@@ -37,7 +37,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 		const type name() const { return _##name; }					\
 	private:														\
 		PropertyField<type> _##name;								\
-	DECLARE_PROPERTY_FIELD(_##name)
+		DECLARE_PROPERTY_FIELD(_##name)
 
 #define DECLARE_PROPERTY_FIELD_EX_SETTER(name, type, setter)		\
 	DECLARE_PROPERTY_FIELD_EX(name, type)							\
@@ -50,6 +50,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 class OVITO_PARTICLES_EXPORT CorrelationFunctionModifier : public AsynchronousParticleModifier
 {
 public:
+
+    enum AveragingDirectionType { CELL_VECTOR_1 = 0, CELL_VECTOR_2 = 1, CELL_VECTOR_3 = 2, RADIAL = 3 };
+    Q_ENUMS(AveragingDirectionType);
 
 	/// Constructor.
 	Q_INVOKABLE CorrelationFunctionModifier(DataSet* dataset);
@@ -71,6 +74,9 @@ public:
 
 	/// Returns the X coordinates of the reciprocal-space correlation function.
 	const QVector<FloatType>& reciprocalSpaceCorrelationX() const { return _reciprocalSpaceCorrelationX; }
+
+	/// Return the averaging direction.
+	const AveragingDirectionType& averagingDirection() const { return _averagingDirection; }
 
 	/// Returns the mean of the first property.
 	FloatType mean1() const { return _mean1; }
@@ -96,10 +102,12 @@ private:
 								  const SimulationCell& simCell,
 								  FloatType fftGridSpacing,
 								  FloatType neighCutoff,
-								  int numberOfNeighBins) :
+								  int numberOfNeighBins,
+								  AveragingDirectionType averagingDirection) :
 			ComputeEngine(validityInterval), _positions(positions),
 			_sourceProperty1(sourceProperty1), _sourceProperty2(sourceProperty2),
-			_simCell(simCell), _fftGridSpacing(fftGridSpacing), _neighCutoff(neighCutoff),
+			_simCell(simCell), _fftGridSpacing(fftGridSpacing),
+			_averagingDirection(averagingDirection), _neighCutoff(neighCutoff),
 			_neighCorrelation(numberOfNeighBins, 0.0),
 			_neighCorrelationX(numberOfNeighBins) {}
 
@@ -127,7 +135,7 @@ private:
 		/// Returns the real-space correlation function.
 		const QVector<FloatType>& realSpaceCorrelation() const { return _realSpaceCorrelation; }
 
-		/// Returns the distances for which the real-space correlation function is tabulated.
+		/// Returns the distances for which the real-space correlation function is tabulAveated.
 		const QVector<FloatType>& realSpaceCorrelationX() const { return _realSpaceCorrelationX; }
 
 		/// Returns the short-ranged real-space correlation function.
@@ -168,6 +176,7 @@ private:
 
 		FloatType _fftGridSpacing;
 		FloatType _neighCutoff;
+		AveragingDirectionType _averagingDirection;
 		SimulationCell _simCell;
 		QExplicitlySharedDataPointer<ParticleProperty> _positions;
 		QExplicitlySharedDataPointer<ParticleProperty> _sourceProperty1;
@@ -245,6 +254,9 @@ private:
 	DECLARE_PROPERTY_FIELD_EX(neighCutoff, FloatType);
 	/// Controls the number of bins for the neighbor part of the real-space correlation function.
 	DECLARE_PROPERTY_FIELD_EX(numberOfNeighBins, int);
+	/// Controls the averaging direction.
+	PropertyField<AveragingDirectionType, int> _averagingDirection;
+	DECLARE_PROPERTY_FIELD(_averagingDirection);
 	/// Controls the normalization of the real-space correlation function.
 	DECLARE_PROPERTY_FIELD_EX(normalize, bool);
 	/// Type of real-space plot (lin-lin, log-lin or log-log)
@@ -281,5 +293,8 @@ OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
+
+Q_DECLARE_METATYPE(Ovito::Particles::CorrelationFunctionModifier::AveragingDirectionType);
+Q_DECLARE_TYPEINFO(Ovito::Particles::CorrelationFunctionModifier::AveragingDirectionType, Q_PRIMITIVE_TYPE);
 
 #endif // __OVITO_CORRELATION_FUNCTION_MODIFIER_H
