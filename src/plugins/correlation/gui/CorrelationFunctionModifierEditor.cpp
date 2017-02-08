@@ -27,6 +27,7 @@
 #include <gui/properties/IntegerParameterUI.h>
 #include <gui/properties/IntegerRadioButtonParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
+#include <gui/properties/VariantComboBoxParameterUI.h>
 #include <plugins/particles/gui/util/ParticlePropertyParameterUI.h>
 #include "CorrelationFunctionModifierEditor.h"
 
@@ -71,6 +72,16 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 	gridlayout->addLayout(fftGridSpacingRadiusPUI->createFieldLayout(), 0, 1);
 
 	layout->addLayout(gridlayout);
+
+	gridlayout = new QGridLayout();
+	gridlayout->addWidget(new QLabel(tr("Average:"), rollout), 0, 0);
+	VariantComboBoxParameterUI* averagingDirectionPUI = new VariantComboBoxParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::_averagingDirection));
+    averagingDirectionPUI->comboBox()->addItem("radial", qVariantFromValue(CorrelationFunctionModifier::RADIAL));
+    averagingDirectionPUI->comboBox()->addItem("cell vector 1", qVariantFromValue(CorrelationFunctionModifier::CELL_VECTOR_1));
+    averagingDirectionPUI->comboBox()->addItem("cell vector 2", qVariantFromValue(CorrelationFunctionModifier::CELL_VECTOR_2));
+    averagingDirectionPUI->comboBox()->addItem("cell vector 3", qVariantFromValue(CorrelationFunctionModifier::CELL_VECTOR_3));
+    gridlayout->addWidget(averagingDirectionPUI->comboBox(), 0, 1);
+    layout->addLayout(gridlayout);
 
 	QGroupBox* realSpaceGroupBox = new QGroupBox(tr("Real-space correlation function"));
 	layout->addWidget(realSpaceGroupBox);

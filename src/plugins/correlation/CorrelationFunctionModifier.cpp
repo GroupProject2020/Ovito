@@ -34,6 +34,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(CorrelationFunctionModifier, AsynchronousParticleModifier);
 DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, sourceProperty1, "SourceProperty1");
 DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, sourceProperty2, "SourceProperty2");
+DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, averagingDirection, "BinDirection", PROPERTY_FIELD_MEMORIZE);
 DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, fftGridSpacing, "FftGridSpacing");
 DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, doComputeNeighCorrelation, "doComputeNeighCorrelation", PROPERTY_FIELD_MEMORIZE);
 DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, neighCutoff, "NeighCutoff", PROPERTY_FIELD_MEMORIZE);
@@ -56,6 +57,7 @@ DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, reciprocalSpaceYAxisRan
 DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeEnd, "ReciprocalSpaceYAxisRangeEnd", PROPERTY_FIELD_MEMORIZE);
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, sourceProperty1, "First property");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, sourceProperty2, "Second property");
+SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, averagingDirection, "Averaging direction");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, fftGridSpacing, "FFT grid spacing");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, doComputeNeighCorrelation, "Direct summation");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, neighCutoff, "Neighbor cutoff radius");
@@ -82,13 +84,14 @@ SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeE
 * Constructs the modifier object.
 ******************************************************************************/
 CorrelationFunctionModifier::CorrelationFunctionModifier(DataSet* dataset) : AsynchronousParticleModifier(dataset),
-	_fftGridSpacing(3.0), _doComputeNeighCorrelation(false), _neighCutoff(5.0), _numberOfNeighBins(50),
+	_averagingDirection(RADIAL), _fftGridSpacing(3.0), _doComputeNeighCorrelation(false), _neighCutoff(5.0), _numberOfNeighBins(50),
 	_normalizeRealSpace(false), _typeOfRealSpacePlot(0), _normalizeReciprocalSpace(false), _typeOfReciprocalSpacePlot(0),
 	_fixRealSpaceXAxisRange(false), _realSpaceXAxisRangeStart(0.0), _realSpaceXAxisRangeEnd(1.0),
 	_fixRealSpaceYAxisRange(false), _realSpaceYAxisRangeStart(0.0), _realSpaceYAxisRangeEnd(1.0),
 	_fixReciprocalSpaceXAxisRange(false), _reciprocalSpaceXAxisRangeStart(0.0), _reciprocalSpaceXAxisRangeEnd(1.0),
 	_fixReciprocalSpaceYAxisRange(false), _reciprocalSpaceYAxisRangeStart(0.0), _reciprocalSpaceYAxisRangeEnd(1.0)
 {
+	INIT_PROPERTY_FIELD(_averagingDirection);
 	INIT_PROPERTY_FIELD(sourceProperty1);
 	INIT_PROPERTY_FIELD(sourceProperty2);
 	INIT_PROPERTY_FIELD(fftGridSpacing);
@@ -173,7 +176,8 @@ std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> CorrelationFunction
 													   fftGridSpacing(),
 													   doComputeNeighCorrelation(),
 													   neighCutoff(),
-													   numberOfNeighBins());
+													   numberOfNeighBins(),
+													   averagingDirection());
 }
 
 /******************************************************************************
@@ -350,9 +354,19 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 
 	// Minimum reciprocal space vector is given by the minimum distance of cell faces.
 	FloatType minReciprocalSpaceVector = 1/minCellFaceDistance;
-	int numberOfWavevectorBins = 1/(2*minReciprocalSpaceVector*fftGridSpacing());
+	int numberOfWavevectorBins, dir1, dir2;
+	Vector_3<int> n(nX, nY, nZ);
 
-	// Radially averaged reciprocal space correlation function.
+	if (_averagingDirection == RADIAL) {
+		numberOfWavevectorBins = 1/(2*minReciprocalSpaceVector*fftGridSpacing());
+	}
+	else {
+		dir1 = (_averagingDirection+1)%3;
+		dir2 = (_averagingDirection+2)%3;
+		numberOfWavevectorBins = n[dir1]*n[dir2];
+	}
+
+	// Averaged reciprocal space correlation function.
 	_reciprocalSpaceCorrelation.fill(0.0, numberOfWavevectorBins);
 	_reciprocalSpaceCorrelationX.resize(numberOfWavevectorBins);
 	QVector<int> numberOfValues(numberOfWavevectorBins, 0);
@@ -374,22 +388,30 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 				// Store correlation function to property1 for back transform.
 				ftProperty1[binIndex] = corr;
 
-				// Ignore Gamma-point for radial average.
-				if (binIndex == 0 && binIndexY == 0 && binIndexZ == 0)
-					continue;
+				int wavevectorBinIndex;
+				if (_averagingDirection == RADIAL) {
+					// Ignore Gamma-point for radial average.
+					if (binIndex == 0 && binIndexY == 0 && binIndexZ == 0)
+						continue;
 
-				// Compute wavevector.
-				int iX = SimulationCell::modulo(binIndexX+nX/2, nX)-nX/2;
-				int iY = SimulationCell::modulo(binIndexY+nY/2, nY)-nY/2;
-				int iZ = SimulationCell::modulo(binIndexZ+nZ/2, nZ)-nZ/2;
-				// This is the reciprocal space vector (without a factor of 2*pi).
-				Vector_4<FloatType> wavevector = FloatType(iX)*reciprocalCellMatrix.row(0) +
-						 		   	 			 FloatType(iY)*reciprocalCellMatrix.row(1) +
-						 			 			 FloatType(iZ)*reciprocalCellMatrix.row(2);
-				wavevector.w() = 0.0;
+					// Compute wavevector.
+					int iX = SimulationCell::modulo(binIndexX+nX/2, nX)-nX/2;
+					int iY = SimulationCell::modulo(binIndexY+nY/2, nY)-nY/2;
+					int iZ = SimulationCell::modulo(binIndexZ+nZ/2, nZ)-nZ/2;
+					// This is the reciprocal space vector (without a factor of 2*pi).
+					Vector_4<FloatType> wavevector = FloatType(iX)*reciprocalCellMatrix.row(0) +
+							 		   	 			 FloatType(iY)*reciprocalCellMatrix.row(1) +
+							 			 			 FloatType(iZ)*reciprocalCellMatrix.row(2);
+					wavevector.w() = 0.0;
 
-				// Length of reciprocal space vector.
-				int wavevectorBinIndex = int(std::floor(wavevector.length()/minReciprocalSpaceVector));
+					// Compute bin index.
+					wavevectorBinIndex = int(std::floor(wavevector.length()/minReciprocalSpaceVector));
+				}
+				else {
+					Vector_3<int> binIndexXYZ(binIndexX, binIndexY, binIndexZ);
+					wavevectorBinIndex = binIndexXYZ[dir2]+n[dir2]*binIndexXYZ[dir1];
+				}
+
 				if (wavevectorBinIndex >= 0 && wavevectorBinIndex < numberOfWavevectorBins) {
 					_reciprocalSpaceCorrelation[wavevectorBinIndex] += std::real(corr);
 					numberOfValues[wavevectorBinIndex]++;
