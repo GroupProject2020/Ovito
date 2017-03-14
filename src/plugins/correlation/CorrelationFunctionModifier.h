@@ -63,9 +63,6 @@ public:
 	/// Returns the X coordinates of the reciprocal-space correlation function.
 	const QVector<FloatType>& reciprocalSpaceCorrelationX() const { return _reciprocalSpaceCorrelationX; }
 
-	/// Return the averaging direction.
-	const AveragingDirectionType& averagingDirection() const { return _averagingDirection; }
-
 	/// Returns the mean of the first property.
 	FloatType mean1() const { return _mean1; }
 
@@ -99,18 +96,13 @@ private:
 								  int numberOfNeighBins,
 								  AveragingDirectionType averagingDirection) :
 			ComputeEngine(validityInterval), _positions(positions),
-<<<<<<< HEAD
 			_sourceProperty1(sourceProperty1), _vecComponent1(vecComponent1),
 			_sourceProperty2(sourceProperty2), _vecComponent2(vecComponent2),
 			_simCell(simCell), _fftGridSpacing(fftGridSpacing),
 			_neighCutoff(neighCutoff),
-=======
-			_sourceProperty1(sourceProperty1), _sourceProperty2(sourceProperty2),
-			_simCell(simCell), _fftGridSpacing(fftGridSpacing),
-			_averagingDirection(averagingDirection), _neighCutoff(neighCutoff),
->>>>>>> 17_2D_viz_corr_func
 			_neighCorrelation(numberOfNeighBins, 0.0),
-			_neighCorrelationX(numberOfNeighBins) {
+			_neighCorrelationX(numberOfNeighBins),
+			_averagingDirection(averagingDirection) {
 				if (!doComputeNeighCorrelation) {
 					_neighCorrelation.clear();
 					_neighCorrelationX.clear();

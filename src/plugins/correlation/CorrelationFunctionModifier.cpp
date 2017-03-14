@@ -91,7 +91,7 @@ CorrelationFunctionModifier::CorrelationFunctionModifier(DataSet* dataset) : Asy
 	_fixReciprocalSpaceXAxisRange(false), _reciprocalSpaceXAxisRangeStart(0.0), _reciprocalSpaceXAxisRangeEnd(1.0),
 	_fixReciprocalSpaceYAxisRange(false), _reciprocalSpaceYAxisRangeStart(0.0), _reciprocalSpaceYAxisRangeEnd(1.0)
 {
-	INIT_PROPERTY_FIELD(_averagingDirection);
+	INIT_PROPERTY_FIELD(averagingDirection);
 	INIT_PROPERTY_FIELD(sourceProperty1);
 	INIT_PROPERTY_FIELD(sourceProperty2);
 	INIT_PROPERTY_FIELD(fftGridSpacing);

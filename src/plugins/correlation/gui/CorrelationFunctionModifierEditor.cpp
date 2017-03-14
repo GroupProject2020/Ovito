@@ -75,7 +75,7 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 
 	gridlayout = new QGridLayout();
 	gridlayout->addWidget(new QLabel(tr("Average:"), rollout), 0, 0);
-	VariantComboBoxParameterUI* averagingDirectionPUI = new VariantComboBoxParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::_averagingDirection));
+	VariantComboBoxParameterUI* averagingDirectionPUI = new VariantComboBoxParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::averagingDirection));
     averagingDirectionPUI->comboBox()->addItem("radial", qVariantFromValue(CorrelationFunctionModifier::RADIAL));
     averagingDirectionPUI->comboBox()->addItem("cell vector 1", qVariantFromValue(CorrelationFunctionModifier::CELL_VECTOR_1));
     averagingDirectionPUI->comboBox()->addItem("cell vector 2", qVariantFromValue(CorrelationFunctionModifier::CELL_VECTOR_2));
