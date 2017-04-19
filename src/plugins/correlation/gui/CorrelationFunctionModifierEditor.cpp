@@ -108,6 +108,7 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 	connect(doComputeNeighCorrelationUI->checkBox(), &QCheckBox::toggled, numberOfNeighBinsPUI, &IntegerParameterUI::setEnabled);
 
 	BooleanParameterUI* normalizeRealSpaceUI = new BooleanParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::normalizeRealSpace));
+	BooleanParameterUI* normalizeByRDFUI = new BooleanParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::normalizeByRDF));
 
 	QGridLayout* typeOfRealSpacePlotLayout = new QGridLayout();
 	IntegerRadioButtonParameterUI *typeOfRealSpacePlotPUI = new IntegerRadioButtonParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::typeOfRealSpacePlot));
@@ -171,6 +172,7 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 	realSpaceLayout->addWidget(doComputeNeighCorrelationUI->checkBox());
 	realSpaceLayout->addLayout(realSpaceGridLayout);
 	realSpaceLayout->addWidget(normalizeRealSpaceUI->checkBox());
+	realSpaceLayout->addWidget(normalizeByRDFUI->checkBox());
 	realSpaceLayout->addLayout(typeOfRealSpacePlotLayout);
 	realSpaceLayout->addWidget(_realSpacePlot);
 	realSpaceLayout->addWidget(axesBox);
