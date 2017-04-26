@@ -25,6 +25,7 @@
 #include <gui/properties/BooleanRadioButtonParameterUI.h>
 #include <gui/properties/IntegerParameterUI.h>
 #include <gui/properties/SubObjectParameterUI.h>
+#include <gui/properties/VariantComboBoxParameterUI.h>
 #include "CalculateDisplacementsModifierEditor.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -45,8 +46,11 @@ void CalculateDisplacementsModifierEditor::createUI(const RolloutInsertionParame
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(4);
 
-	BooleanParameterUI* eliminateCellDeformationUI = new BooleanParameterUI(this, PROPERTY_FIELD(CalculateDisplacementsModifier::eliminateCellDeformation));
-	layout->addWidget(eliminateCellDeformationUI->checkBox());
+	VariantComboBoxParameterUI* eliminateCellDeformationPUI = new VariantComboBoxParameterUI(this, PROPERTY_FIELD(CalculateDisplacementsModifier::eliminateCellDeformation));
+    eliminateCellDeformationPUI->comboBox()->addItem("Do not eliminate homogeneous cell deformation", qVariantFromValue(CalculateDisplacementsModifier::DO_NOT_ELIMINATE));
+    eliminateCellDeformationPUI->comboBox()->addItem("Affinely map atom positions to reference cell", qVariantFromValue(CalculateDisplacementsModifier::REFERENCE_CELL));
+    eliminateCellDeformationPUI->comboBox()->addItem("Affinely map atom positions to current cell", qVariantFromValue(CalculateDisplacementsModifier::CURRENT_CELL));
+    layout->addWidget(eliminateCellDeformationPUI->comboBox());
 
 	BooleanParameterUI* assumeUnwrappedUI = new BooleanParameterUI(this, PROPERTY_FIELD(CalculateDisplacementsModifier::assumeUnwrappedCoordinates));
 	layout->addWidget(assumeUnwrappedUI->checkBox());
