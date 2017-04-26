@@ -51,7 +51,7 @@ DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, fixRealSpaceYAxisRange, "FixR
 DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, realSpaceYAxisRangeStart, "RealSpaceYAxisRangeStart", PROPERTY_FIELD_MEMORIZE);
 DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, realSpaceYAxisRangeEnd, "RealSpaceYAxisRangeEnd", PROPERTY_FIELD_MEMORIZE);
 DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, fixReciprocalSpaceXAxisRange, "FixReciprocalSpaceXAxisRange");
-DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, reciprocalSpaceXAxisRangeStart, "ReciprocalSpaceXAxisRangeStart", PROPERTY_FIELD_MEMORIZE);
+	DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, reciprocalSpaceXAxisRangeStart, "ReciprocalSpaceXAxisRangeStart", PROPERTY_FIELD_MEMORIZE);
 DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, reciprocalSpaceXAxisRangeEnd, "ReciprocalSpaceXAxisRangeEnd", PROPERTY_FIELD_MEMORIZE);
 DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, fixReciprocalSpaceYAxisRange, "FixReciprocalSpaceYAxisRange");
 DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeStart, "ReciprocalSpaceYAxisRangeStart", PROPERTY_FIELD_MEMORIZE);
@@ -63,8 +63,8 @@ SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, fftGridSpacing, "FFT grid 
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, doComputeNeighCorrelation, "Direct summation");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, neighCutoff, "Neighbor cutoff radius");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, numberOfNeighBins, "Number of neighbor bins");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, normalizeRealSpace, "Normalize correlation function by variance");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, normalizeByRDF, "Normalize correlation function by RDF");
+SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, normalizeRealSpace, "Normalize correlation function by covariance");
+SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, normalizeByRDF, "Normalize correlation function by full RDF");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, normalizeReciprocalSpace, "Normalize correlation function");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CorrelationFunctionModifier, fftGridSpacing, WorldParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CorrelationFunctionModifier, neighCutoff, WorldParameterUnit, 0);
@@ -337,16 +337,14 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 					 gridProperty2);
 
 	QVector<FloatType> gridDensity;
-	if (_normalizeByRDF) {
-		mapToSpatialGrid(nullptr,
-						 _vecComponent1,
-						 reciprocalCellMatrix,
-						 nX, nY, nZ,
-						 gridDensity);
-		incrementProgressValue();
-		if (isCanceled())
-			return;
-	}
+	mapToSpatialGrid(nullptr,
+					 _vecComponent1,
+					 reciprocalCellMatrix,
+					 nX, nY, nZ,
+					 gridDensity);
+	incrementProgressValue();
+	if (isCanceled())
+		return;
 
 	// FIXME. Apply windowing function in nonperiodic directions here.
 
@@ -368,13 +366,11 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 		return;
 
 	QVector<std::complex<FloatType>> ftDensity;
-	if (_normalizeByRDF) {
-		r2cFFT(nX, nY, nZ, gridDensity, ftDensity);
+	r2cFFT(nX, nY, nZ, gridDensity, ftDensity);
 
-		incrementProgressValue();
-		if (isCanceled())
-			return;
-	}
+	incrementProgressValue();
+	if (isCanceled())
+		return;
 
 	// Note: Reciprocal cell vectors are in rows. Those are 4-vectors.
 	Vector_4<FloatType> recCell1 = reciprocalCellMatrix.row(0);
@@ -424,9 +420,8 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 				// Store correlation function to property1 for back transform.
 				ftProperty1[binIndex] = corr;
 
-				if (_normalizeByRDF) {
-					ftDensity[binIndex] = ftDensity[binIndex]*std::conj(ftDensity[binIndex]);
-				}
+				// Compute structure factor/radial distribution function.
+				ftDensity[binIndex] = ftDensity[binIndex]*std::conj(ftDensity[binIndex]);
 
 				int wavevectorBinIndex;
 				if (_averagingDirection == RADIAL) {
@@ -481,13 +476,11 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 	if (isCanceled())
 		return;
 
-	if (_normalizeByRDF) {
-		c2rFFT(nX, nY, nZ, ftDensity, gridDensity);
+	c2rFFT(nX, nY, nZ, ftDensity, gridDensity);
 
-		incrementProgressValue();
-		if (isCanceled())
-			return;
-	}
+	incrementProgressValue();
+	if (isCanceled())
+		return;
 
 	// Determine number of grid points for reciprocal-spacespace correlation function.
 	int numberOfDistanceBins = minCellFaceDistance/(2*fftGridSpacing());
@@ -495,7 +488,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 
 	// Radially averaged real space correlation function.
 	_realSpaceCorrelation.fill(0.0, numberOfDistanceBins);
-        QVector<FloatType> realSpaceRDF(numberOfDistanceBins, 0.0);
+	QVector<FloatType> realSpaceRDF(numberOfDistanceBins, 0.0);
 	_realSpaceCorrelationX.resize(numberOfDistanceBins);
 	numberOfValues.fill(0, numberOfDistanceBins);
 
@@ -526,8 +519,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 				int distanceBinIndex = int(std::floor(distance.length()/gridSpacing));
 				if (distanceBinIndex >= 0 && distanceBinIndex < numberOfDistanceBins) {
 					_realSpaceCorrelation[distanceBinIndex] += gridProperty1[binIndex];
-					if (_normalizeByRDF)
-						realSpaceRDF[distanceBinIndex] += gridDensity[binIndex];
+					realSpaceRDF[distanceBinIndex] += gridDensity[binIndex];
 					numberOfValues[distanceBinIndex]++;
 				}
 			}
@@ -822,12 +814,20 @@ void CorrelationFunctionModifier::propertyChanged(const PropertyFieldDescriptor&
 		field == PROPERTY_FIELD(fftGridSpacing) ||
 		field == PROPERTY_FIELD(doComputeNeighCorrelation) ||
 		field == PROPERTY_FIELD(neighCutoff) ||
-	    field == PROPERTY_FIELD(numberOfNeighBins) ||
-		field == PROPERTY_FIELD(normalizeByRDF))
+	    field == PROPERTY_FIELD(numberOfNeighBins)) {
 		invalidateCachedResults();
+	}
+	else if (field == PROPERTY_FIELD(normalizeByRDF)) {
+		_normalizeRealSpace = false;
+		invalidateCachedResults();
+	}
+	else if (field == PROPERTY_FIELD(normalizeRealSpace)) {
+		_normalizeByRDF = false;
+	}
 }
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
+	

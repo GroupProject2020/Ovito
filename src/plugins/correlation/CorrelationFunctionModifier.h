@@ -48,11 +48,17 @@ public:
 	/// Returns the Y coordinates of the real-space correlation function.
 	const QVector<FloatType>& realSpaceCorrelation() const { return _realSpaceCorrelation; }
 
+	/// Returns the RDF evaluated from an FFT correlation.
+	const QVector<FloatType>& realSpaceRDF() const { return _realSpaceRDF; }
+
 	/// Returns the X coordinates of the real-space correlation function.
 	const QVector<FloatType>& realSpaceCorrelationX() const { return _realSpaceCorrelationX; }
 
 	/// Returns the Y coordinates of the short-ranged part of the real-space correlation function.
 	const QVector<FloatType>& neighCorrelation() const { return _neighCorrelation; }
+
+	/// Returns the RDF evalauted from a direct sum over neighbor shells.
+	const QVector<FloatType>& neighRDF() const { return _neighRDF; }
 
 	/// Returns the X coordinates of the short-ranged part of the real-space correlation function.
 	const QVector<FloatType>& neighCorrelationX() const { return _neighCorrelationX; }
@@ -144,11 +150,17 @@ private:
 		/// Returns the real-space correlation function.
 		const QVector<FloatType>& realSpaceCorrelation() const { return _realSpaceCorrelation; }
 
+		/// Returns the RDF evaluated from an FFT correlation.
+		const QVector<FloatType>& realSpaceRDF() const { return _realSpaceRDF; }
+
 		/// Returns the distances for which the real-space correlation function is tabulAveated.
 		const QVector<FloatType>& realSpaceCorrelationX() const { return _realSpaceCorrelationX; }
 
 		/// Returns the short-ranged real-space correlation function.
 		const QVector<FloatType>& neighCorrelation() const { return _neighCorrelation; }
+
+		/// Returns the RDF evalauted from a direct sum over neighbor shells.
+		const QVector<FloatType>& neighRDF() const { return _neighRDF; }
 
 		/// Returns the distances for which the short-ranged real-space correlation function is tabulated.
 		const QVector<FloatType>& neighCorrelationX() const { return _neighCorrelationX; }
@@ -194,8 +206,10 @@ private:
 		QExplicitlySharedDataPointer<ParticleProperty> _sourceProperty1;
 		QExplicitlySharedDataPointer<ParticleProperty> _sourceProperty2;
 		QVector<FloatType> _realSpaceCorrelation;
+		QVector<FloatType> _realSpaceRDF;
 		QVector<FloatType> _realSpaceCorrelationX;
 		QVector<FloatType> _neighCorrelation;
+		QVector<FloatType> _neighRDF;
 		QVector<FloatType> _neighCorrelationX;
 		QVector<FloatType> _reciprocalSpaceCorrelation;
 		QVector<FloatType> _reciprocalSpaceCorrelationX;
@@ -226,11 +240,17 @@ private:
 	/// The real-space correlation function.
 	QVector<FloatType> _realSpaceCorrelation;
 
+	/// The radial distribution function computed from an FFT convolution.
+	QVector<FloatType> _realSpaceRDF;
+
 	/// The distances for which the real-space correlation function is tabulated.
 	QVector<FloatType> _realSpaceCorrelationX;
 
 	/// The short-ranged part of the real-space correlation function.
 	QVector<FloatType> _neighCorrelation;
+
+	/// The radial distribution function computed from a direct sum over neighbor shells.
+	QVector<FloatType> _neighRDF;
 
 	/// The distances for which short-ranged part of the real-space correlation function is tabulated.
 	QVector<FloatType> _neighCorrelationX;
