@@ -88,5 +88,3 @@ OVITO_END_INLINE_NAMESPACE
 
 Q_DECLARE_METATYPE(Ovito::Particles::CalculateDisplacementsModifier::EliminateCellDeformationType);
 Q_DECLARE_TYPEINFO(Ovito::Particles::CalculateDisplacementsModifier::EliminateCellDeformationType, Q_PRIMITIVE_TYPE);
-
-#endif // __OVITO_CALCULATE_DISPLACEMENTS_MODIFIER_H
