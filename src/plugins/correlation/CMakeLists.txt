@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2014) Alexander Stukowski
+#  Copyright (2017) Alexander Stukowski
 #  Copyright (2016) Lars Pastewka
 #
 #  This file is part of OVITO (Open Visualization Tool).
@@ -21,35 +21,35 @@
 ###############################################################################
 
 # Locate the FFTW library.
-IF(OVITO_DOUBLE_PRECISION_FP)
-    FIND_LIBRARY(FFTW3_LIBRARIES NAMES fftw3 libfftw3)
-ELSE()
-    FIND_LIBRARY(FFTW3F_LIBRARIES NAMES fftw3f libfftw3f)
-ENDIF()
+FIND_PACKAGE(FFTW3 REQUIRED)
 
 SET(SourceFiles
 	CorrelationFunctionModifier.cpp
 )
 
-IF(OVITO_DOUBLE_PRECISION_FP)
-    OVITO_STANDARD_PLUGIN(
-    	CorrelationFunctionModifierPlugin
-    	SOURCES ${SourceFiles}
-    	PLUGIN_DEPENDENCIES Particles
-    	PRIVATE_LIB_DEPENDENCIES fftw3
-    )
-ELSE()
-    OVITO_STANDARD_PLUGIN(
-        CorrelationFunctionModifierPlugin
-        SOURCES ${SourceFiles}
-        PLUGIN_DEPENDENCIES Particles
-        PRIVATE_LIB_DEPENDENCIES fftw3f
-    )
-ENDIF()
+OVITO_STANDARD_PLUGIN(
+    CorrelationFunctionPlugin
+    SOURCES ${SourceFiles}
+    PLUGIN_DEPENDENCIES Particles
+    PRIVATE_LIB_DEPENDENCIES ${FFTW3_LIBRARIES}
+)
+
+TARGET_INCLUDE_DIRECTORIES(CorrelationFunctionPlugin PRIVATE "${FFTW3_INCLUDE_DIRS}")
 
 # Build corresponding GUI plugin.
 IF(OVITO_BUILD_GUI)
 	ADD_SUBDIRECTORY(gui)
+ENDIF()
+
+IF(WIN32)
+	# Deploy FFTW3 dll.
+	LIST(GET FFTW3_LIBRARIES 0 FFTW3_FIRST_LIBRARY)
+	GET_FILENAME_COMPONENT(FFTW3_LIBRARY_DIR "${FFTW3_FIRST_LIBRARY}" PATH)
+	GET_FILENAME_COMPONENT(FFTW3_LIBRARY_NAME "${FFTW3_FIRST_LIBRARY}" NAME_WE)
+	OVITO_INSTALL_DLL("${FFTW3_LIBRARY_DIR}/${FFTW3_LIBRARY_NAME}.dll")
+ELSEIF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
+	# Deploy FFTW3 shared library.
+	OVITO_INSTALL_SHARED_LIB("${FFTW3_LIBRARIES}" "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
 ENDIF()
 
 # Propagate list of plugins to parent scope.

@@ -19,15 +19,14 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <fftw3.h>
-
 #include <plugins/particles/Particles.h>
-
 #include <core/scene/objects/DataObject.h>
 #include <core/scene/pipeline/PipelineObject.h>
 #include <core/app/Application.h>
 #include <core/animation/AnimationSettings.h>
 #include "CorrelationFunctionModifier.h"
+
+#include <fftw3.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
@@ -130,7 +129,7 @@ void CorrelationFunctionModifier::initializeModifier(PipelineObject* pipeline, M
 
 	// Use the first available particle property from the input state as data source when the modifier is newly created.
 	if(sourceProperty1().isNull() || sourceProperty2().isNull()) {
-		PipelineFlowState input = pipeline->evaluatePipeline(dataset()->animationSettings()->time(), modApp, false);
+		PipelineFlowState input = getModifierInput(modApp);
 		ParticlePropertyReference bestProperty;
 		for(DataObject* o : input.objects()) {
 			ParticlePropertyObject* property = dynamic_object_cast<ParticlePropertyObject>(o);
@@ -247,19 +246,17 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::mapToSpatialGrid(Pa
 			const int* v = property->constDataInt() + vecComponent;
 			const int* v_end = v + (property->size() * vecComponentCount);
 			for(; v != v_end; v += vecComponentCount, ++pos) {
-				if(!std::isnan(*v)) {
-					Point3 fractionalPos = reciprocalCellMatrix*(*pos);
-					int binIndexX = int( fractionalPos.x() * nX );
-					int binIndexY = int( fractionalPos.y() * nY );
-					int binIndexZ = int( fractionalPos.z() * nZ );
-					if(pbc[0]) binIndexX = SimulationCell::modulo(binIndexX, nX);
-					if(pbc[1]) binIndexY = SimulationCell::modulo(binIndexY, nY);
-					if(pbc[2]) binIndexZ = SimulationCell::modulo(binIndexZ, nZ);
-					if(binIndexX >= 0 && binIndexX < nX && binIndexY >= 0 && binIndexY < nY && binIndexZ >= 0 && binIndexZ < nZ) {
-						// Store in row-major format.
-						size_t binIndex = binIndexZ+nZ*(binIndexY+nY*binIndexX);
-						gridData[binIndex] += *v;
-					}
+				Point3 fractionalPos = reciprocalCellMatrix*(*pos);
+				int binIndexX = int( fractionalPos.x() * nX );
+				int binIndexY = int( fractionalPos.y() * nY );
+				int binIndexZ = int( fractionalPos.z() * nZ );
+				if(pbc[0]) binIndexX = SimulationCell::modulo(binIndexX, nX);
+				if(pbc[1]) binIndexY = SimulationCell::modulo(binIndexY, nY);
+				if(pbc[2]) binIndexZ = SimulationCell::modulo(binIndexZ, nZ);
+				if(binIndexX >= 0 && binIndexX < nX && binIndexY >= 0 && binIndexY < nY && binIndexZ >= 0 && binIndexZ < nZ) {
+					// Store in row-major format.
+					size_t binIndex = binIndexZ+nZ*(binIndexY+nY*binIndexX);
+					gridData[binIndex] += *v;
 				}
 			}
 		}
@@ -572,12 +569,12 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeighCorrela
 
 	// Prepare the neighbor list.
 	CutoffNeighborFinder neighborListBuilder;
-	if (!neighborListBuilder.prepare(_neighCutoff, positions(), cell(), nullptr, this))
+	if (!neighborListBuilder.prepare(_neighCutoff, positions(), cell(), nullptr, *this))
 		return;
 
 	// Perform analysis on each particle in parallel.
 	std::vector<std::thread> workers;
-	size_t num_threads = Application::instance().idealThreadCount();
+	size_t num_threads = Application::instance()->idealThreadCount();
 	size_t chunkSize = particleCount / num_threads;
 	size_t startIndex = 0;
 	size_t endIndex = chunkSize;
@@ -705,10 +702,14 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::perform()
 {
 	setProgressText(tr("Computing correlation function"));
 	setProgressValue(0);
-	int range = 7;
-	if (!_neighCorrelation.empty())  range++;
-	if (_normalizeByRDF)  range += 3;
+	int range = 10;
+	if (!_neighCorrelation.empty())
+		range++;
 	setProgressRange(range);
+	if (_neighCorrelation.empty())
+		setProgressMaximum(7);
+	else
+		setProgressMaximum(9);
 
 	// Compute reciprocal space correlation function and long-ranged part of
 	// the real-space correlation function from an FFT.

@@ -19,8 +19,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef __OVITO_SCENE_NODE_H
-#define __OVITO_SCENE_NODE_H
+#pragma once
+
 
 #include <core/Core.h>
 #include <core/utilities/Color.h>
@@ -185,12 +185,23 @@ public:
 	bool isSelected() const;
 
 	/// \brief Returns whether this is the root scene node.
-	/// \return \c true if this is the root node of the scene, i.e. parentNode() returns \c NULL;
-	///         \c false if this a node with a parent.
+	/// \return \c true if this is the root node of the scene.
 	///
 	/// \sa DataSet::sceneRoot()
 	/// \sa parentNode()
-	bool isRootNode() const { return parentNode() == nullptr; }
+	virtual bool isRootNode() const { return false; }
+
+	/// \brief Returns whether this node is part of a scene.
+	/// \return \c true if the node has a root node.
+	bool isInScene() const { 
+		const SceneNode* n = this;
+		do {
+			if(n->isRootNode()) return true;
+			n = n->parentNode();
+		}
+		while(n != nullptr);
+		return false; 
+	}
 
 	/// \brief Returns the title of this object.
 	virtual QString objectTitle() override { return _nodeName; }
@@ -273,4 +284,4 @@ OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
-#endif // __OVITO_SCENE_NODE_H
+

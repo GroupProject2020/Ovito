@@ -19,8 +19,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef __OVITO_CA_SMOOTH_SURFACE_MODIFIER_H
-#define __OVITO_CA_SMOOTH_SURFACE_MODIFIER_H
+#pragma once
+
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <core/scene/pipeline/Modifier.h>
@@ -53,11 +53,11 @@ private:
 	OVITO_OBJECT
 
 	Q_CLASSINFO("DisplayName", "Smooth surface");
-	Q_CLASSINFO("ModifierCategory", "Crystal analysis");
+	Q_CLASSINFO("ModifierCategory", "Modification");
 };
 
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
 
-#endif // __OVITO_CA_SMOOTH_SURFACE_MODIFIER_H
+

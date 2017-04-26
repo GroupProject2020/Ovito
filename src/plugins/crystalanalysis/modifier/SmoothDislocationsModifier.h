@@ -19,8 +19,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef __OVITO_CA_SMOOTH_DISLOCATIONS_MODIFIER_H
-#define __OVITO_CA_SMOOTH_DISLOCATIONS_MODIFIER_H
+#pragma once
+
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
@@ -73,11 +73,11 @@ private:
 	OVITO_OBJECT
 
 	Q_CLASSINFO("DisplayName", "Smooth dislocations");
-	Q_CLASSINFO("ModifierCategory", "Crystal analysis");
+	Q_CLASSINFO("ModifierCategory", "Modification");
 };
 
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
 
-#endif // __OVITO_CA_SMOOTH_DISLOCATIONS_MODIFIER_H
+
