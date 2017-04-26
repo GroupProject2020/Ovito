@@ -106,8 +106,7 @@ private:
 								  bool doComputeNeighCorrelation,
 								  FloatType neighCutoff,
 								  int numberOfNeighBins,
-								  AveragingDirectionType averagingDirection,
-								  bool normalizeByRDF) :
+								  AveragingDirectionType averagingDirection) :
 			ComputeEngine(validityInterval), _positions(positions),
 			_sourceProperty1(sourceProperty1), _vecComponent1(vecComponent1),
 			_sourceProperty2(sourceProperty2), _vecComponent2(vecComponent2),
@@ -115,8 +114,7 @@ private:
 			_neighCutoff(neighCutoff),
 			_neighCorrelation(numberOfNeighBins, 0.0),
 			_neighCorrelationX(numberOfNeighBins),
-			_averagingDirection(averagingDirection),
-			_normalizeByRDF(normalizeByRDF) {
+			_averagingDirection(averagingDirection) {
 				if (!doComputeNeighCorrelation) {
 					_neighCorrelation.clear();
 					_neighCorrelationX.clear();
@@ -206,7 +204,6 @@ private:
 		FloatType _fftGridSpacing;
 		FloatType _neighCutoff;
 		AveragingDirectionType _averagingDirection;
-		bool _normalizeByRDF;
 		SimulationCell _simCell;
 		QExplicitlySharedDataPointer<ParticleProperty> _positions;
 		QExplicitlySharedDataPointer<ParticleProperty> _sourceProperty1;

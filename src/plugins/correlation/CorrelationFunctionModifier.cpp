@@ -50,7 +50,7 @@ DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, fixRealSpaceYAxisRange, "FixR
 DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, realSpaceYAxisRangeStart, "RealSpaceYAxisRangeStart", PROPERTY_FIELD_MEMORIZE);
 DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, realSpaceYAxisRangeEnd, "RealSpaceYAxisRangeEnd", PROPERTY_FIELD_MEMORIZE);
 DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, fixReciprocalSpaceXAxisRange, "FixReciprocalSpaceXAxisRange");
-	DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, reciprocalSpaceXAxisRangeStart, "ReciprocalSpaceXAxisRangeStart", PROPERTY_FIELD_MEMORIZE);
+DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, reciprocalSpaceXAxisRangeStart, "ReciprocalSpaceXAxisRangeStart", PROPERTY_FIELD_MEMORIZE);
 DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, reciprocalSpaceXAxisRangeEnd, "ReciprocalSpaceXAxisRangeEnd", PROPERTY_FIELD_MEMORIZE);
 DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, fixReciprocalSpaceYAxisRange, "FixReciprocalSpaceYAxisRange");
 DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeStart, "ReciprocalSpaceYAxisRangeStart", PROPERTY_FIELD_MEMORIZE);
@@ -63,7 +63,7 @@ SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, doComputeNeighCorrelation,
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, neighCutoff, "Neighbor cutoff radius");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, numberOfNeighBins, "Number of neighbor bins");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, normalizeRealSpace, "Normalize correlation function by covariance");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, normalizeByRDF, "Normalize correlation function by full RDF");
+SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, normalizeByRDF, "Normalize correlation function by RDF");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, normalizeReciprocalSpace, "Normalize correlation function");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CorrelationFunctionModifier, fftGridSpacing, WorldParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CorrelationFunctionModifier, neighCutoff, WorldParameterUnit, 0);
@@ -179,8 +179,7 @@ std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> CorrelationFunction
 													   doComputeNeighCorrelation(),
 													   neighCutoff(),
 													   numberOfNeighBins(),
-													   averagingDirection(),
-													   normalizeByRDF());
+													   averagingDirection());
 }
 
 /******************************************************************************
@@ -485,7 +484,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 
 	// Radially averaged real space correlation function.
 	_realSpaceCorrelation.fill(0.0, numberOfDistanceBins);
-	QVector<FloatType> realSpaceRDF(numberOfDistanceBins, 0.0);
+	_realSpaceRDF.fill(0.0, numberOfDistanceBins);
 	_realSpaceCorrelationX.resize(numberOfDistanceBins);
 	numberOfValues.fill(0, numberOfDistanceBins);
 
@@ -516,7 +515,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 				int distanceBinIndex = int(std::floor(distance.length()/gridSpacing));
 				if (distanceBinIndex >= 0 && distanceBinIndex < numberOfDistanceBins) {
 					_realSpaceCorrelation[distanceBinIndex] += gridProperty1[binIndex];
-					realSpaceRDF[distanceBinIndex] += gridDensity[binIndex];
+					_realSpaceRDF[distanceBinIndex] += gridDensity[binIndex];
 					numberOfValues[distanceBinIndex]++;
 				}
 			}
@@ -527,12 +526,8 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 	normalizationFactor = 1.0/(sourceProperty1()->size()*sourceProperty2()->size());
 	for (int distanceBinIndex = 0; distanceBinIndex < numberOfDistanceBins; distanceBinIndex++) {
 		if (numberOfValues[distanceBinIndex] > 0) {
-			if (_normalizeByRDF) {
-				_realSpaceCorrelation[distanceBinIndex] /= realSpaceRDF[distanceBinIndex];
-			}
-			else {
-				_realSpaceCorrelation[distanceBinIndex] *= normalizationFactor/numberOfValues[distanceBinIndex];
-			}
+			_realSpaceCorrelation[distanceBinIndex] *= normalizationFactor/numberOfValues[distanceBinIndex];
+			_realSpaceRDF[distanceBinIndex] *= normalizationFactor/numberOfValues[distanceBinIndex];
 		}
 	}
 
@@ -565,7 +560,8 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeighCorrela
 		intData2 = sourceProperty2()->constDataInt();
 	}
 
-	QVector<int> neighRDF(_neighCorrelation.size(), 0);
+	// Resize neighbor RDF and fill with zeros.
+	_neighRDF.fill(0.0, _neighCorrelation.size());
 
 	// Prepare the neighbor list.
 	CutoffNeighborFinder neighborListBuilder;
@@ -588,7 +584,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeighCorrela
 		workers.push_back(std::thread([&neighborListBuilder, startIndex, endIndex,
 								   	   floatData1, intData1, componentCount1, vecComponent1,
 								   	   floatData2, intData2, componentCount2, vecComponent2,
-									   &neighRDF, &mutex, this]() {
+									   &mutex, this]() {
 			FloatType gridSpacing = (_neighCutoff + FLOATTYPE_EPSILON) / _neighCorrelation.size();
 			std::vector<double> threadLocalCorrelation(_neighCorrelation.size(), 0);
 			std::vector<int> threadLocalRDF(_neighCorrelation.size(), 0);
@@ -617,7 +613,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeighCorrela
 			auto iter_corr_out = _neighCorrelation.begin();
 			for (auto iter_corr = threadLocalCorrelation.cbegin(); iter_corr != threadLocalCorrelation.cend(); ++iter_corr, ++iter_corr_out)
 				*iter_corr_out += *iter_corr;
-			auto iter_rdf_out = neighRDF.begin();
+			auto iter_rdf_out = _neighRDF.begin();
 			for (auto iter_rdf = threadLocalRDF.cbegin(); iter_rdf != threadLocalRDF.cend(); ++iter_rdf, ++iter_rdf_out)
 				*iter_rdf_out += *iter_rdf;
 		}));
@@ -636,12 +632,8 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeighCorrela
 		FloatType distance = distanceBinIndex*gridSpacing;
 		FloatType distance2 = (distanceBinIndex+1)*gridSpacing;
 		_neighCorrelationX[distanceBinIndex] = (distance+distance2)/2;
-		if (_normalizeByRDF) {
-			_neighCorrelation[distanceBinIndex] /= neighRDF[distanceBinIndex];
-		}
-		else {
-			_neighCorrelation[distanceBinIndex] *= normalizationFactor/(distance2*distance2*distance2-distance*distance*distance);
-		}
+		_neighCorrelation[distanceBinIndex] *= normalizationFactor/(distance2*distance2*distance2-distance*distance*distance);
+		_neighRDF[distanceBinIndex] *= normalizationFactor/(distance2*distance2*distance2-distance*distance*distance);
 	}
 
 	incrementProgressValue();
@@ -702,14 +694,10 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::perform()
 {
 	setProgressText(tr("Computing correlation function"));
 	setProgressValue(0);
-	int range = 10;
+	int range = 12;
 	if (!_neighCorrelation.empty())
-		range++;
-	setProgressRange(range);
-	if (_neighCorrelation.empty())
-		setProgressMaximum(7);
-	else
-		setProgressMaximum(9);
+		range+=2;
+	setProgressMaximum(range);
 
 	// Compute reciprocal space correlation function and long-ranged part of
 	// the real-space correlation function from an FFT.
