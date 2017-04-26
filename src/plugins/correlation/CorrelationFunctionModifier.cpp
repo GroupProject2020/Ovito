@@ -771,8 +771,10 @@ void CorrelationFunctionModifier::transferComputationResults(ComputeEngine* engi
 {
 	CorrelationAnalysisEngine* eng = static_cast<CorrelationAnalysisEngine*>(engine);
 	_realSpaceCorrelation = eng->realSpaceCorrelation();
+	_realSpaceRDF = eng->realSpaceRDF();
 	_realSpaceCorrelationX = eng->realSpaceCorrelationX();
 	_neighCorrelation = eng->neighCorrelation();
+	_neighRDF = eng->neighRDF();
 	_neighCorrelationX = eng->neighCorrelationX();
 	_reciprocalSpaceCorrelation = eng->reciprocalSpaceCorrelation();
 	_reciprocalSpaceCorrelationX = eng->reciprocalSpaceCorrelationX();
