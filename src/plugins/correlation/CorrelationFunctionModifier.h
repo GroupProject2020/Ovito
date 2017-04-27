@@ -46,7 +46,9 @@ class OVITO_CORRELATION_FUNCTION_EXPORT CorrelationFunctionModifier : public Asy
 public:
 
     enum AveragingDirectionType { CELL_VECTOR_1 = 0, CELL_VECTOR_2 = 1, CELL_VECTOR_3 = 2, RADIAL = 3 };
+    enum NormalizationType { DO_NOT_NORMALIZE = 0, NORMALIZE_BY_COVARIANCE = 1, NORMALIZE_BY_RDF = 2 };
     Q_ENUMS(AveragingDirectionType);
+    Q_ENUMS(NormalizationType);
 
 	/// Constructor.
 	Q_INVOKABLE CorrelationFunctionModifier(DataSet* dataset);
@@ -294,9 +296,7 @@ private:
 	/// Controls the averaging direction.
 	DECLARE_PROPERTY_FIELD(AveragingDirectionType, averagingDirection);
 	/// Controls the normalization of the real-space correlation function.
-	DECLARE_PROPERTY_FIELD(bool, normalizeRealSpace);
-	/// Controls the normalization of the real-space correlation function.
-	DECLARE_PROPERTY_FIELD(bool, normalizeByRDF);
+	DECLARE_PROPERTY_FIELD(NormalizationType, normalizeRealSpace);
 	/// Type of real-space plot (lin-lin, log-lin or log-log)
 	DECLARE_PROPERTY_FIELD(int, typeOfRealSpacePlot);
 	/// Controls the whether the range of the x-axis of the plot should be fixed.
@@ -335,6 +335,8 @@ OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::Particles::CorrelationFunctionModifier::AveragingDirectionType);
+Q_DECLARE_METATYPE(Ovito::Particles::CorrelationFunctionModifier::NormalizationType);
 Q_DECLARE_TYPEINFO(Ovito::Particles::CorrelationFunctionModifier::AveragingDirectionType, Q_PRIMITIVE_TYPE);
+Q_DECLARE_TYPEINFO(Ovito::Particles::CorrelationFunctionModifier::NormalizationType, Q_PRIMITIVE_TYPE);
 
 #endif // __OVITO_CORRELATION_FUNCTION_MODIFIER_H

@@ -39,7 +39,6 @@ DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, doComputeNeighCorrelati
 DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, neighCutoff, "NeighCutoff", PROPERTY_FIELD_MEMORIZE);
 DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, numberOfNeighBins, "NumberOfNeighBins", PROPERTY_FIELD_MEMORIZE);
 DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, normalizeRealSpace, "NormalizeRealSpace", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, normalizeByRDF, "NormalizeByRDF", PROPERTY_FIELD_MEMORIZE);
 DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, typeOfRealSpacePlot, "TypeOfRealSpacePlot");
 DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, normalizeReciprocalSpace, "NormalizeReciprocalSpace", PROPERTY_FIELD_MEMORIZE);
 DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, typeOfReciprocalSpacePlot, "TypeOfReciprocalSpacePlot");
@@ -62,8 +61,7 @@ SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, fftGridSpacing, "FFT grid 
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, doComputeNeighCorrelation, "Direct summation");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, neighCutoff, "Neighbor cutoff radius");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, numberOfNeighBins, "Number of neighbor bins");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, normalizeRealSpace, "Normalize correlation function by covariance");
-SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, normalizeByRDF, "Normalize correlation function by RDF");
+SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, normalizeRealSpace, "Normalize correlation function");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, normalizeReciprocalSpace, "Normalize correlation function");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CorrelationFunctionModifier, fftGridSpacing, WorldParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CorrelationFunctionModifier, neighCutoff, WorldParameterUnit, 0);
@@ -86,7 +84,7 @@ SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeE
 ******************************************************************************/
 CorrelationFunctionModifier::CorrelationFunctionModifier(DataSet* dataset) : AsynchronousParticleModifier(dataset),
 	_averagingDirection(RADIAL), _fftGridSpacing(3.0), _doComputeNeighCorrelation(false), _neighCutoff(5.0), _numberOfNeighBins(50),
-	_normalizeRealSpace(false), _normalizeByRDF(false), _typeOfRealSpacePlot(0), _normalizeReciprocalSpace(false), _typeOfReciprocalSpacePlot(0),
+	_normalizeRealSpace(DO_NOT_NORMALIZE), _typeOfRealSpacePlot(0), _normalizeReciprocalSpace(false), _typeOfReciprocalSpacePlot(0),
 	_fixRealSpaceXAxisRange(false), _realSpaceXAxisRangeStart(0.0), _realSpaceXAxisRangeEnd(1.0),
 	_fixRealSpaceYAxisRange(false), _realSpaceYAxisRangeStart(0.0), _realSpaceYAxisRangeEnd(1.0),
 	_fixReciprocalSpaceXAxisRange(false), _reciprocalSpaceXAxisRangeStart(0.0), _reciprocalSpaceXAxisRangeEnd(1.0),
@@ -100,7 +98,6 @@ CorrelationFunctionModifier::CorrelationFunctionModifier(DataSet* dataset) : Asy
 	INIT_PROPERTY_FIELD(neighCutoff);
 	INIT_PROPERTY_FIELD(numberOfNeighBins);
 	INIT_PROPERTY_FIELD(normalizeRealSpace);
-	INIT_PROPERTY_FIELD(normalizeByRDF);
 	INIT_PROPERTY_FIELD(typeOfRealSpacePlot);
 	INIT_PROPERTY_FIELD(normalizeReciprocalSpace);
 	INIT_PROPERTY_FIELD(typeOfReciprocalSpacePlot);
@@ -193,7 +190,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::mapToSpatialGrid(Pa
 {
 	size_t vecComponent = std::max(size_t(0), propertyVectorComponent);
 	size_t vecComponentCount = 0;
-        if (property)  vecComponentCount = property->componentCount();
+	if (property)  vecComponentCount = property->componentCount();
 
 	int numberOfGridPoints = nX*nY*nZ;
 
@@ -207,20 +204,22 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::mapToSpatialGrid(Pa
 		const Point3* pos = positions()->constDataPoint3();
 		const Point3* pos_end = pos + positions()->size();
 
-                if (!property) {
-			Point3 fractionalPos = reciprocalCellMatrix*(*pos);
-			int binIndexX = int( fractionalPos.x() * nX );
-			int binIndexY = int( fractionalPos.y() * nY );
-			int binIndexZ = int( fractionalPos.z() * nZ );
-			if(pbc[0]) binIndexX = SimulationCell::modulo(binIndexX, nX);
-			if(pbc[1]) binIndexY = SimulationCell::modulo(binIndexY, nY);
-			if(pbc[2]) binIndexZ = SimulationCell::modulo(binIndexZ, nZ);
-			if(binIndexX >= 0 && binIndexX < nX && binIndexY >= 0 && binIndexY < nY && binIndexZ >= 0 && binIndexZ < nZ) {
-				// Store in row-major format.
-				size_t binIndex = binIndexZ+nZ*(binIndexY+nY*binIndexX);
-				gridData[binIndex] += 1;
+		if (!property) {
+			for (; pos != pos_end; ++pos) {
+				Point3 fractionalPos = reciprocalCellMatrix*(*pos);
+				int binIndexX = int( fractionalPos.x() * nX );
+				int binIndexY = int( fractionalPos.y() * nY );
+				int binIndexZ = int( fractionalPos.z() * nZ );
+				if(pbc[0]) binIndexX = SimulationCell::modulo(binIndexX, nX);
+				if(pbc[1]) binIndexY = SimulationCell::modulo(binIndexY, nY);
+				if(pbc[2]) binIndexZ = SimulationCell::modulo(binIndexZ, nZ);
+				if(binIndexX >= 0 && binIndexX < nX && binIndexY >= 0 && binIndexY < nY && binIndexZ >= 0 && binIndexZ < nZ) {
+					// Store in row-major format.
+					size_t binIndex = binIndexZ+nZ*(binIndexY+nY*binIndexX);
+					gridData[binIndex] += 1;
+				}
 			}
-                }
+		}
 		else if(property->dataType() == qMetaTypeId<FloatType>()) {
 			const FloatType* v = property->constDataFloat() + vecComponent;
 			const FloatType* v_end = v + (property->size() * vecComponentCount);
@@ -306,7 +305,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::c2rFFT(int nX, int 
 void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelation()
 {
 	// Get reciprocal cell.
-	AffineTransformation cellMatrix = cell().matrix(); 
+	AffineTransformation cellMatrix = cell().matrix();
 	AffineTransformation reciprocalCellMatrix = cell().inverseMatrix();
 
 	// Note: Cell vectors are in columns. Those are 3-vectors.
@@ -808,17 +807,9 @@ void CorrelationFunctionModifier::propertyChanged(const PropertyFieldDescriptor&
 	    field == PROPERTY_FIELD(numberOfNeighBins)) {
 		invalidateCachedResults();
 	}
-	else if (field == PROPERTY_FIELD(normalizeByRDF)) {
-		_normalizeRealSpace = false;
-		invalidateCachedResults();
-	}
-	else if (field == PROPERTY_FIELD(normalizeRealSpace)) {
-		_normalizeByRDF = false;
-	}
 }
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-	
