@@ -85,7 +85,7 @@ SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeE
 * Constructs the modifier object.
 ******************************************************************************/
 CorrelationFunctionModifier::CorrelationFunctionModifier(DataSet* dataset) : AsynchronousParticleModifier(dataset),
-	_averagingDirection(RADIAL), _fftGridSpacing(3.0), _applyWindow(false), _doComputeNeighCorrelation(false), _neighCutoff(5.0), _numberOfNeighBins(50),
+	_averagingDirection(RADIAL), _fftGridSpacing(3.0), _applyWindow(true), _doComputeNeighCorrelation(false), _neighCutoff(5.0), _numberOfNeighBins(50),
 	_normalizeRealSpace(DO_NOT_NORMALIZE), _typeOfRealSpacePlot(0), _normalizeReciprocalSpace(false), _typeOfReciprocalSpacePlot(0),
 	_fixRealSpaceXAxisRange(false), _realSpaceXAxisRangeStart(0.0), _realSpaceXAxisRangeEnd(1.0),
 	_fixRealSpaceYAxisRange(false), _realSpaceYAxisRangeStart(0.0), _realSpaceYAxisRangeEnd(1.0),
