@@ -76,6 +76,7 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 	BooleanParameterUI* applyWindowUI = new BooleanParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::applyWindow));
 	layout->addWidget(applyWindowUI->checkBox());
 
+#if 0
 	gridlayout = new QGridLayout();
 	gridlayout->addWidget(new QLabel(tr("Average:"), rollout), 0, 0);
 	VariantComboBoxParameterUI* averagingDirectionPUI = new VariantComboBoxParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::averagingDirection));
@@ -85,6 +86,7 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
     averagingDirectionPUI->comboBox()->addItem("cell vector 3", qVariantFromValue(CorrelationFunctionModifier::CELL_VECTOR_3));
     gridlayout->addWidget(averagingDirectionPUI->comboBox(), 0, 1);
     layout->addLayout(gridlayout);
+#endif
 
 	QGroupBox* realSpaceGroupBox = new QGroupBox(tr("Real-space correlation function"));
 	layout->addWidget(realSpaceGroupBox);

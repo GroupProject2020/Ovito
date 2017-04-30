@@ -48,6 +48,13 @@
       </varlistentry>
 
       <varlistentry>
+        <term>Apply window function to nonperiodic directions</term>
+        <listitem>
+          <para>This property controls whether nonperiodic direction have a Hann window applied to them. Applying a window function is necessary to remove spurios oscillations and power-law scaling of the (implicit) rectangular window of the nonperiodic domain.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term>Direct summation</term>
         <listitem>
           <para>If enabled, the real-space correlation plot will show the result of a direct calculation of the correlation function, obtaining by summing over neighbors. This short-ranged part of the correlation function is displayed as a red line.</para>
@@ -71,7 +78,8 @@
       <varlistentry>
         <term>Normalize correlation function</term>
         <listitem>
-          <para>If activated for the real-space correlation, the correlation function is normalized to approach unity at small distances and zero at large distances, i.e. the plot shows <inlineequation><mathphrase>(C(r)-&#x3008;P<subscript>1</subscript>&#x3009;&#x3008;P<subscript>2</subscript>&#x3009;)/(&#x3008;P<subscript>1</subscript>P<subscript>2</subscript>&#x3009;-&#x3008;P<subscript>1</subscript>&#x3009;&#x3008;P<subscript>2</subscript>&#x3009;)</mathphrase></inlineequation> rather than the unnormalized <inlineequation>C(r)</inlineequation>.
+          <para>If set to "by covariance" for the real-space correlation, the correlation function is normalized to approach unity at small distances and zero at large distances, i.e. the plot shows <inlineequation><mathphrase>(C(r)-&#x3008;P<subscript>1</subscript>&#x3009;&#x3008;P<subscript>2</subscript>&#x3009;)/(&#x3008;P<subscript>1</subscript>P<subscript>2</subscript>&#x3009;-&#x3008;P<subscript>1</subscript>&#x3009;&#x3008;P<subscript>2</subscript>&#x3009;)</mathphrase></inlineequation> rather than the unnormalized <inlineequation>C(r)</inlineequation>.
+          If set to "by RDF" for the real-space correlation, the correlation function is divided by the radial distribution function.
           If activated for the reciprocal-space correlation function, the plot shows <inlineequation>C(q)/&#x3008;P<subscript>1</subscript>P<subscript>2</subscript>&#x3009;</inlineequation> rather than the unnormalized <inlineequation>C(q)</inlineequation>.
           </para>
         </listitem>
