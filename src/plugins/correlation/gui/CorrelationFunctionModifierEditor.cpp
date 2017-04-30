@@ -73,6 +73,9 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 
 	layout->addLayout(gridlayout);
 
+	BooleanParameterUI* applyWindowUI = new BooleanParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::applyWindow));
+	layout->addWidget(applyWindowUI->checkBox());
+
 	gridlayout = new QGridLayout();
 	gridlayout->addWidget(new QLabel(tr("Average:"), rollout), 0, 0);
 	VariantComboBoxParameterUI* averagingDirectionPUI = new VariantComboBoxParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::averagingDirection));

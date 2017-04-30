@@ -105,6 +105,7 @@ private:
 								  size_t vecComponent2,
 								  const SimulationCell& simCell,
 								  FloatType fftGridSpacing,
+								  bool applyWindow,
 								  bool doComputeNeighCorrelation,
 								  FloatType neighCutoff,
 								  int numberOfNeighBins,
@@ -113,7 +114,7 @@ private:
 			_sourceProperty1(sourceProperty1), _vecComponent1(vecComponent1),
 			_sourceProperty2(sourceProperty2), _vecComponent2(vecComponent2),
 			_simCell(simCell), _fftGridSpacing(fftGridSpacing),
-			_neighCutoff(neighCutoff),
+			_applyWindow(applyWindow), _neighCutoff(neighCutoff),
 			_neighCorrelation(numberOfNeighBins, 0.0),
 			_neighCorrelationX(numberOfNeighBins),
 			_averagingDirection(averagingDirection) {
@@ -199,11 +200,13 @@ private:
 							  size_t propertyVectorComponent,
 							  const AffineTransformation &reciprocalCell,
 							  int nX, int nY, int nZ,
-							  QVector<FloatType> &gridData);
+							  QVector<FloatType> &gridData,
+							  bool applyWindow);
 
 		size_t _vecComponent1;
 		size_t _vecComponent2;
 		FloatType _fftGridSpacing;
+		bool _applyWindow;
 		FloatType _neighCutoff;
 		AveragingDirectionType _averagingDirection;
 		SimulationCell _simCell;
@@ -287,6 +290,8 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(ParticlePropertyReference, sourceProperty2, setSourceProperty2);
 	/// Controls the cutoff radius for the FFT grid.
 	DECLARE_PROPERTY_FIELD(FloatType, fftGridSpacing);
+	/// Controls if a windowing function should be applied in nonperiodic directions.
+	DECLARE_PROPERTY_FIELD(bool, applyWindow);
 	/// Controls whether the real-space correlation should be computed by direct summation.
 	DECLARE_PROPERTY_FIELD(bool, doComputeNeighCorrelation);
 	/// Controls the cutoff radius for the neighbor lists.

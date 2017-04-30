@@ -35,6 +35,7 @@ DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, sourceProperty1, "SourcePrope
 DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, sourceProperty2, "SourceProperty2");
 DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, averagingDirection, "BinDirection", PROPERTY_FIELD_MEMORIZE);
 DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, fftGridSpacing, "FftGridSpacing");
+DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, applyWindow, "applyWindow", PROPERTY_FIELD_MEMORIZE);
 DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, doComputeNeighCorrelation, "doComputeNeighCorrelation", PROPERTY_FIELD_MEMORIZE);
 DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, neighCutoff, "NeighCutoff", PROPERTY_FIELD_MEMORIZE);
 DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, numberOfNeighBins, "NumberOfNeighBins", PROPERTY_FIELD_MEMORIZE);
@@ -58,6 +59,7 @@ SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, sourceProperty1, "First pr
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, sourceProperty2, "Second property");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, averagingDirection, "Averaging direction");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, fftGridSpacing, "FFT grid spacing");
+SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, applyWindow, "Apply window function to nonperiodic directions");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, doComputeNeighCorrelation, "Direct summation");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, neighCutoff, "Neighbor cutoff radius");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, numberOfNeighBins, "Number of neighbor bins");
@@ -83,7 +85,7 @@ SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeE
 * Constructs the modifier object.
 ******************************************************************************/
 CorrelationFunctionModifier::CorrelationFunctionModifier(DataSet* dataset) : AsynchronousParticleModifier(dataset),
-	_averagingDirection(RADIAL), _fftGridSpacing(3.0), _doComputeNeighCorrelation(false), _neighCutoff(5.0), _numberOfNeighBins(50),
+	_averagingDirection(RADIAL), _fftGridSpacing(3.0), _applyWindow(false), _doComputeNeighCorrelation(false), _neighCutoff(5.0), _numberOfNeighBins(50),
 	_normalizeRealSpace(DO_NOT_NORMALIZE), _typeOfRealSpacePlot(0), _normalizeReciprocalSpace(false), _typeOfReciprocalSpacePlot(0),
 	_fixRealSpaceXAxisRange(false), _realSpaceXAxisRangeStart(0.0), _realSpaceXAxisRangeEnd(1.0),
 	_fixRealSpaceYAxisRange(false), _realSpaceYAxisRangeStart(0.0), _realSpaceYAxisRangeEnd(1.0),
@@ -94,6 +96,7 @@ CorrelationFunctionModifier::CorrelationFunctionModifier(DataSet* dataset) : Asy
 	INIT_PROPERTY_FIELD(sourceProperty1);
 	INIT_PROPERTY_FIELD(sourceProperty2);
 	INIT_PROPERTY_FIELD(fftGridSpacing);
+	INIT_PROPERTY_FIELD(applyWindow);
 	INIT_PROPERTY_FIELD(doComputeNeighCorrelation);
 	INIT_PROPERTY_FIELD(neighCutoff);
 	INIT_PROPERTY_FIELD(numberOfNeighBins);
@@ -173,6 +176,7 @@ std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> CorrelationFunction
 													   std::max(0, sourceProperty2().vectorComponent()),
 													   inputCell->data(),
 													   fftGridSpacing(),
+													   applyWindow(),
 													   doComputeNeighCorrelation(),
 													   neighCutoff(),
 													   numberOfNeighBins(),
@@ -186,7 +190,8 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::mapToSpatialGrid(Pa
 																			  size_t propertyVectorComponent,
 																			  const AffineTransformation &reciprocalCellMatrix,
 																			  int nX, int nY, int nZ,
-																			  QVector<FloatType> &gridData)
+																			  QVector<FloatType> &gridData,
+																			  bool applyWindow)
 {
 	size_t vecComponent = std::max(size_t(0), propertyVectorComponent);
 	size_t vecComponentCount = 0;
@@ -210,13 +215,18 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::mapToSpatialGrid(Pa
 				int binIndexX = int( fractionalPos.x() * nX );
 				int binIndexY = int( fractionalPos.y() * nY );
 				int binIndexZ = int( fractionalPos.z() * nZ );
+				FloatType window = 1.0;
 				if(pbc[0]) binIndexX = SimulationCell::modulo(binIndexX, nX);
+				else window *= sqrt(2./3)*(1-cos(2*M_PI*fractionalPos.x()));
 				if(pbc[1]) binIndexY = SimulationCell::modulo(binIndexY, nY);
+				else window *= sqrt(2./3)*(1-cos(2*M_PI*fractionalPos.y()));
 				if(pbc[2]) binIndexZ = SimulationCell::modulo(binIndexZ, nZ);
+				else window *= sqrt(2./3)*(1-cos(2*M_PI*fractionalPos.z()));
+				if (!applyWindow) window = 1.0;
 				if(binIndexX >= 0 && binIndexX < nX && binIndexY >= 0 && binIndexY < nY && binIndexZ >= 0 && binIndexZ < nZ) {
 					// Store in row-major format.
 					size_t binIndex = binIndexZ+nZ*(binIndexY+nY*binIndexX);
-					gridData[binIndex] += 1;
+					gridData[binIndex] += window;
 				}
 			}
 		}
@@ -229,13 +239,18 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::mapToSpatialGrid(Pa
 					int binIndexX = int( fractionalPos.x() * nX );
 					int binIndexY = int( fractionalPos.y() * nY );
 					int binIndexZ = int( fractionalPos.z() * nZ );
+					FloatType window = 1.0;
 					if(pbc[0]) binIndexX = SimulationCell::modulo(binIndexX, nX);
+					else window *= sqrt(2./3)*(1-cos(2*M_PI*fractionalPos.x()));
 					if(pbc[1]) binIndexY = SimulationCell::modulo(binIndexY, nY);
+					else window *= sqrt(2./3)*(1-cos(2*M_PI*fractionalPos.y()));
 					if(pbc[2]) binIndexZ = SimulationCell::modulo(binIndexZ, nZ);
+					else window *= sqrt(2./3)*(1-cos(2*M_PI*fractionalPos.z()));
+					if (!applyWindow) window = 1.0;
 					if(binIndexX >= 0 && binIndexX < nX && binIndexY >= 0 && binIndexY < nY && binIndexZ >= 0 && binIndexZ < nZ) {
 						// Store in row-major format.
 						size_t binIndex = binIndexZ+nZ*(binIndexY+nY*binIndexX);
-						gridData[binIndex] += *v;
+						gridData[binIndex] += window*(*v);
 					}
 				}
 			}
@@ -248,13 +263,18 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::mapToSpatialGrid(Pa
 				int binIndexX = int( fractionalPos.x() * nX );
 				int binIndexY = int( fractionalPos.y() * nY );
 				int binIndexZ = int( fractionalPos.z() * nZ );
+				FloatType window = 1.0;
 				if(pbc[0]) binIndexX = SimulationCell::modulo(binIndexX, nX);
+				else window *= sqrt(2./3)*(1-cos(2*M_PI*fractionalPos.x()));
 				if(pbc[1]) binIndexY = SimulationCell::modulo(binIndexY, nY);
+				else window *= sqrt(2./3)*(1-cos(2*M_PI*fractionalPos.y()));
 				if(pbc[2]) binIndexZ = SimulationCell::modulo(binIndexZ, nZ);
+				else window *= sqrt(2./3)*(1-cos(2*M_PI*fractionalPos.z()));
+				if (!applyWindow) window = 1.0;
 				if(binIndexX >= 0 && binIndexX < nX && binIndexY >= 0 && binIndexY < nY && binIndexZ >= 0 && binIndexZ < nZ) {
 					// Store in row-major format.
 					size_t binIndex = binIndexZ+nZ*(binIndexY+nY*binIndexX);
-					gridData[binIndex] += *v;
+					gridData[binIndex] += window*(*v);
 				}
 			}
 		}
@@ -319,7 +339,8 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 					 _vecComponent1,
 					 reciprocalCellMatrix,
 					 nX, nY, nZ,
-					 gridProperty1);
+					 gridProperty1,
+					 _applyWindow);
 
 	incrementProgressValue();
 	if (isCanceled())
@@ -329,14 +350,16 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 					 _vecComponent2,
 					 reciprocalCellMatrix,
 					 nX, nY, nZ,
-					 gridProperty2);
+					 gridProperty2,
+					 _applyWindow);
 
 	QVector<FloatType> gridDensity;
 	mapToSpatialGrid(nullptr,
 					 _vecComponent1,
 					 reciprocalCellMatrix,
 					 nX, nY, nZ,
-					 gridDensity);
+					 gridDensity,
+					 _applyWindow);
 	incrementProgressValue();
 	if (isCanceled())
 		return;
@@ -802,6 +825,7 @@ void CorrelationFunctionModifier::propertyChanged(const PropertyFieldDescriptor&
 	if (field == PROPERTY_FIELD(sourceProperty1) ||
 		field == PROPERTY_FIELD(sourceProperty2) ||
 		field == PROPERTY_FIELD(fftGridSpacing) ||
+		field == PROPERTY_FIELD(applyWindow) ||
 		field == PROPERTY_FIELD(doComputeNeighCorrelation) ||
 		field == PROPERTY_FIELD(neighCutoff) ||
 	    field == PROPERTY_FIELD(numberOfNeighBins)) {
