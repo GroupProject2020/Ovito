@@ -73,6 +73,9 @@ protected:
 
 		/// Parses the given input file and stores the data in this container object.
 		virtual void parseFile(CompressedTextReader& stream) override;
+
+		/// Reads from the input stream and throws an exception if the given keyword is not present.
+		static void expectKeyword(CompressedTextReader& stream, const char* keyword);
 	};
 
 private:

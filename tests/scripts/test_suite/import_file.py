@@ -25,6 +25,7 @@ import_file(test_data_dir + "LAMMPS/class2.data", atom_style = "full")
 import_file(test_data_dir + "LAMMPS/bonds.data.gz", atom_style = "bond")
 import_file(test_data_dir + "VTK/mesh_test.vtk")
 import_file(test_data_dir + "VTK/ThomsonTet_Gr1_rotmatNonRand_unstructGrid.vtk")
+import_file(test_data_dir + "VTK/box_a.vtk")
 node = import_file(test_data_dir + "LAMMPS/multi_sequence_*.dump")
 assert(ovito.dataset.anim.last_frame == 2)
 node = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin", 
