@@ -51,7 +51,7 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CalculateDisplacementsModifier, referenceFr
 * Constructs the modifier object.
 ******************************************************************************/
 CalculateDisplacementsModifier::CalculateDisplacementsModifier(DataSet* dataset) : ParticleModifier(dataset),
-    _referenceShown(false), _eliminateCellDeformation(DO_NOT_ELIMINATE),
+    _referenceShown(false), _eliminateCellDeformation(false),
     _useReferenceFrameOffset(false), _referenceFrameNumber(0), _referenceFrameOffset(-1),
     _assumeUnwrappedCoordinates(false)
 {
@@ -145,7 +145,7 @@ PipelineStatus CalculateDisplacementsModifier::modifyParticles(TimePoint time, T
 		if(refState.status().type() != PipelineStatus::Pending)
 			throwException(tr("Reference configuration has not been specified yet or is empty. Please pick a reference simulation file."));
 		else
-			return PipelineStatus(PipelineStatus::Pending, tr("Waoiting for input data to become ready..."));
+			return PipelineStatus(PipelineStatus::Pending, tr("Waiting for input data to become ready..."));
 	}
 	// Make sure we really got back the requested reference frame.
 	if(refState.attributes().value(QStringLiteral("SourceFrame"), referenceFrame).toInt() != referenceFrame)
@@ -247,7 +247,7 @@ PipelineStatus CalculateDisplacementsModifier::modifyParticles(TimePoint time, T
 	// Compute inverse cell transformation.
 	AffineTransformation simCellInv;
 	AffineTransformation simCellRefInv;
-	if(eliminateCellDeformation() != DO_NOT_ELIMINATE) {
+	if(eliminateCellDeformation()) {
 		if(std::abs(simCell.determinant()) < FLOATTYPE_EPSILON || std::abs(simCellRef.determinant()) < FLOATTYPE_EPSILON)
 			throwException(tr("Simulation cell is degenerate in either the deformed or the reference configuration."));
 
@@ -262,9 +262,8 @@ PipelineStatus CalculateDisplacementsModifier::modifyParticles(TimePoint time, T
 	Vector3* d_begin = displacementProperty->dataVector3();
 	FloatType* dmag_begin = displacementMagnitudeProperty->dataFloat();
 	auto index_begin = indexToIndexMap.begin();
-	if(eliminateCellDeformation() != DO_NOT_ELIMINATE) {
-		auto elimCellDef = eliminateCellDeformation();
-		parallelForChunks(displacementProperty->size(), [d_begin, dmag_begin, elimCellDef, u_begin, index_begin, u0, unwrap, pbc, simCell, simCellRef, simCellInv, simCellRefInv] (size_t startIndex, size_t count) {
+	if(eliminateCellDeformation()) {
+		parallelForChunks(displacementProperty->size(), [d_begin, dmag_begin, u_begin, index_begin, u0, unwrap, pbc, simCellRef, simCellInv, simCellRefInv] (size_t startIndex, size_t count) {
 			Vector3* d = d_begin + startIndex;
 			FloatType* dmag = dmag_begin + startIndex;
 			const Point3* u = u_begin + startIndex;
@@ -280,10 +279,7 @@ PipelineStatus CalculateDisplacementsModifier::modifyParticles(TimePoint time, T
 						else if(delta[k] < -0.5) delta[k] += 1.0;
 					}
 				}
-				if (elimCellDef == REFERENCE_CELL)
-					*d = simCellRef * delta;
-				else
-					*d = simCell * delta;
+				*d = simCellRef * delta;
 				*dmag = d->length();
 			}
 		});
