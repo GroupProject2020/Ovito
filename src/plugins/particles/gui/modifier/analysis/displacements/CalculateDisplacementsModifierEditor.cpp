@@ -25,6 +25,7 @@
 #include <gui/properties/BooleanRadioButtonParameterUI.h>
 #include <gui/properties/IntegerParameterUI.h>
 #include <gui/properties/SubObjectParameterUI.h>
+#include <gui/properties/VariantComboBoxParameterUI.h>
 #include "CalculateDisplacementsModifierEditor.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)

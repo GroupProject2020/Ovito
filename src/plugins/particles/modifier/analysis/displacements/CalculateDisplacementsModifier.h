@@ -36,6 +36,9 @@ class OVITO_PARTICLES_EXPORT CalculateDisplacementsModifier : public ParticleMod
 {
 public:
 
+    enum EliminateCellDeformationType { DO_NOT_ELIMINATE = 0, REFERENCE_CELL = 1, CURRENT_CELL = 2 };
+    Q_ENUMS(EliminateCellDeformationType);
+
 	/// Constructor.
 	Q_INVOKABLE CalculateDisplacementsModifier(DataSet* dataset);
 
@@ -54,7 +57,7 @@ protected:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, referenceShown, setReferenceShown);
 
 	/// Controls the whether the homogeneous deformation of the simulation cell is eliminated from the calculated displacement vectors.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, eliminateCellDeformation, setEliminateCellDeformation);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(EliminateCellDeformationType, eliminateCellDeformation, setEliminateCellDeformation);
 
 	/// Controls the whether we assume the particle coordinates are unwrapped when calculating the displacement vectors.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, assumeUnwrappedCoordinates, setAssumeUnwrappedCoordinates);
@@ -83,4 +86,5 @@ OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
 
-
+Q_DECLARE_METATYPE(Ovito::Particles::CalculateDisplacementsModifier::EliminateCellDeformationType);
+Q_DECLARE_TYPEINFO(Ovito::Particles::CalculateDisplacementsModifier::EliminateCellDeformationType, Q_PRIMITIVE_TYPE);
