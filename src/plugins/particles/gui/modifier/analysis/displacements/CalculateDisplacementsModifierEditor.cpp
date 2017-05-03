@@ -45,8 +45,12 @@ void CalculateDisplacementsModifierEditor::createUI(const RolloutInsertionParame
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(4);
 
-	BooleanParameterUI* eliminateCellDeformationUI = new BooleanParameterUI(this, PROPERTY_FIELD(CalculateDisplacementsModifier::eliminateCellDeformation));
-	layout->addWidget(eliminateCellDeformationUI->checkBox());
+	VariantComboBoxParameterUI* eliminateCellDeformationPUI = new VariantComboBoxParameterUI(this, PROPERTY_FIELD(CalculateDisplacementsModifier::eliminateCellDeformation));
+    eliminateCellDeformationPUI->comboBox()->addItem("Do not eliminate homogeneous cell deformation", qVariantFromValue(CalculateDisplacementsModifier::DO_NOT_ELIMINATE));
+    eliminateCellDeformationPUI->comboBox()->addItem("Affinely map atom positions to reference cell", qVariantFromValue(CalculateDisplacementsModifier::REFERENCE_CELL));
+    eliminateCellDeformationPUI->comboBox()->addItem("Affinely map atom positions to current cell", qVariantFromValue(CalculateDisplacementsModifier::CURRENT_CELL));
+	layout->addWidget(new QLabel(tr("Eliminate homogeneous cell deformation:"), rollout));
+    layout->addWidget(eliminateCellDeformationPUI->comboBox());
 
 	BooleanParameterUI* assumeUnwrappedUI = new BooleanParameterUI(this, PROPERTY_FIELD(CalculateDisplacementsModifier::assumeUnwrappedCoordinates));
 	layout->addWidget(assumeUnwrappedUI->checkBox());
