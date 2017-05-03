@@ -9,6 +9,7 @@ User interface improvements:
 - Histogram plot export (SaeeD PourasaD <saeedpourasad@gmail.com>).
 - Spherical and cylindral slices (Enrique Martinez)
 - Warn about NaN/infinite values in the input of modifiers
+- Add positibility to export custom modifier presets to a file so that they can be transferred to other computers (requested in Ovito forum).
 
 Work-flow improvements:
 
@@ -91,7 +92,7 @@ New analysis features:
 
 - Create Bonds modifier: Add 'lower bound' parameter such that, when using the mothod todifier several times, bonds with different lengths can be assigned different colors (jerome.dequeker@ed.univ-lille1.fr).
 - Plotting the value of a certain property of a certain particle versus simulation time. To make this work, all simulation frames need to be kept in memory (requested by Taojun & Mathieu Marciante).
-- Calculation of type-specific (partial) RDF (requested by Jordan R Keith <jordan.keith@utexas.edu>). Also demonstrate how to average RDF over time using a script.
+- Calculation of type-specific (partial) RDF (requested by Jordan R Keith <jordan.keith@utexas.edu>, lindeye0716@163.com). Also demonstrate how to average RDF over time using a script.
 - Identification of binary phases and defects (see Christoph Begau's work)
 - Glass ring analysis (see ISAACS, RINGS, Sudheer @ FAU) 
 - Crystal orientation map

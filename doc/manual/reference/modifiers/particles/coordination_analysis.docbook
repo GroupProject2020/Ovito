@@ -23,14 +23,15 @@
 
   <para>
     In addition, the modifier also computes the radial pair distribution function (RDF) of the particle system.
-    The pair distribution function is normalized by the number density of particles (i.e. total number of
-    particles divided by the simulation cell volume).
+    The RDF <emphasis>g</emphasis>(<emphasis>r</emphasis>) measures the probability of finding a particle at distance <emphasis>r</emphasis> given that there is a particle at position 0; 
+    it is essentially a histogram of inter-particle distances. The pair distribution function is normalized by the number 
+    density of particles (i.e. total number of particles divided by the simulation cell volume).
   </para>
   
   <para>
-    The current program version cannot compute partial pair distribution functions, which take into account
-    the type of particles. If this is a program feature you are interested in, please let the developer
-    of OVITO know.
+    The current version of the modifier can only calculate the <emphasis>global</emphasis> RDF ignoring the types
+    of particles. As explained in <link xlink:href="http://forum.ovito.org/index.php?topic=131.0">this forum post</link>, you can also compute the <emphasis>partial</emphasis> RDFs for a system
+    containing more than one particle species using a different approach.
   </para>
 
 </section>
