@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2015) Alexander Stukowski
+#  Copyright (2017) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -19,52 +19,26 @@
 #
 ###############################################################################
 
-# Create the plugins library and manifest directories.
-FILE(MAKE_DIRECTORY "${OVITO_PLUGINS_DIRECTORY}")
+SET(SourceFiles
+    VoroTopModifier.cpp
+	Filter.cpp
+)
 
 IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
-	ADD_SUBDIRECTORY(pyscript)
-	SET(OVITOS_EXECUTABLE ${OVITOS_EXECUTABLE} PARENT_SCOPE)
+	LIST(APPEND SourceFiles PythonInterface.cpp)
 ENDIF()
 
-IF(OVITO_BUILD_PLUGIN_PARTICLES)
-	ADD_SUBDIRECTORY(particles)
-ENDIF()
+OVITO_STANDARD_PLUGIN(VoroTop
+	SOURCES ${SourceFiles}
+	PLUGIN_DEPENDENCIES Particles
+	LIB_DEPENDENCIES VoroPlusPlus
+	OPTIONAL_PLUGIN_DEPENDENCIES PyScript
+	PYTHON_WRAPPERS "${CMAKE_CURRENT_SOURCE_DIR}/resources/python/"
+)
 
-IF(OVITO_BUILD_PLUGIN_TACHYON)
-	ADD_SUBDIRECTORY(tachyon)
-ENDIF()
-
-IF(OVITO_BUILD_PLUGIN_MESH)
-	ADD_SUBDIRECTORY(mesh)
-ENDIF()
-
-IF(OVITO_BUILD_PLUGIN_CRYSTALANALYSIS)
-	ADD_SUBDIRECTORY(crystalanalysis)
-ENDIF()
-
-IF(OVITO_BUILD_PLUGIN_NETCDFPLUGIN)
-	ADD_SUBDIRECTORY(netcdf)
-ENDIF()
-
-IF(OVITO_BUILD_PLUGIN_POVRAY)
-	ADD_SUBDIRECTORY(povray)
-ENDIF()
-
-IF(OVITO_BUILD_PLUGIN_OPENBABELPLUGIN)
-	ADD_SUBDIRECTORY(openbabel)
-ENDIF()
-
-IF(OVITO_BUILD_PLUGIN_VR)
-	ADD_SUBDIRECTORY(vr)
-ENDIF()
-
-IF(OVITO_BUILD_PLUGIN_CORRELATION)
-	ADD_SUBDIRECTORY(correlation)
-ENDIF()
-
-IF(OVITO_BUILD_PLUGIN_VOROTOP)
-	ADD_SUBDIRECTORY(vorotop)
+# Build corresponding GUI plugin.
+IF(OVITO_BUILD_GUI)
+	ADD_SUBDIRECTORY(gui)
 ENDIF()
 
 # Propagate list of plugins to parent scope.
