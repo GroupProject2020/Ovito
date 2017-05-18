@@ -20,7 +20,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <gui/GUI.h>
-#include <gui/properties/FilenameParameterUI.h>
 #include <gui/properties/BooleanParameterUI.h>
 #include <gui/properties/BooleanActionParameterUI.h>
 #include <gui/properties/IntegerParameterUI.h>

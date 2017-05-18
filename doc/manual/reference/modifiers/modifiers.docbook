@@ -101,6 +101,10 @@
               <entry>Computes the coordination number, atomic volume, and Voronoi index of particles from their Voronoi polyhedra.</entry>
             </row>
             <row>
+              <entry><link linkend="particles.modifiers.vorotop_analysis">VoroTop analysis</link></entry>
+              <entry>Identifies local structure of particles using the topology of their Voronoi polyhedra.</entry>
+            </row>
+            <row>
               <entry><link linkend="particles.modifiers.wigner_seitz_analysis">Wigner-Seitz defect analysis</link></entry>
               <entry>Identifies point defects (vacancies and interstitials) in a crystal lattice.</entry>
             </row>
@@ -298,6 +302,8 @@
   <xi:include href="particles/slice.docbook"/>
 
   <xi:include href="particles/voronoi_analysis.docbook"/>
+
+  <xi:include href="particles/vorotop_analysis.docbook"/>
 
   <xi:include href="particles/wigner_seitz_analysis.docbook"/>
 
