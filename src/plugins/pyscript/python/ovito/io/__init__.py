@@ -170,7 +170,7 @@ FileSource.load = _FileSource_load
 
 # Implement the 'sourceUrl' property of FileSource, which returns or sets the currently loaded file path.
 def _get_FileSource_source_path(self, _originalGetterMethod = FileSource.source_path):
-    """ The path or URL of the loaded file. """    
+    """ The path or URL of the imported file or file sequence. Unlike the path return by :py:attr:`.loaded_file`, the source path may contain a '*' wildcard character when a file sequence has been imported. """
     return _originalGetterMethod.__get__(self)
 def _set_FileSource_source_path(self, url):
     """ Sets the URL of the file referenced by this FileSource. """

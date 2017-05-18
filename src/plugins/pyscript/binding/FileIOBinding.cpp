@@ -119,9 +119,15 @@ void defineIOSubmodule(py::module parentModule)
 		.def_property_readonly("num_frames", &FileSource::numberOfFrames,
 				"The total number of frames the imported file or file sequence contains (read-only).")
 		.def_property_readonly("loaded_frame", &FileSource::loadedFrameIndex,
-				"The zero-based frame index that is currently loaded into memory by the :py:class:`!FileSource` (read-only). "
+				"The zero-based frame index that is currently loaded and kept in memory by the :py:class:`!FileSource` (read-only). "
 				"\n\n"
-				"The content of this frame is accessible through the inherited :py:class:`~ovito.data.DataCollection` interface.")
+				"The data of this frame is accessible through the inherited :py:class:`~ovito.data.DataCollection` interface.")
+		.def_property_readonly("loaded_file", [](FileSource& fs) -> QUrl {
+					if(fs.loadedFrameIndex() < 0) return QUrl();
+					const FileSourceImporter::Frame& frameInfo = fs.frames()[fs.loadedFrameIndex()];
+					return frameInfo.sourceFile;
+				},
+				"The path or URL of the data file that is currently loaded and kept in memory by the :py:class:`!FileSource` (read-only). ")
 		.def_property("adjust_animation_interval", &FileSource::adjustAnimationIntervalEnabled, &FileSource::setAdjustAnimationIntervalEnabled,
 				"A flag that controls whether the animation length in OVITO is automatically adjusted to match the number of frames in the "
 				"loaded file or file sequence."
