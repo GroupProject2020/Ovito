@@ -57,31 +57,50 @@
 
     <variablelist>
       <varlistentry>
-        <term>Eliminate homogeneous cell deformation</term>
+        <term>Affine mapping</term>
         <listitem>
-          <para>This option lets the modifier first rescale the current
-          simulation cell including all particle coordinates to match the 
-          cell shape in the reference configuration before calculating the displacement vectors. 
-          This effectively eliminates any macroscopic, homogeneous deformation of the simulation cell, and the
-          calculated vectors will reflect only the internal, microscopic displacements of particles.</para>
+          <para>This option applies an affine transformation to the simulation cell and all particle positions prior 
+           to calculating the displacement vectors. This can be used to effectively eliminate contributions to the displacements from the macroscopic deformation 
+           of the simulation cell and retain only the internal (non-affine) motion of the particles.
+           </para>
+           <para>
+           The following table shows the effect of the mapping option on the calculated displacement vector of a particle. When mapping is turned off (first row), 
+           the vector is simply calculated from the new and old absolute particle positions irrespective of the changing cell shape.
+           The second option, <emphasis>"To reference"</emphasis>, applies an affine transformation to the particle positions of the deformed configuration such that
+           they are first mapped to the reference cell before calculating the displacement vectors. Note that this transformation
+           is applied only virtually during the displacement vector calculation.
+           The last option, <emphasis>"To current"</emphasis>, does the opposite of the second option: it maps the reference particle positions
+           to the deformed cell before calculating the displacements.
+           <screenshot><mediaobject><imageobject>
+             <imagedata fileref="images/modifiers/displacement_vectors_mapping.png" format="PNG" scale="95" />
+           </imageobject></mediaobject></screenshot>
+           </para>
+           <para>Note: The <emphasis>"To reference"</emphasis> setting corresponds to the <emphasis>eliminate homogeneous cell deformation</emphasis> option 
+           found in older program versions.
+           </para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
         <term>Assume unwrapped coordinates</term>
         <listitem>
-          <para>This only affects the treatment of simulation cells with
-          periodic boundary conditions. If activated, the particle coordinates
-          in the reference and the current configuration are taken as is. If
-          this option is not checked, the minimum image convention is used to
-          deal with particles that have crossed a periodic boundary.</para>
+          <para>This option only affects simulations cells with periodic boundary conditions. If activated, the particle coordinates
+          in the reference and the current configuration are always taken as is and the displacement vectors are directly calculated
+          from the coordinate differences, even for particles that crossed a periodic boundary. 
+          If this option is not checked, which is the default, the minimum image convention is used to deal with particles that have 
+          crossed a periodic boundary as indicated in the figure below.
+           <screenshot><mediaobject><imageobject>
+             <imagedata fileref="images/modifiers/displacement_vectors_unwrapped.png" format="PNG" scale="95" />
+           </imageobject></mediaobject></screenshot>
+           Note: For directions without periodic boundary conditions, <emphasis>assume unwrapped coordinates</emphasis> is the standard behavior.
+          </para>          
         </listitem>
       </varlistentry>
 
       <varlistentry>
-        <term>Fixed reference configuration</term>
+        <term>Constant reference configuration</term>
         <listitem>
-          <para>If this option is active, the selected animation frame from the reference simulation sequence is used
+          <para>If this option is active, the specified animation frame from the reference simulation sequence is used
           as a fixed reference to calculate the displacement vectors. This is the default mode.</para>
         </listitem>
       </varlistentry>
@@ -89,9 +108,9 @@
       <varlistentry>
         <term>Relative to current frame</term>
         <listitem>
-          <para>If this option is active, then a changing reference configuration is used to calculate the displacement vectors. 
+          <para>If this option is active, then a varying reference configuration is used to calculate the displacement vectors. 
           This allows computing incremental displacement vectors (similar to discrete velocity vectors).
-          The frame offset controls the distance between reference and current frame and can be negative or positive. If it is negative, then the reference frame 
+          The frame offset paremeter controls the temporal distance between reference and current frame and can be negative or positive. If it is negative, then the reference frame 
           precedes the current frame in the simulation sequence.
           Note that the displacement vectors will not be computed for simulation frames for which the resulting reference frame is negative or out of range.
           </para>

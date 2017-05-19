@@ -984,7 +984,7 @@ void defineModifiersSubmodule(py::module parentModule)
 				}))
 	;
 
-	ovito_class<CalculateDisplacementsModifier, ParticleModifier>(m,
+	auto CalculateDisplacementsModifier_py = ovito_class<CalculateDisplacementsModifier, ParticleModifier>(m,
 			":Base class: :py:class:`ovito.modifiers.Modifier`\n\n"
 			"Computes the displacement vectors of particles based on a separate reference configuration. "
 			"The modifier requires you to load a reference configuration from an external file::"
@@ -1000,11 +1000,26 @@ void defineModifiersSubmodule(py::module parentModule)
 				"A :py:class:`~ovito.io.FileSource` that provides the reference positions of particles. "
 				"You can call its :py:meth:`~ovito.io.FileSource.load` function to load a reference simulation file "
 				"as shown in the code example above.")
-		.def_property("eliminate_cell_deformation", &CalculateDisplacementsModifier::eliminateCellDeformation, &CalculateDisplacementsModifier::setEliminateCellDeformation,
-				"Boolean flag that controls the elimination of the affine cell deformation prior to calculating the "
-				"displacement vectors."
+		.def_property("affine_mapping", &CalculateDisplacementsModifier::affineMapping, &CalculateDisplacementsModifier::setAffineMapping,
+				"Selects the type of affine deformation to be applied to the particle coordinates prior to calculating the displacement vectors. "
+				"This must be one of the following constants:\n"
+				" * ``CalculateDisplacementsModifier.AffineMapping.Off``\n"
+				" * ``CalculateDisplacementsModifier.AffineMapping.ToReference``\n"
+				" * ``CalculateDisplacementsModifier.AffineMapping.ToCurrent``\n"
 				"\n\n"
-				":Default: ``False``\n")
+				"When affine mapping is turned off (``AffineMapping.Off``), the displacement vectors are simply calculated from the new and old absolute "
+				"particle positions irrespective of the cell shape in the reference and current configuration. "
+           		"The mode ``AffineMapping.ToReference`` applies an affine transformation to the current configuration such that "
+           		"all particle positions are first mapped to the reference cell before calculating the displacement vectors. Note that this transformation "
+           		"is applied only virtually during the displacement vector calculation. "
+           		"The last option, ``AffineMapping.ToCurrent``, does the reverse: it maps the particle positions of the "
+				"deformed configuration to the deformed cell before calculating the displacements. "
+				"\n\n"
+				":Default: ``CalculateDisplacementsModifier.AffineMapping.Off``\n")
+		// For backward compatibility with OVITO 2.8.2:
+		.def_property("eliminate_cell_deformation", 
+				[](CalculateDisplacementsModifier& mod) { return mod.affineMapping() != CalculateDisplacementsModifier::NO_MAPPING; }, 
+				[](CalculateDisplacementsModifier& mod, bool b) { mod.setAffineMapping(b ? CalculateDisplacementsModifier::TO_REFERENCE_CELL : CalculateDisplacementsModifier::NO_MAPPING); })
 		.def_property("assume_unwrapped_coordinates", &CalculateDisplacementsModifier::assumeUnwrappedCoordinates, &CalculateDisplacementsModifier::setAssumeUnwrappedCoordinates,
 				"If ``True``, the particle coordinates of the reference and of the current configuration are taken as is. "
 				"If ``False``, the minimum image convention is used to deal with particles that have crossed a periodic boundary. "
@@ -1036,6 +1051,12 @@ void defineModifiersSubmodule(py::module parentModule)
 				"   modifier.vector_display.color = (0,0,0)\n"
 				"\n")
 	;
+
+	py::enum_<CalculateDisplacementsModifier::AffineMappingType>(CalculateDisplacementsModifier_py, "AffineMapping")
+		.value("Off", CalculateDisplacementsModifier::NO_MAPPING)
+		.value("ToReference", CalculateDisplacementsModifier::TO_REFERENCE_CELL)
+		.value("ToCurrent", CalculateDisplacementsModifier::TO_CURRENT_CELL)
+	;	
 
 	auto HistogramModifier_py = ovito_class<HistogramModifier, ParticleModifier>(m,
 			":Base class: :py:class:`ovito.modifiers.Modifier`\n\n"

@@ -36,8 +36,8 @@ class OVITO_PARTICLES_EXPORT CalculateDisplacementsModifier : public ParticleMod
 {
 public:
 
-    enum EliminateCellDeformationType { DO_NOT_ELIMINATE = 0, REFERENCE_CELL = 1, CURRENT_CELL = 2 };
-    Q_ENUMS(EliminateCellDeformationType);
+    enum AffineMappingType { NO_MAPPING = 0, TO_REFERENCE_CELL = 1, TO_CURRENT_CELL = 2 };
+    Q_ENUMS(AffineMappingType);
 
 	/// Constructor.
 	Q_INVOKABLE CalculateDisplacementsModifier(DataSet* dataset);
@@ -46,6 +46,9 @@ protected:
 
 	/// Handles reference events sent by reference targets of this object.
 	virtual bool referenceEvent(RefTarget* source, ReferenceEvent* event) override;
+
+	/// Allows the object to parse the serialized contents of a property field in a custom way.
+	virtual bool loadPropertyFieldFromStream(ObjectLoadStream& stream, const ObjectLoadStream::SerializedPropertyField& serializedField) override;
 
 	/// Modifies the particle object.
 	virtual PipelineStatus modifyParticles(TimePoint time, TimeInterval& validityInterval) override;
@@ -57,7 +60,7 @@ protected:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, referenceShown, setReferenceShown);
 
 	/// Controls the whether the homogeneous deformation of the simulation cell is eliminated from the calculated displacement vectors.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(EliminateCellDeformationType, eliminateCellDeformation, setEliminateCellDeformation);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(AffineMappingType, affineMapping, setAffineMapping);
 
 	/// Controls the whether we assume the particle coordinates are unwrapped when calculating the displacement vectors.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, assumeUnwrappedCoordinates, setAssumeUnwrappedCoordinates);
@@ -86,5 +89,5 @@ OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
 
-Q_DECLARE_METATYPE(Ovito::Particles::CalculateDisplacementsModifier::EliminateCellDeformationType);
-Q_DECLARE_TYPEINFO(Ovito::Particles::CalculateDisplacementsModifier::EliminateCellDeformationType, Q_PRIMITIVE_TYPE);
+Q_DECLARE_METATYPE(Ovito::Particles::CalculateDisplacementsModifier::AffineMappingType);
+Q_DECLARE_TYPEINFO(Ovito::Particles::CalculateDisplacementsModifier::AffineMappingType, Q_PRIMITIVE_TYPE);

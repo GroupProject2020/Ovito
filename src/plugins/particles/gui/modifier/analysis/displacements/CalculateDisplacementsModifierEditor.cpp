@@ -24,6 +24,7 @@
 #include <gui/properties/BooleanParameterUI.h>
 #include <gui/properties/BooleanRadioButtonParameterUI.h>
 #include <gui/properties/IntegerParameterUI.h>
+#include <gui/properties/IntegerRadioButtonParameterUI.h>
 #include <gui/properties/SubObjectParameterUI.h>
 #include <gui/properties/VariantComboBoxParameterUI.h>
 #include "CalculateDisplacementsModifierEditor.h"
@@ -46,22 +47,28 @@ void CalculateDisplacementsModifierEditor::createUI(const RolloutInsertionParame
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(4);
 
-	VariantComboBoxParameterUI* eliminateCellDeformationPUI = new VariantComboBoxParameterUI(this, PROPERTY_FIELD(CalculateDisplacementsModifier::eliminateCellDeformation));
-    eliminateCellDeformationPUI->comboBox()->addItem("Do not eliminate homogeneous cell deformation", qVariantFromValue(CalculateDisplacementsModifier::DO_NOT_ELIMINATE));
-    eliminateCellDeformationPUI->comboBox()->addItem("Affinely map atom positions to reference cell", qVariantFromValue(CalculateDisplacementsModifier::REFERENCE_CELL));
-    eliminateCellDeformationPUI->comboBox()->addItem("Affinely map atom positions to current cell", qVariantFromValue(CalculateDisplacementsModifier::CURRENT_CELL));
-	layout->addWidget(new QLabel(tr("Eliminate homogeneous cell deformation:"), rollout));
-    layout->addWidget(eliminateCellDeformationPUI->comboBox());
-
-	BooleanParameterUI* assumeUnwrappedUI = new BooleanParameterUI(this, PROPERTY_FIELD(CalculateDisplacementsModifier::assumeUnwrappedCoordinates));
-	layout->addWidget(assumeUnwrappedUI->checkBox());
-
 #if 0
 	BooleanParameterUI* showReferenceUI = new BooleanParameterUI(this, PROPERTY_FIELD(CalculateDisplacementsModifier::referenceShown));
 	layout->addWidget(showReferenceUI->checkBox());
 #endif
 
-	QGroupBox* referenceFrameGroupBox = new QGroupBox(tr("Reference frame"));
+	QGroupBox* mappingGroupBox = new QGroupBox(tr("Affine mapping"));
+	layout->addWidget(mappingGroupBox);
+
+	QGridLayout* sublayout1 = new QGridLayout(mappingGroupBox);
+	sublayout1->setContentsMargins(4,4,4,4);
+	sublayout1->setSpacing(4);
+
+	IntegerRadioButtonParameterUI* eliminateCellDeformationPUI = new IntegerRadioButtonParameterUI(this, PROPERTY_FIELD(CalculateDisplacementsModifier::affineMapping));
+    sublayout1->addWidget(eliminateCellDeformationPUI->addRadioButton(CalculateDisplacementsModifier::NO_MAPPING, tr("Off")), 0, 0);
+	sublayout1->addWidget(eliminateCellDeformationPUI->addRadioButton(CalculateDisplacementsModifier::TO_REFERENCE_CELL, tr("To reference")), 0, 1);
+    sublayout1->addWidget(eliminateCellDeformationPUI->addRadioButton(CalculateDisplacementsModifier::TO_CURRENT_CELL, tr("To current")), 1, 1);
+
+	BooleanParameterUI* assumeUnwrappedUI = new BooleanParameterUI(this, PROPERTY_FIELD(CalculateDisplacementsModifier::assumeUnwrappedCoordinates));
+	layout->addWidget(assumeUnwrappedUI->checkBox());
+
+
+	QGroupBox* referenceFrameGroupBox = new QGroupBox(tr("Reference animation frame"));
 	layout->addWidget(referenceFrameGroupBox);
 
 	QGridLayout* sublayout = new QGridLayout(referenceFrameGroupBox);
