@@ -31,7 +31,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(CalculateDisplacementsModifier, ParticleModifier);
 DEFINE_FLAGS_REFERENCE_FIELD(CalculateDisplacementsModifier, referenceConfiguration, "Reference Configuration", DataObject, PROPERTY_FIELD_NO_SUB_ANIM);
 DEFINE_PROPERTY_FIELD(CalculateDisplacementsModifier, referenceShown, "ShowReferenceConfiguration");
-DEFINE_FLAGS_PROPERTY_FIELD(CalculateDisplacementsModifier, eliminateCellDeformation, "EliminateCellDeformation", PROPERTY_FIELD_MEMORIZE);
+DEFINE_FLAGS_PROPERTY_FIELD(CalculateDisplacementsModifier, affineMapping, "AffineMapping", PROPERTY_FIELD_MEMORIZE);
 DEFINE_PROPERTY_FIELD(CalculateDisplacementsModifier, assumeUnwrappedCoordinates, "AssumeUnwrappedCoordinates");
 DEFINE_PROPERTY_FIELD(CalculateDisplacementsModifier, useReferenceFrameOffset, "UseReferenceFrameOffet");
 DEFINE_PROPERTY_FIELD(CalculateDisplacementsModifier, referenceFrameNumber, "ReferenceFrameNumber");
@@ -39,7 +39,7 @@ DEFINE_FLAGS_PROPERTY_FIELD(CalculateDisplacementsModifier, referenceFrameOffset
 DEFINE_FLAGS_REFERENCE_FIELD(CalculateDisplacementsModifier, vectorDisplay, "VectorDisplay", VectorDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
 SET_PROPERTY_FIELD_LABEL(CalculateDisplacementsModifier, referenceConfiguration, "Reference Configuration");
 SET_PROPERTY_FIELD_LABEL(CalculateDisplacementsModifier, referenceShown, "Show reference configuration");
-SET_PROPERTY_FIELD_LABEL(CalculateDisplacementsModifier, eliminateCellDeformation, "Eliminate homogeneous cell deformation");
+SET_PROPERTY_FIELD_LABEL(CalculateDisplacementsModifier, affineMapping, "Affine mapping");
 SET_PROPERTY_FIELD_LABEL(CalculateDisplacementsModifier, assumeUnwrappedCoordinates, "Assume unwrapped coordinates");
 SET_PROPERTY_FIELD_LABEL(CalculateDisplacementsModifier, useReferenceFrameOffset, "Use reference frame offset");
 SET_PROPERTY_FIELD_LABEL(CalculateDisplacementsModifier, referenceFrameNumber, "Reference frame number");
@@ -51,13 +51,13 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CalculateDisplacementsModifier, referenceFr
 * Constructs the modifier object.
 ******************************************************************************/
 CalculateDisplacementsModifier::CalculateDisplacementsModifier(DataSet* dataset) : ParticleModifier(dataset),
-    _referenceShown(false), _eliminateCellDeformation(false),
+    _referenceShown(false), _affineMapping(NO_MAPPING),
     _useReferenceFrameOffset(false), _referenceFrameNumber(0), _referenceFrameOffset(-1),
     _assumeUnwrappedCoordinates(false)
 {
 	INIT_PROPERTY_FIELD(referenceConfiguration);
 	INIT_PROPERTY_FIELD(referenceShown);
-	INIT_PROPERTY_FIELD(eliminateCellDeformation);
+	INIT_PROPERTY_FIELD(affineMapping);
 	INIT_PROPERTY_FIELD(assumeUnwrappedCoordinates);
 	INIT_PROPERTY_FIELD(useReferenceFrameOffset);
 	INIT_PROPERTY_FIELD(referenceFrameNumber);
@@ -87,6 +87,25 @@ CalculateDisplacementsModifier::CalculateDisplacementsModifier(DataSet* dataset)
 	vectorDisplay()->setReverseArrowDirection(false);
 	vectorDisplay()->setArrowPosition(VectorDisplay::Head);
 }
+
+/******************************************************************************
+* Allows the object to parse the serialized contents of a property field in a 
+* custom way.
+******************************************************************************/
+bool CalculateDisplacementsModifier::loadPropertyFieldFromStream(ObjectLoadStream& stream, const ObjectLoadStream::SerializedPropertyField& serializedField)
+{
+	// This is for backward compatibility with OVITO 2.8.2:
+	if(serializedField.identifier == "EliminateCellDeformation" && serializedField.definingClass == &CalculateDisplacementsModifier::OOType) {
+		bool eliminateEnabled;
+		stream >> eliminateEnabled;
+		if(eliminateEnabled)
+			setAffineMapping(TO_REFERENCE_CELL);
+		return true;
+	}
+
+	return ParticleModifier::loadPropertyFieldFromStream(stream, serializedField);
+}
+
 /******************************************************************************
 * Handles reference events sent by reference targets of this object.
 ******************************************************************************/
@@ -247,7 +266,7 @@ PipelineStatus CalculateDisplacementsModifier::modifyParticles(TimePoint time, T
 	// Compute inverse cell transformation.
 	AffineTransformation simCellInv;
 	AffineTransformation simCellRefInv;
-	if(eliminateCellDeformation()) {
+	if(affineMapping() != NO_MAPPING) {
 		if(std::abs(simCell.determinant()) < FLOATTYPE_EPSILON || std::abs(simCellRef.determinant()) < FLOATTYPE_EPSILON)
 			throwException(tr("Simulation cell is degenerate in either the deformed or the reference configuration."));
 
@@ -262,8 +281,9 @@ PipelineStatus CalculateDisplacementsModifier::modifyParticles(TimePoint time, T
 	Vector3* d_begin = displacementProperty->dataVector3();
 	FloatType* dmag_begin = displacementMagnitudeProperty->dataFloat();
 	auto index_begin = indexToIndexMap.begin();
-	if(eliminateCellDeformation()) {
-		parallelForChunks(displacementProperty->size(), [d_begin, dmag_begin, u_begin, index_begin, u0, unwrap, pbc, simCellRef, simCellInv, simCellRefInv] (size_t startIndex, size_t count) {
+	if(affineMapping() != NO_MAPPING) {
+		auto affMapping = affineMapping();
+		parallelForChunks(displacementProperty->size(), [d_begin, dmag_begin, affMapping, u_begin, index_begin, u0, unwrap, pbc, simCell, simCellRef, simCellInv, simCellRefInv] (size_t startIndex, size_t count) {
 			Vector3* d = d_begin + startIndex;
 			FloatType* dmag = dmag_begin + startIndex;
 			const Point3* u = u_begin + startIndex;
@@ -275,11 +295,14 @@ PipelineStatus CalculateDisplacementsModifier::modifyParticles(TimePoint time, T
 				if(unwrap) {
 					for(int k = 0; k < 3; k++) {
 						if(!pbc[k]) continue;
-						if(delta[k] > 0.5) delta[k] -= 1.0;
-						else if(delta[k] < -0.5) delta[k] += 1.0;
+						if(delta[k] > FloatType(0.5)) delta[k] -= FloatType(1);
+						else if(delta[k] < FloatType(-0.5)) delta[k] += FloatType(1);
 					}
 				}
-				*d = simCellRef * delta;
+				if(affMapping == TO_REFERENCE_CELL)
+					*d = simCellRef * delta;
+				else
+					*d = simCell * delta;
 				*dmag = d->length();
 			}
 		});
