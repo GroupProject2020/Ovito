@@ -251,11 +251,14 @@ bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask 
 	if(frameBuffer->image().format() != QImage::Format_ARGB32)
 		frameBuffer->image() = frameBuffer->image().convertToFormat(QImage::Format_ARGB32);
 
-	int tileSize = scene->numthreads * 2;
-	for(int ystart = 0; ystart < scene->vres; ystart += tileSize) {
-		for(int xstart = 0; xstart < scene->hres; xstart += tileSize) {
-			int xstop = std::min(scene->hres, xstart + tileSize);
-			int ystop = std::min(scene->vres, ystart + tileSize);
+	int tileHeight = 16;
+	int tileWidth = scene->numthreads * 4;
+	QTime renderTime;
+	renderTime.start();
+	for(int ystart = 0; ystart < scene->vres; ystart += tileHeight) {
+		for(int xstart = 0; xstart < scene->hres; ) {
+			int xstop = std::min(scene->hres, xstart + tileWidth);
+			int ystop = std::min(scene->vres, ystart + tileHeight);
 			for(int thr = 0; thr < scene->numthreads; thr++) {
 				thr_parms* parms = &((thr_parms *) scene->threadparms)[thr];
 				parms->startx = 1 + xstart;
@@ -291,6 +294,13 @@ bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask 
 			renderTask.setProgressValue(renderTask.progressValue() + (xstop - xstart) * (ystop - ystart));
 			if(renderTask.isCanceled())
 				break;
+			
+			xstart += tileWidth;
+			
+			// Auto-adjust tile size to maintain constant update interval of about 50 ms.
+			// We furthermore limit the maximum tile width to 100px and the minimum width to 1px.
+			int elapsedTime = renderTime.restart();
+			tileWidth = std::max(1, std::min(100, (tileWidth + tileWidth * 50 / std::max(1, elapsedTime)) / 2));
 		}
 
 		if(renderTask.isCanceled())
