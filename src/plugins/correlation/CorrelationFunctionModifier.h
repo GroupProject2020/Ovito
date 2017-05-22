@@ -45,17 +45,28 @@ class OVITO_CORRELATION_FUNCTION_EXPORT CorrelationFunctionModifier : public Asy
 {
 public:
 
+    enum AveragingDirectionType { CELL_VECTOR_1 = 0, CELL_VECTOR_2 = 1, CELL_VECTOR_3 = 2, RADIAL = 3 };
+    enum NormalizationType { DO_NOT_NORMALIZE = 0, NORMALIZE_BY_COVARIANCE = 1, NORMALIZE_BY_RDF = 2 };
+    Q_ENUMS(AveragingDirectionType);
+    Q_ENUMS(NormalizationType);
+
 	/// Constructor.
 	Q_INVOKABLE CorrelationFunctionModifier(DataSet* dataset);
 
 	/// Returns the Y coordinates of the real-space correlation function.
 	const QVector<FloatType>& realSpaceCorrelation() const { return _realSpaceCorrelation; }
 
+	/// Returns the RDF evaluated from an FFT correlation.
+	const QVector<FloatType>& realSpaceRDF() const { return _realSpaceRDF; }
+
 	/// Returns the X coordinates of the real-space correlation function.
 	const QVector<FloatType>& realSpaceCorrelationX() const { return _realSpaceCorrelationX; }
 
 	/// Returns the Y coordinates of the short-ranged part of the real-space correlation function.
 	const QVector<FloatType>& neighCorrelation() const { return _neighCorrelation; }
+
+	/// Returns the RDF evalauted from a direct sum over neighbor shells.
+	const QVector<FloatType>& neighRDF() const { return _neighRDF; }
 
 	/// Returns the X coordinates of the short-ranged part of the real-space correlation function.
 	const QVector<FloatType>& neighCorrelationX() const { return _neighCorrelationX; }
@@ -94,16 +105,19 @@ private:
 								  size_t vecComponent2,
 								  const SimulationCell& simCell,
 								  FloatType fftGridSpacing,
+								  bool applyWindow,
 								  bool doComputeNeighCorrelation,
 								  FloatType neighCutoff,
-								  int numberOfNeighBins) :
+								  int numberOfNeighBins,
+								  AveragingDirectionType averagingDirection) :
 			ComputeEngine(validityInterval), _positions(positions),
 			_sourceProperty1(sourceProperty1), _vecComponent1(vecComponent1),
 			_sourceProperty2(sourceProperty2), _vecComponent2(vecComponent2),
 			_simCell(simCell), _fftGridSpacing(fftGridSpacing),
-			_neighCutoff(neighCutoff),
+			_applyWindow(applyWindow), _neighCutoff(neighCutoff),
 			_neighCorrelation(numberOfNeighBins, 0.0),
-			_neighCorrelationX(numberOfNeighBins) {
+			_neighCorrelationX(numberOfNeighBins),
+			_averagingDirection(averagingDirection) {
 				if (!doComputeNeighCorrelation) {
 					_neighCorrelation.clear();
 					_neighCorrelationX.clear();
@@ -143,11 +157,17 @@ private:
 		/// Returns the real-space correlation function.
 		const QVector<FloatType>& realSpaceCorrelation() const { return _realSpaceCorrelation; }
 
-		/// Returns the distances for which the real-space correlation function is tabulated.
+		/// Returns the RDF evaluated from an FFT correlation.
+		const QVector<FloatType>& realSpaceRDF() const { return _realSpaceRDF; }
+
+		/// Returns the distances for which the real-space correlation function is tabulAveated.
 		const QVector<FloatType>& realSpaceCorrelationX() const { return _realSpaceCorrelationX; }
 
 		/// Returns the short-ranged real-space correlation function.
 		const QVector<FloatType>& neighCorrelation() const { return _neighCorrelation; }
+
+		/// Returns the RDF evalauted from a direct sum over neighbor shells.
+		const QVector<FloatType>& neighRDF() const { return _neighRDF; }
 
 		/// Returns the distances for which the short-ranged real-space correlation function is tabulated.
 		const QVector<FloatType>& neighCorrelationX() const { return _neighCorrelationX; }
@@ -180,19 +200,24 @@ private:
 							  size_t propertyVectorComponent,
 							  const AffineTransformation &reciprocalCell,
 							  int nX, int nY, int nZ,
-							  QVector<FloatType> &gridData);
+							  QVector<FloatType> &gridData,
+							  bool applyWindow);
 
 		size_t _vecComponent1;
 		size_t _vecComponent2;
 		FloatType _fftGridSpacing;
+		bool _applyWindow;
 		FloatType _neighCutoff;
+		AveragingDirectionType _averagingDirection;
 		SimulationCell _simCell;
 		QExplicitlySharedDataPointer<ParticleProperty> _positions;
 		QExplicitlySharedDataPointer<ParticleProperty> _sourceProperty1;
 		QExplicitlySharedDataPointer<ParticleProperty> _sourceProperty2;
 		QVector<FloatType> _realSpaceCorrelation;
+		QVector<FloatType> _realSpaceRDF;
 		QVector<FloatType> _realSpaceCorrelationX;
 		QVector<FloatType> _neighCorrelation;
+		QVector<FloatType> _neighRDF;
 		QVector<FloatType> _neighCorrelationX;
 		QVector<FloatType> _reciprocalSpaceCorrelation;
 		QVector<FloatType> _reciprocalSpaceCorrelationX;
@@ -223,11 +248,17 @@ private:
 	/// The real-space correlation function.
 	QVector<FloatType> _realSpaceCorrelation;
 
+	/// The radial distribution function computed from an FFT convolution.
+	QVector<FloatType> _realSpaceRDF;
+
 	/// The distances for which the real-space correlation function is tabulated.
 	QVector<FloatType> _realSpaceCorrelationX;
 
 	/// The short-ranged part of the real-space correlation function.
 	QVector<FloatType> _neighCorrelation;
+
+	/// The radial distribution function computed from a direct sum over neighbor shells.
+	QVector<FloatType> _neighRDF;
 
 	/// The distances for which short-ranged part of the real-space correlation function is tabulated.
 	QVector<FloatType> _neighCorrelationX;
@@ -259,14 +290,18 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(ParticlePropertyReference, sourceProperty2, setSourceProperty2);
 	/// Controls the cutoff radius for the FFT grid.
 	DECLARE_PROPERTY_FIELD(FloatType, fftGridSpacing);
+	/// Controls if a windowing function should be applied in nonperiodic directions.
+	DECLARE_PROPERTY_FIELD(bool, applyWindow);
 	/// Controls whether the real-space correlation should be computed by direct summation.
 	DECLARE_PROPERTY_FIELD(bool, doComputeNeighCorrelation);
 	/// Controls the cutoff radius for the neighbor lists.
 	DECLARE_PROPERTY_FIELD(FloatType, neighCutoff);
 	/// Controls the number of bins for the neighbor part of the real-space correlation function.
 	DECLARE_PROPERTY_FIELD(int, numberOfNeighBins);
+	/// Controls the averaging direction.
+	DECLARE_PROPERTY_FIELD(AveragingDirectionType, averagingDirection);
 	/// Controls the normalization of the real-space correlation function.
-	DECLARE_PROPERTY_FIELD(bool, normalizeRealSpace);
+	DECLARE_PROPERTY_FIELD(NormalizationType, normalizeRealSpace);
 	/// Type of real-space plot (lin-lin, log-lin or log-log)
 	DECLARE_PROPERTY_FIELD(int, typeOfRealSpacePlot);
 	/// Controls the whether the range of the x-axis of the plot should be fixed.
@@ -303,5 +338,10 @@ OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
+
+Q_DECLARE_METATYPE(Ovito::Particles::CorrelationFunctionModifier::AveragingDirectionType);
+Q_DECLARE_METATYPE(Ovito::Particles::CorrelationFunctionModifier::NormalizationType);
+Q_DECLARE_TYPEINFO(Ovito::Particles::CorrelationFunctionModifier::AveragingDirectionType, Q_PRIMITIVE_TYPE);
+Q_DECLARE_TYPEINFO(Ovito::Particles::CorrelationFunctionModifier::NormalizationType, Q_PRIMITIVE_TYPE);
 
 #endif // __OVITO_CORRELATION_FUNCTION_MODIFIER_H

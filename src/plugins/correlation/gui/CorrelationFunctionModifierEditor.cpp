@@ -27,6 +27,7 @@
 #include <gui/properties/IntegerParameterUI.h>
 #include <gui/properties/IntegerRadioButtonParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
+#include <gui/properties/VariantComboBoxParameterUI.h>
 #include <plugins/particles/gui/util/ParticlePropertyParameterUI.h>
 #include "CorrelationFunctionModifierEditor.h"
 
@@ -72,6 +73,21 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 
 	layout->addLayout(gridlayout);
 
+	BooleanParameterUI* applyWindowUI = new BooleanParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::applyWindow));
+	layout->addWidget(applyWindowUI->checkBox());
+
+#if 0
+	gridlayout = new QGridLayout();
+	gridlayout->addWidget(new QLabel(tr("Average:"), rollout), 0, 0);
+	VariantComboBoxParameterUI* averagingDirectionPUI = new VariantComboBoxParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::averagingDirection));
+    averagingDirectionPUI->comboBox()->addItem("radial", qVariantFromValue(CorrelationFunctionModifier::RADIAL));
+    averagingDirectionPUI->comboBox()->addItem("cell vector 1", qVariantFromValue(CorrelationFunctionModifier::CELL_VECTOR_1));
+    averagingDirectionPUI->comboBox()->addItem("cell vector 2", qVariantFromValue(CorrelationFunctionModifier::CELL_VECTOR_2));
+    averagingDirectionPUI->comboBox()->addItem("cell vector 3", qVariantFromValue(CorrelationFunctionModifier::CELL_VECTOR_3));
+    gridlayout->addWidget(averagingDirectionPUI->comboBox(), 0, 1);
+    layout->addLayout(gridlayout);
+#endif
+
 	QGroupBox* realSpaceGroupBox = new QGroupBox(tr("Real-space correlation function"));
 	layout->addWidget(realSpaceGroupBox);
 
@@ -96,7 +112,13 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 	connect(doComputeNeighCorrelationUI->checkBox(), &QCheckBox::toggled, neighCutoffRadiusPUI, &FloatParameterUI::setEnabled);
 	connect(doComputeNeighCorrelationUI->checkBox(), &QCheckBox::toggled, numberOfNeighBinsPUI, &IntegerParameterUI::setEnabled);
 
-	BooleanParameterUI* normalizeRealSpaceUI = new BooleanParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::normalizeRealSpace));
+	QGridLayout *normalizeRealSpaceLayout = new QGridLayout();
+	normalizeRealSpaceLayout->addWidget(new QLabel(tr("Normalization:"), rollout), 0, 0);
+	VariantComboBoxParameterUI* normalizeRealSpacePUI = new VariantComboBoxParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::normalizeRealSpace));
+    normalizeRealSpacePUI->comboBox()->addItem("Do not normalize", qVariantFromValue(CorrelationFunctionModifier::DO_NOT_NORMALIZE));
+    normalizeRealSpacePUI->comboBox()->addItem("by covariance", qVariantFromValue(CorrelationFunctionModifier::NORMALIZE_BY_COVARIANCE));
+    normalizeRealSpacePUI->comboBox()->addItem("by RDF", qVariantFromValue(CorrelationFunctionModifier::NORMALIZE_BY_RDF));
+    normalizeRealSpaceLayout->addWidget(normalizeRealSpacePUI->comboBox(), 0, 1);
 
 	QGridLayout* typeOfRealSpacePlotLayout = new QGridLayout();
 	IntegerRadioButtonParameterUI *typeOfRealSpacePlotPUI = new IntegerRadioButtonParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::typeOfRealSpacePlot));
@@ -159,7 +181,7 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 	QVBoxLayout* realSpaceLayout = new QVBoxLayout(realSpaceGroupBox);
 	realSpaceLayout->addWidget(doComputeNeighCorrelationUI->checkBox());
 	realSpaceLayout->addLayout(realSpaceGridLayout);
-	realSpaceLayout->addWidget(normalizeRealSpaceUI->checkBox());
+	realSpaceLayout->addLayout(normalizeRealSpaceLayout);
 	realSpaceLayout->addLayout(typeOfRealSpacePlotLayout);
 	realSpaceLayout->addWidget(_realSpacePlot);
 	realSpaceLayout->addWidget(axesBox);
@@ -304,7 +326,7 @@ void CorrelationFunctionModifierEditor::plotAllData()
 
 	FloatType offset = 0.0;
 	FloatType fac = 1.0;
-	if (modifier->normalizeRealSpace()) {
+	if (modifier->normalizeRealSpace() == CorrelationFunctionModifier::NORMALIZE_BY_COVARIANCE) {
 		offset = modifier->mean1()*modifier->mean2();
 		fac = 1.0/(modifier->covariance()-offset);
 	}
@@ -318,10 +340,11 @@ void CorrelationFunctionModifierEditor::plotAllData()
 	// Plot real-space correlation function
 	if(!modifier->realSpaceCorrelationX().empty() &&
 	   !modifier->realSpaceCorrelation().empty()) {
-		plotData(modifier->realSpaceCorrelationX(),
-				 modifier->realSpaceCorrelation(),
-				 _realSpacePlot,
-				 _realSpaceCurve,
+	    QVector<FloatType> y = modifier->realSpaceCorrelation();
+		if (modifier->normalizeRealSpace() == CorrelationFunctionModifier::NORMALIZE_BY_RDF)
+		    std::transform(y.begin(), y.end(), modifier->realSpaceRDF().constBegin(), y.begin(), std::divides<FloatType>());
+		plotData(modifier->realSpaceCorrelationX(), y,
+				 _realSpacePlot, _realSpaceCurve,
 				 offset, fac);
 	}
 
@@ -338,11 +361,15 @@ void CorrelationFunctionModifierEditor::plotAllData()
 		// Set data to plot.
 		auto &xData = modifier->neighCorrelationX();
 		auto &yData = modifier->neighCorrelation();
+		auto &rdfData = modifier->neighRDF();
 		size_t numberOfDataPoints = yData.size();
 		QVector<QPointF> plotData(numberOfDataPoints);
+		bool normByRDF = modifier->normalizeRealSpace() == CorrelationFunctionModifier::NORMALIZE_BY_RDF;
 		for (int i = 0; i < numberOfDataPoints; i++) {
 			FloatType xValue = xData[i];
 			FloatType yValue = fac*(yData[i]-offset);
+			if (normByRDF)
+				yValue /= rdfData[i];
 			plotData[i].rx() = xValue;
 			plotData[i].ry() = yValue;
 		}
