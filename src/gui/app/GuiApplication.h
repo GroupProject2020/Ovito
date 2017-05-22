@@ -55,6 +55,9 @@ protected:
 	/// Creates the global FileManager class instance.
 	virtual FileManager* createFileManager() override;
 
+	/// Handles events sent to the Qt application object.
+	virtual bool eventFilter(QObject* watched, QEvent* event) override;
+    
 private Q_SLOTS:
 
 	/// Displays an error message box. This slot is called by reportError().

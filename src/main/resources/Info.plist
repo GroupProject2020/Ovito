@@ -36,5 +36,53 @@
 	<string>NSApplication</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleTypeName</key>
+			<string>OVITO</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>ovito</string>
+			</array>
+			<key>CFBundleTypeIconFile</key>
+			<string>ovito.icns</string>
+			<key>LSIsAppleDefaultForType</key>
+			<true/>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>CFBundleTypeName</key>
+			<string>XYZ</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>xyz</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>CFBundleTypeName</key>
+			<string>LAMMPS</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>dump</string>
+				<string>data</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>CFBundleTypeName</key>
+			<string>PDB</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>pdb</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
