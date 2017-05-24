@@ -215,14 +215,14 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::mapToSpatialGrid(Pa
 				int binIndexX = int( fractionalPos.x() * nX );
 				int binIndexY = int( fractionalPos.y() * nY );
 				int binIndexZ = int( fractionalPos.z() * nZ );
-				FloatType window = 1.0;
+				FloatType window = 1;
 				if(pbc[0]) binIndexX = SimulationCell::modulo(binIndexX, nX);
-				else window *= sqrt(2./3)*(1-cos(2*M_PI*fractionalPos.x()));
+				else window *= sqrt(2./3)*(1-cos(2*FLOATTYPE_PI*fractionalPos.x()));
 				if(pbc[1]) binIndexY = SimulationCell::modulo(binIndexY, nY);
-				else window *= sqrt(2./3)*(1-cos(2*M_PI*fractionalPos.y()));
+				else window *= sqrt(2./3)*(1-cos(2*FLOATTYPE_PI*fractionalPos.y()));
 				if(pbc[2]) binIndexZ = SimulationCell::modulo(binIndexZ, nZ);
-				else window *= sqrt(2./3)*(1-cos(2*M_PI*fractionalPos.z()));
-				if (!applyWindow) window = 1.0;
+				else window *= sqrt(2./3)*(1-cos(2*FLOATTYPE_PI*fractionalPos.z()));
+				if (!applyWindow) window = 1;
 				if(binIndexX >= 0 && binIndexX < nX && binIndexY >= 0 && binIndexY < nY && binIndexZ >= 0 && binIndexZ < nZ) {
 					// Store in row-major format.
 					size_t binIndex = binIndexZ+nZ*(binIndexY+nY*binIndexX);
@@ -239,14 +239,14 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::mapToSpatialGrid(Pa
 					int binIndexX = int( fractionalPos.x() * nX );
 					int binIndexY = int( fractionalPos.y() * nY );
 					int binIndexZ = int( fractionalPos.z() * nZ );
-					FloatType window = 1.0;
+					FloatType window = 1;
 					if(pbc[0]) binIndexX = SimulationCell::modulo(binIndexX, nX);
-					else window *= sqrt(2./3)*(1-cos(2*M_PI*fractionalPos.x()));
+					else window *= sqrt(2./3)*(1-cos(2*FLOATTYPE_PI*fractionalPos.x()));
 					if(pbc[1]) binIndexY = SimulationCell::modulo(binIndexY, nY);
-					else window *= sqrt(2./3)*(1-cos(2*M_PI*fractionalPos.y()));
+					else window *= sqrt(2./3)*(1-cos(2*FLOATTYPE_PI*fractionalPos.y()));
 					if(pbc[2]) binIndexZ = SimulationCell::modulo(binIndexZ, nZ);
-					else window *= sqrt(2./3)*(1-cos(2*M_PI*fractionalPos.z()));
-					if (!applyWindow) window = 1.0;
+					else window *= sqrt(2./3)*(1-cos(2*FLOATTYPE_PI*fractionalPos.z()));
+					if (!applyWindow) window = 1;
 					if(binIndexX >= 0 && binIndexX < nX && binIndexY >= 0 && binIndexY < nY && binIndexZ >= 0 && binIndexZ < nZ) {
 						// Store in row-major format.
 						size_t binIndex = binIndexZ+nZ*(binIndexY+nY*binIndexX);
@@ -263,14 +263,14 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::mapToSpatialGrid(Pa
 				int binIndexX = int( fractionalPos.x() * nX );
 				int binIndexY = int( fractionalPos.y() * nY );
 				int binIndexZ = int( fractionalPos.z() * nZ );
-				FloatType window = 1.0;
+				FloatType window = 1;
 				if(pbc[0]) binIndexX = SimulationCell::modulo(binIndexX, nX);
-				else window *= sqrt(2./3)*(1-cos(2*M_PI*fractionalPos.x()));
+				else window *= sqrt(2./3)*(1-cos(2*FLOATTYPE_PI*fractionalPos.x()));
 				if(pbc[1]) binIndexY = SimulationCell::modulo(binIndexY, nY);
-				else window *= sqrt(2./3)*(1-cos(2*M_PI*fractionalPos.y()));
+				else window *= sqrt(2./3)*(1-cos(2*FLOATTYPE_PI*fractionalPos.y()));
 				if(pbc[2]) binIndexZ = SimulationCell::modulo(binIndexZ, nZ);
-				else window *= sqrt(2./3)*(1-cos(2*M_PI*fractionalPos.z()));
-				if (!applyWindow) window = 1.0;
+				else window *= sqrt(2./3)*(1-cos(2*FLOATTYPE_PI*fractionalPos.z()));
+				if (!applyWindow) window = 1;
 				if(binIndexX >= 0 && binIndexX < nX && binIndexY >= 0 && binIndexY < nY && binIndexZ >= 0 && binIndexZ < nZ) {
 					// Store in row-major format.
 					size_t binIndex = binIndexZ+nZ*(binIndexY+nY*binIndexX);
