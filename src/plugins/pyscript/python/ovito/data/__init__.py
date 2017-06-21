@@ -262,28 +262,37 @@ def _DataCollection_to_ase_atoms(self):
     """
 
     from ase.atoms import Atoms
+    from ase.data import chemical_symbols
 
     # Extract basic dat: pbc, cell, positions, particle types
     pbc = self.cell.pbc
     cell_matrix = np.array(self.cell.matrix)
     cell, origin = cell_matrix[:, :3].T, cell_matrix[:, 3]
     info = {'cell_origin': origin }
-    positions = np.array(self.position)
-    type_names = dict([(t.id, t.name) for t in
-                       self.particle_type.type_list])
-    symbols = [type_names[id] for id in np.array(self.particle_type)]
-
+    positions = np.array(self.particle_properties.position)
+    if 'Particle Type' in self.particle_properties:
+        # ASE only accepts chemical symbols as atom type names.
+        # If our atom type names are not chemical symbols, pass the numerical atom type to ASE instead.
+        type_names = {}
+        for t in self.particle_properties.particle_type.type_list:
+            if t.name in chemical_symbols:
+                type_names[t.id] = t.name
+            else:
+                type_names[t.id] = t.id
+        symbols = [type_names[id] for id in np.array(self.particle_properties.particle_type)]
+    else:
+        symbols = None
+    
     # construct ase.Atoms object
     atoms = Atoms(symbols,
-                  positions,
+                  positions=positions,
                   cell=cell,
                   pbc=pbc,
                   info=info)
 
     # Convert any other particle properties to additional arrays
-    for name, prop in self.items():
-        if name in ['Simulation cell',
-                    'Position',
+    for name, prop in self.particle_properties.items():
+        if name in ['Position',
                     'Particle Type']:
             continue
         if not isinstance(prop, ParticleProperty):
