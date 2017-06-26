@@ -188,6 +188,10 @@
               <entry>GSD/HOOMD</entry>
               <entry><para>Binary format for molecular dynamics data used by the <link xlink:href="http://glotzerlab.engin.umich.edu/hoomd-blue/">HOOMD-blue code</link>. See <link xlink:href="http://gsd.readthedocs.io">GSD (General Simulation Data) format</link>.</para></entry>
             </row>
+            <row>
+              <entry>CASTEP</entry>
+              <entry><para>File format used by the <link xlink:href="http://www.castep.org">CASTEP</link> ab initio code. OVITO can read the <link xlink:href="http://www.tcm.phy.cam.ac.uk/castep/documentation/WebHelp/content/modules/castep/expcastepfileformats.htm"><literal>.cell</literal>, <literal>.md</literal> and <literal>.geom</literal> formats</link>.</para></entry>
+            </row>
           </tbody>
         </tgroup>
       </informaltable>  

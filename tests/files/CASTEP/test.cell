@@ -1,0 +1,43 @@
+%BLOCK LATTICE_CART # H-Vector
+#Optional Units
+    21.222673600000000     0.000000000000000     0.000000000000000 # R1x R1y R1z
+     0.000000000000000    21.222673600000000     0.000000000000000 # R2x R2y R2z
+     0.000000000000000     0.000000000000000    54.330044416000000 # R3x R3y R3z
+%ENDBLOCK LATTICE_CART
+
+ %BLOCK LATTICE_ABC
+21.222673600000000     21.222673600000000   54.330044416000000  # ABC side lengths
+ 90 90 70 # alpha, beta, gamma angles
+%ENDBLOCK LATTICE_ABC
+
+# Instructions to castep (Can be ignored entirely I suspect)
+fix_all_cell : T            
+kpoints_mp_spacing = 0.05 A 
+
+%BLOCK POSITIONS_ABS  # Absolute positions entry
+ANG # Optional units
+8 16.3714250871232 3.47831211661269 47.6388648058143 
+Ar:Tag 19.9938383532128 5.9346589870918 45.475551097258  # Loads default Ar params, but can be overridden
+Ar 3.08848186950762 1.29619245696072 48.6152300340142 
+Cu 3.65016616503122 13.4336977167168 0.676108172722509 
+%ENDBLOCK POSITIONS_ABS 
+
+#%BLOCK POSITIONS_FRAC # Fractional coordinates
+#Ar:Tag 0.942098 0.279637669548468 0.837024             # Loads default Ar params, but can be overridden
+#Ar 0.145527464056537 0.061075832451229 0.894813 SPIN= 4  # Optional spin stated any of these ways
+#Ar 0.171993700408756 0.632988 0.012444461991336 SPIN : 1
+#Ar 0.771412 0.163896037896596 0.876842          SPIN 4
+#%ENDBLOCK positions_frac
+
+%block species_mass
+# ME Optional units
+Ar:Tag 150.0
+#Ar defaults to CODATA numbers
+%ENDBLOCK SpEcIeS_MASs # Case insensitive
+
+%block ionic_velocities
+1 1 1
+1 2 3
+0 1 2
+5 6 7
+%endblock ionic_velocities

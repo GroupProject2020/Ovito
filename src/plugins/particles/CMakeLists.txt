@@ -102,6 +102,8 @@ SET(SourceFiles
 	import/fhi_aims/FHIAimsLogFileImporter.cpp
 	import/gsd/GSDImporter.cpp
 	import/gsd/gsd.c
+	import/castep/CastepCellImporter.cpp
+	import/castep/CastepMDImporter.cpp
 	export/ParticleExporter.cpp
 	export/FileColumnParticleExporter.cpp
 	export/OutputColumnMapping.cpp
