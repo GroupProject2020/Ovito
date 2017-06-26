@@ -88,7 +88,7 @@ private:
 	std::vector<quint8> _outputBuf;
 	std::shared_ptr<AVFrame> _frame;
 	AVStream* _videoStream;
-	AVCodecContext* _codecContext;
+	std::shared_ptr<AVCodecContext> _codecContext;
 	SwsContext* _imgConvertCtx;
 	bool _isOpen;
 

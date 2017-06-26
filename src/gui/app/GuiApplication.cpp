@@ -95,6 +95,9 @@ void GuiApplication::createQtApplication(int& argc, char** argv)
 	// Set the global default OpenGL surface format.
 	// This will let Qt use core profile contexts.
 	QSurfaceFormat::setDefaultFormat(OpenGLSceneRenderer::getDefaultSurfaceFormat());
+
+	// Process events sent to the Qt application by the OS.
+	QCoreApplication::instance()->installEventFilter(this);
 }
 
 /******************************************************************************
@@ -168,6 +171,30 @@ bool GuiApplication::startupApplication()
 	}
 
 	return true;
+}
+
+/******************************************************************************
+* Handles events sent to the Qt application object.
+******************************************************************************/
+bool GuiApplication::eventFilter(QObject* watched, QEvent* event)
+{
+	if(event->type() == QEvent::FileOpen) {
+		QFileOpenEvent* openEvent = static_cast<QFileOpenEvent*>(event);
+		GuiDataSetContainer* container = static_object_cast<GuiDataSetContainer>(datasetContainer());
+		try {
+			if(openEvent->file().endsWith(".ovito", Qt::CaseInsensitive)) {
+				container->fileLoad(openEvent->file());
+			}
+			else {
+				container->importFile(openEvent->url());
+				container->currentSet()->undoStack().setClean();
+			}
+		}
+		catch(const Exception& ex) {
+			ex.reportError();
+		}
+	}
+	return StandaloneApplication::eventFilter(watched, event);
 }
 
 /******************************************************************************

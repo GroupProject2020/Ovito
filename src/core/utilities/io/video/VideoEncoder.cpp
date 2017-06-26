@@ -29,10 +29,6 @@ extern "C" {
 #include <libswscale/swscale.h>
 };
 
-#if LIBAVCODEC_VERSION_MAJOR >= 55
-	#define CODEC_ID_NONE AV_CODEC_ID_NONE
-#endif
-
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /// The list of supported video formats.
@@ -52,7 +48,10 @@ VideoEncoder::VideoEncoder(QObject* parent) : QObject(parent), _videoStream(null
 void VideoEncoder::initCodecs()
 {
 	static std::once_flag initFlag;
-	std::call_once(initFlag, []() { av_register_all(); });
+	std::call_once(initFlag, []() { 
+		av_register_all(); 
+		avcodec_register_all();
+	});
 }
 
 /******************************************************************************
@@ -62,7 +61,7 @@ QString VideoEncoder::errorMessage(int errorCode)
 {
 	char errbuf[256];
 	if(av_strerror(errorCode, errbuf, sizeof(errbuf)) < 0) {
-		return QString("Unknown FFmpeg error.");
+		return QString("Unknown Libav error.");
 	}
 	return QString::fromLocal8Bit(errbuf);
 }
@@ -89,7 +88,7 @@ QList<VideoEncoder::Format> VideoEncoder::supportedFormats()
 		format.extensions = QString::fromLocal8Bit(fmt->extensions).split(',');
 		format.avformat = fmt;
 
-		if(format.name != "mov" && format.name != "mp4" && format.name != "webm" && format.name != "avi" && format.name != "gif")
+		if(format.name != "mov" && format.name != "mp4" && format.name != "avi" && format.name != "gif")
 			continue;
 
 		_supportedFormats.push_back(format);
@@ -111,7 +110,7 @@ void VideoEncoder::openFile(const QString& filename, int width, int height, int 
 	AVOutputFormat* outputFormat;
 	if(format == nullptr) {
 		// Auto detect the output format from the file name.
-		outputFormat = av_guess_format(NULL, filename.toLocal8Bit().constData(), NULL);
+		outputFormat = av_guess_format(NULL, qPrintable(filename), NULL);
 		if(!outputFormat)
 			throw Exception(tr("Could not deduce video output format from file extension."));
 	}
@@ -123,17 +122,29 @@ void VideoEncoder::openFile(const QString& filename, int width, int height, int 
 		throw Exception(tr("Failed to allocate output media context."));
 
 	_formatContext->oformat = outputFormat;
-	qstrncpy(_formatContext->filename, filename.toLocal8Bit().constData(), sizeof(_formatContext->filename) - 1);
+	qstrncpy(_formatContext->filename, qPrintable(filename), sizeof(_formatContext->filename) - 1);
 
-	if(outputFormat->video_codec == CODEC_ID_NONE)
+	if(outputFormat->video_codec == AV_CODEC_ID_NONE)
 		throw Exception(tr("No video codec available."));
 
+	// Find the video encoder.
+	AVCodec* codec = avcodec_find_encoder(outputFormat->video_codec);
+	if(!codec)
+		throw Exception(tr("Video codec not found."));
+
 	// Add the video stream using the default format codec and initialize the codec.
-	_videoStream = avformat_new_stream(_formatContext.get(), NULL);
+	_videoStream = avformat_new_stream(_formatContext.get(), codec);
 	if(!_videoStream)
 		throw Exception(tr("Failed to create video stream."));
 
-	_codecContext = _videoStream->codec;
+#if LIBAVCODEC_VERSION_MAJOR >= 57
+	_codecContext.reset(avcodec_alloc_context3(codec), [](AVCodecContext* ctxt) { avcodec_free_context(&ctxt); });
+    if(!_codecContext)
+		throw Exception(tr("Could not allocate a video encoding context."));
+#else
+	_codecContext.reset(_videoStream->codec, [](AVCodecContext*) {});
+#endif
+
 	_codecContext->codec_id = outputFormat->video_codec;
 	_codecContext->codec_type = AVMEDIA_TYPE_VIDEO;
 	_codecContext->qmin = 4;
@@ -141,8 +152,7 @@ void VideoEncoder::openFile(const QString& filename, int width, int height, int 
 	_codecContext->bit_rate = 0;
 	_codecContext->width = width;
 	_codecContext->height = height;
-	_codecContext->time_base.den = _videoStream->time_base.den = fps;
-	_codecContext->time_base.num = _videoStream->time_base.num = 1;
+	_codecContext->time_base = _videoStream->time_base = (AVRational){ 1, fps };
 	_codecContext->gop_size = 12;	// Emit one intra frame every twelve frames at most.
 	if(qstrcmp(outputFormat->name, "gif") != 0)
 		_codecContext->pix_fmt = AV_PIX_FMT_YUV420P;
@@ -153,15 +163,10 @@ void VideoEncoder::openFile(const QString& filename, int width, int height, int 
 	if(_formatContext->oformat->flags & AVFMT_GLOBALHEADER)
 		_codecContext->flags |= CODEC_FLAG_GLOBAL_HEADER;
 
-	// Find the video encoder.
-	AVCodec* codec = avcodec_find_encoder(_codecContext->codec_id);
-	if(!codec)
-		throw Exception(tr("Video codec not found."));
-
-	av_dump_format(_formatContext.get(), 0, filename.toLocal8Bit().constData(), 1);
+	av_dump_format(_formatContext.get(), 0, _formatContext->filename, 1);
 
 	// Open the codec.
-	if((errCode = avcodec_open2(_codecContext, codec, NULL)) < 0)
+	if((errCode = avcodec_open2(_codecContext.get(), NULL, NULL)) < 0)
 		throw Exception(tr("Could not open video codec: %1").arg(errorMessage(errCode)));
 
 	// Allocate and init a YUV frame.
@@ -185,12 +190,13 @@ void VideoEncoder::openFile(const QString& filename, int width, int height, int 
 
 	// Open output file (if needed).
 	if(!(outputFormat->flags & AVFMT_NOFILE)) {
-		if(avio_open(&_formatContext->pb, filename.toLocal8Bit().constData(), AVIO_FLAG_WRITE) < 0)
+		if(avio_open(&_formatContext->pb, _formatContext->filename, AVIO_FLAG_WRITE) < 0)
 			throw Exception(tr("Failed to open output video file %1").arg(filename));
 	}
 
 	// Write stream header, if any.
-	avformat_write_header(_formatContext.get(), NULL);
+	if((errCode = avformat_write_header(_formatContext.get(), NULL)) < 0)
+		throw Exception(tr("Failed to write video file header: %1").arg(errorMessage(errCode)));
 
 	// Success.
 	_isOpen = true;
@@ -211,9 +217,10 @@ void VideoEncoder::closeFile()
 		av_write_trailer(_formatContext.get());
 
 	// Close codec.
-	if(_videoStream)
-		avcodec_close(_videoStream->codec);
+	if(_codecContext)
+		avcodec_close(_codecContext.get());
 
+#if LIBAVCODEC_VERSION_MAJOR < 57
 	// Free streams.
 	if(_formatContext) {
 		for(size_t i = 0; i < _formatContext->nb_streams; i++) {
@@ -221,6 +228,7 @@ void VideoEncoder::closeFile()
 			av_freep(&_formatContext->streams[i]);
 		}
 	}
+#endif
 
 	// Close the output file.
 	if(_formatContext->pb)
@@ -230,7 +238,7 @@ void VideoEncoder::closeFile()
 	_pictureBuf.reset();
 	_frame.reset();
 	_videoStream = nullptr;
-	_codecContext = nullptr;
+	_codecContext.reset();
 	_outputBuf.clear();
 	_formatContext.reset();
 	_isOpen = false;
@@ -296,7 +304,7 @@ void VideoEncoder::writeFrame(const QImage& image)
 	AVPacket pkt = {0};
 	av_init_packet(&pkt);
 
-	if(avcodec_encode_video2(_codecContext, &pkt, _frame.get(), &got_packet_ptr) < 0)
+	if(avcodec_encode_video2(_codecContext.get(), &pkt, _frame.get(), &got_packet_ptr) < 0)
 		throw Exception(tr("Error while encoding video frame."));
 
 	if(got_packet_ptr && pkt.size) {
