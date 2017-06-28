@@ -25,6 +25,7 @@
   </section>
   
   <xi:include href="reference/animation/animation_settings_dialog.docbook"/>
+  <xi:include href="reference/utilities/particle_inspection_utility.docbook"/>
   
   <section xml:id="rendering">
     <title>Renderering</title>

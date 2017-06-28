@@ -129,7 +129,7 @@ void ParticleInformationApplet::updateInformationDisplay()
 			ParticlePropertyObject* posProperty = ParticlePropertyObject::findInState(flowState, ParticleProperty::PositionProperty);
 			if(posProperty && posProperty->size() > pickedParticle->particleIndex) {
 
-				stream << QStringLiteral("<b>") << tr("Particle index") << QStringLiteral(" ") << (pickedParticle->particleIndex + 1) << QStringLiteral(":</b>");
+				stream << QStringLiteral("<b>") << tr("Particle index") << QStringLiteral(" ") << pickedParticle->particleIndex << QStringLiteral(":</b>");
 				stream << QStringLiteral("<table border=\"0\">");
 
 				for(DataObject* dataObj : flowState.objects()) {
@@ -182,9 +182,9 @@ void ParticleInformationApplet::updateInformationDisplay()
 			for(size_t j = i + 1; j < _inputMode->_pickedParticles.size(); j++) {
 				const auto& p2 = _inputMode->_pickedParticles[j];
 				Vector3 delta = p2.localPos - p1.localPos;
-				stream << QStringLiteral("<tr><td>(") <<
-						(p1.particleIndex+1) << QStringLiteral(" - ") << (p2.particleIndex+1) <<
-						QStringLiteral("):</td><td>Distance = ") << delta.length() << QStringLiteral("</td></tr>");
+				stream << QStringLiteral("<tr><td width=\"50%%\">(") <<
+						p1.particleIndex << QStringLiteral(" - ") << p2.particleIndex <<
+						QStringLiteral("):</td><td width=\"50%%\">Distance = ") << delta.length() << QStringLiteral("</td></tr>");
 				stream << QStringLiteral("<tr><td colspan=\"2\">&nbsp;&nbsp;&nbsp;&nbsp;[") <<
 						delta.x() << QStringLiteral(", ") << delta.y() << QStringLiteral(", ") << delta.z() << QStringLiteral("]</td></tr>");
 			}
@@ -208,8 +208,8 @@ void ParticleInformationApplet::updateInformationDisplay()
 					v2.normalizeSafely();
 					FloatType angle = acos(v1.dot(v2));
 					stream << QStringLiteral("<tr><td>(") <<
-							(p2.particleIndex+1) << QStringLiteral(" - ") << (p1.particleIndex+1) << QStringLiteral(" - ") << (p3.particleIndex+1) <<
-							QStringLiteral("):</td><td>") << (angle * 180.0f / FLOATTYPE_PI) << QStringLiteral("</td></tr>");
+							p2.particleIndex << QStringLiteral(" - ") << p1.particleIndex << QStringLiteral(" - ") << p3.particleIndex <<
+							QStringLiteral("):</td><td>") << qRadiansToDegrees(angle) << QStringLiteral("</td></tr>");
 				}
 			}
 		}
