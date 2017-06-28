@@ -674,7 +674,7 @@ PYBIND11_PLUGIN(Particles)
 			":Base class: :py:class:`ovito.data.DataObject`\n\n"
 			"This data object stores the surface mesh computed by a :py:class:`~ovito.modifiers.ConstructSurfaceModifier`. "
 			"\n\n"
-			"Currently, no direct script access to the vertices and faces of the mesh is possible. But you can export the mesh to a VTK text file, "
+			"Currently, no direct access to the stored vertices and faces of the mesh is possible. But you can export the mesh to a geometry file, "
 			"which can be further processed by external tools such as ParaView. "
 			"\n\n"
 			"The visual appearance of the surface mesh within Ovito is controlled by its attached :py:class:`~ovito.vis.SurfaceMeshDisplay` instance, which is "
@@ -686,6 +686,8 @@ PYBIND11_PLUGIN(Particles)
 			"   :lines: 4-\n"
 		)
 		.def_property("is_completely_solid", &SurfaceMesh::isCompletelySolid, &SurfaceMesh::setIsCompletelySolid)
+
+		// For backward compatibility with Ovito 2.8.2:	
 		.def("export_vtk", [](SurfaceMesh& mesh, const QString& filename, SimulationCellObject* simCellObj) {
 				if(!simCellObj)
 					throw Exception("A simulation cell is required to generate non-periodic mesh for export.");

@@ -3,6 +3,8 @@ from ovito.modifiers import *
 import numpy as np
 
 import sys
+import os
+
 if "ovito.plugins.CrystalAnalysis" not in sys.modules: sys.exit()
 
 node = import_file("../../files/CFG/lammps_dumpi-42-1100-510000.cfg")
@@ -34,3 +36,11 @@ print("Output:")
 print("  solid_volume= {}".format(node.output.attributes['ConstructSurfaceMesh.solid_volume']))
 print("  surface_area= {}".format(node.output.attributes['ConstructSurfaceMesh.surface_area']))
 print(node.output)
+
+surface_mesh = node.output.surface
+
+# Backward compatibility with Ovito 2.8.2:
+surface_mesh.export_vtk("_surface_mesh.vtk", node.output.cell)
+surface_mesh.export_cap_vtk("_surfacecap_mesh.vtk", node.output.cell)
+os.remove("_surface_mesh.vtk")
+os.remove("_surfacecap_mesh.vtk")

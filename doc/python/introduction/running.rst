@@ -99,7 +99,7 @@ If you want to use other third-party Python modules from your OVITO scripts, it 
 :program:`ovitos` interpreter using the normal *pip* or *setuptools* mechanisms 
 (e.g., run :command:`ovitos -m pip install <package>` to install a module via *pip*).
 
-Installing Python extensions that include native code (e.g. `Scipy <http:://www.scipy.org>`_) in the embedded interpreter 
+Installing Python extensions that include native code (e.g. `Scipy <http://www.scipy.org>`_) in the embedded interpreter 
 will likely fail. In this case it is recommended to build OVITO from source on your local system. 
 The graphical program and :program:`ovitos` will then both make use of your system's standard Python interpreter.
 This will make all modules that are installed in your Python interpreter accessible within OVITO and :program:`ovitos` as well.

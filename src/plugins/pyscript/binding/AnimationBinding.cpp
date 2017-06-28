@@ -71,9 +71,11 @@ void defineAnimationSubmodule(py::module parentModule)
 			"Animation settings comprise the animation length (number of frames) and the current animation time. "
 			"For example, to step through each animation frame and perform some action::"
 			"\n\n"
+			"    from ovito import dataset\n"
+			"    \n"
 			"    for frame in range(0, dataset.anim.last_frame + 1):\n"
 			"        dataset.anim.current_frame = frame    # Jump to the animation frame.\n"
-			"        performSomething()\n"
+			"        perform_something()\n"
 			"\n")
 		.def_property("time", &AnimationSettings::time, &AnimationSettings::setTime)
 		//.def_property("animation_interval", &AnimationSettings::animationInterval, &AnimationSettings::setAnimationInterval)
@@ -84,11 +86,12 @@ void defineAnimationSubmodule(py::module parentModule)
 		//.def_property("ticks_per_frame", &AnimationSettings::ticksPerFrame, &AnimationSettings::setTicksPerFrame)
 		.def_property("current_frame", &AnimationSettings::currentFrame, &AnimationSettings::setCurrentFrame,
 				"The current animation frame. This parameter controls the position of the time slider in OVITO's main window "
-				"and determines which animation frame is shown in the viewports."
+				"and determines which animation frame is shown in the viewports. It also affects various other functions that operate "
+				"on the current animation frame."
 				"\n\n"
 				":Default: 0\n")
 		.def_property("last_frame", &AnimationSettings::lastFrame, &AnimationSettings::setLastFrame,
-				"The index of the last animation frame. You can change this property to set a new animation length."
+				"The index of the last animation frame. You can set this property to change the animation length. "
 				"\n\n"
 				":Default: 0\n")
 		.def_property("first_frame", &AnimationSettings::firstFrame, &AnimationSettings::setFirstFrame,

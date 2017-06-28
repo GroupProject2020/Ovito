@@ -502,6 +502,9 @@ public:
 	/// \brief Exports the triangle mesh to a VTK file.
 	void saveToVTK(CompressedTextWriter& stream);
 
+	/// \brief Exports the triangle mesh to a Wavefront .obj file.
+	void saveToOBJ(CompressedTextWriter& stream);
+
 	/************************************* Clipping *************************************/
 
 	/// Clips the mesh at the given plane.

@@ -37,6 +37,7 @@ before_script:
                          xsltproc
                          docbook-xml
                          povray
+                         linkchecker
 
 build_linux_python3:
    stage: build
@@ -55,6 +56,8 @@ build_linux_python3:
            ..
       - make -j4 install
       - ctest --output-on-failure
+      - linkchecker --check-extern ../install/share/ovito/doc/manual/html/index.html
+           --ignore-url=https://dx.doi.org/10.1088/0965-0393/24/5/055007
 
 build_linux_python2:
    stage: build

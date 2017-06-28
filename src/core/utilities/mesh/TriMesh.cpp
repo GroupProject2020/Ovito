@@ -263,6 +263,24 @@ void TriMesh::saveToVTK(CompressedTextWriter& stream)
 }
 
 /******************************************************************************
+* Exports the triangle mesh to a Wavefront .obj file.
+******************************************************************************/
+void TriMesh::saveToOBJ(CompressedTextWriter& stream)
+{
+	stream << "# Wavefront OBJ file written by OVITO\n";
+	stream << "# List of geometric vertices:\n";
+	for(const Point3& p : vertices())
+		stream << "v " << p.x() << " " << p.y() << " " << p.z() << "\n";
+	stream << "# List of faces:\n";
+	for(const TriMeshFace& f : faces()) {
+		stream << "f ";
+		for(size_t i = 0; i < 3; i++)
+			stream << " " << (f.vertex(i)+1);
+		stream << "\n";
+	}
+}
+
+/******************************************************************************
 * Clips the mesh at the given plane.
 ******************************************************************************/
 void TriMesh::clipAtPlane(const Plane3& plane)

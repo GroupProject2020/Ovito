@@ -6,8 +6,8 @@ external files:
     * :py:func:`import_file`
     * :py:func:`export_file`
 
-In addition, it contains the :py:class:`FileSource` class, which is a data source object
-that reads its input data from an external file.
+In addition, the module contains the :py:class:`FileSource` class, which is a data source for OVITO's 
+data pipeline system reading its input data from an external file.
 """
 
 import ovito.data
@@ -178,7 +178,7 @@ def _set_FileSource_source_path(self, url):
 FileSource.source_path = property(_get_FileSource_source_path, _set_FileSource_source_path)
 
 def export_file(node, file, format, **params):
-    """ High-level function that exports the output of a modification pipeline to a file.
+    """ High-level function that exports the results of the data pipeline to a file.
     
         :param node: The object node that provides the data to be exported.
         :type node: :py:class:`~ovito.scene.ObjectNode` 
@@ -192,68 +192,72 @@ def export_file(node, file, format, **params):
                             * ``"vasp"`` -- POSCAR format
                             * ``"xyz"`` -- XYZ format
                             * ``"fhi-aims"`` -- FHI-aims format
-                            * ``"ca"`` -- Text-based format for storing dislocation lines (Crystal Analysis Tool)
+                            * ``"ca"`` -- `Text-based format for storing dislocation lines <../../particles.modifiers.dislocation_analysis.html#particles.modifiers.dislocation_analysis.fileformat>`_
                             * ``"povray"`` -- POV-Ray scene format
         
-        The function evaluates the modification pipeline of the given object node to obtain the data to be exported. 
+        The function first evaluates the modification pipeline of the given :py:class:`~ovito.ObjectNode` to obtain the data to be exported.
         This means it is not necessary to call :py:meth:`ObjectNode.compute() <ovito.ObjectNode.compute>` before calling
         :py:func:`!export_file` (but it doesn't hurt either).
+
+        The ``format`` parameter determines the type of file written by the export function; the filename suffix is ignored.
+        However, for files that end in ``.gz``, automatic gzip compression is activated if the file format is a text-based one.
         
-        Depending on the selected export format, additional keyword arguments must be provided to the function:
+        Depending on the selected export format, additional keyword arguments must be provided:
        
         **File columns**
         
-        When writing files in the *lammps_dump*, *xyz*, or *imd* formats, you must specify the particle properties to be exported 
+        When writing files in one of the formats *lammps_dump*, *xyz*, or *imd*, you must specify the set of particle properties to be exported 
         using the ``columns`` keyword parameter::
         
-            export_file(node, "output.xyz", "xyz", columns = 
+            export_file(node, "output.xyz", "xyz", columns= 
               ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z"]
             )
             
-        See the list of :ref:`particle properties <particle-types-list>` for valid names. For vector properties, the component must be appended to 
-        the property base name as demonstrated for the ``Position`` property in the example above.
+        See the list of standard :ref:`particle properties <particle-types-list>` for valid names. Additionaly, user-defined properties
+        can be listed if they exist in the output data. For vector properties, the component name must be appended to the base name as 
+        demonstrated for the ``Position`` property in the example above. 
         
-        **Exporting multiple simulation frames**
+        **Exporting several simulation frames**
         
-        By default, only the current animation frame (:py:attr:`~ovito.anim.AnimationSettings.current_frame`) is exported.
-        To export a specific frame, pass the ``frame`` keyword parameter to the function.         
-        You can export all animation frames by passing ``multiple_frames=True`` to :py:func:`!export_file`. Further
-        control is possible using the keyword arguments ``start_frame``, ``end_frame``, and ``every_nth_frame``.
+        By default, only the current animation frame (given by the :py:attr:`~ovito.anim.AnimationSettings.current_frame` global variable) is exported.
+        To export a different frame, pass the ``frame`` keyword parameter to the :py:func:`!export_file` function. 
+        Alternatively, you can export all frames of the current animation sequence at once by passing ``multiple_frames=True``. Refined
+        control of the exported frames is possible using the keyword arguments ``start_frame``, ``end_frame``, and ``every_nth_frame``.
         
-        The *lammps_dump* and *xyz* file formats can store multiple frames per file. For all other file formats, or
-        if you explicitly want to generate one file per frame, you have to pass wildcard filename to :py:func:`!export_file`.
-        This filename must contain exactly one ``*`` character as in the following example. It will be replaced by OVITO with the
+        The *lammps_dump* and *xyz* file formats can store multiple frames in a single output file. For all other formats, or
+        if you intentionally want to generate one file per frame, you must pass a wildcard filename to :py:func:`!export_file`.
+        This filename must contain exactly one ``*`` character as in the following example, which will be replaced with the
         animation frame number::
 
-            export_file(node, "output.*.dump", "lammps_dump", multiple_frames = True)
+            export_file(node, "output.*.dump", "lammps_dump", multiple_frames=True)
             
-        The above line is equivalent to the following Python loop::
+        The above call is equivalent to the following Python loop::
         
             for i in range(node.source.num_frames):
-                export_file(node, "output.%i.dump" % i, "lammps_dump", frame = i)
+                export_file(node, "output.%i.dump" % i, "lammps_dump", frame=i)
        
         **LAMMPS atom style**
         
         When writing files in the *lammps_data* format, the LAMMPS atom style "atomic" is used by default. If you want to create 
-        a data file with a different atom style, it must be explicitly selected using the ``atom_style`` keyword parameter::
+        a data file with a different atom style, the style can be selected using the ``atom_style`` keyword parameter::
         
-            export_file(node, "output.data", "lammps_data", atom_tyle = "bond")
+            export_file(node, "output.data", "lammps_data", atom_tyle="bond")
         
-        The following LAMMPS atom styles are currently supported by OVITO:
-        ``angle``, ``atomic``, ``body``, ``bond``, ``charge``, ``dipole``, ``full``, ``molecular``.
+        The following `LAMMPS atom styles <http://lammps.sandia.gov/doc/atom_style.html>`_ are currently supported by OVITO:
+        ``angle``, ``atomic``, ``bond``, ``charge``, ``dipole``, ``full``, ``molecular``, ``sphere``.
         
         **Global attributes**
         
         The *txt* file format allows you to export global quantities computed by OVITO's data pipeline to a text file. 
-        For example, to write out the number of FCC atoms identified by the :py:class:`~ovito.modifiers.CommonNeighborAnalysisModifier`
-        as a function of simulation time one would do the following::
+        For example, to write out the number of FCC atoms identified by a :py:class:`~ovito.modifiers.CommonNeighborAnalysisModifier`
+        as a function of simulation time, one would do the following::
         
             export_file(node, "data.txt", "txt", 
-                columns = ["Timestep", "CommonNeighborAnalysis.counts.FCC"], 
-                multiple_frames = True)
+                columns=["Timestep", "CommonNeighborAnalysis.counts.FCC"], 
+                multiple_frames=True)
             
-        See the documentation of an analysis modifier to find out which global quantities it 
-        outputs. From a script you can determine which :py:attr:`~ovito.data.DataCollection.attributes` are  available for export as follows::
+        See the documentation of each analysis modifier to find out which global quantities it 
+        computes. At runtime, you can determine which :py:attr:`~ovito.data.DataCollection.attributes` are available for export as follows::
         
             print(node.compute().attributes)
 
