@@ -70,16 +70,17 @@
 
   <para>
     Voronoi polyhedra are known to be unstable with regard to small pertubations of the particle positions in 
-    many cases. To address this issue, at least partially, the modifier provides two threshold parameters for the
-    <emphasis>area</emphasis> of Voronoi faces and the <emphasis>length</emphasis> of face edges, respectively.    
+    many cases. To address this issue, at least partially, the modifier provides threshold parameters for the
+    <emphasis>area</emphasis> of Voronoi faces and the <emphasis>length</emphasis> of face edges to filter out very small,
+    almost degenerate faces and edges.
   </para>
   <para>
-    If a face of a particle's Voronoi polyhedron has an area below the specified area threshold, then this face is not counted toward
-    the coordination number of the particle. 
-    Correspondingly, if an edge of Voronoi face is shorter than the specified edge length threshold, then this edge is not counted toward
-    the order of the Voronoi face. 
-    The purpose of these two thresholds is to filter our very small faces/edges that show up sporadically
-    in the presence of pertubations of the particle positions. Also see <link xlink:href="http://www.pnas.org/content/112/43/E5769.short">this paper on the topic</link>.  
+    If an edge of a Voronoi face is shorter than the specified edge length threshold, then this edge is not counted toward
+    the order of the Voronoi face. Furthermore, if the face's area is below the area threshold, then the face is 
+    not included in the computed Voronoi index and it also not counted toward the coordination number of the central particle.
+    The threshold face area can either be specified as an absolute value or relative to the total surface area of the Voronoi polyhedron.
+    The purpose of these thresholds is to exclude very small faces/edges, which occur sporadically
+    in the presence of pertubations, from the analysis and the counting. Also see <link xlink:href="http://www.pnas.org/content/112/43/E5769.short">this paper on the topic</link>.
   </para>
   </simplesect>
   
@@ -88,16 +89,16 @@
 
   <para>
     The algorithm calculates the Voronoi tessellation of the finite volume enclosed by the simulation cell (not 
-    infinite space). Thus, Voronoi cells are truncated at the simulation box boundaries (unless periodic boundary conditions are used).
-    No computation will be performed for particles located outside the simulation box 
+    infinite space!). Thus, Voronoi cells get truncated at the simulation box boundaries (unless periodic boundary conditions are active).
+    Accordingly, no computation will be performed for particles located outside the finite simulation box 
     (but they still affect the Voronoi cells of particles inside the box).
   </para>
 
   <para>
-    Particles located exactly on the simulation box boundaries (along a non-periodic direction) also pose a problem.
+    Particles located exactly on the simulation box boundaries (in a non-periodic direction) pose a problem.
     The Voronoi cell of such particles is singular and the construction algorithm may stop with the error message "Could not compute Voronoi cell for some particles".
-    The solution to this kind of problem is to slightly enlarge the simulation box to fully include all particles. 
-    This can be done, for example, by using the <link linkend="particles.modifiers.affine_transformation">Affine Transformation</link> modifier to scale the box size.
+    The solution to this type of problem is to slightly enlarge the simulation box to fully include all particles. 
+    This can be done, for example, by using the <link linkend="particles.modifiers.affine_transformation">Affine Transformation</link> modifier to scale the box size by a factor greater than 1.
   </para>
 
   </simplesect>
@@ -108,12 +109,26 @@
     <variablelist>
 
       <varlistentry>
-        <term>Face area threshold</term>
+        <term>Absolute face area threshold</term>
         <listitem>
           <para>
-             Specifies a minimum area for faces of a Voronoi cell. The modifier will ignore any Voronoi cell faces with an area smaller than this
-             threshold when computing the coordination number and the Voronoi index of particles. 
+             Specifies a minimum area for the individual faces of a Voronoi cell. The modifier will ignore any Voronoi cell face whose area is smaller than this
+             threshold area when computing the coordination number and the Voronoi index of a particle. 
              The threshold is an absolute value in units of length squared (in whatever units of length your input data is given). 
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Relative face area threshold</term>
+        <listitem>
+          <para>
+             Specifies a minimum area for the individual faces of a Voronoi cell in terms of a fraction of the total surface area of a Voronoi polyhedron. 
+             The modifier will ignore any Voronoi cell face whose area is smaller than this
+             threshold when computing the coordination number and the Voronoi index of a particle. 
+             The relative threshold is specified as a fraction of the total surface area of the Voronoi polyhedron the faces belong to. 
+				     For example, you can use this threshold to exclude those faces from the analysis with an area less than 1% of the total area of the polyhedron surface,
+             like it was done in <link xlink:href="http://dx.doi.org/10.1038/nature04421">this paper</link>.
           </para>
         </listitem>
       </varlistentry>
@@ -143,7 +158,7 @@
         <term>Edge length threshold</term>
         <listitem>
           <para>
-             Specifies the minimum length an edge must have to be considered in the Voronoi index calculation. Edges that are shorter
+             Specifies the minimum length a face edge must have to be considered in the Voronoi index calculation. Edges that are shorter
              than this threshold will be ignored when counting the number of edges of a Voronoi face.
              The threshold value is given in absolute units of length (depending on your input data).
           </para>
@@ -154,15 +169,14 @@
         <term>Generate neighbor bonds</term>
         <listitem>
           <para>
-             If this option is enabled, the modifier outputs the bonds between pairs of
-             neighboring particles. A bond is generated for every Voronoi face whose
-             area is larger than the specified face area threshold, and which has at least three edges
+             If this option is enabled, the modifier generates bonds between neighboring particles that share a Voronoi face. 
+             A bond is generated for every Voronoi face whose area is larger than the face area threshold and which has at least three edges
              longer than the specified edge length threshold.
           </para>
           <para>
              Note that bonds in periodic simulation cells are computed using the minimum image convention,
              which requires that the cell is at least twice as large in each periodic direction as the 
-             longest neighbor bond. In cases where the cell is shorter, the computed bonds might be incorrect.
+             longest neighbor bond. In cases where the cell is shorter, the computed bonds may be incorrect.
           </para>
         </listitem>
       </varlistentry>

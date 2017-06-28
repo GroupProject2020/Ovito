@@ -21,6 +21,9 @@ modifier.edge_threshold = 0.1
 print("  face_threshold: {}".format(modifier.face_threshold))
 modifier.face_threshold = 0.04
 
+print("  relative_face_threshold: {}".format(modifier.relative_face_threshold))
+modifier.relative_face_threshold = 0.01
+
 print("  only_selected: {}".format(modifier.only_selected))
 modifier.only_selected = False
 

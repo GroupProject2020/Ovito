@@ -1336,13 +1336,27 @@ void defineModifiersSubmodule(py::module parentModule)
 				"\n\n"
 				":Default: ``False``\n")
 		.def_property("face_threshold", &VoronoiAnalysisModifier::faceThreshold, &VoronoiAnalysisModifier::setFaceThreshold,
-				"Specifies a minimum area for faces of a Voronoi cell. The modifier will ignore any Voronoi cell faces with an area smaller than this "
-				"threshold when computing the coordination number and the Voronoi index of particles."
+				"Specifies a minimum area for individual Voronoi faces in terms of an absolute area. The algorithm will ignore any face of a Voronoi polyhedron with an area smaller than this "
+				"threshold when computing the coordination number and the Voronoi index of a particle. "
+				"The threshold parameter is an absolute area given in units of length squared (in whatever units your input data is given). "
+				"\n\n"
+				"Note that this absolute area threshold and the :py:attr:`.relative_face_threshold` are applied simultaneously. "
+				"\n\n"
+				":Default: 0.0\n")
+		.def_property("relative_face_threshold", &VoronoiAnalysisModifier::relativeFaceThreshold, &VoronoiAnalysisModifier::setRelativeFaceThreshold,
+				"Specifies a minimum area for Voronoi faces in terms of a fraction of total area of the Voronoi polyhedron surface. The algorithm will ignore any face of a Voronoi polyhedron with an area smaller than this "
+				"threshold when computing the coordination number and the Voronoi index of particles. "
+				"The threshold parameter is specified as a fraction of the total surface area of the Voronoi polyhedron the faces belong to. "
+				"For example, a threshold value of 0.01 would remove those faces from the analysis with an area less than 1% of the total area "
+				"of the polyhedron surface. "
+				"\n\n"
+				"Note that this relative threshold and the absolute :py:attr:`.face_threshold` are applied simultaneously. "
 				"\n\n"
 				":Default: 0.0\n")
 		.def_property("edge_threshold", &VoronoiAnalysisModifier::edgeThreshold, &VoronoiAnalysisModifier::setEdgeThreshold,
 				"Specifies the minimum length an edge must have to be considered in the Voronoi index calculation. Edges that are shorter "
-				"than this threshold will be ignored when counting the number of edges of a Voronoi face."
+				"than this threshold will be ignored when counting the number of edges of a Voronoi face. "
+				"The threshold parameter is an absolute value in units of length of your input data. "
 				"\n\n"
 				":Default: 0.0\n")
 		.def_property("compute_indices", &VoronoiAnalysisModifier::computeIndices, &VoronoiAnalysisModifier::setComputeIndices,

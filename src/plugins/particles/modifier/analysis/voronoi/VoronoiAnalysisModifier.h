@@ -76,7 +76,7 @@ private:
 		/// Constructor.
 		VoronoiAnalysisEngine(const TimeInterval& validityInterval, ParticleProperty* positions, ParticleProperty* selection, std::vector<FloatType>&& radii,
 							const SimulationCell& simCell,
-							int edgeCount, bool computeIndices, bool computeBonds, FloatType edgeThreshold, FloatType faceThreshold) :
+							int edgeCount, bool computeIndices, bool computeBonds, FloatType edgeThreshold, FloatType faceThreshold, FloatType relativeFaceThreshold) :
 			ComputeEngine(validityInterval),
 			_positions(positions),
 			_selection(selection),
@@ -85,6 +85,7 @@ private:
 			_maxFaceOrder(0),
 			_edgeThreshold(edgeThreshold),
 			_faceThreshold(faceThreshold),
+			_relativeFaceThreshold(relativeFaceThreshold),
 			_voronoiVolumeSum(0),
 			_simulationBoxVolume(0),
 			_coordinationNumbers(new ParticleProperty(positions->size(), ParticleProperty::CoordinationProperty, 0, true)),
@@ -120,6 +121,7 @@ private:
 
 		FloatType _edgeThreshold;
 		FloatType _faceThreshold;
+		FloatType _relativeFaceThreshold;
 		double _simulationBoxVolume;
 		std::atomic<double> _voronoiVolumeSum;
 		std::atomic<int> _maxFaceOrder;
@@ -159,6 +161,9 @@ private:
 
 	/// The minimum area for a face to be counted.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, faceThreshold, setFaceThreshold);
+
+	/// The minimum area for a face to be counted relative to the total polyhedron surface.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, relativeFaceThreshold, setRelativeFaceThreshold);
 
 	/// Controls whether the modifier output nearest neighbor bonds.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, computeBonds, setComputeBonds);

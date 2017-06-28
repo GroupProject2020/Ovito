@@ -57,6 +57,11 @@ void VoronoiAnalysisModifierEditor::createUI(const RolloutInsertionParameters& r
 	gridlayout->addWidget(faceThresholdPUI->label(), row, 0);
 	gridlayout->addLayout(faceThresholdPUI->createFieldLayout(), row++, 1);
 
+	// Relative face threshold.
+	FloatParameterUI* relativeFaceThresholdPUI = new FloatParameterUI(this, PROPERTY_FIELD(VoronoiAnalysisModifier::relativeFaceThreshold));
+	gridlayout->addWidget(relativeFaceThresholdPUI->label(), row, 0);
+	gridlayout->addLayout(relativeFaceThresholdPUI->createFieldLayout(), row++, 1);
+
 	// Compute indices.
 	BooleanGroupBoxParameterUI* computeIndicesPUI = new BooleanGroupBoxParameterUI(this, PROPERTY_FIELD(VoronoiAnalysisModifier::computeIndices));
 	gridlayout->addWidget(computeIndicesPUI->groupBox(), row++, 0, 1, 2);

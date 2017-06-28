@@ -37,6 +37,7 @@ DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, computeBonds, "ComputeBonds");
 DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, edgeCount, "EdgeCount");
 DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, edgeThreshold, "EdgeThreshold");
 DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, faceThreshold, "FaceThreshold");
+DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, relativeFaceThreshold, "RelativeFaceThreshold");
 DEFINE_FLAGS_REFERENCE_FIELD(VoronoiAnalysisModifier, bondsDisplay, "BondsDisplay", BondsDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, onlySelected, "Use only selected particles");
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, useRadii, "Use particle radii");
@@ -44,10 +45,12 @@ SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, computeIndices, "Compute Voron
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, computeBonds, "Generate neighbor bonds");
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, edgeCount, "Maximum edge count");
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, edgeThreshold, "Edge length threshold");
-SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, faceThreshold, "Face area threshold");
+SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, faceThreshold, "Absolute face area threshold");
+SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, relativeFaceThreshold, "Relative face area threshold");
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, bondsDisplay, "Bonds display");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(VoronoiAnalysisModifier, edgeThreshold, WorldParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(VoronoiAnalysisModifier, faceThreshold, FloatParameterUnit, 0);
+SET_PROPERTY_FIELD_UNITS_AND_RANGE(VoronoiAnalysisModifier, relativeFaceThreshold, PercentParameterUnit, 0, 1);
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(VoronoiAnalysisModifier, edgeCount, IntegerParameterUnit, 3, 18);
 
 /******************************************************************************
@@ -56,7 +59,8 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(VoronoiAnalysisModifier, edgeCount, IntegerPa
 VoronoiAnalysisModifier::VoronoiAnalysisModifier(DataSet* dataset) : AsynchronousParticleModifier(dataset),
 	_onlySelected(false), _computeIndices(false), _edgeCount(6),
 	_useRadii(false), _edgeThreshold(0), _faceThreshold(0),
-	_simulationBoxVolume(0), _voronoiVolumeSum(0), _maxFaceOrder(0), _computeBonds(false)
+	_simulationBoxVolume(0), _voronoiVolumeSum(0), _maxFaceOrder(0), _computeBonds(false),
+	_relativeFaceThreshold(0)
 {
 	INIT_PROPERTY_FIELD(onlySelected);
 	INIT_PROPERTY_FIELD(useRadii);
@@ -65,6 +69,7 @@ VoronoiAnalysisModifier::VoronoiAnalysisModifier(DataSet* dataset) : Asynchronou
 	INIT_PROPERTY_FIELD(edgeCount);
 	INIT_PROPERTY_FIELD(edgeThreshold);
 	INIT_PROPERTY_FIELD(faceThreshold);
+	INIT_PROPERTY_FIELD(relativeFaceThreshold);
 	INIT_PROPERTY_FIELD(bondsDisplay);
 
 	// Create the display object for bonds rendering.
@@ -115,7 +120,8 @@ std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> VoronoiAnalysisModi
 			computeIndices(),
 			computeBonds(),
 			edgeThreshold(),
-			faceThreshold());
+			faceThreshold(),
+			relativeFaceThreshold());
 }
 
 /******************************************************************************
@@ -135,15 +141,22 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 	// Add additional factor of 4 because Voronoi cell vertex coordinates are all scaled by factor of 2.
 	FloatType sqEdgeThreshold = _edgeThreshold * _edgeThreshold * 4;
 
-	auto processCell = [this, sqEdgeThreshold](voro::voronoicell_neighbor& v, size_t index, QMutex* mutex) {
+	auto processCell = [this, sqEdgeThreshold](voro::voronoicell_neighbor& v, size_t index, QMutex* mutex) 
+	{
 		// Compute cell volume.
 		double vol = v.volume();
 		_atomicVolumes->setFloat(index, (FloatType)vol);
 
-		// Compute total volume of Voronoi cells.
+		// Accumulate total volume of Voronoi cells.
 		// Loop is for lock-free write access to shared max counter.
 		double prevVolumeSum = _voronoiVolumeSum;
 		while(!_voronoiVolumeSum.compare_exchange_weak(prevVolumeSum, prevVolumeSum + vol));
+
+		// Compute total surface area of Voronoi cell when relative area threshold is used to 
+		// filter out small faces.
+		double faceAreaThreshold = _faceThreshold;
+		if(_relativeFaceThreshold > 0)
+			faceAreaThreshold = std::max(v.surface_area() * _relativeFaceThreshold, faceAreaThreshold);
 
 		int localMaxFaceOrder = 0;
 		// Iterate over the Voronoi faces and their edges.
@@ -170,7 +183,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 								faceOrder++;
 						}
 						else faceOrder++;
-						if(_faceThreshold != 0) {
+						if(faceAreaThreshold != 0) {
 							Vector3 w(v.pts[3*m] - v.pts[3*i], v.pts[3*m+1] - v.pts[3*i+1], v.pts[3*m+2] - v.pts[3*i+2]);
 							area += d.cross(w).length() / 8;
 							d = w;
@@ -180,7 +193,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 						k = m;
 					}
 					while(k != i);
-					if((_faceThreshold == 0 || area > _faceThreshold) && faceOrder >= 3) {
+					if((faceAreaThreshold == 0 || area > faceAreaThreshold) && faceOrder >= 3) {
 						coordNumber++;
 						if(faceOrder > localMaxFaceOrder)
 							localMaxFaceOrder = faceOrder;

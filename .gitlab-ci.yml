@@ -58,6 +58,9 @@ build_linux_python3:
       - ctest --output-on-failure
       - linkchecker --check-extern ../install/share/ovito/doc/manual/html/index.html
            --ignore-url=https://dx.doi.org/10.1088/0965-0393/24/5/055007
+           --ignore-url=http://stacks.iop.org/0965-0393/18/015012
+           --ignore-url=http://dx.doi.org/10.1088/0965-0393/20/3/035012
+           --ignore-url=http://dx.doi.org/10.1088/0965-0393/20/4/045021
 
 build_linux_python2:
    stage: build
