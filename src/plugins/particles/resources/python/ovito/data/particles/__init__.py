@@ -438,7 +438,7 @@ class NearestNeighborFinder(ovito.plugins.Particles.NearestNeighborFinder):
     .. literalinclude:: ../example_snippets/nearest_neighbor_finder.py    
        :lines: 19-
 
-    If you want to find all neighbor particles within a certain cutoff radius of a central particle,
+    Note, if you want to find all neighbor particles within a certain cutoff radius of a central particle,
     use the :py:class:`CutoffNeighborFinder` class instead.
     """
         
@@ -490,7 +490,7 @@ class NearestNeighborFinder(ovito.plugins.Particles.NearestNeighborFinder):
         Unlike the :py:meth:`find` method, which queries the nearest neighbors of a physical particle, the :py:meth:`!find_at` method allows  
         searching for neareby particles at arbitrary locations in space. 
          
-        :param coords: A (x,y,z) coordinate triple specifying the spatial location where the *N* nearest particles should be queried.
+        :param coords: A (x,y,z) coordinate triplet specifying the spatial location where the *N* nearest particles should be queried.
         :returns: A Python iterator that visits the *N* nearest neighbors in order of ascending distance. 
                   For each visited particle the iterator returns an object with the following attributes:
                   

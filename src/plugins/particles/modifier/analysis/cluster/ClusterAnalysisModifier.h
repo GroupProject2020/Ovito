@@ -25,16 +25,23 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/data/ParticleProperty.h>
 #include <plugins/particles/util/CutoffNeighborFinder.h>
+#include <plugins/particles/data/BondsStorage.h>
 #include "../../AsynchronousParticleModifier.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
 /**
- * \brief This modifier determines decomposes the particle set into clusters.
+ * \brief This modifier builds clusters of particles.
  */
 class OVITO_PARTICLES_EXPORT ClusterAnalysisModifier : public AsynchronousParticleModifier
 {
 public:
+
+	enum NeighborMode {
+		CutoffRange,	///< Treats particles as neighbors which are within a certain distance.
+		Bonding,		///< Treats particles as neighbors which are connected by a bond.
+	};
+	Q_ENUMS(NeighborMode);
 
 	/// Constructor.
 	Q_INVOKABLE ClusterAnalysisModifier(DataSet* dataset);
@@ -64,9 +71,9 @@ private:
 	public:
 
 		/// Constructor.
-		ClusterAnalysisEngine(const TimeInterval& validityInterval, ParticleProperty* positions, const SimulationCell& simCell, FloatType cutoff, bool sortBySize, ParticleProperty* selection) :
+		ClusterAnalysisEngine(const TimeInterval& validityInterval, ParticleProperty* positions, const SimulationCell& simCell, bool sortBySize, ParticleProperty* selection) :
 			ComputeEngine(validityInterval),
-			_positions(positions), _simCell(simCell), _cutoff(cutoff),
+			_positions(positions), _simCell(simCell), 
 			_sortBySize(sortBySize),
 			_selection(selection),
 			_largestClusterSize(0),
@@ -74,6 +81,9 @@ private:
 
 		/// Computes the modifier's results and stores them in this object for later retrieval.
 		virtual void perform() override;
+
+		/// Performs the actual clustering algorithm.
+		virtual void doClustering() = 0;
 
 		/// Returns the property storage that contains the input particle positions.
 		ParticleProperty* positions() const { return _positions.data(); }
@@ -84,9 +94,6 @@ private:
 		/// Returns the property storage that contains the computed cluster number of each particle.
 		ParticleProperty* particleClusters() const { return _particleClusters.data(); }
 
-		/// Returns the cutoff radius.
-		FloatType cutoff() const { return _cutoff; }
-
 		/// Returns the property storage that contains the particle selection (optional).
 		ParticleProperty* selection() const { return _selection.data(); }
 
@@ -96,9 +103,8 @@ private:
 		/// Returns the size of the largest cluster.
 		size_t largestClusterSize() const { return _largestClusterSize; }
 
-	private:
+	protected:
 
-		FloatType _cutoff;
 		SimulationCell _simCell;
 		bool _sortBySize;
 		size_t _numClusters;
@@ -108,16 +114,61 @@ private:
 		QExplicitlySharedDataPointer<ParticleProperty> _particleClusters;
 	};
 
+	/// Computes the modifier's results.
+	class CutoffClusterAnalysisEngine : public ClusterAnalysisEngine
+	{
+	public:
+
+		/// Constructor.
+		CutoffClusterAnalysisEngine(const TimeInterval& validityInterval, ParticleProperty* positions, const SimulationCell& simCell, bool sortBySize, ParticleProperty* selection, FloatType cutoff) :
+			ClusterAnalysisEngine(validityInterval, positions, simCell, sortBySize, selection),
+			_cutoff(cutoff) {}
+
+		/// Performs the actual clustering algorithm.
+		virtual void doClustering() override;
+
+		/// Returns the cutoff radius.
+		FloatType cutoff() const { return _cutoff; }
+
+	private:
+
+		FloatType _cutoff;
+	};
+
+	/// Computes the modifier's results.
+	class BondClusterAnalysisEngine : public ClusterAnalysisEngine
+	{
+	public:
+
+		/// Constructor.
+		BondClusterAnalysisEngine(const TimeInterval& validityInterval, ParticleProperty* positions, const SimulationCell& simCell, bool sortBySize, ParticleProperty* selection, BondsStorage* bonds) :
+			ClusterAnalysisEngine(validityInterval, positions, simCell, sortBySize, selection),
+			_bonds(bonds) {}
+
+		/// Performs the actual clustering algorithm.
+		virtual void doClustering() override;
+
+		/// Returns the list of input bonds.
+		const BondsStorage& bonds() const { return *_bonds; }
+
+	private:
+
+		QExplicitlySharedDataPointer<BondsStorage> _bonds;
+	};
+
 	/// This stores the cached results of the modifier.
 	QExplicitlySharedDataPointer<ParticleProperty> _particleClusters;
 
-	/// Controls the cutoff radius for the neighbor lists.
+	/// The neighbor mode.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(NeighborMode, neighborMode, setNeighborMode);
+
+	/// The cutoff radius for the distance-based neighbor criterion.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, cutoff, setCutoff);
 
 	/// Controls whether analysis should take into account only selected particles.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, onlySelectedParticles, setOnlySelectedParticles);
 
-	/// Controls the sorting of cluster IDs by size.
+	/// Controls the sorting of cluster IDs by cluster size.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, sortBySize, setSortBySize);
 
 	/// The number of clusters identified during the last evaluation of the modifier.

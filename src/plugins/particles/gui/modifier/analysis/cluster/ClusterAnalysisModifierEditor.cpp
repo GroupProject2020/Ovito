@@ -23,6 +23,7 @@
 #include <plugins/particles/modifier/analysis/cluster/ClusterAnalysisModifier.h>
 #include <gui/properties/BooleanParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
+#include <gui/properties/IntegerRadioButtonParameterUI.h>
 #include "ClusterAnalysisModifierEditor.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -45,20 +46,30 @@ void ClusterAnalysisModifierEditor::createUI(const RolloutInsertionParameters& r
 
 	QGridLayout* gridlayout = new QGridLayout();
 	gridlayout->setContentsMargins(4,4,4,4);
-	gridlayout->setColumnStretch(1, 1);
+	gridlayout->setColumnStretch(2, 1);
+	gridlayout->setColumnMinimumWidth(0, 10);
+
+	gridlayout->addWidget(new QLabel(tr("Neighbor mode:")), 0, 0, 1, 3);
+
+	IntegerRadioButtonParameterUI* neighborModePUI = new IntegerRadioButtonParameterUI(this, PROPERTY_FIELD(ClusterAnalysisModifier::neighborMode));
+	QRadioButton* cutoffModeBtn = neighborModePUI->addRadioButton(ClusterAnalysisModifier::CutoffRange, tr("Cutoff distance:"));
+	gridlayout->addWidget(cutoffModeBtn, 1, 1);
+	QRadioButton* bondModeBtn = neighborModePUI->addRadioButton(ClusterAnalysisModifier::Bonding, tr("Bonds"));
+	gridlayout->addWidget(bondModeBtn, 2, 1, 1, 2);
 
 	// Cutoff parameter.
 	FloatParameterUI* cutoffRadiusPUI = new FloatParameterUI(this, PROPERTY_FIELD(ClusterAnalysisModifier::cutoff));
-	gridlayout->addWidget(cutoffRadiusPUI->label(), 0, 0);
-	gridlayout->addLayout(cutoffRadiusPUI->createFieldLayout(), 0, 1);
+	gridlayout->addLayout(cutoffRadiusPUI->createFieldLayout(), 1, 2);
+	cutoffRadiusPUI->setEnabled(false);
+	connect(cutoffModeBtn, &QRadioButton::toggled, cutoffRadiusPUI, &FloatParameterUI::setEnabled);
 
 	// Sort by size
 	BooleanParameterUI* sortBySizeUI = new BooleanParameterUI(this, PROPERTY_FIELD(ClusterAnalysisModifier::sortBySize));
-	gridlayout->addWidget(sortBySizeUI->checkBox(), 1, 0, 1, 2);
+	gridlayout->addWidget(sortBySizeUI->checkBox(), 3, 0, 1, 3);
 
 	// Use only selected particles.
 	BooleanParameterUI* onlySelectedParticlesUI = new BooleanParameterUI(this, PROPERTY_FIELD(ClusterAnalysisModifier::onlySelectedParticles));
-	gridlayout->addWidget(onlySelectedParticlesUI->checkBox(), 2, 0, 1, 2);
+	gridlayout->addWidget(onlySelectedParticlesUI->checkBox(), 4, 0, 1, 3);
 
 	layout->addLayout(gridlayout);
 

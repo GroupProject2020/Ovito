@@ -24,6 +24,8 @@ print("Parameter defaults:")
 
 print("  cutoff: {}".format(modifier.cutoff))
 modifier.cutoff = 2.8
+print("  neighbor_mode: {}".format(modifier.neighbor_mode))
+modifier.neighbor_mode = ClusterAnalysisModifier.NeighborMode.CutoffRange
 print("  sort_by_size: {}".format(modifier.sort_by_size))
 modifier.sort_by_size = False
 
@@ -39,3 +41,8 @@ modifier.sort_by_size = True
 node.compute()
 print(node.output.attributes['ClusterAnalysis.largest_size'])
 assert(node.output.attributes['ClusterAnalysis.largest_size'] >= 1)
+
+node.modifiers.insert(2, VoronoiAnalysisModifier(generate_bonds=True))
+modifier.neighbor_mode = ClusterAnalysisModifier.NeighborMode.Bonding
+node.compute()
+assert(node.output.attributes['ClusterAnalysis.largest_size'] == node.output.number_of_particles)
