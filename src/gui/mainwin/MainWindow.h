@@ -122,6 +122,12 @@ protected:
 	/// Is called when the window receives an event.
 	virtual bool event(QEvent *event) override;
 
+	/// Called by the system when a drag is in progress and the mouse enters this window.
+	virtual void dragEnterEvent(QDragEnterEvent* event) override;
+
+	/// Called by the system when the drag is dropped on this window.
+	virtual void dropEvent(QDropEvent* event) override;
+
 private:
 
 	/// Creates the main menu.

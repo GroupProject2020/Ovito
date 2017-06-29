@@ -205,6 +205,9 @@ MainWindow::MainWindow() : _datasetContainer(this)
 	// Update window title when document path changes.
 	connect(&_datasetContainer, &DataSetContainer::filePathChanged, [this](const QString& filePath) { setWindowFilePath(filePath); });
 	connect(&_datasetContainer, &DataSetContainer::modificationStatusChanged, [this](bool isClean) { setWindowModified(!isClean); });
+
+	// Accept files via drag & drop.
+	setAcceptDrops(true);
 }
 
 /******************************************************************************
@@ -481,6 +484,40 @@ void MainWindow::setWindowFilePath(const QString& filePath)
 	QMainWindow::setWindowFilePath(filePath);
 }
 
+/******************************************************************************
+* Called by the system when a drag is in progress and the mouse enters this 
+* window.
+******************************************************************************/
+void MainWindow::dragEnterEvent(QDragEnterEvent* event)
+{
+	if(event->mimeData()->hasUrls())
+		event->acceptProposedAction();
+}
+
+/******************************************************************************
+* Called by the system when the drag is dropped on this window.
+******************************************************************************/
+void MainWindow::dropEvent(QDropEvent* event)
+{
+    event->acceptProposedAction();
+	try {
+		for(const QUrl& url : event->mimeData()->urls()) {
+			if(url.fileName().endsWith(".ovito", Qt::CaseInsensitive)) {
+				if(url.isLocalFile()) {
+					if(!datasetContainer().askForSaveChanges())
+						continue;
+					datasetContainer().fileLoad(url.toLocalFile());
+				}
+			}
+			else {
+				datasetContainer().importFile(url);
+			}
+		}
+	}
+	catch(const Exception& ex) {
+		ex.reportError();
+	}
+}
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

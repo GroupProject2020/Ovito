@@ -46,7 +46,7 @@ void ParticleInformationApplet::openUtility(MainWindow* mainWindow, RolloutConta
 
 	// Create a rollout.
 	_panel = new QWidget();
-	container->addRollout(_panel, tr("Particle information"), rolloutParams.useAvailableSpace());
+	container->addRollout(_panel, tr("Particle information"), rolloutParams.useAvailableSpace(), "utilities.particle_inspection.html");
 
     // Create the rollout contents.
 	QVBoxLayout* layout = new QVBoxLayout(_panel);
