@@ -120,6 +120,8 @@ std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> ElasticStrainModifi
 	// Get modifier inputs.
 	ParticlePropertyObject* posProperty = expectStandardProperty(ParticleProperty::PositionProperty);
 	SimulationCellObject* simCell = expectSimulationCell();
+	if(simCell->is2D())
+		throwException(tr("The elastic strain calculation modifier does not support 2d simulation cells."));
 
 	// Build list of preferred crystal orientations.
 	std::vector<Matrix3> preferredCrystalOrientations;

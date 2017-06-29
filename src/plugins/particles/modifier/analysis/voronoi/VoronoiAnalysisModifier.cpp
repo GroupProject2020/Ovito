@@ -98,6 +98,8 @@ std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> VoronoiAnalysisModi
 
 	// Get simulation cell.
 	SimulationCellObject* inputCell = expectSimulationCell();
+	if(inputCell->is2D())
+		throwException(tr("The Voronoi modifier does not support 2d simulation cells."));
 
 	// Get selection particle property.
 	ParticlePropertyObject* selectionProperty = nullptr;

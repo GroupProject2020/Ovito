@@ -93,6 +93,8 @@ std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> ConstructSurfaceMod
 	if(onlySelectedParticles())
 		selProperty = expectStandardProperty(ParticleProperty::SelectionProperty);
 	SimulationCellObject* simCell = expectSimulationCell();
+	if(simCell->is2D())
+		throwException(tr("The construct surface mesh modifier does not support 2d simulation cells."));
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	return std::make_shared<ConstructSurfaceEngine>(validityInterval, posProperty->storage(),

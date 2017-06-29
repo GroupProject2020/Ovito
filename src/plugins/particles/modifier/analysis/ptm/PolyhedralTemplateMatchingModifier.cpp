@@ -93,6 +93,8 @@ std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> PolyhedralTemplateM
 	// Get modifier input.
 	ParticlePropertyObject* posProperty = expectStandardProperty(ParticleProperty::PositionProperty);
 	SimulationCellObject* simCell = expectSimulationCell();
+	if(simCell->is2D())
+		throwException(tr("The PTM modifier does not support 2d simulation cells."));
 
 	// Get particle selection.
 	ParticleProperty* selectionProperty = nullptr;

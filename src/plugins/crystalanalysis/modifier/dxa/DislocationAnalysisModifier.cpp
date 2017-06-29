@@ -223,6 +223,8 @@ std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> DislocationAnalysis
 	// Get modifier inputs.
 	ParticlePropertyObject* posProperty = expectStandardProperty(ParticleProperty::PositionProperty);
 	SimulationCellObject* simCell = expectSimulationCell();
+	if(simCell->is2D())
+		throwException(tr("The DXA modifier does not support 2d simulation cells."));
 
 	// Get particle selection.
 	ParticleProperty* selectionProperty = nullptr;
