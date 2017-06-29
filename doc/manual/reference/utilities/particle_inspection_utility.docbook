@@ -12,17 +12,27 @@
 
     <para>
      <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/utilities/particle_inspection_panel.png" format="PNG" scale="80"/>
+       <imagedata fileref="images/utilities/particle_inspection_panel.png" format="PNG" scale="60"/>
      </imageobject></mediaobject></screenshot></informalfigure>
      
-      This utility applet allows you to inspect all properties associated with individual particles (which you pick
-      using the mouse) and to measure distances and angles between pairs and triplets of particles.
+      This utility applet allows you to inspect the property values associated with individual particles 
+      and to measure distances and angles between pairs and triplets of particles.
+      The utility is invoked from "Utilities" tab of OVITO's command panel shown on the right.
    </para>
    <para>
-      The utility can be invoked from "Utilities" tab of OVITO's command panel shown on the right.
+      After opening the utility, you can pick individual particles in the viewports using the mouse.
+      The current values of their properties are displayed in the utility's text panel.
+      It is possible to select multiple particles at once, in which case the pair-wise distances
+      between all selected particles and angles formed by all triplets are computed by OVITO.
    </para>
    <para>
-      Note: Particle indices reported by the utility are zero-based and always refer to the set of
+      The expression text box allows you to enter an expression to select certain particles based on their properties
+      instead of picking them using the mouse. The syntax of the Boolean expression must follow
+      the same rules as for the <link linkend="particles.modifiers.expression_select">Expression Select</link> modifier.
+      Note that, for performance reasons, the utility only displays the properties of the first ten particles that match the expression.
+   </para>
+   <para>
+      Note that particle indices reported by the utility are zero-based and always refer to the set of
       of particles currently visible. Thus, if you delete some particles, the indices of the remaining
       ones are shifted (this is in contrast to particle <emphasis>identifiers</emphasis>, which stick).
    </para>

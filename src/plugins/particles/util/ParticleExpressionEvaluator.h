@@ -53,6 +53,12 @@ public:
 	/// Initializes the parser object and evaluates the expressions for every particle.
 	void evaluate(const std::function<void(size_t,size_t,double)>& callback, const std::function<bool(size_t)>& filter = std::function<bool(size_t)>());
 
+	/// Returns the maximum number of threads used to evaluate the expression (or 0 if all processor cores are used).
+	size_t maxThreadCount() const { return _maxThreadCount; }
+
+	/// Sets The maximum number of threads used to evaluate the expression (or 0 if all processor cores should be used).
+	void setMaxThreadCount(size_t count) { _maxThreadCount = count; }
+
 	/// Returns the list of expressions.
 	const std::vector<std::string>& expression() const { return _expressions; }
 
@@ -200,6 +206,9 @@ protected:
 
 	/// List of characters allowed in variable names.
 	static QByteArray _validVariableNameChars;
+
+	/// The maximum number of threads used to evaluate the expression.
+	size_t _maxThreadCount = 0;
 };
 
 OVITO_END_INLINE_NAMESPACE

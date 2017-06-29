@@ -56,13 +56,21 @@ public Q_SLOTS:
 	/// Updates the display of particle properties.
 	void updateInformationDisplay();
 
+	/// Switches back to the auto-generated selection expression.
+	void resetUserExpression() { _userSelectionExpression.clear(); }
+
 private:
 
 	MainWindow* _mainWindow;
+	AutocompleteTextEdit* _expressionEdit;
+	QString _userSelectionExpression;
 	QTextEdit* _infoDisplay;
-	QWidget* _panel;
+	QLabel* _displayHeader;
+	QWidget* _panel;	
 	ParticleInformationInputMode* _inputMode;
 	QMetaObject::Connection _timeChangeCompleteConnection;
+	
+	size_t _maxSelectionSize = 10;
 
 	Q_CLASSINFO("DisplayName", "Inspect particles");
 

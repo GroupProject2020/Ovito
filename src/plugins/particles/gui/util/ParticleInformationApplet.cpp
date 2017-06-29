@@ -28,8 +28,10 @@
 #include <gui/actions/ViewportModeAction.h>
 #include <gui/mainwin/MainWindow.h>
 #include <gui/viewport/ViewportWindow.h>
+#include <gui/widgets/general/AutocompleteTextEdit.h>
 #include <plugins/particles/objects/ParticlePropertyObject.h>
 #include <plugins/particles/objects/ParticleTypeProperty.h>
+#include <plugins/particles/util/ParticleExpressionEvaluator.h>
 #include "ParticleInformationApplet.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -51,11 +53,22 @@ void ParticleInformationApplet::openUtility(MainWindow* mainWindow, RolloutConta
     // Create the rollout contents.
 	QVBoxLayout* layout = new QVBoxLayout(_panel);
 	layout->setContentsMargins(4,4,4,4);
-	layout->setSpacing(4);
+	layout->setSpacing(2);
 
 	_inputMode = new ParticleInformationInputMode(this);
 	ViewportModeAction* pickModeAction = new ViewportModeAction(_mainWindow, tr("Selection mode"), this, _inputMode);
 
+	layout->addWidget(new QLabel(tr("Particle selection expression:")));
+	_expressionEdit = new AutocompleteTextEdit();
+	layout->addWidget(_expressionEdit);
+	connect(_expressionEdit, &AutocompleteTextEdit::editingFinished, this, [this]() {
+		_userSelectionExpression = _expressionEdit->toPlainText();
+		updateInformationDisplay();
+	});
+
+	layout->addSpacing(2);
+	_displayHeader = new QLabel(tr("Particle information:"));
+	layout->addWidget(_displayHeader);
 	_infoDisplay = new QTextEdit(_panel);
 	_infoDisplay->setReadOnly(true);
 	_infoDisplay->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
@@ -66,10 +79,28 @@ void ParticleInformationApplet::openUtility(MainWindow* mainWindow, RolloutConta
 #endif
 	layout->addWidget(_infoDisplay, 1);
 
+	// Install signal handlers to automatically update displayed information upon animation time change.
 	connect(&_mainWindow->datasetContainer(), &DataSetContainer::animationSettingsReplaced, this, &ParticleInformationApplet::onAnimationSettingsReplaced);
 	_timeChangeCompleteConnection = connect(_mainWindow->datasetContainer().currentSet()->animationSettings(), &AnimationSettings::timeChangeComplete, this, &ParticleInformationApplet::updateInformationDisplay);
+
+	// Also update displayed information whenever scene selection changes.
 	connect(&_mainWindow->datasetContainer(), &DataSetContainer::selectionChangeComplete, this, &ParticleInformationApplet::updateInformationDisplay);
+
+	// Activate the viewport input mode which allows picking particles with the mouse.
 	_mainWindow->viewportInputManager()->pushInputMode(_inputMode);
+
+	// Update the list of variables that can be referenced in the selection expression.
+	try {
+		if(DataSet* dataset = _mainWindow->datasetContainer().currentSet()) {
+			if(ObjectNode* node = dynamic_object_cast<ObjectNode>(dataset->selection()->front())) {
+				const PipelineFlowState& state = node->evaluatePipelineImmediately(PipelineEvalRequest(dataset->animationSettings()->time(), false));
+				ParticleExpressionEvaluator evaluator;
+				evaluator.initialize(QStringList(), state, 0);
+				_expressionEdit->setWordList(evaluator.inputVariableNames());
+			}
+		}
+	}
+	catch(const Exception& ex) {}
 }
 
 /******************************************************************************
@@ -99,9 +130,56 @@ void ParticleInformationApplet::updateInformationDisplay()
 {
 	DataSet* dataset = _mainWindow->datasetContainer().currentSet();
 	if(!dataset) return;
-	
+
 	QString infoText;
+	size_t nselected = 0;
 	QTextStream stream(&infoText, QIODevice::WriteOnly);
+
+	// In case a user-defined selection expression has been entered, 
+	// apply it the current particle system to generate a new selection set.
+	if(!_userSelectionExpression.isEmpty()) {
+		_inputMode->_pickedParticles.clear();
+		try {
+			// Check if expression contain an assignment ('=' operator).
+			// This should be considered an error, because the user is probably referring the comparison operator '=='.
+			if(_userSelectionExpression.contains(QRegExp("[^=!><]=(?!=)")))
+				throwException(tr("The entered expression contains the assignment operator '='. Please use the comparison operator '==' instead."));
+			
+			// Get the currently selected scene node and obtains its pipeline results.
+			ObjectNode* node = dynamic_object_cast<ObjectNode>(dataset->selection()->front());
+			if(!node) throwException(tr("No scene object is currently selected."));
+			const PipelineFlowState& state = node->evaluatePipelineImmediately(PipelineEvalRequest(dataset->animationSettings()->time(), false));
+			TimeInterval iv;
+			const AffineTransformation nodeTM = node->getWorldTransform(dataset->animationSettings()->time(), iv);
+			ParticlePropertyObject* posProperty = ParticlePropertyObject::findInState(state, ParticleProperty::PositionProperty);
+			ParticlePropertyObject* identifierProperty = ParticlePropertyObject::findInState(state, ParticleProperty::IdentifierProperty);
+
+			// Generate particle selection set.
+			ParticleExpressionEvaluator evaluator;
+			evaluator.setMaxThreadCount(1);	// Disable multi-threading to make the selection order deterministic.
+			evaluator.initialize(QStringList(_userSelectionExpression), state, dataset->animationSettings()->currentFrame());
+			evaluator.evaluate([this, node, &nodeTM, posProperty, identifierProperty, &nselected](size_t particleIndex, size_t componentIndex, double value) {
+				if(value) {
+					ParticlePickingHelper::PickResult pickRes;
+					pickRes.objNode = node;
+					pickRes.particleIndex = particleIndex;
+					pickRes.localPos = posProperty ? posProperty->getPoint3(particleIndex) : Point3::Origin();
+					pickRes.worldPos = nodeTM * pickRes.localPos;
+					pickRes.particleId = identifierProperty ? identifierProperty->getInt(particleIndex) : -1;
+					++nselected;
+					if(_inputMode->_pickedParticles.size() < _maxSelectionSize)
+						_inputMode->_pickedParticles.push_back(pickRes);
+				}
+			});
+		}
+		catch(const Exception& ex) {
+			stream << QStringLiteral("<p><b>Evaluation error: ") << ex.messages().join("<br>") << QStringLiteral("</b></p>");
+		}
+		// Update the displayed particle markers to reflect the new selection set.
+		dataset->viewportConfig()->updateViewports();
+	}
+	
+	QString autoExpressionText;
 	for(auto pickedParticle = _inputMode->_pickedParticles.begin(); pickedParticle != _inputMode->_pickedParticles.end(); ) {
 		OVITO_ASSERT(pickedParticle->objNode);
 
@@ -118,12 +196,23 @@ void ParticleInformationApplet::updateInformationDisplay()
 						const int* begin = property->constDataInt();
 						const int* end = begin + property->size();
 						const int* iter = std::find(begin, end, pickedParticle->particleId);
-						if(iter != end)
+						if(iter != end) {
 							pickedParticle->particleIndex = (iter - begin);
-						else 
+						}
+						else {
 							pickedParticle->particleIndex = std::numeric_limits<size_t>::max();
+						}
 					}
 				}
+			}
+
+			// Generate an automatic selection expression.
+			if(_userSelectionExpression.isEmpty()) {
+				if(!autoExpressionText.isEmpty()) autoExpressionText += QStringLiteral(" ||\n");
+				if(pickedParticle->particleId >= 0)
+					autoExpressionText += QStringLiteral("ParticleIdentifier==%1").arg(pickedParticle->particleId);
+				else
+					autoExpressionText += QStringLiteral("ParticleIndex==%1").arg(pickedParticle->particleIndex);
 			}
 
 			ParticlePropertyObject* posProperty = ParticlePropertyObject::findInState(flowState, ParticleProperty::PositionProperty);
@@ -172,9 +261,22 @@ void ParticleInformationApplet::updateInformationDisplay()
 		// Remove non-existent particle from the list.
 		pickedParticle = _inputMode->_pickedParticles.erase(pickedParticle);
 	}
-	if(_inputMode->_pickedParticles.empty())
-		infoText = tr("No particles selected.");
-	else if(_inputMode->_pickedParticles.size() >= 2) {
+
+	if(_userSelectionExpression.isEmpty())
+		_expressionEdit->setPlainText(autoExpressionText);
+
+	if(_inputMode->_pickedParticles.empty()) {
+		stream << tr("No particles selected.");
+		_displayHeader->setText(tr("Particle information:"));
+	}
+	else if(_inputMode->_pickedParticles.size() >= nselected) {
+		_displayHeader->setText(tr("Particle information (%1):").arg(_inputMode->_pickedParticles.size()));
+	}
+	else {
+		_displayHeader->setText(tr("Particle information (%1 out of %2):").arg(_inputMode->_pickedParticles.size()).arg(nselected));
+	}
+
+	if(_inputMode->_pickedParticles.size() >= 2) {
 		stream << QStringLiteral("<b>") << tr("Pair vectors:") << QStringLiteral("</b>");
 		stream << QStringLiteral("<table border=\"0\">");
 		for(size_t i = 0; i < _inputMode->_pickedParticles.size(); i++) {
@@ -241,6 +343,7 @@ void ParticleInformationInputMode::mouseReleaseEvent(ViewportWindow* vpwin, QMou
 			if(!alreadySelected)
 				_pickedParticles.push_back(pickResult);
 		}
+		_applet->resetUserExpression();
 		_applet->updateInformationDisplay();
 		vpwin->viewport()->dataset()->viewportConfig()->updateViewports();
 	}

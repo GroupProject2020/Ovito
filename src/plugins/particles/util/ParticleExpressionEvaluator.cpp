@@ -223,6 +223,7 @@ void ParticleExpressionEvaluator::evaluate(const std::function<void(size_t,size_
 
 	// Determine the number of parallel threads to use.
 	size_t nthreads = Application::instance()->idealThreadCount();
+	if(maxThreadCount() != 0 && nthreads > maxThreadCount()) nthreads = maxThreadCount();
 	if(_particleCount == 0)
 		return;
 	else if(_particleCount < 100)

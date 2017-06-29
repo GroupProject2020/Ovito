@@ -17,7 +17,7 @@
     </imageobject></mediaobject></screenshot></informalfigure>
 
   This modifier allows you to select particles based on a user-defined criterion.
-  You enter an arbitrary complex Boolean expression, which is evaluated by the modifier for every particle
+  You enter an Boolean expression, which is evaluated by the modifier for every particle
   in the system. Those particles for which the expression yields a non-zero value ("<emphasis>true</emphasis>")
   will be selected; all other particles, for which the expression evaluates to zero ("<emphasis>false</emphasis>"), are deselected. 
   </para>
