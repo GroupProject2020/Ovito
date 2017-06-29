@@ -16,14 +16,15 @@
        <imagedata fileref="images/modifiers/load_trajectory_panel.png" format="PNG" />
     </imageobject></mediaobject></screenshot></informalfigure>
   
-     This modifier is used to load time-dependent atomic positions from a separate molecular dynamics trajectory file.
+     This modifier loads time-dependent atomic positions and other properties from a separate molecular dynamics trajectory file
+     and combines them with static topology data (e.g. bonds and atom type information) from another file.
   </para>
 
   <para>Some MD codes work with separate topology and a trajectory files. The former 
   contain the initial atomic positions and other definitions like atom types, bonds, etc. 
-  which are constant throughout the simulation and which are read in by the MD simulation code. 
+  which are constant throughout the simulation and which are read in by the MD code at the beginning of the simulation. 
   The MD code writes the computed trajectories to a separate file containing just the time-dependent 
-  coordinates (but no other static information like the bonds).</para>
+  coordinates and perhaps other varying properties like atomic energies (but no static information like the bonds).</para>
   
   <para>
   One typical example is the code LAMMPS, which relies on the <code>data</code> input file format 
@@ -32,10 +33,11 @@
   </para>
   
   <para>
-  To load such a pair of topology/trajectory files in OVITO, first import the topology file.
-  Then apply the Load Trajectory modifier to the loaded dataset and select the trajectory file on disk. The modifier
-  will replace the initial atomic positions loaded from the topology file with the time-dependent positions
-  loaded from the trajectory file. The same is done for the simulation cell geometry.
+  To load such a pair of topology/trajectory files in OVITO, first import the topology file as usual.
+  Then apply the <emphasis>Load Trajectory</emphasis> modifier to the dataset and select the corresponding trajectory file. The modifier
+  will replace the initial atomic positions from the topology file with the time-dependent positions
+  loaded from the trajectory file. The same is done for the simulation cell geometry and also any other particle property 
+  that is present in the trajectory file.
   </para>
   
   <para>
@@ -44,6 +46,14 @@
   the PBC shift vectors of bonds need to be readjusted to ensure a correct display. The method used by 
   the modifier is based on the minimum image convention, which prevents bonds from spanning more than half
   of the simulation box size. 
+  </para>
+
+  <para>
+  If particles in the topology and the trajectory file possess IDs, then the modifier
+  uses them to determine the correct one-to-one mapping when the storage order of particles
+  changes during the course of a simulation. If no particle IDs are available, 
+  then the modifier assumes that the storage order of particles in the topology and the trajectory file
+  is the same.
   </para>
 
 </section>

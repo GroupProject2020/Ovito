@@ -96,7 +96,7 @@ PipelineStatus LoadTrajectoryModifier::modifyParticles(TimePoint time, TimeInter
 	// Build particle-to-particle index map.
 	std::vector<size_t> indexToIndexMap(inputParticleCount());
 	ParticlePropertyObject* identifierProperty = inputStandardProperty(ParticleProperty::IdentifierProperty);
-	ParticlePropertyObject* trajIdentifierProperty = ParticlePropertyObject::findInState(trajState, ParticleProperty::IdentifierProperty);;
+	ParticlePropertyObject* trajIdentifierProperty = ParticlePropertyObject::findInState(trajState, ParticleProperty::IdentifierProperty);
 	if(identifierProperty && trajIdentifierProperty) {
 
 		// Build map of particle identifiers in trajectory dataset.
@@ -140,12 +140,40 @@ PipelineStatus LoadTrajectoryModifier::modifyParticles(TimePoint time, TimeInter
 		std::iota(indexToIndexMap.begin(), indexToIndexMap.end(), size_t(0));
 	}
 
-	// Transfer particle positions.
-	ParticlePropertyObject* outputPosProperty = outputStandardProperty(ParticleProperty::PositionProperty);
-	for(size_t i = 0; i < inputParticleCount(); i++) {
-		outputPosProperty->setPoint3(i, trajectoryPosProperty->getPoint3(indexToIndexMap[i]));
+	// Transfer particle properties from the trajectory file.
+	for(DataObject* obj : trajState.objects()) {
+		ParticlePropertyObject* property = dynamic_object_cast<ParticlePropertyObject>(obj);
+		if(!property)
+			continue;
+		if(property->type() == ParticleProperty::IdentifierProperty)
+			continue;
+
+		// Get or create the output particle property.
+		ParticlePropertyObject* outputProperty;
+		if(property->type() != ParticleProperty::UserProperty) {
+			outputProperty = outputStandardProperty(property->type(), true);
+			if(outputProperty->dataType() != property->dataType()
+				|| outputProperty->componentCount() != property->componentCount())
+				continue; // Types of source property and output property are not compatible.
+		}
+		else {
+			outputProperty = outputCustomProperty(property->name(), 
+				property->dataType(), property->componentCount(),
+				0, true);
+		}
+		OVITO_ASSERT(outputProperty->stride() == property->stride());
+
+		// Copy and reorder property data.
+		std::vector<size_t>::const_iterator idx = indexToIndexMap.cbegin();
+		char* dest = static_cast<char*>(outputProperty->data());
+		const char* src = static_cast<const char*>(property->constData());
+		size_t stride = outputProperty->stride();
+		for(size_t index = 0; index < outputProperty->size(); index++, ++idx, dest += stride) {
+			memcpy(dest, src + stride * (*idx), stride);
+		}
+
+		outputProperty->changed();
 	}
-	outputPosProperty->changed();
 
 	// Transfer box geometry.
 	SimulationCellObject* topologyCell = input().findObject<SimulationCellObject>();
@@ -159,6 +187,7 @@ PipelineStatus LoadTrajectoryModifier::modifyParticles(TimePoint time, TimeInter
 		// stored in wrapped coordinates, then it becomes necessary to fix bonds using the minimum image convention.
 		std::array<bool, 3> pbc = topologyCell->pbcFlags();
 		if((pbc[0] || pbc[1] || pbc[2]) && std::abs(simCell.determinant()) > FLOATTYPE_EPSILON) {
+			ParticlePropertyObject* outputPosProperty = outputStandardProperty(ParticleProperty::PositionProperty);
 			AffineTransformation inverseSimCell = simCell.inverse();
 
 			for(DataObject* obj : output().objects()) {
