@@ -52,15 +52,15 @@ ActionManager::ActionManager(MainWindow* mainWindow) : QObject(mainWindow)
 	createCommandAction(ACTION_FILE_REMOTE_IMPORT, tr("Load Remote File"), ":/gui/actions/file/file_import_remote.png", tr("Import a file from a remote location."), Qt::CTRL + Qt::SHIFT + Qt::Key_I);
 	createCommandAction(ACTION_FILE_EXPORT, tr("Export File"), ":/gui/actions/file/file_export.png", tr("Export data to a file."), Qt::CTRL + Qt::Key_E);
 	createCommandAction(ACTION_FILE_NEW_WINDOW, tr("New Program Window"), ":/gui/actions/file/file_new.png", tr("Opens a new OVITO window."));
-	createCommandAction(ACTION_HELP_ABOUT, tr("About Ovito"), NULL, tr("Show information about the application."));
-	createCommandAction(ACTION_HELP_SHOW_ONLINE_HELP, tr("User Manual"), NULL, tr("Open the user manual."), QKeySequence::HelpContents);
-	createCommandAction(ACTION_HELP_OPENGL_INFO, tr("OpenGL Information"), NULL, tr("Display OpenGL graphics driver information."));
+	createCommandAction(ACTION_HELP_ABOUT, tr("About Ovito"), nullptr, tr("Show information about the application."));
+	createCommandAction(ACTION_HELP_SHOW_ONLINE_HELP, tr("User Manual"), nullptr, tr("Open the user manual."), QKeySequence::HelpContents);
+	createCommandAction(ACTION_HELP_OPENGL_INFO, tr("OpenGL Information"), nullptr, tr("Display OpenGL graphics driver information."));
 
 	createCommandAction(ACTION_EDIT_UNDO, tr("Undo"), ":/gui/actions/edit/edit_undo.png", tr("Reverse a user action."), QKeySequence::Undo);
 	createCommandAction(ACTION_EDIT_REDO, tr("Redo"), ":/gui/actions/edit/edit_redo.png", tr("Redo the previously undone user action."), QKeySequence::Redo);
 	createCommandAction(ACTION_EDIT_DELETE, tr("Delete"), ":/gui/actions/edit/edit_delete.png", tr("Deletes the selected objects."));
 
-	createCommandAction(ACTION_SETTINGS_DIALOG, tr("&Settings..."));
+	createCommandAction(ACTION_SETTINGS_DIALOG, tr("&Settings..."), nullptr, QString(), QKeySequence::Preferences);
 
 	createCommandAction(ACTION_RENDER_ACTIVE_VIEWPORT, tr("Render Active Viewport"), ":/gui/actions/rendering/render_active_viewport.png");
 
@@ -81,14 +81,14 @@ ActionManager::ActionManager(MainWindow* mainWindow) : QObject(mainWindow)
 	createViewportModeAction(ACTION_XFORM_MOVE_MODE, vpInputManager->moveMode(), tr("Move"), ":/gui/actions/edit/mode_move.png", tr("Move objects."));
 	createViewportModeAction(ACTION_XFORM_ROTATE_MODE, vpInputManager->rotateMode(), tr("Rotate"), ":/gui/actions/edit/mode_rotate.png", tr("Rotate objects."));
 
-	createCommandAction(ACTION_GOTO_START_OF_ANIMATION, tr("Goto Start of Animation"), ":/gui/actions/animation/goto_animation_start.png", QString(), Qt::Key_Home);
-	createCommandAction(ACTION_GOTO_END_OF_ANIMATION, tr("Goto End of Animation"), ":/gui/actions/animation/goto_animation_end.png", QString(), Qt::Key_End);
-	createCommandAction(ACTION_GOTO_PREVIOUS_FRAME, tr("Goto Previous Frame"), ":/gui/actions/animation/goto_previous_frame.png", QString(), Qt::Key_Minus);
-	createCommandAction(ACTION_GOTO_NEXT_FRAME, tr("Goto Next Frame"), ":/gui/actions/animation/goto_next_frame.png", QString(), Qt::Key_Plus);
+	createCommandAction(ACTION_GOTO_START_OF_ANIMATION, tr("Go to Start of Animation"), ":/gui/actions/animation/goto_animation_start.png", QString(), Qt::Key_Home);
+	createCommandAction(ACTION_GOTO_END_OF_ANIMATION, tr("Go to End of Animation"), ":/gui/actions/animation/goto_animation_end.png", QString(), Qt::Key_End);
+	createCommandAction(ACTION_GOTO_PREVIOUS_FRAME, tr("Go to Previous Frame"), ":/gui/actions/animation/goto_previous_frame.png", QString(), Qt::ALT + Qt::Key_Left);
+	createCommandAction(ACTION_GOTO_NEXT_FRAME, tr("Go to Next Frame"), ":/gui/actions/animation/goto_next_frame.png", QString(), Qt::ALT + Qt::Key_Right);
 	createCommandAction(ACTION_START_ANIMATION_PLAYBACK, tr("Start Animation Playback"), ":/gui/actions/animation/play_animation.png");
 	createCommandAction(ACTION_STOP_ANIMATION_PLAYBACK, tr("Stop Animation Playback"), ":/gui/actions/animation/stop_animation.png");
 	createCommandAction(ACTION_ANIMATION_SETTINGS, tr("Animation Settings"), ":/gui/actions/animation/animation_settings.png");
-	createCommandAction(ACTION_TOGGLE_ANIMATION_PLAYBACK, tr("Play Animation"), ":/gui/actions/animation/play_animation.png")->setCheckable(true);
+	createCommandAction(ACTION_TOGGLE_ANIMATION_PLAYBACK, tr("Play Animation"), ":/gui/actions/animation/play_animation.png", QString(), Qt::Key_Space)->setCheckable(true);
 	createCommandAction(ACTION_AUTO_KEY_MODE_TOGGLE, tr("Auto Key Mode"), ":/gui/actions/animation/animation_mode.png")->setCheckable(true);
 
 	QMetaObject::connectSlotsByName(this);
@@ -190,7 +190,7 @@ void ActionManager::invokeAction(const QString& actionId)
 void ActionManager::addAction(QAction* action)
 {
 	OVITO_CHECK_POINTER(action);
-	OVITO_ASSERT_MSG(action->parent() == this || findAction(action->objectName()) == NULL, "ActionManager::addAction()", "There is already an action with the same ID.");
+	OVITO_ASSERT_MSG(action->parent() == this || findAction(action->objectName()) == nullptr, "ActionManager::addAction()", "There is already an action with the same ID.");
 
 	// Make it a child of this manager.
 	action->setParent(this);
@@ -203,8 +203,12 @@ QAction* ActionManager::createCommandAction(const QString& id, const QString& ti
 {
 	QAction* action = new QAction(title, this);
 	action->setObjectName(id);
-	if(!shortcut.isEmpty()) action->setShortcut(shortcut);
-	action->setStatusTip(statusTip);
+	if(!shortcut.isEmpty()) 
+		action->setShortcut(shortcut);
+	if(!statusTip.isEmpty())
+		action->setStatusTip(statusTip);
+	if(!shortcut.isEmpty())
+		action->setToolTip(QStringLiteral("%1 [%2]").arg(title).arg(shortcut.toString(QKeySequence::NativeText)));
 	if(iconPath)
 		action->setIcon(QIcon(QString(iconPath)));
 	addAction(action);
@@ -218,8 +222,11 @@ QAction* ActionManager::createViewportModeAction(const QString& id, ViewportInpu
 {
 	QAction* action = new ViewportModeAction(mainWindow(), title, this, inputHandler);
 	action->setObjectName(id);
-	if(!shortcut.isEmpty()) action->setShortcut(shortcut);
+	if(!shortcut.isEmpty()) 
+		action->setShortcut(shortcut);
 	action->setStatusTip(statusTip);
+	if(!shortcut.isEmpty())
+		action->setToolTip(QStringLiteral("%1 [%2]").arg(title).arg(shortcut.toString(QKeySequence::NativeText)));
 	if(iconPath)
 		action->setIcon(QIcon(QString(iconPath)));
 	addAction(action);
