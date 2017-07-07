@@ -180,8 +180,8 @@ PYBIND11_PLUGIN(Particles)
 			"ParticleProperty")
 		.def_static("createUserProperty", &ParticlePropertyObject::createUserProperty)
 		.def_static("createStandardProperty", &ParticlePropertyObject::createStandardProperty)
-		.def_static("findInState", (ParticlePropertyObject* (*)(const PipelineFlowState&, ParticleProperty::Type))&ParticlePropertyObject::findInState)
-		.def_static("findInState", (ParticlePropertyObject* (*)(const PipelineFlowState&, const QString&))&ParticlePropertyObject::findInState)
+		//.def_static("findInState", (ParticlePropertyObject* (*)(const PipelineFlowState&, ParticleProperty::Type))&ParticlePropertyObject::findInState)
+		//.def_static("findInState", (ParticlePropertyObject* (*)(const PipelineFlowState&, const QString&))&ParticlePropertyObject::findInState)
 		.def("changed", &ParticlePropertyObject::changed,
 				"Informs the particle property object that its internal data has changed. "
 				"This function must be called after each direct modification of the per-particle data "
@@ -793,8 +793,8 @@ PYBIND11_PLUGIN(Particles)
 			"BondProperty")
 		.def_static("createUserProperty", &BondPropertyObject::createUserProperty)
 		.def_static("createStandardProperty", &BondPropertyObject::createStandardProperty)
-		.def_static("findInState", (BondPropertyObject* (*)(const PipelineFlowState&, BondProperty::Type))&BondPropertyObject::findInState)
-		.def_static("findInState", (BondPropertyObject* (*)(const PipelineFlowState&, const QString&))&BondPropertyObject::findInState)
+		//.def_static("findInState", (BondPropertyObject* (*)(const PipelineFlowState&, BondProperty::Type))&BondPropertyObject::findInState)
+		//.def_static("findInState", (BondPropertyObject* (*)(const PipelineFlowState&, const QString&))&BondPropertyObject::findInState)
 		.def("changed", &BondPropertyObject::changed,
 				"Informs the bond property object that its stored data has changed. "
 				"This function must be called after each direct modification of the per-bond data "

@@ -409,10 +409,13 @@ int ScriptEngine::handleSystemExit()
 	int exitcode = 0;
 
 	PyErr_Fetch(&exception, &value, &tb);
+
 #if PY_MAJOR_VERSION < 3
 	if(Py_FlushLine())
 		PyErr_Clear();
 #endif
+
+	// Interpret sys.exit() argument.
 	if(value && value != Py_None) {
 #ifdef PyExceptionInstance_Check
 		if(PyExceptionInstance_Check(value)) {	// Python 2.6 or newer
@@ -437,8 +440,14 @@ int ScriptEngine::handleSystemExit()
 			exitcode = (int)PyInt_AsLong(value);
 #endif
 		else {
+			// Send sys.exit() argument to stderr.
 			py::str s(value);
-			Q_EMIT scriptError(s.cast<QString>() + QChar('\n'));
+	        try {
+				auto write = py::module::import("sys").attr("stderr").attr("write");
+    	        write(s);
+				write("\n");
+			} 
+			catch(const py::error_already_set&) {}
 			exitcode = 1;
 		}
 	}

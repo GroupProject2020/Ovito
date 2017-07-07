@@ -258,7 +258,7 @@ def _DataCollection_to_ase_atoms(self):
        which will allow you to use all modules installed in the system's Python interpreter.
 
     :return: A new `ASE Atoms object <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`_ that contains the
-             contains the converted particle data from this :py:class:`!DataCollection`.
+             converted particle data from this :py:class:`!DataCollection`.
     """
 
     from ase.atoms import Atoms
