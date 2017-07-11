@@ -84,8 +84,8 @@ inspect the results of your script during the development phase.
 Number of parallel threads
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-OVITO uses all available processor cores on a machine to perform computations by default. To restrict OVITO
-to a certain number of parallel threads, use the :command:`-nt` command line parameter, e.g. :command:`ovitos -nt 1 myscript.py`.
+OVITO uses all available processor cores on a machine by default to perform computations. To restrict OVITO
+to a certain number of parallel threads, use the :command:`--nthreads` command line parameter, e.g. :command:`ovitos --nthreads 1 myscript.py`.
 
 Third-party Python modules
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
