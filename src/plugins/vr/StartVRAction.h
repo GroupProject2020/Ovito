@@ -45,6 +45,12 @@ public:
 	/// \brief Is called when the main menu is created.
 	virtual void addActionsToMenu(ActionManager& actionManager, QMenuBar* menuBar) override;
 
+	/// \brief Registers plugin-specific command line options.
+	virtual void registerCommandLineOptions(QCommandLineParser& cmdLineParser) override;
+
+	/// \brief Is called after the application has been completely initialized.
+	virtual void applicationStarted() override;
+
 private:
 
 	Q_OBJECT

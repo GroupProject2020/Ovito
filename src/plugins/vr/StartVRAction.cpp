@@ -22,6 +22,7 @@
 #include <gui/GUI.h>
 #include <gui/actions/ActionManager.h>
 #include <gui/mainwin/MainWindow.h>
+#include <core/app/StandaloneApplication.h>
 #include "StartVRAction.h"
 #include "VRWindow.h"
 
@@ -60,5 +61,29 @@ void StartVRAction::addActionsToMenu(ActionManager& actionManager, QMenuBar* men
 	vrMenu->setObjectName(QStringLiteral("VRMenu"));
 	vrMenu->addAction(startVRAction);
 }
+
+/******************************************************************************
+* Registers plugin-specific command line options.
+******************************************************************************/
+void StartVRAction::registerCommandLineOptions(QCommandLineParser& cmdLineParser)
+{
+	// Register the --vr command line option.
+	cmdLineParser.addOption(QCommandLineOption("vr", tr("Invokes the virtual reality module.")));
+}
+
+/******************************************************************************
+* Is called after the application has been completely initialized.
+******************************************************************************/
+void StartVRAction::applicationStarted()
+{
+	// Handle the --vr command line option.
+	if(StandaloneApplication::instance()->cmdLineParser().isSet("vr")) {
+
+		// Trigger the 'Start VR' command action, which has been registered by registerActions() above.
+		GuiDataSetContainer* container = qobject_cast<GuiDataSetContainer*>(StandaloneApplication::instance()->datasetContainer());
+		container->mainWindow()->actionManager()->findAction("StartVR")->trigger();
+	}
+}
+
 
 };
