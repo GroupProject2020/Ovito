@@ -118,6 +118,9 @@ protected:
 		/// The slip surfaces.
 		QExplicitlySharedDataPointer<SlipSurfaceData> _slipSurface;
 
+		/// The stacking faults.
+		QExplicitlySharedDataPointer<SlipSurfaceData> _stackingFaults;
+
 		/// Controls whether particles should be loaded too.
 		bool _loadParticles;
 

@@ -203,7 +203,7 @@ bool SlipSurfaceDisplay::buildMesh(const SlipSurfaceData& input, const Simulatio
 {
 	// Convert half-edge mesh to triangle mesh.
 	input.convertToTriMesh(output);
-
+	
 	// Color faces according to slip vector.
 	auto fout = output.faces().begin();
 	for(SlipSurfaceData::Face* face : input.faces()) {

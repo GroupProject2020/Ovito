@@ -577,6 +577,40 @@ void CAImporter::CrystalAnalysisFrameLoader::parseFile(CompressedTextReader& str
 				face->slipVector = ClusterVector(slipVector, cluster);
 			}
 		}
+		else if(stream.lineStartsWith("STACKING_FAULT_VERTICES ")) {
+			// Read slip surface vertices.
+			int numVertices;
+			if(sscanf(stream.line(), "STACKING_FAULT_VERTICES %i", &numVertices) != 1)
+				throw Exception(tr("Failed to parse file. Invalid number of mesh vertices in line %1.").arg(stream.lineNumber()));
+			setProgressText(tr("Reading stacking faults"));
+			setProgressMaximum(numVertices);
+			_stackingFaults = new SlipSurfaceData();
+			_stackingFaults->reserveVertices(numVertices);
+			for(int index = 0; index < numVertices; index++) {
+				if(!setProgressValueIntermittent(index)) return;
+				Point3 p;
+				if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &p.x(), &p.y(), &p.z()) != 3)
+					throw Exception(tr("Failed to parse file. Invalid point in line %1.").arg(stream.lineNumber()));
+				_stackingFaults->createVertex(p);
+			}
+		}
+		else if(stream.lineStartsWith("STACKING_FAULT_FACETS ") && _stackingFaults) {
+			// Read slip surface facets.
+			int numFacets;
+			if(sscanf(stream.line(), "STACKING_FAULT_FACETS %i", &numFacets) != 1)
+				throw Exception(tr("Failed to parse file. Invalid number of mesh facets in line %1.").arg(stream.lineNumber()));
+			setProgressMaximum(numFacets);
+			_stackingFaults->reserveFaces(numFacets);
+			for(int index = 0; index < numFacets; index++) {
+				if(!setProgressValueIntermittent(index))
+					return;
+				int v[3];
+				if(sscanf(stream.readLine(), "%i %i %i", &v[0], &v[1], &v[2]) != 3)
+					throw Exception(tr("Failed to parse file. Invalid triangle facet in line %1.").arg(stream.lineNumber()));
+				SlipSurfaceData::Face* face = _stackingFaults->createFace({ _stackingFaults->vertex(v[0]), _stackingFaults->vertex(v[1]), _stackingFaults->vertex(v[2]) });
+				face->slipVector = ClusterVector(Vector3::Zero());
+			}
+		}
 		else if(stream.lineStartsWith("METADATA ")) {
 			// Ignore. This is for future use.
 		}
@@ -662,8 +696,16 @@ void CAImporter::CrystalAnalysisFrameLoader::handOver(CompoundObject* container)
 		partitionMeshObj->setStorage(_partitionMesh.data());
 	}
 
+	OORef<SlipSurface> slipSurfaceObj;
+	OORef<SlipSurface> stackingFaultsObj;
+	for(DataObject* dataObj : oldObjects.objects()) {		
+		if(SlipSurface* surfaceObj = dynamic_object_cast<SlipSurface>(dataObj)) {
+			if(!slipSurfaceObj) slipSurfaceObj = surfaceObj;
+			else if(!stackingFaultsObj) stackingFaultsObj = surfaceObj;
+		}
+	}
+
 	// Insert slip surface.
-	OORef<SlipSurface> slipSurfaceObj = oldObjects.findObject<SlipSurface>();
 	if(_slipSurface) {
 		if(!slipSurfaceObj) {
 			slipSurfaceObj = new SlipSurface(container->dataset(), _slipSurface.data());
@@ -672,6 +714,18 @@ void CAImporter::CrystalAnalysisFrameLoader::handOver(CompoundObject* container)
 			slipSurfaceObj->setDisplayObject(displayObj);
 		}
 		slipSurfaceObj->setStorage(_slipSurface.data());
+	}
+
+	// Insert stacking faults.
+	if(_stackingFaults) {
+		if(!stackingFaultsObj) {
+			stackingFaultsObj = new SlipSurface(container->dataset(), _stackingFaults.data());
+			OORef<SlipSurfaceDisplay> displayObj = new SlipSurfaceDisplay(container->dataset());
+			displayObj->loadUserDefaults();
+			displayObj->setObjectTitle(tr("Stacking faults"));
+			stackingFaultsObj->setDisplayObject(displayObj);
+		}
+		stackingFaultsObj->setStorage(_stackingFaults.data());
 	}
 
 	// Insert pattern catalog.
@@ -766,6 +820,8 @@ void CAImporter::CrystalAnalysisFrameLoader::handOver(CompoundObject* container)
 		container->addDataObject(partitionMeshObj);
 	if(_slipSurface)
 		container->addDataObject(slipSurfaceObj);
+	if(_stackingFaults)
+		container->addDataObject(stackingFaultsObj);
 	if(patternCatalog)
 		container->addDataObject(patternCatalog);
 	if(clusterGraph)
