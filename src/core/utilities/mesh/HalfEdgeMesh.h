@@ -102,10 +102,13 @@ public:
 	protected:
 
 		/// Constructor.
-		Edge(Vertex* vertex2, Face* face) : _oppositeEdge(nullptr), _vertex2(vertex2), _face(face) {}
+		Edge(Vertex* vertex2, Face* face) : _vertex2(vertex2), _face(face) { 
+			OVITO_ASSERT(vertex2 != nullptr);
+			OVITO_ASSERT(face != nullptr);
+		}
 
 		/// The opposite half-edge.
-		Edge* _oppositeEdge;
+		Edge* _oppositeEdge = nullptr;
 
 		/// The vertex this half-edge is pointing to.
 		Vertex* _vertex2;
@@ -180,7 +183,7 @@ public:
 	protected:
 
 		/// Constructor.
-		Vertex(const Point3& pos, int index = -1) : _pos(pos), _edges(nullptr), _numEdges(0),  _index(index) {}
+		Vertex(const Point3& pos, int index = -1) : _pos(pos), _index(index) {}
 
 		/// Adds an adjacent half-edge to this vertex.
 		void addEdge(Edge* edge) {
@@ -212,10 +215,10 @@ public:
 		Point3 _pos;
 
 		/// The number of faces (as well as half-edges) adjacent to this vertex.
-		int _numEdges;
+		int _numEdges = 0;
 
 		/// The head of the linked-list of outgoing half-edges.
-		Edge* _edges;
+		Edge* _edges = nullptr;
 
 		/// The index of the vertex in the list of vertices of the mesh.
 		int _index;
@@ -273,16 +276,16 @@ public:
 	protected:
 
 		/// Constructor.
-		Face(int index = -1) : _edges(nullptr), _index(index), _flags(0) {}
+		Face(int index = -1) : _index(index) {}
 
 		/// The head of the linked-list of half-edges that are adjacent to this face.
-		Edge* _edges;
+		Edge* _edges = nullptr;
 
 		/// The index of the face in the list of faces of the mesh.
 		int _index;
 
 		/// The bit-wise flags assigned to this face.
-		unsigned int _flags;
+		unsigned int _flags = 0;
 
 		friend class HalfEdgeMesh;
 	};
@@ -398,6 +401,7 @@ public:
 	/// Deletes a halfedge from the mesh.
 	/// This method assumes that the edge is not connected to any part of the mesh.
 	void removeEdge(Edge* edge) {
+		OVITO_ASSERT(edge != nullptr);
 		OVITO_ASSERT(edge->oppositeEdge() == nullptr);
 		_reclaimedEdges.push_back(edge);
 	}
@@ -424,6 +428,13 @@ public:
 		_reclaimedFaces.push_back(face);
 	}
 
+	/// Deletes a face from the mesh.
+	void removeFace(Face* face) {
+		OVITO_ASSERT(face != nullptr);
+		OVITO_ASSERT(faces()[face->index()] == face);
+		removeFace(face->index());
+	}
+
 	/// Deletes a vertex from the mesh. 
 	/// This method assumes that the vertex is not connected to any edges or faces of the mesh.
 	void removeVertex(int vertexIndex) {
@@ -433,6 +444,66 @@ public:
 		_vertices[vertexIndex] = _vertices.back();
 		_vertices.erase(_vertices.end() - 1);
 		_reclaimedVertices.push_back(vertex);
+	}
+
+	void joinFaces(Edge* edge) {
+		Edge* oppositeEdge = edge->oppositeEdge();
+		OVITO_ASSERT(oppositeEdge);
+
+		for(Edge* currentEdge = edge->nextFaceEdge(); currentEdge != edge; currentEdge = currentEdge->nextFaceEdge()) {
+			currentEdge->_face = oppositeEdge->face();
+		}
+		oppositeEdge->face()->_edges = oppositeEdge->nextFaceEdge();
+		edge->face()->_edges = nullptr;
+		edge->vertex1()->removeEdge(edge);
+		edge->vertex2()->removeEdge(oppositeEdge);
+		edge->unlinkFromOppositeEdge();
+		edge->prevFaceEdge()->_nextFaceEdge = oppositeEdge->nextFaceEdge();
+		oppositeEdge->nextFaceEdge()->_prevFaceEdge = edge->prevFaceEdge();
+		oppositeEdge->prevFaceEdge()->_nextFaceEdge = edge->nextFaceEdge();
+		edge->nextFaceEdge()->_prevFaceEdge = oppositeEdge->prevFaceEdge();
+		removeEdge(edge);
+		removeEdge(oppositeEdge);
+	}
+
+	void collapseEdge(Edge* edge) {
+
+		Edge* oppositeEdge = edge->oppositeEdge();
+		OVITO_ASSERT(oppositeEdge);
+		Edge* ep1 = edge->prevFaceEdge();
+		Edge* epo1 = ep1->oppositeEdge();
+		Edge* en1 = edge->nextFaceEdge();
+		Edge* eno1 = en1->oppositeEdge();
+		Edge* ep2 = oppositeEdge->prevFaceEdge();
+		Edge* epo2 = ep2->oppositeEdge();
+		Edge* en2 = oppositeEdge->nextFaceEdge();
+		Edge* eno2 = en2->oppositeEdge();
+		Vertex* deletedVertex = edge->vertex1();
+		Vertex* remainingVertex = edge->vertex2();
+
+		// Go around the deleted vertex and transfer edges.
+		Edge* currentEdge = edge;
+		do {
+			if(currentEdge != edge)
+				deletedVertex->transferEdgeToVertex(currentEdge, remainingVertex);
+			currentEdge = currentEdge->prevFaceEdge()->oppositeEdge();
+			OVITO_ASSERT(currentEdge);
+		}
+		while(currentEdge != edge);
+
+		edge->prevFaceEdge()->_nextFaceEdge = edge->nextFaceEdge();
+		edge->nextFaceEdge()->_prevFaceEdge = edge->prevFaceEdge();
+		oppositeEdge->prevFaceEdge()->_nextFaceEdge = oppositeEdge->nextFaceEdge();
+		oppositeEdge->nextFaceEdge()->_prevFaceEdge = oppositeEdge->prevFaceEdge();
+		edge->face()->_edges = edge->nextFaceEdge();
+		oppositeEdge->face()->_edges = oppositeEdge->nextFaceEdge();
+
+		deletedVertex->removeEdge(edge);
+		remainingVertex->removeEdge(oppositeEdge);
+
+		edge->unlinkFromOppositeEdge();
+		removeEdge(edge);
+		removeEdge(oppositeEdge);
 	}
 
 	/// Create a new half-edge. This is for internal use only.

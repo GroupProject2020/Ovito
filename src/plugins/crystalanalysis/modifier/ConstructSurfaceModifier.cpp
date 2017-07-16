@@ -24,6 +24,7 @@
 #include <plugins/particles/objects/SimulationCellObject.h>
 #include <plugins/crystalanalysis/util/DelaunayTessellation.h>
 #include <plugins/crystalanalysis/util/ManifoldConstructionHelper.h>
+#include <core/utilities/mesh/HalfEdgeMesh_EdgeCollapse.h>
 #include "ConstructSurfaceModifier.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
@@ -209,17 +210,20 @@ void ConstructSurfaceModifier::ConstructSurfaceEngine::perform()
 	_mesh->duplicateSharedVertices();
 
 	nextProgressSubStep();
-	if(!SurfaceMesh::smoothMesh(*_mesh, _simCell, _smoothingLevel, *this))
+	if(!SurfaceMesh::smoothMesh(*mesh(), _simCell, _smoothingLevel, *this))
 		return;
 
 	// Compute surface area.
-	for(const HalfEdgeMesh<>::Face* facet : _mesh->faces()) {
+	for(const HalfEdgeMesh<>::Face* facet : mesh()->faces()) {
 		if(isCanceled()) return;
 		Vector3 e1 = _simCell.wrapVector(facet->edges()->vertex1()->pos() - facet->edges()->vertex2()->pos());
 		Vector3 e2 = _simCell.wrapVector(facet->edges()->prevFaceEdge()->vertex1()->pos() - facet->edges()->vertex2()->pos());
 		_surfaceArea += e1.cross(e2).length();
 	}
 	_surfaceArea *= FloatType(0.5);
+
+	EdgeCollapseMeshSimplification<HalfEdgeMesh<>> simplification(*mesh());
+	simplification.perform();
 
 	endProgressSubSteps();
 }

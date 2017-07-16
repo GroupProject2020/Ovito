@@ -58,30 +58,77 @@ StructurePattern::StructurePattern(DataSet* dataset) : ParticleType(dataset),
 ******************************************************************************/
 Color StructurePattern::getBurgersVectorColor(const QString& latticeName, const Vector3& b)
 {
-	static const Color predefinedLineColors[] = {
-			Color(0.4f,1.0f,0.4f),
-			Color(1.0f,0.2f,0.2f),
-			Color(0.4f,0.4f,1.0f),
-			Color(0.9f,0.5f,0.0f),
-			Color(1.0f,1.0f,0.0f),
-			Color(1.0f,0.4f,1.0f),
-			Color(0.7f,0.0f,1.0f),
-			Color(0.2f,1.0f,1.0f)
-	};
-
 	if(latticeName == "bcc") {
-		static const Vector3 bccBurgersVectors[] = {
-				{ 0.5, 0.5, 0.5 },
-				{ -0.5, 0.5, 0.5 },
-				{ 0.5, -0.5, 0.5 },
-				{ 0.5, 0.5, -0.5 },
-				{ 1.0, 0.0, 0.0 },
-				{ 0.0, 1.0, 0.0 },
-				{ 0.0, 0.0, 1.0 },
+		static const Color predefinedLineColors[] = {
+				Color(0.4f,1.0f,0.4f),
+				Color(1.0f,0.2f,0.2f),
+				Color(0.4f,0.4f,1.0f),
+				Color(0.9f,0.5f,0.0f),
+				Color(1.0f,1.0f,0.0f),
+				Color(1.0f,0.4f,1.0f),
+				Color(0.7f,0.0f,1.0f)
+		};		
+		static const Vector3 burgersVectors[] = {
+				{ FloatType(0.5), FloatType(0.5), FloatType(0.5) },
+				{ FloatType(-0.5), FloatType(0.5), FloatType(0.5) },
+				{ FloatType(0.5), FloatType(-0.5), FloatType(0.5) },
+				{ FloatType(0.5), FloatType(0.5), FloatType(-0.5) },
+				{ FloatType(1.0), FloatType(0.0), FloatType(0.0) },
+				{ FloatType(0.0), FloatType(1.0), FloatType(0.0) },
+				{ FloatType(0.0), FloatType(0.0), FloatType(1.0) }
 		};
-		OVITO_ASSERT(sizeof(bccBurgersVectors)/sizeof(bccBurgersVectors[0]) < sizeof(predefinedLineColors)/sizeof(predefinedLineColors[0]));
-		for(size_t i = 0; i < sizeof(bccBurgersVectors)/sizeof(bccBurgersVectors[0]); i++) {
-			if(b.equals(bccBurgersVectors[i]) || b.equals(-bccBurgersVectors[i]))
+		OVITO_STATIC_ASSERT(sizeof(burgersVectors)/sizeof(burgersVectors[0]) == sizeof(predefinedLineColors)/sizeof(predefinedLineColors[0]));
+		for(size_t i = 0; i < sizeof(burgersVectors)/sizeof(burgersVectors[0]); i++) {
+			if(b.equals(burgersVectors[i]) || b.equals(-burgersVectors[i]))
+				return predefinedLineColors[i];
+		}
+	}
+	else if(latticeName == "fcc") {
+		static const Color predefinedLineColors[] = {
+				Color(0.4f,1.0f,0.4f),
+				Color(1.0f,0.2f,0.2f),
+				Color(0.4f,0.4f,1.0f),
+				Color(0.9f,0.5f,0.0f),
+				Color(1.0f,1.0f,0.0f),
+				Color(1.0f,0.4f,1.0f),
+				Color(0.7f,0.0f,1.0f),
+				Color(0.2f,1.0f,1.0f),
+				Color(0.2f,1.0f,0.2f),
+				Color(0.2f,0.0f,1.0f),
+				Color(0.0f,0.8f,0.2f),
+				Color(0.2f,0.0f,0.8f),
+
+				Color(0.5f,0.5f,0.5f),
+				Color(0.5f,0.5f,0.5f),
+				Color(0.5f,0.5f,0.5f),
+				Color(0.5f,0.5f,0.5f),
+				Color(0.5f,0.5f,0.5f),
+				Color(0.5f,0.5f,0.5f),
+		};
+		static const Vector3 burgersVectors[] = {
+				{ FloatType(1.0/6.0), FloatType(-2.0/6.0), FloatType(-1.0/6.0) },
+				{ FloatType(1.0/6.0), FloatType(-2.0/6.0), FloatType(1.0/6.0) },
+				{ FloatType(1.0/6.0), FloatType(-1.0/6.0), FloatType(2.0/6.0) },
+				{ FloatType(1.0/6.0), FloatType(-1.0/6.0), FloatType(-2.0/6.0) },
+				{ FloatType(1.0/6.0), FloatType(1.0/6.0), FloatType(2.0/6.0) },
+				{ FloatType(1.0/6.0), FloatType(1.0/6.0), FloatType(-2.0/6.0) },
+				{ FloatType(1.0/6.0), FloatType(2.0/6.0), FloatType(1.0/6.0) },
+				{ FloatType(1.0/6.0), FloatType(2.0/6.0), FloatType(-1.0/6.0) },
+				{ FloatType(2.0/6.0), FloatType(-1.0/6.0), FloatType(-1.0/6.0) },
+				{ FloatType(2.0/6.0), FloatType(-1.0/6.0), FloatType(1.0/6.0) },
+				{ FloatType(2.0/6.0), FloatType(1.0/6.0), FloatType(-1.0/6.0) },				
+				{ FloatType(2.0/6.0), FloatType(1.0/6.0), FloatType(1.0/6.0) },
+
+				{ 0, FloatType(1.0/6.0), FloatType(1.0/6.0) },
+				{ 0, FloatType(1.0/6.0), FloatType(-1.0/6.0) },
+				{ FloatType(1.0/6.0), 0, FloatType(1.0/6.0) },
+				{ FloatType(1.0/6.0), 0, FloatType(-1.0/6.0) },
+				{ FloatType(1.0/6.0), FloatType(1.0/6.0), 0 },
+				{ FloatType(1.0/6.0), FloatType(-1.0/6.0), 0 },
+		};
+		OVITO_STATIC_ASSERT(sizeof(burgersVectors)/sizeof(burgersVectors[0]) == sizeof(predefinedLineColors)/sizeof(predefinedLineColors[0]));
+		for(size_t i = 0; i < sizeof(burgersVectors)/sizeof(burgersVectors[0]); i++) {
+			if(b.equals(burgersVectors[i]) || b.equals(-burgersVectors[i]))
 				return predefinedLineColors[i];
 		}
 	}
