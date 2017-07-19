@@ -26,18 +26,37 @@
 #include "HalfEdgeMesh.h"
 
 #include <boost/heap/fibonacci_heap.hpp>
-#include <fstream>
+#include <boost/optional.hpp>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Mesh)
+
+/// Default implementation of a functor that calculates the vector between to spatial points.
+struct DefaultPointPointVector 
+{
+	Vector3 operator()(const Point3& p0, const Point3& p1) const {
+		return p1 - p0;
+	}
+};
+
+/// Default implementation of a functor that validates an edge vector.
+struct DefaultEdgeVectorValidation
+{
+	bool operator()(const Vector3& v) const {
+		return true;
+	}
+};
 
 /******************************************************************************
 * Algorithm that reduces the number of faces/edges/vertices of a HalfEdgeMesh 
 * structure using an edge collapse strategy.
 *
-* "Fast and Memory Efficient Polygonal Symplification", 
-* by Peter Lindstrom and Greg Turk
+* See "Fast and Memory Efficient Polygonal Simplification"
+* by Peter Lindstrom and Greg Turk.
+*
+* This implementation only supports closed manifold meshes made of 
+* triangle faces.
 ******************************************************************************/
-template<class HEM>
+template<class HEM, typename PointPointVector = DefaultPointPointVector, typename EdgeVectorValidation = DefaultEdgeVectorValidation>
 class EdgeCollapseMeshSimplification
 {
 public:
@@ -47,9 +66,10 @@ public:
 	using Vertex = typename HEM::Vertex;
 
 	/// Constructor.
-	EdgeCollapseMeshSimplification(HEM& mesh) : _mesh(mesh) {}
+	EdgeCollapseMeshSimplification(HEM& mesh, PointPointVector ppvec = PointPointVector(), EdgeVectorValidation edgeValidation = EdgeVectorValidation()) : 
+		_mesh(mesh), _ppvec(std::move(ppvec)), _edgeValidation(std::move(edgeValidation)) {}
 
-	void perform() 
+	void perform(FloatType minEdgeLength) 
 	{
 		// Current implementation can only handle closed manifolds.
 		OVITO_ASSERT(_mesh.isClosed());
@@ -58,35 +78,20 @@ public:
 		collect();
 
 		// Then proceed to collapse each edge in turn.
-		loop();
+		loop(minEdgeLength);
 	}
 
 private:
 
-	class Profile
+	/// Used to decide whether a half-edge is the primary half-edge of a pair.
+	bool edgeSense(const Vector3& v) const 
 	{
-	public:
-		/// Constructor.
-		Profile(Edge* edge) : _V0V1(edge), _V1V0(edge->oppositeEdge()) {
-			OVITO_ASSERT(_V0V1->face() != nullptr);
-			OVITO_ASSERT(_V1V0 == nullptr || _V1V0->face() != nullptr);
-		}
-
-		bool is_v0_v1_a_border() const { return _V0V1 == nullptr; }
-		bool is_v1_v0_a_border() const { return _V1V0 == nullptr; }  
-		bool left_face_exists () const { return _V0V1 != nullptr; }
-		bool right_face_exists() const { return _V1V0 != nullptr; }
-
-		const Point3& p0() const { OVITO_ASSERT(_V1V0); return _V1V0->vertex2()->pos(); }
-		const Point3& p1() const { OVITO_ASSERT(_V0V1); return _V0V1->vertex2()->pos(); }
-
-		Edge* edge() const { return _V0V1; }
-
-	private:
-
-		Edge* _V0V1;
-		Edge* _V1V0;
-	};
+		if(v.x() >= FLOATTYPE_EPSILON) return true;
+		else if(v.x() <= -FLOATTYPE_EPSILON) return false;
+		if(v.y() >= FLOATTYPE_EPSILON) return true;
+		else if(v.y() <= -FLOATTYPE_EPSILON) return false;
+		return v.z() > 0;
+	}
 
 	/// Collects all candidate edges.
 	void collect() 
@@ -96,46 +101,20 @@ private:
 		for(Face* face : _mesh.faces()) {
 			Edge* edge = face->edges();
 			do {
-				// Skip every other halfedge.
-				if(edge->oppositeEdge() == nullptr || edge->vertex2()->index() >= edge->oppositeEdge()->vertex2()->index()) {
-					Point3 placement = computePlacement(edge);
-					FloatType cost = computeCost(edge, placement);
+				// Skip every other half-edge.
+				if(edge->oppositeEdge() == nullptr || edgeSense(_ppvec(edge->vertex1()->pos(), edge->vertex2()->pos()))) {
+					boost::optional<Vector3> placement = computePlacement(edge);
+					FloatType cost = placement ? computeCost(edge, *placement) : -1;
 					_pqHandles.insert(std::make_pair(edge, _pq.push({ edge, cost })));
 				}
 				edge = edge->nextFaceEdge();
 			}
 			while(edge != face->edges());
 		}
-
-		std::ofstream s("edge_collapse.data");
-		s << "LAMMPS data file\n";
-		s << "\n";
-		s << _mesh.vertexCount() << " atoms\n";
-		s << _pq.size() << " bonds\n";
-		s << "\n";
-		s << "1 atom types\n";
-		s << "1 bond types\n";
-		s << "\n";
-		Box3 bbox;
-		for(Vertex* v : _mesh.vertices())
-			bbox.addPoint(v->pos());
-		s << bbox.minc[0] << " " << bbox.maxc[0] << "xlo xhi\n";
-		s << bbox.minc[1] << " " << bbox.maxc[1] << "ylo yhi\n";
-		s << bbox.minc[2] << " " << bbox.maxc[2] << "zlo zhi\n";
-		s << "\nMasses\n\n";
-		s << "1 1\n";
-		s << "\nAtoms # bond\n\n";
-		for(Vertex* v : _mesh.vertices())
-			s << v->index() << " 1 1 " << v->pos()[0] << " " << v->pos()[1] << " " << v->pos()[2] << "\n";
-		s << "\nBonds\n\n";
-		size_t counter = 1;
-		for(const EdgeWithCost& e : _pq) {
-			s << counter++ << " 1 " << e.edge->vertex1()->index() << " " << e.edge->vertex2()->index() << "\n";
-		}
 	}
 
 	/// Collapses edges in order of priority.
-	void loop()
+	void loop(FloatType minEdgeLength)
 	{
 		// Pop and processe each edge from the PQ.
 		size_t collapsedEdges = 0;
@@ -145,36 +124,20 @@ private:
 			_pq.pop();
 			_pqHandles.erase(edge);
 
-			if(cost >= 0) {
-				Point3 placement = computePlacement(edge);
+			// Stopping criterion:
+			if(_ppvec(edge->vertex1()->pos(), edge->vertex2()->pos()).squaredLength() > minEdgeLength*minEdgeLength)
+				break;
 
-#if 0
-				for(int f = _mesh.faceCount() - 1; f >= 0; f--) {
-					if(_mesh.faces()[f]->edges() == nullptr)
-						_mesh.removeFace(f);
-				}
-				for(int v = _mesh.vertexCount() - 1; v >= 0; v--) {
-					if(_mesh.vertices()[v]->numEdges() == 0)
-						_mesh.removeVertex(v);
-				}
-				_mesh.reindexVerticesAndFaces();
-#endif				
-				
-				qDebug() << collapsedEdges << "Checking edge " << edge->vertex1()->index() << "-" << edge->vertex2()->index() << ": cost=" << cost;
-				if(isCollapseTopologicallyValid(edge, placement)) {
-					collapse(edge, placement);
+			if(cost >= 0) {
+				boost::optional<Vector3> placement = computePlacement(edge);
+				if(placement && isCollapseTopologicallyValid(edge, edge->vertex2()->pos() + *placement)) {
+					collapse(edge, *placement);
 					collapsedEdges++;
 				}
-				else {
-					qDebug() << "collapse not possible";
-				}
-				if(collapsedEdges == 315) break;
 			}
 		}
 
 		// Remove faces and vertices which were marked for deletion.
-		int oldFaceCount = _mesh.faceCount();
-		int oldVertexCount = _mesh.vertexCount();
 		for(int f = _mesh.faceCount() - 1; f >= 0; f--) {
 			if(_mesh.faces()[f]->edges() == nullptr)
 				_mesh.removeFace(f);
@@ -183,110 +146,65 @@ private:
 			if(_mesh.vertices()[v]->numEdges() == 0)
 				_mesh.removeVertex(v);
 		}
+		
+		// Need to assigne new indices to vertices and faces after some of the have been deleted.
 		_mesh.reindexVerticesAndFaces();
-		qDebug() << "Deleted" << (oldFaceCount - _mesh.faceCount()) << "faces";
-		qDebug() << "Deleted" << (oldVertexCount - _mesh.vertexCount()) << "vertices";
+	}
 
-		std::ofstream s("edge_collapse_result.data");
-		s << "LAMMPS data file\n";
-		s << "\n";
-		s << _mesh.vertexCount() << " atoms\n";
-		s << (_mesh.faceCount() * 3 / 2) << " bonds\n";
-		s << "\n";
-		s << "1 atom types\n";
-		s << "1 bond types\n";
-		s << "\n";
-		Box3 bbox;
-		for(Vertex* v : _mesh.vertices())
-			bbox.addPoint(v->pos());
-		bbox = bbox.padBox(10.0);
-		s << bbox.minc[0] << " " << bbox.maxc[0] << "xlo xhi\n";
-		s << bbox.minc[1] << " " << bbox.maxc[1] << "ylo yhi\n";
-		s << bbox.minc[2] << " " << bbox.maxc[2] << "zlo zhi\n";
-		s << "\nMasses\n\n";
-		s << "1 1\n";
-		s << "\nAtoms # bond\n\n";
-		for(Vertex* v : _mesh.vertices())
-			s << v->index() << " 1 1 " << v->pos()[0] << " " << v->pos()[1] << " " << v->pos()[2] << "\n";
-		s << "\nBonds\n\n";
-		size_t counter = 1;
-		for(Face* face : _mesh.faces()) {
-			Edge* e = face->edges();
-			OVITO_ASSERT(e);
-			do {
-				if(e->vertex2()->index() > e->vertex1()->index()) {
-					s << counter++ << " 1 " << e->vertex1()->index() << " " << e->vertex2()->index() << "\n";
-				}
-				e = e->nextFaceEdge();
-			}
-			while(e != face->edges());
+	/// Calls a callback function on all faces which are adjacent on the two vertices of the given edge.
+	template<typename Callback>
+	void visitAdjacentTriangles(Edge* edge, Callback callback) const 
+	{
+		// Go around first vertex.
+		OVITO_ASSERT(edge->oppositeEdge() && edge->oppositeEdge()->nextFaceEdge());
+		Edge* currentEdge = edge;
+		Edge* stopEdge = edge->oppositeEdge()->nextFaceEdge();
+		do {
+			callback(currentEdge);
+			currentEdge = currentEdge->prevFaceEdge()->oppositeEdge();
+			OVITO_ASSERT(currentEdge);
 		}
-		qDebug() << "Done";
+		while(currentEdge != stopEdge);
+
+		// Go around second vertex.
+		edge = edge->oppositeEdge();
+		OVITO_ASSERT(edge && edge->oppositeEdge()->nextFaceEdge());
+		currentEdge = edge;
+		stopEdge = edge->oppositeEdge()->nextFaceEdge();
+		do {
+			callback(currentEdge);
+			currentEdge = currentEdge->prevFaceEdge()->oppositeEdge();
+			OVITO_ASSERT(currentEdge);
+		}
+		while(currentEdge != stopEdge);
 	}
 
-	Point3 computePlacement(Edge* edge) const 
+	/// Calls a callback function on all vertices which are adjacent on the two vertices of the given edge.
+	template<typename Callback>
+	void visitLink(Edge* edge, Callback callback) const 
 	{
-#if 0		
-		const Point3& p0 = edge->vertex1()->pos();
-		const Point3& p1 = edge->vertex2()->pos();
-		return p0 + (p1 - p0) * FloatType(0.5);
-#else 
-		Constraints constraints;
-		addVolumePreservationConstraints(edge, constraints);
+		// Go around first vertex.
+		OVITO_ASSERT(edge->oppositeEdge() && edge->oppositeEdge()->nextFaceEdge());
+		Edge* currentEdge = edge->prevFaceEdge()->oppositeEdge();
+		Edge* stopEdge = edge->oppositeEdge()->nextFaceEdge();
+		do {
+			callback(currentEdge->vertex2());
+			currentEdge = currentEdge->prevFaceEdge()->oppositeEdge();
+			OVITO_ASSERT(currentEdge);
+		}
+		while(currentEdge != stopEdge);
 
-		// It might happen that there were not enough alpha-compatible constraints.
-		// In that case there is simply no good vertex placement
-  		if ( mConstraints_n == 3 ) 
-  {
-    // If the matrix is singular it's inverse cannot be computed so an 'absent' value is returned.
-    optional<Matrix> lOptional_Ai = inverse_matrix(mConstraints_A);
-    if ( lOptional_Ai )
-    {
-      Matrix const& lAi = *lOptional_Ai ;
-      
-      CGAL_ECMS_LT_TRACE(2,"       b: " << xyz_to_string(mConstraints_b) );
-      CGAL_ECMS_LT_TRACE(2,"  inv(A): " << matrix_to_string(lAi) );
-      
-      lPlacementV = filter_infinity(mConstraints_b * lAi) ;
-      
-      CGAL_ECMS_LT_TRACE(0,"  New vertex point: " << xyz_to_string(*lPlacementV) );
-    }
-    else
-    {
-      CGAL_ECMS_LT_TRACE(1,"  Can't solve optimization, singular system.");
-    }  
-  }
-  else
-  {
-    CGAL_ECMS_LT_TRACE(1,"  Can't solve optimization, not enough alpha-compatible constraints.");
-  }  
-  
-  if ( lPlacementV )
-    rPlacementP = ORIGIN + (*lPlacementV) ;
-    
-  return rPlacementP;		
-#endif		
-	}
-
-	int addVolumePreservationConstraints(Edge& edge, Constraints& constraints)
-	{
-		Vector3 sumV = Vector3::Zero();
-		FloatType sumL = 0;
-		visitAdjacentTriangles(edge, [&sumV,&sumL](Face* face) {
-			Edge* fedge0 = face->edges();
-			Edge* fedge1 = fedge0->nextFaceEdge();
-			Edge* fedge2 = fedge1->nextFaceEdge();
-			const Point3& p0 = fedge0->vertex2()->pos();
-			const Point3& p1 = fedge1->vertex2()->pos();
-			const Point3& p2 = fedge2->vertex2()->pos();
-			Vector3 v01 = p1 - p0;
-			Vector3 v02 = p2 - p0;
-			Vector3 normalV = v01.cross(v02);
-			FloatType normalL = (p0 - Point3::Origin()).cross(p1 - Point3::Origin()).dot(p2 - Point3::Origin());
-			sumV += normalV;
-			sumL += normalL;
-		});		
-		constraints.addConstraintIfAlphaCompatible(sumV, sumL);
+		// Go around second vertex.
+		edge = edge->oppositeEdge();
+		OVITO_ASSERT(edge && edge->oppositeEdge()->nextFaceEdge());
+		currentEdge = edge->prevFaceEdge()->oppositeEdge();
+		stopEdge = edge->oppositeEdge()->nextFaceEdge();
+		do {
+			callback(currentEdge->vertex2());
+			currentEdge = currentEdge->prevFaceEdge()->oppositeEdge();
+			OVITO_ASSERT(currentEdge);
+		}
+		while(currentEdge != stopEdge);
 	}
 
 	/// Each vertex constraint is an equation of the form: Ai * v = bi
@@ -307,7 +225,7 @@ private:
 	/// The member variables contain A and b. Individual constraints (Ai,bi) can be added to it.
 	/// Once 3 such constraints have been added, 'v' is directly solved as:
 	///
-	///  v = b*inverse(A)
+	///  v = inv(A) * b
 	///
 	/// A constraint (Ai,bi) must be alpha-compatible with the previously added constraints (see paper); otherwise, it's discarded.
 	struct Constraints
@@ -316,131 +234,216 @@ private:
 		Matrix3 constraintsA = Matrix3::Zero();
 		Vector3 constraintsB = Vector3::Zero();
 
-		void addConstraintIfAlphaCompatible(const Vector3& Ai, FloatType Bi)
+		void addConstraintIfAlphaCompatible(const Vector3& Ai, FloatType bi)
 		{
-			FloatType slai = Ai.dot(Ai);
-			if(std::isfinite(slai)) {
-				FloatType l = std::sqrt(slai);
-				if(l != 0) {
-					Vector3 Ain = Ai / l;
-					FloatType bin = bi / l;
-					bool addIt = true;
-					if(numConstraints == 1) {
-						FloatType d01 = constraintsA.column(0).dot(Ai);
-						FloatType sla0 = constraintsA.column(0).dot(constraintsA.column(0));
-						FloatType sd01 = d01 * d01;
-						FloatType max = sla0 * slai * _squared_cos_alpha;
-						if(sd01 > max)
-							addIt = false;
-					}
-					else if(numConstraints == 2) {
-						Vector3 N = constraintsA.column(0).cross(constraintsA.column(1));			
-						FloatType dc012 = N.dot(Ai);
-						FloatType slc01  = N.dot(N);
-						FloatType sdc012 = dc012 * dc012;		
-						FloatType min = slc01 * slai * _squared_sin_alpha;
-						if(sdc012 <= min)
-							addIt = false;
-					}
-					
-					if(addIt) {
-						switch(numConstraints)
-						{
-						case 0:
-							constraintsA.column(0) = Ain;
-							constraintsB = Vector3(bin,constraintsB.y(),ConstraintsB.z());
-							break;
-						case 1:
-							constraintsA.column(1) = Ain;
-							constraintsB = Vector3(constraintsB.x(),bin,constraintsB.z());
-							break;
-						case 2:
-							constraintsA.column(2) = Ain;
-							constraintsB = Vector3(constraintsB.x(),constraintsB.y(),bin);
-							break;
-						}
+			OVITO_ASSERT(numConstraints < 3);
+			FloatType slai = Ai.squaredLength();
+			if(slai == 0) return;
+			FloatType l = std::sqrt(slai);
 			
-						++numConstraints;			
-					}
+			Vector3 Ain = Ai / l;
+			FloatType bin = bi / l;
+			if(numConstraints == 1) {
+				FloatType d01 = constraintsA.column(0).dot(Ai);
+				FloatType sla0 = constraintsA.column(0).squaredLength();
+				FloatType sd01 = d01 * d01;
+				FloatType max = sla0 * slai * mcMaxDihedralAngleCos2;
+				if(sd01 > max)
+					return;
+			}
+			else if(numConstraints == 2) {
+				Vector3 N = constraintsA.column(0).cross(constraintsA.column(1));			
+				FloatType dc012 = N.dot(Ai);
+				FloatType slc01  = N.squaredLength();
+				FloatType sdc012 = dc012 * dc012;		
+				FloatType min = slc01 * slai * mcMaxDihedralAngleSin2;
+				if(sdc012 <= min)
+					return;
+			}
+					
+			constraintsA.column(numConstraints) = Ain;
+			constraintsB[numConstraints] = bin;
+			++numConstraints;
+		}
+		
+		void addConstraintFromGradient(const Matrix3& H, const Vector3& c) 
+		{
+			OVITO_ASSERT(numConstraints >= 0 && numConstraints < 3);
+			switch(numConstraints)
+			{
+			case 0:
+				addConstraintIfAlphaCompatible(H.column(0), -c.x());
+				addConstraintIfAlphaCompatible(H.column(1), -c.y());
+				addConstraintIfAlphaCompatible(H.column(2), -c.z());
+				break;  
+      
+			case 1:
+				{
+				const Vector3& A0 = constraintsA.column(0);
+				OVITO_ASSERT(A0 != Vector3::Zero());
+        
+				Vector3 AbsA0(std::abs(A0.x()), std::abs(A0.y()), std::abs(A0.z()));
+           
+				Vector3 Q0;      
+				switch(AbsA0.maxComponent())
+				{
+				// Since A0 is guaranteed to be non-zero, the denominators here are known to be non-zero too.
+				case 0: Q0 = Vector3(-A0.z()/A0.x(),0             ,1             ); break;
+				case 1: Q0 = Vector3(0             ,-A0.z()/A0.y(),1             ); break;
+				case 2: Q0 = Vector3(1             ,0             ,-A0.x()/A0.z()); break;
+				default: Q0.setZero(); // This should never happen!
+		        }
+				Vector3 Q1 = A0.cross(Q0);
+		        Vector3 A1 = H * Q0;
+        		Vector3 A2 = H * Q1;
+        
+				FloatType b1 = -Q0.dot(c);
+				FloatType b2 = -Q1.dot(c);
+        
+        		addConstraintIfAlphaCompatible(A1,b1);
+        		addConstraintIfAlphaCompatible(A2,b2);
 				}
+				break;
+    
+			case 2:
+				{
+				Vector3 Q = constraintsA.column(0).cross(constraintsA.column(1));
+				Vector3 A2 = H * Q;
+				FloatType b2 = -Q.dot(c);
+				addConstraintIfAlphaCompatible(A2,b2);
+				}
+				break;
 			}
 		}
 
-		bool solve(Vector3& solution) const 
+		boost::optional<Vector3> solve() const 
 		{
-
+			// It might happen that there were not enough alpha-compatible constraints.
+			// In that case there is simply no good vertex placement
+			if(numConstraints != 3) return {};
+			
+			// If the matrix is singular it's inverse cannot be computed so an 'absent' value is returned.
+			Matrix3 inverseA;
+			if(!constraintsA.inverse(inverseA)) return {};
+			
+			return inverseA.transposed() * constraintsB;
 		}
 	};
 
-	/// Computes the costs associated with collapsing the given edge into a single vertex at position p.
-	FloatType computeCost(Edge* edge, const Point3& p) const
+
+	boost::optional<Vector3> computePlacement(Edge* edge) const 
+	{
+		Constraints constraints;
+		addVolumePreservationConstraints(edge, constraints);
+		
+		if(constraints.numConstraints < 3)
+			addBoundaryAndVolumeOptimizationConstraints(edge, constraints); 
+		
+		if(constraints.numConstraints < 3)
+			addShapeOptimizationConstraints(edge, constraints);
+		
+		return constraints.solve();
+	}
+
+	void addVolumePreservationConstraints(Edge* edge, Constraints& constraints) const
+	{
+		Vector3 sumV = Vector3::Zero();
+		FloatType sumL = 0;
+		const Point3& origin = edge->vertex2()->pos();
+		visitAdjacentTriangles(edge, [this,&sumV,&sumL,&origin](Edge* faceEdge) {
+			const Point3& p0 = faceEdge->prevFaceEdge()->vertex1()->pos();
+			const Point3& p1 = faceEdge->vertex1()->pos();
+			const Point3& p2 = faceEdge->vertex2()->pos();
+			Vector3 v01 = _ppvec(p0, p1);
+			Vector3 v02 = _ppvec(p0, p2);
+			Vector3 normalV = v01.cross(v02);
+			// Determinant:
+			FloatType normalL = _ppvec(origin, p0).cross(_ppvec(origin, p1)).dot(_ppvec(origin, p2));
+			sumV += normalV;
+			sumL += normalL;
+		});
+		constraints.addConstraintIfAlphaCompatible(sumV, sumL);
+	}
+
+	void addBoundaryAndVolumeOptimizationConstraints(Edge* edge, Constraints& constraints) const
+	{
+		Matrix3 H = Matrix3::Zero();
+		Vector3 c = Vector3::Zero();
+		const Point3& origin = edge->vertex2()->pos();
+  		visitAdjacentTriangles(edge, [this,&H,&c,&origin](Edge* faceEdge) {
+			const Point3& p0 = faceEdge->prevFaceEdge()->vertex1()->pos();
+			const Point3& p1 = faceEdge->vertex1()->pos();
+			const Point3& p2 = faceEdge->vertex2()->pos();
+			Vector3 v01 = _ppvec(p0, p1);
+			Vector3 v02 = _ppvec(p0, p2);
+			Vector3 normalV = v01.cross(v02);
+			// Determinant:
+			FloatType normalL = _ppvec(origin, p0).cross(_ppvec(origin, p1)).dot(_ppvec(origin, p2));
+			H.column(0) += normalV * normalV.x();
+			H.column(1) += normalV * normalV.y();
+			H.column(2) += normalV * normalV.z();
+			c -= normalL * normalV;
+		});
+		constraints.addConstraintFromGradient(H,c);
+	}
+	
+	void addShapeOptimizationConstraints(Edge* edge, Constraints& constraints) const
+	{
+		Vector3 c = Vector3::Zero();
+  		int linkCount = 0;
+		const Point3& origin = edge->vertex2()->pos();
+		visitLink(edge, [this,&c,&linkCount,&origin](Vertex* v) {
+			c -= _ppvec(origin, v->pos());
+			linkCount++;
+		});
+  		FloatType s = linkCount;
+  		Matrix3 H(s,0,0,0,s,0,0,0,s);
+		constraints.addConstraintFromGradient(H,c);
+	}
+	
+	/// Computes the costs associated with collapsing the given edge into a single vertex at relative position v.
+	FloatType computeCost(Edge* edge, const Vector3& v) const
 	{
 		const Point3& p0 = edge->vertex1()->pos();
 		const Point3& p1 = edge->vertex2()->pos();
-		Vector3 v = p - Point3::Origin();
-    	FloatType squaredLength = (p0 - p1).squaredLength();
-    	FloatType bdryCost = computeBoundaryCost(edge, v);
+    	FloatType squaredLength = _ppvec(p0,  p1).squaredLength();
 		FloatType volumeCost = computeVolumeCost(edge, v);
-		FloatType shapeCost = 0;//computeShapeCost(p, profile.link());
+		FloatType shapeCost = computeShapeCost(edge, p1 + v);
     
 		FloatType totalCost = _volumeWeight * volumeCost
-		                    + _boundaryWeight * bdryCost * squaredLength
-                    		+ _shapeWeight * shapeCost * squaredLength * squaredLength;
+		                    + _shapeWeight * shapeCost * squaredLength * squaredLength;
     
 		OVITO_ASSERT(totalCost >= 0);
     	return std::isfinite(totalCost) ? totalCost : FloatType(-1);
 	}
 
-	/// Calls a callback function on all faces which are adjacenet to the two vertices of the given edge.
-	template<typename Callback>
-	void visitAdjacentTriangles(Edge* edge, Callback callback) const {
-		// Go around first vertex.
-		OVITO_ASSERT(edge->oppositeEdge() && edge->oppositeEdge()->nextFaceEdge());
-		Edge* currentEdge = edge;
-		Edge* stopEdge = edge->oppositeEdge()->nextFaceEdge();
-		do {
-			OVITO_ASSERT(currentEdge->face());
-			callback(currentEdge->face());
-			currentEdge = currentEdge->prevFaceEdge()->oppositeEdge();
-			OVITO_ASSERT(currentEdge);
-		}
-		while(currentEdge != stopEdge);
-
-		// Go around second vertex.
-		edge = edge->oppositeEdge();
-		OVITO_ASSERT(edge && edge->oppositeEdge()->nextFaceEdge());
-		currentEdge = edge;
-		stopEdge = edge->oppositeEdge()->nextFaceEdge();
-		do {
-			OVITO_ASSERT(currentEdge->face());
-			callback(currentEdge->face());
-			currentEdge = currentEdge->prevFaceEdge()->oppositeEdge();
-			OVITO_ASSERT(currentEdge);
-		}
-		while(currentEdge != stopEdge);
-	}
-
-	FloatType computeBoundaryCost(Edge* edge, const Vector3& v) const { return 0; }
-
 	FloatType computeVolumeCost(Edge* edge, const Vector3& v) const
 	{
 		FloatType cost = 0;
-		visitAdjacentTriangles(edge, [&cost,&v](Face* face) {
-			Edge* fedge0 = face->edges();
-			Edge* fedge1 = fedge0->nextFaceEdge();
-			Edge* fedge2 = fedge1->nextFaceEdge();
-			const Point3& p0 = fedge0->vertex2()->pos();
-			const Point3& p1 = fedge1->vertex2()->pos();
-			const Point3& p2 = fedge2->vertex2()->pos();
-			Vector3 v01 = p1 - p0;
-			Vector3 v02 = p2 - p0;
+		const Point3& origin = edge->vertex2()->pos();
+		visitAdjacentTriangles(edge, [this,&cost,&v,&origin](Edge* faceEdge) {
+			const Point3& p0 = faceEdge->prevFaceEdge()->vertex1()->pos();
+			const Point3& p1 = faceEdge->vertex1()->pos();
+			const Point3& p2 = faceEdge->vertex2()->pos();
+			Vector3 v01 = _ppvec(p0, p1);
+			Vector3 v02 = _ppvec(p0, p2);
 			Vector3 normalV = v01.cross(v02);
-			FloatType normalL = (p0 - Point3::Origin()).cross(p1 - Point3::Origin()).dot(p2 - Point3::Origin());
+			// Determinant:
+			FloatType normalL = _ppvec(origin, p0).cross(_ppvec(origin, p1)).dot(_ppvec(origin, p2));
 			FloatType f = normalV.dot(v) - normalL;
 			cost += f*f;
 		});
 		return cost / 36;
 	}
+	
+	FloatType computeShapeCost(Edge* edge, const Point3& p) const
+	{
+		FloatType cost = 0;
+		visitLink(edge, [this,&p,&cost](Vertex* v) {
+			cost += _ppvec(p, v->pos()).squaredLength();
+		});
+		return cost;
+	}	
 
 	/// A collapse is geometrically valid if in the resulting local mesh no two adjacent triangles form an internal dihedral angle
 	/// greater than a fixed threshold (i.e. triangles do not "fold" into each other).
@@ -514,9 +517,12 @@ private:
 	/// a given threshold
 	bool areSharedTrianglesValid(const Point3& p0, const Point3& p1, const Point3& p2, const Point3& p3) const
 	{
-		Vector3 e01 = p1 - p0;
-		Vector3 e02 = p2 - p0;
-		Vector3 e03 = p3 - p0;
+		Vector3 e01 = _ppvec(p0, p1);
+		Vector3 e02 = _ppvec(p0, p2);
+		Vector3 e03 = _ppvec(p0, p3);
+		if(!_edgeValidation(e01)) return false;
+		if(!_edgeValidation(e02)) return false;
+		if(!_edgeValidation(e03)) return false;
 
 		Vector3 n012 = e01.cross(e02);
 		Vector3 n023 = e02.cross(e03);
@@ -531,21 +537,21 @@ private:
     		FloatType l0123 = n012.dot(n023);
 			if(l0123 > 0)
 				return true;
-			if((l0123 * l0123) <= mcMaxDihedralAngleCos2 * (l012 * l023))
+			if(l0123 * l0123 <= mcMaxDihedralAngleCos2 * l012 * l023)
 				return true;
 		}
 		return false;
   	}
 
 	/// Removes the given edge from the mesh and updates the neighborhood.
-	void collapse(Edge* edge, const Point3& placement)
+	void collapse(Edge* edge, const Vector3& placement)
 	{
 		Edge* oppositeEdge = edge->oppositeEdge();
 		OVITO_ASSERT(oppositeEdge);
 
 		// Reposition vertex.
 		Vertex* remainingVertex = edge->vertex2();
-		remainingVertex->setPos(placement);
+		remainingVertex->setPos(remainingVertex->pos() + placement);
 
 		Edge* ep1 = edge->prevFaceEdge();
 		Edge* epo1 = ep1->oppositeEdge();
@@ -580,7 +586,8 @@ private:
 		while(currentEdge != en1);
 	}
 
-	void eraseEdgeFromPQ(Edge* edge) {
+	void eraseEdgeFromPQ(Edge* edge) 
+	{
 		auto handle = _pqHandles.find(edge);
 		if(handle == _pqHandles.end()) {
 			OVITO_ASSERT(edge->oppositeEdge() != nullptr);
@@ -592,12 +599,13 @@ private:
 		}
 	}
 
-	void updateEdgeCostIfPrimary(Edge* edge) {
+	void updateEdgeCostIfPrimary(Edge* edge) 
+	{
 		auto handle = _pqHandles.find(edge);
 		if(handle == _pqHandles.end())
 			return;
-		Point3 placement = computePlacement(edge);
-		(*handle->second).cost = computeCost(edge, placement);
+		boost::optional<Vector3> placement = computePlacement(edge);
+		(*handle->second).cost = placement ? computeCost(edge, *placement) : -1;
 		_pq.update(handle->second);
 	}
 
@@ -621,6 +629,12 @@ private:
 
 	/// Loopup map for handles in the priority queue.
 	std::unordered_map<Edge*, typename PQ::handle_type> _pqHandles;
+	
+	/// Functor object that is responsible for calculating the vector between two points.
+	PointPointVector _ppvec;
+	
+	/// Client-provided functor object that allow to reject new edges. 
+	EdgeVectorValidation _edgeValidation;
 
 	// Lindstrom-Turk algorithm parameters:
 	FloatType _volumeWeight = FloatType(0.5);
@@ -630,6 +644,8 @@ private:
 	static constexpr FloatType cMaxAreaRatio = FloatType(1e8);
 	static constexpr double cMaxDihedralAngleCos = 0.99984769515639123916; // =cos(1 degree)
 	static constexpr FloatType mcMaxDihedralAngleCos2 = FloatType(0.999695413509547865); // =cos(1 degree)^2
+	static constexpr double cMaxDihedralAngleSin = 0.017452406437284; // =sin(1 degree)
+	static constexpr FloatType mcMaxDihedralAngleSin2 = FloatType(0.000304586490452); // =sin(1 degree)^2
 };
 
 

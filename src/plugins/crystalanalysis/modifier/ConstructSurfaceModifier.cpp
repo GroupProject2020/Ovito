@@ -24,7 +24,6 @@
 #include <plugins/particles/objects/SimulationCellObject.h>
 #include <plugins/crystalanalysis/util/DelaunayTessellation.h>
 #include <plugins/crystalanalysis/util/ManifoldConstructionHelper.h>
-#include <core/utilities/mesh/HalfEdgeMesh_EdgeCollapse.h>
 #include "ConstructSurfaceModifier.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
@@ -221,9 +220,6 @@ void ConstructSurfaceModifier::ConstructSurfaceEngine::perform()
 		_surfaceArea += e1.cross(e2).length();
 	}
 	_surfaceArea *= FloatType(0.5);
-
-	EdgeCollapseMeshSimplification<HalfEdgeMesh<>> simplification(*mesh());
-	simplification.perform();
 
 	endProgressSubSteps();
 }

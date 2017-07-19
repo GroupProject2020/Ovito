@@ -22,6 +22,7 @@
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/modifier/SmoothSurfaceModifier.h>
 #include <gui/properties/IntegerParameterUI.h>
+#include <gui/properties/FloatParameterUI.h>
 #include "SmoothSurfaceModifierEditor.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
@@ -45,6 +46,10 @@ void SmoothSurfaceModifierEditor::createUI(const RolloutInsertionParameters& rol
 	IntegerParameterUI* smoothingLevelUI = new IntegerParameterUI(this, PROPERTY_FIELD(SmoothSurfaceModifier::smoothingLevel));
 	layout->addWidget(smoothingLevelUI->label(), 0, 0);
 	layout->addLayout(smoothingLevelUI->createFieldLayout(), 0, 1);
+
+	FloatParameterUI* minEdgeLengthUI = new FloatParameterUI(this, PROPERTY_FIELD(SmoothSurfaceModifier::minEdgeLength));
+	layout->addWidget(minEdgeLengthUI->label(), 1, 0);
+	layout->addLayout(minEdgeLengthUI->createFieldLayout(), 1, 1);
 }
 
 }	// End of namespace

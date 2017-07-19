@@ -46,8 +46,11 @@ public:
 
 private:
 
-	/// Controls the amount of smoothing.
+	/// The number of iterations of the smoothing algorithm.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, smoothingLevel, setSmoothingLevel);
+
+	/// The minimum edge length stopping criterion for the mesh simplification algorithm.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, minEdgeLength, setMinEdgeLength);
 
 	Q_OBJECT
 	OVITO_OBJECT
