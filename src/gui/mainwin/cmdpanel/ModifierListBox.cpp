@@ -257,7 +257,7 @@ void ModifierListBox::updateMRUList(const QString& selectedModifierName)
 {
 	QSettings settings;
 	settings.beginGroup("core/modifier/mru/");
-	if(!settings.value("enable_mru", true).toBool())
+	if(!settings.value("enable_mru", false).toBool())
 		return;
 	
 	int index = _mostRecentlyUsedModifiers.indexOf(selectedModifierName);
@@ -288,7 +288,7 @@ void ModifierListBox::updateAvailableModifiers()
 	// Should we show MRU list?
 	QSettings settings;
 	settings.beginGroup("core/modifier/mru/");
-	if(settings.value("enable_mru", true).toBool())
+	if(settings.value("enable_mru", false).toBool())
 		_mostRecentlyUsedModifiers = settings.value("list").toStringList();
 	else
 		_mostRecentlyUsedModifiers.clear();

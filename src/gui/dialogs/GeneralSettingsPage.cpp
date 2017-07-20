@@ -42,19 +42,19 @@ void GeneralSettingsPage::insertSettingsDialogPage(ApplicationSettingsDialog* se
 	layout1->addWidget(uiGroupBox);
 	QGridLayout* layout2 = new QGridLayout(uiGroupBox);
 
-	_useQtFileDialog = new QCheckBox(tr("Use alternative file selection dialog"), uiGroupBox);
+	_useQtFileDialog = new QCheckBox(tr("Load file: Use alternative file selection dialog"), uiGroupBox);
 	_useQtFileDialog->setToolTip(tr(
 			"<p>Use an alternative file selection dialog instead of the native dialog box provided by the operating system.</p>"));
 	layout2->addWidget(_useQtFileDialog, 0, 0);
 	_useQtFileDialog->setChecked(settings.value("file/use_qt_dialog", false).toBool());
 
-	_enableMRUModifierList = new QCheckBox(tr("Show most recently used modifiers"), uiGroupBox);
+	_enableMRUModifierList = new QCheckBox(tr("Modifier list: Only show most recently used modifiers"), uiGroupBox);
 	_enableMRUModifierList->setToolTip(tr(
 			"<p>Restricts the modifiers in the <i>Add Modification</i> list box to the most recently used ones.</p>"));
 	layout2->addWidget(_enableMRUModifierList, 1, 0);
-	_enableMRUModifierList->setChecked(settings.value("core/modifier/mru/enable_mru", true).toBool());
+	_enableMRUModifierList->setChecked(settings.value("core/modifier/mru/enable_mru", false).toBool());
 
-	QGroupBox* openglGroupBox = new QGroupBox(tr("Display / OpenGL"), page);
+	QGroupBox* openglGroupBox = new QGroupBox(tr("Viewport rendering / OpenGL"), page);
 	layout1->addWidget(openglGroupBox);
 	layout2 = new QGridLayout(openglGroupBox);
 

@@ -67,7 +67,7 @@ OPTION(OVITO_BUILD_PLUGIN_POVRAY "Build the POV-Ray plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_OPENBABELPLUGIN "Build the OpenBabel plugin (experimental)." "OFF")
 OPTION(OVITO_BUILD_PLUGIN_CORRELATION "Build the correlation function plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_VR "Build the virtual reality plugin (experimental)." "OFF")
-OPTION(OVITO_BUILD_PLUGIN_VOROTOP "Build the VoroTop plugin (experimental)." "ON")
+OPTION(OVITO_BUILD_PLUGIN_VOROTOP "Build the VoroTop plugin." "ON")
 
 # This is a global list of plugin targets that will be built.
 # It will get populated by the OVITO_PLUGIN macro.
