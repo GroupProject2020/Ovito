@@ -69,16 +69,26 @@ public:
 	EdgeCollapseMeshSimplification(HEM& mesh, PointPointVector ppvec = PointPointVector(), EdgeVectorValidation edgeValidation = EdgeVectorValidation()) : 
 		_mesh(mesh), _ppvec(std::move(ppvec)), _edgeValidation(std::move(edgeValidation)) {}
 
-	void perform(FloatType minEdgeLength) 
+	bool perform(FloatType minEdgeLength, PromiseBase& promise) 
 	{
 		// Current implementation can only handle closed manifolds.
 		OVITO_ASSERT(_mesh.isClosed());
 
+		promise.beginProgressSubSteps(2);
+
 		// First collect all candidate edges in a priority queue
-		collect();
+		if(!collect(promise))
+			return false;
+
+		promise.nextProgressSubStep();
 
 		// Then proceed to collapse each edge in turn.
-		loop(minEdgeLength);
+		if(!loop(minEdgeLength, promise))
+			return false;
+
+		promise.endProgressSubSteps();
+
+		return !promise.isCanceled();
 	}
 
 private:
@@ -94,8 +104,10 @@ private:
 	}
 
 	/// Collects all candidate edges.
-	void collect() 
+	bool collect(PromiseBase& promise) 
 	{
+		promise.setProgressMaximum(_mesh.faceCount());
+
 		// Insert edges into priority queue.
 		_pqHandles.clear();
 		for(Face* face : _mesh.faces()) {
@@ -110,15 +122,25 @@ private:
 				edge = edge->nextFaceEdge();
 			}
 			while(edge != face->edges());
+
+			if(!promise.incrementProgressValue())
+				return false;
 		}
+
+		return true;
 	}
 
 	/// Collapses edges in order of priority.
-	void loop(FloatType minEdgeLength)
+	bool loop(FloatType minEdgeLength, PromiseBase& promise)
 	{
+		promise.setProgressMaximum(_pq.size());
+
 		// Pop and processe each edge from the PQ.
 		size_t collapsedEdges = 0;
 		while(!_pq.empty()) {
+			if(!promise.incrementProgressValue())
+				return false;
+			
 			Edge* edge = _pq.top().edge;
 			FloatType cost = _pq.top().cost;
 			_pq.pop();
@@ -136,6 +158,7 @@ private:
 				}
 			}
 		}
+		promise.setProgressValue(promise.progressMaximum());
 
 		// Remove faces and vertices which were marked for deletion.
 		for(int f = _mesh.faceCount() - 1; f >= 0; f--) {
@@ -149,6 +172,8 @@ private:
 		
 		// Need to assigne new indices to vertices and faces after some of the have been deleted.
 		_mesh.reindexVerticesAndFaces();
+
+		return true;
 	}
 
 	/// Calls a callback function on all faces which are adjacent on the two vertices of the given edge.

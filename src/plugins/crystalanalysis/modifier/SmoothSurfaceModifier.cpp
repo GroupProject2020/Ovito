@@ -85,51 +85,24 @@ PipelineStatus SmoothSurfaceModifier::modifyObject(TimePoint time, ModifierAppli
 			}
 			if(minEdgeLength() > 0) {
 				EdgeCollapseMeshSimplification<HalfEdgeMesh<>, decltype(pointPointVector)> simplification(*outputSurface->modifiableStorage(), pointPointVector);
-				simplification.perform(minEdgeLength());
+				simplification.perform(minEdgeLength(), smoothingTask.promise());
 				outputSurface->changed();
-
-#if 0
-				std::ofstream s("edge_collapse_result.data");
-				s << "LAMMPS data file\n";
-				s << "\n";
-				s << mesh()->vertexCount() << " atoms\n";
-				s << (mesh()->faceCount() * 3 / 2) << " bonds\n";
-				s << "\n";
-				s << "1 atom types\n";
-				s << "1 bond types\n";
-				s << "\n";
-				Point3 minc = _simCell.matrix() * Point3(0,0,0);
-				Point3 maxc = _simCell.matrix() * Point3(1,1,1);
-				s << minc[0] << " " << maxc[0] << "xlo xhi\n";
-				s << minc[1] << " " << maxc[1] << "ylo yhi\n";
-				s << minc[2] << " " << maxc[2] << "zlo zhi\n";
-				s << "\nMasses\n\n";
-				s << "1 1\n";
-				s << "\nAtoms # bond\n\n";
-				for(HalfEdgeMesh<>::Vertex* v : mesh()->vertices())
-					s << v->index() << " 1 1 " << v->pos()[0] << " " << v->pos()[1] << " " << v->pos()[2] << "\n";
-				s << "\nBonds\n\n";
-				size_t counter = 1;
-				for(HalfEdgeMesh<>::Face* face : mesh()->faces()) {
-					HalfEdgeMesh<>::Edge* e = face->edges();
-					OVITO_ASSERT(e);
-					do {
-						if(e->vertex2()->index() > e->vertex1()->index()) {
-							s << counter++ << " 1 " << e->vertex1()->index() << " " << e->vertex2()->index() << "\n";
-						}
-						e = e->nextFaceEdge();
-					}
-					while(e != face->edges());
-				}	
-#endif				
 			}		
 			state.replaceObject(inputSurface, outputSurface);
 		}
 		else if(SlipSurface* inputSurface = dynamic_object_cast<SlipSurface>(state.objects()[index])) {
 			OORef<SlipSurface> outputSurface = cloneHelper.cloneObject(inputSurface, false);
 			SynchronousTask smoothingTask(dataset()->container()->taskManager());
-			if(smoothingLevel() > 0)
+			if(smoothingLevel() > 0) {
 				outputSurface->smoothMesh(cell, smoothingLevel(), smoothingTask.promise(), FloatType(0.1), FloatType(0.6));
+			}
+#if 0
+			if(minEdgeLength() > 0) {
+				EdgeCollapseMeshSimplification<SlipSurfaceData, decltype(pointPointVector)> simplification(*outputSurface->modifiableStorage(), pointPointVector);
+				simplification.perform(minEdgeLength(), smoothingTask.promise());
+				outputSurface->changed();
+			}
+#endif
 			state.replaceObject(inputSurface, outputSurface);
 		}
 	}

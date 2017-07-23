@@ -604,11 +604,17 @@ void CAImporter::CrystalAnalysisFrameLoader::parseFile(CompressedTextReader& str
 			for(int index = 0; index < numFacets; index++) {
 				if(!setProgressValueIntermittent(index))
 					return;
+				Vector3 slipVector;
+				int clusterId;
 				int v[3];
-				if(sscanf(stream.readLine(), "%i %i %i", &v[0], &v[1], &v[2]) != 3)
+				if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " %i %i %i %i", &slipVector.x(), &slipVector.y(), &slipVector.z(), &clusterId, &v[0], &v[1], &v[2]) != 7)
 					throw Exception(tr("Failed to parse file. Invalid triangle facet in line %1.").arg(stream.lineNumber()));
+
 				SlipSurfaceData::Face* face = _stackingFaults->createFace({ _stackingFaults->vertex(v[0]), _stackingFaults->vertex(v[1]), _stackingFaults->vertex(v[2]) });
-				face->slipVector = ClusterVector(Vector3::Zero());
+				Cluster* cluster = _clusterGraph->findCluster(clusterId);
+				if(!cluster)
+					throw Exception(tr("Failed to parse file. Invalid cluster reference in line %1.").arg(stream.lineNumber()));
+				face->slipVector = ClusterVector(slipVector, cluster);
 			}
 		}
 		else if(stream.lineStartsWith("METADATA ")) {

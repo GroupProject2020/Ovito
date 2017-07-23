@@ -135,7 +135,7 @@ protected:
 	Q_OBJECT
 	OVITO_OBJECT
 
-	Q_CLASSINFO("DisplayName", "Slip surface");
+	Q_CLASSINFO("DisplayName", "Slip surfaces");
 };
 
 }	// End of namespace

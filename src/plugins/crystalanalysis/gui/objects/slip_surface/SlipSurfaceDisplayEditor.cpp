@@ -44,7 +44,7 @@ void SlipSurfaceDisplayEditor::createUI(const RolloutInsertionParameters& rollou
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(4);
 
-	QGroupBox* surfaceGroupBox = new QGroupBox(tr("Surface"));
+	QGroupBox* surfaceGroupBox = new QGroupBox(tr("Surface display"));
 	QGridLayout* sublayout = new QGridLayout(surfaceGroupBox);
 	sublayout->setContentsMargins(4,4,4,4);
 	sublayout->setSpacing(4);
