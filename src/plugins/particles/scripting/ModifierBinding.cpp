@@ -1258,7 +1258,7 @@ void defineModifiersSubmodule(py::module parentModule)
 	ovito_class<WignerSeitzAnalysisModifier, AsynchronousParticleModifier>(m,
 			":Base class: :py:class:`ovito.modifiers.Modifier`\n\n"
 			"Performs the Wigner-Seitz cell analysis to identify point defects in crystals. "
-			"The modifier requires loading a reference configuration from an external file::"
+			"The modifier requires loading a reference configuration from an external data file::"
 			"\n\n"
 			"    from ovito.modifiers import *\n"
 			"    \n"
@@ -1294,21 +1294,6 @@ void defineModifiersSubmodule(py::module parentModule)
 				"Boolean flag that controls the elimination of the affine cell deformation prior to performing the analysis."
 				"\n\n"
 				":Default: ``False``\n")
-		.def_property("use_frame_offset", &WignerSeitzAnalysisModifier::useReferenceFrameOffset, &WignerSeitzAnalysisModifier::setUseReferenceFrameOffset,
-				"Determines whether a sliding reference configuration is taken at a constant time offset (specified by :py:attr:`.frame_offset`) "
-				"relative to the current frame. If ``False``, a constant reference configuration is used (set by the :py:attr:`.reference_frame` parameter) "
-				"irrespective of the current frame."
-				"\n\n"
-				":Default: ``False``\n")
-		.def_property("reference_frame", &WignerSeitzAnalysisModifier::referenceFrameNumber, &WignerSeitzAnalysisModifier::setReferenceFrameNumber,
-				"The frame number to use as reference configuration if the reference data comprises multiple "
-				"simulation frames. Only used if ``use_frame_offset==False``."
-				"\n\n"
-				":Default: 0\n")
-		.def_property("frame_offset", &WignerSeitzAnalysisModifier::referenceFrameOffset, &WignerSeitzAnalysisModifier::setReferenceFrameOffset,
-				"The relative frame offset when using a sliding reference configuration (``use_frame_offset==True``)."
-				"\n\n"
-				":Default: -1\n")
 		.def_property("per_type_occupancies", &WignerSeitzAnalysisModifier::perTypeOccupancy, &WignerSeitzAnalysisModifier::setPerTypeOccupancy,
 				"A parameter flag that controls whether occupancy numbers are determined per particle type. "
 				"\n\n"
@@ -1319,6 +1304,10 @@ void defineModifiersSubmodule(py::module parentModule)
 				"the property component ``Occupancy.1`` contains the number of particles of type 1 that occupy a site. "
 				"\n\n"
 				":Default: ``False``\n")
+		// For backward compatibility with OVITO 2.8.2:
+		.def_property("use_frame_offset", &WignerSeitzAnalysisModifier::useReferenceFrameOffset, &WignerSeitzAnalysisModifier::setUseReferenceFrameOffset)
+		.def_property("reference_frame", &WignerSeitzAnalysisModifier::referenceFrameNumber, &WignerSeitzAnalysisModifier::setReferenceFrameNumber)
+		.def_property("frame_offset", &WignerSeitzAnalysisModifier::referenceFrameOffset, &WignerSeitzAnalysisModifier::setReferenceFrameOffset)
 		.def_property_readonly("vacancy_count", &WignerSeitzAnalysisModifier::vacancyCount)
 		.def_property_readonly("interstitial_count", &WignerSeitzAnalysisModifier::interstitialCount)
 	;
