@@ -1,3 +1,58 @@
+Release 2.9.0 (27-Jul-17):
+
+ - Added the --nthreads command line option to ovitos as an alternative to -nt (issue #35).
+ - Brought back missing stderr output from calls to sys.exit() in ovitos interpreter.
+ - Extended the Particle Inspection utility to allow expression-based selection of particles in 
+   addition to picking them using the mouse (issue #19).
+ - Added a bond-based mode to the Cluster Analysis modifier. It allows forming clusters based on 
+   the bond network topology.
+ - The OVITO main window now accepts data files and .ovito files via drag & drop (issue #28).
+ - Extended the Load Trajectory modifier to also copy other varying particle properties in addition 
+   to the particle positions (issue #29).
+ - The particle indices displayed by the Particle Inspection utility are now zero-based, consistent 
+   with the ParticleIndex variable used by the Expression Selection modifier (issue #21).
+ - Added the new 'Relative face area' threshold parameter to the Voronoi analysis modifier, which 
+   allows filtering out small faces with an area below a specified fraction of the total Voronoi cell 
+   surface area (issue #7).
+ - Added file parsers for the CASTEP .cell, .geom and .md simulation file formats.
+ - Replaced the 'eliminate homogeneous deformation' option of the Displacement Vectors modifier with 
+   the more general affine mapping setting.
+ - On macOS, data files and .ovito files can now be associated with OVTIO and directly opened from 
+   the Finder (issue #22).
+ - Added the FileSource.loaded_file attribute, which allows accessing the filename of the currently 
+   loaded simulation file from a Python script.
+ - New modifier: The Voronoi Topology Analysis modifier can classify the Voronoi polyhedra of particles, 
+   e.g. to perform structural filtering. 
+ - New modifier: The Correlation Function modifier has been contributed by Lars Pastewka. It allows 
+   computing the spatial correlation between two particle properties.
+ - Bug fix: LAMMPS data file parser ignored Bonds section at end of file when number of bonds is zero.
+ - New modifier: The Create Isosurface modifier allows to visualize field quantities like the electron 
+   density that are defined on a structured data grid. So far, only the POSCAR file parser has been 
+   extended to read charge density data from CHGCAR files, which can serve as input for the isosurface modifier. 
+ - New modifier: The Coordination Polyhedra modifier constructs convex hulls from the bonded neighbours of atoms. 
+ - Bug fix: Unexpected error message during file export when the old mapping for the output file columns 
+   has become invalid.
+ - Added the 'Adjust range (all frames)' function to the Color Coding modifier, which takes into account 
+   all frames of the animation sequence when determining the min/max values of the input property.
+ - Added a new user option to the Affine Transformation modifier that enables the transformation of 
+   vectorial particle properties like Force and velocity together with the particle positions (issue #11).
+ - Bug fix: Need to pass /exit option to Windows version of POV-Ray to automatically close message 
+   window after rendering is done (issue #16).
+ - Bug fix: Assertion error in Ambient Occlusion modifier when modifier input is empty.
+ - The ovito Python module is now usable from external Python interpreters as well, not only ovitos. 
+ - Complete overhaul of the internals of the asynchronous data pipeline framework; many improvements to the code. 
+ - Dropped backward compatibility with Qt library versions less than 5.4.
+ - Bug fix: Parser error when reading a LAMMPS file containing very small numbers on the order of 1e-200 (issue #12). 
+ - Bug fix: Windows version always appends .pov to expected file names (issue #13).
+ - Bug fix: Create trajectories function does not use correct number of frames from input sequence (issue #6).
+ - Added support for omnidirectional stereoscopic rendering to the POV-Ray renderer plugin. This allows 
+   producing 360 degrees VR movies (requires POV-Ray 3.7.1).
+ - The required system library libstdc++.so.6 is no longer bundled with the Linux version of OVITO, 
+   because it causes conflicts with OpenGL drivers on some systems.
+ - Reading multi-frame GSD files that contain static data now works correctly.
+ - Bug fix: Program crash during parallel access to NetCDF files. Calls to NetCDF library functions 
+   are now serialized, because they are not thread-safe.
+
 Release 2.8.2 (22-Jan-17):
 
 - The Histogram modifier can now operate on bond properties too.
