@@ -2,6 +2,8 @@
 Rendering
 ===================================
 
+.. _rendering_display_objects:
+
 -----------------------------------
 Display objects
 -----------------------------------
@@ -68,6 +70,8 @@ or via the :py:attr:`~ovito.data.DataObject.display` attribute of the resulting 
 Similarly, the :py:class:`~ovito.modifiers.CreateBondsModifier` attached a :py:class:`~ovito.vis.BondsDisplay`
 to the :py:class:`~ovito.data.Bonds` data object it computes.
     
+.. _rendering_viewports:
+
 -----------------------------------
 Viewports
 -----------------------------------

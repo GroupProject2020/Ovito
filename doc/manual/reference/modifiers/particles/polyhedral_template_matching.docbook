@@ -104,9 +104,9 @@
     <title>Local lattice orientation</title>
     <para>
      The PTM modifier can calculate the local lattice orientation for atoms that match one of the structural types. The computed orientation is stored
-     as a quaternion in the <literal>Orientation</literal> particle  property. 
+     as a quaternion in the <literal>Orientation</literal> particle property. 
      You can switch the <link linkend="display_objects.particles">particle display shape</link> to <emphasis>Cube/Box</emphasis> to visualize the computed 
-     per-particle orientations.
+     per-particle orientations or apply <link xlink:href="python/introduction/examples.html#example-visualize-local-lattice-orientation">this custom Python modifier</link> to color particles according to their local lattice orientation.
      Lattice orientations are calculated such that they lie in the fundamental zone of the symmetry group for each structural type. 
      This means that two atoms with very similar orientations can have large misorientations if they lie close to the boundaries of the fundamental zone.
      For atoms that do not match any of the known structure types, no local lattice orientation can be computed. They are assigned the

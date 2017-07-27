@@ -179,6 +179,7 @@ FileSource.source_path = property(_get_FileSource_source_path, _set_FileSource_s
 
 def export_file(node, file, format, **params):
     """ High-level function that exports the results of the data pipeline to a file.
+        See the :ref:`file_output_overview` section for an overview.
     
         :param node: The object node that provides the data to be exported.
         :type node: :py:class:`~ovito.scene.ObjectNode` 
@@ -197,12 +198,12 @@ def export_file(node, file, format, **params):
         
         The function first evaluates the modification pipeline of the given :py:class:`~ovito.ObjectNode` to obtain the data to be exported.
         This means it is not necessary to call :py:meth:`ObjectNode.compute() <ovito.ObjectNode.compute>` before calling
-        :py:func:`!export_file` (but it doesn't hurt either).
+        :py:func:`!export_file`, but it doesn't hurt either.
 
         The ``format`` parameter determines the type of file written by the export function; the filename suffix is ignored.
-        However, for files that end in ``.gz``, automatic gzip compression is activated if the file format is a text-based one.
+        However, for files that end in ``.gz``, automatic gzip compression is activated if the file format is text-based.
         
-        Depending on the selected export format, additional keyword arguments must be provided:
+        Depending on the selected format, additional keyword arguments must be provided:
        
         **File columns**
         
