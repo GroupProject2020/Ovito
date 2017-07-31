@@ -55,7 +55,7 @@ private:
 	Q_OBJECT
 	OVITO_OBJECT
 
-	Q_CLASSINFO("DisplayName", "Smooth surface");
+	Q_CLASSINFO("DisplayName", "Smooth surfaces");
 	Q_CLASSINFO("ModifierCategory", "Modification");
 };
 
