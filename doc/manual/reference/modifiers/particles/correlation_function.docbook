@@ -11,16 +11,16 @@
   <title>Correlation function</title>
 
   <para>
-  
+
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/modifiers/correlation_function_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
-  
+
   This modifier calculates the spatial correlation function between two particle properties.</para>
 
   <para>OVITO uses the FFT to compute the convolution. It then computes a radial average in reciprocal and real space. This gives the correlation function up to half of the cell size. The modifier can additionally compute the short-ranged part of the correlation function from a direct summation over neighbors.</para>
 
-  <para>For example, when both particle properties are constant and unity, the modifier returns the pair correlation function. The reciprocal space representation is then the structure factor.</para>
+  <para>For example, when both particle properties (<inlineequation>P<subscript>1</subscript></inlineequation> and <inlineequation>P<subscript>2</subscript></inlineequation>) are constant and unity, the modifier returns the pair distribution function. The reciprocal space representation is then the structure factor.</para>
 
   <simplesect>
     <title>Parameters</title>
@@ -50,7 +50,7 @@
       <varlistentry>
         <term>Apply window function to nonperiodic directions</term>
         <listitem>
-          <para>This property controls whether nonperiodic direction have a Hann window applied to them. Applying a window function is necessary to remove spurios oscillations and power-law scaling of the (implicit) rectangular window of the nonperiodic domain.</para>
+          <para>This property controls whether nonperiodic directions have a Hann window applied to them. Applying a window function is necessary to remove spurios oscillations and power-law scaling of the (implicit) rectangular window of the nonperiodic domain.</para>
         </listitem>
       </varlistentry>
 
@@ -60,7 +60,7 @@
           <para>If enabled, the real-space correlation plot will show the result of a direct calculation of the correlation function, obtaining by summing over neighbors. This short-ranged part of the correlation function is displayed as a red line.</para>
         </listitem>
       </varlistentry>
-      
+
       <varlistentry>
         <term>Neighbor cutoff radius</term>
         <listitem>
@@ -73,7 +73,7 @@
         <listitem>
           <para>This property sets the number of bins for the direct calculation of the real-space correlation function.</para>
         </listitem>
-      </varlistentry>      
+      </varlistentry>
 
       <varlistentry>
         <term>Normalize correlation function</term>
@@ -83,8 +83,8 @@
           If activated for the reciprocal-space correlation function, the plot shows <inlineequation>C(q)/&#x3008;P<subscript>1</subscript>P<subscript>2</subscript>&#x3009;</inlineequation> rather than the unnormalized <inlineequation>C(q)</inlineequation>.
           </para>
         </listitem>
-      </varlistentry>      
-      
+      </varlistentry>
+
     </variablelist>
   </simplesect>
 
@@ -94,5 +94,5 @@
       This modifier has been contributed by Lars Pastewka.
     </para>
   </simplesect>
-    
+
 </section>
