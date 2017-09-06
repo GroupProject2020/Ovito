@@ -272,8 +272,8 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 ******************************************************************************/
 bool CorrelationFunctionModifierEditor::referenceEvent(RefTarget* source, ReferenceEvent* event)
 {
-	if (event->sender() == editObject() && 
-		(event->type() == ReferenceEvent::TargetChanged || 
+	if (event->sender() == editObject() &&
+		(event->type() == ReferenceEvent::TargetChanged ||
 		 event->type() == ReferenceEvent::ObjectStatusChanged)) {
 		plotAllDataLater(this);
 	}
@@ -395,7 +395,7 @@ void CorrelationFunctionModifierEditor::plotAllData()
 	}
 
 	// Set type of plot.
-	if (modifier->typeOfRealSpacePlot() & 1) 
+	if (modifier->typeOfRealSpacePlot() & 1)
 		_realSpacePlot->setAxisScaleEngine(QwtPlot::yLeft, new QwtLogScaleEngine());
 	else
 		_realSpacePlot->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine());
@@ -456,8 +456,11 @@ void CorrelationFunctionModifierEditor::onSaveData()
 			stream << "# 1: Bin number" << endl;
 			stream << "# 2: Distance r" << endl;
 			stream << "# 3: Correlation function C(r)" << endl;
+			stream << "# 4: Radial distribution function g(r)" << endl;
 			for(int i = 0; i < modifier->realSpaceCorrelation().size(); i++) {
-				stream << i << "\t" << modifier->realSpaceCorrelationX()[i] << "\t" << modifier->realSpaceCorrelation()[i] << endl;
+				stream << i << "\t" << modifier->realSpaceCorrelationX()[i]
+				            << "\t" << modifier->realSpaceCorrelation()[i]
+										<< "\t" << modifier->realSpaceRDF()[i] << endl;
 			}
 			stream << endl;
 		}
@@ -467,8 +470,11 @@ void CorrelationFunctionModifierEditor::onSaveData()
 			stream << "# 1: Bin number" << endl;
 			stream << "# 2: Distance r" << endl;
 			stream << "# 3: Correlation function C(r)" << endl;
+			stream << "# 4: Radial distribution function g(r)" << endl;
 			for(int i = 0; i < modifier->neighCorrelation().size(); i++) {
-				stream << i << "\t" << modifier->neighCorrelationX()[i] << "\t" << modifier->neighCorrelation()[i] << endl;
+				stream << i << "\t" << modifier->neighCorrelationX()[i]
+				            << "\t" << modifier->neighCorrelation()[i]
+										<< "\t" << modifier->neighRDF()[i] << endl;
 			}
 			stream << endl;
 		}
@@ -479,7 +485,8 @@ void CorrelationFunctionModifierEditor::onSaveData()
 			stream << "# 2: Wavevector q (includes a factor of 2*pi)" << endl;
 			stream << "# 3: Correlation function C(q)" << endl;
 			for(int i = 0; i < modifier->reciprocalSpaceCorrelation().size(); i++) {
-				stream << i << "\t" << modifier->reciprocalSpaceCorrelationX()[i] << "\t" << modifier->reciprocalSpaceCorrelation()[i] << endl;
+				stream << i << "\t" << modifier->reciprocalSpaceCorrelationX()[i]
+				            << "\t" << modifier->reciprocalSpaceCorrelation()[i] << endl;
 			}
 		}
 	}
