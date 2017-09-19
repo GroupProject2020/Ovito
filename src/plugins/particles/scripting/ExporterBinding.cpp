@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,10 +21,9 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/pyscript/binding/PythonBinding.h>
-#include <plugins/particles/data/ParticleProperty.h>
-#include <plugins/particles/objects/ParticlePropertyObject.h>
-#include <plugins/particles/objects/ParticleTypeProperty.h>
-#include <plugins/particles/objects/SimulationCellObject.h>
+#include <core/dataset/data/properties/PropertyStorage.h>
+#include <plugins/particles/objects/ParticleProperty.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
 #include <plugins/particles/export/ParticleExporter.h>
 #include <plugins/particles/export/imd/IMDExporter.h>
 #include <plugins/particles/export/vasp/POSCARExporter.h>

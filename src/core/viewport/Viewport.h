@@ -23,10 +23,10 @@
 
 
 #include <core/Core.h>
-#include <core/reference/RefTarget.h>
-#include <core/animation/TimeInterval.h>
-#include <core/scene/ObjectNode.h>
-#include <core/viewport/overlay/ViewportOverlay.h>
+#include <core/oo/RefTarget.h>
+#include <core/dataset/animation/TimeInterval.h>
+#include <core/dataset/scene/ObjectNode.h>
+#include <core/viewport/overlays/ViewportOverlay.h>
 #include "ViewportSettings.h"
 #include "ViewportWindowInterface.h"
 
@@ -78,6 +78,9 @@ struct ViewProjectionParameters
  */
 class OVITO_CORE_EXPORT Viewport : public RefTarget
 {
+	Q_OBJECT
+	OVITO_CLASS(Viewport)
+	
 public:
 
 	/// View types.
@@ -106,10 +109,9 @@ public:
 	/// \brief Computes the projection matrix and other parameters.
 	/// \param time The animation time for which the view is requested.
 	/// \param aspectRatio Specifies the desired aspect ratio (height/width) of the output image.
-	/// \param sceneBoundingBox The bounding box of the scene in world coordinates. This must be provided by the caller and
-	///                         is used to calculate the near and far z-clipping planes.
+	/// \param sceneBoundingBox The bounding box of the scene in world coordinates. This is used to calculate the near and far z-clipping planes.
 	/// \return The returned structure describes the projection used to render the contents of the viewport.
-	ViewProjectionParameters projectionParameters(TimePoint time, FloatType aspectRatio, const Box3& sceneBoundingBox);
+	ViewProjectionParameters computeProjectionParameters(TimePoint time, FloatType aspectRatio, const Box3& sceneBoundingBox = Box3());
 
     /// \brief Puts an update request event for this viewport on the event loop.
     ///
@@ -147,7 +149,7 @@ public:
 	///            uses an orthogonal projection.
 	void setFieldOfView(FloatType fov) {
 		// Clamp FOV to reasonable interval.
-		_fieldOfView = qBound(FloatType(-1e12), fov, FloatType(1e12));
+		_fieldOfView.set(this, PROPERTY_FIELD(fieldOfView), qBound(FloatType(-1e12), fov, FloatType(1e12)));
 	}
 
 	/// \brief Returns the viewing direction of the camera.
@@ -243,14 +245,14 @@ public:
 	/// \param overlay The overlay to insert.
 	/// \undoable
 	void insertOverlay(int index, ViewportOverlay* overlay) {
-		_overlays.insert(index, overlay);
+		_overlays.insert(this, PROPERTY_FIELD(overlays), index, overlay);
 	}
 
 	/// \brief Removes an overlay from this viewport.
 	/// \param index The index of the overlay to remove.
 	/// \undoable
 	void removeOverlay(int index) {
-		_overlays.remove(index);
+		_overlays.remove(this, PROPERTY_FIELD(overlays), index);
 	}
 
 	/// \brief Returns the size of the viewport's screen window (in device pixels).
@@ -302,48 +304,43 @@ private Q_SLOTS:
 private:
 
 	/// The type of the viewport (top, left, perspective, etc.)
-	DECLARE_PROPERTY_FIELD(ViewType, viewType);
+	DECLARE_PROPERTY_FIELD_FLAGS(ViewType, viewType, PROPERTY_FIELD_NO_UNDO);
 
 	/// The orientation of the grid.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(AffineTransformation, gridMatrix, setGridMatrix);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(AffineTransformation, gridMatrix, setGridMatrix, PROPERTY_FIELD_NO_UNDO);
 
 	/// The zoom or field of view.
-	DECLARE_PROPERTY_FIELD(FloatType, fieldOfView);
+	DECLARE_PROPERTY_FIELD_FLAGS(FloatType, fieldOfView, PROPERTY_FIELD_NO_UNDO);
 
 	/// The orientation of the camera.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(AffineTransformation, cameraTransformation, setCameraTransformation);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(AffineTransformation, cameraTransformation, setCameraTransformation, PROPERTY_FIELD_NO_UNDO);
 
 	/// Indicates whether the rendering frame is shown.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, renderPreviewMode, setRenderPreviewMode);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, renderPreviewMode, setRenderPreviewMode, PROPERTY_FIELD_NO_UNDO);
 
 	/// Indicates whether the grid is shown.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, isGridVisible, setGridVisible);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, isGridVisible, setGridVisible, PROPERTY_FIELD_NO_UNDO);
 
 	/// Enables stereoscopic rendering.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, stereoscopicMode, setStereoscopicMode);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, stereoscopicMode, setStereoscopicMode, PROPERTY_FIELD_NO_UNDO);
 
 	/// The scene node (camera) that has been selected as the view node.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(ObjectNode, viewNode, setViewNode);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(ObjectNode, viewNode, setViewNode, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_NO_SUB_ANIM);
 
 	/// The title of the viewport.
-	DECLARE_PROPERTY_FIELD(QString, viewportTitle);
+	DECLARE_PROPERTY_FIELD_FLAGS(QString, viewportTitle, PROPERTY_FIELD_NO_UNDO);
 
-	/// This flag is true during the rendering phase.
+	/// The list of overlay objects owned by this viewport.
+	DECLARE_VECTOR_REFERENCE_FIELD(ViewportOverlay, overlays);
+	
+		/// This flag is true during the rendering phase.
 	bool _isRendering;
 
 	/// Describes the current 3D projection used to render the contents of the viewport.
 	ViewProjectionParameters _projParams;
 
-	/// The list of overlay objects owned by this viewport.
-	DECLARE_VECTOR_REFERENCE_FIELD(ViewportOverlay, overlays);
-
 	/// The GUI window associated with this viewport.
 	ViewportWindowInterface* _window;
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

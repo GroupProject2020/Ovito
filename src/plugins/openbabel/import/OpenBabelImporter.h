@@ -32,6 +32,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVI
  */
 class OpenBabelImporter : public ParticleImporter
 {
+	OVITO_CLASS()
+	Q_OBJECT
+	
 public:
 
 	/// \brief Constructs a new instance of this class.
@@ -41,8 +44,8 @@ public:
 	virtual const char* openBabelFormat() const = 0;
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
-	virtual std::shared_ptr<FrameLoader> createFrameLoader(const Frame& frame, bool isNewlySelectedFile) override {
-		return std::make_shared<OpenBabelImportTask>(dataset()->container(), frame, isNewlySelectedFile, openBabelFormat());
+	virtual std::shared_ptr<FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
+		return std::make_shared<OpenBabelImportTask>(dataset()->container(), frame, openBabelFormat());
 	}
 
 private:
@@ -53,8 +56,8 @@ private:
 	public:
 
 		/// Constructor.
-		OpenBabelImportTask(DataSetContainer* container, const FileSourceImporter::Frame& frame, bool isNewFile, const char* obFormat)
-			: ParticleFrameLoader(container, frame, isNewFile), _obFormat(obFormat) {}
+		OpenBabelImportTask(DataSetContainer* container, const FileSourceImporter::Frame& frame, const char* obFormat)
+			: ParticleFrameLoader(container, frame), _obFormat(obFormat) {}
 
 	protected:
 
@@ -66,11 +69,6 @@ private:
 		/// The OpenBabel format.
 		const char* _obFormat;
 	};
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

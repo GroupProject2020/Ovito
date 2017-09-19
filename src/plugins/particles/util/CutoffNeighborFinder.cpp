@@ -20,6 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
+#include <core/utilities/concurrent/PromiseState.h>
 #include "CutoffNeighborFinder.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util)
@@ -27,14 +28,14 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util)
 /******************************************************************************
 * Initialization function.
 ******************************************************************************/
-bool CutoffNeighborFinder::prepare(FloatType cutoffRadius, ParticleProperty* positions, const SimulationCell& cellData, ParticleProperty* selectionProperty, PromiseBase& promise)
+bool CutoffNeighborFinder::prepare(FloatType cutoffRadius, const PropertyStorage& positions, const SimulationCell& cellData, const PropertyStorage* selectionProperty, PromiseState* promise)
 {
-	promise.setProgressMaximum(0);
-	OVITO_CHECK_POINTER(positions);
+	OVITO_ASSERT(&positions);
+	if(promise) promise->setProgressMaximum(0);
 
 	_cutoffRadius = cutoffRadius;
 	_cutoffRadiusSquared = cutoffRadius * cutoffRadius;
-	if(_cutoffRadius <= 0.0)
+	if(_cutoffRadius <= 0)
 		throw Exception("Invalid parameter: Neighbor cutoff radius must be positive.");
 
 	simCell = cellData;
@@ -54,7 +55,7 @@ bool CutoffNeighborFinder::prepare(FloatType cutoffRadius, ParticleProperty* pos
 	std::array<Vector3,3> planeNormals;
 
 	// Determine the number of bins along each simulation cell vector.
-	const qint64 binCountLimit = 128*128*128;
+	const double binCountLimit = 128*128*128;
 	for(size_t i = 0; i < 3; i++) {
 		planeNormals[i] = simCell.cellNormalVector(i);
 		FloatType x = std::abs(simCell.matrix().column(i).dot(planeNormals[i]) / _cutoffRadius);
@@ -64,22 +65,24 @@ bool CutoffNeighborFinder::prepare(FloatType cutoffRadius, ParticleProperty* pos
 		binDim[2] = 1;
 
 	// Impose limit on the total number of bins.
-	qint64 binCount = (qint64)binDim[0] * (qint64)binDim[1] * (qint64)binDim[2];
-	// Reduce bin count in each dimension by the same fraction to stay below total upper limit.
-	if(binCount > binCountLimit) {
+	double estimatedBinCount = (double)binDim[0] * (double)binDim[1] * (double)binDim[2];
+
+	// Reduce bin count in each dimension by the same fraction to stay below total bin count limit.
+	if(estimatedBinCount > binCountLimit) {
 		if(!simCell.is2D()) {
-			FloatType factor = pow((FloatType)binCountLimit / binCount, 1.0/3.0);
+			double factor = pow(binCountLimit / estimatedBinCount, 1.0/3.0);
 			for(size_t i = 0; i < 3; i++)
 				binDim[i] = std::max((int)(binDim[i] * factor), 1);
 		}
 		else {
-			FloatType factor = pow((FloatType)binCountLimit / binCount, 1.0/2.0);
+			double factor = pow(binCountLimit / estimatedBinCount, 1.0/2.0);
 			for(size_t i = 0; i < 2; i++)
 				binDim[i] = std::max((int)(binDim[i] * factor), 1);
 		}
 	}
-	binCount = (qint64)binDim[0] * (qint64)binDim[1] * (qint64)binDim[2];
-	OVITO_ASSERT(binCount < 0xFFFFFFFF);
+
+	qint64 binCount = (qint64)binDim[0] * (qint64)binDim[1] * (qint64)binDim[2];
+	OVITO_ASSERT(binCount > 0 && binCount < (qint64)0xFFFFFFFF);
 
 	// Compute bin cell.
 	for(size_t i = 0; i < 3; i++) {
@@ -129,7 +132,7 @@ bool CutoffNeighborFinder::prepare(FloatType cutoffRadius, ParticleProperty* pos
 		for(int ix = -stencilRadiusX; ix <= stencilRadiusX; ix++) {
 			for(int iy = -stencilRadiusY; iy <= stencilRadiusY; iy++) {
 				for(int iz = -stencilRadiusZ; iz <= stencilRadiusZ; iz++) {
-					if(promise.isCanceled())
+					if(promise && promise->isCanceled())
 						return false;
 					if(std::abs(ix) < stencilRadius && std::abs(iy) < stencilRadius && std::abs(iz) < stencilRadius)
 						continue;
@@ -157,11 +160,11 @@ bool CutoffNeighborFinder::prepare(FloatType cutoffRadius, ParticleProperty* pos
 	bins.resize(binCount, nullptr);
 
 	// Sort particles into bins.
-	particles.resize(positions->size());
-	const Point3* p = positions->constDataPoint3();
+	particles.resize(positions.size());
+	const Point3* p = positions.constDataPoint3();
 	for(size_t pindex = 0; pindex < particles.size(); pindex++, ++p) {
 
-		if(promise.isCanceled())
+		if(promise && promise->isCanceled())
 			return false;
 
 		NeighborListParticle& a = particles[pindex];
@@ -204,7 +207,7 @@ bool CutoffNeighborFinder::prepare(FloatType cutoffRadius, ParticleProperty* pos
 		bins[binIndex] = &a;
 	}
 
-	return !promise.isCanceled();
+	return true;
 }
 
 /******************************************************************************

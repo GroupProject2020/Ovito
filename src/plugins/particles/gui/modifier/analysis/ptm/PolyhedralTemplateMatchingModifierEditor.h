@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/particles/gui/modifier/ParticleModifierEditor.h>
+#include <gui/properties/ModifierPropertiesEditor.h>
 #include <core/utilities/DeferredMethodInvocation.h>
 
 class QwtPlot;
@@ -35,7 +35,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 /**
  * \brief A properties editor for the PolyhedralTemplateMatchingModifier class.
  */
-class PolyhedralTemplateMatchingModifierEditor : public ParticleModifierEditor
+class PolyhedralTemplateMatchingModifierEditor : public ModifierPropertiesEditor
 {
 public:
 
@@ -70,7 +70,7 @@ private:
 	DeferredMethodInvocation<PolyhedralTemplateMatchingModifierEditor, &PolyhedralTemplateMatchingModifierEditor::plotHistogram> plotHistogramLater;
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 };
 
 OVITO_END_INLINE_NAMESPACE

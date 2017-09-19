@@ -44,10 +44,10 @@ class DislocationTracer
 public:
 
 	/// Constructor.
-	DislocationTracer(InterfaceMesh& mesh, ClusterGraph* clusterGraph, int maxTrialCircuitSize, int maxCircuitElongation) :
+	DislocationTracer(InterfaceMesh& mesh, std::shared_ptr<ClusterGraph> clusterGraph, int maxTrialCircuitSize, int maxCircuitElongation) :
 		_mesh(mesh),
 		_clusterGraph(clusterGraph),
-		_network(new DislocationNetwork(clusterGraph)),
+		_network(std::make_shared<DislocationNetwork>(clusterGraph)),
 		_unusedCircuit(nullptr),
 		_rng(1),
 		_maxBurgersCircuitSize(maxTrialCircuitSize),
@@ -58,13 +58,10 @@ public:
 	const InterfaceMesh& mesh() const { return _mesh; }
 
 	/// Returns a reference to the cluster graph.
-	ClusterGraph& clusterGraph() { return *_clusterGraph; }
+	const std::shared_ptr<ClusterGraph>& clusterGraph() { return _clusterGraph; }
 
 	/// Returns the extracted network of dislocation segments.
-	DislocationNetwork& network() { return *_network; }
-
-	/// Returns a const-reference to the extracted network of dislocation segments.
-	const DislocationNetwork& network() const { return *_network; }
+	const std::shared_ptr<DislocationNetwork>& network() { return _network; }
 
 	/// Returns the simulation cell.
 	const SimulationCell& cell() const { return mesh().structureAnalysis().cell(); }
@@ -72,7 +69,7 @@ public:
 	/// Performs a dislocation search on the interface mesh by generating
 	/// trial Burgers circuits. Identified dislocation segments are converted to
 	/// a continuous line representation
-	bool traceDislocationSegments(PromiseBase& promise);
+	bool traceDislocationSegments(PromiseState& promise);
 
 	/// After dislocation segments have been extracted, this method trims
 	/// dangling lines and finds the optimal cluster to express each segment's
@@ -86,7 +83,7 @@ private:
 
 	BurgersCircuit* allocateCircuit();
 	void discardCircuit(BurgersCircuit* circuit);
-	bool findPrimarySegments(int maxBurgersCircuitSize, PromiseBase& promise);
+	bool findPrimarySegments(int maxBurgersCircuitSize, PromiseState& promise);
 	bool createBurgersCircuit(InterfaceMesh::Edge* edge, int maxBurgersCircuitSize);
 	void createAndTraceSegment(const ClusterVector& burgersVector, BurgersCircuit* forwardCircuit, int maxCircuitLength);
 	bool intersectsOtherCircuits(BurgersCircuit* circuit);
@@ -118,10 +115,10 @@ private:
 	InterfaceMesh& _mesh;
 
 	/// The extracted network of dislocation segments.
-	QExplicitlySharedDataPointer<DislocationNetwork> _network;
+	std::shared_ptr<DislocationNetwork> _network;
 
 	/// The cluster graph.
-	QExplicitlySharedDataPointer<ClusterGraph> _clusterGraph;
+	const std::shared_ptr<ClusterGraph> _clusterGraph;
 
 	/// The maximum length (number of edges) for Burgers circuits during the first tracing phase.
 	int _maxBurgersCircuitSize;

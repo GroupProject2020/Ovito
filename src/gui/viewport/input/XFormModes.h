@@ -23,7 +23,7 @@
 
 
 #include <gui/GUI.h>
-#include <core/reference/RefTargetListener.h>
+#include <core/oo/RefTargetListener.h>
 #include "ViewportInputMode.h"
 
 #include <boost/optional/optional.hpp>

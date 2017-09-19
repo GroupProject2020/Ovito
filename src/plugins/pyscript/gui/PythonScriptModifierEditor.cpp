@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -29,7 +29,7 @@
 
 namespace PyScript { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_OBJECT(PythonScriptModifierEditor, PropertiesEditor);
+IMPLEMENT_OVITO_CLASS(PythonScriptModifierEditor);	
 SET_OVITO_OBJECT_EDITOR(PythonScriptModifier, PythonScriptModifierEditor);
 
 /******************************************************************************
@@ -52,7 +52,7 @@ void PythonScriptModifierEditor::createUI(const RolloutInsertionParameters& roll
 
 	StringParameterUI* namePUI = new StringParameterUI(this, PROPERTY_FIELD(Modifier::title));
 	layout->addWidget(new QLabel(tr("User-defined modifier name:")), row++, 0);
-	static_cast<QLineEdit*>(namePUI->textBox())->setPlaceholderText(PythonScriptModifier::OOType.displayName());
+	static_cast<QLineEdit*>(namePUI->textBox())->setPlaceholderText(PythonScriptModifier::OOClass().displayName());
 	sublayout->addWidget(namePUI->textBox(), 1);
 	layout->addLayout(sublayout, row++, 0);
 
@@ -83,7 +83,10 @@ void PythonScriptModifierEditor::onContentsChanged(RefTarget* editObject)
 	PythonScriptModifier* modifier = static_object_cast<PythonScriptModifier>(editObject);
 	if(modifier) {
 		_editScriptButton->setEnabled(true);
-		_outputDisplay->setText(modifier->scriptLogOutput());
+		QString text = modifier->scriptCompilationOutput();
+		if(PythonScriptModifierApplication* modApp = dynamic_object_cast<PythonScriptModifierApplication>(someModifierApplication()))
+			text += modApp->logOutput();
+		_outputDisplay->setText(text);
 	}
 	else {
 		_editScriptButton->setEnabled(false);
@@ -101,17 +104,24 @@ void PythonScriptModifierEditor::onOpenEditor()
 
 	class ScriptEditor : public ObjectScriptEditor {
 	public:
+	
+		/// Constructor.
 		ScriptEditor(QWidget* parentWidget, RefTarget* scriptableObject) : ObjectScriptEditor(parentWidget, scriptableObject) {}
+
 	protected:
+
 		/// Obtains the current script from the owner object.
 		virtual const QString& getObjectScript(RefTarget* obj) const override {
 			return static_object_cast<PythonScriptModifier>(obj)->script();
 		}
 
 		/// Obtains the script output cached by the owner object.
-		virtual const QString& getOutputText(RefTarget* obj) const override {
-			return static_object_cast<PythonScriptModifier>(obj)->scriptLogOutput();
-		}
+		virtual QString getOutputText(RefTarget* obj) const override {
+			PythonScriptModifier* modifier = static_object_cast<PythonScriptModifier>(obj);
+			QString text = modifier->scriptCompilationOutput();
+			if(PythonScriptModifierApplication* modApp = dynamic_object_cast<PythonScriptModifierApplication>(modifier->someModifierApplication()))
+				text += modApp->logOutput();
+			return text;		}
 
 		/// Sets the current script of the owner object.
 		virtual void setObjectScript(RefTarget* obj, const QString& script) const override {
@@ -138,10 +148,9 @@ void PythonScriptModifierEditor::onOpenEditor()
 bool PythonScriptModifierEditor::referenceEvent(RefTarget* source, ReferenceEvent* event)
 {
 	if(source == editObject() && event->type() == ReferenceEvent::ObjectStatusChanged) {
-		if(PythonScriptModifier* modifier = static_object_cast<PythonScriptModifier>(editObject()))
-			_outputDisplay->setText(modifier->scriptLogOutput());
+		onContentsChanged(editObject());
 	}
-	return PropertiesEditor::referenceEvent(source, event);
+	return ModifierPropertiesEditor::referenceEvent(source, event);
 }
 
 OVITO_END_INLINE_NAMESPACE

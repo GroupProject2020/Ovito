@@ -23,14 +23,14 @@
 
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/particles/gui/modifier/ParticleModifierEditor.h>
+#include <gui/properties/ModifierPropertiesEditor.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /**
  * A properties editor for the CombineParticleSetsModifier class.
  */
-class CombineParticleSetsModifierEditor : public ParticleModifierEditor
+class CombineParticleSetsModifierEditor : public ModifierPropertiesEditor
 {
 public:
 
@@ -43,7 +43,7 @@ protected:
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 };
 
 OVITO_END_INLINE_NAMESPACE

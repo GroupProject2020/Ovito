@@ -20,15 +20,15 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <core/Core.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/animation/AnimationSettings.h>
 #include <core/dataset/DataSet.h>
-#include <core/scene/SceneRoot.h>
+#include <core/dataset/scene/SceneRoot.h>
 #include <core/viewport/ViewportSettings.h>
 #include "VRSettingsObject.h"
 
 namespace VRPlugin {
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(VRSettingsObject, RefTarget);
+
 DEFINE_PROPERTY_FIELD(VRSettingsObject, supersamplingEnabled, "SupersamplingEnabled");
 DEFINE_FLAGS_PROPERTY_FIELD(VRSettingsObject, scaleFactor, "ScaleFactor", PROPERTY_FIELD_MEMORIZE);
 DEFINE_PROPERTY_FIELD(VRSettingsObject, showFloor, "ShowFloor");

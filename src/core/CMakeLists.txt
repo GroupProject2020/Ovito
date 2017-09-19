@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2013) Alexander Stukowski
+#  Copyright (2017) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -31,55 +31,76 @@ SET(SourceFiles
 	utilities/io/SaveStream.cpp
 	utilities/io/LoadStream.cpp
 	utilities/io/gzdevice/qtiocompressor.cpp
-	object/OvitoObject.cpp
-	object/OvitoObjectType.cpp
-	object/NativeOvitoObjectType.cpp
-	plugins/Plugin.cpp
-	plugins/PluginManager.cpp
-	plugins/autostart/AutoStartObject.cpp
 	app/Application.cpp
+	app/ApplicationService.cpp
+	app/PluginManager.cpp
 	app/StandaloneApplication.cpp
-	reference/CloneHelper.cpp
-	reference/PropertyFieldDescriptor.cpp
-	reference/PropertyField.cpp
-	reference/RefMaker.cpp
-	reference/RefTarget.cpp
-	reference/RefTargetListener.cpp
-	animation/AnimationSettings.cpp
-	animation/controller/Controller.cpp
-	animation/controller/ConstantControllers.cpp
-	animation/controller/KeyframeController.cpp
-	animation/controller/LinearInterpolationControllers.cpp
-	animation/controller/SplineInterpolationControllers.cpp
-	animation/controller/TCBInterpolationControllers.cpp
-	animation/controller/AnimationKeys.cpp
-	animation/controller/LookAtController.cpp
-	animation/controller/PRSTransformationController.cpp
+	oo/CloneHelper.cpp
+	oo/OvitoClass.cpp
+	oo/OvitoObject.cpp
+	oo/OvitoObjectExecutor.cpp
+	oo/PropertyFieldDescriptor.cpp
+	oo/PropertyField.cpp
+	oo/RefMaker.cpp
+	oo/RefMakerClass.cpp
+	oo/RefTarget.cpp
+	oo/RefTargetListener.cpp
+	dataset/animation/AnimationSettings.cpp
+	dataset/animation/controller/Controller.cpp
+	dataset/animation/controller/ConstantControllers.cpp
+	dataset/animation/controller/KeyframeController.cpp
+	dataset/animation/controller/LinearInterpolationControllers.cpp
+	dataset/animation/controller/SplineInterpolationControllers.cpp
+	dataset/animation/controller/TCBInterpolationControllers.cpp
+	dataset/animation/controller/AnimationKeys.cpp
+	dataset/animation/controller/LookAtController.cpp
+	dataset/animation/controller/PRSTransformationController.cpp
 	dataset/DataSet.cpp
 	dataset/DataSetContainer.cpp
 	dataset/UndoStack.cpp
-	dataset/importexport/FileImporter.cpp
-	dataset/importexport/FileExporter.cpp
-	dataset/importexport/FileSourceImporter.cpp
-	dataset/importexport/FileSource.cpp
-	dataset/importexport/AttributeFileExporter.cpp
-	scene/SceneNode.cpp
-	scene/ObjectNode.cpp
-	scene/SceneRoot.cpp
-	scene/SelectionSet.cpp
-	scene/objects/DisplayObject.cpp
-	scene/objects/AsynchronousDisplayObject.cpp
-	scene/objects/DataObject.cpp
-	scene/objects/CompoundObject.cpp
-	scene/objects/geometry/TriMeshObject.cpp
-	scene/objects/geometry/TriMeshDisplay.cpp
-	scene/objects/camera/CameraObject.cpp
-	scene/objects/helpers/TargetObject.cpp
-	scene/pipeline/PipelineFlowState.cpp
-	scene/pipeline/PipelineObject.cpp
-	scene/pipeline/Modifier.cpp
-	scene/pipeline/ModifierApplication.cpp
-	scene/pipeline/AsyncPipelineEvaluationHelper
+	dataset/io/FileImporter.cpp
+	dataset/io/FileExporter.cpp
+	dataset/io/FileSourceImporter.cpp
+	dataset/io/FileSource.cpp
+	dataset/io/AttributeFileExporter.cpp
+	dataset/scene/SceneNode.cpp
+	dataset/scene/ObjectNode.cpp
+	dataset/scene/SceneRoot.cpp
+	dataset/scene/SelectionSet.cpp
+	dataset/data/DisplayObject.cpp
+	dataset/data/DataObject.cpp
+	dataset/data/camera/CameraObject.cpp
+	dataset/data/helpers/TargetObject.cpp
+	dataset/data/simcell/SimulationCellObject.cpp
+	dataset/data/simcell/SimulationCellDisplay.cpp
+	dataset/data/simcell/PeriodicDomainDataObject.cpp
+	dataset/data/properties/PropertyStorage.cpp
+	dataset/data/properties/PropertyObject.cpp
+	dataset/data/properties/PropertyClass.cpp
+	dataset/data/properties/PropertyReference.cpp
+	dataset/data/properties/ElementType.cpp
+	dataset/pipeline/PipelineFlowState.cpp
+	dataset/pipeline/PipelineObject.cpp
+	dataset/pipeline/CachingPipelineObject.cpp
+	dataset/pipeline/AsynchronousModifier.cpp
+	dataset/pipeline/Modifier.cpp
+	dataset/pipeline/ModifierApplication.cpp
+	dataset/pipeline/InputHelper.cpp
+	dataset/pipeline/OutputHelper.cpp
+	dataset/pipeline/AsynchronousModifierApplication.cpp
+	dataset/pipeline/StaticSource.cpp
+	dataset/pipeline/modifiers/DelegatingModifier.cpp
+	dataset/pipeline/modifiers/GenericPropertyModifier.cpp
+	dataset/pipeline/modifiers/SliceModifier.cpp
+	dataset/pipeline/modifiers/AffineTransformationModifier.cpp
+	dataset/pipeline/modifiers/InvertSelectionModifier.cpp
+	dataset/pipeline/modifiers/ClearSelectionModifier.cpp
+	dataset/pipeline/modifiers/ColorCodingModifier.cpp
+	dataset/pipeline/modifiers/AssignColorModifier.cpp
+	dataset/pipeline/modifiers/DeleteSelectedModifier.cpp
+	dataset/pipeline/modifiers/SelectTypeModifier.cpp
+	dataset/pipeline/modifiers/HistogramModifier.cpp
+	dataset/pipeline/modifiers/ScatterPlotModifier.cpp
 	utilities/units/UnitsManager.cpp
 	utilities/io/ObjectSaveStream.cpp
 	utilities/io/ObjectLoadStream.cpp
@@ -89,6 +110,11 @@ SET(SourceFiles
 	utilities/io/CompressedTextWriter.cpp
 	utilities/concurrent/PromiseWatcher.cpp
 	utilities/concurrent/Promise.cpp
+	utilities/concurrent/PromiseState.cpp
+	utilities/concurrent/SynchronousPromiseState.cpp
+	utilities/concurrent/PromiseStateWithProgress.cpp
+	utilities/concurrent/ThreadSafePromiseState.cpp
+	utilities/concurrent/TrackingPromiseState.cpp
 	utilities/concurrent/TaskManager.cpp
 	utilities/concurrent/Task.cpp
 	utilities/mesh/TriMesh.cpp
@@ -106,9 +132,10 @@ SET(SourceFiles
 	viewport/Viewport.cpp
 	viewport/ViewportConfiguration.cpp
 	viewport/ViewportSettings.cpp
-	viewport/overlay/ViewportOverlay.cpp
-	viewport/overlay/CoordinateTripodOverlay.cpp
-	viewport/overlay/TextLabelOverlay.cpp
+	viewport/overlays/ViewportOverlay.cpp
+	viewport/overlays/CoordinateTripodOverlay.cpp
+	viewport/overlays/TextLabelOverlay.cpp
+	viewport/overlays/ColorLegendOverlay.cpp	
 )
 
 # Include video encoder interface code.
@@ -153,6 +180,11 @@ ENDIF()
 
 # Define the OVITO_DEBUG macro in debug builds.
 TARGET_COMPILE_DEFINITIONS(Core PUBLIC "$<$<CONFIG:Debug>:OVITO_DEBUG>")
+
+# Turn off warnings about undefined instantiation of static variable of class templates.
+IF(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+	TARGET_COMPILE_OPTIONS(Core PUBLIC "-Wno-undefined-var-template")
+ENDIF()
 
 # Floating point precision control.
 IF(NOT OVITO_DOUBLE_PRECISION_FP)

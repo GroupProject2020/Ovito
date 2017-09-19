@@ -24,7 +24,7 @@
 
 #include <gui/GUI.h>
 #include <gui/properties/PropertiesEditor.h>
-#include <core/reference/RefTarget.h>
+#include <core/oo/RefTarget.h>
 
 namespace Ovito { namespace POVRay { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 	
@@ -33,6 +33,9 @@ namespace Ovito { namespace POVRay { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
  */
 class POVRayRendererEditor : public PropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(POVRayRendererEditor)
+	
 public:
 
 	/// Default constructor.
@@ -42,11 +45,6 @@ protected:
 	
 	/// Creates the user interface controls for the editor.
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
-	
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

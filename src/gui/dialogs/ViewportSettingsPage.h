@@ -33,6 +33,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
  */
 class OVITO_GUI_EXPORT ViewportSettingsPage : public ApplicationSettingsDialogPage
 {
+	Q_OBJECT
+	OVITO_CLASS(ViewportSettingsPage)
+	
 public:
 
 	/// Default constructor.
@@ -53,9 +56,6 @@ private:
 	QButtonGroup* _upDirectionGroup;
 	QCheckBox* _restrictVerticalRotationBox;
 	QButtonGroup* _colorScheme;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

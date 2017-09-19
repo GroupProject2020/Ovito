@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <core/scene/pipeline/PipelineFlowState.h>
+#include <core/dataset/pipeline/PipelineFlowState.h>
 
 #include <muParser.h>
 #include <boost/utility.hpp>
@@ -33,7 +33,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO
 /**
  * \brief Helper class that evaluates one or more math expressions for every particle.
  *
- * This class is used by the ComputePropertyModifier and the SelectExpressionModifier.
+ * This class is used by the ComputePropertyModifier and the ExpressionSelectionModifier.
  */
 class OVITO_PARTICLES_EXPORT ParticleExpressionEvaluator
 {
@@ -48,7 +48,7 @@ public:
 	void initialize(const QStringList& expressions, const PipelineFlowState& inputState, int animationFrame = 0);
 
 	/// Specifies the expressions to be evaluated for each particle and creates the input variables.
-	void initialize(const QStringList& expressions, const std::vector<ParticleProperty*>& inputProperties, const SimulationCell* simCell, const QVariantMap& attributes, int animationFrame = 0);
+	void initialize(const QStringList& expressions, const std::vector<ConstPropertyPtr>& inputProperties, const SimulationCell* simCell, const QVariantMap& attributes, int animationFrame = 0);
 
 	/// Initializes the parser object and evaluates the expressions for every particle.
 	void evaluate(const std::function<void(size_t,size_t,double)>& callback, const std::function<bool(size_t)>& filter = std::function<bool(size_t)>());
@@ -130,7 +130,7 @@ protected:
 		/// A function that computes the variable's value for each particle.
 		std::function<double(size_t)> function;
 		/// Reference the origin particle property that contains the data.
-		QExplicitlySharedDataPointer<ParticleProperty> particleProperty;
+		ConstPropertyPtr particleProperty;
 	};
 
 public:
@@ -187,7 +187,7 @@ public:
 protected:
 
 	/// Initializes the list of input variables from the given input state.
-	void createInputVariables(const std::vector<ParticleProperty*>& inputProperties, const SimulationCell* simCell, const QVariantMap& attributes, int animationFrame);
+	void createInputVariables(const std::vector<ConstPropertyPtr>& inputProperties, const SimulationCell* simCell, const QVariantMap& attributes, int animationFrame);
 
 	/// Registers an input variable if the name does not exist yet.
 	void addVariable(ExpressionVariable&& v);

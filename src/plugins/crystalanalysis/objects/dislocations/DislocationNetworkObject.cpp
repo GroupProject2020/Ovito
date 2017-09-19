@@ -24,28 +24,35 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(DislocationNetworkObject, DataObject);
+
+DEFINE_RUNTIME_PROPERTY_FIELD(DislocationNetworkObject, storage, "DataStorage");
+
+/// Holds a shared, empty instance of the DislocationNetwork class, 
+/// which is used in places where a default storage is needed.
+/// This singleton instance is never modified.
+static const std::shared_ptr<DislocationNetwork> defaultStorage = std::make_shared<DislocationNetwork>(std::make_shared<ClusterGraph>());
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-DislocationNetworkObject::DislocationNetworkObject(DataSet* dataset, DislocationNetwork* network)
-	: DataObjectWithSharedStorage(dataset, network ? network : new DislocationNetwork(new ClusterGraph()))
+DislocationNetworkObject::DislocationNetworkObject(DataSet* dataset) : PeriodicDomainDataObject(dataset), _storage(defaultStorage)
 {
+
 }
 
 /******************************************************************************
-* Creates a copy of this object.
+* Returns the data encapsulated by this object after making sure it is not 
+* shared with other owners.
 ******************************************************************************/
-OORef<RefTarget> DislocationNetworkObject::clone(bool deepCopy, CloneHelper& cloneHelper)
+const std::shared_ptr<DislocationNetwork>& DislocationNetworkObject::modifiableStorage() 
 {
-	// Let the base class create an instance of this class.
-	OORef<DislocationNetworkObject> clone = static_object_cast<DislocationNetworkObject>(DataObjectWithSharedStorage<DislocationNetwork>::clone(deepCopy, cloneHelper));
-
-	// Copy internal data.
-	clone->_cuttingPlanes = this->_cuttingPlanes;
-
-	return clone;
+	// Copy data storage on write if there is more than one reference to the storage.
+	OVITO_ASSERT(storage());
+	OVITO_ASSERT(storage().use_count() >= 1);
+	if(storage().use_count() > 1)
+		_storage.mutableValue() = std::make_shared<DislocationNetwork>(*storage());
+	OVITO_ASSERT(storage().use_count() == 1);
+	return storage();
 }
 
 }	// End of namespace

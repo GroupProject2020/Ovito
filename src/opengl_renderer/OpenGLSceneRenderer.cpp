@@ -20,12 +20,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <core/Core.h>
-#include <core/scene/SceneNode.h>
-#include <core/scene/SceneRoot.h>
-#include <core/scene/ObjectNode.h>
-#include <core/scene/pipeline/PipelineObject.h>
-#include <core/scene/pipeline/Modifier.h>
-#include <core/scene/objects/DisplayObject.h>
+#include <core/dataset/scene/SceneNode.h>
+#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/pipeline/PipelineObject.h>
+#include <core/dataset/pipeline/Modifier.h>
+#include <core/dataset/data/DisplayObject.h>
 #include <core/dataset/DataSet.h>
 #include <core/app/Application.h>
 #include <core/rendering/RenderSettings.h>
@@ -46,7 +46,7 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(OpenGLSceneRenderer, SceneRenderer);
+IMPLEMENT_OVITO_CLASS(OpenGLSceneRenderer);
 
 /// The vendor of the OpenGL implementation in use.
 QByteArray OpenGLSceneRenderer::_openGLVendor;
@@ -228,6 +228,8 @@ void OpenGLSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParamet
 	_glcontext = QOpenGLContext::currentContext();
 	if(!_glcontext)
 		throwException(tr("Cannot render scene: There is no active OpenGL context"));
+	_glsurface = _glcontext->surface();
+	OVITO_ASSERT(_glsurface != nullptr);
 
 	// Obtain a functions object that allows to call basic OpenGL functions in a platform-independent way.
     OVITO_REPORT_OPENGL_ERRORS();
@@ -311,8 +313,8 @@ void OpenGLSceneRenderer::endFrame(bool renderSuccessful)
 
 /******************************************************************************
 * Renders the current animation frame.
-******************************************************************************/
-bool OpenGLSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, TaskManager& taskManager)
+*******************************11***********************************************/
+bool OpenGLSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, const PromiseBase& promise)
 {
 	OVITO_ASSERT(_glcontext == QOpenGLContext::currentContext());
 
@@ -338,26 +340,37 @@ bool OpenGLSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingT
 	OVITO_REPORT_OPENGL_ERRORS();
 
 	// Render the 3D scene objects.
-	renderScene();
-	OVITO_REPORT_OPENGL_ERRORS();
+	if(renderScene(promise)) {
+		OVITO_REPORT_OPENGL_ERRORS();
 
-	// Call subclass to render additional content that is only visible in the interactive viewports.
-	renderInteractiveContent();
-	OVITO_REPORT_OPENGL_ERRORS();
+		// Call subclass to render additional content that is only visible in the interactive viewports.
+		renderInteractiveContent();
+		OVITO_REPORT_OPENGL_ERRORS();
 
-	// Render translucent objects in a second pass.
-	_translucentPass = true;
-	for(auto& record : _translucentPrimitives) {
-		setWorldTransform(std::get<0>(record));
-		std::get<1>(record)->render(this);
+		// Render translucent objects in a second pass.
+		_translucentPass = true;
+		for(auto& record : _translucentPrimitives) {
+			setWorldTransform(std::get<0>(record));
+			std::get<1>(record)->render(this);
+		}
+		_translucentPrimitives.clear();
 	}
-	_translucentPrimitives.clear();
 
 	// Restore default OpenGL state.
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	OVITO_REPORT_OPENGL_ERRORS();
 
-	return true;
+	return !promise.isCanceled();
+}
+
+/******************************************************************************
+* Makes the renderer's GL context current.
+******************************************************************************/
+void OpenGLSceneRenderer::makeContextCurrent()
+{
+	OVITO_ASSERT(glcontext());
+	if(!glcontext()->makeCurrent(_glsurface))
+		throwException(tr("Failed to make OpenGL context current."));
 }
 
 /******************************************************************************
@@ -392,6 +405,8 @@ const char* OpenGLSceneRenderer::openglErrorString(GLenum errorCode)
 ******************************************************************************/
 std::shared_ptr<LinePrimitive> OpenGLSceneRenderer::createLinePrimitive()
 {
+	OVITO_ASSERT(!isBoundingBoxPass());
+	makeContextCurrent();
 	return std::make_shared<OpenGLLinePrimitive>(this);
 }
 
@@ -400,7 +415,10 @@ std::shared_ptr<LinePrimitive> OpenGLSceneRenderer::createLinePrimitive()
 ******************************************************************************/
 std::shared_ptr<ParticlePrimitive> OpenGLSceneRenderer::createParticlePrimitive(ParticlePrimitive::ShadingMode shadingMode,
 		ParticlePrimitive::RenderingQuality renderingQuality, ParticlePrimitive::ParticleShape shape,
-		bool translucentParticles) {
+		bool translucentParticles) 
+{
+	OVITO_ASSERT(!isBoundingBoxPass());
+	makeContextCurrent();
 	return std::make_shared<OpenGLParticlePrimitive>(this, shadingMode, renderingQuality, shape, translucentParticles);
 }
 
@@ -409,6 +427,8 @@ std::shared_ptr<ParticlePrimitive> OpenGLSceneRenderer::createParticlePrimitive(
 ******************************************************************************/
 std::shared_ptr<TextPrimitive> OpenGLSceneRenderer::createTextPrimitive()
 {
+	OVITO_ASSERT(!isBoundingBoxPass());
+	makeContextCurrent();
 	return std::make_shared<OpenGLTextPrimitive>(this);
 }
 
@@ -417,6 +437,8 @@ std::shared_ptr<TextPrimitive> OpenGLSceneRenderer::createTextPrimitive()
 ******************************************************************************/
 std::shared_ptr<ImagePrimitive> OpenGLSceneRenderer::createImagePrimitive()
 {
+	OVITO_ASSERT(!isBoundingBoxPass());
+	makeContextCurrent();
 	return std::make_shared<OpenGLImagePrimitive>(this);
 }
 
@@ -427,6 +449,8 @@ std::shared_ptr<ArrowPrimitive> OpenGLSceneRenderer::createArrowPrimitive(ArrowP
 		ArrowPrimitive::ShadingMode shadingMode,
 		ArrowPrimitive::RenderingQuality renderingQuality)
 {
+	OVITO_ASSERT(!isBoundingBoxPass());
+	makeContextCurrent();
 	return std::make_shared<OpenGLArrowPrimitive>(this, shape, shadingMode, renderingQuality);
 }
 
@@ -435,6 +459,8 @@ std::shared_ptr<ArrowPrimitive> OpenGLSceneRenderer::createArrowPrimitive(ArrowP
 ******************************************************************************/
 std::shared_ptr<MarkerPrimitive> OpenGLSceneRenderer::createMarkerPrimitive(MarkerPrimitive::MarkerShape shape)
 {
+	OVITO_ASSERT(!isBoundingBoxPass());
+	makeContextCurrent();
 	return std::make_shared<OpenGLMarkerPrimitive>(this, shape);
 }
 
@@ -443,6 +469,8 @@ std::shared_ptr<MarkerPrimitive> OpenGLSceneRenderer::createMarkerPrimitive(Mark
 ******************************************************************************/
 std::shared_ptr<MeshPrimitive> OpenGLSceneRenderer::createMeshPrimitive()
 {
+	OVITO_ASSERT(!isBoundingBoxPass());
+	makeContextCurrent();
 	return std::make_shared<OpenGLMeshPrimitive>(this);
 }
 
@@ -575,6 +603,11 @@ void OpenGLSceneRenderer::loadShader(QOpenGLShaderProgram* program, QOpenGLShade
 ******************************************************************************/
 void OpenGLSceneRenderer::render2DPolyline(const Point2* points, int count, const ColorA& color, bool closed)
 {
+	if(isBoundingBoxPass())
+		return;
+
+	makeContextCurrent();
+
 	// Load OpenGL shader.
 	QOpenGLShaderProgram* shader = loadShaderProgram("line", ":/openglrenderer/glsl/lines/line.vs", ":/openglrenderer/glsl/lines/line.fs");
 	if(!shader->bind())

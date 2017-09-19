@@ -23,7 +23,7 @@
 #include <plugins/pyscript/binding/PythonBinding.h>
 #include <plugins/povray/renderer/POVRayRenderer.h>
 #include <plugins/povray/exporter/POVRayExporter.h>
-#include <core/plugins/PluginManager.h>
+#include <core/app/PluginManager.h>
 
 namespace Ovito { namespace POVRay { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 

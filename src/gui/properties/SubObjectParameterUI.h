@@ -34,6 +34,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 ******************************************************************************/
 class OVITO_GUI_EXPORT SubObjectParameterUI : public PropertyParameterUI
 {
+	Q_OBJECT
+	OVITO_CLASS(SubObjectParameterUI)
+	
 public:
 
 	/// Constructor.
@@ -60,11 +63,6 @@ protected:
 	
 	/// Controls where the sub-editor is opened and whether the sub-editor is opened in a collapsed state.
 	RolloutInsertionParameters _rolloutParams;
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

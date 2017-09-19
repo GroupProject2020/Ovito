@@ -32,6 +32,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 ******************************************************************************/
 class OVITO_GUI_EXPORT BooleanActionParameterUI : public PropertyParameterUI
 {
+	Q_OBJECT
+	OVITO_CLASS(BooleanActionParameterUI)
+	
 public:
 
 	/// Constructor for a Qt property.
@@ -67,11 +70,6 @@ protected:
 
 	/// The check box of the UI component.
 	QPointer<QAction> _action;
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

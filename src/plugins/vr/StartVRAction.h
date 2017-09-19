@@ -23,7 +23,7 @@
 
 
 #include <gui/GUI.h>
-#include <gui/plugins/autostart/GuiAutoStartObject.h>
+#include <gui/app/GuiApplicationService.h>
 
 namespace VRPlugin {
 
@@ -32,7 +32,7 @@ using namespace Ovito;
 /**
  * \brief An auto-start object that is automatically invoked on application startup.
  */
-class StartVRAction : public GuiAutoStartObject
+class StartVRAction : public GuiApplicationService
 {
 public:
 
@@ -54,7 +54,7 @@ public:
 private:
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 };
 
 }	// End of namespace

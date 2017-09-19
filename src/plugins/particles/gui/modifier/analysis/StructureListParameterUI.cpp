@@ -21,6 +21,7 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <plugins/particles/modifier/analysis/StructureIdentificationModifier.h>
+#include <gui/properties/ModifierPropertiesEditor.h>
 #include "StructureListParameterUI.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
@@ -43,23 +44,25 @@ QVariant StructureListParameterUI::getItemData(RefTarget* target, const QModelIn
 {
 	ParticleType* stype = dynamic_object_cast<ParticleType>(target);
 	StructureIdentificationModifier* modifier = dynamic_object_cast<StructureIdentificationModifier>(editor()->editObject());
+	ModifierPropertiesEditor* modEditor = dynamic_object_cast<ModifierPropertiesEditor>(editor()); 
+	StructureIdentificationModifierApplication* modApp = modEditor ? dynamic_object_cast<StructureIdentificationModifierApplication>(modEditor->someModifierApplication()) : nullptr;
 
-	if(stype && modifier) {
+	if(stype && modifier && modApp) {
 		if(role == Qt::DisplayRole) {
 			if(index.column() == 1)
 				return stype->name();
 			else if(index.column() == 2) {
-				if(stype->id() >= 0 && stype->id() < modifier->structureCounts().size())
-					return modifier->structureCounts()[stype->id()];
+				if(stype->id() >= 0 && stype->id() < modApp->structureCounts().size())
+					return (int)modApp->structureCounts()[stype->id()];
 				else
 					return QString();
 			}
 			else if(index.column() == 3) {
-				if(stype->id() >= 0 && stype->id() < modifier->structureCounts().size()) {
+				if(stype->id() >= 0 && stype->id() < modApp->structureCounts().size()) {
 					size_t totalCount = 0;
-					for(int c : modifier->structureCounts())
+					for(size_t c : modApp->structureCounts())
 						totalCount += c;
-					return QString("%1%").arg((double)modifier->structureCounts()[stype->id()] * 100.0 / std::max((size_t)1, totalCount), 0, 'f', 1);
+					return QString("%1%").arg((double)modApp->structureCounts()[stype->id()] * 100.0 / std::max((size_t)1, totalCount), 0, 'f', 1);
 				}
 				else
 					return QString();

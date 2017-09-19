@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,45 +23,101 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <core/reference/RefTarget.h>
+#include <plugins/particles/objects/ParticleProperty.h>
+#include <core/dataset/data/properties/ElementType.h>
 
 namespace Ovito { namespace Particles {
 
 /**
  * \brief Stores the properties of a particle type, e.g. name, color, and radius.
- *
- * \ingroup particles_objects
  */
-class OVITO_PARTICLES_EXPORT ParticleType : public RefTarget
+class OVITO_PARTICLES_EXPORT ParticleType : public ElementType
 {
+	Q_OBJECT
+	OVITO_CLASS(ParticleType)
+
+public:
+
+	enum PredefinedParticleType {
+		H,He,Li,C,N,O,Na,Mg,Al,Si,K,Ca,Ti,Cr,Fe,Co,Ni,Cu,Zn,Ga,Ge,Kr,Sr,Y,Zr,Nb,Pd,Pt,W,Au,
+
+		NUMBER_OF_PREDEFINED_PARTICLE_TYPES
+	};
+
+	enum PredefinedStructureType {
+		OTHER = 0,					//< Unidentified structure
+		FCC,						//< Face-centered cubic
+		HCP,						//< Hexagonal close-packed
+		BCC,						//< Body-centered cubic
+		ICO,						//< Icosahedral structure
+		CUBIC_DIAMOND,				//< Cubic diamond structure
+		CUBIC_DIAMOND_FIRST_NEIGH,	//< First neighbor of a cubic diamond atom
+		CUBIC_DIAMOND_SECOND_NEIGH,	//< Second neighbor of a cubic diamond atom
+		HEX_DIAMOND,				//< Hexagonal diamond structure
+		HEX_DIAMOND_FIRST_NEIGH,	//< First neighbor of a hexagonal diamond atom
+		HEX_DIAMOND_SECOND_NEIGH,	//< Second neighbor of a hexagonal diamond atom
+		SC,							//< Simple cubic structure
+
+		NUMBER_OF_PREDEFINED_STRUCTURE_TYPES
+	};
+
 public:
 
 	/// \brief Constructs a new particle type.
 	Q_INVOKABLE ParticleType(DataSet* dataset);
 
-	/// Returns the title of this object.
-	virtual QString objectTitle() override { return name(); }
+	//////////////////////////////////// Utility methods ////////////////////////////////
+	
+	/// Builds a map from type identifiers to particle radii.
+	static std::map<int,FloatType> typeRadiusMap(ParticleProperty* typeProperty) {
+		std::map<int,FloatType> m;
+		for(const ElementType* type : typeProperty->elementTypes())
+			m.insert({ type->id(), static_object_cast<ParticleType>(type)->radius() });
+		return m;
+	}	
 
-protected:
+	//////////////////////////////////// Default settings ////////////////////////////////
 
-	/// Stores the identifier of the particle type.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, id, setId);
+	/// Returns the name string of a predefined particle type.
+	static const QString& getPredefinedParticleTypeName(PredefinedParticleType predefType) {
+		OVITO_ASSERT(predefType < NUMBER_OF_PREDEFINED_PARTICLE_TYPES);
+		return std::get<0>(_predefinedParticleTypes[predefType]);
+	}
 
-	/// The name of this particle type.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, name, setName);
+	/// Returns the name string of a predefined structure type.
+	static const QString& getPredefinedStructureTypeName(PredefinedStructureType predefType) {
+		OVITO_ASSERT(predefType < NUMBER_OF_PREDEFINED_STRUCTURE_TYPES);
+		return std::get<0>(_predefinedStructureTypes[predefType]);
+	}
 
-	/// Stores the color of the particle type.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(Color, color, setColor);
+	/// Returns the default color for the particle type with the given ID.
+	static Color getDefaultParticleColorFromId(ParticleProperty::Type typeClass, int particleTypeId);
+
+	/// Returns the default color for a named particle type.
+	static Color getDefaultParticleColor(ParticleProperty::Type typeClass, const QString& particleTypeName, int particleTypeId, bool userDefaults = true);
+
+	/// Changes the default color for a named particle type.
+	static void setDefaultParticleColor(ParticleProperty::Type typeClass, const QString& particleTypeName, const Color& color);
+
+	/// Returns the default radius for a named particle type.
+	static FloatType getDefaultParticleRadius(ParticleProperty::Type typeClass, const QString& particleTypeName, int particleTypeId, bool userDefaults = true);
+
+	/// Changes the default radius for a named particle type.
+	static void setDefaultParticleRadius(ParticleProperty::Type typeClass, const QString& particleTypeName, FloatType radius);	
+
+private:
 
 	/// Stores the radius of the particle type.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, radius, setRadius);
 
-	/// Stores whether this type is enabled or disabled.
-	/// This controls, e.g., the search for this structure type by structure identification modifiers.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, enabled, setEnabled);
+	/// Data structure that holds the name, color, and radius of a particle type.
+	typedef std::tuple<QString,Color,FloatType> PredefinedTypeInfo;
 
-	Q_OBJECT
-	OVITO_OBJECT
+	/// Contains default names, colors, and radii for some predefined particle types.
+	static std::array<PredefinedTypeInfo, NUMBER_OF_PREDEFINED_PARTICLE_TYPES> _predefinedParticleTypes;
+
+	/// Contains default names, colors, and radii for the predefined structure types.
+	static std::array<PredefinedTypeInfo, NUMBER_OF_PREDEFINED_STRUCTURE_TYPES> _predefinedStructureTypes;	
 };
 
 }	// End of namespace

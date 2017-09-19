@@ -20,8 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticlePropertyObject.h>
-#include <plugins/particles/objects/SimulationCellObject.h>
+#include <plugins/particles/objects/ParticleProperty.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
 #include <core/app/Application.h>
 #include "ParticleExpressionEvaluator.h"
 
@@ -39,9 +39,9 @@ QByteArray ParticleExpressionEvaluator::_validVariableNameChars("0123456789_abcd
 void ParticleExpressionEvaluator::initialize(const QStringList& expressions, const PipelineFlowState& inputState, int animationFrame)
 {
 	// Build list of particle properties.
-	std::vector<ParticleProperty*> inputProperties;
+	std::vector<ConstPropertyPtr> inputProperties;
 	for(DataObject* obj : inputState.objects()) {
-		if(ParticlePropertyObject* prop = dynamic_object_cast<ParticlePropertyObject>(obj)) {
+		if(ParticleProperty* prop = dynamic_object_cast<ParticleProperty>(obj)) {
 			inputProperties.push_back(prop->storage());
 		}
 	}
@@ -59,7 +59,7 @@ void ParticleExpressionEvaluator::initialize(const QStringList& expressions, con
 * Specifies the expressions to be evaluated for each particle and create the
 * list of input variables.
 ******************************************************************************/
-void ParticleExpressionEvaluator::initialize(const QStringList& expressions, const std::vector<ParticleProperty*>& inputProperties, const SimulationCell* simCell, const QVariantMap& attributes, int animationFrame)
+void ParticleExpressionEvaluator::initialize(const QStringList& expressions, const std::vector<ConstPropertyPtr>& inputProperties, const SimulationCell* simCell, const QVariantMap& attributes, int animationFrame)
 {
 	// Create list of input variables.
 	createInputVariables(inputProperties, simCell, attributes, animationFrame);
@@ -76,14 +76,14 @@ void ParticleExpressionEvaluator::initialize(const QStringList& expressions, con
 /******************************************************************************
 * Initializes the list of input variables from the given input state.
 ******************************************************************************/
-void ParticleExpressionEvaluator::createInputVariables(const std::vector<ParticleProperty*>& inputProperties, const SimulationCell* simCell, const QVariantMap& attributes, int animationFrame)
+void ParticleExpressionEvaluator::createInputVariables(const std::vector<ConstPropertyPtr>& inputProperties, const SimulationCell* simCell, const QVariantMap& attributes, int animationFrame)
 {
 	_inputVariables.clear();
-	ParticleProperty* posProperty = nullptr;
+	ConstPropertyPtr posProperty;
 
 	int propertyIndex = 1;
 	size_t particleCount = 0;
-	for(ParticleProperty* property : inputProperties) {
+	for(const ConstPropertyPtr& property : inputProperties) {
 		if(property->type() == ParticleProperty::PositionProperty)
 			posProperty = property;
 

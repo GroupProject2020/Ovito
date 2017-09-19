@@ -24,7 +24,7 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <plugins/netcdf/NetCDFImporter.h>
-#include <gui/dataset/importexport/FileImporterEditor.h>
+#include <gui/dataset/io/FileImporterEditor.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
@@ -54,7 +54,7 @@ protected Q_SLOTS:
 private:
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 };
 
 OVITO_END_INLINE_NAMESPACE

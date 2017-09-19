@@ -24,19 +24,33 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/util/ParticleExpressionEvaluator.h>
-#include "../AsynchronousParticleModifier.h"
+#include <core/dataset/data/simcell/SimulationCell.h>
+#include <plugins/particles/objects/ParticleProperty.h>
+#include <core/dataset/pipeline/AsynchronousModifier.h>
+#include <core/dataset/pipeline/AsynchronousModifierApplication.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Properties)
 
 /**
  * \brief Computes the values of a particle property from a user-defined math expression.
  */
-class OVITO_PARTICLES_EXPORT ComputePropertyModifier : public AsynchronousParticleModifier
+class OVITO_PARTICLES_EXPORT ComputePropertyModifier : public AsynchronousModifier
 {
+	OVITO_CLASS()
+	Q_CLASSINFO("DisplayName", "Compute property");
+	Q_CLASSINFO("ModifierCategory", "Modification");
+	Q_OBJECT
+	
 public:
 
 	/// \brief Constructs a new instance of this class.
 	Q_INVOKABLE ComputePropertyModifier(DataSet* dataset);
+
+	/// \brief Create a new modifier application that refers to this modifier instance.
+	virtual OORef<ModifierApplication> createModifierApplication() override;
+
+	/// \brief This virtual method is called by the system when the modifier has been inserted into a PipelineObject.
+	virtual void initializeModifier(ModifierApplication* modApp) override;
 
 	/// \brief Sets the math expression that is used to calculate the values of one of the new property's components.
 	/// \param index The property component for which the expression should be set.
@@ -47,7 +61,7 @@ public:
 			throwException("Property component index is out of range.");
 		QStringList copy = _expressions;
 		copy[index] = expression;
-		_expressions = copy;
+		_expressions.set(this, std::move(copy));
 	}
 
 	/// \brief Returns the math expression that is used to calculate the values of one of the new property's components.
@@ -79,7 +93,7 @@ public:
 			throwException("Property component index is out of range.");
 		QStringList copy = _neighborExpressions;
 		copy[index] = expression;
-		_neighborExpressions = copy;
+		_neighborExpressions.set(this, std::move(copy));
 	}
 
 	/// \brief Returns the math expression that is used to compute the neighbor-terms of the property function.
@@ -100,26 +114,46 @@ public:
 
 protected:
 
-	/// Loads the class' contents from the given stream.
-	virtual void loadFromStream(ObjectLoadStream& stream) override;
-
-	/// \brief Allows the object to parse the serialized contents of a property field in a custom way.
-	virtual bool loadPropertyFieldFromStream(ObjectLoadStream& stream, const ObjectLoadStream::SerializedPropertyField& serializedField) override;
-
-	/// \brief This virtual method is called by the system when the modifier has been inserted into a PipelineObject.
-	virtual void initializeModifier(PipelineObject* pipeline, ModifierApplication* modApp) override;
-
 	/// \brief Is called when the value of a property of this object has changed.
 	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
 
 	/// Creates a computation engine that will compute the modifier's results.
-	virtual std::shared_ptr<ComputeEngine> createEngine(TimePoint time, TimeInterval validityInterval) override;
+	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
-	/// Unpacks the results of the computation engine and stores them in the modifier.
-	virtual void transferComputationResults(ComputeEngine* engine) override;
+public:
+	
+	/// Give this modifier class its own metaclass.
+	class OOMetaClass : public AsynchronousModifier::OOMetaClass 
+	{
+	public:
 
-	/// Lets the modifier insert the cached computation results into the modification pipeline.
-	virtual PipelineStatus applyComputationResults(TimePoint time, TimeInterval& validityInterval) override;
+		/// Inherit constructor from base metaclass.
+		using AsynchronousModifier::OOMetaClass::OOMetaClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
+
+protected:
+
+	/// Holds the modifier's results.
+	class PropertyComputeResults : public ComputeEngineResults
+	{
+	public:
+
+		/// Constructor.
+		PropertyComputeResults(PropertyPtr outputProperty) : _outputProperty(std::move(outputProperty)) {}
+
+		/// Injects the computed results into the data pipeline.
+		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		
+		/// Returns the property storage that will receive the computed values.
+		const PropertyPtr& outputProperty() const { return _outputProperty; }
+		
+	private:
+
+		const PropertyPtr _outputProperty;
+	};
 
 	/// Asynchronous compute engine that does the actual work in a background thread.
 	class PropertyComputeEngine : public ComputeEngine
@@ -127,40 +161,49 @@ protected:
 	public:
 
 		/// Constructor.
-		PropertyComputeEngine(const TimeInterval& validityInterval, TimePoint time,
-				ParticleProperty* outputProperty, ParticleProperty* positions, ParticleProperty* selectionProperty,
-				const SimulationCell& simCell, FloatType cutoff,
-				const QStringList& expressions, const QStringList& neighborExpressions,
-				std::vector<QExplicitlySharedDataPointer<ParticleProperty>>&& inputProperties,
-				int frameNumber, const QVariantMap& attributes) :
+		PropertyComputeEngine(
+				const TimeInterval& validityInterval, 
+				TimePoint time,
+				PropertyPtr outputProperty, 
+				ConstPropertyPtr positions, 
+				ConstPropertyPtr selectionProperty,
+				const SimulationCell& simCell, 
+				FloatType cutoff,
+				QStringList expressions, 
+				QStringList neighborExpressions,
+				std::vector<ConstPropertyPtr> inputProperties,
+				int frameNumber, 
+				QVariantMap attributes) :
 			ComputeEngine(validityInterval),
-			_outputProperty(outputProperty),
-			_positions(positions), _simCell(simCell),
-			_selection(selectionProperty),
-			_expressions(expressions), _neighborExpressions(neighborExpressions),
+			_positions(std::move(positions)), 
+			_simCell(simCell),
+			_selection(std::move(selectionProperty)),
+			_expressions(std::move(expressions)), 
+			_neighborExpressions(std::move(neighborExpressions)),
 			_cutoff(cutoff),
-			_frameNumber(frameNumber), _attributes(attributes),
-			_inputProperties(std::move(inputProperties)) {
+			_frameNumber(frameNumber), 
+			_attributes(std::move(attributes)),
+			_inputProperties(std::move(inputProperties)),
+			_results(std::make_shared<PropertyComputeResults>(std::move(outputProperty))) 
+		{
+			setResult(_results);
 			initializeEngine(time);
 		}
 
 		/// This is called by the constructor to prepare the compute engine.
 		void initializeEngine(TimePoint time);
 
-		/// Computes the modifier's results and stores them for later retrieval.
+		/// Computes the modifier's results.
 		virtual void perform() override;
 
 		/// Returns the property storage that contains the input particle positions.
-		ParticleProperty* positions() const { return _positions.data(); }
+		const ConstPropertyPtr& positions() const { return _positions; }
 
 		/// Returns the property storage that contains the input particle selection.
-		ParticleProperty* selection() const { return _selection.data(); }
+		const ConstPropertyPtr& selection() const { return _selection; }
 
 		/// Returns the simulation cell data.
 		const SimulationCell& cell() const { return _simCell; }
-
-		/// Returns the property storage that will receive the computed values.
-		ParticleProperty* outputProperty() const { return _outputProperty.data(); }
 
 		/// Returns the list of available input variables.
 		const QStringList& inputVariableNames() const { return _inputVariableNames; }
@@ -171,22 +214,25 @@ protected:
 		/// Indicates whether contributions from particle neighbors are taken into account.
 		bool neighborMode() const { return _cutoff != 0; }
 
+		/// Returns the property storage that will receive the computed values.
+		const PropertyPtr& outputProperty() const { return _results->outputProperty(); }
+
 	private:
 
-		FloatType _cutoff;
-		SimulationCell _simCell;
-		int _frameNumber;
-		QVariantMap _attributes;
-		QStringList _expressions;
-		QStringList _neighborExpressions;
-		QExplicitlySharedDataPointer<ParticleProperty> _positions;
-		QExplicitlySharedDataPointer<ParticleProperty> _selection;
-		QExplicitlySharedDataPointer<ParticleProperty> _outputProperty;
-		std::vector<QExplicitlySharedDataPointer<ParticleProperty>> _inputProperties;
+		const FloatType _cutoff;
+		const SimulationCell _simCell;
+		const int _frameNumber;
+		const QStringList _expressions;
+		const QVariantMap _attributes;
+		const QStringList _neighborExpressions;
+		const ConstPropertyPtr _positions;
+		const ConstPropertyPtr _selection;
+		const std::vector<ConstPropertyPtr> _inputProperties;
 		QStringList _inputVariableNames;
 		QString _inputVariableTable;
 		ParticleExpressionEvaluator _evaluator;
 		ParticleExpressionEvaluator _neighborEvaluator;
+		std::shared_ptr<PropertyComputeResults> _results;
 	};
 
 	/// The math expressions for calculating the property values. One for every vector component.
@@ -212,21 +258,26 @@ protected:
 
 	/// Human-readable text listing the input variables during the last evaluation.
 	QString _inputVariableTable;
+};
 
-	/// This stores the cached results of the modifier.
-	QExplicitlySharedDataPointer<ParticleProperty> _computedProperty;
 
-	/// The cached display objects that are attached to the output particle property.
-	DECLARE_VECTOR_REFERENCE_FIELD(DisplayObject, cachedDisplayObjects);
+/**
+ * Used by the ComputePropertyModifier to store working data.
+ */
+class OVITO_PARTICLES_EXPORT ComputePropertyModifierApplication : public AsynchronousModifierApplication
+{
+	OVITO_CLASS()
+	Q_OBJECT
+
+public:
+
+	/// Constructor.
+	Q_INVOKABLE ComputePropertyModifierApplication(DataSet* dataset) : AsynchronousModifierApplication(dataset) {}
 
 private:
 
-	Q_OBJECT
-	OVITO_OBJECT
-
-	Q_CLASSINFO("DisplayName", "Compute property");
-	Q_CLASSINFO("ModifierCategory", "Modification");
-	Q_CLASSINFO("ClassNameAlias", "CreateExpressionPropertyModifier");	// This for backward compatibility with files written by Ovito 2.4 and older.
+	/// The cached display objects that are attached to the output particle property.
+	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD(DisplayObject, cachedDisplayObjects, setCachedDisplayObjects);
 };
 
 OVITO_END_INLINE_NAMESPACE

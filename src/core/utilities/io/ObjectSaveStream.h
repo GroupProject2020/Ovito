@@ -23,7 +23,7 @@
 
 
 #include <core/Core.h>
-#include "SaveStream.h"
+#include <core/utilities/io/SaveStream.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
 
@@ -49,7 +49,7 @@ public:
 	/// \throw Exception if the underlying data stream only supports sequential access.
 	ObjectSaveStream(QDataStream& destination) : SaveStream(destination), _dataset(nullptr) {}
 
-	// Calls close() to close the ObjectSaveStream.
+	/// Calls close() to close the ObjectSaveStream.
 	virtual ~ObjectSaveStream();
 
 	/// \brief Closes this ObjectSaveStream, but not the underlying QDataStream passed to the constructor.
@@ -59,7 +59,7 @@ public:
 	/// \brief Serializes an object and writes its data to the output stream.
 	/// \throw Exception if an I/O error has occurred.
 	/// \sa ObjectLoadStream::loadObject()
-	void saveObject(OvitoObject* object);
+	void saveObject(OvitoObject* object, bool excludeRecomputableData = false);
 
 private:
 
@@ -67,7 +67,7 @@ private:
 	std::map<OvitoObject*, quint32> _objectMap;
 
 	/// Contains all objects ordered by ID.
-	QVector<OvitoObject*> _objects;
+	std::vector<std::pair<OvitoObject*, bool>> _objects;
 
 	/// The current dataset being saved.
 	DataSet* _dataset;

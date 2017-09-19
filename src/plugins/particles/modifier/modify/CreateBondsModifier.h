@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,14 +24,15 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/BondsDisplay.h>
-#include <plugins/particles/modifier/AsynchronousParticleModifier.h>
+#include <core/dataset/data/simcell/SimulationCell.h>
+#include <core/dataset/pipeline/AsynchronousModifier.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 
 /**
  * \brief A modifier that creates bonds between pairs of particles based on their distance.
  */
-class OVITO_PARTICLES_EXPORT CreateBondsModifier : public AsynchronousParticleModifier
+class OVITO_PARTICLES_EXPORT CreateBondsModifier : public AsynchronousModifier
 {
 public:
 
@@ -46,45 +47,73 @@ public:
 
 private:
 
-	/// Engine that determines the bonds between particles.
+	/// Holds the modifier's results.
+	class BondsEngineResults : public ComputeEngineResults
+	{
+	public:
+
+		/// Constructor.
+		BondsEngineResults() : _bonds(std::make_shared<BondsStorage>()) {}
+
+		/// Injects the computed results into the data pipeline.
+		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	
+		/// Indicates whether the computation results stored in this object may be 
+		/// reused and tentatively applied to changing pipeline flow states without recomputation.
+		virtual bool isReapplicable() override { return false; }
+	
+		/// Returns the generated bonds.
+		const std::shared_ptr<BondsStorage>& bonds() { return _bonds; }
+		
+	private:
+
+		std::shared_ptr<BondsStorage> _bonds;
+	};
+
+	/// Compute engine that creates bonds between particles.
 	class BondsEngine : public ComputeEngine
 	{
 	public:
 
 		/// Constructor.
-		BondsEngine(const TimeInterval& validityInterval, ParticleProperty* positions, ParticleProperty* particleTypes, const SimulationCell& simCell, CutoffMode cutoffMode,
-				FloatType maxCutoff, FloatType minCutoff, std::vector<std::vector<FloatType>>&& pairCutoffsSquared, ParticleProperty* moleculeIDs) :
+		BondsEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, ConstPropertyPtr particleTypes, 
+				const SimulationCell& simCell, CutoffMode cutoffMode, FloatType maxCutoff, FloatType minCutoff, std::vector<std::vector<FloatType>> pairCutoffsSquared, 
+				ConstPropertyPtr moleculeIDs) :
 					ComputeEngine(validityInterval),
-					_positions(positions), _particleTypes(particleTypes), _simCell(simCell), _cutoffMode(cutoffMode),
-					_maxCutoff(maxCutoff), _minCutoff(minCutoff), _pairCutoffsSquared(std::move(pairCutoffsSquared)), _bonds(new BondsStorage()),
-					_moleculeIDs(moleculeIDs) {}
+					_positions(std::move(positions)), 
+					_particleTypes(std::move(particleTypes)), 
+					_simCell(simCell), 
+					_cutoffMode(cutoffMode),
+					_maxCutoff(maxCutoff), 
+					_minCutoff(minCutoff), 
+					_pairCutoffsSquared(std::move(pairCutoffsSquared)), 
+					_moleculeIDs(std::move(moleculeIDs)) {}
 
-		/// Computes the modifier's results and stores them in this object for later retrieval.
+		/// Computes the modifier's results.
 		virtual void perform() override;
 
-		/// Returns the generated bonds.
-		BondsStorage* bonds() { return _bonds.data(); }
-
 		/// Returns the input particle positions.
-		ParticleProperty* positions() const { return _positions.data(); }
+		const ConstPropertyPtr& positions() const { return _positions; }
 
 	private:
 
-		CutoffMode _cutoffMode;
-		FloatType _maxCutoff;
-		FloatType _minCutoff;
-		std::vector<std::vector<FloatType>> _pairCutoffsSquared;
-		QExplicitlySharedDataPointer<ParticleProperty> _positions;
-		QExplicitlySharedDataPointer<ParticleProperty> _particleTypes;
-		QExplicitlySharedDataPointer<ParticleProperty> _moleculeIDs;
-		QExplicitlySharedDataPointer<BondsStorage> _bonds;
-		SimulationCell _simCell;
+		const CutoffMode _cutoffMode;
+		const FloatType _maxCutoff;
+		const FloatType _minCutoff;
+		const std::vector<std::vector<FloatType>> _pairCutoffsSquared;
+		const ConstPropertyPtr _positions;
+		const ConstPropertyPtr _particleTypes;
+		const ConstPropertyPtr _moleculeIDs;
+		const SimulationCell _simCell;
 	};
 
 public:
 
 	/// Constructor.
 	Q_INVOKABLE CreateBondsModifier(DataSet* dataset);
+
+	/// This method is called by the system after the modifier has been inserted into a data pipeline.
+	virtual void initializeModifier(ModifierApplication* modApp) override;
 
 	/// Returns the cutoff radii for pairs of particle types.
 	const PairCutoffsList& pairCutoffs() const { return _pairCutoffs; }
@@ -101,7 +130,7 @@ public:
 protected:
 
 	/// Saves the class' contents to the given stream.
-	virtual void saveToStream(ObjectSaveStream& stream) override;
+	virtual void saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData) override;
 
 	/// Loads the class' contents from the given stream.
 	virtual void loadFromStream(ObjectLoadStream& stream) override;
@@ -112,24 +141,23 @@ protected:
 	/// Handles reference events sent by reference targets of this object.
 	virtual bool referenceEvent(RefTarget* source, ReferenceEvent* event) override;
 
-	/// Is called when the value of a property of this object has changed.
-	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
-
-	/// Resets the modifier's result cache.
-	virtual void invalidateCachedResults() override;
-
-	/// This virtual method is called by the system when the modifier has been inserted into a PipelineObject.
-	virtual void initializeModifier(PipelineObject* pipelineObject, ModifierApplication* modApp) override;
-
 	/// Creates a computation engine that will compute the modifier's results.
-	virtual std::shared_ptr<ComputeEngine> createEngine(TimePoint time, TimeInterval validityInterval) override;
+	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
-	/// Unpacks the results of the computation engine and stores them in the modifier.
-	virtual void transferComputationResults(ComputeEngine* engine) override;
+public:
 
-	/// Lets the modifier insert the cached computation results into the modification pipeline.
-	virtual PipelineStatus applyComputationResults(TimePoint time, TimeInterval& validityInterval) override;
+	/// Give this modifier class its own metaclass.
+	class OOMetaClass : public ModifierClass 
+	{
+	public:
 
+		/// Inherit constructor from base class.
+		using ModifierClass::ModifierClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
+		
 private:
 
 	/// The mode of choosing the cutoff radius.
@@ -150,11 +178,8 @@ private:
 	/// The display object for rendering the bonds.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD(BondsDisplay, bondsDisplay, setBondsDisplay);
 
-	/// This stores the cached results of the modifier, i.e. the list of created bonds.
-	QExplicitlySharedDataPointer<BondsStorage> _bonds;
-
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 
 	Q_CLASSINFO("DisplayName", "Create bonds");
 	Q_CLASSINFO("ModifierCategory", "Modification");

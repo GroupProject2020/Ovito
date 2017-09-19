@@ -32,6 +32,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 ******************************************************************************/
 class OVITO_GUI_EXPORT VariantComboBoxParameterUI : public PropertyParameterUI
 {
+	Q_OBJECT
+	OVITO_CLASS(VariantComboBoxParameterUI)
+	
 public:
 
 	/// Constructor.
@@ -80,11 +83,6 @@ protected:
 
 	/// The combo box of the UI component.
 	QPointer<QComboBox> _comboBox;
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

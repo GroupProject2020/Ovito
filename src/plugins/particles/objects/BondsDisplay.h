@@ -23,15 +23,14 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <core/scene/objects/DisplayObject.h>
-#include <core/scene/objects/WeakVersionedObjectReference.h>
+#include <core/dataset/data/DisplayObject.h>
+#include <core/dataset/data/VersionedDataObjectRef.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
 #include <core/rendering/ArrowPrimitive.h>
 #include <core/rendering/SceneRenderer.h>
 #include "BondsObject.h"
-#include "ParticlePropertyObject.h"
-#include "BondPropertyObject.h"
-#include "BondTypeProperty.h"
-#include "SimulationCellObject.h"
+#include "ParticleProperty.h"
+#include "BondProperty.h"
 
 namespace Ovito { namespace Particles {
 
@@ -40,6 +39,10 @@ namespace Ovito { namespace Particles {
  */
 class OVITO_PARTICLES_EXPORT BondsDisplay : public DisplayObject
 {
+	Q_OBJECT
+	OVITO_CLASS(BondsDisplay)
+	Q_CLASSINFO("DisplayName", "Bonds");
+	
 public:
 
 	/// \brief Constructor.
@@ -49,15 +52,16 @@ public:
 	virtual void render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, ObjectNode* contextNode) override;
 
 	/// \brief Computes the display bounding box of the data object.
-	virtual Box3 boundingBox(TimePoint time, DataObject* dataObject, ObjectNode* contextNode, const PipelineFlowState& flowState) override;
+	virtual Box3 boundingBox(TimePoint time, DataObject* dataObject, ObjectNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval) override;
 
 	/// Returns the display color used for selected bonds.
 	Color selectionBondColor() const { return Color(1,0,0); }
 
-	/// Determines the display colors of bonds.
-	void bondColors(std::vector<Color>& output, size_t particleCount, BondsObject* bondsObject,
-			BondPropertyObject* bondColorProperty, BondTypeProperty* bondTypeProperty, BondPropertyObject* bondSelectionProperty,
-			ParticleDisplay* particleDisplay, ParticlePropertyObject* particleColorProperty, ParticleTypeProperty* particleTypeProperty);
+	/// Determines the display colors of half-bonds.
+	/// Returns an array with two colors per full bond, because the two half-bonds may have different colors.
+	std::vector<Color> halfBondColors(size_t particleCount, BondsObject* bondsObject,
+			BondProperty* bondColorProperty, BondProperty* bondTypeProperty, BondProperty* bondSelectionProperty,
+			ParticleDisplay* particleDisplay, ParticleProperty* particleColorProperty, ParticleProperty* particleTypeProperty);
 
 public:
 
@@ -67,16 +71,16 @@ public:
 protected:
 
 	/// Controls the display width of bonds.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, bondWidth, setBondWidth);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, bondWidth, setBondWidth, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the color of the bonds.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(Color, bondColor, setBondColor);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(Color, bondColor, setBondColor, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls whether bonds colors are derived from particle colors.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, useParticleColors, setUseParticleColors);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, useParticleColors, setUseParticleColors, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the shading mode for bonds.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(ArrowPrimitive::ShadingMode, shadingMode, setShadingMode);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(ArrowPrimitive::ShadingMode, shadingMode, setShadingMode, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the rendering quality mode for bonds.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(ArrowPrimitive::RenderingQuality, renderingQuality, setRenderingQuality);
@@ -87,17 +91,17 @@ protected:
 	/// This helper structure is used to detect any changes in the input data
 	/// that require updating the geometry buffer.
 	SceneObjectCacheHelper<
-		WeakVersionedOORef<BondsObject>,				// The bonds data object + revision number
-		WeakVersionedOORef<ParticlePropertyObject>,		// Particle position property + revision number
-		WeakVersionedOORef<ParticlePropertyObject>,		// Particle color property + revision number
-		WeakVersionedOORef<ParticlePropertyObject>,		// Particle type property + revision number
-		WeakVersionedOORef<BondPropertyObject>,			// Bond color property + revision number
-		WeakVersionedOORef<BondPropertyObject>,			// Bond type property + revision number
-		WeakVersionedOORef<BondPropertyObject>,			// Bond selection property + revision number
-		WeakVersionedOORef<SimulationCellObject>,		// Simulation cell + revision number
-		FloatType,										// Bond width
-		Color,											// Bond color
-		bool											// Use particle colors
+		VersionedDataObjectRef,		// The bonds data object + revision number
+		VersionedDataObjectRef,		// Particle position property + revision number
+		VersionedDataObjectRef,		// Particle color property + revision number
+		VersionedDataObjectRef,		// Particle type property + revision number
+		VersionedDataObjectRef,		// Bond color property + revision number
+		VersionedDataObjectRef,		// Bond type property + revision number
+		VersionedDataObjectRef,		// Bond selection property + revision number
+		VersionedDataObjectRef,		// Simulation cell + revision number
+		FloatType,					// Bond width
+		Color,						// Bond color
+		bool						// Use particle colors
 	> _geometryCacheHelper;
 
 	/// The bounding box that includes all bonds.
@@ -106,18 +110,11 @@ protected:
 	/// This helper structure is used to detect changes in the input data
 	/// that require recomputing the bounding box.
 	SceneObjectCacheHelper<
-		WeakVersionedOORef<BondsObject>,				// The bonds data object + revision number
-		WeakVersionedOORef<ParticlePropertyObject>,		// Particle position property + revision number
-		WeakVersionedOORef<SimulationCellObject>,		// Simulation cell + revision number
-		FloatType										// Bond width
+		VersionedDataObjectRef,		// The bonds data object + revision number
+		VersionedDataObjectRef,		// Particle position property + revision number
+		VersionedDataObjectRef,		// Simulation cell + revision number
+		FloatType					// Bond width
 	> _boundingBoxCacheHelper;
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
-
-	Q_CLASSINFO("DisplayName", "Bonds");
 };
 
 /**
@@ -126,6 +123,9 @@ private:
  */
 class OVITO_PARTICLES_EXPORT BondPickInfo : public ObjectPickInfo
 {
+	Q_OBJECT
+	OVITO_CLASS(BondPickInfo)
+
 public:
 
 	/// Constructor.
@@ -144,9 +144,6 @@ private:
 
 	/// The bonds data object.
 	OORef<BondsObject> _bondsObj;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 }	// End of namespace

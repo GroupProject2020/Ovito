@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2015) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,29 +23,32 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <core/dataset/importexport/FileExporter.h>
-#include <core/utilities/io/CompressedTextWriter.h>
+#include <plugins/particles/export/ParticleExporter.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
 /**
  * \brief Exporter that exports dislocation lines to a Crystal Analysis Tool (CA) file.
  */
-class OVITO_CRYSTALANALYSIS_EXPORT CAExporter : public FileExporter
+class OVITO_CRYSTALANALYSIS_EXPORT CAExporter : public ParticleExporter
 {
 public:
 
 	/// \brief Constructs a new instance of this class.
-	Q_INVOKABLE CAExporter(DataSet* dataset) : FileExporter(dataset), _meshExportEnabled(true) {}
+	Q_INVOKABLE CAExporter(DataSet* dataset) : ParticleExporter(dataset) {}
 
 	/// \brief Returns the file filter that specifies the files that can be exported by this service.
-	virtual QString fileFilter() override { return QStringLiteral("*"); }
+	virtual QString fileFilter() override { 
+#ifndef Q_OS_WIN
+		return QStringLiteral("*.ca");
+#else 
+		// Workaround for bug in Windows file selection dialog (https://bugreports.qt.io/browse/QTBUG-45759)
+		return QStringLiteral("*");
+#endif
+	}
 
 	/// \brief Returns the filter description that is displayed in the drop-down box of the file dialog.
 	virtual QString fileFilterDescription() override { return tr("Crystal Analysis File"); }
-
-	/// \brief Selects the natural scene nodes to be exported by this exporter under normal circumstances.
-	virtual void selectStandardOutputData() override; 
 
 	/// Returns whether the DXA defect mesh is exported (in addition to the dislocation lines).
 	bool meshExportEnabled() const { return _meshExportEnabled; }
@@ -55,34 +58,16 @@ public:
 
 protected:
 
-	/// \brief Exports a single animation frame to the current output file.
-	virtual bool exportFrame(int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager) override;
-
-	/// \brief This is called once for every output file to be written and before exportData() is called.
-	virtual bool openOutputFile(const QString& filePath, int numberOfFrames) override;
-
-	/// \brief This is called once for every output file written after exportData() has been called.
-	virtual void closeOutputFile(bool exportCompleted) override;
-
-	/// Returns the current file this exporter is writing to.
-	QFile& outputFile() { return _outputFile; }
-
-	/// Returns the text stream used to write into the current output file.
-	CompressedTextWriter& textStream() { return *_outputStream; }
-
+	/// \brief Writes the particles of one animation frame to the current output file.
+	virtual bool exportObject(SceneNode* sceneNode, int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager) override;
+	
 private:
 
-	/// The output file stream.
-	QFile _outputFile;
-
-	/// The stream object used to write into the output file.
-	std::unique_ptr<CompressedTextWriter> _outputStream;
-
 	/// Controls whether the DXA defect mesh is exported (in addition to the dislocation lines).
-	bool _meshExportEnabled;
+	bool _meshExportEnabled = true;
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 };
 
 }	// End of namespace

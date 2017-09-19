@@ -26,103 +26,84 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
-class FutureBase;
-class PromiseBase;
-
-/// A pointer to the promise base class.
-using PromiseBasePtr = std::shared_ptr<PromiseBase>;
-
 /******************************************************************************
 * A utility class that integrates the Promise class into the Qt signal/slots
-* framework. It allows to have signals generated when the state of a Promise
-* changes.
+* framework. It allows to have signals generated when the shared state of a 
+* Future or a Promise changes.
 ******************************************************************************/
 class OVITO_CORE_EXPORT PromiseWatcher : public QObject
 {
 public:
 
 	/// Constructor that creates a watcher that is not associated with 
-	/// a Promise yet.
+	/// any future/promise yet.
 	PromiseWatcher(QObject* parent = nullptr) : QObject(parent) {}
 
 	/// Destructor.
 	virtual ~PromiseWatcher() {
-		setPromise(nullptr, false);
+		watch(nullptr, false);
 	}
 
-	/// Associates this object with the Promise of the given Future.
-	void setFuture(const FutureBase& future);
+	/// Returns whether this watcher is currently monitoring a shared state.
+	bool isWatching() const { return (bool)_sharedState; }
 
-	/// Associates this object with the given Promise.
-	void setPromise(const PromiseBasePtr& promise) {
-		setPromise(promise, true);
-	}
+	/// Returns the shared state being monitored by this watcher.
+	const PromiseStatePtr& sharedState() const { return _sharedState; }
 
-	/// Dissociates this object from its Promise.
-	void unsetPromise() {
-		setPromise(nullptr, true);
-	}
+	/// Makes this watcher monitor the given shared state.
+	void watch(const PromiseStatePtr& promiseState, bool pendingAssignment = true);
 
-	/// Returns true if the Promise monitored by this object has been canceled.
+	/// Detaches this watcher from the shared state.
+	void reset() { watch(nullptr); }
+
+	/// Returns true if the shared state monitored by this object has been canceled.
 	bool isCanceled() const;
 
-	/// Returns true if the Promise monitored by this object has reached the 'finished' state.
+	/// Returns true if the shared state monitored by this object has reached the 'finished' state.
 	bool isFinished() const;
 
-	/// Returns the maximum value for the progress of the Promise monitored by this object.
+	/// Returns the maximum value for the progress of the shared state monitored by this object.
 	int progressMaximum() const;
 
-	/// Returns the current value for the progress of the Promise monitored by this object.
+	/// Returns the current value for the progress of the shared state monitored by this object.
 	int progressValue() const;
 
-	/// Returns the status text of the Promise monitored by this object.
+	/// Returns the status text of the shared state monitored by this object.
 	QString progressText() const;
-
-	/// Blocks execution until the Promise monitored by this object has reached the 'finished' state.
-	void waitForFinished() const;
-
-	/// Returns the Promise monitored by this object.
-	const PromiseBasePtr& promise() const { return _promise; }
-
-protected:
-
-	void setPromise(const PromiseBasePtr& promise, bool pendingAssignment);
 
 Q_SIGNALS:
 
 	void canceled();
 	void finished();
 	void started();
-	void resultReady();
 	void progressRangeChanged(int maximum);
 	void progressValueChanged(int progressValue);
 	void progressTextChanged(const QString& progressText);
-
-public Q_SLOTS:
-
-	void cancel();
 
 private Q_SLOTS:
 
 	void promiseCanceled();
 	void promiseFinished();
 	void promiseStarted();
-	void promiseResultReady();
 	void promiseProgressRangeChanged(int maximum);
 	void promiseProgressValueChanged(int progressValue);
 	void promiseProgressTextChanged(QString progressText);
 
 private:
 
-	/// The Promise being monitored.
-	PromiseBasePtr _promise;
+	/// The shared state being monitored.
+	PromiseStatePtr _sharedState;
 
-	/// Indicates that the promise has reached the 'finished' state.
+	/// Indicates that the shared state has reached the 'finished' state.
     bool _finished = false;
+
+	/// Linked list pointer for list of registered watchers of the current shared state.
+	PromiseWatcher* _nextInList;	
 
 	Q_OBJECT
 
-	friend class PromiseBase;
+	friend class PromiseState;
+	friend class PromiseStateWithProgress;
 };
 
 OVITO_END_INLINE_NAMESPACE

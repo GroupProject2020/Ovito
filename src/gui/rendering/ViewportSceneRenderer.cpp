@@ -20,12 +20,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <gui/GUI.h>
-#include <core/scene/SceneNode.h>
-#include <core/scene/SceneRoot.h>
-#include <core/scene/ObjectNode.h>
-#include <core/scene/pipeline/PipelineObject.h>
-#include <core/scene/pipeline/Modifier.h>
-#include <core/scene/objects/DisplayObject.h>
+#include <core/dataset/scene/SceneNode.h>
+#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/pipeline/PipelineObject.h>
+#include <core/dataset/pipeline/Modifier.h>
+#include <core/dataset/data/DisplayObject.h>
 #include <core/dataset/DataSet.h>
 #include <core/app/Application.h>
 #include <core/rendering/RenderSettings.h>
@@ -37,7 +37,7 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(ViewportSceneRenderer, OpenGLSceneRenderer);
+IMPLEMENT_OVITO_CLASS(ViewportSceneRenderer);
 
 /******************************************************************************
 * This method is called just before renderFrame() is called.
@@ -94,65 +94,6 @@ void ViewportSceneRenderer::renderInteractiveContent()
 QSize ViewportSceneRenderer::outputSize() const
 {
 	return viewport()->windowSize();
-}
-
-/******************************************************************************
-* Computes the bounding box of the the 3D visual elements
-* shown only in the interactive viewports.
-******************************************************************************/
-Box3 ViewportSceneRenderer::boundingBoxInteractive(TimePoint time, Viewport* viewport)
-{
-	OVITO_CHECK_POINTER(viewport);
-	Box3 bb;
-
-	// Visit all pipeline objects in the scene.
-	renderDataset()->sceneRoot()->visitObjectNodes([this, viewport, time, &bb](ObjectNode* node) -> bool {
-
-		// Ignore node if it is the view node of the viewport or if it is the target of the view node.
-		if(viewport->viewNode()) {
-			if(viewport->viewNode() == node || viewport->viewNode()->lookatTargetNode() == node)
-				return true;
-		}
-
-		// Evaluate data pipeline of object node.
-		const PipelineFlowState& state = node->evaluatePipelineImmediately(PipelineEvalRequest(time, true));
-		for(const auto& dataObj : state.objects()) {
-			for(DisplayObject* displayObj : dataObj->displayObjects()) {
-				if(displayObj && displayObj->isEnabled()) {
-					TimeInterval interval;
-					bb.addBox(displayObj->viewDependentBoundingBox(time, viewport,
-							dataObj, node, state).transformed(node->getWorldTransform(time, interval)));
-				}
-			}
-		}
-
-		if(PipelineObject* pipelineObj = dynamic_object_cast<PipelineObject>(node->dataProvider()))
-			boundingBoxModifiers(pipelineObj, node, bb);
-
-		return true;
-	});
-
-	// Include visual geometry of input mode overlays in bounding box.
-	if(MainWindow* mainWindow = MainWindow::fromDataset(viewport->dataset())) {
-		for(const auto& handler : mainWindow->viewportInputManager()->stack()) {
-			if(handler->hasOverlay())
-				bb.addBox(handler->overlayBoundingBox(viewport, this));
-		}
-	}
-
-	// Include construction grid in bounding box.
-	if(viewport->isGridVisible()) {
-		FloatType gridSpacing;
-		Box2I gridRange;
-		std::tie(gridSpacing, gridRange) = determineGridRange(viewport);
-		if(gridSpacing > 0) {
-			bb.addBox(viewport->gridMatrix() * Box3(
-					Point3(gridRange.minc.x() * gridSpacing, gridRange.minc.y() * gridSpacing, 0),
-					Point3(gridRange.maxc.x() * gridSpacing, gridRange.maxc.y() * gridSpacing, 0)));
-		}
-	}
-
-	return bb;
 }
 
 /******************************************************************************
@@ -221,50 +162,57 @@ void ViewportSceneRenderer::renderGrid()
 	FloatType xendF = (FloatType)(xstart + numLinesX - 1) * gridSpacing;
 	FloatType yendF = (FloatType)(ystart + numLinesY - 1) * gridSpacing;
 
-	// Allocate vertex buffer.
-	int numVertices = 2 * (numLinesX + numLinesY);
-	std::unique_ptr<Point3[]> vertexPositions(new Point3[numVertices]);
-	std::unique_ptr<ColorA[]> vertexColors(new ColorA[numVertices]);
-
-	// Build lines array.
-	ColorA color = Viewport::viewportColor(ViewportSettings::COLOR_GRID);
-	ColorA majorColor = Viewport::viewportColor(ViewportSettings::COLOR_GRID_INTENS);
-	ColorA majorMajorColor = Viewport::viewportColor(ViewportSettings::COLOR_GRID_AXIS);
-
-	Point3* v = vertexPositions.get();
-	ColorA* c = vertexColors.get();
-	FloatType x = xstartF;
-	for(int i = xstart; i < xstart + numLinesX; i++, x += gridSpacing, c += 2) {
-		*v++ = Point3(x, ystartF, 0);
-		*v++ = Point3(x, yendF, 0);
-		if((i % 10) != 0)
-			c[0] = c[1] = color;
-		else if(i != 0)
-			c[0] = c[1] = majorColor;
-		else
-			c[0] = c[1] = majorMajorColor;
-	}
-	FloatType y = ystartF;
-	for(int i = ystart; i < ystart + numLinesY; i++, y += gridSpacing, c += 2) {
-		*v++ = Point3(xstartF, y, 0);
-		*v++ = Point3(xendF, y, 0);
-		if((i % 10) != 0)
-			c[0] = c[1] = color;
-		else if(i != 0)
-			c[0] = c[1] = majorColor;
-		else
-			c[0] = c[1] = majorMajorColor;
-	}
-	OVITO_ASSERT(c == vertexColors.get() + numVertices);
-
-	// Render grid lines.
 	setWorldTransform(viewport()->gridMatrix());
-	if(!_constructionGridGeometry || !_constructionGridGeometry->isValid(this))
-		_constructionGridGeometry = createLinePrimitive();
-	_constructionGridGeometry->setVertexCount(numVertices);
-	_constructionGridGeometry->setVertexPositions(vertexPositions.get());
-	_constructionGridGeometry->setVertexColors(vertexColors.get());
-	_constructionGridGeometry->render(this);
+
+	if(!isBoundingBoxPass()) {
+
+		// Allocate vertex buffer.
+		int numVertices = 2 * (numLinesX + numLinesY);
+		std::unique_ptr<Point3[]> vertexPositions(new Point3[numVertices]);
+		std::unique_ptr<ColorA[]> vertexColors(new ColorA[numVertices]);
+
+		// Build lines array.
+		ColorA color = Viewport::viewportColor(ViewportSettings::COLOR_GRID);
+		ColorA majorColor = Viewport::viewportColor(ViewportSettings::COLOR_GRID_INTENS);
+		ColorA majorMajorColor = Viewport::viewportColor(ViewportSettings::COLOR_GRID_AXIS);
+
+		Point3* v = vertexPositions.get();
+		ColorA* c = vertexColors.get();
+		FloatType x = xstartF;
+		for(int i = xstart; i < xstart + numLinesX; i++, x += gridSpacing, c += 2) {
+			*v++ = Point3(x, ystartF, 0);
+			*v++ = Point3(x, yendF, 0);
+			if((i % 10) != 0)
+				c[0] = c[1] = color;
+			else if(i != 0)
+				c[0] = c[1] = majorColor;
+			else
+				c[0] = c[1] = majorMajorColor;
+		}
+		FloatType y = ystartF;
+		for(int i = ystart; i < ystart + numLinesY; i++, y += gridSpacing, c += 2) {
+			*v++ = Point3(xstartF, y, 0);
+			*v++ = Point3(xendF, y, 0);
+			if((i % 10) != 0)
+				c[0] = c[1] = color;
+			else if(i != 0)
+				c[0] = c[1] = majorColor;
+			else
+				c[0] = c[1] = majorMajorColor;
+		}
+		OVITO_ASSERT(c == vertexColors.get() + numVertices);
+
+		// Render grid lines.
+		if(!_constructionGridGeometry || !_constructionGridGeometry->isValid(this))
+			_constructionGridGeometry = createLinePrimitive();
+		_constructionGridGeometry->setVertexCount(numVertices);
+		_constructionGridGeometry->setVertexPositions(vertexPositions.get());
+		_constructionGridGeometry->setVertexColors(vertexColors.get());
+		_constructionGridGeometry->render(this);
+	}
+	else {
+		addToLocalBoundingBox(Box3(Point3(xstartF, ystartF, 0), Point3(xendF, yendF, 0)));
+	}
 }
 
 /******************************************************************************

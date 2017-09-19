@@ -23,7 +23,7 @@ assert(modifier.structures[4].name == "FCC-HCP")
 node.compute()
 
 print("Computed structure types:")
-print(node.output.structure_type.array)
+print(node.output.particle_properties.structure_type.array)
 
 assert(node.output.particle_properties.structure_type.array[0] == 4)
 assert((node.output.particle_properties.color.array[0] == (1,0,0)).all())

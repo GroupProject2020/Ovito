@@ -20,14 +20,14 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticlePropertyObject.h>
-#include <plugins/particles/objects/SimulationCellObject.h>
-#include <core/utilities/concurrent/Task.h>
+#include <plugins/particles/objects/ParticleProperty.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <core/utilities/concurrent/Promise.h>
 #include "LAMMPSDumpExporter.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(LAMMPSDumpExporter, FileColumnParticleExporter);
+IMPLEMENT_OVITO_CLASS(LAMMPSDumpExporter);
 
 /******************************************************************************
 * Writes the particles of one animation frame to the current output file.
@@ -39,10 +39,10 @@ bool LAMMPSDumpExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 	if(!getParticleData(sceneNode, time, state, taskManager))
 		return false;
 
-	SynchronousTask exportTask(taskManager);
+	Promise<> exportTask = Promise<>::createSynchronous(taskManager, true, true);
 
 	// Get particle positions.
-	ParticlePropertyObject* posProperty = ParticlePropertyObject::findInState(state, ParticleProperty::PositionProperty);
+	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
 
 	// Get simulation cell info.
 	SimulationCellObject* simulationCell = state.findObject<SimulationCellObject>();
@@ -106,7 +106,7 @@ bool LAMMPSDumpExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 
 	// Write column names.
 	for(int i = 0; i < (int)mapping.size(); i++) {
-		const ParticlePropertyReference& pref = mapping[i];
+		const PropertyReference& pref = mapping[i];
 		QString columnName;
 		switch(pref.type()) {
 		case ParticleProperty::PositionProperty:
@@ -134,7 +134,7 @@ bool LAMMPSDumpExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 			else columnName = QStringLiteral("pbcimage");
 			break;
 		case ParticleProperty::IdentifierProperty: columnName = QStringLiteral("id"); break;
-		case ParticleProperty::ParticleTypeProperty: columnName = QStringLiteral("type"); break;
+		case ParticleProperty::TypeProperty: columnName = QStringLiteral("type"); break;
 		case ParticleProperty::MassProperty: columnName = QStringLiteral("mass"); break;
 		case ParticleProperty::RadiusProperty: columnName = QStringLiteral("radius"); break;
 		default:

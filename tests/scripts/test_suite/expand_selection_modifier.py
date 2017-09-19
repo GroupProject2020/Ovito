@@ -26,7 +26,7 @@ modifier.iterations = 3
 
 node.compute()
 
-selection_count = np.count_nonzero(node.output.selection.array)
+selection_count = np.count_nonzero(node.output.particle_properties.selection.array)
 print(selection_count)
 assert(selection_count == 1212)
 

@@ -20,16 +20,20 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
+#include <plugins/particles/modifier/ParticleInputHelper.h>
+#include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <plugins/particles/util/NearestNeighborFinder.h>
 #include <plugins/particles/objects/BondsObject.h>
 #include <core/utilities/concurrent/ParallelFor.h>
+#include <core/utilities/units/UnitsManager.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include "VoronoiAnalysisModifier.h"
 
 #include <voro++.hh>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(VoronoiAnalysisModifier, AsynchronousParticleModifier);
+
 DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, onlySelected, "OnlySelected");
 DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, useRadii, "UseRadii");
 DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, computeIndices, "ComputeIndices");
@@ -56,24 +60,36 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(VoronoiAnalysisModifier, edgeCount, IntegerPa
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
-VoronoiAnalysisModifier::VoronoiAnalysisModifier(DataSet* dataset) : AsynchronousParticleModifier(dataset),
-	_onlySelected(false), _computeIndices(false), _edgeCount(6),
-	_useRadii(false), _edgeThreshold(0), _faceThreshold(0),
-	_simulationBoxVolume(0), _voronoiVolumeSum(0), _maxFaceOrder(0), _computeBonds(false),
+VoronoiAnalysisModifier::VoronoiAnalysisModifier(DataSet* dataset) : AsynchronousModifier(dataset),
+	_onlySelected(false), 
+	_computeIndices(false), 
+	_edgeCount(6),
+	_useRadii(false), 
+	_edgeThreshold(0), 
+	_faceThreshold(0),
+	_computeBonds(false),
 	_relativeFaceThreshold(0)
 {
-	INIT_PROPERTY_FIELD(onlySelected);
-	INIT_PROPERTY_FIELD(useRadii);
-	INIT_PROPERTY_FIELD(computeIndices);
-	INIT_PROPERTY_FIELD(computeBonds);
-	INIT_PROPERTY_FIELD(edgeCount);
-	INIT_PROPERTY_FIELD(edgeThreshold);
-	INIT_PROPERTY_FIELD(faceThreshold);
-	INIT_PROPERTY_FIELD(relativeFaceThreshold);
-	INIT_PROPERTY_FIELD(bondsDisplay);
+
+
+
+
+
+
+
+
+
 
 	// Create the display object for bonds rendering.
 	setBondsDisplay(new BondsDisplay(dataset));
+}
+
+/******************************************************************************
+* Asks the modifier whether it can be applied to the given input data.
+******************************************************************************/
+bool VoronoiAnalysisModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+{
+	return input.findObject<ParticleProperty>() != nullptr;
 }
 
 /******************************************************************************
@@ -85,31 +101,33 @@ bool VoronoiAnalysisModifier::referenceEvent(RefTarget* source, ReferenceEvent* 
 	if(source == bondsDisplay())
 		return false;
 
-	return AsynchronousParticleModifier::referenceEvent(source, event);
+	return AsynchronousModifier::referenceEvent(source, event);
 }
 
 /******************************************************************************
 * Creates and initializes a computation engine that will compute the modifier's results.
 ******************************************************************************/
-std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> VoronoiAnalysisModifier::createEngine(TimePoint time, TimeInterval validityInterval)
+Future<AsynchronousModifier::ComputeEnginePtr> VoronoiAnalysisModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get the current positions.
-	ParticlePropertyObject* posProperty = expectStandardProperty(ParticleProperty::PositionProperty);
+	ParticleInputHelper pih(dataset(), input);
+	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
 
 	// Get simulation cell.
-	SimulationCellObject* inputCell = expectSimulationCell();
+	SimulationCellObject* inputCell = pih.expectSimulationCell();
 	if(inputCell->is2D())
 		throwException(tr("The Voronoi modifier does not support 2d simulation cells."));
 
 	// Get selection particle property.
-	ParticlePropertyObject* selectionProperty = nullptr;
+	ParticleProperty* selectionProperty = nullptr;
 	if(onlySelected())
-		selectionProperty = expectStandardProperty(ParticleProperty::SelectionProperty);
+		selectionProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty);
 
 	// Get particle radii.
+	TimeInterval validityInterval = input.stateValidity();
 	std::vector<FloatType> radii;
 	if(useRadii())
-		radii = std::move(inputParticleRadii(time, validityInterval));
+		radii = pih.inputParticleRadii(time, validityInterval);
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	return std::make_shared<VoronoiAnalysisEngine>(
@@ -134,9 +152,9 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 	setProgressText(tr("Computing Voronoi cells"));
 
 	// Compute the total simulation cell volume.
-	_simulationBoxVolume = _simCell.volume3D();
+	_results->setSimulationBoxVolume(_simCell.volume3D());
 
-	if(_positions->size() == 0 || _simulationBoxVolume == 0)
+	if(_positions->size() == 0 || _results->simulationBoxVolume() == 0)
 		return;	// Nothing to do
 
 	// The squared edge length threshold.
@@ -147,12 +165,12 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 	{
 		// Compute cell volume.
 		double vol = v.volume();
-		_atomicVolumes->setFloat(index, (FloatType)vol);
+		_results->atomicVolumes()->setFloat(index, (FloatType)vol);
 
 		// Accumulate total volume of Voronoi cells.
 		// Loop is for lock-free write access to shared max counter.
-		double prevVolumeSum = _voronoiVolumeSum;
-		while(!_voronoiVolumeSum.compare_exchange_weak(prevVolumeSum, prevVolumeSum + vol));
+		double prevVolumeSum = _results->voronoiVolumeSum();
+		while(!_results->voronoiVolumeSum().compare_exchange_weak(prevVolumeSum, prevVolumeSum + vol));
 
 		// Compute total surface area of Voronoi cell when relative area threshold is used to 
 		// filter out small faces.
@@ -199,7 +217,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 						coordNumber++;
 						if(faceOrder > localMaxFaceOrder)
 							localMaxFaceOrder = faceOrder;
-						if(_bonds && neighbor_id >= 0) {
+						if(_results->bonds() && neighbor_id >= 0) {
 							OVITO_ASSERT(neighbor_id < _positions->size());
 							Vector3 delta = _positions->getPoint3(index) - _positions->getPoint3(neighbor_id);
 							Vector_3<int8_t> pbcShift = Vector_3<int8_t>::Zero();
@@ -207,24 +225,26 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 								if(_simCell.pbcFlags()[dim])
 									pbcShift[dim] = (int8_t)floor(_simCell.inverseMatrix().prodrow(delta, dim) + FloatType(0.5));
 							}
+							Bond bond = { (unsigned int)index, (unsigned int)neighbor_id, pbcShift };
+							if(bond.isOdd()) continue;
 							QMutexLocker locker(mutex);
-							_bonds->push_back(Bond{ pbcShift, (unsigned int)index, (unsigned int)neighbor_id });
+							_results->bonds()->push_back(bond);
 						}
 						faceOrder--;
-						if(_voronoiIndices && faceOrder < (int)_voronoiIndices->componentCount())
-							_voronoiIndices->setIntComponent(index, faceOrder, _voronoiIndices->getIntComponent(index, faceOrder) + 1);
+						if(_results->voronoiIndices() && faceOrder < (int)_results->voronoiIndices()->componentCount())
+							_results->voronoiIndices()->setIntComponent(index, faceOrder, _results->voronoiIndices()->getIntComponent(index, faceOrder) + 1);
 					}
 				}
 			}
 		}
 
 		// Store computed result.
-		_coordinationNumbers->setInt(index, coordNumber);
+		_results->coordinationNumbers()->setInt(index, coordNumber);
 
 		// Keep track of the maximum number of edges per face.
 		// Loop is for lock-free write access to shared max counter.
-		int prevMaxFaceOrder = _maxFaceOrder;
-		while(localMaxFaceOrder > prevMaxFaceOrder && !_maxFaceOrder.compare_exchange_weak(prevMaxFaceOrder, localMaxFaceOrder));
+		int prevMaxFaceOrder = _results->maxFaceOrder();
+		while(localMaxFaceOrder > prevMaxFaceOrder && !_results->maxFaceOrder().compare_exchange_weak(prevMaxFaceOrder, localMaxFaceOrder));
 	};
 
 	// Decide whether to use Voro++ container class or our own implementation.
@@ -390,7 +410,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 	else {
 		// Prepare the nearest neighbor list generator.
 		NearestNeighborFinder nearestNeighborFinder;
-		if(!nearestNeighborFinder.prepare(_positions.data(), _simCell, _selection.data(), *this))
+		if(!nearestNeighborFinder.prepare(*positions(), _simCell, selection().get(), this))
 			return;
 
 		// Squared particle radii (input was just radii).
@@ -468,85 +488,59 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 			processCell(v, index, &mutex);
 		});
 	}
+
+	// Return the results of the compute engine.
+	setResult(std::move(_results));		
 }
 
 /******************************************************************************
-* Unpacks the results of the computation engine and stores them in the modifier.
+* Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-void VoronoiAnalysisModifier::transferComputationResults(ComputeEngine* engine)
+PipelineFlowState VoronoiAnalysisModifier::VoronoiAnalysisResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	VoronoiAnalysisEngine* eng = static_cast<VoronoiAnalysisEngine*>(engine);
-	_coordinationNumbers = eng->coordinationNumbers();
-	_atomicVolumes = eng->atomicVolumes();
-	_voronoiIndices = eng->voronoiIndices();
-	_simulationBoxVolume = eng->simulationBoxVolume();
-	_voronoiVolumeSum = eng->voronoiVolumeSum();
-	_maxFaceOrder = eng->maxFaceOrder();
-	_bonds = eng->bonds();
-}
+	VoronoiAnalysisModifier* modifier = static_object_cast<VoronoiAnalysisModifier>(modApp->modifier());
+	
+	PipelineFlowState output = input;
+	ParticleOutputHelper poh(modApp->dataset(), output);
 
-/******************************************************************************
-* Lets the modifier insert the cached computation results into the
-* modification pipeline.
-******************************************************************************/
-PipelineStatus VoronoiAnalysisModifier::applyComputationResults(TimePoint time, TimeInterval& validityInterval)
-{
-	if(!_coordinationNumbers)
-		throwException(tr("No computation results available."));
-
-	if(inputParticleCount() != _coordinationNumbers->size())
-		throwException(tr("The number of input particles has changed. The stored results have become invalid."));
-
-	outputStandardProperty(_coordinationNumbers.data());
-	outputCustomProperty(_atomicVolumes.data());
-	if(_voronoiIndices)
-		outputCustomProperty(_voronoiIndices.data());
+	poh.outputProperty<ParticleProperty>(coordinationNumbers());
+	poh.outputProperty<ParticleProperty>(atomicVolumes());
+	if(voronoiIndices() && modifier->computeIndices())
+		poh.outputProperty<ParticleProperty>(voronoiIndices());
 
 	// Check computed Voronoi cell volume sum.
-	if(std::abs(_voronoiVolumeSum - _simulationBoxVolume) > 1e-8 * inputParticleCount() * _simulationBoxVolume) {
+	if(std::abs(voronoiVolumeSum() - simulationBoxVolume()) > 1e-8 * poh.outputParticleCount() * simulationBoxVolume()) {
 		//qDebug() << _voronoiVolumeSum;
 		//qDebug() << _simulationBoxVolume;
 		//qDebug() << std::abs(_voronoiVolumeSum - _simulationBoxVolume);
 		//qDebug() << (1e-8 * inputParticleCount() * _simulationBoxVolume);
-		return PipelineStatus(PipelineStatus::Warning,
+		output.setStatus(PipelineStatus(PipelineStatus::Warning,
 				tr("The volume sum of all Voronoi cells does not match the simulation box volume. "
 						"This may be a result of particles being located outside of the simulation box boundaries. "
 						"See user manual for more information.\n"
 						"Simulation box volume: %1\n"
-						"Voronoi cell volume sum: %2").arg(_simulationBoxVolume).arg(_voronoiVolumeSum));
+						"Voronoi cell volume sum: %2").arg(simulationBoxVolume()).arg(voronoiVolumeSum())));
 	}
 
-	if(_bonds) {
+	if(bonds() && modifier->computeBonds()) {
 		// Insert output object into the pipeline.
-		addBonds(_bonds.data(), bondsDisplay());
+		poh.addBonds(bonds(), modifier->bondsDisplay());
 	}
 
-	output().attributes().insert(QStringLiteral("Voronoi.max_face_order"), QVariant::fromValue(_maxFaceOrder));
+	output.attributes().insert(QStringLiteral("Voronoi.max_face_order"), QVariant::fromValue(maxFaceOrder().load()));
 
-	if(_voronoiIndices && _maxFaceOrder > _voronoiIndices->componentCount()) {
-		return PipelineStatus(PipelineStatus::Warning,
+	if(voronoiIndices() && maxFaceOrder() > voronoiIndices()->componentCount()) {
+		output.setStatus(PipelineStatus(PipelineStatus::Warning,
 				tr("The Voronoi tessellation contains faces with up to %1 edges "
 						"(ignoring edges below the length threshold). "
 						"This number exceeds the current maximum edge count, "
 						"and the computed Voronoi index vectors are therefore truncated. "
 						"You should consider increasing the maximum edge count parameter to %1 edges "
 						"to not truncate the Voronoi index vectors and avoid this message."
-						).arg(_maxFaceOrder));
+						).arg(maxFaceOrder().load())));
 	}
-	else {
-		return PipelineStatus::Success;
-	}
-}
 
-/******************************************************************************
-* Is called when the value of a property of this object has changed.
-******************************************************************************/
-void VoronoiAnalysisModifier::propertyChanged(const PropertyFieldDescriptor& field)
-{
-	AsynchronousParticleModifier::propertyChanged(field);
-
-	// Recompute modifier results when the parameters have been changed.
-	invalidateCachedResults();
+	return output;
 }
 
 OVITO_END_INLINE_NAMESPACE

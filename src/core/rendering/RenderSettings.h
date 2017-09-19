@@ -23,10 +23,10 @@
 
 
 #include <core/Core.h>
-#include <core/reference/RefTarget.h>
-#include <core/animation/TimeInterval.h>
-#include <core/animation/controller/Controller.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/oo/RefTarget.h>
+#include <core/dataset/animation/TimeInterval.h>
+#include <core/dataset/animation/controller/Controller.h>
+#include <core/dataset/animation/AnimationSettings.h>
 #include "FrameBuffer.h"
 #include "SceneRenderer.h"
 
@@ -37,6 +37,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
  */
 class OVITO_CORE_EXPORT RenderSettings : public RefTarget
 {
+	Q_OBJECT
+	OVITO_CLASS(RenderSettings)
+
 public:
 
 	/// This enumeration specifies the animation range that should be rendered.
@@ -78,7 +81,7 @@ public:
 protected:
 
 	/// Saves the class' contents to the given stream. 
-	virtual void saveToStream(ObjectSaveStream& stream) override;
+	virtual void saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData) override;
 	/// Loads the class' contents from the given stream. 
 	virtual void loadFromStream(ObjectLoadStream& stream) override;
 	/// Creates a copy of this object. 
@@ -90,10 +93,10 @@ private:
 	ImageInfo _imageInfo;
 
 	/// The instance of the plugin renderer class. 
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(SceneRenderer, renderer, setRenderer);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SceneRenderer, renderer, setRenderer, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the background color of the rendered image.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(Controller, backgroundColorController, setBackgroundColorController);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(Controller, backgroundColorController, setBackgroundColorController, PROPERTY_FIELD_MEMORIZE);
 	
 	/// The width of the output image in pixels.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, outputImageWidth, setOutputImageWidth);
@@ -125,12 +128,7 @@ private:
 	/// Specifies the base number for filename generation when rendering an animation.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, fileNumberBase, setFileNumberBase);
 
-private:
-    
     friend class RenderSettingsEditor;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

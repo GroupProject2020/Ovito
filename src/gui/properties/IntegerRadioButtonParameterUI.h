@@ -33,6 +33,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 ******************************************************************************/
 class OVITO_GUI_EXPORT IntegerRadioButtonParameterUI : public PropertyParameterUI
 {
+	Q_OBJECT
+	OVITO_CLASS(IntegerRadioButtonParameterUI)
+	
 public:
 
 	/// Constructor.
@@ -61,7 +64,7 @@ public:
 	/// Sets the tooltip text for the radio button widgets.
 	void setToolTip(const QString& text) const { 
 		if(buttonGroup()) {
-			Q_FOREACH(QAbstractButton* button, buttonGroup()->buttons()) 
+			for(QAbstractButton* button : buttonGroup()->buttons()) 
 				button->setToolTip(text);
 		} 
 	}
@@ -69,7 +72,7 @@ public:
 	/// Sets the What's This helper text for the radio button widgets.
 	void setWhatsThis(const QString& text) const { 
 		if(buttonGroup()) {
-			Q_FOREACH(QAbstractButton* button, buttonGroup()->buttons()) 
+			for(QAbstractButton* button : buttonGroup()->buttons()) 
 				button->setWhatsThis(text);
 		} 
 	}
@@ -88,9 +91,6 @@ protected:
 
 	/// The radio button group.
 	QPointer<QButtonGroup> _buttonGroup;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

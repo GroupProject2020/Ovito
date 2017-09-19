@@ -33,6 +33,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
  */
 class OVITO_GUI_EXPORT ViewportSceneRenderer : public OpenGLSceneRenderer
 {
+	Q_OBJECT
+	OVITO_CLASS(ViewportSceneRenderer)
+
 public:
 
 	/// Standard constructor.
@@ -40,13 +43,6 @@ public:
 
 	/// This method is called just before renderFrame() is called.
 	virtual void beginFrame(TimePoint time, const ViewProjectionParameters& params, Viewport* vp) override;
-
-	/// \brief Computes the bounding box of the the 3D visual elements
-	///        shown only in the interactive viewports.
-	/// \param time The time at which the bounding box should be computed.
-	/// \return An axis-aligned box in the world coordinate system that contains
-	///         everything to be rendered.
-	virtual Box3 boundingBoxInteractive(TimePoint time, Viewport* viewport) override;
 
 	/// Returns whether this renderer is rendering an interactive viewport.
 	/// \return true if rendering a real-time viewport; false if rendering an output image.
@@ -74,9 +70,6 @@ private:
 
 	/// The geometry buffer used to render the construction grid of a viewport.
 	std::shared_ptr<LinePrimitive> _constructionGridGeometry;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

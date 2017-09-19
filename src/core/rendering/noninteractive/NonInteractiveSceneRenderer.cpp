@@ -24,7 +24,7 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(NonInteractiveSceneRenderer, SceneRenderer);
+IMPLEMENT_OVITO_CLASS(NonInteractiveSceneRenderer);
 
 /******************************************************************************
 * This method is called just before renderFrame() is called.

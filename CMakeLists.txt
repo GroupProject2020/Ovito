@@ -36,8 +36,8 @@ ENDIF()
 
 # Check compiler requirement.
 IF(CMAKE_CXX_COMPILER_ID STREQUAL MSVC)
-	IF(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "18")
-		MESSAGE(FATAL_ERROR "OVITO requires Visual C++ 2013 or newer.")
+	IF(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "19")
+		MESSAGE(FATAL_ERROR "OVITO requires Visual C++ 2015 or newer.")
 	ENDIF()
 ENDIF()
 
@@ -59,6 +59,7 @@ OPTION(OVITO_BUILD_APPSTORE_VERSION "Build binaries for the Apple App Store and 
 # Define user options that control the building of OVITO's standard plugins.
 OPTION(OVITO_BUILD_PLUGIN_PARTICLES "Build the Particles plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_MESH "Build the Mesh plugin." "ON")
+OPTION(OVITO_BUILD_PLUGIN_GRID "Build the Grid plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_TACHYON "Build the Tachyon renderer plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_CRYSTALANALYSIS "Build the CrystalAnalysis plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_PYSCRIPT "Build the Python scripting plugin." "ON")
@@ -76,16 +77,16 @@ SET(OVITO_PLUGINS_LIST "")
 # Enable software testing framework.
 ENABLE_TESTING()
 
-# Activate C++11 language standard.
+# Activate C++14 language standard.
 IF(NOT CMAKE_VERSION VERSION_LESS "3.1")
-	SET(CMAKE_CXX_STANDARD 11)
+	SET(CMAKE_CXX_STANDARD 14)
 	SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 ELSE()
 	IF(NOT MSVC)
 		IF(CMAKE_COMPILER_IS_GNUCXX)
-		    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+		    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0y")
 		ELSE()
-	    	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+	    	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 		ENDIF()
 	ENDIF()
 ENDIF()

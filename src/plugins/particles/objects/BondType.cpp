@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2015) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,31 +20,75 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
+#include <core/utilities/units/UnitsManager.h>
 #include "BondType.h"
 
 namespace Ovito { namespace Particles {
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(BondType, RefTarget);
-DEFINE_PROPERTY_FIELD(BondType, id, "Identifier");
-DEFINE_PROPERTY_FIELD(BondType, color, "Color");
-DEFINE_PROPERTY_FIELD(BondType, radius, "Radius");
-DEFINE_PROPERTY_FIELD(BondType, name, "Name");
-SET_PROPERTY_FIELD_LABEL(BondType, id, "Id");
-SET_PROPERTY_FIELD_LABEL(BondType, color, "Color");
+IMPLEMENT_OVITO_CLASS(BondType);	
+DEFINE_PROPERTY_FIELD(BondType, radius);
 SET_PROPERTY_FIELD_LABEL(BondType, radius, "Radius");
-SET_PROPERTY_FIELD_LABEL(BondType, name, "Name");
 SET_PROPERTY_FIELD_UNITS(BondType, radius, WorldParameterUnit);
-SET_PROPERTY_FIELD_CHANGE_EVENT(BondType, name, ReferenceEvent::TitleChanged);
 
 /******************************************************************************
 * Constructs a new BondType.
 ******************************************************************************/
-BondType::BondType(DataSet* dataset) : RefTarget(dataset), _color(1,1,1), _radius(0), _id(0)
+BondType::BondType(DataSet* dataset) : ElementType(dataset), _radius(0)
 {
-	INIT_PROPERTY_FIELD(id);
-	INIT_PROPERTY_FIELD(color);
-	INIT_PROPERTY_FIELD(radius);
-	INIT_PROPERTY_FIELD(name);
+}
+
+/******************************************************************************
+* Returns the default color for a bond type ID.
+******************************************************************************/
+Color BondType::getDefaultBondColorFromId(BondProperty::Type typeClass, int bondTypeId)
+{
+	// Assign initial standard color to new bond types.
+	static const Color defaultTypeColors[] = {
+		Color(1.0f,1.0f,0.0f),
+		Color(0.7f,0.0f,1.0f),
+		Color(0.2f,1.0f,1.0f),
+		Color(1.0f,0.4f,1.0f),
+		Color(0.4f,1.0f,0.4f),
+		Color(1.0f,0.4f,0.4f),
+		Color(0.4f,0.4f,1.0f),
+		Color(1.0f,1.0f,0.7f),
+		Color(0.97f,0.97f,0.97f)
+	};
+	return defaultTypeColors[std::abs(bondTypeId) % (sizeof(defaultTypeColors) / sizeof(defaultTypeColors[0]))];
+}
+
+/******************************************************************************
+* Returns the default color for a bond type name.
+******************************************************************************/
+Color BondType::getDefaultBondColor(BondProperty::Type typeClass, const QString& bondTypeName, int bondTypeId, bool userDefaults)
+{
+	if(userDefaults) {
+		QSettings settings;
+		settings.beginGroup("bonds/defaults/color");
+		settings.beginGroup(QString::number((int)typeClass));
+		QVariant v = settings.value(bondTypeName);
+		if(v.isValid() && v.canConvert<Color>())
+			return v.value<Color>();
+	}
+
+	return getDefaultBondColorFromId(typeClass, bondTypeId);
+}
+
+/******************************************************************************
+* Returns the default radius for a bond type name.
+******************************************************************************/
+FloatType BondType::getDefaultBondRadius(BondProperty::Type typeClass, const QString& bondTypeName, int bondTypeId, bool userDefaults)
+{
+	if(userDefaults) {
+		QSettings settings;
+		settings.beginGroup("bonds/defaults/radius");
+		settings.beginGroup(QString::number((int)typeClass));
+		QVariant v = settings.value(bondTypeName);
+		if(v.isValid() && v.canConvert<FloatType>())
+			return v.value<FloatType>();
+	}
+
+	return 0;
 }
 
 }	// End of namespace

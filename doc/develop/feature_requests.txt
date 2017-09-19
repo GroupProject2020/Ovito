@@ -90,7 +90,6 @@ Unresolved bugs:
 
 New analysis features:
 
-- Create Bonds modifier: Add 'lower bound' parameter such that, when using the modifier several times, bonds with different lengths can be assigned different colors (jerome.dequeker@ed.univ-lille1.fr).
 - Plotting the value of a certain property of a certain particle versus simulation time. To make this work, all simulation frames need to be kept in memory (requested by Taojun & Mathieu Marciante).
 - Calculation of type-specific (partial) RDF (requested by Jordan R Keith <jordan.keith@utexas.edu>, lindeye0716@163.com). Also demonstrate how to average RDF over time using a script.
 - Identification of binary phases and defects (see Christoph Begau's work)

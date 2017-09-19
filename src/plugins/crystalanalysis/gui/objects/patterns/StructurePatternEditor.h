@@ -52,7 +52,7 @@ private:
 	RefTargetListParameterUI* familiesListUI;
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 };
 
 }	// End of namespace

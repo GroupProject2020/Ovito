@@ -154,6 +154,5 @@
 #include <core/utilities/Exception.h>
 #include <core/utilities/linalg/LinAlg.h>
 #include <core/utilities/Color.h>
-#include <core/object/OvitoObject.h>
-
-
+#include <core/oo/OvitoObject.h>
+#include <core/dataset/DataSet.h>

@@ -4,7 +4,7 @@ import numpy as np
 
 node = import_file("../../files/CFG/shear.void.120.cfg")
 
-# Apply smoe strain to the atoms.
+# Apply some strain to the atoms.
 node.modifiers.append(AffineTransformationModifier(
     transformation = [[1,0.1,0,0],[0,1,0,0.8],[0,0,1,0]],
     transform_box = True
@@ -51,10 +51,10 @@ modifier.use_frame_offset = True
 node.compute()
 
 print("Output:")
-print("  invalid_particle_count={}".format(modifier.invalid_particle_count))
-print(node.output["Shear Strain"].array)
-print(node.output.deformation_gradient.array)
-print(node.output.strain_tensor.array)
-print(node.output.selection.array)
+print("  invalid_particle_count={}".format(node.output.attributes["AtomicStrain.invalid_particle_count"]))
+print(node.output.particle_properties["Shear Strain"].array)
+print(node.output.particle_properties.deformation_gradient.array)
+print(node.output.particle_properties.strain_tensor.array)
+print(node.output.particle_properties.selection.array)
 
-assert(abs(node.output["Shear Strain"].array[0] - 0.05008306) < 1e-4)
+assert(abs(node.output.particle_properties["Shear Strain"].array[0] - 0.05008306) < 1e-4)

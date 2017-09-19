@@ -22,9 +22,9 @@
 #include <gui/GUI.h>
 #include <core/dataset/UndoStack.h>
 #include <core/dataset/DataSetContainer.h>
-#include <core/scene/SelectionSet.h>
-#include <core/scene/SceneRoot.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/scene/SelectionSet.h>
+#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/animation/AnimationSettings.h>
 #include <gui/viewport/input/NavigationModes.h>
 #include <gui/viewport/input/ViewportInputMode.h>
 #include <gui/viewport/input/ViewportInputManager.h>

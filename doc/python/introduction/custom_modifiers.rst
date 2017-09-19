@@ -4,6 +4,10 @@
 Writing new modifiers
 ===================================
 
+.. warning::
+   This section of manual is out of date! It has not been updated yet to reflect the changes made in the current
+   development version of OVITO.
+
 OVITO provides a collection of built-in data manipulation and analysis modifiers, which can be found in the :py:mod:`ovito.modifiers` module.
 These modifier types are all implemented in C++, and the Python interface allows you to instantiate them, 
 insert them into the modification pipeline of an :py:class:`~ovito.ObjectNode`, and configure their parameters.

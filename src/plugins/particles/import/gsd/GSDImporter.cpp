@@ -20,12 +20,13 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
+#include <plugins/particles/import/ParticleFrameData.h>
 #include "GSDImporter.h"
 #include "GSDFile.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(GSDImporter, ParticleImporter);
+IMPLEMENT_OVITO_CLASS(GSDImporter);	
 
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
@@ -46,11 +47,11 @@ bool GSDImporter::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation
 /******************************************************************************
 * Scans the input file for simulation timesteps.
 ******************************************************************************/
-void GSDImporter::scanFileForTimesteps(PromiseBase& promise, QVector<FileSourceImporter::Frame>& frames, const QUrl& sourceUrl, CompressedTextReader& stream)
+void GSDImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
 {
+	setProgressText(tr("Scanning file %1").arg(sourceUrl.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+
 	// First close text stream, we don't need it here.
-	QFileDevice& file = stream.device();
-	file.close();
 	QString filename = QDir::toNativeSeparators(file.fileName());
 
 	// Open GSD file for reading.
@@ -71,15 +72,11 @@ void GSDImporter::scanFileForTimesteps(PromiseBase& promise, QVector<FileSourceI
 }
 
 /******************************************************************************
-* Parses the given input file and stores the data in the given container object.
+* Parses the given input file.
 ******************************************************************************/
-void GSDImporter::GSDImportTask::parseFile(CompressedTextReader& stream)
+void GSDImporter::FrameLoader::loadFile(QFile& file)
 {
 	setProgressText(tr("Reading GSD file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
-
-	// First close text stream, we don't need it here.
-	QFileDevice& file = stream.device();
-	file.close();
 
 	// Open GSD file for reading.
 	QString filename = QDir::toNativeSeparators(file.fileName());
@@ -89,6 +86,9 @@ void GSDImporter::GSDImportTask::parseFile(CompressedTextReader& stream)
 	if(qstrcmp(gsd.schemaName(), "hoomd") != 0)
 		throw Exception(tr("Failed to open GSD file for reading. File schema must be 'hoomd', but found '%1'.").arg(gsd.schemaName()));
 
+	// Create the destination container for loaded data.
+	std::shared_ptr<ParticleFrameData> frameData = std::make_shared<ParticleFrameData>();
+
 	// Parse number of frames in file.
 	uint64_t nFrames = gsd.numerOfFrames();
 
@@ -97,7 +97,7 @@ void GSDImporter::GSDImportTask::parseFile(CompressedTextReader& stream)
 
 	// Parse simulation step.
 	uint64_t simulationStep = gsd.readOptionalScalar<uint64_t>("configuration/step", frameNumber, 0);
-	attributes().insert(QStringLiteral("Timestep"), QVariant::fromValue(simulationStep));
+	frameData->attributes().insert(QStringLiteral("Timestep"), QVariant::fromValue(simulationStep));
 
 	// Parse number of dimensions.
 	uint8_t ndimensions = gsd.readOptionalScalar<uint8_t>("configuration/dimensions", frameNumber, 3);
@@ -113,9 +113,9 @@ void GSDImporter::GSDImportTask::parseFile(CompressedTextReader& stream)
 	simCell(0,2) = boxValues[4] * boxValues[2];
 	simCell(1,2) = boxValues[5] * boxValues[2];
 	simCell.column(3) = simCell * Vector3(FloatType(-0.5));
-	simulationCell().setMatrix(simCell);
-	simulationCell().setPbcFlags(true, true, true);
-	simulationCell().set2D(ndimensions == 2);
+	frameData->simulationCell().setMatrix(simCell);
+	frameData->simulationCell().setPbcFlags(true, true, true);
+	frameData->simulationCell().set2D(ndimensions == 2);
 
 	// Parse number of particles.
 	uint32_t numParticles = gsd.readOptionalScalar<uint32_t>("particles/N", frameNumber, 0);
@@ -126,14 +126,14 @@ void GSDImporter::GSDImportTask::parseFile(CompressedTextReader& stream)
 		particleTypeNames.push_back(QStringLiteral("A"));
 
 	// Read particle positions.
-	ParticleProperty* posProperty = new ParticleProperty(numParticles, ParticleProperty::PositionProperty, 0, false);
-	addParticleProperty(posProperty);
+	PropertyPtr posProperty = ParticleProperty::createStandardStorage(numParticles, ParticleProperty::PositionProperty, false);
+	frameData->addParticleProperty(posProperty);
 	gsd.readFloatArray("particles/position", frameNumber, posProperty->dataPoint3(), numParticles, posProperty->componentCount());
 
 	// Create particle types.
-	ParticleProperty* typeProperty = new ParticleProperty(numParticles, ParticleProperty::ParticleTypeProperty, 0, false);
-	ParticleFrameLoader::ParticleTypeList* typeList = new ParticleFrameLoader::ParticleTypeList();
-	addParticleProperty(typeProperty, typeList);
+	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(numParticles, ParticleProperty::TypeProperty, false);
+	ParticleFrameData::ParticleTypeList* typeList = new ParticleFrameData::ParticleTypeList();
+	frameData->addParticleProperty(typeProperty, typeList);
 	for(int i = 0; i < particleTypeNames.size(); i++)
 		typeList->addParticleTypeId(i, particleTypeNames[i]);
 
@@ -143,15 +143,15 @@ void GSDImporter::GSDImportTask::parseFile(CompressedTextReader& stream)
 	else
 		std::fill(typeProperty->dataInt(), typeProperty->dataInt() + typeProperty->size(), 0);
 
-	ParticleProperty* massProperty = readOptionalParticleProperty(gsd, "particles/mass", frameNumber, numParticles, ParticleProperty::MassProperty);
-	readOptionalParticleProperty(gsd, "particles/charge", frameNumber, numParticles, ParticleProperty::ChargeProperty);
-	ParticleProperty* velocityProperty = readOptionalParticleProperty(gsd, "particles/velocity", frameNumber, numParticles, ParticleProperty::VelocityProperty);
-	ParticleProperty* radiusProperty = readOptionalParticleProperty(gsd, "particles/diameter", frameNumber, numParticles, ParticleProperty::RadiusProperty);
+	PropertyStorage* massProperty = readOptionalParticleProperty(gsd, "particles/mass", frameNumber, numParticles, ParticleProperty::MassProperty, frameData);
+	readOptionalParticleProperty(gsd, "particles/charge", frameNumber, numParticles, ParticleProperty::ChargeProperty, frameData);
+	PropertyStorage* velocityProperty = readOptionalParticleProperty(gsd, "particles/velocity", frameNumber, numParticles, ParticleProperty::VelocityProperty, frameData);
+	PropertyStorage* radiusProperty = readOptionalParticleProperty(gsd, "particles/diameter", frameNumber, numParticles, ParticleProperty::RadiusProperty, frameData);
 	if(radiusProperty) {
 		// Convert particle diameter to radius by dividing by 2.
 		std::for_each(radiusProperty->dataFloat(), radiusProperty->dataFloat() + radiusProperty->size(), [](FloatType& r) { r /= 2; });
 	}
-	ParticleProperty* orientationProperty = readOptionalParticleProperty(gsd, "particles/orientation", frameNumber, numParticles, ParticleProperty::OrientationProperty);
+	PropertyStorage* orientationProperty = readOptionalParticleProperty(gsd, "particles/orientation", frameNumber, numParticles, ParticleProperty::OrientationProperty, frameData);
 	if(orientationProperty) {
 		// Convert quaternion representation from GSD format to internal format.
 		// Left-shift all quaternion components by one: (W,X,Y,Z) -> (X,Y,Z,W).
@@ -166,8 +166,8 @@ void GSDImporter::GSDImportTask::parseFile(CompressedTextReader& stream)
 		gsd.readIntArray("bonds/group", frameNumber, bondList.data(), numBonds, 2);
 
 		// Convert to OVITO format.
-		setBonds(new BondsStorage());
-		bonds()->reserve(numBonds * 2);
+		frameData->setBonds(std::make_shared<BondsStorage>());
+		frameData->bonds()->reserve(numBonds);
 		for(auto b = bondList.cbegin(); b != bondList.cend(); ) {
 			unsigned int atomIndex1 = *b++;
 			unsigned int atomIndex2 = *b++;
@@ -175,16 +175,15 @@ void GSDImporter::GSDImportTask::parseFile(CompressedTextReader& stream)
 				throw Exception(tr("Nonexistent atom tag in bond list in GSD file."));
 
 			// Use minimum image convention to determine PBC shift vector of the bond.
-			Vector3 delta = simulationCell().absoluteToReduced(posProperty->getPoint3(atomIndex2) - posProperty->getPoint3(atomIndex1));
+			Vector3 delta = frameData->simulationCell().absoluteToReduced(posProperty->getPoint3(atomIndex2) - posProperty->getPoint3(atomIndex1));
 			Vector_3<int8_t> shift = Vector_3<int8_t>::Zero();
 			for(size_t dim = 0; dim < 3; dim++) {
-				if(simulationCell().pbcFlags()[dim])
+				if(frameData->simulationCell().pbcFlags()[dim])
 					shift[dim] -= (int8_t)floor(delta[dim] + FloatType(0.5));
 			}
 
-			// Create two half-bonds.
-			bonds()->push_back({  shift, atomIndex1, atomIndex2 });
-			bonds()->push_back({ -shift, atomIndex2, atomIndex1 });
+			// Create a bond.
+			frameData->bonds()->push_back({ atomIndex1, atomIndex2, shift });
 		}
 
 		// Read bond types.
@@ -196,20 +195,15 @@ void GSDImporter::GSDImportTask::parseFile(CompressedTextReader& stream)
 				bondTypeNames.push_back(QStringLiteral("A"));
 
 			// Create bond types.
-			BondProperty* bondTypeProperty = new BondProperty(numBonds * 2, BondProperty::BondTypeProperty, 0, false);
-			ParticleFrameLoader::BondTypeList* bondTypeList = new ParticleFrameLoader::BondTypeList();
-			addBondProperty(bondTypeProperty, bondTypeList);
+			PropertyPtr bondTypeProperty = BondProperty::createStandardStorage(numBonds, BondProperty::TypeProperty, false);
+			ParticleFrameData::BondTypeList* bondTypeList = new ParticleFrameData::BondTypeList();
+			frameData->addBondProperty(bondTypeProperty, bondTypeList);
 			for(int i = 0; i < bondTypeNames.size(); i++)
 				bondTypeList->addBondTypeId(i, bondTypeNames[i]);
 
 			// Read bond types.
 			if(gsd.hasChunk("bonds/typeid", frameNumber)) {
 				gsd.readIntArray("bonds/typeid", frameNumber, bondTypeProperty->dataInt(), numBonds);
-				// Duplicate data for half-bonds.
-				for(size_t i = numBonds; i-- != 0; ) {
-					bondTypeProperty->setInt(i*2+1, bondTypeProperty->getInt(i));
-					bondTypeProperty->setInt(i*2+0, bondTypeProperty->getInt(i));
-				}
 			}
 			else {
 				std::fill(bondTypeProperty->dataInt(), bondTypeProperty->dataInt() + bondTypeProperty->size(), 0);
@@ -220,19 +214,20 @@ void GSDImporter::GSDImportTask::parseFile(CompressedTextReader& stream)
 	QString statusString = tr("Number of particles: %1").arg(numParticles);
 	if(numBonds != 0)
 		statusString += tr("\nNumber of bonds: %1").arg(numBonds);
-	setStatus(statusString);
+	frameData->setStatus(statusString);
+	setResult(std::move(frameData));
 }
 
 /******************************************************************************
 * Reads the values of a particle property from the GSD file.
 ******************************************************************************/
-ParticleProperty* GSDImporter::GSDImportTask::readOptionalParticleProperty(GSDFile& gsd, const char* chunkName, uint64_t frameNumber, uint32_t numParticles, ParticleProperty::Type propertyType)
+PropertyStorage* GSDImporter::FrameLoader::readOptionalParticleProperty(GSDFile& gsd, const char* chunkName, uint64_t frameNumber, uint32_t numParticles, ParticleProperty::Type propertyType, const std::shared_ptr<ParticleFrameData>& frameData)
 {
 	if(gsd.hasChunk(chunkName, frameNumber)) {
-		ParticleProperty* prop = new ParticleProperty(numParticles, propertyType, 0, false);
-		addParticleProperty(prop);
+		PropertyPtr prop = ParticleProperty::createStandardStorage(numParticles, propertyType, false);
+		frameData->addParticleProperty(prop);
 		gsd.readFloatArray(chunkName, frameNumber, prop->dataFloat(), numParticles, prop->componentCount());
-		return prop;
+		return prop.get();
 	}
 	else return nullptr;
 }

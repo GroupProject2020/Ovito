@@ -23,13 +23,12 @@
 #include <gui/properties/ColorParameterUI.h>
 #include <core/dataset/UndoStack.h>
 #include <core/dataset/DataSetContainer.h>
-#include <core/animation/controller/Controller.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/animation/controller/Controller.h>
+#include <core/dataset/animation/AnimationSettings.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
 
-// Gives the class run-time type information.
-IMPLEMENT_OVITO_OBJECT(ColorParameterUI, PropertyParameterUI);
+IMPLEMENT_OVITO_CLASS(ColorParameterUI);
 
 /******************************************************************************
 * The constructor.
@@ -128,7 +127,7 @@ void ColorParameterUI::onColorPickerChanged()
 					ctrl->setCurrentColorValue(colorPicker()->color());
 			}
 			else if(isPropertyFieldUI()) {
-				editObject()->setPropertyFieldValue(*propertyField(), qVariantFromValue((QColor)colorPicker()->color()));
+				editObject()->setPropertyFieldValue(*propertyField(), QVariant::fromValue((QColor)colorPicker()->color()));
 			}
 			Q_EMIT valueEntered();
 		});

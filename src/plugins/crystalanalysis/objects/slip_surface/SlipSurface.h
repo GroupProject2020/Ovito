@@ -23,11 +23,11 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <core/scene/objects/DataObjectWithSharedStorage.h>
-#include <core/utilities/mesh/HalfEdgeMesh.h>
-#include <plugins/particles/data/SimulationCell.h>
-#include <core/utilities/concurrent/Promise.h>
 #include <plugins/crystalanalysis/data/ClusterVector.h>
+#include <core/dataset/data/simcell/PeriodicDomainDataObject.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <core/utilities/mesh/HalfEdgeMesh.h>
+#include <core/utilities/concurrent/PromiseState.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
@@ -55,12 +55,12 @@ public:
 /**
  * \brief A triangle mesh representing the slipped surfaces in a deformed crystal.
  */
-class OVITO_CRYSTALANALYSIS_EXPORT SlipSurface : public DataObjectWithSharedStorage<SlipSurfaceData>
+class OVITO_CRYSTALANALYSIS_EXPORT SlipSurface : public PeriodicDomainDataObject
 {
 public:
 
 	/// \brief Constructor.
-	Q_INVOKABLE SlipSurface(DataSet* dataset, SlipSurfaceData* data = nullptr);
+	Q_INVOKABLE SlipSurface(DataSet* dataset);
 
 	/// Returns the title of this object.
 	virtual QString objectTitle() override { return tr("Slip surface"); }
@@ -71,20 +71,16 @@ public:
 	/// Return false because this object cannot be edited.
 	virtual bool isSubObjectEditable() const override { return false; }
 
-	/// Returns the planar cuts applied to this mesh.
-	const QVector<Plane3>& cuttingPlanes() const { return _cuttingPlanes; }
-
-	/// Sets the planar cuts applied to this mesh.
-	void setCuttingPlanes(const QVector<Plane3>& planes) {
-		_cuttingPlanes = planes;
-		notifyDependents(ReferenceEvent::TargetChanged);
-	}
-
+	/// Returns the data encapsulated by this object after making sure it is not shared with other owners.
+	const std::shared_ptr<SlipSurfaceData>& modifiableStorage();
+	
 	/// Fairs the mesh stored in this object.
-	bool smoothMesh(const SimulationCell& cell, int numIterations, PromiseBase& promise, FloatType k_PB = FloatType(0.1), FloatType lambda = FloatType(0.5)) {
-		if(!smoothMesh(*modifiableStorage(), cell, numIterations, promise, k_PB, lambda))
+	bool smoothMesh(int numIterations, PromiseBase& promise, FloatType k_PB = FloatType(0.1), FloatType lambda = FloatType(0.5)) {
+		if(!domain() || !storage()) 
+			return true;
+		if(!smoothMesh(*modifiableStorage(), domain()->data(), numIterations, promise, k_PB, lambda))
 			return false;
-		changed();
+		notifyDependents(ReferenceEvent::TargetChanged);
 		return true;
 	}
 
@@ -96,16 +92,13 @@ protected:
 	/// Performs one iteration of the smoothing algorithm.
 	static void smoothMeshIteration(SlipSurfaceData& mesh, FloatType prefactor, const SimulationCell& cell);
 
-	/// Creates a copy of this object.
-	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) override;
-
 private:
 
-	/// The planar cuts applied to this mesh.
-	QVector<Plane3> _cuttingPlanes;
+	/// The internal data.
+	DECLARE_RUNTIME_PROPERTY_FIELD(std::shared_ptr<SlipSurfaceData>, storage, setStorage);
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 };
 
 }	// End of namespace

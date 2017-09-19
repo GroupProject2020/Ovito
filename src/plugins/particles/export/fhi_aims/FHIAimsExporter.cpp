@@ -20,15 +20,14 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticlePropertyObject.h>
-#include <plugins/particles/objects/ParticleTypeProperty.h>
-#include <plugins/particles/objects/SimulationCellObject.h>
-#include <core/utilities/concurrent/Task.h>
+#include <plugins/particles/objects/ParticleProperty.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <core/utilities/concurrent/Promise.h>
 #include "FHIAimsExporter.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(FHIAimsExporter, ParticleExporter);
+IMPLEMENT_OVITO_CLASS(FHIAimsExporter);
 
 /******************************************************************************
 * Writes the particles of one animation frame to the current output file.
@@ -40,11 +39,11 @@ bool FHIAimsExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePo
 	if(!getParticleData(sceneNode, time, state, taskManager))
 		return false;
 
-	SynchronousTask exportTask(taskManager);
+	Promise<> exportTask = Promise<>::createSynchronous(taskManager, true, true);
 
 	// Get particle positions and types.
-	ParticlePropertyObject* posProperty = ParticlePropertyObject::findInState(state, ParticleProperty::PositionProperty);
-	ParticleTypeProperty* particleTypeProperty = dynamic_object_cast<ParticleTypeProperty>(ParticlePropertyObject::findInState(state, ParticleProperty::ParticleTypeProperty));
+	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
+	ParticleProperty* particleTypeProperty = ParticleProperty::findInState(state, ParticleProperty::TypeProperty);
 
 	textStream() << "# FHI-aims file written by OVITO\n";
 
@@ -64,7 +63,7 @@ bool FHIAimsExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePo
 	exportTask.setProgressMaximum(100);
 	for(size_t i = 0; i < posProperty->size(); i++) {
 		const Point3& p = posProperty->getPoint3(i);
-		const ParticleType* type = particleTypeProperty->particleType(particleTypeProperty->getInt(i));
+		const ElementType* type = particleTypeProperty->elementType(particleTypeProperty->getInt(i));
 
 		textStream() << "atom " << (p.x() - origin.x()) << ' ' << (p.y() - origin.y()) << ' ' << (p.z() - origin.z());
 		if(type && !type->name().isEmpty()) {

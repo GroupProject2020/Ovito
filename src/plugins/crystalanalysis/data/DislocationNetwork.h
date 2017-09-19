@@ -23,7 +23,7 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/particles/data/SimulationCell.h>
+#include <core/dataset/data/simcell/SimulationCell.h>
 #include <plugins/crystalanalysis/modifier/dxa/InterfaceMesh.h>
 #include <plugins/crystalanalysis/modifier/dxa/BurgersCircuit.h>
 #include "ClusterVector.h"
@@ -254,18 +254,18 @@ inline const Point3& DislocationNode::position() const
 /**
  * This class holds the entire network of dislocation segments.
  */
-class DislocationNetwork : public QSharedData
+class DislocationNetwork
 {
 public:
 
 	/// Constructor that creates an empty dislocation network.
-	DislocationNetwork(ClusterGraph* clusterGraph) : _clusterGraph(clusterGraph) {}
+	DislocationNetwork(std::shared_ptr<ClusterGraph> clusterGraph) : _clusterGraph(std::move(clusterGraph)) {}
 
 	/// Copy constructor.
 	DislocationNetwork(const DislocationNetwork& other);
 
 	/// Returns a const-reference to the cluster graph.
-	const ClusterGraph& clusterGraph() const { return *_clusterGraph; }
+	const std::shared_ptr<ClusterGraph>& clusterGraph() const { return _clusterGraph; }
 
 	/// Returns the list of dislocation segments.
 	const std::vector<DislocationSegment*>& segments() const { return _segments; }
@@ -276,10 +276,19 @@ public:
 	/// Removes a segment from the global list of segments.
 	void discardSegment(DislocationSegment* segment);
 
+	/// Smoothens and coarsens the dislocation lines.
+	bool smoothDislocationLines(int lineSmoothingLevel, FloatType linePointInterval, PromiseState& promise);
+
 private:
 
+	/// Smoothes the sampling points of a dislocation line.
+	static void smoothDislocationLine(int smoothingLevel, std::deque<Point3>& line, bool isLoop);
+
+	/// Removes some of the sampling points from a dislocation line.
+	static void coarsenDislocationLine(FloatType linePointInterval, const std::deque<Point3>& input, const std::deque<int>& coreSize, std::deque<Point3>& output, std::deque<int>& outputCoreSize, bool isClosedLoop, bool isInfiniteLine);
+		
 	/// The associated cluster graph.
-	QExplicitlySharedDataPointer<ClusterGraph> _clusterGraph;
+	const std::shared_ptr<ClusterGraph> _clusterGraph;
 
 	// Used to allocate memory for DislocationNode instances.
 	MemoryPool<DislocationNode> _nodePool;

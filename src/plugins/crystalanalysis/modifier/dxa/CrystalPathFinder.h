@@ -19,8 +19,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef _OVITO_CA_CRYSTAL_PATH_FINDER_H
-#define _OVITO_CA_CRYSTAL_PATH_FINDER_H
+#pragma once
+
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <core/utilities/MemoryPool.h>
@@ -53,10 +53,7 @@ public:
 	const StructureAnalysis& structureAnalysis() const { return _structureAnalysis; }
 
 	/// Returns a reference to the cluster graph.
-	ClusterGraph& clusterGraph() { return _structureAnalysis.clusterGraph(); }
-
-	/// Returns a const-reference to the cluster graph.
-	const ClusterGraph& clusterGraph() const { return structureAnalysis().clusterGraph(); }
+	const std::shared_ptr<ClusterGraph>& clusterGraph() { return structureAnalysis().clusterGraph(); }
 
 	/// Finds an atom-to-atom path from atom 1 to atom 2 that lies entirely in the good crystal region.
 	/// If a path could be found, returns the corresponding ideal vector connecting the two
@@ -104,5 +101,3 @@ private:
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-
-#endif // _OVITO_CA_CRYSTAL_PATH_FINDER_H

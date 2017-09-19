@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2015) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,7 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/particles/objects/SimulationCellObject.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/particles/modifier/ParticleInputHelper.h>
+#include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
 #include <plugins/crystalanalysis/objects/patterns/StructurePattern.h>
 #include "ElasticStrainModifier.h"
@@ -28,7 +30,7 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(ElasticStrainModifier, StructureIdentificationModifier);
+
 DEFINE_FLAGS_PROPERTY_FIELD(ElasticStrainModifier, inputCrystalStructure, "CrystalStructure", PROPERTY_FIELD_MEMORIZE);
 DEFINE_FLAGS_PROPERTY_FIELD(ElasticStrainModifier, calculateDeformationGradients, "CalculateDeformationGradients", PROPERTY_FIELD_MEMORIZE);
 DEFINE_FLAGS_PROPERTY_FIELD(ElasticStrainModifier, calculateStrainTensors, "CalculateStrainTensors", PROPERTY_FIELD_MEMORIZE);
@@ -49,28 +51,32 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ElasticStrainModifier, axialRatio, FloatPar
 * Constructs the modifier object.
 ******************************************************************************/
 ElasticStrainModifier::ElasticStrainModifier(DataSet* dataset) : StructureIdentificationModifier(dataset),
-		_inputCrystalStructure(StructureAnalysis::LATTICE_FCC), _calculateDeformationGradients(false), _calculateStrainTensors(true),
-		_latticeConstant(1), _axialRatio(sqrt(8.0/3.0)), _pushStrainTensorsForward(true)
+	_inputCrystalStructure(StructureAnalysis::LATTICE_FCC), 
+	_calculateDeformationGradients(false), 
+	_calculateStrainTensors(true),
+	_latticeConstant(1), 
+	_axialRatio(sqrt(8.0/3.0)), 
+	_pushStrainTensorsForward(true)
 {
-	INIT_PROPERTY_FIELD(inputCrystalStructure);
-	INIT_PROPERTY_FIELD(patternCatalog);
-	INIT_PROPERTY_FIELD(calculateDeformationGradients);
-	INIT_PROPERTY_FIELD(calculateStrainTensors);
-	INIT_PROPERTY_FIELD(latticeConstant);
-	INIT_PROPERTY_FIELD(axialRatio);
-	INIT_PROPERTY_FIELD(pushStrainTensorsForward);
+
+
+
+
+
+
+
 
 	// Create pattern catalog.
-	_patternCatalog = new PatternCatalog(dataset);
+	setPatternCatalog(new PatternCatalog(dataset));
 
 	// Create the structure types.
-	ParticleTypeProperty::PredefinedStructureType predefTypes[] = {
-			ParticleTypeProperty::PredefinedStructureType::OTHER,
-			ParticleTypeProperty::PredefinedStructureType::FCC,
-			ParticleTypeProperty::PredefinedStructureType::HCP,
-			ParticleTypeProperty::PredefinedStructureType::BCC,
-			ParticleTypeProperty::PredefinedStructureType::CUBIC_DIAMOND,
-			ParticleTypeProperty::PredefinedStructureType::HEX_DIAMOND
+	ParticleType::PredefinedStructureType predefTypes[] = {
+			ParticleType::PredefinedStructureType::OTHER,
+			ParticleType::PredefinedStructureType::FCC,
+			ParticleType::PredefinedStructureType::HCP,
+			ParticleType::PredefinedStructureType::BCC,
+			ParticleType::PredefinedStructureType::CUBIC_DIAMOND,
+			ParticleType::PredefinedStructureType::HEX_DIAMOND
 	};
 	OVITO_STATIC_ASSERT(sizeof(predefTypes)/sizeof(predefTypes[0]) == StructureAnalysis::NUM_LATTICE_TYPES);
 	for(int id = 0; id < StructureAnalysis::NUM_LATTICE_TYPES; id++) {
@@ -81,45 +87,21 @@ ElasticStrainModifier::ElasticStrainModifier(DataSet* dataset) : StructureIdenti
 			stype->setStructureType(StructurePattern::Lattice);
 			_patternCatalog->addPattern(stype);
 		}
-		stype->setName(ParticleTypeProperty::getPredefinedStructureTypeName(predefTypes[id]));
-		stype->setColor(ParticleTypeProperty::getDefaultParticleColor(ParticleProperty::StructureTypeProperty, stype->name(), id));
+		stype->setName(ParticleType::getPredefinedStructureTypeName(predefTypes[id]));
+		stype->setColor(ParticleType::getDefaultParticleColor(ParticleProperty::StructureTypeProperty, stype->name(), id));
 		addStructureType(stype);
 	}
 }
 
 /******************************************************************************
-* Is called when the value of a property of this object has changed.
-******************************************************************************/
-void ElasticStrainModifier::propertyChanged(const PropertyFieldDescriptor& field)
-{
-	StructureIdentificationModifier::propertyChanged(field);
-
-	// Recompute results when the parameters have changed.
-	if(field == PROPERTY_FIELD(inputCrystalStructure) ||
-			field == PROPERTY_FIELD(calculateDeformationGradients) ||
-			field == PROPERTY_FIELD(calculateStrainTensors) ||
-			field == PROPERTY_FIELD(latticeConstant) ||
-			field == PROPERTY_FIELD(axialRatio) ||
-			field == PROPERTY_FIELD(pushStrainTensorsForward))
-		invalidateCachedResults();
-}
-
-/******************************************************************************
-* Resets the modifier's result cache.
-******************************************************************************/
-void ElasticStrainModifier::invalidateCachedResults()
-{
-	StructureIdentificationModifier::invalidateCachedResults();
-}
-
-/******************************************************************************
 * Creates and initializes a computation engine that will compute the modifier's results.
 ******************************************************************************/
-std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> ElasticStrainModifier::createEngine(TimePoint time, TimeInterval validityInterval)
+Future<AsynchronousModifier::ComputeEnginePtr> ElasticStrainModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get modifier inputs.
-	ParticlePropertyObject* posProperty = expectStandardProperty(ParticleProperty::PositionProperty);
-	SimulationCellObject* simCell = expectSimulationCell();
+	ParticleInputHelper pih(dataset(), input);
+	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
+	SimulationCellObject* simCell = pih.expectSimulationCell();
 	if(simCell->is2D())
 		throwException(tr("The elastic strain calculation modifier does not support 2d simulation cells."));
 
@@ -130,66 +112,42 @@ std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> ElasticStrainModifi
 	}
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<ElasticStrainEngine>(validityInterval, posProperty->storage(),
+	return std::make_shared<ElasticStrainEngine>(input.stateValidity(), posProperty->storage(),
 			simCell->data(), inputCrystalStructure(), std::move(preferredCrystalOrientations),
 			calculateDeformationGradients(), calculateStrainTensors(),
 			latticeConstant(), axialRatio(), pushStrainTensorsForward());
 }
 
 /******************************************************************************
-* Unpacks the results of the computation engine and stores them in the modifier.
+* Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-void ElasticStrainModifier::transferComputationResults(ComputeEngine* engine)
+PipelineFlowState ElasticStrainResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	StructureIdentificationModifier::transferComputationResults(engine);
+	ElasticStrainModifier* modifier = static_object_cast<ElasticStrainModifier>(modApp->modifier());
+	
+	PipelineFlowState output = StructureIdentificationResults::apply(time, modApp, input);
+	ParticleOutputHelper poh(modApp->dataset(), output);
 
-	ElasticStrainEngine* eng = static_cast<ElasticStrainEngine*>(engine);
-	_atomClusters = eng->atomClusters();
-	_clusterGraph = eng->clusterGraph();
-	_strainTensors = eng->strainTensors();
-	_deformationGradients = eng->deformationGradients();
-	_volumetricStrainValues = eng->volumetricStrains();
-}
-
-/******************************************************************************
-* Lets the modifier insert the cached computation results into the
-* modification pipeline.
-******************************************************************************/
-PipelineStatus ElasticStrainModifier::applyComputationResults(TimePoint time, TimeInterval& validityInterval)
-{
-	StructureIdentificationModifier::applyComputationResults(time, validityInterval);
-
-	if(!_volumetricStrainValues)
-		throwException(tr("No computation results available."));
-
-	if(outputParticleCount() != _volumetricStrainValues->size())
-		throwException(tr("The number of input particles has changed. The stored results have become invalid."));
-
-	if(_clusterGraph) {
-		// Output cluster graph.
-		OORef<ClusterGraphObject> clusterGraphObj(new ClusterGraphObject(dataset(), _clusterGraph.data()));
-		output().addObject(clusterGraphObj);
-	}
+	// Output cluster graph.
+	OORef<ClusterGraphObject> clusterGraphObj(new ClusterGraphObject(modApp->dataset()));
+	clusterGraphObj->setStorage(clusterGraph());
+	output.addObject(clusterGraphObj);
 
 	// Output pattern catalog.
-	if(_patternCatalog) {
-		output().addObject(_patternCatalog);
-	}
+	output.addObject(modifier->patternCatalog());
 
 	// Output particle properties.
-	if(_atomClusters && _atomClusters->size() == outputParticleCount())
-		outputStandardProperty(_atomClusters.data());
+	poh.outputProperty<ParticleProperty>(atomClusters());
+	if(modifier->calculateStrainTensors() && strainTensors())
+		poh.outputProperty<ParticleProperty>(strainTensors());
 
-	if(calculateStrainTensors() && _strainTensors && _strainTensors->size() == outputParticleCount())
-		outputStandardProperty(_strainTensors.data());
+	if(modifier->calculateDeformationGradients() && deformationGradients())
+	poh.outputProperty<ParticleProperty>(deformationGradients());
 
-	if(calculateDeformationGradients() && _deformationGradients && _deformationGradients->size() == outputParticleCount())
-		outputStandardProperty(_deformationGradients.data());
+	if(volumetricStrains())
+		poh.outputProperty<ParticleProperty>(volumetricStrains());
 
-	if(_volumetricStrainValues && _volumetricStrainValues->size() == outputParticleCount())
-		outputCustomProperty(_volumetricStrainValues.data());
-
-	return PipelineStatus::Success;
+	return output;
 }
 
 }	// End of namespace

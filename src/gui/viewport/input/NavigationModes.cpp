@@ -26,9 +26,9 @@
 #include <core/viewport/Viewport.h>
 #include <core/viewport/ViewportSettings.h>
 #include <core/viewport/ViewportConfiguration.h>
-#include <core/animation/AnimationSettings.h>
-#include <core/scene/objects/camera/AbstractCameraObject.h>
-#include <core/scene/SceneRoot.h>
+#include <core/dataset/animation/AnimationSettings.h>
+#include <core/dataset/data/camera/AbstractCameraObject.h>
+#include <core/dataset/scene/SceneRoot.h>
 #include <core/dataset/UndoStack.h>
 #include "ViewportInputManager.h"
 #include "NavigationModes.h"
@@ -143,26 +143,22 @@ void NavigationMode::renderOverlay3D(Viewport* vp, ViewportSceneRenderer* render
 	FloatType symbolSize = vp->nonScalingSize(center);
 	renderer->setWorldTransform(AffineTransformation::translation(center - Point3::Origin()) * AffineTransformation::scaling(symbolSize));
 
-	// Create line buffer.
-	if(!_orbitCenterMarker || !_orbitCenterMarker->isValid(renderer)) {
-		_orbitCenterMarker = renderer->createArrowPrimitive(ArrowPrimitive::CylinderShape, ArrowPrimitive::NormalShading, ArrowPrimitive::HighQuality);
-		_orbitCenterMarker->startSetElements(3);
-        _orbitCenterMarker->setElement(0, Point3(-1,0,0), Vector3(2,0,0), ColorA(1,0,0), 0.05f);
-        _orbitCenterMarker->setElement(1, Point3(0,-1,0), Vector3(0,2,0), ColorA(0,1,0), 0.05f);
-        _orbitCenterMarker->setElement(2, Point3(0,0,-1), Vector3(0,0,2), ColorA(0.4f,0.4f,1), 0.05f);
-		_orbitCenterMarker->endSetElements();
+	if(!renderer->isBoundingBoxPass()) {
+		// Create line buffer.
+		if(!_orbitCenterMarker || !_orbitCenterMarker->isValid(renderer)) {
+			_orbitCenterMarker = renderer->createArrowPrimitive(ArrowPrimitive::CylinderShape, ArrowPrimitive::NormalShading, ArrowPrimitive::HighQuality);
+			_orbitCenterMarker->startSetElements(3);
+			_orbitCenterMarker->setElement(0, Point3(-1,0,0), Vector3(2,0,0), ColorA(1,0,0), FloatType(0.05));
+			_orbitCenterMarker->setElement(1, Point3(0,-1,0), Vector3(0,2,0), ColorA(0,1,0), FloatType(0.05));
+			_orbitCenterMarker->setElement(2, Point3(0,0,-1), Vector3(0,0,2), ColorA(0.4f,0.4f,1), FloatType(0.05));
+			_orbitCenterMarker->endSetElements();
+		}
+		_orbitCenterMarker->render(renderer);
 	}
-	_orbitCenterMarker->render(renderer);
-}
-
-/******************************************************************************
-* Computes the bounding box of the visual viewport overlay rendered by the input mode.
-******************************************************************************/
-Box3 NavigationMode::overlayBoundingBox(Viewport* vp, ViewportSceneRenderer* renderer)
-{
-	Point3 center = vp->dataset()->viewportConfig()->orbitCenter();
-	FloatType symbolSize = vp->nonScalingSize(center);
-	return Box3(center, symbolSize);
+	else {
+		// Add marker to bounding box.
+		renderer->addToLocalBoundingBox(Box3(Point3::Origin(), symbolSize));
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -211,7 +207,7 @@ void PanMode::modifyView(ViewportWindow* vpwin, Viewport* vp, QPointF delta)
 void ZoomMode::modifyView(ViewportWindow* vpwin, Viewport* vp, QPointF delta)
 {
 	if(vp->isPerspectiveProjection()) {
-		FloatType amount =  -5.0f * sceneSizeFactor(vp) * delta.y();
+		FloatType amount =  FloatType(-5) * sceneSizeFactor(vp) * delta.y();
 		if(vp->viewNode() == nullptr || vp->viewType() != Viewport::VIEW_SCENENODE) {
 			vp->setCameraPosition(_oldCameraPosition + _oldCameraDirection.resized(amount));
 		}
@@ -234,7 +230,7 @@ void ZoomMode::modifyView(ViewportWindow* vpwin, Viewport* vp, QPointF delta)
 			}
 		}
 
-		FloatType newFOV = oldFOV * (FloatType)exp(0.003f * delta.y());
+		FloatType newFOV = oldFOV * (FloatType)exp(0.003 * delta.y());
 
 		if(vp->viewNode() == nullptr || vp->viewType() != Viewport::VIEW_SCENENODE) {
 			vp->setFieldOfView(newFOV);
@@ -246,8 +242,8 @@ void ZoomMode::modifyView(ViewportWindow* vpwin, Viewport* vp, QPointF delta)
 }
 
 /******************************************************************************
-* Computes a scaling factor that depends on the total size of the scene which is used to
-* control the zoom sensitivity in perspective mode.
+* Computes a scaling factor that depends on the total size of the scene 
+* which is used to control the zoom sensitivity in perspective mode.
 ******************************************************************************/
 FloatType ZoomMode::sceneSizeFactor(Viewport* vp)
 {
@@ -256,7 +252,7 @@ FloatType ZoomMode::sceneSizeFactor(Viewport* vp)
 	if(!sceneBoundingBox.isEmpty())
 		return sceneBoundingBox.size().length() * FloatType(5e-4);
 	else
-		return 0.1f;
+		return FloatType(0.1);
 }
 
 /******************************************************************************
@@ -463,14 +459,6 @@ bool PickOrbitCenterMode::findIntersection(ViewportWindow* vpwin, const QPointF&
 void PickOrbitCenterMode::renderOverlay3D(Viewport* vp, ViewportSceneRenderer* renderer)
 {
 	inputManager()->orbitMode()->renderOverlay3D(vp, renderer);
-}
-
-/******************************************************************************
-* Computes the bounding box of the visual viewport overlay rendered by the input mode.
-******************************************************************************/
-Box3 PickOrbitCenterMode::overlayBoundingBox(Viewport* vp, ViewportSceneRenderer* renderer)
-{
-	return inputManager()->orbitMode()->overlayBoundingBox(vp, renderer);
 }
 
 OVITO_END_INLINE_NAMESPACE

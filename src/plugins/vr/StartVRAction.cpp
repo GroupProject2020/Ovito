@@ -28,7 +28,7 @@
 
 namespace VRPlugin {
 
-IMPLEMENT_OVITO_OBJECT(StartVRAction, GuiAutoStartObject);
+
 
 /******************************************************************************
 * Is called when a new main window is created.

@@ -24,7 +24,7 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(StructurePattern, ParticleType);
+
 DEFINE_PROPERTY_FIELD(StructurePattern, shortName, "ShortName");
 DEFINE_PROPERTY_FIELD(StructurePattern, structureType, "StructureType");
 DEFINE_PROPERTY_FIELD(StructurePattern, symmetryType, "SymmetryType");
@@ -40,10 +40,10 @@ SET_PROPERTY_FIELD_LABEL(StructurePattern, burgersVectorFamilies, "Burgers vecto
 StructurePattern::StructurePattern(DataSet* dataset) : ParticleType(dataset),
 		_structureType(OtherStructure), _symmetryType(OtherSymmetry)
 {
-	INIT_PROPERTY_FIELD(shortName);
-	INIT_PROPERTY_FIELD(structureType);
-	INIT_PROPERTY_FIELD(symmetryType);
-	INIT_PROPERTY_FIELD(burgersVectorFamilies);
+
+
+
+
 
 	// Create "unknown" Burgers vector family.
 	BurgersVectorFamily* family = new BurgersVectorFamily(dataset);

@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <core/scene/objects/DataObject.h>
+#include <core/dataset/data/DataObject.h>
 
 namespace Ovito { namespace Particles {
 
@@ -32,13 +32,14 @@ namespace Ovito { namespace Particles {
  */
 class OVITO_PARTICLES_EXPORT TrajectoryObject : public DataObject
 {
+	Q_OBJECT
+	OVITO_CLASS(TrajectoryObject)
+	Q_CLASSINFO("DisplayName", "Particle trajectories");
+
 public:
 
 	/// \brief Constructor.
 	Q_INVOKABLE TrajectoryObject(DataSet* dataset);
-
-	/// \brief Returns the title of this object.
-	virtual QString objectTitle() override { return tr("Particle trajectories"); }
 
 	/// Returns the trajectory points.
 	const QVector<Point3>& points() const { return _points; }
@@ -55,7 +56,7 @@ public:
 protected:
 
 	/// Saves the class' contents to the given stream.
-	virtual void saveToStream(ObjectSaveStream& stream) override;
+	virtual void saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData) override;
 
 	/// Loads the class' contents from the given stream.
 	virtual void loadFromStream(ObjectLoadStream& stream) override;
@@ -73,9 +74,6 @@ private:
 
 	/// The points in time where the trajectories have been sampled.
 	QVector<TimePoint> _sampleTimes;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 }	// End of namespace

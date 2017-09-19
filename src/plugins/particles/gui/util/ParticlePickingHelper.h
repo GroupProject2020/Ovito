@@ -23,8 +23,8 @@
 
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <core/scene/pipeline/PipelineFlowState.h>
-#include <core/scene/ObjectNode.h>
+#include <core/dataset/pipeline/PipelineFlowState.h>
+#include <core/dataset/scene/ObjectNode.h>
 #include <core/viewport/Viewport.h>
 #include <core/rendering/LinePrimitive.h>
 #include <core/rendering/ParticlePrimitive.h>
@@ -80,17 +80,6 @@ protected:
 	/// \param renderer The renderer for the viewport.
 	/// \param pickRecord Specifies the particle for which the selection marker should be rendered.
 	void renderSelectionMarker(Viewport* vp, ViewportSceneRenderer* renderer, const PickResult& pickRecord);
-
-	/// \brief Computes the world space bounding box of the particle selection marker.
-	/// \param vp The viewport into which the selection will be rendered.
-	/// \param pickRecord Specifies the particle for which the selection marker will be rendered.
-	Box3 selectionMarkerBoundingBox(Viewport* vp, const PickResult& pickRecord);
-
-	/// \brief Render a marker around a particle to highlight it in the viewports.
-	void highlightParticle(int particleIndex, const PipelineFlowState& flowState, SceneRenderer* renderer);
-
-	/// \brief Compute the (local) bounding box of the marker around a particle used to highlight it in the viewports.
-	Box3 highlightParticleBoundingBox(int particleIndex, const PipelineFlowState& flowState, const AffineTransformation& tm, Viewport* viewport);
 };
 
 OVITO_END_INLINE_NAMESPACE

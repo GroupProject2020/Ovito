@@ -23,6 +23,7 @@
 
 
 #include <core/Core.h>
+#include <core/app/ApplicationService.h>
 #include "Application.h"
 
 namespace Ovito {
@@ -64,6 +65,9 @@ public:
 	/// \brief Returns the command line options passed to the program.
 	const QCommandLineParser& cmdLineParser() const { return _cmdLineParser; }
 
+	/// Returns the list of application services created at application startup.
+	const std::vector<OORef<ApplicationService>>& applicationServices() const { return _applicationServices; }	
+		
 protected:
 
 	/// Defines the program's command line parameters.
@@ -79,6 +83,9 @@ protected:
 
 	/// The parser for the command line options passed to the program.
 	QCommandLineParser _cmdLineParser;
+
+	/// The service objects created at application startup.
+	std::vector<OORef<ApplicationService>> _applicationServices;
 };
 
 }	// End of namespace

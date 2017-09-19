@@ -40,6 +40,10 @@ namespace Ovito { namespace Tachyon {
  */
 class OVITO_TACHYON_EXPORT TachyonRenderer : public NonInteractiveSceneRenderer
 {
+	Q_OBJECT
+	OVITO_CLASS(TachyonRenderer)
+	Q_CLASSINFO("DisplayName", "Tachyon renderer");
+	
 public:
 
 	/// Constructor.
@@ -51,7 +55,7 @@ public:
 
 	/// Renders a single animation frame into the given frame buffer.
 	/// Throws an exception on error. Returns false when the operation has been aborted by the user.
-	virtual bool renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, TaskManager& taskManager) override;
+	virtual bool renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, const PromiseBase& promise) override;
 
 	///	Finishes the rendering pass. This is called after all animation frames have been rendered
 	/// or when the rendering operation has been aborted.
@@ -83,51 +87,46 @@ private:
 private:
 
 	/// Controls anti-aliasing.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, antialiasingEnabled, setAntialiasingEnabled);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, antialiasingEnabled, setAntialiasingEnabled, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls quality of anti-aliasing.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, antialiasingSamples, setAntialiasingSamples);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, antialiasingSamples, setAntialiasingSamples, PROPERTY_FIELD_MEMORIZE);
 
 	/// Enables direct light source.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, directLightSourceEnabled, setDirectLightSourceEnabled);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, directLightSourceEnabled, setDirectLightSourceEnabled, PROPERTY_FIELD_MEMORIZE);
 
 	/// Enables shadows for the direct light source.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, shadowsEnabled, setShadowsEnabled);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, shadowsEnabled, setShadowsEnabled, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the brightness of the default direct light source.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, defaultLightSourceIntensity, setDefaultLightSourceIntensity);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, defaultLightSourceIntensity, setDefaultLightSourceIntensity, PROPERTY_FIELD_MEMORIZE);
 
 	/// Enables ambient occlusion lighting.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, ambientOcclusionEnabled, setAmbientOcclusionEnabled);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, ambientOcclusionEnabled, setAmbientOcclusionEnabled, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls quality of ambient occlusion.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, ambientOcclusionSamples, setAmbientOcclusionSamples);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, ambientOcclusionSamples, setAmbientOcclusionSamples, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the brightness of the sky light source used for ambient occlusion.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, ambientOcclusionBrightness, setAmbientOcclusionBrightness);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, ambientOcclusionBrightness, setAmbientOcclusionBrightness, PROPERTY_FIELD_MEMORIZE);
 
 	/// Enables depth-of-field rendering.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, depthOfFieldEnabled, setDepthOfFieldEnabled);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, depthOfFieldEnabled, setDepthOfFieldEnabled, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the camera's focal length, which is used for depth-of-field rendering.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, dofFocalLength, setDofFocalLength);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, dofFocalLength, setDofFocalLength, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the camera's aperture, which is used for depth-of-field rendering.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, dofAperture, setDofAperture);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, dofAperture, setDofAperture, PROPERTY_FIELD_MEMORIZE);
 
 	/// The Tachyon internal scene handle.
-	SceneHandle _rtscene;
+	SceneHandle _rtscene = nullptr;
 
 	/// List of image primitives that need to be painted over the final image.
 	std::vector<std::tuple<QImage,Point2,Vector2>> _imageDrawCalls;
 
 	/// List of text primitives that need to be painted over the final image.
 	std::vector<std::tuple<QString,ColorA,QFont,Point2,int>> _textDrawCalls;
-
-	Q_OBJECT
-	OVITO_OBJECT
-
-	Q_CLASSINFO("DisplayName", "Tachyon renderer");
 };
 
 }	// End of namespace

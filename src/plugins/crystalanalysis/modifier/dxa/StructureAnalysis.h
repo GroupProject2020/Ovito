@@ -25,7 +25,6 @@
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/particles/modifier/analysis/cna/CommonNeighborAnalysisModifier.h>
 #include <plugins/crystalanalysis/data/ClusterGraph.h>
-#include <core/utilities/concurrent/Promise.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
@@ -94,53 +93,50 @@ public:
 
 	/// Constructor.
 	StructureAnalysis(
-			ParticleProperty* positions,
+			ConstPropertyPtr positions,
 			const SimulationCell& simCell,
 			LatticeStructureType inputCrystalType,
-			ParticleProperty* particleSelection,
-			ParticleProperty* outputStructures,
-			std::vector<Matrix3>&& preferredCrystalOrientations = std::vector<Matrix3>(),
+			ConstPropertyPtr particleSelection,
+			PropertyPtr outputStructures,
+			std::vector<Matrix3> preferredCrystalOrientations = std::vector<Matrix3>(),
 			bool identifyPlanarDefects = true);
 
 	/// Identifies the atomic structures.
-	bool identifyStructures(PromiseBase& promise);
+	bool identifyStructures(PromiseState& promise);
 
 	/// Combines adjacent atoms to clusters.
-	bool buildClusters(PromiseBase& promise);
+	bool buildClusters(PromiseState& promise);
 
 	/// Determines the transition matrices between clusters.
-	bool connectClusters(PromiseBase& promise);
+	bool connectClusters(PromiseState& promise);
 
 	/// Combines clusters to super clusters.
-	bool formSuperClusters(PromiseBase& promise);
+	bool formSuperClusters(PromiseState& promise);
 
 	/// Returns the number of input atoms.
 	int atomCount() const { return positions()->size(); }
 
 	/// Returns the input particle positions.
-	ParticleProperty* positions() const { return _positions.data(); }
+	const ConstPropertyPtr& positions() const { return _positions; }
 
 	/// Returns the input simulation cell.
 	const SimulationCell& cell() const { return _simCell; }
 
 	/// Returns the array of atom structure types.
-	ParticleProperty* structureTypes() const { return _structureTypes.data(); }
+	const PropertyPtr& structureTypes() const { return _structureTypes; }
 
 	/// Returns the array of atom cluster IDs.
-	ParticleProperty* atomClusters() const { return _atomClusters.data(); }
+	const PropertyPtr& atomClusters() const { return _atomClusters; }
 
 	/// Returns the maximum distance of any neighbor from a crystalline atom.
 	FloatType maximumNeighborDistance() const { return _maximumNeighborDistance; }
 
 	/// Returns the cluster graph.
-	const ClusterGraph& clusterGraph() const { return *_clusterGraph; }
-
-	/// Returns the cluster graph.
-	ClusterGraph& clusterGraph() { return *_clusterGraph; }
+	const std::shared_ptr<ClusterGraph>& clusterGraph() const { return _clusterGraph; }
 
 	/// Returns the cluster an atom belongs to.
 	Cluster* atomCluster(int atomIndex) const {
-		return clusterGraph().findCluster(_atomClusters->getInt(atomIndex));
+		return clusterGraph()->findCluster(_atomClusters->getInt(atomIndex));
 	}
 
 	/// Returns the number of neighbors of the given atom.
@@ -211,17 +207,17 @@ private:
 
 private:
 
-	LatticeStructureType _inputCrystalType;
+	const LatticeStructureType _inputCrystalType;
 	bool _identifyPlanarDefects;
-	QExplicitlySharedDataPointer<ParticleProperty> _positions;
-	QExplicitlySharedDataPointer<ParticleProperty> _structureTypes;
-	QExplicitlySharedDataPointer<ParticleProperty> _neighborLists;
-	QExplicitlySharedDataPointer<ParticleProperty> _atomClusters;
-	QExplicitlySharedDataPointer<ParticleProperty> _atomSymmetryPermutations;
-	QExplicitlySharedDataPointer<ParticleProperty> _particleSelection;
-	QExplicitlySharedDataPointer<ClusterGraph> _clusterGraph;
+	const ConstPropertyPtr _positions;
+	const PropertyPtr _structureTypes;
+	PropertyPtr _neighborLists;
+	const PropertyPtr _atomClusters;
+	PropertyPtr _atomSymmetryPermutations;
+	const ConstPropertyPtr _particleSelection;
+	const std::shared_ptr<ClusterGraph> _clusterGraph;
 	std::atomic<FloatType> _maximumNeighborDistance;
-	SimulationCell _simCell;
+	const SimulationCell _simCell;
 	std::vector<Matrix3> _preferredCrystalOrientations;
 
 	static CoordinationStructure _coordinationStructures[NUM_COORD_TYPES];

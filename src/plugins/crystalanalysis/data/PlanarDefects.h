@@ -30,7 +30,7 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 /**
  * This class stores the extracted planar defects (stacking faults & grain boundaries).
  */
-class PlanarDefects : public QSharedData
+class PlanarDefects
 {
 public:
 

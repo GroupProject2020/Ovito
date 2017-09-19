@@ -20,6 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
+#include <core/utilities/concurrent/PromiseState.h>
 #include "NearestNeighborFinder.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util)
@@ -29,10 +30,10 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util)
 /******************************************************************************
 * Prepares the neighbor list builder.
 ******************************************************************************/
-bool NearestNeighborFinder::prepare(ParticleProperty* posProperty, const SimulationCell& cellData, ParticleProperty* selectionProperty, PromiseBase& promise)
+bool NearestNeighborFinder::prepare(const PropertyStorage& posProperty, const SimulationCell& cellData, const PropertyStorage* selectionProperty, PromiseState* promise)
 {
-	promise.setProgressMaximum(0);
-	OVITO_CHECK_POINTER(posProperty);
+	OVITO_ASSERT(&posProperty);
+	if(promise) promise->setProgressMaximum(0);
 
 	simCell = cellData;
 
@@ -71,7 +72,7 @@ bool NearestNeighborFinder::prepare(ParticleProperty* posProperty, const Simulat
 	// Compute bounding box of all particles (only for non-periodic directions).
 	Box3 boundingBox(Point3(0,0,0), Point3(1,1,1));
 	if(simCell.pbcFlags()[0] == false || simCell.pbcFlags()[1] == false || simCell.pbcFlags()[2] == false) {
-		for(const Point3& p : posProperty->constPoint3Range()) {
+		for(const Point3& p : posProperty.constPoint3Range()) {
 			Point3 reducedp = simCell.absoluteToReduced(p);
 			if(simCell.pbcFlags()[0] == false) {
 				if(reducedp.x() < boundingBox.minc.x()) boundingBox.minc.x() = reducedp.x();
@@ -107,11 +108,11 @@ bool NearestNeighborFinder::prepare(ParticleProperty* posProperty, const Simulat
 	splitLeafNode(root->children[1]->children[1], 2);
 
 	// Insert particles into tree structure. Refine tree as needed.
-	const Point3* p = posProperty->constDataPoint3();
+	const Point3* p = posProperty.constDataPoint3();
 	const int* sel = selectionProperty ? selectionProperty->constDataInt() : nullptr;
-	atoms.resize(posProperty->size());
+	atoms.resize(posProperty.size());
 	for(NeighborListAtom& a : atoms) {
-		if(promise.isCanceled())
+		if(promise && promise->isCanceled())
 			return false;
 		a.pos = *p;
 		// Wrap atomic positions back into simulation box.
@@ -132,7 +133,7 @@ bool NearestNeighborFinder::prepare(ParticleProperty* posProperty, const Simulat
 
 	root->convertToAbsoluteCoordinates(simCell);
 
-	return !promise.isCanceled();
+	return true;
 }
 
 /******************************************************************************

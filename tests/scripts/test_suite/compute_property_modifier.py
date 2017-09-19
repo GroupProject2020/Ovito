@@ -25,7 +25,7 @@ modifier.output_property = "Color"
 modifier.expressions = ["Position.X / CellSize.X", "0", "0"]
 node.modifiers.append(modifier)
 
-print(node.compute()["testprop"].array)
+print(node.compute().particle_properties["testprop"].array)
 print(node.compute().particle_properties.position.array)
 print(node.compute().particle_properties.color.array)
 

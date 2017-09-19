@@ -23,7 +23,7 @@
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/dataset/UndoStack.h>
 #include <core/dataset/DataSetContainer.h>
-#include <core/plugins/PluginManager.h>
+#include <core/app/PluginManager.h>
 #include <gui/mainwin/MainWindow.h>
 #include "OverlayCommandPage.h"
 
@@ -48,7 +48,7 @@ OverlayCommandPage::OverlayCommandPage(MainWindow* mainWindow, QWidget* parent) 
 
     _newOverlayBox->addItem(tr("Add overlay..."));
     _newOverlayBox->insertSeparator(1);
-	Q_FOREACH(const OvitoObjectType* clazz, PluginManager::instance().listClasses(ViewportOverlay::OOType)) {
+	for(OvitoClassPtr clazz : PluginManager::instance().listClasses(ViewportOverlay::OOClass())) {
 		_newOverlayBox->addItem(clazz->displayName(), QVariant::fromValue(clazz));
 	}
 
@@ -214,7 +214,7 @@ void OverlayCommandPage::onItemSelectionChanged()
 void OverlayCommandPage::onNewOverlay(int index)
 {
 	if(index > 0) {
-		const OvitoObjectType* descriptor = _newOverlayBox->itemData(index).value<const OvitoObjectType*>();
+		OvitoClassPtr descriptor = _newOverlayBox->itemData(index).value<OvitoClassPtr>();
 		Viewport* vp = activeViewport();
 		if(descriptor && vp) {
 			int index = _overlayListWidget->currentRow();

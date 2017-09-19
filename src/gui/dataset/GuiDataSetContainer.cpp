@@ -20,24 +20,24 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <gui/GUI.h>
-#include <core/dataset/importexport/FileImporter.h>
+#include <core/dataset/io/FileImporter.h>
 #include <core/dataset/UndoStack.h>
 #include <core/app/Application.h>
-#include <core/animation/AnimationSettings.h>
-#include <core/scene/SceneRoot.h>
-#include <core/scene/SelectionSet.h>
+#include <core/dataset/animation/AnimationSettings.h>
+#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/scene/SelectionSet.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/rendering/RenderSettings.h>
 #include <core/utilities/io/ObjectSaveStream.h>
 #include <core/utilities/io/ObjectLoadStream.h>
 #include <core/utilities/io/FileManager.h>
 #include <gui/mainwin/MainWindow.h>
-#include <gui/dataset/importexport/FileImporterEditor.h>
+#include <gui/dataset/io/FileImporterEditor.h>
 #include "GuiDataSetContainer.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
 
-IMPLEMENT_OVITO_OBJECT(GuiDataSetContainer, DataSetContainer);
+IMPLEMENT_OVITO_CLASS(GuiDataSetContainer);
 
 /******************************************************************************
 * Initializes the dataset manager.
@@ -45,8 +45,55 @@ IMPLEMENT_OVITO_OBJECT(GuiDataSetContainer, DataSetContainer);
 GuiDataSetContainer::GuiDataSetContainer(MainWindow* mainWindow) : DataSetContainer(),
 	_mainWindow(mainWindow)
 {
-	connect(&taskManager(), &TaskManager::localEventLoopEntered, this, &GuiDataSetContainer::localEventLoopEntered);
-	connect(&taskManager(), &TaskManager::localEventLoopExited, this, &GuiDataSetContainer::localEventLoopExited);
+	// Prepare scene for display whenever a new dataset becomes active.
+	if(Application::instance()->guiMode()) {
+		connect(this, &DataSetContainer::dataSetChanged, this, [this](DataSet* dataset) {
+			if(dataset) {
+				dataset->whenSceneReady().finally(executor(), [this]() {
+					sceneBecameReady();
+				});
+			}
+		});
+	}
+}
+
+/******************************************************************************
+* Is called when a RefTarget referenced by this object has generated an event.
+******************************************************************************/
+bool GuiDataSetContainer::referenceEvent(RefTarget* source, ReferenceEvent* event)
+{
+	if(source == currentSet()) {
+		if(Application::instance()->guiMode()) {
+			if(event->type() == ReferenceEvent::TargetChanged) {
+				// Update viewports as soon as the scene becomes ready.
+//				qDebug() << "************* GuiDataSetContainer::referenceEvent **************** (sender=" << event->sender() << ", state counter=" << PromiseState::instanceCount() << ")";
+				if(!_sceneReadyScheduled) {
+					_sceneReadyScheduled = true;
+					currentSet()->whenSceneReady().finally(executor(), [this]() {
+						_sceneReadyScheduled = false;
+						sceneBecameReady();
+					});
+				}
+			}
+			else if(event->type() == ReferenceEvent::PreliminaryStateAvailable) {
+				// Update viewports when a new preliminiary state from one of the data pipelines
+				// becomes available (unless we are playing an animation).
+//				qDebug() << "GuiDataSetContainer::referenceEvent: PreliminaryStateAvailable (sender=" << event->sender() << ") vp suspended=" << currentSet()->viewportConfig()->isSuspended();
+				if(currentSet()->animationSettings()->isPlaybackActive() == false)
+					currentSet()->viewportConfig()->updateViewports();
+			}
+		}
+	}
+	return DataSetContainer::referenceEvent(source, event);
+}
+
+/******************************************************************************
+* Is called when scene of the current dataset is ready to be displayed.
+******************************************************************************/
+void GuiDataSetContainer::sceneBecameReady()
+{
+	if(currentSet())
+		currentSet()->viewportConfig()->updateViewports();
 }
 
 /******************************************************************************
@@ -211,7 +258,7 @@ bool GuiDataSetContainer::fileLoad(const QString& filename)
 /******************************************************************************
 * Imports a given file into the scene.
 ******************************************************************************/
-bool GuiDataSetContainer::importFile(const QUrl& url, const OvitoObjectType* importerType)
+bool GuiDataSetContainer::importFile(const QUrl& url, OvitoClassPtr importerType)
 {
 	OVITO_ASSERT(currentSet() != nullptr);
 
@@ -222,7 +269,7 @@ bool GuiDataSetContainer::importFile(const QUrl& url, const OvitoObjectType* imp
 	if(!importerType) {
 
 		// Download file so we can determine its format.
-		Future<QString> fetchFileFuture = Application::instance()->fileManager()->fetchUrl(*this, url);
+		SharedFuture<QString> fetchFileFuture = Application::instance()->fileManager()->fetchUrl(taskManager(), url);
 		if(!taskManager().waitForTask(fetchFileFuture))
 			return false;
 
@@ -241,9 +288,9 @@ bool GuiDataSetContainer::importFile(const QUrl& url, const OvitoObjectType* imp
 	importer->loadUserDefaults();
 
 	// Show the optional user interface (which is provided by the corresponding FileImporterEditor class) for the new importer.
-	for(const OvitoObjectType* clazz = &importer->getOOType(); clazz != nullptr; clazz = clazz->superClass()) {
-		const OvitoObjectType* editorClass = PropertiesEditor::registry().getEditorClass(clazz);
-		if(editorClass && editorClass->isDerivedFrom(FileImporterEditor::OOType)) {
+	for(OvitoClassPtr clazz = &importer->getOOClass(); clazz != nullptr; clazz = clazz->superClass()) {
+		OvitoClassPtr editorClass = PropertiesEditor::registry().getEditorClass(clazz);
+		if(editorClass && editorClass->isDerivedFrom(FileImporterEditor::OOClass())) {
 			OORef<FileImporterEditor> editor = dynamic_object_cast<FileImporterEditor>(editorClass->createInstance(nullptr));
 			if(editor) {
 				if(!editor->inspectNewFile(importer, url, mainWindow()))
@@ -309,42 +356,6 @@ bool GuiDataSetContainer::importFile(const QUrl& url, const OvitoObjectType* imp
 	}
 
 	return importer->importFile(url, importMode, true);
-}
-
-/******************************************************************************
-* Is called whenever a local event loop is entered to wait for a task to finish.
-******************************************************************************/
-void GuiDataSetContainer::localEventLoopEntered()
-{
-	if(!currentSet() || !Application::instance()->guiMode()) return;
-
-	// Suspend viewport updates while waiting.
-	currentSet()->viewportConfig()->suspendViewportUpdates();
-
-	// Disable viewport repaints while processing events to
-	// avoid recursive calls to repaint().
-	if(currentSet()->viewportConfig()->isRendering()) {
-		if(!_viewportRepaintsDisabled)
-			mainWindow()->viewportsPanel()->setUpdatesEnabled(false);
-		_viewportRepaintsDisabled++;
-	}
-}
-
-/******************************************************************************
-* Is called whenever a local event loop was exited after waiting for a task to finish.
-******************************************************************************/
-void GuiDataSetContainer::localEventLoopExited()
-{
-	if(!currentSet() || !Application::instance()->guiMode()) return;
-
-	// Handle viewport updates again.
-	currentSet()->viewportConfig()->resumeViewportUpdates();
-
-	// Re-enable viewport repaints.
-	if(currentSet()->viewportConfig()->isRendering()) {
-		if(--_viewportRepaintsDisabled == 0)
-			mainWindow()->viewportsPanel()->setUpdatesEnabled(true);
-	}
 }
 
 OVITO_END_INLINE_NAMESPACE

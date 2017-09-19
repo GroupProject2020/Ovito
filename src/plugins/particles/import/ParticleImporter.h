@@ -23,10 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/data/ParticleProperty.h>
-#include <core/dataset/importexport/FileSourceImporter.h>
-#include <core/utilities/io/CompressedTextReader.h>
-#include "ParticleFrameLoader.h"
+#include <core/dataset/io/FileSourceImporter.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import)
 
@@ -35,19 +32,13 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import)
  */
 class OVITO_PARTICLES_EXPORT ParticleImporter : public FileSourceImporter
 {
+	Q_OBJECT
+	OVITO_CLASS(ParticleImporter)
+	
 public:
 
 	/// \brief Constructs a new instance of this class.
-	ParticleImporter(DataSet* dataset) : FileSourceImporter(dataset), _isMultiTimestepFile(false) {
-		INIT_PROPERTY_FIELD(isMultiTimestepFile);
-	}
-
-	/// Scans the given external path (which may be a directory and a wild-card pattern,
-	/// or a single file containing multiple frames) to find all available animation frames.
-	///
-	/// \param sourceUrl The source file or wild-card pattern to scan for animation frames.
-	/// \return A Future that will yield the list of discovered animation frames.
-	virtual Future<QVector<FileSourceImporter::Frame>> discoverFrames(const QUrl& sourceUrl) override;
+	ParticleImporter(DataSet* dataset) : FileSourceImporter(dataset), _isMultiTimestepFile(false) {}
 
 	/// This method indicates whether a wildcard pattern should be automatically generated
 	/// when the user picks a new input filename.
@@ -59,23 +50,14 @@ protected:
 	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
 
 	/// \brief Determines whether the input file should be scanned to discover all contained frames.
-	virtual bool shouldScanFileForTimesteps(const QUrl& sourceUrl) {
+	virtual bool shouldScanFileForFrames(const QUrl& sourceUrl) override {
 		return isMultiTimestepFile();
 	}
 
-	/// \brief Scans the given input file to find all contained simulation frames.
-	virtual void scanFileForTimesteps(PromiseBase& promise, QVector<FileSourceImporter::Frame>& frames, const QUrl& sourceUrl, CompressedTextReader& stream);
-
 private:
-
-	/// Retrieves the given file in the background and scans it for simulation timesteps.
-	QVector<FileSourceImporter::Frame> discoverFramesInFile(const QUrl sourceUrl, PromiseBase& promise);
 
 	/// Indicates that the input file contains multiple timesteps.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, isMultiTimestepFile, setMultiTimestepFile);
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

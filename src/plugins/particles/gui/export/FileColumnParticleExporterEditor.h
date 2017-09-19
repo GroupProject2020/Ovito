@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/particles/objects/ParticlePropertyObject.h>
+#include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/particles/export/OutputColumnMapping.h>
 #include <plugins/particles/export/FileColumnParticleExporter.h>
 #include <gui/properties/PropertiesEditor.h>
@@ -35,6 +35,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export)
  */
 class FileColumnParticleExporterEditor : public PropertiesEditor
 {
+	OVITO_CLASS(FileColumnParticleExporterEditor)
+	Q_OBJECT
+	
 public:
 
 	/// Constructor.
@@ -62,9 +65,6 @@ private:
 	void saveChanges(FileColumnParticleExporter* particleExporter);
 
 	QListWidget* _columnMappingWidget;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -23,8 +23,8 @@
 
 
 #include <gui/GUI.h>
-#include <core/reference/RefTargetListener.h>
-#include <core/animation/controller/KeyframeController.h>
+#include <core/oo/RefTargetListener.h>
+#include <core/dataset/animation/controller/KeyframeController.h>
 #include "AnimationTimeSlider.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)

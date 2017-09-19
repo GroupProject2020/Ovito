@@ -17,7 +17,7 @@ modifier.number_of_bins = 400
 node.compute()
 
 print("Output:")
-print(node.output.coordination)
-print(node.output.coordination.array)
+print(node.output.particle_properties.coordination)
+print(node.output.particle_properties.coordination.array)
 print("RDF:")
 print(modifier.rdf)

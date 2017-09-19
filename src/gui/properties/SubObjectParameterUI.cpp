@@ -25,8 +25,7 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
 
-// Gives the class run-time type information.
-IMPLEMENT_OVITO_OBJECT(SubObjectParameterUI, PropertyParameterUI);
+IMPLEMENT_OVITO_CLASS(SubObjectParameterUI);
 
 /******************************************************************************
 * The constructor.
@@ -49,8 +48,8 @@ void SubObjectParameterUI::resetUI()
 
 		// Close editor if it is no longer needed.
 		if(subEditor()) {
-			if(!parameterObject() || subEditor()->editObject() == NULL ||
-					subEditor()->editObject()->getOOType() != parameterObject()->getOOType() ||
+			if(!parameterObject() || subEditor()->editObject() == nullptr ||
+					subEditor()->editObject()->getOOClass() != parameterObject()->getOOClass() ||
 					!isEnabled()) {
 
 				_subEditor = nullptr;
@@ -59,12 +58,14 @@ void SubObjectParameterUI::resetUI()
 		if(!parameterObject() || !isEnabled()) return;
 		if(!subEditor()) {
 			_subEditor = PropertiesEditor::create(parameterObject());
-			if(subEditor())
+			if(subEditor()) {
 				subEditor()->initialize(editor()->container(), editor()->mainWindow(), _rolloutParams);
+			}
 		}
 
-		if(subEditor())
+		if(subEditor()) {
 			subEditor()->setEditObject(parameterObject());
+		}
 	}
 	catch(const Exception& ex) {
 		ex.reportError();
