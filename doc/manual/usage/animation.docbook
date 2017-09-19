@@ -87,7 +87,7 @@
   <simplesect>
     <title>Animation via time-dependent functions</title>
     <para>
-       Simple animation effects can readily be achieved using the <link linkend="particles.modifiers.expression_select">Expression select</link> 
+       Simple animation effects can readily be achieved using the <link linkend="particles.modifiers.expression_select">Expression selection</link> 
        and <link linkend="particles.modifiers.compute_property">Compute property</link> modifiers. These modifiers
        allow you to enter arbitrary mathematical formulas and Boolean expressions to select subsets of
        particles or to manipulate certain particle properties (e.g. position, color, transparency, etc.).

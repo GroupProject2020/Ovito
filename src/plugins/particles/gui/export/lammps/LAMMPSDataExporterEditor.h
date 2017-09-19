@@ -32,6 +32,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVI
  */
 class LAMMPSDataExporterEditor : public PropertiesEditor
 {
+	OVITO_CLASS(LAMMPSDataExporterEditor)
+	Q_OBJECT
+	
 public:
 
 	/// Constructor.
@@ -41,11 +44,6 @@ protected:
 
 	/// Creates the user interface controls for the editor.
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -38,6 +38,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVI
  */
 class OVITO_NETCDF_EXPORT NetCDFExporter : public FileColumnParticleExporter
 {
+	OVITO_CLASS()
+	Q_OBJECT
+	
 public:
 
 	/// \brief Constructs a new instance of this class.
@@ -107,9 +110,6 @@ private:
 
 	/// The number of frames written.
 	size_t _frameCounter;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

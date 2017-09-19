@@ -21,11 +21,12 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <plugins/particles/import/lammps/LAMMPSDataImporter.h>
+#include <core/app/PluginManager.h>
 #include "LAMMPSDataImporterEditor.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_OBJECT(LAMMPSDataImporterEditor, FileImporterEditor);
+
 SET_OVITO_OBJECT_EDITOR(LAMMPSDataImporter, LAMMPSDataImporterEditor);
 
 /******************************************************************************
@@ -37,10 +38,10 @@ bool LAMMPSDataImporterEditor::inspectNewFile(FileImporter* importer, const QUrl
 	LAMMPSDataImporter* dataImporter = static_object_cast<LAMMPSDataImporter>(importer);
 
 	// Inspect the data file and try to detect the LAMMPS atom style.
-	LAMMPSDataImporter::LAMMPSAtomStyle detectedAtomStyle;
-	bool successful;
-	std::tie(detectedAtomStyle, successful) = dataImporter->inspectFileHeader(FileSourceImporter::Frame(sourceFile));
-	if(!successful) return false;
+	Future<LAMMPSDataImporter::LAMMPSAtomStyle> inspectFuture = dataImporter->inspectFileHeader(FileSourceImporter::Frame(sourceFile));
+	if(!importer->dataset()->container()->taskManager().waitForTask(inspectFuture))
+		return false;
+	LAMMPSDataImporter::LAMMPSAtomStyle detectedAtomStyle = inspectFuture.result();
 
 	// Show dialog to ask user for the right LAMMPS atom style if it could not be detected.
 	if(detectedAtomStyle == LAMMPSDataImporter::AtomStyle_Unknown) {
@@ -58,8 +59,8 @@ bool LAMMPSDataImporterEditor::inspectNewFile(FileImporter* importer, const QUrl
 		QStringList itemList = styleList.keys();
 
 		QSettings settings;
-		settings.beginGroup(LAMMPSDataImporter::OOType.plugin()->pluginId());
-		settings.beginGroup(LAMMPSDataImporter::OOType.name());
+		settings.beginGroup(LAMMPSDataImporter::OOClass().plugin()->pluginId());
+		settings.beginGroup(LAMMPSDataImporter::OOClass().name());
 
 		int currentIndex = -1;
 		for(int i = 0; i < itemList.size(); i++)

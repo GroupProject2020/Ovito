@@ -23,10 +23,10 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <core/scene/pipeline/PipelineFlowState.h>
+#include <plugins/particles/objects/ParticleProperty.h>
+#include <core/dataset/pipeline/PipelineFlowState.h>
 #include <core/utilities/io/CompressedTextWriter.h>
-#include <plugins/particles/data/ParticleProperty.h>
-#include <plugins/particles/objects/ParticlePropertyObject.h>
+#include <core/dataset/data/properties/PropertyStorage.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export)
 
@@ -43,7 +43,7 @@ public:
 	using std::vector<ParticlePropertyReference>::size_type;
 
 	/// Default constructor.
-	OutputColumnMapping() {}
+	OutputColumnMapping() = default;
 
 	/// Constructor.
 	OutputColumnMapping(size_type size) : std::vector<ParticlePropertyReference>(size) {}
@@ -97,7 +97,7 @@ private:
 
 	/// Stores the source particle properties for each column in the output file.
 	/// If an entry is NULL then the particle index will be written to the corresponding column.
-	QVector<ParticlePropertyObject*> _properties;
+	QVector<ParticleProperty*> _properties;
 
 	/// Stores the source vector component for each output column.
 	QVector<int> _vectorComponents;

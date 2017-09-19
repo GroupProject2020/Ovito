@@ -107,8 +107,10 @@
 
 	<file>glsl/markers/marker.vs</file>
 	<file>glsl/markers/marker.fs</file>
+	<file>glsl/markers/box_lines.vs</file>
 	<file>glsl/markers/picking/marker.vs</file>
 	<file>glsl/markers/picking/marker.fs</file>
+	<file>glsl/markers/picking/box_lines.vs</file>
 
 </qresource>
 

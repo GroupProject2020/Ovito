@@ -24,9 +24,9 @@
 
 #include <gui/GUI.h>
 #include <gui/properties/PropertiesPanel.h>
-#include <core/reference/RefTargetListener.h>
+#include <core/oo/RefTargetListener.h>
 #include <core/viewport/Viewport.h>
-#include <core/viewport/overlay/ViewportOverlay.h>
+#include <core/viewport/overlays/ViewportOverlay.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 

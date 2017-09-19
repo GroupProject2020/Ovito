@@ -20,18 +20,16 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticlePropertyObject.h>
-#include <plugins/particles/objects/ParticleTypeProperty.h>
-#include <plugins/particles/objects/SimulationCellObject.h>
+#include <plugins/particles/objects/ParticleProperty.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
 #include <plugins/particles/objects/BondsObject.h>
-#include <plugins/particles/objects/BondTypeProperty.h>
-#include <core/utilities/concurrent/Task.h>
+#include <core/utilities/concurrent/Promise.h>
 #include "LAMMPSDataExporter.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(LAMMPSDataExporter, ParticleExporter);
-DEFINE_FLAGS_PROPERTY_FIELD(LAMMPSDataExporter, atomStyle, "AtomStyle", PROPERTY_FIELD_MEMORIZE);
+IMPLEMENT_OVITO_CLASS(LAMMPSDataExporter);	
+DEFINE_PROPERTY_FIELD(LAMMPSDataExporter, atomStyle);
 SET_PROPERTY_FIELD_LABEL(LAMMPSDataExporter, atomStyle, "Atom style");
 
 /******************************************************************************
@@ -44,19 +42,19 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 	if(!getParticleData(sceneNode, time, state, taskManager))
 		return false;
 
-	SynchronousTask exportTask(taskManager);
+	Promise<> exportTask = Promise<>::createSynchronous(taskManager, true, true);
 
-	ParticlePropertyObject* posProperty = ParticlePropertyObject::findInState(state, ParticleProperty::PositionProperty);
-	ParticlePropertyObject* velocityProperty = ParticlePropertyObject::findInState(state, ParticleProperty::VelocityProperty);
-	ParticlePropertyObject* identifierProperty = ParticlePropertyObject::findInState(state, ParticleProperty::IdentifierProperty);
-	ParticlePropertyObject* periodicImageProperty = ParticlePropertyObject::findInState(state, ParticleProperty::PeriodicImageProperty);
-	ParticleTypeProperty* particleTypeProperty = dynamic_object_cast<ParticleTypeProperty>(ParticlePropertyObject::findInState(state, ParticleProperty::ParticleTypeProperty));
-	ParticlePropertyObject* chargeProperty = ParticlePropertyObject::findInState(state, ParticleProperty::ChargeProperty);
-	ParticlePropertyObject* radiusProperty = ParticlePropertyObject::findInState(state, ParticleProperty::RadiusProperty);	
-	ParticlePropertyObject* massProperty = ParticlePropertyObject::findInState(state, ParticleProperty::MassProperty);
-	ParticlePropertyObject* moleculeProperty = ParticlePropertyObject::findInState(state, ParticleProperty::MoleculeProperty);
+	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
+	ParticleProperty* velocityProperty = ParticleProperty::findInState(state, ParticleProperty::VelocityProperty);
+	ParticleProperty* identifierProperty = ParticleProperty::findInState(state, ParticleProperty::IdentifierProperty);
+	ParticleProperty* periodicImageProperty = ParticleProperty::findInState(state, ParticleProperty::PeriodicImageProperty);
+	ParticleProperty* particleTypeProperty = ParticleProperty::findInState(state, ParticleProperty::TypeProperty);
+	ParticleProperty* chargeProperty = ParticleProperty::findInState(state, ParticleProperty::ChargeProperty);
+	ParticleProperty* radiusProperty = ParticleProperty::findInState(state, ParticleProperty::RadiusProperty);	
+	ParticleProperty* massProperty = ParticleProperty::findInState(state, ParticleProperty::MassProperty);
+	ParticleProperty* moleculeProperty = ParticleProperty::findInState(state, ParticleProperty::MoleculeProperty);
 	BondsObject* bondsObj = state.findObject<BondsObject>();
-	BondTypeProperty* bondTypeProperty = dynamic_object_cast<BondTypeProperty>(BondPropertyObject::findInState(state, BondProperty::BondTypeProperty));
+	BondProperty* bondTypeProperty = BondProperty::findInState(state, BondProperty::TypeProperty);
 
 	// Get simulation cell info.
 	SimulationCellObject* simulationCell = state.findObject<SimulationCellObject>();
@@ -104,11 +102,11 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 	textStream() << "# LAMMPS data file written by OVITO\n";
 	textStream() << posProperty->size() << " atoms\n";
 	if(writeBonds)
-		textStream() << (bondsObj->storage()->size()/2) << " bonds\n";
+		textStream() << bondsObj->storage()->size() << " bonds\n";
 
 	if(particleTypeProperty && particleTypeProperty->size() > 0) {
 		int numParticleTypes = std::max(
-				particleTypeProperty->particleTypes().size(),
+				particleTypeProperty->elementTypes().size(),
 				*std::max_element(particleTypeProperty->constDataInt(), particleTypeProperty->constDataInt() + particleTypeProperty->size()));
 		textStream() << numParticleTypes << " atom types\n";
 	}
@@ -116,7 +114,7 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 	if(writeBonds) {
 		if(bondTypeProperty && bondTypeProperty->size() > 0) {
 			int numBondTypes = std::max(
-					bondTypeProperty->bondTypes().size(),
+					bondTypeProperty->elementTypes().size(),
 					*std::max_element(bondTypeProperty->constDataInt(), bondTypeProperty->constDataInt() + bondTypeProperty->size()));
 			textStream() << numBondTypes << " bond types\n";
 		}
@@ -133,7 +131,7 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 
 	size_t totalProgressCount = posProperty->size();
 	if(velocityProperty) totalProgressCount += posProperty->size();
-	if(writeBonds) totalProgressCount += bondsObj->storage()->size() / 2;
+	if(writeBonds) totalProgressCount += bondsObj->storage()->size();
 	size_t currentProgress = 0;
 
 	// Write "Atoms" section.
@@ -236,7 +234,6 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 		int bondIndex = 1;
 		for(size_t i = 0; i < bondsObj->storage()->size(); i++) {
 			const Bond& bond = (*bondsObj->storage())[i];
-			if(bond.index2 < bond.index1) continue;	// Skip every other half-bond.
 			textStream() << bondIndex++;
 			textStream() << ' ';
 			textStream() << (bondTypeProperty ? bondTypeProperty->getInt(i) : 1);
@@ -253,7 +250,7 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 					return false;
 			}
 		}
-		OVITO_ASSERT(bondIndex == bondsObj->storage()->size() / 2 + 1);
+		OVITO_ASSERT(bondIndex == bondsObj->storage()->size() + 1);
 	}
 
 	return !exportTask.isCanceled();

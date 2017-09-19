@@ -28,6 +28,57 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
+/// Holds the results of the ElasticStrainModifier.
+class ElasticStrainResults : public StructureIdentificationModifier::StructureIdentificationResults
+{
+public:
+
+	/// Constructor.
+	ElasticStrainResults(size_t particleCount, bool calculateStrainTensors, bool calculateDeformationGradients) :
+		StructureIdentificationResults(particleCount),
+		_volumetricStrains(std::make_shared<PropertyStorage>(particleCount, qMetaTypeId<FloatType>(), 1, 0, QStringLiteral("Volumetric Strain"), false)),
+		_strainTensors(calculateStrainTensors ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::ElasticStrainTensorProperty, false) : nullptr),
+		_deformationGradients(calculateDeformationGradients ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::ElasticDeformationGradientProperty, false) : nullptr) {}
+	
+	/// Injects the computed results into the data pipeline.
+	virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+
+	/// Returns the array of atom cluster IDs.
+	const PropertyPtr& atomClusters() const { return _atomClusters; }
+
+	/// Assigns the array of atom cluster IDs.
+	void setAtomClusters(PropertyPtr prop) { _atomClusters = std::move(prop); }
+	
+	/// Returns the created cluster graph.
+	const std::shared_ptr<ClusterGraph>& clusterGraph() { return _clusterGraph; }
+
+	/// Returns the property storage that contains the computed per-particle volumetric strain values.
+	const PropertyPtr& volumetricStrains() const { return _volumetricStrains; }
+
+	/// Returns the property storage that contains the computed per-particle strain tensors.
+	const PropertyPtr& strainTensors() const { return _strainTensors; }
+
+	/// Returns the property storage that contains the computed per-particle deformation gradient tensors.
+	const PropertyPtr& deformationGradients() const { return _deformationGradients; }
+
+private:
+
+	/// This stores the cached atom-to-cluster assignments computed by the modifier.
+	PropertyPtr _atomClusters;
+	
+	/// This stores the cached cluster graph computed by the modifier.
+	const std::shared_ptr<ClusterGraph> _clusterGraph;
+
+	/// This stores the cached results of the modifier.
+	const PropertyPtr _volumetricStrains;
+
+	/// This stores the cached results of the modifier.
+	const PropertyPtr _strainTensors;
+
+	/// This stores the cached results of the modifier.
+	const PropertyPtr _deformationGradients;	
+};
+
 /*
  * Computation engine of the ElasticStrainModifier, which performs the actual strain tensor calculation.
  */
@@ -37,8 +88,8 @@ public:
 
 	/// Constructor.
 	ElasticStrainEngine(const TimeInterval& validityInterval,
-			ParticleProperty* positions, const SimulationCell& simCell,
-			int inputCrystalStructure, std::vector<Matrix3>&& preferredCrystalOrientations,
+			ConstPropertyPtr positions, const SimulationCell& simCell,
+			int inputCrystalStructure, std::vector<Matrix3> preferredCrystalOrientations,
 			bool calculateDeformationGradients, bool calculateStrainTensors,
 			FloatType latticeConstant, FloatType caRatio, bool pushStrainTensorsForward);
 
@@ -46,30 +97,28 @@ public:
 	virtual void perform() override;
 
 	/// Returns the array of atom cluster IDs.
-	ParticleProperty* atomClusters() const { return _structureAnalysis.atomClusters(); }
+	const PropertyPtr& atomClusters() const { return _results->atomClusters(); }
 
 	/// Returns the created cluster graph.
-	ClusterGraph* clusterGraph() { return &_structureAnalysis.clusterGraph(); }
+	const std::shared_ptr<ClusterGraph>& clusterGraph() { return _results->clusterGraph(); }
 
 	/// Returns the property storage that contains the computed per-particle volumetric strain values.
-	ParticleProperty* volumetricStrains() const { return _volumetricStrains.data(); }
+	const PropertyPtr& volumetricStrains() const { return _results->volumetricStrains(); }
 
 	/// Returns the property storage that contains the computed per-particle strain tensors.
-	ParticleProperty* strainTensors() const { return _strainTensors.data(); }
+	const PropertyPtr& strainTensors() const { return _results->strainTensors(); }
 
 	/// Returns the property storage that contains the computed per-particle deformation gradient tensors.
-	ParticleProperty* deformationGradients() const { return _deformationGradients.data(); }
+	const PropertyPtr& deformationGradients() const { return _results->deformationGradients(); }
 
 private:
 
-	int _inputCrystalStructure;
+	const int _inputCrystalStructure;
 	FloatType _latticeConstant;
 	FloatType _axialScaling;
-	bool _pushStrainTensorsForward;
+	const bool _pushStrainTensorsForward;
+	std::shared_ptr<ElasticStrainResults> _results;
 	StructureAnalysis _structureAnalysis;
-	QExplicitlySharedDataPointer<ParticleProperty> _volumetricStrains;
-	QExplicitlySharedDataPointer<ParticleProperty> _strainTensors;
-	QExplicitlySharedDataPointer<ParticleProperty> _deformationGradients;
 };
 
 }	// End of namespace

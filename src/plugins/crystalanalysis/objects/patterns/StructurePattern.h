@@ -64,10 +64,10 @@ public:
 	void setLongName(const QString& name) { setName(name); }
 
 	/// Adds a new family to this lattice pattern's list of Burgers vector families.
-	void addBurgersVectorFamily(BurgersVectorFamily* family) { _burgersVectorFamilies.push_back(family); }
+	void addBurgersVectorFamily(BurgersVectorFamily* family) { _burgersVectorFamilies.push_back(this, family); }
 
 	/// Removes a family from this lattice pattern's list of Burgers vector families.
-	void removeBurgersVectorFamily(int index) { _burgersVectorFamilies.remove(index); }
+	void removeBurgersVectorFamily(int index) { _burgersVectorFamilies.remove(this, index); }
 
 	/// Returns the default Burgers vector family, which is assigned to dislocation segments that
 	/// don't belong to any family.
@@ -91,7 +91,7 @@ private:
 	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD(BurgersVectorFamily, burgersVectorFamilies, setBurgersVectorFamilies);
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 };
 
 }	// End of namespace

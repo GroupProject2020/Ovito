@@ -23,7 +23,7 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <core/scene/objects/DataObject.h>
+#include <core/dataset/data/DataObject.h>
 #include "StructurePattern.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
@@ -39,10 +39,10 @@ public:
 	Q_INVOKABLE PatternCatalog(DataSet* dataset);
 
 	/// Adds a new patterns to the catalog.
-	void addPattern(StructurePattern* pattern) { _patterns.push_back(pattern); }
+	void addPattern(StructurePattern* pattern) { _patterns.push_back(this, pattern); }
 
 	/// Removes a pattern from the catalog.
-	void removePattern(int index) { _patterns.remove(index); }
+	void removePattern(int index) { _patterns.remove(this, index); }
 
 	/// Returns the title of this object.
 	virtual QString objectTitle() override { return tr("Pattern catalog"); }
@@ -61,7 +61,7 @@ private:
 	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD(StructurePattern, patterns, setPatterns);
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 };
 
 }	// End of namespace

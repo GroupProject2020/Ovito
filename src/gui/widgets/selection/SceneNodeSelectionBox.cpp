@@ -21,7 +21,7 @@
 
 #include <gui/GUI.h>
 #include <core/dataset/DataSetContainer.h>
-#include <core/scene/SelectionSet.h>
+#include <core/dataset/scene/SelectionSet.h>
 #include "SceneNodeSelectionBox.h"
 #include "SceneNodesListModel.h"
 
@@ -60,14 +60,14 @@ SceneNodeSelectionBox::SceneNodeSelectionBox(DataSetContainer& datasetContainer,
 void SceneNodeSelectionBox::onSceneSelectionChanged()
 {
 	SelectionSet* selection = _datasetContainer.currentSet() ? _datasetContainer.currentSet()->selection() : nullptr;
-	if(!selection || selection->empty()) {
+	if(!selection || selection->nodes().empty()) {
 		setCurrentText(tr("No selection"));
 	}
-	else if(selection->size() > 1) {
-		setCurrentText(tr("%i selected objects").arg(selection->size()));
+	else if(selection->nodes().size() > 1) {
+		setCurrentText(tr("%i selected objects").arg(selection->nodes().size()));
 	}
 	else {
-		int index = findData(QVariant::fromValue(selection->node(0)));
+		int index = findData(QVariant::fromValue(selection->nodes().front()));
 		setCurrentIndex(index);
 	}
 }

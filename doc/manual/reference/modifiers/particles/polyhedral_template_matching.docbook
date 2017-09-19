@@ -159,7 +159,7 @@
     
   </itemizedlist>
     The alloy type of a lattice atom is found by comparing the types of its neighbors to its own type. See the paper for details.
-    You can subsequently use the <link linkend="particles.modifiers.expression_select">Expression select</link> modifier to select atoms of a
+    You can subsequently use the <link linkend="particles.modifiers.expression_select">Expression selection</link> modifier to select atoms of a
     certain alloy type to give them a distinct color, for example.
     </para>
   </simplesect>

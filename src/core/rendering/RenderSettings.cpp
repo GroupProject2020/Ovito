@@ -22,24 +22,25 @@
 #include <core/Core.h>
 #include <core/rendering/SceneRenderer.h>
 #include <core/viewport/Viewport.h>
-#include <core/plugins/PluginManager.h>
+#include <core/app/PluginManager.h>
+#include <core/utilities/units/UnitsManager.h>
 #include "RenderSettings.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(RenderSettings, RefTarget);
-DEFINE_FLAGS_REFERENCE_FIELD(RenderSettings, renderer, "Renderer", SceneRenderer, PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_REFERENCE_FIELD(RenderSettings, backgroundColorController, "BackgroundColor", Controller, PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(RenderSettings, outputImageWidth, "OutputImageWidth");
-DEFINE_PROPERTY_FIELD(RenderSettings, outputImageHeight, "OutputImageHeight");
-DEFINE_PROPERTY_FIELD(RenderSettings, generateAlphaChannel, "GenerateAlphaChannel");
-DEFINE_PROPERTY_FIELD(RenderSettings, saveToFile, "SaveToFile");
-DEFINE_PROPERTY_FIELD(RenderSettings, skipExistingImages, "SkipExistingImages");
-DEFINE_PROPERTY_FIELD(RenderSettings, renderingRangeType, "RenderingRangeType");
-DEFINE_PROPERTY_FIELD(RenderSettings, customRangeStart, "CustomRangeStart");
-DEFINE_PROPERTY_FIELD(RenderSettings, customRangeEnd, "CustomRangeEnd");
-DEFINE_PROPERTY_FIELD(RenderSettings, everyNthFrame, "EveryNthFrame");
-DEFINE_PROPERTY_FIELD(RenderSettings, fileNumberBase, "FileNumberBase");
+IMPLEMENT_OVITO_CLASS(RenderSettings);
+DEFINE_REFERENCE_FIELD(RenderSettings, renderer);
+DEFINE_REFERENCE_FIELD(RenderSettings, backgroundColorController);
+DEFINE_PROPERTY_FIELD(RenderSettings, outputImageWidth);
+DEFINE_PROPERTY_FIELD(RenderSettings, outputImageHeight);
+DEFINE_PROPERTY_FIELD(RenderSettings, generateAlphaChannel);
+DEFINE_PROPERTY_FIELD(RenderSettings, saveToFile);
+DEFINE_PROPERTY_FIELD(RenderSettings, skipExistingImages);
+DEFINE_PROPERTY_FIELD(RenderSettings, renderingRangeType);
+DEFINE_PROPERTY_FIELD(RenderSettings, customRangeStart);
+DEFINE_PROPERTY_FIELD(RenderSettings, customRangeEnd);
+DEFINE_PROPERTY_FIELD(RenderSettings, everyNthFrame);
+DEFINE_PROPERTY_FIELD(RenderSettings, fileNumberBase);
 SET_PROPERTY_FIELD_LABEL(RenderSettings, renderer, "Renderer");
 SET_PROPERTY_FIELD_LABEL(RenderSettings, backgroundColorController, "Background color");
 SET_PROPERTY_FIELD_LABEL(RenderSettings, outputImageWidth, "Width");
@@ -60,34 +61,25 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(RenderSettings, everyNthFrame, IntegerParam
 * Constructor.
 ******************************************************************************/
 RenderSettings::RenderSettings(DataSet* dataset) : RefTarget(dataset),
-	_outputImageWidth(640), _outputImageHeight(480), _generateAlphaChannel(false),
-	_saveToFile(false), _skipExistingImages(false), _renderingRangeType(CURRENT_FRAME),
-	_customRangeStart(0), _customRangeEnd(100), _everyNthFrame(1), _fileNumberBase(0)
+	_outputImageWidth(640), 
+	_outputImageHeight(480), 
+	_generateAlphaChannel(false),
+	_saveToFile(false), 
+	_skipExistingImages(false), 
+	_renderingRangeType(CURRENT_FRAME),
+	_customRangeStart(0), 
+	_customRangeEnd(100), 
+	_everyNthFrame(1), 
+	_fileNumberBase(0)
 {
-	INIT_PROPERTY_FIELD(renderer);
-	INIT_PROPERTY_FIELD(backgroundColorController);
-	INIT_PROPERTY_FIELD(outputImageWidth);
-	INIT_PROPERTY_FIELD(outputImageHeight);
-	INIT_PROPERTY_FIELD(generateAlphaChannel);
-	INIT_PROPERTY_FIELD(saveToFile);
-	INIT_PROPERTY_FIELD(skipExistingImages);
-	INIT_PROPERTY_FIELD(renderingRangeType);
-	INIT_PROPERTY_FIELD(customRangeStart);
-	INIT_PROPERTY_FIELD(customRangeEnd);
-	INIT_PROPERTY_FIELD(everyNthFrame);
-	INIT_PROPERTY_FIELD(fileNumberBase);
-
 	// Setup default background color.
 	setBackgroundColorController(ControllerManager::createColorController(dataset));
 	setBackgroundColor(Color(1,1,1));
 
 	// Create an instance of the default renderer class.
-	Plugin* glrendererPlugin = PluginManager::instance().plugin("OpenGLRenderer");
-	OvitoObjectType* rendererClass = nullptr;
-	if(glrendererPlugin)
-		rendererClass = glrendererPlugin->findClass("StandardSceneRenderer");
+	OvitoClassPtr rendererClass = PluginManager::instance().findClass("OpenGLRenderer", "StandardSceneRenderer");
 	if(rendererClass == nullptr) {
-		QVector<OvitoObjectType*> classList = PluginManager::instance().listClasses(SceneRenderer::OOType);
+		QVector<OvitoClassPtr> classList = PluginManager::instance().listClasses(SceneRenderer::OOClass());
 		if(classList.isEmpty() == false) rendererClass = classList.front();
 	}
 	if(rendererClass)
@@ -119,9 +111,9 @@ void RenderSettings::setImageInfo(const ImageInfo& imageInfo)
 /******************************************************************************
 * Saves the class' contents to the given stream. 
 ******************************************************************************/
-void RenderSettings::saveToStream(ObjectSaveStream& stream)
+void RenderSettings::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData)
 {
-	RefTarget::saveToStream(stream);
+	RefTarget::saveToStream(stream, excludeRecomputableData);
 
 	stream.beginChunk(RENDER_SETTINGS_FILE_FORMAT_VERSION);
 	stream << _imageInfo;
@@ -135,21 +127,8 @@ void RenderSettings::loadFromStream(ObjectLoadStream& stream)
 {
 	RefTarget::loadFromStream(stream);
 
-	int fileVersion = stream.expectChunkRange(0, RENDER_SETTINGS_FILE_FORMAT_VERSION);
-	if(fileVersion == 0) {
-		bool generateAlphaChannel;
-		RenderingRangeType renderingRange;
-		stream >> renderingRange;
-		stream >> _imageInfo;
-		stream >> generateAlphaChannel;
-		_generateAlphaChannel = generateAlphaChannel;
-		_renderingRangeType = renderingRange;
-		_outputImageWidth = _imageInfo.imageWidth();
-		_outputImageHeight = _imageInfo.imageHeight();
-	}
-	else {
-		stream >> _imageInfo;
-	}
+	stream.expectChunk(RENDER_SETTINGS_FILE_FORMAT_VERSION);
+	stream >> _imageInfo;
 	stream.closeChunk();
 }
 

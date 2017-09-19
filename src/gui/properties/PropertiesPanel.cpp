@@ -54,7 +54,7 @@ void PropertiesPanel::setEditObject(RefTarget* newEditObject)
 		
 		// Can we re-use the old editor?
 		if(newEditObject != nullptr && editor()->editObject() != nullptr
-			&& editor()->editObject()->getOOType() == newEditObject->getOOType()) {
+			&& editor()->editObject()->getOOClass() == newEditObject->getOOClass()) {
 			
 			editor()->setEditObject(newEditObject);
 			return;

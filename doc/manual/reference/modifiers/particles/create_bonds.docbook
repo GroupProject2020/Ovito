@@ -45,8 +45,8 @@
   </para>
   
   <para>
-    The visual appearance of the generated bonds is controlled by the <link linkend="display_objects.bonds">bonds
-    display object</link> attached to the modifier. 
+    The visual appearance of the generated bonds is controlled by the attached <link linkend="display_objects.bonds">bonds
+    display object</link>. 
   </para>
   
   <simplesect>
@@ -57,8 +57,7 @@
       <varlistentry>
         <term>Uniform cutoff radius</term>
         <listitem>
-          <para>Use this mode to create bonds between pairs of particles irrespective of their types if the pair separation is below  
-                the specified cutoff.</para>
+          <para>Use this mode to create bonds between pairs of particles irrespective of their type.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
@@ -66,22 +65,22 @@
         <listitem>
           <para>This mode gives you more control over which particle types get connected by bonds. 
           The table lists all pair-wise combinations of particle types. Enter a cutoff distance into the third
-          column to connect pairs of particles of the given types with bonds. </para>
-          <para>Note that is mode is only available if the <literal>Particle Type</literal> property is defined for particles.</para>
+          column to create bonds between pairs of particles of the given types. </para>
+          <para>Note that this mode is only available when the <literal>Particle Type</literal> property is defined.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>No bonds between different molecules</term>
+        <term>Suppress inter-molecular bonds</term>
         <listitem>
-          <para>If this option is active, bonds will only be created between particles that belong to the same molecule.
-          Two particles belong to the same molecule if their <literal>Molecule Identifier</literal> property values
-          are the same. If the <literal>Molecule Identifier</literal> property is not defined for the particles, this option has no effect.</para>
+          <para>If this option is active, bonds are only created between particles that belong to the same molecule,
+          i.e. if their <literal>Molecule Identifier</literal> properties match.
+          If the <literal>Molecule Identifier</literal> property is not defined at all, this option has no effect.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
         <term>Lower cutoff</term>
         <listitem>
-          <para>This parameter allows to set a lower cutoff, i.e. a minimum length, for the bonds to be created.</para>
+          <para>This parameter defines a lower cutoff, i.e. a minimum particle separation, for bonds to be created.</para>
         </listitem>
       </varlistentry>
     </variablelist>

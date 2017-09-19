@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2015) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,7 +25,6 @@
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/particles/modifier/analysis/StructureIdentificationModifier.h>
 #include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
-#include <plugins/crystalanalysis/data/ClusterGraph.h>
 #include <plugins/crystalanalysis/modifier/dxa/StructureAnalysis.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
@@ -40,22 +39,10 @@ public:
 	/// Constructor.
 	Q_INVOKABLE ElasticStrainModifier(DataSet* dataset);
 
-	/// Resets the modifier's result cache.
-	virtual void invalidateCachedResults() override;
-
 protected:
 
-	/// Is called when the value of a property of this object has changed.
-	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
-
 	/// Creates a computation engine that will compute the modifier's results.
-	virtual std::shared_ptr<ComputeEngine> createEngine(TimePoint time, TimeInterval validityInterval) override;
-
-	/// Unpacks the results of the computation engine and stores them in the modifier.
-	virtual void transferComputationResults(ComputeEngine* engine) override;
-
-	/// Lets the modifier insert the cached computation results into the modification pipeline.
-	virtual PipelineStatus applyComputationResults(TimePoint time, TimeInterval& validityInterval) override;
+	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 private:
 
@@ -80,23 +67,8 @@ private:
 	/// The catalog of structure patterns.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD(PatternCatalog, patternCatalog, setPatternCatalog);
 
-	/// This stores the cached atom-to-cluster assignments computed by the modifier.
-	QExplicitlySharedDataPointer<ParticleProperty> _atomClusters;
-
-	/// This stores the cached cluster graph computed by the modifier.
-	QExplicitlySharedDataPointer<ClusterGraph> _clusterGraph;
-
-	/// This stores the cached results of the modifier.
-	QExplicitlySharedDataPointer<ParticleProperty> _volumetricStrainValues;
-
-	/// This stores the cached results of the modifier.
-	QExplicitlySharedDataPointer<ParticleProperty> _strainTensors;
-
-	/// This stores the cached results of the modifier.
-	QExplicitlySharedDataPointer<ParticleProperty> _deformationGradients;
-
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 
 	Q_CLASSINFO("DisplayName", "Elastic strain calculation");
 	Q_CLASSINFO("ModifierCategory", "Analysis");

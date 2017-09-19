@@ -20,13 +20,15 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
+#include <plugins/particles/import/ParticleFrameData.h>
+#include <core/utilities/io/CompressedTextReader.h>
 #include "CastepMDImporter.h"
 
 #include <boost/algorithm/string.hpp>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(CastepMDImporter, ParticleImporter);
+IMPLEMENT_OVITO_CLASS(CastepMDImporter);
 
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
@@ -52,10 +54,11 @@ bool CastepMDImporter::checkFileFormat(QFileDevice& input, const QUrl& sourceLoc
 /******************************************************************************
 * Scans the given input file to find all contained simulation frames.
 ******************************************************************************/
-void CastepMDImporter::scanFileForTimesteps(PromiseBase& promise, QVector<FileSourceImporter::Frame>& frames, const QUrl& sourceUrl, CompressedTextReader& stream)
+void CastepMDImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
 {
-	promise.setProgressText(tr("Scanning CASTEP file %1").arg(stream.filename()));
-	promise.setProgressMaximum(stream.underlyingSize() / 1000);
+	CompressedTextReader stream(file, sourceUrl.path());
+	setProgressText(tr("Scanning CASTEP file %1").arg(stream.filename()));
+	setProgressMaximum(stream.underlyingSize() / 1000);
 
 	// Look for string 'BEGIN header' to occur on first line.
 	if(!boost::algorithm::istarts_with(stream.readLineTrimLeft(32), "BEGIN header"))
@@ -63,13 +66,13 @@ void CastepMDImporter::scanFileForTimesteps(PromiseBase& promise, QVector<FileSo
 
 	// Fast forward to line 'END header'.
 	for(;;) {
-		if(promise.isCanceled())
+		if(isCanceled())
 			return;
 		if(stream.eof())
 			throw Exception(tr("Invalid CASTEP md/geom file. Unexpected end of file."));
 		if(boost::algorithm::istarts_with(stream.readLineTrimLeft(), "END header"))
 			break;
-		promise.setProgressValueIntermittent(stream.underlyingByteOffset() / 1000);
+		setProgressValueIntermittent(stream.underlyingByteOffset() / 1000);
 	}
 
 	QFileInfo fileInfo(stream.device().fileName());
@@ -93,24 +96,33 @@ void CastepMDImporter::scanFileForTimesteps(PromiseBase& promise, QVector<FileSo
 			stream.readLine();
 		}
 
-		promise.setProgressValueIntermittent(stream.underlyingByteOffset() / 1000);
-		if(promise.isCanceled())
+		setProgressValueIntermittent(stream.underlyingByteOffset() / 1000);
+		if(isCanceled())
 			return;
 	}
 }
 
 /******************************************************************************
-* Parses the given input file and stores the data in the given container object.
+* Parses the given input file.
 ******************************************************************************/
-void CastepMDImporter::ImportTask::parseFile(CompressedTextReader& stream)
+void CastepMDImporter::FrameLoader::loadFile(QFile& file)
 {
+	// Open file for reading.
+	CompressedTextReader stream(file, frame().sourceFile.path());
 	setProgressText(tr("Reading CASTEP file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+
+	// Jump to byte offset.
+	if(frame().byteOffset != 0)
+		stream.seek(frame().byteOffset);
 
 	std::vector<Point3> coords;
 	std::vector<int> types;
 	std::vector<Vector3> velocities;
 	std::vector<Vector3> forces;
-	std::unique_ptr<ParticleFrameLoader::ParticleTypeList> typeList(new ParticleFrameLoader::ParticleTypeList());
+	std::unique_ptr<ParticleFrameData::ParticleTypeList> typeList(new ParticleFrameData::ParticleTypeList());
+
+	// Create the destination container for loaded data.
+	std::shared_ptr<ParticleFrameData> frameData = std::make_shared<ParticleFrameData>();
 
 	AffineTransformation cell = AffineTransformation::Identity();
 	int numCellVectors = 0;
@@ -153,34 +165,35 @@ void CastepMDImporter::ImportTask::parseFile(CompressedTextReader& stream)
 		if(isCanceled())
 			return;
 	}
-	simulationCell().setMatrix(cell);
+	frameData->simulationCell().setMatrix(cell);
 
 	// Create the particle properties.
-	ParticleProperty* posProperty = new ParticleProperty(coords.size(), ParticleProperty::PositionProperty, 0, false);
-	addParticleProperty(posProperty);
+	PropertyPtr posProperty = ParticleProperty::createStandardStorage(coords.size(), ParticleProperty::PositionProperty, false);
+	frameData->addParticleProperty(posProperty);
 	std::copy(coords.begin(), coords.end(), posProperty->dataPoint3());
 	
-	ParticleProperty* typeProperty = new ParticleProperty(types.size(), ParticleProperty::ParticleTypeProperty, 0, false);
-	addParticleProperty(typeProperty, typeList.release());
+	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(types.size(), ParticleProperty::TypeProperty, false);
+	frameData->addParticleProperty(typeProperty, typeList.release());
 	std::copy(types.begin(), types.end(), typeProperty->dataInt());
 
 	// Since we created particle types on the go while reading the particles, the assigned particle type IDs
 	// depend on the storage order of particles in the file. We rather want a well-defined particle type ordering, that's
 	// why we sort them now.
-	getTypeListOfParticleProperty(typeProperty)->sortParticleTypesByName(typeProperty);
+	frameData->getTypeListOfParticleProperty(typeProperty.get())->sortParticleTypesByName(typeProperty.get());
 
 	if(velocities.size() == coords.size()) {
-		ParticleProperty* velocityProperty = new ParticleProperty(velocities.size(), ParticleProperty::VelocityProperty, 0, false);
-		addParticleProperty(velocityProperty);
+		PropertyPtr velocityProperty = ParticleProperty::createStandardStorage(velocities.size(), ParticleProperty::VelocityProperty, false);
+		frameData->addParticleProperty(velocityProperty);
 		std::copy(velocities.begin(), velocities.end(), velocityProperty->dataVector3());
 	}
 	if(forces.size() == coords.size()) {
-		ParticleProperty* forceProperty = new ParticleProperty(forces.size(), ParticleProperty::ForceProperty, 0, false);
-		addParticleProperty(forceProperty);
+		PropertyPtr forceProperty = ParticleProperty::createStandardStorage(forces.size(), ParticleProperty::ForceProperty, false);
+		frameData->addParticleProperty(forceProperty);
 		std::copy(forces.begin(), forces.end(), forceProperty->dataVector3());
 	}
 
-	setStatus(tr("%1 atoms").arg(coords.size()));
+	frameData->setStatus(tr("%1 atoms").arg(coords.size()));
+	setResult(std::move(frameData));
 }
 
 OVITO_END_INLINE_NAMESPACE

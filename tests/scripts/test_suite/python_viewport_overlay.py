@@ -5,25 +5,37 @@ from ovito.vis import *
 
 import numpy
 
-node = import_file("../../files/CFG/fcc_coherent_twin.0.cfg")
+node = import_file("../../files/LAMMPS/animation.dump.gz")
 node.modifiers.append(CommonNeighborAnalysisModifier())
+node.add_to_scene()
 
 vp = ovito.dataset.viewports.active_vp
 
-new_overlay = PythonViewportOverlay()
-new_overlay.script = """
-def render(painter, **args):
+settings = RenderSettings(size = (16,16))
+if ovito.headless_mode:
+    settings.renderer = TachyonRenderer(ambient_occlusion = False, antialiasing = False)
+
+def myrender(painter, **args):
     painter.drawText(10, 10, "Hello world")
-"""
+
+new_overlay = PythonViewportOverlay(function = myrender)
 vp.overlays.append(new_overlay)
 
 assert(len(vp.overlays) == 1)
 assert(vp.overlays[0] == new_overlay)
-assert(new_overlay.output == "")
+vp.render(settings)
 
-overlay2 = PythonViewportOverlay()
-overlay2.script = "This is an intentionally invalid Python script."
+def myrender2(painter, **args):
+    print("The following render function will provoke an intentional error:")
+    return this_is_an_intentional_error
+
+overlay2 = PythonViewportOverlay(function = myrender2)
 vp.overlays.append(overlay2)
-
 assert(len(vp.overlays) == 2)
-assert(overlay2.output != "")
+
+try:
+    vp.render(settings)
+    assert(False)
+except:
+    pass
+    

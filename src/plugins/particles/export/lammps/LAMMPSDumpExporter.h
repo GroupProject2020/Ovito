@@ -32,6 +32,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVI
  */
 class OVITO_PARTICLES_EXPORT LAMMPSDumpExporter : public FileColumnParticleExporter
 {
+	Q_OBJECT
+	OVITO_CLASS(LAMMPSDumpExporter)
+	
 public:
 
 	/// \brief Constructs a new instance of this class.
@@ -47,11 +50,6 @@ protected:
 
 	/// \brief Writes the particles of one animation frame to the current output file.
 	virtual bool exportObject(SceneNode* sceneNode, int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager) override;
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

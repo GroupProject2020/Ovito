@@ -24,16 +24,16 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/data/ParticleProperty.h>
-#include <plugins/particles/objects/ParticlePropertyObject.h>
-#include "../../ParticleModifier.h"
+#include <core/dataset/data/properties/PropertyStorage.h>
+#include <plugins/particles/objects/ParticleProperty.h>
+#include <core/dataset/pipeline/Modifier.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
 /**
  * \brief This modifier computes a spatial average (over splices) for a particle property.
  */
-class OVITO_PARTICLES_EXPORT BinAndReduceModifier : public ParticleModifier
+class OVITO_PARTICLES_EXPORT BinAndReduceModifier : public Modifier
 {
 public:
 
@@ -46,11 +46,20 @@ public:
 	/// Constructor.
 	Q_INVOKABLE BinAndReduceModifier(DataSet* dataset);
 
+	/// This method is called by the system after the modifier has been inserted into a data pipeline.
+	virtual void initializeModifier(ModifierApplication* modApp) override;
+
+	/// \brief Modifies the input data.
+	virtual Future<PipelineFlowState> evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+
 	/// Returns the stored average data.
 	const QVector<double>& binData() const { return _binData; }
 
 	/// Set start and end value of the plotting property axis.
-	void setPropertyAxisRange(FloatType start, FloatType end) { _propertyAxisRangeStart = start; _propertyAxisRangeEnd = end; }
+	void setPropertyAxisRange(FloatType start, FloatType end) { 
+		setPropertyAxisRangeStart(start); 
+		setPropertyAxisRangeEnd(end); 
+	}
 
 	/// Returns the start value of the plotting x-axis.
 	FloatType xAxisRangeStart() const { return _xAxisRangeStart; }
@@ -84,13 +93,19 @@ public:
         return (d >> 2) & 3;
     }
 
-protected:
+public:
+	
+	/// Give this modifier class its own metaclass.
+	class OOMetaClass : public ModifierClass 
+	{
+	public:
 
-	/// Modifies the particle object.
-	virtual PipelineStatus modifyParticles(TimePoint time, TimeInterval& validityInterval) override;
+		/// Inherit constructor from base metaclass.
+		using ModifierClass::ModifierClass;
 
-	/// This virtual method is called by the system when the modifier has been inserted into a PipelineObject.
-	virtual void initializeModifier(PipelineObject* pipelineObject, ModifierApplication* modApp) override;
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
 
 private:
 
@@ -141,7 +156,7 @@ private:
 	QVector<double> _binData;
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 
 	Q_CLASSINFO("DisplayName", "Bin and reduce");
 	Q_CLASSINFO("ModifierCategory", "Analysis");

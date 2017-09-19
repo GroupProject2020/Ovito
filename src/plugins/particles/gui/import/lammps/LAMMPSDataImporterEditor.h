@@ -24,7 +24,7 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <plugins/particles/import/lammps/LAMMPSDataImporter.h>
-#include <gui/dataset/importexport/FileImporterEditor.h>
+#include <gui/dataset/io/FileImporterEditor.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
@@ -33,6 +33,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVI
  */
 class LAMMPSDataImporterEditor : public FileImporterEditor
 {
+	OVITO_CLASS(LAMMPSDataImporterEditor)
+	Q_OBJECT
+	
 public:
 
 	/// Constructor.
@@ -45,11 +48,6 @@ protected:
 
 	/// Creates the user interface controls for the editor.
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

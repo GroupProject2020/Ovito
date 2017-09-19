@@ -55,9 +55,6 @@ public:
 	/// \brief Lets the input mode render its overlay content in a viewport.
 	virtual void renderOverlay3D(Viewport* vp, ViewportSceneRenderer* renderer) override;
 
-	/// \brief Computes the bounding box of the visual viewport overlay rendered by the input mode.
-	virtual Box3 overlayBoundingBox(Viewport* vp, ViewportSceneRenderer* renderer) override;
-
 	/// \brief Indicates whether this input mode renders into the viewports.
 	virtual bool hasOverlay() override { return true; }
 
@@ -223,9 +220,6 @@ public:
 
 	/// \brief Lets the input mode render its overlay content in a viewport.
 	virtual void renderOverlay3D(Viewport* vp, ViewportSceneRenderer* renderer) override;
-
-	/// \brief Computes the bounding box of the visual viewport overlay rendered by the input mode.
-	virtual Box3 overlayBoundingBox(Viewport* vp, ViewportSceneRenderer* renderer) override;
 
 	/// \brief Indicates whether this input mode renders into the viewports.
 	virtual bool hasOverlay() override { return true; }

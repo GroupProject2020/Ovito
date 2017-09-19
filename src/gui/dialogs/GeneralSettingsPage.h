@@ -32,6 +32,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
  */
 class OVITO_GUI_EXPORT GeneralSettingsPage : public ApplicationSettingsDialogPage
 {
+	Q_OBJECT
+	OVITO_CLASS(GeneralSettingsPage)
+
 public:
 
 	/// Default constructor.
@@ -58,9 +61,6 @@ private:
 	QCheckBox* _enableUpdateChecks;
 	QCheckBox* _enableUsageStatistics;
 #endif
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

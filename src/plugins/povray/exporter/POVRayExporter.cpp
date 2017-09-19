@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <core/Core.h>
-#include <core/scene/SceneRoot.h>
-#include <core/animation/AnimationSettings.h>
-#include <core/utilities/concurrent/Task.h>
+#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/animation/AnimationSettings.h>
+#include <core/utilities/concurrent/Promise.h>
 #include <core/utilities/concurrent/TaskManager.h>
 #include <core/rendering/RenderSettings.h>
 #include <core/viewport/Viewport.h>
@@ -31,7 +31,7 @@
 
 namespace Ovito { namespace POVRay {
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(POVRayExporter, FileExporter);
+IMPLEMENT_OVITO_CLASS(POVRayExporter);
 
 /******************************************************************************
 * Constructs a new instance of the class.
@@ -41,8 +41,8 @@ POVRayExporter::POVRayExporter(DataSet* dataset) : FileExporter(dataset)
 }
 
 /******************************************************************************
-* Selects the natural scene nodes to be exported by this exporter under 
-* normal circumstances.
+* Selects the nodes from the scene to be exported by this exporter if 
+* no specific set of nodes was provided.
 ******************************************************************************/
 void POVRayExporter::selectStandardOutputData()
 {
@@ -105,26 +105,22 @@ bool POVRayExporter::exportFrame(int frameNumber, TimePoint time, const QString&
 	if(!FileExporter::exportFrame(frameNumber, time, filePath, taskManager))
 		return false;
 
-	// Wait until the scene is ready.
-	Future<void> sceneReadyFuture = dataset()->makeSceneReady();
-	if(!taskManager.waitForTask(sceneReadyFuture))
-		return false;
-
 	Viewport* vp = dataset()->viewportConfig()->activeViewport();
 	if(!vp) throwException(tr("POV-Ray exporter requires an active viewport."));
 
-	SynchronousTask exportTask(taskManager);
+	Promise<> exportTask = Promise<>::createSynchronous(taskManager, true, true);
 	exportTask.setProgressText(tr("Writing data to POV-Ray file"));
 
 	OVITO_ASSERT(_renderer);
-	Box3 boundingBox = _renderer->sceneBoundingBox(time);
-	ViewProjectionParameters projParams = vp->projectionParameters(time, _renderer->renderSettings()->outputImageAspectRatio(), boundingBox);
+	// Use a dummy bounding box to set up view projection.
+	Box3 boundingBox(Point3::Origin(), 1);
+	ViewProjectionParameters projParams = vp->computeProjectionParameters(time, _renderer->renderSettings()->outputImageAspectRatio(), boundingBox);
 	try {
-		_renderer->_exportTask = &exportTask;
+		_renderer->_exportTask = exportTask.sharedState();
 		_renderer->beginFrame(time, projParams, vp);
 		for(SceneNode* node : outputData()) {
-			_renderer->renderNode(node);
-			if(exportTask.isCanceled()) break;
+			if(!_renderer->renderNode(node, exportTask))
+				break;
 		}
 		_renderer->endFrame(!exportTask.isCanceled());
 	}

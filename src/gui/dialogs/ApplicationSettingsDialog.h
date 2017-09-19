@@ -23,7 +23,7 @@
 
 
 #include <gui/GUI.h>
-#include <core/object/OvitoObject.h>
+#include <core/oo/OvitoObject.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Dialogs)
 	
@@ -34,6 +34,9 @@ class ApplicationSettingsDialog;		// defined below.
  */
 class OVITO_GUI_EXPORT ApplicationSettingsDialogPage : public OvitoObject
 {
+	Q_OBJECT
+	OVITO_CLASS(ApplicationSettingsDialogPage)
+
 protected:
 
 	/// Base class constructor.
@@ -50,11 +53,6 @@ public:
 	/// \param settingsDialog The settings dialog box. 
 	/// \return true if the settings are valid; false if settings need to be corrected by the user and the dialog should not be closed.
 	virtual bool saveValues(ApplicationSettingsDialog* settingsDialog, QTabWidget* tabWidget) { return true; }
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 	
 /**

@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2014) Alexander Stukowski
+#  Copyright (2017) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -20,46 +20,35 @@
 ###############################################################################
 
 SET(SourceFiles 
-	objects/SimulationCellObject.cpp
-	objects/SimulationCellDisplay.cpp
-	objects/ParticlePropertyObject.cpp
+	objects/ParticleProperty.cpp
 	objects/ParticleDisplay.cpp
 	objects/ParticleType.cpp
-	objects/ParticleTypeProperty.cpp
 	objects/BondType.cpp
-	objects/BondPropertyObject.cpp
-	objects/BondTypeProperty.cpp
-	objects/VectorDisplay.cpp
+	objects/BondProperty.cpp
+	objects/BondsStorage.cpp
 	objects/BondsObject.cpp
 	objects/BondsDisplay.cpp
-	objects/SurfaceMesh.cpp
-	objects/SurfaceMeshDisplay.cpp
 	objects/TrajectoryObject.cpp
 	objects/TrajectoryDisplay.cpp
-	objects/TrajectoryGeneratorObject.cpp
-	objects/FieldQuantityObject.cpp
-	data/ParticleProperty.cpp
-	data/BondProperty.cpp
-	data/PropertyBase.cpp
-	data/BondsStorage.cpp
-	data/FieldQuantity.cpp
-	modifier/ParticleModifier.cpp
-	modifier/AsynchronousParticleModifier.cpp
-	modifier/coloring/AssignColorModifier.cpp
-	modifier/coloring/ColorCodingModifier.cpp
-	modifier/coloring/ColorLegendOverlay.cpp
+	objects/TrajectoryGenerator.cpp
+	objects/VectorDisplay.cpp
+	modifier/ParticleInputHelper.cpp
+	modifier/ParticleOutputHelper.cpp
 	modifier/coloring/AmbientOcclusionModifier.cpp
 	modifier/coloring/AmbientOcclusionRenderer.cpp
-	modifier/modify/SliceModifier.cpp
-	modifier/modify/DeleteParticlesModifier.cpp
-	modifier/modify/AffineTransformationModifier.cpp
+	modifier/coloring/ParticlesColorCodingModifierDelegate.cpp
+	modifier/coloring/ParticlesAssignColorModifierDelegate.cpp
 	modifier/modify/ShowPeriodicImagesModifier.cpp
 	modifier/modify/WrapPeriodicImagesModifier.cpp
 	modifier/modify/CreateBondsModifier.cpp
 	modifier/modify/LoadTrajectoryModifier.cpp
 	modifier/modify/CombineParticleSetsModifier.cpp
 	modifier/modify/CoordinationPolyhedraModifier.cpp
+	modifier/modify/ParticlesSliceModifierDelegate.cpp
+	modifier/modify/ParticlesAffineTransformationModifierDelegate.cpp
+	modifier/modify/ParticlesDeleteSelectedModifierDelegate.cpp
 	modifier/analysis/StructureIdentificationModifier.cpp
+	modifier/analysis/ReferenceConfigurationModifier.cpp
 	modifier/analysis/binandreduce/BinAndReduceModifier.cpp
 	modifier/analysis/bondangle/BondAngleAnalysisModifier.cpp
 	modifier/analysis/cna/CommonNeighborAnalysisModifier.cpp
@@ -69,25 +58,18 @@ SET(SourceFiles
 	modifier/analysis/strain/AtomicStrainModifier.cpp
 	modifier/analysis/diamond/IdentifyDiamondModifier.cpp	
 	modifier/analysis/voronoi/VoronoiAnalysisModifier.cpp
-	modifier/analysis/histogram/HistogramModifier.cpp
 	modifier/analysis/cluster/ClusterAnalysisModifier.cpp
-	modifier/analysis/scatterplot/ScatterPlotModifier.cpp
 	modifier/analysis/wignerseitz/WignerSeitzAnalysisModifier.cpp
 	modifier/analysis/ptm/PolyhedralTemplateMatchingModifier.cpp
-	#modifier/analysis/structural_clustering/StructuralClusteringModifier.cpp
 	modifier/selection/ExpandSelectionModifier.cpp
-	modifier/selection/InvertSelectionModifier.cpp
-	modifier/selection/SelectParticleTypeModifier.cpp
-	modifier/selection/SelectExpressionModifier.cpp
+	modifier/selection/ExpressionSelectionModifier.cpp
 	modifier/selection/ManualSelectionModifier.cpp
-	modifier/selection/ClearSelectionModifier.cpp
 	modifier/properties/ComputePropertyModifier.cpp
 	modifier/properties/FreezePropertyModifier.cpp
 	modifier/properties/ComputeBondLengthsModifier.cpp
-	modifier/fields/CreateIsosurfaceModifier.cpp
-	modifier/fields/MarchingCubes.cpp
+	modifier/properties/InterpolateTrajectoryModifier.cpp
 	import/ParticleImporter.cpp
-	import/ParticleFrameLoader.cpp
+	import/ParticleFrameData.cpp
 	import/InputColumnMapping.cpp
 	import/lammps/LAMMPSTextDumpImporter.cpp
 	import/lammps/LAMMPSBinaryDumpImporter.cpp
@@ -128,23 +110,11 @@ IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
 	)
 ENDIF()
 
-# List of source files of the GLU library used for polygon tessellation.
-SET(GLUSourceFiles
-	util/polytess/dict.c
-	util/polytess/geom.c
-	util/polytess/memalloc.c
-	util/polytess/mesh.c
-	util/polytess/normal.c
-	util/polytess/priorityq.c
-	util/polytess/render.c
-	util/polytess/sweep.c
-	util/polytess/tess.c
-	util/polytess/tessmono.c
-)
 
 OVITO_STANDARD_PLUGIN(Particles
-	SOURCES Particles.cpp ${SourceFiles} ${GLUSourceFiles}
+	SOURCES Particles.cpp ${SourceFiles}
 	LIB_DEPENDENCIES muParser
+	PLUGIN_DEPENDENCIES Mesh Grid
 	PRIVATE_LIB_DEPENDENCIES VoroPlusPlus OpenGLRenderer PolyhedralTemplateMatching CombinatoriallyOptimalPointRegistration
 	OPTIONAL_PLUGIN_DEPENDENCIES PyScript
 	PYTHON_WRAPPERS "${CMAKE_CURRENT_SOURCE_DIR}/resources/python/"

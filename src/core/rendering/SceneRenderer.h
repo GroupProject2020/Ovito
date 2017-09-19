@@ -28,8 +28,8 @@
 
 
 #include <core/Core.h>
-#include <core/animation/TimeInterval.h>
-#include <core/reference/RefTarget.h>
+#include <core/dataset/animation/TimeInterval.h>
+#include <core/oo/RefTarget.h>
 #include <core/viewport/Viewport.h>
 #include "LinePrimitive.h"
 #include "ParticlePrimitive.h"
@@ -46,6 +46,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
  */
 class OVITO_CORE_EXPORT ObjectPickInfo : public OvitoObject
 {
+	Q_OBJECT
+	OVITO_CLASS(ObjectPickInfo)
+
 protected:
 
 	/// Constructor
@@ -55,10 +58,6 @@ public:
 
 	/// Returns a human-readable string describing the picked object, which will be displayed in the status bar by OVITO.
 	virtual QString infoString(ObjectNode* objectNode, quint32 subobjectId) { return QString(); }
-
-private:
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 /**
@@ -66,6 +65,9 @@ private:
  */
 class OVITO_CORE_EXPORT SceneRenderer : public RefTarget
 {
+	OVITO_CLASS(SceneRenderer)
+	Q_OBJECT
+
 public:
 
 	enum StereoRenderingTask {
@@ -121,7 +123,7 @@ public:
 	/// \param time The time at which the bounding box should be computed.
 	/// \return An axis-aligned box in the world coordinate system that contains
 	///         everything to be rendered.
-	virtual Box3 sceneBoundingBox(TimePoint time);
+	Box3 computeSceneBoundingBox(TimePoint time, const ViewProjectionParameters& params, Viewport* vp, const PromiseBase& promise);
 
 	/// This method is called just before renderFrame() is called.
 	/// Sets the view projection parameters, the animation frame to render,
@@ -134,7 +136,7 @@ public:
 
 	/// Renders the current animation frame.
 	/// Returns false if the operation has been canceled by the user.
-	virtual bool renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, TaskManager& taskManager) = 0;
+	virtual bool renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, const PromiseBase& promise) = 0;
 
 	/// This method is called after renderFrame() has been called.
 	virtual void endFrame(bool renderSuccessful) {}
@@ -155,7 +157,7 @@ public:
 			bool translucentParticles = false) = 0;
 
 	/// Requests a new marker geometry buffer from the renderer.
-	virtual std::shared_ptr<MarkerPrimitive> createMarkerPrimitive(MarkerPrimitive::MarkerShape shape = MarkerPrimitive::DotShape) = 0;
+	virtual std::shared_ptr<MarkerPrimitive> createMarkerPrimitive(MarkerPrimitive::MarkerShape shape) = 0;
 
 	/// Requests a new text geometry buffer from the renderer.
 	virtual std::shared_ptr<TextPrimitive> createTextPrimitive() = 0;
@@ -179,6 +181,21 @@ public:
 	/// Returns whether object picking mode is active.
 	bool isPicking() const { return _isPicking; }
 
+	/// Returns whether bounding box calculation pass is active.
+	bool isBoundingBoxPass() const { return _isBoundingBoxPass; }
+
+	/// Adds a bounding box given in local coordinates to the global bounding box.
+	/// This method must be called during the bounding box render pass.
+	void addToLocalBoundingBox(const Box3& bb) {
+		_sceneBoundingBox.addBox(bb.transformed(worldTransform()));
+	}
+
+	/// Adds a point given in local coordinates to the global bounding box.
+	/// This method must be called during the bounding box render pass.
+	void addToLocalBoundingBox(const Point3& p) {
+		_sceneBoundingBox.addPoint(worldTransform() * p);
+	}
+
 	/// When picking mode is active, this registers an object being rendered.
 	virtual quint32 beginPickObject(ObjectNode* objNode, ObjectPickInfo* pickInfo = nullptr) { return 0; }
 
@@ -196,32 +213,26 @@ public:
 	/// This method is mainly used with the interactive viewport renderer.
 	virtual void setHighlightMode(int pass) {}
 
-	/// \brief Computes the bounding box of the the 3D visual elements
-	///        shown only in the interactive viewports.
-	/// \param time The time at which the bounding box should be computed.
-	/// \return An axis-aligned box in the world coordinate system that contains
-	///         everything to be rendered.
-	///
-	/// The default implementation returns an empty box. This method is only re-implemented
-	/// by the interactive viewport scene renderer.
-	virtual Box3 boundingBoxInteractive(TimePoint time, Viewport* viewport) { return Box3(); }
-
 protected:
 
 	/// Constructor.
 	SceneRenderer(DataSet* dataset);
 
 	/// \brief Renders all nodes in the scene.
-	virtual void renderScene();
+	virtual bool renderScene(const PromiseBase& promise);
 
 	/// \brief Render a scene node (and all its children).
-	virtual void renderNode(SceneNode* node);
+	virtual bool renderNode(SceneNode* node, const PromiseBase& promise);
+
+	/// \brief This virtual method is responsible for rendering additional content that is only
+	///       visible in the interactive viewports.
+	virtual void renderInteractiveContent() {}
 
 	/// \brief Renders the visual representation of the modifiers.
 	void renderModifiers(bool renderOverlay);
 
 	/// \brief Renders the visual representation of the modifiers.
-	void renderModifiers(PipelineObject* pipelineObj, ObjectNode* objNode, bool renderOverlay);
+	void renderModifiers(ObjectNode* objNode, bool renderOverlay);
 
 	/// \brief Gets the trajectory of motion of a node.
 	std::vector<Point3> getNodeTrajectory(SceneNode* node);
@@ -229,22 +240,19 @@ protected:
 	/// \brief Renders the trajectory of motion of a node in the interactive viewports.
 	void renderNodeTrajectory(SceneNode* node);
 
-	/// \brief Determines the bounding box of the visual representation of the modifiers.
-	void boundingBoxModifiers(PipelineObject* pipelineObj, ObjectNode* objNode, Box3& boundingBox);
-
 	/// Sets whether object picking mode is active.
 	void setPicking(bool enable) { _isPicking = enable; }
 
 private:
 
 	/// The data set being rendered.
-	DataSet* _renderDataset;
+	DataSet* _renderDataset = nullptr;
 
 	/// The current render settings.
-	RenderSettings* _settings;
+	RenderSettings* _settings = nullptr;
 
 	/// The viewport whose contents are currently being rendered.
-	Viewport* _viewport;
+	Viewport* _viewport = nullptr;
 
 	/// The view projection parameters.
 	ViewProjectionParameters _projParams;
@@ -252,11 +260,14 @@ private:
 	/// The animation time being rendered.
 	TimePoint _time;
 
-	/// Indicates that object picking mode is active.
-	bool _isPicking;
+	/// Indicates that an object picking pass is active.
+	bool _isPicking = false;
 
-	Q_OBJECT
-	OVITO_OBJECT
+	/// Indicates that a bounding box pass is active.
+	bool _isBoundingBoxPass = false;
+
+	/// Working variable used for computing the bounding box of the entire scene.
+	Box3 _sceneBoundingBox;
 };
 
 OVITO_END_INLINE_NAMESPACE

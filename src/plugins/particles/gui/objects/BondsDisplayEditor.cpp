@@ -29,7 +29,7 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_OBJECT(BondsDisplayEditor, PropertiesEditor);
+
 SET_OVITO_OBJECT_EDITOR(BondsDisplay, BondsDisplayEditor);
 
 /******************************************************************************
@@ -48,16 +48,16 @@ void BondsDisplayEditor::createUI(const RolloutInsertionParameters& rolloutParam
 
 	// Shading mode.
 	VariantComboBoxParameterUI* shadingModeUI = new VariantComboBoxParameterUI(this, PROPERTY_FIELD(BondsDisplay::shadingMode));
-	shadingModeUI->comboBox()->addItem(tr("Normal"), qVariantFromValue(ArrowPrimitive::NormalShading));
-	shadingModeUI->comboBox()->addItem(tr("Flat"), qVariantFromValue(ArrowPrimitive::FlatShading));
+	shadingModeUI->comboBox()->addItem(tr("Normal"), QVariant::fromValue(ArrowPrimitive::NormalShading));
+	shadingModeUI->comboBox()->addItem(tr("Flat"), QVariant::fromValue(ArrowPrimitive::FlatShading));
 	layout->addWidget(new QLabel(tr("Shading mode:")), 0, 0);
 	layout->addWidget(shadingModeUI->comboBox(), 0, 1);
 
 	// Rendering quality.
 	VariantComboBoxParameterUI* renderingQualityUI = new VariantComboBoxParameterUI(this, PROPERTY_FIELD(BondsDisplay::renderingQuality));
-	renderingQualityUI->comboBox()->addItem(tr("Low"), qVariantFromValue(ArrowPrimitive::LowQuality));
-	renderingQualityUI->comboBox()->addItem(tr("Medium"), qVariantFromValue(ArrowPrimitive::MediumQuality));
-	renderingQualityUI->comboBox()->addItem(tr("High"), qVariantFromValue(ArrowPrimitive::HighQuality));
+	renderingQualityUI->comboBox()->addItem(tr("Low"), QVariant::fromValue(ArrowPrimitive::LowQuality));
+	renderingQualityUI->comboBox()->addItem(tr("Medium"), QVariant::fromValue(ArrowPrimitive::MediumQuality));
+	renderingQualityUI->comboBox()->addItem(tr("High"), QVariant::fromValue(ArrowPrimitive::HighQuality));
 	layout->addWidget(new QLabel(tr("Rendering quality:")), 1, 0);
 	layout->addWidget(renderingQualityUI->comboBox(), 1, 1);
 

@@ -20,18 +20,18 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
+#include <plugins/particles/objects/ParticleType.h>
 #include <core/utilities/units/UnitsManager.h>
 #include <core/rendering/SceneRenderer.h>
 #include "ParticleDisplay.h"
-#include "ParticleTypeProperty.h"
 
 namespace Ovito { namespace Particles {
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(ParticleDisplay, DisplayObject);
-IMPLEMENT_OVITO_OBJECT(ParticlePickInfo, ObjectPickInfo);
-DEFINE_FLAGS_PROPERTY_FIELD(ParticleDisplay, defaultParticleRadius, "DefaultParticleRadius", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(ParticleDisplay, renderingQuality, "RenderingQuality");
-DEFINE_PROPERTY_FIELD(ParticleDisplay, particleShape, "ParticleShape");
+IMPLEMENT_OVITO_CLASS(ParticleDisplay);	
+IMPLEMENT_OVITO_CLASS(ParticlePickInfo);	
+DEFINE_PROPERTY_FIELD(ParticleDisplay, defaultParticleRadius);
+DEFINE_PROPERTY_FIELD(ParticleDisplay, renderingQuality);
+DEFINE_PROPERTY_FIELD(ParticleDisplay, particleShape);
 SET_PROPERTY_FIELD_LABEL(ParticleDisplay, defaultParticleRadius, "Default particle radius");
 SET_PROPERTY_FIELD_LABEL(ParticleDisplay, renderingQuality, "Rendering quality");
 SET_PROPERTY_FIELD_LABEL(ParticleDisplay, particleShape, "Shape");
@@ -45,20 +45,17 @@ ParticleDisplay::ParticleDisplay(DataSet* dataset) : DisplayObject(dataset),
 	_renderingQuality(ParticlePrimitive::AutoQuality),
 	_particleShape(Sphere)
 {
-	INIT_PROPERTY_FIELD(defaultParticleRadius);
-	INIT_PROPERTY_FIELD(renderingQuality);
-	INIT_PROPERTY_FIELD(particleShape);
 }
 
 /******************************************************************************
 * Computes the bounding box of the object.
 ******************************************************************************/
-Box3 ParticleDisplay::boundingBox(TimePoint time, DataObject* dataObject, ObjectNode* contextNode, const PipelineFlowState& flowState)
+Box3 ParticleDisplay::boundingBox(TimePoint time, DataObject* dataObject, ObjectNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
-	ParticlePropertyObject* positionProperty = dynamic_object_cast<ParticlePropertyObject>(dataObject);
-	ParticlePropertyObject* radiusProperty = ParticlePropertyObject::findInState(flowState, ParticleProperty::RadiusProperty);
-	ParticleTypeProperty* typeProperty = dynamic_object_cast<ParticleTypeProperty>(ParticlePropertyObject::findInState(flowState, ParticleProperty::ParticleTypeProperty));
-	ParticlePropertyObject* shapeProperty = ParticlePropertyObject::findInState(flowState, ParticleProperty::AsphericalShapeProperty);
+	ParticleProperty* positionProperty = dynamic_object_cast<ParticleProperty>(dataObject);
+	ParticleProperty* radiusProperty = ParticleProperty::findInState(flowState, ParticleProperty::RadiusProperty);
+	ParticleProperty* typeProperty = ParticleProperty::findInState(flowState, ParticleProperty::TypeProperty);
+	ParticleProperty* shapeProperty = ParticleProperty::findInState(flowState, ParticleProperty::AsphericalShapeProperty);
 
 	// Detect if the input data has changed since the last time we computed the bounding box.
 	if(_boundingBoxCacheHelper.updateState(
@@ -76,10 +73,10 @@ Box3 ParticleDisplay::boundingBox(TimePoint time, DataObject* dataObject, Object
 /******************************************************************************
 * Computes the bounding box of the particles.
 ******************************************************************************/
-Box3 ParticleDisplay::particleBoundingBox(ParticlePropertyObject* positionProperty, ParticleTypeProperty* typeProperty, ParticlePropertyObject* radiusProperty, ParticlePropertyObject* shapeProperty, bool includeParticleRadius)
+Box3 ParticleDisplay::particleBoundingBox(ParticleProperty* positionProperty, ParticleProperty* typeProperty, ParticleProperty* radiusProperty, ParticleProperty* shapeProperty, bool includeParticleRadius)
 {
 	OVITO_ASSERT(positionProperty == nullptr || positionProperty->type() == ParticleProperty::PositionProperty);
-	OVITO_ASSERT(typeProperty == nullptr || typeProperty->type() == ParticleProperty::ParticleTypeProperty);
+	OVITO_ASSERT(typeProperty == nullptr || typeProperty->type() == ParticleProperty::TypeProperty);
 	OVITO_ASSERT(radiusProperty == nullptr || radiusProperty->type() == ParticleProperty::RadiusProperty);
 	OVITO_ASSERT(shapeProperty == nullptr || shapeProperty->type() == ParticleProperty::AsphericalShapeProperty);
 	if(particleShape() != Sphere && particleShape() != Box && particleShape() != Cylinder && particleShape() != Spherocylinder)
@@ -95,7 +92,7 @@ Box3 ParticleDisplay::particleBoundingBox(ParticlePropertyObject* positionProper
 	// Extend box to account for radii/shape of particles.
 	FloatType maxAtomRadius = defaultParticleRadius();
 	if(typeProperty) {
-		for(const auto& it : typeProperty->radiusMap()) {
+		for(const auto& it : ParticleType::typeRadiusMap(typeProperty)) {
 			maxAtomRadius = std::max(maxAtomRadius, it.second);
 		}
 	}
@@ -120,10 +117,10 @@ Box3 ParticleDisplay::particleBoundingBox(ParticlePropertyObject* positionProper
 /******************************************************************************
 * Determines the display particle colors.
 ******************************************************************************/
-void ParticleDisplay::particleColors(std::vector<Color>& output, ParticlePropertyObject* colorProperty, ParticleTypeProperty* typeProperty, ParticlePropertyObject* selectionProperty)
+void ParticleDisplay::particleColors(std::vector<Color>& output, ParticleProperty* colorProperty, ParticleProperty* typeProperty, ParticleProperty* selectionProperty)
 {
 	OVITO_ASSERT(colorProperty == nullptr || colorProperty->type() == ParticleProperty::ColorProperty);
-	OVITO_ASSERT(typeProperty == nullptr || typeProperty->type() == ParticleProperty::ParticleTypeProperty);
+	OVITO_ASSERT(typeProperty == nullptr || typeProperty->type() == ParticleProperty::TypeProperty);
 	OVITO_ASSERT(selectionProperty == nullptr || selectionProperty->type() == ParticleProperty::SelectionProperty);
 
 	Color defaultColor = defaultParticleColor();
@@ -134,7 +131,7 @@ void ParticleDisplay::particleColors(std::vector<Color>& output, ParticlePropert
 	else if(typeProperty && typeProperty->size() == output.size()) {
 		// Assign colors based on particle types.
 		// Generate a lookup map for particle type colors.
-		const std::map<int,Color> colorMap = typeProperty->colorMap();
+		const std::map<int,Color> colorMap = typeProperty->typeColorMap();
 		std::array<Color,16> colorArray;
 		// Check if all type IDs are within a small, non-negative range.
 		// If yes, we can use an array lookup strategy. Otherwise we have to use a dictionary lookup strategy, which is slower.
@@ -183,10 +180,10 @@ void ParticleDisplay::particleColors(std::vector<Color>& output, ParticlePropert
 /******************************************************************************
 * Determines the display particle radii.
 ******************************************************************************/
-void ParticleDisplay::particleRadii(std::vector<FloatType>& output, ParticlePropertyObject* radiusProperty, ParticleTypeProperty* typeProperty)
+void ParticleDisplay::particleRadii(std::vector<FloatType>& output, ParticleProperty* radiusProperty, ParticleProperty* typeProperty)
 {
 	OVITO_ASSERT(radiusProperty == nullptr || radiusProperty->type() == ParticleProperty::RadiusProperty);
-	OVITO_ASSERT(typeProperty == nullptr || typeProperty->type() == ParticleProperty::ParticleTypeProperty);
+	OVITO_ASSERT(typeProperty == nullptr || typeProperty->type() == ParticleProperty::TypeProperty);
 
 	FloatType defaultRadius = defaultParticleRadius();
 	if(radiusProperty && radiusProperty->size() == output.size()) {
@@ -197,7 +194,7 @@ void ParticleDisplay::particleRadii(std::vector<FloatType>& output, ParticleProp
 	else if(typeProperty && typeProperty->size() == output.size()) {
 		// Assign radii based on particle types.
 		// Build a lookup map for particle type radii.
-		const std::map<int,FloatType> radiusMap = typeProperty->radiusMap();
+		const std::map<int,FloatType> radiusMap = ParticleType::typeRadiusMap(typeProperty);
 		// Skip the following loop if all per-type radii are zero. In this case, simply use the default radius for all particles.
 		if(std::any_of(radiusMap.cbegin(), radiusMap.cend(), [](const std::pair<int,FloatType>& it) { return it.second != 0; })) {
 			// Fill radius array.
@@ -223,10 +220,10 @@ void ParticleDisplay::particleRadii(std::vector<FloatType>& output, ParticleProp
 /******************************************************************************
 * Determines the display radius of a single particle.
 ******************************************************************************/
-FloatType ParticleDisplay::particleRadius(size_t particleIndex, ParticlePropertyObject* radiusProperty, ParticleTypeProperty* typeProperty)
+FloatType ParticleDisplay::particleRadius(size_t particleIndex, ParticleProperty* radiusProperty, ParticleProperty* typeProperty)
 {
 	OVITO_ASSERT(radiusProperty == nullptr || radiusProperty->type() == ParticleProperty::RadiusProperty);
-	OVITO_ASSERT(typeProperty == nullptr || typeProperty->type() == ParticleProperty::ParticleTypeProperty);
+	OVITO_ASSERT(typeProperty == nullptr || typeProperty->type() == ParticleProperty::TypeProperty);
 
 	if(radiusProperty && radiusProperty->size() > particleIndex) {
 		// Take particle radius directly from the radius property.
@@ -235,7 +232,7 @@ FloatType ParticleDisplay::particleRadius(size_t particleIndex, ParticleProperty
 	}
 	else if(typeProperty && typeProperty->size() > particleIndex) {
 		// Assign radius based on particle types.
-		ParticleType* ptype = typeProperty->particleType(typeProperty->getInt(particleIndex));
+		ParticleType* ptype = static_object_cast<ParticleType>(typeProperty->elementType(typeProperty->getInt(particleIndex)));
 		if(ptype && ptype->radius() > 0)
 			return ptype->radius();
 	}
@@ -246,10 +243,10 @@ FloatType ParticleDisplay::particleRadius(size_t particleIndex, ParticleProperty
 /******************************************************************************
 * Determines the display color of a single particle.
 ******************************************************************************/
-ColorA ParticleDisplay::particleColor(size_t particleIndex, ParticlePropertyObject* colorProperty, ParticleTypeProperty* typeProperty, ParticlePropertyObject* selectionProperty, ParticlePropertyObject* transparencyProperty)
+ColorA ParticleDisplay::particleColor(size_t particleIndex, ParticleProperty* colorProperty, ParticleProperty* typeProperty, ParticleProperty* selectionProperty, ParticleProperty* transparencyProperty)
 {
 	OVITO_ASSERT(colorProperty == nullptr || colorProperty->type() == ParticleProperty::ColorProperty);
-	OVITO_ASSERT(typeProperty == nullptr || typeProperty->type() == ParticleProperty::ParticleTypeProperty);
+	OVITO_ASSERT(typeProperty == nullptr || typeProperty->type() == ParticleProperty::TypeProperty);
 	OVITO_ASSERT(selectionProperty == nullptr || selectionProperty->type() == ParticleProperty::SelectionProperty);
 	OVITO_ASSERT(transparencyProperty == nullptr || transparencyProperty->type() == ParticleProperty::TransparencyProperty);
 
@@ -266,7 +263,7 @@ ColorA ParticleDisplay::particleColor(size_t particleIndex, ParticlePropertyObje
 	}
 	else if(typeProperty && typeProperty->size() > particleIndex) {
 		// Return color based on particle types.
-		ParticleType* ptype = typeProperty->particleType(typeProperty->getInt(particleIndex));
+		ElementType* ptype = typeProperty->elementType(typeProperty->getInt(particleIndex));
 		if(ptype)
 			c = ptype->color();
 	}
@@ -282,7 +279,7 @@ ColorA ParticleDisplay::particleColor(size_t particleIndex, ParticlePropertyObje
 /******************************************************************************
 * Returns the actual rendering quality used to render the particles.
 ******************************************************************************/
-ParticlePrimitive::RenderingQuality ParticleDisplay::effectiveRenderingQuality(SceneRenderer* renderer, ParticlePropertyObject* positionProperty) const
+ParticlePrimitive::RenderingQuality ParticleDisplay::effectiveRenderingQuality(SceneRenderer* renderer, ParticleProperty* positionProperty) const
 {
 	ParticlePrimitive::RenderingQuality renderQuality = renderingQuality();
 	if(renderQuality == ParticlePrimitive::AutoQuality) {
@@ -301,7 +298,7 @@ ParticlePrimitive::RenderingQuality ParticleDisplay::effectiveRenderingQuality(S
 /******************************************************************************
 * Returns the actual particle shape used to render the particles.
 ******************************************************************************/
-ParticlePrimitive::ParticleShape ParticleDisplay::effectiveParticleShape(ParticlePropertyObject* shapeProperty, ParticlePropertyObject* orientationProperty) const
+ParticlePrimitive::ParticleShape ParticleDisplay::effectiveParticleShape(ParticleProperty* shapeProperty, ParticleProperty* orientationProperty) const
 {
 	if(particleShape() == Sphere) {
 		if(shapeProperty != nullptr) return ParticlePrimitive::EllipsoidShape;
@@ -328,15 +325,21 @@ ParticlePrimitive::ParticleShape ParticleDisplay::effectiveParticleShape(Particl
 ******************************************************************************/
 void ParticleDisplay::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, ObjectNode* contextNode)
 {
+	if(renderer->isBoundingBoxPass()) {
+		TimeInterval validityInterval;
+		renderer->addToLocalBoundingBox(boundingBox(time, dataObject, contextNode, flowState, validityInterval));
+		return;
+	}
+
 	// Get input data.
-	ParticlePropertyObject* positionProperty = dynamic_object_cast<ParticlePropertyObject>(dataObject);
-	ParticlePropertyObject* radiusProperty = ParticlePropertyObject::findInState(flowState, ParticleProperty::RadiusProperty);
-	ParticlePropertyObject* colorProperty = ParticlePropertyObject::findInState(flowState, ParticleProperty::ColorProperty);
-	ParticleTypeProperty* typeProperty = dynamic_object_cast<ParticleTypeProperty>(ParticlePropertyObject::findInState(flowState, ParticleProperty::ParticleTypeProperty));
-	ParticlePropertyObject* selectionProperty = renderer->isInteractive() ? ParticlePropertyObject::findInState(flowState, ParticleProperty::SelectionProperty) : nullptr;
-	ParticlePropertyObject* transparencyProperty = ParticlePropertyObject::findInState(flowState, ParticleProperty::TransparencyProperty);
-	ParticlePropertyObject* shapeProperty = ParticlePropertyObject::findInState(flowState, ParticleProperty::AsphericalShapeProperty);
-	ParticlePropertyObject* orientationProperty = ParticlePropertyObject::findInState(flowState, ParticleProperty::OrientationProperty);
+	ParticleProperty* positionProperty = dynamic_object_cast<ParticleProperty>(dataObject);
+	ParticleProperty* radiusProperty = ParticleProperty::findInState(flowState, ParticleProperty::RadiusProperty);
+	ParticleProperty* colorProperty = ParticleProperty::findInState(flowState, ParticleProperty::ColorProperty);
+	ParticleProperty* typeProperty = ParticleProperty::findInState(flowState, ParticleProperty::TypeProperty);
+	ParticleProperty* selectionProperty = renderer->isInteractive() ? ParticleProperty::findInState(flowState, ParticleProperty::SelectionProperty) : nullptr;
+	ParticleProperty* transparencyProperty = ParticleProperty::findInState(flowState, ParticleProperty::TransparencyProperty);
+	ParticleProperty* shapeProperty = ParticleProperty::findInState(flowState, ParticleProperty::AsphericalShapeProperty);
+	ParticleProperty* orientationProperty = ParticleProperty::findInState(flowState, ParticleProperty::OrientationProperty);
 	if(particleShape() != Sphere && particleShape() != Box && particleShape() != Cylinder && particleShape() != Spherocylinder) {
 		shapeProperty = nullptr;
 		orientationProperty = nullptr;
@@ -426,7 +429,7 @@ void ParticleDisplay::render(TimePoint time, DataObject* dataObject, const Pipel
 			else if(typeProperty && typeProperty->size() == particleCount) {
 				// Assign radii based on particle types.
 				// Build a lookup map for particle type radii.
-				const std::map<int,FloatType> radiusMap = typeProperty->radiusMap();
+				const std::map<int,FloatType> radiusMap = ParticleType::typeRadiusMap(typeProperty);
 				// Skip the following loop if all per-type radii are zero. In this case, simply use the default radius for all particles.
 				if(std::any_of(radiusMap.cbegin(), radiusMap.cend(), [](const std::pair<int,FloatType>& it) { return it.second != 0; })) {
 					// Allocate memory buffer.
@@ -610,24 +613,29 @@ void ParticleDisplay::render(TimePoint time, DataObject* dataObject, const Pipel
 ******************************************************************************/
 void ParticleDisplay::highlightParticle(int particleIndex, const PipelineFlowState& flowState, SceneRenderer* renderer)
 {
+	if(renderer->isBoundingBoxPass()) {
+		renderer->addToLocalBoundingBox(highlightParticleBoundingBox(particleIndex, flowState, renderer->worldTransform(), renderer->viewport()));
+		return;
+	}
+
 	// Fetch properties of selected particle which are needed to render the overlay.
-	ParticlePropertyObject* posProperty = nullptr;
-	ParticlePropertyObject* radiusProperty = nullptr;
-	ParticlePropertyObject* colorProperty = nullptr;
-	ParticlePropertyObject* selectionProperty = nullptr;
-	ParticlePropertyObject* transparencyProperty = nullptr;
-	ParticlePropertyObject* shapeProperty = nullptr;
-	ParticlePropertyObject* orientationProperty = nullptr;
-	ParticleTypeProperty* typeProperty = nullptr;
+	ParticleProperty* posProperty = nullptr;
+	ParticleProperty* radiusProperty = nullptr;
+	ParticleProperty* colorProperty = nullptr;
+	ParticleProperty* selectionProperty = nullptr;
+	ParticleProperty* transparencyProperty = nullptr;
+	ParticleProperty* shapeProperty = nullptr;
+	ParticleProperty* orientationProperty = nullptr;
+	ParticleProperty* typeProperty = nullptr;
 	for(DataObject* dataObj : flowState.objects()) {
-		ParticlePropertyObject* property = dynamic_object_cast<ParticlePropertyObject>(dataObj);
+		ParticleProperty* property = dynamic_object_cast<ParticleProperty>(dataObj);
 		if(!property) continue;
 		if(property->type() == ParticleProperty::PositionProperty && property->size() >= particleIndex)
 			posProperty = property;
 		else if(property->type() == ParticleProperty::RadiusProperty && property->size() >= particleIndex)
 			radiusProperty = property;
-		else if(property->type() == ParticleProperty::ParticleTypeProperty && property->size() >= particleIndex)
-			typeProperty = dynamic_object_cast<ParticleTypeProperty>(property);
+		else if(property->type() == ParticleProperty::TypeProperty && property->size() >= particleIndex)
+			typeProperty = property;
 		else if(property->type() == ParticleProperty::ColorProperty && property->size() >= particleIndex)
 			colorProperty = property;
 		else if(property->type() == ParticleProperty::SelectionProperty && property->size() >= particleIndex)
@@ -748,17 +756,18 @@ void ParticleDisplay::highlightParticle(int particleIndex, const PipelineFlowSta
 }
 
 /******************************************************************************
-* Compute the (local) bounding box of the marker around a particle used to highlight it in the viewports.
+* Compute the (local) bounding box of the marker around a particle used to 
+* highlight it in the viewports.
 ******************************************************************************/
 Box3 ParticleDisplay::highlightParticleBoundingBox(int particleIndex, const PipelineFlowState& flowState, const AffineTransformation& tm, Viewport* viewport)
 {
 	// Fetch properties of selected particle needed to compute the bounding box.
-	ParticlePropertyObject* posProperty = nullptr;
-	ParticlePropertyObject* radiusProperty = nullptr;
-	ParticlePropertyObject* shapeProperty = nullptr;
-	ParticleTypeProperty* typeProperty = nullptr;
+	ParticleProperty* posProperty = nullptr;
+	ParticleProperty* radiusProperty = nullptr;
+	ParticleProperty* shapeProperty = nullptr;
+	ParticleProperty* typeProperty = nullptr;
 	for(DataObject* dataObj : flowState.objects()) {
-		ParticlePropertyObject* property = dynamic_object_cast<ParticlePropertyObject>(dataObj);
+		ParticleProperty* property = dynamic_object_cast<ParticleProperty>(dataObj);
 		if(!property) continue;
 		if(property->type() == ParticleProperty::PositionProperty && property->size() >= particleIndex)
 			posProperty = property;
@@ -766,8 +775,8 @@ Box3 ParticleDisplay::highlightParticleBoundingBox(int particleIndex, const Pipe
 			radiusProperty = property;
 		else if(property->type() == ParticleProperty::AsphericalShapeProperty && property->size() >= particleIndex)
 			shapeProperty = property;
-		else if(property->type() == ParticleProperty::ParticleTypeProperty && property->size() >= particleIndex)
-			typeProperty = dynamic_object_cast<ParticleTypeProperty>(property);
+		else if(property->type() == ParticleProperty::TypeProperty && property->size() >= particleIndex)
+			typeProperty = property;
 	}
 	if(!posProperty)
 		return Box3();
@@ -784,10 +793,10 @@ Box3 ParticleDisplay::highlightParticleBoundingBox(int particleIndex, const Pipe
 		radius *= 2;
 	}
 
-	if(radius <= 0)
+	if(radius <= 0 || !viewport)
 		return Box3();
 
-	return Box3(pos, radius + viewport->nonScalingSize(tm * pos) * 1e-1f);
+	return Box3(pos, radius + viewport->nonScalingSize(tm * pos) * FloatType(1e-1));
 }
 
 /******************************************************************************
@@ -826,7 +835,7 @@ QString ParticlePickInfo::particleInfoString(const PipelineFlowState& pipelineSt
 {
 	QString str;
 	for(DataObject* dataObj : pipelineState.objects()) {
-		ParticlePropertyObject* property = dynamic_object_cast<ParticlePropertyObject>(dataObj);
+		ParticleProperty* property = dynamic_object_cast<ParticleProperty>(dataObj);
 		if(!property || property->size() <= particleIndex) continue;
 		if(property->type() == ParticleProperty::SelectionProperty) continue;
 		if(property->type() == ParticleProperty::ColorProperty) continue;
@@ -839,9 +848,8 @@ QString ParticlePickInfo::particleInfoString(const PipelineFlowState& pipelineSt
 			QString valueString;
 			if(property->dataType() == qMetaTypeId<int>()) {
 				str += QString::number(property->getIntComponent(particleIndex, component));
-				ParticleTypeProperty* typeProperty = dynamic_object_cast<ParticleTypeProperty>(property);
-				if(typeProperty && typeProperty->particleTypes().empty() == false) {
-					if(ParticleType* ptype = typeProperty->particleType(property->getIntComponent(particleIndex, component)))
+				if(property->elementTypes().empty() == false) {
+					if(ElementType* ptype = property->elementType(property->getIntComponent(particleIndex, component)))
 						str += QString(" (%1)").arg(ptype->name());
 				}
 			}

@@ -23,13 +23,12 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <core/scene/objects/DisplayObject.h>
-#include <core/scene/objects/WeakVersionedObjectReference.h>
+#include <core/dataset/data/DisplayObject.h>
+#include <core/dataset/data/VersionedDataObjectRef.h>
 #include <core/rendering/ParticlePrimitive.h>
 #include <core/rendering/ArrowPrimitive.h>
 #include <core/rendering/SceneRenderer.h>
-#include "ParticlePropertyObject.h"
-#include "ParticleTypeProperty.h"
+#include "ParticleProperty.h"
 
 namespace Ovito { namespace Particles {
 
@@ -38,6 +37,10 @@ namespace Ovito { namespace Particles {
  */
 class OVITO_PARTICLES_EXPORT ParticleDisplay : public DisplayObject
 {
+	Q_OBJECT
+	OVITO_CLASS(ParticleDisplay)
+	Q_CLASSINFO("DisplayName", "Particles");
+	
 public:
 
 	/// The shapes supported by the particle display object.
@@ -60,7 +63,7 @@ public:
 	virtual void render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, ObjectNode* contextNode) override;
 
 	/// \brief Computes the bounding box of the object.
-	virtual Box3 boundingBox(TimePoint time, DataObject* dataObject, ObjectNode* contextNode, const PipelineFlowState& flowState) override;
+	virtual Box3 boundingBox(TimePoint time, DataObject* dataObject, ObjectNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval) override;
 
 	/// \brief Returns the default display color for particles.
 	Color defaultParticleColor() const { return Color(1,1,1); }
@@ -69,25 +72,25 @@ public:
 	Color selectionParticleColor() const { return Color(1,0,0); }
 
 	/// \brief Returns the actual particle shape used to render the particles.
-	ParticlePrimitive::ParticleShape effectiveParticleShape(ParticlePropertyObject* shapeProperty, ParticlePropertyObject* orientationProperty) const;
+	ParticlePrimitive::ParticleShape effectiveParticleShape(ParticleProperty* shapeProperty, ParticleProperty* orientationProperty) const;
 
 	/// \brief Returns the actual rendering quality used to render the particles.
-	ParticlePrimitive::RenderingQuality effectiveRenderingQuality(SceneRenderer* renderer, ParticlePropertyObject* positionProperty) const;
+	ParticlePrimitive::RenderingQuality effectiveRenderingQuality(SceneRenderer* renderer, ParticleProperty* positionProperty) const;
 
 	/// \brief Determines the display particle colors.
-	void particleColors(std::vector<Color>& output, ParticlePropertyObject* colorProperty, ParticleTypeProperty* typeProperty, ParticlePropertyObject* selectionProperty = nullptr);
+	void particleColors(std::vector<Color>& output, ParticleProperty* colorProperty, ParticleProperty* typeProperty, ParticleProperty* selectionProperty = nullptr);
 
 	/// \brief Determines the display particle radii.
-	void particleRadii(std::vector<FloatType>& output, ParticlePropertyObject* radiusProperty, ParticleTypeProperty* typeProperty);
+	void particleRadii(std::vector<FloatType>& output, ParticleProperty* radiusProperty, ParticleProperty* typeProperty);
 
 	/// \brief Determines the display radius of a single particle.
-	FloatType particleRadius(size_t particleIndex, ParticlePropertyObject* radiusProperty, ParticleTypeProperty* typeProperty);
+	FloatType particleRadius(size_t particleIndex, ParticleProperty* radiusProperty, ParticleProperty* typeProperty);
 
 	/// \brief Determines the display color of a single particle.
-	ColorA particleColor(size_t particleIndex, ParticlePropertyObject* colorProperty, ParticleTypeProperty* typeProperty, ParticlePropertyObject* selectionProperty, ParticlePropertyObject* transparencyProperty);
+	ColorA particleColor(size_t particleIndex, ParticleProperty* colorProperty, ParticleProperty* typeProperty, ParticleProperty* selectionProperty, ParticleProperty* transparencyProperty);
 
 	/// \brief Computes the bounding box of the particles.
-	Box3 particleBoundingBox(ParticlePropertyObject* positionProperty, ParticleTypeProperty* typeProperty, ParticlePropertyObject* radiusProperty, ParticlePropertyObject* shapeProperty, bool includeParticleRadius = true);
+	Box3 particleBoundingBox(ParticleProperty* positionProperty, ParticleProperty* typeProperty, ParticleProperty* radiusProperty, ParticleProperty* shapeProperty, bool includeParticleRadius = true);
 
 	/// \brief Render a marker around a particle to highlight it in the viewports.
 	void highlightParticle(int particleIndex, const PipelineFlowState& flowState, SceneRenderer* renderer);
@@ -103,7 +106,7 @@ public:
 private:
 
 	/// Controls the default display radius of atomic particles.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, defaultParticleRadius, setDefaultParticleRadius);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, defaultParticleRadius, setDefaultParticleRadius, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the rendering quality mode for particles.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(ParticlePrimitive::RenderingQuality, renderingQuality, setRenderingQuality);
@@ -123,43 +126,43 @@ private:
 	/// This helper structure is used to detect any changes in the particle positions
 	/// that require updating the particle position buffer.
 	SceneObjectCacheHelper<
-		WeakVersionedOORef<ParticlePropertyObject>
+		VersionedDataObjectRef
 		> _positionsCacheHelper;
 
 	/// This helper structure is used to detect any changes in the particle radii
 	/// that require updating the particle radius buffer.
 	SceneObjectCacheHelper<
-		WeakVersionedOORef<ParticlePropertyObject>,		// Radius property + revision number
-		WeakVersionedOORef<ParticlePropertyObject>,		// Type property + revision number
-		FloatType										// Default radius
+		VersionedDataObjectRef,		// Radius property + revision number
+		VersionedDataObjectRef,		// Type property + revision number
+		FloatType					// Default radius
 		> _radiiCacheHelper;
 
 	/// This helper structure is used to detect any changes in the particle shapes
 	/// that require updating the particle shape buffer.
 	SceneObjectCacheHelper<
-		WeakVersionedOORef<ParticlePropertyObject>,		// Shape property + revision number
-		WeakVersionedOORef<ParticlePropertyObject>		// Orientation property + revision number
+		VersionedDataObjectRef,		// Shape property + revision number
+		VersionedDataObjectRef		// Orientation property + revision number
 		> _shapesCacheHelper;
 
 	/// This helper structure is used to detect any changes in the particle colors
 	/// that require updating the particle color buffer.
 	SceneObjectCacheHelper<
-		WeakVersionedOORef<ParticlePropertyObject>,		// Color property + revision number
-		WeakVersionedOORef<ParticlePropertyObject>,		// Type property + revision number
-		WeakVersionedOORef<ParticlePropertyObject>,		// Selection property + revision number
-		WeakVersionedOORef<ParticlePropertyObject>,		// Transparency property + revision number
-		WeakVersionedOORef<ParticlePropertyObject>		// Position property + revision number
+		VersionedDataObjectRef,		// Color property + revision number
+		VersionedDataObjectRef,		// Type property + revision number
+		VersionedDataObjectRef,		// Selection property + revision number
+		VersionedDataObjectRef,		// Transparency property + revision number
+		VersionedDataObjectRef		// Position property + revision number
 		> _colorsCacheHelper;
 
 	/// This helper structure is used to detect any changes in the particle properties
 	/// that require updating the cylinder geometry buffer.
 	SceneObjectCacheHelper<
-		WeakVersionedOORef<ParticlePropertyObject>,		// Position property + revision number
-		WeakVersionedOORef<ParticlePropertyObject>,		// Type property + revision number
-		WeakVersionedOORef<ParticlePropertyObject>,		// Selection property + revision number
-		WeakVersionedOORef<ParticlePropertyObject>,		// Color property + revision number
-		WeakVersionedOORef<ParticlePropertyObject>,		// Shape property + revision number
-		WeakVersionedOORef<ParticlePropertyObject>,		// Orientation property + revision number
+		VersionedDataObjectRef,		// Position property + revision number
+		VersionedDataObjectRef,		// Type property + revision number
+		VersionedDataObjectRef,		// Selection property + revision number
+		VersionedDataObjectRef,		// Color property + revision number
+		VersionedDataObjectRef,		// Shape property + revision number
+		VersionedDataObjectRef,		// Orientation property + revision number
 		FloatType										// Default particle radius
 		> _cylinderCacheHelper;
 
@@ -169,19 +172,12 @@ private:
 	/// This helper structure is used to detect changes in the input objects
 	/// that require rebuilding the bounding box.
 	SceneObjectCacheHelper<
-		WeakVersionedOORef<ParticlePropertyObject>,	// Position property + revision number
-		WeakVersionedOORef<ParticlePropertyObject>,	// Radius property + revision number
-		WeakVersionedOORef<ParticlePropertyObject>,	// Type property + revision number
-		WeakVersionedOORef<ParticlePropertyObject>,	// Aspherical shape property + revision number
-		FloatType> 									// Default particle radius
+		VersionedDataObjectRef,	// Position property + revision number
+		VersionedDataObjectRef,	// Radius property + revision number
+		VersionedDataObjectRef,	// Type property + revision number
+		VersionedDataObjectRef,	// Aspherical shape property + revision number
+		FloatType> 				// Default particle radius
 		_boundingBoxCacheHelper;
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
-
-	Q_CLASSINFO("DisplayName", "Particles");
 };
 
 /**
@@ -190,6 +186,9 @@ private:
  */
 class OVITO_PARTICLES_EXPORT ParticlePickInfo : public ObjectPickInfo
 {
+	Q_OBJECT
+	OVITO_CLASS(ParticlePickInfo)
+
 public:
 
 	/// Constructor.
@@ -219,9 +218,6 @@ private:
 
 	/// The number of rendered particles;
 	int _particleCount;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 }	// End of namespace

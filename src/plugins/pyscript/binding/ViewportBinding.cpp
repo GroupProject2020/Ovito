@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,10 +22,11 @@
 #include <plugins/pyscript/PyScript.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/viewport/Viewport.h>
-#include <core/viewport/overlay/ViewportOverlay.h>
-#include <core/viewport/overlay/CoordinateTripodOverlay.h>
-#include <core/viewport/overlay/TextLabelOverlay.h>
-#include <core/scene/SceneNode.h>
+#include <core/viewport/overlays/ViewportOverlay.h>
+#include <core/viewport/overlays/CoordinateTripodOverlay.h>
+#include <core/viewport/overlays/TextLabelOverlay.h>
+#include <core/viewport/overlays/ColorLegendOverlay.h>
+#include <core/dataset/scene/SceneNode.h>
 #include <plugins/pyscript/extensions/PythonViewportOverlay.h>
 #include "PythonBinding.h"
 
@@ -56,8 +57,8 @@ void defineViewportSubmodule(py::module parentModule)
 			"Note that the four interactive viewports in OVITO's main window are instances of this class. If you want to "
 			"manipulate these existing viewports, you can access them through the "
 			":py:attr:`DataSet.viewports <ovito.DataSet.viewports>` attribute.")
-		.def_property_readonly("isRendering", &Viewport::isRendering)
-		.def_property_readonly("isPerspective", &Viewport::isPerspectiveProjection)
+		//.def_property_readonly("isRendering", &Viewport::isRendering)
+		//.def_property_readonly("isPerspective", &Viewport::isPerspectiveProjection)
 		.def_property("type", &Viewport::viewType, [](Viewport& vp, Viewport::ViewType vt) { vp.setViewType(vt); },
 				"The type of projection:"
 				"\n\n"
@@ -87,34 +88,33 @@ void defineViewportSubmodule(py::module parentModule)
 		.def_property_readonly("inverseViewMatrix", [](Viewport& vp) -> const AffineTransformation& { return vp.projectionParams().inverseViewMatrix; })
 		.def_property_readonly("projectionMatrix", [](Viewport& vp) -> const Matrix4& { return vp.projectionParams().projectionMatrix; })
 		.def_property_readonly("inverseProjectionMatrix", [](Viewport& vp) -> const Matrix4& { return vp.projectionParams().inverseProjectionMatrix; })
-		.def_property("renderPreviewMode", &Viewport::renderPreviewMode, &Viewport::setRenderPreviewMode)
-		.def_property("gridVisible", &Viewport::isGridVisible, &Viewport::setGridVisible)
-		.def_property("viewNode", &Viewport::viewNode, &Viewport::setViewNode)
-		.def_property("gridMatrix", &Viewport::gridMatrix, &Viewport::setGridMatrix)
-		.def_property_readonly("title", &Viewport::viewportTitle,
-				"The title string of the viewport shown in its top left corner (read-only).")
-		.def("updateViewport", &Viewport::updateViewport)
-		.def("redrawViewport", &Viewport::redrawViewport)
-		.def("nonScalingSize", &Viewport::nonScalingSize)
+		//.def_property("renderPreviewMode", &Viewport::renderPreviewMode, &Viewport::setRenderPreviewMode)
+		//.def_property("gridVisible", &Viewport::isGridVisible, &Viewport::setGridVisible)
+		//.def_property("viewNode", &Viewport::viewNode, &Viewport::setViewNode)
+		//.def_property("gridMatrix", &Viewport::gridMatrix, &Viewport::setGridMatrix)
+		//.def_property_readonly("title", &Viewport::viewportTitle,
+		//		"The name of the viewport as shown in its top left corner (read-only).")
+		//.def("updateViewport", &Viewport::updateViewport)
+		//.def("redrawViewport", &Viewport::redrawViewport)
+		//.def("nonScalingSize", &Viewport::nonScalingSize)
 		.def("zoom_all", &Viewport::zoomToSceneExtents,
 				"Repositions the viewport camera such that all objects in the scene become completely visible. "
 				"The camera direction is not changed.")
-		.def("zoomToSelectionExtents", &Viewport::zoomToSelectionExtents)
-		.def("zoomToBox", &Viewport::zoomToBox)
+		//.def("zoomToSelectionExtents", &Viewport::zoomToSelectionExtents)
+		//.def("zoomToBox", &Viewport::zoomToBox)
 	;
-	expose_mutable_subobject_list<Viewport, 
-								  ViewportOverlay, 
-								  Viewport,
-								  &Viewport::overlays, 
-								  &Viewport::insertOverlay, 
-								  &Viewport::removeOverlay>(
-									  Viewport_py, "overlays", "ViewportOverlayList",
-		"A list-like sequence of viewport overlay objects that are attached to this viewport. "
-		"See the following classes for more information:"
-		"\n\n"
-		"   * :py:class:`TextLabelOverlay`\n"
-		"   * :py:class:`CoordinateTripodOverlay`\n"
-		"   * :py:class:`PythonViewportOverlay`\n");		
+	expose_mutable_subobject_list(Viewport_py,
+								  std::mem_fn(&Viewport::overlays), 
+								  std::mem_fn(&Viewport::insertOverlay), 
+								  std::mem_fn(&Viewport::removeOverlay), "overlays", "ViewportOverlayList",
+								"A list-like sequence of viewport overlay objects that are attached to this viewport. "
+								"They render graphical content on top of the three-dimensional scene. "
+								"See the following classes for more information:"
+								"\n\n"
+								"   * :py:class:`TextLabelOverlay`\n"
+								"   * :py:class:`ColorLegendOverlay`\n"
+								"   * :py:class:`CoordinateTripodOverlay`\n"
+								"   * :py:class:`PythonViewportOverlay`\n");		
 
 	py::enum_<Viewport::ViewType>(Viewport_py, "Type")
 		.value("NONE", Viewport::VIEW_NONE)
@@ -141,18 +141,7 @@ void defineViewportSubmodule(py::module parentModule)
 		.def_readwrite("inverseProjectionMatrix", &ViewProjectionParameters::inverseProjectionMatrix)
 	;
 
-	auto ViewportConfiguration_py = ovito_class<ViewportConfiguration, RefTarget>(m,
-			"Manages the viewports in OVITO's main window."
-			"\n\n"
-			"This list-like object can be accessed through the :py:attr:`~ovito.DataSet.viewports` attribute of the :py:attr:`~ovito.DataSet` class. "
-			"It contains all viewports in OVITO's main window::"
-			"\n\n"
-			"    for viewport in dataset.viewports:\n"
-			"        print(viewport.title)\n"
-			"\n"
-			"By default OVITO creates four predefined :py:class:`Viewport` instances. Note that in the current program version it is not possible to add or remove "
-			"viewports from the main window. "
-			"The ``ViewportConfiguration`` object also manages the :py:attr:`active <.active_vp>` and the :py:attr:`maximized <.maximized_vp>` viewport.")
+	auto ViewportConfiguration_py = ovito_class<ViewportConfiguration, RefTarget>(m)
 		.def_property("active_vp", &ViewportConfiguration::activeViewport, &ViewportConfiguration::setActiveViewport,
 				"The viewport that is currently active. It is marked with a colored border in OVITO's main window.")
 		.def_property("maximized_vp", &ViewportConfiguration::maximizedViewport, &ViewportConfiguration::setMaximizedViewport,
@@ -160,15 +149,8 @@ void defineViewportSubmodule(py::module parentModule)
 				"Assign a viewport to this attribute to maximize it, e.g.::"
 				"\n\n"
 				"    dataset.viewports.maximized_vp = dataset.viewports.active_vp\n")
-		.def("zoomToSelectionExtents", &ViewportConfiguration::zoomToSelectionExtents)
-		.def("zoomToSceneExtents", &ViewportConfiguration::zoomToSceneExtents)
-		.def("updateViewports", &ViewportConfiguration::updateViewports)
 	;
-	expose_subobject_list<ViewportConfiguration, 
-						  Viewport, 
-						  ViewportConfiguration,
-						  &ViewportConfiguration::viewports>(
-							  ViewportConfiguration_py, "viewports", "ViewportList");
+	expose_subobject_list(ViewportConfiguration_py, std::mem_fn(&ViewportConfiguration::viewports), "viewports", "ViewportList");
 
 	ovito_abstract_class<ViewportOverlay, RefTarget>{m};
 
@@ -208,6 +190,78 @@ void defineViewportSubmodule(py::module parentModule)
 				":Default: 0.4\n")
 	;
 
+	ovito_class<ColorLegendOverlay, ViewportOverlay>(m,
+			"Renders a color legend for a :py:class:`~ovito.modifiers.ColorCodingModifier` on top of the three-dimensional "
+			"scene. You can attach an instance of this class to a :py:class:`~ovito.vis.Viewport` by adding it to the viewport's "
+			":py:attr:`~ovito.vis.Viewport.overlays` collection:"
+			"\n\n"
+			".. literalinclude:: ../example_snippets/color_legend_overlay.py"
+			"\n")
+		.def_property("alignment", &ColorLegendOverlay::alignment, &ColorLegendOverlay::setAlignment,
+				"Selects the corner of the viewport where the color bar is displayed (anchor position). This must be a valid `Qt.Alignment value <http://doc.qt.io/qt-5/qt.html#AlignmentFlag-enum>`_ as shown in the code example above. "
+				"\n\n"
+				":Default: ``PyQt5.QtCore.Qt.AlignHCenter ^ PyQt5.QtCore.Qt.AlignBottom``")
+		.def_property("orientation", &ColorLegendOverlay::orientation, &ColorLegendOverlay::setOrientation,
+				"Selects the orientation of the color bar. This must be a valid `Qt.Orientation value <http://doc.qt.io/qt-5/qt.html#Orientation-enum>`_ as shown in the code example above. "
+				"\n\n"
+				":Default: ``PyQt5.QtCore.Qt.Horizontal``")
+		.def_property("offset_x", &ColorLegendOverlay::offsetX, &ColorLegendOverlay::setOffsetX,
+				"This parameter allows to displace the color bar horizontally from its anchor position. The offset is specified as a fraction of the output image width."
+				"\n\n"
+				":Default: 0.0\n")
+		.def_property("offset_y", &ColorLegendOverlay::offsetY, &ColorLegendOverlay::setOffsetY,
+				"This parameter allows to displace the color bar vertically from its anchor position. The offset is specified as a fraction of the output image height."
+				"\n\n"
+				":Default: 0.0\n")
+		.def_property("legend_size", &ColorLegendOverlay::legendSize, &ColorLegendOverlay::setLegendSize,
+				"Controls the overall size of the color bar relative to the output image size. "
+				"\n\n"
+				":Default: 0.3\n")
+		.def_property("aspect_ratio", &ColorLegendOverlay::aspectRatio, &ColorLegendOverlay::setAspectRatio,
+				"The aspect ratio of the color bar. Larger values make it more narrow. "
+				"\n\n"
+				":Default: 8.0\n")
+		.def_property("font_size", &ColorLegendOverlay::fontSize, &ColorLegendOverlay::setFontSize,
+				"The relative size of the font used for text labels."
+				"\n\n"
+				":Default: 0.1\n")
+		.def_property("format_string", &ColorLegendOverlay::valueFormatString, &ColorLegendOverlay::setValueFormatString,
+				"The format string used with the `sprintf() <http://en.cppreference.com/w/cpp/io/c/fprintf>`_ function to "
+				"generate the text representation of floating-point values. You can change this format string to control the "
+				"number of decimal places or add units to the numeric values, for example. "
+				"\n\n"
+				":Default: '%g'\n")
+		.def_property("title", &ColorLegendOverlay::title, &ColorLegendOverlay::setTitle,
+				"The text displayed next to the color bar. If empty, the name of the input property selected in the :py:class:`~ovito.modifiers.ColorCodingModifier` "
+				"is used. "
+				"\n\n"
+				":Default: ''")
+		.def_property("label1", &ColorLegendOverlay::label1, &ColorLegendOverlay::setLabel1,
+				"Sets the text string displayed at the upper end of the bar. If empty, the :py:attr:`~ovito.modifiers.ColorCodingModifier.end_value` of the "
+				":py:class:`~ovito.modifiers.ColorCodingModifier` is used. "
+				"\n\n"
+				":Default: ''")
+		.def_property("label2", &ColorLegendOverlay::label2, &ColorLegendOverlay::setLabel2,
+				"Sets the text string displayed at the lower end of the bar. If empty, the :py:attr:`~ovito.modifiers.ColorCodingModifier.start_value` of the "
+				":py:class:`~ovito.modifiers.ColorCodingModifier` is used. "
+				"\n\n"
+				":Default: ''")
+		.def_property("modifier", &ColorLegendOverlay::modifier, &ColorLegendOverlay::setModifier,
+				"The :py:class:`~ovito.modifiers.ColorCodingModifier` for which the color legend should be rendered.")
+		.def_property("text_color", &ColorLegendOverlay::textColor, &ColorLegendOverlay::setTextColor,
+				"The RGB color used for text labels."
+				"\n\n"
+				":Default: ``(0.0,0.0,0.0)``\n")
+		.def_property("outline_color", &ColorLegendOverlay::outlineColor, &ColorLegendOverlay::setOutlineColor,
+				"The text outline color. This is used only if :py:attr:`.outline_enabled` is set."
+				"\n\n"
+				":Default: ``(1.0,1.0,1.0)``\n")
+		.def_property("outline_enabled", &ColorLegendOverlay::outlineEnabled, &ColorLegendOverlay::setOutlineEnabled,
+				"Enables the painting of a font outline to make the text easier to read."
+				"\n\n"
+				":Default: ``False``\n")
+	;
+	
 	ovito_class<TextLabelOverlay, ViewportOverlay>(m,
 			"Displays a text label in a viewport and in rendered images. "
 			"You can attach an instance of this class to a viewport by adding it to the viewport's "
@@ -217,15 +271,15 @@ void defineViewportSubmodule(py::module parentModule)
 			"\n\n"
 			"Text labels can display dynamically computed values. See the :py:attr:`.text` property for an example.")
 		.def_property("alignment", &TextLabelOverlay::alignment, &TextLabelOverlay::setAlignment,
-				"Selects the corner of the viewport where the text is displayed. This must be a valid `Qt.Alignment value <http://doc.qt.io/qt-5/qt.html#AlignmentFlag-enum>`_ as shown in the example above. "
+				"Selects the corner of the viewport where the text is displayed (anchor position). This must be a valid `Qt.Alignment value <http://doc.qt.io/qt-5/qt.html#AlignmentFlag-enum>`_ as shown in the example above. "
 				"\n\n"
 				":Default: ``PyQt5.QtCore.Qt.AlignLeft ^ PyQt5.QtCore.Qt.AlignTop``")
 		.def_property("offset_x", &TextLabelOverlay::offsetX, &TextLabelOverlay::setOffsetX,
-				"This parameter allows to displace the label horizontally. The offset is specified as a fraction of the output image width."
+				"This parameter allows to displace the label horizontally from its anchor position. The offset is specified as a fraction of the output image width."
 				"\n\n"
 				":Default: 0.0\n")
 		.def_property("offset_y", &TextLabelOverlay::offsetY, &TextLabelOverlay::setOffsetY,
-				"This parameter allows to displace the label vertically. The offset is specified as a fraction of the output image height."
+				"This parameter allows to displace the label vertically from its anchor position. The offset is specified as a fraction of the output image height."
 				"\n\n"
 				":Default: 0.0\n")
 		.def_property("font_size", &TextLabelOverlay::fontSize, &TextLabelOverlay::setFontSize,
@@ -252,7 +306,7 @@ void defineViewportSubmodule(py::module parentModule)
 				"\n\n"
 				":Default: ``(0.0,0.0,0.5)``\n")
 		.def_property("outline_color", &TextLabelOverlay::outlineColor, &TextLabelOverlay::setOutlineColor,
-				"The text outline color. This is only used if :py:attr:`.outline_enabled` is set."
+				"The text outline color. This is used only if :py:attr:`.outline_enabled` is set."
 				"\n\n"
 				":Default: ``(1.0,1.0,1.0)``\n")
 		.def_property("outline_enabled", &TextLabelOverlay::outlineEnabled, &TextLabelOverlay::setOutlineEnabled,
@@ -273,12 +327,6 @@ void defineViewportSubmodule(py::module parentModule)
 			":py:attr:`~ovito.vis.Viewport.overlays` collection:"
 			"\n\n"
 			".. literalinclude:: ../example_snippets/python_viewport_overlay.py")
-		.def_property("script", &PythonViewportOverlay::script, &PythonViewportOverlay::setScript,
-				"The source code of the user-defined Python script that defines the ``render()`` function. "
-				"Note that this property returns the source code entered by the user through the graphical user interface, not the callable Python function. "
-				"\n\n"
-				"If you want to set the render function from an already running Python script, you should set "
-				"the :py:attr:`.function` property instead as demonstrated in the example above.")
 		.def_property("function", &PythonViewportOverlay::scriptFunction, &PythonViewportOverlay::setScriptFunction,
 				"The Python function to be called every time the viewport is repainted or when an output image is being rendered."
 				"\n\n"
@@ -298,9 +346,6 @@ void defineViewportSubmodule(py::module parentModule)
 				"Implementation note: Exceptions raised by the custom rendering function are not propagated to the calling context. "
 				"\n\n"
 				":Default: ``None``\n")
-		.def_property_readonly("output", &PythonViewportOverlay::scriptOutput,
-				"The output text generated when compiling/running the Python function. "
-				"Contain the error message when the most recent execution of the custom rendering function failed.")
 	;
 }
 

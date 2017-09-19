@@ -96,6 +96,10 @@ public:
 		_oldValue = temp;
 	}
 
+	virtual QString displayName() const override { 
+		return QStringLiteral("Set property of %1").arg(_obj->getOOClass().name()); 
+	}
+
 private:
 
 	/// The value getter function.
@@ -144,6 +148,10 @@ public:
 		_oldValue = temp;
 	}
 	
+	virtual QString displayName() const override { 
+		return QStringLiteral("Set property %1 of %2").arg(_propertyName).arg(_object->getOOClass().name()); 
+	}
+	
 private:
 
 	/// The object whose property has been changed.
@@ -170,6 +178,10 @@ public:
 	virtual void undo() override;
 	virtual void redo() override {}
 
+	virtual QString displayName() const override { 
+		return QStringLiteral("Target changed undo operation"); 
+	}
+
 private:
 
 	/// The object that has been changed.
@@ -189,6 +201,10 @@ public:
 
 	virtual void undo() override {}
 	virtual void redo() override;
+
+	virtual QString displayName() const override { 
+		return QStringLiteral("Target changed redo operation"); 
+	}
 
 private:
 
@@ -336,6 +352,9 @@ public:
 	/// from the bottom of the stack are removed.
 	void limitUndoStack();
 
+	/// \brief Prints a text representation of the undo stack to the console. This is for debugging purposes only.
+	void debugPrint();
+
 	/// Registers an undo record for changing a property of an object.
 	///
 	/// The setter method for a property of an object should call this function
@@ -433,6 +452,9 @@ private:
 		/// \brief Removes all sub-operations from this compound operation.
 		void clear() { _subOperations.clear(); }
 
+		/// For debugging purposes only.
+		void debugPrint(int level);
+
 	private:
 
 		/// List of contained operations.
@@ -488,10 +510,12 @@ class OVITO_CORE_EXPORT UndoSuspender {
 public:
 	UndoSuspender(UndoStack& undoStack) : _suspendCount(&undoStack._suspendCount) { ++(*_suspendCount); }
 	UndoSuspender(RefMaker* object);
-	~UndoSuspender() {
+	~UndoSuspender() { reset(); }
+	void reset() {
 		if(_suspendCount) {
 			OVITO_ASSERT_MSG((*_suspendCount) > 0, "UndoStack::resume()", "resume() has been called more often than suspend().");
 			--(*_suspendCount);
+			_suspendCount = nullptr;
 		}
 	}
 private:

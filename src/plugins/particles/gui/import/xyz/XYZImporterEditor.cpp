@@ -24,12 +24,12 @@
 #include <plugins/particles/gui/import/InputColumnMappingDialog.h>
 #include <gui/properties/BooleanParameterUI.h>
 #include <gui/mainwin/MainWindow.h>
-#include <core/dataset/importexport/FileSource.h>
+#include <core/dataset/io/FileSource.h>
 #include "XYZImporterEditor.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_OBJECT(XYZImporterEditor, FileImporterEditor);
+
 SET_OVITO_OBJECT_EDITOR(XYZImporter, XYZImporterEditor);
 
 /******************************************************************************
@@ -39,9 +39,11 @@ SET_OVITO_OBJECT_EDITOR(XYZImporter, XYZImporterEditor);
 bool XYZImporterEditor::inspectNewFile(FileImporter* importer, const QUrl& sourceFile, QWidget* parent)
 {
 	XYZImporter* xyzImporter = static_object_cast<XYZImporter>(importer);
-	InputColumnMapping mapping = xyzImporter->inspectFileHeader(FileSourceImporter::Frame(sourceFile));
-	if(mapping.empty()) return false;
-
+	Future<InputColumnMapping> inspectFuture = xyzImporter->inspectFileHeader(FileSourceImporter::Frame(sourceFile));
+	if(!importer->dataset()->container()->taskManager().waitForTask(inspectFuture))
+		return false;
+	InputColumnMapping mapping = inspectFuture.result();
+	
 	// If column names were given in the XYZ file, use them rather than popping up a dialog.
 	if(mapping.hasFileColumnNames()) {
 		return true;
@@ -88,8 +90,10 @@ bool XYZImporterEditor::inspectNewFile(FileImporter* importer, const QUrl& sourc
  *****************************************************************************/
 bool XYZImporterEditor::showEditColumnMappingDialog(XYZImporter* importer, const QUrl& sourceFile, QWidget* parent)
 {
-	InputColumnMapping mapping = importer->inspectFileHeader(FileSourceImporter::Frame(sourceFile));
-	if(mapping.empty()) return false;
+	Future<InputColumnMapping> inspectFuture = importer->inspectFileHeader(FileSourceImporter::Frame(sourceFile));
+	if(!importer->dataset()->container()->taskManager().waitForTask(inspectFuture))
+		return false;
+	InputColumnMapping mapping = inspectFuture.result();
 
 	if(!importer->columnMapping().empty()) {
 		InputColumnMapping customMapping = importer->columnMapping();
@@ -171,8 +175,8 @@ void XYZImporterEditor::onEditColumnMapping()
 		if(!fileSource || fileSource->frames().empty()) return;
 
 		QUrl sourceUrl;
-		if(fileSource->loadedFrameIndex() >= 0)
-			sourceUrl = fileSource->frames()[fileSource->loadedFrameIndex()].sourceFile;
+		if(fileSource->storedFrameIndex() >= 0)
+			sourceUrl = fileSource->frames()[fileSource->storedFrameIndex()].sourceFile;
 		else
 			sourceUrl = fileSource->frames().front().sourceFile;
 

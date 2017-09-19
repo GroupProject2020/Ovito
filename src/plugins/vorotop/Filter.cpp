@@ -22,6 +22,7 @@
 #include <plugins/vorotop/VoroTopPlugin.h>
 #include <core/utilities/io/CompressedTextReader.h>
 #include <core/utilities/io/NumberParsing.h>
+#include <core/utilities/concurrent/PromiseState.h>
 #include "Filter.h"
 
 namespace Ovito { namespace VoroTop {
@@ -29,7 +30,7 @@ namespace Ovito { namespace VoroTop {
 /******************************************************************************
 * Loads the filter definition from the given input stream.
 ******************************************************************************/
-bool Filter::load(CompressedTextReader& stream, bool readHeaderOnly, PromiseBase& promise)
+bool Filter::load(CompressedTextReader& stream, bool readHeaderOnly, PromiseState& promise)
 {
 	// Parse comment lines starting with '#':
 	_filterDescription.clear();

@@ -23,14 +23,14 @@
 
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/particles/gui/modifier/ParticleModifierEditor.h>
+#include <gui/properties/ModifierPropertiesEditor.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /**
  * \brief A properties editor for the IdentifyDiamondModifier class.
  */
-class IdentifyDiamondModifierEditor : public ParticleModifierEditor
+class IdentifyDiamondModifierEditor : public ModifierPropertiesEditor
 {
 public:
 
@@ -45,7 +45,7 @@ protected:
 private:
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 };
 
 OVITO_END_INLINE_NAMESPACE

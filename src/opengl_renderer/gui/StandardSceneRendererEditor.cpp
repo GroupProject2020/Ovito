@@ -26,7 +26,7 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_OBJECT(StandardSceneRendererEditor, PropertiesEditor);
+IMPLEMENT_OVITO_CLASS(StandardSceneRendererEditor);
 SET_OVITO_OBJECT_EDITOR(StandardSceneRenderer, StandardSceneRendererEditor);
 
 /******************************************************************************

@@ -32,6 +32,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVI
  */
 class OVITO_PARTICLES_EXPORT XYZExporter : public FileColumnParticleExporter
 {
+	Q_OBJECT
+	OVITO_CLASS(XYZExporter)
+
 public:
 
 	/// \brief The supported XYZ sub-formats.
@@ -44,9 +47,7 @@ public:
 public:
 
 	/// \brief Constructs a new instance of this class.
-	Q_INVOKABLE XYZExporter(DataSet* dataset) : FileColumnParticleExporter(dataset), _subFormat(ExtendedFormat) {
-		INIT_PROPERTY_FIELD(subFormat);
-	}
+	Q_INVOKABLE XYZExporter(DataSet* dataset) : FileColumnParticleExporter(dataset), _subFormat(ExtendedFormat) {}
 
 	/// \brief Returns the file filter that specifies the files that can be exported by this service.
 	virtual QString fileFilter() override { return QStringLiteral("*"); }
@@ -62,10 +63,7 @@ protected:
 private:
 
 	/// Selects the kind of XYZ file to write.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(XYZSubFormat, subFormat, setSubFormat);
-
-	Q_OBJECT
-	OVITO_OBJECT
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(XYZSubFormat, subFormat, setSubFormat, PROPERTY_FIELD_MEMORIZE);
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -23,10 +23,10 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <core/scene/objects/DataObjectWithSharedStorage.h>
 #include <core/utilities/mesh/HalfEdgeMesh.h>
-#include <plugins/particles/data/SimulationCell.h>
-#include <core/utilities/concurrent/Promise.h>
+#include <core/utilities/concurrent/PromiseState.h>
+#include <core/dataset/data/simcell/PeriodicDomainDataObject.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
@@ -52,12 +52,12 @@ using PartitionMeshData = HalfEdgeMesh<PartitionMeshEdge, PartitionMeshFace, Emp
 /**
  * \brief A closed triangle mesh representing the outer surfaces and the inner interfaces of a microstructure.
  */
-class OVITO_CRYSTALANALYSIS_EXPORT PartitionMesh : public DataObjectWithSharedStorage<PartitionMeshData>
+class OVITO_CRYSTALANALYSIS_EXPORT PartitionMesh : public PeriodicDomainDataObject
 {
 public:
 
 	/// \brief Constructor that creates an empty PartitionMesh object.
-	Q_INVOKABLE PartitionMesh(DataSet* dataset, PartitionMeshData* mesh = nullptr);
+	Q_INVOKABLE PartitionMesh(DataSet* dataset);
 
 	/// Returns the title of this object.
 	virtual QString objectTitle() override { return tr("Microstructure mesh"); }
@@ -68,15 +68,9 @@ public:
 	/// Return false because this object cannot be edited.
 	virtual bool isSubObjectEditable() const override { return false; }
 
-	/// Returns the planar cuts applied to this mesh.
-	const QVector<Plane3>& cuttingPlanes() const { return _cuttingPlanes; }
-
-	/// Sets the planar cuts applied to this mesh.
-	void setCuttingPlanes(const QVector<Plane3>& planes) {
-		_cuttingPlanes = planes;
-		notifyDependents(ReferenceEvent::TargetChanged);
-	}
-
+	/// Returns the data encapsulated by this object after making sure it is not shared with other owners.
+	const std::shared_ptr<PartitionMeshData>& modifiableStorage();
+	
 	/// Fairs a triangle mesh.
 	static bool smoothMesh(PartitionMeshData& mesh, const SimulationCell& cell, int numIterations, PromiseBase& promise, FloatType k_PB = FloatType(0.1), FloatType lambda = FloatType(0.5));
 
@@ -85,19 +79,16 @@ protected:
 	/// Performs one iteration of the smoothing algorithm.
 	static void smoothMeshIteration(PartitionMeshData& mesh, FloatType prefactor, const SimulationCell& cell);
 
-	/// Creates a copy of this object.
-	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) override;
-
 private:
 
 	/// Indicates that the entire simulation cell is part of one region without boundaries.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, spaceFillingRegion, setSpaceFillingRegion);
 
-	/// The planar cuts applied to this mesh.
-	QVector<Plane3> _cuttingPlanes;
+	/// The internal data.
+	DECLARE_RUNTIME_PROPERTY_FIELD(std::shared_ptr<PartitionMeshData>, storage, setStorage);
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 };
 
 }	// End of namespace

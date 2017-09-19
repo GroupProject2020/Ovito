@@ -32,6 +32,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 ******************************************************************************/
 class OVITO_GUI_EXPORT CustomParameterUI : public PropertyParameterUI
 {
+	Q_OBJECT
+	OVITO_CLASS(CustomParameterUI)
+	
 public:
 
 	/// Constructor.
@@ -94,11 +97,6 @@ protected:
 
 	/// This function is called when a new object is loaded into the editor.
 	std::function<void(RefTarget*)> _resetUIFunction;
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

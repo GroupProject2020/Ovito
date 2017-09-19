@@ -62,15 +62,15 @@ protected:
 	virtual QVariant getHorizontalHeaderData(int index, int role) override {
 		if(role == Qt::DisplayRole) {
 			if(index == 0)
-				return qVariantFromValue(tr("Color"));
+				return QVariant();
 			else if(index == 1)
-				return qVariantFromValue(tr("Structure"));
+				return QVariant::fromValue(tr("Structure"));
 			else if(index == 2)
-				return qVariantFromValue(tr("Count"));
+				return QVariant::fromValue(tr("Count"));
 			else if(index == 3)
-				return qVariantFromValue(tr("Fraction"));
+				return QVariant::fromValue(tr("Fraction"));
 			else if(index == 4)
-				return qVariantFromValue(tr("Id"));
+				return QVariant::fromValue(tr("Id"));
 		}
 		return RefTargetListParameterUI::getHorizontalHeaderData(index, role);
 	}

@@ -28,12 +28,14 @@ before_script:
                          python3-sip
                          python3-pyqt5
                          python3-matplotlib
+                         python3-ase
                          python-dev
                          python-sphinx
                          python-numpy
                          python-sip
                          python-pyqt5
                          python-matplotlib
+                         python-ase
                          xsltproc
                          docbook-xml
                          povray

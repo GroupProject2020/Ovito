@@ -22,9 +22,10 @@
 #include <core/Core.h>
 #include <core/rendering/FrameBuffer.h>
 #include <core/rendering/RenderSettings.h>
-#include <core/scene/ObjectNode.h>
+#include <core/dataset/scene/ObjectNode.h>
 #include <core/utilities/concurrent/Task.h>
 #include <core/utilities/concurrent/TaskManager.h>
+#include <core/utilities/units/UnitsManager.h>
 #include "POVRayRenderer.h"
 
 #include <QTemporaryFile>
@@ -32,25 +33,25 @@
 
 namespace Ovito { namespace POVRay {
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(POVRayRenderer, NonInteractiveSceneRenderer);
-DEFINE_FLAGS_PROPERTY_FIELD(POVRayRenderer, qualityLevel, "QualityLevel", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(POVRayRenderer, antialiasingEnabled, "EnableAntialiasing", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(POVRayRenderer, samplingMethod, "SamplingMethod", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(POVRayRenderer, AAThreshold, "AAThreshold", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(POVRayRenderer, antialiasDepth, "AntialiasDepth", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(POVRayRenderer, jitterEnabled, "EnableJitter", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(POVRayRenderer, povrayDisplayEnabled, "ShowPOVRayDisplay", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(POVRayRenderer, radiosityEnabled, "EnableRadiosity", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(POVRayRenderer, radiosityRayCount, "RadiosityRayCount", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(POVRayRenderer, radiosityRecursionLimit, "RadiosityRecursionLimit", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(POVRayRenderer, radiosityErrorBound, "RadiosityErrorBound", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(POVRayRenderer, povrayExecutable, "ExecutablePath", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(POVRayRenderer, depthOfFieldEnabled, "DepthOfFieldEnabled", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(POVRayRenderer, dofFocalLength, "DOFFocalLength", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(POVRayRenderer, dofAperture, "DOFAperture", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(POVRayRenderer, dofSampleCount, "DOFSampleCount", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(POVRayRenderer, odsEnabled, "ODSEnabled", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(POVRayRenderer, interpupillaryDistance, "InterpupillaryDistance", PROPERTY_FIELD_MEMORIZE);
+IMPLEMENT_OVITO_CLASS(POVRayRenderer);
+DEFINE_PROPERTY_FIELD(POVRayRenderer, qualityLevel);
+DEFINE_PROPERTY_FIELD(POVRayRenderer, antialiasingEnabled);
+DEFINE_PROPERTY_FIELD(POVRayRenderer, samplingMethod);
+DEFINE_PROPERTY_FIELD(POVRayRenderer, AAThreshold);
+DEFINE_PROPERTY_FIELD(POVRayRenderer, antialiasDepth);
+DEFINE_PROPERTY_FIELD(POVRayRenderer, jitterEnabled);
+DEFINE_PROPERTY_FIELD(POVRayRenderer, povrayDisplayEnabled);
+DEFINE_PROPERTY_FIELD(POVRayRenderer, radiosityEnabled);
+DEFINE_PROPERTY_FIELD(POVRayRenderer, radiosityRayCount);
+DEFINE_PROPERTY_FIELD(POVRayRenderer, radiosityRecursionLimit);
+DEFINE_PROPERTY_FIELD(POVRayRenderer, radiosityErrorBound);
+DEFINE_PROPERTY_FIELD(POVRayRenderer, povrayExecutable);
+DEFINE_PROPERTY_FIELD(POVRayRenderer, depthOfFieldEnabled);
+DEFINE_PROPERTY_FIELD(POVRayRenderer, dofFocalLength);
+DEFINE_PROPERTY_FIELD(POVRayRenderer, dofAperture);
+DEFINE_PROPERTY_FIELD(POVRayRenderer, dofSampleCount);
+DEFINE_PROPERTY_FIELD(POVRayRenderer, odsEnabled);
+DEFINE_PROPERTY_FIELD(POVRayRenderer, interpupillaryDistance);
 SET_PROPERTY_FIELD_LABEL(POVRayRenderer, qualityLevel, "Quality level");
 SET_PROPERTY_FIELD_LABEL(POVRayRenderer, antialiasingEnabled, "Anti-aliasing");
 SET_PROPERTY_FIELD_LABEL(POVRayRenderer, samplingMethod, "Sampling method");
@@ -91,24 +92,6 @@ POVRayRenderer::POVRayRenderer(DataSet* dataset) : NonInteractiveSceneRenderer(d
 	_depthOfFieldEnabled(false), _dofFocalLength(40), _dofAperture(1.0f), _dofSampleCount(80),
 	_odsEnabled(false), _interpupillaryDistance(0.5)
 {
-	INIT_PROPERTY_FIELD(qualityLevel);
-	INIT_PROPERTY_FIELD(antialiasingEnabled);
-	INIT_PROPERTY_FIELD(samplingMethod);
-	INIT_PROPERTY_FIELD(AAThreshold);
-	INIT_PROPERTY_FIELD(antialiasDepth);
-	INIT_PROPERTY_FIELD(jitterEnabled);
-	INIT_PROPERTY_FIELD(povrayDisplayEnabled);
-	INIT_PROPERTY_FIELD(radiosityEnabled);
-	INIT_PROPERTY_FIELD(radiosityRayCount);
-	INIT_PROPERTY_FIELD(radiosityRecursionLimit);
-	INIT_PROPERTY_FIELD(radiosityErrorBound);
-	INIT_PROPERTY_FIELD(povrayExecutable);
-	INIT_PROPERTY_FIELD(depthOfFieldEnabled);
-	INIT_PROPERTY_FIELD(dofFocalLength);
-	INIT_PROPERTY_FIELD(dofAperture);	
-	INIT_PROPERTY_FIELD(dofSampleCount);
-	INIT_PROPERTY_FIELD(odsEnabled);
-	INIT_PROPERTY_FIELD(interpupillaryDistance);
 }
 
 /******************************************************************************
@@ -323,13 +306,13 @@ void POVRayRenderer::beginFrame(TimePoint time, const ViewProjectionParameters& 
 /******************************************************************************
 * Renders a single animation frame into the given frame buffer.
 ******************************************************************************/
-bool POVRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, TaskManager& taskManager)
+bool POVRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, const PromiseBase& promise)
 {
-	SynchronousTask renderTask(taskManager);
-	renderTask.setProgressText(tr("Writing scene to temporary POV-Ray file"));
+	promise.setProgressText(tr("Writing scene to temporary POV-Ray file"));
 
 	// Export Ovito data objects to POV-Ray scene.
-	renderScene();
+	if(!renderScene(promise))
+		return false;
 
 	// Render visual 3D representation of the modifiers.
 	renderModifiers(false);
@@ -343,8 +326,8 @@ bool POVRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 		_imageFile->close();
 
 		// Start POV-Ray sub-process.
-		renderTask.setProgressText(tr("Starting external POV-Ray program."));
-		if(renderTask.isCanceled()) 
+		promise.setProgressText(tr("Starting external POV-Ray program."));
+		if(promise.isCanceled()) 
 			return false;
 
 		// Specify POV-Ray options:
@@ -405,12 +388,12 @@ bool POVRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 		}
 
 		// Wait until POV-Ray has finished rendering.
-		renderTask.setProgressText(tr("Waiting for external POV-Ray program..."));
-		if(renderTask.isCanceled()) 
+		promise.setProgressText(tr("Waiting for external POV-Ray program..."));
+		if(promise.isCanceled()) 
 			return false;
 		while(!povrayProcess.waitForFinished(100)) {
-			renderTask.setProgressValue(0);
-			if(renderTask.isCanceled())
+			promise.setProgressValue(0);
+			if(promise.isCanceled())
 				return false;
 		}
 
@@ -422,8 +405,8 @@ bool POVRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 			throwException(tr("POV-Ray program returned with error code %1.").arg(povrayProcess.exitCode()));
 
 		// Get rendered image from POV-Ray process.
-		renderTask.setProgressText(tr("Getting rendered image from POV-Ray."));
-		if(renderTask.isCanceled()) 
+		promise.setProgressText(tr("Getting rendered image from POV-Ray."));
+		if(promise.isCanceled()) 
 			return false;
 
 		QImage povrayImage;
@@ -464,7 +447,7 @@ bool POVRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 		}
 	}
 
-	return !renderTask.isCanceled();
+	return !promise.isCanceled();
 }
 
 /******************************************************************************

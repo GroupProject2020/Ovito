@@ -23,7 +23,7 @@
 
 
 #include <gui/GUI.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/animation/AnimationSettings.h>
 #include <core/dataset/DataSetContainer.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)

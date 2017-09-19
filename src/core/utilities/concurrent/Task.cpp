@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,65 +20,37 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <core/Core.h>
-#include <core/utilities/concurrent/Task.h>
-#include <core/utilities/concurrent/TaskManager.h>
+#include "Task.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
 /******************************************************************************
-* Constructor.
-******************************************************************************/
-SynchronousTask::SynchronousTask(TaskManager& taskManager) : _promise(std::make_shared<Promise<void>>()), _taskManager(taskManager)
-{
-	taskManager.registerTask(_promise);
-	_promise->setStarted();
-}
-
-/******************************************************************************
 * Destructor.
 ******************************************************************************/
-SynchronousTask::~SynchronousTask() 
+AsynchronousTaskBase::~AsynchronousTaskBase() 
 {
-	_promise->setFinished();
+	// If task was never started, cancel and finish it.
+	if(PromiseState::setStarted()) {
+		PromiseState::cancel();
+		PromiseState::setFinishedNoSelfLock();
+	}
+	OVITO_ASSERT(isFinished());
 }
 
 /******************************************************************************
-* Sets the status text to be displayed.
+* Implementation of QRunnable.
 ******************************************************************************/
-void SynchronousTask::setProgressText(const QString& text)
+void AsynchronousTaskBase::run() 
 {
-	_promise->setProgressText(text);
-
-	// Yield control to the event loop to process user interface events.
-	// This is necessary so that the user can interrupt the running opertion.
-	_taskManager.processEvents();
-}
-
-/******************************************************************************
-* Sets the value displayed by the progress bar.
-******************************************************************************/
-void SynchronousTask::setProgressValue(int v) 
-{
-	_promise->setProgressValue(v);
-
-	// Yield control to the event loop to process user interface events.
-	// This is necessary so that the user can interrupt the running opertion.
-	_taskManager.processEvents();
-}
-
-/******************************************************************************
-* Returns whether the operation has been canceled by the user.
-******************************************************************************/
-bool SynchronousTask::isCanceled() const 
-{ 
-	// Note: The SynchronousTask may get destroyed during event processing. Better access it first.
-	bool result = _promise->isCanceled();
-
-	// Yield control to the event loop to process user interface events.
-	// This is necessary so that the user can interrupt the running opertion.
-	_taskManager.processEvents();
-	
-	return result; 
+	OVITO_ASSERT(!isStarted() && !isFinished());
+	if(!this->setStarted()) return;
+	try {
+		perform();
+	}
+	catch(...) {
+		this->captureException();
+	}
+	this->setFinished();
 }
 
 OVITO_END_INLINE_NAMESPACE

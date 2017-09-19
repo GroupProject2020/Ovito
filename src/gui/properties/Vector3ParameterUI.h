@@ -33,6 +33,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 ******************************************************************************/
 class OVITO_GUI_EXPORT Vector3ParameterUI : public FloatParameterUI
 {
+	Q_OBJECT
+	OVITO_CLASS(Vector3ParameterUI)
+	
 public:
 
 	/// Constructor for a Qt property.
@@ -52,9 +55,6 @@ private:
 
 	/// The vector component to control (0 - 2).
 	size_t _component;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

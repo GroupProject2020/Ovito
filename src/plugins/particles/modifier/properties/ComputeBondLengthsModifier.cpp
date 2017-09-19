@@ -21,34 +21,48 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/BondsObject.h>
-#include <plugins/particles/objects/BondPropertyObject.h>
+#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/modifier/ParticleInputHelper.h>
+#include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <core/utilities/concurrent/ParallelFor.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
 #include "ComputeBondLengthsModifier.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Properties)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(ComputeBondLengthsModifier, ParticleModifier);
+
 
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
-ComputeBondLengthsModifier::ComputeBondLengthsModifier(DataSet* dataset) : ParticleModifier(dataset)
+ComputeBondLengthsModifier::ComputeBondLengthsModifier(DataSet* dataset) : Modifier(dataset)
 {
 }
 
 /******************************************************************************
-* Modifies the particle object.
+* Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-PipelineStatus ComputeBondLengthsModifier::modifyParticles(TimePoint time, TimeInterval& validityInterval)
+bool ComputeBondLengthsModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+{
+	return input.findObject<BondsObject>() != nullptr;
+}
+
+/******************************************************************************
+* Modifies the input data in an immediate, preliminary way.
+******************************************************************************/
+PipelineFlowState ComputeBondLengthsModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Inputs:
-	ParticlePropertyObject* posProperty = expectStandardProperty(ParticleProperty::PositionProperty);
-	BondsObject* bondsObj = expectBonds();
-	SimulationCellObject* simCell = input().findObject<SimulationCellObject>();
+	ParticleInputHelper pih(dataset(), input);
+	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
+	BondsObject* bondsObj = pih.expectBonds();
+	SimulationCellObject* simCell = input.findObject<SimulationCellObject>();
 	AffineTransformation cellMatrix = simCell ? simCell->cellMatrix() : AffineTransformation::Identity();
 
 	// Outputs:
-	BondPropertyObject* lengthProperty = outputStandardBondProperty(BondProperty::LengthProperty, false);
+	PipelineFlowState output = input;
+	ParticleOutputHelper poh(dataset(), output);
+	BondProperty* lengthProperty = poh.outputStandardProperty<BondProperty>(BondProperty::LengthProperty, false);
 
 	// Perform bond length calculation.
 	parallelFor(bondsObj->size(), [posProperty, bondsObj, simCell, &cellMatrix, lengthProperty](size_t bondIndex) {
@@ -66,9 +80,8 @@ PipelineStatus ComputeBondLengthsModifier::modifyParticles(TimePoint time, TimeI
 		}
 		else lengthProperty->setFloat(bondIndex, 0);
 	});
-	lengthProperty->changed();
 
-	return PipelineStatus::Success;
+	return output;
 }
 
 OVITO_END_INLINE_NAMESPACE

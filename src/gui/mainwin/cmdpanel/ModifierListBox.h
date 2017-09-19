@@ -23,11 +23,11 @@
 
 
 #include <gui/GUI.h>
-#include <core/object/OvitoObjectType.h>
+#include <core/oo/OvitoClass.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-class ModificationListModel;
+class PipelineListModel;
 
 /**
  * A combo-box widget that lets the user insert new modifiers into the modification pipeline.
@@ -37,7 +37,7 @@ class ModifierListBox : public QComboBox
 public:
 
 	/// Initializes the widget.
-	ModifierListBox(QWidget* parent, ModificationListModel* modificationList);
+	ModifierListBox(QWidget* parent, PipelineListModel* pipelineList);
 
 	/// Is called just before the drop-down box is activated.
 	virtual void showPopup() override {
@@ -71,7 +71,7 @@ private:
 	bool filterSortLessThan(const QModelIndex& source_left, const QModelIndex& source_right);
 
 	/// The modification list model.
-	ModificationListModel* _modificationList;
+	PipelineListModel* _pipelineList;
 
 	/// The list items representing modifier types.
 	QVector<QStandardItem*> _modifierItems;

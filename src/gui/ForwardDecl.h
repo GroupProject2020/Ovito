@@ -69,6 +69,7 @@ namespace Ovito {
 		OVITO_BEGIN_INLINE_NAMESPACE(Params)
 			class PropertiesEditor;
 			class AffineTransformationParameterUI;
+			class BooleanParameterUI;
 			class BooleanActionParameterUI;
 			class BooleanGroupBoxParameterUI;
 			class BooleanRadioButtonParameterUI;

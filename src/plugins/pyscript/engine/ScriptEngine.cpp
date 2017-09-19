@@ -21,7 +21,7 @@
 
 #include <plugins/pyscript/PyScript.h>
 #include <plugins/pyscript/binding/PythonBinding.h>
-#include <core/plugins/PluginManager.h>
+#include <core/app/PluginManager.h>
 #include <core/app/Application.h>
 #include <core/dataset/DataSetContainer.h>
 #include "ScriptEngine.h"
@@ -265,7 +265,7 @@ int ScriptEngine::executeCommands(const QString& commands, const QStringList& sc
 void ScriptEngine::execute(const std::function<void()>& func)
 {
 	if(QCoreApplication::instance() && QThread::currentThread() != QCoreApplication::instance()->thread())
-		throw Exception(tr("Can run Python scripts only from the main thread."), dataset());
+		throw Exception(tr("Python scripts can only be run from the main thread."), dataset());
 
 	// Activate this engine.
 	ActiveScriptEngineSetter engineSetter(this);

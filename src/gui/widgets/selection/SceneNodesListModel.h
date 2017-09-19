@@ -23,7 +23,7 @@
 
 
 #include <gui/GUI.h>
-#include <core/reference/RefTargetListener.h>
+#include <core/oo/RefTargetListener.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 

@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <gui/plugins/utility/UtilityApplet.h>
+#include <gui/mainwin/cmdpanel/UtilityApplet.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
@@ -64,7 +64,7 @@ private:
 	Q_CLASSINFO("DisplayName", "Create trajectory lines");
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 };
 
 OVITO_END_INLINE_NAMESPACE

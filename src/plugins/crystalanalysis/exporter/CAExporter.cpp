@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2015) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,80 +20,36 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/particles/objects/SimulationCellObject.h>
-#include <plugins/particles/objects/SurfaceMesh.h>
 #include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
 #include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
 #include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
 #include <plugins/crystalanalysis/objects/partition_mesh/PartitionMesh.h>
+#include <plugins/mesh/surface/SurfaceMesh.h>
+#include <core/utilities/io/CompressedTextWriter.h>
+#include <core/utilities/concurrent/Promise.h>
 #include <core/utilities/concurrent/TaskManager.h>
-#include <core/scene/ObjectNode.h>
-#include <core/scene/SelectionSet.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <core/dataset/scene/ObjectNode.h>
 #include "CAExporter.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(CAExporter, FileExporter);
+
 
 /******************************************************************************
-* Selects the natural scene nodes to be exported by this exporter under 
-* normal circumstances.
+* Writes the particles of one animation frame to the current output file.
 ******************************************************************************/
-void CAExporter::selectStandardOutputData()
+bool CAExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager)
 {
-	QVector<SceneNode*> nodes = dataset()->selection()->nodes();
-	if(nodes.empty())
-		throwException(tr("Please select an object to be exported first."));
-	setOutputData(nodes);
-}
-
-/******************************************************************************
- * This is called once for every output file to be written and before
- * exportData() is called.
- ****************************************************************************/
-bool CAExporter::openOutputFile(const QString& filePath, int numberOfFrames)
-{
-	OVITO_ASSERT(!_outputFile.isOpen());
-	OVITO_ASSERT(!_outputStream);
-
-	_outputFile.setFileName(filePath);
-	_outputStream.reset(new CompressedTextWriter(_outputFile, dataset()));
-
-	return true;
-}
-
-/******************************************************************************
- * This is called once for every output file written after exportData() has
- * been called.
- *****************************************************************************/
-void CAExporter::closeOutputFile(bool exportCompleted)
-{
-	_outputStream.reset();
-	if(_outputFile.isOpen())
-		_outputFile.close();
-
-	if(!exportCompleted)
-		_outputFile.remove();
-}
-
-/******************************************************************************
- * Exports a single animation frame to the current output file.
- *****************************************************************************/
-bool CAExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager)
-{
-	if(!FileExporter::exportFrame(frameNumber, time, filePath, taskManager))
-		return false;
-
-	// Export the first scene node from the selection set.
-	if(outputData().empty())
-		throwException(tr("The selection set to be exported is empty."));
-
-	ObjectNode* objectNode = dynamic_object_cast<ObjectNode>(outputData().front());
+	// Get particle data to be exported.
+	ObjectNode* objectNode = dynamic_object_cast<ObjectNode>(sceneNode);
 	if(!objectNode)
 		throwException(tr("The scene node to be exported is not an object node."));
 
+	Promise<> exportTask = Promise<>::createSynchronous(taskManager, true, true);
+				
 	// Evaluate pipeline of object node.
-	auto evalFuture = objectNode->evaluatePipelineAsync(PipelineEvalRequest(time, false));
+	auto evalFuture = objectNode->evaluatePipeline(time);
 	if(!taskManager.waitForTask(evalFuture))
 		return false;
 	const PipelineFlowState& state = evalFuture.result();

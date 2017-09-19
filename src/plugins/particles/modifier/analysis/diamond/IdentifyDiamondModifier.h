@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -55,13 +55,22 @@ public:
 
 protected:
 
-	/// Creates and initializes a computation engine that will compute the modifier's results.
-	virtual std::shared_ptr<ComputeEngine> createEngine(TimePoint time, TimeInterval validityInterval) override;
-
-	/// Lets the modifier insert the cached computation results into the modification pipeline.
-	virtual PipelineStatus applyComputationResults(TimePoint time, TimeInterval& validityInterval) override;
-
+	/// Creates a computation engine that will compute the modifier's results.
+	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	
 private:
+
+	/// Holds the modifier's results.
+	class DiamondIdentificationResults : public StructureIdentificationResults
+	{
+	public:
+
+		/// Inherit constructor of base class.
+		using StructureIdentificationResults::StructureIdentificationResults;
+
+		/// Injects the computed results into the data pipeline.
+		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	};
 
 	/// Analysis engine that performs the structure identification
 	class DiamondIdentificationEngine : public StructureIdentificationEngine
@@ -69,15 +78,15 @@ private:
 	public:
 
 		/// Constructor.
-		DiamondIdentificationEngine(const TimeInterval& validityInterval, ParticleProperty* positions, const SimulationCell& simCell, const QVector<bool>& typesToIdentify, ParticleProperty* selection) :
-			StructureIdentificationEngine(validityInterval, positions, simCell, typesToIdentify, selection) {}
+		DiamondIdentificationEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell, QVector<bool> typesToIdentify, ConstPropertyPtr selection) :
+			StructureIdentificationEngine(validityInterval, std::move(positions), simCell, std::move(typesToIdentify), std::move(selection)) {}
 
-		/// Computes the modifier's results and stores them in this object for later retrieval.
+		/// Computes the modifier's results.
 		virtual void perform() override;
 	};
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 
 	Q_CLASSINFO("DisplayName", "Identify diamond structure");
 	Q_CLASSINFO("ModifierCategory", "Analysis");

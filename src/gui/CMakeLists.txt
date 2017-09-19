@@ -26,11 +26,12 @@ SET(SourceFiles
 	mainwin/cmdpanel/CommandPanel.cpp
 	mainwin/cmdpanel/RenderCommandPage.cpp
 	mainwin/cmdpanel/ModifyCommandPage.cpp
-	mainwin/cmdpanel/ModificationListModel.cpp
-	mainwin/cmdpanel/ModificationListItem.cpp
+	mainwin/cmdpanel/PipelineListModel.cpp
+	mainwin/cmdpanel/PipelineListItem.cpp
 	mainwin/cmdpanel/ModifierListBox.cpp
 	mainwin/cmdpanel/UtilityCommandPage.cpp
 	mainwin/cmdpanel/OverlayCommandPage.cpp
+	mainwin/cmdpanel/UtilityApplet.cpp
 	dialogs/AdjustCameraDialog.cpp
 	dialogs/AnimationKeyEditorDialog.cpp
 	dialogs/AnimationSettingsDialog.cpp
@@ -50,11 +51,26 @@ SET(SourceFiles
 	actions/AnimationActions.cpp
 	actions/RenderActions.cpp
 	actions/ViewportModeAction.cpp
-	dataset/importexport/FileSourceEditor.cpp
-	dataset/importexport/FileImporterEditor.cpp
-	dataset/importexport/AttributeFileExporterEditor.cpp
 	dataset/GuiDataSetContainer.cpp
+	dataset/io/FileSourceEditor.cpp
+	dataset/io/FileImporterEditor.cpp
+	dataset/io/AttributeFileExporterEditor.cpp
+	dataset/animation/controller/TCBInterpolationControllerEditor.cpp
+	dataset/data/camera/CameraObjectEditor.cpp
+	dataset/data/simcell/SimulationCellObjectEditor.cpp
+	dataset/data/simcell/SimulationCellDisplayEditor.cpp
+	dataset/pipeline/modifiers/SliceModifierEditor.cpp
+	dataset/pipeline/modifiers/AffineTransformationModifierEditor.cpp
+	dataset/pipeline/modifiers/ClearSelectionModifierEditor.cpp
+	dataset/pipeline/modifiers/InvertSelectionModifierEditor.cpp
+	dataset/pipeline/modifiers/ColorCodingModifierEditor.cpp
+	dataset/pipeline/modifiers/AssignColorModifierEditor.cpp
+	dataset/pipeline/modifiers/DeleteSelectedModifierEditor.cpp
+	dataset/pipeline/modifiers/SelectTypeModifierEditor.cpp
+	dataset/pipeline/modifiers/HistogramModifierEditor.cpp
+	dataset/pipeline/modifiers/ScatterPlotModifierEditor.cpp
 	widgets/general/RolloutContainer.cpp
+	widgets/general/RolloutContainerLayout.cpp
 	widgets/general/SpinnerWidget.cpp
 	widgets/general/ColorPickerWidget.cpp
 	widgets/general/ElidedTextLabel.cpp
@@ -71,8 +87,7 @@ SET(SourceFiles
 	widgets/selection/SceneNodeSelectionBox.cpp
 	widgets/display/CoordinateDisplayWidget.cpp
 	widgets/display/StatusWidget.cpp
-	plugins/utility/UtilityApplet.cpp
-	plugins/autostart/GuiAutoStartObject.cpp
+	widgets/properties/PropertySelectionComboBox.cpp
 	properties/PropertiesEditor.cpp
 	properties/PropertiesPanel.cpp
 	properties/ParameterUI.cpp
@@ -89,7 +104,12 @@ SET(SourceFiles
 	properties/FontParameterUI.cpp
 	properties/IntegerParameterUI.cpp
 	properties/IntegerRadioButtonParameterUI.cpp
+	properties/ModifierPropertiesEditor.cpp
+	properties/ModifierDelegateParameterUI.cpp
+	properties/ModifierDelegateListParameterUI.cpp
 	properties/RefTargetListParameterUI.cpp
+	properties/PropertyClassParameterUI.cpp
+	properties/PropertyReferenceParameterUI.cpp
 	properties/StringParameterUI.cpp
 	properties/SubObjectParameterUI.cpp
 	properties/VariantComboBoxParameterUI.cpp
@@ -103,15 +123,14 @@ SET(SourceFiles
 	viewport/input/NavigationModes.cpp
 	viewport/input/XFormModes.cpp
 	viewport/picking/PickingSceneRenderer.cpp
-	viewport/overlay/CoordinateTripodOverlayEditor.cpp
-	viewport/overlay/TextLabelOverlayEditor.cpp
-	viewport/overlay/MoveOverlayInputMode.cpp
+	viewport/overlays/CoordinateTripodOverlayEditor.cpp
+	viewport/overlays/TextLabelOverlayEditor.cpp
+	viewport/overlays/MoveOverlayInputMode.cpp
+	viewport/overlays/ColorLegendOverlayEditor.cpp
 	app/GuiApplication.cpp
-	scene/objects/camera/CameraObjectEditor.cpp
-	scene/objects/geometry/TriMeshDisplayEditor.cpp
+	app/GuiApplicationService.cpp
 	utilities/io/GuiFileManager.cpp
 	utilities/concurrent/ProgressDialog.cpp
-	animation/controller/TCBInterpolationControllerEditor.cpp
 )
 
 # Compile resources.
@@ -131,6 +150,9 @@ TARGET_LINK_LIBRARIES(Gui PUBLIC Core OpenGLRenderer)
 
 # Link Qt5.
 TARGET_LINK_LIBRARIES(Gui PUBLIC Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network)
+
+# Link Qwt.
+TARGET_LINK_LIBRARIES(Gui PRIVATE Qwt)
 
 # Speed up compilation by using precompiled headers.
 ADD_PRECOMPILED_HEADER(Gui gui/GUI.h)

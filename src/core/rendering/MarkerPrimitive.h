@@ -35,7 +35,8 @@ class OVITO_CORE_EXPORT MarkerPrimitive : public PrimitiveBase
 public:
 
 	enum MarkerShape {
-		DotShape
+		DotShape,
+		BoxShape
 	};
 	Q_ENUMS(MarkerShape);
 

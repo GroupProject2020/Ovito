@@ -23,29 +23,37 @@
 
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/particles/gui/modifier/ParticleModifierEditor.h>
+#include <gui/properties/ModifierPropertiesEditor.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /**
  * A properties editor for the AtomicStrainModifier class.
  */
-class AtomicStrainModifierEditor : public ParticleModifierEditor
+class AtomicStrainModifierEditor : public ModifierPropertiesEditor
 {
 public:
 
 	/// Default constructor.
 	Q_INVOKABLE AtomicStrainModifierEditor() {}
 
+private Q_SLOTS:
+
+	/// Is called when the object being edited changes.
+	void onContentsChanged(RefTarget* editObject);	
+	
+	/// Is called when the user clicks one of the source mode buttons.
+	void onSourceButtonClicked(int id);
+
 protected:
 
 	/// Creates the user interface controls for the editor.
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
 
-private:
+	QButtonGroup* _sourceButtonGroup;
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 };
 
 OVITO_END_INLINE_NAMESPACE

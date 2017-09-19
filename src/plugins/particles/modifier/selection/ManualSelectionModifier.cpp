@@ -21,42 +21,80 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/util/ParticleSelectionSet.h>
-#include <core/scene/pipeline/PipelineObject.h>
-#include <core/animation/AnimationSettings.h>
+#include <plugins/particles/modifier/ParticleInputHelper.h>
+#include <plugins/particles/modifier/ParticleOutputHelper.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
+#include <core/dataset/animation/AnimationSettings.h>
 #include <core/utilities/concurrent/ParallelFor.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include "ManualSelectionModifier.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Selection)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(ManualSelectionModifier, ParticleModifier);
+
+
+DEFINE_FLAGS_REFERENCE_FIELD(ManualSelectionModifierApplication, selectionSet, "SelectionSet", ParticleSelectionSet, PROPERTY_FIELD_ALWAYS_CLONE);
+SET_PROPERTY_FIELD_LABEL(ManualSelectionModifierApplication, selectionSet, "Particle selection set");
 
 /******************************************************************************
-* This modifies the input object.
+* Constructor.
 ******************************************************************************/
-PipelineStatus ManualSelectionModifier::modifyParticles(TimePoint time, TimeInterval& validityInterval)
+ManualSelectionModifierApplication::ManualSelectionModifierApplication(DataSet* dataset) : ModifierApplication(dataset)
 {
+
+}
+
+/******************************************************************************
+* Asks the modifier whether it can be applied to the given input data.
+******************************************************************************/
+bool ManualSelectionModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+{
+	return input.findObject<ParticleProperty>() != nullptr;
+}
+
+/******************************************************************************
+* Create a new modifier application that refers to this modifier instance.
+******************************************************************************/
+OORef<ModifierApplication> ManualSelectionModifier::createModifierApplication()
+{
+	OORef<ModifierApplication> modApp = new ManualSelectionModifierApplication(dataset());
+	modApp->setModifier(this);
+	return modApp;
+}
+
+/******************************************************************************
+* Modifies the input data in an immediate, preliminary way.
+******************************************************************************/
+PipelineFlowState ManualSelectionModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+{
+	PipelineFlowState output = input;
+	ParticleInputHelper pih(dataset(), input);
+	ParticleOutputHelper poh(dataset(), output);
+
 	// Retrieve the selection stored in the modifier application.
-	ParticleSelectionSet* selectionSet = getSelectionSet(modifierApplication());
+	ParticleSelectionSet* selectionSet = getSelectionSet(modApp, false);
 	if(!selectionSet)
 		throwException(tr("No stored selection set available. Please reset the selection state."));
 
-	return selectionSet->applySelection(
-			outputStandardProperty(ParticleProperty::SelectionProperty),
-			inputStandardProperty(ParticleProperty::IdentifierProperty));
+	PipelineStatus status = selectionSet->applySelection(
+			poh.outputStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty),
+			pih.inputStandardProperty<ParticleProperty>(ParticleProperty::IdentifierProperty));
+
+	output.setStatus(std::move(status));
+	return output;
 }
 
 /******************************************************************************
 * This method is called by the system when the modifier has been inserted
 * into a pipeline.
 ******************************************************************************/
-void ManualSelectionModifier::initializeModifier(PipelineObject* pipeline, ModifierApplication* modApp)
+void ManualSelectionModifier::initializeModifier(ModifierApplication* modApp)
 {
-	ParticleModifier::initializeModifier(pipeline, modApp);
+	Modifier::initializeModifier(modApp);
 
 	// Take a snapshot of the existing selection state at the time the modifier is created.
-	if(getSelectionSet(modApp, false) == nullptr) {
-		PipelineFlowState input = getModifierInput(modApp);
+	if(!getSelectionSet(modApp, false)) {
+		PipelineFlowState input = modApp->evaluateInputPreliminary();
 		resetSelection(modApp, input);
 	}
 }
@@ -67,9 +105,14 @@ void ManualSelectionModifier::initializeModifier(PipelineObject* pipeline, Modif
 ******************************************************************************/
 ParticleSelectionSet* ManualSelectionModifier::getSelectionSet(ModifierApplication* modApp, bool createIfNotExist)
 {
-	ParticleSelectionSet* selectionSet = dynamic_object_cast<ParticleSelectionSet>(modApp->modifierData());
+	ManualSelectionModifierApplication* myModApp = dynamic_object_cast<ManualSelectionModifierApplication>(modApp);
+	if(!myModApp)
+		throwException(tr("Manual selection modifier is not referenced by a ManualSelectionModifierApplication."));
+
+	ParticleSelectionSet* selectionSet = myModApp->selectionSet();
 	if(!selectionSet && createIfNotExist)
-		modApp->setModifierData(selectionSet = new ParticleSelectionSet(dataset()));
+		myModApp->setSelectionSet(selectionSet = new ParticleSelectionSet(dataset()));
+
 	return selectionSet;
 }
 
@@ -102,7 +145,7 @@ void ManualSelectionModifier::clearSelection(ModifierApplication* modApp, const 
 ******************************************************************************/
 void ManualSelectionModifier::toggleParticleSelection(ModifierApplication* modApp, const PipelineFlowState& state, size_t particleIndex)
 {
-	ParticleSelectionSet* selectionSet = getSelectionSet(modApp);
+	ParticleSelectionSet* selectionSet = getSelectionSet(modApp, false);
 	if(!selectionSet)
 		throwException(tr("No stored selection set available. Please reset the selection state."));
 	selectionSet->toggleParticle(state, particleIndex);

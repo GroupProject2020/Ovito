@@ -1,14 +1,36 @@
 from ovito.io import *
+from ovito.data import *
+from ovito.modifiers import *
+
+# Tests access to a ParticleType objects
+# it contains.
 
 node = import_file("../../files/CFG/shear.void.120.cfg")
-ptype_property = node.source.particle_type
+tprop = node.source.particle_properties['Particle Type']
 
-assert(len(ptype_property.type_list) == 3)
-assert(ptype_property.type_list[0].id == 1)
+assert(len(tprop.types) == 3)
+assert(tprop.types[0].id == 1)
 
-print(ptype_property.type_list[0].id)
-print(ptype_property.type_list[0].color)
-print(ptype_property.type_list[0].name)
-print(ptype_property.type_list[0].radius)
+print(tprop.types[0].id)
+print(tprop.types[0].color)
+print(tprop.types[0].name)
+print(tprop.types[0].radius)
 
-print(ptype_property.array)
+assert(tprop.type_by_id(1).id == 1)
+assert(tprop.type_by_id(tprop.types[1].id) == tprop.types[1])
+assert(tprop.type_by_id(tprop.types[2].id) == tprop.types[2])
+
+assert(tprop.type_by_name(tprop.types[1].name) == tprop.types[1])
+assert(tprop.type_by_name(tprop.types[2].name) == tprop.types[2])
+
+# Let the CNA modifier create a structural type property.
+node.modifiers.append(CommonNeighborAnalysisModifier())
+sprop = node.compute().particle_properties['Structure Type']
+
+assert(len(sprop.types) >= 1)
+assert(sprop.type_by_id(CommonNeighborAnalysisModifier.Type.HCP).id == CommonNeighborAnalysisModifier.Type.HCP)
+
+# Backward compatibility check:
+assert(len(tprop.type_list) == 3)
+assert(tprop.get_type_by_id(tprop.type_list[1].id) == tprop.type_list[1])
+assert(tprop.get_type_by_name(tprop.type_list[1].name) == tprop.type_list[1])

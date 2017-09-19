@@ -28,7 +28,7 @@
 
 
 #include <gui/GUI.h>
-#include <core/reference/RefTarget.h>
+#include <core/oo/RefTarget.h>
 #include "PropertiesEditor.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
@@ -39,6 +39,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
  */
 class OVITO_GUI_EXPORT ParameterUI : public RefMaker
 {
+	Q_OBJECT
+	OVITO_CLASS(ParameterUI)
+	
 public:
 
 	/// \brief Constructor.
@@ -67,9 +70,11 @@ public:
 	bool isDisabled() const { return !isEnabled(); }
 
 	/// \brief Returns the dataset currently being edited.
-	DataSet* dataset() const {
-		OVITO_ASSERT_MSG(editObject() != nullptr, "ParameterUI::dataset()", "Can access dataset only while editing an object.");
-		return editObject()->dataset();
+	DataSet* dataset() {
+		if(editObject())
+			_dataset = editObject()->dataset();
+		OVITO_ASSERT_MSG(!_dataset.isNull(), "ParameterUI::dataset()", "Can access dataset only while editing an object.");
+		return _dataset.data();
 	}
 
 	/// \brief Executes the passed functor and catches any exceptions thrown during its execution.
@@ -123,20 +128,20 @@ public Q_SLOTS:
 	/// \brief Sets the object whose property is being displayed in this parameter UI.
 	/// \sa editObject()
 	void setEditObject(RefTarget* newObject) {
-		_editObject = newObject;
+		_editObject.set(this, PROPERTY_FIELD(editObject), newObject);
 		resetUI();
 	}
 	
 private:
 
 	/// The object whose parameter is being edited.
-	DECLARE_REFERENCE_FIELD(RefTarget, editObject);
+	DECLARE_REFERENCE_FIELD_FLAGS(RefTarget, editObject, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
 	/// Stores whether this UI is enabled.
 	bool _enabled;
 
-	Q_OBJECT
-	OVITO_OBJECT
+	/// The dataset currently being edited.
+	QPointer<DataSet> _dataset;
 };
 
 /**
@@ -145,6 +150,9 @@ private:
  */
 class OVITO_GUI_EXPORT PropertyParameterUI : public ParameterUI
 {
+	OVITO_CLASS(PropertyParameterUI)
+	Q_OBJECT
+	
 public:
 	
 	/// \brief Constructor for a Qt property.
@@ -215,16 +223,13 @@ private:
 	/// The controller or sub-object whose value is being edited.
 	/// This may be \c NULL either when there is no editable object selected in the parent editor
 	/// or if the editable object's reference field is currently empty.
-	DECLARE_REFERENCE_FIELD(RefTarget, parameterObject);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(RefTarget, parameterObject, setParameterObject, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
 	/// The property or reference field being edited or NULL if bound to a Qt property.
 	const PropertyFieldDescriptor* _propField;
 
 	/// The name of the Qt property being edited or NULL.
 	const char* _propertyName;
-	
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

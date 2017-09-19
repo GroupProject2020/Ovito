@@ -20,16 +20,15 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticlePropertyObject.h>
-#include <plugins/particles/objects/ParticleTypeProperty.h>
-#include <plugins/particles/objects/SimulationCellObject.h>
-#include <core/utilities/concurrent/Task.h>
+#include <plugins/particles/objects/ParticleProperty.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <core/utilities/concurrent/Promise.h>
 #include "IMDExporter.h"
 #include "../OutputColumnMapping.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(IMDExporter, FileColumnParticleExporter);
+IMPLEMENT_OVITO_CLASS(IMDExporter);	
 
 /******************************************************************************
 * Writes the particles of one animation frame to the current output file.
@@ -41,13 +40,13 @@ bool IMDExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 	if(!getParticleData(sceneNode, time, state, taskManager))
 		return false;
 
-	SynchronousTask exportTask(taskManager);
+	Promise<> exportTask = Promise<>::createSynchronous(taskManager, true, true);
 
-	ParticlePropertyObject* posProperty = ParticlePropertyObject::findInState(state, ParticleProperty::PositionProperty);
-	ParticleTypeProperty* typeProperty = nullptr;
-	ParticlePropertyObject* identifierProperty = nullptr;
-	ParticlePropertyObject* velocityProperty = nullptr;
-	ParticlePropertyObject* massProperty = nullptr;
+	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
+	ParticleProperty* typeProperty = nullptr;
+	ParticleProperty* identifierProperty = nullptr;
+	ParticleProperty* velocityProperty = nullptr;
+	ParticleProperty* massProperty = nullptr;
 
 	// Get simulation cell info.
 	SimulationCellObject* simulationCell = state.findObject<SimulationCellObject>();
@@ -63,23 +62,23 @@ bool IMDExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 	bool exportIdentifiers = false;
 	for(const ParticlePropertyReference& pref : columnMapping()) {
 		if(pref.type() == ParticleProperty::PositionProperty) {
-			posProperty = ParticlePropertyObject::findInState(state, ParticleProperty::PositionProperty);
+			posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
 			if(!posProperty) throwException(tr("Cannot export particle positions, because they are not present in the dataset to be exported."));
 		}
-		else if(pref.type() == ParticleProperty::ParticleTypeProperty) {
-			typeProperty = dynamic_object_cast<ParticleTypeProperty>(ParticlePropertyObject::findInState(state, ParticleProperty::ParticleTypeProperty));
+		else if(pref.type() == ParticleProperty::TypeProperty) {
+			typeProperty = ParticleProperty::findInState(state, ParticleProperty::TypeProperty);
 			if(!typeProperty) throwException(tr("Cannot export particle types, because they are not present in the dataset to be exported."));
 		}
 		else if(pref.type() == ParticleProperty::IdentifierProperty) {
-			identifierProperty = ParticlePropertyObject::findInState(state, ParticleProperty::IdentifierProperty);
+			identifierProperty = ParticleProperty::findInState(state, ParticleProperty::IdentifierProperty);
 			exportIdentifiers = true;
 		}
 		else if(pref.type() == ParticleProperty::VelocityProperty) {
-			velocityProperty = ParticlePropertyObject::findInState(state, ParticleProperty::VelocityProperty);
+			velocityProperty = ParticleProperty::findInState(state, ParticleProperty::VelocityProperty);
 			if(!velocityProperty) throwException(tr("Cannot export particle velocities, because they are not present in the dataset to be exported."));
 		}
 		else if(pref.type() == ParticleProperty::MassProperty) {
-			massProperty = ParticlePropertyObject::findInState(state, ParticleProperty::MassProperty);
+			massProperty = ParticleProperty::findInState(state, ParticleProperty::MassProperty);
 			if(!massProperty) throwException(tr("Cannot export particle masses, because they are not present in the dataset to be exported."));
 		}
 		else filteredMapping.push_back(pref);
@@ -90,33 +89,33 @@ bool IMDExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 	if(exportIdentifiers) {
 		if(identifierProperty) {
 			textStream() << "1 ";
-			colMapping.emplace_back(identifierProperty->type(), identifierProperty->name());
+			colMapping.emplace_back(identifierProperty);
 			columnNames.push_back("number");
 		}
 		else {
 			textStream() << "1 ";
-			colMapping.emplace_back(ParticleProperty::IdentifierProperty, ParticleProperty::standardPropertyName(ParticleProperty::IdentifierProperty));
+			colMapping.emplace_back(ParticleProperty::IdentifierProperty);
 			columnNames.push_back("number");
 		}
 	}
 	else textStream() << "0 ";
 	if(typeProperty) {
 		textStream() << "1 ";
-		colMapping.emplace_back(typeProperty->type(), typeProperty->name());
+		colMapping.emplace_back(typeProperty);
 		columnNames.push_back("type");
 	}
 	else textStream() << "0 ";
 	if(massProperty) {
 		textStream() << "1 ";
-		colMapping.emplace_back(massProperty->type(), massProperty->name());
+		colMapping.emplace_back(massProperty);
 		columnNames.push_back("mass");
 	}
 	else textStream() << "0 ";
 	if(posProperty) {
 		textStream() << "3 ";
-		colMapping.emplace_back(posProperty->type(), posProperty->name(), 0);
-		colMapping.emplace_back(posProperty->type(), posProperty->name(), 1);
-		colMapping.emplace_back(posProperty->type(), posProperty->name(), 2);
+		colMapping.emplace_back(posProperty, 0);
+		colMapping.emplace_back(posProperty, 1);
+		colMapping.emplace_back(posProperty, 2);
 		columnNames.push_back("x");
 		columnNames.push_back("y");
 		columnNames.push_back("z");
@@ -124,9 +123,9 @@ bool IMDExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 	else textStream() << "0 ";
 	if(velocityProperty) {
 		textStream() << "3 ";
-		colMapping.emplace_back(velocityProperty->type(), velocityProperty->name(), 0);
-		colMapping.emplace_back(velocityProperty->type(), velocityProperty->name(), 1);
-		colMapping.emplace_back(velocityProperty->type(), velocityProperty->name(), 2);
+		colMapping.emplace_back(velocityProperty, 0);
+		colMapping.emplace_back(velocityProperty, 1);
+		colMapping.emplace_back(velocityProperty, 2);
 		columnNames.push_back("vx");
 		columnNames.push_back("vy");
 		columnNames.push_back("vz");
@@ -134,7 +133,7 @@ bool IMDExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 	else textStream() << "0 ";
 
 	for(int i = 0; i < (int)filteredMapping.size(); i++) {
-		const ParticlePropertyReference& pref = filteredMapping[i];
+		const PropertyReference& pref = filteredMapping[i];
 		QString columnName = pref.nameWithComponent();
 		columnName.remove(QRegExp("[^A-Za-z\\d_.]"));
 		columnNames.push_back(columnName);
@@ -143,7 +142,7 @@ bool IMDExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 	textStream() << filteredMapping.size() << "\n";
 
 	textStream() << "#C";
-	Q_FOREACH(const QString& cname, columnNames)
+	for(const QString& cname : columnNames)
 		textStream() << " " << cname;
 	textStream() << "\n";
 

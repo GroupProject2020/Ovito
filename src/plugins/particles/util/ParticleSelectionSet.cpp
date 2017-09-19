@@ -21,12 +21,12 @@
 
 #include <plugins/particles/Particles.h>
 #include <core/dataset/UndoStack.h>
-#include <plugins/particles/objects/ParticlePropertyObject.h>
+#include <plugins/particles/objects/ParticleProperty.h>
 #include "ParticleSelectionSet.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(ParticleSelectionSet, RefTarget);
+
 DEFINE_PROPERTY_FIELD(ParticleSelectionSet, useIdentifiers, "UseIdentifiers");
 
 /* Undo record that can restore an old particle selection state. */
@@ -40,6 +40,9 @@ public:
 		_selectedIdentifiers.swap(_owner->_selectedIdentifiers);
 		_owner->notifyDependents(ReferenceEvent::TargetChanged);
 	}
+	virtual QString displayName() const override { 
+		return QStringLiteral("Replace particle selection set"); 
+	}		
 private:
 	OORef<ParticleSelectionSet> _owner;
 	QBitArray _selection;
@@ -58,6 +61,9 @@ public:
 		else
 			_owner->toggleParticleIdentifier(_particleId);
 	}
+	virtual QString displayName() const override { 
+		return QStringLiteral("Toggle particle selection"); 
+	}		
 private:
 	OORef<ParticleSelectionSet> _owner;
 	int _particleId;
@@ -67,9 +73,9 @@ private:
 /******************************************************************************
 * Saves the class' contents to the given stream.
 ******************************************************************************/
-void ParticleSelectionSet::saveToStream(ObjectSaveStream& stream)
+void ParticleSelectionSet::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData)
 {
-	RefTarget::saveToStream(stream);
+	RefTarget::saveToStream(stream, excludeRecomputableData);
 	stream.beginChunk(0x01);
 	stream << _selection;
 	stream << _selectedIdentifiers;
@@ -107,7 +113,7 @@ size_t ParticleSelectionSet::particleCount(const PipelineFlowState& state)
 {
 	// Find the first particle property object to determine the number of particles.
 	for(DataObject* o : state.objects()) {
-		if(ParticlePropertyObject* particleProperty = dynamic_object_cast<ParticlePropertyObject>(o))
+		if(ParticleProperty* particleProperty = dynamic_object_cast<ParticleProperty>(o))
 			return particleProperty->size();
 	}
 	return 0;
@@ -119,13 +125,13 @@ size_t ParticleSelectionSet::particleCount(const PipelineFlowState& state)
 void ParticleSelectionSet::resetSelection(const PipelineFlowState& state)
 {
 	// Take a snapshot of the current selection.
-	ParticlePropertyObject* selProperty = ParticlePropertyObject::findInState(state, ParticleProperty::SelectionProperty);
+	ParticleProperty* selProperty = ParticleProperty::findInState(state, ParticleProperty::SelectionProperty);
 	if(selProperty) {
 
 		// Make a backup of the old snapshot so it may be restored.
 		dataset()->undoStack().pushIfRecording<ReplaceSelectionOperation>(this);
 
-		ParticlePropertyObject* identifierProperty = ParticlePropertyObject::findInState(state, ParticleProperty::IdentifierProperty);
+		ParticleProperty* identifierProperty = ParticleProperty::findInState(state, ParticleProperty::IdentifierProperty);
 		if(identifierProperty && useIdentifiers()) {
 			OVITO_ASSERT(selProperty->size() == identifierProperty->size());
 			_selectedIdentifiers.clear();
@@ -163,7 +169,7 @@ void ParticleSelectionSet::clearSelection(const PipelineFlowState& state)
 	// Make a backup of the old selection state so it may be restored.
 	dataset()->undoStack().pushIfRecording<ReplaceSelectionOperation>(this);
 
-	if(useIdentifiers() && ParticlePropertyObject::findInState(state, ParticleProperty::IdentifierProperty)) {
+	if(useIdentifiers() && ParticleProperty::findInState(state, ParticleProperty::IdentifierProperty)) {
 		_selection.clear();
 		_selectedIdentifiers.clear();
 	}
@@ -182,7 +188,7 @@ void ParticleSelectionSet::setParticleSelection(const PipelineFlowState& state, 
 	// Make a backup of the old snapshot so it may be restored.
 	dataset()->undoStack().pushIfRecording<ReplaceSelectionOperation>(this);
 
-	ParticlePropertyObject* identifierProperty = ParticlePropertyObject::findInState(state, ParticleProperty::IdentifierProperty);
+	ParticleProperty* identifierProperty = ParticleProperty::findInState(state, ParticleProperty::IdentifierProperty);
 	if(identifierProperty && useIdentifiers()) {
 		OVITO_ASSERT(selection.size() == identifierProperty->size());
 		_selection.clear();
@@ -232,7 +238,7 @@ void ParticleSelectionSet::toggleParticle(const PipelineFlowState& state, size_t
 	if(particleIndex >= particleCount(state))
 		return;
 
-	ParticlePropertyObject* identifiers = ParticlePropertyObject::findInState(state, ParticleProperty::IdentifierProperty);
+	ParticleProperty* identifiers = ParticleProperty::findInState(state, ParticleProperty::IdentifierProperty);
 	if(useIdentifiers() && identifiers) {
 		_selection.clear();
 		toggleParticleIdentifier(identifiers->getInt(particleIndex));
@@ -281,7 +287,7 @@ void ParticleSelectionSet::selectAll(const PipelineFlowState& state)
 	// Make a backup of the old selection state so it may be restored.
 	dataset()->undoStack().pushIfRecording<ReplaceSelectionOperation>(this);
 
-	ParticlePropertyObject* identifiers = ParticlePropertyObject::findInState(state, ParticleProperty::IdentifierProperty);
+	ParticleProperty* identifiers = ParticleProperty::findInState(state, ParticleProperty::IdentifierProperty);
 	if(useIdentifiers() && identifiers != nullptr) {
 		_selection.clear();
 		_selectedIdentifiers.clear();
@@ -298,7 +304,7 @@ void ParticleSelectionSet::selectAll(const PipelineFlowState& state)
 /******************************************************************************
 * Copies the stored selection set into the given output selection particle property.
 ******************************************************************************/
-PipelineStatus ParticleSelectionSet::applySelection(ParticlePropertyObject* outputSelectionProperty, ParticlePropertyObject* identifierProperty)
+PipelineStatus ParticleSelectionSet::applySelection(ParticleProperty* outputSelectionProperty, ParticleProperty* identifierProperty)
 {
 	size_t nselected = 0;
 	if(!identifierProperty || !useIdentifiers()) {
@@ -323,7 +329,7 @@ PipelineStatus ParticleSelectionSet::applySelection(ParticlePropertyObject* outp
 				nselected++;
 		}
 	}
-	outputSelectionProperty->changed();
+	outputSelectionProperty->notifyDependents(ReferenceEvent::TargetChanged);
 
 	return PipelineStatus(PipelineStatus::Success, tr("%1 particles selected").arg(nselected));
 }

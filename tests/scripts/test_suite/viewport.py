@@ -14,7 +14,6 @@ vp.type = Viewport.Type.PERSPECTIVE
 vp.camera_pos = (350, -450, 450)
 vp.camera_dir = (-100, -50, -50)
 print(vp.fov)
-print(vp.title)
 print(vp.type)
 vp.zoom_all()
 

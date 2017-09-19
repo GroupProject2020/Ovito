@@ -25,7 +25,7 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_OBJECT(GeneralSettingsPage, ApplicationSettingsDialogPage);
+IMPLEMENT_OVITO_CLASS(GeneralSettingsPage);
 
 /******************************************************************************
 * Creates the widget that contains the plugin specific setting controls.
@@ -50,7 +50,7 @@ void GeneralSettingsPage::insertSettingsDialogPage(ApplicationSettingsDialog* se
 
 	_enableMRUModifierList = new QCheckBox(tr("Modifier list: Only show most recently used modifiers"), uiGroupBox);
 	_enableMRUModifierList->setToolTip(tr(
-			"<p>Restricts the modifiers in the <i>Add Modification</i> list box to the most recently used ones.</p>"));
+			"<p>Restricts the modifiers dhown in the <i>Add Modification</i> list box to the most recently used ones.</p>"));
 	layout2->addWidget(_enableMRUModifierList, 1, 0);
 	_enableMRUModifierList->setChecked(settings.value("core/modifier/mru/enable_mru", false).toBool());
 

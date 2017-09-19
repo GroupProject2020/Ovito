@@ -23,9 +23,9 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/data/ParticleProperty.h>
-#include <core/scene/pipeline/PipelineFlowState.h>
-#include <core/dataset/importexport/FileExporter.h>
+#include <core/dataset/data/properties/PropertyStorage.h>
+#include <core/dataset/pipeline/PipelineFlowState.h>
+#include <core/dataset/io/FileExporter.h>
 #include <core/utilities/io/CompressedTextWriter.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export)
@@ -35,13 +35,16 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export)
  */
 class OVITO_PARTICLES_EXPORT ParticleExporter : public FileExporter
 {
+	Q_OBJECT
+	OVITO_CLASS(ParticleExporter)
+	
 public:
 
 	/// \brief Evaluates the pipeline of an ObjectNode and makes sure that the data to be
 	///        exported contains particles and throws an exception if not.
 	bool getParticleData(SceneNode* sceneNode, TimePoint time, PipelineFlowState& state, TaskManager& taskManager);
 
-	/// \brief Selects the natural scene nodes to be exported by this exporter under normal circumstances.
+	/// \brief Selects the nodes from the scene to be exported by this exporter if no specific set of nodes was provided.
 	virtual void selectStandardOutputData() override; 
 
 protected:
@@ -80,9 +83,6 @@ private:
 
 	/// The stream object used to write into the output file.
 	std::unique_ptr<CompressedTextWriter> _outputStream;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

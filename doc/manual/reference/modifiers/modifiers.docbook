@@ -213,7 +213,7 @@
               <entry>Inverts the selection state of each particle.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.expression_select">Expression select</link></entry>
+              <entry><link linkend="particles.modifiers.expression_select">Expression selection</link></entry>
               <entry>Selects particles based on a user-defined criterion.</entry>
             </row>
             <row>

@@ -14,8 +14,6 @@ modifier.source_property = "Force"
 print("  destination_property: {}".format(modifier.destination_property))
 modifier.destination_property = "Force0"
 
-modifier.take_snapshot()
-
 node.compute()
 
 print(node.output)

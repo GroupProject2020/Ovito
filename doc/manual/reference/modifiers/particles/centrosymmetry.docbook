@@ -48,7 +48,7 @@
   <para>
     After you have computed the centro-symmetry parameter (CSP) values with this analysis modifier, you can use the 
     <link linkend="particles.modifiers.color_coding">Color Coding</link> modifier to color atoms according to their CSP value.
-    Or you can use the <link linkend="particles.modifiers.expression_select">Expression Select</link> modifier to select atoms 
+    Or you can use the <link linkend="particles.modifiers.expression_select">Expression Selection</link> modifier to select atoms 
     having a low CSP value. These undisturbed atoms can then be hidden using the <link linkend="particles.modifiers.delete_selected_particles">Delete Selected Particles</link>
     modifier to reveal crystal defect atoms.
   </para>

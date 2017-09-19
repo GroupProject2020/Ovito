@@ -23,7 +23,7 @@ modifier.structures[CommonNeighborAnalysisModifier.Type.FCC].color = (1,0,0)
 
 node.compute()
 print("Computed structure types:")
-print(node.output.structure_type.array)
+print(node.output.particle_properties.structure_type.array)
 print("Number of particles: {}".format(node.output.number_of_particles))
 print("Number of FCC atoms: {}".format(node.output.attributes['CommonNeighborAnalysis.counts.FCC']))
 print("Number of HCP atoms: {}".format(node.output.attributes['CommonNeighborAnalysis.counts.HCP']))

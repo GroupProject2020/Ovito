@@ -20,8 +20,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
+#include <plugins/particles/objects/ParticleProperty.h>
 #include <core/utilities/io/NumberParsing.h>
 #include "InputColumnMapping.h"
+#include "ParticleFrameData.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import)
 
@@ -62,7 +64,10 @@ void InputColumnMapping::loadFromStream(LoadStream& stream)
 			col.dataType = qMetaTypeId<FloatType>();
 		int vectorComponent;
 		stream >> vectorComponent;
-		col.property = ParticlePropertyReference(propertyType, propertyName, vectorComponent);
+		if(propertyType == ParticleProperty::UserProperty)
+			col.property = ParticlePropertyReference(propertyName, vectorComponent);
+		else
+			col.property = ParticlePropertyReference(propertyType, vectorComponent);
 	}
 	stream.closeChunk();
 }
@@ -104,7 +109,7 @@ void InputColumnMapping::validate() const
 /******************************************************************************
  * Initializes the object.
  *****************************************************************************/
-InputColumnReader::InputColumnReader(const InputColumnMapping& mapping, ParticleFrameLoader& destination, size_t particleCount)
+InputColumnReader::InputColumnReader(const InputColumnMapping& mapping, ParticleFrameData& destination, size_t particleCount)
 	: _mapping(mapping), _destination(destination),
 	  _intMetaTypeId(qMetaTypeId<int>()), _floatMetaTypeId(qMetaTypeId<FloatType>())
 {
@@ -113,7 +118,7 @@ InputColumnReader::InputColumnReader(const InputColumnMapping& mapping, Particle
 	// Create particle properties as defined by the mapping.
 	for(int i = 0; i < (int)mapping.size(); i++) {
 
-		ParticleProperty* property = nullptr;
+		PropertyPtr property;
 		const ParticlePropertyReference& pref = mapping[i].property;
 
 		int vectorComponent = std::max(0, pref.vectorComponent());
@@ -129,31 +134,31 @@ InputColumnReader::InputColumnReader(const InputColumnMapping& mapping, Particle
 				// Look for existing standard property.
 				for(const auto& p : destination.particleProperties()) {
 					if(p->type() == pref.type()) {
-						property = p.get();
+						property = p;
 						break;
 					}
 				}
 				if(!property) {
 					// Create standard property.
-					property = new ParticleProperty(particleCount, pref.type(), 0, true);
+					property = ParticleProperty::OOClass().createStandardStorage(particleCount, pref.type(), true);
 
 					// Also create a particle type list if it is a type property.
-					ParticleFrameLoader::ParticleTypeList* typeList = nullptr;
-					if(pref.type() == ParticleProperty::ParticleTypeProperty || pref.type() == ParticleProperty::StructureTypeProperty)
-						typeList = new ParticleFrameLoader::ParticleTypeList();
+					ParticleFrameData::ParticleTypeList* typeList = nullptr;
+					if(pref.type() == ParticleProperty::TypeProperty || pref.type() == ParticleProperty::StructureTypeProperty)
+						typeList = new ParticleFrameData::ParticleTypeList();
 
 					destination.addParticleProperty(property, typeList);
 				}
 			}
 			else {
 				// Look for existing user-defined property with the same name.
-                ParticleProperty* oldProperty = nullptr;
+                PropertyStorage* oldProperty = nullptr;
                 int oldPropertyIndex = -1;
 				for(int j = 0; j < (int)destination.particleProperties().size(); j++) {
 					const auto& p = destination.particleProperties()[j];
 					if(p->name() == pref.name()) {
 						if(p->dataType() == dataType && (int)p->componentCount() > vectorComponent) {
-							property = p.get();
+							property = p;
                         }
 						else {
                             oldProperty = p.get();
@@ -164,13 +169,13 @@ InputColumnReader::InputColumnReader(const InputColumnMapping& mapping, Particle
 				}
 				if(!property) {
 					// Create a new user-defined property for the column.
-					property = new ParticleProperty(particleCount, dataType, vectorComponent + 1, 0, pref.name(), true);
+					property = std::make_shared<PropertyStorage>(particleCount, dataType, vectorComponent + 1, 0, pref.name(), true);
 					destination.addParticleProperty(property);
 					if(oldProperty) {
 						// We need to replace all old properties (with lower vector component count) with this one.
 						for(TargetPropertyRecord& rec2 : _properties) {
 							if(rec2.property == oldProperty)
-								rec2.property = property;
+								rec2.property = property.get();
 						}
 						// Remove old property.
 						destination.removeParticleProperty(oldPropertyIndex);
@@ -185,7 +190,7 @@ InputColumnReader::InputColumnReader(const InputColumnMapping& mapping, Particle
 		}
 
 		// Build list of target properties for fast look up during parsing.
-		rec.property = property;
+		rec.property = property.get();
 		_properties.push_back(rec);
 	}
 

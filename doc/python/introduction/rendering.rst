@@ -1,6 +1,13 @@
+.. _rendering_intro:
+
 ===================================
 Rendering
 ===================================
+
+.. warning::
+   This section of manual is out of date! It has not been updated yet to reflect the changes made in the current
+   development version of OVITO.
+
 
 .. _rendering_display_objects:
 

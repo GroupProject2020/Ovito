@@ -1,8 +1,8 @@
 from ovito.io import import_file
 
-# This creates a node with a FileSource, which also is a DataCollection.
-node = import_file('simulation.dump')
+# This creates a pipeline with a FileSource.
+pipeline = import_file('simulation.dump')
 
-# Access data cached in the DataCollection.
-print(node.source.number_of_particles)
-print(node.source.cell.matrix)
+# Access the data cached in the FileSource.
+print(pipeline.source.particle_properties['Position'][...])
+

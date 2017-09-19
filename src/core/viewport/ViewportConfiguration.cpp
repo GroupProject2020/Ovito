@@ -20,20 +20,29 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <core/Core.h>
+#include <core/dataset/DataSet.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/viewport/Viewport.h>
-#include <core/scene/SelectionSet.h>
-#include <core/scene/SceneRoot.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/DataSet.h>
+#include <core/dataset/scene/SelectionSet.h>
+#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/animation/AnimationSettings.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(ViewportConfiguration, RefTarget);
-DEFINE_FLAGS_VECTOR_REFERENCE_FIELD(ViewportConfiguration, viewports, "Viewports", Viewport, PROPERTY_FIELD_NO_UNDO|PROPERTY_FIELD_ALWAYS_CLONE);
-DEFINE_FLAGS_REFERENCE_FIELD(ViewportConfiguration, activeViewport, "ActiveViewport", Viewport, PROPERTY_FIELD_NO_UNDO);
-DEFINE_FLAGS_REFERENCE_FIELD(ViewportConfiguration, maximizedViewport, "MaximizedViewport", Viewport, PROPERTY_FIELD_NO_UNDO);
-DEFINE_FLAGS_PROPERTY_FIELD(ViewportConfiguration, orbitCenterMode, "OrbitCenterMode", PROPERTY_FIELD_NO_UNDO);
-DEFINE_FLAGS_PROPERTY_FIELD(ViewportConfiguration, userOrbitCenter, "UserOrbitCenter", PROPERTY_FIELD_NO_UNDO);
+IMPLEMENT_OVITO_CLASS(ViewportConfiguration);
+DEFINE_REFERENCE_FIELD(ViewportConfiguration, viewports);
+DEFINE_REFERENCE_FIELD(ViewportConfiguration, activeViewport);
+DEFINE_REFERENCE_FIELD(ViewportConfiguration, maximizedViewport);
+DEFINE_PROPERTY_FIELD(ViewportConfiguration, orbitCenterMode);
+DEFINE_PROPERTY_FIELD(ViewportConfiguration, userOrbitCenter);
+
+/******************************************************************************
+* Constructor.
+******************************************************************************/
+ViewportSuspender::ViewportSuspender(RefMaker* object) : ViewportSuspender(object->dataset()->viewportConfig()) 
+{
+}
 
 /******************************************************************************
 * Constructor.
@@ -41,12 +50,6 @@ DEFINE_FLAGS_PROPERTY_FIELD(ViewportConfiguration, userOrbitCenter, "UserOrbitCe
 ViewportConfiguration::ViewportConfiguration(DataSet* dataset) : RefTarget(dataset),
 	_orbitCenterMode(ORBIT_SELECTION_CENTER), _userOrbitCenter(Point3::Origin()), _viewportSuspendCount(0)
 {
-	INIT_PROPERTY_FIELD(viewports);
-	INIT_PROPERTY_FIELD(activeViewport);
-	INIT_PROPERTY_FIELD(maximizedViewport);
-	INIT_PROPERTY_FIELD(orbitCenterMode);
-	INIT_PROPERTY_FIELD(userOrbitCenter);
-
 	// Repaint viewports when the camera orbit center changed.
 	connect(this, &ViewportConfiguration::cameraOrbitCenterChanged, this, &ViewportConfiguration::updateViewports);
 }
@@ -126,8 +129,11 @@ void ViewportConfiguration::resumeViewportUpdates()
 {
 	OVITO_ASSERT(_viewportSuspendCount > 0);
 	_viewportSuspendCount--;
-	if(_viewportSuspendCount == 0 && _viewportsNeedUpdate)
-		updateViewports();
+	if(_viewportSuspendCount == 0) {
+		Q_EMIT viewportUpdateResumed();
+		if(_viewportsNeedUpdate)
+			updateViewports();
+	}
 }
 
 /******************************************************************************
@@ -137,14 +143,15 @@ Point3 ViewportConfiguration::orbitCenter()
 {
 	// Update orbiting center.
 	if(orbitCenterMode() == ORBIT_SELECTION_CENTER) {
+		TimePoint time = dataset()->animationSettings()->time();
 		Box3 selectionBoundingBox;
 		for(SceneNode* node : dataset()->selection()->nodes()) {
-			selectionBoundingBox.addBox(node->worldBoundingBox(dataset()->animationSettings()->time()));
+			selectionBoundingBox.addBox(node->worldBoundingBox(time));
 		}
 		if(!selectionBoundingBox.isEmpty())
 			return selectionBoundingBox.center();
 		else {
-			Box3 sceneBoundingBox = dataset()->sceneRoot()->worldBoundingBox(dataset()->animationSettings()->time());
+			Box3 sceneBoundingBox = dataset()->sceneRoot()->worldBoundingBox(time);
 			if(!sceneBoundingBox.isEmpty())
 				return sceneBoundingBox.center();
 		}

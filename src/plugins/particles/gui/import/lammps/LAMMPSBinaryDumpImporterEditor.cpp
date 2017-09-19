@@ -30,7 +30,7 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_OBJECT(LAMMPSBinaryDumpImporterEditor, FileImporterEditor);
+
 SET_OVITO_OBJECT_EDITOR(LAMMPSBinaryDumpImporter, LAMMPSBinaryDumpImporterEditor);
 
 /******************************************************************************
@@ -40,8 +40,10 @@ bool LAMMPSBinaryDumpImporterEditor::inspectNewFile(FileImporter* importer, cons
 {
 	// Retrieve column information of input file.
 	LAMMPSBinaryDumpImporter* lammpsImporter = static_object_cast<LAMMPSBinaryDumpImporter>(importer);
-	InputColumnMapping mapping = lammpsImporter->inspectFileHeader(FileSourceImporter::Frame(sourceFile));
-	if(mapping.empty()) return false;
+	Future<InputColumnMapping> inspectFuture = lammpsImporter->inspectFileHeader(FileSourceImporter::Frame(sourceFile));
+	if(!importer->dataset()->container()->taskManager().waitForTask(inspectFuture))
+		return false;
+	InputColumnMapping mapping = inspectFuture.result();
 
 	if(lammpsImporter->columnMapping().size() != mapping.size()) {
 		// If this is a newly created file importer, load old mapping from application settings store.

@@ -28,7 +28,7 @@ print("Output:")
 print(node.output.bonds)
 print(node.output.bonds.array)
 print(len(node.output.bonds.array))
-assert(node.output.number_of_half_bonds == len(node.output.bonds.array))
+assert(node.output.number_of_full_bonds == len(node.output.bonds.array))
 
 assert(node.output.number_of_half_bonds == 21894)
 assert(node.output.number_of_half_bonds == node.output.number_of_full_bonds*2)

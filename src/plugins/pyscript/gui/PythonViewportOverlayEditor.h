@@ -34,6 +34,9 @@ using namespace Ovito;
  */
 class PythonViewportOverlayEditor : public PropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(PythonViewportOverlayEditor)
+
 public:
 
 	/// Constructor.
@@ -60,9 +63,6 @@ private:
 
 	QPushButton* _editScriptButton;
 	QTextEdit* _outputDisplay;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

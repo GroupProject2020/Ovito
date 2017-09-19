@@ -175,17 +175,6 @@ void ViewportInputMode::renderOverlay3D(Viewport* vp, ViewportSceneRenderer* ren
 		inputManager()->orbitMode()->renderOverlay3D(vp, renderer);
 }
 
-/******************************************************************************
-* Computes the bounding box of the visual viewport overlay rendered by the input mode.
-******************************************************************************/
-Box3 ViewportInputMode::overlayBoundingBox(Viewport* vp, ViewportSceneRenderer* renderer)
-{
-	Box3 bb;
-	if(_showOrbitCenter && isActive())
-		bb.addBox(inputManager()->orbitMode()->overlayBoundingBox(vp, renderer));
-	return bb;
-}
-
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

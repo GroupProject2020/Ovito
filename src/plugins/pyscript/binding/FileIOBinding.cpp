@@ -20,11 +20,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/pyscript/PyScript.h>
-#include <core/dataset/importexport/FileImporter.h>
-#include <core/dataset/importexport/FileExporter.h>
-#include <core/dataset/importexport/FileSourceImporter.h>
-#include <core/dataset/importexport/FileSource.h>
-#include <core/dataset/importexport/AttributeFileExporter.h>
+#include <core/dataset/io/FileImporter.h>
+#include <core/dataset/io/FileExporter.h>
+#include <core/dataset/io/FileSourceImporter.h>
+#include <core/dataset/io/FileSource.h>
+#include <core/dataset/io/AttributeFileExporter.h>
 #include <core/utilities/io/FileManager.h>
 #include <core/utilities/concurrent/TaskManager.h>
 #include "PythonBinding.h"
@@ -38,37 +38,22 @@ void defineIOSubmodule(py::module parentModule)
 	py::module m = parentModule.def_submodule("IO");
 
 	ovito_abstract_class<FileImporter, RefTarget>{m}
-		// These are needed by ovito.io.import_file():
+		// These are needed by implementation of import_file():
 		.def("import_file", &FileImporter::importFile)
 		.def_static("autodetect_format", (OORef<FileImporter> (*)(DataSet*, const QUrl&))&FileImporter::autodetectFileFormat)
-
-		//.def_property_readonly("fileFilter", &FileImporter::fileFilter)
-		//.def_property_readonly("fileFilterDescription", &FileImporter::fileFilterDescription)		
-		//.def("isReplaceExistingPossible", &FileImporter::isReplaceExistingPossible)
-		//.def("checkFileFormat", &FileImporter::checkFileFormat)
 	;
 
+	// This is needed by implementation of import_file():
 	py::enum_<FileImporter::ImportMode>(m, "ImportMode")
 		.value("AddToScene", FileImporter::AddToScene)
 		.value("ReplaceSelected", FileImporter::ReplaceSelected)
 		.value("ResetScene", FileImporter::ResetScene)
 	;
 
-	//py::class_<FileManager>(m, "FileManager", py::metaclass())
-		//.def_property_readonly_static("instance", py::cpp_function(
-		//	[](py::object /*self*/) { return Application::instance()->fileManager(); }, py::return_value_policy::reference))
-		//.def("removeFromCache", &FileManager::removeFromCache)
-		//.def("urlFromUserInput", &FileManager::urlFromUserInput)
-	//;
-
 	ovito_abstract_class<FileSourceImporter, FileImporter>{m}
-		//.def("requestReload", &FileSourceImporter::requestReload)
-		//.def("requestFramesUpdate", &FileSourceImporter::requestFramesUpdate)
 	;
 
 	ovito_abstract_class<FileExporter, RefTarget>(m)
-		//.def_property_readonly("fileFilter", &FileExporter::fileFilter)
-		//.def_property_readonly("fileFilterDescription", &FileExporter::fileFilterDescription)
 		.def_property("output_filename", &FileExporter::outputFilename, &FileExporter::setOutputFilename)
 		.def_property("multiple_frames", &FileExporter::exportAnimation, &FileExporter::setExportAnimation)
 		.def_property("use_wildcard_filename", &FileExporter::useWildcardFilename, &FileExporter::setUseWildcardFilename)
@@ -76,8 +61,9 @@ void defineIOSubmodule(py::module parentModule)
 		.def_property("start_frame", &FileExporter::startFrame, &FileExporter::setStartFrame)
 		.def_property("end_frame", &FileExporter::endFrame, &FileExporter::setEndFrame)
 		.def_property("every_nth_frame", &FileExporter::everyNthFrame, &FileExporter::setEveryNthFrame)
-		// Required by ovito.io.export_file():
-		.def("set_node", [](FileExporter& exporter, SceneNode* node) { exporter.setOutputData({ node }); })
+		
+		// These are required by implementation of export_file():
+		.def("set_pipeline", [](FileExporter& exporter, SceneNode* node) { exporter.setOutputData({ node }); })
 		.def("export_nodes", &FileExporter::exportNodes)
 		.def("select_standard_output_data", &FileExporter::selectStandardOutputData)		
 	;
@@ -86,45 +72,46 @@ void defineIOSubmodule(py::module parentModule)
 		.def_property("columns", &AttributeFileExporter::attributesToExport, &AttributeFileExporter::setAttributesToExport)
 	;
 
-	ovito_class<FileSource, CompoundObject>(m, 
+	auto FileSource_py = ovito_class<FileSource, CachingPipelineObject>(m, 
 			":Base class: :py:class:`ovito.data.DataCollection`\n\n"
-			"This object serves as a data source for modification pipelines and is responsible for reading the input data from one or more external files."
+			"This object type can serve as a :py:attr:`Pipeline.source` and takes care of reading the input for the :py:class:`Pipeline` from an external data file. "
 			"\n\n"
-			"You normally do not create an instance of this class yourself. "
-			"The :py:func:`ovito.io.import_file` function does it for you and assigns the file source to the :py:attr:`~ovito.ObjectNode.source` "
-			"attribute of the returned :py:class:`~ovito.ObjectNode`. "
-			"This file source loads data from the external file given by the :py:attr:`.source_path` attribute. The :py:class:`~ovito.ObjectNode` "
-			"then takes this data and feeds it into its modification pipeline."
-			"\n\n"
-			"You typically don't set the :py:attr:`.source_path` attribute directly. "
-			"Instead, use the :py:meth:`FileSource.load` method to load a different input file and hook it into an existing modification pipeline:"
+			"You normally do not need to create an instance of this class; the :py:func:`~ovito.io.import_file` function does it for you and wires the configured :py:class:`!FileSource` "
+			"to the :py:attr:`~ovito.pipeline.Pipeline`. Subsequently, the :py:meth:`FileSource.load` method allows you to load a different input file if needed:"
 			"\n\n"
 			".. literalinclude:: ../example_snippets/file_source_load_method.py\n"
 			"\n"
-			"File sources are also used by certain modifiers to load a reference configuration, e.g. by the :py:class:`~ovito.modifiers.CalculateDisplacementsModifier`, "
-			"whose :py:attr:`~ovito.modifiers.CalculateDisplacementsModifier.reference` attribute also contains a :py:class:`!FileSource`.\n"
+			"File sources can furthermore be used in conjunction with certain modifiers. "
+			"The :py:class:`~ovito.modifiers.CalculateDisplacementsModifier` can make use of a :py:class:`!FileSource` to load a reference configuration from a separate input file. "
+			"Another example is the :py:class:`~ovito.modifiers.LoadTrajectoryModifier`, "
+			"which employs its own :py:class:`!FileSource` instance to load the particle trajectories from disk. "
 			"\n\n"
 			"**Data access**"
 			"\n\n"
-		    "The :py:class:`!FileSource` class is derived from the :py:class:`~ovito.data.DataCollection` base class. "
-		    "This means the file source also stores the data loaded from the external file, and you can access this data through the :py:class:`~ovito.data.DataCollection` base class interface. "
-			"Note that the cached data represents the outcome of the most recent successful loading operation and may change every time a new simulation frame is "
-			"loaded (see :py:attr:`.loaded_frame`)."
+		    "The :py:class:`!FileSource` class derives from the :py:class:`~ovito.data.DataCollection` base class. "
+			"This means it also functions as a container for data objects, which were loaded from the external file and then cached in the :py:class:`!FileSource` object. "
+			"You can directly access the cached data through the methods and properties inherited from the :py:class:`~ovito.data.DataCollection` interface. "
+			"Note that the :py:class:`!FileSource`'s contents reflect only the outcome of the most recent load operation. "
 			"\n\n"
 			".. literalinclude:: ../example_snippets/file_source_data_access.py\n"
 			)
 		.def_property_readonly("importer", &FileSource::importer)
 		.def_property_readonly("source_path", &FileSource::sourceUrl)
 		.def("set_source", &FileSource::setSource)
+		// Required by implementation of FileSource.load():
+		.def("wait_until_ready", [](FileSource& fs, TimePoint time) {
+			SharedFuture<PipelineFlowState> future = fs.evaluate(time);
+			return ScriptEngine::activeTaskManager().waitForTask(future);
+		})	
 		.def_property_readonly("num_frames", &FileSource::numberOfFrames,
 				"The total number of frames the imported file or file sequence contains (read-only).")
-		.def_property_readonly("loaded_frame", &FileSource::loadedFrameIndex,
+		.def_property_readonly("loaded_frame", &FileSource::storedFrameIndex,
 				"The zero-based frame index that is currently loaded and kept in memory by the :py:class:`!FileSource` (read-only). "
 				"\n\n"
 				"The data of this frame is accessible through the inherited :py:class:`~ovito.data.DataCollection` interface.")
 		.def_property_readonly("loaded_file", [](FileSource& fs) -> QUrl {
-					if(fs.loadedFrameIndex() < 0) return QUrl();
-					const FileSourceImporter::Frame& frameInfo = fs.frames()[fs.loadedFrameIndex()];
+					if(fs.storedFrameIndex() < 0 || fs.storedFrameIndex() >= fs.frames().size()) return QUrl();
+					const FileSourceImporter::Frame& frameInfo = fs.frames()[fs.storedFrameIndex()];
 					return frameInfo.sourceFile;
 				},
 				"The path or URL of the data file that is currently loaded and kept in memory by the :py:class:`!FileSource` (read-only). ")
@@ -140,11 +127,27 @@ void defineIOSubmodule(py::module parentModule)
 				"OVITO simultaneously, but their frame counts do not match. "
 				"\n\n"
 				":Default: ``True``\n")
-		//.def("refreshFromSource", &FileSource::refreshFromSource)
-		//.def("updateFrames", &FileSource::updateFrames)
-		//.def("animationTimeToInputFrame", &FileSource::animationTimeToInputFrame)
-		//.def("inputFrameToAnimationTime", &FileSource::inputFrameToAnimationTime)
+
+		// The following methods are required for the DataCollection.attributes property.
+		.def_property_readonly("attribute_names", [](FileSource& obj) -> QStringList {
+				return obj.attributes().keys();
+			})
+		.def("get_attribute", [](FileSource& obj, const QString& attrName) -> py::object {
+				auto item = obj.attributes().find(attrName);
+				if(item == obj.attributes().end())
+					return py::none();
+				else
+					return py::cast(item.value());
+			})
+		.def("set_attribute", [](FileSource& obj, const QString& attrName, py::object value) {
+				obj.throwException("Attributes of a FileSource are read-only.");
+			})
+				
 	;
+	expose_mutable_subobject_list(FileSource_py,
+		std::mem_fn(&FileSource::dataObjects), 
+		std::mem_fn(&FileSource::insertDataObject), 
+		std::mem_fn(&FileSource::removeDataObject), "objects", "FileSourceDataObjectList");
 }
 
 };

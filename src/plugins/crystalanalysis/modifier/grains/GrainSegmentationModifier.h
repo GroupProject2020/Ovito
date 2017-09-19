@@ -101,13 +101,13 @@ private:
 	DECLARE_MODIFIABLE_REFERENCE_FIELD(PatternCatalog, patternCatalog, setPatternCatalog);
 
 	/// This stores the cached atom-to-cluster assignments computed by the modifier.
-	QExplicitlySharedDataPointer<ParticleProperty> _atomClusters;
+	QExplicitlySharedDataPointer<PropertyStorage> _atomClusters;
 
 	/// This stores the cached cluster graph computed by the modifier.
 	QExplicitlySharedDataPointer<ClusterGraph> _clusterGraph;
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 
 	Q_CLASSINFO("DisplayName", "Grain segmentation");
 	Q_CLASSINFO("ModifierCategory", "Analysis");

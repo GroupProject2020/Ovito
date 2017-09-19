@@ -26,7 +26,7 @@
 
 namespace VRPlugin {
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(VRSceneRenderer, OpenGLSceneRenderer);
+
 
 /******************************************************************************
 * This method is called just before renderFrame() is called.
@@ -44,9 +44,6 @@ void VRSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParameters&
 ******************************************************************************/
 QSize VRSceneRenderer::outputSize() const
 {
-#if 0
-	return viewport()->windowSize();
-#endif
 	return OpenGLSceneRenderer::outputSize();
 }
 
@@ -55,12 +52,6 @@ QSize VRSceneRenderer::outputSize() const
 ******************************************************************************/
 qreal VRSceneRenderer::devicePixelRatio() const
 {
-#if 0
-	if(viewport()) {
-		if(QWidget* vpWidget = ViewportsPanel::viewportWidget(viewport()))
-			return vpWidget->devicePixelRatio();
-	}
-#endif
 	return OpenGLSceneRenderer::devicePixelRatio();
 }
 

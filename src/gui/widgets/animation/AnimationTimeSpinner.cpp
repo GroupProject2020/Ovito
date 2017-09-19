@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <gui/GUI.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/animation/AnimationSettings.h>
 #include <core/utilities/units/UnitsManager.h>
 #include <gui/mainwin/MainWindow.h>
 #include "AnimationTimeSpinner.h"

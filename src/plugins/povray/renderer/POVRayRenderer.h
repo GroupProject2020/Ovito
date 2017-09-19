@@ -40,6 +40,10 @@ namespace Ovito { namespace POVRay {
  */
 class OVITO_POVRAY_EXPORT POVRayRenderer : public NonInteractiveSceneRenderer
 {
+	Q_OBJECT
+	OVITO_CLASS(POVRayRenderer)
+	Q_CLASSINFO("DisplayName", "POV-Ray renderer");
+
 public:
 
 	/// Constructor.
@@ -56,7 +60,7 @@ public:
 
 	/// Renders a single animation frame into the given frame buffer.
 	/// Throws an exception on error. Returns false when the operation has been aborted by the user.
-	virtual bool renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, TaskManager& taskManager) override;
+	virtual bool renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, const PromiseBase& promise) override;
 
 	/// This method is called after renderFrame() has been called.
 	virtual void endFrame(bool renderSuccessful) override;
@@ -138,67 +142,62 @@ private:
 	std::unique_ptr<QTemporaryFile> _imageFile;
 
 	/// This is used by the POVRayExporter class to make the export process interruptable.
-	SynchronousTask* _exportTask = nullptr;
+	PromiseStatePtr _exportTask;
 
 	/// The POV-Ray quality level to use for rendering (0 <= level <= 11).
 	/// See POV-Ray documentation for details.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, qualityLevel, setQualityLevel);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, qualityLevel, setQualityLevel, PROPERTY_FIELD_MEMORIZE);
 
 	/// Turns anti-aliasing on/off
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, antialiasingEnabled, setAntialiasingEnabled);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, antialiasingEnabled, setAntialiasingEnabled, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the AA sampling method (only 1 or 2 are valid).
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, samplingMethod, setSamplingMethod);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, samplingMethod, setSamplingMethod, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the anti-aliasing threshold.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, AAThreshold, setAAThreshold);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, AAThreshold, setAAThreshold, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the number of AA samples.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, antialiasDepth, setAntialiasDepth);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, antialiasDepth, setAntialiasDepth, PROPERTY_FIELD_MEMORIZE);
 
 	/// Turns on AA-jitter.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, jitterEnabled, setJitterEnabled);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, jitterEnabled, setJitterEnabled, PROPERTY_FIELD_MEMORIZE);
 
 	/// Shows or supresses the POV-Ray rendering window.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, povrayDisplayEnabled, setPovrayDisplayEnabled);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, povrayDisplayEnabled, setPovrayDisplayEnabled, PROPERTY_FIELD_MEMORIZE);
 
 	/// Turns on radiosity.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, radiosityEnabled, setRadiosityEnabled);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, radiosityEnabled, setRadiosityEnabled, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the number of rays that are sent out whenever a new radiosity value has to be calculated.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, radiosityRayCount, setRadiosityRayCount);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, radiosityRayCount, setRadiosityRayCount, PROPERTY_FIELD_MEMORIZE);
 
 	/// Determines how many recursion levels are used to calculate the diffuse inter-reflection.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, radiosityRecursionLimit, setRadiosityRecursionLimit);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, radiosityRecursionLimit, setRadiosityRecursionLimit, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the fraction of error tolerated for the radiosity calculation.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, radiosityErrorBound, setRadiosityErrorBound);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, radiosityErrorBound, setRadiosityErrorBound, PROPERTY_FIELD_MEMORIZE);
 
 	/// Enables depth-of-field rendering.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, depthOfFieldEnabled, setDepthOfFieldEnabled);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, depthOfFieldEnabled, setDepthOfFieldEnabled, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the camera's focal length, which is used for depth-of-field rendering.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, dofFocalLength, setDofFocalLength);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, dofFocalLength, setDofFocalLength, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the camera's aperture, which is used for depth-of-field rendering.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, dofAperture, setDofAperture);	
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, dofAperture, setDofAperture, PROPERTY_FIELD_MEMORIZE);	
 
 	/// Controls the number of sampling rays used for focal blur.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, dofSampleCount, setDofSampleCount);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, dofSampleCount, setDofSampleCount, PROPERTY_FIELD_MEMORIZE);
 
 	/// Path to the external POV-Ray executable.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, povrayExecutable, setPovrayExecutable);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(QString, povrayExecutable, setPovrayExecutable, PROPERTY_FIELD_MEMORIZE);
 
 	/// Enables omni­directional stereo projection.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, odsEnabled, setODSEnabled);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, odsEnabled, setODSEnabled, PROPERTY_FIELD_MEMORIZE);
 
 	/// The interpupillary distance for stereo projection.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, interpupillaryDistance, setInterpupillaryDistance);
-
-	Q_OBJECT
-	OVITO_OBJECT
-
-	Q_CLASSINFO("DisplayName", "POV-Ray renderer");
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, interpupillaryDistance, setInterpupillaryDistance, PROPERTY_FIELD_MEMORIZE);
 
 	friend class POVRayExporter;
 };

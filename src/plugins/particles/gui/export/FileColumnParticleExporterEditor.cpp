@@ -21,14 +21,14 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <plugins/particles/export/FileColumnParticleExporter.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/animation/AnimationSettings.h>
 #include <core/dataset/DataSetContainer.h>
 #include <gui/utilities/concurrent/ProgressDialog.h>
 #include "FileColumnParticleExporterEditor.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export)
 
-IMPLEMENT_OVITO_OBJECT(FileColumnParticleExporterEditor, PropertiesEditor);
+
 SET_OVITO_OBJECT_EDITOR(FileColumnParticleExporter, FileColumnParticleExporterEditor);
 
 /******************************************************************************
@@ -109,7 +109,7 @@ void FileColumnParticleExporterEditor::onContentsReplaced(Ovito::RefTarget* newE
 				continue;
 			bool hasParticleIdentifiers = false;
 			for(DataObject* o : state.objects()) {
-				ParticlePropertyObject* property = dynamic_object_cast<ParticlePropertyObject>(o);
+				ParticleProperty* property = dynamic_object_cast<ParticleProperty>(o);
 				if(!property) continue;
 				if(property->componentCount() == 1) {
 					insertPropertyItem(ParticlePropertyReference(property), property->name(), particleExporter->columnMapping());
@@ -146,7 +146,7 @@ void FileColumnParticleExporterEditor::insertPropertyItem(ParticlePropertyRefere
 	QListWidgetItem* item = new QListWidgetItem(displayName);
 	item->setFlags(Qt::ItemFlags(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemNeverHasChildren));
 	item->setCheckState(Qt::Unchecked);
-	item->setData(Qt::UserRole, qVariantFromValue(propRef));
+	item->setData(Qt::UserRole, QVariant::fromValue(static_cast<PropertyReference&>(propRef)));
 	int sortKey = columnMapping.size();
 
 	for(int c = 0; c < (int)columnMapping.size(); c++) {
@@ -180,7 +180,7 @@ void FileColumnParticleExporterEditor::saveChanges(FileColumnParticleExporter* p
 	OutputColumnMapping newMapping;
 	for(int index = 0; index < _columnMappingWidget->count(); index++) {
 		if(_columnMappingWidget->item(index)->checkState() == Qt::Checked) {
-			newMapping.push_back(_columnMappingWidget->item(index)->data(Qt::UserRole).value<ParticlePropertyReference>());
+			newMapping.push_back(_columnMappingWidget->item(index)->data(Qt::UserRole).value<PropertyReference>());
 		}
 	}
 	particleExporter->setColumnMapping(newMapping);

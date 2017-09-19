@@ -641,6 +641,22 @@ inline Q_DECL_CONSTEXPR AffineTransformationT<T> operator*(T s, const AffineTran
 	return a * s;
 }
 
+/// Add two 3x4 matrices.
+/// \relates AffineTransformationT
+template<typename T>
+inline Q_DECL_CONSTEXPR AffineTransformationT<T> operator+(const AffineTransformationT<T>& a, const AffineTransformationT<T>& b)
+{
+	return { a.column(0) + b.column(0), a.column(1) + b.column(1), a.column(2) + b.column(2), a.column(3) + b.column(3) };
+}
+
+/// Subtracts 3x4 matrix from another matrix.
+/// \relates AffineTransformationT
+template<typename T>
+inline Q_DECL_CONSTEXPR AffineTransformationT<T> operator-(const AffineTransformationT<T>& a, const AffineTransformationT<T>& b)
+{
+	return { a.column(0) - b.column(0), a.column(1) - b.column(1), a.column(2) - b.column(2), a.column(3) - b.column(3) };
+}
+
 /// Computes the product of a 3x3 matrix and a 3x4 matrix.
 /// \relates AffineTransformationT
 template<typename T>

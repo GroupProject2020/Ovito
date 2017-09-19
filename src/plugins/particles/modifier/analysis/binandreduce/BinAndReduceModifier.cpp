@@ -21,13 +21,18 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <core/scene/pipeline/PipelineObject.h>
-#include <core/animation/AnimationSettings.h>
+#include <plugins/particles/modifier/ParticleInputHelper.h>
+#include <core/dataset/DataSet.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
+#include <core/dataset/data/simcell/SimulationCell.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <core/dataset/animation/AnimationSettings.h>
+#include <core/utilities/units/UnitsManager.h>
 #include "BinAndReduceModifier.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(BinAndReduceModifier, ParticleModifier);
+
 DEFINE_FLAGS_PROPERTY_FIELD(BinAndReduceModifier, reductionOperation, "ReductionOperation", PROPERTY_FIELD_MEMORIZE);
 DEFINE_FLAGS_PROPERTY_FIELD(BinAndReduceModifier, firstDerivative, "firstDerivative", PROPERTY_FIELD_MEMORIZE);
 DEFINE_FLAGS_PROPERTY_FIELD(BinAndReduceModifier, binDirection, "BinDirection", PROPERTY_FIELD_MEMORIZE);
@@ -55,39 +60,47 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(BinAndReduceModifier, numberOfBinsY, IntegerP
 * Constructs the modifier object.
 ******************************************************************************/
 BinAndReduceModifier::BinAndReduceModifier(DataSet* dataset) : 
-    ParticleModifier(dataset), _reductionOperation(RED_MEAN), _firstDerivative(false),
+    Modifier(dataset), _reductionOperation(RED_MEAN), _firstDerivative(false),
     _binDirection(CELL_VECTOR_3), _numberOfBinsX(200), _numberOfBinsY(200),
     _fixPropertyAxisRange(false), _propertyAxisRangeStart(0), _propertyAxisRangeEnd(0),
 	_xAxisRangeStart(0), _xAxisRangeEnd(0),
 	_yAxisRangeStart(0), _yAxisRangeEnd(0),
 	_onlySelected(false)
 {
-	INIT_PROPERTY_FIELD(reductionOperation);
-	INIT_PROPERTY_FIELD(firstDerivative);
-	INIT_PROPERTY_FIELD(binDirection);
-	INIT_PROPERTY_FIELD(numberOfBinsX);
-	INIT_PROPERTY_FIELD(numberOfBinsY);
-	INIT_PROPERTY_FIELD(fixPropertyAxisRange);
-	INIT_PROPERTY_FIELD(propertyAxisRangeStart);
-	INIT_PROPERTY_FIELD(propertyAxisRangeEnd);
-	INIT_PROPERTY_FIELD(sourceProperty);
-	INIT_PROPERTY_FIELD(onlySelected);
+
+
+
+
+
+
+
+
+
+
+}
+
+/******************************************************************************
+* Asks the modifier whether it can be applied to the given input data.
+******************************************************************************/
+bool BinAndReduceModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+{
+	return input.findObject<ParticleProperty>() != nullptr;
 }
 
 /******************************************************************************
 * This method is called by the system when the modifier has been inserted
 * into a pipeline.
 ******************************************************************************/
-void BinAndReduceModifier::initializeModifier(PipelineObject* pipeline, ModifierApplication* modApp)
+void BinAndReduceModifier::initializeModifier(ModifierApplication* modApp)
 {
-	ParticleModifier::initializeModifier(pipeline, modApp);
+	Modifier::initializeModifier(modApp);
 
 	// Use the first available particle property from the input state as data source when the modifier is newly created.
 	if(sourceProperty().isNull()) {
-		PipelineFlowState input = getModifierInput(modApp);
+		PipelineFlowState input = modApp->evaluateInputPreliminary();
 		ParticlePropertyReference bestProperty;
 		for(DataObject* o : input.objects()) {
-			ParticlePropertyObject* property = dynamic_object_cast<ParticlePropertyObject>(o);
+			ParticleProperty* property = dynamic_object_cast<ParticleProperty>(o);
 			if(property && (property->dataType() == qMetaTypeId<int>() || property->dataType() == qMetaTypeId<FloatType>())) {
 				bestProperty = ParticlePropertyReference(property, (property->componentCount() > 1) ? 0 : -1);
 			}
@@ -99,10 +112,12 @@ void BinAndReduceModifier::initializeModifier(PipelineObject* pipeline, Modifier
 }
 
 /******************************************************************************
-* This modifies the input object.
+* Asks the object for the result of the data pipeline.
 ******************************************************************************/
-PipelineStatus BinAndReduceModifier::modifyParticles(TimePoint time, TimeInterval& validityInterval)
+Future<PipelineFlowState> BinAndReduceModifier::evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
+    ParticleInputHelper pih(dataset(), input);
+
 	int binDataSizeX = std::max(1, numberOfBinsX());
 	int binDataSizeY = std::max(1, numberOfBinsY());
     if(is1D()) binDataSizeY = 1;
@@ -119,8 +134,8 @@ PipelineStatus BinAndReduceModifier::modifyParticles(TimePoint time, TimeInterva
 
 	// Get the source property.
 	if(sourceProperty().isNull())
-		throwException(tr("Select a particle property first."));
-	ParticlePropertyObject* property = sourceProperty().findInState(input());
+		throwException(tr("Please select an input particle property."));
+	ParticleProperty* property = sourceProperty().findInState(input);
 	if(!property)
 		throwException(tr("The selected particle property with the name '%1' does not exist.").arg(sourceProperty().name()));
 	if(sourceProperty().vectorComponent() >= (int)property->componentCount())
@@ -130,14 +145,14 @@ PipelineStatus BinAndReduceModifier::modifyParticles(TimePoint time, TimeInterva
 	size_t vecComponentCount = property->componentCount();
 
 	// Get input selection.
-	ParticleProperty* inputSelectionProperty = nullptr;
+	PropertyStorage* inputSelectionProperty = nullptr;
 	if(onlySelected()) {
-		inputSelectionProperty = expectStandardProperty(ParticleProperty::SelectionProperty)->storage();
+		inputSelectionProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty)->storage().get();
 		OVITO_ASSERT(inputSelectionProperty->size() == property->size());
 	}
 
     // Get bottom-left and top-right corner of the simulation cell.
-	SimulationCell cell = expectSimulationCell()->data();
+	SimulationCell cell = pih.expectSimulationCell()->data();
     AffineTransformation reciprocalCell = cell.inverseMatrix();
 
     // Get periodic boundary flag.
@@ -146,35 +161,35 @@ PipelineStatus BinAndReduceModifier::modifyParticles(TimePoint time, TimeInterva
     // Compute the surface normal vector.
     Vector3 normalX, normalY(1, 1, 1);
     if(binDirection() == CELL_VECTOR_1) {
-        normalX = expectSimulationCell()->cellVector2().cross(expectSimulationCell()->cellVector3());
+        normalX = cell.matrix().column(1).cross(cell.matrix().column(2));
     }
     else if(binDirection() == CELL_VECTOR_2) {
-        normalX = expectSimulationCell()->cellVector3().cross(expectSimulationCell()->cellVector1());
+        normalX = cell.matrix().column(2).cross(cell.matrix().column(0));
     }
     else if(binDirection() == CELL_VECTOR_3) {
-        normalX = expectSimulationCell()->cellVector1().cross(expectSimulationCell()->cellVector2());
+        normalX = cell.matrix().column(0).cross(cell.matrix().column(1));
     }
     else if(binDirection() == CELL_VECTORS_1_2) {
-        normalX = expectSimulationCell()->cellVector2().cross(expectSimulationCell()->cellVector3());
-        normalY = expectSimulationCell()->cellVector3().cross(expectSimulationCell()->cellVector1());
+        normalX = cell.matrix().column(1).cross(cell.matrix().column(2));
+        normalY = cell.matrix().column(2).cross(cell.matrix().column(0));
     }
     else if(_binDirection == CELL_VECTORS_2_3) {
-        normalX = expectSimulationCell()->cellVector3().cross(expectSimulationCell()->cellVector1());
-        normalY = expectSimulationCell()->cellVector1().cross(expectSimulationCell()->cellVector2());
+        normalX = cell.matrix().column(2).cross(cell.matrix().column(0));
+        normalY = cell.matrix().column(0).cross(cell.matrix().column(1));
     }
     else if(binDirection() == CELL_VECTORS_1_3) {
-        normalX = expectSimulationCell()->cellVector2().cross(expectSimulationCell()->cellVector3());
-        normalY = expectSimulationCell()->cellVector1().cross(expectSimulationCell()->cellVector2());
+        normalX = cell.matrix().column(1).cross(cell.matrix().column(2));
+        normalY = cell.matrix().column(0).cross(cell.matrix().column(1));
     }
 	if(normalX == Vector3::Zero() || normalY == Vector3::Zero())
 		throwException(tr("Simulation cell is degenerate."));
 
     // Compute the distance of the two cell faces (normal.length() is area of face).
     FloatType cellVolume = cell.volume3D();
-    _xAxisRangeStart = (expectSimulationCell()->cellOrigin() - Point3::Origin()).dot(normalX.normalized());
+    _xAxisRangeStart = cell.matrix().translation().dot(normalX.normalized());
     _xAxisRangeEnd = _xAxisRangeStart + cellVolume / normalX.length();
     if(!is1D()) {
-        _yAxisRangeStart = (expectSimulationCell()->cellOrigin() - Point3::Origin()).dot(normalY.normalized());
+        _yAxisRangeStart = cell.matrix().translation().dot(normalY.normalized());
 		_yAxisRangeEnd = _yAxisRangeStart + cellVolume / normalY.length();
     }
     else {
@@ -183,7 +198,7 @@ PipelineStatus BinAndReduceModifier::modifyParticles(TimePoint time, TimeInterva
     }
 
 	// Get the particle positions.
-	ParticlePropertyObject* posProperty = expectStandardProperty(ParticleProperty::PositionProperty);
+	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
 	OVITO_ASSERT(posProperty->size() == property->size());
 
 	if(property->size() > 0) {
@@ -314,7 +329,7 @@ PipelineStatus BinAndReduceModifier::modifyParticles(TimePoint time, TimeInterva
 	// and it should update the display.
 	notifyDependents(ReferenceEvent::ObjectStatusChanged);
 
-	return PipelineStatus(PipelineStatus::Success);
+	return input;
 }
 
 OVITO_END_INLINE_NAMESPACE

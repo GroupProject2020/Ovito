@@ -13,7 +13,7 @@ import PyQt5.QtGui
 
 node = import_file("../../files/CFG/fcc_coherent_twin.0.cfg")
 node.modifiers.append(CoordinationNumberModifier())
-node.modifiers.append(HistogramModifier())
+node.modifiers.append(HistogramModifier(property = "Coordination"))
 node.add_to_scene()
 vp = ovito.dataset.viewports.active_vp
 

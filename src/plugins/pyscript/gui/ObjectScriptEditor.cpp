@@ -21,6 +21,7 @@
 
 #include <plugins/pyscript/PyScript.h>
 #include <gui/dialogs/HistoryFileDialog.h>
+#include <core/dataset/DataSet.h>
 #include "ObjectScriptEditor.h"
 
 #ifndef signals
@@ -151,6 +152,7 @@ void ObjectScriptEditor::onNotificationEvent(ReferenceEvent* event)
 		updateOutputWindow();
 	}
 	else if(event->type() == ReferenceEvent::ObjectStatusChanged) {
+		// Update script logging window.
 		updateOutputWindow();
 	}
 }

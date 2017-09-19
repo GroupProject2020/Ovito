@@ -20,20 +20,20 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <core/utilities/io/FileManager.h>
-#include <core/utilities/concurrent/Future.h>
-#include <core/dataset/importexport/FileSource.h>
-#include <core/dataset/DataSetContainer.h>
+#include <plugins/particles/import/ParticleFrameData.h>
 #include <core/app/Application.h>
+#include <core/utilities/io/CompressedTextReader.h>
+#include <core/utilities/io/FileManager.h>
+#include <core/utilities/concurrent/TaskManager.h>
 #include "LAMMPSDataImporter.h"
 
 #include <QRegularExpression>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(LAMMPSDataImporter, ParticleImporter);
-DEFINE_PROPERTY_FIELD(LAMMPSDataImporter, atomStyle, "AtomStyle");
-SET_PROPERTY_FIELD_LABEL(LAMMPSDataImporter, atomStyle, "Atom style");
+IMPLEMENT_OVITO_CLASS(LAMMPSDataImporter);	
+DEFINE_PROPERTY_FIELD(LAMMPSDataImporter, atomStyle);
+SET_PROPERTY_FIELD_LABEL(LAMMPSDataImporter, atomStyle, "LAMMPS atom style");
 
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
@@ -70,24 +70,35 @@ bool LAMMPSDataImporter::checkFileFormat(QFileDevice& input, const QUrl& sourceL
 /******************************************************************************
 * Inspects the header of the given file and returns the detected LAMMPS atom style.
 ******************************************************************************/
-std::pair<LAMMPSDataImporter::LAMMPSAtomStyle,bool> LAMMPSDataImporter::inspectFileHeader(const Frame& frame)
+Future<LAMMPSDataImporter::LAMMPSAtomStyle> LAMMPSDataImporter::inspectFileHeader(const Frame& frame)
 {
-	// Start task that inspects the file header to determine the number of data columns.
-	std::shared_ptr<LAMMPSDataImportTask> inspectionTask = std::make_shared<LAMMPSDataImportTask>(dataset()->container(), frame, true, atomStyle(), true);
-	if(!dataset()->container()->taskManager().runTask(inspectionTask))
-		return std::make_pair(AtomStyle_Unknown, false);
-	else
-		return std::make_pair(inspectionTask->atomStyle(), true);
+	// Retrieve file.
+	return Application::instance()->fileManager()->fetchUrl(dataset()->container()->taskManager(), frame.sourceFile)
+		.then(executor(), [this, frame](const QString& filename) {
+
+			// Start task that inspects the file header to determine the LAMMPS atom style.
+			FrameLoaderPtr inspectionTask = std::make_shared<FrameLoader>(frame, filename, atomStyle(), true);
+			return dataset()->container()->taskManager().runTaskAsync(inspectionTask)
+				.then([](const FileSourceImporter::FrameDataPtr& frameData) mutable {
+					return static_cast<LAMMPSFrameData*>(frameData.get())->detectedAtomStyle();
+				});
+		});
 }
 
 /******************************************************************************
-* Parses the given input file and stores the data in the given container object.
+* Parses the given input file.
 ******************************************************************************/
-void LAMMPSDataImporter::LAMMPSDataImportTask::parseFile(CompressedTextReader& stream)
+void LAMMPSDataImporter::FrameLoader::loadFile(QFile& file)
 {
 	using namespace std;
 
+	// Open file for reading.
+	CompressedTextReader stream(file, frame().sourceFile.path());
 	setProgressText(tr("Reading LAMMPS data file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+
+	// Jump to byte offset.
+	if(frame().byteOffset != 0)
+		stream.seek(frame().byteOffset);
 
 	// Read comment line
 	stream.readLine();
@@ -192,8 +203,11 @@ void LAMMPSDataImporter::LAMMPSDataImportTask::parseFile(CompressedTextReader& s
 	if(xhi < xlo || yhi < ylo || zhi < zlo)
 		throw Exception(tr("Invalid simulation cell size in header of LAMMPS data file."));
 
+	// Create the destination container for loaded data.
+	std::shared_ptr<LAMMPSFrameData> frameData = std::make_shared<LAMMPSFrameData>();
+
 	// Define the simulation cell geometry.
-	simulationCell().setMatrix(AffineTransformation(
+	frameData->simulationCell().setMatrix(AffineTransformation(
 			Vector3(xhi - xlo, 0, 0),
 			Vector3(xy, yhi - ylo, 0),
 			Vector3(xz, yz, zhi - zlo),
@@ -210,15 +224,15 @@ void LAMMPSDataImporter::LAMMPSDataImportTask::parseFile(CompressedTextReader& s
 		foundAtomsSection = true;
 
 	// Create standard particle properties.
-	ParticleProperty* posProperty = new ParticleProperty(natoms, ParticleProperty::PositionProperty, 0, true);
-	addParticleProperty(posProperty);
+	PropertyPtr posProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::PositionProperty, true);
+	frameData->addParticleProperty(posProperty);
 	Point3* pos = posProperty->dataPoint3();
-	ParticleProperty* typeProperty = new ParticleProperty(natoms, ParticleProperty::ParticleTypeProperty, 0, true);
-	ParticleFrameLoader::ParticleTypeList* typeList = new ParticleFrameLoader::ParticleTypeList();
-	addParticleProperty(typeProperty, typeList);
+	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::TypeProperty, true);
+	ParticleFrameData::ParticleTypeList* typeList = new ParticleFrameData::ParticleTypeList();
+	frameData->addParticleProperty(typeProperty, typeList);
 	int* atomType = typeProperty->dataInt();
-	ParticleProperty* identifierProperty = new ParticleProperty(natoms, ParticleProperty::IdentifierProperty, 0, true);
-	addParticleProperty(identifierProperty);
+	PropertyPtr identifierProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::IdentifierProperty, true);
+	frameData->addParticleProperty(identifierProperty);
 	int* atomId = identifierProperty->dataInt();
 
 	// Create atom types.
@@ -239,14 +253,18 @@ void LAMMPSDataImporter::LAMMPSDataImportTask::parseFile(CompressedTextReader& s
 		if(keyword.startsWith("Atoms")) {
 			if(natoms != 0) {
 				stream.readLine();
-				bool withPBCImageFlags = detectAtomStyle(stream.line(), keyword);
-				if(_detectAtomStyle)
+				bool withPBCImageFlags;
+				std::tie(_atomStyle, withPBCImageFlags) = detectAtomStyle(stream.line(), keyword, _atomStyle);
+				frameData->setDetectedAtomStyle(_atomStyle);
+				if(_detectAtomStyle) {
+					setResult(std::move(frameData));
 					return;
+				}
 
 				Point3I* pbcImage = nullptr;
 				if(withPBCImageFlags) {
-					ParticleProperty* pbcProperty = new ParticleProperty(natoms, ParticleProperty::PeriodicImageProperty, 0, true);
-					addParticleProperty(pbcProperty);
+					PropertyPtr pbcProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::PeriodicImageProperty, true);
+					frameData->addParticleProperty(pbcProperty);
 					pbcImage = pbcProperty->dataPoint3I();
 				}
 
@@ -269,8 +287,8 @@ void LAMMPSDataImporter::LAMMPSDataImportTask::parseFile(CompressedTextReader& s
 					}
 				}
 				else if(_atomStyle == AtomStyle_Charge || _atomStyle == AtomStyle_Dipole) {
-					ParticleProperty* chargeProperty = new ParticleProperty(natoms, ParticleProperty::ChargeProperty, 0, true);
-					addParticleProperty(chargeProperty);
+					PropertyPtr chargeProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::ChargeProperty, true);
+					frameData->addParticleProperty(chargeProperty);
 					FloatType* charge = chargeProperty->dataFloat();
 					for(int i = 0; i < natoms; i++, ++pos, ++atomType, ++atomId, ++charge) {
 						if(!setProgressValueIntermittent(i)) return;
@@ -290,8 +308,8 @@ void LAMMPSDataImporter::LAMMPSDataImportTask::parseFile(CompressedTextReader& s
 					}
 				}
 				else if(_atomStyle == AtomStyle_Angle || _atomStyle == AtomStyle_Bond || _atomStyle == AtomStyle_Molecular) {
-					ParticleProperty* moleculeProperty = new ParticleProperty(natoms, ParticleProperty::MoleculeProperty, 0, true);
-					addParticleProperty(moleculeProperty);
+					PropertyPtr moleculeProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::MoleculeProperty, true);
+					frameData->addParticleProperty(moleculeProperty);
 					int* molecule = moleculeProperty->dataInt();
 					for(int i = 0; i < natoms; i++, ++pos, ++atomType, ++atomId, ++molecule) {
 						if(!setProgressValueIntermittent(i)) return;
@@ -311,11 +329,11 @@ void LAMMPSDataImporter::LAMMPSDataImportTask::parseFile(CompressedTextReader& s
 					}
 				}
 				else if(_atomStyle == AtomStyle_Full) {
-					ParticleProperty* chargeProperty = new ParticleProperty(natoms, ParticleProperty::ChargeProperty, 0, true);
-					addParticleProperty(chargeProperty);
+					PropertyPtr chargeProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::ChargeProperty, true);
+					frameData->addParticleProperty(chargeProperty);
 					FloatType* charge = chargeProperty->dataFloat();
-					ParticleProperty* moleculeProperty = new ParticleProperty(natoms, ParticleProperty::MoleculeProperty, 0, true);
-					addParticleProperty(moleculeProperty);
+					PropertyPtr moleculeProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::MoleculeProperty, true);
+					frameData->addParticleProperty(moleculeProperty);
 					int* molecule = moleculeProperty->dataInt();
 					for(int i = 0; i < natoms; i++, ++pos, ++atomType, ++atomId, ++charge, ++molecule) {
 						if(!setProgressValueIntermittent(i)) return;
@@ -335,11 +353,11 @@ void LAMMPSDataImporter::LAMMPSDataImportTask::parseFile(CompressedTextReader& s
 					}
 				}
 				else if(_atomStyle == AtomStyle_Sphere) {
-					ParticleProperty* radiusProperty = new ParticleProperty(natoms, ParticleProperty::RadiusProperty, 0, true);
-					addParticleProperty(radiusProperty);
+					PropertyPtr radiusProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::RadiusProperty, true);
+					frameData->addParticleProperty(radiusProperty);
 					FloatType* radius = radiusProperty->dataFloat();
-					ParticleProperty* massProperty = new ParticleProperty(natoms, ParticleProperty::MassProperty, 0, true);
-					addParticleProperty(massProperty);
+					PropertyPtr massProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::MassProperty, true);
+					frameData->addParticleProperty(massProperty);
 					FloatType* mass = massProperty->dataFloat();
 					for(int i = 0; i < natoms; i++, ++pos, ++atomType, ++atomId, ++radius, ++mass) {
 						if(!setProgressValueIntermittent(i)) return;
@@ -373,13 +391,13 @@ void LAMMPSDataImporter::LAMMPSDataImportTask::parseFile(CompressedTextReader& s
 		else if(keyword.startsWith("Velocities")) {
 
 			// Get the atomic IDs.
-			ParticleProperty* identifierProperty = particleProperty(ParticleProperty::IdentifierProperty);
+			PropertyStorage* identifierProperty = frameData->particleProperty(ParticleProperty::IdentifierProperty);
 			if(!identifierProperty)
 				throw Exception(tr("Atoms section must precede Velocities section in data file (error in line %1).").arg(stream.lineNumber()));
 
 			// Create the velocity property.
-			ParticleProperty* velocityProperty = new ParticleProperty(natoms, ParticleProperty::VelocityProperty, 0, true);
-			addParticleProperty(velocityProperty);
+			PropertyPtr velocityProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::VelocityProperty, true);
+			frameData->addParticleProperty(velocityProperty);
 
 			for(int i = 0; i < natoms; i++) {
 				if(!setProgressValueIntermittent(i)) return;
@@ -444,19 +462,19 @@ void LAMMPSDataImporter::LAMMPSDataImportTask::parseFile(CompressedTextReader& s
 		else if(keyword.startsWith("Bonds")) {
 
 			// Get the atomic IDs and positions.
-			ParticleProperty* identifierProperty = particleProperty(ParticleProperty::IdentifierProperty);
-			ParticleProperty* posProperty = particleProperty(ParticleProperty::PositionProperty);
+			PropertyStorage* identifierProperty = frameData->particleProperty(ParticleProperty::IdentifierProperty);
+			PropertyStorage* posProperty = frameData->particleProperty(ParticleProperty::PositionProperty);
 			if(!identifierProperty || !posProperty)
 				throw Exception(tr("Atoms section must precede Bonds section in data file (error in line %1).").arg(stream.lineNumber()));
 
 			// Create bonds storage.
-			setBonds(new BondsStorage());
-			bonds()->reserve(nbonds);
+			frameData->setBonds(std::make_shared<BondsStorage>());
+			frameData->bonds()->reserve(nbonds);
 
 			// Create bond type property.
-			BondProperty* typeProperty = new BondProperty(nbonds * 2, BondProperty::BondTypeProperty, 0, true);
-			ParticleFrameLoader::BondTypeList* bondTypeList = new ParticleFrameLoader::BondTypeList();
-			addBondProperty(typeProperty, bondTypeList);
+			PropertyPtr typeProperty = BondProperty::createStandardStorage(nbonds, BondProperty::TypeProperty, true);
+			ParticleFrameData::BondTypeList* bondTypeList = new ParticleFrameData::BondTypeList();
+			frameData->addBondProperty(typeProperty, bondTypeList);
 			int* bondType = typeProperty->dataInt();
 
 			// Create bond types.
@@ -490,20 +508,18 @@ void LAMMPSDataImporter::LAMMPSDataImportTask::parseFile(CompressedTextReader& s
 
 				if(*bondType < 1 || *bondType > nbondtypes)
 					throw Exception(tr("Bond type out of range in Bonds section of LAMMPS data file at line %1.").arg(stream.lineNumber()));
-    			bondType[1] = bondType[0];
-    			bondType += 2;
+    			bondType++;
 
 				// Use minimum image convention to determine PBC shift vector of the bond.
-				Vector3 delta = simulationCell().absoluteToReduced(posProperty->getPoint3(atomIndex2) - posProperty->getPoint3(atomIndex1));
+				Vector3 delta = frameData->simulationCell().absoluteToReduced(posProperty->getPoint3(atomIndex2) - posProperty->getPoint3(atomIndex1));
 				Vector_3<int8_t> shift = Vector_3<int8_t>::Zero();
 				for(size_t dim = 0; dim < 3; dim++) {
-					if(simulationCell().pbcFlags()[dim])
+					if(frameData->simulationCell().pbcFlags()[dim])
 						shift[dim] -= (int8_t)floor(delta[dim] + FloatType(0.5));
 				}
 
-				// Create two half-bonds.
-				bonds()->push_back({  shift, atomIndex1, atomIndex2 });
-				bonds()->push_back({ -shift, atomIndex2, atomIndex1 });
+				// Create a bonds.
+				frameData->bonds()->push_back({ atomIndex1, atomIndex2,  shift });
 			}
 		}
 		else if(keyword.isEmpty() == false) {
@@ -524,17 +540,18 @@ void LAMMPSDataImporter::LAMMPSDataImportTask::parseFile(CompressedTextReader& s
 	QString statusString = tr("Number of particles: %1").arg(natoms);
 	if(nbondtypes > 0 || nbonds > 0)
 		statusString += tr("\nNumber of bonds: %1").arg(nbonds);
-	setStatus(statusString);
+	frameData->setStatus(statusString);
+	setResult(std::move(frameData));
 }
 
 /******************************************************************************
 * Detects or verifies the LAMMPS atom style used by the data file.
 ******************************************************************************/
-bool LAMMPSDataImporter::LAMMPSDataImportTask::detectAtomStyle(const char* firstLine, const QByteArray& keywordLine)
+std::tuple<LAMMPSDataImporter::LAMMPSAtomStyle,bool> LAMMPSDataImporter::FrameLoader::detectAtomStyle(const char* firstLine, const QByteArray& keywordLine, LAMMPSAtomStyle style)
 {
 	QRegularExpression ws_re(QStringLiteral("\\s+"));
 
-	// Some data files contain a comment after the Atoms keyword that indicates the atom type.
+	// Some data files contain a comment after the 'Atoms' keyword that indicates the atom type.
 	QString atomTypeHint;
 	int commentStart = keywordLine.indexOf('#');
 	if(commentStart != -1) {
@@ -550,38 +567,35 @@ bool LAMMPSDataImporter::LAMMPSDataImportTask::detectAtomStyle(const char* first
 	QStringList tokens = str.split(ws_re, QString::SkipEmptyParts);
 	int count = tokens.size();
 
-	if(_atomStyle == AtomStyle_Unknown && !atomTypeHint.isEmpty()) {
-		if(atomTypeHint == QStringLiteral("atomic")) _atomStyle = AtomStyle_Atomic;
-		else if(atomTypeHint == QStringLiteral("full")) _atomStyle = AtomStyle_Full;
-		else if(atomTypeHint == QStringLiteral("angle")) _atomStyle = AtomStyle_Angle;
-		else if(atomTypeHint == QStringLiteral("bond")) _atomStyle = AtomStyle_Bond;
-		else if(atomTypeHint == QStringLiteral("charge")) _atomStyle = AtomStyle_Charge;
-		else if(atomTypeHint == QStringLiteral("molecular")) _atomStyle = AtomStyle_Molecular;
-		else if(atomTypeHint == QStringLiteral("sphere")) _atomStyle = AtomStyle_Sphere;
+	if(style == AtomStyle_Unknown && !atomTypeHint.isEmpty()) {
+		if(atomTypeHint == QStringLiteral("atomic")) style = AtomStyle_Atomic;
+		else if(atomTypeHint == QStringLiteral("full")) style = AtomStyle_Full;
+		else if(atomTypeHint == QStringLiteral("angle")) style = AtomStyle_Angle;
+		else if(atomTypeHint == QStringLiteral("bond")) style = AtomStyle_Bond;
+		else if(atomTypeHint == QStringLiteral("charge")) style = AtomStyle_Charge;
+		else if(atomTypeHint == QStringLiteral("molecular")) style = AtomStyle_Molecular;
+		else if(atomTypeHint == QStringLiteral("sphere")) style = AtomStyle_Sphere;
 	}
 
-	if(_atomStyle == AtomStyle_Unknown) {
+	if(style == AtomStyle_Unknown) {
 		if(count == 5) {
-			_atomStyle = AtomStyle_Atomic;
-			return false;
+			return std::make_tuple(AtomStyle_Atomic, false);
 		}
 		else if(count == 5+3) {
 			if(!tokens[5].contains(QChar('.')) && !tokens[6].contains(QChar('.')) && !tokens[7].contains(QChar('.'))) {
-				_atomStyle = AtomStyle_Atomic;
-				return true;
+				return std::make_tuple(AtomStyle_Atomic, true);
 			}
 		}
 	}
 
-	if(_atomStyle == AtomStyle_Atomic && (count == 5 || count == 5+3)) return (count == 5+3);
-	if(_atomStyle == AtomStyle_Hybrid && count >= 5) return false;
-	if((_atomStyle == AtomStyle_Angle || _atomStyle == AtomStyle_Bond || _atomStyle == AtomStyle_Charge || _atomStyle == AtomStyle_Molecular) && (count == 6 || count == 6+3)) return (count == 6+3);
-	if((_atomStyle == AtomStyle_Body || _atomStyle == AtomStyle_Ellipsoid || _atomStyle == AtomStyle_Full || _atomStyle == AtomStyle_Peri || _atomStyle == AtomStyle_Sphere) && (count == 7 || count == 7+3)) return (count == 7+3);
-	if((_atomStyle == AtomStyle_Electron || _atomStyle == AtomStyle_Line || _atomStyle == AtomStyle_Meso || _atomStyle == AtomStyle_Template || _atomStyle == AtomStyle_Tri) && (count == 8 || count == 8+3)) return (count == 8+3);
-	if(_atomStyle == AtomStyle_Dipole && (count == 9 || count == 9+3)) return (count == 9+3);
-	if(_atomStyle == AtomStyle_Wavepacket && (count == 11 || count == 11+3)) return (count == 11+3);
-	_atomStyle = AtomStyle_Unknown;
-	return false;
+	if(style == AtomStyle_Atomic && (count == 5 || count == 5+3)) return std::make_tuple(style, count == 5+3);
+	if(style == AtomStyle_Hybrid && count >= 5) return std::make_tuple(style, false);
+	if((style == AtomStyle_Angle || style == AtomStyle_Bond || style == AtomStyle_Charge || style == AtomStyle_Molecular) && (count == 6 || count == 6+3)) return std::make_tuple(style, count == 6+3);
+	if((style == AtomStyle_Body || style == AtomStyle_Ellipsoid || style == AtomStyle_Full || style == AtomStyle_Peri || style == AtomStyle_Sphere) && (count == 7 || count == 7+3)) return std::make_tuple(style, count == 7+3);
+	if((style == AtomStyle_Electron || style == AtomStyle_Line || style == AtomStyle_Meso || style == AtomStyle_Template || style == AtomStyle_Tri) && (count == 8 || count == 8+3)) return std::make_tuple(style, count == 8+3);
+	if(style == AtomStyle_Dipole && (count == 9 || count == 9+3)) return std::make_tuple(style, count == 9+3);
+	if(style == AtomStyle_Wavepacket && (count == 11 || count == 11+3)) return std::make_tuple(style, count == 11+3);
+	return std::make_tuple(AtomStyle_Unknown, false);
 }
 
 OVITO_END_INLINE_NAMESPACE

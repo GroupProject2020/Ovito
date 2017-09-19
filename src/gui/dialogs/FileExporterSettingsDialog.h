@@ -23,7 +23,7 @@
 
 
 #include <gui/GUI.h>
-#include <core/dataset/importexport/FileExporter.h>
+#include <core/dataset/io/FileExporter.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 

@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/particles/gui/modifier/ParticleModifierEditor.h>
+#include <gui/properties/ModifierPropertiesEditor.h>
 #include <core/utilities/DeferredMethodInvocation.h>
 
 class QwtPlot;
@@ -34,7 +34,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 /**
  * A properties editor for the CoordinationNumberModifier class.
  */
-class CoordinationNumberModifierEditor : public ParticleModifierEditor
+class CoordinationNumberModifierEditor : public ModifierPropertiesEditor
 {
 public:
 
@@ -69,7 +69,7 @@ private:
 	DeferredMethodInvocation<CoordinationNumberModifierEditor, &CoordinationNumberModifierEditor::plotRDF> plotRDFLater;
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 };
 
 OVITO_END_INLINE_NAMESPACE

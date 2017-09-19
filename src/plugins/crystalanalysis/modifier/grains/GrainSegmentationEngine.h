@@ -38,8 +38,8 @@ public:
 
 	/// Constructor.
 	GrainSegmentationEngine(const TimeInterval& validityInterval,
-			ParticleProperty* positions, const SimulationCell& simCell,
-			ParticleProperty* selection,
+			PropertyStorage* positions, const SimulationCell& simCell,
+			PropertyStorage* selection,
 			int inputCrystalStructure, FloatType misorientationThreshold,
 			FloatType fluctuationTolerance, int minGrainAtomCount,
 			FloatType probeSphereRadius, int meshSmoothingLevel);
@@ -48,13 +48,13 @@ public:
 	virtual void perform() override;
 
 	/// Returns the array of atom cluster IDs.
-	ParticleProperty* atomClusters() const { return _structureAnalysis.atomClusters(); }
+	PropertyStorage* atomClusters() const { return _structureAnalysis.atomClusters(); }
 
 	/// Returns the created cluster graph.
 	ClusterGraph* outputClusterGraph() { return _outputClusterGraph.data(); }
 
 	/// Returns the property storage that contains the computed per-particle deformation gradient tensors.
-	ParticleProperty* deformationGradients() const { return _deformationGradients.data(); }
+	PropertyStorage* deformationGradients() const { return _deformationGradients.data(); }
 
 	/// Returns the generated mesh.
 	PartitionMeshData* mesh() { return _mesh.data(); }
@@ -163,7 +163,7 @@ private:
 
 	int _inputCrystalStructure;
 	StructureAnalysis _structureAnalysis;
-	QExplicitlySharedDataPointer<ParticleProperty> _deformationGradients;
+	QExplicitlySharedDataPointer<PropertyStorage> _deformationGradients;
 
 	/// The minimum misorientation angle between adjacent grains.
 	FloatType _misorientationThreshold;

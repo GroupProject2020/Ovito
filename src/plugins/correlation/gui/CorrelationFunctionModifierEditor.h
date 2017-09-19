@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //  Copyright (2017) Lars Pastewka
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -20,11 +20,11 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef __OVITO_CORRELATION_FUNCTION_MODIFIER_EDITOR_H
-#define __OVITO_CORRELATION_FUNCTION_MODIFIER_EDITOR_H
+#pragma once
+
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/particles/gui/modifier/ParticleModifierEditor.h>
+#include <gui/properties/ModifierPropertiesEditor.h>
 #include <core/utilities/DeferredMethodInvocation.h>
 
 class QwtPlot;
@@ -35,8 +35,11 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 /**
  * A properties editor for the CorrelationFunctionModifier class.
  */
-class CorrelationFunctionModifierEditor : public ParticleModifierEditor
+class CorrelationFunctionModifierEditor : public ModifierPropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(CorrelationFunctionModifierEditor)
+	
 public:
 
 	/// Default constructor.
@@ -82,9 +85,6 @@ private:
 
 	/// For deferred invocation of the plot repaint function.
 	DeferredMethodInvocation<CorrelationFunctionModifierEditor, &CorrelationFunctionModifierEditor::plotAllData> plotAllDataLater;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE
@@ -92,5 +92,3 @@ OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-#endif // __OVITO_CORRELATION_FUNCTION_MODIFIER_EDITOR_H

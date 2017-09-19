@@ -20,15 +20,17 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
+#include <plugins/particles/import/InputColumnMapping.h>
+#include <plugins/particles/import/ParticleFrameData.h>
+#include <core/utilities/io/CompressedTextReader.h>
 #include "IMDImporter.h"
-#include "../InputColumnMapping.h"
 
 #include <QRegularExpression>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(IMDImporter, ParticleImporter);
-
+IMPLEMENT_OVITO_CLASS(IMDImporter);
+	
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
@@ -45,11 +47,20 @@ bool IMDImporter::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation
 }
 
 /******************************************************************************
-* Parses the given input file and stores the data in the given container object.
+* Parses the given input file.
 ******************************************************************************/
-void IMDImporter::IMDImportTask::parseFile(CompressedTextReader& stream)
+void IMDImporter::FrameLoader::loadFile(QFile& file)
 {
+	// Open file for reading.
+	CompressedTextReader stream(file, frame().sourceFile.path());
 	setProgressText(tr("Reading IMD file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+
+	// Jump to byte offset.
+	if(frame().byteOffset != 0)
+		stream.seek(frame().byteOffset);
+
+	// Create the destination container for loaded data.
+	std::shared_ptr<ParticleFrameData> frameData = std::make_shared<ParticleFrameData>();
 
 	// Regular expression for whitespace characters.
 	QRegularExpression ws_re(QStringLiteral("\\s+"));
@@ -80,7 +91,7 @@ void IMDImporter::IMDImportTask::parseFile(CompressedTextReader& stream)
 				int columnIndex = t - 1;
 				columnMapping[columnIndex].columnName = token;
 				if(token == "mass") columnMapping[columnIndex].mapStandardColumn(ParticleProperty::MassProperty);
-				else if(token == "type") columnMapping[columnIndex].mapStandardColumn(ParticleProperty::ParticleTypeProperty);
+				else if(token == "type") columnMapping[columnIndex].mapStandardColumn(ParticleProperty::TypeProperty);
 				else if(token == "number") columnMapping[columnIndex].mapStandardColumn(ParticleProperty::IdentifierProperty);
 				else if(token == "x") columnMapping[columnIndex].mapStandardColumn(ParticleProperty::PositionProperty, 0);
 				else if(token == "y") columnMapping[columnIndex].mapStandardColumn(ParticleProperty::PositionProperty, 1);
@@ -91,13 +102,13 @@ void IMDImporter::IMDImportTask::parseFile(CompressedTextReader& stream)
 				else if(token == "Epot") columnMapping[columnIndex].mapStandardColumn(ParticleProperty::PotentialEnergyProperty);
 				else {
 					bool isStandardProperty = false;
-					QMap<QString, ParticleProperty::Type> standardPropertyList = ParticleProperty::standardPropertyList();
+					const auto& standardPropertyList = ParticleProperty::OOClass().standardPropertyIds();
 					QRegularExpression specialCharacters(QStringLiteral("[^A-Za-z\\d_]"));
-					for(ParticleProperty::Type id : standardPropertyList) {
-						for(size_t component = 0; component < ParticleProperty::standardPropertyComponentCount(id); component++) {
-							QString columnName = ParticleProperty::standardPropertyName(id);
+					for(int id : standardPropertyList) {
+						for(size_t component = 0; component < ParticleProperty::OOClass().standardPropertyComponentCount(id); component++) {
+							QString columnName = ParticleProperty::OOClass().standardPropertyName(id);
 							columnName.remove(specialCharacters);
-							QStringList componentNames = ParticleProperty::standardPropertyComponentNames(id);
+							const QStringList& componentNames = ParticleProperty::OOClass().standardPropertyComponentNames(id);
 							if(!componentNames.empty()) {
 								QString componentName = componentNames[component];
 								componentName.remove(specialCharacters);
@@ -105,7 +116,7 @@ void IMDImporter::IMDImportTask::parseFile(CompressedTextReader& stream)
 								columnName += componentName;
 							}
 							if(columnName == token) {
-								columnMapping[columnIndex].mapStandardColumn(id, component);
+								columnMapping[columnIndex].mapStandardColumn((ParticleProperty::Type)id, component);
 								isStandardProperty = true;
 								break;
 							}
@@ -131,7 +142,7 @@ void IMDImporter::IMDImportTask::parseFile(CompressedTextReader& stream)
 		}
 		else throw Exception(tr("Invalid header line key in IMD atom file (line %2).").arg(stream.lineNumber()));
 	}
-	simulationCell().setMatrix(cell);
+	frameData->simulationCell().setMatrix(cell);
 
 	// Save file position.
 	qint64 headerOffset = stream.byteOffset();
@@ -153,7 +164,7 @@ void IMDImporter::IMDImportTask::parseFile(CompressedTextReader& stream)
 	stream.seek(headerOffset);
 
 	// Parse data columns.
-	InputColumnReader columnParser(columnMapping, *this, numAtoms);
+	InputColumnReader columnParser(columnMapping, *frameData, numAtoms);
 	for(int i = 0; i < numAtoms; i++) {
 		if(!setProgressValueIntermittent(i)) return;
 		try {
@@ -164,7 +175,8 @@ void IMDImporter::IMDImportTask::parseFile(CompressedTextReader& stream)
 		}
 	}
 
-	setStatus(tr("Number of particles: %1").arg(numAtoms));
+	frameData->setStatus(tr("Number of particles: %1").arg(numAtoms));
+	setResult(std::move(frameData));
 }
 
 OVITO_END_INLINE_NAMESPACE

@@ -20,10 +20,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <gui/GUI.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/animation/AnimationSettings.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/dataset/DataSetContainer.h>
-#include <core/scene/SelectionSet.h>
+#include <core/dataset/scene/SelectionSet.h>
 #include <gui/mainwin/MainWindow.h>
 #include "AnimationTrackBar.h"
 
@@ -214,22 +214,20 @@ void AnimationTrackBar::findControllers(RefTarget* target)
 	bool hasSubAnimatables = false;
 
 	// Iterate over all reference fields of the current target.
-	for(const OvitoObjectType* clazz = &target->getOOType(); clazz != nullptr; clazz = clazz->superClass()) {
-		for(const PropertyFieldDescriptor* field = clazz->firstPropertyField(); field != nullptr; field = field->next()) {
-			if(field->isReferenceField() && field->flags().testFlag(PROPERTY_FIELD_NO_SUB_ANIM) == false) {
-				hasSubAnimatables = true;
-				if(field->isVector() == false) {
-					if(RefTarget* subTarget = target->getReferenceField(*field)) {
+	for(const PropertyFieldDescriptor* field : target->getOOMetaClass().propertyFields()) {
+		if(field->isReferenceField() && field->flags().testFlag(PROPERTY_FIELD_NO_SUB_ANIM) == false) {
+			hasSubAnimatables = true;
+			if(field->isVector() == false) {
+				if(RefTarget* subTarget = target->getReferenceField(*field)) {
+					findControllers(subTarget);
+					addController(subTarget, target, field);
+				}
+			}
+			else {
+				for(RefTarget* subTarget : target->getVectorReferenceField(*field).targets()) {
+					if(subTarget) {
 						findControllers(subTarget);
 						addController(subTarget, target, field);
-					}
-				}
-				else {
-					for(RefTarget* subTarget : target->getVectorReferenceField(*field).targets()) {
-						if(subTarget) {
-							findControllers(subTarget);
-							addController(subTarget, target, field);
-						}
 					}
 				}
 			}

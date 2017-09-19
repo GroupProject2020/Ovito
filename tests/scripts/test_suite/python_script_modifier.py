@@ -6,11 +6,12 @@ import numpy
 node = import_file("../../files/CFG/shear.void.120.cfg")
 modifier = PythonScriptModifier()
 node.modifiers.append(modifier)
+node.add_to_scene()
 
 def compute_coordination(pindex, finder):
     return sum(1 for _ in finder.find(pindex))
 
-def modify(frame, input, output):
+def mymodify(frame, input, output):
     yield "Hello world"
     color_property = output.create_particle_property(ParticleProperty.Type.Color)
     color_property.marray[:] = (0,0.5,0)
@@ -20,8 +21,8 @@ def modify(frame, input, output):
         if index % 100 == 0: yield index/input.number_of_particles
         my_property.marray[index] = compute_coordination(index, finder)
     
-modifier.function = modify
+modifier.function = mymodify
 node.compute()
 
-assert((node.output.color.array[0] == numpy.array([0,0.5,0])).all())
-assert(node.output["MyCoordination"].array[0] > 0)
+assert((node.output.particle_properties.color.array[0] == numpy.array([0,0.5,0])).all())
+assert(node.output.particle_properties["MyCoordination"].array[0] > 0)

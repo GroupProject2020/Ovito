@@ -20,17 +20,16 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <core/utilities/io/FileManager.h>
+#include <plugins/particles/import/ParticleFrameData.h>
 #include <core/utilities/io/NumberParsing.h>
-#include <core/utilities/concurrent/Future.h>
-#include <core/dataset/importexport/FileSource.h>
+#include <core/utilities/io/CompressedTextReader.h>
 #include "POSCARImporter.h"
 
 #include <QRegularExpression>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(POSCARImporter, ParticleImporter);
+IMPLEMENT_OVITO_CLASS(POSCARImporter);	
 
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
@@ -85,7 +84,7 @@ bool POSCARImporter::checkFileFormat(QFileDevice& input, const QUrl& sourceLocat
 /******************************************************************************
 * Determines whether the input file should be scanned to discover all contained frames.
 ******************************************************************************/
-bool POSCARImporter::shouldScanFileForTimesteps(const QUrl& sourceUrl)
+bool POSCARImporter::shouldScanFileForFrames(const QUrl& sourceUrl)
 {
 	return sourceUrl.fileName().contains(QStringLiteral("XDATCAR"));
 }
@@ -93,10 +92,11 @@ bool POSCARImporter::shouldScanFileForTimesteps(const QUrl& sourceUrl)
 /******************************************************************************
 * Scans the given input file to find all contained simulation frames.
 ******************************************************************************/
-void POSCARImporter::scanFileForTimesteps(PromiseBase& promise, QVector<FileSourceImporter::Frame>& frames, const QUrl& sourceUrl, CompressedTextReader& stream)
+void POSCARImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
 {
-	promise.setProgressText(tr("Scanning file %1").arg(stream.filename()));
-	promise.setProgressMaximum(stream.underlyingSize() / 1000);
+	CompressedTextReader stream(file, sourceUrl.path());
+	setProgressText(tr("Scanning file %1").arg(sourceUrl.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	setProgressMaximum(stream.underlyingSize() / 1000);
 
 	// Regular expression for whitespace characters.
 	QRegularExpression ws_re(QStringLiteral("\\s+"));
@@ -124,7 +124,7 @@ void POSCARImporter::scanFileForTimesteps(PromiseBase& promise, QVector<FileSour
 	Frame frame;
 	frame.sourceFile = sourceUrl;
 	frame.lastModificationTime = fileInfo.lastModified();
-	while(!stream.eof() && !promise.isCanceled()) {
+	while(!stream.eof() && !isCanceled()) {
 		frame.byteOffset = stream.byteOffset();
 		frame.lineNumber = stream.lineNumber();
 		frame.label = QString("%1 (Frame %2)").arg(filename).arg(frameNumber++);
@@ -137,22 +137,23 @@ void POSCARImporter::scanFileForTimesteps(PromiseBase& promise, QVector<FileSour
 			}
 		}
 
-		promise.setProgressValueIntermittent(stream.underlyingByteOffset() / 1000);
-		if(promise.isCanceled())
+		setProgressValueIntermittent(stream.underlyingByteOffset() / 1000);
+		if(isCanceled())
 			return;
 	}
 }
 
 /******************************************************************************
-* Parses the given input file and stores the data in the given container object.
+* Parses the given input file.
 ******************************************************************************/
-void POSCARImporter::POSCARImportTask::parseFile(CompressedTextReader& stream)
+void POSCARImporter::FrameLoader::loadFile(QFile& file)
 {
+	// Open file for reading.
+	CompressedTextReader stream(file, frame().sourceFile.path());
 	setProgressText(tr("Reading POSCAR file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
 
-	// Always start reading the file from the beginning.
-	qint64 byteOffset = stream.byteOffset();
-	stream.seek(0);
+	// Create the destination container for loaded data.
+	std::shared_ptr<ParticleFrameData> frameData = std::make_shared<ParticleFrameData>();
 
 	// Regular expression for whitespace characters.
 	QRegularExpression ws_re(QStringLiteral("\\s+"));
@@ -161,7 +162,7 @@ void POSCARImporter::POSCARImportTask::parseFile(CompressedTextReader& stream)
 	stream.readLine();
 	QString trimmedComment = stream.lineString().trimmed();
 	if(!trimmedComment.isEmpty())
-		attributes().insert(QStringLiteral("Comment"), QVariant::fromValue(trimmedComment));
+		frameData->attributes().insert(QStringLiteral("Comment"), QVariant::fromValue(trimmedComment));
 
 	// Read global scaling factor
 	FloatType scaling_factor = 0;
@@ -177,7 +178,7 @@ void POSCARImporter::POSCARImportTask::parseFile(CompressedTextReader& stream)
 			throw Exception(tr("Invalid cell vector (line %1): %2").arg(stream.lineNumber()).arg(stream.lineString()));
 	}
 	cell = cell * scaling_factor;
-	simulationCell().setMatrix(cell);
+	frameData->simulationCell().setMatrix(cell);
 
 	// Parse atom type names and atom type counts.
 	QStringList atomTypeNames;
@@ -188,8 +189,8 @@ void POSCARImporter::POSCARImportTask::parseFile(CompressedTextReader& stream)
 		throw Exception(tr("Invalid atom counts (line %1): %2").arg(stream.lineNumber()).arg(stream.lineString()));
 
 	// Jump to requested animation frame.
-	if(byteOffset != 0)
-		stream.seek(byteOffset);
+	if(frame().byteOffset != 0)
+		stream.seek(frame().byteOffset);
 
 	// Read in 'Selective dynamics' flag
 	stream.readLine();
@@ -202,19 +203,23 @@ void POSCARImporter::POSCARImportTask::parseFile(CompressedTextReader& stream)
 		isCartesian = true;
 
 	// Create the particle properties.
-	ParticleProperty* posProperty = new ParticleProperty(totalAtomCount, ParticleProperty::PositionProperty, 0, false);
-	addParticleProperty(posProperty);
-	ParticleProperty* typeProperty = new ParticleProperty(totalAtomCount, ParticleProperty::ParticleTypeProperty, 0, false);
-	ParticleFrameLoader::ParticleTypeList* typeList = new ParticleFrameLoader::ParticleTypeList();
-	addParticleProperty(typeProperty, typeList);
+	PropertyPtr posProperty = ParticleProperty::createStandardStorage(totalAtomCount, ParticleProperty::PositionProperty, false);
+	frameData->addParticleProperty(posProperty);
+	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(totalAtomCount, ParticleProperty::TypeProperty, false);
+	ParticleFrameData::ParticleTypeList* typeList = new ParticleFrameData::ParticleTypeList();
+	frameData->addParticleProperty(typeProperty, typeList);
 
 	// Read atom coordinates.
 	Point3* p = posProperty->dataPoint3();
 	int* a = typeProperty->dataInt();
 	for(int atype = 1; atype <= atomCounts.size(); atype++) {
-		typeList->addParticleTypeId(atype, (atomTypeNames.size() == atomCounts.size()) ? atomTypeNames[atype-1] : QString());
+		int typeId = atype;
+		if(atomTypeNames.size() == atomCounts.size() && atomTypeNames[atype-1].isEmpty() == false)
+			typeId = typeList->addParticleTypeName(atomTypeNames[atype-1]);
+		else
+			typeList->addParticleTypeId(atype);
 		for(int i = 0; i < atomCounts[atype-1]; i++, ++p, ++a) {
-			*a = atype;
+			*a = typeId;
 			if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING,
 					&p->x(), &p->y(), &p->z()) != 3)
 				throw Exception(tr("Invalid atom coordinates (line %1): %2").arg(stream.lineNumber()).arg(stream.lineString()));
@@ -229,7 +234,7 @@ void POSCARImporter::POSCARImportTask::parseFile(CompressedTextReader& stream)
 
 	// Parse optional atomic velocity vectors or CHGCAR electron density data. 
 	// Do this only for the first frame.
-	if(byteOffset == 0) {
+	if(frame().byteOffset == 0) {
 		if(!stream.eof())
 			stream.readLineTrimLeft();
 		if(!stream.eof() && stream.line()[0] > ' ') {
@@ -238,8 +243,8 @@ void POSCARImporter::POSCARImportTask::parseFile(CompressedTextReader& stream)
 				isCartesian = true;
 
 			// Read atomic velocities.
-			ParticleProperty* velocityProperty = new ParticleProperty(totalAtomCount, ParticleProperty::VelocityProperty, 0, false);
-			addParticleProperty(velocityProperty);
+			PropertyPtr velocityProperty = ParticleProperty::createStandardStorage(totalAtomCount, ParticleProperty::VelocityProperty, false);
+			frameData->addParticleProperty(velocityProperty);
 			Vector3* v = velocityProperty->dataVector3();
 			for(int atype = 1; atype <= atomCounts.size(); atype++) {
 				for(int i = 0; i < atomCounts[atype-1]; i++, ++v) {
@@ -255,12 +260,13 @@ void POSCARImporter::POSCARImportTask::parseFile(CompressedTextReader& stream)
 			size_t nx, ny, nz;
 			// Parse charge density volumetric grid.
 			if(sscanf(stream.readLine(), "%zu %zu %zu", &nx, &ny, &nz) == 3 && nx > 0 && ny > 0 && nz > 0) {
-				auto parseFieldData = [this, &stream](size_t nx, size_t ny, size_t nz, const QString& name) -> FieldQuantity* {
-					std::unique_ptr<FieldQuantity> fieldQuantity(new FieldQuantity({nx,ny,nz}, qMetaTypeId<FloatType>(), 1, 0, name, false));
+				auto parseFieldData = [this, &stream, &frameData](size_t nx, size_t ny, size_t nz, const QString& name) -> PropertyPtr {
+					PropertyPtr fieldQuantity = std::make_shared<PropertyStorage>(nx*ny*nz, qMetaTypeId<FloatType>(), 1, 0, name, false);
+					fieldQuantity->setShape({nx,ny,nz});
 					const char* s = stream.readLine();
 					FloatType* data = fieldQuantity->dataFloat();
 					setProgressMaximum(fieldQuantity->size());
-					FloatType cellVolume = simulationCell().volume3D();
+					FloatType cellVolume = frameData->simulationCell().volume3D();
 					for(size_t i = 0; i < fieldQuantity->size(); i++, ++data) {
 						const char* token;
 						for(;;) {
@@ -276,22 +282,22 @@ void POSCARImporter::POSCARImportTask::parseFile(CompressedTextReader& stream)
 						if(*s != '\0')
 							s++;
 
-						if(!setProgressValueIntermittent(i)) return nullptr;						
+						if(!setProgressValueIntermittent(i)) return {};						
 					}
-					return fieldQuantity.release();
+					return fieldQuantity;
 				};
 
 				// Parse spin up + spin down denisty.
-				FieldQuantity* chargeDensity = parseFieldData(nx, ny, nz, tr("Charge density"));
+				PropertyPtr chargeDensity = parseFieldData(nx, ny, nz, tr("Charge density"));
 				if(!chargeDensity) return;
-				addFieldQuantity(chargeDensity);
+				frameData->addVoxelProperty(chargeDensity);
 				statusString += tr("\nCharge density grid: %1 x %2 x %3").arg(nx).arg(ny).arg(nz);
 
 				// Look for spin up - spin down density.
-				std::unique_ptr<FieldQuantity> magnetizationDensity;
+				PropertyPtr magnetizationDensity;
 				while(!stream.eof()) {
 					if(sscanf(stream.readLine(), "%zu %zu %zu", &nx, &ny, &nz) == 3 && nx > 0 && ny > 0 && nz > 0) {
-						magnetizationDensity.reset(parseFieldData(nx, ny, nz, tr("Magnetization density")));
+						magnetizationDensity = parseFieldData(nx, ny, nz, tr("Magnetization density"));
 						if(!magnetizationDensity) return;
 						statusString += tr("\nMagnetization density grid: %1 x %2 x %3").arg(nx).arg(ny).arg(nz);
 						break;
@@ -299,18 +305,18 @@ void POSCARImporter::POSCARImportTask::parseFile(CompressedTextReader& stream)
 				}
 
 				// Look for more vector components in case file contains vector magnetization. 
-				std::unique_ptr<FieldQuantity> magnetizationDensityY;
-				std::unique_ptr<FieldQuantity> magnetizationDensityZ;
+				PropertyPtr magnetizationDensityY;
+				PropertyPtr magnetizationDensityZ;
 				while(!stream.eof()) {
 					if(sscanf(stream.readLine(), "%zu %zu %zu", &nx, &ny, &nz) == 3 && nx > 0 && ny > 0 && nz > 0) {
-						magnetizationDensityY.reset(parseFieldData(nx, ny, nz, tr("Magnetization density")));
+						magnetizationDensityY = parseFieldData(nx, ny, nz, tr("Magnetization density"));
 						if(!magnetizationDensityY) return;
 						break;
 					}
 				}
 				while(!stream.eof()) {
 					if(sscanf(stream.readLine(), "%zu %zu %zu", &nx, &ny, &nz) == 3 && nx > 0 && ny > 0 && nz > 0) {
-						magnetizationDensityZ.reset(parseFieldData(nx, ny, nz, tr("Magnetization density")));
+						magnetizationDensityZ = parseFieldData(nx, ny, nz, tr("Magnetization density"));
 						if(!magnetizationDensityZ) return;
 						break;
 					}
@@ -319,20 +325,22 @@ void POSCARImporter::POSCARImportTask::parseFile(CompressedTextReader& stream)
 				if(magnetizationDensity && magnetizationDensityY && magnetizationDensityZ && 
 					magnetizationDensityY->shape() == magnetizationDensityZ->shape() &&
 					magnetizationDensity->shape() == magnetizationDensityY->shape()) {
-					std::unique_ptr<FieldQuantity> vectorMagnetization(new FieldQuantity({nx,ny,nz}, qMetaTypeId<FloatType>(), 3, 0, tr("Magnetization density"), false));
+					PropertyPtr vectorMagnetization = std::make_shared<PropertyStorage>(nx*ny*nz, qMetaTypeId<FloatType>(), 3, 0, tr("Magnetization density"), false);
+					vectorMagnetization->setShape({nx,ny,nz});
 					vectorMagnetization->setComponentNames(QStringList() << "X" << "Y" << "Z");
 					for(size_t i = 0; i < vectorMagnetization->size(); i++) 
 						vectorMagnetization->setVector3(i, { magnetizationDensity->getFloat(i), magnetizationDensityY->getFloat(i), magnetizationDensityZ->getFloat(i) });
-					addFieldQuantity(vectorMagnetization.release());
+					frameData->addVoxelProperty(std::move(vectorMagnetization));
 				}
 				else if(magnetizationDensity) {
-					addFieldQuantity(magnetizationDensity.release());
+					frameData->addVoxelProperty(std::move(magnetizationDensity));
 				}
 			}
 		}
 	}
 
-	setStatus(statusString);
+	frameData->setStatus(statusString);
+	setResult(std::move(frameData));
 }
 
 /******************************************************************************

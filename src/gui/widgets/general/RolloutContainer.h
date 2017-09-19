@@ -35,16 +35,8 @@ class RolloutInsertionParameters
 {
 public:
 
-	/// Default constructor that sets all parameters to default values.
-	RolloutInsertionParameters() :
-		_collapsed(false),
-		_animateFirstOpening(false),
-		_useAvailableSpace(false),
-		_afterThisRollout(nullptr),
-		_beforeThisRollout(nullptr),
-		_intoThisContainer(nullptr) {}
-
 	RolloutInsertionParameters after(QWidget* afterThisRollout) const { 
+		OVITO_ASSERT(afterThisRollout);
 		RolloutInsertionParameters p;
 		p._collapsed = this->_collapsed;
 		p._useAvailableSpace = this->_useAvailableSpace;
@@ -55,6 +47,7 @@ public:
 	}
 
 	RolloutInsertionParameters before(QWidget* beforeThisRollout) const { 
+		OVITO_ASSERT(beforeThisRollout);
 		RolloutInsertionParameters p;
 		p._collapsed = this->_collapsed;
 		p._useAvailableSpace = this->_useAvailableSpace;
@@ -83,6 +76,7 @@ public:
 	}
 
 	RolloutInsertionParameters insertInto(QWidget* intoThisContainer) const {
+		OVITO_ASSERT(intoThisContainer);
 		RolloutInsertionParameters p;
 		p._intoThisContainer = intoThisContainer;
 		return p;
@@ -103,9 +97,9 @@ public:
 
 private:
 	
-	bool _collapsed;
-	bool _animateFirstOpening;
-	bool _useAvailableSpace;
+	bool _collapsed = false;
+	bool _animateFirstOpening = false;
+	bool _useAvailableSpace = false;
 	QPointer<QWidget> _afterThisRollout;
 	QPointer<QWidget> _beforeThisRollout;
 	QPointer<QWidget> _intoThisContainer;

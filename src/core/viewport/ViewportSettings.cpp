@@ -152,8 +152,8 @@ Matrix3 ViewportSettings::coordinateSystemOrientation() const
 ******************************************************************************/
 void ViewportSettings::load(QSettings& store)
 {
-	_upDirection = (UpDirection)store.value("UpDirection", qVariantFromValue((int)_upDirection)).toInt();
-	_restrictVerticalRotation = store.value("RestrictVerticalRotation", qVariantFromValue(_restrictVerticalRotation)).toBool();
+	_upDirection = (UpDirection)store.value("UpDirection", QVariant::fromValue((int)_upDirection)).toInt();
+	_restrictVerticalRotation = store.value("RestrictVerticalRotation", QVariant::fromValue(_restrictVerticalRotation)).toBool();
 	store.beginGroup("Colors");
 	QMetaEnum colorEnum;
 	for(int i = 0; i < ViewportSettings::staticMetaObject.enumeratorCount(); i++) {

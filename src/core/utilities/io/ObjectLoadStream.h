@@ -23,9 +23,9 @@
 
 
 #include <core/Core.h>
-#include <core/object/OvitoObject.h>
-#include <core/object/OvitoObjectReference.h>
-#include "LoadStream.h"
+#include <core/oo/OvitoObject.h>
+#include <core/oo/OORef.h>
+#include <core/utilities/io/LoadStream.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
 
@@ -50,7 +50,7 @@ public:
 		QByteArray identifier;
 
 		/// The RefMaker-derived class that owns the property field.
-		OvitoObjectType* definingClass;
+		const RefMakerClass* definingClass;
 
 		/// The stored flags of the property field (see PropertyFieldFlag).
 		int flags;
@@ -59,7 +59,7 @@ public:
 		bool isReferenceField;
 
 		/// If this is a reference field, this is its RefTarget-derived class.
-		OvitoObjectType* targetClass;
+		OvitoClassPtr targetClass;
 
 		/// The property field of the defining class that matches the
 		/// stored field. Can be NULL if the property field no longer exists.
@@ -83,9 +83,9 @@ public:
 	template<class T>
 	OORef<T> loadObject() {
 		OORef<OvitoObject> ptr = loadObjectInternal();
-		OVITO_ASSERT(!ptr || ptr->getOOType().isDerivedFrom(T::OOType));
-		if(ptr && !ptr->getOOType().isDerivedFrom(T::OOType))
-			throw Exception(tr("Class hierarchy mismatch in file. The object class '%1' is not derived from '%2'.").arg(ptr->getOOType().name()).arg(T::OOType.name()));
+		OVITO_ASSERT(!ptr || ptr->getOOClass().isDerivedFrom(T::OOClass()));
+		if(ptr && !ptr->getOOClass().isDerivedFrom(T::OOClass()))
+			throw Exception(tr("Class hierarchy mismatch in file. The object class '%1' is not derived from '%2'.").arg(ptr->getOOClass().name()).arg(T::OOClass().name()));
 		return static_object_cast<T>(ptr);
 	}
 
@@ -104,7 +104,7 @@ private:
 	struct ClassEntry {
 
 		/// The corresponding runtime class.
-		OvitoObjectType* descriptor;
+		OvitoClassPtr descriptor;
 
 		/// The list of reference and property fields stored for each instance of the class
 		/// in the file.

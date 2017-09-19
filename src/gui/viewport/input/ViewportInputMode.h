@@ -143,10 +143,6 @@ public:
 	/// method then it should also override the hasOverlay() function.
 	virtual void renderOverlay3D(Viewport* vp, ViewportSceneRenderer* renderer);
 
-	/// \brief Computes the bounding box of the 3d visual viewport overlay rendered by the input mode.
-	/// \return The bounding box of the geometry in world coordinates.
-	virtual Box3 overlayBoundingBox(Viewport* vp, ViewportSceneRenderer* renderer);
-
 	/// \brief Lets the input mode render its 2d overlay content in a viewport.
 	/// \param vp The viewport into which the mode should render its specific overlay content.
 	/// \param renderer The renderer that should be used to display the overlay.
