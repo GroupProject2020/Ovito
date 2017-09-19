@@ -28,7 +28,7 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-
+IMPLEMENT_OVITO_CLASS(SlipSurfaceDisplayEditor);
 SET_OVITO_OBJECT_EDITOR(SlipSurfaceDisplay, SlipSurfaceDisplayEditor);
 
 /******************************************************************************

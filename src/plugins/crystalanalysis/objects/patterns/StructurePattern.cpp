@@ -24,11 +24,11 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-
-DEFINE_PROPERTY_FIELD(StructurePattern, shortName, "ShortName");
-DEFINE_PROPERTY_FIELD(StructurePattern, structureType, "StructureType");
-DEFINE_PROPERTY_FIELD(StructurePattern, symmetryType, "SymmetryType");
-DEFINE_VECTOR_REFERENCE_FIELD(StructurePattern, burgersVectorFamilies, "BurgersVectorFamilies", BurgersVectorFamily);
+IMPLEMENT_OVITO_CLASS(StructurePattern);
+DEFINE_PROPERTY_FIELD(StructurePattern, shortName);
+DEFINE_PROPERTY_FIELD(StructurePattern, structureType);
+DEFINE_PROPERTY_FIELD(StructurePattern, symmetryType);
+DEFINE_REFERENCE_FIELD(StructurePattern, burgersVectorFamilies);
 SET_PROPERTY_FIELD_LABEL(StructurePattern, shortName, "Short name");
 SET_PROPERTY_FIELD_LABEL(StructurePattern, structureType, "Structure type");
 SET_PROPERTY_FIELD_LABEL(StructurePattern, symmetryType, "Symmetry type");
@@ -40,11 +40,6 @@ SET_PROPERTY_FIELD_LABEL(StructurePattern, burgersVectorFamilies, "Burgers vecto
 StructurePattern::StructurePattern(DataSet* dataset) : ParticleType(dataset),
 		_structureType(OtherStructure), _symmetryType(OtherSymmetry)
 {
-
-
-
-
-
 	// Create "unknown" Burgers vector family.
 	BurgersVectorFamily* family = new BurgersVectorFamily(dataset);
 	family->setColor(Color(0.9f, 0.2f, 0.2f));

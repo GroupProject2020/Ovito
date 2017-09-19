@@ -29,10 +29,10 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Properties)
 
-
-DEFINE_PROPERTY_FIELD(InterpolateTrajectoryModifier, useMinimumImageConvention, "UseMinimumImageConvention");
+IMPLEMENT_OVITO_CLASS(InterpolateTrajectoryModifier);
+IMPLEMENT_OVITO_CLASS(InterpolateTrajectoryModifierApplication);
+DEFINE_PROPERTY_FIELD(InterpolateTrajectoryModifier, useMinimumImageConvention);
 SET_PROPERTY_FIELD_LABEL(InterpolateTrajectoryModifier, useMinimumImageConvention, "Use minimum image convention");
-
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -40,7 +40,6 @@ SET_PROPERTY_FIELD_LABEL(InterpolateTrajectoryModifier, useMinimumImageConventio
 InterpolateTrajectoryModifier::InterpolateTrajectoryModifier(DataSet* dataset) : Modifier(dataset),
 	_useMinimumImageConvention(true)
 {
-
 }
 
 /******************************************************************************

@@ -68,8 +68,7 @@ TextLabelOverlay::TextLabelOverlay(DataSet* dataset) : ViewportOverlay(dataset),
 		_outlineEnabled(false)
 {
 	// Automatically connect to the selected object node.
-	if(!dataset->selection()->nodes().empty())
-		setSourceNode(dynamic_object_cast<ObjectNode>(dataset->selection()->nodes().front()));
+	setSourceNode(dynamic_object_cast<ObjectNode>(dataset->selection()->firstNode()));
 }
 
 /******************************************************************************

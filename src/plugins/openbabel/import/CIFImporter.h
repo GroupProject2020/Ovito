@@ -32,7 +32,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVI
  */
 class CIFImporter : public OpenBabelImporter
 {
-	OVITO_CLASS()
+	OVITO_CLASS(CIFImporter)
 	Q_OBJECT
 	
 public:

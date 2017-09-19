@@ -34,6 +34,9 @@ using namespace Ovito;
  */
 class VRSettingsObjectEditor : public PropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(VRSettingsObjectEditor)
+
 public:
 
 	/// Default constructor.
@@ -55,9 +58,6 @@ private:
 
 	/// Used to disable viewport rendering.
 	std::unique_ptr<ViewportSuspender> _viewportSuspender;
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 }	// End of namespace

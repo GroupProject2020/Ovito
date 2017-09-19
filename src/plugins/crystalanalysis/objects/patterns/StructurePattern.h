@@ -33,6 +33,9 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
  */
 class OVITO_CRYSTALANALYSIS_EXPORT StructurePattern : public ParticleType
 {
+	Q_OBJECT
+	OVITO_CLASS(StructurePattern)
+
 public:
 
 	/// The types of structures described by a pattern:
@@ -64,14 +67,14 @@ public:
 	void setLongName(const QString& name) { setName(name); }
 
 	/// Adds a new family to this lattice pattern's list of Burgers vector families.
-	void addBurgersVectorFamily(BurgersVectorFamily* family) { _burgersVectorFamilies.push_back(this, family); }
+	void addBurgersVectorFamily(BurgersVectorFamily* family) { _burgersVectorFamilies.push_back(this, PROPERTY_FIELD(burgersVectorFamilies), family); }
 
 	/// Removes a family from this lattice pattern's list of Burgers vector families.
-	void removeBurgersVectorFamily(int index) { _burgersVectorFamilies.remove(this, index); }
+	void removeBurgersVectorFamily(int index) { _burgersVectorFamilies.remove(this, PROPERTY_FIELD(burgersVectorFamilies), index); }
 
 	/// Returns the default Burgers vector family, which is assigned to dislocation segments that
 	/// don't belong to any family.
-	BurgersVectorFamily* defaultBurgersVectorFamily() const { return _burgersVectorFamilies.front(); }
+	BurgersVectorFamily* defaultBurgersVectorFamily() const { return burgersVectorFamilies().front(); }
 
 	/// Returns the display color to be used for a given Burgers vector.
 	static Color getBurgersVectorColor(const QString& latticeName, const Vector3& b);
@@ -89,9 +92,6 @@ private:
 
 	/// List of Burgers vector families.
 	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD(BurgersVectorFamily, burgersVectorFamilies, setBurgersVectorFamilies);
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 }	// End of namespace
@@ -102,5 +102,3 @@ Q_DECLARE_METATYPE(Ovito::Plugins::CrystalAnalysis::StructurePattern::StructureT
 Q_DECLARE_TYPEINFO(Ovito::Plugins::CrystalAnalysis::StructurePattern::StructureType, Q_PRIMITIVE_TYPE);
 Q_DECLARE_METATYPE(Ovito::Plugins::CrystalAnalysis::StructurePattern::SymmetryType);
 Q_DECLARE_TYPEINFO(Ovito::Plugins::CrystalAnalysis::StructurePattern::SymmetryType, Q_PRIMITIVE_TYPE);
-
-

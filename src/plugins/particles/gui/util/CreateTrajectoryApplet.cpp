@@ -34,7 +34,7 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-
+IMPLEMENT_OVITO_CLASS(CreateTrajectoryApplet);
 
 /******************************************************************************
 * Shows the UI of the utility in the given RolloutContainer.
@@ -187,7 +187,7 @@ void CreateTrajectoryApplet::onCreateTrajectory()
 		// Get input particles.
 		OORef<ParticleProperty> posProperty;
 		OORef<ParticleProperty> selectionProperty;
-		ObjectNode* inputNode = dynamic_object_cast<ObjectNode>(dataset->selection()->front());
+		ObjectNode* inputNode = dynamic_object_cast<ObjectNode>(dataset->selection()->firstNode());
 		if(inputNode) {
 			SharedFuture<PipelineFlowState> stateFuture = inputNode->evaluatePipeline(time);
 			if(!progressDialog.taskManager().waitForTask(stateFuture))

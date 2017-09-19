@@ -32,6 +32,9 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
  */
 class ElasticStrainModifierEditor : public ModifierPropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(ElasticStrainModifierEditor)
+
 public:
 
 	/// Default constructor.
@@ -50,13 +53,8 @@ private Q_SLOTS:
 private:
 
 	FloatParameterUI* _caRatioUI;
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-
-

@@ -36,6 +36,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class CoordinationNumberModifierEditor : public ModifierPropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(CoordinationNumberModifierEditor)
+
 public:
 
 	/// Default constructor.
@@ -67,9 +70,6 @@ private:
 
 	/// For deferred invocation of the plot repaint function.
 	DeferredMethodInvocation<CoordinationNumberModifierEditor, &CoordinationNumberModifierEditor::plotRDF> plotRDFLater;
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 OVITO_END_INLINE_NAMESPACE
@@ -77,5 +77,3 @@ OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

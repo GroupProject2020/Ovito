@@ -29,8 +29,8 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-
-DEFINE_FLAGS_PROPERTY_FIELD(WignerSeitzAnalysisModifier, perTypeOccupancy, "PerTypeOccupancy", PROPERTY_FIELD_MEMORIZE);
+IMPLEMENT_OVITO_CLASS(WignerSeitzAnalysisModifier);
+DEFINE_PROPERTY_FIELD(WignerSeitzAnalysisModifier, perTypeOccupancy);
 SET_PROPERTY_FIELD_LABEL(WignerSeitzAnalysisModifier, perTypeOccupancy, "Output per-type occupancies");
 
 /******************************************************************************
@@ -39,7 +39,6 @@ SET_PROPERTY_FIELD_LABEL(WignerSeitzAnalysisModifier, perTypeOccupancy, "Output 
 WignerSeitzAnalysisModifier::WignerSeitzAnalysisModifier(DataSet* dataset) : ReferenceConfigurationModifier(dataset),
 	_perTypeOccupancy(false)
 {
-
 }
 
 /******************************************************************************

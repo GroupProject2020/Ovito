@@ -37,6 +37,9 @@ class ParticleInformationInputMode;		// defined below
  */
 class ParticleInformationApplet : public UtilityApplet
 {
+	Q_OBJECT
+	OVITO_CLASS(ParticleInformationApplet)
+
 public:
 
 	/// Constructor.
@@ -73,9 +76,6 @@ private:
 	size_t _maxSelectionSize = 10;
 
 	Q_CLASSINFO("DisplayName", "Inspect particles");
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 /**
@@ -119,5 +119,3 @@ OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

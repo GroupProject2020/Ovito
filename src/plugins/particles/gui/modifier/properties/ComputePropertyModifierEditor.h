@@ -32,6 +32,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class ComputePropertyModifierEditor : public ModifierPropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(ComputePropertyModifierEditor)
+
 public:
 
 	/// Default constructor.
@@ -69,9 +72,6 @@ private:
 	bool editorUpdatePending;
 
 	QLabel* variableNamesDisplay;
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 OVITO_END_INLINE_NAMESPACE
@@ -79,5 +79,3 @@ OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

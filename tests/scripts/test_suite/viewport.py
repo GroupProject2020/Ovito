@@ -1,5 +1,6 @@
 from ovito.io import *
 from ovito.vis import *
+import ovito
 from PyQt5 import QtCore
 
 # Import a data file.
@@ -26,3 +27,6 @@ overlay = TextLabelOverlay(
 
 vp.overlays.append(overlay)
 vp.render(settings)
+
+for vp in ovito.dataset.viewports:
+    print(vp)

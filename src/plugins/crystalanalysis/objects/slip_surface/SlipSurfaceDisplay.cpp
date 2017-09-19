@@ -33,9 +33,9 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-
-DEFINE_PROPERTY_FIELD(SlipSurfaceDisplay, smoothShading, "SmoothShading");
-DEFINE_REFERENCE_FIELD(SlipSurfaceDisplay, surfaceTransparencyController, "SurfaceTransparency", Controller);
+IMPLEMENT_OVITO_CLASS(SlipSurfaceDisplay);
+DEFINE_PROPERTY_FIELD(SlipSurfaceDisplay, smoothShading);
+DEFINE_REFERENCE_FIELD(SlipSurfaceDisplay, surfaceTransparencyController);
 SET_PROPERTY_FIELD_LABEL(SlipSurfaceDisplay, smoothShading, "Smooth shading");
 SET_PROPERTY_FIELD_LABEL(SlipSurfaceDisplay, surfaceTransparencyController, "Surface transparency");
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(SlipSurfaceDisplay, surfaceTransparencyController, PercentParameterUnit, 0, 1);
@@ -46,9 +46,6 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(SlipSurfaceDisplay, surfaceTransparencyContro
 SlipSurfaceDisplay::SlipSurfaceDisplay(DataSet* dataset) : DisplayObject(dataset),
 	_smoothShading(true)
 {
-
-
-
 	setSurfaceTransparencyController(ControllerManager::createFloatController(dataset));
 }
 

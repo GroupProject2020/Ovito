@@ -5,7 +5,7 @@ Modifiers
 ===================================
 
 .. warning::
-   This section of manual is out of date! It has not been updated yet to reflect the changes made in the current
+   This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
    development version of OVITO.
 
 Modifiers are objects that make up a node's modification pipeline.

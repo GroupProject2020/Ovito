@@ -34,6 +34,24 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT CreateBondsModifier : public AsynchronousModifier
 {
+	/// Give this modifier class its own metaclass.
+	class CreateBondsModifierClass : public ModifierClass 
+	{
+	public:
+
+		/// Inherit constructor from base class.
+		using ModifierClass::ModifierClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
+
+	Q_OBJECT
+	OVITO_CLASS_META(CreateBondsModifier, CreateBondsModifierClass)
+
+	Q_CLASSINFO("DisplayName", "Create bonds");
+	Q_CLASSINFO("ModifierCategory", "Modification");
+
 public:
 
 	enum CutoffMode {
@@ -143,20 +161,6 @@ protected:
 
 	/// Creates a computation engine that will compute the modifier's results.
 	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-
-public:
-
-	/// Give this modifier class its own metaclass.
-	class OOMetaClass : public ModifierClass 
-	{
-	public:
-
-		/// Inherit constructor from base class.
-		using ModifierClass::ModifierClass;
-
-		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
-	};
 		
 private:
 
@@ -164,7 +168,7 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(CutoffMode, cutoffMode, setCutoffMode);
 
 	/// The cutoff radius for bond generation.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, uniformCutoff, setUniformCutoff);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, uniformCutoff, setUniformCutoff, PROPERTY_FIELD_MEMORIZE);
 
 	/// The minimum bond length.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, minimumCutoff, setMinimumCutoff);
@@ -173,16 +177,10 @@ private:
 	PairCutoffsList _pairCutoffs;
 
 	/// If true, bonds will only be created between atoms from the same molecule.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, onlyIntraMoleculeBonds, setOnlyIntraMoleculeBonds);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, onlyIntraMoleculeBonds, setOnlyIntraMoleculeBonds, PROPERTY_FIELD_MEMORIZE);
 
 	/// The display object for rendering the bonds.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(BondsDisplay, bondsDisplay, setBondsDisplay);
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Create bonds");
-	Q_CLASSINFO("ModifierCategory", "Modification");
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(BondsDisplay, bondsDisplay, setBondsDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -34,6 +34,9 @@ using namespace Ovito;
  */
 class StartVRAction : public GuiApplicationService
 {
+	Q_OBJECT
+	OVITO_CLASS(StartVRAction)
+	
 public:
 
 	/// \brief Default constructor.
@@ -50,11 +53,6 @@ public:
 
 	/// \brief Is called after the application has been completely initialized.
 	virtual void applicationStarted() override;
-
-private:
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 }	// End of namespace

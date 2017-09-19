@@ -48,6 +48,9 @@ extern const size_t NumberOfChemicalElements;
 
 class OVITO_PARTICLES_GUI_EXPORT CutoffRadiusPresetsUI : public PropertyParameterUI
 {
+	Q_OBJECT
+	OVITO_CLASS(CutoffRadiusPresetsUI)
+
 public:
 
 	/// Constructor for a PropertyField property.
@@ -79,16 +82,9 @@ protected:
 
 	/// The combo box control of the UI component.
 	QPointer<QComboBox> _comboBox;
-
-private:
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

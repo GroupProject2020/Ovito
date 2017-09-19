@@ -28,19 +28,19 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Properties)
 
-
-DEFINE_PROPERTY_FIELD(FreezePropertyModifier, sourceProperty, "SourceProperty");
-DEFINE_PROPERTY_FIELD(FreezePropertyModifier, destinationProperty, "DestinationProperty");
-DEFINE_PROPERTY_FIELD(FreezePropertyModifier, freezeTime, "FreezeTime");
+IMPLEMENT_OVITO_CLASS(FreezePropertyModifier);
+DEFINE_PROPERTY_FIELD(FreezePropertyModifier, sourceProperty);
+DEFINE_PROPERTY_FIELD(FreezePropertyModifier, destinationProperty);
+DEFINE_PROPERTY_FIELD(FreezePropertyModifier, freezeTime);
 SET_PROPERTY_FIELD_LABEL(FreezePropertyModifier, sourceProperty, "Property");
 SET_PROPERTY_FIELD_LABEL(FreezePropertyModifier, destinationProperty, "Destination property");
 SET_PROPERTY_FIELD_LABEL(FreezePropertyModifier, freezeTime, "Freeze at frame");
 SET_PROPERTY_FIELD_UNITS(FreezePropertyModifier, freezeTime, TimeParameterUnit);
 
-
-DEFINE_FLAGS_REFERENCE_FIELD(FreezePropertyModifierApplication, property, "Property", ParticleProperty, PROPERTY_FIELD_NEVER_CLONE_TARGET|PROPERTY_FIELD_NO_CHANGE_MESSAGE|PROPERTY_FIELD_NO_UNDO|PROPERTY_FIELD_NO_SUB_ANIM|PROPERTY_FIELD_DONT_SAVE_RECOMPUTABLE_DATA);
-DEFINE_FLAGS_REFERENCE_FIELD(FreezePropertyModifierApplication, identifiers, "Identifiers", ParticleProperty, PROPERTY_FIELD_NEVER_CLONE_TARGET|PROPERTY_FIELD_NO_CHANGE_MESSAGE|PROPERTY_FIELD_NO_UNDO|PROPERTY_FIELD_NO_SUB_ANIM|PROPERTY_FIELD_DONT_SAVE_RECOMPUTABLE_DATA);
-DEFINE_FLAGS_VECTOR_REFERENCE_FIELD(FreezePropertyModifierApplication, cachedDisplayObjects, "CachedDisplayObjects", DisplayObject, PROPERTY_FIELD_NEVER_CLONE_TARGET|PROPERTY_FIELD_NO_CHANGE_MESSAGE|PROPERTY_FIELD_NO_UNDO|PROPERTY_FIELD_NO_SUB_ANIM);
+IMPLEMENT_OVITO_CLASS(FreezePropertyModifierApplication);
+DEFINE_REFERENCE_FIELD(FreezePropertyModifierApplication, property);
+DEFINE_REFERENCE_FIELD(FreezePropertyModifierApplication, identifiers);
+DEFINE_REFERENCE_FIELD(FreezePropertyModifierApplication, cachedDisplayObjects);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -48,9 +48,6 @@ DEFINE_FLAGS_VECTOR_REFERENCE_FIELD(FreezePropertyModifierApplication, cachedDis
 FreezePropertyModifier::FreezePropertyModifier(DataSet* dataset) : Modifier(dataset), 
 	_freezeTime(0)
 {
-
-
-
 }
 
 /******************************************************************************

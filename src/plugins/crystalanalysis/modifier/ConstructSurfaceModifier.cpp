@@ -31,11 +31,11 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-
-DEFINE_FLAGS_PROPERTY_FIELD(ConstructSurfaceModifier, smoothingLevel, "SmoothingLevel", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(ConstructSurfaceModifier, probeSphereRadius, "Radius", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_REFERENCE_FIELD(ConstructSurfaceModifier, surfaceMeshDisplay, "SurfaceMeshDisplay", SurfaceMeshDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(ConstructSurfaceModifier, onlySelectedParticles, "OnlySelectedParticles");
+IMPLEMENT_OVITO_CLASS(ConstructSurfaceModifier);
+DEFINE_PROPERTY_FIELD(ConstructSurfaceModifier, smoothingLevel);
+DEFINE_PROPERTY_FIELD(ConstructSurfaceModifier, probeSphereRadius);
+DEFINE_REFERENCE_FIELD(ConstructSurfaceModifier, surfaceMeshDisplay);
+DEFINE_PROPERTY_FIELD(ConstructSurfaceModifier, onlySelectedParticles);
 SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, smoothingLevel, "Smoothing level");
 SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, probeSphereRadius, "Probe sphere radius");
 SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, surfaceMeshDisplay, "Surface mesh display");
@@ -51,11 +51,6 @@ ConstructSurfaceModifier::ConstructSurfaceModifier(DataSet* dataset) : Asynchron
 	_probeSphereRadius(4), 
 	_onlySelectedParticles(false)
 {
-
-
-
-
-
 	// Create the display object.
 	setSurfaceMeshDisplay(new SurfaceMeshDisplay(dataset));
 }

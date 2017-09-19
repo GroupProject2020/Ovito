@@ -32,12 +32,12 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 
-
-DEFINE_PROPERTY_FIELD(CreateBondsModifier, cutoffMode, "CutoffMode");
-DEFINE_FLAGS_PROPERTY_FIELD(CreateBondsModifier, uniformCutoff, "UniformCutoff", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(CreateBondsModifier, minimumCutoff, "MinimumCutoff");
-DEFINE_FLAGS_PROPERTY_FIELD(CreateBondsModifier, onlyIntraMoleculeBonds, "OnlyIntraMoleculeBonds", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_REFERENCE_FIELD(CreateBondsModifier, bondsDisplay, "BondsDisplay", BondsDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
+IMPLEMENT_OVITO_CLASS(CreateBondsModifier);
+DEFINE_PROPERTY_FIELD(CreateBondsModifier, cutoffMode);
+DEFINE_PROPERTY_FIELD(CreateBondsModifier, uniformCutoff);
+DEFINE_PROPERTY_FIELD(CreateBondsModifier, minimumCutoff);
+DEFINE_PROPERTY_FIELD(CreateBondsModifier, onlyIntraMoleculeBonds);
+DEFINE_REFERENCE_FIELD(CreateBondsModifier, bondsDisplay);
 SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, cutoffMode, "Cutoff mode");
 SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, uniformCutoff, "Cutoff radius");
 SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, minimumCutoff, "Lower cutoff");
@@ -52,12 +52,6 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CreateBondsModifier, minimumCutoff, WorldPa
 CreateBondsModifier::CreateBondsModifier(DataSet* dataset) : AsynchronousModifier(dataset),
 	_cutoffMode(UniformCutoff), _uniformCutoff(3.2), _onlyIntraMoleculeBonds(false), _minimumCutoff(0)
 {
-
-
-
-
-
-
 	// Create the display object for bonds rendering and assign it to the data object.
 	setBondsDisplay(new BondsDisplay(dataset));
 }

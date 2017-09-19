@@ -30,8 +30,8 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Selection)
 
-
-DEFINE_PROPERTY_FIELD(ExpressionSelectionModifier, expression, "Expression");
+IMPLEMENT_OVITO_CLASS(ExpressionSelectionModifier);
+DEFINE_PROPERTY_FIELD(ExpressionSelectionModifier, expression);
 SET_PROPERTY_FIELD_LABEL(ExpressionSelectionModifier, expression, "Boolean expression");
 
 /******************************************************************************

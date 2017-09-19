@@ -32,6 +32,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class FreezePropertyModifierEditor : public ModifierPropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(FreezePropertyModifierEditor)
+
 public:
 
 	/// Default constructor
@@ -42,15 +45,10 @@ protected:
 	/// Creates the user interface controls for the editor.
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
 
-protected Q_SLOTS:
+private Q_SLOTS:
 
 	/// Is called when the user has selected a different source property.
 	void onSourcePropertyChanged();
-
-private:
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 OVITO_END_INLINE_NAMESPACE
@@ -58,5 +56,3 @@ OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

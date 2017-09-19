@@ -32,6 +32,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class AtomicStrainModifierEditor : public ModifierPropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(AtomicStrainModifierEditor)
+
 public:
 
 	/// Default constructor.
@@ -51,9 +54,6 @@ protected:
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
 
 	QButtonGroup* _sourceButtonGroup;
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 OVITO_END_INLINE_NAMESPACE

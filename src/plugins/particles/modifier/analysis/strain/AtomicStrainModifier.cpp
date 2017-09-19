@@ -32,14 +32,14 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-
-DEFINE_FLAGS_PROPERTY_FIELD(AtomicStrainModifier, cutoff, "Cutoff", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(AtomicStrainModifier, calculateDeformationGradients, "CalculateDeformationGradients");
-DEFINE_PROPERTY_FIELD(AtomicStrainModifier, calculateStrainTensors, "CalculateStrainTensors");
-DEFINE_PROPERTY_FIELD(AtomicStrainModifier, calculateNonaffineSquaredDisplacements, "CalculateNonaffineSquaredDisplacements");
-DEFINE_PROPERTY_FIELD(AtomicStrainModifier, selectInvalidParticles, "SelectInvalidParticles");
-DEFINE_PROPERTY_FIELD(AtomicStrainModifier, calculateStretchTensors, "CalculateStretchTensors");
-DEFINE_PROPERTY_FIELD(AtomicStrainModifier, calculateRotations, "CalculateRotations");
+IMPLEMENT_OVITO_CLASS(AtomicStrainModifier);
+DEFINE_PROPERTY_FIELD(AtomicStrainModifier, cutoff);
+DEFINE_PROPERTY_FIELD(AtomicStrainModifier, calculateDeformationGradients);
+DEFINE_PROPERTY_FIELD(AtomicStrainModifier, calculateStrainTensors);
+DEFINE_PROPERTY_FIELD(AtomicStrainModifier, calculateNonaffineSquaredDisplacements);
+DEFINE_PROPERTY_FIELD(AtomicStrainModifier, selectInvalidParticles);
+DEFINE_PROPERTY_FIELD(AtomicStrainModifier, calculateStretchTensors);
+DEFINE_PROPERTY_FIELD(AtomicStrainModifier, calculateRotations);
 SET_PROPERTY_FIELD_LABEL(AtomicStrainModifier, cutoff, "Cutoff radius");
 SET_PROPERTY_FIELD_LABEL(AtomicStrainModifier, calculateDeformationGradients, "Output deformation gradient tensors");
 SET_PROPERTY_FIELD_LABEL(AtomicStrainModifier, calculateStrainTensors, "Output strain tensors");
@@ -61,13 +61,6 @@ AtomicStrainModifier::AtomicStrainModifier(DataSet* dataset) : ReferenceConfigur
 	_calculateRotations(false),
     _selectInvalidParticles(true)
 {
-
-
-
-
-
-
-
 }
 
 /******************************************************************************

@@ -30,15 +30,15 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 
-
-DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, showImageX, "ShowImageX");
-DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, showImageY, "ShowImageY");
-DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, showImageZ, "ShowImageZ");
-DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, numImagesX, "NumImagesX");
-DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, numImagesY, "NumImagesY");
-DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, numImagesZ, "NumImagesZ");
-DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, adjustBoxSize, "AdjustBoxSize");
-DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, uniqueIdentifiers, "UniqueIdentifiers");
+IMPLEMENT_OVITO_CLASS(ShowPeriodicImagesModifier);
+DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, showImageX);
+DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, showImageY);
+DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, showImageZ);
+DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, numImagesX);
+DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, numImagesY);
+DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, numImagesZ);
+DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, adjustBoxSize);
+DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, uniqueIdentifiers);
 SET_PROPERTY_FIELD_LABEL(ShowPeriodicImagesModifier, showImageX, "Periodic images X");
 SET_PROPERTY_FIELD_LABEL(ShowPeriodicImagesModifier, showImageY, "Periodic images Y");
 SET_PROPERTY_FIELD_LABEL(ShowPeriodicImagesModifier, showImageZ, "Periodic images Z");
@@ -64,14 +64,6 @@ ShowPeriodicImagesModifier::ShowPeriodicImagesModifier(DataSet* dataset) : Modif
 	_adjustBoxSize(false), 
 	_uniqueIdentifiers(true)
 {
-
-
-
-
-
-
-
-
 }
 
 /******************************************************************************

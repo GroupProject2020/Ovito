@@ -24,8 +24,8 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-
-DEFINE_RUNTIME_PROPERTY_FIELD(DislocationNetworkObject, storage, "DataStorage");
+IMPLEMENT_OVITO_CLASS(DislocationNetworkObject);
+DEFINE_PROPERTY_FIELD(DislocationNetworkObject, storage);
 
 /// Holds a shared, empty instance of the DislocationNetwork class, 
 /// which is used in places where a default storage is needed.
@@ -37,7 +37,6 @@ static const std::shared_ptr<DislocationNetwork> defaultStorage = std::make_shar
 ******************************************************************************/
 DislocationNetworkObject::DislocationNetworkObject(DataSet* dataset) : PeriodicDomainDataObject(dataset), _storage(defaultStorage)
 {
-
 }
 
 /******************************************************************************

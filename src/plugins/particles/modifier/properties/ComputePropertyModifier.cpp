@@ -32,13 +32,13 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Properties)
 
-
-DEFINE_PROPERTY_FIELD(ComputePropertyModifier, expressions, "Expressions");
-DEFINE_PROPERTY_FIELD(ComputePropertyModifier, outputProperty, "OutputProperty");
-DEFINE_PROPERTY_FIELD(ComputePropertyModifier, onlySelectedParticles, "OnlySelectedParticles");
-DEFINE_PROPERTY_FIELD(ComputePropertyModifier, neighborModeEnabled, "NeighborModeEnabled");
-DEFINE_PROPERTY_FIELD(ComputePropertyModifier, neighborExpressions, "NeighborExpressions");
-DEFINE_FLAGS_PROPERTY_FIELD(ComputePropertyModifier, cutoff, "Cutoff", PROPERTY_FIELD_MEMORIZE);
+IMPLEMENT_OVITO_CLASS(ComputePropertyModifier);
+DEFINE_PROPERTY_FIELD(ComputePropertyModifier, expressions);
+DEFINE_PROPERTY_FIELD(ComputePropertyModifier, outputProperty);
+DEFINE_PROPERTY_FIELD(ComputePropertyModifier, onlySelectedParticles);
+DEFINE_PROPERTY_FIELD(ComputePropertyModifier, neighborModeEnabled);
+DEFINE_PROPERTY_FIELD(ComputePropertyModifier, neighborExpressions);
+DEFINE_PROPERTY_FIELD(ComputePropertyModifier, cutoff);
 SET_PROPERTY_FIELD_LABEL(ComputePropertyModifier, expressions, "Expressions");
 SET_PROPERTY_FIELD_LABEL(ComputePropertyModifier, outputProperty, "Output property");
 SET_PROPERTY_FIELD_LABEL(ComputePropertyModifier, onlySelectedParticles, "Compute only for selected particles");
@@ -47,8 +47,8 @@ SET_PROPERTY_FIELD_LABEL(ComputePropertyModifier, neighborExpressions, "Neighbor
 SET_PROPERTY_FIELD_LABEL(ComputePropertyModifier, cutoff, "Cutoff radius");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ComputePropertyModifier, cutoff, WorldParameterUnit, 0);
 
-
-DEFINE_FLAGS_VECTOR_REFERENCE_FIELD(ComputePropertyModifierApplication, cachedDisplayObjects, "CachedDisplayObjects", DisplayObject, PROPERTY_FIELD_NEVER_CLONE_TARGET|PROPERTY_FIELD_NO_CHANGE_MESSAGE|PROPERTY_FIELD_NO_UNDO|PROPERTY_FIELD_NO_SUB_ANIM);
+IMPLEMENT_OVITO_CLASS(ComputePropertyModifierApplication);
+DEFINE_REFERENCE_FIELD(ComputePropertyModifierApplication, cachedDisplayObjects);
 
 /******************************************************************************
 * Constructs a new instance of this class.

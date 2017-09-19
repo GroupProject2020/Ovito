@@ -231,10 +231,11 @@ class DataCollection(metaclass=abc.ABCMeta):
 
     def expect(self, object_type):
         """
-        Looks up the first data object from this collection of the given class type.
-        Raises a ``KeyError`` if there is no instance matching the type.
+        Looks up the first data object in this collection of the given class type.
+        Raises a ``KeyError`` if there is no instance matching the type. Use :py:meth:`.find` instead
+        to test if the data collection contains the given type of data object.
 
-        :param object_type: The :py:class:`DataObject` subclass that should be looked up.
+        :param object_type: The :py:class:`DataObject` subclass specifying the type of object to find.
         :return: The first instance of the given class or its subclasses from the :py:attr:`.objects` list.
         """
         o = self.find(object_type)

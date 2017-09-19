@@ -29,13 +29,14 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-
-DEFINE_FLAGS_REFERENCE_FIELD(ReferenceConfigurationModifier, referenceConfiguration, "Reference Configuration", PipelineObject, PROPERTY_FIELD_NO_SUB_ANIM);
-DEFINE_FLAGS_PROPERTY_FIELD(ReferenceConfigurationModifier, affineMapping, "AffineMapping", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(ReferenceConfigurationModifier, useMinimumImageConvention, "UseMinimumImageConvention");
-DEFINE_PROPERTY_FIELD(ReferenceConfigurationModifier, useReferenceFrameOffset, "UseReferenceFrameOffet");
-DEFINE_PROPERTY_FIELD(ReferenceConfigurationModifier, referenceFrameNumber, "ReferenceFrameNumber");
-DEFINE_FLAGS_PROPERTY_FIELD(ReferenceConfigurationModifier, referenceFrameOffset, "ReferenceFrameOffset", PROPERTY_FIELD_MEMORIZE);
+IMPLEMENT_OVITO_CLASS(ReferenceConfigurationModifier);
+IMPLEMENT_OVITO_CLASS(ReferenceConfigurationModifierApplication);
+DEFINE_REFERENCE_FIELD(ReferenceConfigurationModifier, referenceConfiguration);
+DEFINE_PROPERTY_FIELD(ReferenceConfigurationModifier, affineMapping);
+DEFINE_PROPERTY_FIELD(ReferenceConfigurationModifier, useMinimumImageConvention);
+DEFINE_PROPERTY_FIELD(ReferenceConfigurationModifier, useReferenceFrameOffset);
+DEFINE_PROPERTY_FIELD(ReferenceConfigurationModifier, referenceFrameNumber);
+DEFINE_PROPERTY_FIELD(ReferenceConfigurationModifier, referenceFrameOffset);
 SET_PROPERTY_FIELD_LABEL(ReferenceConfigurationModifier, referenceConfiguration, "Reference Configuration");
 SET_PROPERTY_FIELD_LABEL(ReferenceConfigurationModifier, affineMapping, "Affine mapping");
 SET_PROPERTY_FIELD_LABEL(ReferenceConfigurationModifier, useMinimumImageConvention, "Use minimum image convention");
@@ -43,8 +44,6 @@ SET_PROPERTY_FIELD_LABEL(ReferenceConfigurationModifier, useReferenceFrameOffset
 SET_PROPERTY_FIELD_LABEL(ReferenceConfigurationModifier, referenceFrameNumber, "Reference frame number");
 SET_PROPERTY_FIELD_LABEL(ReferenceConfigurationModifier, referenceFrameOffset, "Reference frame offset");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ReferenceConfigurationModifier, referenceFrameNumber, IntegerParameterUnit, 0);
-
-
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -56,12 +55,6 @@ ReferenceConfigurationModifier::ReferenceConfigurationModifier(DataSet* dataset)
 	_referenceFrameOffset(-1),
 	_useMinimumImageConvention(true)
 {
-
-
-
-
-
-
 }
 
 /******************************************************************************

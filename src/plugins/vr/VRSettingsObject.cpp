@@ -28,16 +28,16 @@
 
 namespace VRPlugin {
 
-
-DEFINE_PROPERTY_FIELD(VRSettingsObject, supersamplingEnabled, "SupersamplingEnabled");
-DEFINE_FLAGS_PROPERTY_FIELD(VRSettingsObject, scaleFactor, "ScaleFactor", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(VRSettingsObject, showFloor, "ShowFloor");
-DEFINE_FLAGS_PROPERTY_FIELD(VRSettingsObject, flyingMode, "FlyingMode", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(VRSettingsObject, viewerTM, "ViewerTM");
-DEFINE_PROPERTY_FIELD(VRSettingsObject, translation, "Translation");
-DEFINE_PROPERTY_FIELD(VRSettingsObject, rotationZ, "RotationZ");
-DEFINE_PROPERTY_FIELD(VRSettingsObject, modelCenter, "ModelCenter");
-DEFINE_PROPERTY_FIELD(VRSettingsObject, movementSpeed, "MovementSpeed");
+IMPLEMENT_OVITO_CLASS(VRSettingsObject);
+DEFINE_PROPERTY_FIELD(VRSettingsObject, supersamplingEnabled);
+DEFINE_PROPERTY_FIELD(VRSettingsObject, scaleFactor);
+DEFINE_PROPERTY_FIELD(VRSettingsObject, showFloor);
+DEFINE_PROPERTY_FIELD(VRSettingsObject, flyingMode);
+DEFINE_PROPERTY_FIELD(VRSettingsObject, viewerTM);
+DEFINE_PROPERTY_FIELD(VRSettingsObject, translation);
+DEFINE_PROPERTY_FIELD(VRSettingsObject, rotationZ);
+DEFINE_PROPERTY_FIELD(VRSettingsObject, modelCenter);
+DEFINE_PROPERTY_FIELD(VRSettingsObject, movementSpeed);
 SET_PROPERTY_FIELD_LABEL(VRSettingsObject, supersamplingEnabled, "Supersampling");
 SET_PROPERTY_FIELD_LABEL(VRSettingsObject, scaleFactor, "Scale factor");
 SET_PROPERTY_FIELD_LABEL(VRSettingsObject, translation, "Position");

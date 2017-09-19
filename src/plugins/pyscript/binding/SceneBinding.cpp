@@ -600,7 +600,7 @@ void defineSceneSubmodule(py::module parentModule)
 				"because changing :py:attr:`.operate_on` will implicitly reset the :py:attr:`!property` attribute. "
 				"\n\n"
 				":Default: ``''``\n")
-		.def_property("operate_on", modifierDelegateGetter(), modifierDelegateSetter(SelectTypeModifier::OOClass()),
+		.def_property("operate_on", modifierPropertyClassGetter(), modifierPropertyClassSetter(),
 				"Selects the kind of data elements this modifier should select. "
 				"Supported values are: ``'particles'``, ``'bonds'``. "
 				"\n\n"
@@ -957,16 +957,66 @@ void defineSceneSubmodule(py::module parentModule)
 	ovito_class<ElementType, RefTarget>{m}
 	;
 
-	ovito_abstract_class<PropertyObject, DataObject>{m}
+	ovito_abstract_class<PropertyObject, DataObject>(m,
+			":Base class: :py:class:`ovito.data.DataObject`\n\n"
+			"Stores the values for an array of elements (e.g. particle or bonds). "
+			"\n\n"
+			"In OVITO's data model, an arbitrary number of properties can be associated with data elements such as particle or bonds, "
+			"each property being represented by a :py:class:`!Property` object. A :py:class:`!Property` "
+			"is basically an array of values whose length matches the number of data elements. "
+			"\n\n"
+			":py:class:`!Property` is the common base class for the :py:class:`ParticleProperty` and :py:class:`BondProperty` "
+			"specializations. "
+			"\n\n"
+			"**Data access**"
+			"\n\n"
+			"A :py:class:`!Property` object behaves almost like a Numpy array. For example, you can access the property value for the *i*-th data element using indexing:: "
+			"\n\n"
+			"     property = data.particle_properties['Velocity']\n"
+			"     print('Velocity vector of first particle:', property[0])\n"
+			"     print('Z-velocity of second particle:', property[1,2])\n"
+			"     for v in property: print(v)\n"
+			"\n\n"
+			"Element indices start at zero. Properties can be either vectorial (e.g. velocity vectors are stored as an *N* x 3 array) "
+			"or scalar (1-d array of length *N*). Length of the first array dimension is in both cases equal to "
+			"the number of data elements (number of particles in the example above). Array elements can either be of data type ``float`` or ``int``. "
+			"\n\n"
+			"If necessary, you can cast a :py:class:`!Property` to a standard Numpy array:: "
+			"\n\n"
+			"     velocities = numpy.asarray(property)\n"
+			"\n\n"
+			"No data is copied during the conversion; the Numpy array will refer to the same memory as the :py:class:`!Property`. "
+			"By default, the memory of a :py:class:`!Property` is write-protected. Thus, trying to modify property values will raise an error:: "
+			"\n\n"
+			"    property[0] = (0, 0, -4) # \"TypeError: 'ParticleProperty' object does not\n"
+			"                             # support item assignment\"\n"
+			"\n\n"
+			"A direct modification is prevented by the system, because OVITO's data pipeline uses shallow data copies and needs to know when data objects are being modified. "
+			"Only then results that depend on the changing data can be automatically recalculated. "
+			"We need to explicitly announce a modification by using the :py:meth:`Property.modify` method and a Python ``with`` statement:: "
+			"\n\n"
+			"    with property.modify() as arr:\n"
+			"        arr[0] = (0, 0, -4)\n"
+			"\n\n"
+			"Within the ``with`` compound statement, the variable ``arr`` refers to a *modifiable* Numpy array, allowing us to alter "
+			"the per-particle data stored in the :py:class:`!Property` object. "
+			"\n\n",
+			// Python class name:
+			"Property")
 		// To mimic the numpy ndarray class:
 		.def("__len__", &PropertyObject::size)
 		.def_property_readonly("size", &PropertyObject::size)
 		.def_property_readonly("data_type", &PropertyObject::dataType)
 		// Used for Numpy array interface:
 		.def_property_readonly("__array_interface__", &PropertyObject__array_interface__<true>)
-		// Required for implementation of the ParticleProperty.modify() method:
+		// Required for implementation of the Property.modify() method:
 		.def_property_readonly("__mutable_array_interface__", &PropertyObject__array_interface__<false>)
 
+		.def_property("name", &PropertyObject::name, &PropertyObject::setName,
+				"The name of the property.")
+		.def_property_readonly("components", &PropertyObject::componentCount,
+				"The number of vector components if this is a vector property; or 1 if this is a scalar property.")
+		
 		// Used by the type_by_name() and type_by_id() methods:
 		.def("_get_type_by_id", static_cast<ElementType* (PropertyObject::*)(int) const>(&PropertyObject::elementType))
 		.def("_get_type_by_name", static_cast<ElementType* (PropertyObject::*)(const QString&) const>(&PropertyObject::elementType))

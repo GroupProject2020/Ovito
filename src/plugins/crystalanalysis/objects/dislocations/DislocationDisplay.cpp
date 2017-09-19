@@ -26,16 +26,15 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-
-
-DEFINE_FLAGS_PROPERTY_FIELD(DislocationDisplay, lineWidth, "LineWidth", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(DislocationDisplay, shadingMode, "ShadingMode", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(DislocationDisplay, burgersVectorWidth, "BurgersVectorWidth", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(DislocationDisplay, burgersVectorScaling, "BurgersVectorScaling", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(DislocationDisplay, burgersVectorColor, "BurgersVectorColor", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(DislocationDisplay, showBurgersVectors, "ShowBurgersVectors");
-DEFINE_PROPERTY_FIELD(DislocationDisplay, showLineDirections, "ShowLineDirections");
-DEFINE_PROPERTY_FIELD(DislocationDisplay, lineColoringMode, "LineColoringMode");
+IMPLEMENT_OVITO_CLASS(DislocationDisplay);
+DEFINE_PROPERTY_FIELD(DislocationDisplay, lineWidth);
+DEFINE_PROPERTY_FIELD(DislocationDisplay, shadingMode);
+DEFINE_PROPERTY_FIELD(DislocationDisplay, burgersVectorWidth);
+DEFINE_PROPERTY_FIELD(DislocationDisplay, burgersVectorScaling);
+DEFINE_PROPERTY_FIELD(DislocationDisplay, burgersVectorColor);
+DEFINE_PROPERTY_FIELD(DislocationDisplay, showBurgersVectors);
+DEFINE_PROPERTY_FIELD(DislocationDisplay, showLineDirections);
+DEFINE_PROPERTY_FIELD(DislocationDisplay, lineColoringMode);
 SET_PROPERTY_FIELD_LABEL(DislocationDisplay, lineWidth, "Dislocation line width");
 SET_PROPERTY_FIELD_LABEL(DislocationDisplay, shadingMode, "Shading mode");
 SET_PROPERTY_FIELD_LABEL(DislocationDisplay, burgersVectorWidth, "Burgers vector width");
@@ -47,23 +46,21 @@ SET_PROPERTY_FIELD_LABEL(DislocationDisplay, lineColoringMode, "Line coloring");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(DislocationDisplay, lineWidth, WorldParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(DislocationDisplay, burgersVectorWidth, WorldParameterUnit, 0);
 
+IMPLEMENT_OVITO_CLASS(DislocationPickInfo);
+
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
 DislocationDisplay::DislocationDisplay(DataSet* dataset) : DisplayObject(dataset),
-	_lineWidth(1.0f), _shadingMode(ArrowPrimitive::NormalShading),
-	_burgersVectorWidth(0.6f), _burgersVectorScaling(3.0f),
+	_lineWidth(1.0f), 
+	_shadingMode(ArrowPrimitive::NormalShading),
+	_burgersVectorWidth(0.6f), 
+	_burgersVectorScaling(3.0f),
 	_burgersVectorColor(0.7, 0.7, 0.7),
-	_showBurgersVectors(false), _showLineDirections(false), _lineColoringMode(ColorByDislocationType)
+	_showBurgersVectors(false), 
+	_showLineDirections(false), 
+	_lineColoringMode(ColorByDislocationType)
 {
-
-
-
-
-
-
-
-
 }
 
 /******************************************************************************

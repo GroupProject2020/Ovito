@@ -33,16 +33,6 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
  */
 class OVITO_CRYSTALANALYSIS_EXPORT DislocationSliceModifierDelegate : public SliceModifierDelegate
 {
-public:
-
-	/// Constructor.
-	Q_INVOKABLE DislocationSliceModifierDelegate(DataSet* dataset) : SliceModifierDelegate(dataset) {}
-
-	/// \brief Applies a slice operation to a data object.
-	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp) override;
-		
-public:
-	
 	/// Give the modifier delegate its own metaclass.
 	class OOMetaClass : public SliceModifierDelegate::OOMetaClass 
 	{
@@ -59,13 +49,19 @@ public:
 		/// The name by which Python scripts can refer to this modifier delegate.
 		virtual QString pythonDataName() const override { return QStringLiteral("dislocations"); }
 	};
-
-private:
-
+	
 	Q_OBJECT
-	OVITO_CLASS
+	OVITO_CLASS_META(DislocationSliceModifierDelegate, OOMetaClass)
 
 	Q_CLASSINFO("DisplayName", "Dislocation lines");
+
+public:
+
+	/// Constructor.
+	Q_INVOKABLE DislocationSliceModifierDelegate(DataSet* dataset) : SliceModifierDelegate(dataset) {}
+
+	/// \brief Applies a slice operation to a data object.
+	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp) override;
 };
 
 }	// End of namespace

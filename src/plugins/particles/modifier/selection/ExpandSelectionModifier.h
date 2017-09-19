@@ -36,6 +36,24 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT ExpandSelectionModifier : public AsynchronousModifier
 {
+	/// Give this modifier class its own metaclass.
+	class OOMetaClass : public AsynchronousModifier::OOMetaClass 
+	{
+	public:
+
+		/// Inherit constructor from base metaclass.
+		using AsynchronousModifier::OOMetaClass::OOMetaClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
+
+	Q_OBJECT
+	OVITO_CLASS_META(ExpandSelectionModifier, OOMetaClass)
+
+	Q_CLASSINFO("DisplayName", "Expand selection");
+	Q_CLASSINFO("ModifierCategory", "Selection");
+
 public:
 
 	enum ExpansionMode {
@@ -52,20 +70,6 @@ public:
 
 	/// \brief Constructs a new instance of this class.
 	Q_INVOKABLE ExpandSelectionModifier(DataSet* dataset);
-
-public:
-	
-	/// Give this modifier class its own metaclass.
-	class OOMetaClass : public AsynchronousModifier::OOMetaClass 
-	{
-	public:
-
-		/// Inherit constructor from base metaclass.
-		using AsynchronousModifier::OOMetaClass::OOMetaClass;
-
-		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
-	};
 
 protected:
 
@@ -195,22 +199,16 @@ private:
 private:
 
 	/// The expansion mode.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(ExpansionMode, mode, setMode);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(ExpansionMode, mode, setMode, PROPERTY_FIELD_MEMORIZE);
 
 	/// The selection cutoff range.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, cutoffRange, setCutoffRange);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, cutoffRange, setCutoffRange, PROPERTY_FIELD_MEMORIZE);
 
 	/// The number of nearest neighbors to select.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, numNearestNeighbors, setNumNearestNeighbors);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, numNearestNeighbors, setNumNearestNeighbors, PROPERTY_FIELD_MEMORIZE);
 
 	/// The number of expansion steps to perform.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, numberOfIterations, setNumberOfIterations);
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Expand selection");
-	Q_CLASSINFO("ModifierCategory", "Selection");
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -36,6 +36,21 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT StructureIdentificationModifier : public AsynchronousModifier
 {
+	/// Give this modifier class its own metaclass.
+	class StructureIdentificationModifierClass : public ModifierClass 
+	{
+	public:
+
+		/// Inherit constructor from base metaclass.
+		using ModifierClass::ModifierClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
+
+	Q_OBJECT
+	OVITO_CLASS_META(StructureIdentificationModifier, StructureIdentificationModifierClass)
+	
 public:
 
 	/// Holds the modifier's results.
@@ -107,20 +122,6 @@ public:
 	/// \brief Create a new modifier application that refers to this modifier instance.
 	virtual OORef<ModifierApplication> createModifierApplication() override;
 
-public:
-	
-	/// Give this modifier class its own metaclass.
-	class OOMetaClass : public ModifierClass 
-	{
-	public:
-
-		/// Inherit constructor from base metaclass.
-		using ModifierClass::ModifierClass;
-
-		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
-	};
-	
 protected:
 
 	/// Saves the class' contents to the given stream.
@@ -130,7 +131,7 @@ protected:
 	virtual void loadFromStream(ObjectLoadStream& stream) override;
 
 	/// Inserts a structure type into the list.
-	void addStructureType(ParticleType* type) { _structureTypes.push_back(this, type); }
+	void addStructureType(ParticleType* type) { _structureTypes.push_back(this, PROPERTY_FIELD(structureTypes), type); }
 
 	/// Create an instance of the ParticleType class to represent a structure type.
 	void createStructureType(int id, ParticleType::PredefinedStructureType predefType);
@@ -145,9 +146,6 @@ private:
 
 	/// Controls whether analysis should take into account only selected particles.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, onlySelectedParticles, setOnlySelectedParticles);
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 
@@ -157,6 +155,9 @@ private:
  */
 class OVITO_PARTICLES_EXPORT StructureIdentificationModifierApplication : public AsynchronousModifierApplication
 {
+	Q_OBJECT
+	OVITO_CLASS(StructureIdentificationModifierApplication)
+
 public:
 
 	/// Constructor.
@@ -174,9 +175,6 @@ public:
 private:
 
 	std::vector<size_t> _structureCounts;
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 OVITO_END_INLINE_NAMESPACE

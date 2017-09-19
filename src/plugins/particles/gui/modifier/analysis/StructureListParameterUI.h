@@ -32,6 +32,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_GUI_EXPORT StructureListParameterUI : public RefTargetListParameterUI
 {
+	Q_OBJECT
+	OVITO_CLASS(StructureListParameterUI)
+
 public:
 
 	/// Constructor.
@@ -90,8 +93,6 @@ private:
 
 	/// Controls whether a check box is shown next to each structure type.
 	bool _showCheckBoxes;
-
-	Q_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -33,16 +33,16 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-
-DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, onlySelected, "OnlySelected");
-DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, useRadii, "UseRadii");
-DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, computeIndices, "ComputeIndices");
-DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, computeBonds, "ComputeBonds");
-DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, edgeCount, "EdgeCount");
-DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, edgeThreshold, "EdgeThreshold");
-DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, faceThreshold, "FaceThreshold");
-DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, relativeFaceThreshold, "RelativeFaceThreshold");
-DEFINE_FLAGS_REFERENCE_FIELD(VoronoiAnalysisModifier, bondsDisplay, "BondsDisplay", BondsDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
+IMPLEMENT_OVITO_CLASS(VoronoiAnalysisModifier);
+DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, onlySelected);
+DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, useRadii);
+DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, computeIndices);
+DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, computeBonds);
+DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, edgeCount);
+DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, edgeThreshold);
+DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, faceThreshold);
+DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, relativeFaceThreshold);
+DEFINE_REFERENCE_FIELD(VoronoiAnalysisModifier, bondsDisplay);
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, onlySelected, "Use only selected particles");
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, useRadii, "Use particle radii");
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, computeIndices, "Compute Voronoi indices");
@@ -70,16 +70,6 @@ VoronoiAnalysisModifier::VoronoiAnalysisModifier(DataSet* dataset) : Asynchronou
 	_computeBonds(false),
 	_relativeFaceThreshold(0)
 {
-
-
-
-
-
-
-
-
-
-
 	// Create the display object for bonds rendering.
 	setBondsDisplay(new BondsDisplay(dataset));
 }

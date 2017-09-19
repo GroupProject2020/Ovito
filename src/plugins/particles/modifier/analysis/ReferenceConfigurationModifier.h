@@ -35,6 +35,21 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT ReferenceConfigurationModifier : public AsynchronousModifier
 {
+	/// Give this modifier class its own metaclass.
+	class ReferenceConfigurationModifierClass : public ModifierClass 
+	{
+	public:
+
+		/// Inherit constructor from base metaclass.
+		using ModifierClass::ModifierClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
+
+	Q_OBJECT
+	OVITO_CLASS_META(ReferenceConfigurationModifier, ReferenceConfigurationModifierClass)
+
 public:
 
 	/// Controls the type of coordinate mapping used in the calculation of displacement vectors. 
@@ -52,20 +67,6 @@ public:
 
 	/// Creates a new modifier application that refers to this modifier instance.
 	virtual OORef<ModifierApplication> createModifierApplication() override;
-
-public:
-	
-	/// Give this modifier class its own metaclass.
-	class OOMetaClass : public ModifierClass 
-	{
-	public:
-
-		/// Inherit constructor from base metaclass.
-		using ModifierClass::ModifierClass;
-
-		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
-	};
 
 protected:
 
@@ -143,10 +144,10 @@ protected:
 protected:
 
 	/// The reference configuration.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(PipelineObject, referenceConfiguration, setReferenceConfiguration);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(PipelineObject, referenceConfiguration, setReferenceConfiguration, PROPERTY_FIELD_NO_SUB_ANIM);
 
 	/// Controls the whether the homogeneous deformation of the simulation cell is eliminated from the calculated displacement vectors.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(AffineMappingType, affineMapping, setAffineMapping);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(AffineMappingType, affineMapping, setAffineMapping, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the whether the minimum image convention is used when calculating displacements.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, useMinimumImageConvention, setUseMinimumImageConvention);
@@ -158,19 +159,19 @@ protected:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, referenceFrameNumber, setReferenceFrameNumber);
 
 	/// Relative frame offset for reference coordinates.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, referenceFrameOffset, setReferenceFrameOffset);
-	
-	Q_OBJECT
-	OVITO_CLASS
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, referenceFrameOffset, setReferenceFrameOffset, PROPERTY_FIELD_MEMORIZE);
 };
 
 /**
  * Used by the ReferenceConfigurationModifier to cache the reference configuration.
  */
- class OVITO_PARTICLES_EXPORT ReferenceConfigurationModifierApplication : public AsynchronousModifierApplication
- {
- public:
- 
+class OVITO_PARTICLES_EXPORT ReferenceConfigurationModifierApplication : public AsynchronousModifierApplication
+{
+	Q_OBJECT
+	OVITO_CLASS(ReferenceConfigurationModifierApplication)
+
+public:
+
 	/// Constructor.
 	Q_INVOKABLE ReferenceConfigurationModifierApplication(DataSet* dataset) : AsynchronousModifierApplication(dataset) {}
 
@@ -189,13 +190,13 @@ protected:
 		_referenceCache = std::move(state);
 		_cacheValidity = cacheValidity;
 	}
+	
+protected:
+
+	/// Is called when a RefTarget referenced by this object has generated an event.
+	virtual bool referenceEvent(RefTarget* source, ReferenceEvent* event) override;
 	 
- protected:
- 
-	 /// Is called when a RefTarget referenced by this object has generated an event.
-	 virtual bool referenceEvent(RefTarget* source, ReferenceEvent* event) override;
-	 
- private:
+private:
  
 	/// The cached reference configuration.
 	PipelineFlowState _referenceCache;
@@ -203,9 +204,7 @@ protected:
 	/// The validity of the cache.
 	TimeInterval _cacheValidity = TimeInterval::empty();
  
-	Q_OBJECT
-	OVITO_CLASS
- };
+};
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

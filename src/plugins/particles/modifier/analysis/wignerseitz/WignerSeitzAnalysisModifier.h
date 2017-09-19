@@ -35,6 +35,12 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT WignerSeitzAnalysisModifier : public ReferenceConfigurationModifier
 {
+	Q_OBJECT
+	OVITO_CLASS(WignerSeitzAnalysisModifier)
+
+	Q_CLASSINFO("DisplayName", "Wigner-Seitz defect analysis");
+	Q_CLASSINFO("ModifierCategory", "Analysis");
+
 public:
 
 	/// Constructor.
@@ -116,13 +122,7 @@ private:
 	};
 
 	/// Enable per-type occupancy numbers.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, perTypeOccupancy, setPerTypeOccupancy)
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Wigner-Seitz defect analysis");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, perTypeOccupancy, setPerTypeOccupancy, PROPERTY_FIELD_MEMORIZE)
 };
 
 OVITO_END_INLINE_NAMESPACE

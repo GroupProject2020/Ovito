@@ -32,16 +32,6 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class ParticlesAffineTransformationModifierDelegate : public AffineTransformationModifierDelegate
 {
-public:
-
-	/// Constructor.
-	Q_INVOKABLE ParticlesAffineTransformationModifierDelegate(DataSet* dataset) : AffineTransformationModifierDelegate(dataset) {}
-
-	/// Applies the modifier operation to the data in a pipeline flow state.
-	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp) override;
-
-public:
-
 	/// Give the modifier delegate its own metaclass.
 	class OOMetaClass : public AffineTransformationModifierDelegate::OOMetaClass 
 	{
@@ -57,12 +47,18 @@ public:
 		virtual QString pythonDataName() const override { return QStringLiteral("particles"); }
 	};	
 
-private:
-
 	Q_OBJECT
-	OVITO_CLASS
+	OVITO_CLASS_META(ParticlesAffineTransformationModifierDelegate, OOMetaClass)
 
 	Q_CLASSINFO("DisplayName", "Particles");
+
+public:
+
+	/// Constructor.
+	Q_INVOKABLE ParticlesAffineTransformationModifierDelegate(DataSet* dataset) : AffineTransformationModifierDelegate(dataset) {}
+
+	/// Applies the modifier operation to the data in a pipeline flow state.
+	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp) override;
 };
 
 /**
@@ -70,16 +66,6 @@ private:
  */
 class VectorParticlePropertiesAffineTransformationModifierDelegate : public AffineTransformationModifierDelegate
 {
-public:
-
-	/// Constructor.
-	Q_INVOKABLE VectorParticlePropertiesAffineTransformationModifierDelegate(DataSet* dataset) : AffineTransformationModifierDelegate(dataset) {}
-
-	/// Applies the modifier operation to the data in a pipeline flow state.
-	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp) override;
-
-public:
-
 	/// Give the modifier delegate its own metaclass.
 	class OOMetaClass : public AffineTransformationModifierDelegate::OOMetaClass 
 	{
@@ -93,17 +79,25 @@ public:
 
 		/// The name by which Python scripts can refer to this modifier delegate.
 		virtual QString pythonDataName() const override { return QStringLiteral("vector_properties"); }
-	};	
+	};
+
+	Q_OBJECT
+	OVITO_CLASS_META(VectorParticlePropertiesAffineTransformationModifierDelegate, OOMetaClass)
+
+	Q_CLASSINFO("DisplayName", "Vector particle properties");
+
+public:
+
+	/// Constructor.
+	Q_INVOKABLE VectorParticlePropertiesAffineTransformationModifierDelegate(DataSet* dataset) : AffineTransformationModifierDelegate(dataset) {}
+
+	/// Applies the modifier operation to the data in a pipeline flow state.
+	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp) override;
 
 private:
 
 	/// Decides if the given particle property is one that should be transformed.
 	static bool isTransformableProperty(ParticleProperty* property);
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Vector particle properties");
 };
 
 OVITO_END_INLINE_NAMESPACE

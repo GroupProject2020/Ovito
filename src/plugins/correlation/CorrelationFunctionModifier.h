@@ -46,6 +46,24 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_CORRELATION_FUNCTION_EXPORT CorrelationFunctionModifier : public AsynchronousModifier
 {
+	/// Give this modifier class its own metaclass.
+	class OOMetaClass : public AsynchronousModifier::OOMetaClass 
+	{
+	public:
+
+		/// Inherit constructor from base metaclass.
+		using AsynchronousModifier::OOMetaClass::OOMetaClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
+		
+	Q_OBJECT
+	OVITO_CLASS_META(CorrelationFunctionModifier, OOMetaClass)
+
+	Q_CLASSINFO("DisplayName", "Correlation function");
+	Q_CLASSINFO("ModifierCategory", "Analysis");
+
 public:
 
     enum AveragingDirectionType {
@@ -75,20 +93,6 @@ public:
 	/// Update plot ranges.
 	void updateRanges(FloatType offset, FloatType fac, FloatType reciprocalFac, ModifierApplication* modApp);
 
-public:
-	
-	/// Give this modifier class its own metaclass.
-	class OOMetaClass : public AsynchronousModifier::OOMetaClass 
-	{
-	public:
-
-		/// Inherit constructor from base metaclass.
-		using AsynchronousModifier::OOMetaClass::OOMetaClass;
-
-		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
-	};
-		
 protected:
 	
 	/// Creates a computation engine that will compute the modifier's results.
@@ -283,53 +287,47 @@ private:
 	/// Controls the cutoff radius for the FFT grid.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, fftGridSpacing, setFFTGridSpacing);
 	/// Controls if a windowing function should be applied in nonperiodic directions.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, applyWindow, setApplyWindow);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, applyWindow, setApplyWindow, PROPERTY_FIELD_MEMORIZE);
 	/// Controls whether the real-space correlation should be computed by direct summation.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, doComputeNeighCorrelation, setComputeNeighCorrelation);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, doComputeNeighCorrelation, setComputeNeighCorrelation, PROPERTY_FIELD_MEMORIZE);
 	/// Controls the cutoff radius for the neighbor lists.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, neighCutoff, setNeighCutoff);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, neighCutoff, setNeighCutoff, PROPERTY_FIELD_MEMORIZE);
 	/// Controls the number of bins for the neighbor part of the real-space correlation function.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, numberOfNeighBins, setNumberOfNeighBins);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, numberOfNeighBins, setNumberOfNeighBins, PROPERTY_FIELD_MEMORIZE);
 	/// Controls the averaging direction.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(AveragingDirectionType, averagingDirection, setAveragingDirection);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(AveragingDirectionType, averagingDirection, setAveragingDirection, PROPERTY_FIELD_MEMORIZE);
 	/// Controls the normalization of the real-space correlation function.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(NormalizationType, normalizeRealSpace, setNormalizeRealSpace);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(NormalizationType, normalizeRealSpace, setNormalizeRealSpace, PROPERTY_FIELD_MEMORIZE);
 	/// Type of real-space plot (lin-lin, log-lin or log-log)
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, typeOfRealSpacePlot, setTypeOfRealSpacePlot);
 	/// Controls the whether the range of the x-axis of the plot should be fixed.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, fixRealSpaceXAxisRange, setFixRealSpaceXAxisRange);
 	/// Controls the start value of the x-axis.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, realSpaceXAxisRangeStart, setRealSpaceXAxisRangeStart);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, realSpaceXAxisRangeStart, setRealSpaceXAxisRangeStart, PROPERTY_FIELD_MEMORIZE);
 	/// Controls the end value of the x-axis.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, realSpaceXAxisRangeEnd, setRealSpaceXAxisRangeEnd);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, realSpaceXAxisRangeEnd, setRealSpaceXAxisRangeEnd, PROPERTY_FIELD_MEMORIZE);
 	/// Controls the whether the range of the y-axis of the plot should be fixed.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, fixRealSpaceYAxisRange, setFixRealSpaceYAxisRange);
 	/// Controls the start value of the y-axis.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, realSpaceYAxisRangeStart, setRealSpaceYAxisRangeStart);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, realSpaceYAxisRangeStart, setRealSpaceYAxisRangeStart, PROPERTY_FIELD_MEMORIZE);
 	/// Controls the end value of the y-axis.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, realSpaceYAxisRangeEnd, setRealSpaceYAxisRangeEnd);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, realSpaceYAxisRangeEnd, setRealSpaceYAxisRangeEnd, PROPERTY_FIELD_MEMORIZE);
 	/// Controls the normalization of the reciprocal-space correlation function.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, normalizeReciprocalSpace, setNormalizeReciprocalSpace);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, normalizeReciprocalSpace, setNormalizeReciprocalSpace, PROPERTY_FIELD_MEMORIZE);
 	/// Type of reciprocal-space plot (lin-lin, log-lin or log-log)
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, typeOfReciprocalSpacePlot, setTypeOfReciprocalSpacePlot);
 	/// Controls the whether the range of the x-axis of the plot should be fixed.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, fixReciprocalSpaceXAxisRange, setFixReciprocalSpaceXAxisRange);
 	/// Controls the start value of the x-axis.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, reciprocalSpaceXAxisRangeStart, setReciprocalSpaceXAxisRangeStart);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, reciprocalSpaceXAxisRangeStart, setReciprocalSpaceXAxisRangeStart, PROPERTY_FIELD_MEMORIZE);
 	/// Controls the end value of the x-axis.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, reciprocalSpaceXAxisRangeEnd, setReciprocalSpaceXAxisRangeEnd);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, reciprocalSpaceXAxisRangeEnd, setReciprocalSpaceXAxisRangeEnd, PROPERTY_FIELD_MEMORIZE);
 	/// Controls the whether the range of the y-axis of the plot should be fixed.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, fixReciprocalSpaceYAxisRange, setFixReciprocalSpaceYAxisRange);
 	/// Controls the start value of the y-axis.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, reciprocalSpaceYAxisRangeStart, setReciprocalSpaceYAxisRangeStart);
 	/// Controls the end value of the y-axis.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, reciprocalSpaceYAxisRangeEnd, setReciprocalSpaceYAxisRangeEnd);
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Correlation function");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
 };
 
 
@@ -338,12 +336,15 @@ private:
  *        when it is inserted into in a data pipeline. Its stores results computed by the
  *        modifier's compute engine so that they can be displayed in the modifier's UI panel.
  */
- class OVITO_CORRELATION_FUNCTION_EXPORT CorrelationFunctionModifierApplication : public AsynchronousModifierApplication
- {
- public:
- 
-	 /// Constructor.
-	 Q_INVOKABLE CorrelationFunctionModifierApplication(DataSet* dataset) : AsynchronousModifierApplication(dataset) {}
+class OVITO_CORRELATION_FUNCTION_EXPORT CorrelationFunctionModifierApplication : public AsynchronousModifierApplication
+{
+	Q_OBJECT
+	OVITO_CLASS(CorrelationFunctionModifierApplication)
+
+public:
+
+	/// Constructor.
+	Q_INVOKABLE CorrelationFunctionModifierApplication(DataSet* dataset) : AsynchronousModifierApplication(dataset) {}
  
 	/// Returns the Y coordinates of the real-space correlation function.
 	const QVector<FloatType>& realSpaceCorrelation() const { return _realSpaceCorrelation; }
@@ -432,9 +433,6 @@ private:
 
 	/// (Co)variance.
 	FloatType _covariance;
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 OVITO_END_INLINE_NAMESPACE

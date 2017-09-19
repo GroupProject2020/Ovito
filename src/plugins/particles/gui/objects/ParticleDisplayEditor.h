@@ -34,6 +34,9 @@ OVITO_BEGIN_INLINE_NAMESPACE(Internal)
  */
 class ParticleDisplayEditor : public PropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(ParticleDisplayEditor)
+
 public:
 
 	/// Constructor.
@@ -43,14 +46,8 @@ protected:
 
 	/// Creates the user interface controls for the editor.
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 OVITO_END_INLINE_NAMESPACE
-
 }	// End of namespace
 }	// End of namespace
-
-

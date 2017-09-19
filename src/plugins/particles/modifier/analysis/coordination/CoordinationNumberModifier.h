@@ -36,6 +36,24 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT CoordinationNumberModifier : public AsynchronousModifier
 {
+	/// Give this modifier class its own metaclass.
+	class CoordinationNumberModifierClass : public AsynchronousModifier::OOMetaClass 
+	{
+	public:
+
+		/// Inherit constructor from base metaclass.
+		using AsynchronousModifier::OOMetaClass::OOMetaClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
+		
+	Q_OBJECT
+	OVITO_CLASS_META(CoordinationNumberModifier, CoordinationNumberModifierClass)
+
+	Q_CLASSINFO("DisplayName", "Coordination analysis");
+	Q_CLASSINFO("ModifierCategory", "Analysis");
+
 public:
 
 	/// Constructor.
@@ -49,20 +67,6 @@ protected:
 	/// Creates a computation engine that will compute the modifier's results.
 	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;	
 
-public:
-	
-	/// Give this modifier class its own metaclass.
-	class OOMetaClass : public AsynchronousModifier::OOMetaClass 
-	{
-	public:
-
-		/// Inherit constructor from base metaclass.
-		using AsynchronousModifier::OOMetaClass::OOMetaClass;
-
-		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
-	};
-		
 private:
 
 	/// Stores the modifier's results.
@@ -131,16 +135,10 @@ private:
 private:
 
 	/// Controls the cutoff radius for the neighbor lists.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, cutoff, setCutoff);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, cutoff, setCutoff, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the number of RDF histogram bins.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, numberOfBins, setNumberOfBins);
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Coordination analysis");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, numberOfBins, setNumberOfBins, PROPERTY_FIELD_MEMORIZE);
 };
 
 /**
@@ -149,11 +147,14 @@ private:
  *        modifier's compute engine so that they can be displayed in the modifier's UI panel.
  */
  class OVITO_PARTICLES_EXPORT CoordinationNumberModifierApplication : public AsynchronousModifierApplication
- {
- public:
- 
-	 /// Constructor.
-	 Q_INVOKABLE CoordinationNumberModifierApplication(DataSet* dataset) : AsynchronousModifierApplication(dataset) {}
+{
+	Q_OBJECT
+	OVITO_CLASS(CoordinationNumberModifierApplication)
+
+public:
+
+	/// Constructor.
+	Q_INVOKABLE CoordinationNumberModifierApplication(DataSet* dataset) : AsynchronousModifierApplication(dataset) {}
  
 	/// Returns the X coordinates of the RDF data points.
 	const QVector<double>& rdfX() const { return _rdfX; }
@@ -175,9 +176,6 @@ private:
 	
 	/// The Y coordinates of the RDF data points.
 	QVector<double> _rdfY;
-		
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 OVITO_END_INLINE_NAMESPACE

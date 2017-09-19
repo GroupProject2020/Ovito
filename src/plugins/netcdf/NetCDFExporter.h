@@ -38,7 +38,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVI
  */
 class OVITO_NETCDF_EXPORT NetCDFExporter : public FileColumnParticleExporter
 {
-	OVITO_CLASS()
+	OVITO_CLASS(NetCDFExporter)
 	Q_OBJECT
 	
 public:

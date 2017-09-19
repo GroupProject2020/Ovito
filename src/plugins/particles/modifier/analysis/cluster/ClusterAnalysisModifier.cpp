@@ -29,11 +29,11 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-
-DEFINE_FLAGS_PROPERTY_FIELD(ClusterAnalysisModifier, neighborMode, "NeighborMode", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(ClusterAnalysisModifier, cutoff, "Cutoff", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(ClusterAnalysisModifier, onlySelectedParticles, "OnlySelectedParticles");
-DEFINE_PROPERTY_FIELD(ClusterAnalysisModifier, sortBySize, "SortBySize");
+IMPLEMENT_OVITO_CLASS(ClusterAnalysisModifier);
+DEFINE_PROPERTY_FIELD(ClusterAnalysisModifier, neighborMode);
+DEFINE_PROPERTY_FIELD(ClusterAnalysisModifier, cutoff);
+DEFINE_PROPERTY_FIELD(ClusterAnalysisModifier, onlySelectedParticles);
+DEFINE_PROPERTY_FIELD(ClusterAnalysisModifier, sortBySize);
 SET_PROPERTY_FIELD_LABEL(ClusterAnalysisModifier, neighborMode, "Neighbor mode");
 SET_PROPERTY_FIELD_LABEL(ClusterAnalysisModifier, cutoff, "Cutoff distance");
 SET_PROPERTY_FIELD_LABEL(ClusterAnalysisModifier, onlySelectedParticles, "Use only selected particles");
@@ -49,10 +49,6 @@ ClusterAnalysisModifier::ClusterAnalysisModifier(DataSet* dataset) : Asynchronou
 	_sortBySize(false), 
 	_neighborMode(CutoffRange)
 {
-
-
-
-
 }
 
 /******************************************************************************

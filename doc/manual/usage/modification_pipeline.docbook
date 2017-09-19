@@ -9,6 +9,9 @@
          xmlns:ns="http://docbook.org/ns/docbook">
   <title>Modification pipeline</title>
 
+  <warning><para>This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
+   development version of OVITO.</para></warning>
+
   <para>
     The central workflow concept of OVITO is the so-called <emphasis>modification pipeline</emphasis>. 
     It is a user-defined sequence of data manipulation operations (<emphasis>modifiers</emphasis>)

@@ -34,6 +34,12 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT AtomicStrainModifier : public ReferenceConfigurationModifier
 {
+	Q_OBJECT
+	OVITO_CLASS(AtomicStrainModifier)
+
+	Q_CLASSINFO("DisplayName", "Atomic strain");
+	Q_CLASSINFO("ModifierCategory", "Analysis");
+
 public:
 
 	/// Constructor.
@@ -148,7 +154,7 @@ private:
 	};
 
 	/// Controls the cutoff radius for the neighbor lists.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, cutoff, setCutoff);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, cutoff, setCutoff, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the whether atomic deformation gradient tensors should be computed and stored.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, calculateDeformationGradients, setCalculateDeformationGradients);
@@ -167,12 +173,6 @@ private:
 
 	/// Controls the whether particles, for which the strain tensor could not be computed, are selected.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, selectInvalidParticles, setSelectInvalidParticles);
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Atomic strain");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
 };
 
 OVITO_END_INLINE_NAMESPACE

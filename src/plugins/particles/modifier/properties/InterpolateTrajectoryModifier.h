@@ -34,6 +34,24 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT InterpolateTrajectoryModifier : public Modifier
 {
+	/// Give this modifier class its own metaclass.
+	class OOMetaClass : public Modifier::OOMetaClass 
+	{
+	public:
+
+		/// Inherit constructor from base metaclass.
+		using Modifier::OOMetaClass::OOMetaClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
+		
+	Q_OBJECT
+	OVITO_CLASS_META(InterpolateTrajectoryModifier, OOMetaClass)
+
+	Q_CLASSINFO("DisplayName", "Interpolate trajectory");
+	Q_CLASSINFO("ModifierCategory", "Modification");
+
 public:
 
 	/// Constructor.
@@ -48,30 +66,10 @@ public:
 	/// Modifies the input data in an immediate, preliminary way.
 	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
-public:
-	
-	/// Give this modifier class its own metaclass.
-	class OOMetaClass : public Modifier::OOMetaClass 
-	{
-	public:
-
-		/// Inherit constructor from base metaclass.
-		using Modifier::OOMetaClass::OOMetaClass;
-
-		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
-	};
-
 private:
 
 	/// Controls whether the minimum image convention is used during displacement calculation.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, useMinimumImageConvention, setUseMinimumImageConvention);
-		
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Interpolate trajectory");
-	Q_CLASSINFO("ModifierCategory", "Modification");
 };
 
 /**
@@ -79,6 +77,9 @@ private:
  */
 class OVITO_PARTICLES_EXPORT InterpolateTrajectoryModifierApplication : public ModifierApplication
 {
+	Q_OBJECT
+	OVITO_CLASS(InterpolateTrajectoryModifierApplication)
+
 public:
 
 	/// Constructor.
@@ -102,9 +103,6 @@ private:
 
 	/// The cached source frame.
 	PipelineFlowState _frameCache;
-	
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 OVITO_END_INLINE_NAMESPACE

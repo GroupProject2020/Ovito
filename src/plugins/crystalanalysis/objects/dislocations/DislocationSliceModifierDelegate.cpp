@@ -26,7 +26,7 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-
+IMPLEMENT_OVITO_CLASS(DislocationSliceModifierDelegate);
 
 /******************************************************************************
 * Performs the actual rejection of particles.

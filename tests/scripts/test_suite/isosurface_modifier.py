@@ -11,8 +11,8 @@ print("Parameter defaults:")
 print("  isolevel: {}".format(modifier.isolevel))
 modifier.isolevel = 0.02
 
-print("  field_quantity: {}".format(modifier.field_quantity))
-modifier.field_quantity = "Charge density"
+print("  property: {}".format(modifier.property))
+modifier.property = "Charge density"
 
 print("  mesh_display: {}".format(modifier.mesh_display))
 

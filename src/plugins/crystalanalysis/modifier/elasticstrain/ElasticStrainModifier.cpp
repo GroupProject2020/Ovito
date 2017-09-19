@@ -30,14 +30,14 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-
-DEFINE_FLAGS_PROPERTY_FIELD(ElasticStrainModifier, inputCrystalStructure, "CrystalStructure", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(ElasticStrainModifier, calculateDeformationGradients, "CalculateDeformationGradients", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(ElasticStrainModifier, calculateStrainTensors, "CalculateStrainTensors", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(ElasticStrainModifier, latticeConstant, "LatticeConstant", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(ElasticStrainModifier, axialRatio, "CtoARatio", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(ElasticStrainModifier, pushStrainTensorsForward, "PushStrainTensorsForward", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_REFERENCE_FIELD(ElasticStrainModifier, patternCatalog, "PatternCatalog", PatternCatalog, PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
+IMPLEMENT_OVITO_CLASS(ElasticStrainModifier);
+DEFINE_PROPERTY_FIELD(ElasticStrainModifier, inputCrystalStructure);
+DEFINE_PROPERTY_FIELD(ElasticStrainModifier, calculateDeformationGradients);
+DEFINE_PROPERTY_FIELD(ElasticStrainModifier, calculateStrainTensors);
+DEFINE_PROPERTY_FIELD(ElasticStrainModifier, latticeConstant);
+DEFINE_PROPERTY_FIELD(ElasticStrainModifier, axialRatio);
+DEFINE_PROPERTY_FIELD(ElasticStrainModifier, pushStrainTensorsForward);
+DEFINE_REFERENCE_FIELD(ElasticStrainModifier, patternCatalog);
 SET_PROPERTY_FIELD_LABEL(ElasticStrainModifier, inputCrystalStructure, "Input crystal structure");
 SET_PROPERTY_FIELD_LABEL(ElasticStrainModifier, calculateDeformationGradients, "Output deformation gradient tensors");
 SET_PROPERTY_FIELD_LABEL(ElasticStrainModifier, calculateStrainTensors, "Output strain tensors");
@@ -58,14 +58,6 @@ ElasticStrainModifier::ElasticStrainModifier(DataSet* dataset) : StructureIdenti
 	_axialRatio(sqrt(8.0/3.0)), 
 	_pushStrainTensorsForward(true)
 {
-
-
-
-
-
-
-
-
 	// Create pattern catalog.
 	setPatternCatalog(new PatternCatalog(dataset));
 

@@ -36,10 +36,23 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT ComputePropertyModifier : public AsynchronousModifier
 {
-	OVITO_CLASS()
+	/// Give this modifier class its own metaclass.
+	class OOMetaClass : public AsynchronousModifier::OOMetaClass 
+	{
+	public:
+
+		/// Inherit constructor from base metaclass.
+		using AsynchronousModifier::OOMetaClass::OOMetaClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
+
+	Q_OBJECT
+	OVITO_CLASS_META(ComputePropertyModifier, OOMetaClass)
+
 	Q_CLASSINFO("DisplayName", "Compute property");
 	Q_CLASSINFO("ModifierCategory", "Modification");
-	Q_OBJECT
 	
 public:
 
@@ -61,7 +74,7 @@ public:
 			throwException("Property component index is out of range.");
 		QStringList copy = _expressions;
 		copy[index] = expression;
-		_expressions.set(this, std::move(copy));
+		setExpressions(std::move(copy));
 	}
 
 	/// \brief Returns the math expression that is used to calculate the values of one of the new property's components.
@@ -93,7 +106,7 @@ public:
 			throwException("Property component index is out of range.");
 		QStringList copy = _neighborExpressions;
 		copy[index] = expression;
-		_neighborExpressions.set(this, std::move(copy));
+		setNeighborExpressions(std::move(copy));
 	}
 
 	/// \brief Returns the math expression that is used to compute the neighbor-terms of the property function.
@@ -119,20 +132,6 @@ protected:
 
 	/// Creates a computation engine that will compute the modifier's results.
 	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-
-public:
-	
-	/// Give this modifier class its own metaclass.
-	class OOMetaClass : public AsynchronousModifier::OOMetaClass 
-	{
-	public:
-
-		/// Inherit constructor from base metaclass.
-		using AsynchronousModifier::OOMetaClass::OOMetaClass;
-
-		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
-	};
 
 protected:
 
@@ -251,7 +250,7 @@ protected:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(QStringList, neighborExpressions, setNeighborExpressions);
 
 	/// Controls the cutoff radius for the neighbor lists.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, cutoff, setCutoff);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, cutoff, setCutoff, PROPERTY_FIELD_MEMORIZE);
 
 	/// The list of input variables during the last evaluation.
 	QStringList _inputVariableNames;
@@ -266,7 +265,7 @@ protected:
  */
 class OVITO_PARTICLES_EXPORT ComputePropertyModifierApplication : public AsynchronousModifierApplication
 {
-	OVITO_CLASS()
+	OVITO_CLASS(ComputePropertyModifierApplication)
 	Q_OBJECT
 
 public:
@@ -277,7 +276,7 @@ public:
 private:
 
 	/// The cached display objects that are attached to the output particle property.
-	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD(DisplayObject, cachedDisplayObjects, setCachedDisplayObjects);
+	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD_FLAGS(DisplayObject, cachedDisplayObjects, setCachedDisplayObjects, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_NO_CHANGE_MESSAGE | PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_NO_SUB_ANIM);
 };
 
 OVITO_END_INLINE_NAMESPACE

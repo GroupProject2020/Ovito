@@ -33,18 +33,8 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT CombineParticleSetsModifier : public Modifier
 {
-public:
-
-	/// Constructor.
-	Q_INVOKABLE CombineParticleSetsModifier(DataSet* dataset);
-
-	/// Modifies the input data.
-	virtual Future<PipelineFlowState> evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-
-public:
-
 	/// Give this modifier class its own metaclass.
-	class OOMetaClass : public ModifierClass 
+	class CombineParticleSetsModifierClass : public ModifierClass 
 	{
 	public:
 
@@ -55,16 +45,24 @@ public:
 		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
 	};
 
-private:
-
-	/// The source for particle data to be merged into the pipeline.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(PipelineObject, secondaryDataSource, setSecondaryDataSource);
-
 	Q_OBJECT
-	OVITO_CLASS
+	OVITO_CLASS_META(CombineParticleSetsModifier, CombineParticleSetsModifierClass)
 
 	Q_CLASSINFO("DisplayName", "Combine particle sets");
 	Q_CLASSINFO("ModifierCategory", "Modification");
+
+public:
+
+	/// Constructor.
+	Q_INVOKABLE CombineParticleSetsModifier(DataSet* dataset);
+
+	/// Modifies the input data.
+	virtual Future<PipelineFlowState> evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+
+private:
+
+	/// The source for particle data to be merged into the pipeline.
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(PipelineObject, secondaryDataSource, setSecondaryDataSource, PROPERTY_FIELD_NO_SUB_ANIM);
 };
 
 OVITO_END_INLINE_NAMESPACE

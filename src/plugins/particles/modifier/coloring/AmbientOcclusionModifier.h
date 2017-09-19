@@ -37,6 +37,24 @@ class AmbientOcclusionRenderer;		// defined in AmbientOcclusionRenderer.h
  */
 class OVITO_PARTICLES_EXPORT AmbientOcclusionModifier : public AsynchronousModifier
 {
+	/// Give this modifier class its own metaclass.
+	class AmbientOcclusionModifierClass : public ModifierClass 
+	{
+	public:
+
+		/// Inherit constructor from base class.
+		using ModifierClass::ModifierClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
+
+	Q_OBJECT
+	OVITO_CLASS_META(AmbientOcclusionModifier, AmbientOcclusionModifierClass)
+
+	Q_CLASSINFO("DisplayName", "Ambient occlusion");
+	Q_CLASSINFO("ModifierCategory", "Coloring");
+
 public:
 
 	enum { MAX_AO_RENDER_BUFFER_RESOLUTION = 4 };
@@ -90,20 +108,6 @@ public:
 	/// Constructor.
 	Q_INVOKABLE AmbientOcclusionModifier(DataSet* dataset);
 
-public:
-
-	/// Give this modifier class its own metaclass.
-	class OOMetaClass : public ModifierClass 
-	{
-	public:
-
-		/// Inherit constructor from base class.
-		using ModifierClass::ModifierClass;
-
-		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
-	};
-
 protected:
 
 	/// Creates a computation engine that will compute the modifier's results.
@@ -119,14 +123,6 @@ private:
 
 	/// Controls the resolution of the offscreen rendering buffer.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, bufferResolution, setBufferResolution);
-
-private:
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Ambient occlusion");
-	Q_CLASSINFO("ModifierCategory", "Coloring");
 };
 
 OVITO_END_INLINE_NAMESPACE

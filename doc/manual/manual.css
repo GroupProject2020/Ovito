@@ -159,3 +159,7 @@ hr {
 .comment {
 	color: green;
 }
+
+.warning {
+	color: red;
+}

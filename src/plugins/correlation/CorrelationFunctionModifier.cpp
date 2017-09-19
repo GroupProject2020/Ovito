@@ -32,31 +32,31 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, sourceProperty1, "SourceProperty1");
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, sourceProperty2, "SourceProperty2");
-DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, averagingDirection, "BinDirection", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, fftGridSpacing, "FftGridSpacing");
-DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, applyWindow, "applyWindow", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, doComputeNeighCorrelation, "doComputeNeighCorrelation", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, neighCutoff, "NeighCutoff", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, numberOfNeighBins, "NumberOfNeighBins", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, normalizeRealSpace, "NormalizeRealSpace", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, typeOfRealSpacePlot, "TypeOfRealSpacePlot");
-DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, normalizeReciprocalSpace, "NormalizeReciprocalSpace", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, typeOfReciprocalSpacePlot, "TypeOfReciprocalSpacePlot");
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, fixRealSpaceXAxisRange, "FixRealSpaceXAxisRange");
-DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, realSpaceXAxisRangeStart, "RealSpaceXAxisRangeStart", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, realSpaceXAxisRangeEnd, "RealSpaceXAxisRangeEnd", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, fixRealSpaceYAxisRange, "FixRealSpaceYAxisRange");
-DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, realSpaceYAxisRangeStart, "RealSpaceYAxisRangeStart", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, realSpaceYAxisRangeEnd, "RealSpaceYAxisRangeEnd", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, fixReciprocalSpaceXAxisRange, "FixReciprocalSpaceXAxisRange");
-DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, reciprocalSpaceXAxisRangeStart, "ReciprocalSpaceXAxisRangeStart", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, reciprocalSpaceXAxisRangeEnd, "ReciprocalSpaceXAxisRangeEnd", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, fixReciprocalSpaceYAxisRange, "FixReciprocalSpaceYAxisRange");
-DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeStart, "ReciprocalSpaceYAxisRangeStart", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeEnd, "ReciprocalSpaceYAxisRangeEnd", PROPERTY_FIELD_MEMORIZE);
+IMPLEMENT_OVITO_CLASS(CorrelationFunctionModifier);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, sourceProperty1);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, sourceProperty2);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, averagingDirection);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, fftGridSpacing);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, applyWindow);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, doComputeNeighCorrelation);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, neighCutoff);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, numberOfNeighBins);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, normalizeRealSpace);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, typeOfRealSpacePlot);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, normalizeReciprocalSpace);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, typeOfReciprocalSpacePlot);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, fixRealSpaceXAxisRange);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, realSpaceXAxisRangeStart);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, realSpaceXAxisRangeEnd);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, fixRealSpaceYAxisRange);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, realSpaceYAxisRangeStart);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, realSpaceYAxisRangeEnd);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, fixReciprocalSpaceXAxisRange);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, reciprocalSpaceXAxisRangeStart);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, reciprocalSpaceXAxisRangeEnd);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, fixReciprocalSpaceYAxisRange);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeStart);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeEnd);
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, sourceProperty1, "First property");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, sourceProperty2, "Second property");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, averagingDirection, "Averaging direction");
@@ -83,7 +83,7 @@ SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, fixReciprocalSpaceYAxisRan
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeStart, "Y-range start");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeEnd, "Y-range end");
 
-
+IMPLEMENT_OVITO_CLASS(CorrelationFunctionModifierApplication);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -112,30 +112,6 @@ CorrelationFunctionModifier::CorrelationFunctionModifier(DataSet* dataset) : Asy
 	_reciprocalSpaceYAxisRangeStart(0.0), 
 	_reciprocalSpaceYAxisRangeEnd(1.0)
 {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
 
 /******************************************************************************
@@ -188,7 +164,7 @@ void CorrelationFunctionModifier::initializeModifier(ModifierApplication* modApp
 ******************************************************************************/
 Future<AsynchronousModifier::ComputeEnginePtr> CorrelationFunctionModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	// Get the source
+	// Get the source data.
 	if(sourceProperty1().isNull())
 		throwException(tr("Select a first particle property first."));
 	if(sourceProperty2().isNull())
@@ -785,7 +761,6 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::perform()
 	setResult(std::move(_results));
 }
 
-
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
@@ -809,7 +784,7 @@ void CorrelationFunctionModifier::updateRanges(FloatType offset, FloatType fac, 
 	if(!myModApp) return;
 
 	// Compute data ranges
-	if (!_fixRealSpaceXAxisRange) {
+	if (!fixRealSpaceXAxisRange()) {
 		if (!myModApp->realSpaceCorrelationX().empty() && !myModApp->neighCorrelationX().empty() && doComputeNeighCorrelation()) {
 			setRealSpaceXAxisRangeStart(std::min(myModApp->realSpaceCorrelationX().first(), myModApp->neighCorrelationX().first()));
 			setRealSpaceXAxisRangeEnd(std::max(myModApp->realSpaceCorrelationX().last(), myModApp->neighCorrelationX().last()));
@@ -823,7 +798,7 @@ void CorrelationFunctionModifier::updateRanges(FloatType offset, FloatType fac, 
 			setRealSpaceXAxisRangeEnd(myModApp->neighCorrelationX().last());
 		}
 	}
-	if (!_fixRealSpaceYAxisRange) {
+	if (!fixRealSpaceYAxisRange()) {
 		if (!myModApp->realSpaceCorrelation().empty() && !myModApp->neighCorrelation().empty() && doComputeNeighCorrelation()) {
 			auto realSpace = std::minmax_element(myModApp->realSpaceCorrelation().begin(), myModApp->realSpaceCorrelation().end());
 			auto neigh = std::minmax_element(myModApp->neighCorrelation().begin(), myModApp->neighCorrelation().end());
@@ -841,11 +816,11 @@ void CorrelationFunctionModifier::updateRanges(FloatType offset, FloatType fac, 
 			setRealSpaceYAxisRangeEnd(fac*(*neigh.second-offset));
 		}	
 	}
-	if (!_fixReciprocalSpaceXAxisRange && !myModApp->reciprocalSpaceCorrelationX().empty()) {
+	if (!fixReciprocalSpaceXAxisRange() && !myModApp->reciprocalSpaceCorrelationX().empty()) {
 		setReciprocalSpaceXAxisRangeStart(myModApp->reciprocalSpaceCorrelationX().first());
 		setReciprocalSpaceXAxisRangeEnd(myModApp->reciprocalSpaceCorrelationX().last());
 	}
-	if (!_fixReciprocalSpaceYAxisRange && !myModApp->reciprocalSpaceCorrelation().empty()) {
+	if (!fixReciprocalSpaceYAxisRange() && !myModApp->reciprocalSpaceCorrelation().empty()) {
 		auto reciprocalSpace = std::minmax_element(myModApp->reciprocalSpaceCorrelation().begin(), myModApp->reciprocalSpaceCorrelation().end());
 		setReciprocalSpaceYAxisRangeStart(reciprocalFac*(*reciprocalSpace.first));
 		setReciprocalSpaceYAxisRangeEnd(reciprocalFac*(*reciprocalSpace.second));

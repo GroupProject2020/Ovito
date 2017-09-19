@@ -32,6 +32,9 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
  */
 class PartitionMeshDisplayEditor : public PropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(PartitionMeshDisplayEditor)
+
 public:
 
 	/// Constructor.
@@ -41,13 +44,8 @@ protected:
 
 	/// Creates the user interface controls for the editor.
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-
-

@@ -32,17 +32,17 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-
-DEFINE_FLAGS_PROPERTY_FIELD(BinAndReduceModifier, reductionOperation, "ReductionOperation", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(BinAndReduceModifier, firstDerivative, "firstDerivative", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(BinAndReduceModifier, binDirection, "BinDirection", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(BinAndReduceModifier, numberOfBinsX, "NumberOfBinsX", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(BinAndReduceModifier, numberOfBinsY, "NumberOfBinsY", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(BinAndReduceModifier, fixPropertyAxisRange, "FixPropertyAxisRange");
-DEFINE_FLAGS_PROPERTY_FIELD(BinAndReduceModifier, propertyAxisRangeStart, "PropertyAxisRangeStart", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(BinAndReduceModifier, propertyAxisRangeEnd, "PropertyAxisRangeEnd", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(BinAndReduceModifier, sourceProperty, "SourceProperty");
-DEFINE_PROPERTY_FIELD(BinAndReduceModifier, onlySelected, "OnlySelected");
+IMPLEMENT_OVITO_CLASS(BinAndReduceModifier);
+DEFINE_PROPERTY_FIELD(BinAndReduceModifier, reductionOperation);
+DEFINE_PROPERTY_FIELD(BinAndReduceModifier, firstDerivative);
+DEFINE_PROPERTY_FIELD(BinAndReduceModifier, binDirection);
+DEFINE_PROPERTY_FIELD(BinAndReduceModifier, numberOfBinsX);
+DEFINE_PROPERTY_FIELD(BinAndReduceModifier, numberOfBinsY);
+DEFINE_PROPERTY_FIELD(BinAndReduceModifier, fixPropertyAxisRange);
+DEFINE_PROPERTY_FIELD(BinAndReduceModifier, propertyAxisRangeStart);
+DEFINE_PROPERTY_FIELD(BinAndReduceModifier, propertyAxisRangeEnd);
+DEFINE_PROPERTY_FIELD(BinAndReduceModifier, sourceProperty);
+DEFINE_PROPERTY_FIELD(BinAndReduceModifier, onlySelected);
 SET_PROPERTY_FIELD_LABEL(BinAndReduceModifier, reductionOperation, "Reduction operation");
 SET_PROPERTY_FIELD_LABEL(BinAndReduceModifier, firstDerivative, "Compute first derivative");
 SET_PROPERTY_FIELD_LABEL(BinAndReduceModifier, binDirection, "Bin direction");
@@ -67,16 +67,6 @@ BinAndReduceModifier::BinAndReduceModifier(DataSet* dataset) :
 	_yAxisRangeStart(0), _yAxisRangeEnd(0),
 	_onlySelected(false)
 {
-
-
-
-
-
-
-
-
-
-
 }
 
 /******************************************************************************

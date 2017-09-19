@@ -107,8 +107,9 @@ PYBIND11_PLUGIN(Particles)
 	py::module m("Particles");
 
 	auto ParticleProperty_py = ovito_abstract_class<ParticleProperty, PropertyObject>(m,
-			":Base class: :py:class:`ovito.data.DataObject`\n\n"
-			"Stores an array of per-particle values. "
+			":Base class: :py:class:`ovito.data.Property`\n\n"
+			"Stores an array of per-particle values. This class derives from :py:class:`Property`, which provides the "
+			"base functionality shared by all property types in OVITO. "
 			"\n\n"
 			"In OVITO's data model, an arbitrary number of properties can be associated with the particles, "
 			"each property being represented by a separate :py:class:`!ParticleProperty` object. A :py:class:`!ParticleProperty` "
@@ -127,40 +128,7 @@ PYBIND11_PLUGIN(Particles)
 			"and the property values have no special meaning to OVITO, only to you, the user. Whether a :py:class:`!ParticleProperty` is a "
 			"standard or a user-defined property is indicated by the value of its :py:attr:`.type` attribute. "
 			"\n\n"
-			"**Data access**"
-			"\n\n"
-			"A :py:class:`!ParticleProperty` object behaves almost like a Numpy array. For example, you can access the property value for the *i*-th particle using indexing:: "
-			"\n\n"
-			"     vel_property = data.particle_properties['Velocity']\n"
-			"     print('Velocity vector of first particle:', vel_property[0])\n"
-			"     print('Z-velocity of second particle:', vel_property[1,2])\n"
-			"     for v in vel_property: print(v)\n"
-			"\n\n"
-			"Particle indices start at zero. Properties can be either vectorial (e.g. velocity vectors are stored as an *N* x 3 array) "
-			"or scalar (1-d array of length *N*). Length of the first array dimension is in both cases equal to "
-			"the number of particles. Array elements can either be of data type ``float`` or ``int``. "
-			"\n\n"
-			"If necessary, you can cast a :py:class:`!ParticleProperty` to a standard Numpy array:: "
-			"\n\n"
-			"     velocities = numpy.asarray(vel_property)\n"
-			"\n\n"
-			"No data is copied during the conversion; the Numpy array will refer to the same memory as the :py:class:`!ParticleProperty`. "
-			"By default, the memory of a :py:class:`!ParticleProperty` is write-protected. Thus, trying to modify property values will raise an error:: "
-			"\n\n"
-			"    vel_property[0] = (0, 0, -4) # \"TypeError: 'ParticleProperty' object does not\n"
-			"                                 # support item assignment\"\n"
-			"\n\n"
-			"A direct modification is prevented by the system, because OVITO's data pipeline uses shallow data copies and needs to know when data objects are being modified. "
-			"Only then results that depend on the changing data can be automatically recalculated. "
-			"We need to explicitly announce a modification by using the :py:meth:`ParticleProperty.modify` method and a Python ``with`` statement:: "
-			"\n\n"
-			"    with vel_property.modify() as arr:\n"
-			"        arr[0] = (0, 0, -4)\n"
-			"\n\n"
-			"Within the ``with`` compound statement, the variable ``arr`` refers to a *modifiable* Numpy array, allowing us to alter "
-			"the per-particle data stored in the :py:class:`!ParticleProperty` object. "
-			"\n\n"
-			"**Creating properties**"
+			"**Creating particle properties**"
 			"\n\n"
 			"New properties can be created and assigned to particles with the :py:meth:`ParticlePropertiesView.create` factory method. "
 			"User-defined modifier functions, for example, use this to output their computation results. "
@@ -217,12 +185,8 @@ PYBIND11_PLUGIN(Particles)
 		})
 		.def_static("createUserProperty", [](DataSet& dataset, size_t particleCount, int dataType, size_t componentCount, size_t stride, const QString& name, bool initializeMemory) {
 			return ParticleProperty::createFromStorage(&dataset, std::make_shared<PropertyStorage>(particleCount, dataType, componentCount, stride, name, initializeMemory));
-		})		
+		})
 		.def_static("standard_property_type_id", [](const QString& name) { return (ParticleProperty::Type)ParticleProperty::OOClass().standardPropertyTypeId(name); })
-		.def_property("name", &ParticleProperty::name, &ParticleProperty::setName,
-				"The name of the particle property.")
-		.def_property_readonly("components", &ParticleProperty::componentCount,
-				"The number of vector components if this is a vector particle property; otherwise 1 (= scalar property).")				
 		.def_property_readonly("type", &ParticleProperty::type,
 				".. _particle-types-list:"
 				"\n\n"
@@ -601,15 +565,16 @@ PYBIND11_PLUGIN(Particles)
 	;
 
 	auto BondProperty_py = ovito_abstract_class<BondProperty, PropertyObject>(m,
-			":Base class: :py:class:`ovito.data.DataObject`\n\n"
-			"Stores an array of per-bond values. "
+			":Base class: :py:class:`ovito.data.Property`\n\n"
+			"Stores an array of per-bond values. This class derives from :py:class:`Property`, which provides the "
+			"base functionality shared by all property types in OVITO. "
 			"\n\n"
 			"In OVITO's data model, an arbitrary set of properties can be associated with bonds, "
 			"each property being represented by a :py:class:`!BondProperty` object. A :py:class:`!BondProperty` "
 			"is basically an array of values whose length matches the numer of bonds in the data collection (i.e. the length of the :py:class:`Bonds` array). "
 			"\n\n"
 			":py:class:`!BondProperty` objects have the same fields and behave the same way as :py:class:`ParticleProperty` objects. "
-			"Please see the :py:class:`ParticleProperty` documentation on how to access per-bond values. "
+			"Both property classes derives from the common :py:class:`Property` base class. Please see its documentation on how to access per-bond values. "
 			"\n\n"
 			"The set of properties currently associated with the bonds is exposed by the "
 			":py:attr:`DataCollection.bond_properties` view, which allows accessing them by name "
@@ -627,10 +592,6 @@ PYBIND11_PLUGIN(Particles)
 			return BondProperty::createFromStorage(&dataset, std::make_shared<PropertyStorage>(bondCount, dataType, componentCount, stride, name, initializeMemory));
 		})
 		.def_static("standard_property_type_id", [](const QString& name) { return (BondProperty::Type)BondProperty::OOClass().standardPropertyTypeId(name); })
-		.def_property("name", &BondProperty::name, &BondProperty::setName,
-				"The name of this bond property.")
-		.def_property_readonly("components", &BondProperty::componentCount,
-				"The number of vector components if this is a vector bond property; otherwise 1 (= scalar property).")				
 		.def_property_readonly("type", &BondProperty::type, 
 				".. _bond-types-list:"
 				"\n\n"

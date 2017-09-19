@@ -30,7 +30,7 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Properties)
 
-
+IMPLEMENT_OVITO_CLASS(ComputeBondLengthsModifier);
 
 /******************************************************************************
 * Constructs the modifier object.

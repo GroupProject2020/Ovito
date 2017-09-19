@@ -54,6 +54,9 @@ using PartitionMeshData = HalfEdgeMesh<PartitionMeshEdge, PartitionMeshFace, Emp
  */
 class OVITO_CRYSTALANALYSIS_EXPORT PartitionMesh : public PeriodicDomainDataObject
 {
+	Q_OBJECT
+	OVITO_CLASS(PartitionMesh)
+
 public:
 
 	/// \brief Constructor that creates an empty PartitionMesh object.
@@ -86,9 +89,6 @@ private:
 
 	/// The internal data.
 	DECLARE_RUNTIME_PROPERTY_FIELD(std::shared_ptr<PartitionMeshData>, storage, setStorage);
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 }	// End of namespace

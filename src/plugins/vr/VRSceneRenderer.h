@@ -31,6 +31,9 @@ using namespace Ovito;
 
 class VRSceneRenderer : public OpenGLSceneRenderer
 {
+	Q_OBJECT
+	OVITO_CLASS(VRSceneRenderer)
+	
 public:
 
 	/// Standard constructor.
@@ -48,11 +51,6 @@ public:
 
 	/// Returns the device pixel ratio of the output device we are rendering to.
 	qreal devicePixelRatio() const;
-
-private:
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 }	// End of namespace

@@ -36,15 +36,8 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT CoordinationPolyhedraModifier : public AsynchronousModifier
 {
-public:
-
-	/// Constructor.
-	Q_INVOKABLE CoordinationPolyhedraModifier(DataSet* dataset);
-
-public:
-	
 	/// Give this modifier class its own metaclass.
-	class OOMetaClass : public AsynchronousModifier::OOMetaClass 
+	class CoordinationPolyhedraModifierClass : public AsynchronousModifier::OOMetaClass 
 	{
 	public:
 
@@ -54,6 +47,17 @@ public:
 		/// Asks the metaclass whether the modifier can be applied to the given input data.
 		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
 	};
+
+	Q_OBJECT
+	OVITO_CLASS_META(CoordinationPolyhedraModifier, CoordinationPolyhedraModifierClass)
+
+	Q_CLASSINFO("DisplayName", "Coordination polyhedra");
+	Q_CLASSINFO("ModifierCategory", "Modification");
+
+public:
+
+	/// Constructor.
+	Q_INVOKABLE CoordinationPolyhedraModifier(DataSet* dataset);
 
 protected:
 
@@ -121,13 +125,7 @@ private:
 private:
 
 	/// The display object for rendering the computed mesh.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(SurfaceMeshDisplay, surfaceMeshDisplay, setSurfaceMeshDisplay);
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Coordination polyhedra");
-	Q_CLASSINFO("ModifierCategory", "Modification");
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SurfaceMeshDisplay, surfaceMeshDisplay, setSurfaceMeshDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -33,15 +33,14 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-
-DEFINE_FLAGS_PROPERTY_FIELD(CoordinationNumberModifier, cutoff, "Cutoff", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(CoordinationNumberModifier, numberOfBins, "NumberOfBins", PROPERTY_FIELD_MEMORIZE);
+IMPLEMENT_OVITO_CLASS(CoordinationNumberModifier);
+IMPLEMENT_OVITO_CLASS(CoordinationNumberModifierApplication);
+DEFINE_PROPERTY_FIELD(CoordinationNumberModifier, cutoff);
+DEFINE_PROPERTY_FIELD(CoordinationNumberModifier, numberOfBins);
 SET_PROPERTY_FIELD_LABEL(CoordinationNumberModifier, cutoff, "Cutoff radius");
 SET_PROPERTY_FIELD_LABEL(CoordinationNumberModifier, numberOfBins, "Number of histogram bins");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CoordinationNumberModifier, cutoff, WorldParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(CoordinationNumberModifier, numberOfBins, IntegerParameterUnit, 4, 100000);
-
-
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -50,8 +49,6 @@ CoordinationNumberModifier::CoordinationNumberModifier(DataSet* dataset) : Async
 	_cutoff(3.2), 
 	_numberOfBins(200)
 {
-
-
 }
 
 /******************************************************************************

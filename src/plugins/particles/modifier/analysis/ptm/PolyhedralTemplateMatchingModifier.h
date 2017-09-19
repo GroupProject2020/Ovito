@@ -35,6 +35,12 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT PolyhedralTemplateMatchingModifier : public StructureIdentificationModifier
 {
+	Q_OBJECT
+	OVITO_CLASS(PolyhedralTemplateMatchingModifier)
+
+	Q_CLASSINFO("DisplayName", "Polyhedral template matching");
+	Q_CLASSINFO("ModifierCategory", "Analysis");
+
 public:
 
 #ifndef Q_CC_MSVC
@@ -163,28 +169,22 @@ private:
 private:
 
 	/// The RMSD cutoff.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, rmsdCutoff, setRmsdCutoff);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, rmsdCutoff, setRmsdCutoff, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the output of the per-particle RMSD values.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, outputRmsd, setOutputRmsd);
 
 	/// Controls the output of local interatomic distances.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, outputInteratomicDistance, setOutputInteratomicDistance);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, outputInteratomicDistance, setOutputInteratomicDistance, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the output of local orientations.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, outputOrientation, setOutputOrientation);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, outputOrientation, setOutputOrientation, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the output of elastic deformation gradients.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, outputDeformationGradient, setOutputDeformationGradient);
 
 	/// Controls the output of alloy structure types.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, outputAlloyTypes, setOutputAlloyTypes);
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Polyhedral template matching");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, outputAlloyTypes, setOutputAlloyTypes, PROPERTY_FIELD_MEMORIZE);
 };
 
 
@@ -193,12 +193,15 @@ private:
  *        when it is inserted into in a data pipeline. It stores the last computation results
  *        so that they can be displayed in the modifier's user interface.
  */
- class OVITO_PARTICLES_EXPORT PolyhedralTemplateMatchingModifierApplication : public StructureIdentificationModifierApplication
- {
- public:
+class OVITO_PARTICLES_EXPORT PolyhedralTemplateMatchingModifierApplication : public StructureIdentificationModifierApplication
+{
+	Q_OBJECT
+	OVITO_CLASS(PolyhedralTemplateMatchingModifierApplication)
+
+public:
  
-	 /// Constructor.
-	 Q_INVOKABLE PolyhedralTemplateMatchingModifierApplication(DataSet* dataset) : StructureIdentificationModifierApplication(dataset) {}
+	/// Constructor.
+	Q_INVOKABLE PolyhedralTemplateMatchingModifierApplication(DataSet* dataset) : StructureIdentificationModifierApplication(dataset) {}
  
 	/// Returns the histogram of computed RMSD values.
 	const QVector<int>& rmsdHistogramData() const { return _rmsdHistogramData; }
@@ -220,9 +223,6 @@ private:
 
 	/// The bin size of the RMSD histogram;
 	FloatType _rmsdHistogramBinSize = 0;
-		
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 OVITO_END_INLINE_NAMESPACE

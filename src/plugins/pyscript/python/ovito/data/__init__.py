@@ -14,6 +14,7 @@ It also provides container classes for such data objects and some additional uti
   * :py:class:`BondProperty`
   * :py:class:`DislocationNetwork`
   * :py:class:`ParticleProperty`
+  * :py:class:`Property`
   * :py:class:`SimulationCell`
   * :py:class:`SurfaceMesh`
 
@@ -42,10 +43,10 @@ from ..plugins.PyScript.App import CloneHelper
 # Load submodules.
 from .data_collection import DataCollection
 from .simulation_cell import SimulationCell
-from .property_object import PropertyObject
+from .property import Property
 
 # Make PipelineFlowState a DataCollection.
 DataCollection.registerDataCollectionType(PipelineFlowState)
 assert(issubclass(PipelineFlowState, DataCollection))
 
-__all__ = ['DataCollection', 'DataObject', 'PipelineFlowState', 'SimulationCell', 'PropertyObject']
+__all__ = ['DataCollection', 'DataObject', 'PipelineFlowState', 'SimulationCell', 'Property']

@@ -34,6 +34,9 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
  */
 class OVITO_CRYSTALANALYSIS_EXPORT DislocationNetworkObject : public PeriodicDomainDataObject
 {
+	Q_OBJECT
+	OVITO_CLASS(DislocationNetworkObject)
+
 public:
 
 	/// \brief Constructor.
@@ -61,9 +64,6 @@ private:
 
 	/// The internal data.
 	DECLARE_RUNTIME_PROPERTY_FIELD(std::shared_ptr<DislocationNetwork>, storage, setStorage);
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 }	// End of namespace

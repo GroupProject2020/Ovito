@@ -41,6 +41,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util)
  */
 class OVITO_PARTICLES_EXPORT ParticleSelectionSet : public RefTarget
 {
+	Q_OBJECT
+	OVITO_CLASS(ParticleSelectionSet)
+
 public:
 
 	/// Controls the mode of operation of the setParticleSelection() method.
@@ -53,9 +56,7 @@ public:
 public:
 
 	/// Constructor.
-	Q_INVOKABLE ParticleSelectionSet(DataSet* dataset) : RefTarget(dataset), _useIdentifiers(true) {
-		
-	}
+	Q_INVOKABLE ParticleSelectionSet(DataSet* dataset) : RefTarget(dataset), _useIdentifiers(true) {}
 
 	/// Returns the stored selection set as a bit array.
 	const QBitArray& selection() const { return _selection; }
@@ -109,14 +110,9 @@ private:
 	/// Controls whether the object should store the identifiers of selected particles (when available).
 	DECLARE_PROPERTY_FIELD(bool, useIdentifiers);
 
-	Q_OBJECT
-	OVITO_CLASS
-
 	friend class ReplaceSelectionOperation;
 };
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

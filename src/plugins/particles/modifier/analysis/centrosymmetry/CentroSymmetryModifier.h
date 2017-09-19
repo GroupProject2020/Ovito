@@ -34,20 +34,8 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT CentroSymmetryModifier : public AsynchronousModifier
 {
-public:
-
-	/// The maximum number of neighbors that can be taken into account to compute the CSP.
-	enum { MAX_CSP_NEIGHBORS = 32 };
-
-public:
-
-	/// Constructor.
-	Q_INVOKABLE CentroSymmetryModifier(DataSet* dataset);
-
-public:
-	
 	/// Give this modifier class its own metaclass.
-	class OOMetaClass : public AsynchronousModifier::OOMetaClass 
+	class CentroSymmetryModifierClass : public AsynchronousModifier::OOMetaClass 
 	{
 	public:
 
@@ -57,6 +45,22 @@ public:
 		/// Asks the metaclass whether the modifier can be applied to the given input data.
 		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
 	};
+
+	Q_OBJECT
+	OVITO_CLASS_META(CentroSymmetryModifier, CentroSymmetryModifierClass)
+
+	Q_CLASSINFO("DisplayName", "Centrosymmetry parameter");
+	Q_CLASSINFO("ModifierCategory", "Analysis");
+
+public:
+
+	/// The maximum number of neighbors that can be taken into account to compute the CSP.
+	enum { MAX_CSP_NEIGHBORS = 32 };
+
+public:
+
+	/// Constructor.
+	Q_INVOKABLE CentroSymmetryModifier(DataSet* dataset);
 		
 protected:
 
@@ -119,13 +123,7 @@ private:
 	};
 
 	/// Specifies the number of nearest neighbors to take into account when computing the CSP.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, numNeighbors, setNumNeighbors);
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Centrosymmetry parameter");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, numNeighbors, setNumNeighbors, PROPERTY_FIELD_MEMORIZE);
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -35,6 +35,24 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT ShowPeriodicImagesModifier : public Modifier
 {
+	/// Give this modifier class its own metaclass.
+	class ShowPeriodicImagesModifierClass : public ModifierClass 
+	{
+	public:
+
+		/// Inherit constructor from base class.
+		using ModifierClass::ModifierClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
+	
+	Q_OBJECT
+	OVITO_CLASS_META(ShowPeriodicImagesModifier, ShowPeriodicImagesModifierClass)
+
+	Q_CLASSINFO("DisplayName", "Show periodic images");
+	Q_CLASSINFO("ModifierCategory", "Modification");
+
 public:
 
 	/// \brief Constructs a new instance of this class.
@@ -46,20 +64,6 @@ public:
 		
 	/// Modifies the input data in an immediate, preliminary way.
 	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-
-public:
-
-	/// Give this modifier class its own metaclass.
-	class OOMetaClass : public ModifierClass 
-	{
-	public:
-
-		/// Inherit constructor from base class.
-		using ModifierClass::ModifierClass;
-
-		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
-	};
 
 private:
 
@@ -82,12 +86,6 @@ private:
 
 	/// Controls whether the modifier assigns unique identifiers to particle copies.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, uniqueIdentifiers, setUniqueIdentifiers);
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Show periodic images");
-	Q_CLASSINFO("ModifierCategory", "Modification");
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -3,7 +3,7 @@ Examples
 ==================================
 
 .. warning::
-   This section of manual is out of date! It was not updated yet to reflect the changes made in the current
+   This section of the manual is out of date! It was not updated yet to reflect the changes made in the current
    development version of OVITO.
 
 This page provides a collection of example scripts:

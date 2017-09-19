@@ -34,6 +34,12 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
  */
 class OVITO_CRYSTALANALYSIS_EXPORT ElasticStrainModifier : public StructureIdentificationModifier
 {
+	Q_OBJECT
+	OVITO_CLASS(ElasticStrainModifier)
+
+	Q_CLASSINFO("DisplayName", "Elastic strain calculation");
+	Q_CLASSINFO("ModifierCategory", "Analysis");
+
 public:
 
 	/// Constructor.
@@ -47,31 +53,25 @@ protected:
 private:
 
 	/// The type of crystal to be analyzed.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(StructureAnalysis::LatticeStructureType, inputCrystalStructure, setInputCrystalStructure);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(StructureAnalysis::LatticeStructureType, inputCrystalStructure, setInputCrystalStructure, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls whether atomic deformation gradient tensors should be computed and stored.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, calculateDeformationGradients, setCalculateDeformationGradients);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, calculateDeformationGradients, setCalculateDeformationGradients, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls whether atomic strain tensors should be computed and stored.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, calculateStrainTensors, setCalculateStrainTensors);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, calculateStrainTensors, setCalculateStrainTensors, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls whether the calculated strain tensors should be pushed forward to the spatial reference frame.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, pushStrainTensorsForward, setPushStrainTensorsForward);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, pushStrainTensorsForward, setPushStrainTensorsForward, PROPERTY_FIELD_MEMORIZE);
 
 	/// The lattice parameter of ideal crystal.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, latticeConstant, setLatticeConstant);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, latticeConstant, setLatticeConstant, PROPERTY_FIELD_MEMORIZE);
 
 	/// The c/a ratio of the ideal crystal.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, axialRatio, setAxialRatio);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, axialRatio, setAxialRatio, PROPERTY_FIELD_MEMORIZE);
 
 	/// The catalog of structure patterns.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(PatternCatalog, patternCatalog, setPatternCatalog);
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Elastic strain calculation");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(PatternCatalog, patternCatalog, setPatternCatalog, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);
 };
 
 }	// End of namespace

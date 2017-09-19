@@ -31,18 +31,10 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Selection)
 
-
-
-DEFINE_FLAGS_REFERENCE_FIELD(ManualSelectionModifierApplication, selectionSet, "SelectionSet", ParticleSelectionSet, PROPERTY_FIELD_ALWAYS_CLONE);
+IMPLEMENT_OVITO_CLASS(ManualSelectionModifier);
+IMPLEMENT_OVITO_CLASS(ManualSelectionModifierApplication);
+DEFINE_REFERENCE_FIELD(ManualSelectionModifierApplication, selectionSet);
 SET_PROPERTY_FIELD_LABEL(ManualSelectionModifierApplication, selectionSet, "Particle selection set");
-
-/******************************************************************************
-* Constructor.
-******************************************************************************/
-ManualSelectionModifierApplication::ManualSelectionModifierApplication(DataSet* dataset) : ModifierApplication(dataset)
-{
-
-}
 
 /******************************************************************************
 * Asks the modifier whether it can be applied to the given input data.

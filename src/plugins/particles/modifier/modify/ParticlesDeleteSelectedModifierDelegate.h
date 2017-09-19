@@ -32,16 +32,6 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class ParticlesDeleteSelectedModifierDelegate : public DeleteSelectedModifierDelegate
 {
-public:
-
-	/// Constructor.
-	Q_INVOKABLE ParticlesDeleteSelectedModifierDelegate(DataSet* dataset) : DeleteSelectedModifierDelegate(dataset) {}
-
-	/// Applies the modifier operation to the data in a pipeline flow state.
-	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp) override;
-
-public:
-
 	/// Give the modifier delegate its own metaclass.
 	class OOMetaClass : public DeleteSelectedModifierDelegate::OOMetaClass 
 	{
@@ -57,12 +47,18 @@ public:
 		virtual QString pythonDataName() const override { return QStringLiteral("particles"); }
 	};
 
-private:
-
 	Q_OBJECT
-	OVITO_CLASS
+	OVITO_CLASS_META(ParticlesDeleteSelectedModifierDelegate, OOMetaClass)
 
 	Q_CLASSINFO("DisplayName", "Particles");
+
+public:
+
+	/// Constructor.
+	Q_INVOKABLE ParticlesDeleteSelectedModifierDelegate(DataSet* dataset) : DeleteSelectedModifierDelegate(dataset) {}
+
+	/// Applies the modifier operation to the data in a pipeline flow state.
+	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp) override;
 };
 
 /**
@@ -70,16 +66,6 @@ private:
  */
 class BondsDeleteSelectedModifierDelegate : public DeleteSelectedModifierDelegate
 {
-public:
-
-	/// Constructor.
-	Q_INVOKABLE BondsDeleteSelectedModifierDelegate(DataSet* dataset) : DeleteSelectedModifierDelegate(dataset) {}
-
-	/// Applies the modifier operation to the data in a pipeline flow state.
-	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp) override;
-
-public:
-
 	/// Give the modifier delegate its own metaclass.
 	class OOMetaClass : public DeleteSelectedModifierDelegate::OOMetaClass 
 	{
@@ -95,12 +81,18 @@ public:
 		virtual QString pythonDataName() const override { return QStringLiteral("bonds"); }
 	};
 
-private:
-
 	Q_OBJECT
-	OVITO_CLASS
+	OVITO_CLASS_META(BondsDeleteSelectedModifierDelegate, OOMetaClass)
 
 	Q_CLASSINFO("DisplayName", "Bonds");
+
+public:
+
+	/// Constructor.
+	Q_INVOKABLE BondsDeleteSelectedModifierDelegate(DataSet* dataset) : DeleteSelectedModifierDelegate(dataset) {}
+
+	/// Applies the modifier operation to the data in a pipeline flow state.
+	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp) override;
 };
 
 OVITO_END_INLINE_NAMESPACE

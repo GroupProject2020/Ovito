@@ -36,6 +36,12 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
  */
 class OVITO_CRYSTALANALYSIS_EXPORT DislocationAnalysisModifier : public StructureIdentificationModifier
 {
+	Q_OBJECT
+	OVITO_CLASS(DislocationAnalysisModifier)
+
+	Q_CLASSINFO("DisplayName", "Dislocation analysis (DXA)");
+	Q_CLASSINFO("ModifierCategory", "Analysis");
+
 public:
 
 	/// Constructor.
@@ -55,7 +61,7 @@ protected:
 private:
 
 	/// The type of crystal to be analyzed.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(StructureAnalysis::LatticeStructureType, inputCrystalStructure, setInputCrystalStructure);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(StructureAnalysis::LatticeStructureType, inputCrystalStructure, setInputCrystalStructure, PROPERTY_FIELD_MEMORIZE);
 
 	/// The maximum length of trial circuits.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, maxTrialCircuitSize, setMaxTrialCircuitSize);
@@ -70,16 +76,16 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, onlyPerfectDislocations, setOnlyPerfectDislocations);
 
 	/// The catalog of structure patterns.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(PatternCatalog, patternCatalog, setPatternCatalog);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(PatternCatalog, patternCatalog, setPatternCatalog, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);
 
 	/// The display object for rendering the defect mesh.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(SurfaceMeshDisplay, defectMeshDisplay, setDefectMeshDisplay);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SurfaceMeshDisplay, defectMeshDisplay, setDefectMeshDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);
 
 	/// The display object for rendering the interface mesh.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(SurfaceMeshDisplay, interfaceMeshDisplay, setInterfaceMeshDisplay);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SurfaceMeshDisplay, interfaceMeshDisplay, setInterfaceMeshDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);
 
 	/// The display object for rendering the dislocations.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(DislocationDisplay, dislocationDisplay, setDislocationDisplay);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(DislocationDisplay, dislocationDisplay, setDislocationDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);
 
 	/// The number of iterations of the mesh smoothing algorithm.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, defectMeshSmoothingLevel, setDefectMeshSmoothingLevel);
@@ -95,12 +101,6 @@ private:
 
 	/// Controls the coarsening of dislocation lines.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, linePointInterval, setLinePointInterval);
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Dislocation analysis (DXA)");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
 };
 
 /**
@@ -108,12 +108,15 @@ private:
  *        when it is inserted into in a data pipeline. It stores the last computation results
  *        so that they can be displayed in the modifier's user interface.
  */
- class OVITO_PARTICLES_EXPORT DislocationAnalysisModifierApplication : public StructureIdentificationModifierApplication
- {
- public:
- 
-	 /// Constructor.
-	 Q_INVOKABLE DislocationAnalysisModifierApplication(DataSet* dataset) : StructureIdentificationModifierApplication(dataset) {}
+class OVITO_PARTICLES_EXPORT DislocationAnalysisModifierApplication : public StructureIdentificationModifierApplication
+{
+	Q_OBJECT
+	OVITO_CLASS(DislocationAnalysisModifierApplication)
+
+public:
+
+	/// Constructor.
+	Q_INVOKABLE DislocationAnalysisModifierApplication(DataSet* dataset) : StructureIdentificationModifierApplication(dataset) {}
 
 	/// Returns the number of segments found per dislocation type.
 	const std::map<BurgersVectorFamily*,int>& segmentCounts() const { return _segmentCounts; }
@@ -134,9 +137,6 @@ private:
 	
 	/// The total length of segments found per dislocation type.
 	std::map<BurgersVectorFamily*,FloatType> _dislocationLengths;
-		
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 }	// End of namespace

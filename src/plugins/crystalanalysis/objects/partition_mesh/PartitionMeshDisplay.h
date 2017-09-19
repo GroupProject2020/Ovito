@@ -40,6 +40,10 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
  */
 class OVITO_CRYSTALANALYSIS_EXPORT PartitionMeshDisplay : public DisplayObject
 {
+	Q_OBJECT
+	OVITO_CLASS(PartitionMeshDisplay)
+	Q_CLASSINFO("DisplayName", "Microstructure");
+	
 public:
 
 	/// \brief Constructor.
@@ -107,10 +111,10 @@ protected:
 	static bool splitFace(TriMesh& output, int faceIndex, int oldVertexCount, std::vector<Point3>& newVertices, std::map<std::pair<int,int>,std::pair<int,int>>& newVertexLookupMap, const SimulationCell& cell, size_t dim);
 
 	/// Controls the display color of the outer surface mesh.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(Color, surfaceColor, setSurfaceColor);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(Color, surfaceColor, setSurfaceColor, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls whether the cap polygons are rendered.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, showCap, setShowCap);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, showCap, setShowCap, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls whether the mesh is rendered using smooth shading.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, smoothShading, setSmoothShading);
@@ -140,11 +144,7 @@ protected:
 	/// The revision counter of this display object.
 	/// The counter is increment every time the object's parameters change.
 	unsigned int _revisionNumber = 0;
-	
-	Q_OBJECT
-	OVITO_CLASS
 
-	Q_CLASSINFO("DisplayName", "Microstructure");
 };
 
 }	// End of namespace

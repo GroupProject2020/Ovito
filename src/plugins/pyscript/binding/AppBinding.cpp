@@ -59,7 +59,10 @@ void defineAppSubmodule(py::module parentModule)
 	;
 
 	ovito_abstract_class<RefMaker, OvitoObject>{m}
-		.def_property_readonly("dataset", py::cpp_function(&RefMaker::dataset, py::return_value_policy::reference))
+		.def_property_readonly("dataset", 
+			[](RefMaker& obj) {
+				return obj.dataset().data();
+			}, py::return_value_policy::reference)
 	;
 
 	ovito_abstract_class<RefTarget, RefMaker>{m}
@@ -82,7 +85,7 @@ void defineAppSubmodule(py::module parentModule)
 		.def_property_readonly("anim", &DataSet::animationSettings,
 				"An :py:class:`~ovito.anim.AnimationSettings` object, which manages various animation-related settings in OVITO such as the number of frames, the current frame, playback speed etc.")
 		.def_property_readonly("viewports", &DataSet::viewportConfig,
-				"A :py:class:`~ovito.vis.ViewportConfiguration` object managing the viewports in OVITO's main window.")
+				"The list of :py:class:`~ovito.vis.Viewport` objects in OVITO's main window.")
 		.def_property_readonly("render_settings", &DataSet::renderSettings,
 				"The global :py:class:`~ovito.vis.RenderSettings` object, which stores the current settings for rendering pictures and movies. "
 				"These are the settings the user can edit in the graphical version of OVITO.")

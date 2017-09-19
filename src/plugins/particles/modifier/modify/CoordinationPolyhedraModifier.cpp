@@ -31,8 +31,8 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 
-
-DEFINE_FLAGS_REFERENCE_FIELD(CoordinationPolyhedraModifier, surfaceMeshDisplay, "SurfaceMeshDisplay", SurfaceMeshDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
+IMPLEMENT_OVITO_CLASS(CoordinationPolyhedraModifier);
+DEFINE_REFERENCE_FIELD(CoordinationPolyhedraModifier, surfaceMeshDisplay);
 SET_PROPERTY_FIELD_LABEL(CoordinationPolyhedraModifier, surfaceMeshDisplay, "Surface mesh display");
 
 /******************************************************************************
@@ -40,8 +40,6 @@ SET_PROPERTY_FIELD_LABEL(CoordinationPolyhedraModifier, surfaceMeshDisplay, "Sur
 ******************************************************************************/
 CoordinationPolyhedraModifier::CoordinationPolyhedraModifier(DataSet* dataset) : AsynchronousModifier(dataset)
 {
-
-
 	// Create the display object for rendering the created polyhedra.
 	setSurfaceMeshDisplay(new SurfaceMeshDisplay(dataset));
 	_surfaceMeshDisplay->setShowCap(false);

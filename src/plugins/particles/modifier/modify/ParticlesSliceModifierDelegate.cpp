@@ -28,7 +28,7 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 
-
+IMPLEMENT_OVITO_CLASS(ParticlesSliceModifierDelegate);
 
 /******************************************************************************
 * Performs the actual rejection of particles.

@@ -33,18 +33,8 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT WrapPeriodicImagesModifier : public Modifier
 {
-public:
-
-	/// \brief Constructs a new instance of this class.
-	Q_INVOKABLE WrapPeriodicImagesModifier(DataSet* dataset) : Modifier(dataset) {}
-
-	/// Modifies the input data in an immediate, preliminary way.
-	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-
-public:
-
 	/// Give this modifier class its own metaclass.
-	class OOMetaClass : public ModifierClass 
+	class WrapPeriodicImagesModifierClass : public ModifierClass 
 	{
 	public:
 
@@ -55,13 +45,19 @@ public:
 		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
 	};
 
-private:
-
 	Q_OBJECT
-	OVITO_CLASS
+	OVITO_CLASS_META(WrapPeriodicImagesModifier, WrapPeriodicImagesModifierClass)
 
 	Q_CLASSINFO("DisplayName", "Wrap at periodic boundaries");
 	Q_CLASSINFO("ModifierCategory", "Modification");
+
+public:
+
+	/// \brief Constructs a new instance of this class.
+	Q_INVOKABLE WrapPeriodicImagesModifier(DataSet* dataset) : Modifier(dataset) {}
+
+	/// Modifies the input data in an immediate, preliminary way.
+	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 };
 
 OVITO_END_INLINE_NAMESPACE

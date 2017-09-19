@@ -40,14 +40,13 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVI
  */
 class OVITO_NETCDF_EXPORT NetCDFImporter : public ParticleImporter
 {
-	OVITO_CLASS()
 	Q_OBJECT
+	OVITO_CLASS(NetCDFImporter)
 
 public:
 
 	/// \brief Constructs a new instance of this class.
 	Q_INVOKABLE NetCDFImporter(DataSet *dataset) : ParticleImporter(dataset), _useCustomColumnMapping(false) {
-		
 		setMultiTimestepFile(true);
 	}
 

@@ -31,8 +31,8 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-
-DEFINE_FLAGS_PROPERTY_FIELD(CentroSymmetryModifier, numNeighbors, "NumNeighbors", PROPERTY_FIELD_MEMORIZE);
+IMPLEMENT_OVITO_CLASS(CentroSymmetryModifier);
+DEFINE_PROPERTY_FIELD(CentroSymmetryModifier, numNeighbors);
 SET_PROPERTY_FIELD_LABEL(CentroSymmetryModifier, numNeighbors, "Number of neighbors");
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(CentroSymmetryModifier, numNeighbors, IntegerParameterUnit, 2, CentroSymmetryModifier::MAX_CSP_NEIGHBORS);
 
@@ -42,7 +42,6 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(CentroSymmetryModifier, numNeighbors, Integer
 CentroSymmetryModifier::CentroSymmetryModifier(DataSet* dataset) : AsynchronousModifier(dataset),
 	_numNeighbors(12)
 {
-
 }
 
 /******************************************************************************

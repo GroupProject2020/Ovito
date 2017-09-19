@@ -36,6 +36,12 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT CommonNeighborAnalysisModifier : public StructureIdentificationModifier
 {
+	Q_OBJECT
+	OVITO_CLASS(CommonNeighborAnalysisModifier)
+
+	Q_CLASSINFO("DisplayName", "Common neighbor analysis");
+	Q_CLASSINFO("ModifierCategory", "Analysis");
+
 public:
 
 	enum CNAMode {
@@ -216,18 +222,10 @@ private:
 	static StructureType determineStructureFixed(CutoffNeighborFinder& neighList, size_t particleIndex, const QVector<bool>& typesToIdentify);
 
 	/// The cutoff radius used for the conventional CNA.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, cutoff, setCutoff);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, cutoff, setCutoff, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls how the CNA is performed.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(CNAMode, mode, setMode);
-
-private:
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Common neighbor analysis");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(CNAMode, mode, setMode, PROPERTY_FIELD_MEMORIZE);
 };
 
 OVITO_END_INLINE_NAMESPACE

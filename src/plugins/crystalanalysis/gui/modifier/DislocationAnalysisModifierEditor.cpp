@@ -32,11 +32,11 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-
+IMPLEMENT_OVITO_CLASS(DislocationAnalysisModifierEditor);
 SET_OVITO_OBJECT_EDITOR(DislocationAnalysisModifier, DislocationAnalysisModifierEditor);
 
-
-DEFINE_FLAGS_REFERENCE_FIELD(DislocationTypeListParameterUI, modApp, "ModifierApplication", DislocationAnalysisModifierApplication, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
+IMPLEMENT_OVITO_CLASS(DislocationTypeListParameterUI);
+DEFINE_REFERENCE_FIELD(DislocationTypeListParameterUI, modApp);
 
 /******************************************************************************
 * Sets up the UI widgets of the editor.
@@ -175,7 +175,7 @@ void DislocationTypeListParameterUI::setModApp(DislocationAnalysisModifierApplic
 		setEditObject(modifier->patternCatalog()->structureById(modifier->inputCrystalStructure()));
 	}
 	else setEditObject(nullptr);
-	_modApp.set(this, modApp);
+	_modApp.set(this, PROPERTY_FIELD(modApp), modApp);
 }
 
 /******************************************************************************

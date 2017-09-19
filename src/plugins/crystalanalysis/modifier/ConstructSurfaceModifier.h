@@ -36,19 +36,6 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
  */
 class OVITO_CRYSTALANALYSIS_EXPORT ConstructSurfaceModifier : public AsynchronousModifier
 {
-public:
-
-	/// Constructor.
-	Q_INVOKABLE ConstructSurfaceModifier(DataSet* dataset);
-
-	/// Decides whether a preliminary viewport update is performed after the modifier has been 
-	/// evaluated but before the entire pipeline evaluation is complete.
-	/// We suppress such preliminary updates for this modifier, because it produces a surface mesh,
-	/// which requires further asynchronous processing before a viewport update makes sense. 
-	virtual bool performPreliminaryUpdateAfterEvaluation() override { return false; }
-
-public:
-	
 	/// Give this modifier class its own metaclass.
 	class OOMetaClass : public AsynchronousModifier::OOMetaClass 
 	{
@@ -60,6 +47,23 @@ public:
 		/// Asks the metaclass whether the modifier can be applied to the given input data.
 		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
 	};
+
+	Q_OBJECT
+	OVITO_CLASS_META(ConstructSurfaceModifier, OOMetaClass)
+
+	Q_CLASSINFO("DisplayName", "Construct surface mesh");
+	Q_CLASSINFO("ModifierCategory", "Analysis");
+
+public:
+
+	/// Constructor.
+	Q_INVOKABLE ConstructSurfaceModifier(DataSet* dataset);
+
+	/// Decides whether a preliminary viewport update is performed after the modifier has been 
+	/// evaluated but before the entire pipeline evaluation is complete.
+	/// We suppress such preliminary updates for this modifier, because it produces a surface mesh,
+	/// which requires further asynchronous processing before a viewport update makes sense. 
+	virtual bool performPreliminaryUpdateAfterEvaluation() override { return false; }
 
 protected:
 
@@ -154,22 +158,16 @@ private:
 	};
 
 	/// Controls the radius of the probe sphere.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, probeSphereRadius, setProbeSphereRadius);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, probeSphereRadius, setProbeSphereRadius, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the amount of smoothing.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, smoothingLevel, setSmoothingLevel);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, smoothingLevel, setSmoothingLevel, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls whether only selected particles should be taken into account.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, onlySelectedParticles, setOnlySelectedParticles);
 
 	/// The display object for rendering the surface mesh.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(SurfaceMeshDisplay, surfaceMeshDisplay, setSurfaceMeshDisplay);
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Construct surface mesh");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SurfaceMeshDisplay, surfaceMeshDisplay, setSurfaceMeshDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);
 };
 
 }	// End of namespace

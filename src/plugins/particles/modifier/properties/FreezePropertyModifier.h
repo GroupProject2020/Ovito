@@ -34,10 +34,23 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT FreezePropertyModifier : public Modifier
 {
-	OVITO_CLASS()
+	/// Give this modifier class its own metaclass.
+	class OOMetaClass : public Modifier::OOMetaClass 
+	{
+	public:
+
+		/// Inherit constructor from base metaclass.
+		using Modifier::OOMetaClass::OOMetaClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
+
+	Q_OBJECT
+	OVITO_CLASS_META(FreezePropertyModifier, OOMetaClass)
+
 	Q_CLASSINFO("DisplayName", "Freeze property");
 	Q_CLASSINFO("ModifierCategory", "Modification");
-	Q_OBJECT
 
 public:
 
@@ -56,20 +69,6 @@ public:
 	/// Modifies the input data in an immediate, preliminary way.
 	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
-public:
-	
-	/// Give this modifier class its own metaclass.
-	class OOMetaClass : public Modifier::OOMetaClass 
-	{
-	public:
-
-		/// Inherit constructor from base metaclass.
-		using Modifier::OOMetaClass::OOMetaClass;
-
-		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
-	};
-
 private:
 
 	/// The particle property that is preserved by this modifier.
@@ -87,7 +86,7 @@ private:
  */
 class OVITO_PARTICLES_EXPORT FreezePropertyModifierApplication : public ModifierApplication
 {
-	OVITO_CLASS()
+	OVITO_CLASS(FreezePropertyModifierApplication)
 	Q_OBJECT
 
 public:
@@ -118,13 +117,13 @@ protected:
 private:
 
 	/// The stored copy of the particle property.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(ParticleProperty, property, setProperty);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(ParticleProperty, property, setProperty, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_NO_CHANGE_MESSAGE | PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_NO_SUB_ANIM | PROPERTY_FIELD_DONT_SAVE_RECOMPUTABLE_DATA);
 
 	/// A copy of the particle identifiers, taken at the time when the property values were saved.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(ParticleProperty, identifiers, setIdentifiers);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(ParticleProperty, identifiers, setIdentifiers, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_NO_CHANGE_MESSAGE | PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_NO_SUB_ANIM | PROPERTY_FIELD_DONT_SAVE_RECOMPUTABLE_DATA);
 
 	/// The cached display objects that are attached to the output particle property.
-	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD(DisplayObject, cachedDisplayObjects, setCachedDisplayObjects);
+	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD_FLAGS(DisplayObject, cachedDisplayObjects, setCachedDisplayObjects, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_NO_CHANGE_MESSAGE | PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_NO_SUB_ANIM);
 
 	/// The validity interval of the frozen property.
 	TimeInterval _validityInterval;

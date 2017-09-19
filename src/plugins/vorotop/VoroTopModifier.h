@@ -38,6 +38,12 @@ namespace Ovito { namespace VoroTop {
  */
 class OVITO_VOROTOP_EXPORT VoroTopModifier : public StructureIdentificationModifier
 {
+	Q_OBJECT
+	OVITO_CLASS(VoroTopModifier)
+
+	Q_CLASSINFO("DisplayName", "VoroTop analysis");
+	Q_CLASSINFO("ModifierCategory", "Analysis");
+
 public:
 
 	/// Constructor.
@@ -125,12 +131,6 @@ private:
 
 	/// The VoroTop filter definition cached from the last analysis run.
 	std::shared_ptr<Filter> _filter;
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "VoroTop analysis");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
 };
 
 }	// End of namespace

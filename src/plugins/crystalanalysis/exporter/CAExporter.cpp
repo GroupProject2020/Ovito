@@ -34,7 +34,7 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-
+IMPLEMENT_OVITO_CLASS(CAExporter);
 
 /******************************************************************************
 * Writes the particles of one animation frame to the current output file.

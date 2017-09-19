@@ -42,6 +42,9 @@ class DislocationDisplay;	// defined below
  */
 class OVITO_CRYSTALANALYSIS_EXPORT DislocationPickInfo : public ObjectPickInfo
 {
+	Q_OBJECT
+	OVITO_CLASS(DislocationPickInfo)
+
 public:
 
 	/// Constructor.
@@ -82,9 +85,6 @@ private:
 
 	/// This array is used to map sub-object picking IDs back to dislocation segments.
 	std::vector<int> _subobjToSegmentMap;
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 /**
@@ -92,6 +92,11 @@ private:
  */
 class OVITO_CRYSTALANALYSIS_EXPORT DislocationDisplay : public DisplayObject
 {
+	Q_OBJECT
+	OVITO_CLASS(DislocationDisplay)
+
+	Q_CLASSINFO("DisplayName", "Dislocations");
+
 public:
 
 	enum LineColoringMode {
@@ -167,19 +172,19 @@ protected:
 		> _boundingBoxCacheHelper;
 
 	/// The rendering width for dislocation lines.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, lineWidth, setLineWidth);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, lineWidth, setLineWidth, PROPERTY_FIELD_MEMORIZE);
 
 	/// The shading mode for dislocation lines.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(ArrowPrimitive::ShadingMode, shadingMode, setShadingMode);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(ArrowPrimitive::ShadingMode, shadingMode, setShadingMode, PROPERTY_FIELD_MEMORIZE);
 
 	/// The rendering width for Burgers vectors.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, burgersVectorWidth, setBurgersVectorWidth);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, burgersVectorWidth, setBurgersVectorWidth, PROPERTY_FIELD_MEMORIZE);
 
 	/// The scaling factor Burgers vectors.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, burgersVectorScaling, setBurgersVectorScaling);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, burgersVectorScaling, setBurgersVectorScaling, PROPERTY_FIELD_MEMORIZE);
 
 	/// Display color for Burgers vectors.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(Color, burgersVectorColor, setBurgersVectorColor);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(Color, burgersVectorColor, setBurgersVectorColor, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the display of Burgers vectors.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, showBurgersVectors, setShowBurgersVectors);
@@ -192,11 +197,6 @@ protected:
 
 	/// The data record used for picking dislocations in the viewports.
 	OORef<DislocationPickInfo> _pickInfo;
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Dislocations");
 };
 
 }	// End of namespace

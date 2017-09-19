@@ -29,8 +29,8 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-
-DEFINE_FLAGS_REFERENCE_FIELD(CalculateDisplacementsModifier, vectorDisplay, "VectorDisplay", VectorDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
+IMPLEMENT_OVITO_CLASS(CalculateDisplacementsModifier);
+DEFINE_REFERENCE_FIELD(CalculateDisplacementsModifier, vectorDisplay);
 SET_PROPERTY_FIELD_LABEL(CalculateDisplacementsModifier, vectorDisplay, "Vector display");
 
 /******************************************************************************
@@ -38,8 +38,6 @@ SET_PROPERTY_FIELD_LABEL(CalculateDisplacementsModifier, vectorDisplay, "Vector 
 ******************************************************************************/
 CalculateDisplacementsModifier::CalculateDisplacementsModifier(DataSet* dataset) : ReferenceConfigurationModifier(dataset)
 {
-
-
 	// Create display object for vectors.
 	setVectorDisplay(new VectorDisplay(dataset));
 	vectorDisplay()->setObjectTitle(tr("Displacements"));

@@ -35,6 +35,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class ManualSelectionModifierEditor : public ModifierPropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(ManualSelectionModifierEditor)
+
 public:
 
 	/// Default constructor
@@ -61,11 +64,6 @@ protected Q_SLOTS:
 
 	/// Clears the selection.
 	void clearSelection();
-
-private:
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 OVITO_END_INLINE_NAMESPACE
@@ -73,5 +71,3 @@ OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

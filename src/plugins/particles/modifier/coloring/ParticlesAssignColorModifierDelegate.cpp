@@ -28,9 +28,9 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 
-
-
-
+IMPLEMENT_OVITO_CLASS(ParticlesAssignColorModifierDelegate);
+IMPLEMENT_OVITO_CLASS(ParticleVectorsAssignColorModifierDelegate);
+IMPLEMENT_OVITO_CLASS(BondsAssignColorModifierDelegate);
 
 /******************************************************************************
 * Creates the property object that will receive the computed colors.

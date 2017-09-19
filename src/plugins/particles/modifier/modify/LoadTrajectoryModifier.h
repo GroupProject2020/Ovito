@@ -33,18 +33,8 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT LoadTrajectoryModifier : public Modifier
 {
-public:
-
-	/// Constructor.
-	Q_INVOKABLE LoadTrajectoryModifier(DataSet* dataset);
-
-	/// Modifies the input data.
-	virtual Future<PipelineFlowState> evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-
-public:
-	
 	/// Give this modifier class its own metaclass.
-	class OOMetaClass : public ModifierClass 
+	class LoadTrajectoryModifierClass : public ModifierClass 
 	{
 	public:
 
@@ -55,16 +45,24 @@ public:
 		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
 	};
 
-private:
-
-	/// The source for trajectory data.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(PipelineObject, trajectorySource, setTrajectorySource);
-
 	Q_OBJECT
-	OVITO_CLASS
+	OVITO_CLASS_META(LoadTrajectoryModifier, LoadTrajectoryModifierClass)
 
 	Q_CLASSINFO("DisplayName", "Load trajectory");
 	Q_CLASSINFO("ModifierCategory", "Modification");
+
+public:
+
+	/// Constructor.
+	Q_INVOKABLE LoadTrajectoryModifier(DataSet* dataset);
+
+	/// Modifies the input data.
+	virtual Future<PipelineFlowState> evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+
+private:
+
+	/// The source for trajectory data.
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(PipelineObject, trajectorySource, setTrajectorySource, PROPERTY_FIELD_NO_SUB_ANIM);
 };
 
 OVITO_END_INLINE_NAMESPACE

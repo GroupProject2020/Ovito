@@ -32,12 +32,28 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT ExpressionSelectionModifier : public Modifier
 {
+	/// Give this modifier class its own metaclass.
+	class OOMetaClass : public Modifier::OOMetaClass 
+	{
+	public:
+
+		/// Inherit constructor from base metaclass.
+		using Modifier::OOMetaClass::OOMetaClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
+
+	Q_OBJECT
+	OVITO_CLASS_META(ExpressionSelectionModifier, OOMetaClass)
+
+	Q_CLASSINFO("DisplayName", "Expression selection");
+	Q_CLASSINFO("ModifierCategory", "Selection");
+
 public:
 
 	/// Constructor.
-	Q_INVOKABLE ExpressionSelectionModifier(DataSet* dataset) : Modifier(dataset) {
-		
-	}
+	Q_INVOKABLE ExpressionSelectionModifier(DataSet* dataset) : Modifier(dataset) {}
 
 	/// Modifies the input data in an immediate, preliminary way.
 	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
@@ -51,20 +67,6 @@ public:
 	/// \brief Returns a human-readable text listing the input variables.
 	const QString& inputVariableTable() const { return _variableTable; }
 
-public:
-	
-	/// Give this modifier class its own metaclass.
-	class OOMetaClass : public Modifier::OOMetaClass 
-	{
-	public:
-
-		/// Inherit constructor from base metaclass.
-		using Modifier::OOMetaClass::OOMetaClass;
-
-		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
-	};
-
 private:
 
 	/// The expression that is used to select atoms.
@@ -75,12 +77,6 @@ private:
 
 	/// Human-readable text listing the input variables during the last evaluation.
 	QString _variableTable;
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Expression selection");
-	Q_CLASSINFO("ModifierCategory", "Selection");
 };
 
 OVITO_END_INLINE_NAMESPACE

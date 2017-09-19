@@ -32,16 +32,6 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT ComputeBondLengthsModifier : public Modifier
 {
-public:
-
-	/// \brief Constructs a new instance of this class.
-	Q_INVOKABLE ComputeBondLengthsModifier(DataSet* dataset);
-
-	/// Modifies the input data in an immediate, preliminary way.
-	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-
-public:
-	
 	/// Give this modifier class its own metaclass.
 	class OOMetaClass : public Modifier::OOMetaClass 
 	{
@@ -54,13 +44,19 @@ public:
 		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
 	};
 
-private:
-
 	Q_OBJECT
-	OVITO_CLASS
+	OVITO_CLASS_META(ComputeBondLengthsModifier, OOMetaClass)
 
 	Q_CLASSINFO("DisplayName", "Compute bond lengths");
 	Q_CLASSINFO("ModifierCategory", "Modification");
+
+public:
+
+	/// \brief Constructs a new instance of this class.
+	Q_INVOKABLE ComputeBondLengthsModifier(DataSet* dataset);
+
+	/// Modifies the input data in an immediate, preliminary way.
+	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 };
 
 OVITO_END_INLINE_NAMESPACE

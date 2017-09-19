@@ -29,7 +29,7 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-
+IMPLEMENT_OVITO_CLASS(BondAngleAnalysisModifier);
 
 /******************************************************************************
 * Constructs the modifier object.

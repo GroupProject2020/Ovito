@@ -25,15 +25,14 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-
-DEFINE_RUNTIME_PROPERTY_FIELD(SlipSurface, storage, "DataStorage");
+IMPLEMENT_OVITO_CLASS(SlipSurface);
+DEFINE_PROPERTY_FIELD(SlipSurface, storage);
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
 SlipSurface::SlipSurface(DataSet* dataset) : PeriodicDomainDataObject(dataset)
 {
-
 }
 
 /******************************************************************************

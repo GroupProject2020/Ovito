@@ -167,8 +167,7 @@ void SliceModifierEditor::onAlignPlaneToView()
 	if(!vp) return;
 
 	// Get the object to world transformation for the currently selected object.
-	if(dataset()->selection()->nodes().empty()) return;
-	ObjectNode* node = dynamic_object_cast<ObjectNode>(dataset()->selection()->nodes().front());
+	ObjectNode* node = dynamic_object_cast<ObjectNode>(dataset()->selection()->firstNode());
 	if(!node) return;
 	const AffineTransformation& nodeTM = node->getWorldTransform(dataset()->animationSettings()->time(), interval);
 
@@ -202,8 +201,7 @@ void SliceModifierEditor::onAlignViewToPlane()
 	if(!vp) return;
 
 	// Get the object to world transformation for the currently selected object
-	if(dataset()->selection()->nodes().empty()) return;
-	ObjectNode* node = dynamic_object_cast<ObjectNode>(dataset()->selection()->nodes().front());
+	ObjectNode* node = dynamic_object_cast<ObjectNode>(dataset()->selection()->firstNode());
 	if(!node) return;
 	const AffineTransformation& nodeTM = node->getWorldTransform(dataset()->animationSettings()->time(), interval);
 

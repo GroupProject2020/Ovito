@@ -34,6 +34,9 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
  */
 class DislocationTypeListParameterUI : public RefTargetListParameterUI
 {
+	Q_OBJECT
+	OVITO_CLASS(DislocationTypeListParameterUI)
+
 public:
 
 	/// Constructor.
@@ -86,10 +89,7 @@ protected Q_SLOTS:
 private:
 
 	/// The modifier application whose results are being displayed.
-	DECLARE_REFERENCE_FIELD(DislocationAnalysisModifierApplication, modApp);
-
-	Q_OBJECT
-	OVITO_CLASS
+	DECLARE_REFERENCE_FIELD_FLAGS(DislocationAnalysisModifierApplication, modApp, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 };
 
 /**
@@ -97,6 +97,9 @@ private:
  */
 class DislocationAnalysisModifierEditor : public ModifierPropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(DislocationAnalysisModifierEditor)
+
 public:
 
 	/// Default constructor.
@@ -110,13 +113,8 @@ protected:
 private:
 
 	std::unique_ptr<DislocationTypeListParameterUI> _burgersFamilyListUI;
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-
-

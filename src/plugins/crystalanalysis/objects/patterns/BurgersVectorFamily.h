@@ -32,6 +32,9 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
  */
 class OVITO_CRYSTALANALYSIS_EXPORT BurgersVectorFamily : public RefTarget
 {
+	Q_OBJECT
+	OVITO_CLASS(BurgersVectorFamily)
+
 public:
 
 	/// \brief Constructs a new BurgersVectorFamily.
@@ -58,13 +61,8 @@ private:
 
 	/// This prototype Burgers vector of this family.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(Vector3, burgersVector, setBurgersVector);
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-
-

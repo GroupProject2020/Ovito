@@ -10,6 +10,9 @@
          xmlns:ns="http://docbook.org/ns/docbook">
   <title>Invert selection</title>
 
+  <warning><para>This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
+   development version of OVITO.</para></warning>
+
   <para>This modifier inverts the selection state of all particles. 
   Particles that are not selected are selected by this modifier and vice versa.</para>
 </section>

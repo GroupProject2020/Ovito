@@ -33,6 +33,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class CreateBondsModifierEditor : public ModifierPropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(CreateBondsModifierEditor)
+
 public:
 
 	/// Default constructor.
@@ -91,9 +94,6 @@ private:
 
 	QTableView* _pairCutoffTable;
 	PairCutoffTableModel* _pairCutoffTableModel;
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 OVITO_END_INLINE_NAMESPACE
@@ -101,5 +101,3 @@ OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

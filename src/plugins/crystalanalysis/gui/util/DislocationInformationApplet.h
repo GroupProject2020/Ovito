@@ -38,6 +38,11 @@ class DislocationInformationInputMode;		// defined below
  */
 class DislocationInformationApplet : public UtilityApplet
 {
+	Q_OBJECT
+	OVITO_CLASS(DislocationInformationApplet)
+
+	Q_CLASSINFO("DisplayName", "Inspect dislocations");
+	
 public:
 
 	/// Constructor.
@@ -60,11 +65,6 @@ private:
 	QTextEdit* _infoDisplay;
 	QWidget* _panel;
 	DislocationInformationInputMode* _inputMode;
-
-	Q_CLASSINFO("DisplayName", "Inspect dislocations");
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 /**

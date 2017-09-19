@@ -57,6 +57,9 @@ public:
  */
 class OVITO_CRYSTALANALYSIS_EXPORT SlipSurface : public PeriodicDomainDataObject
 {
+	Q_OBJECT
+	OVITO_CLASS(SlipSurface)
+
 public:
 
 	/// \brief Constructor.
@@ -96,9 +99,6 @@ private:
 
 	/// The internal data.
 	DECLARE_RUNTIME_PROPERTY_FIELD(std::shared_ptr<SlipSurfaceData>, storage, setStorage);
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 }	// End of namespace

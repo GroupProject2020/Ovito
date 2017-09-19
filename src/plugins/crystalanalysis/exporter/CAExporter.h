@@ -32,6 +32,9 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
  */
 class OVITO_CRYSTALANALYSIS_EXPORT CAExporter : public ParticleExporter
 {
+	Q_OBJECT
+	OVITO_CLASS(CAExporter)
+	
 public:
 
 	/// \brief Constructs a new instance of this class.
@@ -65,9 +68,6 @@ private:
 
 	/// Controls whether the DXA defect mesh is exported (in addition to the dislocation lines).
 	bool _meshExportEnabled = true;
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 }	// End of namespace

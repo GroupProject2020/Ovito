@@ -35,6 +35,24 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT BinAndReduceModifier : public Modifier
 {
+	/// Give this modifier class its own metaclass.
+	class BinAndReduceModifierClass : public ModifierClass 
+	{
+	public:
+
+		/// Inherit constructor from base metaclass.
+		using ModifierClass::ModifierClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
+
+
+	Q_OBJECT
+	OVITO_CLASS_META(BinAndReduceModifier, BinAndReduceModifierClass)
+	Q_CLASSINFO("DisplayName", "Bin and reduce");
+	Q_CLASSINFO("ModifierCategory", "Analysis");
+
 public:
 
     enum ReductionOperationType { RED_MEAN, RED_SUM, RED_SUM_VOL, RED_MIN, RED_MAX };
@@ -93,48 +111,34 @@ public:
         return (d >> 2) & 3;
     }
 
-public:
-	
-	/// Give this modifier class its own metaclass.
-	class OOMetaClass : public ModifierClass 
-	{
-	public:
-
-		/// Inherit constructor from base metaclass.
-		using ModifierClass::ModifierClass;
-
-		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
-	};
-
 private:
 
 	/// The particle property that serves as data source to be averaged.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(ParticlePropertyReference, sourceProperty, setSourceProperty);
 
 	/// Type of reduction operation
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(ReductionOperationType, reductionOperation, setReductionOperation);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(ReductionOperationType, reductionOperation, setReductionOperation, PROPERTY_FIELD_MEMORIZE);
 
 	/// Compute first derivative.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, firstDerivative, setFirstDerivative);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, firstDerivative, setFirstDerivative, PROPERTY_FIELD_MEMORIZE);
 
 	/// Bin alignment
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(BinDirectionType, binDirection, setBinDirection);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(BinDirectionType, binDirection, setBinDirection, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the number of spatial bins.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, numberOfBinsX, setNumberOfBinsX);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, numberOfBinsX, setNumberOfBinsX, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the number of spatial bins.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, numberOfBinsY, setNumberOfBinsY);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, numberOfBinsY, setNumberOfBinsY, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the whether the plotting range along the y-axis should be fixed.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, fixPropertyAxisRange, setFixPropertyAxisRange);
 
 	/// Controls the start value of the plotting y-axis.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, propertyAxisRangeStart, setPropertyAxisRangeStart);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, propertyAxisRangeStart, setPropertyAxisRangeStart, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the end value of the plotting y-axis.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, propertyAxisRangeEnd, setPropertyAxisRangeEnd);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, propertyAxisRangeEnd, setPropertyAxisRangeEnd, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls whether the modifier should take into account only selected particles.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, onlySelected, setOnlySelected);
@@ -154,12 +158,6 @@ private:
 	/// Stores the averaged data.
 	/// Use double precision numbers to avoid precision loss when adding up a large number of values.
 	QVector<double> _binData;
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Bin and reduce");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
 };
 
 OVITO_END_INLINE_NAMESPACE
@@ -171,5 +169,3 @@ Q_DECLARE_METATYPE(Ovito::Particles::BinAndReduceModifier::ReductionOperationTyp
 Q_DECLARE_METATYPE(Ovito::Particles::BinAndReduceModifier::BinDirectionType);
 Q_DECLARE_TYPEINFO(Ovito::Particles::BinAndReduceModifier::ReductionOperationType, Q_PRIMITIVE_TYPE);
 Q_DECLARE_TYPEINFO(Ovito::Particles::BinAndReduceModifier::BinDirectionType, Q_PRIMITIVE_TYPE);
-
-

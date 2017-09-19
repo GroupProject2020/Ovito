@@ -36,21 +36,21 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-
-DEFINE_FLAGS_PROPERTY_FIELD(DislocationAnalysisModifier, inputCrystalStructure, "CrystalStructure", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, maxTrialCircuitSize, "MaxTrialCircuitSize");
-DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, circuitStretchability, "CircuitStretchability");
-DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, outputInterfaceMesh, "OutputInterfaceMesh");
-DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, onlyPerfectDislocations, "OnlyPerfectDislocations");
-DEFINE_FLAGS_REFERENCE_FIELD(DislocationAnalysisModifier, patternCatalog, "PatternCatalog", PatternCatalog, PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_REFERENCE_FIELD(DislocationAnalysisModifier, dislocationDisplay, "DislocationDisplay", DislocationDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_REFERENCE_FIELD(DislocationAnalysisModifier, defectMeshDisplay, "DefectMeshDisplay", SurfaceMeshDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_REFERENCE_FIELD(DislocationAnalysisModifier, interfaceMeshDisplay, "InterfaceMeshDisplay", SurfaceMeshDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, defectMeshSmoothingLevel, "DefectMeshSmoothingLevel");
-DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, lineSmoothingEnabled, "LineSmoothingEnabled");
-DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, lineSmoothingLevel, "LineSmoothingLevel");
-DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, lineCoarseningEnabled, "LineCoarseningEnabled");
-DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, linePointInterval, "LinePointInterval");
+IMPLEMENT_OVITO_CLASS(DislocationAnalysisModifier);
+DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, inputCrystalStructure);
+DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, maxTrialCircuitSize);
+DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, circuitStretchability);
+DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, outputInterfaceMesh);
+DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, onlyPerfectDislocations);
+DEFINE_REFERENCE_FIELD(DislocationAnalysisModifier, patternCatalog);
+DEFINE_REFERENCE_FIELD(DislocationAnalysisModifier, dislocationDisplay);
+DEFINE_REFERENCE_FIELD(DislocationAnalysisModifier, defectMeshDisplay);
+DEFINE_REFERENCE_FIELD(DislocationAnalysisModifier, interfaceMeshDisplay);
+DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, defectMeshSmoothingLevel);
+DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, lineSmoothingEnabled);
+DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, lineSmoothingLevel);
+DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, lineCoarseningEnabled);
+DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, linePointInterval);
 SET_PROPERTY_FIELD_LABEL(DislocationAnalysisModifier, inputCrystalStructure, "Input crystal structure");
 SET_PROPERTY_FIELD_LABEL(DislocationAnalysisModifier, maxTrialCircuitSize, "Trial circuit length");
 SET_PROPERTY_FIELD_LABEL(DislocationAnalysisModifier, circuitStretchability, "Circuit stretchability");
@@ -67,7 +67,7 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(DislocationAnalysisModifier, defectMeshSmoo
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(DislocationAnalysisModifier, lineSmoothingLevel, IntegerParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(DislocationAnalysisModifier, linePointInterval, FloatParameterUnit, 0);
 
-
+IMPLEMENT_OVITO_CLASS(DislocationAnalysisModifierApplication);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -84,21 +84,6 @@ DislocationAnalysisModifier::DislocationAnalysisModifier(DataSet* dataset) : Str
 	_lineSmoothingLevel(1),
 	_linePointInterval(2.5)
 {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	// Create the display objects.
 	setDislocationDisplay(new DislocationDisplay(dataset));
 

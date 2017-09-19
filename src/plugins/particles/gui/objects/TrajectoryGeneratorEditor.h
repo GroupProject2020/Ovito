@@ -32,6 +32,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
  */
 class TrajectoryGeneratorEditor : public PropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(TrajectoryGeneratorEditor)
+
 public:
 
 	/// Constructor.
@@ -46,15 +49,8 @@ private Q_SLOTS:
 
 	/// Is called when the user clicks the 'Regenerate trajectory' button.
 	void onRegenerateTrajectory();
-
-private:
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

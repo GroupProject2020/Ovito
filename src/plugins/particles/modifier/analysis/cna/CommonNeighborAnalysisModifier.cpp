@@ -34,9 +34,9 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-
-DEFINE_FLAGS_PROPERTY_FIELD(CommonNeighborAnalysisModifier, cutoff, "Cutoff", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(CommonNeighborAnalysisModifier, mode, "CNAMode", PROPERTY_FIELD_MEMORIZE);
+IMPLEMENT_OVITO_CLASS(CommonNeighborAnalysisModifier);
+DEFINE_PROPERTY_FIELD(CommonNeighborAnalysisModifier, cutoff);
+DEFINE_PROPERTY_FIELD(CommonNeighborAnalysisModifier, mode);
 SET_PROPERTY_FIELD_LABEL(CommonNeighborAnalysisModifier, cutoff, "Cutoff radius");
 SET_PROPERTY_FIELD_LABEL(CommonNeighborAnalysisModifier, mode, "Mode");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CommonNeighborAnalysisModifier, cutoff, WorldParameterUnit, 0);
@@ -47,9 +47,6 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CommonNeighborAnalysisModifier, cutoff, Wor
 CommonNeighborAnalysisModifier::CommonNeighborAnalysisModifier(DataSet* dataset) : StructureIdentificationModifier(dataset),
 	_cutoff(3.2), _mode(AdaptiveCutoffMode)
 {
-
-
-
 	// Create the structure types.
 	createStructureType(OTHER, ParticleType::PredefinedStructureType::OTHER);
 	createStructureType(FCC, ParticleType::PredefinedStructureType::FCC);

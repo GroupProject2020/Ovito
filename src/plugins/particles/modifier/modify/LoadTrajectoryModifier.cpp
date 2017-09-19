@@ -31,8 +31,8 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 
-
-DEFINE_FLAGS_REFERENCE_FIELD(LoadTrajectoryModifier, trajectorySource, "TrajectorySource", PipelineObject, PROPERTY_FIELD_NO_SUB_ANIM);
+IMPLEMENT_OVITO_CLASS(LoadTrajectoryModifier);
+DEFINE_REFERENCE_FIELD(LoadTrajectoryModifier, trajectorySource);
 SET_PROPERTY_FIELD_LABEL(LoadTrajectoryModifier, trajectorySource, "Trajectory source");
 
 /******************************************************************************
@@ -40,8 +40,6 @@ SET_PROPERTY_FIELD_LABEL(LoadTrajectoryModifier, trajectorySource, "Trajectory s
 ******************************************************************************/
 LoadTrajectoryModifier::LoadTrajectoryModifier(DataSet* dataset) : Modifier(dataset)
 {
-
-
 	// Create the file source object, which will be responsible for loading
 	// and caching the trajectory data.
 	OORef<FileSource> fileSource(new FileSource(dataset));

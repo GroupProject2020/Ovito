@@ -31,8 +31,8 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 
-
-DEFINE_FLAGS_REFERENCE_FIELD(CombineParticleSetsModifier, secondaryDataSource, "SecondarySource", PipelineObject, PROPERTY_FIELD_NO_SUB_ANIM);
+IMPLEMENT_OVITO_CLASS(CombineParticleSetsModifier);
+DEFINE_REFERENCE_FIELD(CombineParticleSetsModifier, secondaryDataSource);
 SET_PROPERTY_FIELD_LABEL(CombineParticleSetsModifier, secondaryDataSource, "Secondary source");
 
 /******************************************************************************
@@ -40,8 +40,6 @@ SET_PROPERTY_FIELD_LABEL(CombineParticleSetsModifier, secondaryDataSource, "Seco
 ******************************************************************************/
 CombineParticleSetsModifier::CombineParticleSetsModifier(DataSet* dataset) : Modifier(dataset)
 {
-
-
 	// Create the file source object, which will be responsible for loading
 	// and caching the data to be merged.
 	OORef<FileSource> fileSource(new FileSource(dataset));

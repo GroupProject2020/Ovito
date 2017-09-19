@@ -32,6 +32,9 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
  */
 class SlipSurfaceDisplayEditor : public PropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(SlipSurfaceDisplayEditor)
+
 public:
 
 	/// Constructor.
@@ -41,9 +44,6 @@ protected:
 
 	/// Creates the user interface controls for the editor.
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 }	// End of namespace

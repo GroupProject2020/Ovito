@@ -40,6 +40,11 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
  */
 class OVITO_CRYSTALANALYSIS_EXPORT SlipSurfaceDisplay : public DisplayObject
 {
+	Q_OBJECT
+	OVITO_CLASS(SlipSurfaceDisplay)
+
+	Q_CLASSINFO("DisplayName", "Slip surfaces");
+
 public:
 
 	/// \brief Constructor.
@@ -123,15 +128,8 @@ protected:
 	/// The revision counter of this display object.
 	/// The counter is increment every time the object's parameters change.
 	unsigned int _revisionNumber = 0;
-	
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Slip surfaces");
 };
 
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-
-

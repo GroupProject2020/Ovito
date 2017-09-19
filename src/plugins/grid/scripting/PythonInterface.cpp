@@ -48,7 +48,7 @@ PYBIND11_PLUGIN(Grid)
 			"\n\n"
 			"**Modifier outputs:**"
 			"\n\n"
-			" * :py:attr:`DataCollection.surface <ovito.data.DataCollection.surface>` (:py:class:`~ovito.data.SurfaceMesh`):\n"
+			" * :py:class:`~ovito.data.SurfaceMesh`:\n"
 			"   The isosurface mesh generted by the modifier.\n"
 			)
 		.def_property("isolevel", &CreateIsosurfaceModifier::isolevel, &CreateIsosurfaceModifier::setIsolevel,

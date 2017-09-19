@@ -33,13 +33,13 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-
-DEFINE_FLAGS_PROPERTY_FIELD(PartitionMeshDisplay, surfaceColor, "SurfaceColor", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(PartitionMeshDisplay, showCap, "ShowCap", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(PartitionMeshDisplay, smoothShading, "SmoothShading");
-DEFINE_PROPERTY_FIELD(PartitionMeshDisplay, flipOrientation, "FlipOrientation");
-DEFINE_REFERENCE_FIELD(PartitionMeshDisplay, surfaceTransparencyController, "SurfaceTransparency", Controller);
-DEFINE_REFERENCE_FIELD(PartitionMeshDisplay, capTransparencyController, "CapTransparency", Controller);
+IMPLEMENT_OVITO_CLASS(PartitionMeshDisplay);
+DEFINE_PROPERTY_FIELD(PartitionMeshDisplay, surfaceColor);
+DEFINE_PROPERTY_FIELD(PartitionMeshDisplay, showCap);
+DEFINE_PROPERTY_FIELD(PartitionMeshDisplay, smoothShading);
+DEFINE_PROPERTY_FIELD(PartitionMeshDisplay, flipOrientation);
+DEFINE_REFERENCE_FIELD(PartitionMeshDisplay, surfaceTransparencyController);
+DEFINE_REFERENCE_FIELD(PartitionMeshDisplay, capTransparencyController);
 SET_PROPERTY_FIELD_LABEL(PartitionMeshDisplay, surfaceColor, "Free surface color");
 SET_PROPERTY_FIELD_LABEL(PartitionMeshDisplay, showCap, "Show cap polygons");
 SET_PROPERTY_FIELD_LABEL(PartitionMeshDisplay, smoothShading, "Smooth shading");
@@ -58,13 +58,6 @@ PartitionMeshDisplay::PartitionMeshDisplay(DataSet* dataset) : DisplayObject(dat
 	_smoothShading(true),
 	_flipOrientation(false)
 {
-
-
-
-
-
-
-
 	setSurfaceTransparencyController(ControllerManager::createFloatController(dataset));
 	setCapTransparencyController(ControllerManager::createFloatController(dataset));
 }

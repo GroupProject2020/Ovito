@@ -36,9 +36,9 @@
 
 namespace Ovito { namespace VoroTop {
 
-
-DEFINE_PROPERTY_FIELD(VoroTopModifier, useRadii, "UseRadii");
-DEFINE_PROPERTY_FIELD(VoroTopModifier, filterFile, "FilterFile");
+IMPLEMENT_OVITO_CLASS(VoroTopModifier);
+DEFINE_PROPERTY_FIELD(VoroTopModifier, useRadii);
+DEFINE_PROPERTY_FIELD(VoroTopModifier, filterFile);
 SET_PROPERTY_FIELD_LABEL(VoroTopModifier, useRadii, "Use particle radii");
 SET_PROPERTY_FIELD_LABEL(VoroTopModifier, filterFile, "Filter file");
 
@@ -47,9 +47,7 @@ SET_PROPERTY_FIELD_LABEL(VoroTopModifier, filterFile, "Filter file");
  ******************************************************************************/
 VoroTopModifier::VoroTopModifier(DataSet* dataset) : StructureIdentificationModifier(dataset),
        _useRadii(false)
-{
-    
-    
+{   
 }
 
 /******************************************************************************

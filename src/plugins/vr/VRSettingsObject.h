@@ -34,14 +34,17 @@ using namespace Ovito;
  */
 class VRSettingsObject : public RefTarget
 {
-	OVITO_CLASS(VRSettingsObject)
 	Q_OBJECT
+	OVITO_CLASS(VRSettingsObject)
 	
 public:
 
 	/// \brief Default constructor.
 	Q_INVOKABLE VRSettingsObject(DataSet* dataset) : RefTarget(dataset),
-		_supersamplingEnabled(true), _scaleFactor(1e-1), _showFloor(false), _flyingMode(false), 
+		_supersamplingEnabled(true), 
+		_scaleFactor(1e-1), 
+		_showFloor(false), 
+		_flyingMode(false), 
 		_translation(Vector3::Zero()),
 		_rotationZ(0),
 		_modelCenter(Vector3::Zero()),
@@ -60,7 +63,7 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, supersamplingEnabled, setSupersamplingEnabled);
 
 	/// The scaling applied to the model.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, scaleFactor, setScaleFactor);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, scaleFactor, setScaleFactor, PROPERTY_FIELD_MEMORIZE);
 
 	/// The translation applied to the model.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(Vector3, translation, setTranslation);
@@ -75,7 +78,7 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, showFloor, setShowFloor);
 
 	/// Activates the flying mode.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, flyingMode, setFlyingMode);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, flyingMode, setFlyingMode, PROPERTY_FIELD_MEMORIZE);
 
 	/// Current flying position.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(AffineTransformation, viewerTM, setViewerTM);

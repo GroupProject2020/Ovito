@@ -25,9 +25,9 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-
-DEFINE_PROPERTY_FIELD(PartitionMesh, spaceFillingRegion, "SpaceFillingRegion");
-DEFINE_RUNTIME_PROPERTY_FIELD(PartitionMesh, storage, "DataStorage");
+IMPLEMENT_OVITO_CLASS(PartitionMesh);
+DEFINE_PROPERTY_FIELD(PartitionMesh, spaceFillingRegion);
+DEFINE_PROPERTY_FIELD(PartitionMesh, storage);
 
 /// Holds a shared, empty instance of the PartitionMeshData class, 
 /// which is used in places where a default storage is needed.
@@ -40,8 +40,6 @@ static const std::shared_ptr<PartitionMeshData> defaultStorage = std::make_share
 PartitionMesh::PartitionMesh(DataSet* dataset) : PeriodicDomainDataObject(dataset),
 		_spaceFillingRegion(0), _storage(defaultStorage)
 {
-
-
 }
 
 /******************************************************************************

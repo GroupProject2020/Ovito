@@ -34,6 +34,11 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT BondAngleAnalysisModifier : public StructureIdentificationModifier
 {
+	Q_OBJECT
+	OVITO_CLASS(BondAngleAnalysisModifier)
+	Q_CLASSINFO("DisplayName", "Bond-angle analysis");
+	Q_CLASSINFO("ModifierCategory", "Analysis");
+
 public:
 
 	/// The structure types recognized by the bond angle analysis.
@@ -86,12 +91,6 @@ private:
 
 	/// Determines the coordination structure of a single particle using the bond-angle analysis method.
 	static StructureType determineStructure(NearestNeighborFinder& neighFinder, size_t particleIndex, const QVector<bool>& typesToIdentify);
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Bond-angle analysis");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
 };
 
 OVITO_END_INLINE_NAMESPACE

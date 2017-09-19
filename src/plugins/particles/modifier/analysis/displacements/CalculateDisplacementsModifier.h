@@ -35,6 +35,12 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT CalculateDisplacementsModifier : public ReferenceConfigurationModifier
 {
+	Q_OBJECT
+	OVITO_CLASS(CalculateDisplacementsModifier)
+
+	Q_CLASSINFO("DisplayName", "Displacement vectors");
+	Q_CLASSINFO("ModifierCategory", "Analysis");
+
 public:
 
 	/// Constructor.
@@ -104,13 +110,7 @@ private:
 	};
 
 	/// The vector display object for rendering the displacement vectors.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(VectorDisplay, vectorDisplay, setVectorDisplay);
-	
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Displacement vectors");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(VectorDisplay, vectorDisplay, setVectorDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
 };
 
 OVITO_END_INLINE_NAMESPACE

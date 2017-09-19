@@ -39,6 +39,9 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
  */
 class OVITO_CRYSTALANALYSIS_EXPORT CAImporter : public ParticleImporter
 {
+	Q_OBJECT
+	OVITO_CLASS(CAImporter)
+
 public:
 
 	/// \brief Constructs a new instance of this class.
@@ -190,11 +193,6 @@ protected:
 		/// Scans the given file for source frames.
 		virtual void discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames) override;	
 	};
-
-private:
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 }	// End of namespace

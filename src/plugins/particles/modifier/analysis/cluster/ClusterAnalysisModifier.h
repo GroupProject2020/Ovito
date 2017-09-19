@@ -36,6 +36,24 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT ClusterAnalysisModifier : public AsynchronousModifier
 {
+	/// Give this modifier class its own metaclass.
+	class ClusterAnalysisModifierClass : public AsynchronousModifier::OOMetaClass 
+	{
+	public:
+
+		/// Inherit constructor from base metaclass.
+		using AsynchronousModifier::OOMetaClass::OOMetaClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
+
+	Q_OBJECT
+	OVITO_CLASS_META(ClusterAnalysisModifier, ClusterAnalysisModifierClass)
+
+	Q_CLASSINFO("DisplayName", "Cluster analysis");
+	Q_CLASSINFO("ModifierCategory", "Analysis");
+
 public:
 
 	enum NeighborMode {
@@ -51,20 +69,6 @@ protected:
 
 	/// Creates a computation engine that will compute the modifier's results.
 	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-
-public:
-	
-	/// Give this modifier class its own metaclass.
-	class OOMetaClass : public AsynchronousModifier::OOMetaClass 
-	{
-	public:
-
-		/// Inherit constructor from base metaclass.
-		using AsynchronousModifier::OOMetaClass::OOMetaClass;
-
-		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
-	};
 
 private:
 
@@ -182,22 +186,16 @@ private:
 	};
 
 	/// The neighbor mode.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(NeighborMode, neighborMode, setNeighborMode);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(NeighborMode, neighborMode, setNeighborMode, PROPERTY_FIELD_MEMORIZE);
 
 	/// The cutoff radius for the distance-based neighbor criterion.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, cutoff, setCutoff);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, cutoff, setCutoff, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls whether analysis should take into account only selected particles.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, onlySelectedParticles, setOnlySelectedParticles);
 
 	/// Controls the sorting of cluster IDs by cluster size.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, sortBySize, setSortBySize);
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Cluster analysis");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
 };
 
 OVITO_END_INLINE_NAMESPACE

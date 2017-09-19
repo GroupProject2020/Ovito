@@ -33,7 +33,7 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-
+IMPLEMENT_OVITO_CLASS(DislocationInformationApplet);
 
 /******************************************************************************
 * Shows the UI of the utility in the given RolloutContainer.

@@ -28,13 +28,12 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-
-DEFINE_VECTOR_REFERENCE_FIELD(StructureIdentificationModifier, structureTypes, "StructureTypes", ElementType);
-DEFINE_PROPERTY_FIELD(StructureIdentificationModifier, onlySelectedParticles, "OnlySelectedParticles");
+IMPLEMENT_OVITO_CLASS(StructureIdentificationModifier);
+IMPLEMENT_OVITO_CLASS(StructureIdentificationModifierApplication);
+DEFINE_REFERENCE_FIELD(StructureIdentificationModifier, structureTypes);
+DEFINE_PROPERTY_FIELD(StructureIdentificationModifier, onlySelectedParticles);
 SET_PROPERTY_FIELD_LABEL(StructureIdentificationModifier, structureTypes, "Structure types");
 SET_PROPERTY_FIELD_LABEL(StructureIdentificationModifier, onlySelectedParticles, "Use only selected particles");
-
-
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -42,8 +41,6 @@ SET_PROPERTY_FIELD_LABEL(StructureIdentificationModifier, onlySelectedParticles,
 StructureIdentificationModifier::StructureIdentificationModifier(DataSet* dataset) : AsynchronousModifier(dataset),
 		_onlySelectedParticles(false)
 {
-
-
 }
 
 /******************************************************************************

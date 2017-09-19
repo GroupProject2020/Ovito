@@ -54,11 +54,11 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-QMutex NetCDFImporter::_netcdfMutex;
-
-
-DEFINE_PROPERTY_FIELD(NetCDFImporter, useCustomColumnMapping, "UseCustomColumnMapping");
+IMPLEMENT_OVITO_CLASS(NetCDFImporter);
+DEFINE_PROPERTY_FIELD(NetCDFImporter, useCustomColumnMapping);
 SET_PROPERTY_FIELD_LABEL(NetCDFImporter, useCustomColumnMapping, "Custom file column mapping");
+
+QMutex NetCDFImporter::_netcdfMutex;
 
 // Convert full tensor to Voigt tensor
 template<typename T>

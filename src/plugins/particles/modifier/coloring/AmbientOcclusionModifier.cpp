@@ -34,10 +34,10 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Coloring)
 
-
-DEFINE_PROPERTY_FIELD(AmbientOcclusionModifier, intensity, "Intensity");
-DEFINE_PROPERTY_FIELD(AmbientOcclusionModifier, samplingCount, "SamplingCount");
-DEFINE_PROPERTY_FIELD(AmbientOcclusionModifier, bufferResolution, "BufferResolution");
+IMPLEMENT_OVITO_CLASS(AmbientOcclusionModifier);
+DEFINE_PROPERTY_FIELD(AmbientOcclusionModifier, intensity);
+DEFINE_PROPERTY_FIELD(AmbientOcclusionModifier, samplingCount);
+DEFINE_PROPERTY_FIELD(AmbientOcclusionModifier, bufferResolution);
 SET_PROPERTY_FIELD_LABEL(AmbientOcclusionModifier, intensity, "Shading intensity");
 SET_PROPERTY_FIELD_LABEL(AmbientOcclusionModifier, samplingCount, "Number of exposure samples");
 SET_PROPERTY_FIELD_LABEL(AmbientOcclusionModifier, bufferResolution, "Render buffer resolution");
@@ -51,9 +51,6 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(AmbientOcclusionModifier, bufferResolution, I
 AmbientOcclusionModifier::AmbientOcclusionModifier(DataSet* dataset) : AsynchronousModifier(dataset),
 	_intensity(0.7f), _samplingCount(40), _bufferResolution(3)
 {
-
-
-
 }
 
 /******************************************************************************

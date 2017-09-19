@@ -32,6 +32,9 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
  */
 class GrainSegmentationModifierEditor : public ParticleModifierEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(GrainSegmentationModifierEditor)
+
 public:
 
 	/// Default constructor.
@@ -41,15 +44,8 @@ protected:
 
 	/// Creates the user interface controls for the editor.
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
-
-private:
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-
-

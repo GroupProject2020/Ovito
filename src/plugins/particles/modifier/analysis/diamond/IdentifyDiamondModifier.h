@@ -32,6 +32,12 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT IdentifyDiamondModifier : public StructureIdentificationModifier
 {
+	Q_OBJECT
+	OVITO_CLASS(IdentifyDiamondModifier)
+
+	Q_CLASSINFO("DisplayName", "Identify diamond structure");
+	Q_CLASSINFO("ModifierCategory", "Analysis");
+
 public:
 
 	/// The structure types recognized by the modifier.
@@ -84,12 +90,6 @@ private:
 		/// Computes the modifier's results.
 		virtual void perform() override;
 	};
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Identify diamond structure");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
 };
 
 OVITO_END_INLINE_NAMESPACE

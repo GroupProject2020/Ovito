@@ -30,8 +30,8 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 
-
-
+IMPLEMENT_OVITO_CLASS(ParticlesDeleteSelectedModifierDelegate);
+IMPLEMENT_OVITO_CLASS(BondsDeleteSelectedModifierDelegate);
 
 /******************************************************************************
 * Determines whether this delegate can handle the given input data.

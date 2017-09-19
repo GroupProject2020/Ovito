@@ -32,6 +32,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO
  */
 class CreateTrajectoryApplet : public UtilityApplet
 {
+	Q_OBJECT
+	OVITO_CLASS(CreateTrajectoryApplet)
+
 public:
 
 	/// Constructor.
@@ -62,9 +65,6 @@ private:
 	SpinnerWidget* _everyNthFrameSpinner;
 
 	Q_CLASSINFO("DisplayName", "Create trajectory lines");
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 OVITO_END_INLINE_NAMESPACE

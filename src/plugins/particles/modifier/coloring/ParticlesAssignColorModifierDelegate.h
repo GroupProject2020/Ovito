@@ -35,18 +35,8 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class ParticlesAssignColorModifierDelegate : public AssignColorModifierDelegate
 {
-public:
-
-	/// Constructor.
-	Q_INVOKABLE ParticlesAssignColorModifierDelegate(DataSet* dataset) : AssignColorModifierDelegate(dataset) {}
-
-	/// \brief Returns the class of properties that can serve as input for the color coding.
-	virtual const PropertyClass& propertyClass() const override { return ParticleProperty::OOClass(); }
-
-public:
-	
 	/// Give the modifier delegate its own metaclass.
-	class OOMetaClass : public AssignColorModifierDelegate::OOMetaClass 
+	class ParticlesAssignColorModifierDelegateClass : public AssignColorModifierDelegate::OOMetaClass 
 	{
 	public:
 
@@ -62,17 +52,23 @@ public:
 		virtual QString pythonDataName() const override { return QStringLiteral("particles"); }
 	};
 	
+	Q_OBJECT
+	OVITO_CLASS_META(ParticlesAssignColorModifierDelegate, ParticlesAssignColorModifierDelegateClass)
+
+	Q_CLASSINFO("DisplayName", "Particles");
+
+public:
+
+	/// Constructor.
+	Q_INVOKABLE ParticlesAssignColorModifierDelegate(DataSet* dataset) : AssignColorModifierDelegate(dataset) {}
+
+	/// \brief Returns the class of properties that can serve as input for the color coding.
+	virtual const PropertyClass& propertyClass() const override { return ParticleProperty::OOClass(); }
+
 protected:
 	
 	/// \brief Creates the property object that will receive the computed colors.
 	virtual PropertyObject* createOutputColorProperty(TimePoint time, InputHelper& ih, OutputHelper& oh, bool initializeWithExistingColors) override;	
-	
-private:
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Particles");
 };
 
 /**
@@ -80,18 +76,8 @@ private:
  */
 class ParticleVectorsAssignColorModifierDelegate : public AssignColorModifierDelegate
 {
-public:
-
-	/// Constructor.
-	Q_INVOKABLE ParticleVectorsAssignColorModifierDelegate(DataSet* dataset) : AssignColorModifierDelegate(dataset) {}
-
-	/// \brief Returns the class of properties that can serve as input for the color coding.
-	virtual const PropertyClass& propertyClass() const override { return ParticleProperty::OOClass(); }
-
-public:
-	
 	/// Give the modifier delegate its own metaclass.
-	class OOMetaClass : public AssignColorModifierDelegate::OOMetaClass 
+	class ParticleVectorsAssignColorModifierDelegateClass : public AssignColorModifierDelegate::OOMetaClass 
 	{
 	public:
 
@@ -105,17 +91,23 @@ public:
 		virtual QString pythonDataName() const override { return QStringLiteral("vectors"); }
 	};
 
+	Q_OBJECT
+	OVITO_CLASS_META(ParticleVectorsAssignColorModifierDelegate, ParticleVectorsAssignColorModifierDelegateClass)
+
+	Q_CLASSINFO("DisplayName", "Particle vectors");
+
+public:
+
+	/// Constructor.
+	Q_INVOKABLE ParticleVectorsAssignColorModifierDelegate(DataSet* dataset) : AssignColorModifierDelegate(dataset) {}
+
+	/// \brief Returns the class of properties that can serve as input for the color coding.
+	virtual const PropertyClass& propertyClass() const override { return ParticleProperty::OOClass(); }
+
 protected:
 	
 	/// \brief Creates the property object that will receive the computed colors.
 	virtual PropertyObject* createOutputColorProperty(TimePoint time, InputHelper& ih, OutputHelper& oh, bool initializeWithExistingColors) override;	
-	
-private:
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Particle vectors");
 };
 
 /**
@@ -123,18 +115,8 @@ private:
  */
 class BondsAssignColorModifierDelegate : public AssignColorModifierDelegate
 {
-public:
-
-	/// Constructor.
-	Q_INVOKABLE BondsAssignColorModifierDelegate(DataSet* dataset) : AssignColorModifierDelegate(dataset) {}
-	
-	/// \brief Returns the class of properties that can serve as input for the color coding.
-	virtual const PropertyClass& propertyClass() const override { return BondProperty::OOClass(); }
-
-public:
-
 	/// Give the modifier delegate its own metaclass.
-	class OOMetaClass : public AssignColorModifierDelegate::OOMetaClass 
+	class BondsAssignColorModifierDelegateClass : public AssignColorModifierDelegate::OOMetaClass 
 	{
 	public:
 
@@ -150,17 +132,23 @@ public:
 		virtual QString pythonDataName() const override { return QStringLiteral("bonds"); }
 	};	
 
+	Q_OBJECT
+	OVITO_CLASS_META(BondsAssignColorModifierDelegate, BondsAssignColorModifierDelegateClass)
+
+	Q_CLASSINFO("DisplayName", "Bonds");
+
+public:
+
+	/// Constructor.
+	Q_INVOKABLE BondsAssignColorModifierDelegate(DataSet* dataset) : AssignColorModifierDelegate(dataset) {}
+	
+	/// \brief Returns the class of properties that can serve as input for the color coding.
+	virtual const PropertyClass& propertyClass() const override { return BondProperty::OOClass(); }
+
 protected:
 	
 	/// \brief Creates the property object that will receive the computed colors.
 	virtual PropertyObject* createOutputColorProperty(TimePoint time, InputHelper& ih, OutputHelper& oh, bool initializeWithExistingColors) override;	
-	
-private:
-
-	Q_OBJECT
-	OVITO_CLASS
-
-	Q_CLASSINFO("DisplayName", "Bonds");
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -33,6 +33,9 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
  */
 class OVITO_CRYSTALANALYSIS_EXPORT ClusterGraphObject : public DataObject
 {
+	Q_OBJECT
+	OVITO_CLASS(ClusterGraphObject)
+	
 public:
 
 	/// \brief Constructor.
@@ -57,9 +60,6 @@ private:
 
 	/// The internal data.
 	DECLARE_RUNTIME_PROPERTY_FIELD(std::shared_ptr<ClusterGraph>, storage, setStorage);
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 }	// End of namespace

@@ -33,6 +33,9 @@ namespace Ovito { namespace VoroTop {
  */
 class VoroTopModifierEditor : public ModifierPropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(VoroTopModifierEditor)
+
 public:
 
 	/// Default constructor.
@@ -47,11 +50,6 @@ private Q_SLOTS:
 
 	/// Is called when the user presses the 'Load filter' button.
 	void onLoadFilter();
-
-private:
-
-	Q_OBJECT
-	OVITO_CLASS
 };
 
 }	// End of namespace

@@ -82,6 +82,11 @@ public:
 			clear();
 	}
 
+	/// \brief Returns the first scene node from the selection, or NULL if the set is empty.
+	SceneNode* firstNode() const {
+		return nodes().empty() ? nullptr : nodes().front();
+	}
+
 Q_SIGNALS:
 
 	/// \brief Is emitted when nodes have been added or removed from the selection set.

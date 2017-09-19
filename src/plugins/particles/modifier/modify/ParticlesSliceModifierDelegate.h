@@ -33,18 +33,8 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class ParticlesSliceModifierDelegate : public SliceModifierDelegate
 {
-public:
-
-	/// Constructor.
-	Q_INVOKABLE ParticlesSliceModifierDelegate(DataSet* dataset) : SliceModifierDelegate(dataset) {}
-
-	/// Applies a slice operation to a data object.
-	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp) override;
-
-public:
-
 	/// Give the modifier delegate its own metaclass.
-	class OOMetaClass : public SliceModifierDelegate::OOMetaClass 
+	class ParticlesSliceModifierDelegateClass : public SliceModifierDelegate::OOMetaClass 
 	{
 	public:
 
@@ -60,12 +50,18 @@ public:
 		virtual QString pythonDataName() const override { return QStringLiteral("particles"); }
 	};
 
-private:
-
 	Q_OBJECT
-	OVITO_CLASS
+	OVITO_CLASS_META(ParticlesSliceModifierDelegate, ParticlesSliceModifierDelegateClass)
 
 	Q_CLASSINFO("DisplayName", "Particles");
+
+public:
+
+	/// Constructor.
+	Q_INVOKABLE ParticlesSliceModifierDelegate(DataSet* dataset) : SliceModifierDelegate(dataset) {}
+
+	/// Applies a slice operation to a data object.
+	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp) override;
 };
 
 OVITO_END_INLINE_NAMESPACE

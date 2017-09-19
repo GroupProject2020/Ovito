@@ -33,11 +33,11 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Selection)
 
-
-DEFINE_FLAGS_PROPERTY_FIELD(ExpandSelectionModifier, mode, "Mode", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(ExpandSelectionModifier, cutoffRange, "Cutoff", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(ExpandSelectionModifier, numNearestNeighbors, "NumNearestNeighbors", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(ExpandSelectionModifier, numberOfIterations, "NumIterations");
+IMPLEMENT_OVITO_CLASS(ExpandSelectionModifier);
+DEFINE_PROPERTY_FIELD(ExpandSelectionModifier, mode);
+DEFINE_PROPERTY_FIELD(ExpandSelectionModifier, cutoffRange);
+DEFINE_PROPERTY_FIELD(ExpandSelectionModifier, numNearestNeighbors);
+DEFINE_PROPERTY_FIELD(ExpandSelectionModifier, numberOfIterations);
 SET_PROPERTY_FIELD_LABEL(ExpandSelectionModifier, mode, "Mode");
 SET_PROPERTY_FIELD_LABEL(ExpandSelectionModifier, cutoffRange, "Cutoff distance");
 SET_PROPERTY_FIELD_LABEL(ExpandSelectionModifier, numNearestNeighbors, "N");
@@ -50,12 +50,11 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ExpandSelectionModifier, numberOfIterations
 * Constructs the modifier object.
 ******************************************************************************/
 ExpandSelectionModifier::ExpandSelectionModifier(DataSet* dataset) : AsynchronousModifier(dataset),
-	_mode(CutoffRange), _cutoffRange(3.2), _numNearestNeighbors(1), _numberOfIterations(1)
+	_mode(CutoffRange), 
+	_cutoffRange(3.2), 
+	_numNearestNeighbors(1), 
+	_numberOfIterations(1)
 {
-
-
-
-
 }
 
 /******************************************************************************

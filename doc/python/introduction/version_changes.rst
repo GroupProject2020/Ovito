@@ -86,8 +86,11 @@ as destination for the atoms data, e.g. a :py:class:`~ovito.pipeline.StaticSourc
 Particle and bond properties
 ----------------------------------------
 
-Access to standard particle and bond properties via Python named attributes has been deprecated. Instead, they 
-should be looked up by name::
+The :py:class:`~ovito.data.ParticleProperty` and :py:class:`~ovito.data.BondProperty` classes now have a common base class,
+:py:class:`~ovito.data.Property`, which provides the functionality common to all property types in OVITO.
+
+Access to *standard* particle and bond properties via Python named attributes has been deprecated. Instead, they 
+should be looked up by name, similar to *user-defined* properties::
 
     data = pipeline.compute()
     pos_property = data.particle_properties.position     # <-- Deprecated
@@ -109,15 +112,15 @@ interface to some extent. You can turn them into true Numpy arrays if needed in 
     pos_array = numpy.asarray(pos_property)
     pos_array = pos_property[...]
 
-In both cases no data copy is made. The Numpy array will be a view of the internal memory of the :py:class:`~ovito.data.ParticleProperty`.
-To modify the data of a :py:class:`~ovito.data.ParticleProperty`, write access must be explicitly requested using a Python ``with`` 
+In both cases no data copy is made. The Numpy array will be a view of the internal memory of the :py:class:`~ovito.data.Property`.
+To modify the data of a :py:class:`~ovito.data.Property`, write access must be explicitly requested using a Python ``with`` 
 statement::
 
     with pos_property.modify() as pos_array:
         pos_array[0] = (0,0,0)
 
-The :py:meth:`!modify` method used in the ``with`` statement returns a temporary Numpy array that is writable and which allows
-modifying the internal data of the :py:class:`~ovito.data.ParticleProperty`. The old :py:attr:`!.marray` accessor and a 
+The :py:meth:`~ovito.data.Property.modify` method used in the ``with`` statement returns a temporary Numpy array that is writable and which allows
+modifying the internal data of the :py:class:`~ovito.data.Property`. The old :py:attr:`!.marray` accessor and a 
 call to the deprecated :py:meth:`!ParticleProperty.changed` method to finalize the write transaction are no longer needed.
 
 Simulation cells

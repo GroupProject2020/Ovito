@@ -16,7 +16,7 @@ do many things that are already familiar from the graphical user interface (and 
 But first let's take a look at some essential concepts of OVITO's data model and the scripting framework. 
 
 .. warning::
-   This section of manual is out of date! It has not been updated yet to reflect the changes made in the current
+   This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
    development version of OVITO.
 
 ------------------------------------

@@ -34,13 +34,14 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-
-DEFINE_FLAGS_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, rmsdCutoff, "RMSDCutoff", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputRmsd, "OutputRmsd");
-DEFINE_FLAGS_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputInteratomicDistance, "OutputInteratomicDistance", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputOrientation, "OutputOrientation", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputDeformationGradient, "OutputDeformationGradient");
-DEFINE_FLAGS_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputAlloyTypes, "OutputAlloyTypes", PROPERTY_FIELD_MEMORIZE);
+IMPLEMENT_OVITO_CLASS(PolyhedralTemplateMatchingModifier);
+IMPLEMENT_OVITO_CLASS(PolyhedralTemplateMatchingModifierApplication);
+DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, rmsdCutoff);
+DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputRmsd);
+DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputInteratomicDistance);
+DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputOrientation);
+DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputDeformationGradient);
+DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputAlloyTypes);
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, rmsdCutoff, "RMSD cutoff");
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputRmsd, "Output RMSD values");
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputInteratomicDistance, "Output interatomic distance");
@@ -48,8 +49,6 @@ SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputOrientation, 
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputDeformationGradient, "Output deformation gradients");
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputAlloyTypes, "Output alloy types");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(PolyhedralTemplateMatchingModifier, rmsdCutoff, FloatParameterUnit, 0);
-
-
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -62,13 +61,6 @@ PolyhedralTemplateMatchingModifier::PolyhedralTemplateMatchingModifier(DataSet* 
 		_outputDeformationGradient(false), 
 		_outputAlloyTypes(false)
 {
-
-
-
-
-
-
-
 	// Define the structure types.
 	createStructureType(OTHER, ParticleType::PredefinedStructureType::OTHER);
 	createStructureType(FCC, ParticleType::PredefinedStructureType::FCC);
