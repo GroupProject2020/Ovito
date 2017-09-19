@@ -21,8 +21,6 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/modifier/ConstructSurfaceModifier.h>
-#include <plugins/crystalanalysis/modifier/SmoothDislocationsModifier.h>
-#include <plugins/crystalanalysis/modifier/SmoothSurfaceModifier.h>
 #include <plugins/crystalanalysis/modifier/dxa/DislocationAnalysisModifier.h>
 #include <plugins/crystalanalysis/modifier/dxa/StructureAnalysis.h>
 #include <plugins/crystalanalysis/modifier/elasticstrain/ElasticStrainModifier.h>
@@ -39,7 +37,7 @@
 #include <plugins/crystalanalysis/exporter/CAExporter.h>
 #include <plugins/pyscript/binding/PythonBinding.h>
 #include <plugins/particles/scripting/PythonBinding.h>
-#include <core/plugins/PluginManager.h>
+#include <core/app/PluginManager.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
@@ -55,8 +53,8 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 
 	py::module m("CrystalAnalysis");
 
-	ovito_class<ConstructSurfaceModifier, AsynchronousParticleModifier>(m,
-			":Base class: :py:class:`ovito.modifiers.Modifier`\n\n"
+	ovito_class<ConstructSurfaceModifier, AsynchronousModifier>(m,
+			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"Constructs the geometric surface of a solid made of point-like particles. The modifier generates "
 			"a :py:class:`~ovito.data.SurfaceMesh`, which is a closed manifold consisting of triangles. It also computes the total "
 			"surface area and the volume of the region enclosed by the surface mesh."
@@ -69,9 +67,8 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 			"\n\n"
 			"**Modifier outputs:**"
 			"\n\n"
-			" * :py:attr:`DataCollection.surface <ovito.data.DataCollection.surface>` (:py:class:`~ovito.data.SurfaceMesh`):\n"
-			"   This property of the output data collection provides access to the surface mesh computed by the modifier.\n"
-			"   See the example script below.\n"
+			" * :py:class:`~ovito.data.SurfaceMesh`:\n"
+			"   The surface mesh computed by the modifier.\n"
 			" * ``ConstructSurfaceMesh.surface_area`` (:py:attr:`attribute <ovito.data.DataCollection.attributes>`):\n"
 			"   The area of the surface mesh.\n"
 			" * ``ConstructSurfaceMesh.solid_volume`` (:py:attr:`attribute <ovito.data.DataCollection.attributes>`):\n"
@@ -106,7 +103,7 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 	;
 
 	auto DislocationAnalysisModifier_py = ovito_class<DislocationAnalysisModifier, StructureIdentificationModifier>(m,
-			":Base class: :py:class:`ovito.modifiers.Modifier`\n\n"
+			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"This analysis modifier extracts all dislocations in a crystal and converts them to continuous line segments. "
 			"The computational method behind this is called *Dislocation Extraction Algorithm* (DXA) and is described "
 			"in the paper `[MSMSE 20 (2012), 085007] <http://stacks.iop.org/0965-0393/20/085007>`_."
@@ -169,13 +166,6 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 				"  * ``DislocationAnalysisModifier.Lattice.HexagonalDiamond``\n"
 				"\n\n"
 				":Default: ``DislocationAnalysisModifier.Lattice.FCC``\n")
-#if 0
-		.def_property("reconstruct_edge_vectors", &DislocationAnalysisModifier::reconstructEdgeVectors, &DislocationAnalysisModifier::setReconstructEdgeVectors,
-				"Flag that enables the reconstruction of ideal lattice vectors in highly distorted crystal regions. This algorithm step is supposed to improve "
-				"the identification of dislocations in some situations, but it may have undesirable side effect. Use with care, only for experts!"
-				"\n\n"
-				":Default: False\n")
-#endif
 		.def_property("line_smoothing_enabled", &DislocationAnalysisModifier::lineSmoothingEnabled, &DislocationAnalysisModifier::setLineSmoothingEnabled,
 				"Flag that enables the smoothing of extracted dislocation lines after they have been coarsened."
 				"\n\n"
@@ -216,7 +206,7 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 	;
 
 	ovito_class<ElasticStrainModifier, StructureIdentificationModifier>(m,
-			":Base class: :py:class:`ovito.modifiers.Modifier`\n\n"
+			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"This modifier computes the atomic-level elastic strain and deformation gradient tensors in crystalline systems. "
 			"\n\n"
 			"The modifier first performs an identification of the local crystal structure and stores the results in the ``Structure Type`` particle "
@@ -309,22 +299,10 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 	;
 #endif
 
-	ovito_class<SmoothDislocationsModifier, Modifier>(m)
-		.def_property("smoothingEnabled", &SmoothDislocationsModifier::smoothingEnabled, &SmoothDislocationsModifier::setSmoothingEnabled)
-		.def_property("smoothingLevel", &SmoothDislocationsModifier::smoothingLevel, &SmoothDislocationsModifier::setSmoothingLevel)
-		.def_property("coarseningEnabled", &SmoothDislocationsModifier::coarseningEnabled, &SmoothDislocationsModifier::setCoarseningEnabled)
-		.def_property("linePointInterval", &SmoothDislocationsModifier::linePointInterval, &SmoothDislocationsModifier::setLinePointInterval)
+	ovito_class<CAImporter, FileSourceImporter>{m}
 	;
 
-	ovito_class<SmoothSurfaceModifier, Modifier>(m)
-		.def_property("smoothingLevel", &SmoothSurfaceModifier::smoothingLevel, &SmoothSurfaceModifier::setSmoothingLevel)
-	;
-
-	ovito_class<CAImporter, FileSourceImporter>(m)
-		.def_property("loadParticles", &CAImporter::loadParticles, &CAImporter::setLoadParticles)
-	;
-
-	ovito_class<CAExporter, FileExporter>(m)
+	ovito_class<CAExporter, FileExporter>{m}
 		.def_property("export_mesh", &CAExporter::meshExportEnabled, &CAExporter::setMeshExportEnabled)
 	;
 
@@ -375,7 +353,7 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 		.value("ByCharacter", DislocationDisplay::ColorByCharacter)
 	;
 
-	ovito_class<DislocationNetworkObject, DataObject>(m,
+	ovito_class<DislocationNetworkObject, PeriodicDomainDataObject>(m,
 			":Base class: :py:class:`ovito.data.DataObject`\n\n"
 			"This data object types stores the network of dislocation lines extracted by a :py:class:`~ovito.modifiers.DislocationAnalysisModifier`."
 			"\n\n"
@@ -393,6 +371,7 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 				"The list of dislocation segments in this dislocation network. "
 				"This list-like object is read-only and contains :py:class:`~ovito.data.DislocationSegment` objects.")
 	;
+	ovito_class<DislocationAnalysisModifierApplication, StructureIdentificationModifierApplication>{m};
 
 	py::class_<DislocationSegment>(m, "DislocationSegment",
 			"A single dislocation line from a :py:class:`DislocationNetwork`. "
@@ -454,7 +433,7 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 		.def_readonly("orientation", &Cluster::orientation)
 	;
 
-	ovito_class<PartitionMesh, DataObject>{m}
+	ovito_class<PartitionMesh, PeriodicDomainDataObject>{m}
 	;
 
 	ovito_class<PartitionMeshDisplay, DisplayObject>(m)

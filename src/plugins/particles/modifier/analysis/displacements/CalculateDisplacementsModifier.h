@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,70 +24,96 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/VectorDisplay.h>
-#include <core/dataset/importexport/FileImporter.h>
-#include "../../ParticleModifier.h"
+#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/modifier/analysis/ReferenceConfigurationModifier.h>
+#include <core/dataset/data/simcell/SimulationCell.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
 /**
  * \brief Calculates the per-particle displacement vectors based on a reference configuration.
  */
-class OVITO_PARTICLES_EXPORT CalculateDisplacementsModifier : public ParticleModifier
+class OVITO_PARTICLES_EXPORT CalculateDisplacementsModifier : public ReferenceConfigurationModifier
 {
-public:
+	Q_OBJECT
+	OVITO_CLASS(CalculateDisplacementsModifier)
 
-    enum AffineMappingType { NO_MAPPING = 0, TO_REFERENCE_CELL = 1, TO_CURRENT_CELL = 2 };
-    Q_ENUMS(AffineMappingType);
+	Q_CLASSINFO("DisplayName", "Displacement vectors");
+	Q_CLASSINFO("ModifierCategory", "Analysis");
+
+public:
 
 	/// Constructor.
 	Q_INVOKABLE CalculateDisplacementsModifier(DataSet* dataset);
 
 protected:
 
+	/// Creates a computation engine that will compute the modifier's results.
+	virtual Future<ComputeEnginePtr> createEngineWithReference(TimePoint time, ModifierApplication* modApp, PipelineFlowState input, const PipelineFlowState& referenceState, TimeInterval validityInterval) override;
+	
 	/// Handles reference events sent by reference targets of this object.
 	virtual bool referenceEvent(RefTarget* source, ReferenceEvent* event) override;
 
-	/// Allows the object to parse the serialized contents of a property field in a custom way.
-	virtual bool loadPropertyFieldFromStream(ObjectLoadStream& stream, const ObjectLoadStream::SerializedPropertyField& serializedField) override;
+private:
 
-	/// Modifies the particle object.
-	virtual PipelineStatus modifyParticles(TimePoint time, TimeInterval& validityInterval) override;
+	/// Stores the modifier's results.
+	class DisplacementResults : public ComputeEngineResults 
+	{
+	public:
 
-	/// The reference configuration.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(DataObject, referenceConfiguration, setReferenceConfiguration);
+		/// Constructor.
+		DisplacementResults(size_t particleCount) : 
+			_displacements(ParticleProperty::createStandardStorage(particleCount, ParticleProperty::DisplacementProperty, false)),
+			_displacementMagnitudes(ParticleProperty::createStandardStorage(particleCount, ParticleProperty::DisplacementMagnitudeProperty, false)) {}
 
-	/// Controls the whether the reference configuration is shown instead of the current configuration.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, referenceShown, setReferenceShown);
+		/// Injects the computed results into the data pipeline.
+		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
-	/// Controls the whether the homogeneous deformation of the simulation cell is eliminated from the calculated displacement vectors.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(AffineMappingType, affineMapping, setAffineMapping);
+		/// Returns the property storage that contains the computed displacement vectors.
+		const PropertyPtr& displacements() const { return _displacements; }
+		
+		/// Returns the property storage that contains the computed displacement vector magnitudes.
+		const PropertyPtr& displacementMagnitudes() const { return _displacementMagnitudes; }
+		
+	private:
 
-	/// Controls the whether we assume the particle coordinates are unwrapped when calculating the displacement vectors.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, assumeUnwrappedCoordinates, setAssumeUnwrappedCoordinates);
+		const PropertyPtr _displacements;
+		const PropertyPtr _displacementMagnitudes;
+	};
 
-	/// Specify reference frame relative to current frame.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, useReferenceFrameOffset, setUseReferenceFrameOffset);
+	/// Computes the modifier's results.
+	class DisplacementEngine : public RefConfigEngineBase
+	{
+	public:
 
-	/// Absolute frame number from reference file to use when calculating displacement vectors.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, referenceFrameNumber, setReferenceFrameNumber);
+		/// Constructor.
+		DisplacementEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell,
+				ConstPropertyPtr refPositions, const SimulationCell& simCellRef,
+				ConstPropertyPtr identifiers, ConstPropertyPtr refIdentifiers,
+				AffineMappingType affineMapping, bool useMinimumImageConvention) :
+			RefConfigEngineBase(validityInterval, positions, simCell, std::move(refPositions), simCellRef,
+				std::move(identifiers), std::move(refIdentifiers), affineMapping, useMinimumImageConvention),
+			_results(std::make_shared<DisplacementResults>(positions->size())) {}
 
-	/// Relative frame offset for reference coordinates.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, referenceFrameOffset, setReferenceFrameOffset);
+		/// Computes the modifier's results.
+		virtual void perform() override;
+
+		/// Returns the property storage that contains the computed displacement vectors.
+		const PropertyPtr& displacements() const { return _results->displacements(); }
+		
+		/// Returns the property storage that contains the computed displacement vector magnitudes.
+		const PropertyPtr& displacementMagnitudes() const { return _results->displacementMagnitudes(); }
+		
+	private:
+
+		std::shared_ptr<DisplacementResults> _results;
+	};
 
 	/// The vector display object for rendering the displacement vectors.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(VectorDisplay, vectorDisplay, setVectorDisplay);
-	
-	Q_OBJECT
-	OVITO_OBJECT
-
-	Q_CLASSINFO("DisplayName", "Displacement vectors");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(VectorDisplay, vectorDisplay, setVectorDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
 };
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-Q_DECLARE_METATYPE(Ovito::Particles::CalculateDisplacementsModifier::AffineMappingType);
-Q_DECLARE_TYPEINFO(Ovito::Particles::CalculateDisplacementsModifier::AffineMappingType, Q_PRIMITIVE_TYPE);

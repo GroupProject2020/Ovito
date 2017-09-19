@@ -32,6 +32,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
  */
 class VectorDisplayEditor : public PropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(VectorDisplayEditor)
+
 public:
 
 	/// Constructor.
@@ -41,13 +44,8 @@ protected:
 
 	/// Creates the user interface controls for the editor.
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

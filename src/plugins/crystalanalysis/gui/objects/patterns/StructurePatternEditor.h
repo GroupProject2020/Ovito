@@ -32,6 +32,9 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
  */
 class StructurePatternEditor : public PropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(StructurePatternEditor)
+
 public:
 
 	/// Default constructor.
@@ -50,9 +53,6 @@ protected Q_SLOTS:
 private:
 
 	RefTargetListParameterUI* familiesListUI;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 }	// End of namespace

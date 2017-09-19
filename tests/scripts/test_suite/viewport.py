@@ -1,5 +1,6 @@
 from ovito.io import *
 from ovito.vis import *
+import ovito
 from PyQt5 import QtCore
 
 # Import a data file.
@@ -14,7 +15,6 @@ vp.type = Viewport.Type.PERSPECTIVE
 vp.camera_pos = (350, -450, 450)
 vp.camera_dir = (-100, -50, -50)
 print(vp.fov)
-print(vp.title)
 print(vp.type)
 vp.zoom_all()
 
@@ -27,3 +27,6 @@ overlay = TextLabelOverlay(
 
 vp.overlays.append(overlay)
 vp.render(settings)
+
+for vp in ovito.dataset.viewports:
+    print(vp)

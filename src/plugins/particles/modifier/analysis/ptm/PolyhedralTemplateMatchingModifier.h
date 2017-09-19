@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,15 +24,23 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/modifier/analysis/StructureIdentificationModifier.h>
+#include <plugins/particles/objects/ParticleProperty.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
 /**
- * \brief A modifier that uses the Polyhedral Template Matching method to identify
+ * \brief A modifier that uses the Polyhedral Template Matching (PTM) method to identify
  *        local coordination structures.
  */
 class OVITO_PARTICLES_EXPORT PolyhedralTemplateMatchingModifier : public StructureIdentificationModifier
 {
+	Q_OBJECT
+	OVITO_CLASS(PolyhedralTemplateMatchingModifier)
+
+	Q_CLASSINFO("DisplayName", "Polyhedral template matching");
+	Q_CLASSINFO("ModifierCategory", "Analysis");
+
 public:
 
 #ifndef Q_CC_MSVC
@@ -73,107 +81,148 @@ public:
 	/// Constructor.
 	Q_INVOKABLE PolyhedralTemplateMatchingModifier(DataSet* dataset);
 
-	/// Returns the computed histogram of RMSD values.
-	const QVector<int>& rmsdHistogramData() const { return _rmsdHistogramData; }
-
-	/// Returns the bin size of the RMSD histogram.
-	FloatType rmsdHistogramBinSize() const { return _rmsdHistogramBinSize; }
-
+	/// Creates a new modifier application that refers to this modifier instance.
+	virtual OORef<ModifierApplication> createModifierApplication() override;
+		
 protected:
 
-	/// Is called when the value of a property of this object has changed.
-	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
-
-	/// Creates and initializes a computation engine that will compute the modifier's results.
-	virtual std::shared_ptr<ComputeEngine> createEngine(TimePoint time, TimeInterval validityInterval) override;
-
-	/// Unpacks the results of the computation engine and stores them in the modifier.
-	virtual void transferComputationResults(ComputeEngine* engine) override;
-
-	/// Lets the modifier insert the cached computation results into the modification pipeline.
-	virtual PipelineStatus applyComputationResults(TimePoint time, TimeInterval& validityInterval) override;
-
+	/// Creates a computation engine that will compute the modifier's results.
+	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	
 private:
 
+	/// Holds the modifier's results.
+	class PTMResults : public StructureIdentificationResults
+	{
+	public:
+
+		/// Constructor.
+		PTMResults(size_t particleCount, bool outputInteratomicDistance, bool outputOrientation, bool outputDeformationGradient, bool outputAlloyTypes) :
+			StructureIdentificationResults(particleCount),
+			_rmsd(std::make_shared<PropertyStorage>(particleCount, qMetaTypeId<FloatType>(), 1, 0, tr("RMSD"), false)),
+			_interatomicDistances(outputInteratomicDistance ? std::make_shared<PropertyStorage>(particleCount, qMetaTypeId<FloatType>(), 1, 0, tr("Interatomic Distance"), true) : nullptr),
+			_orientations(outputOrientation ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::OrientationProperty, true) : nullptr),
+			_deformationGradients(outputDeformationGradient ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::ElasticDeformationGradientProperty, true) : nullptr),
+			_alloyTypes(outputAlloyTypes ? std::make_shared<PropertyStorage>(particleCount, qMetaTypeId<int>(), 1, 0, tr("Alloy Type"), true) : nullptr) {}
+
+		/// Injects the computed results into the data pipeline.
+		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+
+		const PropertyPtr& rmsd() const { return _rmsd; }
+		const PropertyPtr& interatomicDistances() const { return _interatomicDistances; }
+		const PropertyPtr& orientations() const { return _orientations; }
+		const PropertyPtr& deformationGradients() const { return _deformationGradients; }
+		const PropertyPtr& alloyTypes() const { return _alloyTypes; }
+		
+		/// Returns the histogram of computed RMSD values.
+		const QVector<int>& rmsdHistogramData() const { return _rmsdHistogramData; }
+
+		/// Returns the bin size of the RMSD histogram.
+		FloatType rmsdHistogramBinSize() const { return _rmsdHistogramBinSize; }
+	
+		/// Replaces the stored histogram data.
+		void setRmsdHistogram(QVector<int> counts, FloatType rmsdHistogramBinSize) {
+			_rmsdHistogramData = std::move(counts);
+			_rmsdHistogramBinSize = rmsdHistogramBinSize;
+		}
+
+	protected:
+		
+		/// Post-processes the per-particle structure types before they are output to the data pipeline.
+		virtual PropertyPtr postProcessStructureTypes(TimePoint time, ModifierApplication* modApp, const PropertyPtr& structures) override;
+
+	private:
+
+		const PropertyPtr _rmsd;
+		const PropertyPtr _interatomicDistances;
+		const PropertyPtr _orientations;
+		const PropertyPtr _deformationGradients;
+		const PropertyPtr _alloyTypes;
+		/// The histogram of computed RMSD values.
+		QVector<int> _rmsdHistogramData;	
+		/// The bin size of the RMSD histogram;
+		FloatType _rmsdHistogramBinSize = 0;
+	};
+	
 	/// Analysis engine that performs the PTM.
 	class PTMEngine : public StructureIdentificationEngine
 	{
 	public:
 
 		/// Constructor.
-		PTMEngine(const TimeInterval& validityInterval, ParticleProperty* positions, ParticleProperty* particleTypes, const SimulationCell& simCell,
-				const QVector<bool>& typesToIdentify, ParticleProperty* selection,
+		PTMEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, ConstPropertyPtr particleTypes, const SimulationCell& simCell,
+				QVector<bool> typesToIdentify, ConstPropertyPtr selection,
 				bool outputInteratomicDistance, bool outputOrientation, bool outputDeformationGradient, bool outputAlloyTypes) :
-			StructureIdentificationEngine(validityInterval, positions, simCell, typesToIdentify, selection),
-			_particleTypes(particleTypes),
-			_rmsd(new ParticleProperty(positions->size(), qMetaTypeId<FloatType>(), 1, 0, tr("RMSD"), false)),
-			_interatomicDistances(outputInteratomicDistance ? new ParticleProperty(positions->size(), qMetaTypeId<FloatType>(), 1, 0, tr("Interatomic Distance"), true) : nullptr),
-			_orientations(outputOrientation ? new ParticleProperty(positions->size(), ParticleProperty::OrientationProperty, 0, true) : nullptr),
-			_deformationGradients(outputDeformationGradient ? new ParticleProperty(positions->size(), ParticleProperty::ElasticDeformationGradientProperty, 0, true) : nullptr),
-			_alloyTypes(outputAlloyTypes ? new ParticleProperty(positions->size(), qMetaTypeId<int>(), 1, 0, tr("Alloy Type"), true) : nullptr) {}
+			StructureIdentificationEngine(validityInterval, positions, simCell, std::move(typesToIdentify), std::move(selection)),
+			_particleTypes(std::move(particleTypes)),
+			_results(std::make_shared<PTMResults>(positions->size(), outputInteratomicDistance, outputOrientation, outputDeformationGradient, outputAlloyTypes)) {}
 
-		/// Computes the modifier's results and stores them in this object for later retrieval.
+		/// Computes the modifier's results.
 		virtual void perform() override;
 
-		QExplicitlySharedDataPointer<ParticleProperty> _particleTypes;
-		QExplicitlySharedDataPointer<ParticleProperty> _rmsd;
-		QExplicitlySharedDataPointer<ParticleProperty> _interatomicDistances;
-		QExplicitlySharedDataPointer<ParticleProperty> _orientations;
-		QExplicitlySharedDataPointer<ParticleProperty> _deformationGradients;
-		QExplicitlySharedDataPointer<ParticleProperty> _alloyTypes;
-		QVector<int> _rmsdHistogramData;
-		FloatType _rmsdHistogramBinSize = 0;
+	private:
+
+		const ConstPropertyPtr _particleTypes;
+		std::shared_ptr<PTMResults> _results;
 	};
 
 private:
 
-	/// The original structures types determined by PTM before the RMSD cutoff is applied.
-	QExplicitlySharedDataPointer<ParticleProperty> _originalStructureTypes;
-
-	/// The computed per-particle RMSD values.
-	QExplicitlySharedDataPointer<ParticleProperty> _rmsd;
-
-	/// The computed per-particle interatomic distance.
-	QExplicitlySharedDataPointer<ParticleProperty> _interatomicDistances;
-
-	/// The computed per-particle orientations.
-	QExplicitlySharedDataPointer<ParticleProperty> _orientations;
-
-	/// The computed per-particle deformation gradients.
-	QExplicitlySharedDataPointer<ParticleProperty> _deformationGradients;
-
-	/// The alloy types identified by the PTM routine.
-	QExplicitlySharedDataPointer<ParticleProperty> _alloyTypes;
-
 	/// The RMSD cutoff.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, rmsdCutoff, setRmsdCutoff);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, rmsdCutoff, setRmsdCutoff, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the output of the per-particle RMSD values.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, outputRmsd, setOutputRmsd);
 
 	/// Controls the output of local interatomic distances.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, outputInteratomicDistance, setOutputInteratomicDistance);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, outputInteratomicDistance, setOutputInteratomicDistance, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the output of local orientations.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, outputOrientation, setOutputOrientation);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, outputOrientation, setOutputOrientation, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the output of elastic deformation gradients.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, outputDeformationGradient, setOutputDeformationGradient);
 
 	/// Controls the output of alloy structure types.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, outputAlloyTypes, setOutputAlloyTypes);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, outputAlloyTypes, setOutputAlloyTypes, PROPERTY_FIELD_MEMORIZE);
+};
 
-	/// The computed histogram of RMSD values.
-	QVector<int> _rmsdHistogramData;
+
+/**
+ * \brief The type of ModifierApplication created for a PolyhedralTemplateMatchingModifier 
+ *        when it is inserted into in a data pipeline. It stores the last computation results
+ *        so that they can be displayed in the modifier's user interface.
+ */
+class OVITO_PARTICLES_EXPORT PolyhedralTemplateMatchingModifierApplication : public StructureIdentificationModifierApplication
+{
+	Q_OBJECT
+	OVITO_CLASS(PolyhedralTemplateMatchingModifierApplication)
+
+public:
+ 
+	/// Constructor.
+	Q_INVOKABLE PolyhedralTemplateMatchingModifierApplication(DataSet* dataset) : StructureIdentificationModifierApplication(dataset) {}
+ 
+	/// Returns the histogram of computed RMSD values.
+	const QVector<int>& rmsdHistogramData() const { return _rmsdHistogramData; }
+
+	/// Returns the bin size of the RMSD histogram.
+	FloatType rmsdHistogramBinSize() const { return _rmsdHistogramBinSize; }
+	 
+	/// Replaces the stored histogram data.
+	void setRmsdHistogram(QVector<int> counts, FloatType rmsdHistogramBinSize) {
+		_rmsdHistogramData = std::move(counts);
+		_rmsdHistogramBinSize = rmsdHistogramBinSize;
+		notifyDependents(ReferenceEvent::ObjectStatusChanged);
+	}
+ 
+private:
+ 
+	/// The histogram of computed RMSD values.
+	QVector<int> _rmsdHistogramData;	
 
 	/// The bin size of the RMSD histogram;
-	FloatType _rmsdHistogramBinSize;
-
-	Q_OBJECT
-	OVITO_OBJECT
-
-	Q_CLASSINFO("DisplayName", "Polyhedral template matching");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
+	FloatType _rmsdHistogramBinSize = 0;
 };
 
 OVITO_END_INLINE_NAMESPACE

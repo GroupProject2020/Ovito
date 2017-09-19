@@ -20,12 +20,13 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <gui/GUI.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/animation/AnimationSettings.h>
 #include <core/dataset/DataSet.h>
 #include <core/viewport/Viewport.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/viewport/ViewportSettings.h>
-#include <core/scene/SceneRoot.h>
+#include <core/dataset/scene/SceneRoot.h>
+#include <core/utilities/concurrent/Promise.h>
 #include "VRWindow.h"
 
 namespace VRPlugin {
@@ -112,7 +113,6 @@ void VRRenderingWidget::initializeGL()
 ViewProjectionParameters VRRenderingWidget::projectionParameters(int eye, FloatType aspectRatio, const AffineTransformation& bodyToWorldTM, const Box3& sceneBoundingBox)
 {
 	OVITO_ASSERT(aspectRatio > FLOATTYPE_EPSILON);
-	OVITO_ASSERT(!sceneBoundingBox.isEmpty());
 
     AffineTransformation headToBodyTM = fromOpenVRMatrix(_trackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking);
     AffineTransformation eyeToHeadTM = fromOpenVRMatrix(_hmd->GetEyeToHeadTransform(eye ? vr::Eye_Right : vr::Eye_Left));
@@ -120,14 +120,17 @@ ViewProjectionParameters VRRenderingWidget::projectionParameters(int eye, FloatT
 	ViewProjectionParameters params;
 	params.aspectRatio = aspectRatio;
 	params.validityInterval.setInfinite();
-	params.boundingBox = sceneBoundingBox;
     params.inverseViewMatrix = bodyToWorldTM * headToBodyTM * eyeToHeadTM;
     params.viewMatrix = params.inverseViewMatrix.inverse();
     params.fieldOfView = 0;
     params.isPerspective = true;
+	if(!sceneBoundingBox.isEmpty())
+		params.boundingBox = sceneBoundingBox;
+	else
+		params.boundingBox = Box3(Point3::Origin(), 1);
 
 	// Transform scene bounding box to camera space.
-	Box3 bb = sceneBoundingBox.transformed(params.viewMatrix).centerScale(FloatType(1.01));
+	Box3 bb = params.boundingBox.transformed(params.viewMatrix).centerScale(FloatType(1.01));
 
 	// Compute near/far plane distances.
     if(bb.minc.z() < 0) {
@@ -135,7 +138,7 @@ ViewProjectionParameters VRRenderingWidget::projectionParameters(int eye, FloatT
         params.znear = std::max(-bb.maxc.z(), params.zfar * FloatType(1e-4));
     }
     else {
-        params.zfar = std::max(sceneBoundingBox.size().length(), FloatType(1));
+        params.zfar = std::max(params.boundingBox.size().length(), FloatType(1));
         params.znear = params.zfar * FloatType(1e-4);
     }
     params.zfar = std::max(params.zfar, params.znear * FloatType(1.01));
@@ -263,8 +266,13 @@ void VRRenderingWidget::paintGL()
             if(!_eyeBuffer->bind())
                 dataset()->throwException(tr("Failed to bind OpenGL framebuffer object for offscreen rendering."));
 
+            Promise<> renderPromise = Promise<>::createSynchronous(dataset()->container()->taskManager(), true, false);
+                
+            // Set up a preliminary projection without a known bounding box.
+            ViewProjectionParameters projParams = projectionParameters(eye, aspectRatio, bodyToWorldTM);
+            
             // Request scene bounding box.
-            Box3 boundingBox = _sceneRenderer->sceneBoundingBox(time);
+            Box3 boundingBox = _sceneRenderer->computeSceneBoundingBox(time, projParams, nullptr, renderPromise);
 
             // Add ground geometry to bounding box.
             AffineTransformation bodyToFloorTM;
@@ -280,15 +288,15 @@ void VRRenderingWidget::paintGL()
             for(const AffineTransformation& controllerTM : controllerTMs)
                 boundingBox.addBox((bodyToWorldTM * controllerTM) * Box3(Point3::Origin(), _controllerSize));
             
-            // Set up projection.
-            ViewProjectionParameters projParams = projectionParameters(eye, aspectRatio, bodyToWorldTM, boundingBox);
+            // Set up final projection with the now known bounding box.
+            projParams = projectionParameters(eye, aspectRatio, bodyToWorldTM, boundingBox);
 
             // Set up the renderer.
             _sceneRenderer->beginFrame(time, projParams, nullptr);
             _sceneRenderer->setRenderingViewport(0, 0, _renderResolution.width(), _renderResolution.height());
             
             // Call the viewport renderer to render the scene objects.
-            _sceneRenderer->renderFrame(nullptr, SceneRenderer::NonStereoscopic, dataset()->container()->taskManager());
+            _sceneRenderer->renderFrame(nullptr, SceneRenderer::NonStereoscopic, renderPromise);
 
             // Render floor rectangle.
             if(settings()->showFloor()) {

@@ -27,7 +27,7 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-IMPLEMENT_OVITO_OBJECT(BurgersVectorFamilyEditor, PropertiesEditor);
+IMPLEMENT_OVITO_CLASS(BurgersVectorFamilyEditor);
 SET_OVITO_OBJECT_EDITOR(BurgersVectorFamily, BurgersVectorFamilyEditor);
 
 /******************************************************************************

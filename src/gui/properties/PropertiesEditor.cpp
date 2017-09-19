@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,9 +24,8 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
 
-// Gives the class run-time type information.
-IMPLEMENT_OVITO_OBJECT(PropertiesEditor, RefMaker);
-DEFINE_FLAGS_REFERENCE_FIELD(PropertiesEditor, editObject, "EditObject", RefTarget, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
+IMPLEMENT_OVITO_CLASS(PropertiesEditor);
+DEFINE_REFERENCE_FIELD(PropertiesEditor, editObject);
 
 /******************************************************************************
 * Returns the global editor registry, which can be used to look up the editor 
@@ -46,10 +45,10 @@ OORef<PropertiesEditor> PropertiesEditor::create(RefTarget* obj)
 	OVITO_CHECK_POINTER(obj);
 	try {
 		// Look if an editor class has been registered for this RefTarget class and one of its super classes.
-		for(const OvitoObjectType* clazz = &obj->getOOType(); clazz != nullptr; clazz = clazz->superClass()) {
-			const OvitoObjectType* editorClass = registry().getEditorClass(clazz);
+		for(OvitoClassPtr clazz = &obj->getOOClass(); clazz != nullptr; clazz = clazz->superClass()) {
+			OvitoClassPtr editorClass = registry().getEditorClass(clazz);
 			if(editorClass) {
-				if(!editorClass->isDerivedFrom(PropertiesEditor::OOType))
+				if(!editorClass->isDerivedFrom(PropertiesEditor::OOClass()))
 					throw Exception(tr("The editor class %1 assigned to the RefTarget-derived class %2 is not derived from PropertiesEditor.").arg(editorClass->name(), clazz->name()));
 				return dynamic_object_cast<PropertiesEditor>(editorClass->createInstance(nullptr));
 			}
@@ -66,9 +65,8 @@ OORef<PropertiesEditor> PropertiesEditor::create(RefTarget* obj)
 /******************************************************************************
 * The constructor.
 ******************************************************************************/
-PropertiesEditor::PropertiesEditor() : RefMaker(nullptr), _container(nullptr), _mainWindow(nullptr)
+PropertiesEditor::PropertiesEditor() : RefMaker(), _container(nullptr), _mainWindow(nullptr)
 {
-	INIT_PROPERTY_FIELD(editObject);
 }
 
 /******************************************************************************
@@ -113,11 +111,10 @@ QWidget* PropertiesEditor::createRollout(const QString& title, const RolloutInse
 				rollout->setTitle(titlePrefix + editObject()->objectTitle());
 
 			// Automatically update rollout title each time a new object is loaded into the editor.
-			connect(this, &PropertiesEditor::contentsReplaced, [rollout, titlePrefix](RefTarget* target) {
+			connect(this, &PropertiesEditor::contentsReplaced, rollout, [rollout, titlePrefix](RefTarget* target) {
 				if(rollout && target)
 					rollout->setTitle(titlePrefix + target->objectTitle());
 			});
-
 		}
 	}
 	else if(params.container()->layout()) {

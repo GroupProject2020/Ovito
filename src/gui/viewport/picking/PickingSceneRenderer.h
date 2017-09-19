@@ -32,6 +32,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View) OVITO_BEGIN_INLINE_NAMESPAC
  */
 class OVITO_GUI_EXPORT PickingSceneRenderer : public ViewportSceneRenderer
 {
+	Q_OBJECT
+	OVITO_CLASS(PickingSceneRenderer)
+	
 public:
 
 	struct ObjectRecord {
@@ -51,7 +54,7 @@ public:
 	virtual void beginFrame(TimePoint time, const ViewProjectionParameters& params, Viewport* vp) override;
 
 	/// Renders the current animation frame.
-	virtual bool renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, TaskManager& taskManager) override;
+	virtual bool renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, const PromiseBase& promise) override;
 
 	/// This method is called after renderFrame() has been called.
 	virtual void endFrame(bool renderSuccessful) override;
@@ -108,9 +111,6 @@ private:
 
 	/// Used to restore previous OpenGL context that was active.
 	QSurface* _oldSurface;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

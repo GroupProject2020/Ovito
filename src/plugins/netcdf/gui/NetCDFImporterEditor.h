@@ -24,7 +24,7 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <plugins/netcdf/NetCDFImporter.h>
-#include <gui/dataset/importexport/FileImporterEditor.h>
+#include <gui/dataset/io/FileImporterEditor.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
@@ -33,6 +33,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVI
  */
 class NetCDFImporterEditor : public FileImporterEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(NetCDFImporterEditor)
+
 public:
 
 	/// Constructor.
@@ -50,11 +53,6 @@ protected Q_SLOTS:
 
 	/// Is called when the user pressed the "Edit column mapping" button.
 	void onEditColumnMapping();
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

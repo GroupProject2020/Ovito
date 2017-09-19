@@ -41,8 +41,9 @@ public:
 
 	/// Constructor.
 	PlanarDefectIdentification(ElasticMapping& elasticMapping) :
-		_elasticMapping(elasticMapping), _incidentEdges(elasticMapping.structureAnalysis().atomCount(), nullptr),
-		_planarDefects(new PlanarDefects()) {}
+		_elasticMapping(elasticMapping), 
+		_incidentEdges(elasticMapping.structureAnalysis().atomCount(), nullptr),
+		_planarDefects(std::make_shared<PlanarDefects>()) {}
 
 	/// Returns the elastic mapping of the crystal.
 	const ElasticMapping& elasticMapping() const { return _elasticMapping; }
@@ -54,13 +55,13 @@ public:
 	const DelaunayTessellation& tessellation() const { return _elasticMapping.tessellation(); }
 
 	/// Returns the cluster graph.
-	ClusterGraph& clusterGraph() { return _elasticMapping.clusterGraph(); }
+	const std::shared_ptrClusterGraph>& clusterGraph() { return _elasticMapping.clusterGraph(); }
 
 	/// Extracts the planar defects.
 	bool extractPlanarDefects(int crystalStructure, FutureInterfaceBase& progress);
 
 	/// Returns the extracted planar defects.
-	PlanarDefects* planarDefects() { return _planarDefects.data(); }
+	const std::shared_ptrPlanarDefects>& planarDefects() { return _planarDefects; }
 
 private:
 
@@ -71,7 +72,7 @@ private:
 	std::vector<ElasticMapping::TessellationEdge*> _incidentEdges;
 
 	/// The extracted planar defects.
-	QExplicitlySharedDataPointer<PlanarDefects> _planarDefects;
+	std::shared_ptr<PlanarDefects> _planarDefects;
 };
 
 }	// End of namespace

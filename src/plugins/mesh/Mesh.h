@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,3 +24,17 @@
 
 #include <core/Core.h>
 
+#ifdef Mesh_EXPORTS		// This is defined by CMake when building the plugin library.
+#  define OVITO_MESH_EXPORT Q_DECL_EXPORT
+#else
+#  define OVITO_MESH_EXPORT Q_DECL_IMPORT
+#endif
+
+namespace Ovito {
+	namespace Mesh {
+		class TriMeshObject;
+		class TriMeshDisplay;
+		class SurfaceMesh;
+		class SurfaceMeshDisplay;
+	}
+}

@@ -20,13 +20,15 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
+#include <plugins/particles/import/ParticleFrameData.h>
+#include <core/utilities/io/CompressedTextReader.h>
 #include "CFGImporter.h"
 
 #include <boost/algorithm/string.hpp>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(CFGImporter, ParticleImporter);
+IMPLEMENT_OVITO_CLASS(CFGImporter);	
 
 struct CFGHeader {
 
@@ -159,20 +161,30 @@ void CFGHeader::parse(CompressedTextReader& stream)
 }
 
 /******************************************************************************
-* Parses the given input file and stores the data in the given container object.
+* Parses the given input file.
 ******************************************************************************/
-void CFGImporter::CFGImportTask::parseFile(CompressedTextReader& stream)
+void CFGImporter::FrameLoader::loadFile(QFile& file)
 {
+	// Open file for reading.
+	CompressedTextReader stream(file, frame().sourceFile.path());
 	setProgressText(tr("Reading CFG file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
 
+	// Jump to byte offset.
+	if(frame().byteOffset != 0)
+		stream.seek(frame().byteOffset);
+
+	// Parse header of CFG file.
 	CFGHeader header;
 	header.parse(stream);
+
+	// Create the destination container for loaded data.
+	std::shared_ptr<ParticleFrameData> frameData = std::make_shared<ParticleFrameData>();
 
 	InputColumnMapping cfgMapping;
 	if(header.isExtendedFormat == false) {
 		cfgMapping.resize(8);
 		cfgMapping[0].mapStandardColumn(ParticleProperty::MassProperty);
-		cfgMapping[1].mapStandardColumn(ParticleProperty::ParticleTypeProperty);
+		cfgMapping[1].mapStandardColumn(ParticleProperty::TypeProperty);
 		cfgMapping[2].mapStandardColumn(ParticleProperty::PositionProperty, 0);
 		cfgMapping[3].mapStandardColumn(ParticleProperty::PositionProperty, 1);
 		cfgMapping[4].mapStandardColumn(ParticleProperty::PositionProperty, 2);
@@ -196,22 +208,22 @@ void CFGImporter::CFGImportTask::parseFile(CompressedTextReader& stream)
 	setProgressMaximum(header.numParticles);
 
 	// Prepare the mapping between input file columns and particle properties.
-	InputColumnReader columnParser(cfgMapping, *this, header.numParticles);
+	InputColumnReader columnParser(cfgMapping, *frameData, header.numParticles);
 
 	// Create particle mass and type properties.
 	int currentAtomType = 0;
 	FloatType currentMass = 0;
 	FloatType* massPointer = nullptr;
 	int* atomTypePointer = nullptr;
-	ParticleProperty* typeProperty = nullptr;
-	ParticleFrameLoader::ParticleTypeList* typeList = nullptr;
+	PropertyPtr typeProperty;
+	ParticleFrameData::ParticleTypeList* typeList = nullptr;
 	if(header.isExtendedFormat) {
-		typeProperty = new ParticleProperty(header.numParticles, ParticleProperty::ParticleTypeProperty, 0, false);
-		typeList = new ParticleFrameLoader::ParticleTypeList();
-		addParticleProperty(typeProperty, typeList);
+		typeProperty = ParticleProperty::createStandardStorage(header.numParticles, ParticleProperty::TypeProperty, false);
+		typeList = new ParticleFrameData::ParticleTypeList();
+		frameData->addParticleProperty(typeProperty, typeList);
 		atomTypePointer = typeProperty->dataInt();
-		ParticleProperty* massProperty = new ParticleProperty(header.numParticles, ParticleProperty::MassProperty, 0, false);
-		addParticleProperty(massProperty);
+		PropertyPtr massProperty = ParticleProperty::createStandardStorage(header.numParticles, ParticleProperty::MassProperty, false);
+		frameData->addParticleProperty(massProperty);
 		massPointer = massProperty->dataFloat();
 	}
 
@@ -271,16 +283,16 @@ void CFGImporter::CFGImportTask::parseFile(CompressedTextReader& stream)
 	// why we sort them now.
 	columnParser.sortParticleTypes();
 	if(header.isExtendedFormat)
-		typeList->sortParticleTypesByName(typeProperty);
+		typeList->sortParticleTypesByName(typeProperty.get());
 
 	AffineTransformation H((header.transform * header.H0).transposed());
 	H.translation() = H * Vector3(-0.5f, -0.5f, -0.5f);
-	simulationCell().setMatrix(H);
+	frameData->simulationCell().setMatrix(H);
 
 	// The CFG file stores particle positions in reduced coordinates.
 	// Rescale them now to absolute (Cartesian) coordinates.
 	// However, do this only if no absolute coordinates have been read from the extra data columns in the CFG file.
-	ParticleProperty* posProperty = particleProperty(ParticleProperty::PositionProperty);
+	PropertyStorage* posProperty = frameData->particleProperty(ParticleProperty::PositionProperty);
 	if(posProperty && header.numParticles > 0) {
 		Point3* p = posProperty->dataPoint3();
 		Point3* pend = p + posProperty->size();
@@ -288,7 +300,8 @@ void CFGImporter::CFGImportTask::parseFile(CompressedTextReader& stream)
 			*p = H * (*p);
 	}
 
-	setStatus(tr("Number of particles: %1").arg(header.numParticles));
+	frameData->setStatus(tr("Number of particles: %1").arg(header.numParticles));
+	setResult(std::move(frameData));
 }
 
 /******************************************************************************

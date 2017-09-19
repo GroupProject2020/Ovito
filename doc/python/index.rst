@@ -4,7 +4,7 @@
 OVITO Scripting Reference
 **********************************
 
-This manual describes OVITO's scripting interface. You can access this manual from the Help menu of
+This manual describes OVITO's scripting interface. You can access this manual from the *Help* menu in
 OVITO's graphical user interface.
 
 Introduction:
@@ -21,6 +21,7 @@ Introduction:
    introduction/rendering
    introduction/custom_modifiers
    introduction/examples
+   introduction/version_changes
 
 Module Reference:
 -----------------
@@ -31,5 +32,7 @@ Module Reference:
    modules/ovito_anim
    modules/ovito_data
    modules/ovito_io
+   modules/ovito_io_ase
    modules/ovito_modifiers
+   modules/ovito_pipeline
    modules/ovito_vis

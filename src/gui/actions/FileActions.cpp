@@ -29,10 +29,10 @@
 #include <gui/utilities/concurrent/ProgressDialog.h>
 #include <opengl_renderer/OpenGLSceneRenderer.h>
 #include <core/dataset/DataSetContainer.h>
-#include <core/dataset/importexport/FileImporter.h>
-#include <core/dataset/importexport/FileExporter.h>
-#include <core/scene/SelectionSet.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/io/FileImporter.h>
+#include <core/dataset/io/FileExporter.h>
+#include <core/dataset/scene/SelectionSet.h>
+#include <core/dataset/animation/AnimationSettings.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
 
@@ -255,12 +255,12 @@ void ActionManager::on_Settings_triggered()
 ******************************************************************************/
 void ActionManager::on_FileImport_triggered()
 {
-	// Let the user select a file.
-	ImportFileDialog dialog(FileImporter::availableImporters(), _dataset, mainWindow(), tr("Load File"));
-	if(dialog.exec() != QDialog::Accepted)
-		return;
-
 	try {
+		// Let the user select a file.
+		ImportFileDialog dialog(FileImporter::availableImporters(), _dataset, mainWindow(), tr("Load File"));
+		if(dialog.exec() != QDialog::Accepted)
+			return;
+
 		// Import file.
 		mainWindow()->datasetContainer().importFile(QUrl::fromLocalFile(dialog.fileToImport()), dialog.selectedFileImporterType());
 	}
@@ -274,12 +274,12 @@ void ActionManager::on_FileImport_triggered()
 ******************************************************************************/
 void ActionManager::on_FileRemoteImport_triggered()
 {
-	// Let the user enter the URL of the remote file.
-	ImportRemoteFileDialog dialog(FileImporter::availableImporters(), _dataset, mainWindow(), tr("Load Remote File"));
-	if(dialog.exec() != QDialog::Accepted)
-		return;
-
 	try {
+		// Let the user enter the URL of the remote file.
+		ImportRemoteFileDialog dialog(FileImporter::availableImporters(), _dataset, mainWindow(), tr("Load Remote File"));
+		if(dialog.exec() != QDialog::Accepted)
+			return;
+		
 		// Import URL.
 		mainWindow()->datasetContainer().importFile(dialog.fileToImport(), dialog.selectedFileImporterType());
 	}
@@ -296,7 +296,7 @@ void ActionManager::on_FileExport_triggered()
 	// Build filter string.
 	QStringList filterStrings;
 	const auto& exporterTypes = FileExporter::availableExporters();
-	for(const OvitoObjectType* type : exporterTypes) {
+	for(OvitoClassPtr type : exporterTypes) {
 		try {
 			OORef<FileExporter> exporter = static_object_cast<FileExporter>(type->createInstance(_dataset));
 			filterStrings << QString("%1 (%2)").arg(exporter->fileFilterDescription(), exporter->fileFilter());
@@ -358,7 +358,7 @@ void ActionManager::on_FileExport_triggered()
 		// Wait until the scene is ready.
 		{
 			ProgressDialog progressDialog(mainWindow(), tr("File export"));
-			if(!progressDialog.taskManager().waitForTask(_dataset->makeSceneReady(tr("Waiting for running tasks to complete."))))
+			if(!progressDialog.taskManager().waitForTask(_dataset->whenSceneReady()))
 				return;
 		}
 

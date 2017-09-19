@@ -21,38 +21,38 @@
 
 #include <core/Core.h>
 #include "PromiseWatcher.h"
-#include "Promise.h"
-#include "Future.h"
-#include "Task.h"
+#include "PromiseState.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
-void PromiseWatcher::setPromise(const PromiseBasePtr& promise, bool pendingAssignment)
+void PromiseWatcher::watch(const PromiseStatePtr& sharedState, bool pendingAssignment)
 {
-	if(promise == _promise)
+	OVITO_ASSERT_MSG(QCoreApplication::closingDown() || QThread::currentThread() == QCoreApplication::instance()->thread(), "PromiseWatcher::watch", "Function may only be called from the main thread.");
+
+	if(sharedState == _sharedState)
 		return;
 
-	if(_promise) {
-		_promise->unregisterWatcher(this);
+	if(_sharedState) {
+		_sharedState->unregisterWatcher(this);
 		if(pendingAssignment) {
 	        _finished = false;
 	        QCoreApplication::removePostedEvents(this);
 		}
 	}
-	_promise = promise;
-	if(_promise)
-		_promise->registerWatcher(this);
+	_sharedState = sharedState;
+	if(_sharedState)
+		_sharedState->registerWatcher(this);
 }
 
 void PromiseWatcher::promiseCanceled()
 {
-	if(promise())
+	if(isWatching())
 		Q_EMIT canceled();
 }
 
 void PromiseWatcher::promiseFinished()
 {
-	if(promise()) {
+	if(isWatching()) {
 		_finished = true;
 		Q_EMIT finished();
 	}
@@ -60,43 +60,31 @@ void PromiseWatcher::promiseFinished()
 
 void PromiseWatcher::promiseStarted()
 {
-	if(promise())
+	if(isWatching())
     	Q_EMIT started();
-}
-
-void PromiseWatcher::promiseResultReady()
-{
-	if(promise() && !promise()->isCanceled())
-		Q_EMIT resultReady();
 }
 
 void PromiseWatcher::promiseProgressRangeChanged(int maximum)
 {
-	if(promise() && !promise()->isCanceled())
+	if(isWatching() && !sharedState()->isCanceled())
 		Q_EMIT progressRangeChanged(maximum);
 }
 
 void PromiseWatcher::promiseProgressValueChanged(int progressValue)
 {
-	if(promise() && !promise()->isCanceled())
+	if(isWatching() && !sharedState()->isCanceled())
 		Q_EMIT progressValueChanged(progressValue);
 }
 
 void PromiseWatcher::promiseProgressTextChanged(QString progressText)
 {
-	if(promise() && !promise()->isCanceled())
+	if(isWatching() && !sharedState()->isCanceled())
 		Q_EMIT progressTextChanged(progressText);
-}
-
-void PromiseWatcher::cancel()
-{
-	if(promise())
-		promise()->cancel();
 }
 
 bool PromiseWatcher::isCanceled() const
 {
-	return promise() ? promise()->isCanceled() : false;
+	return isWatching() ? sharedState()->isCanceled() : false;
 }
 
 bool PromiseWatcher::isFinished() const
@@ -106,23 +94,17 @@ bool PromiseWatcher::isFinished() const
 
 int PromiseWatcher::progressMaximum() const
 {
-	return promise() ? promise()->totalProgressMaximum() : 0;
+	return isWatching() ? sharedState()->totalProgressMaximum() : 0;
 }
 
 int PromiseWatcher::progressValue() const
 {
-	return promise() ? promise()->totalProgressValue() : 0;
+	return isWatching() ? sharedState()->totalProgressValue() : 0;
 }
 
 QString PromiseWatcher::progressText() const
 {
-	return promise() ? promise()->progressText() : QString();
-}
-
-void PromiseWatcher::waitForFinished() const
-{
-	if(promise())
-		promise()->waitForFinished();
+	return isWatching() ? sharedState()->progressText() : QString();
 }
 
 OVITO_END_INLINE_NAMESPACE

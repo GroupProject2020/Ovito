@@ -234,6 +234,18 @@ public:
 		return *this / length();
 	}
 
+	/// \brief Returns a normalized version of this vector (unless it is the null vector).
+	/// \param epsilon The epsilon used to test if this vector is zero.
+	/// \return The normalized vector.
+	/// \sa normalized(), normalizeSafely()
+	inline Vector_3 safelyNormalized(T epsilon = T(FLOATTYPE_EPSILON)) const {
+		T l = length();
+		if(l > epsilon)
+			return *this / l;
+		else
+			return Vector_3::Zero();
+	}
+	
 	/// \brief Normalizes this vector to make it a unit vector (only if it is non-zero).
 	/// \param epsilon The epsilon used to test if this vector is zero.
 	/// This method rescales this vector to unit length if its original length is greater than \a epsilon.

@@ -20,29 +20,29 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <gui/GUI.h>
-#include <core/plugins/PluginManager.h>
-#include <core/scene/pipeline/Modifier.h>
-#include <core/scene/pipeline/PipelineObject.h>
-#include <core/scene/ObjectNode.h>
+#include <core/app/PluginManager.h>
+#include <core/dataset/pipeline/Modifier.h>
+#include <core/dataset/pipeline/PipelineObject.h>
+#include <core/dataset/scene/ObjectNode.h>
 #include <core/dataset/DataSetContainer.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/animation/AnimationSettings.h>
 #include "ModifierListBox.h"
-#include "ModificationListModel.h"
+#include "PipelineListModel.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /******************************************************************************
 * Initializes the widget.
 ******************************************************************************/
-ModifierListBox::ModifierListBox(QWidget* parent, ModificationListModel* modificationList) : QComboBox(parent),
-		_modificationList(modificationList)
+ModifierListBox::ModifierListBox(QWidget* parent, PipelineListModel* pipelineList) : QComboBox(parent),
+		_pipelineList(pipelineList)
 {
 	setSizeAdjustPolicy(QComboBox::AdjustToContents);
 
 	// A category of modifiers.
 	struct ModifierCategory {
 		QString name;
-		QVector<const OvitoObjectType*> modifierClasses;
+		QVector<ModifierClassPtr> modifierClasses;
 	};
 	
 	QVector<ModifierCategory> modifierCategories;
@@ -50,34 +50,31 @@ ModifierListBox::ModifierListBox(QWidget* parent, ModificationListModel* modific
 	otherCategory.name = tr("Others");
 
 	// Retrieve all installed modifier classes.
-	for(const OvitoObjectType* clazz : PluginManager::instance().listClasses(Modifier::OOType)) {
+	for(ModifierClassPtr clazz : PluginManager::instance().metaclassMembers<Modifier>()) {
 		// Sort modifiers into categories.
-		if(clazz->qtMetaObject()) {
-			int infoIndex = clazz->qtMetaObject()->indexOfClassInfo("ModifierCategory");
-			if(infoIndex != -1) {
-				QString categoryName = QString::fromLocal8Bit(clazz->qtMetaObject()->classInfo(infoIndex).value());
-				// Check if category has already been created.
-				bool found = false;
-				for(auto& category : modifierCategories) {
-					if(category.name == categoryName) {
-						category.modifierClasses.push_back(clazz);
-						found = true;
-						break;
-					}
-				}
-				// Create a new category.
-				if(!found) {
-					ModifierCategory category;
-					category.name = categoryName;
+		QString categoryName = clazz->modifierCategory();
+		if(!categoryName.isEmpty()) {
+			// Check if category has already been created.
+			bool found = false;
+			for(auto& category : modifierCategories) {
+				if(category.name == categoryName) {
 					category.modifierClasses.push_back(clazz);
-					modifierCategories.push_back(category);
+					found = true;
+					break;
 				}
-				continue;
+			}
+			// Create a new category.
+			if(!found) {
+				ModifierCategory category;
+				category.name = categoryName;
+				category.modifierClasses.push_back(clazz);
+				modifierCategories.push_back(category);
 			}
 		}
-
-		// Insert modifiers that don't have category information to the "Other" category.
-		otherCategory.modifierClasses.push_back(clazz);
+		else {
+			// Insert modifiers that don't have category information to the "Other" category.
+			otherCategory.modifierClasses.push_back(clazz);
+		}
 	}
 
 	// Sort category list.
@@ -91,7 +88,7 @@ ModifierListBox::ModifierListBox(QWidget* parent, ModificationListModel* modific
 
 	// Sort modifiers in each category.
 	for(auto& category : modifierCategories) {
-		std::sort(category.modifierClasses.begin(), category.modifierClasses.end(), [](const OvitoObjectType* a, const OvitoObjectType* b) {
+		std::sort(category.modifierClasses.begin(), category.modifierClasses.end(), [](ModifierClassPtr a, ModifierClassPtr b) {
 			return QString::compare(a->displayName(), b->displayName(), Qt::CaseInsensitive) < 0;
 		} );
 	}
@@ -135,9 +132,9 @@ ModifierListBox::ModifierListBox(QWidget* parent, ModificationListModel* modific
 		categoryItem->setTextAlignment(Qt::AlignCenter);
 		_model->appendRow(categoryItem);
 
-		for(const OvitoObjectType* descriptor : category.modifierClasses) {
+		for(ModifierClassPtr descriptor : category.modifierClasses) {
 			QStandardItem* modifierItem = new QStandardItem("   " + descriptor->displayName());
-			modifierItem->setData(QVariant::fromValue((void*)descriptor), Qt::UserRole);
+			modifierItem->setData(QVariant::fromValue(descriptor), Qt::UserRole);
 			_model->appendRow(modifierItem);
 			_modifierItems.push_back(modifierItem);
 		}
@@ -285,7 +282,7 @@ void ModifierListBox::updateAvailableModifiers()
 	// Always select the "Add modification..." entry by default.
 	setCurrentIndex(0);
 
-	// Should we show MRU list?
+	// Should we show an MRU list?
 	QSettings settings;
 	settings.beginGroup("core/modifier/mru/");
 	if(settings.value("enable_mru", false).toBool())
@@ -296,43 +293,33 @@ void ModifierListBox::updateAvailableModifiers()
 
 	// Retrieve the input state which a newly inserted modifier would be applied to.
 	// This is used to filter the list of available modifiers.
-	ModificationListItem* currentItem = _modificationList->selectedItem();
+	PipelineListItem* currentItem = _pipelineList->selectedItem();
 	while(currentItem && currentItem->parent()) {
 		currentItem = currentItem->parent();
 	}
-	PipelineFlowState inputState;
-	DataSet* dataset = _modificationList->datasetContainer().currentSet();
+	DataSet* dataset = _pipelineList->datasetContainer().currentSet();
 	if(!dataset) return;
 
+	PipelineFlowState inputState;
 	if(dynamic_object_cast<Modifier>(currentItem->object())) {
-		for(ModifierApplication* modApp : currentItem->modifierApplications()) {
-			PipelineObject* pipelineObj = modApp->pipelineObject();
-			OVITO_CHECK_OBJECT_POINTER(pipelineObj);
-			inputState = pipelineObj->evaluateImmediately(PipelineEvalRequest(dataset->animationSettings()->time(), false, modApp, true));
-			break;
+		if(!currentItem->modifierApplications().empty()) {
+			ModifierApplication* modApp = currentItem->modifierApplications().front();
+			inputState = modApp->evaluatePreliminary();
 		}
 	}
-	else if(dynamic_object_cast<DataObject>(currentItem->object())) {
-		DataObject* dataObj = static_object_cast<DataObject>(currentItem->object());
-		OVITO_CHECK_OBJECT_POINTER(dataObj);
-		inputState = dataObj->evaluateImmediately(PipelineEvalRequest(dataset->animationSettings()->time(), false));
+	else if(PipelineObject* pipelineObject = dynamic_object_cast<PipelineObject>(currentItem->object())) {
+		inputState = pipelineObject->evaluatePreliminary();
 	}
-	else {
-		for(RefTarget* objNode : _modificationList->selectedNodes()) {
-			inputState = static_object_cast<ObjectNode>(objNode)->evaluatePipelineImmediately(PipelineEvalRequest(dataset->animationSettings()->time(), false));
-			break;
-		}
+	else if(!_pipelineList->selectedNodes().empty()) {
+		ObjectNode* node = _pipelineList->selectedNodes().front();
+		inputState = node->evaluatePipelinePreliminary(false);
 	}
 
 	// Update state of combo box items.
 	for(QStandardItem* item : _modifierItems) {
-		const OvitoObjectType* descriptor = static_cast<const OvitoObjectType*>(item->data(Qt::UserRole).value<void*>());
-		OVITO_ASSERT(descriptor);
-
-		// Create an instance of the modifier to call its isApplicableTo() method.
-		OORef<Modifier> modifier = static_object_cast<Modifier>(descriptor->createInstance(dataset));
-		OVITO_CHECK_OBJECT_POINTER(modifier);
-		item->setEnabled(modifier && modifier->isApplicableTo(inputState));
+		ModifierClassPtr modifierClass = item->data(Qt::UserRole).value<ModifierClassPtr>();
+		OVITO_ASSERT(modifierClass);
+		item->setEnabled(modifierClass->isApplicableTo(inputState));
 	}
 
 	// Load custom modifier presets.

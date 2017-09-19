@@ -25,8 +25,7 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
 
-// Gives the class run-time type information.
-IMPLEMENT_OVITO_OBJECT(BooleanRadioButtonParameterUI, PropertyParameterUI);
+IMPLEMENT_OVITO_CLASS(BooleanRadioButtonParameterUI);
 
 /******************************************************************************
 * Constructor for a Qt property.
@@ -77,7 +76,7 @@ void BooleanRadioButtonParameterUI::resetUI()
 	PropertyParameterUI::resetUI();	
 	
 	if(buttonGroup()) {
-		Q_FOREACH(QAbstractButton* button, buttonGroup()->buttons()) 
+		for(QAbstractButton* button : buttonGroup()->buttons()) 
 			button->setEnabled(editObject() != NULL && isEnabled());
 	}
 }
@@ -119,7 +118,7 @@ void BooleanRadioButtonParameterUI::setEnabled(bool enabled)
 	if(enabled == isEnabled()) return;
 	PropertyParameterUI::setEnabled(enabled);
 	if(buttonGroup()) {
-		Q_FOREACH(QAbstractButton* button, buttonGroup()->buttons()) 
+		for(QAbstractButton* button : buttonGroup()->buttons()) 
 			button->setEnabled(editObject() != NULL && isEnabled());
 	}
 }

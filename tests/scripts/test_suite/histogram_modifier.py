@@ -30,6 +30,9 @@ modifier.bond_property = "Length"
 print("  source_mode: {}".format(modifier.source_mode))
 modifier.source_mode = HistogramModifier.SourceMode.Particles
 
+print("  property: {}".format(modifier.property))
+modifier.property = "Position.X"
+
 node.compute()
 
 print("Output:")

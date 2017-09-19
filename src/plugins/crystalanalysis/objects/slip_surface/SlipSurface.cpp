@@ -25,27 +25,29 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(SlipSurface, DataObject);
+IMPLEMENT_OVITO_CLASS(SlipSurface);
+DEFINE_PROPERTY_FIELD(SlipSurface, storage);
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-SlipSurface::SlipSurface(DataSet* dataset, SlipSurfaceData* data) : DataObjectWithSharedStorage(dataset, data ? data : new SlipSurfaceData())
+SlipSurface::SlipSurface(DataSet* dataset) : PeriodicDomainDataObject(dataset)
 {
 }
 
 /******************************************************************************
-* Creates a copy of this object.
+* Returns the data encapsulated by this object after making sure it is not 
+* shared with other owners.
 ******************************************************************************/
-OORef<RefTarget> SlipSurface::clone(bool deepCopy, CloneHelper& cloneHelper)
+const std::shared_ptr<SlipSurfaceData>& SlipSurface::modifiableStorage() 
 {
-	// Let the base class create an instance of this class.
-	OORef<SlipSurface> clone = static_object_cast<SlipSurface>(DataObjectWithSharedStorage<SlipSurfaceData>::clone(deepCopy, cloneHelper));
-
-	// Copy internal data.
-	clone->_cuttingPlanes = this->_cuttingPlanes;
-
-	return clone;
+	// Copy data storage on write if there is more than one reference to the storage.
+	OVITO_ASSERT(storage());
+	OVITO_ASSERT(storage().use_count() >= 1);
+	if(storage().use_count() > 1)
+		_storage.mutableValue() = std::make_shared<SlipSurfaceData>(*storage());
+	OVITO_ASSERT(storage().use_count() == 1);
+	return storage();
 }
 
 /******************************************************************************

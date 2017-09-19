@@ -24,6 +24,8 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/import/ParticleImporter.h>
+#include <plugins/particles/import/ParticleFrameData.h>
+#include <core/dataset/DataSetContainer.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
@@ -32,6 +34,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVI
  */
 class OVITO_PARTICLES_EXPORT LAMMPSDataImporter : public ParticleImporter
 {
+	Q_OBJECT
+	OVITO_CLASS(LAMMPSDataImporter)
+	
 public:
 
 	/// \brief The LAMMPS atom_style used by the data file.
@@ -61,9 +66,7 @@ public:
 public:
 
 	/// \brief Constructs a new instance of this class.
-	Q_INVOKABLE LAMMPSDataImporter(DataSet* dataset) : ParticleImporter(dataset), _atomStyle(AtomStyle_Unknown) {
-		INIT_PROPERTY_FIELD(atomStyle);
-	}
+	Q_INVOKABLE LAMMPSDataImporter(DataSet* dataset) : ParticleImporter(dataset), _atomStyle(AtomStyle_Unknown) {}
 
 	/// \brief Returns the file filter that specifies the files that can be imported by this service.
 	/// \return A wild-card pattern that specifies the file types that can be handled by this import class.
@@ -80,47 +83,60 @@ public:
 	virtual QString objectTitle() override { return tr("LAMMPS Data"); }
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
-	virtual std::shared_ptr<FrameLoader> createFrameLoader(const Frame& frame, bool isNewlySelectedFile) override {
-		return std::make_shared<LAMMPSDataImportTask>(dataset()->container(), frame, isNewlySelectedFile, atomStyle());
+	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
+		return std::make_shared<FrameLoader>(frame, localFilename, atomStyle());
 	}
 
 	/// Inspects the header of the given file and returns the detected LAMMPS atom style.
-	std::pair<LAMMPSAtomStyle,bool> inspectFileHeader(const Frame& frame);
+	Future<LAMMPSAtomStyle> inspectFileHeader(const Frame& frame);
 
 private:
 
-	/// The format-specific task object that is responsible for reading an input file in the background.
-	class LAMMPSDataImportTask : public ParticleFrameLoader
+	class LAMMPSFrameData : public ParticleFrameData
 	{
 	public:
 
-		/// Normal constructor.
-		LAMMPSDataImportTask(DataSetContainer* container, const FileSourceImporter::Frame& frame,
-				bool isNewFile,
-				LAMMPSAtomStyle atomStyle = AtomStyle_Unknown,
-				bool detectAtomStyle = false) : ParticleFrameLoader(container, frame, isNewFile), _atomStyle(atomStyle), _detectAtomStyle(detectAtomStyle) {}
+		/// Inherit constructor from base class.
+		using ParticleFrameData::ParticleFrameData;
 
 		/// Returns the LAMMPS atom style used in the data file.
-		LAMMPSAtomStyle atomStyle() const { return _atomStyle; }
+		LAMMPSAtomStyle detectedAtomStyle() const { return _detectedAtomStyle; }
+
+		/// Sets the LAMMPS atom style used in the data file.
+		void setDetectedAtomStyle(LAMMPSAtomStyle style) { _detectedAtomStyle = style; }
+
+	private:
+
+		/// The LAMMPS atom style used in the data file.
+		LAMMPSAtomStyle _detectedAtomStyle;
+	};
+
+	/// The format-specific task object that is responsible for reading an input file in the background.
+	class FrameLoader : public FileSourceImporter::FrameLoader
+	{
+	public:
+
+		/// Constructor.
+		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename,
+				LAMMPSAtomStyle atomStyle = AtomStyle_Unknown,
+				bool detectAtomStyle = false) : FileSourceImporter::FrameLoader(frame, filename), _atomStyle(atomStyle), _detectAtomStyle(detectAtomStyle) {}
 
 		/// Detects or verifies the LAMMPS atom style used by the data file.
-		bool detectAtomStyle(const char* firstLine, const QByteArray& keywordLine);
+		static std::tuple<LAMMPSAtomStyle,bool> detectAtomStyle(const char* firstLine, const QByteArray& keywordLine, LAMMPSAtomStyle style);
 
 	protected:
 
-		/// Parses the given input file and stores the data in this container object.
-		virtual void parseFile(CompressedTextReader& stream) override;
+		/// Loads the frame data from the given file.
+		virtual void loadFile(QFile& file) override;
 
-		/// The LAMMPS atom style used by the data file.
+		/// The LAMMPS atom style to assume.
 		LAMMPSAtomStyle _atomStyle;
+
 		bool _detectAtomStyle;
 	};
 
 	/// The LAMMPS atom style used by the data format.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(LAMMPSAtomStyle, atomStyle, setAtomStyle);
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

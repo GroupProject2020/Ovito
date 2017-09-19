@@ -37,8 +37,22 @@ OpenGLMarkerPrimitive::OpenGLMarkerPrimitive(OpenGLSceneRenderer* renderer, Mark
 	OVITO_ASSERT(renderer->glcontext()->shareGroup() == _contextGroup);
 
 	// Initialize OpenGL shaders.
-	_shader = renderer->loadShaderProgram("marker", ":/openglrenderer/glsl/markers/marker.vs", ":/openglrenderer/glsl/markers/marker.fs");
-	_pickingShader = renderer->loadShaderProgram("marker.picking", ":/openglrenderer/glsl/markers/picking/marker.vs", ":/openglrenderer/glsl/markers/picking/marker.fs");
+	if(shape == BoxShape) {
+		_shader = renderer->loadShaderProgram("box_marker",
+				":/openglrenderer/glsl/markers/box_lines.vs",
+				":/openglrenderer/glsl/markers/marker.fs");
+		_pickingShader = renderer->loadShaderProgram("box_marker_picking",
+				":/openglrenderer/glsl/markers/picking/box_lines.vs",
+				":/openglrenderer/glsl/markers/picking/marker.fs");	
+	}
+	else {
+		_shader = renderer->loadShaderProgram("dot_marker", 
+				":/openglrenderer/glsl/markers/marker.vs", 
+				":/openglrenderer/glsl/markers/marker.fs");
+		_pickingShader = renderer->loadShaderProgram("dot_marker_picking", 
+				":/openglrenderer/glsl/markers/picking/marker.vs", 
+				":/openglrenderer/glsl/markers/picking/marker.fs");
+	}
 }
 
 /******************************************************************************
@@ -50,9 +64,13 @@ void OpenGLMarkerPrimitive::setCount(int markerCount)
 
 	_markerCount = markerCount;
 
+	int verticesPerMarker = 1;
+	if(markerShape() == BoxShape)
+		verticesPerMarker = 24;
+
 	// Allocate VBOs.
-	_positionBuffer.create(QOpenGLBuffer::StaticDraw, _markerCount);
-	_colorBuffer.create(QOpenGLBuffer::StaticDraw, _markerCount);
+	_positionBuffer.create(QOpenGLBuffer::StaticDraw, _markerCount, verticesPerMarker);
+	_colorBuffer.create(QOpenGLBuffer::StaticDraw, _markerCount, verticesPerMarker);
 }
 
 /******************************************************************************
@@ -98,17 +116,15 @@ void OpenGLMarkerPrimitive::render(SceneRenderer* renderer)
 
 	vpRenderer->rebindVAO();
 
-	OVITO_ASSERT(_positionBuffer.verticesPerElement() == 1);
-
 	// Pick the right OpenGL shader program.
 	QOpenGLShaderProgram* shader = vpRenderer->isPicking() ? _pickingShader : _shader;
 	if(!shader->bind())
 		vpRenderer->throwException(QStringLiteral("Failed to bind OpenGL shader program."));
 
-	OVITO_CHECK_OPENGL(shader->setUniformValue("modelview_projection_matrix",
-			(QMatrix4x4)(vpRenderer->projParams().projectionMatrix * vpRenderer->modelViewTM())));
-
-	OVITO_CHECK_OPENGL(vpRenderer->glPointSize(3));
+	if(markerShape() == DotShape) {
+		OVITO_ASSERT(_positionBuffer.verticesPerElement() == 1);
+		OVITO_CHECK_OPENGL(vpRenderer->glPointSize(3));
+	}
 
 	_positionBuffer.bindPositions(vpRenderer, shader);
 	if(!renderer->isPicking()) {
@@ -116,11 +132,43 @@ void OpenGLMarkerPrimitive::render(SceneRenderer* renderer)
 	}
 	else {
 		GLint pickingBaseID = vpRenderer->registerSubObjectIDs(markerCount());
-		vpRenderer->activateVertexIDs(shader, markerCount());
+		vpRenderer->activateVertexIDs(shader, _positionBuffer.elementCount() * _positionBuffer.verticesPerElement());
 		shader->setUniformValue("pickingBaseID", pickingBaseID);
 	}
 
-	OVITO_CHECK_OPENGL(glDrawArrays(GL_POINTS, 0, markerCount()));
+	if(markerShape() == DotShape) {
+		OVITO_CHECK_OPENGL(shader->setUniformValue("modelview_projection_matrix", (QMatrix4x4)(vpRenderer->projParams().projectionMatrix * vpRenderer->modelViewTM())));	
+		OVITO_CHECK_OPENGL(glDrawArrays(GL_POINTS, 0, markerCount()));
+	}
+	else if(markerShape() == BoxShape) {
+
+		shader->setUniformValue("projection_matrix", (QMatrix4x4)renderer->projParams().projectionMatrix);
+		shader->setUniformValue("viewprojection_matrix", (QMatrix4x4)(renderer->projParams().projectionMatrix * renderer->projParams().viewMatrix));
+		shader->setUniformValue("model_matrix", (QMatrix4x4)vpRenderer->worldTransform());
+		shader->setUniformValue("modelview_matrix", (QMatrix4x4)vpRenderer->modelViewTM());
+
+		GLint viewportCoords[4];
+		vpRenderer->glGetIntegerv(GL_VIEWPORT, viewportCoords);
+		shader->setUniformValue("marker_size", 4.0f / viewportCoords[3]);
+		
+		static const QVector3D cubeVerts[] = {
+				{-1, -1, -1}, { 1,-1,-1},
+				{-1, -1,  1}, { 1,-1, 1},
+				{-1, -1, -1}, {-1,-1, 1},
+				{ 1, -1, -1}, { 1,-1, 1},
+				{-1,  1, -1}, { 1, 1,-1},
+				{-1,  1,  1}, { 1, 1, 1},
+				{-1,  1, -1}, {-1, 1, 1},
+				{ 1,  1, -1}, { 1, 1, 1},
+				{-1, -1, -1}, {-1, 1,-1},
+				{ 1, -1, -1}, { 1, 1,-1},
+				{ 1, -1,  1}, { 1, 1, 1},
+				{-1, -1,  1}, {-1, 1, 1}
+		};
+		OVITO_CHECK_OPENGL(shader->setUniformValueArray("cubeVerts", cubeVerts, 24));
+		
+		OVITO_CHECK_OPENGL(glDrawArrays(GL_LINES, 0, _positionBuffer.elementCount() * _positionBuffer.verticesPerElement()));
+	}
 
 	_positionBuffer.detachPositions(vpRenderer, shader);
 	if(!renderer->isPicking()) {

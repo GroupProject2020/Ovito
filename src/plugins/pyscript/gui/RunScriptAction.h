@@ -23,18 +23,21 @@
 
 
 #include <plugins/pyscript/PyScript.h>
-#include <gui/plugins/autostart/GuiAutoStartObject.h>
+#include <gui/app/GuiApplicationService.h>
 
 namespace PyScript {
 
 using namespace Ovito;
 
 /**
- * \brief An auto-start object that is automatically invoked on application startup
- *        and that will execute a script files passed on the command line.
+ * \brief An application service that is automatically invoked on application startup
+ *        and that installs new actions in the graphical user interface.
  */
-class RunScriptAction : public GuiAutoStartObject
+class RunScriptAction : public GuiApplicationService
 {
+	Q_OBJECT
+	OVITO_CLASS(RunScriptAction)
+
 public:
 
 	/// \brief Default constructor.
@@ -42,11 +45,6 @@ public:
 
 	/// \brief Is called when a new main window is created.
 	virtual void registerActions(ActionManager& actionManager) override;
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 }	// End of namespace

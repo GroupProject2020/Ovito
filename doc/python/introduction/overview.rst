@@ -15,6 +15,10 @@ do many things that are already familiar from the graphical user interface (and 
 
 But first let's take a look at some essential concepts of OVITO's data model and the scripting framework. 
 
+.. warning::
+   This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
+   development version of OVITO.
+
 ------------------------------------
 OVITO's data pipeline architecture
 ------------------------------------
@@ -79,7 +83,7 @@ We can now start populating the node's modification pipeline with some modifiers
 to the :py:attr:`ObjectNode.modifiers <ovito.ObjectNode.modifiers>` list::
 
    >>> from ovito.modifiers import *
-   >>> node.modifiers.append(SelectExpressionModifier(expression="PotentialEnergy<-3.9"))
+   >>> node.modifiers.append(ExpressionSelectionModifier(expression="PotentialEnergy<-3.9"))
    >>> node.modifiers.append(DeleteSelectedParticlesModifier())
 
 A modifier is constructed by calling the constructor of one of the modifier classes, which are
@@ -115,7 +119,7 @@ Exporting data to a file
 Exporting the data to a file that is produced by the modification pipeline is simple; 
 we call the :py:func:`ovito.io.export_file` function for this::
 
-    >>> export_file(node, "outputdata.dump", "lammps_dump",
+    >>> export_file(node, "outputdata.dump", "lammps/dump",
     ...    columns = ["Position.X", "Position.Y", "Position.Z", "Structure Type"])
     
 The first argument of this high-level function is the :py:class:`~ovito.ObjectNode` whose pipeline results are to be exported.

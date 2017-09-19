@@ -31,7 +31,7 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-IMPLEMENT_OVITO_OBJECT(DislocationDisplayEditor, PropertiesEditor);
+IMPLEMENT_OVITO_CLASS(DislocationDisplayEditor);
 SET_OVITO_OBJECT_EDITOR(DislocationDisplay, DislocationDisplayEditor);
 
 /******************************************************************************
@@ -56,8 +56,8 @@ void DislocationDisplayEditor::createUI(const RolloutInsertionParameters& rollou
 
 	// Shading mode.
 	VariantComboBoxParameterUI* shadingModeUI = new VariantComboBoxParameterUI(this, PROPERTY_FIELD(DislocationDisplay::shadingMode));
-	shadingModeUI->comboBox()->addItem(tr("Normal"), qVariantFromValue(ArrowPrimitive::NormalShading));
-	shadingModeUI->comboBox()->addItem(tr("Flat"), qVariantFromValue(ArrowPrimitive::FlatShading));
+	shadingModeUI->comboBox()->addItem(tr("Normal"), QVariant::fromValue(ArrowPrimitive::NormalShading));
+	shadingModeUI->comboBox()->addItem(tr("Flat"), QVariant::fromValue(ArrowPrimitive::FlatShading));
 	sublayout->addWidget(new QLabel(tr("Shading mode:")), 0, 0);
 	sublayout->addWidget(shadingModeUI->comboBox(), 0, 1);
 

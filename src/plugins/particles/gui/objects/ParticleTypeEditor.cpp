@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,8 +21,7 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <plugins/particles/objects/ParticleType.h>
-#include <plugins/particles/objects/ParticleTypeProperty.h>
-#include <plugins/particles/data/ParticleProperty.h>
+#include <core/dataset/data/properties/PropertyStorage.h>
 #include <gui/properties/ColorParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
 #include <gui/properties/StringParameterUI.h>
@@ -31,7 +30,7 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_OBJECT(ParticleTypeEditor, PropertiesEditor);
+IMPLEMENT_OVITO_CLASS(ParticleTypeEditor);
 SET_OVITO_OBJECT_EDITOR(ParticleType, ParticleTypeEditor);
 
 /******************************************************************************
@@ -74,8 +73,8 @@ void ParticleTypeEditor::createUI(const RolloutInsertionParameters& rolloutParam
 		ParticleType* ptype = static_object_cast<ParticleType>(editObject());
 		if(!ptype) return;
 
-		ParticleTypeProperty::setDefaultParticleColor(ParticleProperty::ParticleTypeProperty, ptype->name(), ptype->color());
-		ParticleTypeProperty::setDefaultParticleRadius(ParticleProperty::ParticleTypeProperty, ptype->name(), ptype->radius());
+		ParticleType::setDefaultParticleColor(ParticleProperty::TypeProperty, ptype->name(), ptype->color());
+		ParticleType::setDefaultParticleRadius(ParticleProperty::TypeProperty, ptype->name(), ptype->radius());
 
 		mainWindow()->statusBar()->showMessage(tr("Stored current color and radius as defaults for particle type '%1'.").arg(ptype->name()), 4000);
 	});

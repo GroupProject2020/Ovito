@@ -32,6 +32,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
  */
 class ParticleSettingsPage : public ApplicationSettingsDialogPage
 {
+	Q_OBJECT
+	OVITO_CLASS(ParticleSettingsPage)
+
 public:
 
 	/// Default constructor.
@@ -54,13 +57,8 @@ private:
 	QTreeWidget* _predefTypesTable;
 	QTreeWidgetItem* _particleTypesItem;
 	QTreeWidgetItem* _structureTypesItem;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

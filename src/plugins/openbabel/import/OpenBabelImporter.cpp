@@ -21,7 +21,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <core/utilities/concurrent/Future.h>
-#include <core/dataset/importexport/FileSource.h>
+#include <core/dataset/io/FileSource.h>
 #include "OpenBabelImporter.h"
 
 #include <openbabel/obconversion.h>
@@ -32,7 +32,7 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(OpenBabelImporter, ParticleImporter);
+
 
 /******************************************************************************
 * Parses the given input file and stores the data in this container object.
@@ -52,12 +52,12 @@ void OpenBabelImporter::OpenBabelImportTask::parseFile(CompressedTextReader& str
 	obconversion.ReadFile(&mol, file.fileName().toStdString());
 
 	// Create the particle properties.
-	ParticleProperty* posProperty = new ParticleProperty(mol.NumAtoms(), ParticleProperty::PositionProperty, 0, false);
+	PropertyStorage* posProperty = new ParticleProperty(mol.NumAtoms(), ParticleProperty::PositionProperty, 0, false);
 	addParticleProperty(posProperty);
-	ParticleProperty* typeProperty = new ParticleProperty(mol.NumAtoms(), ParticleProperty::ParticleTypeProperty, 0, false);
-	ParticleFrameLoader::ParticleTypeList* typeList = new ParticleFrameLoader::ParticleTypeList();
+	PropertyStorage* typeProperty = new ParticleProperty(mol.NumAtoms(), ParticleProperty::TypeProperty, 0, false);
+	ParticleFrameData::ParticleTypeList* typeList = new ParticleFrameData::ParticleTypeList();
 	addParticleProperty(typeProperty, typeList);
-	ParticleProperty* identifierProperty = new ParticleProperty(mol.NumAtoms(), ParticleProperty::IdentifierProperty, 0, false);
+	PropertyStorage* identifierProperty = new ParticleProperty(mol.NumAtoms(), ParticleProperty::IdentifierProperty, 0, false);
 	addParticleProperty(identifierProperty);
 
 	// Transfer atoms.

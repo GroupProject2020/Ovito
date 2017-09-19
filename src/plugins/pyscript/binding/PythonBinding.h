@@ -26,8 +26,15 @@
 #include <plugins/pyscript/engine/ScriptEngine.h>
 #include <core/utilities/io/FileManager.h>
 #include <core/app/Application.h>
+#include <core/oo/OORef.h>
+#include <core/dataset/data/properties/PropertyReference.h>
+#include <core/dataset/data/properties/PropertyClass.h>
 
 PYBIND11_DECLARE_HOLDER_TYPE(T, Ovito::OORef<T>, true);
+
+// Needed by modifier_operate_on_list() below.
+PYBIND11_MAKE_OPAQUE(std::vector<Ovito::OORef<Ovito::ModifierDelegate>>);
+
 
 namespace pybind11 { namespace detail {
 
@@ -314,6 +321,101 @@ namespace pybind11 { namespace detail {
 	// Automatic QSet<int> conversion.
 	template<> struct type_caster<QSet<int>> : set_caster<QSet<int>, int> {};
 
+	// Automatic QSet<QString> conversion.
+	template<> struct type_caster<QSet<QString>> : set_caster<QSet<QString>, QString> {};
+	
+	/// Automatic PropertyReference -> Python string conversion
+	/// Note that conversion in the other direction is not possible without additional information,
+	/// because the property class is unknown.
+    template<> struct type_caster<Ovito::PropertyReference> {
+    public:
+        PYBIND11_TYPE_CASTER(Ovito::PropertyReference, _("PropertyReference"));
+
+        bool load(handle src, bool) {
+			return false;
+		}
+
+        static handle cast(const Ovito::PropertyReference& src, return_value_policy /* policy */, handle /* parent */) {
+        	object s = pybind11::cast(src.nameWithComponent());
+			return s.release();
+        }
+    };
+	
+	/// Automatic Python string <--> TypedPropertyReference conversion
+    template<class PropertyObjectType> struct type_caster<Ovito::TypedPropertyReference<PropertyObjectType>> {
+    public:
+        PYBIND11_TYPE_CASTER(Ovito::TypedPropertyReference<PropertyObjectType>, _("PropertyReference<") + make_caster<PropertyObjectType>::name() + _(">"));
+
+        bool load(handle src, bool) {
+			using namespace Ovito;
+
+			if(!src) return false;
+			if(src.is_none())
+				return true;
+
+			try {
+				int ptype = src.cast<int>();
+				if(ptype == 0)
+					throw Exception(QStringLiteral("User-defined property without a name is not acceptable."));
+				if(PropertyObjectType::OOClass().standardProperties().contains(ptype) == false)
+					throw Exception(QStringLiteral("%1 is not a valid standard property type ID.").arg(ptype));
+				value = Ovito::TypedPropertyReference<PropertyObjectType>(ptype);
+				return true;
+			}
+			catch(const cast_error&) {}
+			
+			QString str;
+			try {
+				str = src.cast<QString>();
+			}
+			catch(const cast_error&) {
+				return false;
+			}
+
+			QStringList parts = str.split(QChar('.'));
+			if(parts.length() > 2)
+				throw Exception(QStringLiteral("Too many dots in property name string."));
+			else if(parts.length() == 0 || parts[0].isEmpty())
+				throw Exception(QStringLiteral("Property name string is empty."));
+
+			// Determine property type.
+			QString name = parts[0];
+			int type = PropertyObjectType::OOClass().standardPropertyIds().value(name, 0);
+
+			// Determine vector component.
+			int component = -1;
+			if(parts.length() == 2) {
+				// First try to convert component to integer.
+				bool ok;
+				component = parts[1].toInt(&ok) - 1;
+				if(!ok) {
+					if(type != 0) {
+						// Perhaps the standard property's component name was used instead of an integer.
+						const QString componentName = parts[1].toUpper();
+						QStringList standardNames = PropertyObjectType::OOClass().standardPropertyComponentNames(type);
+						component = standardNames.indexOf(componentName);
+						if(component < 0)
+							throw Exception(QStringLiteral("Component name '%1' is not defined for particle property '%2'. Possible components are: %3").arg(parts[1]).arg(parts[0]).arg(standardNames.join(',')));
+					}
+					else {
+						// Assume user-defined properties cannot be vectors.
+						component = -1;
+						name = parts.join(QChar('.'));
+					}
+				}
+			}
+			if(type == 0)
+				value = Ovito::TypedPropertyReference<PropertyObjectType>(name, component);
+			else
+				value = Ovito::TypedPropertyReference<PropertyObjectType>(type, component);
+			return true;
+		}
+
+        static handle cast(const Ovito::TypedPropertyReference<PropertyObjectType>& src, return_value_policy /* policy */, handle /* parent */) {			
+        	object s = pybind11::cast(src.nameWithComponent());
+			return s.release();
+        }
+    };
 	
 }} // namespace pybind11::detail
 
@@ -370,7 +472,7 @@ class ovito_abstract_class : public py::class_<OvitoObjectClass, BaseClass, OORe
 public:
 	/// Constructor.
 	ovito_abstract_class(py::handle scope, const char* docstring = nullptr, const char* pythonClassName = nullptr)
-		: py::class_<OvitoObjectClass, BaseClass, OORef<OvitoObjectClass>>(scope, pythonClassName ? pythonClassName : OvitoObjectClass::OOType.className(), docstring) {}
+		: py::class_<OvitoObjectClass, BaseClass, OORef<OvitoObjectClass>>(scope, pythonClassName ? pythonClassName : OvitoObjectClass::OOClass().className(), docstring) {}
 };
 
 /// Defines a Python class for an OvitoObject-derived C++ class.
@@ -381,25 +483,43 @@ public:
 
 	/// Constructor.
 	ovito_class(py::handle scope, const char* docstring = nullptr, const char* pythonClassName = nullptr) 
-		: py::class_<OvitoObjectClass, BaseClass, OORef<OvitoObjectClass>>(scope, pythonClassName ? pythonClassName : OvitoObjectClass::OOType.className(), docstring) {
+		: py::class_<OvitoObjectClass, BaseClass, OORef<OvitoObjectClass>>(scope, pythonClassName ? pythonClassName : OvitoObjectClass::OOClass().className(), docstring) {
 		// Define a constructor that takes a variable number of keyword arguments, which are used to initialize
 		// properties of the newly created object.
-		this->def("__init__", [](py::args args, py::kwargs kwargs) {			
-			OvitoObjectClass& instance = args[0].cast<OvitoObjectClass&>();
+		this->def("__init__", [](py::args args, py::kwargs kwargs) {
+			py::object obj = args[0];
+			OvitoObjectClass& instance = obj.cast<OvitoObjectClass&>();
 			constructInstance(instance);
-			initializeParameters(py::cast(instance), args, kwargs);
+			try {
+				initializeParameters(std::move(obj), std::move(args), std::move(kwargs));
+			}
+			catch(...) {
+				// Clean up if an exception occured during object initialization. 
+				instance.aboutToBeDeleted();
+				instance.~OvitoObjectClass();
+				throw;
+			}
 		});
 	}
 
 	/// Constructor.
 	ovito_class(py::handle scope, const char* docstring, const char* pythonClassName, py::dynamic_attr dyn_attr)
-		: py::class_<OvitoObjectClass, BaseClass, OORef<OvitoObjectClass>>(scope, pythonClassName ? pythonClassName : OvitoObjectClass::OOType.className(), docstring, dyn_attr) {
+		: py::class_<OvitoObjectClass, BaseClass, OORef<OvitoObjectClass>>(scope, pythonClassName ? pythonClassName : OvitoObjectClass::OOClass().className(), docstring, dyn_attr) {
 		// Define a constructor that takes a variable number of keyword arguments, which are used to initialize
 		// properties of the newly created object.
 		this->def("__init__", [](py::args args, py::kwargs kwargs) {			
-			OvitoObjectClass& instance = args[0].cast<OvitoObjectClass&>();
+			py::object obj = args[0];
+			OvitoObjectClass& instance = obj.cast<OvitoObjectClass&>();
 			constructInstance(instance);
-			initializeParameters(py::cast(instance), args, kwargs);
+			try {
+				initializeParameters(std::move(obj), std::move(args), std::move(kwargs));
+			}
+			catch(...) {
+				// Clean up if an exception occured during object initialization. 
+				instance.aboutToBeDeleted();
+				instance.~OvitoObjectClass();
+				throw;
+			}
 		});
 	}
 
@@ -435,7 +555,7 @@ private:
 			// Check if the attribute exists. Otherwise raise error.
 			if(!py::hasattr(pyobj, item.first)) {
 				PyErr_SetObject(PyExc_AttributeError, 
-					py::str("Object type {} does not have an attribute named '{}'.").format(OvitoObjectClass::OOType.className(), item.first).ptr());
+					py::str("Object type {} does not have an attribute named '{}'.").format(OvitoObjectClass::OOClass().className(), item.first).ptr());
 				throw py::error_already_set();
 			}
 			// Set attribute value.
@@ -509,185 +629,187 @@ pybind11::class_<Vector, holder_type> bind_vector_readonly(pybind11::module &m, 
 
 namespace detail {
 
-template<
-	typename ParentClass, 
-	typename ElementClass, 
-	typename GetListClass,
-	const QVector<ElementClass*>& (GetListClass::*get_list)() const>
-class SubobjectListWrapper
+template<typename PythonClass, typename ListGetterFunction>
+auto register_subobject_list_wrapper(PythonClass& parentClass, const char* wrapperClassName, ListGetterFunction&& listGetter)
 {
-public:
-	SubobjectListWrapper(ParentClass& parent) : _parent(parent) {}
-	const QVector<ElementClass*>& getVector() const { return (_parent.*get_list)(); }
-	ParentClass& parent() { return _parent; }
-private:
-	ParentClass& _parent;
-};
-    
-template<
-	typename ParentClass, 
-	typename ElementClass, 
-	typename GetListClass = ParentClass,
-	const QVector<ElementClass*>& (GetListClass::*get_list)() const, 
-	typename... options, 
-	typename... Extra>
-py::class_<SubobjectListWrapper<ParentClass, ElementClass, GetListClass, get_list>> register_subobject_list_wrapper(py::class_<ParentClass,options...>& parentClass, const char* pyPropertyName, const char* wrapperObjectName, const Extra& ...extra) 
-{
-	using WrapperClass = SubobjectListWrapper<ParentClass, ElementClass, GetListClass, get_list>;
-	py::class_<WrapperClass> pyWrapperClass(parentClass, wrapperObjectName);
-	pyWrapperClass.def("__bool__", [](const WrapperClass& wrapper) {
-				return !wrapper.getVector().empty();
+	using ObjectType = typename PythonClass::type;
+	struct ObjectWrapper : public std::reference_wrapper<ObjectType> {
+		using std::reference_wrapper<ObjectType>::reference_wrapper;
+		ObjectType& get() { return static_cast<ObjectType&>(*this); }
+		const ObjectType& get() const { return static_cast<const ObjectType&>(*this); }
+	};
+	using VectorType = std::decay_t<std::result_of_t<ListGetterFunction(ObjectType&)>>;
+	using ElementType = typename VectorType::value_type;
+	using ConstIterType = typename VectorType::const_iterator;
+	
+	py::class_<ObjectWrapper> pyWrapperClass(parentClass, wrapperClassName);
+	pyWrapperClass.def("__bool__", [listGetter](const ObjectWrapper& wrapper) {
+				return !listGetter(wrapper.get()).empty();
 			});
-	pyWrapperClass.def("__len__", [](const WrapperClass& wrapper) {
-				return wrapper.getVector().size();
+	pyWrapperClass.def("__len__", [listGetter](const ObjectWrapper& wrapper) {
+				return listGetter(wrapper.get()).size();
 			});
-	pyWrapperClass.def("__getitem__", [](const WrapperClass& wrapper, int index) {
-				if(index < 0) index += wrapper.getVector().size();
-				if(index < 0 || index >= wrapper.getVector().size()) throw py::index_error();
-				return wrapper.getVector()[index]; 
+	pyWrapperClass.def("__getitem__", [listGetter](const ObjectWrapper& wrapper, int index) {
+				const auto& list = listGetter(wrapper.get());
+				if(index < 0) index += list.size();
+				if(index < 0 || index >= list.size()) throw py::index_error();
+				return list[index]; 
 			});
-	pyWrapperClass.def("__iter__", [](const WrapperClass& wrapper) {
-				using IterType = typename QVector<ElementClass*>::const_iterator;
-				return py::make_iterator<
-					py::return_value_policy::reference_internal, IterType, IterType, ElementClass*>(
-					wrapper.getVector().begin(), wrapper.getVector().end());
+	pyWrapperClass.def("__iter__", [listGetter](const ObjectWrapper& wrapper) {
+				const auto& list = listGetter(wrapper.get());
+				return py::make_iterator<py::return_value_policy::reference_internal, ConstIterType, ConstIterType, ElementType>(
+					list.begin(), list.end());
 			}, 
 			py::keep_alive<0, 1>());
-	pyWrapperClass.def("__getitem__", [](const WrapperClass& wrapper, py::slice slice) {
+	pyWrapperClass.def("__getitem__", [listGetter](const ObjectWrapper& wrapper, py::slice slice) {
 				size_t start, stop, step, slicelength;
+				const auto& list = listGetter(wrapper.get());
 
-				if(!slice.compute(wrapper.getVector().size(), &start, &stop, &step, &slicelength))
+				if(!slice.compute(list.size(), &start, &stop, &step, &slicelength))
 					throw py::error_already_set();
 
 				py::list seq;
 				for(size_t i = 0; i < slicelength; ++i) {
-					seq.append(py::cast(wrapper.getVector()[start]));
+					seq.append(py::cast(list[start]));
 					start += step;
 				}
 				return seq;
         	}, 
 			py::arg("s"), "Retrieve list elements using a slice object");
-	pyWrapperClass.def("index", [](const WrapperClass& wrapper, py::object& item) {				
-				int index = wrapper.getVector().indexOf(item.cast<ElementClass*>());
-				if(index < 0) throw py::value_error("Item does not exist in list");
-				return index;
+	pyWrapperClass.def("index", [listGetter](const ObjectWrapper& wrapper, py::object& item) {
+				const auto& list = listGetter(wrapper.get());
+				auto iter = std::find(list.cbegin(), list.cend(), item.cast<ElementType>());
+				if(iter == list.cend()) throw py::value_error("Item does not exist in list");
+				return std::distance(list.cbegin(), iter);
+			});
+	pyWrapperClass.def("__contains__", [listGetter](const ObjectWrapper& wrapper, py::object& item) {
+				const auto& list = listGetter(wrapper.get());
+				return std::find(list.cbegin(), list.cend(), item.cast<ElementType>()) != list.cend();
+			});
+	pyWrapperClass.def("count", [listGetter](const ObjectWrapper& wrapper, py::object& item) {
+				const auto& list = listGetter(wrapper.get());
+				return std::count(list.cbegin(), list.cend(), item.cast<ElementType>());
 			});
 	return pyWrapperClass;
 }
 
-template<
-	typename ParentClass, 
-	typename ElementClass, 
-	typename GetListClass = ParentClass,
-	const QVector<ElementClass*>& (GetListClass::*get_list)() const, 
-	void (GetListClass::*insert_element)(int, ElementClass*),
-	void (GetListClass::*remove_element)(int),
-	typename... options, 
-	typename... Extra>
-py::class_<SubobjectListWrapper<ParentClass, ElementClass, GetListClass, get_list>> register_mutable_subobject_list_wrapper(py::class_<ParentClass,options...>& parentClass, const char* pyPropertyName, const char* wrapperObjectName, const Extra& ...extra) 
+template<typename PythonClass, typename ListGetterFunction, typename ListInserterFunction, typename ListRemoverFunction>
+auto register_mutable_subobject_list_wrapper(PythonClass& parentClass, const char* wrapperObjectName, ListGetterFunction&& listGetter, ListInserterFunction&& listInserter, ListRemoverFunction&& listRemover) 
 {
-	using WrapperClass = SubobjectListWrapper<ParentClass, ElementClass, GetListClass, get_list>;
-	auto pyWrapperClass = register_subobject_list_wrapper<ParentClass, ElementClass, GetListClass, get_list>(parentClass, pyPropertyName, wrapperObjectName, extra...);
+	auto pyWrapperClass = register_subobject_list_wrapper(parentClass, wrapperObjectName, std::forward<ListGetterFunction>(listGetter));
+	using ObjectType = typename PythonClass::type;
+	using ObjectWrapper = typename decltype(pyWrapperClass)::type;
+	using VectorType = std::decay_t<std::result_of_t<ListGetterFunction(ObjectType&)>>;	
+	using ElementType = typename VectorType::value_type;
 
-	pyWrapperClass.def("append", [](WrapperClass& wrapper, ElementClass* element) {
+	pyWrapperClass.def("append", [listGetter,listInserter](ObjectWrapper& wrapper, ElementType element) {
 				if(!element) throw py::value_error("Cannot insert 'None' elements into this collection.");
-				int index = wrapper.getVector().size();
-				(wrapper.parent().*insert_element)(index, element);
+				auto index = listGetter(wrapper.get()).size();
+				listInserter(wrapper.get(), index, element);
 			});
-	pyWrapperClass.def("insert", [](WrapperClass& wrapper, int index, ElementClass* element) {
+	pyWrapperClass.def("extend", [listGetter,listInserter](ObjectWrapper& wrapper, py::sequence seq) {
+				auto index = listGetter(wrapper.get()).size();
+				for(size_t i = 0; i < seq.size(); i++) {
+					ElementType el = seq[i].cast<ElementType>();
+					if(!el) throw py::value_error("Cannot insert 'None' elements into this collection.");
+					listInserter(wrapper.get(), index++, el);
+				}
+			});
+	pyWrapperClass.def("insert", [listGetter,listInserter](ObjectWrapper& wrapper, int index, ElementType element) {
 				if(!element) throw py::value_error("Cannot insert 'None' elements into this collection.");
-				if(index < 0) index += wrapper.getVector().size();
-				if(index < 0 || index >= wrapper.getVector().size()) throw py::index_error();
-				(wrapper.parent().*insert_element)(index, element);
+				const auto& list = listGetter(wrapper.get());
+				if(index < 0) index += list.size();
+				if(index < 0 || index >= list.size()) throw py::index_error();
+				listInserter(wrapper.get(), index, element);
 			});
-	pyWrapperClass.def("__setitem__", [](WrapperClass& wrapper, int index, ElementClass* element) {
+	pyWrapperClass.def("__setitem__", [listGetter,listInserter,listRemover](ObjectWrapper& wrapper, int index, ElementType element) {
 				if(!element) throw py::value_error("Cannot insert 'None' elements into this collection.");
-				if(index < 0) index += wrapper.getVector().size();
-				if(index < 0 || index >= wrapper.getVector().size()) throw py::index_error();
-				(wrapper.parent().*remove_element)(index);
-				(wrapper.parent().*insert_element)(index, element);
+				const auto& list = listGetter(wrapper.get());
+				if(index < 0) index += list.size();
+				if(index < 0 || index >= list.size()) throw py::index_error();
+				listRemover(wrapper.get(), index);
+				listInserter(wrapper.get(), index, element);
 			});
-	pyWrapperClass.def("__delitem__", [](WrapperClass& wrapper, int index) {
-				if(index < 0) index += wrapper.getVector().size();
-				if(index < 0 || index >= wrapper.getVector().size()) throw py::index_error();
-				(wrapper.parent().*remove_element)(index);
+	pyWrapperClass.def("__delitem__", [listGetter,listRemover](ObjectWrapper& wrapper, int index) {
+				const auto& list = listGetter(wrapper.get());
+				if(index < 0) index += list.size();
+				if(index < 0 || index >= list.size()) throw py::index_error();
+				listRemover(wrapper.get(), index);
 			});
-    pyWrapperClass.def("__delitem__", [](WrapperClass& wrapper, py::slice slice) {
-            size_t start, stop, step, slicelength;
-            
-			if(!slice.compute(wrapper.getVector().size(), &start, &stop, &step, &slicelength))
-                throw py::error_already_set();
+	pyWrapperClass.def("__delitem__", [listGetter,listRemover](ObjectWrapper& wrapper, py::slice slice) {
+				size_t start, stop, step, slicelength;
+				const auto& list = listGetter(wrapper.get());
+				
+				if(!slice.compute(list.size(), &start, &stop, &step, &slicelength))
+					throw py::error_already_set();
 
-			for(size_t i = 0; i < slicelength; ++i) {
-				(wrapper.parent().*remove_element)(start);
-				start += step - 1;
-			}
-        },
-        "Delete list elements using a slice object"
-    );			
+				for(size_t i = 0; i < slicelength; ++i) {
+					listRemover(wrapper.get(), start);
+					start += step - 1;
+				}
+			},
+			"Delete list elements using a slice object");			
+	pyWrapperClass.def("remove", [listGetter,listRemover](ObjectWrapper& wrapper, ElementType element) {
+				if(!element) throw py::value_error("Cannot remove 'None' elements from this collection.");
+				const auto& list = listGetter(wrapper.get());
+				auto iter = std::find(list.cbegin(), list.cend(), element);
+				if(iter == list.cend()) throw py::value_error("Item does not exist in list");
+				listRemover(wrapper.get(), std::distance(list.cbegin(), iter));
+			});
 	
 	return pyWrapperClass;
 }
 
 };	// End of namespace detail
 
-template<
-	typename ParentClass, 
-	typename ElementClass, 
-	typename GetListClass = ParentClass,
-	const QVector<ElementClass*>& (GetListClass::*get_list)() const, 
-	typename... options, 
-	typename... Extra>
-py::class_<detail::SubobjectListWrapper<ParentClass, ElementClass, GetListClass, get_list>> expose_subobject_list(py::class_<ParentClass,options...>& parentClass, const char* pyPropertyName, const char* wrapperObjectName, const Extra& ...extra) 
+template<class PythonClass, typename ListGetterFunction>
+auto expose_subobject_list(PythonClass& parentClass, ListGetterFunction&& listGetter, const char* pyPropertyName, const char* wrapperObjectName, const char* docstring = nullptr) 
 {
-	using WrapperClass = detail::SubobjectListWrapper<ParentClass, ElementClass, GetListClass, get_list>;
-	auto pyWrapperClass = detail::register_subobject_list_wrapper<ParentClass, ElementClass, GetListClass, get_list>(parentClass, pyPropertyName, wrapperObjectName, extra...);
-
+	auto pyWrapperClass = detail::register_subobject_list_wrapper(parentClass, wrapperObjectName, std::forward<ListGetterFunction>(listGetter));
+	using WapperClassType = typename decltype(pyWrapperClass)::type;
+	
 	parentClass.def_property_readonly(pyPropertyName, py::cpp_function(
-		[](ParentClass& parent) {
-			return WrapperClass(parent);
-		}, py::keep_alive<0,1>()), extra...);
+		[](typename PythonClass::type& parent) { return WapperClassType(parent); }, 
+		py::keep_alive<0,1>()), docstring);
 
 	return pyWrapperClass;
 }
 
-template<
-	typename ParentClass, 
-	typename ElementClass, 
-	typename GetListClass = ParentClass,
-	const QVector<ElementClass*>& (GetListClass::*get_list)() const, 
-	void (GetListClass::*insert_element)(int, ElementClass*),
-	void (GetListClass::*remove_element)(int),
-	typename... options, 
-	typename... Extra>
-py::class_<detail::SubobjectListWrapper<ParentClass, ElementClass, GetListClass, get_list>> expose_mutable_subobject_list(py::class_<ParentClass,options...>& parentClass, const char* pyPropertyName, const char* wrapperObjectName, const Extra& ...extra) 
+template<class PythonClass, typename ListGetterFunction, typename ListInserterFunction, typename ListRemoverFunction>
+auto expose_mutable_subobject_list(PythonClass& parentClass, ListGetterFunction&& listGetter, ListInserterFunction&& listInserter, ListRemoverFunction&& listRemover, const char* pyPropertyName, const char* wrapperObjectName, const char* docstring = nullptr) 
 {
-	using WrapperClass = detail::SubobjectListWrapper<ParentClass, ElementClass, GetListClass, get_list>;
-	auto pyWrapperClass = detail::register_mutable_subobject_list_wrapper<ParentClass, ElementClass, GetListClass, get_list, insert_element, remove_element>(parentClass, pyPropertyName, wrapperObjectName, extra...);
-
+	auto pyWrapperClass = detail::register_mutable_subobject_list_wrapper(parentClass, wrapperObjectName, 
+			std::forward<ListGetterFunction>(listGetter),
+			std::forward<ListInserterFunction>(listInserter),
+			std::forward<ListRemoverFunction>(listRemover));
+	using WapperClassType = typename decltype(pyWrapperClass)::type;
+	using ObjectType = typename PythonClass::type;
+	using ObjectWrapper = typename decltype(pyWrapperClass)::type;
+	using VectorType = std::decay_t<std::result_of_t<ListGetterFunction(ObjectType&)>>;	
+	using ElementType = typename VectorType::value_type;
+		
 	parentClass.def_property(pyPropertyName, py::cpp_function(
 		// getter
-		[](ParentClass& parent) {	
-			return WrapperClass(parent);
+		[](typename PythonClass::type& parent) {	
+			return WapperClassType(parent);
 		}, py::keep_alive<0,1>()), 
 		// setter
-		[](ParentClass& parent, py::object& obj) {
+		[listGetter,listInserter,listRemover](typename PythonClass::type& parent, py::object& obj) {
 			if(!py::isinstance<py::sequence>(obj))
 				throw py::value_error("Can only assign a sequence.");
 			py::sequence seq(obj);
-			const auto& vec = (parent.*get_list)();
 			// First, clear the existing list.
-			while(vec.size() != 0)
-				(parent.*remove_element)(vec.size() - 1);
+			while(listGetter(parent).size() != 0)
+				listRemover(parent, listGetter(parent).size() - 1);
 			// Then insert elements from assigned sequence.
 			for(size_t i = 0; i < seq.size(); i++) {
-				ElementClass* el = seq[i].cast<ElementClass*>();
+				ElementType el = seq[i].cast<ElementType>();
 				if(!el) throw py::value_error("Cannot insert 'None' elements into this collection.");
-				(parent.*insert_element)(vec.size(), el);
+				listInserter(parent, listGetter(parent).size(), el);
 			}
 		},
-		extra...);
-	
+		docstring);
+
 	return pyWrapperClass;
 }
 
@@ -733,7 +855,7 @@ py::cpp_function VectorSetter()
 			throw py::value_error(str.str());
 		}
 		if(array.strides(0) != sizeof(typename VectorClass::value_type))
-			throw py::value_error("Array stride is not acceptable. Must be a compact array.");
+			throw py::value_error("Array stride is not compatible. Must be a compact array.");
 		(obj.cast<ParentClass&>().*setter_func)(*v);
 	});
 }
@@ -780,9 +902,41 @@ py::cpp_function MatrixSetter()
 			throw py::value_error(str.str());
 		}
 		if(array.strides(0) != sizeof(typename MatrixClass::element_type) || array.strides(1) != sizeof(typename MatrixClass::column_type))
-			throw py::value_error("Array stride is not acceptable. Must be a compact array.");
+			throw py::value_error("Array stride is not compatible. Must be a compact array.");
 		(obj.cast<ParentClass&>().*setter_func)(*tm);
 	});
 }
+
+template<class PythonClass, typename DelegateListGetter>
+void modifier_operate_on_list(PythonClass& parentClass, DelegateListGetter&& delegatesGetter, const char* pyPropertyName, const char* docstring = nullptr)
+{	
+	parentClass.def_property(pyPropertyName, 
+		[delegatesGetter](typename PythonClass::type& parent) { 
+			const auto& list = delegatesGetter(parent);
+			return std::vector<OORef<ModifierDelegate>>(std::begin(list), std::end(list));
+		}, 
+		[delegatesGetter](typename PythonClass::type& parent, py::object obj) { 
+			const auto& list = delegatesGetter(parent);
+			py::object wrapper = py::cast(std::vector<OORef<ModifierDelegate>>(std::begin(list), std::end(list)));
+			wrapper.attr("assign")(std::move(obj));
+		}, 
+		docstring);
+}
+
+/// Helper function that generates a getter function for the 'operate_on' attribute of a DelegatingModifier subclass
+OVITO_PYSCRIPT_EXPORT py::cpp_function modifierDelegateGetter();
+
+/// Helper function that generates a setter function for the 'operate_on' attribute of a DelegatingModifier subclass.
+OVITO_PYSCRIPT_EXPORT py::cpp_function modifierDelegateSetter(const OvitoClass& delegateType);
+
+/// Helper function that generates a getter function for the 'operate_on' attribute of a GenericPropertyModifier subclass
+OVITO_PYSCRIPT_EXPORT py::cpp_function modifierPropertyClassGetter();
+
+/// Helper function that generates a setter function for the 'operate_on' attribute of a GenericPropertyModifier subclass.
+OVITO_PYSCRIPT_EXPORT py::cpp_function modifierPropertyClassSetter();
+
+/// Helper function that converts a Python string to a C++ PropertyReference instance.
+/// The function requires a property class to look up the property name string.
+OVITO_PYSCRIPT_EXPORT PropertyReference convertPythonPropertyReference(py::object src, const PropertyClass* propertyClass);
 
 }	// End of namespace

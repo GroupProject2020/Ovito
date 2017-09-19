@@ -58,7 +58,7 @@ PYBIND11_PLUGIN(PyScript)
 		try {
 			AdhocApplication* app = new AdhocApplication(); // This will leak, but it doesn't matter because this Python module will never be unloaded.
 			if(!app->initialize())
-				throw Exception("Application object could not be initialized.");
+				throw Exception("OVITO application object could not be initialized.");
 			OVITO_ASSERT(Application::instance() == app);
 
 			// Create a global QCoreApplication object if there isn't one already.
@@ -104,5 +104,70 @@ PYBIND11_PLUGIN(PyScript)
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(PyScript);
+
+/// Helper function that converts a Python string to a C++ PropertyReference instance.
+/// The function requires a property class to look up the property name string.
+PropertyReference convertPythonPropertyReference(py::object src, const PropertyClass* propertyClass)
+{
+	if(src.is_none())
+		return {};
+	if(!propertyClass)
+		throw Exception(QStringLiteral("Cannot set property field without an active property class."));
+
+	try {
+		int ptype = src.cast<int>();
+		if(ptype == 0)
+			throw Exception(QStringLiteral("User-defined property without a name is not acceptable."));
+		if(propertyClass->standardProperties().contains(ptype) == false)
+			throw Exception(QStringLiteral("%1 is not a valid standard property type ID.").arg(ptype));
+		return PropertyReference(propertyClass, ptype);
+	}
+	catch(const py::cast_error&) {}
+
+	QString str;
+	try {
+		str = src.cast<QString>();
+	}
+	catch(const py::cast_error&) {
+		throw Exception(QStringLiteral("Invalid property name. Expected a string."));
+	}
+
+	QStringList parts = str.split(QChar('.'));
+	if(parts.length() > 2)
+		throw Exception(QStringLiteral("Too many dots in property name string."));
+	else if(parts.length() == 0 || parts[0].isEmpty())
+		throw Exception(QStringLiteral("Invalid property name. String is empty."));
+
+	// Determine property type.
+	QString name = parts[0];
+	int type = propertyClass->standardPropertyIds().value(name, 0);
+
+	// Determine vector component.
+	int component = -1;
+	if(parts.length() == 2) {
+		// First try to convert component to integer.
+		bool ok;
+		component = parts[1].toInt(&ok) - 1;
+		if(!ok) {
+			if(type != 0) {
+				// Perhaps the standard property's component name was used instead of an integer.
+				const QString componentName = parts[1].toUpper();
+				QStringList standardNames = propertyClass->standardPropertyComponentNames(type);
+				component = standardNames.indexOf(componentName);
+				if(component < 0)
+					throw Exception(QStringLiteral("Component name '%1' is not defined for property '%2'. Possible components are: %3").arg(parts[1]).arg(parts[0]).arg(standardNames.join(',')));
+			}
+			else {
+				// Assume user-defined properties cannot be vectors.
+				component = -1;
+				name = parts.join(QChar('.'));
+			}
+		}
+	}
+	if(type == 0)
+		return PropertyReference(propertyClass, name, component);
+	else
+		return PropertyReference(propertyClass, type, component);
+}
 
 };

@@ -23,9 +23,9 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/particles/data/SimulationCell.h>
-#include <plugins/particles/data/ParticleProperty.h>
-#include <core/utilities/concurrent/Promise.h>
+#include <core/dataset/data/simcell/SimulationCell.h>
+#include <core/dataset/data/properties/PropertyStorage.h>
+#include <core/utilities/concurrent/PromiseState.h>
 #include <plugins/crystalanalysis/util/DelaunayTessellation.h>
 
 #include <boost/functional/hash.hpp>
@@ -58,16 +58,16 @@ public:
 
 	/// Constructor.
 	ManifoldConstructionHelper(DelaunayTessellation& tessellation, HalfEdgeStructureType& outputMesh, FloatType alpha,
-			ParticleProperty* positions) : _tessellation(tessellation), _mesh(outputMesh), _alpha(alpha), _positions(positions) {}
+			const PropertyStorage& positions) : _tessellation(tessellation), _mesh(outputMesh), _alpha(alpha), _positions(positions) {}
 
 	/// This is the main function, which constructs the manifold triangle mesh.
 	template<typename CellRegionFunc, typename PrepareMeshFaceFunc = DefaultPrepareMeshFaceFunc, typename LinkManifoldsFunc = DefaultLinkManifoldsFunc>
-	bool construct(CellRegionFunc&& determineCellRegion, PromiseBase& promise,
+	bool construct(CellRegionFunc&& determineCellRegion, PromiseState& promise,
 			PrepareMeshFaceFunc&& prepareMeshFaceFunc = PrepareMeshFaceFunc(), LinkManifoldsFunc&& linkManifoldsFunc = LinkManifoldsFunc())
 	{
 		// Algorithm is divided into several sub-steps.
 		// Assign weights to sub-steps according to estimated runtime.
-		promise.beginProgressSubSteps({ 1, 1, 1 });
+		promise.beginProgressSubStepsWithWeights({ 1, 1, 1 });
 
 		/// Assign tetrahedra to regions.
 		if(!classifyTetrahedra(std::move(determineCellRegion), promise))
@@ -97,7 +97,7 @@ private:
 
 	/// Assigns each tetrahedron to a region.
 	template<typename CellRegionFunc>
-	bool classifyTetrahedra(CellRegionFunc&& determineCellRegion, PromiseBase& promise)
+	bool classifyTetrahedra(CellRegionFunc&& determineCellRegion, PromiseState& promise)
 	{
 		promise.setProgressValue(0);
 		promise.setProgressMaximum(_tessellation.numberOfTetrahedra());
@@ -105,7 +105,8 @@ private:
 		_numSolidCells = 0;
 		_spaceFillingRegion = -2;
 		int progressCounter = 0;
-		for(DelaunayTessellation::CellIterator cell = _tessellation.begin_cells(); cell != _tessellation.end_cells(); ++cell) {
+		for(DelaunayTessellation::CellIterator cellIter = _tessellation.begin_cells(); cellIter != _tessellation.end_cells(); ++cellIter) {
+			DelaunayTessellation::CellHandle cell = *cellIter;
 
 			// Update progress indicator.
 			if(!promise.setProgressValueIntermittent(progressCounter++))
@@ -140,17 +141,18 @@ private:
 
 	/// Constructs the triangle facets that separate different regions in the tetrahedral mesh.
 	template<typename PrepareMeshFaceFunc>
-	bool createInterfaceFacets(PrepareMeshFaceFunc&& prepareMeshFaceFunc, PromiseBase& promise)
+	bool createInterfaceFacets(PrepareMeshFaceFunc&& prepareMeshFaceFunc, PromiseState& promise)
 	{
 		// Stores the triangle mesh vertices created for the vertices of the tetrahedral mesh.
-		std::vector<typename HalfEdgeStructureType::Vertex*> vertexMap(_positions->size(), nullptr);
+		std::vector<typename HalfEdgeStructureType::Vertex*> vertexMap(_positions.size(), nullptr);
 		_tetrahedraFaceList.clear();
 		_faceLookupMap.clear();
 
 		promise.setProgressValue(0);
 		promise.setProgressMaximum(_numSolidCells);
 
-		for(DelaunayTessellation::CellIterator cell = _tessellation.begin_cells(); cell != _tessellation.end_cells(); ++cell) {
+		for(DelaunayTessellation::CellIterator cellIter = _tessellation.begin_cells(); cellIter != _tessellation.end_cells(); ++cellIter) {
+			DelaunayTessellation::CellHandle cell = *cellIter;
 
 			// Look for solid and local tetrahedra.
 			if(_tessellation.getCellIndex(cell) == -1) continue;
@@ -192,7 +194,7 @@ private:
 					int vertexIndex = vertexIndices[v] = _tessellation.vertexIndex(vertexHandles[v]);
 					OVITO_ASSERT(vertexIndex >= 0 && vertexIndex < vertexMap.size());
 					if(vertexMap[vertexIndex] == nullptr)
-						vertexMap[vertexIndex] = _mesh.createVertex(_positions->getPoint3(vertexIndex));
+						vertexMap[vertexIndex] = _mesh.createVertex(_positions.getPoint3(vertexIndex));
 					facetVertices[v] = vertexMap[vertexIndex];
 				}
 
@@ -282,13 +284,14 @@ private:
 	}
 
 	template<typename LinkManifoldsFunc>
-	bool linkHalfedges(LinkManifoldsFunc&& linkManifoldsFunc, PromiseBase& promise)
+	bool linkHalfedges(LinkManifoldsFunc&& linkManifoldsFunc, PromiseState& promise)
 	{
 		promise.setProgressValue(0);
 		promise.setProgressMaximum(_tetrahedraFaceList.size());
 
 		auto tet = _tetrahedraFaceList.cbegin();
-		for(DelaunayTessellation::CellIterator cell = _tessellation.begin_cells(); cell != _tessellation.end_cells(); ++cell) {
+		for(DelaunayTessellation::CellIterator cellIter = _tessellation.begin_cells(); cellIter != _tessellation.end_cells(); ++cellIter) {
+			DelaunayTessellation::CellHandle cell = *cellIter;
 
 			// Look for tetrahedra with at least one face.
 			if(_tessellation.getCellIndex(cell) == -1) continue;
@@ -400,7 +403,7 @@ private:
 	int _spaceFillingRegion = -1;
 
 	/// The input particle positions.
-	ParticleProperty* _positions;
+	const PropertyStorage& _positions;
 
 	/// The output triangle mesh.
 	HalfEdgeStructureType& _mesh;

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -33,19 +33,56 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPAC
 /******************************************************************************
 * Initializes the task manager.
 ******************************************************************************/
-TaskManager::TaskManager()
+TaskManager::TaskManager(DataSetContainer& owner) : _owner(owner)
 {
-	qRegisterMetaType<PromiseBasePtr>("PromiseBasePtr");
+	qRegisterMetaType<PromiseStatePtr>("PromiseStatePtr");
+}
+
+/******************************************************************************
+* Destructor.
+******************************************************************************/
+TaskManager::~TaskManager()
+{
+	for(PromiseWatcher* watcher : runningTasks()) {
+		OVITO_ASSERT_MSG(watcher->isFinished() || watcher->isCanceled(), "TaskManager destructor", "Some tasks are still in progress when destroying the TaskManager instance.");
+	}
+}
+
+/******************************************************************************
+* Registers a future's promise with the progress manager, which will display 
+* the progress of the background task in the main window.
+******************************************************************************/
+void TaskManager::registerTask(const FutureBase& future) 
+{
+	registerTask(future.sharedState());
+}
+
+/******************************************************************************
+* Registers a promise with the progress manager, which will display 
+* the progress of the background task in the main window.
+******************************************************************************/
+void TaskManager::registerTask(const PromiseBase& promise) 
+{
+	registerTask(promise.sharedState());
 }
 
 /******************************************************************************
 * Registers a promise with the task manager.
 ******************************************************************************/
-PromiseWatcher* TaskManager::addTaskInternal(PromiseBasePtr promise)
+void TaskManager::registerTask(const PromiseStatePtr& promiseState) 
+{
+	// Execute the function call in the main thread.
+	QMetaObject::invokeMethod(this, "addTaskInternal", Q_ARG(PromiseStatePtr, promiseState));
+}
+
+/******************************************************************************
+* Registers a promise with the task manager.
+******************************************************************************/
+PromiseWatcher* TaskManager::addTaskInternal(PromiseStatePtr sharedState)
 {
 	// Check if task is already registered.
 	for(PromiseWatcher* watcher : runningTasks()) {
-		if(watcher->promise() == promise)
+		if(watcher->sharedState() == sharedState)
 			return watcher;
 	}
 
@@ -55,8 +92,17 @@ PromiseWatcher* TaskManager::addTaskInternal(PromiseBasePtr promise)
 	connect(watcher, &PromiseWatcher::finished, this, &TaskManager::taskFinishedInternal);
 	
 	// Activate the watcher.
-	watcher->setPromise(promise);
+	watcher->watch(sharedState);
 	return watcher;
+}
+
+/******************************************************************************
+* Waits for the given task to finish and displays a modal progress dialog
+* to show the task's progress.
+******************************************************************************/
+bool TaskManager::waitForTask(const FutureBase& future) 
+{
+	return waitForTask(future.sharedState());
 }
 
 /******************************************************************************
@@ -91,7 +137,9 @@ void TaskManager::taskFinishedInternal()
 void TaskManager::cancelAll()
 {
 	for(PromiseWatcher* watcher : runningTasks()) {
-		watcher->cancel();
+		if(watcher->sharedState()) {
+			watcher->sharedState()->cancel();
+		}
 	}
 }
 
@@ -109,12 +157,12 @@ void TaskManager::cancelAllAndWait()
 ******************************************************************************/
 void TaskManager::waitForAll()
 {
-	for(PromiseWatcher* watcher : runningTasks()) {
-		try {
-			watcher->waitForFinished();
-		}
-		catch(...) {}
+	OVITO_ASSERT(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread());
+	do {
+		QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+		QCoreApplication::sendPostedEvents(nullptr, OvitoObjectExecutor::workEventType());
 	}
+	while(!runningTasks().empty());
 }
 
 /******************************************************************************
@@ -122,38 +170,46 @@ void TaskManager::waitForAll()
 ******************************************************************************/
 void TaskManager::startLocalEventHandling() 
 {
-	OVITO_ASSERT_MSG(QThread::currentThread() == QCoreApplication::instance()->thread(), "TaskManager::waitForTask", "Function may only be called from the main thread.");
+	OVITO_ASSERT_MSG(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread(), "TaskManager::waitForTask", "Function may only be called from the main thread.");
 	
 	_inLocalEventLoop++;
-	Q_EMIT localEventLoopEntered();
 }
 
-/******************************************************************************
+/*******************************
+***********************************************
 * This should be called whenever a local event handling loop is left.
 ******************************************************************************/
 void TaskManager::stopLocalEventHandling()
 {
-	OVITO_ASSERT_MSG(QThread::currentThread() == QCoreApplication::instance()->thread(), "TaskManager::waitForTask", "Function may only be called from the main thread.");
+	OVITO_ASSERT_MSG(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread(), "TaskManager::waitForTask", "Function may only be called from the main thread.");
 	OVITO_ASSERT(_inLocalEventLoop > 0);
 
 	_inLocalEventLoop--;
-	Q_EMIT localEventLoopExited();
 }
 
 /******************************************************************************
 * Waits for the given task to finish.
 ******************************************************************************/
-bool TaskManager::waitForTask(const PromiseBasePtr& promise)
+bool TaskManager::waitForTask(const PromiseStatePtr& sharedState)
 {
-	OVITO_ASSERT_MSG(QThread::currentThread() == QCoreApplication::instance()->thread(), "TaskManager::waitForTask", "Function may only be called from the main thread.");
+	OVITO_ASSERT_MSG(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread(), "TaskManager::waitForTask", "Function may be called only from the main thread.");
 
-	// Before entering the local event loop, check if task has already finished.
-	if(promise->isFinished()) {
-		return !promise->isCanceled();
+	// Make sure this method is not called while rendering a viewport.
+	// Qt doesn't allow a local event loops during paint event processing.
+	if(DataSet* dataset = _owner.currentSet()) {
+		if(dataset->viewportConfig()->isRendering()) {
+			qWarning() << "WARNING: Do not call TaskManager::waitForTask() during interactive viewport rendering!";
+			OVITO_ASSERT(false);
+		}
 	}
 
-	// Register the task in cases it hasn't been registered with this TaskManager yet.
-	PromiseWatcher* watcher = addTaskInternal(promise); 
+	// Before entering the local event loop, check if task has already finished.
+	if(sharedState->isFinished()) {
+		return !sharedState->isCanceled();
+	}
+
+	// Register the task in case it hasn't been registered with this TaskManager yet.
+	PromiseWatcher* watcher = addTaskInternal(sharedState); 
 
 	// Start a local event loop and wait for the task to generate a signal when it finishes.
 	QEventLoop eventLoop;
@@ -188,12 +244,12 @@ bool TaskManager::waitForTask(const PromiseBasePtr& promise)
 	}
 #endif
 
-	return !promise->isCanceled();
+	return !sharedState->isCanceled();
 }
 
 /******************************************************************************
 * Process events from the event queue when the tasks manager has started
-*  a local event loop. Otherwise does nothing and lets the main event loop
+* a local event loop. Otherwise do nothing and let the main event loop
 * do the processing. 
 ******************************************************************************/
 void TaskManager::processEvents()

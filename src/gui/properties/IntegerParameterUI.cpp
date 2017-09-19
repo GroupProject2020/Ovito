@@ -21,14 +21,13 @@
 
 #include <gui/GUI.h>
 #include <gui/properties/IntegerParameterUI.h>
-#include <core/animation/controller/Controller.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/animation/controller/Controller.h>
+#include <core/dataset/animation/AnimationSettings.h>
 #include <core/utilities/units/UnitsManager.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
 
-// Gives the class run-time type information.
-IMPLEMENT_OVITO_OBJECT(IntegerParameterUI, NumericalParameterUI);
+IMPLEMENT_OVITO_CLASS(IntegerParameterUI);
 
 /******************************************************************************
 * Constructor for a Qt property.

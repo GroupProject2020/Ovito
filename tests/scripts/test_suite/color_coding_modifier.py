@@ -4,8 +4,9 @@ from ovito.modifiers import *
 import numpy
 
 node = import_file("../../files/LAMMPS/animation.dump.gz")
-modifier = ColorCodingModifier()
+node.modifiers.append(SelectExpressionModifier(expression = "ParticleIndex<5"))
 
+modifier = ColorCodingModifier(particle_property = "Position.X", only_selected = True)
 node.modifiers.append(modifier)
 
 print("Parameter defaults:")
@@ -17,6 +18,13 @@ print("  only_selected: {}".format(modifier.only_selected))
 print("  assign_to: {}".format(modifier.assign_to))
 print("  particle_property: {}".format(modifier.particle_property))
 print("  bond_property: {}".format(modifier.bond_property))
+print("  property: {}".format(modifier.property))
+print("  operate_on: {}".format(modifier.operate_on))
+
+modifier.operate_on = 'bonds'
+modifier.operate_on = 'vectors'
+modifier.operate_on = 'particles'
+modifier.property = 'Position.X'
 
 modifier.gradient = ColorCodingModifier.Rainbow()
 modifier.gradient = ColorCodingModifier.Jet()
@@ -30,14 +38,18 @@ modifier.gradient = ColorCodingModifier.Custom("../../../doc/manual/images/modif
 print(node.compute().particle_properties.color.array)
 
 modifier.particle_property = "Position.X"
-node.compute()
+data = node.compute()
+
+print("Particle properties:", data.particle_properties)
+assert('Selection' in data.particle_properties)
 
 modifier = ColorCodingModifier(
-    particle_property = "Position.Z",
+    assign_to = ColorCodingModifier.AssignmentMode.Bonds,
     bond_property = "Length",
     start_value = 0.0,
     end_value = 0.0,
     only_selected = True,
-    gradient = ColorCodingModifier.Grayscale(),
-    assign_to = ColorCodingModifier.AssignmentMode.Bonds
+    gradient = ColorCodingModifier.Grayscale()
 )
+assert(modifier.property == 'Length')
+assert(modifier.operate_on == 'bonds')

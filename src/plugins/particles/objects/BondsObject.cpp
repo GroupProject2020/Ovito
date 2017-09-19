@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2014) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,26 +25,47 @@
 
 namespace Ovito { namespace Particles {
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(BondsObject, DataObject);
+IMPLEMENT_OVITO_CLASS(BondsObject);	
+DEFINE_PROPERTY_FIELD(BondsObject, storage);
+
+/// Holds a shared, empty instance of the BondsStorage class, 
+/// which is used in places where a default storage is needed.
+/// This singleton instance is never modified.
+static const BondsPtr defaultStorage = std::make_shared<BondsStorage>();
 
 /******************************************************************************
 * Default constructor.
 ******************************************************************************/
-BondsObject::BondsObject(DataSet* dataset, BondsStorage* storage) : DataObjectWithSharedStorage(dataset, storage ? storage : new BondsStorage())
+BondsObject::BondsObject(DataSet* dataset) : DataObject(dataset), _storage(defaultStorage)
 {
 	// Attach a display object.
 	addDisplayObject(new BondsDisplay(dataset));
 }
 
 /******************************************************************************
+* Returns the data encapsulated by this object after making sure it is not 
+* shared with other owners.
+******************************************************************************/
+const std::shared_ptr<BondsStorage>& BondsObject::modifiableStorage() 
+{
+	// Copy data storage on write if there is more than one reference to the storage.
+	OVITO_ASSERT(storage());
+	OVITO_ASSERT(storage().use_count() >= 1);
+	if(storage().use_count() > 1)
+		_storage.mutableValue() = std::make_shared<BondsStorage>(*storage());
+	OVITO_ASSERT(storage().use_count() == 1);
+	return storage();
+}
+
+/******************************************************************************
 * Saves the class' contents to the given stream.
 ******************************************************************************/
-void BondsObject::saveToStream(ObjectSaveStream& stream)
+void BondsObject::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData)
 {
-	DataObjectWithSharedStorage::saveToStream(stream);
+	DataObject::saveToStream(stream, excludeRecomputableData);
 
 	stream.beginChunk(0x01);
-	storage()->saveToStream(stream, !saveWithScene());
+	storage()->saveToStream(stream, excludeRecomputableData);
 	stream.endChunk();
 }
 
@@ -53,7 +74,7 @@ void BondsObject::saveToStream(ObjectSaveStream& stream)
 ******************************************************************************/
 void BondsObject::loadFromStream(ObjectLoadStream& stream)
 {
-	DataObjectWithSharedStorage::loadFromStream(stream);
+	DataObject::loadFromStream(stream);
 
 	stream.expectChunk(0x01);
 	modifiableStorage()->loadFromStream(stream);
@@ -62,9 +83,9 @@ void BondsObject::loadFromStream(ObjectLoadStream& stream)
 
 /******************************************************************************
 * Remaps the bonds after some of the particles have been deleted.
-* Dangling bonds are removed too.
+* Dangling bonds are removed and the list of deleted bonds is returned as a bit array.
 ******************************************************************************/
-size_t BondsObject::particlesDeleted(const boost::dynamic_bitset<>& deletedParticlesMask, boost::dynamic_bitset<>& deletedBondsMask)
+boost::dynamic_bitset<> BondsObject::particlesDeleted(const boost::dynamic_bitset<>& deletedParticlesMask)
 {
 	// Build map that maps old particle indices to new indices.
 	std::vector<size_t> indexMap(deletedParticlesMask.size());
@@ -74,24 +95,22 @@ size_t BondsObject::particlesDeleted(const boost::dynamic_bitset<>& deletedParti
 	for(size_t i = 0; i < deletedParticlesMask.size(); i++)
 		*index++ = deletedParticlesMask.test(i) ? std::numeric_limits<size_t>::max() : newParticleCount++;
 
-	OVITO_ASSERT(deletedBondsMask.empty() || deletedBondsMask.size() == modifiableStorage()->size());
+	boost::dynamic_bitset<> deletedBondsMask(storage()->size());
 
 	auto result = modifiableStorage()->begin();
 	auto bond = modifiableStorage()->begin();
 	auto last = modifiableStorage()->end();
 	size_t bondIndex = 0;
 	for(; bond != last; ++bond, ++bondIndex) {
-		// Remove invalid bonds.
+		// Remove invalid bonds, i.e. whose particle indices are out of bounds.
 		if(bond->index1 >= oldParticleCount || bond->index2 >= oldParticleCount) {
-			if(!deletedBondsMask.empty())
-				deletedBondsMask.set(bondIndex);
+			deletedBondsMask.set(bondIndex);
 			continue;
 		}
 
 		// Remove dangling bonds whose particles have gone.
 		if(deletedParticlesMask.test(bond->index1) || deletedParticlesMask.test(bond->index2)) {
-			if(!deletedBondsMask.empty())
-				deletedBondsMask.set(bondIndex);
+			deletedBondsMask.set(bondIndex);
 			continue;
 		}
 
@@ -100,12 +119,11 @@ size_t BondsObject::particlesDeleted(const boost::dynamic_bitset<>& deletedParti
 		result->index1 = indexMap[bond->index1];
 		result->index2 = indexMap[bond->index2];
 		++result;
-		if(!deletedBondsMask.empty())
-			deletedBondsMask.reset(bondIndex);
 	}
 	modifiableStorage()->erase(result, last);
-	changed();
-	return modifiableStorage()->size();
+	notifyDependents(ReferenceEvent::TargetChanged);
+	
+	return deletedBondsMask;
 }
 
 }	// End of namespace

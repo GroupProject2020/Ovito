@@ -34,7 +34,7 @@
     For instance, an icosahedral coordination structure corresponds to the Voronoi index vector (0,0,0,0,12,0,...).
     In other words, this index vector denotes a polyhdron with exactly 12 faces with 5 edges each. 
     To select all atoms having this kind of icosahedral coordination structure, we can use the 
-    <link linkend="particles.modifiers.expression_select">Expression select</link>
+    <link linkend="particles.modifiers.expression_select">Expression selection</link>
     modifier with the Boolean expression:
     <programlisting>VoronoiIndex.3==0 &amp;&amp; VoronoiIndex.4==0 &amp;&amp; VoronoiIndex.5==12 &amp;&amp; VoronoiIndex.6==0</programlisting>
     Note that we don't need to include the first two indices in the selection expression, since faces with less than three edges 

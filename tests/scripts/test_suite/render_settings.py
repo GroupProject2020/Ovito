@@ -6,6 +6,8 @@ from ovito.vis import *
 node = import_file("../../files/CFG/shear.void.120.cfg")
 node.add_to_scene()
 
+print("ovito.headless_mode=", ovito.headless_mode)
+
 settings = RenderSettings(size = (20,20))
 if ovito.headless_mode: 
     settings.renderer = TachyonRenderer(ambient_occlusion = False, antialiasing = False)

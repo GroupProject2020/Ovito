@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,29 +23,79 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/data/ParticleProperty.h>
 #include <plugins/particles/util/CutoffNeighborFinder.h>
-#include "../../AsynchronousParticleModifier.h"
+#include <plugins/particles/objects/ParticleProperty.h>
+#include <core/dataset/data/simcell/SimulationCell.h>
+#include <core/dataset/pipeline/AsynchronousModifier.h>
+#include <core/dataset/pipeline/AsynchronousModifierApplication.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
 /**
  * \brief This modifier computes the coordination number of each particle (i.e. the number of neighbors within a given cutoff radius).
  */
-class OVITO_PARTICLES_EXPORT CoordinationNumberModifier : public AsynchronousParticleModifier
+class OVITO_PARTICLES_EXPORT CoordinationNumberModifier : public AsynchronousModifier
 {
+	/// Give this modifier class its own metaclass.
+	class CoordinationNumberModifierClass : public AsynchronousModifier::OOMetaClass 
+	{
+	public:
+
+		/// Inherit constructor from base metaclass.
+		using AsynchronousModifier::OOMetaClass::OOMetaClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
+		
+	Q_OBJECT
+	OVITO_CLASS_META(CoordinationNumberModifier, CoordinationNumberModifierClass)
+
+	Q_CLASSINFO("DisplayName", "Coordination analysis");
+	Q_CLASSINFO("ModifierCategory", "Analysis");
+
 public:
 
 	/// Constructor.
 	Q_INVOKABLE CoordinationNumberModifier(DataSet* dataset);
 
-	/// Returns the X coordinates of the RDF data points.
-	const QVector<double>& rdfX() const { return _rdfX; }
+	/// \brief Create a new modifier application that refers to this modifier instance.
+	virtual OORef<ModifierApplication> createModifierApplication() override;
 
-	/// Returns the Y coordinates of the RDF data points.
-	const QVector<double>& rdfY() const { return _rdfY; }
+protected:
+	
+	/// Creates a computation engine that will compute the modifier's results.
+	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;	
 
 private:
+
+	/// Stores the modifier's results.
+	class CoordinationAnalysisResults : public ComputeEngineResults 
+	{
+	public:
+
+		/// Constructor.
+		CoordinationAnalysisResults(size_t particleCount) :
+			_coordinationNumbers(ParticleProperty::createStandardStorage(particleCount, ParticleProperty::CoordinationProperty, true)) {}
+
+		/// Injects the computed results into the data pipeline.
+		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+
+		/// Returns the property storage that contains the computed coordination numbers.
+		const PropertyPtr& coordinationNumbers() const { return _coordinationNumbers; }
+
+		/// Returns the X coordinates of the RDF data points.
+		QVector<double>& rdfX() { return _rdfX; }
+
+		/// Returns the Y coordinates of the RDF data points.
+		QVector<double>& rdfY() { return _rdfY; }
+
+	private:
+
+		const PropertyPtr _coordinationNumbers;
+		QVector<double> _rdfX;
+		QVector<double> _rdfY;
+	};
 
 	/// Computes the modifier's results.
 	class CoordinationAnalysisEngine : public ComputeEngine
@@ -53,75 +103,79 @@ private:
 	public:
 
 		/// Constructor.
-		CoordinationAnalysisEngine(const TimeInterval& validityInterval, ParticleProperty* positions, const SimulationCell& simCell, FloatType cutoff, int rdfSampleCount) :
+		CoordinationAnalysisEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell, FloatType cutoff, int rdfSampleCount) :
 			ComputeEngine(validityInterval),
-			_positions(positions), _simCell(simCell),
-			_cutoff(cutoff), _rdfHistogram(rdfSampleCount, 0.0),
-			_coordinationNumbers(new ParticleProperty(positions->size(), ParticleProperty::CoordinationProperty, 0, true)) {}
+			_positions(positions), 
+			_simCell(simCell),
+			_cutoff(cutoff),
+			_rdfSampleCount(rdfSampleCount),
+			_results(std::make_shared<CoordinationAnalysisResults>(positions->size())) {}
 
-		/// Computes the modifier's results and stores them in this object for later retrieval.
+		/// Computes the modifier's results.
 		virtual void perform() override;
 
 		/// Returns the property storage that contains the input particle positions.
-		ParticleProperty* positions() const { return _positions.data(); }
+		const ConstPropertyPtr& positions() const { return _positions; }
 
 		/// Returns the simulation cell data.
 		const SimulationCell& cell() const { return _simCell; }
 
-		/// Returns the property storage that contains the computed coordination numbers.
-		ParticleProperty* coordinationNumbers() const { return _coordinationNumbers.data(); }
-
 		/// Returns the cutoff radius.
 		FloatType cutoff() const { return _cutoff; }
 
-		/// Returns the histogram for the radial distribution function.
-		const QVector<double>& rdfHistogram() const { return _rdfHistogram; }
-
 	private:
 
-		FloatType _cutoff;
-		SimulationCell _simCell;
-		QExplicitlySharedDataPointer<ParticleProperty> _positions;
-		QExplicitlySharedDataPointer<ParticleProperty> _coordinationNumbers;
-		QVector<double> _rdfHistogram;
+		const FloatType _cutoff;
+		const int _rdfSampleCount;
+		const SimulationCell _simCell;
+		const ConstPropertyPtr _positions;
+		std::shared_ptr<CoordinationAnalysisResults> _results;
 	};
-
-protected:
-
-	/// Is called when the value of a property of this object has changed.
-	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
-
-	/// Creates a computation engine that will compute the modifier's results.
-	virtual std::shared_ptr<ComputeEngine> createEngine(TimePoint time, TimeInterval validityInterval) override;
-
-	/// Unpacks the results of the computation engine and stores them in the modifier.
-	virtual void transferComputationResults(ComputeEngine* engine) override;
-
-	/// Lets the modifier insert the cached computation results into the modification pipeline.
-	virtual PipelineStatus applyComputationResults(TimePoint time, TimeInterval& validityInterval) override;
 
 private:
 
-	/// This stores the cached results of the modifier.
-	QExplicitlySharedDataPointer<ParticleProperty> _coordinationNumbers;
-
 	/// Controls the cutoff radius for the neighbor lists.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, cutoff, setCutoff);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, cutoff, setCutoff, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the number of RDF histogram bins.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, numberOfBins, setNumberOfBins);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, numberOfBins, setNumberOfBins, PROPERTY_FIELD_MEMORIZE);
+};
 
+/**
+ * \brief The type of ModifierApplication created for a CoordinationNumberModifier 
+ *        when it is inserted into in a data pipeline. Its stores results computed by the
+ *        modifier's compute engine so that they can be displayed in the modifier's UI panel.
+ */
+ class OVITO_PARTICLES_EXPORT CoordinationNumberModifierApplication : public AsynchronousModifierApplication
+{
+	Q_OBJECT
+	OVITO_CLASS(CoordinationNumberModifierApplication)
+
+public:
+
+	/// Constructor.
+	Q_INVOKABLE CoordinationNumberModifierApplication(DataSet* dataset) : AsynchronousModifierApplication(dataset) {}
+ 
+	/// Returns the X coordinates of the RDF data points.
+	const QVector<double>& rdfX() const { return _rdfX; }
+	
+	/// Returns the Y coordinates of the RDF data points.
+	const QVector<double>& rdfY() const { return _rdfY; }
+	 
+	/// Sets the stored RDF data points.
+	void setRDF(QVector<double> x, QVector<double> y) {
+		_rdfX = std::move(x);
+		_rdfY = std::move(y);
+		notifyDependents(ReferenceEvent::ObjectStatusChanged);
+	}
+ 
+private:
+ 
 	/// The X coordinates of the RDF data points.
 	QVector<double> _rdfX;
-
+	
 	/// The Y coordinates of the RDF data points.
 	QVector<double> _rdfY;
-
-	Q_OBJECT
-	OVITO_OBJECT
-
-	Q_CLASSINFO("DisplayName", "Coordination analysis");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
 };
 
 OVITO_END_INLINE_NAMESPACE

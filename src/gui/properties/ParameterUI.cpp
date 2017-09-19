@@ -22,18 +22,18 @@
 #include <gui/GUI.h>
 #include <gui/properties/ParameterUI.h>
 #include <gui/properties/PropertiesEditor.h>
-#include <core/animation/controller/Controller.h>
-#include <core/animation/controller/KeyframeController.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/animation/controller/Controller.h>
+#include <core/dataset/animation/controller/KeyframeController.h>
+#include <core/dataset/animation/AnimationSettings.h>
+#include <core/app/PluginManager.h>
 #include <gui/dialogs/AnimationKeyEditorDialog.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
 
-// Gives the class run-time type information.
-IMPLEMENT_OVITO_OBJECT(ParameterUI, RefMaker);
-IMPLEMENT_OVITO_OBJECT(PropertyParameterUI, ParameterUI);
-DEFINE_FLAGS_REFERENCE_FIELD(ParameterUI, editObject, "EditObject", RefTarget, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
-DEFINE_FLAGS_REFERENCE_FIELD(PropertyParameterUI, parameterObject, "ParameterObject", RefTarget, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
+IMPLEMENT_OVITO_CLASS(ParameterUI);
+IMPLEMENT_OVITO_CLASS(PropertyParameterUI);
+DEFINE_REFERENCE_FIELD(ParameterUI, editObject);
+DEFINE_REFERENCE_FIELD(PropertyParameterUI, parameterObject);
 
 ///////////////////////////////////// ParameterUI /////////////////////////////////////////
 
@@ -42,8 +42,6 @@ DEFINE_FLAGS_REFERENCE_FIELD(PropertyParameterUI, parameterObject, "ParameterObj
 ******************************************************************************/
 ParameterUI::ParameterUI(QObject* parent) : RefMaker(nullptr), _enabled(true)
 {
-	INIT_PROPERTY_FIELD(editObject);
-	
 	setParent(parent);
 
 	PropertiesEditor* editor = this->editor();
@@ -65,8 +63,7 @@ ParameterUI::ParameterUI(QObject* parent) : RefMaker(nullptr), _enabled(true)
 PropertyParameterUI::PropertyParameterUI(QObject* parent, const char* propertyName) :
 	ParameterUI(parent), _propertyName(propertyName), _propField(nullptr)
 {
-	OVITO_ASSERT(propertyName != NULL);
-	INIT_PROPERTY_FIELD(parameterObject);
+	OVITO_ASSERT(propertyName);
 }
 
 /******************************************************************************
@@ -75,8 +72,6 @@ PropertyParameterUI::PropertyParameterUI(QObject* parent, const char* propertyNa
 PropertyParameterUI::PropertyParameterUI(QObject* parent, const PropertyFieldDescriptor& propField) :
 	ParameterUI(parent), _propertyName(nullptr), _propField(&propField)
 {
-	INIT_PROPERTY_FIELD(parameterObject);
-
 	// If requested, save parameter value to application's settings store each time the user changes it.
 	if(propField.flags().testFlag(PROPERTY_FIELD_MEMORIZE))
 		connect(this, &PropertyParameterUI::valueEntered, this, &PropertyParameterUI::memorizeDefaultParameterValue);
@@ -117,13 +112,13 @@ void PropertyParameterUI::resetUI()
 {
 	if(editObject() && isReferenceFieldUI()) {
 		OVITO_CHECK_OBJECT_POINTER(editObject());
-		OVITO_ASSERT(editObject() == NULL || editObject()->getOOType().isDerivedFrom(*propertyField()->definingClass()));
+		OVITO_ASSERT(editObject() == NULL || editObject()->getOOClass().isDerivedFrom(*propertyField()->definingClass()));
 
 		// Bind this parameter UI to the parameter object of the new edited object.
-		_parameterObject = editObject()->getReferenceField(*propertyField());
+		setParameterObject(editObject()->getReferenceField(*propertyField()));
 	}
 	else {
-		_parameterObject = nullptr;
+		setParameterObject(nullptr);
 	}
 
 	ParameterUI::resetUI();

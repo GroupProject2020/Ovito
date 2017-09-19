@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,23 +21,27 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/util/CutoffNeighborFinder.h>
-#include <plugins/particles/objects/ParticleTypeProperty.h>
 #include <plugins/particles/objects/BondsDisplay.h>
+#include <plugins/particles/modifier/ParticleInputHelper.h>
+#include <plugins/particles/modifier/ParticleOutputHelper.h>
+#include <core/dataset/DataSet.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/utilities/concurrent/ParallelFor.h>
+#include <core/utilities/units/UnitsManager.h>
 #include "CreateBondsModifier.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(CreateBondsModifier, AsynchronousParticleModifier);
-DEFINE_PROPERTY_FIELD(CreateBondsModifier, cutoffMode, "CutoffMode");
-DEFINE_FLAGS_PROPERTY_FIELD(CreateBondsModifier, uniformCutoff, "UniformCutoff", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(CreateBondsModifier, minimumCutoff, "MinimumCutoff");
-DEFINE_FLAGS_PROPERTY_FIELD(CreateBondsModifier, onlyIntraMoleculeBonds, "OnlyIntraMoleculeBonds", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_REFERENCE_FIELD(CreateBondsModifier, bondsDisplay, "BondsDisplay", BondsDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
+IMPLEMENT_OVITO_CLASS(CreateBondsModifier);
+DEFINE_PROPERTY_FIELD(CreateBondsModifier, cutoffMode);
+DEFINE_PROPERTY_FIELD(CreateBondsModifier, uniformCutoff);
+DEFINE_PROPERTY_FIELD(CreateBondsModifier, minimumCutoff);
+DEFINE_PROPERTY_FIELD(CreateBondsModifier, onlyIntraMoleculeBonds);
+DEFINE_REFERENCE_FIELD(CreateBondsModifier, bondsDisplay);
 SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, cutoffMode, "Cutoff mode");
 SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, uniformCutoff, "Cutoff radius");
 SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, minimumCutoff, "Lower cutoff");
-SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, onlyIntraMoleculeBonds, "No bonds between different molecules");
+SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, onlyIntraMoleculeBonds, "Suppress inter-molecular bonds");
 SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, bondsDisplay, "Bonds display");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CreateBondsModifier, uniformCutoff, WorldParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CreateBondsModifier, minimumCutoff, WorldParameterUnit, 0);
@@ -45,31 +49,19 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CreateBondsModifier, minimumCutoff, WorldPa
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
-CreateBondsModifier::CreateBondsModifier(DataSet* dataset) : AsynchronousParticleModifier(dataset),
+CreateBondsModifier::CreateBondsModifier(DataSet* dataset) : AsynchronousModifier(dataset),
 	_cutoffMode(UniformCutoff), _uniformCutoff(3.2), _onlyIntraMoleculeBonds(false), _minimumCutoff(0)
 {
-	INIT_PROPERTY_FIELD(cutoffMode);
-	INIT_PROPERTY_FIELD(uniformCutoff);
-	INIT_PROPERTY_FIELD(onlyIntraMoleculeBonds);
-	INIT_PROPERTY_FIELD(bondsDisplay);
-	INIT_PROPERTY_FIELD(minimumCutoff);
-
 	// Create the display object for bonds rendering and assign it to the data object.
 	setBondsDisplay(new BondsDisplay(dataset));
 }
 
 /******************************************************************************
-* Is called when the value of a property of this object has changed.
+* Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-void CreateBondsModifier::propertyChanged(const PropertyFieldDescriptor& field)
+bool CreateBondsModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	AsynchronousParticleModifier::propertyChanged(field);
-
-	// Recompute results when the parameters have been changed.
-	if(field == PROPERTY_FIELD(uniformCutoff) || field == PROPERTY_FIELD(cutoffMode)
-			 || field == PROPERTY_FIELD(onlyIntraMoleculeBonds)
-			 || field == PROPERTY_FIELD(minimumCutoff))
-		invalidateCachedResults();
+	return input.findObject<ParticleProperty>() != nullptr;
 }
 
 /******************************************************************************
@@ -83,7 +75,6 @@ void CreateBondsModifier::setPairCutoffs(const PairCutoffsList& pairCutoffs)
 
 	_pairCutoffs = pairCutoffs;
 
-	invalidateCachedResults();
 	notifyDependents(ReferenceEvent::TargetChanged);
 }
 
@@ -119,9 +110,9 @@ FloatType CreateBondsModifier::getPairCutoff(const QString& typeA, const QString
 /******************************************************************************
 * Saves the class' contents to the given stream.
 ******************************************************************************/
-void CreateBondsModifier::saveToStream(ObjectSaveStream& stream)
+void CreateBondsModifier::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData)
 {
-	AsynchronousParticleModifier::saveToStream(stream);
+	AsynchronousModifier::saveToStream(stream, excludeRecomputableData);
 
 	stream.beginChunk(0x01);
 	stream << _pairCutoffs;
@@ -133,7 +124,7 @@ void CreateBondsModifier::saveToStream(ObjectSaveStream& stream)
 ******************************************************************************/
 void CreateBondsModifier::loadFromStream(ObjectLoadStream& stream)
 {
-	AsynchronousParticleModifier::loadFromStream(stream);
+	AsynchronousModifier::loadFromStream(stream);
 
 	stream.expectChunk(0x01);
 	stream >> _pairCutoffs;
@@ -146,7 +137,7 @@ void CreateBondsModifier::loadFromStream(ObjectLoadStream& stream)
 OORef<RefTarget> CreateBondsModifier::clone(bool deepCopy, CloneHelper& cloneHelper)
 {
 	// Let the base class create an instance of this class.
-	OORef<CreateBondsModifier> clone = static_object_cast<CreateBondsModifier>(AsynchronousParticleModifier::clone(deepCopy, cloneHelper));
+	OORef<CreateBondsModifier> clone = static_object_cast<CreateBondsModifier>(AsynchronousModifier::clone(deepCopy, cloneHelper));
 	clone->_pairCutoffs = this->_pairCutoffs;
 	return clone;
 }
@@ -160,34 +151,23 @@ bool CreateBondsModifier::referenceEvent(RefTarget* source, ReferenceEvent* even
 	if(source == bondsDisplay())
 		return false;
 
-	return AsynchronousParticleModifier::referenceEvent(source, event);
-}
-
-/******************************************************************************
-* Resets the modifier's result cache.
-******************************************************************************/
-void CreateBondsModifier::invalidateCachedResults()
-{
-	AsynchronousParticleModifier::invalidateCachedResults();
-
-	// Reset all bonds when the input has changed.
-	_bonds.reset();
+	return AsynchronousModifier::referenceEvent(source, event);
 }
 
 /******************************************************************************
 * This method is called by the system when the modifier has been inserted
 * into a pipeline.
 ******************************************************************************/
-void CreateBondsModifier::initializeModifier(PipelineObject* pipeline, ModifierApplication* modApp)
+void CreateBondsModifier::initializeModifier(ModifierApplication* modApp)
 {
-	AsynchronousParticleModifier::initializeModifier(pipeline, modApp);
+	AsynchronousModifier::initializeModifier(modApp);
 
 	// Adopt the upstream BondsDisplay object if there already is one.
-	PipelineFlowState input = getModifierInput(modApp);
+	PipelineFlowState input = modApp->evaluateInputPreliminary();
 	if(BondsObject* bondsObj = input.findObject<BondsObject>()) {
 		for(DisplayObject* displayObj : bondsObj->displayObjects()) {
 			if(BondsDisplay* bondsDisplay = dynamic_object_cast<BondsDisplay>(displayObj)) {
-				_bondsDisplay = bondsDisplay;
+				setBondsDisplay(bondsDisplay);
 				break;
 			}
 		}
@@ -195,29 +175,31 @@ void CreateBondsModifier::initializeModifier(PipelineObject* pipeline, ModifierA
 }
 
 /******************************************************************************
-* Creates and initializes a computation engine that will compute the modifier's results.
+* Creates and initializes a computation engine that will compute the 
+* modifier's results.
 ******************************************************************************/
-std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> CreateBondsModifier::createEngine(TimePoint time, TimeInterval validityInterval)
+Future<AsynchronousModifier::ComputeEnginePtr> CreateBondsModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get modifier input.
-	ParticlePropertyObject* posProperty = expectStandardProperty(ParticleProperty::PositionProperty);
-	SimulationCellObject* simCell = expectSimulationCell();
+	ParticleInputHelper ph(dataset(), input);
+	ParticleProperty* posProperty = ph.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
+	SimulationCellObject* simCell = ph.expectSimulationCell();
 
 	// The neighbor list cutoff.
 	FloatType maxCutoff = uniformCutoff();
 
 	// Build table of pair-wise cutoff radii.
-	ParticleTypeProperty* typeProperty = nullptr;
+	ParticleProperty* typeProperty = nullptr;
 	std::vector<std::vector<FloatType>> pairCutoffSquaredTable;
 	if(cutoffMode() == PairCutoff) {
-		typeProperty = dynamic_object_cast<ParticleTypeProperty>(expectStandardProperty(ParticleProperty::ParticleTypeProperty));
+		typeProperty = ph.expectStandardProperty<ParticleProperty>(ParticleProperty::TypeProperty);
 		if(typeProperty) {
 			maxCutoff = 0;
 			for(PairCutoffsList::const_iterator entry = pairCutoffs().begin(); entry != pairCutoffs().end(); ++entry) {
 				FloatType cutoff = entry.value();
 				if(cutoff > 0) {
-					ParticleType* ptype1 = typeProperty->particleType(entry.key().first);
-					ParticleType* ptype2 = typeProperty->particleType(entry.key().second);
+					ElementType* ptype1 = typeProperty->elementType(entry.key().first);
+					ElementType* ptype2 = typeProperty->elementType(entry.key().second);
 					if(ptype1 && ptype2 && ptype1->id() >= 0 && ptype2->id() >= 0) {
 						if((int)pairCutoffSquaredTable.size() <= std::max(ptype1->id(), ptype2->id())) pairCutoffSquaredTable.resize(std::max(ptype1->id(), ptype2->id()) + 1);
 						if((int)pairCutoffSquaredTable[ptype1->id()].size() <= ptype2->id()) pairCutoffSquaredTable[ptype1->id()].resize(ptype2->id() + 1, FloatType(0));
@@ -234,10 +216,10 @@ std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> CreateBondsModifier
 	}
 
 	// Get molecule IDs.
-	ParticlePropertyObject* moleculeProperty = onlyIntraMoleculeBonds() ? inputStandardProperty(ParticleProperty::MoleculeProperty) : nullptr;
+	ParticleProperty* moleculeProperty = onlyIntraMoleculeBonds() ? ph.inputStandardProperty<ParticleProperty>(ParticleProperty::MoleculeProperty) : nullptr;
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<BondsEngine>(validityInterval, posProperty->storage(),
+	return std::make_shared<BondsEngine>(input.stateValidity(), posProperty->storage(),
 			typeProperty ? typeProperty->storage() : nullptr, simCell->data(), cutoffMode(),
 			maxCutoff, minimumCutoff(), std::move(pairCutoffSquaredTable), moleculeProperty ? moleculeProperty->storage() : nullptr);
 }
@@ -251,12 +233,14 @@ void CreateBondsModifier::BondsEngine::perform()
 
 	// Prepare the neighbor list.
 	CutoffNeighborFinder neighborFinder;
-	if(!neighborFinder.prepare(_maxCutoff, _positions.data(), _simCell, nullptr, *this))
+	if(!neighborFinder.prepare(_maxCutoff, *_positions, _simCell, nullptr, this))
 		return;
 
 	FloatType minCutoffSquared = _minCutoff * _minCutoff;
 
-	// Generate (half) bonds.
+	auto results = std::make_shared<BondsEngineResults>();
+
+	// Generate bonds.
 	size_t particleCount = _positions->size();
 	setProgressMaximum(particleCount);
 	if(!_particleTypes) {
@@ -266,7 +250,12 @@ void CreateBondsModifier::BondsEngine::perform()
 					continue;
 				if(_moleculeIDs && _moleculeIDs->getInt(particleIndex) != _moleculeIDs->getInt(neighborQuery.current()))
 					continue;
-				_bonds->push_back({ neighborQuery.unwrappedPbcShift(), (unsigned int)particleIndex, (unsigned int)neighborQuery.current() });
+
+				Bond bond = { (unsigned int)particleIndex, (unsigned int)neighborQuery.current(), neighborQuery.unwrappedPbcShift() };
+
+				// Skip every other bond to create only one bond per particle pair.
+				if(!bond.isOdd())
+					results->bonds()->push_back(bond);
 			}
 			// Update progress indicator.
 			if(!setProgressValueIntermittent(particleIndex))
@@ -283,8 +272,12 @@ void CreateBondsModifier::BondsEngine::perform()
 				int type1 = _particleTypes->getInt(particleIndex);
 				int type2 = _particleTypes->getInt(neighborQuery.current());
 				if(type1 >= 0 && type1 < (int)_pairCutoffsSquared.size() && type2 >= 0 && type2 < (int)_pairCutoffsSquared[type1].size()) {
-					if(neighborQuery.distanceSquared() <= _pairCutoffsSquared[type1][type2])
-						_bonds->push_back({ neighborQuery.unwrappedPbcShift(), (unsigned int)particleIndex, (unsigned int)neighborQuery.current() });
+					if(neighborQuery.distanceSquared() <= _pairCutoffsSquared[type1][type2]) {
+						Bond bond = { (unsigned int)particleIndex, (unsigned int)neighborQuery.current(), neighborQuery.unwrappedPbcShift() };
+						// Skip every other bond to create only one bond per particle pair.
+						if(!bond.isOdd())				
+							results->bonds()->push_back(bond);
+					}
 				}
 			}
 			// Update progress indicator.
@@ -293,39 +286,37 @@ void CreateBondsModifier::BondsEngine::perform()
 		}
 	}
 	setProgressValue(particleCount);
+
+	// Return the results of the compute engine.
+	setResult(std::move(results));
 }
 
 /******************************************************************************
-* Unpacks the results of the computation engine and stores them in the modifier.
+* Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-void CreateBondsModifier::transferComputationResults(ComputeEngine* engine)
+PipelineFlowState CreateBondsModifier::BondsEngineResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	_bonds = static_cast<BondsEngine*>(engine)->bonds();
-}
-
-/******************************************************************************
-* Lets the modifier insert the cached computation results into the
-* modification pipeline.
-******************************************************************************/
-PipelineStatus CreateBondsModifier::applyComputationResults(TimePoint time, TimeInterval& validityInterval)
-{
-	// Check if the modifier's compute engine has finished executing.
-	if(!_bonds)
-		throwException(tr("No computation results available."));
+	CreateBondsModifier* modifier = static_object_cast<CreateBondsModifier>(modApp->modifier());
+	OVITO_ASSERT(modifier);
 
 	// Add our bonds to the system.
-	addBonds(_bonds.data(), _bondsDisplay);
+	PipelineFlowState output = input;
+	ParticleOutputHelper poh(modApp->dataset(), output);
+	poh.addBonds(bonds(), modifier->bondsDisplay());
 
-	size_t bondsCount = _bonds->size();
-	output().attributes().insert(QStringLiteral("CreateBonds.num_bonds"), QVariant::fromValue(bondsCount / 2));
+	size_t bondsCount = bonds()->size();
+	output.attributes().insert(QStringLiteral("CreateBonds.num_bonds"), QVariant::fromValue(bondsCount));
 
 	// If the number of bonds is unusually high, we better turn off bonds display to prevent the program from freezing.
 	if(bondsCount > 1000000) {
-		bondsDisplay()->setEnabled(false);
-		return PipelineStatus(PipelineStatus::Warning, tr("Created %1 bonds. Automatically disabled display of such a large number of bonds to prevent the program from freezing.").arg(bondsCount));
+		modifier->bondsDisplay()->setEnabled(false);		
+		output.setStatus(PipelineStatus(PipelineStatus::Warning, tr("Created %1 bonds, which is a lot. As a precaution, the display of bonds has been disabled. You can manually enable it again if needed.").arg(bondsCount)));
+	}
+	else {
+		output.setStatus(PipelineStatus(PipelineStatus::Success, tr("Created %1 bonds.").arg(bondsCount)));
 	}
 
-	return PipelineStatus(PipelineStatus::Success, tr("Created %1 bonds.").arg(bondsCount / 2));
+	return output;	
 }
 
 OVITO_END_INLINE_NAMESPACE

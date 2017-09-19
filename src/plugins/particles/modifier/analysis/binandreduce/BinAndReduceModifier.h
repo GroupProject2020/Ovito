@@ -24,17 +24,35 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/data/ParticleProperty.h>
-#include <plugins/particles/objects/ParticlePropertyObject.h>
-#include "../../ParticleModifier.h"
+#include <core/dataset/data/properties/PropertyStorage.h>
+#include <plugins/particles/objects/ParticleProperty.h>
+#include <core/dataset/pipeline/Modifier.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
 /**
  * \brief This modifier computes a spatial average (over splices) for a particle property.
  */
-class OVITO_PARTICLES_EXPORT BinAndReduceModifier : public ParticleModifier
+class OVITO_PARTICLES_EXPORT BinAndReduceModifier : public Modifier
 {
+	/// Give this modifier class its own metaclass.
+	class BinAndReduceModifierClass : public ModifierClass 
+	{
+	public:
+
+		/// Inherit constructor from base metaclass.
+		using ModifierClass::ModifierClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
+
+
+	Q_OBJECT
+	OVITO_CLASS_META(BinAndReduceModifier, BinAndReduceModifierClass)
+	Q_CLASSINFO("DisplayName", "Bin and reduce");
+	Q_CLASSINFO("ModifierCategory", "Analysis");
+
 public:
 
     enum ReductionOperationType { RED_MEAN, RED_SUM, RED_SUM_VOL, RED_MIN, RED_MAX };
@@ -46,11 +64,20 @@ public:
 	/// Constructor.
 	Q_INVOKABLE BinAndReduceModifier(DataSet* dataset);
 
+	/// This method is called by the system after the modifier has been inserted into a data pipeline.
+	virtual void initializeModifier(ModifierApplication* modApp) override;
+
+	/// \brief Modifies the input data.
+	virtual Future<PipelineFlowState> evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+
 	/// Returns the stored average data.
 	const QVector<double>& binData() const { return _binData; }
 
 	/// Set start and end value of the plotting property axis.
-	void setPropertyAxisRange(FloatType start, FloatType end) { _propertyAxisRangeStart = start; _propertyAxisRangeEnd = end; }
+	void setPropertyAxisRange(FloatType start, FloatType end) { 
+		setPropertyAxisRangeStart(start); 
+		setPropertyAxisRangeEnd(end); 
+	}
 
 	/// Returns the start value of the plotting x-axis.
 	FloatType xAxisRangeStart() const { return _xAxisRangeStart; }
@@ -84,42 +111,34 @@ public:
         return (d >> 2) & 3;
     }
 
-protected:
-
-	/// Modifies the particle object.
-	virtual PipelineStatus modifyParticles(TimePoint time, TimeInterval& validityInterval) override;
-
-	/// This virtual method is called by the system when the modifier has been inserted into a PipelineObject.
-	virtual void initializeModifier(PipelineObject* pipelineObject, ModifierApplication* modApp) override;
-
 private:
 
 	/// The particle property that serves as data source to be averaged.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(ParticlePropertyReference, sourceProperty, setSourceProperty);
 
 	/// Type of reduction operation
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(ReductionOperationType, reductionOperation, setReductionOperation);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(ReductionOperationType, reductionOperation, setReductionOperation, PROPERTY_FIELD_MEMORIZE);
 
 	/// Compute first derivative.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, firstDerivative, setFirstDerivative);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, firstDerivative, setFirstDerivative, PROPERTY_FIELD_MEMORIZE);
 
 	/// Bin alignment
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(BinDirectionType, binDirection, setBinDirection);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(BinDirectionType, binDirection, setBinDirection, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the number of spatial bins.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, numberOfBinsX, setNumberOfBinsX);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, numberOfBinsX, setNumberOfBinsX, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the number of spatial bins.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, numberOfBinsY, setNumberOfBinsY);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, numberOfBinsY, setNumberOfBinsY, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the whether the plotting range along the y-axis should be fixed.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, fixPropertyAxisRange, setFixPropertyAxisRange);
 
 	/// Controls the start value of the plotting y-axis.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, propertyAxisRangeStart, setPropertyAxisRangeStart);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, propertyAxisRangeStart, setPropertyAxisRangeStart, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the end value of the plotting y-axis.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, propertyAxisRangeEnd, setPropertyAxisRangeEnd);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, propertyAxisRangeEnd, setPropertyAxisRangeEnd, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls whether the modifier should take into account only selected particles.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, onlySelected, setOnlySelected);
@@ -139,12 +158,6 @@ private:
 	/// Stores the averaged data.
 	/// Use double precision numbers to avoid precision loss when adding up a large number of values.
 	QVector<double> _binData;
-
-	Q_OBJECT
-	OVITO_OBJECT
-
-	Q_CLASSINFO("DisplayName", "Bin and reduce");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
 };
 
 OVITO_END_INLINE_NAMESPACE
@@ -156,5 +169,3 @@ Q_DECLARE_METATYPE(Ovito::Particles::BinAndReduceModifier::ReductionOperationTyp
 Q_DECLARE_METATYPE(Ovito::Particles::BinAndReduceModifier::BinDirectionType);
 Q_DECLARE_TYPEINFO(Ovito::Particles::BinAndReduceModifier::ReductionOperationType, Q_PRIMITIVE_TYPE);
 Q_DECLARE_TYPEINFO(Ovito::Particles::BinAndReduceModifier::BinDirectionType, Q_PRIMITIVE_TYPE);
-
-

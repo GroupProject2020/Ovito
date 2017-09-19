@@ -23,16 +23,19 @@
 
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/particles/gui/modifier/ParticleModifierEditor.h>
 #include <plugins/particles/modifier/modify/CreateBondsModifier.h>
+#include <gui/properties/ModifierPropertiesEditor.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /**
  * \brief A properties editor for the CreateBondsModifier class.
  */
-class CreateBondsModifierEditor : public ParticleModifierEditor
+class CreateBondsModifierEditor : public ModifierPropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(CreateBondsModifierEditor)
+
 public:
 
 	/// Default constructor.
@@ -91,9 +94,6 @@ private:
 
 	QTableView* _pairCutoffTable;
 	PairCutoffTableModel* _pairCutoffTableModel;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE
@@ -101,5 +101,3 @@ OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -26,7 +26,7 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-IMPLEMENT_OVITO_OBJECT(CAImporterEditor, PropertiesEditor);
+IMPLEMENT_OVITO_CLASS(CAImporterEditor);
 SET_OVITO_OBJECT_EDITOR(CAImporter, CAImporterEditor);
 
 /******************************************************************************
@@ -41,9 +41,6 @@ void CAImporterEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 	QVBoxLayout* layout = new QVBoxLayout(rollout);
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(4);
-
-	BooleanParameterUI* loadParticlesUI = new BooleanParameterUI(this, PROPERTY_FIELD(CAImporter::loadParticles));
-	layout->addWidget(loadParticlesUI->checkBox());
 
 	// Multi-timestep file
 	BooleanParameterUI* multitimestepUI = new BooleanParameterUI(this, PROPERTY_FIELD(ParticleImporter::isMultiTimestepFile));

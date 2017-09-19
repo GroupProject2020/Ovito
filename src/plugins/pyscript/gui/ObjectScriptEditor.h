@@ -23,7 +23,7 @@
 
 
 #include <plugins/pyscript/PyScript.h>
-#include <core/reference/RefTargetListener.h>
+#include <core/oo/RefTargetListener.h>
 #include <gui/GUI.h>
 
 class QsciScintilla;
@@ -58,12 +58,6 @@ public Q_SLOTS:
 	/// Lets the user save the current script to a file.
 	void onSaveScriptToFile();
 
-	/// Returns the path where the current script is stored.
-	//const QString& filePath() const { return _filePath; }
-
-	/// Sets the path where current script is stored.
-	//void setFilePath(const QString& path) { _filePath = path; }
-
 protected Q_SLOTS:
 
 	/// Is called when the scriptable object generates an event.
@@ -81,7 +75,7 @@ protected:
 	virtual const QString& getObjectScript(RefTarget* obj) const = 0;
 
 	/// Obtains the script output cached by the owner object.
-	virtual const QString& getOutputText(RefTarget* obj) const = 0;
+	virtual QString getOutputText(RefTarget* obj) const = 0;
 
 	/// Sets the current script of the owner object.
 	virtual void setObjectScript(RefTarget* obj, const QString& script) const = 0;
@@ -98,7 +92,7 @@ protected:
 	/// The text box that displays the script's output.
 	QsciScintilla* _outputWindow;
 
-	/// The object to which the script belongs that is opened in the editor.
+	/// The object which the current script belongs to.
 	RefTargetListener<RefTarget> _scriptableObject;
 
 	/// The action that undoes the last edit operation.
@@ -106,9 +100,6 @@ protected:
 
 	/// The action that redoes the last undone edit operation.
 	QAction* _redoAction;
-
-	/// The file path where the current script is stored.
-	//QString _filePath;
 };
 
 };

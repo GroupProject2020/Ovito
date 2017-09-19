@@ -1,27 +1,24 @@
-from ovito.io import *
-from ovito.modifiers import *
+from ovito.io import import_file, export_file
+from ovito.modifiers import (CoordinationNumberModifier, FreezePropertyModifier,
+                            ExpressionSelectionModifier)
 
-# Load a simulation sequence. 
-node = import_file("simulation.*.dump")
+# Load a input simulation sequence. 
+pl = import_file("simulation.*.dump")
 
 # Add modifier for computing the coordination numbers of particles.
-node.modifiers.append(CoordinationNumberModifier(cutoff = 2.9))
+pl.modifiers.append(CoordinationNumberModifier(cutoff = 2.9))
 
-# Save the initial coordination numbers at frame 0 under a different name.
+# Save the initial coordination numbers from frame 0 under a new name.
 modifier = FreezePropertyModifier(source_property = 'Coordination', 
-                                  destination_property = 'Coord0')
-node.modifiers.append(modifier)
-
-# This will evaluate the modification pipeline at the current animation and up to 
-# the FreezePropertyModifier. The current values of the 'Coordination' property are
-# stored and inserted back into the pipeline under the new name 'Coord0'.
-modifier.take_snapshot()
+                                  destination_property = 'Coord0',
+                                  freeze_at = 0)
+pl.modifiers.append(modifier)
 
 # Select all particles whose coordination number has changed since frame 0
-# by comapring the dynamically computed coordination numbers with the stored ones.
-node.modifiers.append(SelectExpressionModifier(expression='Coordination != Coord0'))
+# by comapring the dynamically computed coordination numbers with the frozen ones.
+pl.modifiers.append(ExpressionSelectionModifier(expression='Coordination != Coord0'))
 
-# Write a table with the number of particles having a coordination number variation.
-export_file(node, 'output.txt', 'txt', 
+# Write out number of particles exhibiting a change in coordination number.
+export_file(pl, 'output.txt', 'txt', 
             columns = ['Timestep', 'SelectExpression.num_selected'], 
             multiple_frames = True)

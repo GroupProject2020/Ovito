@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,6 +24,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/import/ParticleImporter.h>
+#include <plugins/particles/import/ParticleFrameData.h>
 #include <plugins/particles/import/InputColumnMapping.h>
 
 #ifdef NetCDFPlugin_EXPORTS		// This is defined by CMake when building the plugin library.
@@ -39,11 +40,13 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVI
  */
 class OVITO_NETCDF_EXPORT NetCDFImporter : public ParticleImporter
 {
+	Q_OBJECT
+	OVITO_CLASS(NetCDFImporter)
+
 public:
 
 	/// \brief Constructs a new instance of this class.
 	Q_INVOKABLE NetCDFImporter(DataSet *dataset) : ParticleImporter(dataset), _useCustomColumnMapping(false) {
-		INIT_PROPERTY_FIELD(useCustomColumnMapping);
 		setMultiTimestepFile(true);
 	}
 
@@ -70,12 +73,17 @@ public:
 	void setCustomColumnMapping(const InputColumnMapping& mapping);
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
-	virtual std::shared_ptr<FrameLoader> createFrameLoader(const Frame& frame, bool isNewlySelectedFile) override {
-		return std::make_shared<NetCDFImportTask>(dataset()->container(), frame, isNewlySelectedFile, _useCustomColumnMapping, _customColumnMapping);
+	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
+		return std::make_shared<FrameLoader>(frame, localFilename, useCustomColumnMapping(), customColumnMapping());
+	}
+
+	/// Creates an asynchronous frame discovery object that scans the input file for contained animation frames.
+	virtual std::shared_ptr<FileSourceImporter::FrameFinder> createFrameFinder(const QUrl& sourceUrl, const QString& localFilename) override {
+		return std::make_shared<FrameFinder>(sourceUrl, localFilename);
 	}
 
 	/// Inspects the header of the given file and returns the number of file columns.
-	InputColumnMapping inspectFileHeader(const Frame& frame);
+	Future<InputColumnMapping> inspectFileHeader(const Frame& frame);
 
 	/// Return the global mutex used to serialize access to the NetCDF library functions, 
 	/// which are not thread-safe.
@@ -83,19 +91,34 @@ public:
 
 private:
 
+	class FrameData : public ParticleFrameData
+	{
+	public:
+
+		/// Inherit constructor from base class.
+		using ParticleFrameData::ParticleFrameData;
+
+		/// Returns the file column mapping generated from the information in the file header.
+		InputColumnMapping& detectedColumnMapping() { return _detectedColumnMapping; }
+
+	private:
+
+		InputColumnMapping _detectedColumnMapping;
+	};
+
 	/// The format-specific task object that is responsible for reading an input file in the background.
-	class NetCDFImportTask : public ParticleFrameLoader
+	class FrameLoader : public FileSourceImporter::FrameLoader
 	{
 	public:
 
 		/// Normal constructor.
-		NetCDFImportTask(DataSetContainer* container, const FileSourceImporter::Frame& frame, bool isNewFile,
+		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename, 
 				bool useCustomColumnMapping, const InputColumnMapping& customColumnMapping)
-			: ParticleFrameLoader(container, frame, isNewFile), _parseFileHeaderOnly(false), _useCustomColumnMapping(useCustomColumnMapping), _customColumnMapping(customColumnMapping) {}
+			: FileSourceImporter::FrameLoader(frame, filename), _parseFileHeaderOnly(false), _useCustomColumnMapping(useCustomColumnMapping), _customColumnMapping(customColumnMapping) {}
 
 		/// Constructor used when reading only the file header information.
-		NetCDFImportTask(DataSetContainer* container, const FileSourceImporter::Frame& frame)
-			: ParticleFrameLoader(container, frame, true), _parseFileHeaderOnly(true), _useCustomColumnMapping(false) {}
+		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename)
+			: FileSourceImporter::FrameLoader(frame, filename), _parseFileHeaderOnly(true), _useCustomColumnMapping(false) {}
 
 		/// Returns the file column mapping used to load the file.
 		const InputColumnMapping& columnMapping() const { return _customColumnMapping; }
@@ -105,8 +128,8 @@ private:
         /// Map dimensions from NetCDF file to internal representation.
         void detectDims(int movieFrame, int particleCount, int nDims, int *dimIds, int &nDimsDetected, int &componentCount, int &nativeComponentCount, size_t *startp, size_t *countp);
 
-		/// Parses the given input file and stores the data in this container object.
-		virtual void parseFile(CompressedTextReader& stream) override;
+		/// Loads the frame data from the given file.
+		virtual void loadFile(QFile& file) override;
 
 	private:
 
@@ -122,7 +145,7 @@ private:
 		int _shear_dx_var;
 
 		/// Open NetCDF file, and load additional information
-		void openNetCDF(const QString &filename);
+		void openNetCDF(const QString &filename, FrameData* frameData);
 
 		/// Close the current NetCDF file.
 		void closeNetCDF();
@@ -132,19 +155,30 @@ private:
 		InputColumnMapping _customColumnMapping;
 	};
 
+	/// The format-specific task object that is responsible for scanning the input file for animation frames. 
+	class FrameFinder : public FileSourceImporter::FrameFinder
+	{
+	public:
+
+		/// Inherit constructor from base class.
+		using FileSourceImporter::FrameFinder::FrameFinder;
+
+	protected:
+
+		/// Scans the given file for source frames.
+		virtual void discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames) override;	
+	};
+
 protected:
 
 	/// \brief Saves the class' contents to the given stream.
-	virtual void saveToStream(ObjectSaveStream& stream) override;
+	virtual void saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData) override;
 
 	/// \brief Loads the class' contents from the given stream.
 	virtual void loadFromStream(ObjectLoadStream& stream) override;
 
 	/// \brief Creates a copy of this object.
 	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) override;
-
-	/// \brief Scans the given input file to find all contained simulation frames.
-	virtual void scanFileForTimesteps(PromiseBase& promise, QVector<FileSourceImporter::Frame>& frames, const QUrl& sourceUrl, CompressedTextReader& stream) override;
 
 	/// \brief Guesses the mapping of an input file field to one of OVITO's internal particle properties.
 	static InputColumnInfo mapVariableToColumn(const QString& name, int dataType);
@@ -162,9 +196,6 @@ private:
 	/// This global mutex is used to serialize access to the NetCDF library functions, 
 	/// which are not thread-safe.
 	static QMutex _netcdfMutex;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

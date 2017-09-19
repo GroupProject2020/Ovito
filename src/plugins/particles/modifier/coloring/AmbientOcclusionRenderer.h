@@ -35,6 +35,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class AmbientOcclusionRenderer : public OpenGLSceneRenderer
 {
+	Q_OBJECT
+	OVITO_CLASS(AmbientOcclusionRenderer)
+
 public:
 
 	/// Constructor.
@@ -82,9 +85,6 @@ private:
 
 	/// The rendering resolution.
 	QSize _resolution;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

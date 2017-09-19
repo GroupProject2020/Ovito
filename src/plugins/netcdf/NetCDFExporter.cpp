@@ -20,8 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticlePropertyObject.h>
-#include <plugins/particles/objects/SimulationCellObject.h>
+#include <plugins/particles/objects/ParticleProperty.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
 #include <core/utilities/concurrent/Task.h>
 #include "NetCDFExporter.h"
 
@@ -55,7 +55,7 @@ const char NC_SCALE_FACTOR_STR[]  = "scale_factor";
 	#define NC_OVITO_FLOATTYPE NC_DOUBLE
 #endif
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(NetCDFExporter, FileColumnParticleExporter);
+IMPLEMENT_OVITO_CLASS(NetCDFExporter);
 
 /******************************************************************************
 * Check for NetCDF error and throw exception
@@ -179,7 +179,7 @@ bool NetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 	SynchronousTask exportTask(taskManager);
 	
 	// Get particle positions.
-	ParticlePropertyObject* posProperty = ParticlePropertyObject::findInState(state, ParticleProperty::PositionProperty);
+	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
 
 	// Get simulation cell info.
 	SimulationCellObject* simulationCell = state.findObject<SimulationCellObject>();
@@ -219,7 +219,7 @@ bool NetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 			if(std::find_if(columnMapping().begin(), c, [c](const ParticlePropertyReference& pr) { return pr.type() == c->type(); }) != c)
 				continue;
 
-			ParticlePropertyObject* prop = c->findInState(state);
+			ParticleProperty* prop = c->findInState(state);
 			if(!prop)
 				throwException(tr("Invalid set of particle properties to be exported. The property '%1' does not exist.").arg(c->name()));
 			if((int)prop->componentCount() <= std::max(0, c->vectorComponent()))
@@ -235,7 +235,7 @@ bool NetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 					mangledName = "velocities";
 					dims[2] = _spatial_dim;
 				}
-				else if(prop->type() == ParticleProperty::ParticleTypeProperty) {
+				else if(prop->type() == ParticleProperty::TypeProperty) {
 					mangledName = "atom_types";
 				}
 				else if(prop->type() == ParticleProperty::ColorProperty) {
@@ -262,12 +262,12 @@ bool NetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 
 			if(prop->dataType() == qMetaTypeId<int>()) {
 				int ncvar;
-				NCERR(nc_def_var(_ncid, c->nameWithComponent().toUtf8().constData(), NC_INT, 2, dims, &ncvar));
+				NCERR(nc_def_var(_ncid, qPrintable(c->nameWithComponent()), NC_INT, 2, dims, &ncvar));
 				_columns.emplace_back(*c, qMetaTypeId<int>(), 1, ncvar);
 			}
 			else if(prop->dataType() == qMetaTypeId<FloatType>()) {
 				int ncvar;
-				NCERR(nc_def_var(_ncid, c->nameWithComponent().toUtf8().constData(), NC_OVITO_FLOATTYPE, 2, dims, &ncvar));
+				NCERR(nc_def_var(_ncid, qPrintable(c->nameWithComponent()), NC_OVITO_FLOATTYPE, 2, dims, &ncvar));
 				_columns.emplace_back(*c, qMetaTypeId<FloatType>(), 1, ncvar);
 			}
 		}
@@ -298,7 +298,7 @@ bool NetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 	// Write "time" variable.
 	double t = _frameCounter;
 	if(attributes.contains(NC_TIME_STR)) t = attributes.value(NC_TIME_STR).toDouble();
-	else if(attributes.contains(QStringLiteral("SourceFrame"))) t = attributes.value(QStringLiteral("SourceFrame")).toDouble();
+	else if(state.sourceFrame() >= 0) t = state.sourceFrame();
     NCERR(nc_put_var1_double(_ncid, _time_var, &_frameCounter, &t));
 
 	// Write simulation cell.
@@ -345,7 +345,7 @@ bool NetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 	for(const NCOutputColumn& outColumn : _columns) {
 		
 		// Look up property to be exported.
-		ParticlePropertyObject* prop = outColumn.property.findInState(state);
+		ParticleProperty* prop = outColumn.property.findInState(state);
 		if(!prop)
 			throwException(tr("The property '%1' cannot be exported, because it does not exist at frame %2.").arg(outColumn.property.name()).arg(frameNumber));
 		if((int)prop->componentCount() != outColumn.componentCount)

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,28 +21,23 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/pyscript/binding/PythonBinding.h>
-#include <plugins/particles/data/ParticleProperty.h>
-#include <plugins/particles/objects/ParticlePropertyObject.h>
-#include <plugins/particles/objects/ParticleTypeProperty.h>
+#include <core/dataset/data/properties/PropertyStorage.h>
+#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticleType.h>
 #include <plugins/particles/objects/ParticleDisplay.h>
 #include <plugins/particles/objects/VectorDisplay.h>
-#include <plugins/particles/objects/SimulationCellDisplay.h>
-#include <plugins/particles/objects/SurfaceMesh.h>
-#include <plugins/particles/objects/SurfaceMeshDisplay.h>
 #include <plugins/particles/objects/BondsObject.h>
 #include <plugins/particles/objects/BondsDisplay.h>
-#include <plugins/particles/objects/BondPropertyObject.h>
-#include <plugins/particles/objects/BondTypeProperty.h>
-#include <plugins/particles/objects/FieldQuantityObject.h>
-#include <plugins/particles/objects/SimulationCellObject.h>
+#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/BondType.h>
 #include <plugins/particles/objects/TrajectoryObject.h>
-#include <plugins/particles/objects/TrajectoryGeneratorObject.h>
+#include <plugins/particles/objects/TrajectoryGenerator.h>
 #include <plugins/particles/objects/TrajectoryDisplay.h>
 #include <plugins/particles/util/CutoffNeighborFinder.h>
 #include <plugins/particles/util/NearestNeighborFinder.h>
 #include <core/utilities/io/CompressedTextWriter.h>
-#include <core/animation/AnimationSettings.h>
-#include <core/plugins/PluginManager.h>
+#include <core/dataset/animation/AnimationSettings.h>
+#include <core/app/PluginManager.h>
 #include "PythonBinding.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -52,56 +47,6 @@ using namespace PyScript;
 void defineModifiersSubmodule(py::module parentModule);	// Defined in ModifierBinding.cpp
 void defineImportersSubmodule(py::module parentModule);	// Defined in ImporterBinding.cpp
 void defineExportersSubmodule(py::module parentModule);	// Defined in ExporterBinding.cpp
-
-template<class PropertyClass, bool ReadOnly>
-py::dict PropertyObject__array_interface__(PropertyClass& p)
-{
-	py::dict ai;
-	if(p.componentCount() == 1) {
-		ai["shape"] = py::make_tuple(p.size());
-		if(p.stride() != p.dataTypeSize())
-			ai["strides"] = py::make_tuple(p.stride());
-	}
-	else if(p.componentCount() > 1) {
-		ai["shape"] = py::make_tuple(p.size(), p.componentCount());
-		ai["strides"] = py::make_tuple(p.stride(), p.dataTypeSize());
-	}
-	else throw Exception("Cannot access empty property from Python.");
-	if(p.dataType() == qMetaTypeId<int>()) {
-		OVITO_STATIC_ASSERT(sizeof(int) == 4);
-#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
-		ai["typestr"] = py::bytes("<i4");
-#else
-		ai["typestr"] = py::bytes(">i4");
-#endif
-	}
-	else if(p.dataType() == qMetaTypeId<FloatType>()) {
-#ifdef FLOATTYPE_FLOAT		
-		OVITO_STATIC_ASSERT(sizeof(FloatType) == 4);
-#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
-		ai["typestr"] = py::bytes("<f4");
-#else
-		ai["typestr"] = py::bytes(">f4");
-#endif
-#else
-		OVITO_STATIC_ASSERT(sizeof(FloatType) == 8);
-#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
-		ai["typestr"] = py::bytes("<f8");
-#else
-		ai["typestr"] = py::bytes(">f8");
-#endif
-#endif
-	}
-	else throw Exception("Cannot access property of this data type from Python.");
-	if(ReadOnly) {
-		ai["data"] = py::make_tuple(reinterpret_cast<std::intptr_t>(p.constData()), true);
-	}
-	else {
-		ai["data"] = py::make_tuple(reinterpret_cast<std::intptr_t>(p.data()), false);
-	}
-	ai["version"] = py::cast(3);
-	return ai;
-}
 
 py::dict BondsObject__array_interface__(const BondsObject& p)
 {
@@ -161,44 +106,91 @@ PYBIND11_PLUGIN(Particles)
 
 	py::module m("Particles");
 
-	ovito_abstract_class<DataObjectWithSharedStorage<ParticleProperty>, DataObject>(m, nullptr, "DataObjectWithSharedParticlePropertyStorage");
-	auto ParticlePropertyObject_py = ovito_abstract_class<ParticlePropertyObject, DataObjectWithSharedStorage<ParticleProperty>>(m,
-			":Base class: :py:class:`ovito.data.DataObject`\n\n"
-			"A data object that stores the per-particle values of a particle property. "
+	auto ParticleProperty_py = ovito_abstract_class<ParticleProperty, PropertyObject>(m,
+			":Base class: :py:class:`ovito.data.Property`\n\n"
+			"Stores an array of per-particle values. This class derives from :py:class:`Property`, which provides the "
+			"base functionality shared by all property types in OVITO. "
 			"\n\n"
-			"The list of properties associated with a particle dataset can be access via the "
-			":py:attr:`DataCollection.particle_properties` dictionary. The :py:attr:`.size` of a particle "
-			"property is always equal to the number of particles in the dataset. The per-particle data "
-			"of a property can be accessed as a NumPy array through the :py:attr:`.array` attribute. "
+			"In OVITO's data model, an arbitrary number of properties can be associated with the particles, "
+			"each property being represented by a separate :py:class:`!ParticleProperty` object. A :py:class:`!ParticleProperty` "
+			"is basically an array of values whose length matches the number of particles. "
 			"\n\n"
-			"If you want to modify the property values, you have to use the :py:attr:`.marray` (*modifiable array*) "
-			"attribute instead, which provides read/write access to the underlying per-particle data. "
-			"After you are done modifying the property values, you should call :py:meth:`.changed` to inform "
-			"the system that it needs to update any state that depends on the data. "
-			,
-			// Python class name:
-			"ParticleProperty")
-		.def_static("createUserProperty", &ParticlePropertyObject::createUserProperty)
-		.def_static("createStandardProperty", &ParticlePropertyObject::createStandardProperty)
-		//.def_static("findInState", (ParticlePropertyObject* (*)(const PipelineFlowState&, ParticleProperty::Type))&ParticlePropertyObject::findInState)
-		//.def_static("findInState", (ParticlePropertyObject* (*)(const PipelineFlowState&, const QString&))&ParticlePropertyObject::findInState)
-		.def("changed", &ParticlePropertyObject::changed,
-				"Informs the particle property object that its internal data has changed. "
-				"This function must be called after each direct modification of the per-particle data "
-				"through the :py:attr:`.marray` attribute.\n\n"
-				"Calling this method on an input particle property is necessary to invalidate data caches down the modification "
-				"pipeline. Forgetting to call this method may result in an incomplete re-evaluation of the modification pipeline. "
-				"See :py:attr:`.marray` for more information.")
-		.def("nameWithComponent", &ParticlePropertyObject::nameWithComponent)
-		.def_property("name", &ParticlePropertyObject::name, &ParticlePropertyObject::setName,
-				"The human-readable name of this particle property.")
-		.def_property_readonly("__len__", &ParticlePropertyObject::size)
-		.def_property("size", &ParticlePropertyObject::size, &ParticlePropertyObject::resize,
-				"The number of particles.")
-		.def_property("type", &ParticlePropertyObject::type, &ParticlePropertyObject::setType,
+			"The set of properties currently associated with all particles is exposed by the "
+			":py:attr:`DataCollection.particle_properties` view, which allows accessing them by name "
+			"and adding new properties. " 
+			"\n\n"
+			"**Standard properties**"
+			"\n\n"
+			"OVITO differentiates between *standard* properties and *user-defined* properties. The former have a "
+			"special meaning to OVITO, a prescribed name and data layout. Certain standard properties control the visual representation "
+			"of particles. Typical examples are the ``Position`` property, the ``Color`` property and the ``Radius`` property. "
+			"User-defined properties, on the other hand, may have arbitrary names (as long as they do not collide with one of the standard names) "
+			"and the property values have no special meaning to OVITO, only to you, the user. Whether a :py:class:`!ParticleProperty` is a "
+			"standard or a user-defined property is indicated by the value of its :py:attr:`.type` attribute. "
+			"\n\n"
+			"**Creating particle properties**"
+			"\n\n"
+			"New properties can be created and assigned to particles with the :py:meth:`ParticlePropertiesView.create` factory method. "
+			"User-defined modifier functions, for example, use this to output their computation results. "
+			"\n\n"
+			"**Particle type property**"
+			"\n\n"
+			"The standard property ``'Particle Type'`` stores the types of particles encoded as integer values, e.g.: "
+			"\n\n"
+			"    >>> data = node.compute()\n"
+			"    >>> tprop = data.particle_properties['Particle Type']\n"
+			"    >>> print(tprop[...])\n"
+			"    [2 1 3 ..., 2 1 2]\n"
+			"\n\n"
+			"Here, each number in the property array refers to a defined particle type (e.g. 1=Cu, 2=Ni, 3=Fe, etc.). The defined particle types, each one represented by "
+			"an instance of the :py:class:`ParticleType` auxiliary class, are stored in the :py:attr:`.types` array "
+			"of the :py:class:`!ParticleProperty` object. Each type has a unique :py:attr:`~ParticleType.id`, a human-readable :py:attr:`~ParticleType.name` "
+			"and other attributes like :py:attr:`~ParticleType.color` and :py:attr:`~ParticleType.radius` that control the "
+			"visual appearance of particles belonging to the type:"
+			"\n\n"
+			"    >>> for type in tprop.types:\n"
+			"    ...     print(type.id, type.name, type.color, type.radius)\n"
+			"    ... \n"
+			"    1 Cu (0.188 0.313 0.972) 0.74\n"
+			"    2 Ni (0.564 0.564 0.564) 0.77\n"
+			"    3 Fe (1 0.050 0.050) 0.74\n"
+			"\n\n"
+			"IDs of types typically start at 1 and form a consecutive sequence as in the example above. "
+			"Note, however, that the :py:attr:`.types` list may store the :py:class:`ParticleType` objects in an arbitrary order. "
+			"Thus, in general, it is not valid to directly use a type ID as an index into the :py:attr:`.types` array. "
+			"Instead, the :py:meth:`.type_by_id` method should be used to look up the :py:class:`ParticleType`:: "
+			"\n\n"
+			"    >>> for i,t in enumerate(tprop): # (loop over the type ID of each particle)\n"
+			"    ...     print('Atom', i, 'is of type', tprop.type_by_id(t).name)\n"
+			"    ...\n"
+			"    Atom 0 is of type Ni\n"
+			"    Atom 1 is of type Cu\n"
+			"    Atom 2 is of type Fe\n"
+			"    Atom 3 is of type Cu\n"
+			"\n\n"
+			"Similarly, a :py:meth:`.type_by_name` method exists that looks up a :py:attr:`ParticleType` by name. "
+			"For example, to count the number of Fe atoms in a system:"
+			"\n\n"
+			"    >>> Fe_type_id = tprop.type_by_name('Fe').id   # Determine ID of the 'Fe' type\n"
+			"    >>> numpy.count_nonzero(tprop == Fe_type_id)   # Count particles having that type ID\n"
+			"    957\n"
+			"\n\n"
+			"Note that OVITO supports multiple type classifications. For example, in addition to the ``'Particle Type'`` standard particle property, "
+			"which stores the chemical types of atoms (e.g. C, H, Fe, ...), the ``'Structure Type'`` property may hold the structural types computed for atoms "
+			"(e.g. FCC, BCC, ...) maintaining its own list of known structure types in the :py:attr:`.types` array. "
+		)
+		// Used by ParticlePropertiesView.create(): 
+		.def_static("createStandardProperty", [](DataSet& dataset, size_t particleCount, ParticleProperty::Type type, bool initializeMemory) {
+			return ParticleProperty::createFromStorage(&dataset, ParticleProperty::createStandardStorage(particleCount, type, initializeMemory));
+		})
+		.def_static("createUserProperty", [](DataSet& dataset, size_t particleCount, int dataType, size_t componentCount, size_t stride, const QString& name, bool initializeMemory) {
+			return ParticleProperty::createFromStorage(&dataset, std::make_shared<PropertyStorage>(particleCount, dataType, componentCount, stride, name, initializeMemory));
+		})
+		.def_static("standard_property_type_id", [](const QString& name) { return (ParticleProperty::Type)ParticleProperty::OOClass().standardPropertyTypeId(name); })
+		.def_property_readonly("type", &ParticleProperty::type,
 				".. _particle-types-list:"
 				"\n\n"
-				"The type of the particle property (user-defined or one of the standard types).\n"
+				"The type of the particle property.\n"
 				"One of the following constants:"
 				"\n\n"
 				"======================================================= =================================================== ========== ==================================\n"
@@ -222,7 +214,7 @@ PYBIND11_PLUGIN(Particles)
 				"``ParticleProperty.Type.Identifier``                    :guilabel:`Particle Identifier`                     int        \n"
 				"``ParticleProperty.Type.StressTensor``                  :guilabel:`Stress Tensor`                           float      XX, YY, ZZ, XY, XZ, YZ\n"
 				"``ParticleProperty.Type.StrainTensor``                  :guilabel:`Strain Tensor`                           float      XX, YY, ZZ, XY, XZ, YZ\n"
-				"``ParticleProperty.Type.DeformationGradient``           :guilabel:`Deformation Gradient`                    float      11, 21, 31, 12, 22, 32, 13, 23, 33\n"
+				"``ParticleProperty.Type.DeformationGradient``           :guilabel:`Deformation Gradient`                    float      XX, YX, ZX, XY, YY, ZY, XZ, YZ, ZZ\n"
 				"``ParticleProperty.Type.Orientation``                   :guilabel:`Orientation`                             float      X, Y, Z, W\n"
 				"``ParticleProperty.Type.Force``                         :guilabel:`Force`                                   float      X, Y, Z\n"
 				"``ParticleProperty.Type.Mass``                          :guilabel:`Mass`                                    float      \n"
@@ -247,18 +239,18 @@ PYBIND11_PLUGIN(Particles)
 				"``ParticleProperty.Type.MoleculeType``                  :guilabel:`Molecule Type`                           int        \n"
 				"======================================================= =================================================== ========== ==================================\n"
 				)
-		.def_property_readonly("data_type", &ParticlePropertyObject::dataType)
-		.def_property_readonly("data_type_size", &ParticlePropertyObject::dataTypeSize)
-		.def_property_readonly("stride", &ParticlePropertyObject::stride)
-		.def_property_readonly("components", &ParticlePropertyObject::componentCount,
-				"The number of vector components (if this is a vector particle property); otherwise 1 (= scalar property).")
-		.def_property_readonly("__array_interface__", &PropertyObject__array_interface__<ParticlePropertyObject,true>)
-		.def_property_readonly("__mutable_array_interface__", &PropertyObject__array_interface__<ParticlePropertyObject,false>)
 	;
+	expose_mutable_subobject_list(ParticleProperty_py,
+		std::mem_fn(&ParticleProperty::elementTypes), 
+		std::mem_fn(&ParticleProperty::insertElementType), 
+		std::mem_fn(&ParticleProperty::removeElementType), "types", "ParticleTypeList",
+			  "A (mutable) list of :py:class:`ParticleType` instances. "
+			  "\n\n"
+			  "Note that the particle types may be stored in arbitrary order in this list. Thus, it is not valid to use a numeric type ID as an index into this list. ");
 
-	py::enum_<ParticleProperty::Type>(ParticlePropertyObject_py, "Type")
+	py::enum_<ParticleProperty::Type>(ParticleProperty_py, "Type")
 		.value("User", ParticleProperty::UserProperty)
-		.value("ParticleType", ParticleProperty::ParticleTypeProperty)
+		.value("ParticleType", ParticleProperty::TypeProperty)
 		.value("Position", ParticleProperty::PositionProperty)
 		.value("Selection", ParticleProperty::SelectionProperty)
 		.value("Color", ParticleProperty::ColorProperty)
@@ -298,164 +290,64 @@ PYBIND11_PLUGIN(Particles)
 		.value("Rotation", ParticleProperty::RotationProperty)
 		.value("StretchTensor", ParticleProperty::StretchTensorProperty)
 		.value("MoleculeType", ParticleProperty::MoleculeTypeProperty)
-	;
+	;								
 
-	auto ParticleTypeProperty_py = ovito_abstract_class<ParticleTypeProperty, ParticlePropertyObject>(m,
-			":Base class: :py:class:`ovito.data.ParticleProperty`\n\n"
-			"This is a specialization of the :py:class:`ParticleProperty` class, which holds a list of :py:class:`ParticleType` instances in addition "
-			"to the per-particle type values. "
-			"\n\n"
-			"OVITO encodes the types of particles (chemical and also others) as integer values starting at 1. "
-			"Like for any other particle property, the numeric type of each particle can be accessed as a NumPy array through the :py:attr:`~ParticleProperty.array` attribute "
-			"of the base class, or modified through the mutable :py:attr:`~ParticleProperty.marray` NumPy interface:: "
-			"\n\n"
-		    "    >>> type_property = node.source.particle_properties.particle_type\n"
-			"    >>> print(type_property.array)\n"
-			"    [1 3 2 ..., 2 1 2]\n"
-			"\n\n"
-			"In addition to these per-particle type values, the :py:class:`!ParticleTypeProperty` class keeps the :py:attr:`.type_list`, which "
-			"contains all defined particle types including their names, IDs, display color and radius. "
-			"Each defined type is represented by an :py:attr:`ParticleType` instance and has a unique integer ID, a human-readable name (e.g. the chemical symbol) "
-			"and a display color and radius:: "
-			"\n\n"
-			"    >>> for t in type_property.type_list:\n"
-			"    ...     print(t.id, t.name, t.color, t.radius)\n"
-			"    ... \n"
-			"    1 N (0.188 0.313 0.972) 0.74\n"
-			"    2 C (0.564 0.564 0.564) 0.77\n"
-			"    3 O (1 0.050 0.050) 0.74\n"
-			"    4 S (0.97 0.97 0.97) 0.0\n"
-			"\n\n"
-			"Each particle type has a unique numeric ID (typically starting at 1). Note that, in this particular example, types were stored in order of ascending ID in the "
-			":py:attr:`.type_list`. This may not always be the case. To quickly look up the :py:class:`ParticleType` and its name for a given ID, "
-			"the :py:meth:`.get_type_by_id` method is available:: "
-			"\n\n"
-			"    >>> for t in type_property.array:\n"
-			"    ...     print(type_property.get_type_by_id(t).name)\n"
-			"    ... \n"
-			"    N\n"
-			"    O\n"
-			"    C\n"
-			"\n\n"
-			"Conversely, the :py:attr:`ParticleType` and its numeric ID can be looked by name using the :py:meth:`.get_type_by_name` method. "
-			"For example, to count the number of oxygen atoms in a system:"
-			"\n\n"
-			"    >>> O_type_id = type_property.get_type_by_name('O').id\n"
-			"    >>> numpy.count_nonzero(type_property.array == O_type_id)\n"
-			"    957\n"
-			"\n\n"
-			"Note that particles may be associated with multiple kinds of types in OVITO. This includes, for example, the chemical type and the structural type. "
-			"Thus, several type classifications of particles can co-exist, each being represented by a separate instance of the :py:class:`!ParticleTypeProperty` class and a separate :py:attr:`.type_list`. "
-			"For example, while the ``'Particle Type'`` property stores the chemical type of "
-			"atoms (e.g. C, H, Fe, ...), the ``'Structure Type'`` property stores the structural type computed for each atom (e.g. FCC, BCC, ...). ")
-		.def("_get_type_by_id", (ParticleType* (ParticleTypeProperty::*)(int) const)&ParticleTypeProperty::particleType)
-		.def("_get_type_by_name", (ParticleType* (ParticleTypeProperty::*)(const QString&) const)&ParticleTypeProperty::particleType)
-		//.def_static("getDefaultParticleColorFromId", &ParticleTypeProperty::getDefaultParticleColorFromId)
-		//.def_static("getDefaultParticleColor", &ParticleTypeProperty::getDefaultParticleColor)
-		//.def_static("setDefaultParticleColor", &ParticleTypeProperty::setDefaultParticleColor)
-		//.def_static("getDefaultParticleRadius", &ParticleTypeProperty::getDefaultParticleRadius)
-		//.def_static("setDefaultParticleRadius", &ParticleTypeProperty::setDefaultParticleRadius)
-	;
-	expose_mutable_subobject_list<ParticleTypeProperty, 
-								  ParticleType, 
-								  ParticleTypeProperty,
-								  &ParticleTypeProperty::particleTypes, 
-								  &ParticleTypeProperty::insertParticleType, 
-								  &ParticleTypeProperty::removeParticleType>(
-									  ParticleTypeProperty_py, "type_list", "ParticleTypeList",
-										"A (mutable) list of :py:class:`ParticleType` instances. "
-										"\n\n"
-										"Note that the particle types may be stored in arbitrary order in this type list. "
-        								"Each type has a unique integer ID (given by the :py:attr:`ParticleType.id` attribute). "
-        								"The numbers stored in the particle type property :py:attr:`~ParticleProperty.array` refer to these type IDs.");
-
-	ovito_class<SimulationCellObject, DataObject>(m,
+	auto BondsObject_py = ovito_class<BondsObject, DataObject>(m,
 			":Base class: :py:class:`ovito.data.DataObject`\n\n"
-			"Stores the shape and the boundary conditions of the simulation cell."
+			"Stores the list of bonds between pairs of particles. "
 			"\n\n"
-			"Each instance of this class is associated with a corresponding :py:class:`~ovito.vis.SimulationCellDisplay` "
-			"that controls the visual appearance of the simulation cell. It can be accessed through "
-			"the :py:attr:`~DataObject.display` attribute of the :py:class:`!SimulationCell` object, which is defined by the :py:class:`~DataObject` base class."
+			"Typically, bonds are loaded from a simulation data file or are dynamically created by modifiers in a data pipeline. "
+			"The following code example demonstrates how to access the bonds produced by a :py:class:`~.ovito.modifiers.CreateBondsModifier`: "
 			"\n\n"
-			"The simulation cell of a particle dataset can be accessed via the :py:attr:`DataCollection.cell` property."
-			"\n\n"
-			"Example:\n\n"
-			".. literalinclude:: ../example_snippets/simulation_cell.py\n",
-			// Python class name:
-			"SimulationCell")
-		.def_property("pbc_x", &SimulationCellObject::pbcX, &SimulationCellObject::setPbcX)
-		.def_property("pbc_y", &SimulationCellObject::pbcY, &SimulationCellObject::setPbcY)
-		.def_property("pbc_z", &SimulationCellObject::pbcZ, &SimulationCellObject::setPbcZ)
-		.def_property("is2D", &SimulationCellObject::is2D, &SimulationCellObject::setIs2D,
-				"Specifies whether the system is two-dimensional (true) or three-dimensional (false). "
-				"For two-dimensional systems the PBC flag in the third direction (z) and the third cell vector are ignored. "
-				"\n\n"
-				":Default: ``false``\n")
-		.def_property("matrix", MatrixGetterCopy<SimulationCellObject, AffineTransformation, &SimulationCellObject::cellMatrix>(),
-								MatrixSetter<SimulationCellObject, AffineTransformation, &SimulationCellObject::setCellMatrix>(),
-				"A 3x4 matrix containing the three edge vectors of the cell (matrix columns 0 to 2) "
-        		"and the cell origin (matrix column 3).")
-		.def_property("vector1", &SimulationCellObject::cellVector1, &SimulationCellObject::setCellVector1)
-		.def_property("vector2", &SimulationCellObject::cellVector2, &SimulationCellObject::setCellVector2)
-		.def_property("vector3", &SimulationCellObject::cellVector3, &SimulationCellObject::setCellVector3)
-		.def_property("origin", &SimulationCellObject::cellOrigin, &SimulationCellObject::setCellOrigin)
-		.def_property_readonly("volume", &SimulationCellObject::volume3D,
-				"Returns the volume of the three-dimensional simulation cell.\n"
-				"It is the absolute value of the determinant of the cell matrix.")
-		.def_property_readonly("volume2D", &SimulationCellObject::volume2D,
-				"Returns the volume of the two-dimensional simulation cell (see :py:attr:`.is2D`).\n")
-	;
-
-	ovito_abstract_class<DataObjectWithSharedStorage<BondsStorage>, DataObject>(m, nullptr, "DataObjectWithSharedBondsStorage");
-	auto BondsObject_py = ovito_class<BondsObject, DataObjectWithSharedStorage<BondsStorage>>(m,
-			":Base class: :py:class:`ovito.data.DataObject`\n\n"
-			"This data object stores a list of bonds between pairs of particles. "
-			"Typically, bonds are loaded from a simulation file or created by inserting the :py:class:`~.ovito.modifiers.CreateBondsModifier` into the modification pipeline."
-			"The following example demonstrates how to access the bonds list create by a :py:class:`~.ovito.modifiers.CreateBondsModifier`:\n"
-			"\n"
 			".. literalinclude:: ../example_snippets/bonds_data_object.py\n"
-			"   :lines: 1-15\n"
+			"   :lines: 1-12\n"
 			"\n"
-			"OVITO represents each bond by two half-bonds, one pointing from a particle *A* to a particle *B*, and "
-			"the other half-bond pointing back from *B* to *A*. Thus, you will typically find twice as many half-bonds in the :py:class:`!Bonds` object as there are bonds. \n"
-			"The :py:attr:`.array` attribute of the :py:class:`!Bonds` class returns a (read-only) NumPy array that contains the list of half-bonds, each being "
-			"defined as a pair of particle indices."
+			"The :py:class:`Bonds` object can be used like a Numpy array of shape *N* x 2, where *N* is the number bonds: "
 			"\n\n"
-			"Note that half-bonds are not stored in any particular order in the :py:attr:`.array`. In particular, the half-bond (*a*, *b*) may not always be immediately succeeded by the corresponding "
-			"reverse half-bond (*b*, *a*). Also, the half-bonds leaving a particle might not be not stored as a contiguous sequence. "
-			"If you need to iterate over all half-bonds of a particle, you can use the :py:class:`.Enumerator` utility class described below. "
-			"\n\n"
-			"**Bond display settings**\n"
+			".. literalinclude:: ../example_snippets/bonds_data_object.py\n"
+			"   :lines: 14-15\n"
 			"\n"
+			"Access to the bonds array is read-only. Each bond in the arrray is defined by a pair of 0-based indices into the particles array. "
+			"Note that bonds are stored in the array in an arbitrary order. "
+			"If you need to enumerate all bonds of a particular particle, you should use the :py:class:`BondsEnumerator` utility class. "
+			"\n\n"
+			"**Bond properties**"
+			"\n\n"
+			"Like particles, bonds may be associated with *bond properties*. These properties are stored "
+			"in separate data objects of type :py:class:`BondProperty`, which are accessible through the "
+			":py:attr:`DataCollection.bond_properties` field of the data collection. "
+			"\n\n"
+			"**Bond display settings**"
+			"\n\n"
 			"Every :py:class:`!Bonds` object is associated with a :py:class:`~ovito.vis.BondsDisplay` instance, "
-			"which controls the visual appearance of the bonds in the viewports. It can be accessed through the :py:attr:`~DataObject.display` attribute:\n"
-			"\n"
+			"which controls the visual appearance of the bonds in rendered images. It can be accessed through the :py:attr:`~DataObject.display` base class attribute: "
+			"\n\n"
 			".. literalinclude:: ../example_snippets/bonds_data_object.py\n"
-			"   :lines: 17-20\n"
+			"   :lines: 20-23\n"
 			"\n\n"
 			"**Computing bond vectors**"
 			"\n\n"
-			"Note that the :py:class:`!Bonds` class only stores the indices of the particles connected by bonds (the *topology*). "
-			"Sometimes it might be necessary to determine the corresponding spatial bond vectors. They can be computed "
+			"Note that the :py:class:`!Bonds` class stores only the indices of the particles connected by bonds (the *topology*). "
+			"Sometimes it may be necessary to determine the corresponding spatial bond *vectors*. They can be computed "
 			"from the current positions of the particles:\n"
 			"\n"
 			".. literalinclude:: ../example_snippets/bonds_data_object.py\n"
-			"   :lines: 23-25\n"
+			"   :lines: 25-29\n"
 			"\n\n"
-			"Here, the first and the second column of the bonds array were each used to index the particle positions array. "
+			"Here, the first and the second column of the bonds array are used to index into the particle positions array. "
 			"The subtraction of the two indexed arrays yields the list of bond vectors. Each vector in this list points "
-			"from the first particle to the second particle of the corresponding half-bond."
+			"from the first particle to the second particle of the corresponding bond."
 			"\n\n"
-			"Finally, we need to correct for the effect of periodic boundary conditions when bonds "
-			"cross the box boundaries. This is achieved by multiplying the cell matrix and the stored PBC "
-			"shift vector of each bond and adding the product to the bond vectors:\n"
+			"Finally, we must correct for the effect of periodic boundary conditions when bonds "
+			"cross the box boundaries. This is achieved by adding the product of the cell matrix and the stored PBC "
+			"shift vectors to the bond vectors:\n"
 			"\n"
 			".. literalinclude:: ../example_snippets/bonds_data_object.py\n"
-			"   :lines: 26-\n"
+			"   :lines: 30-\n"
 			"\n\n"
-			"Note that it was necessary to transpose the PBC vectors array first to facilitate the transformation "
-			"of the entire array of vectors with a single 3x3 cell matrix. In the above code snippets we have performed "
-			"the following calculation for every half-bond (*a*, *b*) in parallel:"
+			"The PBC vectors array is transposed here to facilitate the transformation "
+			"of the entire array of vectors with a single 3x3 cell matrix. In the code snippet we perform "
+			"the following calculation for every bond (*a*, *b*) in parallel:"
 			"\n\n"
 			"   v = x(b) - x(a) + dot(H, pbc)\n"
 			"\n\n"
@@ -466,26 +358,40 @@ PYBIND11_PLUGIN(Particles)
 			"Bonds")
 		.def_property_readonly("__array_interface__", &BondsObject__array_interface__)
 		.def_property_readonly("_pbc_vectors", &BondsObject__pbc_vectors)
-		.def("clear", &BondsObject::clear,
-				"Removes all stored bonds.")
-		// This is used by the Bonds.add() and Bonds.add_full() implementations:
-		.def("addBond", &BondsObject::addBond)
+		.def("clear", &BondsObject::clear)
 		.def_property_readonly("size", &BondsObject::size)
+		.def("__len__", &BondsObject::size)
 	;
 
-	py::class_<ParticleBondMap>(BondsObject_py, "ParticleBondMap")
-		.def("__init__", [](ParticleBondMap& instance, BondsObject* bonds) {
-            	new (&instance) ParticleBondMap(*bonds->storage());
-        	}, py::arg("bonds"))
-		.def("firstBondOfParticle", &ParticleBondMap::firstBondOfParticle)
-		.def("nextBondOfParticle", &ParticleBondMap::nextBondOfParticle)
-		.def_property_readonly("endOfListValue", &ParticleBondMap::endOfListValue)
+	py::class_<ParticleBondMap>(m, "BondsEnumerator",
+		"Utility class that allows to efficiently iterate over the bonds connected to specific particles. "
+		"\n\n"
+    	"The constructor takes a :py:class:`Bonds` object as input, which contains an unordered list of all "
+    	"bonds in a system. The :py:class:`!BondsEnumerator` will build a lookup table for quick enumeration  "
+		"of bonds of particular particles. "
+		"\n\n"
+		"All bonds connected to a given particle can be visited using the :py:meth:`.bonds_of_particle` method. "
+		"\n\n"
+		"Warning: Do not modify the :py:class:`Bonds` instance while using the :py:class:`!BondsEnumerator`. "
+		"Adding or deleting bonds would render the internal lookup table of the :py:class:`!BondsEnumerator` invalid. "
+		"\n\n"
+		"**Usage example**"
+		"\n\n"
+		".. literalinclude:: ../example_snippets/bonds_enumerator.py\n")
+		.def("__init__", [](ParticleBondMap& instance, BondsObject& bonds) {
+            	new (&instance) ParticleBondMap(*bonds.storage());
+			}, py::arg("bonds"), py::keep_alive<1, 2>())
+		.def("bonds_of_particle", [](const ParticleBondMap& bondMap, size_t particleIndex) {
+			auto range = bondMap.bondIndicesOfParticle(particleIndex);
+			return py::make_iterator<py::return_value_policy::automatic>(range.begin(), range.end());
+		},
+		py::keep_alive<0, 1>(),
+		"Returns an iterator that yields the indices of the bonds connected to the given particle. "
+        "They can be used to index into the :py:class:`Bonds` array. ");
 	;
 
-	ovito_class<ParticleType, RefTarget>(m,
-			"Stores the properties of a particle type or atom type."
-			"\n\n"
-			"The list of particle types is stored in the :py:class:`~ovito.data.ParticleTypeProperty` class.")
+	ovito_class<ParticleType, ElementType>(m,
+			"Represents a particle or atom type. A :py:class:`!ParticleType` instance is always owned by a :py:class:`ParticleTypeProperty`. ")
 		.def_property("id", &ParticleType::id, &ParticleType::setId,
 				"The identifier of the particle type.")
 		.def_property("color", &ParticleType::color, &ParticleType::setColor,
@@ -590,60 +496,6 @@ PYBIND11_PLUGIN(Particles)
 		.value("Head", VectorDisplay::Head)
 	;
 
-	ovito_class<SimulationCellDisplay, DisplayObject>(m,
-			":Base class: :py:class:`ovito.vis.Display`\n\n"
-			"Controls the visual appearance of :py:class:`~ovito.data.SimulationCell` objects."
-			"The following script demonstrates how to change the line width of the simulation cell:"
-			"\n\n"
-			".. literalinclude:: ../example_snippets/simulation_cell_display.py\n")
-		.def_property("line_width", &SimulationCellDisplay::cellLineWidth, &SimulationCellDisplay::setCellLineWidth,
-				"The width of the simulation cell line (in simulation units of length)."
-				"\n\n"
-				":Default: 0.14% of the simulation box diameter\n")
-		.def_property("render_cell", &SimulationCellDisplay::renderCellEnabled, &SimulationCellDisplay::setRenderCellEnabled,
-				"Boolean flag controlling the cell's visibility in rendered images. "
-				"If ``False``, the cell will only be visible in the interactive viewports. "
-				"\n\n"
-				":Default: ``True``\n")
-		.def_property("rendering_color", &SimulationCellDisplay::cellColor, &SimulationCellDisplay::setCellColor,
-				"The line color used when rendering the cell."
-				"\n\n"
-				":Default: ``(0, 0, 0)``\n")
-	;
-
-	ovito_class<SurfaceMeshDisplay, DisplayObject>(m,
-			":Base class: :py:class:`ovito.vis.Display`\n\n"
-			"Controls the visual appearance of a surface mesh computed by the :py:class:`~ovito.modifiers.ConstructSurfaceModifier`.")
-		.def_property("surface_color", &SurfaceMeshDisplay::surfaceColor, &SurfaceMeshDisplay::setSurfaceColor,
-				"The display color of the surface mesh."
-				"\n\n"
-				":Default: ``(1.0, 1.0, 1.0)``\n")
-		.def_property("cap_color", &SurfaceMeshDisplay::capColor, &SurfaceMeshDisplay::setCapColor,
-				"The display color of the cap polygons at periodic boundaries."
-				"\n\n"
-				":Default: ``(0.8, 0.8, 1.0)``\n")
-		.def_property("show_cap", &SurfaceMeshDisplay::showCap, &SurfaceMeshDisplay::setShowCap,
-				"Controls the visibility of cap polygons, which are created at the intersection of the surface mesh with periodic box boundaries."
-				"\n\n"
-				":Default: ``True``\n")
-		.def_property("surface_transparency", &SurfaceMeshDisplay::surfaceTransparency, &SurfaceMeshDisplay::setSurfaceTransparency,
-				"The level of transparency of the displayed surface. Valid range is 0.0 -- 1.0."
-				"\n\n"
-				":Default: 0.0\n")
-		.def_property("cap_transparency", &SurfaceMeshDisplay::capTransparency, &SurfaceMeshDisplay::setCapTransparency,
-				"The level of transparency of the displayed cap polygons. Valid range is 0.0 -- 1.0."
-				"\n\n"
-				":Default: 0.0\n")
-		.def_property("smooth_shading", &SurfaceMeshDisplay::smoothShading, &SurfaceMeshDisplay::setSmoothShading,
-				"Enables smooth shading of the triangulated surface mesh."
-				"\n\n"
-				":Default: ``True``\n")
-		.def_property("reverse_orientation", &SurfaceMeshDisplay::reverseOrientation, &SurfaceMeshDisplay::setReverseOrientation,
-				"Flips the orientation of the surface. This affects the generation of cap polygons."
-				"\n\n"
-				":Default: ``False``\n")
-	;
-
 	ovito_class<BondsDisplay, DisplayObject>(m,
 			":Base class: :py:class:`ovito.vis.Display`\n\n"
 			"Controls the visual appearance of particle bonds. An instance of this class is attached to every :py:class:`~ovito.data.Bonds` data object.")
@@ -669,62 +521,10 @@ PYBIND11_PLUGIN(Particles)
 				":Default: ``True``\n")
 	;
 
-	ovito_abstract_class<DataObjectWithSharedStorage<HalfEdgeMesh<>>, DataObject>(m, nullptr, "DataObjectWithSharedHalfEdgeMeshStorage");
-	ovito_class<SurfaceMesh, DataObjectWithSharedStorage<HalfEdgeMesh<>>>(m,
-			":Base class: :py:class:`ovito.data.DataObject`\n\n"
-			"This data object stores the surface mesh computed by a :py:class:`~ovito.modifiers.ConstructSurfaceModifier`. "
-			"\n\n"
-			"Currently, no direct access to the stored vertices and faces of the mesh is possible. But you can export the mesh to a geometry file, "
-			"which can be further processed by external tools such as ParaView. "
-			"\n\n"
-			"The visual appearance of the surface mesh within Ovito is controlled by its attached :py:class:`~ovito.vis.SurfaceMeshDisplay` instance, which is "
-			"accessible through the :py:attr:`~DataObject.display` attribute of the :py:class:`DataObject` base class or through the :py:attr:`~ovito.modifiers.ConstructSurfaceModifier.mesh_display` attribute "
-			"of the :py:class:`~ovito.modifiers.ConstructSurfaceModifier` that created the surface mesh."
-			"\n\n"
-			"Example:\n\n"
-			".. literalinclude:: ../example_snippets/surface_mesh.py\n"
-			"   :lines: 4-\n"
-		)
-		.def_property("is_completely_solid", &SurfaceMesh::isCompletelySolid, &SurfaceMesh::setIsCompletelySolid)
-
-		// For backward compatibility with Ovito 2.8.2:	
-		.def("export_vtk", [](SurfaceMesh& mesh, const QString& filename, SimulationCellObject* simCellObj) {
-				if(!simCellObj)
-					throw Exception("A simulation cell is required to generate non-periodic mesh for export.");
-				TriMesh output;
-				if(!SurfaceMeshDisplay::buildSurfaceMesh(*mesh.storage(), simCellObj->data(), false, mesh.cuttingPlanes(), output))
-					throw Exception("Failed to generate non-periodic mesh for export. Simulation cell might be too small.");
-				QFile file(filename);
-				CompressedTextWriter writer(file, mesh.dataset());
-				output.saveToVTK(writer);
-			},
-			"export_vtk(filename, cell)"
-			"\n\n"
-			"Writes the surface mesh to a VTK file, which is a simple text-based format and which can be opened with the software ParaView. "
-			"The method takes the output filename and a :py:class:`~ovito.data.SimulationCell` object as input. The simulation cell information "
-			"is needed by the method to generate a non-periodic version of the mesh, which is truncated at the periodic boundaries "
-			"of the simulation cell (if it has any).")
-		.def("export_cap_vtk", [](SurfaceMesh& mesh, const QString& filename, SimulationCellObject* simCellObj) {
-				if(!simCellObj)
-					throw Exception("A simulation cell is required to generate cap mesh for export.");
-				TriMesh output;
-				SurfaceMeshDisplay::buildCapMesh(*mesh.storage(), simCellObj->data(), mesh.isCompletelySolid(), false, mesh.cuttingPlanes(), output);
-				QFile file(filename);
-				CompressedTextWriter writer(file, mesh.dataset());
-				output.saveToVTK(writer);
-			},
-			"export_cap_vtk(filename, cell)"
-			"\n\n"
-			"If the surface mesh has been generated from a :py:class:`~ovito.data.SimulationCell` with periodic boundary conditions, then this "
-			"method computes the cap polygons from the intersection of the surface mesh with the periodic cell boundaries. "
-			"The cap polygons are written to a VTK file, which is a simple text-based format and which can be opened with the software ParaView.")
-	;
-
 	auto CutoffNeighborFinder_py = py::class_<CutoffNeighborFinder>(m, "CutoffNeighborFinder")
 		.def(py::init<>())
-		.def("prepare", [](CutoffNeighborFinder& finder, FloatType cutoff, ParticlePropertyObject& positions, SimulationCellObject& cell) {
-				SynchronousTask task(ScriptEngine::activeTaskManager());
-				return finder.prepare(cutoff, positions.storage(), cell.data(), nullptr, task.promise());
+		.def("prepare", [](CutoffNeighborFinder& finder, FloatType cutoff, ParticleProperty& positions, SimulationCellObject& cell) {
+				return finder.prepare(cutoff, *positions.storage(), cell.data(), nullptr, nullptr);
 			})
 	;
 
@@ -741,9 +541,8 @@ PYBIND11_PLUGIN(Particles)
 
 	auto NearestNeighborFinder_py = py::class_<NearestNeighborFinder>(m, "NearestNeighborFinder")
 		.def(py::init<size_t>())
-		.def("prepare", [](NearestNeighborFinder& finder, ParticlePropertyObject& positions, SimulationCellObject& cell) {
-			SynchronousTask task(ScriptEngine::activeTaskManager());
-			return finder.prepare(positions.storage(), cell.data(), nullptr, task.promise());
+		.def("prepare", [](NearestNeighborFinder& finder, ParticleProperty& positions, SimulationCellObject& cell) {
+			return finder.prepare(*positions.storage(), cell.data(), nullptr, nullptr);
 		})
 	;
 
@@ -765,50 +564,35 @@ PYBIND11_PLUGIN(Particles)
 			py::return_value_policy::reference_internal)
 	;
 
-	ovito_abstract_class<DataObjectWithSharedStorage<BondProperty>, DataObject>(m, nullptr, "DataObjectWithSharedBondPropertyStorage");
-	auto BondPropertyObject_py = ovito_abstract_class<BondPropertyObject, DataObjectWithSharedStorage<BondProperty>>(m,
-			":Base class: :py:class:`ovito.data.DataObject`\n\n"
-			"This data object stores the values of a certain bond property. A bond property is a quantity associated with every bond in a system. "
-			"Bond properties work similar to particle properties (see :py:class:`ParticleProperty` class)."
+	auto BondProperty_py = ovito_abstract_class<BondProperty, PropertyObject>(m,
+			":Base class: :py:class:`ovito.data.Property`\n\n"
+			"Stores an array of per-bond values. This class derives from :py:class:`Property`, which provides the "
+			"base functionality shared by all property types in OVITO. "
 			"\n\n"
-			"All bond properties associated with the bonds in a system are stored in the :py:attr:`DataCollection.bond_properties` dictionary of the :py:class:`DataCollection` container. "
-			"Bond properties are either read from the external simulation file or can be newly generated by OVITO's modifiers, the "
-			":py:class:`~ovito.modifiers.ComputeBondLengthsModifier` being one example. "
+			"In OVITO's data model, an arbitrary set of properties can be associated with bonds, "
+			"each property being represented by a :py:class:`!BondProperty` object. A :py:class:`!BondProperty` "
+			"is basically an array of values whose length matches the numer of bonds in the data collection (i.e. the length of the :py:class:`Bonds` array). "
 			"\n\n"
-			"The topological definition of bonds, i.e. the connectivity of particles, is stored separately from the bond properties in the :py:class:`Bonds` data object. "
-			"The :py:class:`Bonds` can be accessed through the :py:attr:`DataCollection.bonds` field. "
+			":py:class:`!BondProperty` objects have the same fields and behave the same way as :py:class:`ParticleProperty` objects. "
+			"Both property classes derives from the common :py:class:`Property` base class. Please see its documentation on how to access per-bond values. "
 			"\n\n"
-			"Note that OVITO internally works with half-bonds, i.e., every full bond is represented as two half-bonds, one pointing "
-			"from particle A to particle B and the other from B to A. Each half-bond is associated with its own property value, "
-			"and the :py:attr:`.size` of a bond property array is always twice as large as the number of full bonds "
-			"(see :py:attr:`DataCollection.number_of_half_bonds` and :py:attr:`DataCollection.number_of_full_bonds`). "
-			"Typically, however, the property values of a half-bond and its reverse bond are identical. "
+			"The set of properties currently associated with the bonds is exposed by the "
+			":py:attr:`DataCollection.bond_properties` view, which allows accessing them by name "
+			"and adding new properties. " 
 			"\n\n"
-			"Similar to particle properties, it is possible to associate user-defined properties with bonds. OVITO also knows a set of standard "
-			"bond properties (see the :py:attr:`.type` attribute below), which control the visual appearance of bonds. For example, "
-			"it is possible to assign the ``Color`` property to bonds, giving one control over the rendering color of each individual (half-)bond. "
-			"The color values stored in this property array will be used by OVITO to render the bonds. If not present, OVITO will fall back to the "
-			"default behavior, which is determined by the :py:class:`ovito.vis.BondsDisplay` associated with the :py:class:`Bonds` object. ",
+			"Note that the topological definition of bonds, i.e. the connectivity between particles, is stored separately from the bond properties in "
+			"the :py:class:`Bonds` data object. ",
 			// Python class name:
 			"BondProperty")
-		.def_static("createUserProperty", &BondPropertyObject::createUserProperty)
-		.def_static("createStandardProperty", &BondPropertyObject::createStandardProperty)
-		//.def_static("findInState", (BondPropertyObject* (*)(const PipelineFlowState&, BondProperty::Type))&BondPropertyObject::findInState)
-		//.def_static("findInState", (BondPropertyObject* (*)(const PipelineFlowState&, const QString&))&BondPropertyObject::findInState)
-		.def("changed", &BondPropertyObject::changed,
-				"Informs the bond property object that its stored data has changed. "
-				"This function must be called after each direct modification of the per-bond data "
-				"through the :py:attr:`.marray` attribute.\n\n"
-				"Calling this method on an input bond property is necessary to invalidate data caches down the modification "
-				"pipeline. Forgetting to call this method may result in an incomplete re-evaluation of the modification pipeline. "
-				"See :py:attr:`.marray` for more information.")
-		.def("nameWithComponent", &BondPropertyObject::nameWithComponent)
-		.def_property("name", &BondPropertyObject::name, &BondPropertyObject::setName,
-				"The human-readable name of the bond property.")
-		.def_property_readonly("__len__", &BondPropertyObject::size)
-		.def_property("size", &BondPropertyObject::size, &BondPropertyObject::resize,
-				"The number of stored property values, which is always equal to the number of half-bonds.")
-		.def_property("type", &BondPropertyObject::type, &BondPropertyObject::setType,
+		// Used by BondPropertiesView.create():
+		.def_static("createStandardProperty", [](DataSet& dataset, size_t bondCount, BondProperty::Type type, bool initializeMemory) {
+			return BondProperty::createFromStorage(&dataset, BondProperty::createStandardStorage(bondCount, type, initializeMemory));
+		})
+		.def_static("createUserProperty", [](DataSet& dataset, size_t bondCount, int dataType, size_t componentCount, size_t stride, const QString& name, bool initializeMemory) {
+			return BondProperty::createFromStorage(&dataset, std::make_shared<PropertyStorage>(bondCount, dataType, componentCount, stride, name, initializeMemory));
+		})
+		.def_static("standard_property_type_id", [](const QString& name) { return (BondProperty::Type)BondProperty::OOClass().standardPropertyTypeId(name); })
+		.def_property_readonly("type", &BondProperty::type, 
 				".. _bond-types-list:"
 				"\n\n"
 				"The type of the bond property (user-defined or one of the standard types).\n"
@@ -824,51 +608,25 @@ PYBIND11_PLUGIN(Particles)
 				"``BondProperty.Type.Length``                            :guilabel:`Length`                                  float     \n"
 				"======================================================= =================================================== ==========\n"
 				)
-		.def_property_readonly("dataType", &BondPropertyObject::dataType)
-		.def_property_readonly("dataTypeSize", &BondPropertyObject::dataTypeSize)
-		.def_property_readonly("stride", &BondPropertyObject::stride)
-		.def_property_readonly("components", &BondPropertyObject::componentCount,
-				"The number of vector components (if this is a vector bond property); otherwise 1 (= scalar property).")
-		.def_property_readonly("__array_interface__", &PropertyObject__array_interface__<BondPropertyObject,true>)
-		.def_property_readonly("__mutable_array_interface__", &PropertyObject__array_interface__<BondPropertyObject,false>)
 	;
+	expose_mutable_subobject_list(BondProperty_py,
+		std::mem_fn(&BondProperty::elementTypes), 
+		std::mem_fn(&BondProperty::insertElementType), 
+		std::mem_fn(&BondProperty::removeElementType), "types", "BondTypeList",
+				"A (mutable) list of :py:class:`BondType` instances. "
+			  "\n\n"
+			  "Note that the bond types may be stored in arbitrary order in this type list.");
 
-	py::enum_<BondProperty::Type>(BondPropertyObject_py, "Type")
+	py::enum_<BondProperty::Type>(BondProperty_py, "Type")
 		.value("User", BondProperty::UserProperty)
-		.value("BondType", BondProperty::BondTypeProperty)
+		.value("BondType", BondProperty::TypeProperty)
 		.value("Selection", BondProperty::SelectionProperty)
 		.value("Color", BondProperty::ColorProperty)
 		.value("Length", BondProperty::LengthProperty)
-	;
+	;								
 
-	auto BondTypeProperty_py = ovito_abstract_class<BondTypeProperty, BondPropertyObject>(m,
-			":Base class: :py:class:`ovito.data.BondProperty`\n\n"
-			"A special :py:class:`BondProperty` that stores a list of :py:class:`BondType` instances in addition "
-			"to the per-bond values. "
-			"\n\n"
-			"The bond property ``Bond Type`` is represented by an instance of this class. In addition to the regular per-bond "
-			"data (consisting of an integer per half-bond, indicating its type ID), this class holds the list of defined bond types. These are "
-			":py:class:`BondType` instances, which store the ID, name, and color of each bond type.")
-		.def("_get_type_by_id", (BondType* (BondTypeProperty::*)(int) const)&BondTypeProperty::bondType)
-		.def("_get_type_by_name", (BondType* (BondTypeProperty::*)(const QString&) const)&BondTypeProperty::bondType)
-	;
-	expose_mutable_subobject_list<BondTypeProperty, 
-								  BondType, 
-								  BondTypeProperty,
-								  &BondTypeProperty::bondTypes, 
-								  &BondTypeProperty::insertBondType, 
-								  &BondTypeProperty::removeBondType>(
-									  BondTypeProperty_py, "type_list", "BondTypeList",
-									  	"A (mutable) list of :py:class:`BondType` instances. "
-										"\n\n"
-										"Note that the bond types may be stored in arbitrary order in this type list. "
-        								"Each type has a unique integer ID (given by the :py:attr:`BondType.id` attribute). "
-        								"The numbers stored in the bond type property :py:attr:`~BondProperty.array` refer to these type IDs.");
-
-	ovito_class<BondType, RefTarget>(m,
-			"Stores the properties of a bond type."
-			"\n\n"
-			"The list of bond types is stored in the :py:class:`~ovito.data.BondTypeProperty` class.")
+	ovito_class<BondType, ElementType>(m,
+			"Represents a bond type. A :py:class:`!BondType` instance is always owned by a :py:class:`BondTypeProperty`. ")
 		.def_property("id", &BondType::id, &BondType::setId,
 				"The identifier of the bond type.")
 		.def_property("color", &BondType::color, &BondType::setColor,
@@ -877,56 +635,54 @@ PYBIND11_PLUGIN(Particles)
 				"The display name of this bond type.")
 	;
 
-	ovito_abstract_class<DataObjectWithSharedStorage<FieldQuantity>, DataObject>(m, nullptr, "DataObjectWithSharedFieldQuantityStorage");
-	auto FieldQuantityObject_py = ovito_abstract_class<FieldQuantityObject, DataObjectWithSharedStorage<FieldQuantity>>(m)
-		.def("changed", &FieldQuantityObject::changed,
-				"Informs the object that its stored data has changed. "
-				"This function must be called after each direct modification of the field data "
-				"through the :py:attr:`.marray` attribute.\n\n"
-				"Calling this method on an input field quantity is necessary to invalidate data caches down the data "
-				"pipeline. Forgetting to call this method may result in an incomplete re-evaluation of the data pipeline. "
-				"See :py:attr:`.marray` for more information.")
-		.def_property("name", &FieldQuantityObject::name, &FieldQuantityObject::setName,
-				"The human-readable name of the field quantitz.")
-		.def_property_readonly("components", &FieldQuantityObject::componentCount,
-				"The number of vector components (if this is a vector quantity); otherwise 1 (= scalar quantity).")
-	;
-	
-	ovito_class<TrajectoryObject, DataObject>{m};
-
-	ovito_class<TrajectoryGeneratorObject, TrajectoryObject>(m,
-			":Base class: :py:class:`ovito.data.DataObject`\n\n"
-			"Data object that generates and stores the trajectory lines from a set of moving particles. "
+	ovito_class<TrajectoryObject, DataObject>(m,
+			":Base class: :py:class:`ovito.data.DataObject`"
 			"\n\n"
-			"The visual appearance of the trajectory lines is controlled by the attached :py:class:`~ovito.vis.TrajectoryLineDisplay` instance, which is "
-			"accessible through the :py:attr:`~DataObject.display` attribute."
+			"This is a data object that stores the traced trajectory lines of a group of particles. "
+			"It is typically generated by a :py:class:`~ovito.pipeline.TrajectoryLinegenerator`."
+			,
+			// Python class name:
+			"TrajectoryLines")
+	;
+
+	ovito_class<TrajectoryGenerator, StaticSource>(m,
+			":Base class: :py:class:`ovito.pipeline.StaticSource`"
+			"\n\n"
+			"A type of pipeline source that generates trajectory lines by sampling the particle positions of another :py:class:`Pipeline`. "
+			"It is used to statically visualize the trajectories of particles. "
+			"The trajectory line generation must be explicitly triggered by a call to :py:meth:`.generate`. "
+			"The visual appearance of the trajectory lines is controlled by a " 
+			":py:class:`~ovito.vis.TrajectoryLineDisplay` attached to the generated :py:class:`~ovito.data.TrajectoryLines` data object. "
 			"\n\n"
 			"**Usage example:**"
 			"\n\n"
 			".. literalinclude:: ../example_snippets/trajectory_lines.py",
+			// Python class name:
 			"TrajectoryLineGenerator")
-		.def_property("source_node", &TrajectoryGeneratorObject::source, &TrajectoryGeneratorObject::setSource,
-				"The :py:class:`~ovito.ObjectNode` that serves as source for particle trajectory data. ") 
-		.def_property("only_selected", &TrajectoryGeneratorObject::onlySelectedParticles, &TrajectoryGeneratorObject::setOnlySelectedParticles,
+		.def_property("source_pipeline", &TrajectoryGenerator::source, &TrajectoryGenerator::setSource,
+				"The :py:class:`~ovito.pipeline.Pipeline` providing the time-dependent particle positions from which the trajectory lines will be generated. ") 
+		// For backward compatibility with OVITO 2.9.0:
+		.def_property("source_node", &TrajectoryGenerator::source, &TrajectoryGenerator::setSource)
+		.def_property("only_selected", &TrajectoryGenerator::onlySelectedParticles, &TrajectoryGenerator::setOnlySelectedParticles,
 				"Controls whether trajectory lines should only by generated for currently selected particles."
 				"\n\n"
 				":Default: ``True``\n")
-		.def_property("unwrap_trajectories", &TrajectoryGeneratorObject::unwrapTrajectories, &TrajectoryGeneratorObject::setUnwrapTrajectories,
+		.def_property("unwrap_trajectories", &TrajectoryGenerator::unwrapTrajectories, &TrajectoryGenerator::setUnwrapTrajectories,
 				"Controls whether trajectory lines should be automatically unwrapped at the box boundaries when the particles cross a periodic boundary."
 				"\n\n"
 				":Default: ``True``\n")
-		.def_property("sampling_frequency", &TrajectoryGeneratorObject::everyNthFrame, &TrajectoryGeneratorObject::setEveryNthFrame,
-				"Length of animation frame interval at which the particle positions should be sampled when generating the trajectory lines."
+		.def_property("sampling_frequency", &TrajectoryGenerator::everyNthFrame, &TrajectoryGenerator::setEveryNthFrame,
+				"Length of the animation frame intervals at which the particle positions should be sampled."
 				"\n\n"
 				":Default: 1\n")
-		.def_property("frame_interval", [](TrajectoryGeneratorObject& tgo) -> py::object {
+		.def_property("frame_interval", [](TrajectoryGenerator& tgo) -> py::object {
 					if(tgo.useCustomInterval()) return py::make_tuple(
 						tgo.dataset()->animationSettings()->timeToFrame(tgo.customIntervalStart()),
 						tgo.dataset()->animationSettings()->timeToFrame(tgo.customIntervalEnd()));
 					else
 						return py::none();
 				},
-				[](TrajectoryGeneratorObject& tgo, py::object arg) {
+				[](TrajectoryGenerator& tgo, py::object arg) {
 					if(py::isinstance<py::none>(arg)) {
 						tgo.setUseCustomInterval(false);
 						return;
@@ -949,11 +705,15 @@ PYBIND11_PLUGIN(Particles)
 				"over the entire input sequence."
 				"\n\n"
 				":Default: ``None``\n")
-		.def("generate", [](TrajectoryGeneratorObject& obj) {
-				return obj.generateTrajectories(ScriptEngine::activeTaskManager());
+		.def("generate", [](TrajectoryGenerator& obj) {
+				TrajectoryObject* traj = obj.generateTrajectories(ScriptEngine::activeTaskManager());
+				if(!traj)
+					obj.throwException(ScriptEngine::tr("Trajectory line generation has been canceled by the user."));
+				return traj;
 			},
-			"Generates the trajectory lines by sampling the positions of the particles in the :py:attr:`.source_node` at regular time intervals. "
-			"The trajectory line data is cached by the :py:class:`!TrajectoryLineGenerator`.")
+			"Generates the trajectory lines by sampling the positions of the particles from the :py:attr:`.source_pipeline` in regular animation time intervals. "
+			"The method creates a :py:class:`~ovito.data.TrajectoryLines` data object to store the trajectory line data. The object is inserted into this data collection "
+			"and also returned to the caller. ")
 	;	
 
 	ovito_class<TrajectoryDisplay, DisplayObject>(m,

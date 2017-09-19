@@ -20,14 +20,14 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/pyscript/PyScript.h>
-#include <core/animation/TimeInterval.h>
-#include <core/animation/AnimationSettings.h>
-#include <core/animation/controller/Controller.h>
-#include <core/animation/controller/PRSTransformationController.h>
-#include <core/animation/controller/LinearInterpolationControllers.h>
-#include <core/animation/controller/SplineInterpolationControllers.h>
-#include <core/animation/controller/TCBInterpolationControllers.h>
-#include <core/animation/controller/LookAtController.h>
+#include <core/dataset/animation/TimeInterval.h>
+#include <core/dataset/animation/AnimationSettings.h>
+#include <core/dataset/animation/controller/Controller.h>
+#include <core/dataset/animation/controller/PRSTransformationController.h>
+#include <core/dataset/animation/controller/LinearInterpolationControllers.h>
+#include <core/dataset/animation/controller/SplineInterpolationControllers.h>
+#include <core/dataset/animation/controller/TCBInterpolationControllers.h>
+#include <core/dataset/animation/controller/LookAtController.h>
 #include "PythonBinding.h"
 
 namespace PyScript {
@@ -39,7 +39,7 @@ void defineAnimationSubmodule(py::module parentModule)
 {
 	py::module m = parentModule.def_submodule("Animation");
 
-	py::class_<TimeInterval>(m, "TimeInterval", py::metaclass())
+	py::class_<TimeInterval>(m, "TimeInterval")
 		.def(py::init<>())
 		.def(py::init<TimePoint>())
 		.def(py::init<TimePoint, TimePoint>())

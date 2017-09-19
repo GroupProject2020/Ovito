@@ -23,18 +23,21 @@
 
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/particles/gui/modifier/ParticleModifierEditor.h>
 #include <plugins/particles/gui/util/ParticlePickingHelper.h>
 #include <plugins/particles/util/ParticleSelectionSet.h>
 #include <gui/viewport/input/ViewportInputMode.h>
+#include <gui/properties/ModifierPropertiesEditor.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Selection) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /**
  * A properties editor for the ManualSelectionModifier class.
  */
-class ManualSelectionModifierEditor : public ParticleModifierEditor
+class ManualSelectionModifierEditor : public ModifierPropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(ManualSelectionModifierEditor)
+
 public:
 
 	/// Default constructor
@@ -61,11 +64,6 @@ protected Q_SLOTS:
 
 	/// Clears the selection.
 	void clearSelection();
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE
@@ -73,5 +71,3 @@ OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

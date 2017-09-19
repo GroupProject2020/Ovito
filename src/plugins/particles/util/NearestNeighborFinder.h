@@ -23,11 +23,10 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/data/ParticleProperty.h>
-#include <plugins/particles/data/SimulationCell.h>
+#include <core/dataset/data/properties/PropertyStorage.h>
+#include <core/dataset/data/simcell/SimulationCell.h>
 #include <core/utilities/BoundedPriorityQueue.h>
 #include <core/utilities/MemoryPool.h>
-#include <core/utilities/concurrent/Promise.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util)
 
@@ -117,7 +116,7 @@ public:
 	/// \return \c false when the operation has been canceled by the user;
 	///         \c true on success.
 	/// \throw Exception on error.
-	bool prepare(ParticleProperty* posProperty, const SimulationCell& cellData, ParticleProperty* selectionProperty, PromiseBase& promise);
+	bool prepare(const PropertyStorage& posProperty, const SimulationCell& cellData, const PropertyStorage* selectionProperty, PromiseState* promise);
 
 	/// Returns the coordinates of the i-th input particle.
 	const Point3& particlePos(size_t index) const {

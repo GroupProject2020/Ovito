@@ -20,23 +20,22 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/animation/AnimationSettings.h>
 #include <core/viewport/Viewport.h>
 #include <core/viewport/ViewportConfiguration.h>
-#include <core/scene/SelectionSet.h>
+#include <core/dataset/scene/SelectionSet.h>
 #include <gui/rendering/ViewportSceneRenderer.h>
 #include <gui/actions/ViewportModeAction.h>
 #include <gui/mainwin/MainWindow.h>
 #include <gui/viewport/ViewportWindow.h>
 #include <gui/widgets/general/AutocompleteTextEdit.h>
-#include <plugins/particles/objects/ParticlePropertyObject.h>
-#include <plugins/particles/objects/ParticleTypeProperty.h>
+#include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/particles/util/ParticleExpressionEvaluator.h>
 #include "ParticleInformationApplet.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_OBJECT(ParticleInformationApplet, UtilityApplet);
+IMPLEMENT_OVITO_CLASS(ParticleInformationApplet);
 
 /******************************************************************************
 * Shows the UI of the utility in the given RolloutContainer.
@@ -92,8 +91,8 @@ void ParticleInformationApplet::openUtility(MainWindow* mainWindow, RolloutConta
 	// Update the list of variables that can be referenced in the selection expression.
 	try {
 		if(DataSet* dataset = _mainWindow->datasetContainer().currentSet()) {
-			if(ObjectNode* node = dynamic_object_cast<ObjectNode>(dataset->selection()->front())) {
-				const PipelineFlowState& state = node->evaluatePipelineImmediately(PipelineEvalRequest(dataset->animationSettings()->time(), false));
+			if(ObjectNode* node = dynamic_object_cast<ObjectNode>(dataset->selection()->firstNode())) {
+				const PipelineFlowState& state = node->evaluatePipelinePreliminary(false);
 				ParticleExpressionEvaluator evaluator;
 				evaluator.initialize(QStringList(), state, 0);
 				_expressionEdit->setWordList(evaluator.inputVariableNames());
@@ -146,13 +145,13 @@ void ParticleInformationApplet::updateInformationDisplay()
 				throwException(tr("The entered expression contains the assignment operator '='. Please use the comparison operator '==' instead."));
 			
 			// Get the currently selected scene node and obtains its pipeline results.
-			ObjectNode* node = dynamic_object_cast<ObjectNode>(dataset->selection()->front());
+			ObjectNode* node = dynamic_object_cast<ObjectNode>(dataset->selection()->firstNode());
 			if(!node) throwException(tr("No scene object is currently selected."));
-			const PipelineFlowState& state = node->evaluatePipelineImmediately(PipelineEvalRequest(dataset->animationSettings()->time(), false));
+			const PipelineFlowState& state = node->evaluatePipelinePreliminary(false);
 			TimeInterval iv;
 			const AffineTransformation nodeTM = node->getWorldTransform(dataset->animationSettings()->time(), iv);
-			ParticlePropertyObject* posProperty = ParticlePropertyObject::findInState(state, ParticleProperty::PositionProperty);
-			ParticlePropertyObject* identifierProperty = ParticlePropertyObject::findInState(state, ParticleProperty::IdentifierProperty);
+			ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
+			ParticleProperty* identifierProperty = ParticleProperty::findInState(state, ParticleProperty::IdentifierProperty);
 
 			// Generate particle selection set.
 			ParticleExpressionEvaluator evaluator;
@@ -186,12 +185,12 @@ void ParticleInformationApplet::updateInformationDisplay()
 		// Check if the scene node to which the selected particle belongs still exists.
 		if(pickedParticle->objNode->isInScene()) {
 
-			const PipelineFlowState& flowState = pickedParticle->objNode->evaluatePipelineImmediately(PipelineEvalRequest(dataset->animationSettings()->time(), false));
+			const PipelineFlowState& flowState = pickedParticle->objNode->evaluatePipelinePreliminary(false);
 
 			// If selection is based on particle ID, update the stored particle index in case order has changed.
 			if(pickedParticle->particleId >= 0) {
 				for(DataObject* dataObj : flowState.objects()) {
-					ParticlePropertyObject* property = dynamic_object_cast<ParticlePropertyObject>(dataObj);
+					ParticleProperty* property = dynamic_object_cast<ParticleProperty>(dataObj);
 					if(property && property->type() == ParticleProperty::IdentifierProperty) {
 						const int* begin = property->constDataInt();
 						const int* end = begin + property->size();
@@ -215,14 +214,14 @@ void ParticleInformationApplet::updateInformationDisplay()
 					autoExpressionText += QStringLiteral("ParticleIndex==%1").arg(pickedParticle->particleIndex);
 			}
 
-			ParticlePropertyObject* posProperty = ParticlePropertyObject::findInState(flowState, ParticleProperty::PositionProperty);
+			ParticleProperty* posProperty = ParticleProperty::findInState(flowState, ParticleProperty::PositionProperty);
 			if(posProperty && posProperty->size() > pickedParticle->particleIndex) {
 
 				stream << QStringLiteral("<b>") << tr("Particle index") << QStringLiteral(" ") << pickedParticle->particleIndex << QStringLiteral(":</b>");
 				stream << QStringLiteral("<table border=\"0\">");
 
 				for(DataObject* dataObj : flowState.objects()) {
-					ParticlePropertyObject* property = dynamic_object_cast<ParticlePropertyObject>(dataObj);
+					ParticleProperty* property = dynamic_object_cast<ParticleProperty>(dataObj);
 					if(!property || property->size() <= pickedParticle->particleIndex) continue;
 
 					// Update saved particle position in case it has changed.
@@ -239,9 +238,8 @@ void ParticleInformationApplet::updateInformationDisplay()
 						QString valueString;
 						if(property->dataType() == qMetaTypeId<int>()) {
 							valueString = QString::number(property->getIntComponent(pickedParticle->particleIndex, component));
-							ParticleTypeProperty* typeProperty = dynamic_object_cast<ParticleTypeProperty>(property);
-							if(typeProperty && typeProperty->particleTypes().empty() == false) {
-								ParticleType* ptype = typeProperty->particleType(property->getIntComponent(pickedParticle->particleIndex, component));
+							if(property->elementTypes().empty() == false) {
+								ElementType* ptype = property->elementType(property->getIntComponent(pickedParticle->particleIndex, component));
 								if(ptype) {
 									valueString.append(" (" + ptype->name() + ")");
 								}
@@ -373,17 +371,6 @@ void ParticleInformationInputMode::renderOverlay3D(Viewport* vp, ViewportSceneRe
 	ViewportInputMode::renderOverlay3D(vp, renderer);
 	for(const auto& pickedParticle : _pickedParticles)
 		renderSelectionMarker(vp, renderer, pickedParticle);
-}
-
-/******************************************************************************
-* Computes the bounding box of the 3d visual viewport overlay rendered by the input mode.
-******************************************************************************/
-Box3 ParticleInformationInputMode::overlayBoundingBox(Viewport* vp, ViewportSceneRenderer* renderer)
-{
-	Box3 bbox = ViewportInputMode::overlayBoundingBox(vp, renderer);
-	for(const auto& pickedParticle : _pickedParticles)
-		bbox.addBox(selectionMarkerBoundingBox(vp, pickedParticle));
-	return bbox;
 }
 
 OVITO_END_INLINE_NAMESPACE

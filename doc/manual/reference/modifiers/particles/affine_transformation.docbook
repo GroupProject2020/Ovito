@@ -10,6 +10,9 @@
          xmlns:ns="http://docbook.org/ns/docbook">
   <title>Affine transformation</title>
 
+  <warning><para>This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
+   development version of OVITO.</para></warning>
+
   <para>
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/modifiers/affine_transformation_panel.png" format="PNG" scale="50" />

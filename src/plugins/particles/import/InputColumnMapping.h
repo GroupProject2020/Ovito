@@ -23,8 +23,10 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/data/ParticleProperty.h>
+#include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/particles/import/ParticleImporter.h>
+#include <plugins/particles/import/ParticleFrameData.h>
+#include <core/dataset/data/properties/PropertyStorage.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import)
 
@@ -46,9 +48,8 @@ public:
 	/// \param propertyName The name of target particle property.
 	/// \param dataType The data type of the property to create.
 	/// \param vectorComponent The component of the per-particle vector.
-	/// \param type The type of the ParticleProperty (should be ParticleProperty::UserProperty).
-	void mapCustomColumn(const QString& propertyName, int dataType, int vectorComponent = 0, ParticleProperty::Type type = ParticleProperty::UserProperty) {
-		this->property = ParticlePropertyReference(type, propertyName, vectorComponent);
+	void mapCustomColumn(const QString& propertyName, int dataType, int vectorComponent = 0) {
+		this->property = ParticlePropertyReference(propertyName, vectorComponent);
 		this->dataType = dataType;
 	}
 
@@ -58,7 +59,7 @@ public:
 	void mapStandardColumn(ParticleProperty::Type type, int vectorComponent = 0) {
 		OVITO_ASSERT(type != ParticleProperty::UserProperty);
 		this->property = ParticlePropertyReference(type, vectorComponent);
-		this->dataType = ParticleProperty::standardPropertyDataType(type);
+		this->dataType = ParticleProperty::OOClass().standardPropertyDataType(type);
 	}
 
 	/// \brief Returns true if the file column is mapped to a particle property; false otherwise (file column will be ignored during import).
@@ -66,7 +67,7 @@ public:
 
 	/// \brief Indicates whether this column is mapped to a particle type property.
 	bool isTypeProperty() const {
-		return (property.type() == ParticleProperty::ParticleTypeProperty)
+		return (property.type() == ParticleProperty::TypeProperty)
 				|| (property.type() == ParticleProperty::StructureTypeProperty);
 	}
 
@@ -154,7 +155,7 @@ public:
 	///
 	/// This constructor creates all necessary data channels in the destination object as defined
  	/// by the column to channel mapping.
-	InputColumnReader(const InputColumnMapping& mapping, ParticleFrameLoader& destination, size_t particleCount);
+	InputColumnReader(const InputColumnMapping& mapping, ParticleFrameData& destination, size_t particleCount);
 
 	/// \brief Parses the string tokens from one line of the input file and stores the values
 	///        in the property objects.
@@ -185,16 +186,16 @@ private:
 	InputColumnMapping _mapping;
 
 	/// The data container.
-	ParticleFrameLoader& _destination;
+	ParticleFrameData& _destination;
 
 	struct TargetPropertyRecord {
-		ParticleProperty* property;
+		PropertyStorage* property;
 		uint8_t* data;
 		size_t stride;
 		size_t count;
 		int vectorComponent;
 		bool isInt;
-		ParticleFrameLoader::ParticleTypeList* typeList;
+		ParticleFrameData::ParticleTypeList* typeList;
 		bool numericParticleTypes;
 	};
 

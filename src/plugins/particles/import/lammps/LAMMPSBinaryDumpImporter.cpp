@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,16 +20,14 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <core/utilities/io/FileManager.h>
-#include <core/utilities/concurrent/Future.h>
-#include <core/dataset/DataSetContainer.h>
-#include <core/dataset/importexport/FileSource.h>
+#include <plugins/particles/import/ParticleFrameData.h>
 #include <core/app/Application.h>
+#include <core/utilities/io/FileManager.h>
 #include "LAMMPSBinaryDumpImporter.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(LAMMPSBinaryDumpImporter, ParticleImporter);
+IMPLEMENT_OVITO_CLASS(LAMMPSBinaryDumpImporter);	
 
 struct LAMMPSBinaryDumpHeader
 {
@@ -107,36 +105,38 @@ bool LAMMPSBinaryDumpImporter::checkFileFormat(QFileDevice& input, const QUrl& s
 /******************************************************************************
 * Inspects the header of the given file and returns the number of file columns.
 ******************************************************************************/
-InputColumnMapping LAMMPSBinaryDumpImporter::inspectFileHeader(const Frame& frame)
+Future<InputColumnMapping> LAMMPSBinaryDumpImporter::inspectFileHeader(const Frame& frame)
 {
-	// Start task that inspects the file header to determine the number of data columns.
-	std::shared_ptr<LAMMPSBinaryDumpImportTask> inspectionTask = std::make_shared<LAMMPSBinaryDumpImportTask>(dataset()->container(), frame);
-	if(!dataset()->container()->taskManager().runTask(inspectionTask))
-		return InputColumnMapping();
-	return inspectionTask->columnMapping();
+	// Retrieve file.
+	return Application::instance()->fileManager()->fetchUrl(dataset()->container()->taskManager(), frame.sourceFile)
+		.then(executor(), [this, frame](const QString& filename) {
+
+			// Start task that inspects the file header to determine the contained data columns.
+			FrameLoaderPtr inspectionTask = std::make_shared<FrameLoader>(frame, filename);
+			return dataset()->container()->taskManager().runTaskAsync(inspectionTask)
+				.then([](const FileSourceImporter::FrameDataPtr& frameData) mutable {
+					return static_cast<LAMMPSFrameData*>(frameData.get())->detectedColumnMapping();
+				});
+		});
 }
 
 /******************************************************************************
 * Scans the given input file to find all contained simulation frames.
 ******************************************************************************/
-void LAMMPSBinaryDumpImporter::scanFileForTimesteps(PromiseBase& promise, QVector<FileSourceImporter::Frame>& frames, const QUrl& sourceUrl, CompressedTextReader& stream)
+void LAMMPSBinaryDumpImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
 {
-	promise.setProgressText(tr("Scanning binary LAMMPS dump file %1").arg(stream.filename()));
-	promise.setProgressMaximum(stream.underlyingSize() / 1000);
-
-	// First close text stream so we can re-open it in binary mode.
-	QIODevice& file = stream.device();
-	file.close();
-
-	// Open input file for reading.
+	// Open input file in binary mode for reading.
 	if(!file.open(QIODevice::ReadOnly))
 		throw Exception(tr("Failed to open binary LAMMPS dump file: %1.").arg(file.errorString()));
 
-	QFileInfo fileInfo(stream.device().fileName());
+	QFileInfo fileInfo(file.fileName());
 	QString filename = fileInfo.fileName();
 	QDateTime lastModified = fileInfo.lastModified();
 
-	while(!file.atEnd() && !promise.isCanceled()) {
+	setProgressText(tr("Scanning binary LAMMPS dump file %1").arg(filename));
+	setProgressMaximum(file.size() / 1000);
+
+	while(!file.atEnd() && !isCanceled()) {
 		qint64 byteOffset = file.pos();
 
 		// Parse file header.
@@ -158,8 +158,8 @@ void LAMMPSBinaryDumpImporter::scanFileForTimesteps(PromiseBase& promise, QVecto
 			if(!file.seek(filePos))
 				throw Exception(tr("Unexpected end of file."));
 
-			promise.setProgressValue(filePos / 1000);
-			if(promise.isCanceled())
+			setProgressValue(filePos / 1000);
+			if(isCanceled())
 				return;
 		}
 
@@ -255,15 +255,11 @@ bool LAMMPSBinaryDumpHeader::parse(QIODevice& input)
 }
 
 /******************************************************************************
-* Parses the given input file and stores the data in the given container object.
+* Parses the given input file.
 ******************************************************************************/
-void LAMMPSBinaryDumpImporter::LAMMPSBinaryDumpImportTask::parseFile(CompressedTextReader& stream)
+void LAMMPSBinaryDumpImporter::FrameLoader::loadFile(QFile& file)
 {
 	setProgressText(tr("Reading binary LAMMPS dump file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
-
-	// First close text stream so we can re-open it in binary mode.
-	QIODevice& file = stream.device();
-	file.close();
 
 	// Open input file for reading.
 	if(!file.open(QIODevice::ReadOnly))
@@ -277,12 +273,17 @@ void LAMMPSBinaryDumpImporter::LAMMPSBinaryDumpImportTask::parseFile(CompressedT
 	LAMMPSBinaryDumpHeader header;
 	if(!header.parse(file))
 		throw Exception(tr("Failed to read binary LAMMPS dump file: Invalid file header."));
-	attributes().insert(QStringLiteral("Timestep"), QVariant::fromValue(header.ntimestep));
+
+	// Create the destination container for loaded data.
+	std::shared_ptr<LAMMPSFrameData> frameData = std::make_shared<LAMMPSFrameData>();
 
 	if(_parseFileHeaderOnly) {
-		_columnMapping.resize(header.size_one);
+		frameData->detectedColumnMapping().resize(header.size_one);
+		setResult(std::move(frameData));
 		return;
 	}
+
+	frameData->attributes().insert(QStringLiteral("Timestep"), QVariant::fromValue(header.ntimestep));
 
 	setProgressMaximum(header.natoms);
 
@@ -295,15 +296,15 @@ void LAMMPSBinaryDumpImporter::LAMMPSBinaryDumpImportTask::parseFile(CompressedT
 	simBox.maxc.x() -= std::max(std::max(std::max(header.tiltFactors[0], header.tiltFactors[1]), header.tiltFactors[0]+header.tiltFactors[1]), 0.0);
 	simBox.minc.y() -= std::min(header.tiltFactors[2], 0.0);
 	simBox.maxc.y() -= std::max(header.tiltFactors[2], 0.0);
-	simulationCell().setMatrix(AffineTransformation(
+	frameData->simulationCell().setMatrix(AffineTransformation(
 			Vector3(simBox.sizeX(), 0, 0),
 			Vector3(header.tiltFactors[0], simBox.sizeY(), 0),
 			Vector3(header.tiltFactors[1], header.tiltFactors[2], simBox.sizeZ()),
 			simBox.minc - Point3::Origin()));
-	simulationCell().setPbcFlags(header.boundary[0][0] == 0, header.boundary[1][0] == 0, header.boundary[2][0] == 0);
+	frameData->simulationCell().setPbcFlags(header.boundary[0][0] == 0, header.boundary[1][0] == 0, header.boundary[2][0] == 0);
 
 	// Parse particle data.
-	InputColumnReader columnParser(_columnMapping, *this, header.natoms);
+	InputColumnReader columnParser(_columnMapping, *frameData, header.natoms);
 	try {
 		QVector<double> chunkData;
 		int i = 0;
@@ -343,7 +344,7 @@ void LAMMPSBinaryDumpImporter::LAMMPSBinaryDumpImportTask::parseFile(CompressedT
 	// Sort the particle type list since we created particles on the go and their order depends on the occurrence of types in the file.
 	columnParser.sortParticleTypes();
 
-	ParticleProperty* posProperty = particleProperty(ParticleProperty::PositionProperty);
+	PropertyStorage* posProperty = frameData->particleProperty(ParticleProperty::PositionProperty);
 	if(posProperty && posProperty->size() > 0) {
 		Box3 boundingBox;
 		boundingBox.addPoints(posProperty->constDataPoint3(), posProperty->size());
@@ -354,21 +355,22 @@ void LAMMPSBinaryDumpImporter::LAMMPSBinaryDumpImportTask::parseFile(CompressedT
 
 		if(Box3(Point3(-0.01f), Point3(1.01f)).containsBox(boundingBox)) {
 			// Convert all atom coordinates from reduced to absolute (Cartesian) format.
-			const AffineTransformation simCell = simulationCell().matrix();
+			const AffineTransformation simCell = frameData->simulationCell().matrix();
 			for(Point3& p : posProperty->point3Range())
 				p = simCell * p;
 		}
 	}
 
-	setStatus(tr("%1 particles at timestep %2").arg(header.natoms).arg(header.ntimestep));
+	frameData->setStatus(tr("%1 particles at timestep %2").arg(header.natoms).arg(header.ntimestep));
+	setResult(std::move(frameData));
 }
 
 /******************************************************************************
  * Saves the class' contents to the given stream.
  *****************************************************************************/
-void LAMMPSBinaryDumpImporter::saveToStream(ObjectSaveStream& stream)
+void LAMMPSBinaryDumpImporter::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData)
 {
-	ParticleImporter::saveToStream(stream);
+	ParticleImporter::saveToStream(stream, excludeRecomputableData);
 
 	stream.beginChunk(0x01);
 	_columnMapping.saveToStream(stream);

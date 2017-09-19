@@ -26,11 +26,11 @@
 
 namespace Ovito { namespace Particles {
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(TrajectoryDisplay, DisplayObject);
-DEFINE_FLAGS_PROPERTY_FIELD(TrajectoryDisplay, lineWidth, "LineWidth", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(TrajectoryDisplay, lineColor, "LineColor", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(TrajectoryDisplay, shadingMode, "ShadingMode", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(TrajectoryDisplay, showUpToCurrentTime, "ShowUpToCurrentTime");
+IMPLEMENT_OVITO_CLASS(TrajectoryDisplay);	
+DEFINE_PROPERTY_FIELD(TrajectoryDisplay, lineWidth);
+DEFINE_PROPERTY_FIELD(TrajectoryDisplay, lineColor);
+DEFINE_PROPERTY_FIELD(TrajectoryDisplay, shadingMode);
+DEFINE_PROPERTY_FIELD(TrajectoryDisplay, showUpToCurrentTime);
 SET_PROPERTY_FIELD_LABEL(TrajectoryDisplay, lineWidth, "Line width");
 SET_PROPERTY_FIELD_LABEL(TrajectoryDisplay, lineColor, "Line color");
 SET_PROPERTY_FIELD_LABEL(TrajectoryDisplay, shadingMode, "Shading mode");
@@ -41,19 +41,17 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(TrajectoryDisplay, lineWidth, WorldParamete
 * Constructor.
 ******************************************************************************/
 TrajectoryDisplay::TrajectoryDisplay(DataSet* dataset) : DisplayObject(dataset),
-	_lineWidth(0.2), _lineColor(0.6, 0.6, 0.6),
-	_shadingMode(ArrowPrimitive::FlatShading), _showUpToCurrentTime(false)
+	_lineWidth(0.2), 
+	_lineColor(0.6, 0.6, 0.6),
+	_shadingMode(ArrowPrimitive::FlatShading), 
+	_showUpToCurrentTime(false)
 {
-	INIT_PROPERTY_FIELD(lineWidth);
-	INIT_PROPERTY_FIELD(lineColor);
-	INIT_PROPERTY_FIELD(shadingMode);
-	INIT_PROPERTY_FIELD(showUpToCurrentTime);
 }
 
 /******************************************************************************
 * Computes the bounding box of the object.
 ******************************************************************************/
-Box3 TrajectoryDisplay::boundingBox(TimePoint time, DataObject* dataObject, ObjectNode* contextNode, const PipelineFlowState& flowState)
+Box3 TrajectoryDisplay::boundingBox(TimePoint time, DataObject* dataObject, ObjectNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
 	TrajectoryObject* trajObj = dynamic_object_cast<TrajectoryObject>(dataObject);
 
@@ -63,7 +61,6 @@ Box3 TrajectoryDisplay::boundingBox(TimePoint time, DataObject* dataObject, Obje
 		_cachedBoundingBox.setEmpty();
 		if(trajObj) {
 			_cachedBoundingBox.addPoints(trajObj->points().constData(), trajObj->points().size());
-			_cachedBoundingBox = _cachedBoundingBox.padBox(lineWidth() / 2);
 		}
 	}
 	return _cachedBoundingBox;
@@ -74,6 +71,12 @@ Box3 TrajectoryDisplay::boundingBox(TimePoint time, DataObject* dataObject, Obje
 ******************************************************************************/
 void TrajectoryDisplay::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, ObjectNode* contextNode)
 {
+	if(renderer->isBoundingBoxPass()) {
+		TimeInterval validityInterval;
+		renderer->addToLocalBoundingBox(boundingBox(time, dataObject, contextNode, flowState, validityInterval));
+		return;
+	}
+	
 	TrajectoryObject* trajObj = dynamic_object_cast<TrajectoryObject>(dataObject);
 
 	// Do we have to re-create the geometry buffers from scratch?

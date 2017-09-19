@@ -24,19 +24,23 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/data/DislocationNetwork.h>
-#include <core/scene/objects/DataObjectWithSharedStorage.h>
+#include <core/dataset/data/simcell/PeriodicDomainDataObject.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
 /**
  * \brief Stores a collection of dislocation segments.
  */
-class OVITO_CRYSTALANALYSIS_EXPORT DislocationNetworkObject : public DataObjectWithSharedStorage<DislocationNetwork>
+class OVITO_CRYSTALANALYSIS_EXPORT DislocationNetworkObject : public PeriodicDomainDataObject
 {
+	Q_OBJECT
+	OVITO_CLASS(DislocationNetworkObject)
+
 public:
 
 	/// \brief Constructor.
-	Q_INVOKABLE DislocationNetworkObject(DataSet* dataset, DislocationNetwork* network = nullptr);
+	Q_INVOKABLE DislocationNetworkObject(DataSet* dataset);
 
 	/// Returns the title of this object.
 	virtual QString objectTitle() override { return tr("Dislocations"); }
@@ -47,33 +51,19 @@ public:
 	/// Return false because this object cannot be edited.
 	virtual bool isSubObjectEditable() const override { return false; }
 
+	/// Returns the data encapsulated by this object after making sure it is not shared with other owners.
+	const std::shared_ptr<DislocationNetwork>& modifiableStorage();
+
 	/// Returns the list of dislocation segments.
 	const std::vector<DislocationSegment*>& segments() const { return storage()->segments(); }
 
 	/// Returns the list of dislocation segments.
 	const std::vector<DislocationSegment*>& modifiableSegments() { return modifiableStorage()->segments(); }
 
-	/// Returns the planar cuts applied to this dislocation network.
-	const QVector<Plane3>& cuttingPlanes() const { return _cuttingPlanes; }
-
-	/// Sets the planar cuts applied to this dislocation network.
-	void setCuttingPlanes(const QVector<Plane3>& planes) {
-		_cuttingPlanes = planes;
-		notifyDependents(ReferenceEvent::TargetChanged);
-	}
-
-protected:
-
-	/// Creates a copy of this object.
-	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) override;
-
 private:
 
-	/// The planar cuts applied to this dislocation network.
-	QVector<Plane3> _cuttingPlanes;
-
-	Q_OBJECT
-	OVITO_OBJECT
+	/// The internal data.
+	DECLARE_RUNTIME_PROPERTY_FIELD(std::shared_ptr<DislocationNetwork>, storage, setStorage);
 };
 
 }	// End of namespace

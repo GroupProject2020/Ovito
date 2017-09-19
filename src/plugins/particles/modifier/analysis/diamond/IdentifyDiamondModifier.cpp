@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,12 +22,15 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/util/NearestNeighborFinder.h>
 #include <plugins/particles/modifier/analysis/cna/CommonNeighborAnalysisModifier.h>
+#include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <core/utilities/concurrent/ParallelFor.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include "IdentifyDiamondModifier.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(IdentifyDiamondModifier, StructureIdentificationModifier);
+IMPLEMENT_OVITO_CLASS(IdentifyDiamondModifier);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -35,36 +38,38 @@ IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(IdentifyDiamondModifier, StructureIdentifica
 IdentifyDiamondModifier::IdentifyDiamondModifier(DataSet* dataset) : StructureIdentificationModifier(dataset)
 {
 	// Create the structure types.
-	createStructureType(OTHER, ParticleTypeProperty::PredefinedStructureType::OTHER);
-	createStructureType(CUBIC_DIAMOND, ParticleTypeProperty::PredefinedStructureType::CUBIC_DIAMOND);
-	createStructureType(CUBIC_DIAMOND_FIRST_NEIGH, ParticleTypeProperty::PredefinedStructureType::CUBIC_DIAMOND_FIRST_NEIGH);
-	createStructureType(CUBIC_DIAMOND_SECOND_NEIGH, ParticleTypeProperty::PredefinedStructureType::CUBIC_DIAMOND_SECOND_NEIGH);
-	createStructureType(HEX_DIAMOND, ParticleTypeProperty::PredefinedStructureType::HEX_DIAMOND);
-	createStructureType(HEX_DIAMOND_FIRST_NEIGH, ParticleTypeProperty::PredefinedStructureType::HEX_DIAMOND_FIRST_NEIGH);
-	createStructureType(HEX_DIAMOND_SECOND_NEIGH, ParticleTypeProperty::PredefinedStructureType::HEX_DIAMOND_SECOND_NEIGH);
+	createStructureType(OTHER, ParticleType::PredefinedStructureType::OTHER);
+	createStructureType(CUBIC_DIAMOND, ParticleType::PredefinedStructureType::CUBIC_DIAMOND);
+	createStructureType(CUBIC_DIAMOND_FIRST_NEIGH, ParticleType::PredefinedStructureType::CUBIC_DIAMOND_FIRST_NEIGH);
+	createStructureType(CUBIC_DIAMOND_SECOND_NEIGH, ParticleType::PredefinedStructureType::CUBIC_DIAMOND_SECOND_NEIGH);
+	createStructureType(HEX_DIAMOND, ParticleType::PredefinedStructureType::HEX_DIAMOND);
+	createStructureType(HEX_DIAMOND_FIRST_NEIGH, ParticleType::PredefinedStructureType::HEX_DIAMOND_FIRST_NEIGH);
+	createStructureType(HEX_DIAMOND_SECOND_NEIGH, ParticleType::PredefinedStructureType::HEX_DIAMOND_SECOND_NEIGH);
 }
 
 /******************************************************************************
-* Creates and initializes a computation engine that will compute the modifier's results.
+* Creates and initializes a computation engine that will compute the 
+* modifier's results.
 ******************************************************************************/
-std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> IdentifyDiamondModifier::createEngine(TimePoint time, TimeInterval validityInterval)
+Future<AsynchronousModifier::ComputeEnginePtr> IdentifyDiamondModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	if(structureTypes().size() != NUM_STRUCTURE_TYPES)
 		throwException(tr("The number of structure types has changed. Please remove this modifier from the modification pipeline and insert it again."));
 
 	// Get modifier input.
-	ParticlePropertyObject* posProperty = expectStandardProperty(ParticleProperty::PositionProperty);
-	SimulationCellObject* simCell = expectSimulationCell();
+	ParticleInputHelper pih(dataset(), input);
+	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
+	SimulationCellObject* simCell = pih.expectSimulationCell();
 	if(simCell->is2D())
 		throwException(tr("The modifier does not support 2d simulation cells."));
 
 	// Get particle selection.
-	ParticleProperty* selectionProperty = nullptr;
+	ConstPropertyPtr selectionProperty;
 	if(onlySelectedParticles())
-		selectionProperty = expectStandardProperty(ParticleProperty::SelectionProperty)->storage();
+		selectionProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty)->storage();
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<DiamondIdentificationEngine>(validityInterval, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), selectionProperty);
+	return std::make_shared<DiamondIdentificationEngine>(input.stateValidity(), posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty));
 }
 
 /******************************************************************************
@@ -76,7 +81,7 @@ void IdentifyDiamondModifier::DiamondIdentificationEngine::perform()
 
 	// Prepare the neighbor list builder.
 	NearestNeighborFinder neighborFinder(4);
-	if(!neighborFinder.prepare(positions(), cell(), selection(), *this))
+	if(!neighborFinder.prepare(*positions(), cell(), selection().get(), this))
 		return;
 
 	// This data structure stores information about a single neighbor.
@@ -106,13 +111,14 @@ void IdentifyDiamondModifier::DiamondIdentificationEngine::perform()
 	});
 
 	// Create output storage.
-	ParticleProperty* output = structures();
+	auto results = std::make_shared<DiamondIdentificationResults>(positions()->size());
+	PropertyStorage& output = *results->structures();
 
 	// Perform structure identification.
 	setProgressText(tr("Identifying diamond structures"));
-	parallelFor(positions()->size(), *this, [&neighLists, output, this](size_t index) {
+	parallelFor(positions()->size(), *this, [&neighLists, &output, this](size_t index) {
 		// Mark atom as 'other' by default.
-		output->setInt(index, OTHER);
+		output.setInt(index, OTHER);
 
 		// Skip particles that are not included in the analysis.
 		if(selection() && selection()->getInt(index) == 0)
@@ -174,13 +180,13 @@ void IdentifyDiamondModifier::DiamondIdentificationEngine::perform()
 			else if(maxChainLength == 2) n422++;
 			else return;
 		}
-		if(n421 == 12 && typesToIdentify()[CUBIC_DIAMOND]) output->setInt(index, CUBIC_DIAMOND);
-		else if(n421 == 6 && n422 == 6 && typesToIdentify()[HEX_DIAMOND]) output->setInt(index, HEX_DIAMOND);
+		if(n421 == 12 && typesToIdentify()[CUBIC_DIAMOND]) output.setInt(index, CUBIC_DIAMOND);
+		else if(n421 == 6 && n422 == 6 && typesToIdentify()[HEX_DIAMOND]) output.setInt(index, HEX_DIAMOND);
 	});
 
 	// Mark first neighbors of crystalline atoms.
-	for(size_t index = 0; index < output->size(); index++) {
-		int ctype = output->getInt(index);
+	for(size_t index = 0; index < output.size(); index++) {
+		int ctype = output.getInt(index);
 		if(ctype != CUBIC_DIAMOND && ctype != HEX_DIAMOND)
 			continue;
 		if(selection() && selection()->getInt(index) == 0)
@@ -189,18 +195,18 @@ void IdentifyDiamondModifier::DiamondIdentificationEngine::perform()
 		const std::array<NeighborInfo,4>& nlist = neighLists[index];
 		for(size_t i = 0; i < 4; i++) {
 			OVITO_ASSERT(nlist[i].index != -1);
-			if(output->getInt(nlist[i].index) == OTHER) {
+			if(output.getInt(nlist[i].index) == OTHER) {
 				if(ctype == CUBIC_DIAMOND)
-					output->setInt(nlist[i].index, CUBIC_DIAMOND_FIRST_NEIGH);
+					output.setInt(nlist[i].index, CUBIC_DIAMOND_FIRST_NEIGH);
 				else
-					output->setInt(nlist[i].index, HEX_DIAMOND_FIRST_NEIGH);
+					output.setInt(nlist[i].index, HEX_DIAMOND_FIRST_NEIGH);
 			}
 		}
 	}
 
 	// Mark second neighbors of crystalline atoms.
-	for(size_t index = 0; index < output->size(); index++) {
-		int ctype = output->getInt(index);
+	for(size_t index = 0; index < output.size(); index++) {
+		int ctype = output.getInt(index);
 		if(ctype != CUBIC_DIAMOND_FIRST_NEIGH && ctype != HEX_DIAMOND_FIRST_NEIGH)
 			continue;
 		if(selection() && selection()->getInt(index) == 0)
@@ -208,36 +214,36 @@ void IdentifyDiamondModifier::DiamondIdentificationEngine::perform()
 
 		const std::array<NeighborInfo,4>& nlist = neighLists[index];
 		for(size_t i = 0; i < 4; i++) {
-			if(nlist[i].index != -1 && output->getInt(nlist[i].index) == OTHER) {
+			if(nlist[i].index != -1 && output.getInt(nlist[i].index) == OTHER) {
 				if(ctype == CUBIC_DIAMOND_FIRST_NEIGH)
-					output->setInt(nlist[i].index, CUBIC_DIAMOND_SECOND_NEIGH);
+					output.setInt(nlist[i].index, CUBIC_DIAMOND_SECOND_NEIGH);
 				else
-					output->setInt(nlist[i].index, HEX_DIAMOND_SECOND_NEIGH);
+					output.setInt(nlist[i].index, HEX_DIAMOND_SECOND_NEIGH);
 			}
 		}
 	}
+
+	// Return the results of the compute engine.
+	setResult(std::move(results));
 }
 
 /******************************************************************************
-* Lets the modifier insert the cached computation results into the modification pipeline.
+* Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineStatus IdentifyDiamondModifier::applyComputationResults(TimePoint time, TimeInterval& validityInterval)
+PipelineFlowState IdentifyDiamondModifier::DiamondIdentificationResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	// Let the base class output the structure type property to the pipeline.
-	PipelineStatus status = StructureIdentificationModifier::applyComputationResults(time, validityInterval);
+	PipelineFlowState outState = StructureIdentificationResults::apply(time, modApp, input);
 
 	// Also output structure type counts, which have been computed by the base class.
-	if(status.type() == PipelineStatus::Success) {
-		output().attributes().insert(QStringLiteral("IdentifyDiamond.counts.OTHER"), QVariant::fromValue(structureCounts()[OTHER]));
-		output().attributes().insert(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND"), QVariant::fromValue(structureCounts()[CUBIC_DIAMOND]));
-		output().attributes().insert(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND_FIRST_NEIGHBOR"), QVariant::fromValue(structureCounts()[CUBIC_DIAMOND_FIRST_NEIGH]));
-		output().attributes().insert(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND_SECOND_NEIGHBOR"), QVariant::fromValue(structureCounts()[CUBIC_DIAMOND_SECOND_NEIGH]));
-		output().attributes().insert(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND"), QVariant::fromValue(structureCounts()[HEX_DIAMOND]));
-		output().attributes().insert(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND_FIRST_NEIGHBOR"), QVariant::fromValue(structureCounts()[HEX_DIAMOND_FIRST_NEIGH]));
-		output().attributes().insert(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND_SECOND_NEIGHBOR"), QVariant::fromValue(structureCounts()[HEX_DIAMOND_SECOND_NEIGH]));
-	}
+	StructureIdentificationModifierApplication* myModApp = static_object_cast<StructureIdentificationModifierApplication>(modApp);
+	outState.attributes().insert(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND"), QVariant::fromValue(myModApp->structureCounts()[CUBIC_DIAMOND]));
+	outState.attributes().insert(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND_FIRST_NEIGHBOR"), QVariant::fromValue(myModApp->structureCounts()[CUBIC_DIAMOND_FIRST_NEIGH]));
+	outState.attributes().insert(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND_SECOND_NEIGHBOR"), QVariant::fromValue(myModApp->structureCounts()[CUBIC_DIAMOND_SECOND_NEIGH]));
+	outState.attributes().insert(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND"), QVariant::fromValue(myModApp->structureCounts()[HEX_DIAMOND]));
+	outState.attributes().insert(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND_FIRST_NEIGHBOR"), QVariant::fromValue(myModApp->structureCounts()[HEX_DIAMOND_FIRST_NEIGH]));
+	outState.attributes().insert(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND_SECOND_NEIGHBOR"), QVariant::fromValue(myModApp->structureCounts()[HEX_DIAMOND_SECOND_NEIGH]));
 
-	return status;
+	return outState;
 }
 
 OVITO_END_INLINE_NAMESPACE

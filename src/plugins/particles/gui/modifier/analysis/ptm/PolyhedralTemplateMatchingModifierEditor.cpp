@@ -33,7 +33,7 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_OBJECT(PolyhedralTemplateMatchingModifierEditor, ParticleModifierEditor);
+IMPLEMENT_OVITO_CLASS(PolyhedralTemplateMatchingModifierEditor);
 SET_OVITO_OBJECT_EDITOR(PolyhedralTemplateMatchingModifier, PolyhedralTemplateMatchingModifierEditor);
 
 /******************************************************************************
@@ -118,7 +118,7 @@ bool PolyhedralTemplateMatchingModifierEditor::referenceEvent(RefTarget* source,
 	if(event->sender() == editObject() && (event->type() == ReferenceEvent::ObjectStatusChanged || event->type() == ReferenceEvent::TargetChanged)) {
 		plotHistogramLater(this);
 	}
-	return ParticleModifierEditor::referenceEvent(source, event);
+	return ModifierPropertiesEditor::referenceEvent(source, event);
 }
 
 /******************************************************************************
@@ -127,18 +127,19 @@ bool PolyhedralTemplateMatchingModifierEditor::referenceEvent(RefTarget* source,
 void PolyhedralTemplateMatchingModifierEditor::plotHistogram()
 {
 	PolyhedralTemplateMatchingModifier* modifier = static_object_cast<PolyhedralTemplateMatchingModifier>(editObject());
+	PolyhedralTemplateMatchingModifierApplication* modApp = dynamic_object_cast<PolyhedralTemplateMatchingModifierApplication>(someModifierApplication());
 	
-	if(!modifier || modifier->rmsdHistogramData().empty()) {
+	if(!modifier || !modApp || modApp->rmsdHistogramData().empty()) {
 		if(_plotCurve) _plotCurve->hide();
 		return;
 	}
 
-	QVector<QPointF> plotData(modifier->rmsdHistogramData().size());
-	double binSize = modifier->rmsdHistogramBinSize();
+	QVector<QPointF> plotData(modApp->rmsdHistogramData().size());
+	double binSize = modApp->rmsdHistogramBinSize();
 	double maxHistogramData = 0;
-	for(int i = 0; i < modifier->rmsdHistogramData().size(); i++) {
+	for(int i = 0; i < modApp->rmsdHistogramData().size(); i++) {
 		plotData[i].rx() = binSize * ((double)i + 0.5);
-		plotData[i].ry() = modifier->rmsdHistogramData()[i];
+		plotData[i].ry() = modApp->rmsdHistogramData()[i];
 		maxHistogramData = std::max(maxHistogramData, plotData[i].y());
 	}
 

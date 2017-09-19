@@ -29,7 +29,7 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_OBJECT(TrajectoryDisplayEditor, PropertiesEditor);
+IMPLEMENT_OVITO_CLASS(TrajectoryDisplayEditor);
 SET_OVITO_OBJECT_EDITOR(TrajectoryDisplay, TrajectoryDisplayEditor);
 
 /******************************************************************************
@@ -48,8 +48,8 @@ void TrajectoryDisplayEditor::createUI(const RolloutInsertionParameters& rollout
 
 	// Shading mode.
 	VariantComboBoxParameterUI* shadingModeUI = new VariantComboBoxParameterUI(this, PROPERTY_FIELD(TrajectoryDisplay::shadingMode));
-	shadingModeUI->comboBox()->addItem(tr("Normal"), qVariantFromValue(ArrowPrimitive::NormalShading));
-	shadingModeUI->comboBox()->addItem(tr("Flat"), qVariantFromValue(ArrowPrimitive::FlatShading));
+	shadingModeUI->comboBox()->addItem(tr("Normal"), QVariant::fromValue(ArrowPrimitive::NormalShading));
+	shadingModeUI->comboBox()->addItem(tr("Flat"), QVariant::fromValue(ArrowPrimitive::FlatShading));
 	layout->addWidget(new QLabel(tr("Shading:")), 0, 0);
 	layout->addWidget(shadingModeUI->comboBox(), 0, 1);
 

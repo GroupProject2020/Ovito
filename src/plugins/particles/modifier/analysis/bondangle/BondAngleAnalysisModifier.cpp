@@ -20,15 +20,16 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <core/viewport/Viewport.h>
-#include <core/animation/AnimationSettings.h>
-#include <core/utilities/concurrent/ParallelFor.h>
 #include <plugins/particles/util/NearestNeighborFinder.h>
+#include <plugins/particles/modifier/ParticleInputHelper.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <core/dataset/animation/AnimationSettings.h>
+#include <core/utilities/concurrent/ParallelFor.h>
 #include "BondAngleAnalysisModifier.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(BondAngleAnalysisModifier, StructureIdentificationModifier);
+IMPLEMENT_OVITO_CLASS(BondAngleAnalysisModifier);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -36,34 +37,36 @@ IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(BondAngleAnalysisModifier, StructureIdentifi
 BondAngleAnalysisModifier::BondAngleAnalysisModifier(DataSet* dataset) : StructureIdentificationModifier(dataset)
 {
 	// Create the structure types.
-	createStructureType(OTHER, ParticleTypeProperty::PredefinedStructureType::OTHER);
-	createStructureType(FCC, ParticleTypeProperty::PredefinedStructureType::FCC);
-	createStructureType(HCP, ParticleTypeProperty::PredefinedStructureType::HCP);
-	createStructureType(BCC, ParticleTypeProperty::PredefinedStructureType::BCC);
-	createStructureType(ICO, ParticleTypeProperty::PredefinedStructureType::ICO);
+	createStructureType(OTHER, ParticleType::PredefinedStructureType::OTHER);
+	createStructureType(FCC, ParticleType::PredefinedStructureType::FCC);
+	createStructureType(HCP, ParticleType::PredefinedStructureType::HCP);
+	createStructureType(BCC, ParticleType::PredefinedStructureType::BCC);
+	createStructureType(ICO, ParticleType::PredefinedStructureType::ICO);
 }
 
 /******************************************************************************
-* Creates and initializes a computation engine that will compute the modifier's results.
+* Creates and initializes a computation engine that will compute the 
+* modifier's results.
 ******************************************************************************/
-std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> BondAngleAnalysisModifier::createEngine(TimePoint time, TimeInterval validityInterval)
+Future<AsynchronousModifier::ComputeEnginePtr> BondAngleAnalysisModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	if(structureTypes().size() != NUM_STRUCTURE_TYPES)
-		throwException(tr("The number of structure types has changed. Please remove this modifier from the modification pipeline and insert it again."));
+		throwException(tr("The number of structure types has changed. Please remove this modifier from the pipeline and insert it again."));
 
 	// Get modifier input.
-	ParticlePropertyObject* posProperty = expectStandardProperty(ParticleProperty::PositionProperty);
-	SimulationCellObject* simCell = expectSimulationCell();
+	ParticleInputHelper pih(dataset(), input);
+	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
+	SimulationCellObject* simCell = pih.expectSimulationCell();
 	if(simCell->is2D())
 		throwException(tr("The bond-angle ananlysis modifier does not support 2d simulation cells."));
 
 	// Get particle selection.
-	ParticleProperty* selectionProperty = nullptr;
+	ConstPropertyPtr selectionProperty;
 	if(onlySelectedParticles())
-		selectionProperty = expectStandardProperty(ParticleProperty::SelectionProperty)->storage();
+		selectionProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty)->storage();
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<BondAngleAnalysisEngine>(validityInterval, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), selectionProperty);
+	return std::make_shared<BondAngleAnalysisEngine>(input.stateValidity(), posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty));
 }
 
 /******************************************************************************
@@ -75,20 +78,24 @@ void BondAngleAnalysisModifier::BondAngleAnalysisEngine::perform()
 
 	// Prepare the neighbor list.
 	NearestNeighborFinder neighborFinder(14);
-	if(!neighborFinder.prepare(positions(), cell(), selection(), *this))
+	if(!neighborFinder.prepare(*positions(), cell(), selection().get(), this))
 		return;
 
 	// Create output storage.
-	ParticleProperty* output = structures();
+	auto results = std::make_shared<BondAngleAnalysisResults>(positions()->size());
+	PropertyStorage& output = *results->structures();
 
 	// Perform analysis on each particle.
-	parallelFor(positions()->size(), *this, [this, &neighborFinder, output](size_t index) {
+	parallelFor(positions()->size(), *this, [this, &neighborFinder, &output](size_t index) {
 		// Skip particles that are not included in the analysis.
 		if(!selection() || selection()->getInt(index))
-			output->setInt(index, determineStructure(neighborFinder, index, typesToIdentify()));
+			output.setInt(index, determineStructure(neighborFinder, index, typesToIdentify()));
 		else
-			output->setInt(index, OTHER);
+			output.setInt(index, OTHER);
 	});
+
+	// Return the results of the compute engine.
+	setResult(std::move(results));
 }
 
 /******************************************************************************
@@ -175,23 +182,21 @@ BondAngleAnalysisModifier::StructureType BondAngleAnalysisModifier::determineStr
 }
 
 /******************************************************************************
-* Lets the modifier insert the cached computation results into the modification pipeline.
+* Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineStatus BondAngleAnalysisModifier::applyComputationResults(TimePoint time, TimeInterval& validityInterval)
+PipelineFlowState BondAngleAnalysisModifier::BondAngleAnalysisResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	// Let the base class output the structure type property to the pipeline.
-	PipelineStatus status = StructureIdentificationModifier::applyComputationResults(time, validityInterval);
+	PipelineFlowState outState = StructureIdentificationResults::apply(time, modApp, input);
 
 	// Also output structure type counts, which have been computed by the base class.
-	if(status.type() == PipelineStatus::Success) {
-		output().attributes().insert(QStringLiteral("BondAngleAnalysis.counts.OTHER"), QVariant::fromValue(structureCounts()[OTHER]));
-		output().attributes().insert(QStringLiteral("BondAngleAnalysis.counts.FCC"), QVariant::fromValue(structureCounts()[FCC]));
-		output().attributes().insert(QStringLiteral("BondAngleAnalysis.counts.HCP"), QVariant::fromValue(structureCounts()[HCP]));
-		output().attributes().insert(QStringLiteral("BondAngleAnalysis.counts.BCC"), QVariant::fromValue(structureCounts()[BCC]));
-		output().attributes().insert(QStringLiteral("BondAngleAnalysis.counts.ICO"), QVariant::fromValue(structureCounts()[ICO]));
-	}
+	StructureIdentificationModifierApplication* myModApp = static_object_cast<StructureIdentificationModifierApplication>(modApp);
+	outState.attributes().insert(QStringLiteral("BondAngleAnalysis.counts.OTHER"), QVariant::fromValue(myModApp->structureCounts()[OTHER]));
+	outState.attributes().insert(QStringLiteral("BondAngleAnalysis.counts.FCC"), QVariant::fromValue(myModApp->structureCounts()[FCC]));
+	outState.attributes().insert(QStringLiteral("BondAngleAnalysis.counts.HCP"), QVariant::fromValue(myModApp->structureCounts()[HCP]));
+	outState.attributes().insert(QStringLiteral("BondAngleAnalysis.counts.BCC"), QVariant::fromValue(myModApp->structureCounts()[BCC]));
+	outState.attributes().insert(QStringLiteral("BondAngleAnalysis.counts.ICO"), QVariant::fromValue(myModApp->structureCounts()[ICO]));
 
-	return status;
+	return outState;
 }
 
 OVITO_END_INLINE_NAMESPACE

@@ -26,16 +26,16 @@
 #include <gui/properties/PropertiesPanel.h>
 #include <gui/widgets/general/RolloutContainer.h>
 #include <viewport/input/ViewportInputManager.h>
-#include <core/reference/RefTargetListener.h>
+#include <core/oo/RefTargetListener.h>
 
 // QtNetwork module
 #include <QtNetwork>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-class ModificationListModel;	// defined in ModificationListModel.h
-class ModificationListItem;		// defined in ModificationListModel.h
-class ModifierListBox;			// defined in ModifierListBox.h
+class PipelineListModel;	// defined in PipelineListModel.h
+class PipelineListItem;		// defined in PipelineListItem.h
+class ModifierListBox;		// defined in ModifierListBox.h
 
 /**
  * The command panel tab lets the user modify the selected object.
@@ -53,7 +53,7 @@ public:
 	RefTarget* editObject() const { return _propertiesPanel->editObject(); }
 
 	/// Returns the list model that encapsulates the modification pipeline of the selected node(s).
-	ModificationListModel* modificationListModel() const { return _modificationListModel; }
+	PipelineListModel* pipelineListModel() const { return _pipelineListModel; }
 
 protected Q_SLOTS:
 
@@ -91,7 +91,7 @@ protected Q_SLOTS:
 private:
 
 	/// Updates the state of the actions that can be invoked on the currently selected item.
-	void updateActions(ModificationListItem* currentItem);
+	void updateActions(PipelineListItem* currentItem);
 
 	/// Creates the rollout panel that shows information about the application whenever no object is selected.
 	void createAboutPanel();
@@ -105,10 +105,10 @@ private:
 	ActionManager* _actionManager;
 
 	/// This list box shows the modifier stack of the selected scene node(s).
-	QListView* _modificationListWidget;
+	QListView* _pipelineWidget;
 
-	/// The visual representation of the modification pipeline of the selected node(s).
-	ModificationListModel* _modificationListModel;
+	/// The Qt model for the data pipeline of the selected node(s).
+	PipelineListModel* _pipelineListModel;
 
 	/// This control displays the list of available modifier classes and allows the user to apply a modifier.
 	ModifierListBox* _modifierSelector;

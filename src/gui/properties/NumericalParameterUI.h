@@ -34,6 +34,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 ******************************************************************************/
 class OVITO_GUI_EXPORT NumericalParameterUI : public PropertyParameterUI
 {
+	Q_OBJECT
+	OVITO_CLASS(NumericalParameterUI)
+	
 public:
 
 	/// Constructor for a Qt property.
@@ -134,9 +137,6 @@ private:
 
 	/// The signal/slot connection that informs the parameter UI about animation time changes.
 	QMetaObject::Connection _animationTimeChangedConnection;
-	
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

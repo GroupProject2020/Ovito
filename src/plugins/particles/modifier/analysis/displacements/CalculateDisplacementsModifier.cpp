@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,60 +20,24 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <core/scene/objects/DataObject.h>
-#include <core/dataset/importexport/FileSource.h>
-#include <core/animation/AnimationSettings.h>
+#include <plugins/particles/modifier/ParticleInputHelper.h>
+#include <plugins/particles/modifier/ParticleOutputHelper.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
 #include <core/utilities/concurrent/ParallelFor.h>
 #include "CalculateDisplacementsModifier.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(CalculateDisplacementsModifier, ParticleModifier);
-DEFINE_FLAGS_REFERENCE_FIELD(CalculateDisplacementsModifier, referenceConfiguration, "Reference Configuration", DataObject, PROPERTY_FIELD_NO_SUB_ANIM);
-DEFINE_PROPERTY_FIELD(CalculateDisplacementsModifier, referenceShown, "ShowReferenceConfiguration");
-DEFINE_FLAGS_PROPERTY_FIELD(CalculateDisplacementsModifier, affineMapping, "AffineMapping", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(CalculateDisplacementsModifier, assumeUnwrappedCoordinates, "AssumeUnwrappedCoordinates");
-DEFINE_PROPERTY_FIELD(CalculateDisplacementsModifier, useReferenceFrameOffset, "UseReferenceFrameOffet");
-DEFINE_PROPERTY_FIELD(CalculateDisplacementsModifier, referenceFrameNumber, "ReferenceFrameNumber");
-DEFINE_FLAGS_PROPERTY_FIELD(CalculateDisplacementsModifier, referenceFrameOffset, "ReferenceFrameOffset", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_REFERENCE_FIELD(CalculateDisplacementsModifier, vectorDisplay, "VectorDisplay", VectorDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
-SET_PROPERTY_FIELD_LABEL(CalculateDisplacementsModifier, referenceConfiguration, "Reference Configuration");
-SET_PROPERTY_FIELD_LABEL(CalculateDisplacementsModifier, referenceShown, "Show reference configuration");
-SET_PROPERTY_FIELD_LABEL(CalculateDisplacementsModifier, affineMapping, "Affine mapping");
-SET_PROPERTY_FIELD_LABEL(CalculateDisplacementsModifier, assumeUnwrappedCoordinates, "Assume unwrapped coordinates");
-SET_PROPERTY_FIELD_LABEL(CalculateDisplacementsModifier, useReferenceFrameOffset, "Use reference frame offset");
-SET_PROPERTY_FIELD_LABEL(CalculateDisplacementsModifier, referenceFrameNumber, "Reference frame number");
-SET_PROPERTY_FIELD_LABEL(CalculateDisplacementsModifier, referenceFrameOffset, "Reference frame offset");
+IMPLEMENT_OVITO_CLASS(CalculateDisplacementsModifier);
+DEFINE_REFERENCE_FIELD(CalculateDisplacementsModifier, vectorDisplay);
 SET_PROPERTY_FIELD_LABEL(CalculateDisplacementsModifier, vectorDisplay, "Vector display");
-SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CalculateDisplacementsModifier, referenceFrameNumber, IntegerParameterUnit, 0);
 
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
-CalculateDisplacementsModifier::CalculateDisplacementsModifier(DataSet* dataset) : ParticleModifier(dataset),
-    _referenceShown(false), _affineMapping(NO_MAPPING),
-    _useReferenceFrameOffset(false), _referenceFrameNumber(0), _referenceFrameOffset(-1),
-    _assumeUnwrappedCoordinates(false)
+CalculateDisplacementsModifier::CalculateDisplacementsModifier(DataSet* dataset) : ReferenceConfigurationModifier(dataset)
 {
-	INIT_PROPERTY_FIELD(referenceConfiguration);
-	INIT_PROPERTY_FIELD(referenceShown);
-	INIT_PROPERTY_FIELD(affineMapping);
-	INIT_PROPERTY_FIELD(assumeUnwrappedCoordinates);
-	INIT_PROPERTY_FIELD(useReferenceFrameOffset);
-	INIT_PROPERTY_FIELD(referenceFrameNumber);
-	INIT_PROPERTY_FIELD(referenceFrameOffset);
-	INIT_PROPERTY_FIELD(vectorDisplay);
-
-	// Create the file source object, which will be responsible for loading
-	// and storing the reference configuration.
-	OORef<FileSource> linkedFileObj(new FileSource(dataset));
-
-	// Disable automatic adjustment of animation length for the reference object.
-	// We don't want the scene's animation interval to be affected by an animation
-	// loaded into the reference configuration object.
-	linkedFileObj->setAdjustAnimationIntervalEnabled(false);
-	setReferenceConfiguration(linkedFileObj);
-
 	// Create display object for vectors.
 	setVectorDisplay(new VectorDisplay(dataset));
 	vectorDisplay()->setObjectTitle(tr("Displacements"));
@@ -88,25 +52,7 @@ CalculateDisplacementsModifier::CalculateDisplacementsModifier(DataSet* dataset)
 	vectorDisplay()->setArrowPosition(VectorDisplay::Head);
 }
 
-/******************************************************************************
-* Allows the object to parse the serialized contents of a property field in a 
-* custom way.
-******************************************************************************/
-bool CalculateDisplacementsModifier::loadPropertyFieldFromStream(ObjectLoadStream& stream, const ObjectLoadStream::SerializedPropertyField& serializedField)
-{
-	// This is for backward compatibility with OVITO 2.8.2:
-	if(serializedField.identifier == "EliminateCellDeformation" && serializedField.definingClass == &CalculateDisplacementsModifier::OOType) {
-		bool eliminateEnabled;
-		stream >> eliminateEnabled;
-		if(eliminateEnabled)
-			setAffineMapping(TO_REFERENCE_CELL);
-		return true;
-	}
-
-	return ParticleModifier::loadPropertyFieldFromStream(stream, serializedField);
-}
-
-/******************************************************************************
+/*********************************************sourceFrameToAnimationTime*********************************
 * Handles reference events sent by reference targets of this object.
 ******************************************************************************/
 bool CalculateDisplacementsModifier::referenceEvent(RefTarget* source, ReferenceEvent* event)
@@ -115,227 +61,119 @@ bool CalculateDisplacementsModifier::referenceEvent(RefTarget* source, Reference
 	if(source == vectorDisplay())
 		return false;
 
-	return ParticleModifier::referenceEvent(source, event);
+	return ReferenceConfigurationModifier::referenceEvent(source, event);
 }
 
 /******************************************************************************
-* This modifies the input object.
+* Creates and initializes a computation engine that will compute the modifier's results.
 ******************************************************************************/
-PipelineStatus CalculateDisplacementsModifier::modifyParticles(TimePoint time, TimeInterval& validityInterval)
+Future<AsynchronousModifier::ComputeEnginePtr> CalculateDisplacementsModifier::createEngineWithReference(TimePoint time, ModifierApplication* modApp, PipelineFlowState input, const PipelineFlowState& referenceState, TimeInterval validityInterval)
 {
-	// Get the reference positions of the particles.
-	if(!referenceConfiguration())
-		throwException(tr("Cannot calculate displacement vectors. Reference configuration has not been specified."));
+	ParticleInputHelper pih(dataset(), input);
 
-	// What is the reference frame number to use?
-	int referenceFrame;
-	if(useReferenceFrameOffset()) {
-		// Determine the current frame, preferably from the attributes stored with the pipeline flow state.
-		// If the "SourceFrame" attribute is not present, infer it from the current animation time.
-		int currentFrame = input().attributes().value(QStringLiteral("SourceFrame"),
-				dataset()->animationSettings()->timeToFrame(time)).toInt();
+	// Get the current particle positions.
+	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
 
-		// Use frame offset relative to current configuration.
-		referenceFrame = currentFrame + referenceFrameOffset();
-
-		// Results are only valid for current frame.
-		validityInterval.intersect(time);
-	}
-	else {
-		// Always use the same, user-specified frame as reference configuration.
-		referenceFrame = referenceFrameNumber();
-	}
-
-	// Get the reference configuration.
-	PipelineFlowState refState;
-	if(FileSource* fileSource = dynamic_object_cast<FileSource>(referenceConfiguration())) {
-		if(fileSource->numberOfFrames() > 0) {
-			if(referenceFrame < 0 || referenceFrame >= fileSource->numberOfFrames())
-				throwException(tr("Requested reference frame %1 is out of range.").arg(referenceFrame));
-			refState = fileSource->requestFrame(referenceFrame);
-		}
-	}
-	else refState = referenceConfiguration()->evaluateImmediately(PipelineEvalRequest(dataset()->animationSettings()->frameToTime(referenceFrame), false));
-
-	// Make sure the obtained reference configuration is valid and ready to use.
-	if(refState.status().type() == PipelineStatus::Error)
-		return refState.status();
-	if(refState.isEmpty()) {
-		if(refState.status().type() != PipelineStatus::Pending)
-			throwException(tr("Reference configuration has not been specified yet or is empty. Please pick a reference simulation file."));
-		else
-			return PipelineStatus(PipelineStatus::Pending, tr("Waiting for input data to become ready..."));
-	}
-	// Make sure we really got back the requested reference frame.
-	if(refState.attributes().value(QStringLiteral("SourceFrame"), referenceFrame).toInt() != referenceFrame)
-		throwException(tr("Requested reference frame %1 is out of range.").arg(referenceFrame));
-
-	// Get the reference positions.
-	ParticlePropertyObject* refPosProperty = ParticlePropertyObject::findInState(refState, ParticleProperty::PositionProperty);
+	// Get the reference particle position.
+	ParticleProperty* refPosProperty = ParticleProperty::findInState(referenceState, ParticleProperty::PositionProperty);
 	if(!refPosProperty)
-		throwException(tr("Reference configuration does not contain any particle positions."));
+		throwException(tr("Reference configuration does not contain particle positions."));
 
-	// Get the current positions.
-	ParticlePropertyObject* posProperty = expectStandardProperty(ParticleProperty::PositionProperty);
-
-	// Build particle-to-particle index map.
-	std::vector<size_t> indexToIndexMap(inputParticleCount());
-	ParticlePropertyObject* identifierProperty = inputStandardProperty(ParticleProperty::IdentifierProperty);
-	ParticlePropertyObject* refIdentifierProperty = ParticlePropertyObject::findInState(refState, ParticleProperty::IdentifierProperty);;
-	if(identifierProperty && refIdentifierProperty) {
-
-		// Build map of particle identifiers in reference configuration.
-		std::map<int, size_t> refMap;
-		size_t index = 0;
-		const int* id = refIdentifierProperty->constDataInt();
-		const int* id_end = id + refIdentifierProperty->size();
-		for(; id != id_end; ++id, ++index) {
-			if(refMap.insert(std::make_pair(*id, index)).second == false)
-				throwException(tr("Particles with duplicate identifiers detected in reference configuration."));
-		}
-
-		// Check for duplicate identifiers in current configuration.
-		std::vector<size_t> idSet(identifierProperty->constDataInt(), identifierProperty->constDataInt() + identifierProperty->size());
-		std::sort(idSet.begin(), idSet.end());
-		if(std::adjacent_find(idSet.begin(), idSet.end()) != idSet.end())
-			throwException(tr("Particles with duplicate identifiers detected in input configuration."));
-
-		// Build index map.
-		index = 0;
-		id = identifierProperty->constDataInt();
-		for(auto& mappedIndex : indexToIndexMap) {
-			auto iter = refMap.find(*id);
-			if(iter == refMap.end())
-				throwException(tr("Particle id %1 from current configuration not found in reference configuration.").arg(*id));
-			mappedIndex = iter->second;
-			index++;
-			++id;
-		}
-	}
-	else {
-		// Deformed and reference configuration must contain the same number of particles.
-		if(posProperty->size() != refPosProperty->size()) {
-			if(refState.status().type() != PipelineStatus::Pending)
-				throwException(tr("Cannot calculate displacement vectors. Numbers of particles in reference configuration and current configuration do not match."));
-			else
-				return PipelineStatus(PipelineStatus::Pending, tr("Waiting for input data to become ready..."));
-		}
-		// When particle identifiers are not available, use trivial 1-to-1 mapping.
-		std::iota(indexToIndexMap.begin(), indexToIndexMap.end(), size_t(0));
-	}
-
-	// Get simulation cells.
-	SimulationCellObject* inputCell = expectSimulationCell();
-	SimulationCellObject* refCell = refState.findObject<SimulationCellObject>();
+	// Get the simulation cells.
+	SimulationCellObject* inputCell = pih.expectSimulationCell();
+	SimulationCellObject* refCell = referenceState.findObject<SimulationCellObject>();
 	if(!refCell)
 		throwException(tr("Reference configuration does not contain simulation cell info."));
 
-#if 0
-	// If enabled, feed particle positions from reference configuration into geometry pipeline.
-	ParticlePropertyObject* outputPosProperty = nullptr;
-	if(referenceShown()) {
-		outputPosProperty = outputStandardProperty(ParticleProperty::PositionProperty);
-		OVITO_ASSERT(outputPosProperty->size() == refPosProperty->size());
-		outputPosProperty->setStorage(refPosProperty->storage());
-		outputSimulationCell()->setCellMatrix(refCell->cellMatrix());
-	}
-#endif
+	// Get particle identifiers.
+	ParticleProperty* identifierProperty = pih.inputStandardProperty<ParticleProperty>(ParticleProperty::IdentifierProperty);
+	ParticleProperty* refIdentifierProperty = ParticleProperty::findInState(referenceState, ParticleProperty::IdentifierProperty);
 
-	// Create the displacement property.
-	ParticlePropertyObject* displacementProperty = outputStandardProperty(ParticleProperty::DisplacementProperty);
-	ParticlePropertyObject* displacementMagnitudeProperty = outputStandardProperty(ParticleProperty::DisplacementMagnitudeProperty);
-	OVITO_ASSERT(displacementProperty->size() == posProperty->size());
-	OVITO_ASSERT(displacementMagnitudeProperty->size() == posProperty->size());
+	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
+	return std::make_shared<DisplacementEngine>(validityInterval, posProperty->storage(), inputCell->data(), refPosProperty->storage(), refCell->data(),
+			identifierProperty ? identifierProperty->storage() : nullptr, refIdentifierProperty ? refIdentifierProperty->storage() : nullptr,
+			affineMapping(), useMinimumImageConvention());
+}
 
-	// Plug in our internal display object.
-	displacementProperty->setDisplayObject(_vectorDisplay);
-
-	// Get simulation cell info.
-	const std::array<bool, 3> pbc = inputCell->pbcFlags();
-	AffineTransformation simCell;
-	AffineTransformation simCellRef;
-	if(_referenceShown) {
-		simCellRef = inputCell->cellMatrix();
-		simCell = refCell->cellMatrix();
-	}
-	else {
-		simCellRef = refCell->cellMatrix();
-		simCell = inputCell->cellMatrix();
-	}
-
-	// Compute inverse cell transformation.
-	AffineTransformation simCellInv;
-	AffineTransformation simCellRefInv;
-	if(affineMapping() != NO_MAPPING) {
-		if(std::abs(simCell.determinant()) < FLOATTYPE_EPSILON || std::abs(simCellRef.determinant()) < FLOATTYPE_EPSILON)
-			throwException(tr("Simulation cell is degenerate in either the deformed or the reference configuration."));
-
-		simCellInv = simCell.inverse();
-		simCellRefInv = simCellRef.inverse();
-	}
+/******************************************************************************
+* Asks the object for the result of the data pipeline.
+******************************************************************************/
+void CalculateDisplacementsModifier::DisplacementEngine::perform()
+{
+	// First determine the mapping from particles of the reference config to particles
+	// of the current config.
+	if(!buildParticleMapping())
+		return;
 
 	// Compute displacement vectors.
-	const bool unwrap = !assumeUnwrappedCoordinates();
-	const Point3* u0 = refPosProperty->constDataPoint3();
-	const Point3* u_begin = posProperty->constDataPoint3();
-	Vector3* d_begin = displacementProperty->dataVector3();
-	FloatType* dmag_begin = displacementMagnitudeProperty->dataFloat();
-	auto index_begin = indexToIndexMap.begin();
 	if(affineMapping() != NO_MAPPING) {
-		auto affMapping = affineMapping();
-		parallelForChunks(displacementProperty->size(), [d_begin, dmag_begin, affMapping, u_begin, index_begin, u0, unwrap, pbc, simCell, simCellRef, simCellInv, simCellRefInv] (size_t startIndex, size_t count) {
-			Vector3* d = d_begin + startIndex;
-			FloatType* dmag = dmag_begin + startIndex;
-			const Point3* u = u_begin + startIndex;
-			auto index = index_begin + startIndex;
-			for(; count; --count, ++d, ++dmag, ++u, ++index) {
-				Point3 ru = simCellInv * (*u);
-				Point3 ru0 = simCellRefInv * u0[*index];
+		parallelForChunks(displacements()->size(), [this](size_t startIndex, size_t count) {
+			Vector3* u = displacements()->dataVector3() + startIndex;
+			FloatType* umag = displacementMagnitudes()->dataFloat() + startIndex;
+			const Point3* p = positions()->constDataPoint3() + startIndex;
+			auto index = currentToRefIndexMap().cbegin() + startIndex;
+			for(; count; --count, ++u, ++umag, ++p, ++index) {
+				Point3 ru = cell().inverseMatrix() * (*p);
+				Point3 ru0 = refCell().inverseMatrix() * refPositions()->getPoint3(*index);
 				Vector3 delta = ru - ru0;
-				if(unwrap) {
-					for(int k = 0; k < 3; k++) {
-						if(!pbc[k]) continue;
-						if(delta[k] > FloatType(0.5)) delta[k] -= FloatType(1);
-						else if(delta[k] < FloatType(-0.5)) delta[k] += FloatType(1);
+				if(useMinimumImageConvention()) {
+					for(size_t k = 0; k < 3; k++) {
+						if(refCell().pbcFlags()[k]) {
+							if(delta[k] > FloatType(0.5)) delta[k] -= FloatType(1);
+							else if(delta[k] < FloatType(-0.5)) delta[k] += FloatType(1);
+						}
 					}
 				}
-				if(affMapping == TO_REFERENCE_CELL)
-					*d = simCellRef * delta;
+				if(affineMapping() == TO_REFERENCE_CELL)
+					*u = refCell().matrix() * delta;
 				else
-					*d = simCell * delta;
-				*dmag = d->length();
+					*u = cell().matrix() * delta;
+				*umag = u->length();
 			}
 		});
 	}
 	else {
-		parallelForChunks(displacementProperty->size(), [d_begin, dmag_begin, u_begin, index_begin, u0, unwrap, pbc, simCellRef, simCellInv, simCellRefInv] (size_t startIndex, size_t count) {
-			Vector3* d = d_begin + startIndex;
-			FloatType* dmag = dmag_begin + startIndex;
-			const Point3* u = u_begin + startIndex;
-			auto index = index_begin + startIndex;
-			for(; count; --count, ++d, ++dmag, ++u, ++index) {
-				*d = *u - u0[*index];
-				if(unwrap) {
-					for(int k = 0; k < 3; k++) {
-						if(!pbc[k]) continue;
-						if((*d + simCellRef.column(k)).squaredLength() < d->squaredLength())
-							*d += simCellRef.column(k);
-						else if((*d - simCellRef.column(k)).squaredLength() < d->squaredLength())
-							*d -= simCellRef.column(k);
+		parallelForChunks(displacements()->size(), [this] (size_t startIndex, size_t count) {
+			Vector3* u = displacements()->dataVector3() + startIndex;
+			FloatType* umag = displacementMagnitudes()->dataFloat() + startIndex;
+			const Point3* p = positions()->constDataPoint3() + startIndex;
+			auto index = currentToRefIndexMap().cbegin() + startIndex;
+			for(; count; --count, ++u, ++umag, ++p, ++index) {
+				*u = *p - refPositions()->getPoint3(*index);
+				if(useMinimumImageConvention()) {
+					for(size_t k = 0; k < 3; k++) {
+						if(refCell().pbcFlags()[k]) {
+							if((*u + refCell().matrix().column(k)).squaredLength() < u->squaredLength())
+								*u += refCell().matrix().column(k);
+							else if((*u - refCell().matrix().column(k)).squaredLength() < u->squaredLength())
+								*u -= refCell().matrix().column(k);
+						}
 					}
+					*umag = u->length();
 				}
-				*dmag = d->length();
 			}
 		});
 	}
-	if(_referenceShown) {
-		// Flip all displacement vectors.
-		std::for_each(displacementProperty->dataVector3(), displacementProperty->dataVector3() + displacementProperty->size(), [](Vector3& d) { d = -d; });
-	}
-	displacementProperty->changed();
 
-	return refState.status().type();
+	// Return the results of the compute engine.
+	setResult(std::move(_results));
 }
+
+/******************************************************************************
+* Injects the computed results of the engine into the data pipeline.
+******************************************************************************/
+PipelineFlowState CalculateDisplacementsModifier::DisplacementResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+{
+	CalculateDisplacementsModifier* modifier = static_object_cast<CalculateDisplacementsModifier>(modApp->modifier());
+
+	PipelineFlowState output = input;
+	ParticleOutputHelper poh(modApp->dataset(), output);
+	poh.outputProperty<ParticleProperty>(displacements())->setDisplayObject(modifier->vectorDisplay());	
+	poh.outputProperty<ParticleProperty>(displacementMagnitudes());
+	
+	return output;
+}
+
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

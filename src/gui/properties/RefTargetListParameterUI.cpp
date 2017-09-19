@@ -24,17 +24,15 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
 
-// Gives the class run-time type information.
-IMPLEMENT_OVITO_OBJECT(RefTargetListParameterUI, ParameterUI);
-DEFINE_FLAGS_VECTOR_REFERENCE_FIELD(RefTargetListParameterUI, targets, "Targets", RefTarget, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
+IMPLEMENT_OVITO_CLASS(RefTargetListParameterUI);
+DEFINE_REFERENCE_FIELD(RefTargetListParameterUI, targets);
 
 /******************************************************************************
 * The constructor.
 ******************************************************************************/
-RefTargetListParameterUI::RefTargetListParameterUI(QObject* parentEditor, const PropertyFieldDescriptor& refField, const RolloutInsertionParameters& rolloutParams, const OvitoObjectType* defaultEditorClass)
+RefTargetListParameterUI::RefTargetListParameterUI(QObject* parentEditor, const PropertyFieldDescriptor& refField, const RolloutInsertionParameters& rolloutParams, OvitoClassPtr defaultEditorClass)
 	: ParameterUI(parentEditor), _refField(refField), _rolloutParams(rolloutParams), _defaultEditorClass(defaultEditorClass)
 {
-	INIT_PROPERTY_FIELD(targets);
 	OVITO_ASSERT_MSG(refField.isVector(), "RefTargetListParameterUI constructor", "The reference field bound to this parameter UI must be a vector reference field.");
 	
 	_model = new ListViewModel(this);
@@ -120,18 +118,18 @@ void RefTargetListParameterUI::resetUI()
 	if(_viewWidget) {
 		_viewWidget->setEnabled(editObject() != nullptr);
 	
-		_targets.clear();
+		_targets.clear(this, PROPERTY_FIELD(targets));
 		_targetToRow.clear();
 		_rowToTarget.clear();
 		
 		if(editObject()) {
 			// Create a local copy of the list of ref targets.
 			const QVector<RefTarget*>& reflist = editObject()->getVectorReferenceField(referenceField());
-			Q_FOREACH(RefTarget* t, reflist) {
+			for(RefTarget* t : reflist) {
 				_targetToRow.push_back(_rowToTarget.size());
 				if(t != nullptr)
 					_rowToTarget.push_back(_targets.size());
-				_targets.push_back(t);
+				_targets.push_back(this, PROPERTY_FIELD(targets), t);
 			}
 		}
 		
@@ -162,9 +160,9 @@ void RefTargetListParameterUI::openSubEditor()
 		if(subEditor()) {
 			// Close old editor if it is no longer needed.
 			if(!selection || subEditor()->editObject() == nullptr ||
-					subEditor()->editObject()->getOOType() != selection->getOOType()) {
+					subEditor()->editObject()->getOOClass() != selection->getOOClass()) {
 
-				if(selection || &subEditor()->getOOType() != _defaultEditorClass)
+				if(selection || &subEditor()->getOOClass() != _defaultEditorClass)
 					_subEditor = nullptr;
 			}
 		}
@@ -249,7 +247,7 @@ bool RefTargetListParameterUI::referenceEvent(RefTarget* source, ReferenceEvent*
 					rowIndex = _rowToTarget.size();
 				if(refevent->newTarget() != nullptr)
 					_model->beginInsert(rowIndex);
-				_targets.insert(refevent->index(), refevent->newTarget());
+				_targets.insert(this, PROPERTY_FIELD(targets), refevent->index(), refevent->newTarget());
 				_targetToRow.insert(refevent->index(), rowIndex);
 				for(int i = rowIndex; i < _rowToTarget.size(); i++)
 					_rowToTarget[i]++;
@@ -264,7 +262,7 @@ bool RefTargetListParameterUI::referenceEvent(RefTarget* source, ReferenceEvent*
 				int numRows = 0;
 				int numTargets = 0;
 				const QVector<RefTarget*>& reflist = editObject()->getVectorReferenceField(referenceField());
-				Q_FOREACH(RefTarget* t, reflist) {
+				for(RefTarget* t : reflist) {
 					OVITO_ASSERT(_targets[numTargets] == t);
 					OVITO_ASSERT(_targetToRow[numTargets] == numRows);
 					if(t != nullptr) {
@@ -283,7 +281,7 @@ bool RefTargetListParameterUI::referenceEvent(RefTarget* source, ReferenceEvent*
 				if(refevent->oldTarget())
 					_model->beginRemove(rowIndex);
 				OVITO_ASSERT(refevent->oldTarget() == _targets[refevent->index()]);
-				_targets.remove(refevent->index());
+				_targets.remove(this, PROPERTY_FIELD(targets), refevent->index());
 				_targetToRow.remove(refevent->index());
 				for(int i=rowIndex; i<_rowToTarget.size(); i++)
 					_rowToTarget[i]--;
@@ -298,7 +296,7 @@ bool RefTargetListParameterUI::referenceEvent(RefTarget* source, ReferenceEvent*
 				int numRows = 0;
 				int numTargets = 0;
 				const QVector<RefTarget*>& reflist = editObject()->getVectorReferenceField(referenceField());
-				Q_FOREACH(RefTarget* t, reflist) {
+				for(RefTarget* t : reflist) {
 					OVITO_ASSERT(_targets[numTargets] == t);
 					OVITO_ASSERT(_targetToRow[numTargets] == numRows);
 					if(t != NULL) {
@@ -402,10 +400,11 @@ bool RefTargetListParameterUI::ListViewModel::setData(const QModelIndex& index, 
 QVariant RefTargetListParameterUI::getItemData(RefTarget* target, const QModelIndex& index, int role)
 {
 	if(role == Qt::DisplayRole) {
-		if(target == nullptr) return QVariant();
-		return target->objectTitle();
+		if(target) {
+			return target->objectTitle();
+		}
 	}
-	else return QVariant();
+	return {};
 }
 
 /******************************************************************************
@@ -416,7 +415,7 @@ QVariant RefTargetListParameterUI::getVerticalHeaderData(RefTarget* target, int 
 	if(role == Qt::DisplayRole) {
 		return QVariant(index);
 	}
-	else return QVariant();
+	return {};
 }
 
 /******************************************************************************
@@ -427,7 +426,7 @@ QVariant RefTargetListParameterUI::getHorizontalHeaderData(int index, int role)
 	if(role == Qt::DisplayRole) {
 		return QVariant(index);
 	}
-	else return QVariant();
+	return {}; 
 }
 
 OVITO_END_INLINE_NAMESPACE

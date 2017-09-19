@@ -22,23 +22,23 @@
 #include <core/Core.h>
 #include <core/rendering/SceneRenderer.h>
 #include <core/rendering/RenderSettings.h>
-#include <core/scene/SceneNode.h>
-#include <core/scene/SceneRoot.h>
-#include <core/scene/pipeline/PipelineObject.h>
-#include <core/scene/pipeline/Modifier.h>
+#include <core/dataset/scene/SceneNode.h>
+#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/pipeline/PipelineObject.h>
+#include <core/dataset/pipeline/Modifier.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/dataset/DataSet.h>
+#include <core/dataset/DataSetContainer.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(SceneRenderer, RefTarget);
-IMPLEMENT_OVITO_OBJECT(ObjectPickInfo, OvitoObject);
+IMPLEMENT_OVITO_CLASS(SceneRenderer);
+IMPLEMENT_OVITO_CLASS(ObjectPickInfo);
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-SceneRenderer::SceneRenderer(DataSet* dataset) : RefTarget(dataset),
-		_renderDataset(nullptr), _settings(nullptr),
-		_viewport(nullptr), _isPicking(false)
+SceneRenderer::SceneRenderer(DataSet* dataset) : RefTarget(dataset)
 {
 }
 
@@ -53,46 +53,58 @@ QSize SceneRenderer::outputSize() const
 /******************************************************************************
 * Computes the bounding box of the entire scene to be rendered.
 ******************************************************************************/
-Box3 SceneRenderer::sceneBoundingBox(TimePoint time)
+Box3 SceneRenderer::computeSceneBoundingBox(TimePoint time, const ViewProjectionParameters& params, Viewport* vp, const PromiseBase& promise)
 {
-	OVITO_CHECK_OBJECT_POINTER(renderDataset());
-	Box3 bb = renderDataset()->sceneRoot()->worldBoundingBox(time);
+	OVITO_CHECK_OBJECT_POINTER(renderDataset()); // startRender() must be called first.
 
-	// Include interactive  viewport content in bounding box.
-	if(isInteractive()) {
-		renderDataset()->sceneRoot()->visitChildren([this, &bb](SceneNode* node) -> bool {
-			std::vector<Point3> trajectory = getNodeTrajectory(node);
-			bb.addPoints(trajectory.data(), trajectory.size());
-			return true;
-		});
+	try {
+		_sceneBoundingBox.setEmpty();
+		_isBoundingBoxPass = true;
+		_time = time;
+		_viewport = vp;
+		setProjParams(params);
+
+		// Perform bounding box rendering pass.
+		if(renderScene(promise)) {
+
+			// Take into acocunt additional visual content that is only visible in the interactive viewports.
+			if(isInteractive())
+				renderInteractiveContent();
+		}
+
+		_isBoundingBoxPass = false;
+	}
+	catch(...) {
+		_isBoundingBoxPass = false;
+		throw;
 	}
 
-	if(!bb.isEmpty())
-		return bb;
-	else
-		return Box3(Point3::Origin(), 100);
+	return _sceneBoundingBox;
 }
 
 /******************************************************************************
 * Renders all nodes in the scene
 ******************************************************************************/
-void SceneRenderer::renderScene()
+bool SceneRenderer::renderScene(const PromiseBase& promise)
 {
 	OVITO_CHECK_OBJECT_POINTER(renderDataset());
+
 	if(SceneRoot* rootNode = renderDataset()->sceneRoot()) {
-		// Recursively render all nodes.
-		renderNode(rootNode);
+		// Recursively render all scene nodes.
+		return renderNode(rootNode, promise);
 	}
+
+	return true;
 }
 
 /******************************************************************************
 * Render a scene node (and all its children).
 ******************************************************************************/
-void SceneRenderer::renderNode(SceneNode* node)
+bool SceneRenderer::renderNode(SceneNode* node, const PromiseBase& promise)
 {
     OVITO_CHECK_OBJECT_POINTER(node);
 
-    // Setup transformation matrix.
+    // Set up transformation matrix.
 	TimeInterval interval;
 	const AffineTransformation& nodeTM = node->getWorldTransform(time(), interval);
 	setWorldTransform(nodeTM);
@@ -102,8 +114,27 @@ void SceneRenderer::renderNode(SceneNode* node)
 		// Do not render node if it is the view node of the viewport or
 		// if it is the target of the view node.
 		if(!viewport() || !viewport()->viewNode() || (viewport()->viewNode() != objNode && viewport()->viewNode()->lookatTargetNode() != objNode)) {
-			// Evaluate geometry pipeline of object node and render the results.
-			objNode->render(time(), this);
+
+			// Evaluate data pipeline of object node and render the results.
+			SharedFuture<PipelineFlowState> pipelineStateFuture;
+			if(!isInteractive()) {
+				pipelineStateFuture = objNode->evaluateRenderingPipeline(time());
+				if(!dataset()->container()->taskManager().waitForTask(pipelineStateFuture))
+					return false;
+			}
+			const PipelineFlowState& state = pipelineStateFuture.isValid() ? 
+												pipelineStateFuture.result() : 
+												objNode->evaluatePipelinePreliminary(true);
+
+			// Render every display object of every data object in the pipeline state.
+			for(const auto& dataObj : state.objects()) {
+				for(DisplayObject* displayObj : dataObj->displayObjects()) {
+					OVITO_ASSERT(displayObj);
+					if(displayObj->isEnabled()) {
+						displayObj->render(time(), dataObj, state, this, objNode);
+					}
+				}	
+			}
 		}
 	}
 
@@ -113,8 +144,12 @@ void SceneRenderer::renderNode(SceneNode* node)
 	}
 
 	// Render child nodes.
-	for(SceneNode* child : node->children())
-		renderNode(child);
+	for(SceneNode* child : node->children()) {
+		if(!renderNode(child, promise))
+			return false;
+	}
+
+	return !promise.isCanceled();
 }
 
 /******************************************************************************
@@ -151,25 +186,32 @@ void SceneRenderer::renderNodeTrajectory(SceneNode* node)
 	if(!trajectory.empty()) {
 		setWorldTransform(AffineTransformation::Identity());
 
-		std::shared_ptr<MarkerPrimitive> frameMarkers = createMarkerPrimitive();
-		frameMarkers->setCount(trajectory.size());
-		frameMarkers->setMarkerPositions(trajectory.data());
-		frameMarkers->setMarkerColor(ColorA(1, 1, 1));
-		frameMarkers->render(this);
+		if(!isBoundingBoxPass()) {
+			std::shared_ptr<MarkerPrimitive> frameMarkers = createMarkerPrimitive(MarkerPrimitive::DotShape);
+			frameMarkers->setCount(trajectory.size());
+			frameMarkers->setMarkerPositions(trajectory.data());
+			frameMarkers->setMarkerColor(ColorA(1, 1, 1));
+			frameMarkers->render(this);
 
-		std::vector<Point3> lineVertices((trajectory.size()-1) * 2);
-		if(!lineVertices.empty()) {
-			for(size_t index = 0; index < trajectory.size(); index++) {
-				if(index != 0)
-					lineVertices[index*2 - 1] = trajectory[index];
-				if(index != trajectory.size() - 1)
-					lineVertices[index*2] = trajectory[index];
+			std::vector<Point3> lineVertices((trajectory.size()-1) * 2);
+			if(!lineVertices.empty()) {
+				for(size_t index = 0; index < trajectory.size(); index++) {
+					if(index != 0)
+						lineVertices[index*2 - 1] = trajectory[index];
+					if(index != trajectory.size() - 1)
+						lineVertices[index*2] = trajectory[index];
+				}
+				std::shared_ptr<LinePrimitive> trajLine = createLinePrimitive();
+				trajLine->setVertexCount(lineVertices.size());
+				trajLine->setVertexPositions(lineVertices.data());
+				trajLine->setLineColor(ColorA(1.0f, 0.8f, 0.4f));
+				trajLine->render(this);
 			}
-			std::shared_ptr<LinePrimitive> trajLine = createLinePrimitive();
-			trajLine->setVertexCount(lineVertices.size());
-			trajLine->setVertexPositions(lineVertices.data());
-			trajLine->setLineColor(ColorA(1.0f, 0.8f, 0.4f));
-			trajLine->render(this);
+		}
+		else {
+			Box3 bb;
+			bb.addPoints(trajectory.data(), trajectory.size());
+			addToLocalBoundingBox(bb);
 		}
 	}
 }
@@ -179,10 +221,9 @@ void SceneRenderer::renderNodeTrajectory(SceneNode* node)
 ******************************************************************************/
 void SceneRenderer::renderModifiers(bool renderOverlay)
 {
-	// Visit all pipeline objects in the scene.
+	// Visit all objects in the scene.
 	renderDataset()->sceneRoot()->visitObjectNodes([this, renderOverlay](ObjectNode* objNode) -> bool {
-		if(PipelineObject* pipelineObj = dynamic_object_cast<PipelineObject>(objNode->dataProvider()))
-			renderModifiers(pipelineObj, objNode, renderOverlay);
+		renderModifiers(objNode, renderOverlay);
 		return true;
 	});
 }
@@ -190,46 +231,22 @@ void SceneRenderer::renderModifiers(bool renderOverlay)
 /******************************************************************************
 * Renders the visual representation of the modifiers.
 ******************************************************************************/
-void SceneRenderer::renderModifiers(PipelineObject* pipelineObj, ObjectNode* objNode, bool renderOverlay)
+void SceneRenderer::renderModifiers(ObjectNode* objNode, bool renderOverlay)
 {
-	OVITO_CHECK_OBJECT_POINTER(pipelineObj);
+	ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(objNode->dataProvider());
+	while(modApp) {
 
-	// Render the visual representation of the modifier that is currently being edited.
-	for(ModifierApplication* modApp : pipelineObj->modifierApplications()) {
 		Modifier* mod = modApp->modifier();
 
-		// Setup transformation.
+		// Setup object node transformation.
 		TimeInterval interval;
 		setWorldTransform(objNode->getWorldTransform(time(), interval));
 
-		// Render selected modifier.
-		mod->render(time(), objNode, modApp, this, renderOverlay);
+		// Render modifier.
+		mod->renderModifierVisual(time(), objNode, modApp, this, renderOverlay);
+
+		modApp = dynamic_object_cast<ModifierApplication>(modApp->input());
 	}
-
-	// Continue with nested pipeline objects.
-	if(PipelineObject* input = dynamic_object_cast<PipelineObject>(pipelineObj->sourceObject()))
-		renderModifiers(input, objNode, renderOverlay);
-}
-
-/******************************************************************************
-* Determines the bounding box of the visual representation of the modifiers.
-******************************************************************************/
-void SceneRenderer::boundingBoxModifiers(PipelineObject* pipelineObj, ObjectNode* objNode, Box3& boundingBox)
-{
-	OVITO_CHECK_OBJECT_POINTER(pipelineObj);
-	TimeInterval interval;
-
-	// Render the visual representation of the modifier that is currently being edited.
-	for(ModifierApplication* modApp : pipelineObj->modifierApplications()) {
-		Modifier* mod = modApp->modifier();
-
-		// Compute bounding box and transform it to world space.
-		boundingBox.addBox(mod->boundingBox(time(), objNode, modApp).transformed(objNode->getWorldTransform(time(), interval)));
-	}
-
-	// Continue with nested pipeline objects.
-	if(PipelineObject* input = dynamic_object_cast<PipelineObject>(pipelineObj->sourceObject()))
-		boundingBoxModifiers(input, objNode, boundingBox);
 }
 
 OVITO_END_INLINE_NAMESPACE

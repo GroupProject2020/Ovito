@@ -25,30 +25,36 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(PartitionMesh, DataObject);
-DEFINE_PROPERTY_FIELD(PartitionMesh, spaceFillingRegion, "SpaceFillingRegion");
+IMPLEMENT_OVITO_CLASS(PartitionMesh);
+DEFINE_PROPERTY_FIELD(PartitionMesh, spaceFillingRegion);
+DEFINE_PROPERTY_FIELD(PartitionMesh, storage);
+
+/// Holds a shared, empty instance of the PartitionMeshData class, 
+/// which is used in places where a default storage is needed.
+/// This singleton instance is never modified.
+static const std::shared_ptr<PartitionMeshData> defaultStorage = std::make_shared<PartitionMeshData>();
 
 /******************************************************************************
 * Constructs an empty surface mesh object.
 ******************************************************************************/
-PartitionMesh::PartitionMesh(DataSet* dataset, PartitionMeshData* mesh) : DataObjectWithSharedStorage(dataset, mesh ? mesh : new PartitionMeshData()),
-		_spaceFillingRegion(0)
+PartitionMesh::PartitionMesh(DataSet* dataset) : PeriodicDomainDataObject(dataset),
+		_spaceFillingRegion(0), _storage(defaultStorage)
 {
-	INIT_PROPERTY_FIELD(spaceFillingRegion);
 }
 
 /******************************************************************************
-* Creates a copy of this object.
+* Returns the data encapsulated by this object after making sure it is not 
+* shared with other owners.
 ******************************************************************************/
-OORef<RefTarget> PartitionMesh::clone(bool deepCopy, CloneHelper& cloneHelper)
+const std::shared_ptr<PartitionMeshData>& PartitionMesh::modifiableStorage() 
 {
-	// Let the base class create an instance of this class.
-	OORef<PartitionMesh> clone = static_object_cast<PartitionMesh>(DataObjectWithSharedStorage<PartitionMeshData>::clone(deepCopy, cloneHelper));
-
-	// Copy internal data.
-	clone->_cuttingPlanes = this->_cuttingPlanes;
-
-	return clone;
+	// Copy data storage on write if there is more than one reference to the storage.
+	OVITO_ASSERT(storage());
+	OVITO_ASSERT(storage().use_count() >= 1);
+	if(storage().use_count() > 1)
+		_storage.mutableValue() = std::make_shared<PartitionMeshData>(*storage());
+	OVITO_ASSERT(storage().use_count() == 1);
+	return storage();
 }
 
 /******************************************************************************

@@ -28,7 +28,7 @@
 
 namespace Ovito { namespace VoroTop {
 
-IMPLEMENT_OVITO_OBJECT(VoroTopModifierEditor, ParticleModifierEditor);
+IMPLEMENT_OVITO_CLASS(VoroTopModifierEditor);
 SET_OVITO_OBJECT_EDITOR(VoroTopModifier, VoroTopModifierEditor);
 
 /******************************************************************************

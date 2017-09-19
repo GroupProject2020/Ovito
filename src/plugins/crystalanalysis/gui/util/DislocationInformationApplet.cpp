@@ -28,12 +28,12 @@
 #include <gui/viewport/ViewportWindow.h>
 #include <core/viewport/Viewport.h>
 #include <core/viewport/ViewportConfiguration.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/animation/AnimationSettings.h>
 #include "DislocationInformationApplet.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-IMPLEMENT_OVITO_OBJECT(DislocationInformationApplet, UtilityApplet);
+IMPLEMENT_OVITO_CLASS(DislocationInformationApplet);
 
 /******************************************************************************
 * Shows the UI of the utility in the given RolloutContainer.
@@ -93,7 +93,7 @@ void DislocationInformationApplet::updateInformationDisplay()
 
 	for(auto& pickedDislocation : _inputMode->_pickedDislocations) {
 		OVITO_ASSERT(pickedDislocation.objNode);
-		const PipelineFlowState& flowState = pickedDislocation.objNode->evaluatePipelineImmediately(PipelineEvalRequest(dataset->animationSettings()->time(), false));
+		const PipelineFlowState& flowState = pickedDislocation.objNode->evaluatePipelinePreliminary(false);
 		DislocationNetworkObject* dislocationObj = flowState.findObject<DislocationNetworkObject>();
 		if(!dislocationObj || pickedDislocation.segmentIndex >= dislocationObj->segments().size())
 			continue;
@@ -244,24 +244,13 @@ void DislocationInformationInputMode::renderOverlay3D(Viewport* vp, ViewportScen
 
 	for(const auto& pickedDislocation : _pickedDislocations) {
 
-		const PipelineFlowState& flowState = pickedDislocation.objNode->evaluatePipelineImmediately(PipelineEvalRequest(vp->dataset()->animationSettings()->time(), true));
+		const PipelineFlowState& flowState = pickedDislocation.objNode->evaluatePipelinePreliminary(true);
 		DislocationNetworkObject* dislocationObj = flowState.findObject<DislocationNetworkObject>();
 		if(!dislocationObj)
 			continue;
 
 		pickedDislocation.displayObj->renderOverlayMarker(vp->dataset()->animationSettings()->time(), dislocationObj, flowState, pickedDislocation.segmentIndex, renderer, pickedDislocation.objNode);
 	}
-}
-
-/******************************************************************************
-* Computes the bounding box of the 3d visual viewport overlay rendered by the input mode.
-******************************************************************************/
-Box3 DislocationInformationInputMode::overlayBoundingBox(Viewport* vp, ViewportSceneRenderer* renderer)
-{
-	Box3 bbox = ViewportInputMode::overlayBoundingBox(vp, renderer);
-	//for(const auto& pickedParticle : _pickedParticles)
-	//	bbox.addBox(selectionMarkerBoundingBox(vp, pickedParticle));
-	return bbox;
 }
 
 }	// End of namespace

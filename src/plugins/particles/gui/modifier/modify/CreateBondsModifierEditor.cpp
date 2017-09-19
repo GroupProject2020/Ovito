@@ -21,7 +21,6 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <plugins/particles/modifier/modify/CreateBondsModifier.h>
-#include <plugins/particles/objects/ParticleTypeProperty.h>
 #include <gui/properties/SubObjectParameterUI.h>
 #include <gui/properties/IntegerRadioButtonParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
@@ -30,7 +29,7 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_OBJECT(CreateBondsModifierEditor, ParticleModifierEditor);
+IMPLEMENT_OVITO_CLASS(CreateBondsModifierEditor);
 SET_OVITO_OBJECT_EDITOR(CreateBondsModifier, CreateBondsModifierEditor);
 
 /******************************************************************************
@@ -107,12 +106,11 @@ void CreateBondsModifierEditor::updatePairCutoffList()
 
 	// Obtain the list of particle types in the modifier's input.
 	PairCutoffTableModel::ContentType pairCutoffs;
-	PipelineFlowState inputState = mod->getModifierInput();
-	ParticleTypeProperty* typeProperty = dynamic_object_cast<ParticleTypeProperty>(
-			ParticlePropertyObject::findInState(inputState, ParticleProperty::ParticleTypeProperty));
+	PipelineFlowState inputState = getSomeModifierInput();
+	ParticleProperty* typeProperty = ParticleProperty::findInState(inputState, ParticleProperty::TypeProperty);
 	if(typeProperty) {
-		for(auto ptype1 = typeProperty->particleTypes().constBegin(); ptype1 != typeProperty->particleTypes().constEnd(); ++ptype1) {
-			for(auto ptype2 = ptype1; ptype2 != typeProperty->particleTypes().constEnd(); ++ptype2) {
+		for(auto ptype1 = typeProperty->elementTypes().constBegin(); ptype1 != typeProperty->elementTypes().constEnd(); ++ptype1) {
+			for(auto ptype2 = ptype1; ptype2 != typeProperty->elementTypes().constEnd(); ++ptype2) {
 				pairCutoffs.push_back(qMakePair((*ptype1)->name(), (*ptype2)->name()));
 			}
 		}

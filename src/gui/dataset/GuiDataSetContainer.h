@@ -32,6 +32,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
  */
 class OVITO_GUI_EXPORT GuiDataSetContainer : public DataSetContainer
 {
+	Q_OBJECT
+	OVITO_CLASS(GuiDataSetContainer)
+
 public:
 
 	/// \brief Constructor.
@@ -45,7 +48,7 @@ public:
 	/// \param importerType The FileImporter type to use. If NULL, the file format will be automatically detected.
 	/// \return true if the file was successfully imported; false if operation has been canceled by the user.
 	/// \throw Exception on error.
-	bool importFile(const QUrl& url, const OvitoObjectType* importerType = nullptr);
+	bool importFile(const QUrl& url, OvitoClassPtr importerType = nullptr);
 
 	/// \brief Creates an empty dataset and makes it the current dataset.
 	/// \return \c true if the operation was completed; \c false if the operation has been canceled by the user.
@@ -80,25 +83,23 @@ public:
 	/// If yes, then the dataset is saved by calling fileSave().
 	bool askForSaveChanges();
 
+protected:
+
+	/// Is called when a RefTarget referenced by this object has generated an event.
+	virtual bool referenceEvent(RefTarget* source, ReferenceEvent* event) override;	
+
 private Q_SLOTS:
 
-	/// Is called whenever a local event loop is entered to wait for a task to finish.
-	void localEventLoopEntered();
-
-	/// Is called whenever a local event loop was exited after waiting for a task to finish.
-	void localEventLoopExited();
+	/// Is called when scene of the current dataset is ready to be displayed.
+	void sceneBecameReady();
 
 private:
 
 	/// The window this dataset container is linked to (may be NULL).
 	MainWindow* _mainWindow;
 
-	/// Counts how many times viewport repaints have been disabled so that we can
-	/// re-enable them again the same number of times.
-	int _viewportRepaintsDisabled = 0;
-
-	Q_OBJECT
-	OVITO_OBJECT
+	/// Indicates whether we are already waiting for the scene to become ready.
+	bool _sceneReadyScheduled = false;	
 };
 
 OVITO_END_INLINE_NAMESPACE

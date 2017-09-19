@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,20 +21,24 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/BondsObject.h>
-#include <plugins/particles/objects/BondPropertyObject.h>
+#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/modifier/ParticleInputHelper.h>
+#include <plugins/particles/modifier/ParticleOutputHelper.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <core/utilities/units/UnitsManager.h>
 #include "ShowPeriodicImagesModifier.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(ShowPeriodicImagesModifier, ParticleModifier);
-DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, showImageX, "ShowImageX");
-DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, showImageY, "ShowImageY");
-DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, showImageZ, "ShowImageZ");
-DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, numImagesX, "NumImagesX");
-DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, numImagesY, "NumImagesY");
-DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, numImagesZ, "NumImagesZ");
-DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, adjustBoxSize, "AdjustBoxSize");
-DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, uniqueIdentifiers, "UniqueIdentifiers");
+IMPLEMENT_OVITO_CLASS(ShowPeriodicImagesModifier);
+DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, showImageX);
+DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, showImageY);
+DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, showImageZ);
+DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, numImagesX);
+DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, numImagesY);
+DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, numImagesZ);
+DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, adjustBoxSize);
+DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, uniqueIdentifiers);
 SET_PROPERTY_FIELD_LABEL(ShowPeriodicImagesModifier, showImageX, "Periodic images X");
 SET_PROPERTY_FIELD_LABEL(ShowPeriodicImagesModifier, showImageY, "Periodic images Y");
 SET_PROPERTY_FIELD_LABEL(ShowPeriodicImagesModifier, showImageZ, "Periodic images Z");
@@ -50,25 +54,52 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ShowPeriodicImagesModifier, numImagesZ, Int
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
-ShowPeriodicImagesModifier::ShowPeriodicImagesModifier(DataSet* dataset) : ParticleModifier(dataset),
-	_showImageX(false), _showImageY(false), _showImageZ(false),
-	_numImagesX(3), _numImagesY(3), _numImagesZ(3), _adjustBoxSize(false), _uniqueIdentifiers(true)
+ShowPeriodicImagesModifier::ShowPeriodicImagesModifier(DataSet* dataset) : Modifier(dataset),
+	_showImageX(true), 
+	_showImageY(true), 
+	_showImageZ(true),
+	_numImagesX(1), 
+	_numImagesY(1), 
+	_numImagesZ(1), 
+	_adjustBoxSize(false), 
+	_uniqueIdentifiers(true)
 {
-	INIT_PROPERTY_FIELD(showImageX);
-	INIT_PROPERTY_FIELD(showImageY);
-	INIT_PROPERTY_FIELD(showImageZ);
-	INIT_PROPERTY_FIELD(numImagesX);
-	INIT_PROPERTY_FIELD(numImagesY);
-	INIT_PROPERTY_FIELD(numImagesZ);
-	INIT_PROPERTY_FIELD(adjustBoxSize);
-	INIT_PROPERTY_FIELD(uniqueIdentifiers);
 }
 
 /******************************************************************************
-* Modifies the particle object.
+* Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-PipelineStatus ShowPeriodicImagesModifier::modifyParticles(TimePoint time, TimeInterval& validityInterval)
+bool ShowPeriodicImagesModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
+	return input.findObject<ParticleProperty>() != nullptr;
+}
+
+/******************************************************************************
+* Loads the user-defined default values of this object's parameter fields from the
+* application's settings store.
+******************************************************************************/
+void ShowPeriodicImagesModifier::loadUserDefaults()
+{
+	Modifier::loadUserDefaults();
+
+	// In the graphical program environment, we use the following parameter defaults:
+	setShowImageX(false);
+	setShowImageY(false);
+	setShowImageZ(false);
+	setNumImagesX(3);
+	setNumImagesY(3);
+	setNumImagesZ(3);
+}
+
+/******************************************************************************
+* Modifies the input data in an immediate, preliminary way.
+******************************************************************************/
+PipelineFlowState ShowPeriodicImagesModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+{
+	PipelineFlowState output = input;
+	ParticleInputHelper pih(dataset(), input);
+	ParticleOutputHelper poh(dataset(), output);
+	
 	std::array<int,3> nPBC;
 	nPBC[0] = showImageX() ? std::max(numImagesX(),1) : 1;
 	nPBC[1] = showImageY() ? std::max(numImagesY(),1) : 1;
@@ -76,8 +107,8 @@ PipelineStatus ShowPeriodicImagesModifier::modifyParticles(TimePoint time, TimeI
 
 	// Calculate new number of atoms.
 	size_t numCopies = nPBC[0] * nPBC[1] * nPBC[2];
-	if(numCopies <= 1 || inputParticleCount() == 0)
-		return PipelineStatus::Success;
+	if(numCopies <= 1 || pih.inputParticleCount() == 0)
+		return output;
 
 	Box3I newImages;
 	newImages.minc[0] = -(nPBC[0]-1)/2;
@@ -88,21 +119,19 @@ PipelineStatus ShowPeriodicImagesModifier::modifyParticles(TimePoint time, TimeI
 	newImages.maxc[2] = nPBC[2]/2;
 
 	// Enlarge particle property arrays.
-	size_t oldParticleCount = inputParticleCount();
+	size_t oldParticleCount = pih.inputParticleCount();
 	size_t newParticleCount = oldParticleCount * numCopies;
 
-	_outputParticleCount = newParticleCount;
-	AffineTransformation simCell = expectSimulationCell()->cellMatrix();
+	poh.setOutputParticleCount(newParticleCount);
+	AffineTransformation simCell = pih.expectSimulationCell()->cellMatrix();
 
 	// Replicate particle property values.
-	for(DataObject* outobj : output().objects()) {
-		OORef<ParticlePropertyObject> originalOutputProperty = dynamic_object_cast<ParticlePropertyObject>(outobj);
-		if(!originalOutputProperty)
-			continue;
-		OVITO_ASSERT(originalOutputProperty->size() == oldParticleCount);
+	for(DataObject* obj : output.objects()) {
+		OORef<ParticleProperty> existingProperty = dynamic_object_cast<ParticleProperty>(obj);
+		if(!existingProperty) continue;
 
-		// Create copy.
-		OORef<ParticlePropertyObject> newProperty = cloneHelper()->cloneObject(originalOutputProperty, false);
+		// Create modifiable copy.
+		ParticleProperty* newProperty = poh.cloneIfNeeded(existingProperty.get());
 		newProperty->resize(newParticleCount, false);
 
 		size_t destinationIndex = 0;
@@ -113,7 +142,7 @@ PipelineStatus ShowPeriodicImagesModifier::modifyParticles(TimePoint time, TimeI
 
 					// Duplicate property data.
 					memcpy((char*)newProperty->data() + (destinationIndex * newProperty->stride()),
-							originalOutputProperty->constData(), newProperty->stride() * oldParticleCount);
+							existingProperty->constData(), newProperty->stride() * oldParticleCount);
 
 					if(newProperty->type() == ParticleProperty::PositionProperty && (imageX != 0 || imageY != 0 || imageZ != 0)) {
 						// Shift particle positions by the periodicity vector.
@@ -140,9 +169,6 @@ PipelineStatus ShowPeriodicImagesModifier::modifyParticles(TimePoint time, TimeI
 					*id += offset;
 			}
 		}
-
-		// Replace original property with the modified one.
-		output().replaceObject(originalOutputProperty, newProperty);
 	}
 
 	// Extend simulation box if requested.
@@ -153,30 +179,31 @@ PipelineStatus ShowPeriodicImagesModifier::modifyParticles(TimePoint time, TimeI
 		simCell.column(0) *= nPBC[0];
 		simCell.column(1) *= nPBC[1];
 		simCell.column(2) *= nPBC[2];
-		outputSimulationCell()->setCellMatrix(simCell);
+		poh.outputObject<SimulationCellObject>()->setCellMatrix(simCell);
 	}
 
 	// Replicate bonds.
 	size_t oldBondCount = 0;
 	size_t newBondCount = 0;
-	for(DataObject* outobj : output().objects()) {
-		OORef<BondsObject> originalOutputBonds = dynamic_object_cast<BondsObject>(outobj);
-		if(!originalOutputBonds)
+	for(DataObject* obj : output.objects()) {
+		OORef<BondsObject> existingBonds = dynamic_object_cast<BondsObject>(obj);
+		if(!existingBonds)
 			continue;
 
-		OORef<BondsObject> newBondsObj = cloneHelper()->cloneObject(originalOutputBonds, false);
+		// Create modifiable copy.
+		BondsObject* newBonds = poh.cloneIfNeeded(existingBonds.get());
 
 		// Duplicate bonds and adjust particle indices and PBC shift vectors as needed.
 		// Some bonds may no longer cross periodic boundaries.
-		oldBondCount = newBondsObj->storage()->size();
+		oldBondCount = newBonds->storage()->size();
 		newBondCount = oldBondCount * numCopies;
-		newBondsObj->modifiableStorage()->resize(newBondCount);
-		auto outBond = newBondsObj->modifiableStorage()->begin();
+		newBonds->modifiableStorage()->resize(newBondCount);
+		auto outBond = newBonds->modifiableStorage()->begin();
 		Point3I image;
 		for(image[0] = newImages.minc.x(); image[0] <= newImages.maxc.x(); image[0]++) {
 			for(image[1] = newImages.minc.y(); image[1] <= newImages.maxc.y(); image[1]++) {
 				for(image[2] = newImages.minc.z(); image[2] <= newImages.maxc.z(); image[2]++) {
-					auto inBond = originalOutputBonds->storage()->cbegin();
+					auto inBond = existingBonds->storage()->cbegin();
 					for(size_t bindex = 0; bindex < oldBondCount; bindex++, ++inBond, ++outBond) {
 						Point3I newImage;
 						Vector_3<int8_t> newShift;
@@ -205,20 +232,16 @@ PipelineStatus ShowPeriodicImagesModifier::modifyParticles(TimePoint time, TimeI
 				}
 			}
 		}
-		newBondsObj->changed();
-
-		// Replace original object with the modified one.
-		output().replaceObject(originalOutputBonds, newBondsObj);
 	}
 
 	// Replicate bond property values.
-	for(DataObject* outobj : output().objects()) {
-		OORef<BondPropertyObject> originalOutputProperty = dynamic_object_cast<BondPropertyObject>(outobj);
-		if(!originalOutputProperty || originalOutputProperty->size() != oldBondCount)
+	for(DataObject* obj : output.objects()) {
+		OORef<BondProperty> existingProperty = dynamic_object_cast<BondProperty>(obj);
+		if(!existingProperty || existingProperty->size() != oldBondCount)
 			continue;
 
-		// Create copy.
-		OORef<BondPropertyObject> newProperty = cloneHelper()->cloneObject(originalOutputProperty, false);
+		// Create modifiable copy.
+		BondProperty* newProperty = poh.cloneIfNeeded(existingProperty.get());
 		newProperty->resize(newBondCount, false);
 
 		size_t destinationIndex = 0;
@@ -228,18 +251,15 @@ PipelineStatus ShowPeriodicImagesModifier::modifyParticles(TimePoint time, TimeI
 
 					// Duplicate property data.
 					memcpy((char*)newProperty->data() + (destinationIndex * newProperty->stride()),
-							originalOutputProperty->constData(), newProperty->stride() * oldBondCount);
+							existingProperty->constData(), newProperty->stride() * oldBondCount);
 
 					destinationIndex += oldBondCount;
 				}
 			}
 		}
-
-		// Replace original property with the modified one.
-		output().replaceObject(originalOutputProperty, newProperty);
 	}
 
-	return PipelineStatus::Success;
+	return output;
 }
 
 OVITO_END_INLINE_NAMESPACE

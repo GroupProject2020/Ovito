@@ -24,15 +24,18 @@
 
 #include <plugins/vorotop/VoroTopPlugin.h>
 #include <plugins/vorotop/VoroTopModifier.h>
-#include <plugins/particles/gui/modifier/ParticleModifierEditor.h>
+#include <gui/properties/ModifierPropertiesEditor.h>
 
 namespace Ovito { namespace VoroTop {
 
 /**
  * A properties editor for the VoroTopModifier class.
  */
-class VoroTopModifierEditor : public ParticleModifierEditor
+class VoroTopModifierEditor : public ModifierPropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(VoroTopModifierEditor)
+
 public:
 
 	/// Default constructor.
@@ -47,11 +50,6 @@ private Q_SLOTS:
 
 	/// Is called when the user presses the 'Load filter' button.
 	void onLoadFilter();
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 }	// End of namespace

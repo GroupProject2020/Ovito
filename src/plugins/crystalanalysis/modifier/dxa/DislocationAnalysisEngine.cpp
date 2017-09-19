@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2015) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,8 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/particles/objects/SurfaceMesh.h>
 #include <plugins/crystalanalysis/util/DelaunayTessellation.h>
+#include <plugins/mesh/surface/SurfaceMesh.h>
 #include "DislocationAnalysisEngine.h"
 #include "DislocationAnalysisModifier.h"
 
@@ -35,26 +35,31 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 * Constructor.
 ******************************************************************************/
 DislocationAnalysisEngine::DislocationAnalysisEngine(const TimeInterval& validityInterval,
-		ParticleProperty* positions, const SimulationCell& simCell,
+		ConstPropertyPtr positions, const SimulationCell& simCell,
 		int inputCrystalStructure, int maxTrialCircuitSize, int maxCircuitElongation,
-		bool reconstructEdgeVectors, ParticleProperty* particleSelection,
-		ParticleProperty* crystalClusters,
-		std::vector<Matrix3>&& preferredCrystalOrientations,
-		bool onlyPerfectDislocations) :
-	StructureIdentificationModifier::StructureIdentificationEngine(validityInterval, positions, simCell, QVector<bool>(), particleSelection),
-	_structureAnalysis(positions, simCell, (StructureAnalysis::LatticeStructureType)inputCrystalStructure, selection(), structures(), std::move(preferredCrystalOrientations), !onlyPerfectDislocations),
-	_defectMesh(new HalfEdgeMesh<>()),
+		ConstPropertyPtr particleSelection,
+		ConstPropertyPtr crystalClusters,
+		std::vector<Matrix3> preferredCrystalOrientations,
+		bool onlyPerfectDislocations, int defectMeshSmoothingLevel,
+		int lineSmoothingLevel, FloatType linePointInterval,
+		bool outputInterfaceMesh) :
+	StructureIdentificationModifier::StructureIdentificationEngine(validityInterval, positions, simCell, {}, std::move(particleSelection)),
+	_results(std::make_shared<DislocationAnalysisResults>(positions->size(), simCell.volume3D())),
+	_structureAnalysis(positions, simCell, (StructureAnalysis::LatticeStructureType)inputCrystalStructure, selection(), _results->structures(), std::move(preferredCrystalOrientations), !onlyPerfectDislocations),
 	_elasticMapping(_structureAnalysis, _tessellation),
 	_interfaceMesh(_elasticMapping),
-	_dislocationTracer(_interfaceMesh, &_structureAnalysis.clusterGraph(), maxTrialCircuitSize, maxCircuitElongation),
+	_dislocationTracer(_interfaceMesh, _structureAnalysis.clusterGraph(), maxTrialCircuitSize, maxCircuitElongation),
 	_inputCrystalStructure(inputCrystalStructure),
-#if 0
-	_planarDefectIdentification(_elasticMapping),
-#endif
-	_reconstructEdgeVectors(reconstructEdgeVectors),
 	_crystalClusters(crystalClusters),
-	_onlyPerfectDislocations(onlyPerfectDislocations)
+	_onlyPerfectDislocations(onlyPerfectDislocations),
+	_defectMeshSmoothingLevel(defectMeshSmoothingLevel),
+	_lineSmoothingLevel(lineSmoothingLevel),
+	_linePointInterval(linePointInterval),
+	_outputInterfaceMesh(outputInterfaceMesh)
 {
+	_results->setAtomClusters(_structureAnalysis.atomClusters());
+	_results->setDislocationNetwork(_dislocationTracer.network());
+	_results->setClusterGraph(_dislocationTracer.clusterGraph());
 }
 
 /******************************************************************************
@@ -64,7 +69,7 @@ void DislocationAnalysisEngine::perform()
 {
 	setProgressText(DislocationAnalysisModifier::tr("Dislocation analysis (DXA)"));
 
-	beginProgressSubSteps({ 35, 6, 1, 220, 60, 1, 53, 190, 146, 20 });
+	beginProgressSubStepsWithWeights({ 35, 6, 1, 220, 60, 1, 53, 190, 146, 20, 4, 4 });
 	if(!_structureAnalysis.identifyStructures(*this))
 		return;
 
@@ -121,7 +126,7 @@ void DislocationAnalysisEngine::perform()
 
 	// Determine the ideal vector corresponding to each edge of the tessellation.
 	nextProgressSubStep();
-	if(!_elasticMapping.assignIdealVectorsToEdges(_reconstructEdgeVectors, 4, *this))
+	if(!_elasticMapping.assignIdealVectorsToEdges(4, *this))
 		return;
 
 	// Free some memory that is no longer needed.
@@ -129,7 +134,7 @@ void DislocationAnalysisEngine::perform()
 
 	// Create the mesh facets.
 	nextProgressSubStep();
-	if(!_interfaceMesh.createMesh(_structureAnalysis.maximumNeighborDistance(), crystalClusters(), *this))
+	if(!_interfaceMesh.createMesh(_structureAnalysis.maximumNeighborDistance(), crystalClusters().get(), *this))
 		return;
 
 	// Trace dislocation lines.
@@ -213,22 +218,39 @@ void DislocationAnalysisEngine::perform()
 	stream.close();
 #endif
 
-#if 0
-	// Extract planar defects.
-	if(!_planarDefectIdentification.extractPlanarDefects(_inputCrystalStructure, *this))
-		return;
-#endif
-
 	// Generate the defect mesh.
 	nextProgressSubStep();
-	if(!_interfaceMesh.generateDefectMesh(_dislocationTracer, *_defectMesh, *this))
+	if(!_interfaceMesh.generateDefectMesh(_dislocationTracer, *defectMesh(), *this))
 		return;
-
-	endProgressSubSteps();
 
 #if 0
 	_tessellation.dumpToVTKFile("tessellation.vtk");
 #endif
+
+	nextProgressSubStep();
+
+	// Post-process surface mesh.
+	if(_defectMeshSmoothingLevel > 0 && !SurfaceMesh::smoothMesh(*defectMesh(), cell(), _defectMeshSmoothingLevel, *this))
+		return;
+
+	nextProgressSubStep();
+		
+	// Post-process dislocation lines.
+	if(_lineSmoothingLevel > 0 || _linePointInterval > 0) {
+		if(!dislocationNetwork()->smoothDislocationLines(_lineSmoothingLevel, _linePointInterval, *this))
+			return;
+	}
+
+	endProgressSubSteps();
+	
+	// Return the results of the compute engine.
+	_results->setCompletelyGoodOrBad(interfaceMesh().isCompletelyGood(), interfaceMesh().isCompletelyBad());
+	if(_outputInterfaceMesh) {
+		auto outputInterfaceMesh = std::make_shared<HalfEdgeMesh<>>();
+		outputInterfaceMesh->copyFrom(interfaceMesh());
+		_results->setInterfaceMesh(std::move(outputInterfaceMesh));
+	}	
+	setResult(std::move(_results));
 }
 
 }	// End of namespace

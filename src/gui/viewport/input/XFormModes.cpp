@@ -25,10 +25,10 @@
 #include <gui/viewport/ViewportWindow.h>
 #include <gui/dialogs/AnimationKeyEditorDialog.h>
 #include <core/dataset/UndoStack.h>
-#include <core/animation/AnimationSettings.h>
-#include <core/animation/controller/PRSTransformationController.h>
-#include <core/animation/controller/KeyframeController.h>
-#include <core/scene/SelectionSet.h>
+#include <core/dataset/animation/AnimationSettings.h>
+#include <core/dataset/animation/controller/PRSTransformationController.h>
+#include <core/dataset/animation/controller/KeyframeController.h>
+#include <core/dataset/scene/SelectionSet.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/viewport/Viewport.h>
 #include "ViewportInputManager.h"
@@ -142,8 +142,8 @@ void XFormMode::onSelectionChangeComplete(SelectionSet* selection)
 {
 	CoordinateDisplayWidget* coordDisplay = inputManager()->mainWindow()->coordinateDisplay();
 	if(selection) {
-		if(selection->size() == 1) {
-			_selectedNode.setTarget(selection->node(0));
+		if(selection->nodes().size() == 1) {
+			_selectedNode.setTarget(selection->nodes().front());
 			updateCoordinateDisplay(coordDisplay);
 			coordDisplay->activate(undoDisplayName());
 			connect(coordDisplay, &CoordinateDisplayWidget::valueEntered, this, &XFormMode::onCoordinateValueEntered, Qt::ConnectionType(Qt::AutoConnection | Qt::UniqueConnection));
@@ -267,14 +267,14 @@ Point3 XFormMode::transformationCenter()
 {
 	Point3 center = Point3::Origin();
 	SelectionSet* selection = viewport()->dataset()->selection();
-	if(selection && !selection->empty()) {
+	if(selection && !selection->nodes().empty()) {
 		TimeInterval interval;
 		TimePoint time = selection->dataset()->animationSettings()->time();
 		for(SceneNode* node : selection->nodes()) {
 			const AffineTransformation& nodeTM = node->getWorldTransform(time, interval);
 			center += nodeTM.translation();
 		}
-		center /= (FloatType)selection->size();
+		center /= (FloatType)selection->nodes().size();
 	}
 	return center;
 }

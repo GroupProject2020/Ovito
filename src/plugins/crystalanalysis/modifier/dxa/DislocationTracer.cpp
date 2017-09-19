@@ -20,6 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
+#include <core/utilities/concurrent/PromiseState.h>
 #include "DislocationTracer.h"
 #include "InterfaceMesh.h"
 
@@ -53,7 +54,7 @@ void DislocationTracer::discardCircuit(BurgersCircuit* circuit)
 * trial Burgers circuits. Identified dislocation segments are converted to
 * a continuous line representation.
 ******************************************************************************/
-bool DislocationTracer::traceDislocationSegments(PromiseBase& promise)
+bool DislocationTracer::traceDislocationSegments(PromiseState& promise)
 {
 	if(_maxBurgersCircuitSize < 3 || _maxBurgersCircuitSize > _maxExtendedBurgersCircuitSize)
 		throw Exception("Invalid maximum circuit size parameter(s).");
@@ -63,7 +64,7 @@ bool DislocationTracer::traceDislocationSegments(PromiseBase& promise)
 	std::vector<int> subStepWeights(_maxExtendedBurgersCircuitSize - 2);
 	for(int i = 0; i < subStepWeights.size(); i++)
 		subStepWeights[i] = (i+3)*(i+3);
-	promise.beginProgressSubSteps(subStepWeights);
+	promise.beginProgressSubStepsWithWeights(subStepWeights);
 
 	mesh().clearFaceFlag(0);
 
@@ -107,7 +108,7 @@ bool DislocationTracer::traceDislocationSegments(PromiseBase& promise)
 			promise.nextProgressSubStep();
 	}
 
-	//qDebug() << "Number of dislocation segments:" << network().segments().size();
+	//qDebug() << "Number of dislocation segments:" << network()->segments().size();
 	//qDebug() << "Number of dislocation junctions:" << numJunctions;
 
 	promise.endProgressSubSteps();
@@ -122,8 +123,8 @@ void DislocationTracer::finishDislocationSegments(int crystalStructure)
 {
 	// Remove extra line points from segments that do not end in a junction.
 	// Also assign consecutive IDs to final segments.
-	for(int segmentIndex = 0; segmentIndex < network().segments().size(); segmentIndex++) {
-		DislocationSegment* segment = network().segments()[segmentIndex];
+	for(int segmentIndex = 0; segmentIndex < network()->segments().size(); segmentIndex++) {
+		DislocationSegment* segment = network()->segments()[segmentIndex];
 		std::deque<Point3>& line = segment->line;
 		std::deque<int>& coreSize = segment->coreSize;
 		segment->id = segmentIndex;
@@ -136,7 +137,7 @@ void DislocationTracer::finishDislocationSegments(int crystalStructure)
 	}
 
 	// Express Burgers vectors of dislocations in a proper lattice frame whenever possible.
-	for(DislocationSegment* segment : network().segments()) {
+	for(DislocationSegment* segment : network()->segments()) {
 		Cluster* originalCluster = segment->burgersVector.cluster();
 		if(originalCluster->structure != crystalStructure) {
 			for(ClusterTransition* t = originalCluster->transitions; t != nullptr && t->distance <= 1; t = t->next) {
@@ -149,7 +150,7 @@ void DislocationTracer::finishDislocationSegments(int crystalStructure)
 	}
 
 	// Align dislocations.
-	for(DislocationSegment* segment : network().segments()) {
+	for(DislocationSegment* segment : network()->segments()) {
 		std::deque<Point3>& line = segment->line;
 		OVITO_ASSERT(line.size() >= 2);
 
@@ -209,7 +210,7 @@ struct BurgersCircuitSearchStruct
 * Then moves the Burgers circuit in both directions along the dislocation
 * segment until the maximum circuit size has been reached.
 ******************************************************************************/
-bool DislocationTracer::findPrimarySegments(int maxBurgersCircuitSize, PromiseBase& promise)
+bool DislocationTracer::findPrimarySegments(int maxBurgersCircuitSize, PromiseState& promise)
 {
 	int searchDepth =  (maxBurgersCircuitSize - 1) / 2;
 	OVITO_ASSERT(searchDepth >= 1);
@@ -459,7 +460,7 @@ void DislocationTracer::createAndTraceSegment(const ClusterVector& burgersVector
 	BurgersCircuit* backwardCircuit = buildReverseCircuit(forwardCircuit);
 
 	// Create new dislocation segment.
-	DislocationSegment* segment = network().createSegment(burgersVector);
+	DislocationSegment* segment = network()->createSegment(burgersVector);
 	segment->forwardNode().circuit = forwardCircuit;
 	segment->backwardNode().circuit = backwardCircuit;
 	forwardCircuit->dislocationNode = &segment->forwardNode();
@@ -1200,7 +1201,7 @@ size_t DislocationTracer::joinSegments(int maxCircuitLength)
 				node1->oppositeNode = node2;
 				node2->oppositeNode = node1;
 				segment2->replacedWith = segment1;
-				network().discardSegment(segment2);
+				network()->discardSegment(segment2);
 			}
 		}
 	}

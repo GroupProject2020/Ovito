@@ -27,7 +27,7 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_OBJECT(PickingSceneRenderer, ViewportSceneRenderer);
+IMPLEMENT_OVITO_CLASS(PickingSceneRenderer);
 
 /******************************************************************************
 * This method is called just before renderFrame() is called.
@@ -80,13 +80,13 @@ void PickingSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParame
 /******************************************************************************
 * Renders the current animation frame.
 ******************************************************************************/
-bool PickingSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, TaskManager& taskManager)
+bool PickingSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, const PromiseBase& promise)
 {
 	// Clear previous object records.
 	reset();
 
 	// Let the base class do the main rendering work.
-	if(!ViewportSceneRenderer::renderFrame(frameBuffer, stereoTask, taskManager))
+	if(!ViewportSceneRenderer::renderFrame(frameBuffer, stereoTask, promise))
 		return false;
 
 	// Clear OpenGL error state, so we start fresh for the glReadPixels() call below.
@@ -128,7 +128,7 @@ bool PickingSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRendering
 		_depthBufferBits = 0;
 	}
 
-	return true;
+	return !promise.isCanceled();
 }
 
 /******************************************************************************

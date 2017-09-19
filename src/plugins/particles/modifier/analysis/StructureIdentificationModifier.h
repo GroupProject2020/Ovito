@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,18 +23,63 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/modifier/AsynchronousParticleModifier.h>
-#include <plugins/particles/objects/ParticleTypeProperty.h>
 #include <plugins/particles/objects/ParticleType.h>
+#include <plugins/particles/objects/ParticleProperty.h>
+#include <core/dataset/data/simcell/SimulationCell.h>
+#include <core/dataset/pipeline/AsynchronousModifier.h>
+#include <core/dataset/pipeline/AsynchronousModifierApplication.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
 /**
  * \brief Base class for modifiers that assign a structure type to each particle.
  */
-class OVITO_PARTICLES_EXPORT StructureIdentificationModifier : public AsynchronousParticleModifier
+class OVITO_PARTICLES_EXPORT StructureIdentificationModifier : public AsynchronousModifier
 {
+	/// Give this modifier class its own metaclass.
+	class StructureIdentificationModifierClass : public ModifierClass 
+	{
+	public:
+
+		/// Inherit constructor from base metaclass.
+		using ModifierClass::ModifierClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
+
+	Q_OBJECT
+	OVITO_CLASS_META(StructureIdentificationModifier, StructureIdentificationModifierClass)
+	
 public:
+
+	/// Holds the modifier's results.
+	class StructureIdentificationResults : public ComputeEngineResults
+	{
+	public:
+
+		/// Constructor.
+		StructureIdentificationResults(size_t particleCount) :
+			_structures(ParticleProperty::createStandardStorage(particleCount, ParticleProperty::StructureTypeProperty, false)) {}
+
+		/// Injects the computed results into the data pipeline.
+		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+
+		/// Returns the property storage that contains the computed per-particle structure types.
+		const PropertyPtr& structures() const { return _structures; }
+
+	protected:
+
+		/// Gives subclasses the possibility to post-process per-particle structure types
+		/// before they are output to the data pipeline.
+		virtual PropertyPtr postProcessStructureTypes(TimePoint time, ModifierApplication* modApp, const PropertyPtr& structures) { 
+			return structures;
+		}
+
+	private:
+
+		const PropertyPtr _structures;
+	};
 
 	/// Computes the modifier's results.
 	class StructureIdentificationEngine : public ComputeEngine
@@ -42,21 +87,18 @@ public:
 	public:
 
 		/// Constructor.
-		StructureIdentificationEngine(const TimeInterval& validityInterval, ParticleProperty* positions, const SimulationCell& simCell, const QVector<bool>& typesToIdentify, ParticleProperty* selection = nullptr) :
+		StructureIdentificationEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell, QVector<bool> typesToIdentify, ConstPropertyPtr selection = {}) :
 			ComputeEngine(validityInterval),
-			_positions(positions), _simCell(simCell),
-			_typesToIdentify(typesToIdentify),
-			_selection(selection),
-			_structures(new ParticleProperty(positions->size(), ParticleProperty::StructureTypeProperty, 0, false)) {}
+			_positions(std::move(positions)), 
+			_simCell(simCell),
+			_typesToIdentify(std::move(typesToIdentify)),
+			_selection(std::move(selection)) {}
 
 		/// Returns the property storage that contains the input particle positions.
-		ParticleProperty* positions() const { return _positions.data(); }
-
-		/// Returns the property storage that contains the computed per-particle structure types.
-		ParticleProperty* structures() const { return _structures.data(); }
+		const ConstPropertyPtr& positions() const { return _positions; }
 
 		/// Returns the property storage that contains the particle selection (optional).
-		ParticleProperty* selection() const { return _selection.data(); }
+		const ConstPropertyPtr& selection() const { return _selection; }
 
 		/// Returns the simulation cell data.
 		const SimulationCell& cell() const { return _simCell; }
@@ -66,11 +108,10 @@ public:
 
 	private:
 
-		QExplicitlySharedDataPointer<ParticleProperty> _positions;
-		QExplicitlySharedDataPointer<ParticleProperty> _structures;
-		QExplicitlySharedDataPointer<ParticleProperty> _selection;
-		SimulationCell _simCell;
-		QVector<bool> _typesToIdentify;
+		const ConstPropertyPtr _positions;
+		const ConstPropertyPtr _selection;
+		const SimulationCell _simCell;
+		const QVector<bool> _typesToIdentify;
 	};
 
 public:
@@ -78,60 +119,62 @@ public:
 	/// Constructor.
 	StructureIdentificationModifier(DataSet* dataset);
 
-	/// Returns an array that contains the number of matching particles for each structure type.
-	const QList<int>& structureCounts() const { return _structureCounts; }
-
-	/// Returns the cached results of the modifier, i.e. the structures assigned to the particles.
-	ParticleProperty* structureData() const { return _structureData.data(); }
-
-	/// Replaces the cached results of the modifier, i.e. the structures assigned to the particles.
-	void setStructureData(ParticleProperty* structureData) { _structureData = structureData; }
+	/// \brief Create a new modifier application that refers to this modifier instance.
+	virtual OORef<ModifierApplication> createModifierApplication() override;
 
 protected:
 
 	/// Saves the class' contents to the given stream.
-	virtual void saveToStream(ObjectSaveStream& stream) override;
+	virtual void saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData) override;
 
 	/// Loads the class' contents from the given stream.
 	virtual void loadFromStream(ObjectLoadStream& stream) override;
 
-	/// Is called when the value of a property of this object has changed.
-	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
-
-	/// Is called when a RefTarget referenced by this object has generated an event.
-	virtual bool referenceEvent(RefTarget* source, ReferenceEvent* event) override;
-
 	/// Inserts a structure type into the list.
-	void addStructureType(ParticleType* type) { _structureTypes.push_back(type); }
+	void addStructureType(ParticleType* type) { _structureTypes.push_back(this, PROPERTY_FIELD(structureTypes), type); }
 
 	/// Create an instance of the ParticleType class to represent a structure type.
-	void createStructureType(int id, ParticleTypeProperty::PredefinedStructureType predefType);
+	void createStructureType(int id, ParticleType::PredefinedStructureType predefType);
 
 	/// Returns a bit flag array which indicates what structure types to search for.
 	QVector<bool> getTypesToIdentify(int numTypes) const;
 
-	/// Unpacks the results of the computation engine and stores them in the modifier.
-	virtual void transferComputationResults(ComputeEngine* engine) override;
-
-	/// Lets the modifier insert the cached computation results into the modification pipeline.
-	virtual PipelineStatus applyComputationResults(TimePoint time, TimeInterval& validityInterval) override;
-
 private:
 
-	/// This stores the cached results of the modifier, i.e. the structures assigned to the particles.
-	QExplicitlySharedDataPointer<ParticleProperty> _structureData;
-
 	/// Contains the list of structure types recognized by this analysis modifier.
-	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD(ParticleType, structureTypes, setStructureTypes);
+	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD(ElementType, structureTypes, setStructureTypes);
 
 	/// Controls whether analysis should take into account only selected particles.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, onlySelectedParticles, setOnlySelectedParticles);
+};
 
-	/// The number of matching particles for each structure type.
-	QList<int> _structureCounts;
 
+/**
+ * \brief The type of ModifierApplication create for a StructureIdentificationModifier 
+ *        when it is inserted into in a data pipeline.
+ */
+class OVITO_PARTICLES_EXPORT StructureIdentificationModifierApplication : public AsynchronousModifierApplication
+{
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS(StructureIdentificationModifierApplication)
+
+public:
+
+	/// Constructor.
+	Q_INVOKABLE StructureIdentificationModifierApplication(DataSet* dataset) : AsynchronousModifierApplication(dataset) {}
+
+	/// Returns an array that contains the number of matching particles for each structure type.
+	const std::vector<size_t>& structureCounts() const { return _structureCounts; }
+
+	/// Sets the array containing the number of matching particles for each structure type.
+	void setStructureCounts(std::vector<size_t> counts) {
+		_structureCounts = std::move(counts);
+		notifyDependents(ReferenceEvent::ObjectStatusChanged);
+	}
+
+private:
+
+	std::vector<size_t> _structureCounts;
 };
 
 OVITO_END_INLINE_NAMESPACE

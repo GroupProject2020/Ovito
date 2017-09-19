@@ -32,14 +32,11 @@ modifier.per_type_occupancies = False
 node.compute()
 
 print("Output:")
-print("  vacancy_count= {}".format(modifier.vacancy_count))
-print("  interstitial_count= {}".format(modifier.interstitial_count))
 print("  vacancy_count= {}".format(node.output.attributes['WignerSeitz.vacancy_count']))
 print("  interstitial_count= {}".format(node.output.attributes['WignerSeitz.interstitial_count']))
 print(node.output.particle_properties["Occupancy"].array)
 
 assert(node.output.attributes['WignerSeitz.vacancy_count'] == 970)
-assert(modifier.vacancy_count == 970)
 
 node.source.load('../../files/CFG/shear.void.120.cfg')
 print(len(node.source.particle_properties.particle_type.type_list))
@@ -50,5 +47,5 @@ print("occupancy.shape=%s" % str(node.output.particle_properties["Occupancy"].ar
 #assert(node.output["Occupancy"].array.shape == (node.output.number_of_particles, 3))
 print(node.output.particle_properties["Occupancy"].array)
 
-export_file(node, "_output.dump", "lammps_dump", columns = [ "Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z", "Occupancy","Occupancy.1"])
+export_file(node, "_output.dump", "lammps/dump", columns = [ "Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z", "Occupancy","Occupancy.1"])
 os.remove("_output.dump")

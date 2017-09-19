@@ -10,6 +10,9 @@
          xmlns:ns="http://docbook.org/ns/docbook">
   <title>Wigner-Seitz defect analysis</title>
 
+  <warning><para>This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
+   development version of OVITO.</para></warning>
+
   <para>
   
     <informalfigure><screenshot><mediaobject><imageobject>
@@ -46,7 +49,7 @@
     <title>Generated output</title>
   <para>
     The modifier outputs the number of atoms sitting on each site as a particle property named <literal>Occupancy</literal>.
-    This integer property allows to subsequently filter out normal sites and show only defective sites (e.g. by using the <link linkend="particles.modifiers.expression_select">Expression Select</link> modifier).
+    This integer property allows to subsequently filter out normal sites and show only defective sites (e.g. by using the <link linkend="particles.modifiers.expression_select">Expression Selection</link> modifier).
     Furthermore, the modifier reports two global quantities:
     <variablelist>
       <varlistentry>
@@ -96,7 +99,7 @@
 
   <para>
     After the WS modifier has performed its computation, each atomic site will be associated with a new integer property named <emphasis>Occupancy</emphasis>.
-    You can subsequently use the <link linkend="particles.modifiers.expression_select">Expression Select</link> modifier to select certain sites that
+    You can subsequently use the <link linkend="particles.modifiers.expression_select">Expression Selection</link> modifier to select certain sites that
     correspond to certain types of point defects. For example, the selection expression <literal>"Occupancy==0"</literal> would select all empty sites (vacancies)
     while the expression <literal>"Occupancy>1"</literal> would select all sites containing at least one interstitial atom. Typically, you want
     to visualize just the defective sites and hide all other sites, which are occupied by exactly one atom. This can be achieved with the following modification pipeline setup:
@@ -120,7 +123,7 @@
 
   <para>
     OVITO's particle selection tools, in particular the <link linkend="particles.modifiers.expression_select">
-    Expression Select</link> modifier, can be used to select the sites that meet specific criteria, for example
+    Expression Selection</link> modifier, can be used to select the sites that meet specific criteria, for example
     A-sites that are occupied by a B-atom (antisite). Another way of selecting this type of defect sites
     is using OVITO's scripting interface or OVITO's <link linkend="particles.modifiers.python_script">Python Script modifier</link>. You can find a detailed example in the 
     <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.WignerSeitzAnalysisModifier">scripting documentation of the Wigner-Seitz modifier</link>.

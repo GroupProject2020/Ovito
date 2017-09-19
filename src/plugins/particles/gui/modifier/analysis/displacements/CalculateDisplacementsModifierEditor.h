@@ -23,27 +23,37 @@
 
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/particles/gui/modifier/ParticleModifierEditor.h>
+#include <gui/properties/ModifierPropertiesEditor.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /**
  * A properties editor for the CalculateDisplacementsModifier class.
  */
-class CalculateDisplacementsModifierEditor : public ParticleModifierEditor
+class CalculateDisplacementsModifierEditor : public ModifierPropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(CalculateDisplacementsModifierEditor)
+
 public:
 
 	/// Default constructor.
 	Q_INVOKABLE CalculateDisplacementsModifierEditor() {}
+
+private Q_SLOTS:
+
+	/// Is called when the object being edited changes.
+	void onContentsChanged(RefTarget* editObject);	
+	
+	/// Is called when the user clicks one of the source mode buttons.
+	void onSourceButtonClicked(int id);
 
 protected:
 
 	/// Creates the user interface controls for the editor.
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
 
-	Q_OBJECT
-	OVITO_OBJECT
+	QButtonGroup* _sourceButtonGroup;
 };
 
 OVITO_END_INLINE_NAMESPACE
@@ -51,5 +61,3 @@ OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

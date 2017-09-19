@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <gui/plugins/utility/UtilityApplet.h>
+#include <gui/mainwin/cmdpanel/UtilityApplet.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
@@ -32,6 +32,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO
  */
 class CreateTrajectoryApplet : public UtilityApplet
 {
+	Q_OBJECT
+	OVITO_CLASS(CreateTrajectoryApplet)
+
 public:
 
 	/// Constructor.
@@ -62,9 +65,6 @@ private:
 	SpinnerWidget* _everyNthFrameSpinner;
 
 	Q_CLASSINFO("DisplayName", "Create trajectory lines");
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

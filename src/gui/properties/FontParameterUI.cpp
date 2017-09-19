@@ -26,8 +26,7 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
 
-// Gives the class run-time type information.
-IMPLEMENT_OVITO_OBJECT(FontParameterUI, PropertyParameterUI);
+IMPLEMENT_OVITO_CLASS(FontParameterUI);
 
 /******************************************************************************
 * The constructor.
@@ -116,7 +115,7 @@ void FontParameterUI::onButtonClicked()
 		QFont font = QFontDialog::getFont(&ok, currentFont, fontPicker()->window());
 		if(ok && font != currentFont) {
 			undoableTransaction(tr("Change font"), [this, &font]() {
-				editObject()->setPropertyFieldValue(*propertyField(), qVariantFromValue(font));
+				editObject()->setPropertyFieldValue(*propertyField(), QVariant::fromValue(font));
 				Q_EMIT valueEntered();
 			});
 		}

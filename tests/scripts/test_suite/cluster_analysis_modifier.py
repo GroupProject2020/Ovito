@@ -34,8 +34,8 @@ node.compute()
 print("Output:")
 print("Number of clusters: {}".format(node.output.attributes['ClusterAnalysis.cluster_count']))
 assert(node.output.attributes['ClusterAnalysis.cluster_count'] == 2)
-print(node.output.cluster)
-print(node.output.cluster.array)
+print(node.output.particle_properties.cluster)
+print(node.output.particle_properties.cluster.array)
 
 modifier.sort_by_size = True
 node.compute()

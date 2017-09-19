@@ -23,6 +23,8 @@
 
 
 #include <core/Core.h>
+#include <plugins/mesh/Mesh.h>
+#include <plugins/grid/Grid.h>
 
 #ifdef Particles_EXPORTS		// This is defined by CMake when building the plugin library.
 #  define OVITO_PARTICLES_EXPORT Q_DECL_EXPORT
@@ -69,29 +71,26 @@
 
 namespace Ovito {
 	namespace Particles {
-		class ParticlePropertyObject;
-		class ParticleTypeProperty;
+
+		using namespace Ovito::Mesh;
+		using namespace Ovito::Grid;
+
 		class ParticleProperty;
 		class ParticleType;
 		class BondsStorage;
+		using BondsPtr = std::shared_ptr<BondsStorage>;
+		using ConstBondsPtr = std::shared_ptr<const BondsStorage>;
 		class BondsObject;
-		class BondPropertyObject;
-		class BondTypeProperty;
 		class BondProperty;
 		class BondType;
 		class ParticleDisplay;
 		class BondsDisplay;
 		class VectorDisplay;
-		class SurfaceMesh;
-		class SurfaceMeshDisplay;
-		class SimulationCell;
-		class SimulationCellObject;
-		class SimulationCellDisplay;
-
-		OVITO_BEGIN_INLINE_NAMESPACE(Modifiers)
-		OVITO_END_INLINE_NAMESPACE
 
 		OVITO_BEGIN_INLINE_NAMESPACE(Import)
+			class ParticleFrameData;
+			class ParticleImporter;
+			class InputColumnMapping;
 		OVITO_END_INLINE_NAMESPACE
 
 		OVITO_BEGIN_INLINE_NAMESPACE(Export)

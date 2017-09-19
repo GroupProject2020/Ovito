@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,8 +24,9 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/modifier/analysis/StructureIdentificationModifier.h>
-#include <plugins/particles/data/BondsStorage.h>
-#include <plugins/particles/data/BondProperty.h>
+#include <plugins/particles/objects/BondsStorage.h>
+#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/ParticleProperty.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
@@ -35,6 +36,12 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  */
 class OVITO_PARTICLES_EXPORT CommonNeighborAnalysisModifier : public StructureIdentificationModifier
 {
+	Q_OBJECT
+	OVITO_CLASS(CommonNeighborAnalysisModifier)
+
+	Q_CLASSINFO("DisplayName", "Common neighbor analysis");
+	Q_CLASSINFO("ModifierCategory", "Analysis");
+
 public:
 
 	enum CNAMode {
@@ -119,22 +126,22 @@ public:
 
 protected:
 
-	/// Is called when the value of a property of this object has changed.
-	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
-
-	/// Creates and initializes a computation engine that will compute the modifier's results.
-	virtual std::shared_ptr<ComputeEngine> createEngine(TimePoint time, TimeInterval validityInterval) override;
-
-	/// Parses the serialized contents of a property field in a custom way.
-	virtual bool loadPropertyFieldFromStream(ObjectLoadStream& stream, const ObjectLoadStream::SerializedPropertyField& serializedField) override;
-
-	/// Unpacks the results of the computation engine and stores them in the modifier.
-	virtual void transferComputationResults(ComputeEngine* engine) override;
-
-	/// Lets the modifier insert the cached computation results into the modification pipeline.
-	virtual PipelineStatus applyComputationResults(TimePoint time, TimeInterval& validityInterval) override;
+	/// Creates a computation engine that will compute the modifier's results.
+	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 private:
+
+	/// Holds the modifier's results.
+	class CNAResults : public StructureIdentificationResults
+	{
+	public:
+
+		/// Inherit constructor of base class.
+		using StructureIdentificationResults::StructureIdentificationResults;
+
+		/// Injects the computed results into the data pipeline.
+		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	};
 
 	/// Analysis engine that performs the conventional common neighbor analysis.
 	class FixedCNAEngine : public StructureIdentificationEngine
@@ -142,16 +149,16 @@ private:
 	public:
 
 		/// Constructor.
-		FixedCNAEngine(const TimeInterval& validityInterval, ParticleProperty* positions, const SimulationCell& simCell, const QVector<bool>& typesToIdentify, ParticleProperty* selection, FloatType cutoff) :
-			StructureIdentificationEngine(validityInterval, positions, simCell, typesToIdentify, selection), _cutoff(cutoff) {}
+		FixedCNAEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell, QVector<bool> typesToIdentify, ConstPropertyPtr selection, FloatType cutoff) :
+			StructureIdentificationEngine(validityInterval, std::move(positions), simCell, std::move(typesToIdentify), std::move(selection)), _cutoff(cutoff) {}
 
-		/// Computes the modifier's results and stores them in this object for later retrieval.
+		/// Computes the modifier's results.
 		virtual void perform() override;
 
 	private:
 
 		/// The CNA cutoff radius.
-		FloatType _cutoff;
+		const FloatType _cutoff;
 	};
 
 	/// Analysis engine that performs the adaptive common neighbor analysis.
@@ -160,11 +167,31 @@ private:
 	public:
 
 		/// Constructor.
-		AdaptiveCNAEngine(const TimeInterval& validityInterval, ParticleProperty* positions, const SimulationCell& simCell, const QVector<bool>& typesToIdentify, ParticleProperty* selection) :
-			StructureIdentificationEngine(validityInterval, positions, simCell, typesToIdentify, selection) {}
-
-		/// Computes the modifier's results and stores them in this object for later retrieval.
+		using StructureIdentificationEngine::StructureIdentificationEngine;
+		
+		/// Computes the modifier's results.
 		virtual void perform() override;
+	};
+
+	/// Holds the modifier's results.
+	class BondCNAResults : public CNAResults
+	{
+	public:
+
+		/// Constructor.
+		BondCNAResults(size_t particleCount, size_t bondCount) :
+			CNAResults(particleCount),
+			_cnaIndices(std::make_shared<PropertyStorage>(bondCount, qMetaTypeId<int>(), 3, 0, tr("CNA Indices"), false)) {}
+
+		/// Injects the computed results into the data pipeline.
+		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+
+		/// Returns the output bonds property that stores the computed CNA indices.
+		const PropertyPtr& cnaIndices() const { return _cnaIndices; }
+
+	private:
+
+		PropertyPtr _cnaIndices;
 	};
 
 	/// Analysis engine that performs the common neighbor analysis based on existing bonds.
@@ -173,23 +200,19 @@ private:
 	public:
 
 		/// Constructor.
-		BondCNAEngine(const TimeInterval& validityInterval, ParticleProperty* positions, const SimulationCell& simCell, const QVector<bool>& typesToIdentify, ParticleProperty* selection, BondsStorage* bonds) :
-			StructureIdentificationEngine(validityInterval, positions, simCell, typesToIdentify, selection), _bonds(bonds),
-			_cnaIndices(new BondProperty(bonds->size(), qMetaTypeId<int>(), 3, 0, tr("CNA Indices"), false)) {}
+		BondCNAEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell, QVector<bool> typesToIdentify, ConstPropertyPtr selection, ConstBondsPtr bonds) :
+			StructureIdentificationEngine(validityInterval, std::move(positions), simCell, std::move(typesToIdentify), std::move(selection)), 
+			_bonds(std::move(bonds)) {}
 
-		/// Computes the modifier's results and stores them in this object for later retrieval.
+		/// Computes the modifier's results.
 		virtual void perform() override;
 
 		/// Returns the input bonds between particles.
-		const BondsStorage& bonds() const { return *_bonds; }
-
-		/// Returns the output bonds property that stores the computed CNA indices.
-		BondProperty* cnaIndices() const { return _cnaIndices.data(); }
+		const ConstBondsPtr& bonds() const { return _bonds; }
 
 	private:
 
-		QExplicitlySharedDataPointer<BondsStorage> _bonds;
-		QExplicitlySharedDataPointer<BondProperty> _cnaIndices;
+		const ConstBondsPtr _bonds;
 	};
 
 	/// Determines the coordination structure of a single particle using the common neighbor analysis method.
@@ -199,21 +222,10 @@ private:
 	static StructureType determineStructureFixed(CutoffNeighborFinder& neighList, size_t particleIndex, const QVector<bool>& typesToIdentify);
 
 	/// The cutoff radius used for the conventional CNA.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, cutoff, setCutoff);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, cutoff, setCutoff, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls how the CNA is performed.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(CNAMode, mode, setMode);
-
-	/// This stores the computed CNA bond indices.
-	QExplicitlySharedDataPointer<BondProperty> _cnaIndicesData;
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
-
-	Q_CLASSINFO("DisplayName", "Common neighbor analysis");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(CNAMode, mode, setMode, PROPERTY_FIELD_MEMORIZE);
 };
 
 OVITO_END_INLINE_NAMESPACE

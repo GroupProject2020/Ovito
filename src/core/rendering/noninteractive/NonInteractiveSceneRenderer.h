@@ -39,6 +39,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
  */
 class OVITO_CORE_EXPORT NonInteractiveSceneRenderer : public SceneRenderer
 {
+	Q_OBJECT
+	OVITO_CLASS(NonInteractiveSceneRenderer)
+	
 public:
 
 	/// Constructor.
@@ -120,9 +123,6 @@ private:
 
 	/// The current model-to-world transformation matrix.
 	AffineTransformation _modelTM;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

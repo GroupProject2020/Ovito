@@ -20,7 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <core/Core.h>
-#include <core/reference/RefMaker.h>
+#include <core/oo/RefMaker.h>
+#include <core/dataset/DataSet.h>
 #include "UndoStack.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Undo)
@@ -86,7 +87,7 @@ void UndoStack::push(std::unique_ptr<UndoableOperation> operation)
 void UndoStack::beginCompoundOperation(const QString& displayName)
 {
 	OVITO_ASSERT_MSG(isUndoingOrRedoing() == false, "UndoStack::beginCompoundOperation()", "Cannot record an operation while undoing or redoing another operation.");
-	_compoundStack.emplace_back(new CompoundOperation(displayName));
+	_compoundStack.push_back(std::make_unique<CompoundOperation>(displayName));
 }
 
 /******************************************************************************
@@ -282,6 +283,40 @@ void UndoStack::CompoundOperation::redo()
 	for(size_t i = 0; i < _subOperations.size(); i++) {
 		OVITO_CHECK_POINTER(_subOperations[i]);
 		_subOperations[i]->redo();
+	}
+}
+
+/******************************************************************************
+* Prints a text representation of the undo stack to the console. 
+* This is for debugging purposes only.
+******************************************************************************/
+void UndoStack::debugPrint()
+{
+	qDebug() << "Undo stack (suspend=" << _suspendCount << "index=" << _index << "clean index=" << _cleanIndex << "):";
+	int index = 0;
+	for(const auto& op : _operations) {
+		qDebug() << "  " << index << ":" << qPrintable(op->displayName());
+		if(CompoundOperation* compOp = dynamic_cast<CompoundOperation*>(op.get())) {
+			compOp->debugPrint(2);
+		}
+		index++;
+	}
+}
+
+
+/******************************************************************************
+* Prints a text representation of the compound operation to the console. 
+* This is for debugging purposes only.
+******************************************************************************/
+void UndoStack::CompoundOperation::debugPrint(int level)
+{
+	int index = 0;
+	for(const auto& op : _subOperations) {
+		qDebug() << QByteArray(level*2, ' ').constData() << index << ":" << qPrintable(op->displayName());
+		if(CompoundOperation* compOp = dynamic_cast<CompoundOperation*>(op.get())) {
+			compOp->debugPrint(level+1);
+		}
+		index++;
 	}
 }
 

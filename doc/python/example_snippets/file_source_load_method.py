@@ -1,12 +1,11 @@
 from ovito.io import import_file
-from ovito.modifiers import ColorCodingModifier
 
-# This creates a new node with an empty modification pipeline:
-node = import_file('first_file.dump')
+# Create a new pipeline with a FileSource:
+pipeline = import_file('first_file.dump')
 
-# Populate the pipeline with a modifier:
-node.modifiers.append(ColorCodingModifier(particle_property='Potential Energy'))
+# Get the data from the first file:
+data1 = pipeline.compute()
 
-# Call FileSource.load() to replace the input data with a different file
-# but keep the node's current modification pipeline:
-node.source.load('second_file.dump')
+# Replace the pipeline's input with a different file by calling FileSource.load():
+pipeline.source.load('second_file.dump')
+data2 = pipeline.compute()

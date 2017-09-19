@@ -21,21 +21,24 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/util/CutoffNeighborFinder.h>
-#include <core/animation/AnimationSettings.h>
-#include <core/scene/pipeline/PipelineObject.h>
+#include <plugins/particles/modifier/ParticleInputHelper.h>
+#include <plugins/particles/modifier/ParticleOutputHelper.h>
+#include <core/dataset/animation/AnimationSettings.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
 #include <core/utilities/concurrent/ParallelFor.h>
+#include <core/dataset/pipeline/AsynchronousModifier.h>
 #include "ComputePropertyModifier.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Properties)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(ComputePropertyModifier, AsynchronousParticleModifier);
-DEFINE_PROPERTY_FIELD(ComputePropertyModifier, expressions, "Expressions");
-DEFINE_PROPERTY_FIELD(ComputePropertyModifier, outputProperty, "OutputProperty");
-DEFINE_PROPERTY_FIELD(ComputePropertyModifier, onlySelectedParticles, "OnlySelectedParticles");
-DEFINE_PROPERTY_FIELD(ComputePropertyModifier, neighborModeEnabled, "NeighborModeEnabled");
-DEFINE_PROPERTY_FIELD(ComputePropertyModifier, neighborExpressions, "NeighborExpressions");
-DEFINE_FLAGS_PROPERTY_FIELD(ComputePropertyModifier, cutoff, "Cutoff", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_VECTOR_REFERENCE_FIELD(ComputePropertyModifier, cachedDisplayObjects, "CachedDisplayObjects", DisplayObject, PROPERTY_FIELD_NEVER_CLONE_TARGET|PROPERTY_FIELD_NO_CHANGE_MESSAGE|PROPERTY_FIELD_NO_UNDO|PROPERTY_FIELD_NO_SUB_ANIM);
+IMPLEMENT_OVITO_CLASS(ComputePropertyModifier);
+DEFINE_PROPERTY_FIELD(ComputePropertyModifier, expressions);
+DEFINE_PROPERTY_FIELD(ComputePropertyModifier, outputProperty);
+DEFINE_PROPERTY_FIELD(ComputePropertyModifier, onlySelectedParticles);
+DEFINE_PROPERTY_FIELD(ComputePropertyModifier, neighborModeEnabled);
+DEFINE_PROPERTY_FIELD(ComputePropertyModifier, neighborExpressions);
+DEFINE_PROPERTY_FIELD(ComputePropertyModifier, cutoff);
 SET_PROPERTY_FIELD_LABEL(ComputePropertyModifier, expressions, "Expressions");
 SET_PROPERTY_FIELD_LABEL(ComputePropertyModifier, outputProperty, "Output property");
 SET_PROPERTY_FIELD_LABEL(ComputePropertyModifier, onlySelectedParticles, "Compute only for selected particles");
@@ -44,37 +47,44 @@ SET_PROPERTY_FIELD_LABEL(ComputePropertyModifier, neighborExpressions, "Neighbor
 SET_PROPERTY_FIELD_LABEL(ComputePropertyModifier, cutoff, "Cutoff radius");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ComputePropertyModifier, cutoff, WorldParameterUnit, 0);
 
+IMPLEMENT_OVITO_CLASS(ComputePropertyModifierApplication);
+DEFINE_REFERENCE_FIELD(ComputePropertyModifierApplication, cachedDisplayObjects);
+
 /******************************************************************************
 * Constructs a new instance of this class.
 ******************************************************************************/
-ComputePropertyModifier::ComputePropertyModifier(DataSet* dataset) : AsynchronousParticleModifier(dataset),
-	_outputProperty(tr("My property")), _expressions(QStringList("0")), _onlySelectedParticles(false),
-	_neighborExpressions(QStringList("0")), _cutoff(3), _neighborModeEnabled(false)
+ComputePropertyModifier::ComputePropertyModifier(DataSet* dataset) : AsynchronousModifier(dataset),
+	_outputProperty(tr("My property")), 
+	_expressions(QStringList("0")), 
+	_onlySelectedParticles(false),
+	_neighborExpressions(QStringList("0")), 
+	_cutoff(3), 
+	_neighborModeEnabled(false)
 {
-	INIT_PROPERTY_FIELD(expressions);
-	INIT_PROPERTY_FIELD(onlySelectedParticles);
-	INIT_PROPERTY_FIELD(outputProperty);
-	INIT_PROPERTY_FIELD(neighborModeEnabled);
-	INIT_PROPERTY_FIELD(cutoff);
-	INIT_PROPERTY_FIELD(neighborExpressions);
-	INIT_PROPERTY_FIELD(cachedDisplayObjects);
+
+
+
+
+
+
 }
 
 /******************************************************************************
-* Loads the class' contents from the given stream.
+* Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-void ComputePropertyModifier::loadFromStream(ObjectLoadStream& stream)
+bool ComputePropertyModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	// This is for backward compatibility with OVITO 2.5.1.
-	// AsynchronousParticleModifier was not the base class before.
-	if(stream.formatVersion() >= 20502)
-		AsynchronousParticleModifier::loadFromStream(stream);
-	else
-		ParticleModifier::loadFromStream(stream);
+	return input.findObject<ParticleProperty>() != nullptr;
+}
 
-	// This is also for backward compatibility with OVITO 2.5.1.
-	// Make sure the number of neighbor expressions is equal to the number of central expressions.
-	setPropertyComponentCount(propertyComponentCount());
+/******************************************************************************
+* Create a new modifier application that refers to this modifier instance.
+******************************************************************************/
+OORef<ModifierApplication> ComputePropertyModifier::createModifierApplication()
+{
+	OORef<ModifierApplication> modApp = new ComputePropertyModifierApplication(dataset());
+	modApp->setModifier(this);
+	return modApp;
 }
 
 /******************************************************************************
@@ -110,33 +120,24 @@ void ComputePropertyModifier::propertyChanged(const PropertyFieldDescriptor& fie
 {
 	if(field == PROPERTY_FIELD(outputProperty)) {
 		if(outputProperty().type() != ParticleProperty::UserProperty)
-			setPropertyComponentCount(ParticleProperty::standardPropertyComponentCount(outputProperty().type()));
+			setPropertyComponentCount(ParticleProperty::OOClass().standardPropertyComponentCount(outputProperty().type()));
 		else
 			setPropertyComponentCount(1);
 	}
 
-	AsynchronousParticleModifier::propertyChanged(field);
-
-	// Throw away cached results if parameters change.
-	if(field == PROPERTY_FIELD(expressions) ||
-			field == PROPERTY_FIELD(neighborExpressions) ||
-			field == PROPERTY_FIELD(onlySelectedParticles) ||
-			field == PROPERTY_FIELD(neighborModeEnabled) ||
-			field == PROPERTY_FIELD(outputProperty) ||
-			field == PROPERTY_FIELD(cutoff))
-		invalidateCachedResults();
+	AsynchronousModifier::propertyChanged(field);
 }
 
 /******************************************************************************
 * This method is called by the system when the modifier has been inserted
 * into a pipeline.
 ******************************************************************************/
-void ComputePropertyModifier::initializeModifier(PipelineObject* pipeline, ModifierApplication* modApp)
+void ComputePropertyModifier::initializeModifier(ModifierApplication* modApp)
 {
-	AsynchronousParticleModifier::initializeModifier(pipeline, modApp);
+	AsynchronousModifier::initializeModifier(modApp);
 
 	// Generate list of available input variables.
-	PipelineFlowState input = getModifierInput(modApp);
+	PipelineFlowState input = modApp->evaluateInputPreliminary();
 	ParticleExpressionEvaluator evaluator;
 	evaluator.initialize(QStringList(), input);
 	_inputVariableNames = evaluator.inputVariableNames();
@@ -144,44 +145,47 @@ void ComputePropertyModifier::initializeModifier(PipelineObject* pipeline, Modif
 }
 
 /******************************************************************************
-* Creates and initializes a computation engine that will compute the modifier's results.
+* Creates and initializes a computation engine that will compute the 
+* modifier's results.
 ******************************************************************************/
-std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> ComputePropertyModifier::createEngine(TimePoint time, TimeInterval validityInterval)
+Future<AsynchronousModifier::ComputeEnginePtr> ComputePropertyModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
+	ParticleInputHelper pih(dataset(), input);
+
 	// Get the particle positions.
-	ParticlePropertyObject* posProperty = expectStandardProperty(ParticleProperty::PositionProperty);
+	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
 
 	// Get simulation cell.
-	SimulationCellObject* inputCell = expectSimulationCell();
+	SimulationCellObject* inputCell = pih.expectSimulationCell();
 
 	// The current animation frame number.
 	int currentFrame = dataset()->animationSettings()->timeToFrame(time);
 
 	// Build list of all input particle properties, which will be passed to the compute engine.
-	std::vector<QExplicitlySharedDataPointer<ParticleProperty>> inputProperties;
-	for(DataObject* obj : input().objects()) {
-		if(ParticlePropertyObject* prop = dynamic_object_cast<ParticlePropertyObject>(obj)) {
+	std::vector<ConstPropertyPtr> inputProperties;
+	for(DataObject* obj : input.objects()) {
+		if(ParticleProperty* prop = dynamic_object_cast<ParticleProperty>(obj)) {
 			inputProperties.emplace_back(prop->storage());
 		}
 	}
 
 	// Get particle selection
-	ParticleProperty* selProperty = nullptr;
+	ConstPropertyPtr selProperty;
 	if(onlySelectedParticles()) {
-		ParticlePropertyObject* selPropertyObj = inputStandardProperty(ParticleProperty::SelectionProperty);
+		ParticleProperty* selPropertyObj = pih.inputStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty);
 		if(!selPropertyObj)
 			throwException(tr("Compute modifier has been restricted to selected particles, but no particle selection is defined."));
-		OVITO_ASSERT(selPropertyObj->size() == inputParticleCount());
+		OVITO_ASSERT(selPropertyObj->size() == pih.inputParticleCount());
 		selProperty = selPropertyObj->storage();
 	}
 
 	// Prepare output property.
-	QExplicitlySharedDataPointer<ParticleProperty> outp;
+	PropertyPtr outp;
 	if(outputProperty().type() != ParticleProperty::UserProperty) {
-		outp = new ParticleProperty(posProperty->size(), outputProperty().type(), 0, onlySelectedParticles());
+		outp = ParticleProperty::OOClass().createStandardStorage(posProperty->size(), outputProperty().type(), onlySelectedParticles());
 	}
 	else if(!outputProperty().name().isEmpty() && propertyComponentCount() > 0) {
-		outp = new ParticleProperty(posProperty->size(), qMetaTypeId<FloatType>(), propertyComponentCount(), 0, outputProperty().name(), onlySelectedParticles());
+		outp = std::make_shared<PropertyStorage>(posProperty->size(), qMetaTypeId<FloatType>(), propertyComponentCount(), 0, outputProperty().name(), onlySelectedParticles());
 	}
 	else {
 		throwException(tr("Output property has not been specified."));
@@ -191,15 +195,17 @@ std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> ComputePropertyModi
 	if(neighborModeEnabled() && neighborExpressions().size() != outp->componentCount())
 		throwException(tr("Number of neighbor expressions does not match component count of output property."));
 
+	TimeInterval validityInterval = input.stateValidity();
+
 	// Initialize output property with original values when computation is restricted to selected particles.
 	if(onlySelectedParticles()) {
-		ParticlePropertyObject* originalPropertyObj = nullptr;
+		ParticleProperty* originalPropertyObj = nullptr;
 		if(outputProperty().type() != ParticleProperty::UserProperty) {
-			originalPropertyObj = inputStandardProperty(outputProperty().type());
+			originalPropertyObj = pih.inputStandardProperty<ParticleProperty>(outputProperty().type());
 		}
 		else {
-			for(DataObject* o : input().objects()) {
-				ParticlePropertyObject* property = dynamic_object_cast<ParticlePropertyObject>(o);
+			for(DataObject* o : input.objects()) {
+				ParticleProperty* property = dynamic_object_cast<ParticleProperty>(o);
 				if(property && property->type() == ParticleProperty::UserProperty && property->name() == outp->name()) {
 					originalPropertyObj = property;
 					break;
@@ -212,22 +218,22 @@ std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> ComputePropertyModi
 			memcpy(outp->data(), originalPropertyObj->constData(), outp->stride() * outp->size());
 		}
 		else if(outputProperty().type() == ParticleProperty::ColorProperty) {
-			std::vector<Color> colors = inputParticleColors(time, validityInterval);
+			std::vector<Color> colors = pih.inputParticleColors(time, validityInterval);
 			OVITO_ASSERT(outp->stride() == sizeof(Color) && outp->size() == colors.size());
 			memcpy(outp->data(), colors.data(), outp->stride() * outp->size());
 		}
 		else if(outputProperty().type() == ParticleProperty::RadiusProperty) {
-			std::vector<FloatType> radii = inputParticleRadii(time, validityInterval);
+			std::vector<FloatType> radii = pih.inputParticleRadii(time, validityInterval);
 			OVITO_ASSERT(outp->stride() == sizeof(FloatType) && outp->size() == radii.size());
 			memcpy(outp->data(), radii.data(), outp->stride() * outp->size());
 		}
 	}
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<PropertyComputeEngine>(validityInterval, time, outp.data(), posProperty->storage(),
-			selProperty, inputCell->data(), neighborModeEnabled() ? cutoff() : 0.0f,
+	return std::make_shared<PropertyComputeEngine>(validityInterval, time, std::move(outp), posProperty->storage(),
+			std::move(selProperty), inputCell->data(), neighborModeEnabled() ? cutoff() : 0,
 			expressions(), neighborExpressions(),
-			std::move(inputProperties), currentFrame, input().attributes());
+			std::move(inputProperties), currentFrame, input.attributes());
 }
 
 /******************************************************************************
@@ -238,9 +244,9 @@ void ComputePropertyModifier::PropertyComputeEngine::initializeEngine(TimePoint 
 	OVITO_ASSERT(_expressions.size() == outputProperty()->componentCount());
 
 	// Make a copy of the list of input properties.
-	std::vector<ParticleProperty*> inputProperties;
+	std::vector<ConstPropertyPtr> inputProperties;
 	for(const auto& p : _inputProperties)
-		inputProperties.push_back(p.data());
+		inputProperties.push_back(p);
 
 	// Initialize expression evaluators.
 	_evaluator.initialize(_expressions, inputProperties, &cell(), _attributes, _frameNumber);
@@ -291,7 +297,7 @@ void ComputePropertyModifier::PropertyComputeEngine::perform()
 	CutoffNeighborFinder neighborFinder;
 	if(neighborMode()) {
 		// Prepare the neighbor list.
-		if(!neighborFinder.prepare(_cutoff, positions(), cell(), nullptr, *this))
+		if(!neighborFinder.prepare(_cutoff, *positions(), cell(), nullptr, this))
 			return;
 	}
 
@@ -299,7 +305,7 @@ void ComputePropertyModifier::PropertyComputeEngine::perform()
 	setProgressMaximum(positions()->size());
 
 	// Parallelized loop over all particles.
-	parallelForChunks(positions()->size(), *this, [this, &neighborFinder](size_t startIndex, size_t count, PromiseBase& promise) {
+	parallelForChunks(positions()->size(), *this, [this, &neighborFinder](size_t startIndex, size_t count, PromiseState& promise) {
 		ParticleExpressionEvaluator::Worker worker(_evaluator);
 		ParticleExpressionEvaluator::Worker neighborWorker(_neighborEvaluator);
 
@@ -374,71 +380,31 @@ void ComputePropertyModifier::PropertyComputeEngine::perform()
 }
 
 /******************************************************************************
-* Unpacks the results of the computation engine and stores them in the modifier.
+* Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-void ComputePropertyModifier::transferComputationResults(ComputeEngine* engine)
+PipelineFlowState ComputePropertyModifier::PropertyComputeResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	PropertyComputeEngine* eng = static_cast<PropertyComputeEngine*>(engine);
-	_computedProperty = eng->outputProperty();
-	_inputVariableNames = eng->inputVariableNames();
-	_inputVariableTable = eng->inputVariableTable();
-}
+	PipelineFlowState output = input;
+	ParticleOutputHelper poh(modApp->dataset(), output);
+	ParticleProperty* outputPropertyObj = poh.outputProperty<ParticleProperty>(outputProperty());
 
-/******************************************************************************
-* Lets the modifier insert the cached computation results into the
-* modification pipeline.
-******************************************************************************/
-PipelineStatus ComputePropertyModifier::applyComputationResults(TimePoint time, TimeInterval& validityInterval)
-{
-	if(!_computedProperty)
-		throwException(tr("No computation results available."));
-
-	if(outputParticleCount() != _computedProperty->size())
-		throwException(tr("The number of input particles has changed. The stored results have become invalid."));
-
-	ParticlePropertyObject* outputPropertyObj;
-	if(_computedProperty->type() == ParticleProperty::UserProperty)
-		outputPropertyObj = outputCustomProperty(_computedProperty.data());
-	else
-		outputPropertyObj = outputStandardProperty(_computedProperty.data());
-
-	// Replace display objects of output property with cached ones and cache any new display objects.
-	// This is required to avoid losing the output property's display settings
-	// each time the modifier is re-evaluated or when serializing the modifier.
-	if(outputPropertyObj) {
+	ComputePropertyModifierApplication* myModApp = dynamic_object_cast<ComputePropertyModifierApplication>(modApp);
+	if(myModApp) {
+		// Replace display objects of output property with cached ones and cache any new display objects.
+		// This is required to avoid losing the output property's display settings
+		// each time the modifier is re-evaluated or when serializing the modifier.
 		QVector<DisplayObject*> currentDisplayObjs = outputPropertyObj->displayObjects();
 		// Replace with cached display objects if they are of the same class type.
-		for(int i = 0; i < currentDisplayObjs.size() && i < _cachedDisplayObjects.size(); i++) {
-			if(currentDisplayObjs[i]->getOOType() == _cachedDisplayObjects[i]->getOOType()) {
-				currentDisplayObjs[i] = _cachedDisplayObjects[i];
+		for(int i = 0; i < currentDisplayObjs.size() && i < myModApp->cachedDisplayObjects().size(); i++) {
+			if(currentDisplayObjs[i]->getOOClass() == myModApp->cachedDisplayObjects()[i]->getOOClass()) {
+				currentDisplayObjs[i] = myModApp->cachedDisplayObjects()[i];
 			}
 		}
 		outputPropertyObj->setDisplayObjects(currentDisplayObjs);
-		_cachedDisplayObjects = currentDisplayObjs;
+		myModApp->setCachedDisplayObjects(currentDisplayObjs);
 	}
 
-	return PipelineStatus::Success;
-}
-
-/******************************************************************************
-* Allows the object to parse the serialized contents of a property field in a custom way.
-******************************************************************************/
-bool ComputePropertyModifier::loadPropertyFieldFromStream(ObjectLoadStream& stream, const ObjectLoadStream::SerializedPropertyField& serializedField)
-{
-	// This is to maintain compatibility with old file format.
-	if(serializedField.identifier == "PropertyName") {
-		QString propertyName;
-		stream >> propertyName;
-		setOutputProperty(ParticlePropertyReference(outputProperty().type(), propertyName));
-		return true;
-	}
-	else if(serializedField.identifier == "PropertyType") {
-		int propertyType;
-		stream >> propertyType;
-		setOutputProperty(ParticlePropertyReference((ParticleProperty::Type)propertyType, outputProperty().name()));
-		return true;
-	}
-	return AsynchronousParticleModifier::loadPropertyFieldFromStream(stream, serializedField);
+	return output;
 }
 
 OVITO_END_INLINE_NAMESPACE

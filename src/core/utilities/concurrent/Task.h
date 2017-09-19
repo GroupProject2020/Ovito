@@ -23,86 +23,77 @@
 
 
 #include <core/Core.h>
+#include "ThreadSafePromiseState.h"
 #include "Future.h"
 
 #include <QRunnable>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
-class AsynchronousTask : public Promise<void>, public QRunnable
+class AsynchronousTaskBase : public ThreadSafePromiseState, public QRunnable
 {
 public:
 
-	/// Constructor.
-	AsynchronousTask() {
-		setAutoDelete(false);
-	}
+	/// Destructor.
+	virtual ~AsynchronousTaskBase();
 
 	/// This function must be implemented by subclasses to perform the actual task.
 	virtual void perform() = 0;
 
+	/// Runs the given function once this task has reached the 'finished' state.
+	/// The function is run even if the task was canceled or produced an error state.
+	template<typename FC, class Executor>
+	void finally(Executor&& executor, FC&& cont)
+	{
+		addContinuation(
+			executor.createWork([cont = std::forward<FC>(cont)](bool workCanceled) mutable {
+				if(!workCanceled)
+					std::move(cont)();
+		}));
+	}
+
+protected:
+
+	/// Constructor.
+	AsynchronousTaskBase() {
+		QRunnable::setAutoDelete(false);
+	}
+
 private:
 
 	/// Implementation of QRunnable.
-	virtual void run() override {
-		tryToRunImmediately();
-	}
-
-	/// Implementation of FutureInterface.
-	virtual void tryToRunImmediately() override {
-		if(!this->setStarted())
-			return;
-		try {
-			perform();
-		}
-		catch(...) {
-			this->setException();
-		}
-		this->setFinished();
-	}
+	virtual void run() override;
 };
 
-class OVITO_CORE_EXPORT SynchronousTask
+template<typename... R>
+class AsynchronousTask : public PromiseStateWithResultStorage<AsynchronousTaskBase, std::tuple<R...>>
 {
 public:
 
+	/// Returns a future that is associated with the same shared state as this task.
+	Future<R...> future() {
+#ifdef OVITO_DEBUG
+		OVITO_ASSERT_MSG(!_futureCreated, "AsynchronousTask::future()", "Only a single Future may be created from a task.");
+		_futureCreated = true;
+#endif
+		return Future<R...>(this->shared_from_this());
+	}
+
+	/// Sets the result value of the task.
+	template<typename... R2>
+	void setResult(R2&&... result) {
+		this->template setResults<std::tuple<R...>>(std::forward_as_tuple(std::forward<R2>(result)...));
+	}
+
+protected:
+
 	/// Constructor.
-	SynchronousTask(TaskManager& taskManager);
+	AsynchronousTask() : 
+		PromiseStateWithResultStorage<AsynchronousTaskBase, std::tuple<R...>>(PromiseState::no_result_init_t()) {}
 
-	/// Destructor.
-	~SynchronousTask();
-
-	/// Returns whether the operation has been canceled by the user.
-	bool isCanceled() const;
-
-	/// Cancels the operation.
-	void cancel() { _promise->cancel(); }
-
-	/// Sets the status text to be displayed.
-	void setProgressText(const QString& text);
-
-	/// Return the current status text.
-	QString progressText() const { return _promise->progressText(); }
-
-	/// Returns the highest value represented by the progress bar.
-	int progressMaximum() const { return _promise->progressMaximum(); }
-
-	/// Sets the highest value represented by the progress bar.
-	void setProgressMaximum(int max) { _promise->setProgressMaximum(max); }
-
-	/// Returns the value displayed by the progress bar.
-	int progressValue() const { return _promise->progressValue(); }
-
-	/// Sets the value displayed by the progress bar.
-	void setProgressValue(int v);
-
-	/// Returns the internal promise managed by this object.
-	Promise<void>& promise() const { return *_promise.get(); }
-
-private:
-
-	PromisePtr<void> _promise;
-	TaskManager& _taskManager;
+#ifdef OVITO_DEBUG
+	bool _futureCreated = false;
+#endif
 };
 
 OVITO_END_INLINE_NAMESPACE

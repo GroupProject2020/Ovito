@@ -42,7 +42,7 @@ StatusWidget::StatusWidget(QWidget* parent) : QScrollArea(parent),
 
 	_textLabel = new QLabel(container);
 	_textLabel->setAlignment(Qt::AlignTop);
-	_textLabel->setTextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard | Qt::LinksAccessibleByMouse | Qt::LinksAccessibleByKeyboard);
+	_textLabel->setTextInteractionFlags(Qt::TextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard | Qt::LinksAccessibleByMouse | Qt::LinksAccessibleByKeyboard));
 	_textLabel->setWordWrap(true);
 	layout->addWidget(_textLabel, 1, Qt::AlignTop);
 

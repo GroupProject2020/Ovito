@@ -34,7 +34,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View)
  */
 class OVITO_CORE_EXPORT ViewportConfiguration : public RefTarget
 {
-
+	Q_OBJECT
+	OVITO_CLASS(ViewportConfiguration)
+	
 public:
 
 	enum OrbitCenterMode {
@@ -50,7 +52,7 @@ public:
 	Q_INVOKABLE ViewportConfiguration(DataSet* dataset);
 
 	/// Add a record for a new viewport.
-	void addViewport(const OORef<Viewport>& vp) { _viewports.push_back(vp); }
+	void addViewport(const OORef<Viewport>& vp) { _viewports.push_back(this, PROPERTY_FIELD(viewports), vp); }
 
 	/// \brief Immediately repaints all viewports that have been scheduled for an update using updateViewports().
 	/// \sa updateViewports()
@@ -83,12 +85,6 @@ public:
 	/// \return \c true if there is currently a rendering operation going on.
 	bool isRendering() const;
 
-	/// Changes the way the center of rotation is chosen.
-	void setOrbitCenterMode(OrbitCenterMode mode) { _orbitCenterMode = mode; }
-
-	/// Returns the current center of orbit mode.
-	OrbitCenterMode orbitCenterMode() { return _orbitCenterMode; }
-
 	/// Returns the current location around which the viewport camera orbits.
 	Point3 orbitCenter();
 
@@ -96,17 +92,15 @@ public Q_SLOTS:
 
 	/// \brief Sets the active viewport.
 	/// \param vp The viewport to be made active.
-	void setActiveViewport(Viewport* vp) {
-		OVITO_ASSERT_MSG(vp == NULL || _viewports.contains(vp), "ViewportConfiguration::setActiveViewport", "Viewport is not in current configuration.");
-		_activeViewport = vp;
+	void setActiveViewportSlot(Viewport* vp) {
+		setActiveViewport(vp);
 	}
 
 	/// \brief Maximizes a viewport.
 	/// \param vp The viewport to be maximized or \c NULL to restore the currently maximized viewport to
 	///           its original state.
-	void setMaximizedViewport(Viewport* vp) {
-		OVITO_ASSERT_MSG(vp == NULL || _viewports.contains(vp), "ViewportConfiguration::setMaximizedViewport", "Viewport is not in current configuration.");
-		_maximizedViewport = vp;
+	void setMaximizedViewportSlot(Viewport* vp) {
+		setMaximizedViewport(vp);
 	}
 
 	/// \brief Zooms all viewports to the extents of the currently selected nodes.
@@ -153,31 +147,31 @@ Q_SIGNALS:
 	/// This signal is emitted when the camera orbit center haa changed.
 	void cameraOrbitCenterChanged();
 
+	/// This signal is emitted whenever the updating of viewports is resumed.
+	void viewportUpdateResumed();
+
 private:
 
 	/// The list of viewports.
-	DECLARE_VECTOR_REFERENCE_FIELD(Viewport, viewports);
+	DECLARE_VECTOR_REFERENCE_FIELD_FLAGS(Viewport, viewports, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_ALWAYS_CLONE);
 
 	/// The active viewport. May be NULL.
-	DECLARE_REFERENCE_FIELD(Viewport, activeViewport);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(Viewport, activeViewport, setActiveViewport, PROPERTY_FIELD_NO_UNDO);
 
 	/// The maximized viewport or NULL.
-	DECLARE_REFERENCE_FIELD(Viewport, maximizedViewport);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(Viewport, maximizedViewport, setMaximizedViewport, PROPERTY_FIELD_NO_UNDO);
+
+	/// Controls around which point the viewport camera should orbit.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(OrbitCenterMode, orbitCenterMode, setOrbitCenterMode, PROPERTY_FIELD_NO_UNDO);
+
+	/// Position of the orbiting center picked by the user.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(Point3, userOrbitCenter, setUserOrbitCenter, PROPERTY_FIELD_NO_UNDO);
 
 	/// This counter is for suspending the viewport updates.
 	int _viewportSuspendCount;
 
 	/// Indicates that the viewports have been invalidated while updates were suspended.
 	bool _viewportsNeedUpdate;
-
-	/// Controls around which point the viewport camera should orbit.
-	DECLARE_PROPERTY_FIELD(OrbitCenterMode, orbitCenterMode);
-
-	/// Position of the orbiting center picked by the user.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(Point3, userOrbitCenter, setUserOrbitCenter);
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 
@@ -192,10 +186,10 @@ private:
  * Just create an instance of this class on the stack to suspend viewport updates
  * during the lifetime of the class instance.
  */
-class ViewportSuspender {
+class OVITO_CORE_EXPORT ViewportSuspender {
 public:
 	ViewportSuspender(ViewportConfiguration* vpconf) : _vpconf(*vpconf) { _vpconf.suspendViewportUpdates(); }
-	ViewportSuspender(RefMaker* object) : _vpconf(*object->dataset()->viewportConfig()) { _vpconf.suspendViewportUpdates(); }
+	ViewportSuspender(RefMaker* object);
 	~ViewportSuspender() { _vpconf.resumeViewportUpdates(); }
 private:
 	ViewportConfiguration& _vpconf;

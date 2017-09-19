@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <gui/GUI.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/animation/AnimationSettings.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/dataset/DataSetContainer.h>
 #include <gui/mainwin/MainWindow.h>

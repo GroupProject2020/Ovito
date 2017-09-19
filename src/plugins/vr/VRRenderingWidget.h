@@ -74,7 +74,7 @@ protected:
 private:
 
 	/// Computes the projection and transformation matrices for each of the two eyes.
-	ViewProjectionParameters projectionParameters(int eye, FloatType aspectRatio, const AffineTransformation& bodyToWorldTM, const Box3& sceneBoundingBox);
+	ViewProjectionParameters projectionParameters(int eye, FloatType aspectRatio, const AffineTransformation& bodyToWorldTM, const Box3& sceneBoundingBox = Box3());
 
 	/// Converts a transformation matrix from the OpenVR format to OVITO's internal format.
 	static AffineTransformation fromOpenVRMatrix(const vr::HmdMatrix34_t& tm) {

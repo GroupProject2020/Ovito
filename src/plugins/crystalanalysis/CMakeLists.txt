@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2015) Alexander Stukowski
+#  Copyright (2017) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -28,6 +28,7 @@ SET(SourceFiles
 	objects/clusters/ClusterGraphObject.cpp
 	objects/dislocations/DislocationNetworkObject.cpp
 	objects/dislocations/DislocationDisplay.cpp
+	objects/dislocations/DislocationSliceModifierDelegate.cpp
 	objects/partition_mesh/PartitionMesh.cpp
 	objects/partition_mesh/PartitionMeshDisplay.cpp
 	objects/slip_surface/SlipSurface.cpp
@@ -35,8 +36,6 @@ SET(SourceFiles
 	data/ClusterGraph.cpp
 	data/DislocationNetwork.cpp
 	data/PlanarDefects.cpp
-	modifier/SmoothSurfaceModifier.cpp
-	modifier/SmoothDislocationsModifier.cpp
 	modifier/ConstructSurfaceModifier.cpp
 	modifier/dxa/DislocationAnalysisModifier.cpp
 	modifier/dxa/DislocationAnalysisEngine.cpp
@@ -50,7 +49,6 @@ SET(SourceFiles
 	modifier/elasticstrain/ElasticStrainEngine.cpp
 #	modifier/grains/GrainSegmentationModifier.cpp
 #	modifier/grains/GrainSegmentationEngine.cpp
-	modifier/SliceSurfaceModifier.cpp
 	util/DelaunayTessellation.cpp
 )
 
@@ -60,7 +58,7 @@ ENDIF()
 
 OVITO_STANDARD_PLUGIN(CrystalAnalysis
 	SOURCES ${SourceFiles}
-	PLUGIN_DEPENDENCIES Particles
+	PLUGIN_DEPENDENCIES Particles Mesh
 	LIB_DEPENDENCIES geogram
 	OPTIONAL_PLUGIN_DEPENDENCIES PyScript
 	PYTHON_WRAPPERS "${CMAKE_CURRENT_SOURCE_DIR}/resources/python/"

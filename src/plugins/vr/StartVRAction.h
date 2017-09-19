@@ -23,7 +23,7 @@
 
 
 #include <gui/GUI.h>
-#include <gui/plugins/autostart/GuiAutoStartObject.h>
+#include <gui/app/GuiApplicationService.h>
 
 namespace VRPlugin {
 
@@ -32,8 +32,11 @@ using namespace Ovito;
 /**
  * \brief An auto-start object that is automatically invoked on application startup.
  */
-class StartVRAction : public GuiAutoStartObject
+class StartVRAction : public GuiApplicationService
 {
+	Q_OBJECT
+	OVITO_CLASS(StartVRAction)
+	
 public:
 
 	/// \brief Default constructor.
@@ -50,11 +53,6 @@ public:
 
 	/// \brief Is called after the application has been completely initialized.
 	virtual void applicationStarted() override;
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 }	// End of namespace

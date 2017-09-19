@@ -2,6 +2,10 @@
 Examples
 ==================================
 
+.. warning::
+   This section of the manual is out of date! It was not updated yet to reflect the changes made in the current
+   development version of OVITO.
+
 This page provides a collection of example scripts:
 
    * :ref:`example_compute_voronoi_indices`
@@ -148,8 +152,8 @@ The following script demonstrates how to create particles, a simulation cell, an
 without loading an external simulation file. This approach can be used to implement custom data importers
 or dynamically generate atomic structures, which can then be further processed with OVITO or exported to a file.
 
-The script creates different data objects and adds them to a new :py:class:`~ovito.data.DataCollection` instance.
-Finally, an :py:class:`~ovito.ObjectNode` is created and the :py:class:`~ovito.data.DataCollection` is set as
+The script creates different data objects and adds them to a new :py:class:`~ovito.pipeline.StaticSource` instance.
+Finally, a :py:class:`~ovito.pipeline.Pipeline` is created and the :py:class:`~ovito.pipeline.StaticSource` is set as
 its data source.
 
 .. literalinclude:: ../../../tests/scripts/test_suite/create_new_particle_property.py
@@ -170,4 +174,4 @@ into RGB values and stores them in the ``Color`` particle property.
 In the graphical OVITO version, simply insert a new Python modifier and copy/paste the following script into the source code window:
 
 .. literalinclude:: ../example_snippets/quaternions_to_colors.py
-  :lines: 1-52
+  :lines: 1-53

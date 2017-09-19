@@ -23,6 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
+#include <core/dataset/DataSetContainer.h>
 #include "../ParticleImporter.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
@@ -32,6 +33,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVI
  */
 class OVITO_PARTICLES_EXPORT FHIAimsLogFileImporter : public ParticleImporter
 {
+	Q_OBJECT
+	OVITO_CLASS(FHIAimsLogFileImporter)
+	
 public:
 
 	/// \brief Constructs a new instance of this class.
@@ -54,35 +58,44 @@ public:
 	virtual QString objectTitle() override { return tr("FHI-aims"); }
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
-	virtual std::shared_ptr<FrameLoader> createFrameLoader(const Frame& frame, bool isNewlySelectedFile) override {
-		return std::make_shared<FHIAimsImportTask>(dataset()->container(), frame, isNewlySelectedFile);
+	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
+		return std::make_shared<FrameLoader>(frame, localFilename);
 	}
 
-protected:
-
-	/// \brief Scans the given input file to find all contained simulation frames.
-	virtual void scanFileForTimesteps(PromiseBase& promise, QVector<FileSourceImporter::Frame>& frames, const QUrl& sourceUrl, CompressedTextReader& stream) override;
+	/// Creates an asynchronous frame discovery object that scans the input file for contained animation frames.
+	virtual std::shared_ptr<FileSourceImporter::FrameFinder> createFrameFinder(const QUrl& sourceUrl, const QString& localFilename) override {
+		return std::make_shared<FrameFinder>(sourceUrl, localFilename);
+	}
 
 private:
 
 	/// The format-specific task object that is responsible for reading an input file in the background.
-	class FHIAimsImportTask : public ParticleFrameLoader
+	class FrameLoader : public FileSourceImporter::FrameLoader
 	{
 	public:
 
-		/// Constructor.
-		FHIAimsImportTask(DataSetContainer* container, const FileSourceImporter::Frame& frame, bool isNewFile)
-			: ParticleFrameLoader(container, frame, isNewFile) {}
+		/// Inherit constructor from base class.
+		using FileSourceImporter::FrameLoader::FrameLoader;
 
 	protected:
 
-		/// Parses the given input file and stores the data in this container object.
-		virtual void parseFile(CompressedTextReader& stream) override;
+		/// Loads the frame data from the given file.
+		virtual void loadFile(QFile& file) override;
 	};
 
+	/// The format-specific task object that is responsible for scanning the input file for animation frames. 
+	class FrameFinder : public FileSourceImporter::FrameFinder
+	{
+	public:
 
-	Q_OBJECT
-	OVITO_OBJECT
+		/// Inherit constructor from base class.
+		using FileSourceImporter::FrameFinder::FrameFinder;
+
+	protected:
+
+		/// Scans the given file for source frames.
+		virtual void discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames) override;	
+	};
 };
 
 OVITO_END_INLINE_NAMESPACE

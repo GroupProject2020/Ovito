@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,15 +20,17 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticlePropertyObject.h>
+#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/BondsObject.h>
 #include <core/utilities/concurrent/TaskManager.h>
-#include <core/scene/ObjectNode.h>
-#include <core/scene/SelectionSet.h>
+#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/SelectionSet.h>
 #include "ParticleExporter.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(ParticleExporter, FileExporter);
+IMPLEMENT_OVITO_CLASS(ParticleExporter);	
 
 /******************************************************************************
 * Constructs a new instance of the class.
@@ -38,8 +40,8 @@ ParticleExporter::ParticleExporter(DataSet* dataset) : FileExporter(dataset)
 }
 
 /******************************************************************************
-* Selects the natural scene nodes to be exported by this exporter under 
-* normal circumstances.
+* Selects the nodes from the scene to be exported by this exporter if 
+* no specific set of nodes was provided.
 ******************************************************************************/
 void ParticleExporter::selectStandardOutputData()
 {
@@ -60,22 +62,32 @@ bool ParticleExporter::getParticleData(SceneNode* sceneNode, TimePoint time, Pip
 		throwException(tr("The scene node to be exported is not an object node."));
 
 	// Evaluate pipeline of object node.
-	auto evalFuture = objectNode->evaluatePipelineAsync(PipelineEvalRequest(time, false));
+	auto evalFuture = objectNode->evaluatePipeline(time);
 	if(!taskManager.waitForTask(evalFuture))
 		return false;
 	state = evalFuture.result();
 	if(state.isEmpty())
-		throwException(tr("The object to be exported does not contain any data."));
+		throwException(tr("The data collection to be exported is empty."));
 
-	ParticlePropertyObject* posProperty = ParticlePropertyObject::findInState(state, ParticleProperty::PositionProperty);
+	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
 	if(!posProperty)
-		throwException(tr("The selected scene object does not contain any particles that can be exported."));
+		throwException(tr("The selected data collection does not contain any particles that can be exported."));
 
 	// Verify data, make sure array length is consistent for all particle properties.
 	for(DataObject* obj : state.objects()) {
-		if(ParticlePropertyObject* p = dynamic_object_cast<ParticlePropertyObject>(obj)) {
+		if(ParticleProperty* p = dynamic_object_cast<ParticleProperty>(obj)) {
 			if(p->size() != posProperty->size())
-				throwException(tr("Data produced by modification pipeline is invalid. Array size is not the same for all particle properties."));
+				throwException(tr("Data produced by pipeline is invalid. The array size is not the same for all particle properties."));
+		}
+	}
+
+	// Verify data, make sure array length is consistent for all bond properties.
+	if(BondsObject* bonds = state.findObject<BondsObject>()) {
+		for(DataObject* obj : state.objects()) {
+			if(BondProperty* p = dynamic_object_cast<BondProperty>(obj)) {
+				if(p->size() != bonds->size())
+					throwException(tr("Data produced by pipeline is invalid. The array size of some bond properties is not consistent with the number of bonds."));
+			}
 		}
 	}
 

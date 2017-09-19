@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -43,7 +43,7 @@ struct EmptyHalfEdgeMeshStruct {};
  * Each face has a pointer to one of the edges adjacent to it.
  */
 template<class EdgeBase, class FaceBase, class VertexBase>
-class HalfEdgeMesh : public QSharedData
+class HalfEdgeMesh
 {
 public:
 
@@ -297,7 +297,7 @@ public:
 	HalfEdgeMesh() {}
 
 	/// Copy constructor.
-	HalfEdgeMesh(const HalfEdgeMesh& other) : QSharedData(other) {
+	HalfEdgeMesh(const HalfEdgeMesh& other) {
 		*this = other;
 	}
 

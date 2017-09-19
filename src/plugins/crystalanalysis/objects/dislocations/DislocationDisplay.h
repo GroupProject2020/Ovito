@@ -23,12 +23,12 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <core/scene/objects/DisplayObject.h>
-#include <core/scene/objects/WeakVersionedObjectReference.h>
+#include <core/dataset/data/DisplayObject.h>
+#include <core/dataset/data/VersionedDataObjectRef.h>
 #include <core/rendering/ParticlePrimitive.h>
 #include <core/rendering/ArrowPrimitive.h>
 #include <core/rendering/SceneRenderer.h>
-#include <plugins/particles/objects/SimulationCellObject.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
 #include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
 #include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
 
@@ -42,6 +42,9 @@ class DislocationDisplay;	// defined below
  */
 class OVITO_CRYSTALANALYSIS_EXPORT DislocationPickInfo : public ObjectPickInfo
 {
+	Q_OBJECT
+	OVITO_CLASS(DislocationPickInfo)
+
 public:
 
 	/// Constructor.
@@ -82,9 +85,6 @@ private:
 
 	/// This array is used to map sub-object picking IDs back to dislocation segments.
 	std::vector<int> _subobjToSegmentMap;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 /**
@@ -92,6 +92,11 @@ private:
  */
 class OVITO_CRYSTALANALYSIS_EXPORT DislocationDisplay : public DisplayObject
 {
+	Q_OBJECT
+	OVITO_CLASS(DislocationDisplay)
+
+	Q_CLASSINFO("DisplayName", "Dislocations");
+
 public:
 
 	enum LineColoringMode {
@@ -109,9 +114,9 @@ public:
 	/// \brief Lets the display object render a data object.
 	virtual void render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, ObjectNode* contextNode) override;
 
-	/// \brief Computes the bounding box of the object.
-	virtual Box3 boundingBox(TimePoint time, DataObject* dataObject, ObjectNode* contextNode, const PipelineFlowState& flowState) override;
-
+	/// Computes the bounding box of the object.
+	virtual Box3 boundingBox(TimePoint time, DataObject* dataObject, ObjectNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval) override;
+	
 	/// \brief Renders an overlay marker for a single dislocation segment.
 	void renderOverlayMarker(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, int segmentIndex, SceneRenderer* renderer, ObjectNode* contextNode);
 
@@ -141,15 +146,15 @@ protected:
 	/// This helper structure is used to detect any changes in the input data
 	/// that require updating the geometry buffers.
 	SceneObjectCacheHelper<
-		WeakVersionedOORef<DataObject>,		// Source object + revision number
-		SimulationCell,						// Simulation cell geometry
-		WeakVersionedOORef<PatternCatalog>,	// The pattern catalog
-		FloatType,							// Line width
-		bool,								// Burgers vector display
-		FloatType,							// Burgers vectors scaling
-		FloatType,							// Burgers vector width
-		Color,								// Burgers vector color
-		LineColoringMode					// Way to color lines
+		VersionedDataObjectRef,	// Source object + revision number
+		SimulationCell,			// Simulation cell geometry
+		VersionedDataObjectRef,	// The pattern catalog
+		FloatType,				// Line width
+		bool,					// Burgers vector display
+		FloatType,				// Burgers vectors scaling
+		FloatType,				// Burgers vector width
+		Color,					// Burgers vector color
+		LineColoringMode		// Way to color lines
 		> _geometryCacheHelper;
 
 	/// The cached bounding box.
@@ -158,28 +163,28 @@ protected:
 	/// This helper structure is used to detect changes in the input
 	/// that require recalculating the bounding box.
 	SceneObjectCacheHelper<
-		WeakVersionedOORef<DataObject>,		// Source object + revision number
-		SimulationCell,						// Simulation cell geometry
-		FloatType,							// Line width
-		bool,								// Burgers vector display
-		FloatType,							// Burgers vectors scaling
-		FloatType							// Burgers vector width
+		VersionedDataObjectRef,	// Source object + revision number
+		SimulationCell,			// Simulation cell geometry
+		FloatType,				// Line width
+		bool,					// Burgers vector display
+		FloatType,				// Burgers vectors scaling
+		FloatType				// Burgers vector width
 		> _boundingBoxCacheHelper;
 
 	/// The rendering width for dislocation lines.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, lineWidth, setLineWidth);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, lineWidth, setLineWidth, PROPERTY_FIELD_MEMORIZE);
 
 	/// The shading mode for dislocation lines.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(ArrowPrimitive::ShadingMode, shadingMode, setShadingMode);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(ArrowPrimitive::ShadingMode, shadingMode, setShadingMode, PROPERTY_FIELD_MEMORIZE);
 
 	/// The rendering width for Burgers vectors.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, burgersVectorWidth, setBurgersVectorWidth);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, burgersVectorWidth, setBurgersVectorWidth, PROPERTY_FIELD_MEMORIZE);
 
 	/// The scaling factor Burgers vectors.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, burgersVectorScaling, setBurgersVectorScaling);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, burgersVectorScaling, setBurgersVectorScaling, PROPERTY_FIELD_MEMORIZE);
 
 	/// Display color for Burgers vectors.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(Color, burgersVectorColor, setBurgersVectorColor);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(Color, burgersVectorColor, setBurgersVectorColor, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the display of Burgers vectors.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, showBurgersVectors, setShowBurgersVectors);
@@ -192,11 +197,6 @@ protected:
 
 	/// The data record used for picking dislocations in the viewports.
 	OORef<DislocationPickInfo> _pickInfo;
-
-	Q_OBJECT
-	OVITO_OBJECT
-
-	Q_CLASSINFO("DisplayName", "Dislocations");
 };
 
 }	// End of namespace

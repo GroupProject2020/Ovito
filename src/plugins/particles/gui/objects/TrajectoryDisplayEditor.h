@@ -32,6 +32,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
  */
 class TrajectoryDisplayEditor : public PropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(TrajectoryDisplayEditor)
+
 public:
 
 	/// Constructor.
@@ -41,15 +44,8 @@ protected:
 
 	/// Creates the user interface controls for the editor.
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

@@ -1,18 +1,24 @@
 from ovito.io import import_file
+from ovito.data import SimulationCell
+
+pipeline = import_file("simulation.dump")
+cell = pipeline.source.expect(SimulationCell)
+
+# Print cell matrix to the console. [...] is for casting to Numpy. 
+print(cell[...])
+
 import numpy.linalg
 
-node = import_file("simulation.dump")
-cell = node.source.cell
-
 # Compute simulation cell volume by taking the determinant of the
-# left 3x3 submatrix:
-volume = abs(numpy.linalg.det(cell.matrix[0:3,0:3]))
+# left 3x3 submatrix of the cell matrix:
+vol = abs(numpy.linalg.det(cell[0:3,0:3]))
 
-# Make cell twice as large along the Y direction by scaling the
-# second cell vector.
-mat = cell.matrix.copy()
-mat[:,1] = mat[:,1] * 2.0
-cell.matrix = mat
+# The SimulationCell.volume property computes the same value.
+assert numpy.isclose(cell.volume, vol)
 
-# Change color of simulation cell to red:
+# Make cell twice as large along the Y direction by scaling the second cell vector: 
+with cell.modify() as mat:
+    mat[:,1] *= 2.0
+
+# Change display color of simulation cell to red:
 cell.display.rendering_color = (1.0, 0.0, 0.0)

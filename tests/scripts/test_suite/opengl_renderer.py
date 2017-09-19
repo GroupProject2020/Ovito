@@ -6,6 +6,7 @@ if not ovito.headless_mode:
 
     # Import a data file.
     node = import_file("../../files/CFG/shear.void.120.cfg")
+    node.add_to_scene()
 
     renderer = OpenGLRenderer()
 

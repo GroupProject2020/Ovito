@@ -24,8 +24,8 @@
 
 #include <gui/GUI.h>
 #include <gui/properties/PropertiesEditor.h>
-#include <core/reference/RefTarget.h>
-#include <core/animation/TimeInterval.h>
+#include <core/oo/RefTarget.h>
+#include <core/dataset/animation/TimeInterval.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
@@ -34,6 +34,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAM
  */
 class RenderSettingsEditor : public PropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(RenderSettingsEditor)
+	
 public:
 
 	/// Constructor.
@@ -58,9 +61,6 @@ private Q_SLOTS:
 private:
 
 	QComboBox* sizePresetsBox;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -23,7 +23,7 @@
 
 
 #include <gui/GUI.h>
-#include <core/reference/RefTarget.h>
+#include <core/oo/RefTarget.h>
 #include <gui/properties/PropertiesEditor.h>
 #include <gui/widgets/general/RolloutContainer.h>
 

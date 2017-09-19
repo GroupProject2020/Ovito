@@ -33,8 +33,8 @@ modifier.use_radii = True
 node.compute()
 
 print("Output:")
-print(node.output["Atomic Volume"].array)
-print(node.output["Voronoi Index"].array)
-print(node.output["Coordination"].array)
-print(node.output.coordination.array)
+print(node.output.particle_properties["Atomic Volume"].array)
+print(node.output.particle_properties["Voronoi Index"].array)
+print(node.output.particle_properties["Coordination"].array)
+print(node.output.particle_properties.coordination.array)
 print(node.output.attributes['Voronoi.max_face_order'])

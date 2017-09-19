@@ -23,8 +23,10 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/data/BondsStorage.h>
-#include "../AsynchronousParticleModifier.h"
+#include <plugins/particles/objects/BondsStorage.h>
+#include <core/dataset/data/simcell/SimulationCell.h>
+#include <core/dataset/data/properties/PropertyStorage.h>
+#include <core/dataset/pipeline/AsynchronousModifier.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Selection)
 
@@ -32,8 +34,26 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  * \brief Extends the current particle selection by adding particles to the selection
  *        that are neighbors of an already selected particle.
  */
-class OVITO_PARTICLES_EXPORT ExpandSelectionModifier : public AsynchronousParticleModifier
+class OVITO_PARTICLES_EXPORT ExpandSelectionModifier : public AsynchronousModifier
 {
+	/// Give this modifier class its own metaclass.
+	class OOMetaClass : public AsynchronousModifier::OOMetaClass 
+	{
+	public:
+
+		/// Inherit constructor from base metaclass.
+		using AsynchronousModifier::OOMetaClass::OOMetaClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
+
+	Q_OBJECT
+	OVITO_CLASS_META(ExpandSelectionModifier, OOMetaClass)
+
+	Q_CLASSINFO("DisplayName", "Expand selection");
+	Q_CLASSINFO("ModifierCategory", "Selection");
+
 public:
 
 	enum ExpansionMode {
@@ -53,126 +73,142 @@ public:
 
 protected:
 
-	/// Is called when the value of a property of this object has changed.
-	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
-
 	/// Creates a computation engine that will compute the modifier's results.
-	virtual std::shared_ptr<ComputeEngine> createEngine(TimePoint time, TimeInterval validityInterval) override;
-
-	/// Unpacks the results of the computation engine and stores them in the modifier.
-	virtual void transferComputationResults(ComputeEngine* engine) override;
-
-	/// Lets the modifier insert the cached computation results into the modification pipeline.
-	virtual PipelineStatus applyComputationResults(TimePoint time, TimeInterval& validityInterval) override;
+	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 private:
 
-	/// Abstract base class for compute engines.
+	/// Holds the modifier's results.
+	class ExpandSelectionResults : public ComputeEngineResults
+	{
+	public:
+
+		/// Constructor.
+		ExpandSelectionResults(const ConstPropertyPtr& inputSelection) :
+			_outputSelection(std::make_shared<PropertyStorage>(*inputSelection)) {}
+
+		/// Injects the computed results into the data pipeline.
+		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		
+		const PropertyPtr& outputSelection() { return _outputSelection; }
+		void setOutputSelection(PropertyPtr ptr) { _outputSelection = std::move(ptr); }
+		size_t numSelectedParticlesInput() const { return _numSelectedParticlesInput; }
+		size_t numSelectedParticlesOutput() const { return _numSelectedParticlesOutput; }
+		void setNumSelectedParticlesInput(size_t count) { _numSelectedParticlesInput = count; }
+		void setNumSelectedParticlesOutput(size_t count) { _numSelectedParticlesOutput = count; }
+		
+	private:
+
+		PropertyPtr _outputSelection;
+		size_t _numSelectedParticlesInput;
+		size_t _numSelectedParticlesOutput;
+	};
+
+	/// The modifier's compute engine.
 	class ExpandSelectionEngine : public ComputeEngine
 	{
 	public:
 
 		/// Constructor.
-		ExpandSelectionEngine(const TimeInterval& validityInterval, ParticleProperty* positions, const SimulationCell& simCell, ParticleProperty* inputSelection, int numIterations) :
+		ExpandSelectionEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell, ConstPropertyPtr inputSelection, int numIterations) :
 			ComputeEngine(validityInterval),
 			_numIterations(numIterations),
-			_positions(positions), _simCell(simCell),
-			_inputSelection(inputSelection),
-			_outputSelection(inputSelection) {}
+			_positions(std::move(positions)), 
+			_simCell(simCell),
+			_inputSelection(std::move(inputSelection)),
+			_results(std::make_shared<ExpandSelectionResults>(_inputSelection)) { setResult(_results); }
 
-		ParticleProperty* outputSelection() { return _outputSelection.data(); }
-		size_t numSelectedParticlesInput() const { return _numSelectedParticlesInput; }
-		size_t numSelectedParticlesOutput() const { return _numSelectedParticlesOutput; }
-
-		/// Computes the modifier's results and stores them in this object for later retrieval.
+		/// Computes the modifier's results.
 		virtual void perform() override;
 
 		/// Performs one iteration of the expansion.
 		virtual void expandSelection() = 0;
 
+		const SimulationCell& simCell() const { return _simCell; }
+
+		const ConstPropertyPtr& positions() const { return _positions; }
+
+		const ConstPropertyPtr& inputSelection() const { return _inputSelection; }
+		
+		/// Returns a pointer to the engine's computation results.
+		ExpandSelectionResults* results() const { return _results.get(); }
+
 	protected:
-		int _numIterations;
-		SimulationCell _simCell;
-		QExplicitlySharedDataPointer<ParticleProperty> _positions;
-		QExplicitlySharedDataPointer<ParticleProperty> _inputSelection;
-		QExplicitlySharedDataPointer<ParticleProperty> _outputSelection;
-		size_t _numSelectedParticlesInput;
-		size_t _numSelectedParticlesOutput;
+
+		const int _numIterations;
+		const SimulationCell _simCell;
+		const ConstPropertyPtr _positions;
+		ConstPropertyPtr _inputSelection;
+		std::shared_ptr<ExpandSelectionResults> _results;
 	};
 
 	/// Computes the expanded selection by using the nearest neighbor criterion.
 	class ExpandSelectionNearestEngine : public ExpandSelectionEngine
 	{
 	public:
+
 		/// Constructor.
-		ExpandSelectionNearestEngine(const TimeInterval& validityInterval, ParticleProperty* positions, const SimulationCell& simCell, ParticleProperty* inputSelection, int numIterations, int numNearestNeighbors) :
-			ExpandSelectionEngine(validityInterval, positions, simCell, inputSelection, numIterations), _numNearestNeighbors(numNearestNeighbors) {}
+		ExpandSelectionNearestEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell, ConstPropertyPtr inputSelection, int numIterations, int numNearestNeighbors) :
+			ExpandSelectionEngine(validityInterval, std::move(positions), simCell, std::move(inputSelection), numIterations), 
+			_numNearestNeighbors(numNearestNeighbors) {}
 
 		/// Expands the selection by one step.
 		virtual void expandSelection() override;
 
 	private:
-		int _numNearestNeighbors;
+
+		const int _numNearestNeighbors;
 	};
 
 	/// Computes the expanded selection when using a cutoff range criterion.
 	class ExpandSelectionCutoffEngine : public ExpandSelectionEngine
 	{
 	public:
+
 		/// Constructor.
-		ExpandSelectionCutoffEngine(const TimeInterval& validityInterval, ParticleProperty* positions, const SimulationCell& simCell, ParticleProperty* inputSelection, int numIterations, FloatType cutoff) :
-			ExpandSelectionEngine(validityInterval, positions, simCell, inputSelection, numIterations), _cutoffRange(cutoff) {}
+		ExpandSelectionCutoffEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell, ConstPropertyPtr inputSelection, int numIterations, FloatType cutoff) :
+			ExpandSelectionEngine(validityInterval, std::move(positions), simCell, std::move(inputSelection), numIterations), 
+			_cutoffRange(cutoff) {}
 
 		/// Expands the selection by one step.
 		virtual void expandSelection() override;
 
 	private:
-		FloatType _cutoffRange;
+
+		const FloatType _cutoffRange;
 	};
 
 	/// Computes the expanded selection when using bonds.
 	class ExpandSelectionBondedEngine : public ExpandSelectionEngine
 	{
 	public:
+
 		/// Constructor.
-		ExpandSelectionBondedEngine(const TimeInterval& validityInterval, ParticleProperty* positions, const SimulationCell& simCell, ParticleProperty* inputSelection, int numIterations, BondsStorage* bonds) :
-			ExpandSelectionEngine(validityInterval, positions, simCell, inputSelection, numIterations), _bonds(bonds) {}
+		ExpandSelectionBondedEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell, ConstPropertyPtr inputSelection, int numIterations, ConstBondsPtr bonds) :
+			ExpandSelectionEngine(validityInterval, std::move(positions), simCell, std::move(inputSelection), numIterations), 
+			_bonds(std::move(bonds)) {}
 
 		/// Expands the selection by one step.
 		virtual void expandSelection() override;
 
 	private:
-		QExplicitlySharedDataPointer<BondsStorage> _bonds;
+
+		const ConstBondsPtr _bonds;
 	};
 
 private:
 
 	/// The expansion mode.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(ExpansionMode, mode, setMode);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(ExpansionMode, mode, setMode, PROPERTY_FIELD_MEMORIZE);
 
 	/// The selection cutoff range.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, cutoffRange, setCutoffRange);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, cutoffRange, setCutoffRange, PROPERTY_FIELD_MEMORIZE);
 
 	/// The number of nearest neighbors to select.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, numNearestNeighbors, setNumNearestNeighbors);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, numNearestNeighbors, setNumNearestNeighbors, PROPERTY_FIELD_MEMORIZE);
 
 	/// The number of expansion steps to perform.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, numberOfIterations, setNumberOfIterations);
-
-	/// This stores the cached results of the modifier.
-	QExplicitlySharedDataPointer<ParticleProperty> _outputSelection;
-
-	/// Number of selected particles in the modifier's input.
-	size_t _numSelectedParticlesInput;
-
-	/// Number of selected particles in the modifier's output.
-	size_t _numSelectedParticlesOutput;
-
-	Q_OBJECT
-	OVITO_OBJECT
-
-	Q_CLASSINFO("DisplayName", "Expand selection");
-	Q_CLASSINFO("ModifierCategory", "Selection");
 };
 
 OVITO_END_INLINE_NAMESPACE

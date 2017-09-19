@@ -26,10 +26,10 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(BurgersVectorFamily, RefTarget);
-DEFINE_PROPERTY_FIELD(BurgersVectorFamily, name, "Name");
-DEFINE_PROPERTY_FIELD(BurgersVectorFamily, color, "Color");
-DEFINE_PROPERTY_FIELD(BurgersVectorFamily, burgersVector, "BurgersVector");
+IMPLEMENT_OVITO_CLASS(BurgersVectorFamily);
+DEFINE_PROPERTY_FIELD(BurgersVectorFamily, name);
+DEFINE_PROPERTY_FIELD(BurgersVectorFamily, color);
+DEFINE_PROPERTY_FIELD(BurgersVectorFamily, burgersVector);
 SET_PROPERTY_FIELD_LABEL(BurgersVectorFamily, name, "Name");
 SET_PROPERTY_FIELD_LABEL(BurgersVectorFamily, color, "Color");
 SET_PROPERTY_FIELD_LABEL(BurgersVectorFamily, burgersVector, "Burgers vector");
@@ -41,9 +41,6 @@ SET_PROPERTY_FIELD_CHANGE_EVENT(BurgersVectorFamily, name, ReferenceEvent::Title
 BurgersVectorFamily::BurgersVectorFamily(DataSet* dataset, const QString& name, const Vector3& burgersVector, const Color& color)
 	: RefTarget(dataset), _name(name), _burgersVector(burgersVector), _color(color)
 {
-	INIT_PROPERTY_FIELD(name);
-	INIT_PROPERTY_FIELD(color);
-	INIT_PROPERTY_FIELD(burgersVector);
 }
 
 /******************************************************************************

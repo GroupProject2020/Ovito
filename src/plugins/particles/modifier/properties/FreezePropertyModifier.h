@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,36 +23,51 @@
 
 
 #include <plugins/particles/Particles.h>
-#include "../ParticleModifier.h"
+#include <plugins/particles/objects/ParticleProperty.h>
+#include <core/dataset/pipeline/Modifier.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Properties)
 
 /**
  * \brief Saves the current state of a particle property and preserves it over time.
  */
-class OVITO_PARTICLES_EXPORT FreezePropertyModifier : public ParticleModifier
+class OVITO_PARTICLES_EXPORT FreezePropertyModifier : public Modifier
 {
+	/// Give this modifier class its own metaclass.
+	class OOMetaClass : public Modifier::OOMetaClass 
+	{
+	public:
+
+		/// Inherit constructor from base metaclass.
+		using Modifier::OOMetaClass::OOMetaClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
+
+	Q_OBJECT
+	OVITO_CLASS_META(FreezePropertyModifier, OOMetaClass)
+
+	Q_CLASSINFO("DisplayName", "Freeze property");
+	Q_CLASSINFO("ModifierCategory", "Modification");
+
 public:
 
 	/// Constructor.
 	Q_INVOKABLE FreezePropertyModifier(DataSet* dataset);
 
-	/// Asks the modifier for its validity interval at the given time.
-	virtual TimeInterval modifierValidity(TimePoint time) override { return TimeInterval::infinite(); }
+	/// Creates a new modifier application that refers to this modifier instance.
+	virtual OORef<ModifierApplication> createModifierApplication() override;
 
-	/// Takes a snapshot of the source property for a specific ModifierApplication of this modifier.
-	void takePropertySnapshot(ModifierApplication* modApp, const PipelineFlowState& state);
+	/// This method is called by the system after the modifier has been inserted into a data pipeline.
+	virtual void initializeModifier(ModifierApplication* modApp) override;
 
-	/// Takes a snapshot of the source property for every ModifierApplication of this modifier.
-	bool takePropertySnapshot(TimePoint time, TaskManager& taskManager, bool waitUntilReady);
-
-protected:
-
-	/// This virtual method is called by the modification system when the modifier is being inserted into a PipelineObject.
-	virtual void initializeModifier(PipelineObject* pipelineObject, ModifierApplication* modApp) override;
-
-	/// Modifies the particle object.
-	virtual PipelineStatus modifyParticles(TimePoint time, TimeInterval& validityInterval) override;
+	/// Modifies the input data.
+	virtual Future<PipelineFlowState> evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		
+	/// Modifies the input data in an immediate, preliminary way.
+	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 private:
 
@@ -62,50 +77,57 @@ private:
 	/// The particle property to which the stored values should be written
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(ParticlePropertyReference, destinationProperty, setDestinationProperty);
 
-	/// The cached display objects that are attached to the output particle property.
-	DECLARE_VECTOR_REFERENCE_FIELD(DisplayObject, cachedDisplayObjects);
-
-	Q_OBJECT
-	OVITO_OBJECT
-
-	Q_CLASSINFO("DisplayName", "Freeze property");
-	Q_CLASSINFO("ModifierCategory", "Modification");
+	/// Animation time at which the frozen property is taken.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(TimePoint, freezeTime, setFreezeTime);
 };
 
-OVITO_BEGIN_INLINE_NAMESPACE(Internal)
-
 /**
- * Helper class used by the FreezePropertyModifier to store the values of
- * the selected particle property.
+ * Used by the FreezePropertyModifier to store the values of the selected particle property.
  */
-class OVITO_PARTICLES_EXPORT SavedParticleProperty : public RefTarget
+class OVITO_PARTICLES_EXPORT FreezePropertyModifierApplication : public ModifierApplication
 {
+	OVITO_CLASS(FreezePropertyModifierApplication)
+	Q_OBJECT
+
 public:
 
 	/// Constructor.
-	Q_INVOKABLE SavedParticleProperty(DataSet* dataset) : RefTarget(dataset) {
-		INIT_PROPERTY_FIELD(property);
-		INIT_PROPERTY_FIELD(identifiers);
-	}
+	Q_INVOKABLE FreezePropertyModifierApplication(DataSet* dataset) : ModifierApplication(dataset) {}
 
 	/// Makes a copy of the given source property and, optionally, of the provided
 	/// particle identifier list, which will allow to restore the saved property
 	/// values even if the order of particles changes.
-	void reset(ParticlePropertyObject* property, ParticlePropertyObject* identifiers);
+	void updateStoredData(ParticleProperty* property, ParticleProperty* identifiers, TimeInterval validityInterval);
 
+	/// Returns true if the frozen state for given animation time is already stored.
+	bool hasFrozenState(TimePoint time) const { return _validityInterval.contains(time); }
+
+	/// Clears the stored state.
+	void invalidateFrozenState() {
+		setProperty(nullptr);
+		setIdentifiers(nullptr);
+		_validityInterval.setEmpty();
+	}
+
+protected:
+
+	/// Is called when a RefTarget referenced by this object has generated an event.
+	virtual bool referenceEvent(RefTarget* source, ReferenceEvent* event) override;
+	
 private:
 
 	/// The stored copy of the particle property.
-	DECLARE_REFERENCE_FIELD(ParticlePropertyObject, property);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(ParticleProperty, property, setProperty, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_NO_CHANGE_MESSAGE | PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_NO_SUB_ANIM | PROPERTY_FIELD_DONT_SAVE_RECOMPUTABLE_DATA);
 
 	/// A copy of the particle identifiers, taken at the time when the property values were saved.
-	DECLARE_REFERENCE_FIELD(ParticlePropertyObject, identifiers);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(ParticleProperty, identifiers, setIdentifiers, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_NO_CHANGE_MESSAGE | PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_NO_SUB_ANIM | PROPERTY_FIELD_DONT_SAVE_RECOMPUTABLE_DATA);
 
-	Q_OBJECT
-	OVITO_OBJECT
+	/// The cached display objects that are attached to the output particle property.
+	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD_FLAGS(DisplayObject, cachedDisplayObjects, setCachedDisplayObjects, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_NO_CHANGE_MESSAGE | PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_NO_SUB_ANIM);
+
+	/// The validity interval of the frozen property.
+	TimeInterval _validityInterval;
 };
-
-OVITO_END_INLINE_NAMESPACE
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

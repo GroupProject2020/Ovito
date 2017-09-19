@@ -23,11 +23,11 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <core/scene/objects/DisplayObject.h>
-#include <core/scene/objects/WeakVersionedObjectReference.h>
+#include <core/dataset/data/DisplayObject.h>
+#include <core/dataset/data/VersionedDataObjectRef.h>
 #include <core/rendering/ArrowPrimitive.h>
 #include <core/rendering/SceneRenderer.h>
-#include "ParticlePropertyObject.h"
+#include "ParticleProperty.h"
 
 namespace Ovito { namespace Particles {
 
@@ -36,6 +36,10 @@ namespace Ovito { namespace Particles {
  */
 class OVITO_PARTICLES_EXPORT VectorDisplay : public DisplayObject
 {
+	Q_OBJECT
+	OVITO_CLASS(VectorDisplay)
+	Q_CLASSINFO("DisplayName", "Vectors");
+	
 public:
 
 	/// The position mode for the arrows.
@@ -55,7 +59,7 @@ public:
 	virtual void render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, ObjectNode* contextNode) override;
 
 	/// \brief Computes the bounding box of the object.
-	virtual Box3 boundingBox(TimePoint time, DataObject* dataObject, ObjectNode* contextNode, const PipelineFlowState& flowState) override;
+	virtual Box3 boundingBox(TimePoint time, DataObject* dataObject, ObjectNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval) override;
 
 public:
 
@@ -65,13 +69,7 @@ public:
 protected:
 
 	/// Computes the bounding box of the arrows.
-	Box3 arrowBoundingBox(ParticlePropertyObject* vectorProperty, ParticlePropertyObject* positionProperty);
-
-    /// Loads the data of this class from an input stream.
-	virtual void loadFromStream(ObjectLoadStream& stream) override;
-
-	/// Parses the serialized contents of a property field in a custom way.
-	virtual bool loadPropertyFieldFromStream(ObjectLoadStream& stream, const ObjectLoadStream::SerializedPropertyField& serializedField) override;
+	Box3 arrowBoundingBox(ParticleProperty* vectorProperty, ParticleProperty* positionProperty);
 
 protected:
 
@@ -79,19 +77,19 @@ protected:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, reverseArrowDirection, setReverseArrowDirection);
 
 	/// Controls how the arrows are positioned relative to the particles.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(ArrowPosition, arrowPosition, setArrowPosition);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(ArrowPosition, arrowPosition, setArrowPosition, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the color of the arrows.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(Color, arrowColor, setArrowColor);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(Color, arrowColor, setArrowColor, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the width of the arrows in world units.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, arrowWidth, setArrowWidth);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, arrowWidth, setArrowWidth, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the scaling factor applied to the vectors.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, scalingFactor, setScalingFactor);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, scalingFactor, setScalingFactor, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the shading mode for arrows.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(ArrowPrimitive::ShadingMode, shadingMode, setShadingMode);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(ArrowPrimitive::ShadingMode, shadingMode, setShadingMode, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the rendering quality mode for arrows.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(ArrowPrimitive::RenderingQuality, renderingQuality, setRenderingQuality);
@@ -102,14 +100,14 @@ protected:
 	/// This helper structure is used to detect any changes in the input data
 	/// that require updating the geometry buffer.
 	SceneObjectCacheHelper<
-		WeakVersionedOORef<ParticlePropertyObject>,			// Vector property + revision number
-		WeakVersionedOORef<ParticlePropertyObject>,			// Particle position property + revision number
-		FloatType,											// Scaling factor
-		FloatType,											// Arrow width
-		Color,												// Arrow color
-		bool,												// Reverse arrow direction
-		ArrowPosition,										// Arrow position
-		WeakVersionedOORef<ParticlePropertyObject>			// Vector color property + revision number
+		VersionedDataObjectRef,			// Vector property + revision number
+		VersionedDataObjectRef,			// Particle position property + revision number
+		FloatType,						// Scaling factor
+		FloatType,						// Arrow width
+		Color,							// Arrow color
+		bool,							// Reverse arrow direction
+		ArrowPosition,					// Arrow position
+		VersionedDataObjectRef			// Vector color property + revision number
 		> _geometryCacheHelper;
 
 	/// The bounding box that includes all arrows.
@@ -118,21 +116,14 @@ protected:
 	/// This helper structure is used to detect changes in the input
 	/// that require recalculating the bounding box.
 	SceneObjectCacheHelper<
-		WeakVersionedOORef<ParticlePropertyObject>,		// Vector property + revision number
-		WeakVersionedOORef<ParticlePropertyObject>,		// Particle position property + revision number
-		FloatType,										// Scaling factor
-		FloatType										// Arrow width
+		VersionedDataObjectRef,		// Vector property + revision number
+		VersionedDataObjectRef,		// Particle position property + revision number
+		FloatType,					// Scaling factor
+		FloatType					// Arrow width
 		> _boundingBoxCacheHelper;
 
 	/// This is for backward compatibility with OVITO 2.6.0.
 	bool _flipVectors = false;
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
-
-	Q_CLASSINFO("DisplayName", "Vectors");
 };
 
 /**
@@ -141,10 +132,13 @@ private:
  */
 class OVITO_PARTICLES_EXPORT VectorPickInfo : public ObjectPickInfo
 {
+	Q_OBJECT
+	OVITO_CLASS(VectorPickInfo)
+	
 public:
 
 	/// Constructor.
-	VectorPickInfo(VectorDisplay* displayObj, const PipelineFlowState& pipelineState, ParticlePropertyObject* vectorProperty) :
+	VectorPickInfo(VectorDisplay* displayObj, const PipelineFlowState& pipelineState, ParticleProperty* vectorProperty) :
 		_displayObject(displayObj), _pipelineState(pipelineState), _vectorProperty(vectorProperty) {}
 
 	/// The pipeline flow state containing the particle properties.
@@ -166,10 +160,7 @@ private:
 	OORef<VectorDisplay> _displayObject;
 
 	/// The vector property.
-	OORef<ParticlePropertyObject> _vectorProperty;
-
-	Q_OBJECT
-	OVITO_OBJECT
+	OORef<ParticleProperty> _vectorProperty;
 };
 
 

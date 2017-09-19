@@ -32,6 +32,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVI
  */
 class CIFImporter : public OpenBabelImporter
 {
+	OVITO_CLASS(CIFImporter)
+	Q_OBJECT
+	
 public:
 
 	/// \brief Constructs a new instance of this class.
@@ -53,11 +56,6 @@ public:
 
 	/// Returns the OpenBabel format string used by this class.
 	virtual const char* openBabelFormat() const override { return "cif"; }
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -24,13 +24,12 @@
 #include <core/dataset/UndoStack.h>
 #include <core/dataset/DataSetContainer.h>
 #include <core/viewport/ViewportConfiguration.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/animation/AnimationSettings.h>
 #include <core/utilities/units/UnitsManager.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
 
-// Gives the class run-time type information.
-IMPLEMENT_OVITO_OBJECT(NumericalParameterUI, PropertyParameterUI);
+IMPLEMENT_OVITO_CLASS(NumericalParameterUI);
 
 /******************************************************************************
 * Constructor for a Qt property.
@@ -74,7 +73,7 @@ void NumericalParameterUI::initUIControls(const QString& labelText)
 	}
 
 	// Create animate button if parameter is animation (i.e. it's a reference to a Controller object).
-	if(isReferenceFieldUI() && propertyField()->targetClass()->isDerivedFrom(Controller::OOType)) {
+	if(isReferenceFieldUI() && propertyField()->targetClass()->isDerivedFrom(Controller::OOClass())) {
 		_animateButton = new QToolButton();
 		_animateButton->setText(tr("A"));
 		_animateButton->setFocusPolicy(Qt::NoFocus);

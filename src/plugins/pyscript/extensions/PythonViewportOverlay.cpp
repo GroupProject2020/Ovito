@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -28,16 +28,15 @@
 
 namespace PyScript {
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(PythonViewportOverlay, ViewportOverlay);
-DEFINE_PROPERTY_FIELD(PythonViewportOverlay, script, "Script");
-SET_PROPERTY_FIELD_LABEL(PythonViewportOverlay, script, "Script");
+IMPLEMENT_OVITO_CLASS(PythonViewportOverlay);
+DEFINE_PROPERTY_FIELD(PythonViewportOverlay, script);
+SET_PROPERTY_FIELD_LABEL(PythonViewportOverlay, script, "script");
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
 PythonViewportOverlay::PythonViewportOverlay(DataSet* dataset) : ViewportOverlay(dataset)
 {
-	INIT_PROPERTY_FIELD(script);
 }
 
 /******************************************************************************
@@ -59,8 +58,11 @@ void PythonViewportOverlay::loadUserDefaults()
 			"\tpainter.drawText(10, 10 + painter.fontMetrics().ascent(), text1)\n"
 			"\n"
 			"\t# Also print the current number of particles into the lower left corner of the viewport.\n"
-			"\tnode = ovito.dataset.selected_node\n"
-			"\tnum_particles = (node.compute().number_of_particles if node else 0)\n"
+			"\tpipeline = ovito.dataset.selected_pipeline\n"
+			"\tif not pipeline is None:\n"			
+			"\t\tdata = pipeline.compute()\n"
+			"\t\tnum_particles = len(data.particle_properties['Position']) if 'Position' in data.particle_properties else 0\n"
+			"\telse: num_particles = 0\n"
 			"\ttext2 = \"{} particles\".format(num_particles)\n"
 			"\tpainter.drawText(10, painter.window().height() - 10, text2)\n"
 			"\n"
@@ -75,9 +77,31 @@ void PythonViewportOverlay::loadUserDefaults()
 void PythonViewportOverlay::propertyChanged(const PropertyFieldDescriptor& field)
 {
 	ViewportOverlay::propertyChanged(field);
+
+	// Throw away compiled script function whenever script source code changes and recompile.
 	if(field == PROPERTY_FIELD(script)) {
+		_overlayScriptFunction = py::object();
 		compileScript();
 	}
+}
+
+/******************************************************************************
+* Prepares the script engine, which is needed for script execution.
+******************************************************************************/
+ScriptEngine* PythonViewportOverlay::getScriptEngine()
+{
+	// Initialize a private script engine if there is no active global engine.
+	ScriptEngine* engine = ScriptEngine::activeEngine();
+	if(!engine) {
+		if(!_scriptEngine) {
+			_scriptEngine.reset(new ScriptEngine(dataset(), dataset()->container()->taskManager(), true));
+			connect(_scriptEngine.get(), &ScriptEngine::scriptOutput, this, &PythonViewportOverlay::onScriptOutput);
+			connect(_scriptEngine.get(), &ScriptEngine::scriptError, this, &PythonViewportOverlay::onScriptOutput);
+			_mainNamespacePrototype = _scriptEngine->mainNamespace();
+		}
+		engine = _scriptEngine.get();
+	}
+	return engine;
 }
 
 /******************************************************************************
@@ -88,37 +112,38 @@ void PythonViewportOverlay::compileScript()
 	// Cannot execute scripts during file loading.
 	if(isBeingLoaded()) return;
 
-	_scriptOutput.clear();
 	_overlayScriptFunction = py::function();
+	_scriptCompilationOutput.clear();
+	_scriptRenderingOutput.clear();
 	try {
-
+		// Make sure the actions of the script function are not recorded on the undo stack.
+		UndoSuspender noUndo(dataset());
+			
 		// Initialize a local script engine.
-		if(!_scriptEngine) {
-			_scriptEngine.reset(new ScriptEngine(dataset(), dataset()->container()->taskManager(), true));
-			connect(_scriptEngine.get(), &ScriptEngine::scriptOutput, this, &PythonViewportOverlay::onScriptOutput);
-			connect(_scriptEngine.get(), &ScriptEngine::scriptError, this, &PythonViewportOverlay::onScriptOutput);
-		}
-		
-		_scriptEngine->executeCommands(script());
+		ScriptEngine* engine = getScriptEngine();
+
+		// Run script once.
+		engine->executeCommands(script());
 
 		// Extract the render() function defined by the script.
-		_scriptEngine->execute([this]() {
+		engine->execute([this, engine]() {
 			try {
-				_overlayScriptFunction = py::function(_scriptEngine->mainNamespace()["render"]);
+				_overlayScriptFunction = py::function(engine->mainNamespace()["render"]);
 				if(!py::isinstance<py::function>(_overlayScriptFunction)) {
 					_overlayScriptFunction = py::function();
-					throwException(tr("Invalid Python script. It does not define a callable function render()."));
+					throwException(tr("Invalid Python script. It does not define a callable function named render()."));
 				}
 			}
 			catch(const py::error_already_set&) {
-				throwException(tr("Invalid Python script. It does not define the function render()."));
+				throwException(tr("Invalid Python script. It does not define the function named render()."));
 			}
 		});
 	}
 	catch(const Exception& ex) {
-		_scriptOutput += ex.messages().join('\n');
+		_scriptCompilationOutput += ex.messages().join(QChar('\n'));
 	}
 
+	// Update status, because log output has changed.
 	notifyDependents(ReferenceEvent::ObjectStatusChanged);
 }
 
@@ -127,33 +152,44 @@ void PythonViewportOverlay::compileScript()
 ******************************************************************************/
 void PythonViewportOverlay::onScriptOutput(const QString& text)
 {
-	_scriptOutput += text;
+	if(!_overlayScriptFunction)
+		_scriptCompilationOutput += text;
+	else
+		_scriptRenderingOutput += text;
 }
 
 /******************************************************************************
 * This method asks the overlay to paint its contents over the given viewport.
 ******************************************************************************/
-void PythonViewportOverlay::render(Viewport* viewport, QPainter& painter, const ViewProjectionParameters& projParams, RenderSettings* renderSettings)
+void PythonViewportOverlay::render(Viewport* viewport, TimePoint time, QPainter& painter, 
+									const ViewProjectionParameters& projParams, RenderSettings* renderSettings, 
+									bool interactiveViewport, TaskManager& taskManager)
 {
-	// When the overlay was loaded from a scene file, the script is not compiled yet.
-	// Let's do it now.
-	if(!_scriptEngine)
+	// Compile script source if needed.
+	if(!_overlayScriptFunction) {
 		compileScript();
+	}
 
-	if(!compilationSucessful())
+	// Check if executable script function is available.
+	if(!_overlayScriptFunction)
 		return;
 
 	// This object instance may be deleted while this method is being executed.
 	// This is to detect this situation.
 	QPointer<PythonViewportOverlay> thisPointer(this);
 	
-	_scriptOutput.clear();
+	_scriptRenderingOutput.clear();
 	try {
+		// Make sure the actions of the script function are not recorded on the undo stack.
+		UndoSuspender noUndo(dataset());
+			
 		// Enable antialiasing for the QPainter by default.
 		painter.setRenderHint(QPainter::Antialiasing);
 		painter.setRenderHint(QPainter::TextAntialiasing);
 
-		_scriptEngine->execute([this,viewport,&painter,&projParams,renderSettings]() {
+		// Get a local script engine.
+		ScriptEngine* engine = getScriptEngine();
+		engine->execute([this,engine,viewport,&painter,&projParams,renderSettings]() {
 
 			// Pass viewport, QPainter, and other information to the Python script function.
 			// The QPainter pointer has to be converted to the representation used by PyQt.
@@ -173,14 +209,17 @@ void PythonViewportOverlay::render(Viewport* viewport, QPainter& painter, const 
 			py::object painter_ptr = py::cast(reinterpret_cast<std::uintptr_t>(&painter));
 			py::object qpainter_class = qtgui_module.attr("QPainter");
 			py::object sip_painter = sip_module.attr("wrapinstance")(painter_ptr, qpainter_class);
-			py::tuple arguments = py::make_tuple(sip_painter);
+			py::tuple arguments = py::make_tuple(std::move(sip_painter));
 
 			// Execute render() script function.
-			_scriptEngine->callObject(_overlayScriptFunction, arguments, kwargs);
+			engine->callObject(_overlayScriptFunction, std::move(arguments), std::move(kwargs));
 		});
 	}
 	catch(const Exception& ex) {
-		_scriptOutput += ex.messages().join('\n');
+		_scriptRenderingOutput +=  ex.messages().join(QChar('\n'));
+		// Interrupt rendering process in console mode.
+		if(Application::instance()->consoleMode())
+			throw;
 	}
 
 	if(thisPointer)

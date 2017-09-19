@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,16 +21,19 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/BondsObject.h>
-#include <plugins/particles/data/BondsStorage.h>
+#include <plugins/particles/modifier/ParticleInputHelper.h>
+#include <plugins/particles/modifier/ParticleOutputHelper.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
 #include "ClusterAnalysisModifier.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(ClusterAnalysisModifier, AsynchronousParticleModifier);
-DEFINE_FLAGS_PROPERTY_FIELD(ClusterAnalysisModifier, neighborMode, "NeighborMode", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(ClusterAnalysisModifier, cutoff, "Cutoff", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(ClusterAnalysisModifier, onlySelectedParticles, "OnlySelectedParticles");
-DEFINE_PROPERTY_FIELD(ClusterAnalysisModifier, sortBySize, "SortBySize");
+IMPLEMENT_OVITO_CLASS(ClusterAnalysisModifier);
+DEFINE_PROPERTY_FIELD(ClusterAnalysisModifier, neighborMode);
+DEFINE_PROPERTY_FIELD(ClusterAnalysisModifier, cutoff);
+DEFINE_PROPERTY_FIELD(ClusterAnalysisModifier, onlySelectedParticles);
+DEFINE_PROPERTY_FIELD(ClusterAnalysisModifier, sortBySize);
 SET_PROPERTY_FIELD_LABEL(ClusterAnalysisModifier, neighborMode, "Neighbor mode");
 SET_PROPERTY_FIELD_LABEL(ClusterAnalysisModifier, cutoff, "Cutoff distance");
 SET_PROPERTY_FIELD_LABEL(ClusterAnalysisModifier, onlySelectedParticles, "Use only selected particles");
@@ -40,41 +43,46 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ClusterAnalysisModifier, cutoff, WorldParam
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
-ClusterAnalysisModifier::ClusterAnalysisModifier(DataSet* dataset) : AsynchronousParticleModifier(dataset),
-	_cutoff(3.2), _onlySelectedParticles(false), _sortBySize(false), _numClusters(0), _largestClusterSize(0),
+ClusterAnalysisModifier::ClusterAnalysisModifier(DataSet* dataset) : AsynchronousModifier(dataset),
+	_cutoff(3.2), 
+	_onlySelectedParticles(false), 
+	_sortBySize(false), 
 	_neighborMode(CutoffRange)
 {
-	INIT_PROPERTY_FIELD(neighborMode);
-	INIT_PROPERTY_FIELD(cutoff);
-	INIT_PROPERTY_FIELD(onlySelectedParticles);
-	INIT_PROPERTY_FIELD(sortBySize);
+}
+
+/******************************************************************************
+* Asks the modifier whether it can be applied to the given input data.
+******************************************************************************/
+bool ClusterAnalysisModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+{
+	return input.findObject<ParticleProperty>() != nullptr;
 }
 
 /******************************************************************************
 * Creates and initializes a computation engine that will compute the modifier's results.
 ******************************************************************************/
-std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> ClusterAnalysisModifier::createEngine(TimePoint time, TimeInterval validityInterval)
+Future<AsynchronousModifier::ComputeEnginePtr> ClusterAnalysisModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get the current particle positions.
-	ParticlePropertyObject* posProperty = expectStandardProperty(ParticleProperty::PositionProperty);
+	ParticleInputHelper pih(dataset(), input);
+	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
 
 	// Get simulation cell.
-	SimulationCellObject* inputCell = expectSimulationCell();
+	SimulationCellObject* inputCell = pih.expectSimulationCell();
 
 	// Get particle selection.
-	ParticleProperty* selectionProperty = nullptr;
+	ConstPropertyPtr selectionProperty;
 	if(onlySelectedParticles())
-		selectionProperty = expectStandardProperty(ParticleProperty::SelectionProperty)->storage();
+		selectionProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty)->storage();
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	if(neighborMode() == CutoffRange) {
-		return std::make_shared<CutoffClusterAnalysisEngine>(validityInterval, posProperty->storage(), inputCell->data(), sortBySize(), selectionProperty, cutoff());
+		return std::make_shared<CutoffClusterAnalysisEngine>(input.stateValidity(), posProperty->storage(), inputCell->data(), sortBySize(), std::move(selectionProperty), cutoff());
 	}
 	else if(neighborMode() == Bonding) {
-		BondsObject* bonds = input().findObject<BondsObject>();
-		if(!bonds)
-			throwException(tr("Input of cluster analysis modifier does not contain any bonds."));
-		return std::make_shared<BondClusterAnalysisEngine>(validityInterval, posProperty->storage(), inputCell->data(), sortBySize(), selectionProperty, bonds->storage());
+		BondsObject* bonds = pih.expectBonds();
+		return std::make_shared<BondClusterAnalysisEngine>(input.stateValidity(), posProperty->storage(), inputCell->data(), sortBySize(), std::move(selectionProperty), bonds->storage());
 	}
 	else {
 		throwException(tr("Invalid cluster neighbor mode"));
@@ -89,40 +97,42 @@ void ClusterAnalysisModifier::ClusterAnalysisEngine::perform()
 	setProgressText(tr("Performing cluster analysis"));
 
 	// Initialize.
-	std::fill(_particleClusters->dataInt(), _particleClusters->dataInt() + _particleClusters->size(), -1);
-	_numClusters = 0;
-
+	std::fill(_results->particleClusters()->dataInt(), _results->particleClusters()->dataInt() + _results->particleClusters()->size(), -1);
+	
 	// Perform the actual clustering.
 	doClustering();
 	if(isCanceled())
 		return;
 
 	// Sort clusters by size.
-	if(_sortBySize && _numClusters != 0) {
+	if(_sortBySize && _results->numClusters() != 0) {
 
 		// Determine cluster sizes.
-		std::vector<size_t> clusterSizes(_numClusters + 1, 0);
-		for(int id : _particleClusters->constIntRange()) {
+		std::vector<size_t> clusterSizes(_results->numClusters() + 1, 0);
+		for(int id : _results->particleClusters()->constIntRange()) {
 			clusterSizes[id]++;
 		}
 
 		// Sort clusters by size.
-		std::vector<int> mapping(_numClusters + 1);
+		std::vector<int> mapping(_results->numClusters() + 1);
 		std::iota(mapping.begin(), mapping.end(), 0);
 		std::sort(mapping.begin() + 1, mapping.end(), [&clusterSizes](int a, int b) {
 			return clusterSizes[a] > clusterSizes[b];
 		});
-		_largestClusterSize = clusterSizes[mapping[1]];
+		_results->setLargestClusterSize(clusterSizes[mapping[1]]);
 		clusterSizes.clear();
 		clusterSizes.shrink_to_fit();
 
 		// Remap cluster IDs.
-		std::vector<int> inverseMapping(_numClusters + 1);
-		for(size_t i = 0; i <= _numClusters; i++)
+		std::vector<int> inverseMapping(_results->numClusters() + 1);
+		for(size_t i = 0; i <= _results->numClusters(); i++)
 			inverseMapping[mapping[i]] = i;
-		for(int& id : _particleClusters->intRange())
+		for(int& id : _results->particleClusters()->intRange())
 			id = inverseMapping[id];
 	}
+
+	// Return the results of the compute engine.
+	setResult(std::move(_results));	
 }
 
 /******************************************************************************
@@ -132,29 +142,32 @@ void ClusterAnalysisModifier::CutoffClusterAnalysisEngine::doClustering()
 {
 	// Prepare the neighbor finder.
 	CutoffNeighborFinder neighborFinder;
-	if(!neighborFinder.prepare(cutoff(), positions(), cell(), selection(), *this))
+	if(!neighborFinder.prepare(cutoff(), *positions(), cell(), selection().get(), this))
 		return;
 
 	size_t particleCount = positions()->size();
 	setProgressValue(0);
 	setProgressMaximum(particleCount);
 
+	PropertyStorage& particleClusters = *_results->particleClusters();
+			
 	std::deque<size_t> toProcess;
 	for(size_t seedParticleIndex = 0; seedParticleIndex < particleCount; seedParticleIndex++) {
 
 		// Skip unselected particles that are not included in the analysis.
 		if(selection() && !selection()->getInt(seedParticleIndex)) {
-			particleClusters()->setInt(seedParticleIndex, 0);
+			particleClusters.setInt(seedParticleIndex, 0);
 			continue;
 		}
 
 		// Skip particles that have already been assigned to a cluster.
-		if(particleClusters()->getInt(seedParticleIndex) != -1)
+		if(particleClusters.getInt(seedParticleIndex) != -1)
 			continue;
 
 		// Start a new cluster.
-		int cluster = ++_numClusters;
-		particleClusters()->setInt(seedParticleIndex, cluster);
+		_results->setNumClusters(_results->numClusters() + 1);
+		int cluster = _results->numClusters();
+		particleClusters.setInt(seedParticleIndex, cluster);
 
 		// Now recursively iterate over all neighbors of the seed particle and add them to the cluster too.
 		OVITO_ASSERT(toProcess.empty());
@@ -169,8 +182,8 @@ void ClusterAnalysisModifier::CutoffClusterAnalysisEngine::doClustering()
 			toProcess.pop_front();
 			for(CutoffNeighborFinder::Query neighQuery(neighborFinder, currentParticle); !neighQuery.atEnd(); neighQuery.next()) {
 				int neighborIndex = neighQuery.current();
-				if(particleClusters()->getInt(neighborIndex) == -1) {
-					particleClusters()->setInt(neighborIndex, cluster);
+				if(particleClusters.getInt(neighborIndex) == -1) {
+					particleClusters.setInt(neighborIndex, cluster);
 					toProcess.push_back(neighborIndex);
 				}
 			}
@@ -189,24 +202,27 @@ void ClusterAnalysisModifier::BondClusterAnalysisEngine::doClustering()
 	setProgressMaximum(particleCount);
 
 	// Prepare particle bond map.
-	ParticleBondMap bondMap(bonds());
+	ParticleBondMap bondMap(*bonds());
 
+	PropertyStorage& particleClusters = *_results->particleClusters();
+	
 	std::deque<size_t> toProcess;
 	for(size_t seedParticleIndex = 0; seedParticleIndex < particleCount; seedParticleIndex++) {
 
 		// Skip unselected particles that are not included in the analysis.
 		if(selection() && !selection()->getInt(seedParticleIndex)) {
-			particleClusters()->setInt(seedParticleIndex, 0);
+			particleClusters.setInt(seedParticleIndex, 0);
 			continue;
 		}
 
 		// Skip particles that have already been assigned to a cluster.
-		if(particleClusters()->getInt(seedParticleIndex) != -1)
+		if(particleClusters.getInt(seedParticleIndex) != -1)
 			continue;
 
 		// Start a new cluster.
-		int cluster = ++_numClusters;
-		particleClusters()->setInt(seedParticleIndex, cluster);
+		_results->setNumClusters(_results->numClusters() + 1);
+		int cluster = _results->numClusters();
+		particleClusters.setInt(seedParticleIndex, cluster);
 
 		// Now recursively iterate over all neighbors of the seed particle and add them to the cluster too.
 		OVITO_ASSERT(toProcess.empty());
@@ -221,18 +237,18 @@ void ClusterAnalysisModifier::BondClusterAnalysisEngine::doClustering()
 			toProcess.pop_front();
 
 			// Iterate over all bonds of the current particle.
-			for(size_t neighborBondIndex : bondMap.bondsOfParticle(currentParticle)) {
-				const Bond& neighborBond = bonds()[neighborBondIndex];
-				OVITO_ASSERT(neighborBond.index1 == currentParticle);
-				size_t neighborIndex = neighborBond.index2;
+			for(size_t neighborBondIndex : bondMap.bondIndicesOfParticle(currentParticle)) {
+				const Bond& neighborBond = (*bonds())[neighborBondIndex];
+				OVITO_ASSERT(neighborBond.index1 == currentParticle || neighborBond.index2 == currentParticle);
+				size_t neighborIndex = (neighborBond.index1 == currentParticle) ? neighborBond.index2 : neighborBond.index1;
 				if(neighborIndex >= particleCount)
 					continue;
-				if(particleClusters()->getInt(neighborIndex) != -1) 
+				if(particleClusters.getInt(neighborIndex) != -1) 
 					continue;
 				if(selection() && !selection()->getInt(neighborIndex))
 					continue;
 
-				particleClusters()->setInt(neighborIndex, cluster);
+				particleClusters.setInt(neighborIndex, cluster);
 				toProcess.push_back(neighborIndex);
 			}
 		}
@@ -240,51 +256,24 @@ void ClusterAnalysisModifier::BondClusterAnalysisEngine::doClustering()
 	}
 }
 
-/******************************************************************************
-* Unpacks the results of the computation engine and stores them in the modifier.
-******************************************************************************/
-void ClusterAnalysisModifier::transferComputationResults(ComputeEngine* engine)
-{
-	ClusterAnalysisEngine* eng = static_cast<ClusterAnalysisEngine*>(engine);
-	_particleClusters = eng->particleClusters();
-	_numClusters = eng->numClusters();
-	_largestClusterSize = eng->largestClusterSize();
-}
 
 /******************************************************************************
-* Lets the modifier insert the cached computation results into the
-* modification pipeline.
+* Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineStatus ClusterAnalysisModifier::applyComputationResults(TimePoint time, TimeInterval& validityInterval)
+PipelineFlowState ClusterAnalysisModifier::ClusterAnalysisResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	if(!_particleClusters)
-		throwException(tr("No computation results available."));
+	ClusterAnalysisModifier* modifier = static_object_cast<ClusterAnalysisModifier>(modApp->modifier());
+	
+	PipelineFlowState output = input;
+	ParticleOutputHelper poh(modApp->dataset(), output);
+	poh.outputProperty<ParticleProperty>(particleClusters());
 
-	if(inputParticleCount() != _particleClusters->size())
-		throwException(tr("The number of input particles has changed. The stored results have become invalid."));
+	output.attributes().insert(QStringLiteral("ClusterAnalysis.cluster_count"), QVariant::fromValue(numClusters()));
+	if(modifier->sortBySize())
+		output.attributes().insert(QStringLiteral("ClusterAnalysis.largest_size"), QVariant::fromValue(largestClusterSize()));
 
-	outputStandardProperty(_particleClusters.data());
-
-	output().attributes().insert(QStringLiteral("ClusterAnalysis.cluster_count"), QVariant::fromValue(_numClusters));
-	if(sortBySize())
-		output().attributes().insert(QStringLiteral("ClusterAnalysis.largest_size"), QVariant::fromValue(_largestClusterSize));
-
-	return PipelineStatus(PipelineStatus::Success, tr("Found %1 clusters").arg(_numClusters));
-}
-
-/******************************************************************************
-* Is called when the value of a property of this object has changed.
-******************************************************************************/
-void ClusterAnalysisModifier::propertyChanged(const PropertyFieldDescriptor& field)
-{
-	AsynchronousParticleModifier::propertyChanged(field);
-
-	// Recompute modifier results when the parameters have been changed.
-	if(field == PROPERTY_FIELD(neighborMode) ||
-			field == PROPERTY_FIELD(cutoff) ||
-			field == PROPERTY_FIELD(onlySelectedParticles) ||
-			field == PROPERTY_FIELD(sortBySize))
-		invalidateCachedResults();
+	output.setStatus(PipelineStatus(PipelineStatus::Success, tr("Found %n cluster(s)", "", numClusters())));
+	return output;	
 }
 
 OVITO_END_INLINE_NAMESPACE

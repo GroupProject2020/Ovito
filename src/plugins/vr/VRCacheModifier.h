@@ -23,7 +23,7 @@
 
 
 #include <core/Core.h>
-#include <core/scene/pipeline/Modifier.h>
+#include <core/dataset/pipeline/Modifier.h>
 
 namespace VRPlugin {
 
@@ -34,6 +34,12 @@ using namespace Ovito;
  */
 class VRCacheModifier : public Modifier
 {
+	Q_OBJECT
+	OVITO_CLASS(VRCacheModifier)
+
+	Q_CLASSINFO("DisplayName", "VR Display Cache");
+	Q_CLASSINFO("ModifierCategory", "VR");
+	
 public:
 
 	/// \brief Default constructor.
@@ -42,9 +48,6 @@ public:
 	/// \brief This modifies the input object in a specific way.
 	virtual PipelineStatus modifyObject(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
-	/// \brief Asks the modifier for its validity interval at the given time.
-	virtual TimeInterval modifierValidity(TimePoint time) override { return TimeInterval::infinite(); }
-
 	/// Asks the modifier whether it can be applied to the given input data.
 	virtual bool isApplicableTo(const PipelineFlowState& input) override { return true; }
 
@@ -52,13 +55,6 @@ private:
 
 	/// The cached state.
 	PipelineFlowState _cache;
-
-	Q_OBJECT
-	OVITO_OBJECT
-
-	Q_CLASSINFO("DisplayName", "VR Display Cache");
-	Q_CLASSINFO("ModifierCategory", "VR");
-
 };
 
 }	// End of namespace

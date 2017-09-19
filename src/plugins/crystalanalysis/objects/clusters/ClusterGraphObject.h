@@ -24,19 +24,22 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/data/ClusterGraph.h>
-#include <core/scene/objects/DataObjectWithSharedStorage.h>
+#include <core/dataset/data/DataObject.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
 /**
  * \brief A graph of atomic clusters.
  */
-class OVITO_CRYSTALANALYSIS_EXPORT ClusterGraphObject : public DataObjectWithSharedStorage<ClusterGraph>
+class OVITO_CRYSTALANALYSIS_EXPORT ClusterGraphObject : public DataObject
 {
+	Q_OBJECT
+	OVITO_CLASS(ClusterGraphObject)
+	
 public:
 
 	/// \brief Constructor.
-	Q_INVOKABLE ClusterGraphObject(DataSet* dataset, ClusterGraph* graph = nullptr);
+	Q_INVOKABLE ClusterGraphObject(DataSet* dataset);
 
 	/// Returns the title of this object.
 	virtual QString objectTitle() override { return tr("Clusters"); }
@@ -55,8 +58,8 @@ public:
 
 private:
 
-	Q_OBJECT
-	OVITO_OBJECT
+	/// The internal data.
+	DECLARE_RUNTIME_PROPERTY_FIELD(std::shared_ptr<ClusterGraph>, storage, setStorage);
 };
 
 }	// End of namespace

@@ -475,6 +475,8 @@ void ViewportWindow::renderGui()
 ******************************************************************************/
 void ViewportWindow::renderNow()
 {
+//	qDebug() << "ViewportWindow::renderNow() rendering viewport " << qPrintable(viewport()->viewportTitle());
+
 	_updateRequested = false;
 
 	// Do not re-enter rendering function of the same viewport.
@@ -557,17 +559,7 @@ void ViewportWindow::renderNow()
 		}
 	}
 	else {
-		// When viewport updates are disabled, just clear the frame buffer with the background color.
-		Color backgroundColor = Viewport::viewportColor(ViewportSettings::COLOR_VIEWPORT_BKG);
-		context()->functions()->glClearColor(backgroundColor.r(), backgroundColor.g(), backgroundColor.b(), 1);
-		context()->functions()->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-		// Make sure viewport is refreshed once updates are enables again.
-		_viewport->dataset()->viewportConfig()->updateViewports();
-	}
-
-	// If viewport updates are current disables, make sure the viewports will be refreshed
-	// as soon as updates are enabled again.
-	if(viewport()->dataset()->viewportConfig()->isSuspended()) {
+		// Make sure viewport gets refreshed as soon as updates are enabled again.
 		_viewport->dataset()->viewportConfig()->updateViewports();
 	}
 }

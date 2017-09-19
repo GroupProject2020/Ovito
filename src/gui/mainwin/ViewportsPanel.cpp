@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -26,7 +26,7 @@
 #include <gui/viewport/ViewportWindow.h>
 #include <core/viewport/ViewportSettings.h>
 #include <core/viewport/ViewportConfiguration.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/animation/AnimationSettings.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/DataSetContainer.h>
 #include "ViewportsPanel.h"

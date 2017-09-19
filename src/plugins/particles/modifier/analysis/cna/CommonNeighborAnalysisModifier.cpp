@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,19 +20,23 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <core/utilities/concurrent/ParallelFor.h>
 #include <plugins/particles/util/NearestNeighborFinder.h>
 #include <plugins/particles/util/CutoffNeighborFinder.h>
+#include <plugins/particles/modifier/ParticleInputHelper.h>
+#include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <plugins/particles/objects/BondsObject.h>
-#include <plugins/particles/objects/BondPropertyObject.h>
-#include <plugins/particles/data/BondProperty.h>
+#include <plugins/particles/objects/BondProperty.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <core/utilities/concurrent/ParallelFor.h>
+#include <core/dataset/DataSetContainer.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include "CommonNeighborAnalysisModifier.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(CommonNeighborAnalysisModifier, StructureIdentificationModifier);
-DEFINE_FLAGS_PROPERTY_FIELD(CommonNeighborAnalysisModifier, cutoff, "Cutoff", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(CommonNeighborAnalysisModifier, mode, "CNAMode", PROPERTY_FIELD_MEMORIZE);
+IMPLEMENT_OVITO_CLASS(CommonNeighborAnalysisModifier);
+DEFINE_PROPERTY_FIELD(CommonNeighborAnalysisModifier, cutoff);
+DEFINE_PROPERTY_FIELD(CommonNeighborAnalysisModifier, mode);
 SET_PROPERTY_FIELD_LABEL(CommonNeighborAnalysisModifier, cutoff, "Cutoff radius");
 SET_PROPERTY_FIELD_LABEL(CommonNeighborAnalysisModifier, mode, "Mode");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CommonNeighborAnalysisModifier, cutoff, WorldParameterUnit, 0);
@@ -43,80 +47,47 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CommonNeighborAnalysisModifier, cutoff, Wor
 CommonNeighborAnalysisModifier::CommonNeighborAnalysisModifier(DataSet* dataset) : StructureIdentificationModifier(dataset),
 	_cutoff(3.2), _mode(AdaptiveCutoffMode)
 {
-	INIT_PROPERTY_FIELD(cutoff);
-	INIT_PROPERTY_FIELD(mode);
-
 	// Create the structure types.
-	createStructureType(OTHER, ParticleTypeProperty::PredefinedStructureType::OTHER);
-	createStructureType(FCC, ParticleTypeProperty::PredefinedStructureType::FCC);
-	createStructureType(HCP, ParticleTypeProperty::PredefinedStructureType::HCP);
-	createStructureType(BCC, ParticleTypeProperty::PredefinedStructureType::BCC);
-	createStructureType(ICO, ParticleTypeProperty::PredefinedStructureType::ICO);
+	createStructureType(OTHER, ParticleType::PredefinedStructureType::OTHER);
+	createStructureType(FCC, ParticleType::PredefinedStructureType::FCC);
+	createStructureType(HCP, ParticleType::PredefinedStructureType::HCP);
+	createStructureType(BCC, ParticleType::PredefinedStructureType::BCC);
+	createStructureType(ICO, ParticleType::PredefinedStructureType::ICO);
 }
 
 /******************************************************************************
-* Is called when the value of a property of this object has changed.
+* Creates and initializes a computation engine that will compute the 
+* modifier's results.
 ******************************************************************************/
-void CommonNeighborAnalysisModifier::propertyChanged(const PropertyFieldDescriptor& field)
-{
-	StructureIdentificationModifier::propertyChanged(field);
-
-	// Recompute results when the parameters have been changed.
-	if(field == PROPERTY_FIELD(cutoff) ||
-		field == PROPERTY_FIELD(mode))
-		invalidateCachedResults();
-}
-
-/******************************************************************************
-* Parses the serialized contents of a property field in a custom way.
-******************************************************************************/
-bool CommonNeighborAnalysisModifier::loadPropertyFieldFromStream(ObjectLoadStream& stream, const ObjectLoadStream::SerializedPropertyField& serializedField)
-{
-	// This is for backward compatibility with OVITO 2.5.1.
-	if(serializedField.identifier == "AdaptiveMode" && serializedField.definingClass == &CommonNeighborAnalysisModifier::OOType) {
-		bool adaptiveMode;
-		stream >> adaptiveMode;
-		if(!adaptiveMode)
-			setMode(FixedCutoffMode);
-		return true;
-	}
-
-	return false;
-}
-
-/******************************************************************************
-* Creates and initializes a computation engine that will compute the modifier's results.
-******************************************************************************/
-std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> CommonNeighborAnalysisModifier::createEngine(TimePoint time, TimeInterval validityInterval)
+Future<AsynchronousModifier::ComputeEnginePtr> CommonNeighborAnalysisModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	if(structureTypes().size() != NUM_STRUCTURE_TYPES)
-		throwException(tr("The number of structure types has changed. Please remove this modifier from the modification pipeline and insert it again."));
+		throwException(tr("The number of structure types has changed. Please remove this modifier from the pipeline and insert it again."));
 
 	// Get modifier input.
-	ParticlePropertyObject* posProperty = expectStandardProperty(ParticleProperty::PositionProperty);
-	SimulationCellObject* simCell = expectSimulationCell();
+	ParticleInputHelper pih(dataset(), input);
+	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
+	SimulationCellObject* simCell = pih.expectSimulationCell();
 	if(simCell->is2D())
 		throwException(tr("The CNA modifier does not support 2d simulation cells."));
+	TimeInterval validityInterval = input.stateValidity();
 
 	// Get particle selection.
-	ParticleProperty* selectionProperty = nullptr;
+	ConstPropertyPtr selectionProperty;
 	if(onlySelectedParticles())
-		selectionProperty = expectStandardProperty(ParticleProperty::SelectionProperty)->storage();
+		selectionProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty)->storage();
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	if(mode() == AdaptiveCutoffMode) {
-		return std::make_shared<AdaptiveCNAEngine>(validityInterval, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), selectionProperty);
+		return std::make_shared<AdaptiveCNAEngine>(validityInterval, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty));
 	}
 	else if(mode() == BondMode) {
 		// Get input bonds.
-		BondsObject* bondsObj = input().findObject<BondsObject>();
-		if(!bondsObj || !bondsObj->storage())
-			throwException(tr("No bonds are defined. Please use the 'Create Bonds' modifier first to generate some bonds between particles."));
-
-		return std::make_shared<BondCNAEngine>(validityInterval, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), selectionProperty, bondsObj->storage());
+		BondsObject* bondsObj = pih.expectBonds();
+		return std::make_shared<BondCNAEngine>(validityInterval, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty), bondsObj->storage());
 	}
 	else {
-		return std::make_shared<FixedCNAEngine>(validityInterval, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), selectionProperty, cutoff());
+		return std::make_shared<FixedCNAEngine>(validityInterval, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty), cutoff());
 	}
 }
 
@@ -129,20 +100,24 @@ void CommonNeighborAnalysisModifier::AdaptiveCNAEngine::perform()
 
 	// Prepare the neighbor list.
 	NearestNeighborFinder neighFinder(MAX_NEIGHBORS);
-	if(!neighFinder.prepare(positions(), cell(), selection(), *this))
+	if(!neighFinder.prepare(*positions(), cell(), selection().get(), this))
 		return;
 
 	// Create output storage.
-	ParticleProperty* output = structures();
+	auto results = std::make_shared<CNAResults>(positions()->size());
+	PropertyStorage& output = *results->structures();
 
 	// Perform analysis on each particle.
-	parallelFor(positions()->size(), *this, [this, &neighFinder, output](size_t index) {
+	parallelFor(positions()->size(), *this, [this, &neighFinder, &output](size_t index) {
 		// Skip particles that are not included in the analysis.
 		if(!selection() || selection()->getInt(index))
-			output->setInt(index, determineStructureAdaptive(neighFinder, index, typesToIdentify()));
+			output.setInt(index, determineStructureAdaptive(neighFinder, index, typesToIdentify()));
 		else
-			output->setInt(index, OTHER);
+			output.setInt(index, OTHER);
 	});
+
+	// Return the results of the compute engine.
+	setResult(std::move(results));	
 }
 
 /******************************************************************************
@@ -154,20 +129,25 @@ void CommonNeighborAnalysisModifier::FixedCNAEngine::perform()
 
 	// Prepare the neighbor list.
 	CutoffNeighborFinder neighborListBuilder;
-	if(!neighborListBuilder.prepare(_cutoff, positions(), cell(), selection(), *this))
+	if(!neighborListBuilder.prepare(_cutoff, *positions(), cell(), selection().get(), this))
 		return;
 
+	auto results = std::make_shared<CNAResults>(positions()->size());
+
 	// Create output storage.
-	ParticleProperty* output = structures();
+	PropertyStorage& output = *results->structures();
 
 	// Perform analysis on each particle.
-	parallelFor(positions()->size(), *this, [this, &neighborListBuilder, output](size_t index) {
+	parallelFor(positions()->size(), *this, [this, &neighborListBuilder, &output](size_t index) {
 		// Skip particles that are not included in the analysis.
 		if(!selection() || selection()->getInt(index))
-			output->setInt(index, determineStructureFixed(neighborListBuilder, index, typesToIdentify()));
+			output.setInt(index, determineStructureFixed(neighborListBuilder, index, typesToIdentify()));
 		else
-			output->setInt(index, OTHER);
+			output.setInt(index, OTHER);
 	});
+
+	// Return the results of the compute engine.
+	setResult(std::move(results));	
 }
 
 /******************************************************************************
@@ -178,22 +158,23 @@ void CommonNeighborAnalysisModifier::BondCNAEngine::perform()
 	setProgressText(tr("Performing common neighbor analysis"));
 
 	// Prepare particle bond map.
-	ParticleBondMap bondMap(bonds());
+	ParticleBondMap bondMap(*bonds());
+
+	auto results = std::make_shared<BondCNAResults>(positions()->size(), bonds()->size());
+	PropertyStorage& cnaIndices = *results->cnaIndices();
 
 	// Compute per-bond CNA indices.
 	bool maxNeighborLimitExceeded = false;
 	bool maxCommonNeighborBondLimitExceeded = false;
-	parallelFor(bonds().size(), *this, [this, &bondMap, &maxNeighborLimitExceeded, &maxCommonNeighborBondLimitExceeded](size_t bondIndex) {
-		const Bond& currentBond = bonds()[bondIndex];
+	parallelFor(bonds()->size(), *this, [this, &cnaIndices, &bondMap, &maxNeighborLimitExceeded, &maxCommonNeighborBondLimitExceeded](size_t bondIndex) {
+		const Bond& currentBond = (*bonds())[bondIndex];
 
 		// Determine common neighbors shared by both particles.
 		int numCommonNeighbors = 0;
 		std::array<std::pair<unsigned int, Vector_3<int8_t>>, 32> commonNeighbors;
-		for(size_t neighborBondIndex1 : bondMap.bondsOfParticle(currentBond.index1)) {
-			const Bond& neighborBond1 = bonds()[neighborBondIndex1];
+		for(Bond neighborBond1 : bondMap.bondsOfParticle(currentBond.index1)) {
 			OVITO_ASSERT(neighborBond1.index1 == currentBond.index1);
-			for(size_t neighborBondIndex2 : bondMap.bondsOfParticle(currentBond.index2)) {
-				const Bond& neighborBond2 = bonds()[neighborBondIndex2];
+			for(Bond neighborBond2 : bondMap.bondsOfParticle(currentBond.index2)) {
 				OVITO_ASSERT(neighborBond2.index1 == currentBond.index2);
 				if(neighborBond2.index2 == neighborBond1.index2 && neighborBond1.pbcShift == currentBond.pbcShift + neighborBond2.pbcShift) {
 					if(numCommonNeighbors == commonNeighbors.size()) {
@@ -208,12 +189,11 @@ void CommonNeighborAnalysisModifier::BondCNAEngine::perform()
 			}
 		}
 
-		// Determine which of the common neighbors are connected by bonds.
+		// Determine which of the common neighbors are inter-connected by bonds.
 		std::array<CNAPairBond, 64> commonNeighborBonds;
 		int numCommonNeighborBonds = 0;
 		for(int ni1 = 0; ni1 < numCommonNeighbors; ni1++) {
-			for(size_t neighborBondIndex : bondMap.bondsOfParticle(commonNeighbors[ni1].first)) {
-				const Bond& neighborBond = bonds()[neighborBondIndex];
+			for(Bond neighborBond : bondMap.bondsOfParticle(commonNeighbors[ni1].first)) {
 				for(int ni2 = 0; ni2 < ni1; ni2++) {
 					if(commonNeighbors[ni2].first == neighborBond.index2 && commonNeighbors[ni1].second + neighborBond.pbcShift == commonNeighbors[ni2].second) {
 						if(numCommonNeighborBonds == commonNeighborBonds.size()) {
@@ -231,9 +211,9 @@ void CommonNeighborAnalysisModifier::BondCNAEngine::perform()
 		int maxChainLength = calcMaxChainLength(commonNeighborBonds.data(), numCommonNeighborBonds);
 
 		// Store results in bond property.
-		cnaIndices()->setIntComponent(bondIndex, 0, numCommonNeighbors);
-		cnaIndices()->setIntComponent(bondIndex, 1, numCommonNeighborBonds);
-		cnaIndices()->setIntComponent(bondIndex, 2, maxChainLength);
+		cnaIndices.setIntComponent(bondIndex, 0, numCommonNeighbors);
+		cnaIndices.setIntComponent(bondIndex, 1, numCommonNeighborBonds);
+		cnaIndices.setIntComponent(bondIndex, 2, maxChainLength);
 	});
 	if(isCanceled())
 		return;
@@ -243,10 +223,10 @@ void CommonNeighborAnalysisModifier::BondCNAEngine::perform()
 		throw Exception(tr("There are more than 64 bonds between common neighbors, which is the built-in limit. Cannot perform CNA in this case."));
 
 	// Create output storage.
-	ParticleProperty* output = structures();
+	PropertyStorage& output = *results->structures();
 
 	// Classify particles.
-	parallelFor(positions()->size(), *this, [this, output, &bondMap](size_t particleIndex) {
+	parallelFor(positions()->size(), *this, [this, &output, &cnaIndices, &bondMap](size_t particleIndex) {
 
 		int n421 = 0;
 		int n422 = 0;
@@ -254,8 +234,8 @@ void CommonNeighborAnalysisModifier::BondCNAEngine::perform()
 		int n555 = 0;
 		int n666 = 0;
 		int ntotal = 0;
-		for(size_t neighborBondIndex : bondMap.bondsOfParticle(particleIndex)) {
-			const Point3I& indices = cnaIndices()->getPoint3I(neighborBondIndex);
+		for(size_t neighborBondIndex : bondMap.bondIndicesOfParticle(particleIndex)) {
+			const Point3I& indices = cnaIndices.getPoint3I(neighborBondIndex);
 			if(indices[0] == 4) {
 				if(indices[1] == 2) {
 					if(indices[2] == 1) n421++;
@@ -266,23 +246,26 @@ void CommonNeighborAnalysisModifier::BondCNAEngine::perform()
 			else if(indices[0] == 5 && indices[1] == 5 && indices[2] == 5) n555++;
 			else if(indices[0] == 6 && indices[1] == 6 && indices[2] == 6) n666++;
 			else {
-				output->setInt(particleIndex, OTHER);
+				output.setInt(particleIndex, OTHER);
 				return;
 			}
 			ntotal++;
 		}
 
 		if(n421 == 12 && ntotal == 12 && typesToIdentify()[FCC])
-			output->setInt(particleIndex, FCC);
+			output.setInt(particleIndex, FCC);
 		else if(n421 == 6 && n422 == 6 && ntotal == 12 && typesToIdentify()[HCP])
-			output->setInt(particleIndex, HCP);
+			output.setInt(particleIndex, HCP);
 		else if(n444 == 6 && n666 == 8 && ntotal == 14 && typesToIdentify()[BCC])
-			output->setInt(particleIndex, BCC);
+			output.setInt(particleIndex, BCC);
 		else if(n555 == 12 && ntotal == 12 && typesToIdentify()[ICO])
-			output->setInt(particleIndex, ICO);
+			output.setInt(particleIndex, ICO);
 		else
-			output->setInt(particleIndex, OTHER);
+			output.setInt(particleIndex, OTHER);
 	});
+
+	// Return the results of the compute engine.
+	setResult(std::move(results));	
 }
 
 /******************************************************************************
@@ -592,44 +575,32 @@ CommonNeighborAnalysisModifier::StructureType CommonNeighborAnalysisModifier::de
 }
 
 /******************************************************************************
-* Unpacks the results of the computation engine and stores them in the modifier.
+* Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-void CommonNeighborAnalysisModifier::transferComputationResults(ComputeEngine* engine)
+PipelineFlowState CommonNeighborAnalysisModifier::CNAResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	StructureIdentificationModifier::transferComputationResults(engine);
+	PipelineFlowState outState = StructureIdentificationResults::apply(time, modApp, input);
 
-	if(BondCNAEngine* bondEngine = dynamic_cast<BondCNAEngine*>(engine))
-		_cnaIndicesData = bondEngine->cnaIndices();
-	else
-		_cnaIndicesData.reset();
+	// Also output structure type counts, which have been computed by the base class.
+	StructureIdentificationModifierApplication* myModApp = static_object_cast<StructureIdentificationModifierApplication>(modApp);
+	outState.attributes().insert(QStringLiteral("CommonNeighborAnalysis.counts.OTHER"), QVariant::fromValue(myModApp->structureCounts()[OTHER]));
+	outState.attributes().insert(QStringLiteral("CommonNeighborAnalysis.counts.FCC"), QVariant::fromValue(myModApp->structureCounts()[FCC]));
+	outState.attributes().insert(QStringLiteral("CommonNeighborAnalysis.counts.HCP"), QVariant::fromValue(myModApp->structureCounts()[HCP]));
+	outState.attributes().insert(QStringLiteral("CommonNeighborAnalysis.counts.BCC"), QVariant::fromValue(myModApp->structureCounts()[BCC]));
+	outState.attributes().insert(QStringLiteral("CommonNeighborAnalysis.counts.ICO"), QVariant::fromValue(myModApp->structureCounts()[ICO]));
+
+	return outState;
 }
 
 /******************************************************************************
 * Lets the modifier insert the cached computation results into the modification pipeline.
 ******************************************************************************/
-PipelineStatus CommonNeighborAnalysisModifier::applyComputationResults(TimePoint time, TimeInterval& validityInterval)
+PipelineFlowState CommonNeighborAnalysisModifier::BondCNAResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	// Output per-bond CNA indices to pipeline.
-	if(_cnaIndicesData && _cnaIndicesData->size() == inputBondCount()) {
-		// Create output bond property object.
-		OORef<BondPropertyObject> cnaIndicesProperty = BondPropertyObject::createFromStorage(dataset(), _cnaIndicesData.data());
-		// Insert into pipeline.
-		output().addObject(cnaIndicesProperty);
-	}
-
-	// Let the base class output the structure type property to the pipeline.
-	PipelineStatus status = StructureIdentificationModifier::applyComputationResults(time, validityInterval);
-
-	// Also output structure type counts, which have been computed by the base class.
-	if(status.type() == PipelineStatus::Success) {
-		output().attributes().insert(QStringLiteral("CommonNeighborAnalysis.counts.OTHER"), QVariant::fromValue(structureCounts()[OTHER]));
-		output().attributes().insert(QStringLiteral("CommonNeighborAnalysis.counts.FCC"), QVariant::fromValue(structureCounts()[FCC]));
-		output().attributes().insert(QStringLiteral("CommonNeighborAnalysis.counts.HCP"), QVariant::fromValue(structureCounts()[HCP]));
-		output().attributes().insert(QStringLiteral("CommonNeighborAnalysis.counts.BCC"), QVariant::fromValue(structureCounts()[BCC]));
-		output().attributes().insert(QStringLiteral("CommonNeighborAnalysis.counts.ICO"), QVariant::fromValue(structureCounts()[ICO]));
-	}
-
-	return status;
+	PipelineFlowState output = CNAResults::apply(time, modApp, input);
+	ParticleOutputHelper poh(modApp->dataset(), output);
+	poh.outputProperty<BondProperty>(cnaIndices());
+	return output;
 }
 
 OVITO_END_INLINE_NAMESPACE

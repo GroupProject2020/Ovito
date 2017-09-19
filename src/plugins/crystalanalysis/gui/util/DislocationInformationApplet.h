@@ -23,9 +23,11 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <gui/plugins/utility/UtilityApplet.h>
+#include <plugins/crystalanalysis/objects/dislocations/DislocationDisplay.h>
+#include <gui/mainwin/cmdpanel/UtilityApplet.h>
 #include <gui/viewport/input/ViewportInputMode.h>
 #include <gui/viewport/input/ViewportInputManager.h>
+#include <core/dataset/scene/ObjectNode.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
@@ -36,6 +38,11 @@ class DislocationInformationInputMode;		// defined below
  */
 class DislocationInformationApplet : public UtilityApplet
 {
+	Q_OBJECT
+	OVITO_CLASS(DislocationInformationApplet)
+
+	Q_CLASSINFO("DisplayName", "Inspect dislocations");
+	
 public:
 
 	/// Constructor.
@@ -58,11 +65,6 @@ private:
 	QTextEdit* _infoDisplay;
 	QWidget* _panel;
 	DislocationInformationInputMode* _inputMode;
-
-	Q_CLASSINFO("DisplayName", "Inspect dislocations");
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 /**
@@ -90,9 +92,6 @@ public:
 
 	/// \brief Indicates whether this input mode renders into the viewports.
 	virtual bool hasOverlay() override { return true; }
-
-	/// Computes the bounding box of the 3d visual viewport overlay rendered by the input mode.
-	virtual Box3 overlayBoundingBox(Viewport* vp, ViewportSceneRenderer* renderer) override;
 
 private:
 

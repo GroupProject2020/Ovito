@@ -74,7 +74,7 @@ InputColumnMappingDialog::InputColumnMappingDialog(const InputColumnMapping& map
 	// Calculate the optimum width of the property column.
 	QComboBox* box = new QComboBox();
 	box->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-	QMapIterator<QString, ParticleProperty::Type> i(ParticleProperty::standardPropertyList());
+	QMapIterator<QString, int> i(ParticleProperty::OOClass().standardPropertyIds());
 	while(i.hasNext()) {
 		i.next();
 		box->addItem(i.key(), i.value());
@@ -158,7 +158,7 @@ void InputColumnMappingDialog::setMapping(const InputColumnMapping& mapping)
 		QComboBox* nameItem = new QComboBox();
 		nameItem->setEditable(true);
 		nameItem->setDuplicatesEnabled(false);
-		QMapIterator<QString, ParticleProperty::Type> propIter(ParticleProperty::standardPropertyList());
+		QMapIterator<QString, int> propIter(ParticleProperty::OOClass().standardPropertyIds());
 		while(propIter.hasNext()) {
 			propIter.next();
 			nameItem->addItem(propIter.key(), propIter.value());
@@ -206,11 +206,11 @@ void InputColumnMappingDialog::updateVectorComponentList(int columnIndex)
 	QComboBox* vecBox = _vectorComponentBoxes[columnIndex];
 
 	QString propertyName = _propertyBoxes[columnIndex]->currentText();
-	ParticleProperty::Type standardProperty = ParticleProperty::standardPropertyList().value(propertyName);
+	int standardProperty = ParticleProperty::OOClass().standardPropertyIds().value(propertyName);
 	if(standardProperty != ParticleProperty::UserProperty) {
 		int oldIndex = vecBox->currentIndex();
 		_vectorComponentBoxes[columnIndex]->clear();
-		Q_FOREACH(QString name, ParticleProperty::standardPropertyComponentNames(standardProperty))
+		for(const QString& name : ParticleProperty::OOClass().standardPropertyComponentNames(standardProperty))
 			vecBox->addItem(name);
 		vecBox->setEnabled(_fileColumnBoxes[columnIndex]->isChecked() && vecBox->count() != 0);
 		if(oldIndex >= 0)
@@ -233,7 +233,7 @@ InputColumnMapping InputColumnMappingDialog::mapping() const
 		mapping[index].columnName = _fileColumnBoxes[index]->text();
 		if(_fileColumnBoxes[index]->isChecked()) {
 			QString propertyName = _propertyBoxes[index]->currentText().trimmed();
-			ParticleProperty::Type type = ParticleProperty::standardPropertyList().value(propertyName);
+			ParticleProperty::Type type = (ParticleProperty::Type)ParticleProperty::OOClass().standardPropertyIds().value(propertyName);
 			if(type != ParticleProperty::UserProperty) {
 				int vectorCompnt = std::max(0, _vectorComponentBoxes[index]->currentIndex());
 				mapping[index].mapStandardColumn(type, vectorCompnt);

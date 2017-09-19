@@ -45,7 +45,7 @@ class SftpJob : public QObject
 public:
 
 	/// Constructor.
-	SftpJob(const QUrl& url, const PromiseBasePtr& promise);
+	SftpJob(const QUrl& url, const PromiseStatePtr& promiseState);
 
 	/// Destructor.
 	virtual ~SftpJob() {
@@ -93,10 +93,10 @@ protected:
     QSsh::SftpChannel::Ptr _sftpChannel;
 
     /// The associated future interface of the job.
-    PromiseBasePtr _promise;
+    PromiseStatePtr _promiseState;
 
     /// Indicates whether this SFTP job is currently active.
-    bool _isActive;
+    bool _isActive = false;
 
     /// List SFTP jobs that are waiting to be executed.
     static QQueue<SftpJob*> _queuedJobs;
@@ -115,8 +115,8 @@ class SftpDownloadJob : public SftpJob
 public:
 
 	/// Constructor.
-	SftpDownloadJob(const QUrl& url, const PromisePtr<QString>& promise) :
-		SftpJob(url, promise), _timerId(0) {}
+	SftpDownloadJob(const QUrl& url, Promise<QString>&& promise) :
+		SftpJob(url, promise.sharedState()), _promise(std::move(promise)), _timerId(0) {}
 
 protected:
 
@@ -147,6 +147,9 @@ private:
 
     /// The progress monitor timer.
     int _timerId;
+
+	/// The promise through which the result of this download job is returned.
+	Promise<QString> _promise;
 };
 
 /**
@@ -159,8 +162,8 @@ class SftpListDirectoryJob : public SftpJob
 public:
 
 	/// Constructor.
-	SftpListDirectoryJob(const QUrl& url, const PromisePtr<QStringList>& promise) :
-		SftpJob(url, promise) {}
+	SftpListDirectoryJob(const QUrl& url, Promise<QStringList>&& promise) :
+		SftpJob(url, promise.sharedState()), _promise(std::move(promise)) {}
 
 protected:
 
@@ -182,6 +185,9 @@ private:
 
     /// The SFTP job.
     QSsh::SftpJobId _listingJob;
+
+	/// The promise through which the result of this download job is returned.
+	Promise<QStringList> _promise;	
 };
 
 OVITO_END_INLINE_NAMESPACE

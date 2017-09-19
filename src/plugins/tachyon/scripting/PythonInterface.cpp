@@ -22,7 +22,7 @@
 #include <plugins/pyscript/PyScript.h>
 #include <plugins/pyscript/binding/PythonBinding.h>
 #include <plugins/tachyon/renderer/TachyonRenderer.h>
-#include <core/plugins/PluginManager.h>
+#include <core/app/PluginManager.h>
 
 namespace Ovito { namespace Tachyon { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 

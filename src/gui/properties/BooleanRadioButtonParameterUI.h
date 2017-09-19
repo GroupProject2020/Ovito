@@ -33,6 +33,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 ******************************************************************************/
 class OVITO_GUI_EXPORT BooleanRadioButtonParameterUI : public PropertyParameterUI
 {
+	Q_OBJECT
+	OVITO_CLASS(BooleanRadioButtonParameterUI)
+	
 public:
 
 	/// Constructor for a Qt property.
@@ -77,11 +80,6 @@ protected:
 
 	/// The radio button group.
 	QPointer<QButtonGroup> _buttonGroup;
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

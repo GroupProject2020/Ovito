@@ -27,8 +27,8 @@
 #include "StructurePatternEditor.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
-
-IMPLEMENT_OVITO_OBJECT(StructurePatternEditor, PropertiesEditor);
+	
+IMPLEMENT_OVITO_CLASS(StructurePatternEditor);
 SET_OVITO_OBJECT_EDITOR(StructurePattern, StructurePatternEditor);
 
 /******************************************************************************

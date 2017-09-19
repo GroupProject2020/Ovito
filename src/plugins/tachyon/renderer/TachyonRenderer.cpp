@@ -22,9 +22,10 @@
 #include <core/Core.h>
 #include <core/rendering/FrameBuffer.h>
 #include <core/rendering/RenderSettings.h>
-#include <core/reference/CloneHelper.h>
-#include <core/scene/ObjectNode.h>
+#include <core/oo/CloneHelper.h>
+#include <core/dataset/scene/ObjectNode.h>
 #include <core/utilities/concurrent/Task.h>
+#include <core/utilities/units/UnitsManager.h>
 #include "TachyonRenderer.h"
 
 extern "C" {
@@ -54,18 +55,18 @@ inline apivector tvec(const Point_3<T>& p) {
 	return rt_vector(p.x(), p.y(), -p.z());
 }
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(TachyonRenderer, NonInteractiveSceneRenderer);
-DEFINE_FLAGS_PROPERTY_FIELD(TachyonRenderer, antialiasingEnabled, "EnableAntialiasing", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(TachyonRenderer, directLightSourceEnabled, "EnableDirectLightSource", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(TachyonRenderer, shadowsEnabled, "EnableShadows", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(TachyonRenderer, antialiasingSamples, "AntialiasingSamples", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(TachyonRenderer, defaultLightSourceIntensity, "DefaultLightSourceIntensity", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(TachyonRenderer, ambientOcclusionEnabled, "EnableAmbientOcclusion", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(TachyonRenderer, ambientOcclusionSamples, "AmbientOcclusionSamples", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(TachyonRenderer, ambientOcclusionBrightness, "AmbientOcclusionBrightness", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(TachyonRenderer, depthOfFieldEnabled, "DepthOfFieldEnabled", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(TachyonRenderer, dofFocalLength, "DOFFocalLength", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(TachyonRenderer, dofAperture, "DOFAperture", PROPERTY_FIELD_MEMORIZE);
+IMPLEMENT_OVITO_CLASS(TachyonRenderer);
+DEFINE_PROPERTY_FIELD(TachyonRenderer, antialiasingEnabled);
+DEFINE_PROPERTY_FIELD(TachyonRenderer, antialiasingSamples);
+DEFINE_PROPERTY_FIELD(TachyonRenderer, directLightSourceEnabled);
+DEFINE_PROPERTY_FIELD(TachyonRenderer, shadowsEnabled);
+DEFINE_PROPERTY_FIELD(TachyonRenderer, defaultLightSourceIntensity);
+DEFINE_PROPERTY_FIELD(TachyonRenderer, ambientOcclusionEnabled);
+DEFINE_PROPERTY_FIELD(TachyonRenderer, ambientOcclusionSamples);
+DEFINE_PROPERTY_FIELD(TachyonRenderer, ambientOcclusionBrightness);
+DEFINE_PROPERTY_FIELD(TachyonRenderer, depthOfFieldEnabled);
+DEFINE_PROPERTY_FIELD(TachyonRenderer, dofFocalLength);
+DEFINE_PROPERTY_FIELD(TachyonRenderer, dofAperture);
 SET_PROPERTY_FIELD_LABEL(TachyonRenderer, antialiasingEnabled, "Enable anti-aliasing");
 SET_PROPERTY_FIELD_LABEL(TachyonRenderer, antialiasingSamples, "Anti-aliasing samples");
 SET_PROPERTY_FIELD_LABEL(TachyonRenderer, directLightSourceEnabled, "Direct light");
@@ -90,20 +91,9 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(TachyonRenderer, ambientOcclusionSamples, Int
 TachyonRenderer::TachyonRenderer(DataSet* dataset) : NonInteractiveSceneRenderer(dataset),
 		_antialiasingEnabled(true), _directLightSourceEnabled(true), _shadowsEnabled(true),
 	  _antialiasingSamples(12), _ambientOcclusionEnabled(true), _ambientOcclusionSamples(12),
-	  _defaultLightSourceIntensity(0.90f), _ambientOcclusionBrightness(0.80f), _depthOfFieldEnabled(false),
-	  _dofFocalLength(40), _dofAperture(1e-2f)
+	  _defaultLightSourceIntensity(FloatType(0.9)), _ambientOcclusionBrightness(FloatType(0.8)), _depthOfFieldEnabled(false),
+	  _dofFocalLength(40), _dofAperture(FloatType(1e-2))
 {
-	INIT_PROPERTY_FIELD(antialiasingEnabled);
-	INIT_PROPERTY_FIELD(antialiasingSamples);
-	INIT_PROPERTY_FIELD(directLightSourceEnabled);
-	INIT_PROPERTY_FIELD(shadowsEnabled);
-	INIT_PROPERTY_FIELD(defaultLightSourceIntensity);
-	INIT_PROPERTY_FIELD(ambientOcclusionEnabled);
-	INIT_PROPERTY_FIELD(ambientOcclusionSamples);
-	INIT_PROPERTY_FIELD(ambientOcclusionBrightness);
-	INIT_PROPERTY_FIELD(depthOfFieldEnabled);
-	INIT_PROPERTY_FIELD(dofFocalLength);
-	INIT_PROPERTY_FIELD(dofAperture);
 }
 
 /******************************************************************************
@@ -122,13 +112,13 @@ bool TachyonRenderer::startRender(DataSet* dataset, RenderSettings* settings)
 /******************************************************************************
 * Renders a single animation frame into the given frame buffer.
 ******************************************************************************/
-bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, TaskManager& taskManager)
+bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, const PromiseBase& promise)
 {
-	SynchronousTask renderTask(taskManager);
-	renderTask.setProgressText(tr("Handing scene data to Tachyon renderer"));
+	promise.setProgressText(tr("Handing scene data to Tachyon renderer"));
 
 	// Create new scene and set up parameters.
-	_rtscene = rt_newscene();
+	std::unique_ptr<void, void (*)(void*)> rtscene(rt_newscene(), &rt_deletescene);
+	_rtscene = rtscene.get();
 	rt_resolution(_rtscene, renderSettings()->outputImageWidth(), renderSettings()->outputImageHeight());
 	if(antialiasingEnabled())
 		rt_aa_maxsamples(_rtscene, antialiasingSamples());
@@ -224,7 +214,8 @@ bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask 
 	rt_camera_raydepth(_rtscene, 1000);
 
 	// Export Ovito data objects to Tachyon scene.
-	renderScene();
+	if(!renderScene(promise))
+		return false;
 
 	// Render visual 3D representation of the modifiers.
 	renderModifiers(false);
@@ -233,10 +224,10 @@ bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask 
 	renderModifiers(true);
 
 	// Render scene.
-	renderTask.setProgressMaximum(renderSettings()->outputImageWidth() * renderSettings()->outputImageHeight());
-	renderTask.setProgressText(tr("Rendering image"));
+	promise.setProgressMaximum(renderSettings()->outputImageWidth() * renderSettings()->outputImageHeight());
+	promise.setProgressText(tr("Rendering image"));
 
-	scenedef * scene = (scenedef *)_rtscene;
+	scenedef* scene = (scenedef*)_rtscene;
 
 	/* if certain key aspects of the scene parameters have been changed */
 	/* since the last frame rendered, or when rendering the scene the   */
@@ -269,13 +260,13 @@ bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask 
 				parms->yinc   = scene->numthreads;
 			}
 
-			/* if using threads, wake up the child threads...  */
+			// If using threads, wake up the child threads...
 			rt_thread_barrier(((thr_parms *) scene->threadparms)[0].runbar, 1);
 
-			/* Actually Ray Trace The Image */
+			// Ray trace the image tile.
 			thread_trace(&((thr_parms *) scene->threadparms)[0]);
 
-			// Copy rendered image back into Ovito's frame buffer.
+			// Copy rendered image piece back into Ovito's frame buffer.
 			// Flip image since Tachyon fills the buffer upside down.
 			OVITO_ASSERT(frameBuffer->image().format() == QImage::Format_ARGB32);
 			int bperline = renderSettings()->outputImageWidth() * 4;
@@ -291,8 +282,8 @@ bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask 
 			}
 			frameBuffer->update(QRect(xstart, frameBuffer->image().height() - ystop, xstop - xstart, ystop - ystart));
 
-			renderTask.setProgressValue(renderTask.progressValue() + (xstop - xstart) * (ystop - ystart));
-			if(renderTask.isCanceled())
+			promise.setProgressValue(promise.progressValue() + (xstop - xstart) * (ystop - ystart));
+			if(promise.isCanceled())
 				break;
 			
 			xstart += tileWidth;
@@ -303,7 +294,7 @@ bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask 
 			tileWidth = std::max(1, std::min(100, (tileWidth + tileWidth * 50 / std::max(1, elapsedTime)) / 2));
 		}
 
-		if(renderTask.isCanceled())
+		if(promise.isCanceled())
 			break;
 	}
 
@@ -323,10 +314,7 @@ bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask 
 		frameBuffer->update(boundingRect.toAlignedRect());
 	}
 
-	// Clean up.
-	rt_deletescene(_rtscene);
-
-	return !renderTask.isCanceled();
+	return !promise.isCanceled();
 }
 
 /******************************************************************************

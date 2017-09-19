@@ -23,36 +23,40 @@
 
 
 #include <plugins/particles/Particles.h>
-#include "../ParticleModifier.h"
+#include <core/dataset/pipeline/Modifier.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Properties)
 
 /**
  * \brief This modifier computes the length of bonds and stores them in a new bond property.
  */
-class OVITO_PARTICLES_EXPORT ComputeBondLengthsModifier : public ParticleModifier
+class OVITO_PARTICLES_EXPORT ComputeBondLengthsModifier : public Modifier
 {
+	/// Give this modifier class its own metaclass.
+	class OOMetaClass : public Modifier::OOMetaClass 
+	{
+	public:
+
+		/// Inherit constructor from base metaclass.
+		using Modifier::OOMetaClass::OOMetaClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
+
+	Q_OBJECT
+	OVITO_CLASS_META(ComputeBondLengthsModifier, OOMetaClass)
+
+	Q_CLASSINFO("DisplayName", "Compute bond lengths");
+	Q_CLASSINFO("ModifierCategory", "Modification");
+
 public:
 
 	/// \brief Constructs a new instance of this class.
 	Q_INVOKABLE ComputeBondLengthsModifier(DataSet* dataset);
 
-	/// \brief Asks the modifier for its validity interval at the given time.
-	virtual TimeInterval modifierValidity(TimePoint time) override { return TimeInterval::infinite(); }
-
-protected:
-
-	/// Modifies the particle object. The time interval passed
-	/// to the function is reduced to the interval where the modified object is valid/constant.
-	virtual PipelineStatus modifyParticles(TimePoint time, TimeInterval& validityInterval) override;
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
-
-	Q_CLASSINFO("DisplayName", "Compute bond lengths");
-	Q_CLASSINFO("ModifierCategory", "Modification");
+	/// Modifies the input data in an immediate, preliminary way.
+	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 };
 
 OVITO_END_INLINE_NAMESPACE

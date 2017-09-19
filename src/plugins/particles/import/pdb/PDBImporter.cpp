@@ -20,14 +20,13 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <core/utilities/io/FileManager.h>
-#include <core/utilities/concurrent/Future.h>
-#include <core/dataset/importexport/FileSource.h>
+#include <plugins/particles/import/ParticleFrameData.h>
+#include <core/utilities/io/CompressedTextReader.h>
 #include "PDBImporter.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(PDBImporter, ParticleImporter);
+IMPLEMENT_OVITO_CLASS(PDBImporter);	
 
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
@@ -51,11 +50,20 @@ bool PDBImporter::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation
 }
 
 /******************************************************************************
-* Parses the given input file and stores the data in the given container object.
+* Parses the given input file.
 ******************************************************************************/
-void PDBImporter::PDBImportTask::parseFile(CompressedTextReader& stream)
+void PDBImporter::FrameLoader::loadFile(QFile& file)
 {
+	// Open file for reading.
+	CompressedTextReader stream(file, frame().sourceFile.path());
 	setProgressText(tr("Reading PDB file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+
+	// Jump to byte offset.
+	if(frame().byteOffset != 0)
+		stream.seek(frame().byteOffset);
+
+	// Create the destination container for loaded data.
+	std::shared_ptr<ParticleFrameData> frameData = std::make_shared<ParticleFrameData>();
 
 	// Parse metadata records.
 	int numAtoms = 0;
@@ -101,7 +109,7 @@ void PDBImporter::PDBImportTask::parseFile(CompressedTextReader& stream)
 				cell(1,2) = c * (cos(alpha) - cos(beta)*cos(gamma)) / sin(gamma);
 				cell(2,2) = v / (a*b*sin(gamma));
 			}
-			simulationCell().setMatrix(cell);
+			frameData->simulationCell().setMatrix(cell);
 			hasSimulationCell = true;
 		}
 		// Count atoms.
@@ -116,20 +124,20 @@ void PDBImporter::PDBImportTask::parseFile(CompressedTextReader& stream)
 	stream.seek(0);
 
 	// Create the particle properties.
-	ParticleProperty* posProperty = new ParticleProperty(numAtoms, ParticleProperty::PositionProperty, 0, true);
-	addParticleProperty(posProperty);
-	ParticleProperty* typeProperty = new ParticleProperty(numAtoms, ParticleProperty::ParticleTypeProperty, 0, true);
-	ParticleFrameLoader::ParticleTypeList* typeList = new ParticleFrameLoader::ParticleTypeList();
-	addParticleProperty(typeProperty, typeList);
+	PropertyPtr posProperty = ParticleProperty::createStandardStorage(numAtoms, ParticleProperty::PositionProperty, true);
+	frameData->addParticleProperty(posProperty);
+	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(numAtoms, ParticleProperty::TypeProperty, true);
+	ParticleFrameData::ParticleTypeList* typeList = new ParticleFrameData::ParticleTypeList();
+	frameData->addParticleProperty(typeProperty, typeList);
 
 	// Parse atoms.
 	int atomIndex = 0;
 	Point3* p = posProperty->dataPoint3();
 	int* a = typeProperty->dataInt();
-	ParticleProperty* particleIdentifierProperty = nullptr;
-	ParticleProperty* moleculeIdentifierProperty = nullptr;
-	ParticleProperty* moleculeTypeProperty = nullptr;
-	ParticleFrameLoader::ParticleTypeList* moleculeTypeList = nullptr;
+	PropertyPtr particleIdentifierProperty;
+	PropertyPtr moleculeIdentifierProperty;
+	PropertyPtr moleculeTypeProperty;
+	ParticleFrameData::ParticleTypeList* moleculeTypeList = nullptr;
 	while(!stream.eof() && atomIndex < numAtoms) {
 		if(!setProgressValueIntermittent(atomIndex)) return;
 
@@ -160,8 +168,8 @@ void PDBImporter::PDBImportTask::parseFile(CompressedTextReader& stream)
 			unsigned int atomSerialNumber;
 			if(sscanf(stream.line() + 6, "%5u", &atomSerialNumber) == 1) {
 				if(!particleIdentifierProperty) {
-					particleIdentifierProperty = new ParticleProperty(numAtoms, ParticleProperty::IdentifierProperty, 0, true);
-					addParticleProperty(particleIdentifierProperty);
+					particleIdentifierProperty = ParticleProperty::createStandardStorage(numAtoms, ParticleProperty::IdentifierProperty, true);
+					frameData->addParticleProperty(particleIdentifierProperty);
 				}
 				particleIdentifierProperty->setInt(atomIndex, atomSerialNumber);
 			}
@@ -170,8 +178,8 @@ void PDBImporter::PDBImportTask::parseFile(CompressedTextReader& stream)
 			unsigned int residueSequenceNumber;
 			if(sscanf(stream.line() + 22, "%4u", &residueSequenceNumber) == 1) {
 				if(!moleculeIdentifierProperty) {
-					moleculeIdentifierProperty = new ParticleProperty(numAtoms, ParticleProperty::MoleculeProperty, 0, true);
-					addParticleProperty(moleculeIdentifierProperty);
+					moleculeIdentifierProperty = ParticleProperty::createStandardStorage(numAtoms, ParticleProperty::MoleculeProperty, true);
+					frameData->addParticleProperty(moleculeIdentifierProperty);
 				}
 				moleculeIdentifierProperty->setInt(atomIndex, residueSequenceNumber);
 			}
@@ -183,9 +191,9 @@ void PDBImporter::PDBImportTask::parseFile(CompressedTextReader& stream)
 				if(*c != ' ') moleculeType[moleculeTypeLength++] = *c;
 			if(moleculeTypeLength != 0) {
 				if(!moleculeTypeProperty) {
-					moleculeTypeProperty = new ParticleProperty(numAtoms, ParticleProperty::MoleculeTypeProperty, 0, true);
-					moleculeTypeList = new ParticleFrameLoader::ParticleTypeList();
-					addParticleProperty(moleculeTypeProperty, moleculeTypeList);
+					moleculeTypeProperty = ParticleProperty::createStandardStorage(numAtoms, ParticleProperty::MoleculeTypeProperty, true);
+					moleculeTypeList = new ParticleFrameData::ParticleTypeList();
+					frameData->addParticleProperty(moleculeTypeProperty, moleculeTypeList);
 				}
 				moleculeTypeProperty->setInt(atomIndex, moleculeTypeList->addParticleTypeName(moleculeType, moleculeType + moleculeTypeLength));
 			}
@@ -216,9 +224,9 @@ void PDBImporter::PDBImportTask::parseFile(CompressedTextReader& stream)
 					unsigned int atomIndex2 = std::find(particleIdentifierProperty->constDataInt(), particleIdentifierProperty->constDataInt() + particleIdentifierProperty->size(), atomSerialNumber2) - particleIdentifierProperty->constDataInt();
 					if(atomIndex1 >= particleIdentifierProperty->size() || atomIndex2 >= particleIdentifierProperty->size())
 						throw Exception(tr("Nonexistent atom ID encountered in line %1 of PDB file.").arg(stream.lineNumber()));
-					if(!bonds())
-						setBonds(new BondsStorage());
-					bonds()->push_back({ Vector_3<int8_t>::Zero(), atomIndex1, atomIndex2 });
+					if(!frameData->bonds())
+						frameData->setBonds(std::make_shared<BondsStorage>());
+					frameData->bonds()->push_back({ atomIndex1, atomIndex2, Vector_3<int8_t>::Zero() });
 				}
 			}
 		}
@@ -232,15 +240,16 @@ void PDBImporter::PDBImportTask::parseFile(CompressedTextReader& stream)
 	if(!hasSimulationCell && numAtoms > 0) {
 		Box3 boundingBox;
 		boundingBox.addPoints(posProperty->constDataPoint3(), posProperty->size());
-		simulationCell().setPbcFlags(false, false, false);
-		simulationCell().setMatrix(AffineTransformation(
+		frameData->simulationCell().setPbcFlags(false, false, false);
+		frameData->simulationCell().setMatrix(AffineTransformation(
 				Vector3(boundingBox.sizeX(), 0, 0),
 				Vector3(0, boundingBox.sizeY(), 0),
 				Vector3(0, 0, boundingBox.sizeZ()),
 				boundingBox.minc - Point3::Origin()));
 	}
 
-	setStatus(tr("Number of particles: %1").arg(numAtoms));
+	frameData->setStatus(tr("Number of particles: %1").arg(numAtoms));
+	setResult(std::move(frameData));
 }
 
 OVITO_END_INLINE_NAMESPACE

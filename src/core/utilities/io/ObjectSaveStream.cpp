@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,10 +20,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <core/Core.h>
-#include <core/utilities/io/ObjectSaveStream.h>
-#include <core/object/OvitoObject.h>
-#include <core/reference/PropertyFieldDescriptor.h>
+#include <core/oo/OvitoObject.h>
+#include <core/oo/PropertyFieldDescriptor.h>
 #include <core/dataset/DataSet.h>
+#include "ObjectSaveStream.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
 
@@ -46,21 +46,27 @@ ObjectSaveStream::~ObjectSaveStream()
 /******************************************************************************
 * Saves an object with runtime type information to the stream.
 ******************************************************************************/
-void ObjectSaveStream::saveObject(OvitoObject* object)
+void ObjectSaveStream::saveObject(OvitoObject* object, bool excludeRecomputableData)
 {
-	if(object == nullptr) *this << (quint32)0;
+	if(object == nullptr) {
+		*this << (quint32)0;
+	}
 	else {
 		OVITO_CHECK_OBJECT_POINTER(object);
 		OVITO_ASSERT(_objects.size() == _objectMap.size());
 		quint32& id = _objectMap[object];
 		if(id == 0) {
-			_objects.push_back(object);
+			_objects.emplace_back(object, excludeRecomputableData);
 			id = (quint32)_objects.size();
 
-			if(object->getOOType() == DataSet::OOType)
+			if(object->getOOClass() == DataSet::OOClass())
 				_dataset = static_object_cast<DataSet>(object);
 
-			OVITO_ASSERT(_dataset == nullptr || !object->getOOType().isDerivedFrom(RefTarget::OOType) || static_object_cast<RefTarget>(object)->dataset() == _dataset);
+			OVITO_ASSERT(_dataset == nullptr || !object->getOOClass().isDerivedFrom(RefTarget::OOClass()) || static_object_cast<RefTarget>(object)->dataset() == _dataset);
+		}
+		else if(!excludeRecomputableData) {
+			OVITO_ASSERT(_objects[id-1].first == object);
+			_objects[id-1].second = false;
 		}
 		*this << id;
 	}
@@ -79,40 +85,37 @@ void ObjectSaveStream::close()
 
 		// Save all objects.
 		beginChunk(0x100);
-		for(int i = 0; i < _objects.size(); i++) {
-			OvitoObject* obj = _objects[i];
+		for(size_t i = 0; i < _objects.size(); i++) {
+			OvitoObject* obj = _objects[i].first;
 			OVITO_CHECK_OBJECT_POINTER(obj);
 			objectOffsets.push_back(filePosition());
-			obj->saveToStream(*this);
+			obj->saveToStream(*this, _objects[i].second);
 		}
 		endChunk();
 
 		// Save RTTI.
-		map<const OvitoObjectType*, quint32> classes;
+		map<OvitoClassPtr, quint32> classes;
 		qint64 beginOfRTTI = filePosition();
 		beginChunk(0x200);
-		Q_FOREACH(OvitoObject* obj, _objects) {
-			const OvitoObjectType* descriptor = &obj->getOOType();
+		for(const auto& obj : _objects) {
+			OvitoClassPtr descriptor = &obj.first->getOOClass();
 			if(classes.find(descriptor) == classes.end()) {
 				classes.insert(make_pair(descriptor, (quint32)classes.size()));
 				// Write the runtime type information to the stream.
-				if(descriptor->isSerializable() == false)
-					throw Exception(tr("Failed to save class %1 because it is marked as non-serializable.").arg(descriptor->name()), _dataset);
 				beginChunk(0x201);
-				OvitoObjectType::serializeRTTI(*this, descriptor);
+				OvitoClass::serializeRTTI(*this, descriptor);
 				endChunk();
-				// Write the property fields to the stream.
+				// Write the property fields to the stream if this is a RefMaker derived class.
 				beginChunk(0x202);
-				for(const OvitoObjectType* clazz = descriptor; clazz; clazz = clazz->superClass()) {
-					for(const PropertyFieldDescriptor* field = clazz->firstPropertyField(); field; field = field->next()) {
+				if(descriptor->isDerivedFrom(RefMaker::OOClass())) {
+					for(const PropertyFieldDescriptor* field : static_cast<const RefMakerClass*>(descriptor)->propertyFields()) {
 						beginChunk(0x01);
 						*this << QByteArray::fromRawData(field->identifier(), qstrlen(field->identifier()));
-						OVITO_ASSERT(field->definingClass() == clazz);
-						OvitoObjectType::serializeRTTI(*this, field->definingClass());
+						OvitoClass::serializeRTTI(*this, field->definingClass());
 						*this << field->flags();
 						*this << field->isReferenceField();
 						if(field->isReferenceField()) {
-							OvitoObjectType::serializeRTTI(*this, field->targetClass());
+							OvitoClass::serializeRTTI(*this, field->targetClass());
 						}
 						endChunk();
 					}
@@ -130,8 +133,8 @@ void ObjectSaveStream::close()
 		qint64 beginOfObjTable = filePosition();
 		beginChunk(0x300);
 		auto offsetIterator = objectOffsets.constBegin();
-		Q_FOREACH(OvitoObject* obj, _objects) {
-			*this << classes[&obj->getOOType()];
+		for(const auto& obj : _objects) {
+			*this << classes[&obj.first->getOOClass()];
 			*this << *offsetIterator++;
 		}
 		endChunk();

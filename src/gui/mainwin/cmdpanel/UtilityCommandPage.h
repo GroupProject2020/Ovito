@@ -24,7 +24,7 @@
 
 #include <gui/GUI.h>
 #include <gui/widgets/general/RolloutContainer.h>
-#include <plugins/utility/UtilityApplet.h>
+#include <gui/mainwin/cmdpanel/UtilityApplet.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 

@@ -23,18 +23,37 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/modifier/AsynchronousParticleModifier.h>
-#include <plugins/particles/objects/SurfaceMesh.h>
-#include <plugins/particles/objects/SurfaceMeshDisplay.h>
-#include <plugins/particles/data/BondsStorage.h>
+#include <plugins/particles/objects/BondsStorage.h>
+#include <plugins/mesh/surface/SurfaceMesh.h>
+#include <plugins/mesh/surface/SurfaceMeshDisplay.h>
+#include <core/dataset/pipeline/AsynchronousModifier.h>
+#include <core/dataset/data/simcell/SimulationCell.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 
 /**
  * \brief A modifier that creates coordination polyhedra around atoms.
  */
-class OVITO_PARTICLES_EXPORT CoordinationPolyhedraModifier : public AsynchronousParticleModifier
+class OVITO_PARTICLES_EXPORT CoordinationPolyhedraModifier : public AsynchronousModifier
 {
+	/// Give this modifier class its own metaclass.
+	class CoordinationPolyhedraModifierClass : public AsynchronousModifier::OOMetaClass 
+	{
+	public:
+
+		/// Inherit constructor from base metaclass.
+		using AsynchronousModifier::OOMetaClass::OOMetaClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
+
+	Q_OBJECT
+	OVITO_CLASS_META(CoordinationPolyhedraModifier, CoordinationPolyhedraModifierClass)
+
+	Q_CLASSINFO("DisplayName", "Coordination polyhedra");
+	Q_CLASSINFO("ModifierCategory", "Modification");
+
 public:
 
 	/// Constructor.
@@ -42,28 +61,32 @@ public:
 
 protected:
 
-	/// Resets the modifier's result cache.
-	virtual void invalidateCachedResults() override;
-
-	/// Is called when the value of a property of this object has changed.
-	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
-
 	/// Handles reference events sent by reference targets of this object.
 	virtual bool referenceEvent(RefTarget* source, ReferenceEvent* event) override;
 
-	/// This virtual method is called by the system when the modifier has been inserted into a PipelineObject.
-	virtual void initializeModifier(PipelineObject* pipelineObject, ModifierApplication* modApp) override;
-
 	/// Creates a computation engine that will compute the modifier's results.
-	virtual std::shared_ptr<ComputeEngine> createEngine(TimePoint time, TimeInterval validityInterval) override;
-
-	/// Unpacks the results of the computation engine and stores them in the modifier.
-	virtual void transferComputationResults(ComputeEngine* engine) override;
-
-	/// Lets the modifier insert the cached computation results into the modification pipeline.
-	virtual PipelineStatus applyComputationResults(TimePoint time, TimeInterval& validityInterval) override;
-
+	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		
 private:
+
+	/// Holds the modifier's results.
+	class ComputePolyhedraResults : public ComputeEngineResults
+	{
+	public:
+
+		/// Constructor.
+		ComputePolyhedraResults() : _mesh(std::make_shared<HalfEdgeMesh<>>()) {}
+
+		/// Injects the computed results into the data pipeline.
+		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	
+		/// Returns the generated mesh.
+		const std::shared_ptr<HalfEdgeMesh<>>& mesh() const { return _mesh; }
+						
+	private:
+
+		std::shared_ptr<HalfEdgeMesh<>> _mesh;
+	};
 
 	/// Computation engine that builds the polyhedra.
 	class ComputePolyhedraEngine : public ComputeEngine
@@ -71,17 +94,19 @@ private:
 	public:
 
 		/// Constructor.
-		ComputePolyhedraEngine(const TimeInterval& validityInterval, ParticleProperty* positions, ParticleProperty* selection, ParticleProperty* particleTypes, 
-			BondsStorage* bonds, const SimulationCell& simCell) :
-			ComputeEngine(validityInterval), _positions(positions), _selection(selection), _particleTypes(particleTypes), 
-			_bonds(bonds), _simCell(simCell), _mesh(new HalfEdgeMesh<>()) {}
+		ComputePolyhedraEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, 
+			ConstPropertyPtr selection, ConstPropertyPtr particleTypes, 
+			std::shared_ptr<const BondsStorage> bonds, const SimulationCell& simCell) :
+			ComputeEngine(validityInterval), _positions(std::move(positions)), _selection(std::move(selection)), 
+			_particleTypes(std::move(particleTypes)), 
+			_bonds(std::move(bonds)), _simCell(simCell), _results(std::make_shared<ComputePolyhedraResults>()) {}
 
 		/// Computes the modifier's results and stores them in this object for later retrieval.
 		virtual void perform() override;
 
-		/// Returns the generated mesh.
-		HalfEdgeMesh<>* mesh() { return _mesh.data(); }
-
+		/// Returns the mesh.
+		const std::shared_ptr<HalfEdgeMesh<>>& mesh() const { return _results->mesh(); }
+				
 	private:
 
 		/// Constructs the convex hull from a set of points and adds the resulting polyhedron to the mesh.
@@ -89,27 +114,18 @@ private:
 
 	private:
 
-		QExplicitlySharedDataPointer<ParticleProperty> _positions;
-		QExplicitlySharedDataPointer<ParticleProperty> _selection;
-		QExplicitlySharedDataPointer<ParticleProperty> _particleTypes;
-		QExplicitlySharedDataPointer<BondsStorage> _bonds;
-		QExplicitlySharedDataPointer<HalfEdgeMesh<>> _mesh;
-		SimulationCell _simCell;
+		const ConstPropertyPtr _positions;
+		const ConstPropertyPtr _selection;
+		const ConstPropertyPtr _particleTypes;
+		const std::shared_ptr<const BondsStorage> _bonds;
+		const SimulationCell _simCell;
+		std::shared_ptr<ComputePolyhedraResults> _results;
 	};
 
 private:
 
 	/// The display object for rendering the computed mesh.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(SurfaceMeshDisplay, surfaceMeshDisplay, setSurfaceMeshDisplay);
-
-	/// This stores the cached mesh produced by the modifier.
-	QExplicitlySharedDataPointer<HalfEdgeMesh<>> _polyhedraMesh;
-
-	Q_OBJECT
-	OVITO_OBJECT
-
-	Q_CLASSINFO("DisplayName", "Coordination polyhedra");
-	Q_CLASSINFO("ModifierCategory", "Modification");
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SurfaceMeshDisplay, surfaceMeshDisplay, setSurfaceMeshDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);
 };
 
 OVITO_END_INLINE_NAMESPACE

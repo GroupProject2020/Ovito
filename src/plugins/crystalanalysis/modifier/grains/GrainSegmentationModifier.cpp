@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/particles/objects/SimulationCellObject.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
 #include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
 #include <plugins/crystalanalysis/objects/patterns/StructurePattern.h>
 #include "GrainSegmentationModifier.h"
@@ -28,7 +28,7 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(GrainSegmentationModifier, StructureIdentificationModifier);
+
 DEFINE_FLAGS_PROPERTY_FIELD(GrainSegmentationModifier, inputCrystalStructure, "CrystalStructure", PROPERTY_FIELD_MEMORIZE);
 DEFINE_FLAGS_PROPERTY_FIELD(GrainSegmentationModifier, misorientationThreshold, "MisorientationThreshold", PROPERTY_FIELD_MEMORIZE);
 DEFINE_FLAGS_PROPERTY_FIELD(GrainSegmentationModifier, fluctuationTolerance, "FluctuationTolerance", PROPERTY_FIELD_MEMORIZE);
@@ -67,16 +67,16 @@ GrainSegmentationModifier::GrainSegmentationModifier(DataSet* dataset) : Structu
 		_onlySelectedParticles(false),
 		_outputPartitionMesh(false)
 {
-	INIT_PROPERTY_FIELD(inputCrystalStructure);
-	INIT_PROPERTY_FIELD(misorientationThreshold);
-	INIT_PROPERTY_FIELD(fluctuationTolerance);
-	INIT_PROPERTY_FIELD(minGrainAtomCount);
-	INIT_PROPERTY_FIELD(patternCatalog);
-	INIT_PROPERTY_FIELD(smoothingLevel);
-	INIT_PROPERTY_FIELD(probeSphereRadius);
-	INIT_PROPERTY_FIELD(meshDisplay);
-	INIT_PROPERTY_FIELD(onlySelectedParticles);
-	INIT_PROPERTY_FIELD(outputPartitionMesh);
+
+
+
+
+
+
+
+
+
+
 
 	// Create the display object.
 	_meshDisplay = new PartitionMeshDisplay(dataset);
@@ -85,13 +85,13 @@ GrainSegmentationModifier::GrainSegmentationModifier(DataSet* dataset) : Structu
 	_patternCatalog = new PatternCatalog(dataset);
 
 	// Create the structure types.
-	ParticleTypeProperty::PredefinedStructureType predefTypes[] = {
-			ParticleTypeProperty::PredefinedStructureType::OTHER,
-			ParticleTypeProperty::PredefinedStructureType::FCC,
-			ParticleTypeProperty::PredefinedStructureType::HCP,
-			ParticleTypeProperty::PredefinedStructureType::BCC,
-			ParticleTypeProperty::PredefinedStructureType::CUBIC_DIAMOND,
-			ParticleTypeProperty::PredefinedStructureType::HEX_DIAMOND
+	ParticleType::PredefinedStructureType predefTypes[] = {
+			ParticleType::PredefinedStructureType::OTHER,
+			ParticleType::PredefinedStructureType::FCC,
+			ParticleType::PredefinedStructureType::HCP,
+			ParticleType::PredefinedStructureType::BCC,
+			ParticleType::PredefinedStructureType::CUBIC_DIAMOND,
+			ParticleType::PredefinedStructureType::HEX_DIAMOND
 	};
 	OVITO_STATIC_ASSERT(sizeof(predefTypes)/sizeof(predefTypes[0]) == StructureAnalysis::NUM_LATTICE_TYPES);
 	for(int id = 0; id < StructureAnalysis::NUM_LATTICE_TYPES; id++) {
@@ -102,8 +102,8 @@ GrainSegmentationModifier::GrainSegmentationModifier(DataSet* dataset) : Structu
 			stype->setStructureType(StructurePattern::Lattice);
 			_patternCatalog->addPattern(stype);
 		}
-		stype->setName(ParticleTypeProperty::getPredefinedStructureTypeName(predefTypes[id]));
-		stype->setColor(ParticleTypeProperty::getDefaultParticleColor(ParticleProperty::StructureTypeProperty, stype->name(), id));
+		stype->setName(ParticleType::getPredefinedStructureTypeName(predefTypes[id]));
+		stype->setColor(ParticleType::getDefaultParticleColor(ParticleProperty::StructureTypeProperty, stype->name(), id));
 		addStructureType(stype);
 	}
 }
@@ -154,11 +154,11 @@ void GrainSegmentationModifier::invalidateCachedResults()
 std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> GrainSegmentationModifier::createEngine(TimePoint time, TimeInterval validityInterval)
 {
 	// Get modifier inputs.
-	ParticlePropertyObject* posProperty = expectStandardProperty(ParticleProperty::PositionProperty);
+	ParticleProperty* posProperty = expectStandardProperty(ParticleProperty::PositionProperty);
 	SimulationCellObject* simCell = expectSimulationCell();
 
 	// Get particle selection.
-	ParticleProperty* selectionProperty = nullptr;
+	PropertyStorage* selectionProperty = nullptr;
 	if(onlySelectedParticles())
 		selectionProperty = expectStandardProperty(ParticleProperty::SelectionProperty)->storage();
 

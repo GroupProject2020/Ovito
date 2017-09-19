@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,41 +20,22 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <core/utilities/concurrent/Future.h>
-#include <core/dataset/importexport/FileSource.h>
-#include <core/scene/ObjectNode.h>
 #include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
 #include <plugins/crystalanalysis/objects/dislocations/DislocationDisplay.h>
 #include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
 #include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
-#include <plugins/crystalanalysis/modifier/SmoothSurfaceModifier.h>
-#include <plugins/crystalanalysis/modifier/SmoothDislocationsModifier.h>
-#include <plugins/particles/import/lammps/LAMMPSTextDumpImporter.h>
-#include <plugins/particles/objects/ParticleTypeProperty.h>
-#include <plugins/particles/objects/SurfaceMesh.h>
-#include <plugins/particles/objects/SurfaceMeshDisplay.h>
 #include <plugins/crystalanalysis/objects/partition_mesh/PartitionMesh.h>
 #include <plugins/crystalanalysis/objects/partition_mesh/PartitionMeshDisplay.h>
 #include <plugins/crystalanalysis/objects/slip_surface/SlipSurface.h>
 #include <plugins/crystalanalysis/objects/slip_surface/SlipSurfaceDisplay.h>
+#include <plugins/mesh/surface/SurfaceMesh.h>
+#include <plugins/mesh/surface/SurfaceMeshDisplay.h>
+#include <core/utilities/io/CompressedTextReader.h>
 #include "CAImporter.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(CAImporter, ParticleImporter);
-DEFINE_PROPERTY_FIELD(CAImporter, loadParticles, "LoadParticles");
-SET_PROPERTY_FIELD_LABEL(CAImporter, loadParticles, "Load particles");
-
-/******************************************************************************
-* Is called when the value of a property of this object has changed.
-******************************************************************************/
-void CAImporter::propertyChanged(const PropertyFieldDescriptor& field)
-{
-	if(field == PROPERTY_FIELD(CAImporter::loadParticles)) {
-		requestReload();
-	}
-	ParticleImporter::propertyChanged(field);
-}
+IMPLEMENT_OVITO_CLASS(CAImporter);
 
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
@@ -77,10 +58,11 @@ bool CAImporter::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation)
 /******************************************************************************
 * Scans the given input file to find all contained simulation frames.
 ******************************************************************************/
-void CAImporter::scanFileForTimesteps(PromiseBase& promise, QVector<FileSourceImporter::Frame>& frames, const QUrl& sourceUrl, CompressedTextReader& stream)
+void CAImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
 {
-	promise.setProgressText(tr("Scanning CA file %1").arg(stream.filename()));
-	promise.setProgressMaximum(stream.underlyingSize() / 1000);
+	CompressedTextReader stream(file, sourceUrl.path());
+	setProgressText(tr("Scanning CA file %1").arg(stream.filename()));
+	setProgressMaximum(stream.underlyingSize() / 1000);
 
 	QFileInfo fileInfo(stream.device().fileName());
 	QString filename = fileInfo.fileName();
@@ -88,7 +70,7 @@ void CAImporter::scanFileForTimesteps(PromiseBase& promise, QVector<FileSourceIm
 	int frameNumber = 0;
 	qint64 byteOffset;
 
-	while(!stream.eof() && !promise.isCanceled()) {
+	while(!stream.eof() && !isCanceled()) {
 
 		if(frameNumber == 0) {
 			byteOffset = stream.byteOffset();
@@ -115,31 +97,36 @@ void CAImporter::scanFileForTimesteps(PromiseBase& promise, QVector<FileSourceIm
 			stream.readLineTrimLeft();
 			if(stream.lineStartsWith("CA_FILE_VERSION ")) break;
 			if((stream.lineNumber() % 4096) == 0)
-				promise.setProgressValue(stream.underlyingByteOffset() / 1000);
+				setProgressValue(stream.underlyingByteOffset() / 1000);
 		}
 	}
 }
 
 /******************************************************************************
-* Reads the data from the input file(s).
+* Parses the given input file.
 ******************************************************************************/
-void CAImporter::CrystalAnalysisFrameLoader::parseFile(CompressedTextReader& stream)
+void CAImporter::FrameLoader::loadFile(QFile& file)
 {
-	setProgressText(tr("Reading crystal analysis file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	// Open file for reading.
+	CompressedTextReader stream(file, frame().sourceFile.path());
+	setProgressText(tr("Reading CA file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
 
 	// Read file header.
 	stream.readLine();
 	if(!stream.lineStartsWith("CA_FILE_VERSION "))
-		throw Exception(tr("Failed to parse file. This is not a proper file written by the Crystal Analysis Tool or OVITO."));
+		throw Exception(tr("Failed to parse file. This is not a proper CA file written by OVITO or the Crystal Analysis Tool."));
 	int fileFormatVersion = 0;
 	if(sscanf(stream.line(), "CA_FILE_VERSION %i", &fileFormatVersion) != 1)
-		throw Exception(tr("Failed to parse file. This is not a proper file written by the Crystal Analysis Tool or OVITO."));
+		throw Exception(tr("Failed to parse file. This is not a proper CA file written by OVITO or the Crystal Analysis Tool."));
 	if(fileFormatVersion != 4 && fileFormatVersion != 5 && fileFormatVersion != 6 && fileFormatVersion != 7)
-		throw Exception(tr("Failed to parse file. This file format version is not supported: %1").arg(fileFormatVersion));
+		throw Exception(tr("Failed to parse file. This CA file format version is not supported: %1").arg(fileFormatVersion));
 	stream.readLine();
 	if(!stream.lineStartsWith("CA_LIB_VERSION"))
-		throw Exception(tr("Failed to parse file. This is not a proper file written by the Crystal Analysis Tool or OVITO."));
+		throw Exception(tr("Failed to parse file. This is not a proper CA file written by OVITO or the Crystal Analysis Tool."));
 
+	// Create the destination container for loaded data.
+	std::shared_ptr<CrystalAnalysisFrameData> frameData = std::make_shared<CrystalAnalysisFrameData>();
+	
 	QString caFilename;
 	QString atomsFilename;
 	AffineTransformation cell = AffineTransformation::Zero();
@@ -165,7 +152,7 @@ void CAImporter::CrystalAnalysisFrameLoader::parseFile(CompressedTextReader& str
 				throw Exception(tr("Failed to parse file. Invalid number of structure types in line %1.").arg(stream.lineNumber()));
 			std::vector<int> patternId2Index;
 			for(int index = 0; index < numPatterns; index++) {
-				PatternInfo pattern;
+				CrystalAnalysisFrameData::PatternInfo pattern;
 				if(fileFormatVersion <= 4) {
 					if(sscanf(stream.readLine(), "PATTERN ID %i", &pattern.id) != 1)
 						throw Exception(tr("Failed to parse file. Invalid pattern ID in line %1.").arg(stream.lineNumber()));
@@ -201,7 +188,7 @@ void CAImporter::CrystalAnalysisFrameLoader::parseFile(CompressedTextReader& str
 						if(sscanf(stream.line(), "BURGERS_VECTOR_FAMILIES %i", &numFamilies) != 1 || numFamilies < 0)
 							throw Exception(tr("Failed to parse file. Invalid number of Burgers vectors families in line %1.").arg(stream.lineNumber()));
 						for(int familyIndex = 0; familyIndex < numFamilies; familyIndex++) {
-							BurgersVectorFamilyInfo family;
+							CrystalAnalysisFrameData::BurgersVectorFamilyInfo family;
 							if(sscanf(stream.readLine(), "BURGERS_VECTOR_FAMILY ID %i", &family.id) != 1)
 								throw Exception(tr("Failed to parse file. Invalid Burgers vector family ID in line %1.").arg(stream.lineNumber()));
 							stream.readLine();
@@ -210,7 +197,7 @@ void CAImporter::CrystalAnalysisFrameLoader::parseFile(CompressedTextReader& str
 								throw Exception(tr("Failed to parse file. Invalid Burgers vector in line %1.").arg(stream.lineNumber()));
 							if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &family.color.r(), &family.color.g(), &family.color.b()) != 3)
 								throw Exception(tr("Failed to parse file. Invalid color in line %1.").arg(stream.lineNumber()));
-							pattern.burgersVectorFamilies.push_back(family);
+							pattern.burgersVectorFamilies.push_back(std::move(family));
 						}
 					}
 					else if(stream.lineStartsWith("END_PATTERN") || stream.lineStartsWith("END_STRUCTURE_TYPE"))
@@ -218,7 +205,7 @@ void CAImporter::CrystalAnalysisFrameLoader::parseFile(CompressedTextReader& str
 				}
 				if(pattern.longName.isEmpty())
 					pattern.longName = pattern.shortName;
-				_patterns.push_back(pattern);
+				frameData->addPattern(std::move(pattern));
 			}
 		}
 		else if(stream.lineStartsWith("SIMULATION_CELL_ORIGIN ")) {
@@ -250,7 +237,6 @@ void CAImporter::CrystalAnalysisFrameLoader::parseFile(CompressedTextReader& str
 				throw Exception(tr("Failed to parse file. Invalid number of clusters in line %1.").arg(stream.lineNumber()));
 			setProgressText(tr("Reading clusters"));
 			setProgressMaximum(numClusters);
-			_clusterGraph = new ClusterGraph();
 			for(int index = 0; index < numClusters; index++) {
 				if(!setProgressValueIntermittent(index))
 					return;
@@ -261,7 +247,7 @@ void CAImporter::CrystalAnalysisFrameLoader::parseFile(CompressedTextReader& str
 						throw Exception(tr("Failed to parse file. Invalid cluster ID in line %1.").arg(stream.lineNumber()));
 					if(sscanf(stream.readLine(), "%i", &patternId) != 1)
 						throw Exception(tr("Failed to parse file. Invalid cluster pattern index in line %1.").arg(stream.lineNumber()));
-					Cluster* cluster = _clusterGraph->createCluster(patternId);
+					Cluster* cluster = frameData->createCluster(patternId);
 					OVITO_ASSERT(cluster->structure != 0);
 					if(sscanf(stream.readLine(), "%i", &cluster->atomCount) != 1)
 						throw Exception(tr("Failed to parse file. Invalid cluster atom count in line %1.").arg(stream.lineNumber()));
@@ -312,7 +298,7 @@ void CAImporter::CrystalAnalysisFrameLoader::parseFile(CompressedTextReader& str
 						else if(stream.lineStartsWith("END_CLUSTER"))
 							break;
 					}
-					Cluster* cluster = _clusterGraph->createCluster(patternId);
+					Cluster* cluster = frameData->createCluster(patternId);
 					if(cluster->id != clusterId)
 						throw Exception(tr("Failed to parse file. Invalid cluster id: %1.").arg(clusterId));
 					cluster->atomCount = atomCount;
@@ -343,7 +329,7 @@ void CAImporter::CrystalAnalysisFrameLoader::parseFile(CompressedTextReader& str
 						&tm(1,0), &tm(1,1), &tm(1,2),
 						&tm(2,0), &tm(2,1), &tm(2,2)) != 9)
 					throw Exception(tr("Failed to parse file. Invalid cluster transition matrix in line %1.").arg(stream.lineNumber()));
-				_clusterGraph->createClusterTransition(_clusterGraph->clusters()[clusterIndex1+1], _clusterGraph->clusters()[clusterIndex2+1], tm);
+				frameData->clusterGraph()->createClusterTransition(frameData->clusterGraph()->clusters()[clusterIndex1+1], frameData->clusterGraph()->clusters()[clusterIndex2+1], tm);
 			}
 		}
 		else if(stream.lineStartsWith("DISLOCATIONS ")) {
@@ -352,7 +338,6 @@ void CAImporter::CrystalAnalysisFrameLoader::parseFile(CompressedTextReader& str
 				throw Exception(tr("Failed to parse file. Invalid number of dislocation segments in line %1.").arg(stream.lineNumber()));
 			setProgressText(tr("Reading dislocations"));
 			setProgressMaximum(numDislocationSegments);
-			_dislocations = new DislocationNetwork(_clusterGraph.data());
 			for(int index = 0; index < numDislocationSegments; index++) {
 				if(!setProgressValueIntermittent(index))
 					return;
@@ -369,18 +354,18 @@ void CAImporter::CrystalAnalysisFrameLoader::parseFile(CompressedTextReader& str
 					int clusterIndex;
 					if(sscanf(stream.readLine(), "%i", &clusterIndex) != 1 || clusterIndex < 0 || clusterIndex >= numClusters)
 						throw Exception(tr("Failed to parse file. Invalid cluster index in line %1.").arg(stream.lineNumber()));
-					cluster = _clusterGraph->clusters()[clusterIndex+1];
+					cluster = frameData->clusterGraph()->clusters()[clusterIndex+1];
 				}
 				else {
 					int clusterId;
 					if(sscanf(stream.readLine(), "%i", &clusterId) != 1 || clusterId <= 0)
 						throw Exception(tr("Failed to parse file. Invalid cluster ID in line %1.").arg(stream.lineNumber()));
-					cluster = _clusterGraph->findCluster(clusterId);
+					cluster = frameData->clusterGraph()->findCluster(clusterId);
 				}
 				if(!cluster)
 					throw Exception(tr("Failed to parse file. Invalid cluster reference in line %1.").arg(stream.lineNumber()));
 
-				DislocationSegment* segment = _dislocations->createSegment(ClusterVector(burgersVector, cluster));
+				DislocationSegment* segment = frameData->dislocations()->createSegment(ClusterVector(burgersVector, cluster));
 
 				// Read polyline.
 				int numPoints;
@@ -413,13 +398,14 @@ void CAImporter::CrystalAnalysisFrameLoader::parseFile(CompressedTextReader& str
 		}
 		else if(stream.lineStartsWith("DISLOCATION_JUNCTIONS")) {
 			// Read dislocation junctions.
+			auto dislocations = frameData->dislocations();
 			for(int index = 0; index < numDislocationSegments; index++) {
-				DislocationSegment* segment = _dislocations->segments()[index];
+				DislocationSegment* segment = dislocations->segments()[index];
 				for(int nodeIndex = 0; nodeIndex < 2; nodeIndex++) {
 					int isForward, otherSegmentId;
 					if(sscanf(stream.readLine(), "%i %i", &isForward, &otherSegmentId) != 2 || otherSegmentId < 0 || otherSegmentId >= numDislocationSegments)
 						throw Exception(tr("Failed to parse file. Invalid dislocation junction record in line %1.").arg(stream.lineNumber()));
-					segment->nodes[nodeIndex]->junctionRing = _dislocations->segments()[otherSegmentId]->nodes[isForward ? 0 : 1];
+					segment->nodes[nodeIndex]->junctionRing = dislocations->segments()[otherSegmentId]->nodes[isForward ? 0 : 1];
 				}
 			}
 		}
@@ -430,30 +416,31 @@ void CAImporter::CrystalAnalysisFrameLoader::parseFile(CompressedTextReader& str
 				throw Exception(tr("Failed to parse file. Invalid number of defect mesh vertices in line %1.").arg(stream.lineNumber()));
 			setProgressText(tr("Reading defect surface"));
 			setProgressMaximum(numDefectMeshVertices);
-			_defectSurface = new HalfEdgeMesh<>();
-			_defectSurface->reserveVertices(numDefectMeshVertices);
+			auto defectSurface = frameData->defectSurface();
+			defectSurface->reserveVertices(numDefectMeshVertices);
 			for(int index = 0; index < numDefectMeshVertices; index++) {
 				if(!setProgressValueIntermittent(index)) return;
 				Point3 p;
 				if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &p.x(), &p.y(), &p.z()) != 3)
 					throw Exception(tr("Failed to parse file. Invalid point in line %1.").arg(stream.lineNumber()));
-				_defectSurface->createVertex(p);
+				defectSurface->createVertex(p);
 			}
 		}
-		else if(stream.lineStartsWith("DEFECT_MESH_FACETS ") && _defectSurface) {
+		else if(stream.lineStartsWith("DEFECT_MESH_FACETS ")) {
 			// Read defect mesh facets.
 			int numDefectMeshFacets;
 			if(sscanf(stream.line(), "DEFECT_MESH_FACETS %i", &numDefectMeshFacets) != 1)
 				throw Exception(tr("Failed to parse file. Invalid number of defect mesh facets in line %1.").arg(stream.lineNumber()));
 			setProgressMaximum(numDefectMeshFacets * 2);
-			_defectSurface->reserveFaces(numDefectMeshFacets);
+			auto defectSurface = frameData->defectSurface();
+			defectSurface->reserveFaces(numDefectMeshFacets);
 			for(int index = 0; index < numDefectMeshFacets; index++) {
 				if(!setProgressValueIntermittent(index))
 					return;
 				int v[3];
 				if(sscanf(stream.readLine(), "%i %i %i", &v[0], &v[1], &v[2]) != 3)
 					throw Exception(tr("Failed to parse file. Invalid triangle facet in line %1.").arg(stream.lineNumber()));
-				_defectSurface->createFace({ _defectSurface->vertex(v[0]), _defectSurface->vertex(v[1]), _defectSurface->vertex(v[2]) });
+				defectSurface->createFace({ defectSurface->vertex(v[0]), defectSurface->vertex(v[1]), defectSurface->vertex(v[2]) });
 			}
 
 			// Read facet adjacency information.
@@ -463,11 +450,11 @@ void CAImporter::CrystalAnalysisFrameLoader::parseFile(CompressedTextReader& str
 				int v[3];
 				if(sscanf(stream.readLine(), "%i %i %i", &v[0], &v[1], &v[2]) != 3)
 					throw Exception(tr("Failed to parse file. Invalid triangle adjacency info in line %1.").arg(stream.lineNumber()));
-				HalfEdgeMesh<>::Edge* edge = _defectSurface->face(index)->edges();
+				HalfEdgeMesh<>::Edge* edge = defectSurface->face(index)->edges();
 				for(int i = 0; i < 3; i++, edge = edge->nextFaceEdge()) {
 					OVITO_CHECK_POINTER(edge);
 					if(edge->oppositeEdge() != nullptr) continue;
-					HalfEdgeMesh<>::Face* oppositeFace = _defectSurface->face(v[i]);
+					HalfEdgeMesh<>::Face* oppositeFace = defectSurface->face(v[i]);
 					HalfEdgeMesh<>::Edge* oppositeEdge = oppositeFace->findEdge(edge->vertex2(), edge->vertex1());
 					OVITO_ASSERT(oppositeEdge != nullptr);
 					edge->linkToOppositeEdge(oppositeEdge);
@@ -481,23 +468,24 @@ void CAImporter::CrystalAnalysisFrameLoader::parseFile(CompressedTextReader& str
 				throw Exception(tr("Failed to parse file. Invalid number of mesh vertices in line %1.").arg(stream.lineNumber()));
 			setProgressText(tr("Reading partition mesh"));
 			setProgressMaximum(numVertices);
-			_partitionMesh = new PartitionMeshData();
-			_partitionMesh->reserveVertices(numVertices);
+			auto partitionMesh = frameData->partitionMesh();
+			partitionMesh->reserveVertices(numVertices);
 			for(int index = 0; index < numVertices; index++) {
 				if(!setProgressValueIntermittent(index)) return;
 				Point3 p;
 				if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &p.x(), &p.y(), &p.z()) != 3)
 					throw Exception(tr("Failed to parse file. Invalid point in line %1.").arg(stream.lineNumber()));
-				_partitionMesh->createVertex(p);
+				partitionMesh->createVertex(p);
 			}
 		}
-		else if(stream.lineStartsWith("PARTITION_MESH_FACETS ") && _partitionMesh) {
+		else if(stream.lineStartsWith("PARTITION_MESH_FACETS ")) {
 			// Read partition mesh facets.
 			int numFacets;
 			if(sscanf(stream.line(), "PARTITION_MESH_FACETS %i", &numFacets) != 1)
 				throw Exception(tr("Failed to parse file. Invalid number of mesh facets in line %1.").arg(stream.lineNumber()));
 			setProgressMaximum(numFacets * 2);
-			_partitionMesh->reserveFaces(numFacets);
+			auto partitionMesh = frameData->partitionMesh();
+			partitionMesh->reserveFaces(numFacets);
 			for(int index = 0; index < numFacets; index++) {
 				if(!setProgressValueIntermittent(index))
 					return;
@@ -505,7 +493,7 @@ void CAImporter::CrystalAnalysisFrameLoader::parseFile(CompressedTextReader& str
 				int region;
 				if(sscanf(stream.readLine(), "%i %i %i %i", &region, &v[0], &v[1], &v[2]) != 4)
 					throw Exception(tr("Failed to parse file. Invalid triangle facet in line %1.").arg(stream.lineNumber()));
-				PartitionMeshData::Face* face = _partitionMesh->createFace({ _partitionMesh->vertex(v[0]), _partitionMesh->vertex(v[1]), _partitionMesh->vertex(v[2]) });
+				PartitionMeshData::Face* face = partitionMesh->createFace({ partitionMesh->vertex(v[0]), partitionMesh->vertex(v[1]), partitionMesh->vertex(v[2]) });
 				face->region = region;
 			}
 
@@ -521,16 +509,16 @@ void CAImporter::CrystalAnalysisFrameLoader::parseFile(CompressedTextReader& str
 						&v[1], &mfe[1][0], &mfe[1][1],
 						&v[2], &mfe[2][0], &mfe[2][1]) != 10)
 					throw Exception(tr("Failed to parse file. Invalid triangle adjacency info in line %1.").arg(stream.lineNumber()));
-				PartitionMeshData::Face* oppositeFace = _partitionMesh->face(oppositeFaceIndex);
-				_partitionMesh->face(index)->oppositeFace = oppositeFace;
-				PartitionMeshData::Edge* edge = _partitionMesh->face(index)->edges();
+				PartitionMeshData::Face* oppositeFace = partitionMesh->face(oppositeFaceIndex);
+				partitionMesh->face(index)->oppositeFace = oppositeFace;
+				PartitionMeshData::Edge* edge = partitionMesh->face(index)->edges();
 				for(int i = 0; i < 3; i++, edge = edge->nextFaceEdge()) {
 					OVITO_CHECK_POINTER(edge);
-					PartitionMeshData::Edge* manifoldEdge = oppositeFace->findEdge(_partitionMesh->vertex(mfe[i][0]), _partitionMesh->vertex(mfe[i][1]));
+					PartitionMeshData::Edge* manifoldEdge = oppositeFace->findEdge(partitionMesh->vertex(mfe[i][0]), partitionMesh->vertex(mfe[i][1]));
 					OVITO_ASSERT(manifoldEdge != nullptr);
 					edge->nextManifoldEdge = manifoldEdge;
 					if(edge->oppositeEdge() != nullptr) continue;
-					PartitionMeshData::Face* adjacentFace = _partitionMesh->face(v[i]);
+					PartitionMeshData::Face* adjacentFace = partitionMesh->face(v[i]);
 					PartitionMeshData::Edge* oppositeEdge = adjacentFace->findEdge(edge->vertex2(), edge->vertex1());
 					OVITO_ASSERT(oppositeEdge != nullptr);
 					edge->linkToOppositeEdge(oppositeEdge);
@@ -544,23 +532,24 @@ void CAImporter::CrystalAnalysisFrameLoader::parseFile(CompressedTextReader& str
 				throw Exception(tr("Failed to parse file. Invalid number of mesh vertices in line %1.").arg(stream.lineNumber()));
 			setProgressText(tr("Reading slip surfaces"));
 			setProgressMaximum(numVertices);
-			_slipSurface = new SlipSurfaceData();
-			_slipSurface->reserveVertices(numVertices);
+			auto slipSurface = frameData->slipSurface();
+			slipSurface->reserveVertices(numVertices);
 			for(int index = 0; index < numVertices; index++) {
 				if(!setProgressValueIntermittent(index)) return;
 				Point3 p;
 				if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &p.x(), &p.y(), &p.z()) != 3)
 					throw Exception(tr("Failed to parse file. Invalid point in line %1.").arg(stream.lineNumber()));
-				_slipSurface->createVertex(p);
+				slipSurface->createVertex(p);
 			}
 		}
-		else if(stream.lineStartsWith("SLIP_SURFACE_FACETS ") && _slipSurface) {
+		else if(stream.lineStartsWith("SLIP_SURFACE_FACETS ")) {
 			// Read slip surface facets.
 			int numFacets;
 			if(sscanf(stream.line(), "SLIP_SURFACE_FACETS %i", &numFacets) != 1)
 				throw Exception(tr("Failed to parse file. Invalid number of mesh facets in line %1.").arg(stream.lineNumber()));
 			setProgressMaximum(numFacets);
-			_slipSurface->reserveFaces(numFacets);
+			auto slipSurface = frameData->slipSurface();
+			slipSurface->reserveFaces(numFacets);
 			for(int index = 0; index < numFacets; index++) {
 				if(!setProgressValueIntermittent(index))
 					return;
@@ -569,9 +558,9 @@ void CAImporter::CrystalAnalysisFrameLoader::parseFile(CompressedTextReader& str
 				int v[3];
 				if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " %i %i %i %i", &slipVector.x(), &slipVector.y(), &slipVector.z(), &clusterId, &v[0], &v[1], &v[2]) != 7)
 					throw Exception(tr("Failed to parse file. Invalid triangle facet in line %1.").arg(stream.lineNumber()));
-				SlipSurfaceData::Face* face = _slipSurface->createFace({ _slipSurface->vertex(v[0]), _slipSurface->vertex(v[1]), _slipSurface->vertex(v[2]) });
+				SlipSurfaceData::Face* face = slipSurface->createFace({ slipSurface->vertex(v[0]), slipSurface->vertex(v[1]), slipSurface->vertex(v[2]) });
 
-				Cluster* cluster = _clusterGraph->findCluster(clusterId);
+				Cluster* cluster = frameData->clusterGraph()->findCluster(clusterId);
 				if(!cluster)
 					throw Exception(tr("Failed to parse file. Invalid cluster reference in line %1.").arg(stream.lineNumber()));
 				face->slipVector = ClusterVector(slipVector, cluster);
@@ -584,23 +573,24 @@ void CAImporter::CrystalAnalysisFrameLoader::parseFile(CompressedTextReader& str
 				throw Exception(tr("Failed to parse file. Invalid number of mesh vertices in line %1.").arg(stream.lineNumber()));
 			setProgressText(tr("Reading stacking faults"));
 			setProgressMaximum(numVertices);
-			_stackingFaults = new SlipSurfaceData();
-			_stackingFaults->reserveVertices(numVertices);
+			auto stackingFaults = frameData->stackingFaults();
+			stackingFaults->reserveVertices(numVertices);
 			for(int index = 0; index < numVertices; index++) {
 				if(!setProgressValueIntermittent(index)) return;
 				Point3 p;
 				if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &p.x(), &p.y(), &p.z()) != 3)
 					throw Exception(tr("Failed to parse file. Invalid point in line %1.").arg(stream.lineNumber()));
-				_stackingFaults->createVertex(p);
+				stackingFaults->createVertex(p);
 			}
 		}
-		else if(stream.lineStartsWith("STACKING_FAULT_FACETS ") && _stackingFaults) {
+		else if(stream.lineStartsWith("STACKING_FAULT_FACETS ")) {
 			// Read slip surface facets.
 			int numFacets;
 			if(sscanf(stream.line(), "STACKING_FAULT_FACETS %i", &numFacets) != 1)
 				throw Exception(tr("Failed to parse file. Invalid number of mesh facets in line %1.").arg(stream.lineNumber()));
 			setProgressMaximum(numFacets);
-			_stackingFaults->reserveFaces(numFacets);
+			auto stackingFaults = frameData->stackingFaults();
+			stackingFaults->reserveFaces(numFacets);
 			for(int index = 0; index < numFacets; index++) {
 				if(!setProgressValueIntermittent(index))
 					return;
@@ -610,8 +600,8 @@ void CAImporter::CrystalAnalysisFrameLoader::parseFile(CompressedTextReader& str
 				if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " %i %i %i %i", &slipVector.x(), &slipVector.y(), &slipVector.z(), &clusterId, &v[0], &v[1], &v[2]) != 7)
 					throw Exception(tr("Failed to parse file. Invalid triangle facet in line %1.").arg(stream.lineNumber()));
 
-				SlipSurfaceData::Face* face = _stackingFaults->createFace({ _stackingFaults->vertex(v[0]), _stackingFaults->vertex(v[1]), _stackingFaults->vertex(v[2]) });
-				Cluster* cluster = _clusterGraph->findCluster(clusterId);
+				SlipSurfaceData::Face* face = stackingFaults->createFace({ stackingFaults->vertex(v[0]), stackingFaults->vertex(v[1]), stackingFaults->vertex(v[2]) });
+				Cluster* cluster = frameData->clusterGraph()->findCluster(clusterId);
 				if(!cluster)
 					throw Exception(tr("Failed to parse file. Invalid cluster reference in line %1.").arg(stream.lineNumber()));
 				face->slipVector = ClusterVector(slipVector, cluster);
@@ -629,82 +619,54 @@ void CAImporter::CrystalAnalysisFrameLoader::parseFile(CompressedTextReader& str
 		}
 	}
 
-	simulationCell().setMatrix(cell);
-	simulationCell().setPbcFlags(pbcFlags[0], pbcFlags[1], pbcFlags[2]);
+	frameData->simulationCell().setMatrix(cell);
+	frameData->simulationCell().setPbcFlags(pbcFlags[0], pbcFlags[1], pbcFlags[2]);
 
-	// Load particles if requested by the user.
-	if(_loadParticles) {
-		FileSourceImporter::Frame particleFileInfo;
-		particleFileInfo.byteOffset = 0;
-		particleFileInfo.lineNumber = 0;
-
-		// Resolve relative path to atoms file.
-		QFileInfo caFileInfo(caFilename);
-		QFileInfo atomsFileInfo(atomsFilename);
-		if(!atomsFileInfo.isAbsolute()) {
-			QDir baseDir = caFileInfo.absoluteDir();
-			QString relativePath = baseDir.relativeFilePath(atomsFileInfo.absoluteFilePath());
-			if(frame().sourceFile.isLocalFile()) {
-				particleFileInfo.sourceFile = QUrl::fromLocalFile(QFileInfo(frame().sourceFile.toLocalFile()).dir().filePath(relativePath));
-			}
-			else {
-				particleFileInfo.sourceFile = frame().sourceFile;
-				particleFileInfo.sourceFile.setPath(QFileInfo(frame().sourceFile.path()).dir().filePath(relativePath));
-			}
-		}
-		else particleFileInfo.sourceFile = QUrl::fromLocalFile(atomsFilename);
-
-		// Create and execute the import sub-task.
-		_particleLoadTask = LAMMPSTextDumpImporter::createFrameLoader(&datasetContainer(), particleFileInfo, true, false, InputColumnMapping());
-		if(!waitForSubTask(_particleLoadTask))
-			return;
-
-		setStatus(tr("Number of dislocations: %1\n%2").arg(numDislocationSegments).arg(_particleLoadTask->status().text()));
-	}
-	else {
-		setStatus(tr("Number of dislocations: %1").arg(numDislocationSegments));
-	}
+	frameData->setStatus(tr("Number of dislocations: %1").arg(numDislocationSegments));	
+	setResult(std::move(frameData));
 }
 
 /******************************************************************************
-* Inserts the data loaded by perform() into the provided container object.
+* Inserts the data loaded by perform() into the provided pipeline state.
 * This function is called by the system from the main thread after the
 * asynchronous loading task has finished.
 ******************************************************************************/
-void CAImporter::CrystalAnalysisFrameLoader::handOver(CompoundObject* container)
+PipelineFlowState CAImporter::CrystalAnalysisFrameData::handOver(DataSet* dataset, const PipelineFlowState& existing, bool isNewFile)
 {
-	// Make a copy of the list of old data objects in the container so we can re-use some objects.
-	PipelineFlowState oldObjects(container->status(), container->dataObjects(), TimeInterval::infinite(), container->attributes());
 	// Insert simulation cell.
-	ParticleFrameLoader::handOver(container);
+	PipelineFlowState output = ParticleFrameData::handOver(dataset, existing, isNewFile);
 
 	// Insert defect surface.
-	OORef<SurfaceMesh> defectSurfaceObj = oldObjects.findObject<SurfaceMesh>();
 	if(_defectSurface) {
+		OORef<SurfaceMesh> defectSurfaceObj = existing.findObject<SurfaceMesh>();
 		if(!defectSurfaceObj) {
-			defectSurfaceObj = new SurfaceMesh(container->dataset(), _defectSurface.data());
-			OORef<SurfaceMeshDisplay> displayObj = new SurfaceMeshDisplay(container->dataset());
+			defectSurfaceObj = new SurfaceMesh(dataset);
+			OORef<SurfaceMeshDisplay> displayObj = new SurfaceMeshDisplay(dataset);
 			displayObj->loadUserDefaults();
 			defectSurfaceObj->setDisplayObject(displayObj);
 		}
-		defectSurfaceObj->setStorage(_defectSurface.data());
+		defectSurfaceObj->setDomain(output.findObject<SimulationCellObject>());
+		defectSurfaceObj->setStorage(defectSurface());
+		output.addObject(defectSurfaceObj);
 	}
 
 	// Insert partition mesh.
-	OORef<PartitionMesh> partitionMeshObj = oldObjects.findObject<PartitionMesh>();
 	if(_partitionMesh) {
+		OORef<PartitionMesh> partitionMeshObj = existing.findObject<PartitionMesh>();
 		if(!partitionMeshObj) {
-			partitionMeshObj = new PartitionMesh(container->dataset(), _partitionMesh.data());
-			OORef<PartitionMeshDisplay> displayObj = new PartitionMeshDisplay(container->dataset());
+			partitionMeshObj = new PartitionMesh(dataset);
+			OORef<PartitionMeshDisplay> displayObj = new PartitionMeshDisplay(dataset);
 			displayObj->loadUserDefaults();
 			partitionMeshObj->setDisplayObject(displayObj);
 		}
-		partitionMeshObj->setStorage(_partitionMesh.data());
+		partitionMeshObj->setDomain(output.findObject<SimulationCellObject>());
+		partitionMeshObj->setStorage(partitionMesh());
+		output.addObject(partitionMeshObj);
 	}
 
 	OORef<SlipSurface> slipSurfaceObj;
 	OORef<SlipSurface> stackingFaultsObj;
-	for(DataObject* dataObj : oldObjects.objects()) {		
+	for(DataObject* dataObj : existing.objects()) {		
 		if(SlipSurface* surfaceObj = dynamic_object_cast<SlipSurface>(dataObj)) {
 			if(!slipSurfaceObj) slipSurfaceObj = surfaceObj;
 			else if(!stackingFaultsObj) stackingFaultsObj = surfaceObj;
@@ -713,32 +675,37 @@ void CAImporter::CrystalAnalysisFrameLoader::handOver(CompoundObject* container)
 
 	// Insert slip surface.
 	if(_slipSurface) {
+		OORef<SlipSurface> slipSurfaceObj = existing.findObject<SlipSurface>();
 		if(!slipSurfaceObj) {
-			slipSurfaceObj = new SlipSurface(container->dataset(), _slipSurface.data());
-			OORef<SlipSurfaceDisplay> displayObj = new SlipSurfaceDisplay(container->dataset());
+			slipSurfaceObj = new SlipSurface(dataset);
+			OORef<SlipSurfaceDisplay> displayObj = new SlipSurfaceDisplay(dataset);
 			displayObj->loadUserDefaults();
 			slipSurfaceObj->setDisplayObject(displayObj);
 		}
-		slipSurfaceObj->setStorage(_slipSurface.data());
+		slipSurfaceObj->setDomain(output.findObject<SimulationCellObject>());
+		slipSurfaceObj->setStorage(slipSurface());
+		output.addObject(slipSurfaceObj);
 	}
 
 	// Insert stacking faults.
 	if(_stackingFaults) {
 		if(!stackingFaultsObj) {
-			stackingFaultsObj = new SlipSurface(container->dataset(), _stackingFaults.data());
-			OORef<SlipSurfaceDisplay> displayObj = new SlipSurfaceDisplay(container->dataset());
+			stackingFaultsObj = new SlipSurface(dataset);
+			OORef<SlipSurfaceDisplay> displayObj = new SlipSurfaceDisplay(dataset);
 			displayObj->loadUserDefaults();
 			displayObj->setObjectTitle(tr("Stacking faults"));
 			stackingFaultsObj->setDisplayObject(displayObj);
 		}
-		stackingFaultsObj->setStorage(_stackingFaults.data());
+		stackingFaultsObj->setDomain(output.findObject<SimulationCellObject>());
+		stackingFaultsObj->setStorage(stackingFaults());
 	}
 
 	// Insert pattern catalog.
-	OORef<PatternCatalog> patternCatalog = oldObjects.findObject<PatternCatalog>();
+	OORef<PatternCatalog> patternCatalog = existing.findObject<PatternCatalog>();
 	if(!patternCatalog) {
-		patternCatalog = new PatternCatalog(container->dataset());
+		patternCatalog = new PatternCatalog(dataset);
 	}
+	output.addObject(patternCatalog);
 
 	// Update pattern catalog.
 	for(int i = 0; i < _patterns.size(); i++) {
@@ -782,72 +749,32 @@ void CAImporter::CrystalAnalysisFrameLoader::handOver(CompoundObject* container)
 		patternCatalog->removePattern(i);
 
 	// Insert cluster graph.
-	OORef<ClusterGraphObject> clusterGraph;
 	if(_clusterGraph) {
-		clusterGraph = oldObjects.findObject<ClusterGraphObject>();
-		if(!clusterGraph) {
-			clusterGraph = new ClusterGraphObject(container->dataset());
+		OORef<ClusterGraphObject> clusterGraphObj;
+		clusterGraphObj = existing.findObject<ClusterGraphObject>();
+		if(!clusterGraphObj) {
+			clusterGraphObj = new ClusterGraphObject(dataset);
 		}
-		clusterGraph->setStorage(_clusterGraph.data());
+		clusterGraphObj->setStorage(clusterGraph());
+		output.addObject(clusterGraphObj);
 	}
 
 	// Insert dislocations.
-	OORef<DislocationNetworkObject> dislocationNetwork;
 	if(_dislocations) {
-		dislocationNetwork = oldObjects.findObject<DislocationNetworkObject>();
+		OORef<DislocationNetworkObject> dislocationNetwork;
+		dislocationNetwork = existing.findObject<DislocationNetworkObject>();
 		if(!dislocationNetwork) {
-			dislocationNetwork = new DislocationNetworkObject(container->dataset());
-			OORef<DislocationDisplay> displayObj = new DislocationDisplay(container->dataset());
+			dislocationNetwork = new DislocationNetworkObject(dataset);
+			OORef<DislocationDisplay> displayObj = new DislocationDisplay(dataset);
 			displayObj->loadUserDefaults();
 			dislocationNetwork->setDisplayObject(displayObj);
 		}
-		dislocationNetwork->setStorage(_dislocations.data());
+		dislocationNetwork->setDomain(output.findObject<SimulationCellObject>());
+		dislocationNetwork->setStorage(dislocations());
+		output.addObject(dislocationNetwork);
 	}
 
-	// Insert particles.
-	if(_particleLoadTask) {
-		_particleLoadTask->handOver(container);
-
-		// Copy structure patterns into StructureType particle property.
-		for(DataObject* dataObj : container->dataObjects()) {
-			ParticleTypeProperty* structureTypeProperty = dynamic_object_cast<ParticleTypeProperty>(dataObj);
-			if(structureTypeProperty && structureTypeProperty->type() == ParticleProperty::StructureTypeProperty) {
-				structureTypeProperty->clearParticleTypes();
-				for(StructurePattern* pattern : patternCatalog->patterns()) {
-					structureTypeProperty->addParticleType(pattern);
-				}
-			}
-		}
-	}
-
-	if(_defectSurface)
-		container->addDataObject(defectSurfaceObj);
-	if(_partitionMesh)
-		container->addDataObject(partitionMeshObj);
-	if(_slipSurface)
-		container->addDataObject(slipSurfaceObj);
-	if(_stackingFaults)
-		container->addDataObject(stackingFaultsObj);
-	if(patternCatalog)
-		container->addDataObject(patternCatalog);
-	if(clusterGraph)
-		container->addDataObject(clusterGraph);
-	if(dislocationNetwork)
-		container->addDataObject(dislocationNetwork);
-}
-
-/******************************************************************************
-* This method is called when the scene node for the FileSource is created.
-******************************************************************************/
-void CAImporter::prepareSceneNode(ObjectNode* node, FileSource* importObj)
-{
-	ParticleImporter::prepareSceneNode(node, importObj);
-
-	// Add a modifier to smooth the defect surface mesh.
-	node->applyModifier(new SmoothSurfaceModifier(node->dataset()));
-
-	// Add a modifier to smooth the dislocation lines.
-	node->applyModifier(new SmoothDislocationsModifier(node->dataset()));
+	return output;
 }
 
 }	// End of namespace

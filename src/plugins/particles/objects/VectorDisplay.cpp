@@ -25,19 +25,18 @@
 #include <core/rendering/SceneRenderer.h>
 #include "VectorDisplay.h"
 #include "ParticleDisplay.h"
-#include "ParticleTypeProperty.h"
 
 namespace Ovito { namespace Particles {
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(VectorDisplay, DisplayObject);
-IMPLEMENT_OVITO_OBJECT(VectorPickInfo, ObjectPickInfo);
-DEFINE_PROPERTY_FIELD(VectorDisplay, reverseArrowDirection, "ReverseArrowDirection");
-DEFINE_FLAGS_PROPERTY_FIELD(VectorDisplay, arrowPosition, "ArrowPosition", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(VectorDisplay, arrowColor, "ArrowColor", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(VectorDisplay, arrowWidth, "ArrowWidth", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(VectorDisplay, scalingFactor, "ScalingFactor", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(VectorDisplay, shadingMode, "ShadingMode", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(VectorDisplay, renderingQuality, "RenderingQuality");
+IMPLEMENT_OVITO_CLASS(VectorDisplay);	
+IMPLEMENT_OVITO_CLASS(VectorPickInfo);	
+DEFINE_PROPERTY_FIELD(VectorDisplay, reverseArrowDirection);
+DEFINE_PROPERTY_FIELD(VectorDisplay, arrowPosition);
+DEFINE_PROPERTY_FIELD(VectorDisplay, arrowColor);
+DEFINE_PROPERTY_FIELD(VectorDisplay, arrowWidth);
+DEFINE_PROPERTY_FIELD(VectorDisplay, scalingFactor);
+DEFINE_PROPERTY_FIELD(VectorDisplay, shadingMode);
+DEFINE_PROPERTY_FIELD(VectorDisplay, renderingQuality);
 SET_PROPERTY_FIELD_LABEL(VectorDisplay, arrowColor, "Arrow color");
 SET_PROPERTY_FIELD_LABEL(VectorDisplay, arrowWidth, "Arrow width");
 SET_PROPERTY_FIELD_LABEL(VectorDisplay, scalingFactor, "Scaling factor");
@@ -56,22 +55,15 @@ VectorDisplay::VectorDisplay(DataSet* dataset) : DisplayObject(dataset),
 	_shadingMode(ArrowPrimitive::FlatShading),
 	_renderingQuality(ArrowPrimitive::LowQuality)
 {
-	INIT_PROPERTY_FIELD(arrowColor);
-	INIT_PROPERTY_FIELD(arrowWidth);
-	INIT_PROPERTY_FIELD(scalingFactor);
-	INIT_PROPERTY_FIELD(reverseArrowDirection);
-	INIT_PROPERTY_FIELD(arrowPosition);
-	INIT_PROPERTY_FIELD(shadingMode);
-	INIT_PROPERTY_FIELD(renderingQuality);
 }
 
 /******************************************************************************
 * Computes the bounding box of the object.
 ******************************************************************************/
-Box3 VectorDisplay::boundingBox(TimePoint time, DataObject* dataObject, ObjectNode* contextNode, const PipelineFlowState& flowState)
+Box3 VectorDisplay::boundingBox(TimePoint time, DataObject* dataObject, ObjectNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
-	ParticlePropertyObject* vectorProperty = dynamic_object_cast<ParticlePropertyObject>(dataObject);
-	ParticlePropertyObject* positionProperty = ParticlePropertyObject::findInState(flowState, ParticleProperty::PositionProperty);
+	ParticleProperty* vectorProperty = dynamic_object_cast<ParticleProperty>(dataObject);
+	ParticleProperty* positionProperty = ParticleProperty::findInState(flowState, ParticleProperty::PositionProperty);
 	if(vectorProperty && (vectorProperty->dataType() != qMetaTypeId<FloatType>() || vectorProperty->componentCount() != 3))
 		vectorProperty = nullptr;
 
@@ -89,7 +81,7 @@ Box3 VectorDisplay::boundingBox(TimePoint time, DataObject* dataObject, ObjectNo
 /******************************************************************************
 * Computes the bounding box of the arrows.
 ******************************************************************************/
-Box3 VectorDisplay::arrowBoundingBox(ParticlePropertyObject* vectorProperty, ParticlePropertyObject* positionProperty)
+Box3 VectorDisplay::arrowBoundingBox(ParticleProperty* vectorProperty, ParticleProperty* positionProperty)
 {
 	if(!positionProperty || !vectorProperty)
 		return Box3();
@@ -125,12 +117,18 @@ Box3 VectorDisplay::arrowBoundingBox(ParticlePropertyObject* vectorProperty, Par
 ******************************************************************************/
 void VectorDisplay::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, ObjectNode* contextNode)
 {
+	if(renderer->isBoundingBoxPass()) {
+		TimeInterval validityInterval;
+		renderer->addToLocalBoundingBox(boundingBox(time, dataObject, contextNode, flowState, validityInterval));
+		return;
+	}
+	
 	// Get input data.
-	ParticlePropertyObject* vectorProperty = dynamic_object_cast<ParticlePropertyObject>(dataObject);
-	ParticlePropertyObject* positionProperty = ParticlePropertyObject::findInState(flowState, ParticleProperty::PositionProperty);
+	ParticleProperty* vectorProperty = dynamic_object_cast<ParticleProperty>(dataObject);
+	ParticleProperty* positionProperty = ParticleProperty::findInState(flowState, ParticleProperty::PositionProperty);
 	if(vectorProperty && (vectorProperty->dataType() != qMetaTypeId<FloatType>() || vectorProperty->componentCount() != 3))
 		vectorProperty = nullptr;
-	ParticlePropertyObject* vectorColorProperty = ParticlePropertyObject::findInState(flowState, ParticleProperty::VectorColorProperty);
+	ParticleProperty* vectorColorProperty = ParticleProperty::findInState(flowState, ParticleProperty::VectorColorProperty);
 
 	// Do we have to re-create the geometry buffer from scratch?
 	bool recreateBuffer = !_buffer || !_buffer->isValid(renderer);
@@ -206,34 +204,6 @@ void VectorDisplay::render(TimePoint time, DataObject* dataObject, const Pipelin
 	if(renderer->isPicking()) {
 		renderer->endPickObject();
 	}
-}
-
-/******************************************************************************
-* Loads the data of this class from an input stream.
-******************************************************************************/
-void VectorDisplay::loadFromStream(ObjectLoadStream& stream)
-{
-	DisplayObject::loadFromStream(stream);
-
-	// This is for backward compatibility with OVITO 2.6.0.
-	if(_flipVectors && reverseArrowDirection()) {
-		setReverseArrowDirection(false);
-		setArrowPosition(Head);
-	}
-}
-
-/******************************************************************************
-* Parses the serialized contents of a property field in a custom way.
-******************************************************************************/
-bool VectorDisplay::loadPropertyFieldFromStream(ObjectLoadStream& stream, const ObjectLoadStream::SerializedPropertyField& serializedField)
-{
-	// This is for backward compatibility with OVITO 2.6.0.
-	if(serializedField.identifier == "FlipVectors" && serializedField.definingClass == &VectorDisplay::OOType) {
-		stream >> _flipVectors;
-		return true;
-	}
-
-	return DisplayObject::loadPropertyFieldFromStream(stream, serializedField);
 }
 
 /******************************************************************************

@@ -21,9 +21,9 @@
 
 #include <core/Core.h>
 #include <core/dataset/UndoStack.h>
+#include <core/dataset/DataSet.h>
 #include <core/dataset/DataSetContainer.h>
-#include <core/plugins/PluginManager.h>
-#include <core/plugins/autostart/AutoStartObject.h>
+#include <core/app/PluginManager.h>
 #include "StandaloneApplication.h"
 
 namespace Ovito {
@@ -95,11 +95,11 @@ bool StandaloneApplication::initialize(int& argc, char** argv)
 		PluginManager::initialize();
 		PluginManager::instance().loadAllPlugins();
 
-		// Load auto-start objects and let them register their custom command line options.
-		for(const OvitoObjectType* clazz : PluginManager::instance().listClasses(AutoStartObject::OOType)) {
-			OORef<AutoStartObject> obj = static_object_cast<AutoStartObject>(clazz->createInstance(nullptr));
-			_autostartObjects.push_back(obj);
-			obj->registerCommandLineOptions(_cmdLineParser);
+		// Load application service classes and let them register their custom command line options.
+		for(OvitoClassPtr clazz : PluginManager::instance().listClasses(ApplicationService::OOClass())) {
+			OORef<ApplicationService> service = static_object_cast<ApplicationService>(clazz->createInstance(nullptr));
+			service->registerCommandLineOptions(_cmdLineParser);
+			_applicationServices.push_back(std::move(service));
 		}
 
 		// Parse the command line parameters again after the plugins have registered their options.
@@ -124,9 +124,9 @@ bool StandaloneApplication::initialize(int& argc, char** argv)
 		if(!startupApplication())
 			return true;
 
-		// Invoke auto-start objects.
-		for(const auto& obj : autostartObjects())
-			obj->applicationStarted();
+		// Notify registered application services.
+		for(const auto& service : applicationServices())
+			service->applicationStarted();
 	}
 	catch(const Exception& ex) {
 		ex.reportError(true);
@@ -194,17 +194,19 @@ int StandaloneApplication::runApplication()
 void StandaloneApplication::shutdown()
 {
 	// Release dataset and all contained objects.
-	if(datasetContainer())
+	if(datasetContainer()) {
 		datasetContainer()->setCurrentSet(nullptr);
-
-	// Destroy auto-start objects.
-	_autostartObjects.clear();
-
-	// Unload plugins.
-	PluginManager::shutdown();
-
+		datasetContainer()->taskManager().cancelAllAndWait();
+	}
+	
 	// Destroy Qt application object.
 	delete QCoreApplication::instance();
+
+	// Release application services.
+	_applicationServices.clear();
+	
+	// Unload plugins.
+	PluginManager::shutdown();	
 }
 
 }	// End of namespace

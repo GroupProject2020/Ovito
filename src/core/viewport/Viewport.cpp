@@ -23,11 +23,11 @@
 #include <core/viewport/Viewport.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/viewport/ViewportSettings.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/animation/AnimationSettings.h>
 #include <core/rendering/RenderSettings.h>
-#include <core/scene/SelectionSet.h>
-#include <core/scene/SceneRoot.h>
-#include <core/scene/objects/camera/AbstractCameraObject.h>
+#include <core/dataset/scene/SelectionSet.h>
+#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/data/camera/AbstractCameraObject.h>
 #include <core/dataset/DataSetContainer.h>
 
 /// The default field of view in world units used for orthogonal view types when the scene is empty.
@@ -41,17 +41,18 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(Viewport, RefTarget);
-DEFINE_FLAGS_REFERENCE_FIELD(Viewport, viewNode, "ViewNode", ObjectNode, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_NO_SUB_ANIM);
-DEFINE_FLAGS_PROPERTY_FIELD(Viewport, viewType, "ViewType", PROPERTY_FIELD_NO_UNDO);
-DEFINE_FLAGS_PROPERTY_FIELD(Viewport, gridMatrix, "GridMatrix", PROPERTY_FIELD_NO_UNDO);
-DEFINE_FLAGS_PROPERTY_FIELD(Viewport, fieldOfView, "FieldOfView", PROPERTY_FIELD_NO_UNDO);
-DEFINE_FLAGS_PROPERTY_FIELD(Viewport, renderPreviewMode, "ShowRenderFrame", PROPERTY_FIELD_NO_UNDO);
-DEFINE_FLAGS_PROPERTY_FIELD(Viewport, viewportTitle, "Title", PROPERTY_FIELD_NO_UNDO);
-DEFINE_FLAGS_PROPERTY_FIELD(Viewport, cameraTransformation, "CameraTransformation", PROPERTY_FIELD_NO_UNDO);
-DEFINE_FLAGS_PROPERTY_FIELD(Viewport, isGridVisible, "ShowGrid", PROPERTY_FIELD_NO_UNDO);
-DEFINE_FLAGS_PROPERTY_FIELD(Viewport, stereoscopicMode, "StereoscopicMode", PROPERTY_FIELD_NO_UNDO);
-DEFINE_VECTOR_REFERENCE_FIELD(Viewport, overlays, "Overlays", ViewportOverlay);
+IMPLEMENT_OVITO_CLASS(Viewport);
+DEFINE_PROPERTY_FIELD(Viewport, viewType);
+DEFINE_PROPERTY_FIELD(Viewport, gridMatrix);
+DEFINE_PROPERTY_FIELD(Viewport, fieldOfView);
+DEFINE_PROPERTY_FIELD(Viewport, cameraTransformation);
+DEFINE_PROPERTY_FIELD(Viewport, renderPreviewMode);
+DEFINE_PROPERTY_FIELD(Viewport, isGridVisible);
+DEFINE_PROPERTY_FIELD(Viewport, stereoscopicMode);
+DEFINE_PROPERTY_FIELD(Viewport, viewportTitle);
+DEFINE_REFERENCE_FIELD(Viewport, viewNode);
+DEFINE_REFERENCE_FIELD(Viewport, overlays);
+SET_PROPERTY_FIELD_CHANGE_EVENT(Viewport, viewportTitle, ReferenceEvent::TitleChanged);
 
 /******************************************************************************
 * Constructor.
@@ -67,17 +68,6 @@ Viewport::Viewport(DataSet* dataset) : RefTarget(dataset),
 		_stereoscopicMode(false),
 		_window(nullptr)
 {
-	INIT_PROPERTY_FIELD(viewNode);
-	INIT_PROPERTY_FIELD(viewType);
-	INIT_PROPERTY_FIELD(gridMatrix);
-	INIT_PROPERTY_FIELD(fieldOfView);
-	INIT_PROPERTY_FIELD(renderPreviewMode);
-	INIT_PROPERTY_FIELD(viewportTitle);
-	INIT_PROPERTY_FIELD(cameraTransformation);
-	INIT_PROPERTY_FIELD(isGridVisible);
-	INIT_PROPERTY_FIELD(overlays);
-	INIT_PROPERTY_FIELD(stereoscopicMode);
-
 	connect(&ViewportSettings::getSettings(), &ViewportSettings::settingsChanged, this, &Viewport::viewportSettingsChanged);
 }
 
@@ -170,7 +160,7 @@ void Viewport::setViewType(ViewType type, bool keepCurrentView)
 		}
 	}
 
-	_viewType = type;
+	_viewType.set(this, PROPERTY_FIELD(viewType), type);
 }
 
 /******************************************************************************
@@ -205,15 +195,17 @@ void Viewport::setCameraDirection(const Vector3& newDir)
 /******************************************************************************
 * Computes the projection matrix and other parameters.
 ******************************************************************************/
-ViewProjectionParameters Viewport::projectionParameters(TimePoint time, FloatType aspectRatio, const Box3& sceneBoundingBox)
+ViewProjectionParameters Viewport::computeProjectionParameters(TimePoint time, FloatType aspectRatio, const Box3& sceneBoundingBox)
 {
 	OVITO_ASSERT(aspectRatio > FLOATTYPE_EPSILON);
-	OVITO_ASSERT(!sceneBoundingBox.isEmpty());
 
 	ViewProjectionParameters params;
 	params.aspectRatio = aspectRatio;
 	params.validityInterval.setInfinite();
-	params.boundingBox = sceneBoundingBox;
+	if(!sceneBoundingBox.isEmpty())
+		params.boundingBox = sceneBoundingBox;
+	else
+		params.boundingBox = Box3(Point3::Origin(), 1);
 
 	// Get transformation from view scene node.
 	if(viewType() == VIEW_SCENENODE && viewNode()) {
@@ -221,9 +213,9 @@ ViewProjectionParameters Viewport::projectionParameters(TimePoint time, FloatTyp
 		params.inverseViewMatrix = viewNode()->getWorldTransform(time, params.validityInterval);
 		params.viewMatrix = params.inverseViewMatrix.inverse();
 
-		PipelineFlowState state = viewNode()->evaluatePipelineImmediately(PipelineEvalRequest(time, true));
+		// Get camera settings (FOV etc.)
+		const PipelineFlowState& state = viewNode()->evaluatePipelinePreliminary(false);
 		if(OORef<AbstractCameraObject> camera = state.convertObject<AbstractCameraObject>(time)) {
-
 			// Get remaining parameters from camera object.
 			camera->projectionParameters(time, params);
 		}
@@ -240,7 +232,7 @@ ViewProjectionParameters Viewport::projectionParameters(TimePoint time, FloatTyp
 	}
 
 	// Transform scene bounding box to camera space.
-	Box3 bb = sceneBoundingBox.transformed(params.viewMatrix).centerScale(FloatType(1.01));
+	Box3 bb = params.boundingBox.transformed(params.viewMatrix).centerScale(FloatType(1.01));
 
 	// Compute projection matrix.
 	if(params.isPerspective) {
@@ -249,7 +241,7 @@ ViewProjectionParameters Viewport::projectionParameters(TimePoint time, FloatTyp
 			params.znear = std::max(-bb.maxc.z(), params.zfar * FloatType(1e-4));
 		}
 		else {
-			params.zfar = std::max(sceneBoundingBox.size().length(), FloatType(1));
+			params.zfar = std::max(params.boundingBox.size().length(), FloatType(1));
 			params.znear = params.zfar * FloatType(1e-4);
 		}
 		params.zfar = std::max(params.zfar, params.znear * FloatType(1.01));
@@ -322,7 +314,7 @@ void Viewport::zoomToBox(const Box3& box)
 			if(RenderSettings* renderSettings = dataset()->renderSettings())
 				aspectRatio = renderSettings->outputImageAspectRatio();
 		}
-		ViewProjectionParameters projParams = projectionParameters(dataset()->animationSettings()->time(), aspectRatio, box);
+		ViewProjectionParameters projParams = computeProjectionParameters(dataset()->animationSettings()->time(), aspectRatio, box);
 
 		FloatType minX = FLOATTYPE_MAX, minY = FLOATTYPE_MAX;
 		FloatType maxX = FLOATTYPE_MIN, maxY = FLOATTYPE_MIN;
@@ -443,24 +435,20 @@ void Viewport::viewportSettingsChanged(ViewportSettings* newSettings)
 void Viewport::updateViewportTitle()
 {
 	// Load viewport caption string.
+	QString newTitle;
 	switch(viewType()) {
-		case VIEW_TOP: _viewportTitle = tr("Top"); break;
-		case VIEW_BOTTOM: _viewportTitle = tr("Bottom"); break;
-		case VIEW_FRONT: _viewportTitle = tr("Front"); break;
-		case VIEW_BACK: _viewportTitle = tr("Back"); break;
-		case VIEW_LEFT: _viewportTitle = tr("Left"); break;
-		case VIEW_RIGHT: _viewportTitle = tr("Right"); break;
-		case VIEW_ORTHO: _viewportTitle = tr("Ortho"); break;
-		case VIEW_PERSPECTIVE: _viewportTitle = tr("Perspective"); break;
-		case VIEW_SCENENODE:
-			if(viewNode() != nullptr)
-				_viewportTitle = viewNode()->nodeName();
-			else
-				_viewportTitle = tr("No view node");
-		break;
-		default: OVITO_ASSERT(false); _viewportTitle = QString(); // unknown viewport type
+		case VIEW_TOP: newTitle = tr("Top"); break;
+		case VIEW_BOTTOM: newTitle = tr("Bottom"); break;
+		case VIEW_FRONT: newTitle = tr("Front"); break;
+		case VIEW_BACK: newTitle = tr("Back"); break;
+		case VIEW_LEFT: newTitle = tr("Left"); break;
+		case VIEW_RIGHT: newTitle = tr("Right"); break;
+		case VIEW_ORTHO: newTitle = tr("Ortho"); break;
+		case VIEW_PERSPECTIVE: newTitle = tr("Perspective"); break;
+		case VIEW_SCENENODE: newTitle = viewNode() ? viewNode()->nodeName() : tr("No view node"); break;
+		default: OVITO_ASSERT(false); // unknown viewport type
 	}
-	notifyDependents(ReferenceEvent::TitleChanged);
+	_viewportTitle.set(this, PROPERTY_FIELD(viewportTitle), std::move(newTitle));
 }
 
 /******************************************************************************
@@ -496,8 +484,8 @@ void Viewport::processUpdateRequest()
 ******************************************************************************/
 void Viewport::renderInteractive(SceneRenderer* renderer)
 {
-	OVITO_ASSERT_MSG(!isRendering(), "Viewport::render()", "Viewport is already rendering.");
-	OVITO_ASSERT_MSG(!dataset()->viewportConfig()->isRendering(), "Viewport::render()", "Some other viewport is already rendering.");
+	OVITO_ASSERT_MSG(!isRendering(), "Viewport::renderInteractive()", "Viewport is already rendering.");
+	OVITO_ASSERT_MSG(!dataset()->viewportConfig()->isRendering(), "Viewport::renderInteractive()", "Some other viewport is already rendering.");
 	OVITO_ASSERT(!dataset()->viewportConfig()->isSuspended());
 
 	QSize vpSize = windowSize();
@@ -513,12 +501,20 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 		// Set up the renderer.
 		renderer->startRender(dataset(), renderSettings);
 
-		// Request scene bounding box.
-		Box3 boundingBox = renderer->sceneBoundingBox(time);
-
-		// Set up preliminary projection.
+		// Set up preliminary projection without a known bounding box.
 		FloatType aspectRatio = (FloatType)vpSize.height() / vpSize.width();
-		_projParams = projectionParameters(time, aspectRatio, boundingBox);
+		_projParams = computeProjectionParameters(time, aspectRatio);
+
+		// Adjust projection if render frame is shown.
+		if(renderPreviewMode())
+			adjustProjectionForRenderFrame(_projParams);
+
+		// Request scene bounding box.
+		Promise<> renderPromise = Promise<>::createSynchronous(dataset()->container()->taskManager(), true, false);
+		Box3 boundingBox = renderer->computeSceneBoundingBox(time, _projParams, this, renderPromise);
+
+		// Set up final projection with the now known bounding box.
+		_projParams = computeProjectionParameters(time, aspectRatio, boundingBox);
 
 		// Adjust projection if render frame is shown.
 		if(renderPreviewMode())
@@ -527,23 +523,13 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 		// Set up the viewport renderer.
 		renderer->beginFrame(time, _projParams, this);
 
-		// Add bounding box of interactive elements.
-		boundingBox.addBox(renderer->boundingBoxInteractive(time, this));
-
-		// Set up final projection.
-		_projParams = projectionParameters(time, aspectRatio, boundingBox);
-
-		// Adjust projection if render frame is shown.
-		if(renderPreviewMode())
-			adjustProjectionForRenderFrame(_projParams);
-
-		if(!projectionParams().isPerspective || !stereoscopicMode() || renderer->isPicking()) {
+		if(!_projParams.isPerspective || !stereoscopicMode() || renderer->isPicking()) {
 
 			// Pass final projection parameters to renderer.
-			renderer->setProjParams(projectionParams());
+			renderer->setProjParams(_projParams);
 
 			// Call the viewport renderer to render the scene objects.
-			renderer->renderFrame(nullptr, SceneRenderer::NonStereoscopic, dataset()->container()->taskManager());
+			renderer->renderFrame(nullptr, SceneRenderer::NonStereoscopic, renderPromise);
 		}
 		else {
 
@@ -551,7 +537,7 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 			FloatType eyeSeparation = FloatType(16);
 			FloatType convergence = (orbitCenter() - Point3::Origin() - _projParams.inverseViewMatrix.translation()).length();
 			convergence = std::max(convergence, _projParams.znear);
-			ViewProjectionParameters params = projectionParams();
+			ViewProjectionParameters params = _projParams;
 
 			// Setup project of left eye.
 			FloatType top = params.znear * tan(params.fieldOfView / 2);
@@ -568,7 +554,7 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 			renderer->setProjParams(params);
 
 			// Render image of left eye.
-			renderer->renderFrame(nullptr, SceneRenderer::StereoscopicLeft, dataset()->container()->taskManager());
+			renderer->renderFrame(nullptr, SceneRenderer::StereoscopicLeft, renderPromise);
 
 			// Setup project of right eye.
 			left = -c * params.znear / convergence;
@@ -580,7 +566,7 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 			renderer->setProjParams(params);
 
 			// Render image of right eye.
-			renderer->renderFrame(nullptr, SceneRenderer::StereoscopicRight, dataset()->container()->taskManager());
+			renderer->renderFrame(nullptr, SceneRenderer::StereoscopicRight, renderPromise);
 		}
 
 		// Render viewport overlays.
@@ -595,13 +581,13 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 					(renderFrameBox.minc.y() + 1) * overlayBuffer.height() / 2,
 					renderFrameBox.width() * overlayBuffer.width() / 2,
 					renderFrameBox.height() * overlayBuffer.height() / 2);
-			ViewProjectionParameters renderProjParams = projectionParameters(time, renderSettings->outputImageAspectRatio(), boundingBox);
+			ViewProjectionParameters renderProjParams = computeProjectionParameters(time, renderSettings->outputImageAspectRatio(), boundingBox);
 			for(ViewportOverlay* overlay : overlays()) {
 				QPainter painter(&overlayBuffer);
 				painter.setWindow(QRect(0, 0, renderSettings->outputImageWidth(), renderSettings->outputImageHeight()));
 				painter.setViewport(renderFrameRect);
 				painter.setRenderHint(QPainter::Antialiasing);
-				overlay->render(this, painter, renderProjParams, renderSettings);
+				overlay->render(this, time, painter, renderProjParams, renderSettings, true, dataset()->container()->taskManager());
 			}
 			std::shared_ptr<ImagePrimitive> overlayBufferPrim = renderer->createImagePrimitive();
 			overlayBufferPrim->setImage(overlayBuffer);

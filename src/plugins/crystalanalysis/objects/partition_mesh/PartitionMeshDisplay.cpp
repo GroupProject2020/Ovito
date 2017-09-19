@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,21 +21,25 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
-#include <plugins/particles/objects/SimulationCellObject.h>
+#include <plugins/mesh/surface/RenderableSurfaceMesh.h>
 #include <core/rendering/SceneRenderer.h>
 #include <core/utilities/mesh/TriMesh.h>
-#include <core/animation/controller/Controller.h>
+#include <core/utilities/concurrent/PromiseState.h>
+#include <core/utilities/units/UnitsManager.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <core/dataset/animation/controller/Controller.h>
+#include <core/dataset/DataSetContainer.h>
 #include "PartitionMeshDisplay.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(PartitionMeshDisplay, AsynchronousDisplayObject);
-DEFINE_FLAGS_PROPERTY_FIELD(PartitionMeshDisplay, surfaceColor, "SurfaceColor", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_PROPERTY_FIELD(PartitionMeshDisplay, showCap, "ShowCap", PROPERTY_FIELD_MEMORIZE);
-DEFINE_PROPERTY_FIELD(PartitionMeshDisplay, smoothShading, "SmoothShading");
-DEFINE_PROPERTY_FIELD(PartitionMeshDisplay, flipOrientation, "FlipOrientation");
-DEFINE_REFERENCE_FIELD(PartitionMeshDisplay, surfaceTransparencyController, "SurfaceTransparency", Controller);
-DEFINE_REFERENCE_FIELD(PartitionMeshDisplay, capTransparencyController, "CapTransparency", Controller);
+IMPLEMENT_OVITO_CLASS(PartitionMeshDisplay);
+DEFINE_PROPERTY_FIELD(PartitionMeshDisplay, surfaceColor);
+DEFINE_PROPERTY_FIELD(PartitionMeshDisplay, showCap);
+DEFINE_PROPERTY_FIELD(PartitionMeshDisplay, smoothShading);
+DEFINE_PROPERTY_FIELD(PartitionMeshDisplay, flipOrientation);
+DEFINE_REFERENCE_FIELD(PartitionMeshDisplay, surfaceTransparencyController);
+DEFINE_REFERENCE_FIELD(PartitionMeshDisplay, capTransparencyController);
 SET_PROPERTY_FIELD_LABEL(PartitionMeshDisplay, surfaceColor, "Free surface color");
 SET_PROPERTY_FIELD_LABEL(PartitionMeshDisplay, showCap, "Show cap polygons");
 SET_PROPERTY_FIELD_LABEL(PartitionMeshDisplay, smoothShading, "Smooth shading");
@@ -48,58 +52,86 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(PartitionMeshDisplay, capTransparencyControll
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-PartitionMeshDisplay::PartitionMeshDisplay(DataSet* dataset) : AsynchronousDisplayObject(dataset),
-	_surfaceColor(1, 1, 1), _showCap(true), _smoothShading(true), _flipOrientation(false), _trimeshUpdate(true)
+PartitionMeshDisplay::PartitionMeshDisplay(DataSet* dataset) : DisplayObject(dataset),
+	_surfaceColor(1, 1, 1),
+	_showCap(true),
+	_smoothShading(true),
+	_flipOrientation(false)
 {
-	INIT_PROPERTY_FIELD(surfaceColor);
-	INIT_PROPERTY_FIELD(showCap);
-	INIT_PROPERTY_FIELD(smoothShading);
-	INIT_PROPERTY_FIELD(surfaceTransparencyController);
-	INIT_PROPERTY_FIELD(capTransparencyController);
-	INIT_PROPERTY_FIELD(flipOrientation);
-
 	setSurfaceTransparencyController(ControllerManager::createFloatController(dataset));
 	setCapTransparencyController(ControllerManager::createFloatController(dataset));
 }
 
 /******************************************************************************
-* Computes the bounding box of the displayed data.
+* Is called when the value of a property of this object has changed.
 ******************************************************************************/
-Box3 PartitionMeshDisplay::boundingBox(TimePoint time, DataObject* dataObject, ObjectNode* contextNode, const PipelineFlowState& flowState)
+void PartitionMeshDisplay::propertyChanged(const PropertyFieldDescriptor& field)
 {
-	// We'll use the entire simulation cell as bounding box for the mesh.
-	if(SimulationCellObject* cellObject = flowState.findObject<SimulationCellObject>())
-		return Box3(Point3(0,0,0), Point3(1,1,1)).transformed(cellObject->cellMatrix());
-	else
-		return Box3();
+	if(field == PROPERTY_FIELD(smoothShading) || field == PROPERTY_FIELD(flipOrientation)) {
+		// Inceremnt internal object revision number each time a parameter changes
+		// that requires a re-generation of the cached RenderableSurfaceMesh.
+		_revisionNumber++;
+	}
+	DisplayObject::propertyChanged(field);
 }
 
 /******************************************************************************
-* Creates a computation engine that will prepare the data to be displayed.
+* Computes the bounding box of the displayed data.
 ******************************************************************************/
-std::shared_ptr<AsynchronousTask> PartitionMeshDisplay::createEngine(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState)
+Box3 PartitionMeshDisplay::boundingBox(TimePoint time, DataObject* dataObject, ObjectNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
-	// Get the simulation cell.
-	SimulationCellObject* cellObject = flowState.findObject<SimulationCellObject>();
+	// Compute mesh bounding box.
+	Box3 bb;
+	if(OORef<RenderableSurfaceMesh> meshObj = dataObject->convertTo<RenderableSurfaceMesh>(time)) {
+		bb.addBox(meshObj->surfaceMesh().boundingBox());
+		bb.addBox(meshObj->capPolygonsMesh().boundingBox());
+	}
+	return bb;
+}
 
+/******************************************************************************
+* Lets the display object transform a data object in preparation for rendering.
+******************************************************************************/
+Future<PipelineFlowState> PartitionMeshDisplay::transformDataImpl(TimePoint time, DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState, ObjectNode* contextNode)
+{
 	// Get the partition mesh.
 	PartitionMesh* partitionMeshObj = dynamic_object_cast<PartitionMesh>(dataObject);
+	
+	// Abort if necessary input is not available.
+	if(!partitionMeshObj)
+		return std::move(flowState);
 
-	// Check if input is available.
-	if(cellObject && partitionMeshObj) {
-		// Check if the input has changed.
-		if(_preparationCacheHelper.updateState(dataObject, cellObject->data(), flipOrientation())) {
-			// Create compute engine.
-			return std::make_shared<PrepareMeshEngine>(partitionMeshObj->storage(), cellObject->data(), partitionMeshObj->spaceFillingRegion(), partitionMeshObj->cuttingPlanes(), flipOrientation());
+	// Check if the cache state already contains a RenderableSurfaceMesh that we
+	// created earlier for the same input surface mesh. If yes, we can immediately return it.
+	for(DataObject* o : cachedState.objects()) {
+		if(RenderableSurfaceMesh* renderableMesh = dynamic_object_cast<RenderableSurfaceMesh>(o)) {
+			if(renderableMesh->sourceDataObject() == dataObject && renderableMesh->displayObject() == this && renderableMesh->generatorDisplayObjectRevision() == _revisionNumber) {
+				flowState.addObject(renderableMesh);
+				return std::move(flowState);
+			}
 		}
 	}
-	else {
-		_surfaceMesh.clear();
-		_capPolygonsMesh.clear();
-		_trimeshUpdate = true;
-	}
 
-	return std::shared_ptr<AsynchronousTask>();
+	// Get the simulation cell.
+	SimulationCellObject* cellObject = partitionMeshObj->domain();
+	if(!cellObject)
+		return std::move(flowState);
+		
+	// Create compute engine.
+	auto engine = std::make_shared<PrepareMeshEngine>(partitionMeshObj->storage(), cellObject->data(), 
+		partitionMeshObj->spaceFillingRegion(), partitionMeshObj->cuttingPlanes(), flipOrientation(), smoothShading());
+
+	// Submit engine for execution and post-process results.
+	return dataset()->container()->taskManager().runTaskAsync(engine)
+		.then(executor(), [this, flowState = std::move(flowState), dataObject](TriMesh&& surfaceMesh, TriMesh&& capPolygonsMesh) mutable {
+			UndoSuspender noUndo(this);
+
+			// Output the computed mesh as a RenderableSurfaceMesh.
+			OORef<RenderableSurfaceMesh> renderableMesh = new RenderableSurfaceMesh(dataset(), std::move(surfaceMesh), std::move(capPolygonsMesh), dataObject, _revisionNumber);
+			renderableMesh->setDisplayObject(this);
+			flowState.addObject(renderableMesh);
+			return std::move(flowState);
+		});
 }
 
 /******************************************************************************
@@ -109,30 +141,28 @@ void PartitionMeshDisplay::PrepareMeshEngine::perform()
 {
 	setProgressText(tr("Preparing microstructure mesh for display"));
 
-	if(!buildMesh(*_inputMesh, _simCell, _cuttingPlanes, _surfaceMesh, *this))
-		throw Exception(tr("Failed to generate non-periodic version of microstructure mesh for display. Simulation cell might be too small."));
+	TriMesh surfaceMesh;
+	TriMesh capPolygonsMesh;
 
-	if(_flipOrientation)
-		_surfaceMesh.flipFaces();
+	if(!buildMesh(*_inputMesh, _simCell, _cuttingPlanes, surfaceMesh, this))
+		throw Exception(tr("Failed to generate non-periodic version of microstructure mesh for display. Simulation cell might be too small."));
 
 	if(isCanceled())
 		return;
-}
 
-/******************************************************************************
-* Unpacks the results of the computation engine and stores them in the display object.
-******************************************************************************/
-void PartitionMeshDisplay::transferComputationResults(AsynchronousTask* engine)
-{
-	if(engine) {
-		_surfaceMesh = static_cast<PrepareMeshEngine*>(engine)->surfaceMesh();
-		_capPolygonsMesh = static_cast<PrepareMeshEngine*>(engine)->capPolygonsMesh();
-		_trimeshUpdate = true;
+	if(_flipOrientation)
+		surfaceMesh.flipFaces();
+
+	if(isCanceled())
+		return;
+
+	if(_smoothShading) {
+		// Assign smoothing group to faces to interpolate normals.
+		for(auto& face : surfaceMesh.faces())
+			face.setSmoothingGroups(1);	
 	}
-	else {
-		// Reset cache when compute task has been canceled.
-		_preparationCacheHelper.updateState(nullptr, SimulationCell(), false);
-	}
+
+	setResult(std::move(surfaceMesh), std::move(capPolygonsMesh));
 }
 
 /******************************************************************************
@@ -140,12 +170,15 @@ void PartitionMeshDisplay::transferComputationResults(AsynchronousTask* engine)
 ******************************************************************************/
 void PartitionMeshDisplay::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, ObjectNode* contextNode)
 {
-	// Check if geometry preparation was successful.
-	// If not, reset triangle mesh.
-	if(status().type() == PipelineStatus::Error && _surfaceMesh.faceCount() != 0) {
-		_surfaceMesh.clear();
-		_capPolygonsMesh.clear();
-		_trimeshUpdate = true;
+	// Ignore render calls for the original PartitionMesh.
+	// We are only interested in the RenderableSurfaceMesh.
+	if(dynamic_object_cast<PartitionMesh>(dataObject) != nullptr)
+		return;
+
+	if(renderer->isBoundingBoxPass()) {
+		TimeInterval validityInterval;
+		renderer->addToLocalBoundingBox(boundingBox(time, dataObject, contextNode, flowState, validityInterval));
+		return;
 	}
 
 	// Get the cluster graph.
@@ -164,8 +197,8 @@ void PartitionMeshDisplay::render(TimePoint time, DataObject* dataObject, const 
 	bool recreateCapBuffer = showCap() && (!_capBuffer || !_capBuffer->isValid(renderer));
 
 	// Do we have to update the render primitives?
-	bool updateContents = _geometryCacheHelper.updateState(color_surface, smoothShading(), clusterGraph)
-					|| recreateSurfaceBuffer || recreateCapBuffer || _trimeshUpdate;
+	bool updateContents = _geometryCacheHelper.updateState(color_surface, clusterGraph)
+					|| recreateSurfaceBuffer || recreateCapBuffer;
 
 	// Re-create the render primitives if necessary.
 	if(recreateSurfaceBuffer)
@@ -176,11 +209,7 @@ void PartitionMeshDisplay::render(TimePoint time, DataObject* dataObject, const 
 	// Update render primitives.
 	if(updateContents) {
 
-		// Assign smoothing group to faces to interpolate normals.
-		const quint32 smoothingGroup = smoothShading() ? 1 : 0;
-		for(auto& face : _surfaceMesh.faces()) {
-			face.setSmoothingGroups(smoothingGroup);
-		}
+		OORef<RenderableSurfaceMesh> meshObj = dataObject->convertTo<RenderableSurfaceMesh>(time);
 
 		// Define surface colors for the regions by taking them from the cluster graph.
 		int maxClusterId = 0;
@@ -199,14 +228,11 @@ void PartitionMeshDisplay::render(TimePoint time, DataObject* dataObject, const 
 		}
 		_surfaceBuffer->setMaterialColors(std::move(materialColors));
 
-		_surfaceBuffer->setMesh(_surfaceMesh, color_surface);
+		_surfaceBuffer->setMesh(meshObj->surfaceMesh(), color_surface);
 		_surfaceBuffer->setCullFaces(true);
 
 		if(showCap())
-			_capBuffer->setMesh(_capPolygonsMesh, color_surface);
-
-		// Reset update flag.
-		_trimeshUpdate = false;
+			_capBuffer->setMesh(meshObj->capPolygonsMesh(), color_surface);
 	}
 
 	// Handle picking of triangles.
@@ -222,7 +248,7 @@ void PartitionMeshDisplay::render(TimePoint time, DataObject* dataObject, const 
 /******************************************************************************
 * Generates the final triangle mesh, which will be rendered.
 ******************************************************************************/
-bool PartitionMeshDisplay::buildMesh(const PartitionMeshData& input, const SimulationCell& cell, const QVector<Plane3>& cuttingPlanes, TriMesh& output, PromiseBase& promise)
+bool PartitionMeshDisplay::buildMesh(const PartitionMeshData& input, const SimulationCell& cell, const QVector<Plane3>& cuttingPlanes, TriMesh& output, PromiseState* promise)
 {
 	// Convert half-edge mesh to triangle mesh.
 	input.convertToTriMesh(output);
@@ -237,7 +263,7 @@ bool PartitionMeshDisplay::buildMesh(const PartitionMeshData& input, const Simul
 	}
 	OVITO_ASSERT(fout == output.faces().end());
 
-	if(promise.isCanceled())
+	if(promise && promise->isCanceled())
 		return false;
 
 	// Convert vertex positions to reduced coordinates.
@@ -250,7 +276,7 @@ bool PartitionMeshDisplay::buildMesh(const PartitionMeshData& input, const Simul
 	for(size_t dim = 0; dim < 3; dim++) {
 		if(cell.pbcFlags()[dim] == false) continue;
 
-		if(promise.isCanceled())
+		if(promise && promise->isCanceled())
 			return false;
 
 		// Make sure all vertices are located inside the periodic box.
@@ -276,7 +302,7 @@ bool PartitionMeshDisplay::buildMesh(const PartitionMeshData& input, const Simul
 	}
 
 	// Check for early abortion.
-	if(promise.isCanceled())
+	if(promise && promise->isCanceled())
 		return false;
 
 	// Convert vertex positions back from reduced coordinates to absolute coordinates.
@@ -286,7 +312,7 @@ bool PartitionMeshDisplay::buildMesh(const PartitionMeshData& input, const Simul
 
 	// Clip mesh at cutting planes.
 	for(const Plane3& plane : cuttingPlanes) {
-		if(promise.isCanceled())
+		if(promise && promise->isCanceled())
 			return false;
 
 		output.clipAtPlane(plane);
@@ -295,7 +321,7 @@ bool PartitionMeshDisplay::buildMesh(const PartitionMeshData& input, const Simul
 	output.invalidateVertices();
 	output.invalidateFaces();
 
-	return !promise.isCanceled();
+	return !promise || !promise->isCanceled();
 }
 
 /******************************************************************************

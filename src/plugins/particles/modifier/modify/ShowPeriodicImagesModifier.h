@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include "../ParticleModifier.h"
+#include <core/dataset/pipeline/Modifier.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 
@@ -33,18 +33,37 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
  *
  * \author Alexander Stukowski
  */
-class OVITO_PARTICLES_EXPORT ShowPeriodicImagesModifier : public ParticleModifier
+class OVITO_PARTICLES_EXPORT ShowPeriodicImagesModifier : public Modifier
 {
+	/// Give this modifier class its own metaclass.
+	class ShowPeriodicImagesModifierClass : public ModifierClass 
+	{
+	public:
+
+		/// Inherit constructor from base class.
+		using ModifierClass::ModifierClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
+	
+	Q_OBJECT
+	OVITO_CLASS_META(ShowPeriodicImagesModifier, ShowPeriodicImagesModifierClass)
+
+	Q_CLASSINFO("DisplayName", "Show periodic images");
+	Q_CLASSINFO("ModifierCategory", "Modification");
+
 public:
 
 	/// \brief Constructs a new instance of this class.
 	Q_INVOKABLE ShowPeriodicImagesModifier(DataSet* dataset);
 
-protected:
-
-	/// Modifies the particle object. The time interval passed
-	/// to the function is reduced to the interval where the modified object is valid/constant.
-	virtual PipelineStatus modifyParticles(TimePoint time, TimeInterval& validityInterval) override;
+	/// Loads the user-defined default values of this object's parameter fields from the
+	/// application's settings store.
+	virtual void loadUserDefaults() override;
+		
+	/// Modifies the input data in an immediate, preliminary way.
+	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 private:
 
@@ -67,12 +86,6 @@ private:
 
 	/// Controls whether the modifier assigns unique identifiers to particle copies.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, uniqueIdentifiers, setUniqueIdentifiers);
-
-	Q_OBJECT
-	OVITO_OBJECT
-
-	Q_CLASSINFO("DisplayName", "Show periodic images");
-	Q_CLASSINFO("ModifierCategory", "Modification");
 };
 
 OVITO_END_INLINE_NAMESPACE

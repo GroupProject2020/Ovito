@@ -50,9 +50,9 @@ def modify(frame, input, output):
     
     # The output:
     color_property = output.create_particle_property(ParticleProperty.Type.Color)
-    color_property.marray[:] = quaternions_to_colors(orientation_property )
+    color_property.marray[:] = quaternions_to_colors(orientation_property)
 
-# This part is for automated testing.
+# The following is for automated testing only and not shown in the documentation:
 from ovito.io import import_file
 from ovito.modifiers import PythonScriptModifier, PolyhedralTemplateMatchingModifier
 node = import_file("simulation.dump")

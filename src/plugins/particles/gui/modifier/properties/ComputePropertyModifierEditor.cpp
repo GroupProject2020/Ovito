@@ -21,20 +21,20 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <plugins/particles/modifier/properties/ComputePropertyModifier.h>
-#include <plugins/particles/gui/util/ParticlePropertyParameterUI.h>
+#include <gui/properties/PropertyReferenceParameterUI.h>
 #include <gui/properties/BooleanGroupBoxParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
 #include <gui/properties/BooleanParameterUI.h>
 #include <gui/properties/StringParameterUI.h>
 #include <gui/properties/VariantComboBoxParameterUI.h>
 #include <gui/widgets/general/AutocompleteLineEdit.h>
-#include <core/animation/AnimationSettings.h>
-#include <core/scene/pipeline/PipelineObject.h>
+#include <core/dataset/animation/AnimationSettings.h>
+#include <core/dataset/pipeline/PipelineObject.h>
 #include "ComputePropertyModifierEditor.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Properties) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_OBJECT(ComputePropertyModifierEditor, ParticleModifierEditor);
+IMPLEMENT_OVITO_CLASS(ComputePropertyModifierEditor);
 SET_OVITO_OBJECT_EDITOR(ComputePropertyModifier, ComputePropertyModifierEditor);
 
 /******************************************************************************
@@ -55,7 +55,7 @@ void ComputePropertyModifierEditor::createUI(const RolloutInsertionParameters& r
 	propertiesLayout->setSpacing(4);
 
 	// Output property
-	ParticlePropertyParameterUI* outputPropertyUI = new ParticlePropertyParameterUI(this, PROPERTY_FIELD(ComputePropertyModifier::outputProperty), false, false);
+	PropertyReferenceParameterUI* outputPropertyUI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(ComputePropertyModifier::outputProperty), &ParticleProperty::OOClass(), false, false);
 	propertiesLayout->addWidget(outputPropertyUI->comboBox());
 
 	// Create the check box for the selection flag.
@@ -121,7 +121,7 @@ bool ComputePropertyModifierEditor::referenceEvent(RefTarget* source, ReferenceE
 			QMetaObject::invokeMethod(this, "updateEditorFields", Qt::QueuedConnection, Q_ARG(bool, event->type() == ReferenceEvent::TargetChanged));
 		}
 	}
-	return ParticleModifierEditor::referenceEvent(source, event);
+	return ModifierPropertiesEditor::referenceEvent(source, event);
 }
 
 /******************************************************************************
@@ -172,7 +172,7 @@ void ComputePropertyModifierEditor::updateEditorFields(bool updateExpressions)
 
 	QStringList standardPropertyComponentNames;
 	if(mod->outputProperty().type() != ParticleProperty::UserProperty) {
-		standardPropertyComponentNames = ParticleProperty::standardPropertyComponentNames(mod->outputProperty().type());
+		standardPropertyComponentNames = ParticleProperty::OOClass().standardPropertyComponentNames(mod->outputProperty().type());
 	}
 
 	QStringList inputVariableNames = mod->inputVariableNames();

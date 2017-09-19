@@ -36,12 +36,14 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
  */
 class OVITO_OPENGL_RENDERER_EXPORT StandardSceneRenderer : public OpenGLSceneRenderer
 {
+	Q_OBJECT
+	OVITO_CLASS(StandardSceneRenderer)
+	Q_CLASSINFO("DisplayName", "OpenGL renderer");
+	
 public:
 
 	/// Default constructor.
-	Q_INVOKABLE StandardSceneRenderer(DataSet* dataset) : OpenGLSceneRenderer(dataset), _antialiasingLevel(3) {
-		INIT_PROPERTY_FIELD(antialiasingLevel);
-	}
+	Q_INVOKABLE StandardSceneRenderer(DataSet* dataset) : OpenGLSceneRenderer(dataset), _antialiasingLevel(3) {}
 
 	/// Prepares the renderer for rendering and sets the data set that is being rendered.
 	virtual bool startRender(DataSet* dataset, RenderSettings* settings) override;
@@ -50,7 +52,7 @@ public:
 	virtual void beginFrame(TimePoint time, const ViewProjectionParameters& params, Viewport* vp) override;
 
 	/// Renders the current animation frame.
-	virtual bool renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, TaskManager& taskManager) override;
+	virtual bool renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, const PromiseBase& promise) override;
 
 	/// Is called after rendering has finished.
 	virtual void endRender() override;
@@ -80,11 +82,6 @@ private:
 
 	/// The resolution of the offscreen framebuffer.
 	QSize _framebufferSize;
-
-	Q_OBJECT
-	OVITO_OBJECT
-
-	Q_CLASSINFO("DisplayName", "OpenGL renderer");
 };
 
 OVITO_END_INLINE_NAMESPACE

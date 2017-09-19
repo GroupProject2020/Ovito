@@ -37,6 +37,12 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
  */
 class OVITO_CRYSTALANALYSIS_EXPORT GrainSegmentationModifier : public StructureIdentificationModifier
 {
+	Q_OBJECT
+	OVITO_CLASS(GrainSegmentationModifier)
+
+	Q_CLASSINFO("DisplayName", "Grain segmentation");
+	Q_CLASSINFO("ModifierCategory", "Analysis");
+
 public:
 
 	/// Constructor.
@@ -101,16 +107,10 @@ private:
 	DECLARE_MODIFIABLE_REFERENCE_FIELD(PatternCatalog, patternCatalog, setPatternCatalog);
 
 	/// This stores the cached atom-to-cluster assignments computed by the modifier.
-	QExplicitlySharedDataPointer<ParticleProperty> _atomClusters;
+	QExplicitlySharedDataPointer<PropertyStorage> _atomClusters;
 
 	/// This stores the cached cluster graph computed by the modifier.
 	QExplicitlySharedDataPointer<ClusterGraph> _clusterGraph;
-
-	Q_OBJECT
-	OVITO_OBJECT
-
-	Q_CLASSINFO("DisplayName", "Grain segmentation");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
 };
 
 }	// End of namespace

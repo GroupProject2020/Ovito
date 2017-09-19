@@ -23,15 +23,18 @@
 
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/particles/gui/modifier/ParticleModifierEditor.h>
+#include <gui/properties/ModifierPropertiesEditor.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Properties) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /**
  * A properties editor for the FreezePropertyModifier class.
  */
-class FreezePropertyModifierEditor : public ParticleModifierEditor
+class FreezePropertyModifierEditor : public ModifierPropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(FreezePropertyModifierEditor)
+
 public:
 
 	/// Default constructor
@@ -42,18 +45,10 @@ protected:
 	/// Creates the user interface controls for the editor.
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
 
-protected Q_SLOTS:
-
-	/// Takes a new snapshot of the current particle property values.
-	void takeSnapshot();
+private Q_SLOTS:
 
 	/// Is called when the user has selected a different source property.
 	void onSourcePropertyChanged();
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE
@@ -61,5 +56,3 @@ OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

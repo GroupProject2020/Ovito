@@ -33,8 +33,8 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 * Constructor.
 ******************************************************************************/
 GrainSegmentationEngine::GrainSegmentationEngine(const TimeInterval& validityInterval,
-		ParticleProperty* positions, const SimulationCell& simCell,
-		ParticleProperty* selection,
+		PropertyStorage* positions, const SimulationCell& simCell,
+		PropertyStorage* selection,
 		int inputCrystalStructure, FloatType misorientationThreshold,
 		FloatType fluctuationTolerance, int minGrainAtomCount,
 		FloatType probeSphereRadius, int meshSmoothingLevel) :

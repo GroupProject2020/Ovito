@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //  Copyright (2017) Lars Pastewka
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -28,7 +28,7 @@
 #include <gui/properties/IntegerRadioButtonParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
 #include <gui/properties/VariantComboBoxParameterUI.h>
-#include <plugins/particles/gui/util/ParticlePropertyParameterUI.h>
+#include <gui/properties/PropertyReferenceParameterUI.h>
 #include "CorrelationFunctionModifierEditor.h"
 
 #include <qwt/qwt_plot.h>
@@ -38,7 +38,7 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_OBJECT(CorrelationFunctionModifierEditor, ParticleModifierEditor);
+IMPLEMENT_OVITO_CLASS(CorrelationFunctionModifierEditor);
 SET_OVITO_OBJECT_EDITOR(CorrelationFunctionModifier, CorrelationFunctionModifierEditor);
 
 /******************************************************************************
@@ -54,11 +54,11 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(4);
 
-	ParticlePropertyParameterUI* sourceProperty1UI = new ParticlePropertyParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::sourceProperty1));
+	PropertyReferenceParameterUI* sourceProperty1UI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::sourceProperty1), &ParticleProperty::OOClass());
 	layout->addWidget(new QLabel(tr("First property:"), rollout));
 	layout->addWidget(sourceProperty1UI->comboBox());
 
-	ParticlePropertyParameterUI* sourceProperty2UI = new ParticlePropertyParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::sourceProperty2));
+	PropertyReferenceParameterUI* sourceProperty2UI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::sourceProperty2), &ParticleProperty::OOClass());
 	layout->addWidget(new QLabel(tr("Second property:"), rollout));
 	layout->addWidget(sourceProperty2UI->comboBox());
 
@@ -80,10 +80,10 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 	gridlayout = new QGridLayout();
 	gridlayout->addWidget(new QLabel(tr("Average:"), rollout), 0, 0);
 	VariantComboBoxParameterUI* averagingDirectionPUI = new VariantComboBoxParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::averagingDirection));
-    averagingDirectionPUI->comboBox()->addItem("radial", qVariantFromValue(CorrelationFunctionModifier::RADIAL));
-    averagingDirectionPUI->comboBox()->addItem("cell vector 1", qVariantFromValue(CorrelationFunctionModifier::CELL_VECTOR_1));
-    averagingDirectionPUI->comboBox()->addItem("cell vector 2", qVariantFromValue(CorrelationFunctionModifier::CELL_VECTOR_2));
-    averagingDirectionPUI->comboBox()->addItem("cell vector 3", qVariantFromValue(CorrelationFunctionModifier::CELL_VECTOR_3));
+    averagingDirectionPUI->comboBox()->addItem("radial", QVariant::fromValue(CorrelationFunctionModifier::RADIAL));
+    averagingDirectionPUI->comboBox()->addItem("cell vector 1", QVariant::fromValue(CorrelationFunctionModifier::CELL_VECTOR_1));
+    averagingDirectionPUI->comboBox()->addItem("cell vector 2", QVariant::fromValue(CorrelationFunctionModifier::CELL_VECTOR_2));
+    averagingDirectionPUI->comboBox()->addItem("cell vector 3", QVariant::fromValue(CorrelationFunctionModifier::CELL_VECTOR_3));
     gridlayout->addWidget(averagingDirectionPUI->comboBox(), 0, 1);
     layout->addLayout(gridlayout);
 #endif
@@ -115,9 +115,9 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 	QGridLayout *normalizeRealSpaceLayout = new QGridLayout();
 	normalizeRealSpaceLayout->addWidget(new QLabel(tr("Normalization:"), rollout), 0, 0);
 	VariantComboBoxParameterUI* normalizeRealSpacePUI = new VariantComboBoxParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::normalizeRealSpace));
-    normalizeRealSpacePUI->comboBox()->addItem("Do not normalize", qVariantFromValue(CorrelationFunctionModifier::DO_NOT_NORMALIZE));
-    normalizeRealSpacePUI->comboBox()->addItem("by covariance", qVariantFromValue(CorrelationFunctionModifier::NORMALIZE_BY_COVARIANCE));
-    normalizeRealSpacePUI->comboBox()->addItem("by RDF", qVariantFromValue(CorrelationFunctionModifier::NORMALIZE_BY_RDF));
+    normalizeRealSpacePUI->comboBox()->addItem("Do not normalize", QVariant::fromValue(CorrelationFunctionModifier::DO_NOT_NORMALIZE));
+    normalizeRealSpacePUI->comboBox()->addItem("by covariance", QVariant::fromValue(CorrelationFunctionModifier::NORMALIZE_BY_COVARIANCE));
+    normalizeRealSpacePUI->comboBox()->addItem("by RDF", QVariant::fromValue(CorrelationFunctionModifier::NORMALIZE_BY_RDF));
     normalizeRealSpaceLayout->addWidget(normalizeRealSpacePUI->comboBox(), 0, 1);
 
 	QGridLayout* typeOfRealSpacePlotLayout = new QGridLayout();
@@ -277,7 +277,7 @@ bool CorrelationFunctionModifierEditor::referenceEvent(RefTarget* source, Refere
 		 event->type() == ReferenceEvent::ObjectStatusChanged)) {
 		plotAllDataLater(this);
 	}
-	return ParticleModifierEditor::referenceEvent(source, event);
+	return ModifierPropertiesEditor::referenceEvent(source, event);
 }
 
 /******************************************************************************
@@ -289,8 +289,7 @@ void CorrelationFunctionModifierEditor::plotData(const QVector<FloatType> &xData
 												 QwtPlotCurve *&curve,
 												 FloatType offset, FloatType fac)
 {
-	if (xData.size() != yData.size())
-		throwException("Argument to plotData must have same size.");
+	OVITO_ASSERT(xData.size() == yData.size());
 
 	if(!curve) {
 		curve = new QwtPlotCurve();
@@ -321,35 +320,36 @@ void CorrelationFunctionModifierEditor::plotData(const QVector<FloatType> &xData
 void CorrelationFunctionModifierEditor::plotAllData()
 {
 	CorrelationFunctionModifier* modifier = static_object_cast<CorrelationFunctionModifier>(editObject());
-	if(!modifier)
+	CorrelationFunctionModifierApplication* modApp = dynamic_object_cast<CorrelationFunctionModifierApplication>(someModifierApplication());
+	if(!modifier || !modApp)
 		return;
 
 	FloatType offset = 0.0;
 	FloatType fac = 1.0;
 	if (modifier->normalizeRealSpace() == CorrelationFunctionModifier::NORMALIZE_BY_COVARIANCE) {
-		offset = modifier->mean1()*modifier->mean2();
-		fac = 1.0/(modifier->covariance()-offset);
+		offset = modApp->mean1()*modApp->mean2();
+		fac = 1.0/(modApp->covariance()-offset);
 	}
 	FloatType rfac = 1.0;
 	if (modifier->normalizeReciprocalSpace()) {
-		rfac = 1.0/(modifier->covariance()-modifier->mean1()*modifier->mean2());
+		rfac = 1.0/(modApp->covariance()-modApp->mean1()*modApp->mean2());
 	}
 
-	modifier->updateRanges(offset, fac, rfac);
+	modifier->updateRanges(offset, fac, rfac, modApp);
 
 	// Plot real-space correlation function
-	if(!modifier->realSpaceCorrelationX().empty() &&
-	   !modifier->realSpaceCorrelation().empty()) {
-	    QVector<FloatType> y = modifier->realSpaceCorrelation();
+	if(!modApp->realSpaceCorrelationX().empty() &&
+	   !modApp->realSpaceCorrelation().empty()) {
+	    QVector<FloatType> y = modApp->realSpaceCorrelation();
 		if (modifier->normalizeRealSpace() == CorrelationFunctionModifier::NORMALIZE_BY_RDF)
-		    std::transform(y.begin(), y.end(), modifier->realSpaceRDF().constBegin(), y.begin(), std::divides<FloatType>());
-		plotData(modifier->realSpaceCorrelationX(), y,
+		    std::transform(y.begin(), y.end(), modApp->realSpaceRDF().constBegin(), y.begin(), std::divides<FloatType>());
+		plotData(modApp->realSpaceCorrelationX(), y,
 				 _realSpacePlot, _realSpaceCurve,
 				 offset, fac);
 	}
 
-	if(!modifier->neighCorrelationX().empty() &&
-	   !modifier->neighCorrelation().empty() &&
+	if(!modApp->neighCorrelationX().empty() &&
+	   !modApp->neighCorrelation().empty() &&
 	   modifier->doComputeNeighCorrelation()) {
 		if(!_neighCurve) {
 			_neighCurve = new QwtPlotCurve();
@@ -359,9 +359,9 @@ void CorrelationFunctionModifierEditor::plotAllData()
 		}
 
 		// Set data to plot.
-		auto &xData = modifier->neighCorrelationX();
-		auto &yData = modifier->neighCorrelation();
-		auto &rdfData = modifier->neighRDF();
+		const auto &xData = modApp->neighCorrelationX();
+		const auto &yData = modApp->neighCorrelation();
+		const auto &rdfData = modApp->neighRDF();
 		size_t numberOfDataPoints = yData.size();
 		QVector<QPointF> plotData(numberOfDataPoints);
 		bool normByRDF = modifier->normalizeRealSpace() == CorrelationFunctionModifier::NORMALIZE_BY_RDF;
@@ -385,10 +385,10 @@ void CorrelationFunctionModifierEditor::plotAllData()
 	}
 
 	// Plot reciprocal-space correlation function
-	if(!modifier->reciprocalSpaceCorrelationX().empty() &&
-	   !modifier->reciprocalSpaceCorrelation().empty()) {
-		plotData(modifier->reciprocalSpaceCorrelationX(),
-				 modifier->reciprocalSpaceCorrelation(),
+	if(!modApp->reciprocalSpaceCorrelationX().empty() &&
+	   !modApp->reciprocalSpaceCorrelation().empty()) {
+		plotData(modApp->reciprocalSpaceCorrelationX(),
+				 modApp->reciprocalSpaceCorrelation(),
 				 _reciprocalSpacePlot,
 				 _reciprocalSpaceCurve,
 				 0.0, rfac);
@@ -428,10 +428,11 @@ void CorrelationFunctionModifierEditor::plotAllData()
 void CorrelationFunctionModifierEditor::onSaveData()
 {
 	CorrelationFunctionModifier* modifier = static_object_cast<CorrelationFunctionModifier>(editObject());
-	if(!modifier)
+	CorrelationFunctionModifierApplication* modApp = dynamic_object_cast<CorrelationFunctionModifierApplication>(someModifierApplication());
+	if(!modifier || !modApp)
 		return;
 
-	if(modifier->realSpaceCorrelation().empty() && modifier->neighCorrelation().empty() && modifier->reciprocalSpaceCorrelation().empty())
+	if(modApp->realSpaceCorrelation().empty() && modApp->neighCorrelation().empty() && modApp->reciprocalSpaceCorrelation().empty())
 		return;
 
 	QString fileName = QFileDialog::getSaveFileName(mainWindow(),
@@ -447,39 +448,39 @@ void CorrelationFunctionModifierEditor::onSaveData()
 		QTextStream stream(&file);
 
 		stream << "# This file contains the correlation between the following property:" << endl;
-		stream << "# " << modifier->sourceProperty1().name() << " with mean value " << modifier->mean1() << endl;
-		stream << "# " << modifier->sourceProperty2().name() << " with mean value " << modifier->mean2() << endl;
-		stream << "# Covariance is " << modifier->covariance() << endl << endl;
+		stream << "# " << modifier->sourceProperty1().name() << " with mean value " << modApp->mean1() << endl;
+		stream << "# " << modifier->sourceProperty2().name() << " with mean value " << modApp->mean2() << endl;
+		stream << "# Covariance is " << modApp->covariance() << endl << endl;
 
-		if (!modifier->realSpaceCorrelation().empty()) {
+		if (!modApp->realSpaceCorrelation().empty()) {
 			stream << "# Real-space correlation function from FFT follows." << endl;
 			stream << "# 1: Bin number" << endl;
 			stream << "# 2: Distance r" << endl;
 			stream << "# 3: Correlation function C(r)" << endl;
-			for(int i = 0; i < modifier->realSpaceCorrelation().size(); i++) {
-				stream << i << "\t" << modifier->realSpaceCorrelationX()[i] << "\t" << modifier->realSpaceCorrelation()[i] << endl;
+			for(int i = 0; i < modApp->realSpaceCorrelation().size(); i++) {
+				stream << i << "\t" << modApp->realSpaceCorrelationX()[i] << "\t" << modApp->realSpaceCorrelation()[i] << endl;
 			}
 			stream << endl;
 		}
 
-		if (!modifier->neighCorrelation().empty()) {
+		if (!modApp->neighCorrelation().empty()) {
 			stream << "# Real-space correlation function from direct sum over neighbors follows." << endl;
 			stream << "# 1: Bin number" << endl;
 			stream << "# 2: Distance r" << endl;
 			stream << "# 3: Correlation function C(r)" << endl;
-			for(int i = 0; i < modifier->neighCorrelation().size(); i++) {
-				stream << i << "\t" << modifier->neighCorrelationX()[i] << "\t" << modifier->neighCorrelation()[i] << endl;
+			for(int i = 0; i < modApp->neighCorrelation().size(); i++) {
+				stream << i << "\t" << modApp->neighCorrelationX()[i] << "\t" << modApp->neighCorrelation()[i] << endl;
 			}
 			stream << endl;
 		}
 
-		if (!modifier->reciprocalSpaceCorrelation().empty()) {
+		if (!modApp->reciprocalSpaceCorrelation().empty()) {
 			stream << "# Reciprocal-space correlation function from FFT follows." << endl;
 			stream << "# 1: Bin number" << endl;
 			stream << "# 2: Wavevector q (includes a factor of 2*pi)" << endl;
 			stream << "# 3: Correlation function C(q)" << endl;
-			for(int i = 0; i < modifier->reciprocalSpaceCorrelation().size(); i++) {
-				stream << i << "\t" << modifier->reciprocalSpaceCorrelationX()[i] << "\t" << modifier->reciprocalSpaceCorrelation()[i] << endl;
+			for(int i = 0; i < modApp->reciprocalSpaceCorrelation().size(); i++) {
+				stream << i << "\t" << modApp->reciprocalSpaceCorrelationX()[i] << "\t" << modApp->reciprocalSpaceCorrelation()[i] << endl;
 			}
 		}
 	}

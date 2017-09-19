@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,11 +20,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <gui/GUI.h>
-#include <core/scene/objects/DataObject.h>
-#include <core/scene/pipeline/PipelineObject.h>
-#include <core/scene/pipeline/Modifier.h>
-#include <core/scene/ObjectNode.h>
-#include <core/scene/SelectionSet.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
+#include <core/dataset/pipeline/Modifier.h>
+#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/SelectionSet.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/dataset/UndoStack.h>
 #include <core/dataset/DataSetContainer.h>
@@ -33,7 +32,7 @@
 #include <gui/mainwin/MainWindow.h>
 #include <gui/widgets/selection/SceneNodeSelectionBox.h>
 #include "ModifyCommandPage.h"
-#include "ModificationListModel.h"
+#include "PipelineListModel.h"
 #include "ModifierListBox.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -52,14 +51,14 @@ ModifyCommandPage::ModifyCommandPage(MainWindow* mainWindow, QWidget* parent) : 
 	SceneNodeSelectionBox* nodeSelBox = new SceneNodeSelectionBox(_datasetContainer, this);
 	layout->addWidget(nodeSelBox, 0, 0, 1, 2);
 
-	_modificationListModel = new ModificationListModel(_datasetContainer, this);
-	_modifierSelector = new ModifierListBox(this, _modificationListModel);
+	_pipelineListModel = new PipelineListModel(_datasetContainer, this);
+	_modifierSelector = new ModifierListBox(this, _pipelineListModel);
     layout->addWidget(_modifierSelector, 1, 0, 1, 2);
     connect(_modifierSelector, (void (QComboBox::*)(int))&QComboBox::activated, this, &ModifyCommandPage::onModifierAdd);
 
-	class ModifierStackListView : public QListView {
+	class PipelineListView : public QListView {
 	public:
-		ModifierStackListView(QWidget* parent) : QListView(parent) {}
+		PipelineListView(QWidget* parent) : QListView(parent) {}
 		virtual QSize sizeHint() const { return QSize(256, 260); }
 	};
 
@@ -72,17 +71,17 @@ ModifyCommandPage::ModifyCommandPage(MainWindow* mainWindow, QWidget* parent) : 
 	subLayout->setContentsMargins(0,0,0,0);
 	subLayout->setSpacing(2);
 
-	_modificationListWidget = new ModifierStackListView(upperContainer);
-	_modificationListWidget->setDragDropMode(QAbstractItemView::InternalMove);
-	_modificationListWidget->setDragEnabled(true);
-	_modificationListWidget->setAcceptDrops(true);
-	_modificationListWidget->setDragDropOverwriteMode(false);
-	_modificationListWidget->setDropIndicatorShown(true);
-	_modificationListWidget->setModel(_modificationListModel);
-	_modificationListWidget->setSelectionModel(_modificationListModel->selectionModel());
-	connect(_modificationListModel, &ModificationListModel::selectedItemChanged, this, &ModifyCommandPage::onSelectedItemChanged);
-	connect(_modificationListWidget, &ModifierStackListView::doubleClicked, this, &ModifyCommandPage::onModifierStackDoubleClicked);
-	subLayout->addWidget(_modificationListWidget);
+	_pipelineWidget = new PipelineListView(upperContainer);
+	_pipelineWidget->setDragDropMode(QAbstractItemView::InternalMove);
+	_pipelineWidget->setDragEnabled(true);
+	_pipelineWidget->setAcceptDrops(true);
+	_pipelineWidget->setDragDropOverwriteMode(false);
+	_pipelineWidget->setDropIndicatorShown(true);
+	_pipelineWidget->setModel(_pipelineListModel);
+	_pipelineWidget->setSelectionModel(_pipelineListModel->selectionModel());
+	connect(_pipelineListModel, &PipelineListModel::selectedItemChanged, this, &ModifyCommandPage::onSelectedItemChanged);
+	connect(_pipelineWidget, &PipelineListView::doubleClicked, this, &ModifyCommandPage::onModifierStackDoubleClicked);
+	subLayout->addWidget(_pipelineWidget);
 
 	QToolBar* editToolbar = new QToolBar(this);
 	editToolbar->setOrientation(Qt::Vertical);
@@ -145,7 +144,7 @@ ModifyCommandPage::ModifyCommandPage(MainWindow* mainWindow, QWidget* parent) : 
 void ModifyCommandPage::onSelectionChangeComplete(SelectionSet* newSelection)
 {
 	// Make sure we get informed about any future changes of the selection set.
-	_modificationListModel->refreshList();
+	_pipelineListModel->refreshList();
 }
 
 /******************************************************************************
@@ -154,7 +153,7 @@ void ModifyCommandPage::onSelectionChangeComplete(SelectionSet* newSelection)
 ******************************************************************************/
 void ModifyCommandPage::onSelectedItemChanged()
 {
-	ModificationListItem* currentItem = _modificationListModel->selectedItem();
+	PipelineListItem* currentItem = _pipelineListModel->selectedItem();
 	RefTarget* object = currentItem ? currentItem->object() : nullptr;
 
 	if(currentItem != nullptr)
@@ -175,7 +174,7 @@ void ModifyCommandPage::onSelectedItemChanged()
 /******************************************************************************
 * Updates the state of the actions that can be invoked on the currently selected item.
 ******************************************************************************/
-void ModifyCommandPage::updateActions(ModificationListItem* currentItem)
+void ModifyCommandPage::updateActions(PipelineListItem* currentItem)
 {
 	QAction* deleteModifierAction = _actionManager->getAction(ACTION_MODIFIER_DELETE);
 	QAction* moveModifierUpAction = _actionManager->getAction(ACTION_MODIFIER_MOVE_UP);
@@ -191,12 +190,10 @@ void ModifyCommandPage::updateActions(ModificationListItem* currentItem)
 		createCustomModifierAction->setEnabled(true);
 		if(currentItem->modifierApplications().size() == 1) {
 			ModifierApplication* modApp = currentItem->modifierApplications()[0];
-			PipelineObject* pipelineObj = modApp->pipelineObject();
-			if(pipelineObj) {
-				OVITO_ASSERT(pipelineObj->modifierApplications().contains(modApp));
-				moveModifierUpAction->setEnabled(modApp != pipelineObj->modifierApplications().back());
-				moveModifierDownAction->setEnabled(modApp != pipelineObj->modifierApplications().front());
-			}
+			moveModifierDownAction->setEnabled(dynamic_object_cast<ModifierApplication>(modApp->input()) != nullptr);
+			int index = _pipelineListModel->items().indexOf(currentItem);
+			PipelineListItem* predecessor = (index > 0) ? _pipelineListModel->item(index - 1) : nullptr;
+			moveModifierUpAction->setEnabled(dynamic_object_cast<Modifier>(predecessor ? predecessor->object() : nullptr) != nullptr);
 		}
 		else {
 			moveModifierUpAction->setEnabled(false);
@@ -226,19 +223,19 @@ void ModifyCommandPage::updateActions(ModificationListItem* currentItem)
 ******************************************************************************/
 void ModifyCommandPage::onModifierAdd(int index)
 {
-	if(index >= 0 && _modificationListModel->isUpToDate()) {
-		const OvitoObjectType* descriptor = static_cast<const OvitoObjectType*>(_modifierSelector->itemData(index).value<void*>());
-		if(descriptor) {
-			UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(), tr("Apply modifier"), [descriptor, this]() {
+	if(index >= 0 && _pipelineListModel->isUpToDate()) {
+		ModifierClassPtr modifierClass = _modifierSelector->itemData(index).value<ModifierClassPtr>();
+		if(modifierClass) {
+			UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(), tr("Apply modifier"), [modifierClass, this]() {
 				// Create an instance of the modifier.
-				OORef<Modifier> modifier = static_object_cast<Modifier>(descriptor->createInstance(_datasetContainer.currentSet()));
+				OORef<Modifier> modifier = static_object_cast<Modifier>(modifierClass->createInstance(_datasetContainer.currentSet()));
 				OVITO_CHECK_OBJECT_POINTER(modifier);
 				// Load user-defined default parameters.
 				modifier->loadUserDefaults();
 				// Apply it.
-				_modificationListModel->applyModifiers({modifier});
+				_pipelineListModel->applyModifiers({modifier});
 			});
-			_modificationListModel->requestUpdate();
+			_pipelineListModel->requestUpdate();
 		}
 		else {
 			QString presetName = _modifierSelector->itemData(index).toString();
@@ -266,9 +263,9 @@ void ModifyCommandPage::onModifierAdd(int index)
 						ex.prependGeneralMessage(tr("Failed to load stored modifier set."));
 						throw;
 					}
-					_modificationListModel->applyModifiers(modifierSet);
+					_pipelineListModel->applyModifiers(modifierSet);
 				});
-				_modificationListModel->requestUpdate();
+				_pipelineListModel->requestUpdate();
 			}
 		}
 
@@ -282,7 +279,7 @@ void ModifyCommandPage::onModifierAdd(int index)
 void ModifyCommandPage::onDeleteModifier()
 {
 	// Get the currently selected modifier.
-	ModificationListItem* selectedItem = _modificationListModel->selectedItem();
+	PipelineListItem* selectedItem = _pipelineListModel->selectedItem();
 	if(!selectedItem) return;
 
 	Modifier* modifier = dynamic_object_cast<Modifier>(selectedItem->object());
@@ -290,26 +287,37 @@ void ModifyCommandPage::onDeleteModifier()
 
 	UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(), tr("Delete modifier"), [selectedItem, modifier, this]() {
 
-		// Move selection to the modifier following the one to be deleted in the list box.
-		for(int i = 0; i < _modificationListModel->rowCount() - 1; i++) {
-			if(_modificationListModel->item(i) == selectedItem) {
-				ModificationListItem* nextItem = _modificationListModel->item(i+1);
-				if(dynamic_object_cast<Modifier>(nextItem->object()))
-					_modificationListModel->setNextToSelectObject(nextItem->object());
+		// Determine the modifier item preceding the item to be deleted.
+		int index = _pipelineListModel->items().indexOf(selectedItem);
+		while(index > 0) {
+			PipelineListItem* predecessor = _pipelineListModel->items()[index-1];
+			if(dynamic_object_cast<Modifier>(predecessor->object())) {
+				for(ModifierApplication* modApp : predecessor->modifierApplications()) {
+					ModifierApplication* toBeDeleted = dynamic_object_cast<ModifierApplication>(modApp->input());
+					OVITO_ASSERT(selectedItem->modifierApplications().contains(toBeDeleted));
+					if(toBeDeleted) {
+						modApp->setInput(toBeDeleted->input());
+						_pipelineListModel->setNextToSelectObject(modApp->input());
+					}
+				}
 				break;
+			}
+			index--;
+		}
+
+		if(index <= 0) {
+			for(ObjectNode* objNode : _pipelineListModel->selectedNodes()) {
+				ModifierApplication* toBeDeleted = dynamic_object_cast<ModifierApplication>(objNode->dataProvider());
+				if(toBeDeleted) {
+					objNode->setDataProvider(toBeDeleted->input());
+					_pipelineListModel->setNextToSelectObject(objNode->dataProvider());
+				}
 			}
 		}
 
-		// Remove each ModifierApplication from the corresponding PipelineObject.
-		for(ModifierApplication* modApp : selectedItem->modifierApplications()) {
-			OVITO_ASSERT(modApp->modifier() == modifier);
-			OVITO_CHECK_OBJECT_POINTER(modApp->pipelineObject());
-			int index = modApp->pipelineObject()->modifierApplications().indexOf(modApp);
-			modApp->pipelineObject()->removeModifierApplication(index);
-		}
-
-		// Delete modifier.
-		modifier->deleteReferenceObject();
+		// Delete modifier if there are no more applications left.
+		if(modifier->modifierApplications().empty())
+			modifier->deleteReferenceObject();
 	});
 }
 
@@ -318,7 +326,7 @@ void ModifyCommandPage::onDeleteModifier()
 ******************************************************************************/
 void ModifyCommandPage::onModifierStackDoubleClicked(const QModelIndex& index)
 {
-	ModificationListItem* item = _modificationListModel->item(index.row());
+	PipelineListItem* item = _pipelineListModel->item(index.row());
 	OVITO_CHECK_OBJECT_POINTER(item);
 
 	Modifier* modifier = dynamic_object_cast<Modifier>(item->object());
@@ -345,28 +353,35 @@ void ModifyCommandPage::onModifierStackDoubleClicked(const QModelIndex& index)
 void ModifyCommandPage::onModifierMoveUp()
 {
 	// Get the currently selected modifier.
-	ModificationListItem* selectedItem = _modificationListModel->selectedItem();
+	PipelineListItem* selectedItem = _pipelineListModel->selectedItem();
 	if(!selectedItem) return;
 
 	if(selectedItem->modifierApplications().size() != 1)
 		return;
 
-	OORef<ModifierApplication> modApp = selectedItem->modifierApplications()[0];
-	OORef<PipelineObject> pipelineObj = modApp->pipelineObject();
-	if(!pipelineObj)
-		return;
-
-	OVITO_ASSERT(pipelineObj->modifierApplications().contains(modApp));
-	if(modApp == pipelineObj->modifierApplications().back())
-		return;
-
-	UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(), tr("Move modifier up"), [pipelineObj, modApp]() {
-		// Determine old position in stack.
-		int index = pipelineObj->modifierApplications().indexOf(modApp);
-		// Remove ModifierApplication from the PipelineObject.
-		pipelineObj->removeModifierApplication(index);
-		// Re-insert ModifierApplication into the PipelineObject.
-		pipelineObj->insertModifierApplication(index + 1, modApp);
+	UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(), tr("Move modifier up"), [selectedItem]() {
+		QVector<ModifierApplication*> modApps = selectedItem->modifierApplications();
+		for(OORef<ModifierApplication> modApp : modApps) {
+			for(RefMaker* dependent : modApp->dependents()) {
+				if(OORef<ModifierApplication> predecessor = dynamic_object_cast<ModifierApplication>(dependent)) {
+					for(RefMaker* dependent2 : predecessor->dependents()) {
+						if(ModifierApplication* predecessor2 = dynamic_object_cast<ModifierApplication>(dependent2)) {
+							predecessor->setInput(modApp->input());
+							predecessor2->setInput(modApp);
+							modApp->setInput(predecessor);
+							break;
+						}
+						else if(ObjectNode* predecessor2 = dynamic_object_cast<ObjectNode>(dependent2)) {
+							predecessor->setInput(modApp->input());
+							predecessor2->setDataProvider(modApp);
+							modApp->setInput(predecessor);
+							break;
+						}
+					}
+					break;
+				}				
+			}
+		}
 	});
 }
 
@@ -377,27 +392,32 @@ void ModifyCommandPage::onModifierMoveUp()
 void ModifyCommandPage::onModifierMoveDown()
 {
 	// Get the currently selected modifier.
-	ModificationListItem* selectedItem = _modificationListModel->selectedItem();
+	PipelineListItem* selectedItem = _pipelineListModel->selectedItem();
 	if(!selectedItem) return;
 
 	if(selectedItem->modifierApplications().size() != 1)
 		return;
 
-	OORef<ModifierApplication> modApp = selectedItem->modifierApplications()[0];
-	OORef<PipelineObject> pipelineObj = modApp->pipelineObject();
-	if(!pipelineObj) return;
-
-	OVITO_ASSERT(pipelineObj->modifierApplications().contains(modApp));
-	if(modApp == pipelineObj->modifierApplications().front())
-		return;
-
-	UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(), tr("Move modifier down"), [pipelineObj, modApp]() {
-		// Determine old position in stack.
-		int index = pipelineObj->modifierApplications().indexOf(modApp);
-		// Remove ModifierApplication from the PipelineObject.
-		pipelineObj->removeModifierApplication(index);
-		// Re-insert ModifierApplication into the PipelineObject.
-		pipelineObj->insertModifierApplication(index - 1, modApp);
+	UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(), tr("Move modifier down"), [selectedItem]() {
+		QVector<ModifierApplication*> modApps = selectedItem->modifierApplications();
+		for(OORef<ModifierApplication> modApp : modApps) {
+			if(OORef<ModifierApplication> successor = dynamic_object_cast<ModifierApplication>(modApp->input())) {
+				for(RefMaker* dependent : modApp->dependents()) {
+					if(ModifierApplication* predecessor = dynamic_object_cast<ModifierApplication>(dependent)) {
+						modApp->setInput(successor->input());
+						successor->setInput(modApp);
+						predecessor->setInput(successor);
+						break;
+					}
+					else if(ObjectNode* predecessor = dynamic_object_cast<ObjectNode>(dependent)) {
+						modApp->setInput(successor->input());
+						successor->setInput(modApp);
+						predecessor->setDataProvider(successor);
+						break;
+					}
+				}
+			}
+		}
 	});
 }
 
@@ -408,7 +428,7 @@ void ModifyCommandPage::onModifierMoveDown()
 void ModifyCommandPage::onModifierToggleState(bool newState)
 {
 	// Get the selected modifier from the modifier stack box.
-	QModelIndexList selection = _modificationListWidget->selectionModel()->selectedRows();
+	QModelIndexList selection = _pipelineWidget->selectionModel()->selectedRows();
 	if(selection.empty())
 		return;
 
@@ -519,17 +539,7 @@ void ModifyCommandPage::onWebRequestFinished(QNetworkReply* reply)
 			QSettings settings;
 			settings.setValue("news/cached_webpage", page);
 		}
-#if 0
-		else {
-			qDebug() << "News page fetched from server is invalid.";
-		}
-#endif
 	}
-#if 0
-	else {
-		qDebug() << "Failed to fetch news page from server: " << reply->errorString();
-	}
-#endif
 	reply->deleteLater();
 }
 
@@ -558,13 +568,13 @@ void ModifyCommandPage::onCreateCustomModifier()
 	modifierListWidget->setUniformItemSizes(true);
 	Modifier* selectedModifier = nullptr;
 	QVector<Modifier*> modifierList;
-	for(int index = 0; index < _modificationListModel->rowCount(); index++) {
-		ModificationListItem* item = _modificationListModel->item(index);
+	for(int index = 0; index < _pipelineListModel->rowCount(); index++) {
+		PipelineListItem* item = _pipelineListModel->item(index);
 		Modifier* modifier = dynamic_object_cast<Modifier>(item->object());
 		if(modifier) {
 			QListWidgetItem* listItem = new QListWidgetItem(modifier->objectTitle(), modifierListWidget);
 			listItem->setFlags(Qt::ItemFlags(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemNeverHasChildren));
-			if(_modificationListModel->selectedItem() == item) {
+			if(_pipelineListModel->selectedItem() == item) {
 				selectedModifier = modifier;
 				listItem->setCheckState(Qt::Checked);
 			}

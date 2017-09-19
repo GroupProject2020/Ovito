@@ -23,7 +23,7 @@
 #include <plugins/pyscript/binding/PythonBinding.h>
 #include <plugins/netcdf/NetCDFImporter.h>
 #include <plugins/particles/scripting/PythonBinding.h>
-#include <core/plugins/PluginManager.h>
+#include <core/app/PluginManager.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 

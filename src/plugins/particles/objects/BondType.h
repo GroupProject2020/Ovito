@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2015) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,43 +23,49 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <core/reference/RefTarget.h>
+#include <plugins/particles/objects/BondProperty.h>
+#include <core/dataset/data/properties/ElementType.h>
 
 namespace Ovito { namespace Particles {
 
 /**
  * \brief Stores the properties of a bond type, e.g. name, color, and radius.
- *
- * \ingroup particles_objects
  */
-class OVITO_PARTICLES_EXPORT BondType : public RefTarget
+class OVITO_PARTICLES_EXPORT BondType : public ElementType
 {
+	Q_OBJECT
+	OVITO_CLASS(BondType)
+
 public:
 
 	/// \brief Constructs a new bond type.
 	Q_INVOKABLE BondType(DataSet* dataset);
 
-	/// Returns the title of this object.
-	virtual QString objectTitle() override { return name(); }
+	//////////////////////////////////// Utility methods ////////////////////////////////
+	
+	/// Builds a map from type identifiers to bond radii.
+	static std::map<int,FloatType> typeRadiusMap(BondProperty* typeProperty) {
+		std::map<int,FloatType> m;
+		for(const ElementType* type : typeProperty->elementTypes())
+			m.insert({ type->id(), static_object_cast<BondType>(type)->radius() });
+		return m;
+	}	
+	
+	//////////////////////////////////// Default settings ////////////////////////////////
+	
+	/// Returns the default color for the bond type with the given ID.
+	static Color getDefaultBondColorFromId(BondProperty::Type typeClass, int bondTypeId);
 
-protected:
+	/// Returns the default color for a named bond type.
+	static Color getDefaultBondColor(BondProperty::Type typeClass, const QString& bondTypeName, int bondTypeId, bool userDefaults = true);
 
-	/// Stores the identifier of the bond type.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, id, setId);
-
-	/// The name of this bond type.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, name, setName);
-
-	/// Stores the color of the bond type.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(Color, color, setColor);
+	/// Returns the default radius for a named bond type.
+	static FloatType getDefaultBondRadius(BondProperty::Type typeClass, const QString& bondTypeName, int bondTypeId, bool userDefaults = true);
+	
+private:
 
 	/// Stores the radius of the bond type.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, radius, setRadius);
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 }	// End of namespace

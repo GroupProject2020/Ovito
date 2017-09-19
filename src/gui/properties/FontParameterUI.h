@@ -32,6 +32,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 ******************************************************************************/
 class OVITO_GUI_EXPORT FontParameterUI : public PropertyParameterUI
 {
+	Q_OBJECT
+	OVITO_CLASS(FontParameterUI)
+	
 public:
 
 	/// Constructor.
@@ -76,9 +79,6 @@ protected:
 
 	/// The label of the UI component.
 	QPointer<QLabel> _label;
-	
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -22,17 +22,20 @@
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
 #include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
-#include <plugins/particles/objects/SimulationCellObject.h>
+#include <plugins/mesh/surface/RenderableSurfaceMesh.h>
 #include <core/rendering/SceneRenderer.h>
 #include <core/utilities/mesh/TriMesh.h>
-#include <core/animation/controller/Controller.h>
+#include <core/utilities/units/UnitsManager.h>
+#include <core/dataset/animation/controller/Controller.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <core/dataset/DataSetContainer.h>
 #include "SlipSurfaceDisplay.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(SlipSurfaceDisplay, AsynchronousDisplayObject);
-DEFINE_PROPERTY_FIELD(SlipSurfaceDisplay, smoothShading, "SmoothShading");
-DEFINE_REFERENCE_FIELD(SlipSurfaceDisplay, surfaceTransparencyController, "SurfaceTransparency", Controller);
+IMPLEMENT_OVITO_CLASS(SlipSurfaceDisplay);
+DEFINE_PROPERTY_FIELD(SlipSurfaceDisplay, smoothShading);
+DEFINE_REFERENCE_FIELD(SlipSurfaceDisplay, surfaceTransparencyController);
 SET_PROPERTY_FIELD_LABEL(SlipSurfaceDisplay, smoothShading, "Smooth shading");
 SET_PROPERTY_FIELD_LABEL(SlipSurfaceDisplay, surfaceTransparencyController, "Surface transparency");
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(SlipSurfaceDisplay, surfaceTransparencyController, PercentParameterUnit, 0, 1);
@@ -40,71 +43,94 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(SlipSurfaceDisplay, surfaceTransparencyContro
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-SlipSurfaceDisplay::SlipSurfaceDisplay(DataSet* dataset) : AsynchronousDisplayObject(dataset),
-	_smoothShading(true), _trimeshUpdate(true)
+SlipSurfaceDisplay::SlipSurfaceDisplay(DataSet* dataset) : DisplayObject(dataset),
+	_smoothShading(true)
 {
-	INIT_PROPERTY_FIELD(smoothShading);
-	INIT_PROPERTY_FIELD(surfaceTransparencyController);
-
 	setSurfaceTransparencyController(ControllerManager::createFloatController(dataset));
 }
 
 /******************************************************************************
-* Computes the bounding box of the displayed data.
+* Is called when the value of a property of this object has changed.
 ******************************************************************************/
-Box3 SlipSurfaceDisplay::boundingBox(TimePoint time, DataObject* dataObject, ObjectNode* contextNode, const PipelineFlowState& flowState)
+void SlipSurfaceDisplay::propertyChanged(const PropertyFieldDescriptor& field)
 {
-	// We'll use the entire simulation cell as bounding box for the mesh.
-	if(SimulationCellObject* cellObject = flowState.findObject<SimulationCellObject>())
-		return Box3(Point3(0,0,0), Point3(1,1,1)).transformed(cellObject->cellMatrix());
-	else
-		return Box3();
+	if(field == PROPERTY_FIELD(smoothShading)) {
+		// Inceremnt internal object revision number each time a parameter changes
+		// that requires a re-generation of the cached RenderableSurfaceMesh.
+		_revisionNumber++;
+	}
+	DisplayObject::propertyChanged(field);
 }
 
 /******************************************************************************
-* Creates a computation engine that will prepare the data to be displayed.
+* Lets the display object transform a data object in preparation for rendering.
 ******************************************************************************/
-std::shared_ptr<AsynchronousTask> SlipSurfaceDisplay::createEngine(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState)
+Future<PipelineFlowState> SlipSurfaceDisplay::transformDataImpl(TimePoint time, DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState, ObjectNode* contextNode)
 {
-	// Get the simulation cell.
-	SimulationCellObject* cellObject = flowState.findObject<SimulationCellObject>();
-
 	// Get the slip surface.
 	SlipSurface* slipSurfaceObj = dynamic_object_cast<SlipSurface>(dataObject);
+	
+	// Abort if necessary input is not available.
+	if(!slipSurfaceObj)
+		return std::move(flowState);
 
-	// Check if input is available.
-	if(cellObject && slipSurfaceObj) {
-		// Check if the input has changed.
-		if(_preparationCacheHelper.updateState(dataObject, cellObject->data())) {
-
-			// Get the cluster graph.
-			ClusterGraphObject* clusterGraphObject = flowState.findObject<ClusterGraphObject>();
-
-			// Build lookup map of lattice structure names.
-			QStringList structureNames;
-			if(PatternCatalog* patternCatalog = flowState.findObject<PatternCatalog>()) {
-				for(StructurePattern* pattern : patternCatalog->patterns()) {
-					if(pattern->id() < 0) continue;
-					while(pattern->id() >= structureNames.size()) structureNames.append(QString());
-					structureNames[pattern->id()] = pattern->shortName();
-				}
+	// Check if the cache state already contains a RenderableSurfaceMesh that we
+	// created earlier for the same input surface mesh. If yes, we can immediately return it.
+	for(DataObject* o : cachedState.objects()) {
+		if(RenderableSurfaceMesh* renderableMesh = dynamic_object_cast<RenderableSurfaceMesh>(o)) {
+			if(renderableMesh->sourceDataObject() == dataObject && renderableMesh->displayObject() == this && renderableMesh->generatorDisplayObjectRevision() == _revisionNumber) {
+				flowState.addObject(renderableMesh);
+				return std::move(flowState);
 			}
-
-			// Create compute engine.
-			return std::make_shared<PrepareMeshEngine>(
-					slipSurfaceObj->storage(),
-					clusterGraphObject ? clusterGraphObject->storage() : nullptr,
-					cellObject->data(),
-					structureNames,
-					slipSurfaceObj->cuttingPlanes());
 		}
 	}
-	else {
-		_surfaceMesh.clear();
-		_trimeshUpdate = true;
+
+	// Get the simulation cell.
+	SimulationCellObject* cellObject = slipSurfaceObj->domain();
+	if(!cellObject)
+		return std::move(flowState);
+			
+	// Get the cluster graph.
+	ClusterGraphObject* clusterGraphObject = flowState.findObject<ClusterGraphObject>();
+	
+	// Build lookup map of lattice structure names.
+	QStringList structureNames;
+	if(PatternCatalog* patternCatalog = flowState.findObject<PatternCatalog>()) {
+		for(StructurePattern* pattern : patternCatalog->patterns()) {
+			if(pattern->id() < 0) continue;
+			while(pattern->id() >= structureNames.size()) structureNames.append(QString());
+			structureNames[pattern->id()] = pattern->shortName();
+		}
 	}
 
-	return std::shared_ptr<AsynchronousTask>();
+	// Create compute engine.
+	auto engine = std::make_shared<PrepareMeshEngine>(
+		slipSurfaceObj->storage(),
+		clusterGraphObject ? clusterGraphObject->storage() : nullptr,
+		cellObject->data(),
+		structureNames,
+		slipSurfaceObj->cuttingPlanes(),
+		smoothShading());
+
+	// Submit engine for execution and post-process results.
+	return dataset()->container()->taskManager().runTaskAsync(engine)
+		.then(executor(), [this, flowState = std::move(flowState), dataObject](TriMesh&& surfaceMesh, std::vector<ColorA>&& materialColors) mutable {
+			UndoSuspender noUndo(this);
+
+			// Increase surface color brightness.
+			for(ColorA& c : materialColors) {
+				c.r() = std::min(c.r() + FloatType(0.3), FloatType(1));
+				c.g() = std::min(c.g() + FloatType(0.3), FloatType(1));
+				c.b() = std::min(c.b() + FloatType(0.3), FloatType(1));
+			}
+				
+			// Output the computed mesh as a RenderableSurfaceMesh.
+			OORef<RenderableSurfaceMesh> renderableMesh = new RenderableSurfaceMesh(dataset(), std::move(surfaceMesh), {}, dataObject, _revisionNumber);
+			renderableMesh->materialColors() = std::move(materialColors);
+			renderableMesh->setDisplayObject(this);
+			flowState.addObject(renderableMesh);
+			return std::move(flowState);
+		});
 }
 
 /******************************************************************************
@@ -114,32 +140,35 @@ void SlipSurfaceDisplay::PrepareMeshEngine::perform()
 {
 	setProgressText(tr("Preparing slip surface for display"));
 
-	if(!buildMesh(*_inputMesh, _simCell, _cuttingPlanes, _structureNames, _surfaceMesh, _materialColors, *this))
+	TriMesh surfaceMesh;	
+	std::vector<ColorA> materialColors;
+	
+	if(!buildMesh(*_inputMesh, _simCell, _cuttingPlanes, _structureNames, surfaceMesh, materialColors, *this))
 		throw Exception(tr("Failed to generate non-periodic version of slip surface for display. Simulation cell might be too small."));
 
 	if(isCanceled())
 		return;
+
+	if(_smoothShading) {
+		// Assign smoothing group to faces to interpolate normals.
+		for(auto& face : surfaceMesh.faces())
+			face.setSmoothingGroups(1);	
+	}
+			
+	setResult(std::move(surfaceMesh), std::move(materialColors));
 }
 
 /******************************************************************************
-* Unpacks the results of the computation engine and stores them in the display object.
+* Computes the bounding box of the displayed data.
 ******************************************************************************/
-void SlipSurfaceDisplay::transferComputationResults(AsynchronousTask* engine)
+Box3 SlipSurfaceDisplay::boundingBox(TimePoint time, DataObject* dataObject, ObjectNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
-	if(engine) {
-		_surfaceMesh = static_cast<PrepareMeshEngine*>(engine)->surfaceMesh();
-		_materialColors = std::move(static_cast<PrepareMeshEngine*>(engine)->materialColors());
-		for(ColorA& c : _materialColors) {
-			c.r() = std::min(c.r() + FloatType(0.3), FloatType(1));
-			c.g() = std::min(c.g() + FloatType(0.3), FloatType(1));
-			c.b() = std::min(c.b() + FloatType(0.3), FloatType(1));
-		}
-		_trimeshUpdate = true;
+	// Compute mesh bounding box.
+	Box3 bb;
+	if(OORef<RenderableSurfaceMesh> meshObj = dataObject->convertTo<RenderableSurfaceMesh>(time)) {
+		bb.addBox(meshObj->surfaceMesh().boundingBox());
 	}
-	else {
-		// Reset cache when compute task has been canceled.
-		_preparationCacheHelper.updateState(nullptr, SimulationCell());
-	}
+	return bb;
 }
 
 /******************************************************************************
@@ -147,11 +176,15 @@ void SlipSurfaceDisplay::transferComputationResults(AsynchronousTask* engine)
 ******************************************************************************/
 void SlipSurfaceDisplay::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, ObjectNode* contextNode)
 {
-	// Check if geometry preparation was successful.
-	// If not, reset triangle mesh.
-	if(status().type() == PipelineStatus::Error && _surfaceMesh.faceCount() != 0) {
-		_surfaceMesh.clear();
-		_trimeshUpdate = true;
+	// Ignore render calls for the original SlipSurface.
+	// We are only interested in the RenderableSurfaceMesh.
+	if(dynamic_object_cast<SlipSurface>(dataObject) != nullptr)
+		return;
+
+	if(renderer->isBoundingBoxPass()) {
+		TimeInterval validityInterval;
+		renderer->addToLocalBoundingBox(boundingBox(time, dataObject, contextNode, flowState, validityInterval));
+		return;
 	}
 
 	// Get the rendering colors for the surface.
@@ -164,8 +197,8 @@ void SlipSurfaceDisplay::render(TimePoint time, DataObject* dataObject, const Pi
 	bool recreateSurfaceBuffer = !_surfaceBuffer || !_surfaceBuffer->isValid(renderer);
 
 	// Do we have to update the render primitives?
-	bool updateContents = _geometryCacheHelper.updateState(surface_alpha, smoothShading())
-					|| recreateSurfaceBuffer || _trimeshUpdate;
+	bool updateContents = _geometryCacheHelper.updateState(surface_alpha)
+					|| recreateSurfaceBuffer;
 
 	// Re-create the render primitives if necessary.
 	if(recreateSurfaceBuffer)
@@ -174,20 +207,15 @@ void SlipSurfaceDisplay::render(TimePoint time, DataObject* dataObject, const Pi
 	// Update render primitives.
 	if(updateContents) {
 
-		// Assign smoothing group to faces to interpolate normals.
-		const quint32 smoothingGroup = smoothShading() ? 1 : 0;
-		for(auto& face : _surfaceMesh.faces()) {
-			face.setSmoothingGroups(smoothingGroup);
-		}
-
-		for(ColorA& c : _materialColors)
+		OORef<RenderableSurfaceMesh> meshObj = dataObject->convertTo<RenderableSurfaceMesh>(time);
+		
+		auto materialColors = meshObj->materialColors();
+		for(ColorA& c : materialColors)
 			c.a() = surface_alpha;
-		_surfaceBuffer->setMaterialColors(_materialColors);
+		_surfaceBuffer->setMaterialColors(materialColors);
 
-		_surfaceBuffer->setMesh(_surfaceMesh, color_surface);
+		_surfaceBuffer->setMesh(meshObj->surfaceMesh(), color_surface);
 
-		// Reset update flag.
-		_trimeshUpdate = false;
 	}
 
 	// Handle picking of triangles.
@@ -199,7 +227,7 @@ void SlipSurfaceDisplay::render(TimePoint time, DataObject* dataObject, const Pi
 /******************************************************************************
 * Generates the final triangle mesh, which will be rendered.
 ******************************************************************************/
-bool SlipSurfaceDisplay::buildMesh(const SlipSurfaceData& input, const SimulationCell& cell, const QVector<Plane3>& cuttingPlanes, const QStringList& structureNames, TriMesh& output, std::vector<ColorA>& materialColors, PromiseBase& promise)
+bool SlipSurfaceDisplay::buildMesh(const SlipSurfaceData& input, const SimulationCell& cell, const QVector<Plane3>& cuttingPlanes, const QStringList& structureNames, TriMesh& output, std::vector<ColorA>& materialColors, PromiseState& promise)
 {
 	// Convert half-edge mesh to triangle mesh.
 	input.convertToTriMesh(output);

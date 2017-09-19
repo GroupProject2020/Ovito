@@ -23,8 +23,8 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <core/scene/pipeline/PipelineFlowState.h>
-#include <core/reference/RefTarget.h>
+#include <core/dataset/pipeline/PipelineFlowState.h>
+#include <core/oo/RefTarget.h>
 
 #include <QBitArray>
 
@@ -41,6 +41,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util)
  */
 class OVITO_PARTICLES_EXPORT ParticleSelectionSet : public RefTarget
 {
+	Q_OBJECT
+	OVITO_CLASS(ParticleSelectionSet)
+
 public:
 
 	/// Controls the mode of operation of the setParticleSelection() method.
@@ -53,9 +56,7 @@ public:
 public:
 
 	/// Constructor.
-	Q_INVOKABLE ParticleSelectionSet(DataSet* dataset) : RefTarget(dataset), _useIdentifiers(true) {
-		INIT_PROPERTY_FIELD(useIdentifiers);
-	}
+	Q_INVOKABLE ParticleSelectionSet(DataSet* dataset) : RefTarget(dataset), _useIdentifiers(true) {}
 
 	/// Returns the stored selection set as a bit array.
 	const QBitArray& selection() const { return _selection; }
@@ -82,12 +83,12 @@ public:
 	void setParticleSelection(const PipelineFlowState& state, const QBitArray& selection, SelectionMode mode = SelectionReplace);
 
 	/// Copies the stored selection set into the given output selection particle property.
-	PipelineStatus applySelection(ParticlePropertyObject* outputSelectionProperty, ParticlePropertyObject* identifierProperty);
+	PipelineStatus applySelection(ParticleProperty* outputSelectionProperty, ParticleProperty* identifierProperty);
 
 protected:
 
 	/// Saves the class' contents to the given stream.
-	virtual void saveToStream(ObjectSaveStream& stream) override;
+	virtual void saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData) override;
 
 	/// Loads the class' contents from the given stream.
 	virtual void loadFromStream(ObjectLoadStream& stream) override;
@@ -109,14 +110,9 @@ private:
 	/// Controls whether the object should store the identifiers of selected particles (when available).
 	DECLARE_PROPERTY_FIELD(bool, useIdentifiers);
 
-	Q_OBJECT
-	OVITO_OBJECT
-
 	friend class ReplaceSelectionOperation;
 };
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

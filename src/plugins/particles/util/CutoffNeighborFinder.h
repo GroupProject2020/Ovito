@@ -23,9 +23,8 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/data/ParticleProperty.h>
-#include <plugins/particles/data/SimulationCell.h>
-#include <core/utilities/concurrent/Promise.h>
+#include <core/dataset/data/properties/PropertyStorage.h>
+#include <core/dataset/data/simcell/SimulationCell.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util)
 
@@ -69,18 +68,18 @@ public:
 
 	/// Default constructor.
 	/// You need to call prepare() first before the neighbor finder can be used.
-	CutoffNeighborFinder() : _cutoffRadius(0), _cutoffRadiusSquared(0) {}
+	CutoffNeighborFinder() = default;
 
 	/// \brief Prepares the neighbor finder by sorting particles into a grid of bin cells.
 	/// \param cutoffRadius The cutoff radius for neighbor lists.
-	/// \param positions The ParticleProperty containing the particle coordinates.
+	/// \param positions The property containing the particle coordinates.
 	/// \param simCell The input simulation cell geometry and boundary conditions.
 	/// \param selectionProperty Determines which particles are included in the neighbor search (optional).
-	/// \param promis A callback object that will be used to the report progress.
+	/// \param promis An optional callback object that is used to the report progress.
 	/// \return \c false when the operation has been canceled by the user;s
 	///         \c true on success.
 	/// \throw Exception on error.
-	bool prepare(FloatType cutoffRadius, ParticleProperty* positions, const SimulationCell& simCell, ParticleProperty* selectionProperty, PromiseBase& promise);
+	bool prepare(FloatType cutoffRadius, const PropertyStorage& positions, const SimulationCell& simCell, const PropertyStorage* selectionProperty, PromiseState* promise);
 
 	/// Returns the cutoff radius set via prepare().
 	FloatType cutoffRadius() const { return _cutoffRadius; }
@@ -148,10 +147,10 @@ public:
 private:
 
 	/// The neighbor criterion.
-	FloatType _cutoffRadius;
+	FloatType _cutoffRadius = 0;
 
 	/// The neighbor criterion.
-	FloatType _cutoffRadiusSquared;
+	FloatType _cutoffRadiusSquared = 0;
 
 	// Simulation cell.
 	SimulationCell simCell;

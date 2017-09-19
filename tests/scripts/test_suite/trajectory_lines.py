@@ -2,16 +2,18 @@ import ovito
 from ovito.io import *
 from ovito.data import *
 from ovito.vis import *
+from ovito.pipeline import TrajectoryLineGenerator
 
 node = import_file("../../files/LAMMPS/animation.dump.gz", multiple_frames = True)
 node.add_to_scene()
-node.source.particle_properties.position.display.radius = 0.1
-print(node.source.num_frames)
+print("Number of frames:", node.source.num_frames)
 
 traj_node = ovito.ObjectNode()
 traj_node.add_to_scene()
 traj_node.source = TrajectoryLineGenerator()
 
+print("Hello world 2")
+print(traj_node.source)
 print(traj_node.source.source_node)
 print(traj_node.source.only_selected)
 print(traj_node.source.unwrap_trajectories)
@@ -24,9 +26,10 @@ assert(traj_node.source.frame_interval == (0, 9))
 
 traj_node.source.source_node = node
 traj_node.source.only_selected = False
-assert(traj_node.source.generate())
+traj_data = traj_node.source.generate()
+assert(traj_data)
 
-dis = traj_node.source.display
+dis = traj_data.display
 print(dis.width)
 print(dis.color)
 print(dis.shading)

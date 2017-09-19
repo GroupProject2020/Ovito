@@ -21,15 +21,13 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <plugins/particles/modifier/properties/FreezePropertyModifier.h>
-#include <plugins/particles/gui/util/ParticlePropertyParameterUI.h>
-#include <core/animation/AnimationSettings.h>
-#include <core/dataset/DataSetContainer.h>
-#include <gui/utilities/concurrent/ProgressDialog.h>
+#include <gui/properties/PropertyReferenceParameterUI.h>
+#include <gui/properties/IntegerParameterUI.h>
 #include "FreezePropertyModifierEditor.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Properties) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_OBJECT(FreezePropertyModifierEditor, ParticleModifierEditor);
+IMPLEMENT_OVITO_CLASS(FreezePropertyModifierEditor);
 SET_OVITO_OBJECT_EDITOR(FreezePropertyModifier, FreezePropertyModifierEditor);
 
 /******************************************************************************
@@ -44,38 +42,30 @@ void FreezePropertyModifierEditor::createUI(const RolloutInsertionParameters& ro
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(2);
 
-	ParticlePropertyParameterUI* sourcePropertyUI = new ParticlePropertyParameterUI(this, PROPERTY_FIELD(FreezePropertyModifier::sourceProperty), false, true);
+	PropertyReferenceParameterUI* sourcePropertyUI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(FreezePropertyModifier::sourceProperty), &ParticleProperty::OOClass(), false, true);
 	layout->addWidget(new QLabel(tr("Property to freeze:"), rollout));
 	layout->addWidget(sourcePropertyUI->comboBox());
-	connect(sourcePropertyUI, &ParticlePropertyParameterUI::valueEntered, this, &FreezePropertyModifierEditor::onSourcePropertyChanged);
+	connect(sourcePropertyUI, &PropertyReferenceParameterUI::valueEntered, this, &FreezePropertyModifierEditor::onSourcePropertyChanged);
 	layout->addSpacing(8);
 
-	ParticlePropertyParameterUI* destPropertyUI = new ParticlePropertyParameterUI(this, PROPERTY_FIELD(FreezePropertyModifier::destinationProperty), false, false);
+	PropertyReferenceParameterUI* destPropertyUI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(FreezePropertyModifier::destinationProperty), &ParticleProperty::OOClass(), false, false);
 	layout->addWidget(new QLabel(tr("Output property:"), rollout));
 	layout->addWidget(destPropertyUI->comboBox());
 	layout->addSpacing(8);
+	
+	QGridLayout* gridlayout = new QGridLayout();
+	gridlayout->setContentsMargins(0,0,0,0);
+	gridlayout->setColumnStretch(1, 1);
 
-	QPushButton* takeSnapshotBtn = new QPushButton(tr("Take new snapshot"), rollout);
-	connect(takeSnapshotBtn, &QPushButton::clicked, this, &FreezePropertyModifierEditor::takeSnapshot);
-	layout->addWidget(takeSnapshotBtn);
-
+	IntegerParameterUI* freezeTimePUI = new IntegerParameterUI(this, PROPERTY_FIELD(FreezePropertyModifier::freezeTime));
+	gridlayout->addWidget(freezeTimePUI->label(), 0, 0);
+	gridlayout->addLayout(freezeTimePUI->createFieldLayout(), 0, 1);
+	layout->addLayout(gridlayout);
+	layout->addSpacing(8);
+	
 	// Status label.
 	layout->addSpacing(12);
 	layout->addWidget(statusLabel());
-}
-
-/******************************************************************************
-* Takes a new snapshot of the current property values.
-******************************************************************************/
-void FreezePropertyModifierEditor::takeSnapshot()
-{
-	FreezePropertyModifier* mod = static_object_cast<FreezePropertyModifier>(editObject());
-	if(!mod) return;
-
-	undoableTransaction(tr("Take property snapshot"), [this,mod]() {
-		ProgressDialog progressDialog(container(), mod->dataset()->container()->taskManager(), tr("Property snapshot"));
-		mod->takePropertySnapshot(mod->dataset()->animationSettings()->time(), progressDialog.taskManager(), true);
-	});
 }
 
 /******************************************************************************
@@ -89,9 +79,6 @@ void FreezePropertyModifierEditor::onSourcePropertyChanged()
 	undoableTransaction(tr("Freeze property"), [this,mod]() {
 		// When the user selects a different source property, adjust the destination property automatically.
 		mod->setDestinationProperty(mod->sourceProperty());
-		// Also take a current snapshot of the source property values.
-		ProgressDialog progressDialog(container(), mod->dataset()->container()->taskManager());
-		mod->takePropertySnapshot(mod->dataset()->animationSettings()->time(), progressDialog.taskManager(), true);
 	});
 }
 

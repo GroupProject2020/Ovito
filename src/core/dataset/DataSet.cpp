@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,9 +24,9 @@
 #include <core/dataset/DataSetContainer.h>
 #include <core/viewport/Viewport.h>
 #include <core/viewport/ViewportConfiguration.h>
-#include <core/animation/AnimationSettings.h>
-#include <core/scene/SceneRoot.h>
-#include <core/scene/SelectionSet.h>
+#include <core/dataset/animation/AnimationSettings.h>
+#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/scene/SelectionSet.h>
 #include <core/rendering/RenderSettings.h>
 #include <core/rendering/FrameBuffer.h>
 #include <core/rendering/SceneRenderer.h>
@@ -37,13 +37,13 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(DataSet, RefTarget);
-DEFINE_FLAGS_REFERENCE_FIELD(DataSet, viewportConfig, "ViewportConfiguration", ViewportConfiguration, PROPERTY_FIELD_NO_CHANGE_MESSAGE|PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_REFERENCE_FIELD(DataSet, animationSettings, "AnimationSettings", AnimationSettings, PROPERTY_FIELD_NO_CHANGE_MESSAGE|PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_REFERENCE_FIELD(DataSet, sceneRoot, "SceneRoot", SceneRoot, PROPERTY_FIELD_NO_CHANGE_MESSAGE|PROPERTY_FIELD_ALWAYS_DEEP_COPY);
-DEFINE_FLAGS_REFERENCE_FIELD(DataSet, selection, "CurrentSelection", SelectionSet, PROPERTY_FIELD_NO_CHANGE_MESSAGE|PROPERTY_FIELD_ALWAYS_DEEP_COPY);
-DEFINE_FLAGS_REFERENCE_FIELD(DataSet, renderSettings, "RenderSettings", RenderSettings, PROPERTY_FIELD_NO_CHANGE_MESSAGE|PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_VECTOR_REFERENCE_FIELD(DataSet, globalObjects, "GlobalObjects", RefTarget, PROPERTY_FIELD_ALWAYS_CLONE|PROPERTY_FIELD_ALWAYS_DEEP_COPY);
+IMPLEMENT_OVITO_CLASS(DataSet);
+DEFINE_REFERENCE_FIELD(DataSet, viewportConfig);
+DEFINE_REFERENCE_FIELD(DataSet, animationSettings);
+DEFINE_REFERENCE_FIELD(DataSet, sceneRoot);
+DEFINE_REFERENCE_FIELD(DataSet, selection);
+DEFINE_REFERENCE_FIELD(DataSet, renderSettings);
+DEFINE_REFERENCE_FIELD(DataSet, globalObjects);
 SET_PROPERTY_FIELD_LABEL(DataSet, viewportConfig, "Viewport Configuration");
 SET_PROPERTY_FIELD_LABEL(DataSet, animationSettings, "Animation Settings");
 SET_PROPERTY_FIELD_LABEL(DataSet, sceneRoot, "Scene");
@@ -56,18 +56,13 @@ SET_PROPERTY_FIELD_LABEL(DataSet, globalObjects, "Global objects");
 ******************************************************************************/
 DataSet::DataSet(DataSet* self) : RefTarget(this), _unitsManager(this)
 {
-	INIT_PROPERTY_FIELD(viewportConfig);
-	INIT_PROPERTY_FIELD(animationSettings);
-	INIT_PROPERTY_FIELD(sceneRoot);
-	INIT_PROPERTY_FIELD(selection);
-	INIT_PROPERTY_FIELD(renderSettings);
-	INIT_PROPERTY_FIELD(globalObjects);
+	setViewportConfig(createDefaultViewportConfiguration());
+	setAnimationSettings(new AnimationSettings(this));
+	setSceneRoot(new SceneRoot(this));
+	setSelection(new SelectionSet(this));
+	setRenderSettings(new RenderSettings(this));
 
-	_viewportConfig = createDefaultViewportConfiguration();
-	_animationSettings = new AnimationSettings(this);
-	_sceneRoot = new SceneRoot(this);
-	_selection = new SelectionSet(this);
-	_renderSettings = new RenderSettings(this);
+	connect(&_pipelineEvaluationWatcher, &PromiseWatcher::finished, this, &DataSet::pipelineEvaluationFinished);
 }
 
 /******************************************************************************
@@ -75,11 +70,10 @@ DataSet::DataSet(DataSet* self) : RefTarget(this), _unitsManager(this)
 ******************************************************************************/
 DataSet::~DataSet()
 {
-	if(_sceneReadyRequest) {
-		_sceneReadyRequest->cancel();
-		_sceneReadyRequest->setFinished();
-		_sceneReadyRequest.reset();
-	}
+	// Stop pipeline evaluation, which might still be in progress.
+	_pipelineEvaluationWatcher.reset();
+	if(_pipelineEvaluationFuture.isValid())
+		_pipelineEvaluationFuture.cancelRequest();
 }
 
 /******************************************************************************
@@ -121,27 +115,45 @@ bool DataSet::referenceEvent(RefTarget* source, ReferenceEvent* event)
 {
 	OVITO_ASSERT_MSG(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread(), "DataSet::referenceEvent", "Reference events may only be processed in the main thread.");
 
-	if(event->type() == ReferenceEvent::TargetChanged || event->type() == ReferenceEvent::PendingStateChanged) {
+	if(event->type() == ReferenceEvent::TargetChanged) {
 
-		// Update the viewports whenever something has changed in the current data set.
-		if(source == sceneRoot() || source == selection() || source == renderSettings()) {
-			// Do not automatically update while in the process of jumping to a new animation frame.
-			if(!animationSettings()->isTimeChanging())
-				viewportConfig()->updateViewports();
+		if(source == sceneRoot()) {
 
-			if(source == sceneRoot() && event->type() == ReferenceEvent::PendingStateChanged) {
-				// Serve requests waiting for scene to become ready.
-				if(_sceneReadyRequest) {
-					Application::instance()->runOnceLater(this, [this]() {
-						if(_sceneReadyRequest) {
-							if(_sceneReadyRequest->isCanceled() || isSceneReady(animationSettings()->time())) {
-								_sceneReadyRequest->setFinished();
-								_sceneReadyRequest.reset();
-							}
-						}
-					});
-				}
+			// If any of the scene nodes change, the scene ready state needs to be reset (unless it's still unfulfilled).
+			if(_sceneReadyFuture.isValid() && _sceneReadyFuture.isFinished()) {
+//				qDebug() << "DataSet::referenceEvent() resetting scene ready promise (source=" << event->sender() << ")";
+				_sceneReadyFuture.reset();
+				_sceneReadyPromise.reset();
+				OVITO_ASSERT(!_pipelineEvaluationFuture.isValid());
+				OVITO_ASSERT(!_currentEvaluationNode);
 			}
+
+			// If any of the scene nodes change, we should interrupt the pipeline evaluation that is in progress.
+			// Ignore messages from display objects, because they usually don't require a pipeline re-evaluation.
+			if(_pipelineEvaluationFuture.isValid() && dynamic_object_cast<DisplayObject>(event->sender()) == nullptr) {
+//				qDebug() << "DataSet::referenceEvent() canceling pipeline evaluation (due to changing source=" << event->sender() << ")";
+//				qDebug() << "DataSet::referenceEvent: a target in the scene has changed:" << event->sender() << "vp suspended=" << viewportConfig()->isSuspended();
+				// Restart pipeline evaluation immediately:
+				makeSceneReady(true);
+			}
+		}
+		else if(source == animationSettings()) {
+			// If the animation time changes, we should interrupt any pipeline evaluation that is in progress.
+			if(_pipelineEvaluationFuture.isValid() && _pipelineEvaluationTime != animationSettings()->time()) {
+//				qDebug() << "DataSet::referenceEvent() canceling pipeline evaluation (due to changing animation time)";
+				_pipelineEvaluationWatcher.reset();
+				_currentEvaluationNode.clear();
+				_pipelineEvaluationFuture.cancelRequest();
+				// Restart pipeline evaluation immediately:
+				makeSceneReady(false);
+			}
+		}
+			
+		if(source == sceneRoot() || source == selection() || source == renderSettings()) {
+			return true;	// Propagate change event to DataSetContainer.
+		}
+		else {
+			return false;	// Do not propagate change event to DataSetContainer.
 		}
 	}
 	return RefTarget::referenceEvent(source, event);
@@ -154,6 +166,10 @@ void DataSet::referenceReplaced(const PropertyFieldDescriptor& field, RefTarget*
 {
 	if(field == PROPERTY_FIELD(viewportConfig)) {
 		Q_EMIT viewportConfigReplaced(viewportConfig());
+
+		// Whenever viewport updates are resumed, we also resume evaluation of the scene's data pipelines.
+		if(oldTarget) disconnect(static_cast<ViewportConfiguration*>(oldTarget), &ViewportConfiguration::viewportUpdateResumed, this, &DataSet::onViewportUpdatesResumed);
+		if(newTarget) connect(static_cast<ViewportConfiguration*>(newTarget), &ViewportConfiguration::viewportUpdateResumed, this, &DataSet::onViewportUpdatesResumed);
 	}
 	else if(field == PROPERTY_FIELD(animationSettings)) {
 		// Stop animation playback when animation settings are being replaced.
@@ -218,58 +234,166 @@ void DataSet::rescaleTime(const TimeInterval& oldAnimationInterval, const TimeIn
 }
 
 /******************************************************************************
-* Checks all scene nodes if their data pipeline is fully evaluated at the
-* given animation time.
+* Returns a future that is triggered once all data pipelines in the scene 
+* have been completely evaluated at the current animation time.
 ******************************************************************************/
-bool DataSet::isSceneReady(TimePoint time) const
+SharedFuture<> DataSet::whenSceneReady()
 {
-	OVITO_ASSERT_MSG(QThread::currentThread() == QCoreApplication::instance()->thread(), "DataSet::isSceneReady", "This function may only be called from the main thread.");
+//	qDebug() << "DataSet::whenSceneReady: time=" << animationSettings()->time() << "Is evaluation in progress:" << _pipelineEvaluationWatcher.isWatching();
+
 	OVITO_CHECK_OBJECT_POINTER(sceneRoot());
+	OVITO_CHECK_OBJECT_POINTER(animationSettings());
+	OVITO_CHECK_OBJECT_POINTER(viewportConfig());
+	OVITO_ASSERT(!viewportConfig()->isRendering());
+	OVITO_ASSERT(_sceneReadyPromise.isValid() == _sceneReadyFuture.isValid());
 
-	PipelineEvalRequest pipelineRequest(time, true); // Request display objects to be ready as well.
+	if(_sceneReadyFuture.isValid() && _sceneReadyFuture.isFinished() && _sceneReadyTime != animationSettings()->time()) {
+//		qDebug() << "DataSet::whenSceneReady() resetting scene ready promise because animation time has changed";
+		_sceneReadyFuture.reset();
+		_sceneReadyPromise.reset();
+	}
+	
+	if(!_sceneReadyFuture.isValid()) {
+		_sceneReadyPromise = Promise<>::createSynchronous(container()->taskManager(), true, false);
+//		qDebug() << "DataSet::whenSceneReady: creating scene ready future:" << _sceneReadyPromise.sharedState().get();
+		_sceneReadyFuture = _sceneReadyPromise.future();
+		_sceneReadyTime = animationSettings()->time();
+		makeSceneReady(false);
+	}
 
-	// Iterate over all object nodes and make an attempt to request results from their data pipelines.
-	// The scene is ready if none of the results has status 'pending'.
-	bool isReady = sceneRoot()->visitObjectNodes([&pipelineRequest](ObjectNode* node) {
-		return (node->evaluatePipelineImmediately(pipelineRequest).status().type() != PipelineStatus::Pending);
-	});
-
-	return isReady;
+	OVITO_ASSERT(!_sceneReadyFuture.isCanceled());
+	return _sceneReadyFuture;
 }
 
 /******************************************************************************
-* This function blocks until the scene has become ready.
+* Makes sure all data pipeline have been evaluated.
 ******************************************************************************/
-Future<void> DataSet::makeSceneReady(const QString& message)
+void DataSet::makeSceneReady(bool forceReevaluation)
 {
-	// Perform a first quick check if scene is already ready.
-	if(isSceneReady(animationSettings()->time())) {
-		if(!_sceneReadyRequest)
-			return Future<void>::createImmediate(message);
-		else {
-			_sceneReadyRequest->setFinished();
-			Future<void> future(_sceneReadyRequest);
-			_sceneReadyRequest.reset();
-			return future;
+	//qDebug() << "DataSet::makeSceneReady(): time=" << animationSettings()->time();
+	OVITO_ASSERT(_sceneReadyPromise.isValid() == _sceneReadyFuture.isValid());
+	
+	// Make sure whenSceneReady() was called before.
+	if(!_sceneReadyFuture.isValid()) {
+		OVITO_ASSERT(!_currentEvaluationNode);
+		OVITO_ASSERT(!_pipelineEvaluationFuture.isValid());
+		return;
+	}
+	
+	OVITO_ASSERT(!_sceneReadyFuture.isCanceled());
+
+	// If scene is already ready, we are done.
+	if(_sceneReadyFuture.isFinished() && _pipelineEvaluationTime == animationSettings()->time()) {
+//		qDebug() << "DataSet::makeSceneReady(): returning with already finished future";
+		return;
+	}
+
+	// Is there already a pipeline evaluation in progress?
+	if(_pipelineEvaluationFuture.isValid()) {
+		// Keep waiting for the current pipeline evaluation to finish unless we are at the different animation time now.
+		// Or unless the node has been deleted from the scene in the meantime.
+		if(!forceReevaluation && _pipelineEvaluationTime == animationSettings()->time() && _currentEvaluationNode && _currentEvaluationNode->isChildOf(sceneRoot())) {
+//			qDebug() << "DataSet::makeSceneReady(): returning with already in progress future";
+			return;
 		}
 	}
 
-	// Re-use existing request.
-	if(_sceneReadyRequest) {
-		if(!_sceneReadyRequest->isCanceled())
-			return Future<void>(_sceneReadyRequest);
-		else {
-			_sceneReadyRequest->setFinished();
-			_sceneReadyRequest.reset();
+	// If viewport updates are suspended, we simply wait until they are resumed.
+	if(viewportConfig()->isSuspended()) {
+//		qDebug() << "DataSet::makeSceneReady(): returning with unfinished future, because viewports are suspended";
+		return;
+	}
+
+	// Request result of the data pipeline of each scene node.
+	// If at least one of them is not immediately available, we'll have to
+	// wait until its pipeline results become available.
+	_pipelineEvaluationTime = animationSettings()->time();
+	_currentEvaluationNode.clear();
+	_pipelineEvaluationWatcher.reset();
+//	qDebug() << "DataSet::makeSceneReady(): re-evaluating pipelines at time" << _pipelineEvaluationTime;
+
+	SharedFuture<PipelineFlowState> newPipelineEvaluationFuture;
+	sceneRoot()->visitObjectNodes([this,&newPipelineEvaluationFuture](ObjectNode* node) {
+		// Request display objects as well.
+		SharedFuture<PipelineFlowState> stateFuture = node->evaluateRenderingPipeline(_pipelineEvaluationTime);
+		if(!stateFuture.isFinished()) {
+			// Wait for this state to become available and return a pending future.
+			_currentEvaluationNode = node;
+			_pipelineEvaluationWatcher.watch(stateFuture.sharedState());
+			newPipelineEvaluationFuture = std::move(stateFuture);
+			return false;
+		}
+		else if(!stateFuture.isCanceled()) {
+			try { stateFuture.results(); }
+			catch(...) { 
+				qWarning() << "DataSet::makeSceneReady(): An exception was thrown in a data pipeline. This should never happen.";
+				OVITO_ASSERT(false);
+			}
+		}
+		return true;
+	});
+
+//	if(_currentEvaluationNode)
+//		qDebug() << "DataSet::makeSceneReady(): pipeline evaluation in progress";
+//	else
+//		qDebug() << "DataSet::makeSceneReady(): all pipelines complete";
+	
+	if(_pipelineEvaluationFuture.isValid()) {
+//		qDebug() << "DataSet::makeSceneReady(): canceling old request in progress";
+		_pipelineEvaluationFuture.cancelRequest();
+	}
+	_pipelineEvaluationFuture = std::move(newPipelineEvaluationFuture);
+		
+	//qDebug() << "  DataSet::makeSceneReady: isReady=" << (!_currentEvaluationNode) << "waiting for pipeline=" << _pipelineEvaluationWatcher.hasPromise() << "promise=" << _pipelineEvaluationWatcher.promiseState().get();
+
+	// If all pipelines are already complete, we are done.
+	if(!_currentEvaluationNode) {
+		_sceneReadyPromise.setFinished();
+		OVITO_ASSERT(_sceneReadyFuture.isFinished());
+	}
+}
+
+/******************************************************************************
+* Is called whenver viewport updates are resumed.
+******************************************************************************/
+void DataSet::onViewportUpdatesResumed()
+{
+//	qDebug() << "DataSet::onViewportUpdatesResumed(): calling makeSceneReady";
+	makeSceneReady(true);
+}
+
+/******************************************************************************
+* Is called when the pipeline evaluation of a scene node has finished.
+******************************************************************************/
+void DataSet::pipelineEvaluationFinished()
+{
+	OVITO_ASSERT(_sceneReadyFuture.isValid());
+	OVITO_ASSERT(_sceneReadyPromise.isValid() == _sceneReadyFuture.isValid());
+	OVITO_ASSERT(!_sceneReadyFuture.isCanceled());
+	OVITO_ASSERT(_currentEvaluationNode);
+	OVITO_ASSERT(_pipelineEvaluationFuture.isValid());
+	OVITO_ASSERT(_pipelineEvaluationFuture.isFinished());
+
+	// Query results of the pipeline evaluation to see if an exception has been thrown.
+	if(_pipelineEvaluationFuture.isCanceled() == false) {
+		try { 
+			_pipelineEvaluationFuture.results();
+		}
+		catch(...) { 
+			qWarning() << "DataSet::pipelineEvaluationFinished(): An exception was thrown in a data pipeline. This should never happen.";
+			OVITO_ASSERT(false);
 		}
 	}
 
-	// If not ready yet, create a future.
-	Future<void> future = Future<void>::createWithPromise();
-	_sceneReadyRequest = future.promise();
-	_sceneReadyRequest->setStarted();
-	_sceneReadyRequest->setProgressText(message);
-	return future;
+	_pipelineEvaluationFuture.reset();
+	_pipelineEvaluationWatcher.reset();
+	_currentEvaluationNode.clear();
+
+//	qDebug() << "DataSet::pipelineEvaluationFinished: Pipeline evaluation complete";
+
+	// One of the pipelines in the scene became ready. 
+	// Check if there are more pending pipelines in the scene.
+	makeSceneReady(false);
 }
 
 /******************************************************************************
@@ -286,7 +410,7 @@ bool DataSet::renderScene(RenderSettings* settings, Viewport* viewport, FrameBuf
 	SceneRenderer* renderer = settings->renderer();
 	if(!renderer) throwException(tr("No rendering engine has been selected."));
 
-	SynchronousTask renderTask(taskManager);
+	Promise<> renderTask = Promise<>::createSynchronous(taskManager, true, true);
 	renderTask.setProgressText(tr("Initializing renderer"));
 	try {
 
@@ -406,25 +530,26 @@ bool DataSet::renderFrame(TimePoint renderTime, int frameNumber, RenderSettings*
 		}
 	}
 
-	// Jump to animation frame.
-	animationSettings()->setTime(renderTime);
+	Promise<> renderTask = Promise<>::createSynchronous(taskManager, true, true);
 
-	// Wait until the scene is ready.
-	Future<void> sceneReadyFuture = makeSceneReady(tr("Preparing frame %1").arg(frameNumber));
-	if(!taskManager.waitForTask(sceneReadyFuture))
-		return false;
-
-	// Request scene bounding box.
-	Box3 boundingBox = renderer->sceneBoundingBox(renderTime);
-
-	// Setup projection.
-	ViewProjectionParameters projParams = viewport->projectionParameters(renderTime, settings->outputImageAspectRatio(), boundingBox);
-
+	// Setup preliminary projection.
+	ViewProjectionParameters projParams = viewport->computeProjectionParameters(renderTime, settings->outputImageAspectRatio());
+		
 	// Render one frame.
 	frameBuffer->clear();
 	try {
+		// Request scene bounding box.
+		Box3 boundingBox = renderer->computeSceneBoundingBox(renderTime, projParams, nullptr, renderTask);
+		if(renderTask.isCanceled()) {
+			renderer->endFrame(false);
+			return false;
+		}
+
+		// Determine final view projection.
+		projParams = viewport->computeProjectionParameters(renderTime, settings->outputImageAspectRatio(), boundingBox);
+
 		renderer->beginFrame(renderTime, projParams, viewport);
-		if(!renderer->renderFrame(frameBuffer, SceneRenderer::NonStereoscopic, taskManager)) {
+		if(!renderer->renderFrame(frameBuffer, SceneRenderer::NonStereoscopic, renderTask)) {
 			renderer->endFrame(false);
 			return false;
 		}
@@ -439,7 +564,9 @@ bool DataSet::renderFrame(TimePoint renderTime, int frameNumber, RenderSettings*
 	for(ViewportOverlay* overlay : viewport->overlays()) {
 		{
 			QPainter painter(&frameBuffer->image());
-			overlay->render(viewport, painter, projParams, settings);
+			overlay->render(viewport, renderTime, painter, projParams, settings, false, taskManager);
+			if(renderTask.isCanceled())
+				return false;
 		}
 		frameBuffer->update();
 	}
@@ -458,7 +585,7 @@ bool DataSet::renderFrame(TimePoint renderTime, int frameNumber, RenderSettings*
 		}
 	}
 
-	return true;
+	return !renderTask.isCanceled();
 }
 
 /******************************************************************************

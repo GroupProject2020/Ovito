@@ -23,7 +23,7 @@
 
 
 #include <plugins/vorotop/VoroTopPlugin.h>
-#include <plugins/particles/data/ParticleProperty.h>
+#include <core/dataset/data/properties/PropertyStorage.h>
 #include <plugins/particles/modifier/analysis/StructureIdentificationModifier.h>
 #include "Filter.h"
 
@@ -38,6 +38,12 @@ namespace Ovito { namespace VoroTop {
  */
 class OVITO_VOROTOP_EXPORT VoroTopModifier : public StructureIdentificationModifier
 {
+	Q_OBJECT
+	OVITO_CLASS(VoroTopModifier)
+
+	Q_CLASSINFO("DisplayName", "VoroTop analysis");
+	Q_CLASSINFO("ModifierCategory", "Analysis");
+
 public:
 
 	/// Constructor.
@@ -55,15 +61,31 @@ protected:
 	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
 
 	/// Creates a computation engine that will compute the modifier's results.
-	virtual std::shared_ptr<ComputeEngine> createEngine(TimePoint time, TimeInterval validityInterval) override;
-
-	/// Unpacks the results of the computation engine and stores them in the modifier.
-	virtual void transferComputationResults(ComputeEngine* engine) override;
-
-	/// Lets the modifier insert the cached computation results into the modification pipeline.
-	virtual PipelineStatus applyComputationResults(TimePoint time, TimeInterval& validityInterval) override;
+	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 private:
+
+	/// Holds the modifier's results.
+	class VoroTopAnalysisResults : public StructureIdentificationResults
+	{
+	public:
+
+		/// Constructor.
+		VoroTopAnalysisResults(size_t particleCount, const std::shared_ptr<Filter>& filter) : 
+			StructureIdentificationResults(particleCount),
+			_filter(filter) {}
+
+		/// Injects the computed results into the data pipeline.
+		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	
+		/// Returns the VoroTop filter definition.
+		const std::shared_ptr<Filter>& filter() const { return _filter; }
+	
+	private:
+
+		/// The VoroTop filter definition.
+		std::shared_ptr<Filter> _filter;
+	};
 
 	/// Compute engine that performs the actual analysis in a background thread.
 	class VoroTopAnalysisEngine : public StructureIdentificationEngine
@@ -71,18 +93,18 @@ private:
 	public:
 
 		/// Constructor.
-		VoroTopAnalysisEngine(const TimeInterval& validityInterval, ParticleProperty* positions, ParticleProperty* selection,
-							std::vector<FloatType>&& radii, const SimulationCell& simCell, const QString& filterFile, const std::shared_ptr<Filter>& filter, const QVector<bool>& typesToIdentify) :
-			StructureIdentificationEngine(validityInterval, positions, simCell, typesToIdentify, selection),
+		VoroTopAnalysisEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, ConstPropertyPtr selection,
+							std::vector<FloatType> radii, const SimulationCell& simCell, const QString& filterFile, std::shared_ptr<Filter> filter, QVector<bool> typesToIdentify) :
+			StructureIdentificationEngine(validityInterval, std::move(positions), simCell, std::move(typesToIdentify), std::move(selection)),
 			_filterFile(filterFile),
-			_filter(filter),
+			_filter(std::move(filter)),
 			_radii(std::move(radii)) {}
 
 		/// Computes the modifier's results and stores them in this object for later retrieval.
 		virtual void perform() override;
 
 		/// Processes a single Voronoi cell.
-		void processCell(voro::voronoicell_neighbor& vcell, size_t particleIndex, QMutex* mutex);
+		void processCell(voro::voronoicell_neighbor& vcell, size_t particleIndex, PropertyStorage& structures, QMutex* mutex);
 
 		/// Returns the VoroTop filter definition.
 		const std::shared_ptr<Filter>& filter() const { return _filter; }
@@ -93,7 +115,7 @@ private:
 		QString _filterFile;
 
 		/// The VoroTop filter definition.
-		std::shared_ptr<Filter> _filter;
+		std::shared_ptr<Filter> _filter;		
 
 		/// The per-particle radii.
 		std::vector<FloatType> _radii;
@@ -109,12 +131,6 @@ private:
 
 	/// The VoroTop filter definition cached from the last analysis run.
 	std::shared_ptr<Filter> _filter;
-
-	Q_OBJECT
-	OVITO_OBJECT
-
-	Q_CLASSINFO("DisplayName", "VoroTop analysis");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
 };
 
 }	// End of namespace

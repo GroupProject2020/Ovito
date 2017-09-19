@@ -20,21 +20,21 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/animation/AnimationSettings.h>
 #include <core/utilities/units/UnitsManager.h>
-#include <core/scene/SelectionSet.h>
-#include <core/scene/ObjectNode.h>
-#include <core/scene/SceneRoot.h>
+#include <core/dataset/scene/SelectionSet.h>
+#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/SceneRoot.h>
 #include <gui/widgets/general/SpinnerWidget.h>
 #include <gui/mainwin/MainWindow.h>
 #include <gui/utilities/concurrent/ProgressDialog.h>
-#include <plugins/particles/objects/ParticlePropertyObject.h>
-#include <plugins/particles/objects/TrajectoryGeneratorObject.h>
+#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/TrajectoryGenerator.h>
 #include "CreateTrajectoryApplet.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_OBJECT(CreateTrajectoryApplet, UtilityApplet);
+IMPLEMENT_OVITO_CLASS(CreateTrajectoryApplet);
 
 /******************************************************************************
 * Shows the UI of the utility in the given RolloutContainer.
@@ -185,16 +185,16 @@ void CreateTrajectoryApplet::onCreateTrajectory()
 		TimePoint time = dataset->animationSettings()->time();
 
 		// Get input particles.
-		OORef<ParticlePropertyObject> posProperty;
-		OORef<ParticlePropertyObject> selectionProperty;
-		ObjectNode* inputNode = dynamic_object_cast<ObjectNode>(dataset->selection()->front());
+		OORef<ParticleProperty> posProperty;
+		OORef<ParticleProperty> selectionProperty;
+		ObjectNode* inputNode = dynamic_object_cast<ObjectNode>(dataset->selection()->firstNode());
 		if(inputNode) {
-			Future<PipelineFlowState> stateFuture = inputNode->evaluatePipelineAsync(PipelineEvalRequest(time, false));
+			SharedFuture<PipelineFlowState> stateFuture = inputNode->evaluatePipeline(time);
 			if(!progressDialog.taskManager().waitForTask(stateFuture))
 				return;
 			const PipelineFlowState& state = stateFuture.result();
-			posProperty = ParticlePropertyObject::findInState(state, ParticleProperty::PositionProperty);
-			selectionProperty = ParticlePropertyObject::findInState(state, ParticleProperty::SelectionProperty);
+			posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
+			selectionProperty = ParticleProperty::findInState(state, ParticleProperty::SelectionProperty);
 		}
 
 		if(!posProperty)
@@ -220,34 +220,37 @@ void CreateTrajectoryApplet::onCreateTrajectory()
 			UndoSuspender noUndo(dataset);
 
 			// Create trajectory object.
-			OORef<TrajectoryGeneratorObject> trajObj = new TrajectoryGeneratorObject(dataset);
+			OORef<TrajectoryGenerator> trajGenerator = new TrajectoryGenerator(dataset);
 			OVITO_CHECK_OBJECT_POINTER(inputNode);
-			trajObj->loadUserDefaults();
-			for(DisplayObject* displayObj : trajObj->displayObjects())
-				displayObj->loadUserDefaults();
-			trajObj->setSource(inputNode);
-			trajObj->setOnlySelectedParticles(_selectedParticlesButton->isChecked());
-			trajObj->setUseCustomInterval(_customIntervalButton->isChecked());
-			trajObj->setCustomIntervalStart(_customRangeStartSpinner->intValue());
-			trajObj->setCustomIntervalEnd(_customRangeEndSpinner->intValue());
-			trajObj->setEveryNthFrame(_everyNthFrameSpinner->intValue());
-			trajObj->setUnwrapTrajectories(_unwrapTrajectoryButton->isChecked());
+			trajGenerator->loadUserDefaults();
+			trajGenerator->setSource(inputNode);
+			trajGenerator->setOnlySelectedParticles(_selectedParticlesButton->isChecked());
+			trajGenerator->setUseCustomInterval(_customIntervalButton->isChecked());
+			trajGenerator->setCustomIntervalStart(_customRangeStartSpinner->intValue());
+			trajGenerator->setCustomIntervalEnd(_customRangeEndSpinner->intValue());
+			trajGenerator->setEveryNthFrame(_everyNthFrameSpinner->intValue());
+			trajGenerator->setUnwrapTrajectories(_unwrapTrajectoryButton->isChecked());
 
 			// Make sure we are having an actual trajectory.
-			TimeInterval interval = trajObj->useCustomInterval() ?
-					trajObj->customInterval() : dataset->animationSettings()->animationInterval();
+			TimeInterval interval = trajGenerator->useCustomInterval() ?
+					trajGenerator->customInterval() : dataset->animationSettings()->animationInterval();
 			if(interval.duration() <= 0)
 				dataset->throwException(tr("Loaded simulation sequence consists only of a single frame. No trajectory lines were created."));
 
 			// Generate trajectories.
-			if(!trajObj->generateTrajectories(progressDialog.taskManager()))
+			if(!trajGenerator->generateTrajectories(progressDialog.taskManager()))
 				return;
+
+			// Initialize trajectory display object.
+			for(DataObject* dataObj : trajGenerator->dataObjects())
+				for(DisplayObject* displayObj : dataObj->displayObjects())
+					displayObj->loadUserDefaults();			
 
 			// Create scene node.
 			node = new ObjectNode(dataset);
 			TimeInterval validityInterval;
 			node->transformationController()->setTransformationValue(time, inputNode->getWorldTransform(time, validityInterval), true);
-			node->setDataProvider(trajObj);
+			node->setDataProvider(trajGenerator);
 		}
 		// Insert node into scene.
 		dataset->sceneRoot()->addChildNode(node);
