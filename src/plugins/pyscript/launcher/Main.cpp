@@ -56,6 +56,12 @@ int main(int argc, char** argv)
 			execMode = true;
 			break;
 		}
+		else if(strcmp(*argv, "-u") == 0) {
+			argc--;
+			argv++;
+			// Silently ignore the -u command line option. 
+			// We only accept it for the sake of compatibility with CPython.
+		}
 		else if(strcmp(*argv, "-c") == 0) {
 			if(argc >= 2) {
 				newargv.push_back("--exec");
