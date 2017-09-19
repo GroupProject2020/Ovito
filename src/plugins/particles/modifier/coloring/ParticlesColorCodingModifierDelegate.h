@@ -36,7 +36,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 class ParticlesColorCodingModifierDelegate : public ColorCodingModifierDelegate
 {
 	/// Give the modifier delegate its own metaclass.
-	class ParticlesColorCodingModifierDelegateClass : public ColorCodingModifierDelegate::OOMetaClass 
+	class OOMetaClass : public ColorCodingModifierDelegate::OOMetaClass 
 	{
 	public:
 
@@ -53,7 +53,7 @@ class ParticlesColorCodingModifierDelegate : public ColorCodingModifierDelegate
 	};	
 
 	Q_OBJECT
-	OVITO_CLASS_META(ParticlesColorCodingModifierDelegate, ParticlesColorCodingModifierDelegateClass)
+	OVITO_CLASS_META(ParticlesColorCodingModifierDelegate, OOMetaClass)
 
 	Q_CLASSINFO("DisplayName", "Particles");
 
@@ -77,7 +77,7 @@ protected:
 class ParticleVectorsColorCodingModifierDelegate : public ColorCodingModifierDelegate
 {
 	/// Give the modifier delegate its own metaclass.
-	class ParticleVectorsColorCodingModifierDelegateClass : public ColorCodingModifierDelegate::OOMetaClass 
+	class OOMetaClass : public ColorCodingModifierDelegate::OOMetaClass 
 	{
 	public:
 
@@ -92,7 +92,7 @@ class ParticleVectorsColorCodingModifierDelegate : public ColorCodingModifierDel
 	};	
 
 	Q_OBJECT
-	OVITO_CLASS_META(ParticleVectorsColorCodingModifierDelegate, ParticleVectorsColorCodingModifierDelegateClass)
+	OVITO_CLASS_META(ParticleVectorsColorCodingModifierDelegate, OOMetaClass)
 
 	Q_CLASSINFO("DisplayName", "Particle vectors");
 
@@ -116,7 +116,7 @@ protected:
 class BondsColorCodingModifierDelegate : public ColorCodingModifierDelegate
 {
 	/// Give the modifier delegate its own metaclass.
-	class BondsColorCodingModifierDelegateClass : public ColorCodingModifierDelegate::OOMetaClass 
+	class OOMetaClass : public ColorCodingModifierDelegate::OOMetaClass 
 	{
 	public:
 
@@ -133,7 +133,7 @@ class BondsColorCodingModifierDelegate : public ColorCodingModifierDelegate
 	};	
 
 	Q_OBJECT
-	OVITO_CLASS_META(BondsColorCodingModifierDelegate, BondsColorCodingModifierDelegateClass)
+	OVITO_CLASS_META(BondsColorCodingModifierDelegate, OOMetaClass)
 
 	Q_CLASSINFO("DisplayName", "Bonds");
 

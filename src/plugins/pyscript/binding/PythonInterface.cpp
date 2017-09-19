@@ -147,7 +147,7 @@ PropertyReference convertPythonPropertyReference(py::object src, const PropertyC
 	if(parts.length() == 2) {
 		// First try to convert component to integer.
 		bool ok;
-		component = parts[1].toInt(&ok);
+		component = parts[1].toInt(&ok) - 1;
 		if(!ok) {
 			if(type != 0) {
 				// Perhaps the standard property's component name was used instead of an integer.
