@@ -24,14 +24,15 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(ClusterGraphObject, DataObject);
+
+DEFINE_RUNTIME_PROPERTY_FIELD(ClusterGraphObject, storage, "DataStorage");
 
 /******************************************************************************
 * Constructs a cluster graph object.
 ******************************************************************************/
-ClusterGraphObject::ClusterGraphObject(DataSet* dataset, ClusterGraph* graph)
-	: DataObjectWithSharedStorage(dataset, graph ? graph : new ClusterGraph())
+ClusterGraphObject::ClusterGraphObject(DataSet* dataset) : DataObject(dataset)
 {
+
 }
 
 }	// End of namespace

@@ -23,7 +23,7 @@
 
 
 #include <core/Core.h>
-#include <core/object/OvitoObject.h>
+#include <core/oo/OvitoObject.h>
 #include "PrimitiveBase.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)

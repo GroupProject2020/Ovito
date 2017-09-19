@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2015) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -30,19 +30,18 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 * Constructor.
 ******************************************************************************/
 ElasticStrainEngine::ElasticStrainEngine(const TimeInterval& validityInterval,
-		ParticleProperty* positions, const SimulationCell& simCell,
-		int inputCrystalStructure, std::vector<Matrix3>&& preferredCrystalOrientations,
+		ConstPropertyPtr positions, const SimulationCell& simCell,
+		int inputCrystalStructure, std::vector<Matrix3> preferredCrystalOrientations,
 		bool calculateDeformationGradients, bool calculateStrainTensors,
 		FloatType latticeConstant, FloatType caRatio, bool pushStrainTensorsForward) :
-	StructureIdentificationModifier::StructureIdentificationEngine(validityInterval, positions, simCell, QVector<bool>()),
-	_structureAnalysis(positions, simCell, (StructureAnalysis::LatticeStructureType)inputCrystalStructure, selection(), structures(), std::move(preferredCrystalOrientations)),
+	StructureIdentificationModifier::StructureIdentificationEngine(validityInterval, positions, simCell, {}),
+	_results(std::make_shared<ElasticStrainResults>(positions->size(), calculateStrainTensors, calculateDeformationGradients)),
+	_structureAnalysis(positions, simCell, (StructureAnalysis::LatticeStructureType)inputCrystalStructure, selection(), _results->structures(), std::move(preferredCrystalOrientations)),
 	_inputCrystalStructure(inputCrystalStructure),
 	_latticeConstant(latticeConstant),
-	_pushStrainTensorsForward(pushStrainTensorsForward),
-	_volumetricStrains(new ParticleProperty(positions->size(), qMetaTypeId<FloatType>(), 1, 0, QStringLiteral("Volumetric Strain"), false)),
-	_strainTensors(calculateStrainTensors ? new ParticleProperty(positions->size(), ParticleProperty::ElasticStrainTensorProperty, 0, false) : nullptr),
-	_deformationGradients(calculateDeformationGradients ? new ParticleProperty(positions->size(), ParticleProperty::ElasticDeformationGradientProperty, 0, false) : nullptr)
+	_pushStrainTensorsForward(pushStrainTensorsForward)	
 {
+	_results->setAtomClusters(_structureAnalysis.atomClusters());
 	if(inputCrystalStructure == StructureAnalysis::LATTICE_FCC || inputCrystalStructure == StructureAnalysis::LATTICE_BCC || inputCrystalStructure == StructureAnalysis::LATTICE_CUBIC_DIAMOND) {
 		// Cubic crystal structures always have a c/a ratio of one.
 		_axialScaling = 1;
@@ -61,7 +60,7 @@ void ElasticStrainEngine::perform()
 {
 	setProgressText(ElasticStrainModifier::tr("Calculating elastic strain tensors"));
 
-	beginProgressSubSteps({ 35, 6, 1, 1, 20 });
+	beginProgressSubStepsWithWeights({ 35, 6, 1, 1, 20 });
 	if(!_structureAnalysis.identifyStructures(*this))
 		return;
 
@@ -170,6 +169,7 @@ void ElasticStrainEngine::perform()
 	});
 
 	endProgressSubSteps();
+	setResult(std::move(_results));
 }
 
 }	// End of namespace

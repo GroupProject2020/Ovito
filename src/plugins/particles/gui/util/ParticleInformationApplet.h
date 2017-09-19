@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <gui/plugins/utility/UtilityApplet.h>
+#include <gui/mainwin/cmdpanel/UtilityApplet.h>
 #include <gui/viewport/input/ViewportInputMode.h>
 #include <gui/viewport/input/ViewportInputManager.h>
 #include "ParticlePickingHelper.h"
@@ -75,7 +75,7 @@ private:
 	Q_CLASSINFO("DisplayName", "Inspect particles");
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 };
 
 /**
@@ -103,9 +103,6 @@ public:
 
 	/// \brief Indicates whether this input mode renders into the viewports.
 	virtual bool hasOverlay() override { return true; }
-
-	/// Computes the bounding box of the 3d visual viewport overlay rendered by the input mode.
-	virtual Box3 overlayBoundingBox(Viewport* vp, ViewportSceneRenderer* renderer) override;
 
 private:
 

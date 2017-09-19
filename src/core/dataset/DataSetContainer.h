@@ -24,8 +24,9 @@
 
 #include <core/Core.h>
 #include <core/utilities/concurrent/TaskManager.h>
-#include "DataSet.h"
-#include "importexport/FileImporter.h"
+#include <core/dataset/animation/TimeInterval.h>
+#include <core/dataset/DataSet.h>
+#include <core/oo/RefMaker.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
 
@@ -34,16 +35,16 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
  */
 class OVITO_CORE_EXPORT DataSetContainer : public RefMaker
 {
+	Q_OBJECT
+	OVITO_CLASS(DataSetContainer)
+	
 public:
 
 	/// \brief Constructor.
 	DataSetContainer();
 
 	/// \brief Destructor.
-	virtual ~DataSetContainer() {
-		setCurrentSet(nullptr);
-		clearAllReferences();
-	}
+	virtual ~DataSetContainer();
 
 	/// \brief Returns the manager of background tasks.
 	/// \return Reference to the task manager, which is part of this dataset manager.
@@ -119,7 +120,7 @@ protected Q_SLOTS:
 private:
 
 	/// The current dataset being edited by the user.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(DataSet, currentSet, setCurrentSet);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(DataSet, currentSet, setCurrentSet, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
 	/// The list of running compute tasks.
 	TaskManager _taskManager;
@@ -134,9 +135,6 @@ private:
 	QMetaObject::Connection _animationTimeChangeCompleteConnection;
 	QMetaObject::Connection _undoStackCleanChangedConnection;
 	QMetaObject::Connection _filePathChangedConnection;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

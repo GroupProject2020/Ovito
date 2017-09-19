@@ -20,12 +20,13 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <gui/GUI.h>
-#include <core/scene/SceneRoot.h>
-#include <core/scene/ObjectNode.h>
-#include <core/scene/objects/camera/AbstractCameraObject.h>
-#include <core/scene/objects/camera/CameraObject.h>
+#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/data/camera/AbstractCameraObject.h>
+#include <core/dataset/data/camera/CameraObject.h>
+#include <core/dataset/pipeline/StaticSource.h>
 #include <core/dataset/DataSet.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/animation/AnimationSettings.h>
 #include <gui/dialogs/AdjustCameraDialog.h>
 #include <gui/mainwin/MainWindow.h>
 #include "ViewportMenu.h"
@@ -118,14 +119,14 @@ void ViewportMenu::onShowViewTypeMenu()
 
 	// Find all camera nodes in the scene.
 	_viewport->dataset()->sceneRoot()->visitObjectNodes([this, viewNodeGroup](ObjectNode* node) -> bool {
-		const PipelineFlowState& state = node->evaluatePipelineImmediately(PipelineEvalRequest(_viewport->dataset()->animationSettings()->time(), false));
+		const PipelineFlowState& state = node->evaluatePipelinePreliminary(false);
 		OORef<AbstractCameraObject> camera = state.convertObject<AbstractCameraObject>(_viewport->dataset()->animationSettings()->time());
 		if(camera) {
 			// Add a menu entry for this camera node.
 			QAction* action = viewNodeGroup->addAction(node->nodeName());
 			action->setCheckable(true);
 			action->setChecked(_viewport->viewNode() == node);
-			action->setData(qVariantFromValue((void*)node));
+			action->setData(QVariant::fromValue((void*)node));
 		}
 		return true;
 	});
@@ -207,20 +208,20 @@ void ViewportMenu::onCreateCamera()
 		AnimationSuspender animSuspender(_viewport->dataset()->animationSettings());
 
 		// Create and initialize the camera object.
-		OORef<CameraObject> cameraObj;
 		OORef<ObjectNode> cameraNode;
 		{
 			UndoSuspender noUndo(_viewport->dataset()->undoStack());
-			cameraObj = new CameraObject(_viewport->dataset());
+			OORef<CameraObject> cameraObj = new CameraObject(_viewport->dataset());
 			cameraObj->setIsPerspective(_viewport->isPerspectiveProjection());
 			if(_viewport->isPerspectiveProjection())
 				cameraObj->fovController()->setFloatValue(0, _viewport->fieldOfView());
 			else
 				cameraObj->zoomController()->setFloatValue(0, _viewport->fieldOfView());
 
-			// Create an object node for the camera.
+			// Create an object node with a data source for the camera.
 			cameraNode = new ObjectNode(_viewport->dataset());
-			cameraNode->setDataProvider(cameraObj);
+			OORef<StaticSource> cameraSource = new StaticSource(_viewport->dataset(), cameraObj);
+			cameraNode->setDataProvider(cameraSource);
 
 			// Give the new node a name.
 			cameraNode->setNodeName(scene->makeNameUnique(tr("Camera")));

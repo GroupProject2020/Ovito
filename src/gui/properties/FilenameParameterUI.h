@@ -32,6 +32,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 ******************************************************************************/
 class OVITO_GUI_EXPORT FilenameParameterUI : public PropertyParameterUI
 {
+	Q_OBJECT
+	OVITO_CLASS(FilenameParameterUI)
+	
 public:
 
 	/// Constructor for a Qt property.
@@ -74,11 +77,6 @@ protected:
 
 	/// The selector control.
 	QPointer<QPushButton> _selectorButton;
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

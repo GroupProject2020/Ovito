@@ -1,5 +1,6 @@
 # Load dependencies
 import ovito.vis
+import ovito.vis.mesh
 
 # Load the native code modules.
 import ovito.plugins.Particles

@@ -26,8 +26,8 @@
 #include <core/rendering/ParticlePrimitive.h>
 #include <core/rendering/ArrowPrimitive.h>
 #include <core/rendering/FrameBuffer.h>
-#include <core/scene/objects/DisplayObject.h>
-#include <core/scene/objects/geometry/TriMeshDisplay.h>
+#include <core/dataset/data/DisplayObject.h>
+#include <core/dataset/data/simcell/SimulationCellDisplay.h>
 #include <opengl_renderer/StandardSceneRenderer.h>
 #include "PythonBinding.h"
 
@@ -48,27 +48,48 @@ void defineRenderingSubmodule(py::module parentModule)
 	;
 
 	py::object RenderSettings_py = ovito_class<RenderSettings, RefTarget>(m,
-			"Stores settings and parameters for rendering images and movies."
+			"A data structure with parameters that control image and movie generation."
 			"\n\n"
-			"A instance of this class can be passed to the :py:func:`~Viewport.render` function "
-			"of the :py:class:`Viewport` class to control various aspects such as the resolution of the generated image. "
-			"The ``RenderSettings`` object contains a :py:attr:`.renderer`, which is the rendering engine "
-			"that will be used to generate images of the three-dimensional scene. OVITO comes with two different "
-			"rendering engines:"
+			"You typically pass an instance of this class to the :py:meth:`Viewport.render` method to specify various render settings "
+			"such as the resolution of the output image and the rendering engine to use: "
 			"\n\n"
-			"  * :py:class:`OpenGLRenderer` -- An OpenGL-based renderer, which is also used for the interactive display in OVITO's viewports.\n"
+			".. literalinclude:: ../example_snippets/render_settings.py\n"
+			"   :lines: 1-8\n"
+			"\n\n"
+			"The rendering engine, which produces the two-dimensional rendering of the three-dimensional scene, is part of the :py:class:`!RenderSettings` structure. "
+			"You can choose from three different rendering backends: "
+			"\n\n"
+			"  * :py:class:`OpenGLRenderer` -- The quick renderer which is also used by the interactive viewports of OVITO.\n"
 			"  * :py:class:`TachyonRenderer` -- A software-based, high-quality raytracing renderer.\n"
-			"  * :py:class:`POVRayRenderer` -- A rendering backend that invokes the external POV-Ray raytracing program.\n"
+			"  * :py:class:`POVRayRenderer` -- A rendering backend that calls the external POV-Ray raytracing program.\n"
 			"\n"
-			"Usage example::"
+			"To render an image, one must create a :py:class:`Viewport`, set up its virtual camera, and finally invoke its :py:meth:`~Viewport.render` method with "
+			"the :py:class:`!RenderSettings` structure: "
 			"\n\n"
-			"    rs = RenderSettings(\n"
-			"        filename = 'image.png',\n"
-			"        size = (1024,768),\n"
-			"        background_color = (0.8,0.8,1.0)\n"
-			"    )\n"
-			"    rs.renderer.antialiasing = False\n"
-			"    dataset.viewports.active_vp.render(rs)\n")
+			".. literalinclude:: ../example_snippets/render_settings.py\n"
+			"   :lines: 10-12\n"
+			"\n\n"
+			"This will render a single frame at the current animation time position, which is given by the global "
+			":py:attr:`AnimationSettings.current_frame <ovito.anim.AnimationSettings.current_frame>` setting (frame 0 by default). "
+			"\n\n"
+			"**Rendering animations**"
+			"\n\n"
+			"To render an animation, the rendering :py:attr:`.range` must be set to ``RenderSettings.Range.ANIMATION``. "
+			"The chosen output :py:attr:`.filename` determines the kind of file(s) that will be produced: "
+			"If the name suffix is :file:`.mp4`, :file:`.avi` or :file:`.mov`, a single encoded movie file "
+			"will be produced from all rendered frames. The playback speed of the final movie is determined by the "
+			"global :py:attr:`AnimationSettings.frames_per_second <ovito.anim.AnimationSettings.frames_per_second>` setting in this case: "
+			"\n\n"
+			".. literalinclude:: ../example_snippets/render_settings.py\n"
+			"   :lines: 14-21\n"
+			"\n\n"
+			"Alternatively, a series of images can be rendered, which may subsequently be combined into a movie with an external video encoding tool: "
+			"\n\n"
+			".. literalinclude:: ../example_snippets/render_settings.py\n"
+			"   :lines: 23-26\n"
+			"\n\n"
+			"This produces image files named :file:`frame0000.png`, :file:`frame0001.png`, etc. "
+			)
 		.def_property("renderer", &RenderSettings::renderer, &RenderSettings::setRenderer,
 				"The renderer that is used to generate the image or movie. Depending on the selected renderer you "
 				"can use this to set additional parameters such as the anti-aliasing level."
@@ -82,20 +103,21 @@ void defineRenderingSubmodule(py::module parentModule)
 				"  * ``RenderSettings.Range.CURRENT_FRAME`` (default): Renders a single image at the current animation time.\n"
 				"  * ``RenderSettings.Range.ANIMATION``: Renders a movie of the entire animation sequence.\n"
 				"  * ``RenderSettings.Range.CUSTOM_INTERVAL``: Renders a movie of the animation interval given by the :py:attr:`.custom_range` attribute.\n")
+		// Required by RenderSettings.filename implementation:
 		.def_property("outputImageWidth", &RenderSettings::outputImageWidth, &RenderSettings::setOutputImageWidth)
 		.def_property("outputImageHeight", &RenderSettings::outputImageHeight, &RenderSettings::setOutputImageHeight)
-		.def_property_readonly("outputImageAspectRatio", &RenderSettings::outputImageAspectRatio)
-		.def_property("imageFilename", &RenderSettings::imageFilename, &RenderSettings::setImageFilename)
 		.def_property("background_color", &RenderSettings::backgroundColor, &RenderSettings::setBackgroundColor,
 				"Controls the background color of the rendered image."
 				"\n\n"
 				":Default: ``(1,1,1)`` -- white")
 		.def_property("generate_alpha", &RenderSettings::generateAlphaChannel, &RenderSettings::setGenerateAlphaChannel,
-				"When saving the generated image to a file format that can store transparency information (e.g. PNG), this option will make "
-				"those parts of the output image transparent that are not covered by an object."
+				"When saving the image to a file format that supports transparency information (e.g. PNG), this option will make "
+				"those parts of the output image transparent which are not covered by an object."
 				"\n\n"
 				":Default: ``False``")
-		.def_property("saveToFile", &RenderSettings::saveToFile, &RenderSettings::setSaveToFile)
+		// Required by RenderSettings.filename implementation:
+		.def_property("save_to_file", &RenderSettings::saveToFile, &RenderSettings::setSaveToFile)
+		.def_property("output_filename", &RenderSettings::imageFilename, &RenderSettings::setImageFilename)
 		.def_property("skip_existing_images", &RenderSettings::skipExistingImages, &RenderSettings::setSkipExistingImages,
 				"Controls whether animation frames for which the output image file already exists will be skipped "
 				"when rendering an animation sequence. This flag is ignored when directly rendering to a movie file and not an image file sequence. "
@@ -147,10 +169,26 @@ void defineRenderingSubmodule(py::module parentModule)
 				":Default: ``True``\n")
 	;
 
-	ovito_class<TriMeshDisplay, DisplayObject>(m)
-		.def_property("color", &TriMeshDisplay::color, &TriMeshDisplay::setColor)
-		.def_property("transparency", &TriMeshDisplay::transparency, &TriMeshDisplay::setTransparency)
-	;
+	ovito_class<SimulationCellDisplay, DisplayObject>(m,
+			":Base class: :py:class:`ovito.vis.Display`\n\n"
+			"Controls the visual appearance of :py:class:`~ovito.data.SimulationCell` objects."
+			"The following script demonstrates how to change the line width of the simulation cell:"
+			"\n\n"
+			".. literalinclude:: ../example_snippets/simulation_cell_display.py\n")
+		.def_property("line_width", &SimulationCellDisplay::cellLineWidth, &SimulationCellDisplay::setCellLineWidth,
+				"The width of the simulation cell line (in simulation units of length)."
+				"\n\n"
+				":Default: 0.14% of the simulation box diameter\n")
+		.def_property("render_cell", &SimulationCellDisplay::renderCellEnabled, &SimulationCellDisplay::setRenderCellEnabled,
+				"Boolean flag controlling the cell's visibility in rendered images. "
+				"If ``False``, the cell will only be visible in the interactive viewports. "
+				"\n\n"
+				":Default: ``True``\n")
+		.def_property("rendering_color", &SimulationCellDisplay::cellColor, &SimulationCellDisplay::setCellColor,
+				"The line color used when rendering the cell."
+				"\n\n"
+				":Default: ``(0, 0, 0)``\n")
+	;	
 
 	py::enum_<ParticlePrimitive::ShadingMode>(m, "ParticleShadingMode")
 		.value("Normal", ParticlePrimitive::NormalShading)
@@ -165,7 +203,6 @@ void defineRenderingSubmodule(py::module parentModule)
 	;
 
 	py::enum_<ParticlePrimitive::ParticleShape>(m, "ParticleShape")
-		.value("Spherical", ParticlePrimitive::SphericalShape)	// Deprecated since v2.4.5
 		.value("Round", ParticlePrimitive::SphericalShape)
 		.value("Square", ParticlePrimitive::SquareShape)
 	;

@@ -20,13 +20,20 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <core/scene/objects/DataObject.h>
+#include <plugins/particles/modifier/ParticleInputHelper.h>
+#include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <core/app/Application.h>
+#include <core/dataset/DataSet.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
+#include <core/utilities/units/UnitsManager.h>
 #include "CoordinationNumberModifier.h"
+
+#include <QtConcurrent>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(CoordinationNumberModifier, AsynchronousParticleModifier);
+
 DEFINE_FLAGS_PROPERTY_FIELD(CoordinationNumberModifier, cutoff, "Cutoff", PROPERTY_FIELD_MEMORIZE);
 DEFINE_FLAGS_PROPERTY_FIELD(CoordinationNumberModifier, numberOfBins, "NumberOfBins", PROPERTY_FIELD_MEMORIZE);
 SET_PROPERTY_FIELD_LABEL(CoordinationNumberModifier, cutoff, "Cutoff radius");
@@ -34,26 +41,48 @@ SET_PROPERTY_FIELD_LABEL(CoordinationNumberModifier, numberOfBins, "Number of hi
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CoordinationNumberModifier, cutoff, WorldParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(CoordinationNumberModifier, numberOfBins, IntegerParameterUnit, 4, 100000);
 
+
+
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
-CoordinationNumberModifier::CoordinationNumberModifier(DataSet* dataset) : AsynchronousParticleModifier(dataset),
-	_cutoff(3.2), _numberOfBins(200)
+CoordinationNumberModifier::CoordinationNumberModifier(DataSet* dataset) : AsynchronousModifier(dataset),
+	_cutoff(3.2), 
+	_numberOfBins(200)
 {
-	INIT_PROPERTY_FIELD(cutoff);
-	INIT_PROPERTY_FIELD(numberOfBins);
+
+
+}
+
+/******************************************************************************
+* Asks the modifier whether it can be applied to the given input data.
+******************************************************************************/
+bool CoordinationNumberModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+{
+	return input.findObject<ParticleProperty>() != nullptr;
+}
+
+/******************************************************************************
+* Create a new modifier application that refers to this modifier instance.
+******************************************************************************/
+OORef<ModifierApplication> CoordinationNumberModifier::createModifierApplication()
+{
+	OORef<ModifierApplication> modApp = new CoordinationNumberModifierApplication(dataset());
+	modApp->setModifier(this);
+	return modApp;
 }
 
 /******************************************************************************
 * Creates and initializes a computation engine that will compute the modifier's results.
 ******************************************************************************/
-std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> CoordinationNumberModifier::createEngine(TimePoint time, TimeInterval validityInterval)
+Future<AsynchronousModifier::ComputeEnginePtr> CoordinationNumberModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get the current positions.
-	ParticlePropertyObject* posProperty = expectStandardProperty(ParticleProperty::PositionProperty);
+	ParticleInputHelper pih(dataset(), input);
+	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
 
 	// Get simulation cell.
-	SimulationCellObject* inputCell = expectSimulationCell();
+	SimulationCellObject* inputCell = pih.expectSimulationCell();
 
 	// The number of sampling intervals for the radial distribution function.
 	int rdfSampleCount = std::max(numberOfBins(), 4);
@@ -61,7 +90,7 @@ std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> CoordinationNumberM
 		throwException(tr("Number of histogram bins is too large."));
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<CoordinationAnalysisEngine>(validityInterval, posProperty->storage(), inputCell->data(), cutoff(), rdfSampleCount);
+	return std::make_shared<CoordinationAnalysisEngine>(input.stateValidity(), posProperty->storage(), inputCell->data(), cutoff(), rdfSampleCount);
 }
 
 /******************************************************************************
@@ -73,15 +102,17 @@ void CoordinationNumberModifier::CoordinationAnalysisEngine::perform()
 
 	// Prepare the neighbor list.
 	CutoffNeighborFinder neighborListBuilder;
-	if(!neighborListBuilder.prepare(_cutoff, positions(), cell(), nullptr, *this))
+	if(!neighborListBuilder.prepare(_cutoff, *positions(), cell(), nullptr, this))
 		return;
 
 	size_t particleCount = positions()->size();
 	setProgressValue(0);
 	setProgressMaximum(particleCount / 1000);
 
+	QVector<double> rdfHistogram(_rdfSampleCount, 0.0);
+
 	// Perform analysis on each particle in parallel.
-	std::vector<std::thread> workers;
+	std::vector<QFuture<void>> workers;
 	size_t num_threads = Application::instance()->idealThreadCount();
 	size_t chunkSize = particleCount / num_threads;
 	size_t startIndex = 0;
@@ -91,10 +122,10 @@ void CoordinationNumberModifier::CoordinationAnalysisEngine::perform()
 		if(t == num_threads - 1) {
 			endIndex += particleCount % num_threads;
 		}
-		workers.push_back(std::thread([&neighborListBuilder, startIndex, endIndex, &mutex, this]() {
-			FloatType rdfBinSize = (_cutoff + FLOATTYPE_EPSILON) / _rdfHistogram.size();
-			std::vector<double> threadLocalRDF(_rdfHistogram.size(), 0);
-			int* coordOutput = _coordinationNumbers->dataInt() + startIndex;
+		workers.push_back(QtConcurrent::run([&neighborListBuilder, startIndex, endIndex, &mutex, &rdfHistogram, this]() {
+			FloatType rdfBinSize = (_cutoff + FLOATTYPE_EPSILON) / _rdfSampleCount;
+			std::vector<double> threadLocalRDF(_rdfSampleCount, 0);
+			int* coordOutput = _results->coordinationNumbers()->dataInt() + startIndex;
 			for(size_t i = startIndex; i < endIndex; ++coordOutput) {
 
 				OVITO_ASSERT(*coordOutput == 0);
@@ -115,7 +146,7 @@ void CoordinationNumberModifier::CoordinationAnalysisEngine::perform()
 					return;
 			}
 			std::lock_guard<std::mutex> lock(mutex);
-			auto iter_out = _rdfHistogram.begin();
+			auto iter_out = rdfHistogram.begin();
 			for(auto iter = threadLocalRDF.cbegin(); iter != threadLocalRDF.cend(); ++iter, ++iter_out)
 				*iter_out += *iter;
 		}));
@@ -124,69 +155,52 @@ void CoordinationNumberModifier::CoordinationAnalysisEngine::perform()
 	}
 
 	for(auto& t : workers)
-		t.join();
-}
+		t.waitForFinished();
 
-/******************************************************************************
-* Unpacks the results of the computation engine and stores them in the modifier.
-******************************************************************************/
-void CoordinationNumberModifier::transferComputationResults(ComputeEngine* engine)
-{
-	CoordinationAnalysisEngine* eng = static_cast<CoordinationAnalysisEngine*>(engine);
-	_coordinationNumbers = eng->coordinationNumbers();
-	_rdfY.resize(eng->rdfHistogram().size());
-	_rdfX.resize(eng->rdfHistogram().size());
-	if(!eng->cell().is2D()) {
-		double rho = eng->positions()->size() / eng->cell().volume3D();
-		double constant = 4.0/3.0 * FLOATTYPE_PI * rho * eng->positions()->size();
-		double stepSize = eng->cutoff() / _rdfX.size();
-		for(int i = 0; i < _rdfX.size(); i++) {
+	// Normalize RDF.
+	_results->rdfX().resize(_rdfSampleCount);
+	_results->rdfY().resize(_rdfSampleCount);
+	if(!cell().is2D()) {
+		double rho = positions()->size() / cell().volume3D();
+		double constant = 4.0/3.0 * FLOATTYPE_PI * rho * positions()->size();
+		double stepSize = cutoff() / _rdfSampleCount;
+		for(int i = 0; i < _rdfSampleCount; i++) {
 			double r = stepSize * i;
 			double r2 = r + stepSize;
-			_rdfX[i] = r + 0.5 * stepSize;
-			_rdfY[i] = eng->rdfHistogram()[i] / (constant * (r2*r2*r2 - r*r*r));
+			_results->rdfX()[i] = r + 0.5 * stepSize;
+			_results->rdfY()[i] = rdfHistogram[i] / (constant * (r2*r2*r2 - r*r*r));
 		}
 	}
 	else {
-		double rho = eng->positions()->size() / eng->cell().volume2D();
-		double constant = FLOATTYPE_PI * rho * eng->positions()->size();
-		double stepSize = eng->cutoff() / _rdfX.size();
-		for(int i = 0; i < _rdfX.size(); i++) {
+		double rho = positions()->size() / cell().volume2D();
+		double constant = FLOATTYPE_PI * rho * positions()->size();
+		double stepSize = cutoff() / _rdfSampleCount;
+		for(int i = 0; i < _rdfSampleCount; i++) {
 			double r = stepSize * i;
 			double r2 = r + stepSize;
-			_rdfX[i] = r + 0.5 * stepSize;
-			_rdfY[i] = eng->rdfHistogram()[i] / (constant * (r2*r2 - r*r));
+			_results->rdfX()[i] = r + 0.5 * stepSize;
+			_results->rdfY()[i] = rdfHistogram[i] / (constant * (r2*r2 - r*r));
 		}
 	}
+
+	// Return the results of the compute engine.
+	setResult(std::move(_results));		
 }
 
 /******************************************************************************
-* Lets the modifier insert the cached computation results into the
-* modification pipeline.
+* Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineStatus CoordinationNumberModifier::applyComputationResults(TimePoint time, TimeInterval& validityInterval)
+PipelineFlowState CoordinationNumberModifier::CoordinationAnalysisResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	if(!_coordinationNumbers)
-		throwException(tr("No computation results available."));
+	PipelineFlowState output = input;
+	ParticleOutputHelper poh(modApp->dataset(), output);
+	
+	poh.outputProperty<ParticleProperty>(coordinationNumbers());
 
-	if(inputParticleCount() != _coordinationNumbers->size())
-		throwException(tr("The number of input particles has changed. The stored results have become invalid."));
-
-	outputStandardProperty(_coordinationNumbers.data());
-	return PipelineStatus::Success;
-}
-
-/******************************************************************************
-* Is called when the value of a property of this object has changed.
-******************************************************************************/
-void CoordinationNumberModifier::propertyChanged(const PropertyFieldDescriptor& field)
-{
-	AsynchronousParticleModifier::propertyChanged(field);
-
-	// Recompute modifier results when the parameters have been changed.
-	if(field == PROPERTY_FIELD(cutoff) ||
-			field == PROPERTY_FIELD(numberOfBins))
-		invalidateCachedResults();
+	// Store the RDF data points in the ModifierApplication.
+	static_object_cast<CoordinationNumberModifierApplication>(modApp)->setRDF(rdfX(), rdfY());
+		
+	return output;
 }
 
 OVITO_END_INLINE_NAMESPACE

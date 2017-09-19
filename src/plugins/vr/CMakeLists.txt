@@ -27,7 +27,7 @@ SET(SourceFiles
 	VRWindow.cpp
 	VRRenderingWidget.cpp
 	VRSceneRenderer.cpp
-	VRCacheModifier.cpp
+	#VRCacheModifier.cpp
 	VRSettingsObject.cpp
 	VRSettingsObjectEditor.cpp
 )

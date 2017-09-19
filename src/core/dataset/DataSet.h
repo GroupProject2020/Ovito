@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,12 +23,19 @@
 
 
 #include <core/Core.h>
-#include <core/reference/RefTarget.h>
-#include <core/animation/TimeInterval.h>
+#include <core/oo/RefTarget.h>
+#include <core/oo/PropertyField.h>
+#include <core/dataset/animation/TimeInterval.h>
+#include <core/dataset/UndoStack.h>
+#include <core/dataset/animation/AnimationSettings.h>
+#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/scene/SelectionSet.h>
+#include <core/rendering/RenderSettings.h>
+#include <core/viewport/ViewportConfiguration.h>
 #include <core/utilities/units/UnitsManager.h>
-#include <core/utilities/concurrent/Future.h>
+#include <core/utilities/concurrent/SharedFuture.h>
 #include <core/utilities/concurrent/Promise.h>
-#include "UndoStack.h"
+#include <core/utilities/concurrent/PromiseWatcher.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
 
@@ -45,6 +52,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
  */
 class OVITO_CORE_EXPORT DataSet : public RefTarget
 {
+	OVITO_CLASS(DataSet)
+	Q_OBJECT
+	
 public:
 
 	/// \brief Constructs an empty dataset.
@@ -112,9 +122,9 @@ public:
 	/// \throw Exception on error.
 	bool renderScene(RenderSettings* settings, Viewport* viewport, FrameBuffer* frameBuffer, TaskManager& taskManager);
 
-	/// \brief This function returns a future that is triggered once all data pipelines in the scene become ready.
-	/// \param message An optional messge text to be shown to the user while waiting.
-	Future<void> makeSceneReady(const QString& message = QString());
+	/// \brief Returns a future that is triggered once all data pipelines in the scene 
+	///        have been completely evaluated at the current animation time.
+	SharedFuture<> whenSceneReady();
 
 	/// \brief Saves the dataset to the given file.
 	/// \throw Exception on error.
@@ -125,12 +135,12 @@ public:
 	/// \brief Appends an object to this dataset's list of global objects.
 	void addGlobalObject(RefTarget* target) {
 		if(!_globalObjects.contains(target))
-			_globalObjects.push_back(target);
+			_globalObjects.push_back(this, PROPERTY_FIELD(globalObjects), target);
 	}
 
 	/// \brief Removes an object from this dataset's list of global objects.
 	void removeGlobalObject(int index) {
-		_globalObjects.remove(index);
+		_globalObjects.remove(this, PROPERTY_FIELD(globalObjects), index);
 	}
 
 	/// \brief Looks for a global object of the given type.
@@ -185,28 +195,36 @@ private:
 	/// Returns a viewport configuration that is used as template for new scenes.
 	OORef<ViewportConfiguration> createDefaultViewportConfiguration();
 
-	/// \brief Checks if all scene nodes are ready and their data pipelines can provide fully computed results.
-	bool isSceneReady(TimePoint time) const;
+	/// Makes sure all data pipeline have been evaluated.
+	void makeSceneReady(bool forceReevaluation);
+			
+private Q_SLOTS:
 
+	/// Is called when the pipeline evaluation of a scene node has finished.
+	void pipelineEvaluationFinished();
+
+	/// Is called whenver viewport updates are resumed.
+	void onViewportUpdatesResumed();
+				
 private:
 
 	/// The configuration of the viewports.
-	DECLARE_REFERENCE_FIELD(ViewportConfiguration, viewportConfig);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(ViewportConfiguration, viewportConfig, setViewportConfig, PROPERTY_FIELD_NO_CHANGE_MESSAGE|PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
 
 	/// Current animation settings.
-	DECLARE_REFERENCE_FIELD(AnimationSettings, animationSettings);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(AnimationSettings, animationSettings, setAnimationSettings, PROPERTY_FIELD_NO_CHANGE_MESSAGE|PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
 
 	/// Root node of the scene node tree.
-	DECLARE_REFERENCE_FIELD(SceneRoot, sceneRoot);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SceneRoot, sceneRoot, setSceneRoot, PROPERTY_FIELD_NO_CHANGE_MESSAGE|PROPERTY_FIELD_ALWAYS_DEEP_COPY);
 
 	/// The current node selection set.
-	DECLARE_REFERENCE_FIELD(SelectionSet, selection);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SelectionSet, selection, setSelection, PROPERTY_FIELD_NO_CHANGE_MESSAGE|PROPERTY_FIELD_ALWAYS_DEEP_COPY);
 
 	/// The settings used when rendering the scene.
-	DECLARE_REFERENCE_FIELD(RenderSettings, renderSettings);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(RenderSettings, renderSettings, setRenderSettings, PROPERTY_FIELD_NO_CHANGE_MESSAGE|PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
 
 	/// Global data managed by plugins.
-	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD(RefTarget, globalObjects, setGlobalObjects);
+	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD_FLAGS(RefTarget, globalObjects, setGlobalObjects, PROPERTY_FIELD_NO_CHANGE_MESSAGE|PROPERTY_FIELD_ALWAYS_CLONE|PROPERTY_FIELD_ALWAYS_DEEP_COPY);
 
 	/// The file path this DataSet has been saved to.
 	QString _filePath;
@@ -217,14 +235,29 @@ private:
 	/// The manager of ParameterUnit objects.
 	UnitsManager _unitsManager;
 
-	/// Active request waiting for the scene to become ready.
-	PromisePtr<void> _sceneReadyRequest;
-
 	/// This signal/slot connection updates the viewports when the animation time changes.
 	QMetaObject::Connection _updateViewportOnTimeChangeConnection;
 
-	Q_OBJECT
-	OVITO_OBJECT
+	/// The promise of the scene becoming ready.
+	Promise<> _sceneReadyPromise;
+
+	/// The future of the scene becoming ready.
+	SharedFuture<> _sceneReadyFuture;
+
+	/// The last animation time at which the scene was made ready.
+	TimePoint _sceneReadyTime;
+		
+	/// The watcher object that is used to monitor the evaluation of data pipelines in the scene.
+	PromiseWatcher _pipelineEvaluationWatcher;
+
+	/// The future for the results of the pipeline evaluation being in progress.
+	SharedFuture<PipelineFlowState> _pipelineEvaluationFuture;
+
+	/// The animation time at which the scene's pipelines are currently being evaluated.
+	TimePoint _pipelineEvaluationTime;
+
+	/// The current scene node whose pipeline is being evaluated.
+	QPointer<ObjectNode> _currentEvaluationNode;
 };
 
 OVITO_END_INLINE_NAMESPACE

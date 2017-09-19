@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,11 +21,11 @@
 
 #include <core/Core.h>
 #include <core/dataset/DataSetContainer.h>
-#include <core/dataset/importexport/FileImporter.h>
 #include <core/dataset/UndoStack.h>
-#include <core/animation/AnimationSettings.h>
-#include <core/scene/SceneRoot.h>
-#include <core/scene/SelectionSet.h>
+#include <core/dataset/animation/AnimationSettings.h>
+#include <core/dataset/io/FileImporter.h>
+#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/scene/SelectionSet.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/rendering/RenderSettings.h>
 #include <core/utilities/io/ObjectSaveStream.h>
@@ -34,15 +34,24 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
 
-IMPLEMENT_OVITO_OBJECT(DataSetContainer, RefMaker);
-DEFINE_FLAGS_REFERENCE_FIELD(DataSetContainer, currentSet, "CurrentSet", DataSet, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
+IMPLEMENT_OVITO_CLASS(DataSetContainer);
+DEFINE_REFERENCE_FIELD(DataSetContainer, currentSet);
 
 /******************************************************************************
 * Initializes the dataset manager.
 ******************************************************************************/
-DataSetContainer::DataSetContainer() : RefMaker(nullptr)
+DataSetContainer::DataSetContainer() : RefMaker(), _taskManager(*this)
 {
-	INIT_PROPERTY_FIELD(currentSet);
+}
+
+/******************************************************************************
+* Destructor.
+******************************************************************************/
+DataSetContainer::~DataSetContainer()
+{
+	setCurrentSet(nullptr);
+	taskManager().cancelAllAndWait();
+	clearAllReferences();
 }
 
 /******************************************************************************

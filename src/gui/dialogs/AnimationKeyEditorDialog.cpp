@@ -25,7 +25,7 @@
 #include <gui/properties/PropertiesPanel.h>
 #include <gui/properties/NumericalParameterUI.h>
 #include <gui/dialogs/AnimationSettingsDialog.h>
-#include <core/animation/controller/KeyframeController.h>
+#include <core/dataset/animation/controller/KeyframeController.h>
 #include <core/utilities/units/UnitsManager.h>
 #include "AnimationKeyEditorDialog.h"
 

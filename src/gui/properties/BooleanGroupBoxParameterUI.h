@@ -33,6 +33,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 ******************************************************************************/
 class OVITO_GUI_EXPORT BooleanGroupBoxParameterUI : public PropertyParameterUI
 {
+	Q_OBJECT
+	OVITO_CLASS(BooleanGroupBoxParameterUI)
+	
 public:
 
 	/// Constructor for a Qt property.
@@ -83,11 +86,6 @@ protected:
 
 	/// A container widget where child widgets should be inserted into.
 	QWidget* _childContainer;
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

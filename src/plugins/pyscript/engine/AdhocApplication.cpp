@@ -22,7 +22,7 @@
 #include <plugins/pyscript/PyScript.h>
 #include <core/dataset/DataSetContainer.h>
 #include <core/dataset/UndoStack.h>
-#include <core/plugins/PluginManager.h>
+#include <core/app/PluginManager.h>
 #include <opengl_renderer/OpenGLSceneRenderer.h>
 #include "AdhocApplication.h"
 

@@ -23,8 +23,8 @@
 #include <core/dataset/DataSetContainer.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/viewport/ViewportWindowInterface.h>
-#include <core/app/Application.h>
 #include <core/app/StandaloneApplication.h>
+#include <gui/app/GuiApplicationService.h>
 #include <gui/actions/ActionManager.h>
 #include <gui/widgets/animation/AnimationTimeSpinner.h>
 #include <gui/widgets/animation/AnimationFramesToolButton.h>
@@ -35,7 +35,6 @@
 #include <gui/viewport/input/ViewportInputManager.h>
 #include <gui/viewport/ViewportWindow.h>
 #include <gui/rendering/ViewportSceneRenderer.h>
-#include <gui/plugins/autostart/GuiAutoStartObject.h>
 #include <opengl_renderer/OpenGLSceneRenderer.h>
 #include "MainWindow.h"
 #include "ViewportsPanel.h"
@@ -65,10 +64,10 @@ MainWindow::MainWindow() : _datasetContainer(this)
 	// Create actions.
 	_actionManager = new ActionManager(this);
 
-	// Let GUI auto-start objects register their actions.
-	for(const auto& obj : Application::instance()->autostartObjects()) {
-		if(auto gui_obj = dynamic_object_cast<GuiAutoStartObject>(obj))
-			gui_obj->registerActions(*_actionManager);
+	// Let GUI application servives register their actions.
+	for(const auto& service : StandaloneApplication::instance()->applicationServices()) {
+		if(auto gui_service = dynamic_object_cast<GuiApplicationService>(service))
+			gui_service->registerActions(*_actionManager);
 	}
 
 	// Create the main menu
@@ -320,10 +319,10 @@ void MainWindow::createMainMenu()
 #endif
 	helpMenu->addAction(actionManager()->getAction(ACTION_HELP_ABOUT));
 
-	// Let GUI auto-start objects add their actions to the main menu.
-	for(const auto& obj : StandaloneApplication::instance()->autostartObjects()) {
-		if(auto gui_obj = dynamic_object_cast<GuiAutoStartObject>(obj))
-			gui_obj->addActionsToMenu(*_actionManager, menuBar);
+	// Let GUI application services add their actions to the main menu.
+	for(const auto& service : StandaloneApplication::instance()->applicationServices()) {
+		if(auto gui_service = dynamic_object_cast<GuiApplicationService>(service))
+			gui_service->addActionsToMenu(*_actionManager, menuBar);
 	}
 
 	setMenuBar(menuBar);

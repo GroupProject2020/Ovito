@@ -21,7 +21,7 @@ print("  radius: {}".format(modifier.radius))
 modifier.radius = 3.8
 
 print("  smoothing_level: {}".format(modifier.smoothing_level))
-modifier.smoothing_level = 1
+modifier.smoothing_level = 0
 
 print("  cap_color: {}".format(modifier.mesh_display.cap_color))
 print("  cap_transparency: {}".format(modifier.mesh_display.cap_transparency))
@@ -39,8 +39,20 @@ print(node.output)
 
 surface_mesh = node.output.surface
 
+assert(surface_mesh.locate_point((0,0,0)) == 1)
+assert(surface_mesh.locate_point((82.9433, -43.5068, 26.4005), eps=1e-1) == 0)
+assert(surface_mesh.locate_point((80.0, -47.2837, 26.944)) == -1)
+
+surface_mesh.get_cutting_planes()
+surface_mesh.get_face_adjacency()
+surface_mesh.get_faces()
+surface_mesh.get_vertices()
+surface_mesh.set_cutting_planes([[0,1,3,0.4]])
+assert(len(surface_mesh.get_cutting_planes()) == 1)
+
 # Backward compatibility with Ovito 2.8.2:
 surface_mesh.export_vtk("_surface_mesh.vtk", node.output.cell)
 surface_mesh.export_cap_vtk("_surfacecap_mesh.vtk", node.output.cell)
 os.remove("_surface_mesh.vtk")
 os.remove("_surfacecap_mesh.vtk")
+

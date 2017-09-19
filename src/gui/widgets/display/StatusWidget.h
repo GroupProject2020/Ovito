@@ -23,7 +23,7 @@
 
 
 #include <gui/GUI.h>
-#include <core/scene/pipeline/PipelineStatus.h>
+#include <core/dataset/pipeline/PipelineStatus.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Widgets)
 

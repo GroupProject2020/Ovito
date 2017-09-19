@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <gui/GUI.h>
-#include <core/plugins/PluginManager.h>
+#include <core/app/PluginManager.h>
 #include <core/dataset/DataSetContainer.h>
 #include <gui/mainwin/MainWindow.h>
 #include "UtilityCommandPage.h"
@@ -59,12 +59,12 @@ UtilityCommandPage::UtilityCommandPage(MainWindow* mainWindow, QWidget* parent) 
 	utilitiesButtonGroup = new QButtonGroup(utilityListPanel);
 	utilitiesButtonGroup->setExclusive(false);
 
-	auto utilityClasses = PluginManager::instance().listClasses(UtilityApplet::OOType);
-	std::sort(utilityClasses.begin(), utilityClasses.end(), [](const OvitoObjectType* a, const OvitoObjectType* b) {
+	auto utilityClasses = PluginManager::instance().listClasses(UtilityApplet::OOClass());
+	std::sort(utilityClasses.begin(), utilityClasses.end(), [](OvitoClassPtr a, OvitoClassPtr b) {
 		return a->displayName().compare(b->displayName()) < 0;
 	});
 
-	for(const OvitoObjectType* descriptor : utilityClasses) {
+	for(OvitoClassPtr descriptor : utilityClasses) {
    		QString displayName = descriptor->displayName();
 
 		// Create a button that activates the utility.
@@ -86,10 +86,10 @@ UtilityCommandPage::UtilityCommandPage(MainWindow* mainWindow, QWidget* parent) 
 ******************************************************************************/
 void UtilityCommandPage::onUtilityButton(QAbstractButton* button)
 {
-	const OvitoObjectType* descriptor = button->property("ClassDescriptor").value<const OvitoObjectType*>();
+	OvitoClassPtr descriptor = button->property("ClassDescriptor").value<OvitoClassPtr>();
 	OVITO_CHECK_POINTER(descriptor);
 
-	if(button->isChecked() && currentUtility && currentUtility->getOOType() == *descriptor) {
+	if(button->isChecked() && currentUtility && currentUtility->getOOClass() == *descriptor) {
 		closeUtility();
 		currentButton->setChecked(false);
 		return;
@@ -119,7 +119,7 @@ void UtilityCommandPage::closeUtility()
 	if(!currentUtility) return;
 	OVITO_CHECK_OBJECT_POINTER(currentUtility);
 	OVITO_CHECK_POINTER(currentButton);
-	OVITO_ASSERT(currentButton->property("ClassDescriptor").value<const OvitoObjectType*>() == &currentUtility->getOOType());
+	OVITO_ASSERT(currentButton->property("ClassDescriptor").value<OvitoClassPtr>() == &currentUtility->getOOClass());
 
 	// Close the utility.
 	currentUtility->closeUtility(rolloutContainer);

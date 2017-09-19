@@ -23,7 +23,7 @@
 
 
 #include <core/Core.h>
-#include <core/dataset/importexport/FileExporter.h>
+#include <core/dataset/io/FileExporter.h>
 #include "../renderer/POVRayRenderer.h"
 
 namespace Ovito { namespace POVRay {
@@ -33,12 +33,15 @@ namespace Ovito { namespace POVRay {
  */
 class OVITO_POVRAY_EXPORT POVRayExporter : public FileExporter
 {
+	Q_OBJECT
+	OVITO_CLASS(POVRayExporter)
+	
 public:
 
 	/// \brief Constructs a new instance of this class.
 	Q_INVOKABLE POVRayExporter(DataSet* dataset);
 
-	/// \brief Selects the natural scene nodes to be exported by this exporter under normal circumstances.
+	/// \brief Selects the nodes from the scene to be exported by this exporter if no specific set of nodes was provided.
 	virtual void selectStandardOutputData() override; 
 
 	/// \brief This is called once for every output file to be written and before exportData() is called.
@@ -75,9 +78,6 @@ private:
 
 	/// The internal renderer, which is responsible for streaming the scene to a POVRay scene file.
 	OORef<POVRayRenderer> _renderer;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 }	// End of namespace

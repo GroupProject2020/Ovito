@@ -114,7 +114,7 @@ boost::optional<ClusterVector> CrystalPathFinder::findPath(int atomIndex1, int a
 				pathVector.localVec() += step.localVec();
 			else if(pathVector.cluster() != nullptr) {
 				OVITO_ASSERT(step.cluster() != nullptr);
-				ClusterTransition* transition = clusterGraph().determineClusterTransition(step.cluster(), pathVector.cluster());
+				ClusterTransition* transition = clusterGraph()->determineClusterTransition(step.cluster(), pathVector.cluster());
 				if(!transition)
 					continue;	// Failed to concatenate cluster vectors.
 				pathVector.localVec() += transition->transform(step.localVec());

@@ -33,6 +33,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export)
  */
 class OVITO_PARTICLES_EXPORT FileColumnParticleExporter : public ParticleExporter
 {
+	Q_OBJECT
+	OVITO_CLASS(FileColumnParticleExporter)
+	
 protected:
 
 	/// \brief Constructs a new instance of this class.
@@ -58,9 +61,6 @@ private:
 
 	/// The mapping of particle properties to output file columns.
 	OutputColumnMapping _columnMapping;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

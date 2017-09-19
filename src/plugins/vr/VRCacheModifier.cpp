@@ -24,7 +24,7 @@
 
 namespace VRPlugin {
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(VRCacheModifier, Modifier);
+
 
 /******************************************************************************
 * This modifies the input object in a specific way.

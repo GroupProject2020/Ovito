@@ -21,6 +21,7 @@
 
 #include <core/Core.h>
 #include <core/utilities/concurrent/Future.h>
+#include <core/utilities/concurrent/TaskManager.h>
 #include <core/dataset/DataSetContainer.h>
 #include "FileManager.h"
 #include "SftpJob.h"
@@ -30,7 +31,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPAC
 /******************************************************************************
 * Makes a file available on this computer.
 ******************************************************************************/
-Future<QString> FileManager::fetchUrl(DataSetContainer& container, const QUrl& url)
+SharedFuture<QString> FileManager::fetchUrl(TaskManager& taskManager, const QUrl& url)
 {
 	if(url.isLocalFile()) {
 		// Nothing to do to fetch local files. Simply return a finished Future object.
@@ -38,9 +39,9 @@ Future<QString> FileManager::fetchUrl(DataSetContainer& container, const QUrl& u
 		// But first check if the file exists.
 		QString filePath = url.toLocalFile();
 		if(QFileInfo(url.toLocalFile()).exists() == false)
-			return Future<QString>::createFailed(Exception(tr("File does not exist:\n%1").arg(filePath), &container));
+			return Future<QString>::createFailed(Exception(tr("File does not exist:\n%1").arg(filePath), &taskManager.datasetContainer()));
 
-		return Future<QString>::createImmediate(filePath, tr("Loading file %1").arg(filePath));
+		return filePath;
 	}
 	else if(url.scheme() == QStringLiteral("sftp")) {
 		QMutexLocker lock(&_mutex);
@@ -50,36 +51,41 @@ Future<QString> FileManager::fetchUrl(DataSetContainer& container, const QUrl& u
 		// Check if requested URL is already in the cache.
 		auto cacheEntry = _cachedFiles.find(normalizedUrl);
 		if(cacheEntry != _cachedFiles.end()) {
-			return Future<QString>::createImmediate(cacheEntry.value()->fileName(), tr("Loading URL %1").arg(url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+			return cacheEntry.value()->fileName();
 		}
 
 		// Check if requested URL is already being loaded.
 		auto inProgressEntry = _pendingFiles.find(normalizedUrl);
 		if(inProgressEntry != _pendingFiles.end()) {
-			return inProgressEntry.value();
+			return inProgressEntry->second;
 		}
 
 		// Start the background download job.
-		Future<QString> future = Future<QString>::createWithPromise();
-		_pendingFiles.insert(normalizedUrl, future);
-		new SftpDownloadJob(url, future.promise());
-		container.taskManager().registerTask(future);
+		Promise<QString> promise = Promise<QString>::createSynchronous(taskManager, false, true);
+		SharedFuture<QString> future(promise.future());
+		_pendingFiles.emplace(normalizedUrl, future);
+		new SftpDownloadJob(url, std::move(promise));
 		return future;
 	}
-	else throw Exception(tr("URL scheme not supported. The program supports only the sftp:// scheme and local file paths."), &container);
+	else {
+		return Future<QString>::createFailed(Exception(tr("URL scheme not supported. The program supports only the sftp:// scheme and local file paths."), &taskManager.datasetContainer()));
+	}
 }
 
 /******************************************************************************
 * Lists all files in a remote directory.
 ******************************************************************************/
-Future<QStringList> FileManager::listDirectoryContents(const QUrl& url)
+Future<QStringList> FileManager::listDirectoryContents(TaskManager& taskManager, const QUrl& url)
 {
 	if(url.scheme() == QStringLiteral("sftp")) {
-		Future<QStringList> future = Future<QStringList>::createWithPromise();
-		new SftpListDirectoryJob(url, future.promise());
+		Promise<QStringList> promise = Promise<QStringList>::createSynchronous(taskManager, false, false);
+		Future<QStringList> future = promise.future();
+		new SftpListDirectoryJob(url, std::move(promise));
 		return future;
 	}
-	else throw Exception(tr("URL scheme not supported. The program supports only the sftp:// scheme and local file paths."));
+	else {
+		return Future<QStringList>::createFailed(Exception(tr("URL scheme not supported. The program supports only the sftp:// scheme and local file paths."), &taskManager.datasetContainer()));
+	}
 }
 
 /******************************************************************************

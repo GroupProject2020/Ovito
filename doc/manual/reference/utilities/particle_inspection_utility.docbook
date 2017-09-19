@@ -28,7 +28,7 @@
    <para>
       The expression text box allows you to enter an expression to select certain particles based on their properties
       instead of picking them using the mouse. The syntax of the Boolean expression must follow
-      the same rules as for the <link linkend="particles.modifiers.expression_select">Expression Select</link> modifier.
+      the same rules as for the <link linkend="particles.modifiers.expression_select">Expression Selection</link> modifier.
       Note that, for performance reasons, the utility only displays the properties of the first ten particles that match the expression.
    </para>
    <para>

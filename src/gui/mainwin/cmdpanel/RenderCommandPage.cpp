@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <gui/GUI.h>
-#include <core/plugins/PluginManager.h>
+#include <core/app/PluginManager.h>
 #include <gui/actions/ActionManager.h>
 #include <gui/mainwin/MainWindow.h>
 #include <core/rendering/RenderSettings.h>

@@ -1,11 +1,10 @@
 """
-This module contains classes related to data visualization and rendering.
+This module contains classes related to :ref:`data visualization and image rendering <rendering_intro>`.
 
 **Rendering:**
 
   * :py:class:`RenderSettings`
   * :py:class:`Viewport`
-  * :py:class:`ViewportConfiguration`
 
 **Render engines:**
 
@@ -26,6 +25,7 @@ This module contains classes related to data visualization and rendering.
 
 **Viewport overlays:**
 
+  * :py:class:`ColorLegendOverlay`
   * :py:class:`CoordinateTripodOverlay`
   * :py:class:`PythonViewportOverlay`
   * :py:class:`TextLabelOverlay`
@@ -41,11 +41,12 @@ from ..plugins.PyScript.Rendering import *
 from ..plugins.PyScript.Viewport import *
 
 __all__ = ['RenderSettings', 'Viewport', 'ViewportConfiguration', 'OpenGLRenderer', 'Display',
-        'CoordinateTripodOverlay', 'PythonViewportOverlay', 'TextLabelOverlay']
+        'CoordinateTripodOverlay', 'PythonViewportOverlay', 'TextLabelOverlay', 'SimulationCellDisplay',
+        'ColorLegendOverlay']
 
 def _get_RenderSettings_custom_range(self):
     """ 
-    Specifies the range of animation frames to render if :py:attr:`.range` is ``CUSTOM_INTERVAL``.
+    Specifies the range of animation frames to render if :py:attr:`.range` is set to ``CUSTOM_INTERVAL``.
     
     :Default: ``(0,100)`` 
     """
@@ -75,14 +76,14 @@ def _get_RenderSettings_filename(self):
     
     :Default: ``None``
     """
-    if self.saveToFile and self.imageFilename: return self.imageFilename
+    if self.save_to_file and self.output_filename: return self.output_filename
     else: return None
 def _set_RenderSettings_filename(self, filename):
     if filename:
-        self.imageFilename = filename
-        self.saveToFile = True
+        self.output_filename = filename
+        self.save_to_file = True
     else:
-        self.saveToFile = False
+        self.save_to_file = False
 RenderSettings.filename = property(_get_RenderSettings_filename, _set_RenderSettings_filename)
 
 # Implement FrameBuffer.image property (requires conversion to SIP).

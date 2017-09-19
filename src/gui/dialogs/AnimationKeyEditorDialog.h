@@ -24,7 +24,7 @@
 
 #include <gui/GUI.h>
 #include <core/dataset/UndoStack.h>
-#include <core/reference/RefTargetListener.h>
+#include <core/oo/RefTargetListener.h>
 #include <gui/properties/ParameterUI.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)

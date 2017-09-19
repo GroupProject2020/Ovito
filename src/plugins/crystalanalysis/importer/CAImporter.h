@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -28,8 +28,8 @@
 #include <plugins/crystalanalysis/data/DislocationNetwork.h>
 #include <plugins/crystalanalysis/objects/partition_mesh/PartitionMesh.h>
 #include <plugins/crystalanalysis/objects/slip_surface/SlipSurface.h>
-#include <plugins/particles/import/ParticleFrameLoader.h>
 #include <plugins/particles/import/ParticleImporter.h>
+#include <plugins/particles/import/ParticleFrameData.h>
 #include <core/utilities/mesh/HalfEdgeMesh.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
@@ -42,9 +42,7 @@ class OVITO_CRYSTALANALYSIS_EXPORT CAImporter : public ParticleImporter
 public:
 
 	/// \brief Constructs a new instance of this class.
-	Q_INVOKABLE CAImporter(DataSet* dataset) : ParticleImporter(dataset), _loadParticles(false) {
-		INIT_PROPERTY_FIELD(loadParticles);
-	}
+	Q_INVOKABLE CAImporter(DataSet* dataset) : ParticleImporter(dataset) {}
 
 	/// \brief Returns the file filter that specifies the files that can be imported by this service.
 	virtual QString fileFilter() override { return QString("*"); }
@@ -59,30 +57,22 @@ public:
 	virtual QString objectTitle() override { return tr("CA File"); }
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
-	virtual std::shared_ptr<FrameLoader> createFrameLoader(const Frame& frame, bool isNewlySelectedFile) override {
-		return std::make_shared<CrystalAnalysisFrameLoader>(dataset()->container(), frame, _loadParticles);
+	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
+		return std::make_shared<FrameLoader>(frame, localFilename);
+	}
+
+	/// Creates an asynchronous frame discovery object that scans the input file for contained animation frames.
+	virtual std::shared_ptr<FileSourceImporter::FrameFinder> createFrameFinder(const QUrl& sourceUrl, const QString& localFilename) override {
+		return std::make_shared<FrameFinder>(sourceUrl, localFilename);
 	}
 
 protected:
 
-	/// The format-specific task object that is responsible for reading an input file in the background.
-	class CrystalAnalysisFrameLoader : public ParticleFrameLoader
+	/// The format-specific data holder.
+	class CrystalAnalysisFrameData : public ParticleFrameData
 	{
 	public:
-
-		/// Constructor.
-		CrystalAnalysisFrameLoader(DataSetContainer* container, const FileSourceImporter::Frame& frame, bool loadParticles)
-			: ParticleFrameLoader(container, frame, true), _loadParticles(loadParticles) {}
-
-		/// Inserts the data loaded by perform() into the provided container object. This function is
-		/// called by the system from the main thread after the asynchronous loading task has finished.
-		virtual void handOver(CompoundObject* container) override;
-
-	protected:
-
-		/// Parses the given input file and stores the data in this container object.
-		virtual void parseFile(CompressedTextReader& stream) override;
-
+		
 		struct BurgersVectorFamilyInfo {
 			int id = 0;
 			QString name;
@@ -100,50 +90,111 @@ protected:
 			QVector<BurgersVectorFamilyInfo> burgersVectorFamilies;
 		};
 
-		/// The triangle mesh of the defect surface.
-		QExplicitlySharedDataPointer<HalfEdgeMesh<>> _defectSurface;
+		
+	public:
+
+		/// Inherit constructor from base class.
+		using ParticleFrameData::ParticleFrameData;
+		
+		/// Inserts the loaded data into the provided pipeline state structure. This function is
+		/// called by the system from the main thread after the asynchronous loading task has finished.
+		virtual PipelineFlowState handOver(DataSet* dataset, const PipelineFlowState& existing, bool isNewFile) override;
+
+		void addPattern(PatternInfo pattern) {
+			_patterns.push_back(std::move(pattern));
+		}
+
+		Cluster* createCluster(int patternId) {
+			if(!_clusterGraph) _clusterGraph = std::make_shared<ClusterGraph>();
+			return _clusterGraph->createCluster(patternId);
+		}
+
+		const std::shared_ptr<ClusterGraph>& clusterGraph() const {
+			OVITO_ASSERT(_clusterGraph);
+			return _clusterGraph;
+		}
+
+		const std::shared_ptr<DislocationNetwork>& dislocations() {
+			if(!_dislocations) _dislocations = std::make_shared<DislocationNetwork>(clusterGraph());
+			return _dislocations;
+		}
+
+		const std::shared_ptr<HalfEdgeMesh<>>& defectSurface() {
+			if(!_defectSurface) _defectSurface = std::make_shared<HalfEdgeMesh<>>();
+			return _defectSurface;
+		}
+
+		const std::shared_ptr<PartitionMeshData>& partitionMesh() {
+			if(!_partitionMesh) _partitionMesh = std::make_shared<PartitionMeshData>();
+			return _partitionMesh;
+		}
+
+		const std::shared_ptr<SlipSurfaceData>& slipSurface() {
+			if(!_slipSurface) _slipSurface = std::make_shared<SlipSurfaceData>();
+			return _slipSurface;
+		}
+		
+		const std::shared_ptr<SlipSurfaceData>& stackingFaults() {
+			if(!_stackingFaults) _stackingFaults = std::make_shared<SlipSurfaceData>();
+			return _stackingFaults;
+		}
+
+	protected:
 
 		/// The structure pattern catalog.
 		QVector<PatternInfo> _patterns;
 
 		/// The cluster list.
-		QExplicitlySharedDataPointer<ClusterGraph> _clusterGraph;
+		std::shared_ptr<ClusterGraph> _clusterGraph;
 
 		/// The dislocation segments.
-		QExplicitlySharedDataPointer<DislocationNetwork> _dislocations;
+		std::shared_ptr<DislocationNetwork> _dislocations;
 
+		/// The triangle mesh of the defect surface.
+		std::shared_ptr<HalfEdgeMesh<>> _defectSurface;
+		
 		/// The partition mesh.
-		QExplicitlySharedDataPointer<PartitionMeshData> _partitionMesh;
+		std::shared_ptr<PartitionMeshData> _partitionMesh;
 
 		/// The slip surfaces.
-		QExplicitlySharedDataPointer<SlipSurfaceData> _slipSurface;
+		std::shared_ptr<SlipSurfaceData> _slipSurface;
 
 		/// The stacking faults.
-		QExplicitlySharedDataPointer<SlipSurfaceData> _stackingFaults;
-
-		/// Controls whether particles should be loaded too.
-		bool _loadParticles;
-
-		/// This is the sub-task task that loads the particles.
-		std::shared_ptr<FileSourceImporter::FrameLoader> _particleLoadTask;
+		std::shared_ptr<SlipSurfaceData> _stackingFaults;
 	};
 
-	/// This method is called when the scene node for the FileSource is created.
-	virtual void prepareSceneNode(ObjectNode* node, FileSource* importObj) override;
+	/// The format-specific task object that is responsible for reading an input file in the background.
+	class FrameLoader : public FileSourceImporter::FrameLoader
+	{
+	public:
 
-	/// \brief Is called when the value of a property of this object has changed.
-	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
+		/// Inherit constructor from base class.
+		using FileSourceImporter::FrameLoader::FrameLoader;
 
-	/// \brief Scans the given input file to find all contained simulation frames.
-	virtual void scanFileForTimesteps(PromiseBase& promise, QVector<FileSourceImporter::Frame>& frames, const QUrl& sourceUrl, CompressedTextReader& stream) override;
+	protected:
+
+		/// Loads the frame data from the given file.
+		virtual void loadFile(QFile& file) override;
+	};
+
+	/// The format-specific task object that is responsible for scanning the input file for animation frames. 
+	class FrameFinder : public FileSourceImporter::FrameFinder
+	{
+	public:
+
+		/// Inherit constructor from base class.
+		using FileSourceImporter::FrameFinder::FrameFinder;
+
+	protected:
+
+		/// Scans the given file for source frames.
+		virtual void discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames) override;	
+	};
 
 private:
 
-	/// Controls whether the associated particle file should be loaded too.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, loadParticles, setLoadParticles);
-
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 };
 
 }	// End of namespace

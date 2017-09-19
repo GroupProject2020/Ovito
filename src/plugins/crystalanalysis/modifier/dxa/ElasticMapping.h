@@ -25,10 +25,9 @@
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/util/DelaunayTessellation.h>
 #include <core/utilities/MemoryPool.h>
-#include <core/utilities/concurrent/Promise.h>
 #include <plugins/crystalanalysis/data/Cluster.h>
 #include <plugins/crystalanalysis/data/ClusterGraph.h>
-#include <plugins/particles/data/BondsStorage.h>
+#include <plugins/particles/objects/BondsStorage.h>
 #include "StructureAnalysis.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
@@ -101,23 +100,16 @@ public:
 	const DelaunayTessellation& tessellation() const { return _tessellation; }
 
 	/// Returns the cluster graph.
-	const ClusterGraph& clusterGraph() const { return _clusterGraph; }
-
-	/// Returns the cluster graph.
-	ClusterGraph& clusterGraph() { return _clusterGraph; }
+	const std::shared_ptr<ClusterGraph>& clusterGraph() const { return _clusterGraph; }
 
 	/// Builds the list of edges in the tetrahedral tessellation.
-	bool generateTessellationEdges(PromiseBase& promise);
+	bool generateTessellationEdges(PromiseState& promise);
 
 	/// Assigns each tessellation vertex to a cluster.
-	bool assignVerticesToClusters(PromiseBase& promise);
+	bool assignVerticesToClusters(PromiseState& promise);
 
 	/// Determines the ideal vector corresponding to each edge of the tessellation.
-	bool assignIdealVectorsToEdges(bool reconstructEdgeVectors, int crystalPathSteps, PromiseBase& promise);
-
-	/// Tries to determine the ideal vectors of tessellation edges, which haven't
-	/// been assigned one during the first phase.
-	bool reconstructIdealEdgeVectors(PromiseBase& promise);
+	bool assignIdealVectorsToEdges(int crystalPathSteps, PromiseState& promise);
 
 	/// Determines whether the elastic mapping from the physical configuration
 	/// of the crystal to the imaginary, stress-free configuration is compatible
@@ -126,7 +118,7 @@ public:
 	bool isElasticMappingCompatible(DelaunayTessellation::CellHandle cell) const;
 
 	/// Returns the list of edges, which don't have a lattice vector.
-	BondsStorage* unassignedEdges() const { return _unassignedEdges.data(); }
+	const BondsPtr& unassignedEdges() const { return _unassignedEdges; }
 
 	/// Returns the cluster to which a vertex of the tessellation has been assigned (may be NULL).
 	Cluster* clusterOfVertex(int vertexIndex) const {
@@ -171,7 +163,7 @@ private:
 	DelaunayTessellation& _tessellation;
 
 	/// The cluster graph.
-	ClusterGraph& _clusterGraph;
+	const std::shared_ptr<ClusterGraph> _clusterGraph;
 
 	/// Stores the heads of the linked lists of leaving/arriving edges of each vertex.
 	std::vector<std::pair<TessellationEdge*,TessellationEdge*>> _vertexEdges;
@@ -186,7 +178,7 @@ private:
 	std::vector<Cluster*> _vertexClusters;
 
 	/// List of edges, which don't have a lattice vector.
-	QExplicitlySharedDataPointer<BondsStorage> _unassignedEdges;
+	BondsPtr _unassignedEdges;
 };
 
 }	// End of namespace

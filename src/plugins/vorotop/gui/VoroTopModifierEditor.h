@@ -24,14 +24,14 @@
 
 #include <plugins/vorotop/VoroTopPlugin.h>
 #include <plugins/vorotop/VoroTopModifier.h>
-#include <plugins/particles/gui/modifier/ParticleModifierEditor.h>
+#include <gui/properties/ModifierPropertiesEditor.h>
 
 namespace Ovito { namespace VoroTop {
 
 /**
  * A properties editor for the VoroTopModifier class.
  */
-class VoroTopModifierEditor : public ParticleModifierEditor
+class VoroTopModifierEditor : public ModifierPropertiesEditor
 {
 public:
 
@@ -51,7 +51,7 @@ private Q_SLOTS:
 private:
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 };
 
 }	// End of namespace

@@ -4,6 +4,10 @@
 Modifiers
 ===================================
 
+.. warning::
+   This section of manual is out of date! It has not been updated yet to reflect the changes made in the current
+   development version of OVITO.
+
 Modifiers are objects that make up a node's modification pipeline.
 They modify, filter, or extend the data that flows down the pipeline from the 
 :py:class:`~ovito.io.FileSource` to the node's output cache, which is an instance of the 

@@ -20,15 +20,14 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticlePropertyObject.h>
-#include <plugins/particles/objects/ParticleTypeProperty.h>
-#include <plugins/particles/objects/SimulationCellObject.h>
-#include <core/utilities/concurrent/Task.h>
+#include <plugins/particles/objects/ParticleProperty.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <core/utilities/concurrent/Promise.h>
 #include "POSCARExporter.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(POSCARExporter, ParticleExporter);
+IMPLEMENT_OVITO_CLASS(POSCARExporter);
 
 /******************************************************************************
 * Writes the particles of one animation frame to the current output file.
@@ -40,11 +39,11 @@ bool POSCARExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 	if(!getParticleData(sceneNode, time, state, taskManager))
 		return false;
 
-	SynchronousTask exportTask(taskManager);
+	Promise<> exportTask = Promise<>::createSynchronous(taskManager, true, true);
 
 	// Get particle positions and velocities.
-	ParticlePropertyObject* posProperty = ParticlePropertyObject::findInState(state, ParticleProperty::PositionProperty);
-	ParticlePropertyObject* velocityProperty = ParticlePropertyObject::findInState(state, ParticleProperty::VelocityProperty);
+	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
+	ParticleProperty* velocityProperty = ParticleProperty::findInState(state, ParticleProperty::VelocityProperty);
 
 	// Get simulation cell info.
 	SimulationCellObject* simulationCell = state.findObject<SimulationCellObject>();
@@ -61,7 +60,7 @@ bool POSCARExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 
 	// Count number of particles per particle type.
 	QMap<int,int> particleCounts;
-	ParticleTypeProperty* particleTypeProperty = dynamic_object_cast<ParticleTypeProperty>(ParticlePropertyObject::findInState(state, ParticleProperty::ParticleTypeProperty));
+	ParticleProperty* particleTypeProperty = ParticleProperty::findInState(state, ParticleProperty::TypeProperty);
 	if(particleTypeProperty) {
 		const int* ptype = particleTypeProperty->constDataInt();
 		const int* ptype_end = ptype + particleTypeProperty->size();
@@ -71,7 +70,7 @@ bool POSCARExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 
 		// Write line with particle type names.
 		for(auto c = particleCounts.begin(); c != particleCounts.end(); ++c) {
-			ParticleType* particleType = particleTypeProperty->particleType(c.key());
+			ElementType* particleType = particleTypeProperty->elementType(c.key());
 			if(particleType) {
 				QString typeName = particleType->name();
 				typeName.replace(' ', '_');

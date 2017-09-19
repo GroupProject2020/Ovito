@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,9 +25,9 @@
 #include <gui/properties/IntegerParameterUI.h>
 #include <gui/properties/IntegerRadioButtonParameterUI.h>
 #include <gui/properties/VariantComboBoxParameterUI.h>
+#include <gui/properties/PropertyReferenceParameterUI.h>
 #include <gui/mainwin/MainWindow.h>
 #include <plugins/particles/modifier/analysis/binandreduce/BinAndReduceModifier.h>
-#include <plugins/particles/gui/util/ParticlePropertyParameterUI.h>
 #include "BinAndReduceModifierEditor.h"
 
 #include <qwt/qwt_plot.h>
@@ -42,7 +42,7 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_OBJECT(BinAndReduceModifierEditor, ParticleModifierEditor);
+
 SET_OVITO_OBJECT_EDITOR(BinAndReduceModifier, BinAndReduceModifierEditor);
 
 /******************************************************************************
@@ -58,30 +58,30 @@ void BinAndReduceModifierEditor::createUI(const RolloutInsertionParameters& roll
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(4);
 
-	ParticlePropertyParameterUI* sourcePropertyUI = new ParticlePropertyParameterUI(this, PROPERTY_FIELD(BinAndReduceModifier::sourceProperty));
+	PropertyReferenceParameterUI* sourcePropertyUI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(BinAndReduceModifier::sourceProperty), &ParticleProperty::OOClass());
 	layout->addWidget(new QLabel(tr("Particle property:"), rollout));
 	layout->addWidget(sourcePropertyUI->comboBox());
 
 	QGridLayout* gridlayout = new QGridLayout();
 	gridlayout->addWidget(new QLabel(tr("Reduction operation:"), rollout), 0, 0);
 	VariantComboBoxParameterUI* reductionOperationPUI = new VariantComboBoxParameterUI(this, PROPERTY_FIELD(BinAndReduceModifier::reductionOperation));
-    reductionOperationPUI->comboBox()->addItem(tr("mean"), qVariantFromValue(BinAndReduceModifier::RED_MEAN));
-    reductionOperationPUI->comboBox()->addItem(tr("sum"), qVariantFromValue(BinAndReduceModifier::RED_SUM));
-    reductionOperationPUI->comboBox()->addItem(tr("sum divided by bin volume"), qVariantFromValue(BinAndReduceModifier::RED_SUM_VOL));
-    reductionOperationPUI->comboBox()->addItem(tr("min"), qVariantFromValue(BinAndReduceModifier::RED_MIN));
-    reductionOperationPUI->comboBox()->addItem(tr("max"), qVariantFromValue(BinAndReduceModifier::RED_MAX));
+    reductionOperationPUI->comboBox()->addItem(tr("mean"), QVariant::fromValue(BinAndReduceModifier::RED_MEAN));
+    reductionOperationPUI->comboBox()->addItem(tr("sum"), QVariant::fromValue(BinAndReduceModifier::RED_SUM));
+    reductionOperationPUI->comboBox()->addItem(tr("sum divided by bin volume"), QVariant::fromValue(BinAndReduceModifier::RED_SUM_VOL));
+    reductionOperationPUI->comboBox()->addItem(tr("min"), QVariant::fromValue(BinAndReduceModifier::RED_MIN));
+    reductionOperationPUI->comboBox()->addItem(tr("max"), QVariant::fromValue(BinAndReduceModifier::RED_MAX));
     gridlayout->addWidget(reductionOperationPUI->comboBox(), 0, 1);
     layout->addLayout(gridlayout);
 
 	gridlayout = new QGridLayout();
 	gridlayout->addWidget(new QLabel(tr("Binning direction:"), rollout), 0, 0);
 	VariantComboBoxParameterUI* binDirectionPUI = new VariantComboBoxParameterUI(this, PROPERTY_FIELD(BinAndReduceModifier::binDirection));
-    binDirectionPUI->comboBox()->addItem("cell vector 1", qVariantFromValue(BinAndReduceModifier::CELL_VECTOR_1));
-    binDirectionPUI->comboBox()->addItem("cell vector 2", qVariantFromValue(BinAndReduceModifier::CELL_VECTOR_2));
-    binDirectionPUI->comboBox()->addItem("cell vector 3", qVariantFromValue(BinAndReduceModifier::CELL_VECTOR_3));
-    binDirectionPUI->comboBox()->addItem("vectors 1 and 2", qVariantFromValue(BinAndReduceModifier::CELL_VECTORS_1_2));
-    binDirectionPUI->comboBox()->addItem("vectors 1 and 3", qVariantFromValue(BinAndReduceModifier::CELL_VECTORS_1_3));
-    binDirectionPUI->comboBox()->addItem("vectors 2 and 3", qVariantFromValue(BinAndReduceModifier::CELL_VECTORS_2_3));
+    binDirectionPUI->comboBox()->addItem("cell vector 1", QVariant::fromValue(BinAndReduceModifier::CELL_VECTOR_1));
+    binDirectionPUI->comboBox()->addItem("cell vector 2", QVariant::fromValue(BinAndReduceModifier::CELL_VECTOR_2));
+    binDirectionPUI->comboBox()->addItem("cell vector 3", QVariant::fromValue(BinAndReduceModifier::CELL_VECTOR_3));
+    binDirectionPUI->comboBox()->addItem("vectors 1 and 2", QVariant::fromValue(BinAndReduceModifier::CELL_VECTORS_1_2));
+    binDirectionPUI->comboBox()->addItem("vectors 1 and 3", QVariant::fromValue(BinAndReduceModifier::CELL_VECTORS_1_3));
+    binDirectionPUI->comboBox()->addItem("vectors 2 and 3", QVariant::fromValue(BinAndReduceModifier::CELL_VECTORS_2_3));
     gridlayout->addWidget(binDirectionPUI->comboBox(), 0, 1);
     layout->addLayout(gridlayout);
 
@@ -164,7 +164,7 @@ bool BinAndReduceModifierEditor::referenceEvent(RefTarget* source, ReferenceEven
 	if(event->sender() == editObject() && event->type() == ReferenceEvent::ObjectStatusChanged) {
 		plotLater(this);
 	}
-	return ParticleModifierEditor::referenceEvent(source, event);
+	return ModifierPropertiesEditor::referenceEvent(source, event);
 }
 
 /******************************************************************************

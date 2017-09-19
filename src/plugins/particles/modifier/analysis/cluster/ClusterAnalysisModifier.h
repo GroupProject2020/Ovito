@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,17 +23,18 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/data/ParticleProperty.h>
+#include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/particles/util/CutoffNeighborFinder.h>
-#include <plugins/particles/data/BondsStorage.h>
-#include "../../AsynchronousParticleModifier.h"
+#include <plugins/particles/objects/BondsStorage.h>
+#include <core/dataset/data/simcell/SimulationCell.h>
+#include <core/dataset/pipeline/AsynchronousModifier.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
 /**
  * \brief This modifier builds clusters of particles.
  */
-class OVITO_PARTICLES_EXPORT ClusterAnalysisModifier : public AsynchronousParticleModifier
+class OVITO_PARTICLES_EXPORT ClusterAnalysisModifier : public AsynchronousModifier
 {
 public:
 
@@ -46,24 +47,60 @@ public:
 	/// Constructor.
 	Q_INVOKABLE ClusterAnalysisModifier(DataSet* dataset);
 
-	/// Returns the number of clusters found during the last successful evaluation of the modifier.
-	size_t clusterCount() const { return _numClusters; }
-
 protected:
 
-	/// Is called when the value of a property of this object has changed.
-	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
-
 	/// Creates a computation engine that will compute the modifier's results.
-	virtual std::shared_ptr<ComputeEngine> createEngine(TimePoint time, TimeInterval validityInterval) override;
+	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
-	/// Unpacks the results of the computation engine and stores them in the modifier.
-	virtual void transferComputationResults(ComputeEngine* engine) override;
+public:
+	
+	/// Give this modifier class its own metaclass.
+	class OOMetaClass : public AsynchronousModifier::OOMetaClass 
+	{
+	public:
 
-	/// Lets the modifier insert the cached computation results into the modification pipeline.
-	virtual PipelineStatus applyComputationResults(TimePoint time, TimeInterval& validityInterval) override;
+		/// Inherit constructor from base metaclass.
+		using AsynchronousModifier::OOMetaClass::OOMetaClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
 
 private:
+
+	/// Stores the modifier's results.
+	class ClusterAnalysisResults : public ComputeEngineResults 
+	{
+	public:
+
+		/// Constructor.
+		ClusterAnalysisResults(size_t particleCount) :
+			_particleClusters(ParticleProperty::createStandardStorage(particleCount, ParticleProperty::ClusterProperty, false)) {}
+
+		/// Injects the computed results into the data pipeline.
+		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+
+		/// Returns the property storage that contains the computed cluster number of each particle.
+		const PropertyPtr& particleClusters() const { return _particleClusters; }
+			
+		/// Returns the number of clusters.
+		size_t numClusters() const { return _numClusters; }
+
+		/// Sets the number of clusters.
+		void setNumClusters(size_t num) { _numClusters = num; }
+				
+		/// Returns the size of the largest cluster.
+		size_t largestClusterSize() const { return _largestClusterSize; }
+
+		/// Sets the size of the largest cluster.
+		void setLargestClusterSize(size_t size) { _largestClusterSize = size; }
+				
+	private:
+
+		size_t _numClusters = 0;
+		size_t _largestClusterSize = 0;
+		const PropertyPtr _particleClusters;
+	};
 
 	/// Computes the modifier's results.
 	class ClusterAnalysisEngine : public ComputeEngine
@@ -71,47 +108,35 @@ private:
 	public:
 
 		/// Constructor.
-		ClusterAnalysisEngine(const TimeInterval& validityInterval, ParticleProperty* positions, const SimulationCell& simCell, bool sortBySize, ParticleProperty* selection) :
+		ClusterAnalysisEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell, bool sortBySize, ConstPropertyPtr selection) :
 			ComputeEngine(validityInterval),
 			_positions(positions), _simCell(simCell), 
 			_sortBySize(sortBySize),
-			_selection(selection),
-			_largestClusterSize(0),
-			_particleClusters(new ParticleProperty(positions->size(), ParticleProperty::ClusterProperty, 0, false)) {}
+			_selection(std::move(selection)),
+			_results(std::make_shared<ClusterAnalysisResults>(positions->size())) {}
 
-		/// Computes the modifier's results and stores them in this object for later retrieval.
+		/// Computes the modifier's results.
 		virtual void perform() override;
 
 		/// Performs the actual clustering algorithm.
 		virtual void doClustering() = 0;
 
 		/// Returns the property storage that contains the input particle positions.
-		ParticleProperty* positions() const { return _positions.data(); }
+		const ConstPropertyPtr& positions() const { return _positions; }
 
 		/// Returns the simulation cell data.
 		const SimulationCell& cell() const { return _simCell; }
 
-		/// Returns the property storage that contains the computed cluster number of each particle.
-		ParticleProperty* particleClusters() const { return _particleClusters.data(); }
-
 		/// Returns the property storage that contains the particle selection (optional).
-		ParticleProperty* selection() const { return _selection.data(); }
-
-		/// Returns the number of clusters.
-		size_t numClusters() const { return _numClusters; }
-
-		/// Returns the size of the largest cluster.
-		size_t largestClusterSize() const { return _largestClusterSize; }
+		const ConstPropertyPtr& selection() const { return _selection; }
 
 	protected:
 
-		SimulationCell _simCell;
-		bool _sortBySize;
-		size_t _numClusters;
-		size_t _largestClusterSize;
-		QExplicitlySharedDataPointer<ParticleProperty> _positions;
-		QExplicitlySharedDataPointer<ParticleProperty> _selection;
-		QExplicitlySharedDataPointer<ParticleProperty> _particleClusters;
+		const SimulationCell _simCell;
+		const bool _sortBySize;
+		const ConstPropertyPtr _positions;
+		const ConstPropertyPtr _selection;
+		std::shared_ptr<ClusterAnalysisResults> _results;
 	};
 
 	/// Computes the modifier's results.
@@ -120,8 +145,8 @@ private:
 	public:
 
 		/// Constructor.
-		CutoffClusterAnalysisEngine(const TimeInterval& validityInterval, ParticleProperty* positions, const SimulationCell& simCell, bool sortBySize, ParticleProperty* selection, FloatType cutoff) :
-			ClusterAnalysisEngine(validityInterval, positions, simCell, sortBySize, selection),
+		CutoffClusterAnalysisEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell, bool sortBySize, ConstPropertyPtr selection, FloatType cutoff) :
+			ClusterAnalysisEngine(validityInterval, std::move(positions), simCell, sortBySize, std::move(selection)),
 			_cutoff(cutoff) {}
 
 		/// Performs the actual clustering algorithm.
@@ -132,7 +157,7 @@ private:
 
 	private:
 
-		FloatType _cutoff;
+		const FloatType _cutoff;
 	};
 
 	/// Computes the modifier's results.
@@ -141,23 +166,20 @@ private:
 	public:
 
 		/// Constructor.
-		BondClusterAnalysisEngine(const TimeInterval& validityInterval, ParticleProperty* positions, const SimulationCell& simCell, bool sortBySize, ParticleProperty* selection, BondsStorage* bonds) :
-			ClusterAnalysisEngine(validityInterval, positions, simCell, sortBySize, selection),
-			_bonds(bonds) {}
+		BondClusterAnalysisEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell, bool sortBySize, ConstPropertyPtr selection, ConstBondsPtr bonds) :
+			ClusterAnalysisEngine(validityInterval, std::move(positions), simCell, sortBySize, std::move(selection)),
+			_bonds(std::move(bonds)) {}
 
 		/// Performs the actual clustering algorithm.
 		virtual void doClustering() override;
 
 		/// Returns the list of input bonds.
-		const BondsStorage& bonds() const { return *_bonds; }
+		const ConstBondsPtr& bonds() const { return _bonds; }
 
 	private:
 
-		QExplicitlySharedDataPointer<BondsStorage> _bonds;
+		const ConstBondsPtr _bonds;
 	};
-
-	/// This stores the cached results of the modifier.
-	QExplicitlySharedDataPointer<ParticleProperty> _particleClusters;
 
 	/// The neighbor mode.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(NeighborMode, neighborMode, setNeighborMode);
@@ -171,14 +193,8 @@ private:
 	/// Controls the sorting of cluster IDs by cluster size.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, sortBySize, setSortBySize);
 
-	/// The number of clusters identified during the last evaluation of the modifier.
-	size_t _numClusters;
-
-	/// The size of the largest cluster.
-	size_t _largestClusterSize;
-
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 
 	Q_CLASSINFO("DisplayName", "Cluster analysis");
 	Q_CLASSINFO("ModifierCategory", "Analysis");

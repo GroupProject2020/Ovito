@@ -27,8 +27,6 @@ SET(SourceFiles
 	objects/dislocations/DislocationDisplayEditor.cpp
 	objects/partition_mesh/PartitionMeshDisplayEditor.cpp
 	objects/slip_surface/SlipSurfaceDisplayEditor.cpp
-	modifier/SmoothSurfaceModifierEditor.cpp
-	modifier/SmoothDislocationsModifierEditor.cpp
 	modifier/ConstructSurfaceModifierEditor.cpp
 	modifier/DislocationAnalysisModifierEditor.cpp
 	modifier/ElasticStrainModifierEditor.cpp

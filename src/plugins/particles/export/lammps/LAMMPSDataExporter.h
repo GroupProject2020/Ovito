@@ -33,12 +33,13 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVI
  */
 class OVITO_PARTICLES_EXPORT LAMMPSDataExporter : public ParticleExporter
 {
+	Q_OBJECT
+	OVITO_CLASS(LAMMPSDataExporter)
+
 public:
 
 	/// \brief Constructs a new instance of this class.
-	Q_INVOKABLE LAMMPSDataExporter(DataSet* dataset) : ParticleExporter(dataset), _atomStyle(LAMMPSDataImporter::AtomStyle_Atomic) {
-		INIT_PROPERTY_FIELD(atomStyle);
-	}
+	Q_INVOKABLE LAMMPSDataExporter(DataSet* dataset) : ParticleExporter(dataset), _atomStyle(LAMMPSDataImporter::AtomStyle_Atomic) {}
 
 	/// \brief Returns the file filter that specifies the files that can be exported by this service.
 	virtual QString fileFilter() override { return QStringLiteral("*"); }
@@ -54,10 +55,7 @@ protected:
 private:
 
 	/// Selects the kind of data file to write.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(LAMMPSDataImporter::LAMMPSAtomStyle, atomStyle, setAtomStyle);
-
-	Q_OBJECT
-	OVITO_OBJECT
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(LAMMPSDataImporter::LAMMPSAtomStyle, atomStyle, setAtomStyle, PROPERTY_FIELD_MEMORIZE);
 };
 
 OVITO_END_INLINE_NAMESPACE

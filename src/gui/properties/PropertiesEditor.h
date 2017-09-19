@@ -23,7 +23,8 @@
 
 
 #include <gui/GUI.h>
-#include <core/reference/RefTarget.h>
+#include <core/oo/RefTarget.h>
+#include <core/dataset/DataSet.h>
 #include <gui/widgets/general/RolloutContainer.h>
 #include "PropertiesPanel.h"
 
@@ -36,16 +37,19 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
  */
 class OVITO_GUI_EXPORT PropertiesEditor : public RefMaker
 {
+	Q_OBJECT
+	OVITO_CLASS(PropertiesEditor)
+
 public:
 
 	/// Registry for editor classes.
-	class OVITO_GUI_EXPORT Registry : private std::map<const OvitoObjectType*, const OvitoObjectType*>
+	class OVITO_GUI_EXPORT Registry : private std::map<OvitoClassPtr, OvitoClassPtr>
 	{
 	public:
-		void registerEditorClass(const OvitoObjectType* refTargetClass, const OvitoObjectType* editorClass) {
+		void registerEditorClass(OvitoClassPtr refTargetClass, OvitoClassPtr editorClass) {
 			insert(std::make_pair(refTargetClass, editorClass));
 		}
-		const OvitoObjectType* getEditorClass(const OvitoObjectType* refTargetClass) const {
+		OvitoClassPtr getEditorClass(OvitoClassPtr refTargetClass) const {
 			auto entry = find(refTargetClass);
 			if(entry != end()) return entry->second;
 			else return nullptr;
@@ -113,9 +117,9 @@ public Q_SLOTS:
 	///
 	/// This method generates a contentsReplaced() and a contentsChanged() signal.
 	void setEditObject(RefTarget* newObject) {
-		OVITO_ASSERT_MSG(!editObject() || !newObject || newObject->getOOType().isDerivedFrom(editObject()->getOOType()),
+		OVITO_ASSERT_MSG(!editObject() || !newObject || newObject->getOOClass().isDerivedFrom(editObject()->getOOClass()),
 				"PropertiesEditor::setEditObject()", "This properties editor was not made for this object class.");
-		_editObject = newObject;
+		_editObject.set(this, PROPERTY_FIELD(editObject), newObject);
 	}
 
 Q_SIGNALS:
@@ -151,19 +155,16 @@ private:
 	MainWindow* _mainWindow;
 
 	/// The object being edited in this editor.
-	DECLARE_REFERENCE_FIELD(RefTarget, editObject);
+	DECLARE_REFERENCE_FIELD_FLAGS(RefTarget, editObject, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 	
 	/// The list of rollout widgets that have been created by editor.
 	/// The cleanup handler is used to delete them when the editor is being deleted.
 	QObjectCleanupHandler _rollouts;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 /// This macro is used to assign a PropertiesEditor-derived class to a RefTarget-derived class.
 #define SET_OVITO_OBJECT_EDITOR(RefTargetClass, PropertiesEditorClass) \
-	static const int __editorSetter##RefTargetClass = (Ovito::PropertiesEditor::registry().registerEditorClass(&RefTargetClass::OOType, &PropertiesEditorClass::OOType), 0);
+	static const int __editorSetter##RefTargetClass = (Ovito::PropertiesEditor::registry().registerEditorClass(&RefTargetClass::OOClass(), &PropertiesEditorClass::OOClass()), 0);
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

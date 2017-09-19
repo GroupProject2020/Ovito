@@ -20,12 +20,13 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
+#include <core/dataset/DataSet.h>
 #include "TrajectoryObject.h"
 #include "TrajectoryDisplay.h"
 
 namespace Ovito { namespace Particles {
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(TrajectoryObject, DataObject);
+IMPLEMENT_OVITO_CLASS(TrajectoryObject);
 
 /******************************************************************************
 * Default constructor.
@@ -38,9 +39,9 @@ TrajectoryObject::TrajectoryObject(DataSet* dataset) : DataObject(dataset), _tra
 /******************************************************************************
 * Saves the class' contents to the given stream.
 ******************************************************************************/
-void TrajectoryObject::saveToStream(ObjectSaveStream& stream)
+void TrajectoryObject::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData)
 {
-	DataObject::saveToStream(stream);
+	DataObject::saveToStream(stream, excludeRecomputableData);
 
 	stream.beginChunk(0x01);
 	stream << _trajectoryCount;
@@ -99,6 +100,9 @@ void TrajectoryObject::setTrajectories(int trajectoryCount, const QVector<Point3
 			_points = std::move(points);
 			_trajectoryCount = trajectoryCount;
 			_sampleTimes = std::move(sampleTimes);
+		}
+		virtual QString displayName() const override { 
+			return QStringLiteral("Replace trajectory"); 
 		}
 	private:
 		OORef<TrajectoryObject> _obj;

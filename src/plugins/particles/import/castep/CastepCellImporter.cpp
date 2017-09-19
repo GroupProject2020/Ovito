@@ -20,14 +20,16 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
+#include <plugins/particles/import/ParticleFrameData.h>
+#include <core/utilities/io/CompressedTextReader.h>
 #include "CastepCellImporter.h"
 
 #include <boost/algorithm/string.hpp>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(CastepCellImporter, ParticleImporter);
-
+IMPLEMENT_OVITO_CLASS(CastepCellImporter);
+	
 static const char* chemical_symbols[] = {
     // 0
     "X",
@@ -73,10 +75,12 @@ bool CastepCellImporter::checkFileFormat(QFileDevice& input, const QUrl& sourceL
 }
 
 /******************************************************************************
-* Parses the given input file and stores the data in the given container object.
+* Parses the given input file.
 ******************************************************************************/
-void CastepCellImporter::ImportTask::parseFile(CompressedTextReader& stream)
+void CastepCellImporter::FrameLoader::loadFile(QFile& file)
 {
+	// Open file for reading.
+	CompressedTextReader stream(file, frame().sourceFile.path());
 	setProgressText(tr("Reading CASTEP file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
 
 	// Helper function that reads and returns the next line from the .cell file 
@@ -90,6 +94,9 @@ void CastepCellImporter::ImportTask::parseFile(CompressedTextReader& stream)
 		}
 		return "";
 	};
+
+	// Create the destination container for loaded data.
+	std::shared_ptr<ParticleFrameData> frameData = std::make_shared<ParticleFrameData>();
 
 	while(!isCanceled()) {
 
@@ -112,7 +119,7 @@ void CastepCellImporter::ImportTask::parseFile(CompressedTextReader& stream)
 					throw Exception(tr("Invalid simulation cell in CASTEP file at line %1").arg(stream.lineNumber()));
 				line = readNonCommentLine();
 			}
-			simulationCell().setMatrix(cell);
+			frameData->simulationCell().setMatrix(cell);
 		}
 		else if(boost::algorithm::istarts_with(line, "%BLOCK LATTICE_ABC")) {
 			line = readNonCommentLine();
@@ -152,7 +159,7 @@ void CastepCellImporter::ImportTask::parseFile(CompressedTextReader& stream)
 				cell(1,2) = c * (cos(alpha) - cos(beta)*cos(gamma)) / sin(gamma);
 				cell(2,2) = v / (a*b*sin(gamma));
 			}
-			simulationCell().setMatrix(cell);
+			frameData->simulationCell().setMatrix(cell);
 		}		
 		else if((boost::algorithm::istarts_with(line, "%BLOCK POSITIONS_FRAC") && !boost::algorithm::istarts_with(line, "%BLOCK POSITIONS_FRAC_"))
 				|| (boost::algorithm::istarts_with(line, "%BLOCK POSITIONS_ABS") && !boost::algorithm::istarts_with(line, "%BLOCK POSITIONS_ABS_"))) {
@@ -160,7 +167,7 @@ void CastepCellImporter::ImportTask::parseFile(CompressedTextReader& stream)
 			line = readNonCommentLine();
 			std::vector<Point3> coords;
 			std::vector<int> types;
-			std::unique_ptr<ParticleFrameLoader::ParticleTypeList> typeList(new ParticleFrameLoader::ParticleTypeList());
+			std::unique_ptr<ParticleFrameData::ParticleTypeList> typeList(new ParticleFrameData::ParticleTypeList());
 			while(!boost::algorithm::istarts_with(line, "%ENDBLOCK") && !isCanceled() && !stream.eof()) {
 				Point3 pos;
 				int atomicNumber;
@@ -184,21 +191,21 @@ void CastepCellImporter::ImportTask::parseFile(CompressedTextReader& stream)
 
 			// Convert from fractional to cartesian coordinates.
 			if(fractionalCoords) {
-				const AffineTransformation& cell = simulationCell().matrix();
+				const AffineTransformation& cell = frameData->simulationCell().matrix();
 				for(Point3& p : coords) 
 					p = cell * p;
 			}
 
-			ParticleProperty* posProperty = new ParticleProperty(coords.size(), ParticleProperty::PositionProperty, 0, false);
-			addParticleProperty(posProperty);
+			PropertyPtr posProperty = ParticleProperty::createStandardStorage(coords.size(), ParticleProperty::PositionProperty, false);
+			frameData->addParticleProperty(posProperty);
 			std::copy(coords.begin(), coords.end(), posProperty->dataPoint3());
 
-			ParticleProperty* typeProperty = new ParticleProperty(types.size(), ParticleProperty::ParticleTypeProperty, 0, false);
-			addParticleProperty(typeProperty, typeList.release());
+			PropertyPtr typeProperty = ParticleProperty::createStandardStorage(types.size(), ParticleProperty::TypeProperty, false);
+			frameData->addParticleProperty(typeProperty, typeList.release());
 			std::copy(types.begin(), types.end(), typeProperty->dataInt());
-			getTypeListOfParticleProperty(typeProperty)->sortParticleTypesByName(typeProperty);
+			frameData->getTypeListOfParticleProperty(typeProperty.get())->sortParticleTypesByName(typeProperty.get());
 
-			setStatus(tr("%1 atoms").arg(coords.size()));
+			frameData->setStatus(tr("%1 atoms").arg(coords.size()));
 		}		
 		else if(boost::algorithm::istarts_with(line, "%BLOCK IONIC_VELOCITIES")) {
 			line = readNonCommentLine();
@@ -211,11 +218,12 @@ void CastepCellImporter::ImportTask::parseFile(CompressedTextReader& stream)
 				line = readNonCommentLine();
 			}
 
-			ParticleProperty* velocityProperty = new ParticleProperty(velocities.size(), ParticleProperty::VelocityProperty, 0, false);
-			addParticleProperty(velocityProperty);
+			PropertyPtr velocityProperty = ParticleProperty::createStandardStorage(velocities.size(), ParticleProperty::VelocityProperty, false);
+			frameData->addParticleProperty(velocityProperty);
 			std::copy(velocities.begin(), velocities.end(), velocityProperty->dataVector3());
 		}		
-	}	
+	}
+	setResult(std::move(frameData));
 }
 
 OVITO_END_INLINE_NAMESPACE

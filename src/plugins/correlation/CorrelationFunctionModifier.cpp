@@ -1,5 +1,5 @@
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //  Copyright (2017) Lars Pastewka
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -20,17 +20,19 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <core/scene/objects/DataObject.h>
-#include <core/scene/pipeline/PipelineObject.h>
+#include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <core/app/Application.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/animation/AnimationSettings.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <core/utilities/units/UnitsManager.h>
 #include "CorrelationFunctionModifier.h"
 
+#include <QtConcurrent>
 #include <fftw3.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(CorrelationFunctionModifier, AsynchronousParticleModifier);
+
 DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, sourceProperty1, "SourceProperty1");
 DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, sourceProperty2, "SourceProperty2");
 DEFINE_FLAGS_PROPERTY_FIELD(CorrelationFunctionModifier, averagingDirection, "BinDirection", PROPERTY_FIELD_MEMORIZE);
@@ -81,58 +83,93 @@ SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, fixReciprocalSpaceYAxisRan
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeStart, "Y-range start");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeEnd, "Y-range end");
 
+
+
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
-CorrelationFunctionModifier::CorrelationFunctionModifier(DataSet* dataset) : AsynchronousParticleModifier(dataset),
-	_averagingDirection(RADIAL), _fftGridSpacing(3.0), _applyWindow(true), _doComputeNeighCorrelation(false), _neighCutoff(5.0), _numberOfNeighBins(50),
-	_normalizeRealSpace(DO_NOT_NORMALIZE), _typeOfRealSpacePlot(0), _normalizeReciprocalSpace(false), _typeOfReciprocalSpacePlot(0),
-	_fixRealSpaceXAxisRange(false), _realSpaceXAxisRangeStart(0.0), _realSpaceXAxisRangeEnd(1.0),
-	_fixRealSpaceYAxisRange(false), _realSpaceYAxisRangeStart(0.0), _realSpaceYAxisRangeEnd(1.0),
-	_fixReciprocalSpaceXAxisRange(false), _reciprocalSpaceXAxisRangeStart(0.0), _reciprocalSpaceXAxisRangeEnd(1.0),
-	_fixReciprocalSpaceYAxisRange(false), _reciprocalSpaceYAxisRangeStart(0.0), _reciprocalSpaceYAxisRangeEnd(1.0)
+CorrelationFunctionModifier::CorrelationFunctionModifier(DataSet* dataset) : AsynchronousModifier(dataset),
+	_averagingDirection(RADIAL), 
+	_fftGridSpacing(3.0), 
+	_applyWindow(true), 
+	_doComputeNeighCorrelation(false), 
+	_neighCutoff(5.0), 
+	_numberOfNeighBins(50),
+	_normalizeRealSpace(DO_NOT_NORMALIZE), 
+	_typeOfRealSpacePlot(0), 
+	_normalizeReciprocalSpace(false), 
+	_typeOfReciprocalSpacePlot(0),
+	_fixRealSpaceXAxisRange(false), 
+	_realSpaceXAxisRangeStart(0.0), 
+	_realSpaceXAxisRangeEnd(1.0),
+	_fixRealSpaceYAxisRange(false), 
+	_realSpaceYAxisRangeStart(0.0), 
+	_realSpaceYAxisRangeEnd(1.0),
+	_fixReciprocalSpaceXAxisRange(false), 
+	_reciprocalSpaceXAxisRangeStart(0.0), 
+	_reciprocalSpaceXAxisRangeEnd(1.0),
+	_fixReciprocalSpaceYAxisRange(false), 
+	_reciprocalSpaceYAxisRangeStart(0.0), 
+	_reciprocalSpaceYAxisRangeEnd(1.0)
 {
-	INIT_PROPERTY_FIELD(averagingDirection);
-	INIT_PROPERTY_FIELD(sourceProperty1);
-	INIT_PROPERTY_FIELD(sourceProperty2);
-	INIT_PROPERTY_FIELD(fftGridSpacing);
-	INIT_PROPERTY_FIELD(applyWindow);
-	INIT_PROPERTY_FIELD(doComputeNeighCorrelation);
-	INIT_PROPERTY_FIELD(neighCutoff);
-	INIT_PROPERTY_FIELD(numberOfNeighBins);
-	INIT_PROPERTY_FIELD(normalizeRealSpace);
-	INIT_PROPERTY_FIELD(typeOfRealSpacePlot);
-	INIT_PROPERTY_FIELD(normalizeReciprocalSpace);
-	INIT_PROPERTY_FIELD(typeOfReciprocalSpacePlot);
-	INIT_PROPERTY_FIELD(fixRealSpaceXAxisRange);
-	INIT_PROPERTY_FIELD(realSpaceXAxisRangeStart);
-	INIT_PROPERTY_FIELD(realSpaceXAxisRangeEnd);
-	INIT_PROPERTY_FIELD(fixRealSpaceYAxisRange);
-	INIT_PROPERTY_FIELD(realSpaceYAxisRangeStart);
-	INIT_PROPERTY_FIELD(realSpaceYAxisRangeEnd);
-	INIT_PROPERTY_FIELD(fixReciprocalSpaceXAxisRange);
-	INIT_PROPERTY_FIELD(reciprocalSpaceXAxisRangeStart);
-	INIT_PROPERTY_FIELD(reciprocalSpaceXAxisRangeEnd);
-	INIT_PROPERTY_FIELD(fixReciprocalSpaceYAxisRange);
-	INIT_PROPERTY_FIELD(reciprocalSpaceYAxisRangeStart);
-	INIT_PROPERTY_FIELD(reciprocalSpaceYAxisRangeEnd);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
+/******************************************************************************
+* Asks the modifier whether it can be applied to the given input data.
+******************************************************************************/
+bool CorrelationFunctionModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+{
+	return input.findObject<ParticleProperty>() != nullptr;
+}
+
+/******************************************************************************
+* Create a new modifier application that refers to this modifier instance.
+******************************************************************************/
+OORef<ModifierApplication> CorrelationFunctionModifier::createModifierApplication()
+{
+	OORef<ModifierApplication> modApp = new CorrelationFunctionModifierApplication(dataset());
+	modApp->setModifier(this);
+	return modApp;
+}
 
 /******************************************************************************
 * This method is called by the system when the modifier has been inserted
 * into a pipeline.
 ******************************************************************************/
-void CorrelationFunctionModifier::initializeModifier(PipelineObject* pipeline, ModifierApplication* modApp)
+void CorrelationFunctionModifier::initializeModifier(ModifierApplication* modApp)
 {
-	ParticleModifier::initializeModifier(pipeline, modApp);
+	AsynchronousModifier::initializeModifier(modApp);
 
 	// Use the first available particle property from the input state as data source when the modifier is newly created.
 	if(sourceProperty1().isNull() || sourceProperty2().isNull()) {
-		PipelineFlowState input = getModifierInput(modApp);
+		PipelineFlowState input = modApp->evaluateInputPreliminary();
 		ParticlePropertyReference bestProperty;
 		for(DataObject* o : input.objects()) {
-			ParticlePropertyObject* property = dynamic_object_cast<ParticlePropertyObject>(o);
+			ParticleProperty* property = dynamic_object_cast<ParticleProperty>(o);
 			if(property && (property->dataType() == qMetaTypeId<int>() || property->dataType() == qMetaTypeId<FloatType>())) {
 				bestProperty = ParticlePropertyReference(property, (property->componentCount() > 1) ? 0 : -1);
 			}
@@ -149,7 +186,7 @@ void CorrelationFunctionModifier::initializeModifier(PipelineObject* pipeline, M
 /******************************************************************************
 * Creates and initializes a computation engine that will compute the modifier's results.
 ******************************************************************************/
-std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> CorrelationFunctionModifier::createEngine(TimePoint time, TimeInterval validityInterval)
+Future<AsynchronousModifier::ComputeEnginePtr> CorrelationFunctionModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get the source
 	if(sourceProperty1().isNull())
@@ -158,17 +195,22 @@ std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> CorrelationFunction
 		throwException(tr("Select a second particle property first."));
 
 	// Get the current positions.
-	ParticlePropertyObject* posProperty = expectStandardProperty(ParticleProperty::PositionProperty);
+	ParticleInputHelper pih(dataset(), input);
+	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
 
 	// Get the current selected properties.
-	ParticlePropertyObject* property1 = sourceProperty1().findInState(input());
-	ParticlePropertyObject* property2 = sourceProperty2().findInState(input());
+	ParticleProperty* property1 = sourceProperty1().findInState(input);
+	ParticleProperty* property2 = sourceProperty2().findInState(input);
+	if(!property1)
+		throwException(tr("The selected particle property with the name '%1' does not exist.").arg(sourceProperty1().name()));
+	if(!property2)
+		throwException(tr("The selected particle property with the name '%1' does not exist.").arg(sourceProperty2().name()));
 
 	// Get simulation cell.
-	SimulationCellObject* inputCell = expectSimulationCell();
+	SimulationCellObject* inputCell = pih.expectSimulationCell();
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<CorrelationAnalysisEngine>(validityInterval,
+	return std::make_shared<CorrelationAnalysisEngine>(input.stateValidity(),
 													   posProperty->storage(),
 													   property1->storage(),
 													   std::max(0, sourceProperty1().vectorComponent()),
@@ -186,7 +228,7 @@ std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> CorrelationFunction
 /******************************************************************************
 * Map property onto grid.
 ******************************************************************************/
-void CorrelationFunctionModifier::CorrelationAnalysisEngine::mapToSpatialGrid(ParticleProperty *property,
+void CorrelationFunctionModifier::CorrelationAnalysisEngine::mapToSpatialGrid(const PropertyStorage* property,
 																			  size_t propertyVectorComponent,
 																			  const AffineTransformation &reciprocalCellMatrix,
 																			  int nX, int nY, int nZ,
@@ -194,8 +236,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::mapToSpatialGrid(Pa
 																			  bool applyWindow)
 {
 	size_t vecComponent = std::max(size_t(0), propertyVectorComponent);
-	size_t vecComponentCount = 0;
-	if (property)  vecComponentCount = property->componentCount();
+	size_t vecComponentCount = property ? property->componentCount() : 0;
 
 	int numberOfGridPoints = nX*nY*nZ;
 
@@ -335,7 +376,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 
 	// Map all quantities onto a spatial grid.
 	QVector<FloatType> gridProperty1, gridProperty2;
-	mapToSpatialGrid(sourceProperty1(),
+	mapToSpatialGrid(sourceProperty1().get(),
 					 _vecComponent1,
 					 reciprocalCellMatrix,
 					 nX, nY, nZ,
@@ -346,7 +387,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 	if (isCanceled())
 		return;
 
-	mapToSpatialGrid(sourceProperty2(),
+	mapToSpatialGrid(sourceProperty2().get(),
 					 _vecComponent2,
 					 reciprocalCellMatrix,
 					 nX, nY, nZ,
@@ -417,13 +458,13 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 	}
 
 	// Averaged reciprocal space correlation function.
-	_reciprocalSpaceCorrelation.fill(0.0, numberOfWavevectorBins);
-	_reciprocalSpaceCorrelationX.resize(numberOfWavevectorBins);
+	reciprocalSpaceCorrelation().fill(0.0, numberOfWavevectorBins);
+	reciprocalSpaceCorrelationX().resize(numberOfWavevectorBins);
 	QVector<int> numberOfValues(numberOfWavevectorBins, 0);
 
 	// Populate array with reciprocal space vectors.
 	for (int wavevectorBinIndex = 0; wavevectorBinIndex < numberOfWavevectorBins; wavevectorBinIndex++) {
-		_reciprocalSpaceCorrelationX[wavevectorBinIndex] = 2*FLOATTYPE_PI*(wavevectorBinIndex+0.5)*minReciprocalSpaceVector;
+		reciprocalSpaceCorrelationX()[wavevectorBinIndex] = 2*FLOATTYPE_PI*(wavevectorBinIndex+0.5)*minReciprocalSpaceVector;
 	}
 
 	// Compute Fourier-transformed correlation function and put it on a radial
@@ -466,7 +507,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 				}
 
 				if (wavevectorBinIndex >= 0 && wavevectorBinIndex < numberOfWavevectorBins) {
-					_reciprocalSpaceCorrelation[wavevectorBinIndex] += std::real(corr);
+					reciprocalSpaceCorrelation()[wavevectorBinIndex] += std::real(corr);
 					numberOfValues[wavevectorBinIndex]++;
 				}
 			}
@@ -475,14 +516,14 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 
 	// Compute averages and normalize reciprocal-space correlation function.
 	FloatType normalizationFactor = cell().volume3D()/(sourceProperty1()->size()*sourceProperty2()->size());
-	for (int wavevectorBinIndex = 0; wavevectorBinIndex < numberOfWavevectorBins; wavevectorBinIndex++) {
-		if (numberOfValues[wavevectorBinIndex] > 0) {
-			_reciprocalSpaceCorrelation[wavevectorBinIndex] *= normalizationFactor/numberOfValues[wavevectorBinIndex];
+	for(int wavevectorBinIndex = 0; wavevectorBinIndex < numberOfWavevectorBins; wavevectorBinIndex++) {
+		if(numberOfValues[wavevectorBinIndex] > 0) {
+			reciprocalSpaceCorrelation()[wavevectorBinIndex] *= normalizationFactor/numberOfValues[wavevectorBinIndex];
 		}
 	}
 
 	incrementProgressValue();
-	if (isCanceled())
+	if(isCanceled())
 		return;
 
 	// Compute long-ranged part of the real-space correlation function from the FFT convolution.
@@ -491,13 +532,13 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 	c2rFFT(nX, nY, nZ, ftProperty1, gridProperty1);
 
 	incrementProgressValue();
-	if (isCanceled())
+	if(isCanceled())
 		return;
 
 	c2rFFT(nX, nY, nZ, ftDensity, gridDensity);
 
 	incrementProgressValue();
-	if (isCanceled())
+	if(isCanceled())
 		return;
 
 	// Determine number of grid points for reciprocal-spacespace correlation function.
@@ -505,14 +546,14 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 	FloatType gridSpacing = minCellFaceDistance/(2*numberOfDistanceBins);
 
 	// Radially averaged real space correlation function.
-	_realSpaceCorrelation.fill(0.0, numberOfDistanceBins);
-	_realSpaceRDF.fill(0.0, numberOfDistanceBins);
-	_realSpaceCorrelationX.resize(numberOfDistanceBins);
+	realSpaceCorrelation().fill(0.0, numberOfDistanceBins);
+	realSpaceRDF().fill(0.0, numberOfDistanceBins);
+	realSpaceCorrelationX().resize(numberOfDistanceBins);
 	numberOfValues.fill(0, numberOfDistanceBins);
 
 	// Populate array with real space vectors.
-	for (int distanceBinIndex = 0; distanceBinIndex < numberOfDistanceBins; distanceBinIndex++) {
-		_realSpaceCorrelationX[distanceBinIndex] = (distanceBinIndex+0.5)*gridSpacing;
+	for(int distanceBinIndex = 0; distanceBinIndex < numberOfDistanceBins; distanceBinIndex++) {
+		realSpaceCorrelationX()[distanceBinIndex] = (distanceBinIndex+0.5)*gridSpacing;
 	}
 
 	// Put real-space correlation function on a radial grid.
@@ -536,8 +577,8 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 				// Length of real space vector.
 				int distanceBinIndex = int(std::floor(distance.length()/gridSpacing));
 				if (distanceBinIndex >= 0 && distanceBinIndex < numberOfDistanceBins) {
-					_realSpaceCorrelation[distanceBinIndex] += gridProperty1[binIndex];
-					_realSpaceRDF[distanceBinIndex] += gridDensity[binIndex];
+					realSpaceCorrelation()[distanceBinIndex] += gridProperty1[binIndex];
+					realSpaceRDF()[distanceBinIndex] += gridDensity[binIndex];
 					numberOfValues[distanceBinIndex]++;
 				}
 			}
@@ -548,8 +589,8 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 	normalizationFactor = 1.0/(sourceProperty1()->size()*sourceProperty2()->size());
 	for (int distanceBinIndex = 0; distanceBinIndex < numberOfDistanceBins; distanceBinIndex++) {
 		if (numberOfValues[distanceBinIndex] > 0) {
-			_realSpaceCorrelation[distanceBinIndex] *= normalizationFactor/numberOfValues[distanceBinIndex];
-			_realSpaceRDF[distanceBinIndex] *= normalizationFactor/numberOfValues[distanceBinIndex];
+			realSpaceCorrelation()[distanceBinIndex] *= normalizationFactor/numberOfValues[distanceBinIndex];
+			realSpaceRDF()[distanceBinIndex] *= normalizationFactor/numberOfValues[distanceBinIndex];
 		}
 	}
 
@@ -583,15 +624,15 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeighCorrela
 	}
 
 	// Resize neighbor RDF and fill with zeros.
-	_neighRDF.fill(0.0, _neighCorrelation.size());
+	neighRDF().fill(0.0, neighCorrelation().size());
 
 	// Prepare the neighbor list.
 	CutoffNeighborFinder neighborListBuilder;
-	if (!neighborListBuilder.prepare(_neighCutoff, positions(), cell(), nullptr, *this))
+	if (!neighborListBuilder.prepare(_neighCutoff, *positions(), cell(), nullptr, this))
 		return;
 
 	// Perform analysis on each particle in parallel.
-	std::vector<std::thread> workers;
+	std::vector<QFuture<void>> workers;
 	size_t num_threads = Application::instance()->idealThreadCount();
 	size_t chunkSize = particleCount / num_threads;
 	size_t startIndex = 0;
@@ -603,13 +644,13 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeighCorrela
 		if (t == num_threads - 1) {
 			endIndex += particleCount % num_threads;
 		}
-		workers.push_back(std::thread([&neighborListBuilder, startIndex, endIndex,
+		workers.push_back(QtConcurrent::run([&neighborListBuilder, startIndex, endIndex,
 								   	   floatData1, intData1, componentCount1, vecComponent1,
 								   	   floatData2, intData2, componentCount2, vecComponent2,
 									   &mutex, this]() {
-			FloatType gridSpacing = (_neighCutoff + FLOATTYPE_EPSILON) / _neighCorrelation.size();
-			std::vector<double> threadLocalCorrelation(_neighCorrelation.size(), 0);
-			std::vector<int> threadLocalRDF(_neighCorrelation.size(), 0);
+			FloatType gridSpacing = (_neighCutoff + FLOATTYPE_EPSILON) / neighCorrelation().size();
+			std::vector<double> threadLocalCorrelation(neighCorrelation().size(), 0);
+			std::vector<int> threadLocalRDF(neighCorrelation().size(), 0);
 			for (size_t i = startIndex; i < endIndex;) {
 					for (CutoffNeighborFinder::Query neighQuery(neighborListBuilder, i); !neighQuery.atEnd(); neighQuery.next()) {
 					size_t distanceBinIndex = (size_t)(sqrt(neighQuery.distanceSquared()) / gridSpacing);
@@ -632,10 +673,10 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeighCorrela
 					return;
 			}
 			std::lock_guard<std::mutex> lock(mutex);
-			auto iter_corr_out = _neighCorrelation.begin();
+			auto iter_corr_out = neighCorrelation().begin();
 			for (auto iter_corr = threadLocalCorrelation.cbegin(); iter_corr != threadLocalCorrelation.cend(); ++iter_corr, ++iter_corr_out)
 				*iter_corr_out += *iter_corr;
-			auto iter_rdf_out = _neighRDF.begin();
+			auto iter_rdf_out = neighRDF().begin();
 			for (auto iter_rdf = threadLocalRDF.cbegin(); iter_rdf != threadLocalRDF.cend(); ++iter_rdf, ++iter_rdf_out)
 				*iter_rdf_out += *iter_rdf;
 		}));
@@ -644,18 +685,18 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeighCorrela
 	}
 
 	for (auto& t: workers)
-		t.join();
+		t.waitForFinished();
 	incrementProgressValue();
 
 	// Normalize short-ranged real-space correlation function and populate x-array.
-	FloatType gridSpacing = (_neighCutoff + FLOATTYPE_EPSILON) / _neighCorrelation.size();
+	FloatType gridSpacing = (_neighCutoff + FLOATTYPE_EPSILON) / neighCorrelation().size();
 	FloatType normalizationFactor = 3.0*cell().volume3D()/(4.0*FLOATTYPE_PI*sourceProperty1()->size()*sourceProperty2()->size());
-	for (int distanceBinIndex = 0; distanceBinIndex < _neighCorrelation.size(); distanceBinIndex++) {
+	for (int distanceBinIndex = 0; distanceBinIndex < neighCorrelation().size(); distanceBinIndex++) {
 		FloatType distance = distanceBinIndex*gridSpacing;
 		FloatType distance2 = (distanceBinIndex+1)*gridSpacing;
-		_neighCorrelationX[distanceBinIndex] = (distance+distance2)/2;
-		_neighCorrelation[distanceBinIndex] *= normalizationFactor/(distance2*distance2*distance2-distance*distance*distance);
-		_neighRDF[distanceBinIndex] *= normalizationFactor/(distance2*distance2*distance2-distance*distance*distance);
+		neighCorrelationX()[distanceBinIndex] = (distance+distance2)/2;
+		neighCorrelation()[distanceBinIndex] *= normalizationFactor/(distance2*distance2*distance2-distance*distance*distance);
+		neighRDF()[distanceBinIndex] *= normalizationFactor/(distance2*distance2*distance2-distance*distance*distance);
 	}
 
 	incrementProgressValue();
@@ -685,9 +726,12 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeLimits()
 	}
 
 	// Compute mean and covariance values.
-	_mean1 = _mean2 = _covariance = 0.0;
 	if (sourceProperty1()->size() != sourceProperty2()->size())
 		return;
+
+	FloatType mean1 = 0;
+	FloatType mean2 = 0;
+	FloatType covariance = 0;
 	for (int particleIndex = 0; particleIndex < sourceProperty1()->size(); particleIndex++) {
 		FloatType data1, data2;
 		if (floatData1)
@@ -698,13 +742,14 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeLimits()
 			data2 = floatData2[particleIndex*componentCount2 + _vecComponent2];
 		else if (intData2)
 			data2 = intData2[particleIndex*componentCount2 + _vecComponent2];
-		_mean1 += data1;
-		_mean2 += data2;
-		_covariance += data1*data2;
+		mean1 += data1;
+		mean2 += data2;
+		covariance += data1*data2;
 	}
-	_mean1 /= sourceProperty1()->size();
-	_mean2 /= sourceProperty2()->size();
-	_covariance /= sourceProperty1()->size();
+	mean1 /= sourceProperty1()->size();
+	mean2 /= sourceProperty2()->size();
+	covariance /= sourceProperty1()->size();
+	_results->setLimits(mean1, mean2, covariance);
 
 	incrementProgressValue();
 }
@@ -717,119 +762,93 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::perform()
 	setProgressText(tr("Computing correlation function"));
 	setProgressValue(0);
 	int range = 12;
-	if (!_neighCorrelation.empty())
-		range+=2;
+	if(!neighCorrelation().empty())
+		range += 2;
 	setProgressMaximum(range);
 
 	// Compute reciprocal space correlation function and long-ranged part of
 	// the real-space correlation function from an FFT.
 	computeFftCorrelation();
-	if (isCanceled())
+	if(isCanceled())
 		return;
 
 	// Compute short-ranged part of the real-space correlation function from a direct loop over particle neighbors.
-	if (!_neighCorrelation.empty()) {
-		if (isCanceled())
-			return;
+	if(!neighCorrelation().empty())
 		computeNeighCorrelation();
-	}
+
+	if(isCanceled())
+		return;
 
 	computeLimits();
+
+	// Return the results of the compute engine.
+	setResult(std::move(_results));
+}
+
+
+/******************************************************************************
+* Injects the computed results of the engine into the data pipeline.
+******************************************************************************/
+PipelineFlowState CorrelationFunctionModifier::CorrelationAnalysisResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+{
+	// Store the computed data in the ModifierApplication.
+	static_object_cast<CorrelationFunctionModifierApplication>(modApp)->setResults(
+		realSpaceCorrelation(), realSpaceRDF(), realSpaceCorrelationX(),
+		neighCorrelation(), neighRDF(), neighCorrelationX(), 
+		reciprocalSpaceCorrelation(), reciprocalSpaceCorrelationX(), mean1(), mean2(), covariance());
+		
+	return input;
 }
 
 /******************************************************************************
 * Update plot ranges.
 ******************************************************************************/
-void CorrelationFunctionModifier::updateRanges(FloatType offset, FloatType fac, FloatType reciprocalFac)
+void CorrelationFunctionModifier::updateRanges(FloatType offset, FloatType fac, FloatType reciprocalFac, ModifierApplication* modApp)
 {
+	CorrelationFunctionModifierApplication* myModApp = dynamic_object_cast<CorrelationFunctionModifierApplication>(modApp);
+	if(!myModApp) return;
+
 	// Compute data ranges
 	if (!_fixRealSpaceXAxisRange) {
-		if (!_realSpaceCorrelationX.empty() && !_neighCorrelationX.empty() && _doComputeNeighCorrelation) {
-			_realSpaceXAxisRangeStart = std::min(_realSpaceCorrelationX.first(), _neighCorrelationX.first());
-			_realSpaceXAxisRangeEnd = std::max(_realSpaceCorrelationX.last(), _neighCorrelationX.last());
+		if (!myModApp->realSpaceCorrelationX().empty() && !myModApp->neighCorrelationX().empty() && doComputeNeighCorrelation()) {
+			setRealSpaceXAxisRangeStart(std::min(myModApp->realSpaceCorrelationX().first(), myModApp->neighCorrelationX().first()));
+			setRealSpaceXAxisRangeEnd(std::max(myModApp->realSpaceCorrelationX().last(), myModApp->neighCorrelationX().last()));
 		}
-		else if (!_realSpaceCorrelationX.empty()) {
-			_realSpaceXAxisRangeStart = _realSpaceCorrelationX.first();
-			_realSpaceXAxisRangeEnd = _realSpaceCorrelationX.last();
+		else if (!myModApp->realSpaceCorrelationX().empty()) {
+			setRealSpaceXAxisRangeStart(myModApp->realSpaceCorrelationX().first());
+			setRealSpaceXAxisRangeEnd(myModApp->realSpaceCorrelationX().last());
 		}
-		else if (!_neighCorrelationX.empty() && _doComputeNeighCorrelation) {
-			_realSpaceXAxisRangeStart = _neighCorrelationX.first();
-			_realSpaceXAxisRangeEnd = _neighCorrelationX.last();
+		else if (!myModApp->neighCorrelationX().empty() && doComputeNeighCorrelation()) {
+			setRealSpaceXAxisRangeStart(myModApp->neighCorrelationX().first());
+			setRealSpaceXAxisRangeEnd(myModApp->neighCorrelationX().last());
 		}
 	}
 	if (!_fixRealSpaceYAxisRange) {
-		if (!_realSpaceCorrelation.empty() && !_neighCorrelation.empty() && _doComputeNeighCorrelation) {
-			auto realSpace = std::minmax_element(_realSpaceCorrelation.begin(), _realSpaceCorrelation.end());
-			auto neigh = std::minmax_element(_neighCorrelation.begin(), _neighCorrelation.end());
-			_realSpaceYAxisRangeStart = fac*(std::min(*realSpace.first, *neigh.first)-offset);
-			_realSpaceYAxisRangeEnd = fac*(std::max(*realSpace.second, *neigh.second)-offset);
+		if (!myModApp->realSpaceCorrelation().empty() && !myModApp->neighCorrelation().empty() && doComputeNeighCorrelation()) {
+			auto realSpace = std::minmax_element(myModApp->realSpaceCorrelation().begin(), myModApp->realSpaceCorrelation().end());
+			auto neigh = std::minmax_element(myModApp->neighCorrelation().begin(), myModApp->neighCorrelation().end());
+			setRealSpaceYAxisRangeStart(fac*(std::min(*realSpace.first, *neigh.first)-offset));
+			setRealSpaceYAxisRangeEnd(fac*(std::max(*realSpace.second, *neigh.second)-offset));
 		}
-		else if (!_realSpaceCorrelation.empty()) {
-			auto realSpace = std::minmax_element(_realSpaceCorrelation.begin(), _realSpaceCorrelation.end());
-			_realSpaceYAxisRangeStart = fac*(*realSpace.first-offset);
-			_realSpaceYAxisRangeEnd = fac*(*realSpace.second-offset);
+		else if (!myModApp->realSpaceCorrelation().empty()) {
+			auto realSpace = std::minmax_element(myModApp->realSpaceCorrelation().begin(), myModApp->realSpaceCorrelation().end());
+			setRealSpaceYAxisRangeStart(fac*(*realSpace.first-offset));
+			setRealSpaceYAxisRangeEnd(fac*(*realSpace.second-offset));
 		}
-		else if (!_neighCorrelation.empty() && _doComputeNeighCorrelation) {
-			auto neigh = std::minmax_element(_neighCorrelation.begin(), _neighCorrelation.end());
-			_realSpaceYAxisRangeStart = fac*(*neigh.first-offset);
-			_realSpaceYAxisRangeEnd = fac*(*neigh.second-offset);
+		else if (!myModApp->neighCorrelation().empty() && doComputeNeighCorrelation()) {
+			auto neigh = std::minmax_element(myModApp->neighCorrelation().begin(), myModApp->neighCorrelation().end());
+			setRealSpaceYAxisRangeStart(fac*(*neigh.first-offset));
+			setRealSpaceYAxisRangeEnd(fac*(*neigh.second-offset));
 		}	
 	}
-	if (!_fixReciprocalSpaceXAxisRange && !_reciprocalSpaceCorrelationX.empty()) {
-		_reciprocalSpaceXAxisRangeStart = _reciprocalSpaceCorrelationX.first();
-		_reciprocalSpaceXAxisRangeEnd = _reciprocalSpaceCorrelationX.last();
+	if (!_fixReciprocalSpaceXAxisRange && !myModApp->reciprocalSpaceCorrelationX().empty()) {
+		setReciprocalSpaceXAxisRangeStart(myModApp->reciprocalSpaceCorrelationX().first());
+		setReciprocalSpaceXAxisRangeEnd(myModApp->reciprocalSpaceCorrelationX().last());
 	}
-	if (!_fixReciprocalSpaceYAxisRange && !_reciprocalSpaceCorrelation.empty()) {
-		auto reciprocalSpace = std::minmax_element(_reciprocalSpaceCorrelation.begin(), _reciprocalSpaceCorrelation.end());
-		_reciprocalSpaceYAxisRangeStart = reciprocalFac*(*reciprocalSpace.first);
-		_reciprocalSpaceYAxisRangeEnd = reciprocalFac*(*reciprocalSpace.second);
-	}
-}
-
-/******************************************************************************
-* Unpacks the results of the computation engine and stores them in the modifier.
-******************************************************************************/
-void CorrelationFunctionModifier::transferComputationResults(ComputeEngine* engine)
-{
-	CorrelationAnalysisEngine* eng = static_cast<CorrelationAnalysisEngine*>(engine);
-	_realSpaceCorrelation = eng->realSpaceCorrelation();
-	_realSpaceRDF = eng->realSpaceRDF();
-	_realSpaceCorrelationX = eng->realSpaceCorrelationX();
-	_neighCorrelation = eng->neighCorrelation();
-	_neighRDF = eng->neighRDF();
-	_neighCorrelationX = eng->neighCorrelationX();
-	_reciprocalSpaceCorrelation = eng->reciprocalSpaceCorrelation();
-	_reciprocalSpaceCorrelationX = eng->reciprocalSpaceCorrelationX();
-	_mean1 = eng->mean1();
-	_mean2 = eng->mean2();
-	_covariance = eng->covariance();
-}
-
-/******************************************************************************
-* Lets the modifier insert the cached computation results into the
-* modification pipeline.
-******************************************************************************/
-PipelineStatus CorrelationFunctionModifier::applyComputationResults(TimePoint time, TimeInterval& validityInterval)
-{
-	return PipelineStatus::Success;
-}
-
-/******************************************************************************
-* Is called when the value of a property of this object has changed.
-******************************************************************************/
-void CorrelationFunctionModifier::propertyChanged(const PropertyFieldDescriptor& field)
-{
-	AsynchronousParticleModifier::propertyChanged(field);
-
-	// Recompute modifier results when the parameters have been changed.
-	if (field == PROPERTY_FIELD(sourceProperty1) ||
-		field == PROPERTY_FIELD(sourceProperty2) ||
-		field == PROPERTY_FIELD(fftGridSpacing) ||
-		field == PROPERTY_FIELD(applyWindow) ||
-		field == PROPERTY_FIELD(doComputeNeighCorrelation) ||
-		field == PROPERTY_FIELD(neighCutoff) ||
-	    field == PROPERTY_FIELD(numberOfNeighBins)) {
-		invalidateCachedResults();
+	if (!_fixReciprocalSpaceYAxisRange && !myModApp->reciprocalSpaceCorrelation().empty()) {
+		auto reciprocalSpace = std::minmax_element(myModApp->reciprocalSpaceCorrelation().begin(), myModApp->reciprocalSpaceCorrelation().end());
+		setReciprocalSpaceYAxisRangeStart(reciprocalFac*(*reciprocalSpace.first));
+		setReciprocalSpaceYAxisRangeEnd(reciprocalFac*(*reciprocalSpace.second));
 	}
 }
 

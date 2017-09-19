@@ -20,25 +20,16 @@
 ###############################################################################
 
 SET(SourceFiles 
-	objects/SimulationCellObjectEditor.cpp
-	objects/SimulationCellDisplayEditor.cpp
 	objects/ParticleDisplayEditor.cpp
 	objects/ParticleTypeEditor.cpp
-	objects/ParticleTypePropertyEditor.cpp
+	objects/ParticlePropertyEditor.cpp
 	objects/BondTypeEditor.cpp
-	objects/BondTypePropertyEditor.cpp
+	objects/BondPropertyEditor.cpp
 	objects/VectorDisplayEditor.cpp
 	objects/BondsDisplayEditor.cpp
-	objects/SurfaceMeshDisplayEditor.cpp
 	objects/TrajectoryDisplayEditor.cpp
-	objects/TrajectoryGeneratorObjectEditor.cpp
-	modifier/ParticleModifierEditor.cpp
-	modifier/coloring/AssignColorModifierEditor.cpp
-	modifier/coloring/ColorCodingModifierEditor.cpp
-	modifier/coloring/ColorLegendOverlayEditor.cpp
+	objects/TrajectoryGeneratorEditor.cpp
 	modifier/coloring/AmbientOcclusionModifierEditor.cpp
-	modifier/modify/SliceModifierEditor.cpp
-	modifier/modify/AffineTransformationModifierEditor.cpp
 	modifier/modify/ShowPeriodicImagesModifierEditor.cpp
 	modifier/modify/CreateBondsModifierEditor.cpp
 	modifier/modify/LoadTrajectoryModifierEditor.cpp
@@ -53,28 +44,18 @@ SET(SourceFiles
 	modifier/analysis/strain/AtomicStrainModifierEditor.cpp
 	modifier/analysis/diamond/IdentifyDiamondModifierEditor.cpp	
 	modifier/analysis/voronoi/VoronoiAnalysisModifierEditor.cpp
-	modifier/analysis/histogram/HistogramModifierEditor.cpp
 	modifier/analysis/cluster/ClusterAnalysisModifierEditor.cpp
-	modifier/analysis/scatterplot/ScatterPlotModifierEditor.cpp
 	modifier/analysis/wignerseitz/WignerSeitzAnalysisModifierEditor.cpp
 	modifier/analysis/ptm/PolyhedralTemplateMatchingModifierEditor.cpp
-	#modifier/analysis/structural_clustering/StructuralClusteringModifierEditor.cpp	
 	modifier/selection/ExpandSelectionModifierEditor.cpp
-	modifier/selection/SelectParticleTypeModifierEditor.cpp
-	modifier/selection/SelectExpressionModifierEditor.cpp
+	modifier/selection/ExpressionSelectionModifierEditor.cpp
 	modifier/selection/ManualSelectionModifierEditor.cpp
 	modifier/properties/ComputePropertyModifierEditor.cpp
 	modifier/properties/FreezePropertyModifierEditor.cpp
-	modifier/fields/CreateIsosurfaceModifierEditor.cpp
-	util/ParticlePropertyComboBox.cpp
+	modifier/properties/InterpolateTrajectoryModifierEditor.cpp
 	util/CutoffRadiusPresetsUI.cpp
 	util/ParticleInformationApplet.cpp
 	util/ParticlePickingHelper.cpp
-	util/ParticlePropertyParameterUI.cpp
-	util/BondPropertyComboBox.cpp
-	util/BondPropertyParameterUI.cpp
-	util/FieldQuantityComboBox.cpp
-	util/FieldQuantityParameterUI.cpp
 	util/CreateTrajectoryApplet.cpp
 	util/ParticleSettingsPage.cpp
 	import/InputColumnMappingDialog.cpp

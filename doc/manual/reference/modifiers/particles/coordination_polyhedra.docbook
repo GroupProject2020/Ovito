@@ -26,5 +26,8 @@
     some bonds first using the <link linkend="particles.modifiers.create_bonds">Create bonds</link> modifier 
     (unless they are already provided in the input file).
   </para>
+  <para>
+    Note: This modifier has no parameters.
+  </para>
      
 </section>

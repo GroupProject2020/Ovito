@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2015) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,7 +24,7 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/modifier/dxa/DislocationAnalysisModifier.h>
-#include <plugins/particles/gui/modifier/ParticleModifierEditor.h>
+#include <gui/properties/ModifierPropertiesEditor.h>
 #include <gui/properties/RefTargetListParameterUI.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
@@ -46,8 +46,8 @@ public:
 		tableWidget()->selectionModel()->clear();
 	}
 
-	/// Sets the modifier whose results should be displayed.
-	void setModifier(DislocationAnalysisModifier* modifier);
+	/// Sets the modifier application whose results should be displayed.
+	void setModApp(DislocationAnalysisModifierApplication* modApp);
 
 protected:
 
@@ -61,13 +61,13 @@ protected:
 	virtual QVariant getHorizontalHeaderData(int index, int role) override {
 		if(role == Qt::DisplayRole) {
 			if(index == 0)
-				return qVariantFromValue(tr("Color"));
+				return QVariant();
 			else if(index == 1)
-				return qVariantFromValue(tr("Dislocation type"));
+				return QVariant::fromValue(tr("Dislocation type"));
 			else if(index == 2)
-				return qVariantFromValue(tr("Segs"));
+				return QVariant::fromValue(tr("Segs"));
 			else
-				return qVariantFromValue(tr("Length"));
+				return QVariant::fromValue(tr("Length"));
 		}
 		else return RefTargetListParameterUI::getHorizontalHeaderData(index, role);
 	}
@@ -85,17 +85,17 @@ protected Q_SLOTS:
 
 private:
 
-	/// The modifier whose results are being displayed.
-	DECLARE_REFERENCE_FIELD(DislocationAnalysisModifier, modifier);
+	/// The modifier application whose results are being displayed.
+	DECLARE_REFERENCE_FIELD(DislocationAnalysisModifierApplication, modApp);
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 };
 
 /**
  * Properties editor for the DislocationAnalysisModifier class.
  */
-class DislocationAnalysisModifierEditor : public ParticleModifierEditor
+class DislocationAnalysisModifierEditor : public ModifierPropertiesEditor
 {
 public:
 
@@ -112,7 +112,7 @@ private:
 	std::unique_ptr<DislocationTypeListParameterUI> _burgersFamilyListUI;
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 };
 
 }	// End of namespace

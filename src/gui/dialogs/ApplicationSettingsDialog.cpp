@@ -20,12 +20,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <gui/GUI.h>
-#include <core/plugins/PluginManager.h>
+#include <core/app/PluginManager.h>
 #include "ApplicationSettingsDialog.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Dialogs)
 	
-IMPLEMENT_OVITO_OBJECT(ApplicationSettingsDialogPage, OvitoObject);
+IMPLEMENT_OVITO_CLASS(ApplicationSettingsDialogPage);
 
 /******************************************************************************
 * The constructor of the settings dialog class.
@@ -41,7 +41,7 @@ ApplicationSettingsDialog::ApplicationSettingsDialog(QWidget* parent) : QDialog(
 	layout1->addWidget(_tabWidget);
 
 	// Create an iterator that retrieves all ApplicationSettingsDialogPage derived classes.
-	for(OvitoObjectType* clazz : PluginManager::instance().listClasses(ApplicationSettingsDialogPage::OOType)) {
+	for(OvitoClassPtr clazz : PluginManager::instance().listClasses(ApplicationSettingsDialogPage::OOClass())) {
 		try {
 			OORef<ApplicationSettingsDialogPage> page = static_object_cast<ApplicationSettingsDialogPage>(clazz->createInstance(nullptr));
 			_pages.push_back(page);

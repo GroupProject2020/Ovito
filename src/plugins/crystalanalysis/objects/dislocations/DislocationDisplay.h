@@ -23,12 +23,12 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <core/scene/objects/DisplayObject.h>
-#include <core/scene/objects/WeakVersionedObjectReference.h>
+#include <core/dataset/data/DisplayObject.h>
+#include <core/dataset/data/VersionedDataObjectRef.h>
 #include <core/rendering/ParticlePrimitive.h>
 #include <core/rendering/ArrowPrimitive.h>
 #include <core/rendering/SceneRenderer.h>
-#include <plugins/particles/objects/SimulationCellObject.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
 #include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
 #include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
 
@@ -84,7 +84,7 @@ private:
 	std::vector<int> _subobjToSegmentMap;
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 };
 
 /**
@@ -109,9 +109,9 @@ public:
 	/// \brief Lets the display object render a data object.
 	virtual void render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, ObjectNode* contextNode) override;
 
-	/// \brief Computes the bounding box of the object.
-	virtual Box3 boundingBox(TimePoint time, DataObject* dataObject, ObjectNode* contextNode, const PipelineFlowState& flowState) override;
-
+	/// Computes the bounding box of the object.
+	virtual Box3 boundingBox(TimePoint time, DataObject* dataObject, ObjectNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval) override;
+	
 	/// \brief Renders an overlay marker for a single dislocation segment.
 	void renderOverlayMarker(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, int segmentIndex, SceneRenderer* renderer, ObjectNode* contextNode);
 
@@ -141,15 +141,15 @@ protected:
 	/// This helper structure is used to detect any changes in the input data
 	/// that require updating the geometry buffers.
 	SceneObjectCacheHelper<
-		WeakVersionedOORef<DataObject>,		// Source object + revision number
-		SimulationCell,						// Simulation cell geometry
-		WeakVersionedOORef<PatternCatalog>,	// The pattern catalog
-		FloatType,							// Line width
-		bool,								// Burgers vector display
-		FloatType,							// Burgers vectors scaling
-		FloatType,							// Burgers vector width
-		Color,								// Burgers vector color
-		LineColoringMode					// Way to color lines
+		VersionedDataObjectRef,	// Source object + revision number
+		SimulationCell,			// Simulation cell geometry
+		VersionedDataObjectRef,	// The pattern catalog
+		FloatType,				// Line width
+		bool,					// Burgers vector display
+		FloatType,				// Burgers vectors scaling
+		FloatType,				// Burgers vector width
+		Color,					// Burgers vector color
+		LineColoringMode		// Way to color lines
 		> _geometryCacheHelper;
 
 	/// The cached bounding box.
@@ -158,12 +158,12 @@ protected:
 	/// This helper structure is used to detect changes in the input
 	/// that require recalculating the bounding box.
 	SceneObjectCacheHelper<
-		WeakVersionedOORef<DataObject>,		// Source object + revision number
-		SimulationCell,						// Simulation cell geometry
-		FloatType,							// Line width
-		bool,								// Burgers vector display
-		FloatType,							// Burgers vectors scaling
-		FloatType							// Burgers vector width
+		VersionedDataObjectRef,	// Source object + revision number
+		SimulationCell,			// Simulation cell geometry
+		FloatType,				// Line width
+		bool,					// Burgers vector display
+		FloatType,				// Burgers vectors scaling
+		FloatType				// Burgers vector width
 		> _boundingBoxCacheHelper;
 
 	/// The rendering width for dislocation lines.
@@ -194,7 +194,7 @@ protected:
 	OORef<DislocationPickInfo> _pickInfo;
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 
 	Q_CLASSINFO("DisplayName", "Dislocations");
 };

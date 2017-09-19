@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,15 +20,18 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/particles/objects/SurfaceMesh.h>
-#include <plugins/particles/objects/SimulationCellObject.h>
+#include <plugins/particles/modifier/ParticleInputHelper.h>
+#include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <plugins/crystalanalysis/util/DelaunayTessellation.h>
 #include <plugins/crystalanalysis/util/ManifoldConstructionHelper.h>
+#include <plugins/mesh/surface/SurfaceMesh.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include "ConstructSurfaceModifier.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(ConstructSurfaceModifier, AsynchronousParticleModifier);
+
 DEFINE_FLAGS_PROPERTY_FIELD(ConstructSurfaceModifier, smoothingLevel, "SmoothingLevel", PROPERTY_FIELD_MEMORIZE);
 DEFINE_FLAGS_PROPERTY_FIELD(ConstructSurfaceModifier, probeSphereRadius, "Radius", PROPERTY_FIELD_MEMORIZE);
 DEFINE_FLAGS_REFERENCE_FIELD(ConstructSurfaceModifier, surfaceMeshDisplay, "SurfaceMeshDisplay", SurfaceMeshDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
@@ -43,31 +46,26 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ConstructSurfaceModifier, smoothingLevel, I
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
-ConstructSurfaceModifier::ConstructSurfaceModifier(DataSet* dataset) : AsynchronousParticleModifier(dataset),
-	_smoothingLevel(8), _probeSphereRadius(4), _onlySelectedParticles(false),
-	_solidVolume(0), _totalVolume(0), _surfaceArea(0)
+ConstructSurfaceModifier::ConstructSurfaceModifier(DataSet* dataset) : AsynchronousModifier(dataset),
+	_smoothingLevel(8), 
+	_probeSphereRadius(4), 
+	_onlySelectedParticles(false)
 {
-	INIT_PROPERTY_FIELD(smoothingLevel);
-	INIT_PROPERTY_FIELD(probeSphereRadius);
-	INIT_PROPERTY_FIELD(surfaceMeshDisplay);
-	INIT_PROPERTY_FIELD(onlySelectedParticles);
+
+
+
+
 
 	// Create the display object.
-	_surfaceMeshDisplay = new SurfaceMeshDisplay(dataset);
+	setSurfaceMeshDisplay(new SurfaceMeshDisplay(dataset));
 }
 
 /******************************************************************************
-* Is called when the value of a property of this object has changed.
+* Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-void ConstructSurfaceModifier::propertyChanged(const PropertyFieldDescriptor& field)
+bool ConstructSurfaceModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	AsynchronousParticleModifier::propertyChanged(field);
-
-	// Recompute results when the parameters have changed.
-	if(field == PROPERTY_FIELD(smoothingLevel)
-			|| field == PROPERTY_FIELD(probeSphereRadius)
-			|| field == PROPERTY_FIELD(onlySelectedParticles))
-		invalidateCachedResults();
+	return input.findObject<ParticleProperty>() != nullptr;
 }
 
 /******************************************************************************
@@ -79,65 +77,29 @@ bool ConstructSurfaceModifier::referenceEvent(RefTarget* source, ReferenceEvent*
 	if(source == surfaceMeshDisplay())
 		return false;
 
-	return AsynchronousParticleModifier::referenceEvent(source, event);
+	return AsynchronousModifier::referenceEvent(source, event);
 }
 
 /******************************************************************************
-* Creates and initializes a computation engine that will compute the modifier's results.
+* Creates and initializes a computation engine that will compute the 
+* modifier's results.
 ******************************************************************************/
-std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> ConstructSurfaceModifier::createEngine(TimePoint time, TimeInterval validityInterval)
+Future<AsynchronousModifier::ComputeEnginePtr> ConstructSurfaceModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get modifier inputs.
-	ParticlePropertyObject* posProperty = expectStandardProperty(ParticleProperty::PositionProperty);
-	ParticlePropertyObject* selProperty = nullptr;
+	ParticleInputHelper ph(dataset(), input);
+	ParticleProperty* posProperty = ph.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
+	ParticleProperty* selProperty = nullptr;
 	if(onlySelectedParticles())
-		selProperty = expectStandardProperty(ParticleProperty::SelectionProperty);
-	SimulationCellObject* simCell = expectSimulationCell();
+		selProperty = ph.expectStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty);
+	SimulationCellObject* simCell = ph.expectSimulationCell();
 	if(simCell->is2D())
 		throwException(tr("The construct surface mesh modifier does not support 2d simulation cells."));
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<ConstructSurfaceEngine>(validityInterval, posProperty->storage(),
+	return std::make_shared<ConstructSurfaceEngine>(input.stateValidity(), posProperty->storage(),
 			selProperty ? selProperty->storage() : nullptr,
 			simCell->data(), probeSphereRadius(), smoothingLevel());
-}
-
-/******************************************************************************
-* Unpacks the results of the computation engine and stores them in the modifier.
-******************************************************************************/
-void ConstructSurfaceModifier::transferComputationResults(ComputeEngine* engine)
-{
-	ConstructSurfaceEngine* eng = static_cast<ConstructSurfaceEngine*>(engine);
-	_surfaceMesh = eng->mesh();
-	_isCompletelySolid = eng->isCompletelySolid();
-	_solidVolume = eng->solidVolume();
-	_totalVolume = eng->totalVolume();
-	_surfaceArea = eng->surfaceArea();
-}
-
-/******************************************************************************
-* Lets the modifier insert the cached computation results into the
-* modification pipeline.
-******************************************************************************/
-PipelineStatus ConstructSurfaceModifier::applyComputationResults(TimePoint time, TimeInterval& validityInterval)
-{
-	if(!_surfaceMesh)
-		throwException(tr("No computation results available."));
-
-	// Create the output data object.
-	OORef<SurfaceMesh> meshObj(new SurfaceMesh(dataset(), _surfaceMesh.data()));
-	meshObj->setIsCompletelySolid(_isCompletelySolid);
-	meshObj->addDisplayObject(_surfaceMeshDisplay);
-
-	// Insert output object into the pipeline.
-	output().addObject(meshObj);
-
-	output().attributes().insert(QStringLiteral("ConstructSurfaceMesh.surface_area"), QVariant::fromValue(surfaceArea()));
-	output().attributes().insert(QStringLiteral("ConstructSurfaceMesh.solid_volume"), QVariant::fromValue(solidVolume()));
-
-	return PipelineStatus(PipelineStatus::Success, tr("Surface area: %1\nSolid volume: %2\nTotal cell volume: %3\nSolid volume fraction: %4\nSurface area per solid volume: %5\nSurface area per total volume: %6")
-			.arg(surfaceArea()).arg(solidVolume()).arg(totalVolume())
-			.arg(solidVolume() / totalVolume()).arg(surfaceArea() / solidVolume()).arg(surfaceArea() / totalVolume()));
 }
 
 /******************************************************************************
@@ -150,6 +112,9 @@ void ConstructSurfaceModifier::ConstructSurfaceEngine::perform()
 	if(_radius <= 0)
 		throw Exception(tr("Radius parameter must be positive."));
 
+	if(_simCell.volume3D() <= FLOATTYPE_EPSILON*FLOATTYPE_EPSILON*FLOATTYPE_EPSILON)
+		throw Exception(tr("Simulation cell is degenerate."));
+		
 	double alpha = _radius * _radius;
 	FloatType ghostLayerSize = _radius * FloatType(3);
 
@@ -162,9 +127,6 @@ void ConstructSurfaceModifier::ConstructSurfaceEngine::perform()
 		}
 	}
 
-	_solidVolume = 0;
-	_surfaceArea = 0;
-
 	// If there are too few particles, don't build Delaunay tessellation.
 	// It is going to be invalid anyway.
 	size_t numInputParticles = positions()->size();
@@ -175,7 +137,7 @@ void ConstructSurfaceModifier::ConstructSurfaceEngine::perform()
 
 	// Algorithm is divided into several sub-steps.
 	// Assign weights to sub-steps according to estimated runtime.
-	beginProgressSubSteps({ 20, 1, 6, 1 });
+	beginProgressSubStepsWithWeights({ 20, 1, 6, 1 });
 
 	// Generate Delaunay tessellation.
 	DelaunayTessellation tessellation;
@@ -193,35 +155,65 @@ void ConstructSurfaceModifier::ConstructSurfaceEngine::perform()
 			Vector3 ad = tessellation.vertexPosition(tessellation.cellVertex(cell, 1)) - p0;
 			Vector3 bd = tessellation.vertexPosition(tessellation.cellVertex(cell, 2)) - p0;
 			Vector3 cd = tessellation.vertexPosition(tessellation.cellVertex(cell, 3)) - p0;
-			_solidVolume += std::abs(ad.dot(cd.cross(bd))) / FloatType(6);
+			_results->addSolidVolume(std::abs(ad.dot(cd.cross(bd))) / FloatType(6));
 		}
 		return 1;
 	};
 
-	ManifoldConstructionHelper<HalfEdgeMesh<>, true> manifoldConstructor(tessellation, *mesh(), alpha, positions());
+	ManifoldConstructionHelper<HalfEdgeMesh<>, true> manifoldConstructor(tessellation, *_results->mesh(), alpha, *positions());
 	if(!manifoldConstructor.construct(tetrahedronRegion, *this))
 		return;
-	_isCompletelySolid = (manifoldConstructor.spaceFillingRegion() == 1);
+	_results->setIsCompletelySolid(manifoldConstructor.spaceFillingRegion() == 1);
 
 	nextProgressSubStep();
 
 	// Make sure every mesh vertex is only part of one surface manifold.
-	_mesh->duplicateSharedVertices();
+	_results->mesh()->duplicateSharedVertices();
 
 	nextProgressSubStep();
-	if(!SurfaceMesh::smoothMesh(*mesh(), _simCell, _smoothingLevel, *this))
+	if(!SurfaceMesh::smoothMesh(*_results->mesh(), _simCell, _smoothingLevel, *this))
 		return;
 
 	// Compute surface area.
-	for(const HalfEdgeMesh<>::Face* facet : mesh()->faces()) {
+	for(const HalfEdgeMesh<>::Face* facet : _results->mesh()->faces()) {
 		if(isCanceled()) return;
 		Vector3 e1 = _simCell.wrapVector(facet->edges()->vertex1()->pos() - facet->edges()->vertex2()->pos());
 		Vector3 e2 = _simCell.wrapVector(facet->edges()->prevFaceEdge()->vertex1()->pos() - facet->edges()->vertex2()->pos());
-		_surfaceArea += e1.cross(e2).length();
+		_results->addSurfaceArea(e1.cross(e2).length() / 2);
 	}
-	_surfaceArea *= FloatType(0.5);
 
 	endProgressSubSteps();
+
+	setResult(std::move(_results));
+}
+
+/******************************************************************************
+* Injects the computed results of the engine into the data pipeline.
+******************************************************************************/
+PipelineFlowState ConstructSurfaceModifier::ConstructSurfaceResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+{
+	ConstructSurfaceModifier* modifier = static_object_cast<ConstructSurfaceModifier>(modApp->modifier());
+	OVITO_ASSERT(modifier);
+
+	// Create the output data object.
+	OORef<SurfaceMesh> meshObj(new SurfaceMesh(modApp->dataset()));
+	meshObj->setStorage(mesh());
+	meshObj->setIsCompletelySolid(isCompletelySolid());
+	meshObj->setDomain(input.findObject<SimulationCellObject>());
+	meshObj->addDisplayObject(modifier->surfaceMeshDisplay());
+
+	// Insert output object into the pipeline.
+	PipelineFlowState output = input;
+	output.addObject(meshObj);
+	
+	output.attributes().insert(QStringLiteral("ConstructSurfaceMesh.surface_area"), QVariant::fromValue(surfaceArea()));
+	output.attributes().insert(QStringLiteral("ConstructSurfaceMesh.solid_volume"), QVariant::fromValue(solidVolume()));
+
+	output.setStatus(PipelineStatus(PipelineStatus::Success, tr("Surface area: %1\nSolid volume: %2\nTotal cell volume: %3\nSolid volume fraction: %4\nSurface area per solid volume: %5\nSurface area per total volume: %6")
+			.arg(surfaceArea()).arg(solidVolume()).arg(totalVolume())
+			.arg(solidVolume() / totalVolume()).arg(surfaceArea() / solidVolume()).arg(surfaceArea() / totalVolume())));
+
+	return output;
 }
 
 }	// End of namespace

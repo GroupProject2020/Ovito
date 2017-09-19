@@ -22,7 +22,7 @@
 #pragma once
 
 
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/animation/AnimationSettings.h>
 #include <core/dataset/UndoStack.h>
 #include <gui/widgets/general/SpinnerWidget.h>
 

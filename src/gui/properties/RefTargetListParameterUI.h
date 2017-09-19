@@ -33,11 +33,14 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 ******************************************************************************/
 class OVITO_GUI_EXPORT RefTargetListParameterUI : public ParameterUI
 {
+	Q_OBJECT
+	OVITO_CLASS(RefTargetListParameterUI)
+	
 public:
 
 	/// Constructor.
 	RefTargetListParameterUI(QObject* parentEditor, const PropertyFieldDescriptor& refField,
-			const RolloutInsertionParameters& rolloutParams = RolloutInsertionParameters(), const OvitoObjectType* defaultEditorClass = nullptr);
+			const RolloutInsertionParameters& rolloutParams = RolloutInsertionParameters(), OvitoClassPtr defaultEditorClass = nullptr);
 	
 	/// Destructor.
 	virtual ~RefTargetListParameterUI();
@@ -176,13 +179,13 @@ protected:
 	QPointer<QAbstractItemView> _viewWidget;
 	
 	/// This editor type is show if no entry is selected in the list box.
-	const OvitoObjectType* _defaultEditorClass;
+	OvitoClassPtr _defaultEditorClass;
 
 	/// The internal model used for the list view widget.
 	ListViewModel* _model;
 
 	/// The list of items in the list view.
-	DECLARE_VECTOR_REFERENCE_FIELD(RefTarget, targets);
+	DECLARE_VECTOR_REFERENCE_FIELD_FLAGS(RefTarget, targets, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
 	/// Maps reference field indices to row indices.
 	QVector<int> _targetToRow;
@@ -195,9 +198,6 @@ protected:
 
 	/// Controls where the sub-editor is opened and whether the sub-editor is opened in a collapsed state.
 	RolloutInsertionParameters _rolloutParams;
-	
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

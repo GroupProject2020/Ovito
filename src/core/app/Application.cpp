@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,7 +22,6 @@
 #include <core/Core.h>
 #include <core/dataset/UndoStack.h>
 #include <core/dataset/DataSetContainer.h>
-#include <core/plugins/autostart/AutoStartObject.h>
 #include <core/utilities/io/FileManager.h>
 #include "Application.h"
 
@@ -190,20 +189,6 @@ DataSetContainer* Application::datasetContainer() const
 FileManager* Application::createFileManager()
 {
 	return new FileManager();
-}
-
-/******************************************************************************
-* Executes the functions registered with the runOnceLater() function.
-* This method is called after the events in the event queue have been processed.
-******************************************************************************/
-void Application::processRunOnceList()
-{
-	QMap<QPointer<QObject>,std::function<void()>> listCopy;
-	_runOnceList.swap(listCopy);
-	for(auto entry = listCopy.cbegin(); entry != listCopy.cend(); ++entry) {
-		if(entry.key())
-			entry.value()();
-	}
 }
 
 /******************************************************************************

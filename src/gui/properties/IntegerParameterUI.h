@@ -32,6 +32,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 ******************************************************************************/
 class OVITO_GUI_EXPORT IntegerParameterUI : public NumericalParameterUI
 {
+	Q_OBJECT
+	OVITO_CLASS(IntegerParameterUI)
+	
 public:
 
 	/// Constructor for a Qt property.
@@ -67,11 +70,6 @@ public:
 	
 	Q_PROPERTY(int minValue READ minValue WRITE setMinValue)	
 	Q_PROPERTY(int maxValue READ maxValue WRITE setMaxValue)	
-	
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

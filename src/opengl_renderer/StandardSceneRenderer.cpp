@@ -20,16 +20,18 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <core/Core.h>
+#include <core/dataset/DataSet.h>
 #include <core/viewport/Viewport.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/rendering/RenderSettings.h>
 #include <core/app/Application.h>
+#include <core/utilities/units/UnitsManager.h>
 #include "StandardSceneRenderer.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(StandardSceneRenderer, OpenGLSceneRenderer);
-DEFINE_PROPERTY_FIELD(StandardSceneRenderer, antialiasingLevel, "AntialiasingLevel");
+IMPLEMENT_OVITO_CLASS(StandardSceneRenderer);
+DEFINE_PROPERTY_FIELD(StandardSceneRenderer, antialiasingLevel);
 SET_PROPERTY_FIELD_LABEL(StandardSceneRenderer, antialiasingLevel, "Antialiasing level");
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(StandardSceneRenderer, antialiasingLevel, IntegerParameterUnit, 1, 6);
 
@@ -84,7 +86,7 @@ bool StandardSceneRenderer::startRender(DataSet* dataset, RenderSettings* settin
 	_framebufferSize = QSize(settings->outputImageWidth() * sampling, settings->outputImageHeight() * sampling);
 	QOpenGLFramebufferObjectFormat framebufferFormat;
 	framebufferFormat.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
-	_framebufferObject.reset(new QOpenGLFramebufferObject(_framebufferSize.width(), _framebufferSize.height(), framebufferFormat));
+	_framebufferObject.reset(new QOpenGLFramebufferObject(_framebufferSize, framebufferFormat));
 	if(!_framebufferObject->isValid())
 		throwException(tr("Failed to create OpenGL framebuffer object for offscreen rendering."));
 
@@ -120,10 +122,10 @@ void StandardSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParam
 /******************************************************************************
 * Renders the current animation frame.
 ******************************************************************************/
-bool StandardSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, TaskManager& taskManager)
+bool StandardSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, const PromiseBase& promise)
 {
 	// Let the base class do the main rendering work.
-	if(!OpenGLSceneRenderer::renderFrame(frameBuffer, stereoTask, taskManager))
+	if(!OpenGLSceneRenderer::renderFrame(frameBuffer, stereoTask, promise))
 		return false;
 
 	// Flush the contents to the FBO before extracting image.

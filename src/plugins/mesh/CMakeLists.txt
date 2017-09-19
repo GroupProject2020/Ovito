@@ -20,16 +20,49 @@
 ###############################################################################
 
 SET(SourceFiles 
-	import/TriMeshLoader.cpp
-	import/VTKFileImporter.cpp
+	tri/TriMeshObject.cpp
+	tri/TriMeshDisplay.cpp
+	surface/SurfaceMesh.cpp
+	surface/RenderableSurfaceMesh.cpp
+	surface/SurfaceMeshDisplay.cpp	
+	surface/SurfaceMeshSliceModifierDelegate.cpp
+	surface/SurfaceMeshAffineTransformationModifierDelegate.cpp
+	io/TriMeshFrameData.cpp
+	io/VTKFileImporter.cpp
+	io/VTKTriangleMeshExporter.cpp
 )
 
 IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
 	LIST(APPEND SourceFiles scripting/PythonInterface.cpp)
 ENDIF()
 
+# List of source files of the GLU library used for polygon tessellation.
+SET(GLUSourceFiles
+	util/polytess/dict.c
+	util/polytess/geom.c
+	util/polytess/memalloc.c
+	util/polytess/mesh.c
+	util/polytess/normal.c
+	util/polytess/priorityq.c
+	util/polytess/render.c
+	util/polytess/sweep.c
+	util/polytess/tess.c
+	util/polytess/tessmono.c
+)
+
 OVITO_STANDARD_PLUGIN(Mesh
-	SOURCES ${SourceFiles}
+	SOURCES ${SourceFiles} ${GLUSourceFiles}
 	OPTIONAL_PLUGIN_DEPENDENCIES PyScript	
 	PYTHON_WRAPPERS "${CMAKE_CURRENT_SOURCE_DIR}/resources/python/"
 )
+
+# Speed up compilation by using precompiled headers.
+ADD_PRECOMPILED_HEADER(Mesh plugins/mesh/Mesh.h)
+
+# Build corresponding GUI plugin.
+IF(OVITO_BUILD_GUI)
+	ADD_SUBDIRECTORY(gui)
+ENDIF()
+
+# Propagate list of plugins to parent scope.
+SET(OVITO_PLUGIN_LIST ${OVITO_PLUGIN_LIST} PARENT_SCOPE)

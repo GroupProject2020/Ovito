@@ -21,11 +21,10 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <core/viewport/Viewport.h>
-#include <core/scene/ObjectNode.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/animation/AnimationSettings.h>
 #include <gui/viewport/ViewportWindow.h>
-#include <plugins/particles/objects/ParticlePropertyObject.h>
-#include <plugins/particles/objects/ParticleTypeProperty.h>
+#include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/particles/objects/ParticleDisplay.h>
 #include "ParticlePickingHelper.h"
 
@@ -43,7 +42,7 @@ bool ParticlePickingHelper::pickParticle(ViewportWindow* vpwin, const QPoint& cl
 		// Check if that was a particle.
 		ParticlePickInfo* pickInfo = dynamic_object_cast<ParticlePickInfo>(vpPickResult.pickInfo);
 		if(pickInfo) {
-			ParticlePropertyObject* posProperty = ParticlePropertyObject::findInState(pickInfo->pipelineState(), ParticleProperty::PositionProperty);
+			ParticleProperty* posProperty = ParticleProperty::findInState(pickInfo->pipelineState(), ParticleProperty::PositionProperty);
 			int particleIndex = pickInfo->particleIndexFromSubObjectID(vpPickResult.subobjectId);
 			if(posProperty && particleIndex >= 0) {
 				// Save reference to the selected particle.
@@ -54,7 +53,7 @@ bool ParticlePickingHelper::pickParticle(ViewportWindow* vpwin, const QPoint& cl
 				result.worldPos = result.objNode->getWorldTransform(vpwin->viewport()->dataset()->animationSettings()->time(), iv) * result.localPos;
 
 				// Determine particle ID.
-				ParticlePropertyObject* identifierProperty = ParticlePropertyObject::findInState(pickInfo->pipelineState(), ParticleProperty::IdentifierProperty);
+				ParticleProperty* identifierProperty = ParticleProperty::findInState(pickInfo->pipelineState(), ParticleProperty::IdentifierProperty);
 				if(identifierProperty && result.particleIndex < identifierProperty->size()) {
 					result.particleId = identifierProperty->getInt(result.particleIndex);
 				}
@@ -70,50 +69,7 @@ bool ParticlePickingHelper::pickParticle(ViewportWindow* vpwin, const QPoint& cl
 }
 
 /******************************************************************************
-* Computes the world space bounding box of the particle selection marker.
-******************************************************************************/
-Box3 ParticlePickingHelper::selectionMarkerBoundingBox(Viewport* vp, const PickResult& pickRecord)
-{
-	if(!pickRecord.objNode)
-		return Box3();
-
-	const PipelineFlowState& flowState = pickRecord.objNode->evaluatePipelineImmediately(PipelineEvalRequest(vp->dataset()->animationSettings()->time(), true));
-
-	// If particle selection is based on ID, find particle with the given ID.
-	size_t particleIndex = pickRecord.particleIndex;
-	if(pickRecord.particleId >= 0) {
-		ParticlePropertyObject* identifierProperty = ParticlePropertyObject::findInState(flowState, ParticleProperty::IdentifierProperty);
-		if(identifierProperty) {
-			const int* begin = identifierProperty->constDataInt();
-			const int* end = begin + identifierProperty->size();
-			const int* iter = std::find(begin, end, pickRecord.particleId);
-			if(iter != end)
-				particleIndex = (iter - begin);
-		}
-	}
-
-	// Fetch properties of selected particle needed to compute the bounding box.
-	ParticlePropertyObject* posProperty = ParticlePropertyObject::findInState(flowState, ParticleProperty::PositionProperty);
-	if(!posProperty)
-		return Box3();
-
-	// Get the particle display object, which is attached to the position property object.
-	ParticleDisplay* particleDisplay = nullptr;
-	for(DisplayObject* displayObj : posProperty->displayObjects()) {
-		if((particleDisplay = dynamic_object_cast<ParticleDisplay>(displayObj)) != nullptr)
-			break;
-	}
-	if(!particleDisplay)
-		return Box3();
-
-	TimeInterval iv;
-	const AffineTransformation& nodeTM = pickRecord.objNode->getWorldTransform(vp->dataset()->animationSettings()->time(), iv);
-
-	return nodeTM * particleDisplay->highlightParticleBoundingBox(particleIndex, flowState, nodeTM, vp);
-}
-
-/******************************************************************************
-* Renders the atom selection overlay in a viewport.
+* Renders the particle selection overlay in a viewport.
 ******************************************************************************/
 void ParticlePickingHelper::renderSelectionMarker(Viewport* vp, ViewportSceneRenderer* renderer, const PickResult& pickRecord)
 {
@@ -123,12 +79,12 @@ void ParticlePickingHelper::renderSelectionMarker(Viewport* vp, ViewportSceneRen
 	if(!renderer->isInteractive() || renderer->isPicking())
 		return;
 
-	const PipelineFlowState& flowState = pickRecord.objNode->evaluatePipelineImmediately(PipelineEvalRequest(vp->dataset()->animationSettings()->time(), true));
+	const PipelineFlowState& flowState = pickRecord.objNode->evaluatePipelinePreliminary(true);
 
 	// If particle selection is based on ID, find particle with the given ID.
 	size_t particleIndex = pickRecord.particleIndex;
 	if(pickRecord.particleId >= 0) {
-		ParticlePropertyObject* identifierProperty = ParticlePropertyObject::findInState(flowState, ParticleProperty::IdentifierProperty);
+		ParticleProperty* identifierProperty = ParticleProperty::findInState(flowState, ParticleProperty::IdentifierProperty);
 		if(identifierProperty) {
 			const int* begin = identifierProperty->constDataInt();
 			const int* end = begin + identifierProperty->size();
@@ -139,7 +95,7 @@ void ParticlePickingHelper::renderSelectionMarker(Viewport* vp, ViewportSceneRen
 	}
 
 	// Fetch properties of selected particle needed to render the overlay.
-	ParticlePropertyObject* posProperty = ParticlePropertyObject::findInState(flowState, ParticleProperty::PositionProperty);
+	ParticleProperty* posProperty = ParticleProperty::findInState(flowState, ParticleProperty::PositionProperty);
 	if(!posProperty)
 		return;
 

@@ -22,13 +22,12 @@
 #include <gui/GUI.h>
 #include <gui/properties/BooleanGroupBoxParameterUI.h>
 #include <core/dataset/UndoStack.h>
-#include <core/animation/controller/Controller.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/animation/controller/Controller.h>
+#include <core/dataset/animation/AnimationSettings.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
 
-// Gives the class run-time type information.
-IMPLEMENT_OVITO_OBJECT(BooleanGroupBoxParameterUI, PropertyParameterUI);
+IMPLEMENT_OVITO_CLASS(BooleanGroupBoxParameterUI);
 
 /******************************************************************************
 * Constructor for a Qt property.
@@ -98,16 +97,7 @@ void BooleanGroupBoxParameterUI::updateUI()
 	PropertyParameterUI::updateUI();
 
 	if(groupBox() && editObject()) {
-		if(isReferenceFieldUI()) {
-#if 0
-			BooleanController* ctrl = dynamic_object_cast<BooleanController>(parameterObject());
-			if(ctrl != NULL) {
-				bool val = ctrl->currentValue();
-				groupBox()->setChecked(val);
-			}
-#endif
-		}
-		else {
+		if(!isReferenceFieldUI()) {
 			QVariant val(false);
 			if(isQtPropertyUI()) {
 				val = editObject()->property(propertyName());
@@ -148,15 +138,7 @@ void BooleanGroupBoxParameterUI::updatePropertyValue()
 {
 	if(groupBox() && editObject()) {
 		undoableTransaction(tr("Change parameter"), [this]() {
-			if(isReferenceFieldUI()) {
-#if 0
-				if(BooleanController* ctrl = dynamic_object_cast<BooleanController>(parameterObject())) {
-					ctrl->setCurrentValue(groupBox()->isChecked());
-					updateUI();
-				}
-#endif
-			}
-			else if(isQtPropertyUI()) {
+			if(isQtPropertyUI()) {
 				if(!editObject()->setProperty(propertyName(), groupBox()->isChecked())) {
 					OVITO_ASSERT_MSG(false, "BooleanGroupBoxParameterUI::updatePropertyValue()", QString("The value of property %1 of object class %2 could not be set.").arg(QString(propertyName()), editObject()->metaObject()->className()).toLocal8Bit().constData());
 				}

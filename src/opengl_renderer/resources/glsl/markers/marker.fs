@@ -21,7 +21,7 @@
 
 #if __VERSION__ >= 130
 
-	in vec4 vertex_color_fs;
+	flat in vec4 vertex_color_fs;
 	out vec4 FragColor;
 
 #else

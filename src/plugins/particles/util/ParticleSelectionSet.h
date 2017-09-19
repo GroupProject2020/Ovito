@@ -23,8 +23,8 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <core/scene/pipeline/PipelineFlowState.h>
-#include <core/reference/RefTarget.h>
+#include <core/dataset/pipeline/PipelineFlowState.h>
+#include <core/oo/RefTarget.h>
 
 #include <QBitArray>
 
@@ -54,7 +54,7 @@ public:
 
 	/// Constructor.
 	Q_INVOKABLE ParticleSelectionSet(DataSet* dataset) : RefTarget(dataset), _useIdentifiers(true) {
-		INIT_PROPERTY_FIELD(useIdentifiers);
+		
 	}
 
 	/// Returns the stored selection set as a bit array.
@@ -82,12 +82,12 @@ public:
 	void setParticleSelection(const PipelineFlowState& state, const QBitArray& selection, SelectionMode mode = SelectionReplace);
 
 	/// Copies the stored selection set into the given output selection particle property.
-	PipelineStatus applySelection(ParticlePropertyObject* outputSelectionProperty, ParticlePropertyObject* identifierProperty);
+	PipelineStatus applySelection(ParticleProperty* outputSelectionProperty, ParticleProperty* identifierProperty);
 
 protected:
 
 	/// Saves the class' contents to the given stream.
-	virtual void saveToStream(ObjectSaveStream& stream) override;
+	virtual void saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData) override;
 
 	/// Loads the class' contents from the given stream.
 	virtual void loadFromStream(ObjectLoadStream& stream) override;
@@ -110,7 +110,7 @@ private:
 	DECLARE_PROPERTY_FIELD(bool, useIdentifiers);
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 
 	friend class ReplaceSelectionOperation;
 };

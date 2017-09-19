@@ -23,7 +23,7 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <core/reference/RefTarget.h>
+#include <core/oo/RefTarget.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
@@ -60,7 +60,7 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(Vector3, burgersVector, setBurgersVector);
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 };
 
 }	// End of namespace

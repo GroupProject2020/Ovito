@@ -20,8 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <gui/GUI.h>
-#include <core/scene/SceneNode.h>
-#include <core/scene/SceneRoot.h>
+#include <core/dataset/scene/SceneNode.h>
+#include <core/dataset/scene/SceneRoot.h>
 #include <core/dataset/DataSetContainer.h>
 #include <core/dataset/DataSet.h>
 #include "SceneNodesListModel.h"
@@ -58,10 +58,10 @@ int SceneNodesListModel::rowCount(const QModelIndex& parent) const
 QVariant SceneNodesListModel::data(const QModelIndex& index, int role) const
 {
 	if(role == Qt::DisplayRole) {
-		return qVariantFromValue(_nodeListener.targets()[index.row()]->objectTitle());
+		return QVariant::fromValue(_nodeListener.targets()[index.row()]->objectTitle());
 	}
 	else if(role == Qt::UserRole) {
-		return qVariantFromValue(_nodeListener.targets()[index.row()]);
+		return QVariant::fromValue(_nodeListener.targets()[index.row()]);
 	}
 	return QVariant();
 }

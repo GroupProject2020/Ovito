@@ -20,8 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <core/Core.h>
-#include <core/utilities/io/LoadStream.h>
 #include <core/utilities/Exception.h>
+#include <core/app/Application.h>
+#include "LoadStream.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
 
@@ -67,6 +68,11 @@ LoadStream::LoadStream(QDataStream& source) : _is(source), _isOpen(false)
 	if(_fileFormat > OVITO_FILE_FORMAT_VERSION)
 		throw Exception(tr("Unsupported file format revision %1. This file has been written by %2 %3.%4.%5. Please upgrade to the newest program version to open this file.")
 				.arg(_fileFormat).arg(_applicationName).arg(_applicationMajorVersion).arg(_applicationMinorVersion).arg(_applicationRevisionVersion));
+
+	// OVITO 3.x cannot read state files written by OVITO 2.x:
+	if(_fileFormat < 30000)
+		throw Exception(tr("This file has been written by %1 %2.%3.%4 and %5 %6.x cannot read it anymore. Please use the old program version to open the file.")
+			.arg(_applicationName).arg(_applicationMajorVersion).arg(_applicationMinorVersion).arg(_applicationRevisionVersion).arg(QCoreApplication::applicationName()).arg(Application::applicationVersionMajor()));	
 }
 
 /******************************************************************************

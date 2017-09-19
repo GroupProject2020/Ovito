@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,6 +24,9 @@
 
 #include <core/Core.h>
 #include "Promise.h"
+#include "FutureDetail.h"
+#include "TrackingPromiseState.h"
+#include "DirectContinuationPromiseState.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
@@ -35,185 +38,321 @@ class FutureBase
 {
 public:
 
-	/// Returns true if the Promise associated with this Future has been canceled.
-	bool isCanceled() const { return promise()->isCanceled(); }
+	/// Destructor.
+	~FutureBase() { reset(); }
 
-	/// Returns true if the Promise associated with this Future has been completed.
-	bool isFinished() const { return promise()->isFinished(); }
+	/// Returns true if the shared state associated with this Future has been canceled.
+	bool isCanceled() const { return sharedState()->isCanceled(); }
 
-	/// Cancels the Promise associated with this Future.
-	void cancel() { promise()->cancel(); }
+	/// Returns true if the shared state associated with this Future has been fulfilled.
+	bool isFinished() const { return sharedState()->isFinished(); }
 
-	/// Blocks execution until the Promise associated with this future has been completed.
-	void waitForFinished() const {
-		promise()->waitForFinished();
+	/// Returns true if this Future is associated with a shared state.
+	bool isValid() const { return (bool)_sharedState.get(); }
+
+	/// Dissociates this Future from its shared state.
+	void reset() {
+		_sharedState.reset();
 	}
 
-	/// Returns true if this Future is associated with a valid Promise.
-	bool isValid() const { return (bool)_promise; }
-
-	/// Dissociates this Future from its Promise.
-	void reset() { _promise.reset(); }
-
-	/// Returns the Promise associated with this Future. 
-	/// Make sure it has a Promise before calling this function.
-	const PromiseBasePtr& promise() const {
+	/// Returns the shared state associated with this Future. 
+	/// Make sure it has one before calling this function.
+	const PromiseStatePtr& sharedState() const {
 		OVITO_ASSERT(isValid());
-		return _promise;
+		return _sharedState.get();
 	}
+
+	/// Move constructor.
+	FutureBase(FutureBase&& other) noexcept = default;
+
+	/// Copy constructor.
+	FutureBase(const FutureBase& other) noexcept = default;
+
+	/// A future is moveable.
+	FutureBase& operator=(FutureBase&& other) noexcept = default;
+
+	/// Copy assignment.
+	FutureBase& operator=(const FutureBase& other) noexcept = default;
+
+	/// Runs the given function once this future has reached the 'finished' state.
+	/// The function is run even if the future was canceled or set to an error state.
+	template<typename FC, class Executor>
+	void finally(Executor&& executor, FC&& cont);
+
+	/// Version of the function above, which uses the default inline executor.
+	template<typename FC>
+	void finally(FC&& cont) { finally(detail::InlineExecutor(), std::forward<FC>(cont)); }
 
 protected:
 
-	/// Default constructor, which creates a Future with a Promise.
-	FutureBase() {}
+	/// Default constructor, which creates a Future without a shared state.
+	FutureBase() noexcept = default;
 
-	/// Constructor that creates a Future associated with a Promise.
-	explicit FutureBase(const PromiseBasePtr& p) : _promise(p) {}
+	/// Constructor that creates a Future associated with a share state.
+	explicit FutureBase(PromiseStatePtr&& p) noexcept : _sharedState(std::move(p)) {}
 	
-	/// The Promise associated with this Future.
-	PromiseBasePtr _promise;
+	/// The shared state associated with this Future.
+	PromiseStateCountedPtr _sharedState;
 
-	template<typename R2, typename Function> friend class Task;
-	template<typename R2> friend class Promise;
-	friend class PromiseBase;
-	friend class PromiseWatcher;
-	friend class TaskManager;
+	friend class TrackingPromiseState;
 };
 
 /******************************************************************************
 * A future that provides access to the value computed by a Promise.
 ******************************************************************************/
-template<typename R>
-class Future : public FutureBase 
+template<typename... R>
+class Future : public FutureBase
 {
 public:
-	typedef Promise<R> PromiseType;
-	typedef PromisePtr<R> PromisePtrType;
 
-	/// Default constructor that coonstructs an invalid Future that is not associated with any Promise.
-	Future() {}
+	using this_type = Future<R...>;
+	using tuple_type = std::tuple<R...>;
+	using promise_type = Promise<R...>;
 
-	/// Constructor that constructs a Future that is associated with the given Promise.
-	explicit Future(const PromisePtrType& p) : FutureBase(p) {}
+	/// Default constructor that constructs an invalid Future that is not associated with any shared state.
+	Future() noexcept {}
 
-	/// Creates a new Future and its associated Promise. The Promise is not started yet.
-	static Future createWithPromise() {
-		return Future(std::make_shared<PromiseType>());
-	}
+	/// A future is not copy constructible.
+	Future(const Future& other) = delete;
 
-	/// Creates an already completed Future with a result value that is immediately available.
-	static Future createImmediate(const R& result, const QString& statusText = QString()) {
-		auto promise = std::make_shared<PromiseType>();
-		promise->setStarted();
-		if(statusText.isEmpty() == false)
-			promise->setProgressText(statusText);
-		promise->setResult(result);
-		promise->setFinished();
-		return Future(promise);
-	}
+	/// A future is move constructible.
+	Future(Future&& other) noexcept = default;
 
-	/// Creates an already completed Future with a result value that is immediately available.
-	static Future createImmediate(R&& result, const QString& statusText = QString()) {
-		auto promise = std::make_shared<PromiseType>();
-		promise->setStarted();
-		if(statusText.isEmpty() == false)
-			promise->setProgressText(statusText);
-		promise->setResult(std::move(result));
-		promise->setFinished();
-		return Future(promise);
-	}
+	/// A future may directly be initialized from r-values.
+	template<typename... R2, size_t C = sizeof...(R), 
+		typename = std::enable_if_t<C != 0 
+			&& !std::is_same<std::tuple<std::decay_t<R2>...>, std::tuple<Future<R...>>>::value
+			&& !std::is_same<std::tuple<std::decay_t<R2>...>, std::tuple<PromiseStatePtr>>::value>>
+	Future(R2&&... val) noexcept : FutureBase(std::move(promise_type::createImmediate(std::forward<R2>(val)...)._sharedState)) {}
 
-	/// Creates a completed Future that is in the 'exception' state.
-	static Future createFailed(const Exception& ex) {
-		auto promise = std::make_shared<PromiseType>();
-		promise->setStarted();
-		promise->setException(std::make_exception_ptr(ex));
-		promise->setFinished();
-		return Future(promise);
-	}
+	/// A future is moveable.
+	Future& operator=(Future&& other) noexcept = default;
 
-	/// Creates a Future without results that is in the canceled state.
+	/// A future is not copy assignable.
+	Future& operator=(const Future& other) = delete;
+
+	/// Creates a future that is in the 'canceled' state.
 	static Future createCanceled() {
-		auto promise = std::make_shared<PromiseType>();
-		promise->setStarted();
-		promise->cancel();
-		promise->setFinished();
-		return Future(promise);
+		return promise_type::createCanceled();
+	}
+
+	/// Create a future that is ready and provides an immediate result.
+	template<typename... V>
+	static Future createImmediate(V&&... result) {
+		return promise_type::createImmediate(std::forward<V>(result)...);
+	}
+
+	/// Create a future that is ready and provides an immediate result.
+	template<typename... Args>
+	static Future createImmediateEmplace(Args&&... args) {
+		return promise_type::createImmediateEmplace(std::forward<Args>(args)...);
+	}
+
+	/// Creates a future that is in the 'exception' state.
+	static Future createFailed(const Exception& ex) {
+		return promise_type::createFailed(ex);
+	}
+
+	/// Creates a future that is in the 'exception' state.
+	static Future createFailed(std::exception_ptr ex_ptr) {
+		return promise_type::createFailed(std::move(ex_ptr));
+	}
+
+	/// Cancels the shared state associated with this Future.
+	/// The Future is no longer valid after calling this function.
+	void cancelRequest() {
+		reset();
 	}
 
 	/// Returns the results computed by the associated Promise.
-	/// Blocks execution until the results become available.
-	/// Throws an exception if an error occurred while the promise was computing
-	/// the results, or if the promise has been canceled.
-	const R& result() const {
-		promise()->waitForResult();
-		return static_cast<Promise<R>*>(promise().get())->_result;
+	/// This function may only be called after the Promise was fulfilled (and not canceled).
+	tuple_type results() {
+		OVITO_ASSERT_MSG(isValid(), "Future::results()", "Future must be valid.");
+		OVITO_ASSERT_MSG(isFinished(), "Future::results()", "Future must be in fulfilled state.");
+		OVITO_ASSERT_MSG(!isCanceled(), "Future::results()", "Future must not be canceled.");
+	    sharedState()->throwPossibleException();
+		tuple_type result = sharedState()->template takeResults<tuple_type>();
+		reset();
+		return result;
 	}
 
-	/// Returns the Promise associated with this Future. 
-	/// Make sure it has a Promise before calling this function.
-	PromisePtrType promise() const {
-		return std::static_pointer_cast<PromiseType>(FutureBase::promise());
+	/// Returns the results computed by the associated Promise.
+	/// This function may only be called after the Promise was fulfilled (and not canceled).
+	auto result() {
+		return std::get<0>(results());
 	}
+
+	/// Returns a new future that, upon the fulfillment of this future, will
+    /// be fulfilled by the specified continuation function.
+	template<typename FC, class Executor>
+	typename detail::resulting_future_type<FC,std::add_rvalue_reference_t<tuple_type>>::type then(Executor&& executor, FC&& cont);
+
+	/// Version of the function above, which uses the default inline executor.
+	template<typename FC>
+	typename detail::resulting_future_type<FC,std::add_rvalue_reference_t<tuple_type>>::type then(FC&& cont) {
+		return then(detail::InlineExecutor(), std::forward<FC>(cont));
+	}
+
+	/// Returns a new future that, upon the fulfillment of this future, will
+    /// be fulfilled by the specified continuation function.
+	template<typename FC, class Executor>
+	typename detail::resulting_future_type<FC,std::tuple<this_type>>::type then_future(Executor&& executor, FC&& cont);
+
+	/// Runs the given function once this future has reached the 'finished' state.
+	/// The function is awlays run, even if the future was canceled or set to an error state.
+	template<typename FC, class Executor>
+	void finally_future(Executor&& executor, FC&& cont);
+
+	/// Version of the function above, which uses the default inline executor.
+	template<typename FC>
+	void finally_future(FC&& cont) { finally_future(detail::InlineExecutor(), std::forward<FC>(cont)); }
+
+protected:
+
+	/// Constructor that constructs a Future that is associated with the given shared state.
+	explicit Future(PromiseStatePtr p) noexcept : FutureBase(std::move(p)) {}
+
+	/// Move constructor taking the promise state pointer from a r-value Promise.
+	Future(promise_type&& promise) : FutureBase(std::move(promise._sharedState)) {}
+
+	template<typename... R2> friend class Future;
+	template<typename... R2> friend class Promise;
+	template<typename... R2> friend class AsynchronousTask;
+	template<typename... R2> friend class SharedFuture;
 };
 
-/******************************************************************************
-* A future without a result.
-******************************************************************************/
-template<>
-class Future<void> : public FutureBase 
+/// Returns a new future that, upon the fulfillment of this future, will
+/// be fulfilled by the specified continuation function.
+template<typename... R>
+template<typename FC, class Executor>
+typename detail::resulting_future_type<FC,std::add_rvalue_reference_t<typename Future<R...>::tuple_type>>::type Future<R...>::then(Executor&& executor, FC&& cont)
 {
-public:
-	typedef Promise<void> PromiseType;
-	typedef PromisePtr<void> PromisePtrType;
+	// The future type returned by then():
+	using ResultFutureType = typename detail::resulting_future_type<FC,tuple_type>::type;
+	using ContinuationStateType = typename detail::continuation_state_type<FC,tuple_type>::type;
 
-	/// Default constructor that coonstructs an invalid Future that is not associated with any Promise.
-	Future() {}
+	// This future must be valid for then() to work.
+	OVITO_ASSERT_MSG(isValid(), "Future::then()", "Future must be valid.");
 
-	/// Constructor that constructs a Future that is associated with the given Promise.
-	explicit Future(const PromisePtrType& p) : FutureBase(p) {}
+	// Create an unfulfilled promise state for the result of the continuation.
+	auto trackingState = std::make_shared<ContinuationStateType>(std::move(_sharedState));
+//	qDebug() << "Future::then: Creating tracking state" << trackingState.get() << "as exclusive continuation of state" << trackingState->creatorState().get();
+		
+	trackingState->creatorState()->addContinuation(
+		executor.createWork([cont = std::forward<FC>(cont), trackingState](bool workCanceled) mutable {
 
-	/// Creates a new Future and its associated Promise. The Promise is not started yet.
-	static Future createWithPromise() {
-		return Future(std::make_shared<PromiseType>());
-	}
+		// Don't need to run continuation function when our promise has been canceled in the meantime.
+		if(workCanceled || trackingState->isCanceled()) {
+			trackingState->setStarted();
+			trackingState->setFinished();
+			return;
+		}
 
-	/// Creates a Future that is already complete.
-	static Future createImmediate(const QString& statusText = QString()) {
-		auto promise = std::make_shared<PromiseType>();
-		promise->setStarted();
-		if(statusText.isEmpty() == false)
-			promise->setProgressText(statusText);
-		promise->setFinished();
-		return Future(promise);
-	}
+		// If promise was canceled, skip continuation function.
+		if(trackingState->creatorState()->isCanceled()) {
+			trackingState->setStarted();
+			trackingState->cancel();
+			trackingState->setFinished();
+			return;
+		}
 
-	/// Create a Future without results that is in the canceled state.
-	static Future createCanceled() {
-		auto promise = std::make_shared<PromiseType>();
-		promise->setStarted();
-		promise->cancel();
-		promise->setFinished();
-		return Future(promise);
-	}
+		// Also skip continuation function in case of an exception state.
+		if(trackingState->creatorState()->_exceptionStore) {
+			trackingState->setStarted();
+			trackingState->setException(std::move(trackingState->creatorState()->_exceptionStore));
+			trackingState->setFinished();
+			return;
+		}
 
-	/// Blocks execution until the Promise associated with this Future has finished.
-	/// Throws an exception if an error occurred while the promise was running or if the promise has been canceled.
-	void result() const {
-		promise()->waitForResult();
-	}
+		trackingState->fulfillWith(std::forward<FC>(cont), trackingState->creatorState()->template takeResults<tuple_type>());
+	}));
 
-	/// Returns the Promise associated with this Future. 
-	/// Make sure it has a Promise before calling this function.
-	PromisePtrType promise() const {
-		return std::static_pointer_cast<PromiseType>(FutureBase::promise());
-	}
-};
+	// Calling then() on a Future invalidates it.
+	OVITO_ASSERT(!isValid());
 
-/// Part of PromiseWatcher implementation.
-inline void PromiseWatcher::setFuture(const FutureBase& future)
+	return ResultFutureType(PromiseStatePtr(std::move(trackingState)));
+}
+
+/// Returns a new future that, upon the fulfillment of this future, will
+/// be fulfilled by the specified continuation function.
+template<typename... R>
+template<typename FC, class Executor>
+typename detail::resulting_future_type<FC,std::tuple<Future<R...>>>::type Future<R...>::then_future(Executor&& executor, FC&& cont)
 {
-	setPromise(future.promise());
+	// The future type returned by then_future():
+	using ResultFutureType = typename detail::resulting_future_type<FC,std::tuple<this_type>>::type;
+	using ContinuationStateType = typename detail::continuation_state_type<FC,std::tuple<this_type>>::type;
+
+	// This future must be valid for then() to work.
+	OVITO_ASSERT_MSG(isValid(), "Future::then_future()", "Future must be valid.");
+
+	// Create an unfulfilled promise state for the result of the continuation.
+	auto trackingState = std::make_shared<ContinuationStateType>(std::move(_sharedState));
+//	qDebug() << "Future::then_future: Creating tracking state" << trackingState.get() << "as exclusive continuation of state" << trackingState->creatorState().get();
+		
+	trackingState->creatorState()->addContinuation(
+		executor.createWork([cont = std::forward<FC>(cont), trackingState](bool workCanceled) mutable {
+
+		// Don't need to run continuation function when our promise has been canceled in the meantime.
+		if(workCanceled || trackingState->isCanceled()) {
+			trackingState->setStarted();
+			trackingState->setFinished();
+			return;
+		}
+
+		// If promise was canceled, skip continuation function.
+		if(trackingState->creatorState()->isCanceled()) {
+			trackingState->setStarted();
+			trackingState->cancel();
+			trackingState->setFinished();
+			return;
+		}
+
+		// Create a Future for the fulfilled state.
+		Future<R...> future(trackingState->creatorState());
+
+		trackingState->fulfillWith(std::forward<FC>(cont), std::forward_as_tuple(std::move(future)));
+	}));
+
+	// Calling then_future() on a Future invalidates it.
+	OVITO_ASSERT(!isValid());
+
+	return ResultFutureType(PromiseStatePtr(std::move(trackingState)));
+}
+
+/// Runs the given function once this future has reached the 'finished' state.
+/// The function is run even if the future was canceled or set to an error state.
+template<typename... R>
+template<typename FC, class Executor>
+void Future<R...>::finally_future(Executor&& executor, FC&& cont)
+{
+	// This future must be valid for finally_future() to work.
+	OVITO_ASSERT_MSG(isValid(), "Future::finally_future()", "Future must be valid.");
+
+	sharedState()->addContinuation(
+		executor.createWork([cont = std::forward<FC>(cont), future = std::move(*this)](bool workCanceled) mutable {
+			if(!workCanceled) {
+				std::move(cont)(std::move(future));
+			}
+	}));
+
+	// Calling finally_future() on a Future invalidates it.
+	OVITO_ASSERT(!isValid());
+}
+
+/// Runs the given function once this future has reached the 'finished' state.
+/// The function is run even if the future was canceled or set to an error state.
+template<typename FC, class Executor>
+void FutureBase::finally(Executor&& executor, FC&& cont)
+{
+	// This future must be valid for finally() to work.
+	OVITO_ASSERT_MSG(isValid(), "Future::finally()", "Future must be valid.");
+
+	sharedState()->addContinuation(
+		executor.createWork([cont = std::forward<FC>(cont)](bool workCanceled) mutable {
+			if(!workCanceled)
+				std::move(cont)();
+	}));
 }
 
 OVITO_END_INLINE_NAMESPACE

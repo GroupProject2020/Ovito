@@ -23,6 +23,7 @@
 #include <plugins/particles/util/NearestNeighborFinder.h>
 #include <plugins/particles/modifier/analysis/cna/CommonNeighborAnalysisModifier.h>
 #include <core/utilities/concurrent/ParallelFor.h>
+#include <core/utilities/concurrent/PromiseState.h>
 #include "StructureAnalysis.h"
 #include "DislocationAnalysisModifier.h"
 
@@ -56,17 +57,17 @@ void bitmapSort(iterator begin, iterator end, int max)
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-StructureAnalysis::StructureAnalysis(ParticleProperty* positions, const SimulationCell& simCell,
-		LatticeStructureType inputCrystalType, ParticleProperty* particleSelection,
-		ParticleProperty* outputStructures, std::vector<Matrix3>&& preferredCrystalOrientations,
+StructureAnalysis::StructureAnalysis(ConstPropertyPtr positions, const SimulationCell& simCell,
+		LatticeStructureType inputCrystalType, ConstPropertyPtr particleSelection,
+		PropertyPtr outputStructures, std::vector<Matrix3> preferredCrystalOrientations,
 		bool identifyPlanarDefects) :
 	_positions(positions), _simCell(simCell),
 	_inputCrystalType(inputCrystalType),
-	_structureTypes(outputStructures),
-	_particleSelection(particleSelection),
-	_atomClusters(new ParticleProperty(positions->size(), ParticleProperty::ClusterProperty, 0, true)),
-	_atomSymmetryPermutations(new ParticleProperty(positions->size(), qMetaTypeId<int>(), 1, 0, QStringLiteral("SymmetryPermutations"), false)),
-	_clusterGraph(new ClusterGraph()),
+	_structureTypes(std::move(outputStructures)),
+	_particleSelection(std::move(particleSelection)),
+	_atomClusters(ParticleProperty::createStandardStorage(positions->size(), ParticleProperty::ClusterProperty, true)),
+	_atomSymmetryPermutations(std::make_shared<PropertyStorage>(positions->size(), qMetaTypeId<int>(), 1, 0, QStringLiteral("SymmetryPermutations"), false)),
+	_clusterGraph(std::make_shared<ClusterGraph>()),
 	_preferredCrystalOrientations(std::move(preferredCrystalOrientations)),
 	_identifyPlanarDefects(identifyPlanarDefects)
 {
@@ -77,7 +78,7 @@ StructureAnalysis::StructureAnalysis(ParticleProperty* positions, const Simulati
 	}
 
 	// Allocate memory for neighbor lists.
-	_neighborLists = new ParticleProperty(positions->size(), qMetaTypeId<int>(),
+	_neighborLists = std::make_shared<PropertyStorage>(_positions->size(), qMetaTypeId<int>(),
 			latticeStructure(inputCrystalType).maxNeighbors, 0, QStringLiteral("Neighbors"), false);
 	std::fill(_neighborLists->dataInt(), _neighborLists->dataInt() + _neighborLists->size() * _neighborLists->componentCount(), -1);
 
@@ -444,12 +445,12 @@ void StructureAnalysis::initializeListOfStructures()
 /******************************************************************************
 * Identifies the atomic structures.
 ******************************************************************************/
-bool StructureAnalysis::identifyStructures(PromiseBase& promise)
+bool StructureAnalysis::identifyStructures(PromiseState& promise)
 {
 	// Prepare the neighbor list.
 	int maxNeighborListSize = std::min((int)_neighborLists->componentCount() + 1, (int)MAX_NEIGHBORS);
 	NearestNeighborFinder neighFinder(maxNeighborListSize);
-	if(!neighFinder.prepare(positions(), cell(), _particleSelection.data(), promise))
+	if(!neighFinder.prepare(*positions(), cell(), _particleSelection.get(), &promise))
 		return false;
 
 	// Identify local structure around each particle.
@@ -752,7 +753,7 @@ void StructureAnalysis::determineLocalStructure(NearestNeighborFinder& neighList
 /******************************************************************************
 * Combines adjacent atoms to clusters.
 ******************************************************************************/
-bool StructureAnalysis::buildClusters(PromiseBase& promise)
+bool StructureAnalysis::buildClusters(PromiseState& promise)
 {
 	promise.setProgressValue(0);
 	promise.setProgressMaximum(positions()->size());
@@ -770,7 +771,7 @@ bool StructureAnalysis::buildClusters(PromiseBase& promise)
 
 		// Start a new cluster.
 		int latticeStructureType = coordStructureType;
-		Cluster* cluster = clusterGraph().createCluster(latticeStructureType);
+		Cluster* cluster = clusterGraph()->createCluster(latticeStructureType);
 		OVITO_ASSERT(cluster->id > 0);
 		cluster->atomCount = 1;
 		_atomClusters->setInt(seedAtomIndex, cluster->id);
@@ -905,7 +906,7 @@ bool StructureAnalysis::buildClusters(PromiseBase& promise)
 	for(size_t atomIndex = 0; atomIndex < positions()->size(); atomIndex++) {
 		int clusterId = _atomClusters->getInt(atomIndex);
 		if(clusterId == 0) continue;
-		Cluster* cluster = clusterGraph().findCluster(clusterId);
+		Cluster* cluster = clusterGraph()->findCluster(clusterId);
 		OVITO_ASSERT(cluster);
 		if(cluster->symmetryTransformation == 0) continue;
 		const LatticeStructure& latticeStructure = _latticeStructures[cluster->structure];
@@ -922,7 +923,7 @@ bool StructureAnalysis::buildClusters(PromiseBase& promise)
 /******************************************************************************
 * Determines the transition matrices between clusters.
 ******************************************************************************/
-bool StructureAnalysis::connectClusters(PromiseBase& promise)
+bool StructureAnalysis::connectClusters(PromiseState& promise)
 {
 	promise.setProgressValue(0);
 	promise.setProgressMaximum(positions()->size());
@@ -930,7 +931,7 @@ bool StructureAnalysis::connectClusters(PromiseBase& promise)
 	for(size_t atomIndex = 0; atomIndex < positions()->size(); atomIndex++) {
 		int clusterId = _atomClusters->getInt(atomIndex);
 		if(clusterId == 0) continue;
-		Cluster* cluster1 = clusterGraph().findCluster(clusterId);
+		Cluster* cluster1 = clusterGraph()->findCluster(clusterId);
 		OVITO_ASSERT(cluster1);
 
 		// Update progress indicator.
@@ -961,7 +962,7 @@ bool StructureAnalysis::connectClusters(PromiseBase& promise)
 
 				continue;
 			}
-			Cluster* cluster2 = clusterGraph().findCluster(neighborClusterId);
+			Cluster* cluster2 = clusterGraph()->findCluster(neighborClusterId);
 			OVITO_ASSERT(cluster2);
 
 			// Skip if there is already a transition between the two clusters.
@@ -1012,7 +1013,7 @@ bool StructureAnalysis::connectClusters(PromiseBase& promise)
 
 			if(transition.isOrthogonalMatrix()) {
 				// Create a new transition between clusters.
-				ClusterTransition* t = clusterGraph().createClusterTransition(cluster1, cluster2, transition);
+				ClusterTransition* t = clusterGraph()->createClusterTransition(cluster1, cluster2, transition);
 				t->area++;
 				t->reverse->area++;
 			}
@@ -1027,12 +1028,12 @@ bool StructureAnalysis::connectClusters(PromiseBase& promise)
 /******************************************************************************
 * Combines clusters to super clusters.
 ******************************************************************************/
-bool StructureAnalysis::formSuperClusters(PromiseBase& promise)
+bool StructureAnalysis::formSuperClusters(PromiseState& promise)
 {
-	size_t oldTransitionCount = clusterGraph().clusterTransitions().size();
+	size_t oldTransitionCount = clusterGraph()->clusterTransitions().size();
 
-	for(size_t clusterIndex = 0; clusterIndex < clusterGraph().clusters().size(); clusterIndex++) {
-		Cluster* cluster = clusterGraph().clusters()[clusterIndex];
+	for(size_t clusterIndex = 0; clusterIndex < clusterGraph()->clusters().size(); clusterIndex++) {
+		Cluster* cluster = clusterGraph()->clusters()[clusterIndex];
 		cluster->rank = 0;
 		if(cluster->id == 0) continue;
 
@@ -1064,7 +1065,7 @@ bool StructureAnalysis::formSuperClusters(PromiseBase& promise)
 							Matrix3 misorientation = t2->tm * t1->reverse->tm;
 							for(const SymmetryPermutation& symElement : latticeStructure.permutations) {
 								if(symElement.transformation.equals(misorientation, CA_TRANSITION_MATRIX_EPSILON)) {
-									clusterGraph().createClusterTransition(t1->cluster2, t2->cluster2, misorientation, 2);
+									clusterGraph()->createClusterTransition(t1->cluster2, t2->cluster2, misorientation, 2);
 									break;
 								}
 							}
@@ -1075,14 +1076,14 @@ bool StructureAnalysis::formSuperClusters(PromiseBase& promise)
 		}
 	}
 
-	size_t newTransitionCount = clusterGraph().clusterTransitions().size();
+	size_t newTransitionCount = clusterGraph()->clusterTransitions().size();
 
 	auto getParentGrain = [this](Cluster* c) {
 		if(c->parentTransition == nullptr) return c;
 		ClusterTransition* newParentTransition = c->parentTransition;
 		Cluster* parent = newParentTransition->cluster2;
 		while(parent->parentTransition != nullptr) {
-			newParentTransition = clusterGraph().concatenateClusterTransitions(newParentTransition, parent->parentTransition);
+			newParentTransition = clusterGraph()->concatenateClusterTransitions(newParentTransition, parent->parentTransition);
 			parent = parent->parentTransition->cluster2;
 		}
 		c->parentTransition = newParentTransition;
@@ -1091,7 +1092,7 @@ bool StructureAnalysis::formSuperClusters(PromiseBase& promise)
 
 	// Merge crystal-crystal pairs.
 	for(size_t index = oldTransitionCount; index < newTransitionCount; index++) {
-		ClusterTransition* t = clusterGraph().clusterTransitions()[index];
+		ClusterTransition* t = clusterGraph()->clusterTransitions()[index];
 		OVITO_ASSERT(t->distance == 2);
 		OVITO_ASSERT(t->cluster1->structure == _inputCrystalType && t->cluster2->structure == _inputCrystalType);
 
@@ -1105,11 +1106,11 @@ bool StructureAnalysis::formSuperClusters(PromiseBase& promise)
 		ClusterTransition* parentTransition = t;
 		if(parentCluster2 != t->cluster2) {
 			OVITO_ASSERT(t->cluster2->parentTransition->cluster2 == parentCluster2);
-			parentTransition = clusterGraph().concatenateClusterTransitions(parentTransition, t->cluster2->parentTransition);
+			parentTransition = clusterGraph()->concatenateClusterTransitions(parentTransition, t->cluster2->parentTransition);
 		}
 		if(parentCluster1 != t->cluster1) {
 			OVITO_ASSERT(t->cluster1->parentTransition->cluster2 == parentCluster1);
-			parentTransition = clusterGraph().concatenateClusterTransitions(t->cluster1->parentTransition->reverse, parentTransition);
+			parentTransition = clusterGraph()->concatenateClusterTransitions(t->cluster1->parentTransition->reverse, parentTransition);
 		}
 
 		if(parentCluster1->rank > parentCluster2->rank) {
@@ -1123,7 +1124,7 @@ bool StructureAnalysis::formSuperClusters(PromiseBase& promise)
 	}
 
 	// Compress paths.
-	for(Cluster* cluster : clusterGraph().clusters()) {
+	for(Cluster* cluster : clusterGraph()->clusters()) {
 		getParentGrain(cluster);
 	}
 

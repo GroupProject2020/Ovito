@@ -24,7 +24,7 @@
 #include <gui/mainwin/MainWindow.h>
 #include <gui/dataset/GuiDataSetContainer.h>
 #include <plugins/pyscript/binding/PythonBinding.h>
-#include <core/plugins/PluginManager.h>
+#include <core/app/PluginManager.h>
 
 namespace PyScript {
 

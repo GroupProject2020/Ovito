@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -33,12 +33,12 @@
 #include <gui/widgets/general/HtmlListWidget.h>
 #include <core/rendering/RenderSettings.h>
 #include <core/rendering/SceneRenderer.h>
-#include <core/plugins/PluginManager.h>
+#include <core/app/PluginManager.h>
 #include "RenderSettingsEditor.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_OBJECT(RenderSettingsEditor, PropertiesEditor);
+IMPLEMENT_OVITO_CLASS(RenderSettingsEditor);
 SET_OVITO_OBJECT_EDITOR(RenderSettings, RenderSettingsEditor);
 
 // Predefined output image dimensions.
@@ -244,7 +244,7 @@ void RenderSettingsEditor::onSwitchRenderer()
 	RenderSettings* settings = static_object_cast<RenderSettings>(editObject());
 	if(!settings) return;
 
-	QVector<OvitoObjectType*> rendererClasses = PluginManager::instance().listClasses(SceneRenderer::OOType);
+	QVector<OvitoClassPtr> rendererClasses = PluginManager::instance().listClasses(SceneRenderer::OOClass());
 
 	// Preferred ordering of renderers:
 	const QStringList displayOrdering = {
@@ -252,7 +252,7 @@ void RenderSettingsEditor::onSwitchRenderer()
 		"TachyonRenderer",
 		"POVRayRenderer"
 	};
-	std::sort(rendererClasses.begin(), rendererClasses.end(), [&displayOrdering](OvitoObjectType* a, OvitoObjectType* b) {
+	std::sort(rendererClasses.begin(), rendererClasses.end(), [&displayOrdering](OvitoClassPtr a, OvitoClassPtr b) {
 		int ia = displayOrdering.indexOf(a->name());
 		int ib = displayOrdering.indexOf(b->name());
 		if(ia == -1 && ib == -1) return a->displayName() < b->displayName();
@@ -270,7 +270,7 @@ void RenderSettingsEditor::onSwitchRenderer()
 	layout->addWidget(label, 0, 0, 1, 2);
 
 	QListWidget* rendererListWidget = new HtmlListWidget(&dlg);
-	for(OvitoObjectType* clazz : rendererClasses) {
+	for(OvitoClassPtr clazz : rendererClasses) {
 		QString description;
 		if(clazz->name() == QStringLiteral("StandardSceneRenderer"))
 			description = tr("This is a hardware-accelerated rendering engine, which produces output that is nearly identical "
@@ -285,7 +285,7 @@ void RenderSettingsEditor::onSwitchRenderer()
 		if(description.isEmpty() == false)
 			text += QStringLiteral("<p style=\"font-size: small;\">") + description + QStringLiteral("</p>");
 		QListWidgetItem* item = new QListWidgetItem(text, rendererListWidget);
-		if(settings->renderer() && &settings->renderer()->getOOType() == clazz)
+		if(settings->renderer() && &settings->renderer()->getOOClass() == clazz)
 			rendererListWidget->setCurrentItem(item);
 	}
 	layout->addWidget(rendererListWidget, 1, 0, 1, 2);
@@ -301,9 +301,6 @@ void RenderSettingsEditor::onSwitchRenderer()
 	connect(rendererListWidget, &QListWidget::itemDoubleClicked, &dlg, &QDialog::accept);
 	layout->addWidget(buttonBox, 2, 1, Qt::AlignRight);
 
-	//QPushButton* makeDefaultButton = new QPushButton(tr("Set as default"));
-	//layout->addWidget(makeDefaultButton, 2, 0, Qt::AlignLeft);
-
 	if(dlg.exec() != QDialog::Accepted)
 		return;
 
@@ -311,7 +308,7 @@ void RenderSettingsEditor::onSwitchRenderer()
 	if(selItems.empty()) return;
 
 	int newIndex = rendererListWidget->row(selItems.front());
-	if(!settings->renderer() || &settings->renderer()->getOOType() != rendererClasses[newIndex]) {
+	if(!settings->renderer() || &settings->renderer()->getOOClass() != rendererClasses[newIndex]) {
 		undoableTransaction(tr("Switch renderer"), [settings, newIndex, &rendererClasses]() {
 			OORef<SceneRenderer> renderer = static_object_cast<SceneRenderer>(rendererClasses[newIndex]->createInstance(settings->dataset()));
 			renderer->loadUserDefaults();

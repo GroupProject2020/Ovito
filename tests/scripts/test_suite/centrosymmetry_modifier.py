@@ -15,5 +15,5 @@ modifier.num_neighbors = 12
 node.compute()
 
 print("Output:")
-print(node.output.centrosymmetry)
-print(node.output.centrosymmetry.array)
+print(node.output.particle_properties.centrosymmetry)
+print(node.output.particle_properties.centrosymmetry.array)

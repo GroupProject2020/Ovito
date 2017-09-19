@@ -23,14 +23,14 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/particles/gui/modifier/ParticleModifierEditor.h>
+#include <gui/properties/ModifierPropertiesEditor.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
 /**
  * Properties editor for the ElasticStrainModifier class.
  */
-class ElasticStrainModifierEditor : public ParticleModifierEditor
+class ElasticStrainModifierEditor : public ModifierPropertiesEditor
 {
 public:
 
@@ -52,7 +52,7 @@ private:
 	FloatParameterUI* _caRatioUI;
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 };
 
 }	// End of namespace

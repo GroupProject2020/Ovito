@@ -23,22 +23,25 @@
 
 
 #include <plugins/pyscript/PyScript.h>
-#include <core/plugins/autostart/AutoStartObject.h>
+#include <core/app/ApplicationService.h>
 
 namespace PyScript {
 
 using namespace Ovito;
 
 /**
- * \brief An auto-start object that is automatically invoked on application startup
+ * \brief An application service that is automatically invoked on application startup
  *        and that will execute a script files passed on the command line.
  */
-class ScriptAutostarter : public AutoStartObject
+class ScriptAutostarter : public ApplicationService
 {
+	Q_OBJECT
+	OVITO_CLASS(ScriptAutostarter)
+
 public:
 
 	/// \brief Default constructor.
-	Q_INVOKABLE ScriptAutostarter() {}
+	Q_INVOKABLE ScriptAutostarter() = default;
 
 	/// \brief Destructor, which is called at program exit.
 	virtual ~ScriptAutostarter();
@@ -48,11 +51,6 @@ public:
 
 	/// \brief Is called after the application has been completely initialized.
 	virtual void applicationStarted() override;
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 }	// End of namespace

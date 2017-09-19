@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -28,7 +28,7 @@
 
 namespace PyScript {
 
-IMPLEMENT_OVITO_OBJECT(ScriptAutostarter, AutoStartObject);
+IMPLEMENT_OVITO_CLASS(ScriptAutostarter);
 
 /******************************************************************************
 * Destructor, which is called at program exit.
@@ -77,6 +77,12 @@ void ScriptAutostarter::applicationStarted()
 
 		// Pass command line parameters to the script.
 		QStringList scriptArguments = StandaloneApplication::instance()->cmdLineParser().values("scriptarg");
+
+		// Forward script output to the console in GUI mode. That's not needed in console mode.
+		if(Application::instance()->guiMode()) {
+			connect(&engine, &ScriptEngine::scriptOutput, [](const QString& s) { std::cout << qPrintable(s); });
+			connect(&engine, &ScriptEngine::scriptError, [](const QString& s) { std::cerr << qPrintable(s); });
+		}
 
 		// Execute script commands.
 		for(int index = scriptCommands.size() - 1; index >= 0; index--) {

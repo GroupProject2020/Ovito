@@ -25,6 +25,8 @@
 #include <core/Core.h>
 #include <core/utilities/concurrent/Future.h>
 
+#include <QMutex>
+
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
 
 /**
@@ -37,16 +39,16 @@ class OVITO_CORE_EXPORT FileManager : public QObject
 public:
 
 	/// \brief Makes a file available on this computer.
-	/// \return A QFuture that will provide the local file name of the downloaded file.
-	Future<QString> fetchUrl(DataSetContainer& container, const QUrl& url);
+	/// \return A Future that will provide the local file name of the downloaded file.
+	SharedFuture<QString> fetchUrl(TaskManager& taskManager, const QUrl& url);
 
 	/// \brief Removes a cached remote file so that it will be downloaded again next
 	///        time it is requested.
 	void removeFromCache(const QUrl& url);
 
 	/// \brief Lists all files in a remote directory.
-	/// \return A QFuture that will provide the list of file names.
-	Future<QStringList> listDirectoryContents(const QUrl& url);
+	/// \return A Future that will provide the list of file names.
+	Future<QStringList> listDirectoryContents(TaskManager& taskManager, const QUrl& url);
 
 	/// \brief Looks up login name and password for the given host in the credential cache.
 	QPair<QString,QString> findCredentials(const QString& host);
@@ -77,7 +79,7 @@ private:
 private:
 
 	/// The remote files that are currently being fetched.
-	QMap<QUrl, Future<QString>> _pendingFiles;
+	std::map<QUrl, SharedFuture<QString>> _pendingFiles;
 
 	/// The remote files that have already been downloaded to the local cache.
 	QMap<QUrl, QTemporaryFile*> _cachedFiles;

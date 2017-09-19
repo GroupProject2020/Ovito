@@ -49,6 +49,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
  */
 class OVITO_OPENGL_RENDERER_EXPORT OpenGLSceneRenderer : public SceneRenderer, protected QOpenGLFunctions
 {
+	Q_OBJECT
+	OVITO_CLASS(OpenGLSceneRenderer)
+
 public:
 
 	/// Default constructor.
@@ -58,7 +61,7 @@ public:
 		_glVertexIDBufferSize(-1) {}
 
 	/// Renders the current animation frame.
-	virtual bool renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, TaskManager& taskManager) override;
+	virtual bool renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, const PromiseBase& promise) override;
 
 	/// This method is called just before renderFrame() is called.
 	virtual void beginFrame(TimePoint time, const ViewProjectionParameters& params, Viewport* vp) override;
@@ -155,6 +158,7 @@ public:
 	/// Binds the default vertex array object again in case another VAO was bound in between.
 	/// This method should be called before calling an OpenGL rendering function.
 	void rebindVAO() {
+		makeContextCurrent();
 		if(_vertexArrayObject) _vertexArrayObject->bind();
 	}
 
@@ -211,9 +215,8 @@ protected:
 	/// \brief Loads and compiles a GLSL shader and adds it to the given program object.
 	void loadShader(QOpenGLShaderProgram* program, QOpenGLShader::ShaderType shaderType, const QString& filename);
 
-	/// \brief This virtual method is responsible for rendering additional content that is only
-	///       visible in the interactive viewports.
-	virtual void renderInteractiveContent() {}
+	/// Makes the renderer's GL context current.
+	void makeContextCurrent();
 
 	/// Returns the supersampling level to use.
 	virtual int antialiasingLevelInternal() { return 1; }
@@ -258,6 +261,9 @@ private:
 
 	/// The OpenGL context this renderer uses.
 	QOpenGLContext* _glcontext;
+
+	/// The surface used by the GL context.
+	QSurface* _glsurface;
 
 	/// The OpenGL 2.0 functions object.
 	QOpenGLFunctions_2_0* _glFunctions20;
@@ -319,9 +325,6 @@ private:
 
 	/// Indicates whether the current OpenGL implementation supports geometry shader programs.
 	static bool _openglSupportsGeomShaders;
-
-	Q_OBJECT
-	OVITO_OBJECT
 
 	friend class OpenGLMeshPrimitive;
 	friend class OpenGLArrowPrimitive;

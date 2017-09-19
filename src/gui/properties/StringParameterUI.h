@@ -32,6 +32,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 ******************************************************************************/
 class OVITO_GUI_EXPORT StringParameterUI : public PropertyParameterUI
 {
+	Q_OBJECT
+	OVITO_CLASS(StringParameterUI)
+	
 public:
 	/// Constructor for a Qt property.
 	StringParameterUI(QObject* parentEditor, const char* propertyName);
@@ -82,11 +85,6 @@ protected:
 
 	/// The text box of the UI component.
 	QPointer<QWidget> _textBox;
-
-private:
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

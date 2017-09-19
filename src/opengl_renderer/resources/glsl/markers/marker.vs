@@ -25,7 +25,7 @@ uniform mat4 modelview_projection_matrix;
 
 	in vec3 position;
 	in vec4 color;
-	out vec4 vertex_color_fs;
+	flat out vec4 vertex_color_fs;
 
 #endif
 

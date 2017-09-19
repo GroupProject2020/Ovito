@@ -26,6 +26,7 @@
 #include <gui/utilities/io/GuiFileManager.h>
 #include <opengl_renderer/OpenGLSceneRenderer.h>
 #include <core/utilities/io/FileManager.h>
+#include <core/app/ApplicationService.h>
 #include "GuiApplication.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) 
@@ -152,8 +153,14 @@ bool GuiApplication::startupApplication()
 	// Load state file specified on the command line.
 	if(cmdLineParser().positionalArguments().empty() == false) {
 		QString startupFilename = cmdLineParser().positionalArguments().front();
-		if(startupFilename.endsWith(".ovito", Qt::CaseInsensitive))
-			container->fileLoad(startupFilename);
+		if(startupFilename.endsWith(".ovito", Qt::CaseInsensitive)) {
+			try {
+				container->fileLoad(startupFilename);
+			}
+			catch(const Exception& ex) {
+				ex.reportError();
+			}
+		}
 	}
 
 	// Create an empty dataset if nothing has been loaded.
@@ -165,7 +172,12 @@ bool GuiApplication::startupApplication()
 		QString importFilename = cmdLineParser().positionalArguments().front();
 		if(!importFilename.endsWith(".ovito", Qt::CaseInsensitive)) {
 			QUrl importURL = Application::instance()->fileManager()->urlFromUserInput(importFilename);
-			container->importFile(importURL);
+			try {
+				container->importFile(importURL);
+			}
+			catch(const Exception& ex) {
+				ex.reportError();
+			}
 			container->currentSet()->undoStack().setClean();
 		}
 	}
@@ -267,7 +279,7 @@ void GuiApplication::showErrorMessages()
 		if(exception.messages().size() > 1) {
 			QString detailText;
 			for(int i = 1; i < exception.messages().size(); i++)
-				detailText += exception.messages()[i] + "\n";
+				detailText += exception.messages()[i] + QStringLiteral("\n");
 			msgbox->setDetailedText(detailText);
 		}
 

@@ -27,7 +27,7 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-IMPLEMENT_OVITO_OBJECT(PatternCatalogEditor, PropertiesEditor);
+
 SET_OVITO_OBJECT_EDITOR(PatternCatalog, PatternCatalogEditor);
 
 /******************************************************************************
@@ -49,7 +49,7 @@ void PatternCatalogEditor::createUI(const RolloutInsertionParameters& rolloutPar
 	public:
 
 		CustomRefTargetListParameterUI(PropertiesEditor* parentEditor, const PropertyFieldDescriptor& refField, const RolloutInsertionParameters& rolloutParams)
-			: RefTargetListParameterUI(parentEditor, refField, rolloutParams, &StructurePatternEditor::OOType) {}
+			: RefTargetListParameterUI(parentEditor, refField, rolloutParams, &StructurePatternEditor::OOClass()) {}
 
 	protected:
 

@@ -57,7 +57,7 @@ private:
 	std::unique_ptr<ViewportSuspender> _viewportSuspender;
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 };
 
 }	// End of namespace

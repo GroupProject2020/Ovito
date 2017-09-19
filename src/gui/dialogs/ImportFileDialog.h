@@ -23,7 +23,7 @@
 
 
 #include <gui/GUI.h>
-#include <core/dataset/importexport/FileImporter.h>
+#include <core/dataset/io/FileImporter.h>
 #include "HistoryFileDialog.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -38,17 +38,17 @@ class OVITO_GUI_EXPORT ImportFileDialog : public HistoryFileDialog
 public:
 
 	/// \brief Constructs the dialog window.
-	ImportFileDialog(const QVector<OvitoObjectType*>& importerTypes, DataSet* dataset, QWidget* parent, const QString& caption, const QString& directory = QString());
+	ImportFileDialog(const QVector<OvitoClassPtr>& importerTypes, DataSet* dataset, QWidget* parent, const QString& caption, const QString& directory = QString());
 
 	/// \brief Returns the file to import after the dialog has been closed with "OK".
 	QString fileToImport() const;
 
 	/// \brief Returns the selected importer type or NULL if auto-detection is requested.
-	const OvitoObjectType* selectedFileImporterType() const;
+	OvitoClassPtr selectedFileImporterType() const;
 
 private:
 
-	QVector<OvitoObjectType*> _importerTypes;
+	QVector<OvitoClassPtr> _importerTypes;
 	QStringList _filterStrings;
 	QString _selectedFile;
 	QString _selectedFilter;

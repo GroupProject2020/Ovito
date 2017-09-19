@@ -20,16 +20,15 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <core/utilities/io/FileManager.h>
-#include <core/utilities/concurrent/Future.h>
-#include <core/dataset/importexport/FileSource.h>
+#include <plugins/particles/import/ParticleFrameData.h>
+#include <core/utilities/io/CompressedTextReader.h>
 #include "FHIAimsImporter.h"
 
 #include <boost/algorithm/string.hpp>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(FHIAimsImporter, ParticleImporter);
+IMPLEMENT_OVITO_CLASS(FHIAimsImporter);	
 
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
@@ -69,11 +68,20 @@ bool FHIAimsImporter::checkFileFormat(QFileDevice& input, const QUrl& sourceLoca
 }
 
 /******************************************************************************
-* Parses the given input file and stores the data in the given container object.
+* Parses the given input file.
 ******************************************************************************/
-void FHIAimsImporter::FHIAimsImportTask::parseFile(CompressedTextReader& stream)
+void FHIAimsImporter::FrameLoader::loadFile(QFile& file)
 {
+	// Open file for reading.
+	CompressedTextReader stream(file, frame().sourceFile.path());
 	setProgressText(tr("Reading FHI-aims geometry file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+
+	// Jump to byte offset.
+	if(frame().byteOffset != 0)
+		stream.seek(frame().byteOffset);
+
+	// Create the destination container for loaded data.
+	std::shared_ptr<ParticleFrameData> frameData = std::make_shared<ParticleFrameData>();
 
 	// First pass: determine the cell geometry and number of atoms.
 	AffineTransformation cell = AffineTransformation::Identity();
@@ -97,11 +105,11 @@ void FHIAimsImporter::FHIAimsImportTask::parseFile(CompressedTextReader& stream)
 		throw Exception(tr("Invalid FHI-aims file: No atoms found."));
 
 	// Create the particle properties.
-	ParticleProperty* posProperty = new ParticleProperty(totalAtomCount, ParticleProperty::PositionProperty, 0, false);
-	addParticleProperty(posProperty);
-	ParticleProperty* typeProperty = new ParticleProperty(totalAtomCount, ParticleProperty::ParticleTypeProperty, 0, false);
-	ParticleFrameLoader::ParticleTypeList* typeList = new ParticleFrameLoader::ParticleTypeList();
-	addParticleProperty(typeProperty, typeList);
+	PropertyPtr posProperty = ParticleProperty::createStandardStorage(totalAtomCount, ParticleProperty::PositionProperty, false);
+	frameData->addParticleProperty(posProperty);
+	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(totalAtomCount, ParticleProperty::TypeProperty, false);
+	ParticleFrameData::ParticleTypeList* typeList = new ParticleFrameData::ParticleTypeList();
+	frameData->addParticleProperty(typeProperty, typeList);
 
 	// Return to file beginning.
 	stream.seek(0);
@@ -131,12 +139,12 @@ void FHIAimsImporter::FHIAimsImportTask::parseFile(CompressedTextReader& stream)
 	// Since we created particle types on the go while reading the particles, the assigned particle type IDs
 	// depend on the storage order of particles in the file. We rather want a well-defined particle type ordering, that's
 	// why we sort them now.
-	typeList->sortParticleTypesByName(typeProperty);
+	typeList->sortParticleTypesByName(typeProperty.get());
 
 	// Set simulation cell.
 	if(lattVecCount == 3) {
-		simulationCell().setMatrix(cell);
-		simulationCell().setPbcFlags(true, true, true);
+		frameData->simulationCell().setMatrix(cell);
+		frameData->simulationCell().setPbcFlags(true, true, true);
 	}
 	else {
 		// If the input file does not contain simulation cell info,
@@ -144,15 +152,16 @@ void FHIAimsImporter::FHIAimsImportTask::parseFile(CompressedTextReader& stream)
 
 		Box3 boundingBox;
 		boundingBox.addPoints(posProperty->constDataPoint3(), posProperty->size());
-		simulationCell().setMatrix(AffineTransformation(
+		frameData->simulationCell().setMatrix(AffineTransformation(
 				Vector3(boundingBox.sizeX(), 0, 0),
 				Vector3(0, boundingBox.sizeY(), 0),
 				Vector3(0, 0, boundingBox.sizeZ()),
 				boundingBox.minc - Point3::Origin()));
-		simulationCell().setPbcFlags(false, false, false);
+		frameData->simulationCell().setPbcFlags(false, false, false);
 	}
 
-	setStatus(tr("%1 atoms").arg(totalAtomCount));
+	frameData->setStatus(tr("%1 atoms").arg(totalAtomCount));
+	setResult(std::move(frameData));
 }
 
 OVITO_END_INLINE_NAMESPACE

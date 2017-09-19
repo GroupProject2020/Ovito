@@ -23,7 +23,7 @@
 
 
 #include <plugins/pyscript/PyScript.h>
-#include <gui/properties/PropertiesEditor.h>
+#include <gui/properties/ModifierPropertiesEditor.h>
 
 namespace PyScript { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
@@ -32,8 +32,11 @@ using namespace Ovito;
 /**
  * \brief A properties editor for the PythonScriptModifier class.
  */
-class PythonScriptModifierEditor : public PropertiesEditor
+class PythonScriptModifierEditor : public ModifierPropertiesEditor
 {
+	Q_OBJECT
+	OVITO_CLASS(PythonScriptModifierEditor)
+
 public:
 
 	/// Constructor.
@@ -60,9 +63,6 @@ private:
 
 	QPushButton* _editScriptButton;
 	QTextEdit* _outputDisplay;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

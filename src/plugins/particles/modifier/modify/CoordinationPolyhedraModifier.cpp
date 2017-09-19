@@ -20,28 +20,30 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleTypeProperty.h>
-#include <plugins/particles/objects/SurfaceMesh.h>
-#include <plugins/particles/objects/SurfaceMeshDisplay.h>
-#include <plugins/particles/objects/SimulationCellObject.h>
+#include <plugins/mesh/surface/SurfaceMesh.h>
+#include <plugins/mesh/surface/SurfaceMeshDisplay.h>
 #include <plugins/particles/objects/BondsObject.h>
+#include <plugins/particles/modifier/ParticleInputHelper.h>
+#include <core/dataset/DataSet.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include "CoordinationPolyhedraModifier.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(CoordinationPolyhedraModifier, AsynchronousParticleModifier);
+
 DEFINE_FLAGS_REFERENCE_FIELD(CoordinationPolyhedraModifier, surfaceMeshDisplay, "SurfaceMeshDisplay", SurfaceMeshDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
 SET_PROPERTY_FIELD_LABEL(CoordinationPolyhedraModifier, surfaceMeshDisplay, "Surface mesh display");
 
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
-CoordinationPolyhedraModifier::CoordinationPolyhedraModifier(DataSet* dataset) : AsynchronousParticleModifier(dataset)
+CoordinationPolyhedraModifier::CoordinationPolyhedraModifier(DataSet* dataset) : AsynchronousModifier(dataset)
 {
-	INIT_PROPERTY_FIELD(surfaceMeshDisplay);
+
 
 	// Create the display object for rendering the created polyhedra.
-	_surfaceMeshDisplay = new SurfaceMeshDisplay(dataset);
+	setSurfaceMeshDisplay(new SurfaceMeshDisplay(dataset));
 	_surfaceMeshDisplay->setShowCap(false);
 	_surfaceMeshDisplay->setSmoothShading(false);
 	_surfaceMeshDisplay->setSurfaceTransparency(FloatType(0.25));
@@ -49,11 +51,11 @@ CoordinationPolyhedraModifier::CoordinationPolyhedraModifier(DataSet* dataset) :
 }
 
 /******************************************************************************
-* Is called when the value of a property of this object has changed.
+* Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-void CoordinationPolyhedraModifier::propertyChanged(const PropertyFieldDescriptor& field)
+bool CoordinationPolyhedraModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	AsynchronousParticleModifier::propertyChanged(field);
+	return input.findObject<ParticleProperty>() && input.findObject<BondsObject>();
 }
 
 /******************************************************************************
@@ -65,43 +67,25 @@ bool CoordinationPolyhedraModifier::referenceEvent(RefTarget* source, ReferenceE
 	if(source == surfaceMeshDisplay())
 		return false;
 
-	return AsynchronousParticleModifier::referenceEvent(source, event);
+	return AsynchronousModifier::referenceEvent(source, event);
 }
 
 /******************************************************************************
-* Resets the modifier's result cache.
+* Creates and initializes a computation engine that will compute the 
+* modifier's results.
 ******************************************************************************/
-void CoordinationPolyhedraModifier::invalidateCachedResults()
+Future<AsynchronousModifier::ComputeEnginePtr> CoordinationPolyhedraModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	AsynchronousParticleModifier::invalidateCachedResults();
-
-	// Reset computed mesh when the input has changed.
-	_polyhedraMesh.reset();
-}
-
-/******************************************************************************
-* This method is called by the system when the modifier has been inserted
-* into a pipeline.
-******************************************************************************/
-void CoordinationPolyhedraModifier::initializeModifier(PipelineObject* pipeline, ModifierApplication* modApp)
-{
-	AsynchronousParticleModifier::initializeModifier(pipeline, modApp);
-}
-
-/******************************************************************************
-* Creates and initializes a computation engine that will compute the modifier's results.
-******************************************************************************/
-std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> CoordinationPolyhedraModifier::createEngine(TimePoint time, TimeInterval validityInterval)
-{
-	// Get modifier inputs.
-	ParticlePropertyObject* posProperty = expectStandardProperty(ParticleProperty::PositionProperty);
-	ParticlePropertyObject* typeProperty = inputStandardProperty(ParticleProperty::ParticleTypeProperty);
-	ParticlePropertyObject* selectionProperty = inputStandardProperty(ParticleProperty::SelectionProperty);
-	BondsObject* bondsObj = input().findObject<BondsObject>();
-	SimulationCellObject* simCell = expectSimulationCell();
+	// Get modifier input.
+	ParticleInputHelper ph(dataset(), input);
+	ParticleProperty* posProperty = ph.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
+	ParticleProperty* typeProperty = ph.inputStandardProperty<ParticleProperty>(ParticleProperty::TypeProperty);
+	ParticleProperty* selectionProperty = ph.inputStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty);
+	BondsObject* bondsObj = input.findObject<BondsObject>();
+	SimulationCellObject* simCell = ph.expectSimulationCell();
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<ComputePolyhedraEngine>(validityInterval, posProperty->storage(),
+	return std::make_shared<ComputePolyhedraEngine>(input.stateValidity(), posProperty->storage(),
 			selectionProperty ? selectionProperty->storage() : nullptr,
 			typeProperty ? typeProperty->storage() : nullptr, 
 			bondsObj ? bondsObj->storage() : nullptr, simCell->data());
@@ -131,9 +115,8 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::perform()
 
 		// Collect the bonds that are part of the coordination polyhedron.
 		const Point3& p1 = _positions->getPoint3(i);
-		for(auto bondIndex : bondMap.bondsOfParticle(i)) {
-			const Bond& bond = (*_bonds)[bondIndex];
-			if(_positions->size() > bond.index2) {
+		for(Bond bond : bondMap.bondsOfParticle(i)) {
+			if(bond.index2 < _positions->size()) {
 				Vector3 delta = _positions->getPoint3(bond.index2) - p1;
 				if(bond.pbcShift.x()) delta += _simCell.matrix().column(0) * (FloatType)bond.pbcShift.x();
 				if(bond.pbcShift.y()) delta += _simCell.matrix().column(1) * (FloatType)bond.pbcShift.y();
@@ -150,6 +133,8 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::perform()
 			return;
 	}
 	mesh()->reindexVerticesAndFaces();
+
+	setResult(std::move(_results));
 }
 
 /******************************************************************************
@@ -331,30 +316,23 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::constructConvexHull(
 }
 
 /******************************************************************************
-* Unpacks the results of the computation engine and stores them in the modifier.
+* Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-void CoordinationPolyhedraModifier::transferComputationResults(ComputeEngine* engine)
+PipelineFlowState CoordinationPolyhedraModifier::ComputePolyhedraResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	_polyhedraMesh = static_cast<ComputePolyhedraEngine*>(engine)->mesh();
-}
-
-/******************************************************************************
-* Lets the modifier insert the cached computation results into the
-* modification pipeline.
-******************************************************************************/
-PipelineStatus CoordinationPolyhedraModifier::applyComputationResults(TimePoint time, TimeInterval& validityInterval)
-{
-	if(!_polyhedraMesh)
-		throwException(tr("No computation results available."));
+	CoordinationPolyhedraModifier* modifier = static_object_cast<CoordinationPolyhedraModifier>(modApp->modifier());
+	PipelineFlowState output = input;
 
 	// Create the output data object.
-	OORef<SurfaceMesh> meshObj(new SurfaceMesh(dataset(), _polyhedraMesh.data()));
-	meshObj->addDisplayObject(_surfaceMeshDisplay);
+	OORef<SurfaceMesh> meshObj(new SurfaceMesh(modApp->dataset()));
+	meshObj->setStorage(mesh());
+	meshObj->setDomain(input.findObject<SimulationCellObject>());
+	meshObj->addDisplayObject(modifier->surfaceMeshDisplay());
 
 	// Insert output object into the pipeline.
-	output().addObject(meshObj);
+	output.addObject(meshObj);
 
-	return PipelineStatus(PipelineStatus::Success);
+	return output;
 }
 
 OVITO_END_INLINE_NAMESPACE

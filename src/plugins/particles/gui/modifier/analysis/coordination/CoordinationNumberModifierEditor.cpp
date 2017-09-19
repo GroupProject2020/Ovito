@@ -32,7 +32,7 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_OBJECT(CoordinationNumberModifierEditor, ParticleModifierEditor);
+
 SET_OVITO_OBJECT_EDITOR(CoordinationNumberModifier, CoordinationNumberModifierEditor);
 
 /******************************************************************************
@@ -93,7 +93,7 @@ bool CoordinationNumberModifierEditor::referenceEvent(RefTarget* source, Referen
 	if(event->sender() == editObject() && event->type() == ReferenceEvent::ObjectStatusChanged) {
 		plotRDFLater(this);
 	}
-	return ParticleModifierEditor::referenceEvent(source, event);
+	return ModifierPropertiesEditor::referenceEvent(source, event);
 }
 
 /******************************************************************************
@@ -102,10 +102,11 @@ bool CoordinationNumberModifierEditor::referenceEvent(RefTarget* source, Referen
 void CoordinationNumberModifierEditor::plotRDF()
 {
 	CoordinationNumberModifier* modifier = static_object_cast<CoordinationNumberModifier>(editObject());
-	if(!modifier)
+	CoordinationNumberModifierApplication* modApp = dynamic_object_cast<CoordinationNumberModifierApplication>(someModifierApplication());
+	if(!modApp || !modifier)
 		return;
 
-	if(modifier->rdfX().empty())
+	if(modApp->rdfX().empty())
 		return;
 
 	if(!_plotCurve) {
@@ -117,14 +118,14 @@ void CoordinationNumberModifierEditor::plotRDF()
 		plotGrid->setPen(Qt::gray, 0, Qt::DotLine);
 		plotGrid->attach(_rdfPlot);
 	}
-    _plotCurve->setSamples(modifier->rdfX().data(), modifier->rdfY().data(), modifier->rdfX().size());
+    _plotCurve->setSamples(modApp->rdfX().data(), modApp->rdfY().data(), modApp->rdfX().size());
 
 	// Determine lower X bound where the histogram is non-zero.
 	_rdfPlot->setAxisAutoScale(QwtPlot::xBottom);
 	double maxx = modifier->cutoff();
-	for(int i = 0; i < modifier->rdfX().size(); i++) {
-		if(modifier->rdfY()[i] != 0) {
-			double minx = std::floor(modifier->rdfX()[i] * 9.0 / maxx) / 10.0 * maxx;
+	for(int i = 0; i < modApp->rdfX().size(); i++) {
+		if(modApp->rdfY()[i] != 0) {
+			double minx = std::floor(modApp->rdfX()[i] * 9.0 / maxx) / 10.0 * maxx;
 			_rdfPlot->setAxisScale(QwtPlot::xBottom, minx, maxx);
 			break;
 		}
@@ -138,11 +139,11 @@ void CoordinationNumberModifierEditor::plotRDF()
 ******************************************************************************/
 void CoordinationNumberModifierEditor::onSaveData()
 {
-	CoordinationNumberModifier* modifier = static_object_cast<CoordinationNumberModifier>(editObject());
-	if(!modifier)
+	CoordinationNumberModifierApplication* modApp = dynamic_object_cast<CoordinationNumberModifierApplication>(someModifierApplication());
+	if(!modApp)
 		return;
 
-	if(modifier->rdfX().empty())
+	if(modApp->rdfX().empty())
 		return;
 
 	QString fileName = QFileDialog::getSaveFileName(mainWindow(),
@@ -154,15 +155,15 @@ void CoordinationNumberModifierEditor::onSaveData()
 
 		QFile file(fileName);
 		if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
-			modifier->throwException(tr("Could not open file for writing: %1").arg(file.errorString()));
+			modApp->throwException(tr("Could not open file for writing: %1").arg(file.errorString()));
 
 		QTextStream stream(&file);
 
 		stream << "# 1: Bin number" << endl;
 		stream << "# 2: r" << endl;
 		stream << "# 3: g(r)" << endl;
-		for(int i = 0; i < modifier->rdfX().size(); i++) {
-			stream << i << "\t" << modifier->rdfX()[i] << "\t" << modifier->rdfY()[i] << endl;
+		for(int i = 0; i < modApp->rdfX().size(); i++) {
+			stream << i << "\t" << modApp->rdfX()[i] << "\t" << modApp->rdfY()[i] << endl;
 		}
 	}
 	catch(const Exception& ex) {

@@ -33,6 +33,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 ******************************************************************************/
 class OVITO_GUI_EXPORT AffineTransformationParameterUI : public FloatParameterUI
 {
+	Q_OBJECT
+	OVITO_CLASS(AffineTransformationParameterUI)
+	
 public:
 
 	/// Constructor for a Qt property.
@@ -52,9 +55,6 @@ private:
 
 	/// The matrix component to control.
 	size_t row, column;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

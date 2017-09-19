@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,52 +21,53 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/BondsObject.h>
+#include <plugins/particles/modifier/ParticleInputHelper.h>
+#include <plugins/particles/modifier/ParticleOutputHelper.h>
+#include <core/dataset/DataSet.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
 #include "WrapPeriodicImagesModifier.h"
-
-#include <QtConcurrent>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(WrapPeriodicImagesModifier, ParticleModifier);
+
 
 /******************************************************************************
-* Constructs the modifier object.
+* Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-WrapPeriodicImagesModifier::WrapPeriodicImagesModifier(DataSet* dataset) : ParticleModifier(dataset)
+bool WrapPeriodicImagesModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
+	return input.findObject<ParticleProperty>() != nullptr;
 }
 
 /******************************************************************************
-* Modifies the particle object.
+* Modifies the input data in an immediate, preliminary way.
 ******************************************************************************/
-PipelineStatus WrapPeriodicImagesModifier::modifyParticles(TimePoint time, TimeInterval& validityInterval)
+PipelineFlowState WrapPeriodicImagesModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	std::array<bool, 3> pbc = expectSimulationCell()->pbcFlags();
+	PipelineFlowState output = input;
+	ParticleInputHelper pih(dataset(), input);
+	ParticleOutputHelper poh(dataset(), output);
+
+	SimulationCellObject* simCellObj = pih.expectSimulationCell();
+	std::array<bool, 3> pbc = simCellObj->pbcFlags();
 	if(!pbc[0] && !pbc[1] && !pbc[2])
 		return PipelineStatus(PipelineStatus::Warning, tr("The simulation cell has no periodic boundary conditions."));
 
-	if(expectSimulationCell()->is2D())
+	if(simCellObj->is2D())
 		 throwException(tr("In the current program version this modifier only supports three-dimensional simulation cells."));
 
-	AffineTransformation simCell = expectSimulationCell()->cellMatrix();
+	AffineTransformation simCell = simCellObj->cellMatrix();
 	if(std::abs(simCell.determinant()) < FLOATTYPE_EPSILON)
 		 throwException(tr("The simulation cell is degenerated."));
 	AffineTransformation inverseSimCell = simCell.inverse();
 
-	expectStandardProperty(ParticleProperty::PositionProperty);
-	ParticlePropertyObject* posProperty = outputStandardProperty(ParticleProperty::PositionProperty, true);
+	pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
+	ParticleProperty* posProperty = poh.outputStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty, true);
 
 	// Wrap bonds
-	for(DataObject* obj : output().objects()) {
-		BondsObject* bondsObj = dynamic_object_cast<BondsObject>(obj);
-		if(bondsObj) {
-			// Is the object still a shallow copy of the input?
-			if(input().contains(bondsObj)) {
-				// If yes, make a real copy of the object, which may be modified.
-				OORef<BondsObject> newObject = cloneHelper()->cloneObject(bondsObj, false);
-				output().replaceObject(bondsObj, newObject);
-				bondsObj = newObject;
-			}
+	for(DataObject* obj : output.objects()) {
+		if(BondsObject* bondsObj = dynamic_object_cast<BondsObject>(obj)) {
+			bondsObj = poh.cloneIfNeeded(bondsObj);
 
 			// Wrap bonds by adjusting their shift vectors.
 			for(Bond& bond : *bondsObj->modifiableStorage()) {
@@ -81,29 +82,20 @@ PipelineStatus WrapPeriodicImagesModifier::modifyParticles(TimePoint time, TimeI
 					}
 				}
 			}
-			bondsObj->changed();
 		}
 	}
 
 	// Wrap particles coordinates
-	Point3* pbegin = posProperty->dataPoint3();
-	Point3* pend = pbegin + posProperty->size();
+	for(size_t dim = 0; dim < 3; dim++) {
+		if(pbc[dim]) {
+			for(Point3& p : posProperty->point3Range()) {
+				if(FloatType n = floor(inverseSimCell.prodrow(p, dim)))
+					p -= simCell.column(dim) * n;
+			}
+		}
+	}
 
-	if(pbc[0]) QtConcurrent::blockingMap(pbegin, pend, [simCell, inverseSimCell](Point3& p) {
-		if(FloatType n = floor(inverseSimCell.prodrow(p, 0)))
-			p -= simCell.column(0) * n;
-	});
-	if(pbc[1]) QtConcurrent::blockingMap(pbegin, pend, [simCell, inverseSimCell](Point3& p) {
-		if(FloatType n = floor(inverseSimCell.prodrow(p, 1)))
-			p -= simCell.column(1) * n;
-	});
-	if(pbc[2]) QtConcurrent::blockingMap(pbegin, pend, [simCell, inverseSimCell](Point3& p) {
-		if(FloatType n = floor(inverseSimCell.prodrow(p, 2)))
-			p -= simCell.column(2) * n;
-	});
-	posProperty->changed();
-
-	return PipelineStatus::Success;
+	return output;
 }
 
 OVITO_END_INLINE_NAMESPACE

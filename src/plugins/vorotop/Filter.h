@@ -23,7 +23,6 @@
 
 
 #include <plugins/vorotop/VoroTopPlugin.h>
-#include <core/utilities/concurrent/Promise.h>
 
 namespace Ovito { namespace VoroTop {
 
@@ -44,7 +43,7 @@ public:
 public:
 
 	/// Loads the filter definition from the given input stream.
-	bool load(CompressedTextReader& stream, bool readHeaderOnly, PromiseBase& promise);
+	bool load(CompressedTextReader& stream, bool readHeaderOnly, PromiseState& promise);
 
 	/// Returns the comment text loaded from the filter definition file.
 	const QString& filterDescription() const { return _filterDescription; }

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2015) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,9 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <core/utilities/io/FileManager.h>
-#include <core/utilities/concurrent/Future.h>
-#include <core/dataset/importexport/FileSource.h>
+#include <plugins/particles/import/ParticleFrameData.h>
+#include <core/utilities/io/CompressedTextReader.h>
 #include "FHIAimsLogFileImporter.h"
 
 #include <boost/algorithm/string.hpp>
@@ -30,7 +29,7 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(FHIAimsLogFileImporter, ParticleImporter);
+IMPLEMENT_OVITO_CLASS(FHIAimsLogFileImporter);	
 
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
@@ -54,10 +53,11 @@ bool FHIAimsLogFileImporter::checkFileFormat(QFileDevice& input, const QUrl& sou
 /******************************************************************************
 * Scans the given input file to find all contained simulation frames.
 ******************************************************************************/
-void FHIAimsLogFileImporter::scanFileForTimesteps(PromiseBase& promise, QVector<FileSourceImporter::Frame>& frames, const QUrl& sourceUrl, CompressedTextReader& stream)
+void FHIAimsLogFileImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
 {
-	promise.setProgressText(tr("Scanning FHI-aims log file %1").arg(stream.filename()));
-	promise.setProgressMaximum(stream.underlyingSize() / 1000);
+	CompressedTextReader stream(file, sourceUrl.path());
+	setProgressText(tr("Scanning file %1").arg(sourceUrl.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	setProgressMaximum(stream.underlyingSize() / 1000);
 
 	// Regular expression for whitespace characters.
 	QRegularExpression ws_re(QStringLiteral("\\s+"));
@@ -67,7 +67,7 @@ void FHIAimsLogFileImporter::scanFileForTimesteps(PromiseBase& promise, QVector<
 	QDateTime lastModified = fileInfo.lastModified();
 	int frameNumber = 0;
 
-	while(!stream.eof() && !promise.isCanceled()) {
+	while(!stream.eof() && !isCanceled()) {
 		const char* line = stream.readLineTrimLeft();
 		if(boost::algorithm::starts_with(line, "Updated atomic structure:")) {
 			stream.readLine();
@@ -80,19 +80,25 @@ void FHIAimsLogFileImporter::scanFileForTimesteps(PromiseBase& promise, QVector<
 			frames.push_back(frame);
 		}
 
-		promise.setProgressValueIntermittent(stream.underlyingByteOffset() / 1000);
-		if(promise.isCanceled())
-			return;
+		setProgressValueIntermittent(stream.underlyingByteOffset() / 1000);
 	}
 }
 
 /******************************************************************************
-* Parses the given input file and stores the data in the given container object.
+* Parses the given input file.
 ******************************************************************************/
-void FHIAimsLogFileImporter::FHIAimsImportTask::parseFile(CompressedTextReader& stream)
+void FHIAimsLogFileImporter::FrameLoader::loadFile(QFile& file)
 {
+	// Open file for reading.
+	CompressedTextReader stream(file, frame().sourceFile.path());
 	setProgressText(tr("Reading FHI-aims log file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
-	qint64 fileOffset = stream.byteOffset();
+
+	// Jump to byte offset.
+	if(frame().byteOffset != 0)
+		stream.seek(frame().byteOffset);
+
+	// Create the destination container for loaded data.
+	std::shared_ptr<ParticleFrameData> frameData = std::make_shared<ParticleFrameData>();
 
 	// First pass: determine the cell geometry and number of atoms.
 	AffineTransformation cell = AffineTransformation::Identity();
@@ -118,14 +124,14 @@ void FHIAimsLogFileImporter::FHIAimsImportTask::parseFile(CompressedTextReader& 
 		throw Exception(tr("Invalid FHI-aims log file: No atoms found."));
 
 	// Create the particle properties.
-	ParticleProperty* posProperty = new ParticleProperty(totalAtomCount, ParticleProperty::PositionProperty, 0, false);
-	addParticleProperty(posProperty);
-	ParticleProperty* typeProperty = new ParticleProperty(totalAtomCount, ParticleProperty::ParticleTypeProperty, 0, false);
-	ParticleFrameLoader::ParticleTypeList* typeList = new ParticleFrameLoader::ParticleTypeList();
-	addParticleProperty(typeProperty, typeList);
+	PropertyPtr posProperty = ParticleProperty::createStandardStorage(totalAtomCount, ParticleProperty::PositionProperty, false);
+	frameData->addParticleProperty(posProperty);
+	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(totalAtomCount, ParticleProperty::TypeProperty, false);
+	ParticleFrameData::ParticleTypeList* typeList = new ParticleFrameData::ParticleTypeList();
+	frameData->addParticleProperty(typeProperty, typeList);
 
 	// Return to beginning of frame.
-	stream.seek(fileOffset);
+	stream.seek(frame().byteOffset);
 
 	// Second pass: read atom coordinates and types.
 	for(int i = 0; i < totalAtomCount; i++) {
@@ -151,12 +157,12 @@ void FHIAimsLogFileImporter::FHIAimsImportTask::parseFile(CompressedTextReader& 
 	// Since we created particle types on the go while reading the particles, the assigned particle type IDs
 	// depend on the storage order of particles in the file. We rather want a well-defined particle type ordering, that's
 	// why we sort them now.
-	typeList->sortParticleTypesByName(typeProperty);
+	typeList->sortParticleTypesByName(typeProperty.get());
 
 	// Set simulation cell.
 	if(lattVecCount == 3) {
-		simulationCell().setMatrix(cell);
-		simulationCell().setPbcFlags(true, true, true);
+		frameData->simulationCell().setMatrix(cell);
+		frameData->simulationCell().setPbcFlags(true, true, true);
 	}
 	else {
 		// If the input file does not contain simulation cell info,
@@ -164,15 +170,16 @@ void FHIAimsLogFileImporter::FHIAimsImportTask::parseFile(CompressedTextReader& 
 
 		Box3 boundingBox;
 		boundingBox.addPoints(posProperty->constDataPoint3(), posProperty->size());
-		simulationCell().setMatrix(AffineTransformation(
+		frameData->simulationCell().setMatrix(AffineTransformation(
 				Vector3(boundingBox.sizeX(), 0, 0),
 				Vector3(0, boundingBox.sizeY(), 0),
 				Vector3(0, 0, boundingBox.sizeZ()),
 				boundingBox.minc - Point3::Origin()));
-		simulationCell().setPbcFlags(false, false, false);
+		frameData->simulationCell().setPbcFlags(false, false, false);
 	}
 
-	setStatus(tr("%1 atoms").arg(totalAtomCount));
+	frameData->setStatus(tr("%1 atoms").arg(totalAtomCount));
+	setResult(std::move(frameData));
 }
 
 OVITO_END_INLINE_NAMESPACE

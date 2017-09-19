@@ -20,11 +20,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
+#include <plugins/particles/import/ParticleFrameData.h>
 #include "ParcasFileImporter.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(ParcasFileImporter, ParticleImporter);
+IMPLEMENT_OVITO_CLASS(ParcasFileImporter);
 
 // Byte-swaps a 32 bit word.
 #define SWAP32(x) (((uint32_t)(x) >> 24) |			\
@@ -119,15 +120,11 @@ bool ParcasFileImporter::checkFileFormat(QFileDevice& input, const QUrl& sourceL
 }
 
 /******************************************************************************
-* Parses the given input file and stores the data in the given container object.
+* Parses the given input file.
 ******************************************************************************/
-void ParcasFileImporter::ParcasFileImportTask::parseFile(CompressedTextReader& textStream)
+void ParcasFileImporter::FrameLoader::loadFile(QFile& file)
 {
 	setProgressText(tr("Reading Parcas file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
-
-	// First close text stream so we can re-open it in binary mode.
-	QIODevice& file = textStream.device();
-	file.close();
 
 	// Open input file for reading.
 	if(!file.open(QIODevice::ReadOnly))
@@ -192,11 +189,14 @@ void ParcasFileImporter::ParcasFileImportTask::parseFile(CompressedTextReader& t
     if(natoms > std::numeric_limits<int>::max())
     	throw Exception(tr("PARCAS file parsing error: File contains %1 atoms. OVITO can handle only %2 atoms.").arg(natoms).arg(std::numeric_limits<int>::max()));
 
-	attributes().insert(QStringLiteral("Timestep"), QVariant::fromValue((int)frame_num));
-	attributes().insert(QStringLiteral("Time"), QVariant::fromValue(simu_time));
+	// Create the destination container for loaded data.
+	std::shared_ptr<ParticleFrameData> frameData = std::make_shared<ParticleFrameData>();
+
+	frameData->attributes().insert(QStringLiteral("Timestep"), QVariant::fromValue((int)frame_num));
+	frameData->attributes().insert(QStringLiteral("Time"), QVariant::fromValue(simu_time));
 
 	// Create particle properties for extra fields.
-	QVector<ParticleProperty*> properties;
+	QVector<PropertyStorage*> properties;
     for(int i = 0; i < fields; i++) {
     	char field_name[5], field_unit[5];
     	stream.read(field_name, 4);
@@ -212,13 +212,13 @@ void ParcasFileImporter::ParcasFileImportTask::parseFile(CompressedTextReader& t
     	if(propertyName == "Epot") propertyType = ParticleProperty::PotentialEnergyProperty;
     	else if(propertyName == "Ekin") propertyType = ParticleProperty::KineticEnergyProperty;
 
-    	ParticleProperty* property;
+    	PropertyPtr property;
 		if(propertyType != ParticleProperty::UserProperty)
-			property = new ParticleProperty(natoms, propertyType, 0, true);
+			property = ParticleProperty::createStandardStorage(natoms, propertyType, true);
 		else
-			property = new ParticleProperty(natoms, qMetaTypeId<FloatType>(), 1, 0, propertyName, true);
-		addParticleProperty(property);
-		properties.push_back(property);
+			property = std::make_shared<PropertyStorage>(natoms, qMetaTypeId<FloatType>(), 1, 0, propertyName, true);
+		frameData->addParticleProperty(property);
+		properties.push_back(property.get());
     }
 
     // Set up simulation cell and periodic boundary flags.
@@ -227,20 +227,20 @@ void ParcasFileImporter::ParcasFileImportTask::parseFile(CompressedTextReader& t
     		std::abs((FloatType)box_y),
     		std::abs((FloatType)box_z)
     };
-	simulationCell().setMatrix(AffineTransformation(
+	frameData->simulationCell().setMatrix(AffineTransformation(
 			Vector3(boxDim[0], 0, 0), Vector3(0, boxDim[1], 0), Vector3(0, 0, boxDim[2]),
 			Vector3(-boxDim[0]/2, -boxDim[1]/2, -boxDim[2]/2)));
-	simulationCell().setPbcFlags(box_x < 0, box_y < 0, box_z < 0);
+	frameData->simulationCell().setPbcFlags(box_x < 0, box_y < 0, box_z < 0);
 
 	// Create the required standard properties.
     int numAtoms = (int)natoms;
-	ParticleProperty* posProperty = new ParticleProperty(natoms, ParticleProperty::PositionProperty, 0, true);
-	addParticleProperty(posProperty);
-	ParticleProperty* typeProperty = new ParticleProperty(natoms, ParticleProperty::ParticleTypeProperty, 0, true);
-	ParticleFrameLoader::ParticleTypeList* typeList = new ParticleFrameLoader::ParticleTypeList();
-	addParticleProperty(typeProperty, typeList);
-	ParticleProperty* identifierProperty = new ParticleProperty(natoms, ParticleProperty::IdentifierProperty, 0, true);
-	addParticleProperty(identifierProperty);
+	PropertyPtr posProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::PositionProperty, true);
+	frameData->addParticleProperty(posProperty);
+	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::TypeProperty, true);
+	ParticleFrameData::ParticleTypeList* typeList = new ParticleFrameData::ParticleTypeList();
+	frameData->addParticleProperty(typeProperty, typeList);
+	PropertyPtr identifierProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::IdentifierProperty, true);
+	frameData->addParticleProperty(identifierProperty);
 
 	// Create atom types in OVITO.
     std::vector<std::array<char,5>> types(maxtype - mintype + 1);
@@ -287,11 +287,11 @@ void ParcasFileImporter::ParcasFileImportTask::parseFile(CompressedTextReader& t
 
 		// Parse extra fields.
 		if(realsize == 4) {
-			for(ParticleProperty* prop : properties)
+			for(PropertyStorage* prop : properties)
 				prop->setFloat(i, (FloatType)stream.get_real32());
 		}
 		else {
-			for(ParticleProperty* prop : properties)
+			for(PropertyStorage* prop : properties)
 				prop->setFloat(i, (FloatType)stream.get_real64());
 		}
 
@@ -299,7 +299,8 @@ void ParcasFileImporter::ParcasFileImportTask::parseFile(CompressedTextReader& t
 		if(!setProgressValueIntermittent(i)) return;
 	}
 
-	setStatus(tr("%1 atoms at simulation time %2").arg(numAtoms).arg(simu_time));
+	frameData->setStatus(tr("%1 atoms at simulation time %2").arg(numAtoms).arg(simu_time));
+	setResult(std::move(frameData));
 }
 
 OVITO_END_INLINE_NAMESPACE

@@ -24,22 +24,29 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/util/ParticleSelectionSet.h>
-#include "../ParticleModifier.h"
+#include <core/dataset/pipeline/Modifier.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Selection)
 
 /**
  * Modifiers that allows the user to select individual particles by hand.
  */
-class OVITO_PARTICLES_EXPORT ManualSelectionModifier : public ParticleModifier
+class OVITO_PARTICLES_EXPORT ManualSelectionModifier : public Modifier
 {
 public:
 
 	/// Constructor.
-	Q_INVOKABLE ManualSelectionModifier(DataSet* dataset) : ParticleModifier(dataset) {}
+	Q_INVOKABLE ManualSelectionModifier(DataSet* dataset) : Modifier(dataset) {}
 
-	/// Asks the modifier for its validity interval at the given time.
-	virtual TimeInterval modifierValidity(TimePoint time) override { return TimeInterval::infinite(); }
+	/// \brief Create a new modifier application that refers to this modifier instance.
+	virtual OORef<ModifierApplication> createModifierApplication() override;
+
+	/// This method is called by the system after the modifier has been inserted into a data pipeline.
+	virtual void initializeModifier(ModifierApplication* modApp) override;
+
+	/// Modifies the input data in an immediate, preliminary way.
+	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 	/// Adopts the selection state from the modifier's input.
 	void resetSelection(ModifierApplication* modApp, const PipelineFlowState& state);
@@ -56,25 +63,54 @@ public:
 	/// Replaces the particle selection.
 	void setParticleSelection(ModifierApplication* modApp, const PipelineFlowState& state, const QBitArray& selection, ParticleSelectionSet::SelectionMode mode);
 
+public:
+	
+	/// Give this modifier class its own metaclass.
+	class OOMetaClass : public Modifier::OOMetaClass 
+	{
+	public:
+
+		/// Inherit constructor from base metaclass.
+		using Modifier::OOMetaClass::OOMetaClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
+
 protected:
 
-	/// This virtual method is called by the system when the modifier has been inserted into a PipelineObject.
-	virtual void initializeModifier(PipelineObject* pipelineObject, ModifierApplication* modApp) override;
-
-	/// Modifies the particle object.
-	virtual PipelineStatus modifyParticles(TimePoint time, TimeInterval& validityInterval) override;
-
 	/// Returns the selection set object stored in the ModifierApplication, or, if it does not exist, creates one when requested.
-	ParticleSelectionSet* getSelectionSet(ModifierApplication* modApp, bool createIfNotExist = false);
+	ParticleSelectionSet* getSelectionSet(ModifierApplication* modApp, bool createIfNotExist);
 
 private:
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 
 	Q_CLASSINFO("DisplayName", "Manual selection");
 	Q_CLASSINFO("ModifierCategory", "Selection");
 };
+
+/**
+ * \brief The type of ModifierApplication create for a ManualSelectionModifier 
+ *        when it is inserted into in a data pipeline.
+ */
+ class OVITO_CORE_EXPORT ManualSelectionModifierApplication : public ModifierApplication
+ {
+ public:
+ 
+	 /// \brief Constructs a modifier application.
+	 Q_INVOKABLE ManualSelectionModifierApplication(DataSet* dataset);
+ 
+ private:
+ 
+	 /// The per-application data of the modifier.
+	 DECLARE_MODIFIABLE_REFERENCE_FIELD(ParticleSelectionSet, selectionSet, setSelectionSet);
+ 
+	 Q_OBJECT
+	 OVITO_CLASS
+ };
+ 
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

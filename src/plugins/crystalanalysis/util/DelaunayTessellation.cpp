@@ -20,6 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
+#include <core/utilities/concurrent/PromiseState.h>
 #include "DelaunayTessellation.h"
 
 #include <boost/random/mersenne_twister.hpp>
@@ -28,15 +29,25 @@
 #else
 #include <boost/random/uniform_real.hpp>
 #endif
+#include <boost/functional/hash.hpp>
+#include <cstdlib>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
 /******************************************************************************
 * Generates the tessellation.
 ******************************************************************************/
-bool DelaunayTessellation::generateTessellation(const SimulationCell& simCell, const Point3* positions, size_t numPoints, FloatType ghostLayerSize, const int* selectedPoints, PromiseBase& promise)
+bool DelaunayTessellation::generateTessellation(const SimulationCell& simCell, const Point3* positions, size_t numPoints, FloatType ghostLayerSize, const int* selectedPoints, PromiseState& promise)
 {
 	promise.setProgressMaximum(0);
+
+	// Initialize the Geogram library.
+	static bool isGeogramInitialized = false;
+	if(!isGeogramInitialized) {
+		isGeogramInitialized = true;
+		GEO::initialize();
+		GEO::set_assert_mode(GEO::ASSERT_ABORT);
+	}
 
 	const double epsilon = 2e-5;
 
@@ -60,6 +71,7 @@ bool DelaunayTessellation::generateTessellation(const SimulationCell& simCell, c
 	// Build the list of input points.
 	_particleIndices.clear();
 	_pointData.clear();
+
 	for(size_t i = 0; i < numPoints; i++, ++positions) {
 
 		// Skip points which are not included.
@@ -69,9 +81,15 @@ bool DelaunayTessellation::generateTessellation(const SimulationCell& simCell, c
 		// Add a small random perturbation to the particle positions to make the Delaunay triangulation more robust
 		// against singular input data, e.g. particles forming an ideal crystal lattice.
 		Point3 wp = simCell.wrapPoint(*positions);
+#if 1
 		_pointData.push_back((double)wp.x() + displacement(rng));
 		_pointData.push_back((double)wp.y() + displacement(rng));
 		_pointData.push_back((double)wp.z() + displacement(rng));
+#else
+		_pointData.push_back((double)wp.x());
+		_pointData.push_back((double)wp.y());
+		_pointData.push_back((double)wp.z());
+#endif		
 		_particleIndices.push_back((int)i);
 
 		if(promise.isCanceled())
@@ -134,18 +152,15 @@ bool DelaunayTessellation::generateTessellation(const SimulationCell& simCell, c
 		}
 	}
 
-	// Initialize the Geogram library.
-	static bool isGeogramInitialized = false;
-	if(!isGeogramInitialized) {
-		isGeogramInitialized = true;
-		GEO::initialize();
-		GEO::set_assert_mode(GEO::ASSERT_ABORT);
-	}
-
 	// Create the internal Delaunay generator object.
 	_dt = new GEO::Delaunay3d();
 	_dt->set_keeps_infinite(true);
 	_dt->set_reorder(true);
+
+	// This is to work around a bug in Geogram 1.5.0 and earlier versions.
+	// The internal compute_BRIO_order() routine uses std::random_shuffle() to randomize the
+	// input points. This results in unstable ordering of the Delaunay cell list, unless we fix the seed number:
+	std::srand(1);
 
 	// Construct Delaunay tessellation.
 	bool result = _dt->set_vertices(_pointData.size()/3, _pointData.data(), [&promise](int value, int maxProgress) {
@@ -153,11 +168,12 @@ bool DelaunayTessellation::generateTessellation(const SimulationCell& simCell, c
 		return promise.setProgressValueIntermittent(value);
 	});
 	if(!result) return false;
-
+	
 	// Classify tessellation cells as ghost or local cells.
 	_numPrimaryTetrahedra = 0;
 	_cellInfo.resize(_dt->nb_cells());
-	for(CellIterator cell = begin_cells(); cell != end_cells(); ++cell) {
+	for(CellIterator cellIter = begin_cells(); cellIter != end_cells(); ++cellIter) {
+		CellHandle cell = *cellIter;
 		if(classifyGhostCell(cell)) {
 			_cellInfo[cell].isGhost = true;
 			_cellInfo[cell].index = -1;
@@ -215,10 +231,10 @@ static inline double determinant(double a00, double a01, double a02,
 ******************************************************************************/
 bool DelaunayTessellation::alphaTest(CellHandle cell, FloatType alpha) const
 {
-	auto v0 = _dt->vertex_ptr(_dt->cell_vertex(cell, 0));
-	auto v1 = _dt->vertex_ptr(_dt->cell_vertex(cell, 1));
-	auto v2 = _dt->vertex_ptr(_dt->cell_vertex(cell, 2));
-	auto v3 = _dt->vertex_ptr(_dt->cell_vertex(cell, 3));
+	auto v0 = _dt->vertex_ptr(cellVertex(cell, 0));
+	auto v1 = _dt->vertex_ptr(cellVertex(cell, 1));
+	auto v2 = _dt->vertex_ptr(cellVertex(cell, 2));
+	auto v3 = _dt->vertex_ptr(cellVertex(cell, 3));
 
 	auto qpx = v1[0]-v0[0];
 	auto qpy = v1[1]-v0[1];

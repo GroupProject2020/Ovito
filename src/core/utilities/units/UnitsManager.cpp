@@ -21,7 +21,7 @@
 
 #include <core/Core.h>
 #include <core/dataset/DataSet.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/animation/AnimationSettings.h>
 #include "UnitsManager.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Units)

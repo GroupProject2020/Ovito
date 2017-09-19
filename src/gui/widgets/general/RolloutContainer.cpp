@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,6 +22,7 @@
 #include <gui/GUI.h>
 #include <gui/mainwin/MainWindow.h>
 #include "RolloutContainer.h"
+#include "RolloutContainerLayout.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Widgets)
 
@@ -33,10 +34,9 @@ RolloutContainer::RolloutContainer(QWidget* parent) : QScrollArea(parent)
 	setFrameStyle(QFrame::Panel | QFrame::Sunken);
 	setWidgetResizable(true);
 	QWidget* widget = new QWidget();
-	QVBoxLayout* layout = new QVBoxLayout(widget);
+	RolloutContainerLayout* layout = new RolloutContainerLayout(widget);
 	layout->setContentsMargins(QMargins());
 	layout->setSpacing(2);
-	layout->addStretch(0);
 	widget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
 	setWidget(widget);
 }
@@ -48,7 +48,7 @@ Rollout* RolloutContainer::addRollout(QWidget* content, const QString& title, co
 {
 	OVITO_CHECK_POINTER(content);
 	Rollout* rollout = new Rollout(widget(), content, title, params, helpPage);
-	QBoxLayout* layout = static_cast<QBoxLayout*>(widget()->layout());
+	RolloutContainerLayout* layout = static_cast<RolloutContainerLayout*>(widget()->layout());
 	if(params._afterThisRollout) {
 		Rollout* otherRollout = qobject_cast<Rollout*>(params._afterThisRollout->parent());
 		for(int i = 0; i < layout->count(); i++) {
@@ -67,7 +67,7 @@ Rollout* RolloutContainer::addRollout(QWidget* content, const QString& title, co
 			}
 		}
 	}
-	else layout->insertWidget(layout->count() - 1, rollout);
+	else layout->addWidget(rollout);
 	return rollout;
 }
 
@@ -203,7 +203,7 @@ QSize Rollout::sizeHint() const
 		if(availSpace > contentSize.height())
 			contentSize.setHeight(availSpace);
 	}
-	contentSize.setHeight(contentSize.height() * _visiblePercentage / 100);
+	contentSize.setHeight(contentSize.height() * visiblePercentage() / 100);
 	return QSize(std::max(titleSize.width(), contentSize.width()), titleSize.height() + contentSize.height());
 }
 

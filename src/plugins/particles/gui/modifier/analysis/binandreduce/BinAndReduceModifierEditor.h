@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/particles/gui/modifier/ParticleModifierEditor.h>
+#include <gui/properties/ModifierPropertiesEditor.h>
 #include <gui/properties/BooleanParameterUI.h>
 #include <gui/properties/IntegerParameterUI.h>
 #include <core/utilities/DeferredMethodInvocation.h>
@@ -41,8 +41,11 @@ OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 /**
  * A properties editor for the BinAndReduceModifier class.
  */
-class BinAndReduceModifierEditor : public ParticleModifierEditor
+class BinAndReduceModifierEditor : public ModifierPropertiesEditor
 {
+	OVITO_CLASS(BinAndReduceModifierEditor)
+	Q_OBJECT
+	
 public:
 
 	/// Default constructor.
@@ -92,9 +95,6 @@ private:
 
 	/// For deferred invocation of the plot repaint function.
 	DeferredMethodInvocation<BinAndReduceModifierEditor, &BinAndReduceModifierEditor::plotData> plotLater;
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -20,15 +20,15 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticlePropertyObject.h>
-#include <plugins/particles/objects/SimulationCellObject.h>
-#include <core/utilities/concurrent/Task.h>
+#include <plugins/particles/objects/ParticleProperty.h>
+#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <core/utilities/concurrent/Promise.h>
 #include "XYZExporter.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(XYZExporter, FileColumnParticleExporter);
-DEFINE_FLAGS_PROPERTY_FIELD(XYZExporter, subFormat, "XYZSubFormat", PROPERTY_FIELD_MEMORIZE);
+IMPLEMENT_OVITO_CLASS(XYZExporter);	
+DEFINE_PROPERTY_FIELD(XYZExporter, subFormat);
 SET_PROPERTY_FIELD_LABEL(XYZExporter, subFormat, "Format style");
 
 /******************************************************************************
@@ -41,10 +41,10 @@ bool XYZExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 	if(!getParticleData(sceneNode, time, state, taskManager))
 		return false;
 
-	SynchronousTask exportTask(taskManager);
+	Promise<> exportTask = Promise<>::createSynchronous(taskManager, true, true);
 
 	// Get particle positions.
-	ParticlePropertyObject* posProperty = ParticlePropertyObject::findInState(state, ParticleProperty::PositionProperty);
+	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
 
 	size_t atomsCount = posProperty->size();
 	textStream() << atomsCount << '\n';
@@ -91,7 +91,7 @@ bool XYZExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 			// Naming conventions followed are those of the QUIP code
 			QString columnName;
 			switch(pref.type()) {
-			case ParticleProperty::ParticleTypeProperty: columnName = QStringLiteral("species"); break;
+			case ParticleProperty::TypeProperty: columnName = QStringLiteral("species"); break;
 			case ParticleProperty::PositionProperty: columnName = QStringLiteral("pos"); break;
 			case ParticleProperty::SelectionProperty: columnName = QStringLiteral("selection"); break;
 			case ParticleProperty::ColorProperty: columnName = QStringLiteral("color"); break;
@@ -129,7 +129,7 @@ bool XYZExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 			}
 
 			// Find matching property
-			ParticlePropertyObject* property = pref.findInState(state);
+			ParticleProperty* property = pref.findInState(state);
 			if(property == nullptr && pref.type() != ParticleProperty::IdentifierProperty)
 				throwException(tr("Particle property '%1' cannot be exported because it does not exist.").arg(pref.name()));
 
@@ -143,7 +143,7 @@ bool XYZExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 			QString dataTypeStr;
 			if(dataType == qMetaTypeId<FloatType>())
 				dataTypeStr = QStringLiteral("R");
-			else if(dataType == qMetaTypeId<char>() || pref.type() == ParticleProperty::ParticleTypeProperty)
+			else if(dataType == qMetaTypeId<char>() || pref.type() == ParticleProperty::TypeProperty)
 				dataTypeStr = QStringLiteral("S");
 			else if(dataType == qMetaTypeId<int>())
 				dataTypeStr = QStringLiteral("I");

@@ -21,9 +21,10 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <plugins/particles/modifier/selection/ManualSelectionModifier.h>
+#include <plugins/particles/objects/ParticleProperty.h>
 #include <core/viewport/ViewportConfiguration.h>
-#include <core/scene/pipeline/ModifierApplication.h>
-#include <core/animation/AnimationSettings.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
+#include <core/dataset/animation/AnimationSettings.h>
 #include <core/utilities/concurrent/ParallelFor.h>
 #include <gui/actions/ViewportModeAction.h>
 #include <gui/mainwin/MainWindow.h>
@@ -34,7 +35,7 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Selection) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_OBJECT(ManualSelectionModifierEditor, ParticleModifierEditor);
+
 SET_OVITO_OBJECT_EDITOR(ManualSelectionModifier, ManualSelectionModifierEditor);
 
 /**
@@ -214,9 +215,10 @@ void ManualSelectionModifierEditor::resetSelection()
 	ManualSelectionModifier* mod = static_object_cast<ManualSelectionModifier>(editObject());
 	if(!mod) return;
 
-	undoableTransaction(tr("Reset selection"), [mod]() {
-		for(const auto& modInput : mod->getModifierInputs(mod->dataset()->animationSettings()->time()))
-			mod->resetSelection(modInput.first, modInput.second);
+	undoableTransaction(tr("Reset selection"), [this,mod]() {
+		for(ModifierApplication* modApp : modifierApplications()) {
+			mod->resetSelection(modApp, modApp->evaluateInputPreliminary());
+		}
 	});
 }
 
@@ -228,9 +230,10 @@ void ManualSelectionModifierEditor::selectAll()
 	ManualSelectionModifier* mod = static_object_cast<ManualSelectionModifier>(editObject());
 	if(!mod) return;
 
-	undoableTransaction(tr("Select all"), [mod]() {
-		for(const auto& modInput : mod->getModifierInputs(mod->dataset()->animationSettings()->time()))
-			mod->selectAll(modInput.first, modInput.second);
+	undoableTransaction(tr("Select all"), [this,mod]() {
+		for(ModifierApplication* modApp : modifierApplications()) {
+			mod->selectAll(modApp, modApp->evaluateInputPreliminary());
+		}
 	});
 }
 
@@ -242,9 +245,10 @@ void ManualSelectionModifierEditor::clearSelection()
 	ManualSelectionModifier* mod = static_object_cast<ManualSelectionModifier>(editObject());
 	if(!mod) return;
 
-	undoableTransaction(tr("Clear selection"), [mod]() {
-		for(const auto& modInput : mod->getModifierInputs(mod->dataset()->animationSettings()->time()))
-			mod->clearSelection(modInput.first, modInput.second);
+	undoableTransaction(tr("Clear selection"), [this,mod]() {
+		for(ModifierApplication* modApp : modifierApplications()) {
+			mod->clearSelection(modApp, modApp->evaluateInputPreliminary());
+		}
 	});
 }
 
@@ -256,19 +260,20 @@ void ManualSelectionModifierEditor::onParticlePicked(const ParticlePickingHelper
 	ManualSelectionModifier* mod = static_object_cast<ManualSelectionModifier>(editObject());
 	if(!mod) return;
 
-	undoableTransaction(tr("Toggle particle selection"), [mod, &pickResult]() {
-		for(const auto& modInput : mod->getModifierInputs(mod->dataset()->animationSettings()->time())) {
+	undoableTransaction(tr("Toggle particle selection"), [this, mod, &pickResult]() {
+		for(ModifierApplication* modApp : modifierApplications()) {
+			PipelineFlowState modInput = modApp->evaluateInputPreliminary();
 
 			// Lookup the right particle in the modifier's input.
 			// Since we cannot rely on the particle's index or identifier, we use the
 			// particle location to unambiguously find the picked particle.
-			ParticlePropertyObject* posProperty = ParticlePropertyObject::findInState(modInput.second, ParticleProperty::PositionProperty);
+			ParticleProperty* posProperty = ParticleProperty::findInState(modInput, ParticleProperty::PositionProperty);
 			if(!posProperty) continue;
 
 			size_t index = 0;
 			for(const Point3& p : posProperty->constPoint3Range()) {
 				if(p == pickResult.localPos) {
-					mod->toggleParticleSelection(modInput.first, modInput.second, index);
+					mod->toggleParticleSelection(modApp, modInput, index);
 					break;
 				}
 				index++;
@@ -285,16 +290,17 @@ void ManualSelectionModifierEditor::onFence(const QVector<Point2>& fence, Viewpo
 	ManualSelectionModifier* mod = static_object_cast<ManualSelectionModifier>(editObject());
 	if(!mod) return;
 
-	undoableTransaction(tr("Select particles"), [mod, &fence, viewport, mode]() {
-		for(const auto& modInput : mod->getModifierInputs(mod->dataset()->animationSettings()->time())) {
+	undoableTransaction(tr("Select particles"), [this, mod, &fence, viewport, mode]() {
+		for(ModifierApplication* modApp : modifierApplications()) {
+			PipelineFlowState modInput = modApp->evaluateInputPreliminary();
 
 			// Lookup the right particle in the modifier's input.
 			// Since we cannot rely on the particle's index or identifier, we use the
 			// particle location to unambiguously find the picked particle.
-			ParticlePropertyObject* posProperty = ParticlePropertyObject::findInState(modInput.second, ParticleProperty::PositionProperty);
+			ParticleProperty* posProperty = ParticleProperty::findInState(modInput, ParticleProperty::PositionProperty);
 			if(!posProperty) continue;
 
-			for(ObjectNode* node : modInput.first->objectNodes()) {
+			for(ObjectNode* node : modApp->dependentNodes()) {
 
 				// Create projection matrix that transforms particle positions to screen space.
 				TimeInterval interval;
@@ -342,7 +348,7 @@ void ManualSelectionModifierEditor::onFence(const QVector<Point2>& fence, Viewpo
 					fullSelection |= selection;
 				});
 
-				mod->setParticleSelection(modInput.first, modInput.second, fullSelection, mode);
+				mod->setParticleSelection(modApp, modInput, fullSelection, mode);
 				break;
 			}
 		}

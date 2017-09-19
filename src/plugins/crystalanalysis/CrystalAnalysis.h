@@ -23,6 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
+#include <plugins/mesh/Mesh.h>
 
 #ifdef CrystalAnalysis_EXPORTS		// This is defined by CMake when building the plugin library.
 #  define OVITO_CRYSTALANALYSIS_EXPORT Q_DECL_EXPORT
@@ -33,7 +34,9 @@
 namespace Ovito {
 	namespace Plugins {
 		namespace CrystalAnalysis {
+			
 			using namespace Ovito::Particles;
+			using namespace Ovito::Mesh;
 
 			class StructurePattern;
 			class BurgersVectorFamily;

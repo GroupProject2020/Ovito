@@ -23,7 +23,7 @@
 #include <plugins/vorotop/VoroTopModifier.h>
 #include <plugins/pyscript/binding/PythonBinding.h>
 #include <plugins/particles/scripting/PythonBinding.h>
-#include <core/plugins/PluginManager.h>
+#include <core/app/PluginManager.h>
 
 namespace Ovito { namespace VoroTop {
 
@@ -40,7 +40,7 @@ PYBIND11_PLUGIN(VoroTop)
 	py::module m("VoroTop");
 
 	auto VoroTopModifier_py = ovito_class<VoroTopModifier, StructureIdentificationModifier>(m,
-			":Base class: :py:class:`ovito.modifiers.Modifier`\n\n"
+			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"This modifier uses the Voronoi cell topology of particles to characterize their local environments "
 			"[`Lazar, Han, Srolovitz, PNAS 112:43 (2015) <http://dx.doi.org/10.1073/pnas.1505788112>`_]. "
 			"\n\n"
@@ -56,7 +56,7 @@ PYBIND11_PLUGIN(VoroTop)
 			"The modifier calculates the Voronoi cell topology of each particle, uses the provided "
     		"filter to determine the structure type, and stores the results in the ``Structure Type`` particle property. "
 			"This allows the user to subsequently select particles  of a certain structural type, e.g. by using the "
-			":py:class:SelectParticleTypeModifier`. "
+			":py:class:`SelectParticleTypeModifier`. "
 			"\n\n"
 			"This method is well-suited for analyzing finite-temperature systems, including those heated to "
     		"their bulk melting temperatures.  This robust behavior relieves the need to quench a sample "
@@ -69,7 +69,7 @@ PYBIND11_PLUGIN(VoroTop)
 			" * ``Structure Type`` (:py:class:`~ovito.data.ParticleProperty`):\n"
 			"   This output particle property contains the integer structure type computed by the modifier for each particle.\n"
 			" * ``Color`` (:py:class:`~ovito.data.ParticleProperty`):\n"
-			"   The modifier assigns a color to each particle based on its identified structure type. "
+			"   The modifier assigns a color to each particle to indicate its identified structure type. "
 			"\n\n"
 			)
 		.def_property("only_selected", &VoroTopModifier::onlySelectedParticles, &VoroTopModifier::setOnlySelectedParticles,
@@ -87,11 +87,7 @@ PYBIND11_PLUGIN(VoroTop)
 				"\n\n"
 				":Default: ``''``\n")
 	;
-	expose_subobject_list<VoroTopModifier, 
-						  ParticleType,
-						  StructureIdentificationModifier, 
-						  &StructureIdentificationModifier::structureTypes>(
-							  VoroTopModifier_py, "structures", "VoroTopStructureTypeList",
+	expose_subobject_list(VoroTopModifier_py, std::mem_fn(&StructureIdentificationModifier::structureTypes), "structures", "VoroTopStructureTypeList",
 		"A list of :py:class:`~ovito.data.ParticleType` instances managed by this modifier, one for each structural type loaded from the :py:attr:`.filter_file`. ");
 
 	return m.ptr();

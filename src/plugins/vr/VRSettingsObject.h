@@ -23,7 +23,7 @@
 
 
 #include <core/Core.h>
-#include <core/reference/RefTarget.h>
+#include <core/oo/RefTarget.h>
 
 namespace VRPlugin {
 
@@ -34,6 +34,9 @@ using namespace Ovito;
  */
 class VRSettingsObject : public RefTarget
 {
+	OVITO_CLASS(VRSettingsObject)
+	Q_OBJECT
+	
 public:
 
 	/// \brief Default constructor.
@@ -43,17 +46,7 @@ public:
 		_rotationZ(0),
 		_modelCenter(Vector3::Zero()),
 		_viewerTM(AffineTransformation::Identity()),
-		_movementSpeed(4) {
-		INIT_PROPERTY_FIELD(supersamplingEnabled);
-		INIT_PROPERTY_FIELD(scaleFactor);
-		INIT_PROPERTY_FIELD(translation);
-		INIT_PROPERTY_FIELD(rotationZ);
-		INIT_PROPERTY_FIELD(modelCenter);
-		INIT_PROPERTY_FIELD(showFloor);
-		INIT_PROPERTY_FIELD(flyingMode);
-		INIT_PROPERTY_FIELD(viewerTM);
-		INIT_PROPERTY_FIELD(movementSpeed);
-	}
+		_movementSpeed(4) {}
 
 	/// Adjusts the transformation to bring the model into the center of the playing area.
 	void recenter();
@@ -89,9 +82,6 @@ private:
 
 	/// The speed of motion when navigating.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, movementSpeed, setMovementSpeed);
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 }	// End of namespace

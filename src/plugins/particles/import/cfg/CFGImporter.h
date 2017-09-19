@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,6 +25,7 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/import/ParticleImporter.h>
 #include <plugins/particles/import/InputColumnMapping.h>
+#include <core/dataset/DataSetContainer.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
@@ -33,6 +34,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVI
  */
 class OVITO_PARTICLES_EXPORT CFGImporter : public ParticleImporter
 {
+	Q_OBJECT
+	OVITO_CLASS(CFGImporter)
+	
 public:
 
 	/// \brief Constructs a new instance of this class.
@@ -53,34 +57,30 @@ public:
 	virtual QString objectTitle() override { return tr("CFG"); }
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
-	virtual std::shared_ptr<FrameLoader> createFrameLoader(const Frame& frame, bool isNewlySelectedFile) override {
-		return std::make_shared<CFGImportTask>(dataset()->container(), frame, isNewlySelectedFile);
+	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
+		return std::make_shared<FrameLoader>(frame, localFilename);
 	}
 
 private:
 
 	/// The format-specific task object that is responsible for reading an input file in the background.
-	class CFGImportTask : public ParticleFrameLoader
+	class FrameLoader : public FileSourceImporter::FrameLoader
 	{
 	public:
 
-		/// Normal constructor.
-		CFGImportTask(DataSetContainer* container, const FileSourceImporter::Frame& frame, bool isNewFile)
-			: ParticleFrameLoader(container, frame, isNewFile) {}
+		/// Inherit constructor from base class.
+		using FileSourceImporter::FrameLoader::FrameLoader;
 
 	protected:
 
-		/// Parses the given input file and stores the data in this container object.
-		virtual void parseFile(CompressedTextReader& stream) override;
+		/// Loads the frame data from the given file.
+		virtual void loadFile(QFile& file) override;
 	};
 
 protected:
 
 	/// Guesses the mapping of input file columns to internal particle properties.
 	static void generateAutomaticColumnMapping(InputColumnMapping& mapping, const QStringList& columnNames);
-
-	Q_OBJECT
-	OVITO_OBJECT
 };
 
 OVITO_END_INLINE_NAMESPACE

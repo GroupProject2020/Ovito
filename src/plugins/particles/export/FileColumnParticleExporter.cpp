@@ -24,7 +24,7 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export)
 
-IMPLEMENT_SERIALIZABLE_OVITO_OBJECT(FileColumnParticleExporter, ParticleExporter);
+IMPLEMENT_OVITO_CLASS(FileColumnParticleExporter);	
 
 /******************************************************************************
  * Loads the user-defined default values of this object's parameter fields from the

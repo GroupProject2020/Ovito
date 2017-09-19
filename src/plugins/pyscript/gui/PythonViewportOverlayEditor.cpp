@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -27,7 +27,7 @@
 
 namespace PyScript { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_OBJECT(PythonViewportOverlayEditor, PropertiesEditor);
+IMPLEMENT_OVITO_CLASS(PythonViewportOverlayEditor);		
 SET_OVITO_OBJECT_EDITOR(PythonViewportOverlay, PythonViewportOverlayEditor);
 
 /******************************************************************************
@@ -66,7 +66,7 @@ void PythonViewportOverlayEditor::onContentsChanged(RefTarget* editObject)
 	PythonViewportOverlay* overlay = static_object_cast<PythonViewportOverlay>(editObject);
 	if(overlay) {
 		_editScriptButton->setEnabled(true);
-		_outputDisplay->setText(overlay->scriptOutput());
+		_outputDisplay->setText(overlay->scriptCompilationOutput() + overlay->scriptRenderingOutput());
 	}
 	else {
 		_editScriptButton->setEnabled(false);
@@ -92,8 +92,9 @@ void PythonViewportOverlayEditor::onOpenEditor()
 		}
 
 		/// Obtains the script output cached by the owner object.
-		virtual const QString& getOutputText(RefTarget* obj) const override {
-			return static_object_cast<PythonViewportOverlay>(obj)->scriptOutput();
+		virtual QString getOutputText(RefTarget* obj) const override {
+			PythonViewportOverlay* overlay = static_object_cast<PythonViewportOverlay>(obj);
+			return overlay->scriptCompilationOutput() + overlay->scriptRenderingOutput();
 		}
 
 		/// Sets the current script of the owner object.
@@ -121,8 +122,7 @@ void PythonViewportOverlayEditor::onOpenEditor()
 bool PythonViewportOverlayEditor::referenceEvent(RefTarget* source, ReferenceEvent* event)
 {
 	if(source == editObject() && event->type() == ReferenceEvent::ObjectStatusChanged) {
-		if(PythonViewportOverlay* overlay = static_object_cast<PythonViewportOverlay>(editObject()))
-			_outputDisplay->setText(overlay->scriptOutput());
+		onContentsChanged(editObject());
 	}
 	return PropertiesEditor::referenceEvent(source, event);
 }

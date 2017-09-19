@@ -20,7 +20,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleTypeProperty.h>
 #include "OutputColumnMapping.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export)
@@ -87,7 +86,7 @@ OutputColumnWriter::OutputColumnWriter(const OutputColumnMapping& mapping, const
 	for(int i = 0; i < (int)mapping.size(); i++) {
 		const ParticlePropertyReference& pref = mapping[i];
 
-		ParticlePropertyObject* property = pref.findInState(source);
+		ParticleProperty* property = pref.findInState(source);
 		if(property == nullptr && pref.type() != ParticleProperty::IdentifierProperty) {
 			throw Exception(tr("The set of output data columns is invalid (column %1). "
 			                   "The property '%2' does not exist.").arg(i+1).arg(pref.name()));
@@ -110,21 +109,20 @@ OutputColumnWriter::OutputColumnWriter(const OutputColumnMapping& mapping, const
  *****************************************************************************/
 void OutputColumnWriter::writeParticle(size_t particleIndex, CompressedTextWriter& stream)
 {
-	QVector<ParticlePropertyObject*>::const_iterator property = _properties.constBegin();
+	QVector<ParticleProperty*>::const_iterator property = _properties.constBegin();
 	QVector<int>::const_iterator vcomp = _vectorComponents.constBegin();
 	for(; property != _properties.constEnd(); ++property, ++vcomp) {
 		if(property != _properties.constBegin()) stream << ' ';
 		if(*property) {
 			if((*property)->dataType() == qMetaTypeId<int>()) {
-				if(!_writeTypeNames || (*property)->type() != ParticleProperty::ParticleTypeProperty) {
+				if(!_writeTypeNames || (*property)->type() != ParticleProperty::TypeProperty) {
 					stream << (*property)->getIntComponent(particleIndex, *vcomp);
 				}
 				else {
 					// Write type name instead of type number.
 					// Replace spaces in the name with underscores.
-					ParticleTypeProperty* typeProperty = static_object_cast<ParticleTypeProperty>(*property);
-					int particleTypeId = typeProperty->getIntComponent(particleIndex, *vcomp);
-					ParticleType* type = typeProperty->particleType(particleTypeId);
+					int particleTypeId = (*property)->getIntComponent(particleIndex, *vcomp);
+					ElementType* type = (*property)->elementType(particleTypeId);
 					if(type && !type->name().isEmpty()) {
 						QString s = type->name();
 						stream << s.replace(QChar(' '), QChar('_'));

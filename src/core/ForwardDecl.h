@@ -48,9 +48,17 @@ namespace Ovito {
 			OVITO_END_INLINE_NAMESPACE
 		OVITO_END_INLINE_NAMESPACE
 		OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
+			class PromiseBase;
+			class FutureBase;
+			class PromiseState;
 			class TaskManager;
-			class AsynchronousTask;
-			class SynchronousTask;
+			class PromiseWatcher;
+			class AsynchronousTaskBase;
+			class TrackingPromiseState;
+			template<typename tuple_type> class DirectContinuationPromiseState;
+			template<typename... R> class Future;
+			template<typename... R> class SharedFuture;
+			using PromiseStatePtr = std::shared_ptr<PromiseState>;
 		OVITO_END_INLINE_NAMESPACE
 		OVITO_BEGIN_INLINE_NAMESPACE(Mesh)
 			class TriMesh;
@@ -71,18 +79,27 @@ namespace Ovito {
 	OVITO_BEGIN_INLINE_NAMESPACE(PluginSystem)
 		class Plugin;
 		class PluginManager;
-		class AutoStartObject;
+		class ApplicationService;
 		OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 			class NativePlugin;
 		OVITO_END_INLINE_NAMESPACE
 	OVITO_END_INLINE_NAMESPACE
 	OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
 		class OvitoObject;
-		class OvitoObjectType;
+		class OvitoClass;
+		using OvitoClassPtr = const OvitoClass*;
 		class CloneHelper;
 		class RefMaker;
+		class RefMakerClass;
 		class RefTarget;
 		class PropertyFieldDescriptor;
+		class PropertyFieldBase;
+		template<typename property_data_type> class RuntimePropertyField;
+		template<typename property_data_type> class PropertyField;
+		class SingleReferenceFieldBase;
+		template<typename RefTargetType> class ReferenceField;
+		class VectorReferenceFieldBase;
+		template<typename RefTargetType> class VectorReferenceField;
 		class DataSet;
 		class DataSetContainer;
 		OVITO_BEGIN_INLINE_NAMESPACE(Units)
@@ -94,23 +111,38 @@ namespace Ovito {
 		OVITO_END_INLINE_NAMESPACE
 		OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 			class SceneNode;
-			class CompoundObject;
 			class DataObject;
 			class SceneRoot;
 			class SelectionSet;
 			class Modifier;
+			class ModifierClass;
+			using ModifierClassPtr = const ModifierClass*;
 			class ModifierApplication;
 			class ObjectNode;
-			class PipelineEvalRequest;
 			class PipelineFlowState;
 			class PipelineObject;
+			class CachingPipelineObject;
 			class DisplayObject;
 			class AsynchronousDisplayObject;
+			class StaticSource;
+			class ModifierDelegate;
+			class DelegatingModifier;
+			class MultiDelegatingModifier;
+			class InputHelper;
+			class OutputHelper;
 			OVITO_BEGIN_INLINE_NAMESPACE(StdObj)
+				class PropertyObject;
+				class PropertyStorage;
+				using PropertyPtr = std::shared_ptr<PropertyStorage>;
+				using ConstPropertyPtr = std::shared_ptr<const PropertyStorage>;
+				class PropertyClass;
+				using PropertyClassPtr = const PropertyClass*;
+				class PropertyReference;
+				template<class PropertyObjectType> class TypedPropertyReference;
+				class SimulationCell;
+				class SimulationCellObject;
+				class SimulationCellDisplay;
 			OVITO_END_INLINE_NAMESPACE
-		OVITO_END_INLINE_NAMESPACE
-		OVITO_BEGIN_INLINE_NAMESPACE(Internal)
-			class NativeOvitoObjectType;
 		OVITO_END_INLINE_NAMESPACE
 	OVITO_END_INLINE_NAMESPACE
 	OVITO_BEGIN_INLINE_NAMESPACE(Rendering)

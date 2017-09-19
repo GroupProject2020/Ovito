@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,50 +23,105 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/data/ParticleProperty.h>
-#include <plugins/particles/data/BondsStorage.h>
+#include <plugins/particles/objects/BondsStorage.h>
 #include <plugins/particles/objects/BondsDisplay.h>
-#include <plugins/particles/modifier/AsynchronousParticleModifier.h>
+#include <plugins/particles/objects/ParticleProperty.h>
+#include <core/dataset/data/properties/PropertyStorage.h>
+#include <core/dataset/data/simcell/SimulationCell.h>
+#include <core/dataset/pipeline/AsynchronousModifier.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
 /**
  * \brief This modifier computes the atomic volume and the Voronoi indices of particles.
  */
-class OVITO_PARTICLES_EXPORT VoronoiAnalysisModifier : public AsynchronousParticleModifier
+class OVITO_PARTICLES_EXPORT VoronoiAnalysisModifier : public AsynchronousModifier
 {
 public:
 
 	/// Constructor.
 	Q_INVOKABLE VoronoiAnalysisModifier(DataSet* dataset);
 
-	/// Returns the total volume of the simulation cell computed by the modifier.
-	double simulationBoxVolume() const { return _simulationBoxVolume; }
-
-	/// Returns the volume sum of all Voronoi cells computed by the modifier.
-	double voronoiVolumeSum() const { return _voronoiVolumeSum; }
-
-	/// Returns the maximum number of edges of any Voronoi face.
-	int maxFaceOrder() const { return _maxFaceOrder; }
-
 protected:
-
-	/// Is called when the value of a property of this object has changed.
-	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
 
 	/// Handles reference events sent by reference targets of this object.
 	virtual bool referenceEvent(RefTarget* source, ReferenceEvent* event) override;
 
 	/// Creates a computation engine that will compute the modifier's results.
-	virtual std::shared_ptr<ComputeEngine> createEngine(TimePoint time, TimeInterval validityInterval) override;
+	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;	
 
-	/// Unpacks the results of the computation engine and stores them in the modifier.
-	virtual void transferComputationResults(ComputeEngine* engine) override;
+public:
+	
+	/// Give this modifier class its own metaclass.
+	class OOMetaClass : public AsynchronousModifier::OOMetaClass 
+	{
+	public:
 
-	/// Lets the modifier insert the cached computation results into the modification pipeline.
-	virtual PipelineStatus applyComputationResults(TimePoint time, TimeInterval& validityInterval) override;
+		/// Inherit constructor from base metaclass.
+		using AsynchronousModifier::OOMetaClass::OOMetaClass;
+
+		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+	};
 
 private:
+
+	/// Stores the modifier's results.
+	class VoronoiAnalysisResults : public ComputeEngineResults 
+	{
+	public:
+
+		/// Constructor.
+		VoronoiAnalysisResults(size_t particleCount, int edgeCount, bool computeIndices, bool computeBonds) :
+			_coordinationNumbers(ParticleProperty::createStandardStorage(particleCount, ParticleProperty::CoordinationProperty, true)),
+			_atomicVolumes(std::make_shared<PropertyStorage>(particleCount, qMetaTypeId<FloatType>(), 1, 0, QStringLiteral("Atomic Volume"), true)),
+			_voronoiIndices(computeIndices ? std::make_shared<PropertyStorage>(particleCount, qMetaTypeId<int>(), edgeCount, 0, QStringLiteral("Voronoi Index"), true) : nullptr),
+			_bonds(computeBonds ? std::make_shared<BondsStorage>() : nullptr) {}
+
+		/// Injects the computed results into the data pipeline.
+		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+
+		/// Returns the property storage that contains the computed coordination numbers.
+		const PropertyPtr& coordinationNumbers() const { return _coordinationNumbers; }
+		
+		/// Returns the property storage that contains the computed atomic volumes.
+		const PropertyPtr& atomicVolumes() const { return _atomicVolumes; }
+
+		/// Returns the property storage that contains the computed Voronoi indices.
+		const PropertyPtr& voronoiIndices() const { return _voronoiIndices; }
+		
+		/// Returns the total volume of the simulation cell computed by the modifier.
+		double simulationBoxVolume() const { return _simulationBoxVolume; }
+
+		/// Sets the total volume of the simulation cell computed by the modifier.
+		void setSimulationBoxVolume(double vol) { _simulationBoxVolume = vol; }
+				
+		/// Returns the volume sum of all Voronoi cells computed by the modifier.
+		std::atomic<double>& voronoiVolumeSum() { return _voronoiVolumeSum; }
+	
+		/// Returns the maximum number of edges of any Voronoi face.
+		std::atomic<int>& maxFaceOrder() { return _maxFaceOrder; }
+
+		/// Returns the computed nearest neighbor bonds.
+		const BondsPtr& bonds() const { return _bonds; }
+
+	private:
+
+		const PropertyPtr _coordinationNumbers;
+		const PropertyPtr _atomicVolumes;
+		const PropertyPtr _voronoiIndices;
+		const BondsPtr _bonds;
+
+		/// The total volume of the simulation cell computed by the modifier.
+		double _simulationBoxVolume = 0;
+	
+		/// The volume sum of all Voronoi cells.
+		std::atomic<double> _voronoiVolumeSum{0.0};
+		
+		/// The maximum number of edges of a Voronoi face.
+		std::atomic<int> _maxFaceOrder{0};
+	};
 
 	/// Computes the modifier's results.
 	class VoronoiAnalysisEngine : public ComputeEngine
@@ -74,75 +129,37 @@ private:
 	public:
 
 		/// Constructor.
-		VoronoiAnalysisEngine(const TimeInterval& validityInterval, ParticleProperty* positions, ParticleProperty* selection, std::vector<FloatType>&& radii,
+		VoronoiAnalysisEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, ConstPropertyPtr selection, std::vector<FloatType> radii,
 							const SimulationCell& simCell,
 							int edgeCount, bool computeIndices, bool computeBonds, FloatType edgeThreshold, FloatType faceThreshold, FloatType relativeFaceThreshold) :
 			ComputeEngine(validityInterval),
 			_positions(positions),
-			_selection(selection),
+			_selection(std::move(selection)),
 			_radii(std::move(radii)),
 			_simCell(simCell),
-			_maxFaceOrder(0),
 			_edgeThreshold(edgeThreshold),
 			_faceThreshold(faceThreshold),
 			_relativeFaceThreshold(relativeFaceThreshold),
-			_voronoiVolumeSum(0),
-			_simulationBoxVolume(0),
-			_coordinationNumbers(new ParticleProperty(positions->size(), ParticleProperty::CoordinationProperty, 0, true)),
-			_atomicVolumes(new ParticleProperty(positions->size(), qMetaTypeId<FloatType>(), 1, 0, QStringLiteral("Atomic Volume"), true)),
-			_voronoiIndices(computeIndices ? new ParticleProperty(positions->size(), qMetaTypeId<int>(), edgeCount, 0, QStringLiteral("Voronoi Index"), true) : nullptr),
-			_bonds(computeBonds ? new BondsStorage() : nullptr) {}
-
-		/// Computes the modifier's results and stores them in this object for later retrieval.
+			_results(std::make_shared<VoronoiAnalysisResults>(positions->size(), edgeCount, computeIndices, computeBonds)) {}
+			
+		/// Computes the modifier's results.
 		virtual void perform() override;
 
-		/// Returns the property storage that contains the computed coordination numbers.
-		ParticleProperty* coordinationNumbers() const { return _coordinationNumbers.data(); }
-
-		/// Returns the property storage that contains the computed atomic volumes.
-		ParticleProperty* atomicVolumes() const { return _atomicVolumes.data(); }
-
-		/// Returns the property storage that contains the computed Voronoi indices.
-		ParticleProperty* voronoiIndices() const { return _voronoiIndices.data(); }
-
-		/// Returns the total volume of the simulation cell computed by the modifier.
-		double simulationBoxVolume() const { return _simulationBoxVolume; }
-
-		/// Returns the volume sum of all Voronoi cells.
-		double voronoiVolumeSum() const { return _voronoiVolumeSum; }
-
-		/// Returns the maximum number of edges of a Voronoi face.
-		int maxFaceOrder() const { return _maxFaceOrder; }
-
-		/// Returns the computed nearest neighbor bonds.
-		BondsStorage* bonds() const { return _bonds.data(); }
-
+		const SimulationCell& simCell() const { return _simCell; }
+		const ConstPropertyPtr& positions() const { return _positions; }
+		const ConstPropertyPtr selection() const { return _selection; }
+		
 	private:
 
-		FloatType _edgeThreshold;
-		FloatType _faceThreshold;
-		FloatType _relativeFaceThreshold;
-		double _simulationBoxVolume;
-		std::atomic<double> _voronoiVolumeSum;
-		std::atomic<int> _maxFaceOrder;
-		SimulationCell _simCell;
+		const FloatType _edgeThreshold;
+		const FloatType _faceThreshold;
+		const FloatType _relativeFaceThreshold;
+		const SimulationCell _simCell;
 		std::vector<FloatType> _radii;
-		QExplicitlySharedDataPointer<ParticleProperty> _positions;
-		QExplicitlySharedDataPointer<ParticleProperty> _selection;
-		QExplicitlySharedDataPointer<ParticleProperty> _coordinationNumbers;
-		QExplicitlySharedDataPointer<ParticleProperty> _atomicVolumes;
-		QExplicitlySharedDataPointer<ParticleProperty> _voronoiIndices;
-		QExplicitlySharedDataPointer<BondsStorage> _bonds;
+		const ConstPropertyPtr _positions;
+		const ConstPropertyPtr _selection;
+		std::shared_ptr<VoronoiAnalysisResults> _results;
 	};
-
-	/// This stores the cached coordination numbers computed by the modifier.
-	QExplicitlySharedDataPointer<ParticleProperty> _coordinationNumbers;
-
-	/// This stores the cached atomic volumes computed by the modifier.
-	QExplicitlySharedDataPointer<ParticleProperty> _atomicVolumes;
-
-	/// This stores the cached Voronoi indices computed by the modifier.
-	QExplicitlySharedDataPointer<ParticleProperty> _voronoiIndices;
 
 	/// Controls whether the modifier takes into account only selected particles.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, onlySelected, setOnlySelected);
@@ -168,25 +185,13 @@ private:
 	/// Controls whether the modifier output nearest neighbor bonds.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, computeBonds, setComputeBonds);
 
-	/// The total volume of the simulation cell computed by the modifier.
-	double _simulationBoxVolume;
-
-	/// The volume sum of all Voronoi cells.
-	double _voronoiVolumeSum;
-
-	/// The maximum number of edges of a Voronoi face.
-	int _maxFaceOrder;
-
 	/// The display object for rendering the bonds generated by the modifier.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD(BondsDisplay, bondsDisplay, setBondsDisplay);
-
-	/// This stores the cached results of the modifier, i.e. the bonds information.
-	QExplicitlySharedDataPointer<BondsStorage> _bonds;
 
 private:
 
 	Q_OBJECT
-	OVITO_OBJECT
+	OVITO_CLASS
 
 	Q_CLASSINFO("DisplayName", "Voronoi analysis");
 	Q_CLASSINFO("ModifierCategory", "Analysis");

@@ -23,13 +23,12 @@
 #include <gui/properties/BooleanParameterUI.h>
 #include <core/dataset/UndoStack.h>
 #include <core/dataset/DataSetContainer.h>
-#include <core/animation/AnimationSettings.h>
-#include <core/animation/controller/Controller.h>
+#include <core/dataset/animation/AnimationSettings.h>
+#include <core/dataset/animation/controller/Controller.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
 
-// Gives the class run-time type information.
-IMPLEMENT_OVITO_OBJECT(BooleanParameterUI, PropertyParameterUI);
+IMPLEMENT_OVITO_CLASS(BooleanParameterUI);
 
 /******************************************************************************
 * Constructor for a Qt property.
@@ -92,16 +91,7 @@ void BooleanParameterUI::updateUI()
 	PropertyParameterUI::updateUI();	
 	
 	if(checkBox() && editObject()) {
-		if(isReferenceFieldUI()) {
-#if 0
-			BooleanController* ctrl = dynamic_object_cast<BooleanController>(parameterObject());
-			if(ctrl) {
-				bool val = ctrl->currentValue();
-				checkBox()->setChecked(val);
-			}
-#endif
-		}
-		else {
+		if(!isReferenceFieldUI()) {
 			QVariant val(false);
 			if(propertyName()) {
 				val = editObject()->property(propertyName());
@@ -142,15 +132,7 @@ void BooleanParameterUI::updatePropertyValue()
 {
 	if(checkBox() && editObject()) {
 		undoableTransaction(tr("Change parameter"), [this]() {
-			if(isReferenceFieldUI()) {
-#if 0
-				if(BooleanController* ctrl = dynamic_object_cast<BooleanController>(parameterObject())) {
-					ctrl->setCurrentValue(checkBox()->isChecked());
-					updateUI();
-				}
-#endif
-			}
-			else if(isQtPropertyUI()) {
+			if(isQtPropertyUI()) {
 				if(!editObject()->setProperty(propertyName(), checkBox()->isChecked())) {
 					OVITO_ASSERT_MSG(false, "BooleanParameterUI::updatePropertyValue()", QString("The value of property %1 of object class %2 could not be set.").arg(QString(propertyName()), editObject()->metaObject()->className()).toLocal8Bit().constData());
 				}

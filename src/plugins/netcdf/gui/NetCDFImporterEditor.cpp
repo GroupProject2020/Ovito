@@ -44,12 +44,12 @@
 #include <gui/properties/BooleanParameterUI.h>
 #include <gui/properties/BooleanRadioButtonParameterUI.h>
 #include <gui/mainwin/MainWindow.h>
-#include <core/dataset/importexport/FileSource.h>
+#include <core/dataset/io/FileSource.h>
 #include "NetCDFImporterEditor.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_OBJECT(NetCDFImporterEditor, FileImporterEditor);
+
 SET_OVITO_OBJECT_EDITOR(NetCDFImporter, NetCDFImporterEditor);
 
 /******************************************************************************
@@ -58,8 +58,10 @@ SET_OVITO_OBJECT_EDITOR(NetCDFImporter, NetCDFImporterEditor);
  *****************************************************************************/
 bool NetCDFImporterEditor::showEditColumnMappingDialog(NetCDFImporter* importer, const QUrl& sourceFile, QWidget* parent)
 {
-	InputColumnMapping mapping = importer->inspectFileHeader(FileSourceImporter::Frame(sourceFile));
-	if(mapping.empty()) return false;
+	Future<InputColumnMapping> inspectFuture = importer->inspectFileHeader(FileSourceImporter::Frame(sourceFile));
+	if(!importer->dataset()->container()->taskManager().waitForTask(inspectFuture))
+		return false;
+	InputColumnMapping mapping = inspectFuture.result();
 
 	if(!importer->customColumnMapping().empty()) {
 		InputColumnMapping customMapping = importer->customColumnMapping();
@@ -125,8 +127,8 @@ void NetCDFImporterEditor::onEditColumnMapping()
 		if(!fileSource || fileSource->frames().empty()) return;
 
 		QUrl sourceUrl;
-		if(fileSource->loadedFrameIndex() >= 0)
-			sourceUrl = fileSource->frames()[fileSource->loadedFrameIndex()].sourceFile;
+		if(fileSource->storedFrameIndex() >= 0)
+			sourceUrl = fileSource->frames()[fileSource->storedFrameIndex()].sourceFile;
 		else
 			sourceUrl = fileSource->frames().front().sourceFile;
 
