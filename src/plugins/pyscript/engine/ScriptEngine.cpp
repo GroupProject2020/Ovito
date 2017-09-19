@@ -29,7 +29,7 @@
 namespace PyScript {
 
 /// Points to the script engine that is currently active (i.e. which is executing a script).
-ScriptEngine* ScriptEngine::_activeEngine = nullptr;
+std::shared_ptr<ScriptEngine> ScriptEngine::_activeEngine;
 
 /// Head of linked list containing all initXXX functions. 
 PythonPluginRegistration* PythonPluginRegistration::linkedlist = nullptr;
@@ -75,8 +75,8 @@ TaskManager& ScriptEngine::activeTaskManager()
 /******************************************************************************
 * Initializes the scripting engine and sets up the environment.
 ******************************************************************************/
-ScriptEngine::ScriptEngine(DataSet* dataset, TaskManager& taskManager, bool privateContext, QObject* parent)
-	: QObject(parent), _dataset(dataset), _taskManager(&taskManager)
+ScriptEngine::ScriptEngine(DataSet* dataset, TaskManager& taskManager, bool privateContext)
+	: _dataset(dataset), _taskManager(&taskManager)
 {
 	try {
 		// Initialize our embedded Python interpreter if it isn't running already.
@@ -117,10 +117,8 @@ ScriptEngine::ScriptEngine(DataSet* dataset, TaskManager& taskManager, bool priv
 ******************************************************************************/
 ScriptEngine::~ScriptEngine()
 {
-	if(_activeEngine == this) {
-		qWarning() << "Deleting active script engine.";
-		_activeEngine = nullptr;
-	}
+	OVITO_ASSERT(_activeEngine.get() != this);
+
 	try {
 		// Explicitly release all objects created by Python scripts.
 		if(_mainNamespace) _mainNamespace.clear();
@@ -353,6 +351,7 @@ int ScriptEngine::handlePythonException(py::error_already_set& ex, const QString
 	}
 
 	// Prepare C++ exception object.
+	qDebug() << "Throwing exception: dataset=" << (void*)dataset();
 	Exception exception(filename.isEmpty() ? 
 		tr("The Python script has exited with an error.") :
 		tr("The Python script '%1' has exited with an error.").arg(filename), dataset());

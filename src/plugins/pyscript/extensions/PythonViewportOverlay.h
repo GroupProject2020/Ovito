@@ -94,7 +94,7 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, script, setScript);
 
 	/// The Python engine.
-	std::unique_ptr<ScriptEngine> _scriptEngine;
+	std::shared_ptr<ScriptEngine> _scriptEngine;
 
 	/// The compiled script function.
 	py::function _overlayScriptFunction;

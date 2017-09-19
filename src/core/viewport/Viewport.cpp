@@ -510,7 +510,7 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 			adjustProjectionForRenderFrame(_projParams);
 
 		// Request scene bounding box.
-		Promise<> renderPromise = Promise<>::createSynchronous(dataset()->container()->taskManager(), true, false);
+		Promise<> renderPromise = Promise<>::createSynchronous(nullptr, true, false);
 		Box3 boundingBox = renderer->computeSceneBoundingBox(time, _projParams, this, renderPromise);
 
 		// Set up final projection with the now known bounding box.

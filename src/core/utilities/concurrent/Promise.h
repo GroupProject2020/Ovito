@@ -153,11 +153,11 @@ public:
 	Promise() {}
 
 	/// Creates a promise that is used to report progress in the main thread.
-	static Promise createSynchronous(TaskManager& taskManager, bool startedState, bool registerWithManager) {
+	static Promise createSynchronous(TaskManager* taskManager, bool startedState, bool registerWithManager) {
 		Promise promise(std::make_shared<PromiseStateWithResultStorage<SynchronousPromiseState, tuple_type>>(
 			PromiseState::no_result_init_t(), 
 			startedState ? PromiseState::State(PromiseState::Started) : PromiseState::NoState, taskManager));
-		if(registerWithManager) promise.registerWithTaskManager(taskManager);
+		if(registerWithManager && taskManager) promise.registerWithTaskManager(*taskManager);
 		return promise;
 	}
 

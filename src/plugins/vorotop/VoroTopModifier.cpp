@@ -61,7 +61,7 @@ void VoroTopModifier::loadFilterDefinition(const QString& filepath)
     
     // Load filter file header (i.e. list of structure types).
     std::shared_ptr<Filter> filter = std::make_shared<Filter>();
-    Promise<> loadTask = Promise<>::createSynchronous(dataset()->container()->taskManager(), true, true);
+    Promise<> loadTask = Promise<>::createSynchronous(&dataset()->container()->taskManager(), true, true);
     if(!filter->load(stream, true, *loadTask.sharedState()))
         return;
     

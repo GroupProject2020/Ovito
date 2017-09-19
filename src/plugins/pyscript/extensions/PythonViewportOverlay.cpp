@@ -91,17 +91,20 @@ void PythonViewportOverlay::propertyChanged(const PropertyFieldDescriptor& field
 ScriptEngine* PythonViewportOverlay::getScriptEngine()
 {
 	// Initialize a private script engine if there is no active global engine.
-	ScriptEngine* engine = ScriptEngine::activeEngine();
+	const std::shared_ptr<ScriptEngine>& engine = ScriptEngine::activeEngine();
 	if(!engine) {
 		if(!_scriptEngine) {
-			_scriptEngine.reset(new ScriptEngine(dataset(), dataset()->container()->taskManager(), true));
+			_scriptEngine = std::make_shared<ScriptEngine>(dataset(), dataset()->container()->taskManager(), true);
 			connect(_scriptEngine.get(), &ScriptEngine::scriptOutput, this, &PythonViewportOverlay::onScriptOutput);
 			connect(_scriptEngine.get(), &ScriptEngine::scriptError, this, &PythonViewportOverlay::onScriptOutput);
 			_mainNamespacePrototype = _scriptEngine->mainNamespace();
 		}
-		engine = _scriptEngine.get();
+		return _scriptEngine.get();
 	}
-	return engine;
+	else {
+		if(!_scriptEngine) _scriptEngine = engine;
+		return engine.get();
+	}
 }
 
 /******************************************************************************

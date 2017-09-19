@@ -66,6 +66,9 @@ void DataSetContainer::referenceReplaced(const PropertyFieldDescriptor& field, R
 
 			// Stop animation playback for the old dataset.
 			oldDataSet->animationSettings()->stopAnimationPlayback();
+
+			if(oldDataSet->_container == this)
+				oldDataSet->_container = nullptr;
 		}
 
 		// Forward signals from the current dataset.
@@ -82,6 +85,7 @@ void DataSetContainer::referenceReplaced(const PropertyFieldDescriptor& field, R
 			_renderSettingsReplacedConnection = connect(currentSet(), &DataSet::renderSettingsReplaced, this, &DataSetContainer::renderSettingsReplaced);
 			_filePathChangedConnection = connect(currentSet(), &DataSet::filePathChanged, this, &DataSetContainer::filePathChanged);
 			_undoStackCleanChangedConnection = connect(&currentSet()->undoStack(), &UndoStack::cleanChanged, this, &DataSetContainer::modificationStatusChanged);
+			currentSet()->_container = this;
 		}
 
 		Q_EMIT dataSetChanged(currentSet());

@@ -39,7 +39,7 @@ bool POSCARExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 	if(!getParticleData(sceneNode, time, state, taskManager))
 		return false;
 
-	Promise<> exportTask = Promise<>::createSynchronous(taskManager, true, true);
+	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
 
 	// Get particle positions and velocities.
 	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);

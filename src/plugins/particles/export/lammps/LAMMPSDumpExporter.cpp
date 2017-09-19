@@ -39,7 +39,7 @@ bool LAMMPSDumpExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 	if(!getParticleData(sceneNode, time, state, taskManager))
 		return false;
 
-	Promise<> exportTask = Promise<>::createSynchronous(taskManager, true, true);
+	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
 
 	// Get particle positions.
 	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);

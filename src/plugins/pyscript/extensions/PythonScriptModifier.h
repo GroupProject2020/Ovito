@@ -82,6 +82,9 @@ protected:
 	/// Compiles the script entered by the user.
 	void compileScript(ScriptEngine& engine);
 
+	/// Prepares the script engine, which is needed for script execution.
+	ScriptEngine* getScriptEngine();
+	
 private Q_SLOTS:
 
 	/// Is called whenever the script generates some log output.
@@ -94,7 +97,7 @@ private:
 
 	/// The Python engine owned by this modifier instance.
 	/// Only used if there is no global script engine currently active.
-	std::unique_ptr<ScriptEngine> _scriptEngine;
+	std::shared_ptr<ScriptEngine> _scriptEngine;
 
 	/// The compiled Python modifier function.
 	py::function _modifyScriptFunction;

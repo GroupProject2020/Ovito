@@ -258,6 +258,11 @@ private:
 
 	/// The current scene node whose pipeline is being evaluated.
 	QPointer<ObjectNode> _currentEvaluationNode;
+
+	/// The DataSetContainer which currently hosts this DataSet.
+	QPointer<DataSetContainer> _container;
+
+	friend class DataSetContainer;
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -245,7 +245,7 @@ bool ColorCodingModifier::adjustRange()
 bool ColorCodingModifier::adjustRangeGlobal(TaskManager& taskManager)
 {
 	ViewportSuspender noVPUpdates(this);
-	Promise<> task = Promise<>::createSynchronous(taskManager, true, true);
+	Promise<> task = Promise<>::createSynchronous(&taskManager, true, true);
 
 	TimeInterval interval = dataset()->animationSettings()->animationInterval();
 	task.setProgressMaximum(interval.duration() / dataset()->animationSettings()->ticksPerFrame() + 1);

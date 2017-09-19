@@ -46,7 +46,8 @@ PropertyFieldDescriptor::PropertyFieldDescriptor(RefMakerClass* definingClass, c
 	OVITO_ASSERT(!_flags.testFlag(PROPERTY_FIELD_VECTOR));
 	OVITO_ASSERT(definingClass != nullptr);
 	// Make sure that there is no other reference field with the same identifier in the defining class.
-	OVITO_ASSERT_MSG(definingClass->findPropertyField(identifier) == nullptr, "PropertyFieldDescriptor", "Property field identifier is not unique.");
+	OVITO_ASSERT_MSG(definingClass->findPropertyField(identifier) == nullptr, "PropertyFieldDescriptor", 
+		qPrintable(QString("Property field identifier is not unique for class %2: %1").arg(identifier).arg(definingClass->name())));
 	// Insert into linked list of reference fields stored in the defining class' descriptor.
 	this->_next = definingClass->_firstPropertyField;
 	definingClass->_firstPropertyField = this;
@@ -62,7 +63,8 @@ PropertyFieldDescriptor::PropertyFieldDescriptor(RefMakerClass* definingClass, O
 	OVITO_ASSERT(definingClass != nullptr);
 	OVITO_ASSERT(targetClass != nullptr);
 	// Make sure that there is no other reference field with the same identifier in the defining class.
-	OVITO_ASSERT_MSG(definingClass->findPropertyField(identifier) == nullptr, "PropertyFieldDescriptor", "Property field identifier is not unique.");
+	OVITO_ASSERT_MSG(definingClass->findPropertyField(identifier) == nullptr, "PropertyFieldDescriptor", 
+		qPrintable(QString("Property field identifier is not unique for class %2: %1").arg(identifier).arg(definingClass->name())));
 	// Insert into linked list of reference fields stored in the defining class' descriptor.
 	this->_next = definingClass->_firstPropertyField;
 	definingClass->_firstPropertyField = this;
@@ -77,8 +79,8 @@ PropertyFieldDescriptor::PropertyFieldDescriptor(RefMakerClass* definingClass, O
 	OVITO_ASSERT(_flags.testFlag(PROPERTY_FIELD_VECTOR));
 	OVITO_ASSERT(definingClass != nullptr);
 	OVITO_ASSERT(targetClass != nullptr);
-	// Make sure that there is no other reference field with the same identifier in the defining class.
-	OVITO_ASSERT_MSG(definingClass->findPropertyField(identifier) == nullptr, "PropertyFieldDescriptor", "Property field identifier is not unique.");
+	OVITO_ASSERT_MSG(definingClass->findPropertyField(identifier) == nullptr, "PropertyFieldDescriptor", 
+		qPrintable(QString("Property field identifier is not unique for class %2: %1").arg(identifier).arg(definingClass->name())));
 	// Insert into linked list of reference fields stored in the defining class' descriptor.
 	this->_next = definingClass->_firstPropertyField;
 	definingClass->_firstPropertyField = this;

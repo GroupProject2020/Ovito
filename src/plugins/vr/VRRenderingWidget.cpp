@@ -266,7 +266,7 @@ void VRRenderingWidget::paintGL()
             if(!_eyeBuffer->bind())
                 dataset()->throwException(tr("Failed to bind OpenGL framebuffer object for offscreen rendering."));
 
-            Promise<> renderPromise = Promise<>::createSynchronous(dataset()->container()->taskManager(), true, false);
+            Promise<> renderPromise = Promise<>::createSynchronous(nullptr, true, false);
                 
             // Set up a preliminary projection without a known bounding box.
             ViewProjectionParameters projParams = projectionParameters(eye, aspectRatio, bodyToWorldTM);

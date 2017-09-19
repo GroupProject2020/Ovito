@@ -39,7 +39,7 @@ bool FHIAimsExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePo
 	if(!getParticleData(sceneNode, time, state, taskManager))
 		return false;
 
-	Promise<> exportTask = Promise<>::createSynchronous(taskManager, true, true);
+	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
 
 	// Get particle positions and types.
 	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);

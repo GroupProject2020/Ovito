@@ -85,7 +85,7 @@ bool VTKTriangleMeshExporter::exportFrame(int frameNumber, TimePoint time, const
 	if(outputData().empty())
 		throwException(tr("The selection set to be exported is empty."));
  
-	Promise<> exportTask = Promise<>::createSynchronous(taskManager, true, true);
+	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
 
 	ObjectNode* objectNode = dynamic_object_cast<ObjectNode>(outputData().front());
 	if(!objectNode)

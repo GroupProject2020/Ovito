@@ -30,7 +30,7 @@ bool SynchronousPromiseState::setProgressValue(int value)
 {
 	// Yield control to the event loop to process user interface events.
 	// This is necessary so that the user can interrupt the running opertion.
-	_taskManager.processEvents();
+	if(_taskManager) _taskManager->processEvents();
 
     return PromiseStateWithProgress::setProgressValue(value);
 }
@@ -39,7 +39,7 @@ bool SynchronousPromiseState::incrementProgressValue(int increment)
 {
 	// Yield control to the event loop to process user interface events.
 	// This is necessary so that the user can interrupt the running opertion.
-	_taskManager.processEvents();
+	if(_taskManager) _taskManager->processEvents();
 
 	return PromiseStateWithProgress::incrementProgressValue(increment);
 }
@@ -50,7 +50,7 @@ void SynchronousPromiseState::setProgressText(const QString& progressText)
 
 	// Yield control to the event loop to process user interface events.
 	// This is necessary so that the user can interrupt the running opertion.
-	_taskManager.processEvents();
+	if(_taskManager) _taskManager->processEvents();
 }
 
 OVITO_END_INLINE_NAMESPACE

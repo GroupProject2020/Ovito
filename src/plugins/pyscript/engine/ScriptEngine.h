@@ -33,7 +33,7 @@ namespace py = pybind11;
 /**
  * \brief A scripting engine that provides bindings to OVITO's C++ classes.
  */
-class OVITO_PYSCRIPT_EXPORT ScriptEngine : public QObject
+class OVITO_PYSCRIPT_EXPORT ScriptEngine : public QObject, public std::enable_shared_from_this<ScriptEngine>
 {
 public:
 
@@ -41,8 +41,7 @@ public:
 	/// \param dataset The engine will execute scripts in the context of this dataset.
 	/// \param taskManager The engine will execute scripts in the context of this task manager.
 	/// \param privateContext If true, then changes made by the script will not be visible on the global scope.
-	/// \param parent The owner of this engine object.
-	ScriptEngine(DataSet* dataset, TaskManager& taskManager, bool privateContext, QObject* parent = nullptr);
+	ScriptEngine(DataSet* dataset, TaskManager& taskManager, bool privateContext);
 
 	/// \brief Destructor
 	virtual ~ScriptEngine();
@@ -55,7 +54,7 @@ public:
 
 	/// \brief Returns the script engine that is currently active (i.e. which is executing a script).
 	/// \return The active script engine or NULL if no script is currently being executed.
-	static ScriptEngine* activeEngine() { return _activeEngine; }
+	static const std::shared_ptr<ScriptEngine>& activeEngine() { return _activeEngine; }
 
 	/// \brief Returns the task manager providing the context for the currently running script.
 	static TaskManager& activeTaskManager();
@@ -140,14 +139,14 @@ private:
 	/// This helper class is used to make a script engine the active one as long as a script execution
 	/// is in progress. Uses RAII pattern to ensure that the old state is restored when the helper object goes out of scope.
 	struct ActiveScriptEngineSetter {
-		ActiveScriptEngineSetter(ScriptEngine* engine) : _previousEngine(ScriptEngine::_activeEngine) {
-			ScriptEngine::_activeEngine = engine;
+		ActiveScriptEngineSetter(ScriptEngine* engine) : _previousEngine(std::move(ScriptEngine::_activeEngine)) {
+			ScriptEngine::_activeEngine = engine->shared_from_this();
 		}
 		~ActiveScriptEngineSetter() {
-			ScriptEngine::_activeEngine = _previousEngine;
+			ScriptEngine::_activeEngine = std::move(_previousEngine);
 		}
 	private:
-		QPointer<ScriptEngine> _previousEngine;
+		std::shared_ptr<ScriptEngine> _previousEngine;
 	};
 
 	/// The dataset that provides the context for the script execution.
@@ -160,7 +159,7 @@ private:
 	py::dict _mainNamespace;
 
 	/// The script engine that is currently active (i.e. which is executing a script).
-	static ScriptEngine* _activeEngine;
+	static std::shared_ptr<ScriptEngine> _activeEngine;
 
 	Q_OBJECT
 };

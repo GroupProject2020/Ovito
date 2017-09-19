@@ -108,7 +108,7 @@ bool POVRayExporter::exportFrame(int frameNumber, TimePoint time, const QString&
 	Viewport* vp = dataset()->viewportConfig()->activeViewport();
 	if(!vp) throwException(tr("POV-Ray exporter requires an active viewport."));
 
-	Promise<> exportTask = Promise<>::createSynchronous(taskManager, true, true);
+	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
 	exportTask.setProgressText(tr("Writing data to POV-Ray file"));
 
 	OVITO_ASSERT(_renderer);

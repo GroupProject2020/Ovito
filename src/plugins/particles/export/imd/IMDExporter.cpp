@@ -40,7 +40,7 @@ bool IMDExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 	if(!getParticleData(sceneNode, time, state, taskManager))
 		return false;
 
-	Promise<> exportTask = Promise<>::createSynchronous(taskManager, true, true);
+	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
 
 	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
 	ParticleProperty* typeProperty = nullptr;

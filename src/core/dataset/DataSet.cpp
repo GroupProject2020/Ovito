@@ -202,13 +202,8 @@ void DataSet::referenceReplaced(const PropertyFieldDescriptor& field, RefTarget*
 ******************************************************************************/
 DataSetContainer* DataSet::container() const
 {
-	for(RefMaker* refmaker : dependents()) {
-		if(DataSetContainer* c = dynamic_object_cast<DataSetContainer>(refmaker)) {
-			return c;
-		}
-	}
-	OVITO_ASSERT_MSG(false, "DataSet::container()", "DataSet is not in a DataSetContainer.");
-	return nullptr;
+	OVITO_ASSERT_MSG(!_container.isNull(), "DataSet::container()", "DataSet is not in a DataSetContainer.");
+	return _container.data();
 }
 
 /******************************************************************************
@@ -254,7 +249,7 @@ SharedFuture<> DataSet::whenSceneReady()
 	}
 	
 	if(!_sceneReadyFuture.isValid()) {
-		_sceneReadyPromise = Promise<>::createSynchronous(container()->taskManager(), true, false);
+		_sceneReadyPromise = Promise<>::createSynchronous(nullptr, true, false);
 //		qDebug() << "DataSet::whenSceneReady: creating scene ready future:" << _sceneReadyPromise.sharedState().get();
 		_sceneReadyFuture = _sceneReadyPromise.future();
 		_sceneReadyTime = animationSettings()->time();
@@ -410,7 +405,7 @@ bool DataSet::renderScene(RenderSettings* settings, Viewport* viewport, FrameBuf
 	SceneRenderer* renderer = settings->renderer();
 	if(!renderer) throwException(tr("No rendering engine has been selected."));
 
-	Promise<> renderTask = Promise<>::createSynchronous(taskManager, true, true);
+	Promise<> renderTask = Promise<>::createSynchronous(&taskManager, true, true);
 	renderTask.setProgressText(tr("Initializing renderer"));
 	try {
 
@@ -530,7 +525,7 @@ bool DataSet::renderFrame(TimePoint renderTime, int frameNumber, RenderSettings*
 		}
 	}
 
-	Promise<> renderTask = Promise<>::createSynchronous(taskManager, true, true);
+	Promise<> renderTask = Promise<>::createSynchronous(&taskManager, true, true);
 
 	// Setup preliminary projection.
 	ViewProjectionParameters projParams = viewport->computeProjectionParameters(renderTime, settings->outputImageAspectRatio());

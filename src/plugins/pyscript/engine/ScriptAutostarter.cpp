@@ -73,22 +73,22 @@ void ScriptAutostarter::applicationStarted()
 		UndoSuspender noUndo(dataset);
 
 		// Set up script engine.
-		ScriptEngine engine(dataset, Application::instance()->datasetContainer()->taskManager(), false);
+		auto engine = std::make_shared<ScriptEngine>(dataset, Application::instance()->datasetContainer()->taskManager(), false);
 
 		// Pass command line parameters to the script.
 		QStringList scriptArguments = StandaloneApplication::instance()->cmdLineParser().values("scriptarg");
 
 		// Forward script output to the console in GUI mode. That's not needed in console mode.
 		if(Application::instance()->guiMode()) {
-			connect(&engine, &ScriptEngine::scriptOutput, [](const QString& s) { std::cout << qPrintable(s); });
-			connect(&engine, &ScriptEngine::scriptError, [](const QString& s) { std::cerr << qPrintable(s); });
+			connect(engine.get(), &ScriptEngine::scriptOutput, [](const QString& s) { std::cout << qPrintable(s); });
+			connect(engine.get(), &ScriptEngine::scriptError, [](const QString& s) { std::cerr << qPrintable(s); });
 		}
 
 		// Execute script commands.
 		for(int index = scriptCommands.size() - 1; index >= 0; index--) {
 			const QString& command = scriptCommands[index];
 			try {
-				engine.executeCommands(command, scriptArguments);
+				engine->executeCommands(command, scriptArguments);
 			}
 			catch(Exception& ex) {
 				ex.prependGeneralMessage(tr("Error during Python script execution."));
@@ -98,7 +98,7 @@ void ScriptAutostarter::applicationStarted()
 
 		// Execute script files.
 		for(int index = scriptFiles.size() - 1; index >= 0; index--) {
-			engine.executeFile(scriptFiles[index], scriptArguments);
+			engine->executeFile(scriptFiles[index], scriptArguments);
 		}
 	}
 }

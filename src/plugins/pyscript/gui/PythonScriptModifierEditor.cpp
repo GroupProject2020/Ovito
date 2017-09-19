@@ -112,7 +112,16 @@ void PythonScriptModifierEditor::onOpenEditor()
 
 		/// Obtains the current script from the owner object.
 		virtual const QString& getObjectScript(RefTarget* obj) const override {
-			return static_object_cast<PythonScriptModifier>(obj)->script();
+			PythonScriptModifier* modifier = static_object_cast<PythonScriptModifier>(obj);
+			if(!modifier->script().isEmpty() || !modifier->scriptFunction()) {
+				return modifier->script();
+			}
+			else {
+				// If the user is executing an external Python script, we have no source code of the 
+				// user-defined modifier function.
+				static const QString message = tr("# Modifier function was defined in an external Python file. Source code is not available here.\n");
+				return message;
+			}
 		}
 
 		/// Obtains the script output cached by the owner object.

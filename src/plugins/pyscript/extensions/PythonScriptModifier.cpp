@@ -125,6 +125,28 @@ void PythonScriptModifier::compileScript(ScriptEngine& engine)
 }
 
 /******************************************************************************
+* Prepares the script engine, which is needed for script execution.
+******************************************************************************/
+ScriptEngine* PythonScriptModifier::getScriptEngine()
+{
+	// Initialize a private script engine if there is no active global engine.
+	const std::shared_ptr<ScriptEngine>& engine = ScriptEngine::activeEngine();
+	if(!engine) {
+		if(!_scriptEngine) {
+			_scriptEngine = std::make_shared<ScriptEngine>(dataset(), dataset()->container()->taskManager(), true);
+			connect(_scriptEngine.get(), &ScriptEngine::scriptOutput, this, &PythonScriptModifier::onScriptOutput);
+			connect(_scriptEngine.get(), &ScriptEngine::scriptError, this, &PythonScriptModifier::onScriptOutput);
+			_mainNamespacePrototype = _scriptEngine->mainNamespace();
+		}
+		return _scriptEngine.get();
+	}
+	else {
+		if(!_scriptEngine) _scriptEngine = engine;
+		return engine.get();
+	}
+}
+
+/******************************************************************************
 * This modifies the input data.
 ******************************************************************************/
 Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
@@ -136,16 +158,7 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 		throwException(tr("Python script modifier is not reentrant. It cannot be evaluated while another evaluation is already in progress."));
 
 	// Initialize the script engine if there is no active global engine.
-	ScriptEngine* engine = ScriptEngine::activeEngine();
-	if(!engine) {
-		if(!_scriptEngine) {
-			_scriptEngine.reset(new ScriptEngine(dataset(), dataset()->container()->taskManager(), true));
-			connect(_scriptEngine.get(), &ScriptEngine::scriptOutput, this, &PythonScriptModifier::onScriptOutput);
-			connect(_scriptEngine.get(), &ScriptEngine::scriptError, this, &PythonScriptModifier::onScriptOutput);
-			_mainNamespacePrototype = _scriptEngine->mainNamespace();
-		}
-		engine = _scriptEngine.get();
-	}
+	ScriptEngine* engine = getScriptEngine();
 
 	// We now enter the modifier evaluation phase.
 	_activeModApp = dynamic_object_cast<PythonScriptModifierApplication>(modApp);
@@ -202,7 +215,6 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 					py::iterator generator;
 					py::object output_py;
 					Promise<PipelineFlowState> promise;
-					ScriptEngine* engine;
 					
 					// This is to submit this structure as a work item to the executor:
 					void reschedule_execution() {
@@ -224,13 +236,11 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 						UndoSuspender noUndo(modifier);
 
 						// Get the script engine to use.
-						ScriptEngine* activeEngine = ScriptEngine::activeEngine();
-						if(!activeEngine) activeEngine = engine;
-						OVITO_ASSERT(activeEngine != nullptr);
+						ScriptEngine* engine = modifier->getScriptEngine();
 						
 						try {
 							try {
-								activeEngine->execute([this]() {
+								engine->execute([this]() {
 									QTime time;
 									time.start();
 									do {
@@ -288,14 +298,14 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 					}
 				} func_continuation{ modApp->executor() };
 
-				func_continuation.engine = engine;
 				func_continuation.output_py = std::move(output_py);
 				func_continuation.generator = py::reinterpret_borrow<py::iterator>(functionResult);
 				OVITO_ASSERT(func_continuation.generator);
 				
 				// Python has returned a generator. We have to return a Future on the 
 				// the final pipeline state that is till to be computed.
-				func_continuation.promise = Promise<PipelineFlowState>::createSynchronous(dataset()->container()->taskManager(), true, true);\
+				func_continuation.promise = Promise<PipelineFlowState>::createSynchronous(nullptr, true, false);\
+				dataset()->container()->taskManager().registerTask(func_continuation.promise.sharedState());
 				Future<PipelineFlowState> future = func_continuation.promise.future();
 				func_continuation.promise.setProgressText(tr("Executing user-defined modifier function"));				
 

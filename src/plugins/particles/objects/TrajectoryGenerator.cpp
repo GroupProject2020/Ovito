@@ -70,7 +70,7 @@ TrajectoryGenerator::TrajectoryGenerator(DataSet* dataset) : StaticSource(datase
 ******************************************************************************/
 TrajectoryObject* TrajectoryGenerator::generateTrajectories(TaskManager& taskManager)
 {
-	Promise<> trajectoryTask = Promise<>::createSynchronous(taskManager, true, true);
+	Promise<> trajectoryTask = Promise<>::createSynchronous(&taskManager, true, true);
 	TimePoint currentTime = dataset()->animationSettings()->time();
 
 	// Get input particles.

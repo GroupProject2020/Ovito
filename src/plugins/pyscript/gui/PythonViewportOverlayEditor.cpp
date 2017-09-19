@@ -86,9 +86,19 @@ void PythonViewportOverlayEditor::onOpenEditor()
 	public:
 		OverlayScriptEditor(QWidget* parentWidget, RefTarget* scriptableObject) : ObjectScriptEditor(parentWidget, scriptableObject) {}
 	protected:
+
 		/// Obtains the current script from the owner object.
 		virtual const QString& getObjectScript(RefTarget* obj) const override {
-			return static_object_cast<PythonViewportOverlay>(obj)->script();
+			PythonViewportOverlay* overlay = static_object_cast<PythonViewportOverlay>(obj);
+			if(!overlay->script().isEmpty() || !overlay->scriptFunction()) {
+				return overlay->script();
+			}
+			else {
+				// If the user is executing an external Python script, we have no source code of the 
+				// user-defined function.
+				static const QString message = tr("# Overlay function was defined in an external Python file. Source code is not available here.\n");
+				return message;
+			}
 		}
 
 		/// Obtains the script output cached by the owner object.

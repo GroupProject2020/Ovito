@@ -133,7 +133,7 @@ bool FileExporter::exportNodes(TaskManager& taskManager)
 			throwException(tr("Cannot write animation frames to separate files. The filename must contain the '*' wildcard character, which gets replaced by the frame number."));
 	}
 
-	Promise<> exportTask = Promise<>::createSynchronous(taskManager, true, true);
+	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
 	exportTask.setProgressText(tr("Opening output file"));
 
 	QDir dir = QFileInfo(outputFilename()).dir();
