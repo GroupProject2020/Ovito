@@ -33,6 +33,7 @@
 #include <core/utilities/io/FileManager.h>
 #include <core/app/Application.h>
 #include <core/viewport/ViewportConfiguration.h>
+#include <core/app/PluginManager.h>
 #include "FileSourceEditor.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -177,14 +178,10 @@ void FileSourceEditor::onPickLocalInputFile()
 		// Put code in a block: Need to release dialog before loading new input file.
 		{
 			// Offer only file importer types that are compatible with a FileSource.
-			QVector<OvitoClassPtr> availableTypes;
-			for(OvitoClassPtr type : FileImporter::availableImporters()) {
-				if(type->isDerivedFrom(FileSourceImporter::OOClass()))
-					availableTypes.push_back(type);
-			}
+			auto importerClasses = PluginManager::instance().metaclassMembers<FileImporter>(FileSourceImporter::OOClass());
 
 			// Let the user select a file.
-			ImportFileDialog dialog(availableTypes, dataset(), container()->window(), tr("Pick input file"));
+			ImportFileDialog dialog(importerClasses, dataset(), container()->window(), tr("Pick input file"));
 			if(obj->sourceUrl().isLocalFile())
 				dialog.selectFile(obj->sourceUrl().toLocalFile());
 			if(dialog.exec() != QDialog::Accepted)
@@ -217,14 +214,10 @@ void FileSourceEditor::onPickRemoteInputFile()
 		// Put code in a block: Need to release dialog before loading new input file.
 		{
 			// Offer only file importer types that are compatible with a FileSource.
-			QVector<OvitoClassPtr> availableTypes;
-			for(OvitoClassPtr type : FileImporter::availableImporters()) {
-				if(type->isDerivedFrom(FileSourceImporter::OOClass()))
-					availableTypes.push_back(type);
-			}
+			auto importerClasses = PluginManager::instance().metaclassMembers<FileImporter>(FileSourceImporter::OOClass());
 
 			// Let the user select a new URL.
-			ImportRemoteFileDialog dialog(availableTypes, dataset(), container()->window(), tr("Pick source"));
+			ImportRemoteFileDialog dialog(importerClasses, dataset(), container()->window(), tr("Pick source"));
 			QUrl oldUrl = obj->sourceUrl();
 			if(obj->storedFrameIndex() >= 0 && obj->storedFrameIndex() < obj->frames().size())
 				oldUrl = obj->frames()[obj->storedFrameIndex()].sourceFile;

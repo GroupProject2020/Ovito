@@ -31,7 +31,7 @@ IMPLEMENT_OVITO_CLASS(VTKFileImporter);
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool VTKFileImporter::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation)
+bool VTKFileImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
 {
 	// Open input file.
 	CompressedTextReader stream(input, sourceLocation.path());

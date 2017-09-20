@@ -60,7 +60,7 @@ static const char* chemical_symbols[] = {
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool CastepCellImporter::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation)
+bool CastepCellImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
 {
 	// Open input file.
 	CompressedTextReader stream(input, sourceLocation.path());

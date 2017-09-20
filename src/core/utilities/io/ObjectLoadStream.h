@@ -42,30 +42,6 @@ class OVITO_CORE_EXPORT ObjectLoadStream : public LoadStream
 
 public:
 
-	/// Data structure loaded from the file, which describes a serialized property
-	/// or reference field of a RefMaker derived class.
-	struct SerializedPropertyField {
-
-		/// The identifier of the property field.
-		QByteArray identifier;
-
-		/// The RefMaker-derived class that owns the property field.
-		const RefMakerClass* definingClass;
-
-		/// The stored flags of the property field (see PropertyFieldFlag).
-		int flags;
-
-		/// Indicates whether this is a reference field or a property field.
-		bool isReferenceField;
-
-		/// If this is a reference field, this is its RefTarget-derived class.
-		OvitoClassPtr targetClass;
-
-		/// The property field of the defining class that matches the
-		/// stored field. Can be NULL if the property field no longer exists.
-		const PropertyFieldDescriptor* field;
-	};
-
 	/// \brief Initializes the ObjectLoadStream.
 	/// \param source The Qt data stream from which the data is read. This stream must support random access.
 	/// \throw Exception if the source stream does not support random access, or if an I/O error occurs.
@@ -95,48 +71,45 @@ public:
 	/// Sets the dataset to which objects loaded from the stream should be added to.
 	void setDataset(DataSet* dataset) { _dataset = dataset; }
 
+	/// Returns the class info for an object currently being deserialized from the stream.
+	/// This method may only be called from within an OvitoObject::loadFromStream() method.
+	const OvitoClass::SerializedClassInfo* getSerializedClassInfo() const {
+		OVITO_ASSERT_MSG(_currentObject, "ObjectLoadStream::getSerializedClassInfo()", "No current object. Function may only called from within loadFromStream().");
+		return _currentObject->classInfo;
+	}
+
 private:
 
 	/// Loads an object with runtime type information from the stream.
 	OORef<OvitoObject> loadObjectInternal();
 
-	/// Data structure describing a class of objects stored in the file.
-	struct ClassEntry {
-
-		/// The corresponding runtime class.
-		OvitoClassPtr descriptor;
-
-		/// The list of reference and property fields stored for each instance of the class
-		/// in the file.
-		QVector<SerializedPropertyField> propertyFields;
-	};
-	
-	/// Data structure describing an object instance loaded from the file.
+	/// Data structure describing a single object instance loaded from the file.
 	struct ObjectEntry {
-		/// The runtime instance.
+		
+		/// The object instance created from the serialized data.
 		OORef<OvitoObject> object;
-		/// The class information.
-		ClassEntry* pluginClass;
+
+		/// The serialized class information.
+		const OvitoClass::SerializedClassInfo* classInfo;
+
 		/// The position at which the object data is stored in the file.
 		qint64 fileOffset;
 	};
 
 	/// The list of classes stored in the file.
-	QVector<ClassEntry> _classes;
+	std::vector<std::unique_ptr<OvitoClass::SerializedClassInfo>> _classes;
 	
 	/// List all the object instances stored in the file.
-	QVector<ObjectEntry> _objects;
+	std::vector<ObjectEntry> _objects;
 
 	/// Objects that need to be loaded.
-	QVector<quint32> _objectsToLoad;
+	std::vector<quint32> _objectsToLoad;
 	
 	/// The object currently being loaded from the stream.
-	ObjectEntry* _currentObject;
+	ObjectEntry* _currentObject = nullptr;
 	
 	/// The current dataset being loaded.
-	DataSet* _dataset;
-
-	friend class Ovito::RefMaker;
+	DataSet* _dataset = nullptr;
 };
 
 OVITO_END_INLINE_NAMESPACE

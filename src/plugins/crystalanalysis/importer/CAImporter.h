@@ -39,22 +39,30 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
  */
 class OVITO_CRYSTALANALYSIS_EXPORT CAImporter : public ParticleImporter
 {
+	/// Defines a metaclass specialization for this importer type.
+	class OOMetaClass : public ParticleImporter::OOMetaClass
+	{
+	public:
+		/// Inherit standard constructor from base meta class.
+		using ParticleImporter::OOMetaClass ::OOMetaClass;
+
+		/// Returns the file filter that specifies the files that can be imported by this service.
+		virtual QString fileFilter() const override { return QStringLiteral("*"); }
+	
+		/// Returns the filter description that is displayed in the drop-down box of the file dialog.
+		virtual QString fileFilterDescription() const override { return tr("Crystal Analysis files"); }
+	
+		/// Checks if the given file has format that can be read by this importer.
+		virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const override;	
+	};
+	
+	OVITO_CLASS_META(CAImporter, OOMetaClass)
 	Q_OBJECT
-	OVITO_CLASS(CAImporter)
 
 public:
 
 	/// \brief Constructs a new instance of this class.
 	Q_INVOKABLE CAImporter(DataSet* dataset) : ParticleImporter(dataset) {}
-
-	/// \brief Returns the file filter that specifies the files that can be imported by this service.
-	virtual QString fileFilter() override { return QString("*"); }
-
-	/// \brief Returns the filter description that is displayed in the drop-down box of the file dialog.
-	virtual QString fileFilterDescription() override { return tr("Crystal Analysis files"); }
-
-	/// \brief Checks if the given file has format that can be read by this importer.
-	virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) override;
 
 	/// Returns the title of this object.
 	virtual QString objectTitle() override { return tr("CA File"); }

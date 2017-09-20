@@ -217,7 +217,7 @@ protected:
 	/// compatibility, the object can parse the value of the old property field from the file and store it in the new field.
 	///
 	/// The default implementation returns \c false.
-	virtual bool loadPropertyFieldFromStream(ObjectLoadStream& stream, const ObjectLoadStream::SerializedPropertyField& serializedField) { return false; }
+	virtual bool loadPropertyFieldFromStream(ObjectLoadStream& stream, const RefMakerClass::SerializedClassInfo::PropertyFieldInfo& serializedField) { return false; }
 
 public:
 

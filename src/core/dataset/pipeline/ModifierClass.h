@@ -35,7 +35,7 @@ class OVITO_CORE_EXPORT ModifierClass : public RefTarget::OOMetaClass
 public:
 
 	/// Inherit standard constructor from base meta class.
-	using DataObject::OOMetaClass::OOMetaClass;
+	using RefTarget::OOMetaClass::OOMetaClass;
 
 	/// \brief Asks the modifier metaclass whether the modifier class can be applied to the given input data.
 	/// \param input The pipeline state at the point of the pipeline where the modifier is going to be inserted.

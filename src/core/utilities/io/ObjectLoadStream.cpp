@@ -20,7 +20,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <core/Core.h>
-#include <core/oo/PropertyFieldDescriptor.h>
 #include <core/oo/OvitoObject.h>
 #include <core/oo/OORef.h>
 #include <core/app/PluginManager.h>
@@ -32,86 +31,55 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPAC
 /******************************************************************************
 * Opens the stream for reading.
 ******************************************************************************/
-ObjectLoadStream::ObjectLoadStream(QDataStream& source) : LoadStream(source), _currentObject(nullptr), _dataset(nullptr)
+ObjectLoadStream::ObjectLoadStream(QDataStream& source) : LoadStream(source)
 {
 	qint64 oldPos = filePosition();
 
 	// Jump to index at the end of the file.
 	setFilePosition(source.device()->size() - 2 * (qint64)(sizeof(qint64) + sizeof(quint32)));
 
-	// Read index.
-	qint64 beginOfRTTI, beginOfObjTable;
-	quint32 classCount, objCount;
-	*this >> beginOfRTTI;
+	// Read index of tables.
+	qint64 classTableStart, objectTableStart;
+	quint32 classCount, objectCount;
+	*this >> classTableStart;
 	*this >> classCount;
-	*this >> beginOfObjTable;
-	*this >> objCount;
-	_classes.resize(classCount);
-	_objects.resize(objCount);
+	*this >> objectTableStart;
+	*this >> objectCount;
 
-	// Jump to beginning of the class table, which is stored at the end of the file.
-	setFilePosition(beginOfRTTI);
+	// Jump to beginning of the class table.
+	setFilePosition(classTableStart);
 	expectChunk(0x200);
-	for(ClassEntry& classEntry : _classes) {
-		// Load the runtime type information from the stream.
+	_classes.resize(classCount);
+	for(auto& classInfo : _classes) {
+
+		// Read the runtime type from the stream.
 		expectChunk(0x201);
-		classEntry.descriptor = OvitoClass::deserializeRTTI(*this);
+		OvitoClassPtr clazz = OvitoClass::deserializeRTTI(*this);
 		closeChunk();
 
-		// Load the plugin containing the class now.
-		classEntry.descriptor->plugin()->loadPlugin();
+		// Load the plugin containing the class.
+		clazz->plugin()->loadPlugin();
 
-		// Read the stored property fields for this class from the stream.
+		// Create the class info structure.
+		classInfo = clazz->createClassInfoStructure();
+		classInfo->clazz = clazz;
+
+		// Let the metaclass read its specific information from the stream.
 		expectChunk(0x202);
-		for(;;) {
-			quint32 chunkId = openChunk();
-			if(chunkId == 0x00000000) {
-				closeChunk();
-				break;	// end of list
-			}
-			if(chunkId != 0x00000001)
-				throw Exception(tr("File format is invalid. Failed to load property fields of class %1.").arg(classEntry.descriptor->name()));
-
-			SerializedPropertyField propFieldEntry;
-			*this >> propFieldEntry.identifier;
-			OvitoClassPtr definingClass = OvitoClass::deserializeRTTI(*this);
-			OVITO_ASSERT(definingClass->isDerivedFrom(RefMaker::OOClass()));
-			propFieldEntry.definingClass = static_cast<const RefMakerClass*>(definingClass);
-			if(classEntry.descriptor->isDerivedFrom(*propFieldEntry.definingClass) == false) {
-				qDebug() << "WARNING:" << classEntry.descriptor->name() << "is not derived from" << propFieldEntry.definingClass->name();
-				throw Exception(tr("The class hierarchy stored in the file differs from the class hierarchy of the program."));
-			}
-			*this >> propFieldEntry.flags;
-			*this >> propFieldEntry.isReferenceField;
-			if(propFieldEntry.isReferenceField)
-				propFieldEntry.targetClass = OvitoClass::deserializeRTTI(*this);
-			else
-				propFieldEntry.targetClass = nullptr;
-			closeChunk();
-
-			propFieldEntry.field = propFieldEntry.definingClass->findPropertyField(propFieldEntry.identifier.constData(), true);
-
-			if(propFieldEntry.field) {
-				if(propFieldEntry.field->isReferenceField() != propFieldEntry.isReferenceField ||
-						propFieldEntry.field->isVector() != ((propFieldEntry.flags & PROPERTY_FIELD_VECTOR) != 0) ||
-						(propFieldEntry.isReferenceField && propFieldEntry.targetClass->isDerivedFrom(*propFieldEntry.field->targetClass()) == false))
-					throw Exception(tr("File format error: The type of the property field '%1' in class %2 has changed.").arg(propFieldEntry.identifier, propFieldEntry.definingClass->name()));
-			}
-
-			classEntry.propertyFields.push_back(propFieldEntry);
-		}
+		clazz->loadClassInfo(*this, classInfo.get());
 		closeChunk();
 	}
 	closeChunk();
 
 	// Jump to start of object table.
-	setFilePosition(beginOfObjTable);
+	setFilePosition(objectTableStart);
 	expectChunk(0x300);
+	_objects.resize(objectCount);
 	for(ObjectEntry& entry : _objects) {
 		entry.object = nullptr;
 		quint32 id;
 		*this >> id;
-		entry.pluginClass = &_classes[id];
+		entry.classInfo = _classes[id].get();
 		*this >> entry.fileOffset;
 	}
 	closeChunk();
@@ -134,20 +102,20 @@ OORef<OvitoObject> ObjectLoadStream::loadObjectInternal()
 		ObjectEntry& entry = _objects[id - 1];
 		if(entry.object != nullptr) return entry.object;
 		else {
-			if(entry.pluginClass->descriptor != &DataSet::OOClass() && entry.pluginClass->descriptor->isDerivedFrom(RefTarget::OOClass())) {
-				OVITO_ASSERT(_dataset != nullptr);
-			}
+			// When loading a RefTarget-derived class from the stream, we must already have a current DataSet as context.
+			OVITO_ASSERT(_dataset != nullptr || entry.classInfo->clazz == &DataSet::OOClass() || !entry.classInfo->clazz->isDerivedFrom(RefTarget::OOClass()));
 
 			// Create an instance of the object class.
-			entry.object = entry.pluginClass->descriptor->createInstance(_dataset);
-			if(entry.pluginClass->descriptor == &DataSet::OOClass()) {
+			entry.object = entry.classInfo->clazz->createInstance(_dataset);
+			
+			// When deserializing a DataSet, use it as the context for all subsequently deserialized objects.
+			if(entry.classInfo->clazz == &DataSet::OOClass()) {
 				OVITO_ASSERT(_dataset == nullptr);
 				setDataset(static_object_cast<DataSet>(entry.object.get()));
 			}
 			else {
-				OVITO_ASSERT(!entry.pluginClass->descriptor->isDerivedFrom(RefTarget::OOClass()) || _dataset != nullptr);
+				OVITO_ASSERT(!entry.classInfo->clazz->isDerivedFrom(RefTarget::OOClass()) || _dataset != nullptr);
 			}
-			OVITO_ASSERT(!entry.pluginClass->descriptor->isDerivedFrom(RefTarget::OOClass()) || _dataset == static_object_cast<RefTarget>(entry.object)->dataset());
 
 			_objectsToLoad.push_back(id - 1);
 			return entry.object;

@@ -28,7 +28,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 /******************************************************************************
 * Constructs the dialog window.
 ******************************************************************************/
-ImportRemoteFileDialog::ImportRemoteFileDialog(const QVector<OvitoClassPtr>& importerTypes, DataSet* dataset, QWidget* parent, const QString& caption) : QDialog(parent),
+ImportRemoteFileDialog::ImportRemoteFileDialog(const QVector<const FileImporterClass*>& importerTypes, DataSet* dataset, QWidget* parent, const QString& caption) : QDialog(parent),
 		_importerTypes(importerTypes)
 {
 	setWindowTitle(caption);
@@ -78,9 +78,8 @@ ImportRemoteFileDialog::ImportRemoteFileDialog(const QVector<OvitoClassPtr>& imp
 	_formatSelector = new QComboBox(this);
 
 	_formatSelector->addItem(tr("<Auto-detect format>"));
-	for(OvitoClassPtr importerType : importerTypes) {
-		OORef<FileImporter> imp = static_object_cast<FileImporter>(importerType->createInstance(dataset));
-		_formatSelector->addItem(imp->fileFilterDescription());
+	for(const FileImporterClass* importerClass : importerTypes) {
+		_formatSelector->addItem(importerClass->fileFilterDescription());
 	}
 
 	layout1->addWidget(_formatSelector);
@@ -144,7 +143,7 @@ QUrl ImportRemoteFileDialog::fileToImport() const
 /******************************************************************************
 * Returns the selected importer type or NULL if auto-detection is requested.
 ******************************************************************************/
-OvitoClassPtr ImportRemoteFileDialog::selectedFileImporterType() const
+const FileImporterClass* ImportRemoteFileDialog::selectedFileImporterType() const
 {
 	int importFilterIndex = _formatSelector->currentIndex() - 1;
 	OVITO_ASSERT(importFilterIndex >= -1 && importFilterIndex < _importerTypes.size());

@@ -52,7 +52,7 @@ void XYZImporter::setColumnMapping(const InputColumnMapping& mapping)
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool XYZImporter::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation)
+bool XYZImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
 {
 	// Open input file.
 	CompressedTextReader stream(input, sourceLocation.path());

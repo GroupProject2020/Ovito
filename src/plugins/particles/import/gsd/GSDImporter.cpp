@@ -31,7 +31,7 @@ IMPLEMENT_OVITO_CLASS(GSDImporter);
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool GSDImporter::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation)
+bool GSDImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
 {
 	QString filename = QDir::toNativeSeparators(input.fileName());
 

@@ -47,7 +47,7 @@ void LAMMPSTextDumpImporter::setCustomColumnMapping(const InputColumnMapping& ma
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool LAMMPSTextDumpImporter::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation)
+bool LAMMPSTextDumpImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
 {
 	// Open input file.
 	CompressedTextReader stream(input, sourceLocation.path());

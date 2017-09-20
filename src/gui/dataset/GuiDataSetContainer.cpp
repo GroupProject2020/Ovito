@@ -258,7 +258,7 @@ bool GuiDataSetContainer::fileLoad(const QString& filename)
 /******************************************************************************
 * Imports a given file into the scene.
 ******************************************************************************/
-bool GuiDataSetContainer::importFile(const QUrl& url, OvitoClassPtr importerType)
+bool GuiDataSetContainer::importFile(const QUrl& url, const FileImporterClass* importerType)
 {
 	OVITO_ASSERT(currentSet() != nullptr);
 

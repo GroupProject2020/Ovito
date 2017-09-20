@@ -320,14 +320,17 @@ void RefMaker::loadFromStream(ObjectLoadStream& stream)
 {
 	OvitoObject::loadFromStream(stream);
 	OVITO_ASSERT(!dataset()->undoStack().isRecording());
-	OVITO_ASSERT(stream._currentObject && stream._currentObject->object == this);
 
 #if 0
 	qDebug() << "Loading object" << this;
 #endif
 
-	// Read property field from the stream.
-	for(const ObjectLoadStream::SerializedPropertyField& fieldEntry : stream._currentObject->pluginClass->propertyFields) {
+	// Look up the serialized metadata for this RefMaker-derived class,
+	// which was loaded from the input stream.
+	const RefMakerClass::SerializedClassInfo* classInfo = static_cast<const RefMakerClass::SerializedClassInfo*>(stream.getSerializedClassInfo());
+
+	// Read property field values from the stream.	
+	for(const RefMakerClass::SerializedClassInfo::PropertyFieldInfo& fieldEntry : classInfo->propertyFields) {
 		if(fieldEntry.isReferenceField) {
 			OVITO_ASSERT(fieldEntry.targetClass != nullptr);
 	

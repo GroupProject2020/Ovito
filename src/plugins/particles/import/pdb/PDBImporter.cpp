@@ -31,7 +31,7 @@ IMPLEMENT_OVITO_CLASS(PDBImporter);
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool PDBImporter::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation)
+bool PDBImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
 {
 	// Open input file.
 	CompressedTextReader stream(input, sourceLocation.path());

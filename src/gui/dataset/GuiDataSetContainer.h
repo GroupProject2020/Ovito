@@ -48,7 +48,7 @@ public:
 	/// \param importerType The FileImporter type to use. If NULL, the file format will be automatically detected.
 	/// \return true if the file was successfully imported; false if operation has been canceled by the user.
 	/// \throw Exception on error.
-	bool importFile(const QUrl& url, OvitoClassPtr importerType = nullptr);
+	bool importFile(const QUrl& url, const FileImporterClass* importerType = nullptr);
 
 	/// \brief Creates an empty dataset and makes it the current dataset.
 	/// \return \c true if the operation was completed; \c false if the operation has been canceled by the user.

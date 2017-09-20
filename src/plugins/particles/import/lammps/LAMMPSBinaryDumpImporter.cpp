@@ -150,7 +150,7 @@ void LAMMPSBinaryDumpImporter::setColumnMapping(const InputColumnMapping& mappin
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool LAMMPSBinaryDumpImporter::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation)
+bool LAMMPSBinaryDumpImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
 {
 	// Open input file.
 	if(!input.open(QIODevice::ReadOnly))

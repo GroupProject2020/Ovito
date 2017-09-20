@@ -33,24 +33,30 @@ namespace Ovito { namespace Mesh {
  */
 class VTKFileImporter : public FileSourceImporter
 {
+	/// Defines a metaclass specialization for this importer type.
+	class OOMetaClass : public FileSourceImporter::OOMetaClass
+	{
+	public:
+		/// Inherit standard constructor from base meta class.
+		using FileSourceImporter::OOMetaClass ::OOMetaClass;
+
+		/// Returns the file filter that specifies the files that can be imported by this service.
+		virtual QString fileFilter() const override { return QStringLiteral("*.vtk"); }
+	
+		/// Returns the filter description that is displayed in the drop-down box of the file dialog.
+		virtual QString fileFilterDescription() const override { return tr("VTK Files"); }
+	
+		/// Checks if the given file has format that can be read by this importer.
+		virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const override;	
+	};
+
 	Q_OBJECT
-	OVITO_CLASS(VTKFileImporter)
+	OVITO_CLASS_META(VTKFileImporter, OOMetaClass)
 	
 public:
 
 	/// \brief Constructs a new instance of this class.
 	Q_INVOKABLE VTKFileImporter(DataSet* dataset) : FileSourceImporter(dataset) {}
-
-	/// \brief Returns the file filter that specifies the files that can be imported by this service.
-	/// \return A wild-card pattern that specifies the file types that can be handled by this import class.
-	virtual QString fileFilter() override { return "*.vtk"; }
-
-	/// \brief Returns the filter description that is displayed in the drop-down box of the file dialog.
-	/// \return A string that describes the file format.
-	virtual QString fileFilterDescription() override { return tr("VTK Files"); }
-
-	/// \brief Checks if the given file has format that can be read by this importer.
-	virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) override;
 
 	/// Returns the title of this object.
 	virtual QString objectTitle() override { return tr("VTK"); }

@@ -28,6 +28,7 @@
 #include <gui/dialogs/FileExporterSettingsDialog.h>
 #include <gui/utilities/concurrent/ProgressDialog.h>
 #include <opengl_renderer/OpenGLSceneRenderer.h>
+#include <core/app/PluginManager.h>
 #include <core/dataset/DataSetContainer.h>
 #include <core/dataset/io/FileImporter.h>
 #include <core/dataset/io/FileExporter.h>
@@ -257,7 +258,7 @@ void ActionManager::on_FileImport_triggered()
 {
 	try {
 		// Let the user select a file.
-		ImportFileDialog dialog(FileImporter::availableImporters(), _dataset, mainWindow(), tr("Load File"));
+		ImportFileDialog dialog(PluginManager::instance().metaclassMembers<FileImporter>(), _dataset, mainWindow(), tr("Load File"));
 		if(dialog.exec() != QDialog::Accepted)
 			return;
 
@@ -276,7 +277,7 @@ void ActionManager::on_FileRemoteImport_triggered()
 {
 	try {
 		// Let the user enter the URL of the remote file.
-		ImportRemoteFileDialog dialog(FileImporter::availableImporters(), _dataset, mainWindow(), tr("Load Remote File"));
+		ImportRemoteFileDialog dialog(PluginManager::instance().metaclassMembers<FileImporter>(), _dataset, mainWindow(), tr("Load Remote File"));
 		if(dialog.exec() != QDialog::Accepted)
 			return;
 		

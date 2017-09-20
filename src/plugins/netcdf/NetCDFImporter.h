@@ -40,8 +40,25 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVI
  */
 class OVITO_NETCDF_EXPORT NetCDFImporter : public ParticleImporter
 {
+	/// Defines a metaclass specialization for this importer type.
+	class OOMetaClass : public FileSourceImporter::OOMetaClass
+	{
+	public:
+		/// Inherit standard constructor from base meta class.
+		using FileSourceImporter::OOMetaClass ::OOMetaClass;
+
+		/// Returns the file filter that specifies the files that can be imported by this service.
+		virtual QString fileFilter() const override { return QStringLiteral("*"); }
+	
+		/// Returns the filter description that is displayed in the drop-down box of the file dialog.
+		virtual QString fileFilterDescription() const override { return tr("NetCDF Files"); }
+	
+		/// Checks if the given file has format that can be read by this importer.
+		virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const override;	
+	};
+	
+	OVITO_CLASS_META(NetCDFImporter, OOMetaClass)
 	Q_OBJECT
-	OVITO_CLASS(NetCDFImporter)
 
 public:
 
@@ -49,17 +66,6 @@ public:
 	Q_INVOKABLE NetCDFImporter(DataSet *dataset) : ParticleImporter(dataset), _useCustomColumnMapping(false) {
 		setMultiTimestepFile(true);
 	}
-
-	/// \brief Returns the file filter that specifies the files that can be imported by this service.
-	/// \return A wild-card pattern that specifies the file types that can be handled by this import class.
-	virtual QString fileFilter() override { return "*"; }
-
-	/// \brief Returns the filter description that is displayed in the drop-down box of the file dialog.
-	/// \return A string that describes the file format.
-	virtual QString fileFilterDescription() override { return tr("NetCDF Files"); }
-
-	/// \brief Checks if the given file has format that can be read by this importer.
-	virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) override;
 
 	/// Returns the title of this object.
 	virtual QString objectTitle() override { return tr("NetCDF"); }

@@ -38,17 +38,17 @@ class OVITO_GUI_EXPORT ImportFileDialog : public HistoryFileDialog
 public:
 
 	/// \brief Constructs the dialog window.
-	ImportFileDialog(const QVector<OvitoClassPtr>& importerTypes, DataSet* dataset, QWidget* parent, const QString& caption, const QString& directory = QString());
+	ImportFileDialog(const QVector<const FileImporterClass*>& importerTypes, DataSet* dataset, QWidget* parent, const QString& caption, const QString& directory = QString());
 
 	/// \brief Returns the file to import after the dialog has been closed with "OK".
 	QString fileToImport() const;
 
 	/// \brief Returns the selected importer type or NULL if auto-detection is requested.
-	OvitoClassPtr selectedFileImporterType() const;
+	const FileImporterClass* selectedFileImporterType() const;
 
 private:
 
-	QVector<OvitoClassPtr> _importerTypes;
+	QVector<const FileImporterClass*> _importerTypes;
 	QStringList _filterStrings;
 	QString _selectedFile;
 	QString _selectedFilter;

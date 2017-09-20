@@ -37,7 +37,7 @@ class OVITO_GUI_EXPORT ImportRemoteFileDialog : public QDialog
 public:
 
 	/// \brief Constructs the dialog window.
-	ImportRemoteFileDialog(const QVector<OvitoClassPtr>& importerTypes, DataSet* dataset, QWidget* parent = nullptr, const QString& caption = QString());
+	ImportRemoteFileDialog(const QVector<const FileImporterClass*>& importerTypes, DataSet* dataset, QWidget* parent = nullptr, const QString& caption = QString());
 
 	/// \brief Sets the current URL in the dialog.
 	void selectFile(const QUrl& url);
@@ -46,7 +46,7 @@ public:
 	QUrl fileToImport() const;
 
 	/// \brief Returns the selected importer type or NULL if auto-detection is requested.
-	OvitoClassPtr selectedFileImporterType() const;
+	const FileImporterClass* selectedFileImporterType() const;
 
 	virtual QSize sizeHint() const override {
 		return QDialog::sizeHint().expandedTo(QSize(500, 0));
@@ -60,7 +60,7 @@ protected Q_SLOTS:
 
 private:
 
-	QVector<OvitoClassPtr> _importerTypes;
+	QVector<const FileImporterClass*> _importerTypes;
 
 	QComboBox* _urlEdit;
 	QComboBox* _formatSelector;

@@ -47,7 +47,7 @@ public:
 	/// \param destination The Qt data stream to which the objects will be written. This must be a
 	///                    stream that supports random access.
 	/// \throw Exception if the underlying data stream only supports sequential access.
-	ObjectSaveStream(QDataStream& destination) : SaveStream(destination), _dataset(nullptr) {}
+	ObjectSaveStream(QDataStream& destination) : SaveStream(destination) {}
 
 	/// Calls close() to close the ObjectSaveStream.
 	virtual ~ObjectSaveStream();
@@ -70,7 +70,7 @@ private:
 	std::vector<std::pair<OvitoObject*, bool>> _objects;
 
 	/// The current dataset being saved.
-	DataSet* _dataset;
+	DataSet* _dataset = nullptr;
 };
 
 OVITO_END_INLINE_NAMESPACE

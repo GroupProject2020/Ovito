@@ -21,7 +21,6 @@
 
 #include <core/Core.h>
 #include <core/oo/OvitoObject.h>
-#include <core/oo/PropertyFieldDescriptor.h>
 #include <core/dataset/DataSet.h>
 #include "ObjectSaveStream.h"
 
@@ -52,6 +51,9 @@ void ObjectSaveStream::saveObject(OvitoObject* object, bool excludeRecomputableD
 		*this << (quint32)0;
 	}
 	else {
+		// Instead of saveing the object's data, we only assign a unique instance ID to the object here
+		// and write the ID to the stream. The object's contents will get saved when the stream
+		// is closed.
 		OVITO_CHECK_OBJECT_POINTER(object);
 		OVITO_ASSERT(_objects.size() == _objectMap.size());
 		quint32& id = _objectMap[object];
@@ -81,9 +83,12 @@ void ObjectSaveStream::close()
 		return;
 
 	try {
-		QVector<qint64> objectOffsets;
+		// Byte offsets of object instances.
+		std::vector<qint64> objectOffsets;
 
-		// Save all objects.
+		// Serialize the data of each object.
+		// Note that additional objects may be appended to the end of the list
+		// as we save objects which are already in the list.
 		beginChunk(0x100);
 		for(size_t i = 0; i < _objects.size(); i++) {
 			OvitoObject* obj = _objects[i].first;
@@ -92,58 +97,41 @@ void ObjectSaveStream::close()
 			obj->saveToStream(*this, _objects[i].second);
 		}
 		endChunk();
-
-		// Save RTTI.
-		map<OvitoClassPtr, quint32> classes;
-		qint64 beginOfRTTI = filePosition();
+		
+		// Save the class of each object instance.
+		qint64 classTableStart = filePosition();
+		std::map<OvitoClassPtr, quint32> classes;
 		beginChunk(0x200);
 		for(const auto& obj : _objects) {
-			OvitoClassPtr descriptor = &obj.first->getOOClass();
-			if(classes.find(descriptor) == classes.end()) {
-				classes.insert(make_pair(descriptor, (quint32)classes.size()));
-				// Write the runtime type information to the stream.
+			OvitoClassPtr clazz = &obj.first->getOOClass();
+			if(classes.find(clazz) == classes.end()) {
+				classes.insert(make_pair(clazz, (quint32)classes.size()));
+				// Write the basic runtime type information (name and plugin ID) of the class to the stream.
 				beginChunk(0x201);
-				OvitoClass::serializeRTTI(*this, descriptor);
+				OvitoClass::serializeRTTI(*this, clazz);
 				endChunk();
-				// Write the property fields to the stream if this is a RefMaker derived class.
+				// Let the metaclass save additional information like for example the list of property fields defined 
+				// for RefMaker-derived classes.
 				beginChunk(0x202);
-				if(descriptor->isDerivedFrom(RefMaker::OOClass())) {
-					for(const PropertyFieldDescriptor* field : static_cast<const RefMakerClass*>(descriptor)->propertyFields()) {
-						beginChunk(0x01);
-						*this << QByteArray::fromRawData(field->identifier(), qstrlen(field->identifier()));
-						OvitoClass::serializeRTTI(*this, field->definingClass());
-						*this << field->flags();
-						*this << field->isReferenceField();
-						if(field->isReferenceField()) {
-							OvitoClass::serializeRTTI(*this, field->targetClass());
-						}
-						endChunk();
-					}
-				}
-				// Write list terminator.
-				beginChunk(0x00000000);
-				endChunk();
-
+				clazz->saveClassInfo(*this);
 				endChunk();
 			}
 		}
 		endChunk();
 
 		// Save object table.
-		qint64 beginOfObjTable = filePosition();
+		qint64 objectTableStart = filePosition();
 		beginChunk(0x300);
-		auto offsetIterator = objectOffsets.constBegin();
+		auto offsetIterator = objectOffsets.cbegin();
 		for(const auto& obj : _objects) {
 			*this << classes[&obj.first->getOOClass()];
 			*this << *offsetIterator++;
 		}
 		endChunk();
 
-		// Write index.
-		*this << beginOfRTTI;
-		*this << (quint32)classes.size();
-		*this << beginOfObjTable;
-		*this << (quint32)_objects.size();
+		// Write index of tables.
+		*this << classTableStart << (quint32)classes.size();
+		*this << objectTableStart << (quint32)_objects.size();
 	}
 	catch(...) {
 		SaveStream::close();

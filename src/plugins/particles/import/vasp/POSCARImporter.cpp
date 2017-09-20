@@ -34,7 +34,7 @@ IMPLEMENT_OVITO_CLASS(POSCARImporter);
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool POSCARImporter::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation)
+bool POSCARImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
 {
 	// Regular expression for whitespace characters.
 	QRegularExpression ws_re(QStringLiteral("\\s+"));

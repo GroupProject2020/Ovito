@@ -29,12 +29,47 @@
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
 
 /**
+ * \brief A meta-class for file importers (i.e. classes derived from FileImporter).
+ */
+class OVITO_CORE_EXPORT FileImporterClass : public RefTarget::OOMetaClass 
+{
+public:
+
+	/// Inherit standard constructor from base meta class.
+	using RefTarget::OOMetaClass::OOMetaClass;
+
+	/// \brief Returns the file filter that specifies the files that can be imported by this service.
+	/// \return A wild-card pattern that specifies the file types that can be handled by this import class.
+	virtual QString fileFilter() const { 
+		OVITO_ASSERT_MSG(false, "FileImporterClass::fileFilter()", "This method should be overridden by a meta-subclass of FileImportClass.");
+		return {}; 
+	}
+	
+	/// \brief Returns the filter description that is displayed in the drop-down box of the file dialog.
+	/// \return A string that describes the file format.
+	virtual QString fileFilterDescription() const {
+		OVITO_ASSERT_MSG(false, "FileImporterClass::fileFilterDescription()", "This method should be overridden by a meta-subclass of FileImportClass.");
+		return {};
+	}
+
+	/// \brief Checks if the given file has format that can be read by this importer.
+	/// \param input The file that contains the data to check.
+	/// \param sourceLocation The original source location of the file if it was loaded from a remote location.
+	/// \return \c true if the data can be parsed.
+	//	        \c false if the data has some unknown format.
+	/// \throw Exception when the check has failed.
+	virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const { 
+		return false;
+	}
+};
+
+/**
  * \brief Abstract base class for file import services.
  */
 class OVITO_CORE_EXPORT FileImporter : public RefTarget
 {
 	Q_OBJECT
-	OVITO_CLASS(FileImporter)
+	OVITO_CLASS_META(FileImporter, FileImporterClass)
 	
 protected:
 
@@ -52,14 +87,6 @@ public:
 	};
 	Q_ENUMS(ImportMode);
 
-	/// \brief Returns the file filter that specifies the files that can be imported by this service.
-	/// \return A wild-card pattern that specifies the file types that can be handled by this import class.
-	virtual QString fileFilter() = 0;
-
-	/// \brief Returns the filter description that is displayed in the drop-down box of the file dialog.
-	/// \return A string that describes the file format.
-	virtual QString fileFilterDescription() = 0;
-
 	/// \brief Asks the importer if the option to replace the currently selected object
 	///        with the new file is available.
 	virtual bool isReplaceExistingPossible(const QUrl& sourceUrl) { return false; }
@@ -72,17 +99,6 @@ public:
 	//	        \c false if the operation has been canceled by the user.
 	/// \throw Exception when the import operation has failed.
 	virtual bool importFile(const QUrl& sourceUrl, ImportMode importMode, bool autodetectFileSequences) = 0;
-
-	/// \brief Checks if the given file has format that can be read by this importer.
-	/// \param input The file that contains the data to check.
-	/// \param sourceLocation The original source location of the file if it was loaded from a remote location.
-	/// \return \c true if the data can be parsed.
-	//	        \c false if the data has some unknown format.
-	/// \throw Exception when the check has failed.
-	virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) { return false; }
-
-	/// Returns a list of all available importer types.
-	static QVector<OvitoClassPtr> availableImporters();
 
 	/// \brief Tries to detect the format of the given file.
 	/// \return The importer class that can handle the given file. If the file format could not be recognized then NULL is returned.

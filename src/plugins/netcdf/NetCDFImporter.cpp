@@ -105,7 +105,7 @@ void NetCDFImporter::setCustomColumnMapping(const InputColumnMapping& mapping)
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
 ******************************************************************************/
-bool NetCDFImporter::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation)
+bool NetCDFImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
 {
 	QString filename = QDir::toNativeSeparators(input.fileName());
 

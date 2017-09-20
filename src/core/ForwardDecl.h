@@ -162,7 +162,9 @@ namespace Ovito {
 	OVITO_END_INLINE_NAMESPACE
 	OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
 		class FileImporter;
+		class FileImporterClass;
 		class FileExporter;
+		class FileExporterClass;
 		class FileSource;
 		class FileSourceImporter;
 	OVITO_END_INLINE_NAMESPACE

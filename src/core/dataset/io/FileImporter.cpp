@@ -34,14 +34,6 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
 IMPLEMENT_OVITO_CLASS(FileImporter);
 
 /******************************************************************************
-* Return the list of available import services.
-******************************************************************************/
-QVector<OvitoClassPtr> FileImporter::availableImporters()
-{
-	return PluginManager::instance().listClasses(FileImporter::OOClass());
-}
-
-/******************************************************************************
 * Tries to detect the format of the given file.
 ******************************************************************************/
 OORef<FileImporter> FileImporter::autodetectFileFormat(DataSet* dataset, const QUrl& url)
@@ -80,13 +72,11 @@ OORef<FileImporter> FileImporter::autodetectFileFormat(DataSet* dataset, const Q
 ******************************************************************************/
 OORef<FileImporter> FileImporter::autodetectFileFormat(DataSet* dataset, const QString& localFile, const QUrl& sourceLocation)
 {
-	UndoSuspender noUnder(dataset);
-	for(OvitoClassPtr importerType : availableImporters()) {
+	for(const FileImporterClass* importerClass : PluginManager::instance().metaclassMembers<FileImporter>()) {
 		try {
-			OORef<FileImporter> importer = static_object_cast<FileImporter>(importerType->createInstance(dataset));
 			QFile file(localFile);
-			if(importer && importer->checkFileFormat(file, sourceLocation)) {
-				return importer;
+			if(importerClass->checkFileFormat(file, sourceLocation)) {
+				return static_object_cast<FileImporter>(importerClass->createInstance(dataset));;
 			}
 		}
 		catch(const Exception&) {

@@ -27,13 +27,12 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 /******************************************************************************
 * Constructs the dialog window.
 ******************************************************************************/
-ImportFileDialog::ImportFileDialog(const QVector<OvitoClassPtr>& importerTypes, DataSet* dataset, QWidget* parent, const QString& caption, const QString& directory) :
+ImportFileDialog::ImportFileDialog(const QVector<const FileImporterClass*>& importerTypes, DataSet* dataset, QWidget* parent, const QString& caption, const QString& directory) :
 	HistoryFileDialog("import", parent, caption, directory), _importerTypes(importerTypes)
 {
 	// Build filter string.
-	for(OvitoClassPtr importerType : _importerTypes) {
-		OORef<FileImporter> imp = static_object_cast<FileImporter>(importerType->createInstance(dataset));
-		_filterStrings << QString("%1 (%2)").arg(imp->fileFilterDescription(), imp->fileFilter());
+	for(auto importerClass : _importerTypes) {
+		_filterStrings << QString("%1 (%2)").arg(importerClass->fileFilterDescription(), importerClass->fileFilter());
 	}
 	if(_filterStrings.isEmpty()) {
 		dataset->throwException(tr("There are no importer plugins installed."));
@@ -64,7 +63,7 @@ QString ImportFileDialog::fileToImport() const
 /******************************************************************************
 * Returns the selected importer type or NULL if auto-detection is requested.
 ******************************************************************************/
-OvitoClassPtr ImportFileDialog::selectedFileImporterType() const
+const FileImporterClass* ImportFileDialog::selectedFileImporterType() const
 {
 	int importFilterIndex = _filterStrings.indexOf(_selectedFilter.isEmpty() ? selectedNameFilter() : _selectedFilter) - 1;
 	OVITO_ASSERT(importFilterIndex >= -1 && importFilterIndex < _importerTypes.size());
