@@ -37,6 +37,7 @@ node = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin",
                             columns = ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z"])
 try:
     # This should generate an error:
+    print("Note: The following error message is intentional.")
     node = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin",  
                                 columns = ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z", "ExtraProperty"])
     assert False
@@ -52,3 +53,6 @@ node = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin",
                             columns = ["Particle Identifier", None, "Position.X", "Position.Y", "Position.Z"])
 node.source.load(test_data_dir + "LAMMPS/shear.void.dump.bin", 
                             columns = ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z"])
+
+import_file(test_data_dir + "LAMMPS/binary_dump.x86_64.bin", columns = ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z"])
+import_file(test_data_dir + "LAMMPS/binary_dump.bgq.bin", columns = ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z"])
