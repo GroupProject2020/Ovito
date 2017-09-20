@@ -9,7 +9,21 @@ except ImportError:
 from ..plugins.PyScript.Scene import DataObject, SimulationCell
 from ..plugins.PyScript.App import CloneHelper
 
-class DataCollection(metaclass=abc.ABCMeta):
+def with_metaclass(meta, *bases):
+    """
+    Python 2/3 cross-compatibility function for setting a class' metaclass.
+    Function from jinja2/_compat.py. License: BSD.
+    """
+    class metaclass(meta):
+        __call__ = type.__call__
+        __init__ = type.__init__
+        def __new__(cls, name, this_bases, d):
+            if this_bases is None:
+                return type.__new__(cls, name, (), d)
+            return meta(name, bases, d)
+    return metaclass('temporary_class', None, {})
+
+class DataCollection(with_metaclass(abc.ABCMeta)):
     """ 
     A :py:class:`!DataCollection` is a generic container that holds together a set of data objects, each representing different pieces of data
     such as the simulation cell, particle properties or the list of bonds. OVITO knows various types of data objects including
