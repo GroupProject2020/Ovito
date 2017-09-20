@@ -200,13 +200,5 @@ bool FileExporter::exportFrame(int frameNumber, TimePoint time, const QString& f
 	return true;
 }
 
-/******************************************************************************
-* Return the list of available export services.
-******************************************************************************/
-QVector<OvitoClassPtr> FileExporter::availableExporters()
-{
-	return PluginManager::instance().listClasses(FileExporter::OOClass());
-}
-
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

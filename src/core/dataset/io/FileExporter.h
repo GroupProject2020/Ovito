@@ -30,33 +30,39 @@
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
 
 /**
+ * \brief A meta-class for file exporters (i.e. classes derived from FileExporter).
+ */
+class OVITO_CORE_EXPORT FileExporterClass : public RefTarget::OOMetaClass 
+{
+public:
+
+	/// Inherit standard constructor from base meta class.
+	using RefTarget::OOMetaClass::OOMetaClass;
+
+	/// \brief Returns the filename filter that specifies the file extension that can be exported by this service.
+	/// \return A wild-card pattern for the file types that can be produced by the FileExporter class (e.g. \c "*.xyz" or \c "*").
+	virtual QString fileFilter() const { 
+		OVITO_ASSERT_MSG(false, "FileExporterClass::fileFilter()", "This method should be overridden by a meta-subclass of FileExporterClass.");
+		return {}; 
+	}
+	
+	/// \brief Returns the file type description that is displayed in the drop-down box of the export file dialog.
+	/// \return A human-readable string describing the file format written by the FileExporter class.
+	virtual QString fileFilterDescription() const {
+		OVITO_ASSERT_MSG(false, "FileExporterClass::fileFilterDescription()", "This method should be overridden by a meta-subclass of FileExporterClass.");
+		return {};
+	}
+};	
+
+/**
  * \brief Abstract base class for file exporters that export data from OVITO to an external file.
- *
- * To add an exporter for a new file format to OVITO you should derive a new class from FileExporter or
- * one of its specializations and implement the abstract methods fileFilter(), fileFilterDescription(),
- * and exportToFile().
- *
- * A list of all available exporters can be obtained via FileExporter::availableExporters().
  */
 class OVITO_CORE_EXPORT FileExporter : public RefTarget
 {
 	Q_OBJECT
-	OVITO_CLASS(FileExporter)
-	
-public:
-
-	/// Returns the list of all available exporter types installed in the system.
-	static QVector<OvitoClassPtr> availableExporters();
+	OVITO_CLASS_META(FileExporter, FileExporterClass)
 
 public:
-
-	/// \brief Returns the filename filter that specifies the file extension that can be exported by this service.
-	/// \return A wild-card pattern for the file types that can be produced by this export class (e.g. \c "*.xyz" or \c "*").
-	virtual QString fileFilter() = 0;
-
-	/// \brief Returns the file type description that is displayed in the drop-down box of the export file dialog.
-	/// \return A human-readable string describing the file format written by this FileExporter.
-	virtual QString fileFilterDescription() = 0;
 
 	/// \brief Selects the nodes from the scene to be exported by this exporter if no specific set of nodes was provided.
 	virtual void selectStandardOutputData() = 0; 

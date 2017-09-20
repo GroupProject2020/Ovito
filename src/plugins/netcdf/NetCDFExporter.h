@@ -38,19 +38,35 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVI
  */
 class OVITO_NETCDF_EXPORT NetCDFExporter : public FileColumnParticleExporter
 {
-	OVITO_CLASS(NetCDFExporter)
+	/// Defines a metaclass specialization for this exporter type.
+	class OOMetaClass : public FileColumnParticleExporter::OOMetaClass
+	{
+	public:
+
+		/// Inherit standard constructor from base meta class.
+		using FileColumnParticleExporter::OOMetaClass::OOMetaClass;
+
+		/// Returns the file filter that specifies the extension of files written by this service.
+		virtual QString fileFilter() const override { 
+#ifndef Q_OS_WIN
+			return QStringLiteral("*.nc");
+#else 
+			// Workaround for bug in Windows file selection dialog (https://bugreports.qt.io/browse/QTBUG-45759)
+			return QStringLiteral("*");
+#endif
+		}
+	
+		/// Returns the filter description that is displayed in the drop-down box of the file dialog.
+		virtual QString fileFilterDescription() const override { return tr("NetCDF File"); }
+	};
+
 	Q_OBJECT
+	OVITO_CLASS_META(NetCDFExporter, OOMetaClass)
 	
 public:
 
 	/// \brief Constructs a new instance of this class.
 	Q_INVOKABLE NetCDFExporter(DataSet* dataset) : FileColumnParticleExporter(dataset) {}
-
-	/// \brief Returns the file filter that specifies the files that can be exported by this service.
-	virtual QString fileFilter() override { return QStringLiteral("*"); }
-
-	/// \brief Returns the filter description that is displayed in the drop-down box of the file dialog.
-	virtual QString fileFilterDescription() override { return tr("NetCDF File"); }
 
 protected:
 

@@ -32,19 +32,27 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVI
  */
 class OVITO_PARTICLES_EXPORT LAMMPSDumpExporter : public FileColumnParticleExporter
 {
+	/// Defines a metaclass specialization for this exporter type.
+	class OOMetaClass : public FileColumnParticleExporter::OOMetaClass
+	{
+	public:
+		/// Inherit standard constructor from base meta class.
+		using FileColumnParticleExporter::OOMetaClass::OOMetaClass;
+
+		/// Returns the file filter that specifies the extension of files written by this service.
+		virtual QString fileFilter() const override { return QStringLiteral("*"); }
+	
+		/// Returns the filter description that is displayed in the drop-down box of the file dialog.
+		virtual QString fileFilterDescription() const override { return tr("LAMMPS Dump File"); }
+	};
+
 	Q_OBJECT
-	OVITO_CLASS(LAMMPSDumpExporter)
+	OVITO_CLASS_META(LAMMPSDumpExporter, OOMetaClass)
 	
 public:
 
 	/// \brief Constructs a new instance of this class.
 	Q_INVOKABLE LAMMPSDumpExporter(DataSet* dataset) : FileColumnParticleExporter(dataset) {}
-
-	/// \brief Returns the file filter that specifies the files that can be exported by this service.
-	virtual QString fileFilter() override { return QStringLiteral("*"); }
-
-	/// \brief Returns the filter description that is displayed in the drop-down box of the file dialog.
-	virtual QString fileFilterDescription() override { return tr("LAMMPS Dump File"); }
 
 protected:
 

@@ -41,14 +41,14 @@ public:
 	/// \brief Returns the file filter that specifies the files that can be imported by this service.
 	/// \return A wild-card pattern that specifies the file types that can be handled by this import class.
 	virtual QString fileFilter() const { 
-		OVITO_ASSERT_MSG(false, "FileImporterClass::fileFilter()", "This method should be overridden by a meta-subclass of FileImportClass.");
+		OVITO_ASSERT_MSG(false, "FileImporterClass::fileFilter()", "This method should be overridden by a meta-subclass of FileImporterClass.");
 		return {}; 
 	}
 	
 	/// \brief Returns the filter description that is displayed in the drop-down box of the file dialog.
 	/// \return A string that describes the file format.
 	virtual QString fileFilterDescription() const {
-		OVITO_ASSERT_MSG(false, "FileImporterClass::fileFilterDescription()", "This method should be overridden by a meta-subclass of FileImportClass.");
+		OVITO_ASSERT_MSG(false, "FileImporterClass::fileFilterDescription()", "This method should be overridden by a meta-subclass of FileImporterClass.");
 		return {};
 	}
 

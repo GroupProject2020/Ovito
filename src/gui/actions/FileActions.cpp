@@ -296,17 +296,13 @@ void ActionManager::on_FileExport_triggered()
 {
 	// Build filter string.
 	QStringList filterStrings;
-	const auto& exporterTypes = FileExporter::availableExporters();
-	for(OvitoClassPtr type : exporterTypes) {
-		try {
-			OORef<FileExporter> exporter = static_object_cast<FileExporter>(type->createInstance(_dataset));
-			filterStrings << QString("%1 (%2)").arg(exporter->fileFilterDescription(), exporter->fileFilter());
-		}
-		catch(...) { filterStrings << QString(); }
-	}
-	if(filterStrings.isEmpty()) {
+	QVector<const FileExporterClass*> exporterTypes = PluginManager::instance().metaclassMembers<FileExporter>();
+	if(exporterTypes.empty()) {
 		Exception(tr("This function is disabled, because there are no export services available."), _dataset).reportError();
 		return;
+	}
+	for(const FileExporterClass* exporterClass : exporterTypes) {
+		filterStrings << QString("%1 (%2)").arg(exporterClass->fileFilterDescription(), exporterClass->fileFilter());
 	}
 
 	QSettings settings;

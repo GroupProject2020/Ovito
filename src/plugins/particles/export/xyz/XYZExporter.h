@@ -32,8 +32,22 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVI
  */
 class OVITO_PARTICLES_EXPORT XYZExporter : public FileColumnParticleExporter
 {
+	/// Defines a metaclass specialization for this exporter type.
+	class OOMetaClass : public FileColumnParticleExporter::OOMetaClass
+	{
+	public:
+		/// Inherit standard constructor from base meta class.
+		using FileColumnParticleExporter::OOMetaClass::OOMetaClass;
+
+		/// Returns the file filter that specifies the extension of files written by this service.
+		virtual QString fileFilter() const override { return QStringLiteral("*"); }
+	
+		/// Returns the filter description that is displayed in the drop-down box of the file dialog.
+		virtual QString fileFilterDescription() const override { return tr("XYZ File"); }
+	};
+
 	Q_OBJECT
-	OVITO_CLASS(XYZExporter)
+	OVITO_CLASS_META(XYZExporter, OOMetaClass)
 
 public:
 
@@ -48,12 +62,6 @@ public:
 
 	/// \brief Constructs a new instance of this class.
 	Q_INVOKABLE XYZExporter(DataSet* dataset) : FileColumnParticleExporter(dataset), _subFormat(ExtendedFormat) {}
-
-	/// \brief Returns the file filter that specifies the files that can be exported by this service.
-	virtual QString fileFilter() override { return QStringLiteral("*"); }
-
-	/// \brief Returns the filter description that is displayed in the drop-down box of the file dialog.
-	virtual QString fileFilterDescription() override { return tr("XYZ File"); }
 
 protected:
 

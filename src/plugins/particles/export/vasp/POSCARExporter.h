@@ -32,19 +32,27 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVI
  */
 class OVITO_PARTICLES_EXPORT POSCARExporter : public ParticleExporter
 {
+	/// Defines a metaclass specialization for this exporter type.
+	class OOMetaClass : public ParticleExporter::OOMetaClass
+	{
+	public:
+		/// Inherit standard constructor from base meta class.
+		using ParticleExporter::OOMetaClass::OOMetaClass;
+
+		/// Returns the file filter that specifies the extension of files written by this service.
+		virtual QString fileFilter() const override { return QStringLiteral("*"); }
+	
+		/// Returns the filter description that is displayed in the drop-down box of the file dialog.
+		virtual QString fileFilterDescription() const override { return tr("POSCAR File"); }
+	};
+
 	Q_OBJECT
-	OVITO_CLASS(POSCARExporter)
+	OVITO_CLASS_META(POSCARExporter, OOMetaClass)
 	
 public:
 
 	/// \brief Constructs a new instance of this class.
 	Q_INVOKABLE POSCARExporter(DataSet* dataset) : ParticleExporter(dataset) {}
-
-	/// \brief Returns the file filter that specifies the files that can be exported by this service.
-	virtual QString fileFilter() override { return QStringLiteral("*"); }
-
-	/// \brief Returns the filter description that is displayed in the drop-down box of the file dialog.
-	virtual QString fileFilterDescription() override { return tr("POSCAR File"); }
 
 protected:
 

@@ -33,19 +33,27 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
  */
 class OVITO_CORE_EXPORT AttributeFileExporter : public FileExporter
 {
+	/// Defines a metaclass specialization for this exporter type.
+	class OOMetaClass : public FileExporter::OOMetaClass
+	{
+	public:
+		/// Inherit standard constructor from base meta class.
+		using FileExporter::OOMetaClass::OOMetaClass;
+
+		/// Returns the file filter that specifies the extension of files written by this service.
+		virtual QString fileFilter() const override { return QStringLiteral("*"); }
+	
+		/// Returns the filter description that is displayed in the drop-down box of the file dialog.
+		virtual QString fileFilterDescription() const override { return tr("Calculation Results Text File"); }
+	};
+
 	Q_OBJECT
-	OVITO_CLASS(AttributeFileExporter)
+	OVITO_CLASS_META(AttributeFileExporter, OOMetaClass)
 	
 public:
 
 	/// \brief Constructs a new instance of this class.
 	Q_INVOKABLE AttributeFileExporter(DataSet* dataset);
-
-	/// \brief Returns the file filter that specifies the files that can be exported by this service.
-	virtual QString fileFilter() override { return QStringLiteral("*"); }
-
-	/// \brief Returns the filter description that is displayed in the drop-down box of the file dialog.
-	virtual QString fileFilterDescription() override { return tr("Calculation Results Text File"); }
 
 	/// \brief Loads the user-defined default values of this object's parameter fields from the
 	///        application's settings store.

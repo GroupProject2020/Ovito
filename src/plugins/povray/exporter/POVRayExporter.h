@@ -33,8 +33,30 @@ namespace Ovito { namespace POVRay {
  */
 class OVITO_POVRAY_EXPORT POVRayExporter : public FileExporter
 {
+	/// Defines a metaclass specialization for this exporter type.
+	class OOMetaClass : public FileExporter::OOMetaClass
+	{
+	public:
+		
+		/// Inherit standard constructor from base meta class.
+		using FileExporter::OOMetaClass::OOMetaClass;
+
+		/// Returns the file filter that specifies the files that can be exported by this service.
+		virtual QString fileFilter() const override { 
+	#ifndef Q_OS_WIN
+			return QStringLiteral("*.pov");
+	#else 
+			// Workaround for bug in Windows file selection dialog (https://bugreports.qt.io/browse/QTBUG-45759)
+			return QStringLiteral("*");
+	#endif
+		}
+
+		/// Returns the filter description that is displayed in the drop-down box of the file dialog.
+		virtual QString fileFilterDescription() const override { return tr("POV-Ray scene"); }
+	};
+
 	Q_OBJECT
-	OVITO_CLASS(POVRayExporter)
+	OVITO_CLASS_META(POVRayExporter, OOMetaClass)
 	
 public:
 
@@ -52,19 +74,6 @@ public:
 
 	/// Returns the current file this exporter is writing to.
 	QFile& outputFile() { return _outputFile; }
-
-	/// \brief Returns the file filter that specifies the files that can be exported by this service.
-	virtual QString fileFilter() override { 
-#ifndef Q_OS_WIN
-		return QStringLiteral("*.pov");
-#else 
-		// Workaround for bug in Windows file selection dialog (https://bugreports.qt.io/browse/QTBUG-45759)
-		return QStringLiteral("*");
-#endif
-	}
-
-	/// \brief Returns the filter description that is displayed in the drop-down box of the file dialog.
-	virtual QString fileFilterDescription() override { return tr("POV-Ray scene"); }
 
 protected:
 

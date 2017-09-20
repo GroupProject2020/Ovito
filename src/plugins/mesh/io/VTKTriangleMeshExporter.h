@@ -33,26 +33,34 @@ namespace Ovito { namespace Mesh {
  */
 class OVITO_MESH_EXPORT VTKTriangleMeshExporter : public FileExporter
 {
+	/// Defines a metaclass specialization for this exporter type.
+	class OOMetaClass : public FileExporter::OOMetaClass
+	{
+	public:
+		/// Inherit standard constructor from base meta class.
+		using FileExporter::OOMetaClass::OOMetaClass;
+
+		/// Returns the file filter that specifies the files that can be exported by this service.
+		virtual QString fileFilter() const override { 
+	#ifndef Q_OS_WIN
+			return QStringLiteral("*.vtk");
+	#else 
+			// Workaround for bug in Windows file selection dialog (https://bugreports.qt.io/browse/QTBUG-45759)
+			return QStringLiteral("*");
+	#endif
+		}
+
+		/// Returns the filter description that is displayed in the drop-down box of the file dialog.
+		virtual QString fileFilterDescription() const override { return tr("VTK Triangle Mesh File"); }
+	};
+
 	Q_OBJECT
-	OVITO_CLASS(VTKTriangleMeshExporter)
+	OVITO_CLASS_META(VTKTriangleMeshExporter, OOMetaClass)
 
 public:
 
 	/// \brief Constructs a new instance of this class.
 	Q_INVOKABLE VTKTriangleMeshExporter(DataSet* dataset) : FileExporter(dataset) {}
-
-	/// \brief Returns the file filter that specifies the files that can be exported by this service.
-	virtual QString fileFilter() override { 
-#ifndef Q_OS_WIN
-		return QStringLiteral("*.vtk");
-#else 
-		// Workaround for bug in Windows file selection dialog (https://bugreports.qt.io/browse/QTBUG-45759)
-		return QStringLiteral("*");
-#endif
-	}
-
-	/// \brief Returns the filter description that is displayed in the drop-down box of the file dialog.
-	virtual QString fileFilterDescription() override { return tr("VTK Triangle Mesh File"); }
 
 	/// \brief Selects the nodes from the scene to be exported by this exporter if no specific set of nodes was provided.
 	virtual void selectStandardOutputData() override; 
