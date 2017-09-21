@@ -67,8 +67,9 @@ public:
 	
 public:
 
-	/// Inherited constructor.
-	using OvitoClass::OvitoClass;	
+	/// Constructor.
+	RefMakerClass(const QString& name, OvitoClassPtr superClass, const char* pluginId, const QMetaObject* qtClassInfo) : 
+		OvitoClass(name, superClass, pluginId, qtClassInfo) {}
 
 	/// Returns the list of property fields of the class, including those of all parent classes.
 	const std::vector<const PropertyFieldDescriptor*>& propertyFields() const { return _propertyFields; }

@@ -88,6 +88,8 @@ ELSE()
 		ELSE()
 	    	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 		ENDIF()
+	ELSE()
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++14")
 	ENDIF()
 ENDIF()
 
@@ -107,6 +109,8 @@ IF(MSVC)
 	ADD_COMPILE_OPTIONS("/wd4996")
 	# Suppress warning on conversion from size_t to int, possible loss of data.
 	ADD_COMPILE_OPTIONS("/wd4267")
+	# Suppress warning on missing definition for explicit template instantiation request.
+	ADD_COMPILE_OPTIONS("/wd4661")
 	# Compiling template code leads to large object files.
 	ADD_COMPILE_OPTIONS("/bigobj")	
 ENDIF()

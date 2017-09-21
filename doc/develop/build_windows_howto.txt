@@ -1,6 +1,6 @@
 **************************************************************************
 Compiler: 
-    Microsoft Visual C++ 2015
+    Microsoft Visual C++ 2017
 **************************************************************************
 
 Typical layour for the build directory:
@@ -25,7 +25,7 @@ nmake install
 **************************************************************************
 Qt
 **************************************************************************
-Install the following components (Qt 5.9.1) in C:\Qt\ : 
+Install the following components (Qt 5.9.2) in C:\Qt\ : 
    msvc2015 32-bit
    msvc2015 64-bit
 

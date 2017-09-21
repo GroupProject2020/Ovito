@@ -53,7 +53,7 @@ protected:
 
 	/// This abstract undo record class keeps a strong reference object whose property has been changed.
 	/// This is needed to keep the owner object alive as long as this undo record is on the undo stack.
-	class PropertyFieldOperation : public UndoableOperation 
+	class OVITO_CORE_EXPORT PropertyFieldOperation : public UndoableOperation 
 	{
 	public:
 		/// Constructor.
@@ -139,6 +139,7 @@ public:
 	std::enable_if_t<!QMetaTypeId2<T>::Defined, QVariant>
 	getQVariant() const {
 		OVITO_ASSERT_MSG(false, "RuntimePropertyField::getQVariant()", "The data type of the property field does not support conversion to/from QVariant.");
+		return {};
 	}	
 	
 	/// Returns the internal value stored in this property field.
@@ -248,7 +249,7 @@ protected:
 
 protected:
 
-	class SetReferenceOperation : public PropertyFieldOperation
+	class OVITO_CORE_EXPORT SetReferenceOperation : public PropertyFieldOperation
 	{
 	private:
 		/// The reference target that is currently not assigned to the reference field.
@@ -372,7 +373,7 @@ protected:
 
 protected:
 
-	class InsertReferenceOperation : public PropertyFieldOperation
+	class OVITO_CORE_EXPORT InsertReferenceOperation : public PropertyFieldOperation
 	{
 	public:
     	InsertReferenceOperation(RefMaker* owner, RefTarget* target, VectorReferenceFieldBase& reffield, int index, const PropertyFieldDescriptor& descriptor);
@@ -400,7 +401,7 @@ protected:
 		int _index;
 	};
 
-	class RemoveReferenceOperation : public PropertyFieldOperation
+	class OVITO_CORE_EXPORT RemoveReferenceOperation : public PropertyFieldOperation
 	{
 	public:
     	RemoveReferenceOperation(RefMaker* owner, VectorReferenceFieldBase& reffield, int index, const PropertyFieldDescriptor& descriptor);

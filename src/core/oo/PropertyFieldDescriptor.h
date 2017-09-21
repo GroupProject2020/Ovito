@@ -60,8 +60,6 @@ enum PropertyFieldFlag
 	PROPERTY_FIELD_DONT_SAVE_RECOMPUTABLE_DATA	= (1<<10)
 };
 Q_DECLARE_FLAGS(PropertyFieldFlags, PropertyFieldFlag);
-Q_DECLARE_OPERATORS_FOR_FLAGS(PropertyFieldFlags);
-
 
 /**
  * \brief Provides meta information about a numerical parameter field of a class.

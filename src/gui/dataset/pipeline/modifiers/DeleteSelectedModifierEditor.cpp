@@ -19,7 +19,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <plugins/particles/Particles.h>
+#include <gui/GUI.h>
 #include <gui/properties/ModifierDelegateListParameterUI.h>
 #include <core/dataset/pipeline/modifiers/DeleteSelectedModifier.h>
 #include "DeleteSelectedModifierEditor.h"

@@ -51,7 +51,7 @@ SET(GLUSourceFiles
 )
 
 OVITO_STANDARD_PLUGIN(Mesh
-	SOURCES ${SourceFiles} ${GLUSourceFiles}
+	SOURCES Mesh.cpp ${SourceFiles} ${GLUSourceFiles}
 	OPTIONAL_PLUGIN_DEPENDENCIES PyScript	
 	PYTHON_WRAPPERS "${CMAKE_CURRENT_SOURCE_DIR}/resources/python/"
 )

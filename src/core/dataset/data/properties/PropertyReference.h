@@ -100,8 +100,8 @@ private:
 	/// The zero-based component index if the property is a vector property (or zero if not a vector property).
 	int _vectorComponent = -1;
 
-	friend SaveStream& operator<<(SaveStream& stream, const PropertyReference& r);
-	friend LoadStream& operator>>(LoadStream& stream, PropertyReference& r);
+	friend OVITO_CORE_EXPORT SaveStream& operator<<(SaveStream& stream, const PropertyReference& r);
+	friend OVITO_CORE_EXPORT LoadStream& operator>>(LoadStream& stream, PropertyReference& r);
 };
 
 /// Writes a PropertyReference to an output stream.
