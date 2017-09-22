@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,43 +24,41 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
-#include <core/dataset/pipeline/modifiers/SliceModifier.h>
+#include <core/dataset/pipeline/modifiers/ReplicateModifier.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
 /**
- * \brief Slice function that operates on dislocation lines.
+ * \brief Delegate for the ReplicateModifier that operates on dislocation lines.
  */
-class OVITO_CRYSTALANALYSIS_EXPORT DislocationSliceModifierDelegate : public SliceModifierDelegate
+class DislocationReplicateModifierDelegate : public ReplicateModifierDelegate
 {
 	/// Give the modifier delegate its own metaclass.
-	class OOMetaClass : public SliceModifierDelegate::OOMetaClass 
+	class OOMetaClass : public ReplicateModifierDelegate::OOMetaClass 
 	{
 	public:
 
 		/// Inherit constructor from base class.
-		using SliceModifierDelegate::OOMetaClass::OOMetaClass;
+		using ReplicateModifierDelegate::OOMetaClass::OOMetaClass;
 
 		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override {
-			return input.findObject<DislocationNetworkObject>() != nullptr;
-		}
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
 
 		/// The name by which Python scripts can refer to this modifier delegate.
 		virtual QString pythonDataName() const override { return QStringLiteral("dislocations"); }
 	};
-	
-	Q_OBJECT
-	OVITO_CLASS_META(DislocationSliceModifierDelegate, OOMetaClass)
 
-	Q_CLASSINFO("DisplayName", "Dislocation lines");
+	Q_OBJECT
+	OVITO_CLASS_META(DislocationReplicateModifierDelegate, OOMetaClass)
+
+	Q_CLASSINFO("DisplayName", "Dislocations");
 
 public:
 
 	/// Constructor.
-	Q_INVOKABLE DislocationSliceModifierDelegate(DataSet* dataset) : SliceModifierDelegate(dataset) {}
+	Q_INVOKABLE DislocationReplicateModifierDelegate(DataSet* dataset) : ReplicateModifierDelegate(dataset) {}
 
-	/// \brief Applies a slice operation to a data object.
+	/// Applies the modifier operation to the data in a pipeline flow state.
 	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp) override;
 };
 

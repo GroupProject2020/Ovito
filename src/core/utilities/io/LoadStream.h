@@ -259,6 +259,26 @@ inline LoadStream& operator>>(LoadStream& stream, QVector<T>& v)
 	return stream;
 }
 
+/// \brief Reads a vector with a variable number of values from the input stream.
+/// \relates LoadStream
+///
+/// \param stream The source stream.
+/// \param a The vector the will receive the loaded data.
+/// \return The source stream.
+/// \throw Exception if an I/O error has occurred.
+///
+/// The vector will automatically be resized to the number of elements stored in the stream.
+template<typename T>
+inline LoadStream& operator>>(LoadStream& stream, std::vector<T>& v)
+{
+	size_t n;
+	stream.readSizeT(n);
+	v.resize(n);
+	for(auto& el : v)
+		stream >> el;
+	return stream;
+}
+
 /// \brief Reads an array with a fixed number of values from the input stream.
 /// \relates LoadStream
 ///

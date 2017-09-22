@@ -151,12 +151,11 @@ struct DislocationSegment
 	DislocationNode* nodes[2];
 
 	/// The segment that replaces this discarded segment if the two have been merged into one segment.
-	DislocationSegment* replacedWith;
+	DislocationSegment* replacedWith = nullptr;
 
 	/// Constructs a new dislocation segment with the given Burgers vector
 	/// and connecting the two dislocation nodes.
-	DislocationSegment(const ClusterVector& b, DislocationNode* forwardNode, DislocationNode* backwardNode) :
-		burgersVector(b), replacedWith(nullptr) {
+	DislocationSegment(const ClusterVector& b, DislocationNode* forwardNode, DislocationNode* backwardNode) : burgersVector(b) {
 		OVITO_ASSERT(b.localVec() != Vector3::Zero());
 		nodes[0] = forwardNode;
 		nodes[1] = backwardNode;

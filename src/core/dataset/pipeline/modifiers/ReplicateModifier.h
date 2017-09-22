@@ -22,63 +22,71 @@
 #pragma once
 
 
-#include <plugins/particles/Particles.h>
-#include <core/dataset/pipeline/Modifier.h>
+#include <core/Core.h>
+#include <core/dataset/pipeline/modifiers/DelegatingModifier.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
+namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
 /**
- * \brief This modifier duplicates all atoms multiple times and shifts them by
- *        one of the simulation cell vectors to visualize the periodic images.
- *
- * \author Alexander Stukowski
+ * \brief Base class for ReplicateModifier delegates that operate on different kinds of data.
  */
-class OVITO_PARTICLES_EXPORT ShowPeriodicImagesModifier : public Modifier
+class OVITO_CORE_EXPORT ReplicateModifierDelegate : public ModifierDelegate
 {
+	Q_OBJECT
+	OVITO_CLASS(ReplicateModifierDelegate)
+	
+protected:
+
+	/// Abstract class constructor.
+	ReplicateModifierDelegate(DataSet* dataset) : ModifierDelegate(dataset) {}
+};
+
+/**
+ * \brief This modifier duplicates data elements (e.g. particles) multiple times and shifts them by
+ *        the simulation cell vectors to visualize periodic images.
+ */
+class OVITO_CORE_EXPORT ReplicateModifier : public MultiDelegatingModifier
+{
+public:
+
 	/// Give this modifier class its own metaclass.
-	class ShowPeriodicImagesModifierClass : public ModifierClass 
+	class OOMetalass : public MultiDelegatingModifier::OOMetaClass 
 	{
 	public:
 
 		/// Inherit constructor from base class.
-		using ModifierClass::ModifierClass;
+		using MultiDelegatingModifier::OOMetaClass::OOMetaClass;
 
 		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
-	};
-	
-	Q_OBJECT
-	OVITO_CLASS_META(ShowPeriodicImagesModifier, ShowPeriodicImagesModifierClass)
+		virtual bool isApplicableTo(const PipelineFlowState& input) const override;		
 
-	Q_CLASSINFO("DisplayName", "Show periodic images");
-	Q_CLASSINFO("ModifierCategory", "Modification");
+		/// Return the metaclass of delegates for this modifier type. 
+		virtual const ModifierDelegate::OOMetaClass& delegateMetaclass() const override { return ReplicateModifierDelegate::OOClass(); }
+	};
+
+	OVITO_CLASS_META(ReplicateModifier, OOMetalass)
+	Q_CLASSINFO("DisplayName", "Replicate");
+	Q_CLASSINFO("ModifierCategory", "Modification");	
+	Q_OBJECT
 
 public:
 
 	/// \brief Constructs a new instance of this class.
-	Q_INVOKABLE ShowPeriodicImagesModifier(DataSet* dataset);
+	Q_INVOKABLE ReplicateModifier(DataSet* dataset);
 
-	/// Loads the user-defined default values of this object's parameter fields from the
-	/// application's settings store.
-	virtual void loadUserDefaults() override;
-		
 	/// Modifies the input data in an immediate, preliminary way.
 	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
+	/// Helper function that returns the range of replicated boxes.
+	Box3I replicaRange() const;
+	
 private:
 
-	/// Controls whether the periodic images are shown in the X direction.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, showImageX, setShowImageX);
-	/// Controls whether the periodic images are shown in the Y direction.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, showImageY, setShowImageY);
-	/// Controls whether the periodic images are shown in the Z direction.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, showImageZ, setShowImageZ);
-
-	/// Controls the number of periodic images shown in the X direction.
+	/// Controls the number of periodic images generated in the X direction.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, numImagesX, setNumImagesX);
-	/// Controls the number of periodic images shown in the Y direction.
+	/// Controls the number of periodic images generated in the Y direction.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, numImagesY, setNumImagesY);
-	/// Controls the number of periodic images shown in the Z direction.
+	/// Controls the number of periodic images generated in the Z direction.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, numImagesZ, setNumImagesZ);
 
 	/// Controls whether the size of the simulation box is adjusted to the extended system.
@@ -91,6 +99,3 @@ private:
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-}	// End of namespace
-
-

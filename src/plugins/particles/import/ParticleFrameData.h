@@ -26,7 +26,7 @@
 #include <plugins/particles/objects/BondsStorage.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/particles/objects/BondProperty.h>
-#include <plugins/grid/data/VoxelProperty.h>
+#include <plugins/grid/objects/VoxelProperty.h>
 #include <core/dataset/io/FileSourceImporter.h>
 #include <core/dataset/data/properties/PropertyStorage.h>
 #include <core/dataset/data/simcell/SimulationCell.h>
@@ -296,18 +296,24 @@ public:
 		return nullptr;
 	}
 
-	/// Returns the list of field quantities.
-	const std::vector<PropertyPtr>& fieldQuantities() const { return _fieldQuantities; }
+	/// Returns the shape of the voxel grid.
+	const std::vector<size_t>& voxelGridShape() const { return _voxelGridShape; }
 
-	/// Adds a new field quantity.
+	/// Sets the shape of the voxel grid.
+	void setVoxelGridShape(std::vector<size_t> shape) { _voxelGridShape = std::move(shape); }
+	
+	/// Returns the list of voxel properties.
+	const std::vector<PropertyPtr>& voxelProperties() const { return _voxelProperties; }
+
+	/// Adds a new voxel grid property.
 	void addVoxelProperty(PropertyPtr quantity) {
-		_fieldQuantities.push_back(std::move(quantity));
+		_voxelProperties.push_back(std::move(quantity));
 	}
 
-	/// Removes a field quantity from the list.
+	/// Removes a voxel grid property from the list.
 	void removeVoxelProperty(int index) {
-		OVITO_ASSERT(index >= 0 && index < _fieldQuantities.size());
-		_fieldQuantities.erase(_fieldQuantities.begin() + index);
+		OVITO_ASSERT(index >= 0 && index < _voxelProperties.size());
+		_voxelProperties.erase(_voxelProperties.begin() + index);
 	}
 
 	/// Returns the metadata read from the file header.
@@ -347,8 +353,11 @@ private:
 	/// Stores the lists of bond types for type properties.
 	std::map<const PropertyStorage*, std::unique_ptr<BondTypeList>> _bondTypeLists;
 
-	/// Structured field quantities.
-	std::vector<PropertyPtr> _fieldQuantities;
+	/// Voxel grid properties.
+	std::vector<PropertyPtr> _voxelProperties;
+
+	/// The shape of the voxel grid.
+	std::vector<size_t> _voxelGridShape;
 
 	/// The metadata read from the file header.
 	QVariantMap _attributes;

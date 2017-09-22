@@ -20,103 +20,47 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/BondsObject.h>
-#include <plugins/particles/objects/BondProperty.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
+#include <plugins/particles/objects/BondsObject.h>
+#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/ParticleProperty.h>
 #include <core/dataset/data/simcell/SimulationCellObject.h>
-#include <core/utilities/units/UnitsManager.h>
-#include "ShowPeriodicImagesModifier.h"
+#include <core/dataset/DataSet.h>
+#include "ParticlesReplicateModifierDelegate.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 
-IMPLEMENT_OVITO_CLASS(ShowPeriodicImagesModifier);
-DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, showImageX);
-DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, showImageY);
-DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, showImageZ);
-DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, numImagesX);
-DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, numImagesY);
-DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, numImagesZ);
-DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, adjustBoxSize);
-DEFINE_PROPERTY_FIELD(ShowPeriodicImagesModifier, uniqueIdentifiers);
-SET_PROPERTY_FIELD_LABEL(ShowPeriodicImagesModifier, showImageX, "Periodic images X");
-SET_PROPERTY_FIELD_LABEL(ShowPeriodicImagesModifier, showImageY, "Periodic images Y");
-SET_PROPERTY_FIELD_LABEL(ShowPeriodicImagesModifier, showImageZ, "Periodic images Z");
-SET_PROPERTY_FIELD_LABEL(ShowPeriodicImagesModifier, numImagesX, "Number of periodic images - X");
-SET_PROPERTY_FIELD_LABEL(ShowPeriodicImagesModifier, numImagesY, "Number of periodic images - Y");
-SET_PROPERTY_FIELD_LABEL(ShowPeriodicImagesModifier, numImagesZ, "Number of periodic images - Z");
-SET_PROPERTY_FIELD_LABEL(ShowPeriodicImagesModifier, adjustBoxSize, "Adjust simulation box size");
-SET_PROPERTY_FIELD_LABEL(ShowPeriodicImagesModifier, uniqueIdentifiers, "Assign unique particle IDs");
-SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ShowPeriodicImagesModifier, numImagesX, IntegerParameterUnit, 1);
-SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ShowPeriodicImagesModifier, numImagesY, IntegerParameterUnit, 1);
-SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ShowPeriodicImagesModifier, numImagesZ, IntegerParameterUnit, 1);
+IMPLEMENT_OVITO_CLASS(ParticlesReplicateModifierDelegate);
 
 /******************************************************************************
-* Constructs the modifier object.
+* Determines whether this delegate can handle the given input data.
 ******************************************************************************/
-ShowPeriodicImagesModifier::ShowPeriodicImagesModifier(DataSet* dataset) : Modifier(dataset),
-	_showImageX(true), 
-	_showImageY(true), 
-	_showImageZ(true),
-	_numImagesX(1), 
-	_numImagesY(1), 
-	_numImagesZ(1), 
-	_adjustBoxSize(false), 
-	_uniqueIdentifiers(true)
-{
-}
-
-/******************************************************************************
-* Asks the modifier whether it can be applied to the given input data.
-******************************************************************************/
-bool ShowPeriodicImagesModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool ParticlesReplicateModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
 	return input.findObject<ParticleProperty>() != nullptr;
 }
 
 /******************************************************************************
-* Loads the user-defined default values of this object's parameter fields from the
-* application's settings store.
+* Applies the modifier operation to the data in a pipeline flow state.
 ******************************************************************************/
-void ShowPeriodicImagesModifier::loadUserDefaults()
+PipelineStatus ParticlesReplicateModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp)
 {
-	Modifier::loadUserDefaults();
-
-	// In the graphical program environment, we use the following parameter defaults:
-	setShowImageX(false);
-	setShowImageY(false);
-	setShowImageZ(false);
-	setNumImagesX(3);
-	setNumImagesY(3);
-	setNumImagesZ(3);
-}
-
-/******************************************************************************
-* Modifies the input data in an immediate, preliminary way.
-******************************************************************************/
-PipelineFlowState ShowPeriodicImagesModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
-{
-	PipelineFlowState output = input;
+	ReplicateModifier* mod = static_object_cast<ReplicateModifier>(modifier);
 	ParticleInputHelper pih(dataset(), input);
 	ParticleOutputHelper poh(dataset(), output);
 	
 	std::array<int,3> nPBC;
-	nPBC[0] = showImageX() ? std::max(numImagesX(),1) : 1;
-	nPBC[1] = showImageY() ? std::max(numImagesY(),1) : 1;
-	nPBC[2] = showImageZ() ? std::max(numImagesZ(),1) : 1;
+	nPBC[0] = std::max(mod->numImagesX(),1);
+	nPBC[1] = std::max(mod->numImagesY(),1);
+	nPBC[2] = std::max(mod->numImagesZ(),1);
 
-	// Calculate new number of atoms.
+	// Calculate new number of particles.
 	size_t numCopies = nPBC[0] * nPBC[1] * nPBC[2];
 	if(numCopies <= 1 || pih.inputParticleCount() == 0)
-		return output;
+		return PipelineStatus::Success;
 
-	Box3I newImages;
-	newImages.minc[0] = -(nPBC[0]-1)/2;
-	newImages.minc[1] = -(nPBC[1]-1)/2;
-	newImages.minc[2] = -(nPBC[2]-1)/2;
-	newImages.maxc[0] = nPBC[0]/2;
-	newImages.maxc[1] = nPBC[1]/2;
-	newImages.maxc[2] = nPBC[2]/2;
+	Box3I newImages = mod->replicaRange();
 
 	// Enlarge particle property arrays.
 	size_t oldParticleCount = pih.inputParticleCount();
@@ -159,7 +103,7 @@ PipelineFlowState ShowPeriodicImagesModifier::evaluatePreliminary(TimePoint time
 		}
 
 		// Assign unique IDs to duplicated particle.
-		if(uniqueIdentifiers() && newProperty->type() == ParticleProperty::IdentifierProperty) {
+		if(mod->uniqueIdentifiers() && newProperty->type() == ParticleProperty::IdentifierProperty) {
 			auto minmax = std::minmax_element(newProperty->constDataInt(), newProperty->constDataInt() + oldParticleCount);
 			int minID = *minmax.first;
 			int maxID = *minmax.second;
@@ -169,17 +113,6 @@ PipelineFlowState ShowPeriodicImagesModifier::evaluatePreliminary(TimePoint time
 					*id += offset;
 			}
 		}
-	}
-
-	// Extend simulation box if requested.
-	if(adjustBoxSize()) {
-		simCell.translation() += (FloatType)newImages.minc.x() * simCell.column(0);
-		simCell.translation() += (FloatType)newImages.minc.y() * simCell.column(1);
-		simCell.translation() += (FloatType)newImages.minc.z() * simCell.column(2);
-		simCell.column(0) *= nPBC[0];
-		simCell.column(1) *= nPBC[1];
-		simCell.column(2) *= nPBC[2];
-		poh.outputObject<SimulationCellObject>()->setCellMatrix(simCell);
 	}
 
 	// Replicate bonds.
@@ -211,7 +144,7 @@ PipelineFlowState ShowPeriodicImagesModifier::evaluatePreliminary(TimePoint time
 							int i = image[dim] + (int)inBond->pbcShift[dim] - newImages.minc[dim];
 							newImage[dim] = SimulationCell::modulo(i, nPBC[dim]) + newImages.minc[dim];
 							newShift[dim] = i >= 0 ? (i / nPBC[dim]) : ((i-nPBC[dim]+1) / nPBC[dim]);
-							if(!adjustBoxSize())
+							if(!mod->adjustBoxSize())
 								newShift[dim] *= nPBC[dim];
 						}
 						OVITO_ASSERT(newImage.x() >= newImages.minc.x() && newImage.x() <= newImages.maxc.x());
@@ -259,7 +192,7 @@ PipelineFlowState ShowPeriodicImagesModifier::evaluatePreliminary(TimePoint time
 		}
 	}
 
-	return output;
+	return PipelineStatus::Success;
 }
 
 OVITO_END_INLINE_NAMESPACE

@@ -27,6 +27,7 @@ SET(SourceFiles
 	surface/SurfaceMeshDisplay.cpp	
 	surface/SurfaceMeshSliceModifierDelegate.cpp
 	surface/SurfaceMeshAffineTransformationModifierDelegate.cpp
+	surface/SurfaceMeshReplicateModifierDelegate.cpp
 	io/TriMeshFrameData.cpp
 	io/VTKFileImporter.cpp
 	io/VTKTriangleMeshExporter.cpp

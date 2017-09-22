@@ -28,17 +28,17 @@
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /**
- * A properties editor for the ShowPeriodicImagesModifier class.
+ * A properties editor for the ReplicateModifier class.
  */
-class ShowPeriodicImagesModifierEditor : public ModifierPropertiesEditor
+class ReplicateModifierEditor : public ModifierPropertiesEditor
 {
 	Q_OBJECT
-	OVITO_CLASS(ShowPeriodicImagesModifierEditor)
+	OVITO_CLASS(ReplicateModifierEditor)
 
 public:
 
 	/// Default constructor.
-	Q_INVOKABLE ShowPeriodicImagesModifierEditor() {}
+	Q_INVOKABLE ReplicateModifierEditor() {}
 
 protected:
 

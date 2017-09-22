@@ -27,7 +27,8 @@
 #include <plugins/particles/objects/ParticleType.h>
 #include <plugins/particles/objects/BondProperty.h>
 #include <plugins/particles/objects/BondType.h>
-#include <plugins/grid/data/VoxelProperty.h>
+#include <plugins/grid/objects/VoxelProperty.h>
+#include <plugins/grid/objects/VoxelGrid.h>
 #include <core/dataset/data/simcell/SimulationCellObject.h>
 #include <core/dataset/data/simcell/SimulationCellDisplay.h>
 #include <core/dataset/data/properties/PropertyStorage.h>
@@ -192,27 +193,38 @@ PipelineFlowState ParticleFrameData::handOver(DataSet* dataset, const PipelineFl
 		}
 	}
 
-	// Transfer field quantities.
-	for(auto& fq : _fieldQuantities) {
+	// Transfer voxel data.
+	if(voxelGridShape().empty() == false) {
 
-		// Look for existing field quantity object.
-		OORef<VoxelProperty> fqObj;
-		for(DataObject* dataObj : existing.objects()) {
-			VoxelProperty* po = dynamic_object_cast<VoxelProperty>(dataObj);
-			if(po && po->name() == fq->name()) {
-				fqObj = po;
-				break;
+		OORef<VoxelGrid> voxelGrid = existing.findObject<VoxelGrid>();
+		if(!voxelGrid) {
+			voxelGrid = new VoxelGrid(dataset);
+		}
+		voxelGrid->setShape(voxelGridShape());
+		voxelGrid->setDomain(cell);
+		output.addObject(voxelGrid);
+		
+		for(auto& property : voxelProperties()) {
+
+			// Look for existing field quantity object.
+			OORef<VoxelProperty> propertyObject;
+			for(DataObject* dataObj : existing.objects()) {
+				VoxelProperty* po = dynamic_object_cast<VoxelProperty>(dataObj);
+				if(po && po->name() == property->name()) {
+					propertyObject = po;
+					break;
+				}
 			}
-		}
 
-		if(fqObj) {
-			fqObj->setStorage(std::move(fq));
-		}
-		else {
-			fqObj = static_object_cast<VoxelProperty>(VoxelProperty::OOClass().createFromStorage(dataset, std::move(fq)));
-		}
+			if(propertyObject) {
+				propertyObject->setStorage(std::move(property));
+			}
+			else {
+				propertyObject = static_object_cast<VoxelProperty>(VoxelProperty::OOClass().createFromStorage(dataset, std::move(property)));
+			}
 
-		output.addObject(fqObj);
+			output.addObject(propertyObject);
+		}
 	}
 
 	// Pass timestep information and other metadata to modification pipeline.

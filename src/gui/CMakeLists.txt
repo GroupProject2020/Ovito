@@ -69,6 +69,7 @@ SET(SourceFiles
 	dataset/pipeline/modifiers/SelectTypeModifierEditor.cpp
 	dataset/pipeline/modifiers/HistogramModifierEditor.cpp
 	dataset/pipeline/modifiers/ScatterPlotModifierEditor.cpp
+	dataset/pipeline/modifiers/ReplicateModifierEditor.cpp
 	widgets/general/RolloutContainer.cpp
 	widgets/general/RolloutContainerLayout.cpp
 	widgets/general/SpinnerWidget.cpp

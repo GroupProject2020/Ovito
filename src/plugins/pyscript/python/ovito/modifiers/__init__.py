@@ -40,6 +40,7 @@ Python class name                              User interface name
 :py:class:`DislocationAnalysisModifier`        :guilabel:`Dislocation analysis (DXA)`
 :py:class:`ElasticStrainModifier`              :guilabel:`Elastic strain calculation`
 :py:class:`ExpandSelectionModifier`            :guilabel:`Expand selection`
+:py:class:`ExpressionSelectionModifier`        :guilabel:`Expression selection`
 :py:class:`FreezePropertyModifier`             :guilabel:`Freeze property`
 :py:class:`HistogramModifier`                  :guilabel:`Histogram`
 :py:class:`IdentifyDiamondModifier`            :guilabel:`Identify diamond structure`
@@ -48,10 +49,9 @@ Python class name                              User interface name
 :py:class:`ManualSelectionModifier`            :guilabel:`Manual selection`
 :py:class:`PolyhedralTemplateMatchingModifier` :guilabel:`Polyhedral template matching`
 :py:class:`PythonScriptModifier`               :guilabel:`Python script`
+:py:class:`ReplicateModifier`                  :guilabel:`Replicate`
 :py:class:`ScatterPlotModifier`                :guilabel:`Scatter plot`
-:py:class:`ExpressionSelectionModifier`        :guilabel:`Expression selection`
 :py:class:`SelectTypeModifier`                 :guilabel:`Select type`
-:py:class:`ShowPeriodicImagesModifier`         :guilabel:`Show periodic images`
 :py:class:`SliceModifier`                      :guilabel:`Slice`
 :py:class:`VoronoiAnalysisModifier`            :guilabel:`Voronoi analysis`
 :py:class:`VoroTopModifier`                    :guilabel:`VoroTop analysis`
@@ -68,7 +68,8 @@ in a more straightforward manner.*
 # Load the native module.
 from ..plugins.PyScript.Scene import (PythonScriptModifier, SliceModifier, AffineTransformationModifier,
                                     ClearSelectionModifier, InvertSelectionModifier, ColorCodingModifier,
-                                    AssignColorModifier, DeleteSelectedModifier, ScatterPlotModifier)
+                                    AssignColorModifier, DeleteSelectedModifier, ScatterPlotModifier,
+                                    ReplicateModifier)
 
 # Load submodules.
 from .select_type_modifier import SelectTypeModifier
@@ -77,7 +78,7 @@ from .histogram_modifier import HistogramModifier
 __all__ = ['PythonScriptModifier', 'SliceModifier', 'AffineTransformationModifier', 
             'ClearSelectionModifier', 'InvertSelectionModifier', 'ColorCodingModifier',
             'AssignColorModifier', 'DeleteSelectedModifier', 'SelectTypeModifier', 'HistogramModifier', 
-            'ScatterPlotModifier']
+            'ScatterPlotModifier', 'ReplicateModifier']
 
 # For backward compatibility with OVITO 2.9.0:
 def _ColorCodingModifier_set_particle_property(self, v): self.property = v
@@ -107,4 +108,5 @@ AffineTransformationModifier.transform_vector_properties = property(lambda self:
 # For backward compatibility with OVITO 2.9.0:
 DeleteSelectedParticlesModifier = DeleteSelectedModifier
 SelectParticleTypeModifier = SelectTypeModifier
-__all__ += ['DeleteSelectedParticlesModifier', 'SelectParticleTypeModifier']
+ShowPeriodicImagesModifier = ReplicateModifier
+__all__ += ['DeleteSelectedParticlesModifier', 'SelectParticleTypeModifier', 'ShowPeriodicImagesModifier']

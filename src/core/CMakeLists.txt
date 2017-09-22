@@ -101,6 +101,7 @@ SET(SourceFiles
 	dataset/pipeline/modifiers/SelectTypeModifier.cpp
 	dataset/pipeline/modifiers/HistogramModifier.cpp
 	dataset/pipeline/modifiers/ScatterPlotModifier.cpp
+	dataset/pipeline/modifiers/ReplicateModifier.cpp
 	utilities/units/UnitsManager.cpp
 	utilities/io/ObjectSaveStream.cpp
 	utilities/io/ObjectLoadStream.cpp

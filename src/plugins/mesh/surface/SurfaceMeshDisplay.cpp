@@ -236,6 +236,8 @@ bool SurfaceMeshDisplay::buildSurfaceMesh(const HalfEdgeMesh<>& input, const Sim
 {
 	if(cell.is2D())
 		throw Exception(tr("Cannot generate surface triangle mesh when domain is two-dimensional."));
+	
+	OVITO_ASSERT(input.isClosed());
 
 	// Convert half-edge mesh to triangle mesh.
 	input.convertToTriMesh(output);

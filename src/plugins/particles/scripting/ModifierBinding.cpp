@@ -24,7 +24,6 @@
 #include <core/dataset/data/properties/PropertyStorage.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/particles/modifier/coloring/AmbientOcclusionModifier.h>
-#include <plugins/particles/modifier/modify/ShowPeriodicImagesModifier.h>
 #include <plugins/particles/modifier/modify/WrapPeriodicImagesModifier.h>
 #include <plugins/particles/modifier/modify/CreateBondsModifier.h>
 #include <plugins/particles/modifier/modify/LoadTrajectoryModifier.h>
@@ -85,36 +84,6 @@ void defineModifiersSubmodule(py::module parentModule)
 				":Default: 3\n")
 	;
 
-	ovito_class<ShowPeriodicImagesModifier, Modifier>(m,
-			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
-			"This modifier replicates all particles and bonds to display periodic images.")
-		.def_property("replicate_x", &ShowPeriodicImagesModifier::showImageX, &ShowPeriodicImagesModifier::setShowImageX)
-		.def_property("replicate_y", &ShowPeriodicImagesModifier::showImageY, &ShowPeriodicImagesModifier::setShowImageY)
-		.def_property("replicate_z", &ShowPeriodicImagesModifier::showImageZ, &ShowPeriodicImagesModifier::setShowImageZ)
-		.def_property("num_x", &ShowPeriodicImagesModifier::numImagesX, &ShowPeriodicImagesModifier::setNumImagesX,
-				"A positive integer specifying the number of copies to generate in the *x* direction (including the existing primary image)."
-				"\n\n"
-				":Default: 1\n")
-		.def_property("num_y", &ShowPeriodicImagesModifier::numImagesY, &ShowPeriodicImagesModifier::setNumImagesY,
-				"A positive integer specifying the number of copies to generate in the *y* direction (including the existing primary image)."
-				"\n\n"
-				":Default: 1\n")
-		.def_property("num_z", &ShowPeriodicImagesModifier::numImagesZ, &ShowPeriodicImagesModifier::setNumImagesZ,
-				"A positive integer specifying the number of copies to generate in the *z* direction (including the existing primary image)."
-				"\n\n"
-				":Default: 1\n")
-		.def_property("adjust_box", &ShowPeriodicImagesModifier::adjustBoxSize, &ShowPeriodicImagesModifier::setAdjustBoxSize,
-				"A boolean flag controlling the modification of the simulation cell geometry. "
-				"If ``True``, the simulation cell is extended to fit the extended system. "
-				"If ``False``, the original simulation cell (containing only the primary image of the system) is kept. "
-				"\n\n"
-				":Default: ``False``\n")
-		.def_property("unique_ids", &ShowPeriodicImagesModifier::uniqueIdentifiers, &ShowPeriodicImagesModifier::setUniqueIdentifiers,
-				"If ``True``, the modifier automatically generates a new unique ID for each copy of a particle. "
-				"This option has no effect if the input system does not contain particle IDs. "
-				"\n\n"
-				":Default: ``True``\n")
-	;
 
 	ovito_class<WrapPeriodicImagesModifier, Modifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"

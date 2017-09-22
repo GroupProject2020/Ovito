@@ -71,7 +71,7 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 	SharedFuture<PipelineFlowState> trajStateFuture = trajectorySource()->evaluate(time);
 	
 	// Wait for the data to become available.
-	return trajStateFuture.then(executor(), [this, input = std::move(input)](const PipelineFlowState& trajState) {
+	return trajStateFuture.then(executor(), [this, input = input](const PipelineFlowState& trajState) {
 	
 		PipelineFlowState output = input;
 		ParticleInputHelper pih(dataset(), input);

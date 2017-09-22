@@ -97,7 +97,7 @@ Future<PipelineFlowState> InterpolateTrajectoryModifier::evaluate(TimePoint time
 	}
 
 	// Wait for the reference configuration to become available.
-	return nextStateFuture.then(executor(), [this, time, modApp, input = std::move(input), nextFrame](const PipelineFlowState& nextState) mutable {
+	return nextStateFuture.then(executor(), [this, time, modApp, input = input, nextFrame](const PipelineFlowState& nextState) mutable {
 		if(InterpolateTrajectoryModifierApplication* myModApp = dynamic_object_cast<InterpolateTrajectoryModifierApplication>(modApp)) {
 			
 			// Make sure the obtained reference configuration is valid and ready to use.

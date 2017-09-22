@@ -10,7 +10,6 @@ from .coordination_number_modifier import CoordinationNumberModifier
 
 # Inject classes into parent module.
 ovito.modifiers.AmbientOcclusionModifier = AmbientOcclusionModifier
-ovito.modifiers.ShowPeriodicImagesModifier = ShowPeriodicImagesModifier
 ovito.modifiers.WrapPeriodicImagesModifier = WrapPeriodicImagesModifier
 ovito.modifiers.ComputePropertyModifier = ComputePropertyModifier
 ovito.modifiers.FreezePropertyModifier = FreezePropertyModifier
@@ -36,7 +35,7 @@ ovito.modifiers.ComputeBondLengthsModifier = ComputeBondLengthsModifier
 ovito.modifiers.PolyhedralTemplateMatchingModifier = PolyhedralTemplateMatchingModifier
 ovito.modifiers.CoordinationPolyhedraModifier = CoordinationPolyhedraModifier
 ovito.modifiers.__all__ += ['AmbientOcclusionModifier', 
-            'ShowPeriodicImagesModifier', 'WrapPeriodicImagesModifier', 'ComputePropertyModifier', 'FreezePropertyModifier',
+            'WrapPeriodicImagesModifier', 'ComputePropertyModifier', 'FreezePropertyModifier',
             'ManualSelectionModifier', 'ExpandSelectionModifier',
             'ExpressionSelectionModifier', 'BinAndReduceModifier',
             'StructureIdentificationModifier', 'CommonNeighborAnalysisModifier', 'BondAngleAnalysisModifier',

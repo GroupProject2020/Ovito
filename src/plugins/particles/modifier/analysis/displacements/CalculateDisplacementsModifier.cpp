@@ -168,6 +168,8 @@ PipelineFlowState CalculateDisplacementsModifier::DisplacementResults::apply(Tim
 
 	PipelineFlowState output = input;
 	ParticleOutputHelper poh(modApp->dataset(), output);
+	if(displacements()->size() != poh.outputParticleCount())
+		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
 	poh.outputProperty<ParticleProperty>(displacements())->setDisplayObject(modifier->vectorDisplay());	
 	poh.outputProperty<ParticleProperty>(displacementMagnitudes());
 	

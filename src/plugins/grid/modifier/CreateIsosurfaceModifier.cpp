@@ -20,6 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/grid/Grid.h>
+#include <plugins/grid/objects/VoxelGrid.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/InputHelper.h>
 #include <core/dataset/data/simcell/SimulationCellObject.h>
@@ -66,7 +67,7 @@ TimeInterval CreateIsosurfaceModifier::modifierValidity(TimePoint time)
 ******************************************************************************/
 bool CreateIsosurfaceModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<VoxelProperty>() != nullptr;
+	return (input.findObject<VoxelProperty>() != nullptr) && (input.findObject<VoxelGrid>() != nullptr);
 }
 
 /******************************************************************************
@@ -110,7 +111,10 @@ Future<AsynchronousModifier::ComputeEnginePtr> CreateIsosurfaceModifier::createE
 	InputHelper ih(dataset(), input);
 
 	// Get modifier inputs.
-	SimulationCellObject* simCell = ih.expectSimulationCell();
+	VoxelGrid* voxelGrid = input.findObject<VoxelGrid>();
+	if(!voxelGrid)
+		throwException(tr("Modifier input contains no voxel data grid."));
+	OVITO_ASSERT(voxelGrid->domain());
 	if(sourceProperty().isNull())
 		throwException(tr("Select a field quantity first."));
 	VoxelProperty* property = sourceProperty().findInState(input);
@@ -123,8 +127,8 @@ Future<AsynchronousModifier::ComputeEnginePtr> CreateIsosurfaceModifier::createE
 	FloatType isolevel = isolevelController() ? isolevelController()->getFloatValue(time, validityInterval) : 0;
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<ComputeIsosurfaceEngine>(validityInterval, property->storage(), 
-			sourceProperty().vectorComponent(), simCell->data(), isolevel);
+	return std::make_shared<ComputeIsosurfaceEngine>(validityInterval, voxelGrid->shape(), property->storage(), 
+			sourceProperty().vectorComponent(), voxelGrid->domain()->data(), isolevel);
 }
 
 /******************************************************************************
@@ -134,28 +138,29 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 {
 	setProgressText(tr("Constructing isosurface"));
 
-	if(property()->shape().size() != 3)
+	if(_gridShape.size() != 3)
 		throw Exception(tr("Can construct isosurface only for three-dimensional voxel grids"));
 	if(property()->dataType() != qMetaTypeId<FloatType>())
 		throw Exception(tr("Can construct isosurface only for floating-point data"));
+	if(property()->size() != _gridShape[0]*_gridShape[1]*_gridShape[2])
+		throw Exception(tr("Input voxel property has wrong dimensions."));
 
 	const FloatType* fieldData = property()->constDataFloat() + std::max(_vectorComponent, 0);
-	const size_t shape[3] = {property()->shape()[0], property()->shape()[1], property()->shape()[2]}; 
 
-	MarchingCubes mc(shape[0], shape[1], shape[2], fieldData, property()->componentCount(), *_results->mesh());
+	MarchingCubes mc(_gridShape[0], _gridShape[1], _gridShape[2], fieldData, property()->componentCount(), *_results->mesh());
 	if(!mc.generateIsosurface(_isolevel, *this))
 		return;
 	_results->setIsCompletelySolid(mc.isCompletelySolid());
 
 	// Determin min/max field values.
-	const FloatType* fieldDataEnd = fieldData + shape[0]*shape[1]*shape[2]*property()->componentCount();
+	const FloatType* fieldDataEnd = fieldData + _gridShape[0]*_gridShape[1]*_gridShape[2]*property()->componentCount();
 	for(; fieldData != fieldDataEnd; fieldData += property()->componentCount()) {
 		_results->updateMinMax(*fieldData);
 	}
 
 	// Transform mesh vertices from orthogonal grid space to world space.
 	const AffineTransformation tm = _simCell.matrix() * 
-		Matrix3(FloatType(1) / shape[0], 0, 0, 0, FloatType(1) / shape[1], 0, 0, 0, FloatType(1) / shape[2]);
+		Matrix3(FloatType(1) / _gridShape[0], 0, 0, 0, FloatType(1) / _gridShape[1], 0, 0, 0, FloatType(1) / _gridShape[2]);
 	for(HalfEdgeMesh<>::Vertex* vertex : _results->mesh()->vertices())
 		vertex->setPos(tm * vertex->pos());
 
@@ -175,12 +180,16 @@ PipelineFlowState CreateIsosurfaceModifier::ComputeIsosurfaceResults::apply(Time
 {
 	CreateIsosurfaceModifier* modifier = static_object_cast<CreateIsosurfaceModifier>(modApp->modifier());
 	OVITO_ASSERT(modifier);
+
+	// Find the input voxel grid.
+	VoxelGrid* voxelGrid = input.findObject<VoxelGrid>();
+	if(!voxelGrid) return input;
 		
 	// Create the output data object.
 	OORef<SurfaceMesh> meshObj(new SurfaceMesh(modApp->dataset()));
 	meshObj->setStorage(mesh());
 	meshObj->setIsCompletelySolid(isCompletelySolid());
-	meshObj->setDomain(input.findObject<SimulationCellObject>());
+	meshObj->setDomain(voxelGrid->domain());
 	meshObj->addDisplayObject(modifier->surfaceMeshDisplay());
 
 	// Insert output object into the pipeline.

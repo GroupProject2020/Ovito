@@ -89,9 +89,9 @@ PipelineFlowState AsynchronousModifier::evaluatePreliminary(TimePoint time, Modi
 	// If results are still available from the last pipeline evaluation, apply them to the input data.
 	if(AsynchronousModifierApplication* asyncModApp = dynamic_object_cast<AsynchronousModifierApplication>(modApp)) {
 		if(asyncModApp->lastComputeResults())
-			return asyncModApp->lastComputeResults()->apply(time, modApp, std::move(input));
+			return asyncModApp->lastComputeResults()->apply(time, modApp, input);
 	}
-	return Modifier::evaluatePreliminary(time, modApp, std::move(input));
+	return Modifier::evaluatePreliminary(time, modApp, input);
 }
 
 /******************************************************************************

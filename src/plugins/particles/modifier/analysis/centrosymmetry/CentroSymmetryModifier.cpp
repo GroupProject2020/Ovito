@@ -131,6 +131,8 @@ PipelineFlowState CentroSymmetryModifier::CentroSymmetryResults::apply(TimePoint
 {
 	PipelineFlowState output = input;
 	ParticleOutputHelper poh(modApp->dataset(), output);
+	if(csp()->size() != poh.outputParticleCount())
+		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
 	poh.outputProperty<ParticleProperty>(csp());
 	return output;
 }
