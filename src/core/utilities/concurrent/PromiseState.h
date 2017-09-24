@@ -279,7 +279,7 @@ public:
 * results of the PromiseState. If the reference count goes to zero,
 * the PromiseState is automatically canceled.
 ******************************************************************************/
-class PromiseStateCountedPtr 
+class OVITO_CORE_EXPORT PromiseStateCountedPtr 
 {
 public:
 

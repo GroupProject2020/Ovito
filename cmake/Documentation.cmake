@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2013) Alexander Stukowski
+#  Copyright (2017) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -61,10 +61,11 @@ IF(OVITO_BUILD_DOCUMENTATION)
 		IF(NOT SPHINX_PROCESSOR)
 			MESSAGE(FATAL_ERROR "The Sphinx program (sphinx-build) was not found. Please install it and/or specify its location manually using the SPHINX_PROCESSOR setting.")
 		ENDIF()
+
+		# Path of 'ovitos' script interpreter:
+		GET_PROPERTY(OVITOS_EXECUTABLE TARGET ovitos PROPERTY LOCATION)
 		
 		# Use OVITO's built in Python interpreter to run the Sphinx doc program.
-		# We cannot use the standard Python interpreter for this, because it cannot load OVITO's scripting modules, which is required to auto-generate the
-		# interface documentation from the docstrings.
 		ADD_CUSTOM_TARGET(scripting_documentation ALL 
 					COMMAND "${OVITOS_EXECUTABLE}" ${SPHINX_PROCESSOR} "-b" "html" "-a" "-E" 
 					"-D" "version=${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}" 
@@ -74,7 +75,7 @@ IF(OVITO_BUILD_DOCUMENTATION)
 					COMMENT "Generating scripting documentation")
 		
 		# Run Sphinx only after OVITO and all of its plugins have been built.
-		ADD_DEPENDENCIES(scripting_documentation ${PROJECT_NAME})
+		ADD_DEPENDENCIES(scripting_documentation ovitos)
 		
 		# Build the scripting documentation together with the main documentation.
 		ADD_DEPENDENCIES(scripting_documentation documentation)

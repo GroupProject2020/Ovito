@@ -23,11 +23,11 @@
 SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${OVITO_LIBRARY_DIRECTORY}")
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${OVITO_LIBRARY_DIRECTORY}")
 
-################# 3rd-party libraries  ####################
+################### 3rd-party libraries  ####################
 
 ADD_SUBDIRECTORY(3rdparty)
 
-##################### Core library  #######################
+##################### Core library  ########################
 
 ADD_SUBDIRECTORY(core)
 
@@ -45,9 +45,10 @@ ENDIF()
 
 ADD_SUBDIRECTORY(plugins)
 
-# Propagate value of OVITOS_EXECUTABLE variable to parent scope.
-IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
-	SET(OVITOS_EXECUTABLE ${OVITOS_EXECUTABLE} PARENT_SCOPE)
+################### Python interpreter #######################
+
+IF(OVITO_BUILD_GUI AND OVITO_BUILD_PLUGIN_PYSCRIPT)
+	ADD_SUBDIRECTORY(ovitos)
 ENDIF()
 
 ################### Main executable #######################
