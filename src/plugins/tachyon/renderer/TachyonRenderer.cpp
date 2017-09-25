@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,6 +23,7 @@
 #include <core/rendering/FrameBuffer.h>
 #include <core/rendering/RenderSettings.h>
 #include <core/oo/CloneHelper.h>
+#include <core/app/Application.h>
 #include <core/dataset/scene/ObjectNode.h>
 #include <core/utilities/concurrent/Task.h>
 #include <core/utilities/units/UnitsManager.h>
@@ -89,10 +90,17 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(TachyonRenderer, ambientOcclusionSamples, Int
 * Default constructor.
 ******************************************************************************/
 TachyonRenderer::TachyonRenderer(DataSet* dataset) : NonInteractiveSceneRenderer(dataset),
-		_antialiasingEnabled(true), _directLightSourceEnabled(true), _shadowsEnabled(true),
-	  _antialiasingSamples(12), _ambientOcclusionEnabled(true), _ambientOcclusionSamples(12),
-	  _defaultLightSourceIntensity(FloatType(0.9)), _ambientOcclusionBrightness(FloatType(0.8)), _depthOfFieldEnabled(false),
-	  _dofFocalLength(40), _dofAperture(FloatType(1e-2))
+	_antialiasingEnabled(true), 
+	_directLightSourceEnabled(true), 
+	_shadowsEnabled(true),
+	_antialiasingSamples(12), 
+	_ambientOcclusionEnabled(true), 
+	_ambientOcclusionSamples(12),
+	_defaultLightSourceIntensity(FloatType(0.9)), 
+	_ambientOcclusionBrightness(FloatType(0.8)), 
+	_depthOfFieldEnabled(false),
+	_dofFocalLength(40), 
+	_dofAperture(FloatType(1e-2))
 {
 }
 
@@ -229,6 +237,9 @@ bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask 
 
 	scenedef* scene = (scenedef*)_rtscene;
 
+	// Use only the number of parallel rendering threads allowed by the user. 
+	scene->numthreads = Application::instance()->idealThreadCount();
+
 	/* if certain key aspects of the scene parameters have been changed */
 	/* since the last frame rendered, or when rendering the scene the   */
 	/* first time, various setup, initialization and memory allocation  */
@@ -250,21 +261,21 @@ bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask 
 		for(int xstart = 0; xstart < scene->hres; ) {
 			int xstop = std::min(scene->hres, xstart + tileWidth);
 			int ystop = std::min(scene->vres, ystart + tileHeight);
+			thr_parms* threadparams = static_cast<thr_parms*>(scene->threadparms);
 			for(int thr = 0; thr < scene->numthreads; thr++) {
-				thr_parms* parms = &((thr_parms *) scene->threadparms)[thr];
-				parms->startx = 1 + xstart;
-				parms->stopx  = xstop;
-				parms->xinc   = 1;
-				parms->starty = thr + 1 + ystart;
-				parms->stopy  = ystop;
-				parms->yinc   = scene->numthreads;
+				threadparams[thr].startx = 1 + xstart;
+				threadparams[thr].stopx  = xstop;
+				threadparams[thr].xinc   = 1;
+				threadparams[thr].starty = thr + 1 + ystart;
+				threadparams[thr].stopy  = ystop;
+				threadparams[thr].yinc   = scene->numthreads;
 			}
 
 			// If using threads, wake up the child threads...
-			rt_thread_barrier(((thr_parms *) scene->threadparms)[0].runbar, 1);
+			rt_thread_barrier(threadparams[0].runbar, 1);
 
 			// Ray trace the image tile.
-			thread_trace(&((thr_parms *) scene->threadparms)[0]);
+			thread_trace(threadparams);
 
 			// Copy rendered image piece back into Ovito's frame buffer.
 			// Flip image since Tachyon fills the buffer upside down.

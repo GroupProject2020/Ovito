@@ -358,7 +358,6 @@ int ScriptEngine::handlePythonException(py::error_already_set& ex, const QString
 	}
 
 	// Prepare C++ exception object.
-	qDebug() << "Throwing exception: dataset=" << (void*)dataset();
 	Exception exception(filename.isEmpty() ? 
 		tr("The Python script has exited with an error.") :
 		tr("The Python script '%1' has exited with an error.").arg(filename), dataset());
