@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,6 +23,7 @@
 #include <core/rendering/FrameBuffer.h>
 #include <core/rendering/RenderSettings.h>
 #include <core/oo/CloneHelper.h>
+#include <core/app/Application.h>
 #include <core/dataset/scene/ObjectNode.h>
 #include <core/utilities/concurrent/Task.h>
 #include <core/utilities/units/UnitsManager.h>
@@ -89,10 +90,17 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(TachyonRenderer, ambientOcclusionSamples, Int
 * Default constructor.
 ******************************************************************************/
 TachyonRenderer::TachyonRenderer(DataSet* dataset) : NonInteractiveSceneRenderer(dataset),
-		_antialiasingEnabled(true), _directLightSourceEnabled(true), _shadowsEnabled(true),
-	  _antialiasingSamples(12), _ambientOcclusionEnabled(true), _ambientOcclusionSamples(12),
-	  _defaultLightSourceIntensity(FloatType(0.9)), _ambientOcclusionBrightness(FloatType(0.8)), _depthOfFieldEnabled(false),
-	  _dofFocalLength(40), _dofAperture(FloatType(1e-2))
+	_antialiasingEnabled(true), 
+	_directLightSourceEnabled(true), 
+	_shadowsEnabled(true),
+	_antialiasingSamples(12), 
+	_ambientOcclusionEnabled(true), 
+	_ambientOcclusionSamples(12),
+	_defaultLightSourceIntensity(FloatType(0.9)), 
+	_ambientOcclusionBrightness(FloatType(0.8)), 
+	_depthOfFieldEnabled(false),
+	_dofFocalLength(40), 
+	_dofAperture(FloatType(1e-2))
 {
 }
 
@@ -228,6 +236,9 @@ bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask 
 	promise.setProgressText(tr("Rendering image"));
 
 	scenedef* scene = (scenedef*)_rtscene;
+
+	// Use only the number of parallel rendering threads allowed by the user. 
+	scene->numthreads = Application::instance()->idealThreadCount();
 
 	/* if certain key aspects of the scene parameters have been changed */
 	/* since the last frame rendered, or when rendering the scene the   */
