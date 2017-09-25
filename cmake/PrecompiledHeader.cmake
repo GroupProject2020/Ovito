@@ -140,12 +140,12 @@ function(add_precompiled_header _target _input)
     endif()
   endif(MSVC)
 
-  if(CMAKE_COMPILER_IS_GNUCXX)
+  if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     GET_FILENAME_COMPONENT(_name ${_input} NAME)
     GET_FILENAME_COMPONENT(_dir ${_input} DIRECTORY)
     SET_SOURCE_FILES_PROPERTIES(${_name} PROPERTIES LANGUAGE CXX)
     
-    # Create a target that build the .gch precompiled header file from the .h file.
+    # Create a target that build the .pch/.gch precompiled header file from the .h file.
     # It inherits all compile options from the parent target.
     ADD_LIBRARY(${_target}_PCH OBJECT ${_name})
     TARGET_INCLUDE_DIRECTORIES(${_target}_PCH PUBLIC "$<TARGET_PROPERTY:${_target},INCLUDE_DIRECTORIES>")
@@ -155,15 +155,22 @@ function(add_precompiled_header _target _input)
     IF(_target_type STREQUAL SHARED_LIBRARY)
       TARGET_COMPILE_DEFINITIONS(${_target}_PCH PUBLIC "${_target}_EXPORTS")
     ENDIF()
-
+    TARGET_COMPILE_OPTIONS(${_target}_PCH PRIVATE "-x" "c++-header")
+    
     # The parent target depends on the PCH build target.
     ADD_DEPENDENCIES(${_target} ${_target}_PCH)
+
+    if(CMAKE_COMPILER_IS_GNUCXX)
+      set(_pch_extension "gch")
+    else()
+      set(_pch_extension "pch")
+    endif()
     
     # Create a new directory containing a file named .gch, which is a symlink to the precompiled header.
     # CMake always produces a precompile header file with a ".h.o" extension, but GCC requires the .gch extension.
-    SET(_pch_dir "${CMAKE_CURRENT_BINARY_DIR}/${_target}.pch")
+    SET(_pch_dir "${CMAKE_CURRENT_BINARY_DIR}/${_target}.${_pch_extension}")
     FILE(MAKE_DIRECTORY "${_pch_dir}/${_dir}") 
-    EXECUTE_PROCESS(COMMAND "${CMAKE_COMMAND}" -E create_symlink "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/${_target}_PCH.dir/${_name}.o" "${_pch_dir}/${_input}_pch.h.gch")
+    EXECUTE_PROCESS(COMMAND "${CMAKE_COMMAND}" -E create_symlink "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/${_target}_PCH.dir/${_name}.o" "${_pch_dir}/${_input}_pch.h.${_pch_extension}")
 
     # Force include the precompiled header in all .cpp files.
     get_property(_sources TARGET ${_target} PROPERTY SOURCES)

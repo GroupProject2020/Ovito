@@ -157,4 +157,3 @@ ENDIF()
 
 # Fix Mac app bundle.
 INCLUDE(${OVITO_SOURCE_BASE_DIR}/cmake/FixupMacBundle.cmake)
-

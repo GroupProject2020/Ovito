@@ -1,7 +1,7 @@
 IF(APPLE)
 	# Install the Info.plist file.
 	CONFIGURE_FILE("${OVITO_SOURCE_BASE_DIR}/src/main/resources/Info.plist" "${OVITO_BINARY_DIRECTORY}/${MACOSX_BUNDLE_NAME}.app/Contents/Info.plist")
-	SET_TARGET_PROPERTIES(ovito PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${OVITO_BINARY_DIRECTORY}/${MACOSX_BUNDLE_NAME}.app/Contents/Info.plist")
+	SET_TARGET_PROPERTIES(Ovito PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${OVITO_BINARY_DIRECTORY}/${MACOSX_BUNDLE_NAME}.app/Contents/Info.plist")
 
 	# Copy the application icon into the resource directory.
 	INSTALL(FILES "${OVITO_SOURCE_BASE_DIR}/src/main/resources/ovito.icns" DESTINATION "${OVITO_RELATIVE_SHARE_DIRECTORY}")

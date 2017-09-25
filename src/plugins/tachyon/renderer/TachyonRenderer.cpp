@@ -250,21 +250,21 @@ bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask 
 		for(int xstart = 0; xstart < scene->hres; ) {
 			int xstop = std::min(scene->hres, xstart + tileWidth);
 			int ystop = std::min(scene->vres, ystart + tileHeight);
+			thr_parms* threadparams = static_cast<thr_parms*>(scene->threadparms);
 			for(int thr = 0; thr < scene->numthreads; thr++) {
-				thr_parms* parms = &((thr_parms *) scene->threadparms)[thr];
-				parms->startx = 1 + xstart;
-				parms->stopx  = xstop;
-				parms->xinc   = 1;
-				parms->starty = thr + 1 + ystart;
-				parms->stopy  = ystop;
-				parms->yinc   = scene->numthreads;
+				threadparams[thr].startx = 1 + xstart;
+				threadparams[thr].stopx  = xstop;
+				threadparams[thr].xinc   = 1;
+				threadparams[thr].starty = thr + 1 + ystart;
+				threadparams[thr].stopy  = ystop;
+				threadparams[thr].yinc   = scene->numthreads;
 			}
 
 			// If using threads, wake up the child threads...
-			rt_thread_barrier(((thr_parms *) scene->threadparms)[0].runbar, 1);
+			rt_thread_barrier(threadparams[0].runbar, 1);
 
 			// Ray trace the image tile.
-			thread_trace(&((thr_parms *) scene->threadparms)[0]);
+			thread_trace(threadparams);
 
 			// Copy rendered image piece back into Ovito's frame buffer.
 			// Flip image since Tachyon fills the buffer upside down.
