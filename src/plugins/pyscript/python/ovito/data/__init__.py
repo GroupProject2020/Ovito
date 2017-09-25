@@ -37,8 +37,7 @@ It also provides container classes for such data objects and some additional uti
 import numpy as np
 
 # Load the native modules.
-from ..plugins.PyScript.Scene import PipelineFlowState, DataObject
-from ..plugins.PyScript.App import CloneHelper
+from ..plugins.PyScript import PipelineFlowState, DataObject, CloneHelper
 
 # Load submodules.
 from .data_collection import DataCollection

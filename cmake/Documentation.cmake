@@ -51,7 +51,7 @@ IF(OVITO_BUILD_DOCUMENTATION)
 					COMMENT "Generating user documentation")
 	
 	INSTALL(DIRECTORY "${OVITO_SHARE_DIRECTORY}/doc/manual/html/" DESTINATION "${OVITO_RELATIVE_SHARE_DIRECTORY}/doc/manual/html/")
-	ADD_DEPENDENCIES(${PROJECT_NAME} documentation)
+	ADD_DEPENDENCIES(Ovito documentation)
 	
 	# Generate documentation for OVITO's scripting interface.
 	IF(OVITO_BUILD_PLUGIN_PYSCRIPT)

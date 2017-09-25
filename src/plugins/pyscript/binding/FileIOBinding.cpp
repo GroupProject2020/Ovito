@@ -33,10 +33,8 @@ namespace PyScript {
 
 using namespace Ovito;
 
-void defineIOSubmodule(py::module parentModule)
+void defineIOSubmodule(py::module m)
 {
-	py::module m = parentModule.def_submodule("IO");
-
 	ovito_abstract_class<FileImporter, RefTarget>{m}
 		// These are needed by implementation of import_file():
 		.def("import_file", &FileImporter::importFile)

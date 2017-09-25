@@ -66,7 +66,7 @@ in a more straightforward manner.*
 """
 
 # Load the native module.
-from ..plugins.PyScript.Scene import (PythonScriptModifier, SliceModifier, AffineTransformationModifier,
+from ..plugins.PyScript import (PythonScriptModifier, SliceModifier, AffineTransformationModifier,
                                     ClearSelectionModifier, InvertSelectionModifier, ColorCodingModifier,
                                     AssignColorModifier, DeleteSelectedModifier, ScatterPlotModifier,
                                     ReplicateModifier)

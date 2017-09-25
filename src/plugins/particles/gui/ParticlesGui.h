@@ -25,12 +25,6 @@
 #include <gui/GUI.h>
 #include <plugins/particles/Particles.h>
 
-#ifdef ParticlesGui_EXPORTS		// This is defined by CMake when building the plugin library.
-#  define OVITO_PARTICLES_GUI_EXPORT Q_DECL_EXPORT
-#else
-#  define OVITO_PARTICLES_GUI_EXPORT Q_DECL_IMPORT
-#endif
-
 namespace Ovito {
 	namespace Particles {
 		OVITO_BEGIN_INLINE_NAMESPACE(Util)

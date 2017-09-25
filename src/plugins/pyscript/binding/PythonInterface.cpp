@@ -105,6 +105,17 @@ PYBIND11_PLUGIN(PyScript)
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(PyScript);
 
+#if 0
+PYBIND11_PLUGIN(ovitotestmod)
+{
+	py::options options;
+	options.disable_function_signatures();
+	py::module m("ovitotestmod");
+	return m.ptr();
+}
+OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(ovitotestmod);
+#endif
+
 /// Helper function that converts a Python string to a C++ PropertyReference instance.
 /// The function requires a property class to look up the property name string.
 PropertyReference convertPythonPropertyReference(py::object src, const PropertyClass* propertyClass)

@@ -35,10 +35,8 @@ namespace PyScript {
 
 using namespace Ovito;
 
-void defineRenderingSubmodule(py::module parentModule)
+void defineRenderingSubmodule(py::module m)
 {
-	py::module m = parentModule.def_submodule("Rendering");
-
 	py::class_<FrameBuffer, std::shared_ptr<FrameBuffer>>(m, "FrameBuffer")
 		.def(py::init<>())
 		.def(py::init<int, int>())

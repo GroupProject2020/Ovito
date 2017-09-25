@@ -25,12 +25,6 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/export/FileColumnParticleExporter.h>
 
-#ifdef NetCDFPlugin_EXPORTS		// This is defined by CMake when building the plugin library.
-#  define OVITO_NETCDF_EXPORT Q_DECL_EXPORT
-#else
-#  define OVITO_NETCDF_EXPORT Q_DECL_IMPORT
-#endif
-
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
 /**

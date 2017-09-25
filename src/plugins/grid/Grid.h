@@ -25,12 +25,6 @@
 #include <core/Core.h>
 #include <plugins/mesh/Mesh.h>
 
-#ifdef Grid_EXPORTS		// This is defined by CMake when building the plugin library.
-#  define OVITO_GRID_EXPORT Q_DECL_EXPORT
-#else
-#  define OVITO_GRID_EXPORT Q_DECL_IMPORT
-#endif
-
 namespace Ovito {
 	namespace Grid {
 		using namespace Ovito::Mesh;

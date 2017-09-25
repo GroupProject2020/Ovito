@@ -15,7 +15,7 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 	SET(python_wrappers ${ARG_PYTHON_WRAPPERS})
 
 	# Create the library target for the plugin.
-    ADD_LIBRARY(${target_name} SHARED ${plugin_sources})
+    ADD_LIBRARY(${target_name} ${OVITO_DEFAULT_LIBRARY_TYPE} ${plugin_sources})
 
     # Set default include directory.
     TARGET_INCLUDE_DIRECTORIES(${target_name} PUBLIC 
@@ -65,6 +65,15 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 	# This is needed so that the Python interpreter can load OVITO plugins as modules.
 	SET_TARGET_PROPERTIES(${target_name} PROPERTIES PREFIX "" SUFFIX "${OVITO_PLUGIN_LIBRARY_SUFFIX}")
 
+	# Define macro for symbol export from shared library.
+	STRING(TOUPPER "${target_name}" _uppercase_plugin_name)
+	IF(OVITO_BUILD_MONOLITHIC)
+		TARGET_COMPILE_DEFINITIONS(${target_name} PUBLIC "OVITO_${_uppercase_plugin_name}_EXPORT")
+	ELSE()
+		TARGET_COMPILE_DEFINITIONS(${target_name} PRIVATE "OVITO_${_uppercase_plugin_name}_EXPORT=Q_DECL_EXPORT")
+		TARGET_COMPILE_DEFINITIONS(${target_name} INTERFACE "OVITO_${_uppercase_plugin_name}_EXPORT=Q_DECL_IMPORT")
+	ENDIF()
+
 	IF(APPLE)
 		# This is required to avoid error by install_name_tool.
 		SET_TARGET_PROPERTIES(${target_name} PROPERTIES LINK_FLAGS "-headerpad_max_install_names")
@@ -94,11 +103,12 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 	# This plugin will be part of the installation package.
 	INSTALL(TARGETS ${target_name} EXPORT OVITO
 		RUNTIME DESTINATION "${OVITO_RELATIVE_PLUGINS_DIRECTORY}"
-		LIBRARY DESTINATION "${OVITO_RELATIVE_PLUGINS_DIRECTORY}")
+		LIBRARY DESTINATION "${OVITO_RELATIVE_PLUGINS_DIRECTORY}"
+		ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
 	
 	# Export target to make it accessible for external plugins.
 	IF(CMAKE_VERSION VERSION_LESS "3")
-		EXPORT(TARGETS ${target_name} NAMESPACE "Ovito::" APPEND FILE "${${PROJECT_NAME}_BINARY_DIR}/OVITOTargets.cmake")
+		EXPORT(TARGETS ${target_name} NAMESPACE "Ovito::" APPEND FILE "${ovito_BINARY_DIR}/OVITOTargets.cmake")
 	ENDIF()
 	
 	# Keep a list of plugins.

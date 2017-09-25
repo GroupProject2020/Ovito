@@ -27,12 +27,6 @@
 
 #include <QTemporaryFile>
 
-#ifdef POVRay_EXPORTS		// This is defined by CMake when building the plugin library.
-#  define OVITO_POVRAY_EXPORT Q_DECL_EXPORT
-#else
-#  define OVITO_POVRAY_EXPORT Q_DECL_IMPORT
-#endif
-
 namespace Ovito { namespace POVRay {
 
 /**

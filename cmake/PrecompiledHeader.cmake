@@ -151,7 +151,10 @@ function(add_precompiled_header _target _input)
     TARGET_INCLUDE_DIRECTORIES(${_target}_PCH PUBLIC "$<TARGET_PROPERTY:${_target},INCLUDE_DIRECTORIES>")
     TARGET_COMPILE_DEFINITIONS(${_target}_PCH PUBLIC "$<TARGET_PROPERTY:${_target},COMPILE_DEFINITIONS>")
     TARGET_COMPILE_OPTIONS(${_target}_PCH PUBLIC "$<TARGET_PROPERTY:${_target},COMPILE_OPTIONS>")
-    TARGET_COMPILE_DEFINITIONS(${_target}_PCH PUBLIC "${_target}_EXPORTS")
+    GET_TARGET_PROPERTY(_target_type ${_target} TYPE)
+    IF(_target_type STREQUAL SHARED_LIBRARY)
+      TARGET_COMPILE_DEFINITIONS(${_target}_PCH PUBLIC "${_target}_EXPORTS")
+    ENDIF()
 
     # The parent target depends on the PCH build target.
     ADD_DEPENDENCIES(${_target} ${_target}_PCH)

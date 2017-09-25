@@ -58,10 +58,8 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 using namespace PyScript;
 
-void defineModifiersSubmodule(py::module parentModule)
+void defineModifiersSubmodule(py::module m)
 {
-	py::module m = parentModule.def_submodule("Modifiers");
-
 	ovito_class<AmbientOcclusionModifier, AsynchronousModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"Performs a quick lighting calculation to shade particles according to the degree of occlusion by other particles. ")

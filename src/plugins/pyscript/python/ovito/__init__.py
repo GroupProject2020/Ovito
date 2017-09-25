@@ -15,10 +15,9 @@ import importlib
 _package_source_path = __path__ # Make a copy of the original path, which will be used below to automatically import all submodules.
 __path__ = pkgutil.extend_path(__path__, __name__)
 
-# Load the native module with the core bindings
-import ovito.plugins.PyScript
-from .plugins.PyScript import (version, version_string, gui_mode, headless_mode, dataset, task_manager)
-from .plugins.PyScript.App import (DataSet)
+# Load the native module with the core bindings.
+from .plugins.PyScript import (version, version_string, gui_mode, headless_mode, DataSet, dataset, task_manager)
+from .plugins.PyScript import (Pipeline, SceneRoot, PipelineObject, PipelineStatus)
 
 # Load sub-modules (in the right order because there are dependencies among them)
 import ovito.anim
@@ -31,11 +30,6 @@ import ovito.io
 # Load the bindings for the GUI classes when running in gui mode.
 if ovito.gui_mode:
     import ovito.plugins.PyScriptGui
-
-from .plugins.PyScript.Scene import (Pipeline, SceneRoot, PipelineObject, PipelineStatus)
-
-# For backward compatibility with OVITO 2.9.0:
-ObjectNode = ovito.pipeline.Pipeline
 
 __all__ = ['version', 'version_string', 'gui_mode', 'headless_mode', 'dataset', 'DataSet', 'ObjectNode']
 
@@ -71,3 +65,4 @@ DataSet.selected_pipeline = property(_get_DataSet_selected_pipeline, _set_DataSe
 # For backward compatibility with OVITO 2.9.0:
 DataSet.scene_nodes = property(lambda self: self.scene_pipelines)
 DataSet.selected_node = property(lambda self: self.selected_pipeline, _set_DataSet_selected_pipeline)
+ObjectNode = ovito.pipeline.Pipeline

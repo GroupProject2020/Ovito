@@ -107,10 +107,8 @@ py::dict PropertyObject__array_interface__(PropertyObject& p)
 	return ai;
 }
 
-void defineSceneSubmodule(py::module parentModule)
+void defineSceneSubmodule(py::module m)
 {
-	py::module m = parentModule.def_submodule("Scene");
-
 	auto PipelineStatus_py = py::class_<PipelineStatus>(m, "PipelineStatus")
 		.def(py::init<>())
 		.def(py::init<PipelineStatus::StatusType, const QString&>())

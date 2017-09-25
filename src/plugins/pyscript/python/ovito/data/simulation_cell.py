@@ -2,7 +2,7 @@
 import ovito
 
 # Load the native code module
-from ..plugins.PyScript.Scene import SimulationCell
+from ..plugins.PyScript import SimulationCell
 
 # Implement indexing for simulation cell object.
 SimulationCell.__getitem__ = lambda self, idx: self.matrix[idx]

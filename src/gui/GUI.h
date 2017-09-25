@@ -42,12 +42,6 @@
 #include <QtGui>
 #include <QCommandLineParser>
 
-#ifdef Gui_EXPORTS		// This is defined by CMake when building the Gui library.
-#  define OVITO_GUI_EXPORT Q_DECL_EXPORT
-#else
-#  define OVITO_GUI_EXPORT Q_DECL_IMPORT
-#endif
-
 /*! \namespace Ovito::Gui
     \brief This namespace contains the graphical user interface classes.
 */

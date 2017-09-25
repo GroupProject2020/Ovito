@@ -88,13 +88,6 @@
 ******************************************************************************/
 #include <boost/dynamic_bitset.hpp>
 
-
-#ifdef Core_EXPORTS		// This is defined by CMake when building the Core library.
-#  define OVITO_CORE_EXPORT Q_DECL_EXPORT
-#else
-#  define OVITO_CORE_EXPORT Q_DECL_IMPORT
-#endif
-
 /*! \namespace Ovito
     \brief The root namespace of OVITO.
 */

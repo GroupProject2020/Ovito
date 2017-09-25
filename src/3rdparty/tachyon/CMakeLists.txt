@@ -76,8 +76,8 @@ ENDIF()
 # Make header files of this library available to dependent targets.
 TARGET_INCLUDE_DIRECTORIES(TachyonLib INTERFACE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")
 
-IF(APPLE)
-	# Link to Pthreads multi-threading library on MacOS.
+IF(APPLE OR UNIX)
+	# Link to Pthreads multi-threading library on Unix/MacOS.
 	TARGET_LINK_LIBRARIES(TachyonLib pthread)
 ELSEIF(WIN32)
 	# Link to ws2_32 library on Windows.
@@ -89,6 +89,5 @@ SET_PROPERTY(TARGET TachyonLib PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 # Export this target.
 INSTALL(TARGETS TachyonLib EXPORT OVITO 
-    ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" 
-    CONFIGURATIONS "")
+    ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
 

@@ -155,15 +155,22 @@ void ScriptEngine::initializeEmbeddedInterpreter()
 		// This is required for static builds where all Ovito plugins are linked into the main executable file.
 		// On Windows this is needed, because OVITO plugins have an .dll extension and the Python interpreter 
 		// only looks for modules that have a .pyd extension.
-		for(PythonPluginRegistration* r = PythonPluginRegistration::linkedlist; r != nullptr; r = r->_next) {
-			// Note: const_cast<> is for backward compatibility with Python 2.6.
-			PyImport_AppendInittab(const_cast<char*>(r->_moduleName.c_str()), r->_initFunc);
+		for(const PythonPluginRegistration* r = PythonPluginRegistration::linkedlist; r != nullptr; r = r->_next) {
+			const char* name = r->_moduleName.c_str();
+			// Note: const_cast<> is used for backward compatibility with Python 2.6.
+			PyImport_AppendInittab(const_cast<char*>(name), r->_initFunc);
 		}
 
 		// Initialize the Python interpreter.
 		Py_Initialize();
 
 		py::module sys_module = py::module::import("sys");
+
+#ifdef OVITO_BUILD_MONOLITHIC
+		// Let the ovito.plugins module know that it is running in a statically linked
+		// interpreter.
+		sys_module.attr("__OVITO_BUILD_MONOLITHIC") = py::cast(true);
+#endif		
 
 		// Install output redirection (don't do this in console mode as it interferes with the interactive interpreter).
 		if(Application::instance()->guiMode()) {

@@ -25,12 +25,6 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/mesh/Mesh.h>
 
-#ifdef CrystalAnalysis_EXPORTS		// This is defined by CMake when building the plugin library.
-#  define OVITO_CRYSTALANALYSIS_EXPORT Q_DECL_EXPORT
-#else
-#  define OVITO_CRYSTALANALYSIS_EXPORT Q_DECL_IMPORT
-#endif
-
 namespace Ovito {
 	namespace Plugins {
 		namespace CrystalAnalysis {

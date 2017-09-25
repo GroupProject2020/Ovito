@@ -18,10 +18,7 @@ OVITO and ASE:
 
 import numpy as np
 
-from ...data import DataCollection
-
-from ...plugins.Particles import ParticleProperty, ParticleType
-from ...plugins.PyScript.Scene import SimulationCell
+from ...data import DataCollection, SimulationCell, ParticleProperty, ParticleType
 
 __all__ = ['ovito_to_ase', 'ase_to_ovito']
 

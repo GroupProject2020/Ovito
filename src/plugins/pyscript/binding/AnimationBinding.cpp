@@ -35,10 +35,8 @@ namespace PyScript {
 using namespace Ovito;
 namespace py = pybind11;
 
-void defineAnimationSubmodule(py::module parentModule)
+void defineAnimationSubmodule(py::module m)
 {
-	py::module m = parentModule.def_submodule("Animation");
-
 	py::class_<TimeInterval>(m, "TimeInterval")
 		.def(py::init<>())
 		.def(py::init<TimePoint>())

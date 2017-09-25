@@ -54,6 +54,8 @@ INCLUDE(${OVITO_SOURCE_BASE_DIR}/cmake/PrecompiledHeader.cmake)
 # Define build options.
 OPTION(OVITO_DOUBLE_PRECISION_FP "Use double-precision floating-point numbers." "OFF")
 OPTION(OVITO_BUILD_GUI "Build the graphical user interface." "ON")
+OPTION(OVITO_BUILD_MONOLITHIC "Build a monothlitic executable, statically linking all plugins." "OFF")
+OPTION(OVITO_REDISTRIBUTABLE_PACKAGE "Create a redistributable program package that includes third-party libraries." "OFF")
 OPTION(OVITO_BUILD_APPSTORE_VERSION "Build binaries for the Apple App Store and Windows Store." "OFF")
 
 # Define user options that control the building of OVITO's standard plugins.
@@ -151,38 +153,38 @@ ELSE()
 	SET(OVITO_RELATIVE_PYTHON_DIRECTORY "${OVITO_RELATIVE_PLUGINS_DIRECTORY}/python")	
 ENDIF()
 
-# Controls whether a redistributable installation package of OVITO is built.
-OPTION(OVITO_REDISTRIBUTABLE_PACKAGE "Create a redistributable program package that includes third-party libraries." "OFF")
-
 IF(APPLE OR WIN32 OR NOT OVITO_REDISTRIBUTABLE_PACKAGE)
-	SET(OVITO_DEFAULT_LIBRARY_TYPE SHARED)
-    
 	# Add the automatically determined parts of the RPATH,
 	# which point to directories outside the build tree to the install RPATH
 	SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-	    
-ELSE()
+ENDIF()
+
+# Select linking type (shared or static) for plugin libraries.
+IF(OVITO_BUILD_MONOLITHIC)
 	SET(OVITO_DEFAULT_LIBRARY_TYPE STATIC)
+	SET(OVITO_PLUGIN_LIBRARY_SUFFIX ${CMAKE_STATIC_LIBRARY_SUFFIX})
+ELSE()
+	SET(OVITO_DEFAULT_LIBRARY_TYPE SHARED)
+	# Define name suffix used for generating plugin libraries.
+	IF(APPLE)
+		# On Mac OS, we use the .so extension instead of the standard .dylib to be compatible
+		# with the Python interpreter, which only finds modules having a .so suffix.
+		SET(OVITO_PLUGIN_LIBRARY_SUFFIX ".so")
+	ELSE()
+		SET(OVITO_PLUGIN_LIBRARY_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
+	ENDIF()	
 ENDIF()
 
 # The directory where the main executable goes to.
-SET(OVITO_BINARY_DIRECTORY "${${PROJECT_NAME}_BINARY_DIR}/${OVITO_RELATIVE_BINARY_DIRECTORY}")
+SET(OVITO_BINARY_DIRECTORY "${Ovito_BINARY_DIR}/${OVITO_RELATIVE_BINARY_DIRECTORY}")
 # The directory where the main libraries go to.
-SET(OVITO_LIBRARY_DIRECTORY "${${PROJECT_NAME}_BINARY_DIR}/${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
+SET(OVITO_LIBRARY_DIRECTORY "${Ovito_BINARY_DIR}/${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
 # The directory where the compiled plugins go to.
-SET(OVITO_PLUGINS_DIRECTORY "${${PROJECT_NAME}_BINARY_DIR}/${OVITO_RELATIVE_PLUGINS_DIRECTORY}")
+SET(OVITO_PLUGINS_DIRECTORY "${Ovito_BINARY_DIR}/${OVITO_RELATIVE_PLUGINS_DIRECTORY}")
 # The directory where the Python source files go to.
-SET(OVITO_PYTHON_DIRECTORY "${${PROJECT_NAME}_BINARY_DIR}/${OVITO_RELATIVE_PYTHON_DIRECTORY}")
+SET(OVITO_PYTHON_DIRECTORY "${Ovito_BINARY_DIR}/${OVITO_RELATIVE_PYTHON_DIRECTORY}")
 # The directory where the auxiliary files go to.
-SET(OVITO_SHARE_DIRECTORY "${${PROJECT_NAME}_BINARY_DIR}/${OVITO_RELATIVE_SHARE_DIRECTORY}")
-
-# This is the name suffix used for generating plugin libraries.
-SET(OVITO_PLUGIN_LIBRARY_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
-IF(APPLE)
-	# On Mac OS, we use the .so extension instead of the standard .dylib to be compatible
-	# with the Python interpreter, which only finds modules having a .so suffix.
-	SET(OVITO_PLUGIN_LIBRARY_SUFFIX ".so")
-ENDIF()
+SET(OVITO_SHARE_DIRECTORY "${Ovito_BINARY_DIR}/${OVITO_RELATIVE_SHARE_DIRECTORY}")
 
 # This macro installs a required third-party DLL in the OVITO directory
 # so that it can be distributed together with the program.
@@ -198,7 +200,7 @@ ENDMACRO()
 # This macro installs a required third-party shared library in the OVITO directory
 # so that it can be distributed together with the program.
 MACRO(OVITO_INSTALL_SHARED_LIB shared_lib destination_dir)
-	FILE(MAKE_DIRECTORY "${${PROJECT_NAME}_BINARY_DIR}/${destination_dir}")
+	FILE(MAKE_DIRECTORY "${Ovito_BINARY_DIR}/${destination_dir}")
 	# Strip version number from shared lib filename.
 	GET_FILENAME_COMPONENT(shared_lib_ext "${shared_lib}" EXT)
 	STRING(REPLACE ${shared_lib_ext} ".so" shared_lib_new "${shared_lib}")
@@ -209,10 +211,10 @@ MACRO(OVITO_INSTALL_SHARED_LIB shared_lib destination_dir)
 			GET_FILENAME_COMPONENT(symlink_target_name "${symlink_target}" NAME)
 			GET_FILENAME_COMPONENT(lib_version_name "${lib_version}" NAME)
 			MESSAGE("Installing symlink ${lib_version} to shared library ${symlink_target}")
-			EXECUTE_PROCESS(COMMAND "${CMAKE_COMMAND}" -E create_symlink ${symlink_target_name} "${${PROJECT_NAME}_BINARY_DIR}/${destination_dir}/${lib_version_name}")
+			EXECUTE_PROCESS(COMMAND "${CMAKE_COMMAND}" -E create_symlink ${symlink_target_name} "${Ovito_BINARY_DIR}/${destination_dir}/${lib_version_name}")
 		ELSE()
 			MESSAGE("Installing shared library ${lib_version}")
-			CONFIGURE_FILE("${lib_version}" "${${PROJECT_NAME}_BINARY_DIR}/${destination_dir}/" COPYONLY)
+			CONFIGURE_FILE("${lib_version}" "${Ovito_BINARY_DIR}/${destination_dir}/" COPYONLY)
 		ENDIF()
 		INSTALL(FILES "${lib_version}" DESTINATION "${destination_dir}/")
 	ENDFOREACH()
@@ -253,7 +255,7 @@ INCLUDE(cmake/Documentation.cmake)
 INCLUDE(cmake/Packaging.cmake)
 
 # Export our targets so that external plugins can use them.
-CONFIGURE_FILE(cmake/OVITOConfig.cmake "${${PROJECT_NAME}_BINARY_DIR}/" @ONLY)
+CONFIGURE_FILE(cmake/OVITOConfig.cmake "${Ovito_BINARY_DIR}/" @ONLY)
 IF(NOT CMAKE_VERSION VERSION_LESS "3")
 	EXPORT(EXPORT OVITO NAMESPACE "Ovito::" FILE OVITOTargets.cmake)
 ENDIF()

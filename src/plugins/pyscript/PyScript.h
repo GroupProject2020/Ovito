@@ -40,10 +40,4 @@
 #include <3rdparty/pybind11/stl.h>
 #include <3rdparty/pybind11/numpy.h>
 
-#ifdef PyScript_EXPORTS		// This is defined by CMake when building the plugin library.
-#  define OVITO_PYSCRIPT_EXPORT Q_DECL_EXPORT
-#else
-#  define OVITO_PYSCRIPT_EXPORT Q_DECL_IMPORT
-#endif
-
 #endif

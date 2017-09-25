@@ -27,7 +27,7 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-class OVITO_PARTICLES_GUI_EXPORT ChemicalElement
+class OVITO_PARTICLESGUI_EXPORT ChemicalElement
 {
 public:
 
@@ -46,7 +46,7 @@ public:
 extern ChemicalElement ChemicalElements[];
 extern const size_t NumberOfChemicalElements;
 
-class OVITO_PARTICLES_GUI_EXPORT CutoffRadiusPresetsUI : public PropertyParameterUI
+class OVITO_PARTICLESGUI_EXPORT CutoffRadiusPresetsUI : public PropertyParameterUI
 {
 	Q_OBJECT
 	OVITO_CLASS(CutoffRadiusPresetsUI)

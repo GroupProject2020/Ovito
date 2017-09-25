@@ -6,7 +6,7 @@ except ImportError:
     import collections
     
 # Load the native modules.
-from ..plugins.PyScript.Scene import Pipeline, PipelineStatus, ModifierApplication, Modifier
+from ..plugins.PyScript import Pipeline, PipelineStatus, ModifierApplication, Modifier
 
 # Implementation of the Pipeline.modifiers. 
 def _Pipeline_modifiers(self):

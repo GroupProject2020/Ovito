@@ -6,7 +6,7 @@ import ovito
 import ovito.modifiers
 
 # Load the native code module
-from ..plugins.PyScript.Scene import HistogramModifier
+from ..plugins.PyScript import HistogramModifier
 
 # Implementation of the HistogramModifier.histogram attribute.
 def _HistogramModifier_histogram(self):

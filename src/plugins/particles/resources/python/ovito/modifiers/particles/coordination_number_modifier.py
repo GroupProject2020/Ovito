@@ -6,7 +6,7 @@ import ovito
 import ovito.modifiers
 
 # Load the native code module
-from ovito.plugins.Particles.Modifiers import CoordinationNumberModifier
+from ovito.plugins.Particles import CoordinationNumberModifier
 
 # Implement the 'rdf' attribute of the CoordinationNumberModifier class.
 def _CoordinationNumberModifier_rdf(self):
