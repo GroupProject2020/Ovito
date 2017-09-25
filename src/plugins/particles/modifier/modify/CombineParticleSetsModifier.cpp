@@ -71,7 +71,7 @@ Future<PipelineFlowState> CombineParticleSetsModifier::evaluate(TimePoint time, 
 	SharedFuture<PipelineFlowState> secondaryStateFuture = secondaryDataSource()->evaluate(time);
 	
 	// Wait for the data to become available.
-	return secondaryStateFuture.then(executor(), [this, input = std::move(input), time](const PipelineFlowState& secondaryState) {
+	return secondaryStateFuture.then(executor(), [this, input = input, time](const PipelineFlowState& secondaryState) {
 
 		PipelineFlowState output = input;
 		ParticleInputHelper pih(dataset(), input);

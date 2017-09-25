@@ -37,10 +37,8 @@ namespace PyScript {
 
 using namespace Ovito;
 
-void defineAppSubmodule(py::module parentModule)
+void defineAppSubmodule(py::module m)
 {
-	py::module m = parentModule.def_submodule("App");
-
 	py::class_<OvitoObject, OORef<OvitoObject>>(m, "OvitoObject")
 		.def("__str__", [](py::object& pyobj) {
 			return py::str("<{} at 0x{:x}>").format(pyobj.attr("__class__").attr("__name__"), (std::intptr_t)pyobj.cast<OvitoObject*>());

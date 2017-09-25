@@ -1,17 +1,9 @@
-try:
-    # Python 3.x
-    import collections.abc as collections
-except ImportError:
-    # Python 2.x
-    import collections
-
 # Load dependencies
 import ovito.io
 
 # Load the native code modules
-import ovito.plugins.Particles
-from ovito.plugins.Particles.Importers import *
-from ovito.plugins.Particles.Exporters import *
+from ovito.plugins.Particles import LAMMPSDataImporter
+from ovito.plugins.Particles import (LAMMPSDumpExporter, LAMMPSDataExporter, IMDExporter, POSCARExporter, XYZExporter, FHIAimsExporter)
 
 # Register export formats.
 ovito.io.export_file._formatTable["lammps/dump"] = LAMMPSDumpExporter

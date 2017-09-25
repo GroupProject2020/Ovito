@@ -61,6 +61,9 @@ public:
 		/// Returns the vertex this half-edge is pointing to.
 		Vertex* vertex2() const { return _vertex2; }
 
+		/// Changes the vertex this half-edge is pointing to. Use this method with care!
+		void setVertex2(Vertex* v) { _vertex2 = v; }
+		
 		/// Returns a pointer to the face that is adjacent to this half-edge.
 		Face* face() const { return _face; }
 
@@ -79,23 +82,26 @@ public:
 		/// Returns a pointer to this edge's opposite half-edge.
 		Edge* oppositeEdge() const { return _oppositeEdge; }
 
+		/// Sets the pointer to this edge's opposite half-edge. Use with care!
+		void setOppositeEdge(Edge* oe) { _oppositeEdge = oe; }
+		
 		/// Links two opposite half-edges.
-		void linkToOppositeEdge(Edge* oppositeEdge) {
-			OVITO_ASSERT(_oppositeEdge == nullptr);
-			OVITO_ASSERT(oppositeEdge->_oppositeEdge == nullptr);
-			OVITO_ASSERT(vertex1() == oppositeEdge->vertex2());
-			OVITO_ASSERT(vertex2() == oppositeEdge->vertex1());
-			_oppositeEdge = oppositeEdge;
-			oppositeEdge->_oppositeEdge = this;
+		void linkToOppositeEdge(Edge* oe) {
+			OVITO_ASSERT(oppositeEdge() == nullptr);
+			OVITO_ASSERT(oe->oppositeEdge() == nullptr);
+			OVITO_ASSERT(vertex1() == oe->vertex2());
+			OVITO_ASSERT(vertex2() == oe->vertex1());
+			setOppositeEdge(oe);
+			oe->setOppositeEdge(this);
 		}
 
 		/// Unlinks this edge from its opposite edge.
 		Edge* unlinkFromOppositeEdge() {
-			OVITO_ASSERT(_oppositeEdge != nullptr);
-			OVITO_ASSERT(_oppositeEdge->_oppositeEdge == this);
-			Edge* oe = _oppositeEdge;
-			_oppositeEdge = nullptr;
-			oe->_oppositeEdge = nullptr;
+			OVITO_ASSERT(oppositeEdge() != nullptr);
+			OVITO_ASSERT(oppositeEdge()->oppositeEdge() == this);
+			Edge* oe = oppositeEdge();
+			setOppositeEdge(nullptr);
+			oe->setOppositeEdge(nullptr);
 			return oe;
 		}
 
@@ -171,13 +177,24 @@ public:
 		}
 
 		/// Disconnects an edge from this vertex and adds it to the list of edges of another vertex.
-		/// Also transfers the opposite edge to the new vertex.
-		void transferEdgeToVertex(Edge* edge, Vertex* newVertex) {
-			OVITO_ASSERT(edge->oppositeEdge() != nullptr);
-			OVITO_ASSERT(edge->oppositeEdge()->vertex2() == this);
+		/// Also transfers the opposite edge to the new vertex by default.
+		void transferEdgeToVertex(Edge* edge, Vertex* newVertex, bool updateOppositeEdge = true) {
+			if(updateOppositeEdge) {
+				OVITO_ASSERT(edge->oppositeEdge() != nullptr);
+				OVITO_ASSERT(edge->oppositeEdge()->vertex2() == this);
+				edge->oppositeEdge()->_vertex2 = newVertex;
+			}
+			OVITO_ASSERT(newVertex != this);
+			OVITO_ASSERT(hasEdge(edge));
 			this->removeEdge(edge);
 			newVertex->addEdge(edge);
-			edge->oppositeEdge()->_vertex2 = newVertex;
+		}
+
+		/// Determines whether the given edge originates from this vertex.
+		bool hasEdge(const Edge* edge) const {
+			for(Edge* e = edges(); e != nullptr; e = e->nextVertexEdge())
+				if(e == edge) return true;
+			return false;
 		}
 
 	protected:
@@ -777,6 +794,8 @@ public:
 				OVITO_ASSERT(edge->oppositeEdge()->face() != edge->face());
 				OVITO_ASSERT(edge->nextFaceEdge()->face() == edge->face());
 				OVITO_ASSERT(edge->prevFaceEdge()->face() == edge->face());
+				OVITO_ASSERT(edge->vertex2()->hasEdge(edge->oppositeEdge()));
+				OVITO_ASSERT(edge->vertex2()->hasEdge(edge->nextFaceEdge()));
 			}
 		}
 		return true;

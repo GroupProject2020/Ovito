@@ -51,9 +51,10 @@ public:
 		/// Injects the computed results into the data pipeline.
 		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) = 0;
 
-		/// Indicates whether the computation results stored in this object may be 
-		/// reused and tentatively applied to changing pipeline flow states without recomputation.
-		virtual bool isReapplicable() { return true; }
+		/// Indicates whether the outdated computation results may be reused and tentatively applied to 
+		/// changing inputs from the pipeline without recomputation while the calculation of new results is 
+		/// still in progress.
+		virtual bool isReapplicable() const { return true; }
 	};
 
 	/// A managed pointer to a ComputeEngineResults instance.

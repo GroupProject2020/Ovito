@@ -30,7 +30,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import)
 /**
  * \brief Dialog box that lets the user edit an InputColumnMapping.
  */
-class OVITO_PARTICLES_GUI_EXPORT InputColumnMappingDialog : public QDialog
+class OVITO_PARTICLESGUI_EXPORT InputColumnMappingDialog : public QDialog
 {
 	Q_OBJECT
 	

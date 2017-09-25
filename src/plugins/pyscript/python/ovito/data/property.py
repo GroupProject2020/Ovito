@@ -4,7 +4,7 @@ import numpy
 import ovito
 
 # Load the native code module
-from ..plugins.PyScript.Scene import Property
+from ..plugins.PyScript import Property
 
 # Implement indexing for properties.
 Property.__getitem__ = lambda self, idx: numpy.asanyarray(self)[idx]

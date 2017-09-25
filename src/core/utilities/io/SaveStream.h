@@ -196,6 +196,22 @@ inline SaveStream& operator<<(SaveStream& stream, const QVector<T>& v)
 	return stream;
 }
 
+/// \brief Writes a vector container to a SaveStream.
+/// \relates SaveStream
+///
+/// \param stream The destination stream.
+/// \param v The vector to write to the stream.
+/// \return The destination stream.
+/// \throw Exception if an I/O error has occurred.
+template<typename T>
+inline SaveStream& operator<<(SaveStream& stream, const std::vector<T>& v)
+{	
+	stream.writeSizeT(v.size());
+	for(const auto& el : v)
+		stream << el;
+	return stream;
+}
+
 /// \brief Writes an array of values to the output stream.
 /// \relates SaveStream
 ///

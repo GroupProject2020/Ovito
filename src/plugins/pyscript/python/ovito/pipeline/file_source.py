@@ -1,6 +1,5 @@
 # Load the native modules and other dependencies.
-from ..plugins.PyScript.IO import FileImporter, FileSource
-from ..plugins.PyScript.Scene import PipelineStatus
+from ..plugins.PyScript import FileImporter, FileSource, PipelineStatus
 from ..data import DataCollection
 
 # Make FileSource a DataCollection.

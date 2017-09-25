@@ -46,6 +46,7 @@
 #include <core/dataset/pipeline/modifiers/SelectTypeModifier.h>
 #include <core/dataset/pipeline/modifiers/HistogramModifier.h>
 #include <core/dataset/pipeline/modifiers/ScatterPlotModifier.h>
+#include <core/dataset/pipeline/modifiers/ReplicateModifier.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/app/PluginManager.h>
 #include <core/utilities/concurrent/TaskManager.h>
@@ -106,10 +107,8 @@ py::dict PropertyObject__array_interface__(PropertyObject& p)
 	return ai;
 }
 
-void defineSceneSubmodule(py::module parentModule)
+void defineSceneSubmodule(py::module m)
 {
-	py::module m = parentModule.def_submodule("Scene");
-
 	auto PipelineStatus_py = py::class_<PipelineStatus>(m, "PipelineStatus")
 		.def(py::init<>())
 		.def(py::init<PipelineStatus::StatusType, const QString&>())
@@ -421,6 +420,43 @@ void defineSceneSubmodule(py::module parentModule)
 				":Default: ``False``\n")
 	;
 	modifier_operate_on_list(AffineTransformationModifier_py, std::mem_fn(&AffineTransformationModifier::delegates), "operate_on", 
+			"A set of strings specifying the kinds of data elements this modifier should operate on. "
+			"By default the set contains all data element types supported by the modifier. "
+			"\n\n"
+			":Default: ``{'particles', 'vector_properties', 'cell', 'surfaces'}``\n");
+
+
+	auto ReplicateModifier_py = ovito_class<ReplicateModifier, MultiDelegatingModifier>(m,
+			":Base class: :py:class:`ovito.pipeline.Modifier`"
+			"\n\n"
+			"This modifier replicates all particles and bonds to generate periodic images. ")
+		.def_property("num_x", &ReplicateModifier::numImagesX, &ReplicateModifier::setNumImagesX,
+				"A positive integer specifying the number of copies to generate in the *x* direction (including the existing primary image)."
+				"\n\n"
+				":Default: 1\n")
+		.def_property("num_y", &ReplicateModifier::numImagesY, &ReplicateModifier::setNumImagesY,
+				"A positive integer specifying the number of copies to generate in the *y* direction (including the existing primary image)."
+				"\n\n"
+				":Default: 1\n")
+		.def_property("num_z", &ReplicateModifier::numImagesZ, &ReplicateModifier::setNumImagesZ,
+				"A positive integer specifying the number of copies to generate in the *z* direction (including the existing primary image)."
+				"\n\n"
+				":Default: 1\n")
+		.def_property("adjust_box", &ReplicateModifier::adjustBoxSize, &ReplicateModifier::setAdjustBoxSize,
+				"Controls whether the simulation cell is resized. "
+				"If ``True``, the simulation cell is accordingly extended to fit the replicated data. "
+				"If ``False``, the original simulation cell size (containing only the primary image of the system) is maintained. "
+				"\n\n"
+				":Default: ``True``\n")
+		.def_property("unique_ids", &ReplicateModifier::uniqueIdentifiers, &ReplicateModifier::setUniqueIdentifiers,
+				"If ``True``, the modifier automatically generates new unique IDs for each copy of particles. "
+				"Otherwise, the replica will keep the same IDs as the original particles, which is typically not what you want. "
+				"\n\n"
+				"Note: This option has no effect if the input particles do not already have numeric IDs (i.e. the ``'Particle Identifier` property does not exist). "
+				"\n\n"
+				":Default: ``True``\n")
+	;
+	modifier_operate_on_list(ReplicateModifier_py, std::mem_fn(&ReplicateModifier::delegates), "operate_on", 
 			"A set of strings specifying the kinds of data elements this modifier should operate on. "
 			"By default the set contains all data element types supported by the modifier. "
 			"\n\n"

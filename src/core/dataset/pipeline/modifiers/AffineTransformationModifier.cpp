@@ -32,8 +32,6 @@
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
 IMPLEMENT_OVITO_CLASS(AffineTransformationModifier);
-IMPLEMENT_OVITO_CLASS(AffineTransformationModifierDelegate);
-IMPLEMENT_OVITO_CLASS(SimulationCellAffineTransformationModifierDelegate);
 DEFINE_PROPERTY_FIELD(AffineTransformationModifier, transformationTM);
 DEFINE_PROPERTY_FIELD(AffineTransformationModifier, selectionOnly);
 DEFINE_PROPERTY_FIELD(AffineTransformationModifier, targetCell);
@@ -42,6 +40,9 @@ SET_PROPERTY_FIELD_LABEL(AffineTransformationModifier, transformationTM, "Transf
 SET_PROPERTY_FIELD_LABEL(AffineTransformationModifier, selectionOnly, "Transform selected elements only");
 SET_PROPERTY_FIELD_LABEL(AffineTransformationModifier, targetCell, "Target cell shape");
 SET_PROPERTY_FIELD_LABEL(AffineTransformationModifier, relativeMode, "Relative transformation");
+
+IMPLEMENT_OVITO_CLASS(AffineTransformationModifierDelegate);
+IMPLEMENT_OVITO_CLASS(SimulationCellAffineTransformationModifierDelegate);
 
 /******************************************************************************
 * Constructs the modifier object.

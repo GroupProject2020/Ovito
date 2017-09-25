@@ -278,6 +278,9 @@ PipelineFlowState AtomicStrainModifier::AtomicStrainResults::apply(TimePoint tim
 	PipelineFlowState output = input;
 	ParticleOutputHelper poh(modApp->dataset(), output);
 
+	if(invalidParticles()->size() != poh.outputParticleCount())
+		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
+
 	if(invalidParticles())
 		poh.outputProperty<ParticleProperty>(invalidParticles());
 

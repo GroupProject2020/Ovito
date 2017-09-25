@@ -101,6 +101,7 @@ SET(SourceFiles
 	dataset/pipeline/modifiers/SelectTypeModifier.cpp
 	dataset/pipeline/modifiers/HistogramModifier.cpp
 	dataset/pipeline/modifiers/ScatterPlotModifier.cpp
+	dataset/pipeline/modifiers/ReplicateModifier.cpp
 	utilities/units/UnitsManager.cpp
 	utilities/io/ObjectSaveStream.cpp
 	utilities/io/ObjectLoadStream.cpp
@@ -149,7 +150,7 @@ ENDIF()
 QT5_ADD_RESOURCES(ResourceFiles resources/core.qrc)
 
 # Build library
-ADD_LIBRARY(Core SHARED Core.cpp ${SourceFiles} ${ResourceFiles})
+ADD_LIBRARY(Core ${OVITO_DEFAULT_LIBRARY_TYPE} Core.cpp ${SourceFiles} ${ResourceFiles})
 
 # Pass name of core plugin to the code.
 TARGET_COMPILE_DEFINITIONS(Core PRIVATE "OVITO_PLUGIN_NAME=\"Core\"")
@@ -191,8 +192,19 @@ IF(NOT OVITO_DOUBLE_PRECISION_FP)
     TARGET_COMPILE_DEFINITIONS(Core PUBLIC "FLOATTYPE_FLOAT")
 ENDIF()
 
+# Define macro for symbol export from shared library.
+IF(OVITO_BUILD_MONOLITHIC)
+	TARGET_COMPILE_DEFINITIONS(Core PUBLIC "OVITO_CORE_EXPORT")
+ELSE()
+	TARGET_COMPILE_DEFINITIONS(Core PRIVATE "OVITO_CORE_EXPORT=Q_DECL_EXPORT")
+	TARGET_COMPILE_DEFINITIONS(Core INTERFACE "OVITO_CORE_EXPORT=Q_DECL_IMPORT")
+ENDIF()
+
 IF(OVITO_BUILD_APPSTORE_VERSION)
     TARGET_COMPILE_DEFINITIONS(Core PUBLIC "OVITO_BUILD_APPSTORE_VERSION")
+ENDIF()
+IF(OVITO_BUILD_MONOLITHIC)
+	TARGET_COMPILE_DEFINITIONS(Core PUBLIC "OVITO_BUILD_MONOLITHIC")
 ENDIF()
 
 # Pass version information to source code.
@@ -212,15 +224,16 @@ IF(APPLE)
 ELSEIF(UNIX)
     SET_TARGET_PROPERTIES(Core PROPERTIES INSTALL_RPATH "$ORIGIN")
 ENDIF()
-    
+
 # This library is part of the installation package.
 INSTALL(TARGETS Core EXPORT OVITO
 	RUNTIME DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
-	LIBRARY DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
+	LIBRARY DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
+	ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
 
 # Export target to make it accessible for external plugins.
 IF(CMAKE_VERSION VERSION_LESS "3")
-	EXPORT(TARGETS Core NAMESPACE "Ovito::" APPEND FILE "${${PROJECT_NAME}_BINARY_DIR}/OVITOTargets.cmake")
+	EXPORT(TARGETS Core NAMESPACE "Ovito::" APPEND FILE "${Ovito_BINARY_DIR}/OVITOTargets.cmake")
 ENDIF()
 
 # Install Libav video encoding libraries.

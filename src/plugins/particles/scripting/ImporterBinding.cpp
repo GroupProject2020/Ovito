@@ -44,10 +44,8 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 using namespace PyScript;
 
-void defineImportersSubmodule(py::module parentModule)
+void defineImportersSubmodule(py::module m)
 {
-	py::module m = parentModule.def_submodule("Importers");
-
 	ovito_abstract_class<ParticleImporter, FileSourceImporter>(m)
 		.def_property("multiple_frames", &ParticleImporter::isMultiTimestepFile, &ParticleImporter::setMultiTimestepFile)
 	;

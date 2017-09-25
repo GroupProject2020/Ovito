@@ -143,7 +143,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ReferenceConfigurationModifier::c
 	}
 
 	// Wait for the reference configuration to become available.
-	return refState.then(executor(), [this, time, modApp, input = std::move(input), referenceFrame, validityInterval](const PipelineFlowState& referenceInput) {
+	return refState.then(executor(), [this, time, modApp, input = input, referenceFrame, validityInterval](const PipelineFlowState& referenceInput) {
 
 		// Cache the reference configuration state in ModifierApplication.
 		if(ReferenceConfigurationModifierApplication* myModApp = dynamic_object_cast<ReferenceConfigurationModifierApplication>(modApp)) {

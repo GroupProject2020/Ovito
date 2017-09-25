@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2014) Alexander Stukowski
+#  Copyright (2017) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -63,35 +63,6 @@ INSTALL(DIRECTORY "${OVITO_PYTHON_DIRECTORY}/"
 # Build corresponding GUI plugin.
 IF(OVITO_BUILD_GUI)
 	ADD_SUBDIRECTORY(gui)
-ENDIF()
-
-IF(OVITO_BUILD_GUI)
-	# Build the script launcher executable.
-	ADD_EXECUTABLE(ovitos launcher/Main.cpp)
-	TARGET_LINK_LIBRARIES(ovitos Core Gui)
-	TARGET_LINK_LIBRARIES(ovitos Qt5::Core Qt5::Gui)
-	IF(APPLE)
-		SET_TARGET_PROPERTIES(ovitos PROPERTIES OUTPUT_NAME "ovitos.exe")
-		SET_TARGET_PROPERTIES(ovitos PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OVITO_LIBRARY_DIRECTORY}")
-		INSTALL(TARGETS ovitos DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
-		SET(OVITOS_EXECUTABLE "${OVITO_LIBRARY_DIRECTORY}/ovitos.exe")
-		
-		# Install the launch helper script.
-		INSTALL(PROGRAMS "resources/ovitos" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
-	ELSE()
-		SET_TARGET_PROPERTIES(ovitos PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OVITO_BINARY_DIRECTORY}")
-		INSTALL(TARGETS ovitos DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}")
-		GET_PROPERTY(OVITOS_EXECUTABLE TARGET ovitos PROPERTY LOCATION)
-	ENDIF()
-	SET(OVITOS_EXECUTABLE "${OVITOS_EXECUTABLE}" PARENT_SCOPE)
-	IF(APPLE)
-		SET_TARGET_PROPERTIES(ovitos PROPERTIES MACOSX_RPATH TRUE)
-		SET_TARGET_PROPERTIES(ovitos PROPERTIES INSTALL_RPATH "@executable_path/")
-	ELSEIF(UNIX)
-		SET_TARGET_PROPERTIES(ovitos PROPERTIES INSTALL_RPATH "$ORIGIN/../lib/ovito/")
-	ENDIF()
-	# Build the script launcher together with PyScript plugin.
-	ADD_DEPENDENCIES(PyScript ovitos)
 ENDIF()
 
 # Install standard Python packages. 
@@ -179,25 +150,6 @@ ELSEIF(WIN32)
 	# Install Visual C++ runtime needed by Python interpreter.
 	OVITO_INSTALL_DLL("${PYTHON_LIBRARY_PATH}/../msvcr100.dll")
 ENDIF()
-
-# Define tests for the scripting interface.
-SET(PYTHON_TEST_SCRIPTS_DIR "${CMAKE_SOURCE_DIR}/tests/scripts/test_suite")
-FILE(GLOB_RECURSE PYTHON_TEST_SCRIPTS RELATIVE "${PYTHON_TEST_SCRIPTS_DIR}" "${PYTHON_TEST_SCRIPTS_DIR}/*.py")
-FOREACH(test_script ${PYTHON_TEST_SCRIPTS})
-	# Run each test case both with 'ovitos' and a second time with the system Python interpreter.
-	ADD_TEST(NAME "${test_script}" WORKING_DIRECTORY "${PYTHON_TEST_SCRIPTS_DIR}" COMMAND "${OVITOS_EXECUTABLE}" "${test_script}")
-	ADD_TEST(NAME "${test_script}_extern" WORKING_DIRECTORY "${PYTHON_TEST_SCRIPTS_DIR}" COMMAND "${PYTHON_EXECUTABLE}" "${test_script}")
-	SET_PROPERTY(TEST "${test_script}_extern" PROPERTY ENVIRONMENT "PYTHONPATH=${OVITO_PYTHON_DIRECTORY}")
-ENDFOREACH()
-
-# Also test example snippets that are part of user documentation.
-SET(PYTHON_EXAMPLE_SNIPPETS_DIR "${CMAKE_SOURCE_DIR}/doc/python/example_snippets")
-FILE(GLOB_RECURSE PYTHON_EXAMPLE_SNIPPETS RELATIVE "${PYTHON_EXAMPLE_SNIPPETS_DIR}" "${PYTHON_EXAMPLE_SNIPPETS_DIR}/*.py")
-FOREACH(test_script ${PYTHON_EXAMPLE_SNIPPETS})
-	ADD_TEST(NAME "snippet_${test_script}" WORKING_DIRECTORY "${PYTHON_EXAMPLE_SNIPPETS_DIR}" COMMAND "${OVITOS_EXECUTABLE}" "${test_script}")
-	ADD_TEST(NAME "snippet_${test_script}_extern" WORKING_DIRECTORY "${PYTHON_EXAMPLE_SNIPPETS_DIR}" COMMAND "${PYTHON_EXECUTABLE}" "${test_script}")
-	SET_PROPERTY(TEST "snippet_${test_script}_extern" PROPERTY ENVIRONMENT "PYTHONPATH=${OVITO_PYTHON_DIRECTORY}")
-ENDFOREACH()
 
 # Propagate list of plugins to parent scope.
 SET(OVITO_PLUGIN_LIST ${OVITO_PLUGIN_LIST} PARENT_SCOPE)

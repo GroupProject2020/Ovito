@@ -107,15 +107,7 @@ public:
 		OVITO_ASSERT(names.empty() || names.size() == componentCount());
 		_componentNames = names;
 	}
-
-	/// Returns the number of grid points along each dimension. 
-	const std::vector<size_t>& shape() const { return _shape; }
-
-	/// Sets the number of grid points along each dimension. 
-	void setShape(std::vector<size_t> shape) { 
-		_shape = std::move(shape); 
-	}
-		
+	
 	/// \brief Returns a read-only pointer to the raw elements stored in this property object.
 	const void* constData() const {
 		return _data.get();
@@ -521,9 +513,6 @@ protected:
 
 	/// The internal data array that holds the elements.
 	std::unique_ptr<uint8_t[]> _data;
-
-	/// The number of STRUCTURED grid points along each dimension. 
-	std::vector<size_t> _shape;
 };
 
 /// Typically, PropertyStorage objects are shallow copied. That's why we use a shared_ptr to hold on to them.

@@ -104,7 +104,7 @@ Future<PipelineFlowState> FreezePropertyModifier::evaluate(TimePoint time, Modif
 		
 	// Request the frozen state from the pipeline.
 	return modApp->evaluateInput(freezeTime())
-		.then(executor(), [this, time, modApp = QPointer<ModifierApplication>(modApp), input = std::move(input)](const PipelineFlowState& frozenState) mutable {
+		.then(executor(), [this, time, modApp = QPointer<ModifierApplication>(modApp), input = input](const PipelineFlowState& frozenState) mutable {
 			UndoSuspender noUndo(this);
 			
 			// Extract the input property.

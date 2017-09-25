@@ -11,7 +11,7 @@ import numpy
 # Load dependencies
 import ovito
 from ovito.data import DataCollection
-from ovito.plugins.PyScript.App import CloneHelper
+from ovito.plugins.PyScript import CloneHelper
 
 # Load the native code module
 from ovito.plugins.Particles import BondProperty

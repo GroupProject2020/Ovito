@@ -262,7 +262,6 @@ void POSCARImporter::FrameLoader::loadFile(QFile& file)
 			if(sscanf(stream.readLine(), "%zu %zu %zu", &nx, &ny, &nz) == 3 && nx > 0 && ny > 0 && nz > 0) {
 				auto parseFieldData = [this, &stream, &frameData](size_t nx, size_t ny, size_t nz, const QString& name) -> PropertyPtr {
 					PropertyPtr fieldQuantity = std::make_shared<PropertyStorage>(nx*ny*nz, qMetaTypeId<FloatType>(), 1, 0, name, false);
-					fieldQuantity->setShape({nx,ny,nz});
 					const char* s = stream.readLine();
 					FloatType* data = fieldQuantity->dataFloat();
 					setProgressMaximum(fieldQuantity->size());
@@ -287,6 +286,8 @@ void POSCARImporter::FrameLoader::loadFile(QFile& file)
 					return fieldQuantity;
 				};
 
+				frameData->setVoxelGridShape({nx, ny, nz});
+
 				// Parse spin up + spin down denisty.
 				PropertyPtr chargeDensity = parseFieldData(nx, ny, nz, tr("Charge density"));
 				if(!chargeDensity) return;
@@ -297,6 +298,8 @@ void POSCARImporter::FrameLoader::loadFile(QFile& file)
 				PropertyPtr magnetizationDensity;
 				while(!stream.eof()) {
 					if(sscanf(stream.readLine(), "%zu %zu %zu", &nx, &ny, &nz) == 3 && nx > 0 && ny > 0 && nz > 0) {
+						if(nx != frameData->voxelGridShape()[0] || ny != frameData->voxelGridShape()[1] || nz != frameData->voxelGridShape()[2])
+							throw Exception(tr("Inconsistent voxel grid dimensions in line %1").arg(stream.lineNumber()));
 						magnetizationDensity = parseFieldData(nx, ny, nz, tr("Magnetization density"));
 						if(!magnetizationDensity) return;
 						statusString += tr("\nMagnetization density grid: %1 x %2 x %3").arg(nx).arg(ny).arg(nz);
@@ -309,6 +312,8 @@ void POSCARImporter::FrameLoader::loadFile(QFile& file)
 				PropertyPtr magnetizationDensityZ;
 				while(!stream.eof()) {
 					if(sscanf(stream.readLine(), "%zu %zu %zu", &nx, &ny, &nz) == 3 && nx > 0 && ny > 0 && nz > 0) {
+						if(nx != frameData->voxelGridShape()[0] || ny != frameData->voxelGridShape()[1] || nz != frameData->voxelGridShape()[2])
+							throw Exception(tr("Inconsistent voxel grid dimensions in line %1").arg(stream.lineNumber()));
 						magnetizationDensityY = parseFieldData(nx, ny, nz, tr("Magnetization density"));
 						if(!magnetizationDensityY) return;
 						break;
@@ -316,17 +321,16 @@ void POSCARImporter::FrameLoader::loadFile(QFile& file)
 				}
 				while(!stream.eof()) {
 					if(sscanf(stream.readLine(), "%zu %zu %zu", &nx, &ny, &nz) == 3 && nx > 0 && ny > 0 && nz > 0) {
+						if(nx != frameData->voxelGridShape()[0] || ny != frameData->voxelGridShape()[1] || nz != frameData->voxelGridShape()[2])
+							throw Exception(tr("Inconsistent voxel grid dimensions in line %1").arg(stream.lineNumber()));
 						magnetizationDensityZ = parseFieldData(nx, ny, nz, tr("Magnetization density"));
 						if(!magnetizationDensityZ) return;
 						break;
 					}
 				}
 
-				if(magnetizationDensity && magnetizationDensityY && magnetizationDensityZ && 
-					magnetizationDensityY->shape() == magnetizationDensityZ->shape() &&
-					magnetizationDensity->shape() == magnetizationDensityY->shape()) {
+				if(magnetizationDensity && magnetizationDensityY && magnetizationDensityZ) {
 					PropertyPtr vectorMagnetization = std::make_shared<PropertyStorage>(nx*ny*nz, qMetaTypeId<FloatType>(), 3, 0, tr("Magnetization density"), false);
-					vectorMagnetization->setShape({nx,ny,nz});
 					vectorMagnetization->setComponentNames(QStringList() << "X" << "Y" << "Z");
 					for(size_t i = 0; i < vectorMagnetization->size(); i++) 
 						vectorMagnetization->setVector3(i, { magnetizationDensity->getFloat(i), magnetizationDensityY->getFloat(i), magnetizationDensityZ->getFloat(i) });

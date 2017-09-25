@@ -100,6 +100,9 @@ QList<QDir> PluginManager::pluginDirs()
 ******************************************************************************/
 void PluginManager::loadAllPlugins()
 {
+// Only load plugin dynamic libraries if they are not already linked into the executable.
+#ifndef OVITO_BUILD_MONOLITHIC
+
 #ifdef Q_OS_WIN
 	// Modify PATH enviroment variable so that Windows finds the plugin DLLs if 
 	// there are dependencies between them.
@@ -131,6 +134,7 @@ void PluginManager::loadAllPlugins()
 			}
 		}
 	}
+#endif
 
 	registerLoadedPluginClasses();
 }

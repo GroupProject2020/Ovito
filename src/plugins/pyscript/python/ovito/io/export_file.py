@@ -1,6 +1,5 @@
 # Load the native modules and other dependencies.
-from ..plugins.PyScript.IO import FileExporter, AttributeFileExporter
-from ..plugins.PyScript.Scene import PipelineStatus, PipelineObject
+from ..plugins.PyScript import FileExporter, AttributeFileExporter, PipelineStatus, PipelineObject
 from ..data import DataCollection, DataObject
 from ..pipeline import Pipeline, StaticSource
 import ovito

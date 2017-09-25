@@ -492,6 +492,8 @@ PipelineFlowState VoronoiAnalysisModifier::VoronoiAnalysisResults::apply(TimePoi
 	
 	PipelineFlowState output = input;
 	ParticleOutputHelper poh(modApp->dataset(), output);
+	if(coordinationNumbers()->size() != poh.outputParticleCount())
+		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
 
 	poh.outputProperty<ParticleProperty>(coordinationNumbers());
 	poh.outputProperty<ParticleProperty>(atomicVolumes());

@@ -20,7 +20,9 @@
 ###############################################################################
 
 SET(SourceFiles 
-	data/VoxelProperty.cpp
+	objects/VoxelGrid.cpp
+	objects/VoxelProperty.cpp
+	modifier/VoxelGridReplicateModifierDelegate.cpp
 	modifier/CreateIsosurfaceModifier.cpp
 	modifier/MarchingCubes.cpp
 )

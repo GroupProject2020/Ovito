@@ -33,18 +33,12 @@
 
 #include <complex>
 
-#ifdef CorrelationFunctionPlugin_EXPORTS		// This is defined by CMake when building the plugin library.
-#  define OVITO_CORRELATION_FUNCTION_EXPORT Q_DECL_EXPORT
-#else
-#  define OVITO_CORRELATION_FUNCTION_EXPORT Q_DECL_IMPORT
-#endif
-
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
 /**
  * \brief This modifier computes the spatial correlation function between two particle properties.
  */
-class OVITO_CORRELATION_FUNCTION_EXPORT CorrelationFunctionModifier : public AsynchronousModifier
+class OVITO_CORRELATIONFUNCTIONPLUGIN_EXPORT CorrelationFunctionModifier : public AsynchronousModifier
 {
 	/// Give this modifier class its own metaclass.
 	class OOMetaClass : public AsynchronousModifier::OOMetaClass 
@@ -336,7 +330,7 @@ private:
  *        when it is inserted into in a data pipeline. Its stores results computed by the
  *        modifier's compute engine so that they can be displayed in the modifier's UI panel.
  */
-class OVITO_CORRELATION_FUNCTION_EXPORT CorrelationFunctionModifierApplication : public AsynchronousModifierApplication
+class OVITO_CORRELATIONFUNCTIONPLUGIN_EXPORT CorrelationFunctionModifierApplication : public AsynchronousModifierApplication
 {
 	Q_OBJECT
 	OVITO_CLASS(CorrelationFunctionModifierApplication)

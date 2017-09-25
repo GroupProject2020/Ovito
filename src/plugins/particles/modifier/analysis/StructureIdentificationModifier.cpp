@@ -121,6 +121,8 @@ PipelineFlowState StructureIdentificationModifier::StructureIdentificationResult
 
 	// Create output property object.
 	PropertyPtr outputStructures = postProcessStructureTypes(time, modApp, structures());
+	if(outputStructures->size() != poh.outputParticleCount())
+		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
 	ParticleProperty* structureProperty = poh.outputProperty<ParticleProperty>(outputStructures);
 
 	// Attach structure types to output particle property.

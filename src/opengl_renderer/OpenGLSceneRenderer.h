@@ -35,12 +35,6 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLBuffer>
 
-#ifdef OpenGLRenderer_EXPORTS		// This is defined by CMake when building this library.
-#  define OVITO_OPENGL_RENDERER_EXPORT Q_DECL_EXPORT
-#else
-#  define OVITO_OPENGL_RENDERER_EXPORT Q_DECL_IMPORT
-#endif
-
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
 
 /**

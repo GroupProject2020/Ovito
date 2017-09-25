@@ -29,6 +29,7 @@ SET(SourceFiles
 	objects/dislocations/DislocationNetworkObject.cpp
 	objects/dislocations/DislocationDisplay.cpp
 	objects/dislocations/DislocationSliceModifierDelegate.cpp
+	objects/dislocations/DislocationReplicateModifierDelegate.cpp
 	objects/partition_mesh/PartitionMesh.cpp
 	objects/partition_mesh/PartitionMeshDisplay.cpp
 	objects/slip_surface/SlipSurface.cpp
@@ -63,6 +64,9 @@ OVITO_STANDARD_PLUGIN(CrystalAnalysis
 	OPTIONAL_PLUGIN_DEPENDENCIES PyScript
 	PYTHON_WRAPPERS "${CMAKE_CURRENT_SOURCE_DIR}/resources/python/"
 )
+
+# Speed up compilation by using precompiled headers.
+ADD_PRECOMPILED_HEADER(CrystalAnalysis plugins/crystalanalysis/CrystalAnalysis.h)
 
 # Build corresponding GUI plugin.
 IF(OVITO_BUILD_GUI)

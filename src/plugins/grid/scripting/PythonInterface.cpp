@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/grid/Grid.h>
-#include <plugins/grid/data/VoxelProperty.h>
+#include <plugins/grid/objects/VoxelProperty.h>
 #include <plugins/grid/modifier/CreateIsosurfaceModifier.h>
 #include <plugins/pyscript/binding/PythonBinding.h>
 #include <core/app/PluginManager.h>

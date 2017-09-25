@@ -34,7 +34,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPAC
 * Generic base class for futures, which implements the basic state management,
 * progress reporting, and event processing.
 ******************************************************************************/
-class FutureBase 
+class OVITO_CORE_EXPORT FutureBase 
 {
 public:
 
@@ -236,7 +236,6 @@ typename detail::resulting_future_type<FC,std::add_rvalue_reference_t<typename F
 
 	// Create an unfulfilled promise state for the result of the continuation.
 	auto trackingState = std::make_shared<ContinuationStateType>(std::move(_sharedState));
-//	qDebug() << "Future::then: Creating tracking state" << trackingState.get() << "as exclusive continuation of state" << trackingState->creatorState().get();
 		
 	trackingState->creatorState()->addContinuation(
 		executor.createWork([cont = std::forward<FC>(cont), trackingState](bool workCanceled) mutable {
@@ -288,7 +287,6 @@ typename detail::resulting_future_type<FC,std::tuple<Future<R...>>>::type Future
 
 	// Create an unfulfilled promise state for the result of the continuation.
 	auto trackingState = std::make_shared<ContinuationStateType>(std::move(_sharedState));
-//	qDebug() << "Future::then_future: Creating tracking state" << trackingState.get() << "as exclusive continuation of state" << trackingState->creatorState().get();
 		
 	trackingState->creatorState()->addContinuation(
 		executor.createWork([cont = std::forward<FC>(cont), trackingState](bool workCanceled) mutable {

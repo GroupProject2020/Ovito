@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2013) Alexander Stukowski
+#  Copyright (2017) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -33,34 +33,38 @@ ELSE()
 ENDIF()
 
 # Builds the main executable of the application
-ADD_EXECUTABLE(${PROJECT_NAME} ${OVITO_WIN32_EXECUTABLE} MACOSX_BUNDLE Main.cpp ${WINDOWS_RESOURCES})
+ADD_EXECUTABLE(Ovito ${OVITO_WIN32_EXECUTABLE} MACOSX_BUNDLE Main.cpp ${WINDOWS_RESOURCES})
 
 # The executable depends on the core and the gui modules, of course.
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} Core Gui)
+TARGET_LINK_LIBRARIES(Ovito Core Gui)
 
 # Put the executable into the right directory.
-SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OVITO_BINARY_DIRECTORY}")
+SET_TARGET_PROPERTIES(Ovito PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OVITO_BINARY_DIRECTORY}")
 
 # Set name of executable.
-SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "ovito")
+SET_TARGET_PROPERTIES(Ovito PROPERTIES OUTPUT_NAME "ovito")
 
 # Link Qt5.
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} Qt5::Core Qt5::Gui)
+TARGET_LINK_LIBRARIES(Ovito Qt5::Core Qt5::Gui)
 
 IF(APPLE)
     # Enable the use of @rpath on OSX.
-    SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES MACOSX_RPATH TRUE)
-    SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES INSTALL_RPATH "@executable_path/")
+    SET_TARGET_PROPERTIES(Ovito PROPERTIES MACOSX_RPATH TRUE)
+    SET_TARGET_PROPERTIES(Ovito PROPERTIES INSTALL_RPATH "@executable_path/")
 ELSEIF(UNIX)
-    SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES INSTALL_RPATH "$ORIGIN/../lib/ovito/")
+    SET_TARGET_PROPERTIES(Ovito PROPERTIES INSTALL_RPATH "$ORIGIN/../lib/ovito/")
 ENDIF()
 
 # This executable will be part of the installation package.
-INSTALL(TARGETS ${PROJECT_NAME} DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/")
+INSTALL(TARGETS Ovito DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/")
 
 # Build all plugins first before building the main executable.
 FOREACH(plugin ${OVITO_PLUGIN_LIST})
-    ADD_DEPENDENCIES(${PROJECT_NAME} ${plugin})
+	IF(OVITO_BUILD_MONOLITHIC)
+		TARGET_LINK_LIBRARIES(Ovito -Wl,--whole-archive ${plugin} -Wl,--no-whole-archive)
+	ELSE()
+		ADD_DEPENDENCIES(Ovito ${plugin})
+	ENDIF()
 ENDFOREACH()
 
 # Install fonts required by 'minimal' platform plugin on Linux
@@ -98,8 +102,8 @@ IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
 	ENDIF()
 
 	# Make the executable look in lib/ovito/ directory for shared libraries.
-	SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES INSTALL_RPATH "\$ORIGIN/../lib/ovito")
-	SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES BUILD_WITH_INSTALL_RPATH "1")
+	SET_TARGET_PROPERTIES(Ovito PROPERTIES INSTALL_RPATH "\$ORIGIN/../lib/ovito")
+	SET_TARGET_PROPERTIES(Ovito PROPERTIES BUILD_WITH_INSTALL_RPATH "1")
 
 	# Update: No longer bundle libstdc++.so.6 with OVITO, because it causes conflicts with the OpenGL driver on
 	# some systems.

@@ -19,16 +19,10 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#pragma once
-
+#ifndef __OVITO_MESH_
+#define __OVITO_MESH_
 
 #include <core/Core.h>
-
-#ifdef Mesh_EXPORTS		// This is defined by CMake when building the plugin library.
-#  define OVITO_MESH_EXPORT Q_DECL_EXPORT
-#else
-#  define OVITO_MESH_EXPORT Q_DECL_IMPORT
-#endif
 
 namespace Ovito {
 	namespace Mesh {
@@ -38,3 +32,5 @@ namespace Ovito {
 		class SurfaceMeshDisplay;
 	}
 }
+
+#endif

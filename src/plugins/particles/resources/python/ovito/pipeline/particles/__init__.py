@@ -1,8 +1,7 @@
 import ovito.data
 
 # Load the native code module
-from ovito.plugins.Particles import TrajectoryLineGenerator
-from ovito.plugins.Particles.Modifiers import ReferenceConfigurationModifier
+from ovito.plugins.Particles import TrajectoryLineGenerator, ReferenceConfigurationModifier
 
 # Inject selected classes into parent module.
 ovito.pipeline.TrajectoryLineGenerator = TrajectoryLineGenerator

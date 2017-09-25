@@ -24,12 +24,6 @@
 
 #include <plugins/particles/Particles.h>
 
-#ifdef VoroTop_EXPORTS		// This is defined by CMake when building the plugin library.
-#  define OVITO_VOROTOP_EXPORT Q_DECL_EXPORT
-#else
-#  define OVITO_VOROTOP_EXPORT Q_DECL_IMPORT
-#endif
-
 namespace Ovito {
 	namespace VoroTop {
 		using namespace Ovito::Particles;

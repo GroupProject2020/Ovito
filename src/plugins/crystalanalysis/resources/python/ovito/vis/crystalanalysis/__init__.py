@@ -3,6 +3,7 @@ import ovito.vis
 import ovito.vis.mesh
 
 # Load the native code modules.
+import ovito.plugins.PyScript
 import ovito.plugins.Particles
 import ovito.plugins.CrystalAnalysis
 
@@ -12,4 +13,4 @@ ovito.vis.PartitionMeshDisplay = ovito.plugins.CrystalAnalysis.PartitionMeshDisp
 ovito.vis.__all__ += ['DislocationDisplay', 'PartitionMeshDisplay']
 
 # Inject enum types.
-ovito.vis.DislocationDisplay.Shading = ovito.vis.ArrowShadingMode
+ovito.vis.DislocationDisplay.Shading = ovito.plugins.PyScript.ArrowShadingMode

@@ -34,11 +34,13 @@ This module contains classes related to :ref:`data visualization and image rende
 
 import sip
 import PyQt5.QtGui
-import ovito
 
 # Load the native modules.
-from ..plugins.PyScript.Rendering import *
-from ..plugins.PyScript.Viewport import *
+from ..plugins.PyScript import (RenderSettings, Viewport, ViewportConfiguration, OpenGLRenderer, 
+                                Display, CoordinateTripodOverlay, PythonViewportOverlay, TextLabelOverlay,
+                                SimulationCellDisplay, ColorLegendOverlay, FrameBuffer)
+
+import ovito
 
 __all__ = ['RenderSettings', 'Viewport', 'ViewportConfiguration', 'OpenGLRenderer', 'Display',
         'CoordinateTripodOverlay', 'PythonViewportOverlay', 'TextLabelOverlay', 'SimulationCellDisplay',

@@ -37,10 +37,8 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 using namespace PyScript;
 
-void defineExportersSubmodule(py::module parentModule)
+void defineExportersSubmodule(py::module m)
 {
-	py::module m = parentModule.def_submodule("Exporters");
-
 	ovito_abstract_class<ParticleExporter, FileExporter>{m}
 	;
 

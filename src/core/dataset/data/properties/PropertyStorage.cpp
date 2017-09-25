@@ -78,9 +78,6 @@ void PropertyStorage::saveToStream(SaveStream& stream, bool onlyMetadata) const
 	stream.writeSizeT(_stride);
 	stream.writeSizeT(_componentCount);
 	stream << _componentNames;
-	stream.writeSizeT(shape().size());
-	for(size_t d : shape())
-		stream.writeSizeT(d);
 	if(onlyMetadata) {
 		stream.writeSizeT(0);
 	}
@@ -108,11 +105,6 @@ void PropertyStorage::loadFromStream(LoadStream& stream)
 	stream.readSizeT(_stride);
 	stream.readSizeT(_componentCount);
 	stream >> _componentNames;
-	size_t ndim;
-	stream.readSizeT(ndim);
-	_shape.resize(ndim);
-	for(size_t d = 0; d < ndim; d++) 
-		stream.readSizeT(_shape[d]);
 	stream.readSizeT(_numElements);
 	_data.reset(new uint8_t[_numElements * _stride]);
 	stream.read(_data.get(), _stride * _numElements);

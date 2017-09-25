@@ -69,6 +69,7 @@ SET(SourceFiles
 	dataset/pipeline/modifiers/SelectTypeModifierEditor.cpp
 	dataset/pipeline/modifiers/HistogramModifierEditor.cpp
 	dataset/pipeline/modifiers/ScatterPlotModifierEditor.cpp
+	dataset/pipeline/modifiers/ReplicateModifierEditor.cpp
 	widgets/general/RolloutContainer.cpp
 	widgets/general/RolloutContainerLayout.cpp
 	widgets/general/SpinnerWidget.cpp
@@ -137,7 +138,7 @@ SET(SourceFiles
 QT5_ADD_RESOURCES(ResourceFiles resources/gui.qrc)
 
 # Build library
-ADD_LIBRARY(Gui SHARED GUI.cpp ${SourceFiles} ${ResourceFiles})
+ADD_LIBRARY(Gui ${OVITO_DEFAULT_LIBRARY_TYPE} GUI.cpp ${SourceFiles} ${ResourceFiles})
 
 # Pass name of gui plugin to the code.
 TARGET_COMPILE_DEFINITIONS(Gui PRIVATE "OVITO_PLUGIN_NAME=\"Gui\"")
@@ -154,6 +155,14 @@ TARGET_LINK_LIBRARIES(Gui PUBLIC Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network)
 # Link Qwt.
 TARGET_LINK_LIBRARIES(Gui PRIVATE Qwt)
 
+# Define macro for symbol export from shared library.
+IF(OVITO_BUILD_MONOLITHIC)
+	TARGET_COMPILE_DEFINITIONS(Gui PUBLIC "OVITO_GUI_EXPORT")
+ELSE()
+	TARGET_COMPILE_DEFINITIONS(Gui PRIVATE "OVITO_GUI_EXPORT=Q_DECL_EXPORT")
+	TARGET_COMPILE_DEFINITIONS(Gui INTERFACE "OVITO_GUI_EXPORT=Q_DECL_IMPORT")
+ENDIF()
+
 # Speed up compilation by using precompiled headers.
 ADD_PRECOMPILED_HEADER(Gui gui/GUI.h)
 
@@ -169,9 +178,10 @@ ENDIF()
 # This library is part of the installation package.
 INSTALL(TARGETS Gui EXPORT OVITO
 	RUNTIME DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
-	LIBRARY DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
+	LIBRARY DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}"
+	ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
 
 # Export target to make it accessible for external plugins.
 IF(CMAKE_VERSION VERSION_LESS "3")
-	EXPORT(TARGETS Gui NAMESPACE "Ovito::" APPEND FILE "${${PROJECT_NAME}_BINARY_DIR}/OVITOTargets.cmake")
+	EXPORT(TARGETS Gui NAMESPACE "Ovito::" APPEND FILE "${Ovito_BINARY_DIR}/OVITOTargets.cmake")
 ENDIF()

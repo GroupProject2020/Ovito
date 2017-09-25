@@ -25,6 +25,18 @@
 #include <core/utilities/io/FileManager.h>
 #include "Application.h"
 
+// Called from Application::initialize() to register the embedded Qt resource files
+// when running a statically linked executable. Accordings to the Qt documentation this
+// needs to happen from oustide of any C++ namespace.
+static void registerQtResources()
+{
+#ifdef OVITO_BUILD_MONOLITHIC	
+	Q_INIT_RESOURCE(core);
+	Q_INIT_RESOURCE(gui);
+	Q_INIT_RESOURCE(resources);
+#endif	
+}
+
 namespace Ovito {
 
 /// The one and only instance of this class.
@@ -131,6 +143,9 @@ bool Application::initialize()
 	QMetaType::registerConverter<Color, QColor>();
 	QMetaType::registerConverter<QColor, ColorA>();
 	QMetaType::registerConverter<ColorA, QColor>();
+
+	// Register Qt resources.
+	::registerQtResources();
 
 	// Create global FileManager object.
 	_fileManager.reset(createFileManager());

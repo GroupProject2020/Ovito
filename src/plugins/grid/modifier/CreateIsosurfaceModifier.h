@@ -23,7 +23,7 @@
 
 
 #include <plugins/grid/Grid.h>
-#include <plugins/grid/data/VoxelProperty.h>
+#include <plugins/grid/objects/VoxelProperty.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
 #include <plugins/mesh/surface/SurfaceMeshDisplay.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
@@ -139,9 +139,14 @@ private:
 	public:
 
 		/// Constructor.
-		ComputeIsosurfaceEngine(const TimeInterval& validityInterval, ConstPropertyPtr property, int vectorComponent, const SimulationCell& simCell, FloatType isolevel) :
-			ComputeEngine(validityInterval), _property(std::move(property)), _vectorComponent(vectorComponent), 
-			_simCell(simCell), _isolevel(isolevel), _results(std::make_shared<ComputeIsosurfaceResults>()) {}
+		ComputeIsosurfaceEngine(const TimeInterval& validityInterval, const std::vector<size_t>& gridShape, ConstPropertyPtr property, int vectorComponent, const SimulationCell& simCell, FloatType isolevel) :
+			ComputeEngine(validityInterval), 
+			_gridShape(gridShape),
+			_property(std::move(property)), 
+			_vectorComponent(vectorComponent), 
+			_simCell(simCell), 
+			_isolevel(isolevel), 
+			_results(std::make_shared<ComputeIsosurfaceResults>()) {}
 
 		/// Computes the modifier's results.
 		virtual void perform() override;
@@ -151,6 +156,7 @@ private:
 
 	private:
 
+		const std::vector<size_t> _gridShape;
 		const FloatType _isolevel;
 		const int _vectorComponent;
 		const ConstPropertyPtr _property;

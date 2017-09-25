@@ -38,7 +38,6 @@ SET(SourceFiles
 	modifier/coloring/AmbientOcclusionRenderer.cpp
 	modifier/coloring/ParticlesColorCodingModifierDelegate.cpp
 	modifier/coloring/ParticlesAssignColorModifierDelegate.cpp
-	modifier/modify/ShowPeriodicImagesModifier.cpp
 	modifier/modify/WrapPeriodicImagesModifier.cpp
 	modifier/modify/CreateBondsModifier.cpp
 	modifier/modify/LoadTrajectoryModifier.cpp
@@ -47,6 +46,7 @@ SET(SourceFiles
 	modifier/modify/ParticlesSliceModifierDelegate.cpp
 	modifier/modify/ParticlesAffineTransformationModifierDelegate.cpp
 	modifier/modify/ParticlesDeleteSelectedModifierDelegate.cpp
+	modifier/modify/ParticlesReplicateModifierDelegate.cpp
 	modifier/analysis/StructureIdentificationModifier.cpp
 	modifier/analysis/ReferenceConfigurationModifier.cpp
 	modifier/analysis/binandreduce/BinAndReduceModifier.cpp
@@ -109,7 +109,6 @@ IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
 		scripting/ModifierBinding.cpp
 	)
 ENDIF()
-
 
 OVITO_STANDARD_PLUGIN(Particles
 	SOURCES Particles.cpp ${SourceFiles}

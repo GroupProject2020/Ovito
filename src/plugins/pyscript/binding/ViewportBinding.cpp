@@ -34,10 +34,8 @@ namespace PyScript {
 
 using namespace Ovito;
 
-void defineViewportSubmodule(py::module parentModule)
+void defineViewportSubmodule(py::module m)
 {
-	py::module m = parentModule.def_submodule("Viewport");
-
 	auto Viewport_py = ovito_class<Viewport, RefTarget>(m,
 			"A viewport defines the view on the three-dimensional scene. "
 			"\n\n"

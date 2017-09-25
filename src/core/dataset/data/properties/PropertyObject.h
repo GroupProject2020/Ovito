@@ -97,9 +97,6 @@ public:
 			return QStringLiteral("%1.%2").arg(name()).arg(vectorComponent + 1);
 	}
 
-	/// Returns the number of grid points along each dimension. 
-	const std::vector<size_t>& shape() const { return storage()->shape(); }
-
 	/// Returns the data encapsulated by this object after making sure it is not shared with other owners.
 	const PropertyPtr& modifiableStorage();
 

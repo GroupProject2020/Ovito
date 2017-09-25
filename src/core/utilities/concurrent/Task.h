@@ -30,7 +30,7 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
-class AsynchronousTaskBase : public ThreadSafePromiseState, public QRunnable
+class OVITO_CORE_EXPORT AsynchronousTaskBase : public ThreadSafePromiseState, public QRunnable
 {
 public:
 

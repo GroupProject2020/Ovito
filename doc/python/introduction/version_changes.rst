@@ -175,3 +175,14 @@ bonds, surfaces, etc.) the modifier should act on:
    * :py:class:`~ovito.modifiers.InvertSelectionModifier` 
    * :py:class:`~ovito.modifiers.HistogramModifier` 
    * :py:class:`~ovito.modifiers.SelectTypeModifier` 
+
+SurfaceMesh data object
+------------------------------------------
+
+The :py:class:`~ovito.data.SurfaceMesh` class has been greatly extended. It now provides access to
+the periodic :py:attr:`~ovito.data.SurfaceMesh.domain` the surface mesh is embedded in as well as the vertices and faces
+of the mesh. Export of the triangle mesh to a VTK file is now performed using the standard :py:func:`ovito.io.export_file`
+function (``'vtk/trimesh'`` output format). 
+
+Furthermore, the :py:class:`~ovito.data.SurfaceMesh` class now provides the :py:meth:`~ovito.data.SurfaceMesh.locate_point` method,
+which can be used to determine whether a spatial point is located on the surface manifold, inside the region enclosed by the surface, or outside. 

@@ -140,7 +140,7 @@ public:
 	getQVariant() const {
 		OVITO_ASSERT_MSG(false, "RuntimePropertyField::getQVariant()", "The data type of the property field does not support conversion to/from QVariant.");
 		return {};
-	}	
+	}
 	
 	/// Returns the internal value stored in this property field.
 	inline const property_type& get() const { return _value; }

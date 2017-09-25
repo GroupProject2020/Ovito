@@ -30,7 +30,6 @@ SET(SourceFiles
 	objects/TrajectoryDisplayEditor.cpp
 	objects/TrajectoryGeneratorEditor.cpp
 	modifier/coloring/AmbientOcclusionModifierEditor.cpp
-	modifier/modify/ShowPeriodicImagesModifierEditor.cpp
 	modifier/modify/CreateBondsModifierEditor.cpp
 	modifier/modify/LoadTrajectoryModifierEditor.cpp
 	modifier/modify/CombineParticleSetsModifierEditor.cpp

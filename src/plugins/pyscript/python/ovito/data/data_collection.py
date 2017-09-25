@@ -6,8 +6,7 @@ except ImportError:
     # Python 2.x
     import collections
 
-from ..plugins.PyScript.Scene import DataObject, SimulationCell
-from ..plugins.PyScript.App import CloneHelper
+from ..plugins.PyScript import DataObject, SimulationCell, CloneHelper
 
 def with_metaclass(meta, *bases):
     """

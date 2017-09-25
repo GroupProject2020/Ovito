@@ -200,9 +200,13 @@ PipelineFlowState WignerSeitzAnalysisModifier::WignerSeitzAnalysisResults::apply
 	output.attributes() = input.attributes();
 
 	ParticleOutputHelper poh(modApp->dataset(), output);	
+
+	if(occupancyNumbers()->size() != poh.outputParticleCount())
+		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
+
 	ParticleProperty* posProperty = ParticleProperty::findInState(output, ParticleProperty::PositionProperty);
 	if(!posProperty)
-		modApp->throwException(tr("This modifier cannot be evaluated, because the reference configuration does not contain any particles."));
+		modApp->throwException(tr("This modifier cannot be evaluated, because the reference configuration does not contain any particles."));		
 	OVITO_ASSERT(poh.outputParticleCount() == posProperty->size());
 
 	poh.outputProperty<ParticleProperty>(occupancyNumbers());

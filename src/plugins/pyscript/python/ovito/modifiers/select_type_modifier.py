@@ -7,7 +7,7 @@ except ImportError:
     # Python 2.x
     import collections
 
-from ..plugins.PyScript.Scene import SelectTypeModifier
+from ..plugins.PyScript import SelectTypeModifier
 
 try: # check whether Python knows about 'basestring' (Python 2.x)
     basestring

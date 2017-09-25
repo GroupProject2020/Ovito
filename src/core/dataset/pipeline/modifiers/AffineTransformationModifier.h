@@ -47,7 +47,7 @@ protected:
 class OVITO_CORE_EXPORT SimulationCellAffineTransformationModifierDelegate : public AffineTransformationModifierDelegate
 {
 	/// Give the modifier delegate its own metaclass.
-	class SimulationCellAffineTransformationModifierDelegateClass : public AffineTransformationModifierDelegate::OOMetaClass 
+	class OOMetaClass : public AffineTransformationModifierDelegate::OOMetaClass 
 	{
 	public:
 
@@ -61,7 +61,7 @@ class OVITO_CORE_EXPORT SimulationCellAffineTransformationModifierDelegate : pub
 		virtual QString pythonDataName() const override { return QStringLiteral("cell"); }
 	};
 	
-	OVITO_CLASS_META(SimulationCellAffineTransformationModifierDelegate, SimulationCellAffineTransformationModifierDelegateClass)
+	OVITO_CLASS_META(SimulationCellAffineTransformationModifierDelegate, OOMetaClass)
 	Q_CLASSINFO("DisplayName", "Simulation cell");
 	Q_OBJECT
 	
@@ -85,7 +85,7 @@ class OVITO_CORE_EXPORT AffineTransformationModifier : public MultiDelegatingMod
 public:
 
 	/// Give this modifier class its own metaclass.
-	class AffineTransformationModifierClass : public MultiDelegatingModifier::OOMetaClass 
+	class OOMetaClass : public MultiDelegatingModifier::OOMetaClass 
 	{
 	public:
 
@@ -96,7 +96,7 @@ public:
 		virtual const ModifierDelegate::OOMetaClass& delegateMetaclass() const override { return AffineTransformationModifierDelegate::OOClass(); }
 	};
 
-	OVITO_CLASS_META(AffineTransformationModifier, AffineTransformationModifierClass)
+	OVITO_CLASS_META(AffineTransformationModifier, OOMetaClass)
 	Q_CLASSINFO("DisplayName", "Affine transformation");
 	Q_CLASSINFO("ModifierCategory", "Modification");	
 	Q_OBJECT

@@ -19,18 +19,12 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#pragma once
-
+#ifndef __OVITO_PARTICLES_
+#define __OVITO_PARTICLES_
 
 #include <core/Core.h>
 #include <plugins/mesh/Mesh.h>
 #include <plugins/grid/Grid.h>
-
-#ifdef Particles_EXPORTS		// This is defined by CMake when building the plugin library.
-#  define OVITO_PARTICLES_EXPORT Q_DECL_EXPORT
-#else
-#  define OVITO_PARTICLES_EXPORT Q_DECL_IMPORT
-#endif
 
 /*! \namespace Ovito::Particles
     \brief This root namespace of the particles plugin.
@@ -102,3 +96,5 @@ namespace Ovito {
 		OVITO_END_INLINE_NAMESPACE
 	}
 }
+
+#endif

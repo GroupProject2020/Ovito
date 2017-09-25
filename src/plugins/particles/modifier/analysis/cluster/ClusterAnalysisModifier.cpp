@@ -266,6 +266,8 @@ PipelineFlowState ClusterAnalysisModifier::ClusterAnalysisResults::apply(TimePoi
 	
 	PipelineFlowState output = input;
 	ParticleOutputHelper poh(modApp->dataset(), output);
+	if(particleClusters()->size() != poh.outputParticleCount())
+		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
 	poh.outputProperty<ParticleProperty>(particleClusters());
 
 	output.attributes().insert(QStringLiteral("ClusterAnalysis.cluster_count"), QVariant::fromValue(numClusters()));
