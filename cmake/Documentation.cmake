@@ -50,7 +50,7 @@ IF(OVITO_BUILD_DOCUMENTATION)
 					WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/doc/manual/"
 					COMMENT "Generating user documentation")
 	
-	INSTALL(DIRECTORY "${OVITO_SHARE_DIRECTORY}/doc/manual/html/" DESTINATION "${OVITO_RELATIVE_SHARE_DIRECTORY}/doc/manual/html/")
+	INSTALL(DIRECTORY "${OVITO_SHARE_DIRECTORY}/doc/manual/html/" DESTINATION "${OVITO_RELATIVE_SHARE_DIRECTORY}/doc/manual/html/" COMPONENT "runtime")
 	ADD_DEPENDENCIES(Ovito documentation)
 	
 	# Generate documentation for OVITO's scripting interface.
@@ -62,12 +62,9 @@ IF(OVITO_BUILD_DOCUMENTATION)
 			MESSAGE(FATAL_ERROR "The Sphinx program (sphinx-build) was not found. Please install it and/or specify its location manually using the SPHINX_PROCESSOR setting.")
 		ENDIF()
 
-		# Path of 'ovitos' script interpreter:
-		GET_PROPERTY(OVITOS_EXECUTABLE TARGET ovitos PROPERTY LOCATION)
-		
 		# Use OVITO's built in Python interpreter to run the Sphinx doc program.
 		ADD_CUSTOM_TARGET(scripting_documentation ALL 
-					COMMAND "${OVITOS_EXECUTABLE}" ${SPHINX_PROCESSOR} "-b" "html" "-a" "-E" 
+					COMMAND "$<TARGET_FILE:ovitos>" ${SPHINX_PROCESSOR} "-b" "html" "-a" "-E" 
 					"-D" "version=${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}" 
 					"-D" "release=${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}.${OVITO_VERSION_REVISION}"
 					"." "${OVITO_SHARE_DIRECTORY}/doc/manual/html/python/" 

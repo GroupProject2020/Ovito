@@ -91,7 +91,7 @@ protected:
  * \brief The type of ModifierApplication create for a ManualSelectionModifier 
  *        when it is inserted into in a data pipeline.
  */
-class OVITO_CORE_EXPORT ManualSelectionModifierApplication : public ModifierApplication
+class OVITO_PARTICLES_EXPORT ManualSelectionModifierApplication : public ModifierApplication
 {
 	Q_OBJECT
 	OVITO_CLASS(ManualSelectionModifierApplication)

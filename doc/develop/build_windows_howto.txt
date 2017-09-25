@@ -1,6 +1,6 @@
 **************************************************************************
 Compiler: 
-    Microsoft Visual C++ 2017
+    Microsoft Visual C++ 2015
 **************************************************************************
 
 Typical layour for the build directory:
@@ -184,6 +184,7 @@ cmake -G "NMake Makefiles" ^
    -DLIBAV_INCLUDE_DIR=%cd:\=/%/../libav_install/include ^
    -DLIBAV_LIBRARY_DIR=%cd:\=/%/../libav_install/bin ^
    -DOVITO_BUILD_DOCUMENTATION=ON ^
+   -DOVITO_BUILD_MONOLITHIC=ON ^
    -DOVITO_BUILD_PLUGIN_VR=OFF ^
    -DOPENVR_INCLUDE_DIR=%cd:\=/%/../openvr/headers ^
    -DOPENVR_LIBRARY=%cd:\=/%/../openvr/lib/win64/openvr_api.lib ^
@@ -225,3 +226,4 @@ cmake -G "NMake Makefiles" ^
    -DFFTW3_INCLUDE_DIR=%cd:\=/%/../fftw ^
    -DFFTW3_LIBRARY=%cd:\=/%/../fftw/libfftw3f-3.lib ^
    ../../source
+   

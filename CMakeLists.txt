@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2014) Alexander Stukowski
+#  Copyright (2017) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -26,10 +26,8 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12 FATAL_ERROR)
 CMAKE_POLICY(VERSION 2.8.12)
 
 # Choose CMake policies.
-CMAKE_POLICY(SET CMP0023 OLD)   # Allow keyword and plain target_link_libraries signatures to be mixed.
 CMAKE_POLICY(SET CMP0020 NEW) 	# Automatically link to qtmain.lib on Windows.
 IF(NOT CMAKE_VERSION VERSION_LESS "3")
-	CMAKE_POLICY(SET CMP0026 OLD)	# Suppress warning when reading the LOCATION target property.
 	CMAKE_POLICY(SET CMP0043 OLD)	# Suppress warning because COMPILE_DEFINITIONS_* target property is used.
 	CMAKE_POLICY(SET CMP0045 OLD)	# Don't warn about non-existing targets in GET_TARGET_PROPERTY().
 	CMAKE_POLICY(SET CMP0042 NEW) 	# Enable MACOSX_RPATH target property by default.
@@ -194,12 +192,12 @@ SET(OVITO_SHARE_DIRECTORY "${Ovito_BINARY_DIR}/${OVITO_RELATIVE_SHARE_DIRECTORY}
 # This macro installs a required third-party DLL in the OVITO directory
 # so that it can be distributed together with the program.
 MACRO(OVITO_INSTALL_DLL dll)
-	MESSAGE("Deploying DLL ${dll}.")
+	MESSAGE("Deploying DLL ${dll}")
 	EXECUTE_PROCESS(COMMAND "${CMAKE_COMMAND}" "-E" "copy_if_different" "${dll}" "${OVITO_BINARY_DIRECTORY}" RESULT_VARIABLE error_var)
 	IF(error_var)
 		MESSAGE(FATAL_ERROR "Failed to copy DLL into build directory: ${dll}")
 	ENDIF()
-	INSTALL(FILES "${dll}" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}")
+	INSTALL(FILES "${dll}" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}" COMPONENT "runtime")
 ENDMACRO()
 
 # This macro installs a required third-party shared library in the OVITO directory
@@ -221,7 +219,7 @@ MACRO(OVITO_INSTALL_SHARED_LIB shared_lib destination_dir)
 			MESSAGE("Installing shared library ${lib_version}")
 			CONFIGURE_FILE("${lib_version}" "${Ovito_BINARY_DIR}/${destination_dir}/" COPYONLY)
 		ENDIF()
-		INSTALL(FILES "${lib_version}" DESTINATION "${destination_dir}/")
+		INSTALL(FILES "${lib_version}" DESTINATION "${destination_dir}/" COMPONENT "runtime")
 	ENDFOREACH()
 ENDMACRO()
 

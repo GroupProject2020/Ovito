@@ -68,7 +68,7 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 	# Define macro for symbol export from shared library.
 	STRING(TOUPPER "${target_name}" _uppercase_plugin_name)
 	IF(OVITO_BUILD_MONOLITHIC)
-		TARGET_COMPILE_DEFINITIONS(${target_name} PUBLIC "OVITO_${_uppercase_plugin_name}_EXPORT")
+		TARGET_COMPILE_DEFINITIONS(${target_name} PUBLIC "OVITO_${_uppercase_plugin_name}_EXPORT=")
 	ELSE()
 		TARGET_COMPILE_DEFINITIONS(${target_name} PRIVATE "OVITO_${_uppercase_plugin_name}_EXPORT=Q_DECL_EXPORT")
 		TARGET_COMPILE_DEFINITIONS(${target_name} INTERFACE "OVITO_${_uppercase_plugin_name}_EXPORT=Q_DECL_IMPORT")
@@ -97,14 +97,16 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 	# Install Python wrapper files.
 	IF(python_wrappers)
 		# Install the Python source files that belong to the plugin, which provide the scripting interface.
-		ADD_CUSTOM_COMMAND(TARGET ${target_name} POST_BUILD COMMAND ${CMAKE_COMMAND} "-E" copy_directory "${python_wrappers}" "${OVITO_PYTHON_DIRECTORY}/")
+		ADD_CUSTOM_COMMAND(TARGET ${target_name} POST_BUILD 
+			COMMAND ${CMAKE_COMMAND} "-E" copy_directory "${python_wrappers}" "${OVITO_PYTHON_DIRECTORY}/"
+			COMMENT "Copying Python files for plugin ${target_name}")
 	ENDIF()
 
 	# This plugin will be part of the installation package.
 	INSTALL(TARGETS ${target_name} EXPORT OVITO
-		RUNTIME DESTINATION "${OVITO_RELATIVE_PLUGINS_DIRECTORY}"
-		LIBRARY DESTINATION "${OVITO_RELATIVE_PLUGINS_DIRECTORY}"
-		ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}")
+		RUNTIME DESTINATION "${OVITO_RELATIVE_PLUGINS_DIRECTORY}" COMPONENT "runtime"
+		LIBRARY DESTINATION "${OVITO_RELATIVE_PLUGINS_DIRECTORY}" COMPONENT "runtime"
+		ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "development")
 	
 	# Export target to make it accessible for external plugins.
 	IF(CMAKE_VERSION VERSION_LESS "3")

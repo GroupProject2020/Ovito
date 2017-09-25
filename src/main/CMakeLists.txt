@@ -56,12 +56,19 @@ ELSEIF(UNIX)
 ENDIF()
 
 # This executable will be part of the installation package.
-INSTALL(TARGETS Ovito DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/")
+INSTALL(TARGETS Ovito DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/" COMPONENT "runtime")
 
 # Build all plugins first before building the main executable.
 FOREACH(plugin ${OVITO_PLUGIN_LIST})
 	IF(OVITO_BUILD_MONOLITHIC)
-		TARGET_LINK_LIBRARIES(Ovito -Wl,--whole-archive ${plugin} -Wl,--no-whole-archive)
+		IF(UNIX)
+			TARGET_LINK_LIBRARIES(Ovito -Wl,--whole-archive ${plugin} -Wl,--no-whole-archive)
+		ELSE()
+			TARGET_LINK_LIBRARIES(Ovito ${plugin})
+			IF(MSVC)
+				SET_PROPERTY(TARGET Ovito APPEND_STRING PROPERTY LINK_FLAGS " /WHOLEARCHIVE:${plugin}")
+			ENDIF()
+		ENDIF()
 	ELSE()
 		ADD_DEPENDENCIES(Ovito ${plugin})
 	ENDIF()
@@ -69,7 +76,7 @@ ENDFOREACH()
 
 # Install fonts required by 'minimal' platform plugin on Linux
 IF(UNIX AND NOT APPLE)
-    INSTALL(DIRECTORY "resources/fonts" DESTINATION "${OVITO_RELATIVE_SHARE_DIRECTORY}/")
+    INSTALL(DIRECTORY "resources/fonts" DESTINATION "${OVITO_RELATIVE_SHARE_DIRECTORY}/" COMPONENT "runtime")
 ENDIF()
 
 IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
@@ -80,8 +87,8 @@ IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
 		CONFIGURE_FILE("${lib}" "${OVITO_LIBRARY_DIRECTORY}" COPYONLY)		
 		GET_FILENAME_COMPONENT(lib_realname "${lib}" NAME)
 		EXECUTE_PROCESS(COMMAND "${CMAKE_COMMAND}" -E create_symlink ${lib_realname} "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/${lib_soname}")
-		INSTALL(FILES "${lib}" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/")
-		INSTALL(FILES "${OVITO_LIBRARY_DIRECTORY}/${lib_soname}" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/")
+		INSTALL(FILES "${lib}" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/" COMPONENT "runtime")
+		INSTALL(FILES "${OVITO_LIBRARY_DIRECTORY}/${lib_soname}" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/" COMPONENT "runtime")
 		GET_FILENAME_COMPONENT(QtBinaryPath ${lib} PATH)
 	ENDFOREACH()
 
@@ -89,14 +96,14 @@ IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
 	# This is required to let Qt search for its plugin modules in the program directory.
 	INSTALL(CODE "
 	    file(WRITE \"\${CMAKE_INSTALL_PREFIX}/${OVITO_RELATIVE_BINARY_DIRECTORY}/qt.conf\" \"[Paths]\\nPlugins = ../${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins_qt/\")
-	    " COMPONENT Runtime)
+	    " COMPONENT runtime)
 
 	# Install Qt plugins.
-	INSTALL(DIRECTORY "${QtBinaryPath}/../plugins/platforms" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins_qt/")
-	INSTALL(DIRECTORY "${QtBinaryPath}/../plugins/bearer" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins_qt/")
-	INSTALL(DIRECTORY "${QtBinaryPath}/../plugins/imageformats" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins_qt/" PATTERN "libqsvg.so" EXCLUDE)
+	INSTALL(DIRECTORY "${QtBinaryPath}/../plugins/platforms" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins_qt/" COMPONENT "runtime")
+	INSTALL(DIRECTORY "${QtBinaryPath}/../plugins/bearer" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins_qt/" COMPONENT "runtime")
+	INSTALL(DIRECTORY "${QtBinaryPath}/../plugins/imageformats" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins_qt/" COMPONENT "runtime" PATTERN "libqsvg.so" EXCLUDE)
 	IF(NOT Qt5Core_VERSION VERSION_LESS "5.6")
-		INSTALL(DIRECTORY "${QtBinaryPath}/../plugins/xcbglintegrations" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins_qt/")
+		INSTALL(DIRECTORY "${QtBinaryPath}/../plugins/xcbglintegrations" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins_qt/" COMPONENT "runtime")
 		OVITO_INSTALL_SHARED_LIB("${QtBinaryPath}/libQt5DBus.so" "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/lib")
 		OVITO_INSTALL_SHARED_LIB("${QtBinaryPath}/libQt5XcbQpa.so" "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/lib")
 	ENDIF()
@@ -138,20 +145,20 @@ IF(WIN32)
 	
 	# Install Qt plugins.
 	IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		INSTALL(FILES "${QtBinaryPath}/../plugins/platforms/qwindowsd.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/platforms/")
-		INSTALL(FILES "${QtBinaryPath}/../plugins/imageformats/qjpegd.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/imageformats/")
-		INSTALL(FILES "${QtBinaryPath}/../plugins/imageformats/qgifd.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/imageformats/")
+		INSTALL(FILES "${QtBinaryPath}/../plugins/platforms/qwindowsd.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/platforms/" COMPONENT "runtime")
+		INSTALL(FILES "${QtBinaryPath}/../plugins/imageformats/qjpegd.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/imageformats/" COMPONENT "runtime")
+		INSTALL(FILES "${QtBinaryPath}/../plugins/imageformats/qgifd.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/imageformats/" COMPONENT "runtime")
 	ELSE()
-		INSTALL(FILES "${QtBinaryPath}/../plugins/platforms/qwindows.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/platforms/")
-		INSTALL(FILES "${QtBinaryPath}/../plugins/imageformats/qjpeg.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/imageformats/")
-		INSTALL(FILES "${QtBinaryPath}/../plugins/imageformats/qgif.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/imageformats/")
+		INSTALL(FILES "${QtBinaryPath}/../plugins/platforms/qwindows.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/platforms/" COMPONENT "runtime")
+		INSTALL(FILES "${QtBinaryPath}/../plugins/imageformats/qjpeg.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/imageformats/" COMPONENT "runtime")
+		INSTALL(FILES "${QtBinaryPath}/../plugins/imageformats/qgif.dll" DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}/plugins/imageformats/" COMPONENT "runtime")
 	ENDIF()
 	
 	# Create a qt.conf file.
 	# This is required to let Qt search for its plugin modules in the program directory.
 	INSTALL(CODE "
 	    file(WRITE \"\${CMAKE_INSTALL_PREFIX}/${OVITO_RELATIVE_BINARY_DIRECTORY}/qt.conf\" \"[Paths]\\nPlugins = plugins/\")
-	    " COMPONENT Runtime)
+	    " COMPONENT runtime)
 
 ENDIF()
 

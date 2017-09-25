@@ -452,7 +452,7 @@ void defineSceneSubmodule(py::module m)
 				"If ``True``, the modifier automatically generates new unique IDs for each copy of particles. "
 				"Otherwise, the replica will keep the same IDs as the original particles, which is typically not what you want. "
 				"\n\n"
-				"Note: This option has no effect if the input particles do not already have numeric IDs (i.e. the ``'Particle Identifier` property does not exist). "
+				"Note: This option has no effect if the input particles do not already have numeric IDs (i.e. the ``'Particle Identifier'`` property does not exist). "
 				"\n\n"
 				":Default: ``True``\n")
 	;
