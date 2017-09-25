@@ -19,8 +19,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#pragma once
-
+#ifndef __OVITO_PYSCRIPT_
+#define __OVITO_PYSCRIPT_
 
 #include <core/Core.h>
 
@@ -44,4 +44,6 @@
 #  define OVITO_PYSCRIPT_EXPORT Q_DECL_EXPORT
 #else
 #  define OVITO_PYSCRIPT_EXPORT Q_DECL_IMPORT
+#endif
+
 #endif

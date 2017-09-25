@@ -24,8 +24,8 @@
  * \brief This file includes STL and third-party library headers required by OVITO. It is included by all .cpp files belonging to OVITO's codebase.
  */
 
-#pragma once
-
+#ifndef __OVITO_CORE_
+#define __OVITO_CORE_
 
 /******************************************************************************
 * Standard Template Library (STL)
@@ -156,3 +156,5 @@
 #include <core/utilities/Color.h>
 #include <core/oo/OvitoObject.h>
 #include <core/dataset/DataSet.h>
+
+#endif

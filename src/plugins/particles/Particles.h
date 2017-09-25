@@ -19,8 +19,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#pragma once
-
+#ifndef __OVITO_PARTICLES_
+#define __OVITO_PARTICLES_
 
 #include <core/Core.h>
 #include <plugins/mesh/Mesh.h>
@@ -102,3 +102,5 @@ namespace Ovito {
 		OVITO_END_INLINE_NAMESPACE
 	}
 }
+
+#endif

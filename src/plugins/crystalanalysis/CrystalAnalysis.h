@@ -19,8 +19,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#pragma once
-
+#ifndef __OVITO_CRYSTALANALYSIS_
+#define __OVITO_CRYSTALANALYSIS_
 
 #include <plugins/particles/Particles.h>
 #include <plugins/mesh/Mesh.h>
@@ -53,3 +53,5 @@ namespace Ovito {
 		}
 	}
 }
+
+#endif

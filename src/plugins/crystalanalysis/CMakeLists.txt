@@ -65,6 +65,9 @@ OVITO_STANDARD_PLUGIN(CrystalAnalysis
 	PYTHON_WRAPPERS "${CMAKE_CURRENT_SOURCE_DIR}/resources/python/"
 )
 
+# Speed up compilation by using precompiled headers.
+ADD_PRECOMPILED_HEADER(CrystalAnalysis plugins/crystalanalysis/CrystalAnalysis.h)
+
 # Build corresponding GUI plugin.
 IF(OVITO_BUILD_GUI)
 	ADD_SUBDIRECTORY(gui)

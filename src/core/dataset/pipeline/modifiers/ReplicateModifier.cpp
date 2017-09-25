@@ -19,7 +19,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <plugins/particles/Particles.h>
+#include <core/Core.h>
 #include <core/dataset/data/simcell/SimulationCellObject.h>
 #include <core/dataset/pipeline/InputHelper.h>
 #include <core/dataset/pipeline/OutputHelper.h>

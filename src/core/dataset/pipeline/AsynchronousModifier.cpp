@@ -19,7 +19,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <plugins/particles/Particles.h>
+#include <core/Core.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/DataSetContainer.h>
 #include <core/dataset/pipeline/AsynchronousModifierApplication.h>

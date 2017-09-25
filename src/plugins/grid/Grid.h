@@ -19,8 +19,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#pragma once
-
+#ifndef __OVITO_GRID_
+#define __OVITO_GRID_
 
 #include <core/Core.h>
 #include <plugins/mesh/Mesh.h>
@@ -36,3 +36,5 @@ namespace Ovito {
 		using namespace Ovito::Mesh;
 	}
 }
+
+#endif

@@ -19,8 +19,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#pragma once
-
+#ifndef __OVITO_MESH_
+#define __OVITO_MESH_
 
 #include <core/Core.h>
 
@@ -38,3 +38,5 @@ namespace Ovito {
 		class SurfaceMeshDisplay;
 	}
 }
+
+#endif
