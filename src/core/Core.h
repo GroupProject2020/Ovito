@@ -19,10 +19,9 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-/**
- * \file
- * \brief This file includes STL and third-party library headers required by OVITO. It is included by all .cpp files belonging to OVITO's codebase.
- */
+//
+// Standard precompiled header file included by all source files in this module
+//
 
 #ifndef __OVITO_CORE_
 #define __OVITO_CORE_

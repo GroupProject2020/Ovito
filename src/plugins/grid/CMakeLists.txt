@@ -22,10 +22,15 @@
 SET(SourceFiles 
 	objects/VoxelGrid.cpp
 	objects/VoxelProperty.cpp
-	modifier/VoxelGridReplicateModifierDelegate.cpp
 	modifier/CreateIsosurfaceModifier.cpp
 	modifier/MarchingCubes.cpp
 )
+
+IF(OVITO_BUILD_PLUGIN_STDMOD)
+	LIST(APPEND SourceFiles 
+		modifier/VoxelGridReplicateModifierDelegate.cpp
+	)
+ENDIF()
 
 IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
 	LIST(APPEND SourceFiles scripting/PythonInterface.cpp)
@@ -34,7 +39,7 @@ ENDIF()
 OVITO_STANDARD_PLUGIN(Grid
 	SOURCES Grid.cpp ${SourceFiles}
 	PLUGIN_DEPENDENCIES Mesh
-	OPTIONAL_PLUGIN_DEPENDENCIES PyScript
+	OPTIONAL_PLUGIN_DEPENDENCIES PyScript StdMod
 	PYTHON_WRAPPERS "${CMAKE_CURRENT_SOURCE_DIR}/resources/python/"
 )
 

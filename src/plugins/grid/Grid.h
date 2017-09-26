@@ -19,6 +19,10 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+//
+// Standard precompiled header file included by all source files in this module
+//
+
 #ifndef __OVITO_GRID_
 #define __OVITO_GRID_
 

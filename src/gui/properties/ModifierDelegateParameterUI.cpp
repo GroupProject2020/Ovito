@@ -22,7 +22,7 @@
 #include <gui/GUI.h>
 #include <gui/properties/PropertiesEditor.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
-#include <core/dataset/pipeline/modifiers/DelegatingModifier.h>
+#include <core/dataset/pipeline/DelegatingModifier.h>
 #include <core/app/PluginManager.h>
 #include "ModifierDelegateParameterUI.h"
 

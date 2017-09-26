@@ -24,7 +24,7 @@
 
 #include <plugins/mesh/Mesh.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
-#include <core/dataset/pipeline/modifiers/AffineTransformationModifier.h>
+#include <plugins/stdmod/modifiers/AffineTransformationModifier.h>
 
 namespace Ovito { namespace Mesh {
 

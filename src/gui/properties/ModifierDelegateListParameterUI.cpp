@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <gui/GUI.h>
-#include <core/dataset/pipeline/modifiers/DelegatingModifier.h>
+#include <core/dataset/pipeline/DelegatingModifier.h>
 #include <gui/properties/ModifierPropertiesEditor.h>
 #include "ModifierDelegateListParameterUI.h"
 

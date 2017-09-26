@@ -24,14 +24,18 @@ SET(SourceFiles
 	tri/TriMeshDisplay.cpp
 	surface/SurfaceMesh.cpp
 	surface/RenderableSurfaceMesh.cpp
-	surface/SurfaceMeshDisplay.cpp	
-	surface/SurfaceMeshSliceModifierDelegate.cpp
-	surface/SurfaceMeshAffineTransformationModifierDelegate.cpp
-	surface/SurfaceMeshReplicateModifierDelegate.cpp
+	surface/SurfaceMeshDisplay.cpp		
 	io/TriMeshFrameData.cpp
 	io/VTKFileImporter.cpp
 	io/VTKTriangleMeshExporter.cpp
 )
+
+IF(OVITO_BUILD_PLUGIN_STDMOD)
+	LIST(APPEND SourceFiles 
+		surface/SurfaceMeshSliceModifierDelegate.cpp
+		surface/SurfaceMeshAffineTransformationModifierDelegate.cpp
+		surface/SurfaceMeshReplicateModifierDelegate.cpp)
+ENDIF()
 
 IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
 	LIST(APPEND SourceFiles scripting/PythonInterface.cpp)
@@ -53,7 +57,7 @@ SET(GLUSourceFiles
 
 OVITO_STANDARD_PLUGIN(Mesh
 	SOURCES Mesh.cpp ${SourceFiles} ${GLUSourceFiles}
-	OPTIONAL_PLUGIN_DEPENDENCIES PyScript	
+	OPTIONAL_PLUGIN_DEPENDENCIES PyScript StdMod
 	PYTHON_WRAPPERS "${CMAKE_CURRENT_SOURCE_DIR}/resources/python/"
 )
 

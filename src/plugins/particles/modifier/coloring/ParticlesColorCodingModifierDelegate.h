@@ -26,7 +26,7 @@
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/particles/objects/BondProperty.h>
 #include <plugins/particles/objects/BondsObject.h>
-#include <core/dataset/pipeline/modifiers/ColorCodingModifier.h>
+#include <plugins/stdmod/modifiers/ColorCodingModifier.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 

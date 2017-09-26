@@ -19,13 +19,21 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+//
+// Standard precompiled header file included by all source files in this module
+//
+
 #ifndef __OVITO_MESH_
 #define __OVITO_MESH_
 
 #include <core/Core.h>
+#include <plugins/stdmod/StdMod.h>
 
 namespace Ovito {
 	namespace Mesh {
+
+		using namespace Ovito::StdMod;
+
 		class TriMeshObject;
 		class TriMeshDisplay;
 		class SurfaceMesh;

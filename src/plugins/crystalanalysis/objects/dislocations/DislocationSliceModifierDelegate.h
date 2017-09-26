@@ -24,7 +24,7 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
-#include <core/dataset/pipeline/modifiers/SliceModifier.h>
+#include <plugins/stdmod/modifiers/SliceModifier.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 

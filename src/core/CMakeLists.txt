@@ -89,19 +89,8 @@ SET(SourceFiles
 	dataset/pipeline/OutputHelper.cpp
 	dataset/pipeline/AsynchronousModifierApplication.cpp
 	dataset/pipeline/StaticSource.cpp
-	dataset/pipeline/modifiers/DelegatingModifier.cpp
-	dataset/pipeline/modifiers/GenericPropertyModifier.cpp
-	dataset/pipeline/modifiers/SliceModifier.cpp
-	dataset/pipeline/modifiers/AffineTransformationModifier.cpp
-	dataset/pipeline/modifiers/InvertSelectionModifier.cpp
-	dataset/pipeline/modifiers/ClearSelectionModifier.cpp
-	dataset/pipeline/modifiers/ColorCodingModifier.cpp
-	dataset/pipeline/modifiers/AssignColorModifier.cpp
-	dataset/pipeline/modifiers/DeleteSelectedModifier.cpp
-	dataset/pipeline/modifiers/SelectTypeModifier.cpp
-	dataset/pipeline/modifiers/HistogramModifier.cpp
-	dataset/pipeline/modifiers/ScatterPlotModifier.cpp
-	dataset/pipeline/modifiers/ReplicateModifier.cpp
+	dataset/pipeline/DelegatingModifier.cpp
+	dataset/pipeline/GenericPropertyModifier.cpp
 	utilities/units/UnitsManager.cpp
 	utilities/io/ObjectSaveStream.cpp
 	utilities/io/ObjectLoadStream.cpp
@@ -136,7 +125,6 @@ SET(SourceFiles
 	viewport/overlays/ViewportOverlay.cpp
 	viewport/overlays/CoordinateTripodOverlay.cpp
 	viewport/overlays/TextLabelOverlay.cpp
-	viewport/overlays/ColorLegendOverlay.cpp	
 )
 
 # Include video encoder interface code.

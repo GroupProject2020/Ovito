@@ -19,13 +19,12 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-/**
- * \file
- * \brief This file includes third-party library headers required by OVITO's GUI.
- */
+//
+// Standard precompiled header file included by all source files in this module
+//
 
- #ifndef __OVITO_GUI_
- #define __OVITO_GUI_
+#ifndef __OVITO_GUI_
+#define __OVITO_GUI_
 
 #include <core/Core.h>
 

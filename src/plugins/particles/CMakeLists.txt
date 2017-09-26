@@ -36,17 +36,11 @@ SET(SourceFiles
 	modifier/ParticleOutputHelper.cpp
 	modifier/coloring/AmbientOcclusionModifier.cpp
 	modifier/coloring/AmbientOcclusionRenderer.cpp
-	modifier/coloring/ParticlesColorCodingModifierDelegate.cpp
-	modifier/coloring/ParticlesAssignColorModifierDelegate.cpp
 	modifier/modify/WrapPeriodicImagesModifier.cpp
 	modifier/modify/CreateBondsModifier.cpp
 	modifier/modify/LoadTrajectoryModifier.cpp
 	modifier/modify/CombineParticleSetsModifier.cpp
 	modifier/modify/CoordinationPolyhedraModifier.cpp
-	modifier/modify/ParticlesSliceModifierDelegate.cpp
-	modifier/modify/ParticlesAffineTransformationModifierDelegate.cpp
-	modifier/modify/ParticlesDeleteSelectedModifierDelegate.cpp
-	modifier/modify/ParticlesReplicateModifierDelegate.cpp
 	modifier/analysis/StructureIdentificationModifier.cpp
 	modifier/analysis/ReferenceConfigurationModifier.cpp
 	modifier/analysis/binandreduce/BinAndReduceModifier.cpp
@@ -101,6 +95,17 @@ SET(SourceFiles
 	util/ParticleSelectionSet.cpp
 )
 
+IF(OVITO_BUILD_PLUGIN_STDMOD)
+	LIST(APPEND SourceFiles 
+		modifier/coloring/ParticlesColorCodingModifierDelegate.cpp
+		modifier/coloring/ParticlesAssignColorModifierDelegate.cpp
+		modifier/modify/ParticlesSliceModifierDelegate.cpp
+		modifier/modify/ParticlesAffineTransformationModifierDelegate.cpp
+		modifier/modify/ParticlesDeleteSelectedModifierDelegate.cpp
+		modifier/modify/ParticlesReplicateModifierDelegate.cpp
+	)
+ENDIF()
+
 IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
 	LIST(APPEND SourceFiles 
 		scripting/PythonInterface.cpp
@@ -115,7 +120,7 @@ OVITO_STANDARD_PLUGIN(Particles
 	LIB_DEPENDENCIES muParser
 	PLUGIN_DEPENDENCIES Mesh Grid
 	PRIVATE_LIB_DEPENDENCIES VoroPlusPlus OpenGLRenderer PolyhedralTemplateMatching CombinatoriallyOptimalPointRegistration
-	OPTIONAL_PLUGIN_DEPENDENCIES PyScript
+	OPTIONAL_PLUGIN_DEPENDENCIES PyScript StdMod
 	PYTHON_WRAPPERS "${CMAKE_CURRENT_SOURCE_DIR}/resources/python/"
 )
 

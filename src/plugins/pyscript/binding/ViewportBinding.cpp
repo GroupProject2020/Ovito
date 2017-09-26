@@ -25,7 +25,6 @@
 #include <core/viewport/overlays/ViewportOverlay.h>
 #include <core/viewport/overlays/CoordinateTripodOverlay.h>
 #include <core/viewport/overlays/TextLabelOverlay.h>
-#include <core/viewport/overlays/ColorLegendOverlay.h>
 #include <core/dataset/scene/SceneNode.h>
 #include <plugins/pyscript/extensions/PythonViewportOverlay.h>
 #include "PythonBinding.h"
@@ -188,78 +187,6 @@ void defineViewportSubmodule(py::module m)
 				":Default: 0.4\n")
 	;
 
-	ovito_class<ColorLegendOverlay, ViewportOverlay>(m,
-			"Renders a color legend for a :py:class:`~ovito.modifiers.ColorCodingModifier` on top of the three-dimensional "
-			"scene. You can attach an instance of this class to a :py:class:`~ovito.vis.Viewport` by adding it to the viewport's "
-			":py:attr:`~ovito.vis.Viewport.overlays` collection:"
-			"\n\n"
-			".. literalinclude:: ../example_snippets/color_legend_overlay.py"
-			"\n")
-		.def_property("alignment", &ColorLegendOverlay::alignment, &ColorLegendOverlay::setAlignment,
-				"Selects the corner of the viewport where the color bar is displayed (anchor position). This must be a valid `Qt.Alignment value <http://doc.qt.io/qt-5/qt.html#AlignmentFlag-enum>`_ as shown in the code example above. "
-				"\n\n"
-				":Default: ``PyQt5.QtCore.Qt.AlignHCenter ^ PyQt5.QtCore.Qt.AlignBottom``")
-		.def_property("orientation", &ColorLegendOverlay::orientation, &ColorLegendOverlay::setOrientation,
-				"Selects the orientation of the color bar. This must be a valid `Qt.Orientation value <http://doc.qt.io/qt-5/qt.html#Orientation-enum>`_ as shown in the code example above. "
-				"\n\n"
-				":Default: ``PyQt5.QtCore.Qt.Horizontal``")
-		.def_property("offset_x", &ColorLegendOverlay::offsetX, &ColorLegendOverlay::setOffsetX,
-				"This parameter allows to displace the color bar horizontally from its anchor position. The offset is specified as a fraction of the output image width."
-				"\n\n"
-				":Default: 0.0\n")
-		.def_property("offset_y", &ColorLegendOverlay::offsetY, &ColorLegendOverlay::setOffsetY,
-				"This parameter allows to displace the color bar vertically from its anchor position. The offset is specified as a fraction of the output image height."
-				"\n\n"
-				":Default: 0.0\n")
-		.def_property("legend_size", &ColorLegendOverlay::legendSize, &ColorLegendOverlay::setLegendSize,
-				"Controls the overall size of the color bar relative to the output image size. "
-				"\n\n"
-				":Default: 0.3\n")
-		.def_property("aspect_ratio", &ColorLegendOverlay::aspectRatio, &ColorLegendOverlay::setAspectRatio,
-				"The aspect ratio of the color bar. Larger values make it more narrow. "
-				"\n\n"
-				":Default: 8.0\n")
-		.def_property("font_size", &ColorLegendOverlay::fontSize, &ColorLegendOverlay::setFontSize,
-				"The relative size of the font used for text labels."
-				"\n\n"
-				":Default: 0.1\n")
-		.def_property("format_string", &ColorLegendOverlay::valueFormatString, &ColorLegendOverlay::setValueFormatString,
-				"The format string used with the `sprintf() <http://en.cppreference.com/w/cpp/io/c/fprintf>`_ function to "
-				"generate the text representation of floating-point values. You can change this format string to control the "
-				"number of decimal places or add units to the numeric values, for example. "
-				"\n\n"
-				":Default: '%g'\n")
-		.def_property("title", &ColorLegendOverlay::title, &ColorLegendOverlay::setTitle,
-				"The text displayed next to the color bar. If empty, the name of the input property selected in the :py:class:`~ovito.modifiers.ColorCodingModifier` "
-				"is used. "
-				"\n\n"
-				":Default: ''")
-		.def_property("label1", &ColorLegendOverlay::label1, &ColorLegendOverlay::setLabel1,
-				"Sets the text string displayed at the upper end of the bar. If empty, the :py:attr:`~ovito.modifiers.ColorCodingModifier.end_value` of the "
-				":py:class:`~ovito.modifiers.ColorCodingModifier` is used. "
-				"\n\n"
-				":Default: ''")
-		.def_property("label2", &ColorLegendOverlay::label2, &ColorLegendOverlay::setLabel2,
-				"Sets the text string displayed at the lower end of the bar. If empty, the :py:attr:`~ovito.modifiers.ColorCodingModifier.start_value` of the "
-				":py:class:`~ovito.modifiers.ColorCodingModifier` is used. "
-				"\n\n"
-				":Default: ''")
-		.def_property("modifier", &ColorLegendOverlay::modifier, &ColorLegendOverlay::setModifier,
-				"The :py:class:`~ovito.modifiers.ColorCodingModifier` for which the color legend should be rendered.")
-		.def_property("text_color", &ColorLegendOverlay::textColor, &ColorLegendOverlay::setTextColor,
-				"The RGB color used for text labels."
-				"\n\n"
-				":Default: ``(0.0,0.0,0.0)``\n")
-		.def_property("outline_color", &ColorLegendOverlay::outlineColor, &ColorLegendOverlay::setOutlineColor,
-				"The text outline color. This is used only if :py:attr:`.outline_enabled` is set."
-				"\n\n"
-				":Default: ``(1.0,1.0,1.0)``\n")
-		.def_property("outline_enabled", &ColorLegendOverlay::outlineEnabled, &ColorLegendOverlay::setOutlineEnabled,
-				"Enables the painting of a font outline to make the text easier to read."
-				"\n\n"
-				":Default: ``False``\n")
-	;
-	
 	ovito_class<TextLabelOverlay, ViewportOverlay>(m,
 			"Displays a text label in a viewport and in rendered images. "
 			"You can attach an instance of this class to a viewport by adding it to the viewport's "

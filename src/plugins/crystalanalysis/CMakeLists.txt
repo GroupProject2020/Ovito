@@ -28,8 +28,6 @@ SET(SourceFiles
 	objects/clusters/ClusterGraphObject.cpp
 	objects/dislocations/DislocationNetworkObject.cpp
 	objects/dislocations/DislocationDisplay.cpp
-	objects/dislocations/DislocationSliceModifierDelegate.cpp
-	objects/dislocations/DislocationReplicateModifierDelegate.cpp
 	objects/partition_mesh/PartitionMesh.cpp
 	objects/partition_mesh/PartitionMeshDisplay.cpp
 	objects/slip_surface/SlipSurface.cpp
@@ -45,13 +43,17 @@ SET(SourceFiles
 	modifier/dxa/ElasticMapping.cpp
 	modifier/dxa/InterfaceMesh.cpp
 	modifier/dxa/DislocationTracer.cpp
-#	modifier/dxa/PlanarDefectIdentification.cpp
 	modifier/elasticstrain/ElasticStrainModifier.cpp
 	modifier/elasticstrain/ElasticStrainEngine.cpp
-#	modifier/grains/GrainSegmentationModifier.cpp
-#	modifier/grains/GrainSegmentationEngine.cpp
 	util/DelaunayTessellation.cpp
 )
+
+IF(OVITO_BUILD_PLUGIN_STDMOD)
+	LIST(APPEND SourceFiles 
+		objects/dislocations/DislocationSliceModifierDelegate.cpp
+		objects/dislocations/DislocationReplicateModifierDelegate.cpp
+	)
+ENDIF()
 
 IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
 	LIST(APPEND SourceFiles scripting/PythonInterface.cpp)
@@ -61,7 +63,7 @@ OVITO_STANDARD_PLUGIN(CrystalAnalysis
 	SOURCES CrystalAnalysis.cpp ${SourceFiles}
 	PLUGIN_DEPENDENCIES Particles Mesh
 	LIB_DEPENDENCIES geogram
-	OPTIONAL_PLUGIN_DEPENDENCIES PyScript
+	OPTIONAL_PLUGIN_DEPENDENCIES PyScript StdMod
 	PYTHON_WRAPPERS "${CMAKE_CURRENT_SOURCE_DIR}/resources/python/"
 )
 

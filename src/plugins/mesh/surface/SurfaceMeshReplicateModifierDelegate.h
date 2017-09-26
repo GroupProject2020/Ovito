@@ -23,7 +23,7 @@
 
 
 #include <plugins/mesh/Mesh.h>
-#include <core/dataset/pipeline/modifiers/ReplicateModifier.h>
+#include <plugins/stdmod/modifiers/ReplicateModifier.h>
 
 namespace Ovito { namespace Mesh {
 

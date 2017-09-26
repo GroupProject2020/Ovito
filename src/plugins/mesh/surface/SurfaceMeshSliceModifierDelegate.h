@@ -24,7 +24,7 @@
 
 #include <plugins/mesh/Mesh.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
-#include <core/dataset/pipeline/modifiers/SliceModifier.h>
+#include <plugins/stdmod/modifiers/SliceModifier.h>
 
 namespace Ovito { namespace Mesh {
 

@@ -59,17 +59,6 @@ SET(SourceFiles
 	dataset/data/camera/CameraObjectEditor.cpp
 	dataset/data/simcell/SimulationCellObjectEditor.cpp
 	dataset/data/simcell/SimulationCellDisplayEditor.cpp
-	dataset/pipeline/modifiers/SliceModifierEditor.cpp
-	dataset/pipeline/modifiers/AffineTransformationModifierEditor.cpp
-	dataset/pipeline/modifiers/ClearSelectionModifierEditor.cpp
-	dataset/pipeline/modifiers/InvertSelectionModifierEditor.cpp
-	dataset/pipeline/modifiers/ColorCodingModifierEditor.cpp
-	dataset/pipeline/modifiers/AssignColorModifierEditor.cpp
-	dataset/pipeline/modifiers/DeleteSelectedModifierEditor.cpp
-	dataset/pipeline/modifiers/SelectTypeModifierEditor.cpp
-	dataset/pipeline/modifiers/HistogramModifierEditor.cpp
-	dataset/pipeline/modifiers/ScatterPlotModifierEditor.cpp
-	dataset/pipeline/modifiers/ReplicateModifierEditor.cpp
 	widgets/general/RolloutContainer.cpp
 	widgets/general/RolloutContainerLayout.cpp
 	widgets/general/SpinnerWidget.cpp
@@ -127,7 +116,6 @@ SET(SourceFiles
 	viewport/overlays/CoordinateTripodOverlayEditor.cpp
 	viewport/overlays/TextLabelOverlayEditor.cpp
 	viewport/overlays/MoveOverlayInputMode.cpp
-	viewport/overlays/ColorLegendOverlayEditor.cpp
 	app/GuiApplication.cpp
 	app/GuiApplicationService.cpp
 	utilities/io/GuiFileManager.cpp
@@ -151,9 +139,6 @@ TARGET_LINK_LIBRARIES(Gui PUBLIC Core OpenGLRenderer)
 
 # Link Qt5.
 TARGET_LINK_LIBRARIES(Gui PUBLIC Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network)
-
-# Link Qwt.
-TARGET_LINK_LIBRARIES(Gui PRIVATE Qwt)
 
 # Define macro for symbol export from shared library.
 IF(OVITO_BUILD_MONOLITHIC)
