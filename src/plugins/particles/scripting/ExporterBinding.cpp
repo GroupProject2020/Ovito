@@ -21,9 +21,9 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/pyscript/binding/PythonBinding.h>
-#include <core/dataset/data/properties/PropertyStorage.h>
+#include <plugins/stdobj/properties/PropertyStorage.h>
 #include <plugins/particles/objects/ParticleProperty.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <plugins/particles/export/ParticleExporter.h>
 #include <plugins/particles/export/imd/IMDExporter.h>
 #include <plugins/particles/export/vasp/POSCARExporter.h>

@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>

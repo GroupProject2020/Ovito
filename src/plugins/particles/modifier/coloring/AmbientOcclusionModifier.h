@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <core/dataset/data/properties/PropertyStorage.h>
+#include <plugins/stdobj/properties/PropertyStorage.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
 
 #include <QOffscreenSurface>

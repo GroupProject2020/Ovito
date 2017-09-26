@@ -21,7 +21,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/ParticleProperty.h>
-#include <core/dataset/data/properties/PropertyStorage.h>
+#include <plugins/stdobj/properties/PropertyStorage.h>
 #include <core/dataset/io/FileSource.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/dataset/animation/AnimationSettings.h>

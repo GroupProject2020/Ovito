@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/stdmod/gui/StdModGui.h>
-#include <gui/properties/PropertyClassParameterUI.h>
+#include <plugins/stdobj/gui/widgets/PropertyClassParameterUI.h>
 #include "ClearSelectionModifierEditor.h"
 
 namespace Ovito { namespace StdMod {

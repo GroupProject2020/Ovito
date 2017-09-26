@@ -56,9 +56,6 @@ SET(SourceFiles
 	dataset/io/FileImporterEditor.cpp
 	dataset/io/AttributeFileExporterEditor.cpp
 	dataset/animation/controller/TCBInterpolationControllerEditor.cpp
-	dataset/data/camera/CameraObjectEditor.cpp
-	dataset/data/simcell/SimulationCellObjectEditor.cpp
-	dataset/data/simcell/SimulationCellDisplayEditor.cpp
 	widgets/general/RolloutContainer.cpp
 	widgets/general/RolloutContainerLayout.cpp
 	widgets/general/SpinnerWidget.cpp
@@ -77,7 +74,6 @@ SET(SourceFiles
 	widgets/selection/SceneNodeSelectionBox.cpp
 	widgets/display/CoordinateDisplayWidget.cpp
 	widgets/display/StatusWidget.cpp
-	widgets/properties/PropertySelectionComboBox.cpp
 	properties/PropertiesEditor.cpp
 	properties/PropertiesPanel.cpp
 	properties/ParameterUI.cpp
@@ -98,8 +94,6 @@ SET(SourceFiles
 	properties/ModifierDelegateParameterUI.cpp
 	properties/ModifierDelegateListParameterUI.cpp
 	properties/RefTargetListParameterUI.cpp
-	properties/PropertyClassParameterUI.cpp
-	properties/PropertyReferenceParameterUI.cpp
 	properties/StringParameterUI.cpp
 	properties/SubObjectParameterUI.cpp
 	properties/VariantComboBoxParameterUI.cpp

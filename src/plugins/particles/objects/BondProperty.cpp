@@ -101,6 +101,10 @@ bool BondProperty::OOMetaClass::isDataPresent(const PipelineFlowState& state) co
 void BondProperty::OOMetaClass::initialize()
 {
 	PropertyClass::initialize();
+
+	// Enable automatic conversion of a BondPropertyReference to a generic PropertyReference and vice versa.
+	QMetaType::registerConverter<BondPropertyReference, PropertyReference>();
+	QMetaType::registerConverter<PropertyReference, BondPropertyReference>();	
 	
 	setPropertyClassDisplayName(tr("Bonds"));
 	setElementDescriptionName(QStringLiteral("bonds"));

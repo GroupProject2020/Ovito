@@ -20,8 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/stdmod/gui/StdModGui.h>
-#include <gui/properties/PropertyReferenceParameterUI.h>
-#include <gui/properties/PropertyClassParameterUI.h>
+#include <plugins/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
+#include <plugins/stdobj/gui/widgets/PropertyClassParameterUI.h>
 #include <gui/properties/IntegerParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
 #include <gui/properties/BooleanParameterUI.h>

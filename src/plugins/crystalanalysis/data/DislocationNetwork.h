@@ -23,7 +23,7 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <core/dataset/data/simcell/SimulationCell.h>
+#include <plugins/stdobj/simcell/SimulationCell.h>
 #include <plugins/crystalanalysis/modifier/dxa/InterfaceMesh.h>
 #include <plugins/crystalanalysis/modifier/dxa/BurgersCircuit.h>
 #include "ClusterVector.h"

@@ -69,28 +69,16 @@ SET(SourceFiles
 	dataset/scene/SelectionSet.cpp
 	dataset/data/DisplayObject.cpp
 	dataset/data/DataObject.cpp
-	dataset/data/camera/CameraObject.cpp
-	dataset/data/helpers/TargetObject.cpp
-	dataset/data/simcell/SimulationCellObject.cpp
-	dataset/data/simcell/SimulationCellDisplay.cpp
-	dataset/data/simcell/PeriodicDomainDataObject.cpp
-	dataset/data/properties/PropertyStorage.cpp
-	dataset/data/properties/PropertyObject.cpp
-	dataset/data/properties/PropertyClass.cpp
-	dataset/data/properties/PropertyReference.cpp
-	dataset/data/properties/ElementType.cpp
+	dataset/data/camera/AbstractCameraObject.cpp
 	dataset/pipeline/PipelineFlowState.cpp
 	dataset/pipeline/PipelineObject.cpp
 	dataset/pipeline/CachingPipelineObject.cpp
 	dataset/pipeline/AsynchronousModifier.cpp
 	dataset/pipeline/Modifier.cpp
 	dataset/pipeline/ModifierApplication.cpp
-	dataset/pipeline/InputHelper.cpp
-	dataset/pipeline/OutputHelper.cpp
 	dataset/pipeline/AsynchronousModifierApplication.cpp
 	dataset/pipeline/StaticSource.cpp
 	dataset/pipeline/DelegatingModifier.cpp
-	dataset/pipeline/GenericPropertyModifier.cpp
 	utilities/units/UnitsManager.cpp
 	utilities/io/ObjectSaveStream.cpp
 	utilities/io/ObjectLoadStream.cpp

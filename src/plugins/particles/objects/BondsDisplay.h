@@ -25,7 +25,7 @@
 #include <plugins/particles/Particles.h>
 #include <core/dataset/data/DisplayObject.h>
 #include <core/dataset/data/VersionedDataObjectRef.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/rendering/ArrowPrimitive.h>
 #include <core/rendering/SceneRenderer.h>
 #include "BondsObject.h"

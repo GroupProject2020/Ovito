@@ -29,9 +29,9 @@
 #include <plugins/particles/objects/BondType.h>
 #include <plugins/grid/objects/VoxelProperty.h>
 #include <plugins/grid/objects/VoxelGrid.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
-#include <core/dataset/data/simcell/SimulationCellDisplay.h>
-#include <core/dataset/data/properties/PropertyStorage.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/SimulationCellDisplay.h>
+#include <plugins/stdobj/properties/PropertyStorage.h>
 #include "ParticleFrameData.h"
 #include "ParticleImporter.h"
 

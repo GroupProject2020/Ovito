@@ -40,7 +40,7 @@ public:
 
 	/// \brief Standard constructor.
 	Q_INVOKABLE StaticSource(DataSet* dataset);
-		
+
 	/// \brief Constructor that inserts a single data object into the new source.
 	StaticSource(DataSet* dataset, DataObject* dataObject) : StaticSource(dataset) {
 		OVITO_ASSERT(dataObject);

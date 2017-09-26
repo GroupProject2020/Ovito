@@ -28,7 +28,7 @@
 #include <core/utilities/concurrent/Task.h>
 #include <core/utilities/io/CompressedTextReader.h>
 #include <core/dataset/DataSetContainer.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include "VoroTopModifier.h"
 #include "Filter.h"
 

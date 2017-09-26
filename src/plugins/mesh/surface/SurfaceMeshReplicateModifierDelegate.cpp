@@ -21,9 +21,9 @@
 
 #include <plugins/mesh/Mesh.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
-#include <core/dataset/pipeline/InputHelper.h>
-#include <core/dataset/pipeline/OutputHelper.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/util/InputHelper.h>
+#include <plugins/stdobj/util/OutputHelper.h>
 #include <core/dataset/DataSet.h>
 #include "SurfaceMeshReplicateModifierDelegate.h"
 

@@ -28,7 +28,7 @@
 #include <core/rendering/ParticlePrimitive.h>
 #include <core/rendering/ArrowPrimitive.h>
 #include <core/rendering/SceneRenderer.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
 #include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
 

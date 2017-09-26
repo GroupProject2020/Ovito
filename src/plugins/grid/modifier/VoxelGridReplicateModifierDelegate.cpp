@@ -22,9 +22,9 @@
 #include <plugins/grid/Grid.h>
 #include <plugins/grid/objects/VoxelGrid.h>
 #include <plugins/grid/objects/VoxelProperty.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
-#include <core/dataset/pipeline/InputHelper.h>
-#include <core/dataset/pipeline/OutputHelper.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/util/InputHelper.h>
+#include <plugins/stdobj/util/OutputHelper.h>
 #include <core/dataset/DataSet.h>
 #include "VoxelGridReplicateModifierDelegate.h"
 

@@ -24,7 +24,7 @@
 
 #include <plugins/stdmod/StdMod.h>
 #include <core/dataset/pipeline/DelegatingModifier.h>
-#include <core/dataset/data/properties/PropertyReference.h>
+#include <plugins/stdobj/properties/PropertyReference.h>
 #include <core/dataset/animation/controller/Controller.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include "ColormapsData.h"

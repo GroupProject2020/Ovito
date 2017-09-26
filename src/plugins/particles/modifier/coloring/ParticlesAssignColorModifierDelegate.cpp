@@ -23,7 +23,7 @@
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/particles/objects/VectorDisplay.h>
-#include <core/dataset/pipeline/OutputHelper.h>
+#include <plugins/stdobj/util/OutputHelper.h>
 #include "ParticlesAssignColorModifierDelegate.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)

@@ -24,7 +24,7 @@
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <core/app/Application.h>
 #include <core/dataset/DataSet.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/utilities/units/UnitsManager.h>
 #include "CoordinationNumberModifier.h"

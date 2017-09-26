@@ -83,12 +83,9 @@ public:
 	// Pick the QVariant data type used to wrap the property type.
 	// If the property type is an enum, then use 'int'.
 	// If the property is 'Color', then use 'QColor'. 
-	// If the property is a TypedPropertyReference, then use PropertyReference.
 	// Otherwise just use the property type.
 	using qvariant_type = std::conditional_t<std::is_enum<property_data_type>::value, int, 
-		std::conditional_t<std::is_same<property_data_type, Color>::value, QColor,
-		std::conditional_t<std::is_convertible<property_data_type, PropertyReference>::value, PropertyReference, 
-		property_data_type>>>;
+		std::conditional_t<std::is_same<property_data_type, Color>::value, QColor, property_data_type>>;
 
 	// For enum types, the QVariant data type must always be set to 'int'.
 	static_assert(!std::is_enum<property_type>::value || std::is_same<qvariant_type, int>::value, "QVariant data type must be 'int' for enum property types.");

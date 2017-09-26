@@ -25,7 +25,7 @@
 #include <plugins/crystalanalysis/util/DelaunayTessellation.h>
 #include <plugins/crystalanalysis/util/ManifoldConstructionHelper.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include "ConstructSurfaceModifier.h"
 

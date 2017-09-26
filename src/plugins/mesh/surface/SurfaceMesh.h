@@ -23,8 +23,8 @@
 
 
 #include <plugins/mesh/Mesh.h>
-#include <core/dataset/data/simcell/PeriodicDomainDataObject.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/PeriodicDomainDataObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/utilities/mesh/HalfEdgeMesh.h>
 
 namespace Ovito { namespace Mesh {

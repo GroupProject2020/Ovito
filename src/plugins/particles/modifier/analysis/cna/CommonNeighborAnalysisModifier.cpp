@@ -26,7 +26,7 @@
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <plugins/particles/objects/BondsObject.h>
 #include <plugins/particles/objects/BondProperty.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/utilities/concurrent/ParallelFor.h>
 #include <core/dataset/DataSetContainer.h>
 #include <core/dataset/pipeline/ModifierApplication.h>

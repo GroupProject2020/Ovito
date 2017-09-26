@@ -28,6 +28,22 @@ namespace Ovito { namespace Grid {
 IMPLEMENT_OVITO_CLASS(VoxelProperty);
 
 /******************************************************************************
+* Registers all standard properties with the property traits class.
+******************************************************************************/
+void VoxelProperty::OOMetaClass::initialize()
+{
+	PropertyClass::initialize();
+
+	// Enable automatic conversion of a VoxelPropertyReference to a generic PropertyReference and vice versa.
+	QMetaType::registerConverter<VoxelPropertyReference, PropertyReference>();
+	QMetaType::registerConverter<PropertyReference, VoxelPropertyReference>();		
+
+	setPropertyClassDisplayName(tr("Voxel data"));
+	setElementDescriptionName(QStringLiteral("voxels"));
+	setPythonName(QStringLiteral("voxels"));
+}
+
+/******************************************************************************
 * Returns the data grid size in the given data state.
 ******************************************************************************/
 size_t VoxelProperty::OOMetaClass::elementCount(const PipelineFlowState& state) const

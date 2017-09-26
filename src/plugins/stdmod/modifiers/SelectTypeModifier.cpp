@@ -23,8 +23,8 @@
 #include <core/dataset/DataSet.h>
 #include <core/dataset/UndoStack.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
-#include <core/dataset/pipeline/OutputHelper.h>
-#include <core/dataset/data/properties/PropertyObject.h>
+#include <plugins/stdobj/util/OutputHelper.h>
+#include <plugins/stdobj/properties/PropertyObject.h>
 #include <core/app/PluginManager.h>
 #include "SelectTypeModifier.h"
 

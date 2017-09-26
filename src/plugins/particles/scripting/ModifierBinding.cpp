@@ -20,8 +20,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/pyscript/binding/PythonBinding.h>
-#include <core/dataset/data/properties/PropertyStorage.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/particles/modifier/coloring/AmbientOcclusionModifier.h>
 #include <plugins/particles/modifier/modify/WrapPeriodicImagesModifier.h>
@@ -48,6 +46,9 @@
 #include <plugins/particles/modifier/analysis/ptm/PolyhedralTemplateMatchingModifier.h>
 #include <plugins/particles/modifier/analysis/voronoi/VoronoiAnalysisModifier.h>
 #include <plugins/particles/modifier/analysis/diamond/IdentifyDiamondModifier.h>
+#include <plugins/stdobj/properties/PropertyStorage.h>
+#include <plugins/stdobj/scripting/PythonBinding.h>
+#include <plugins/pyscript/binding/PythonBinding.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/dataset/io/FileSource.h>
 #include <core/dataset/animation/AnimationSettings.h>

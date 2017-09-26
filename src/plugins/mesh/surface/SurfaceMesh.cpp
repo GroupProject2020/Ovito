@@ -21,7 +21,7 @@
 
 #include <plugins/mesh/Mesh.h>
 #include <core/utilities/concurrent/ParallelFor.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include "SurfaceMesh.h"
 
 namespace Ovito { namespace Mesh {

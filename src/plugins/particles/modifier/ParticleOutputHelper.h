@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <core/dataset/pipeline/OutputHelper.h>
+#include <plugins/stdobj/util/OutputHelper.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/particles/objects/BondProperty.h>
 

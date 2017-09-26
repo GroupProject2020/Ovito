@@ -22,7 +22,7 @@
 #include <plugins/mesh/Mesh.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
 #include <core/dataset/DataSet.h>
-#include <core/dataset/pipeline/OutputHelper.h>
+#include <plugins/stdobj/util/OutputHelper.h>
 #include "SurfaceMeshSliceModifierDelegate.h"
 
 namespace Ovito { namespace Mesh {

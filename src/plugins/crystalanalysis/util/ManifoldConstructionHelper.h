@@ -23,8 +23,8 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <core/dataset/data/simcell/SimulationCell.h>
-#include <core/dataset/data/properties/PropertyStorage.h>
+#include <plugins/stdobj/simcell/SimulationCell.h>
+#include <plugins/stdobj/properties/PropertyStorage.h>
 #include <core/utilities/concurrent/PromiseState.h>
 #include <plugins/crystalanalysis/util/DelaunayTessellation.h>
 

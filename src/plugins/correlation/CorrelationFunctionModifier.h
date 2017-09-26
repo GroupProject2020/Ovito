@@ -24,8 +24,8 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <core/dataset/data/simcell/SimulationCell.h>
-#include <core/dataset/data/properties/PropertyStorage.h>
+#include <plugins/stdobj/simcell/SimulationCell.h>
+#include <plugins/stdobj/properties/PropertyStorage.h>
 #include <plugins/particles/util/CutoffNeighborFinder.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>

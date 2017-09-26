@@ -26,6 +26,7 @@
 #include <plugins/pyscript/binding/PythonBinding.h>
 #include <plugins/particles/import/InputColumnMapping.h>
 #include <plugins/particles/export/OutputColumnMapping.h>
+#include <plugins/stdobj/scripting/PythonBinding.h>
 
 namespace pybind11 { namespace detail {
 

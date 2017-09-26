@@ -23,7 +23,7 @@
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/dataset/scene/ObjectNode.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/app/Application.h>
 #include <core/dataset/io/FileSource.h>
 #include <core/viewport/ViewportConfiguration.h>

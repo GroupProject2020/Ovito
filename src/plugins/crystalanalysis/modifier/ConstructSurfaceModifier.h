@@ -25,8 +25,8 @@
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
 #include <plugins/mesh/surface/SurfaceMeshDisplay.h>
-#include <core/dataset/data/simcell/SimulationCell.h>
-#include <core/dataset/data/properties/PropertyStorage.h>
+#include <plugins/stdobj/simcell/SimulationCell.h>
+#include <plugins/stdobj/properties/PropertyStorage.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {

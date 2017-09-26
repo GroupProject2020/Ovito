@@ -20,8 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
-#include <core/dataset/pipeline/OutputHelper.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/util/OutputHelper.h>
 #include "DislocationSliceModifierDelegate.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {

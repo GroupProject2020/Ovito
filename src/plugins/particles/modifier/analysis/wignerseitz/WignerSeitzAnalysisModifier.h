@@ -23,9 +23,9 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <core/dataset/data/properties/PropertyStorage.h>
+#include <plugins/stdobj/properties/PropertyStorage.h>
 #include <plugins/particles/util/NearestNeighborFinder.h>
-#include <core/dataset/data/simcell/SimulationCell.h>
+#include <plugins/stdobj/simcell/SimulationCell.h>
 #include <plugins/particles/modifier/analysis/ReferenceConfigurationModifier.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)

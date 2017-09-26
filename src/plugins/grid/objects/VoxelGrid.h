@@ -23,7 +23,7 @@
 
 
 #include <plugins/grid/Grid.h>
-#include <core/dataset/data/simcell/PeriodicDomainDataObject.h>
+#include <plugins/stdobj/simcell/PeriodicDomainDataObject.h>
 
 namespace Ovito { namespace Grid {
 

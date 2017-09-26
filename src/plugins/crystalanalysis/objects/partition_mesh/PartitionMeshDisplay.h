@@ -23,7 +23,7 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <core/dataset/data/simcell/SimulationCell.h>
+#include <plugins/stdobj/simcell/SimulationCell.h>
 #include <core/dataset/data/DisplayObject.h>
 #include <core/dataset/data/VersionedDataObjectRef.h>
 #include <core/utilities/mesh/TriMesh.h>

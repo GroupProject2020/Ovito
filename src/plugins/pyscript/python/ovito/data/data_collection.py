@@ -6,7 +6,7 @@ except ImportError:
     # Python 2.x
     import collections
 
-from ..plugins.PyScript import DataObject, SimulationCell, CloneHelper
+from ..plugins.PyScript import DataObject, CloneHelper
 
 def with_metaclass(meta, *bases):
     """
@@ -289,9 +289,3 @@ class DataCollection(with_metaclass(abc.ABCMeta)):
         index = self.objects.index(oldobj)
         if index >= 0:
             self.objects[index] = newobj
- 
-    @property
-    def cell(self):
-        # Here for backward compatibility with OVITO 2.9.0.
-        # Returns the :py:class:`SimulationCell` stored in this data collection (if any).
-        return self.find(SimulationCell)

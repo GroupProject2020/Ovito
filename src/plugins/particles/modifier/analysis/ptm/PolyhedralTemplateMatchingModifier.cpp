@@ -21,13 +21,13 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/util/NearestNeighborFinder.h>
-#include <core/dataset/data/properties/PropertyStorage.h>
+#include <plugins/stdobj/properties/PropertyStorage.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <core/utilities/concurrent/ParallelFor.h>
 #include <core/utilities/concurrent/PromiseState.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include "PolyhedralTemplateMatchingModifier.h"
 
 #include <ptm/index_ptm.h>

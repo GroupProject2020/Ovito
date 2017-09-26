@@ -25,7 +25,7 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/modifier/analysis/ReferenceConfigurationModifier.h>
 #include <plugins/particles/objects/ParticleProperty.h>
-#include <core/dataset/data/simcell/SimulationCell.h>
+#include <plugins/stdobj/simcell/SimulationCell.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 

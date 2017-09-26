@@ -27,7 +27,7 @@
 #include <core/dataset/animation/controller/Controller.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/utilities/units/UnitsManager.h>
 #include <core/app/PluginManager.h>
 #include "SliceModifier.h"

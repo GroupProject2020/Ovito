@@ -25,7 +25,7 @@
 #include <gui/properties/IntegerParameterUI.h>
 #include <gui/properties/IntegerRadioButtonParameterUI.h>
 #include <gui/properties/VariantComboBoxParameterUI.h>
-#include <gui/properties/PropertyReferenceParameterUI.h>
+#include <plugins/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
 #include <gui/mainwin/MainWindow.h>
 #include <plugins/particles/modifier/analysis/binandreduce/BinAndReduceModifier.h>
 #include "BinAndReduceModifierEditor.h"

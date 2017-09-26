@@ -24,8 +24,8 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/data/DislocationNetwork.h>
-#include <core/dataset/data/simcell/PeriodicDomainDataObject.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/PeriodicDomainDataObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 

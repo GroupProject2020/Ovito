@@ -21,9 +21,9 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/pyscript/binding/PythonBinding.h>
-#include <core/dataset/data/properties/PropertyStorage.h>
+#include <plugins/stdobj/properties/PropertyStorage.h>
 #include <plugins/particles/objects/ParticleProperty.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <plugins/particles/import/InputColumnMapping.h>
 #include <plugins/particles/import/ParticleImporter.h>
 #include <plugins/particles/import/cfg/CFGImporter.h>

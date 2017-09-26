@@ -23,7 +23,7 @@
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <core/app/Application.h>
 #include <core/dataset/animation/AnimationSettings.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/utilities/units/UnitsManager.h>
 #include "CorrelationFunctionModifier.h"
 

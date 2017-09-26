@@ -38,12 +38,12 @@ import PyQt5.QtGui
 # Load the native modules.
 from ..plugins.PyScript import (RenderSettings, Viewport, ViewportConfiguration, OpenGLRenderer, 
                                 Display, CoordinateTripodOverlay, PythonViewportOverlay, TextLabelOverlay,
-                                SimulationCellDisplay, FrameBuffer)
+                                FrameBuffer)
 
 import ovito
 
 __all__ = ['RenderSettings', 'Viewport', 'ViewportConfiguration', 'OpenGLRenderer', 'Display',
-        'CoordinateTripodOverlay', 'PythonViewportOverlay', 'TextLabelOverlay', 'SimulationCellDisplay']
+        'CoordinateTripodOverlay', 'PythonViewportOverlay', 'TextLabelOverlay']
 
 def _get_RenderSettings_custom_range(self):
     """ 

@@ -26,7 +26,7 @@
 #include <core/utilities/mesh/TriMesh.h>
 #include <core/utilities/concurrent/PromiseState.h>
 #include <core/utilities/units/UnitsManager.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/animation/controller/Controller.h>
 #include <core/dataset/DataSetContainer.h>
 #include "PartitionMeshDisplay.h"

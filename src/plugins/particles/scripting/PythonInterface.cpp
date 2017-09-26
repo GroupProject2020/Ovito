@@ -20,8 +20,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/pyscript/binding/PythonBinding.h>
-#include <core/dataset/data/properties/PropertyStorage.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/particles/objects/ParticleType.h>
 #include <plugins/particles/objects/ParticleDisplay.h>
@@ -35,6 +33,9 @@
 #include <plugins/particles/objects/TrajectoryDisplay.h>
 #include <plugins/particles/util/CutoffNeighborFinder.h>
 #include <plugins/particles/util/NearestNeighborFinder.h>
+#include <plugins/stdobj/properties/PropertyStorage.h>
+#include <plugins/stdobj/scripting/PythonBinding.h>
+#include <plugins/pyscript/binding/PythonBinding.h>
 #include <core/utilities/io/CompressedTextWriter.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/app/PluginManager.h>

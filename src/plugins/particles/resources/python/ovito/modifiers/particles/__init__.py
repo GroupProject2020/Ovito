@@ -1,5 +1,6 @@
 # Load dependencies
 import ovito.modifiers
+import ovito.modifiers.stdmod
 
 # Load the native code modules.
 import ovito.plugins.Particles

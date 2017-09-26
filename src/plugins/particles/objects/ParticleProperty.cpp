@@ -203,6 +203,10 @@ bool ParticleProperty::OOMetaClass::isDataPresent(const PipelineFlowState& state
 void ParticleProperty::OOMetaClass::initialize()
 {
 	PropertyClass::initialize();
+
+	// Enable automatic conversion of a ParticlePropertyReference to a generic PropertyReference and vice versa.
+	QMetaType::registerConverter<ParticlePropertyReference, PropertyReference>();
+	QMetaType::registerConverter<PropertyReference, ParticlePropertyReference>();
 	
 	setPropertyClassDisplayName(tr("Particles"));
 	setElementDescriptionName(QStringLiteral("particles"));

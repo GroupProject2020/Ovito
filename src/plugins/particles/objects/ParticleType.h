@@ -24,7 +24,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/ParticleProperty.h>
-#include <core/dataset/data/properties/ElementType.h>
+#include <plugins/stdobj/properties/ElementType.h>
 
 namespace Ovito { namespace Particles {
 

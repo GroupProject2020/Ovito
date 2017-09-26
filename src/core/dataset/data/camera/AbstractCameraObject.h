@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -49,6 +49,12 @@ public:
 	///   - ViewProjectionParameters::boundingBox (The bounding box of the scene in world space coordinates)
 	virtual void projectionParameters(TimePoint time, ViewProjectionParameters& projParams) = 0;
 
+	/// \brief Returns whether this camera uses a perspective projection.
+	virtual bool isPerspectiveCamera() const = 0;
+
+	/// \brief Sets whether this camera uses a perspective projection.
+	virtual void setPerspectiveCamera(bool perspective) = 0;
+	
 	/// \brief Returns the field of view of the camera.
 	virtual FloatType fieldOfView(TimePoint time, TimeInterval& validityInterval) = 0;
 

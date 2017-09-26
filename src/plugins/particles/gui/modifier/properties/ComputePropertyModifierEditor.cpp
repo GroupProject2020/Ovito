@@ -21,7 +21,7 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <plugins/particles/modifier/properties/ComputePropertyModifier.h>
-#include <gui/properties/PropertyReferenceParameterUI.h>
+#include <plugins/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
 #include <gui/properties/BooleanGroupBoxParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
 #include <gui/properties/BooleanParameterUI.h>

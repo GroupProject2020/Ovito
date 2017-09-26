@@ -22,10 +22,10 @@
 #include <plugins/stdmod/StdMod.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
-#include <core/dataset/pipeline/InputHelper.h>
-#include <core/dataset/pipeline/OutputHelper.h>
-#include <core/dataset/data/properties/PropertyStorage.h>
-#include <core/dataset/data/properties/PropertyObject.h>
+#include <plugins/stdobj/util/InputHelper.h>
+#include <plugins/stdobj/util/OutputHelper.h>
+#include <plugins/stdobj/properties/PropertyStorage.h>
+#include <plugins/stdobj/properties/PropertyObject.h>
 #include <core/dataset/animation/controller/Controller.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/utilities/concurrent/TaskManager.h>

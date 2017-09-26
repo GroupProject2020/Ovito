@@ -23,9 +23,9 @@
 
 
 #include <plugins/grid/Grid.h>
-#include <core/dataset/data/properties/PropertyObject.h>
-#include <core/dataset/data/properties/PropertyClass.h>
-#include <core/dataset/data/properties/PropertyReference.h>
+#include <plugins/stdobj/properties/PropertyObject.h>
+#include <plugins/stdobj/properties/PropertyClass.h>
+#include <plugins/stdobj/properties/PropertyReference.h>
 
 namespace Ovito { namespace Grid {
 
@@ -53,12 +53,7 @@ public:
 	protected:
 
 		/// Is called by the system after construction of the meta-class instance.
-		virtual void initialize() override {
-			PropertyClass::initialize();
-			setPropertyClassDisplayName(tr("Voxel data"));
-			setElementDescriptionName(QStringLiteral("voxels"));
-			setPythonName(QStringLiteral("voxels"));
-		}
+		virtual void initialize() override;
 	};
 
 	Q_OBJECT
@@ -77,3 +72,5 @@ using VoxelPropertyReference = TypedPropertyReference<VoxelProperty>;
 
 }	// End of namespace
 }	// End of namespace
+
+Q_DECLARE_METATYPE(Ovito::Grid::VoxelPropertyReference);

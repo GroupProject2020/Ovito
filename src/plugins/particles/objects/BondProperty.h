@@ -23,9 +23,9 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <core/dataset/data/properties/PropertyObject.h>
-#include <core/dataset/data/properties/PropertyClass.h>
-#include <core/dataset/data/properties/PropertyReference.h>
+#include <plugins/stdobj/properties/PropertyObject.h>
+#include <plugins/stdobj/properties/PropertyClass.h>
+#include <plugins/stdobj/properties/PropertyReference.h>
 
 namespace Ovito { namespace Particles {
 
@@ -110,3 +110,5 @@ using BondPropertyReference = TypedPropertyReference<BondProperty>;
 
 }	// End of namespace
 }	// End of namespace
+
+Q_DECLARE_METATYPE(Ovito::Particles::BondPropertyReference);

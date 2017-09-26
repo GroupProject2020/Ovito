@@ -26,7 +26,7 @@
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
 #include <core/utilities/io/CompressedTextWriter.h>
-#include <core/dataset/data/properties/PropertyStorage.h>
+#include <plugins/stdobj/properties/PropertyStorage.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export)
 

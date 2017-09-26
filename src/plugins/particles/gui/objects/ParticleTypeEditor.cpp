@@ -21,7 +21,7 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <plugins/particles/objects/ParticleType.h>
-#include <core/dataset/data/properties/PropertyStorage.h>
+#include <plugins/stdobj/properties/PropertyStorage.h>
 #include <gui/properties/ColorParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
 #include <gui/properties/StringParameterUI.h>

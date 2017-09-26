@@ -22,7 +22,7 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/util/NearestNeighborFinder.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/utilities/concurrent/ParallelFor.h>
 #include "BondAngleAnalysisModifier.h"

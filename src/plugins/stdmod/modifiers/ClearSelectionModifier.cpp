@@ -21,8 +21,8 @@
 
 #include <plugins/stdmod/StdMod.h>
 #include <core/dataset/DataSet.h>
-#include <core/dataset/pipeline/InputHelper.h>
-#include <core/dataset/data/properties/PropertyObject.h>
+#include <plugins/stdobj/util/InputHelper.h>
+#include <plugins/stdobj/properties/PropertyObject.h>
 #include <core/app/PluginManager.h>
 #include "ClearSelectionModifier.h"
 

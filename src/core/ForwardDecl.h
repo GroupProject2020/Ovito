@@ -128,21 +128,6 @@ namespace Ovito {
 			class ModifierDelegate;
 			class DelegatingModifier;
 			class MultiDelegatingModifier;
-			class InputHelper;
-			class OutputHelper;
-			OVITO_BEGIN_INLINE_NAMESPACE(StdObj)
-				class PropertyObject;
-				class PropertyStorage;
-				using PropertyPtr = std::shared_ptr<PropertyStorage>;
-				using ConstPropertyPtr = std::shared_ptr<const PropertyStorage>;
-				class PropertyClass;
-				using PropertyClassPtr = const PropertyClass*;
-				class PropertyReference;
-				template<class PropertyObjectType> class TypedPropertyReference;
-				class SimulationCell;
-				class SimulationCellObject;
-				class SimulationCellDisplay;
-			OVITO_END_INLINE_NAMESPACE
 		OVITO_END_INLINE_NAMESPACE
 	OVITO_END_INLINE_NAMESPACE
 	OVITO_BEGIN_INLINE_NAMESPACE(Rendering)

@@ -24,8 +24,8 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/data/ClusterVector.h>
-#include <core/dataset/data/simcell/PeriodicDomainDataObject.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/PeriodicDomainDataObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/utilities/mesh/HalfEdgeMesh.h>
 #include <core/utilities/concurrent/PromiseState.h>
 

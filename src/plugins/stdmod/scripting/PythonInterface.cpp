@@ -21,6 +21,7 @@
 
 #include <plugins/stdmod/StdMod.h>
 #include <plugins/pyscript/binding/PythonBinding.h>
+#include <plugins/stdobj/scripting/PythonBinding.h>
 #include <plugins/stdmod/viewport/ColorLegendOverlay.h>
 #include <plugins/stdmod/modifiers/SliceModifier.h>
 #include <plugins/stdmod/modifiers/AffineTransformationModifier.h>

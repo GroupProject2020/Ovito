@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <core/dataset/data/simcell/SimulationCell.h>
+#include <plugins/stdobj/simcell/SimulationCell.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
 #include <core/dataset/pipeline/PipelineObject.h>
 #include <core/dataset/pipeline/AsynchronousModifierApplication.h>

@@ -23,8 +23,8 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <core/dataset/data/simcell/SimulationCell.h>
-#include <core/dataset/data/properties/PropertyStorage.h>
+#include <plugins/stdobj/simcell/SimulationCell.h>
+#include <plugins/stdobj/properties/PropertyStorage.h>
 
 #include <geogram/delaunay/delaunay_3d.h>
 #include <boost/iterator/counting_iterator.hpp>

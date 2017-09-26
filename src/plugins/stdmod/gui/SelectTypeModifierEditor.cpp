@@ -20,8 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/stdmod/gui/StdModGui.h>
-#include <gui/widgets/properties/PropertySelectionComboBox.h>
-#include <gui/properties/PropertyClassParameterUI.h>
+#include <plugins/stdobj/gui/widgets/PropertySelectionComboBox.h>
+#include <plugins/stdobj/gui/widgets/PropertyClassParameterUI.h>
 #include <plugins/stdmod/modifiers/SelectTypeModifier.h>
 #include "SelectTypeModifierEditor.h"
 

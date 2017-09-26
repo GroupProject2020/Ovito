@@ -25,7 +25,7 @@
 #include <plugins/particles/objects/BondsObject.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <core/dataset/DataSet.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include "CoordinationPolyhedraModifier.h"
 

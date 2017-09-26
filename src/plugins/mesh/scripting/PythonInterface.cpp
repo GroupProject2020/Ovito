@@ -28,7 +28,7 @@
 #include <plugins/mesh/surface/SurfaceMeshDisplay.h>
 #include <plugins/pyscript/binding/PythonBinding.h>
 #include <core/app/PluginManager.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/utilities/io/CompressedTextWriter.h>
 
 namespace Ovito { namespace Mesh {

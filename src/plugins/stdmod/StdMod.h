@@ -27,9 +27,11 @@
 #define __OVITO_STDMOD_
 
 #include <core/Core.h>
+#include <plugins/stdobj/StdObj.h>
 
 namespace Ovito {
 	namespace StdMod {
+        using namespace Ovito::StdObj;
     }
 }
 

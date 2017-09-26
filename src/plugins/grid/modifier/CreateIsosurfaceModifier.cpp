@@ -22,8 +22,8 @@
 #include <plugins/grid/Grid.h>
 #include <plugins/grid/objects/VoxelGrid.h>
 #include <core/dataset/DataSet.h>
-#include <core/dataset/pipeline/InputHelper.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/util/InputHelper.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include "CreateIsosurfaceModifier.h"
 #include "MarchingCubes.h"

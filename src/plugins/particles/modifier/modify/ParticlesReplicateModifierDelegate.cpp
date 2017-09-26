@@ -25,7 +25,7 @@
 #include <plugins/particles/objects/BondsObject.h>
 #include <plugins/particles/objects/BondProperty.h>
 #include <plugins/particles/objects/ParticleProperty.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/DataSet.h>
 #include "ParticlesReplicateModifierDelegate.h"
 

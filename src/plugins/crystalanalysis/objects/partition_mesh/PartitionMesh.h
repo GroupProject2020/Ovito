@@ -25,8 +25,8 @@
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <core/utilities/mesh/HalfEdgeMesh.h>
 #include <core/utilities/concurrent/PromiseState.h>
-#include <core/dataset/data/simcell/PeriodicDomainDataObject.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/PeriodicDomainDataObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 

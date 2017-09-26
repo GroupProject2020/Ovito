@@ -2,6 +2,7 @@
 import ovito
 import ovito.data
 import ovito.data.mesh
+import ovito.data.stdobj
 
 # Load the native code module
 import ovito.plugins.Particles

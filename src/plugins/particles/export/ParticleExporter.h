@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <core/dataset/data/properties/PropertyStorage.h>
+#include <plugins/stdobj/properties/PropertyStorage.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
 #include <core/dataset/io/FileExporter.h>
 #include <core/utilities/io/CompressedTextWriter.h>

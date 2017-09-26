@@ -28,7 +28,7 @@
 #include <gui/properties/IntegerRadioButtonParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
 #include <gui/properties/VariantComboBoxParameterUI.h>
-#include <gui/properties/PropertyReferenceParameterUI.h>
+#include <plugins/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
 #include "CorrelationFunctionModifierEditor.h"
 
 #include <qwt/qwt_plot.h>

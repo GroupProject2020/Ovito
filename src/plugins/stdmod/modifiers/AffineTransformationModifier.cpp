@@ -21,11 +21,11 @@
 
 #include <plugins/stdmod/StdMod.h>
 #include <core/dataset/DataSet.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
-#include <core/dataset/data/simcell/PeriodicDomainDataObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/PeriodicDomainDataObject.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
-#include <core/dataset/pipeline/InputHelper.h>
-#include <core/dataset/pipeline/OutputHelper.h>
+#include <plugins/stdobj/util/InputHelper.h>
+#include <plugins/stdobj/util/OutputHelper.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include "AffineTransformationModifier.h"
 

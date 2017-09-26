@@ -27,7 +27,6 @@
 #include <core/rendering/ArrowPrimitive.h>
 #include <core/rendering/FrameBuffer.h>
 #include <core/dataset/data/DisplayObject.h>
-#include <core/dataset/data/simcell/SimulationCellDisplay.h>
 #include <opengl_renderer/StandardSceneRenderer.h>
 #include "PythonBinding.h"
 
@@ -166,27 +165,6 @@ void defineRenderingSubmodule(py::module m)
 				"\n\n"
 				":Default: ``True``\n")
 	;
-
-	ovito_class<SimulationCellDisplay, DisplayObject>(m,
-			":Base class: :py:class:`ovito.vis.Display`\n\n"
-			"Controls the visual appearance of :py:class:`~ovito.data.SimulationCell` objects."
-			"The following script demonstrates how to change the line width of the simulation cell:"
-			"\n\n"
-			".. literalinclude:: ../example_snippets/simulation_cell_display.py\n")
-		.def_property("line_width", &SimulationCellDisplay::cellLineWidth, &SimulationCellDisplay::setCellLineWidth,
-				"The width of the simulation cell line (in simulation units of length)."
-				"\n\n"
-				":Default: 0.14% of the simulation box diameter\n")
-		.def_property("render_cell", &SimulationCellDisplay::renderCellEnabled, &SimulationCellDisplay::setRenderCellEnabled,
-				"Boolean flag controlling the cell's visibility in rendered images. "
-				"If ``False``, the cell will only be visible in the interactive viewports. "
-				"\n\n"
-				":Default: ``True``\n")
-		.def_property("rendering_color", &SimulationCellDisplay::cellColor, &SimulationCellDisplay::setCellColor,
-				"The line color used when rendering the cell."
-				"\n\n"
-				":Default: ``(0, 0, 0)``\n")
-	;	
 
 	py::enum_<ParticlePrimitive::ShadingMode>(m, "ParticleShadingMode")
 		.value("Normal", ParticlePrimitive::NormalShading)

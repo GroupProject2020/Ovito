@@ -23,7 +23,7 @@
 
 
 #include <plugins/stdmod/StdMod.h>
-#include <core/dataset/pipeline/GenericPropertyModifier.h>
+#include <plugins/stdobj/properties/GenericPropertyModifier.h>
 
 namespace Ovito { namespace StdMod {
 

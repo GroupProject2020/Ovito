@@ -29,7 +29,7 @@
 #include <plugins/mesh/tri/TriMeshObject.h>
 #include <plugins/mesh/tri/TriMeshDisplay.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/DataSetContainer.h>
 #include "DislocationAnalysisModifier.h"
 #include "DislocationAnalysisEngine.h"

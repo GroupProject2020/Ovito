@@ -24,7 +24,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/util/ParticleExpressionEvaluator.h>
-#include <core/dataset/data/simcell/SimulationCell.h>
+#include <plugins/stdobj/simcell/SimulationCell.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
 #include <core/dataset/pipeline/AsynchronousModifierApplication.h>

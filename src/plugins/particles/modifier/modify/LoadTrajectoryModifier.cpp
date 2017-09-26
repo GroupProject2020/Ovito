@@ -24,7 +24,7 @@
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <plugins/particles/objects/BondsObject.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/io/FileSource.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include "LoadTrajectoryModifier.h"

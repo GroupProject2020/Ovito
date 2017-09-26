@@ -24,8 +24,8 @@
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
-#include <core/dataset/data/simcell/SimulationCell.h>
-#include <core/dataset/data/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/simcell/SimulationCell.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/utilities/units/UnitsManager.h>
 #include "BinAndReduceModifier.h"

@@ -23,7 +23,7 @@
 
 
 #include <plugins/vorotop/VoroTopPlugin.h>
-#include <core/dataset/data/properties/PropertyStorage.h>
+#include <plugins/stdobj/properties/PropertyStorage.h>
 #include <plugins/particles/modifier/analysis/StructureIdentificationModifier.h>
 #include "Filter.h"
 

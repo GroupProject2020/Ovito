@@ -24,7 +24,7 @@
 
 #include <plugins/stdmod/gui/StdModGui.h>
 #include <gui/properties/ModifierPropertiesEditor.h>
-#include <gui/properties/PropertyReferenceParameterUI.h>
+#include <plugins/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
 #include <plugins/stdmod/modifiers/ColorCodingModifier.h>
 
 namespace Ovito { namespace StdMod {

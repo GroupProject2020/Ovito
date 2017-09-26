@@ -23,10 +23,10 @@
 #include <core/dataset/scene/SceneRoot.h>
 #include <core/dataset/scene/ObjectNode.h>
 #include <core/dataset/data/camera/AbstractCameraObject.h>
-#include <core/dataset/data/camera/CameraObject.h>
 #include <core/dataset/pipeline/StaticSource.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/animation/AnimationSettings.h>
+#include <core/app/PluginManager.h>
 #include <gui/dialogs/AdjustCameraDialog.h>
 #include <gui/mainwin/MainWindow.h>
 #include "ViewportMenu.h"
@@ -211,12 +211,17 @@ void ViewportMenu::onCreateCamera()
 		OORef<ObjectNode> cameraNode;
 		{
 			UndoSuspender noUndo(_viewport->dataset()->undoStack());
-			OORef<CameraObject> cameraObj = new CameraObject(_viewport->dataset());
-			cameraObj->setIsPerspective(_viewport->isPerspectiveProjection());
+			
+			QVector<OvitoClassPtr> cameraTypes = PluginManager::instance().listClasses(AbstractCameraObject::OOClass());
+			if(cameraTypes.empty())
+				_viewport->throwException(tr("OVITO has been built without support for camera objects."));		
+			OORef<AbstractCameraObject> cameraObj = static_object_cast<AbstractCameraObject>(cameraTypes.front()->createInstance(_viewport->dataset()));
+
+			cameraObj->setPerspectiveCamera(_viewport->isPerspectiveProjection());
 			if(_viewport->isPerspectiveProjection())
-				cameraObj->fovController()->setFloatValue(0, _viewport->fieldOfView());
+				cameraObj->setFieldOfView(0, _viewport->fieldOfView());
 			else
-				cameraObj->zoomController()->setFloatValue(0, _viewport->fieldOfView());
+				cameraObj->setFieldOfView(0, _viewport->fieldOfView());
 
 			// Create an object node with a data source for the camera.
 			cameraNode = new ObjectNode(_viewport->dataset());

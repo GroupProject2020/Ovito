@@ -26,8 +26,8 @@
 #include <plugins/particles/objects/BondsStorage.h>
 #include <plugins/particles/objects/BondsDisplay.h>
 #include <plugins/particles/objects/ParticleProperty.h>
-#include <core/dataset/data/properties/PropertyStorage.h>
-#include <core/dataset/data/simcell/SimulationCell.h>
+#include <plugins/stdobj/properties/PropertyStorage.h>
+#include <plugins/stdobj/simcell/SimulationCell.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 
