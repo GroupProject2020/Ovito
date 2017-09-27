@@ -252,7 +252,7 @@ void ModifyCommandPage::onModifierAdd(int index)
 						ObjectLoadStream stream(dstream);
 						stream.setDataset(_datasetContainer.currentSet());
 						for(int chunkId = stream.expectChunkRange(0,1); chunkId == 1; chunkId = stream.expectChunkRange(0,1)) {
-							modifierSet.push_front(stream.loadObject<Modifier>());
+							modifierSet.push_back(stream.loadObject<Modifier>());
 							stream.closeChunk();
 						}
 						stream.closeChunk();
