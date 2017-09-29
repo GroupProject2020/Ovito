@@ -32,7 +32,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVI
 /**
  * \brief File parser for NetCDF simulation files.
  */
-class OVITO_NETCDFPLUGIN_EXPORT NetCDFImporter : public ParticleImporter
+class OVITO_NETCDFPLUGIN_EXPORT AMBERNetCDFImporter : public ParticleImporter
 {
 	/// Defines a metaclass specialization for this importer type.
 	class OOMetaClass : public FileSourceImporter::OOMetaClass
@@ -45,19 +45,19 @@ class OVITO_NETCDFPLUGIN_EXPORT NetCDFImporter : public ParticleImporter
 		virtual QString fileFilter() const override { return QStringLiteral("*"); }
 	
 		/// Returns the filter description that is displayed in the drop-down box of the file dialog.
-		virtual QString fileFilterDescription() const override { return tr("NetCDF Files"); }
+		virtual QString fileFilterDescription() const override { return tr("NetCDF/AMBER Files"); }
 	
 		/// Checks if the given file has format that can be read by this importer.
 		virtual bool checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const override;	
 	};
 	
-	OVITO_CLASS_META(NetCDFImporter, OOMetaClass)
+	OVITO_CLASS_META(AMBERNetCDFImporter, OOMetaClass)
 	Q_OBJECT
 
 public:
 
 	/// \brief Constructs a new instance of this class.
-	Q_INVOKABLE NetCDFImporter(DataSet *dataset) : ParticleImporter(dataset), _useCustomColumnMapping(false) {
+	Q_INVOKABLE AMBERNetCDFImporter(DataSet *dataset) : ParticleImporter(dataset), _useCustomColumnMapping(false) {
 		setMultiTimestepFile(true);
 	}
 
@@ -126,10 +126,10 @@ private:
 	protected:
 
         /// Map dimensions from NetCDF file to internal representation.
-        void detectDims(int movieFrame, int particleCount, int nDims, int *dimIds, int &nDimsDetected, int &componentCount, int &nativeComponentCount, size_t *startp, size_t *countp);
+        bool detectDims(int movieFrame, int particleCount, int nDims, int *dimIds, int& nDimsDetected, size_t& componentCount, size_t *startp, size_t *countp);
 
 		/// Loads the frame data from the given file.
-		virtual void loadFile(QFile& file) override;
+		virtual FrameDataPtr loadFile(QFile& file) override;
 
 	private:
 
@@ -139,8 +139,7 @@ private:
 		/// NetCDF ids.
 		int _ncid = -1;
 		int _root_ncid = -1;
-		int _frame_dim, _atom_dim, _spatial_dim, _Voigt_dim, _sph_dim, _dem_dim;
-		//int _cell_spatial_dim, _cell_angular_dim;
+		int _frame_dim, _atom_dim, _spatial_dim, _sph_dim, _dem_dim;
 		int _cell_origin_var, _cell_lengths_var, _cell_angles_var;
 		int _shear_dx_var;
 
@@ -181,7 +180,7 @@ protected:
 	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) override;
 
 	/// \brief Guesses the mapping of an input file field to one of OVITO's internal particle properties.
-	static InputColumnInfo mapVariableToColumn(const QString& name, int dataType);
+	static InputColumnInfo mapVariableToColumn(const QString& name, int dataType, size_t componentCount);
 
 private:
 

@@ -220,7 +220,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> DislocationAnalysisModifier::crea
 	ParticleProperty* clusterProperty = pih.inputStandardProperty<ParticleProperty>(ParticleProperty::ClusterProperty);
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<DislocationAnalysisEngine>(input.stateValidity(), posProperty->storage(),
+	return std::make_shared<DislocationAnalysisEngine>(posProperty->storage(),
 			simCell->data(), inputCrystalStructure(), maxTrialCircuitSize(), circuitStretchability(),
 			std::move(selectionProperty),
 			clusterProperty ? clusterProperty->storage() : nullptr, std::move(preferredCrystalOrientations),

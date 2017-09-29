@@ -436,7 +436,7 @@ void FileSourceImporter::FrameLoader::perform()
 {
 	// Let the subclass implementation parse the file.
 	QFile file(_localFilename);
-	loadFile(file);
+	setResult(loadFile(file));
 }
 
 OVITO_END_INLINE_NAMESPACE

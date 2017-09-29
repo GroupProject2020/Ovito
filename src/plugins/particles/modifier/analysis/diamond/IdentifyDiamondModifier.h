@@ -84,8 +84,8 @@ private:
 	public:
 
 		/// Constructor.
-		DiamondIdentificationEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell, QVector<bool> typesToIdentify, ConstPropertyPtr selection) :
-			StructureIdentificationEngine(validityInterval, std::move(positions), simCell, std::move(typesToIdentify), std::move(selection)) {}
+		DiamondIdentificationEngine(ConstPropertyPtr positions, const SimulationCell& simCell, QVector<bool> typesToIdentify, ConstPropertyPtr selection) :
+			StructureIdentificationEngine(std::move(positions), simCell, std::move(typesToIdentify), std::move(selection)) {}
 
 		/// Computes the modifier's results.
 		virtual void perform() override;
@@ -96,5 +96,3 @@ OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

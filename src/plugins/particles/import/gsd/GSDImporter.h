@@ -88,7 +88,7 @@ private:
 	protected:
 
 		/// Loads the frame data from the given file.
-		virtual void loadFile(QFile& file) override;
+		virtual FrameDataPtr loadFile(QFile& file) override;
 
 		/// Reads the values of a particle property from the GSD file.
 		PropertyStorage* readOptionalParticleProperty(GSDFile& gsd, const char* chunkName, uint64_t frameNumber, uint32_t numParticles, ParticleProperty::Type propertyType, const std::shared_ptr<ParticleFrameData>& frameData);

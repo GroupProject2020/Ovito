@@ -88,7 +88,7 @@ Future<LAMMPSDataImporter::LAMMPSAtomStyle> LAMMPSDataImporter::inspectFileHeade
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-void LAMMPSDataImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile& file)
 {
 	using namespace std;
 
@@ -204,7 +204,7 @@ void LAMMPSDataImporter::FrameLoader::loadFile(QFile& file)
 		throw Exception(tr("Invalid simulation cell size in header of LAMMPS data file."));
 
 	// Create the destination container for loaded data.
-	std::shared_ptr<LAMMPSFrameData> frameData = std::make_shared<LAMMPSFrameData>();
+	auto frameData = std::make_shared<LAMMPSFrameData>();
 
 	// Define the simulation cell geometry.
 	frameData->simulationCell().setMatrix(AffineTransformation(
@@ -228,8 +228,8 @@ void LAMMPSDataImporter::FrameLoader::loadFile(QFile& file)
 	frameData->addParticleProperty(posProperty);
 	Point3* pos = posProperty->dataPoint3();
 	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::TypeProperty, true);
-	ParticleFrameData::ParticleTypeList* typeList = new ParticleFrameData::ParticleTypeList();
-	frameData->addParticleProperty(typeProperty, typeList);
+	frameData->addParticleProperty(typeProperty);
+	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
 	int* atomType = typeProperty->dataInt();
 	PropertyPtr identifierProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::IdentifierProperty, true);
 	frameData->addParticleProperty(identifierProperty);
@@ -237,7 +237,7 @@ void LAMMPSDataImporter::FrameLoader::loadFile(QFile& file)
 
 	// Create atom types.
 	for(int i = 1; i <= natomtypes; i++)
-		typeList->addParticleTypeId(i);
+		typeList->addTypeId(i);
 
 	/// Maps atom IDs to indices.
 	std::unordered_map<int,int> atomIdMap;
@@ -257,8 +257,9 @@ void LAMMPSDataImporter::FrameLoader::loadFile(QFile& file)
 				std::tie(_atomStyle, withPBCImageFlags) = detectAtomStyle(stream.line(), keyword, _atomStyle);
 				frameData->setDetectedAtomStyle(_atomStyle);
 				if(_detectAtomStyle) {
-					setResult(std::move(frameData));
-					return;
+					// We are done at this point if we are only supposed to 
+					// detect the atom style used in the file.
+					return frameData;
 				}
 
 				Point3I* pbcImage = nullptr;
@@ -270,7 +271,7 @@ void LAMMPSDataImporter::FrameLoader::loadFile(QFile& file)
 
 				if(_atomStyle == AtomStyle_Atomic || _atomStyle == AtomStyle_Hybrid) {
 					for(int i = 0; i < natoms; i++, ++pos, ++atomType, ++atomId) {
-						if(!setProgressValueIntermittent(i)) return;
+						if(!setProgressValueIntermittent(i)) return {};
 						if(i != 0) stream.readLine();
 						bool invalidLine;
 						if(!pbcImage)
@@ -291,7 +292,7 @@ void LAMMPSDataImporter::FrameLoader::loadFile(QFile& file)
 					frameData->addParticleProperty(chargeProperty);
 					FloatType* charge = chargeProperty->dataFloat();
 					for(int i = 0; i < natoms; i++, ++pos, ++atomType, ++atomId, ++charge) {
-						if(!setProgressValueIntermittent(i)) return;
+						if(!setProgressValueIntermittent(i)) return {};
 						if(i != 0) stream.readLine();
 						bool invalidLine;
 						if(!pbcImage)
@@ -312,7 +313,7 @@ void LAMMPSDataImporter::FrameLoader::loadFile(QFile& file)
 					frameData->addParticleProperty(moleculeProperty);
 					int* molecule = moleculeProperty->dataInt();
 					for(int i = 0; i < natoms; i++, ++pos, ++atomType, ++atomId, ++molecule) {
-						if(!setProgressValueIntermittent(i)) return;
+						if(!setProgressValueIntermittent(i)) return {};
 						if(i != 0) stream.readLine();
 						bool invalidLine;
 						if(!pbcImage)
@@ -336,7 +337,7 @@ void LAMMPSDataImporter::FrameLoader::loadFile(QFile& file)
 					frameData->addParticleProperty(moleculeProperty);
 					int* molecule = moleculeProperty->dataInt();
 					for(int i = 0; i < natoms; i++, ++pos, ++atomType, ++atomId, ++charge, ++molecule) {
-						if(!setProgressValueIntermittent(i)) return;
+						if(!setProgressValueIntermittent(i)) return {};
 						if(i != 0) stream.readLine();
 						bool invalidLine;
 						if(!pbcImage)
@@ -360,7 +361,7 @@ void LAMMPSDataImporter::FrameLoader::loadFile(QFile& file)
 					frameData->addParticleProperty(massProperty);
 					FloatType* mass = massProperty->dataFloat();
 					for(int i = 0; i < natoms; i++, ++pos, ++atomType, ++atomId, ++radius, ++mass) {
-						if(!setProgressValueIntermittent(i)) return;
+						if(!setProgressValueIntermittent(i)) return {};
 						if(i != 0) stream.readLine();
 						bool invalidLine;
 						if(!pbcImage)
@@ -391,7 +392,7 @@ void LAMMPSDataImporter::FrameLoader::loadFile(QFile& file)
 		else if(keyword.startsWith("Velocities")) {
 
 			// Get the atomic IDs.
-			PropertyStorage* identifierProperty = frameData->particleProperty(ParticleProperty::IdentifierProperty);
+			PropertyPtr identifierProperty = frameData->findStandardParticleProperty(ParticleProperty::IdentifierProperty);
 			if(!identifierProperty)
 				throw Exception(tr("Atoms section must precede Velocities section in data file (error in line %1).").arg(stream.lineNumber()));
 
@@ -400,7 +401,7 @@ void LAMMPSDataImporter::FrameLoader::loadFile(QFile& file)
 			frameData->addParticleProperty(velocityProperty);
 
 			for(int i = 0; i < natoms; i++) {
-				if(!setProgressValueIntermittent(i)) return;
+				if(!setProgressValueIntermittent(i)) return {};
 				stream.readLine();
 
 				Vector3 v;
@@ -428,7 +429,7 @@ void LAMMPSDataImporter::FrameLoader::loadFile(QFile& file)
 				if(*start) {
 					QStringList words = QString::fromLocal8Bit(start).split(QRegularExpression("\\s+"), QString::SkipEmptyParts);
 					if(words.size() == 2)
-						typeList->setParticleTypeName(i, words[1]);
+						typeList->setTypeName(i, words[1]);
 				}
 			}
 		}
@@ -462,8 +463,8 @@ void LAMMPSDataImporter::FrameLoader::loadFile(QFile& file)
 		else if(keyword.startsWith("Bonds")) {
 
 			// Get the atomic IDs and positions.
-			PropertyStorage* identifierProperty = frameData->particleProperty(ParticleProperty::IdentifierProperty);
-			PropertyStorage* posProperty = frameData->particleProperty(ParticleProperty::PositionProperty);
+			PropertyPtr identifierProperty = frameData->findStandardParticleProperty(ParticleProperty::IdentifierProperty);
+			PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticleProperty::PositionProperty);
 			if(!identifierProperty || !posProperty)
 				throw Exception(tr("Atoms section must precede Bonds section in data file (error in line %1).").arg(stream.lineNumber()));
 
@@ -473,17 +474,17 @@ void LAMMPSDataImporter::FrameLoader::loadFile(QFile& file)
 
 			// Create bond type property.
 			PropertyPtr typeProperty = BondProperty::createStandardStorage(nbonds, BondProperty::TypeProperty, true);
-			ParticleFrameData::BondTypeList* bondTypeList = new ParticleFrameData::BondTypeList();
-			frameData->addBondProperty(typeProperty, bondTypeList);
+			frameData->addBondProperty(typeProperty);
+			ParticleFrameData::TypeList* bondTypeList = frameData->propertyTypesList(typeProperty);
 			int* bondType = typeProperty->dataInt();
 
 			// Create bond types.
 			for(int i = 1; i <= nbondtypes; i++)
-				bondTypeList->addBondTypeId(i);
+				bondTypeList->addTypeId(i);
 
 			setProgressMaximum(nbonds);
 			for(int i = 0; i < nbonds; i++) {
-				if(!setProgressValueIntermittent(i)) return;
+				if(!setProgressValueIntermittent(i)) return {};
 				stream.readLine();
 
 				int bondId, atomId1, atomId2;
@@ -541,7 +542,7 @@ void LAMMPSDataImporter::FrameLoader::loadFile(QFile& file)
 	if(nbondtypes > 0 || nbonds > 0)
 		statusString += tr("\nNumber of bonds: %1").arg(nbonds);
 	frameData->setStatus(statusString);
-	setResult(std::move(frameData));
+	return frameData;
 }
 
 /******************************************************************************

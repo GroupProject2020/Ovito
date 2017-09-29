@@ -146,7 +146,7 @@ void POSCARImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& 
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-void POSCARImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile(QFile& file)
 {
 	// Open file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());
@@ -206,18 +206,18 @@ void POSCARImporter::FrameLoader::loadFile(QFile& file)
 	PropertyPtr posProperty = ParticleProperty::createStandardStorage(totalAtomCount, ParticleProperty::PositionProperty, false);
 	frameData->addParticleProperty(posProperty);
 	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(totalAtomCount, ParticleProperty::TypeProperty, false);
-	ParticleFrameData::ParticleTypeList* typeList = new ParticleFrameData::ParticleTypeList();
-	frameData->addParticleProperty(typeProperty, typeList);
-
+	frameData->addParticleProperty(typeProperty);
+	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
+	
 	// Read atom coordinates.
 	Point3* p = posProperty->dataPoint3();
 	int* a = typeProperty->dataInt();
 	for(int atype = 1; atype <= atomCounts.size(); atype++) {
 		int typeId = atype;
 		if(atomTypeNames.size() == atomCounts.size() && atomTypeNames[atype-1].isEmpty() == false)
-			typeId = typeList->addParticleTypeName(atomTypeNames[atype-1]);
+			typeId = typeList->addTypeName(atomTypeNames[atype-1]);
 		else
-			typeList->addParticleTypeId(atype);
+			typeList->addTypeId(atype);
 		for(int i = 0; i < atomCounts[atype-1]; i++, ++p, ++a) {
 			*a = typeId;
 			if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING,
@@ -290,7 +290,7 @@ void POSCARImporter::FrameLoader::loadFile(QFile& file)
 
 				// Parse spin up + spin down denisty.
 				PropertyPtr chargeDensity = parseFieldData(nx, ny, nz, tr("Charge density"));
-				if(!chargeDensity) return;
+				if(!chargeDensity) return {};
 				frameData->addVoxelProperty(chargeDensity);
 				statusString += tr("\nCharge density grid: %1 x %2 x %3").arg(nx).arg(ny).arg(nz);
 
@@ -301,7 +301,7 @@ void POSCARImporter::FrameLoader::loadFile(QFile& file)
 						if(nx != frameData->voxelGridShape()[0] || ny != frameData->voxelGridShape()[1] || nz != frameData->voxelGridShape()[2])
 							throw Exception(tr("Inconsistent voxel grid dimensions in line %1").arg(stream.lineNumber()));
 						magnetizationDensity = parseFieldData(nx, ny, nz, tr("Magnetization density"));
-						if(!magnetizationDensity) return;
+						if(!magnetizationDensity) return {};
 						statusString += tr("\nMagnetization density grid: %1 x %2 x %3").arg(nx).arg(ny).arg(nz);
 						break;
 					}
@@ -315,7 +315,7 @@ void POSCARImporter::FrameLoader::loadFile(QFile& file)
 						if(nx != frameData->voxelGridShape()[0] || ny != frameData->voxelGridShape()[1] || nz != frameData->voxelGridShape()[2])
 							throw Exception(tr("Inconsistent voxel grid dimensions in line %1").arg(stream.lineNumber()));
 						magnetizationDensityY = parseFieldData(nx, ny, nz, tr("Magnetization density"));
-						if(!magnetizationDensityY) return;
+						if(!magnetizationDensityY) return {};
 						break;
 					}
 				}
@@ -324,7 +324,7 @@ void POSCARImporter::FrameLoader::loadFile(QFile& file)
 						if(nx != frameData->voxelGridShape()[0] || ny != frameData->voxelGridShape()[1] || nz != frameData->voxelGridShape()[2])
 							throw Exception(tr("Inconsistent voxel grid dimensions in line %1").arg(stream.lineNumber()));
 						magnetizationDensityZ = parseFieldData(nx, ny, nz, tr("Magnetization density"));
-						if(!magnetizationDensityZ) return;
+						if(!magnetizationDensityZ) return {};
 						break;
 					}
 				}
@@ -344,7 +344,7 @@ void POSCARImporter::FrameLoader::loadFile(QFile& file)
 	}
 
 	frameData->setStatus(statusString);
-	setResult(std::move(frameData));
+	return frameData;
 }
 
 /******************************************************************************

@@ -49,7 +49,7 @@ bool IMDImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& s
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-void IMDImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr IMDImporter::FrameLoader::loadFile(QFile& file)
 {
 	// Open file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());
@@ -60,7 +60,7 @@ void IMDImporter::FrameLoader::loadFile(QFile& file)
 		stream.seek(frame().byteOffset);
 
 	// Create the destination container for loaded data.
-	std::shared_ptr<ParticleFrameData> frameData = std::make_shared<ParticleFrameData>();
+	auto frameData = std::make_shared<ParticleFrameData>();
 
 	// Regular expression for whitespace characters.
 	QRegularExpression ws_re(QStringLiteral("\\s+"));
@@ -155,7 +155,7 @@ void IMDImporter::FrameLoader::loadFile(QFile& file)
 		numAtoms++;
 
 		if((numAtoms % 1000) == 0 && isCanceled())
-			return;
+			return {};
 	}
 
 	setProgressMaximum(numAtoms);
@@ -166,7 +166,7 @@ void IMDImporter::FrameLoader::loadFile(QFile& file)
 	// Parse data columns.
 	InputColumnReader columnParser(columnMapping, *frameData, numAtoms);
 	for(int i = 0; i < numAtoms; i++) {
-		if(!setProgressValueIntermittent(i)) return;
+		if(!setProgressValueIntermittent(i)) return {};
 		try {
 			columnParser.readParticle(i, stream.readLine());
 		}
@@ -176,7 +176,7 @@ void IMDImporter::FrameLoader::loadFile(QFile& file)
 	}
 
 	frameData->setStatus(tr("Number of particles: %1").arg(numAtoms));
-	setResult(std::move(frameData));
+	return frameData;
 }
 
 OVITO_END_INLINE_NAMESPACE

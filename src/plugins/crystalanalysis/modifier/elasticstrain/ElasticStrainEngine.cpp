@@ -29,12 +29,12 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-ElasticStrainEngine::ElasticStrainEngine(const TimeInterval& validityInterval,
+ElasticStrainEngine::ElasticStrainEngine(
 		ConstPropertyPtr positions, const SimulationCell& simCell,
 		int inputCrystalStructure, std::vector<Matrix3> preferredCrystalOrientations,
 		bool calculateDeformationGradients, bool calculateStrainTensors,
 		FloatType latticeConstant, FloatType caRatio, bool pushStrainTensorsForward) :
-	StructureIdentificationModifier::StructureIdentificationEngine(validityInterval, positions, simCell, {}),
+	StructureIdentificationModifier::StructureIdentificationEngine(positions, simCell, {}),
 	_results(std::make_shared<ElasticStrainResults>(positions->size(), calculateStrainTensors, calculateDeformationGradients)),
 	_structureAnalysis(positions, simCell, (StructureAnalysis::LatticeStructureType)inputCrystalStructure, selection(), _results->structures(), std::move(preferredCrystalOrientations)),
 	_inputCrystalStructure(inputCrystalStructure),

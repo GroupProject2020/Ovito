@@ -61,12 +61,6 @@ ComputePropertyModifier::ComputePropertyModifier(DataSet* dataset) : Asynchronou
 	_cutoff(3), 
 	_neighborModeEnabled(false)
 {
-
-
-
-
-
-
 }
 
 /******************************************************************************
@@ -237,19 +231,37 @@ Future<AsynchronousModifier::ComputeEnginePtr> ComputePropertyModifier::createEn
 }
 
 /******************************************************************************
-* This is called by the constructor to prepare the compute engine.
+* Constructor.
 ******************************************************************************/
-void ComputePropertyModifier::PropertyComputeEngine::initializeEngine(TimePoint time)
+ComputePropertyModifier::PropertyComputeEngine::PropertyComputeEngine(
+		const TimeInterval& validityInterval, 
+		TimePoint time,
+		PropertyPtr outputProperty, 
+		ConstPropertyPtr positions, 
+		ConstPropertyPtr selectionProperty,
+		const SimulationCell& simCell, 
+		FloatType cutoff,
+		QStringList expressions, 
+		QStringList neighborExpressions,
+		std::vector<ConstPropertyPtr> inputProperties,
+		int frameNumber, 
+		QVariantMap attributes) :
+	_positions(std::move(positions)), 
+	_simCell(simCell),
+	_selection(std::move(selectionProperty)),
+	_expressions(std::move(expressions)), 
+	_neighborExpressions(std::move(neighborExpressions)),
+	_cutoff(cutoff),
+	_frameNumber(frameNumber), 
+	_attributes(std::move(attributes)),
+	_inputProperties(std::move(inputProperties)),
+	_results(std::make_shared<PropertyComputeResults>(validityInterval, std::move(outputProperty))) 
 {
-	OVITO_ASSERT(_expressions.size() == outputProperty()->componentCount());
-
-	// Make a copy of the list of input properties.
-	std::vector<ConstPropertyPtr> inputProperties;
-	for(const auto& p : _inputProperties)
-		inputProperties.push_back(p);
-
+	OVITO_ASSERT(_expressions.size() == this->outputProperty()->componentCount());
+	setResult(_results);
+	
 	// Initialize expression evaluators.
-	_evaluator.initialize(_expressions, inputProperties, &cell(), _attributes, _frameNumber);
+	_evaluator.initialize(_expressions, _inputProperties, &cell(), _attributes, _frameNumber);
 	_inputVariableNames = _evaluator.inputVariableNames();
 	_inputVariableTable = _evaluator.inputVariableTable();
 
@@ -257,8 +269,8 @@ void ComputePropertyModifier::PropertyComputeEngine::initializeEngine(TimePoint 
 	if(neighborMode()) {
 		_evaluator.registerGlobalParameter("Cutoff", _cutoff);
 		_evaluator.registerGlobalParameter("NumNeighbors", 0);
-		OVITO_ASSERT(_neighborExpressions.size() == outputProperty()->componentCount());
-		_neighborEvaluator.initialize(_neighborExpressions, inputProperties, &cell(), _attributes, _frameNumber);
+		OVITO_ASSERT(_neighborExpressions.size() == this->outputProperty()->componentCount());
+		_neighborEvaluator.initialize(_neighborExpressions, _inputProperties, &cell(), _attributes, _frameNumber);
 		_neighborEvaluator.registerGlobalParameter("Cutoff", _cutoff);
 		_neighborEvaluator.registerGlobalParameter("NumNeighbors", 0);
 		_neighborEvaluator.registerGlobalParameter("Distance", 0);
@@ -280,9 +292,9 @@ void ComputePropertyModifier::PropertyComputeEngine::initializeEngine(TimePoint 
 			isTimeDependent = true;
 	}
 	if(isTimeDependent) {
-		TimeInterval iv = validityInterval();
+		TimeInterval iv = _results->validityInterval();
 		iv.intersect(time);
-		setValidityInterval(iv);
+		_results->setValidityInterval(iv);
 	}
 }
 

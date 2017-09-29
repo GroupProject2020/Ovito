@@ -92,7 +92,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ConstructSurfaceModifier::createE
 		throwException(tr("The construct surface mesh modifier does not support 2d simulation cells."));
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<ConstructSurfaceEngine>(input.stateValidity(), posProperty->storage(),
+	return std::make_shared<ConstructSurfaceEngine>(posProperty->storage(),
 			selProperty ? selProperty->storage() : nullptr,
 			simCell->data(), probeSphereRadius(), smoothingLevel());
 }

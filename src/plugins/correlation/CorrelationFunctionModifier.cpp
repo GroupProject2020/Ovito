@@ -186,8 +186,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CorrelationFunctionModifier::crea
 	SimulationCellObject* inputCell = pih.expectSimulationCell();
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<CorrelationAnalysisEngine>(input.stateValidity(),
-													   posProperty->storage(),
+	return std::make_shared<CorrelationAnalysisEngine>(posProperty->storage(),
 													   property1->storage(),
 													   std::max(0, sourceProperty1().vectorComponent()),
 													   property2->storage(),

@@ -81,7 +81,7 @@ private:
 	public:
 
 		/// Constructor.
-		ConstructSurfaceResults(FloatType totalVolume) : _mesh(std::make_shared<HalfEdgeMesh<>>()), _totalVolume(totalVolume) {}
+		ConstructSurfaceResults(FloatType totalVolume) : _totalVolume(totalVolume) {}
 
 		/// Injects the computed results into the data pipeline.
 		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
@@ -113,7 +113,7 @@ private:
 	private:
 
 		/// The surface mesh produced by the modifier.
-		SurfaceMeshPtr _mesh;
+		SurfaceMeshPtr _mesh = std::make_shared<HalfEdgeMesh<>>();
 
 		/// Indicates that the entire simulation cell is part of the solid region.
 		bool _isCompletelySolid = false;
@@ -134,8 +134,8 @@ private:
 	public:
 
 		/// Constructor.
-		ConstructSurfaceEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, ConstPropertyPtr selection, const SimulationCell& simCell, FloatType radius, int smoothingLevel) :
-			ComputeEngine(validityInterval), _positions(std::move(positions)), _selection(std::move(selection)), _simCell(simCell), _radius(radius), _smoothingLevel(smoothingLevel), 
+		ConstructSurfaceEngine(ConstPropertyPtr positions, ConstPropertyPtr selection, const SimulationCell& simCell, FloatType radius, int smoothingLevel) :
+			_positions(std::move(positions)), _selection(std::move(selection)), _simCell(simCell), _radius(radius), _smoothingLevel(smoothingLevel), 
 			_results(std::make_shared<ConstructSurfaceResults>(std::abs(simCell.matrix().determinant()))) {}
 
 		/// Computes the modifier's results and stores them in this object for later retrieval.

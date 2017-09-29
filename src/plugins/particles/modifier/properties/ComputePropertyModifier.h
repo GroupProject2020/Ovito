@@ -141,7 +141,8 @@ protected:
 	public:
 
 		/// Constructor.
-		PropertyComputeResults(PropertyPtr outputProperty) : _outputProperty(std::move(outputProperty)) {}
+		PropertyComputeResults(const TimeInterval& validityInterval, PropertyPtr outputProperty) : ComputeEngineResults(validityInterval),
+			_outputProperty(std::move(outputProperty)) {}
 
 		/// Injects the computed results into the data pipeline.
 		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
@@ -160,8 +161,7 @@ protected:
 	public:
 
 		/// Constructor.
-		PropertyComputeEngine(
-				const TimeInterval& validityInterval, 
+		PropertyComputeEngine(const TimeInterval& validityInterval, 
 				TimePoint time,
 				PropertyPtr outputProperty, 
 				ConstPropertyPtr positions, 
@@ -172,26 +172,8 @@ protected:
 				QStringList neighborExpressions,
 				std::vector<ConstPropertyPtr> inputProperties,
 				int frameNumber, 
-				QVariantMap attributes) :
-			ComputeEngine(validityInterval),
-			_positions(std::move(positions)), 
-			_simCell(simCell),
-			_selection(std::move(selectionProperty)),
-			_expressions(std::move(expressions)), 
-			_neighborExpressions(std::move(neighborExpressions)),
-			_cutoff(cutoff),
-			_frameNumber(frameNumber), 
-			_attributes(std::move(attributes)),
-			_inputProperties(std::move(inputProperties)),
-			_results(std::make_shared<PropertyComputeResults>(std::move(outputProperty))) 
-		{
-			setResult(_results);
-			initializeEngine(time);
-		}
-
-		/// This is called by the constructor to prepare the compute engine.
-		void initializeEngine(TimePoint time);
-
+				QVariantMap attributes);
+				
 		/// Computes the modifier's results.
 		virtual void perform() override;
 

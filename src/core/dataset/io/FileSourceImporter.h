@@ -122,7 +122,7 @@ public:
 	protected:
 
 		/// Loads the frame data from the given file.
-		virtual void loadFile(QFile& file) = 0;
+		virtual FrameDataPtr loadFile(QFile& file) = 0;
 
 	private:
 

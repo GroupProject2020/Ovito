@@ -122,7 +122,7 @@ bool ParcasFileImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const 
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-void ParcasFileImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr ParcasFileImporter::FrameLoader::loadFile(QFile& file)
 {
 	setProgressText(tr("Reading Parcas file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
 
@@ -190,7 +190,7 @@ void ParcasFileImporter::FrameLoader::loadFile(QFile& file)
     	throw Exception(tr("PARCAS file parsing error: File contains %1 atoms. OVITO can handle only %2 atoms.").arg(natoms).arg(std::numeric_limits<int>::max()));
 
 	// Create the destination container for loaded data.
-	std::shared_ptr<ParticleFrameData> frameData = std::make_shared<ParticleFrameData>();
+	auto frameData = std::make_shared<ParticleFrameData>();
 
 	frameData->attributes().insert(QStringLiteral("Timestep"), QVariant::fromValue((int)frame_num));
 	frameData->attributes().insert(QStringLiteral("Time"), QVariant::fromValue(simu_time));
@@ -237,8 +237,8 @@ void ParcasFileImporter::FrameLoader::loadFile(QFile& file)
 	PropertyPtr posProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::PositionProperty, true);
 	frameData->addParticleProperty(posProperty);
 	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::TypeProperty, true);
-	ParticleFrameData::ParticleTypeList* typeList = new ParticleFrameData::ParticleTypeList();
-	frameData->addParticleProperty(typeProperty, typeList);
+	frameData->addParticleProperty(typeProperty);
+	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
 	PropertyPtr identifierProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::IdentifierProperty, true);
 	frameData->addParticleProperty(identifierProperty);
 
@@ -247,7 +247,7 @@ void ParcasFileImporter::FrameLoader::loadFile(QFile& file)
     for(int i = mintype; i <= maxtype; i++) {
     	stream.read(types[i - mintype].data(), 4);
     	types[i - mintype][4] = '\0';
-		typeList->addParticleTypeId(i, QString::fromLatin1(types[i - mintype].data()).trimmed());
+		typeList->addTypeId(i, QString::fromLatin1(types[i - mintype].data()).trimmed());
     }
 
 	// The actual header is now parsed. Check the offsets.
@@ -296,11 +296,11 @@ void ParcasFileImporter::FrameLoader::loadFile(QFile& file)
 		}
 
 		// Update progress indicator.
-		if(!setProgressValueIntermittent(i)) return;
+		if(!setProgressValueIntermittent(i)) return {};
 	}
 
 	frameData->setStatus(tr("%1 atoms at simulation time %2").arg(numAtoms).arg(simu_time));
-	setResult(std::move(frameData));
+	return frameData;
 }
 
 OVITO_END_INLINE_NAMESPACE

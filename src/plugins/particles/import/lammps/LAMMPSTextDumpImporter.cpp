@@ -154,7 +154,7 @@ void LAMMPSTextDumpImporter::FrameFinder::discoverFramesInFile(QFile& file, cons
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-void LAMMPSTextDumpImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr LAMMPSTextDumpImporter::FrameLoader::loadFile(QFile& file)
 {
 	// Open file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());
@@ -165,7 +165,7 @@ void LAMMPSTextDumpImporter::FrameLoader::loadFile(QFile& file)
 		stream.seek(frame().byteOffset);
 
 	// Create the destination container for loaded data.
-	std::shared_ptr<LAMMPSFrameData> frameData = std::make_shared<LAMMPSFrameData>();
+	auto frameData = std::make_shared<LAMMPSFrameData>();
 
 	// Regular expression for whitespace characters.
 	QRegularExpression ws_re(QStringLiteral("\\s+"));
@@ -258,7 +258,7 @@ void LAMMPSTextDumpImporter::FrameLoader::loadFile(QFile& file)
 					frameData->detectedColumnMapping() = generateAutomaticColumnMapping(fileColumnNames);
 				}
 				setResult(std::move(frameData));
-				return;
+				return {};
 			}
 
 			// Set up column-to-property mapping.
@@ -278,7 +278,7 @@ void LAMMPSTextDumpImporter::FrameLoader::loadFile(QFile& file)
 			int lineNumber = stream.lineNumber() + 1;
 			try {
 				for(size_t i = 0; i < numParticles; i++, lineNumber++) {
-					if(!setProgressValueIntermittent(i)) return;
+					if(!setProgressValueIntermittent(i)) return {};
 					if(!s)
 						columnParser.readParticle(i, stream.readLine());
 					else
@@ -309,8 +309,7 @@ void LAMMPSTextDumpImporter::FrameLoader::loadFile(QFile& file)
 			else {
 				// Check if all atom coordinates are within the [0,1] interval.
 				// If yes, we assume reduced coordinate format.
-				PropertyStorage* posProperty = frameData->particleProperty(ParticleProperty::PositionProperty);
-				if(posProperty) {
+				if(PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticleProperty::PositionProperty)) {
 					Box3 boundingBox;
 					boundingBox.addPoints(posProperty->constDataPoint3(), posProperty->size());
 					if(Box3(Point3(FloatType(-0.02)), Point3(FloatType(1.02))).containsBox(boundingBox))
@@ -320,8 +319,7 @@ void LAMMPSTextDumpImporter::FrameLoader::loadFile(QFile& file)
 
 			if(reducedCoordinates) {
 				// Convert all atom coordinates from reduced to absolute (Cartesian) format.
-				PropertyStorage* posProperty = frameData->particleProperty(ParticleProperty::PositionProperty);
-				if(posProperty) {
+				if(PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticleProperty::PositionProperty)) {
 					const AffineTransformation simCell = frameData->simulationCell().matrix();
 					Point3* p = posProperty->dataPoint3();
 					Point3* p_end = p + posProperty->size();
@@ -334,8 +332,7 @@ void LAMMPSTextDumpImporter::FrameLoader::loadFile(QFile& file)
 			frameData->simulationCell().set2D(!columnMapping.hasZCoordinates());
 
 			frameData->setStatus(tr("%1 particles at timestep %2").arg(numParticles).arg(timestep));
-			setResult(std::move(frameData));
-			return;	// Done!
+			return frameData; // Done!
 		}
 		else {
 			throw Exception(tr("LAMMPS dump file parsing error. Line %1 of file %2 is invalid.").arg(stream.lineNumber()).arg(stream.filename()));

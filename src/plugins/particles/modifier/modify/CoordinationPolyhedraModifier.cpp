@@ -83,7 +83,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CoordinationPolyhedraModifier::cr
 	SimulationCellObject* simCell = ph.expectSimulationCell();
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<ComputePolyhedraEngine>(input.stateValidity(), posProperty->storage(),
+	return std::make_shared<ComputePolyhedraEngine>(posProperty->storage(),
 			selectionProperty ? selectionProperty->storage() : nullptr,
 			typeProperty ? typeProperty->storage() : nullptr, 
 			bondsObj ? bondsObj->storage() : nullptr, simCell->data());

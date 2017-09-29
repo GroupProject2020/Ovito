@@ -37,9 +37,6 @@ public:
 	/// Destructor.
 	virtual ~AsynchronousTaskBase();
 
-	/// This function must be implemented by subclasses to perform the actual task.
-	virtual void perform() = 0;
-
 	/// Runs the given function once this task has reached the 'finished' state.
 	/// The function is run even if the task was canceled or produced an error state.
 	template<typename FC, class Executor>
@@ -52,6 +49,9 @@ public:
 		}));
 	}
 
+	/// This virtual function is responsible for computing the results of the task.
+	virtual void perform() = 0;		
+
 protected:
 
 	/// Constructor.
@@ -60,7 +60,7 @@ protected:
 	}
 
 private:
-
+	
 	/// Implementation of QRunnable.
 	virtual void run() override;
 };
@@ -90,7 +90,7 @@ protected:
 	/// Constructor.
 	AsynchronousTask() : 
 		PromiseStateWithResultStorage<AsynchronousTaskBase, std::tuple<R...>>(PromiseState::no_result_init_t()) {}
-
+	
 #ifdef OVITO_DEBUG
 	bool _futureCreated = false;
 #endif

@@ -74,7 +74,7 @@ void GSDImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sou
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-void GSDImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 {
 	setProgressText(tr("Reading GSD file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
 
@@ -87,7 +87,7 @@ void GSDImporter::FrameLoader::loadFile(QFile& file)
 		throw Exception(tr("Failed to open GSD file for reading. File schema must be 'hoomd', but found '%1'.").arg(gsd.schemaName()));
 
 	// Create the destination container for loaded data.
-	std::shared_ptr<ParticleFrameData> frameData = std::make_shared<ParticleFrameData>();
+	auto frameData = std::make_shared<ParticleFrameData>();
 
 	// Parse number of frames in file.
 	uint64_t nFrames = gsd.numerOfFrames();
@@ -132,10 +132,10 @@ void GSDImporter::FrameLoader::loadFile(QFile& file)
 
 	// Create particle types.
 	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(numParticles, ParticleProperty::TypeProperty, false);
-	ParticleFrameData::ParticleTypeList* typeList = new ParticleFrameData::ParticleTypeList();
-	frameData->addParticleProperty(typeProperty, typeList);
+	frameData->addParticleProperty(typeProperty);
+	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
 	for(int i = 0; i < particleTypeNames.size(); i++)
-		typeList->addParticleTypeId(i, particleTypeNames[i]);
+		typeList->addTypeId(i, particleTypeNames[i]);
 
 	// Read particle types.
 	if(gsd.hasChunk("particles/typeid", frameNumber))
@@ -196,10 +196,10 @@ void GSDImporter::FrameLoader::loadFile(QFile& file)
 
 			// Create bond types.
 			PropertyPtr bondTypeProperty = BondProperty::createStandardStorage(numBonds, BondProperty::TypeProperty, false);
-			ParticleFrameData::BondTypeList* bondTypeList = new ParticleFrameData::BondTypeList();
-			frameData->addBondProperty(bondTypeProperty, bondTypeList);
+			frameData->addBondProperty(bondTypeProperty);
+			ParticleFrameData::TypeList* bondTypeList = frameData->propertyTypesList(bondTypeProperty);
 			for(int i = 0; i < bondTypeNames.size(); i++)
-				bondTypeList->addBondTypeId(i, bondTypeNames[i]);
+				bondTypeList->addTypeId(i, bondTypeNames[i]);
 
 			// Read bond types.
 			if(gsd.hasChunk("bonds/typeid", frameNumber)) {
@@ -215,7 +215,7 @@ void GSDImporter::FrameLoader::loadFile(QFile& file)
 	if(numBonds != 0)
 		statusString += tr("\nNumber of bonds: %1").arg(numBonds);
 	frameData->setStatus(statusString);
-	setResult(std::move(frameData));
+	return frameData;
 }
 
 /******************************************************************************

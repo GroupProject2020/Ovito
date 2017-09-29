@@ -86,10 +86,10 @@ Future<AsynchronousModifier::ComputeEnginePtr> WignerSeitzAnalysisModifier::crea
 
 	// Create the results storage, which holds a copy of the reference state.
 	// We are going to need the reference state in the apply() method.
-	auto resultStorage = std::make_shared<WignerSeitzAnalysisResults>(referenceState);
+	auto resultStorage = std::make_shared<WignerSeitzAnalysisResults>(validityInterval, referenceState);
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	auto engine = std::make_shared<WignerSeitzAnalysisEngine>(validityInterval, resultStorage, posProperty->storage(), inputCell->data(),
+	auto engine = std::make_shared<WignerSeitzAnalysisEngine>(resultStorage, posProperty->storage(), inputCell->data(),
 			refPosProperty->storage(), refCell->data(), affineMapping(), std::move(typeProperty), ptypeMinId, ptypeMaxId);
 
 	// Make sure the results storage, and with it the reference state, stay alive until we are back in the main thread.

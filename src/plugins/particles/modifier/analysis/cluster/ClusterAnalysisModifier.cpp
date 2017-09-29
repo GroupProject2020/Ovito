@@ -78,11 +78,11 @@ Future<AsynchronousModifier::ComputeEnginePtr> ClusterAnalysisModifier::createEn
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	if(neighborMode() == CutoffRange) {
-		return std::make_shared<CutoffClusterAnalysisEngine>(input.stateValidity(), posProperty->storage(), inputCell->data(), sortBySize(), std::move(selectionProperty), cutoff());
+		return std::make_shared<CutoffClusterAnalysisEngine>(posProperty->storage(), inputCell->data(), sortBySize(), std::move(selectionProperty), cutoff());
 	}
 	else if(neighborMode() == Bonding) {
 		BondsObject* bonds = pih.expectBonds();
-		return std::make_shared<BondClusterAnalysisEngine>(input.stateValidity(), posProperty->storage(), inputCell->data(), sortBySize(), std::move(selectionProperty), bonds->storage());
+		return std::make_shared<BondClusterAnalysisEngine>(posProperty->storage(), inputCell->data(), sortBySize(), std::move(selectionProperty), bonds->storage());
 	}
 	else {
 		throwException(tr("Invalid cluster neighbor mode"));

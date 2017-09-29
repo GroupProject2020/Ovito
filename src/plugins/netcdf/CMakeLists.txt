@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2014) Alexander Stukowski
+#  Copyright (2017) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -19,16 +19,17 @@
 #
 ###############################################################################
 
+# Locate the HDF5 library.
 IF(WIN32 OR (UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE))
-	# Locate the HDF5 library.
 	FIND_PACKAGE(HDF5 COMPONENTS hdf5 REQUIRED NO_MODULE)
 ENDIF()
+
 # Locate the NetCDF library.
 FIND_PACKAGE(NetCDF REQUIRED)
 
 SET(SourceFiles
-	NetCDFImporter.cpp
-	#NetCDFExporter.cpp
+	AMBERNetCDFImporter.cpp
+	AMBERNetCDFExporter.cpp
 )
 
 IF(OVITO_BUILD_PLUGIN_PYSCRIPT)

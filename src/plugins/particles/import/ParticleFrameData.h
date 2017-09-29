@@ -40,7 +40,8 @@ class OVITO_PARTICLES_EXPORT ParticleFrameData : public FileSourceImporter::Fram
 {
 public:
 
-	struct ParticleTypeDefinition {
+	/// Used to describe particle and bond types.
+	struct TypeDefinition {
 		int id;
 		QString name;
 		std::string name8bit;
@@ -48,30 +49,32 @@ public:
 		FloatType radius;
 	};
 
-	class OVITO_PARTICLES_EXPORT ParticleTypeList {
+	/// Used to store the lists of particle/bond types.
+	class OVITO_PARTICLES_EXPORT TypeList 
+	{
 	public:
 
-		/// Defines a new particle type with the given id.
-		void addParticleTypeId(int id) {
-			for(const auto& type : _particleTypes) {
+		/// Defines a new particle/bond type with the given id.
+		void addTypeId(int id) {
+			for(const auto& type : _types) {
 				if(type.id == id)
 					return;
 			}
-			_particleTypes.push_back({ id, QString(), std::string(), Color(0,0,0), 0 });
+			_types.push_back({ id, QString(), std::string(), Color(0,0,0), 0 });
 		}
 
-		/// Defines a new particle type with the given id.
-		void addParticleTypeId(int id, const QString& name, const Color& color = Color(0,0,0), FloatType radius = 0) {
-			for(const auto& type : _particleTypes) {
+		/// Defines a new type with the given id.
+		void addTypeId(int id, const QString& name, const Color& color = Color(0,0,0), FloatType radius = 0) {
+			for(const auto& type : _types) {
 				if(type.id == id)
 					return;
 			}
-			_particleTypes.push_back({ id, name, name.toStdString(), color, radius });
+			_types.push_back({ id, name, name.toStdString(), color, radius });
 		}
 
-		/// Changes the name of an existing particle type.
-		void setParticleTypeName(int id, const QString& name) {
-			for(auto& type : _particleTypes) {
+		/// Changes the name of an existing type.
+		void setTypeName(int id, const QString& name) {
+			for(auto& type : _types) {
 				if(type.id == id) {
 					type.name = name;
 					type.name8bit = name.toStdString();
@@ -80,140 +83,56 @@ public:
 			}
 		}
 
-		/// Defines a new particle type with the given name.
-		inline int addParticleTypeName(const char* name, const char* name_end = nullptr) {
+		/// Defines a new type with the given name.
+		inline int addTypeName(const char* name, const char* name_end = nullptr) {
 			size_t nameLen = (name_end ? (name_end - name) : qstrlen(name));
-			for(const auto& type : _particleTypes) {
+			for(const auto& type : _types) {
 				if(type.name8bit.compare(0, type.name8bit.size(), name, nameLen) == 0)
 					return type.id;
 			}
-			int id = _particleTypes.size() + 1;
-			_particleTypes.push_back({ id, QString::fromLocal8Bit(name, nameLen), std::string(name, nameLen), Color(0,0,0), 0.0f });
+			int id = _types.size() + 1;
+			_types.push_back({ id, QString::fromLocal8Bit(name, nameLen), std::string(name, nameLen), Color(0,0,0), 0.0f });
 			return id;
 		}
 
-		/// Defines a new particle type with the given name.
-		inline int addParticleTypeName(const QString& name) {
-			for(const auto& type : _particleTypes) {
+		/// Defines a new type with the given name.
+		inline int addTypeName(const QString& name) {
+			for(const auto& type : _types) {
 				if(type.name == name)
 					return type.id;
 			}
-			int id = _particleTypes.size() + 1;
-			_particleTypes.push_back({ id, name, name.toStdString(), Color(0,0,0), 0.0f });
+			int id = _types.size() + 1;
+			_types.push_back({ id, name, name.toStdString(), Color(0,0,0), 0.0f });
 			return id;
 		}
 		
-		/// Defines a new particle type with the given name, color, and radius.
-		int addParticleTypeName(const char* name, const char* name_end, const Color& color, FloatType radius = 0) {
+		/// Defines a new type with the given name, color, and radius.
+		int addTypeName(const char* name, const char* name_end, const Color& color, FloatType radius = 0) {
 			size_t nameLen = (name_end ? (name_end - name) : qstrlen(name));
-			for(const auto& type : _particleTypes) {
+			for(const auto& type : _types) {
 				if(type.name8bit.compare(0, type.name8bit.size(), name, nameLen) == 0)
 					return type.id;
 			}
-			int id = _particleTypes.size() + 1;
-			_particleTypes.push_back({ id, QString::fromLocal8Bit(name, nameLen), std::string(name, nameLen), color, radius });
+			int id = _types.size() + 1;
+			_types.push_back({ id, QString::fromLocal8Bit(name, nameLen), std::string(name, nameLen), color, radius });
 			return id;
 		}
 
-		/// Returns the list of particle types.
-		const std::vector<ParticleTypeDefinition>& particleTypes() const { return _particleTypes; }
+		/// Returns the list of particle or bond types.
+		const std::vector<TypeDefinition>& types() const { return _types; }
 
-		/// Sorts the particle types w.r.t. their name. Reassigns the per-particle type IDs.
-		/// This method is used by file parsers that create particle types on the go while the read the particle data.
-		/// In such a case, the assignment of IDs to types depends on the storage order of particles in the file, which is not desirable.
-		void sortParticleTypesByName(PropertyStorage* typeProperty);
+		/// Sorts the types w.r.t. their name. Reassigns the per-element type IDs.
+		/// This method is used by file parsers that create particle/bond types on the go while the read the data.
+		/// In such a case, the assignment of IDs to types depends on the storage order of particles/bonds in the file, which is not desirable.
+		void sortTypesByName(const PropertyPtr& typeProperty);
 
-		/// Sorts particle types with ascending identifier.
-		void sortParticleTypesById();
+		/// Sorts types according to numeric identifier.
+		void sortTypesById();
 
 	private:
 
-		/// The list of defined particle types.
-		std::vector<ParticleTypeDefinition> _particleTypes;
-	};
-
-	struct BondTypeDefinition {
-		int id;
-		QString name;
-		std::string name8bit;
-		Color color;
-		FloatType radius;
-	};
-
-	class OVITO_PARTICLES_EXPORT BondTypeList {
-	public:
-
-		/// Defines a new bond type with the given id.
-		void addBondTypeId(int id) {
-			for(const auto& type : _bondTypes) {
-				if(type.id == id)
-					return;
-			}
-			_bondTypes.push_back({ id, QString(), std::string(), Color(0,0,0), 0 });
-		}
-
-		/// Defines a new bond type with the given id.
-		void addBondTypeId(int id, const QString& name, const Color& color = Color(0,0,0), FloatType radius = 0) {
-			for(const auto& type : _bondTypes) {
-				if(type.id == id)
-					return;
-			}
-			_bondTypes.push_back({ id, name, name.toStdString(), color, radius });
-		}
-
-		/// Changes the name of an existing bond type.
-		void setBondTypeName(int id, const QString& name) {
-			for(auto& type : _bondTypes) {
-				if(type.id == id) {
-					type.name = name;
-					type.name8bit = name.toStdString();
-					break;
-				}
-			}
-		}
-
-		/// Defines a new bond type with the given name.
-		inline int addBondTypeName(const char* name, const char* name_end = nullptr) {
-			size_t nameLen = (name_end ? (name_end - name) : qstrlen(name));
-			for(const auto& type : _bondTypes) {
-				if(type.name8bit.compare(0, type.name8bit.size(), name, nameLen) == 0)
-					return type.id;
-			}
-			int id = _bondTypes.size() + 1;
-			_bondTypes.push_back({ id, QString::fromLocal8Bit(name, nameLen), std::string(name, nameLen), Color(0,0,0), 0.0f });
-			return id;
-		}
-
-		/// Defines a new bond type with the given name.
-		inline int addBondTypeName(const QString& name) {
-			for(const auto& type : _bondTypes) {
-				if(type.name == name)
-					return type.id;
-			}
-			int id = _bondTypes.size() + 1;
-			_bondTypes.push_back({ id, name, name.toStdString(), Color(0,0,0), 0.0f });
-			return id;
-		}
-		
-		/// Defines a new bond type with the given name, color, and radius.
-		int addBondTypeName(const char* name, const char* name_end, const Color& color, FloatType radius = 0) {
-			size_t nameLen = (name_end ? (name_end - name) : qstrlen(name));
-			for(const auto& type : _bondTypes) {
-				if(type.name8bit.compare(0, type.name8bit.size(), name, nameLen) == 0)
-					return type.id;
-			}
-			int id = _bondTypes.size() + 1;
-			_bondTypes.push_back({ id, QString::fromLocal8Bit(name, nameLen), std::string(name, nameLen), color, radius });
-			return id;
-		}
-
-		/// Returns the list of bond types.
-		const std::vector<BondTypeDefinition>& bondTypes() const { return _bondTypes; }
-
-	private:
-
-		/// The list of bond types.
-		std::vector<BondTypeDefinition> _bondTypes;
+		/// The list of defined types.
+		std::vector<TypeDefinition> _types;
 	};
 
 public:
@@ -237,63 +156,79 @@ public:
 	/// Returns the list of particle properties.
 	const std::vector<PropertyPtr>& particleProperties() const { return _particleProperties; }
 
-	/// Returns a standard particle property if defined.
-	PropertyStorage* particleProperty(ParticleProperty::Type which) const {
+	/// Returns a standard particle property if already defined.
+	PropertyPtr findStandardParticleProperty(ParticleProperty::Type which) const {
+		OVITO_ASSERT(which != ParticleProperty::UserProperty);
 		for(const auto& prop : _particleProperties)
 			if(prop->type() == which)
-				return prop.get();
-		return nullptr;
+				return prop;
+		return {};
 	}
 
+	/// Finds a particle property by name.
+	PropertyPtr findParticleProperty(const QString& name) const {
+		for(const auto& prop : _particleProperties)
+			if(prop->name() == name)
+				return prop;
+		return {};
+	}
+	
 	/// Adds a new particle property.
-	void addParticleProperty(PropertyPtr property, ParticleTypeList* typeList = nullptr) {
-		if(typeList) _particleTypeLists[property.get()] = std::unique_ptr<ParticleTypeList>(typeList);
+	void addParticleProperty(PropertyPtr property) {
 		_particleProperties.push_back(std::move(property));
 	}
 
 	/// Removes a particle property from the list.
 	void removeParticleProperty(int index) {
 		OVITO_ASSERT(index >= 0 && index < _particleProperties.size());
-		_particleTypeLists.erase(_particleProperties[index].get());
+		_typeLists.erase(_particleProperties[index].get());
 		_particleProperties.erase(_particleProperties.begin() + index);
 	}
 
-	/// Returns the list of types defined for a particle type property.
-	ParticleTypeList* getTypeListOfParticleProperty(const PropertyStorage* property) const {
-		auto typeList = _particleTypeLists.find(property);
-		if(typeList != _particleTypeLists.end()) return typeList->second.get();
-		return nullptr;
+	/// Removes a particle property from the list.
+	void removeParticleProperty(const PropertyPtr& property) {
+		auto iter = std::find(_particleProperties.begin(), _particleProperties.end(), property);
+		OVITO_ASSERT(iter != _particleProperties.end());
+		_typeLists.erase(property.get());
+		_particleProperties.erase(iter);
+	}
+	
+	/// Returns the list of types defined for a particle or bond property.
+	TypeList* propertyTypesList(const PropertyPtr& property) {
+		auto typeList = _typeLists.find(property.get());
+		if(typeList == _typeLists.end()) {
+			typeList = _typeLists.emplace(property.get(), std::make_unique<TypeList>()).first;
+		}
+		return typeList->second.get();
 	}
 
+	/// Sets the list of types defined for a particle or bond property.
+	void setPropertyTypesList(const PropertyPtr& property, std::unique_ptr<TypeList> list) {
+		_typeLists.emplace(property.get(), std::move(list));
+	}
+	
 	/// Returns the list of bond properties.
 	const std::vector<PropertyPtr>& bondProperties() const { return _bondProperties; }
 
-	/// Returns a standard bond property if defined.
-	PropertyStorage* bondProperty(BondProperty::Type which) const {
+	/// Returns a standard bond property if already defined.
+	PropertyPtr findStandardBondProperty(BondProperty::Type which) const {
+		OVITO_ASSERT(which != BondProperty::UserProperty);
 		for(const auto& prop : _bondProperties)
 			if(prop->type() == which)
-				return prop.get();
-		return nullptr;
+				return prop;
+		return {};
 	}
 
 	/// Adds a new bond property.
-	void addBondProperty(PropertyPtr property, BondTypeList* typeList = nullptr) {
-		if(typeList) _bondTypeLists[property.get()] = std::unique_ptr<BondTypeList>(typeList);
+	void addBondProperty(PropertyPtr property) {
 		_bondProperties.push_back(std::move(property));
 	}
 
 	/// Removes a bond property from the list.
 	void removeBondProperty(int index) {
 		OVITO_ASSERT(index >= 0 && index < _bondProperties.size());
-		_bondTypeLists.erase(_bondProperties[index].get());
+		_typeLists.erase(_bondProperties[index].get());
 		_bondProperties.erase(_bondProperties.begin() + index);
-	}
-
-	/// Returns the list of types defined for a bond type property.
-	BondTypeList* getTypeListOfBondProperty(const PropertyStorage* property) const {
-		auto typeList = _bondTypeLists.find(property);
-		if(typeList != _bondTypeLists.end()) return typeList->second.get();
-		return nullptr;
 	}
 
 	/// Returns the shape of the voxel grid.
@@ -327,11 +262,8 @@ public:
 
 private:
 
-	/// Inserts the stored particle types into the given destination object.
-	void insertParticleTypes(ParticleProperty* propertyObj, ParticleTypeList* typeList, bool isNewFile);
-
-	/// Inserts the stored bond types into the given destination object.
-	void insertBondTypes(BondProperty* propertyObj, BondTypeList* typeList);
+	/// Inserts the stored particle or bond types into the given property object.
+	void insertTypes(PropertyObject* propertyObj, TypeList* typeList, bool isNewFile, bool isBondProperty);
 
 private:
 
@@ -341,17 +273,11 @@ private:
 	/// Particle properties.
 	std::vector<PropertyPtr> _particleProperties;
 
-	/// Stores the lists of particle types for type properties.
-	std::map<const PropertyStorage*, std::unique_ptr<ParticleTypeList>> _particleTypeLists;
-
 	/// The list of bonds between particles (if present).
 	BondsPtr _bonds;
 
 	/// Bond properties.
 	std::vector<PropertyPtr> _bondProperties;
-
-	/// Stores the lists of bond types for type properties.
-	std::map<const PropertyStorage*, std::unique_ptr<BondTypeList>> _bondTypeLists;
 
 	/// Voxel grid properties.
 	std::vector<PropertyPtr> _voxelProperties;
@@ -359,6 +285,9 @@ private:
 	/// The shape of the voxel grid.
 	std::vector<size_t> _voxelGridShape;
 
+	/// Stores the lists of types for typed properties (both particle and bond properties).
+	std::map<const PropertyStorage*, std::unique_ptr<TypeList>> _typeLists;
+	
 	/// The metadata read from the file header.
 	QVariantMap _attributes;
 };

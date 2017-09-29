@@ -129,8 +129,7 @@ class DislocationAnalysisEngine : public StructureIdentificationModifier::Struct
 public:
 
 	/// Constructor.
-	DislocationAnalysisEngine(const TimeInterval& validityInterval,
-			ConstPropertyPtr positions, const SimulationCell& simCell,
+	DislocationAnalysisEngine(ConstPropertyPtr positions, const SimulationCell& simCell,
 			int inputCrystalStructure, int maxTrialCircuitSize, int maxCircuitElongation,
 			ConstPropertyPtr particleSelection,
 			ConstPropertyPtr crystalClusters,

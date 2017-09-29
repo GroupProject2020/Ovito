@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -30,7 +30,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVI
 /**
  * \brief Exporter that writes the particles to an extended AMBER NetCDF file.
  */
-class OVITO_NETCDF_EXPORT NetCDFExporter : public FileColumnParticleExporter
+class OVITO_NETCDFPLUGIN_EXPORT AMBERNetCDFExporter : public FileColumnParticleExporter
 {
 	/// Defines a metaclass specialization for this exporter type.
 	class OOMetaClass : public FileColumnParticleExporter::OOMetaClass
@@ -51,16 +51,16 @@ class OVITO_NETCDF_EXPORT NetCDFExporter : public FileColumnParticleExporter
 		}
 	
 		/// Returns the filter description that is displayed in the drop-down box of the file dialog.
-		virtual QString fileFilterDescription() const override { return tr("NetCDF File"); }
+		virtual QString fileFilterDescription() const override { return tr("NetCDF/AMBER File"); }
 	};
 
 	Q_OBJECT
-	OVITO_CLASS_META(NetCDFExporter, OOMetaClass)
+	OVITO_CLASS_META(AMBERNetCDFExporter, OOMetaClass)
 	
 public:
 
 	/// \brief Constructs a new instance of this class.
-	Q_INVOKABLE NetCDFExporter(DataSet* dataset) : FileColumnParticleExporter(dataset) {}
+	Q_INVOKABLE AMBERNetCDFExporter(DataSet* dataset) : FileColumnParticleExporter(dataset) {}
 
 protected:
 
@@ -106,13 +106,14 @@ private:
 	/// NetCDF file variables for global attributes.
 	QMap<QString, int> _attributes_vars;
 
+	/// Describes a data array to be written.
 	struct NCOutputColumn {
 		NCOutputColumn(const ParticlePropertyReference& p, int dt, size_t cc, int ncv) :
 			property(p), dataType(dt), componentCount(cc), ncvar(ncv) {}
 
 		ParticlePropertyReference property;
 		int dataType;
-		size_t componentCount;
+		size_t componentCount; // Number of values per particle.
 		int ncvar;
 	};
 

@@ -95,7 +95,7 @@ private:
 		/// Constructor.
 		VoroTopAnalysisEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, ConstPropertyPtr selection,
 							std::vector<FloatType> radii, const SimulationCell& simCell, const QString& filterFile, std::shared_ptr<Filter> filter, QVector<bool> typesToIdentify) :
-			StructureIdentificationEngine(validityInterval, std::move(positions), simCell, std::move(typesToIdentify), std::move(selection)),
+			StructureIdentificationEngine(std::move(positions), simCell, std::move(typesToIdentify), std::move(selection)),
 			_filterFile(filterFile),
 			_filter(std::move(filter)),
 			_radii(std::move(radii)) {}

@@ -49,7 +49,7 @@ bool VTKFileImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUr
 /******************************************************************************
 * Parses the given input file and stores the data in the given container object.
 ******************************************************************************/
-void VTKFileImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr VTKFileImporter::FrameLoader::loadFile(QFile& file)
 {
 	// Open file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());
@@ -91,7 +91,7 @@ void VTKFileImporter::FrameLoader::loadFile(QFile& file)
 		throw Exception(tr("Invalid number of points in VTK file (line %1): %2").arg(stream.lineNumber()).arg(stream.lineString()));
 
 	// Create output data.
-	std::shared_ptr<TriMeshFrameData> frameData = std::make_shared<TriMeshFrameData>();
+	auto frameData = std::make_shared<TriMeshFrameData>();
 
 	// Parse point coordinates.
 	frameData->mesh().setVertexCount(pointCount);
@@ -195,7 +195,7 @@ void VTKFileImporter::FrameLoader::loadFile(QFile& file)
 	}
 
 	frameData->setStatus(tr("%1 vertices, %2 triangles").arg(pointCount).arg(frameData->mesh().faceCount()));
-	setResult(std::move(frameData));
+	return frameData;
 }
 
 /******************************************************************************

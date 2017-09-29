@@ -163,7 +163,7 @@ void CFGHeader::parse(CompressedTextReader& stream)
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-void CFGImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr CFGImporter::FrameLoader::loadFile(QFile& file)
 {
 	// Open file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());
@@ -178,7 +178,7 @@ void CFGImporter::FrameLoader::loadFile(QFile& file)
 	header.parse(stream);
 
 	// Create the destination container for loaded data.
-	std::shared_ptr<ParticleFrameData> frameData = std::make_shared<ParticleFrameData>();
+	auto frameData = std::make_shared<ParticleFrameData>();
 
 	InputColumnMapping cfgMapping;
 	if(header.isExtendedFormat == false) {
@@ -216,11 +216,11 @@ void CFGImporter::FrameLoader::loadFile(QFile& file)
 	FloatType* massPointer = nullptr;
 	int* atomTypePointer = nullptr;
 	PropertyPtr typeProperty;
-	ParticleFrameData::ParticleTypeList* typeList = nullptr;
+	ParticleFrameData::TypeList* typeList = nullptr;
 	if(header.isExtendedFormat) {
 		typeProperty = ParticleProperty::createStandardStorage(header.numParticles, ParticleProperty::TypeProperty, false);
-		typeList = new ParticleFrameData::ParticleTypeList();
-		frameData->addParticleProperty(typeProperty, typeList);
+		frameData->addParticleProperty(typeProperty);
+		typeList = frameData->propertyTypesList(typeProperty);
 		atomTypePointer = typeProperty->dataInt();
 		PropertyPtr massProperty = ParticleProperty::createStandardStorage(header.numParticles, ParticleProperty::MassProperty, false);
 		frameData->addParticleProperty(massProperty);
@@ -232,7 +232,7 @@ void CFGImporter::FrameLoader::loadFile(QFile& file)
 	for(int particleIndex = 0; particleIndex < header.numParticles; ) {
 
 		// Update progress indicator.
-		if(!setProgressValueIntermittent(particleIndex)) return;
+		if(!setProgressValueIntermittent(particleIndex)) return {};
 
 		if(!isFirstLine)
 			stream.readLine();
@@ -260,7 +260,7 @@ void CFGImporter::FrameLoader::loadFile(QFile& file)
 				const char* line = stream.readLineTrimLeft();
 				const char* line_end = line;
 				while(*line_end != '\0' && *line_end > ' ') ++line_end;
-				currentAtomType = typeList->addParticleTypeName(line, line_end);
+				currentAtomType = typeList->addTypeName(line, line_end);
 
 				continue;
 			}
@@ -283,7 +283,7 @@ void CFGImporter::FrameLoader::loadFile(QFile& file)
 	// why we sort them now.
 	columnParser.sortParticleTypes();
 	if(header.isExtendedFormat)
-		typeList->sortParticleTypesByName(typeProperty.get());
+		typeList->sortTypesByName(typeProperty);
 
 	AffineTransformation H((header.transform * header.H0).transposed());
 	H.translation() = H * Vector3(-0.5f, -0.5f, -0.5f);
@@ -292,7 +292,7 @@ void CFGImporter::FrameLoader::loadFile(QFile& file)
 	// The CFG file stores particle positions in reduced coordinates.
 	// Rescale them now to absolute (Cartesian) coordinates.
 	// However, do this only if no absolute coordinates have been read from the extra data columns in the CFG file.
-	PropertyStorage* posProperty = frameData->particleProperty(ParticleProperty::PositionProperty);
+	PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticleProperty::PositionProperty);
 	if(posProperty && header.numParticles > 0) {
 		Point3* p = posProperty->dataPoint3();
 		Point3* pend = p + posProperty->size();
@@ -301,7 +301,7 @@ void CFGImporter::FrameLoader::loadFile(QFile& file)
 	}
 
 	frameData->setStatus(tr("Number of particles: %1").arg(header.numParticles));
-	setResult(std::move(frameData));
+	return frameData;
 }
 
 /******************************************************************************

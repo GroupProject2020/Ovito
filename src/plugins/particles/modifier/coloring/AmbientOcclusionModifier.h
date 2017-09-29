@@ -65,7 +65,7 @@ public:
 	public:
 
 		/// Constructor.
-		AmbientOcclusionResults(size_t particleCount) :
+		AmbientOcclusionResults(const TimeInterval& validityInterval, size_t particleCount) : ComputeEngineResults(validityInterval),
 			_brightness(std::make_shared<PropertyStorage>(particleCount, qMetaTypeId<FloatType>(), 1, 0, tr("Brightness"), true)) {}
 
 		/// Injects the computed results into the data pipeline.
@@ -75,6 +75,7 @@ public:
 		const PropertyPtr& brightness() const { return _brightness; }
 		
 	private:
+		
 		PropertyPtr _brightness;	
 	};
 
@@ -101,6 +102,7 @@ public:
 		const PropertyPtr _positions;
 		const Box3 _boundingBox;
 		const std::vector<FloatType> _particleRadii;
+		std::shared_ptr<AmbientOcclusionResults> _results;
 	};
 
 public:

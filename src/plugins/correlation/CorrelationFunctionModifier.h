@@ -167,8 +167,7 @@ private:
 	public:
 
 		/// Constructor.
-		CorrelationAnalysisEngine(const TimeInterval& validityInterval,
-								  ConstPropertyPtr positions,
+		CorrelationAnalysisEngine(ConstPropertyPtr positions,
 								  ConstPropertyPtr sourceProperty1,
 								  size_t vecComponent1,
 								  ConstPropertyPtr sourceProperty2,
@@ -180,7 +179,6 @@ private:
 								  FloatType neighCutoff,
 								  int numberOfNeighBins,
 								  AveragingDirectionType averagingDirection) :
-			ComputeEngine(validityInterval), 
 			_positions(std::move(positions)),
 			_sourceProperty1(std::move(sourceProperty1)), _vecComponent1(vecComponent1),
 			_sourceProperty2(std::move(sourceProperty2)), _vecComponent2(vecComponent2),

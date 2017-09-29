@@ -408,6 +408,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 								existingState.clear();
 								output.setStateValidity(interval);
 								output.setSourceFrame(frame);
+								output.setStatus(frameData->status());
 
 								// When loading the current frame, turn the data objects into sub-objects of this
 								// FileSource so that they appear in the pipeline viewer.

@@ -327,7 +327,7 @@ bool LAMMPSBinaryDumpHeader::parse(QIODevice& input)
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-void LAMMPSBinaryDumpImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr LAMMPSBinaryDumpImporter::FrameLoader::loadFile(QFile& file)
 {
 	setProgressText(tr("Reading binary LAMMPS dump file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
 
@@ -345,12 +345,13 @@ void LAMMPSBinaryDumpImporter::FrameLoader::loadFile(QFile& file)
 		throw Exception(tr("Failed to read binary LAMMPS dump file: Invalid file header."));
 
 	// Create the destination container for loaded data.
-	std::shared_ptr<LAMMPSFrameData> frameData = std::make_shared<LAMMPSFrameData>();
+	auto frameData = std::make_shared<LAMMPSFrameData>();
 
 	if(_parseFileHeaderOnly) {
+		// We are done at this point if we are only supposed to detect the 
+		// number of file columns.
 		frameData->detectedColumnMapping().resize(header.size_one);
-		setResult(std::move(frameData));
-		return;
+		return frameData;
 	}
 
 	frameData->attributes().insert(QStringLiteral("Timestep"), QVariant::fromValue(header.ntimestep));
@@ -407,7 +408,7 @@ void LAMMPSBinaryDumpImporter::FrameLoader::loadFile(QFile& file)
 			for(int nChunkAtoms = n / header.size_one; nChunkAtoms--; ++i, iter += header.size_one) {
 
 				// Update progress indicator.
-				if(!setProgressValueIntermittent(i)) return;
+				if(!setProgressValueIntermittent(i)) return {};
 
 				try {
 					columnParser.readParticle(i, iter, header.size_one);
@@ -425,7 +426,7 @@ void LAMMPSBinaryDumpImporter::FrameLoader::loadFile(QFile& file)
 	// Sort the particle type list since we created particles on the go and their order depends on the occurrence of types in the file.
 	columnParser.sortParticleTypes();
 
-	PropertyStorage* posProperty = frameData->particleProperty(ParticleProperty::PositionProperty);
+	PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticleProperty::PositionProperty);
 	if(posProperty && posProperty->size() > 0) {
 		Box3 boundingBox;
 		boundingBox.addPoints(posProperty->constDataPoint3(), posProperty->size());
@@ -443,7 +444,7 @@ void LAMMPSBinaryDumpImporter::FrameLoader::loadFile(QFile& file)
 	}
 
 	frameData->setStatus(tr("%1 particles at timestep %2").arg(header.natoms).arg(header.ntimestep));
-	setResult(std::move(frameData));
+	return frameData;
 }
 
 /******************************************************************************

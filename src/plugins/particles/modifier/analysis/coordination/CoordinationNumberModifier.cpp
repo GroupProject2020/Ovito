@@ -87,7 +87,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CoordinationNumberModifier::creat
 		throwException(tr("Number of histogram bins is too large."));
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<CoordinationAnalysisEngine>(input.stateValidity(), posProperty->storage(), inputCell->data(), cutoff(), rdfSampleCount);
+	return std::make_shared<CoordinationAnalysisEngine>(posProperty->storage(), inputCell->data(), cutoff(), rdfSampleCount);
 }
 
 /******************************************************************************

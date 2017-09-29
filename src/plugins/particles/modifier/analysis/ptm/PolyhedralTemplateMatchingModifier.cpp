@@ -108,7 +108,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> PolyhedralTemplateMatchingModifie
 	// Initialize PTM library.
 	ptm_initialize_global();
 
-	return std::make_shared<PTMEngine>(input.stateValidity(), posProperty->storage(), std::move(typeProperty), simCell->data(),
+	return std::make_shared<PTMEngine>(posProperty->storage(), std::move(typeProperty), simCell->data(),
 			getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty),
 			outputInteratomicDistance(), outputOrientation(), outputDeformationGradient(), outputAlloyTypes());
 }

@@ -23,23 +23,23 @@
 
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/netcdf/NetCDFImporter.h>
+#include <plugins/netcdf/AMBERNetCDFImporter.h>
 #include <gui/dataset/io/FileImporterEditor.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /**
- * \brief A properties editor for the NetCDFImporter class.
+ * \brief A properties editor for the AMBERNetCDFImporter class.
  */
-class NetCDFImporterEditor : public FileImporterEditor
+class AMBERNetCDFImporterEditor : public FileImporterEditor
 {
 	Q_OBJECT
-	OVITO_CLASS(NetCDFImporterEditor)
+	OVITO_CLASS(AMBERNetCDFImporterEditor)
 
 public:
 
 	/// Constructor.
-	Q_INVOKABLE NetCDFImporterEditor() {}
+	Q_INVOKABLE AMBERNetCDFImporterEditor() {}
 
 protected:
 
@@ -47,7 +47,7 @@ protected:
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
 
 	/// Displays a dialog box that allows the user to edit the custom file column to particle property mapping.
-	bool showEditColumnMappingDialog(NetCDFImporter* importer, const QUrl& sourceFile, QWidget* parent);
+	bool showEditColumnMappingDialog(AMBERNetCDFImporter* importer, const QUrl& sourceFile, QWidget* parent);
 
 protected Q_SLOTS:
 

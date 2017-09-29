@@ -77,7 +77,7 @@ bool CastepCellImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const 
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-void CastepCellImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr CastepCellImporter::FrameLoader::loadFile(QFile& file)
 {
 	// Open file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());
@@ -96,7 +96,7 @@ void CastepCellImporter::FrameLoader::loadFile(QFile& file)
 	};
 
 	// Create the destination container for loaded data.
-	std::shared_ptr<ParticleFrameData> frameData = std::make_shared<ParticleFrameData>();
+	auto frameData = std::make_shared<ParticleFrameData>();
 
 	while(!isCanceled()) {
 
@@ -167,7 +167,7 @@ void CastepCellImporter::FrameLoader::loadFile(QFile& file)
 			line = readNonCommentLine();
 			std::vector<Point3> coords;
 			std::vector<int> types;
-			std::unique_ptr<ParticleFrameData::ParticleTypeList> typeList(new ParticleFrameData::ParticleTypeList());
+			std::unique_ptr<ParticleFrameData::TypeList> typeList = std::make_unique<ParticleFrameData::TypeList>();
 			while(!boost::algorithm::istarts_with(line, "%ENDBLOCK") && !isCanceled() && !stream.eof()) {
 				Point3 pos;
 				int atomicNumber;
@@ -175,13 +175,13 @@ void CastepCellImporter::FrameLoader::loadFile(QFile& file)
 					coords.push_back(pos);
 					if(atomicNumber < 0 || atomicNumber >= sizeof(chemical_symbols)/sizeof(chemical_symbols[0]))
 						atomicNumber = 0;
-					types.push_back(typeList->addParticleTypeName(chemical_symbols[atomicNumber]));
+					types.push_back(typeList->addTypeName(chemical_symbols[atomicNumber]));
 				}
 				else if(sscanf(line, "%*s " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &pos.x(), &pos.y(), &pos.z()) == 3) {
 					coords.push_back(pos);
 					const char* typeNameEnd = line;
 					while(*typeNameEnd > ' ') typeNameEnd++;
-					types.push_back(typeList->addParticleTypeName(line, typeNameEnd));
+					types.push_back(typeList->addTypeName(line, typeNameEnd));
 				}
 				else {
 					// Ignore parsing error, skip optional units.
@@ -201,9 +201,10 @@ void CastepCellImporter::FrameLoader::loadFile(QFile& file)
 			std::copy(coords.begin(), coords.end(), posProperty->dataPoint3());
 
 			PropertyPtr typeProperty = ParticleProperty::createStandardStorage(types.size(), ParticleProperty::TypeProperty, false);
-			frameData->addParticleProperty(typeProperty, typeList.release());
+			frameData->addParticleProperty(typeProperty);
 			std::copy(types.begin(), types.end(), typeProperty->dataInt());
-			frameData->getTypeListOfParticleProperty(typeProperty.get())->sortParticleTypesByName(typeProperty.get());
+			typeList->sortTypesByName(typeProperty);
+			frameData->setPropertyTypesList(typeProperty, std::move(typeList));
 
 			frameData->setStatus(tr("%1 atoms").arg(coords.size()));
 		}		
@@ -223,7 +224,7 @@ void CastepCellImporter::FrameLoader::loadFile(QFile& file)
 			std::copy(velocities.begin(), velocities.end(), velocityProperty->dataVector3());
 		}		
 	}
-	setResult(std::move(frameData));
+	return frameData;
 }
 
 OVITO_END_INLINE_NAMESPACE

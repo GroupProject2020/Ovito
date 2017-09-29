@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,8 +22,8 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
-#include <core/utilities/concurrent/Task.h>
-#include "NetCDFExporter.h"
+#include <core/utilities/concurrent/Promise.h>
+#include "AMBERNetCDFExporter.h"
 
 #include <QtMath>
 #include <netcdf.h>
@@ -55,12 +55,12 @@ const char NC_SCALE_FACTOR_STR[]  = "scale_factor";
 	#define NC_OVITO_FLOATTYPE NC_DOUBLE
 #endif
 
-IMPLEMENT_OVITO_CLASS(NetCDFExporter);
+IMPLEMENT_OVITO_CLASS(AMBERNetCDFExporter);
 
 /******************************************************************************
 * Check for NetCDF error and throw exception
 ******************************************************************************/
-void NetCDFExporter::ncerr(int err, const char* file, int line)
+void AMBERNetCDFExporter::ncerr(int err, const char* file, int line)
 {
 	if(err != NC_NOERR)
 		throwException(tr("NetCDF I/O error: %1 (line %2 of %3)").arg(QString(nc_strerror(err))).arg(line).arg(file));
@@ -70,7 +70,7 @@ void NetCDFExporter::ncerr(int err, const char* file, int line)
 * Check for NetCDF error and throw exception (and attach additional information
 * to exception string)
 ******************************************************************************/
-void NetCDFExporter::ncerr_with_info(int err, const char* file, int line, const QString& info)
+void AMBERNetCDFExporter::ncerr_with_info(int err, const char* file, int line, const QString& info)
 {
 	if(err != NC_NOERR)
 		throwException(tr("NetCDF I/O error: %1 %2 (line %3 of %4)").arg(QString(nc_strerror(err))).arg(info).arg(line).arg(file));
@@ -80,14 +80,13 @@ void NetCDFExporter::ncerr_with_info(int err, const char* file, int line, const 
  * This is called once for every output file to be written and before
  * exportFrame() is called.
  *****************************************************************************/
-bool NetCDFExporter::openOutputFile(const QString& filePath, int numberOfFrames)
+bool AMBERNetCDFExporter::openOutputFile(const QString& filePath, int numberOfFrames)
 {
 	OVITO_ASSERT(!outputFile().isOpen());
 	outputFile().setFileName(filePath);
 
 	// Open the input file for writing.
 	NCERR(nc_create(filePath.toLocal8Bit().constData(), NC_64BIT_OFFSET, &_ncid));
-	//NCERR(nc_create(filePath.toLocal8Bit().constData(), NC_NETCDF4, &_ncid));
 
 	// Define dimensions.
 	NCERR(nc_def_dim(_ncid, NC_FRAME_STR, NC_UNLIMITED, &_frame_dim));
@@ -143,6 +142,7 @@ bool NetCDFExporter::openOutputFile(const QString& filePath, int numberOfFrames)
 	count[1] = 5;
 	NCERR(nc_put_vara_text(_ncid, _cell_angular_var, index, count, "gamma"));
 
+	// Number of simulation frames written so far.
 	_frameCounter = 0;
 
 	return true;
@@ -152,7 +152,7 @@ bool NetCDFExporter::openOutputFile(const QString& filePath, int numberOfFrames)
  * This is called once for every output file written after exportFrame()
  * has been called.
  *****************************************************************************/
-void NetCDFExporter::closeOutputFile(bool exportCompleted)
+void AMBERNetCDFExporter::closeOutputFile(bool exportCompleted)
 {
 	OVITO_ASSERT(!outputFile().isOpen());
 
@@ -169,25 +169,25 @@ void NetCDFExporter::closeOutputFile(bool exportCompleted)
 /******************************************************************************
 * Writes the particles of one animation frame to the current output file.
 ******************************************************************************/
-bool NetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager)
+bool AMBERNetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager)
 {
 	// Get particle data to be exported.
 	PipelineFlowState state;
 	if(!getParticleData(sceneNode, time, state, taskManager))
 		return false;
 
-	SynchronousTask exportTask(taskManager);
+	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
 	
 	// Get particle positions.
 	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
 
 	// Get simulation cell info.
 	SimulationCellObject* simulationCell = state.findObject<SimulationCellObject>();
-	const AffineTransformation simCell = simulationCell->cellMatrix();
+	const AffineTransformation simCell = simulationCell ? simulationCell->cellMatrix() : AffineTransformation::Zero();
 	size_t atomsCount = posProperty->size();
 	
+	// Define the "atom" dimension when writing first frame and the number of atoms is known.
 	if(_atom_dim == -1) {
-		// Define "atom" dimension when first frame is written and the number of atoms is known.
 		NCERR(nc_redef(_ncid));
 		NCERR(nc_def_dim(_ncid, NC_ATOM_STR, atomsCount, &_atom_dim));
 
@@ -210,23 +210,29 @@ bool NetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 		int dims[3] = { _frame_dim, _atom_dim, _spatial_dim };
 		NCERR(nc_def_var(_ncid, "coordinates", NC_OVITO_FLOATTYPE, 3, dims, &_coords_var));
 
-		// Define NetCDF variables for per-particle properties.
+		// Define a NetCDF variable for every per-particle property to be exported.
 		for(auto c = columnMapping().begin(); c != columnMapping().end(); ++c) {
+
+			// Skip the particle position property. It has already been emitted above.
 			if(c->type() == ParticleProperty::PositionProperty)
 				continue;
 				
-			// Can export a particle property only as a whole, not individual components.
-			if(std::find_if(columnMapping().begin(), c, [c](const ParticlePropertyReference& pr) { return pr.type() == c->type(); }) != c)
+			// We can export a particle property only as a whole to a NetCDF file, not individual components.
+			// Skip this column if we have already emitted an entry for the same particle property before.
+			if(std::find_if(columnMapping().begin(), c, [c](const ParticlePropertyReference& pr) { return pr.name() == c->name(); }) != c)
 				continue;
 
 			ParticleProperty* prop = c->findInState(state);
 			if(!prop)
-				throwException(tr("Invalid set of particle properties to be exported. The property '%1' does not exist.").arg(c->name()));
+				throwException(tr("Invalid list of particle properties to be exported. The property '%1' does not exist.").arg(c->name()));
 			if((int)prop->componentCount() <= std::max(0, c->vectorComponent()))
-				throwException(tr("The output vector component selected for column %1 is out of range. The particle property '%2' has only %3 component(s).").arg(c-columnMapping().begin()+1).arg(c->name()).arg(prop->componentCount()));
+				throwException(tr("The output vector component selected for column %1 is out of range. The particle property '%2' has only %3 component(s).").arg(c - columnMapping().begin() + 1).arg(c->name()).arg(prop->componentCount()));
 
+			// For certain standard properties we need to use NetCDF variables according to the AMBER convention.
+			// All other properties are output as NetCDF variables under their normal name.
+			const char* mangledName = nullptr;
+			dims[2] = 0;
 			if(prop->type() != ParticleProperty::UserProperty) {
-				const char* mangledName = nullptr;
 				if(prop->type() == ParticleProperty::ForceProperty) {
 					mangledName = "forces";
 					dims[2] = _spatial_dim;
@@ -238,54 +244,41 @@ bool NetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 				else if(prop->type() == ParticleProperty::TypeProperty) {
 					mangledName = "atom_types";
 				}
-				else if(prop->type() == ParticleProperty::ColorProperty) {
-					mangledName = "color";
-					dims[2] = _spatial_dim;
-				}
-
-				if(mangledName) {
-					if(std::find_if(columnMapping().begin(), c, [c](const ParticlePropertyReference& pr) { return pr.type() == c->type(); }) != c)
-						continue;
-					if(prop->dataType() == qMetaTypeId<int>()) {
-						int ncvar;
-						NCERR(nc_def_var(_ncid, mangledName, NC_INT, prop->componentCount() > 1 ? 3 : 2, dims, &ncvar));
-						_columns.emplace_back(*c, prop->dataType(), prop->componentCount(), ncvar);
-					}
-					else if(prop->dataType() == qMetaTypeId<FloatType>()) {
-						int ncvar;
-						NCERR(nc_def_var(_ncid, mangledName, NC_OVITO_FLOATTYPE, prop->componentCount() > 1 ? 3 : 2, dims, &ncvar));
-						_columns.emplace_back(*c, prop->dataType(), prop->componentCount(), ncvar);
-					}
-					continue;
-				}
 			}
 
-			if(prop->dataType() == qMetaTypeId<int>()) {
-				int ncvar;
-				NCERR(nc_def_var(_ncid, qPrintable(c->nameWithComponent()), NC_INT, 2, dims, &ncvar));
-				_columns.emplace_back(*c, qMetaTypeId<int>(), 1, ncvar);
+			// Create the dimension for the NetCDF variable if the property is a vector property.
+			if(dims[2] == 0 && prop->componentCount() > 1) {
+				NCERR(nc_def_dim(_ncid, qPrintable(QStringLiteral("dim_") + prop->name()), prop->componentCount(), &dims[2]));
 			}
-			else if(prop->dataType() == qMetaTypeId<FloatType>()) {
-				int ncvar;
-				NCERR(nc_def_var(_ncid, qPrintable(c->nameWithComponent()), NC_OVITO_FLOATTYPE, 2, dims, &ncvar));
-				_columns.emplace_back(*c, qMetaTypeId<FloatType>(), 1, ncvar);
-			}
+			
+			// Create the NetCDF variable for the property.
+			nc_type ncDataType;
+			if(prop->dataType() == qMetaTypeId<int>()) ncDataType = NC_INT;
+			else if(prop->dataType() == qMetaTypeId<FloatType>()) ncDataType = NC_OVITO_FLOATTYPE;
+			else continue;
+			// For scalar OVITO properties we define a NetCDF variable with 2 dimensions.
+			// For vector OVITO properties we define a NetCDF variable with 3 dimensions.
+			int ncvar;
+			NCERR(nc_def_var(_ncid, mangledName ? mangledName : qPrintable(c->name()), ncDataType, (prop->componentCount() > 1) ? 3 : 2, dims, &ncvar));
+			_columns.emplace_back(*c, prop->dataType(), prop->componentCount(), ncvar);
 		}
 		
 		NCERR(nc_enddef(_ncid));
 	}
 	else {
+		// If this is not the first frame we are writing, make sure the number of atoms remained the same.
 		size_t na;
 		NCERR(nc_inq_dimlen(_ncid, _atom_dim, &na));
 		if(na != atomsCount)
-			throwException(tr("Writing a NetCDF file with varying number of atoms is not supported."));
+			throwException(tr("Number of particles did change between animation frames. Writing a NetCDF trajectory file with "
+				"a varying number of atoms is not supported by the AMBER format convention."));
 	}
 
-	// Write global attributes.
+	// Write global attributes to the NetCDF file.
 	const QVariantMap& attributes = state.attributes();
 	for(auto entry = _attributes_vars.constBegin(); entry != _attributes_vars.constEnd(); ++entry) {		
 		QVariant val = attributes.value(entry.key());
-		if((QMetaType::Type)val.type() == QMetaType::Double || (QMetaType::Type)val.type() == QMetaType::Float) {
+		if(val.type() == (int)QMetaType::Double || val.type() == (int)QMetaType::Float) {
 			double d = val.toDouble();
 			NCERR(nc_put_var1_double(_ncid, entry.value(), &_frameCounter, &d));
 		}
@@ -317,6 +310,9 @@ bool NetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 	double cosbeta = h[4]/sqrt(h[2]*h[2]+h[3]*h[3]+h[4]*h[4]);
 	double cosgamma = h[5]/sqrt(h[1]*h[1]+h[5]*h[5]);
 
+	if(simCell(2,1) != 0 || simCell(2,0) != 0 || simCell(1,0) != 0)
+		qWarning() << "Warning: Simulation cell vectors are not compatible with the AMBER file specification. Generated NetCDF file may be invalid.";
+
 	cell_angles[0] = qRadiansToDegrees(acos(cosalpha));
 	cell_angles[1] = qRadiansToDegrees(acos(cosbeta));
 	cell_angles[2] = qRadiansToDegrees(acos(cosgamma));
@@ -342,9 +338,10 @@ bool NetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 #endif
 
 	// Write out other particle properties.
+	exportTask.setProgressMaximum(_columns.size());
 	for(const NCOutputColumn& outColumn : _columns) {
 		
-		// Look up property to be exported.
+		// Look up the property to be exported.
 		ParticleProperty* prop = outColumn.property.findInState(state);
 		if(!prop)
 			throwException(tr("The property '%1' cannot be exported, because it does not exist at frame %2.").arg(outColumn.property.name()).arg(frameNumber));
@@ -365,6 +362,9 @@ bool NetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 			NCERR(nc_put_vara_double(_ncid, outColumn.ncvar, start, count, prop->constDataFloat()));	
 #endif
 		}
+
+		if(!exportTask.incrementProgressValue())
+			return false;
 	}
 
 	_frameCounter++;

@@ -77,7 +77,8 @@ private:
 	public:
 
 		/// Constructor.
-		VoronoiAnalysisResults(size_t particleCount, int edgeCount, bool computeIndices, bool computeBonds) :
+		VoronoiAnalysisResults(const TimeInterval& validityInterval, size_t particleCount, int edgeCount, bool computeIndices, bool computeBonds) :
+			ComputeEngineResults(validityInterval),
 			_coordinationNumbers(ParticleProperty::createStandardStorage(particleCount, ParticleProperty::CoordinationProperty, true)),
 			_atomicVolumes(std::make_shared<PropertyStorage>(particleCount, qMetaTypeId<FloatType>(), 1, 0, QStringLiteral("Atomic Volume"), true)),
 			_voronoiIndices(computeIndices ? std::make_shared<PropertyStorage>(particleCount, qMetaTypeId<int>(), edgeCount, 0, QStringLiteral("Voronoi Index"), true) : nullptr),
@@ -136,7 +137,6 @@ private:
 		VoronoiAnalysisEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, ConstPropertyPtr selection, std::vector<FloatType> radii,
 							const SimulationCell& simCell,
 							int edgeCount, bool computeIndices, bool computeBonds, FloatType edgeThreshold, FloatType faceThreshold, FloatType relativeFaceThreshold) :
-			ComputeEngine(validityInterval),
 			_positions(positions),
 			_selection(std::move(selection)),
 			_radii(std::move(radii)),
@@ -144,7 +144,7 @@ private:
 			_edgeThreshold(edgeThreshold),
 			_faceThreshold(faceThreshold),
 			_relativeFaceThreshold(relativeFaceThreshold),
-			_results(std::make_shared<VoronoiAnalysisResults>(positions->size(), edgeCount, computeIndices, computeBonds)) {}
+			_results(std::make_shared<VoronoiAnalysisResults>(validityInterval, positions->size(), edgeCount, computeIndices, computeBonds)) {}
 			
 		/// Computes the modifier's results.
 		virtual void perform() override;

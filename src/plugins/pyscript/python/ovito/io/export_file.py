@@ -45,6 +45,7 @@ def export_file(data, file, format, **params):
             * ``"vasp"`` -- POSCAR format
             * ``"xyz"`` -- XYZ format
             * ``"fhi-aims"`` -- FHI-aims format
+            * ``"netcdf/amber"`` -- Binary format for MD data following the `AMBER format convention <http://ambermd.org/netcdf/nctraj.pdf>`_ 
             * ``"vtk/trimesh"`` -- ParaView VTK format for exporting :py:class:`~ovito.data.SurfaceMesh` objects
             * ``"ca"`` -- `Text-based format for storing dislocation lines <../../particles.modifiers.dislocation_analysis.html#particles.modifiers.dislocation_analysis.fileformat>`_
             * ``"povray"`` -- POV-Ray scene format
@@ -53,10 +54,10 @@ def export_file(data, file, format, **params):
        
         **File columns**
         
-        When writing files in one of the formats *lammps/dump*, *xyz*, or *imd*, you must specify the set of particle properties to export 
+        For the output formats *lammps/dump*, *xyz*, *imd* and *netcdf/amber*, you must specify the set of particle properties to export 
         using the ``columns`` keyword parameter::
         
-            export_file(pipeline, "output.xyz", "xyz", columns= 
+            export_file(pipeline, "output.xyz", "xyz", columns = 
               ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z"]
             )
             

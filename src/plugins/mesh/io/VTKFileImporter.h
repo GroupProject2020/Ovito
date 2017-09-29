@@ -79,7 +79,7 @@ protected:
 	protected:
 
 		/// Loads the frame data from the given file.
-		virtual void loadFile(QFile& file) override;
+		virtual FrameDataPtr loadFile(QFile& file) override;
 
 		/// Reads from the input stream and throws an exception if the given keyword is not present.
 		static void expectKeyword(CompressedTextReader& stream, const char* keyword);

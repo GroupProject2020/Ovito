@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -40,23 +40,23 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <plugins/particles/gui/import/InputColumnMappingDialog.h>
-#include <plugins/netcdf/NetCDFImporter.h>
+#include <plugins/netcdf/AMBERNetCDFImporter.h>
 #include <gui/properties/BooleanParameterUI.h>
 #include <gui/properties/BooleanRadioButtonParameterUI.h>
 #include <gui/mainwin/MainWindow.h>
 #include <core/dataset/io/FileSource.h>
-#include "NetCDFImporterEditor.h"
+#include "AMBERNetCDFImporterEditor.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_CLASS(NetCDFImporterEditor);
-SET_OVITO_OBJECT_EDITOR(NetCDFImporter, NetCDFImporterEditor);
+IMPLEMENT_OVITO_CLASS(AMBERNetCDFImporterEditor);
+SET_OVITO_OBJECT_EDITOR(AMBERNetCDFImporter, AMBERNetCDFImporterEditor);
 
 /******************************************************************************
  * Displays a dialog box that allows the user to edit the custom file column to particle
  * property mapping.
  *****************************************************************************/
-bool NetCDFImporterEditor::showEditColumnMappingDialog(NetCDFImporter* importer, const QUrl& sourceFile, QWidget* parent)
+bool AMBERNetCDFImporterEditor::showEditColumnMappingDialog(AMBERNetCDFImporter* importer, const QUrl& sourceFile, QWidget* parent)
 {
 	Future<InputColumnMapping> inspectFuture = importer->inspectFileHeader(FileSourceImporter::Frame(sourceFile));
 	if(!importer->dataset()->container()->taskManager().waitForTask(inspectFuture))
@@ -85,7 +85,7 @@ bool NetCDFImporterEditor::showEditColumnMappingDialog(NetCDFImporter* importer,
 /******************************************************************************
 * Sets up the UI widgets of the editor.
 ******************************************************************************/
-void NetCDFImporterEditor::createUI(const RolloutInsertionParameters& rolloutParams)
+void AMBERNetCDFImporterEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create a rollout.
 	QWidget* rollout = createRollout(tr("NetCDF file"), rolloutParams);
@@ -100,7 +100,7 @@ void NetCDFImporterEditor::createUI(const RolloutInsertionParameters& rolloutPar
 	sublayout->setContentsMargins(4,4,4,4);
 	layout->addWidget(columnMappingBox);
 
-	BooleanRadioButtonParameterUI* useCustomMappingUI = new BooleanRadioButtonParameterUI(this, PROPERTY_FIELD(NetCDFImporter::useCustomColumnMapping));
+	BooleanRadioButtonParameterUI* useCustomMappingUI = new BooleanRadioButtonParameterUI(this, PROPERTY_FIELD(AMBERNetCDFImporter::useCustomColumnMapping));
 	useCustomMappingUI->buttonFalse()->setText(tr("Automatic mapping"));
 	sublayout->addWidget(useCustomMappingUI->buttonFalse());
 	useCustomMappingUI->buttonTrue()->setText(tr("User-defined mapping to particle properties"));
@@ -108,15 +108,15 @@ void NetCDFImporterEditor::createUI(const RolloutInsertionParameters& rolloutPar
 
 	QPushButton* editMappingButton = new QPushButton(tr("Edit column mapping..."));
 	sublayout->addWidget(editMappingButton);
-	connect(editMappingButton, &QPushButton::clicked, this, &NetCDFImporterEditor::onEditColumnMapping);
+	connect(editMappingButton, &QPushButton::clicked, this, &AMBERNetCDFImporterEditor::onEditColumnMapping);
 }
 
 /******************************************************************************
 * Is called when the user pressed the "Edit column mapping" button.
 ******************************************************************************/
-void NetCDFImporterEditor::onEditColumnMapping()
+void AMBERNetCDFImporterEditor::onEditColumnMapping()
 {
-	if(NetCDFImporter* importer = static_object_cast<NetCDFImporter>(editObject())) {
+	if(AMBERNetCDFImporter* importer = static_object_cast<AMBERNetCDFImporter>(editObject())) {
 
 		// Determine URL of current input file.
 		FileSource* fileSource = nullptr;

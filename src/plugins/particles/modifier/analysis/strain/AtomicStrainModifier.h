@@ -58,12 +58,13 @@ private:
 	public:
 
 		/// Constructor.
-		AtomicStrainResults(size_t particleCount, 
+		AtomicStrainResults(const TimeInterval& validityInterval, size_t particleCount, 
 							bool calculateDeformationGradients, 
 							bool calculateStrainTensors,
 							bool calculateNonaffineSquaredDisplacements, 
 							bool calculateRotations,
 							bool calculateStretchTensors) : 
+			ComputeEngineResults(validityInterval),
 			_shearStrains(std::make_shared<PropertyStorage>(particleCount, qMetaTypeId<FloatType>(), 1, 0, tr("Shear Strain"), false)),
 			_volumetricStrains(std::make_shared<PropertyStorage>(particleCount, qMetaTypeId<FloatType>(), 1, 0, tr("Volumetric Strain"), false)),
 			_strainTensors(calculateStrainTensors ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::StrainTensorProperty, false) : nullptr),
@@ -131,10 +132,10 @@ private:
 				FloatType cutoff, AffineMappingType affineMapping, bool useMinimumImageConvention,
 				bool calculateDeformationGradients, bool calculateStrainTensors,
 				bool calculateNonaffineSquaredDisplacements, bool calculateRotations, bool calculateStretchTensors) :
-			RefConfigEngineBase(validityInterval, positions, simCell, std::move(refPositions), simCellRef,
+			RefConfigEngineBase(positions, simCell, std::move(refPositions), simCellRef,
 				std::move(identifiers), std::move(refIdentifiers), affineMapping, useMinimumImageConvention),
 			_cutoff(cutoff), 
-			_results(std::make_shared<AtomicStrainResults>(positions->size(), 
+			_results(std::make_shared<AtomicStrainResults>(validityInterval, positions->size(), 
 							calculateDeformationGradients, 
 							calculateStrainTensors,
 							calculateNonaffineSquaredDisplacements, 

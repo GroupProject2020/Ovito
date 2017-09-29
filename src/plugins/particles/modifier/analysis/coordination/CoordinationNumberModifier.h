@@ -75,7 +75,7 @@ private:
 	public:
 
 		/// Constructor.
-		CoordinationAnalysisResults(size_t particleCount) :
+		CoordinationAnalysisResults(size_t particleCount) : 
 			_coordinationNumbers(ParticleProperty::createStandardStorage(particleCount, ParticleProperty::CoordinationProperty, true)) {}
 
 		/// Injects the computed results into the data pipeline.
@@ -103,8 +103,7 @@ private:
 	public:
 
 		/// Constructor.
-		CoordinationAnalysisEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell, FloatType cutoff, int rdfSampleCount) :
-			ComputeEngine(validityInterval),
+		CoordinationAnalysisEngine(ConstPropertyPtr positions, const SimulationCell& simCell, FloatType cutoff, int rdfSampleCount) :
 			_positions(positions), 
 			_simCell(simCell),
 			_cutoff(cutoff),

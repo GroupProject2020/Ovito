@@ -115,13 +115,13 @@ Future<AsynchronousModifier::ComputeEnginePtr> AmbientOcclusionModifier::createE
 ******************************************************************************/
 AmbientOcclusionModifier::AmbientOcclusionEngine::AmbientOcclusionEngine(const TimeInterval& validityInterval, int resolution, int samplingCount, PropertyPtr positions, 
 		const Box3& boundingBox, std::vector<FloatType> particleRadii, AmbientOcclusionRenderer* renderer) :
-	ComputeEngine(validityInterval),
 	_resolution(resolution),
 	_samplingCount(samplingCount),
-	_positions(std::move(positions)),
+	_positions(positions),
 	_boundingBox(boundingBox),
 	_particleRadii(std::move(particleRadii)),
-	_renderer(renderer)
+	_renderer(renderer),
+	_results(std::make_shared<AmbientOcclusionResults>(validityInterval, positions->size()))
 {
 }
 
@@ -134,7 +134,6 @@ void AmbientOcclusionModifier::AmbientOcclusionEngine::perform()
 		throw Exception(tr("Modifier input is degenerate or contains no particles."));
 
 	setProgressText(tr("Computing ambient occlusion"));
-	auto results = std::make_shared<AmbientOcclusionResults>(positions()->size());
 
 	_renderer->startRender(nullptr, nullptr);
 	try {
@@ -192,7 +191,7 @@ void AmbientOcclusionModifier::AmbientOcclusionEngine::perform()
 
 			// Extract brightness values from rendered image.
 			const QImage image = _renderer->image();
-			FloatType* brightnessValues = results->brightness()->dataFloat();
+			FloatType* brightnessValues = _results->brightness()->dataFloat();
 			for(int y = 0; y < _resolution; y++) {
 				const QRgb* pixel = reinterpret_cast<const QRgb*>(image.scanLine(y));
 				for(int x = 0; x < _resolution; x++, ++pixel) {
@@ -219,16 +218,16 @@ void AmbientOcclusionModifier::AmbientOcclusionEngine::perform()
 	if(!isCanceled()) {
 		setProgressValue(_samplingCount);
 		// Normalize brightness values.
-		FloatType maxBrightness = *std::max_element(results->brightness()->constDataFloat(), results->brightness()->constDataFloat() + results->brightness()->size());
+		FloatType maxBrightness = *std::max_element(_results->brightness()->constDataFloat(), _results->brightness()->constDataFloat() + _results->brightness()->size());
 		if(maxBrightness != 0) {
-			for(FloatType& b : results->brightness()->floatRange()) {
+			for(FloatType& b : _results->brightness()->floatRange()) {
 				b /= maxBrightness;
 			}
 		}
 	}
 
 	// Return the results of the compute engine.
-	setResult(std::move(results));
+	setResult(std::move(_results));
 }
 
 /******************************************************************************

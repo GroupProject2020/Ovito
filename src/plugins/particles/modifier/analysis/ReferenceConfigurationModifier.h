@@ -77,12 +77,12 @@ protected:
 	virtual Future<ComputeEnginePtr> createEngineWithReference(TimePoint time, ModifierApplication* modApp, PipelineFlowState input, const PipelineFlowState& referenceState, TimeInterval validityInterval) = 0;
 
 	/// Base class for compute engines that make use of a reference configuration.
-	class RefConfigEngineBase : public ComputeEngine
+	class OVITO_PARTICLES_EXPORT RefConfigEngineBase : public ComputeEngine
 	{
 	public:
 
 		/// Constructor.
-		RefConfigEngineBase(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell,
+		RefConfigEngineBase(ConstPropertyPtr positions, const SimulationCell& simCell,
 				ConstPropertyPtr refPositions, const SimulationCell& simCellRef,
 				ConstPropertyPtr identifiers, ConstPropertyPtr refIdentifiers,
 				AffineMappingType affineMapping, bool useMinimumImageConvention);

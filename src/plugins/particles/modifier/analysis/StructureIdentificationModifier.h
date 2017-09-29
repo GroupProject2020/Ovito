@@ -59,7 +59,7 @@ public:
 	public:
 
 		/// Constructor.
-		StructureIdentificationResults(size_t particleCount) :
+		StructureIdentificationResults(size_t particleCount) : 
 			_structures(ParticleProperty::createStandardStorage(particleCount, ParticleProperty::StructureTypeProperty, false)) {}
 
 		/// Injects the computed results into the data pipeline.
@@ -87,8 +87,7 @@ public:
 	public:
 
 		/// Constructor.
-		StructureIdentificationEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell, QVector<bool> typesToIdentify, ConstPropertyPtr selection = {}) :
-			ComputeEngine(validityInterval),
+		StructureIdentificationEngine(ConstPropertyPtr positions, const SimulationCell& simCell, QVector<bool> typesToIdentify, ConstPropertyPtr selection = {}) :
 			_positions(std::move(positions)), 
 			_simCell(simCell),
 			_typesToIdentify(std::move(typesToIdentify)),

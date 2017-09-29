@@ -59,7 +59,8 @@ private:
 	public:
 
 		/// Constructor.
-		WignerSeitzAnalysisResults(PipelineFlowState referenceState) : _referenceState(std::move(referenceState)) {}
+		WignerSeitzAnalysisResults(const TimeInterval& validityInterval, PipelineFlowState referenceState) : ComputeEngineResults(validityInterval),
+			_referenceState(std::move(referenceState)) {}
 
 		/// Injects the computed results into the data pipeline.
 		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
@@ -99,10 +100,10 @@ private:
 	public:
 
 		/// Constructor.
-		WignerSeitzAnalysisEngine(const TimeInterval& validityInterval, std::shared_ptr<WignerSeitzAnalysisResults> results, ConstPropertyPtr positions, const SimulationCell& simCell,
+		WignerSeitzAnalysisEngine(std::shared_ptr<WignerSeitzAnalysisResults> results, ConstPropertyPtr positions, const SimulationCell& simCell,
 				ConstPropertyPtr refPositions, const SimulationCell& simCellRef, AffineMappingType affineMapping,
 				ConstPropertyPtr typeProperty, int ptypeMinId, int ptypeMaxId) :
-			RefConfigEngineBase(validityInterval, std::move(positions), simCell, std::move(refPositions), simCellRef,
+			RefConfigEngineBase(std::move(positions), simCell, std::move(refPositions), simCellRef,
 				nullptr, nullptr, affineMapping, false),
 			_typeProperty(std::move(typeProperty)), _ptypeMinId(ptypeMinId), _ptypeMaxId(ptypeMaxId),
 			_results(std::move(results)) {}

@@ -105,7 +105,7 @@ void CastepMDImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-void CastepMDImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr CastepMDImporter::FrameLoader::loadFile(QFile& file)
 {
 	// Open file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());
@@ -119,10 +119,10 @@ void CastepMDImporter::FrameLoader::loadFile(QFile& file)
 	std::vector<int> types;
 	std::vector<Vector3> velocities;
 	std::vector<Vector3> forces;
-	std::unique_ptr<ParticleFrameData::ParticleTypeList> typeList(new ParticleFrameData::ParticleTypeList());
+	std::unique_ptr<ParticleFrameData::TypeList> typeList = std::make_unique<ParticleFrameData::TypeList>();
 
 	// Create the destination container for loaded data.
-	std::shared_ptr<ParticleFrameData> frameData = std::make_shared<ParticleFrameData>();
+	auto frameData = std::make_shared<ParticleFrameData>();
 
 	AffineTransformation cell = AffineTransformation::Identity();
 	int numCellVectors = 0;
@@ -145,7 +145,7 @@ void CastepMDImporter::FrameLoader::loadFile(QFile& file)
 			coords.push_back(pos);
 			const char* typeNameEnd = line;
 			while(*typeNameEnd > ' ') typeNameEnd++;
-			types.push_back(typeList->addParticleTypeName(line, typeNameEnd));
+			types.push_back(typeList->addTypeName(line, typeNameEnd));
 		}
 		else if(boost::algorithm::icontains(line, "<-- v")) {
 			Vector3 v;
@@ -163,7 +163,7 @@ void CastepMDImporter::FrameLoader::loadFile(QFile& file)
 		}
 
 		if(isCanceled())
-			return;
+			return {};
 	}
 	frameData->simulationCell().setMatrix(cell);
 
@@ -173,13 +173,14 @@ void CastepMDImporter::FrameLoader::loadFile(QFile& file)
 	std::copy(coords.begin(), coords.end(), posProperty->dataPoint3());
 	
 	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(types.size(), ParticleProperty::TypeProperty, false);
-	frameData->addParticleProperty(typeProperty, typeList.release());
+	frameData->addParticleProperty(typeProperty);
 	std::copy(types.begin(), types.end(), typeProperty->dataInt());
 
 	// Since we created particle types on the go while reading the particles, the assigned particle type IDs
 	// depend on the storage order of particles in the file. We rather want a well-defined particle type ordering, that's
 	// why we sort them now.
-	frameData->getTypeListOfParticleProperty(typeProperty.get())->sortParticleTypesByName(typeProperty.get());
+	typeList->sortTypesByName(typeProperty);
+	frameData->setPropertyTypesList(typeProperty, std::move(typeList));
 
 	if(velocities.size() == coords.size()) {
 		PropertyPtr velocityProperty = ParticleProperty::createStandardStorage(velocities.size(), ParticleProperty::VelocityProperty, false);
@@ -193,7 +194,7 @@ void CastepMDImporter::FrameLoader::loadFile(QFile& file)
 	}
 
 	frameData->setStatus(tr("%1 atoms").arg(coords.size()));
-	setResult(std::move(frameData));
+	return frameData;
 }
 
 OVITO_END_INLINE_NAMESPACE

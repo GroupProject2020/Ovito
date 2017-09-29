@@ -133,7 +133,7 @@ private:
 	protected:
 
 		/// Loads the frame data from the given file.
-		virtual void loadFile(QFile& file) override;
+		virtual FrameDataPtr loadFile(QFile& file) override;
 
 		/// The LAMMPS atom style to assume.
 		LAMMPSAtomStyle _atomStyle;

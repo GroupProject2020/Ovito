@@ -67,6 +67,10 @@
               <entry><para>File format used by the <emphasis>ab initio</emphasis> simulation package <link xlink:href="https://aimsclub.fhi-berlin.mpg.de/index.php">FHI-aims</link>.</para></entry>
             </row>
             <row>
+              <entry>NetCDF</entry>
+              <entry><para>Binary format for molecular dynamics data following the <link xlink:href="http://ambermd.org/netcdf/nctraj.pdf">AMBER format convention</link>.</para></entry>
+            </row>
+            <row>
               <entry>Crystal Analysis (CA)</entry>
               <entry><para>A text-based file format used by the <emphasis>Crystal Analysis Tool</emphasis>, which can store dislocation line networks extracted by the 
               <link linkend="particles.modifiers.dislocation_analysis">Dislocation Analysis</link> modifier. The format is documented <link linkend="particles.modifiers.dislocation_analysis.fileformat">here</link>.</para></entry>

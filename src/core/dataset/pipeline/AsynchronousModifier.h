@@ -45,6 +45,9 @@ public:
 	{
 	public:
 
+		/// Constructor.
+		ComputeEngineResults(const TimeInterval& validityInterval = TimeInterval::infinite()) : _validityInterval(validityInterval) {}
+
 		/// Destructor.
 		virtual ~ComputeEngineResults() = default;
 
@@ -55,6 +58,17 @@ public:
 		/// changing inputs from the pipeline without recomputation while the calculation of new results is 
 		/// still in progress.
 		virtual bool isReapplicable() const { return true; }
+
+		/// Returns the validity period of the stored results.
+		const TimeInterval& validityInterval() const { return _validityInterval; }
+
+		/// Changes the stored validity period of the results.
+		void setValidityInterval(const TimeInterval& iv) { _validityInterval = iv; }
+		
+	private:
+
+		/// The validity period of the stored results.
+		TimeInterval _validityInterval;
 	};
 
 	/// A managed pointer to a ComputeEngineResults instance.
@@ -67,23 +81,8 @@ public:
 	{
 	public:
 
-		/// Constructs a new compute engine.
-		ComputeEngine(const TimeInterval& validityInterval) :
-			_validityInterval(validityInterval) {}
-
 		/// Destructor.
 		virtual ~ComputeEngine();
-
-		/// Returns the validity period of the results computed by this engine.
-		const TimeInterval& validityInterval() const { return _validityInterval; }
-
-		/// Changes the stored validity period of the results computed by this engine.
-		void setValidityInterval(const TimeInterval& iv) { _validityInterval = iv; }
-
-	private:
-
-		/// The validity period of the results computed by this engine.
-		TimeInterval _validityInterval;
 	};
 
 	/// A managed pointer to a ComputeEngine instance.

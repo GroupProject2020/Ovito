@@ -110,8 +110,7 @@ private:
 	public:
 
 		/// Constructor.
-		ExpandSelectionEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell, ConstPropertyPtr inputSelection, int numIterations) :
-			ComputeEngine(validityInterval),
+		ExpandSelectionEngine(ConstPropertyPtr positions, const SimulationCell& simCell, ConstPropertyPtr inputSelection, int numIterations) :
 			_numIterations(numIterations),
 			_positions(std::move(positions)), 
 			_simCell(simCell),
@@ -148,8 +147,8 @@ private:
 	public:
 
 		/// Constructor.
-		ExpandSelectionNearestEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell, ConstPropertyPtr inputSelection, int numIterations, int numNearestNeighbors) :
-			ExpandSelectionEngine(validityInterval, std::move(positions), simCell, std::move(inputSelection), numIterations), 
+		ExpandSelectionNearestEngine(ConstPropertyPtr positions, const SimulationCell& simCell, ConstPropertyPtr inputSelection, int numIterations, int numNearestNeighbors) :
+			ExpandSelectionEngine(std::move(positions), simCell, std::move(inputSelection), numIterations), 
 			_numNearestNeighbors(numNearestNeighbors) {}
 
 		/// Expands the selection by one step.
@@ -166,8 +165,8 @@ private:
 	public:
 
 		/// Constructor.
-		ExpandSelectionCutoffEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell, ConstPropertyPtr inputSelection, int numIterations, FloatType cutoff) :
-			ExpandSelectionEngine(validityInterval, std::move(positions), simCell, std::move(inputSelection), numIterations), 
+		ExpandSelectionCutoffEngine(ConstPropertyPtr positions, const SimulationCell& simCell, ConstPropertyPtr inputSelection, int numIterations, FloatType cutoff) :
+			ExpandSelectionEngine(std::move(positions), simCell, std::move(inputSelection), numIterations), 
 			_cutoffRange(cutoff) {}
 
 		/// Expands the selection by one step.
@@ -184,8 +183,8 @@ private:
 	public:
 
 		/// Constructor.
-		ExpandSelectionBondedEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell, ConstPropertyPtr inputSelection, int numIterations, ConstBondsPtr bonds) :
-			ExpandSelectionEngine(validityInterval, std::move(positions), simCell, std::move(inputSelection), numIterations), 
+		ExpandSelectionBondedEngine(ConstPropertyPtr positions, const SimulationCell& simCell, ConstPropertyPtr inputSelection, int numIterations, ConstBondsPtr bonds) :
+			ExpandSelectionEngine(std::move(positions), simCell, std::move(inputSelection), numIterations), 
 			_bonds(std::move(bonds)) {}
 
 		/// Expands the selection by one step.

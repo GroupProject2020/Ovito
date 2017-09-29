@@ -92,7 +92,7 @@ private:
 	public:
 
 		/// Constructor.
-		ComputeIsosurfaceResults() : _mesh(std::make_shared<HalfEdgeMesh<>>()) {}
+		using ComputeEngineResults::ComputeEngineResults;
 
 		/// Injects the computed results into the data pipeline.
 		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
@@ -121,7 +121,7 @@ private:
 	private:
 
 		/// The surface mesh produced by the modifier.
-		std::shared_ptr<HalfEdgeMesh<>> _mesh;
+		std::shared_ptr<HalfEdgeMesh<>> _mesh = std::make_shared<HalfEdgeMesh<>>();
 
 		/// Indicates that the entire simulation cell is part of the solid region.
 		bool _isCompletelySolid = false;
@@ -140,13 +140,12 @@ private:
 
 		/// Constructor.
 		ComputeIsosurfaceEngine(const TimeInterval& validityInterval, const std::vector<size_t>& gridShape, ConstPropertyPtr property, int vectorComponent, const SimulationCell& simCell, FloatType isolevel) :
-			ComputeEngine(validityInterval), 
 			_gridShape(gridShape),
 			_property(std::move(property)), 
 			_vectorComponent(vectorComponent), 
 			_simCell(simCell), 
 			_isolevel(isolevel), 
-			_results(std::make_shared<ComputeIsosurfaceResults>()) {}
+			_results(std::make_shared<ComputeIsosurfaceResults>(validityInterval)) {}
 
 		/// Computes the modifier's results.
 		virtual void perform() override;

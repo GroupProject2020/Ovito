@@ -163,7 +163,7 @@ std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> GrainSegmentationMo
 		selectionProperty = expectStandardProperty(ParticleProperty::SelectionProperty)->storage();
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<GrainSegmentationEngine>(validityInterval, posProperty->storage(),
+	return std::make_shared<GrainSegmentationEngine>(posProperty->storage(),
 			simCell->data(), selectionProperty, inputCrystalStructure(), misorientationThreshold(),
 			fluctuationTolerance(), minGrainAtomCount(), outputPartitionMesh() ? probeSphereRadius() : 0, smoothingLevel());
 }

@@ -17,6 +17,7 @@ export_file(node1, "_export_file_test.data", "fhi-aims")
 export_file(node1, "_export_file_test.data", "imd")
 export_file(node1, "_export_file_test.data", "vasp")
 export_file(node1, "_export_file_test.data", "povray")
+export_file(node1, "_export_file_test.data", "netcdf/amber", columns = ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z"])
 export_file(node1, "_export_file_test.data", "xyz", columns = ["Position.X", "Position.Y", "Position.Z"])
 os.remove("_export_file_test.data")
 ovito.dataset.anim.last_frame = 7

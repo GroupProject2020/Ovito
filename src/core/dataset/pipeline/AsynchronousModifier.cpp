@@ -74,7 +74,9 @@ Future<PipelineFlowState> AsynchronousModifier::evaluate(TimePoint time, Modifie
 						UndoSuspender noUndo(this);
 
 						// Apply the computed results to the input data.
-						return results->apply(time, modApp, std::move(input));
+						PipelineFlowState resultState = results->apply(time, modApp, std::move(input));
+						resultState.mutableStateValidity().intersect(results->validityInterval());
+						return resultState;
 					}
 					else return std::move(input);
 				});
@@ -88,8 +90,11 @@ PipelineFlowState AsynchronousModifier::evaluatePreliminary(TimePoint time, Modi
 {
 	// If results are still available from the last pipeline evaluation, apply them to the input data.
 	if(AsynchronousModifierApplication* asyncModApp = dynamic_object_cast<AsynchronousModifierApplication>(modApp)) {
-		if(asyncModApp->lastComputeResults())
-			return asyncModApp->lastComputeResults()->apply(time, modApp, input);
+		if(asyncModApp->lastComputeResults()) {
+			PipelineFlowState resultState = asyncModApp->lastComputeResults()->apply(time, modApp, input);
+			resultState.mutableStateValidity().intersect(asyncModApp->lastComputeResults()->validityInterval());
+			return resultState;
+		}
 	}
 	return Modifier::evaluatePreliminary(time, modApp, input);
 }
@@ -101,7 +106,7 @@ void AsynchronousModifier::saveToStream(ObjectSaveStream& stream, bool excludeRe
 {
 	Modifier::saveToStream(stream, excludeRecomputableData);
 	stream.beginChunk(0x02);
-	// For future use.
+	// Chunk reserved for future use.
 	stream.endChunk();
 }
 
@@ -111,8 +116,7 @@ void AsynchronousModifier::saveToStream(ObjectSaveStream& stream, bool excludeRe
 void AsynchronousModifier::loadFromStream(ObjectLoadStream& stream)
 {
 	Modifier::loadFromStream(stream);
-	stream.expectChunkRange(0, 2);
-	// For future use.
+	stream.expectChunk(0x02);
 	stream.closeChunk();
 }
 

@@ -70,7 +70,7 @@ bool FHIAimsImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUr
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-void FHIAimsImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr FHIAimsImporter::FrameLoader::loadFile(QFile& file)
 {
 	// Open file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());
@@ -81,7 +81,7 @@ void FHIAimsImporter::FrameLoader::loadFile(QFile& file)
 		stream.seek(frame().byteOffset);
 
 	// Create the destination container for loaded data.
-	std::shared_ptr<ParticleFrameData> frameData = std::make_shared<ParticleFrameData>();
+	auto frameData = std::make_shared<ParticleFrameData>();
 
 	// First pass: determine the cell geometry and number of atoms.
 	AffineTransformation cell = AffineTransformation::Identity();
@@ -108,9 +108,9 @@ void FHIAimsImporter::FrameLoader::loadFile(QFile& file)
 	PropertyPtr posProperty = ParticleProperty::createStandardStorage(totalAtomCount, ParticleProperty::PositionProperty, false);
 	frameData->addParticleProperty(posProperty);
 	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(totalAtomCount, ParticleProperty::TypeProperty, false);
-	ParticleFrameData::ParticleTypeList* typeList = new ParticleFrameData::ParticleTypeList();
-	frameData->addParticleProperty(typeProperty, typeList);
-
+	frameData->addParticleProperty(typeProperty);
+	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
+	
 	// Return to file beginning.
 	stream.seek(0);
 
@@ -130,7 +130,7 @@ void FHIAimsImporter::FrameLoader::loadFile(QFile& file)
 						throw Exception(tr("Invalid fractional atom coordinates (in line %1). Cell vectors have not been specified: %2").arg(stream.lineNumber()).arg(stream.lineString()));
 					pos = cell * pos;
 				}
-				typeProperty->setInt(i, typeList->addParticleTypeName(atomTypeName));
+				typeProperty->setInt(i, typeList->addTypeName(atomTypeName));
 				break;
 			}
 		}
@@ -139,7 +139,7 @@ void FHIAimsImporter::FrameLoader::loadFile(QFile& file)
 	// Since we created particle types on the go while reading the particles, the assigned particle type IDs
 	// depend on the storage order of particles in the file. We rather want a well-defined particle type ordering, that's
 	// why we sort them now.
-	typeList->sortParticleTypesByName(typeProperty.get());
+	typeList->sortTypesByName(typeProperty);
 
 	// Set simulation cell.
 	if(lattVecCount == 3) {
@@ -161,7 +161,7 @@ void FHIAimsImporter::FrameLoader::loadFile(QFile& file)
 	}
 
 	frameData->setStatus(tr("%1 atoms").arg(totalAtomCount));
-	setResult(std::move(frameData));
+	return frameData;
 }
 
 OVITO_END_INLINE_NAMESPACE

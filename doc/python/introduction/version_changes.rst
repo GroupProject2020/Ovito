@@ -78,11 +78,6 @@ Similarily, the :py:meth:`!create_bond_property` and :py:meth:`!create_user_bond
 been replaced by the :py:meth:`~ovito.data.BondPropertiesView.create` method in the new :py:class:`~ovito.data.BondPropertiesView` helper class, which 
 is returned by the :py:attr:`DataCollection.bond_properties <ovito.data.DataCollection.bond_properties>` attribute.
 
-The old :py:meth:`!DataCollection.to_ase_atoms` and :py:meth:`!DataCollection.create_from_ase_atoms` methods
-have been refactored into the new :py:mod:`ovito.io.ase` module and are now standalone functions named :py:func:`~ovito.io.ase.ovito_to_ase` 
-and :py:func:`~ovito.io.ase.ase_to_ovito`. The latter requires that the caller provides an existing data collection object
-as destination for the atoms data, e.g. a :py:class:`~ovito.pipeline.StaticSource` instance.
-
 Particle and bond properties
 ----------------------------------------
 
@@ -145,6 +140,21 @@ The :py:class:`~ovito.data.Bonds` class now mimics the Numpy array interface, gi
 The old :py:attr:`!Bonds.array` accessor attribute has been deprecated.
 
 The :py:class:`!Bonds.Enumerator` helper class has been renamed to :py:class:`~ovito.data.BondsEnumerator`.
+
+File I/O
+------------------------------------
+
+The :py:func:`ovito.io.export_file` function now accepts not only a :py:class:`~ovito.pipeline.Pipeline` object which 
+generates the data to be exported, but alternatively also any :py:class:`~ovito.data.DataCollection` or individual 
+data objects.
+
+Some of the file format names accepted by :py:func:`~ovito.io.export_file` have been renamed and the new ``vtk/trimesh`` 
+has been added, which allows to export a :py:class:`~ovito.data.SurfaceMesh` to a VTK geometry file.
+
+The old :py:meth:`!DataCollection.to_ase_atoms` and :py:meth:`!DataCollection.create_from_ase_atoms` methods
+have been refactored into the new :py:mod:`ovito.io.ase` module and are now standalone functions named :py:func:`~ovito.io.ase.ovito_to_ase` 
+and :py:func:`~ovito.io.ase.ase_to_ovito`. The latter requires that the caller provides an existing data collection object
+as destination for the atoms data, e.g. a :py:class:`~ovito.pipeline.StaticSource` instance.
 
 Changes to the global ``DataSet`` class
 ------------------------------------------

@@ -21,7 +21,8 @@
 
 #include <plugins/pyscript/PyScript.h>
 #include <plugins/pyscript/binding/PythonBinding.h>
-#include <plugins/netcdf/NetCDFImporter.h>
+#include <plugins/netcdf/AMBERNetCDFImporter.h>
+#include <plugins/netcdf/AMBERNetCDFExporter.h>
 #include <plugins/particles/scripting/PythonBinding.h>
 #include <core/app/PluginManager.h>
 
@@ -39,9 +40,12 @@ PYBIND11_PLUGIN(NetCDFPlugin)
 
 	py::module m("NetCDFPlugin");
 
-	ovito_class<NetCDFImporter, ParticleImporter>(m)
-		.def_property("custom_column_mapping", &NetCDFImporter::customColumnMapping, &NetCDFImporter::setCustomColumnMapping)
-		.def_property("use_custom_column_mapping", &NetCDFImporter::useCustomColumnMapping, &NetCDFImporter::setUseCustomColumnMapping)
+	ovito_class<AMBERNetCDFImporter, ParticleImporter>(m)
+		.def_property("custom_column_mapping", &AMBERNetCDFImporter::customColumnMapping, &AMBERNetCDFImporter::setCustomColumnMapping)
+		.def_property("use_custom_column_mapping", &AMBERNetCDFImporter::useCustomColumnMapping, &AMBERNetCDFImporter::setUseCustomColumnMapping)
+	;
+
+	ovito_class<AMBERNetCDFExporter, FileColumnParticleExporter>{m}
 	;
 
 	return m.ptr();

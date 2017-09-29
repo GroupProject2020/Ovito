@@ -71,7 +71,7 @@ private:
 	public:
 
 		/// Constructor.
-		BondsEngineResults() : _bonds(std::make_shared<BondsStorage>()) {}
+		using ComputeEngineResults::ComputeEngineResults;
 
 		/// Injects the computed results into the data pipeline.
 		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
@@ -86,7 +86,7 @@ private:
 		
 	private:
 
-		std::shared_ptr<BondsStorage> _bonds;
+		std::shared_ptr<BondsStorage> _bonds = std::make_shared<BondsStorage>();
 	};
 
 	/// Compute engine that creates bonds between particles.
@@ -95,10 +95,9 @@ private:
 	public:
 
 		/// Constructor.
-		BondsEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, ConstPropertyPtr particleTypes, 
+		BondsEngine(ConstPropertyPtr positions, ConstPropertyPtr particleTypes, 
 				const SimulationCell& simCell, CutoffMode cutoffMode, FloatType maxCutoff, FloatType minCutoff, std::vector<std::vector<FloatType>> pairCutoffsSquared, 
 				ConstPropertyPtr moleculeIDs) :
-					ComputeEngine(validityInterval),
 					_positions(std::move(positions)), 
 					_particleTypes(std::move(particleTypes)), 
 					_simCell(simCell), 

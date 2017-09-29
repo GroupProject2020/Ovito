@@ -52,7 +52,7 @@ bool PDBImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& s
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-void PDBImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 {
 	// Open file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());
@@ -71,7 +71,7 @@ void PDBImporter::FrameLoader::loadFile(QFile& file)
 	while(!stream.eof()) {
 
 		if(isCanceled())
-			return;
+			return {};
 
 		stream.readLine();
 		int lineLength = qstrlen(stream.line());
@@ -127,8 +127,8 @@ void PDBImporter::FrameLoader::loadFile(QFile& file)
 	PropertyPtr posProperty = ParticleProperty::createStandardStorage(numAtoms, ParticleProperty::PositionProperty, true);
 	frameData->addParticleProperty(posProperty);
 	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(numAtoms, ParticleProperty::TypeProperty, true);
-	ParticleFrameData::ParticleTypeList* typeList = new ParticleFrameData::ParticleTypeList();
-	frameData->addParticleProperty(typeProperty, typeList);
+	frameData->addParticleProperty(typeProperty);
+	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
 
 	// Parse atoms.
 	int atomIndex = 0;
@@ -137,9 +137,9 @@ void PDBImporter::FrameLoader::loadFile(QFile& file)
 	PropertyPtr particleIdentifierProperty;
 	PropertyPtr moleculeIdentifierProperty;
 	PropertyPtr moleculeTypeProperty;
-	ParticleFrameData::ParticleTypeList* moleculeTypeList = nullptr;
+	ParticleFrameData::TypeList* moleculeTypeList = nullptr;
 	while(!stream.eof() && atomIndex < numAtoms) {
-		if(!setProgressValueIntermittent(atomIndex)) return;
+		if(!setProgressValueIntermittent(atomIndex)) return {};
 
 		stream.readLine();
 		int lineLength = qstrlen(stream.line());
@@ -156,7 +156,7 @@ void PDBImporter::FrameLoader::loadFile(QFile& file)
 				for(const char* c = stream.line() + 12; c <= stream.line() + std::min(15, lineLength); ++c)
 					if(*c != ' ') atomType[atomTypeLength++] = *c;
 			}
-			*a = typeList->addParticleTypeName(atomType, atomType + atomTypeLength);
+			*a = typeList->addTypeName(atomType, atomType + atomTypeLength);
 #ifdef FLOATTYPE_FLOAT
 			if(lineLength <= 30 || sscanf(stream.line() + 30, "%8g%8g%8g", &p->x(), &p->y(), &p->z()) != 3)
 #else
@@ -192,10 +192,10 @@ void PDBImporter::FrameLoader::loadFile(QFile& file)
 			if(moleculeTypeLength != 0) {
 				if(!moleculeTypeProperty) {
 					moleculeTypeProperty = ParticleProperty::createStandardStorage(numAtoms, ParticleProperty::MoleculeTypeProperty, true);
-					moleculeTypeList = new ParticleFrameData::ParticleTypeList();
-					frameData->addParticleProperty(moleculeTypeProperty, moleculeTypeList);
+					frameData->addParticleProperty(moleculeTypeProperty);
+					moleculeTypeList = frameData->propertyTypesList(moleculeTypeProperty);
 				}
-				moleculeTypeProperty->setInt(atomIndex, moleculeTypeList->addParticleTypeName(moleculeType, moleculeType + moleculeTypeLength));
+				moleculeTypeProperty->setInt(atomIndex, moleculeTypeList->addTypeName(moleculeType, moleculeType + moleculeTypeLength));
 			}
 
 			atomIndex++;
@@ -249,7 +249,7 @@ void PDBImporter::FrameLoader::loadFile(QFile& file)
 	}
 
 	frameData->setStatus(tr("Number of particles: %1").arg(numAtoms));
-	setResult(std::move(frameData));
+	return frameData;
 }
 
 OVITO_END_INLINE_NAMESPACE

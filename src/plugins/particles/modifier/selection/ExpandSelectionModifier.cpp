@@ -84,14 +84,14 @@ Future<AsynchronousModifier::ComputeEnginePtr> ExpandSelectionModifier::createEn
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	if(mode() == CutoffRange) {
-		return std::make_shared<ExpandSelectionCutoffEngine>(input.stateValidity(), posProperty->storage(), inputCell->data(), inputSelection->storage(), numberOfIterations(), cutoffRange());
+		return std::make_shared<ExpandSelectionCutoffEngine>(posProperty->storage(), inputCell->data(), inputSelection->storage(), numberOfIterations(), cutoffRange());
 	}
 	else if(mode() == NearestNeighbors) {
-		return std::make_shared<ExpandSelectionNearestEngine>(input.stateValidity(), posProperty->storage(), inputCell->data(), inputSelection->storage(), numberOfIterations(), numNearestNeighbors());
+		return std::make_shared<ExpandSelectionNearestEngine>(posProperty->storage(), inputCell->data(), inputSelection->storage(), numberOfIterations(), numNearestNeighbors());
 	}
 	else if(mode() == BondedNeighbors) {
 		BondsObject* bonds = pih.expectBonds();
-		return std::make_shared<ExpandSelectionBondedEngine>(input.stateValidity(), posProperty->storage(), inputCell->data(), inputSelection->storage(), numberOfIterations(), bonds->storage());
+		return std::make_shared<ExpandSelectionBondedEngine>(posProperty->storage(), inputCell->data(), inputSelection->storage(), numberOfIterations(), bonds->storage());
 	}
 	else {
 		throwException(tr("Invalid selection expansion mode."));

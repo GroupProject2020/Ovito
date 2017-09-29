@@ -70,7 +70,6 @@ Future<AsynchronousModifier::ComputeEnginePtr> CommonNeighborAnalysisModifier::c
 	SimulationCellObject* simCell = pih.expectSimulationCell();
 	if(simCell->is2D())
 		throwException(tr("The CNA modifier does not support 2d simulation cells."));
-	TimeInterval validityInterval = input.stateValidity();
 
 	// Get particle selection.
 	ConstPropertyPtr selectionProperty;
@@ -79,15 +78,15 @@ Future<AsynchronousModifier::ComputeEnginePtr> CommonNeighborAnalysisModifier::c
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	if(mode() == AdaptiveCutoffMode) {
-		return std::make_shared<AdaptiveCNAEngine>(validityInterval, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty));
+		return std::make_shared<AdaptiveCNAEngine>(posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty));
 	}
 	else if(mode() == BondMode) {
 		// Get input bonds.
 		BondsObject* bondsObj = pih.expectBonds();
-		return std::make_shared<BondCNAEngine>(validityInterval, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty), bondsObj->storage());
+		return std::make_shared<BondCNAEngine>(posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty), bondsObj->storage());
 	}
 	else {
-		return std::make_shared<FixedCNAEngine>(validityInterval, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty), cutoff());
+		return std::make_shared<FixedCNAEngine>(posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty), cutoff());
 	}
 }
 

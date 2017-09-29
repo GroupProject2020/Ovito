@@ -173,11 +173,11 @@ Future<AsynchronousModifier::ComputeEnginePtr> ReferenceConfigurationModifier::c
 * Constructor.
 ******************************************************************************/
 ReferenceConfigurationModifier::RefConfigEngineBase::RefConfigEngineBase(
-	const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell,
+	ConstPropertyPtr positions, const SimulationCell& simCell,
 	ConstPropertyPtr refPositions, const SimulationCell& simCellRef,
 	ConstPropertyPtr identifiers, ConstPropertyPtr refIdentifiers,
 	AffineMappingType affineMapping, bool useMinimumImageConvention) :
-	ComputeEngine(validityInterval),
+	ComputeEngine(),
 	_positions(std::move(positions)),
 	_simCell(simCell),
 	_refPositions(std::move(refPositions)),

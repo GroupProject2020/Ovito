@@ -62,7 +62,7 @@ private:
 	public:
 
 		/// Constructor.
-		DisplacementResults(size_t particleCount) : 
+		DisplacementResults(const TimeInterval& validityInterval, size_t particleCount) : ComputeEngineResults(validityInterval),
 			_displacements(ParticleProperty::createStandardStorage(particleCount, ParticleProperty::DisplacementProperty, false)),
 			_displacementMagnitudes(ParticleProperty::createStandardStorage(particleCount, ParticleProperty::DisplacementMagnitudeProperty, false)) {}
 
@@ -91,9 +91,9 @@ private:
 				ConstPropertyPtr refPositions, const SimulationCell& simCellRef,
 				ConstPropertyPtr identifiers, ConstPropertyPtr refIdentifiers,
 				AffineMappingType affineMapping, bool useMinimumImageConvention) :
-			RefConfigEngineBase(validityInterval, positions, simCell, std::move(refPositions), simCellRef,
+			RefConfigEngineBase(positions, simCell, std::move(refPositions), simCellRef,
 				std::move(identifiers), std::move(refIdentifiers), affineMapping, useMinimumImageConvention),
-			_results(std::make_shared<DisplacementResults>(positions->size())) {}
+			_results(std::make_shared<DisplacementResults>(validityInterval, positions->size())) {}
 
 		/// Computes the modifier's results.
 		virtual void perform() override;

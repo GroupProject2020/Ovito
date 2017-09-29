@@ -228,7 +228,7 @@ inline bool parseBool(const char* s, int& d)
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-void XYZImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr XYZImporter::FrameLoader::loadFile(QFile& file)
 {
 	// Open file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());
@@ -239,7 +239,7 @@ void XYZImporter::FrameLoader::loadFile(QFile& file)
 		stream.seek(frame().byteOffset);
 
 	// Create the destination container for loaded data.
-	std::shared_ptr<XYZFrameData> frameData = std::make_shared<XYZFrameData>();
+	auto frameData = std::make_shared<XYZFrameData>();
 
 	// Parse number of atoms.
 	int numParticles;
@@ -470,15 +470,14 @@ void XYZImporter::FrameLoader::loadFile(QFile& file)
 		frameData->detectedColumnMapping().resize(lineString.split(ws_re, QString::SkipEmptyParts).size());
 		frameData->detectedColumnMapping().setFileExcerpt(fileExcerpt);
 
-		setResult(std::move(frameData));
-		return;
+		return frameData;
 	}
 
 	// Parse data columns.
 	InputColumnReader columnParser(_columnMapping, *frameData, numParticles);
 	try {
 		for(int i = 0; i < numParticles; i++) {
-			if(!setProgressValueIntermittent(i)) return;
+			if(!setProgressValueIntermittent(i)) return {};
 			stream.readLine();
 			columnParser.readParticle(i, stream.line());
 		}
@@ -492,7 +491,7 @@ void XYZImporter::FrameLoader::loadFile(QFile& file)
 	// why we sort them now according to their names.
 	columnParser.sortParticleTypes();
 
-	PropertyStorage* posProperty = frameData->particleProperty(ParticleProperty::PositionProperty);
+	PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticleProperty::PositionProperty);
 	if(posProperty && numParticles > 0) {
 		Box3 boundingBox;
 		boundingBox.addPoints(posProperty->constDataPoint3(), posProperty->size());
@@ -528,7 +527,8 @@ void XYZImporter::FrameLoader::loadFile(QFile& file)
 		frameData->setStatus(tr("%1 particles").arg(numParticles));
 	else
 		frameData->setStatus(tr("%1 particles\n%2").arg(numParticles).arg(commentLine));
-	setResult(std::move(frameData));
+	
+	return frameData;
 }
 
 /******************************************************************************

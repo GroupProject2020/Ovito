@@ -75,7 +75,7 @@ private:
 	public:
 
 		/// Constructor.
-		ComputePolyhedraResults() : _mesh(std::make_shared<HalfEdgeMesh<>>()) {}
+		using ComputeEngineResults::ComputeEngineResults;
 
 		/// Injects the computed results into the data pipeline.
 		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
@@ -85,7 +85,7 @@ private:
 						
 	private:
 
-		std::shared_ptr<HalfEdgeMesh<>> _mesh;
+		std::shared_ptr<HalfEdgeMesh<>> _mesh = std::make_shared<HalfEdgeMesh<>>();
 	};
 
 	/// Computation engine that builds the polyhedra.
@@ -94,10 +94,10 @@ private:
 	public:
 
 		/// Constructor.
-		ComputePolyhedraEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, 
+		ComputePolyhedraEngine(ConstPropertyPtr positions, 
 			ConstPropertyPtr selection, ConstPropertyPtr particleTypes, 
 			std::shared_ptr<const BondsStorage> bonds, const SimulationCell& simCell) :
-			ComputeEngine(validityInterval), _positions(std::move(positions)), _selection(std::move(selection)), 
+			_positions(std::move(positions)), _selection(std::move(selection)), 
 			_particleTypes(std::move(particleTypes)), 
 			_bonds(std::move(bonds)), _simCell(simCell), _results(std::make_shared<ComputePolyhedraResults>()) {}
 

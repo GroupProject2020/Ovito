@@ -87,8 +87,7 @@ class ElasticStrainEngine : public StructureIdentificationModifier::StructureIde
 public:
 
 	/// Constructor.
-	ElasticStrainEngine(const TimeInterval& validityInterval,
-			ConstPropertyPtr positions, const SimulationCell& simCell,
+	ElasticStrainEngine(ConstPropertyPtr positions, const SimulationCell& simCell,
 			int inputCrystalStructure, std::vector<Matrix3> preferredCrystalOrientations,
 			bool calculateDeformationGradients, bool calculateStrainTensors,
 			FloatType latticeConstant, FloatType caRatio, bool pushStrainTensorsForward);

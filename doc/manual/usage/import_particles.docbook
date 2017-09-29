@@ -174,7 +174,7 @@
             </row>
             <row>
               <entry>NetCDF</entry>
-              <entry><para>Binary format for molecular dynamics data based on the standard NetCDF container. There exists an <link xlink:href="https://github.com/pastewka/lammps-netcdf">extension module for LAMMPS</link> that adds NetCDF output.</para></entry>
+              <entry><para>Binary format for molecular dynamics data following the <link xlink:href="http://ambermd.org/netcdf/nctraj.pdf">AMBER format convention</link>. NetCDF files are produced by the LAMMPS <link xlink:href="http://lammps.sandia.gov/doc/dump_netcdf.html">dump netcdf</link> command.</para></entry>
             </row>
             <row>
               <entry>PDB</entry>

@@ -20,7 +20,7 @@
 ###############################################################################
 
 OVITO_STANDARD_PLUGIN(NetCDFPluginGui
-	SOURCES NetCDFImporterEditor.cpp
+	SOURCES AMBERNetCDFImporterEditor.cpp
 	PLUGIN_DEPENDENCIES NetCDFPlugin ParticlesGui
 	GUI_PLUGIN
 )

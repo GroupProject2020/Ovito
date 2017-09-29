@@ -31,7 +31,7 @@ namespace Ovito { namespace StdObj {
 /**
  * \brief Memory storage used for e.g. particle and bond properties.
  */
-class OVITO_STDOBJ_EXPORT PropertyStorage : public QSharedData
+class OVITO_STDOBJ_EXPORT PropertyStorage : public std::enable_shared_from_this<PropertyStorage>
 {
 public:
 

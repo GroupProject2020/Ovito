@@ -105,7 +105,7 @@ void CAImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sour
 /******************************************************************************
 * Parses the given input file.
 ******************************************************************************/
-void CAImporter::FrameLoader::loadFile(QFile& file)
+FileSourceImporter::FrameDataPtr CAImporter::FrameLoader::loadFile(QFile& file)
 {
 	// Open file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());
@@ -125,7 +125,7 @@ void CAImporter::FrameLoader::loadFile(QFile& file)
 		throw Exception(tr("Failed to parse file. This is not a proper CA file written by OVITO or the Crystal Analysis Tool."));
 
 	// Create the destination container for loaded data.
-	std::shared_ptr<CrystalAnalysisFrameData> frameData = std::make_shared<CrystalAnalysisFrameData>();
+	auto frameData = std::make_shared<CrystalAnalysisFrameData>();
 	
 	QString caFilename;
 	QString atomsFilename;
@@ -239,7 +239,7 @@ void CAImporter::FrameLoader::loadFile(QFile& file)
 			setProgressMaximum(numClusters);
 			for(int index = 0; index < numClusters; index++) {
 				if(!setProgressValueIntermittent(index))
-					return;
+					return {};
 				if(fileFormatVersion <= 4) {
 					int patternId = 0, clusterId = 0, clusterProc = 0;
 					stream.readLine();
@@ -316,7 +316,7 @@ void CAImporter::FrameLoader::loadFile(QFile& file)
 			setProgressMaximum(numClusterTransitions);
 			for(int index = 0; index < numClusterTransitions; index++) {
 				if(!setProgressValueIntermittent(index))
-					return;
+					return {};
 				int clusterIndex1, clusterIndex2;
 				if(sscanf(stream.readLine(), "TRANSITION %i %i", &clusterIndex1, &clusterIndex2) != 2 || clusterIndex1 >= numClusters || clusterIndex2 >= numClusters) {
 					throw Exception(tr("Failed to parse file. Invalid cluster transition in line %1.").arg(stream.lineNumber()));
@@ -340,7 +340,7 @@ void CAImporter::FrameLoader::loadFile(QFile& file)
 			setProgressMaximum(numDislocationSegments);
 			for(int index = 0; index < numDislocationSegments; index++) {
 				if(!setProgressValueIntermittent(index))
-					return;
+					return {};
 				int segmentId;
 				if(sscanf(stream.readLine(), "%i", &segmentId) != 1)
 					throw Exception(tr("Failed to parse file. Invalid segment ID in line %1.").arg(stream.lineNumber()));
@@ -419,7 +419,7 @@ void CAImporter::FrameLoader::loadFile(QFile& file)
 			auto defectSurface = frameData->defectSurface();
 			defectSurface->reserveVertices(numDefectMeshVertices);
 			for(int index = 0; index < numDefectMeshVertices; index++) {
-				if(!setProgressValueIntermittent(index)) return;
+				if(!setProgressValueIntermittent(index)) return {};
 				Point3 p;
 				if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &p.x(), &p.y(), &p.z()) != 3)
 					throw Exception(tr("Failed to parse file. Invalid point in line %1.").arg(stream.lineNumber()));
@@ -436,7 +436,7 @@ void CAImporter::FrameLoader::loadFile(QFile& file)
 			defectSurface->reserveFaces(numDefectMeshFacets);
 			for(int index = 0; index < numDefectMeshFacets; index++) {
 				if(!setProgressValueIntermittent(index))
-					return;
+					return {};
 				int v[3];
 				if(sscanf(stream.readLine(), "%i %i %i", &v[0], &v[1], &v[2]) != 3)
 					throw Exception(tr("Failed to parse file. Invalid triangle facet in line %1.").arg(stream.lineNumber()));
@@ -446,7 +446,7 @@ void CAImporter::FrameLoader::loadFile(QFile& file)
 			// Read facet adjacency information.
 			for(int index = 0; index < numDefectMeshFacets; index++) {
 				if(!setProgressValueIntermittent(index + numDefectMeshFacets))
-					return;
+					return {};
 				int v[3];
 				if(sscanf(stream.readLine(), "%i %i %i", &v[0], &v[1], &v[2]) != 3)
 					throw Exception(tr("Failed to parse file. Invalid triangle adjacency info in line %1.").arg(stream.lineNumber()));
@@ -471,7 +471,7 @@ void CAImporter::FrameLoader::loadFile(QFile& file)
 			auto partitionMesh = frameData->partitionMesh();
 			partitionMesh->reserveVertices(numVertices);
 			for(int index = 0; index < numVertices; index++) {
-				if(!setProgressValueIntermittent(index)) return;
+				if(!setProgressValueIntermittent(index)) return {};
 				Point3 p;
 				if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &p.x(), &p.y(), &p.z()) != 3)
 					throw Exception(tr("Failed to parse file. Invalid point in line %1.").arg(stream.lineNumber()));
@@ -488,7 +488,7 @@ void CAImporter::FrameLoader::loadFile(QFile& file)
 			partitionMesh->reserveFaces(numFacets);
 			for(int index = 0; index < numFacets; index++) {
 				if(!setProgressValueIntermittent(index))
-					return;
+					return {};
 				int v[3];
 				int region;
 				if(sscanf(stream.readLine(), "%i %i %i %i", &region, &v[0], &v[1], &v[2]) != 4)
@@ -500,7 +500,7 @@ void CAImporter::FrameLoader::loadFile(QFile& file)
 			// Read facet adjacency information.
 			for(int index = 0; index < numFacets; index++) {
 				if(!setProgressValueIntermittent(index + numFacets))
-					return;
+					return {};
 				int v[3];
 				int mfe[3][2];
 				int oppositeFaceIndex;
@@ -535,7 +535,7 @@ void CAImporter::FrameLoader::loadFile(QFile& file)
 			auto slipSurface = frameData->slipSurface();
 			slipSurface->reserveVertices(numVertices);
 			for(int index = 0; index < numVertices; index++) {
-				if(!setProgressValueIntermittent(index)) return;
+				if(!setProgressValueIntermittent(index)) return {};
 				Point3 p;
 				if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &p.x(), &p.y(), &p.z()) != 3)
 					throw Exception(tr("Failed to parse file. Invalid point in line %1.").arg(stream.lineNumber()));
@@ -552,7 +552,7 @@ void CAImporter::FrameLoader::loadFile(QFile& file)
 			slipSurface->reserveFaces(numFacets);
 			for(int index = 0; index < numFacets; index++) {
 				if(!setProgressValueIntermittent(index))
-					return;
+					return {};
 				Vector3 slipVector;
 				int clusterId;
 				int v[3];
@@ -576,7 +576,7 @@ void CAImporter::FrameLoader::loadFile(QFile& file)
 			auto stackingFaults = frameData->stackingFaults();
 			stackingFaults->reserveVertices(numVertices);
 			for(int index = 0; index < numVertices; index++) {
-				if(!setProgressValueIntermittent(index)) return;
+				if(!setProgressValueIntermittent(index)) return {};
 				Point3 p;
 				if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &p.x(), &p.y(), &p.z()) != 3)
 					throw Exception(tr("Failed to parse file. Invalid point in line %1.").arg(stream.lineNumber()));
@@ -593,7 +593,7 @@ void CAImporter::FrameLoader::loadFile(QFile& file)
 			stackingFaults->reserveFaces(numFacets);
 			for(int index = 0; index < numFacets; index++) {
 				if(!setProgressValueIntermittent(index))
-					return;
+					return {};
 				Vector3 slipVector;
 				int clusterId;
 				int v[3];
@@ -623,7 +623,7 @@ void CAImporter::FrameLoader::loadFile(QFile& file)
 	frameData->simulationCell().setPbcFlags(pbcFlags[0], pbcFlags[1], pbcFlags[2]);
 
 	frameData->setStatus(tr("Number of dislocations: %1").arg(numDislocationSegments));	
-	setResult(std::move(frameData));
+	return frameData;
 }
 
 /******************************************************************************

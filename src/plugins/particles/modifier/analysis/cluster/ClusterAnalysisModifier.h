@@ -78,7 +78,7 @@ private:
 	public:
 
 		/// Constructor.
-		ClusterAnalysisResults(size_t particleCount) :
+		ClusterAnalysisResults(size_t particleCount) : 
 			_particleClusters(ParticleProperty::createStandardStorage(particleCount, ParticleProperty::ClusterProperty, false)) {}
 
 		/// Injects the computed results into the data pipeline.
@@ -112,8 +112,7 @@ private:
 	public:
 
 		/// Constructor.
-		ClusterAnalysisEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell, bool sortBySize, ConstPropertyPtr selection) :
-			ComputeEngine(validityInterval),
+		ClusterAnalysisEngine(ConstPropertyPtr positions, const SimulationCell& simCell, bool sortBySize, ConstPropertyPtr selection) :
 			_positions(positions), _simCell(simCell), 
 			_sortBySize(sortBySize),
 			_selection(std::move(selection)),
@@ -149,8 +148,8 @@ private:
 	public:
 
 		/// Constructor.
-		CutoffClusterAnalysisEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell, bool sortBySize, ConstPropertyPtr selection, FloatType cutoff) :
-			ClusterAnalysisEngine(validityInterval, std::move(positions), simCell, sortBySize, std::move(selection)),
+		CutoffClusterAnalysisEngine(ConstPropertyPtr positions, const SimulationCell& simCell, bool sortBySize, ConstPropertyPtr selection, FloatType cutoff) :
+			ClusterAnalysisEngine(std::move(positions), simCell, sortBySize, std::move(selection)),
 			_cutoff(cutoff) {}
 
 		/// Performs the actual clustering algorithm.
@@ -170,8 +169,8 @@ private:
 	public:
 
 		/// Constructor.
-		BondClusterAnalysisEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell, bool sortBySize, ConstPropertyPtr selection, ConstBondsPtr bonds) :
-			ClusterAnalysisEngine(validityInterval, std::move(positions), simCell, sortBySize, std::move(selection)),
+		BondClusterAnalysisEngine(ConstPropertyPtr positions, const SimulationCell& simCell, bool sortBySize, ConstPropertyPtr selection, ConstBondsPtr bonds) :
+			ClusterAnalysisEngine(std::move(positions), simCell, sortBySize, std::move(selection)),
 			_bonds(std::move(bonds)) {}
 
 		/// Performs the actual clustering algorithm.

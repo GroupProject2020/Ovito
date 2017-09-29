@@ -38,34 +38,36 @@
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import)
 
 /******************************************************************************
-* Sorts the particle types w.r.t. their name. Reassigns the per-particle type IDs.
-* This method is used by file parsers that create particle types on the go while the read the particle data.
-* In such a case, the assignment of IDs to types depends on the storage order of particles in the file, which is not desirable.
+* Sorts the types w.r.t. their name. Reassigns the per-element type IDs too.
+* This method is used by file parsers that create particle/bond types on the 
+* go while the read the data. In such a case, the assignment of IDs to types 
+* depends on the storage order of particles/bonds in the file, which is not desirable.
 ******************************************************************************/
-void ParticleFrameData::ParticleTypeList::sortParticleTypesByName(PropertyStorage* typeProperty)
+void ParticleFrameData::TypeList::sortTypesByName(const PropertyPtr& typeProperty)
 {
 	// Check if type IDs form a consecutive sequence starting at 1.
-	for(size_t index = 0; index < _particleTypes.size(); index++) {
-		if(_particleTypes[index].id != index + 1)
+	// If not, we leave the type order as it is.
+	for(size_t index = 0; index < _types.size(); index++) {
+		if(_types[index].id != index + 1)
 			return;
 	}
 
 	// Check if types are already in the correct order.
-	auto compare = [](const ParticleTypeDefinition& a, const ParticleTypeDefinition& b) -> bool { return a.name.compare(b.name) < 0; };
-	if(std::is_sorted(_particleTypes.begin(), _particleTypes.end(), compare))
+	auto compare = [](const TypeDefinition& a, const TypeDefinition& b) -> bool { return a.name.compare(b.name) < 0; };
+	if(std::is_sorted(_types.begin(), _types.end(), compare))
 		return;
 
-	// Reorder types.
-	std::sort(_particleTypes.begin(), _particleTypes.end(), compare);
+	// Reorder types by name.
+	std::sort(_types.begin(), _types.end(), compare);
 
 	// Build map of IDs.
-	std::vector<int> mapping(_particleTypes.size() + 1);
-	for(size_t index = 0; index < _particleTypes.size(); index++) {
-		mapping[_particleTypes[index].id] = index + 1;
-		_particleTypes[index].id = index + 1;
+	std::vector<int> mapping(_types.size() + 1);
+	for(size_t index = 0; index < _types.size(); index++) {
+		mapping[_types[index].id] = index + 1;
+		_types[index].id = index + 1;
 	}
 
-	// Remap particle type IDs.
+	// Remap particle/bond type IDs.
 	if(typeProperty) {
 		for(int& t : typeProperty->intRange()) {
 			OVITO_ASSERT(t >= 1 && t < mapping.size());
@@ -75,12 +77,12 @@ void ParticleFrameData::ParticleTypeList::sortParticleTypesByName(PropertyStorag
 }
 
 /******************************************************************************
-* Sorts particle types with ascending identifier.
+* Sorts particle/bond types according numeric identifier.
 ******************************************************************************/
-void ParticleFrameData::ParticleTypeList::sortParticleTypesById()
+void ParticleFrameData::TypeList::sortTypesById()
 {
-	auto compare = [](const ParticleTypeDefinition& a, const ParticleTypeDefinition& b) -> bool { return a.id < b.id; };
-	std::sort(_particleTypes.begin(), _particleTypes.end(), compare);
+	auto compare = [](const TypeDefinition& a, const TypeDefinition& b) -> bool { return a.id < b.id; };
+	std::sort(_types.begin(), _types.end(), compare);
 }
 
 /******************************************************************************
@@ -137,10 +139,24 @@ PipelineFlowState ParticleFrameData::handOver(DataSet* dataset, const PipelineFl
 			propertyObj = ParticleProperty::createFromStorage(dataset, std::move(property));
 		}
 
-		// Transfer particle types.
-		if(ParticleTypeList* typeList = getTypeListOfParticleProperty(propertyObj->storage().get())) {
-			insertParticleTypes(propertyObj, typeList, isNewFile);
+		// Auto-adjust particle display radius.
+		if(isNewFile && propertyObj->type() == ParticleProperty::PositionProperty) {
+			if(ParticleDisplay* particleDisplay = dynamic_object_cast<ParticleDisplay>(propertyObj->displayObject())) {
+				FloatType cellDiameter = (
+						simulationCell().matrix().column(0) +
+						simulationCell().matrix().column(1) +
+						simulationCell().matrix().column(2)).length();
+				// Limit particle radius to a fraction of the cell diameter. 
+				// This is to avoid extremely large particles when the length scale of the simulation is <<1.
+				cellDiameter /= 2;
+				if(particleDisplay->defaultParticleRadius() > cellDiameter)
+					particleDisplay->setDefaultParticleRadius(cellDiameter);
+			}
 		}
+
+		// Transfer particle types.
+		auto typeList = _typeLists.find(propertyObj->storage().get());
+		insertTypes(propertyObj, (typeList != _typeLists.end()) ? typeList->second.get() : nullptr, isNewFile, false);
 
 		output.addObject(propertyObj);
 	}
@@ -185,10 +201,9 @@ PipelineFlowState ParticleFrameData::handOver(DataSet* dataset, const PipelineFl
 			}
 
 			// Transfer bond types.
-			if(BondTypeList* typeList = getTypeListOfBondProperty(propertyObj->storage().get())) {
-				insertBondTypes(propertyObj, typeList);
-			}
-
+			auto typeList = _typeLists.find(propertyObj->storage().get());
+			insertTypes(propertyObj, (typeList != _typeLists.end()) ? typeList->second.get() : nullptr, isNewFile, true);
+	
 			output.addObject(propertyObj);
 		}
 	}
@@ -233,39 +248,46 @@ PipelineFlowState ParticleFrameData::handOver(DataSet* dataset, const PipelineFl
 }
 
 /******************************************************************************
-* Inserts the stores particle types into the given destination object.
+* Inserts the particle or bond types into the given destination property object.
 ******************************************************************************/
-void ParticleFrameData::insertParticleTypes(ParticleProperty* typeProperty, ParticleTypeList* typeList, bool isNewFile)
+void ParticleFrameData::insertTypes(PropertyObject* typeProperty, TypeList* typeList, bool isNewFile, bool isBondProperty)
 {
 	QSet<ElementType*> activeTypes;
 	if(typeList) {
-		for(const auto& item : typeList->particleTypes()) {
+		for(const auto& item : typeList->types()) {
 			QString name = item.name;
 			if(name.isEmpty())
 				name = ParticleImporter::tr("Type %1").arg(item.id);
-			OORef<ParticleType> ptype = static_object_cast<ParticleType>(typeProperty->elementType(name));
+			OORef<ElementType> ptype = typeProperty->elementType(name);
 			if(ptype) {
 				ptype->setId(item.id);
 			}
 			else {
-				ptype = static_object_cast<ParticleType>(typeProperty->elementType(item.id));
+				ptype = typeProperty->elementType(item.id);
 				if(ptype) {
 					if(item.name.isEmpty() == false)
 						ptype->setName(item.name);
 				}
 				else {
-					ptype = new ParticleType(typeProperty->dataset());
+					if(!isBondProperty) {
+						ptype = new ParticleType(typeProperty->dataset());
+						if(item.radius == 0)
+							static_object_cast<ParticleType>(ptype)->setRadius(ParticleType::getDefaultParticleRadius((ParticleProperty::Type)typeProperty->type(), name, ptype->id()));
+					}
+					else {
+						ptype = new BondType(typeProperty->dataset());
+						if(item.radius == 0)
+							static_object_cast<BondType>(ptype)->setRadius(BondType::getDefaultBondRadius((BondProperty::Type)typeProperty->type(), name, ptype->id()));
+					}
 					ptype->setId(item.id);
 					ptype->setName(name);
 
-					// Assign initial standard color to new particle types.
 					if(item.color != Color(0,0,0))
 						ptype->setColor(item.color);
+					else if(!isBondProperty)
+						ptype->setColor(ParticleType::getDefaultParticleColor((ParticleProperty::Type)typeProperty->type(), name, ptype->id()));
 					else
-						ptype->setColor(ParticleType::getDefaultParticleColor(typeProperty->type(), name, ptype->id()));
-
-					if(item.radius == 0)
-						ptype->setRadius(ParticleType::getDefaultParticleRadius(typeProperty->type(), name, ptype->id()));
+						ptype->setColor(BondType::getDefaultBondColor((BondProperty::Type)typeProperty->type(), name, ptype->id()));
 
 					typeProperty->addElementType(ptype);
 				}
@@ -275,65 +297,21 @@ void ParticleFrameData::insertParticleTypes(ParticleProperty* typeProperty, Part
 			if(item.color != Color(0,0,0))
 				ptype->setColor(item.color);
 
-			if(item.radius != 0)
-				ptype->setRadius(item.radius);
+			if(item.radius != 0) {
+				if(!isBondProperty)
+					static_object_cast<ParticleType>(ptype)->setRadius(item.radius);
+				else
+					static_object_cast<BondType>(ptype)->setRadius(item.radius);
+			}
 		}
 	}
 
 	if(isNewFile) {
-		// Remove unused particle types.
+		// Remove unused types.
 		for(int index = typeProperty->elementTypes().size() - 1; index >= 0; index--) {
 			if(!activeTypes.contains(typeProperty->elementTypes()[index]))
 				typeProperty->removeElementType(index);
 		}
-	}
-}
-
-/******************************************************************************
-* Inserts the stores bond types into the given destination object.
-******************************************************************************/
-void ParticleFrameData::insertBondTypes(BondProperty* typeProperty, BondTypeList* typeList)
-{
-	QSet<ElementType*> activeTypes;
-	if(typeList) {
-		for(const auto& item : typeList->bondTypes()) {
-			OORef<BondType> type = static_object_cast<BondType>(typeProperty->elementType(item.id));
-			QString name = item.name;
-			if(name.isEmpty())
-				name = ParticleImporter::tr("Type %1").arg(item.id);
-
-			if(type == nullptr) {
-				type = new BondType(typeProperty->dataset());
-				type->setId(item.id);
-
-				// Assign initial standard color to new bond type.
-				if(item.color != Color(0,0,0))
-					type->setColor(item.color);
-				else
-					type->setColor(BondType::getDefaultBondColor(typeProperty->type(), name, type->id()));
-
-				if(item.radius == 0)
-					type->setRadius(BondType::getDefaultBondRadius(typeProperty->type(), name, type->id()));
-
-				typeProperty->addElementType(type);
-			}
-			activeTypes.insert(type);
-
-			if(type->name().isEmpty())
-				type->setName(name);
-
-			if(item.color != Color(0,0,0))
-				type->setColor(item.color);
-
-			if(item.radius != 0)
-				type->setRadius(item.radius);
-		}
-	}
-
-	// Remove unused bond types.
-	for(int index = typeProperty->elementTypes().size() - 1; index >= 0; index--) {
-		if(!activeTypes.contains(typeProperty->elementTypes()[index]))
-			typeProperty->removeElementType(index);
 	}
 }
 

@@ -69,7 +69,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CentroSymmetryModifier::createEng
 		throwException(tr("The number of neighbors to take into account for the centrosymmetry calculation must be a positive, even integer."));
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<CentroSymmetryEngine>(input.stateValidity(), posProperty->storage(), simCell->data(), numNeighbors());
+	return std::make_shared<CentroSymmetryEngine>(posProperty->storage(), simCell->data(), numNeighbors());
 }
 
 /******************************************************************************

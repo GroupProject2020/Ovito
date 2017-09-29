@@ -150,10 +150,10 @@ private:
 	public:
 
 		/// Constructor.
-		PTMEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, ConstPropertyPtr particleTypes, const SimulationCell& simCell,
+		PTMEngine(ConstPropertyPtr positions, ConstPropertyPtr particleTypes, const SimulationCell& simCell,
 				QVector<bool> typesToIdentify, ConstPropertyPtr selection,
 				bool outputInteratomicDistance, bool outputOrientation, bool outputDeformationGradient, bool outputAlloyTypes) :
-			StructureIdentificationEngine(validityInterval, positions, simCell, std::move(typesToIdentify), std::move(selection)),
+			StructureIdentificationEngine(positions, simCell, std::move(typesToIdentify), std::move(selection)),
 			_particleTypes(std::move(particleTypes)),
 			_results(std::make_shared<PTMResults>(positions->size(), outputInteratomicDistance, outputOrientation, outputDeformationGradient, outputAlloyTypes)) {}
 

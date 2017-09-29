@@ -149,8 +149,8 @@ private:
 	public:
 
 		/// Constructor.
-		FixedCNAEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell, QVector<bool> typesToIdentify, ConstPropertyPtr selection, FloatType cutoff) :
-			StructureIdentificationEngine(validityInterval, std::move(positions), simCell, std::move(typesToIdentify), std::move(selection)), _cutoff(cutoff) {}
+		FixedCNAEngine(ConstPropertyPtr positions, const SimulationCell& simCell, QVector<bool> typesToIdentify, ConstPropertyPtr selection, FloatType cutoff) :
+			StructureIdentificationEngine(std::move(positions), simCell, std::move(typesToIdentify), std::move(selection)), _cutoff(cutoff) {}
 
 		/// Computes the modifier's results.
 		virtual void perform() override;
@@ -200,8 +200,8 @@ private:
 	public:
 
 		/// Constructor.
-		BondCNAEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell, QVector<bool> typesToIdentify, ConstPropertyPtr selection, ConstBondsPtr bonds) :
-			StructureIdentificationEngine(validityInterval, std::move(positions), simCell, std::move(typesToIdentify), std::move(selection)), 
+		BondCNAEngine(ConstPropertyPtr positions, const SimulationCell& simCell, QVector<bool> typesToIdentify, ConstPropertyPtr selection, ConstBondsPtr bonds) :
+			StructureIdentificationEngine(std::move(positions), simCell, std::move(typesToIdentify), std::move(selection)), 
 			_bonds(std::move(bonds)) {}
 
 		/// Computes the modifier's results.

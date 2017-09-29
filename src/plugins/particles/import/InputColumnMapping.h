@@ -189,13 +189,13 @@ private:
 	ParticleFrameData& _destination;
 
 	struct TargetPropertyRecord {
-		PropertyStorage* property;
+		PropertyPtr property;
 		uint8_t* data;
 		size_t stride;
 		size_t count;
 		int vectorComponent;
 		bool isInt;
-		ParticleFrameData::ParticleTypeList* typeList;
+		ParticleFrameData::TypeList* typeList = nullptr;
 		bool numericParticleTypes;
 	};
 

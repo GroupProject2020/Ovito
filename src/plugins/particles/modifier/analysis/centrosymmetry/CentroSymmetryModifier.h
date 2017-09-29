@@ -98,8 +98,7 @@ private:
 	public:
 
 		/// Constructor.
-		CentroSymmetryEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell, int nneighbors) :
-			ComputeEngine(validityInterval),
+		CentroSymmetryEngine(ConstPropertyPtr positions, const SimulationCell& simCell, int nneighbors) :
 			_nneighbors(nneighbors),
 			_positions(positions),
 			_simCell(simCell),
