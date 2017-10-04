@@ -185,11 +185,13 @@ FileSourceImporter::FrameDataPtr LAMMPSTextDumpImporter::FrameLoader::loadFile(Q
 		}
 		else if(stream.lineStartsWith("ITEM: NUMBER OF ATOMS")) {
 			// Parse number of atoms.
-			unsigned int u;
-			if(sscanf(stream.readLine(), "%u", &u) != 1 || u > 1e9)
+			unsigned long long u;
+			if(sscanf(stream.readLine(), "%llu", &u) != 1)
 				throw Exception(tr("LAMMPS dump file parsing error. Invalid number of atoms in line %1:\n%2").arg(stream.lineNumber()).arg(stream.lineString()));
+			if(u >= 2147483648ull)
+				throw Exception(tr("LAMMPS dump file parsing error. Number of atoms in line %1 exceeds internal limit of 2^31 atoms:\n%2").arg(stream.lineNumber()).arg(stream.lineString()));
 
-			numParticles = u;
+			numParticles = (size_t)u;
 			setProgressMaximum(u);
 		}
 		else if(stream.lineStartsWith("ITEM: BOX BOUNDS xy xz yz")) {

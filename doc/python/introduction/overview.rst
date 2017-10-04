@@ -2,8 +2,8 @@
 Overview
 ==================================
 
-OVITO's scripting interface provides access to most of program features. Using Python scripting, you can
-do many things that are already familiar from the graphical user interface (and even a few more):
+The scripting interface gives you access to most of OVITO's program features. Using Python scripting, you can
+do many things that are already familiar from the graphical user interface (and even some more):
 
   * :ref:`Import data from external files <file_io_overview>`
   * :ref:`Apply modifiers to a dataset and configure them <modifiers_overview>`
@@ -13,7 +13,8 @@ do many things that are already familiar from the graphical user interface (and 
   * :ref:`Access per-particle properties and other analysis results computed by OVITO <particle_properties_intro>`
   * :ref:`Implement new types of modifiers <writing_custom_modifiers>`
 
-But first let's take a look at some essential concepts of OVITO's data model and the scripting framework. 
+But before discussing these specific tasks, let's first take a look at some general concepts of OVITO's data model 
+and scripting framework.
 
 .. warning::
    This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
