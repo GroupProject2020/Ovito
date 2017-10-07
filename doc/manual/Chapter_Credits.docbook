@@ -35,7 +35,7 @@
       <listitem><para><link xlink:href="http://www.zlib.net">zlib</link> library</para></listitem>
       <listitem><para><link xlink:href="https://github.com/pmla/polyhedral-template-matching">Polyhedral Template Matching library</link> by Peter Mahler Larsen 
       (<link linkend="appendix.license.ptm">license</link>).</para></listitem>
-      <listitem><para><link xlink:href="http://theobald.brandeis.edu/qcp/">QCP rotation calculation method</link> by Pu Liu and Douglas L. Theobald 
+      <listitem><para><link xlink:href="https://dx.doi.org/10.1002%2Fjcc.21439">QCP rotation calculation method</link> by Pu Liu and Douglas L. Theobald 
       (<link linkend="appendix.license.qcprot">license</link>).</para></listitem>
       <listitem><para><link xlink:href="http://gsd.readthedocs.io/">GSD (General Simulation Data)</link> I/O routines 
       (<link linkend="appendix.license.gsd">license</link>).</para></listitem>
