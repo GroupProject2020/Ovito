@@ -23,8 +23,9 @@
 #include <plugins/particles/util/NearestNeighborFinder.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
-#include <core/dataset/pipeline/ModifierApplication.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
+#include <core/utilities/concurrent/ParallelFor.h>
 #include "WignerSeitzAnalysisModifier.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
@@ -125,7 +126,7 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 		typemin = std::min(_ptypeMinId, *minmax.first);
 		typemax = std::max(_ptypeMaxId, *minmax.second);
 		if(typemin < 0)
-			throw Exception(tr("Negative particle types are not supported by this modifier."));
+			throw Exception(tr("Negative particle type IDs are not supported by this modifier."));
 		if(typemax > 32)
 			throw Exception(tr("Number of particle types is too large for this modifier. Cannot compute occupancy numbers for more than 32 particle types."));
 		ncomponents = typemax - typemin + 1;
@@ -144,27 +145,36 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 	if(affineMapping() == TO_REFERENCE_CELL)
 		tm = refCell().matrix() * cell().inverseMatrix();
 
+	// Create array for atomic counting.
+	size_t arraySize = _results->occupancyNumbers()->size() * _results->occupancyNumbers()->componentCount();
+	std::vector<std::atomic_size_t> occupancyArray(arraySize);
+	for(auto& o : occupancyArray)
+		o.store(0, std::memory_order_relaxed);
+
 	// Assign particles to reference sites.
-	FloatType closestDistanceSq;
-	int particleIndex = 0;
-	setProgressMaximum(particleCount);
-	for(const Point3& p : positions()->constPoint3Range()) {
-
-		int closestIndex = neighborTree.findClosestParticle((affineMapping() == TO_REFERENCE_CELL) ? (tm * p) : p, closestDistanceSq);
-		OVITO_ASSERT(closestIndex >= 0 && closestIndex < _results->occupancyNumbers()->size());
-		if(ncomponents == 1) {
-			_results->occupancyNumbers()->dataInt()[closestIndex]++;
-		}
-		else {
-			int offset = particleTypes()->getInt(particleIndex) - typemin;
-			OVITO_ASSERT(offset >= 0 && offset < _results->occupancyNumbers()->componentCount());
-			_results->occupancyNumbers()->dataInt()[closestIndex * ncomponents + offset]++;
-		}
-
-		particleIndex++;
-		if(!setProgressValueIntermittent(particleIndex))
-			return;
+	if(ncomponents == 1) {
+		parallelFor(positions()->size(), *this, [this, &neighborTree, tm, &occupancyArray](size_t index) {
+			const Point3& p = positions()->getPoint3(index);
+			FloatType closestDistanceSq;
+			int closestIndex = neighborTree.findClosestParticle((affineMapping() == TO_REFERENCE_CELL) ? (tm * p) : p, closestDistanceSq);
+			OVITO_ASSERT(closestIndex >= 0 && closestIndex < _results->occupancyNumbers()->size());
+			occupancyArray[closestIndex].fetch_add(1, std::memory_order_relaxed);
+		});
 	}
+	else {
+		parallelFor(positions()->size(), *this, [this, &neighborTree, typemin, ncomponents, tm, &occupancyArray](size_t index) {
+			const Point3& p = positions()->getPoint3(index);
+			FloatType closestDistanceSq;
+			int closestIndex = neighborTree.findClosestParticle((affineMapping() == TO_REFERENCE_CELL) ? (tm * p) : p, closestDistanceSq);
+			OVITO_ASSERT(closestIndex >= 0 && closestIndex < _results->occupancyNumbers()->size());
+			int offset = particleTypes()->getInt(index) - typemin;
+			OVITO_ASSERT(offset >= 0 && offset < _results->occupancyNumbers()->componentCount());
+			occupancyArray[closestIndex * ncomponents + offset].fetch_add(1, std::memory_order_relaxed);
+		});
+	}
+	
+	// Copy data from atomic array to output buffer.
+	std::copy(occupancyArray.begin(), occupancyArray.end(), _results->occupancyNumbers()->dataInt());
 
 	// Count defects.
 	if(ncomponents == 1) {
@@ -184,7 +194,7 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 			else if(oc > 1) _results->incrementInterstitialCount(oc - 1);
 		}
 	}
-
+	
 	// Return the results of the compute engine.
 	setResult(std::move(_results));
 }
