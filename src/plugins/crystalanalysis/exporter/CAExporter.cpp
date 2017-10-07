@@ -47,7 +47,8 @@ bool CAExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint t
 		throwException(tr("The scene node to be exported is not an object node."));
 
 	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
-				
+	exportTask.setProgressText(tr("Writing file %1").arg(filePath));
+	
 	// Evaluate pipeline of object node.
 	auto evalFuture = objectNode->evaluatePipeline(time);
 	if(!taskManager.waitForTask(evalFuture))

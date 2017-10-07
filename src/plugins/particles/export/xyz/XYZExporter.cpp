@@ -42,7 +42,8 @@ bool XYZExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 		return false;
 
 	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
-
+	exportTask.setProgressText(tr("Writing file %1").arg(filePath));
+	
 	// Get particle positions.
 	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
 

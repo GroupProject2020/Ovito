@@ -40,7 +40,8 @@ bool FHIAimsExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePo
 		return false;
 
 	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
-
+	exportTask.setProgressText(tr("Writing file %1").arg(filePath));
+	
 	// Get particle positions and types.
 	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
 	ParticleProperty* particleTypeProperty = ParticleProperty::findInState(state, ParticleProperty::TypeProperty);

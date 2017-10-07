@@ -41,7 +41,8 @@ bool IMDExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 		return false;
 
 	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
-
+	exportTask.setProgressText(tr("Writing file %1").arg(filePath));
+	
 	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
 	ParticleProperty* typeProperty = nullptr;
 	ParticleProperty* identifierProperty = nullptr;
