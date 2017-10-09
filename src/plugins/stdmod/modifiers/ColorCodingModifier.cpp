@@ -180,16 +180,24 @@ bool ColorCodingModifier::determinePropertyValueRange(const PipelineFlowState& s
 	FloatType maxValue = FLOATTYPE_MIN;
 	FloatType minValue = FLOATTYPE_MAX;
 	if(property->dataType() == qMetaTypeId<FloatType>()) {
-		const FloatType* v = property->constDataFloat() + vecComponent;
-		const FloatType* vend = v + (property->size() * stride);
+		auto v = property->constDataFloat() + vecComponent;
+		auto vend = v + (property->size() * stride);
 		for(; v != vend; v += stride) {
 			if(*v > maxValue) maxValue = *v;
 			if(*v < minValue) minValue = *v;
 		}
 	}
 	else if(property->dataType() == qMetaTypeId<int>()) {
-		const int* v = property->constDataInt() + vecComponent;
-		const int* vend = v + (property->size() * stride);
+		auto v = property->constDataInt() + vecComponent;
+		auto vend = v + (property->size() * stride);
+		for(; v != vend; v += stride) {
+			if(*v > maxValue) maxValue = *v;
+			if(*v < minValue) minValue = *v;
+		}
+	}
+	else if(property->dataType() == qMetaTypeId<qlonglong>()) {
+		auto v = property->constDataInt64() + vecComponent;
+		auto vend = v + (property->size() * stride);
 		for(; v != vend; v += stride) {
 			if(*v > maxValue) maxValue = *v;
 			if(*v < minValue) minValue = *v;
@@ -369,7 +377,7 @@ PipelineStatus ColorCodingModifierDelegate::apply(Modifier* modifier, const Pipe
 	int stride = property->stride() / property->dataTypeSize();
 
 	if(property->dataType() == qMetaTypeId<FloatType>()) {
-		const FloatType* v = property->constDataFloat() + vecComponent;
+		auto v = property->constDataFloat() + vecComponent;
 		for(; c != c_end; ++c, v += stride) {
 			if(sel && !(*sel++))
 				continue;
@@ -394,7 +402,30 @@ PipelineStatus ColorCodingModifierDelegate::apply(Modifier* modifier, const Pipe
 		}
 	}
 	else if(property->dataType() == qMetaTypeId<int>()) {
-		const int* v = property->constDataInt() + vecComponent;
+		auto v = property->constDataInt() + vecComponent;
+		for(; c != c_end; ++c, v += stride) {
+
+			if(sel && !(*sel++))
+				continue;
+
+			// Compute linear interpolation.
+			FloatType t;
+			if(startValue == endValue) {
+				if((*v) == startValue) t = FloatType(0.5);
+				else if((*v) > startValue) t = 1;
+				else t = 0;
+			}
+			else t = ((*v) - startValue) / (endValue - startValue);
+
+			// Clamp values.
+			if(t < 0) t = 0;
+			else if(t > 1) t = 1;
+
+			*c = mod->colorGradient()->valueToColor(t);
+		}
+	}
+	else if(property->dataType() == qMetaTypeId<qlonglong>()) {
+		auto v = property->constDataInt64() + vecComponent;
 		for(; c != c_end; ++c, v += stride) {
 
 			if(sel && !(*sel++))

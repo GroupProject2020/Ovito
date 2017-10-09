@@ -113,11 +113,18 @@ public:
 		return _data.get();
 	}
 
-	/// \brief Returns a read-only pointer to the first integer element stored in this object..
-	/// \note This method may only be used if this property is of data type integer.
+	/// \brief Returns a read-only pointer to the first integer element stored in this object.
+	/// \note This method may only be used if this property is of data type int32.
 	const int* constDataInt() const {
 		OVITO_ASSERT(dataType() == qMetaTypeId<int>());
 		return reinterpret_cast<const int*>(constData());
+	}
+
+	/// \brief Returns a read-only pointer to the first integer element stored in this object.
+	/// \note This method may only be used if this property is of data type integer.
+	const qlonglong* constDataInt64() const {
+		OVITO_ASSERT(dataType() == qMetaTypeId<qlonglong>());
+		return reinterpret_cast<const qlonglong*>(constData());
 	}
 
 	/// \brief Returns a read-only pointer to the first float element in the property storage.
@@ -184,6 +191,12 @@ public:
 	}
 
 	/// \brief Returns a range of const iterators over the elements stored in this object.
+	boost::iterator_range<const qlonglong*> constInt64Range() const {
+		OVITO_ASSERT(componentCount() == 1);
+		return boost::make_iterator_range(constDataInt64(), constDataInt64() + size());
+	}
+
+	/// \brief Returns a range of const iterators over the elements stored in this object.
 	boost::iterator_range<const FloatType*> constFloatRange() const {
 		OVITO_ASSERT(componentCount() == 1);
 		return boost::make_iterator_range(constDataFloat(), constDataFloat() + size());
@@ -229,11 +242,18 @@ public:
 		return _data.get();
 	}
 
-	/// \brief Returns a read-write pointer to the first integer element stored in this object..
+	/// \brief Returns a read-write pointer to the first integer element stored in this object.
 	/// \note This method may only be used if this property is of data type integer.
 	int* dataInt() {
 		OVITO_ASSERT(dataType() == qMetaTypeId<int>());
 		return reinterpret_cast<int*>(data());
+	}
+
+	/// \brief Returns a read-write pointer to the first integer element stored in this object.
+	/// \note This method may only be used if this property is of data type 64-bit integer.
+	qlonglong* dataInt64() {
+		OVITO_ASSERT(dataType() == qMetaTypeId<qlonglong>());
+		return reinterpret_cast<qlonglong*>(data());
 	}
 
 	/// \brief Returns a read-only pointer to the first float element in the property storage.
@@ -300,6 +320,12 @@ public:
 	}
 
 	/// \brief Returns a range of iterators over the elements stored in this object.
+	boost::iterator_range<qlonglong*> int64Range() {
+		OVITO_ASSERT(componentCount() == 1);
+		return boost::make_iterator_range(dataInt64(), dataInt64() + size());
+	}
+	
+	/// \brief Returns a range of iterators over the elements stored in this object.
 	boost::iterator_range<FloatType*> floatRange() {
 		OVITO_ASSERT(componentCount() == 1);
 		return boost::make_iterator_range(dataFloat(), dataFloat() + size());
@@ -346,6 +372,12 @@ public:
 		return constDataInt()[index];
 	}
 
+	/// \brief Returns an integer element at the given index (if this is a 64-bit integer property).
+	qlonglong getInt64(size_t index) const {
+		OVITO_ASSERT(index < size() && componentCount() == 1);
+		return constDataInt64()[index];
+	}
+	
 	/// Returns a float element at the given index (if this is a float property).
 	FloatType getFloat(size_t index) const {
 		OVITO_ASSERT(index < size() && componentCount() == 1);
@@ -358,6 +390,12 @@ public:
 		return constDataInt()[index*componentCount() + componentIndex];
 	}
 
+	/// Returns an integer element at the given index (if this is a 64-bit integer property).
+	qlonglong getInt64Component(size_t index, size_t componentIndex) const {
+		OVITO_ASSERT(index < size() && componentIndex < componentCount());
+		return constDataInt64()[index*componentCount() + componentIndex];
+	}
+	
 	/// Returns a float element at the given index (if this is a float property).
 	FloatType getFloatComponent(size_t index, size_t componentIndex) const {
 		OVITO_ASSERT(index < size() && componentIndex < componentCount());
@@ -412,6 +450,12 @@ public:
 		dataInt()[index] = newValue;
 	}
 
+	/// Sets the value of an integer element at the given index (if this is a 64-bit integer property).
+	void setInt64(size_t index, qlonglong newValue) {
+		OVITO_ASSERT(index < size());
+		dataInt64()[index] = newValue;
+	}
+	
 	/// Sets the value of a float element at the given index (if this is a float property).
 	void setFloat(size_t index, FloatType newValue) {
 		OVITO_ASSERT(index < size());
@@ -424,6 +468,12 @@ public:
 		dataInt()[index*componentCount() + componentIndex] = newValue;
 	}
 
+	/// Sets the value of an integer element at the given index (if this is a 64-bit integer property).
+	void setInt64Component(size_t index, size_t componentIndex, qlonglong newValue) {
+		OVITO_ASSERT(index < size() && componentIndex < componentCount());
+		dataInt64()[index*componentCount() + componentIndex] = newValue;
+	}
+	
 	/// Sets the value of a float element at the given index (if this is a float property).
 	void setFloatComponent(size_t index, size_t componentIndex, FloatType newValue) {
 		OVITO_ASSERT(index < size() && componentIndex < componentCount());

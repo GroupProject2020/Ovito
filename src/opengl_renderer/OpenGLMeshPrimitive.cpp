@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -79,7 +79,7 @@ void OpenGLMeshPrimitive::setMesh(const TriMesh& mesh, const ColorA& meshColor)
 			const Point3& p0 = mesh.vertex(face->vertex(0));
 			Vector3 d1 = mesh.vertex(face->vertex(1)) - p0;
 			Vector3 d2 = mesh.vertex(face->vertex(2)) - p0;
-			*faceNormal = (Vector_3<float>)d1.cross(d2);
+			*faceNormal = static_cast<Vector_3<float>>(d1.cross(d2));
 			if(*faceNormal != Vector_3<float>::Zero()) {
 				//faceNormal->normalize();
 				allMask |= face->smoothingGroups();
@@ -89,7 +89,7 @@ void OpenGLMeshPrimitive::setMesh(const TriMesh& mesh, const ColorA& meshColor)
 		// Initialize render vertices.
 		ColoredVertexWithNormal* rv = renderVertices;
 		faceNormal = faceNormals.begin();
-		ColorAT<float> defaultVertexColor = (ColorAT<float>)meshColor;
+		ColorAT<float> defaultVertexColor = static_cast<ColorAT<float>>(meshColor);
 		for(auto face = mesh.faces().constBegin(); face != mesh.faces().constEnd(); ++face, ++faceNormal) {
 
 			// Initialize render vertices for this face.
@@ -98,17 +98,17 @@ void OpenGLMeshPrimitive::setMesh(const TriMesh& mesh, const ColorA& meshColor)
 					rv->normal = Vector_3<float>::Zero();
 				else
 					rv->normal = *faceNormal;
-				rv->pos = (Point_3<float>)mesh.vertex(face->vertex(v));
+				rv->pos = static_cast<Point_3<float>>(mesh.vertex(face->vertex(v)));
 				if(mesh.hasVertexColors()) {
-					rv->color = (ColorAT<float>)mesh.vertexColor(face->vertex(v));
+					rv->color = static_cast<ColorAT<float>>(mesh.vertexColor(face->vertex(v)));
 					_hasAlpha |= (rv->color.a() != 1);
 				}
 				else if(mesh.hasFaceColors()) {
-					rv->color = (ColorAT<float>)mesh.faceColor(face - mesh.faces().constBegin());
+					rv->color = static_cast<ColorAT<float>>(mesh.faceColor(face - mesh.faces().constBegin()));
 					_hasAlpha |= (rv->color.a() != 1);
 				}
 				else if(face->materialIndex() < materialColors().size() && face->materialIndex() >= 0) {
-					rv->color = (ColorAT<float>)materialColors()[face->materialIndex()];
+					rv->color = static_cast<ColorAT<float>>(materialColors()[face->materialIndex()]);
 				}
 				else {
 					rv->color = defaultVertexColor;
@@ -153,22 +153,22 @@ void OpenGLMeshPrimitive::setMesh(const TriMesh& mesh, const ColorA& meshColor)
 		// Use normals stored in the mesh.
 		ColoredVertexWithNormal* rv = renderVertices;
 		const Vector3* faceNormal = mesh.normals().begin();
-		ColorAT<float> defaultVertexColor = (ColorAT<float>)meshColor;
+		ColorAT<float> defaultVertexColor = static_cast<ColorAT<float>>(meshColor);
 		for(auto face = mesh.faces().constBegin(); face != mesh.faces().constEnd(); ++face) {
 			// Initialize render vertices for this face.
 			for(size_t v = 0; v < 3; v++, rv++) {
-				rv->normal = *faceNormal++;
-				rv->pos = (Point_3<float>)mesh.vertex(face->vertex(v));
+				rv->normal = static_cast<Vector_3<float>>(*faceNormal++);
+				rv->pos = static_cast<Point_3<float>>(mesh.vertex(face->vertex(v)));
 				if(mesh.hasVertexColors()) {
-					rv->color = (ColorAT<float>)mesh.vertexColor(face->vertex(v));
+					rv->color = static_cast<ColorAT<float>>(mesh.vertexColor(face->vertex(v)));
 					_hasAlpha |= (rv->color.a() != 1);
 				}
 				else if(mesh.hasFaceColors()) {
-					rv->color = (ColorAT<float>)mesh.faceColor(face - mesh.faces().constBegin());
+					rv->color = static_cast<ColorAT<float>>(mesh.faceColor(face - mesh.faces().constBegin()));
 					_hasAlpha |= (rv->color.a() != 1);
 				}
 				else if(face->materialIndex() < materialColors().size() && face->materialIndex() >= 0) {
-					rv->color = (ColorAT<float>)materialColors()[face->materialIndex()];
+					rv->color = static_cast<ColorAT<float>>(materialColors()[face->materialIndex()]);
 				}
 				else {
 					rv->color = defaultVertexColor;

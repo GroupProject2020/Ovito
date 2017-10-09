@@ -88,14 +88,18 @@ PropertyPtr ParticleProperty::OOMetaClass::createStandardStorage(size_t particle
 	case TypeProperty:
 	case StructureTypeProperty:
 	case SelectionProperty:
-	case ClusterProperty:
 	case CoordinationProperty:
-	case IdentifierProperty:
-	case MoleculeProperty:
 	case MoleculeTypeProperty:
 		dataType = qMetaTypeId<int>();
 		componentCount = 1;
 		stride = sizeof(int);
+		break;
+	case IdentifierProperty:
+	case ClusterProperty:
+	case MoleculeProperty:
+		dataType = qMetaTypeId<qlonglong>();
+		componentCount = 1;
+		stride = sizeof(qlonglong);
 		break;
 	case PositionProperty:
 	case DisplacementProperty:
@@ -221,7 +225,7 @@ void ParticleProperty::OOMetaClass::initialize()
 	
 	registerStandardProperty(TypeProperty, tr("Particle Type"), qMetaTypeId<int>(), emptyList, tr("Particle types"));
 	registerStandardProperty(SelectionProperty, tr("Selection"), qMetaTypeId<int>(), emptyList);
-	registerStandardProperty(ClusterProperty, tr("Cluster"), qMetaTypeId<int>(), emptyList);
+	registerStandardProperty(ClusterProperty, tr("Cluster"), qMetaTypeId<qlonglong>(), emptyList);
 	registerStandardProperty(CoordinationProperty, tr("Coordination"), qMetaTypeId<int>(), emptyList);
 	registerStandardProperty(PositionProperty, tr("Position"), qMetaTypeId<FloatType>(), xyzList, tr("Particle positions"));
 	registerStandardProperty(ColorProperty, tr("Color"), qMetaTypeId<FloatType>(), rgbList, tr("Particle colors"));
@@ -233,7 +237,7 @@ void ParticleProperty::OOMetaClass::initialize()
 	registerStandardProperty(TotalEnergyProperty, tr("Total Energy"), qMetaTypeId<FloatType>(), emptyList);
 	registerStandardProperty(RadiusProperty, tr("Radius"), qMetaTypeId<FloatType>(), emptyList, tr("Radii"));
 	registerStandardProperty(StructureTypeProperty, tr("Structure Type"), qMetaTypeId<int>(), emptyList, tr("Structure types"));
-	registerStandardProperty(IdentifierProperty, tr("Particle Identifier"), qMetaTypeId<int>(), emptyList, tr("Particle identifiers"));
+	registerStandardProperty(IdentifierProperty, tr("Particle Identifier"), qMetaTypeId<qlonglong>(), emptyList, tr("Particle identifiers"));
 	registerStandardProperty(StressTensorProperty, tr("Stress Tensor"), qMetaTypeId<FloatType>(), symmetricTensorList);
 	registerStandardProperty(StrainTensorProperty, tr("Strain Tensor"), qMetaTypeId<FloatType>(), symmetricTensorList);
 	registerStandardProperty(DeformationGradientProperty, tr("Deformation Gradient"), qMetaTypeId<FloatType>(), tensorList);
@@ -251,7 +255,7 @@ void ParticleProperty::OOMetaClass::initialize()
 	registerStandardProperty(SpinProperty, tr("Spin"), qMetaTypeId<FloatType>(), emptyList);
 	registerStandardProperty(CentroSymmetryProperty, tr("Centrosymmetry"), qMetaTypeId<FloatType>(), emptyList);
 	registerStandardProperty(VelocityMagnitudeProperty, tr("Velocity Magnitude"), qMetaTypeId<FloatType>(), emptyList);
-	registerStandardProperty(MoleculeProperty, tr("Molecule Identifier"), qMetaTypeId<int>(), emptyList);
+	registerStandardProperty(MoleculeProperty, tr("Molecule Identifier"), qMetaTypeId<qlonglong>(), emptyList);
 	registerStandardProperty(AsphericalShapeProperty, tr("Aspherical Shape"), qMetaTypeId<FloatType>(), xyzList);
 	registerStandardProperty(VectorColorProperty, tr("Vector Color"), qMetaTypeId<FloatType>(), rgbList, tr("Vector colors"));
 	registerStandardProperty(ElasticStrainTensorProperty, tr("Elastic Strain"), qMetaTypeId<FloatType>(), symmetricTensorList);

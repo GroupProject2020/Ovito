@@ -230,7 +230,7 @@ PipelineFlowState ScatterPlotModifier::evaluatePreliminary(TimePoint time, Modif
 			xyData[i].rx() = xProperty->getIntComponent(i, xVecComponent);
 		}
 	}
-	else throwException(tr("Property '%1' has an invalid data type.").arg(xProperty->name()));
+	else throwException(tr("Property '%1' has a data type that is not supported by the scatter plot modifier.").arg(xProperty->name()));
 
 	// Collect Y coordinates.
 	if(yProperty->dataType() == qMetaTypeId<FloatType>()) {
@@ -243,7 +243,7 @@ PipelineFlowState ScatterPlotModifier::evaluatePreliminary(TimePoint time, Modif
 			xyData[i].ry() = yProperty->getIntComponent(i, yVecComponent);
 		}
 	}
-	else throwException(tr("Property '%1' has an invalid data type.").arg(yProperty->name()));
+	else throwException(tr("Property '%1' has a data type that is not supported by the scatter plot modifier.").arg(yProperty->name()));
 
 	// Determine value ranges.
 	if(fixXAxisRange() == false || fixYAxisRange() == false) {

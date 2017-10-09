@@ -112,12 +112,18 @@ public:
 		return storage()->constData();
 	}
 
-	/// \brief Returns a read-only pointer to the first integer element stored in this object..
+	/// \brief Returns a read-only pointer to the first integer element stored in this object.
 	/// \note This method may only be used if this property is of data type integer.
 	const int* constDataInt() const {
 		return storage()->constDataInt();
 	}
 
+	/// \brief Returns a read-only pointer to the first integer element stored in this object.
+	/// \note This method may only be used if this property is of data type 64-bit integer.
+	const qlonglong* constDataInt64() const {
+		return storage()->constDataInt64();
+	}
+	
 	/// \brief Returns a read-only pointer to the first float element in the property storage.
 	/// \note This method may only be used if this property is of data type float.
 	const FloatType* constDataFloat() const {
@@ -166,6 +172,11 @@ public:
 	}
 
 	/// \brief Returns a range of const iterators over the elements stored in this object.
+	boost::iterator_range<const qlonglong*> constInt64Range() const {
+		return storage()->constInt64Range();
+	}
+	
+	/// \brief Returns a range of const iterators over the elements stored in this object.
 	boost::iterator_range<const FloatType*> constFloatRange() const {
 		return storage()->constFloatRange();
 	}
@@ -205,12 +216,18 @@ public:
 		return modifiableStorage()->data();
 	}
 
-	/// \brief Returns a read-write pointer to the first integer element stored in this object..
+	/// \brief Returns a read-write pointer to the first integer element stored in this object.
 	/// \note This method may only be used if this property is of data type integer.
 	int* dataInt() {
 		return modifiableStorage()->dataInt();
 	}
 
+	/// \brief Returns a read-write pointer to the first integer element stored in this object.
+	/// \note This method may only be used if this property is of data type 64-bit integer.
+	qlonglong* dataInt64() {
+		return modifiableStorage()->dataInt64();
+	}
+	
 	/// \brief Returns a read-only pointer to the first float element in the property storage.
 	/// \note This method may only be used if this property is of data type float.
 	FloatType* dataFloat() {
@@ -259,6 +276,11 @@ public:
 	}
 
 	/// \brief Returns a range of iterators over the elements stored in this object.
+	boost::iterator_range<qlonglong*> int64Range() {
+		return modifiableStorage()->int64Range();
+	}
+	
+	/// \brief Returns a range of iterators over the elements stored in this object.
 	boost::iterator_range<FloatType*> floatRange() {
 		return modifiableStorage()->floatRange();
 	}
@@ -298,6 +320,11 @@ public:
 		return storage()->getInt(index);
 	}
 
+	/// \brief Returns an integer element at the given index (if this is a 64-bit integer property).
+	qlonglong getInt64(size_t index) const {
+		return storage()->getInt64(index);
+	}
+
 	/// Returns a float element at the given index (if this is a float property).
 	FloatType getFloat(size_t index) const {
 		return storage()->getFloat(index);
@@ -308,6 +335,11 @@ public:
 		return storage()->getIntComponent(index, componentIndex);
 	}
 
+	/// Returns an integer element at the given index (if this is a 64-bit integer property).
+	qlonglong getInt64Component(size_t index, size_t componentIndex) const {
+		return storage()->getInt64Component(index, componentIndex);
+	}
+	
 	/// Returns a float element at the given index (if this is a float property).
 	FloatType getFloatComponent(size_t index, size_t componentIndex) const {
 		return storage()->getFloatComponent(index, componentIndex);
@@ -348,6 +380,11 @@ public:
 		modifiableStorage()->setInt(index, newValue);
 	}
 
+	/// Sets the value of an integer element at the given index (if this is a 64-bit integer property).
+	void setInt64(size_t index, qlonglong newValue) {
+		modifiableStorage()->setInt64(index, newValue);
+	}
+	
 	/// Sets the value of a float element at the given index (if this is a float property).
 	void setFloat(size_t index, FloatType newValue) {
 		modifiableStorage()->setFloat(index, newValue);
@@ -358,6 +395,11 @@ public:
 		modifiableStorage()->setIntComponent(index, componentIndex, newValue);
 	}
 
+	/// Sets the value of an integer element at the given index (if this is a 64-bit integer property).
+	void setInt64Component(size_t index, size_t componentIndex, qlonglong newValue) {
+		modifiableStorage()->setInt64Component(index, componentIndex, newValue);
+	}
+	
 	/// Sets the value of a float element at the given index (if this is a float property).
 	void setFloatComponent(size_t index, size_t componentIndex, FloatType newValue) {
 		modifiableStorage()->setFloatComponent(index, componentIndex, newValue);

@@ -135,7 +135,7 @@ public:
 				const U* endData = data + _elementCount;
 				for(; data != endData; ++data) {
 					for(int i = 0; i < _verticesPerElement; i++, ++bufferData) {
-						*bufferData = (T)*data;
+						*bufferData = static_cast<T>(*data);
 					}
 				}
 				_buffer.unmap();

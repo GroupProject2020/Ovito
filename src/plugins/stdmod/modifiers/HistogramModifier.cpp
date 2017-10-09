@@ -185,8 +185,8 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 
 	if(property->size() > 0) {
 		if(property->dataType() == qMetaTypeId<FloatType>()) {
-			const FloatType* v_begin = property->constDataFloat() + vecComponent;
-			const FloatType* v_end = v_begin + (property->size() * vecComponentCount);
+			auto v_begin = property->constDataFloat() + vecComponent;
+			auto v_end = v_begin + (property->size() * vecComponentCount);
 			// Determine value range.
 			if(!fixXAxisRange()) {
 				intervalStart = std::numeric_limits<FloatType>::max();
@@ -230,8 +230,8 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 			}
 		}
 		else if(property->dataType() == qMetaTypeId<int>()) {
-			const int* v_begin = property->constDataInt() + vecComponent;
-			const int* v_end = v_begin + (property->size() * vecComponentCount);
+			auto v_begin = property->constDataInt() + vecComponent;
+			auto v_end = v_begin + (property->size() * vecComponentCount);
 			// Determine value range.
 			if(!fixXAxisRange()) {
 				intervalStart = std::numeric_limits<FloatType>::max();
@@ -273,6 +273,9 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 					else *s = 0;
 				}
 			}
+		}
+		else {
+			throwException(tr("The property '%1' has a data type that is not supported by the histogram modifier.").arg(property->name()));
 		}
 	}
 	else {

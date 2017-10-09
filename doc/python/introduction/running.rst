@@ -9,7 +9,7 @@ and how OVITO's capabilities can be leveraged from scripts:
 
 **Invoking program functions** 
 
-Scripts can invoke program functions, similar to what the human user does in the graphical interface.
+Scripts can invoke program functions, similar to what a human user does in the graphical interface.
 For example, you can write a Python script file and execute it within the context of the current program
 session using the ``Run Script File`` function from the ``Scripting`` menu of OVITO. 
 Such a *macro* script can insert new modifiers into the current data pipeline, access the results of the 

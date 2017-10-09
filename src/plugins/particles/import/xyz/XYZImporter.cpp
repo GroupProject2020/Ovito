@@ -200,7 +200,7 @@ bool XYZImporter::mapVariableToProperty(InputColumnMapping& columnMapping, int c
 	else if(loweredName == "centro_symmetry") columnMapping[column].mapStandardColumn(ParticleProperty::CentroSymmetryProperty);
 	else {
 		// Only int or float custom properties are supported
-		if(dataType == qMetaTypeId<FloatType>() || dataType == qMetaTypeId<int>())
+		if(dataType == qMetaTypeId<FloatType>() || dataType == qMetaTypeId<int>() || dataType == qMetaTypeId<qlonglong>())
 			columnMapping[column].mapCustomColumn(name, dataType, vec);
 		else
 			return false;

@@ -185,7 +185,7 @@ void PropertyReferenceParameterUI::addItemsToComboBox(const PipelineFlowState& s
 		if(_propertyFilter && !_propertyFilter(property)) continue;
 		
 		// Properties with a non-numeric data type cannot be used as source properties.
-		if(property->dataType() != qMetaTypeId<int>() && property->dataType() != qMetaTypeId<FloatType>())
+		if(property->dataType() != qMetaTypeId<int>() && property->dataType() != qMetaTypeId<qlonglong>() && property->dataType() != qMetaTypeId<FloatType>())
 			continue;
 
 		if(property->componentNames().empty() || !_showComponents) {

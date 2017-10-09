@@ -79,6 +79,14 @@ inline bool parseInt(const char* s, const char* s_end, int& i)
 }
 
 /******************************************************************************
+ * Helper function that converts a string to a 64-bit integer number.
+ *****************************************************************************/
+inline bool parseInt64(const char* s, const char* s_end, qlonglong& i)
+{
+	return boost::spirit::qi::parse(s, s_end, boost::spirit::qi::long_long, i);
+}
+
+/******************************************************************************
  * Helper function that converts a string repr. of a bool ('T' or 'F') to an int
  *****************************************************************************/
 inline bool parseBool(const char* s, const char* s_end, int& d)

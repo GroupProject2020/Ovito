@@ -132,6 +132,9 @@ void OutputColumnWriter::writeParticle(size_t particleIndex, CompressedTextWrite
 					}
 				}
 			}
+			else if((*property)->dataType() == qMetaTypeId<qlonglong>()) {
+				stream << (*property)->getInt64Component(particleIndex, *vcomp);
+			}
 			else if((*property)->dataType() == qMetaTypeId<FloatType>()) {
 				stream << (*property)->getFloatComponent(particleIndex, *vcomp);
 			}

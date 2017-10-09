@@ -380,10 +380,13 @@ void ComputePropertyModifier::PropertyComputeEngine::perform()
 				}
 
 				// Store results.
-				if(outputProperty()->dataType() == QMetaType::Int) {
+				if(outputProperty()->dataType() == qMetaTypeId<int>()) {
 					outputProperty()->setIntComponent(particleIndex, component, (int)value);
 				}
-				else {
+				else if(outputProperty()->dataType() == qMetaTypeId<qlonglong>()) {
+					outputProperty()->setInt64Component(particleIndex, component, (qlonglong)value);
+				}
+				else if(outputProperty()->dataType() == qMetaTypeId<FloatType>()) {
 					outputProperty()->setFloatComponent(particleIndex, component, value);
 				}
 			}

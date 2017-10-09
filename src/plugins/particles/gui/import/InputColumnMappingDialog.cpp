@@ -111,6 +111,7 @@ InputColumnMappingDialog::InputColumnMappingDialog(const InputColumnMapping& map
 QString InputColumnMappingDialog::dataTypeToString(int dataType)
 {
 	if(dataType == qMetaTypeId<int>()) return tr("Integer");
+	else if(dataType == qMetaTypeId<qlonglong>()) return tr("Integer (64-bit)");
 	else if(dataType == qMetaTypeId<FloatType>()) return tr("Float");
 	else return tr("None");
 }

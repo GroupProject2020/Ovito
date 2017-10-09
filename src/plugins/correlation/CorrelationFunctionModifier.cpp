@@ -225,8 +225,8 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::mapToSpatialGrid(co
 		const Point3* pos = positions()->constDataPoint3();
 		const Point3* pos_end = pos + positions()->size();
 
-		if (!property) {
-			for (; pos != pos_end; ++pos) {
+		if(!property) {
+			for(; pos != pos_end; ++pos) {
 				Point3 fractionalPos = reciprocalCellMatrix*(*pos);
 				int binIndexX = int( fractionalPos.x() * nX );
 				int binIndexY = int( fractionalPos.y() * nY );

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,9 +23,9 @@
 #include <gui/app/GuiApplication.h>
 
 /**
- * This is the main entry point for "ovitos" script launcher program.
+ * This is the entry point for "ovitos" script launcher program.
  *
- * It performs preprocessing of the command line arguments to convert them to the format expected by OVITO.
+ * This function translates command line arguments to the format expected by the main OVITO application.
  */
 int main(int argc, char** argv)
 {

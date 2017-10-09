@@ -228,7 +228,7 @@ void ParticleInformationApplet::updateInformationDisplay()
 					if(property->type() == ParticleProperty::PositionProperty)
 						pickedParticle->localPos = property->getPoint3(pickedParticle->particleIndex);
 
-					if(property->dataType() != qMetaTypeId<int>() && property->dataType() != qMetaTypeId<FloatType>()) continue;
+					if(property->dataType() != qMetaTypeId<int>() && property->dataType() != qMetaTypeId<qlonglong>() && property->dataType() != qMetaTypeId<FloatType>()) continue;
 					for(size_t component = 0; component < property->componentCount(); component++) {
 						QString propertyName = property->name();
 						if(property->componentNames().empty() == false) {
@@ -245,6 +245,8 @@ void ParticleInformationApplet::updateInformationDisplay()
 								}
 							}
 						}
+						else if(property->dataType() == qMetaTypeId<qlonglong>())
+							valueString = QString::number(property->getInt64Component(pickedParticle->particleIndex, component));
 						else if(property->dataType() == qMetaTypeId<FloatType>())
 							valueString = QString::number(property->getFloatComponent(pickedParticle->particleIndex, component));
 

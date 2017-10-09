@@ -354,6 +354,9 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 				if(type == NC_BYTE || type == NC_SHORT || type == NC_INT || type == NC_LONG) {
 					columnMapping.push_back(mapVariableToColumn(name, qMetaTypeId<int>(), componentCount));
 				}
+				else if(type == NC_INT64) {
+					columnMapping.push_back(mapVariableToColumn(name, qMetaTypeId<qlonglong>(), componentCount));
+				}
 				else if(type == NC_FLOAT || type == NC_DOUBLE) {
 					columnMapping.push_back(mapVariableToColumn(name, qMetaTypeId<FloatType>(), componentCount));
 					if(qstrcmp(name, "coordinates") == 0)
@@ -371,6 +374,13 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 					size_t countp[2] = { 1, 1 };
 					int value;
 					NCERR( nc_get_vara_int(_ncid, varId, startp, countp, &value) );
+					frameData->attributes().insert(QString::fromLocal8Bit(name), QVariant::fromValue(value));
+				}
+				else if(type == NC_INT64) {
+					size_t startp[2] = { movieFrame, 0 };
+					size_t countp[2] = { 1, 1 };
+					qlonglong value;
+					NCERR( nc_get_vara_longlong(_ncid, varId, startp, countp, &value) );
 					frameData->attributes().insert(QString::fromLocal8Bit(name), QVariant::fromValue(value));
 				}
 				else if(type == NC_FLOAT || type == NC_DOUBLE) {
@@ -488,7 +498,7 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 			int dataType = column.dataType;
 			if(dataType == QMetaType::Void) continue;
 
-			if(dataType != qMetaTypeId<int>() && dataType != qMetaTypeId<FloatType>())
+			if(dataType != qMetaTypeId<int>() && dataType != qMetaTypeId<qlonglong>() && dataType != qMetaTypeId<FloatType>())
 				throw Exception(tr("Invalid custom particle property (data type %1) for input file column '%2' of NetCDF file.").arg(dataType).arg(columnName));
 
 			// Retrieve NetCDF variable meta-information.
@@ -578,6 +588,25 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 					// why we sort them now according to their numeric IDs.
 					typeList->sortTypesById();
 				}				
+			}
+			if(property->dataType() == qMetaTypeId<qlonglong>()) {
+				// Read 64-bit integer property data in chunks so that we can report I/O progress.
+				size_t totalCount = countp[1];
+				size_t remaining = totalCount;
+				countp[1] = 1000000;
+				setProgressMaximum(totalCount / countp[1] + 1);
+				OVITO_ASSERT(totalCount <= property->size());
+				for(size_t chunk = 0; chunk < totalCount; chunk += countp[1], startp[1] += countp[1]) {
+					countp[1] = std::min(countp[1], remaining);
+					remaining -= countp[1];
+					OVITO_ASSERT(countp[1] >= 1);
+					NCERRI( nc_get_vara_longlong(_ncid, varId, startp, countp, property->dataInt64() + property->componentCount() * chunk), tr("(While reading variable '%1'.)").arg(columnName) );
+					if(!incrementProgressValue()) {
+						closeNetCDF();
+						return {};
+					}
+				}
+				OVITO_ASSERT(remaining == 0);			
 			}
 			else if(property->dataType() == qMetaTypeId<FloatType>()) {
 			

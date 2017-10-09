@@ -194,16 +194,13 @@ private:
 		size_t stride;
 		size_t count;
 		int vectorComponent;
-		bool isInt;
+		int dataType;
 		ParticleFrameData::TypeList* typeList = nullptr;
 		bool numericParticleTypes;
 	};
 
 	/// Stores the destination particle properties.
 	QVector<TargetPropertyRecord> _properties;
-
-	/// The Qt data type identifiers.
-	int _intMetaTypeId, _floatMetaTypeId;
 };
 
 OVITO_END_INLINE_NAMESPACE

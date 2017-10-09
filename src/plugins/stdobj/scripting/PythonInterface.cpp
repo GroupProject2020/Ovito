@@ -58,6 +58,14 @@ py::dict PropertyObject__array_interface__(PropertyObject& p)
 		ai["typestr"] = py::bytes(">i4");
 #endif
 	}
+	else if(p.dataType() == qMetaTypeId<qlonglong>()) {
+		OVITO_STATIC_ASSERT(sizeof(qlonglong) == 8);
+#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
+		ai["typestr"] = py::bytes("<i8");
+#else
+		ai["typestr"] = py::bytes(">i8");
+#endif
+	}
 	else if(p.dataType() == qMetaTypeId<FloatType>()) {
 #ifdef FLOATTYPE_FLOAT		
 		OVITO_STATIC_ASSERT(sizeof(FloatType) == 4);

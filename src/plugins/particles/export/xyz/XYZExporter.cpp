@@ -146,7 +146,7 @@ bool XYZExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 				dataTypeStr = QStringLiteral("R");
 			else if(dataType == qMetaTypeId<char>() || pref.type() == ParticleProperty::TypeProperty)
 				dataTypeStr = QStringLiteral("S");
-			else if(dataType == qMetaTypeId<int>())
+			else if(dataType == qMetaTypeId<int>() || dataType == qMetaTypeId<qlonglong>())
 				dataTypeStr = QStringLiteral("I");
 			else if(dataType == qMetaTypeId<bool>())
 				dataTypeStr = QStringLiteral("L");

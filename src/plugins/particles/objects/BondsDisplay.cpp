@@ -333,7 +333,7 @@ QString BondPickInfo::infoString(ObjectNode* objectNode, quint32 subobjectId)
 			if(!property || property->size() <= bondIndex) continue;
 			if(property->type() == BondProperty::SelectionProperty) continue;
 			if(property->type() == BondProperty::ColorProperty) continue;
-			if(property->dataType() != qMetaTypeId<int>() && property->dataType() != qMetaTypeId<FloatType>()) continue;
+			if(property->dataType() != qMetaTypeId<int>() && property->dataType() != qMetaTypeId<qlonglong>() && property->dataType() != qMetaTypeId<FloatType>()) continue;
 			if(!str.isEmpty()) str += QStringLiteral(" | ");
 			str += property->name();
 			str += QStringLiteral(" ");
@@ -347,6 +347,8 @@ QString BondPickInfo::infoString(ObjectNode* objectNode, quint32 subobjectId)
 							str += QString(" (%1)").arg(btype->name());
 					}
 				}
+				else if(property->dataType() == qMetaTypeId<qlonglong>())
+					str += QString::number(property->getInt64Component(bondIndex, component));
 				else if(property->dataType() == qMetaTypeId<FloatType>())
 					str += QString::number(property->getFloatComponent(bondIndex, component));
 			}

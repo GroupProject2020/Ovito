@@ -255,6 +255,7 @@ bool AMBERNetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, Ti
 			// Create the NetCDF variable for the property.
 			nc_type ncDataType;
 			if(prop->dataType() == qMetaTypeId<int>()) ncDataType = NC_INT;
+			else if(prop->dataType() == qMetaTypeId<qlonglong>()) ncDataType = NC_INT64;
 			else if(prop->dataType() == qMetaTypeId<FloatType>()) ncDataType = NC_OVITO_FLOATTYPE;
 			else continue;
 			// For scalar OVITO properties we define a NetCDF variable with 2 dimensions.
@@ -355,6 +356,9 @@ bool AMBERNetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, Ti
 		count[2] = outColumn.componentCount;
 		if(outColumn.dataType == qMetaTypeId<int>()) {
 			NCERR(nc_put_vara_int(_ncid, outColumn.ncvar, start, count, prop->constDataInt()));
+		}
+		else if(outColumn.dataType == qMetaTypeId<qlonglong>()) {
+			NCERR(nc_put_vara_longlong(_ncid, outColumn.ncvar, start, count, prop->constDataInt64()));
 		}
 		else if(outColumn.dataType == qMetaTypeId<FloatType>()) {
 #ifdef FLOATTYPE_FLOAT 
