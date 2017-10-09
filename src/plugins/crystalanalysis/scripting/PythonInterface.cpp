@@ -337,6 +337,10 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 				"Boolean flag that enables the visualization of line directions."
 				"\n\n"
 				":Default: ``False``\n")
+		.def_property("line_width", &DislocationDisplay::lineWidth, &DislocationDisplay::setLineWidth,
+				"Controls the display width (in units of length of the simulation) of dislocation lines."
+				"\n\n"
+				":Default: ``1.0``\n")
 		.def_property("indicate_character", &DislocationDisplay::lineColoringMode, &DislocationDisplay::setLineColoringMode,
 				"Controls how the display color of dislocation lines is chosen."
 				"Possible values:"
