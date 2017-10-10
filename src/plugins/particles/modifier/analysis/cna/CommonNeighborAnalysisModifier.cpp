@@ -170,7 +170,7 @@ void CommonNeighborAnalysisModifier::BondCNAEngine::perform()
 
 		// Determine common neighbors shared by both particles.
 		int numCommonNeighbors = 0;
-		std::array<std::pair<unsigned int, Vector_3<int8_t>>, 32> commonNeighbors;
+		std::array<std::pair<size_t, Vector_3<int8_t>>, 32> commonNeighbors;
 		for(Bond neighborBond1 : bondMap.bondsOfParticle(currentBond.index1)) {
 			OVITO_ASSERT(neighborBond1.index1 == currentBond.index1);
 			for(Bond neighborBond2 : bondMap.bondsOfParticle(currentBond.index2)) {

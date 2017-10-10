@@ -80,8 +80,8 @@ private:
 		VoronoiAnalysisResults(const TimeInterval& validityInterval, size_t particleCount, int edgeCount, bool computeIndices, bool computeBonds) :
 			ComputeEngineResults(validityInterval),
 			_coordinationNumbers(ParticleProperty::createStandardStorage(particleCount, ParticleProperty::CoordinationProperty, true)),
-			_atomicVolumes(std::make_shared<PropertyStorage>(particleCount, qMetaTypeId<FloatType>(), 1, 0, QStringLiteral("Atomic Volume"), true)),
-			_voronoiIndices(computeIndices ? std::make_shared<PropertyStorage>(particleCount, qMetaTypeId<int>(), edgeCount, 0, QStringLiteral("Voronoi Index"), true) : nullptr),
+			_atomicVolumes(std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Float, 1, 0, QStringLiteral("Atomic Volume"), true)),
+			_voronoiIndices(computeIndices ? std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Int, edgeCount, 0, QStringLiteral("Voronoi Index"), true) : nullptr),
 			_bonds(computeBonds ? std::make_shared<BondsStorage>() : nullptr) {}
 
 		/// Injects the computed results into the data pipeline.

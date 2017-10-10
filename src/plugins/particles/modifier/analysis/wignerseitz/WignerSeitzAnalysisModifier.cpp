@@ -133,7 +133,7 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 	}
 
 	// Create output storage.
-	_results->setOccupancyNumbers(std::make_shared<PropertyStorage>(refPositions()->size(), qMetaTypeId<int>(), ncomponents, 0, tr("Occupancy"), true));
+	_results->setOccupancyNumbers(std::make_shared<PropertyStorage>(refPositions()->size(), PropertyStorage::Int, ncomponents, 0, tr("Occupancy"), true));
 	if(ncomponents > 1 && typemin != 1) {
 		QStringList componentNames;
 		for(int i = typemin; i <= typemax; i++)

@@ -132,7 +132,7 @@ PipelineStatus VectorParticlePropertiesAffineTransformationModifierDelegate::app
 			if(isTransformableProperty(inputProperty)) {
 
 				PropertyStorage* property = poh.cloneIfNeeded(inputProperty)->modifiableStorage().get();
-				OVITO_ASSERT(property->dataType() == qMetaTypeId<FloatType>());
+				OVITO_ASSERT(property->dataType() == PropertyStorage::Float);
 				OVITO_ASSERT(property->componentCount() == 3);
 				if(!mod->selectionOnly()) {
 					for(Vector3& v : property->vector3Range())

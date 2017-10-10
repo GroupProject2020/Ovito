@@ -153,11 +153,11 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 	exportTask.setProgressMaximum(100);
 	for(size_t i = 0; i < posProperty->size(); i++) {
 		// atom-ID
-		textStream() << (identifierProperty ? identifierProperty->getInt(i) : (i+1));
+		textStream() << (identifierProperty ? identifierProperty->getInt64(i) : (i+1));
 		if(atomStyle() == LAMMPSDataImporter::AtomStyle_Bond || atomStyle() == LAMMPSDataImporter::AtomStyle_Molecular || atomStyle() == LAMMPSDataImporter::AtomStyle_Full || atomStyle() == LAMMPSDataImporter::AtomStyle_Angle) {
 			textStream() << ' ';
 			// molecule-ID
-			textStream() << (moleculeProperty ? moleculeProperty->getInt(i) : 1);
+			textStream() << (moleculeProperty ? moleculeProperty->getInt64(i) : 1);
 		}
 		textStream() << ' ';
 		// atom-type
@@ -208,7 +208,7 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 		textStream() << "\nVelocities\n\n";
 		const Vector3* v = velocityProperty->constDataVector3();
 		for(size_t i = 0; i < velocityProperty->size(); i++, ++v) {
-			textStream() << (identifierProperty ? identifierProperty->getInt(i) : (i+1));
+			textStream() << (identifierProperty ? identifierProperty->getInt64(i) : (i+1));
 			if(!transformCoordinates) {
 				for(size_t k = 0; k < 3; k++)
 					textStream() << ' ' << (*v)[k];
@@ -239,9 +239,9 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 			textStream() << ' ';
 			textStream() << (bondTypeProperty ? bondTypeProperty->getInt(i) : 1);
 			textStream() << ' ';
-			textStream() << (identifierProperty ? identifierProperty->getInt(bond.index1) : (bond.index1+1));
+			textStream() << (identifierProperty ? identifierProperty->getInt64(bond.index1) : (bond.index1+1));
 			textStream() << ' ';
-			textStream() << (identifierProperty ? identifierProperty->getInt(bond.index2) : (bond.index2+1));
+			textStream() << (identifierProperty ? identifierProperty->getInt64(bond.index2) : (bond.index2+1));
 			textStream() << '\n';
 
 			currentProgress++;

@@ -47,17 +47,17 @@ PropertyPtr BondProperty::OOMetaClass::createStandardStorage(size_t bondsCount, 
 	switch(type) {
 	case TypeProperty:
 	case SelectionProperty:
-		dataType = qMetaTypeId<int>();
+		dataType = PropertyStorage::Int;
 		componentCount = 1;
 		stride = sizeof(int);
 		break;
 	case LengthProperty:
-		dataType = qMetaTypeId<FloatType>();
+		dataType = PropertyStorage::Float;
 		componentCount = 1;
 		stride = sizeof(FloatType);
 		break;
 	case ColorProperty:
-		dataType = qMetaTypeId<FloatType>();
+		dataType = PropertyStorage::Float;
 		componentCount = 3;
 		stride = componentCount * sizeof(FloatType);
 		OVITO_ASSERT(stride == sizeof(Color));
@@ -113,10 +113,10 @@ void BondProperty::OOMetaClass::initialize()
 	const QStringList emptyList;
 	const QStringList rgbList = QStringList() << "R" << "G" << "B";
 	
-	registerStandardProperty(TypeProperty, tr("Bond Type"), qMetaTypeId<int>(), emptyList, tr("Bond types"));
-	registerStandardProperty(SelectionProperty, tr("Selection"), qMetaTypeId<int>(), emptyList);
-	registerStandardProperty(ColorProperty, tr("Color"), qMetaTypeId<FloatType>(), rgbList, tr("Bond colors"));
-	registerStandardProperty(LengthProperty, tr("Length"), qMetaTypeId<FloatType>(), emptyList);
+	registerStandardProperty(TypeProperty, tr("Bond Type"), PropertyStorage::Int, emptyList, tr("Bond types"));
+	registerStandardProperty(SelectionProperty, tr("Selection"), PropertyStorage::Int, emptyList);
+	registerStandardProperty(ColorProperty, tr("Color"), PropertyStorage::Float, rgbList, tr("Bond colors"));
+	registerStandardProperty(LengthProperty, tr("Length"), PropertyStorage::Float, emptyList);
 }
 
 }	// End of namespace

@@ -156,9 +156,8 @@ void ExpandSelectionModifier::ExpandSelectionBondedEngine::expandSelection()
 {
 	OVITO_ASSERT(inputSelection()->constDataInt() != results()->outputSelection()->dataInt());
 
-	unsigned int particleCount = inputSelection()->size();
-	parallelFor(_bonds->size(), *this, [this,particleCount](size_t index) {
-
+	size_t particleCount = inputSelection()->size();
+	parallelFor(_bonds->size(), *this, [this, particleCount](size_t index) {
 		const Bond& bond = (*_bonds)[index];
 		if(bond.index1 >= particleCount || bond.index2 >= particleCount)
 			return;

@@ -112,24 +112,24 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 		if(identifierProperty && trajIdentifierProperty) {
 
 			// Build map of particle identifiers in trajectory dataset.
-			std::map<int, size_t> refMap;
+			std::map<qlonglong, size_t> refMap;
 			size_t index = 0;
-			const int* id = trajIdentifierProperty->constDataInt();
-			const int* id_end = id + trajIdentifierProperty->size();
+			auto id = trajIdentifierProperty->constDataInt64();
+			auto id_end = id + trajIdentifierProperty->size();
 			for(; id != id_end; ++id, ++index) {
 				if(refMap.insert(std::make_pair(*id, index)).second == false)
 					throwException(tr("Particles with duplicate identifiers detected in trajectory data."));
 			}
 
 			// Check for duplicate identifiers in topology dataset.
-			std::vector<size_t> idSet(identifierProperty->constDataInt(), identifierProperty->constDataInt() + identifierProperty->size());
+			std::vector<size_t> idSet(identifierProperty->constDataInt64(), identifierProperty->constDataInt64() + identifierProperty->size());
 			std::sort(idSet.begin(), idSet.end());
 			if(std::adjacent_find(idSet.begin(), idSet.end()) != idSet.end())
 				throwException(tr("Particles with duplicate identifiers detected in topology dataset."));
 
 			// Build index map.
 			index = 0;
-			id = identifierProperty->constDataInt();
+			id = identifierProperty->constDataInt64();
 			for(auto& mappedIndex : indexToIndexMap) {
 				auto iter = refMap.find(*id);
 				if(iter == refMap.end())
@@ -142,7 +142,7 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 		else {
 			// Topology dataset and trajectory data must contain the same number of particles.
 			if(posProperty->size() != trajectoryPosProperty->size()) {
-				throwException(tr("Cannot apply trajectories to current particle dataset. Number of particles in the trajectory file and in the topology file do not match."));
+				throwException(tr("Cannot apply trajectories to current particle dataset. Numbers of particles in the trajectory file and in the topology file do not match."));
 			}
 
 			// When particle identifiers are not available, use trivial 1-to-1 mapping.

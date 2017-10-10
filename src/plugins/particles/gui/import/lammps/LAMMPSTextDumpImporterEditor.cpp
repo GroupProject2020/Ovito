@@ -94,7 +94,11 @@ void LAMMPSTextDumpImporterEditor::createUI(const RolloutInsertionParameters& ro
 	useCustomMappingUI->buttonFalse()->setText(tr("Automatic mapping"));
 	sublayout->addWidget(useCustomMappingUI->buttonFalse());
 	useCustomMappingUI->buttonTrue()->setText(tr("User-defined mapping to particle properties"));
-	sublayout->addWidget(useCustomMappingUI->buttonTrue());
+	sublayout->addWidget(useCustomMappingUI->buttonTrue());	
+	connect(useCustomMappingUI->buttonFalse(), &QRadioButton::clicked, this, [this]() {
+		if(LAMMPSTextDumpImporter* importer = static_object_cast<LAMMPSTextDumpImporter>(editObject()))
+			importer->requestReload();
+	}, Qt::QueuedConnection);
 
 	QPushButton* editMappingButton = new QPushButton(tr("Edit column mapping..."));
 	sublayout->addWidget(editMappingButton);

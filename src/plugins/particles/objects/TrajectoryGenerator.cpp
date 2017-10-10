@@ -89,20 +89,20 @@ TrajectoryObject* TrajectoryGenerator::generateTrajectories(TaskManager& taskMan
 		throwException(tr("The input object contains no particles."));
 
 	// Determine set of input particles.
-	std::vector<int> selectedIndices;
-	std::set<int> selectedIdentifiers;
-	int particleCount = 0;
+	std::vector<size_t> selectedIndices;
+	std::set<qlonglong> selectedIdentifiers;
+	size_t particleCount = 0;
 	if(onlySelectedParticles()) {
 		if(selectionProperty) {
 			if(identifierProperty && identifierProperty->size() == selectionProperty->size()) {
 				const int* s = selectionProperty->constDataInt();
-				for(int id : identifierProperty->constIntRange())
+				for(auto id : identifierProperty->constInt64Range())
 					if(*s++) selectedIdentifiers.insert(id);
 				particleCount = selectedIdentifiers.size();
 			}
 			else {
 				const int* s = selectionProperty->constDataInt();
-				for(int index = 0; index < selectionProperty->size(); index++)
+				for(size_t index = 0; index < selectionProperty->size(); index++)
 					if(*s++) selectedIndices.push_back(index);
 				particleCount = selectedIndices.size();
 			}
@@ -110,13 +110,13 @@ TrajectoryObject* TrajectoryGenerator::generateTrajectories(TaskManager& taskMan
 	}
 	else {
 		if(identifierProperty) {
-			for(int id : identifierProperty->constIntRange())
+			for(auto id : identifierProperty->constInt64Range())
 				selectedIdentifiers.insert(id);
 			particleCount = selectedIdentifiers.size();
 		}
 		else {
 			selectedIndices.resize(posProperty->size());
-			std::iota(selectedIndices.begin(), selectedIndices.end(), 0);
+			std::iota(selectedIndices.begin(), selectedIndices.end(), size_t(0));
 			particleCount = selectedIndices.size();
 		}
 	}
@@ -162,12 +162,12 @@ TrajectoryObject* TrajectoryGenerator::generateTrajectories(TaskManager& taskMan
 				throwException(tr("Input particles do not possess identifiers at frame %1.").arg(dataset()->animationSettings()->timeToFrame(time)));
 
 			// Create a mapping from IDs to indices.
-			std::map<int,int> idmap;
-			int index = 0;
-			for(int id : identifierProperty->constIntRange())
+			std::map<qlonglong,size_t> idmap;
+			size_t index = 0;
+			for(auto id : identifierProperty->constInt64Range())
 				idmap.insert(std::make_pair(id, index++));
 
-			for(int id : selectedIdentifiers) {
+			for(auto id : selectedIdentifiers) {
 				auto entry = idmap.find(id);
 				if(entry == idmap.end())
 					throwException(tr("Input particle with ID=%1 does not exist at frame %2. This program version cannot create trajectory lines when the number of particles changes over time.").arg(id).arg(dataset()->animationSettings()->timeToFrame(time)));
@@ -175,7 +175,7 @@ TrajectoryObject* TrajectoryGenerator::generateTrajectories(TaskManager& taskMan
 			}
 		}
 		else {
-			for(int index : selectedIndices) {
+			for(auto index : selectedIndices) {
 				if(index >= posProperty->size())
 					throwException(tr("Input particle at index %1 does not exist at frame %2. This program version cannot create trajectory lines when the number of particles changes over time.").arg(index+1).arg(dataset()->animationSettings()->timeToFrame(time)));
 				points.push_back(posProperty->getPoint3(index));
@@ -189,7 +189,7 @@ TrajectoryObject* TrajectoryGenerator::generateTrajectories(TaskManager& taskMan
 				if(cell.pbcFlags() != std::array<bool,3>{false, false, false}) {
 					auto previousPos = points.cbegin() + (points.size() - 2 * particleCount);
 					auto currentPos = points.begin() + (points.size() - particleCount);
-					for(int i = 0; i < particleCount; i++, ++previousPos, ++currentPos) {
+					for(size_t i = 0; i < particleCount; i++, ++previousPos, ++currentPos) {
 						Vector3 delta = cell.wrapVector(*currentPos - *previousPos);
 						*currentPos = *previousPos + delta;
 					}

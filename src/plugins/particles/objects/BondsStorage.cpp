@@ -21,6 +21,7 @@
 
 #include <plugins/particles/Particles.h>
 #include "BondsStorage.h"
+#include "BondsObject.h"
 
 namespace Ovito { namespace Particles {
 
@@ -32,10 +33,12 @@ void BondsStorage::saveToStream(SaveStream& stream, bool onlyMetadata) const
 	stream.beginChunk(0x01);
 	if(!onlyMetadata) {
 		stream.writeSizeT(size());
+		stream.writeSizeT(sizeof(Bond));
 		stream.write(data(), size() * sizeof(Bond));
 	}
 	else {
 		stream.writeSizeT(0);
+		stream.writeSizeT(sizeof(Bond));
 	}
 	stream.endChunk();
 }
@@ -49,6 +52,10 @@ void BondsStorage::loadFromStream(LoadStream& stream)
 	size_t bondCount;
 	stream.readSizeT(bondCount);
 	resize(bondCount);
+	size_t bondSize;
+	stream.readSizeT(bondSize);
+	if(bondSize != sizeof(Bond) && bondCount != 0)
+		throw Exception(BondsObject::tr("Data type size mismatch in stored bond list."));
 	stream.read(data(), size() * sizeof(Bond));
 	stream.closeChunk();
 }

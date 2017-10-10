@@ -66,7 +66,7 @@ StructureAnalysis::StructureAnalysis(ConstPropertyPtr positions, const Simulatio
 	_structureTypes(std::move(outputStructures)),
 	_particleSelection(std::move(particleSelection)),
 	_atomClusters(ParticleProperty::createStandardStorage(positions->size(), ParticleProperty::ClusterProperty, true)),
-	_atomSymmetryPermutations(std::make_shared<PropertyStorage>(positions->size(), qMetaTypeId<int>(), 1, 0, QStringLiteral("SymmetryPermutations"), false)),
+	_atomSymmetryPermutations(std::make_shared<PropertyStorage>(positions->size(), PropertyStorage::Int, 1, 0, QStringLiteral("SymmetryPermutations"), false)),
 	_clusterGraph(std::make_shared<ClusterGraph>()),
 	_preferredCrystalOrientations(std::move(preferredCrystalOrientations)),
 	_identifyPlanarDefects(identifyPlanarDefects)
@@ -77,8 +77,11 @@ StructureAnalysis::StructureAnalysis(ConstPropertyPtr positions, const Simulatio
 		initialized = true;
 	}
 
+	if(_positions->size() > std::numeric_limits<int>::max())
+		throw Exception(DislocationAnalysisModifier::tr("This function is limited to a maximum of %1 input particles in the current program version.").arg(std::numeric_limits<int>::max()));
+
 	// Allocate memory for neighbor lists.
-	_neighborLists = std::make_shared<PropertyStorage>(_positions->size(), qMetaTypeId<int>(),
+	_neighborLists = std::make_shared<PropertyStorage>(_positions->size(), PropertyStorage::Int,
 			latticeStructure(inputCrystalType).maxNeighbors, 0, QStringLiteral("Neighbors"), false);
 	std::fill(_neighborLists->dataInt(), _neighborLists->dataInt() + _neighborLists->size() * _neighborLists->componentCount(), -1);
 
@@ -761,7 +764,7 @@ bool StructureAnalysis::buildClusters(PromiseState& promise)
 
 	// Iterate over atoms, looking for those that have not been visited yet.
 	for(size_t seedAtomIndex = 0; seedAtomIndex < positions()->size(); seedAtomIndex++) {
-		if(_atomClusters->getInt(seedAtomIndex) != 0) continue;
+		if(_atomClusters->getInt64(seedAtomIndex) != 0) continue;
 		int coordStructureType = _structureTypes->getInt(seedAtomIndex);
 
 		if(coordStructureType == COORD_OTHER) {
@@ -774,7 +777,7 @@ bool StructureAnalysis::buildClusters(PromiseState& promise)
 		Cluster* cluster = clusterGraph()->createCluster(latticeStructureType);
 		OVITO_ASSERT(cluster->id > 0);
 		cluster->atomCount = 1;
-		_atomClusters->setInt(seedAtomIndex, cluster->id);
+		_atomClusters->setInt64(seedAtomIndex, cluster->id);
 		_atomSymmetryPermutations->setInt(seedAtomIndex, 0);
 		const CoordinationStructure& coordStructure = _coordinationStructures[coordStructureType];
 		const LatticeStructure& latticeStructure = _latticeStructures[latticeStructureType];
@@ -816,7 +819,7 @@ bool StructureAnalysis::buildClusters(PromiseState& promise)
 				}
 
 				// Skip neighbors which are already part of the cluster, or which have a different coordination structure type.
-				if(_atomClusters->getInt(neighborAtomIndex) != 0) continue;
+				if(_atomClusters->getInt64(neighborAtomIndex) != 0) continue;
 				if(_structureTypes->getInt(neighborAtomIndex) != coordStructureType) continue;
 
 				// Select three non-coplanar atoms, which are all neighbors of the current neighbor.
@@ -856,7 +859,7 @@ bool StructureAnalysis::buildClusters(PromiseState& promise)
 					if(transition.equals(latticeStructure.permutations[i].transformation, CA_TRANSITION_MATRIX_EPSILON)) {
 
 						// Make the neighbor atom part of the current cluster.
-						_atomClusters->setInt(neighborAtomIndex, cluster->id);
+						_atomClusters->setInt64(neighborAtomIndex, cluster->id);
 						cluster->atomCount++;
 
 						// Save the permutation index.
@@ -904,7 +907,7 @@ bool StructureAnalysis::buildClusters(PromiseState& promise)
 
 	// Reorient atoms to align clusters with global coordinate system.
 	for(size_t atomIndex = 0; atomIndex < positions()->size(); atomIndex++) {
-		int clusterId = _atomClusters->getInt(atomIndex);
+		int clusterId = _atomClusters->getInt64(atomIndex);
 		if(clusterId == 0) continue;
 		Cluster* cluster = clusterGraph()->findCluster(clusterId);
 		OVITO_ASSERT(cluster);
@@ -929,7 +932,7 @@ bool StructureAnalysis::connectClusters(PromiseState& promise)
 	promise.setProgressMaximum(positions()->size());
 
 	for(size_t atomIndex = 0; atomIndex < positions()->size(); atomIndex++) {
-		int clusterId = _atomClusters->getInt(atomIndex);
+		int clusterId = _atomClusters->getInt64(atomIndex);
 		if(clusterId == 0) continue;
 		Cluster* cluster1 = clusterGraph()->findCluster(clusterId);
 		OVITO_ASSERT(cluster1);
@@ -950,7 +953,7 @@ bool StructureAnalysis::connectClusters(PromiseState& promise)
 			int neighbor = getNeighbor(atomIndex, ni);
 
 			// Skip neighbor atoms belonging to the same cluster or to no cluster at all.
-			int neighborClusterId = _atomClusters->getInt(neighbor);
+			int neighborClusterId = _atomClusters->getInt64(neighbor);
 			if(neighborClusterId == 0 || neighborClusterId == clusterId) {
 
 				// Add this atom to the neighbor's list of neighbors.

@@ -218,7 +218,7 @@ ReferenceConfigurationModifier::RefConfigEngineBase::RefConfigEngineBase(
 * Determines the mapping between particles in the reference configuration and
 * the current configuration and vice versa.
 ******************************************************************************/
-bool ReferenceConfigurationModifier::RefConfigEngineBase::buildParticleMapping()
+bool ReferenceConfigurationModifier::RefConfigEngineBase::buildParticleMapping(bool requireCompleteCurrentToRefMapping, bool requireCompleteRefToCurrentMapping)
 {
 	// Build particle-to-particle index maps.
 	_currentToRefIndexMap.resize(positions()->size());
@@ -228,9 +228,9 @@ bool ReferenceConfigurationModifier::RefConfigEngineBase::buildParticleMapping()
 		OVITO_ASSERT(refIdentifiers()->size() == refPositions()->size());
 
 		// Build map of particle identifiers in reference configuration.
-		std::map<int, int> refMap;
-		int index = 0;
-		for(int id : refIdentifiers()->constIntRange()) {
+		std::map<qlonglong, size_t> refMap;
+		size_t index = 0;
+		for(auto id : refIdentifiers()->constInt64Range()) {
 			if(refMap.insert(std::make_pair(id, index)).second == false)
 				throw Exception(tr("Particles with duplicate identifiers detected in reference configuration."));
 			index++;
@@ -240,9 +240,9 @@ bool ReferenceConfigurationModifier::RefConfigEngineBase::buildParticleMapping()
 			return false;
 
 		// Check for duplicate identifiers in current configuration
-		std::map<int, int> currentMap;
+		std::map<qlonglong, size_t> currentMap;
 		index = 0;
-		for(int id : identifiers()->constIntRange()) {
+		for(auto id : identifiers()->constInt64Range()) {
 			if(currentMap.insert(std::make_pair(id, index)).second == false)
 				throw Exception(tr("Particles with duplicate identifiers detected in current configuration."));
 			index++;
@@ -252,26 +252,30 @@ bool ReferenceConfigurationModifier::RefConfigEngineBase::buildParticleMapping()
 			return false;
 
 		// Build index maps.
-		const int* id = identifiers()->constDataInt();
+		auto id = identifiers()->constDataInt64();
 		for(auto& mappedIndex : _currentToRefIndexMap) {
 			auto iter = refMap.find(*id);
 			if(iter != refMap.end())
 				mappedIndex = iter->second;
+			else if(requireCompleteCurrentToRefMapping)
+				throw Exception(tr("Particle ID %1 does exist in the current configuration but not in the reference configuration.").arg(*id));
 			else
-				mappedIndex = -1;
+				mappedIndex = std::numeric_limits<size_t>::max();
 			++id;
 		}
 
 		if(isCanceled())
 			return false;
 
-		id = refIdentifiers()->constDataInt();
+		id = refIdentifiers()->constDataInt64();
 		for(auto& mappedIndex : _refToCurrentIndexMap) {
 			auto iter = currentMap.find(*id);
 			if(iter != currentMap.end())
 				mappedIndex = iter->second;
+			else if(requireCompleteRefToCurrentMapping)
+				throw Exception(tr("Particle ID %1 does exist in the reference configuration but not in the current configuration.").arg(*id));
 			else
-				mappedIndex = -1;
+				mappedIndex = std::numeric_limits<size_t>::max();
 			++id;
 		}
 	}
@@ -282,8 +286,8 @@ bool ReferenceConfigurationModifier::RefConfigEngineBase::buildParticleMapping()
 		
 		// When particle identifiers are not available, assume the storage order of particles in the 
 		// reference configuration and the current configuration are the same and use trivial 1-to-1 mapping.
-		std::iota(_refToCurrentIndexMap.begin(), _refToCurrentIndexMap.end(), 0);
-		std::iota(_currentToRefIndexMap.begin(), _currentToRefIndexMap.end(), 0);
+		std::iota(_refToCurrentIndexMap.begin(), _refToCurrentIndexMap.end(), size_t(0));
+		std::iota(_currentToRefIndexMap.begin(), _currentToRefIndexMap.end(), size_t(0));
 	}
 
 	return !isCanceled();

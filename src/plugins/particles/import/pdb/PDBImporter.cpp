@@ -131,7 +131,7 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
 
 	// Parse atoms.
-	int atomIndex = 0;
+	size_t atomIndex = 0;
 	Point3* p = posProperty->dataPoint3();
 	int* a = typeProperty->dataInt();
 	PropertyPtr particleIdentifierProperty;
@@ -171,7 +171,7 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 					particleIdentifierProperty = ParticleProperty::createStandardStorage(numAtoms, ParticleProperty::IdentifierProperty, true);
 					frameData->addParticleProperty(particleIdentifierProperty);
 				}
-				particleIdentifierProperty->setInt(atomIndex, atomSerialNumber);
+				particleIdentifierProperty->setInt64(atomIndex, atomSerialNumber);
 			}
 
 			// Parse molecule ID (residue sequence number).
@@ -181,7 +181,7 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 					moleculeIdentifierProperty = ParticleProperty::createStandardStorage(numAtoms, ParticleProperty::MoleculeProperty, true);
 					frameData->addParticleProperty(moleculeIdentifierProperty);
 				}
-				moleculeIdentifierProperty->setInt(atomIndex, residueSequenceNumber);
+				moleculeIdentifierProperty->setInt64(atomIndex, residueSequenceNumber);
 			}
 
 			// Parse molecule type.
@@ -217,11 +217,11 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 			unsigned int atomSerialNumber1;
 			if(lineLength <= 11 || sscanf(stream.line() + 6, "%5u", &atomSerialNumber1) != 1 || particleIdentifierProperty == nullptr)
 				throw Exception(tr("Invalid CONECT record (line %1): %2").arg(stream.lineNumber()).arg(stream.lineString()));
-			unsigned int atomIndex1 = std::find(particleIdentifierProperty->constDataInt(), particleIdentifierProperty->constDataInt() + particleIdentifierProperty->size(), atomSerialNumber1) - particleIdentifierProperty->constDataInt();
+			size_t atomIndex1 = std::find(particleIdentifierProperty->constDataInt64(), particleIdentifierProperty->constDataInt64() + particleIdentifierProperty->size(), atomSerialNumber1) - particleIdentifierProperty->constDataInt64();
 			for(int i = 0; i < 10; i++) {
 				unsigned int atomSerialNumber2;
 				if(lineLength >= 16+5*i && sscanf(stream.line() + 11+5*i, "%5u", &atomSerialNumber2) == 1) {
-					unsigned int atomIndex2 = std::find(particleIdentifierProperty->constDataInt(), particleIdentifierProperty->constDataInt() + particleIdentifierProperty->size(), atomSerialNumber2) - particleIdentifierProperty->constDataInt();
+					size_t atomIndex2 = std::find(particleIdentifierProperty->constDataInt64(), particleIdentifierProperty->constDataInt64() + particleIdentifierProperty->size(), atomSerialNumber2) - particleIdentifierProperty->constDataInt64();
 					if(atomIndex1 >= particleIdentifierProperty->size() || atomIndex2 >= particleIdentifierProperty->size())
 						throw Exception(tr("Nonexistent atom ID encountered in line %1 of PDB file.").arg(stream.lineNumber()));
 					if(!frameData->bonds())

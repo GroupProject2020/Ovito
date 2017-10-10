@@ -261,7 +261,7 @@ FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile(QFile& fi
 			// Parse charge density volumetric grid.
 			if(sscanf(stream.readLine(), "%zu %zu %zu", &nx, &ny, &nz) == 3 && nx > 0 && ny > 0 && nz > 0) {
 				auto parseFieldData = [this, &stream, &frameData](size_t nx, size_t ny, size_t nz, const QString& name) -> PropertyPtr {
-					PropertyPtr fieldQuantity = std::make_shared<PropertyStorage>(nx*ny*nz, qMetaTypeId<FloatType>(), 1, 0, name, false);
+					PropertyPtr fieldQuantity = std::make_shared<PropertyStorage>(nx*ny*nz, PropertyStorage::Float, 1, 0, name, false);
 					const char* s = stream.readLine();
 					FloatType* data = fieldQuantity->dataFloat();
 					setProgressMaximum(fieldQuantity->size());
@@ -330,7 +330,7 @@ FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile(QFile& fi
 				}
 
 				if(magnetizationDensity && magnetizationDensityY && magnetizationDensityZ) {
-					PropertyPtr vectorMagnetization = std::make_shared<PropertyStorage>(nx*ny*nz, qMetaTypeId<FloatType>(), 3, 0, tr("Magnetization density"), false);
+					PropertyPtr vectorMagnetization = std::make_shared<PropertyStorage>(nx*ny*nz, PropertyStorage::Float, 3, 0, tr("Magnetization density"), false);
 					vectorMagnetization->setComponentNames(QStringList() << "X" << "Y" << "Z");
 					for(size_t i = 0; i < vectorMagnetization->size(); i++) 
 						vectorMagnetization->setVector3(i, { magnetizationDensity->getFloat(i), magnetizationDensityY->getFloat(i), magnetizationDensityZ->getFloat(i) });

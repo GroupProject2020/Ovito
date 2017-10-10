@@ -186,8 +186,8 @@ bool ElasticMapping::assignIdealVectorsToEdges(int crystalPathSteps, PromiseStat
 	for(const auto& firstEdge : _vertexEdges) {
 		for(TessellationEdge* edge = firstEdge.first; edge != nullptr; edge = edge->nextLeavingEdge) {
 			if(edge->hasClusterVector()) continue;
-			_unassignedEdges->push_back({ Vector_3<int8_t>::Zero(), (unsigned int)edge->vertex1, (unsigned int)edge->vertex2 });
-			_unassignedEdges->push_back({ Vector_3<int8_t>::Zero(), (unsigned int)edge->vertex2, (unsigned int)edge->vertex1 });
+			_unassignedEdges->push_back({ Vector_3<int8_t>::Zero(), edge->vertex1, edge->vertex2 });
+			_unassignedEdges->push_back({ Vector_3<int8_t>::Zero(), edge->vertex2, edge->vertex1 });
 		}
 	}
 #endif

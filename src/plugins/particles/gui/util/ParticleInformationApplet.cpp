@@ -164,7 +164,7 @@ void ParticleInformationApplet::updateInformationDisplay()
 					pickRes.particleIndex = particleIndex;
 					pickRes.localPos = posProperty ? posProperty->getPoint3(particleIndex) : Point3::Origin();
 					pickRes.worldPos = nodeTM * pickRes.localPos;
-					pickRes.particleId = identifierProperty ? identifierProperty->getInt(particleIndex) : -1;
+					pickRes.particleId = identifierProperty ? identifierProperty->getInt64(particleIndex) : -1;
 					++nselected;
 					if(_inputMode->_pickedParticles.size() < _maxSelectionSize)
 						_inputMode->_pickedParticles.push_back(pickRes);
@@ -192,9 +192,9 @@ void ParticleInformationApplet::updateInformationDisplay()
 				for(DataObject* dataObj : flowState.objects()) {
 					ParticleProperty* property = dynamic_object_cast<ParticleProperty>(dataObj);
 					if(property && property->type() == ParticleProperty::IdentifierProperty) {
-						const int* begin = property->constDataInt();
-						const int* end = begin + property->size();
-						const int* iter = std::find(begin, end, pickedParticle->particleId);
+						auto begin = property->constDataInt64();
+						auto end = begin + property->size();
+						auto iter = std::find(begin, end, pickedParticle->particleId);
 						if(iter != end) {
 							pickedParticle->particleIndex = (iter - begin);
 						}
@@ -228,7 +228,7 @@ void ParticleInformationApplet::updateInformationDisplay()
 					if(property->type() == ParticleProperty::PositionProperty)
 						pickedParticle->localPos = property->getPoint3(pickedParticle->particleIndex);
 
-					if(property->dataType() != qMetaTypeId<int>() && property->dataType() != qMetaTypeId<qlonglong>() && property->dataType() != qMetaTypeId<FloatType>()) continue;
+					if(property->dataType() != PropertyStorage::Int && property->dataType() != PropertyStorage::Int64 && property->dataType() != PropertyStorage::Float) continue;
 					for(size_t component = 0; component < property->componentCount(); component++) {
 						QString propertyName = property->name();
 						if(property->componentNames().empty() == false) {
@@ -236,7 +236,7 @@ void ParticleInformationApplet::updateInformationDisplay()
 							propertyName.append(property->componentNames()[component]);
 						}
 						QString valueString;
-						if(property->dataType() == qMetaTypeId<int>()) {
+						if(property->dataType() == PropertyStorage::Int) {
 							valueString = QString::number(property->getIntComponent(pickedParticle->particleIndex, component));
 							if(property->elementTypes().empty() == false) {
 								ElementType* ptype = property->elementType(property->getIntComponent(pickedParticle->particleIndex, component));
@@ -245,9 +245,9 @@ void ParticleInformationApplet::updateInformationDisplay()
 								}
 							}
 						}
-						else if(property->dataType() == qMetaTypeId<qlonglong>())
+						else if(property->dataType() == PropertyStorage::Int64)
 							valueString = QString::number(property->getInt64Component(pickedParticle->particleIndex, component));
-						else if(property->dataType() == qMetaTypeId<FloatType>())
+						else if(property->dataType() == PropertyStorage::Float)
 							valueString = QString::number(property->getFloatComponent(pickedParticle->particleIndex, component));
 
 						stream << QStringLiteral("<tr><td>") << propertyName << QStringLiteral(":</td><td>") << valueString << QStringLiteral("</td></tr>");

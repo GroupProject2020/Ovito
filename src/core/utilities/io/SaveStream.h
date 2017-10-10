@@ -240,6 +240,23 @@ inline SaveStream& operator<<(SaveStream& stream, const QFlags<Enum>& a)
 	return stream << (typename QFlags<Enum>::enum_type)(typename QFlags<Enum>::Int)a;
 }
 
+
+/// \brief Writes a bit vector to a SaveStream.
+/// \relates SaveStream
+///
+/// \param stream The destination stream.
+/// \param bs The bit vector to write to the stream.
+/// \return The destination stream.
+/// \throw Exception if an I/O error has occurred.
+inline SaveStream& operator<<(SaveStream& stream, const boost::dynamic_bitset<>& bs)
+{	
+	stream.writeSizeT(bs.size());
+	std::vector<boost::dynamic_bitset<>::block_type> blocks(bs.num_blocks());
+	boost::to_block_range(bs, blocks.begin());
+	stream.write(blocks.data(), blocks.size() * sizeof(boost::dynamic_bitset<>::block_type));
+	return stream;
+}
+
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -200,7 +200,7 @@ bool XYZImporter::mapVariableToProperty(InputColumnMapping& columnMapping, int c
 	else if(loweredName == "centro_symmetry") columnMapping[column].mapStandardColumn(ParticleProperty::CentroSymmetryProperty);
 	else {
 		// Only int or float custom properties are supported
-		if(dataType == qMetaTypeId<FloatType>() || dataType == qMetaTypeId<int>() || dataType == qMetaTypeId<qlonglong>())
+		if(dataType == PropertyStorage::Float || dataType == PropertyStorage::Int || dataType == PropertyStorage::Int64)
 			columnMapping[column].mapCustomColumn(name, dataType, vec);
 		else
 			return false;
@@ -428,19 +428,19 @@ FileSourceImporter::FrameDataPtr XYZImporter::FrameLoader::loadFile(QFile& file)
 				switch(propType) {
 				case 'I':
 					for(int k = 0; k < nCols; k++) {
-						mapVariableToProperty(frameData->detectedColumnMapping(), col, propName, qMetaTypeId<int>(), k);
+						mapVariableToProperty(frameData->detectedColumnMapping(), col, propName, PropertyStorage::Int, k);
 						col++;
 					}
 					break;
 				case 'R':
 					for(int k = 0; k < nCols; k++) {
-						mapVariableToProperty(frameData->detectedColumnMapping(), col, propName, qMetaTypeId<FloatType>(), k);
+						mapVariableToProperty(frameData->detectedColumnMapping(), col, propName, PropertyStorage::Float, k);
 						col++;
 					}
 					break;
 				case 'L':
 					for(int k = 0; k < nCols; k++) {
-						mapVariableToProperty(frameData->detectedColumnMapping(), col, propName, qMetaTypeId<int>(), k);
+						mapVariableToProperty(frameData->detectedColumnMapping(), col, propName, PropertyStorage::Int, k);
 						col++;
 					}
 					break;

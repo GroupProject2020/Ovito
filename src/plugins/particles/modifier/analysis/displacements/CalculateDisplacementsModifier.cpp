@@ -102,7 +102,7 @@ void CalculateDisplacementsModifier::DisplacementEngine::perform()
 {
 	// First determine the mapping from particles of the reference config to particles
 	// of the current config.
-	if(!buildParticleMapping())
+	if(!buildParticleMapping(true, false))
 		return;
 
 	// Compute displacement vectors.
@@ -170,7 +170,7 @@ PipelineFlowState CalculateDisplacementsModifier::DisplacementResults::apply(Tim
 	ParticleOutputHelper poh(modApp->dataset(), output);
 	if(displacements()->size() != poh.outputParticleCount())
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
-	poh.outputProperty<ParticleProperty>(displacements())->setDisplayObject(modifier->vectorDisplay());	
+	poh.outputProperty<ParticleProperty>(displacements())->setDisplayObject(modifier->vectorDisplay());
 	poh.outputProperty<ParticleProperty>(displacementMagnitudes());
 	
 	return output;

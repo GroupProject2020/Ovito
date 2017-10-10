@@ -342,7 +342,7 @@ void CFGImporter::generateAutomaticColumnMapping(InputColumnMapping& columnMappi
 		else if(name == "tqz") columnMapping[i].mapStandardColumn(ParticleProperty::TorqueProperty, 2);
 		else if(name == "spin") columnMapping[i].mapStandardColumn(ParticleProperty::SpinProperty);
 		else {
-			columnMapping[i].mapCustomColumn(columnNames[j], qMetaTypeId<FloatType>());
+			columnMapping[i].mapCustomColumn(columnNames[j], PropertyStorage::Float);
 		}
 	}
 }

@@ -55,7 +55,7 @@ void SelectTypeModifierEditor::createUI(const RolloutInsertionParameters& rollou
 	});
 	// Show only type properties in the list that have some element types attached to them.
 	_sourcePropertyUI->setPropertyFilter([](PropertyObject* property) {
-		return property->elementTypes().empty() == false && property->componentCount() == 1 && property->dataType() == qMetaTypeId<int>();
+		return property->elementTypes().empty() == false && property->componentCount() == 1 && property->dataType() == PropertyStorage::Int;
 	});
 
 	class MyListWidget : public QListWidget {

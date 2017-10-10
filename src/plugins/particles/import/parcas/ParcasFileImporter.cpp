@@ -216,7 +216,7 @@ FileSourceImporter::FrameDataPtr ParcasFileImporter::FrameLoader::loadFile(QFile
 		if(propertyType != ParticleProperty::UserProperty)
 			property = ParticleProperty::createStandardStorage(natoms, propertyType, true);
 		else
-			property = std::make_shared<PropertyStorage>(natoms, qMetaTypeId<FloatType>(), 1, 0, propertyName, true);
+			property = std::make_shared<PropertyStorage>(natoms, PropertyStorage::Float, 1, 0, propertyName, true);
 		frameData->addParticleProperty(property);
 		properties.push_back(property.get());
     }
@@ -233,7 +233,7 @@ FileSourceImporter::FrameDataPtr ParcasFileImporter::FrameLoader::loadFile(QFile
 	frameData->simulationCell().setPbcFlags(box_x < 0, box_y < 0, box_z < 0);
 
 	// Create the required standard properties.
-    int numAtoms = (int)natoms;
+    size_t numAtoms = (size_t)natoms;
 	PropertyPtr posProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::PositionProperty, true);
 	frameData->addParticleProperty(posProperty);
 	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::TypeProperty, true);
@@ -262,11 +262,10 @@ FileSourceImporter::FrameDataPtr ParcasFileImporter::FrameLoader::loadFile(QFile
 	setProgressMaximum(numAtoms);
 
 	// Parse atoms.
-	for(int i = 0; i < numAtoms; i++) {
+	for(size_t i = 0; i < numAtoms; i++) {
 
 		// Parse atom id.
-		int atomId = (int)stream.get_int64();
-		identifierProperty->setInt(i, atomId);
+		identifierProperty->setInt64(i, stream.get_int64());
 
 		// Parse atom type.
 		int32_t atomType = std::abs(stream.get_int32());

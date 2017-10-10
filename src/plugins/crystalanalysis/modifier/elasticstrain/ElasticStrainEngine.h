@@ -36,7 +36,7 @@ public:
 	/// Constructor.
 	ElasticStrainResults(size_t particleCount, bool calculateStrainTensors, bool calculateDeformationGradients) :
 		StructureIdentificationResults(particleCount),
-		_volumetricStrains(std::make_shared<PropertyStorage>(particleCount, qMetaTypeId<FloatType>(), 1, 0, QStringLiteral("Volumetric Strain"), false)),
+		_volumetricStrains(std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Float, 1, 0, QStringLiteral("Volumetric Strain"), false)),
 		_strainTensors(calculateStrainTensors ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::ElasticStrainTensorProperty, false) : nullptr),
 		_deformationGradients(calculateDeformationGradients ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::ElasticDeformationGradientProperty, false) : nullptr) {}
 	

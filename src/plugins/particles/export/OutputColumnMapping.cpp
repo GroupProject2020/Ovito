@@ -114,7 +114,7 @@ void OutputColumnWriter::writeParticle(size_t particleIndex, CompressedTextWrite
 	for(; property != _properties.constEnd(); ++property, ++vcomp) {
 		if(property != _properties.constBegin()) stream << ' ';
 		if(*property) {
-			if((*property)->dataType() == qMetaTypeId<int>()) {
+			if((*property)->dataType() == PropertyStorage::Int) {
 				if(!_writeTypeNames || (*property)->type() != ParticleProperty::TypeProperty) {
 					stream << (*property)->getIntComponent(particleIndex, *vcomp);
 				}
@@ -132,10 +132,10 @@ void OutputColumnWriter::writeParticle(size_t particleIndex, CompressedTextWrite
 					}
 				}
 			}
-			else if((*property)->dataType() == qMetaTypeId<qlonglong>()) {
+			else if((*property)->dataType() == PropertyStorage::Int64) {
 				stream << (*property)->getInt64Component(particleIndex, *vcomp);
 			}
-			else if((*property)->dataType() == qMetaTypeId<FloatType>()) {
+			else if((*property)->dataType() == PropertyStorage::Float) {
 				stream << (*property)->getFloatComponent(particleIndex, *vcomp);
 			}
 		}

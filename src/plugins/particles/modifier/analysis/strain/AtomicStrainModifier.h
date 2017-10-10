@@ -65,11 +65,11 @@ private:
 							bool calculateRotations,
 							bool calculateStretchTensors) : 
 			ComputeEngineResults(validityInterval),
-			_shearStrains(std::make_shared<PropertyStorage>(particleCount, qMetaTypeId<FloatType>(), 1, 0, tr("Shear Strain"), false)),
-			_volumetricStrains(std::make_shared<PropertyStorage>(particleCount, qMetaTypeId<FloatType>(), 1, 0, tr("Volumetric Strain"), false)),
+			_shearStrains(std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Float, 1, 0, tr("Shear Strain"), false)),
+			_volumetricStrains(std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Float, 1, 0, tr("Volumetric Strain"), false)),
 			_strainTensors(calculateStrainTensors ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::StrainTensorProperty, false) : nullptr),
 			_deformationGradients(calculateDeformationGradients ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::DeformationGradientProperty, false) : nullptr),
-			_nonaffineSquaredDisplacements(calculateNonaffineSquaredDisplacements ? std::make_shared<PropertyStorage>(particleCount, qMetaTypeId<FloatType>(), 1, 0, tr("Nonaffine Squared Displacement"), false) : nullptr),
+			_nonaffineSquaredDisplacements(calculateNonaffineSquaredDisplacements ? std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Float, 1, 0, tr("Nonaffine Squared Displacement"), false) : nullptr),
 			_invalidParticles(ParticleProperty::createStandardStorage(particleCount, ParticleProperty::SelectionProperty, false)),
 			_rotations(calculateRotations ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::RotationProperty, false) : nullptr),
 			_stretchTensors(calculateStretchTensors ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::StretchTensorProperty, false) : nullptr) {}

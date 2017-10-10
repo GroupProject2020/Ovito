@@ -107,7 +107,7 @@ void ScatterPlotModifier::initializeModifier(ModifierApplication* modApp)
 		PropertyReference bestProperty;
 		for(DataObject* o : input.objects()) {
 			if(PropertyObject* property = dynamic_object_cast<PropertyObject>(o)) {
-				if(propertyClass()->isMember(property) && (property->dataType() == qMetaTypeId<int>() || property->dataType() == qMetaTypeId<FloatType>())) {
+				if(propertyClass()->isMember(property) && (property->dataType() == PropertyStorage::Int || property->dataType() == PropertyStorage::Float)) {
 					bestProperty = PropertyReference(property, (property->componentCount() > 1) ? 0 : -1);
 				}
 			}
@@ -220,12 +220,12 @@ PipelineFlowState ScatterPlotModifier::evaluatePreliminary(TimePoint time, Modif
 	FloatType yIntervalEnd = yAxisRangeEnd();
 
 	// Collect X coordinates.
-	if(xProperty->dataType() == qMetaTypeId<FloatType>()) {
+	if(xProperty->dataType() == PropertyStorage::Float) {
 		for(size_t i = 0; i < xProperty->size(); i++) {
 			xyData[i].rx() = xProperty->getFloatComponent(i, xVecComponent);
 		}
 	}
-	else if(xProperty->dataType() == qMetaTypeId<int>()) {
+	else if(xProperty->dataType() == PropertyStorage::Int) {
 		for(size_t i = 0; i < xProperty->size(); i++) {
 			xyData[i].rx() = xProperty->getIntComponent(i, xVecComponent);
 		}
@@ -233,12 +233,12 @@ PipelineFlowState ScatterPlotModifier::evaluatePreliminary(TimePoint time, Modif
 	else throwException(tr("Property '%1' has a data type that is not supported by the scatter plot modifier.").arg(xProperty->name()));
 
 	// Collect Y coordinates.
-	if(yProperty->dataType() == qMetaTypeId<FloatType>()) {
+	if(yProperty->dataType() == PropertyStorage::Float) {
 		for(size_t i = 0; i < yProperty->size(); i++) {
 			xyData[i].ry() = yProperty->getFloatComponent(i, yVecComponent);
 		}
 	}
-	else if(yProperty->dataType() == qMetaTypeId<int>()) {
+	else if(yProperty->dataType() == PropertyStorage::Int) {
 		for(size_t i = 0; i < yProperty->size(); i++) {
 			xyData[i].ry() = yProperty->getIntComponent(i, yVecComponent);
 		}

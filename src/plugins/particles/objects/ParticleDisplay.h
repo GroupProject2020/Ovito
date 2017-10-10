@@ -93,10 +93,10 @@ public:
 	Box3 particleBoundingBox(ParticleProperty* positionProperty, ParticleProperty* typeProperty, ParticleProperty* radiusProperty, ParticleProperty* shapeProperty, bool includeParticleRadius = true);
 
 	/// \brief Render a marker around a particle to highlight it in the viewports.
-	void highlightParticle(int particleIndex, const PipelineFlowState& flowState, SceneRenderer* renderer);
+	void highlightParticle(size_t particleIndex, const PipelineFlowState& flowState, SceneRenderer* renderer);
 
 	/// \brief Compute the (local) bounding box of the marker around a particle used to highlight it in the viewports.
-	Box3 highlightParticleBoundingBox(int particleIndex, const PipelineFlowState& flowState, const AffineTransformation& tm, Viewport* viewport);
+	Box3 highlightParticleBoundingBox(size_t particleIndex, const PipelineFlowState& flowState, const AffineTransformation& tm, Viewport* viewport);
 
 public:
 
@@ -203,7 +203,7 @@ public:
 
 	/// Given an sub-object ID returned by the Viewport::pick() method, looks up the
 	/// corresponding particle index.
-	int particleIndexFromSubObjectID(quint32 subobjID) const;
+	qlonglong particleIndexFromSubObjectID(quint32 subobjID) const;
 
 	/// Builds the info string for a particle to be displayed in the status bar.
 	static QString particleInfoString(const PipelineFlowState& pipelineState, size_t particleIndex);
@@ -217,7 +217,7 @@ private:
 	OORef<ParticleDisplay> _displayObject;
 
 	/// The number of rendered particles;
-	int _particleCount;
+	qlonglong _particleCount;
 };
 
 }	// End of namespace

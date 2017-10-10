@@ -35,7 +35,15 @@ class OVITO_STDOBJ_EXPORT PropertyStorage : public std::enable_shared_from_this<
 {
 public:
 
-	/// \brief The standard types defined by all property classes.
+	/// \brief The most commonly used data types. Note that, at least in principle,
+	///        the PropertyStorage class supports any data type registered with the Qt meta type system.
+	enum {
+		Int = qMetaTypeId<int>(),
+		Int64 = qMetaTypeId<qlonglong>(),
+		Float = qMetaTypeId<FloatType>()
+	};
+
+	/// \brief The standard property types defined by all property classes.
 	enum GenericStandardType {
 		GenericUserProperty = 0,	//< This is reserved for user-defined properties.
 		GenericSelectionProperty = 1,
@@ -116,42 +124,42 @@ public:
 	/// \brief Returns a read-only pointer to the first integer element stored in this object.
 	/// \note This method may only be used if this property is of data type int32.
 	const int* constDataInt() const {
-		OVITO_ASSERT(dataType() == qMetaTypeId<int>());
+		OVITO_ASSERT(dataType() == Int);
 		return reinterpret_cast<const int*>(constData());
 	}
 
 	/// \brief Returns a read-only pointer to the first integer element stored in this object.
 	/// \note This method may only be used if this property is of data type integer.
 	const qlonglong* constDataInt64() const {
-		OVITO_ASSERT(dataType() == qMetaTypeId<qlonglong>());
+		OVITO_ASSERT(dataType() == Int64);
 		return reinterpret_cast<const qlonglong*>(constData());
 	}
 
 	/// \brief Returns a read-only pointer to the first float element in the property storage.
 	/// \note This method may only be used if this property is of data type float.
 	const FloatType* constDataFloat() const {
-		OVITO_ASSERT(dataType() == qMetaTypeId<FloatType>());
+		OVITO_ASSERT(dataType() == Float);
 		return reinterpret_cast<const FloatType*>(constData());
 	}
 
 	/// \brief Returns a read-only pointer to the first vector element in the property storage.
 	/// \note This method may only be used if this property is of data type Vector3 or a FloatType channel with 3 components.
 	const Vector3* constDataVector3() const {
-		OVITO_ASSERT(dataType() == qMetaTypeId<Vector3>() || (dataType() == qMetaTypeId<FloatType>() && componentCount() == 3));
+		OVITO_ASSERT(dataType() == qMetaTypeId<Vector3>() || (dataType() == Float && componentCount() == 3));
 		return reinterpret_cast<const Vector3*>(constData());
 	}
 
 	/// \brief Returns a read-only pointer to the first point element in the property storage.
 	/// \note This method may only be used if this property is of data type Point3 or a FloatType channel with 3 components.
 	const Point3* constDataPoint3() const {
-		OVITO_ASSERT(dataType() == qMetaTypeId<Point3>() || (dataType() == qMetaTypeId<FloatType>() && componentCount() == 3));
+		OVITO_ASSERT(dataType() == qMetaTypeId<Point3>() || (dataType() == Float && componentCount() == 3));
 		return reinterpret_cast<const Point3*>(constData());
 	}
 
 	/// \brief Returns a read-only pointer to the first point element in the property storage.
 	/// \note This method may only be used if this property is of data type Point3I or an integer channel with 3 components.
 	const Point3I* constDataPoint3I() const {
-		OVITO_ASSERT(dataType() == qMetaTypeId<Point3I>() || (dataType() == qMetaTypeId<int>() && componentCount() == 3));
+		OVITO_ASSERT(dataType() == qMetaTypeId<Point3I>() || (dataType() == Int && componentCount() == 3));
 		OVITO_STATIC_ASSERT(sizeof(Point3I) == sizeof(int) * 3);
 		return reinterpret_cast<const Point3I*>(constData());
 	}
@@ -159,28 +167,28 @@ public:
 	/// \brief Returns a read-only pointer to the first point element in the property storage.
 	/// \note This method may only be used if this property is of data type Color or a FloatType channel with 3 components.
 	const Color* constDataColor() const {
-		OVITO_ASSERT(dataType() == qMetaTypeId<Color>() || (dataType() == qMetaTypeId<FloatType>() && componentCount() == 3));
+		OVITO_ASSERT(dataType() == qMetaTypeId<Color>() || (dataType() == Float && componentCount() == 3));
 		return reinterpret_cast<const Color*>(constData());
 	}
 
 	/// \brief Returns a read-only pointer to the first symmetric tensor element in the property storage.
 	/// \note This method may only be used if this property is of data type SymmetricTensor2 or a FloatType channel with 6 components.
 	const SymmetricTensor2* constDataSymmetricTensor2() const {
-		OVITO_ASSERT(dataType() == qMetaTypeId<SymmetricTensor2>() || (dataType() == qMetaTypeId<FloatType>() && componentCount() == 6));
+		OVITO_ASSERT(dataType() == qMetaTypeId<SymmetricTensor2>() || (dataType() == Float && componentCount() == 6));
 		return reinterpret_cast<const SymmetricTensor2*>(constData());
 	}
 
 	/// \brief Returns a read-only pointer to the first Matrix3 element in the property storage.
 	/// \note This method may only be used if this property is of data type Matrix3 or a FloatType channel with 9 components.
 	const Matrix3* constDataMatrix3() const {
-		OVITO_ASSERT(dataType() == qMetaTypeId<Matrix3>() || (dataType() == qMetaTypeId<FloatType>() && componentCount() == 9));
+		OVITO_ASSERT(dataType() == qMetaTypeId<Matrix3>() || (dataType() == Float && componentCount() == 9));
 		return reinterpret_cast<const Matrix3*>(constData());
 	}
 
 	/// \brief Returns a read-only pointer to the first quaternion element in the property storage.
 	/// \note This method may only be used if this property is of data type Quaternion or a FloatType channel with 4 components.
 	const Quaternion* constDataQuaternion() const {
-		OVITO_ASSERT(dataType() == qMetaTypeId<Quaternion>() || (dataType() == qMetaTypeId<FloatType>() && componentCount() == 4));
+		OVITO_ASSERT(dataType() == qMetaTypeId<Quaternion>() || (dataType() == Float && componentCount() == 4));
 		return reinterpret_cast<const Quaternion*>(constData());
 	}
 
@@ -245,42 +253,42 @@ public:
 	/// \brief Returns a read-write pointer to the first integer element stored in this object.
 	/// \note This method may only be used if this property is of data type integer.
 	int* dataInt() {
-		OVITO_ASSERT(dataType() == qMetaTypeId<int>());
+		OVITO_ASSERT(dataType() == Int);
 		return reinterpret_cast<int*>(data());
 	}
 
 	/// \brief Returns a read-write pointer to the first integer element stored in this object.
 	/// \note This method may only be used if this property is of data type 64-bit integer.
 	qlonglong* dataInt64() {
-		OVITO_ASSERT(dataType() == qMetaTypeId<qlonglong>());
+		OVITO_ASSERT(dataType() == Int64);
 		return reinterpret_cast<qlonglong*>(data());
 	}
 
 	/// \brief Returns a read-only pointer to the first float element in the property storage.
 	/// \note This method may only be used if this property is of data type float.
 	FloatType* dataFloat() {
-		OVITO_ASSERT(dataType() == qMetaTypeId<FloatType>());
+		OVITO_ASSERT(dataType() == Float);
 		return reinterpret_cast<FloatType*>(data());
 	}
 
 	/// \brief Returns a read-write pointer to the first vector element in the property storage.
 	/// \note This method may only be used if this property is of data type Vector3 or a FloatType channel with 3 components.
 	Vector3* dataVector3() {
-		OVITO_ASSERT(dataType() == qMetaTypeId<Vector3>() || (dataType() == qMetaTypeId<FloatType>() && componentCount() == 3));
+		OVITO_ASSERT(dataType() == qMetaTypeId<Vector3>() || (dataType() == Float && componentCount() == 3));
 		return reinterpret_cast<Vector3*>(data());
 	}
 
 	/// \brief Returns a read-write pointer to the first point element in the property storage.
 	/// \note This method may only be used if this property is of data type Point3 or a FloatType channel with 3 components.
 	Point3* dataPoint3() {
-		OVITO_ASSERT(dataType() == qMetaTypeId<Point3>() || (dataType() == qMetaTypeId<FloatType>() && componentCount() == 3));
+		OVITO_ASSERT(dataType() == qMetaTypeId<Point3>() || (dataType() == Float && componentCount() == 3));
 		return reinterpret_cast<Point3*>(data());
 	}
 
 	/// \brief Returns a read-write pointer to the first point element in the property storage.
 	/// \note This method may only be used if this property is of data type Point3I or an integer channel with 3 components.
 	Point3I* dataPoint3I() {
-		OVITO_ASSERT(dataType() == qMetaTypeId<Point3I>() || (dataType() == qMetaTypeId<int>() && componentCount() == 3));
+		OVITO_ASSERT(dataType() == qMetaTypeId<Point3I>() || (dataType() == Int && componentCount() == 3));
 		OVITO_STATIC_ASSERT(sizeof(Point3I) == sizeof(int) * 3);
 		return reinterpret_cast<Point3I*>(data());
 	}
@@ -288,28 +296,28 @@ public:
 	/// \brief Returns a read-write pointer to the first point element in the property storage.
 	/// \note This method may only be used if this property is of data type Color or a FloatType channel with 3 components.
 	Color* dataColor() {
-		OVITO_ASSERT(dataType() == qMetaTypeId<Color>() || (dataType() == qMetaTypeId<FloatType>() && componentCount() == 3));
+		OVITO_ASSERT(dataType() == qMetaTypeId<Color>() || (dataType() == Float && componentCount() == 3));
 		return reinterpret_cast<Color*>(data());
 	}
 
 	/// \brief Returns a read-write pointer to the first symmetric tensor element in the property storage.
 	/// \note This method may only be used if this property is of data type SymmetricTensor2 or a FloatType channel with 6 components.
 	SymmetricTensor2* dataSymmetricTensor2() {
-		OVITO_ASSERT(dataType() == qMetaTypeId<SymmetricTensor2>() || (dataType() == qMetaTypeId<FloatType>() && componentCount() == 6));
+		OVITO_ASSERT(dataType() == qMetaTypeId<SymmetricTensor2>() || (dataType() == Float && componentCount() == 6));
 		return reinterpret_cast<SymmetricTensor2*>(data());
 	}
 
 	/// \brief Returns a read-write pointer to the first Matrix3 element in the property storage.
 	/// \note This method may only be used if this property is of data type Matrix3 or a FloatType channel with 9 components.
 	Matrix3* dataMatrix3() {
-		OVITO_ASSERT(dataType() == qMetaTypeId<Matrix3>() || (dataType() == qMetaTypeId<FloatType>() && componentCount() == 9));
+		OVITO_ASSERT(dataType() == qMetaTypeId<Matrix3>() || (dataType() == Float && componentCount() == 9));
 		return reinterpret_cast<Matrix3*>(data());
 	}
 
 	/// \brief Returns a read-write pointer to the first quaternion element in the property storage.
 	/// \note This method may only be used if this property is of data type Quaternion or a FloatType channel with 4 components.
 	Quaternion* dataQuaternion() {
-		OVITO_ASSERT(dataType() == qMetaTypeId<Quaternion>() || (dataType() == qMetaTypeId<FloatType>() && componentCount() == 4));
+		OVITO_ASSERT(dataType() == qMetaTypeId<Quaternion>() || (dataType() == Float && componentCount() == 4));
 		return reinterpret_cast<Quaternion*>(data());
 	}
 

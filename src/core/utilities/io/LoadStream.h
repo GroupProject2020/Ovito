@@ -326,6 +326,26 @@ inline LoadStream& operator>>(LoadStream& stream, QFlags<Enum>& v)
 	return stream;
 }
 
+/// \brief Reads a bit vector from the input stream.
+/// \relates LoadStream
+///
+/// \param stream The source stream.
+/// \param bs The bit vector that the will receive the loaded data.
+/// \return The source stream.
+/// \throw Exception if an I/O error has occurred.
+///
+/// The bit vector will automatically be resized to the number of bit stored in the stream.
+inline LoadStream& operator>>(LoadStream& stream, boost::dynamic_bitset<>& bs)
+{
+	size_t n;
+	stream.readSizeT(n);	
+	bs.resize(n);
+	std::vector<boost::dynamic_bitset<>::block_type> blocks(bs.num_blocks());
+	stream.read(blocks.data(), blocks.size() * sizeof(boost::dynamic_bitset<>::block_type));
+	boost::from_block_range(blocks.begin(), blocks.end(), bs);
+	return stream;
+}
+
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -170,19 +170,19 @@ PipelineFlowState FreezePropertyModifier::evaluatePreliminary(TimePoint time, Mo
 	ParticleProperty* idProperty = pih.inputStandardProperty<ParticleProperty>(ParticleProperty::IdentifierProperty);
 	if(myModApp->identifiers() && idProperty && 
 			(idProperty->size() != myModApp->identifiers()->size() || 
-			!std::equal(idProperty->constDataInt(), idProperty->constDataInt() + idProperty->size(), myModApp->identifiers()->constDataInt()))) {
+			!std::equal(idProperty->constDataInt64(), idProperty->constDataInt64() + idProperty->size(), myModApp->identifiers()->constDataInt64()))) {
 
 		// Build ID-to-index map.
-		std::unordered_map<int,int> idmap;
-		int index = 0;
-		for(int id : myModApp->identifiers()->constIntRange()) {
+		std::unordered_map<qlonglong,size_t> idmap;
+		size_t index = 0;
+		for(auto id : myModApp->identifiers()->constInt64Range()) {
 			if(!idmap.insert(std::make_pair(id,index)).second)
 				throwException(tr("Detected duplicate particle ID %1 in saved snapshot. Cannot apply saved property values.").arg(id));
 			index++;
 		}
 
 		// Copy and reorder property data.
-		const int* id = idProperty->constDataInt();
+		auto id = idProperty->constDataInt64();
 		char* dest = static_cast<char*>(outputProperty->data());
 		const char* src = static_cast<const char*>(myModApp->property()->constData());
 		size_t stride = outputProperty->stride();

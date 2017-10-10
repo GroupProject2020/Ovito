@@ -179,7 +179,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ComputePropertyModifier::createEn
 		outp = ParticleProperty::OOClass().createStandardStorage(posProperty->size(), outputProperty().type(), onlySelectedParticles());
 	}
 	else if(!outputProperty().name().isEmpty() && propertyComponentCount() > 0) {
-		outp = std::make_shared<PropertyStorage>(posProperty->size(), qMetaTypeId<FloatType>(), propertyComponentCount(), 0, outputProperty().name(), onlySelectedParticles());
+		outp = std::make_shared<PropertyStorage>(posProperty->size(), PropertyStorage::Float, propertyComponentCount(), 0, outputProperty().name(), onlySelectedParticles());
 	}
 	else {
 		throwException(tr("Output property has not been specified."));
@@ -380,13 +380,13 @@ void ComputePropertyModifier::PropertyComputeEngine::perform()
 				}
 
 				// Store results.
-				if(outputProperty()->dataType() == qMetaTypeId<int>()) {
+				if(outputProperty()->dataType() == PropertyStorage::Int) {
 					outputProperty()->setIntComponent(particleIndex, component, (int)value);
 				}
-				else if(outputProperty()->dataType() == qMetaTypeId<qlonglong>()) {
+				else if(outputProperty()->dataType() == PropertyStorage::Int64) {
 					outputProperty()->setInt64Component(particleIndex, component, (qlonglong)value);
 				}
-				else if(outputProperty()->dataType() == qMetaTypeId<FloatType>()) {
+				else if(outputProperty()->dataType() == PropertyStorage::Float) {
 					outputProperty()->setFloatComponent(particleIndex, component, value);
 				}
 			}

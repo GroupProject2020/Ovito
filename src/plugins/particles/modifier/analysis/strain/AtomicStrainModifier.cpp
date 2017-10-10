@@ -110,7 +110,7 @@ void AtomicStrainModifier::AtomicStrainEngine::perform()
 
 	// First determine the mapping from particles of the reference config to particles
 	// of the current config.
-	if(!buildParticleMapping())
+	if(!buildParticleMapping(false, false))
 		return;
 
 	// Prepare the neighbor list for the reference configuration.
@@ -141,12 +141,12 @@ void AtomicStrainModifier::AtomicStrainEngine::computeStrain(size_t particleInde
 	int numNeighbors = 0;
 
 	// Iterate over neighbors of central particle.
-	int particleIndexReference = currentToRefIndexMap()[particleIndex];
-	if(particleIndexReference != -1) {
+	size_t particleIndexReference = currentToRefIndexMap()[particleIndex];
+	if(particleIndexReference != std::numeric_limits<size_t>::max()) {
 		const Point3 x = positions()->getPoint3(particleIndex);
 		for(CutoffNeighborFinder::Query neighQuery(neighborFinder, particleIndexReference); !neighQuery.atEnd(); neighQuery.next()) {
-			int neighborIndexCurrent = refToCurrentIndexMap()[neighQuery.current()];
-			if(neighborIndexCurrent == -1) continue;
+			size_t neighborIndexCurrent = refToCurrentIndexMap()[neighQuery.current()];
+			if(neighborIndexCurrent == std::numeric_limits<size_t>::max()) continue;
 			Vector3 delta_ref = neighQuery.delta();
 			Vector3 delta_cur = positions()->getPoint3(neighborIndexCurrent) - x;
 			if(useMinimumImageConvention())
@@ -237,8 +237,8 @@ void AtomicStrainModifier::AtomicStrainEngine::computeStrain(size_t particleInde
         numNeighbors = 0;
         const Point3 x = positions()->getPoint3(particleIndex);
         for(CutoffNeighborFinder::Query neighQuery(neighborFinder, particleIndexReference); !neighQuery.atEnd(); neighQuery.next()) {
-			int neighborIndexCurrent = refToCurrentIndexMap()[neighQuery.current()];
-			if(neighborIndexCurrent == -1) continue;
+			size_t neighborIndexCurrent = refToCurrentIndexMap()[neighQuery.current()];
+			if(neighborIndexCurrent == std::numeric_limits<size_t>::max()) continue;
 			Vector3 delta_ref = neighQuery.delta();
 			Vector3 delta_cur = positions()->getPoint3(neighborIndexCurrent) - x;
 			if(useMinimumImageConvention())

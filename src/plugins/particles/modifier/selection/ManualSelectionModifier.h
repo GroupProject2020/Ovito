@@ -79,7 +79,7 @@ public:
 	void toggleParticleSelection(ModifierApplication* modApp, const PipelineFlowState& state, size_t particleIndex);
 
 	/// Replaces the particle selection.
-	void setParticleSelection(ModifierApplication* modApp, const PipelineFlowState& state, const QBitArray& selection, ParticleSelectionSet::SelectionMode mode);
+	void setParticleSelection(ModifierApplication* modApp, const PipelineFlowState& state, const boost::dynamic_bitset<>& selection, ParticleSelectionSet::SelectionMode mode);
 
 protected:
 

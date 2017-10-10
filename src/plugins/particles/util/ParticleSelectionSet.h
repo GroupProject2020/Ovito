@@ -26,8 +26,6 @@
 #include <core/dataset/pipeline/PipelineFlowState.h>
 #include <core/oo/RefTarget.h>
 
-#include <QBitArray>
-
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util)
 
 /**
@@ -59,7 +57,7 @@ public:
 	Q_INVOKABLE ParticleSelectionSet(DataSet* dataset) : RefTarget(dataset), _useIdentifiers(true) {}
 
 	/// Returns the stored selection set as a bit array.
-	const QBitArray& selection() const { return _selection; }
+	const boost::dynamic_bitset<>& selection() const { return _selection; }
 
 	/// Adopts the selection set from the given input state.
 	void resetSelection(const PipelineFlowState& state);
@@ -74,13 +72,13 @@ public:
 	void toggleParticle(const PipelineFlowState& state, size_t particleIndex);
 
 	/// Toggles the selection state of a single particle.
-	void toggleParticleIdentifier(int particleId);
+	void toggleParticleIdentifier(qlonglong particleId);
 
 	/// Toggles the selection state of a single particle.
 	void toggleParticleIndex(size_t particleIndex);
 
 	/// Replaces the particle selection.
-	void setParticleSelection(const PipelineFlowState& state, const QBitArray& selection, SelectionMode mode = SelectionReplace);
+	void setParticleSelection(const PipelineFlowState& state, const boost::dynamic_bitset<>& selection, SelectionMode mode = SelectionReplace);
 
 	/// Copies the stored selection set into the given output selection particle property.
 	PipelineStatus applySelection(ParticleProperty* outputSelectionProperty, ParticleProperty* identifierProperty);
@@ -96,16 +94,13 @@ protected:
 	/// Creates a copy of this object.
 	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) override;
 
-	/// This helper method determines the number of particles present in the given pipeline state.
-	static size_t particleCount(const PipelineFlowState& state);
-
 private:
 
 	/// Stores the selection set as a bit array.
-	QBitArray _selection;
+	boost::dynamic_bitset<> _selection;
 
 	/// Stores the selection as a list of particle identifiers.
-	QSet<int> _selectedIdentifiers;
+	QSet<qlonglong> _selectedIdentifiers;
 
 	/// Controls whether the object should store the identifiers of selected particles (when available).
 	DECLARE_PROPERTY_FIELD(bool, useIdentifiers);

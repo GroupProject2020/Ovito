@@ -45,15 +45,15 @@ public:
 	}		
 private:
 	OORef<ParticleSelectionSet> _owner;
-	QBitArray _selection;
-	QSet<int> _selectedIdentifiers;
+	boost::dynamic_bitset<> _selection;
+	QSet<qlonglong> _selectedIdentifiers;
 };
 
 /* Undo record that can restore selection state of a single particle. */
 class ToggleSelectionOperation : public UndoableOperation
 {
 public:
-	ToggleSelectionOperation(ParticleSelectionSet* owner, int particleId, size_t particleIndex = std::numeric_limits<size_t>::max()) :
+	ToggleSelectionOperation(ParticleSelectionSet* owner, qlonglong particleId, size_t particleIndex = std::numeric_limits<size_t>::max()) :
 		_owner(owner), _particleIndex(particleIndex), _particleId(particleId) {}
 	virtual void undo() override {
 		if(_particleIndex != std::numeric_limits<size_t>::max())
@@ -61,12 +61,12 @@ public:
 		else
 			_owner->toggleParticleIdentifier(_particleId);
 	}
-	virtual QString displayName() const override { 
-		return QStringLiteral("Toggle particle selection"); 
-	}		
+	virtual QString displayName() const override {
+		return QStringLiteral("Toggle particle selection");
+	}
 private:
 	OORef<ParticleSelectionSet> _owner;
-	int _particleId;
+	qlonglong _particleId;
 	size_t _particleIndex;
 };
 
@@ -76,7 +76,7 @@ private:
 void ParticleSelectionSet::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData)
 {
 	RefTarget::saveToStream(stream, excludeRecomputableData);
-	stream.beginChunk(0x01);
+	stream.beginChunk(0x02);
 	stream << _selection;
 	stream << _selectedIdentifiers;
 	stream.endChunk();
@@ -88,7 +88,7 @@ void ParticleSelectionSet::saveToStream(ObjectSaveStream& stream, bool excludeRe
 void ParticleSelectionSet::loadFromStream(ObjectLoadStream& stream)
 {
 	RefTarget::loadFromStream(stream);
-	stream.expectChunk(0x01);
+	stream.expectChunk(0x02);
 	stream >> _selection;
 	stream >> _selectedIdentifiers;
 	stream.closeChunk();
@@ -104,19 +104,6 @@ OORef<RefTarget> ParticleSelectionSet::clone(bool deepCopy, CloneHelper& cloneHe
 	clone->_selection = this->_selection;
 	clone->_selectedIdentifiers = this->_selectedIdentifiers;
 	return clone;
-}
-
-/******************************************************************************
-* Determines the number of particles present in the given pipeline state.
-******************************************************************************/
-size_t ParticleSelectionSet::particleCount(const PipelineFlowState& state)
-{
-	// Find the first particle property object to determine the number of particles.
-	for(DataObject* o : state.objects()) {
-		if(ParticleProperty* particleProperty = dynamic_object_cast<ParticleProperty>(o))
-			return particleProperty->size();
-	}
-	return 0;
 }
 
 /******************************************************************************
@@ -136,8 +123,8 @@ void ParticleSelectionSet::resetSelection(const PipelineFlowState& state)
 			OVITO_ASSERT(selProperty->size() == identifierProperty->size());
 			_selectedIdentifiers.clear();
 			_selection.clear();
-			const int* s = selProperty->constDataInt();
-			for(int id : identifierProperty->constIntRange()) {
+			auto s = selProperty->constDataInt();
+			for(auto id : identifierProperty->constInt64Range()) {
 				if(*s++)
 					_selectedIdentifiers.insert(id);
 			}
@@ -145,11 +132,11 @@ void ParticleSelectionSet::resetSelection(const PipelineFlowState& state)
 		else {
 			// Take a snapshot of the selection state.
 			_selectedIdentifiers.clear();
-			_selection.fill(false, selProperty->size());
-			const int* s = selProperty->constDataInt();
-			const int* s_end = s + selProperty->size();
-			for(int index = 0; s != s_end; ++s, index++) {
-				if(*s) _selection.setBit(index);
+			_selection.resize(selProperty->size());
+			auto s = selProperty->constDataInt();
+			auto s_end = s + selProperty->size();
+			for(size_t index = 0; s != s_end; ++s, index++) {
+				_selection.set(index, *s);
 			}
 		}
 
@@ -174,7 +161,8 @@ void ParticleSelectionSet::clearSelection(const PipelineFlowState& state)
 		_selectedIdentifiers.clear();
 	}
 	else {
-		_selection.fill(false, particleCount(state));
+		_selection.reset();
+		_selection.resize(ParticleProperty::OOClass().elementCount(state), false);
 		_selectedIdentifiers.clear();
 	}
 	notifyDependents(ReferenceEvent::TargetChanged);
@@ -183,7 +171,7 @@ void ParticleSelectionSet::clearSelection(const PipelineFlowState& state)
 /******************************************************************************
 * Replaces the particle selection.
 ******************************************************************************/
-void ParticleSelectionSet::setParticleSelection(const PipelineFlowState& state, const QBitArray& selection, SelectionMode mode)
+void ParticleSelectionSet::setParticleSelection(const PipelineFlowState& state, const boost::dynamic_bitset<>& selection, SelectionMode mode)
 {
 	// Make a backup of the old snapshot so it may be restored.
 	dataset()->undoStack().pushIfRecording<ReplaceSelectionOperation>(this);
@@ -192,23 +180,23 @@ void ParticleSelectionSet::setParticleSelection(const PipelineFlowState& state, 
 	if(identifierProperty && useIdentifiers()) {
 		OVITO_ASSERT(selection.size() == identifierProperty->size());
 		_selection.clear();
-		int index = 0;
+		size_t index = 0;
 		if(mode == SelectionReplace) {
 			_selectedIdentifiers.clear();
-			for(int id : identifierProperty->constIntRange()) {
-				if(selection.testBit(index++))
+			for(auto id : identifierProperty->constInt64Range()) {
+				if(selection.test(index++))
 					_selectedIdentifiers.insert(id);
 			}
 		}
 		else if(mode == SelectionAdd) {
-			for(int id : identifierProperty->constIntRange()) {
-				if(selection.testBit(index++))
+			for(auto id : identifierProperty->constInt64Range()) {
+				if(selection.test(index++))
 					_selectedIdentifiers.insert(id);
 			}
 		}
 		else if(mode == SelectionSubtract) {
-			for(int id : identifierProperty->constIntRange()) {
-				if(selection.testBit(index++))
+			for(auto id : identifierProperty->constInt64Range()) {
+				if(selection.test(index++))
 					_selectedIdentifiers.remove(id);
 			}
 		}
@@ -235,15 +223,15 @@ void ParticleSelectionSet::setParticleSelection(const PipelineFlowState& state, 
 ******************************************************************************/
 void ParticleSelectionSet::toggleParticle(const PipelineFlowState& state, size_t particleIndex)
 {
-	if(particleIndex >= particleCount(state))
+	if(particleIndex >= ParticleProperty::OOClass().elementCount(state))
 		return;
 
 	ParticleProperty* identifiers = ParticleProperty::findInState(state, ParticleProperty::IdentifierProperty);
 	if(useIdentifiers() && identifiers) {
 		_selection.clear();
-		toggleParticleIdentifier(identifiers->getInt(particleIndex));
+		toggleParticleIdentifier(identifiers->getInt64(particleIndex));
 	}
-	else if((int)particleIndex < _selection.size()) {
+	else if(particleIndex < _selection.size()) {
 		_selectedIdentifiers.clear();
 		toggleParticleIndex(particleIndex);
 	}
@@ -252,7 +240,7 @@ void ParticleSelectionSet::toggleParticle(const PipelineFlowState& state, size_t
 /******************************************************************************
 * Toggles the selection state of a single particle.
 ******************************************************************************/
-void ParticleSelectionSet::toggleParticleIdentifier(int particleId)
+void ParticleSelectionSet::toggleParticleIdentifier(qlonglong particleId)
 {
 	// Make a backup of the old selection state so it may be restored.
 	dataset()->undoStack().pushIfRecording<ToggleSelectionOperation>(this, particleId);
@@ -274,8 +262,8 @@ void ParticleSelectionSet::toggleParticleIndex(size_t particleIndex)
 	// Make a backup of the old selection state so it may be restored.
 	dataset()->undoStack().pushIfRecording<ToggleSelectionOperation>(this, -1, particleIndex);
 
-	if((int)particleIndex < _selection.size())
-		_selection.toggleBit(particleIndex);
+	if(particleIndex < _selection.size())
+		_selection.flip(particleIndex);
 	notifyDependents(ReferenceEvent::TargetChanged);
 }
 
@@ -291,11 +279,12 @@ void ParticleSelectionSet::selectAll(const PipelineFlowState& state)
 	if(useIdentifiers() && identifiers != nullptr) {
 		_selection.clear();
 		_selectedIdentifiers.clear();
-		for(int id : identifiers->constIntRange())
+		for(auto id : identifiers->constInt64Range())
 			_selectedIdentifiers.insert(id);
 	}
 	else {
-		_selection.fill(true, particleCount(state));
+		_selection.set();
+		_selection.resize(ParticleProperty::OOClass().elementCount(state), true);
 		_selectedIdentifiers.clear();
 	}
 	notifyDependents(ReferenceEvent::TargetChanged);
@@ -311,20 +300,20 @@ PipelineStatus ParticleSelectionSet::applySelection(ParticleProperty* outputSele
 
 		// When not using particle identifiers, the number of particles may not change.
 		if(outputSelectionProperty->size() != _selection.size())
-			return PipelineStatus(PipelineStatus::Error, tr("Cannot apply stored selection state. The number of input particles has changed."));
+			throwException(tr("Cannot apply stored selection state. The number of input particles has changed."));
 
 		// Restore selection simply by placing the snapshot into the pipeline.
-		int index = 0;
-		for(int& s : outputSelectionProperty->intRange()) {
-			if((s = _selection.testBit(index++)))
+		size_t index = 0;
+		for(auto& s : outputSelectionProperty->intRange()) {
+			if((s = _selection.test(index++)))
 				nselected++;
 		}
 	}
 	else {
 		OVITO_ASSERT(outputSelectionProperty->size() == identifierProperty->size());
 
-		const int* id = identifierProperty->constDataInt();
-		for(int& s : outputSelectionProperty->intRange()) {
+		auto id = identifierProperty->constDataInt64();
+		for(auto& s : outputSelectionProperty->intRange()) {
 			if((s = _selectedIdentifiers.contains(*id++)))
 				nselected++;
 		}

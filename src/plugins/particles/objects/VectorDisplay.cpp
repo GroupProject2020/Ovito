@@ -64,7 +64,7 @@ Box3 VectorDisplay::boundingBox(TimePoint time, DataObject* dataObject, ObjectNo
 {
 	ParticleProperty* vectorProperty = dynamic_object_cast<ParticleProperty>(dataObject);
 	ParticleProperty* positionProperty = ParticleProperty::findInState(flowState, ParticleProperty::PositionProperty);
-	if(vectorProperty && (vectorProperty->dataType() != qMetaTypeId<FloatType>() || vectorProperty->componentCount() != 3))
+	if(vectorProperty && (vectorProperty->dataType() != PropertyStorage::Float || vectorProperty->componentCount() != 3))
 		vectorProperty = nullptr;
 
 	// Detect if the input data has changed since the last time we computed the bounding box.
@@ -87,7 +87,7 @@ Box3 VectorDisplay::arrowBoundingBox(ParticleProperty* vectorProperty, ParticleP
 		return Box3();
 
 	OVITO_ASSERT(positionProperty->type() == ParticleProperty::PositionProperty);
-	OVITO_ASSERT(vectorProperty->dataType() == qMetaTypeId<FloatType>());
+	OVITO_ASSERT(vectorProperty->dataType() == PropertyStorage::Float);
 	OVITO_ASSERT(vectorProperty->componentCount() == 3);
 
 	// Compute bounding box of particle positions (only those with non-zero vector).
@@ -126,10 +126,16 @@ void VectorDisplay::render(TimePoint time, DataObject* dataObject, const Pipelin
 	// Get input data.
 	ParticleProperty* vectorProperty = dynamic_object_cast<ParticleProperty>(dataObject);
 	ParticleProperty* positionProperty = ParticleProperty::findInState(flowState, ParticleProperty::PositionProperty);
-	if(vectorProperty && (vectorProperty->dataType() != qMetaTypeId<FloatType>() || vectorProperty->componentCount() != 3))
+	if(vectorProperty && (vectorProperty->dataType() != PropertyStorage::Float || vectorProperty->componentCount() != 3))
 		vectorProperty = nullptr;
 	ParticleProperty* vectorColorProperty = ParticleProperty::findInState(flowState, ParticleProperty::VectorColorProperty);
 
+	// Make sure we don't exceed our internal limits.
+	if(vectorProperty && vectorProperty->size() > (size_t)std::numeric_limits<int>::max()) {
+		qWarning() << "WARNING: Cannot render more than" << std::numeric_limits<int>::max() << "vectors.";
+		return;
+	}
+	
 	// Do we have to re-create the geometry buffer from scratch?
 	bool recreateBuffer = !_buffer || !_buffer->isValid(renderer);
 

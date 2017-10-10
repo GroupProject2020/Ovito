@@ -132,7 +132,7 @@ void ColorCodingModifier::initializeModifier(ModifierApplication* modApp)
 		for(DataObject* o : input.objects()) {
 			PropertyObject* property = dynamic_object_cast<PropertyObject>(o);
 			if(property && colorDelegate->propertyClass().isMember(property)) {
-				if(property->dataType() == qMetaTypeId<int>() || property->dataType() == qMetaTypeId<FloatType>()) {
+				if(property->dataType() == PropertyStorage::Int || property->dataType() == PropertyStorage::Float) {
 					bestProperty = PropertyReference(property, (property->componentCount() > 1) ? 0 : -1);
 				}
 			}
@@ -179,7 +179,7 @@ bool ColorCodingModifier::determinePropertyValueRange(const PipelineFlowState& s
 	// Iterate over all particles/bonds.
 	FloatType maxValue = FLOATTYPE_MIN;
 	FloatType minValue = FLOATTYPE_MAX;
-	if(property->dataType() == qMetaTypeId<FloatType>()) {
+	if(property->dataType() == PropertyStorage::Float) {
 		auto v = property->constDataFloat() + vecComponent;
 		auto vend = v + (property->size() * stride);
 		for(; v != vend; v += stride) {
@@ -187,7 +187,7 @@ bool ColorCodingModifier::determinePropertyValueRange(const PipelineFlowState& s
 			if(*v < minValue) minValue = *v;
 		}
 	}
-	else if(property->dataType() == qMetaTypeId<int>()) {
+	else if(property->dataType() == PropertyStorage::Int) {
 		auto v = property->constDataInt() + vecComponent;
 		auto vend = v + (property->size() * stride);
 		for(; v != vend; v += stride) {
@@ -195,7 +195,7 @@ bool ColorCodingModifier::determinePropertyValueRange(const PipelineFlowState& s
 			if(*v < minValue) minValue = *v;
 		}
 	}
-	else if(property->dataType() == qMetaTypeId<qlonglong>()) {
+	else if(property->dataType() == PropertyStorage::Int64) {
 		auto v = property->constDataInt64() + vecComponent;
 		auto vend = v + (property->size() * stride);
 		for(; v != vend; v += stride) {
@@ -376,7 +376,7 @@ PipelineStatus ColorCodingModifierDelegate::apply(Modifier* modifier, const Pipe
 	Color* c = c_begin;
 	int stride = property->stride() / property->dataTypeSize();
 
-	if(property->dataType() == qMetaTypeId<FloatType>()) {
+	if(property->dataType() == PropertyStorage::Float) {
 		auto v = property->constDataFloat() + vecComponent;
 		for(; c != c_end; ++c, v += stride) {
 			if(sel && !(*sel++))
@@ -401,7 +401,7 @@ PipelineStatus ColorCodingModifierDelegate::apply(Modifier* modifier, const Pipe
 			*c = mod->colorGradient()->valueToColor(t);
 		}
 	}
-	else if(property->dataType() == qMetaTypeId<int>()) {
+	else if(property->dataType() == PropertyStorage::Int) {
 		auto v = property->constDataInt() + vecComponent;
 		for(; c != c_end; ++c, v += stride) {
 
@@ -424,7 +424,7 @@ PipelineStatus ColorCodingModifierDelegate::apply(Modifier* modifier, const Pipe
 			*c = mod->colorGradient()->valueToColor(t);
 		}
 	}
-	else if(property->dataType() == qMetaTypeId<qlonglong>()) {
+	else if(property->dataType() == PropertyStorage::Int64) {
 		auto v = property->constDataInt64() + vecComponent;
 		for(; c != c_end; ++c, v += stride) {
 

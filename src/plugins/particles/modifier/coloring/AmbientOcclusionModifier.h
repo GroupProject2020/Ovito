@@ -66,7 +66,7 @@ public:
 
 		/// Constructor.
 		AmbientOcclusionResults(const TimeInterval& validityInterval, size_t particleCount) : ComputeEngineResults(validityInterval),
-			_brightness(std::make_shared<PropertyStorage>(particleCount, qMetaTypeId<FloatType>(), 1, 0, tr("Brightness"), true)) {}
+			_brightness(std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Float, 1, 0, tr("Brightness"), true)) {}
 
 		/// Injects the computed results into the data pipeline.
 		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;

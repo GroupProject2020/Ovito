@@ -124,7 +124,7 @@ FileSourceImporter::FrameDataPtr IMDImporter::FrameLoader::loadFile(QFile& file)
 						if(isStandardProperty) break;
 					}
 					if(!isStandardProperty)
-						columnMapping[columnIndex].mapCustomColumn(token, qMetaTypeId<FloatType>());
+						columnMapping[columnIndex].mapCustomColumn(token, PropertyStorage::Float);
 				}
 			}
 		}

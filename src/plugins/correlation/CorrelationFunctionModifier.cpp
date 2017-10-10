@@ -146,7 +146,7 @@ void CorrelationFunctionModifier::initializeModifier(ModifierApplication* modApp
 		ParticlePropertyReference bestProperty;
 		for(DataObject* o : input.objects()) {
 			ParticleProperty* property = dynamic_object_cast<ParticleProperty>(o);
-			if(property && (property->dataType() == qMetaTypeId<int>() || property->dataType() == qMetaTypeId<FloatType>())) {
+			if(property && (property->dataType() == PropertyStorage::Int || property->dataType() == PropertyStorage::Float)) {
 				bestProperty = ParticlePropertyReference(property, (property->componentCount() > 1) ? 0 : -1);
 			}
 		}
@@ -246,7 +246,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::mapToSpatialGrid(co
 				}
 			}
 		}
-		else if(property->dataType() == qMetaTypeId<FloatType>()) {
+		else if(property->dataType() == PropertyStorage::Float) {
 			const FloatType* v = property->constDataFloat() + vecComponent;
 			const FloatType* v_end = v + (property->size() * vecComponentCount);
 			for(; v != v_end; v += vecComponentCount, ++pos) {
@@ -271,7 +271,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::mapToSpatialGrid(co
 				}
 			}
 		}
-		else if(property->dataType() == qMetaTypeId<int>()) {
+		else if(property->dataType() == PropertyStorage::Int) {
 			const int* v = property->constDataInt() + vecComponent;
 			const int* v_end = v + (property->size() * vecComponentCount);
 			for(; v != v_end; v += vecComponentCount, ++pos) {
@@ -585,16 +585,16 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeighCorrela
 	const int *intData1 = nullptr, *intData2 = nullptr; 
 	size_t componentCount1 = sourceProperty1()->componentCount();
 	size_t componentCount2 = sourceProperty2()->componentCount();
-	if(sourceProperty1()->dataType() == qMetaTypeId<FloatType>()) {
+	if(sourceProperty1()->dataType() == PropertyStorage::Float) {
 		floatData1 = sourceProperty1()->constDataFloat();
 	}
-	else if (sourceProperty1()->dataType() == qMetaTypeId<int>()) {
+	else if (sourceProperty1()->dataType() == PropertyStorage::Int) {
 		intData1 = sourceProperty1()->constDataInt();
 	}
-	if(sourceProperty2()->dataType() == qMetaTypeId<FloatType>()) {
+	if(sourceProperty2()->dataType() == PropertyStorage::Float) {
 		floatData2 = sourceProperty2()->constDataFloat();
 	}
-	else if (sourceProperty2()->dataType() == qMetaTypeId<int>()) {
+	else if (sourceProperty2()->dataType() == PropertyStorage::Int) {
 		intData2 = sourceProperty2()->constDataInt();
 	}
 
@@ -687,16 +687,16 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeLimits()
 	const int *intData1 = nullptr, *intData2 = nullptr; 
 	size_t componentCount1 = sourceProperty1()->componentCount();
 	size_t componentCount2 = sourceProperty2()->componentCount();
-	if(sourceProperty1()->dataType() == qMetaTypeId<FloatType>()) {
+	if(sourceProperty1()->dataType() == PropertyStorage::Float) {
 		floatData1 = sourceProperty1()->constDataFloat();
 	}
-	else if (sourceProperty1()->dataType() == qMetaTypeId<int>()) {
+	else if (sourceProperty1()->dataType() == PropertyStorage::Int) {
 		intData1 = sourceProperty1()->constDataInt();
 	}
-	if(sourceProperty2()->dataType() == qMetaTypeId<FloatType>()) {
+	if(sourceProperty2()->dataType() == PropertyStorage::Float) {
 		floatData2 = sourceProperty2()->constDataFloat();
 	}
-	else if (sourceProperty2()->dataType() == qMetaTypeId<int>()) {
+	else if (sourceProperty2()->dataType() == PropertyStorage::Int) {
 		intData2 = sourceProperty2()->constDataInt();
 	}
 

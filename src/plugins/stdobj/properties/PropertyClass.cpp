@@ -36,7 +36,7 @@ void PropertyClass::registerStandardProperty(int typeId, QString name, int dataT
 	OVITO_ASSERT_MSG(typeId > 0, "PropertyClass::registerStandardProperty", "Invalid standard property type ID");
 	OVITO_ASSERT_MSG(!_standardPropertyIds.contains(name), "PropertyClass::registerStandardProperty", "Duplicate standard property name");
 	OVITO_ASSERT_MSG(!_standardPropertyNames.contains(typeId), "PropertyClass::registerStandardProperty", "Duplicate standard property type ID");
-	OVITO_ASSERT_MSG(dataType == qMetaTypeId<int>() || dataType == qMetaTypeId<qlonglong>() || dataType == qMetaTypeId<FloatType>(), "PropertyClass::registerStandardProperty", "Invalid standard property data type");
+	OVITO_ASSERT_MSG(dataType == PropertyStorage::Int || dataType == PropertyStorage::Int64 || dataType == PropertyStorage::Float, "PropertyClass::registerStandardProperty", "Invalid standard property data type");
 
 	_standardPropertyList.push_back(typeId);
 	_standardPropertyIds.insert(name, typeId);

@@ -103,6 +103,10 @@ Future<AsynchronousModifier::ComputeEnginePtr> VoroTopModifier::createEngine(Tim
     if(useRadii())
         radii = pih.inputParticleRadii(time, validityInterval);
     
+	// The Voro++ library uses 32-bit integers. It cannot handle more than 2^31 input points.
+	if(posProperty->size() > std::numeric_limits<int>::max())
+        throwException(tr("VoroTop analysis modifier is limited to a maximum of %1 particles in the current program version.").arg(std::numeric_limits<int>::max()));
+    
     // Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
     return std::make_shared<VoroTopAnalysisEngine>(validityInterval,
                                                    posProperty->storage(),

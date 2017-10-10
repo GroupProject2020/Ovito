@@ -64,7 +64,7 @@ void SelectTypeModifier::initializeModifier(ModifierApplication* modApp)
 		for(DataObject* o : input.objects()) {
 			if(PropertyObject* property = dynamic_object_cast<PropertyObject>(o)) {
 				if(propertyClass()->isMember(property) && property->elementTypes().empty() == false && 
-					property->componentCount() == 1 && property->dataType() == qMetaTypeId<int>()) {
+					property->componentCount() == 1 && property->dataType() == PropertyStorage::Int) {
 						bestProperty = PropertyReference(property);
 				}
 			}
@@ -108,7 +108,7 @@ PipelineFlowState SelectTypeModifier::evaluatePreliminary(TimePoint time, Modifi
 		throwException(tr("The selected input property '%1' is not present.").arg(sourceProperty().name()));
 	if(typeProperty->componentCount() != 1)
 		throwException(tr("The input property '%1' has the wrong number of components.").arg(typeProperty->name()));
-	if(typeProperty->dataType() != qMetaTypeId<int>())
+	if(typeProperty->dataType() != PropertyStorage::Int)
 		throwException(tr("The input property '%1' has the wrong data type.").arg(typeProperty->name()));
 
 	// Create the selection property.

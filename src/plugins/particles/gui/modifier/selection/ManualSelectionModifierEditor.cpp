@@ -314,17 +314,17 @@ void ManualSelectionModifierEditor::onFence(const QVector<Point2>& fence, Viewpo
 				Matrix4 tm = ndcToScreen * viewport->projectionParams().projectionMatrix * (viewport->projectionParams().viewMatrix * nodeTM);
 
 				// Determine which particles are within the closed fence polygon.
-				QBitArray fullSelection(posProperty->size());
+				boost::dynamic_bitset<> fullSelection(posProperty->size());
 				QMutex mutex;
 				parallelForChunks(posProperty->size(), [posProperty, tm, &fence, &mutex, &fullSelection](size_t startIndex, size_t chunkSize) {
-					QBitArray selection(posProperty->size());
-					for(int index = startIndex; chunkSize != 0; chunkSize--, index++) {
+					boost::dynamic_bitset<> selection(posProperty->size());
+					for(size_t index = startIndex; chunkSize != 0; chunkSize--, index++) {
 
 						// Project particle center to screen coordinates.
 						Point3 projPos = tm * posProperty->getPoint3(index);
 
 						// Perform z-clipping.
-						if(std::fabs(projPos.z()) >= 1.0f)
+						if(std::fabs(projPos.z()) >= FloatType(1))
 							continue;
 
 						// Perform point in polygon test.
@@ -341,7 +341,7 @@ void ManualSelectionModifierEditor::onFence(const QVector<Point2>& fence, Viewpo
 								intersectionsLeft++;
 						}
 						if(intersectionsRight & 1)
-							selection.setBit(index);
+							selection.set(index);
 					}
 					// Transfer thread-local results to output bit array.
 					QMutexLocker locker(&mutex);

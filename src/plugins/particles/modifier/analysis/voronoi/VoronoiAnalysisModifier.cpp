@@ -119,6 +119,10 @@ Future<AsynchronousModifier::ComputeEnginePtr> VoronoiAnalysisModifier::createEn
 	if(useRadii())
 		radii = pih.inputParticleRadii(time, validityInterval);
 
+	// The Voro++ library uses 32-bit integers. It cannot handle more than 2^31 input points.
+	if(posProperty->size() > std::numeric_limits<int>::max())
+		throwException(tr("Voronoi analysis modifier is limited to a maximum of %1 particles in the current program version.").arg(std::numeric_limits<int>::max()));
+
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	return std::make_shared<VoronoiAnalysisEngine>(
 			validityInterval,
@@ -207,7 +211,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 						coordNumber++;
 						if(faceOrder > localMaxFaceOrder)
 							localMaxFaceOrder = faceOrder;
-						if(_results->bonds() && neighbor_id >= 0) {
+						if(_results->bonds() && neighbor_id >= 0 && neighbor_id != index) {
 							OVITO_ASSERT(neighbor_id < _positions->size());
 							Vector3 delta = _positions->getPoint3(index) - _positions->getPoint3(neighbor_id);
 							Vector_3<int8_t> pbcShift = Vector_3<int8_t>::Zero();
@@ -215,7 +219,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 								if(_simCell.pbcFlags()[dim])
 									pbcShift[dim] = (int8_t)floor(_simCell.inverseMatrix().prodrow(delta, dim) + FloatType(0.5));
 							}
-							Bond bond = { (unsigned int)index, (unsigned int)neighbor_id, pbcShift };
+							Bond bond = { index, (size_t)neighbor_id, pbcShift };
 							if(bond.isOdd()) continue;
 							QMutexLocker locker(mutex);
 							_results->bonds()->push_back(bond);

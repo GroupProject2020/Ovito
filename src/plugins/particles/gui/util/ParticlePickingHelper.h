@@ -54,7 +54,7 @@ public:
 		size_t particleIndex;
 
 		/// The identifier of the picked particle.
-		int particleId;
+		qlonglong particleId;
 
 		/// The scene node that contains the picked particle.
 		OORef<ObjectNode> objNode;

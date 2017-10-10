@@ -140,13 +140,13 @@ bool XYZExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 				nCols++;
 
 			// Convert OVITO property data type to extended XYZ type code: 'I','R','S','L'
-			int dataType = property ? property->dataType() : qMetaTypeId<int>();
+			int dataType = property ? property->dataType() : PropertyStorage::Int;
 			QString dataTypeStr;
-			if(dataType == qMetaTypeId<FloatType>())
+			if(dataType == PropertyStorage::Float)
 				dataTypeStr = QStringLiteral("R");
 			else if(dataType == qMetaTypeId<char>() || pref.type() == ParticleProperty::TypeProperty)
 				dataTypeStr = QStringLiteral("S");
-			else if(dataType == qMetaTypeId<int>() || dataType == qMetaTypeId<qlonglong>())
+			else if(dataType == PropertyStorage::Int || dataType == PropertyStorage::Int64)
 				dataTypeStr = QStringLiteral("I");
 			else if(dataType == qMetaTypeId<bool>())
 				dataTypeStr = QStringLiteral("L");

@@ -97,7 +97,7 @@ void ClusterAnalysisModifier::ClusterAnalysisEngine::perform()
 	setProgressText(tr("Performing cluster analysis"));
 
 	// Initialize.
-	std::fill(_results->particleClusters()->dataInt(), _results->particleClusters()->dataInt() + _results->particleClusters()->size(), -1);
+	std::fill(_results->particleClusters()->dataInt64(), _results->particleClusters()->dataInt64() + _results->particleClusters()->size(), -1);
 	
 	// Perform the actual clustering.
 	doClustering();
@@ -109,14 +109,14 @@ void ClusterAnalysisModifier::ClusterAnalysisEngine::perform()
 
 		// Determine cluster sizes.
 		std::vector<size_t> clusterSizes(_results->numClusters() + 1, 0);
-		for(int id : _results->particleClusters()->constIntRange()) {
+		for(auto id : _results->particleClusters()->constInt64Range()) {
 			clusterSizes[id]++;
 		}
 
 		// Sort clusters by size.
-		std::vector<int> mapping(_results->numClusters() + 1);
-		std::iota(mapping.begin(), mapping.end(), 0);
-		std::sort(mapping.begin() + 1, mapping.end(), [&clusterSizes](int a, int b) {
+		std::vector<size_t> mapping(_results->numClusters() + 1);
+		std::iota(mapping.begin(), mapping.end(), size_t(0));
+		std::sort(mapping.begin() + 1, mapping.end(), [&clusterSizes](size_t a, size_t b) {
 			return clusterSizes[a] > clusterSizes[b];
 		});
 		_results->setLargestClusterSize(clusterSizes[mapping[1]]);
@@ -124,10 +124,10 @@ void ClusterAnalysisModifier::ClusterAnalysisEngine::perform()
 		clusterSizes.shrink_to_fit();
 
 		// Remap cluster IDs.
-		std::vector<int> inverseMapping(_results->numClusters() + 1);
+		std::vector<size_t> inverseMapping(_results->numClusters() + 1);
 		for(size_t i = 0; i <= _results->numClusters(); i++)
 			inverseMapping[mapping[i]] = i;
-		for(int& id : _results->particleClusters()->intRange())
+		for(auto& id : _results->particleClusters()->int64Range())
 			id = inverseMapping[id];
 	}
 
@@ -156,18 +156,18 @@ void ClusterAnalysisModifier::CutoffClusterAnalysisEngine::doClustering()
 
 		// Skip unselected particles that are not included in the analysis.
 		if(selection() && !selection()->getInt(seedParticleIndex)) {
-			particleClusters.setInt(seedParticleIndex, 0);
+			particleClusters.setInt64(seedParticleIndex, 0);
 			continue;
 		}
 
 		// Skip particles that have already been assigned to a cluster.
-		if(particleClusters.getInt(seedParticleIndex) != -1)
+		if(particleClusters.getInt64(seedParticleIndex) != -1)
 			continue;
 
 		// Start a new cluster.
 		_results->setNumClusters(_results->numClusters() + 1);
-		int cluster = _results->numClusters();
-		particleClusters.setInt(seedParticleIndex, cluster);
+		qlonglong cluster = _results->numClusters();
+		particleClusters.setInt64(seedParticleIndex, cluster);
 
 		// Now recursively iterate over all neighbors of the seed particle and add them to the cluster too.
 		OVITO_ASSERT(toProcess.empty());
@@ -178,12 +178,12 @@ void ClusterAnalysisModifier::CutoffClusterAnalysisEngine::doClustering()
 			if(isCanceled())
 				return;
 
-			int currentParticle = toProcess.front();
+			size_t currentParticle = toProcess.front();
 			toProcess.pop_front();
 			for(CutoffNeighborFinder::Query neighQuery(neighborFinder, currentParticle); !neighQuery.atEnd(); neighQuery.next()) {
-				int neighborIndex = neighQuery.current();
-				if(particleClusters.getInt(neighborIndex) == -1) {
-					particleClusters.setInt(neighborIndex, cluster);
+				size_t neighborIndex = neighQuery.current();
+				if(particleClusters.getInt64(neighborIndex) == -1) {
+					particleClusters.setInt64(neighborIndex, cluster);
 					toProcess.push_back(neighborIndex);
 				}
 			}
@@ -211,18 +211,18 @@ void ClusterAnalysisModifier::BondClusterAnalysisEngine::doClustering()
 
 		// Skip unselected particles that are not included in the analysis.
 		if(selection() && !selection()->getInt(seedParticleIndex)) {
-			particleClusters.setInt(seedParticleIndex, 0);
+			particleClusters.setInt64(seedParticleIndex, 0);
 			continue;
 		}
 
 		// Skip particles that have already been assigned to a cluster.
-		if(particleClusters.getInt(seedParticleIndex) != -1)
+		if(particleClusters.getInt64(seedParticleIndex) != -1)
 			continue;
 
 		// Start a new cluster.
 		_results->setNumClusters(_results->numClusters() + 1);
-		int cluster = _results->numClusters();
-		particleClusters.setInt(seedParticleIndex, cluster);
+		qlonglong cluster = _results->numClusters();
+		particleClusters.setInt64(seedParticleIndex, cluster);
 
 		// Now recursively iterate over all neighbors of the seed particle and add them to the cluster too.
 		OVITO_ASSERT(toProcess.empty());
@@ -243,12 +243,12 @@ void ClusterAnalysisModifier::BondClusterAnalysisEngine::doClustering()
 				size_t neighborIndex = (neighborBond.index1 == currentParticle) ? neighborBond.index2 : neighborBond.index1;
 				if(neighborIndex >= particleCount)
 					continue;
-				if(particleClusters.getInt(neighborIndex) != -1) 
+				if(particleClusters.getInt64(neighborIndex) != -1) 
 					continue;
 				if(selection() && !selection()->getInt(neighborIndex))
 					continue;
 
-				particleClusters.setInt(neighborIndex, cluster);
+				particleClusters.setInt64(neighborIndex, cluster);
 				toProcess.push_back(neighborIndex);
 			}
 		}
@@ -275,7 +275,7 @@ PipelineFlowState ClusterAnalysisModifier::ClusterAnalysisResults::apply(TimePoi
 		output.attributes().insert(QStringLiteral("ClusterAnalysis.largest_size"), QVariant::fromValue(largestClusterSize()));
 
 	output.setStatus(PipelineStatus(PipelineStatus::Success, tr("Found %n cluster(s)", "", numClusters())));
-	return output;	
+	return output;
 }
 
 OVITO_END_INLINE_NAMESPACE

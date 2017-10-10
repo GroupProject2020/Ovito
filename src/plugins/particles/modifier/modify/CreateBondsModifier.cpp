@@ -248,10 +248,10 @@ void CreateBondsModifier::BondsEngine::perform()
 			for(CutoffNeighborFinder::Query neighborQuery(neighborFinder, particleIndex); !neighborQuery.atEnd(); neighborQuery.next()) {
 				if(neighborQuery.distanceSquared() < minCutoffSquared)
 					continue;
-				if(_moleculeIDs && _moleculeIDs->getInt(particleIndex) != _moleculeIDs->getInt(neighborQuery.current()))
+				if(_moleculeIDs && _moleculeIDs->getInt64(particleIndex) != _moleculeIDs->getInt64(neighborQuery.current()))
 					continue;
 
-				Bond bond = { (unsigned int)particleIndex, (unsigned int)neighborQuery.current(), neighborQuery.unwrappedPbcShift() };
+				Bond bond = { particleIndex, neighborQuery.current(), neighborQuery.unwrappedPbcShift() };
 
 				// Skip every other bond to create only one bond per particle pair.
 				if(!bond.isOdd())
@@ -267,13 +267,13 @@ void CreateBondsModifier::BondsEngine::perform()
 			for(CutoffNeighborFinder::Query neighborQuery(neighborFinder, particleIndex); !neighborQuery.atEnd(); neighborQuery.next()) {
 				if(neighborQuery.distanceSquared() < minCutoffSquared)
 					continue;
-				if(_moleculeIDs && _moleculeIDs->getInt(particleIndex) != _moleculeIDs->getInt(neighborQuery.current()))
+				if(_moleculeIDs && _moleculeIDs->getInt64(particleIndex) != _moleculeIDs->getInt64(neighborQuery.current()))
 					continue;
 				int type1 = _particleTypes->getInt(particleIndex);
 				int type2 = _particleTypes->getInt(neighborQuery.current());
 				if(type1 >= 0 && type1 < (int)_pairCutoffsSquared.size() && type2 >= 0 && type2 < (int)_pairCutoffsSquared[type1].size()) {
 					if(neighborQuery.distanceSquared() <= _pairCutoffsSquared[type1][type2]) {
-						Bond bond = { (unsigned int)particleIndex, (unsigned int)neighborQuery.current(), neighborQuery.unwrappedPbcShift() };
+						Bond bond = { particleIndex, neighborQuery.current(), neighborQuery.unwrappedPbcShift() };
 						// Skip every other bond to create only one bond per particle pair.
 						if(!bond.isOdd())				
 							results->bonds()->push_back(bond);

@@ -36,11 +36,11 @@ struct Bond
 {
 	/// The index of the first particle.
 	/// Note that we are using int instead of size_t here to save some memory.
-	unsigned int index1;
+	size_t index1;
 
 	/// The index of the second particle.
 	/// Note that we are using int instead of size_t here to save some memory.
-	unsigned int index2;
+	size_t index2;
 
 	/// If the bond crosses a periodic boundary, this indicates the direction.
 	Vector_3<int8_t> pbcShift;

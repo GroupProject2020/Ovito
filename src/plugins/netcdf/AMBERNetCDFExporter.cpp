@@ -86,7 +86,7 @@ bool AMBERNetCDFExporter::openOutputFile(const QString& filePath, int numberOfFr
 	outputFile().setFileName(filePath);
 
 	// Open the input file for writing.
-	NCERR(nc_create(filePath.toLocal8Bit().constData(), NC_64BIT_OFFSET, &_ncid));
+	NCERR(nc_create(filePath.toLocal8Bit().constData(), NC_64BIT_DATA, &_ncid));
 
 	// Define dimensions.
 	NCERR(nc_def_dim(_ncid, NC_FRAME_STR, NC_UNLIMITED, &_frame_dim));
@@ -254,9 +254,9 @@ bool AMBERNetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, Ti
 			
 			// Create the NetCDF variable for the property.
 			nc_type ncDataType;
-			if(prop->dataType() == qMetaTypeId<int>()) ncDataType = NC_INT;
-			else if(prop->dataType() == qMetaTypeId<qlonglong>()) ncDataType = NC_INT64;
-			else if(prop->dataType() == qMetaTypeId<FloatType>()) ncDataType = NC_OVITO_FLOATTYPE;
+			if(prop->dataType() == PropertyStorage::Int) ncDataType = NC_INT;
+			else if(prop->dataType() == PropertyStorage::Int64) ncDataType = NC_INT64;
+			else if(prop->dataType() == PropertyStorage::Float) ncDataType = NC_OVITO_FLOATTYPE;
 			else continue;
 			// For scalar OVITO properties we define a NetCDF variable with 2 dimensions.
 			// For vector OVITO properties we define a NetCDF variable with 3 dimensions.
@@ -354,13 +354,13 @@ bool AMBERNetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, Ti
 
 		// Write property data to file.
 		count[2] = outColumn.componentCount;
-		if(outColumn.dataType == qMetaTypeId<int>()) {
+		if(outColumn.dataType == PropertyStorage::Int) {
 			NCERR(nc_put_vara_int(_ncid, outColumn.ncvar, start, count, prop->constDataInt()));
 		}
-		else if(outColumn.dataType == qMetaTypeId<qlonglong>()) {
+		else if(outColumn.dataType == PropertyStorage::Int64) {
 			NCERR(nc_put_vara_longlong(_ncid, outColumn.ncvar, start, count, prop->constDataInt64()));
 		}
-		else if(outColumn.dataType == qMetaTypeId<FloatType>()) {
+		else if(outColumn.dataType == PropertyStorage::Float) {
 #ifdef FLOATTYPE_FLOAT 
 			NCERR(nc_put_vara_float(_ncid, outColumn.ncvar, start, count, prop->constDataFloat()));
 #else

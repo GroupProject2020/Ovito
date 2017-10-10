@@ -53,22 +53,30 @@ py::dict BondsObject__array_interface__(const BondsObject& p)
 {
 	py::dict ai;
 	ai["shape"] = py::make_tuple(p.storage()->size(), 2);
-	OVITO_STATIC_ASSERT(sizeof(unsigned int) == 4);
+	if(sizeof(size_t) == 4) {
 #if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
-	ai["typestr"] = py::bytes("<u4");
+		ai["typestr"] = py::bytes("<u4");
 #else
-	ai["typestr"] = py::bytes(">u4");
+		ai["typestr"] = py::bytes(">u4");
 #endif
-	const unsigned int* data;
+	}
+	else if(sizeof(size_t) == 8) {
+#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
+		ai["typestr"] = py::bytes("<u8");
+#else
+		ai["typestr"] = py::bytes(">u8");
+#endif
+	}
+	const size_t* data;
 	if(!p.storage()->empty()) {
 		data = &p.storage()->front().index1;
 	}
 	else {
-		static const unsigned int null_data = 0;
+		static const size_t null_data = 0;
 		data = &null_data;
 	}
 	ai["data"] = py::make_tuple(reinterpret_cast<std::intptr_t>(data), true);
-	ai["strides"] = py::make_tuple(sizeof(Bond), sizeof(unsigned int));
+	ai["strides"] = py::make_tuple(sizeof(Bond), sizeof(size_t));
 	ai["version"] = py::cast(3);
 	return ai;
 }

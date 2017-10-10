@@ -90,9 +90,11 @@ void ParticleExpressionEvaluator::createInputVariables(const std::vector<ConstPr
 		ExpressionVariable v;
 
 		// Properties with custom data type are not supported by this modifier.
-		if(property->dataType() == qMetaTypeId<int>())
+		if(property->dataType() == PropertyStorage::Int)
 			v.type = PARTICLE_INT_PROPERTY;
-		else if(property->dataType() == qMetaTypeId<FloatType>())
+		else if(property->dataType() == PropertyStorage::Int64)
+			v.type = PARTICLE_INT64_PROPERTY;
+		else if(property->dataType() == PropertyStorage::Float)
 			v.type = PARTICLE_FLOAT_PROPERTY;
 		else
 			continue;
@@ -118,8 +120,10 @@ void ParticleExpressionEvaluator::createInputVariables(const std::vector<ConstPr
 			v.name = fullPropertyName.toStdString();
 
 			// Initialize data pointer into particle property storage.
-			if(property->dataType() == qMetaTypeId<int>())
+			if(property->dataType() == PropertyStorage::Int)
 				v.dataPointer = reinterpret_cast<const char*>(property->constDataInt() + k);
+			else if(property->dataType() == PropertyStorage::Int64)
+				v.dataPointer = reinterpret_cast<const char*>(property->constDataInt64() + k);
 			else
 				v.dataPointer = reinterpret_cast<const char*>(property->constDataFloat() + k);
 			v.stride = property->stride();
@@ -361,8 +365,11 @@ double ParticleExpressionEvaluator::Worker::evaluate(size_t particleIndex, size_
 				if(v->type == PARTICLE_FLOAT_PROPERTY) {
 					v->value = *reinterpret_cast<const FloatType*>(v->dataPointer + v->stride * particleIndex);
 				}
-				if(v->type == PARTICLE_INT_PROPERTY) {
+				else if(v->type == PARTICLE_INT_PROPERTY) {
 					v->value = *reinterpret_cast<const int*>(v->dataPointer + v->stride * particleIndex);
+				}
+				else if(v->type == PARTICLE_INT64_PROPERTY) {
+					v->value = *reinterpret_cast<const qlonglong*>(v->dataPointer + v->stride * particleIndex);
 				}
 				else if(v->type == PARTICLE_INDEX) {
 					v->value = particleIndex;
@@ -388,7 +395,7 @@ QString ParticleExpressionEvaluator::inputVariableTable() const
 {
 	QString str(tr("<p>Available input variables:</p><p><b>Particle properties:</b><ul>"));
 	for(const ExpressionVariable& v : _inputVariables) {
-		if(v.type == PARTICLE_FLOAT_PROPERTY || v.type == PARTICLE_INT_PROPERTY || v.type == PARTICLE_INDEX || v.type == DERIVED_PARTICLE_PROPERTY) {
+		if(v.type == PARTICLE_FLOAT_PROPERTY || v.type == PARTICLE_INT_PROPERTY || v.type == PARTICLE_INT64_PROPERTY || v.type == PARTICLE_INDEX || v.type == DERIVED_PARTICLE_PROPERTY) {
 			if(v.description.isEmpty())
 				str.append(QStringLiteral("<li>%1</li>").arg(QString::fromStdString(v.name)));
 			else

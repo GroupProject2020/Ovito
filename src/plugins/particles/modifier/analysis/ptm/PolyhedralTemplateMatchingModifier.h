@@ -99,11 +99,11 @@ private:
 		/// Constructor.
 		PTMResults(size_t particleCount, bool outputInteratomicDistance, bool outputOrientation, bool outputDeformationGradient, bool outputAlloyTypes) :
 			StructureIdentificationResults(particleCount),
-			_rmsd(std::make_shared<PropertyStorage>(particleCount, qMetaTypeId<FloatType>(), 1, 0, tr("RMSD"), false)),
-			_interatomicDistances(outputInteratomicDistance ? std::make_shared<PropertyStorage>(particleCount, qMetaTypeId<FloatType>(), 1, 0, tr("Interatomic Distance"), true) : nullptr),
+			_rmsd(std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Float, 1, 0, tr("RMSD"), false)),
+			_interatomicDistances(outputInteratomicDistance ? std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Float, 1, 0, tr("Interatomic Distance"), true) : nullptr),
 			_orientations(outputOrientation ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::OrientationProperty, true) : nullptr),
 			_deformationGradients(outputDeformationGradient ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::ElasticDeformationGradientProperty, true) : nullptr),
-			_alloyTypes(outputAlloyTypes ? std::make_shared<PropertyStorage>(particleCount, qMetaTypeId<int>(), 1, 0, tr("Alloy Type"), true) : nullptr) {}
+			_alloyTypes(outputAlloyTypes ? std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Int, 1, 0, tr("Alloy Type"), true) : nullptr) {}
 
 		/// Injects the computed results into the data pipeline.
 		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;

@@ -136,7 +136,7 @@ public:
 
 	/// Returns the cluster an atom belongs to.
 	Cluster* atomCluster(int atomIndex) const {
-		return clusterGraph()->findCluster(_atomClusters->getInt(atomIndex));
+		return clusterGraph()->findCluster(_atomClusters->getInt64(atomIndex));
 	}
 
 	/// Returns the number of neighbors of the given atom.

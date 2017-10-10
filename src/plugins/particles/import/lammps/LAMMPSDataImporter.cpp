@@ -103,9 +103,9 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 	// Read comment line
 	stream.readLine();
 
-	int natoms = 0;
+	qlonglong natoms = 0;
 	int natomtypes = 0;
-	int nbonds = 0;
+	qlonglong nbonds = 0;
 	int nangles = 0;
 	int ndihedrals = 0;
 	int nimpropers = 0;
@@ -131,7 +131,7 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 		if(line.find_first_not_of(" \t\n\r") == string::npos) continue;
 
     	if(line.find("atoms") != string::npos) {
-    		if(sscanf(line.c_str(), "%u", &natoms) != 1)
+    		if(sscanf(line.c_str(), "%llu", &natoms) != 1)
     			throw Exception(tr("Invalid number of atoms (line %1): %2").arg(stream.lineNumber()).arg(line.c_str()));
 
 			setProgressMaximum(natoms);
@@ -157,7 +157,7 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
     			throw Exception(tr("Invalid xy/xz/yz values (line %1): %2").arg(stream.lineNumber()).arg(line.c_str()));
     	}
     	else if(line.find("bonds") != string::npos) {
-    		if(sscanf(line.c_str(), "%u", &nbonds) != 1)
+    		if(sscanf(line.c_str(), "%llu", &nbonds) != 1)
     			throw Exception(tr("Invalid number of bonds (line %1): %2").arg(stream.lineNumber()).arg(line.c_str()));
     	}
     	else if(line.find("bond types") != string::npos) {
@@ -230,17 +230,17 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::TypeProperty, true);
 	frameData->addParticleProperty(typeProperty);
 	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
-	int* atomType = typeProperty->dataInt();
+	auto atomType = typeProperty->dataInt();
 	PropertyPtr identifierProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::IdentifierProperty, true);
 	frameData->addParticleProperty(identifierProperty);
-	int* atomId = identifierProperty->dataInt();
+	auto atomId = identifierProperty->dataInt64();
 
 	// Create atom types.
 	for(int i = 1; i <= natomtypes; i++)
 		typeList->addTypeId(i);
 
 	/// Maps atom IDs to indices.
-	std::unordered_map<int,int> atomIdMap;
+	std::unordered_map<qlonglong,size_t> atomIdMap;
 	atomIdMap.reserve(natoms);
 
 	// Read identifier strings one by one in free-form part of data file.
@@ -270,14 +270,14 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 				}
 
 				if(_atomStyle == AtomStyle_Atomic || _atomStyle == AtomStyle_Hybrid) {
-					for(int i = 0; i < natoms; i++, ++pos, ++atomType, ++atomId) {
+					for(size_t i = 0; i < natoms; i++, ++pos, ++atomType, ++atomId) {
 						if(!setProgressValueIntermittent(i)) return {};
 						if(i != 0) stream.readLine();
 						bool invalidLine;
 						if(!pbcImage)
-							invalidLine = (sscanf(stream.line(), "%u %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, atomId, atomType, &pos->x(), &pos->y(), &pos->z()) != 5);
+							invalidLine = (sscanf(stream.line(), "%llu %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, atomId, atomType, &pos->x(), &pos->y(), &pos->z()) != 5);
 						else {
-							invalidLine = (sscanf(stream.line(), "%u %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " %i %i %i", atomId, atomType, &pos->x(), &pos->y(), &pos->z(), &pbcImage->x(), &pbcImage->y(), &pbcImage->z()) != 5+3);
+							invalidLine = (sscanf(stream.line(), "%llu %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " %i %i %i", atomId, atomType, &pos->x(), &pos->y(), &pos->z(), &pbcImage->x(), &pbcImage->y(), &pbcImage->z()) != 5+3);
 							++pbcImage;
 						}
 						if(invalidLine)
@@ -291,14 +291,14 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 					PropertyPtr chargeProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::ChargeProperty, true);
 					frameData->addParticleProperty(chargeProperty);
 					FloatType* charge = chargeProperty->dataFloat();
-					for(int i = 0; i < natoms; i++, ++pos, ++atomType, ++atomId, ++charge) {
+					for(size_t i = 0; i < natoms; i++, ++pos, ++atomType, ++atomId, ++charge) {
 						if(!setProgressValueIntermittent(i)) return {};
 						if(i != 0) stream.readLine();
 						bool invalidLine;
 						if(!pbcImage)
-							invalidLine = (sscanf(stream.line(), "%u %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, atomId, atomType, charge, &pos->x(), &pos->y(), &pos->z()) != 6);
+							invalidLine = (sscanf(stream.line(), "%llu %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, atomId, atomType, charge, &pos->x(), &pos->y(), &pos->z()) != 6);
 						else {
-							invalidLine = (sscanf(stream.line(), "%u %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " %i %i %i", atomId, atomType, charge, &pos->x(), &pos->y(), &pos->z(), &pbcImage->x(), &pbcImage->y(), &pbcImage->z()) != 6+3);
+							invalidLine = (sscanf(stream.line(), "%llu %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " %i %i %i", atomId, atomType, charge, &pos->x(), &pos->y(), &pos->z(), &pbcImage->x(), &pbcImage->y(), &pbcImage->z()) != 6+3);
 							++pbcImage;
 						}
 						if(invalidLine)
@@ -311,15 +311,15 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 				else if(_atomStyle == AtomStyle_Angle || _atomStyle == AtomStyle_Bond || _atomStyle == AtomStyle_Molecular) {
 					PropertyPtr moleculeProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::MoleculeProperty, true);
 					frameData->addParticleProperty(moleculeProperty);
-					int* molecule = moleculeProperty->dataInt();
-					for(int i = 0; i < natoms; i++, ++pos, ++atomType, ++atomId, ++molecule) {
+					auto molecule = moleculeProperty->dataInt64();
+					for(size_t i = 0; i < natoms; i++, ++pos, ++atomType, ++atomId, ++molecule) {
 						if(!setProgressValueIntermittent(i)) return {};
 						if(i != 0) stream.readLine();
 						bool invalidLine;
 						if(!pbcImage)
-							invalidLine = (sscanf(stream.line(), "%u %u %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, atomId, molecule, atomType, &pos->x(), &pos->y(), &pos->z()) != 6);
+							invalidLine = (sscanf(stream.line(), "%llu %llu %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, atomId, molecule, atomType, &pos->x(), &pos->y(), &pos->z()) != 6);
 						else {
-							invalidLine = (sscanf(stream.line(), "%u %u %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " %i %i %i", atomId, molecule, atomType, &pos->x(), &pos->y(), &pos->z(), &pbcImage->x(), &pbcImage->y(), &pbcImage->z()) != 6+3);
+							invalidLine = (sscanf(stream.line(), "%llu %llu %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " %i %i %i", atomId, molecule, atomType, &pos->x(), &pos->y(), &pos->z(), &pbcImage->x(), &pbcImage->y(), &pbcImage->z()) != 6+3);
 							++pbcImage;
 						}
 						if(invalidLine)
@@ -335,15 +335,15 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 					FloatType* charge = chargeProperty->dataFloat();
 					PropertyPtr moleculeProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::MoleculeProperty, true);
 					frameData->addParticleProperty(moleculeProperty);
-					int* molecule = moleculeProperty->dataInt();
-					for(int i = 0; i < natoms; i++, ++pos, ++atomType, ++atomId, ++charge, ++molecule) {
+					auto molecule = moleculeProperty->dataInt64();
+					for(size_t i = 0; i < natoms; i++, ++pos, ++atomType, ++atomId, ++charge, ++molecule) {
 						if(!setProgressValueIntermittent(i)) return {};
 						if(i != 0) stream.readLine();
 						bool invalidLine;
 						if(!pbcImage)
-							invalidLine = (sscanf(stream.line(), "%u %u %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, atomId, molecule, atomType, charge, &pos->x(), &pos->y(), &pos->z()) != 7);
+							invalidLine = (sscanf(stream.line(), "%llu %llu %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, atomId, molecule, atomType, charge, &pos->x(), &pos->y(), &pos->z()) != 7);
 						else {
-							invalidLine = (sscanf(stream.line(), "%u %u %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " %i %i %i", atomId, molecule, atomType, charge, &pos->x(), &pos->y(), &pos->z(), &pbcImage->x(), &pbcImage->y(), &pbcImage->z()) != 7+3);
+							invalidLine = (sscanf(stream.line(), "%llu %llu %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " %i %i %i", atomId, molecule, atomType, charge, &pos->x(), &pos->y(), &pos->z(), &pbcImage->x(), &pbcImage->y(), &pbcImage->z()) != 7+3);
 							++pbcImage;
 						}
 						if(invalidLine)
@@ -360,14 +360,14 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 					PropertyPtr massProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::MassProperty, true);
 					frameData->addParticleProperty(massProperty);
 					FloatType* mass = massProperty->dataFloat();
-					for(int i = 0; i < natoms; i++, ++pos, ++atomType, ++atomId, ++radius, ++mass) {
+					for(size_t i = 0; i < natoms; i++, ++pos, ++atomType, ++atomId, ++radius, ++mass) {
 						if(!setProgressValueIntermittent(i)) return {};
 						if(i != 0) stream.readLine();
 						bool invalidLine;
 						if(!pbcImage)
-							invalidLine = (sscanf(stream.line(), "%u %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, atomId, atomType, radius, mass, &pos->x(), &pos->y(), &pos->z()) != 7);
+							invalidLine = (sscanf(stream.line(), "%llu %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, atomId, atomType, radius, mass, &pos->x(), &pos->y(), &pos->z()) != 7);
 						else {
-							invalidLine = (sscanf(stream.line(), "%u %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " %i %i %i", atomId, atomType, radius, mass, &pos->x(), &pos->y(), &pos->z(), &pbcImage->x(), &pbcImage->y(), &pbcImage->z()) != 7+3);
+							invalidLine = (sscanf(stream.line(), "%llu %u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " %i %i %i", atomId, atomType, radius, mass, &pos->x(), &pos->y(), &pos->z(), &pbcImage->x(), &pbcImage->y(), &pbcImage->z()) != 7+3);
 							++pbcImage;
 						}
 						if(invalidLine)
@@ -400,18 +400,18 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 			PropertyPtr velocityProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::VelocityProperty, true);
 			frameData->addParticleProperty(velocityProperty);
 
-			for(int i = 0; i < natoms; i++) {
+			for(size_t i = 0; i < natoms; i++) {
 				if(!setProgressValueIntermittent(i)) return {};
 				stream.readLine();
 
 				Vector3 v;
-				int atomId;
+				qlonglong atomId;
 
-    			if(sscanf(stream.line(), "%u " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &atomId, &v.x(), &v.y(), &v.z()) != 4)
+    			if(sscanf(stream.line(), "%llu " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &atomId, &v.x(), &v.y(), &v.z()) != 4)
 					throw Exception(tr("Invalid velocity specification (line %1): %2").arg(stream.lineNumber()).arg(stream.lineString()));
 
-    			int atomIndex = i;
-    			if(atomId != identifierProperty->getInt(i)) {
+    			size_t atomIndex = i;
+    			if(atomId != identifierProperty->getInt64(i)) {
 					auto iter = atomIdMap.find(atomId);
 					if(iter == atomIdMap.end())
     					throw Exception(tr("Nonexistent atom ID encountered in line %1 of data file.").arg(stream.lineNumber()));
@@ -483,24 +483,24 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 				bondTypeList->addTypeId(i);
 
 			setProgressMaximum(nbonds);
-			for(int i = 0; i < nbonds; i++) {
+			for(size_t i = 0; i < nbonds; i++) {
 				if(!setProgressValueIntermittent(i)) return {};
 				stream.readLine();
 
-				int bondId, atomId1, atomId2;
-    			if(sscanf(stream.line(), "%u %u %u %u", &bondId, bondType, &atomId1, &atomId2) != 4)
+				qlonglong bondId, atomId1, atomId2;
+    			if(sscanf(stream.line(), "%llu %u %llu %llu", &bondId, bondType, &atomId1, &atomId2) != 4)
 					throw Exception(tr("Invalid bond specification (line %1): %2").arg(stream.lineNumber()).arg(stream.lineString()));
 
-				unsigned int atomIndex1 = atomId1;
-    			if(atomIndex1 >= identifierProperty->size() || atomId1 != identifierProperty->getInt(atomIndex1)) {
+				qlonglong atomIndex1 = atomId1;
+    			if(atomIndex1 < 0 || atomIndex1 >= identifierProperty->size() || atomId1 != identifierProperty->getInt64(atomIndex1)) {
 					auto iter = atomIdMap.find(atomId1);
 					if(iter == atomIdMap.end())
     					throw Exception(tr("Nonexistent atom ID encountered in line %1 of data file.").arg(stream.lineNumber()));
 					atomIndex1 = iter->second;
     			}
 
-				unsigned int atomIndex2 = atomId2;
-    			if(atomIndex2 >= identifierProperty->size() || atomId2 != identifierProperty->getInt(atomIndex2)) {
+				qlonglong atomIndex2 = atomId2;
+    			if(atomIndex2 < 0 || atomIndex2 >= identifierProperty->size() || atomId2 != identifierProperty->getInt64(atomIndex2)) {
 					auto iter = atomIdMap.find(atomId2);
 					if(iter == atomIdMap.end())
     					throw Exception(tr("Nonexistent atom ID encountered in line %1 of data file.").arg(stream.lineNumber()));

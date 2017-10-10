@@ -104,12 +104,12 @@ PipelineStatus ParticlesReplicateModifierDelegate::apply(Modifier* modifier, con
 
 		// Assign unique IDs to duplicated particle.
 		if(mod->uniqueIdentifiers() && newProperty->type() == ParticleProperty::IdentifierProperty) {
-			auto minmax = std::minmax_element(newProperty->constDataInt(), newProperty->constDataInt() + oldParticleCount);
-			int minID = *minmax.first;
-			int maxID = *minmax.second;
+			auto minmax = std::minmax_element(newProperty->constDataInt64(), newProperty->constDataInt64() + oldParticleCount);
+			auto minID = *minmax.first;
+			auto maxID = *minmax.second;
 			for(size_t c = 1; c < numCopies; c++) {
-				int offset = (maxID - minID + 1) * c;
-				for(auto id = newProperty->dataInt() + c * oldParticleCount, id_end = id + oldParticleCount; id != id_end; ++id)
+				auto offset = (maxID - minID + 1) * c;
+				for(auto id = newProperty->dataInt64() + c * oldParticleCount, id_end = id + oldParticleCount; id != id_end; ++id)
 					*id += offset;
 			}
 		}

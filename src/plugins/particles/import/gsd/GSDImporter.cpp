@@ -169,8 +169,8 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 		frameData->setBonds(std::make_shared<BondsStorage>());
 		frameData->bonds()->reserve(numBonds);
 		for(auto b = bondList.cbegin(); b != bondList.cend(); ) {
-			unsigned int atomIndex1 = *b++;
-			unsigned int atomIndex2 = *b++;
+			size_t atomIndex1 = *b++;
+			size_t atomIndex2 = *b++;
 			if(atomIndex1 >= numParticles || atomIndex2 >= numParticles)
 				throw Exception(tr("Nonexistent atom tag in bond list in GSD file."));
 

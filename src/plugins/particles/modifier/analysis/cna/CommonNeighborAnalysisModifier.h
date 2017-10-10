@@ -181,7 +181,7 @@ private:
 		/// Constructor.
 		BondCNAResults(size_t particleCount, size_t bondCount) :
 			CNAResults(particleCount),
-			_cnaIndices(std::make_shared<PropertyStorage>(bondCount, qMetaTypeId<int>(), 3, 0, tr("CNA Indices"), false)) {}
+			_cnaIndices(std::make_shared<PropertyStorage>(bondCount, PropertyStorage::Int, 3, 0, tr("CNA Indices"), false)) {}
 
 		/// Injects the computed results into the data pipeline.
 		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;

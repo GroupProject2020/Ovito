@@ -118,10 +118,10 @@ void LAMMPSTextDumpImporter::FrameFinder::discoverFramesInFile(QFile& file, cons
 			}
 			else if(stream.lineStartsWith("ITEM: NUMBER OF ATOMS")) {
 				// Parse number of atoms.
-				unsigned int u;
-				if(sscanf(stream.readLine(), "%u", &u) != 1 || u > 1e9)
+				unsigned long long u;
+				if(sscanf(stream.readLine(), "%llu", &u) != 1 || u > 1e9)
 					throw Exception(tr("LAMMPS dump file parsing error. Invalid number of atoms in line %1:\n%2").arg(stream.lineNumber()).arg(stream.lineString()));
-				numParticles = u;
+				numParticles = (size_t)u;
 				break;
 			}
 			else if(stream.lineStartsWith("ITEM: ATOMS")) {
@@ -259,8 +259,7 @@ FileSourceImporter::FrameDataPtr LAMMPSTextDumpImporter::FrameLoader::loadFile(Q
 				else {
 					frameData->detectedColumnMapping() = generateAutomaticColumnMapping(fileColumnNames);
 				}
-				setResult(std::move(frameData));
-				return {};
+				return frameData;
 			}
 
 			// Set up column-to-property mapping.
@@ -400,7 +399,7 @@ InputColumnMapping LAMMPSTextDumpImporter::generateAutomaticColumnMapping(const 
 		else if(name == "c_stress[6]") columnMapping[i].mapStandardColumn(ParticleProperty::StressTensorProperty, 5);
 		else if(name == "selection") columnMapping[i].mapStandardColumn(ParticleProperty::SelectionProperty, 0);
 		else {
-			columnMapping[i].mapCustomColumn(name, qMetaTypeId<FloatType>());
+			columnMapping[i].mapCustomColumn(name, PropertyStorage::Float);
 		}
 	}
 	return columnMapping;

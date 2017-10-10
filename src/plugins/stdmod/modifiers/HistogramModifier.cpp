@@ -104,7 +104,7 @@ void HistogramModifier::initializeModifier(ModifierApplication* modApp)
 		PropertyReference bestProperty;
 		for(DataObject* o : input.objects()) {
 			if(PropertyObject* property = dynamic_object_cast<PropertyObject>(o)) {
-				if(propertyClass()->isMember(property) && (property->dataType() == qMetaTypeId<int>() || property->dataType() == qMetaTypeId<FloatType>())) {
+				if(propertyClass()->isMember(property) && (property->dataType() == PropertyStorage::Int || property->dataType() == PropertyStorage::Float)) {
 					bestProperty = PropertyReference(property, (property->componentCount() > 1) ? 0 : -1);
 				}
 			}
@@ -184,7 +184,7 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 	FloatType intervalEnd = xAxisRangeEnd();
 
 	if(property->size() > 0) {
-		if(property->dataType() == qMetaTypeId<FloatType>()) {
+		if(property->dataType() == PropertyStorage::Float) {
 			auto v_begin = property->constDataFloat() + vecComponent;
 			auto v_end = v_begin + (property->size() * vecComponentCount);
 			// Determine value range.
@@ -229,7 +229,7 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 				}
 			}
 		}
-		else if(property->dataType() == qMetaTypeId<int>()) {
+		else if(property->dataType() == PropertyStorage::Int) {
 			auto v_begin = property->constDataInt() + vecComponent;
 			auto v_end = v_begin + (property->size() * vecComponentCount);
 			// Determine value range.

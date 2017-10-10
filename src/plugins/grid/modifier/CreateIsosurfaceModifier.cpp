@@ -140,7 +140,7 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 
 	if(_gridShape.size() != 3)
 		throw Exception(tr("Can construct isosurface only for three-dimensional voxel grids"));
-	if(property()->dataType() != qMetaTypeId<FloatType>())
+	if(property()->dataType() != PropertyStorage::Float)
 		throw Exception(tr("Can construct isosurface only for floating-point data"));
 	if(property()->size() != _gridShape[0]*_gridShape[1]*_gridShape[2])
 		throw Exception(tr("Input voxel property has wrong dimensions."));

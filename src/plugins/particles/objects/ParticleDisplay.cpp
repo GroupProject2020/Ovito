@@ -347,6 +347,12 @@ void ParticleDisplay::render(TimePoint time, DataObject* dataObject, const Pipel
 	if(particleShape() == Sphere && shapeProperty == nullptr)
 		orientationProperty = nullptr;
 
+	// Make sure we don't exceed our internal limits.
+	if(positionProperty && positionProperty->size() > (size_t)std::numeric_limits<int>::max()) {
+		qWarning() << "WARNING: Cannot render more than" << std::numeric_limits<int>::max() << "particles.";
+		return;
+	}
+
 	// Get number of particles.
 	int particleCount = positionProperty ? (int)positionProperty->size() : 0;
 
@@ -611,7 +617,7 @@ void ParticleDisplay::render(TimePoint time, DataObject* dataObject, const Pipel
 /******************************************************************************
 * Render a marker around a particle to highlight it in the viewports.
 ******************************************************************************/
-void ParticleDisplay::highlightParticle(int particleIndex, const PipelineFlowState& flowState, SceneRenderer* renderer)
+void ParticleDisplay::highlightParticle(size_t particleIndex, const PipelineFlowState& flowState, SceneRenderer* renderer)
 {
 	if(renderer->isBoundingBoxPass()) {
 		renderer->addToLocalBoundingBox(highlightParticleBoundingBox(particleIndex, flowState, renderer->worldTransform(), renderer->viewport()));
@@ -759,7 +765,7 @@ void ParticleDisplay::highlightParticle(int particleIndex, const PipelineFlowSta
 * Compute the (local) bounding box of the marker around a particle used to 
 * highlight it in the viewports.
 ******************************************************************************/
-Box3 ParticleDisplay::highlightParticleBoundingBox(int particleIndex, const PipelineFlowState& flowState, const AffineTransformation& tm, Viewport* viewport)
+Box3 ParticleDisplay::highlightParticleBoundingBox(size_t particleIndex, const PipelineFlowState& flowState, const AffineTransformation& tm, Viewport* viewport)
 {
 	// Fetch properties of selected particle needed to compute the bounding box.
 	ParticleProperty* posProperty = nullptr;
@@ -803,7 +809,7 @@ Box3 ParticleDisplay::highlightParticleBoundingBox(int particleIndex, const Pipe
 * Given an sub-object ID returned by the Viewport::pick() method, looks up the
 * corresponding particle index.
 ******************************************************************************/
-int ParticlePickInfo::particleIndexFromSubObjectID(quint32 subobjID) const
+qlonglong ParticlePickInfo::particleIndexFromSubObjectID(quint32 subobjID) const
 {
 	if(_displayObject->particleShape() != ParticleDisplay::Cylinder
 			&& _displayObject->particleShape() != ParticleDisplay::Spherocylinder) {
@@ -823,7 +829,7 @@ int ParticlePickInfo::particleIndexFromSubObjectID(quint32 subobjID) const
 ******************************************************************************/
 QString ParticlePickInfo::infoString(ObjectNode* objectNode, quint32 subobjectId)
 {
-	int particleIndex = particleIndexFromSubObjectID(subobjectId);
+	qlonglong particleIndex = particleIndexFromSubObjectID(subobjectId);
 	if(particleIndex < 0) return QString();
 	return particleInfoString(pipelineState(), particleIndex);
 }
@@ -839,23 +845,23 @@ QString ParticlePickInfo::particleInfoString(const PipelineFlowState& pipelineSt
 		if(!property || property->size() <= particleIndex) continue;
 		if(property->type() == ParticleProperty::SelectionProperty) continue;
 		if(property->type() == ParticleProperty::ColorProperty) continue;
-		if(property->dataType() != qMetaTypeId<int>() && property->dataType() != qMetaTypeId<qlonglong>() && property->dataType() != qMetaTypeId<FloatType>()) continue;
+		if(property->dataType() != PropertyStorage::Int && property->dataType() != PropertyStorage::Int64 && property->dataType() != PropertyStorage::Float) continue;
 		if(!str.isEmpty()) str += QStringLiteral(" | ");
 		str += property->name();
 		str += QStringLiteral(" ");
 		for(size_t component = 0; component < property->componentCount(); component++) {
 			if(component != 0) str += QStringLiteral(", ");
 			QString valueString;
-			if(property->dataType() == qMetaTypeId<int>()) {
+			if(property->dataType() == PropertyStorage::Int) {
 				str += QString::number(property->getIntComponent(particleIndex, component));
 				if(property->elementTypes().empty() == false) {
 					if(ElementType* ptype = property->elementType(property->getIntComponent(particleIndex, component)))
 						str += QString(" (%1)").arg(ptype->name());
 				}
 			}
-			else if(property->dataType() == qMetaTypeId<qlonglong>())
+			else if(property->dataType() == PropertyStorage::Int64)
 				str += QString::number(property->getInt64Component(particleIndex, component));
-			else if(property->dataType() == qMetaTypeId<FloatType>())
+			else if(property->dataType() == PropertyStorage::Float)
 				str += QString::number(property->getFloatComponent(particleIndex, component));
 		}
 	}

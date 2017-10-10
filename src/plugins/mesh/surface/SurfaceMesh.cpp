@@ -193,7 +193,6 @@ int SurfaceMesh::locatePointStatic(const Point3& location, const HalfEdgeMesh<>&
 	}
 
 	// Check if any facet is closer to the test point than the closest vertex and the closest edge.
-	HalfEdgeMesh<>::Face* closestFace = nullptr;
 	for(HalfEdgeMesh<>::Face* face : mesh.faces()) {
 		HalfEdgeMesh<>::Edge* edge1 = face->edges();
 		HalfEdgeMesh<>::Edge* edge2 = edge1->nextFaceEdge();

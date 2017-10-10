@@ -63,7 +63,7 @@ void OpenBabelImporter::OpenBabelImportTask::parseFile(CompressedTextReader& str
 	// Transfer atoms.
 	Point3* pos = posProperty->dataPoint3();
 	int* type = typeProperty->dataInt();
-	int* id = identifierProperty->dataInt();
+	auto id = identifierProperty->dataInt64();
 	FOR_ATOMS_OF_MOL(obatom, mol) {
 		pos->x() = (FloatType)obatom->x();
 		pos->y() = (FloatType)obatom->y();

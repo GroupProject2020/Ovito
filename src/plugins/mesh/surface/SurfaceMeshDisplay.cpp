@@ -527,10 +527,12 @@ void SurfaceMeshDisplay::buildCapMesh(const HalfEdgeMesh<>& input, const Simulat
 		}
 		else {
 			if(isBoxCornerInside3DRegion == -1) {
-				if(closedContours.empty())
-					isBoxCornerInside3DRegion = (SurfaceMesh::locatePointStatic(Point3::Origin(), input, cell, isCompletelySolid, 0) < 0);
-				else
+				if(closedContours.empty()) {
+					isBoxCornerInside3DRegion = (SurfaceMesh::locatePointStatic(Point3::Origin() + cell.matrix().column(3), input, cell, isCompletelySolid, 0) < 0);
+				}
+				else {
 					isBoxCornerInside3DRegion = isCornerInside2DRegion(closedContours);
+				}
 				if(reverseOrientation)
 					isBoxCornerInside3DRegion = !isBoxCornerInside3DRegion;
 			}

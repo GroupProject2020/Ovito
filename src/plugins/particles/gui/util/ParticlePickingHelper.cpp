@@ -55,7 +55,7 @@ bool ParticlePickingHelper::pickParticle(ViewportWindow* vpwin, const QPoint& cl
 				// Determine particle ID.
 				ParticleProperty* identifierProperty = ParticleProperty::findInState(pickInfo->pipelineState(), ParticleProperty::IdentifierProperty);
 				if(identifierProperty && result.particleIndex < identifierProperty->size()) {
-					result.particleId = identifierProperty->getInt(result.particleIndex);
+					result.particleId = identifierProperty->getInt64(result.particleIndex);
 				}
 				else result.particleId = -1;
 
@@ -86,9 +86,9 @@ void ParticlePickingHelper::renderSelectionMarker(Viewport* vp, ViewportSceneRen
 	if(pickRecord.particleId >= 0) {
 		ParticleProperty* identifierProperty = ParticleProperty::findInState(flowState, ParticleProperty::IdentifierProperty);
 		if(identifierProperty) {
-			const int* begin = identifierProperty->constDataInt();
-			const int* end = begin + identifierProperty->size();
-			const int* iter = std::find(begin, end, pickRecord.particleId);
+			auto begin = identifierProperty->constDataInt64();
+			auto end = begin + identifierProperty->size();
+			auto iter = std::find(begin, end, pickRecord.particleId);
 			if(iter != end)
 				particleIndex = (iter - begin);
 		}

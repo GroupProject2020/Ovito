@@ -61,7 +61,7 @@ void InputColumnMapping::loadFromStream(LoadStream& stream)
 		stream >> propertyName;
 		stream >> col.dataType;
 		if(col.dataType == qMetaTypeId<float>() || col.dataType == qMetaTypeId<double>())
-			col.dataType = qMetaTypeId<FloatType>();
+			col.dataType = PropertyStorage::Float;
 		int vectorComponent;
 		stream >> vectorComponent;
 		if(propertyType == ParticleProperty::UserProperty)
@@ -126,7 +126,7 @@ InputColumnReader::InputColumnReader(const InputColumnMapping& mapping, Particle
 		TargetPropertyRecord rec;
 
 		if(dataType != QMetaType::Void) {
-			if(dataType != qMetaTypeId<int>() && dataType != qMetaTypeId<qlonglong>() && dataType != qMetaTypeId<FloatType>())
+			if(dataType != PropertyStorage::Int && dataType != PropertyStorage::Int64 && dataType != PropertyStorage::Float)
 				throw Exception(tr("Invalid custom particle property (data type %1) for input file column %2").arg(dataType).arg(i+1));
 
 			if(pref.type() != ParticleProperty::UserProperty) {
@@ -195,13 +195,13 @@ InputColumnReader::InputColumnReader(const InputColumnMapping& mapping, Particle
 			rec.count = rec.property->size();
 			rec.numericParticleTypes = true;
 			rec.dataType = rec.property->dataType();
-			if(rec.dataType == qMetaTypeId<FloatType>()) {
+			if(rec.dataType == PropertyStorage::Float) {
 				rec.data = reinterpret_cast<uint8_t*>(rec.property->dataFloat() + rec.vectorComponent);
 			}
-			else if(rec.dataType == qMetaTypeId<int>()) {
+			else if(rec.dataType == PropertyStorage::Int) {
 				rec.data = reinterpret_cast<uint8_t*>(rec.property->dataInt() + rec.vectorComponent);
 			}
-			else if(rec.dataType == qMetaTypeId<qlonglong>()) {
+			else if(rec.dataType == PropertyStorage::Int64) {
 				rec.data = reinterpret_cast<uint8_t*>(rec.property->dataInt64() + rec.vectorComponent);
 			}
 			else rec.data = nullptr;
@@ -282,11 +282,11 @@ void InputColumnReader::parseField(size_t particleIndex, int columnIndex, const 
 	if(particleIndex >= prec.count)
 		throw Exception(tr("Too many data lines in input file. Expected only %1 lines.").arg(prec.count));
 
-	if(prec.dataType == qMetaTypeId<FloatType>()) {
+	if(prec.dataType == PropertyStorage::Float) {
 		if(!parseFloatType(token, token_end, *reinterpret_cast<FloatType*>(prec.data + particleIndex * prec.stride)))
 			throw Exception(tr("Invalid floating-point value in column %1 (%2): \"%3\"").arg(columnIndex+1).arg(prec.property->name()).arg(QString::fromLocal8Bit(token, token_end - token)));
 	}
-	else if(prec.dataType == qMetaTypeId<int>()) {
+	else if(prec.dataType == PropertyStorage::Int) {
 		int& d = *reinterpret_cast<int*>(prec.data + particleIndex * prec.stride);
 		bool ok = parseInt(token, token_end, d);
 		if(prec.typeList == nullptr) {
@@ -307,7 +307,7 @@ void InputColumnReader::parseField(size_t particleIndex, int columnIndex, const 
 			}
 		}
 	}
-	else if(prec.dataType == qMetaTypeId<qlonglong>()) {
+	else if(prec.dataType == PropertyStorage::Int64) {
 		qlonglong& d = *reinterpret_cast<qlonglong*>(prec.data + particleIndex * prec.stride);
 		if(!parseInt64(token, token_end, d))
 			throw Exception(tr("Invalid 64-bit integer value in column %1 (%2): \"%3\"").arg(columnIndex+1).arg(prec.property->name()).arg(QString::fromLocal8Bit(token, token_end - token)));
@@ -334,10 +334,10 @@ void InputColumnReader::readParticle(size_t particleIndex, const double* values,
 			throw Exception(tr("Too many data lines in input file. Expected only %1 lines.").arg(prec->count));
 
 		if(prec->data) {
-			if(prec->dataType == qMetaTypeId<FloatType>()) {
+			if(prec->dataType == PropertyStorage::Float) {
 				*reinterpret_cast<FloatType*>(prec->data + particleIndex * prec->stride) = (FloatType)*token;
 			}
-			else if(prec->dataType == qMetaTypeId<int>()) {
+			else if(prec->dataType == PropertyStorage::Int) {
 				int ival = (int)*token;
 				if(prec->typeList) {
 					// Automatically register a new particle type if a new type identifier is encountered.
@@ -345,7 +345,7 @@ void InputColumnReader::readParticle(size_t particleIndex, const double* values,
 				}
 				*reinterpret_cast<int*>(prec->data + particleIndex * prec->stride) = ival;
 			}
-			else if(prec->dataType == qMetaTypeId<qlonglong>()) {
+			else if(prec->dataType == PropertyStorage::Int64) {
 				*reinterpret_cast<qlonglong*>(prec->data + particleIndex * prec->stride) = (qlonglong)*token;
 			}
 		}

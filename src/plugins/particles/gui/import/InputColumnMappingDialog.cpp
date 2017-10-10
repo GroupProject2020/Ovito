@@ -110,9 +110,9 @@ InputColumnMappingDialog::InputColumnMappingDialog(const InputColumnMapping& map
  *****************************************************************************/
 QString InputColumnMappingDialog::dataTypeToString(int dataType)
 {
-	if(dataType == qMetaTypeId<int>()) return tr("Integer");
-	else if(dataType == qMetaTypeId<qlonglong>()) return tr("Integer (64-bit)");
-	else if(dataType == qMetaTypeId<FloatType>()) return tr("Float");
+	if(dataType == PropertyStorage::Int) return tr("Integer");
+	else if(dataType == PropertyStorage::Int64) return tr("Integer (64-bit)");
+	else if(dataType == PropertyStorage::Float) return tr("Float");
 	else return tr("None");
 }
 
@@ -182,7 +182,7 @@ void InputColumnMappingDialog::setMapping(const InputColumnMapping& mapping)
 		connect(fileColumnItem, &QCheckBox::clicked, _vectorCmpntSignalMapper, (void (QSignalMapper::*)())&QSignalMapper::map);
 		connect(nameItem, &QComboBox::currentTextChanged, _vectorCmpntSignalMapper, (void (QSignalMapper::*)())&QSignalMapper::map);
 
-		_propertyDataTypes.push_back(mapping[i].dataType != QMetaType::Void ? mapping[i].dataType : qMetaTypeId<FloatType>());
+		_propertyDataTypes.push_back(mapping[i].dataType != QMetaType::Void ? mapping[i].dataType : PropertyStorage::Float);
 	}
 
 	_tableWidget->resizeRowsToContents();

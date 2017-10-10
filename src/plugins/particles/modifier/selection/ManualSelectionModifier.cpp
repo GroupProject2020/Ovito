@@ -146,7 +146,7 @@ void ManualSelectionModifier::toggleParticleSelection(ModifierApplication* modAp
 /******************************************************************************
 * Replaces the particle selection.
 ******************************************************************************/
-void ManualSelectionModifier::setParticleSelection(ModifierApplication* modApp, const PipelineFlowState& state, const QBitArray& selection, ParticleSelectionSet::SelectionMode mode)
+void ManualSelectionModifier::setParticleSelection(ModifierApplication* modApp, const PipelineFlowState& state, const boost::dynamic_bitset<>& selection, ParticleSelectionSet::SelectionMode mode)
 {
 	getSelectionSet(modApp, true)->setParticleSelection(state, selection, mode);
 }

@@ -22,6 +22,8 @@
 #include <plugins/stdobj/StdObj.h>
 #include "PropertyStorage.h"
 
+#include <cstring>
+
 namespace Ovito { namespace StdObj {
 	
 /******************************************************************************
@@ -111,12 +113,12 @@ void PropertyStorage::loadFromStream(LoadStream& stream)
 	stream.closeChunk();
 
 	// Do floating-point precision conversion from single to double precision.
-	if(_dataType == qMetaTypeId<float>() && qMetaTypeId<FloatType>() == qMetaTypeId<double>()) {
+	if(_dataType == qMetaTypeId<float>() && PropertyStorage::Float == qMetaTypeId<double>()) {
 		OVITO_ASSERT(sizeof(FloatType) == sizeof(double));
 		OVITO_ASSERT(_dataTypeSize == sizeof(float));
 		_stride *= sizeof(double) / sizeof(float);
 		_dataTypeSize = sizeof(double);
-		_dataType = qMetaTypeId<FloatType>();
+		_dataType = PropertyStorage::Float;
 		std::unique_ptr<uint8_t[]> newBuffer(new uint8_t[_stride * _numElements]);
 		double* dst = reinterpret_cast<double*>(newBuffer.get());
 		const float* src = reinterpret_cast<const float*>(_data.get());
@@ -126,12 +128,12 @@ void PropertyStorage::loadFromStream(LoadStream& stream)
 	}
 
 	// Do floating-point precision conversion from double to single precision.
-	if(_dataType == qMetaTypeId<double>() && qMetaTypeId<FloatType>() == qMetaTypeId<float>()) {
+	if(_dataType == qMetaTypeId<double>() && PropertyStorage::Float == qMetaTypeId<float>()) {
 		OVITO_ASSERT(sizeof(FloatType) == sizeof(float));
 		OVITO_ASSERT(_dataTypeSize == sizeof(double));
 		_stride /= sizeof(double) / sizeof(float);
 		_dataTypeSize = sizeof(float);
-		_dataType = qMetaTypeId<FloatType>();
+		_dataType = PropertyStorage::Float;
 		std::unique_ptr<uint8_t[]> newBuffer(new uint8_t[_stride * _numElements]);
 		float* dst = reinterpret_cast<float*>(newBuffer.get());
 		const double* src = reinterpret_cast<const double*>(_data.get());
@@ -168,7 +170,7 @@ void PropertyStorage::filterResize(const boost::dynamic_bitset<>& mask)
 	size_t s = size();
 
 	// Optimize filter operation for the most common property types.
-	if(dataType() == qMetaTypeId<FloatType>() && stride() == sizeof(FloatType)) {
+	if(dataType() == PropertyStorage::Float && stride() == sizeof(FloatType)) {
 		// Single float
 		auto src = constDataFloat();
 		auto dst = dataFloat();
@@ -177,7 +179,7 @@ void PropertyStorage::filterResize(const boost::dynamic_bitset<>& mask)
 		}
 		resize(dst - dataFloat(), true);
 	}
-	else if(dataType() == qMetaTypeId<int>() && stride() == sizeof(int)) {
+	else if(dataType() == PropertyStorage::Int && stride() == sizeof(int)) {
 		// Single integer
 		auto src = constDataInt();
 		auto dst = dataInt();
@@ -186,7 +188,7 @@ void PropertyStorage::filterResize(const boost::dynamic_bitset<>& mask)
 		}
 		resize(dst - dataInt(), true);
 	}
-	else if(dataType() == qMetaTypeId<qlonglong>() && stride() == sizeof(qlonglong)) {
+	else if(dataType() == PropertyStorage::Int64 && stride() == sizeof(qlonglong)) {
 		// Single 64-bit integer
 		auto src = constDataInt64();
 		auto dst = dataInt64();
@@ -195,7 +197,7 @@ void PropertyStorage::filterResize(const boost::dynamic_bitset<>& mask)
 		}
 		resize(dst - dataInt64(), true);
 	}
-	else if(dataType() == qMetaTypeId<FloatType>() && stride() == sizeof(Point3)) {
+	else if(dataType() == PropertyStorage::Float && stride() == sizeof(Point3)) {
 		// Triple float (may actually be four floats when SSE instructions are enabled).
 		auto src = constDataPoint3();
 		auto dst = dataPoint3();
@@ -204,7 +206,7 @@ void PropertyStorage::filterResize(const boost::dynamic_bitset<>& mask)
 		}
 		resize(dst - dataPoint3(), true);
 	}
-	else if(dataType() == qMetaTypeId<FloatType>() && stride() == sizeof(Color)) {
+	else if(dataType() == PropertyStorage::Float && stride() == sizeof(Color)) {
 		// Triple float
 		auto src = constDataColor();
 		auto dst = dataColor();

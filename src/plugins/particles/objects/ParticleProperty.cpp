@@ -90,14 +90,14 @@ PropertyPtr ParticleProperty::OOMetaClass::createStandardStorage(size_t particle
 	case SelectionProperty:
 	case CoordinationProperty:
 	case MoleculeTypeProperty:
-		dataType = qMetaTypeId<int>();
+		dataType = PropertyStorage::Int;
 		componentCount = 1;
 		stride = sizeof(int);
 		break;
 	case IdentifierProperty:
 	case ClusterProperty:
 	case MoleculeProperty:
-		dataType = qMetaTypeId<qlonglong>();
+		dataType = PropertyStorage::Int64;
 		componentCount = 1;
 		stride = sizeof(qlonglong);
 		break;
@@ -110,14 +110,14 @@ PropertyPtr ParticleProperty::OOMetaClass::createStandardStorage(size_t particle
 	case AngularMomentumProperty:
 	case TorqueProperty:
 	case AsphericalShapeProperty:
-		dataType = qMetaTypeId<FloatType>();
+		dataType = PropertyStorage::Float;
 		componentCount = 3;
 		stride = sizeof(Vector3);
 		OVITO_ASSERT(stride == sizeof(Point3));
 		break;
 	case ColorProperty:
 	case VectorColorProperty:
-		dataType = qMetaTypeId<FloatType>();
+		dataType = PropertyStorage::Float;
 		componentCount = 3;
 		stride = componentCount * sizeof(FloatType);
 		OVITO_ASSERT(stride == sizeof(Color));
@@ -134,7 +134,7 @@ PropertyPtr ParticleProperty::OOMetaClass::createStandardStorage(size_t particle
 	case CentroSymmetryProperty:
 	case DisplacementMagnitudeProperty:
 	case VelocityMagnitudeProperty:
-		dataType = qMetaTypeId<FloatType>();
+		dataType = PropertyStorage::Float;
 		componentCount = 1;
 		stride = sizeof(FloatType);
 		break;
@@ -142,26 +142,26 @@ PropertyPtr ParticleProperty::OOMetaClass::createStandardStorage(size_t particle
 	case StrainTensorProperty:
 	case ElasticStrainTensorProperty:
 	case StretchTensorProperty:
-		dataType = qMetaTypeId<FloatType>();
+		dataType = PropertyStorage::Float;
 		componentCount = 6;
 		stride = componentCount * sizeof(FloatType);
 		OVITO_ASSERT(stride == sizeof(SymmetricTensor2));
 		break;
 	case DeformationGradientProperty:
 	case ElasticDeformationGradientProperty:
-		dataType = qMetaTypeId<FloatType>();
+		dataType = PropertyStorage::Float;
 		componentCount = 9;
 		stride = componentCount * sizeof(FloatType);
 		break;
 	case OrientationProperty:
 	case RotationProperty:
-		dataType = qMetaTypeId<FloatType>();
+		dataType = PropertyStorage::Float;
 		componentCount = 4;
 		stride = componentCount * sizeof(FloatType);
 		OVITO_ASSERT(stride == sizeof(Quaternion));
 		break;
 	case PeriodicImageProperty:
-		dataType = qMetaTypeId<int>();
+		dataType = PropertyStorage::Int;
 		componentCount = 3;
 		stride = componentCount * sizeof(FloatType);
 		break;
@@ -223,46 +223,46 @@ void ParticleProperty::OOMetaClass::initialize()
 	const QStringList tensorList = QStringList() << "XX" << "YX" << "ZX" << "XY" << "YY" << "ZY" << "XZ" << "YZ" << "ZZ";
 	const QStringList quaternionList = QStringList() << "X" << "Y" << "Z" << "W";
 	
-	registerStandardProperty(TypeProperty, tr("Particle Type"), qMetaTypeId<int>(), emptyList, tr("Particle types"));
-	registerStandardProperty(SelectionProperty, tr("Selection"), qMetaTypeId<int>(), emptyList);
-	registerStandardProperty(ClusterProperty, tr("Cluster"), qMetaTypeId<qlonglong>(), emptyList);
-	registerStandardProperty(CoordinationProperty, tr("Coordination"), qMetaTypeId<int>(), emptyList);
-	registerStandardProperty(PositionProperty, tr("Position"), qMetaTypeId<FloatType>(), xyzList, tr("Particle positions"));
-	registerStandardProperty(ColorProperty, tr("Color"), qMetaTypeId<FloatType>(), rgbList, tr("Particle colors"));
-	registerStandardProperty(DisplacementProperty, tr("Displacement"), qMetaTypeId<FloatType>(), xyzList, tr("Displacements"));
-	registerStandardProperty(DisplacementMagnitudeProperty, tr("Displacement Magnitude"), qMetaTypeId<FloatType>(), emptyList);
-	registerStandardProperty(VelocityProperty, tr("Velocity"), qMetaTypeId<FloatType>(), xyzList, tr("Velocities"));
-	registerStandardProperty(PotentialEnergyProperty, tr("Potential Energy"), qMetaTypeId<FloatType>(), emptyList);
-	registerStandardProperty(KineticEnergyProperty, tr("Kinetic Energy"), qMetaTypeId<FloatType>(), emptyList);
-	registerStandardProperty(TotalEnergyProperty, tr("Total Energy"), qMetaTypeId<FloatType>(), emptyList);
-	registerStandardProperty(RadiusProperty, tr("Radius"), qMetaTypeId<FloatType>(), emptyList, tr("Radii"));
-	registerStandardProperty(StructureTypeProperty, tr("Structure Type"), qMetaTypeId<int>(), emptyList, tr("Structure types"));
-	registerStandardProperty(IdentifierProperty, tr("Particle Identifier"), qMetaTypeId<qlonglong>(), emptyList, tr("Particle identifiers"));
-	registerStandardProperty(StressTensorProperty, tr("Stress Tensor"), qMetaTypeId<FloatType>(), symmetricTensorList);
-	registerStandardProperty(StrainTensorProperty, tr("Strain Tensor"), qMetaTypeId<FloatType>(), symmetricTensorList);
-	registerStandardProperty(DeformationGradientProperty, tr("Deformation Gradient"), qMetaTypeId<FloatType>(), tensorList);
-	registerStandardProperty(OrientationProperty, tr("Orientation"), qMetaTypeId<FloatType>(), quaternionList);
-	registerStandardProperty(ForceProperty, tr("Force"), qMetaTypeId<FloatType>(), xyzList);
-	registerStandardProperty(MassProperty, tr("Mass"), qMetaTypeId<FloatType>(), emptyList);
-	registerStandardProperty(ChargeProperty, tr("Charge"), qMetaTypeId<FloatType>(), emptyList);
-	registerStandardProperty(PeriodicImageProperty, tr("Periodic Image"), qMetaTypeId<int>(), xyzList);
-	registerStandardProperty(TransparencyProperty, tr("Transparency"), qMetaTypeId<FloatType>(), emptyList);
-	registerStandardProperty(DipoleOrientationProperty, tr("Dipole Orientation"), qMetaTypeId<FloatType>(), xyzList);
-	registerStandardProperty(DipoleMagnitudeProperty, tr("Dipole Magnitude"), qMetaTypeId<FloatType>(), emptyList);
-	registerStandardProperty(AngularVelocityProperty, tr("Angular Velocity"), qMetaTypeId<FloatType>(), xyzList);
-	registerStandardProperty(AngularMomentumProperty, tr("Angular Momentum"), qMetaTypeId<FloatType>(), xyzList);
-	registerStandardProperty(TorqueProperty, tr("Torque"), qMetaTypeId<FloatType>(), xyzList);
-	registerStandardProperty(SpinProperty, tr("Spin"), qMetaTypeId<FloatType>(), emptyList);
-	registerStandardProperty(CentroSymmetryProperty, tr("Centrosymmetry"), qMetaTypeId<FloatType>(), emptyList);
-	registerStandardProperty(VelocityMagnitudeProperty, tr("Velocity Magnitude"), qMetaTypeId<FloatType>(), emptyList);
-	registerStandardProperty(MoleculeProperty, tr("Molecule Identifier"), qMetaTypeId<qlonglong>(), emptyList);
-	registerStandardProperty(AsphericalShapeProperty, tr("Aspherical Shape"), qMetaTypeId<FloatType>(), xyzList);
-	registerStandardProperty(VectorColorProperty, tr("Vector Color"), qMetaTypeId<FloatType>(), rgbList, tr("Vector colors"));
-	registerStandardProperty(ElasticStrainTensorProperty, tr("Elastic Strain"), qMetaTypeId<FloatType>(), symmetricTensorList);
-	registerStandardProperty(ElasticDeformationGradientProperty, tr("Elastic Deformation Gradient"), qMetaTypeId<FloatType>(), tensorList);
-	registerStandardProperty(RotationProperty, tr("Rotation"), qMetaTypeId<FloatType>(), quaternionList);
-	registerStandardProperty(StretchTensorProperty, tr("Stretch Tensor"), qMetaTypeId<FloatType>(), symmetricTensorList);
-	registerStandardProperty(MoleculeTypeProperty, tr("Molecule Type"), qMetaTypeId<FloatType>(), emptyList, tr("Molecule types"));
+	registerStandardProperty(TypeProperty, tr("Particle Type"), PropertyStorage::Int, emptyList, tr("Particle types"));
+	registerStandardProperty(SelectionProperty, tr("Selection"), PropertyStorage::Int, emptyList);
+	registerStandardProperty(ClusterProperty, tr("Cluster"), PropertyStorage::Int64, emptyList);
+	registerStandardProperty(CoordinationProperty, tr("Coordination"), PropertyStorage::Int, emptyList);
+	registerStandardProperty(PositionProperty, tr("Position"), PropertyStorage::Float, xyzList, tr("Particle positions"));
+	registerStandardProperty(ColorProperty, tr("Color"), PropertyStorage::Float, rgbList, tr("Particle colors"));
+	registerStandardProperty(DisplacementProperty, tr("Displacement"), PropertyStorage::Float, xyzList, tr("Displacements"));
+	registerStandardProperty(DisplacementMagnitudeProperty, tr("Displacement Magnitude"), PropertyStorage::Float, emptyList);
+	registerStandardProperty(VelocityProperty, tr("Velocity"), PropertyStorage::Float, xyzList, tr("Velocities"));
+	registerStandardProperty(PotentialEnergyProperty, tr("Potential Energy"), PropertyStorage::Float, emptyList);
+	registerStandardProperty(KineticEnergyProperty, tr("Kinetic Energy"), PropertyStorage::Float, emptyList);
+	registerStandardProperty(TotalEnergyProperty, tr("Total Energy"), PropertyStorage::Float, emptyList);
+	registerStandardProperty(RadiusProperty, tr("Radius"), PropertyStorage::Float, emptyList, tr("Radii"));
+	registerStandardProperty(StructureTypeProperty, tr("Structure Type"), PropertyStorage::Int, emptyList, tr("Structure types"));
+	registerStandardProperty(IdentifierProperty, tr("Particle Identifier"), PropertyStorage::Int64, emptyList, tr("Particle identifiers"));
+	registerStandardProperty(StressTensorProperty, tr("Stress Tensor"), PropertyStorage::Float, symmetricTensorList);
+	registerStandardProperty(StrainTensorProperty, tr("Strain Tensor"), PropertyStorage::Float, symmetricTensorList);
+	registerStandardProperty(DeformationGradientProperty, tr("Deformation Gradient"), PropertyStorage::Float, tensorList);
+	registerStandardProperty(OrientationProperty, tr("Orientation"), PropertyStorage::Float, quaternionList);
+	registerStandardProperty(ForceProperty, tr("Force"), PropertyStorage::Float, xyzList);
+	registerStandardProperty(MassProperty, tr("Mass"), PropertyStorage::Float, emptyList);
+	registerStandardProperty(ChargeProperty, tr("Charge"), PropertyStorage::Float, emptyList);
+	registerStandardProperty(PeriodicImageProperty, tr("Periodic Image"), PropertyStorage::Int, xyzList);
+	registerStandardProperty(TransparencyProperty, tr("Transparency"), PropertyStorage::Float, emptyList);
+	registerStandardProperty(DipoleOrientationProperty, tr("Dipole Orientation"), PropertyStorage::Float, xyzList);
+	registerStandardProperty(DipoleMagnitudeProperty, tr("Dipole Magnitude"), PropertyStorage::Float, emptyList);
+	registerStandardProperty(AngularVelocityProperty, tr("Angular Velocity"), PropertyStorage::Float, xyzList);
+	registerStandardProperty(AngularMomentumProperty, tr("Angular Momentum"), PropertyStorage::Float, xyzList);
+	registerStandardProperty(TorqueProperty, tr("Torque"), PropertyStorage::Float, xyzList);
+	registerStandardProperty(SpinProperty, tr("Spin"), PropertyStorage::Float, emptyList);
+	registerStandardProperty(CentroSymmetryProperty, tr("Centrosymmetry"), PropertyStorage::Float, emptyList);
+	registerStandardProperty(VelocityMagnitudeProperty, tr("Velocity Magnitude"), PropertyStorage::Float, emptyList);
+	registerStandardProperty(MoleculeProperty, tr("Molecule Identifier"), PropertyStorage::Int64, emptyList);
+	registerStandardProperty(AsphericalShapeProperty, tr("Aspherical Shape"), PropertyStorage::Float, xyzList);
+	registerStandardProperty(VectorColorProperty, tr("Vector Color"), PropertyStorage::Float, rgbList, tr("Vector colors"));
+	registerStandardProperty(ElasticStrainTensorProperty, tr("Elastic Strain"), PropertyStorage::Float, symmetricTensorList);
+	registerStandardProperty(ElasticDeformationGradientProperty, tr("Elastic Deformation Gradient"), PropertyStorage::Float, tensorList);
+	registerStandardProperty(RotationProperty, tr("Rotation"), PropertyStorage::Float, quaternionList);
+	registerStandardProperty(StretchTensorProperty, tr("Stretch Tensor"), PropertyStorage::Float, symmetricTensorList);
+	registerStandardProperty(MoleculeTypeProperty, tr("Molecule Type"), PropertyStorage::Float, emptyList, tr("Molecule types"));
 }
 
 }	// End of namespace

@@ -352,13 +352,13 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 			if(detectDims(movieFrame, 0, nDims, dimIds, nDimsDetected, componentCount, startp, countp)) {
 				// Do we support this data type?
 				if(type == NC_BYTE || type == NC_SHORT || type == NC_INT || type == NC_LONG) {
-					columnMapping.push_back(mapVariableToColumn(name, qMetaTypeId<int>(), componentCount));
+					columnMapping.push_back(mapVariableToColumn(name, PropertyStorage::Int, componentCount));
 				}
 				else if(type == NC_INT64) {
-					columnMapping.push_back(mapVariableToColumn(name, qMetaTypeId<qlonglong>(), componentCount));
+					columnMapping.push_back(mapVariableToColumn(name, PropertyStorage::Int64, componentCount));
 				}
 				else if(type == NC_FLOAT || type == NC_DOUBLE) {
-					columnMapping.push_back(mapVariableToColumn(name, qMetaTypeId<FloatType>(), componentCount));
+					columnMapping.push_back(mapVariableToColumn(name, PropertyStorage::Float, componentCount));
 					if(qstrcmp(name, "coordinates") == 0)
 						coordinatesVar = varId;
 				}
@@ -498,7 +498,7 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 			int dataType = column.dataType;
 			if(dataType == QMetaType::Void) continue;
 
-			if(dataType != qMetaTypeId<int>() && dataType != qMetaTypeId<qlonglong>() && dataType != qMetaTypeId<FloatType>())
+			if(dataType != PropertyStorage::Int && dataType != PropertyStorage::Int64 && dataType != PropertyStorage::Float)
 				throw Exception(tr("Invalid custom particle property (data type %1) for input file column '%2' of NetCDF file.").arg(dataType).arg(columnName));
 
 			// Retrieve NetCDF variable meta-information.
@@ -545,7 +545,7 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 			if(componentCount != property->componentCount()) {
 				// For standard particle properties describing symmetric tensors in Voigt notion, we perform autoamtic
 				// converion from the 3x3 full tensors stored in the NetCDF file.
-				if(componentCount == 9 && property->componentCount() == 6 && property->dataType() == qMetaTypeId<FloatType>()) {
+				if(componentCount == 9 && property->componentCount() == 6 && property->dataType() == PropertyStorage::Float) {
 					doVoigtConversion = true;
 				}
 				else {
@@ -554,7 +554,7 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 				}
 			}
 
-			if(property->dataType() == qMetaTypeId<int>()) {
+			if(property->dataType() == PropertyStorage::Int) {
 				// Read integer property data in chunks so that we can report I/O progress.
 				size_t totalCount = countp[1];
 				size_t remaining = totalCount;
@@ -589,7 +589,7 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 					typeList->sortTypesById();
 				}				
 			}
-			if(property->dataType() == qMetaTypeId<qlonglong>()) {
+			if(property->dataType() == PropertyStorage::Int64) {
 				// Read 64-bit integer property data in chunks so that we can report I/O progress.
 				size_t totalCount = countp[1];
 				size_t remaining = totalCount;
@@ -608,7 +608,7 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 				}
 				OVITO_ASSERT(remaining == 0);			
 			}
-			else if(property->dataType() == qMetaTypeId<FloatType>()) {
+			else if(property->dataType() == PropertyStorage::Float) {
 			
 				// Special handling for tensor arrays that need to be converted to Voigt notation.
 				if(doVoigtConversion) {

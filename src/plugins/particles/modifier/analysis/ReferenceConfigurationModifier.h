@@ -89,7 +89,7 @@ protected:
 
 		/// Determines the mapping between particles in the reference configuration and
 		/// the current configuration and vice versa.
-		bool buildParticleMapping();
+		bool buildParticleMapping(bool requireCompleteCurrentToRefMapping, bool requireCompleteRefToCurrentMapping);
 		
 		/// Returns the property storage that contains the input particle positions.
 		const ConstPropertyPtr& positions() const { return _positions; }
@@ -120,10 +120,10 @@ protected:
 		const AffineTransformation& curToRefTM() const { return _curToRefTM; }
 
 		/// Returns the mapping of atom indices in the current config to the reference config.
-		const std::vector<int>& currentToRefIndexMap() const { return _currentToRefIndexMap; }
+		const std::vector<size_t>& currentToRefIndexMap() const { return _currentToRefIndexMap; }
 		
 		/// Returns the mapping of atom indices in the reference config to the current config.
-		const std::vector<int>& refToCurrentIndexMap() const { return _refToCurrentIndexMap; }
+		const std::vector<size_t>& refToCurrentIndexMap() const { return _refToCurrentIndexMap; }
 
 	private:
 
@@ -137,8 +137,8 @@ protected:
 		const ConstPropertyPtr _refIdentifiers;
 		const AffineMappingType _affineMapping;
 		const bool _useMinimumImageConvention;
-		std::vector<int> _currentToRefIndexMap;
-		std::vector<int> _refToCurrentIndexMap;
+		std::vector<size_t> _currentToRefIndexMap;
+		std::vector<size_t> _refToCurrentIndexMap;
 	};
 
 protected:

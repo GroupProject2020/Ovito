@@ -74,7 +74,7 @@ Box3 BondsDisplay::boundingBox(TimePoint time, DataObject* dataObject, ObjectNod
 		_cachedBoundingBox.setEmpty();
 		if(bondsObj && positionProperty) {
 
-			unsigned int particleCount = (unsigned int)positionProperty->size();
+			size_t particleCount = positionProperty->size();
 			const Point3* positions = positionProperty->constDataPoint3();
 			const AffineTransformation cell = simulationCell ? simulationCell->cellMatrix() : AffineTransformation::Zero();
 
@@ -123,6 +123,12 @@ void BondsDisplay::render(TimePoint time, DataObject* dataObject, const Pipeline
 		particleTypeProperty = nullptr;
 	}
 
+	// Make sure we don't exceed our internal limits.
+	if(bondsObj && bondsObj->storage()->size() * 2 > (size_t)std::numeric_limits<int>::max()) {
+		qWarning() << "WARNING: Cannot render more than" << (std::numeric_limits<int>::max()/2) << "bonds.";
+		return;
+	}	
+
 	if(_geometryCacheHelper.updateState(
 			bondsObj,
 			positionProperty,
@@ -160,7 +166,7 @@ void BondsDisplay::render(TimePoint time, DataObject* dataObject, const Pipeline
 			OVITO_ASSERT(colors.size() == _buffer->elementCount());
 
 			// Cache some variables.
-			unsigned int particleCount = (unsigned int)positionProperty->size();
+			size_t particleCount = positionProperty->size();
 			const Point3* positions = positionProperty->constDataPoint3();
 			const AffineTransformation cell = simulationCell ? simulationCell->cellMatrix() : AffineTransformation::Zero();
 
@@ -333,23 +339,23 @@ QString BondPickInfo::infoString(ObjectNode* objectNode, quint32 subobjectId)
 			if(!property || property->size() <= bondIndex) continue;
 			if(property->type() == BondProperty::SelectionProperty) continue;
 			if(property->type() == BondProperty::ColorProperty) continue;
-			if(property->dataType() != qMetaTypeId<int>() && property->dataType() != qMetaTypeId<qlonglong>() && property->dataType() != qMetaTypeId<FloatType>()) continue;
+			if(property->dataType() != PropertyStorage::Int && property->dataType() != PropertyStorage::Int64 && property->dataType() != PropertyStorage::Float) continue;
 			if(!str.isEmpty()) str += QStringLiteral(" | ");
 			str += property->name();
 			str += QStringLiteral(" ");
 			for(size_t component = 0; component < property->componentCount(); component++) {
 				if(component != 0) str += QStringLiteral(", ");
 				QString valueString;
-				if(property->dataType() == qMetaTypeId<int>()) {
+				if(property->dataType() == PropertyStorage::Int) {
 					str += QString::number(property->getIntComponent(bondIndex, component));
 					if(property->elementTypes().empty() == false) {
 						if(ElementType* btype = property->elementType(property->getIntComponent(bondIndex, component)))
 							str += QString(" (%1)").arg(btype->name());
 					}
 				}
-				else if(property->dataType() == qMetaTypeId<qlonglong>())
+				else if(property->dataType() == PropertyStorage::Int64)
 					str += QString::number(property->getInt64Component(bondIndex, component));
-				else if(property->dataType() == qMetaTypeId<FloatType>())
+				else if(property->dataType() == PropertyStorage::Float)
 					str += QString::number(property->getFloatComponent(bondIndex, component));
 			}
 		}

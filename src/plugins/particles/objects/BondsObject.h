@@ -59,7 +59,7 @@ public:
 	const std::shared_ptr<BondsStorage>& modifiableStorage();
 
 	/// Inserts a new bond into the list.
-	void addBond(unsigned int index1, unsigned int index2, Vector_3<int8_t> pbcShift = Vector_3<int8_t>::Zero()) {
+	void addBond(size_t index1, size_t index2, Vector_3<int8_t> pbcShift = Vector_3<int8_t>::Zero()) {
 		modifiableStorage()->push_back(Bond{ index1, index2, pbcShift });
 		notifyDependents(ReferenceEvent::TargetChanged);
 	}

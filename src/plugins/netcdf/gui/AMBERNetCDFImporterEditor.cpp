@@ -105,6 +105,10 @@ void AMBERNetCDFImporterEditor::createUI(const RolloutInsertionParameters& rollo
 	sublayout->addWidget(useCustomMappingUI->buttonFalse());
 	useCustomMappingUI->buttonTrue()->setText(tr("User-defined mapping to particle properties"));
 	sublayout->addWidget(useCustomMappingUI->buttonTrue());
+	connect(useCustomMappingUI->buttonFalse(), &QRadioButton::clicked, this, [this]() {
+		if(AMBERNetCDFImporter* importer = static_object_cast<AMBERNetCDFImporter>(editObject()))
+			importer->requestReload();
+	}, Qt::QueuedConnection);
 
 	QPushButton* editMappingButton = new QPushButton(tr("Edit column mapping..."));
 	sublayout->addWidget(editMappingButton);

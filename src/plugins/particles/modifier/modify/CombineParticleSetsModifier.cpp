@@ -130,8 +130,8 @@ Future<PipelineFlowState> CombineParticleSetsModifier::evaluate(TimePoint time, 
 
 						// Assign unique IDs.
 						if(newProperty->type() == ParticleProperty::IdentifierProperty && primaryCount != 0) {
-							int maxId = *std::max_element(newProperty->constDataInt(), newProperty->constDataInt() + primaryCount);
-							std::iota(newProperty->dataInt() + primaryCount, newProperty->dataInt() + finalCount, maxId+1);
+							qlonglong maxId = *std::max_element(newProperty->constDataInt64(), newProperty->constDataInt64() + primaryCount);
+							std::iota(newProperty->dataInt64() + primaryCount, newProperty->dataInt64() + finalCount, maxId+1);
 						}
 					}
 				}

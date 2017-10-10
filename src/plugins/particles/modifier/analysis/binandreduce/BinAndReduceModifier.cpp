@@ -91,7 +91,7 @@ void BinAndReduceModifier::initializeModifier(ModifierApplication* modApp)
 		ParticlePropertyReference bestProperty;
 		for(DataObject* o : input.objects()) {
 			ParticleProperty* property = dynamic_object_cast<ParticleProperty>(o);
-			if(property && (property->dataType() == qMetaTypeId<int>() || property->dataType() == qMetaTypeId<FloatType>())) {
+			if(property && (property->dataType() == PropertyStorage::Int || property->dataType() == PropertyStorage::Float)) {
 				bestProperty = ParticlePropertyReference(property, (property->componentCount() > 1) ? 0 : -1);
 			}
 		}
@@ -195,7 +195,7 @@ Future<PipelineFlowState> BinAndReduceModifier::evaluate(TimePoint time, Modifie
         const Point3* pos = posProperty->constDataPoint3();
         const Point3* pos_end = pos + posProperty->size();
 
-		if(property->dataType() == qMetaTypeId<FloatType>()) {
+		if(property->dataType() == PropertyStorage::Float) {
 			const FloatType* v = property->constDataFloat() + vecComponent;
 			const FloatType* v_end = v + (property->size() * vecComponentCount);
 			const int* sel = inputSelectionProperty ? inputSelectionProperty->constDataInt() : nullptr;
@@ -231,7 +231,7 @@ Future<PipelineFlowState> BinAndReduceModifier::evaluate(TimePoint time, Modifie
                 }
             }
 		}
-		else if(property->dataType() == qMetaTypeId<int>()) {
+		else if(property->dataType() == PropertyStorage::Int) {
 			const int* v = property->constDataInt() + vecComponent;
 			const int* v_end = v + (property->size() * vecComponentCount);
 			const int* sel = inputSelectionProperty ? inputSelectionProperty->constDataInt() : nullptr;
@@ -264,7 +264,10 @@ Future<PipelineFlowState> BinAndReduceModifier::evaluate(TimePoint time, Modifie
                     numberOfParticlesPerBin[binIndex]++;
                 }
             }
-		}
+        }
+        else {
+			throwException(tr("The property '%1' has a data type that is not supported by the modifier.").arg(property->name()));            
+        }
 
         if(reductionOperation() == RED_MEAN) {
             // Normalize.
