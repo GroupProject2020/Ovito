@@ -71,7 +71,7 @@ SurfaceMeshDisplay::SurfaceMeshDisplay(DataSet* dataset) : DisplayObject(dataset
 void SurfaceMeshDisplay::propertyChanged(const PropertyFieldDescriptor& field)
 {
 	if(field == PROPERTY_FIELD(smoothShading) || field == PROPERTY_FIELD(reverseOrientation)) {
-		// Inceremnt internal object revision number each time a parameter changes
+		// Increment internal object revision number each time a parameter changes
 		// that requires a re-generation of the cached RenderableSurfaceMesh.
 		_revisionNumber++;
 	}
@@ -211,7 +211,7 @@ void SurfaceMeshDisplay::render(TimePoint time, DataObject* dataObject, const Pi
 			_surfaceBuffer->setMesh(meshObj->surfaceMesh(), color_surface);
 			if(showCap())
 				_capBuffer->setMesh(meshObj->capPolygonsMesh(), color_cap);
-		}
+			}
 		else {
 			_surfaceBuffer->setMesh(TriMesh(), ColorA(1,1,1,1));
 			if(showCap())

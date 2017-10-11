@@ -102,8 +102,8 @@ public:
 			facetVertices[1] = tessellator->vertices[1];
 			for(auto v = tessellator->vertices.cbegin() + 2; v != tessellator->vertices.cend(); ++v) {
 				facetVertices[2] = *v;
-				tessellator->mesh.addFace().setVertices(facetVertices[0], facetVertices[1], facetVertices[2]);
-				tessellator->mesh.addFace().setVertices(facetVertices[2]+1, facetVertices[1]+1, facetVertices[0]+1);
+				tessellator->mesh.addFace().setVertices(facetVertices[2], facetVertices[1], facetVertices[0]);
+				tessellator->mesh.addFace().setVertices(facetVertices[0]+1, facetVertices[1]+1, facetVertices[2]+1);
 				facetVertices[1] = facetVertices[2];
 			}
 		}
@@ -115,8 +115,8 @@ public:
 			bool even = true;
 			for(auto v = tessellator->vertices.cbegin() + 2; v != tessellator->vertices.cend(); ++v) {
 				facetVertices[2] = *v;
-				tessellator->mesh.addFace().setVertices(facetVertices[0], facetVertices[1], facetVertices[2]);
-				tessellator->mesh.addFace().setVertices(facetVertices[2]+1, facetVertices[1]+1, facetVertices[0]+1);
+				tessellator->mesh.addFace().setVertices(facetVertices[2], facetVertices[1], facetVertices[0]);
+				tessellator->mesh.addFace().setVertices(facetVertices[0]+1, facetVertices[1]+1, facetVertices[2]+1);
 				if(even)
 					facetVertices[0] = facetVertices[2];
 				else
@@ -126,8 +126,8 @@ public:
 		}
 		else if(tessellator->primitiveType == GL_TRIANGLES) {
 			for(auto v = tessellator->vertices.cbegin(); v != tessellator->vertices.cend(); v += 3) {
-				tessellator->mesh.addFace().setVertices(v[0], v[1], v[2]);
-				tessellator->mesh.addFace().setVertices(v[2]+1, v[1]+1, v[0]+1);
+				tessellator->mesh.addFace().setVertices(v[2], v[1], v[0]);
+				tessellator->mesh.addFace().setVertices(v[0]+1, v[1]+1, v[2]+1);
 			}
 		}
 		else OVITO_ASSERT(false);

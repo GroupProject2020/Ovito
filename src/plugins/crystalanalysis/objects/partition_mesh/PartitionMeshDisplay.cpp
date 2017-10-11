@@ -35,31 +35,24 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
 IMPLEMENT_OVITO_CLASS(PartitionMeshDisplay);
 DEFINE_PROPERTY_FIELD(PartitionMeshDisplay, surfaceColor);
-DEFINE_PROPERTY_FIELD(PartitionMeshDisplay, showCap);
 DEFINE_PROPERTY_FIELD(PartitionMeshDisplay, smoothShading);
 DEFINE_PROPERTY_FIELD(PartitionMeshDisplay, flipOrientation);
 DEFINE_REFERENCE_FIELD(PartitionMeshDisplay, surfaceTransparencyController);
-DEFINE_REFERENCE_FIELD(PartitionMeshDisplay, capTransparencyController);
 SET_PROPERTY_FIELD_LABEL(PartitionMeshDisplay, surfaceColor, "Free surface color");
-SET_PROPERTY_FIELD_LABEL(PartitionMeshDisplay, showCap, "Show cap polygons");
 SET_PROPERTY_FIELD_LABEL(PartitionMeshDisplay, smoothShading, "Smooth shading");
 SET_PROPERTY_FIELD_LABEL(PartitionMeshDisplay, surfaceTransparencyController, "Surface transparency");
-SET_PROPERTY_FIELD_LABEL(PartitionMeshDisplay, capTransparencyController, "Cap transparency");
 SET_PROPERTY_FIELD_LABEL(PartitionMeshDisplay, flipOrientation, "Flip surface orientation");
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(PartitionMeshDisplay, surfaceTransparencyController, PercentParameterUnit, 0, 1);
-SET_PROPERTY_FIELD_UNITS_AND_RANGE(PartitionMeshDisplay, capTransparencyController, PercentParameterUnit, 0, 1);
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
 PartitionMeshDisplay::PartitionMeshDisplay(DataSet* dataset) : DisplayObject(dataset),
 	_surfaceColor(1, 1, 1),
-	_showCap(true),
 	_smoothShading(true),
 	_flipOrientation(false)
 {
 	setSurfaceTransparencyController(ControllerManager::createFloatController(dataset));
-	setCapTransparencyController(ControllerManager::createFloatController(dataset));
 }
 
 /******************************************************************************
@@ -68,7 +61,7 @@ PartitionMeshDisplay::PartitionMeshDisplay(DataSet* dataset) : DisplayObject(dat
 void PartitionMeshDisplay::propertyChanged(const PropertyFieldDescriptor& field)
 {
 	if(field == PROPERTY_FIELD(smoothShading) || field == PROPERTY_FIELD(flipOrientation)) {
-		// Inceremnt internal object revision number each time a parameter changes
+		// Increment internal object revision number each time a parameter changes
 		// that requires a re-generation of the cached RenderableSurfaceMesh.
 		_revisionNumber++;
 	}
@@ -84,7 +77,6 @@ Box3 PartitionMeshDisplay::boundingBox(TimePoint time, DataObject* dataObject, O
 	Box3 bb;
 	if(OORef<RenderableSurfaceMesh> meshObj = dataObject->convertTo<RenderableSurfaceMesh>(time)) {
 		bb.addBox(meshObj->surfaceMesh().boundingBox());
-		bb.addBox(meshObj->capPolygonsMesh().boundingBox());
 	}
 	return bb;
 }
@@ -116,18 +108,23 @@ Future<PipelineFlowState> PartitionMeshDisplay::transformDataImpl(TimePoint time
 	SimulationCellObject* cellObject = partitionMeshObj->domain();
 	if(!cellObject)
 		return std::move(flowState);
-		
+
+	// Get the cluster graph.
+	ClusterGraphObject* clusterGraphObject = flowState.findObject<ClusterGraphObject>();
+	
 	// Create compute engine.
-	auto engine = std::make_shared<PrepareMeshEngine>(partitionMeshObj->storage(), cellObject->data(), 
+	auto engine = std::make_shared<PrepareMeshEngine>(partitionMeshObj->storage(), 
+		clusterGraphObject ? clusterGraphObject->storage() : nullptr, cellObject->data(), 
 		partitionMeshObj->spaceFillingRegion(), partitionMeshObj->cuttingPlanes(), flipOrientation(), smoothShading());
 
 	// Submit engine for execution and post-process results.
 	return dataset()->container()->taskManager().runTaskAsync(engine)
-		.then(executor(), [this, flowState = std::move(flowState), dataObject](TriMesh&& surfaceMesh, TriMesh&& capPolygonsMesh) mutable {
+		.then(executor(), [this, flowState = std::move(flowState), dataObject](TriMesh&& surfaceMesh, std::vector<ColorA>&& materialColors) mutable {
 			UndoSuspender noUndo(this);
 
 			// Output the computed mesh as a RenderableSurfaceMesh.
-			OORef<RenderableSurfaceMesh> renderableMesh = new RenderableSurfaceMesh(dataset(), std::move(surfaceMesh), std::move(capPolygonsMesh), dataObject, _revisionNumber);
+			OORef<RenderableSurfaceMesh> renderableMesh = new RenderableSurfaceMesh(dataset(), std::move(surfaceMesh), {}, dataObject, _revisionNumber);
+			renderableMesh->materialColors() = std::move(materialColors);
 			renderableMesh->setDisplayObject(this);
 			flowState.addObject(renderableMesh);
 			return std::move(flowState);
@@ -140,9 +137,8 @@ Future<PipelineFlowState> PartitionMeshDisplay::transformDataImpl(TimePoint time
 void PartitionMeshDisplay::PrepareMeshEngine::perform()
 {
 	setProgressText(tr("Preparing microstructure mesh for display"));
-
+	
 	TriMesh surfaceMesh;
-	TriMesh capPolygonsMesh;
 
 	if(!buildMesh(*_inputMesh, _simCell, _cuttingPlanes, surfaceMesh, this))
 		throw Exception(tr("Failed to generate non-periodic version of microstructure mesh for display. Simulation cell might be too small."));
@@ -150,7 +146,7 @@ void PartitionMeshDisplay::PrepareMeshEngine::perform()
 	if(isCanceled())
 		return;
 
-	if(_flipOrientation)
+	if(!_flipOrientation)
 		surfaceMesh.flipFaces();
 
 	if(isCanceled())
@@ -162,7 +158,23 @@ void PartitionMeshDisplay::PrepareMeshEngine::perform()
 			face.setSmoothingGroups(1);	
 	}
 
-	setResult(std::move(surfaceMesh), std::move(capPolygonsMesh));
+	// Define surface colors for the regions by taking them from the cluster graph.
+	int maxClusterId = 0;
+	if(_clusterGraph) {
+		for(Cluster* cluster : _clusterGraph->clusters())
+			if(cluster->id > maxClusterId)
+				maxClusterId = cluster->id;
+	}
+	std::vector<ColorA> materialColors(maxClusterId + 1, ColorA(1,1,1,1));
+	if(_clusterGraph) {
+		for(Cluster* cluster : _clusterGraph->clusters()) {
+			if(cluster->id != 0)
+				materialColors[cluster->id] = ColorA(cluster->color);
+		}
+	}
+	
+
+	setResult(std::move(surfaceMesh), std::move(materialColors));
 }
 
 /******************************************************************************
@@ -185,63 +197,40 @@ void PartitionMeshDisplay::render(TimePoint time, DataObject* dataObject, const 
 	ClusterGraphObject* clusterGraph = flowState.findObject<ClusterGraphObject>();
 
 	// Get the rendering colors for the surface and cap meshes.
-	FloatType transp_surface = 0;
-	FloatType transp_cap = 0;
+	FloatType surface_alpha = 1;
 	TimeInterval iv;
-	if(surfaceTransparencyController()) transp_surface = surfaceTransparencyController()->getFloatValue(time, iv);
-	if(capTransparencyController()) transp_cap = capTransparencyController()->getFloatValue(time, iv);
-	ColorA color_surface(surfaceColor(), FloatType(1) - transp_surface);
+	if(surfaceTransparencyController()) surface_alpha = FloatType(1) - surfaceTransparencyController()->getFloatValue(time, iv);
+	ColorA color_surface(surfaceColor(), surface_alpha);
 
 	// Do we have to re-create the render primitives from scratch?
 	bool recreateSurfaceBuffer = !_surfaceBuffer || !_surfaceBuffer->isValid(renderer);
-	bool recreateCapBuffer = showCap() && (!_capBuffer || !_capBuffer->isValid(renderer));
 
 	// Do we have to update the render primitives?
-	bool updateContents = _geometryCacheHelper.updateState(color_surface, clusterGraph)
-					|| recreateSurfaceBuffer || recreateCapBuffer;
+	bool updateContents = _geometryCacheHelper.updateState(dataObject, color_surface, clusterGraph)
+					|| recreateSurfaceBuffer;
 
 	// Re-create the render primitives if necessary.
 	if(recreateSurfaceBuffer)
 		_surfaceBuffer = renderer->createMeshPrimitive();
-	if(recreateCapBuffer && _showCap)
-		_capBuffer = renderer->createMeshPrimitive();
 
 	// Update render primitives.
 	if(updateContents) {
 
 		OORef<RenderableSurfaceMesh> meshObj = dataObject->convertTo<RenderableSurfaceMesh>(time);
 
-		// Define surface colors for the regions by taking them from the cluster graph.
-		int maxClusterId = 0;
-		if(clusterGraph) {
-			for(Cluster* cluster : clusterGraph->storage()->clusters())
-				if(cluster->id > maxClusterId)
-					maxClusterId = cluster->id;
-		}
-		std::vector<ColorA> materialColors(maxClusterId + 1, color_surface);
+		auto materialColors = meshObj->materialColors();
 		materialColors[0] = color_surface;
-		if(clusterGraph) {
-			for(Cluster* cluster : clusterGraph->storage()->clusters()) {
-				if(cluster->id != 0)
-					materialColors[cluster->id] = ColorA(cluster->color, 1.0f - transp_surface);
-			}
-		}
-		_surfaceBuffer->setMaterialColors(std::move(materialColors));
-
+		for(ColorA& c : materialColors)
+			c.a() = surface_alpha;
+		_surfaceBuffer->setMaterialColors(materialColors);
+		
 		_surfaceBuffer->setMesh(meshObj->surfaceMesh(), color_surface);
 		_surfaceBuffer->setCullFaces(true);
-
-		if(showCap())
-			_capBuffer->setMesh(meshObj->capPolygonsMesh(), color_surface);
 	}
 
 	// Handle picking of triangles.
 	renderer->beginPickObject(contextNode);
 	_surfaceBuffer->render(renderer);
-	if(showCap())
-		_capBuffer->render(renderer);
-	else
-		_capBuffer.reset();
 	renderer->endPickObject();
 }
 
