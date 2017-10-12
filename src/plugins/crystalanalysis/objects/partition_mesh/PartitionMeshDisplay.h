@@ -64,12 +64,6 @@ public:
 	/// Sets the transparency of the surface mesh.
 	void setSurfaceTransparency(FloatType transparency) { if(surfaceTransparencyController()) surfaceTransparencyController()->setCurrentFloatValue(transparency); }
 
-	/// Returns the transparency of the cap polygons.
-	FloatType capTransparency() const { return capTransparencyController() ? capTransparencyController()->currentFloatValue() : 0.0f; }
-
-	/// Sets the transparency of the cap polygons.
-	void setCapTransparency(FloatType transparency) { if(capTransparencyController()) capTransparencyController()->setCurrentFloatValue(transparency); }
-
 	/// Generates the final triangle mesh, which will be rendered.
 	static bool buildMesh(const PartitionMeshData& input, const SimulationCell& cell, const QVector<Plane3>& cuttingPlanes, TriMesh& output, PromiseState* promise);
 
@@ -84,13 +78,13 @@ protected:
 protected:
 
 	/// Computation engine that builds the render mesh.
-	class PrepareMeshEngine :public AsynchronousTask<TriMesh, TriMesh>
+	class PrepareMeshEngine :public AsynchronousTask<TriMesh, std::vector<ColorA>>
 	{
 	public:
 
 		/// Constructor.
-		PrepareMeshEngine(std::shared_ptr<PartitionMeshData> mesh, const SimulationCell& simCell, int spaceFillingRegion, const QVector<Plane3>& cuttingPlanes, bool flipOrientation, bool smoothShading) :
-			_inputMesh(std::move(mesh)), _simCell(simCell), _spaceFillingRegion(spaceFillingRegion), _cuttingPlanes(cuttingPlanes), _flipOrientation(flipOrientation), _smoothShading(smoothShading) {}
+		PrepareMeshEngine(std::shared_ptr<PartitionMeshData> mesh, std::shared_ptr<const ClusterGraph> clusterGraph, const SimulationCell& simCell, int spaceFillingRegion, const QVector<Plane3>& cuttingPlanes, bool flipOrientation, bool smoothShading) :
+			_inputMesh(std::move(mesh)), _clusterGraph(std::move(clusterGraph)), _simCell(simCell), _spaceFillingRegion(spaceFillingRegion), _cuttingPlanes(cuttingPlanes), _flipOrientation(flipOrientation), _smoothShading(smoothShading) {}
 
 		/// Computes the results and stores them in this object for later retrieval.
 		virtual void perform() override;
@@ -98,6 +92,7 @@ protected:
 	private:
 
 		std::shared_ptr<PartitionMeshData> _inputMesh;
+		const std::shared_ptr<const ClusterGraph> _clusterGraph;
 		SimulationCell _simCell;
 		int _spaceFillingRegion;
 		bool _flipOrientation;
@@ -113,9 +108,6 @@ protected:
 	/// Controls the display color of the outer surface mesh.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(Color, surfaceColor, setSurfaceColor, PROPERTY_FIELD_MEMORIZE);
 
-	/// Controls whether the cap polygons are rendered.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, showCap, setShowCap, PROPERTY_FIELD_MEMORIZE);
-
 	/// Controls whether the mesh is rendered using smooth shading.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, smoothShading, setSmoothShading);
 
@@ -125,18 +117,13 @@ protected:
 	/// Controls the transparency of the surface mesh.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD(Controller, surfaceTransparencyController, setSurfaceTransparencyController);
 
-	/// Controls the transparency of the surface cap mesh.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(Controller, capTransparencyController, setCapTransparencyController);
-
 	/// The buffered geometry used to render the surface mesh.
 	std::shared_ptr<MeshPrimitive> _surfaceBuffer;
-
-	/// The buffered geometry used to render the surface cap.
-	std::shared_ptr<MeshPrimitive> _capBuffer;
 
 	/// This helper structure is used to detect any changes in the input data
 	/// that require updating the geometry buffer.
 	SceneObjectCacheHelper<
+		VersionedDataObjectRef,		// Mesh object
 		ColorA,						// Surface color
 		VersionedDataObjectRef		// Cluster graph
 		> _geometryCacheHelper;

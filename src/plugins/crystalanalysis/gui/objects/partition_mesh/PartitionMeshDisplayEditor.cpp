@@ -65,18 +65,6 @@ void PartitionMeshDisplayEditor::createUI(const RolloutInsertionParameters& roll
 
 	BooleanParameterUI* flipOrientationUI = new BooleanParameterUI(this, PROPERTY_FIELD(PartitionMeshDisplay::flipOrientation));
 	sublayout->addWidget(flipOrientationUI->checkBox(), 3, 0, 1, 2);
-
-	BooleanGroupBoxParameterUI* capGroupUI = new BooleanGroupBoxParameterUI(this, PROPERTY_FIELD(PartitionMeshDisplay::showCap));
-	capGroupUI->groupBox()->setTitle(tr("Cap polygons"));
-	sublayout = new QGridLayout(capGroupUI->childContainer());
-	sublayout->setContentsMargins(4,4,4,4);
-	sublayout->setSpacing(4);
-	sublayout->setColumnStretch(1, 1);
-	layout->addWidget(capGroupUI->groupBox());
-
-	FloatParameterUI* capTransparencyUI = new FloatParameterUI(this, PROPERTY_FIELD(PartitionMeshDisplay::capTransparencyController));
-	sublayout->addWidget(new QLabel(tr("Transparency:")), 0, 0);
-	sublayout->addLayout(capTransparencyUI->createFieldLayout(), 0, 1);
 }
 
 }	// End of namespace

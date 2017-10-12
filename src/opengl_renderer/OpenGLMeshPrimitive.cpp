@@ -228,7 +228,7 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 
 	if(cullFaces()) {
 		vpRenderer->glEnable(GL_CULL_FACE);
-		vpRenderer->glCullFace(GL_FRONT);
+		vpRenderer->glCullFace(GL_BACK);
 	}
 	else {
 		vpRenderer->glDisable(GL_CULL_FACE);

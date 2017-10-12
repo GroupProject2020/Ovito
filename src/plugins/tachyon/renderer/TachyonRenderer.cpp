@@ -654,10 +654,10 @@ void TachyonRenderer::renderMesh(const DefaultMeshPrimitive& meshBuffer)
 		// Perform culling of triangles not facing the viewer.
 		if(meshBuffer.cullFaces()) {
 			if(projParams().isPerspective) {
-				if(faceNormal->dot(rv0->pos - cameraPos) >= 0) continue;
+				if(faceNormal->dot(rv0->pos - cameraPos) <= 0) continue;
 			}
 			else {
-				if(faceNormal->dot(cameraDirection) >= 0) continue;
+				if(faceNormal->dot(cameraDirection) <= 0) continue;
 			}
 		}
 

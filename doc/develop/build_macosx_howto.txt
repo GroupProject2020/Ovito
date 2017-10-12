@@ -120,6 +120,6 @@ cmake -DOVITO_BUILD_DOCUMENTATION=ON \
       -DLIBAV_LIBRARY_DIR=$HOME/progs/libav/lib \
       -DSPHINX_PROCESSOR=/Library/Frameworks/Python.framework/Versions/3.5/bin/sphinx-build \
       -DQSCINTILLA_INCLUDE_DIR=$HOME/progs/QScintilla_gpl-2.10.1/Qt4Qt5 \
-      -DQSCINTILLA_LIBRARY=$HOME/progs/QScintilla_gpl-2.10.1/Qt4Qt5/libqscintilla2.dylib \
+      -DQSCINTILLA_LIBRARY=$HOME/progs/QScintilla_gpl-2.10.1/Qt4Qt5/libqscintilla2_qt5.dylib \
 	  -DnetCDF_DIR=$HOME/progs/netcdf/lib/cmake/netCDF \
       ../..

@@ -445,16 +445,8 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 				"The display color of the outer free surface."
 				"\n\n"
 				":Default: ``(1.0, 1.0, 1.0)``\n")
-		.def_property("show_cap", &PartitionMeshDisplay::showCap, &PartitionMeshDisplay::setShowCap,
-				"Controls the visibility of cap polygons, which are created at the intersection of the mesh with periodic box boundaries."
-				"\n\n"
-				":Default: ``True``\n")
 		.def_property("surface_transparency", &PartitionMeshDisplay::surfaceTransparency, &PartitionMeshDisplay::setSurfaceTransparency,
 				"The level of transparency of the displayed surface. Valid range is 0.0 -- 1.0."
-				"\n\n"
-				":Default: 0.0\n")
-		.def_property("cap_transparency", &PartitionMeshDisplay::capTransparency, &PartitionMeshDisplay::setCapTransparency,
-				"The level of transparency of the displayed cap polygons. Valid range is 0.0 -- 1.0."
 				"\n\n"
 				":Default: 0.0\n")
 		.def_property("smooth_shading", &PartitionMeshDisplay::smoothShading, &PartitionMeshDisplay::setSmoothShading,

@@ -491,21 +491,23 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
     			if(sscanf(stream.line(), "%llu %u %llu %llu", &bondId, bondType, &atomId1, &atomId2) != 4)
 					throw Exception(tr("Invalid bond specification (line %1): %2").arg(stream.lineNumber()).arg(stream.lineString()));
 
-				qlonglong atomIndex1 = atomId1;
-    			if(atomIndex1 < 0 || atomIndex1 >= identifierProperty->size() || atomId1 != identifierProperty->getInt64(atomIndex1)) {
+				size_t atomIndex1;
+    			if(atomId1 < 0 || atomId1 >= identifierProperty->size() || atomId1 != identifierProperty->getInt64(atomId1)) {
 					auto iter = atomIdMap.find(atomId1);
 					if(iter == atomIdMap.end())
     					throw Exception(tr("Nonexistent atom ID encountered in line %1 of data file.").arg(stream.lineNumber()));
 					atomIndex1 = iter->second;
-    			}
+				}
+				else atomIndex1 = atomId1;
 
-				qlonglong atomIndex2 = atomId2;
-    			if(atomIndex2 < 0 || atomIndex2 >= identifierProperty->size() || atomId2 != identifierProperty->getInt64(atomIndex2)) {
+				size_t atomIndex2;
+    			if(atomId2 < 0 || atomId2 >= identifierProperty->size() || atomId2 != identifierProperty->getInt64(atomId2)) {
 					auto iter = atomIdMap.find(atomId2);
 					if(iter == atomIdMap.end())
     					throw Exception(tr("Nonexistent atom ID encountered in line %1 of data file.").arg(stream.lineNumber()));
 					atomIndex2 = iter->second;
-    			}
+				}
+				else atomIndex2 = atomId2;
 
 				if(*bondType < 1 || *bondType > nbondtypes)
 					throw Exception(tr("Bond type out of range in Bonds section of LAMMPS data file at line %1.").arg(stream.lineNumber()));
@@ -520,7 +522,7 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 				}
 
 				// Create a bonds.
-				frameData->bonds()->push_back({ atomIndex1, atomIndex2,  shift });
+				frameData->bonds()->push_back({ atomIndex1, atomIndex2, shift });
 			}
 		}
 		else if(keyword.isEmpty() == false) {

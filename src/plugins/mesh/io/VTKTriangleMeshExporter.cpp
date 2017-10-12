@@ -142,6 +142,23 @@ bool VTKTriangleMeshExporter::exportFrame(int frameNumber, TimePoint time, const
 	for(size_t i = 0; i < capPolygonsMesh.faceCount(); i++)
 		textStream() << "1\n";
 
+	if(!meshObj->materialColors().empty()) {
+		textStream() << "\nSCALARS material_index int\n";
+		textStream() << "LOOKUP_TABLE default\n";
+		for(size_t i = 0; i < surfaceMesh.faceCount(); i++)
+			textStream() << surfaceMesh.face(i).materialIndex() << "\n";
+		for(size_t i = 0; i < capPolygonsMesh.faceCount(); i++)
+			textStream() << "0\n";
+
+		textStream() << "\nCOLOR_SCALARS color 3\n";
+		for(size_t i = 0; i < surfaceMesh.faceCount(); i++) {
+			const ColorA& c = meshObj->materialColors()[surfaceMesh.face(i).materialIndex() % meshObj->materialColors().size()];
+			textStream() << c.r() << " " << c.g() << " " << c.b() << "\n";
+		}
+		for(size_t i = 0; i < capPolygonsMesh.faceCount(); i++)
+			textStream() << "1 1 1\n";			
+	}
+
 	textStream() << "\nPOINT_DATA " << (surfaceMesh.vertexCount() + capPolygonsMesh.vertexCount()) << "\n";
 	textStream() << "SCALARS cap unsigned_char\n";
 	textStream() << "LOOKUP_TABLE default\n";

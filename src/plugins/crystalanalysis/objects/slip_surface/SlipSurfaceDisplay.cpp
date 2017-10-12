@@ -215,7 +215,6 @@ void SlipSurfaceDisplay::render(TimePoint time, DataObject* dataObject, const Pi
 		_surfaceBuffer->setMaterialColors(materialColors);
 
 		_surfaceBuffer->setMesh(meshObj->surfaceMesh(), color_surface);
-
 	}
 
 	// Handle picking of triangles.

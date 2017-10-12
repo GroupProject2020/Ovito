@@ -116,9 +116,6 @@ protected:
 	/// The buffered geometry used to render the surface mesh.
 	std::shared_ptr<MeshPrimitive> _surfaceBuffer;
 
-	/// The material colors used for mesh rendering.
-	//std::vector<ColorA> _materialColors;
-
 	/// This helper structure is used to detect any changes in the input data
 	/// that require updating the geometry buffer.
 	SceneObjectCacheHelper<
