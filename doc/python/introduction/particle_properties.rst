@@ -1,13 +1,13 @@
 .. _particle_properties_intro:
 
+===================================
+Particle properties
+===================================
+
 .. warning::
    This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
    development version of OVITO.
 
-
-===================================
-Particle properties
-===================================
 
 OVITO stores particle properties such as the position, mass, color, etc. in separate data arrays. 
 A particle system is therefore nothing else than as a loose collection of :py:class:`~ovito.data.ParticleProperty` instances, 
