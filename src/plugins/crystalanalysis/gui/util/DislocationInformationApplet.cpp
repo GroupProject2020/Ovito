@@ -149,8 +149,29 @@ void DislocationInformationApplet::updateInformationDisplay()
 							.arg(QLocale::c().toString(transformedVector.z(), 'f', 4), 7);
 				}
 			}
+			BurgersVectorFamily* family = structure->defaultBurgersVectorFamily();
+			for(BurgersVectorFamily* f : structure->burgersVectorFamilies()) {
+				if(f->isMember(segment->burgersVector.localVec(), structure)) {
+					family = f;
+					break;
+				}
+			}
+			if(family) {
+				stream << tr("<tr%1><td>Dislocation family:</td><td>%2</td></tr>").arg((row++ % 2) ? cellColor1 : cellColor2).arg(family->name().toHtmlEscaped());
+			}
 		}
-
+		Point3 headLocation = segment->backwardNode().position();
+		Point3 tailLocation = segment->forwardNode().position();
+		if(dislocationObj->domain()) {
+			SimulationCell simCell = dislocationObj->domain()->data();
+			headLocation = simCell.wrapPoint(headLocation);
+			tailLocation = simCell.wrapPoint(tailLocation);
+		}
+		stream << tr("<tr%1><td>Head vertex position:</td><td>%2 %3 %4</td></tr>").arg((row++ % 2) ? cellColor1 : cellColor2)
+			.arg(headLocation.x()).arg(headLocation.y()).arg(headLocation.z());
+		stream << tr("<tr%1><td>Tail vertex position:</td><td>%2 %3 %4</td></tr>").arg((row++ % 2) ? cellColor1 : cellColor2)
+			.arg(tailLocation.x()).arg(tailLocation.y()).arg(tailLocation.z());
+		
 		stream << QStringLiteral("</table><hr>");
 	}
 

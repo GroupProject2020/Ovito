@@ -36,6 +36,9 @@ Property.__and__ = lambda self, y: numpy.asanyarray(self).__and__(y)
 Property.__or__ = lambda self, y: numpy.asanyarray(self).__or__(y)
 Property.__xor__ = lambda self, y: numpy.asanyarray(self).__xor__(y)
 
+# Printing / string representation
+Property.__repr__ = lambda self: self.__class__.__name__ + "('" + self.name + "')"
+
 # Implement 'ndim' attribute.
 def _Property_ndim(self):
     if self.components <= 1: return 1

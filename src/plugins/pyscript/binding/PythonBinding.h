@@ -554,6 +554,9 @@ auto register_subobject_list_wrapper(PythonClass& parentClass, const char* wrapp
 	pyWrapperClass.def("__len__", [listGetter](const ObjectWrapper& wrapper) {
 				return listGetter(wrapper.get()).size();
 			});
+	pyWrapperClass.def("__repr__", [](py::object listObj) {
+				return py::repr(py::list(listObj));
+			});
 	pyWrapperClass.def("__getitem__", [listGetter](const ObjectWrapper& wrapper, int index) {
 				const auto& list = listGetter(wrapper.get());
 				if(index < 0) index += list.size();

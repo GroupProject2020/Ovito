@@ -1,12 +1,12 @@
 .. _file_io_overview:
 
-.. warning::
-   This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
-   development version of OVITO.
-
 ===================================
 File I/O
 ===================================
+
+.. warning::
+   This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
+   development version of OVITO.
 
 This section describes how to load simulation data from external files and how to :ref:`export data <file_output_overview>`
 computed by OVITO to a file again.
