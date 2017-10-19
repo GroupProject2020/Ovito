@@ -151,7 +151,7 @@ public:
 	void clear();
 
 	/// Swaps the contents of this mesh with another mesh.
-	void swap(TriMesh& other) {
+	void swap(TriMesh& other) noexcept {
 		_vertices.swap(other._vertices);
 		_faces.swap(other._faces);
 		std::swap(_boundingBox, other._boundingBox);
@@ -168,9 +168,9 @@ public:
 	///
 	/// The bounding box is cached by the TriMesh object.
 	/// Calling this method multiple times is cheap as long as the vertices of the mesh are not changed.
-	const Box3& boundingBox() {
+	const Box3& boundingBox() const {
 		if(_boundingBox.isEmpty())
-			_boundingBox.addPoints(vertices().constData(), vertexCount());
+			const_cast<TriMesh*>(this)->_boundingBox.addPoints(vertices().constData(), vertexCount());
 		return _boundingBox;
 	}
 
@@ -539,6 +539,9 @@ private:
 	/// Array of normals (three per face).
 	QVector<Vector3> _normals;	
 };
+
+/// Swap function for the TriMesh class, which can be found by argument dependent lookup (ADL).
+inline void swap(TriMesh& mesh_a, TriMesh& mesh_b) noexcept { mesh_a.swap(mesh_b); }
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

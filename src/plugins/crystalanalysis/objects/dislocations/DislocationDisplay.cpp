@@ -23,6 +23,7 @@
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/rendering/SceneRenderer.h>
 #include "DislocationDisplay.h"
+#include "RenderableDislocationLines.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
@@ -64,6 +65,52 @@ DislocationDisplay::DislocationDisplay(DataSet* dataset) : DisplayObject(dataset
 }
 
 /******************************************************************************
+* Lets the display object transform a data object in preparation for rendering.
+******************************************************************************/
+Future<PipelineFlowState> DislocationDisplay::transformDataImpl(TimePoint time, DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState, ObjectNode* contextNode)
+{
+	// Get the input dislocations object.
+	DislocationNetworkObject* dislocationsObj = dynamic_object_cast<DislocationNetworkObject>(dataObject);
+	if(!dislocationsObj)
+		return std::move(flowState);
+
+	// Check if the cache state already contains a RenderableDislocationLines instance that we
+	// created earlier for the same input object. If yes, we can immediately return it.
+	for(DataObject* o : cachedState.objects()) {
+		if(RenderableDislocationLines* renderableLines = dynamic_object_cast<RenderableDislocationLines>(o)) {
+			if(renderableLines->sourceDataObject() == dataObject && renderableLines->displayObject() == this) {
+				flowState.addObject(renderableLines);
+				return std::move(flowState);
+			}
+		}
+	}
+
+	// Get the simulation cell.
+	SimulationCellObject* cellObject = dislocationsObj->domain();
+	if(!cellObject)
+		return std::move(flowState);
+
+	// Generate the list of clipped line segments.
+	const SimulationCell cellData = cellObject->data();
+	std::vector<RenderableDislocationLines::Segment> outputSegments;
+	size_t segmentIndex = 0;
+	for(DislocationSegment* segment : dislocationsObj->segments()) {
+		clipDislocationLine(segment->line, cellData, dislocationsObj->cuttingPlanes(), [segmentIndex, &outputSegments](const Point3& p1, const Point3& p2, bool isInitialSegment) {
+			outputSegments.push_back({ { p1, p2 }, segmentIndex });
+		});
+		segmentIndex++;
+	}
+
+	// Create output RenderableDislocationLines object.
+	OORef<RenderableDislocationLines> renderableLines = new RenderableDislocationLines(dataset(), dataObject);
+	renderableLines->setDisplayObject(this);
+	renderableLines->setLineSegments(std::move(outputSegments));
+	flowState.addObject(renderableLines);
+	
+	return std::move(flowState);
+}
+
+/******************************************************************************
 * Computes the bounding box of the object.
 ******************************************************************************/
 Box3 DislocationDisplay::boundingBox(TimePoint time, DataObject* dataObject, ObjectNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
@@ -100,18 +147,17 @@ Box3 DislocationDisplay::boundingBox(TimePoint time, DataObject* dataObject, Obj
 ******************************************************************************/
 void DislocationDisplay::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, ObjectNode* contextNode)
 {
+	// Ignore render calls for the original DislocationNetworkObject.
+	// We are only interested in the RenderableDIslocationLines.
+	if(dynamic_object_cast<DislocationNetworkObject>(dataObject))
+		return;
+
 	// Just compute the bounding box of the rendered objects if requested.
 	if(renderer->isBoundingBoxPass()) {
 		TimeInterval validityInterval;
 		renderer->addToLocalBoundingBox(boundingBox(time, dataObject, contextNode, flowState, validityInterval));
 		return;
 	}
-
-	// Get data and the simulation cell.
-	OORef<DislocationNetworkObject> dislocationObj = dataObject->convertTo<DislocationNetworkObject>(time);		
-	if(!dislocationObj) return;
-	SimulationCellObject* cellObject = dislocationObj->domain();
-	if(!cellObject) return;
 
 	// Do we have to re-create the geometry buffers from scratch?
 	bool recreateBuffers = !_segmentBuffer || !_segmentBuffer->isValid(renderer)
@@ -131,12 +177,30 @@ void DislocationDisplay::render(TimePoint time, DataObject* dataObject, const Pi
 			recreateBuffers = true;
 	}
 
+	// Get the renderable dislocation lines.
+	RenderableDislocationLines* renderableLines = dynamic_object_cast<RenderableDislocationLines>(dataObject);
+	if(!renderableLines) return;
+
+	// Make sure we don't exceed our internal limits.
+	if(renderableLines->lineSegments().size() > (size_t)std::numeric_limits<int>::max()) {
+		qWarning() << "WARNING: Cannot render more than" << std::numeric_limits<int>::max() << "dislocation segments.";
+		return;
+	}
+
+	// Get the original dislocation lines.
+	DislocationNetworkObject* dislocationsObj = dynamic_object_cast<DislocationNetworkObject>(renderableLines->sourceDataObject().get());	
+	if(!dislocationsObj) return;
+
+	// Get the simulation cell.
+	SimulationCellObject* cellObject = dislocationsObj->domain();
+	if(!cellObject) return;
+	
 	// Get the pattern catalog.
 	PatternCatalog* patternCatalog = flowState.findObject<PatternCatalog>();
 
 	// Do we have to update contents of the geometry buffers?
 	bool updateContents = _geometryCacheHelper.updateState(
-			dataObject, cellObject->data(), patternCatalog, lineWidth(),
+			dislocationsObj, renderableLines, cellObject->data(), patternCatalog, lineWidth(),
 			showBurgersVectors(), burgersVectorScaling(),
 			burgersVectorWidth(), burgersVectorColor(), lineColoringMode()) || recreateBuffers;
 
@@ -150,70 +214,72 @@ void DislocationDisplay::render(TimePoint time, DataObject* dataObject, const Pi
 	// Update buffer contents.
 	if(updateContents) {
 		SimulationCell cellData = cellObject->data();
-		// First perform a dry run to count number of render vertices/segments that are going to be generated.
-		int lineSegmentCount = 0, cornerCount = 0;
-		for(DislocationSegment* segment : dislocationObj->segments()) {
-			clipDislocationLine(segment->line, cellData, dislocationObj->cuttingPlanes(), [&lineSegmentCount, &cornerCount](const Point3&, const Point3&, bool isInitialSegment) {
-				lineSegmentCount++;
-				if(!isInitialSegment) cornerCount++;
-			});
+		// First determine number of corner vertices/segments that are going to be rendered.
+		int lineSegmentCount = renderableLines->lineSegments().size();
+		int cornerCount = 0;
+		for(size_t i = 1; i < renderableLines->lineSegments().size(); i++) {
+			const auto& s1 = renderableLines->lineSegments()[i-1];
+			const auto& s2 = renderableLines->lineSegments()[i];
+			if(s1.verts[1] == s2.verts[0]) cornerCount++;
 		}
 		// Allocate render buffer.
 		_segmentBuffer->startSetElements(lineSegmentCount);
 		std::vector<int> subobjToSegmentMap(lineSegmentCount + cornerCount);
-		int lineSegmentIndex = 0;
-		int dislocationIndex = 0;
 		FloatType lineRadius = std::max(lineWidth() / 2, FloatType(0));
-		QVector<Point3> cornerPoints;
-		QVector<Color> cornerColors;
+		std::vector<Point3> cornerPoints;
+		std::vector<Color> cornerColors;
 		cornerPoints.reserve(cornerCount);
 		cornerColors.reserve(cornerCount);
-		for(DislocationSegment* segment : dislocationObj->segments()) {
-			Color lineColor(0.8f,0.8f,0.8f);
-			if(patternCatalog) {
-				Cluster* cluster = segment->burgersVector.cluster();
-				OVITO_ASSERT(cluster != nullptr);
-				StructurePattern* pattern = patternCatalog->structureById(cluster->structure);
-				if(lineColoringMode() == ColorByDislocationType) {
-					BurgersVectorFamily* family = pattern->defaultBurgersVectorFamily();
-					for(BurgersVectorFamily* f : pattern->burgersVectorFamilies()) {
-						if(f->isMember(segment->burgersVector.localVec(), pattern)) {
-							family = f;
-							break;
+		Color lineColor;
+		Vector3 normalizedBurgersVector;
+		DislocationSegment* lastDislocation = nullptr;
+		for(size_t lineSegmentIndex = 0; lineSegmentIndex < renderableLines->lineSegments().size(); lineSegmentIndex++) {
+			const auto& lineSegment = renderableLines->lineSegments()[lineSegmentIndex];
+			DislocationSegment* dislocation = dislocationsObj->segments()[lineSegment.dislocationIndex];
+			if(dislocation != lastDislocation) {
+				lastDislocation = dislocation;
+				lineColor = Color(0.8f,0.8f,0.8f);
+				if(patternCatalog) {
+					Cluster* cluster = dislocation->burgersVector.cluster();
+					OVITO_ASSERT(cluster != nullptr);
+					StructurePattern* pattern = patternCatalog->structureById(cluster->structure);
+					if(lineColoringMode() == ColorByDislocationType) {
+						BurgersVectorFamily* family = pattern->defaultBurgersVectorFamily();
+						for(BurgersVectorFamily* f : pattern->burgersVectorFamilies()) {
+							if(f->isMember(dislocation->burgersVector.localVec(), pattern)) {
+								family = f;
+								break;
+							}
 						}
+						if(family)
+							lineColor = family->color();
 					}
-					if(family)
-						lineColor = family->color();
+					else if(lineColoringMode() == ColorByBurgersVector) {
+						lineColor = StructurePattern::getBurgersVectorColor(pattern->shortName(), dislocation->burgersVector.localVec());
+					}
 				}
-				else if(lineColoringMode() == ColorByBurgersVector) {
-					lineColor = StructurePattern::getBurgersVectorColor(pattern->shortName(), segment->burgersVector.localVec());
-				}
+				normalizedBurgersVector = dislocation->burgersVector.toSpatialVector();
+				normalizedBurgersVector.normalizeSafely();
 			}
-			Vector3 normalizedBurgersVector = segment->burgersVector.toSpatialVector();
-			normalizedBurgersVector.normalizeSafely();
-			clipDislocationLine(segment->line, cellData, dislocationObj->cuttingPlanes(), [this, &lineSegmentIndex, &cornerPoints, &cornerColors, lineColor, lineRadius, &subobjToSegmentMap, &dislocationIndex, lineSegmentCount, normalizedBurgersVector](const Point3& v1, const Point3& v2, bool isInitialSegment) mutable {
-				subobjToSegmentMap[lineSegmentIndex] = dislocationIndex;
-				if(lineColoringMode() == ColorByCharacter) {
-					Vector3 delta = v2 - v1;
-					FloatType dot = std::abs(delta.dot(normalizedBurgersVector));
-					if(dot != 0) dot /= delta.length();
-					if(dot > 1) dot = 1;
-					FloatType angle = std::acos(dot) / (FLOATTYPE_PI/2);
-					if(angle <= FloatType(0.5))
-						lineColor = Color(1, angle * 2, angle * 2);
-					else
-						lineColor = Color((FloatType(1)-angle) * 2, (FloatType(1)-angle) * 2, 1);
-				}
-				_segmentBuffer->setElement(lineSegmentIndex++, v1, v2 - v1, ColorA(lineColor), lineRadius);
-				if(!isInitialSegment) {
-					subobjToSegmentMap[cornerPoints.size() + lineSegmentCount] = dislocationIndex;
-					cornerPoints.push_back(v1);
-					cornerColors.push_back(lineColor);
-				}
-			});
-			dislocationIndex++;
+			subobjToSegmentMap[lineSegmentIndex] = lineSegment.dislocationIndex;
+			Vector3 delta = lineSegment.verts[1] - lineSegment.verts[0];
+			if(lineColoringMode() == ColorByCharacter) {
+				FloatType dot = std::abs(delta.dot(normalizedBurgersVector));
+				if(dot != 0) dot /= delta.length();
+				if(dot > 1) dot = 1;
+				FloatType angle = std::acos(dot) / (FLOATTYPE_PI/2);
+				if(angle <= FloatType(0.5))
+					lineColor = Color(1, angle * 2, angle * 2);
+				else
+					lineColor = Color((FloatType(1)-angle) * 2, (FloatType(1)-angle) * 2, 1);
+			}
+			_segmentBuffer->setElement(lineSegmentIndex, lineSegment.verts[0], delta, ColorA(lineColor), lineRadius);
+			if(lineSegmentIndex != 0 && lineSegment.verts[0] == renderableLines->lineSegments()[lineSegmentIndex-1].verts[1]) {
+				subobjToSegmentMap[cornerPoints.size() + lineSegmentCount] = lineSegment.dislocationIndex;
+				cornerPoints.push_back(lineSegment.verts[0]);
+				cornerColors.push_back(lineColor);
+			}
 		}
-		OVITO_ASSERT(lineSegmentIndex == lineSegmentCount);
 		OVITO_ASSERT(cornerPoints.size() == cornerCount);
 		_segmentBuffer->endSetElements();
 		_cornerBuffer->setSize(cornerPoints.size());
@@ -222,17 +288,17 @@ void DislocationDisplay::render(TimePoint time, DataObject* dataObject, const Pi
 		_cornerBuffer->setParticleRadius(lineRadius);
 
 		if(showBurgersVectors()) {
-			_burgersArrowBuffer->startSetElements(dislocationObj->segments().size());
-			subobjToSegmentMap.reserve(subobjToSegmentMap.size() + dislocationObj->segments().size());
+			_burgersArrowBuffer->startSetElements(dislocationsObj->segments().size());
+			subobjToSegmentMap.reserve(subobjToSegmentMap.size() + dislocationsObj->segments().size());
 			int arrowIndex = 0;
 			ColorA arrowColor = burgersVectorColor();
 			FloatType arrowRadius = std::max(burgersVectorWidth() / 2, FloatType(0));
-			for(DislocationSegment* segment : dislocationObj->segments()) {
+			for(DislocationSegment* segment : dislocationsObj->segments()) {
 				subobjToSegmentMap.push_back(arrowIndex);
-				Point3 center = cellData.wrapPoint(segment->getPointOnLine(0.5f));
+				Point3 center = cellData.wrapPoint(segment->getPointOnLine(FloatType(0.5)));
 				Vector3 dir = burgersVectorScaling() * segment->burgersVector.toSpatialVector();
 				// Check if arrow is clipped away by cutting planes.
-				for(const Plane3& plane : dislocationObj->cuttingPlanes()) {
+				for(const Plane3& plane : dislocationsObj->cuttingPlanes()) {
 					if(plane.classifyPoint(center) > 0) {
 						dir.setZero(); // Hide arrow by setting length to zero.
 						break;
@@ -246,7 +312,7 @@ void DislocationDisplay::render(TimePoint time, DataObject* dataObject, const Pi
 		}
 		_burgersArrowBuffer->endSetElements();
 
-		_pickInfo = new DislocationPickInfo(this, dislocationObj, patternCatalog, std::move(subobjToSegmentMap));
+		_pickInfo = new DislocationPickInfo(this, dislocationsObj, patternCatalog, std::move(subobjToSegmentMap));
 	}
 
 	// Render segments.
@@ -262,7 +328,6 @@ void DislocationDisplay::render(TimePoint time, DataObject* dataObject, const Pi
 
 		renderer->endPickObject();
 	}
-
 }
 
 /******************************************************************************
@@ -274,25 +339,25 @@ void DislocationDisplay::renderOverlayMarker(TimePoint time, DataObject* dataObj
 		return;
 
 	// Get the dislocations.
-	OORef<DislocationNetworkObject> dislocationObj = dataObject->convertTo<DislocationNetworkObject>(time);
-	if(!dislocationObj)
+	OORef<DislocationNetworkObject> dislocationsObj = dataObject->convertTo<DislocationNetworkObject>(time);
+	if(!dislocationsObj)
 		return;
 
 	// Get the simulation cell.
-	SimulationCellObject* cellObject = dislocationObj->domain();
+	SimulationCellObject* cellObject = dislocationsObj->domain();
 	if(!cellObject)
 		return;
 	SimulationCell cellData = cellObject->data();
 
-	if(segmentIndex < 0 || segmentIndex >= dislocationObj->segments().size())
+	if(segmentIndex < 0 || segmentIndex >= dislocationsObj->segments().size())
 		return;
 
-	DislocationSegment* segment = dislocationObj->segments()[segmentIndex];
+	DislocationSegment* segment = dislocationsObj->segments()[segmentIndex];
 
 	// Generate the polyline segments to render.
-	QVector<std::pair<Point3,Point3>> lineSegments;
-	QVector<Point3> cornerVertices;
-	clipDislocationLine(segment->line, cellData, dislocationObj->cuttingPlanes(), [&lineSegments, &cornerVertices](const Point3& v1, const Point3& v2, bool isInitialSegment) {
+	std::vector<std::pair<Point3,Point3>> lineSegments;
+	std::vector<Point3> cornerVertices;
+	clipDislocationLine(segment->line, cellData, dislocationsObj->cuttingPlanes(), [&lineSegments, &cornerVertices](const Point3& v1, const Point3& v2, bool isInitialSegment) {
 		lineSegments.push_back({v1,v2});
 		if(!isInitialSegment)
 			cornerVertices.push_back(v1);
@@ -329,7 +394,7 @@ void DislocationDisplay::renderOverlayMarker(TimePoint time, DataObject* dataObj
 
 	std::shared_ptr<ParticlePrimitive> cornerBuffer = renderer->createParticlePrimitive(ParticlePrimitive::FlatShading, ParticlePrimitive::HighQuality);
 	cornerBuffer->setSize(cornerVertices.size());
-	cornerBuffer->setParticlePositions(cornerVertices.constData());
+	cornerBuffer->setParticlePositions(cornerVertices.data());
 	cornerBuffer->setParticleColor(Color(1,1,1));
 	cornerBuffer->setParticleRadius(lineRadius);
 	cornerBuffer->render(renderer);
@@ -550,7 +615,7 @@ QString DislocationPickInfo::infoString(ObjectNode* objectNode, quint32 subobjec
 				.arg(QLocale::c().toString(transformedVector.y(), 'f', 4), 7)
 				.arg(QLocale::c().toString(transformedVector.z(), 'f', 4), 7);
 		str += tr(" | Cluster Id: %1").arg(segment->burgersVector.cluster()->id);
-		str += tr(" | Segment Id: %1").arg(segment->id);
+		str += tr(" | Dislocation Id: %1").arg(segment->id);
 		if(structure) {
 			str += tr(" | Crystal structure: %1").arg(structure->name());
 		}

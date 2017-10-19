@@ -22,16 +22,16 @@
 #pragma once
 
 
-#include <plugins/mesh/Mesh.h>
+#include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <core/dataset/io/FileExporter.h>
 #include <core/utilities/io/CompressedTextWriter.h>
 
-namespace Ovito { namespace Mesh {
+namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
 /**
- * \brief Exporter that writes VTK files.
+ * \brief Exporter that exports dislocation networks to a VTK (ParaView) file.
  */
-class OVITO_MESH_EXPORT VTKTriangleMeshExporter : public FileExporter
+class OVITO_CRYSTALANALYSIS_EXPORT VTKDislocationsExporter : public FileExporter
 {
 	/// Defines a metaclass specialization for this exporter type.
 	class OOMetaClass : public FileExporter::OOMetaClass
@@ -51,16 +51,16 @@ class OVITO_MESH_EXPORT VTKTriangleMeshExporter : public FileExporter
 		}
 
 		/// Returns the filter description that is displayed in the drop-down box of the file dialog.
-		virtual QString fileFilterDescription() const override { return tr("VTK Triangle Mesh File"); }
+		virtual QString fileFilterDescription() const override { return tr("VTK Dislocation Lines File"); }
 	};
 
 	Q_OBJECT
-	OVITO_CLASS_META(VTKTriangleMeshExporter, OOMetaClass)
+	OVITO_CLASS_META(VTKDislocationsExporter, OOMetaClass)
 
 public:
 
 	/// \brief Constructs a new instance of this class.
-	Q_INVOKABLE VTKTriangleMeshExporter(DataSet* dataset) : FileExporter(dataset) {}
+	Q_INVOKABLE VTKDislocationsExporter(DataSet* dataset) : FileExporter(dataset) {}
 
 	/// \brief Selects the nodes from the scene to be exported by this exporter if no specific set of nodes was provided.
 	virtual void selectStandardOutputData() override; 
@@ -91,5 +91,6 @@ private:
 	std::unique_ptr<CompressedTextWriter> _outputStream;
 };
 
+}	// End of namespace
 }	// End of namespace
 }	// End of namespace

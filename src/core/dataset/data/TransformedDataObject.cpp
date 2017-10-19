@@ -19,26 +19,16 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <plugins/mesh/Mesh.h>
-#include "RenderableSurfaceMesh.h"
+#include <core/Core.h>
+#include "TransformedDataObject.h"
 
-namespace Ovito { namespace Mesh {
+namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+	
+IMPLEMENT_OVITO_CLASS(TransformedDataObject);
+DEFINE_PROPERTY_FIELD(TransformedDataObject, sourceDataObject);
+DEFINE_PROPERTY_FIELD(TransformedDataObject, generatorDisplayObjectRevision);
 
-IMPLEMENT_OVITO_CLASS(RenderableSurfaceMesh);
-DEFINE_PROPERTY_FIELD(RenderableSurfaceMesh, surfaceMesh);
-DEFINE_PROPERTY_FIELD(RenderableSurfaceMesh, capPolygonsMesh);
-DEFINE_PROPERTY_FIELD(RenderableSurfaceMesh, materialColors);
 
-/******************************************************************************
-* Constructs an empty surface mesh object.
-******************************************************************************/
-RenderableSurfaceMesh::RenderableSurfaceMesh(DataSet* dataset, TriMesh surfaceMesh, TriMesh capPolygonsMesh, 
-			DataObject* sourceObject, unsigned int generatorDisplayObjectRevision) : 
-	TransformedDataObject(dataset, sourceObject, generatorDisplayObjectRevision),
-	_surfaceMesh(std::move(surfaceMesh)),
-	_capPolygonsMesh(std::move(capPolygonsMesh))
-{
-}
-
-}	// End of namespace
+OVITO_END_INLINE_NAMESPACE
+OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

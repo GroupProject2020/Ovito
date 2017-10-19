@@ -103,7 +103,7 @@ bool VTKTriangleMeshExporter::exportFrame(int frameNumber, TimePoint time, const
 	const PipelineFlowState& state = evalFuture.result();
 	RenderableSurfaceMesh* meshObj = state.findObject<RenderableSurfaceMesh>();
 	if(!meshObj)
-		throwException(tr("The object to be exported does not contain any exportable data."));
+		throwException(tr("The object to be exported does not contain any exportable surface mesh data."));
 
 	const TriMesh& surfaceMesh = meshObj->surfaceMesh();
 	const TriMesh& capPolygonsMesh = meshObj->capPolygonsMesh();

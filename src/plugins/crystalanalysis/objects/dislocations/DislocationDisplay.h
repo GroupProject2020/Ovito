@@ -111,6 +111,9 @@ public:
 	/// \brief Constructor.
 	Q_INVOKABLE DislocationDisplay(DataSet* dataset);
 
+	/// Indicates whether the display object wants to transform data objects before rendering. 
+	virtual bool doesPerformDataTransformation() const override { return true; }
+	
 	/// \brief Lets the display object render a data object.
 	virtual void render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, ObjectNode* contextNode) override;
 
@@ -129,6 +132,9 @@ public:
 
 protected:
 
+	/// Lets the display object transform a data object in preparation for rendering.
+	virtual Future<PipelineFlowState> transformDataImpl(TimePoint time, DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState, ObjectNode* contextNode) override;
+	
 	/// Clips a dislocation line at the periodic box boundaries.
 	void clipDislocationLine(const std::deque<Point3>& line, const SimulationCell& simulationCell, const QVector<Plane3>& clippingPlanes, const std::function<void(const Point3&, const Point3&, bool)>& segmentCallback);
 
@@ -147,6 +153,7 @@ protected:
 	/// that require updating the geometry buffers.
 	SceneObjectCacheHelper<
 		VersionedDataObjectRef,	// Source object + revision number
+		VersionedDataObjectRef,	// Renderable object + revision number
 		SimulationCell,			// Simulation cell geometry
 		VersionedDataObjectRef,	// The pattern catalog
 		FloatType,				// Line width

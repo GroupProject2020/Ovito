@@ -91,7 +91,7 @@ PYBIND11_PLUGIN(Mesh)
 			"\n\n"
 			"**File export**"
 			"\n\n"
-			"A surface mesh can be written to a dile in the form of a conventional triangle mesh. "
+			"A surface mesh can be written to a file in the form of a conventional triangle mesh. "
 			"For this, a non-periodic version is produced by truncating triangles at the domain boundaries and generating \"cap polygons\" to fill the holes that "
 			"occur at the intersection of the interior region with the domain boundaries. To export the mesh, use the :py:func:`ovito.io.export_file` function "
 			"and select ``vtk/trimesh`` as output format: "
