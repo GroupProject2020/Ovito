@@ -587,9 +587,9 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 					// depend on the storage order of particles in the file. We rather want a well-defined particle type ordering, that's
 					// why we sort them now according to their numeric IDs.
 					typeList->sortTypesById();
-				}				
+				}
 			}
-			if(property->dataType() == PropertyStorage::Int64) {
+			else if(property->dataType() == PropertyStorage::Int64) {
 				// Read 64-bit integer property data in chunks so that we can report I/O progress.
 				size_t totalCount = countp[1];
 				size_t remaining = totalCount;
@@ -711,8 +711,7 @@ InputColumnInfo AMBERNetCDFImporter::mapVariableToColumn(const QString& name, in
 			
 	// Only map to standard property if data layout matches.
 	if(standardType != ParticleProperty::UserProperty) {
-		if(dataType == ParticleProperty::OOClass().standardPropertyDataType(standardType) &&
-				componentCount == ParticleProperty::OOClass().standardPropertyComponentCount(standardType)) {
+		if(componentCount == ParticleProperty::OOClass().standardPropertyComponentCount(standardType)) {
 			column.mapStandardColumn(standardType);
 			return column;
 		}

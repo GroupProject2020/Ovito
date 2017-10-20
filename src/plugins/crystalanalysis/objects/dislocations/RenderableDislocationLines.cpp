@@ -19,26 +19,22 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <plugins/mesh/Mesh.h>
-#include "RenderableSurfaceMesh.h"
+#include <plugins/crystalanalysis/CrystalAnalysis.h>
+#include "RenderableDislocationLines.h"
 
-namespace Ovito { namespace Mesh {
-
-IMPLEMENT_OVITO_CLASS(RenderableSurfaceMesh);
-DEFINE_PROPERTY_FIELD(RenderableSurfaceMesh, surfaceMesh);
-DEFINE_PROPERTY_FIELD(RenderableSurfaceMesh, capPolygonsMesh);
-DEFINE_PROPERTY_FIELD(RenderableSurfaceMesh, materialColors);
+namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
+	
+IMPLEMENT_OVITO_CLASS(RenderableDislocationLines);
+DEFINE_PROPERTY_FIELD(RenderableDislocationLines, lineSegments);
 
 /******************************************************************************
 * Constructs an empty surface mesh object.
 ******************************************************************************/
-RenderableSurfaceMesh::RenderableSurfaceMesh(DataSet* dataset, TriMesh surfaceMesh, TriMesh capPolygonsMesh, 
-			DataObject* sourceObject, unsigned int generatorDisplayObjectRevision) : 
-	TransformedDataObject(dataset, sourceObject, generatorDisplayObjectRevision),
-	_surfaceMesh(std::move(surfaceMesh)),
-	_capPolygonsMesh(std::move(capPolygonsMesh))
+RenderableDislocationLines::RenderableDislocationLines(DataSet* dataset, DataObject* sourceObject, unsigned int generatorDisplayObjectRevision) : 
+	TransformedDataObject(dataset, sourceObject, generatorDisplayObjectRevision)
 {
 }
 
+}	// End of namespace
 }	// End of namespace
 }	// End of namespace

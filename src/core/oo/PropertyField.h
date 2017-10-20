@@ -28,6 +28,8 @@
 #include <core/oo/PropertyFieldDescriptor.h>
 #include <core/oo/ReferenceEvent.h>
 
+#include <boost/type_traits/has_equal_to.hpp>
+
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
 
 /**
@@ -97,12 +99,14 @@ public:
 	explicit RuntimePropertyField(Args&&... args) : PropertyFieldBase(), _value(std::forward<Args>(args)...) {}
 
 	/// Changes the value of the property. Handles undo and sends a notification message.
-	void set(RefMaker* owner, const PropertyFieldDescriptor& descriptor, const property_type& newValue) {
+	template<typename T>
+	void set(RefMaker* owner, const PropertyFieldDescriptor& descriptor, T&& newValue) {
 		OVITO_ASSERT(owner != nullptr);
-		if(get() == newValue) return;
+		if(isEqualToCurrentValue(get(), newValue)) return;
 		if(isUndoRecordingActive(owner, descriptor))
 			pushUndoRecord(owner, std::make_unique<PropertyChangeOperation>(owner, *this, descriptor));
-		setValueInternal(owner, descriptor, newValue);
+		mutableValue() = std::forward<T>(newValue);
+		valueChangedInternal(owner, descriptor);
 	}
 	
 	/// Changes the value of the property. Handles undo and sends a notification message.
@@ -151,33 +155,40 @@ public:
 		
 private:
 
-	/// Internal helper function that changes the stored value and
-	/// generates notification events.
-	void setValueInternal(RefMaker* owner, const PropertyFieldDescriptor& descriptor, const property_type& newValue) {
-		mutableValue() = newValue;
+	/// Internal helper function that generates notification events.
+	void valueChangedInternal(RefMaker* owner, const PropertyFieldDescriptor& descriptor) {
 		generatePropertyChangedEvent(owner, descriptor);
 		generateTargetChangedEvent(owner, descriptor);
 		if(descriptor.extraChangeEventType() != 0)
 			generateTargetChangedEvent(owner, descriptor, static_cast<ReferenceEvent::Type>(descriptor.extraChangeEventType()));
 	}
 
+	/// Helper function that tests if the new value is equal to the current value of the property field. 
+	template<typename T = property_type>
+	static inline std::enable_if_t<boost::has_equal_to<const T&>::value, bool>
+	isEqualToCurrentValue(const T& oldValue, const T& newValue) { return oldValue == newValue; }
+
+	/// Helper function that tests if the new value is equal to the current value of the property field. 
+	template<typename T = property_type>
+	static inline std::enable_if_t<!boost::has_equal_to<const T&>::value, bool>
+	isEqualToCurrentValue(const T& oldValue, const T& newValue) { return false; }
+	
 	/// This undo class records a change to the property value.
 	class PropertyChangeOperation : public PropertyFieldOperation 
 	{
 	public:
 
 		/// Constructor.
-		PropertyChangeOperation(RefMaker* owner, RuntimePropertyField& field, const PropertyFieldDescriptor& descriptor) : PropertyFieldOperation(owner, descriptor), _field(field) {
-			// Make a copy of the current property value.
-			_oldValue = field;
-		}
+		/// Makes a copy of the current property value.
+		PropertyChangeOperation(RefMaker* owner, RuntimePropertyField& field, const PropertyFieldDescriptor& descriptor) : 
+			PropertyFieldOperation(owner, descriptor), _field(field), _oldValue(field.get()) {}
 
 		/// Restores the old property value.
 		virtual void undo() override {
 			// Swap old value and current property value.
-			property_type temp = _field.get();
-			_field.setValueInternal(owner(), descriptor(), _oldValue);
-			_oldValue = temp;
+			using std::swap; // using ADL here
+			swap(_field.mutableValue(), _oldValue);
+			_field.valueChangedInternal(owner(), descriptor());
 		}
 
 	private:

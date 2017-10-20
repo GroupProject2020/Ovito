@@ -35,6 +35,7 @@
 #include <plugins/crystalanalysis/objects/partition_mesh/PartitionMeshDisplay.h>
 #include <plugins/crystalanalysis/importer/CAImporter.h>
 #include <plugins/crystalanalysis/exporter/CAExporter.h>
+#include <plugins/crystalanalysis/exporter/VTKDislocationsExporter.h>
 #include <plugins/pyscript/binding/PythonBinding.h>
 #include <plugins/particles/scripting/PythonBinding.h>
 #include <core/app/PluginManager.h>
@@ -306,6 +307,9 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 		.def_property("export_mesh", &CAExporter::meshExportEnabled, &CAExporter::setMeshExportEnabled)
 	;
 
+	ovito_class<VTKDislocationsExporter, FileExporter>{m}
+	;
+	
 	auto DislocationDisplay_py = ovito_class<DislocationDisplay, DisplayObject>(m,
 			":Base class: :py:class:`ovito.vis.Display`\n\n"
 			"Controls the visual appearance of dislocation lines extracted by a :py:class:`~ovito.modifier.DislocationAnalysisModifier`. "
@@ -367,7 +371,13 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 			"\n\n"
 			"Example:\n\n"
 			".. literalinclude:: ../example_snippets/dislocation_analysis_modifier.py\n"
-			"   :lines: 4-\n",
+			"   :lines: 4-\n"
+			"\n\n"
+			"**File export**"
+			"\n\n"
+			"A dislocation network can be written to a data file in the form of polylines using the "
+			":py:func:`ovito.io.export_file` function (select the ``vtk/disloc`` output format). "
+			"During export, a non-periodic version is produced by clipping dislocation lines at the domain boundaries. ",
 			// Python class name:
 			"DislocationNetwork")
 

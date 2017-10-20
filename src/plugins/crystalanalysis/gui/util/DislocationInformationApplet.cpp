@@ -103,7 +103,7 @@ void DislocationInformationApplet::updateInformationDisplay()
 
 		int row = 0;
 		DislocationSegment* segment = dislocationObj->segments()[pickedDislocation.segmentIndex];
-		stream << tr("<tr%1><td>Segment Id:</td><td>%2</td></tr>").arg((row++ % 2) ? cellColor1 : cellColor2).arg(segment->id);
+		stream << tr("<tr%1><td>Dislocation Id:</td><td>%2</td></tr>").arg((row++ % 2) ? cellColor1 : cellColor2).arg(segment->id);
 		StructurePattern* structure = nullptr;
 		Cluster* cluster = segment->burgersVector.cluster();
 		PatternCatalog* patternCatalog = flowState.findObject<PatternCatalog>();

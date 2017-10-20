@@ -124,7 +124,7 @@ Future<PipelineFlowState> PartitionMeshDisplay::transformDataImpl(TimePoint time
 
 			// Output the computed mesh as a RenderableSurfaceMesh.
 			OORef<RenderableSurfaceMesh> renderableMesh = new RenderableSurfaceMesh(dataset(), std::move(surfaceMesh), {}, dataObject, _revisionNumber);
-			renderableMesh->materialColors() = std::move(materialColors);
+			renderableMesh->setMaterialColors(std::move(materialColors));
 			renderableMesh->setDisplayObject(this);
 			flowState.addObject(renderableMesh);
 			return std::move(flowState);

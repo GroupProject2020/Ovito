@@ -25,3 +25,6 @@ for segment in network.segments:
 
 # Export dislocation lines to a CA file:
 export_file(pipeline, "dislocations.ca", "ca")
+
+# Or export dislocations to a ParaView file:
+export_file(pipeline, "dislocations.vtk", "vtk/disloc")

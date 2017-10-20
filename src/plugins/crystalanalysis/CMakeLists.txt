@@ -22,12 +22,14 @@
 SET(SourceFiles
 	importer/CAImporter.cpp
 	exporter/CAExporter.cpp
+	exporter/VTKDislocationsExporter.cpp
 	objects/patterns/BurgersVectorFamily.cpp
 	objects/patterns/StructurePattern.cpp
 	objects/patterns/PatternCatalog.cpp
 	objects/clusters/ClusterGraphObject.cpp
 	objects/dislocations/DislocationNetworkObject.cpp
 	objects/dislocations/DislocationDisplay.cpp
+	objects/dislocations/RenderableDislocationLines.cpp
 	objects/partition_mesh/PartitionMesh.cpp
 	objects/partition_mesh/PartitionMeshDisplay.cpp
 	objects/slip_surface/SlipSurface.cpp

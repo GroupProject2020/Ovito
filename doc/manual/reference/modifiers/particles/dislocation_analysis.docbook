@@ -41,8 +41,8 @@
        <imagedata fileref="images/modifiers/dislocation_analysis_panel.png" format="PNG" />
     </imageobject></mediaobject></screenshot></informalfigure>
     
-    This analysis modifier identifies all dislocations in a crystal, determines their Burgers vectors, 
-    and outputs a line representation of the dislocation defects. The modifier implements the so-called
+    This analysis modifier identifies all dislocation line defects in an atomistic crystal, determines their Burgers vectors, 
+    and outputs a line representation of the dislocations. The modifier implements the so-called
     <emphasis>Dislocation Extraction Algorithm</emphasis> (DXA), a computational method developed by the author of OVITO.
     The original DXA method has been described in the paper
     <blockquote><para>
@@ -61,7 +61,7 @@ Modelling Simul. Mater. Sci. Eng. 20, 085007 (2012)</link></literallayout>
 
   <para>
     The DXA transforms the original atomistic representation of a dislocated crystal into a line-based representation 
-    of the dislocation network. It determines the Burgers vector of each dislocation segment 
+    of the dislocation network. It determines the Burgers vector of each dislocation  
     and identifies dislocation junctions. The algorithm can recognize partial dislocations and also
     certain secondary grain boundary dislocations (e.g. twinning dislocations in FCC).
   </para>
@@ -73,7 +73,7 @@ Modelling Simul. Mater. Sci. Eng. 20, 085007 (2012)</link></literallayout>
   </para>
 
   <para>
-    OVITO allows you to save the dislocation lines extracted by the modifier to a so-called <emphasis>Crystal Analysis file</emphasis> (CA file)
+    OVITO allows you to save the dislocation lines extracted by the modifier to a so-called <emphasis>Crystal Analysis (CA) file</emphasis>
     using the program's <link linkend="usage.export">file export function</link>. This allows you to further process the 
     dislocation lines outside of OVITO or to reload the dislocation data at a later time without the need to reperform the 
     computationally expensive analysis. The CA file format is documented <link linkend="particles.modifiers.dislocation_analysis.fileformat">below</link>.
@@ -123,7 +123,7 @@ Modelling Simul. Mater. Sci. Eng. 20, 085007 (2012)</link></literallayout>
         <term>Circuit stretchability</term>
         <listitem>
           <para>Once the DXA has discovered a dislocation segment and constructed a Burgers circuit around its dislocation core, the algorithm
-          advances the circuit along the dislocation to generate a line presentation of the segment.
+          advances the circuit along the dislocation to generate a line presentation of the dislocation.
           The thickness of the core may vary along the dislocation (e.g. it becomes wider close to a dislocation junction).
           This is why the circuit has a certain amount of elasticity, which is set by the stretchability parameter.
           A value of 9 (the default), for example, allows the circuit to expand to a length that is 
@@ -231,16 +231,16 @@ Modelling Simul. Mater. Sci. Eng. 20, 085007 (2012)</link></literallayout>
           <varlistentry>
           <term>Dislocation lines</term>
           <listitem>
-          <para>The dislocation segments identified by the DXA are output as continuous lines. Each dislocation segment 
+          <para>The dislocations identified by the DXA are output as continuous lines. Each dislocation 
                 has a starting point and an endpoint. The two define the orientation of the dislocation line (the <emphasis>line sense</emphasis>).
-                Each end may be part of a <emphasis>junction</emphasis>, where it is connected to 
-                other dislocation segments, or it may be a <emphasis>dangling</emphasis> end. Dislocations that merge into a crystal's surface
-                or into other extended defects have dangling ends. If a dislocation is a loop, its starting point forms a 2-junction with its endpoint. 
-                Dislocation loops need not be loop-shaped; they can also be infinite lines, going through a periodic boundary of the simulation cell.
+                Each end point may be part of a <emphasis>junction</emphasis>, where it is connected to 
+                other dislocations, or it may be a <emphasis>dangling</emphasis> end point. Dislocations that merge into a crystal's surface
+                or into other extended defects have dangling ends. If a dislocation is a loop, its starting point forms a 2-junction with its end point. 
+                Dislocation loops need not be loop-shaped; they can also be infinite lines, going through a periodic boundary of the simulation cell and conneting to itself.
           </para>
           <para>
-                In addition to this geometric information, each dislocation segment has two additional properties: The ID of the crystallite cluster
-                it is embedded in (see below) and its Burgers vector. The Burgers vector computed for a segment is its <emphasis>true</emphasis> Burgers vector, i.e.
+                In addition to this geometric information, each dislocation has two additional properties: The ID of the crystallite cluster
+                it is embedded in (see below) and its Burgers vector. The Burgers vector computed for a dislocation is its <emphasis>true</emphasis> Burgers vector, i.e.
                 a vector in the ideal reference crystal frame.
           </para>
           </listitem>
@@ -331,7 +331,7 @@ Modelling Simul. Mater. Sci. Eng. 20, 085007 (2012)</link></literallayout>
     <para>
         The dislocation lines extracted by the modifier can be exported using OVITO's <link linkend="usage.export">file export function</link>.
         Currently, a simple text-based output format is supported, which is also used by another code (<emphasis>Crystal Analysis Tool</emphasis>) that implements the DXA.
-        Please contact the author of OVITO if you need the specification of this CA dislocation file format. OVITO can also import CA files,
+        The CA dislocation file format is specified below. OVITO can also import CA files,
         which allows saving the results of a (possibly) expensive dislocation analysis to disk and then reloding them again later.
     </para>
   </simplesect> 
@@ -531,7 +531,7 @@ Modelling Simul. Mater. Sci. Eng. 20, 085007 (2012)</link></literallayout>
           <variablelist>
             <varlistentry><term><code>BURGERS_VECTOR_FAMILY</code></term><listitem>
             <para>The ID of this predefined Burgers vectors family, followed by the human-readable name
-            of the dislocation type, followed by the Burgers vector (in Cartesian lattice coordinates), followed by the RGB color assigned
+            of the dislocation class, followed by the prototype Burgers vector (in Cartesian lattice coordinates), followed by the RGB color assigned
             to dislocation lines of this predefined type.</para></listitem></varlistentry>
           </variablelist>
           </listitem></varlistentry>

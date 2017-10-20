@@ -286,6 +286,7 @@ public:
 		Ovito::RuntimePropertyField<type> _##name; \
 		const type& name() const { return _##name; } \
 		void setterName(const type& value) { _##name.set(this, PROPERTY_FIELD(name), value); } \
+		void setterName(type&& value) { _##name.set(this, PROPERTY_FIELD(name), std::move(value)); } \
 	private:
 
 /// Adds a property field to a class definition which is not serializble .
