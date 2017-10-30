@@ -106,13 +106,40 @@ Future<AsynchronousModifier::ComputeEnginePtr> AtomicStrainModifier::createEngin
 ******************************************************************************/
 void AtomicStrainModifier::AtomicStrainEngine::perform()
 {
-	setProgressText(tr("Computing atomic strain tensors"));
+	setProgressText(tr("Computing atomic displacements"));
 
 	// First determine the mapping from particles of the reference config to particles
 	// of the current config.
 	if(!buildParticleMapping(false, false))
 		return;
 
+	// Compute displacement vectors of particles in the reference configuration.
+	parallelForChunks(displacements()->size(), [this](size_t startIndex, size_t count) {
+		Vector3* u = displacements()->dataVector3() + startIndex;
+		const Point3* p0 = refPositions()->constDataPoint3() + startIndex;
+		auto index = refToCurrentIndexMap().cbegin() + startIndex;
+		for(; count; --count, ++u, ++p0, ++index) {
+			if(*index == std::numeric_limits<size_t>::max()) {
+				u->setZero();
+				continue;
+			}
+			Point3 reduced_reference_pos = refCell().inverseMatrix() * (*p0);
+			Point3 reduced_current_pos = cell().inverseMatrix() * positions()->getPoint3(*index);
+			Vector3 delta = reduced_current_pos - reduced_reference_pos;
+			if(useMinimumImageConvention()) {
+				for(size_t k = 0; k < 3; k++) {
+					if(refCell().pbcFlags()[k])
+						delta[k] -= std::floor(delta[k] + FloatType(0.5));
+				}
+			}
+			*u = refCell().matrix() * delta;
+		}
+	});
+	if(isCanceled())
+		return;
+
+	setProgressText(tr("Computing atomic strain tensors"));
+	
 	// Prepare the neighbor list for the reference configuration.
 	CutoffNeighborFinder neighborFinder;
 	if(!neighborFinder.prepare(_cutoff, *refPositions(), refCell(), nullptr, this))
@@ -142,27 +169,29 @@ void AtomicStrainModifier::AtomicStrainEngine::computeStrain(size_t particleInde
 
 	// Iterate over neighbors of central particle.
 	size_t particleIndexReference = currentToRefIndexMap()[particleIndex];
+	FloatType sumSquaredDistance = 0;
 	if(particleIndexReference != std::numeric_limits<size_t>::max()) {
-		const Point3 x = positions()->getPoint3(particleIndex);
+		const Vector3& center_displacement = displacements()->getVector3(particleIndexReference);
 		for(CutoffNeighborFinder::Query neighQuery(neighborFinder, particleIndexReference); !neighQuery.atEnd(); neighQuery.next()) {
 			size_t neighborIndexCurrent = refToCurrentIndexMap()[neighQuery.current()];
 			if(neighborIndexCurrent == std::numeric_limits<size_t>::max()) continue;
+			const Vector3& neigh_displacement = displacements()->getVector3(neighQuery.current());
 			Vector3 delta_ref = neighQuery.delta();
-			Vector3 delta_cur = positions()->getPoint3(neighborIndexCurrent) - x;
-			if(useMinimumImageConvention())
-				delta_cur = cell().wrapVector(delta_cur);
-			if(affineMapping() == TO_REFERENCE_CELL)
-				delta_cur = curToRefTM() * delta_cur;
-			else if(affineMapping() == TO_CURRENT_CELL)
+			Vector3 delta_cur = delta_ref + neigh_displacement - center_displacement;
+			if(affineMapping() == TO_CURRENT_CELL) {
 				delta_ref = refToCurTM() * delta_ref;
-
+				delta_cur = refToCurTM() * delta_cur;
+			}
+			else if(affineMapping() != TO_REFERENCE_CELL) {
+				delta_cur = refToCurTM() * delta_cur;
+			}
 			for(size_t i = 0; i < 3; i++) {
 				for(size_t j = 0; j < 3; j++) {
 					V(i,j) += delta_ref[j] * delta_ref[i];
 					W(i,j) += delta_ref[j] * delta_cur[i];
 				}
 			}
-
+			sumSquaredDistance += delta_ref.squaredLength();
 			numNeighbors++;
 		}
 	}
@@ -177,7 +206,8 @@ void AtomicStrainModifier::AtomicStrainEngine::computeStrain(size_t particleInde
 
 	// Check if matrix can be inverted.
 	Matrix_3<double> inverseV;
-	if(numNeighbors < 2 || (!cell().is2D() && numNeighbors < 3) || !V.inverse(inverseV, FloatType(1e-4)) || std::abs(W.determinant()) < FloatType(1e-4)) {
+	double detThreshold = (double)sumSquaredDistance * 1e-12;
+	if(numNeighbors < 2 || (!cell().is2D() && numNeighbors < 3) || !V.inverse(inverseV, detThreshold) || std::abs(W.determinant()) <= detThreshold) {
 		_results->invalidParticles()->setInt(particleIndex, 1);
 		if(_results->deformationGradients()) {
 			for(Matrix_3<double>::size_type col = 0; col < 3; col++) {
@@ -235,19 +265,21 @@ void AtomicStrainModifier::AtomicStrainEngine::computeStrain(size_t particleInde
 
         // Again iterate over neighbor vectors of central particle.
         numNeighbors = 0;
-        const Point3 x = positions()->getPoint3(particleIndex);
+        const Vector3& center_displacement = displacements()->getVector3(particleIndexReference);
         for(CutoffNeighborFinder::Query neighQuery(neighborFinder, particleIndexReference); !neighQuery.atEnd(); neighQuery.next()) {
 			size_t neighborIndexCurrent = refToCurrentIndexMap()[neighQuery.current()];
 			if(neighborIndexCurrent == std::numeric_limits<size_t>::max()) continue;
+			const Vector3& neigh_displacement = displacements()->getVector3(neighQuery.current());
 			Vector3 delta_ref = neighQuery.delta();
-			Vector3 delta_cur = positions()->getPoint3(neighborIndexCurrent) - x;
-			if(useMinimumImageConvention())
-				delta_cur = cell().wrapVector(delta_cur);
-			if(affineMapping() == TO_REFERENCE_CELL)
-				delta_cur = curToRefTM() * delta_cur;
-			else if(affineMapping() == TO_CURRENT_CELL)
+			Vector3 delta_cur = delta_ref + neigh_displacement - center_displacement;
+			if(affineMapping() == TO_CURRENT_CELL) {
 				delta_ref = refToCurTM() * delta_ref;
-            D2min += (Fftype * delta_ref - delta_cur).squaredLength();
+				delta_cur = refToCurTM() * delta_cur;
+			}
+			else if(affineMapping() != TO_REFERENCE_CELL) {
+				delta_cur = refToCurTM() * delta_cur;
+			}
+			D2min += (Fftype * delta_ref - delta_cur).squaredLength();
 		}
 
         _results->nonaffineSquaredDisplacements()->setFloat(particleIndex, D2min);

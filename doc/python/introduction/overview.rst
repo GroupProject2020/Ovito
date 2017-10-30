@@ -1,19 +1,21 @@
+.. _scripting_api_overview:
+
 ==================================
 Overview
 ==================================
 
 The scripting interface gives you access to most of OVITO's program features. Using Python scripting, you can
-do many things that are already familiar from the graphical user interface, and even some more:
+do many things that are already familiar from the graphical user interface (and even some more):
 
-  * :ref:`Import data from external files <file_io_overview>`
-  * :ref:`Apply modifiers to a dataset and configure them <modifiers_overview>`
-  * :ref:`Export data to a file <file_output_overview>`
-  * :ref:`Set up a camera and render pictures or movies of the scene <rendering_viewports>`
-  * :ref:`Control the visual appearance of particles and other objects <rendering_display_objects>`
-  * :ref:`Access per-particle properties and other analysis results computed by OVITO <particle_properties_intro>`
-  * :ref:`Implement new types of modifiers <writing_custom_modifiers>`
+  * Import data from simulation files
+  * Compose modifiers and set up a data processing pipeline
+  * Write computed data to an output file
+  * Render images or movies of the three-dimensional scene and control the camera
+  * Change the appearance of particles and other visual objects
+  * Access data, e.g. particle properties, and analysis results computed by OVITO
+  * Write your own data modification and analysis functions and extend OVITO's capabilities
 
-But before discussing these specific tasks, let's first take a look at some general concepts of OVITO's data model 
+But before discussing these specific topics, let's first take a look at some general concepts of OVITO's data model 
 and scripting framework.
 
 ------------------------------------
@@ -24,7 +26,7 @@ If you have used OVITO's graphical user interface before, you are already famili
 its central concept: the data processing pipeline. After loading a simulation file, you typically apply modifiers 
 that act on the input data. The output of this sequence of modifiers (which form the *data pipeline*) is computed by OVITO 
 and displayed in the interactive viewports. From a Python script's perspective, a data pipeline is represented
-by an instance of the :py:class:`~ovito.pipeline.Pipeline` class, which stores the list of modifiers
+by an instance of the :py:class:`~ovito.pipeline.Pipeline` class, which stores the list of applied modifiers
 in its :py:attr:`~ovito.pipeline.Pipeline.modifiers` field.
 
 In addition to the modifier list, a data pipeline always has some kind of *data source*, which is an associated object providing 
@@ -32,6 +34,10 @@ the input data being passed to the pipeline's first modifier. Typically, the dat
 :py:class:`~ovito.pipeline.FileSource` class. It is responsible for dynamically loading data from an external file.
 OVITO also allows you to select other kinds of data sources for a pipeline, for example in case you want to 
 directly specify the input data programmatically instead of loading it from file. 
+
+.. image:: graphics/Pipeline_overview.*
+   :width: 75 %
+   :align: center
 
 A :py:class:`~ovito.pipeline.Pipeline` may be placed into the *scene*, i.e. the three-dimensional world that is visible
 through OVITO's viewports and in rendered images. Only a :py:class:`~ovito.pipeline.Pipeline` that is part of the *scene*
@@ -96,7 +102,7 @@ all found in the :py:mod:`ovito.modifiers` module. Note how a modifier's paramet
    Obviously, the first way of initializing the object's parameters is more convenient and should be preferentially used
    whenever the parameter values are known at construction time. 
 
-The :ref:`modifiers_overview` section of this documentation provides more information on working with modifiers.
+The :ref:`modifiers_overview` section of this documentation provides more information on working with modifiers and pipelines.
 
 ------------------------------------
 Exporting data to a file
@@ -180,9 +186,8 @@ programming interface for accessing the contained data objects::
 
     >>> input_data = pipeline.source
     >>> input_data.objects
-    [SimulationCell(), 
-        ParticleProperty('Particle Identifier'), ParticleProperty('Position'), 
-        ParticleProperty('Potential Energy')]
+    [SimulationCell(), ParticleProperty('Particle Identifier'), 
+        ParticleProperty('Position'), ParticleProperty('Potential Energy')]
 
 ------------------------------------
 Rendering images and movies

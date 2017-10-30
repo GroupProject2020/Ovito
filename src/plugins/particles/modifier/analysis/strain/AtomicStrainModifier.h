@@ -132,9 +132,10 @@ private:
 				FloatType cutoff, AffineMappingType affineMapping, bool useMinimumImageConvention,
 				bool calculateDeformationGradients, bool calculateStrainTensors,
 				bool calculateNonaffineSquaredDisplacements, bool calculateRotations, bool calculateStretchTensors) :
-			RefConfigEngineBase(positions, simCell, std::move(refPositions), simCellRef,
+			RefConfigEngineBase(positions, simCell, refPositions, simCellRef,
 				std::move(identifiers), std::move(refIdentifiers), affineMapping, useMinimumImageConvention),
 			_cutoff(cutoff), 
+			_displacements(ParticleProperty::createStandardStorage(refPositions->size(), ParticleProperty::DisplacementProperty, false)),
 			_results(std::make_shared<AtomicStrainResults>(validityInterval, positions->size(), 
 							calculateDeformationGradients, 
 							calculateStrainTensors,
@@ -145,12 +146,16 @@ private:
 		/// Computes the modifier's results.
 		virtual void perform() override;
 
+		/// Returns the property storage that contains the computed displacement vectors.
+		const PropertyPtr& displacements() const { return _displacements; }
+		
 	private:
 
 		/// Computes the strain tensor of a single particle.
 		void computeStrain(size_t particleIndex, CutoffNeighborFinder& neighborListBuilder);
 
 		const FloatType _cutoff;
+		const PropertyPtr _displacements;
 		std::shared_ptr<AtomicStrainResults> _results;
 	};
 

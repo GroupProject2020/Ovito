@@ -112,22 +112,18 @@ void CalculateDisplacementsModifier::DisplacementEngine::perform()
 			FloatType* umag = displacementMagnitudes()->dataFloat() + startIndex;
 			const Point3* p = positions()->constDataPoint3() + startIndex;
 			auto index = currentToRefIndexMap().cbegin() + startIndex;
+			const AffineTransformation& reduced_to_absolute = (affineMapping() == TO_REFERENCE_CELL) ? refCell().matrix() : cell().matrix();
 			for(; count; --count, ++u, ++umag, ++p, ++index) {
-				Point3 ru = cell().inverseMatrix() * (*p);
-				Point3 ru0 = refCell().inverseMatrix() * refPositions()->getPoint3(*index);
-				Vector3 delta = ru - ru0;
+				Point3 reduced_current_pos = cell().inverseMatrix() * (*p);
+				Point3 reduced_reference_pos = refCell().inverseMatrix() * refPositions()->getPoint3(*index);
+				Vector3 delta = reduced_current_pos - reduced_reference_pos;
 				if(useMinimumImageConvention()) {
 					for(size_t k = 0; k < 3; k++) {
-						if(refCell().pbcFlags()[k]) {
-							if(delta[k] > FloatType(0.5)) delta[k] -= FloatType(1);
-							else if(delta[k] < FloatType(-0.5)) delta[k] += FloatType(1);
-						}
+						if(refCell().pbcFlags()[k])
+							delta[k] -= std::floor(delta[k] + FloatType(0.5));
 					}
 				}
-				if(affineMapping() == TO_REFERENCE_CELL)
-					*u = refCell().matrix() * delta;
-				else
-					*u = cell().matrix() * delta;
+				*u = reduced_to_absolute * delta;
 				*umag = u->length();
 			}
 		});
@@ -149,8 +145,8 @@ void CalculateDisplacementsModifier::DisplacementEngine::perform()
 								*u -= refCell().matrix().column(k);
 						}
 					}
-					*umag = u->length();
 				}
+				*umag = u->length();
 			}
 		});
 	}

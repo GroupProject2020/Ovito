@@ -147,7 +147,7 @@ void AmbientOcclusionModifier::AmbientOcclusionEngine::perform()
 
 			// Generate lighting direction on unit sphere.
 			FloatType y = (FloatType)sample * 2 / _samplingCount - FloatType(1) + FloatType(1) / _samplingCount;
-			FloatType r = sqrt(FloatType(1) - y * y);
+			//FloatType r = sqrt(FloatType(1) - y * y);
 			FloatType phi = (FloatType)sample * FLOATTYPE_PI * (FloatType(3) - sqrt(FloatType(5)));
 			Vector3 dir(cos(phi), y, sin(phi));
 

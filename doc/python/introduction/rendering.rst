@@ -1,7 +1,7 @@
 .. _rendering_intro:
 
 ===================================
-Rendering
+Rendering & visualization
 ===================================
 
 .. warning::

@@ -1,59 +1,145 @@
 .. _modifiers_overview:
 
 ===================================
-Modifiers
+Data pipelines & modifiers
 ===================================
 
-.. warning::
-   This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
-   development version of OVITO.
+The following introduction assumes that you have already read the :py:ref:`scripting_api_overview` page.
 
-Modifiers are objects that make up a node's modification pipeline.
-They modify, filter, or extend the data that flows down the pipeline from the 
-:py:class:`~ovito.io.FileSource` to the node's output cache, which is an instance of the 
-:py:class:`~ovito.data.DataCollection` class.
+Modifiers are composable function objects that form a `data processing pipeline <https://en.wikipedia.org/wiki/Pipeline_(software)>`_.
+They dynamically modify, filter, analyze or extend the data that flows down the pipeline. Here, with *data* we mean
+any form of information that OVITO can work with, e.g. particles and their properties, bonds, the simulation cell,
+triangles meshes, voxel data, etc. The main purpose of the pipeline concept is to enable a non-destructive and repeatable workflow, i.e.,
+instead of having a single dataset that is being modified in-place, a modification pipeline --once set up-- can be used 
+repeatedly on multiple input data. And since the result of a pipeline is computed dynamically from the original input data, it is possible to 
+change the pipeline at any time and revert actions of individual modifiers, for example. 
 
-You insert a new modifier into a pipeline by first creating a new instance of the corresponding modifier class
-(See :py:mod:`ovito.modifiers` module for the list of available modifier classes) and then 
-adding it to the node's :py:attr:`~ovito.ObjectNode.modifiers` list::
+A processing pipeline is represented by an instance of the :py:class:`~ovito.pipeline.Pipeline` class in OVITO.
+Initially, a pipeline contains no modifiers. That means its output will be identical to its input. The input data
+is provided by a separate source object that is attached to the pipeline. 
+Typically, this :py:attr:`~ovito.pipeline.Pipeline.source` object is an instance of the :py:class:`~ovito.pipeline.FileSource` class, which reads the input data
+from some external data file.
 
-   >>> from ovito.modifiers import *
-   >>> mod = AssignColorModifier( color=(0.5, 1.0, 0.0) )
-   >>> node.modifiers.append(mod)
+You can insert a modifier into a :py:class:`~ovito.pipeline.Pipeline` by creating a new 
+instance of the corresponding modifier class (see the :py:mod:`ovito.modifiers` module for all available modifier types) and then 
+adding it to the pipeline's :py:attr:`~ovito.pipeline.Pipeline.modifiers` list::
+
+   from ovito.modifiers import AssignColorModifier
+
+   modifier = AssignColorModifier( color=(0.5, 1.0, 0.0) )
+   pipeline.modifiers.append(modifier)
    
-Entries in the :py:attr:`ObjectNode.modifiers <ovito.ObjectNode.modifiers>` list are processed front to back, i.e.,
-appending a modifier to the end of the list will position it at the end of the modification pipeline.
-This corresponds to the bottom-up execution order known from OVITO's graphical user interface.
+The modifiers in the :py:attr:`Pipeline.modifiers <ovito.pipeline.Pipeline.modifiers>` list are executed from front to back, i.e.,
+appending a modifier to the list positions it at the end of the data pipeline and it will be the last one to process
+the data that is flowing down the pipeline. In other words, it will see the effect of all preceding modifiers in the sequence.
 
-Note that inserting a new modifier into the modification pipeline does not directly trigger a
-computation. The modifier will only be evaluated when the results of the pipeline need to be recomputed. 
-Evaluation of the modification pipeline can either happen implicitly, e.g. 
+.. image:: graphics/Pipeline.*
+   :width: 50 %
+   :align: center
 
-  * when the interactive viewports in OVITO's main window are updated, 
-  * when rendering an image,
-  * when exporting data using :py:func:`ovito.io.export_file`,
+Note that inserting a new modifier into the pipeline --like any change to a pipeline or its modifiers-- does not 
+immediately trigger a computation. The modifier's effect will be computed only when the results of the pipeline are requested. 
+Evaluation of the pipeline can be triggered either implicitly, e.g. when
+
+  * rendering an image or movie,
+  * updating the interactive viewports in OVITO's graphical user interface, 
+  * or exporting data using the :py:func:`ovito.io.export_file` function.
   
-or explicitly, when calling the :py:meth:`ObjectNode.compute() <ovito.ObjectNode.compute>` method.
-This method explicitly updates the output cache holding the results of the node's modification pipeline.
-The output of the modification pipeline is stored in a :py:class:`~ovito.data.DataCollection`
-that can be accessed through the :py:attr:`output <ovito.ObjectNode.output>` 
-attribute of the object node. The data collection holds all data objects that
-have left modification pipeline the last time it was evaluated::
+But you can also explicitly request an evaluation of the pipeline by calling its :py:meth:`~ovito.pipeline.Pipeline.compute` method.
+This method returns a new :py:class:`~ovito.data.PipelineFlowState` object, which is a form of :py:class:`~ovito.data.DataCollection` 
+holding the set of data objects that left the pipeline::
 
-    >>> node.compute()
-    >>> node.output
-    DataCollection(['Simulation cell', 'Position', 'Color'])
-    
-    >>> for key in node.output:
-    ...     print(node.output[key])
-    <SimulationCell at 0x7fb6238f1b30>
-    <ParticleProperty at 0x7fb623d0c760>
-    <ParticleProperty at 0x7fb623d0c060>
+    >>> data = pipeline.compute()
+    >>> print(data.objects)
+    [SimulationCell(), ParticleProperty('Position'), ParticleProperty('Color')]
 
-In this example, the output data collection consists of a :py:class:`~ovito.data.SimulationCell`
+In this example, the output data collection contains three data objects: a :py:class:`~ovito.data.SimulationCell`
 object and two :py:class:`~ovito.data.ParticleProperty` objects, which store the particle positions and 
-particle colors. We will learn more about the :py:class:`~ovito.data.DataCollection` class and
-particle properties later.
+particle colors, respectively. We will learn more about the :py:class:`~ovito.data.DataCollection` class and
+the representation of data later.
+
+Note that it is possible to change parameters of existing modifiers in a pipeline. Again, this does not immediately trigger 
+a recomputation of the pipeline (unlike in the graphical user interface, where changing a modifier's parameters 
+lets OVITO immediately recompute the results and update the interactive viewports). For example, we can 
+produce two alternative computation results by first evaluating the pipeline, then changing one of the modifiers, and then 
+evaluating the pipeline a second time::
+
+    >>> pipeline = import_file("simulation.dump")
+    >>> pipeline.modifiers.append(AssignColorModifier(color = (0.5, 1.0, 0.0)))
+    
+    >>> data_A = pipeline.compute()
+    >>> pipeline.modifiers[0].color = (0.8, 0.8, 1.0)
+    >>> data_B = pipeline.compute()
+
+    >>> data_A.particle_properties['Color'][...]
+    array([[ 0.5,  1. ,  0. ],
+           [ 0.5,  1. ,  0. ],
+            ..., 
+           [ 0.5,  1. ,  0. ],
+           [ 0.5,  1. ,  0. ]])
+
+    >>> data_B.particle_properties['Color'][...]
+    array([[ 0.8,  0.8,  1. ],
+           [ 0.8,  0.8,  1. ],
+            ..., 
+           [ 0.8,  0.8,  1. ],
+           [ 0.8,  0.8,  1. ]])
+
+--------------------------------------------------------------
+Processing of time-dependent data and simulation trajectories
+--------------------------------------------------------------
+
+As discussed in the :ref:`file_io_overview` section, it is possible to import simulation trajectories into 
+OVITO consisting of a sequence of frames. The :py:class:`~ovito.pipeline.FileSource` object providing
+the input data for a :py:class:`~ovito.pipeline.Pipeline` will feed one frame at a time to the pipeline in this case.
+The pipeline never processes all frames in a trajectory at once; you rather request the processing
+of a specific simulation frame by passing a *time* argument to the pipeline's :py:meth:`~ovito.pipeline.Pipeline.compute`
+method, e.g.::
+
+    >>> pipeline = import_file("trajectory_*.dump")
+    >>> data0 = pipeline.compute(0)
+    >>> data1 = pipeline.compute(1)
+
+The *time* argument specifies the animation frame number at which the pipeline should be evaluated, with 0 denoting the first frame in the loaded sequence.
+Typically, a ``for``-loop of the following form is used to iterate over all frames of a simulation sequence and process them one by one::
+
+    for frame in range(pipeline.source.num_frames):
+        data = pipeline.compute(frame)
+        ...
+
+Here, we accessed the :py:attr:`FileSource.num_frames <ovito.pipeline.FileSource.num_frames>` property to determine how many
+frames the input trajectory contains.
+
+Keep in mind that a :py:class:`~ovito.pipeline.Pipeline` is a reusable object, which normally should be set up only once and 
+then used many times to process multiple frames or input files. Thus, adding modifiers to the pipeline *within* the loop is 
+wrong::
+
+    # WRONG (!!!):
+    for frame in range(pipeline.source.num_frames):
+        pipeline.modifiers.append(AtomicStrainModifier(cutoff = 3.2))
+        data = pipeline.compute(frame)
+        ...
+
+Note how this loop would keep appending additional modifier instances to the same pipeline, making it longer and longer with every iteration.
+As a result, the computation of atomic strain values would be performed over and over again for the same data
+when :py:meth:`~ovito.pipeline.Pipeline.compute` is called. 
+Instead, the addition of the modifier should be performed exactly once *before* entering the loop::
+
+    # CORRECT:
+
+    # 1st step: pipeline setup
+    pipeline.modifiers.append(AtomicStrainModifier(cutoff = 3.2))
+
+    # 2nd step: pipeline evaluation
+    for frame in range(pipeline.source.num_frames):
+        data = pipeline.compute(frame)
+        ...
+
+---------------------------------
+Composing modifiers
+---------------------------------
+
+To be written...
 
 ---------------------------------
 Analysis modifiers
@@ -97,3 +183,11 @@ ourselves::
     
 Attributes are stored in the :py:attr:`~ovito.data.DataCollection.attributes` dictionary of the :py:class:`~ovito.data.DataCollection`.
 The class documentation of each modifier lists the attributes that it generates.
+
+---------------------------------
+User-defined modifiers
+---------------------------------
+
+OVITO provides a large collection of built-in modifier types, which are all found in the :py:mod:`ovito.modifiers` module.
+But it is also possible for you to write your own type of modifier in Python, which can participate in the pipeline system
+just as the built-in modifiers. More on this advanced topic can be found in the :py:ref:`writing_custom_modifiers` section.
