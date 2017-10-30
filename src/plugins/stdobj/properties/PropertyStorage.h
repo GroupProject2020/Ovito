@@ -38,9 +38,19 @@ public:
 	/// \brief The most commonly used data types. Note that, at least in principle,
 	///        the PropertyStorage class supports any data type registered with the Qt meta type system.
 	enum {
+#ifndef Q_CC_MSVC
 		Int = qMetaTypeId<int>(),
 		Int64 = qMetaTypeId<qlonglong>(),
 		Float = qMetaTypeId<FloatType>()
+#else // MSVC compiler doesn't treat qMetaTypeId() function as constexpr. Workaround:
+		Int = QMetaType::Int,
+		Int64 = QMetaType::LongLong,
+#ifdef FLOATTYPE_FLOAT
+		Float = QMetaType::Float
+#else
+		Float = QMetaType::Double
+#endif	
+#endif
 	};
 
 	/// \brief The standard property types defined by all property classes.

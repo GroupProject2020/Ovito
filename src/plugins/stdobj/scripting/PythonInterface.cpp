@@ -52,7 +52,7 @@ py::dict PropertyObject__array_interface__(PropertyObject& p)
 	else throw Exception("Cannot access empty property from Python.");
 	if(p.dataType() == PropertyStorage::Int) {
 		OVITO_STATIC_ASSERT(sizeof(int) == 4);
-		OVITO_STATIC_ASSERT(PropertyStorage::Int == qMetaTypeId<int>());
+		OVITO_STATIC_ASSERT(PropertyStorage::Int == QMetaType::Int);
 #if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
 		ai["typestr"] = py::bytes("<i4");
 #else
@@ -61,7 +61,7 @@ py::dict PropertyObject__array_interface__(PropertyObject& p)
 	}
 	else if(p.dataType() == PropertyStorage::Int64) {
 		OVITO_STATIC_ASSERT(sizeof(qlonglong) == 8);
-		OVITO_STATIC_ASSERT(PropertyStorage::Int64 == qMetaTypeId<qlonglong>());
+		OVITO_STATIC_ASSERT(PropertyStorage::Int64 == QMetaType::LongLong);
 #if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
 		ai["typestr"] = py::bytes("<i8");
 #else
@@ -71,7 +71,7 @@ py::dict PropertyObject__array_interface__(PropertyObject& p)
 	else if(p.dataType() == PropertyStorage::Float) {
 #ifdef FLOATTYPE_FLOAT		
 		OVITO_STATIC_ASSERT(sizeof(FloatType) == 4);
-		OVITO_STATIC_ASSERT(PropertyStorage::Float == qMetaTypeId<float>());
+		OVITO_STATIC_ASSERT(PropertyStorage::Float == QMetaType::Float);
 #if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
 		ai["typestr"] = py::bytes("<f4");
 #else
@@ -79,7 +79,7 @@ py::dict PropertyObject__array_interface__(PropertyObject& p)
 #endif
 #else
 		OVITO_STATIC_ASSERT(sizeof(FloatType) == 8);
-		OVITO_STATIC_ASSERT(PropertyStorage::Float == qMetaTypeId<double>());
+		OVITO_STATIC_ASSERT(PropertyStorage::Float == QMetaType::Double);
 #if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
 		ai["typestr"] = py::bytes("<f8");
 #else

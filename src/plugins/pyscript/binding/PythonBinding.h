@@ -77,11 +77,28 @@ namespace pybind11 { namespace detail {
         bool load(handle src, bool) {
 			if(!src) return false;
 			try {
+#ifndef Q_CC_MSVC
 				QString str = src.cast<QString>();
+#else
+				object temp;
+				handle load_src = src;
+				if(PyUnicode_Check(load_src.ptr())) {
+					temp = reinterpret_steal<object>(PyUnicode_AsUTF8String(load_src.ptr()));
+					if (!temp) { PyErr_Clear(); return false; }  // UnicodeEncodeError
+					load_src = temp;
+				}
+				char *buffer;
+				ssize_t length;
+				int err = PYBIND11_BYTES_AS_STRING_AND_SIZE(load_src.ptr(), &buffer, &length);
+				if (err == -1) { PyErr_Clear(); return false; }  // TypeError
+				QString str = QString::fromUtf8(buffer, (int)length);
+#endif
 				value = Ovito::Application::instance()->fileManager()->urlFromUserInput(str);
 				return true;
 			}
-			catch(const cast_error&) {}
+			catch(const cast_error&) {
+				// ignore
+			}
 			return false;
         }
 
