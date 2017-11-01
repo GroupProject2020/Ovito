@@ -85,6 +85,10 @@ SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeE
 
 IMPLEMENT_OVITO_CLASS(CorrelationFunctionModifierApplication);
 
+// This global mutex is used to serialize access to the FFTW3 planner 
+// routines, which are not thread-safe.
+QMutex CorrelationFunctionModifier::_fftwMutex;
+
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
@@ -312,12 +316,16 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::r2cFFT(int nX, int 
 																	QVector<std::complex<FloatType>> &cData)
 {
 	cData.resize(nX*nY*(nZ/2+1));
+	// Only serial access to FFTW3 functions allowed because they are not thread-safe.
+	QMutexLocker locker(&_fftwMutex);		
 	auto plan = fftw_plan_dft_r2c_3d(
 		nX, nY, nZ,
 		rData.data(),
 		reinterpret_cast<fftw_complex*>(cData.data()),
 		FFTW_ESTIMATE);
+	locker.unlock();
 	fftw_execute(plan);
+	locker.relock();
 	fftw_destroy_plan(plan);
 }
 
@@ -326,12 +334,16 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::c2rFFT(int nX, int 
 																	QVector<FloatType> &rData)
 {
 	rData.resize(nX*nY*nZ);
+	// Only serial access to FFTW3 functions allowed because they are not thread-safe.
+	QMutexLocker locker(&_fftwMutex);		
 	auto plan = fftw_plan_dft_c2r_3d(
 		nX, nY, nZ,
 		reinterpret_cast<fftw_complex*>(cData.data()),
 		rData.data(),
 		FFTW_ESTIMATE);
+	locker.unlock();
 	fftw_execute(plan);
+	locker.relock();
 	fftw_destroy_plan(plan);
 }
 
