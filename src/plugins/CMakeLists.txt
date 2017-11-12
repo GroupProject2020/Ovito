@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2015) Alexander Stukowski
+#  Copyright (2017) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -48,6 +48,10 @@ ENDIF()
 
 IF(OVITO_BUILD_PLUGIN_TACHYON)
 	ADD_SUBDIRECTORY(tachyon)
+ENDIF()
+
+IF(OVITO_BUILD_PLUGIN_OSPRAY)
+	ADD_SUBDIRECTORY(ospray)
 ENDIF()
 
 IF(OVITO_BUILD_PLUGIN_CRYSTALANALYSIS)
