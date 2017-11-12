@@ -135,7 +135,7 @@ Future<InputColumnMapping> AMBERNetCDFImporter::inspectFileHeader(const Frame& f
 			// Start task that inspects the file header to determine the contained data columns.
 			FrameLoaderPtr inspectionTask = std::make_shared<FrameLoader>(frame, filename);
 			return dataset()->container()->taskManager().runTaskAsync(inspectionTask)
-				.then([](const FileSourceImporter::FrameDataPtr& frameData) mutable {
+				.then([](const FileSourceImporter::FrameDataPtr& frameData) {
 					return static_cast<FrameData*>(frameData.get())->detectedColumnMapping();
 				});
 		});

@@ -219,7 +219,7 @@ bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask 
 	rt_trans_mode(_rtscene, RT_TRANS_VMD);
 
 	// Rays can pass through this maximum number of semi-transparent objects:
-	rt_camera_raydepth(_rtscene, 1000);
+	rt_camera_raydepth(_rtscene, 50);
 
 	// Export Ovito data objects to Tachyon scene.
 	if(!renderScene(promise))

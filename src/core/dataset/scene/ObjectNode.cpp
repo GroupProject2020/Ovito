@@ -118,7 +118,7 @@ SharedFuture<PipelineFlowState> ObjectNode::evaluatePipeline(TimePoint time)
 
 	// Evaluate the pipeline and store the obtained results in the cache before returning them to the caller.
 	return dataProvider()->evaluate(time)
-		.then(executor(), [this, time](const PipelineFlowState& state) mutable {
+		.then(executor(), [this, time](const PipelineFlowState& state) {
 //			qDebug() << "ObjectNode::evaluatePipeline: finished:" << state.stateValidity();
 
 			// The pipeline should never return a state without proper validity.
@@ -148,7 +148,7 @@ SharedFuture<PipelineFlowState> ObjectNode::evaluateRenderingPipeline(TimePoint 
 
 	// Evaluate the pipeline and store the obtained results in the cache before returning them to the caller.
 	return evaluatePipeline(time)
-		.then(executor(), [this, time](const PipelineFlowState& state) mutable {
+		.then(executor(), [this, time](const PipelineFlowState& state) {
 
 			// Holds the results to be returned to the caller.
 			Future<PipelineFlowState> results;

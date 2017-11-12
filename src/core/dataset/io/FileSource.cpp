@@ -336,7 +336,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 
 	// First request the list of source frames and wait until it becomes available.
 	return requestFrameList()
-		.then(executor(), [this,frame](const QVector<FileSourceImporter::Frame>& sourceFrames) -> Future<PipelineFlowState> {
+		.then(executor(), [this, frame](const QVector<FileSourceImporter::Frame>& sourceFrames) -> Future<PipelineFlowState> {
 //			qDebug() << "FileSource::requestFrameInternal: received frames list";
 
 			// Is the requested frame out of range?
@@ -384,7 +384,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 					// Execute the loader in a background thread.
 					// Collect results from the loader in the UI thread once it has finished running.
 					return dataset()->container()->taskManager().runTaskAsync(frameLoader)
-						.then(executor(), [this, frame, interval](FileSourceImporter::FrameDataPtr&& frameData) mutable {
+						.then(executor(), [this, frame, interval](FileSourceImporter::FrameDataPtr&& frameData) {
 //							qDebug() << "FileSource::requestFrameInternal: frame loader finished -> handing over data";
 
 							UndoSuspender noUndo(this);
@@ -454,7 +454,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 		//  - Turn any exception that was thrown during loading into a 
 		//    valid pipeline state with an error code.
 		//
-		.then_future(executor(), [this,frame](Future<PipelineFlowState> future) mutable {
+		.then_future(executor(), [this, frame](Future<PipelineFlowState> future) {
 //					qDebug() << "FileSource::requestFrameInternal: post-processing results of future" << future.sharedState().get();
 				OVITO_ASSERT(future.isFinished());
 				OVITO_ASSERT(!future.isCanceled());

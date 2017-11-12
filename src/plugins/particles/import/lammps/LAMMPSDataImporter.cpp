@@ -79,7 +79,7 @@ Future<LAMMPSDataImporter::LAMMPSAtomStyle> LAMMPSDataImporter::inspectFileHeade
 			// Start task that inspects the file header to determine the LAMMPS atom style.
 			FrameLoaderPtr inspectionTask = std::make_shared<FrameLoader>(frame, filename, atomStyle(), true);
 			return dataset()->container()->taskManager().runTaskAsync(inspectionTask)
-				.then([](const FileSourceImporter::FrameDataPtr& frameData) mutable {
+				.then([](const FileSourceImporter::FrameDataPtr& frameData) {
 					return static_cast<LAMMPSFrameData*>(frameData.get())->detectedAtomStyle();
 				});
 		});
