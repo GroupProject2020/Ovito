@@ -44,7 +44,7 @@ public:
 	struct Frame {
 
 		/// Default constructor.
-		Frame() : byteOffset(0), lineNumber(0) {}
+		Frame() = default;
 
 		/// Initialization constructor.
 		Frame(const QUrl& url, qint64 offset = 0, int linenum = 0, const QDateTime& modTime = QDateTime(), const QString& name = QString())	:
@@ -54,10 +54,10 @@ public:
 		QUrl sourceFile;
 
 		/// The byte offset into the source file where the frame's data is stored.
-		qint64 byteOffset;
+		qint64 byteOffset = 0;
 
 		/// The line number in the source file where the frame data is stored, if the file has a text-based format.
-		int lineNumber;
+		int lineNumber = 0;
 
 		/// The last modification time of the source file.
 		/// This is used to detect changes of the source file, which let the stored byte offset become invalid.

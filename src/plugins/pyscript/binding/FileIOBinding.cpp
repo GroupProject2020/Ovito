@@ -96,25 +96,25 @@ void defineIOSubmodule(py::module m)
 		.def_property_readonly("importer", &FileSource::importer)
 		.def_property_readonly("source_path", &FileSource::sourceUrl)
 		.def("set_source", &FileSource::setSource)
-		// Required by implementation of FileSource.load():
+		// Required by the implementation of FileSource.load():
 		.def("wait_until_ready", [](FileSource& fs, TimePoint time) {
 			SharedFuture<PipelineFlowState> future = fs.evaluate(time);
 			return ScriptEngine::activeTaskManager().waitForTask(future);
-		})	
+		})
 		.def_property_readonly("num_frames", &FileSource::numberOfFrames,
-				"The total number of frames the imported file or file sequence contains (read-only).")
-		.def_property_readonly("loaded_frame", &FileSource::storedFrameIndex,
-				"The zero-based frame index that is currently loaded and kept in memory by the :py:class:`!FileSource` (read-only). "
-				"\n\n"
-				"The data of this frame is accessible through the inherited :py:class:`~ovito.data.DataCollection` interface.")
+				"The number of frames the imported file or file sequence contains (read-only).")
+		// For backward compatibility with OVITO 2.9:
+		// Returns the zero-based frame index that is currently loaded and kept in memory by the FileSource.
+		.def_property_readonly("loaded_frame", &FileSource::storedFrameIndex)
+		// For backward compatibility with OVITO 2.9:
 		.def_property_readonly("loaded_file", [](FileSource& fs) -> QUrl {
+					// Return the path or URL of the data file that is currently loaded and kept in memory by the FileSource. 
 					if(fs.storedFrameIndex() < 0 || fs.storedFrameIndex() >= fs.frames().size()) return QUrl();
 					const FileSourceImporter::Frame& frameInfo = fs.frames()[fs.storedFrameIndex()];
 					return frameInfo.sourceFile;
-				},
-				"The path or URL of the data file that is currently loaded and kept in memory by the :py:class:`!FileSource` (read-only). ")
+				})
 		.def_property("adjust_animation_interval", &FileSource::adjustAnimationIntervalEnabled, &FileSource::setAdjustAnimationIntervalEnabled,
-				"A flag that controls whether the animation length in OVITO is automatically adjusted to match the number of frames in the "
+				"A Boolean flag that controls whether the animation length in OVITO is automatically adjusted to match the number of frames in the "
 				"loaded file or file sequence."
 				"\n\n"
 				"The current length of the animation in OVITO is managed by the global :py:class:`~ovito.anim.AnimationSettings` object. The number of frames in the external file "

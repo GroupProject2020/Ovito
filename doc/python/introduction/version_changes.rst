@@ -151,6 +151,14 @@ data objects.
 Some of the file format names accepted by :py:func:`~ovito.io.export_file` have been renamed and the new ``vtk/trimesh`` 
 has been added, which allows to export a :py:class:`~ovito.data.SurfaceMesh` to a VTK geometry file.
 
+The :py:attr:`!FileSource.loaded_file` attribute has been removed. The path of the input data file is now accessible as an attribute
+of the :py:class:`~ovito.data.DataCollection` interface, e.g.::
+
+    pipeline = import_file('input.dump')
+    data = pipeline.compute()
+    print(data.attributes['SourceFile'])
+    print(pipeline.source.attributes['SourceFile'])
+
 The old :py:meth:`!DataCollection.to_ase_atoms` and :py:meth:`!DataCollection.create_from_ase_atoms` methods
 have been refactored into the new :py:mod:`ovito.io.ase` module and are now standalone functions named :py:func:`~ovito.io.ase.ovito_to_ase` 
 and :py:func:`~ovito.io.ase.ase_to_ovito`. The latter requires that the caller provides an existing data collection object

@@ -24,7 +24,8 @@ New visualization features:
 - Thompson Tetrahedra
 - Stereoscopic display (Erik Bitzek)
 - Wireframe mesh rendering (robin.gibaud@simap.grenoble-inp.fr)
-- Double bonds (SP2) (Jejoon Yeon <jyeon3@ucmerced.edu>)
+- Double bonds (SP2) (Jejoon Yeon <jyeon3@ucmerced.edu>, OVITO forum: mlen2@ucmerced.edu)
+- Semi-transparent bonds
 - Visualization of Voronoi polyhedra.
 
 Unresolved OpenGL problems:

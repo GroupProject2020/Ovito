@@ -309,7 +309,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -323,7 +323,7 @@
        y="361.64792"
        x="127.14286"
        height="70.714279"
-       width="400.71432"
+       width="407.85721"
        id="rect2985-9"
        style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#f3eebf;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:3;marker:none;enable-background:accumulate" />
     <path
@@ -378,7 +378,7 @@
     <rect
        style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#adedb5;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:3;marker:none;enable-background:accumulate"
        id="rect3937"
-       width="84.523804"
+       width="94.523804"
        height="41.190479"
        x="292.84579"
        y="377.48126" />
@@ -386,14 +386,14 @@
        sodipodi:linespacing="125%"
        id="text3755-9-2-7"
        y="403.90067"
-       x="335.26285"
+       x="339.54855"
        style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:'Bitstream Vera Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
        xml:space="preserve"><tspan
          id="tspan3935"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;writing-mode:lr-tb;text-anchor:middle"
          y="403.90067"
-         x="335.26285"
-         sodipodi:role="line">Modifier 1</tspan></text>
+         x="339.54855"
+         sodipodi:role="line">Modifier #1</tspan></text>
     <path
        id="path2667"
        style="fill:none;stroke:#000000;stroke-width:0.43114403;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
@@ -470,7 +470,7 @@
          x="594.44104"
          y="397.18643"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1"
-         id="tspan4434">Output</tspan><tspan
+         id="tspan4434">output</tspan><tspan
          sodipodi:role="line"
          x="594.44104"
          y="410.93643"
@@ -486,20 +486,20 @@
        y="377.48126"
        x="430.70294"
        height="41.190479"
-       width="84.523804"
+       width="95.238091"
        id="rect5959"
        style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#adedb5;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:3;marker:none;enable-background:accumulate" />
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:40px;line-height:125%;font-family:'Bitstream Vera Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
-       x="473.12"
+       x="477.40573"
        y="403.90067"
        id="text5961"
        sodipodi:linespacing="125%"><tspan
          sodipodi:role="line"
-         x="473.12"
+         x="477.40573"
          y="403.90067"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;writing-mode:lr-tb;text-anchor:middle"
-         id="tspan5963">Modifier 2</tspan></text>
+         id="tspan5963">Modifier #2</tspan></text>
   </g>
 </svg>

@@ -181,6 +181,11 @@ public:
 		attributes().insert(QStringLiteral("SourceFrame"), frameNumber);
 	}
 
+	/// Sets the source data file associated with this state.
+	void setSourceFile(const QString& filepath) { 
+		attributes().insert(QStringLiteral("SourceFile"), filepath);
+	}
+	
 private:
 
 	/// The data that has been output by the modification pipeline.

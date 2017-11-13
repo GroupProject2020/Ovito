@@ -384,7 +384,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 					// Execute the loader in a background thread.
 					// Collect results from the loader in the UI thread once it has finished running.
 					return dataset()->container()->taskManager().runTaskAsync(frameLoader)
-						.then(executor(), [this, frame, interval](FileSourceImporter::FrameDataPtr&& frameData) mutable {
+						.then(executor(), [this, frame, frameInfo, interval](FileSourceImporter::FrameDataPtr&& frameData) mutable {
 //							qDebug() << "FileSource::requestFrameInternal: frame loader finished -> handing over data";
 
 							UndoSuspender noUndo(this);
@@ -408,8 +408,9 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 								existingState.clear();
 								output.setStateValidity(interval);
 								output.setSourceFrame(frame);
+								output.setSourceFile(frameInfo.sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded));
 								output.setStatus(frameData->status());
-
+								
 								// When loading the current frame, turn the data objects into sub-objects of this
 								// FileSource so that they appear in the pipeline viewer.
 								if(interval.contains(dataset()->animationSettings()->time())) {
@@ -422,7 +423,8 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 									setStoredFrameIndex(frame);
 								}
 
-								// Never directly output the current subobjects to the pipeline.
+								// Never directly output the current subobjects to the pipeline; 
+								// always clone them to avoid unwanted side effects.
 								output.cloneObjectsIfNeeded(false);
 
 								return output;

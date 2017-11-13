@@ -23,7 +23,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.4"
-     inkscape:cx="181.43061"
+     inkscape:cx="55.002039"
      inkscape:cy="245.11979"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -309,7 +309,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -378,9 +378,9 @@
     <rect
        style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#adedb5;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:3;marker:none;enable-background:accumulate"
        id="rect3937"
-       width="84.523804"
+       width="101.66666"
        height="41.190479"
-       x="151.41722"
+       x="142.84579"
        y="466.0527" />
     <path
        inkscape:connector-curvature="0"
@@ -390,9 +390,9 @@
        sodipodi:nodetypes="cc" />
     <rect
        y="560.33844"
-       x="151.41722"
+       x="142.84579"
        height="41.190479"
-       width="84.523804"
+       width="101.66666"
        id="rect4412"
        style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#adedb5;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:3;marker:none;enable-background:accumulate" />
     <text
@@ -406,7 +406,7 @@
          x="193.83427"
          y="586.75781"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;writing-mode:lr-tb;text-anchor:middle"
-         id="tspan4416">Modifier 2</tspan></text>
+         id="tspan4416">Modifier #2</tspan></text>
     <text
        sodipodi:linespacing="125%"
        id="text3755-9-2-7"
@@ -418,7 +418,7 @@
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;writing-mode:lr-tb;text-anchor:middle"
          y="492.47211"
          x="193.83427"
-         sodipodi:role="line">Modifier 1</tspan></text>
+         sodipodi:role="line">Modifier #1</tspan></text>
     <path
        id="path2667"
        style="fill:none;stroke:#000000;stroke-width:0.43114403;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-opacity:1"
@@ -543,7 +543,7 @@
          sodipodi:role="line"
          x="195.47775"
          y="669.32928"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1">Output </tspan><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:11px;line-height:125%;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans';text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1">output </tspan><tspan
          sodipodi:role="line"
          x="193.72678"
          y="683.07928"
