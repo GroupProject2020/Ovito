@@ -105,20 +105,27 @@ void OSPRayRendererEditor::createUI(const RolloutInsertionParameters& rolloutPar
 	QVBoxLayout* mainLayout = new QVBoxLayout(rollout);
 	mainLayout->setContentsMargins(4,4,4,4);
 
-	// Antialiasing
-	BooleanGroupBoxParameterUI* enableAntialiasingUI = new BooleanGroupBoxParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::antialiasingEnabled));
-	QGroupBox* aaGroupBox = enableAntialiasingUI->groupBox();
-	mainLayout->addWidget(aaGroupBox);
+	// Quality
+	QGroupBox* qualityGroupBox = new QGroupBox(tr("Quality"));
+	mainLayout->addWidget(qualityGroupBox);
 
-	QGridLayout* layout = new QGridLayout(enableAntialiasingUI->childContainer());
+	QGridLayout* layout = new QGridLayout(qualityGroupBox);
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(4);
 	layout->setColumnStretch(1, 1);
 
-	IntegerParameterUI* aaSamplesUI = new IntegerParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::antialiasingSamples));
-	layout->addWidget(aaSamplesUI->label(), 0, 0);
-	layout->addLayout(aaSamplesUI->createFieldLayout(), 0, 1);
+	IntegerParameterUI* refinementIterationsUI = new IntegerParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::refinementIterations));
+	layout->addWidget(refinementIterationsUI->label(), 0, 0);
+	layout->addLayout(refinementIterationsUI->createFieldLayout(), 0, 1);
+	
+	IntegerParameterUI* aaSamplesUI = new IntegerParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::samplesPerPixel));
+	layout->addWidget(aaSamplesUI->label(), 1, 0);
+	layout->addLayout(aaSamplesUI->createFieldLayout(), 1, 1);
 
+	IntegerParameterUI* maxRayRecursionUI = new IntegerParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::maxRayRecursion));
+	layout->addWidget(maxRayRecursionUI->label(), 2, 0);
+	layout->addLayout(maxRayRecursionUI->createFieldLayout(), 2, 1);
+	
 	BooleanGroupBoxParameterUI* enableDirectLightUI = new BooleanGroupBoxParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::directLightSourceEnabled));
 	QGroupBox* lightsGroupBox = enableDirectLightUI->groupBox();
 	mainLayout->addWidget(lightsGroupBox);

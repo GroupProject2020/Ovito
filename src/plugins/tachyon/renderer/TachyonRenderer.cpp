@@ -494,7 +494,6 @@ void TachyonRenderer::renderArrows(const DefaultArrowPrimitive& arrowBuffer)
 			rt_ring(_rtscene, tex, tvec(tp), tvec(-ta), 0, element.width);
 		}
 	}
-
 	else if(arrowBuffer.shape() == ArrowPrimitive::ArrowShape) {
 		for(const DefaultArrowPrimitive::ArrowElement& element : arrowBuffer.elements()) {
 			void* tex = getTachyonTexture(element.color.r(), element.color.g(), element.color.b(), element.color.a());

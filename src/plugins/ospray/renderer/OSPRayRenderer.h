@@ -25,7 +25,10 @@
 #include <core/Core.h>
 #include <core/rendering/noninteractive/NonInteractiveSceneRenderer.h>
 
-#include <ospray/ospray_cpp.h>
+// Foward declaration from OSPRay library:
+namespace ospray { namespace cpp {
+	class Model;
+}}
 
 namespace Ovito { namespace OSPRay {
 
@@ -75,12 +78,15 @@ public:
 
 private:
 
-	/// Controls anti-aliasing.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, antialiasingEnabled, setAntialiasingEnabled, PROPERTY_FIELD_MEMORIZE);
+	/// Controls the number of accumulation rendering passes.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, refinementIterations, setRefinementIterations, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls quality of anti-aliasing.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, antialiasingSamples, setAntialiasingSamples, PROPERTY_FIELD_MEMORIZE);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, samplesPerPixel, setSamplesPerPixel, PROPERTY_FIELD_MEMORIZE);
 
+	/// Controls maximum ray recursion depth.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, maxRayRecursion, setMaxRayRecursion, PROPERTY_FIELD_MEMORIZE);
+	
 	/// Enables direct light source.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, directLightSourceEnabled, setDirectLightSourceEnabled, PROPERTY_FIELD_MEMORIZE);
 
@@ -114,8 +120,8 @@ private:
 	/// List of text primitives that need to be painted over the final image.
 	std::vector<std::tuple<QString,ColorA,QFont,Point2,int>> _textDrawCalls;
 
-	/// The OSPRay rendering device.
-	std::unique_ptr<ospray::cpp::Device> _ospDevice;
+	/// Pointer to the OSPRay model.
+	ospray::cpp::Model* _world = nullptr;
 };
 
 }	// End of namespace
