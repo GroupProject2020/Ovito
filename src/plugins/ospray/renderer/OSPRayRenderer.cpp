@@ -365,10 +365,14 @@ void OSPRayRenderer::renderArrows(const DefaultArrowPrimitive& arrowBuffer)
 	std::vector<ospcommon::vec4f> colorData(arrowBuffer.elements().size());
 	std::vector<std::array<float,7>> discData(arrowBuffer.shape() == ArrowPrimitive::CylinderShape ? 0 : arrowBuffer.elements().size()*2);
 	std::vector<ospcommon::vec4f> discColorData(discData.size());
+	std::vector<std::array<float,7>> coneData(arrowBuffer.shape() == ArrowPrimitive::CylinderShape ? 0 : arrowBuffer.elements().size());
+	std::vector<ospcommon::vec4f> coneColorData(coneData.size());
 	auto cylIter = cylData.begin();
 	auto colorIter = colorData.begin();
 	auto discIter = discData.begin();
 	auto discColorIter = discColorData.begin();
+	auto coneIter = coneData.begin();
+	auto coneColorIter = coneColorData.begin();
 	for(const DefaultArrowPrimitive::ArrowElement& element : arrowBuffer.elements()) {
 		if(element.color.a() > 0) {
 			Point3 tp = tm * element.pos;
@@ -386,6 +390,7 @@ void OSPRayRenderer::renderArrows(const DefaultArrowPrimitive& arrowBuffer)
 				if(length > arrowHeadLength) {
 					tp = tm * element.pos;
 					ta = tm * (element.dir * ((length - arrowHeadLength) / length));
+					Vector3 tb = tm * (element.dir * (arrowHeadLength / length));
 					Vector3 normal = ta;
 					normal.normalizeSafely();
 					(*discIter)[0] = tp.x();
@@ -414,17 +419,31 @@ void OSPRayRenderer::renderArrows(const DefaultArrowPrimitive& arrowBuffer)
 					(*discColorIter)[3] = element.color.a();
 					++discIter;
 					++discColorIter;
+					(*coneIter)[0] = tp.x() + ta.x() + tb.x();
+					(*coneIter)[1] = tp.y() + ta.y() + tb.y();
+					(*coneIter)[2] = tp.z() + ta.z() + tb.z();
+					(*coneIter)[3] = -tb.x();
+					(*coneIter)[4] = -tb.y();
+					(*coneIter)[5] = -tb.z();
+					(*coneIter)[6] = arrowHeadRadius;
+					(*coneColorIter)[0] = element.color.r();
+					(*coneColorIter)[1] = element.color.g();
+					(*coneColorIter)[2] = element.color.b();
+					(*coneColorIter)[3] = element.color.a();
+					++coneIter;
+					++coneColorIter;
 				}
 				else {
 					FloatType r = arrowHeadRadius * length / arrowHeadLength;
 					ta = tm * element.dir;
-					ta.normalizeSafely();
+					Vector3 normal = ta;
+					normal.normalizeSafely();
 					(*discIter)[0] = tp.x();
 					(*discIter)[1] = tp.y();
 					(*discIter)[2] = tp.z();
-					(*discIter)[3] = -ta.x();
-					(*discIter)[4] = -ta.y();
-					(*discIter)[5] = -ta.z();
+					(*discIter)[3] = -normal.x();
+					(*discIter)[4] = -normal.y();
+					(*discIter)[5] = -normal.z();
 					(*discIter)[6] = r;
 					(*discColorIter)[0] = element.color.r();
 					(*discColorIter)[1] = element.color.g();
@@ -432,6 +451,19 @@ void OSPRayRenderer::renderArrows(const DefaultArrowPrimitive& arrowBuffer)
 					(*discColorIter)[3] = element.color.a();
 					++discIter;
 					++discColorIter;
+					(*coneIter)[0] = tp.x() + ta.x();
+					(*coneIter)[1] = tp.y() + ta.y();
+					(*coneIter)[2] = tp.z() + ta.z();
+					(*coneIter)[3] = -ta.x();
+					(*coneIter)[4] = -ta.y();
+					(*coneIter)[5] = -ta.z();
+					(*coneIter)[6] = r;
+					(*coneColorIter)[0] = element.color.r();
+					(*coneColorIter)[1] = element.color.g();
+					(*coneColorIter)[2] = element.color.b();
+					(*coneColorIter)[3] = element.color.a();
+					++coneIter;
+					++coneColorIter;
 					continue;
 				}							
 			}
@@ -487,6 +519,26 @@ void OSPRayRenderer::renderArrows(const DefaultArrowPrimitive& arrowBuffer)
 		discs.commit();
 		_world->addGeometry(discs);
 	}
+
+	size_t ncones = coneIter - coneData.begin();
+	if(ncones != 0) {
+		ospray::cpp::Geometry cones("cones");
+		cones.set("bytes_per_cone", (int)sizeof(float) * 7);
+		cones.set("offset_center", (int)sizeof(float) * 0);
+		cones.set("offset_axis", (int)sizeof(float) * 3);
+		cones.set("offset_radius", (int)sizeof(float) * 6);
+
+		ospray::cpp::Data data(ncones * 7, OSP_FLOAT, coneData.data());
+		data.commit();
+		cones.set("cones", data);
+
+		data = ospray::cpp::Data(ncones, OSP_FLOAT4, coneColorData.data());
+		data.commit();
+		cones.set("color", data);
+		
+		cones.commit();
+		_world->addGeometry(cones);
+	}	
 }
 
 /******************************************************************************

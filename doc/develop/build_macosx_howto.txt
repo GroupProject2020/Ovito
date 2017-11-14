@@ -105,6 +105,46 @@ cd ../netcdf/lib
 install_name_tool -id $PWD/libnetcdf.dylib libnetcdf.dylib
 
 **************************************************************************
+Download and build Intel Embree
+**************************************************************************
+cd /Users/stuko/progs/
+git clone https://github.com/embree/embree.git
+cd embree
+git checkout v2.17.0
+mkdir build
+cd build
+export MACOSX_DEPLOYMENT_TARGET=10.8
+cmake -DCMAKE_INSTALL_PREFIX=$HOME/progs/embree_install \
+      -DEMBREE_ISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-osx/ispc \
+	  -DTBB_INCLUDE_DIR=$HOME/progs/tbb2018_20170919oss/include/ \
+	  -DTBB_LIBRARY=$HOME/progs/tbb2018_20170919oss/lib/libtbb.dylib \
+	  -DTBB_LIBRARY_MALLOC=$HOME/progs/tbb2018_20170919oss/lib/libtbbmalloc.dylib \
+	  -DEMBREE_TUTORIALS=OFF \
+      ..
+make -j4 install
+
+**************************************************************************
+Download and build Intel OSPRay
+**************************************************************************
+cd /Users/stuko/progs/
+git clone https://github.com/ospray/ospray.git
+cd ospray
+mkdir build
+cd build
+export MACOSX_DEPLOYMENT_TARGET=10.8
+cmake -DCMAKE_INSTALL_PREFIX=$HOME/progs/ospray_install \
+      -DISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-osx/ispc \
+	  -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-2.17.0 \
+	  -DOSPRAY_APPS_BENCHMARK=OFF \
+	  -DOSPRAY_APPS_EXAMPLEVIEWER=OFF \
+	  -DOSPRAY_APPS_UTILITIES=OFF \
+	  -DOSPRAY_APPS_UTILITIES=OFF \
+	  -DTBB_ROOT=$HOME/progs/tbb2018_20170919oss \
+	  -DBUILD_SHARED_LIBS=ON \
+      ..
+make -j4 install
+
+**************************************************************************
 Build OVITO:
 **************************************************************************
 export MACOSX_DEPLOYMENT_TARGET=10.8
@@ -122,4 +162,8 @@ cmake -DOVITO_BUILD_DOCUMENTATION=ON \
       -DQSCINTILLA_INCLUDE_DIR=$HOME/progs/QScintilla_gpl-2.10.1/Qt4Qt5 \
       -DQSCINTILLA_LIBRARY=$HOME/progs/QScintilla_gpl-2.10.1/Qt4Qt5/libqscintilla2_qt5.dylib \
       -DnetCDF_DIR=$HOME/progs/netcdf/lib/cmake/netCDF \
+      -DOVITO_BUILD_PLUGIN_OSPRAY=ON \
+      -Dospray_DIR=$HOME/progs/ospray_install/lib/cmake/ \
+	  -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-2.17.0 \
+      -DISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-osx/ispc \
       ../..

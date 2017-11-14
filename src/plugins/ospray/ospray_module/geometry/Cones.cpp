@@ -19,9 +19,9 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "Discs.h"
+#include "Cones.h"
 // 'export'ed functions from the ispc file:
-#include "Discs_ispc.h"
+#include "Cones_ispc.h"
 // ospray core:
 #include <common/Data.h>
 
@@ -31,19 +31,19 @@ namespace ospray {
   namespace ovito {
 
     /*! constructor - will create the 'ispc equivalent' */
-    Discs::Discs()
+    Cones::Cones()
     {
       /*! create the 'ispc equivalent': ie, the ispc-side class that
         implements all the ispc-side code for intersection,
         postintersect, etc. See BilinearPatches.ispc */
-      this->ispcEquivalent = ispc::Discs_create(this);
+      this->ispcEquivalent = ispc::Cones_create(this);
 
       // note we do _not_ yet do anything else here - the actual input
       // data isn't available to use until 'commit()' gets called
     }
 
     /*! destructor - supposed to clean up all alloced memory */
-    Discs::~Discs()
+    Cones::~Cones()
     {
       if (_materialList) {
         free(_materialList);
@@ -53,17 +53,17 @@ namespace ospray {
 
     /*! 'finalize' is what ospray calls when everything is set and
         done, and a actual user geometry has to be built */
-    void Discs::finalize(Model *model)
+    void Cones::finalize(Model *model)
     {
       radius            = getParam1f("radius",0.01f);
       materialID        = getParam1i("materialID",0);
-      bytesPerDisc      = getParam1i("bytes_per_disc",6*sizeof(float));
+      bytesPerCone      = getParam1i("bytes_per_cone",6*sizeof(float));
       offset_center     = getParam1i("offset_center",0);
-      offset_normal     = getParam1i("offset_normal",3*sizeof(float));
+      offset_axis       = getParam1i("offset_axis",3*sizeof(float));
       offset_radius     = getParam1i("offset_radius",-1);
       offset_materialID = getParam1i("offset_materialID",-1);
       offset_colorID    = getParam1i("offset_colorID",-1);
-      discData          = getParamData("discs");
+      coneData          = getParamData("cones");
       materialList      = getParamData("materialList");
       colorData         = getParamData("color");
       colorOffset       = getParam1i("color_offset",0);
@@ -71,12 +71,12 @@ namespace ospray {
       colorStride       = getParam1i("color_stride", colComps * sizeof(float));
       texcoordData      = getParamData("texcoord");
       
-      if(discData.ptr == nullptr) {
-        throw std::runtime_error("#ospray:geometry/discs: no 'discs' data specified");
+      if(coneData.ptr == nullptr) {
+        throw std::runtime_error("#ospray:geometry/cones: no 'cones' data specified");
       }
 
       // look at the data we were provided with ....
-      numDiscs = discData->numBytes / bytesPerDisc;
+      numCones = coneData->numBytes / bytesPerCone;
 
       if (_materialList) {
         free(_materialList);
@@ -92,36 +92,38 @@ namespace ospray {
         _materialList = (void*)ispcMaterials;
       }
 
-      const char* discPtr = (const char*)discData->data;
+      const char* conePtr = (const char*)coneData->data;
       bounds = empty;
-      for(uint32_t i = 0; i < numDiscs; i++, discPtr += bytesPerDisc) {
-        const float r = offset_radius < 0 ? radius : *(const float*)(discPtr + offset_radius);
-        const vec3f& center = *(const vec3f*)(discPtr + offset_center);
+      for(uint32_t i = 0; i < numCones; i++, conePtr += bytesPerCone) {
+        float r = offset_radius < 0 ? radius : *(const float*)(conePtr + offset_radius);
+        const vec3f& center = *(const vec3f*)(conePtr + offset_center);
+        const vec3f& axis = *(const vec3f*)(conePtr + offset_axis);
+        r = std::max(r, std::sqrt(axis[0]*axis[0] + axis[1]*axis[1] + axis[2]*axis[2]));
         bounds.extend(box3f(center - r, center + r));
       }
       
-      ispc::DiscsGeometry_set(getIE(), model->getIE(), discData->data, _materialList,
+      ispc::ConesGeometry_set(getIE(), model->getIE(), coneData->data, _materialList,
         texcoordData ? (ispc::vec2f *)texcoordData->data : nullptr,
         colorData ? colorData->data : nullptr,
         colorOffset, colorStride,
         colorData && colorData->type == OSP_FLOAT4,
-        numDiscs, bytesPerDisc,
+        numCones, bytesPerCone,
         radius, materialID,
-        offset_center, offset_normal, offset_radius,
+        offset_center, offset_axis, offset_radius,
         offset_materialID, offset_colorID);
     }
 
 
-    /*! This macro 'registers' the Discs class under the ospray
-        geometry type name of 'discs'.
+    /*! This macro 'registers' the Cones class under the ospray
+        geometry type name of 'cones'.
 
         It is _this_ name that one can now (assuming the module has
         been loaded with ospLoadModule(), of course) create geometries
         with; i.e.,
 
-        OSPGeometry geom = ospNewGeometry("discs") ;
+        OSPGeometry geom = ospNewGeometry("cones") ;
     */
-    OSP_REGISTER_GEOMETRY(Discs,discs);
+    OSP_REGISTER_GEOMETRY(Cones,cones);
 
   } // ::ospray::ovito
 } // ::ospray
