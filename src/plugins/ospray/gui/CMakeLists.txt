@@ -21,6 +21,8 @@
 
 SET(SourceFiles
 	OSPRayRendererEditor.cpp
+	OSPRaySciVisBackendEditor.cpp
+	OSPRayPathTracerBackendEditor.cpp
 )
 
 OVITO_STANDARD_PLUGIN(OSPRayRendererGui

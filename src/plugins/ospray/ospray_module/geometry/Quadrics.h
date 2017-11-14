@@ -35,7 +35,7 @@ namespace ospray {
     // import ospcommon component - vec3f etc
     using namespace ospcommon;
 
-    /*! a geometry type that implements cones.
+    /*! a geometry type that implements quadrics. 
       This implements a new ospray geometry, and as such has
       to
 
@@ -49,49 +49,45 @@ namespace ospray {
       all that matters is under which name it is registered in the cpp
       file (see comments on OSPRAY_REGISTER_GEOMETRY)
     */
-    struct Cones : public ospray::Geometry
+    struct Quadrics : public ospray::Geometry
     {
       /*! constructor - will create the 'ispc equivalent' */
-      Cones();
+      Quadrics();
 
       /*! destructor - supposed to clean up all alloced memory */
-      virtual ~Cones() override;
+      virtual ~Quadrics() override;
 
       /*! 'finalize' is what ospray calls when everything is set and
         done, and a actual user geometry has to be built */
       virtual void finalize(Model *model) override;
 
-      /*! default radius, if no per-cone radius was specified. */
-      float radius;
-
-      size_t numCones;
-      size_t bytesPerCone; //!< num bytes per cone
+      size_t numQuadrics;
+      size_t bytesPerQuadric;
       int32 materialID;
       int64 offset_center;
       int64 offset_radius;
-      int64 offset_axis;
+      int64 offset_coeff;
       int64 offset_materialID;
       int64 offset_colorID;
 
-      /*! the input data array. the data array contains a list of
-          cones, each of which consists of two vec3fs + optional radius. */
-      Ref<Data> coneData;
+      /*! the input data array. */
+      Ref<Data> quadricData;
 
       Ref<Data> materialList;
       void     *_materialList {nullptr};
       Ref<Data> texcoordData;
 
-      /*! data array from which we read the per-cone color data; if
-        NULL we do not have per-cone data */
+      /*! data array from which we read the per-quadric color data; if
+        NULL we do not have per-quadric data */
       Ref<Data> colorData;
       
-      /*! stride in colorData array for accessing i'th cone's
-        color. color of cone i will be read as 3 floats from
+      /*! stride in colorData array for accessing i'th quadric's
+        color. color of disc i will be read as 3 floats from
         'colorOffset+i*colorStride */
       size_t    colorStride;
         
-      /*! offset in colorData array for accessing i'th cone's
-        color. color of cone i will be read as 3 floats from
+      /*! offset in colorData array for accessing i'th quadric's
+        color. color of disc i will be read as 3 floats from
         'colorOffset+i*colorStride */
       size_t    colorOffset;
     };

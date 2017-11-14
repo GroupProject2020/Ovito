@@ -100,7 +100,7 @@ private:
 void TachyonRendererEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create the rollout.
-	QWidget* rollout = createRollout(tr("Tachyon renderer settings"), rolloutParams, "rendering.tachyon_renderer.html");
+	QWidget* rollout = createRollout(tr("Tachyon settings"), rolloutParams, "rendering.tachyon_renderer.html");
 
 	QVBoxLayout* mainLayout = new QVBoxLayout(rollout);
 	mainLayout->setContentsMargins(4,4,4,4);

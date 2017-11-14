@@ -40,12 +40,14 @@ OSPRAY_CREATE_LIBRARY(ospray_module_ovito
 	# building accel structures, etc
 	geometry/Discs.cpp
 	geometry/Cones.cpp
+	geometry/Quadrics.cpp
 	
 	# the ispc files that contain the plugins for all vector code - ie,
 	# for ray-primitive intersection and 'postIntersect' (reporting info
 	# on a previously computed ray-prim intersection)
 	geometry/Discs.ispc
 	geometry/Cones.ispc
+	geometry/Quadrics.ispc
 	
 	# and finally, the module init code (not doing much, but must be there)
 	moduleInit.cpp

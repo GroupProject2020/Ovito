@@ -24,10 +24,13 @@
 
 #include <core/Core.h>
 #include <core/rendering/noninteractive/NonInteractiveSceneRenderer.h>
+#include "OSPRayBackend.h"
 
 // Foward declaration from OSPRay library:
 namespace ospray { namespace cpp {
 	class Model;
+	class Renderer;
+	class Material;
 }}
 
 namespace Ovito { namespace OSPRay {
@@ -39,7 +42,7 @@ class OVITO_OSPRAYRENDERER_EXPORT OSPRayRenderer : public NonInteractiveSceneRen
 {
 	Q_OBJECT
 	OVITO_CLASS(OSPRayRenderer)
-	Q_CLASSINFO("DisplayName", "OSPRay renderer");
+	Q_CLASSINFO("DisplayName", "OSPRay (experimental)");
 	
 public:
 
@@ -78,6 +81,9 @@ public:
 
 private:
 
+	/// Stores OSPRay backend specific parameters.
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(OSPRayBackend, backend, setBackend, PROPERTY_FIELD_MEMORIZE);
+		
 	/// Controls the number of accumulation rendering passes.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, refinementIterations, setRefinementIterations, PROPERTY_FIELD_MEMORIZE);
 
@@ -90,23 +96,20 @@ private:
 	/// Enables direct light source.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, directLightSourceEnabled, setDirectLightSourceEnabled, PROPERTY_FIELD_MEMORIZE);
 
-	/// Enables shadows for the direct light source.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, shadowsEnabled, setShadowsEnabled, PROPERTY_FIELD_MEMORIZE);
-
 	/// Controls the brightness of the default direct light source.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, defaultLightSourceIntensity, setDefaultLightSourceIntensity, PROPERTY_FIELD_MEMORIZE);
 
-	/// Enables ambient occlusion lighting.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, ambientOcclusionEnabled, setAmbientOcclusionEnabled, PROPERTY_FIELD_MEMORIZE);
-
-	/// Controls quality of ambient occlusion.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, ambientOcclusionSamples, setAmbientOcclusionSamples, PROPERTY_FIELD_MEMORIZE);
-
-	/// Controls the brightness of the sky light source used for ambient occlusion.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, ambientOcclusionBrightness, setAmbientOcclusionBrightness, PROPERTY_FIELD_MEMORIZE);
+	/// Controls the angular diameter of the default direct light source.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, defaultLightSourceAngularDiameter, setDefaultLightSourceAngularDiameter, PROPERTY_FIELD_MEMORIZE);
+	
+	/// Enables ambient light source.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, ambientLightEnabled, setAmbientLightEnabled, PROPERTY_FIELD_MEMORIZE);
+	
+	/// Controls the brightness of the sky light source.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, ambientBrightness, setAmbientBrightness, PROPERTY_FIELD_MEMORIZE);
 
 	/// Enables depth-of-field rendering.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, depthOfFieldEnabled, setDepthOfFieldEnabled, PROPERTY_FIELD_MEMORIZE);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, depthOfFieldEnabled, setDepthOfFieldEnabled);
 
 	/// Controls the camera's focal length, which is used for depth-of-field rendering.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, dofFocalLength, setDofFocalLength, PROPERTY_FIELD_MEMORIZE);
@@ -122,6 +125,12 @@ private:
 
 	/// Pointer to the OSPRay model.
 	ospray::cpp::Model* _world = nullptr;
+
+	/// Pointer to the OSPRay renderer.
+	ospray::cpp::Renderer* _ospRenderer = nullptr;
+
+	/// Pointer to the OSPRay standard material.
+	ospray::cpp::Material* _ospMaterial = nullptr;
 };
 
 }	// End of namespace

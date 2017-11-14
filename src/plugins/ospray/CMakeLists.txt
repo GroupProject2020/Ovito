@@ -24,6 +24,7 @@ FIND_PACKAGE(ospray REQUIRED)
 
 SET(SourceFiles
 	renderer/OSPRayRenderer.cpp
+	renderer/OSPRayBackend.cpp
 )
 
 IF(OVITO_BUILD_PLUGIN_PYSCRIPT)

@@ -24,11 +24,14 @@
 #include <gui/properties/BooleanGroupBoxParameterUI.h>
 #include <gui/properties/IntegerParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
+#include <gui/properties/SubObjectParameterUI.h>
 #include <gui/viewport/input/ViewportInputManager.h>
 #include <gui/viewport/input/ViewportInputMode.h>
 #include <gui/viewport/ViewportWindow.h>
 #include <gui/actions/ViewportModeAction.h>
 #include <gui/mainwin/MainWindow.h>
+#include <gui/widgets/general/HtmlListWidget.h>
+#include <core/app/PluginManager.h>
 #include <plugins/ospray/renderer/OSPRayRenderer.h>
 #include "OSPRayRendererEditor.h"
 
@@ -100,7 +103,7 @@ private:
 void OSPRayRendererEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create the rollout.
-	QWidget* rollout = createRollout(tr("OSPRay renderer settings"), rolloutParams);
+	QWidget* rollout = createRollout(tr("OSPRay settings"), rolloutParams);
 
 	QVBoxLayout* mainLayout = new QVBoxLayout(rollout);
 	mainLayout->setContentsMargins(4,4,4,4);
@@ -127,45 +130,39 @@ void OSPRayRendererEditor::createUI(const RolloutInsertionParameters& rolloutPar
 	layout->addLayout(maxRayRecursionUI->createFieldLayout(), 2, 1);
 	
 	BooleanGroupBoxParameterUI* enableDirectLightUI = new BooleanGroupBoxParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::directLightSourceEnabled));
-	QGroupBox* lightsGroupBox = enableDirectLightUI->groupBox();
-	mainLayout->addWidget(lightsGroupBox);
+	QGroupBox* directLightsGroupBox = enableDirectLightUI->groupBox();
+	mainLayout->addWidget(directLightsGroupBox);
 
 	layout = new QGridLayout(enableDirectLightUI->childContainer());
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(4);
 	layout->setColumnStretch(1, 1);
 
-	// Default light brightness.
+	// Direct light brightness.
 	FloatParameterUI* defaultLightIntensityUI = new FloatParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::defaultLightSourceIntensity));
 	defaultLightIntensityUI->label()->setText(tr("Brightness:"));
 	layout->addWidget(defaultLightIntensityUI->label(), 0, 0);
 	layout->addLayout(defaultLightIntensityUI->createFieldLayout(), 0, 1);
 
-	// Shadows.
-	BooleanParameterUI* enableShadowsUI = new BooleanParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::shadowsEnabled));
-	layout->addWidget(enableShadowsUI->checkBox(), 1, 0, 1, 2);
+	// Angular diameter.
+	FloatParameterUI* defaultLightSourceAngularDiameterUI = new FloatParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::defaultLightSourceAngularDiameter));
+	layout->addWidget(defaultLightSourceAngularDiameterUI->label(), 1, 0);
+	layout->addLayout(defaultLightSourceAngularDiameterUI->createFieldLayout(), 1, 1);
+	
+	BooleanGroupBoxParameterUI* enableAmbientLightUI = new BooleanGroupBoxParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::ambientLightEnabled));
+	QGroupBox* ambientLightsGroupBox = enableAmbientLightUI->groupBox();
+	mainLayout->addWidget(ambientLightsGroupBox);
 
-	// Ambient occlusion.
-	BooleanGroupBoxParameterUI* enableAmbientOcclusionUI = new BooleanGroupBoxParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::ambientOcclusionEnabled));
-	QGroupBox* aoGroupBox = enableAmbientOcclusionUI->groupBox();
-	mainLayout->addWidget(aoGroupBox);
-
-	layout = new QGridLayout(enableAmbientOcclusionUI->childContainer());
+	layout = new QGridLayout(enableAmbientLightUI->childContainer());
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(4);
 	layout->setColumnStretch(1, 1);
-
-	// Ambient occlusion brightness.
-	FloatParameterUI* aoBrightnessUI = new FloatParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::ambientOcclusionBrightness));
-	aoBrightnessUI->label()->setText(tr("Brightness:"));
-	layout->addWidget(aoBrightnessUI->label(), 0, 0);
-	layout->addLayout(aoBrightnessUI->createFieldLayout(), 0, 1);
-
-	// Ambient occlusion samples.
-	IntegerParameterUI* aoSamplesUI = new IntegerParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::ambientOcclusionSamples));
-	aoSamplesUI->label()->setText(tr("Sample count:"));
-	layout->addWidget(aoSamplesUI->label(), 1, 0);
-	layout->addLayout(aoSamplesUI->createFieldLayout(), 1, 1);
+	
+	// Ambient brightness.
+	FloatParameterUI* ambientBrightnessUI = new FloatParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::ambientBrightness));
+	ambientBrightnessUI->label()->setText(tr("Brightness:"));
+	layout->addWidget(ambientBrightnessUI->label(), 0, 0);
+	layout->addLayout(ambientBrightnessUI->createFieldLayout(), 0, 1);
 
 	// Depth of field
 	BooleanGroupBoxParameterUI* enableDepthOfFieldUI = new BooleanGroupBoxParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::depthOfFieldEnabled));
@@ -191,6 +188,52 @@ void OSPRayRendererEditor::createUI(const RolloutInsertionParameters& rolloutPar
 	FloatParameterUI* apertureUI = new FloatParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::dofAperture));
 	layout->addWidget(apertureUI->label(), 1, 0);
 	layout->addLayout(apertureUI->createFieldLayout(), 1, 1, 1, 2);
+
+	// 'Switch backend' button.
+	QPushButton* switchBackendButton = new QPushButton(tr("Switch OSPRay backend..."));
+	connect(switchBackendButton, &QPushButton::clicked, this, &OSPRayRendererEditor::onSwitchBackend);
+	mainLayout->addWidget(switchBackendButton);
+	
+	// Open a sub-editor for the backend.
+	new SubObjectParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::backend), rolloutParams.after(rollout));
+}
+
+/******************************************************************************
+* Lets the user choose a different OSPRay engine.
+******************************************************************************/
+void OSPRayRendererEditor::onSwitchBackend()
+{
+	OSPRayRenderer* renderer = static_object_cast<OSPRayRenderer>(editObject());
+	if(!renderer) return;
+
+	// Create list of available backends.
+	QVector<OvitoClassPtr> backendClasses = PluginManager::instance().listClasses(OSPRayBackend::OOClass());
+	int current = -1;
+	int index = 0;
+	QStringList items;	
+	for(const OvitoClassPtr& clazz : backendClasses) {
+		items << clazz->displayName();
+		if(renderer->backend() && &renderer->backend()->getOOClass() == clazz)
+			current = index;
+		++index;
+	}
+
+	// Let user choose a new backend.
+	bool ok;
+	QString item = QInputDialog::getItem(container(), tr("Switch OSPRay backend"), 
+		tr("Select an OSPRay rendering backend."), items, current, false, &ok);
+	if(!ok) return;
+
+	int newIndex = items.indexOf(item);
+	if(newIndex >= 0 && newIndex < backendClasses.size()) {
+		if(!renderer->backend() || &renderer->backend()->getOOClass() != backendClasses[newIndex]) {
+			undoableTransaction(tr("Switch backend"), [renderer, newIndex, &backendClasses]() {
+				OORef<OSPRayBackend> backend = static_object_cast<OSPRayBackend>(backendClasses[newIndex]->createInstance(renderer->dataset()));
+				backend->loadUserDefaults();
+				renderer->setBackend(backend);
+			});
+		}
+	}	
 }
 
 OVITO_END_INLINE_NAMESPACE

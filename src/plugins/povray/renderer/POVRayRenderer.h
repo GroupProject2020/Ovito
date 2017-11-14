@@ -36,7 +36,7 @@ class OVITO_POVRAY_EXPORT POVRayRenderer : public NonInteractiveSceneRenderer
 {
 	Q_OBJECT
 	OVITO_CLASS(POVRayRenderer)
-	Q_CLASSINFO("DisplayName", "POV-Ray renderer");
+	Q_CLASSINFO("DisplayName", "POV-Ray");
 
 public:
 

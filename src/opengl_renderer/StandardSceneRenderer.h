@@ -38,7 +38,7 @@ class OVITO_OPENGL_RENDERER_EXPORT StandardSceneRenderer : public OpenGLSceneRen
 {
 	Q_OBJECT
 	OVITO_CLASS(StandardSceneRenderer)
-	Q_CLASSINFO("DisplayName", "OpenGL renderer");
+	Q_CLASSINFO("DisplayName", "OpenGL");
 	
 public:
 

@@ -29,27 +29,22 @@
 namespace Ovito { namespace OSPRay { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 	
 /*
- * \brief The UI component for the OSPRayRenderer class.
+ * \brief The UI component for the OSPRayPathTracerBackend class.
  */
-class OSPRayRendererEditor : public PropertiesEditor
+class OSPRayPathTracerBackendEditor : public PropertiesEditor
 {
 	Q_OBJECT
-	OVITO_CLASS(OSPRayRendererEditor)
+	OVITO_CLASS(OSPRayPathTracerBackendEditor)
 	
 public:
 
 	/// Default constructor.
-	Q_INVOKABLE OSPRayRendererEditor() = default;
+	Q_INVOKABLE OSPRayPathTracerBackendEditor() = default;
 
 protected:
 	
 	/// Creates the user interface controls for the editor.
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
-
-private Q_SLOTS:
-
-	/// Lets the user choose a different OSPRay engine.
-	void onSwitchBackend();
 };
 
 OVITO_END_INLINE_NAMESPACE

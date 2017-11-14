@@ -24,37 +24,40 @@
 #include <core/rendering/RenderSettings.h>
 #include <core/oo/CloneHelper.h>
 #include <core/app/Application.h>
+#include <core/app/PluginManager.h>
 #include <core/dataset/scene/ObjectNode.h>
 #include <core/utilities/concurrent/Task.h>
 #include <core/utilities/units/UnitsManager.h>
 #include "OSPRayRenderer.h"
 
 #include <ospray/ospray_cpp.h>
+#include <render/LoadBalancer.h>
+#include <ospcommon/tasking/parallel_for.h>
 
 namespace Ovito { namespace OSPRay {
 
 IMPLEMENT_OVITO_CLASS(OSPRayRenderer);
+DEFINE_REFERENCE_FIELD(OSPRayRenderer, backend);
 DEFINE_PROPERTY_FIELD(OSPRayRenderer, refinementIterations);
 DEFINE_PROPERTY_FIELD(OSPRayRenderer, samplesPerPixel);
 DEFINE_PROPERTY_FIELD(OSPRayRenderer, maxRayRecursion);
 DEFINE_PROPERTY_FIELD(OSPRayRenderer, directLightSourceEnabled);
-DEFINE_PROPERTY_FIELD(OSPRayRenderer, shadowsEnabled);
 DEFINE_PROPERTY_FIELD(OSPRayRenderer, defaultLightSourceIntensity);
-DEFINE_PROPERTY_FIELD(OSPRayRenderer, ambientOcclusionEnabled);
-DEFINE_PROPERTY_FIELD(OSPRayRenderer, ambientOcclusionSamples);
-DEFINE_PROPERTY_FIELD(OSPRayRenderer, ambientOcclusionBrightness);
+DEFINE_PROPERTY_FIELD(OSPRayRenderer, defaultLightSourceAngularDiameter);
+DEFINE_PROPERTY_FIELD(OSPRayRenderer, ambientLightEnabled);
+DEFINE_PROPERTY_FIELD(OSPRayRenderer, ambientBrightness);
 DEFINE_PROPERTY_FIELD(OSPRayRenderer, depthOfFieldEnabled);
 DEFINE_PROPERTY_FIELD(OSPRayRenderer, dofFocalLength);
 DEFINE_PROPERTY_FIELD(OSPRayRenderer, dofAperture);
-SET_PROPERTY_FIELD_LABEL(OSPRayRenderer, refinementIterations, "Refinement iterations");
+SET_PROPERTY_FIELD_LABEL(OSPRayRenderer, backend, "OSPRay backend");
+SET_PROPERTY_FIELD_LABEL(OSPRayRenderer, refinementIterations, "Refinement passes");
 SET_PROPERTY_FIELD_LABEL(OSPRayRenderer, samplesPerPixel, "Samples per pixel");
-SET_PROPERTY_FIELD_LABEL(OSPRayRenderer, maxRayRecursion, "Maximum ray recursion depth");
+SET_PROPERTY_FIELD_LABEL(OSPRayRenderer, maxRayRecursion, "Max ray recursion depth");
 SET_PROPERTY_FIELD_LABEL(OSPRayRenderer, directLightSourceEnabled, "Direct light");
-SET_PROPERTY_FIELD_LABEL(OSPRayRenderer, shadowsEnabled, "Shadows");
 SET_PROPERTY_FIELD_LABEL(OSPRayRenderer, defaultLightSourceIntensity, "Direct light intensity");
-SET_PROPERTY_FIELD_LABEL(OSPRayRenderer, ambientOcclusionEnabled, "Ambient occlusion");
-SET_PROPERTY_FIELD_LABEL(OSPRayRenderer, ambientOcclusionSamples, "Ambient occlusion samples");
-SET_PROPERTY_FIELD_LABEL(OSPRayRenderer, ambientOcclusionBrightness, "Ambient occlusion brightness");
+SET_PROPERTY_FIELD_LABEL(OSPRayRenderer, defaultLightSourceAngularDiameter, "Angular diameter");
+SET_PROPERTY_FIELD_LABEL(OSPRayRenderer, ambientLightEnabled, "Ambient light");
+SET_PROPERTY_FIELD_LABEL(OSPRayRenderer, ambientBrightness, "Ambient light brightness");
 SET_PROPERTY_FIELD_LABEL(OSPRayRenderer, depthOfFieldEnabled, "Depth of field");
 SET_PROPERTY_FIELD_LABEL(OSPRayRenderer, dofFocalLength, "Focal length");
 SET_PROPERTY_FIELD_LABEL(OSPRayRenderer, dofAperture, "Aperture");
@@ -62,28 +65,35 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(OSPRayRenderer, refinementIterations, Integer
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(OSPRayRenderer, samplesPerPixel, IntegerParameterUnit, 1, 500);
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(OSPRayRenderer, maxRayRecursion, IntegerParameterUnit, 1, 100);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(OSPRayRenderer, defaultLightSourceIntensity, FloatParameterUnit, 0);
-SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(OSPRayRenderer, ambientOcclusionBrightness, FloatParameterUnit, 0);
+SET_PROPERTY_FIELD_UNITS_AND_RANGE(OSPRayRenderer, defaultLightSourceAngularDiameter, AngleParameterUnit, 0, FLOATTYPE_PI/4);
+SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(OSPRayRenderer, ambientBrightness, FloatParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(OSPRayRenderer, dofFocalLength, WorldParameterUnit, 0);
-SET_PROPERTY_FIELD_UNITS_AND_RANGE(OSPRayRenderer, dofAperture, FloatParameterUnit, 0, 1);
-SET_PROPERTY_FIELD_UNITS_AND_RANGE(OSPRayRenderer, ambientOcclusionSamples, IntegerParameterUnit, 1, 100);
+SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(OSPRayRenderer, dofAperture, WorldParameterUnit, 0);
 
 /******************************************************************************
 * Default constructor.
 ******************************************************************************/
 OSPRayRenderer::OSPRayRenderer(DataSet* dataset) : NonInteractiveSceneRenderer(dataset),
-	_refinementIterations(10),
+	_refinementIterations(8),
 	_directLightSourceEnabled(true), 
-	_shadowsEnabled(true),
 	_samplesPerPixel(4),
 	_maxRayRecursion(20),
-	_ambientOcclusionEnabled(true), 
-	_ambientOcclusionSamples(12),
 	_defaultLightSourceIntensity(FloatType(3.0)), 
-	_ambientOcclusionBrightness(FloatType(0.8)), 
+	_defaultLightSourceAngularDiameter(0),
+	_ambientLightEnabled(true),
+	_ambientBrightness(FloatType(0.8)), 
 	_depthOfFieldEnabled(false),
 	_dofFocalLength(40), 
-	_dofAperture(FloatType(1e-2))
+	_dofAperture(FloatType(0.5f))
 {
+	// Create an instance of the default OSPRay rendering backend.
+	OvitoClassPtr backendClass = PluginManager::instance().findClass("OSPRayRenderer", "OSPRaySciVisBackend");
+	if(backendClass == nullptr) {
+		QVector<OvitoClassPtr> classList = PluginManager::instance().listClasses(OSPRayBackend::OOClass());
+		if(classList.isEmpty() == false) backendClass = classList.front();
+	}
+	if(backendClass)
+		setBackend(static_object_cast<OSPRayBackend>(backendClass->createInstance(dataset)));
 }
 
 /******************************************************************************
@@ -117,10 +127,13 @@ bool OSPRayRenderer::startRender(DataSet* dataset, RenderSettings* settings)
 ******************************************************************************/
 bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, const PromiseBase& promise)
 {
+	if(!backend())
+		throwException(tr("No OSPRay rendering backend has been set."));
+
 	promise.setProgressText(tr("Handing scene data to OSPRay renderer"));
 	try {
 
-		// image size
+		// Output image size:
 		ospcommon::vec2i imgSize;
 		imgSize.x = renderSettings()->outputImageWidth(); 
 		imgSize.y = renderSettings()->outputImageHeight();
@@ -162,6 +175,15 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 			camera.set("focusDistance", dofFocalLength());
 		}	
 		camera.commit();
+
+		// Create OSPRay renderer
+		ospray::cpp::Renderer renderer = backend()->createOSPRenderer();
+		_ospRenderer = &renderer;
+
+		// Create standard material.
+		ospray::cpp::Material material = renderer.newMaterial("OBJMaterial");
+		material.commit();
+		_ospMaterial = &material;
 		
 		// Transfer renderable geometry from OVITO to OSPRay renderer.
 		ospray::cpp::Model world;
@@ -170,13 +192,6 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 			return false;
 		world.commit();	
 			
-		// Create OSPRay renderer
-#if 1
-		ospray::cpp::Renderer renderer("scivis"); // choose Scientific Visualization renderer
-#else
-		ospray::cpp::Renderer renderer("raytracer"); // choose Path Tracer renderer
-#endif	
-
 		// Create direct light.
 		std::vector<ospray::cpp::Light> lightSources;
 		if(directLightSourceEnabled()) {
@@ -185,13 +200,14 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 			light.set("direction", lightDir.x(), lightDir.y(), lightDir.z());
 			light.set("intensity", defaultLightSourceIntensity());
 			light.set("isVisible", false);
+			light.set("angularDiameter", defaultLightSourceAngularDiameter() * FloatType(180) / FLOATTYPE_PI);
 			lightSources.push_back(std::move(light));
 		}
 
-		// Create and setup light for Ambient Occlusion
-		if(ambientOcclusionEnabled()) {
+		// Create and setup ambient light source.
+		if(ambientLightEnabled()) {
 			ospray::cpp::Light light = renderer.newLight("ambient");
-			light.set("intensity", ambientOcclusionBrightness());
+			light.set("intensity", ambientBrightness());
 			lightSources.push_back(std::move(light));
 		}
 
@@ -207,53 +223,110 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 		TimeInterval iv;
 		Color backgroundColor;
 		renderSettings()->backgroundColorController()->getColorValue(time(), backgroundColor, iv);
+		ColorA bgColorWithAlpha(backgroundColor.r(), backgroundColor.g(), backgroundColor.b(), renderSettings()->generateAlphaChannel() ? FloatType(0) : FloatType(1));
 		
 		renderer.set("model",  world);
 		renderer.set("camera", camera);
 		renderer.set("lights", lights);
 		renderer.set("spp", std::max(samplesPerPixel(), 1));
-#if 1
-		renderer.set("bgColor", backgroundColor.r(), backgroundColor.g(), backgroundColor.b(), renderSettings()->generateAlphaChannel() ? FloatType(0) : FloatType(1));
-		renderer.set("shadowsEnabled", shadowsEnabled());
-		renderer.set("aoSamples", ambientOcclusionEnabled() ? ambientOcclusionSamples() : 0);
-		renderer.set("aoTransparencyEnabled", true);
-#endif
+		renderer.set("bgColor", bgColorWithAlpha.r(), bgColorWithAlpha.g(), bgColorWithAlpha.b(), bgColorWithAlpha.a());
 		renderer.set("maxDepth", std::max(maxRayRecursion(), 1));
 		renderer.commit();
 
 		// Create and set up OSPRay framebuffer.
-		ospray::cpp::FrameBuffer framebuffer(imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
-		framebuffer.clear(OSP_FB_COLOR | OSP_FB_ACCUM);
+		ospray::cpp::FrameBuffer osp_fb(imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
+		osp_fb.clear(OSP_FB_COLOR | OSP_FB_ACCUM);
 
-		// Render frame.
-		promise.setProgressMaximum(refinementIterations());
-		promise.setProgressText(tr("Rendering image"));
-		if(promise.isCanceled())
-			return false;
-
-		for(int iteration = 0; iteration < promise.progressMaximum(); iteration++) {
-			renderer.renderFrame(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
-
-			// Access framebuffer data and copy it to our own framebuffer.
-			uint32_t* fb = (uint32_t*)framebuffer.map(OSP_FB_COLOR);
-			QImage img(reinterpret_cast<const uchar*>(fb), imgSize.x, imgSize.y, QImage::Format_RGBA8888);
-#if 1
-			frameBuffer->image() = img.mirrored();
-#else 
-			QPainter painter(&frameBuffer->image());
-			if(!renderSettings()->generateAlphaChannel()) {
-				painter.fillRect(frameBuffer->image().rect(), backgroundColor);
+		// Clear frame buffer.
+		frameBuffer->clear();
+	
+		// Define a custom load balancer for OSPRay that performs progressive updates of the frame buffer.
+		class OVITOTiledLoadBalancer : public ospray::TiledLoadBalancer 
+		{
+		public:			
+			void setProgressCallback(std::function<bool(int,int,int,int)> progressCallback) { 
+				_progressCallback = std::move(progressCallback); 
 			}
-			painter.drawImage(0, 0, img.mirrored());
-#endif		
-			frameBuffer->update();
-			framebuffer.unmap(fb);
 
-			// Update progress display.
-			promise.setProgressValue(iteration);
-			if(promise.isCanceled())
-				break;	
+			float renderFrame(ospray::Renderer *renderer, ospray::FrameBuffer *fb, const ospray::uint32 channelFlags) override {
+				void *perFrameData = renderer->beginFrame(fb);				
+				int tileCount = fb->getTotalTiles();
+				for(int taskIndex = 0; taskIndex < tileCount; taskIndex++) {
+					const size_t numTiles_x = fb->getNumTiles().x;
+					const size_t tile_y = taskIndex / numTiles_x;
+					const size_t tile_x = taskIndex - tile_y*numTiles_x;
+					const ospray::vec2i tileID(tile_x, tile_y);
+					const ospray::int32 accumID = fb->accumID(tileID);
+
+					if(fb->tileError(tileID) <= renderer->errorThreshold)
+						continue;
+#define MAX_TILE_SIZE 128
+#if TILE_SIZE > MAX_TILE_SIZE
+					auto tilePtr = make_unique<Tile>(tileID, fb->size, accumID);
+					auto &tile   = *tilePtr;
+#else
+					ospray::Tile __aligned(64) tile(tileID, fb->size, accumID);
+#endif
+					ospray::tasking::parallel_for(numJobs(renderer->spp, accumID), [&](int tIdx) {
+						renderer->renderTile(perFrameData, tile, tIdx);
+					});
+					fb->setTile(tile);
+
+					if(_progressCallback) {
+						if(!_progressCallback(tile.region.lower.x,tile.region.lower.y,tile.region.upper.x,tile.region.upper.y))
+							break;
+					}
+				}
+
+				renderer->endFrame(perFrameData,channelFlags);
+				return fb->endFrame(renderer->errorThreshold);
+			}
+			std::string toString() const override {
+				return "OVITOTiledLoadBalancer";
+			}
+		private:
+			std::function<bool(int,int,int,int)> _progressCallback;			
+		};
+		auto loadBalancer = std::make_unique<OVITOTiledLoadBalancer>();
+		loadBalancer->setProgressCallback([&osp_fb,frameBuffer,imgSize,&promise,bgColorWithAlpha,this](int x1, int y1, int x2, int y2) {
+			// Access framebuffer data and copy it to our own framebuffer.
+			uchar* fb = (uchar*)osp_fb.map(OSP_FB_COLOR);
+			OVITO_ASSERT(frameBuffer->image().format() == QImage::Format_ARGB32);
+			int bperline = renderSettings()->outputImageWidth() * 4;
+			for(int y = y1; y < y2; y++) {
+				uchar* dst = frameBuffer->image().scanLine(frameBuffer->image().height() - 1 - y) + x1 * 4;
+				uchar* src = fb + y*bperline + x1 * 4;
+				for(int x = x1; x < x2; x++, dst += 4, src += 4) {
+					if(bgColorWithAlpha.a() == 0) {
+						dst[0] = src[2];
+						dst[1] = src[1];
+						dst[2] = src[0];
+						dst[3] = src[3];
+					}
+					else {
+						// Compose colors ("source over" mode).
+						FloatType srcAlpha = (FloatType)src[3] / 255;
+						dst[0] = (uchar)(((FloatType(1) - srcAlpha) * bgColorWithAlpha.b() * 255 + (FloatType)src[2] * srcAlpha));
+						dst[1] = (uchar)(((FloatType(1) - srcAlpha) * bgColorWithAlpha.g() * 255 + (FloatType)src[1] * srcAlpha));
+						dst[2] = (uchar)(((FloatType(1) - srcAlpha) * bgColorWithAlpha.r() * 255 + (FloatType)src[0] * srcAlpha));
+						dst[3] = 255;
+					}
+				}
+			}
+			frameBuffer->update(QRect(x1, frameBuffer->image().height() - y2, x2 - x1, y2 - y1));
+			osp_fb.unmap(fb);
+			return promise.incrementProgressValue((x2-x1) * (y2-y1));
+		});
+		ospray::TiledLoadBalancer::instance = std::move(loadBalancer);
+			
+		promise.beginProgressSubSteps(refinementIterations());
+		for(int iteration = 0; iteration < refinementIterations() && !promise.isCanceled(); iteration++) {
+			if(iteration != 0) promise.nextProgressSubStep();
+			promise.setProgressText(tr("Rendering image (pass %1 of %2)").arg(iteration+1).arg(refinementIterations()));
+			promise.setProgressMaximum(imgSize.x * imgSize.y);
+			renderer.renderFrame(osp_fb, OSP_FB_COLOR | OSP_FB_ACCUM);
 		}
+		promise.endProgressSubSteps();
 
 		// Execute recorded overlay draw calls.
 		QPainter painter(&frameBuffer->image());
@@ -348,9 +421,211 @@ void OSPRayRenderer::renderParticles(const DefaultParticlePrimitive& particleBuf
 		data.commit();
 		spheres.set("color", data);
 		
+		spheres.setMaterial(*_ospMaterial);
 		spheres.commit();
 		_world->addGeometry(spheres);
 	}
+	else if(particleBuffer.particleShape() == ParticlePrimitive::BoxShape) {
+		// Rendering noncubic/rotated box particles.
+
+		// We will pass the particle geometry as a triangle mesh to OSPRay.
+		std::vector<Point_3<float>> vertices;
+		std::vector<ColorAT<float>> colors;
+		std::vector<Vector_3<float>> normals;
+		std::vector<int> indices;
+		vertices.reserve(particleBuffer.positions().size() * 6 * 4);
+		colors.reserve(particleBuffer.positions().size() * 6 * 4);
+		normals.reserve(particleBuffer.positions().size() * 6 * 4);
+		indices.reserve(particleBuffer.positions().size() * 6 * 2 * 3);
+			
+		auto shape = particleBuffer.shapes().begin();
+		auto shape_end = particleBuffer.shapes().end();
+		auto orientation = particleBuffer.orientations().cbegin();
+		auto orientation_end = particleBuffer.orientations().cend();
+		for(; p != p_end; ++p, ++c, ++r) {
+			if(c->a() <= 0) continue;
+			const ColorAT<float> color = (ColorAT<float>)*c;
+			for(int i = 0; i < 6*4; i++) {
+				colors.push_back(color);
+			}
+			Point_3<float> tp = (Point_3<float>)(tm * (*p));
+			QuaternionT<float> quat(0,0,0,1);
+			if(orientation != orientation_end) {
+				quat = (QuaternionT<float>)*orientation++;
+				// Normalize quaternion.
+				float c = sqrt(quat.dot(quat));
+				if(c <= 1e-9f)
+					quat.setIdentity();
+				else
+					quat /= c;
+			}
+			Vector_3<float> s((float)*r);
+			if(shape != shape_end) {
+				s = (Vector_3<float>)*shape++;
+				if(s == Vector_3<float>::Zero())
+					s = Vector_3<float>(*r);
+			}
+			const Point_3<float> corners[8] = {
+					tp + quat * Vector_3<float>(-s.x(), -s.y(), -s.z()), 
+					tp + quat * Vector_3<float>( s.x(), -s.y(), -s.z()),
+					tp + quat * Vector_3<float>( s.x(),  s.y(), -s.z()),
+					tp + quat * Vector_3<float>(-s.x(),  s.y(), -s.z()),
+					tp + quat * Vector_3<float>(-s.x(), -s.y(),  s.z()),
+					tp + quat * Vector_3<float>( s.x(), -s.y(),  s.z()),
+					tp + quat * Vector_3<float>( s.x(),  s.y(),  s.z()),
+					tp + quat * Vector_3<float>(-s.x(),  s.y(),  s.z())
+			};
+			const Vector_3<float> faceNormals[6] = {
+				quat * Vector_3<float>(-1,0,0), quat * Vector_3<float>(1,0,0),
+				quat * Vector_3<float>(0,-1,0), quat * Vector_3<float>(0,1,0),
+				quat * Vector_3<float>(0,0,-1), quat * Vector_3<float>(0,0,1)
+			};
+			int baseIndex;
+
+			// -X face
+			baseIndex = (int)vertices.size();
+			vertices.push_back(corners[0]); vertices.push_back(corners[3]); vertices.push_back(corners[7]); vertices.push_back(corners[4]);
+			indices.push_back(baseIndex + 0); indices.push_back(baseIndex + 1); indices.push_back(baseIndex + 2);
+			indices.push_back(baseIndex + 0); indices.push_back(baseIndex + 2); indices.push_back(baseIndex + 3);
+			for(int i = 0; i < 4; i++) normals.push_back(faceNormals[0]);
+			// +X face
+			baseIndex = (int)vertices.size();
+			vertices.push_back(corners[1]); vertices.push_back(corners[5]); vertices.push_back(corners[6]); vertices.push_back(corners[2]);
+			indices.push_back(baseIndex + 0); indices.push_back(baseIndex + 1); indices.push_back(baseIndex + 2);
+			indices.push_back(baseIndex + 0); indices.push_back(baseIndex + 2); indices.push_back(baseIndex + 3);
+			for(int i = 0; i < 4; i++) normals.push_back(faceNormals[1]);
+			// -Y face
+			baseIndex = (int)vertices.size();
+			vertices.push_back(corners[0]); vertices.push_back(corners[4]); vertices.push_back(corners[5]); vertices.push_back(corners[1]);
+			indices.push_back(baseIndex + 0); indices.push_back(baseIndex + 1); indices.push_back(baseIndex + 2);
+			indices.push_back(baseIndex + 0); indices.push_back(baseIndex + 2); indices.push_back(baseIndex + 3);
+			for(int i = 0; i < 4; i++) normals.push_back(faceNormals[2]);
+			// +Y face
+			baseIndex = (int)vertices.size();
+			vertices.push_back(corners[2]); vertices.push_back(corners[6]); vertices.push_back(corners[7]); vertices.push_back(corners[3]);
+			indices.push_back(baseIndex + 0); indices.push_back(baseIndex + 1); indices.push_back(baseIndex + 2);
+			indices.push_back(baseIndex + 0); indices.push_back(baseIndex + 2); indices.push_back(baseIndex + 3);
+			for(int i = 0; i < 4; i++) normals.push_back(faceNormals[3]);
+			// -Z face
+			baseIndex = (int)vertices.size();
+			vertices.push_back(corners[0]); vertices.push_back(corners[1]); vertices.push_back(corners[2]); vertices.push_back(corners[3]);
+			indices.push_back(baseIndex + 0); indices.push_back(baseIndex + 1); indices.push_back(baseIndex + 2);
+			indices.push_back(baseIndex + 0); indices.push_back(baseIndex + 2); indices.push_back(baseIndex + 3);
+			for(int i = 0; i < 4; i++) normals.push_back(faceNormals[4]);
+			// +Z face
+			baseIndex = (int)vertices.size();
+			vertices.push_back(corners[4]); vertices.push_back(corners[7]); vertices.push_back(corners[6]); vertices.push_back(corners[5]);
+			indices.push_back(baseIndex + 0); indices.push_back(baseIndex + 1); indices.push_back(baseIndex + 2);
+			indices.push_back(baseIndex + 0); indices.push_back(baseIndex + 2); indices.push_back(baseIndex + 3);
+			for(int i = 0; i < 4; i++) normals.push_back(faceNormals[5]);
+		}
+		OVITO_ASSERT(normals.size() == colors.size());
+		OVITO_ASSERT(normals.size() == vertices.size());
+
+		ospray::cpp::Geometry triangles("triangles");	
+		
+		ospray::cpp::Data data(vertices.size(), OSP_FLOAT3, vertices.data());
+		data.commit();
+		triangles.set("vertex", data);
+
+		data = ospray::cpp::Data(colors.size(), OSP_FLOAT4, colors.data());
+		data.commit();
+		triangles.set("vertex.color", data);
+
+		data = ospray::cpp::Data(normals.size(), OSP_FLOAT3, normals.data());
+		data.commit();
+		triangles.set("vertex.normal", data);
+		
+		data = ospray::cpp::Data(indices.size() / 3, OSP_INT3, indices.data());
+		data.commit();
+		triangles.set("index", data);
+		
+		triangles.setMaterial(*_ospMaterial);
+		triangles.commit();
+		_world->addGeometry(triangles);		
+	}
+	else if(particleBuffer.particleShape() == ParticlePrimitive::EllipsoidShape) {
+		// Rendering ellipsoid particles.
+		const Matrix3 linear_tm = tm.linear();
+		auto shape = particleBuffer.shapes().cbegin();
+		auto shape_end = particleBuffer.shapes().cend();
+		auto orientation = particleBuffer.orientations().cbegin();
+		auto orientation_end = particleBuffer.orientations().cend();
+		std::vector<std::array<float,14>> quadricsData(particleBuffer.positions().size());
+		std::vector<ospcommon::vec4f> colorData(particleBuffer.positions().size());
+		auto quadricIter = quadricsData.begin();
+		auto colorIter = colorData.begin();
+		for(; p != p_end && shape != shape_end; ++p, ++c, ++shape, ++r) {
+			if(c->a() <= 0) continue;
+			Point3 tp = tm * (*p);
+			Quaternion quat(0,0,0,1);
+			if(orientation != orientation_end) {
+				quat = *orientation++;
+				// Normalize quaternion.
+				FloatType c = sqrt(quat.dot(quat));
+				if(c == 0)
+					quat.setIdentity();
+				else
+					quat /= c;
+			}
+			(*quadricIter)[0] = tp.x();
+			(*quadricIter)[1] = tp.y();
+			(*quadricIter)[2] = tp.z();
+			if(shape->x() != 0 && shape->y() != 0 && shape->z() != 0) {
+				Matrix3 qmat(FloatType(1)/(shape->x()*shape->x()), 0, 0,
+						     0, FloatType(1)/(shape->y()*shape->y()), 0,
+						     0, 0, FloatType(1)/(shape->z()*shape->z()));
+				Matrix3 rot = linear_tm * Matrix3::rotation(quat);
+				Matrix3 quadric = rot * qmat * rot.transposed();
+				(*quadricIter)[3] = std::max(shape->x(), std::max(shape->y(), shape->z()));
+				(*quadricIter)[4] = quadric(0,0);
+				(*quadricIter)[5] = quadric(0,1);
+				(*quadricIter)[6] = quadric(0,2);
+				(*quadricIter)[7] = 0;
+				(*quadricIter)[8] =	quadric(1,1);
+				(*quadricIter)[9] = quadric(1,2);
+				(*quadricIter)[10] = 0;
+				(*quadricIter)[11] = quadric(2,2);
+				(*quadricIter)[12] = 0;
+				(*quadricIter)[13] = -1;
+			}
+			else {
+				(*quadricIter)[3] = *r;
+				(*quadricIter)[4] = FloatType(1)/((*r)*(*r));
+				(*quadricIter)[5] = 0;
+				(*quadricIter)[6] = 0;
+				(*quadricIter)[7] = 0;
+				(*quadricIter)[8] =	FloatType(1)/((*r)*(*r));
+				(*quadricIter)[9] = 0;
+				(*quadricIter)[10] = 0;
+				(*quadricIter)[11] = FloatType(1)/((*r)*(*r));
+				(*quadricIter)[12] = 0;
+				(*quadricIter)[13] = -1;
+			}
+			(*colorIter)[0] = c->r();
+			(*colorIter)[1] = c->g();
+			(*colorIter)[2] = c->b();
+			(*colorIter)[3] = c->a();
+			++quadricIter;
+			++colorIter;		
+		}
+		size_t nquadrics = quadricIter - quadricsData.begin();
+		if(nquadrics == 0) return;
+		
+		ospray::cpp::Geometry quadrics("quadrics");
+
+		ospray::cpp::Data data(nquadrics*14, OSP_FLOAT, quadricsData.data());
+		data.commit();
+		quadrics.set("quadrics", data);
+
+		data = ospray::cpp::Data(nquadrics, OSP_FLOAT4, colorData.data());
+		data.commit();
+		quadrics.set("color", data);
+		
+		quadrics.setMaterial(*_ospMaterial);
+		quadrics.commit();
+		_world->addGeometry(quadrics);		
+	}	
 }
 
 /******************************************************************************
@@ -363,7 +638,7 @@ void OSPRayRenderer::renderArrows(const DefaultArrowPrimitive& arrowBuffer)
 	// Compile buffer with cylinder data in OSPRay format.
 	std::vector<std::array<float,7>> cylData(arrowBuffer.elements().size());
 	std::vector<ospcommon::vec4f> colorData(arrowBuffer.elements().size());
-	std::vector<std::array<float,7>> discData(arrowBuffer.shape() == ArrowPrimitive::CylinderShape ? 0 : arrowBuffer.elements().size()*2);
+	std::vector<std::array<float,7>> discData(arrowBuffer.elements().size()*2);
 	std::vector<ospcommon::vec4f> discColorData(discData.size());
 	std::vector<std::array<float,7>> coneData(arrowBuffer.shape() == ArrowPrimitive::CylinderShape ? 0 : arrowBuffer.elements().size());
 	std::vector<ospcommon::vec4f> coneColorData(coneData.size());
@@ -379,6 +654,34 @@ void OSPRayRenderer::renderArrows(const DefaultArrowPrimitive& arrowBuffer)
 			Vector3 ta;
 			if(arrowBuffer.shape() == ArrowPrimitive::CylinderShape) {
 				ta = tm * element.dir;
+				Vector3 normal = ta;
+				normal.normalizeSafely();
+				(*discIter)[0] = tp.x();
+				(*discIter)[1] = tp.y();
+				(*discIter)[2] = tp.z();
+				(*discIter)[3] = -normal.x();
+				(*discIter)[4] = -normal.y();
+				(*discIter)[5] = -normal.z();
+				(*discIter)[6] = element.width;
+				(*discColorIter)[0] = element.color.r();
+				(*discColorIter)[1] = element.color.g();
+				(*discColorIter)[2] = element.color.b();
+				(*discColorIter)[3] = element.color.a();
+				++discIter;
+				++discColorIter;
+				(*discIter)[0] = tp.x() + ta.x();
+				(*discIter)[1] = tp.y() + ta.y();
+				(*discIter)[2] = tp.z() + ta.z();
+				(*discIter)[3] = normal.x();
+				(*discIter)[4] = normal.y();
+				(*discIter)[5] = normal.z();
+				(*discIter)[6] = element.width;
+				(*discColorIter)[0] = element.color.r();
+				(*discColorIter)[1] = element.color.g();
+				(*discColorIter)[2] = element.color.b();
+				(*discColorIter)[3] = element.color.a();
+				++discIter;
+				++discColorIter;			
 			}
 			else {
 				FloatType arrowHeadRadius = element.width * FloatType(2.5);
@@ -496,6 +799,7 @@ void OSPRayRenderer::renderArrows(const DefaultArrowPrimitive& arrowBuffer)
 		data.commit();
 		cylinders.set("color", data);
 		
+		cylinders.setMaterial(*_ospMaterial);
 		cylinders.commit();
 		_world->addGeometry(cylinders);
 	}
@@ -516,6 +820,7 @@ void OSPRayRenderer::renderArrows(const DefaultArrowPrimitive& arrowBuffer)
 		data.commit();
 		discs.set("color", data);
 		
+		discs.setMaterial(*_ospMaterial);
 		discs.commit();
 		_world->addGeometry(discs);
 	}
@@ -536,6 +841,7 @@ void OSPRayRenderer::renderArrows(const DefaultArrowPrimitive& arrowBuffer)
 		data.commit();
 		cones.set("color", data);
 		
+		cones.setMaterial(*_ospMaterial);
 		cones.commit();
 		_world->addGeometry(cones);
 	}	
@@ -672,6 +978,7 @@ void OSPRayRenderer::renderMesh(const DefaultMeshPrimitive& meshBuffer)
 	data.commit();
 	triangles.set("index", data);
 	
+	triangles.setMaterial(*_ospMaterial);
 	triangles.commit();
 	_world->addGeometry(triangles);
 }
