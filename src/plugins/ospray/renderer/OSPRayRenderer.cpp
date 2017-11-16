@@ -116,8 +116,28 @@ bool OSPRayRenderer::startRender(DataSet* dataset, RenderSettings* settings)
 	OSPDevice device = ospGetCurrentDevice();
 	if(!device) {
 		device = ospNewDevice();
+
+		// Load our extension module for OSPRay, which provides raytracing functions
+		// for various geometry primitives (discs, cones, quadrics) needed by OVITO.
+
+		// The ospLoadModule() function uses standard OS functions to load the dynamic library
+		// (e.g. dlopen() on MacOS/Linux). Let them know where to find the extension module by 
+		// setting the current working directory.
+
+		QDir oldWDir = QDir::current();
+#if defined(Q_OS_WIN)
+		QDir::setCurrent(QCoreApplication::applicationDirPath());
+#elif defined(Q_OS_MAC)
+		QDir::setCurrent(QCoreApplication::applicationDirPath());
+#else // Linux
+		QDir::setCurrent(QCoreApplication::applicationDirPath() + QStringLiteral("/../lib/ovito"));
+#endif
+
 		if(ospLoadModule("ovito") != OSP_NO_ERROR)
 			throwException(tr("Failed to load OSPRay module 'ovito': %1").arg(ospDeviceGetLastErrorMsg(device)));
+
+		// Restore previous state.
+		QDir::setCurrent(oldWDir.absolutePath());
 	}
 
 	// Use only the number of parallel rendering threads allowed by the user. 

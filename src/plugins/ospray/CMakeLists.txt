@@ -38,11 +38,12 @@ OVITO_STANDARD_PLUGIN(OSPRayRenderer
 )
 
 # Link to the OSPRay library and its dependencies.
-TARGET_INCLUDE_DIRECTORIES(OSPRayRenderer PRIVATE "${OSPRAY_INCLUDE_DIRS}")
+TARGET_INCLUDE_DIRECTORIES(OSPRayRenderer PRIVATE ${OSPRAY_INCLUDE_DIRS} "${TBB_INCLUDE_DIR}")
 TARGET_LINK_LIBRARIES(OSPRayRenderer PRIVATE ${OSPRAY_LIBRARIES})
 
 # Build our extension module for the OSPRay system.
 ADD_SUBDIRECTORY(ospray_module)
+ADD_DEPENDENCIES(OSPRayRenderer ospray_module_ovito)
 
 # Build corresponding GUI plugin.
 IF(OVITO_BUILD_GUI)

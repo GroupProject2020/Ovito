@@ -34,7 +34,7 @@ INCLUDE(${OSPRAY_USE_FILE})
 # b) contain a (extern C linkage) initializatoin routine named
 #    void ospray_init_module_<moduleName>()
 #
-OSPRAY_CREATE_LIBRARY(ospray_module_ovito
+OSPRAY_ADD_LIBRARY(ospray_module_ovito SHARED
 	# the cpp files that contain all the plugin code - parsing
 	# parameters in ospCommit(), creating and registering the object,
 	# building accel structures, etc
@@ -53,5 +53,12 @@ OSPRAY_CREATE_LIBRARY(ospray_module_ovito
 	moduleInit.cpp
 )
 
+OSPRAY_SET_LIBRARY_VERSION(ospray_module_ovito)
 TARGET_INCLUDE_DIRECTORIES(ospray_module_ovito PRIVATE "${OSPRAY_INCLUDE_DIRS}")
 TARGET_LINK_LIBRARIES(ospray_module_ovito PRIVATE ${OSPRAY_LIBRARIES})
+SET_TARGET_PROPERTIES(ospray_module_ovito PROPERTIES MACOSX_RPATH TRUE)
+
+# Export this target.
+INSTALL(TARGETS ospray_module_ovito EXPORT OVITO 
+	RUNTIME DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "runtime"
+	LIBRARY DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "runtime")

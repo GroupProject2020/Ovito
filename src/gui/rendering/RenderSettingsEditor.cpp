@@ -281,7 +281,7 @@ void RenderSettingsEditor::onSwitchRenderer()
 		else if(clazz->name() == QStringLiteral("POVRayRenderer"))
 			description = tr("Offloads rendering to the external Persistence of Vision Raytracer (POV-Ray). POV-Ray must be installed on your computer.");
 		else if(clazz->name() == QStringLiteral("OSPRayRenderer"))
-			description = tr("Software-based path tracing engine with support for soft shadows and physical based lighting.");
+			description = tr("Software-based renderer with support for shadows and ambient occlusion.");
 		QString text = QStringLiteral("<p style=\"font-weight: bold;\">") + clazz->displayName() + QStringLiteral("</p>");
 		if(description.isEmpty() == false)
 			text += QStringLiteral("<p style=\"font-size: small;\">") + description + QStringLiteral("</p>");
