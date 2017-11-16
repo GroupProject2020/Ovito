@@ -201,6 +201,7 @@ echo "using python : 3.5 : /home/stuko/progs/python : /home/stuko/progs/python/i
 **************************************************************************
 Build libav (release 11):
 **************************************************************************
+cd $HOME/progs/
 sudo apt-get install yasm
 cd libav-11.8
 ./configure \
@@ -220,6 +221,7 @@ make install
 **************************************************************************
 Build HDF5:
 **************************************************************************
+cd $HOME/progs/
 mkdir hdf5_build
 cd hdf5_build
 $HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
@@ -235,6 +237,7 @@ make install
 **************************************************************************
 Build NetCDF:
 **************************************************************************
+cd $HOME/progs/
 mkdir netcdf_build
 cd netcdf_build
 $HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
@@ -252,6 +255,59 @@ $HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
 	../netcdf-4.4.1/
 
 make install
+
+**************************************************************************
+Download Intel TBB (binary version for Linux)
+**************************************************************************
+
+**************************************************************************
+Download and build Intel Embree
+**************************************************************************
+cd $HOME/progs/
+git clone https://github.com/embree/embree.git
+cd embree
+git checkout v2.17.0
+- Fix compiler errors:
+- Add the followin to the source file common/sys/alloc.cpp:
+  #ifndef MAP_HUGETLB
+  #define MAP_HUGETLB 0x40000
+  #endif
+- Fix errors "sorry, unimplemented: non-trivial designated initializers not supported" (bug in gcc 5.1.1)
+  by removing 'const' qualifiers from lmbda captured variables.
+mkdir build
+cd build
+$HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
+      -DCMAKE_INSTALL_PREFIX=$HOME/progs/embree_install \
+      -DEMBREE_ISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-linux/ispc \
+	  -DTBB_INCLUDE_DIR=$HOME/progs/tbb2018_20170919oss/include/ \
+	  -DTBB_LIBRARY=$HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbb.so \
+	  -DTBB_LIBRARY_MALLOC=$HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbbmalloc.so \
+	  -DEMBREE_TUTORIALS=OFF \
+      ..
+make install
+
+**************************************************************************
+Download and build Intel OSPRay
+**************************************************************************
+cd $HOME/progs/
+git clone https://github.com/ospray/ospray.git
+cd ospray
+mkdir build
+cd build
+$HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
+      -DCMAKE_INSTALL_PREFIX=$HOME/progs/ospray_install \
+      -DISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-linux/ispc \
+	  -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-2.17.0 \
+	  -DOSPRAY_APPS_BENCHMARK=OFF \
+	  -DOSPRAY_APPS_EXAMPLEVIEWER=OFF \
+	  -DOSPRAY_APPS_UTILITIES=OFF \
+	  -DTBB_ROOT=$HOME/progs/tbb2018_20170919oss \
+	  -DBUILD_SHARED_LIBS=ON \
+      ..
+make install
+cp -d $HOME/progs/embree_install/lib/libembree*.so* $HOME/progs/ospray_install/lib/
+cp -d $HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbb.so.* $HOME/progs/ospray_install/lib/
+cp -d $HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbbmalloc.so.* $HOME/progs/ospray_install/lib/
 
 **************************************************************************
 Set the following flags in the CMake configuration to build all features:
@@ -275,6 +331,13 @@ $HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
   -DQSCINTILLA_LIBRARY=$HOME/progs/QScintilla_gpl-2.9.3/Qt4Qt5/libqscintilla2.so.12 \
   -DLIBAV_INCLUDE_DIR=$HOME/progs/libav/include \
   -DLIBAV_LIBRARY_DIR=$HOME/progs/libav/lib \
+  -DOVITO_BUILD_PLUGIN_OSPRAY=ON \
+  -Dospray_DIR=$HOME/progs/ospray_install/lib/cmake/ospray-1.4.1 \
+  -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-2.17.0 \
+  -DISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-linux/ispc \
+  -DTBB_INCLUDE_DIR=$HOME/progs/tbb2018_20170919oss/include/ \
+  -DTBB_LIBRARY=$HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbb.so \
+  -DTBB_LIBRARY_MALLOC=$HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbbmalloc.so \
   ../source/
 
 
