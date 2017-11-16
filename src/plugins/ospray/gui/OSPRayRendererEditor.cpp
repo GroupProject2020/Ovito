@@ -164,6 +164,23 @@ void OSPRayRendererEditor::createUI(const RolloutInsertionParameters& rolloutPar
 	layout->addWidget(ambientBrightnessUI->label(), 0, 0);
 	layout->addLayout(ambientBrightnessUI->createFieldLayout(), 0, 1);
 
+	// Material
+	QGroupBox* materialGroupBox = new QGroupBox(tr("Material"));
+	mainLayout->addWidget(materialGroupBox);
+
+	layout = new QGridLayout(materialGroupBox);
+	layout->setContentsMargins(4,4,4,4);
+	layout->setSpacing(4);
+	layout->setColumnStretch(1, 1);
+
+	FloatParameterUI* matSpecularUI = new FloatParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::materialSpecularBrightness));
+	layout->addWidget(matSpecularUI->label(), 0, 0);
+	layout->addLayout(matSpecularUI->createFieldLayout(), 0, 1);
+
+	FloatParameterUI* matShininessUI = new FloatParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::materialShininess));
+	layout->addWidget(matShininessUI->label(), 1, 0);
+	layout->addLayout(matShininessUI->createFieldLayout(), 1, 1);
+
 	// Depth of field
 	BooleanGroupBoxParameterUI* enableDepthOfFieldUI = new BooleanGroupBoxParameterUI(this, PROPERTY_FIELD(OSPRayRenderer::depthOfFieldEnabled));
 	QGroupBox* dofGroupBox = enableDepthOfFieldUI->groupBox();

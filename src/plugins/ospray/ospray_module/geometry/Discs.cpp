@@ -92,6 +92,7 @@ namespace ospray {
         _materialList = (void*)ispcMaterials;
       }
 
+#if 0      
       const char* discPtr = (const char*)discData->data;
       bounds = empty;
       for(uint32_t i = 0; i < numDiscs; i++, discPtr += bytesPerDisc) {
@@ -99,6 +100,7 @@ namespace ospray {
         const vec3f& center = *(const vec3f*)(discPtr + offset_center);
         bounds.extend(box3f(center - r, center + r));
       }
+#endif      
       
       ispc::DiscsGeometry_set(getIE(), model->getIE(), discData->data, _materialList,
         texcoordData ? (ispc::vec2f *)texcoordData->data : nullptr,

@@ -92,6 +92,7 @@ namespace ospray {
         _materialList = (void*)ispcMaterials;
       }
 
+#if 0      
       const char* conePtr = (const char*)coneData->data;
       bounds = empty;
       for(uint32_t i = 0; i < numCones; i++, conePtr += bytesPerCone) {
@@ -101,6 +102,7 @@ namespace ospray {
         r = std::max(r, std::sqrt(axis[0]*axis[0] + axis[1]*axis[1] + axis[2]*axis[2]));
         bounds.extend(box3f(center - r, center + r));
       }
+#endif      
       
       ispc::ConesGeometry_set(getIE(), model->getIE(), coneData->data, _materialList,
         texcoordData ? (ispc::vec2f *)texcoordData->data : nullptr,

@@ -91,6 +91,7 @@ namespace ospray {
         _materialList = (void*)ispcMaterials;
       }
 
+#if 0      
       const char* quadricPtr = (const char*)quadricData->data;
       bounds = empty;
       for(uint32_t i = 0; i < numQuadrics; i++, quadricPtr += bytesPerQuadric) {
@@ -98,6 +99,7 @@ namespace ospray {
         const vec3f& center = *(const vec3f*)(quadricPtr + offset_center);
         bounds.extend(box3f(center - r, center + r));
       }
+#endif      
       
       ispc::QuadricsGeometry_set(getIE(), model->getIE(), quadricData->data, _materialList,
         texcoordData ? (ispc::vec2f *)texcoordData->data : nullptr,

@@ -26,14 +26,32 @@
 #include <core/rendering/noninteractive/NonInteractiveSceneRenderer.h>
 #include "OSPRayBackend.h"
 
-// Foward declaration from OSPRay library:
 namespace ospray { namespace cpp {
 	class Model;
 	class Renderer;
 	class Material;
-}}
+}};
 
 namespace Ovito { namespace OSPRay {
+
+template<typename OSPType>
+class OSPReferenceWrapper : public OSPType
+{
+public:
+	using OSPType::OSPType;
+	OSPReferenceWrapper() = default;
+	explicit OSPReferenceWrapper(const OSPType& other) : OSPType(other) {}
+	OSPReferenceWrapper(OSPReferenceWrapper&& other) : OSPType(other) { other.ospObject = nullptr; }
+	OSPReferenceWrapper(const OSPReferenceWrapper& other) = delete;
+	OSPReferenceWrapper& operator=(const OSPReferenceWrapper& other) = delete;
+	OSPReferenceWrapper& operator=(OSPReferenceWrapper&& other) = default;
+	OSPType& operator=(const OSPType& other) { 
+		this->release(); 
+		OSPType::operator=(other);
+		return *this;
+	}
+	~OSPReferenceWrapper() { this->release(); }
+};
 
 /**
  * \brief A scene renderer that is based on the OSPRay open source ray-tracing engine
@@ -117,6 +135,12 @@ private:
 	/// Controls the camera's aperture, which is used for depth-of-field rendering.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, dofAperture, setDofAperture, PROPERTY_FIELD_MEMORIZE);
 
+	/// Controls the material's shininess (Phong exponent).
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, materialShininess, setMaterialShininess, PROPERTY_FIELD_MEMORIZE);
+
+	/// Controls the brightness of the material's specular color.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, materialSpecularBrightness, setMaterialSpecularBrightness, PROPERTY_FIELD_MEMORIZE);
+
 	/// List of image primitives that need to be painted over the final image.
 	std::vector<std::tuple<QImage,Point2,Vector2>> _imageDrawCalls;
 
@@ -124,13 +148,13 @@ private:
 	std::vector<std::tuple<QString,ColorA,QFont,Point2,int>> _textDrawCalls;
 
 	/// Pointer to the OSPRay model.
-	ospray::cpp::Model* _world = nullptr;
+	OSPReferenceWrapper<ospray::cpp::Model>* _ospWorld = nullptr;
 
 	/// Pointer to the OSPRay renderer.
-	ospray::cpp::Renderer* _ospRenderer = nullptr;
+	OSPReferenceWrapper<ospray::cpp::Renderer>* _ospRenderer = nullptr;
 
 	/// Pointer to the OSPRay standard material.
-	ospray::cpp::Material* _ospMaterial = nullptr;
+	OSPReferenceWrapper<ospray::cpp::Material>* _ospMaterial = nullptr;
 };
 
 }	// End of namespace
