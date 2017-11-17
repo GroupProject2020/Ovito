@@ -165,18 +165,24 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 				throw Exception(tr("Invalid atom coordinates (line %1): %2").arg(stream.lineNumber()).arg(stream.lineString()));
 
 			// Parse atom ID (serial number).
-			unsigned int atomSerialNumber;
-			if(sscanf(stream.line() + 6, "%5u", &atomSerialNumber) == 1) {
+			qlonglong atomSerialNumber;
+			if(sscanf(stream.line() + 6, "%5llu", &atomSerialNumber) == 1) {
 				if(!particleIdentifierProperty) {
 					particleIdentifierProperty = ParticleProperty::createStandardStorage(numAtoms, ParticleProperty::IdentifierProperty, true);
 					frameData->addParticleProperty(particleIdentifierProperty);
 				}
 				particleIdentifierProperty->setInt64(atomIndex, atomSerialNumber);
 			}
+			else if(particleIdentifierProperty && qstrncmp(stream.line() + 6, "*****", 5) == 0) {
+				// This is special handling for large PDB files with more than 99,999 atoms. 
+				// Some codes replace the 5 digits in the 'atom serial number' column with the string '*****' in this case.
+				// We we encounter this case, we simply assign consecutive IDs to the atoms.
+				particleIdentifierProperty->setInt64(atomIndex, atomIndex + 1);
+			}
 
 			// Parse molecule ID (residue sequence number).
-			unsigned int residueSequenceNumber;
-			if(sscanf(stream.line() + 22, "%4u", &residueSequenceNumber) == 1) {
+			qlonglong residueSequenceNumber;
+			if(sscanf(stream.line() + 22, "%4llu", &residueSequenceNumber) == 1) {
 				if(!moleculeIdentifierProperty) {
 					moleculeIdentifierProperty = ParticleProperty::createStandardStorage(numAtoms, ParticleProperty::MoleculeProperty, true);
 					frameData->addParticleProperty(moleculeIdentifierProperty);
@@ -214,13 +220,13 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 		// Parse bonds.
 		if(stream.lineStartsWith("CONECT")) {
 			// Parse first atom index.
-			unsigned int atomSerialNumber1;
-			if(lineLength <= 11 || sscanf(stream.line() + 6, "%5u", &atomSerialNumber1) != 1 || particleIdentifierProperty == nullptr)
+			qlonglong atomSerialNumber1;
+			if(lineLength <= 11 || sscanf(stream.line() + 6, "%5llu", &atomSerialNumber1) != 1 || particleIdentifierProperty == nullptr)
 				throw Exception(tr("Invalid CONECT record (line %1): %2").arg(stream.lineNumber()).arg(stream.lineString()));
 			size_t atomIndex1 = std::find(particleIdentifierProperty->constDataInt64(), particleIdentifierProperty->constDataInt64() + particleIdentifierProperty->size(), atomSerialNumber1) - particleIdentifierProperty->constDataInt64();
 			for(int i = 0; i < 10; i++) {
-				unsigned int atomSerialNumber2;
-				if(lineLength >= 16+5*i && sscanf(stream.line() + 11+5*i, "%5u", &atomSerialNumber2) == 1) {
+				qlonglong atomSerialNumber2;
+				if(lineLength >= 16+5*i && sscanf(stream.line() + 11+5*i, "%5llu", &atomSerialNumber2) == 1) {
 					size_t atomIndex2 = std::find(particleIdentifierProperty->constDataInt64(), particleIdentifierProperty->constDataInt64() + particleIdentifierProperty->size(), atomSerialNumber2) - particleIdentifierProperty->constDataInt64();
 					if(atomIndex1 >= particleIdentifierProperty->size() || atomIndex2 >= particleIdentifierProperty->size())
 						throw Exception(tr("Nonexistent atom ID encountered in line %1 of PDB file.").arg(stream.lineNumber()));

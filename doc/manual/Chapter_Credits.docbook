@@ -51,7 +51,10 @@
       (<link linkend="appendix.license.numpy">license</link>).</para></listitem>
       <listitem><para><link xlink:href="http://www.numpy.org/">Matplotlib</link> 
       (<link xlink:href="http://matplotlib.org/users/license.html">license</link>).</para></listitem>
-      <listitem><para><link xlink:href="http://www.fftw.org/">FFTW</link> (GNU General Public License).</para></listitem>
+      <listitem><para><link xlink:href="http://www.fftw.org/">FFTW</link> (GNU General Public License v2).</para></listitem>
+      <listitem><para><link xlink:href="http://www.ospray.org">OSPRay</link> (Apache 2.0 license).</para></listitem>
+      <listitem><para><link xlink:href="https://embree.github.io">Embree</link> (Apache 2.0 license).</para></listitem>
+      <listitem><para><link xlink:href="https://www.threadingbuildingblocks.org/">Intel Threading Building Blocks</link> (Apache 2.0 license).</para></listitem>
     </itemizedlist>
   </para>
 

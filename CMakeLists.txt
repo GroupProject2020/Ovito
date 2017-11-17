@@ -31,6 +31,7 @@ IF(NOT CMAKE_VERSION VERSION_LESS "3")
 	CMAKE_POLICY(SET CMP0043 OLD)	# Suppress warning because COMPILE_DEFINITIONS_* target property is used.
 	CMAKE_POLICY(SET CMP0045 OLD)	# Don't warn about non-existing targets in GET_TARGET_PROPERTY().
 	CMAKE_POLICY(SET CMP0042 NEW) 	# Enable MACOSX_RPATH target property by default.
+	CMAKE_POLICY(SET CMP0054 OLD) 	# Interpret if() arguments as variables or keywords even if quoted.
 ENDIF()
 
 # Check compiler requirement.
@@ -67,7 +68,8 @@ OPTION(OVITO_BUILD_PLUGIN_TACHYON "Build the Tachyon renderer plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_CRYSTALANALYSIS "Build the CrystalAnalysis plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_PYSCRIPT "Build the Python scripting plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_NETCDFPLUGIN "Build the NetCDF plugin." "ON")
-OPTION(OVITO_BUILD_PLUGIN_POVRAY "Build the POV-Ray plugin." "ON")
+OPTION(OVITO_BUILD_PLUGIN_POVRAY "Build the POV-Ray renderer plugin." "ON")
+OPTION(OVITO_BUILD_PLUGIN_OSPRAY "Build the OSPRay renderer plugin (experimental)." "OFF")
 OPTION(OVITO_BUILD_PLUGIN_OPENBABELPLUGIN "Build the OpenBabel plugin (experimental)." "OFF")
 OPTION(OVITO_BUILD_PLUGIN_CORRELATION "Build the correlation function plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_VR "Build the virtual reality plugin (experimental)." "OFF")

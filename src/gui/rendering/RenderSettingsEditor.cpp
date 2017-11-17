@@ -250,6 +250,7 @@ void RenderSettingsEditor::onSwitchRenderer()
 	const QStringList displayOrdering = {
 		"StandardSceneRenderer", 
 		"TachyonRenderer",
+		"OSPRayRenderer",
 		"POVRayRenderer"
 	};
 	std::sort(rendererClasses.begin(), rendererClasses.end(), [&displayOrdering](OvitoClassPtr a, OvitoClassPtr b) {
@@ -273,14 +274,14 @@ void RenderSettingsEditor::onSwitchRenderer()
 	for(OvitoClassPtr clazz : rendererClasses) {
 		QString description;
 		if(clazz->name() == QStringLiteral("StandardSceneRenderer"))
-			description = tr("This is a hardware-accelerated rendering engine, which produces output that is nearly identical "
-					"to the display in OVITO's interactive viewports. The OpenGL renderer is fast and has a small memory footprint.");
+			description = tr("Hardware-accelerated rendering engine, also used by OVITO's interactive viewports. "
+						"The OpenGL renderer is fast and has the smallest memory footprint.");
 		else if(clazz->name() == QStringLiteral("TachyonRenderer"))
-			description = tr("This is a software-based raytracing engine, which can offer better shading and shadows. "
-					"The Tachyon renderer is slower and requires more memory. "
-					"It may not be able to render very large datasets depending on your computer.");
+			description = tr("Software-based ray tracer with support for shadows and ambient occlusion.");
 		else if(clazz->name() == QStringLiteral("POVRayRenderer"))
-			description = tr("This rendering backend uses the Persistence of Vision Raytracer (POV-Ray) to render the scene. POV-Ray must be installed on the computer.");
+			description = tr("Offloads rendering to the external Persistence of Vision Raytracer (POV-Ray). POV-Ray must be installed on your computer.");
+		else if(clazz->name() == QStringLiteral("OSPRayRenderer"))
+			description = tr("Software-based renderer with support for shadows and ambient occlusion.");
 		QString text = QStringLiteral("<p style=\"font-weight: bold;\">") + clazz->displayName() + QStringLiteral("</p>");
 		if(description.isEmpty() == false)
 			text += QStringLiteral("<p style=\"font-size: small;\">") + description + QStringLiteral("</p>");

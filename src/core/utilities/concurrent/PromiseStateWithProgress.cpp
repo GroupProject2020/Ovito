@@ -91,10 +91,10 @@ bool PromiseStateWithProgress::incrementProgressValue(int increment)
 		_progressTime.start();
 
 		for(PromiseWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList)
-			QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(int, progressValue()));
+			QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(int, totalProgressValue()));
 		for(TrackingPromiseState* tracker = _trackers.get(); tracker != nullptr; tracker = tracker->_nextInList.get()) {
 			for(PromiseWatcher* watcher = tracker->_watchers; watcher != nullptr; watcher = watcher->_nextInList)
-				QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(int, progressValue()));
+				QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(int, totalProgressValue()));
 		}
     }
 

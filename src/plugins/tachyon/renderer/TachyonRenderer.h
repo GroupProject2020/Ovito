@@ -36,7 +36,7 @@ class OVITO_TACHYON_EXPORT TachyonRenderer : public NonInteractiveSceneRenderer
 {
 	Q_OBJECT
 	OVITO_CLASS(TachyonRenderer)
-	Q_CLASSINFO("DisplayName", "Tachyon renderer");
+	Q_CLASSINFO("DisplayName", "Tachyon");
 	
 public:
 
@@ -105,7 +105,7 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, ambientOcclusionBrightness, setAmbientOcclusionBrightness, PROPERTY_FIELD_MEMORIZE);
 
 	/// Enables depth-of-field rendering.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, depthOfFieldEnabled, setDepthOfFieldEnabled, PROPERTY_FIELD_MEMORIZE);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, depthOfFieldEnabled, setDepthOfFieldEnabled);
 
 	/// Controls the camera's focal length, which is used for depth-of-field rendering.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, dofFocalLength, setDofFocalLength, PROPERTY_FIELD_MEMORIZE);

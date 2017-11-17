@@ -25,7 +25,7 @@ uniform int pickingBaseID;
 #if __VERSION__ >= 130
 
 	in vec3 position;
-	out vec4 vertex_color_fs;
+	flat out vec4 vertex_color_fs;
 
 #else
 

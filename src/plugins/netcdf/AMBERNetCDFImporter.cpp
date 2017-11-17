@@ -135,7 +135,7 @@ Future<InputColumnMapping> AMBERNetCDFImporter::inspectFileHeader(const Frame& f
 			// Start task that inspects the file header to determine the contained data columns.
 			FrameLoaderPtr inspectionTask = std::make_shared<FrameLoader>(frame, filename);
 			return dataset()->container()->taskManager().runTaskAsync(inspectionTask)
-				.then([](const FileSourceImporter::FrameDataPtr& frameData) mutable {
+				.then([](const FileSourceImporter::FrameDataPtr& frameData) {
 					return static_cast<FrameData*>(frameData.get())->detectedColumnMapping();
 				});
 		});
@@ -359,7 +359,7 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 				}
 				else if(type == NC_FLOAT || type == NC_DOUBLE) {
 					columnMapping.push_back(mapVariableToColumn(name, PropertyStorage::Float, componentCount));
-					if(qstrcmp(name, "coordinates") == 0)
+					if(qstrcmp(name, "coordinates") == 0 || qstrcmp(name, "unwrapped_coordinates") == 0)
 						coordinatesVar = varId;
 				}
 				else {
@@ -392,6 +392,8 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 				}
 			}
 		}
+		if(coordinatesVar == -1)
+			throw Exception(tr("NetCDF file contains no variable named 'coordinates' or 'unwrapped_coordinates'."));
 
 		// Check if the only thing we need to do is read column information.
 		if(_parseFileHeaderOnly) {

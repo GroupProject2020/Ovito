@@ -84,6 +84,22 @@ public:
 	/// Returns false if the promise has been canceled.
     bool setProgressValueIntermittent(int progressValue, int updateEvery = 2000) const { return sharedState()->setProgressValueIntermittent(progressValue, updateEvery); }
 
+	// Progress reporting for tasks with sub-steps:
+
+	/// Begins a sequence of sub-steps in the progress range of this promise.
+	/// This is used for long and complex computations, which consist of several logical sub-steps, each with
+	/// a separate progress range.
+    void beginProgressSubStepsWithWeights(std::vector<int> weights) const { sharedState()->beginProgressSubStepsWithWeights(std::move(weights)); }
+	
+	/// Convenience version of the function above, which creates N substeps, all with the same weight.
+	void beginProgressSubSteps(int nsteps) const { sharedState()->beginProgressSubSteps(nsteps); }
+
+	/// Changes to the next sub-step in the sequence started with beginProgressSubSteps().
+	void nextProgressSubStep() const { sharedState()->nextProgressSubStep(); }
+
+	/// Must be called at the end of a sub-step sequence started with beginProgressSubSteps().
+	void endProgressSubSteps() const { sharedState()->endProgressSubSteps(); }
+		
 	/// Return the current status text set for this promise.
     QString progressText() const { return sharedState()->progressText(); }
 
