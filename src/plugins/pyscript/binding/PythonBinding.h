@@ -68,6 +68,17 @@ namespace pybind11 { namespace detail {
 #endif
         }
     };
+	
+	inline QString castToQString(handle src) {
+#ifndef Q_CC_MSVC
+		return src.cast<QString>();
+#else
+		type_caster<QString> caster;
+		if(!caster.load(src, false))
+			throw cast_error();
+		return (QString&)caster;
+#endif
+	}
 
 	/// Automatic Python string <--> QUrl conversion
     template<> struct type_caster<QUrl> {
@@ -77,22 +88,7 @@ namespace pybind11 { namespace detail {
         bool load(handle src, bool) {
 			if(!src) return false;
 			try {
-#ifndef Q_CC_MSVC
-				QString str = src.cast<QString>();
-#else
-				object temp;
-				handle load_src = src;
-				if(PyUnicode_Check(load_src.ptr())) {
-					temp = reinterpret_steal<object>(PyUnicode_AsUTF8String(load_src.ptr()));
-					if (!temp) { PyErr_Clear(); return false; }  // UnicodeEncodeError
-					load_src = temp;
-				}
-				char *buffer;
-				ssize_t length;
-				int err = PYBIND11_BYTES_AS_STRING_AND_SIZE(load_src.ptr(), &buffer, &length);
-				if (err == -1) { PyErr_Clear(); return false; }  // TypeError
-				QString str = QString::fromUtf8(buffer, (int)length);
-#endif
+				QString str = castToQString(src);
 				value = Ovito::Application::instance()->fileManager()->urlFromUserInput(str);
 				return true;
 			}
@@ -151,7 +147,7 @@ namespace pybind11 { namespace detail {
 			if(!isinstance<sequence>(src)) return false;
 			sequence seq = reinterpret_borrow<sequence>(src);
 			for(size_t i = 0; i < seq.size(); i++)
-				value.push_back(seq[i].cast<QString>());
+				value.push_back(castToQString(seq[i]));
 			return true;
         }
 

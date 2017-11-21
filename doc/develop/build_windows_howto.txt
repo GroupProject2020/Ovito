@@ -190,7 +190,7 @@ cmake -G "NMake Makefiles" ^
    -DOPENVR_INCLUDE_DIR=%cd:\=/%/../openvr/headers ^
    -DOPENVR_LIBRARY=%cd:\=/%/../openvr/lib/win64/openvr_api.lib ^
    -DFFTW3_INCLUDE_DIR=%cd:\=/%/../fftw ^
-   -DFFTW3_LIBRARY=%cd:\=/%/../fftw/libfftw3f-3.lib ^
+   -DFFTW3_LIBRARY=%cd:\=/%/../fftw/libfftw3-3.lib ^
    ../../source
    
 nmake install

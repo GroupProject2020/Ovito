@@ -272,7 +272,7 @@ PropertyReference convertPythonPropertyReference(py::object src, const PropertyC
 
 	QString str;
 	try {
-		str = src.cast<QString>();
+		str = castToQString(src);
 	}
 	catch(const py::cast_error&) {
 		throw Exception(QStringLiteral("Invalid property name. Expected a string."));

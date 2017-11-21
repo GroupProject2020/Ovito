@@ -141,7 +141,7 @@ void defineSceneSubmodule(py::module m)
 					else if(PyFloat_Check(value.ptr()))
 						obj.attributes().insert(attrName, QVariant::fromValue(PyFloat_AsDouble(value.ptr())));
 					else
-						obj.attributes().insert(attrName, QVariant::fromValue(value.cast<py::str>().cast<QString>()));
+						obj.attributes().insert(attrName, QVariant::fromValue(castToQString(value.cast<py::str>())));
 				}
 			})
 	;
@@ -287,7 +287,7 @@ void defineSceneSubmodule(py::module m)
 					else if(PyFloat_Check(value.ptr()))
 						obj.setAttribute(attrName, QVariant::fromValue(PyFloat_AsDouble(value.ptr())));
 					else
-						obj.setAttribute(attrName, QVariant::fromValue(value.cast<py::str>().cast<QString>()));
+						obj.setAttribute(attrName, QVariant::fromValue(castToQString(value.cast<py::str>())));
 				}
 			})
 	;

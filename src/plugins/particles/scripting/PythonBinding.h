@@ -30,6 +30,10 @@
 
 namespace pybind11 { namespace detail {
 
+	/// Automatic Python string <--> ParticlePropertyReference conversion
+    template<> struct type_caster<Ovito::Particles::ParticlePropertyReference> : public typed_property_ref_caster<Ovito::Particles::ParticleProperty> {
+	};
+	
 	/// Automatic Python string list <--> InputColumnMapping conversion
     template<> struct type_caster<Ovito::Particles::InputColumnMapping> {
     public:

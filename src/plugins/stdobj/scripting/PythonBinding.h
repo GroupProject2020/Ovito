@@ -46,7 +46,7 @@ namespace pybind11 { namespace detail {
     };
 	
 	/// Automatic Python string <--> TypedPropertyReference conversion
-    template<class PropertyObjectType> struct type_caster<Ovito::StdObj::TypedPropertyReference<PropertyObjectType>> {
+    template<class PropertyObjectType> struct typed_property_ref_caster {
     public:
         PYBIND11_TYPE_CASTER(Ovito::StdObj::TypedPropertyReference<PropertyObjectType>, _("PropertyReference<") + make_caster<PropertyObjectType>::name() + _(">"));
 
@@ -71,7 +71,7 @@ namespace pybind11 { namespace detail {
 			
 			QString str;
 			try {
-				str = src.cast<QString>();
+				str = castToQString(src);
 			}
 			catch(const cast_error&) {
 				return false;
