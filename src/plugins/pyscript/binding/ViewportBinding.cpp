@@ -157,16 +157,13 @@ void defineViewportSubmodule(py::module m)
 			":py:attr:`~ovito.vis.Viewport.overlays` collection:"
 			"\n\n"
 			".. literalinclude:: ../example_snippets/coordinate_tripod_overlay.py"
-			"\n\n"
-			".. note::\n\n"
-			"  Some properties of this class interface have not been exposed and are not accessible from Python yet. "
-			"  Please let the developer know if you would like them to be added.\n")
+			"\n\n")
 		.def_property("alignment", &CoordinateTripodOverlay::alignment, &CoordinateTripodOverlay::setAlignment,
 				"Selects the corner of the viewport where the tripod is displayed. This must be a valid `Qt.Alignment value <http://doc.qt.io/qt-5/qt.html#AlignmentFlag-enum>`_ value as shown in the example above."
 				"\n\n"
 				":Default: ``PyQt5.QtCore.Qt.AlignLeft ^ PyQt5.QtCore.Qt.AlignBottom``")
 		.def_property("size", &CoordinateTripodOverlay::tripodSize, &CoordinateTripodOverlay::setTripodSize,
-				"The scaling factor that controls the size of the tripod. The size is specified as a fraction of the output image height."
+				"Scaling factor controlling the overall size of the tripod. The size is specified as a fraction of the output image height."
 				"\n\n"
 				":Default: 0.075\n")
 		.def_property("line_width", &CoordinateTripodOverlay::lineWidth, &CoordinateTripodOverlay::setLineWidth,
@@ -185,6 +182,71 @@ void defineViewportSubmodule(py::module m)
 				"The font size for rendering the text labels of the tripod. The font size is specified in terms of the tripod size."
 				"\n\n"
 				":Default: 0.4\n")
+		.def_property("axis1_enabled", &CoordinateTripodOverlay::axis1Enabled, &CoordinateTripodOverlay::setAxis1Enabled,
+				"Enables the display of the first axis."
+				"\n\n"
+				":Default: True\n")
+		.def_property("axis2_enabled", &CoordinateTripodOverlay::axis2Enabled, &CoordinateTripodOverlay::setAxis2Enabled,
+				"Enables the display of the second axis."
+				"\n\n"
+				":Default: True\n")
+		.def_property("axis3_enabled", &CoordinateTripodOverlay::axis3Enabled, &CoordinateTripodOverlay::setAxis3Enabled,
+				"Enables the display of the third axis."
+				"\n\n"
+				":Default: True\n")
+		.def_property("axis4_enabled", &CoordinateTripodOverlay::axis4Enabled, &CoordinateTripodOverlay::setAxis4Enabled,
+				"Enables the display of the fourth axis."
+				"\n\n"
+				":Default: False\n")
+		.def_property("axis1_label", &CoordinateTripodOverlay::axis1Label, &CoordinateTripodOverlay::setAxis1Label,
+				"Text label for the first axis."
+				"\n\n"
+				":Default: \"x\"\n")
+		.def_property("axis2_label", &CoordinateTripodOverlay::axis2Label, &CoordinateTripodOverlay::setAxis2Label,
+				"Text label for the second axis."
+				"\n\n"
+				":Default: \"y\"\n")
+		.def_property("axis3_label", &CoordinateTripodOverlay::axis3Label, &CoordinateTripodOverlay::setAxis3Label,
+				"Text label for the third axis."
+				"\n\n"
+				":Default: \"z\"\n")
+		.def_property("axis4_label", &CoordinateTripodOverlay::axis4Label, &CoordinateTripodOverlay::setAxis4Label,
+				"Label for the fourth axis."
+				"\n\n"
+				":Default: \"w\"\n")
+		.def_property("axis1_dir", &CoordinateTripodOverlay::axis1Dir, &CoordinateTripodOverlay::setAxis1Dir,
+				"Vector specifying direction and length of first axis, expressed in the global Cartesian coordinate system."
+				"\n\n"
+				":Default: ``(1,0,0)``\n")
+		.def_property("axis2_dir", &CoordinateTripodOverlay::axis2Dir, &CoordinateTripodOverlay::setAxis2Dir,
+				"Vector specifying direction and length of second axis, expressed in the global Cartesian coordinate system."
+				"\n\n"
+				":Default: ``(0,1,0)``\n")
+		.def_property("axis3_dir", &CoordinateTripodOverlay::axis3Dir, &CoordinateTripodOverlay::setAxis3Dir,
+				"Vector specifying direction and length of third axis, expressed in the global Cartesian coordinate system."
+				"\n\n"
+				":Default: ``(0,0,1)``\n")
+		.def_property("axis4_dir", &CoordinateTripodOverlay::axis4Dir, &CoordinateTripodOverlay::setAxis4Dir,
+				"Vector specifying direction and length of fourth axis, expressed in the global Cartesian coordinate system."
+				"\n\n"
+				":Default: ``(0.7071, 0.7071, 0.0)``\n")
+		.def_property("axis1_color", &CoordinateTripodOverlay::axis1Color, &CoordinateTripodOverlay::setAxis1Color,
+				"RGB display color of the first axis."
+				"\n\n"
+				":Default: ``(1.0, 0.0, 0.0)``\n")
+		.def_property("axis2_color", &CoordinateTripodOverlay::axis2Color, &CoordinateTripodOverlay::setAxis2Color,
+				"RGB display color of the second axis."
+				"\n\n"
+				":Default: ``(0.0, 0.8, 0.0)``\n")
+		.def_property("axis3_color", &CoordinateTripodOverlay::axis3Color, &CoordinateTripodOverlay::setAxis3Color,
+				"RGB display color of the third axis."
+				"\n\n"
+				":Default: ``(0.2, 0.2, 1.0)``\n")
+		.def_property("axis4_color", &CoordinateTripodOverlay::axis4Color, &CoordinateTripodOverlay::setAxis4Color,
+				"RGB display color of the fourth axis."
+				"\n\n"
+				":Default: ``(1.0, 0.0, 1.0)``\n")
+
 	;
 
 	ovito_class<TextLabelOverlay, ViewportOverlay>(m,
