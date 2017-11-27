@@ -12,6 +12,7 @@ pipeline.add_to_scene()
 
 # Configure the viewport overlay and link it to the ColorCodingModifier:
 overlay = ColorLegendOverlay(
+    modifier = color_mod,
     title = 'Potential energy per atom:', 
     alignment = Qt.AlignLeft ^ Qt.AlignTop,
     orientation = Qt.Vertical,
@@ -19,6 +20,6 @@ overlay = ColorLegendOverlay(
     font_size = 0.12,
     format_string = '%.2f eV')
 
-# Attach the overlay to the active viewport.
+# Attach the overlay to the Viewport that is going to be used for rendering:
 viewport = ovito.dataset.viewports.active_vp
 viewport.overlays.append(overlay)

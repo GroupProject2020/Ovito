@@ -111,7 +111,17 @@ void ColorLegendOverlay::render(Viewport* viewport, TimePoint time, QPainter& pa
 						const ViewProjectionParameters& projParams, RenderSettings* renderSettings,
 						bool interactiveViewport, TaskManager& taskManager)
 {
-	if(!modifier()) return;
+	// Check whether a Color Coding modifier has been wired to this color legend:
+	if(!modifier()) {
+		if(Application::instance()->consoleMode()) {
+			throwException(tr("You are trying to render a Viewport with a ColorLegendOverlay whose 'modifier' property has "
+							  "not been linked to a ColorCodingModifier. Did you forget to assign it?"));
+		}
+		else {
+			// Ignore invalid configuration in GUI mode by not rendering the legend.
+			return;
+		}
+	}
 
 	FloatType legendSize = this->legendSize() * renderSettings->outputImageHeight();
 	if(legendSize <= 0) return;
