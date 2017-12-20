@@ -80,8 +80,8 @@ public:
  */
 class OVITO_CORE_EXPORT PositionSplineAnimationKey : public SplineAnimationKey<PositionAnimationKey>
 {
-	OVITO_CLASS(PositionSplineAnimationKey)
 	Q_OBJECT
+	OVITO_CLASS(PositionSplineAnimationKey)
 	
 public:
 

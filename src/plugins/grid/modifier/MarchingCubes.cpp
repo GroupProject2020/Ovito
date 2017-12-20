@@ -28,11 +28,18 @@ namespace Ovito { namespace Grid {
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-MarchingCubes::MarchingCubes(int size_x, int size_y, int size_z, const FloatType* data, size_t stride, HalfEdgeMesh<>& outputMesh) :
-    _size_x(size_x), _size_y(size_y), _size_z(size_z),
+MarchingCubes::MarchingCubes(int size_x, int size_y, int size_z, std::array<bool,3> pbcFlags, const FloatType* data, size_t stride, HalfEdgeMesh<>& outputMesh, bool lowerIsSolid) :
+    _data_size_x(size_x), 
+    _data_size_y(size_y), 
+    _data_size_z(size_z), 
+    _size_x(size_x + (pbcFlags[0]?0:1)), 
+    _size_y(size_y + (pbcFlags[1]?0:1)), 
+    _size_z(size_z + (pbcFlags[2]?0:1)),
+    _pbcFlags(pbcFlags),
     _data(data), _dataStride(stride), _outputMesh(outputMesh),
-    _cubeVerts(size_x * size_y * size_z * 3, nullptr),
-    _isCompletelySolid(false)
+    _cubeVerts(_size_x * _size_y * _size_z * 3, nullptr),
+    _isCompletelySolid(false),
+    _lowerIsSolid(lowerIsSolid)
 {
     OVITO_ASSERT(stride >= 1);
 }
@@ -68,7 +75,7 @@ bool MarchingCubes::generateIsosurface(FloatType isolevel, PromiseState& promise
 ******************************************************************************/
 void MarchingCubes::computeIntersectionPoints(FloatType isolevel, PromiseState& promise)
 {
-    _isCompletelySolid = true;
+    _isCompletelySolid = (_pbcFlags[0] && _pbcFlags[1] && _pbcFlags[2]);
     for(int k = 0; k < _size_z && !promise.isCanceled(); k++, promise.incrementProgressValue()) {
         for(int j = 0; j < _size_y; j++) {
             for(int i = 0; i < _size_x; i++) {
@@ -83,7 +90,12 @@ void MarchingCubes::computeIntersectionPoints(FloatType isolevel, PromiseState& 
                 if(std::abs(cube[3]) < _epsilon) cube[3] = _epsilon;
                 if(std::abs(cube[4]) < _epsilon) cube[4] = _epsilon;
 
-                if(cube[0] < 0) _isCompletelySolid = false;
+                if(_lowerIsSolid) {
+                    if(cube[0] > 0) _isCompletelySolid = false;
+                }
+                else {
+                    if(cube[0] < 0) _isCompletelySolid = false;
+                }
                 if(cube[1]*cube[0] < 0) createEdgeVertexX(i,j,k, cube[0] / (cube[0] - cube[1]));
                 if(cube[3]*cube[0] < 0) createEdgeVertexY(i,j,k, cube[0] / (cube[0] - cube[3]));
                 if(cube[4]*cube[0] < 0) createEdgeVertexZ(i,j,k, cube[0] / (cube[0] - cube[4]));
@@ -623,8 +635,12 @@ void MarchingCubes::addTriangle(int i, int j, int k, const char* trig, char n, H
         }
         OVITO_ASSERT_MSG(tv[t%3] != nullptr, "Marching cubes", "invalid triangle");
 
-        if(t%3 == 2)
-            _outputMesh.createFace({tv[2], tv[1], tv[0]});
+        if(t%3 == 2) {
+            if(_lowerIsSolid)
+                _outputMesh.createFace({tv[0], tv[1], tv[2]});
+            else
+                _outputMesh.createFace({tv[2], tv[1], tv[0]});
+        }
     }
 }
 

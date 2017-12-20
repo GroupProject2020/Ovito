@@ -106,7 +106,8 @@ Future<PipelineFlowState> SurfaceMeshDisplay::transformDataImpl(TimePoint time, 
 
 	// Create compute engine.
 	auto engine = std::make_shared<PrepareSurfaceEngine>(surfaceMeshObj->storage(), cellObject->data(), 
-		surfaceMeshObj->isCompletelySolid(), reverseOrientation(), surfaceMeshObj->cuttingPlanes(), smoothShading());
+		surfaceMeshObj->isCompletelySolid(), reverseOrientation(), 
+		surfaceMeshObj->cuttingPlanes(), smoothShading());
 
 	// Submit engine for execution and post-process results.
 	return dataset()->container()->taskManager().runTaskAsync(engine)
@@ -209,9 +210,12 @@ void SurfaceMeshDisplay::render(TimePoint time, DataObject* dataObject, const Pi
 		OORef<RenderableSurfaceMesh> meshObj = dataObject->convertTo<RenderableSurfaceMesh>(time);
 		if(meshObj) {
 			_surfaceBuffer->setMesh(meshObj->surfaceMesh(), color_surface);
-			if(showCap())
+			//_surfaceBuffer->setCullFaces(true);
+			if(showCap()) {
 				_capBuffer->setMesh(meshObj->capPolygonsMesh(), color_cap);
+				//_capBuffer->setCullFaces(true);
 			}
+		}
 		else {
 			_surfaceBuffer->setMesh(TriMesh(), ColorA(1,1,1,1));
 			if(showCap())
@@ -397,11 +401,16 @@ bool SurfaceMeshDisplay::splitFace(TriMesh& output, TriMeshFace& face, int oldVe
 ******************************************************************************/
 void SurfaceMeshDisplay::buildCapMesh(const HalfEdgeMesh<>& input, const SimulationCell& cell, bool isCompletelySolid, bool reverseOrientation, const QVector<Plane3>& cuttingPlanes, TriMesh& output, PromiseState* promise)
 {
+	bool flipCapNormal = (cell.matrix().determinant() < 0);
+
 	// Convert vertex positions to reduced coordinates.
 	std::vector<Point3> reducedPos(input.vertexCount());
 	auto inputVertex = input.vertices().begin();
+	AffineTransformation invCellMatrix = cell.inverseMatrix();
+	if(flipCapNormal)
+		invCellMatrix.column(0) = -invCellMatrix.column(0);
 	for(Point3& p : reducedPos)
-		p = cell.absoluteToReduced((*inputVertex++)->pos());
+		p = invCellMatrix * (*inputVertex++)->pos();
 
 	int isBoxCornerInside3DRegion = -1;
 
@@ -463,6 +472,13 @@ void SurfaceMeshDisplay::buildCapMesh(const HalfEdgeMesh<>& input, const Simulat
 			tessellator.endContour();
 		}
 
+		auto yxCoord2ArcLength = [](const Point2& p) {
+			if(p.x() == 0) return p.y();
+			else if(p.y() == 1) return p.x() + FloatType(1);
+			else if(p.x() == 1) return FloatType(3) - p.y();
+			else return std::fmod(FloatType(4) - p.x(), FloatType(4));
+		};
+
 		// Build the outer contour.
 		if(!openContours.empty()) {
 			boost::dynamic_bitset<> visitedContours(openContours.size());
@@ -478,41 +494,31 @@ void SurfaceMeshDisplay::buildCapMesh(const HalfEdgeMesh<>& input, const Simulat
 						}
 						visitedContours.set(currentContour - openContours.begin());
 
-						FloatType exitSide = 0;
-						if(currentContour->back().x() == 0) exitSide = currentContour->back().y();
-						else if(currentContour->back().y() == 1) exitSide = currentContour->back().x() + FloatType(1);
-						else if(currentContour->back().x() == 1) exitSide = FloatType(3) - currentContour->back().y();
-						else if(currentContour->back().y() == 0) exitSide = FloatType(4) - currentContour->back().x();
-						if(exitSide >= FloatType(4)) exitSide = 0;
+						FloatType t_exit = yxCoord2ArcLength(currentContour->back());
 
 						// Find the next contour.
-						FloatType entrySide;
+						FloatType t_entry;
 						FloatType closestDist = FLOATTYPE_MAX;
 						for(auto c = openContours.begin(); c != openContours.end(); ++c) {
-							FloatType pos = 0;
-							if(c->front().x() == 0) pos = c->front().y();
-							else if(c->front().y() == 1) pos = c->front().x() + FloatType(1);
-							else if(c->front().x() == 1) pos = FloatType(3) - c->front().y();
-							else if(c->front().y() == 0) pos = FloatType(4) - c->front().x();
-							if(pos >= FloatType(4)) pos = 0;
-							FloatType dist = exitSide - pos;
+							FloatType t = yxCoord2ArcLength(c->front());
+							FloatType dist = t_exit - t;
 							if(dist < 0) dist += FloatType(4);
 							if(dist < closestDist) {
 								closestDist = dist;
 								currentContour = c;
-								entrySide = pos;
+								t_entry = t;
 							}
 						}
-						int exitCorner = (int)floor(exitSide);
-						int entryCorner = (int)floor(entrySide);
+						int exitCorner = (int)std::floor(t_exit);
+						int entryCorner = (int)std::floor(t_entry);
 						OVITO_ASSERT(exitCorner >= 0 && exitCorner < 4);
 						OVITO_ASSERT(entryCorner >= 0 && entryCorner < 4);
-						if(exitCorner != entryCorner || exitSide < entrySide) {
-							for(int corner = exitCorner; ;) {
+						if(exitCorner != entryCorner || t_exit < t_entry) {
+							for(int corner = exitCorner;;) {
 								switch(corner) {
 								case 0: tessellator.vertex(Point2(0,0)); break;
 								case 1: tessellator.vertex(Point2(0,1)); break;
-								case 2: tessellator.vertex(Point2(1,1)); break;
+								case 2: tessellator.vertex(Point2(1,1)); break;	
 								case 3: tessellator.vertex(Point2(1,0)); break;
 								}
 								corner = (corner + 3) % 4;
@@ -554,7 +560,7 @@ void SurfaceMeshDisplay::buildCapMesh(const HalfEdgeMesh<>& input, const Simulat
 		return;
 
 	// Convert vertex positions back from reduced coordinates to absolute coordinates.
-	AffineTransformation cellMatrix = cell.matrix();
+	const AffineTransformation cellMatrix = invCellMatrix.inverse();
 	for(Point3& p : output.vertices())
 		p = cellMatrix * p;
 

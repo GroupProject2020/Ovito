@@ -80,6 +80,7 @@ SET(SourceFiles
 	import/gsd/gsd.c
 	import/castep/CastepCellImporter.cpp
 	import/castep/CastepMDImporter.cpp
+	import/xsf/XSFImporter.cpp
 	export/ParticleExporter.cpp
 	export/FileColumnParticleExporter.cpp
 	export/OutputColumnMapping.cpp

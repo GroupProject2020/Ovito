@@ -146,10 +146,10 @@ FileSourceImporter::FrameDataPtr IMDImporter::FrameLoader::loadFile(QFile& file)
 
 	// Save file position.
 	qint64 headerOffset = stream.byteOffset();
-	int headerLinerNumber = stream.lineNumber();
+	int headerLineNumber = stream.lineNumber();
 
 	// Count the number of atoms (=lines) in the input file.
-	int numAtoms = 0;
+	size_t numAtoms = 0;
 	while(!stream.eof()) {
 		if(stream.readLine()[0] == '\0') break;
 		numAtoms++;
@@ -165,13 +165,13 @@ FileSourceImporter::FrameDataPtr IMDImporter::FrameLoader::loadFile(QFile& file)
 
 	// Parse data columns.
 	InputColumnReader columnParser(columnMapping, *frameData, numAtoms);
-	for(int i = 0; i < numAtoms; i++) {
+	for(size_t i = 0; i < numAtoms; i++) {
 		if(!setProgressValueIntermittent(i)) return {};
 		try {
 			columnParser.readParticle(i, stream.readLine());
 		}
 		catch(Exception& ex) {
-			throw ex.prependGeneralMessage(tr("Parsing error in line %1 of IMD file.").arg(headerLinerNumber + i));
+			throw ex.prependGeneralMessage(tr("Parsing error in line %1 of IMD file.").arg(headerLineNumber + i));
 		}
 	}
 

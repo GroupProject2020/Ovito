@@ -147,7 +147,7 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 
 	const FloatType* fieldData = property()->constDataFloat() + std::max(_vectorComponent, 0);
 
-	MarchingCubes mc(_gridShape[0], _gridShape[1], _gridShape[2], fieldData, property()->componentCount(), *_results->mesh());
+	MarchingCubes mc(_gridShape[0], _gridShape[1], _gridShape[2], _simCell.pbcFlags(), fieldData, property()->componentCount(), *_results->mesh(), false);
 	if(!mc.generateIsosurface(_isolevel, *this))
 		return;
 	_results->setIsCompletelySolid(mc.isCompletelySolid());
@@ -159,10 +159,17 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 	}
 
 	// Transform mesh vertices from orthogonal grid space to world space.
-	const AffineTransformation tm = _simCell.matrix() * 
-		Matrix3(FloatType(1) / _gridShape[0], 0, 0, 0, FloatType(1) / _gridShape[1], 0, 0, 0, FloatType(1) / _gridShape[2]);
+	const AffineTransformation tm = _simCell.matrix() * Matrix3(
+		FloatType(1) / (_gridShape[0] - (_simCell.pbcFlags()[0]?0:1)), 0, 0, 
+		0, FloatType(1) / (_gridShape[1] - (_simCell.pbcFlags()[1]?0:1)), 0, 
+		0, 0, FloatType(1) / (_gridShape[2] - (_simCell.pbcFlags()[2]?0:1)));
 	for(HalfEdgeMesh<>::Vertex* vertex : _results->mesh()->vertices())
 		vertex->setPos(tm * vertex->pos());
+
+	// Flip surface orientation if cell matrix is a mirror transformation.
+	if(tm.determinant() < 0) {
+		_results->mesh()->flipFaces();
+	}
 
 	if(isCanceled())
 		return;

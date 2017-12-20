@@ -130,11 +130,14 @@ OvitoObject* OvitoClass::createInstanceImpl(DataSet* dataset) const
 {
 #ifdef OVITO_DEBUG
 	// Check if class hierarchy is consistent.
-	OVITO_ASSERT(superClass() != nullptr);
+	OvitoClassPtr ovitoSuperClass = superClass();
+	while(ovitoSuperClass && ovitoSuperClass->qtMetaObject() == nullptr)
+		ovitoSuperClass = ovitoSuperClass->superClass();
+	OVITO_ASSERT(ovitoSuperClass != nullptr);
 	const QMetaObject* qtSuperClass = qtMetaObject()->superClass();
-	while(qtSuperClass && qtSuperClass != superClass()->qtMetaObject())
+	while(qtSuperClass && qtSuperClass != ovitoSuperClass->qtMetaObject())
 		qtSuperClass = qtSuperClass->superClass();
-	OVITO_ASSERT_MSG(qtSuperClass != nullptr, "OvitoClass::createInstanceImpl", qPrintable(QString("Class %1 is not derived from base class %2 as specified by the object type descriptor.").arg(name()).arg(superClass()->name())));
+	OVITO_ASSERT_MSG(qtSuperClass != nullptr, "OvitoClass::createInstanceImpl", qPrintable(QString("Class %1 is not derived from base class %2 as specified by the object type descriptor. Qt super class is %3.").arg(name()).arg(superClass()->name()).arg(qtMetaObject()->superClass()->className())));
 #endif
 
 	OvitoObject* obj;

@@ -801,6 +801,26 @@ public:
 		return true;
 	}
 
+	/// \brief Flip the orientation of all faces.
+	void flipFaces() {
+		for(Face* face : faces()) {
+			if(Edge* e = face->edges()) {
+				do {
+					e->vertex1()->transferEdgeToVertex(e, e->_vertex2, false);
+					e = e->nextFaceEdge();
+				}
+				while(e != face->edges());
+				Vertex* v1 = e->vertex1();
+				do {
+					std::swap(e->_vertex2, v1);
+					std::swap(e->_nextFaceEdge, e->_prevFaceEdge);
+					e = e->prevFaceEdge();
+				}
+				while(e != face->edges());
+			}
+		}
+	}
+
 	/// Re-assigned indices to faces and vertices of the mesh so that the indices
 	/// form a consecutive sequence starting at zero.
 	void reindexVerticesAndFaces() {

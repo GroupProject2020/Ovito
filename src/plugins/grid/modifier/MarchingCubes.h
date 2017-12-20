@@ -36,18 +36,36 @@ class MarchingCubes
 public:
 
     // Constructor
-    MarchingCubes(int size_x, int size_y, int size_z, const FloatType* fielddata, size_t stride, HalfEdgeMesh<>& outputMesh);
+    MarchingCubes(int size_x, int size_y, int size_z, std::array<bool,3> pbcFlags, const FloatType* fielddata, size_t stride, HalfEdgeMesh<>& outputMesh, bool lowerIsSolid);
 
     /// Returns the field value in a specific cube of the grid.
     /// Takes into account periodic boundary conditions.
-    inline const FloatType getFieldValue(int i, int j, int k) const { 
-        if(i == _size_x) i = 0;
-        if(j == _size_y) j = 0;
-        if(k == _size_z) k = 0;
-        OVITO_ASSERT(i >= 0 && i < _size_x);
-        OVITO_ASSERT(j >= 0 && j < _size_y);
-        OVITO_ASSERT(k >= 0 && k < _size_z);
-        return _data[(i + j*_size_x + k*_size_x*_size_y) * _dataStride];
+    inline const FloatType getFieldValue(int i, int j, int k) const {         
+        if(_pbcFlags[0]) {
+            if(i == _size_x) i = 0;
+        }
+        else {
+            if(i == 0 || i == _size_x) return std::numeric_limits<FloatType>::lowest();
+            i--;
+        }
+        if(_pbcFlags[1]) {
+            if(j == _size_y) j = 0;
+        }
+        else {
+            if(j == 0 || j == _size_y) return std::numeric_limits<FloatType>::lowest();
+            j--;
+        }
+        if(_pbcFlags[2]) {
+            if(k == _size_z) k = 0;
+        }
+        else {
+            if(k == 0 || k == _size_z) return std::numeric_limits<FloatType>::lowest();
+            k--;
+        }
+        OVITO_ASSERT(i >= 0 && i < _data_size_x);
+        OVITO_ASSERT(j >= 0 && j < _data_size_y);
+        OVITO_ASSERT(k >= 0 && k < _data_size_z);
+        return _data[(i + j*_data_size_x + k*_data_size_x*_data_size_y) * _dataStride];
     }
   
     bool isCompletelySolid() const { return _isCompletelySolid; }
@@ -78,7 +96,7 @@ protected:
         OVITO_ASSERT(i >= 0 && i < _size_x);
         OVITO_ASSERT(j >= 0 && j < _size_y);
         OVITO_ASSERT(k >= 0 && k < _size_z);
-        auto v = _outputMesh.createVertex(Point3(i + u, j, k));
+        auto v = _outputMesh.createVertex(Point3(i + u - (_pbcFlags[0]?0:1), j - (_pbcFlags[1]?0:1), k - (_pbcFlags[2]?0:1)));
         _cubeVerts[(i + j*_size_x + k*_size_x*_size_y)*3 + 0] = v; 
         return v;
     }
@@ -88,7 +106,7 @@ protected:
         OVITO_ASSERT(i >= 0 && i < _size_x);
         OVITO_ASSERT(j >= 0 && j < _size_y);
         OVITO_ASSERT(k >= 0 && k < _size_z);
-        auto v = _outputMesh.createVertex(Point3(i, j + u, k));
+        auto v = _outputMesh.createVertex(Point3(i - (_pbcFlags[0]?0:1), j + u - (_pbcFlags[1]?0:1), k - (_pbcFlags[2]?0:1)));
         _cubeVerts[(i + j*_size_x + k*_size_x*_size_y)*3 + 1] = v; 
         return v;
     }
@@ -98,7 +116,7 @@ protected:
         OVITO_ASSERT(i >= 0 && i < _size_x);
         OVITO_ASSERT(j >= 0 && j < _size_y);
         OVITO_ASSERT(k >= 0 && k < _size_z);
-        auto v = _outputMesh.createVertex(Point3(i, j, k + u));
+        auto v = _outputMesh.createVertex(Point3(i - (_pbcFlags[0]?0:1), j - (_pbcFlags[1]?0:1), k + u - (_pbcFlags[2]?0:1)));
         _cubeVerts[(i + j*_size_x + k*_size_x*_size_y)*3 + 2] = v; 
         return v;
     }
@@ -118,12 +136,18 @@ protected:
         return _cubeVerts[(i + j*_size_x + k*_size_x*_size_y)*3 + axis]; 
     }
 
-protected :
+protected:
+
+    int _data_size_x;  ///< width  of the input data grid
+    int _data_size_y;  ///< depth  of the input data grid
+    int _data_size_z;  ///< height of the input data grid
     int _size_x;  ///< width  of the grid
     int _size_y;  ///< depth  of the grid
     int _size_z;  ///< height of the grid
     const FloatType* _data;  ///< implicit function values sampled on the grid
-    size_t _dataStride;
+    size_t _dataStride;	
+	std::array<bool,3> _pbcFlags; ///< PBC flags
+    bool _lowerIsSolid; ///< Controls the inward/outward orientation of the created triangle surface.
 
     /// Vertices created along cube edges.
     std::vector<HalfEdgeMesh<>::Vertex*> _cubeVerts;
