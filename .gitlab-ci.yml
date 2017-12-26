@@ -15,7 +15,7 @@ build_linux_python3:
            -DPYTHON_LIBRARY=/usr/lib/x86_64-linux-gnu/libpython3.5m.so
            -DCMAKE_INSTALL_PREFIX=../install
            ..
-      - make -j4 install
+      - make -j3 install
       - ctest --output-on-failure
       - linkchecker --check-extern ../install/share/ovito/doc/manual/html/index.html
            --ignore-url=https://dx.doi.org/10.1088/0965-0393/24/5/055007
@@ -39,5 +39,5 @@ build_linux_python2:
            -DPYTHON_LIBRARY=/usr/lib/x86_64-linux-gnu/libpython2.7.so
            -DCMAKE_INSTALL_PREFIX=../install
            ..
-      - make -j4 install
+      - make -j3 install
       - ctest --output-on-failure
