@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<section version="5.0"
+         xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
+         xml:id="modifier_templates"
+         xmlns="http://docbook.org/ns/docbook"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:xs="http://www.w3.org/2001/XMLSchema"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+         xmlns:ns="http://docbook.org/ns/docbook">
+  <title>Modifier templates</title>
+
+  <para>
+    <informalfigure><screenshot><mediaobject><imageobject>
+      <imagedata fileref="images/app_settings/modifier_templates.png" format="PNG" scale="80" />
+    </imageobject></mediaobject></screenshot></informalfigure>     
+
+    Modifier templates allow you to define modifiers with preconfigured settings for quick access.
+    This is useful in situations where you need to apply the same modifier(s) with the exact same settings 
+    to different datasets repeatedly. The modifier templates you define are preserved across program sessions
+    and can even be transferred between computers. Furthermore, a modifier template can consists of several modifiers allowing
+    you to insert often-used sequences or combinations of modifiers into the data pipeline with only one click.
+  </para>
+    
+  <para>
+    Modifier templates are managed in the <link linkend="application_settings">application settings dialog</link>.
+    Note that the <link linkend="">pipeline editor</link> contains a button to quickly open that dialog. All modifier templates 
+    that you define are available application-wide and OVITO will remember them across program sessions.
+  </para>
+
+  <para>
+    <informalfigure><screenshot><mediaobject><imageobject>
+      <imagedata fileref="images/app_settings/modifier_templates_shortcut.png" format="PNG" scale="50" />
+    </imageobject></mediaobject></screenshot></informalfigure>     
+    New templates are defined on the basis of existing modifiers in the active data pipeline. 
+    That means you basically "save" one or more modifiers including their current settings to make them available
+    for future use. Once defined, modifier templates appear in the drop-down list of available modifiers behind the standard modifiers.
+    From here they can be quickly applied to new datasets. This feature is useful if you need to use the same modifier(s)
+    with the exact same settings over and over again.
+  </para>
+
+  <para>
+    Another typical use case of modifier templates are user-defined script modifiers. The <link linkend="particles.modifiers.python_script">
+    Python script modifier</link> allows you to enter a script function that performs user-defined operations. 
+    You can save a Python scipt modifier as a 
+    modifier template to make it usable like the built-in modifiers. Since the script code is part of the template,
+    this relieves you from keeping the script in an external source file, which needs to be searched and loaded
+    each time you use the script modifier.
+  </para>
+
+  <para>
+    Modifier templates are stored in the application settings file. If needed, they can exported to a separate file
+    in order to transfer them to another computer or for backup purposes.
+  </para>
+
+</section>

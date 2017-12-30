@@ -115,7 +115,15 @@ void GeneralSettingsPage::insertSettingsDialogPage(ApplicationSettingsDialog* se
 	_overrideUseOfGeometryShaders->setChecked(settings.contains("display/use_geometry_shaders"));
 	_geometryShaderMode->setCurrentIndex(OpenGLSceneRenderer::geometryShadersEnabled() ? 0 : 1);
 
-	layout2->addWidget(new QLabel(tr("<p style=\"font-size: small; color: #686868;\">(Restart required for changes to take effect.)</p>")), 3, 0, 1, 2);
+	_restartRequiredLabel = new QLabel(tr("<p style=\"font-size: small; color: #DD2222;\">Restart required for changes to take effect.</p>"));
+	_restartRequiredLabel->hide();
+	layout2->addWidget(_restartRequiredLabel, 3, 0, 1, 2);
+	connect(_overrideGLContextSharing, &QCheckBox::toggled, _restartRequiredLabel, &QLabel::show);
+	connect(_contextSharingMode, &QComboBox::currentTextChanged, _restartRequiredLabel, &QLabel::show);
+	connect(_overrideUseOfPointSprites, &QCheckBox::toggled, _restartRequiredLabel, &QLabel::show);
+	connect(_pointSpriteMode, &QComboBox::currentTextChanged, _restartRequiredLabel, &QLabel::show);
+	connect(_overrideUseOfGeometryShaders, &QCheckBox::toggled, _restartRequiredLabel, &QLabel::show);
+	connect(_geometryShaderMode, &QComboBox::currentTextChanged, _restartRequiredLabel, &QLabel::show);
 
 #if !defined(OVITO_BUILD_APPSTORE_VERSION)
 	QGroupBox* updateGroupBox = new QGroupBox(tr("Program updates"), page);

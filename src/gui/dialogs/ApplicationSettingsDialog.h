@@ -40,7 +40,7 @@ class OVITO_GUI_EXPORT ApplicationSettingsDialogPage : public OvitoObject
 protected:
 
 	/// Base class constructor.
-	ApplicationSettingsDialogPage() {}
+	ApplicationSettingsDialogPage() = default;
 
 public:
 
@@ -53,6 +53,9 @@ public:
 	/// \param settingsDialog The settings dialog box. 
 	/// \return true if the settings are valid; false if settings need to be corrected by the user and the dialog should not be closed.
 	virtual bool saveValues(ApplicationSettingsDialog* settingsDialog, QTabWidget* tabWidget) { return true; }
+
+	/// \brief Returns an integer value that is used to sort the dialog pages in ascending order. 
+	virtual int pageSortingKey() const { return 1000; }
 };
 	
 /**
@@ -69,13 +72,18 @@ public:
 
 	/// \brief Constructs the dialog window.
 	/// \param parent The parent window of the settings dialog.
-	ApplicationSettingsDialog(QWidget* parent);
+	/// \param startPage An optional pointer to the ApplicationSettingsDialogPage derived class whose 
+	///                  settings page should be activated initially.
+	ApplicationSettingsDialog(QWidget* parent, OvitoClassPtr startPage = nullptr);
 	
 protected Q_SLOTS:
 
 	/// This is called when the user has pressed the OK button of the settings dialog.
 	/// Validates and saves all settings made by the user and closes the dialog box.
 	void onOk();
+
+	/// This is called when the user has pressed the help button of the settings dialog.
+	void onHelp();
 
 private:
 

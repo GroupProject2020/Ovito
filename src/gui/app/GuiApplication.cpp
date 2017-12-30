@@ -252,8 +252,8 @@ void GuiApplication::showErrorMessages()
 		msgbox->setIcon(QMessageBox::Critical);
 
 		// If the exception has been thrown within the context of a DataSet or a DataSetContainer,
-		// show the message box under the corresponding main window.
-		MainWindow* window;
+		// show the message box under the corresponding window.
+		QWidget* window;
 		if(DataSet* dataset = qobject_cast<DataSet*>(exception.context())) {
 			window = MainWindow::fromDataset(dataset);
 		}
@@ -261,7 +261,7 @@ void GuiApplication::showErrorMessages()
 			window = datasetContainer->mainWindow();
 		}
 		else {
-			window = qobject_cast<MainWindow*>(exception.context());
+			window = qobject_cast<QWidget*>(exception.context());
 		}
 
 		if(window) {
@@ -269,9 +269,11 @@ void GuiApplication::showErrorMessages()
 			msgbox->setWindowModality(Qt::WindowModal);
 
 			// Stop animation playback when an error occurred.
-			QAction* playbackAction = window->actionManager()->getAction(ACTION_TOGGLE_ANIMATION_PLAYBACK);
-			if(playbackAction->isChecked())
-				playbackAction->trigger();
+			if(MainWindow* mainWindow = qobject_cast<MainWindow*>(window)) {
+				QAction* playbackAction = mainWindow->actionManager()->getAction(ACTION_TOGGLE_ANIMATION_PLAYBACK);
+				if(playbackAction->isChecked())
+					playbackAction->trigger();
+			}
 		}
 
 		// If the exception is associated with additional message strings,

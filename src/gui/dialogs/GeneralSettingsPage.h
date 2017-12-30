@@ -38,7 +38,7 @@ class OVITO_GUI_EXPORT GeneralSettingsPage : public ApplicationSettingsDialogPag
 public:
 
 	/// Default constructor.
-	Q_INVOKABLE GeneralSettingsPage() : ApplicationSettingsDialogPage() {}
+	Q_INVOKABLE GeneralSettingsPage() = default;
 
 	/// \brief Creates the widget.
 	virtual void insertSettingsDialogPage(ApplicationSettingsDialog* settingsDialog, QTabWidget* tabWidget) override;
@@ -46,6 +46,9 @@ public:
 	/// \brief Lets the settings page to save all values entered by the user.
 	/// \param settingsDialog The settings dialog box.
 	virtual bool saveValues(ApplicationSettingsDialog* settingsDialog, QTabWidget* tabWidget) override;
+
+	/// \brief Returns an integer value that is used to sort the dialog pages in ascending order. 
+	virtual int pageSortingKey() const override { return 1; }
 
 private:
 
@@ -61,6 +64,7 @@ private:
 	QCheckBox* _enableUpdateChecks;
 	QCheckBox* _enableUsageStatistics;
 #endif
+	QLabel* _restartRequiredLabel;
 };
 
 OVITO_END_INLINE_NAMESPACE

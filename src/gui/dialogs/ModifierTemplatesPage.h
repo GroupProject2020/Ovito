@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2015) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,23 +22,24 @@
 #pragma once
 
 
-#include <plugins/particles/gui/ParticlesGui.h>
+#include <gui/GUI.h>
 #include <gui/dialogs/ApplicationSettingsDialog.h>
+#include <core/dataset/pipeline/ModifierTemplates.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /**
- * Page of the application settings dialog, which hosts particle-related options.
+ * Page of the application settings dialog, which allows the user to manage the defined modifier templates.
  */
-class ParticleSettingsPage : public ApplicationSettingsDialogPage
+class OVITO_GUI_EXPORT ModifierTemplatesPage : public ApplicationSettingsDialogPage
 {
 	Q_OBJECT
-	OVITO_CLASS(ParticleSettingsPage)
+	OVITO_CLASS(ModifierTemplatesPage)
 
 public:
 
 	/// Default constructor.
-	Q_INVOKABLE ParticleSettingsPage() = default;
+	Q_INVOKABLE ModifierTemplatesPage() = default;
 
 	/// \brief Creates the widget.
 	virtual void insertSettingsDialogPage(ApplicationSettingsDialog* settingsDialog, QTabWidget* tabWidget) override;
@@ -48,20 +49,33 @@ public:
 	virtual bool saveValues(ApplicationSettingsDialog* settingsDialog, QTabWidget* tabWidget) override;
 
 	/// \brief Returns an integer value that is used to sort the dialog pages in ascending order. 
-	virtual int pageSortingKey() const override { return 4; }
+	virtual int pageSortingKey() const override { return 3; }
 
-public Q_SLOTS:
+private Q_SLOTS:
 
-	/// Restores the built-in default particle colors and sizes.
-	void restoreBuiltinParticlePresets();
+	/// Is invoked when the user presses the "Create template" button.
+	void onCreateTemplate();
+
+	/// Is invoked when the user presses the "Delete template" button.
+	void onDeleteTemplate();
+
+	/// Is invoked when the user presses the "Rename template" button.
+	void onRenameTemplate();
+
+	/// Is invoked when the user presses the "Export templates" button.
+	void onExportTemplates();
+
+	/// Is invoked when the user presses the "Import templates" button.
+	void onImportTemplates();
 
 private:
 
-	QTreeWidget* _predefTypesTable;
-	QTreeWidgetItem* _particleTypesItem;
-	QTreeWidgetItem* _structureTypesItem;
+	ModifierTemplates _templates;
+	QListView* _listWidget;
+	ApplicationSettingsDialog* _settingsDialog;
+	bool _dirtyFlag = false;
 };
 
 OVITO_END_INLINE_NAMESPACE
-}	// End of namespace
+OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

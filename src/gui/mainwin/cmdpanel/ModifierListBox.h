@@ -85,8 +85,8 @@ private:
 	/// This flag asks updateAvailableModifiers() to list all modifiers, not just the most recently used ones.
 	bool _showAllModifiers = false;
 
-	/// The number of custom modifier presets in the list.
-	int _numCustomModifiers = 0;
+	/// The number of modifier templates in the list.
+	int _numModifierTemplates = 0;
 
 	/// MRU list of modifiers.
 	QStringList _mostRecentlyUsedModifiers; 

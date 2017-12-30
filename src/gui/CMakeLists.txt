@@ -38,6 +38,7 @@ SET(SourceFiles
 	dialogs/ApplicationSettingsDialog.cpp
 	dialogs/GeneralSettingsPage.cpp
 	dialogs/ViewportSettingsPage.cpp
+	dialogs/ModifierTemplatesPage.cpp
 	dialogs/HistoryFileDialog.cpp
 	dialogs/ImportFileDialog.cpp
 	dialogs/ImportRemoteFileDialog.cpp

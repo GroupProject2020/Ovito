@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<section version="5.0"
+         xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
+         xml:id="application_settings"
+         xmlns="http://docbook.org/ns/docbook"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:xs="http://www.w3.org/2001/XMLSchema"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+         xmlns:ns="http://docbook.org/ns/docbook">
+  <title>Application settings</title>
+
+  <para>
+    To open the application settings dialog, select <menuchoice><guimenu>Options</guimenu><guimenuitem>Settings</guimenuitem></menuchoice> from the main menu on Windows/Linux.
+    On MacOS, select <menuchoice><guimenu>Ovito</guimenu><guimenuitem>Preferences</guimenuitem></menuchoice> instead.
+  </para>
+  <para>
+    The dialog contains several tabs that provide access to different settings:
+    <itemizedlist>
+      <listitem><para><link linkend="modifier_templates">Modifier templates</link></para></listitem>
+    </itemizedlist>
+  </para>
+  <simplesect>
+    <title>Storage location</title>
+    <para>
+      Note that the program stores all settings in a platform-dependent way to preserve them across sessions. On Windows, the information 
+      is stored in the user-specific section of the system registry. On Linux, it is stored in an INI configuration file in the user's
+      home directory, and on MacOS, it is stored in a property list file. The precise storage
+      location is displayed in the application settings dialog at the bottom.
+      You can copy the configuration data across computers to transfer your personal settings.
+    </para>
+  </simplesect>
+
+  <xi:include href="modifier_templates.docbook"/>
+
+</section>

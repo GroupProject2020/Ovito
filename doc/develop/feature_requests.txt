@@ -1,7 +1,6 @@
 User interface improvements:
 
 - Default directory for image/movie output should be the path of the current data file.
-- Add file export function to Construct Surface Mesh modifier, which allows to export the mesh to a VTK file (requested by konstantin.avchachov@helsinki.fi).
 - Make initial set of viewports configurable by the user (requested by mathias.hoeld@univie.ac.at).
 - Add support for keyboard shortcuts (requested by Fossati, Paul C).
 - Add ticks to the color legend.
@@ -9,7 +8,6 @@ User interface improvements:
 - Histogram plot export (SaeeD PourasaD <saeedpourasad@gmail.com>).
 - Spherical and cylindral slices (Enrique Martinez)
 - Warn about NaN/infinite values in the input of modifiers
-- Add positibility to export custom modifier presets to a file so that they can be transferred to other computers (requested in Ovito forum).
 
 Work-flow improvements:
 

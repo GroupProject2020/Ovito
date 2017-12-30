@@ -108,6 +108,9 @@ public:
 	/// Sets the page of the command panel that is currently visible.
 	void setCurrentCommandPanelPage(CommandPanelPage page);
 
+	/// Provides access to the main window's command panel.
+	CommandPanel* commandPanel() const { return _commandPanel; }
+
 	/// Sets the file path associated with this window and updates the window's title.
 	void setWindowFilePath(const QString& filePath);
 

@@ -20,6 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <gui/GUI.h>
+#include <gui/mainwin/MainWindow.h>
 #include <core/app/PluginManager.h>
 #include "ApplicationSettingsDialog.h"
 
@@ -30,9 +31,9 @@ IMPLEMENT_OVITO_CLASS(ApplicationSettingsDialogPage);
 /******************************************************************************
 * The constructor of the settings dialog class.
 ******************************************************************************/
-ApplicationSettingsDialog::ApplicationSettingsDialog(QWidget* parent) : QDialog(parent)
+ApplicationSettingsDialog::ApplicationSettingsDialog(QWidget* parent, OvitoClassPtr startPage) : QDialog(parent)
 {
-	setWindowTitle(tr("Program Settings"));
+	setWindowTitle(tr("Application Settings"));
 	
 	QVBoxLayout* layout1 = new QVBoxLayout(this);
 	
@@ -40,18 +41,27 @@ ApplicationSettingsDialog::ApplicationSettingsDialog(QWidget* parent) : QDialog(
 	_tabWidget = new QTabWidget(this);
 	layout1->addWidget(_tabWidget);
 
-	// Create an iterator that retrieves all ApplicationSettingsDialogPage derived classes.
+	// Instantiate all ApplicationSettingsDialogPage derived classes.
 	for(OvitoClassPtr clazz : PluginManager::instance().listClasses(ApplicationSettingsDialogPage::OOClass())) {
 		try {
 			OORef<ApplicationSettingsDialogPage> page = static_object_cast<ApplicationSettingsDialogPage>(clazz->createInstance(nullptr));
 			_pages.push_back(page);
-			page->insertSettingsDialogPage(this, _tabWidget);
 		}
 		catch(const Exception& ex) {
 			ex.reportError();
 		}	
 	}
-	_tabWidget->setCurrentIndex(0);
+	
+	// Sort pages.
+	std::sort(_pages.begin(), _pages.end(), [](const auto& page1, const auto& page2) { return page1->pageSortingKey() < page2->pageSortingKey(); });
+
+	// Show pages in dialog.
+	int defaultPage = 0;
+	for(const auto& page : _pages) {
+		if(startPage && startPage->isMember(page)) defaultPage = _tabWidget->count();
+		page->insertSettingsDialogPage(this, _tabWidget);
+	}
+	_tabWidget->setCurrentIndex(defaultPage);
 
 	// Add a label that displays the location of the application settings store on the computer.
 	QLabel* configLocationLabel = new QLabel();
@@ -60,9 +70,10 @@ ApplicationSettingsDialog::ApplicationSettingsDialog(QWidget* parent) : QDialog(
 	layout1->addWidget(configLocationLabel);
 
 	// Ok and Cancel buttons
-	QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, Qt::Horizontal, this);
+	QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel | QDialogButtonBox::Help, Qt::Horizontal, this);
 	connect(buttonBox, &QDialogButtonBox::accepted, this, &ApplicationSettingsDialog::onOk);
 	connect(buttonBox, &QDialogButtonBox::rejected, this, &ApplicationSettingsDialog::reject);
+	connect(buttonBox, &QDialogButtonBox::helpRequested, this, &ApplicationSettingsDialog::onHelp);
 	layout1->addWidget(buttonBox);
 }
 
@@ -86,6 +97,14 @@ void ApplicationSettingsDialog::onOk()
 	catch(const Exception& ex) {
 		ex.reportError();
 	}
+}
+
+/******************************************************************************
+* This is called when the user has pressed the help button of the settings dialog.
+******************************************************************************/
+void ApplicationSettingsDialog::onHelp()
+{
+	MainWindow::openHelpTopic(QStringLiteral("application_settings.html"));
 }
 
 OVITO_END_INLINE_NAMESPACE

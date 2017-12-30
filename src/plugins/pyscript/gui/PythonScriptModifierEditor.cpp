@@ -56,9 +56,9 @@ void PythonScriptModifierEditor::createUI(const RolloutInsertionParameters& roll
 	sublayout->addWidget(namePUI->textBox(), 1);
 	layout->addLayout(sublayout, row++, 0);
 
-	QToolButton* savePresetButton = new QToolButton();
-	savePresetButton->setDefaultAction(mainWindow()->actionManager()->getAction(ACTION_MODIFIER_CREATE_PRESET));
-	sublayout->addWidget(savePresetButton);
+	QToolButton* manageModifierTemplatesButton = new QToolButton();
+	manageModifierTemplatesButton->setDefaultAction(mainWindow()->actionManager()->getAction(ACTION_MODIFIER_MANAGE_TEMPLATES));
+	sublayout->addWidget(manageModifierTemplatesButton);
 
 	_editScriptButton = new QPushButton(tr("Edit script..."));
 	layout->addWidget(_editScriptButton, row++, 0);

@@ -23,6 +23,7 @@
 #include <core/app/PluginManager.h>
 #include <core/dataset/pipeline/Modifier.h>
 #include <core/dataset/pipeline/PipelineObject.h>
+#include <core/dataset/pipeline/ModifierTemplates.h>
 #include <core/dataset/scene/ObjectNode.h>
 #include <core/dataset/DataSetContainer.h>
 #include <core/dataset/animation/AnimationSettings.h>
@@ -140,8 +141,8 @@ ModifierListBox::ModifierListBox(QWidget* parent, PipelineListModel* pipelineLis
 		}
 	}
 
-	// Create category for custom modifiers.
-	QStandardItem* categoryItem = new QStandardItem(tr("Custom modifier presets"));
+	// Create category for modifier templates.
+	QStandardItem* categoryItem = new QStandardItem(tr("Modifier templates"));
 	categoryItem->setFont(categoryFont);
 	categoryItem->setBackground(categoryBackgroundBrush);
 	categoryItem->setForeground(categoryForegroundBrush);
@@ -157,7 +158,7 @@ ModifierListBox::ModifierListBox(QWidget* parent, PipelineListModel* pipelineLis
 	showAllItem->setTextAlignment(Qt::AlignCenter);
 	_model->appendRow(showAllItem);
 
-	// Filler item to workaround bug in Qt which doesnt fully show all items in the drop-down menu. 
+	// Filler item to workaround bug in Qt which doesn't fully show all items in the drop-down menu. 
 	QStandardItem* fillerItem = new QStandardItem();
 	fillerItem->setFlags(Qt::ItemIsEnabled);
 	_model->appendRow(fillerItem);
@@ -208,8 +209,8 @@ bool ModifierListBox::filterAcceptsRow(int source_row, const QModelIndex& source
 		// Don't show the "Show all modifiers" entry if all are already shown.
 		if(source_row >= _model->rowCount(source_parent) - 2) 
 			return false; 
-		// Don't show the "Custom modifier presets" category if there are no custom modifiers.
-		if(_numCustomModifiers == 0 && source_row == _model->rowCount(source_parent) - 3)
+		// Don't show the modifier templates category if there are no templates.
+		if(_numModifierTemplates == 0 && source_row == _model->rowCount(source_parent) - 3)
 			return false;
 		return true;
 	}
@@ -322,15 +323,13 @@ void ModifierListBox::updateAvailableModifiers()
 		item->setEnabled(modifierClass->isApplicableTo(inputState));
 	}
 
-	// Load custom modifier presets.
-	settings.beginGroup("core/modifier/presets/");
-	QStringList keys = settings.childKeys();
-	settings.endGroup();
+	// Load custom modifier templates.
+	ModifierTemplates modifierTemplates;
 	int numCustom = 0;
-	for(const QString& name : keys) {
+	for(const QString& name : modifierTemplates.templateList()) {
 		QStandardItem* modifierItem;
-		if(numCustom < _numCustomModifiers)
-			modifierItem = _model->item(_model->rowCount() - 2 - _numCustomModifiers + numCustom);
+		if(numCustom < _numModifierTemplates)
+			modifierItem = _model->item(_model->rowCount() - 2 - _numModifierTemplates + numCustom);
 		else {
 			modifierItem = new QStandardItem("   " + name);
 			_model->insertRow(_model->rowCount() - 2, modifierItem);
@@ -339,9 +338,9 @@ void ModifierListBox::updateAvailableModifiers()
 		numCustom++;
 	}
 	// Remove unused entries.
-	if(numCustom < _numCustomModifiers)
-		_model->removeRows(_model->rowCount() - 2 - _numCustomModifiers + numCustom, _numCustomModifiers - numCustom);
-	_numCustomModifiers = numCustom;
+	if(numCustom < _numModifierTemplates)
+		_model->removeRows(_model->rowCount() - 2 - _numModifierTemplates + numCustom, _numModifierTemplates - numCustom);
+	_numModifierTemplates = numCustom;
 }
 
 OVITO_END_INLINE_NAMESPACE

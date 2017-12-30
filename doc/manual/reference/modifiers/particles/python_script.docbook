@@ -76,11 +76,11 @@
   
   <para>
     Furthermore, the text field at the top of the modifier panel allows you to assign a custom name to the
-    script modifier. This name will be shown in the pipeline editor and makes it easier for you to find the modifier
-    in the pipeline list.
+    script modifier. This name will be shown in the pipeline editor and makes it easier for you to identify the modifier
+    in the pipeline editor.
     Also note that it is possible to save the Python script modifier including your code
-    as a <link linkend="modifier_presets">modifier preset</link>. This preset will appear as an additional entry in the list of available
-    modifiers, allowing you to easily access your user-defined modifier in future program sessions.
+    as a <link linkend="modifier_templates">modifier template</link>. This template will appear as an additional 
+    entry in the list of available modifiers, allowing you to easily access your user-defined modifier in future program sessions.
   </para>
   
   </simplesect>

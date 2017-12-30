@@ -77,6 +77,7 @@ SET(SourceFiles
 	dataset/pipeline/AsynchronousModifier.cpp
 	dataset/pipeline/Modifier.cpp
 	dataset/pipeline/ModifierApplication.cpp
+	dataset/pipeline/ModifierTemplates.cpp
 	dataset/pipeline/AsynchronousModifierApplication.cpp
 	dataset/pipeline/StaticSource.cpp
 	dataset/pipeline/DelegatingModifier.cpp
