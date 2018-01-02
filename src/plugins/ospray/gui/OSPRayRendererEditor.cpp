@@ -103,7 +103,7 @@ private:
 void OSPRayRendererEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create the rollout.
-	QWidget* rollout = createRollout(tr("OSPRay settings"), rolloutParams);
+	QWidget* rollout = createRollout(tr("OSPRay settings"), rolloutParams, "rendering.ospray_renderer.html");
 
 	QVBoxLayout* mainLayout = new QVBoxLayout(rollout);
 	mainLayout->setContentsMargins(4,4,4,4);

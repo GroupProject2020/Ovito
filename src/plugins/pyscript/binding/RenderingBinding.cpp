@@ -154,9 +154,10 @@ void defineRenderingSubmodule(py::module m)
 	;
 
 	ovito_abstract_class<DisplayObject, RefTarget>(m,
-			"Abstract base class for display setting objects that control the visual appearance of data. "
-			":py:class:`DataObjects <ovito.data.DataObject>` may be associated with an instance of this class, which can be accessed via "
-			"their :py:attr:`~ovito.data.DataObject.display` property.",
+			"Abstract base class for display objects that render and control the visual appearance of data objects. "
+			"A :py:class:`~ovito.data.DataObject` may be associated with a corresponding :py:class:`!Display` object (see " ":py:attr:`DataObject.display <ovito.data.DataObject.display>` property), making it a *visual* data object that appears in the viewports and in rendered images. "
+			"\n\n" 
+			"See the :py:mod:`ovito.vis` module for the list of display object classes available in OVITO. ",
 			// Python class name:
 			"Display")
 		.def_property("enabled", &DisplayObject::isEnabled, &DisplayObject::setEnabled,

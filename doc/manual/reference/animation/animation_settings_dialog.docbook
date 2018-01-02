@@ -22,7 +22,7 @@
       It allows you to change animation-related settings of the current scene, e.g. the frame rate or the length of the animation.
    </para>
    <para>
-      More information is found in the documentation of <link linkend="usage.animation">OVITO's animation system</link>.
+      More information can be found in the documentation of <link linkend="usage.animation">OVITO's animation system</link>.
    </para>
     
   <simplesect>
@@ -65,4 +65,12 @@
 
     </variablelist>
   </simplesect>
+
+  <simplesect>
+  <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_anim.html#ovito.anim.AnimationSettings"><classname>AnimationSettings</classname> (Python API)</link>
+    </para>
+  </simplesect>  
+  
 </section>

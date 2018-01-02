@@ -44,7 +44,15 @@
     computed by the VASP DFT code from <emphasis>CHGCAR</emphasis> files.
   </para>
   <para>
-    Note: The modifier may be applied several times to create multiple surfaces at different iso-levels.
+    Note: The modifier may be applied more than once to create multiple surfaces at different iso-levels.
   </para>
+
+  <simplesect>
+  <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.CreateIsosurfaceModifier"><classname>CreateIsosurfaceModifier</classname> (Python API)</link>
+    </para>
+  </simplesect>  
+  
      
 </section>

@@ -205,4 +205,12 @@
 
     </variablelist>
   </simplesect>
+
+  <simplesect>
+  <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.AtomicStrainModifier"><classname>AtomicStrainModifier</classname> (Python API)</link>
+    </para>
+  </simplesect>
+  
 </section>

@@ -12,11 +12,11 @@
 
   <para>
      <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/rendering/render_settings_panel.png" format="PNG" />
+       <imagedata fileref="images/rendering/render_settings_panel.png" format="PNG" scale="50" />
      </imageobject></mediaobject></screenshot></informalfigure>  
     
     This panel lets you set general parameters 
-    for <link linkend="usage.rendering">rendering images and movies</link>, e.g. output resolution, backround color, etc. 
+    for <link linkend="usage.rendering">rendering images and movies</link>, e.g. output resolution, background color, etc. 
     It is found on the <guilabel>Render</guilabel> tab in the main window
   </para>
       
@@ -108,4 +108,12 @@
     </inlinemediaobject> button.</para>
     
   </simplesect>
+
+  <simplesect>
+  <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.RenderSettings"><classname>RenderSettings</classname> (Python API)</link>
+    </para>
+  </simplesect>    
+  
 </section>

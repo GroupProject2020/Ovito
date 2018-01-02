@@ -127,4 +127,11 @@
      </para>
    </simplesect>
     
+   <simplesect>
+    <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_pipeline.html#ovito.pipeline.FileSource"><classname>FileSource</classname> (Python API)</link>
+    </para>
+   </simplesect>
+
 </section>

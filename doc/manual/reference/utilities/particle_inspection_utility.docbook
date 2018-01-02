@@ -15,7 +15,7 @@
        <imagedata fileref="images/utilities/particle_inspection_panel.png" format="PNG" scale="60"/>
      </imageobject></mediaobject></screenshot></informalfigure>
      
-      This utility applet allows you to inspect the property values associated with individual particles 
+      This <link linkend="utilities">utility applet</link> allows you to inspect the property values associated with individual particles 
       and to measure distances and angles between pairs and triplets of particles.
       The utility is invoked from "Utilities" tab of OVITO's command panel shown on the right.
    </para>

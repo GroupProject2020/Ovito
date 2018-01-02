@@ -47,4 +47,12 @@
       simulation file.
       </para>
   </simplesect>
+
+  <simplesect>
+  <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.WrapPeriodicImagesModifier"><classname>WrapPeriodicImagesModifier</classname> (Python API)</link>
+    </para>
+  </simplesect>  
+  
 </section>

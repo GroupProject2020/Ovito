@@ -24,6 +24,7 @@
 #include <plugins/stdobj/properties/PropertyStorage.h>
 #include <gui/properties/ColorParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
+#include <gui/properties/IntegerParameterUI.h>
 #include <gui/properties/StringParameterUI.h>
 #include <gui/mainwin/MainWindow.h>
 #include "ParticleTypeEditor.h"
@@ -64,11 +65,17 @@ void ParticleTypeEditor::createUI(const RolloutInsertionParameters& rolloutParam
 	layout1->addWidget(radiusPUI->label(), 2, 0);
 	layout1->addLayout(radiusPUI->createFieldLayout(), 2, 1);
 
+	// Numeric ID.
+	IntegerParameterUI* idPUI = new IntegerParameterUI(this, PROPERTY_FIELD(ParticleType::id));
+	idPUI->setEnabled(false);
+	layout1->addWidget(new QLabel(tr("Numeric ID:")), 3, 0);
+	layout1->addWidget(idPUI->textBox(), 3, 1);
+
 	// "Set as default" button
 	QPushButton* setAsDefaultBtn = new QPushButton(tr("Set as default"));
 	setAsDefaultBtn->setToolTip(tr("Set current color and radius as defaults for this particle type."));
 	setAsDefaultBtn->setEnabled(false);
-	layout1->addWidget(setAsDefaultBtn, 3, 0, 1, 2, Qt::AlignRight);
+	layout1->addWidget(setAsDefaultBtn, 4, 0, 1, 2, Qt::AlignRight);
 	connect(setAsDefaultBtn, &QPushButton::clicked, [this]() {
 		ParticleType* ptype = static_object_cast<ParticleType>(editObject());
 		if(!ptype) return;

@@ -36,14 +36,14 @@ SET_OVITO_OBJECT_EDITOR(ParticleProperty, ParticlePropertyEditor);
 void ParticlePropertyEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create a rollout.
-	QWidget* rollout = createRollout(QString(), rolloutParams);
+	QWidget* rollout = createRollout(QString(), rolloutParams, "scene_objects.particle_types.html");
 
     // Create the rollout contents.
 	QVBoxLayout* layout = new QVBoxLayout(rollout);
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(0);
 
-	// Atom types
+	// Particle types
 
 	// Derive a custom class from the list parameter UI to display the particle type colors.
 	class CustomRefTargetListParameterUI : public RefTargetListParameterUI {

@@ -30,4 +30,11 @@
     Note: This modifier has no parameters.
   </para>
      
+  <simplesect>
+  <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.CoordinationPolyhedraModifier"><classname>CoordinationPolyhedraModifier</classname> (Python API)</link>
+    </para>
+  </simplesect>  
+     
 </section>

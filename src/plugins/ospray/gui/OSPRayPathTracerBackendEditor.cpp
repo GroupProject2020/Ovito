@@ -35,7 +35,7 @@ SET_OVITO_OBJECT_EDITOR(OSPRayPathTracerBackend, OSPRayPathTracerBackendEditor);
 void OSPRayPathTracerBackendEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create the rollout.
-	QWidget* rollout = createRollout(tr("Path tracer settings"), rolloutParams);
+	QWidget* rollout = createRollout(tr("Path tracer settings"), rolloutParams, "rendering.ospray_renderer.html");
 
 	QGridLayout* layout = new QGridLayout(rollout);
 	layout->setContentsMargins(4,4,4,4);

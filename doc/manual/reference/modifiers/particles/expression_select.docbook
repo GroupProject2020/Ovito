@@ -291,4 +291,12 @@
     
 sqrt(Position.X*Position.X + Position.Y*Position.Y) &lt; 10</programlisting></para>
   </simplesect>
+
+  <simplesect>
+  <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.ExpressionSelectionModifier"><classname>ExpressionSelectionModifier</classname> (Python API)</link>
+    </para>
+  </simplesect>  
+  
 </section>

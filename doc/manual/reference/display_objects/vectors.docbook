@@ -13,7 +13,7 @@
   <para>
       
     <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/display_objects/vectors_panel.png" format="PNG" />
+       <imagedata fileref="images/display_objects/vectors_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
     
     This display object is responsible for visualizing per-particle vector quantities.
@@ -22,7 +22,7 @@
     calculates the displacement vector of each particle and stores it in the <literal>Displacement</literal>
     property. To visualize the computed vectors as arrows, the modifier attaches a <emphasis>vector display object</emphasis>,
     which newly appears under the "Display" section of the <link linkend="usage.modification_pipeline.pipeline_listbox">modification pipeline editor</link>.
-    The settings provided by this display object, which control the apearence of the vector arrows,
+    The settings provided by this display object, which control the appearance of the vector arrows,
     are described below.
   </para>
   <para>
@@ -91,5 +91,12 @@
 
 	</variablelist>
     </simplesect>
+    
+   <simplesect>
+    <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.VectorDisplay"><classname>VectorDisplay</classname> (Python API)</link>
+    </para>
+   </simplesect>
     
 </section>

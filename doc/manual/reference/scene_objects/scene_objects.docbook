@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<section version="5.0"
+         xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
+         xml:id="scene_objects" 
+         xmlns="http://docbook.org/ns/docbook"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:xs="http://www.w3.org/2001/XMLSchema"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+         xmlns:ns="http://docbook.org/ns/docbook">
+  <title>Data objects and data sources</title>
+
+  <para>
+    <informalfigure><screenshot><mediaobject><imageobject>
+       <imagedata fileref="images/scene_objects/data_source_and_objects.png" format="PNG" scale="50" />
+    </imageobject></mediaobject></screenshot></informalfigure>
+
+    In OVITO a <emphasis>data source</emphasis> generates one more more <emphasis>data objects</emphasis>, which
+    are then dynamically processed by the <link linkend="particles.modifiers">modifiers</link> in the 
+    <link linkend="usage.modification_pipeline">data pipeline</link> and finally rendered on screen. 
+    One key type of data source in OVITO is the <link linkend="scene_objects.file_source">external file source</link>.
+    It is responsible for loading data from disk and passing it on to the data pipeline system of OVITO. 
+    There are different kinds of data objects, one example being particle properties. 
+    Certain data objects such as the <link linkend="scene_objects.particle_types">particle type property</link>
+    and the <link linkend="scene_objects.simulation_cell">simulation cell</link> 
+    show up in the <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link> as 
+    sub-entries of the <link linkend="scene_objects.file_source">external file source</link> (see screenshot).
+  </para>
+
+  <simplesect>
+  <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_data.html#ovito.data.DataObject"><classname>DataObject</classname> (Python API)</link>
+    </para>
+  </simplesect> 
+
+  <xi:include href="file_source.docbook"/>
+  <xi:include href="particle_types.docbook"/>
+  <xi:include href="simulation_cell.docbook"/>
+  
+</section>

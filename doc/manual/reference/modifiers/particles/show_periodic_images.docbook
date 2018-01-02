@@ -58,4 +58,11 @@
   have the same molecule ID property as the original atoms.</para>
   </simplesect>
     
+  <simplesect>
+  <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.ReplicateModifier"><classname>ReplicateModifier</classname> (Python API)</link>
+    </para>
+  </simplesect>  
+    
 </section>

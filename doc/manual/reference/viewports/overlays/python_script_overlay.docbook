@@ -237,4 +237,11 @@ def render(painter, **args):
     </programlisting></para>
   </simplesect>
     
+   <simplesect>
+    <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.PythonViewportOverlay"><classname>PythonViewportOverlay</classname> (Python API)</link>
+    </para>
+   </simplesect>
+	
 </section>

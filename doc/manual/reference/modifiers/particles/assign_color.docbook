@@ -30,4 +30,12 @@
   <para>
    The color assigned by the modifier is an <link linkend="usage.animation.keyframes">animatable parameter</link>.
   </para>
+
+  <simplesect>
+  <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.AssignColorModifier"><classname>AssignColorModifier</classname> (Python API)</link>
+    </para>
+  </simplesect>
+  
 </section>

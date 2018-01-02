@@ -37,7 +37,7 @@ SET_OVITO_OBJECT_EDITOR(SimulationCellDisplay, SimulationCellDisplayEditor);
 void SimulationCellDisplayEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create a rollout.
-	QWidget* rollout = createRollout(QString(), rolloutParams);
+	QWidget* rollout = createRollout(QString(), rolloutParams, "display_objects.simulation_cell.html");
 
     // Create the rollout contents.
 	QGridLayout* layout = new QGridLayout(rollout);

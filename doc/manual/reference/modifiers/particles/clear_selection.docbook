@@ -18,4 +18,11 @@
     the <literal>Selection</literal> <link linkend="usage.particle_properties">particle property</link>.
   </para>
   
+  <simplesect>
+  <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.ClearSelectionModifier"><classname>ClearSelectionModifier</classname> (Python API)</link>
+    </para>
+  </simplesect>
+  
 </section>

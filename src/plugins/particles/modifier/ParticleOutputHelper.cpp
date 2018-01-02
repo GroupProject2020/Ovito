@@ -153,13 +153,13 @@ BondsObject* ParticleOutputHelper::addBonds(const BondsPtr& newBonds, BondsDispl
 	}
 	else {
 
-		// Duplicate the existing bonds object and insert the newly created bonds into it.
+		// Duplicate the existing bonds object and append the newly created bonds to it.
 		OORef<BondsObject> bondsObjCopy = cloneHelper().cloneObject(bondsObj, false);
 		BondsStorage* bonds = bondsObjCopy->modifiableStorage().get();
 		OVITO_ASSERT(bonds != nullptr);
 
 		// This is needed to determine which bonds already exist.
-		ParticleBondMap bondMap(*bonds);
+		ParticleBondMap bondMap(*bondsObj->storage());
 
 		// Add bonds one by one.
 		size_t originalBondCount = bonds->size();

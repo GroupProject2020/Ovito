@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<section version="5.0"
+         xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
+         xml:id="application_settings.viewports"
+         xmlns="http://docbook.org/ns/docbook"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:xs="http://www.w3.org/2001/XMLSchema"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+         xmlns:ns="http://docbook.org/ns/docbook">
+  <title>Viewport settings</title>
+
+  <para>
+    <informalfigure><screenshot><mediaobject><imageobject>
+      <imagedata fileref="images/app_settings/viewport_settings.png" format="PNG" scale="80" />
+    </imageobject></mediaobject></screenshot></informalfigure>     
+    This page of the <link linkend="application_settings">application settings dialog</link> 
+    contains options related to the interactive viewports of the OVITO. 
+  </para>
+
+  <simplesect>
+    <title>Camera</title>
+    <para>
+      <variablelist>
+        <varlistentry>
+          <term>Coordinate system orientation</term>
+          <listitem>
+            <para>OVITO restricts the camera rotation in the viewports such that one of the Cartesian coordinate axes 
+            always remains vertical. This selects which of the three axes that is. Default: Z-axis. 
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>Restrict camera to keep major axis pointing upward</term>
+          <listitem>
+            <para>This option restricts the camera rotation to a 180° range such that the vertical axis always points upward,
+            i.e., it prevents the camera from turning upside down.
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </para>
+  </simplesect>
+    
+  <simplesect>
+    <title>Color scheme</title>
+    <para>
+      This option selects between the default dark viewport background and a white background.
+    </para>
+  </simplesect>
+
+</section>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<section version="5.0"
+         xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
+         xml:id="rendering" 
+         xmlns="http://docbook.org/ns/docbook"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:xs="http://www.w3.org/2001/XMLSchema"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+         xmlns:ns="http://docbook.org/ns/docbook">
+  <title>Rendering</title>
+
+  <para>
+    <informalfigure><screenshot><mediaobject><imageobject>
+       <imagedata fileref="images/rendering/render_settings_panel.png" format="PNG" scale="50" />
+    </imageobject></mediaobject></screenshot></informalfigure>
+  
+  The following rendering backends are available in OVITO: 
+  
+  <informaltable>
+        <tgroup cols="2">
+          <colspec colname='name'/>
+          <colspec colname='descr'/>
+          <thead>
+            <row>
+              <entry>Rendering&#xA0;engine</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>          
+            <row>
+              <entry><link linkend="rendering.opengl_renderer">OpenGL&#xA0;renderer</link></entry>
+              <entry>Hardware-accelerated rendering engine, which is also used by the interactive viewports</entry>
+            </row>
+            <row>
+              <entry><link linkend="rendering.tachyon_renderer">Tachyon&#xA0;renderer</link></entry>
+              <entry></entry>
+            </row>
+            <row>
+              <entry><link linkend="rendering.ospray_renderer">OSPRay&#xA0;renderer</link></entry>
+              <entry></entry>
+            </row>
+            <row>
+              <entry><link linkend="rendering.povray_renderer">POV-Ray&#xA0;renderer</link></entry>
+              <entry></entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+   </para>
+   
+  <xi:include href="render_settings.docbook"/>
+  <xi:include href="opengl_renderer.docbook"/>
+  <xi:include href="tachyon_renderer.docbook"/>
+  <xi:include href="ospray_renderer.docbook"/>
+  <xi:include href="povray_renderer.docbook"/>
+  
+</section>

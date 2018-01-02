@@ -50,7 +50,7 @@
        </imageobject></mediaobject></screenshot>
     </figure>
     You can switch back and forth between the <emphasis>Trajectories</emphasis> and the <emphasis>Particles</emphasis> object using the scene object selector box 
-    (marked by a red circle in <xref linkend="fig.trajectory_display_panel" />). Alternatively, you can simpy click on a particle or on a trajectory line in the
+    (marked by a red circle in <xref linkend="fig.trajectory_display_panel" />). Alternatively, you can simply click on a particle or on a trajectory line in the
     viewports to select the corresponding object.
   </para>
   

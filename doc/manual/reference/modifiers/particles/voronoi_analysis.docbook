@@ -208,4 +208,11 @@
     <para>This modifier uses the <link xlink:href="http://math.lbl.gov/voro++/">Voro++ package</link> of Chris Rycroft to compute Voronoi polyhedra.</para>
   </simplesect>
   
+  <simplesect>
+  <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.VoronoiAnalysisModifier"><classname>VoronoiAnalysisModifier</classname> (Python API)</link>
+    </para>
+  </simplesect>  
+  
 </section>

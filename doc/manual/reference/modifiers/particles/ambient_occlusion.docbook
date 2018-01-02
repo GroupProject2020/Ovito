@@ -113,4 +113,11 @@
  	light contributions from all light sources are added up to compute the per-particle illumination factors.</para>
   </simplesect>
   
+  <simplesect>
+  <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.AmbientOcclusionModifier"><classname>AmbientOcclusionModifier</classname> (Python API)</link>
+    </para>
+  </simplesect>
+  
 </section>

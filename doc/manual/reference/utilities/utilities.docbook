@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<section version="5.0"
+         xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
+         xml:id="utilities" 
+         xmlns="http://docbook.org/ns/docbook"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:xs="http://www.w3.org/2001/XMLSchema"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+         xmlns:ns="http://docbook.org/ns/docbook">
+  <title>Utilities</title>
+
+  <para>
+    <informalfigure><screenshot><mediaobject><imageobject>
+       <imagedata fileref="images/utilities/utilities_tab.png" format="PNG" scale="50" />
+    </imageobject></mediaobject></screenshot></informalfigure>
+    This tab in OVITO's command panel hosts several utility functions:
+    <informaltable>
+        <tgroup cols="2">
+          <colspec colname='name'/>
+          <colspec colname='descr'/>
+          <thead>
+            <row>
+              <entry>Utility</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>          
+            <row>
+              <entry><link linkend="howto.visualize_particle_trajectories">Create&#xA0;trajectory&#xA0;lines</link></entry>
+              <entry>Generates trajectory lines to visualize the motion of particles</entry>
+            </row>
+            <row>
+              <entry>Inspect&#xA0;dislocations</entry>
+              <entry>Shows you all properties of selected dislocation lines</entry>
+            </row>
+            <row>
+              <entry><link linkend="utilities.particle_inspection">Inspect&#xA0;particles</link></entry>
+              <entry>Shows you all properties of selected particles</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+   </para>
+  
+  <xi:include href="particle_inspection_utility.docbook"/>
+  
+</section>

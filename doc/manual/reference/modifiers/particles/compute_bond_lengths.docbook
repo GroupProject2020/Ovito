@@ -16,5 +16,12 @@
   You can use this in conjuncion with the <link linkend="particles.modifiers.color_coding">Color Coding</link>
   modifier to color bonds according to their length.
   </para>
-  
+
+  <simplesect>
+  <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.ComputeBondLengthsModifier"><classname>ComputeBondLengthsModifier</classname> (Python API)</link>
+    </para>
+  </simplesect>  
+    
 </section>

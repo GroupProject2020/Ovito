@@ -9,15 +9,15 @@
          xmlns:ns="http://docbook.org/ns/docbook">
   <title>Reference</title>
   
-  <para>This page is intentionally left blank. Please use the "Next" button to go to the next sub-section.</para>
+  <para>This page is intentionally left blank. Please use the "Next" button to go to the first sub-section.</para>
   
   <xi:include href="reference/modifiers/modifiers.docbook"/>
-  <xi:include href="reference/scene_objects/file_source.docbook"/>
+  <xi:include href="reference/scene_objects/scene_objects.docbook"/>
   <xi:include href="reference/display_objects/display_objects.docbook"/>
   <section xml:id="viewports">
     <title>Viewports</title>
     
-      <para>This page is intentionally left blank. Please use the "Next" button to go to the next sub-section.</para>
+      <para>This page is intentionally left blank. Please use the "Next" button to go to the first sub-section.</para>
 
   	  <xi:include href="reference/viewports/adjust_view_dialog.docbook"/>
   	  <xi:include href="reference/viewports/overlays/viewport_overlays.docbook"/>
@@ -25,17 +25,7 @@
   
   <xi:include href="reference/app_settings/application_settings.docbook"/>
   <xi:include href="reference/animation/animation_settings_dialog.docbook"/>
-  <xi:include href="reference/utilities/particle_inspection_utility.docbook"/>
-  
-  <section xml:id="rendering">
-    <title>Renderering</title>
-    
-      <para>This page is intentionally left blank. Please use the "Next" button to go to the next sub-section.</para>
-    
-      <xi:include href="reference/rendering/render_settings.docbook"/>
-      <xi:include href="reference/rendering/opengl_renderer.docbook"/>
-      <xi:include href="reference/rendering/tachyon_renderer.docbook"/>
-      <xi:include href="reference/rendering/povray_renderer.docbook"/>
-  </section>
+  <xi:include href="reference/utilities/utilities.docbook"/>
+  <xi:include href="reference/rendering/rendering.docbook"/>
 
 </chapter>

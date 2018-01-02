@@ -122,4 +122,11 @@
     This option has no effect in <emphasis>bond-based</emphasis> mode.
   </para>
   
+  <simplesect>
+  <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.CommonNeighborAnalysisModifier"><classname>CommonNeighborAnalysisModifier</classname> (Python API)</link>
+    </para>
+  </simplesect>  
+  
 </section>

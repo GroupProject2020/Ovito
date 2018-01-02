@@ -32,4 +32,12 @@
      The omni­directional stereo projection option, which requires POV-Ray 3.7.1 or newer,
      allows to create <link xlink:href="http://wiki.povray.org/content/HowTo:ODS">stereoscopic 360-degree VR videos</link>.
    </para>
+
+  <simplesect>
+  <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.POVRayRenderer"><classname>POVRayRenderer</classname> (Python API)</link>
+    </para>
+  </simplesect>    
+   
 </section>

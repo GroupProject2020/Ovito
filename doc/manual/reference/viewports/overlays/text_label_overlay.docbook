@@ -42,5 +42,12 @@
   <para>
     This new attribute will subsequently become available in the Text Label overlay as a dynamic variable.
   </para>
+
+   <simplesect>
+    <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.TextLabelOverlay"><classname>TextLabelOverlay</classname> (Python API)</link>
+    </para>
+   </simplesect>
     
 </section>

@@ -195,4 +195,11 @@ JOM: Vol. 66, Issue 3 (2014), 399-407</link></literallayout>
 	</variablelist>
     </simplesect>
      
+  <simplesect>
+  <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.ConstructSurfaceModifier"><classname>ConstructSurfaceModifier</classname> (Python API)</link>
+    </para>
+  </simplesect>  
+     
 </section>

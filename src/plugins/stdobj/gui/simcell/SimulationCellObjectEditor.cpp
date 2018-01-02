@@ -38,7 +38,7 @@ SET_OVITO_OBJECT_EDITOR(SimulationCellObject, SimulationCellEditor);
 void SimulationCellEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create rollout.
-	QWidget* rollout = createRollout(QString(), rolloutParams);
+	QWidget* rollout = createRollout(QString(), rolloutParams, "scene_objects.simulation_cell.html");
 
 	QVBoxLayout* layout1 = new QVBoxLayout(rollout);
 	layout1->setContentsMargins(4,4,4,4);

@@ -162,4 +162,11 @@ for frame in range(ovito.dataset.anim.last_frame + 1):
     </variablelist>
   </simplesect>
   
+  <simplesect>
+  <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.ClusterAnalysisModifier"><classname>ClusterAnalysisModifier</classname> (Python API)</link>
+    </para>
+  </simplesect>  
+  
 </section>

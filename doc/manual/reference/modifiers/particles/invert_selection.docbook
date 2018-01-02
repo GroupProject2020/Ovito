@@ -14,5 +14,14 @@
    development version of OVITO.</para></warning>
 
   <para>This modifier inverts the selection state of all particles. 
-  Particles that are not selected are selected by this modifier and vice versa.</para>
+  Particles that are not selected are selected by this modifier and vice versa.
+  </para>
+
+  <simplesect>
+  <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.InvertSelectionModifier"><classname>InvertSelectionModifier</classname> (Python API)</link>
+    </para>
+  </simplesect>  
+
 </section>

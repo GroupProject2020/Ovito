@@ -70,7 +70,7 @@
     The <literal>quati</literal>, <literal>quatj</literal>, <literal>quatj</literal>, and <literal>quatw</literal>
     atom properties of LAMMPS need to be mapped to the <literal>Orientation.X</literal>, <literal>Orientation.Y</literal>,
     <literal>Orientation.Z</literal>, and <literal>Orientation.W</literal> properties of OVITO when importing
-    the dump file. Similarily, the <literal>shapex</literal>, <literal>shapey</literal>, and <literal>shapez</literal> columns
+    the dump file. Similarly, the <literal>shapex</literal>, <literal>shapey</literal>, and <literal>shapez</literal> columns
     need to be mapped to <literal>Aspherical Shape.X</literal>, <literal>Aspherical Shape.Y</literal>, and <literal>Aspherical Shape.Z</literal>
     in OVITO. Since these properties are output as <literal>c_orient*</literal> and <literal>c_shape*</literal> by the
     dump command above, OVITO cannot set up this mapping automatically. You have to do it manually by using the

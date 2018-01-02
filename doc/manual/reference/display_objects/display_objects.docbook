@@ -12,11 +12,18 @@
 
   <para>
   
-  Display objects are responsible for generating the visual representation of data that leaves OVITO's <link
-  linkend="usage.modification_pipeline">modification pipeline</link>. They are automatically
-  created by OVITO and are listed in the "Display" section of the <link linkend="usage.modification_pipeline.pipeline_listbox">
-  pipeline editor</link>.
-  
+    <informalfigure><screenshot><mediaobject><imageobject>
+       <imagedata fileref="images/display_objects/display_section.png" format="PNG" scale="65" />
+    </imageobject></mediaobject></screenshot></informalfigure>
+ 
+    Display objects are responsible for producing the visual representation of the data leaving OVITO's <link
+    linkend="usage.modification_pipeline">data pipeline</link>. They are automatically
+    created by the program and you can access them under the "Display" section of 
+    the <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link> as shown in the screenshot.
+  </para>
+  <para>
+    You can uncheck individual display objects to disable the visualization of the corresponding data in the interactive viewports
+    and in rendered images.
   </para>
   <para>
   The following types of display objects exist: 
@@ -27,52 +34,60 @@
           <colspec colname='descr'/>
           <thead>
             <row>
-              <entry>Display object</entry>
+              <entry>Display&#xA0;object</entry>
               <entry>Description</entry>
             </row>
           </thead>
           <tbody>          
             <row>
               <entry><link linkend="display_objects.bonds">Bonds</link></entry>
-              <entry>Displays the bonds between particles.</entry>
+              <entry>Displays the bonds between particles</entry>
             </row>
             <row>
               <entry><link linkend="display_objects.particles">Particles</link></entry>
-              <entry>Displays a set of particles.</entry>
+              <entry>Displays a set of particles</entry>
             </row>
             <row>
-              <entry>Simulation cell</entry>
-              <entry>Displays the simulation box.</entry>
+              <entry><link linkend="display_objects.simulation_cell">Simulation&#xA0;cell</link></entry>
+              <entry>Displays the simulation box</entry>
             </row>
             <row>
-              <entry><link linkend="display_objects.surface_mesh">Surface mesh</link></entry>
-              <entry>Displays the smooth polygonal mesh, which is produced by the <link linkend="particles.modifiers.construct_surface_mesh">Construct Surface Mesh</link> modifier.</entry>
+              <entry><link linkend="display_objects.surface_mesh">Surface&#xA0;mesh</link></entry>
+              <entry>Displays the smooth polygonal mesh, which is produced by the <link linkend="particles.modifiers.construct_surface_mesh">Construct Surface Mesh</link> modifier</entry>
             </row>
             <row>
-              <entry>Triangle mesh</entry>
-              <entry>Displays a triangle mesh, loaded from a VTK file, for example.</entry>
+              <entry>Triangle&#xA0;mesh</entry>
+              <entry>Displays a triangle mesh, loaded from a VTK file, for example</entry>
             </row>
             <row>
               <entry><link linkend="display_objects.vectors">Vectors</link></entry>
-              <entry>Displays vectors associated with particles, e.g. <link linkend="particles.modifiers.displacement_vectors">displacement vectors</link>.</entry>
+              <entry>Displays vectors associated with particles, e.g. <link linkend="particles.modifiers.displacement_vectors">displacement vectors</link></entry>
             </row>
             <row>
-              <entry>Trajectory lines</entry>
+              <entry>Trajectory&#xA0;lines</entry>
               <entry>Displays the particle trajectory lines, which are created with the
-              <link linkend="howto.visualize_particle_trajectories"><guilabel>Create trajectory lines</guilabel></link> utility.</entry>
+              <link linkend="howto.visualize_particle_trajectories"><guilabel>Create trajectory lines</guilabel></link> utility</entry>
             </row>
             <row>
               <entry>Dislocations</entry>
               <entry>Displays the dislocation lines extracted by the 
-              <link linkend="particles.modifiers.dislocation_analysis">Dislocation analysis</link> modifier.</entry>
+              <link linkend="particles.modifiers.dislocation_analysis">Dislocation analysis</link> modifier</entry>
             </row>
           </tbody>
         </tgroup>
       </informaltable>
    </para>
 
+  <simplesect>
+  <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.Display"><classname>Display</classname> (Python API)</link>
+    </para>
+  </simplesect> 
+
   <xi:include href="bonds.docbook"/>
   <xi:include href="particles.docbook"/>
+  <xi:include href="simulation_cell.docbook"/>
   <xi:include href="surface_mesh.docbook"/>
   <xi:include href="vectors.docbook"/>
   

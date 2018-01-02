@@ -13,7 +13,7 @@
   <para>
       
     <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/display_objects/particles_panel.png" format="PNG" />
+       <imagedata fileref="images/display_objects/particles_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
     
     This <link linkend="display_objects">display object</link> is responsible for rendering particles, and its parameters control the visual appearance
@@ -94,5 +94,12 @@
       </varlistentry>
   	</variablelist>
     </simplesect>
+    
+   <simplesect>
+    <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.ParticleDisplay"><classname>ParticleDisplay</classname> (Python API)</link>
+    </para>
+   </simplesect>
     
 </section>

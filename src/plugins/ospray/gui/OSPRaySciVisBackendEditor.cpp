@@ -38,7 +38,7 @@ SET_OVITO_OBJECT_EDITOR(OSPRaySciVisBackend, OSPRaySciVisBackendEditor);
 void OSPRaySciVisBackendEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create the rollout.
-	QWidget* rollout = createRollout(tr("SciVis settings"), rolloutParams);
+	QWidget* rollout = createRollout(tr("SciVis settings"), rolloutParams, "rendering.ospray_renderer.html");
 
 	QVBoxLayout* mainLayout = new QVBoxLayout(rollout);
 	mainLayout->setContentsMargins(4,4,4,4);

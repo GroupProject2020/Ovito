@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<section version="5.0"
+         xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
+         xml:id="application_settings.particles"
+         xmlns="http://docbook.org/ns/docbook"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:xs="http://www.w3.org/2001/XMLSchema"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+         xmlns:ns="http://docbook.org/ns/docbook">
+  <title>Particle settings</title>
+
+  <para>
+    <informalfigure><screenshot><mediaobject><imageobject>
+      <imagedata fileref="images/app_settings/particle_settings.png" format="PNG" scale="80" />
+    </imageobject></mediaobject></screenshot></informalfigure>     
+    This page of the <link linkend="application_settings">application settings dialog</link> lets you 
+    manage the program's presets for particle colors and sizes.
+  </para>
+
+  <simplesect>
+    <title>Default particle colors and sizes</title>
+    <para>
+      When importing a new simulation file, OVITO automatically assigns colors and radii to particle types based on their name,
+      in particular chemical atom types such as "He", "Fe" or "Si". The table shows the predefined mapping of particle types 
+      to default colors and display radii. You can edit the colors and radius values if desired and OVITO will remember these
+      default presets across program sessions.
+    </para>
+    <para>
+      Changing these presets is also possible from the <link linkend="scene_objects.particle_types">particle types panel</link>, where you 
+      can change the appearance of individual particle types after importing a file. The <guibutton>Set as default</guibutton> from that panel
+      updates the color and radius presets in this table and also allows to define new presets for particle types other than
+      the chemical elements already listed here.
+    </para>
+  </simplesect>
+
+</section>

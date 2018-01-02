@@ -13,7 +13,7 @@
   <para>
       
     <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/display_objects/bonds_panel.png" format="PNG" />
+       <imagedata fileref="images/display_objects/bonds_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
     
     This display object is responsible for rendering bonds between particles.
@@ -74,4 +74,11 @@
 	</variablelist>
     </simplesect>
     
+   <simplesect>
+    <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.BondsDisplay"><classname>BondsDisplay</classname> (Python API)</link>
+    </para>
+   </simplesect>
+
 </section>

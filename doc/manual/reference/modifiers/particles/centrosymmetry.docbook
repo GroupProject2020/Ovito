@@ -53,4 +53,11 @@
     modifier to reveal crystal defect atoms.
   </para>
   
+  <simplesect>
+  <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.CentroSymmetryModifier"><classname>CentroSymmetryModifier</classname> (Python API)</link>
+    </para>
+  </simplesect>
+  
 </section>

@@ -23,6 +23,7 @@
 #include <plugins/particles/objects/BondType.h>
 #include <gui/properties/ColorParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
+#include <gui/properties/IntegerParameterUI.h>
 #include <gui/properties/StringParameterUI.h>
 #include "BondTypeEditor.h"
 
@@ -37,7 +38,7 @@ SET_OVITO_OBJECT_EDITOR(BondType, BondTypeEditor);
 void BondTypeEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create a rollout.
-	QWidget* rollout = createRollout(tr("Bond Type"), rolloutParams);
+	QWidget* rollout = createRollout(tr("Bond Type"), rolloutParams, "scene_objects.particle_types.html");
 
     // Create the rollout contents.
 	QGridLayout* layout1 = new QGridLayout(rollout);
@@ -56,6 +57,12 @@ void BondTypeEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 	ColorParameterUI* colorPUI = new ColorParameterUI(this, PROPERTY_FIELD(BondType::color));
 	layout1->addWidget(colorPUI->label(), 1, 0);
 	layout1->addWidget(colorPUI->colorPicker(), 1, 1);
+
+	// Numeric ID.
+	IntegerParameterUI* idPUI = new IntegerParameterUI(this, PROPERTY_FIELD(BondType::id));
+	idPUI->setEnabled(false);
+	layout1->addWidget(new QLabel(tr("Numeric ID:")), 2, 0);
+	layout1->addWidget(idPUI->textBox(), 2, 1);
 }
 
 OVITO_END_INLINE_NAMESPACE

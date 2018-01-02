@@ -27,7 +27,7 @@
       The <guibutton>Render Active Viewport</guibutton> button starts the rendering process for the viewport that is currently active.
       OVITO will open a window to display the generated image, which can be saved to disk or copied to the clipboard.
       You can optionally specify an output filename beforehand in the <link linkend="core.render_settings">Render settings</link> panel, 
-      under which the generted image or movie will be saved. 
+      under which the generated image or movie will be saved. 
     </para>
     <para>
       OVITO provides several different rendering engines you can choose from. The default one is the <link linkend="rendering.opengl_renderer">OpenGL renderer</link>, 

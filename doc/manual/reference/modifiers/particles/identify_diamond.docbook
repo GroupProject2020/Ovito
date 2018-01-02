@@ -156,4 +156,11 @@ Computer Physics Communications (2016), doi:10.1016/j.cpc.2016.04.001</link></li
     </para>
   </simplesect>
 
+  <simplesect>
+  <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.IdentifyDiamondModifier"><classname>IdentifyDiamondModifier</classname> (Python API)</link>
+    </para>
+  </simplesect>  
+
 </section>

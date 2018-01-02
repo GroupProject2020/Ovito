@@ -37,4 +37,11 @@
     do not conflict with the existing particle IDs in the current dataset.
   </para>
 
+  <simplesect>
+  <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.CombineParticleSetsModifier"><classname>CombineParticleSetsModifier</classname> (Python API)</link>
+    </para>
+  </simplesect>  
+
 </section>

@@ -120,4 +120,5 @@ Performance improvements:
 
 Scripting features:
 
+- Add Python bindings for new OSPRay renderer
 - Display script output when running a script via the GUI menu.

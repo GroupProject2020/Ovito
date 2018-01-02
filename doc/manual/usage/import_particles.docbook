@@ -15,7 +15,7 @@
     Compressed text-based files with a <filename>.gz</filename> suffix can directly be read by OVITO.
   </para>
   <para>
-    Loading a data file creates a new visual object in the three-dimensial scene to display the data. 
+    Loading a data file creates a new visual object in the three-dimensional scene to display the data. 
     This object maintains a reference to the original source file, and it is possible to reload the data from the external
     file or to replace the source data with a different file later on. 
     The <link linkend="scene_objects.file_source">"External File" panel</link>, which is shown in the screenshot below,
