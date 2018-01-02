@@ -159,7 +159,7 @@ public:
 	ParticleBondMap(const BondsStorage& bonds);
 
 	/// Returns an iterator range over the indices of the bonds adjacent to the given particle.
-	/// Returns real indices into the bonds list. Note that bonds can point away from an to the given particle.
+	/// Returns real indices into the bonds list. Note that bonds can point away from and to the given particle.
 	boost::iterator_range<bond_index_iterator> bondIndicesOfParticle(size_t particleIndex) const {
 		size_t firstIndex = (particleIndex < _startIndices.size()) ? _startIndices[particleIndex] : endOfListValue();
 		return boost::iterator_range<bond_index_iterator>(
@@ -177,15 +177,22 @@ public:
 				bond_iterator(this, endOfListValue()));
 	}
 	
-	/// Returns the index of a bond in the bonds list.
-	/// Returns the number of bonds in case such a bond does not exist.
+	/// Returns the index of a bond in the bonds list if it exists.
+	/// Returns the total number of bonds to indicate that the bond does not exist.
 	size_t findBond(const Bond& bond) const {
 		size_t index = (bond.index1 < _startIndices.size()) ? _startIndices[bond.index1] : endOfListValue();
 		for(; index != endOfListValue(); index = _nextBond[index]) {
 			const Bond& current_bond = _bonds[index/2];
-			OVITO_ASSERT(current_bond.index1 == bond.index1);
-			if(current_bond.index2 == bond.index2 && current_bond.pbcShift == bond.pbcShift)
-				return index/2;
+			if((index & 1) == 0) {
+				OVITO_ASSERT(current_bond.index1 == bond.index1);
+				if(current_bond.index2 == bond.index2 && current_bond.pbcShift == bond.pbcShift)
+					return index/2;
+			}
+			else {
+				OVITO_ASSERT(current_bond.index2 == bond.index1);
+				if(current_bond.index1 == bond.index2 && current_bond.pbcShift == -bond.pbcShift)
+					return index/2;
+			}
 		}
 		return _bonds.size();
 	}
