@@ -73,15 +73,15 @@ ObjectScriptEditor::ObjectScriptEditor(QWidget* parentWidget, RefTarget* scripta
 	addDockWidget(Qt::BottomDockWidgetArea, outputDockWidget);
 
 	QToolBar* toolBar = addToolBar(tr("Script Editor"));
-	QAction* commitAction = toolBar->addAction(QIcon(":/pyscript/icons/run_script.png"), tr("Commit and run script"), this, SLOT(onCommitScript()));
+	QAction* commitAction = toolBar->addAction(QIcon(":/pyscript/icons/run_script.svg"), tr("Commit and run script"), this, SLOT(onCommitScript()));
 	commitAction->setShortcut(Qt::CTRL + Qt::Key_E);
 	commitAction->setText(commitAction->text() + QStringLiteral(" [") + commitAction->shortcut().toString() + QStringLiteral("]"));
 	toolBar->addSeparator();
-	toolBar->addAction(QIcon(":/pyscript/icons/file_open.png"), tr("Load script from disk"), this, SLOT(onLoadScriptFromFile()));
-	toolBar->addAction(QIcon(":/pyscript/icons/file_save_as.png"), tr("Save script to disk"), this, SLOT(onSaveScriptToFile()));
+	toolBar->addAction(QIcon(":/pyscript/icons/file_open.svg"), tr("Load script from disk"), this, SLOT(onLoadScriptFromFile()));
+	toolBar->addAction(QIcon(":/pyscript/icons/file_save_as.svg"), tr("Save script to disk"), this, SLOT(onSaveScriptToFile()));
 	toolBar->addSeparator();
-	_undoAction = toolBar->addAction(QIcon(":/pyscript/icons/edit_undo.png"), tr("Undo"));
-	_redoAction = toolBar->addAction(QIcon(":/pyscript/icons/edit_redo.png"), tr("Redo"));
+	_undoAction = toolBar->addAction(QIcon(":/pyscript/icons/edit_undo.svg"), tr("Undo"));
+	_redoAction = toolBar->addAction(QIcon(":/pyscript/icons/edit_redo.svg"), tr("Redo"));
 	_undoAction->setEnabled(false);
 	_redoAction->setEnabled(false);
 

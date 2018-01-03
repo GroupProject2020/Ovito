@@ -56,8 +56,8 @@ ActionManager::ActionManager(MainWindow* mainWindow) : QObject(mainWindow)
 	createCommandAction(ACTION_HELP_SHOW_ONLINE_HELP, tr("User Manual"), nullptr, tr("Open the user manual."), QKeySequence::HelpContents);
 	createCommandAction(ACTION_HELP_OPENGL_INFO, tr("OpenGL Information"), nullptr, tr("Display OpenGL graphics driver information."));
 
-	createCommandAction(ACTION_EDIT_UNDO, tr("Undo"), ":/gui/actions/edit/edit_undo.png", tr("Reverse a user action."), QKeySequence::Undo);
-	createCommandAction(ACTION_EDIT_REDO, tr("Redo"), ":/gui/actions/edit/edit_redo.png", tr("Redo the previously undone user action."), QKeySequence::Redo);
+	createCommandAction(ACTION_EDIT_UNDO, tr("Undo"), ":/gui/actions/edit/edit_undo.svg", tr("Reverse a user action."), QKeySequence::Undo);
+	createCommandAction(ACTION_EDIT_REDO, tr("Redo"), ":/gui/actions/edit/edit_redo.svg", tr("Redo the previously undone user action."), QKeySequence::Redo);
 	createCommandAction(ACTION_EDIT_DELETE, tr("Delete"), ":/gui/actions/edit/edit_delete.png", tr("Deletes the selected objects."));
 
 	createCommandAction(ACTION_SETTINGS_DIALOG, tr("&Settings..."), nullptr, QString(), QKeySequence::Preferences);
@@ -81,14 +81,14 @@ ActionManager::ActionManager(MainWindow* mainWindow) : QObject(mainWindow)
 	createViewportModeAction(ACTION_XFORM_MOVE_MODE, vpInputManager->moveMode(), tr("Move"), ":/gui/actions/edit/mode_move.png", tr("Move objects."));
 	createViewportModeAction(ACTION_XFORM_ROTATE_MODE, vpInputManager->rotateMode(), tr("Rotate"), ":/gui/actions/edit/mode_rotate.png", tr("Rotate objects."));
 
-	createCommandAction(ACTION_GOTO_START_OF_ANIMATION, tr("Go to Start of Animation"), ":/gui/actions/animation/goto_animation_start.png", QString(), Qt::Key_Home);
-	createCommandAction(ACTION_GOTO_END_OF_ANIMATION, tr("Go to End of Animation"), ":/gui/actions/animation/goto_animation_end.png", QString(), Qt::Key_End);
-	createCommandAction(ACTION_GOTO_PREVIOUS_FRAME, tr("Go to Previous Frame"), ":/gui/actions/animation/goto_previous_frame.png", QString(), Qt::ALT + Qt::Key_Left);
-	createCommandAction(ACTION_GOTO_NEXT_FRAME, tr("Go to Next Frame"), ":/gui/actions/animation/goto_next_frame.png", QString(), Qt::ALT + Qt::Key_Right);
-	createCommandAction(ACTION_START_ANIMATION_PLAYBACK, tr("Start Animation Playback"), ":/gui/actions/animation/play_animation.png");
-	createCommandAction(ACTION_STOP_ANIMATION_PLAYBACK, tr("Stop Animation Playback"), ":/gui/actions/animation/stop_animation.png");
+	createCommandAction(ACTION_GOTO_START_OF_ANIMATION, tr("Go to Start of Animation"), ":/gui/actions/animation/goto_animation_start.svg", QString(), Qt::Key_Home);
+	createCommandAction(ACTION_GOTO_END_OF_ANIMATION, tr("Go to End of Animation"), ":/gui/actions/animation/goto_animation_end.svg", QString(), Qt::Key_End);
+	createCommandAction(ACTION_GOTO_PREVIOUS_FRAME, tr("Go to Previous Frame"), ":/gui/actions/animation/goto_previous_frame.svg", QString(), Qt::ALT + Qt::Key_Left);
+	createCommandAction(ACTION_GOTO_NEXT_FRAME, tr("Go to Next Frame"), ":/gui/actions/animation/goto_next_frame.svg", QString(), Qt::ALT + Qt::Key_Right);
+	createCommandAction(ACTION_START_ANIMATION_PLAYBACK, tr("Start Animation Playback"), ":/gui/actions/animation/play_animation.svg");
+	createCommandAction(ACTION_STOP_ANIMATION_PLAYBACK, tr("Stop Animation Playback"), ":/gui/actions/animation/stop_animation.svg");
 	createCommandAction(ACTION_ANIMATION_SETTINGS, tr("Animation Settings"), ":/gui/actions/animation/animation_settings.png");
-	createCommandAction(ACTION_TOGGLE_ANIMATION_PLAYBACK, tr("Play Animation"), ":/gui/actions/animation/play_animation.png", QString(), Qt::Key_Space)->setCheckable(true);
+	createCommandAction(ACTION_TOGGLE_ANIMATION_PLAYBACK, tr("Play Animation"), ":/gui/actions/animation/play_animation.svg", QString(), Qt::Key_Space)->setCheckable(true);
 	createCommandAction(ACTION_AUTO_KEY_MODE_TOGGLE, tr("Auto Key Mode"), ":/gui/actions/animation/animation_mode.png")->setCheckable(true);
 
 	QMetaObject::connectSlotsByName(this);

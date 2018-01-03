@@ -3,11 +3,11 @@
 
 <qresource prefix="/pyscript">
 	
-	<file>icons/edit_undo.png</file>
-	<file>icons/edit_redo.png</file>
-	<file>icons/file_open.png</file>
-	<file>icons/file_save_as.png</file>
-	<file>icons/run_script.png</file>
+	<file>icons/edit_undo.svg</file>
+	<file>icons/edit_redo.svg</file>
+	<file>icons/file_open.svg</file>
+	<file>icons/file_save_as.svg</file>
+	<file>icons/run_script.svg</file>
 	
 </qresource> 
 

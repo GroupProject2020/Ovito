@@ -85,6 +85,9 @@ void GuiApplication::createQtApplication(int& argc, char** argv)
 		StandaloneApplication::createQtApplication(argc, argv);
 	}
 	else {
+		// Enable high-resolution toolbar icons on hi-dpi screens.  
+		QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+
 		new QApplication(argc, argv);
 
 #if defined(Q_OS_LINUX)

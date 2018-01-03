@@ -11,10 +11,8 @@
 	<file>mainwin/window_icon_128.png</file>
 	<file>mainwin/window_icon_256.png</file>
 
-	<file>actions/edit/edit_undo.png</file>
-	<file>actions/edit/edit_undo@2x.png</file>
-	<file>actions/edit/edit_redo.png</file>
-	<file>actions/edit/edit_redo@2x.png</file>
+	<file>actions/edit/edit_undo.svg</file>
+	<file>actions/edit/edit_redo.svg</file>
 	<file>actions/edit/edit_clear.png</file>
 	<file>actions/edit/edit_delete.png</file>
 	<file>actions/edit/mode_select.png</file>
@@ -48,12 +46,12 @@
 	<file>actions/viewport/zoom_selection_extents.png</file>
 	
 	<file>actions/animation/animation_settings.png</file>
-	<file>actions/animation/goto_animation_end.png</file>
-	<file>actions/animation/goto_animation_start.png</file>
-	<file>actions/animation/goto_next_frame.png</file>
-	<file>actions/animation/goto_previous_frame.png</file>
-	<file>actions/animation/play_animation.png</file>
-	<file>actions/animation/stop_animation.png</file>
+	<file>actions/animation/goto_animation_end.svg</file>
+	<file>actions/animation/goto_animation_start.svg</file>
+	<file>actions/animation/goto_next_frame.svg</file>
+	<file>actions/animation/goto_previous_frame.svg</file>
+	<file>actions/animation/play_animation.svg</file>
+	<file>actions/animation/stop_animation.svg</file>
 	<file>actions/animation/animation_mode.png</file>
 	<file>actions/animation/named_frames.png</file>
 	<file>actions/animation/add_animation_key.png</file>
@@ -94,16 +92,12 @@
 	<file>actions/modify/modifier_enabled_large.png</file>
 	<file>actions/modify/modifier_disabled_large.png</file>
 	<file>actions/modify/delete_modifier.png</file>
-	<file>actions/modify/modifier_move_up.png</file>
-	<file>actions/modify/modifier_move_up@2x.png</file>
-	<file>actions/modify/modifier_move_down.png</file>
-	<file>actions/modify/modifier_move_down@2x.png</file>
+	<file>actions/modify/modifier_move_up.svg</file>
+	<file>actions/modify/modifier_move_down.svg</file>
 	<file>actions/modify/modifier_status_info.png</file>
 	<file>actions/modify/modifier_status_warning.png</file>
-	<file>actions/modify/modifier_status_warning@2x.png</file>
 	<file>actions/modify/modifier_status_error.png</file>
 	<file>actions/modify/modifier_save_preset.png</file>
-	<file>actions/modify/modifier_save_preset@2x.png</file>
 	
 	<file>actions/overlays/delete_overlay.png</file>
 	<file>actions/overlays/overlay_move_up.png</file>
