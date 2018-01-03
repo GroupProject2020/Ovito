@@ -10,6 +10,7 @@ This module contains classes related to :ref:`data visualization and image rende
 
   * :py:class:`OpenGLRenderer`
   * :py:class:`TachyonRenderer`
+  * :py:class:`OSPRayRenderer`
   * :py:class:`POVRayRenderer`
 
 **Data visualization:**

@@ -15,7 +15,7 @@
       <imagedata fileref="images/app_settings/modifier_templates.png" format="PNG" scale="80" />
     </imageobject></mediaobject></screenshot></informalfigure>     
 
-    Modifier templates allow you to define modifiers with preconfigured settings for quick access.
+    Modifier templates are a way for you to define modifiers with preconfigured settings for quick access.
     This is useful in situations where you need to apply the same modifier(s) with the exact same settings 
     to different datasets repeatedly. The modifier templates you define are preserved across program sessions
     and can even be transferred between computers. Furthermore, a modifier template can consists of several modifiers allowing

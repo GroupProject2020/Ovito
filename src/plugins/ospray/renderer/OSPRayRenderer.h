@@ -60,7 +60,7 @@ class OVITO_OSPRAYRENDERER_EXPORT OSPRayRenderer : public NonInteractiveSceneRen
 {
 	Q_OBJECT
 	OVITO_CLASS(OSPRayRenderer)
-	Q_CLASSINFO("DisplayName", "OSPRay (experimental)");
+	Q_CLASSINFO("DisplayName", "OSPRay");
 	
 public:
 

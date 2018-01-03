@@ -16,7 +16,10 @@
      </imageobject></mediaobject></screenshot></informalfigure>  
      
     This is a software-based raytracing renderer. It can produce renderings of the scene with 
-    ambient occlusion lighting, shadows and depth of field.
+    ambient occlusion lighting, shadows and depth of field. The visual quality of the Tachyon renderer
+    is slightly better than the one provided by the <link linkend="rendering.ospray_renderer">OSPRay renderer</link>,
+    but it requires more memory. Both renderers offer higher visual quality than the <link linkend="rendering.opengl_renderer">OpenGL renderer</link>,
+    but are typically considerably slower.
     </para>
     
   <simplesect>
@@ -77,14 +80,14 @@
         <listitem>
           <para>This parameter sets the focus distance of the camera. Only objects at this distance from the camera will appear sharp when depth-of-field rendering is active.
           Objects closer to or further from the camera will appear blurred. If you want a specific object to be in the focus, use the <guibutton>Pick in viewport</guibutton> button 
-          and click on that object in the viewport to be rendered. The focal length parameter will be automatically adjusted so that the picked location is focused.</para>
+          and click on that object in the viewport to be rendered. The focal length parameter will be automatically adjusted so that the picked location is in focus.</para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
         <term>Aperture</term>
         <listitem>
-          <para>The aperture of the camera. This parameter controls the strength of the depth-of-field effect.</para>
+          <para>The aperture of the camera. This parameter controls the strength of the depth-of-field effect, i.e. how much objects are blurred that are out of focus.</para>
         </listitem>
       </varlistentry>
       

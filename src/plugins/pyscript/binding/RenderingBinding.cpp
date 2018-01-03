@@ -58,6 +58,7 @@ void defineRenderingSubmodule(py::module m)
 			"\n\n"
 			"  * :py:class:`OpenGLRenderer` -- The quick renderer which is also used by the interactive viewports of OVITO.\n"
 			"  * :py:class:`TachyonRenderer` -- A software-based, high-quality raytracing renderer.\n"
+			"  * :py:class:`OSPRayRenderer` -- Another software-based, high-quality raytracing renderer.\n"
 			"  * :py:class:`POVRayRenderer` -- A rendering backend that calls the external POV-Ray raytracing program.\n"
 			"\n"
 			"To render an image, one must create a :py:class:`Viewport`, set up its virtual camera, and finally invoke its :py:meth:`~Viewport.render` method with "

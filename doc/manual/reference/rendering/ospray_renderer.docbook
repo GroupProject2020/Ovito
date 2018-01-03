@@ -13,10 +13,19 @@
   <para>
     <informalfigure><screenshot><mediaobject><imageobject>
       <imagedata fileref="images/rendering/ospray_renderer_panel.png" format="PNG" scale="50" />
-    </imageobject></mediaobject></screenshot></informalfigure>  
-     
+    </imageobject></mediaobject></screenshot></informalfigure>       
     This is a software-based raytracing renderer. It can produce renderings of the scene with 
-    ambient occlusion lighting, shadows and depth of field.
+    global illumination, shadows and depth of field. The OSPRay renderer has a smaller memory footprint than
+    the <link linkend="rendering.tachyon_renderer">Tachyon renderer</link>. It can thus be used for rendering very large datasets,
+    with a higher visual quality than the <link linkend="rendering.opengl_renderer">OpenGL renderer</link> is able to provide.
+  </para>
+  <para>
+    The OSPRay renderer itself offers two different backends and you can switch between them using the 
+    <guibutton>Switch OSPRay backend</guibutton> button. The default selection is the <emphasis>SciVis</emphasis> backend.
+  </para>
+  <para>
+    For more information on the capabilities of the OSPRay engine and technical background information beyond what is found here,
+    please visit the <link xlink:href="http://www.ospray.org/">www.ospray.org</link> website.
   </para>
     
   <simplesect>
@@ -24,71 +33,115 @@
 
     <variablelist>
       <varlistentry>
-        <term>Anti-aliasing samples</term>
+        <term>Refinement passes</term>
         <listitem>
-          <para>To reduce <link xlink:href="http://en.wikipedia.org/wiki/Aliasing">aliasing
-          effects</link>, the Tachyon raytracer can perform <emphasis>supersampling</emphasis> by 
-          computing multiple rays per output pixel. This parameter controls the number of rays.</para>
+          <para>The OSPRay renderer supports a feature called adaptive accumulation, which is a progressive rendering method.
+          During each rendering pass, the rendered image is progressively refined. 
+          This parameter controls the number of iterations until the refinement stops (default: 8).</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Samples per pixel</term>
+        <listitem>
+          <para>The number of raytracing samples computed per pixel (default: 4). Larger values can help to reduce aliasing artifacts.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Max ray recursion depth</term>
+        <listitem>
+          <para>The maximum number of recursion steps during raytracing. Normally, 1 or 2 is enough, but when rendering semi-transparent 
+          objects, a larger recursion depth is needed.</para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
         <term>Direct light</term>
         <listitem>
-          <para>Enables the parallel light source, which is directed from an angle behind the camera.</para>
+          <para>Controls the directional light source that is positioned behind the camera and is pointing roughly along the viewing direction.
+          The <emphasis>angular diameter</emphasis> parameter specifies the apparent size (angle in degree) of the light source. 
+          Setting the angular diameter to a value greater than zero will result in soft shadows when the rendering backend uses stochastic sampling 
+          (only the case for the <emphasis>Path Tracer</emphasis> backend). For instance, the apparent size of the sun is about 0.53°.</para>
         </listitem>
       </varlistentry>
 
+      <varlistentry>
+        <term>Ambient light</term>
+        <listitem>
+          <para>The ambient light surrounds the scene and illuminates it from infinity with constant radiance.</para>
+        </listitem>
+      </varlistentry>
+
+  	  <varlistentry>
+        <term>Material</term>
+        <listitem>
+          <para>The <emphasis>specular brightness</emphasis> controls the specular reflectivity of the material (default: 5%). 
+          The <emphasis>shininess</emphasis> parameter (specular Phong exponent) is usually in the range between 2.0 and 10,000 (default: 10.0).</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Depth of field</term>
+        <listitem>
+          <para>Only objects exactly at the distance from the camera specified by the <emphasis>focal length</emphasis> will appear sharp when depth-of-field rendering is active.
+          Objects closer to or further from the camera will appear blurred. If you want a specific object to be in the focus, use the <guibutton>Pick in viewport</guibutton> button 
+          and click on that object in the viewport to be rendered. The <emphasis>focal length</emphasis> parameter will be automatically adjusted so that the picked location is in focus.
+          The <emphasis>aperture</emphasis> radius controls how blurred objects will appear that are out of focus (default: 0.5).
+          </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+  </simplesect>
+
+  <simplesect>
+    <title>SciVis backend</title>
+    <para>
+      The SciVis backend is a fast ray tracer for scientific visualization, which supports ambient occlusion (AO).      
+    </para>
+
+    <variablelist>
       <varlistentry>
         <term>Shadows</term>
         <listitem>
-          <para>Enables cast shadows for the directional light. Not that, with the current Tachyon version, you cannot turn off
-          shadows when ambient occlusion shading is enabled. In this case, you can only turn off the directional light source completely.</para>
+          <para>Controls whether to compute (hard) shadows.</para>
         </listitem>
       </varlistentry>
-
       <varlistentry>
         <term>Ambient occlusion</term>
         <listitem>
-          <para>Enabling this lighting technique mimics some of the effects that occur under conditions of omnidirectional diffuse illumination, 
-          e.g. outdoors on an overcast day.</para>
+          <para>
+          Ambient occlusion mimics some of the effects that occur under conditions of omnidirectional diffuse illumination, e.g. outdoors on an overcast day.
+          The <emphasis>sample count</emphasis> parameter determines the number of rays per sample to compute for ambient occlusion (default: 12).</para>
         </listitem>
       </varlistentry>
-
-      <varlistentry>
-        <term>Sample count</term>
-        <listitem>
-          <para>Ambient occlusion is implemented using a Monte Carlo technique. This parameters controls the number of samples to compute. 
-          A higher sample number leads to a more even shading, but requires more computation time.</para>
-        </listitem>
-      </varlistentry>
-
-	  <varlistentry>
-        <term>Depth of field</term>
-        <listitem>
-          <para>This option enables <link xlink:href="http://en.wikipedia.org/wiki/Depth_of_field">depth-of-field</link> (DOF) rendering, which  
-          blurs objects that are not in the focus of the camera. Note that depth-of-field rendering only works for viewports with a perspective projection!
-          Furthermore, anti-aliasing must be enabled for DOF to work and the number of anti-aliasing samples affects the quality of the blurring.</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term>Focal length</term>
-        <listitem>
-          <para>This parameter sets the focus distance of the camera. Only objects at this distance from the camera will appear sharp when depth-of-field rendering is active.
-          Objects closer to or further from the camera will appear blurred. If you want a specific object to be in the focus, use the <guibutton>Pick in viewport</guibutton> button 
-          and click on that object in the viewport to be rendered. The focal length parameter will be automatically adjusted so that the picked location is focused.</para>
-        </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term>Aperture</term>
-        <listitem>
-          <para>The aperture of the camera. This parameter controls the strength of the depth-of-field effect.</para>
-        </listitem>
-      </varlistentry>
-      
     </variablelist>
+    
   </simplesect>
+
+  <simplesect>
+    <title>Path Tracer backend</title>
+    <para>
+      The path tracer backend supports soft shadows, indirect illumination and realistic materials.
+    </para>
+
+    <variablelist>
+      <varlistentry>
+        <term>Roulette depth</term>
+        <listitem>
+          <para>Ray recursion depth at which to start Russian roulette termination (default: 5).</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    
+  </simplesect>
+
+  <simplesect>
+  <title>See also</title>
+    <para>
+      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.OSPRayRenderer"><classname>OSPRayRenderer</classname> (Python API)</link>
+    </para>
+  </simplesect>    
   
 </section>

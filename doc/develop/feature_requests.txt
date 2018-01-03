@@ -111,7 +111,6 @@ New analysis features:
 New I/O functions:
 
 - Export to Blender (Paul Erhart, Filip Sund <filip.sund@fys.uio.no>)
-- Single precision floating-point numbers, which are used for custom particle properties, cannot represent large integer numbers exactly (e.g. 100400). Find a solution to make it work.
 - Add support for more file formats using OpenBabel.
 
 Performance improvements:
@@ -120,5 +119,4 @@ Performance improvements:
 
 Scripting features:
 
-- Add Python bindings for new OSPRay renderer
 - Display script output when running a script via the GUI menu.

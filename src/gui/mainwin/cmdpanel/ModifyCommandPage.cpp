@@ -120,13 +120,6 @@ ModifyCommandPage::ModifyCommandPage(MainWindow* mainWindow, QWidget* parent) : 
 	});
 	editToolbar->addAction(manageModifierTemplatesAction);
 
-	editToolbar->addSeparator();
-	QAction* helpAction = new QAction(QIcon(":/gui/mainwin/command_panel/help.png"), tr("Open Online Help"), this);
-	connect(helpAction, &QAction::triggered, [mainWindow]() {
-		mainWindow->openHelpTopic("usage.modification_pipeline.html");
-	});
-	editToolbar->addAction(helpAction);
-
 	layout->addWidget(splitter, 2, 0, 1, 2);
 	layout->setRowStretch(2, 1);
 

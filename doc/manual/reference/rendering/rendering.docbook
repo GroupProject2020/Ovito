@@ -30,19 +30,19 @@
           <tbody>          
             <row>
               <entry><link linkend="rendering.opengl_renderer">OpenGL&#xA0;renderer</link></entry>
-              <entry>Hardware-accelerated rendering engine, which is also used by the interactive viewports</entry>
+              <entry>Hardware-accelerated rendering engine, which is also used for the interactive viewports</entry>
             </row>
             <row>
               <entry><link linkend="rendering.tachyon_renderer">Tachyon&#xA0;renderer</link></entry>
-              <entry></entry>
+              <entry>Software-based raytracing renderer, with support for ambient occlusion lighting, shadows and depth of field</entry>
             </row>
             <row>
               <entry><link linkend="rendering.ospray_renderer">OSPRay&#xA0;renderer</link></entry>
-              <entry></entry>
+              <entry>Another rendering engine with similar features but reduced memory requirements</entry>
             </row>
             <row>
               <entry><link linkend="rendering.povray_renderer">POV-Ray&#xA0;renderer</link></entry>
-              <entry></entry>
+              <entry>Lets you render OVITO scenes with the external POV-Ray program</entry>
             </row>
           </tbody>
         </tgroup>
