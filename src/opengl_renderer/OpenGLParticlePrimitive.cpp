@@ -71,7 +71,7 @@ OpenGLParticlePrimitive::OpenGLParticlePrimitive(OpenGLSceneRenderer* renderer, 
 						":/openglrenderer/glsl/particles/pointsprites/sphere/picking/without_depth.vs",
 						":/openglrenderer/glsl/particles/pointsprites/sphere/picking/flat_shading.fs");
 			}
-			else if(shape == SquareShape || shape == BoxShape) {
+			else if(shape == SquareCubicShape || shape == BoxShape) {
 				_shader = renderer->loadShaderProgram("particle_pointsprite_square_flat",
 						":/openglrenderer/glsl/particles/pointsprites/sphere/without_depth.vs",
 						":/openglrenderer/glsl/particles/pointsprites/square/flat_shading.fs");
@@ -123,7 +123,7 @@ OpenGLParticlePrimitive::OpenGLParticlePrimitive(OpenGLSceneRenderer* renderer, 
 							":/openglrenderer/glsl/particles/imposter/sphere/picking/flat_shading.fs");
 				}
 			}
-			else if(shape == SquareShape || shape == BoxShape) {
+			else if(shape == SquareCubicShape || shape == BoxShape) {
 				if(_usingGeometryShader) {
 					_shader = renderer->loadShaderProgram("particle_geomshader_imposter_square_flat",
 							":/openglrenderer/glsl/particles/imposter/sphere/without_depth.vs",
@@ -202,7 +202,7 @@ OpenGLParticlePrimitive::OpenGLParticlePrimitive(OpenGLSceneRenderer* renderer, 
 							":/openglrenderer/glsl/particles/geometry/sphere/picking/sphere.fs",
 							":/openglrenderer/glsl/particles/geometry/sphere/picking/sphere.gs");
 				}
-				else if(shape == SquareShape) {
+				else if(shape == SquareCubicShape) {
 					_shader = renderer->loadShaderProgram("particle_geomshader_cube",
 							":/openglrenderer/glsl/particles/geometry/cube/cube.vs",
 							":/openglrenderer/glsl/particles/geometry/cube/cube.fs",
@@ -242,7 +242,7 @@ OpenGLParticlePrimitive::OpenGLParticlePrimitive(OpenGLSceneRenderer* renderer, 
 							":/openglrenderer/glsl/particles/geometry/sphere/picking/sphere_tristrip.vs",
 							":/openglrenderer/glsl/particles/geometry/sphere/picking/sphere.fs");
 				}
-				else if(shape == SquareShape) {
+				else if(shape == SquareCubicShape) {
 					_shader = renderer->loadShaderProgram("particle_tristrip_cube",
 							":/openglrenderer/glsl/particles/geometry/cube/cube_tristrip.vs",
 							":/openglrenderer/glsl/particles/geometry/cube/cube.fs");

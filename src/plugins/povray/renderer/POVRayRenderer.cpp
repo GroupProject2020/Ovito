@@ -519,7 +519,7 @@ void POVRayRenderer::renderParticles(const DefaultParticlePrimitive& particleBuf
 			}
 		}
 	}
-	else if(particleBuffer.particleShape() == ParticlePrimitive::SquareShape) {
+	else if(particleBuffer.particleShape() == ParticlePrimitive::SquareCubicShape) {
 		if(particleBuffer.shadingMode() == ParticlePrimitive::NormalShading) {
 			// Rendering cubic particles.
 			for(; p != p_end; ++p, ++c, ++r) {

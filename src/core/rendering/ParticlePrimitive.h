@@ -50,7 +50,7 @@ public:
 
 	enum ParticleShape {
 		SphericalShape,
-		SquareShape,
+		SquareCubicShape,
 		BoxShape,
 		EllipsoidShape
 	};

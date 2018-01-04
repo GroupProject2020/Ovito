@@ -308,13 +308,13 @@ ParticlePrimitive::ParticleShape ParticleDisplay::effectiveParticleShape(Particl
 	}
 	else if(particleShape() == Box) {
 		if(shapeProperty != nullptr || orientationProperty != nullptr) return ParticlePrimitive::BoxShape;
-		else return ParticlePrimitive::SquareShape;
+		else return ParticlePrimitive::SquareCubicShape;
 	}
 	else if(particleShape() == Circle) {
 		return ParticlePrimitive::SphericalShape;
 	}
 	else if(particleShape() == Square) {
-		return ParticlePrimitive::SquareShape;
+		return ParticlePrimitive::SquareCubicShape;
 	}
 	else {
 		OVITO_ASSERT(false);

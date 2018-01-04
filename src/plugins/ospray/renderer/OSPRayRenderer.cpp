@@ -436,24 +436,32 @@ void OSPRayRenderer::renderParticles(const DefaultParticlePrimitive& particleBuf
 		}
 		size_t nspheres = sphereData.size();
 		
-		OSPReferenceWrapper<ospray::cpp::Geometry> spheres("spheres");
-		spheres.set("bytes_per_sphere", (int)sizeof(ospcommon::vec4f));
-		spheres.set("offset_radius", (int)sizeof(float) * 3);
+		// Note: This for-loop is a workaround for a bug in OSPRay 1.4.2, which crashes when rendering
+		// geometry with a color memory buffer whose size exceeds 2^31 bytes. We split up the geometry 
+		// into chunks to stay below the 2^31 bytes limit.
+		size_t maxChunkSize = ((1ull << 31) / sizeof(ospcommon::vec4f)) - 1;
+		for(size_t chunkOffset = 0; chunkOffset < nspheres; chunkOffset += maxChunkSize) {
 
-		OSPReferenceWrapper<ospray::cpp::Data> data(nspheres, OSP_FLOAT4, sphereData.data());
-		data.commit();
-		spheres.set("spheres", data);
+			OSPReferenceWrapper<ospray::cpp::Geometry> spheres("spheres");
+			spheres.set("bytes_per_sphere", (int)sizeof(ospcommon::vec4f));
+			spheres.set("offset_radius", (int)sizeof(float) * 3);
 
-		data = ospray::cpp::Data(nspheres, OSP_FLOAT4, colorData.data());
-		data.commit();
-		spheres.set("color", data);
-		
-		spheres.setMaterial(*_ospMaterial);
-		spheres.commit();
-		_ospWorld->addGeometry(spheres);
+			size_t chunkSize = std::min(maxChunkSize, nspheres - chunkOffset);
+			OSPReferenceWrapper<ospray::cpp::Data> data(chunkSize, OSP_FLOAT4, sphereData.data() + chunkOffset);
+			data.commit();
+			spheres.set("spheres", data);
+
+			data = ospray::cpp::Data(chunkSize, OSP_FLOAT4, colorData.data() + chunkOffset);
+			data.commit();
+			spheres.set("color", data);
+			
+			spheres.setMaterial(*_ospMaterial);
+			spheres.commit();
+			_ospWorld->addGeometry(spheres);
+		}
 	}
-	else if(particleBuffer.particleShape() == ParticlePrimitive::BoxShape) {
-		// Rendering noncubic/rotated box particles.
+	else if(particleBuffer.particleShape() == ParticlePrimitive::SquareCubicShape || particleBuffer.particleShape() == ParticlePrimitive::BoxShape) {
+		// Rendering cubic/box particles.
 
 		// We will pass the particle geometry as a triangle mesh to OSPRay.
 		std::vector<Point_3<float>> vertices;
@@ -549,27 +557,36 @@ void OSPRayRenderer::renderParticles(const DefaultParticlePrimitive& particleBuf
 		OVITO_ASSERT(normals.size() == colors.size());
 		OVITO_ASSERT(normals.size() == vertices.size());
 
-		OSPReferenceWrapper<ospray::cpp::Geometry> triangles("triangles");	
-		
-		OSPReferenceWrapper<ospray::cpp::Data> data(vertices.size(), OSP_FLOAT3, vertices.data());
-		data.commit();
-		triangles.set("vertex", data);
+		// Note: This for-loop is a workaround for a bug in OSPRay 1.4.2, which crashes when rendering
+		// geometry with a color memory buffer whose size exceeds 2^31 bytes. We split up the geometry 
+		// into chunks to stay below the 2^31 bytes limit.
+		size_t nparticles = (colors.size() / (6 * 4));
+		size_t maxChunkSize = ((1ull << 31) / (sizeof(ColorAT<float>) * 6 * 4)) - 1;
+		for(size_t chunkOffset = 0; chunkOffset < nparticles; chunkOffset += maxChunkSize) {
 
-		data = ospray::cpp::Data(colors.size(), OSP_FLOAT4, colors.data());
-		data.commit();
-		triangles.set("vertex.color", data);
+			OSPReferenceWrapper<ospray::cpp::Geometry> triangles("triangles");	
+			
+			size_t chunkSize = std::min(maxChunkSize, nparticles - chunkOffset);
+			OSPReferenceWrapper<ospray::cpp::Data> data(chunkSize * 6 * 4, OSP_FLOAT3, vertices.data() + (chunkOffset * 6 * 4));
+			data.commit();
+			triangles.set("vertex", data);
 
-		data = ospray::cpp::Data(normals.size(), OSP_FLOAT3, normals.data());
-		data.commit();
-		triangles.set("vertex.normal", data);
-		
-		data = ospray::cpp::Data(indices.size() / 3, OSP_INT3, indices.data());
-		data.commit();
-		triangles.set("index", data);
-		
-		triangles.setMaterial(*_ospMaterial);
-		triangles.commit();
-		_ospWorld->addGeometry(triangles);		
+			data = ospray::cpp::Data(chunkSize * 6 * 4, OSP_FLOAT4, colors.data() + (chunkOffset * 6 * 4));
+			data.commit();
+			triangles.set("vertex.color", data);
+
+			data = ospray::cpp::Data(chunkSize * 6 * 4, OSP_FLOAT3, normals.data() + (chunkOffset * 6 * 4));
+			data.commit();
+			triangles.set("vertex.normal", data);
+			
+			data = ospray::cpp::Data(chunkSize * 6 * 2, OSP_INT3, indices.data() + (chunkOffset * 6 * 3 * 2));
+			data.commit();
+			triangles.set("index", data);
+			
+			triangles.setMaterial(*_ospMaterial);
+			triangles.commit();
+			_ospWorld->addGeometry(triangles);		
+		}
 	}
 	else if(particleBuffer.particleShape() == ParticlePrimitive::EllipsoidShape) {
 		// Rendering ellipsoid particles.
@@ -639,19 +656,27 @@ void OSPRayRenderer::renderParticles(const DefaultParticlePrimitive& particleBuf
 		size_t nquadrics = quadricIter - quadricsData.begin();
 		if(nquadrics == 0) return;
 		
-		OSPReferenceWrapper<ospray::cpp::Geometry> quadrics("quadrics");
-
-		OSPReferenceWrapper<ospray::cpp::Data> data(nquadrics*14, OSP_FLOAT, quadricsData.data());
-		data.commit();
-		quadrics.set("quadrics", data);
-
-		data = ospray::cpp::Data(nquadrics, OSP_FLOAT4, colorData.data());
-		data.commit();
-		quadrics.set("color", data);
+		// Note: This for-loop is a workaround for a bug in OSPRay 1.4.2, which crashes when rendering
+		// geometry with a color memory buffer whose size exceeds 2^31 bytes. We split up the geometry 
+		// into chunks to stay below the 2^31 bytes limit.
+		size_t maxChunkSize = ((1ull << 31) / sizeof(std::array<float,14>)) - 1;
+		for(size_t chunkOffset = 0; chunkOffset < nquadrics; chunkOffset += maxChunkSize) {
 		
-		quadrics.setMaterial(*_ospMaterial);
-		quadrics.commit();
-		_ospWorld->addGeometry(quadrics);		
+			OSPReferenceWrapper<ospray::cpp::Geometry> quadrics("quadrics");
+
+			size_t chunkSize = std::min(maxChunkSize, nquadrics - chunkOffset);
+			OSPReferenceWrapper<ospray::cpp::Data> data(chunkSize * 14, OSP_FLOAT, quadricsData.data() + chunkOffset);
+			data.commit();
+			quadrics.set("quadrics", data);
+
+			data = ospray::cpp::Data(chunkSize, OSP_FLOAT4, colorData.data() + chunkOffset);
+			data.commit();
+			quadrics.set("color", data);
+			
+			quadrics.setMaterial(*_ospMaterial);
+			quadrics.commit();
+			_ospWorld->addGeometry(quadrics);		
+		}
 	}	
 }
 

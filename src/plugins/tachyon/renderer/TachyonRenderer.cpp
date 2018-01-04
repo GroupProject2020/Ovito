@@ -374,7 +374,7 @@ void TachyonRenderer::renderParticles(const DefaultParticlePrimitive& particleBu
 			}
 		}
 	}
-	else if(particleBuffer.particleShape() == ParticlePrimitive::SquareShape) {
+	else if(particleBuffer.particleShape() == ParticlePrimitive::SquareCubicShape) {
 		// Rendering cubic particles.
 		for(; p != p_end; ++p, ++c, ++r) {
 			if(c->a() > 0) {

@@ -6,7 +6,7 @@ User interface improvements:
 - Add ticks to the color legend.
 - List of most recently accessed files
 - Histogram plot export (SaeeD PourasaD <saeedpourasad@gmail.com>).
-- Spherical and cylindral slices (Enrique Martinez)
+- Spherical and cylindrical slices (Enrique Martinez)
 - Warn about NaN/infinite values in the input of modifiers
 
 Work-flow improvements:
@@ -93,7 +93,7 @@ Unresolved bugs:
 - On Windows: Program crash at File->Load File when previous accessed path does not exist anymore.
   Changing the file selection dialog to the alternative solves the problem.
   After changing back to the normal file selection dialog, this one also works for me but opening the selection box takes about 10 seconds, 
-  while the programm does not receive any feedback ('Keine Rückmeldung').
+  while the program does not receive any feedback ('Keine Rückmeldung').
   After changing the preferred file path to a local path in the registry, the selection box opens immediately. 
   Changing the preferred file path back to the non existing server, I can reproduce the 10 seconds of no response, 
   but without any crash.

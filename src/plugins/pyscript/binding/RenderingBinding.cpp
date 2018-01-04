@@ -182,7 +182,7 @@ void defineRenderingSubmodule(py::module m)
 
 	py::enum_<ParticlePrimitive::ParticleShape>(m, "ParticleShape")
 		.value("Round", ParticlePrimitive::SphericalShape)
-		.value("Square", ParticlePrimitive::SquareShape)
+		.value("Square", ParticlePrimitive::SquareCubicShape)
 	;
 
 	py::enum_<ArrowPrimitive::ShadingMode>(m, "ArrowShadingMode")
