@@ -58,7 +58,7 @@ ImportRemoteFileDialog::ImportRemoteFileDialog(const QVector<const FileImporterC
 
 	layout2->addWidget(_urlEdit);
 	QToolButton* clearURLHistoryButton = new QToolButton();
-	clearURLHistoryButton->setIcon(QIcon(":/gui/actions/edit/edit_clear.png"));
+	clearURLHistoryButton->setIcon(QIcon(":/gui/actions/edit/edit_clear.svg"));
 	clearURLHistoryButton->setToolTip(tr("Clear history"));
 	connect(clearURLHistoryButton, &QToolButton::clicked, [this]() {
 		if(QMessageBox::question(this, tr("Clear history"),

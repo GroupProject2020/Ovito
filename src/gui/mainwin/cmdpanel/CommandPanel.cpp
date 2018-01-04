@@ -42,10 +42,10 @@ CommandPanel::CommandPanel(MainWindow* mainWindow, QWidget* parent) : QWidget(pa
 
 	// Create the tabs.
 	_tabWidget->setDocumentMode(true);
-	_tabWidget->addTab(_modifyPage = new ModifyCommandPage(mainWindow, _tabWidget), QIcon(":/gui/mainwin/command_panel/tab_modify.png"), QString());
-	_tabWidget->addTab(_renderPage = new RenderCommandPage(mainWindow, _tabWidget), QIcon(":/gui/mainwin/command_panel/tab_render.png"), QString());
-	_tabWidget->addTab(_overlayPage = new OverlayCommandPage(mainWindow, _tabWidget), QIcon(":/gui/mainwin/command_panel/tab_overlays.png"), QString());
-	_tabWidget->addTab(_utilityPage = new UtilityCommandPage(mainWindow, _tabWidget), QIcon(":/gui/mainwin/command_panel/tab_utilities.png"), QString());
+	_tabWidget->addTab(_modifyPage = new ModifyCommandPage(mainWindow, _tabWidget), QIcon(":/gui/mainwin/command_panel/tab_modify.bw.svg"), QString());
+	_tabWidget->addTab(_renderPage = new RenderCommandPage(mainWindow, _tabWidget), QIcon(":/gui/mainwin/command_panel/tab_render.bw.svg"), QString());
+	_tabWidget->addTab(_overlayPage = new OverlayCommandPage(mainWindow, _tabWidget), QIcon(":/gui/mainwin/command_panel/tab_overlays.bw.svg"), QString());
+	_tabWidget->addTab(_utilityPage = new UtilityCommandPage(mainWindow, _tabWidget), QIcon(":/gui/mainwin/command_panel/tab_utilities.bw.svg"), QString());
 	_tabWidget->setTabToolTip(0, tr("Modify"));
 	_tabWidget->setTabToolTip(1, tr("Render"));
 	_tabWidget->setTabToolTip(2, tr("Overlays"));

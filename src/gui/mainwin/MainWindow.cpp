@@ -171,10 +171,8 @@ MainWindow::MainWindow() : _datasetContainer(this)
 	viewportControlBar1->addAction(actionManager()->getAction(ACTION_VIEWPORT_ZOOM));
 	viewportControlBar1->addAction(actionManager()->getAction(ACTION_VIEWPORT_PAN));
 	viewportControlBar1->addAction(actionManager()->getAction(ACTION_VIEWPORT_ORBIT));
-	viewportControlBar1->addAction(actionManager()->getAction(ACTION_VIEWPORT_PICK_ORBIT_CENTER));
 	QToolBar* viewportControlBar2 = new QToolBar();
 	viewportControlBar2->addAction(actionManager()->getAction(ACTION_VIEWPORT_ZOOM_SCENE_EXTENTS));
-	viewportControlBar2->addAction(actionManager()->getAction(ACTION_VIEWPORT_ZOOM_SCENE_EXTENTS_ALL));
 	viewportControlBar2->addAction(actionManager()->getAction(ACTION_VIEWPORT_FOV));
 	viewportControlBar2->addAction(actionManager()->getAction(ACTION_VIEWPORT_MAXIMIZE));
 	QWidget* viewportControlPanel = new QWidget();
@@ -309,9 +307,7 @@ void MainWindow::createMainMenu()
 	QMenu* helpMenu = menuBar->addMenu(tr("&Help"));
 	helpMenu->setObjectName(QStringLiteral("HelpMenu"));
 	helpMenu->addAction(actionManager()->getAction(ACTION_HELP_SHOW_ONLINE_HELP));
-	connect(helpMenu->addAction(tr("Scripting Reference")), &QAction::triggered, [this]() {
-		openHelpTopic(QStringLiteral("python/index.html"));
-	});
+	helpMenu->addAction(actionManager()->getAction(ACTION_HELP_SHOW_SCRIPTING_HELP));
 	helpMenu->addSeparator();
 	helpMenu->addAction(actionManager()->getAction(ACTION_HELP_OPENGL_INFO));
 #ifndef  Q_OS_MACX

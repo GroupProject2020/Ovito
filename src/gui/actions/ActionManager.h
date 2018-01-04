@@ -52,6 +52,8 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
 #define ACTION_HELP_ABOUT				"HelpAbout"
 /// This action shows the online help.
 #define ACTION_HELP_SHOW_ONLINE_HELP	"HelpShowOnlineHelp"
+/// This action shows the scripting reference manual.
+#define ACTION_HELP_SHOW_SCRIPTING_HELP	"HelpShowScriptingReference"
 /// This action displays OpenGL diagnostics.
 #define ACTION_HELP_OPENGL_INFO			"HelpOpenGLInfo"
 
@@ -199,6 +201,7 @@ private Q_SLOTS:
 	void on_HelpAbout_triggered();
 	void on_HelpOpenGLInfo_triggered();
 	void on_HelpShowOnlineHelp_triggered();
+	void on_HelpShowScriptingReference_triggered();
 	void on_FileNew_triggered();
 	void on_FileOpen_triggered();
 	void on_FileSave_triggered();

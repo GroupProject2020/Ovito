@@ -60,10 +60,10 @@ void FileSourceEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 	toolbar->setStyleSheet("QToolBar { padding: 0px; margin: 0px; border: 0px none black; }");
 	layout->addWidget(toolbar);
 
-	toolbar->addAction(QIcon(":/gui/actions/file/import_object_changefile.png"), tr("Pick new file"), this, SLOT(onPickLocalInputFile()));
-	toolbar->addAction(QIcon(":/gui/actions/file/file_import_remote.png"), tr("Pick new remote file"), this, SLOT(onPickRemoteInputFile()));
-	toolbar->addAction(QIcon(":/gui/actions/file/import_object_reload.png"), tr("Reload data from external file"), this, SLOT(onReloadFrame()));
-	toolbar->addAction(QIcon(":/gui/actions/file/import_object_refresh_animation.png"), tr("Update time series"), this, SLOT(onReloadAnimation()));
+	toolbar->addAction(QIcon(":/gui/actions/file/import_object_changefile.bw.svg"), tr("Pick new file"), this, SLOT(onPickLocalInputFile()));
+	toolbar->addAction(QIcon(":/gui/actions/file/file_import_remote.bw.svg"), tr("Pick new remote file"), this, SLOT(onPickRemoteInputFile()));
+	toolbar->addAction(QIcon(":/gui/actions/file/import_object_reload.bw.svg"), tr("Reload data from external file"), this, SLOT(onReloadFrame()));
+	toolbar->addAction(QIcon(":/gui/actions/file/import_object_refresh_animation.bw.svg"), tr("Update time series"), this, SLOT(onReloadAnimation()));
 
 	QGroupBox* sourceBox = new QGroupBox(tr("Data source"), rollout);
 	layout->addWidget(sourceBox);

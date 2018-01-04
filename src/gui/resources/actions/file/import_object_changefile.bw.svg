@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   viewBox="0 0 576 512"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="file_import.bw.svg">
+  <metadata
+     id="metadata10">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs8" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1142"
+     id="namedview6"
+     showgrid="false"
+     inkscape:zoom="0.4609375"
+     inkscape:cx="14.644068"
+     inkscape:cy="342.77966"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg2" />
+  <path
+     d="m 127.518,238.55175 144.003,-135.985 C 286.7,88.231749 312,98.859749 312,120.01475 l 0,71.963 c 144.575,-0.97 205.566,-35.113 164.775,-171.353001 C 472.292,5.6517492 489.621,-5.9422508 501.781,3.2947492 540.748,32.894749 576,89.511749 576,146.66075 c 0,143.937 -117.599,172.5 -264,173.312 l 0,72.015 c 0,21.174 -25.317,31.768 -40.479,17.448 l -144.003,-135.988 c -10.02,-9.463 -10.028,-25.425 0,-34.896 z"
+     id="path4140"
+     inkscape:connector-curvature="0" />
+  <path
+     d="m 384,379.128 0,68.872 -320,0 0,-320 50.916,0 a 11.99,11.99 0 0 0 8.648,-3.693 C 138.517,108.739 155.801,96.417 174.578,86.631 185.708,80.83 181.584,64 169.033,64 L 48,64 C 21.49,64 0,85.49 0,112 l 0,352 c 0,26.51 21.49,48 48,48 l 352,0 c 26.51,0 48,-21.49 48,-48 l 0,-88.806 c 0,-8.288 -8.197,-14.066 -16.011,-11.302"
+     id="path4" />
+</svg>

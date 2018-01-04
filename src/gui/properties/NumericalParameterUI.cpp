@@ -79,7 +79,7 @@ void NumericalParameterUI::initUIControls(const QString& labelText)
 		_animateButton->setFocusPolicy(Qt::NoFocus);
 		static_cast<QToolButton*>(_animateButton.data())->setAutoRaise(true);
 		static_cast<QToolButton*>(_animateButton.data())->setToolButtonStyle(Qt::ToolButtonTextOnly);
-		_animateButton->setToolTip(tr("Animate parameter..."));
+		_animateButton->setToolTip(tr("Animate this parameter..."));
 		_animateButton->setEnabled(false);
 		connect(_animateButton.data(), &QAbstractButton::clicked, this, &NumericalParameterUI::openAnimationKeyEditor);
 	}

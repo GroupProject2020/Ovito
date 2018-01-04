@@ -77,6 +77,14 @@ void ActionManager::on_HelpShowOnlineHelp_triggered()
 }
 
 /******************************************************************************
+* Handles the ACTION_HELP_SHOW_SCRIPTING_HELP command.
+******************************************************************************/
+void ActionManager::on_HelpShowScriptingReference_triggered()
+{
+	mainWindow()->openHelpTopic(QStringLiteral("python/index.html"));
+}
+
+/******************************************************************************
 * Handles the ACTION_HELP_OPENGL_INFO command.
 ******************************************************************************/
 void ActionManager::on_HelpOpenGLInfo_triggered()

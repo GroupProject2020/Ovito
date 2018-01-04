@@ -77,17 +77,10 @@ OverlayCommandPage::OverlayCommandPage(MainWindow* mainWindow, QWidget* parent) 
 #endif
 	subLayout->addWidget(editToolbar);
 
-	_deleteOverlayAction = new QAction(QIcon(":/gui/actions/modify/delete_modifier.png"), tr("Delete Overlay"), this);
+	_deleteOverlayAction = new QAction(QIcon(":/gui/actions/modify/delete_modifier.bw.svg"), tr("Delete Overlay"), this);
 	_deleteOverlayAction->setEnabled(false);
 	connect(_deleteOverlayAction, &QAction::triggered, this, &OverlayCommandPage::onDeleteOverlay);
 	editToolbar->addAction(_deleteOverlayAction);
-
-	editToolbar->addSeparator();
-	QAction* overlayHelpAction = new QAction(QIcon(":/gui/mainwin/command_panel/help.png"), tr("Open Online Help"), this);
-	connect(overlayHelpAction, &QAction::triggered, [mainWindow] {
-		mainWindow->openHelpTopic("viewport_overlays.html");
-	});
-	editToolbar->addAction(overlayHelpAction);
 
 	layout->addWidget(splitter, 1);
 
