@@ -21,6 +21,7 @@
 
 SET(SourceFiles
 	importer/CAImporter.cpp
+	importer/DislocImporter.cpp
 	exporter/CAExporter.cpp
 	exporter/VTKDislocationsExporter.cpp
 	objects/patterns/BurgersVectorFamily.cpp
@@ -36,6 +37,7 @@ SET(SourceFiles
 	objects/slip_surface/SlipSurfaceDisplay.cpp
 	data/ClusterGraph.cpp
 	data/DislocationNetwork.cpp
+	data/NodalDislocationNetwork.cpp
 	data/PlanarDefects.cpp
 	modifier/ConstructSurfaceModifier.cpp
 	modifier/dxa/DislocationAnalysisModifier.cpp

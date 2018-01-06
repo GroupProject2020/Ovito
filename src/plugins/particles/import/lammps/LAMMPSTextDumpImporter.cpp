@@ -180,7 +180,7 @@ FileSourceImporter::FrameDataPtr LAMMPSTextDumpImporter::FrameLoader::loadFile(Q
 
 		if(stream.lineStartsWith("ITEM: TIMESTEP")) {
 			if(sscanf(stream.readLine(), "%i", &timestep) != 1)
-				throw Exception(tr("LAMMPS dump file parsing error. Invalid timestep number (line %1):\n%2").arg(stream.lineNumber()).arg(QString::fromLocal8Bit(stream.line())));
+				throw Exception(tr("LAMMPS dump file parsing error. Invalid timestep number (line %1):\n%2").arg(stream.lineNumber()).arg(stream.lineString()));
 			frameData->attributes().insert(QStringLiteral("Timestep"), QVariant::fromValue(timestep));
 		}
 		else if(stream.lineStartsWith("ITEM: NUMBER OF ATOMS")) {

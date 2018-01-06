@@ -53,6 +53,12 @@ public:
 	/// Releases the memory reserved by this pool and destroys all allocated object instances.
 	~MemoryPool() { clear(); }
 
+	/// Memory pools cannot be copied.
+	MemoryPool(const MemoryPool& other) = delete;
+
+	/// Memory pools cannot be copy assigned.
+	MemoryPool& operator=(const MemoryPool& other) = delete;
+
 	/// Allocates, constructs, and returns a new object instance.
 	/// Any arguments passed to this method are forwarded to the class constructor.
 	template<class... Args>
