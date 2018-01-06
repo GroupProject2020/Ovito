@@ -12,11 +12,11 @@
    viewBox="0 0 24 24"
    width="24"
    version="1.1"
-   id="svg3139"
-   sodipodi:docname="animation_mode.bw.svg"
+   id="svg6"
+   sodipodi:docname="edit_clear.bw.svg"
    inkscape:version="0.92.2 5c3e80d, 2017-08-06">
   <metadata
-     id="metadata3145">
+     id="metadata12">
     <rdf:RDF>
       <cc:Work
          rdf:about="">
@@ -27,7 +27,7 @@
     </rdf:RDF>
   </metadata>
   <defs
-     id="defs3143" />
+     id="defs10" />
   <sodipodi:namedview
      pagecolor="#ffffff"
      bordercolor="#666666"
@@ -37,24 +37,23 @@
      guidetolerance="10"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
-     inkscape:window-width="1440"
-     inkscape:window-height="855"
-     id="namedview3141"
+     inkscape:window-width="1078"
+     inkscape:window-height="480"
+     id="namedview8"
      showgrid="false"
      inkscape:zoom="9.8333333"
-     inkscape:cx="-6.2033899"
+     inkscape:cx="12"
      inkscape:cy="12"
      inkscape:window-x="0"
-     inkscape:window-y="1"
-     inkscape:window-maximized="1"
-     inkscape:current-layer="svg3139" />
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg6" />
+  <path
+     d="M5 13h14v-2H5v2zm-2 4h14v-2H3v2zM7 7v2h14V7H7z"
+     id="path2"
+     style="fill:#505050;fill-opacity:1" />
   <path
      d="M0 0h24v24H0z"
      fill="none"
-     id="path3135" />
-  <path
-     d="M 12.50678,10.440678 C 11.867458,8.6240678 10.13661,7.3220339 8.1016949,7.3220339 5.5210169,7.3220339 3.4237288,9.419322 3.4237288,12 c 0,2.580678 2.0972881,4.677966 4.6779661,4.677966 2.0349151,0 3.7657631,-1.302034 4.4050851,-3.118644 h 3.391525 v 3.118644 h 3.118644 v -3.118644 h 1.559322 v -3.118644 z m -4.4050851,3.118644 c -0.8576271,0 -1.559322,-0.701695 -1.559322,-1.559322 0,-0.857627 0.7016949,-1.559322 1.559322,-1.559322 0.8576271,0 1.559322,0.701695 1.559322,1.559322 0,0.857627 -0.7016949,1.559322 -1.559322,1.559322 z"
-     id="path3137"
-     inkscape:connector-curvature="0"
-     style="stroke-width:0.779661;fill:#505050;fill-opacity:1" />
+     id="path4" />
 </svg>

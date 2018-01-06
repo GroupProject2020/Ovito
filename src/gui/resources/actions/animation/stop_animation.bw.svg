@@ -7,13 +7,16 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   viewBox="0 0 448 512"
-   id="svg2"
+   fill="#000000"
+   height="24"
+   viewBox="0 0 24 24"
+   width="24"
    version="1.1"
-   inkscape:version="0.91 r13725"
-   sodipodi:docname="stop_animation.bw.svg">
+   id="svg8344"
+   sodipodi:docname="stop_animation.bw.svg"
+   inkscape:version="0.92.2 5c3e80d, 2017-08-06">
   <metadata
-     id="metadata10">
+     id="metadata8350">
     <rdf:RDF>
       <cc:Work
          rdf:about="">
@@ -24,7 +27,7 @@
     </rdf:RDF>
   </metadata>
   <defs
-     id="defs8" />
+     id="defs8348" />
   <sodipodi:namedview
      pagecolor="#ffffff"
      bordercolor="#666666"
@@ -34,19 +37,23 @@
      guidetolerance="10"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
-     inkscape:window-width="1920"
-     inkscape:window-height="1142"
-     id="namedview6"
+     inkscape:window-width="740"
+     inkscape:window-height="480"
+     id="namedview8346"
      showgrid="false"
-     inkscape:zoom="0.4609375"
-     inkscape:cx="228.33898"
-     inkscape:cy="256"
+     inkscape:zoom="9.8333333"
+     inkscape:cx="12"
+     inkscape:cy="12"
      inkscape:window-x="0"
      inkscape:window-y="0"
-     inkscape:window-maximized="1"
-     inkscape:current-layer="svg2" />
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg8344" />
   <path
-     d="m 367.61259,73.220339 -287.225181,0 c -21.623486,0 -39.16707,17.543584 -39.16707,39.167071 l 0,287.22518 c 0,21.62349 17.543584,39.16707 39.16707,39.16707 l 287.225181,0 c 21.62349,0 39.16707,-17.54358 39.16707,-39.16707 l 0,-287.22518 c 0,-21.623487 -17.54358,-39.167071 -39.16707,-39.167071 z"
-     id="path4"
-     inkscape:connector-curvature="0" />
+     d="M0 0h24v24H0z"
+     fill="none"
+     id="path8340" />
+  <path
+     d="M6 6h12v12H6z"
+     id="path8342"
+     style="fill:#505050;fill-opacity:1" />
 </svg>

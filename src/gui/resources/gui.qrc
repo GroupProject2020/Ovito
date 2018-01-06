@@ -13,7 +13,7 @@
 
 	<file>actions/edit/edit_undo.bw.svg</file>
 	<file>actions/edit/edit_redo.bw.svg</file>
-	<file>actions/edit/edit_clear.svg</file>
+	<file>actions/edit/edit_clear.bw.svg</file>
 	<file>actions/edit/edit_delete.bw.svg</file>
 	<file>actions/edit/mode_select.bw.svg</file>
 	<file>actions/edit/mode_move.bw.svg</file>
