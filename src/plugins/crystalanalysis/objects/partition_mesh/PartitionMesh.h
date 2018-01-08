@@ -30,14 +30,16 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-struct PartitionMeshFace;	// defined below
+template<typename> struct PartitionMeshFace;	// defined below
 
+template<typename>
 struct PartitionMeshEdge
 {
 	/// Pointer to the next manifold sharing this edge.
 	HalfEdgeMesh<PartitionMeshEdge, PartitionMeshFace, EmptyHalfEdgeMeshStruct>::Edge* nextManifoldEdge = nullptr;
 };
 
+template<typename>
 struct PartitionMeshFace
 {
 	/// The face on the opposite side of the manifold.

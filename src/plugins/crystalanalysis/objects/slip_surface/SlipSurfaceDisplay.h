@@ -23,15 +23,14 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
+#include <plugins/crystalanalysis/data/Microstructure.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <core/dataset/data/DisplayObject.h>
 #include <core/dataset/data/VersionedDataObjectRef.h>
 #include <core/utilities/mesh/TriMesh.h>
-#include <core/utilities/mesh/HalfEdgeMesh.h>
 #include <core/utilities/concurrent/Task.h>
 #include <core/rendering/MeshPrimitive.h>
 #include <core/dataset/animation/controller/Controller.h>
-#include "SlipSurface.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
@@ -66,7 +65,7 @@ public:
 	void setSurfaceTransparency(FloatType transparency) { if(surfaceTransparencyController()) surfaceTransparencyController()->setCurrentFloatValue(transparency); }
 
 	/// Generates the final triangle mesh, which will be rendered.
-	static bool buildMesh(const SlipSurfaceData& input, const SimulationCell& cell, const QVector<Plane3>& cuttingPlanes, const QStringList& structureNames, TriMesh& output, std::vector<ColorA>& materialColors, PromiseState& promise);
+	static bool buildMesh(const Microstructure& input, const SimulationCell& cell, const QVector<Plane3>& cuttingPlanes, const QStringList& structureNames, TriMesh& output, std::vector<ColorA>& materialColors, PromiseState& promise);
 
 protected:
 	
@@ -84,7 +83,7 @@ protected:
 	public:
 
 		/// Constructor.
-		PrepareMeshEngine(std::shared_ptr<const SlipSurfaceData> mesh, std::shared_ptr<const ClusterGraph> clusterGraph, const SimulationCell& simCell,
+		PrepareMeshEngine(std::shared_ptr<const Microstructure> mesh, std::shared_ptr<const ClusterGraph> clusterGraph, const SimulationCell& simCell,
 				QStringList structureNames, QVector<Plane3> cuttingPlanes, bool smoothShading) :
 			_inputMesh(std::move(mesh)), _clusterGraph(std::move(clusterGraph)), _simCell(simCell),
 			_structureNames(std::move(structureNames)), _cuttingPlanes(std::move(cuttingPlanes)), _smoothShading(smoothShading) {}
@@ -94,7 +93,7 @@ protected:
 
 	private:
 
-		const std::shared_ptr<const SlipSurfaceData> _inputMesh;
+		const std::shared_ptr<const Microstructure> _inputMesh;
 		const std::shared_ptr<const ClusterGraph> _clusterGraph;
 		const SimulationCell _simCell;
 		const QStringList _structureNames;
@@ -119,7 +118,8 @@ protected:
 	/// This helper structure is used to detect any changes in the input data
 	/// that require updating the geometry buffer.
 	SceneObjectCacheHelper<
-		FloatType							// Surface transparency
+		VersionedDataObjectRef,		// Renderable object + revision number
+		FloatType					// Surface transparency
 		> _geometryCacheHelper;
 	
 	/// The revision counter of this display object.

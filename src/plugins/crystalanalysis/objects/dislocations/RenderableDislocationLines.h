@@ -23,6 +23,7 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
+#include <plugins/crystalanalysis/data/ClusterVector.h>
 #include <core/dataset/data/TransformedDataObject.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
@@ -43,11 +44,15 @@ public:
 	{
 		/// The two vertices of the segment.
 		std::array<Point3, 2> verts;
-		/// Identifies the dislocation this segment belongs to.
+
+		/// Identifies the dislocation line this segment belongs to.
 		size_t dislocationIndex;
 
+		/// The Burgers vector of the segment.
+		ClusterVector burgersVector;
+
 		/// Equal comparison operator.
-		bool operator==(const Segment& other) const { return verts == other.verts && dislocationIndex == other.dislocationIndex; }
+		bool operator==(const Segment& other) const { return verts == other.verts && dislocationIndex == other.dislocationIndex && burgersVector == other.burgersVector; }
 	};
 
 	/// \brief Constructor.

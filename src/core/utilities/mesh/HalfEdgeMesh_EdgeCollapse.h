@@ -160,17 +160,16 @@ private:
 		}
 		promise.setProgressValue(promise.progressMaximum());
 
+		// Remove faces which were marked for deletion.
+		_mesh.removeMarkedFaces();
+
 		// Remove faces and vertices which were marked for deletion.
-		for(int f = _mesh.faceCount() - 1; f >= 0; f--) {
-			if(_mesh.faces()[f]->edges() == nullptr)
-				_mesh.removeFace(f);
-		}
 		for(int v = _mesh.vertexCount() - 1; v >= 0; v--) {
 			if(_mesh.vertices()[v]->numEdges() == 0)
 				_mesh.removeVertex(v);
 		}
 		
-		// Need to assigne new indices to vertices and faces after some of the have been deleted.
+		// Need to assign new indices to vertices some of the have been deleted.
 		_mesh.reindexVerticesAndFaces();
 
 		return true;

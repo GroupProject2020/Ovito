@@ -31,6 +31,7 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
+template<typename>
 struct SlipSurfaceFace
 {
 	/// The local slip vector.

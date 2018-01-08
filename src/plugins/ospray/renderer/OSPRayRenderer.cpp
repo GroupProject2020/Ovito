@@ -166,6 +166,10 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 		imgSize.x = renderSettings()->outputImageWidth(); 
 		imgSize.y = renderSettings()->outputImageHeight();
 
+		// Make sure the target frame buffer has the right memory format.
+		if(frameBuffer->image().format() != QImage::Format_ARGB32)
+		frameBuffer->image() = frameBuffer->image().convertToFormat(QImage::Format_ARGB32);
+
 		// Calculate camera information.
 		Point3 cam_pos;
 		Vector3 cam_dir;

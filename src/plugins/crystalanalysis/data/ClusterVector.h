@@ -90,6 +90,12 @@ public:
 		return true;
 	}
 
+	/// Equal comparison operator.
+	bool operator==(const ClusterVector& other) const { return _vec == other._vec && _cluster == other._cluster; }
+
+	/// Not-equal comparison operator.
+	bool operator!=(const ClusterVector& other) const { return _vec != other._vec || _cluster != other._cluster; }
+
 private:
 
 	/// The XYZ components of the vector in the local lattice coordinate system.

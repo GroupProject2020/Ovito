@@ -70,9 +70,16 @@ DislocationNetwork::DislocationNetwork(const DislocationNetwork& other) :
 DislocationNetwork::DislocationNetwork(const Microstructure& other, const SimulationCell& cell) :
 	_clusterGraph(other.clusterGraph())
 {
+	// This is used to keep tracke which input edges have already been converted to a dislocation
+	// line. For each visited edge, we store the ID of the output dislocation line.
+	// The sign of the ID number indicates whether the input edge and the output line
+	// have the same or reverse orientation.
 	std::unordered_map<Microstructure::Edge*, int> visitedEdges;
+
 	for(Microstructure::Vertex* inputVertex : other.vertices()) {
 		for(Microstructure::Edge* inputEdge = inputVertex->edges(); inputEdge != nullptr; inputEdge = inputEdge->nextVertexEdge()) {
+			// Ignore helper edges.
+			if(!inputEdge->isDislocation()) continue;
 			// Start at an arbitrary segment of the input network which has not been converted yet.
 			if(visitedEdges.find(inputEdge) != visitedEdges.end()) continue;
 			// Create a new line in the output network.
@@ -90,6 +97,7 @@ DislocationNetwork::DislocationNetwork(const Microstructure& other, const Simula
 				Microstructure::Edge* nextEdge = nullptr;
 				int armCount = 0;
 				for(Microstructure::Edge* e = currentEdge->vertex2()->edges(); e != nullptr; e = e->nextVertexEdge()) {
+					if(!e->isDislocation()) continue;
 					armCount++;
 					if(e != currentEdge->oppositeEdge()) nextEdge = e;
 				}
@@ -106,10 +114,12 @@ DislocationNetwork::DislocationNetwork(const Microstructure& other, const Simula
 			}
 			// Extend output line along opposite direction until we hit a higher order node.
 			currentEdge = inputEdge->oppositeEdge();
+			OVITO_ASSERT(inputEdge->isDislocation());
 			for(;;) {
 				Microstructure::Edge* nextEdge = nullptr;
 				int armCount = 0;
 				for(Microstructure::Edge* e = currentEdge->vertex2()->edges(); e != nullptr; e = e->nextVertexEdge()) {
+					if(!e->isDislocation()) continue;
 					armCount++;
 					if(e != currentEdge->oppositeEdge()) nextEdge = e;
 				}
@@ -130,18 +140,20 @@ DislocationNetwork::DislocationNetwork(const Microstructure& other, const Simula
 		}
 	}
 
-	// Join dislocation lines at nodes.
+	// Join dislocation lines at nodes with three or more arms.
 	for(Microstructure::Vertex* vertex : other.vertices()) {
-		if(vertex->numEdges() <= 2) continue;
-		OVITO_ASSERT(visitedEdges.find(vertex->edges()) != visitedEdges.end());
-		DislocationNode* headNode = nullptr;
-		for(Microstructure::Edge* edge = vertex->edges(); edge != nullptr; edge = edge->nextVertexEdge()) {
-			int edgeInfo = visitedEdges[edge];
-			DislocationNode* otherNode = (edgeInfo > 0) ? &segments()[edgeInfo - 1]->backwardNode() : &segments()[-edgeInfo - 1]->forwardNode();
-			OVITO_ASSERT(cell.wrapPoint(otherNode->position()).equals(cell.wrapPoint(vertex->pos())));
-			if(!headNode) headNode = otherNode;
-			else {
-				headNode->connectNodes(otherNode);
+		if(vertex->countDislocationArms() >= 3) {
+			DislocationNode* headNode = nullptr;
+			for(Microstructure::Edge* edge = vertex->edges(); edge != nullptr; edge = edge->nextVertexEdge()) {
+				if(!edge->isDislocation()) continue;
+				OVITO_ASSERT(visitedEdges.find(edge) != visitedEdges.end());
+				int edgeInfo = visitedEdges[edge];
+				DislocationNode* otherNode = (edgeInfo > 0) ? &segments()[edgeInfo - 1]->backwardNode() : &segments()[-edgeInfo - 1]->forwardNode();
+				OVITO_ASSERT(cell.wrapPoint(otherNode->position()).equals(cell.wrapPoint(vertex->pos())));
+				if(!headNode)
+					headNode = otherNode;
+				else
+					headNode->connectNodes(otherNode);
 			}
 		}
 	}

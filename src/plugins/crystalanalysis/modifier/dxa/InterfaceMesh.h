@@ -32,6 +32,7 @@ struct BurgersCircuit;				// defined in BurgersCircuit.h
 struct BurgersCircuitSearchStruct;	// defined in DislocationTracer.cpp
 class DislocationTracer;			// defined in DislocationTracer.h
 
+template<typename>
 struct InterfaceMeshVertex
 {
 	/// This pointer is used during Burgers circuit search on the mesh.
@@ -42,6 +43,7 @@ struct InterfaceMeshVertex
 	bool visited = false;
 };
 
+template<typename>
 struct InterfaceMeshFace
 {
 	/// The Burgers circuit which has swept this facet.
@@ -49,6 +51,7 @@ struct InterfaceMeshFace
 	BurgersCircuit* circuit = nullptr;
 };
 
+template<typename>
 struct InterfaceMeshEdge
 {
 	/// The (unwrapped) vector connecting the two vertices.

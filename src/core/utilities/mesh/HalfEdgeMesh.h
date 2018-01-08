@@ -29,6 +29,7 @@
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Mesh)
 
 // An empty structure that is used as default base class for edges, faces, and vertices in the HaldEdgeMesh class template.
+template<typename>
 struct EmptyHalfEdgeMeshStruct {};
 
 /**
@@ -42,7 +43,7 @@ struct EmptyHalfEdgeMeshStruct {};
  * Each vertex has a pointer to the first edge originating from it.
  * Each face has a pointer to one of the edges adjacent to it.
  */
-template<class EdgeBase, class FaceBase, class VertexBase>
+template<template<typename> typename EdgeBase, template<typename> typename FaceBase, template<typename> typename VertexBase>
 class HalfEdgeMesh
 {
 public:
@@ -51,12 +52,12 @@ public:
 	class Face;
 
 	/// A single half-edge.
-	class Edge : public EdgeBase
+	class Edge : public EdgeBase<Edge>
 	{
 	public:
 
 		/// Returns the vertex this half-edge is coming from.
-		Vertex* vertex1() const { return _prevFaceEdge->_vertex2; }
+		Vertex* vertex1() const { return prevFaceEdge()->_vertex2; }
 
 		/// Returns the vertex this half-edge is pointing to.
 		Vertex* vertex2() const { return _vertex2; }
@@ -67,6 +68,10 @@ public:
 		/// Returns a pointer to the face that is adjacent to this half-edge.
 		Face* face() const { return _face; }
 
+		/// Sets the edge's pointer to the face it belongs to. 
+		/// This is an internal implementation method, which must be used with great care.
+		void setFace(Face* face) { _face = face; }
+
 		/// Returns the next half-edge in the linked-list of half-edges that
 		/// leave the same vertex as this edge.
 		Edge* nextVertexEdge() const { return _nextVertexEdge; }
@@ -75,9 +80,17 @@ public:
 		/// same face as this edge.
 		Edge* nextFaceEdge() const { return _nextFaceEdge; }
 
+		/// Sets the pointer to the edge following this edge along the face boundary.
+		/// This is an internal implementation method, which must be used with great care.
+		void setNextFaceEdge(Edge* edge) { _nextFaceEdge = edge; }
+
 		/// Returns the previous half-edge in the linked-list of half-edges adjacent to the
 		/// same face as this edge.
 		Edge* prevFaceEdge() const { return _prevFaceEdge; }
+
+		/// Sets the pointer to the edge preceding this edge along the face boundary.
+		/// This is an internal implementation method, which must be used with great care.
+		void setPrevFaceEdge(Edge* edge) { _prevFaceEdge = edge; }
 
 		/// Returns a pointer to this edge's opposite half-edge.
 		Edge* oppositeEdge() const { return _oppositeEdge; }
@@ -135,7 +148,7 @@ public:
 	};
 
 	/// A vertex of a mesh.
-	class Vertex : public VertexBase
+	class Vertex : public VertexBase<Vertex>
 	{
 	public:
 
@@ -244,12 +257,16 @@ public:
 	};
 
 	/// A polygonal face of the mesh.
-	class Face : public FaceBase
+	class Face : public FaceBase<Face>
 	{
 	public:
 
-		/// Returns a pointer to the head of the linked-list of half-edges that are adjacent to this face.
+		/// Returns a pointer to the head of the linked-list of half-edges that bound this face.
 		Edge* edges() const { return _edges; }
+
+		/// Sets the pointer to the head of the linked-list of half-edges that bound this face.
+		/// Note: This is an internal implementation method, which must be used with great care.
+		void setEdges(Edge* edge) { _edges = edge; }
 
 		/// Returns the index of the face in the list of faces of the mesh.
 		int index() const { return _index; }
@@ -288,6 +305,12 @@ public:
 			}
 			while(e != edges());
 			return nullptr;
+		}
+
+		/// Marks the face for deletion by resetting its edges pointer.
+		void markForDeletion() { 
+			OVITO_ASSERT(edges() != nullptr);
+			setEdges(nullptr); 
 		}
 
 	protected:
@@ -407,7 +430,7 @@ public:
 		}
 		else {
 			face = _reclaimedFaces.back();
-			face->_edges = nullptr;
+			face->setEdges(nullptr);
 			face->_flags = 0;
 			_reclaimedFaces.pop_back();
 		}
@@ -415,7 +438,7 @@ public:
 		return face;
 	}
 
-	/// Deletes a halfedge from the mesh.
+	/// Deletes a halfedge from the mesh.Merge 
 	/// This method assumes that the edge is not connected to any part of the mesh.
 	void removeEdge(Edge* edge) {
 		OVITO_ASSERT(edge != nullptr);
@@ -470,15 +493,15 @@ public:
 		for(Edge* currentEdge = edge->nextFaceEdge(); currentEdge != edge; currentEdge = currentEdge->nextFaceEdge()) {
 			currentEdge->_face = oppositeEdge->face();
 		}
-		oppositeEdge->face()->_edges = oppositeEdge->nextFaceEdge();
-		edge->face()->_edges = nullptr;
+		oppositeEdge->face()->setEdges(oppositeEdge->nextFaceEdge());
+		edge->face()->markForDeletion();
 		edge->vertex1()->removeEdge(edge);
 		edge->vertex2()->removeEdge(oppositeEdge);
 		edge->unlinkFromOppositeEdge();
-		edge->prevFaceEdge()->_nextFaceEdge = oppositeEdge->nextFaceEdge();
-		oppositeEdge->nextFaceEdge()->_prevFaceEdge = edge->prevFaceEdge();
-		oppositeEdge->prevFaceEdge()->_nextFaceEdge = edge->nextFaceEdge();
-		edge->nextFaceEdge()->_prevFaceEdge = oppositeEdge->prevFaceEdge();
+		edge->prevFaceEdge()->setNextFaceEdge(oppositeEdge->nextFaceEdge());
+		oppositeEdge->nextFaceEdge()->setPrevFaceEdge(edge->prevFaceEdge());
+		oppositeEdge->prevFaceEdge()->setNextFaceEdge(edge->nextFaceEdge());
+		edge->nextFaceEdge()->setPrevFaceEdge(oppositeEdge->prevFaceEdge());
 		removeEdge(edge);
 		removeEdge(oppositeEdge);
 	}
@@ -508,12 +531,12 @@ public:
 		}
 		while(currentEdge != edge);
 
-		edge->prevFaceEdge()->_nextFaceEdge = edge->nextFaceEdge();
-		edge->nextFaceEdge()->_prevFaceEdge = edge->prevFaceEdge();
-		oppositeEdge->prevFaceEdge()->_nextFaceEdge = oppositeEdge->nextFaceEdge();
-		oppositeEdge->nextFaceEdge()->_prevFaceEdge = oppositeEdge->prevFaceEdge();
-		edge->face()->_edges = edge->nextFaceEdge();
-		oppositeEdge->face()->_edges = oppositeEdge->nextFaceEdge();
+		edge->prevFaceEdge()->setNextFaceEdge(edge->nextFaceEdge());
+		edge->nextFaceEdge()->setPrevFaceEdge(edge->prevFaceEdge());
+		oppositeEdge->prevFaceEdge()->setNextFaceEdge(oppositeEdge->nextFaceEdge());
+		oppositeEdge->nextFaceEdge()->setPrevFaceEdge(oppositeEdge->prevFaceEdge());
+		edge->face()->setEdges(edge->nextFaceEdge());
+		oppositeEdge->face()->setEdges(oppositeEdge->nextFaceEdge());
 
 		deletedVertex->removeEdge(edge);
 		remainingVertex->removeEdge(oppositeEdge);
@@ -533,20 +556,20 @@ public:
 			edge = _reclaimedEdges.back();
 			_reclaimedEdges.pop_back();
 			edge->_vertex2 = vertex2;
-			edge->_face = face;
+			edge->setFace(face);
 			OVITO_ASSERT(!edge->oppositeEdge());
 		}
 		vertex1->addEdge(edge);
-		if(face->_edges) {
-			edge->_nextFaceEdge = face->_edges;
-			edge->_prevFaceEdge = face->_edges->_prevFaceEdge;
-			face->_edges->_prevFaceEdge->_nextFaceEdge = edge;
-			face->_edges->_prevFaceEdge = edge;
+		if(face->edges()) {
+			edge->setNextFaceEdge(face->edges());
+			edge->setPrevFaceEdge(face->edges()->prevFaceEdge());
+			face->edges()->prevFaceEdge()->setNextFaceEdge(edge);
+			face->edges()->setPrevFaceEdge(edge);
 		}
 		else {
-			edge->_nextFaceEdge = edge;
-			edge->_prevFaceEdge = edge;
-			face->_edges = edge;
+			edge->setNextFaceEdge(edge);
+			edge->setPrevFaceEdge(edge);
+			face->setEdges(edge);
 		}
 		return edge;
 	}
@@ -580,7 +603,7 @@ public:
 	}
 
 	/// Mesh copy function.
-	template<class EdgeBase2, class FaceBase2, class VertexBase2>
+	template<template<typename> typename EdgeBase2, template<typename> typename FaceBase2, template<typename> typename VertexBase2>
 	void copyFrom(const HalfEdgeMesh<EdgeBase2, FaceBase2, VertexBase2>& other) {
 		clear();
 
@@ -641,7 +664,7 @@ public:
 		}
 	}
 
-	/// Copy assigbment operator.
+	/// Copy assignment operator.
 	HalfEdgeMesh& operator=(const HalfEdgeMesh& other) {
 		copyFrom(other);
 		return *this;
@@ -673,28 +696,9 @@ public:
 
 		// Count number of output triangles.
 		int triangleCount = 0;
-		for(Face* face : faces())
-			triangleCount += std::max(face->edgeCount() - 2, 0);
-
-#if 0
-		// Validate mesh.
 		for(Face* face : faces()) {
-			Edge* edge = face->edges();
-			do {
-				OVITO_ASSERT(edge->vertex1() != edge->vertex2());
-				OVITO_ASSERT(edge->oppositeEdge() && edge->oppositeEdge()->oppositeEdge() == edge);
-				OVITO_ASSERT(edge->oppositeEdge()->vertex1() == edge->vertex2());
-				OVITO_ASSERT(edge->oppositeEdge()->vertex2() == edge->vertex1());
-				OVITO_ASSERT(edge->nextFaceEdge()->vertex1() == edge->vertex2());
-				OVITO_ASSERT(edge->prevFaceEdge()->vertex2() == edge->vertex1());
-				OVITO_ASSERT(edge->nextFaceEdge()->prevFaceEdge() == edge);
-				OVITO_ASSERT(edge->nextFaceEdge() != edge->oppositeEdge());
-				OVITO_ASSERT(edge->prevFaceEdge() != edge->oppositeEdge());
-				edge = edge->nextFaceEdge();
-			}
-			while(edge != face->edges());
+			triangleCount += std::max(face->edgeCount() - 2, 0);
 		}
-#endif
 
 		// Transfer faces.
 		output.setFaceCount(triangleCount);
@@ -703,6 +707,15 @@ public:
 			int baseVertex = face->edges()->vertex2()->index();
 			Edge* edge = face->edges()->nextFaceEdge()->nextFaceEdge();
 			while(edge != face->edges()) {
+
+				// Validate face's edge topology.
+				OVITO_ASSERT(edge->vertex1() != edge->vertex2());
+				OVITO_ASSERT(edge->nextFaceEdge()->vertex1() == edge->vertex2());
+				OVITO_ASSERT(edge->prevFaceEdge()->vertex2() == edge->vertex1());
+				OVITO_ASSERT(edge->nextFaceEdge()->prevFaceEdge() == edge);
+				OVITO_ASSERT(edge->nextFaceEdge() != edge->oppositeEdge());
+				OVITO_ASSERT(edge->prevFaceEdge() != edge->oppositeEdge());
+				
 				fout->setVertices(baseVertex, edge->vertex1()->index(), edge->vertex2()->index());
 				++fout;
 				edge = edge->nextFaceEdge();
@@ -713,6 +726,78 @@ public:
 		output.invalidateVertices();
 		output.invalidateFaces();
 	}
+
+	/// Converts selected faces of this half-edge mesh to a triangle mesh.
+	template<class UnaryPredicate>
+	void convertToTriMesh(TriMesh& output, UnaryPredicate predicate) const {
+		output.clear();
+
+		// Count number of output vertices.
+		int outputVertexCount = 0;
+		for(Vertex* vertex : vertices()) {
+			// Vertex is copied to the output mesh if there is at least one incident face that
+			// is selected by the predicate.
+			for(Edge* edge = vertex->edges(); edge != nullptr; edge = edge->nextVertexEdge()) {
+				if(predicate(edge->face())) {
+					outputVertexCount++;
+					break;
+				}
+			}
+		}
+
+		// Transfer vertices and build a mapping from input vertices to output vertices.
+		output.setVertexCount(outputVertexCount);
+		std::vector<int> indexMap(vertices().size());
+		size_t vindex = 0;
+		auto vout = output.vertices().begin();
+		for(Vertex* vertex : vertices()) {
+			OVITO_ASSERT(vertex->index() == vindex);
+			for(Edge* edge = vertex->edges(); edge != nullptr; edge = edge->nextVertexEdge()) {
+				if(predicate(edge->face())) {
+					indexMap[vindex] = vout - output.vertices().begin();
+					*vout++ = vertex->pos();
+					break;
+				}
+			}
+			vindex++;
+		}
+		OVITO_ASSERT(vout == output.vertices().end());
+
+		// Count number of output triangles.
+		int triangleCount = 0;
+		for(Face* face : faces()) {
+			if(predicate(face))
+				triangleCount += std::max(face->edgeCount() - 2, 0);
+		}
+
+		// Transfer faces.
+		output.setFaceCount(triangleCount);
+		auto fout = output.faces().begin();
+		for(Face* face : faces()) {
+			if(!predicate(face)) continue;
+
+			int baseVertex = indexMap[face->edges()->vertex2()->index()];
+			Edge* edge = face->edges()->nextFaceEdge()->nextFaceEdge();
+			while(edge != face->edges()) {
+
+				// Validate face's edge topology.
+				OVITO_ASSERT(edge->vertex1() != edge->vertex2());
+				OVITO_ASSERT(edge->nextFaceEdge()->vertex1() == edge->vertex2());
+				OVITO_ASSERT(edge->prevFaceEdge()->vertex2() == edge->vertex1());
+				OVITO_ASSERT(edge->nextFaceEdge()->prevFaceEdge() == edge);
+				OVITO_ASSERT(edge->nextFaceEdge() != edge->oppositeEdge());
+				OVITO_ASSERT(edge->prevFaceEdge() != edge->oppositeEdge());
+				
+				fout->setVertices(baseVertex, indexMap[edge->vertex1()->index()], indexMap[edge->vertex2()->index()]);
+				++fout;
+				edge = edge->nextFaceEdge();
+			}
+		}
+		OVITO_ASSERT(fout == output.faces().end());
+
+		output.invalidateVertices();
+		output.invalidateFaces();
+	}	
 
 	/// Duplicates vertices which are part of more than one manifold.
 	size_t duplicateSharedVertices() {
@@ -826,6 +911,18 @@ public:
 	void reindexVerticesAndFaces() {
 		int vindex = 0;
 		for(Vertex* vertex : vertices()) vertex->_index = vindex++;
+		int findex = 0;
+		for(Face* face : faces()) face->_index = findex++;
+	}
+
+	/// Feletes the faces from the face list that have previously been marked for
+	/// deletion using the Face::markForDeletion() method.
+	/// Remaining faces will be re-indexed.
+	void removeMarkedFaces() {
+		for(int f = faceCount() - 1; f >= 0; f--) {
+			if(faces()[f]->edges() == nullptr)
+				removeFace(f);
+		}
 		int findex = 0;
 		for(Face* face : faces()) face->_index = findex++;
 	}

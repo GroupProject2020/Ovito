@@ -22,6 +22,7 @@
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
 #include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
+#include <plugins/crystalanalysis/objects/microstructure/MicrostructureObject.h>
 #include <plugins/mesh/surface/RenderableSurfaceMesh.h>
 #include <core/rendering/SceneRenderer.h>
 #include <core/utilities/mesh/TriMesh.h>
@@ -55,7 +56,7 @@ SlipSurfaceDisplay::SlipSurfaceDisplay(DataSet* dataset) : DisplayObject(dataset
 void SlipSurfaceDisplay::propertyChanged(const PropertyFieldDescriptor& field)
 {
 	if(field == PROPERTY_FIELD(smoothShading)) {
-		// Inceremnt internal object revision number each time a parameter changes
+		// Increment internal object revision number each time a parameter changes
 		// that requires a re-generation of the cached RenderableSurfaceMesh.
 		_revisionNumber++;
 	}
@@ -67,11 +68,11 @@ void SlipSurfaceDisplay::propertyChanged(const PropertyFieldDescriptor& field)
 ******************************************************************************/
 Future<PipelineFlowState> SlipSurfaceDisplay::transformDataImpl(TimePoint time, DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState, ObjectNode* contextNode)
 {
-	// Get the slip surface.
-	SlipSurface* slipSurfaceObj = dynamic_object_cast<SlipSurface>(dataObject);
+	// Get the microstructure object.
+	MicrostructureObject* microstructureObj = dynamic_object_cast<MicrostructureObject>(dataObject);
 	
 	// Abort if necessary input is not available.
-	if(!slipSurfaceObj)
+	if(!microstructureObj)
 		return std::move(flowState);
 
 	// Check if the cache state already contains a RenderableSurfaceMesh that we
@@ -86,7 +87,7 @@ Future<PipelineFlowState> SlipSurfaceDisplay::transformDataImpl(TimePoint time, 
 	}
 
 	// Get the simulation cell.
-	SimulationCellObject* cellObject = slipSurfaceObj->domain();
+	SimulationCellObject* cellObject = microstructureObj->domain();
 	if(!cellObject)
 		return std::move(flowState);
 			
@@ -105,11 +106,11 @@ Future<PipelineFlowState> SlipSurfaceDisplay::transformDataImpl(TimePoint time, 
 
 	// Create compute engine.
 	auto engine = std::make_shared<PrepareMeshEngine>(
-		slipSurfaceObj->storage(),
+		microstructureObj->storage(),
 		clusterGraphObject ? clusterGraphObject->storage() : nullptr,
 		cellObject->data(),
 		structureNames,
-		slipSurfaceObj->cuttingPlanes(),
+		microstructureObj->cuttingPlanes(),
 		smoothShading());
 
 	// Submit engine for execution and post-process results.
@@ -176,9 +177,9 @@ Box3 SlipSurfaceDisplay::boundingBox(TimePoint time, DataObject* dataObject, Obj
 ******************************************************************************/
 void SlipSurfaceDisplay::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, ObjectNode* contextNode)
 {
-	// Ignore render calls for the original SlipSurface.
+	// Ignore render calls for the original MicrostructureObject.
 	// We are only interested in the RenderableSurfaceMesh.
-	if(dynamic_object_cast<SlipSurface>(dataObject) != nullptr)
+	if(dynamic_object_cast<MicrostructureObject>(dataObject) != nullptr)
 		return;
 
 	if(renderer->isBoundingBoxPass()) {
@@ -196,8 +197,12 @@ void SlipSurfaceDisplay::render(TimePoint time, DataObject* dataObject, const Pi
 	// Do we have to re-create the render primitives from scratch?
 	bool recreateSurfaceBuffer = !_surfaceBuffer || !_surfaceBuffer->isValid(renderer);
 
+	// Get the renderable mesh.
+	RenderableSurfaceMesh* renderableMesh = dynamic_object_cast<RenderableSurfaceMesh>(dataObject);
+	if(!renderableMesh) return;
+
 	// Do we have to update the render primitives?
-	bool updateContents = _geometryCacheHelper.updateState(surface_alpha)
+	bool updateContents = _geometryCacheHelper.updateState(renderableMesh, surface_alpha)
 					|| recreateSurfaceBuffer;
 
 	// Re-create the render primitives if necessary.
@@ -206,15 +211,13 @@ void SlipSurfaceDisplay::render(TimePoint time, DataObject* dataObject, const Pi
 
 	// Update render primitives.
 	if(updateContents) {
-
-		OORef<RenderableSurfaceMesh> meshObj = dataObject->convertTo<RenderableSurfaceMesh>(time);
 		
-		auto materialColors = meshObj->materialColors();
+		auto materialColors = renderableMesh->materialColors();
 		for(ColorA& c : materialColors)
 			c.a() = surface_alpha;
 		_surfaceBuffer->setMaterialColors(materialColors);
 
-		_surfaceBuffer->setMesh(meshObj->surfaceMesh(), color_surface);
+		_surfaceBuffer->setMesh(renderableMesh->surfaceMesh(), color_surface);
 	}
 
 	// Handle picking of triangles.
@@ -226,18 +229,26 @@ void SlipSurfaceDisplay::render(TimePoint time, DataObject* dataObject, const Pi
 /******************************************************************************
 * Generates the final triangle mesh, which will be rendered.
 ******************************************************************************/
-bool SlipSurfaceDisplay::buildMesh(const SlipSurfaceData& input, const SimulationCell& cell, const QVector<Plane3>& cuttingPlanes, const QStringList& structureNames, TriMesh& output, std::vector<ColorA>& materialColors, PromiseState& promise)
+bool SlipSurfaceDisplay::buildMesh(const Microstructure& input, const SimulationCell& cell, const QVector<Plane3>& cuttingPlanes, const QStringList& structureNames, TriMesh& output, std::vector<ColorA>& materialColors, PromiseState& promise)
 {
-	// Convert half-edge mesh to triangle mesh.
-	input.convertToTriMesh(output);
+	// This predicate function selects the faces of the microstructure mesh 
+	// that are part of the slip surfaces to be rendered.
+	auto facePredicate = [](const Microstructure::Face* face) {
+		return face->isSlipSurfaceFace() && face->isEvenFace();
+	};
+
+	// Convert all slip faces of the half-edge mesh to a triangle mesh.
+	input.convertToTriMesh(output, facePredicate);
 	
 	// Color faces according to slip vector.
 	auto fout = output.faces().begin();
-	for(SlipSurfaceData::Face* face : input.faces()) {
+	for(Microstructure::Face* face : input.faces()) {
+		if(!facePredicate(face)) continue;
+
 		int materialIndex = 0;
-		if(Cluster* cluster = face->slipVector.cluster()) {
+		if(Cluster* cluster = face->cluster()) {
 			if(cluster->structure < structureNames.size() && structureNames[cluster->structure].isEmpty() == false) {
-				ColorA c = StructurePattern::getBurgersVectorColor(structureNames[cluster->structure], face->slipVector.localVec());
+				ColorA c = StructurePattern::getBurgersVectorColor(structureNames[cluster->structure], face->burgersVector());
 				auto iter = std::find(materialColors.begin(), materialColors.end(), c);
 				if(iter == materialColors.end()) {
 					materialIndex = materialColors.size();
@@ -246,7 +257,7 @@ bool SlipSurfaceDisplay::buildMesh(const SlipSurfaceData& input, const Simulatio
 				else materialIndex = iter - materialColors.begin();
 			}
 		}
-		for(SlipSurfaceData::Edge* edge = face->edges()->nextFaceEdge()->nextFaceEdge(); edge != face->edges(); edge = edge->nextFaceEdge()) {
+		for(Microstructure::Edge* edge = face->edges()->nextFaceEdge()->nextFaceEdge(); edge != face->edges(); edge = edge->nextFaceEdge()) {
 			fout->setMaterialIndex(materialIndex);
 			++fout;
 		}
@@ -322,6 +333,8 @@ bool SlipSurfaceDisplay::splitFace(TriMesh& output, int faceIndex, int oldVertex
 		std::map<std::pair<int,int>,std::pair<int,int>>& newVertexLookupMap, const SimulationCell& cell, size_t dim)
 {
 	TriMeshFace& face = output.face(faceIndex);
+
+	// Make sure the face is not degenerate.
 	OVITO_ASSERT(face.vertex(0) != face.vertex(1));
 	OVITO_ASSERT(face.vertex(1) != face.vertex(2));
 	OVITO_ASSERT(face.vertex(2) != face.vertex(0));

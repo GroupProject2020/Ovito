@@ -31,6 +31,7 @@ SET(SourceFiles
 	objects/dislocations/DislocationNetworkObject.cpp
 	objects/dislocations/DislocationDisplay.cpp
 	objects/dislocations/RenderableDislocationLines.cpp
+	objects/microstructure/MicrostructureObject.cpp
 	objects/partition_mesh/PartitionMesh.cpp
 	objects/partition_mesh/PartitionMeshDisplay.cpp
 	objects/slip_surface/SlipSurface.cpp
