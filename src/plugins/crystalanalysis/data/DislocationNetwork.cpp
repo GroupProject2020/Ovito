@@ -21,6 +21,7 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include "DislocationNetwork.h"
+#include "Microstructure.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
@@ -61,6 +62,89 @@ DislocationNetwork::DislocationNetwork(const DislocationNetwork& other) :
 		}
 	}
 #endif
+}
+
+/******************************************************************************
+* Conversion constructor.
+******************************************************************************/
+DislocationNetwork::DislocationNetwork(const Microstructure& other, const SimulationCell& cell) :
+	_clusterGraph(other.clusterGraph())
+{
+	std::unordered_map<Microstructure::Edge*, int> visitedEdges;
+	for(Microstructure::Vertex* inputVertex : other.vertices()) {
+		for(Microstructure::Edge* inputEdge = inputVertex->edges(); inputEdge != nullptr; inputEdge = inputEdge->nextVertexEdge()) {
+			// Start at an arbitrary segment of the input network which has not been converted yet.
+			if(visitedEdges.find(inputEdge) != visitedEdges.end()) continue;
+			// Create a new line in the output network.
+			DislocationSegment* outputSegment = createSegment(ClusterVector(inputEdge->face()->burgersVector(), inputEdge->face()->cluster()));
+			outputSegment->line.push_back(inputEdge->vertex1()->pos());
+			outputSegment->coreSize.push_back(3);
+			// Extend output line along one direction until we hit a higher order node or an already converted segment.
+			Microstructure::Edge* currentEdge = inputEdge;
+			for(;;) {
+				Point3 unwrappedPos2 = outputSegment->line.back() + cell.wrapVector(currentEdge->vertex2()->pos() - outputSegment->line.back());
+				outputSegment->line.push_back(unwrappedPos2);
+				outputSegment->coreSize.push_back(3);
+				visitedEdges.emplace(currentEdge, outputSegment->id + 1);
+				visitedEdges.emplace(currentEdge->oppositeEdge(), -(outputSegment->id + 1));
+				Microstructure::Edge* nextEdge = nullptr;
+				int armCount = 0;
+				for(Microstructure::Edge* e = currentEdge->vertex2()->edges(); e != nullptr; e = e->nextVertexEdge()) {
+					armCount++;
+					if(e != currentEdge->oppositeEdge()) nextEdge = e;
+				}
+				if(armCount != 2) break;
+				auto edgeInfo = visitedEdges.find(nextEdge);
+				if(edgeInfo != visitedEdges.end()) {
+					// It must be a closed loop.
+					if(edgeInfo->second != outputSegment->id + 1)
+						throw Exception("Invalid dislocation network topology.");
+					outputSegment->forwardNode().connectNodes(&outputSegment->backwardNode());
+					break;
+				}
+				currentEdge = nextEdge;
+			}
+			// Extend output line along opposite direction until we hit a higher order node.
+			currentEdge = inputEdge->oppositeEdge();
+			for(;;) {
+				Microstructure::Edge* nextEdge = nullptr;
+				int armCount = 0;
+				for(Microstructure::Edge* e = currentEdge->vertex2()->edges(); e != nullptr; e = e->nextVertexEdge()) {
+					armCount++;
+					if(e != currentEdge->oppositeEdge()) nextEdge = e;
+				}
+				if(armCount != 2) break;
+				auto edgeInfo = visitedEdges.find(nextEdge);
+				if(edgeInfo != visitedEdges.end()) {
+					if(edgeInfo->second != -(outputSegment->id + 1))
+						throw Exception("Invalid dislocation network topology (2).");
+					break;
+				}
+				currentEdge = nextEdge;
+				Point3 unwrappedPos2 = outputSegment->line.front() + cell.wrapVector(currentEdge->vertex2()->pos() - outputSegment->line.front());
+				outputSegment->line.push_front(unwrappedPos2);
+				outputSegment->coreSize.push_front(3);
+				visitedEdges.emplace(currentEdge, -(outputSegment->id + 1));
+				visitedEdges.emplace(currentEdge->oppositeEdge(), outputSegment->id + 1);
+			}
+		}
+	}
+
+	// Join dislocation lines at nodes.
+	for(Microstructure::Vertex* vertex : other.vertices()) {
+		if(vertex->numEdges() <= 2) continue;
+		OVITO_ASSERT(visitedEdges.find(vertex->edges()) != visitedEdges.end());
+		DislocationNode* headNode = nullptr;
+		for(Microstructure::Edge* edge = vertex->edges(); edge != nullptr; edge = edge->nextVertexEdge()) {
+			int edgeInfo = visitedEdges[edge];
+			DislocationNode* otherNode = (edgeInfo > 0) ? &segments()[edgeInfo - 1]->backwardNode() : &segments()[-edgeInfo - 1]->forwardNode();
+			OVITO_ASSERT(cell.wrapPoint(otherNode->position()).equals(cell.wrapPoint(vertex->pos())));
+			if(!headNode) headNode = otherNode;
+			else {
+				headNode->connectNodes(otherNode);
+			}
+		}
+	}
 }
 
 /******************************************************************************

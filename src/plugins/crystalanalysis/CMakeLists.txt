@@ -37,7 +37,7 @@ SET(SourceFiles
 	objects/slip_surface/SlipSurfaceDisplay.cpp
 	data/ClusterGraph.cpp
 	data/DislocationNetwork.cpp
-	data/NodalDislocationNetwork.cpp
+	data/Microstructure.cpp
 	data/PlanarDefects.cpp
 	modifier/ConstructSurfaceModifier.cpp
 	modifier/dxa/DislocationAnalysisModifier.cpp

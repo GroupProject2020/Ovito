@@ -295,13 +295,13 @@ public:
 		/// Constructor.
 		Face(int index = -1) : _index(index) {}
 
-		/// The head of the linked-list of half-edges that are adjacent to this face.
+		/// Head of the linked-list of half-edges that bound this face.
 		Edge* _edges = nullptr;
 
 		/// The index of the face in the list of faces of the mesh.
 		int _index;
 
-		/// The bit-wise flags assigned to this face.
+		/// Bit flags of this face.
 		unsigned int _flags = 0;
 
 		friend class HalfEdgeMesh;
@@ -311,11 +311,11 @@ public:
 public:
 
 	/// Default constructor.
-	HalfEdgeMesh() {}
+	HalfEdgeMesh() = default;
 
 	/// Copy constructor.
 	HalfEdgeMesh(const HalfEdgeMesh& other) {
-		*this = other;
+		copyFrom(other);
 	}
 
 	/// Removes all faces, edges, and vertices from this mesh.
@@ -579,7 +579,7 @@ public:
 		return isClosed;
 	}
 
-	/// Copy operator.
+	/// Mesh copy function.
 	template<class EdgeBase2, class FaceBase2, class VertexBase2>
 	void copyFrom(const HalfEdgeMesh<EdgeBase2, FaceBase2, VertexBase2>& other) {
 		clear();
@@ -641,7 +641,7 @@ public:
 		}
 	}
 
-	/// Copy operator.
+	/// Copy assigbment operator.
 	HalfEdgeMesh& operator=(const HalfEdgeMesh& other) {
 		copyFrom(other);
 		return *this;
@@ -783,7 +783,7 @@ public:
 			face->clearFlag(flag);
 	}
 
-	/// Determines if this mesh is a closed manifold, i.e., every half edge has an opposite half edge.
+	/// Determines if this mesh is a closed manifold, i.e., every half edge is linked to an opposite half edge.
 	bool isClosed() const {
 		for(Vertex* vertex : vertices()) {
 			for(Edge* edge = vertex->edges(); edge != nullptr; edge = edge->nextVertexEdge()) {

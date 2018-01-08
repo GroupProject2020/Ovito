@@ -85,34 +85,20 @@ protected:
 		/// called by the system from the main thread after the asynchronous loading task has finished.
 		virtual PipelineFlowState handOver(DataSet* dataset, const PipelineFlowState& existing, bool isNewFile) override;
 
-		Cluster* createCluster(int patternId) {
-			if(!_clusterGraph) _clusterGraph = std::make_shared<ClusterGraph>();
-			return _clusterGraph->createCluster(patternId);
-		}
+		const std::shared_ptr<ClusterGraph>& clusterGraph() const { return _clusterGraph; }
+		void setClusterGraph(std::shared_ptr<ClusterGraph> clusterGraph) { _clusterGraph = std::move(clusterGraph); }
 
-		const std::shared_ptr<ClusterGraph>& clusterGraph() const {
-			return _clusterGraph;
-		}
+		const std::shared_ptr<DislocationNetwork>& dislocations() { return _dislocations; }
+		void setDislocations(std::shared_ptr<DislocationNetwork> dislocations) { _dislocations = std::move(dislocations); }
 
-		const std::shared_ptr<DislocationNetwork>& dislocations() {
-			if(!_dislocations) _dislocations = std::make_shared<DislocationNetwork>(clusterGraph());
-			return _dislocations;
-		}
-
-		const std::shared_ptr<SlipSurfaceData>& slipSurface() {
-			if(!_slipSurface) _slipSurface = std::make_shared<SlipSurfaceData>();
-			return _slipSurface;
-		}
+		const std::shared_ptr<SlipSurfaceData>& slipSurface() { return _slipSurface; }
 		
-		const std::shared_ptr<SlipSurfaceData>& stackingFaults() {
-			if(!_stackingFaults) _stackingFaults = std::make_shared<SlipSurfaceData>();
-			return _stackingFaults;
-		}
+		const std::shared_ptr<SlipSurfaceData>& stackingFaults() { return _stackingFaults; }
 
 	protected:
 
 		/// The cluster list.
-		std::shared_ptr<ClusterGraph> _clusterGraph = std::make_shared<ClusterGraph>();
+		std::shared_ptr<ClusterGraph> _clusterGraph;
 
 		/// The dislocation segments.
 		std::shared_ptr<DislocationNetwork> _dislocations;
@@ -124,7 +110,7 @@ protected:
 		std::shared_ptr<SlipSurfaceData> _stackingFaults;
 	};
 
-	/// The format-specific task object that is responsible for reading an input file in the background.
+	/// The format-specific task object that is responsible for reading an input file in a worker thread.
 	class FrameLoader : public FileSourceImporter::FrameLoader
 	{
 	public:

@@ -47,10 +47,10 @@ struct DislocationNode
 
 	/// The Burgers circuit associated with this node.
 	/// This field is only used during dislocation line tracing.
-	BurgersCircuit* circuit;
+	BurgersCircuit* circuit = nullptr;
 
 	/// Constructor.
-	DislocationNode() : circuit(nullptr) {
+	DislocationNode() {
 		junctionRing = this;
 	}
 
@@ -262,6 +262,9 @@ public:
 
 	/// Copy constructor.
 	DislocationNetwork(const DislocationNetwork& other);
+
+	/// Conversion constructor.
+	DislocationNetwork(const Microstructure& other, const SimulationCell& cell);
 
 	/// Returns a const-reference to the cluster graph.
 	const std::shared_ptr<ClusterGraph>& clusterGraph() const { return _clusterGraph; }
