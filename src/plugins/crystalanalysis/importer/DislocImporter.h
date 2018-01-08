@@ -105,9 +105,8 @@ protected:
 		/// Loads the frame data from the given file.
 		virtual FrameDataPtr loadFile(QFile& file) override;
 
-		/// Flips the orientation of slip surface triangles to align them with their neighbors
-		/// and build contiguous two-dimensional manifolds of maximum extent.
-		static void alignSlipSurfaceOrientations(Microstructure& microstructure, const std::map<Microstructure::Face*, std::array<qulonglong,2>>& slipSurfaceMap);
+		/// Connects the slip faces to form two-dimensional manifolds.
+		static void connectSlipFaces(Microstructure& microstructure, const std::map<Microstructure::Face*, std::pair<qulonglong,qulonglong>>& slipSurfaceMap);
 	};
 };
 

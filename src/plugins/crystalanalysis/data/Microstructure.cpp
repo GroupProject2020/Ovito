@@ -64,10 +64,12 @@ Microstructure::Edge* Microstructure::createDislocationSegment(Vertex* vertex1, 
     OVITO_ASSERT(face1->edges()->vertex2() == vertex2);
     OVITO_ASSERT(face2->edges()->vertex1() == vertex2);
     OVITO_ASSERT(face2->edges()->vertex2() == vertex1);
+	return face1->edges();
 }
 
 /******************************************************************************
-* Merges virtual dislocation faces to build continuous lines from individual dislocation segments.
+* Merges virtual dislocation faces to build continuous lines from individual 
+* dislocation segments.
 ******************************************************************************/
 void Microstructure::makeContinuousDislocationLines()
 {
@@ -148,6 +150,54 @@ void Microstructure::makeContinuousDislocationLines()
     removeMarkedFaces();
 }
 
+
+/*************************************************************************************
+* Aligns the orientation of slip faces and builds contiguous two-dimensional manifolds 
+* of maximum extent, i.e. slip surfaces with constant slip vector.
+**************************************************************************************/
+void Microstructure::makeSlipSurfaces()
+{
+	// We assume in the following that every slip surface half-edge has an opposite half-edge.
+
+	// Reset flags.
+	for(Face* face : faces()) {
+		if(face->isSlipSurfaceFace())
+			face->setEvenFace(false);
+	}
+	
+	// Build contiguous surfaces with constant slip vector.
+	std::deque<Face*> toVisit;
+	for(Face* seedFace : faces()) {
+
+		// Find a first slip surface face which hasn't been aligned yet.
+		if(!seedFace->isSlipSurfaceFace()) continue;
+		if(seedFace->isEvenFace() || seedFace->oppositeFace()->isEvenFace()) continue;
+
+		// Starting at the current seed face, recursively visit all neighboring faces
+		// and align them. Stop at triple lines and slip surface boundaries.
+		seedFace->setEvenFace(true);
+		toVisit.push_back(seedFace);
+		do {
+			Microstructure::Face* face = toVisit.front();
+			toVisit.pop_front();
+			Microstructure::Edge* edge = face->edges();
+			do {
+				OVITO_ASSERT(edge->oppositeEdge());
+				Microstructure::Face* neighborFace = edge->oppositeEdge()->face();
+				OVITO_ASSERT(neighborFace->isSlipSurfaceFace());
+				if(!neighborFace->isEvenFace() && !neighborFace->oppositeFace()->isEvenFace()) {
+					if(neighborFace->burgersVector().equals(face->burgersVector()) && neighborFace->cluster() == face->cluster()) {
+						neighborFace->setEvenFace(true);
+						toVisit.push_back(neighborFace);
+					}
+				}
+				edge = edge->nextFaceEdge();
+			}
+			while(edge != face->edges());
+		}
+		while(!toVisit.empty());
+	}
+}
 
 }	// End of namespace
 }	// End of namespace

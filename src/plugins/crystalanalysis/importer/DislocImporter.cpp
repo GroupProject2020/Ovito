@@ -81,7 +81,7 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 
 	// Working data structures.
 	std::map<std::array<qulonglong,4>, Microstructure::Vertex*> vertexMap;
-	std::map<Microstructure::Face*, std::array<qulonglong,2>> slipSurfaceMap;
+	std::map<Microstructure::Face*, std::pair<qulonglong,qulonglong>> slipSurfaceMap;
 
 	auto createVertexFromCode = [&vertexMap,&microstructure](std::array<qulonglong,4>&& code) -> Microstructure::Vertex* {
 		std::sort(std::begin(code), std::end(code));
@@ -218,11 +218,10 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 					throw Exception(tr("File parsing error. Invalid slip edge specification in line %1: %2").arg(stream.lineNumber()).arg(stream.lineString()));				
 				line += charCount;
 				Microstructure::Face* face = microstructure->createFace();
-				face->setEvenFace(true);
 				face->setBurgersVector(slipVector);
 				face->setCluster(defaultCluster);
 				face->setSlipSurfaceFace(true);
-				slipSurfaceMap.emplace(face, edgeVertexCodes);
+				slipSurfaceMap.emplace(face, std::make_pair(edgeVertexCodes[0], edgeVertexCodes[1]));
 				Microstructure::Vertex* node0;
 				Microstructure::Vertex* node1;
 				qulonglong cellVertexCode0;
@@ -259,11 +258,10 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 				oppositeFace->setSlipSurfaceFace(true);
 				face->setOppositeFace(oppositeFace);
 				oppositeFace->setOppositeFace(face);
+				slipSurfaceMap.emplace(oppositeFace, std::make_pair(edgeVertexCodes[1], edgeVertexCodes[0]));
 				Microstructure::Edge* edge = face->edges();
 				do {
-					Microstructure::Edge* oppositeEdge = microstructure->createEdge(edge->vertex2(), edge->vertex1(), oppositeFace);
-					edge->setOppositeEdge(oppositeEdge);
-					oppositeEdge->setOppositeEdge(edge);
+					microstructure->createEdge(edge->vertex2(), edge->vertex1(), oppositeFace);
 					edge = edge->prevFaceEdge();
 				}
 				while(edge != face->edges());
@@ -299,9 +297,11 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 	// Form continuous dislocation lines from the segments.
 	microstructure->makeContinuousDislocationLines();
 
-	// Flip the orientation of slip surface triangles to align them with their neighbors
-	// and build contiguous two-dimensional manifolds of maximum size.
-	alignSlipSurfaceOrientations(*microstructure, slipSurfaceMap);
+	// Connect half-edges of slip faces.
+	connectSlipFaces(*microstructure, slipSurfaceMap);
+
+	// Generate slip surfaces along which the slip vector is constant.
+	microstructure->makeSlipSurfaces();
 
 	frameData->setStatus(tr("Number of nodes: %1\nNumber of segments: %2")
 		.arg(microstructure->vertices().size())
@@ -311,69 +311,78 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 }
 
 /*************************************************************************************
-* Flips the orientation of slip surface triangles to align them with their neighbors
-* and build contiguous two-dimensional manifolds of maximum extent.
+* Connects the slip faces to form two-dimensional manifolds.
 **************************************************************************************/
-void DislocImporter::FrameLoader::alignSlipSurfaceOrientations(Microstructure& microstructure, const std::map<Microstructure::Face*, std::array<qulonglong,2>>& slipSurfaceMap)
+void DislocImporter::FrameLoader::connectSlipFaces(Microstructure& microstructure, const std::map<Microstructure::Face*, std::pair<qulonglong,qulonglong>>& slipSurfaceMap)
 {
-	for(Microstructure::Face* face : microstructure.faces()) {
-		if(!face->isSlipSurfaceFace()) continue;
+	// Link slip surface faces with their neighbors, i.e. find the opposite edge for every half-edge of a slip face. 
+	for(Microstructure::Vertex* vertex1 : microstructure.vertices()) {
+		for(Microstructure::Edge* edge1 = vertex1->edges(); edge1 != nullptr; edge1 = edge1->nextVertexEdge()) {
+			// Only process edges which haven't been linked to their neighbors yet.
+			if(edge1->oppositeEdge() != nullptr) continue;
+			if(!edge1->face()->isSlipSurfaceFace()) continue;
 
-		Microstructure::Edge* edge = face->edges();
-		do {
-			if(edge->oppositeEdge() == nullptr) {
-				
-			}
-			edge = edge->nextFaceEdge();
-		}
-		while(edge != face->edges());
-	}
-	
-#if 0	
-	microstructure.clearFaceFlag(Microstructure::Face::VISITED);
-	std::deque<Microstructure::Face*> toVisit;
-	for(Microstructure::Face* seedFace : microstructure.faces()) {
-		if(!seedFace->isSlipSurfaceFace()) continue;
-		if(seedFace->testFlag(Microstructure::Face::VISITED)) continue;
-		seedFace->setFlag(Microstructure::Face::VISITED);
-		toVisit.push_back(seedFace);
-		do {
-			Microstructure::Face* face = toVisit.front();
-			toVisit.pop_front();
-			Microstructure::Edge* edge = face->edges();
-			do {
-				OVITO_ASSERT(edge->oppositeEdge());
-				if(seedFace->testFlag(Microstructure::Face::VISITED)) continue;
-				edge = edge->nextFaceEdge();
-			}
-			while(edge != face->edges());
-			for(int e = 0; e < 3; e++) {
-				Node* n1 = face->nodes[e];
-				Node* n2 = face->nodes[(e+1)%3];
-				auto mr = edgeMap.equal_range(std::make_pair(n2, n1));
-				for(auto iter = mr.first; iter != mr.second; ++iter) {
-					SlipFace* neighbor = iter->second;
-					if(neighbor->visited) continue;
-					if(neighbor->slipVector.localVec() != face->slipVector.localVec()) continue;
-					toVisit.push_back(neighbor);
-					neighbor->visited = true;
-				}
-				mr = edgeMap.equal_range(std::make_pair(n1, n2));
-				for(auto iter = mr.first; iter != mr.second; ++iter) {
-					SlipFace* neighbor = iter->second;
-					if(neighbor->visited) continue;
-					if(neighbor->slipVector.localVec() != -face->slipVector.localVec()) continue;
-					toVisit.push_back(neighbor);
-					neighbor->slipVector = -neighbor->slipVector;
-					std::reverse(neighbor->nodes.begin(), neighbor->nodes.end());
-					neighbor->visited = true;
-					numFlippedFaces++;
+			Microstructure::Edge* oppositeEdge1 = edge1->face()->oppositeFace()->findEdge(edge1->vertex2(), edge1->vertex1());;
+			OVITO_ASSERT(oppositeEdge1 != nullptr);
+			OVITO_ASSERT(edge1->nextManifoldEdge() == nullptr);
+
+			// At an edge, either 1, 2, or 3 slip surface manifolds can meet.
+			// Here, we will link them together in the right order.
+
+			OVITO_ASSERT(slipSurfaceMap.find(edge1->face()) != slipSurfaceMap.end());
+			const std::pair<qulonglong,qulonglong>& edgeVertexCodes = slipSurfaceMap.find(edge1->face())->second;
+
+			// Find the other two manifolds meeting at the current edge (if they exist).
+			Microstructure::Edge* edge2 = nullptr;
+			Microstructure::Edge* edge3 = nullptr;
+			Microstructure::Edge* oppositeEdge2 = nullptr;
+			Microstructure::Edge* oppositeEdge3 = nullptr;
+			for(Microstructure::Edge* e = vertex1->edges(); e != nullptr; e = e->nextVertexEdge()) {
+				if(e->vertex2() == edge1->vertex2() && e->face()->isSlipSurfaceFace() && e->face() != edge1->face()) {					
+					OVITO_ASSERT(slipSurfaceMap.find(e->face()) != slipSurfaceMap.end());
+					const std::pair<qulonglong,qulonglong>& edgeVertexCodes2 = slipSurfaceMap.find(e->face())->second;
+					if(edgeVertexCodes.second == edgeVertexCodes2.first) {
+						OVITO_ASSERT(edgeVertexCodes.first != edgeVertexCodes2.second);
+						OVITO_ASSERT(edge2 == nullptr);
+						OVITO_ASSERT(e->oppositeEdge() == nullptr);
+						OVITO_ASSERT(e->nextManifoldEdge() == nullptr);
+						edge2 = e;
+						oppositeEdge2 = edge2->face()->oppositeFace()->findEdge(e->vertex2(), e->vertex1());
+						OVITO_ASSERT(oppositeEdge2);
+					}
+					else {
+						OVITO_ASSERT(edgeVertexCodes.first == edgeVertexCodes2.second);
+						OVITO_ASSERT(edge3 == nullptr);
+						OVITO_ASSERT(e->oppositeEdge() == nullptr);
+						OVITO_ASSERT(e->nextManifoldEdge() == nullptr);
+						edge3 = e;
+						oppositeEdge3 = edge3->face()->oppositeFace()->findEdge(e->vertex2(), e->vertex1());
+						OVITO_ASSERT(oppositeEdge3);
+					}
 				}
 			}
+
+			if(edge2) {
+				edge1->linkToOppositeEdge(oppositeEdge2);
+				if(edge3) {
+					edge2->linkToOppositeEdge(oppositeEdge3);
+					edge3->linkToOppositeEdge(oppositeEdge1);
+				}
+				else {
+					edge2->linkToOppositeEdge(oppositeEdge1);
+				}
+			}
+			else {
+				if(edge3) {
+					edge1->linkToOppositeEdge(oppositeEdge3);
+					oppositeEdge1->linkToOppositeEdge(edge3);
+				}
+				else {
+					oppositeEdge1->linkToOppositeEdge(edge1);
+				}
+			}
 		}
-		while(!toVisit.empty());
 	}
-#endif	
 }
 
 /******************************************************************************

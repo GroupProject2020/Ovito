@@ -30,26 +30,26 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
+template<typename> struct PartitionMeshEdge;	// defined below
 template<typename> struct PartitionMeshFace;	// defined below
+using PartitionMeshData = HalfEdgeMesh<PartitionMeshEdge, PartitionMeshFace, EmptyHalfEdgeMeshStruct>;
 
 template<typename>
 struct PartitionMeshEdge
 {
 	/// Pointer to the next manifold sharing this edge.
-	HalfEdgeMesh<PartitionMeshEdge, PartitionMeshFace, EmptyHalfEdgeMeshStruct>::Edge* nextManifoldEdge = nullptr;
+	PartitionMeshData::Edge* nextManifoldEdge = nullptr;
 };
 
 template<typename>
 struct PartitionMeshFace
 {
 	/// The face on the opposite side of the manifold.
-	HalfEdgeMesh<PartitionMeshEdge, PartitionMeshFace, EmptyHalfEdgeMeshStruct>::Face* oppositeFace = nullptr;
+	PartitionMeshData::Face* oppositeFace = nullptr;
 
 	/// The region to which this face belongs.
 	int region;
 };
-
-using PartitionMeshData = HalfEdgeMesh<PartitionMeshEdge, PartitionMeshFace, EmptyHalfEdgeMeshStruct>;
 
 /**
  * \brief A closed triangle mesh representing the outer surfaces and the inner interfaces of a microstructure.

@@ -61,7 +61,8 @@ public:
 
 	/// Returns whether this edge is a dislocation segment.
 	bool isDislocation() const {
-		return reinterpret_cast<const Edge*>(this)->oppositeEdge() != nullptr;
+		return reinterpret_cast<const Edge*>(this)->face()->isDislocationFace() && 
+				(reinterpret_cast<const Edge*>(this)->oppositeEdge() != nullptr);
 	}
 
 	/// Returns the Burgers vector if this edge is a dislocation segment.
@@ -69,6 +70,14 @@ public:
 
 	/// Returns the crystal cluster if this edge is a dislocation segment.
 	Cluster* cluster() const { return reinterpret_cast<const Edge*>(this)->face()->cluster(); }
+
+	/// Returns the next manifold when going around this edge.
+	MicrostructureBase::Edge* nextManifoldEdge() const { return _nextManifoldEdge; };
+
+private:
+
+	/// Pointer to the next manifold sharing this edge.
+	MicrostructureBase::Edge* _nextManifoldEdge = nullptr;
 };
 
 /**
@@ -81,10 +90,9 @@ public:
 
 	/// Bit-wise flags that can be set for a face in the microstructure mesh.
 	enum FaceFlags {
-		VISITED = (1<<0), 			//< Used by some algorithms as a mark faces as visited.
-		IS_EVEN_FACE = (1<<1), 		//< Indicates that the face is the "even" one in a pair of opposite faces.
-		IS_DISLOCATION = (1<<2), 	//< Indicates that the face is a virtual face associated with a dislocation line.
-		IS_SLIP_SURFACE = (1<<3), 	//< Indicates that the face is part of a slip surface.
+		IS_EVEN_FACE = (1<<0), 		//< Indicates that the face is the "even" one in a pair of opposite faces.
+		IS_DISLOCATION = (1<<1), 	//< Indicates that the face is a virtual face associated with a dislocation line.
+		IS_SLIP_SURFACE = (1<<2), 	//< Indicates that the face is part of a slip surface.
 	};
 
 public:
@@ -98,7 +106,6 @@ public:
 	/// Returns whether this is the "even" face from the pair of two opposite faces.
 	bool isEvenFace() const {
 		OVITO_ASSERT(oppositeFace() != nullptr);
-		OVITO_ASSERT(oppositeFace()->testFlag(IS_EVEN_FACE) != reinterpret_cast<const Face*>(this)->testFlag(IS_EVEN_FACE));
 		return reinterpret_cast<const Face*>(this)->testFlag(IS_EVEN_FACE); 
 	}
 
@@ -183,6 +190,10 @@ public:
 
 	/// Merges virtual dislocation faces to build continuous lines from individual dislocation segments.
 	void makeContinuousDislocationLines();
+
+	/// Aligns the orientation of slip faces and builds contiguous two-dimensional manifolds 
+	/// of maximum extent, i.e. slip surfaces with constant slip vector.
+	void makeSlipSurfaces();
 
 private:
 

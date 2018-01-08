@@ -32,6 +32,11 @@ struct BurgersCircuit;				// defined in BurgersCircuit.h
 struct BurgersCircuitSearchStruct;	// defined in DislocationTracer.cpp
 class DislocationTracer;			// defined in DislocationTracer.h
 
+template<typename> struct InterfaceMeshVertex;	// defined below.
+template<typename> struct InterfaceMeshFace;	// defined below.
+template<typename> struct InterfaceMeshEdge;	// defined below.
+using InterfaceMeshBase = HalfEdgeMesh<InterfaceMeshEdge, InterfaceMeshFace, InterfaceMeshVertex>;
+
 template<typename>
 struct InterfaceMeshVertex
 {
@@ -69,13 +74,13 @@ struct InterfaceMeshEdge
 
 	/// If this edge is part of a Burgers circuit, then this points to the next edge in the circuit.
 	/// This field is used by the DislocationTracer class.
-	HalfEdgeMesh<InterfaceMeshEdge, InterfaceMeshFace, InterfaceMeshVertex>::Edge* nextCircuitEdge = nullptr;
+	InterfaceMeshBase::Edge* nextCircuitEdge = nullptr;
 };
 
 /**
  * The interface mesh that separates the 'bad' crystal regions from the 'good' crystal regions.
  */
-class InterfaceMesh : public HalfEdgeMesh<InterfaceMeshEdge, InterfaceMeshFace, InterfaceMeshVertex>
+class InterfaceMesh : public InterfaceMeshBase
 {
 public:
 

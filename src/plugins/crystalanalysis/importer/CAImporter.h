@@ -27,7 +27,6 @@
 #include <plugins/crystalanalysis/data/ClusterGraph.h>
 #include <plugins/crystalanalysis/data/DislocationNetwork.h>
 #include <plugins/crystalanalysis/objects/partition_mesh/PartitionMesh.h>
-#include <plugins/crystalanalysis/objects/slip_surface/SlipSurface.h>
 #include <plugins/particles/import/ParticleImporter.h>
 #include <plugins/particles/import/ParticleFrameData.h>
 #include <core/utilities/mesh/HalfEdgeMesh.h>
@@ -140,16 +139,6 @@ protected:
 			return _partitionMesh;
 		}
 
-		const std::shared_ptr<SlipSurfaceData>& slipSurface() {
-			if(!_slipSurface) _slipSurface = std::make_shared<SlipSurfaceData>();
-			return _slipSurface;
-		}
-		
-		const std::shared_ptr<SlipSurfaceData>& stackingFaults() {
-			if(!_stackingFaults) _stackingFaults = std::make_shared<SlipSurfaceData>();
-			return _stackingFaults;
-		}
-
 	protected:
 
 		/// The structure pattern catalog.
@@ -166,12 +155,6 @@ protected:
 		
 		/// The partition mesh.
 		std::shared_ptr<PartitionMeshData> _partitionMesh;
-
-		/// The slip surfaces.
-		std::shared_ptr<SlipSurfaceData> _slipSurface;
-
-		/// The stacking faults.
-		std::shared_ptr<SlipSurfaceData> _stackingFaults;
 	};
 
 	/// The format-specific task object that is responsible for reading an input file in the background.

@@ -45,7 +45,7 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(SlipSurfaceDisplay, surfaceTransparencyContro
 * Constructor.
 ******************************************************************************/
 SlipSurfaceDisplay::SlipSurfaceDisplay(DataSet* dataset) : DisplayObject(dataset),
-	_smoothShading(true)
+	_smoothShading(false)
 {
 	setSurfaceTransparencyController(ControllerManager::createFloatController(dataset));
 }

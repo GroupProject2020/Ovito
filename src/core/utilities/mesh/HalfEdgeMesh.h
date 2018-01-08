@@ -43,7 +43,7 @@ struct EmptyHalfEdgeMeshStruct {};
  * Each vertex has a pointer to the first edge originating from it.
  * Each face has a pointer to one of the edges adjacent to it.
  */
-template<template<typename> typename EdgeBase, template<typename> typename FaceBase, template<typename> typename VertexBase>
+template<template<typename> class EdgeBase, template<typename> class FaceBase, template<typename> class VertexBase>
 class HalfEdgeMesh
 {
 public:
@@ -603,7 +603,7 @@ public:
 	}
 
 	/// Mesh copy function.
-	template<template<typename> typename EdgeBase2, template<typename> typename FaceBase2, template<typename> typename VertexBase2>
+	template<template<typename> class EdgeBase2, template<typename> class FaceBase2, template<typename> class VertexBase2>
 	void copyFrom(const HalfEdgeMesh<EdgeBase2, FaceBase2, VertexBase2>& other) {
 		clear();
 
