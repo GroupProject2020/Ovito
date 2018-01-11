@@ -25,6 +25,7 @@
 #include <plugins/crystalanalysis/objects/slip_surface/SlipSurfaceDisplay.h>
 #include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
 #include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
+#include <plugins/crystalanalysis/modifier/microstructure/SimplifyMicrostructureModifier.h>
 #include <plugins/crystalanalysis/data/Microstructure.h>
 #include <core/utilities/io/CompressedTextReader.h>
 #include "DislocImporter.h"
@@ -49,6 +50,19 @@ bool DislocImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl
 		return true;
 
 	return false;
+}
+
+/******************************************************************************
+* This method is called when the scene node for the FileSource is created.
+******************************************************************************/
+void DislocImporter::prepareSceneNode(ObjectNode* node, FileSource* importObj)
+{
+	ParticleImporter::prepareSceneNode(node, importObj);
+
+	// Insert a SimplyMicrostructureModifier into the data pipeline by default.
+	OORef<SimplifyMicrostructureModifier> modifier = new SimplifyMicrostructureModifier(node->dataset());
+	modifier->loadUserDefaults();
+	node->applyModifier(modifier);
 }
 
 /******************************************************************************
@@ -321,10 +335,12 @@ void DislocImporter::FrameLoader::connectSlipFaces(Microstructure& microstructur
 			// Only process edges which haven't been linked to their neighbors yet.
 			if(edge1->oppositeEdge() != nullptr) continue;
 			if(!edge1->face()->isSlipSurfaceFace()) continue;
+			OVITO_ASSERT(edge1->face()->isSlipSurfaceFace());
 
 			Microstructure::Edge* oppositeEdge1 = edge1->face()->oppositeFace()->findEdge(edge1->vertex2(), edge1->vertex1());;
 			OVITO_ASSERT(oppositeEdge1 != nullptr);
 			OVITO_ASSERT(edge1->nextManifoldEdge() == nullptr);
+			OVITO_ASSERT(oppositeEdge1->nextManifoldEdge() == nullptr);
 
 			// At an edge, either 1, 2, or 3 slip surface manifolds can meet.
 			// Here, we will link them together in the right order.
@@ -349,6 +365,7 @@ void DislocImporter::FrameLoader::connectSlipFaces(Microstructure& microstructur
 						edge2 = e;
 						oppositeEdge2 = edge2->face()->oppositeFace()->findEdge(e->vertex2(), e->vertex1());
 						OVITO_ASSERT(oppositeEdge2);
+						OVITO_ASSERT(oppositeEdge2->nextManifoldEdge() == nullptr);
 					}
 					else {
 						OVITO_ASSERT(edgeVertexCodes.first == edgeVertexCodes2.second);
@@ -358,29 +375,64 @@ void DislocImporter::FrameLoader::connectSlipFaces(Microstructure& microstructur
 						edge3 = e;
 						oppositeEdge3 = edge3->face()->oppositeFace()->findEdge(e->vertex2(), e->vertex1());
 						OVITO_ASSERT(oppositeEdge3);
+						OVITO_ASSERT(oppositeEdge3->nextManifoldEdge() == nullptr);
 					}
 				}
 			}
 
 			if(edge2) {
 				edge1->linkToOppositeEdge(oppositeEdge2);
+				edge1->setNextManifoldEdge(edge2);
+				oppositeEdge2->setNextManifoldEdge(oppositeEdge1);
 				if(edge3) {
 					edge2->linkToOppositeEdge(oppositeEdge3);
 					edge3->linkToOppositeEdge(oppositeEdge1);
+					edge2->setNextManifoldEdge(edge3);
+					oppositeEdge3->setNextManifoldEdge(oppositeEdge2);
+					edge3->setNextManifoldEdge(edge1);
+					oppositeEdge1->setNextManifoldEdge(oppositeEdge3);
+					OVITO_ASSERT(edge1->countManifolds() == 3);
+					OVITO_ASSERT(edge2->countManifolds() == 3);
+					OVITO_ASSERT(edge3->countManifolds() == 3);
 				}
 				else {
 					edge2->linkToOppositeEdge(oppositeEdge1);
+					edge2->setNextManifoldEdge(edge1);
+					oppositeEdge1->setNextManifoldEdge(oppositeEdge2);
+					OVITO_ASSERT(edge1->countManifolds() == 2);
+					OVITO_ASSERT(edge2->countManifolds() == 2);
+					OVITO_ASSERT(oppositeEdge1->countManifolds() == 2);
+					OVITO_ASSERT(oppositeEdge2->countManifolds() == 2);
 				}
 			}
 			else {
 				if(edge3) {
 					edge1->linkToOppositeEdge(oppositeEdge3);
 					oppositeEdge1->linkToOppositeEdge(edge3);
+					edge1->setNextManifoldEdge(edge3);
+					oppositeEdge3->setNextManifoldEdge(oppositeEdge1);
+					edge3->setNextManifoldEdge(edge1);
+					oppositeEdge1->setNextManifoldEdge(oppositeEdge3);
+					OVITO_ASSERT(edge1->countManifolds() == 2);
+					OVITO_ASSERT(oppositeEdge1->countManifolds() == 2);
+					OVITO_ASSERT(edge3->countManifolds() == 2);
+					OVITO_ASSERT(oppositeEdge3->countManifolds() == 2);
 				}
 				else {
 					oppositeEdge1->linkToOppositeEdge(edge1);
+					edge1->setNextManifoldEdge(edge1);
+					oppositeEdge1->setNextManifoldEdge(oppositeEdge1);
+					OVITO_ASSERT(edge1->countManifolds() == 1);
+					OVITO_ASSERT(oppositeEdge1->countManifolds() == 1);
 				}
 			}
+
+			OVITO_ASSERT(edge1->nextManifoldEdge() != nullptr);
+			OVITO_ASSERT(oppositeEdge1->nextManifoldEdge() != nullptr);
+			OVITO_ASSERT(!edge2 || edge2->nextManifoldEdge() != nullptr);
+			OVITO_ASSERT(!oppositeEdge2 || oppositeEdge2->nextManifoldEdge() != nullptr);
+			OVITO_ASSERT(!edge3 || edge3->nextManifoldEdge() != nullptr);
+			OVITO_ASSERT(!oppositeEdge3 || oppositeEdge3->nextManifoldEdge() != nullptr);
 		}
 	}
 }

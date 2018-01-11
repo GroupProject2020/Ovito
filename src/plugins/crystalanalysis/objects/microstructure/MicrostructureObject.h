@@ -53,12 +53,12 @@ public:
 	virtual bool isSubObjectEditable() const override { return false; }
 
 	/// Returns the data encapsulated by this object after making sure it is not shared with other owners.
-	const std::shared_ptr<Microstructure>& modifiableStorage();
+	const MicrostructurePtr& modifiableStorage();
 
 private:
 
 	/// The internal data.
-	DECLARE_RUNTIME_PROPERTY_FIELD(std::shared_ptr<Microstructure>, storage, setStorage);
+	DECLARE_RUNTIME_PROPERTY_FIELD(MicrostructurePtr, storage, setStorage);
 };
 
 }	// End of namespace

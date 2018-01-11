@@ -71,6 +71,9 @@ public:
 
 protected:
 
+	/// This method is called when the scene node for the FileSource is created.
+	virtual void prepareSceneNode(ObjectNode* node, FileSource* importObj) override;
+
 	/// The format-specific data holder.
 	class DislocFrameData : public ParticleFrameData
 	{
@@ -84,12 +87,12 @@ protected:
 		virtual PipelineFlowState handOver(DataSet* dataset, const PipelineFlowState& existing, bool isNewFile) override;
 
 		/// Returns the loaded microstructure.
-		const std::shared_ptr<Microstructure>& microstructure() { return _microstructure; }
+		const MicrostructurePtr& microstructure() { return _microstructure; }
 
 	protected:
 
 		/// The loaded microstructure.
-		std::shared_ptr<Microstructure> _microstructure = std::make_shared<Microstructure>(std::make_shared<ClusterGraph>());
+		MicrostructurePtr _microstructure = std::make_shared<Microstructure>(std::make_shared<ClusterGraph>());
 	};
 
 	/// The format-specific task object that is responsible for reading an input file in a worker thread.
@@ -113,5 +116,3 @@ protected:
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-
-

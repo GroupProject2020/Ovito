@@ -40,7 +40,42 @@ Microstructure::Microstructure(const Microstructure& other) : MicrostructureBase
         dest_face->setCluster((*source_face)->cluster());
         dest_face->setDislocationFace((*source_face)->isDislocationFace());
         dest_face->setOppositeFace(faces()[(*source_face)->oppositeFace()->index()]);
+        ++source_face;
     }
+
+    // Copy additional edge data.
+    source_face = other.faces().begin();
+    for(auto& dest_face : faces()) {
+        Edge* source_edge = (*source_face)->edges();
+        Edge* dest_edge = dest_face->edges();
+        if(source_edge) {
+            do {
+                // Copy the 'next manifold edge' info to the edge copy.
+                if(source_edge->nextManifoldEdge()) {
+                    OVITO_ASSERT(source_edge->oppositeEdge());
+                    OVITO_ASSERT(source_edge->oppositeEdge()->face()->oppositeFace());
+                    OVITO_ASSERT(source_edge->nextManifoldEdge() == source_edge->oppositeEdge()->face()->oppositeFace()->findEdge(source_edge->vertex1(), source_edge->vertex2()));
+                    dest_edge->setNextManifoldEdge(dest_edge->oppositeEdge()->face()->oppositeFace()->findEdge(dest_edge->vertex1(), dest_edge->vertex2()));
+                }
+                source_edge = source_edge->nextFaceEdge();
+                dest_edge = dest_edge->nextFaceEdge();
+            }
+            while(source_edge != (*source_face)->edges());
+        }
+
+        ++source_face;
+    }
+
+    // Verify edge data.
+    source_face = other.faces().begin();
+    for(auto& dest_face : faces()) {
+        Edge* source_edge = (*source_face)->edges();
+        Edge* dest_edge = dest_face->edges();
+        if(source_edge) {
+            OVITO_ASSERT(source_edge->countManifolds() == dest_edge->countManifolds());
+        }
+        ++source_face;
+    }    
 }
 
 /******************************************************************************

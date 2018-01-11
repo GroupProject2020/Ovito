@@ -274,6 +274,9 @@ public:
 		/// Returns the bit flags assigned to this face.
 		unsigned int flags() const { return _flags; }
 
+		/// Replaces all bit flags for this face with new values.
+		void setFlags(unsigned int flags) { _flags = flags; }
+
 		/// Tests if a flag is set for this face.
 		bool testFlag(unsigned int flag) const { return (_flags & flag); }
 
@@ -623,6 +626,7 @@ public:
 		for(OtherFace* face_o : other.faces()) {
 			Face* face_c = createFace();
 			OVITO_ASSERT(face_c->index() == face_o->index());
+			face_c->setFlags(face_o->flags());
 
 			if(!face_o->edges()) continue;
 			OtherEdge* edge_o = face_o->edges();

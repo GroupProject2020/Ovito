@@ -28,6 +28,12 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
+/// Typically, microstructure models are shallow copied. That's why we use a shared_ptr to hold on to them.
+using MicrostructurePtr = std::shared_ptr<Microstructure>;
+
+/// This pointer type is used to indicate that we only need read-only access to the microstructure data.
+using ConstMicrostructurePtr = std::shared_ptr<const Microstructure>;
+
 template<typename> class MicrostructureVertexInfo;	// defined below
 template<typename> class MicrostructureEdgeInfo;	// defined below
 template<typename> class MicrostructureFaceInfo;	// defined below
@@ -73,6 +79,18 @@ public:
 
 	/// Returns the next manifold when going around this edge.
 	MicrostructureBase::Edge* nextManifoldEdge() const { return _nextManifoldEdge; };
+
+	/// Sets the next manifold when going around this edge.
+	void setNextManifoldEdge(MicrostructureBase::Edge* edge) { _nextManifoldEdge = edge; };
+
+	/// Determines the number of manifolds connected to this edge.
+	int countManifolds() const {
+		if(!nextManifoldEdge()) return 0;
+		int count = 1;
+		for(MicrostructureBase::Edge* e = nextManifoldEdge(); e != this; e = e->nextManifoldEdge())
+			count++;
+		return count;
+	}
 
 private:
 
