@@ -440,29 +440,21 @@ void OSPRayRenderer::renderParticles(const DefaultParticlePrimitive& particleBuf
 		}
 		size_t nspheres = sphereData.size();
 		
-		// Note: This for-loop is a workaround for a bug in OSPRay 1.4.2, which crashes when rendering
-		// geometry with a color memory buffer whose size exceeds 2^31 bytes. We split up the geometry 
-		// into chunks to stay below the 2^31 bytes limit.
-		size_t maxChunkSize = ((1ull << 31) / sizeof(ospcommon::vec4f)) - 1;
-		for(size_t chunkOffset = 0; chunkOffset < nspheres; chunkOffset += maxChunkSize) {
+		OSPReferenceWrapper<ospray::cpp::Geometry> spheres("spheres");
+		spheres.set("bytes_per_sphere", (int)sizeof(ospcommon::vec4f));
+		spheres.set("offset_radius", (int)sizeof(float) * 3);
 
-			OSPReferenceWrapper<ospray::cpp::Geometry> spheres("spheres");
-			spheres.set("bytes_per_sphere", (int)sizeof(ospcommon::vec4f));
-			spheres.set("offset_radius", (int)sizeof(float) * 3);
+		OSPReferenceWrapper<ospray::cpp::Data> data(nspheres, OSP_FLOAT4, sphereData.data());
+		data.commit();
+		spheres.set("spheres", data);
 
-			size_t chunkSize = std::min(maxChunkSize, nspheres - chunkOffset);
-			OSPReferenceWrapper<ospray::cpp::Data> data(chunkSize, OSP_FLOAT4, sphereData.data() + chunkOffset);
-			data.commit();
-			spheres.set("spheres", data);
-
-			data = ospray::cpp::Data(chunkSize, OSP_FLOAT4, colorData.data() + chunkOffset);
-			data.commit();
-			spheres.set("color", data);
-			
-			spheres.setMaterial(*_ospMaterial);
-			spheres.commit();
-			_ospWorld->addGeometry(spheres);
-		}
+		data = ospray::cpp::Data(nspheres, OSP_FLOAT4, colorData.data());
+		data.commit();
+		spheres.set("color", data);
+		
+		spheres.setMaterial(*_ospMaterial);
+		spheres.commit();
+		_ospWorld->addGeometry(spheres);
 	}
 	else if(particleBuffer.particleShape() == ParticlePrimitive::SquareCubicShape || particleBuffer.particleShape() == ParticlePrimitive::BoxShape) {
 		// Rendering cubic/box particles.

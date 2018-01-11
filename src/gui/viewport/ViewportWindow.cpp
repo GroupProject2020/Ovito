@@ -42,15 +42,15 @@ ViewportWindow::ViewportWindow(Viewport* owner, QWidget* parentWidget) : QOpenGL
 		_mainWindow(MainWindow::fromDataset(owner->dataset())),
 		_renderDebugCounter(0), _cursorInContextMenuArea(false)
 {
-	// Associate the viewport with this window.
-	owner->setWindow(this);
-
 	setMouseTracking(true);
 	setFocusPolicy(Qt::ClickFocus);
 
 	// Determine OpenGL vendor string so other parts of the code can decide
 	// which OpenGL features are save to use.
 	OpenGLSceneRenderer::determineOpenGLInfo();
+
+	// Associate the viewport with this window.
+	owner->setWindow(this);
 
 	// Create the viewport renderer.
 	// It is shared by all viewports of a dataset.

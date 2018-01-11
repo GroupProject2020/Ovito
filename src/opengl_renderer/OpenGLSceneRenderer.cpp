@@ -81,7 +81,8 @@ void OpenGLSceneRenderer::determineOpenGLInfo()
 	if(QOpenGLContext::currentContext() == nullptr) {
 		tempContext.setFormat(getDefaultSurfaceFormat());
 		if(!tempContext.create())
-			throw Exception(tr("Failed to create temporary OpenGL context."));
+			throw Exception(tr("Failed to create an OpenGL context. Please check your graphics driver installation to make sure your system supports OpenGL applications. "
+								"Sometimes this may only be a temporary error due to an automatic system update taken place in the background. In this case, simply restarting the computer can help."));
 		if(Application::instance()->headlessMode() == false) {
 			// Create a hidden, temporary window to make the GL context current.
 			window.reset(new QWindow());
