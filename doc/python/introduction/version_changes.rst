@@ -108,14 +108,13 @@ interface to some extent. You can turn them into true Numpy arrays if needed in 
     pos_array = pos_property[...]
 
 In both cases no data copy is made. The Numpy array will be a view of the internal memory of the :py:class:`~ovito.data.Property`.
-To modify the data of a :py:class:`~ovito.data.Property`, write access must be explicitly requested using a Python ``with`` 
+To modify the data stored in a :py:class:`~ovito.data.Property`, write access must be explicitly requested using a Python ``with`` 
 statement::
 
-    with pos_property.modify() as pos_array:
-        pos_array[0] = (0,0,0)
+    with pos_property:
+        pos_property[0] = (0,0,0)
 
-The :py:meth:`~ovito.data.Property.modify` method used in the ``with`` statement returns a temporary Numpy array that is writable and which allows
-modifying the internal data of the :py:class:`~ovito.data.Property`. The old :py:attr:`!.marray` accessor and a 
+The old :py:attr:`!.marray` accessor attribute and a 
 call to the deprecated :py:meth:`!ParticleProperty.changed` method to finalize the write transaction are no longer needed.
 
 Simulation cells

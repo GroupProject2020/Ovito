@@ -21,8 +21,8 @@ data.particle_properties.create('Color', data=colors)
 
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 prop = data.particle_properties.create('Color')
-with prop.modify() as arr:
-    arr[...] = numpy.random.random_sample(size = prop.shape)
+with prop:
+    prop[...] = numpy.random.random_sample(size = prop.shape)
 # snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -32,8 +32,8 @@ data.particle_properties.create('myint', data=values)
 
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 prop = data.particle_properties.create('myvector', dtype=float, components=3)
-with prop.modify() as arr:
-    arr[...] = numpy.random.random_sample(size = prop.shape)
+with prop:
+    prop[...] = numpy.random.random_sample(size = prop.shape)
 # snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

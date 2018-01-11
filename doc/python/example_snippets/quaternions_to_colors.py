@@ -43,14 +43,13 @@ def quaternions_to_colors(qs):
     return rs
     
 def modify(frame, input, output):
-    """ The custom modifier function """
+    """ The user-defined modifier function """
     
-    # The input:
-    orientation_property = input.particle_properties.orientation.array
+    # Input:
+    orientations = input.particle_properties['Orientation']
     
-    # The output:
-    color_property = output.create_particle_property(ParticleProperty.Type.Color)
-    color_property.marray[:] = quaternions_to_colors(orientation_property)
+    # Output:
+    output.particle_properties.create('Color', data=quaternions_to_colors(orientations))
 
 # The following is for automated testing only and not shown in the documentation:
 from ovito.io import import_file

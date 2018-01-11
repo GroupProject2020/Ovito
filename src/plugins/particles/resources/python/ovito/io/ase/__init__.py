@@ -122,9 +122,9 @@ def ase_to_ovito(atoms, data_collection):
     type_list = list(set(symbols))
     for i, sym in enumerate(type_list):
         types.type_list.append(ParticleType(id=i+1, name=sym))
-    with types.modify() as arr:
+    with types:
         for i,sym in enumerate(symbols):
-            arr[i] = type_list.index(sym)+1
+            types[i] = type_list.index(sym)+1
 
     # Check for computed properties - forces, energies, stresses
     calc = atoms.get_calculator()

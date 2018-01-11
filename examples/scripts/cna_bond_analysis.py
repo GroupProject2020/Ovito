@@ -8,21 +8,21 @@ import sys
 import numpy
 
 # Load the simulation dataset to be analyzed.
-node = import_file("../data/NanocrystallinePd.dump.gz")
+pipeline = import_file("../data/NanocrystallinePd.dump.gz")
 
 # Create bonds.
-node.modifiers.append(CreateBondsModifier(cutoff = 3.5))
+pipeline.modifiers.append(CreateBondsModifier(cutoff = 3.5))
 
 # Compute CNA indices on the basis of the created bonds.
-node.modifiers.append(
-        CommonNeighborAnalysisModifier(mode = CommonNeighborAnalysisModifier.Mode.BondBased))
+pipeline.modifiers.append(CommonNeighborAnalysisModifier(
+    mode = CommonNeighborAnalysisModifier.Mode.BondBased))
                       
 # Let OVITO's data pipeline do the heavy work.
-node.compute()
+data = pipeline.compute()
 
 # A two-dimensional array containing the three CNA indices 
 # computed for each bond in the system.
-cna_indices = node.output.bond_properties['CNA Indices'].array
+cna_indices = data.bond_properties['CNA Indices']
 
 # This helper function takes a two-dimensional array and computes the frequency 
 # histogram of the data rows using some NumPy magic. 
@@ -36,10 +36,11 @@ def row_histogram(a):
     return (a[indices], counts)
 
 # Used below for enumerating the bonds of each particle:
-bond_enumerator = Bonds.Enumerator(node.output.bonds)
+bond_enumerator = BondsEnumerator(data.expect(Bonds))
 
 # Loop over particles and print their CNA indices.
-for particle_index in range(node.output.number_of_particles):
+num_particles = len(data.particle_properties['Position'])
+for particle_index in range(num_particles):
     
     # Print particle index (1-based).
     sys.stdout.write("%i " % (particle_index+1))

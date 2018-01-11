@@ -32,8 +32,8 @@ def modify(frame, input, output):
     # Select A-sites occupied by exactly one B-atom (the second entry of the Occupancy
     # array must be 1, and all others 0). Note that the Occupancy array uses 0-based
     # indexing, while atom type IDs are typically 1-based.
-    with selection.modify() as sel:
-        sel[...] = (site_type == 1) & (occupancies[:,1] == 1) & (total_occupancy == 1)
+    with selection:
+        selection[...] = (site_type == 1) & (occupancies[:,1] == 1) & (total_occupancy == 1)
     
     # Additionally output the total number of antisites as a global attribute:
     output.attributes['Antisite_count'] = np.count_nonzero(selection)

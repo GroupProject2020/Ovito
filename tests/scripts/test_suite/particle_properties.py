@@ -21,7 +21,7 @@ print("pos[0:3]=", pos[0:3])
 print("len(pos)={}".format(len(pos)))
 print("pos.marray=", pos.marray)
 
-with pos.modify() as a:
-    a[0][0] = 1.0
+with pos:
+    pos[0][0] = 1.0
 
 assert(pos[0][0] == 1.0)

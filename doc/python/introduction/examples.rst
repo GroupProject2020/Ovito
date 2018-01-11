@@ -69,7 +69,7 @@ is then characterized with the help of the :py:class:`~ovito.modifiers.CommonNei
 which computes a triplet of indices for each bond from the topology of the surrounding bond network. 
 The script accesses the computed CNA bond indices in the output :py:class:`~ovito.data.DataCollection` of the 
 modification pipeline and exports them to a text file. The script enumerates the bonds of each particle 
-using the :py:class:`Bonds.Enumerator <ovito.data.Bonds.Enumerator>` helper class.
+using the :py:class:`~ovito.data.BondsEnumerator` helper class.
 
 The generated text file has the following format::
 
@@ -100,7 +100,7 @@ calculates the displacement of every particle. It stores its results in the ``"D
 particle property. So all our custom analysis modifier needs to do is to sum up the squared displacement magnitudes and divide by the number of particles:
 
 .. literalinclude:: ../example_snippets/msd_calculation.py
-  :lines: 14-25
+  :lines: 12-23
 
 When used within the graphical program, the MSD value computed by this custom modifier may be exported to a text file as a function of simulation time using
 OVITO's standard file export feature (Select ``Calculation Results Text File`` as output format).
@@ -137,7 +137,7 @@ The actual modifier function needs to create an output particle property, which 
 order parameter of each atom. Two nested loops run over all input atoms and their 12 nearest neighbors respectively.
 
 .. literalinclude:: ../example_snippets/order_parameter_calculation.py
-  :lines: 34-67
+  :lines: 34-70
 
 Note that the ``yield`` statements in the modifier function above are only needed to support progress feedback in the
 graphical version of OVITO and to give the pipeline system the possibility to interrupt the long-running calculation when needed. 
@@ -174,4 +174,4 @@ into RGB values and stores them in the ``Color`` particle property.
 In the graphical OVITO version, simply insert a new Python modifier and copy/paste the following script into the source code window:
 
 .. literalinclude:: ../example_snippets/quaternions_to_colors.py
-  :lines: 1-53
+  :lines: 1-52

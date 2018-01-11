@@ -196,7 +196,7 @@ class ParticlePropertiesView(collections.Mapping):
 
             # Initialize property with per-particle data if provided.
             if data is not None:
-                with prop.modify() as marray:
+                with prop as marray:
                     marray[...] = data
             
             # Insert new property into data collection.
@@ -215,8 +215,8 @@ class ParticlePropertiesView(collections.Mapping):
 
             # Initialize property with per-particle data if provided.
             if data is not None:
-                with prop.modify() as marray:
-                    marray[...] = data
+                with prop:
+                    prop[...] = data
             
             # Replace old property in data collection with new clone.
             self._data.objects[idx] = prop

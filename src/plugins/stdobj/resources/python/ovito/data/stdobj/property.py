@@ -9,6 +9,10 @@ from ovito.plugins.StdObj import Property
 # Implement indexing for properties.
 Property.__getitem__ = lambda self, idx: numpy.asanyarray(self)[idx]
 
+def _Property__setitem__(self, idx, value): 
+    numpy.asanyarray(self)[idx] = value
+Property.__setitem__ = _Property__setitem__
+
 # Implement iteration.
 Property.__iter__ = lambda self: iter(numpy.asanyarray(self))
 
@@ -35,6 +39,17 @@ Property.__pow__ = lambda self, y: numpy.asanyarray(self).__pow__(y)
 Property.__and__ = lambda self, y: numpy.asanyarray(self).__and__(y)
 Property.__or__ = lambda self, y: numpy.asanyarray(self).__or__(y)
 Property.__xor__ = lambda self, y: numpy.asanyarray(self).__xor__(y)
+Property.__iadd__ = lambda self, y: numpy.asanyarray(self).__iadd__(y)
+Property.__isub__ = lambda self, y: numpy.asanyarray(self).__isub__(y)
+Property.__imul__ = lambda self, y: numpy.asanyarray(self).__imul__(y)
+Property.__idiv__ = lambda self, y: numpy.asanyarray(self).__idiv__(y)
+Property.__itruediv__ = lambda self, y: numpy.asanyarray(self).__itruediv__(y)
+Property.__ifloordiv__ = lambda self, y: numpy.asanyarray(self).__ifloordiv__(y)
+Property.__imod__ = lambda self, y: numpy.asanyarray(self).__imod__(y)
+Property.__ipow__ = lambda self, y: numpy.asanyarray(self).__ipow__(y)
+Property.__iand__ = lambda self, y: numpy.asanyarray(self).__iand__(y)
+Property.__ior__ = lambda self, y: numpy.asanyarray(self).__ior__(y)
+Property.__ixor__ = lambda self, y: numpy.asanyarray(self).__ixor__(y)
 
 # Printing / string representation
 Property.__repr__ = lambda self: self.__class__.__name__ + "('" + self.name + "')"
@@ -51,13 +66,30 @@ def _Property_shape(self):
     else: return (len(self), self.components)
 Property.shape = property(_Property_shape)
 
-# Implementation of Property.modify() method:
+# Implement 'dtype' attribute.
+def _Property_dtype(self):
+    return numpy.asanyarray(self).dtype
+Property.dtype = property(_Property_dtype)
+
+# Context manager entry method:
+def _Property__enter__(self):
+    self.make_writable()
+    return numpy.asanyarray(self)
+Property.__enter__ = _Property__enter__
+
+# Context manager exit method:
+def _Property__exit__(self, exc_type, exc_value, traceback):
+    self.make_readonly()
+    self.notify_object_changed()
+    return False
+Property.__exit__ = _Property__exit__
+
+# Implementation of Property.modify() method.
+# For backward compatibility with OVITO 3.0.0:
 def _Property_modify(self):
-    """
-    Creates a Python context manager that manages write access to the internal property values.
-    The manager returns a mutable Numpy array when used in a Python ``with`` statement,
-    which provides a read/write view of the internal data.
-    """
+    # Creates a Python context manager that manages write access to the internal property values.
+    # The manager returns a mutable Numpy array when used in a Python ``with`` statement,
+    # which provides a read/write view of the internal data.
 
     # A Python context manager for managing write access to the internal property data.
     # It returns a writable Numpy array when used in a Python 'with' statement.
@@ -71,17 +103,14 @@ def _Property_modify(self):
 
         def __enter__(self):
             """ Enter the runtime context related to this object. """
-            return numpy.asarray(self)
+            self._owner.make_writable()
+            return numpy.asanyarray(self._owner)
 
         def __exit__(self, exc_type, exc_value, traceback):
             """ Exit the runtime context related to this object. """
+            self._owner.make_readonly()
             self._owner.notify_object_changed()
             return False
-
-        @property
-        def __array_interface__(self):
-            """ Implementation of the Python Array interface. """
-            return self._owner.__mutable_array_interface__
 
     return _PropertyModificationManager(self)
 
@@ -98,14 +127,10 @@ Property.array = property(_Property_array)
 # Returns a NumPy array wrapper for a property with write access.
 # For backward compatibility with OVITO 2.9.0:
 def _Property_marray(self):
-    # This attribute returns a *mutable* NumPy array providing read/write access to the internal per-element data.
-    class DummyClass:
-        pass
-    o = DummyClass()
-    o.__array_interface__ = self.__mutable_array_interface__
-    # Create reference to particle property object to keep it alive.
-    o.__base_property = self        
-    return numpy.asarray(o)
+    self.make_writable()
+    a = numpy.asanyarray(self)
+    self.make_readonly()
+    return a
 
 # This is needed to enable the augmented assignment operators (+=, -=, etc.) for the 'marray' property.
 # For backward compatibility with OVITO 2.9.0:
@@ -113,7 +138,7 @@ def _Property_marray_assign(self, other):
     if not hasattr(other, "__array_interface__"):
         raise ValueError("Only objects supporting the array interface can be assigned to the 'marray' property.")
     o = other.__array_interface__
-    s = self.__mutable_array_interface__
+    s = self.__array_interface__
     if o["shape"] != s["shape"] or o["typestr"] != s["typestr"] or o["data"] != s["data"]:
         raise ValueError("Assignment to the 'marray' property is restricted. Left and right-hand side must be identical.")
     # Assume that the data has been changed in the meantime.

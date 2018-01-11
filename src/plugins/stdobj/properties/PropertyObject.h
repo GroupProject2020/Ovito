@@ -482,6 +482,25 @@ public:
 			m.insert({type->id(), type->color()});
 		return m;
 	}
+
+	////////////////////////////// Support functions for the Python bindings //////////////////////////////
+
+	/// Indicates to the Python binding layer that this property object has been temporarily put into a 
+	/// writable state. In this state, the binding layer will allow write access to the property's internal data.
+	bool isWritableFromPython() const { return _isWritableFromPython != 0; }
+
+	/// Puts the property array into a writable state.
+	/// In the writable state, the Python binding layer will allow write access to the property's internal data.
+	void makeWritableFromPython() { 
+		_isWritableFromPython++; 
+	}
+
+	/// Puts the property array back into the default read-only state. 
+	/// In the read-only state, the Python binding layer will not permit write access to the property's internal data.
+	void makeReadOnlyFromPython() {
+		OVITO_ASSERT(_isWritableFromPython > 0);
+		_isWritableFromPython--;
+	}
 	
 	//////////////////////////////// from RefTarget //////////////////////////////
 
@@ -513,6 +532,10 @@ private:
 	
 	/// Contains the list of defined "types" if this is a typed property.
 	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD(ElementType, elementTypes, setElementTypes);
+
+	/// This is a special flag used by the Python bindings to indicate that
+	/// this property object has been temporarily put into a writable state.
+	int _isWritableFromPython = 0;
 };
 
 }	// End of namespace

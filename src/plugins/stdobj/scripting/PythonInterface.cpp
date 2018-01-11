@@ -35,8 +35,6 @@ namespace Ovito { namespace StdObj {
 
 using namespace PyScript;
 
-
-template<bool ReadOnly>
 py::dict PropertyObject__array_interface__(PropertyObject& p)
 {
 	py::dict ai;
@@ -84,11 +82,11 @@ py::dict PropertyObject__array_interface__(PropertyObject& p)
 #endif
 	}
 	else throw Exception("Cannot access property of this data type from Python.");
-	if(ReadOnly) {
-		ai["data"] = py::make_tuple(reinterpret_cast<std::intptr_t>(p.constData()), true);
+	if(p.isWritableFromPython()) {
+		ai["data"] = py::make_tuple(reinterpret_cast<std::intptr_t>(p.data()), false);
 	}
 	else {
-		ai["data"] = py::make_tuple(reinterpret_cast<std::intptr_t>(p.data()), false);
+		ai["data"] = py::make_tuple(reinterpret_cast<std::intptr_t>(p.constData()), true);
 	}
 	ai["version"] = py::cast(3);
 	return ai;
@@ -174,7 +172,7 @@ PYBIND11_PLUGIN(StdObj)
 				"The line color used when rendering the cell."
 				"\n\n"
 				":Default: ``(0, 0, 0)``\n")
-	;	
+	;
 
 	ovito_abstract_class<PeriodicDomainDataObject, DataObject>{m};		
 	
@@ -212,17 +210,16 @@ PYBIND11_PLUGIN(StdObj)
 			"No data is copied during the conversion; the Numpy array will refer to the same memory as the :py:class:`!Property`. "
 			"By default, the memory of a :py:class:`!Property` is write-protected. Thus, trying to modify property values will raise an error:: "
 			"\n\n"
-			"    property[0] = (0, 0, -4) # \"TypeError: 'ParticleProperty' object does not\n"
-			"                             # support item assignment\"\n"
+			"    property[0] = (0, 0, -4) # \"ValueError: assignment destination is read-only\"\n"
 			"\n\n"
 			"A direct modification is prevented by the system, because OVITO's data pipeline uses shallow data copies and needs to know when data objects are being modified. "
 			"Only then results that depend on the changing data can be automatically recalculated. "
-			"We need to explicitly announce a modification by using the :py:meth:`Property.modify` method and a Python ``with`` statement:: "
+			"We need to explicitly announce a modification by using Python's ``with`` statement:: "
 			"\n\n"
-			"    with property.modify() as arr:\n"
-			"        arr[0] = (0, 0, -4)\n"
+			"    with property:\n"
+			"        property[0] = (0, 0, -4)\n"
 			"\n\n"
-			"Within the ``with`` compound statement, the variable ``arr`` refers to a *modifiable* Numpy array, allowing us to alter "
+			"Within the ``with`` compound statement, the array is temporarily made writable, allowing us to alter "
 			"the per-particle data stored in the :py:class:`!Property` object. "
 			"\n\n",
 			// Python class name:
@@ -232,9 +229,10 @@ PYBIND11_PLUGIN(StdObj)
 		.def_property_readonly("size", &PropertyObject::size)
 		.def_property_readonly("data_type", &PropertyObject::dataType)
 		// Used for Numpy array interface:
-		.def_property_readonly("__array_interface__", &PropertyObject__array_interface__<true>)
-		// Required for implementation of the Property.modify() method:
-		.def_property_readonly("__mutable_array_interface__", &PropertyObject__array_interface__<false>)
+		.def_property_readonly("__array_interface__", &PropertyObject__array_interface__)
+		// Used by context manager interface:
+		.def("make_writable", &PropertyObject::makeWritableFromPython)
+		.def("make_readonly", &PropertyObject::makeReadOnlyFromPython)
 
 		.def_property("name", &PropertyObject::name, &PropertyObject::setName,
 				"The name of the property.")

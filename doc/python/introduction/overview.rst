@@ -15,8 +15,7 @@ do many things that are already familiar from the graphical user interface (and 
   * Access data, e.g. particle properties, and analysis results computed by OVITO
   * Write your own data modification and analysis functions and extend OVITO's capabilities
 
-But before discussing these specific topics, let's first take a look at some general concepts of OVITO's data model 
-and scripting framework.
+But before discussing these specific topics, let's first take a look at OVITO's object model.
 
 ------------------------------------
 OVITO's data pipeline architecture

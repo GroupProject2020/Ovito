@@ -21,7 +21,7 @@ data.bond_properties.create('Color', data=colors)
 
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 prop = data.bond_properties.create('Color')
-with prop.modify() as arr:
+with prop as arr:
     arr[...] = numpy.random.random_sample(size = prop.shape)
 # snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -32,6 +32,6 @@ data.bond_properties.create('myint', data=values)
 
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 prop = data.bond_properties.create('myvector', dtype=float, components=3)
-with prop.modify() as arr:
-    arr[...] = numpy.random.random_sample(size = prop.shape)
+with prop:
+    prop[...] = numpy.random.random_sample(size = prop.shape)
 # snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

@@ -24,10 +24,10 @@ from ovito.modifiers import *
 import numpy
 
 # Load a simulation snapshot of a Cu-Zr metallic glass.
-node = import_file("../data/CuZr_metallic_glass.dump.gz")
+pipeline = import_file("../data/CuZr_metallic_glass.dump.gz")
 
 # Set atomic radii (required for polydisperse Voronoi tessellation).
-atypes = node.source.particle_properties.particle_type.type_list
+atypes = pipeline.source.particle_properties['Particle Type'].types
 atypes[0].radius = 1.35        # Cu atomic radius (atom type 1 in input file)
 atypes[1].radius = 1.55        # Zr atomic radius (atom type 2 in input file)
 
@@ -38,25 +38,25 @@ voro = VoronoiAnalysisModifier(
     edge_count = 6, # Length after which Voronoi index vectors are truncated
     edge_threshold = 0.1
 )
-node.modifiers.append(voro)
+pipeline.modifiers.append(voro)
                       
 # Let OVITO compute the results.
-node.compute()
+data = pipeline.compute()
 
 # Make sure we did not lose information due to truncated Voronoi index vectors.
-if voro.max_face_order > voro.edge_count:
+if data.attributes['Voronoi.max_face_order'] > voro.edge_count:
     print("Warning: Maximum face order in Voronoi tessellation is {0}, "
           "but computed Voronoi indices are truncated after {1} entries. "
           "You should consider increasing the 'edge_count' parameter to {0}."
-          .format(voro.max_face_order, voro.edge_count))
+          .format(data.attributes['Voronoi.max_face_order'], voro.edge_count))
     # Note that it would be possible to automatically increase the 'edge_count'
     # parameter to 'max_face_order' here and recompute the Voronoi tessellation:
-    #   voro.edge_count = voro.max_face_order
-    #   node.compute()
+    #   voro.edge_count = data.attributes['Voronoi.max_face_order']
+    #   data = pipeline.compute()
 
-# Access computed Voronoi indices as NumPy array.
-# This is an (N)x(edge_count) array.
-voro_indices = node.output.particle_properties['Voronoi Index'].array
+# Access computed Voronoi indices.
+# This is an (N) x (edge_count) array.
+voro_indices = data.particle_properties['Voronoi Index']
 
 # This helper function takes a two-dimensional array and computes a frequency 
 # histogram of the data rows using some NumPy magic. 
