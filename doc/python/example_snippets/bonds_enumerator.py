@@ -2,7 +2,7 @@ from ovito.io import import_file
 from ovito.data import Bonds, BondsEnumerator
 
 # Load a system of atoms and bonds.
-pipeline = import_file('bonds.data.gz', atom_style = 'bond')
+pipeline = import_file('input/bonds.data.gz', atom_style = 'bond')
 bonds = pipeline.source.expect(Bonds)
 positions = pipeline.source.particle_properties['Position']
 

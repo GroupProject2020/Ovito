@@ -3,7 +3,7 @@ from ovito.modifiers import (CoordinationNumberModifier, FreezePropertyModifier,
                             ExpressionSelectionModifier)
 
 # Load a input simulation sequence. 
-pl = import_file("simulation.*.dump")
+pl = import_file("input/simulation.*.dump")
 
 # Add modifier for computing the coordination numbers of particles.
 pl.modifiers.append(CoordinationNumberModifier(cutoff = 2.9))
@@ -19,6 +19,6 @@ pl.modifiers.append(modifier)
 pl.modifiers.append(ExpressionSelectionModifier(expression='Coordination != Coord0'))
 
 # Write out number of particles exhibiting a change in coordination number.
-export_file(pl, 'output.txt', 'txt', 
+export_file(pl, 'output/changes.txt', 'txt', 
             columns = ['Timestep', 'SelectExpression.num_selected'], 
             multiple_frames = True)

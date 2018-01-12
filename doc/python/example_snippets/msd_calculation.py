@@ -3,7 +3,7 @@ from ovito.modifiers import PythonScriptModifier, CalculateDisplacementsModifier
 import numpy
 
 # Load input data and create a data pipeline.
-pipeline = import_file("simulation.dump", multiple_frames = True)
+pipeline = import_file("input/simulation.dump", multiple_frames = True)
 
 # Calculate per-particle displacements with respect to initial simulation frame:
 pipeline.modifiers.append(CalculateDisplacementsModifier())
@@ -26,7 +26,7 @@ def modify(frame, input, output):
 pipeline.modifiers.append(PythonScriptModifier(function = modify))
 
 # Export calculated MSD value to a text file and let OVITO's data pipeline do the rest:
-export_file(pipeline, "msd_data.txt", 
+export_file(pipeline, "output/msd_data.txt", 
     format = "txt",
     columns = ["Timestep", "MSD"],
     multiple_frames = True)

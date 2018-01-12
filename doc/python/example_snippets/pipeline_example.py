@@ -2,7 +2,7 @@ from ovito.io import import_file
 from ovito.modifiers import SliceModifier
 
 # Import a simulation file. This creates a Pipeline object.
-pipeline = import_file('simulation.dump')
+pipeline = import_file('input/simulation.dump')
 
 # Insert a modifier that operates on the data:
 pipeline.modifiers.append(SliceModifier(normal=(0,0,1), distance=0))

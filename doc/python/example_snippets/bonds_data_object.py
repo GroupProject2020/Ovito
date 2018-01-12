@@ -4,7 +4,7 @@ from ovito.data import Bonds, SimulationCell
 
 # Load a set of atoms and create bonds between pairs of atoms that are within 
 # a given cutoff distance of each other using the Create Bonds modifier.
-pipeline = import_file('trajectory.dump')
+pipeline = import_file('input/trajectory.dump')
 pipeline.modifiers.append(CreateBondsModifier(cutoff = 3.4))
 
 # Evaluate pipeline and retrieve the Bonds data object.

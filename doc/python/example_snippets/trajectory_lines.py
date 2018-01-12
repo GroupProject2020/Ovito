@@ -3,7 +3,7 @@ from ovito.io import import_file
 from ovito.vis import TrajectoryLineDisplay
 
 # Load a particle simulation sequence:
-pipeline = import_file('simulation.*.dump')
+pipeline = import_file('input/simulation.*.dump')
 
 # Create a second pipeline for the trajectory lines:
 traj_pipeline = Pipeline()

@@ -2,7 +2,7 @@ from ovito.io import import_file
 from ovito.data import BondProperty, Bonds
 from ovito.modifiers import ComputeBondLengthsModifier
 import numpy
-pipeline = import_file('bonds.data.gz', atom_style = 'bond')
+pipeline = import_file('input/bonds.data.gz', atom_style = 'bond')
 pipeline.modifiers.append(ComputeBondLengthsModifier())
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 data = pipeline.compute()

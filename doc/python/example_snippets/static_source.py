@@ -22,4 +22,4 @@ pipeline.source.particle_properties.create('Position', data=xyz)
 pipeline.modifiers.append(CreateBondsModifier(cutoff = 3.0))
 
 # Write pipeline results to an output file:
-export_file(pipeline, 'output.data', 'lammps/data', atom_style='bond')
+export_file(pipeline, 'output/structure.data', 'lammps/data', atom_style='bond')

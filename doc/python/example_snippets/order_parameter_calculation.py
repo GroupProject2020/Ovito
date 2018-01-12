@@ -2,7 +2,7 @@ from ovito.io import import_file
 from ovito.modifiers import PythonScriptModifier
 
 # Load input data and create a data pipeline.
-pipeline = import_file("simulation.dump")
+pipeline = import_file("input/simulation.dump")
 
 from ovito.data import NearestNeighborFinder
 import numpy as np

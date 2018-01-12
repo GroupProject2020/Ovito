@@ -13,4 +13,4 @@ painter.drawText(10, 20, "Hello world!")
 del painter
 
 # Save image to disk.
-image.save("image.png")
+image.save("output/image.png")

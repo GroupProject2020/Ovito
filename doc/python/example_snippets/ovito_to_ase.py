@@ -7,7 +7,7 @@ from ovito.io import import_file
 from ovito.io.ase import ovito_to_ase
 
 # Create an OVITO data pipeline from an external file:
-pipeline = import_file('simulation.dump')
+pipeline = import_file('input/simulation.dump')
 
 # Evaluate pipeline to obtain a PipelineFlowState data collection:
 data = pipeline.compute()

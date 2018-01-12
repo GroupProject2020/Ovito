@@ -6,7 +6,7 @@ from ovito.data import SurfaceMesh, SimulationCell
 from ovito.modifiers import ConstructSurfaceModifier
 
 # Load a particle structure and reconstruct its geometric surface:
-pipeline = import_file("simulation.dump")
+pipeline = import_file("input/simulation.dump")
 pipeline.modifiers.append(ConstructSurfaceModifier(radius = 2.9))
 data = pipeline.compute()
 mesh = data.expect(SurfaceMesh)
@@ -19,4 +19,4 @@ fraction = data.attributes['ConstructSurfaceMesh.solid_volume'] / cell.volume
 print("Solid volume fraction: %f" % fraction)
 
 # Export the surface triangle mesh to a VTK file.
-mesh.export_vtk('surface.vtk', cell)
+mesh.export_vtk('output/surface.vtk', cell)

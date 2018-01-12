@@ -1,0 +1,1 @@
+This is the directory where the Python test and example scripts will write their output data to.

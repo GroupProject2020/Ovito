@@ -1,7 +1,7 @@
 from ovito.io import import_file
 from ovito.modifiers import SelectTypeModifier, CommonNeighborAnalysisModifier
 
-pipeline = import_file("simulation.dump")
+pipeline = import_file("input/simulation.dump")
 
 # >>>>>>>>>>> begin snippet >>>>>>>>>>>>>>
 # Let the CNA modifier identify the structural type of each particle:

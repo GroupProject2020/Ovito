@@ -1,7 +1,7 @@
 from ovito.io import import_file
 from ovito.modifiers import SelectTypeModifier, CommonNeighborAnalysisModifier
 
-pipeline = import_file("simulation.dump")
+pipeline = import_file("input/simulation.dump")
 
 # Insert a CNA modifier to determine the structural type of each atom:
 pipeline.modifiers.append(CommonNeighborAnalysisModifier())

@@ -1,7 +1,7 @@
 from ovito.io import import_file
 
 # Import a sequence of files.
-pipeline = import_file('simulation.*.dump')
+pipeline = import_file('input/simulation.*.dump')
 
 # Loop over all frames of the sequence.
 for frame in range(pipeline.source.num_frames):    

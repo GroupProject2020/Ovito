@@ -2,7 +2,7 @@ from ovito.io import import_file
 from ovito.modifiers import PythonScriptModifier
 
 # Load some input data:
-pipeline = import_file("simulation.dump")
+pipeline = import_file("input/simulation.dump")
 
 # Define our custom modifier function, which assigns a uniform color 
 # to all particles, similar to the built-in AssignColorModifier. 

@@ -4,7 +4,7 @@ from ovito.vis import TextLabelOverlay
 from ovito.modifiers import ExpressionSelectionModifier
 
 # Import a simulation dataset and select some atoms based on their potential energy:
-node = import_file("simulation.dump")
+node = import_file("input/simulation.dump")
 node.add_to_scene()
 node.modifiers.append(ExpressionSelectionModifier(expression = 'peatom > -4.2'))
 

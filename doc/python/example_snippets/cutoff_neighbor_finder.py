@@ -2,7 +2,7 @@ from ovito.io import import_file
 from ovito.data import CutoffNeighborFinder
 
 # Load input simulation file.
-pipeline = import_file("simulation.dump")
+pipeline = import_file("input/simulation.dump")
 data = pipeline.compute()
 positions = data.particle_properties['Position']
 

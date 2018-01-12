@@ -5,7 +5,7 @@ from ovito.modifiers import ColorCodingModifier
 from PyQt5.QtCore import Qt
 
 # Prepare a data pipeline containing a ColorCodingModifier:
-pipeline = import_file("simulation.dump")
+pipeline = import_file("input/simulation.dump")
 color_mod = ColorCodingModifier(particle_property = 'peatom')
 pipeline.modifiers.append(color_mod)
 pipeline.add_to_scene()

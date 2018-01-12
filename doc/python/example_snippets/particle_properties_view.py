@@ -2,7 +2,7 @@ from ovito.io import import_file
 from ovito.data import ParticleProperty
 import ovito.pipeline
 import numpy
-pipeline = import_file("simulation.dump")
+pipeline = import_file("input/simulation.dump")
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 data = pipeline.compute()
 

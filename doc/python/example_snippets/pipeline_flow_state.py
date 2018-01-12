@@ -1,6 +1,6 @@
 from ovito.io import import_file
 from ovito.data import SimulationCell
-pipeline = import_file("simulation.dump")
+pipeline = import_file("input/simulation.dump")
 
 data = pipeline.compute()
 

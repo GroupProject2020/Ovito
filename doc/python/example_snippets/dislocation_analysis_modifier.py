@@ -4,7 +4,7 @@ if "ovito.modifiers.crystalanalysis" not in sys.modules: sys.exit()
 from ovito.io import import_file, export_file
 from ovito.modifiers import DislocationAnalysisModifier
 
-pipeline = import_file("simulation.dump")
+pipeline = import_file("input/simulation.dump")
 
 # Extract dislocation lines from a crystal with diamond structure:
 modifier = DislocationAnalysisModifier()
@@ -24,7 +24,7 @@ for segment in network.segments:
     print(segment.points)
 
 # Export dislocation lines to a CA file:
-export_file(pipeline, "dislocations.ca", "ca")
+export_file(pipeline, "output/dislocations.ca", "ca")
 
 # Or export dislocations to a ParaView file:
-export_file(pipeline, "dislocations.vtk", "vtk/disloc")
+export_file(pipeline, "output/dislocations.vtk", "vtk/disloc")

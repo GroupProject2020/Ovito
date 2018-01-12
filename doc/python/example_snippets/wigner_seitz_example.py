@@ -4,7 +4,7 @@ from ovito.modifiers import *
 from ovito.pipeline import *
 import numpy as np
 
-pipeline = import_file("simulation.*.dump")
+pipeline = import_file("input/simulation.*.dump")
 
 # Perform Wigner-Seitz analysis:
 ws = WignerSeitzAnalysisModifier(
@@ -43,13 +43,13 @@ pipeline.modifiers.append(PythonScriptModifier(function = modify))
 
 # Let OVITO do the computation and export the number of identified 
 # antisites as a function of simulation time to a text file:
-export_file(pipeline, "antisites.txt", "txt", 
+export_file(pipeline, "output/antisites.txt", "txt", 
     columns = ['Timestep', 'Antisite_count'],
     multiple_frames = True)
 
 # Export the XYZ coordinates of just the antisites by removing all other atoms.
 pipeline.modifiers.append(InvertSelectionModifier())
 pipeline.modifiers.append(DeleteSelectedParticlesModifier())
-export_file(pipeline, "antisites.xyz", "xyz", 
+export_file(pipeline, "output/antisites.xyz", "xyz", 
     columns = ['Position.X', 'Position.Y', 'Position.Z'],
     multiple_frames = True)

@@ -6,9 +6,9 @@ from ovito.data import SurfaceMesh
 from ovito.modifiers import ConstructSurfaceModifier
 
 # Load a particle set and construct the surface mesh:
-pipeline = import_file("simulation.dump")
+pipeline = import_file("input/simulation.dump")
 pipeline.modifiers.append(ConstructSurfaceModifier(radius = 2.8))
 mesh = pipeline.compute().expect(SurfaceMesh)
 
 # Export the mesh to a VTK file for visualization with ParaView.
-export_file(mesh, 'surface_mesh.vtk', 'vtk/trimesh')
+export_file(mesh, 'output/surface_mesh.vtk', 'vtk/trimesh')

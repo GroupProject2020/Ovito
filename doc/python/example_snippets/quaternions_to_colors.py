@@ -54,7 +54,7 @@ def modify(frame, input, output):
 # The following is for automated testing only and not shown in the documentation:
 from ovito.io import import_file
 from ovito.modifiers import PythonScriptModifier, PolyhedralTemplateMatchingModifier
-node = import_file("simulation.dump")
+node = import_file("input/simulation.dump")
 node.modifiers.append(PolyhedralTemplateMatchingModifier(output_orientation = True))
 node.modifiers.append(PythonScriptModifier(function = modify))
 node.compute()
