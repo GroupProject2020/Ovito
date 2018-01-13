@@ -54,7 +54,7 @@ bool POSCARExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 	// Write POSCAR header including the simulation cell geometry.
 	textStream() << "POSCAR file written by OVITO\n";
 	textStream() << "1\n";
-	AffineTransformation cell = simulationCell->cellMatrix();
+	const AffineTransformation& cell = simulationCell->cellMatrix();
 	for(size_t i = 0; i < 3; i++)
 		textStream() << cell(0, i) << ' ' << cell(1, i) << ' ' << cell(2, i) << '\n';
 	Vector3 origin = cell.translation();

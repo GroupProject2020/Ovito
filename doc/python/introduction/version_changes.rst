@@ -125,8 +125,8 @@ access to the cell vectors and the cell origin. The old :py:attr:`!.array` and :
 Write access to the cell matrix now requires a ``with`` statement::
 
     cell = pipeline.source.cell
-    with cell.modify() as matrix:
-        matrix[:,1] *= 1.1   # Expand cell along y-direction by scaling second cell vector
+    with cell:
+        cell[:,1] *= 1.1   # Expand cell along y-direction by scaling second cell vector
 
 Bonds
 ------------------------------------------

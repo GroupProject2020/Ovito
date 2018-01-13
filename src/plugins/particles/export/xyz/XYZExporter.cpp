@@ -60,7 +60,7 @@ bool XYZExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 	if(subFormat() == ParcasFormat) {
 		textStream() << QStringLiteral("Frame %1").arg(frameNumber);
 		if(simulationCell) {
-			AffineTransformation simCell = simulationCell->cellMatrix();
+			const AffineTransformation& simCell = simulationCell->cellMatrix();
 			textStream() << " cell_orig " << simCell.translation().x() << " " << simCell.translation().y() << " " << simCell.translation().z();
 			textStream() << " cell_vec1 " << simCell.column(0).x() << " " << simCell.column(0).y() << " " << simCell.column(0).z();
 			textStream() << " cell_vec2 " << simCell.column(1).x() << " " << simCell.column(1).y() << " " << simCell.column(1).z();
@@ -70,7 +70,7 @@ bool XYZExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 	}
 	else if(subFormat() == ExtendedFormat) {
 		if(simulationCell) {
-			AffineTransformation simCell = simulationCell->cellMatrix();
+			const AffineTransformation& simCell = simulationCell->cellMatrix();
 			// Save cell information in extended XYZ format:
 			// see http://jrkermode.co.uk/quippy/io.html#extendedxyz for details
 			QString latticeStr;

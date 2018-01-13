@@ -56,7 +56,7 @@ PipelineFlowState WrapPeriodicImagesModifier::evaluatePreliminary(TimePoint time
 	if(simCellObj->is2D())
 		 throwException(tr("In the current program version this modifier only supports three-dimensional simulation cells."));
 
-	AffineTransformation simCell = simCellObj->cellMatrix();
+	const AffineTransformation& simCell = simCellObj->cellMatrix();
 	if(std::abs(simCell.determinant()) < FLOATTYPE_EPSILON)
 		 throwException(tr("The simulation cell is degenerated."));
 	AffineTransformation inverseSimCell = simCell.inverse();

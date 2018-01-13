@@ -188,7 +188,7 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 		if(topologyCell && trajectoryCell) {
 			SimulationCellObject* outputCell = poh.outputObject<SimulationCellObject>();
 			outputCell->setCellMatrix(trajectoryCell->cellMatrix());
-			AffineTransformation simCell = trajectoryCell->cellMatrix();
+			const AffineTransformation& simCell = trajectoryCell->cellMatrix();
 
 			// Trajectories of atoms may cross periodic boundaries and if atomic positions are
 			// stored in wrapped coordinates, then it becomes necessary to fix bonds using the minimum image convention.

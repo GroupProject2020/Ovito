@@ -35,63 +35,6 @@ namespace Ovito { namespace StdObj {
 
 using namespace PyScript;
 
-py::dict PropertyObject__array_interface__(PropertyObject& p)
-{
-	py::dict ai;
-	if(p.componentCount() == 1) {
-		ai["shape"] = py::make_tuple(p.size());
-		if(p.stride() != p.dataTypeSize())
-			ai["strides"] = py::make_tuple(p.stride());
-	}
-	else if(p.componentCount() > 1) {
-		ai["shape"] = py::make_tuple(p.size(), p.componentCount());
-		ai["strides"] = py::make_tuple(p.stride(), p.dataTypeSize());
-	}
-	else throw Exception("Cannot access empty property from Python.");
-	if(p.dataType() == PropertyStorage::Int) {
-		OVITO_STATIC_ASSERT(sizeof(int) == 4);
-#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
-		ai["typestr"] = py::bytes("<i4");
-#else
-		ai["typestr"] = py::bytes(">i4");
-#endif
-	}
-	else if(p.dataType() == PropertyStorage::Int64) {
-		OVITO_STATIC_ASSERT(sizeof(qlonglong) == 8);
-#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
-		ai["typestr"] = py::bytes("<i8");
-#else
-		ai["typestr"] = py::bytes(">i8");
-#endif
-	}
-	else if(p.dataType() == PropertyStorage::Float) {
-#ifdef FLOATTYPE_FLOAT		
-		OVITO_STATIC_ASSERT(sizeof(FloatType) == 4);
-#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
-		ai["typestr"] = py::bytes("<f4");
-#else
-		ai["typestr"] = py::bytes(">f4");
-#endif
-#else
-		OVITO_STATIC_ASSERT(sizeof(FloatType) == 8);
-#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
-		ai["typestr"] = py::bytes("<f8");
-#else
-		ai["typestr"] = py::bytes(">f8");
-#endif
-#endif
-	}
-	else throw Exception("Cannot access property of this data type from Python.");
-	if(p.isWritableFromPython()) {
-		ai["data"] = py::make_tuple(reinterpret_cast<std::intptr_t>(p.data()), false);
-	}
-	else {
-		ai["data"] = py::make_tuple(reinterpret_cast<std::intptr_t>(p.constData()), true);
-	}
-	ai["version"] = py::cast(3);
-	return ai;
-}
-
 PYBIND11_PLUGIN(StdObj)
 {
 	// Register the classes of this plugin with the global PluginManager.
@@ -139,7 +82,8 @@ PYBIND11_PLUGIN(StdObj)
 		.def_property("pbc_x", &SimulationCellObject::pbcX, &SimulationCellObject::setPbcX)
 		.def_property("pbc_y", &SimulationCellObject::pbcY, &SimulationCellObject::setPbcY)
 		.def_property("pbc_z", &SimulationCellObject::pbcZ, &SimulationCellObject::setPbcZ)
-		.def_property("matrix", MatrixGetterCopy<SimulationCellObject, AffineTransformation, &SimulationCellObject::cellMatrix>(),
+		// For backward compatibility with OVITO 2.9.0:
+		.def_property("matrix", MatrixGetter<SimulationCellObject, AffineTransformation, &SimulationCellObject::cellMatrix>(),
 								MatrixSetter<SimulationCellObject, AffineTransformation, &SimulationCellObject::setCellMatrix>())
 		.def_property("is2D", &SimulationCellObject::is2D, &SimulationCellObject::setIs2D,
 				"Specifies whether the system is two-dimensional (true) or three-dimensional (false). "
@@ -148,9 +92,43 @@ PYBIND11_PLUGIN(StdObj)
 				":Default: ``false``\n")
 		.def_property_readonly("volume", &SimulationCellObject::volume3D,
 				"Computes the volume of the three-dimensional simulation cell.\n"
-				"It is the absolute value of the determinant of the 3x3 cell submatrix.")
+				"The volume is the absolute value of the determinant of the 3x3 submatrix formed by the three cell vectors.")
 		.def_property_readonly("volume2D", &SimulationCellObject::volume2D,
 				"Computes the area of the two-dimensional simulation cell (see :py:attr:`.is2D`).\n")
+
+		// Used by context manager interface:
+		.def("make_writable", &SimulationCellObject::makeWritableFromPython)
+		.def("make_readonly", &SimulationCellObject::makeReadOnlyFromPython)
+
+		// Used for Numpy array interface:
+		.def_property_readonly("__array_interface__", [](SimulationCellObject& cell) {
+			py::dict ai;
+			ai["shape"] = py::make_tuple(3, 4);
+			ai["strides"] = py::make_tuple(sizeof(AffineTransformation::element_type), sizeof(AffineTransformation::column_type));
+#ifdef FLOATTYPE_FLOAT		
+			OVITO_STATIC_ASSERT(sizeof(AffineTransformation::element_type) == 4);
+#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
+			ai["typestr"] = py::bytes("<f4");
+#else
+			ai["typestr"] = py::bytes(">f4");
+#endif
+#else
+			OVITO_STATIC_ASSERT(sizeof(AffineTransformation::element_type) == 8);
+#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
+			ai["typestr"] = py::bytes("<f8");
+#else
+			ai["typestr"] = py::bytes(">f8");
+#endif
+#endif
+			if(cell.isWritableFromPython()) {
+				ai["data"] = py::make_tuple(reinterpret_cast<std::intptr_t>(cell.cellMatrix().elements()), false);
+			}
+			else {
+				ai["data"] = py::make_tuple(reinterpret_cast<std::intptr_t>(cell.cellMatrix().elements()), true);
+			}
+			ai["version"] = py::cast(3);
+			return ai;
+		})
 	;
 
 	ovito_class<SimulationCellDisplay, DisplayObject>(m,
@@ -228,8 +206,7 @@ PYBIND11_PLUGIN(StdObj)
 		.def("__len__", &PropertyObject::size)
 		.def_property_readonly("size", &PropertyObject::size)
 		.def_property_readonly("data_type", &PropertyObject::dataType)
-		// Used for Numpy array interface:
-		.def_property_readonly("__array_interface__", &PropertyObject__array_interface__)
+
 		// Used by context manager interface:
 		.def("make_writable", &PropertyObject::makeWritableFromPython)
 		.def("make_readonly", &PropertyObject::makeReadOnlyFromPython)
@@ -242,6 +219,63 @@ PYBIND11_PLUGIN(StdObj)
 		// Used by the type_by_name() and type_by_id() methods:
 		.def("_get_type_by_id", static_cast<ElementType* (PropertyObject::*)(int) const>(&PropertyObject::elementType))
 		.def("_get_type_by_name", static_cast<ElementType* (PropertyObject::*)(const QString&) const>(&PropertyObject::elementType))
+
+		// Used for Numpy array interface:
+		.def_property_readonly("__array_interface__", [](PropertyObject& p) {
+			py::dict ai;
+			if(p.componentCount() == 1) {
+				ai["shape"] = py::make_tuple(p.size());
+				if(p.stride() != p.dataTypeSize())
+					ai["strides"] = py::make_tuple(p.stride());
+			}
+			else if(p.componentCount() > 1) {
+				ai["shape"] = py::make_tuple(p.size(), p.componentCount());
+				ai["strides"] = py::make_tuple(p.stride(), p.dataTypeSize());
+			}
+			else throw Exception("Cannot access empty property from Python.");
+			if(p.dataType() == PropertyStorage::Int) {
+				OVITO_STATIC_ASSERT(sizeof(int) == 4);
+#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
+				ai["typestr"] = py::bytes("<i4");
+#else
+				ai["typestr"] = py::bytes(">i4");
+#endif
+			}
+			else if(p.dataType() == PropertyStorage::Int64) {
+				OVITO_STATIC_ASSERT(sizeof(qlonglong) == 8);
+#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
+				ai["typestr"] = py::bytes("<i8");
+#else
+				ai["typestr"] = py::bytes(">i8");
+#endif
+			}
+			else if(p.dataType() == PropertyStorage::Float) {
+#ifdef FLOATTYPE_FLOAT		
+				OVITO_STATIC_ASSERT(sizeof(FloatType) == 4);
+#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
+				ai["typestr"] = py::bytes("<f4");
+#else
+				ai["typestr"] = py::bytes(">f4");
+#endif
+#else
+				OVITO_STATIC_ASSERT(sizeof(FloatType) == 8);
+#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
+				ai["typestr"] = py::bytes("<f8");
+#else
+				ai["typestr"] = py::bytes(">f8");
+#endif
+#endif
+			}
+			else throw Exception("Cannot access property of this data type from Python.");
+			if(p.isWritableFromPython()) {
+				ai["data"] = py::make_tuple(reinterpret_cast<std::intptr_t>(p.data()), false);
+			}
+			else {
+				ai["data"] = py::make_tuple(reinterpret_cast<std::intptr_t>(p.constData()), true);
+			}
+			ai["version"] = py::cast(3);
+			return ai;
+		})		
 	;
 
 	return m.ptr();

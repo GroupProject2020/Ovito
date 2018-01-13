@@ -14,11 +14,11 @@ assert(isinstance(dc, DataCollection))
 dc.attributes['new_attribute'] = 2.8
 cell = SimulationCell()
 dc.objects.append(cell)
-assert(dc.find(SimulationCell) == cell)
-assert(dc.expect(SimulationCell) == cell)
+assert(dc.find(SimulationCell) is cell)
+assert(dc.expect(SimulationCell) is cell)
 assert(dc.find_all(SimulationCell) == [cell])
 dc.objects.remove(cell)
-assert(dc.find(SimulationCell) == None)
+assert(dc.find(SimulationCell) is None)
 
 print()
 print("Particle properties:")
@@ -36,7 +36,7 @@ for p in pipeline.source.bond_properties:
 
 print()
 print("Cell:")
-print(pipeline.source.cell.matrix)
+print(pipeline.source.cell)
 
 print()
 print("Bonds:")

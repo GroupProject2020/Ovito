@@ -62,7 +62,7 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 	if(!simulationCell)
 		throwException(tr("No simulation cell defined. Cannot write LAMMPS file."));
 
-	AffineTransformation simCell = simulationCell->cellMatrix();
+	const AffineTransformation& simCell = simulationCell->cellMatrix();
 
 	// Transform triclinic cell to LAMMPS canonical format.
 	Vector3 a,b,c;

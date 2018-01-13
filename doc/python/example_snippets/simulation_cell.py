@@ -17,8 +17,8 @@ vol = abs(numpy.linalg.det(cell[0:3,0:3]))
 assert numpy.isclose(cell.volume, vol)
 
 # Make cell twice as large along the Y direction by scaling the second cell vector: 
-with cell.modify() as mat:
-    mat[:,1] *= 2.0
+with cell:
+    cell[:,1] *= 2.0
 
 # Change display color of simulation cell to red:
 cell.display.rendering_color = (1.0, 0.0, 0.0)

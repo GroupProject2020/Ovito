@@ -71,51 +71,18 @@ def _Property_dtype(self):
     return numpy.asanyarray(self).dtype
 Property.dtype = property(_Property_dtype)
 
-# Context manager entry method:
+# Context manager section entry method:
 def _Property__enter__(self):
     self.make_writable()
     return numpy.asanyarray(self)
 Property.__enter__ = _Property__enter__
 
-# Context manager exit method:
+# Context manager section exit method:
 def _Property__exit__(self, exc_type, exc_value, traceback):
     self.make_readonly()
     self.notify_object_changed()
     return False
 Property.__exit__ = _Property__exit__
-
-# Implementation of Property.modify() method.
-# For backward compatibility with OVITO 3.0.0:
-def _Property_modify(self):
-    # Creates a Python context manager that manages write access to the internal property values.
-    # The manager returns a mutable Numpy array when used in a Python ``with`` statement,
-    # which provides a read/write view of the internal data.
-
-    # A Python context manager for managing write access to the internal property data.
-    # It returns a writable Numpy array when used in a Python 'with' statement.
-    # Upon exit of the runtime context, it automatically calls Property.notify_object_changed()
-    # to inform the pipeline system of the changed property data.
-    class _PropertyModificationManager:
-
-        def __init__(self, owner):
-            """ Constructor that stores away a back-pointer to the owning property object. """
-            self._owner = owner
-
-        def __enter__(self):
-            """ Enter the runtime context related to this object. """
-            self._owner.make_writable()
-            return numpy.asanyarray(self._owner)
-
-        def __exit__(self, exc_type, exc_value, traceback):
-            """ Exit the runtime context related to this object. """
-            self._owner.make_readonly()
-            self._owner.notify_object_changed()
-            return False
-
-    return _PropertyModificationManager(self)
-
-Property.modify = _Property_modify
-
 
 # Returns a NumPy array wrapper for a property.
 # For backward compatibility with OVITO 2.9.0:

@@ -70,8 +70,8 @@ private:
 
 	SpinnerWidget* simCellSizeSpinners[3];
 	BooleanParameterUI* pbczPUI;
-	Vector3ParameterUI* zvectorPUI[3];
-	Vector3ParameterUI* zoriginPUI;
+	AffineTransformationParameterUI* zvectorPUI[3];
+	AffineTransformationParameterUI* zoriginPUI;
 };
 
 }	// End of namespace

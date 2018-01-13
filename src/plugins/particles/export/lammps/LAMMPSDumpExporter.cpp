@@ -50,7 +50,7 @@ bool LAMMPSDumpExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 	if(!simulationCell)
 		throwException(tr("No simulation cell available. Cannot write LAMMPS file."));
 
-	AffineTransformation simCell = simulationCell->cellMatrix();
+	const AffineTransformation& simCell = simulationCell->cellMatrix();
 	size_t atomsCount = posProperty->size();
 
 	FloatType xlo = simCell.translation().x();

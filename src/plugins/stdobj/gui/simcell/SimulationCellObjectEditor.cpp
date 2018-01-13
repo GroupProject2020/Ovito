@@ -22,7 +22,7 @@
 #include <plugins/stdobj/gui/StdObjGui.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/viewport/ViewportConfiguration.h>
-#include <gui/properties/Vector3ParameterUI.h>
+#include <gui/properties/AffineTransformationParameterUI.h>
 #include <gui/properties/BooleanParameterUI.h>
 #include <gui/properties/BooleanRadioButtonParameterUI.h>
 #include "SimulationCellObjectEditor.h"
@@ -139,7 +139,7 @@ void SimulationCellEditor::createUI(const RolloutInsertionParameters& rolloutPar
 			layout2->setSpacing(0);
 			sublayout->addLayout(layout2);
 			for(int i = 0; i < 3; i++) {
-				Vector3ParameterUI* vPUI = new Vector3ParameterUI(this, PROPERTY_FIELD(SimulationCellObject::cellVector1), i);
+				AffineTransformationParameterUI* vPUI = new AffineTransformationParameterUI(this, PROPERTY_FIELD(SimulationCellObject::cellMatrix), i, 0);
 				layout2->addLayout(vPUI->createFieldLayout(), 0, i*2);
 				layout2->setColumnStretch(i*2, 1);
 				if(i != 2)
@@ -155,7 +155,7 @@ void SimulationCellEditor::createUI(const RolloutInsertionParameters& rolloutPar
 			layout2->setSpacing(0);
 			sublayout->addLayout(layout2);
 			for(int i = 0; i < 3; i++) {
-				Vector3ParameterUI* vPUI = new Vector3ParameterUI(this, PROPERTY_FIELD(SimulationCellObject::cellVector2), i);
+				AffineTransformationParameterUI* vPUI = new AffineTransformationParameterUI(this, PROPERTY_FIELD(SimulationCellObject::cellMatrix), i, 1);
 				layout2->addLayout(vPUI->createFieldLayout(), 0, i*2);
 				layout2->setColumnStretch(i*2, 1);
 				if(i != 2)
@@ -171,7 +171,7 @@ void SimulationCellEditor::createUI(const RolloutInsertionParameters& rolloutPar
 			layout2->setSpacing(0);
 			sublayout->addLayout(layout2);
 			for(int i = 0; i < 3; i++) {
-				Vector3ParameterUI* vPUI = new Vector3ParameterUI(this, PROPERTY_FIELD(SimulationCellObject::cellVector3), i);
+				AffineTransformationParameterUI* vPUI = new AffineTransformationParameterUI(this, PROPERTY_FIELD(SimulationCellObject::cellMatrix), i, 2);
 				zvectorPUI[i] = vPUI;
 				layout2->addLayout(vPUI->createFieldLayout(), 0, i*2);
 				layout2->setColumnStretch(i*2, 1);
@@ -188,7 +188,7 @@ void SimulationCellEditor::createUI(const RolloutInsertionParameters& rolloutPar
 			layout2->setSpacing(0);
 			sublayout->addLayout(layout2);
 			for(int i = 0; i < 3; i++) {
-				Vector3ParameterUI* vPUI = new Vector3ParameterUI(this, PROPERTY_FIELD(SimulationCellObject::cellOrigin), i);
+				AffineTransformationParameterUI* vPUI = new AffineTransformationParameterUI(this, PROPERTY_FIELD(SimulationCellObject::cellMatrix), i, 3);
 				if(i == 2) zoriginPUI = vPUI;
 				layout2->addLayout(vPUI->createFieldLayout(), 0, i*2);
 				layout2->setColumnStretch(i*2, 1);
@@ -212,7 +212,7 @@ void SimulationCellEditor::changeSimulationBoxSize(int dim)
 
 	AffineTransformation cellTM = cell->cellMatrix();
 	FloatType newSize = simCellSizeSpinners[dim]->floatValue();
-	cellTM.column(3)[dim] -= 0.5 * (newSize - cellTM(dim, dim));
+	cellTM.column(3)[dim] -= FloatType(0.5) * (newSize - cellTM(dim, dim));
 	cellTM(dim, dim) = newSize;
 	cell->setCellMatrix(cellTM);
 }
@@ -225,7 +225,7 @@ void SimulationCellEditor::updateSimulationBoxSize()
 	SimulationCellObject* cell = static_object_cast<SimulationCellObject>(editObject());
 	if(!cell) return;
 
-	AffineTransformation cellTM = cell->cellMatrix();
+	const AffineTransformation& cellTM = cell->cellMatrix();
 	for(int dim = 0; dim < 3; dim++) {
 		if(simCellSizeSpinners[dim]->isDragging() == false) {
 			simCellSizeSpinners[dim]->setUnit(dataset()->unitsManager().worldUnit());

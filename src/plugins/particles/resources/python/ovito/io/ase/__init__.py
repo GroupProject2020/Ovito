@@ -108,9 +108,9 @@ def ase_to_ovito(atoms, data_collection):
     # Set the unit cell and origin (if specified in atoms.info)
     cell = SimulationCell()
     cell.pbc = [bool(p) for p in atoms.get_pbc()]
-    with cell.modify() as matrix: 
-        matrix[:, :3] = atoms.get_cell().T
-        matrix[:, 3]  = atoms.info.get('cell_origin', [0., 0., 0.])
+    with cell: 
+        cell[:, :3] = atoms.get_cell().T
+        cell[:, 3]  = atoms.info.get('cell_origin', [0., 0., 0.])
     data_collection.objects.append(cell)
 
     # Add ParticleProperty from atomic positions

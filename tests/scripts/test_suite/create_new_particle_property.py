@@ -28,10 +28,10 @@ my_prop = data.particle_properties.create('My property', data=my_data)
 
 # Create the simulation box:
 cell = SimulationCell(pbc = (True, True, True))
-with cell.modify() as matrix:
-    matrix[...] = [[10,0,0,0],
-                   [0,10,0,0],
-                   [0,0,10,0]]
+with cell:
+    cell[...] = [[10,0,0,0],
+                 [0,10,0,0],
+                 [0,0,10,0]]
 cell.display.line_width = 0.1
 data.objects.append(cell)
 

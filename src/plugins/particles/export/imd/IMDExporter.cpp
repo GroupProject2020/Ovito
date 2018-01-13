@@ -54,7 +54,7 @@ bool IMDExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 	if(!simulationCell)
 		throwException(tr("No simulation cell available. Cannot write IMD file."));
 
-	AffineTransformation simCell = simulationCell->cellMatrix();
+	const AffineTransformation& simCell = simulationCell->cellMatrix();
 	size_t atomsCount = posProperty->size();
 
 	OutputColumnMapping colMapping;

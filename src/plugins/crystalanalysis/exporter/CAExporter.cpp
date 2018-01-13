@@ -113,7 +113,7 @@ bool CAExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint t
 	}
 
 	// Write simulation cell geometry.
-	AffineTransformation cell = simulationCell->cellMatrix();
+	const AffineTransformation& cell = simulationCell->cellMatrix();
 	textStream() << "SIMULATION_CELL_ORIGIN " << cell.column(3).x() << " " << cell.column(3).y() << " " << cell.column(3).z() << "\n";
 	textStream() << "SIMULATION_CELL_MATRIX" << "\n"
 			<< cell.column(0).x() << " " << cell.column(1).x() << " " << cell.column(2).x() << "\n"

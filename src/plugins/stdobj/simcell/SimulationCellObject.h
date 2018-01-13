@@ -43,15 +43,15 @@ public:
 
 	/// \brief Constructor. Creates an empty simulation cell.
 	Q_INVOKABLE SimulationCellObject(DataSet* dataset) : DataObject(dataset),
-		_cellVector1(Vector3::Zero()), _cellVector2(Vector3::Zero()), _cellVector3(Vector3::Zero()),
-		_cellOrigin(Point3::Origin()), _pbcX(false), _pbcY(false), _pbcZ(false), _is2D(false) {
+		_cellMatrix(AffineTransformation::Zero()),
+		_pbcX(false), _pbcY(false), _pbcZ(false), _is2D(false) {
 		init(dataset);
 	}
 
 	/// \brief Constructs a cell from the given cell data structure.
 	explicit SimulationCellObject(DataSet* dataset, const SimulationCell& data) : DataObject(dataset),
-			_cellVector1(data.matrix().column(0)), _cellVector2(data.matrix().column(1)), _cellVector3(data.matrix().column(2)),
-			_cellOrigin(Point3::Origin() + data.matrix().column(3)), _pbcX(data.pbcFlags()[0]), _pbcY(data.pbcFlags()[1]), _pbcZ(data.pbcFlags()[2]), _is2D(data.is2D()) {
+			_cellMatrix(data.matrix()),
+			_pbcX(data.pbcFlags()[0]), _pbcY(data.pbcFlags()[1]), _pbcZ(data.pbcFlags()[2]), _is2D(data.is2D()) {
 		init(dataset);
 	}
 
@@ -63,8 +63,8 @@ public:
 	SimulationCellObject(DataSet* dataset, const Vector3& a1, const Vector3& a2, const Vector3& a3,
 			const Point3& origin = Point3::Origin(), bool pbcX = false, bool pbcY = false, bool pbcZ = false, bool is2D = false) :
 		DataObject(dataset),
-		_cellVector1(a1), _cellVector2(a2), _cellVector3(a3),
-		_cellOrigin(origin), _pbcX(pbcX), _pbcY(pbcY), _pbcZ(pbcZ), _is2D(is2D) {
+		_cellMatrix(a1, a2, a3, origin - Point3::Origin()), 
+		_pbcX(pbcX), _pbcY(pbcY), _pbcZ(pbcZ), _is2D(is2D) {
 		init(dataset);
 	}
 
@@ -72,8 +72,7 @@ public:
 	/// \param cellMatrix The matrix
 	SimulationCellObject(DataSet* dataset, const AffineTransformation& cellMatrix, bool pbcX = false, bool pbcY = false, bool pbcZ = false, bool is2D = false) :
 		DataObject(dataset),
-		_cellVector1(cellMatrix.column(0)), _cellVector2(cellMatrix.column(1)), _cellVector3(cellMatrix.column(2)),
-		_cellOrigin(Point3::Origin() + cellMatrix.column(3)), _pbcX(pbcX), _pbcY(pbcY), _pbcZ(pbcZ), _is2D(is2D) {
+		_cellMatrix(cellMatrix), _pbcX(pbcX), _pbcY(pbcY), _pbcZ(pbcZ), _is2D(is2D) {
 		init(dataset);
 	}
 
@@ -84,18 +83,15 @@ public:
 	/// \param pbcZ Specifies whether periodic boundary conditions are enabled in the Z direction.
 	SimulationCellObject(DataSet* dataset, const Box3& box, bool pbcX = false, bool pbcY = false, bool pbcZ = false, bool is2D = false) :
 		DataObject(dataset),
-		_cellVector1(box.sizeX(), 0, 0), _cellVector2(0, box.sizeY(), 0), _cellVector3(0, 0, box.sizeZ()),
-		_cellOrigin(box.minc), _pbcX(pbcX), _pbcY(pbcY), _pbcZ(pbcZ), _is2D(is2D) {
+		_cellMatrix(box.sizeX(), 0, 0, box.minc.x(), 0, box.sizeY(), 0, box.minc.y(), 0, 0, box.sizeZ(), box.minc.z()),
+		_pbcX(pbcX), _pbcY(pbcY), _pbcZ(pbcZ), _is2D(is2D) {
 		init(dataset);
 		OVITO_ASSERT_MSG(box.sizeX() >= 0 && box.sizeY() >= 0 && box.sizeZ() >= 0, "SimulationCellObject constructor", "The simulation box must have a non-negative volume.");
 	}
 
 	/// \brief Sets the cell geometry to match the given cell data structure.
 	void setData(const SimulationCell& data, bool setBoundaryFlags = true) {
-		setCellVector1(data.matrix().column(0));
-		setCellVector2(data.matrix().column(1));
-		setCellVector3(data.matrix().column(2));
-		setCellOrigin(Point3::Origin() + data.matrix().column(3));
+		setCellMatrix(data.matrix());
 		if(setBoundaryFlags) {
 			setPbcX(data.pbcFlags()[0]);
 			setPbcY(data.pbcFlags()[1]);
@@ -109,32 +105,6 @@ public:
 		return SimulationCell(cellMatrix(), pbcFlags(), is2D());
 	}
 
-	/// \brief Returns the geometry of the simulation cell as a 3x4 matrix.
-	/// \return The shape matrix of the simulation cell.
-	///         The first three matrix columns specify the three edge vectors;
-	///         the fourth matrix column specifies the translation of the cell origin.
-	AffineTransformation cellMatrix() const {
-		return {
-			cellVector1(),
-			cellVector2(),
-			cellVector3(),
-			cellOrigin() - Point3::Origin()
-		};
-	}
-
-	/// \brief Changes the cell's shape.
-	/// \param shape Specifies the new shape matrix for the simulation cell.
-	///              The first three matrix columns contain the three edge vectors.
-	///              The fourth matrix column specifies the translation of the cell's origin.
-	///
-	/// \undoable
-	void setCellMatrix(const AffineTransformation& shape) {
-		setCellVector1(shape.column(0));
-		setCellVector2(shape.column(1));
-		setCellVector3(shape.column(2));
-		setCellOrigin(Point3::Origin() + shape.column(3));
-	}
-
 	/// Returns inverse of the simulation cell matrix.
 	/// This matrix maps the simulation cell to the unit cube ([0,1]^3).
 	AffineTransformation reciprocalCellMatrix() const {
@@ -143,12 +113,12 @@ public:
 
 	/// Computes the (positive) volume of the three-dimensional cell.
 	FloatType volume3D() const {
-		return std::abs(cellVector1().dot(cellVector2().cross(cellVector3())));
+		return std::abs(cellMatrix().determinant());
 	}
 
 	/// Computes the (positive) volume of the two-dimensional cell.
 	FloatType volume2D() const {
-		return cellVector1().cross(cellVector2()).length();
+		return cellMatrix().column(0).cross(cellMatrix().column(1)).length();
 	}
 
 	/// \brief Enables or disables periodic boundary conditions in the three spatial directions.
@@ -163,22 +133,47 @@ public:
 		return {{ pbcX(), pbcY(), pbcZ() }};
 	}
 
+	/// \brief Returns the first edge vector of the cell.
+	const Vector3& cellVector1() const { return cellMatrix().column(0); }
+
+	/// \brief Returns the second edge vector of the cell.
+	const Vector3& cellVector2() const { return cellMatrix().column(1); }
+
+	/// \brief Returns the third edge vector of the cell.
+	const Vector3& cellVector3() const { return cellMatrix().column(2); }
+
+	/// \brief Returns the origin point of the cell.
+	const Point3& cellOrigin() const { return Point3::Origin() + cellMatrix().column(3); }
+
 	/// \brief Returns the title of this object.
 	virtual QString objectTitle() override { return tr("Simulation cell"); }
+
+	////////////////////////////// Support functions for the Python bindings //////////////////////////////
+
+	/// Indicates to the Python binding layer that this object has been temporarily put into a 
+	/// writable state. In this state, the binding layer will allow write access to the cell's internal data.
+	bool isWritableFromPython() const { return _isWritableFromPython != 0; }
+
+	/// Puts the simulayion cell into a writable state.
+	/// In the writable state, the Python binding layer will allow write access to the cell's internal data.
+	void makeWritableFromPython() { 
+		_isWritableFromPython++; 
+	}
+
+	/// Puts the simulation cell array back into the default read-only state. 
+	/// In the read-only state, the Python binding layer will not permit write access to the cell's internal data.
+	void makeReadOnlyFromPython() {
+		OVITO_ASSERT(_isWritableFromPython > 0);
+		_isWritableFromPython--;
+	}
 
 protected:
 
 	/// Creates the storage for the internal parameters.
 	void init(DataSet* dataset);
 
-	/// Stores the first cell edge.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(Vector3, cellVector1, setCellVector1);
-	/// Stores the second cell edge.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(Vector3, cellVector2, setCellVector2);
-	/// Stores the third cell edge.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(Vector3, cellVector3, setCellVector3);
-	/// Stores the cell origin.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(Point3, cellOrigin, setCellOrigin);
+	/// Stores the three cell vectors and the position of the cell origin.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(AffineTransformation, cellMatrix, setCellMatrix);
 
 	/// Specifies periodic boundary condition in the X direction.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, pbcX, setPbcX);
@@ -189,6 +184,10 @@ protected:
 
 	/// Stores the dimensionality of the system.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, is2D, setIs2D);
+
+	/// This is a special flag used by the Python bindings to indicate that
+	/// this simulation cell has been temporarily put into a writable state.
+	int _isWritableFromPython = 0;	
 };
 
 }	// End of namespace

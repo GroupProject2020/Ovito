@@ -219,7 +219,7 @@ PipelineFlowState InterpolateTrajectoryModifier::evaluatePreliminary(TimePoint t
 	// Interpolate simulation cell vectors.
 	if(cell1 && cell2) {
 		SimulationCellObject* outputCell = poh.outputObject<SimulationCellObject>();
-		const AffineTransformation cellMat1 = cell1->cellMatrix();
+		const AffineTransformation& cellMat1 = cell1->cellMatrix();
 		const AffineTransformation delta = cell2->cellMatrix() - cellMat1;
 		outputCell->setCellMatrix(cellMat1 + delta * t);
 	}

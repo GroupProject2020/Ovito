@@ -27,26 +27,17 @@
 namespace Ovito { namespace StdObj {
 	
 IMPLEMENT_OVITO_CLASS(SimulationCellObject);
-DEFINE_PROPERTY_FIELD(SimulationCellObject, cellVector1);
-DEFINE_PROPERTY_FIELD(SimulationCellObject, cellVector2);
-DEFINE_PROPERTY_FIELD(SimulationCellObject, cellVector3);
-DEFINE_PROPERTY_FIELD(SimulationCellObject, cellOrigin);
+DEFINE_PROPERTY_FIELD(SimulationCellObject, cellMatrix);
 DEFINE_PROPERTY_FIELD(SimulationCellObject, pbcX);
 DEFINE_PROPERTY_FIELD(SimulationCellObject, pbcY);
 DEFINE_PROPERTY_FIELD(SimulationCellObject, pbcZ);
 DEFINE_PROPERTY_FIELD(SimulationCellObject, is2D);
-SET_PROPERTY_FIELD_LABEL(SimulationCellObject, cellVector1, "Cell vector 1");
-SET_PROPERTY_FIELD_LABEL(SimulationCellObject, cellVector2, "Cell vector 2");
-SET_PROPERTY_FIELD_LABEL(SimulationCellObject, cellVector3, "Cell vector 3");
-SET_PROPERTY_FIELD_LABEL(SimulationCellObject, cellOrigin, "Cell origin");
+SET_PROPERTY_FIELD_LABEL(SimulationCellObject, cellMatrix, "Cell matrix");
 SET_PROPERTY_FIELD_LABEL(SimulationCellObject, pbcX, "Periodic boundary conditions (X)");
 SET_PROPERTY_FIELD_LABEL(SimulationCellObject, pbcY, "Periodic boundary conditions (Y)");
 SET_PROPERTY_FIELD_LABEL(SimulationCellObject, pbcZ, "Periodic boundary conditions (Z)");
 SET_PROPERTY_FIELD_LABEL(SimulationCellObject, is2D, "2D");
-SET_PROPERTY_FIELD_UNITS(SimulationCellObject, cellVector1, WorldParameterUnit);
-SET_PROPERTY_FIELD_UNITS(SimulationCellObject, cellVector2, WorldParameterUnit);
-SET_PROPERTY_FIELD_UNITS(SimulationCellObject, cellVector3, WorldParameterUnit);
-SET_PROPERTY_FIELD_UNITS(SimulationCellObject, cellOrigin, WorldParameterUnit);
+SET_PROPERTY_FIELD_UNITS(SimulationCellObject, cellMatrix, WorldParameterUnit);
 
 /******************************************************************************
 * Creates the storage for the internal parameters.

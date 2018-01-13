@@ -67,7 +67,7 @@ PipelineStatus ParticlesReplicateModifierDelegate::apply(Modifier* modifier, con
 	size_t newParticleCount = oldParticleCount * numCopies;
 
 	poh.setOutputParticleCount(newParticleCount);
-	AffineTransformation simCell = pih.expectSimulationCell()->cellMatrix();
+	const AffineTransformation& simCell = pih.expectSimulationCell()->cellMatrix();
 
 	// Replicate particle property values.
 	for(DataObject* obj : output.objects()) {

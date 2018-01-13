@@ -8,10 +8,10 @@ pipeline = Pipeline(source = StaticSource())
 
 # Insert a new SimulationCell object into the StaticSource:
 cell = SimulationCell(pbc = (False, False, False))
-with cell.modify() as matrix:
-    matrix[:,0] = (4,0,0)
-    matrix[:,1] = (0,2,0)
-    matrix[:,2] = (0,0,2)
+with cell:
+    cell[:,0] = (4,0,0)
+    cell[:,1] = (0,2,0)
+    cell[:,2] = (0,0,2)
 pipeline.source.objects.append(cell)
 
 # Insert two particles into the StaticSource:

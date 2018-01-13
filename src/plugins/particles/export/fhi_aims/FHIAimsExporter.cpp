@@ -54,7 +54,7 @@ bool FHIAimsExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePo
 	if(simulationCell) {
 		origin = simulationCell->cellOrigin();
 		if(simulationCell->pbcX() || simulationCell->pbcY() || simulationCell->pbcZ()) {
-			AffineTransformation cell = simulationCell->cellMatrix();
+			const AffineTransformation& cell = simulationCell->cellMatrix();
 			for(size_t i = 0; i < 3; i++)
 				textStream() << "lattice_vector " << cell(0, i) << ' ' << cell(1, i) << ' ' << cell(2, i) << '\n';
 		}
