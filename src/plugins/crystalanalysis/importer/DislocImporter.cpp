@@ -30,6 +30,7 @@
 #include <core/utilities/io/CompressedTextReader.h>
 #include "DislocImporter.h"
 
+#include <3rdparty/netcdf_integration/NetCDFIntegration.h>
 #include <netcdf.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
@@ -41,15 +42,29 @@ IMPLEMENT_OVITO_CLASS(DislocImporter);
 ******************************************************************************/
 bool DislocImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
 {
-	// Open input file.
-	CompressedTextReader stream(input, sourceLocation.path());
+	// Only serial access to NetCDF functions is allowed, because they are not thread-safe.
+	NetCDFExclusiveAccess locker;
 
-	// Read first line.
-	stream.readLine(20);
+	// Check if we can open the input file for reading.
+	int ncid;
+	int err = nc_open(QDir::toNativeSeparators(input.fileName()).toLocal8Bit().constData(), NC_NOWRITE, &ncid);
+	if(err == NC_NOERR) {
 
-	// Files start with the marker string "# disloc file format".
-	if(stream.lineStartsWith("# disloc file format"))
-		return true;
+		// Make sure we have the right file conventions.
+		size_t len;
+		if(nc_inq_attlen(ncid, NC_GLOBAL, "Conventions", &len) == NC_NOERR) {
+			std::unique_ptr<char[]> conventions_str(new char[len+1]);
+			if(nc_get_att_text(ncid, NC_GLOBAL, "Conventions", conventions_str.get()) == NC_NOERR) {
+				conventions_str[len] = '\0';
+				if(strcmp(conventions_str.get(), "FixDisloc") == 0) {
+					nc_close(ncid);
+					return true;
+				}
+			}
+		}
+
+		nc_close(ncid);
+	}
 
 	return false;
 }
@@ -72,9 +87,79 @@ void DislocImporter::prepareSceneNode(ObjectNode* node, FileSource* importObj)
 ******************************************************************************/
 FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& file)
 {
+	setProgressText(tr("Reading disloc file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+
+	// Create the container structures for holding the loaded data.
+	auto frameData = std::make_shared<DislocFrameData>();
+	auto microstructure = frameData->microstructure();
+	Cluster* defaultCluster = microstructure->clusterGraph()->createCluster(1);
+	
+	// Fix disloc specific data.
+	std::vector<Vector3> latticeVectors;
+	std::vector<Vector3> transformedLatticeVectors;
+	size_t segmentCount = 0;
+
+	// Working data structures.
+	std::map<std::array<qulonglong,4>, Microstructure::Vertex*> vertexMap;
+	std::map<Microstructure::Face*, std::pair<qulonglong,qulonglong>> slipSurfaceMap;
+
+	// Only serial access to NetCDF functions is allowed, because they are not thread-safe.
+	NetCDFExclusiveAccess locker(this);
+	if(!locker.isLocked()) return {};
+
+	int root_ncid = 0;
+	try {
+		// Open the input file for reading.
+		NCERR(nc_open(qPrintable(file.fileName()), NC_NOWRITE, &root_ncid));
+
+		// Make sure we have the right file conventions
+		size_t len;
+		NCERR(nc_inq_attlen(root_ncid, NC_GLOBAL, "Conventions", &len));
+		std::unique_ptr<char[]> conventions_str(new char[len+1]);
+		NCERR(nc_get_att_text(root_ncid, NC_GLOBAL, "Conventions", conventions_str.get()));
+		conventions_str[len] = '\0';
+		if(strcmp(conventions_str.get(), "FixDisloc"))
+			throw Exception(tr("NetCDF file follows '%1' conventions; expected 'FixDisloc'.").arg(conventions_str.get()));
+
+		// Get NetCDF dimensions.
+		int spatial_dim, lattice_vectors_dim;
+		NCERR(nc_inq_dimid(root_ncid, "spatial", &spatial_dim));
+		NCERR(nc_inq_dimid(root_ncid, "lattice_vectors", &spatial_dim));
+
+		// Get NetCDF variables.
+		int cell_vectors_var, cell_origin_var, cell_pbc_var;
+		NCERR(nc_inq_varid(root_ncid, "cell_vectors", &cell_vectors_var));
+		NCERR(nc_inq_varid(root_ncid, "cell_origin", &cell_origin_var));
+		NCERR(nc_inq_varid(root_ncid, "cell_pbc", &cell_pbc_var));
+
+		// Read simulation cell information.
+		AffineTransformation cellMatrix;
+		int cellPbc[3];
+		size_t startp[2] = { 0, 0 };
+		size_t countp[2] = { 3, 3 };
+#ifdef FLOATTYPE_FLOAT
+		NCERR(nc_get_vara_float(root_ncid, cell_vectors_var, startp, countp, cellMatrix.elements()));
+		NCERR(nc_get_vara_float(root_ncid, cell_origin_var, startp, countp, cellMatrix.column(3).data()));
+#else
+		NCERR(nc_get_vara_double(root_ncid, cell_vectors_var, startp, countp, cellMatrix.elements()));
+		NCERR(nc_get_vara_double(root_ncid, cell_origin_var, startp, countp, cellMatrix.column(3).data()));
+#endif
+		NCERR(nc_get_vara_int(root_ncid, cell_pbc_var, startp, countp, cellPbc));
+		frameData->simulationCell().setPbcFlags({cellPbc[0] != 0, cellPbc[1] != 0, cellPbc[2] != 0});
+		frameData->simulationCell().setMatrix(cellMatrix);
+
+		// Close the input file again.
+		NCERR(nc_close(root_ncid));
+	}
+	catch(...) {
+		if(root_ncid)
+			nc_close(root_ncid);
+		throw;
+	}	
+
+#if 0	
 	// Open file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading disloc file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
 	qint64 progressUpdateInterval = std::max(stream.underlyingSize() / 1000, (qint64)1);
 	setProgressMaximum(stream.underlyingSize() / progressUpdateInterval);
 
@@ -309,6 +394,7 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 	if(numProcessorPiecesLoaded != processorGrid.x() * processorGrid.y() * processorGrid.z())
 		throw Exception(tr("File parsing error. Number of read data pieces %i is not consistent with processor grid size %i x %i x %i.")
 			.arg(numProcessorPiecesLoaded).arg(processorGrid.x()).arg(processorGrid.y()).arg(processorGrid.z()));
+#endif
 
 	// Form continuous dislocation lines from the segments.
 	microstructure->makeContinuousDislocationLines();

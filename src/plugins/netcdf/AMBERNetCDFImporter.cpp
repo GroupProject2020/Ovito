@@ -87,14 +87,31 @@ bool AMBERNetCDFImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const
 	// Only serial access to NetCDF functions is allowed, because they are not thread-safe.
 	NetCDFExclusiveAccess locker;
 
-	QString filename = QDir::toNativeSeparators(input.fileName());
-
 	// Check if we can open the input file for reading.
 	int tmp_ncid;
-	int err = nc_open(filename.toLocal8Bit().constData(), NC_NOWRITE, &tmp_ncid);
-	if (err == NC_NOERR) {
+	int err = nc_open(QDir::toNativeSeparators(input.fileName()).toLocal8Bit().constData(), NC_NOWRITE, &tmp_ncid);
+	if(err == NC_NOERR) {
+
+		// Particle data may be stored in a subgroup named "AMBER" instead of the root group.
+		int amber_ncid = tmp_ncid;
+		if(nc_inq_ncid(tmp_ncid, "AMBER", &amber_ncid) == NC_NOERR) {
+			amber_ncid = amber_ncid;
+		}
+
+		// Make sure we have the right file conventions.
+		size_t len;
+		if(nc_inq_attlen(amber_ncid, NC_GLOBAL, "Conventions", &len) == NC_NOERR) {
+			std::unique_ptr<char[]> conventions_str(new char[len+1]);
+			if(nc_get_att_text(amber_ncid, NC_GLOBAL, "Conventions", conventions_str.get()) == NC_NOERR) {
+				conventions_str[len] = '\0';
+				if(strcmp(conventions_str.get(), "AMBER") == 0) {
+					nc_close(tmp_ncid);
+					return true;
+				}
+			}
+		}
+
 		nc_close(tmp_ncid);
-		return true;
 	}
 
 	return false;

@@ -316,7 +316,6 @@ void ActionManager::on_FileExport_triggered()
 		// Workaround for bug in Windows file selection dialog (https://bugreports.qt.io/browse/QTBUG-45759)
 		filterStrings << QString("%1 (*)").arg(exporterClass->fileFilterDescription());
 #endif
-		
 	}
 
 	QSettings settings;
