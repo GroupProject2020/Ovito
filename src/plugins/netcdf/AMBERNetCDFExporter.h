@@ -41,14 +41,7 @@ class OVITO_NETCDFPLUGIN_EXPORT AMBERNetCDFExporter : public FileColumnParticleE
 		using FileColumnParticleExporter::OOMetaClass::OOMetaClass;
 
 		/// Returns the file filter that specifies the extension of files written by this service.
-		virtual QString fileFilter() const override { 
-#ifndef Q_OS_WIN
-			return QStringLiteral("*.nc");
-#else 
-			// Workaround for bug in Windows file selection dialog (https://bugreports.qt.io/browse/QTBUG-45759)
-			return QStringLiteral("*");
-#endif
-		}
+		virtual QString fileFilter() const override { return QStringLiteral("*.nc"); }
 	
 		/// Returns the filter description that is displayed in the drop-down box of the file dialog.
 		virtual QString fileFilterDescription() const override { return tr("NetCDF/AMBER File"); }
@@ -74,12 +67,6 @@ protected:
 	virtual bool exportObject(SceneNode* sceneNode, int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager) override;
 
 private:
-
-	/// Checks for NetCDF error and throws exception.
-	void ncerr(int err, const char* file, int line);
-
-	/// Checks for NetCDF error and throws exception (and attach additional information to exception string.
-	void ncerr_with_info(int err, const char* file, int line, const QString& info);
 
 	/// The NetCDF file handle.
 	int _ncid = -1;

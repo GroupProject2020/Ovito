@@ -85,10 +85,6 @@ public:
 	/// Inspects the header of the given file and returns the number of file columns.
 	Future<InputColumnMapping> inspectFileHeader(const Frame& frame);
 
-	/// Return the global mutex used to serialize access to the NetCDF library functions, 
-	/// which are not thread-safe.
-	static QMutex& netcdfMutex() { return _netcdfMutex; }
-
 private:
 
 	class FrameData : public ParticleFrameData
@@ -191,10 +187,6 @@ private:
 	/// Stores the user-defined mapping between data columns in the input file and
 	/// the internal particle properties.
 	InputColumnMapping _customColumnMapping;
-
-	/// This global mutex is used to serialize access to the NetCDF library functions, 
-	/// which are not thread-safe.
-	static QMutex _netcdfMutex;
 };
 
 OVITO_END_INLINE_NAMESPACE

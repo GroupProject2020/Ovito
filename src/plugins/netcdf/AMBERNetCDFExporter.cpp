@@ -25,11 +25,9 @@
 #include <core/utilities/concurrent/Promise.h>
 #include "AMBERNetCDFExporter.h"
 
-#include <QtMath>
+#include <3rdparty/netcdf_integration/NetCDFIntegration.h>
 #include <netcdf.h>
-
-#define NCERR(x) ncerr(x, __FILE__, __LINE__)
-#define NCERRI(x, info) ncerr_with_info(x, __FILE__, __LINE__, info)
+#include <QtMath>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
@@ -58,30 +56,14 @@ const char NC_SCALE_FACTOR_STR[]  = "scale_factor";
 IMPLEMENT_OVITO_CLASS(AMBERNetCDFExporter);
 
 /******************************************************************************
-* Check for NetCDF error and throw exception
-******************************************************************************/
-void AMBERNetCDFExporter::ncerr(int err, const char* file, int line)
-{
-	if(err != NC_NOERR)
-		throwException(tr("NetCDF I/O error: %1 (line %2 of %3)").arg(QString(nc_strerror(err))).arg(line).arg(file));
-}
-
-/******************************************************************************
-* Check for NetCDF error and throw exception (and attach additional information
-* to exception string)
-******************************************************************************/
-void AMBERNetCDFExporter::ncerr_with_info(int err, const char* file, int line, const QString& info)
-{
-	if(err != NC_NOERR)
-		throwException(tr("NetCDF I/O error: %1 %2 (line %3 of %4)").arg(QString(nc_strerror(err))).arg(info).arg(line).arg(file));
-}
-
-/******************************************************************************
  * This is called once for every output file to be written and before
  * exportFrame() is called.
  *****************************************************************************/
 bool AMBERNetCDFExporter::openOutputFile(const QString& filePath, int numberOfFrames)
 {
+	// Only serial access to NetCDF functions is allowed, because they are not thread-safe.
+	NetCDFExclusiveAccess locker;
+
 	OVITO_ASSERT(!outputFile().isOpen());
 	outputFile().setFileName(filePath);
 
@@ -154,6 +136,9 @@ bool AMBERNetCDFExporter::openOutputFile(const QString& filePath, int numberOfFr
  *****************************************************************************/
 void AMBERNetCDFExporter::closeOutputFile(bool exportCompleted)
 {
+	// Only serial access to NetCDF functions is allowed, because they are not thread-safe.
+	NetCDFExclusiveAccess locker;
+	
 	OVITO_ASSERT(!outputFile().isOpen());
 
 	if(_ncid != -1) {
@@ -186,6 +171,10 @@ bool AMBERNetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, Ti
 	SimulationCellObject* simulationCell = state.findObject<SimulationCellObject>();
 	const AffineTransformation simCell = simulationCell ? simulationCell->cellMatrix() : AffineTransformation::Zero();
 	size_t atomsCount = posProperty->size();
+	
+	// Only serial access to NetCDF functions is allowed, because they are not thread-safe.
+	NetCDFExclusiveAccess locker(exportTask.sharedState().get());
+	if(!locker.isLocked()) return false;
 	
 	// Define the "atom" dimension when writing first frame and the number of atoms is known.
 	if(_atom_dim == -1) {

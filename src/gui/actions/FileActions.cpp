@@ -310,7 +310,13 @@ void ActionManager::on_FileExport_triggered()
 		return;
 	}
 	for(const FileExporterClass* exporterClass : exporterTypes) {
+#ifndef Q_OS_WIN
 		filterStrings << QString("%1 (%2)").arg(exporterClass->fileFilterDescription(), exporterClass->fileFilter());
+#else 
+		// Workaround for bug in Windows file selection dialog (https://bugreports.qt.io/browse/QTBUG-45759)
+		filterStrings << QString("%1 (*)").arg(exporterClass->fileFilterDescription());
+#endif
+		
 	}
 
 	QSettings settings;

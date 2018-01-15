@@ -42,14 +42,7 @@ class OVITO_POVRAY_EXPORT POVRayExporter : public FileExporter
 		using FileExporter::OOMetaClass::OOMetaClass;
 
 		/// Returns the file filter that specifies the files that can be exported by this service.
-		virtual QString fileFilter() const override { 
-	#ifndef Q_OS_WIN
-			return QStringLiteral("*.pov");
-	#else 
-			// Workaround for bug in Windows file selection dialog (https://bugreports.qt.io/browse/QTBUG-45759)
-			return QStringLiteral("*");
-	#endif
-		}
+		virtual QString fileFilter() const override { return QStringLiteral("*.pov"); }
 
 		/// Returns the filter description that is displayed in the drop-down box of the file dialog.
 		virtual QString fileFilterDescription() const override { return tr("POV-Ray scene"); }

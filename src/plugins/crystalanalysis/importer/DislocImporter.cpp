@@ -30,6 +30,8 @@
 #include <core/utilities/io/CompressedTextReader.h>
 #include "DislocImporter.h"
 
+#include <netcdf.h>
+
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
 IMPLEMENT_OVITO_CLASS(DislocImporter);

@@ -46,19 +46,15 @@
 #include <core/dataset/io/FileSource.h>
 #include "AMBERNetCDFImporter.h"
 
-#include <QtMath>
+#include <3rdparty/netcdf_integration/NetCDFIntegration.h>
 #include <netcdf.h>
-
-#define NCERR(x)  _ncerr(x, __FILE__, __LINE__)
-#define NCERRI(x, info)  _ncerr_with_info(x, __FILE__, __LINE__, info)
+#include <QtMath>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
 IMPLEMENT_OVITO_CLASS(AMBERNetCDFImporter);
 DEFINE_PROPERTY_FIELD(AMBERNetCDFImporter, useCustomColumnMapping);
 SET_PROPERTY_FIELD_LABEL(AMBERNetCDFImporter, useCustomColumnMapping, "Custom file column mapping");
-
-QMutex AMBERNetCDFImporter::_netcdfMutex;
 
 // Convert full tensor to Voigt tensor
 template<typename T>
@@ -71,25 +67,6 @@ void fullToVoigt(size_t particleCount, T *full, T *voigt) {
 		voigt[6*i+4] = (full[9*i+2]+full[9*i+6])/2;
 		voigt[6*i+5] = (full[9*i+1]+full[9*i+3])/2;
     }
-}
-
-/******************************************************************************
-* Check for NetCDF error and throw exception
-******************************************************************************/
-static void _ncerr(int err, const char* file, int line)
-{
-	if(err != NC_NOERR)
-		throw Exception(AMBERNetCDFImporter::tr("NetCDF I/O error: %1 (line %2 of %3)").arg(QString(nc_strerror(err))).arg(line).arg(file));
-}
-
-/******************************************************************************
-* Check for NetCDF error and throw exception (and attach additional information
-* to exception string)
-******************************************************************************/
-static void _ncerr_with_info(int err, const char* file, int line, const QString& info)
-{
-	if(err != NC_NOERR)
-		throw Exception(AMBERNetCDFImporter::tr("NetCDF I/O error: %1 %2 (line %3 of %4)").arg(QString(nc_strerror(err))).arg(info).arg(line).arg(file));
 }
 
 /******************************************************************************
@@ -107,10 +84,10 @@ void AMBERNetCDFImporter::setCustomColumnMapping(const InputColumnMapping& mappi
 ******************************************************************************/
 bool AMBERNetCDFImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
 {
-	QString filename = QDir::toNativeSeparators(input.fileName());
+	// Only serial access to NetCDF functions is allowed, because they are not thread-safe.
+	NetCDFExclusiveAccess locker;
 
-	// Only serial access to NetCDF functions allowed because they are not thread-safe.
-	QMutexLocker locker(&netcdfMutex());
+	QString filename = QDir::toNativeSeparators(input.fileName());
 
 	// Check if we can open the input file for reading.
 	int tmp_ncid;
@@ -146,8 +123,9 @@ Future<InputColumnMapping> AMBERNetCDFImporter::inspectFileHeader(const Frame& f
 ******************************************************************************/
 void AMBERNetCDFImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames)
 {
-	// Only serial access to NetCDF functions allowed because they are not thread-safe.
-	QMutexLocker locker(&netcdfMutex());
+	// Only serial access to NetCDF functions is allowed, because they are not thread-safe.
+	NetCDFExclusiveAccess locker(this);
+	if(!locker.isLocked()) return;
 
 	QString filename = QDir::toNativeSeparators(file.fileName());
 
@@ -319,11 +297,12 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 	// Get frame number.
 	size_t movieFrame = frame().lineNumber;
 
-	// Only serial access to NetCDF functions allowed because they are not thread-safe.
-	QMutexLocker locker(&netcdfMutex());
-
 	// Create the destination container for loaded data.
 	auto frameData = std::make_shared<FrameData>();
+
+	// Only serial access to NetCDF functions is allowed, because they are not thread-safe.
+	NetCDFExclusiveAccess locker(this);
+	if(!locker.isLocked()) return {};
 
 	try {
 		openNetCDF(file.fileName(), frameData.get());

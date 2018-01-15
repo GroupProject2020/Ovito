@@ -41,14 +41,7 @@ class OVITO_CRYSTALANALYSIS_EXPORT CAExporter : public ParticleExporter
 		using ParticleExporter::OOMetaClass::OOMetaClass;
 
 		/// Returns the file filter that specifies the extension of files written by this service.
-		virtual QString fileFilter() const override { 
-#ifndef Q_OS_WIN
-			return QStringLiteral("*.ca");
-#else 
-			// Workaround for bug in Windows file selection dialog (https://bugreports.qt.io/browse/QTBUG-45759)
-			return QStringLiteral("*");
-#endif
-		}
+		virtual QString fileFilter() const override { return QStringLiteral("*.ca"); }
 	
 		/// Returns the filter description that is displayed in the drop-down box of the file dialog.
 		virtual QString fileFilterDescription() const override { return tr("Crystal Analysis File"); }

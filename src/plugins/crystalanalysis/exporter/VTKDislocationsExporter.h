@@ -41,14 +41,7 @@ class OVITO_CRYSTALANALYSIS_EXPORT VTKDislocationsExporter : public FileExporter
 		using FileExporter::OOMetaClass::OOMetaClass;
 
 		/// Returns the file filter that specifies the files that can be exported by this service.
-		virtual QString fileFilter() const override { 
-#ifndef Q_OS_WIN
-			return QStringLiteral("*.vtk");
-#else 
-			// Workaround for bug in Windows file selection dialog (https://bugreports.qt.io/browse/QTBUG-45759)
-			return QStringLiteral("*");
-#endif
-		}
+		virtual QString fileFilter() const override { return QStringLiteral("*.vtk"); }
 
 		/// Returns the filter description that is displayed in the drop-down box of the file dialog.
 		virtual QString fileFilterDescription() const override { return tr("VTK Dislocation Lines File"); }
