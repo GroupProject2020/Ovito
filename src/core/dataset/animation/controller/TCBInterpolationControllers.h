@@ -33,7 +33,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Anim)
 template<class BaseKeyClass>
 class TCBAnimationKey : public BaseKeyClass
 {
-	OVITO_CLASS_TEMPLATE(TCBAnimationKey, BaseKeyClass, "Core")
+	OVITO_CLASS_TEMPLATE(TCBAnimationKey, BaseKeyClass)
 	
 public:
 
@@ -60,7 +60,6 @@ public:
 	/// Controls where the animation curve occurs with respect to the key.
 	DECLARE_PROPERTY_FIELD(FloatType, bias);
 };
-
 
 /**
  * \brief Animation key class for TCB interpolation of float values.

@@ -33,7 +33,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Anim)
 template<class BaseKeyClass>
 class SplineAnimationKey : public BaseKeyClass
 {
-	OVITO_CLASS_TEMPLATE(SplineAnimationKey, BaseKeyClass, "Core")
+	OVITO_CLASS_TEMPLATE(SplineAnimationKey, BaseKeyClass)
 
 public:
 

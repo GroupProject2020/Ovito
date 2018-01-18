@@ -24,12 +24,14 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Anim)
 
+IMPLEMENT_OVITO_CLASS_TEMPLATE(SplineAnimationKey<FloatAnimationKey>);
 template<> DEFINE_PROPERTY_FIELD(SplineAnimationKey<FloatAnimationKey>, inTangent);
 template<> DEFINE_PROPERTY_FIELD(SplineAnimationKey<FloatAnimationKey>, outTangent);
 IMPLEMENT_OVITO_CLASS(FloatSplineAnimationKey);
 SET_PROPERTY_FIELD_LABEL(FloatSplineAnimationKey, inTangent, "In Tangent");
 SET_PROPERTY_FIELD_LABEL(FloatSplineAnimationKey, outTangent, "Out Tangent");
 
+IMPLEMENT_OVITO_CLASS_TEMPLATE(SplineAnimationKey<PositionAnimationKey>);
 template<> DEFINE_PROPERTY_FIELD(SplineAnimationKey<PositionAnimationKey>, inTangent);
 template<> DEFINE_PROPERTY_FIELD(SplineAnimationKey<PositionAnimationKey>, outTangent);
 IMPLEMENT_OVITO_CLASS(PositionSplineAnimationKey);

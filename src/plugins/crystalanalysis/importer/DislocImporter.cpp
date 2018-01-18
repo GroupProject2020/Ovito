@@ -100,8 +100,8 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 	size_t segmentCount = 0;
 
 	// Working data structures.
-	std::map<std::array<qulonglong,4>, Microstructure::Vertex*> vertexMap;
-	std::map<Microstructure::Face*, std::pair<qulonglong,qulonglong>> slipSurfaceMap;
+	//std::map<std::array<qlonglong,4>, Microstructure::Vertex*> vertexMap;
+	std::map<Microstructure::Face*, std::pair<qlonglong,qlonglong>> slipSurfaceMap;
 
 	// Only serial access to NetCDF functions is allowed, because they are not thread-safe.
 	NetCDFExclusiveAccess locker(this);
@@ -115,16 +115,29 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 		// Make sure we have the right file conventions
 		size_t len;
 		NCERR(nc_inq_attlen(root_ncid, NC_GLOBAL, "Conventions", &len));
-		std::unique_ptr<char[]> conventions_str(new char[len+1]);
+		auto conventions_str = std::make_unique<char[]>(len+1);
 		NCERR(nc_get_att_text(root_ncid, NC_GLOBAL, "Conventions", conventions_str.get()));
 		conventions_str[len] = '\0';
 		if(strcmp(conventions_str.get(), "FixDisloc"))
 			throw Exception(tr("NetCDF file follows '%1' conventions; expected 'FixDisloc'.").arg(conventions_str.get()));
 
+		// Read lattice structure.
+		NCERR(nc_inq_attlen(root_ncid, NC_GLOBAL, "LatticeStructure", &len));
+		auto lattice_structure_str = std::make_unique<char[]>(len+1);
+		NCERR(nc_get_att_text(root_ncid, NC_GLOBAL, "LatticeStructure", lattice_structure_str.get()));
+		lattice_structure_str[len] = '\0';		
+		if(strcmp(lattice_structure_str.get(), "bcc") == 0) defaultCluster->structure = StructureAnalysis::LATTICE_BCC;
+		else if(strcmp(lattice_structure_str.get(), "fcc") == 0) defaultCluster->structure = StructureAnalysis::LATTICE_FCC;
+		else if(strcmp(lattice_structure_str.get(), "fcc_perfect") == 0) defaultCluster->structure = StructureAnalysis::LATTICE_FCC;
+		else throw Exception(tr("File parsing error. Unknown lattice structure type: %1").arg(lattice_structure_str.get()));
+
 		// Get NetCDF dimensions.
-		int spatial_dim, lattice_vectors_dim;
+		int spatial_dim, nodes_dim, dislocation_segments_dim, pair_dim, node_id_dim;
 		NCERR(nc_inq_dimid(root_ncid, "spatial", &spatial_dim));
-		NCERR(nc_inq_dimid(root_ncid, "lattice_vectors", &spatial_dim));
+		NCERR(nc_inq_dimid(root_ncid, "nodes", &nodes_dim));
+		NCERR(nc_inq_dimid(root_ncid, "dislocations", &dislocation_segments_dim));
+		NCERR(nc_inq_dimid(root_ncid, "pair", &pair_dim));
+		NCERR(nc_inq_dimid(root_ncid, "node_id", &node_id_dim));
 
 		// Get NetCDF variables.
 		int cell_vectors_var, cell_origin_var, cell_pbc_var;
@@ -148,6 +161,135 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 		frameData->simulationCell().setPbcFlags({cellPbc[0] != 0, cellPbc[1] != 0, cellPbc[2] != 0});
 		frameData->simulationCell().setMatrix(cellMatrix);
 
+		// Read lattice orientation matrix.
+		int lattice_orientation_var;
+		NCERR(nc_inq_varid(root_ncid, "lattice_orientation", &lattice_orientation_var));
+#ifdef FLOATTYPE_FLOAT
+		NCERR(nc_get_var_float(root_ncid, lattice_orientation_var, defaultCluster->orientation.elements()));
+#else
+		NCERR(nc_get_var_double(root_ncid, lattice_orientation_var, defaultCluster->orientation.elements()));		
+#endif		
+
+		// Read node list.
+		int nodal_ids_var, nodal_positions_var;
+		NCERR(nc_inq_varid(root_ncid, "nodal_ids", &nodal_ids_var));
+		NCERR(nc_inq_varid(root_ncid, "nodal_positions", &nodal_positions_var));
+		size_t numNodeRecords;
+		NCERR(nc_inq_dimlen(root_ncid, nodes_dim, &numNodeRecords));
+		std::vector<Point_3<float>> nodalPositions(numNodeRecords);
+		std::vector<std::array<qlonglong,4>> nodalIds(numNodeRecords);
+		if(numNodeRecords) {
+			NCERR(nc_get_var_float(root_ncid, nodal_positions_var, nodalPositions.front().data()));
+			NCERR(nc_get_var_longlong(root_ncid, nodal_ids_var, nodalIds.front().data()));
+		}
+
+		// Build list of unique nodes.
+		std::vector<Microstructure::Vertex*> vertexMap(numNodeRecords);
+		std::map<std::array<qlonglong,4>, Microstructure::Vertex*> idMap;
+		auto vertexMapIter = vertexMap.begin();
+		auto nodalPositionsIter = nodalPositions.cbegin();
+		for(const auto& id : nodalIds) {
+			auto iter = idMap.find(id);
+			if(iter == idMap.end())
+				iter = idMap.emplace(id, microstructure->createVertex(Point3(*nodalPositionsIter))).first;
+			*vertexMapIter = iter->second;
+			++vertexMapIter;
+			++nodalPositionsIter;
+		}
+
+		// Read dislocation segments.
+		int burgers_vectors_var, dislocation_segments_var;
+		NCERR(nc_inq_varid(root_ncid, "burgers_vectors", &burgers_vectors_var));
+		NCERR(nc_inq_varid(root_ncid, "dislocation_segments", &dislocation_segments_var));
+		size_t numDislocationSegments;
+		NCERR(nc_inq_dimlen(root_ncid, dislocation_segments_dim, &numDislocationSegments));
+		std::vector<Vector_3<float>> burgersVectors(numDislocationSegments);
+		std::vector<std::array<qlonglong,2>> dislocationSegments(numDislocationSegments);
+		if(numDislocationSegments) {
+			NCERR(nc_get_var_float(root_ncid, burgers_vectors_var, burgersVectors.front().data()));
+			NCERR(nc_get_var_longlong(root_ncid, dislocation_segments_var, dislocationSegments.front().data()));
+		}
+
+		// Create dislocation segments.
+		auto burgersVector = burgersVectors.cbegin();
+		for(const auto& seg : dislocationSegments) {
+			OVITO_ASSERT(seg[0] >= 0 && seg[0] < vertexMap.size());
+			OVITO_ASSERT(seg[1] >= 0 && seg[1] < vertexMap.size());
+			Microstructure::Vertex* vertex1	= vertexMap[seg[0]];
+			Microstructure::Vertex* vertex2	= vertexMap[seg[1]];
+			microstructure->createDislocationSegment(vertex1, vertex2, Vector3(*burgersVector++), defaultCluster);
+		}
+		segmentCount = dislocationSegments.size();
+
+		// Read slip facets.
+		int slip_facets_dim = -1, slip_facet_vertices_dim = -1;
+		nc_inq_dimid(root_ncid, "slip_facets", &slip_facets_dim);
+		nc_inq_dimid(root_ncid, "slip_facet_vertices", &slip_facet_vertices_dim);
+		if(slip_facets_dim != -1) {
+			int slipped_edges_var;
+			int slip_vectors_var;
+			int slip_facet_edge_counts_var;
+			int slip_facet_vertices_var;
+			NCERR(nc_inq_varid(root_ncid, "slipped_edges", &slipped_edges_var));
+			NCERR(nc_inq_varid(root_ncid, "slip_vectors", &slip_vectors_var));
+			NCERR(nc_inq_varid(root_ncid, "slip_facet_edge_counts", &slip_facet_edge_counts_var));
+			NCERR(nc_inq_varid(root_ncid, "slip_facet_vertices", &slip_facet_vertices_var));
+			size_t numSlipFacets, numSlipFacetVertices;
+			NCERR(nc_inq_dimlen(root_ncid, slip_facets_dim, &numSlipFacets));
+			NCERR(nc_inq_dimlen(root_ncid, slip_facet_vertices_dim, &numSlipFacetVertices));
+			std::vector<Vector_3<float>> slipVectors(numSlipFacets);
+			std::vector<std::array<qlonglong,2>> slippedEdges(numSlipFacets);
+			std::vector<int> slipFacetEdgeCounts(numSlipFacets);
+			std::vector<qlonglong> slipFacetVertices(numSlipFacetVertices);
+			if(numSlipFacets) {
+				NCERR(nc_get_var_float(root_ncid, slip_vectors_var, slipVectors.front().data()));
+				NCERR(nc_get_var_longlong(root_ncid, slipped_edges_var, slippedEdges.front().data()));
+				NCERR(nc_get_var_int(root_ncid, slip_facet_edge_counts_var, slipFacetEdgeCounts.data()));
+			}
+			if(numSlipFacetVertices) {
+				NCERR(nc_get_var_longlong(root_ncid, slip_facet_vertices_var, slipFacetVertices.data()));				
+			}
+
+			// Create slip surfaces.
+			auto slipVector = slipVectors.cbegin();
+			auto slipFacetEdgeCount = slipFacetEdgeCounts.cbegin();
+			auto slipFacetVertex = slipFacetVertices.cbegin();
+			for(const auto& slippedEdge : slippedEdges) {
+				Microstructure::Face* face = microstructure->createFace();
+				face->setBurgersVector(Vector3(*slipVector));
+				face->setCluster(defaultCluster);
+				face->setSlipSurfaceFace(true);
+				slipSurfaceMap.emplace(face, std::make_pair(slippedEdge[0], slippedEdge[1]));
+				Microstructure::Vertex* node0 = vertexMap[*slipFacetVertex++];
+				Microstructure::Vertex* node1 = node0;
+				Microstructure::Vertex* node2;
+				for(int i = 1; i < *slipFacetEdgeCount; i++, node1 = node2) {
+					node2 = vertexMap[*slipFacetVertex++];
+					microstructure->createEdge(node1, node2, face);
+				}
+				microstructure->createEdge(node1, node0, face);
+				
+				// Create the opposite face.
+				Microstructure::Face* oppositeFace = microstructure->createFace();
+				oppositeFace->setBurgersVector(-face->burgersVector());
+				oppositeFace->setCluster(defaultCluster);
+				oppositeFace->setSlipSurfaceFace(true);
+				face->setOppositeFace(oppositeFace);
+				oppositeFace->setOppositeFace(face);
+				slipSurfaceMap.emplace(oppositeFace, std::make_pair(slippedEdge[1], slippedEdge[0]));
+				Microstructure::Edge* edge = face->edges();
+				do {
+					microstructure->createEdge(edge->vertex2(), edge->vertex1(), oppositeFace);
+					edge = edge->prevFaceEdge();
+				}
+				while(edge != face->edges());
+
+				++slipVector;
+				++slipFacetEdgeCount;
+			}
+			OVITO_ASSERT(slipFacetVertex == slipFacetVertices.cend());
+		}
+
 		// Close the input file again.
 		NCERR(nc_close(root_ncid));
 	}
@@ -158,135 +300,6 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 	}	
 
 #if 0	
-	// Open file for reading.
-	CompressedTextReader stream(file, frame().sourceFile.path());
-	qint64 progressUpdateInterval = std::max(stream.underlyingSize() / 1000, (qint64)1);
-	setProgressMaximum(stream.underlyingSize() / progressUpdateInterval);
-
-	// Read file header.
-	stream.readLine();
-	if(!stream.lineStartsWith("# disloc file format"))
-		throw Exception(tr("File parsing error. This is not a proper disloc file."));
-
-	// Create the data structures for holding the loaded data.
-	auto frameData = std::make_shared<DislocFrameData>();
-	auto microstructure = frameData->microstructure();
-	Cluster* defaultCluster = microstructure->clusterGraph()->createCluster(1);
-	
-	// Meta information.
-	Vector3I processorGrid = Vector3I::Zero();
-	int numProcessorPiecesLoaded = 0;
-	std::vector<Vector3> latticeVectors;
-	std::vector<Vector3> transformedLatticeVectors;
-	size_t segmentCount = 0;
-
-	// Working data structures.
-	std::map<std::array<qulonglong,4>, Microstructure::Vertex*> vertexMap;
-	std::map<Microstructure::Face*, std::pair<qulonglong,qulonglong>> slipSurfaceMap;
-
-	auto createVertexFromCode = [&vertexMap,&microstructure](std::array<qulonglong,4>&& code) -> Microstructure::Vertex* {
-		std::sort(std::begin(code), std::end(code));
-		auto iter = vertexMap.find(code);
-		if(iter != vertexMap.end())
-			return iter->second;
-		else
-			return vertexMap.emplace(code, microstructure->createVertex(Point3::Origin())).first->second;
-	};
-
-	while(!stream.eof()) {
-		stream.readLineTrimLeft();
-		if(!setProgressValueIntermittent(stream.underlyingByteOffset() / progressUpdateInterval))
-			return {};
-
-		if(stream.lineStartsWith("simulation cell:")) {
-			AffineTransformation cell;
-			std::array<bool,3> pbcFlags;
-			for(size_t dim = 0; dim < 3; dim++) {
-				char bcString[3];
-				if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " %2s", &cell(0,dim), &cell(1,dim), &cell(2,dim), bcString) != 4)
-					throw Exception(tr("File parsing error. Invalid cell vector in line %1.").arg(stream.lineNumber()));
-				pbcFlags[dim] = (strcmp(bcString, "pp") == 0);
-			}
-			if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &cell(0,3), &cell(1,3), &cell(2,3)) != 3)
-				throw Exception(tr("File parsing error. Invalid cell origin in line %1.").arg(stream.lineNumber()));
-			frameData->simulationCell().setMatrix(cell);
-			frameData->simulationCell().setPbcFlags(pbcFlags[0], pbcFlags[1], pbcFlags[2]);
-		}
-		else if(stream.lineStartsWith("timestep number:")) {
-			int timestep;
-			if(sscanf(stream.readLine(), "%i", &timestep) != 1)
-				throw Exception(tr("File parsing error. Invalid timestep number (line %1):\n%2").arg(stream.lineNumber()).arg(stream.lineString()));
-			frameData->attributes().insert(QStringLiteral("Timestep"), QVariant::fromValue(timestep));
-		}
-		else if(stream.lineStartsWith("processor grid:")) {
-			Vector3I pg;
-			if(sscanf(stream.readLine(), "%i %i %i", &pg.x(), &pg.y(), &pg.z()) != 3)
-				throw Exception(tr("File parsing error. Invalid processor grid specification (line %1):\n%2").arg(stream.lineNumber()).arg(stream.lineString()));
-			if(pg != processorGrid && processorGrid != Vector3I::Zero())
-				throw Exception(tr("File parsing error. Inconsistent processor grid specification in line %1:\n%2").arg(stream.lineNumber()).arg(stream.lineString()));
-			processorGrid = pg;
-			numProcessorPiecesLoaded++;
-		}
-		else if(stream.lineStartsWith("lattice structure:")) {
-			stream.readLineTrimLeft();
-			if(stream.lineStartsWith("bcc")) defaultCluster->structure = StructureAnalysis::LATTICE_BCC;
-			else if(stream.lineStartsWith("fcc")) defaultCluster->structure = StructureAnalysis::LATTICE_FCC;
-			else if(stream.lineStartsWith("fcc_perfect")) defaultCluster->structure = StructureAnalysis::LATTICE_FCC;
-			else throw Exception(tr("File parsing error. Unknown lattice structure type in line %1:\n%2").arg(stream.lineNumber()).arg(stream.lineString()));
-		}
-		else if(stream.lineStartsWith("lattice vectors:")) {
-			int nvectors;
-			if(sscanf(stream.readLine(), "%i", &nvectors) != 1 || nvectors <= 1)
-				throw Exception(tr("File parsing error. Invalid number of lattice vectors (line %1):\n%2").arg(stream.lineNumber()).arg(stream.lineString()));
-			if(latticeVectors.empty()) {
-				latticeVectors.resize(nvectors);
-				transformedLatticeVectors.resize(nvectors);
-			}
-			else if(latticeVectors.size() != nvectors) {
-				throw Exception(tr("File parsing error. Inconsistent number of lattice vectors (line %1):\n%2").arg(stream.lineNumber()).arg(stream.lineString()));
-			}
-			for(int i = 0; i < nvectors; i++) {
-				Vector3& lv = latticeVectors[i];
-				Vector3& sv = transformedLatticeVectors[i];
-				if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " -> " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, 
-						&lv.x(), &lv.y(), &lv.z(), &sv.x(), &sv.y(), &sv.z()) != 6)
-					throw Exception(tr("File parsing error. Invalid lattice vector specification in line %1: %2").arg(stream.lineNumber()).arg(stream.lineString()));
-			}
-		}
-		else if(stream.lineStartsWith("line segments:")) {
-			for(;;) {
-				stream.readLine();
-				if(stream.lineStartsWith("end of line segments:"))
-					break;
-				if(!setProgressValueIntermittent(stream.underlyingByteOffset() / progressUpdateInterval))
-					return {};
-
-				std::array<qulonglong,5> vertexCodes;
-				int burgersVectorCode;
-
-				if(sscanf(stream.line(), "%llx %llx %llx %llx %llx %i", &vertexCodes[0], &vertexCodes[1], &vertexCodes[2], &vertexCodes[3], &vertexCodes[4], &burgersVectorCode) != 6)
-					throw Exception(tr("File parsing error. Invalid line segment specification in line %1: %2").arg(stream.lineNumber()).arg(stream.lineString()));
-				OVITO_ASSERT(vertexCodes[0] != vertexCodes[1]);
-				OVITO_ASSERT(vertexCodes[1] != vertexCodes[2]);
-				OVITO_ASSERT(vertexCodes[2] != vertexCodes[3]);
-				Vector3 burgersVector;
-				if(burgersVectorCode == -1) {
-					if(sscanf(stream.line(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &burgersVector.x(), &burgersVector.y(), &burgersVector.z()) != 3)
-						throw Exception(tr("File parsing error. Invalid Burgers vector specification in line %1: %2").arg(stream.lineNumber()).arg(stream.lineString()));
-				}
-				else {
-					if(burgersVectorCode < 0 || burgersVectorCode > latticeVectors.size())
-						throw Exception(tr("File parsing error. Invalid Burgers vector code in line %1: %2").arg(stream.lineNumber()).arg(stream.lineString()));
-					burgersVector = latticeVectors[burgersVectorCode];
-				}
-				Microstructure::Vertex* vertex1 = createVertexFromCode({vertexCodes[0], vertexCodes[1], vertexCodes[2], vertexCodes[3]});
-				Microstructure::Vertex* vertex2 = createVertexFromCode({vertexCodes[0], vertexCodes[1], vertexCodes[2], vertexCodes[4]});
-				if(vertex1 < vertex2) {
-					microstructure->createDislocationSegment(vertex1, vertex2, burgersVector, defaultCluster);
-					segmentCount++;
-				}
-			}
-		}	
 		else if(stream.lineStartsWith("slip surfaces:")) {
 			for(;;) {
 				stream.readLine();
@@ -415,7 +428,7 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 /*************************************************************************************
 * Connects the slip faces to form two-dimensional manifolds.
 **************************************************************************************/
-void DislocImporter::FrameLoader::connectSlipFaces(Microstructure& microstructure, const std::map<Microstructure::Face*, std::pair<qulonglong,qulonglong>>& slipSurfaceMap)
+void DislocImporter::FrameLoader::connectSlipFaces(Microstructure& microstructure, const std::map<Microstructure::Face*, std::pair<qlonglong,qlonglong>>& slipSurfaceMap)
 {
 	// Link slip surface faces with their neighbors, i.e. find the opposite edge for every half-edge of a slip face. 
 	for(Microstructure::Vertex* vertex1 : microstructure.vertices()) {

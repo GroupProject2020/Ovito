@@ -43,9 +43,9 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(SimplifyMicrostructureModifier, lambda, Flo
 * Constructor.
 ******************************************************************************/
 SimplifyMicrostructureModifier::SimplifyMicrostructureModifier(DataSet* dataset) : AsynchronousModifier(dataset),
-    _smoothingLevel(3), 
+    _smoothingLevel(8), 
     _kPB(0.1),
-    _lambda(0.5)
+    _lambda(0.7)
 {
 }
 

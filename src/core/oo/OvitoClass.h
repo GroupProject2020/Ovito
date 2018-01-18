@@ -205,7 +205,7 @@ protected:
 };
 
 /// This macro must be included in the class definition of any OvitoObject-derived class.
-#define OVITO_CLASS_INTERNAL(classname, baseclassname, qt_meta_object) \
+#define OVITO_CLASS_INTERNAL(classname, baseclassname) \
 public: \
 	using ovito_parent_class = baseclassname; \
 	using ovito_class = classname; \
@@ -217,24 +217,19 @@ private: \
 
 /// This macro must be included in the class definition of any OvitoObject-derived class.
 #define OVITO_CLASS(classname) \
-	OVITO_CLASS_INTERNAL(classname, ovito_class, &classname::staticMetaObject)
+	OVITO_CLASS_INTERNAL(classname, ovito_class)
 
 /// This macro must be included in the class definition of a class template that inherits from a OvitoObject class.
-#define OVITO_CLASS_TEMPLATE(classname, baseclassname, plugin_name) \
+#define OVITO_CLASS_TEMPLATE(clazz, baseclazz) \
 public: \
-	using OOMetaClass = typename baseclassname::OOMetaClass; \
-	using ovito_parent_class = baseclassname; \
-	using ovito_class = classname; \
-	static const OOMetaClass& OOClass() { \
-		static const OOMetaClass __OOClass_instance(\
-			QStringLiteral(#classname), \
-			&ovito_parent_class::OOClass(), \
-			plugin_name, \
-			nullptr); \
-		return __OOClass_instance; \
-	} \
+	using OOMetaClass = typename baseclazz::OOMetaClass; \
+	using ovito_parent_class = baseclazz; \
+	using ovito_class = clazz; \
+	static const OOMetaClass& OOClass() { return __OOClass_instance; } \
 	virtual const Ovito::OvitoClass& getOOClass() const override { return OOClass(); } \
 	const OOMetaClass& getOOMetaClass() const { return static_cast<const OOMetaClass&>(getOOClass()); } \
+private: \
+	static const OOMetaClass __OOClass_instance;
 
 /// This macro is used instead of the default one above when the class should get its own metaclass type.
 #define OVITO_CLASS_META(classname, metaclassname) \
@@ -249,6 +244,14 @@ public: \
 		&classname::ovito_parent_class::OOClass(), \
 		OVITO_PLUGIN_NAME, \
 		&classname::staticMetaObject);
+
+/// This macro must be included in the .cpp file for any OvitoObject-derived class template.
+#define IMPLEMENT_OVITO_CLASS_TEMPLATE(classname) \
+	template<> const classname::OOMetaClass classname::__OOClass_instance(\
+		QStringLiteral(#classname), \
+		&classname::ovito_parent_class::OOClass(), \
+		OVITO_PLUGIN_NAME, \
+		nullptr);
 	
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

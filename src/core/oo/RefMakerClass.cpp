@@ -37,7 +37,7 @@ void RefMakerClass::initialize()
 
 	// Collect all property fields of the class hierarchy in one array.
 	for(const RefMakerClass* clazz = this; clazz != &RefMaker::OOClass(); clazz = static_cast<const RefMakerClass*>(clazz->superClass())) {
-		for(const PropertyFieldDescriptor* field = clazz->_firstPropertyField; field; field = field->next()) {
+		for(const PropertyFieldDescriptor* field = clazz->_firstPropertyField; field != nullptr; field = field->next()) {
 			_propertyFields.push_back(field);
 		}
 	}

@@ -109,7 +109,7 @@ protected:
 		virtual FrameDataPtr loadFile(QFile& file) override;
 
 		/// Connects the slip faces to form two-dimensional manifolds.
-		static void connectSlipFaces(Microstructure& microstructure, const std::map<Microstructure::Face*, std::pair<qulonglong,qulonglong>>& slipSurfaceMap);
+		static void connectSlipFaces(Microstructure& microstructure, const std::map<Microstructure::Face*, std::pair<qlonglong,qlonglong>>& slipSurfaceMap);
 	};
 };
 

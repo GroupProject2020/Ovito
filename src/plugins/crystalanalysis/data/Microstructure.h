@@ -102,7 +102,7 @@ private:
  * Extension data structure associated with each face of a Microstructure.
  */
 template<typename Face>
-struct MicrostructureFaceInfo
+class MicrostructureFaceInfo
 {
 public:
 
