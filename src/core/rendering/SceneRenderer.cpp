@@ -111,6 +111,9 @@ bool SceneRenderer::renderNode(SceneNode* node, const PromiseBase& promise)
 
 	if(ObjectNode* objNode = dynamic_object_cast<ObjectNode>(node)) {
 
+		if(!isInteractive())
+			qDebug() << "Rendering node" << node << "at time" << time() << "_isBoundingBoxPass=" << _isBoundingBoxPass;
+
 		// Do not render node if it is the view node of the viewport or
 		// if it is the target of the view node.
 		if(!viewport() || !viewport()->viewNode() || (viewport()->viewNode() != objNode && viewport()->viewNode()->lookatTargetNode() != objNode)) {
@@ -121,6 +124,10 @@ bool SceneRenderer::renderNode(SceneNode* node, const PromiseBase& promise)
 				pipelineStateFuture = objNode->evaluateRenderingPipeline(time());
 				if(!dataset()->container()->taskManager().waitForTask(pipelineStateFuture))
 					return false;
+
+				// After the rendering process has been temporarily interrupted above, rendering is resumed now. 
+				// Give the renderer the opportunity to restore any state that must be active (e.g. the active OpenGL context).
+				resumeRendering();
 			}
 			const PipelineFlowState& state = pipelineStateFuture.isValid() ? 
 												pipelineStateFuture.result() : 

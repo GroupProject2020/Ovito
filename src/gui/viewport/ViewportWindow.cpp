@@ -475,7 +475,7 @@ void ViewportWindow::renderGui()
 ******************************************************************************/
 void ViewportWindow::renderNow()
 {
-//	qDebug() << "ViewportWindow::renderNow() rendering viewport " << qPrintable(viewport()->viewportTitle());
+	//qDebug() << "ViewportWindow::renderNow() rendering viewport " << qPrintable(viewport()->viewportTitle()) << "current context group =" << QOpenGLContextGroup::currentContextGroup();
 
 	_updateRequested = false;
 

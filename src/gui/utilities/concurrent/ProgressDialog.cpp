@@ -53,7 +53,7 @@ ProgressDialog::ProgressDialog(QWidget* parent, TaskManager& taskManager, const 
 	// Helper function that sets up the UI widgets in the dialog for a newly started task.
 	auto createUIForTask = [this, layout](PromiseWatcher* taskWatcher) {
 		QLabel* statusLabel = new QLabel(taskWatcher->progressText());
-		statusLabel->setMaximumWidth(400);
+		statusLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
 		QProgressBar* progressBar = new QProgressBar();
 		progressBar->setMaximum(taskWatcher->progressMaximum());
 		progressBar->setValue(taskWatcher->progressValue());
@@ -80,6 +80,9 @@ ProgressDialog::ProgressDialog(QWidget* parent, TaskManager& taskManager, const 
 	for(PromiseWatcher* watcher : taskManager.runningTasks()) {
 		createUIForTask(watcher);
 	}
+
+	// Set to preferred size.
+	resize(450, height());
 
 	// Create a separate progress bar for every new active task.
 	connect(&taskManager, &TaskManager::taskStarted, this, createUIForTask);

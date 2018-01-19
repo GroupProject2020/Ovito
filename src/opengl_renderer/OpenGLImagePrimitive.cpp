@@ -42,7 +42,7 @@ OpenGLImagePrimitive::OpenGLImagePrimitive(OpenGLSceneRenderer* renderer) :
 		renderer->throwException(QStringLiteral("Failed to create OpenGL vertex buffer."));
 	_vertexBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
 	if(!_vertexBuffer.bind())
-		renderer->throwException(QStringLiteral("Failed to bind OpenGL vertex buffer."));
+		renderer->throwException(QStringLiteral("Failed to bind OpenGL vertex buffer (OpenGLImagePrimitive initialization)."));
 	_vertexBuffer.allocate(4 * sizeof(Point2));
 	_vertexBuffer.release();
 
@@ -141,7 +141,7 @@ void OpenGLImagePrimitive::renderWindow(SceneRenderer* renderer, const Point2& p
 
 	if(vpRenderer->glformat().majorVersion() >= 3) {
 		if(!_vertexBuffer.bind())
-			renderer->throwException(QStringLiteral("Failed to bind OpenGL vertex buffer."));
+			renderer->throwException(QStringLiteral("Failed to bind OpenGL vertex buffer (OpenGLImagePrimitive rendering)."));
 
 		// Set up look-up table for texture coordinates.
 		static const QVector2D uvcoords[] = {{0,0}, {1,0}, {0,1}, {1,1}};

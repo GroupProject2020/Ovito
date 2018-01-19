@@ -212,6 +212,14 @@ protected:
 	/// Makes the renderer's GL context current.
 	void makeContextCurrent();
 
+	/// This is called during rendering whenever the rendering process has been temporarily 
+	/// interrupted by an event loop and before rendering is resumed. It gives the renderer 
+	/// the opportunity to restore the active OpenGL context.
+	virtual void resumeRendering() override {
+		if(!isBoundingBoxPass())
+			rebindVAO();
+	}
+
 	/// Returns the supersampling level to use.
 	virtual int antialiasingLevelInternal() { return 1; }
 

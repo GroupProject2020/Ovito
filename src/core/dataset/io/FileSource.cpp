@@ -332,7 +332,7 @@ SharedFuture<PipelineFlowState> FileSource::requestFrame(int frame)
 ******************************************************************************/
 Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 {
-//	qDebug() << "FileSource::requestFrameInternal: called for frame" << frame;
+	qDebug() << "FileSource::requestFrameInternal: called for frame" << frame;
 
 	// First request the list of source frames and wait until it becomes available.
 	return requestFrameList()
@@ -457,7 +457,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 		//    valid pipeline state with an error code.
 		//
 		.then_future(executor(), [this, frame](Future<PipelineFlowState> future) {
-//					qDebug() << "FileSource::requestFrameInternal: post-processing results of future" << future.sharedState().get();
+				//qDebug() << "FileSource::requestFrameInternal: post-processing results of future" << future.sharedState().get() << " (frame" << frame << ")";
 				OVITO_ASSERT(future.isFinished());
 				OVITO_ASSERT(!future.isCanceled());
 				try {

@@ -228,6 +228,11 @@ protected:
 	///       visible in the interactive viewports.
 	virtual void renderInteractiveContent() {}
 
+	/// \brief This is called during rendering whenever the rendering process has been temporarily 
+	///        interrupted by an event loop and before rendering is resumed. It gives the renderer 
+	///        the opportunity to restore any state that must be active (e.g. used by the OpenGL renderer).
+	virtual void resumeRendering() {}
+
 	/// \brief Renders the visual representation of the modifiers.
 	void renderModifiers(bool renderOverlay);
 

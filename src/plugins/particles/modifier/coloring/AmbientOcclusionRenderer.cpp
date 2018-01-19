@@ -132,7 +132,7 @@ void AmbientOcclusionRenderer::endFrame(bool renderSuccessful)
 ******************************************************************************/
 void AmbientOcclusionRenderer::endRender()
 {
-	_framebufferObject.reset();
+	_framebufferObject.reset();	
 	_offscreenContext.reset();
 	OpenGLSceneRenderer::endRender();
 }

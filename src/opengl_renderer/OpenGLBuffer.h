@@ -58,8 +58,11 @@ public:
 					throw Exception(QStringLiteral("Failed to create OpenGL vertex buffer."));
 				_buffer.setUsagePattern(usagePattern);
 			}
-			if(!_buffer.bind())
+			if(!_buffer.bind()) {
+				qWarning() << "QOpenGLBuffer::bind() failed in function OpenGLBuffer::create()";
+				qWarning() << "Parameters: usagePattern =" << usagePattern << "elementCount =" << elementCount << "verticesPerElement =" << verticesPerElement;
 				throw Exception(QStringLiteral("Failed to bind OpenGL vertex buffer."));
+			}
 			_buffer.allocate(sizeof(T) * _elementCount * _verticesPerElement);
             OVITO_REPORT_OPENGL_ERRORS();
 			_buffer.release();
@@ -95,8 +98,11 @@ public:
 		OVITO_ASSERT(isCreated());
 		if(elementCount() == 0)
 			return nullptr;
-		if(!_buffer.bind())
+		if(!_buffer.bind()) {
+			qWarning() << "QOpenGLBuffer::bind() failed in function OpenGLBuffer::map()";
+			qWarning() << "Parameters: access =" << access << "elementCount =" << _elementCount << "verticesPerElement =" << _verticesPerElement;
 			throw Exception(QStringLiteral("Failed to bind OpenGL vertex buffer."));
+		}
 		T* data = static_cast<T*>(_buffer.map(access));
 		if(!data)
 			throw Exception(QStringLiteral("Failed to map OpenGL vertex buffer to memory."));
@@ -121,8 +127,11 @@ public:
 		OVITO_ASSERT(_elementCount >= 0);
 		OVITO_ASSERT(_verticesPerElement >= 1);
 
-		if(!_buffer.bind())
+		if(!_buffer.bind()) {
+			qWarning() << "QOpenGLBuffer::bind() failed in function OpenGLBuffer::fill()";
+			qWarning() << "Parameters: elementCount =" << _elementCount << "verticesPerElement =" << _verticesPerElement;
 			throw Exception(QStringLiteral("Failed to bind OpenGL vertex buffer."));
+		}
 		if(_verticesPerElement == 1 && std::is_same<T,U>::value) {
 			_buffer.write(0, data, _elementCount * sizeof(T));
 		}
@@ -152,8 +161,11 @@ public:
 		OVITO_ASSERT(_elementCount >= 0);
 		OVITO_ASSERT(_verticesPerElement >= 1);
 
-		if(!_buffer.bind())
+		if(!_buffer.bind()) {
+			qWarning() << "QOpenGLBuffer::bind() failed in function OpenGLBuffer::fillConstant()";
+			qWarning() << "Parameters: value =" << static_cast<T>(value) << "elementCount =" << _elementCount << "verticesPerElement =" << _verticesPerElement;
 			throw Exception(QStringLiteral("Failed to bind OpenGL vertex buffer."));
+		}
 		if(_elementCount) {
 			T* bufferData = static_cast<T*>(_buffer.map(QOpenGLBuffer::WriteOnly));
 			OVITO_CHECK_POINTER(bufferData);
@@ -171,8 +183,11 @@ public:
 		OVITO_ASSERT(isCreated());
 		OVITO_ASSERT(type != GL_FLOAT || (sizeof(T) == sizeof(GLfloat)*tupleSize && stride == 0) || sizeof(T) == stride);
 		OVITO_ASSERT(type != GL_INT || (sizeof(T) == sizeof(GLint)*tupleSize && stride == 0) || sizeof(T) == stride);
-		if(!_buffer.bind())
+		if(!_buffer.bind()) {
+			qWarning() << "QOpenGLBuffer::bind() failed in function OpenGLBuffer::bind()";
+			qWarning() << "Parameters: attributeName =" << attributeName << "elementCount =" << _elementCount << "verticesPerElement =" << _verticesPerElement << "type =" << type << "offset =" << offset << "tupleSize =" << tupleSize << "stride =" << stride;
 			throw Exception(QStringLiteral("Failed to bind OpenGL vertex buffer."));
+		}
 		if(stride == 0) stride = sizeof(T);
 		OVITO_CHECK_OPENGL(shader->enableAttributeArray(attributeName));
 		OVITO_CHECK_OPENGL(shader->setAttributeBuffer(attributeName, type, offset, tupleSize, stride));
