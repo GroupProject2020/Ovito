@@ -332,7 +332,7 @@ SharedFuture<PipelineFlowState> FileSource::requestFrame(int frame)
 ******************************************************************************/
 Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 {
-	qDebug() << "FileSource::requestFrameInternal: called for frame" << frame;
+//	qDebug() << "FileSource::requestFrameInternal: called for frame" << frame;
 
 	// First request the list of source frames and wait until it becomes available.
 	return requestFrameList()
@@ -675,17 +675,19 @@ bool FileSource::referenceEvent(RefTarget* source, ReferenceEvent* event)
 {
 	if(event->type() == ReferenceEvent::TargetChanged && dataObjects().contains(static_cast<DataObject*>(source))) {
 		if(_handOverInProgress) {
-			// Block target changed messages from subobjects while data hand-over is in progress.
+			// Block TargetChanged messages from sub-objects while a data hand-over is in progress.
 			return false;
 		}
 		else if(!event->sender()->isBeingLoaded()) {
-			// Whenever the user changes the subobjects, update the pipeline state stored in the cache.
-			PipelineFlowState state = getPipelineCache();
+			// Whenever the user changes the sub-objects, update the pipeline state stored in the cache.
+			PipelineFlowState state = evaluatePreliminary();
 			state.clearObjects();
 			for(DataObject* o : dataObjects())
 				state.addObject(o);
 			state.cloneObjectsIfNeeded(false);
-			setPipelineCache(std::move(state));
+			pipelineCache().insert(std::move(state), this);
+			// Also inform the pipeline that we have a new preliminary input state.
+			notifyDependents(ReferenceEvent::PreliminaryStateAvailable);
 		}
 	}
 

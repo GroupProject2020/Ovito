@@ -56,12 +56,11 @@ ObjectNode::~ObjectNode()
 ******************************************************************************/
 void ObjectNode::invalidatePipelineCache()
 {
-//	qDebug() << "ObjectNode::invalidatePipelineCache()";
-	
 	// Invalidate data caches.
-	_pipelineDataCache.setStateValidity(TimeInterval::empty());
-	_pipelineDisplayCache.setStateValidity(TimeInterval::empty());
-	_pipelinePreliminaryCache.setStateValidity(TimeInterval::empty());
+	_pipelineDataCache.clear();
+	_pipelineDisplayCache.invalidate();	// Do not completely discard these cached objects, 
+										// because we might be able to re-use the transformed data objects. 
+	_pipelinePreliminaryCache.clear();
 
 	// Also mark the cached bounding box of this node as invalid.
 	invalidateBoundingBox();
@@ -74,14 +73,14 @@ const PipelineFlowState& ObjectNode::evaluatePipelinePreliminary(bool includeDis
 {
 	TimePoint time = dataset()->animationSettings()->time();
 
-	// First check if our real caches are up to date.
+	// First check if our real caches can serve the request.
 	if(includeDisplayObjects) {
-		if(_pipelineDisplayCache.stateValidity().contains(time))
-			return _pipelineDisplayCache;
+		if(_pipelineDisplayCache.contains(time))
+			return _pipelineDisplayCache.getAt(time);
 	}
 	else {
-		if(_pipelineDataCache.stateValidity().contains(time))
-			return _pipelineDataCache;
+		if(_pipelineDataCache.contains(time))
+			return _pipelineDataCache.getAt(time);
 	}
 
 	// If not, check if our preliminary state cache is filled.
@@ -106,11 +105,9 @@ const PipelineFlowState& ObjectNode::evaluatePipelinePreliminary(bool includeDis
 ******************************************************************************/
 SharedFuture<PipelineFlowState> ObjectNode::evaluatePipeline(TimePoint time)
 {
-//	qDebug() << "ObjectNode::evaluatePipeline(): cache:" << _pipelineDataCache.stateValidity() << "time=" << time;
-	
 	// Check if we can immediately serve the request from the internal cache.
-	if(_pipelineDataCache.stateValidity().contains(time))
-		return _pipelineDataCache;
+	if(_pipelineDataCache.contains(time))
+		return _pipelineDataCache.getAt(time);
 
 	// Without a data provider, we cannot serve any requests.
 	if(!dataProvider())
@@ -119,16 +116,13 @@ SharedFuture<PipelineFlowState> ObjectNode::evaluatePipeline(TimePoint time)
 	// Evaluate the pipeline and store the obtained results in the cache before returning them to the caller.
 	return dataProvider()->evaluate(time)
 		.then(executor(), [this, time](const PipelineFlowState& state) {
-//			qDebug() << "ObjectNode::evaluatePipeline: finished:" << state.stateValidity();
 
-			// The pipeline should never return a state without proper validity.
+			// The pipeline should never return a state without proper validity interval.
 			OVITO_ASSERT(state.stateValidity().contains(time));
 
 			// We maintain a data cache for the current animation time.
-			if(state.stateValidity().contains(dataset()->animationSettings()->time())) {
-//				qDebug() << "ObjectNode::evaluatePipeline: caching:" << state.stateValidity();
-				_pipelineDataCache = state;
-				updateDisplayObjectList();
+			if(_pipelineDataCache.insert(state, this)) {
+				updateDisplayObjectList(dataset()->animationSettings()->time());
 			}
 
 			// Simply forward the pipeline results to the caller by default.
@@ -143,8 +137,8 @@ SharedFuture<PipelineFlowState> ObjectNode::evaluatePipeline(TimePoint time)
 SharedFuture<PipelineFlowState> ObjectNode::evaluateRenderingPipeline(TimePoint time)
 {
 	// Check if we can immediately serve the request from the internal cache.
-	if(_pipelineDisplayCache.stateValidity().contains(time))
-		return _pipelineDisplayCache;
+	if(_pipelineDisplayCache.contains(time))
+		return _pipelineDisplayCache.getAt(time);
 
 	// Evaluate the pipeline and store the obtained results in the cache before returning them to the caller.
 	return evaluatePipeline(time)
@@ -158,32 +152,30 @@ SharedFuture<PipelineFlowState> ObjectNode::evaluateRenderingPipeline(TimePoint 
 				for(DisplayObject* displayObj : dataObj->displayObjects()) {
 					OVITO_ASSERT(displayObj);
 					if(displayObj->isEnabled() && displayObj->doesPerformDataTransformation()) {
-						if(!results.isValid())
-							results = Future<PipelineFlowState>::createImmediate(state);
-						
-						results = results.then(displayObj->executor(), [this, time, displayObj, dataObj](PipelineFlowState&& state) {
-							return displayObj->transformData(time, dataObj, std::move(state), _pipelineDisplayCache, this);
-						});
+						if(!results.isValid()) {
+							results = displayObj->transformData(time, dataObj, PipelineFlowState(state), _pipelineDisplayCache.getStaleContents(), this);
+						}
+						else {
+							results = results.then(displayObj->executor(), [this, time, displayObj, dataObj](PipelineFlowState&& state) {
+								return displayObj->transformData(time, dataObj, std::move(state), _pipelineDisplayCache.getStaleContents(), this);
+							});
+						}
+						OVITO_ASSERT(results.isValid());
 					}
 				}
 			}
 
-			// We maintain a data cache for the current animation time.
-			if(state.stateValidity().contains(dataset()->animationSettings()->time())) {
-				if(!results.isValid()) {
-					_pipelineDisplayCache = state;
-				}
-				else {
-					// Wait for transformations to complete, then cache the results.	
-					results = results.then(executor(), [this](PipelineFlowState&& state) {
-						_pipelineDisplayCache = state;
-						return std::move(state);
-					});
-					OVITO_ASSERT(results.isValid());
-				}
-			}
-			if(!results.isValid())
+			// Maintain a data cache for pipeline states.
+			if(!results.isValid()) {
+				// Immediate storage in the cache:
+				_pipelineDisplayCache.insert(state, this);
 				results = Future<PipelineFlowState>::createImmediate(state);
+			}
+			else {
+				// Asynchronous storage in the cache:
+				_pipelineDisplayCache.insert(results, state.stateValidity(), this);
+				OVITO_ASSERT(results.isValid());
+			}
 
 			OVITO_ASSERT(results.isValid());
 			return results;
@@ -193,21 +185,23 @@ SharedFuture<PipelineFlowState> ObjectNode::evaluateRenderingPipeline(TimePoint 
 /******************************************************************************
 * Rebuilds the list of display objects maintained by the node.
 ******************************************************************************/
-void ObjectNode::updateDisplayObjectList()
+void ObjectNode::updateDisplayObjectList(TimePoint time)
 {
+	const PipelineFlowState& state = _pipelineDataCache.getAt(time);
+
 	// First discard those display objects which are no longer needed.
 	for(int i = displayObjects().size() - 1; i >= 0; i--) {
 		DisplayObject* displayObj = displayObjects()[i];
 		// Check if the display object is still being referenced by any of the objects
 		// that left the pipeline.
-		if(std::none_of(_pipelineDataCache.objects().begin(), _pipelineDataCache.objects().end(),
+		if(std::none_of(state.objects().begin(), state.objects().end(),
 				[displayObj](DataObject* obj) { return obj->displayObjects().contains(displayObj); })) {
 			_displayObjects.remove(this, PROPERTY_FIELD(displayObjects), i);
 		}
 	}
 
 	// Now add any new display objects.
-	for(const auto& dataObj : _pipelineDataCache.objects()) {
+	for(const auto& dataObj : state.objects()) {
 		for(DisplayObject* displayObj : dataObj->displayObjects()) {
 			OVITO_CHECK_OBJECT_POINTER(displayObj);
 			if(displayObjects().contains(displayObj) == false)
@@ -252,8 +246,9 @@ bool ObjectNode::referenceEvent(RefTarget* source, ReferenceEvent* event)
 
 			if(static_object_cast<DisplayObject>(source)->doesPerformDataTransformation()) {
 				
-				// Clear the display pipeline cache whenever an asynchronous display object changes.
-				_pipelineDisplayCache.setStateValidity(TimeInterval::empty());
+				// Invalidate the display pipeline cache whenever an asynchronous display object changes.
+				// Do not completely discard these cached objects, because we might be able to re-use the transformed data objects. 
+				_pipelineDisplayCache.invalidate();
 
 				// Trigger a pipeline re-evaluation.
 				notifyDependents(ReferenceEvent::TargetChanged);

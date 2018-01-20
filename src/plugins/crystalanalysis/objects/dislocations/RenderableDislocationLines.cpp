@@ -27,14 +27,6 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 IMPLEMENT_OVITO_CLASS(RenderableDislocationLines);
 DEFINE_PROPERTY_FIELD(RenderableDislocationLines, lineSegments);
 
-/******************************************************************************
-* Constructs an empty surface mesh object.
-******************************************************************************/
-RenderableDislocationLines::RenderableDislocationLines(DataSet* dataset, DataObject* sourceObject, unsigned int generatorDisplayObjectRevision) : 
-	TransformedDataObject(dataset, sourceObject, generatorDisplayObjectRevision)
-{
-}
-
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace

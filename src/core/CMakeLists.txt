@@ -69,9 +69,11 @@ SET(SourceFiles
 	dataset/scene/SelectionSet.cpp
 	dataset/data/DisplayObject.cpp
 	dataset/data/DataObject.cpp
+	dataset/data/TransformingDisplayObject.cpp
 	dataset/data/TransformedDataObject.cpp
 	dataset/data/camera/AbstractCameraObject.cpp
 	dataset/pipeline/PipelineFlowState.cpp
+	dataset/pipeline/PipelineCache.cpp
 	dataset/pipeline/PipelineObject.cpp
 	dataset/pipeline/CachingPipelineObject.cpp
 	dataset/pipeline/AsynchronousModifier.cpp

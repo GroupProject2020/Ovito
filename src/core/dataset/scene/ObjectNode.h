@@ -27,6 +27,7 @@
 #include <core/dataset/scene/SceneNode.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
 #include <core/dataset/pipeline/PipelineObject.h>
+#include <core/dataset/pipeline/PipelineCache.h>
 #include <core/dataset/data/DisplayObject.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
@@ -97,22 +98,23 @@ protected:
 	void invalidatePipelineCache();
 
 	/// Rebuilds the list of display objects maintained by the node.
-	void updateDisplayObjectList();
+	void updateDisplayObjectList(TimePoint time);
 
 private:
 
 	/// The object that generates the data to be displayed by this ObjectNode.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD(PipelineObject, dataProvider, setDataProvider);
 
-	/// The list of display objects that are responsible for displaying
-	/// the node's data in the viewports. This is for internal caching purposes only.
+	/// The transient list of display objects that render the node's data in the viewports. 
+	/// This list is for internal caching purposes only and is rebuilt every time the node's 
+	/// pipeline is newly evaluated.
 	DECLARE_VECTOR_REFERENCE_FIELD_FLAGS(DisplayObject, displayObjects, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
 	/// The cached results from the data pipeline at the current animation time.
-	PipelineFlowState _pipelineDataCache;
+	PipelineCache _pipelineDataCache;
 
 	/// The cached results from the data pipeline at the current animation time including the effect of display objects.
-	PipelineFlowState _pipelineDisplayCache;
+	PipelineCache _pipelineDisplayCache;
 
 	/// The cached results from an preliminary pipeline evaluation.
 	PipelineFlowState _pipelinePreliminaryCache;

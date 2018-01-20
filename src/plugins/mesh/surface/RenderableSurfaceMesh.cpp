@@ -32,9 +32,8 @@ DEFINE_PROPERTY_FIELD(RenderableSurfaceMesh, materialColors);
 /******************************************************************************
 * Constructs an empty surface mesh object.
 ******************************************************************************/
-RenderableSurfaceMesh::RenderableSurfaceMesh(DataSet* dataset, TriMesh surfaceMesh, TriMesh capPolygonsMesh, 
-			DataObject* sourceObject, unsigned int generatorDisplayObjectRevision) : 
-	TransformedDataObject(dataset, sourceObject, generatorDisplayObjectRevision),
+RenderableSurfaceMesh::RenderableSurfaceMesh(TransformingDisplayObject* creator, DataObject* sourceData, TriMesh surfaceMesh, TriMesh capPolygonsMesh) : 
+	TransformedDataObject(creator, sourceData),
 	_surfaceMesh(std::move(surfaceMesh)),
 	_capPolygonsMesh(std::move(capPolygonsMesh))
 {

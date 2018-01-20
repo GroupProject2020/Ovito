@@ -121,8 +121,10 @@ namespace Ovito {
 			class ObjectNode;
 			class PipelineFlowState;
 			class PipelineObject;
+			class PipelineCache;
 			class CachingPipelineObject;
 			class DisplayObject;
+			class TransformingDisplayObject;
 			class AsynchronousDisplayObject;
 			class StaticSource;
 			class ModifierDelegate;

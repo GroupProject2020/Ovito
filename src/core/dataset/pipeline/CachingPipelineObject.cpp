@@ -40,22 +40,9 @@ CachingPipelineObject::CachingPipelineObject(DataSet* dataset) : PipelineObject(
 ******************************************************************************/
 void CachingPipelineObject::invalidatePipelineCache()
 {
-//	qDebug() << "CachingPipelineObject::invalidatePipelineCache() this=" << this;
-	_outputCache.setStateValidity(TimeInterval::empty());
+	_pipelineCache.clear();
 	_inProgressEvalFuture.reset();
 	_inProgressEvalTime = TimeNegativeInfinity();
-}
-
-/******************************************************************************
-* Replaces the state in the data cache.
-******************************************************************************/
-void CachingPipelineObject::setPipelineCache(PipelineFlowState state)
-{
-	_outputCache = std::move(state);
-	if(performPreliminaryUpdateAfterEvaluation()) {
-//		qDebug() << "CachingPipelineObject::setPipelineCache: Notifying dependents of pipeline object" << this << " about preliminary state";
-		notifyDependents(ReferenceEvent::PreliminaryStateAvailable);
-	}
 }
 
 /******************************************************************************
@@ -63,17 +50,14 @@ void CachingPipelineObject::setPipelineCache(PipelineFlowState state)
 ******************************************************************************/
 SharedFuture<PipelineFlowState> CachingPipelineObject::evaluate(TimePoint time)
 {
-//	qDebug() << "CachingPipelineObject::evaluate: current cache:" << _outputCache.stateValidity() << "this=" << this << "time=" << time;
-
 	// Check if we can immediately serve the request from the internal cache.
-	if(_outputCache.stateValidity().contains(time))
-		return _outputCache;
+	if(_pipelineCache.contains(time))
+		return _pipelineCache.getAt(time);
 
 	// Check if there is already an evaluation in progress whose shared future we can return to the caller.
 	if(_inProgressEvalTime == time) {
 		SharedFuture<PipelineFlowState> sharedFuture = _inProgressEvalFuture.lock();
 		if(sharedFuture.isValid() && !sharedFuture.isCanceled()) {
-//			qDebug() << "CachingPipelineObject::evaluate: returning existing future (is finished=" << sharedFuture.isFinished() << ")";
 			return sharedFuture;
 		}
 	}
@@ -81,21 +65,23 @@ SharedFuture<PipelineFlowState> CachingPipelineObject::evaluate(TimePoint time)
 	// Let the subclass perform the actual pipeline evaluation.
 	Future<PipelineFlowState> stateFuture = evaluateInternal(time);
 
-	if(time == dataset()->animationSettings()->time()) {
-		// Cache the results before returning them to the caller.
-		stateFuture = stateFuture.then(executor(), [this](PipelineFlowState&& state) {
-//			qDebug() << "CachingPipelineObject::evaluate: Filling cache of pipeline object" << this << "; new validity:" << state.stateValidity();
-			setPipelineCache(state);
-			return std::move(state);
-		});
+	// Cache the results in our local pipeline cache.
+	if(_pipelineCache.insert(stateFuture, time, this)) {
+		// If the cache was updated, we also have a new preliminary state.
+		// Inform the pipeline about it.
+		if(performPreliminaryUpdateAfterEvaluation()) {
+			stateFuture = stateFuture.then(executor(), [this](PipelineFlowState&& state) {
+				notifyDependents(ReferenceEvent::PreliminaryStateAvailable);
+				return std::move(state);
+			});
+		}
 	}
+	OVITO_ASSERT(stateFuture.isValid());
 
 	// Keep a weak reference to the future to be able to serve several simultaneous requests.
 	SharedFuture<PipelineFlowState> sharedFuture(std::move(stateFuture));
 	_inProgressEvalFuture = sharedFuture;
 	_inProgressEvalTime = time;
-
-//	qDebug() << "CachingPipelineObject::evaluate: returning promise:" << sharedFuture.sharedState().get() << "this=" << this << "time=" << _inProgressEvalTime;
 
 	return sharedFuture;
 }

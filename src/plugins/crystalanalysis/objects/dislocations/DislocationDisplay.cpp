@@ -53,11 +53,11 @@ IMPLEMENT_OVITO_CLASS(DislocationPickInfo);
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-DislocationDisplay::DislocationDisplay(DataSet* dataset) : DisplayObject(dataset),
-	_lineWidth(1.0f), 
+DislocationDisplay::DislocationDisplay(DataSet* dataset) : TransformingDisplayObject(dataset),
+	_lineWidth(1.0), 
 	_shadingMode(ArrowPrimitive::NormalShading),
-	_burgersVectorWidth(0.6f), 
-	_burgersVectorScaling(3.0f),
+	_burgersVectorWidth(0.6), 
+	_burgersVectorScaling(3.0),
 	_burgersVectorColor(0.7, 0.7, 0.7),
 	_showBurgersVectors(false), 
 	_showLineDirections(false), 
@@ -74,17 +74,6 @@ Future<PipelineFlowState> DislocationDisplay::transformDataImpl(TimePoint time, 
 	PeriodicDomainDataObject* periodicDomainObj = dynamic_object_cast<PeriodicDomainDataObject>(dataObject);
 	if(!periodicDomainObj)
 		return std::move(flowState);
-
-	// Check if the cache state already contains a RenderableDislocationLines instance that we
-	// created earlier for the same input object. If yes, we can immediately return it.
-	for(DataObject* o : cachedState.objects()) {
-		if(RenderableDislocationLines* renderableLines = dynamic_object_cast<RenderableDislocationLines>(o)) {
-			if(renderableLines->sourceDataObject() == dataObject && renderableLines->displayObject() == this) {
-				flowState.addObject(renderableLines);
-				return std::move(flowState);
-			}
-		}
-	}
 
 	// Get the simulation cell.
 	SimulationCellObject* cellObject = periodicDomainObj->domain();
@@ -136,8 +125,7 @@ Future<PipelineFlowState> DislocationDisplay::transformDataImpl(TimePoint time, 
 	}
 
 	// Create output RenderableDislocationLines object.
-	OORef<RenderableDislocationLines> renderableLines = new RenderableDislocationLines(dataset(), dataObject);
-	renderableLines->setDisplayObject(this);
+	OORef<RenderableDislocationLines> renderableLines = new RenderableDislocationLines(this, dataObject);
 	renderableLines->setLineSegments(std::move(outputSegments));
 	flowState.addObject(renderableLines);
 	

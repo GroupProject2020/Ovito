@@ -23,7 +23,7 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <core/dataset/data/DisplayObject.h>
+#include <core/dataset/data/TransformingDisplayObject.h>
 #include <core/dataset/data/VersionedDataObjectRef.h>
 #include <core/rendering/ParticlePrimitive.h>
 #include <core/rendering/ArrowPrimitive.h>
@@ -90,7 +90,7 @@ private:
 /**
  * \brief A display object for the dislocation lines.
  */
-class OVITO_CRYSTALANALYSIS_EXPORT DislocationDisplay : public DisplayObject
+class OVITO_CRYSTALANALYSIS_EXPORT DislocationDisplay : public TransformingDisplayObject
 {
 	Q_OBJECT
 	OVITO_CLASS(DislocationDisplay)

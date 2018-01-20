@@ -61,7 +61,7 @@ public:
 	virtual bool doesPerformDataTransformation() const { return false; }
 
 	/// Lets the display object transform a data object in preparation for rendering.
-	Future<PipelineFlowState> transformData(TimePoint time, DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState, ObjectNode* contextNode);
+	virtual Future<PipelineFlowState> transformData(TimePoint time, DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState, ObjectNode* contextNode);
 
 	/// \brief Computes the view-independent bounding box of the given data object.
 	/// \param time The animation time for which the bounding box should be computed.
@@ -79,9 +79,7 @@ public:
 	virtual bool showSelectionMarker() { return true; }
 
 	/// \brief Returns a structure that describes the current status of the display object.
-	virtual PipelineStatus status() const {
-		return _activeTransformationsCount > 0 ? PipelineStatus(PipelineStatus::Pending) : _status; 
-	}
+	virtual PipelineStatus status() const { return _status; }
 
 	/// \brief Sets the current status of the display object.
 	void setStatus(const PipelineStatus& status);
@@ -96,11 +94,6 @@ public:
 	/// \undoable
 	void setObjectTitle(const QString& title) { setTitle(title); }
 
-protected:
-	
-	/// Lets the display object transform a data object in preparation for rendering.
-	virtual Future<PipelineFlowState> transformDataImpl(TimePoint time, DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState, ObjectNode* contextNode);
-	
 private:
 
 	/// Flag that indicates whether the modifier is enabled.
@@ -111,9 +104,6 @@ private:
 
 	/// The current status of this display object.
 	PipelineStatus _status;
-	
-	/// The number of data transformations that are currently in progress.
-	int _activeTransformationsCount = 0;
 };
 
 /**

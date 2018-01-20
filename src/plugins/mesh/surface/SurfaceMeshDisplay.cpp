@@ -54,7 +54,7 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(SurfaceMeshDisplay, capTransparencyController
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-SurfaceMeshDisplay::SurfaceMeshDisplay(DataSet* dataset) : DisplayObject(dataset),
+SurfaceMeshDisplay::SurfaceMeshDisplay(DataSet* dataset) : TransformingDisplayObject(dataset),
 	_surfaceColor(1, 1, 1), 
 	_capColor(0.8, 0.8, 1.0), 
 	_showCap(true), 
@@ -71,11 +71,10 @@ SurfaceMeshDisplay::SurfaceMeshDisplay(DataSet* dataset) : DisplayObject(dataset
 void SurfaceMeshDisplay::propertyChanged(const PropertyFieldDescriptor& field)
 {
 	if(field == PROPERTY_FIELD(smoothShading) || field == PROPERTY_FIELD(reverseOrientation)) {
-		// Increment internal object revision number each time a parameter changes
-		// that requires a re-generation of the cached RenderableSurfaceMesh.
-		_revisionNumber++;
+		// This kind of parameter change triggers a regeneration of the cached RenderableSurfaceMesh.
+		invalidateTransformedObjects();
 	}
-	DisplayObject::propertyChanged(field);
+	TransformingDisplayObject::propertyChanged(field);
 }
 
 /******************************************************************************
@@ -87,17 +86,6 @@ Future<PipelineFlowState> SurfaceMeshDisplay::transformDataImpl(TimePoint time, 
 	SurfaceMesh* surfaceMeshObj = dynamic_object_cast<SurfaceMesh>(dataObject);
 	if(!surfaceMeshObj)
 		return std::move(flowState);
-
-	// Check if the cache state already contains a RenderableSurfaceMesh that we
-	// created earlier for the same input surface mesh. If yes, we can immediately return it.
-	for(DataObject* o : cachedState.objects()) {
-		if(RenderableSurfaceMesh* renderableMesh = dynamic_object_cast<RenderableSurfaceMesh>(o)) {
-			if(renderableMesh->sourceDataObject() == dataObject && renderableMesh->displayObject() == this && renderableMesh->generatorDisplayObjectRevision() == _revisionNumber) {
-				flowState.addObject(renderableMesh);
-				return std::move(flowState);
-			}
-		}
-	}
 
 	// Get the simulation cell.
 	SimulationCellObject* cellObject = surfaceMeshObj->domain();
@@ -115,8 +103,7 @@ Future<PipelineFlowState> SurfaceMeshDisplay::transformDataImpl(TimePoint time, 
 			UndoSuspender noUndo(this);
 
 			// Output the computed mesh as a RenderableSurfaceMesh.
-			OORef<RenderableSurfaceMesh> renderableMesh = new RenderableSurfaceMesh(dataset(), std::move(surfaceMesh), std::move(capPolygonsMesh), dataObject, _revisionNumber);
-			renderableMesh->setDisplayObject(this);
+			OORef<RenderableSurfaceMesh> renderableMesh = new RenderableSurfaceMesh(this, dataObject, std::move(surfaceMesh), std::move(capPolygonsMesh));
 			flowState.addObject(renderableMesh);
 			return std::move(flowState);
 		});

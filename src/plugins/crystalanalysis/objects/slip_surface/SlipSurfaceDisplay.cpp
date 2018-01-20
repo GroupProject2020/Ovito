@@ -44,7 +44,7 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(SlipSurfaceDisplay, surfaceTransparencyContro
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-SlipSurfaceDisplay::SlipSurfaceDisplay(DataSet* dataset) : DisplayObject(dataset),
+SlipSurfaceDisplay::SlipSurfaceDisplay(DataSet* dataset) : TransformingDisplayObject(dataset),
 	_smoothShading(false)
 {
 	setSurfaceTransparencyController(ControllerManager::createFloatController(dataset));
@@ -56,11 +56,10 @@ SlipSurfaceDisplay::SlipSurfaceDisplay(DataSet* dataset) : DisplayObject(dataset
 void SlipSurfaceDisplay::propertyChanged(const PropertyFieldDescriptor& field)
 {
 	if(field == PROPERTY_FIELD(smoothShading)) {
-		// Increment internal object revision number each time a parameter changes
-		// that requires a re-generation of the cached RenderableSurfaceMesh.
-		_revisionNumber++;
+		// This kind of parameter change triggers a regeneration of the cached RenderableSurfaceMesh.
+		invalidateTransformedObjects();
 	}
-	DisplayObject::propertyChanged(field);
+	TransformingDisplayObject::propertyChanged(field);
 }
 
 /******************************************************************************
@@ -70,21 +69,8 @@ Future<PipelineFlowState> SlipSurfaceDisplay::transformDataImpl(TimePoint time, 
 {
 	// Get the microstructure object.
 	MicrostructureObject* microstructureObj = dynamic_object_cast<MicrostructureObject>(dataObject);
-	
-	// Abort if necessary input is not available.
 	if(!microstructureObj)
 		return std::move(flowState);
-
-	// Check if the cache state already contains a RenderableSurfaceMesh that we
-	// created earlier for the same input surface mesh. If yes, we can immediately return it.
-	for(DataObject* o : cachedState.objects()) {
-		if(RenderableSurfaceMesh* renderableMesh = dynamic_object_cast<RenderableSurfaceMesh>(o)) {
-			if(renderableMesh->sourceDataObject() == dataObject && renderableMesh->displayObject() == this && renderableMesh->generatorDisplayObjectRevision() == _revisionNumber) {
-				flowState.addObject(renderableMesh);
-				return std::move(flowState);
-			}
-		}
-	}
 
 	// Get the simulation cell.
 	SimulationCellObject* cellObject = microstructureObj->domain();
@@ -126,9 +112,8 @@ Future<PipelineFlowState> SlipSurfaceDisplay::transformDataImpl(TimePoint time, 
 			}
 				
 			// Output the computed mesh as a RenderableSurfaceMesh.
-			OORef<RenderableSurfaceMesh> renderableMesh = new RenderableSurfaceMesh(dataset(), std::move(surfaceMesh), {}, dataObject, _revisionNumber);
+			OORef<RenderableSurfaceMesh> renderableMesh = new RenderableSurfaceMesh(this, dataObject, std::move(surfaceMesh), {});
 			renderableMesh->setMaterialColors(std::move(materialColors));
-			renderableMesh->setDisplayObject(this);
 			flowState.addObject(renderableMesh);
 			return std::move(flowState);
 		});

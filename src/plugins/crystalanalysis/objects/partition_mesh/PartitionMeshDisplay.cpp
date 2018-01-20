@@ -47,7 +47,7 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(PartitionMeshDisplay, surfaceTransparencyCont
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-PartitionMeshDisplay::PartitionMeshDisplay(DataSet* dataset) : DisplayObject(dataset),
+PartitionMeshDisplay::PartitionMeshDisplay(DataSet* dataset) : TransformingDisplayObject(dataset),
 	_surfaceColor(1, 1, 1),
 	_smoothShading(true),
 	_flipOrientation(false)
@@ -61,11 +61,10 @@ PartitionMeshDisplay::PartitionMeshDisplay(DataSet* dataset) : DisplayObject(dat
 void PartitionMeshDisplay::propertyChanged(const PropertyFieldDescriptor& field)
 {
 	if(field == PROPERTY_FIELD(smoothShading) || field == PROPERTY_FIELD(flipOrientation)) {
-		// Increment internal object revision number each time a parameter changes
-		// that requires a re-generation of the cached RenderableSurfaceMesh.
-		_revisionNumber++;
+		// This kind of parameter change triggers a regeneration of the cached RenderableSurfaceMesh.
+		invalidateTransformedObjects();
 	}
-	DisplayObject::propertyChanged(field);
+	TransformingDisplayObject::propertyChanged(field);
 }
 
 /******************************************************************************
@@ -88,21 +87,8 @@ Future<PipelineFlowState> PartitionMeshDisplay::transformDataImpl(TimePoint time
 {
 	// Get the partition mesh.
 	PartitionMesh* partitionMeshObj = dynamic_object_cast<PartitionMesh>(dataObject);
-	
-	// Abort if necessary input is not available.
 	if(!partitionMeshObj)
 		return std::move(flowState);
-
-	// Check if the cache state already contains a RenderableSurfaceMesh that we
-	// created earlier for the same input surface mesh. If yes, we can immediately return it.
-	for(DataObject* o : cachedState.objects()) {
-		if(RenderableSurfaceMesh* renderableMesh = dynamic_object_cast<RenderableSurfaceMesh>(o)) {
-			if(renderableMesh->sourceDataObject() == dataObject && renderableMesh->displayObject() == this && renderableMesh->generatorDisplayObjectRevision() == _revisionNumber) {
-				flowState.addObject(renderableMesh);
-				return std::move(flowState);
-			}
-		}
-	}
 
 	// Get the simulation cell.
 	SimulationCellObject* cellObject = partitionMeshObj->domain();
@@ -123,9 +109,8 @@ Future<PipelineFlowState> PartitionMeshDisplay::transformDataImpl(TimePoint time
 			UndoSuspender noUndo(this);
 
 			// Output the computed mesh as a RenderableSurfaceMesh.
-			OORef<RenderableSurfaceMesh> renderableMesh = new RenderableSurfaceMesh(dataset(), std::move(surfaceMesh), {}, dataObject, _revisionNumber);
+			OORef<RenderableSurfaceMesh> renderableMesh = new RenderableSurfaceMesh(this, dataObject, std::move(surfaceMesh), {});
 			renderableMesh->setMaterialColors(std::move(materialColors));
-			renderableMesh->setDisplayObject(this);
 			flowState.addObject(renderableMesh);
 			return std::move(flowState);
 		});

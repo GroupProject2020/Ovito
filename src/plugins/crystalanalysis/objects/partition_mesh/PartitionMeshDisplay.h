@@ -24,7 +24,7 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
-#include <core/dataset/data/DisplayObject.h>
+#include <core/dataset/data/TransformingDisplayObject.h>
 #include <core/dataset/data/VersionedDataObjectRef.h>
 #include <core/utilities/mesh/TriMesh.h>
 #include <core/utilities/mesh/HalfEdgeMesh.h>
@@ -38,7 +38,7 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 /**
  * \brief A display object for the PartitionMesh data object class.
  */
-class OVITO_CRYSTALANALYSIS_EXPORT PartitionMeshDisplay : public DisplayObject
+class OVITO_CRYSTALANALYSIS_EXPORT PartitionMeshDisplay : public TransformingDisplayObject
 {
 	Q_OBJECT
 	OVITO_CLASS(PartitionMeshDisplay)
@@ -127,11 +127,6 @@ protected:
 		ColorA,						// Surface color
 		VersionedDataObjectRef		// Cluster graph
 		> _geometryCacheHelper;
-
-	/// The revision counter of this display object.
-	/// The counter is increment every time the object's parameters change.
-	unsigned int _revisionNumber = 0;
-
 };
 
 }	// End of namespace

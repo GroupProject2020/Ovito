@@ -24,7 +24,7 @@
 
 #include <plugins/mesh/Mesh.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
-#include <core/dataset/data/DisplayObject.h>
+#include <core/dataset/data/TransformingDisplayObject.h>
 #include <core/dataset/data/VersionedDataObjectRef.h>
 #include <core/utilities/mesh/TriMesh.h>
 #include <core/utilities/mesh/HalfEdgeMesh.h>
@@ -37,7 +37,7 @@ namespace Ovito { namespace Mesh {
 /**
  * \brief A display object for the SurfaceMesh data object class.
  */
-class OVITO_MESH_EXPORT SurfaceMeshDisplay : public DisplayObject
+class OVITO_MESH_EXPORT SurfaceMeshDisplay : public TransformingDisplayObject
 {
 	Q_OBJECT
 	OVITO_CLASS(SurfaceMeshDisplay)
@@ -158,10 +158,6 @@ private:
 		ColorA,						// Surface color
 		ColorA						// Cap color
 		> _geometryCacheHelper;
-
-	/// The revision counter of this display object.
-	/// The counter is increment every time the object's parameters change.
-	unsigned int _revisionNumber = 0;
 };
 
 }	// End of namespace

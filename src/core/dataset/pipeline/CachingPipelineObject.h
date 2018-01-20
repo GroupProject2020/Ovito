@@ -24,6 +24,7 @@
 
 #include <core/Core.h>
 #include <core/utilities/concurrent/SharedFuture.h>
+#include <core/dataset/pipeline/PipelineCache.h>
 #include "PipelineObject.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
@@ -46,17 +47,17 @@ public:
 	virtual SharedFuture<PipelineFlowState> evaluate(TimePoint time) override;
 
 	/// \brief Returns the results of an immediate and preliminary evaluation of the data pipeline.
-	virtual PipelineFlowState evaluatePreliminary() override { return _outputCache; }
+	virtual PipelineFlowState evaluatePreliminary() override { return _pipelineCache.getStaleContents(); }
 
 	/// \brief Marks the state in the data cache as invalid.
 	void invalidatePipelineCache();
 
-	/// \brief Returns the state currently stored input the output cache.
-	const PipelineFlowState& getPipelineCache() const { return _outputCache; }
+	/// \brief Returns the internal output cache.
+	const PipelineCache& pipelineCache() const { return _pipelineCache; }
 
-	/// \brief Replaces the state in the data cache.
-	void setPipelineCache(PipelineFlowState state);
-		
+	/// \brief Returns the internal output cache.
+	PipelineCache& pipelineCache() { return _pipelineCache; }
+
 protected:
 
 	/// \brief Asks the object for the result of the data pipeline.
@@ -70,7 +71,7 @@ protected:
 private:
 
 	/// Cache for the data output of this pipeline object.
-	PipelineFlowState _outputCache;
+	PipelineCache _pipelineCache;
 
 	/// A weak reference to the future results of an ongoing evaluation of the pipeline.
 	WeakSharedFuture<PipelineFlowState> _inProgressEvalFuture;

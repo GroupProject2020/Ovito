@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,6 +25,7 @@
 #include <core/Core.h>
 #include <core/dataset/data/DataObject.h>
 #include <core/dataset/data/VersionedDataObjectRef.h>
+#include <core/dataset/data/TransformingDisplayObject.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 	
@@ -39,28 +40,30 @@ class OVITO_CORE_EXPORT TransformedDataObject : public DataObject
 	
 public:
 
-	/// \brief Constructor.
-	TransformedDataObject(DataSet* dataset, DataObject* sourceObject = nullptr, unsigned int generatorDisplayObjectRevision = 0) :
-		DataObject(dataset),
-		_sourceDataObject(sourceObject),
-		_generatorDisplayObjectRevision(generatorDisplayObjectRevision) {}
+	/// \brief Standard constructor.
+	TransformedDataObject(DataSet* dataset) : DataObject(dataset) {}
 
-	/// \brief Returns whether this object, when returned as an editable sub-object by another object,
-	///        should be displayed in the pipeline view.
-	///
-	/// Return false because this object cannot be edited.
+	/// \brief Initialization constructor.
+	TransformedDataObject(TransformingDisplayObject* creator, DataObject* sourceData) :
+		DataObject(creator->dataset()),
+		_sourceDataObject(sourceData),
+		_generatorDisplayObjectRevision(creator->revisionNumber()) {
+			setDisplayObject(creator);
+		}
+
+	/// Indicate that this transient data object cannot be edited.
 	virtual bool isSubObjectEditable() const override { return false; }
 
 private:
 
 	/// Stores a weak reference to + revision version number of the original DataObject 
-	/// from which this TransformedDataObject was derived. 
+	/// this TransformedDataObject was derived from. 
 	/// We use this detected changes to the source object and avoid unnecessary regeneration 
-	/// of the transient object.
+	/// of the transient data object.
 	DECLARE_RUNTIME_PROPERTY_FIELD(VersionedDataObjectRef, sourceDataObject, setSourceDataObject);
 
-	/// Stores a revision version number of the DisplayObject that created this TransformedDataObject. 
-	/// We use this detected changes to the DisplayObject's parameters that would require a re-generation of the
+	/// Stores a revision version number of the TransformingDisplayObject that created this TransformedDataObject. 
+	/// We use this detected changes to the TransformingDisplayObject's parameters that would require a re-generation of the
 	/// transient data object.
 	DECLARE_RUNTIME_PROPERTY_FIELD(unsigned int, generatorDisplayObjectRevision, setGeneratorDisplayObjectRevision);
 };

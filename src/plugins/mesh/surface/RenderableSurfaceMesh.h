@@ -39,9 +39,11 @@ class OVITO_MESH_EXPORT RenderableSurfaceMesh : public TransformedDataObject
 	
 public:
 
-	/// \brief Constructor.
-	Q_INVOKABLE RenderableSurfaceMesh(DataSet* dataset, TriMesh surfaceMesh = TriMesh(), TriMesh capPolygonsMesh = TriMesh(), 
-						DataObject* sourceObject = nullptr, unsigned int generatorDisplayObjectRevision = 0);
+	/// \brief Standard constructor.
+	Q_INVOKABLE RenderableSurfaceMesh(DataSet* dataset) : TransformedDataObject(dataset) {}
+
+	/// \brief Initialization constructor.
+	RenderableSurfaceMesh(TransformingDisplayObject* creator, DataObject* sourceData, TriMesh surfaceMesh, TriMesh capPolygonsMesh);
 
 private:
 	

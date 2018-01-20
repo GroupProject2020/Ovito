@@ -111,9 +111,6 @@ bool SceneRenderer::renderNode(SceneNode* node, const PromiseBase& promise)
 
 	if(ObjectNode* objNode = dynamic_object_cast<ObjectNode>(node)) {
 
-		if(!isInteractive())
-			qDebug() << "Rendering node" << node << "at time" << time() << "_isBoundingBoxPass=" << _isBoundingBoxPass;
-
 		// Do not render node if it is the view node of the viewport or
 		// if it is the target of the view node.
 		if(!viewport() || !viewport()->viewNode() || (viewport()->viewNode() != objNode && viewport()->viewNode()->lookatTargetNode() != objNode)) {
