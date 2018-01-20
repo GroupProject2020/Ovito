@@ -134,10 +134,10 @@ FileSourceImporter::FrameDataPtr VTKFileImporter::FrameLoader::loadFile(QFile& f
 		const char* line = stream.readLine();
 		if(sscanf(line, "%i%n", &vcount, &s) != 1 || vcount <= 2)
 			throw Exception(tr("Invalid polygon/cell definition in VTK file (line %1): %2").arg(stream.lineNumber()).arg(stream.lineString()));
-		unsigned int vindices[3];
+		int vindices[3];
 		for(int j = 0; j < vcount; j++) {
 			line += s;
-			if(sscanf(line, "%u%n", &vindices[std::min(j,2)], &s) != 1)
+			if(sscanf(line, "%i%n", &vindices[std::min(j,2)], &s) != 1)
 				throw Exception(tr("Invalid polygon/cell definition in VTK file (line %1): %2").arg(stream.lineNumber()).arg(stream.lineString()));
 			if(j >= 2) {
 				if(vindices[0] >= pointCount || vindices[1] >= pointCount || vindices[2] >= pointCount)

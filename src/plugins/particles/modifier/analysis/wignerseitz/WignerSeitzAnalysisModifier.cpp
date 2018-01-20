@@ -147,7 +147,7 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 
 	// Create array for atomic counting.
 	size_t arraySize = _results->occupancyNumbers()->size() * _results->occupancyNumbers()->componentCount();
-	std::vector<std::atomic_size_t> occupancyArray(arraySize);
+	std::vector<std::atomic_int> occupancyArray(arraySize);
 	for(auto& o : occupancyArray)
 		o.store(0, std::memory_order_relaxed);
 

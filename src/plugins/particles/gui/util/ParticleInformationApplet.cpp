@@ -99,7 +99,7 @@ void ParticleInformationApplet::openUtility(MainWindow* mainWindow, RolloutConta
 			}
 		}
 	}
-	catch(const Exception& ex) {}
+	catch(const Exception&) {}
 }
 
 /******************************************************************************

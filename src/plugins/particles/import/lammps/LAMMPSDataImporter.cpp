@@ -270,7 +270,7 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 				}
 
 				if(_atomStyle == AtomStyle_Atomic || _atomStyle == AtomStyle_Hybrid) {
-					for(size_t i = 0; i < natoms; i++, ++pos, ++atomType, ++atomId) {
+					for(size_t i = 0; i < (size_t)natoms; i++, ++pos, ++atomType, ++atomId) {
 						if(!setProgressValueIntermittent(i)) return {};
 						if(i != 0) stream.readLine();
 						bool invalidLine;
@@ -291,7 +291,7 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 					PropertyPtr chargeProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::ChargeProperty, true);
 					frameData->addParticleProperty(chargeProperty);
 					FloatType* charge = chargeProperty->dataFloat();
-					for(size_t i = 0; i < natoms; i++, ++pos, ++atomType, ++atomId, ++charge) {
+					for(size_t i = 0; i < (size_t)natoms; i++, ++pos, ++atomType, ++atomId, ++charge) {
 						if(!setProgressValueIntermittent(i)) return {};
 						if(i != 0) stream.readLine();
 						bool invalidLine;
@@ -312,7 +312,7 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 					PropertyPtr moleculeProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::MoleculeProperty, true);
 					frameData->addParticleProperty(moleculeProperty);
 					auto molecule = moleculeProperty->dataInt64();
-					for(size_t i = 0; i < natoms; i++, ++pos, ++atomType, ++atomId, ++molecule) {
+					for(size_t i = 0; i < (size_t)natoms; i++, ++pos, ++atomType, ++atomId, ++molecule) {
 						if(!setProgressValueIntermittent(i)) return {};
 						if(i != 0) stream.readLine();
 						bool invalidLine;
@@ -336,7 +336,7 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 					PropertyPtr moleculeProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::MoleculeProperty, true);
 					frameData->addParticleProperty(moleculeProperty);
 					auto molecule = moleculeProperty->dataInt64();
-					for(size_t i = 0; i < natoms; i++, ++pos, ++atomType, ++atomId, ++charge, ++molecule) {
+					for(size_t i = 0; i < (size_t)natoms; i++, ++pos, ++atomType, ++atomId, ++charge, ++molecule) {
 						if(!setProgressValueIntermittent(i)) return {};
 						if(i != 0) stream.readLine();
 						bool invalidLine;
@@ -360,7 +360,7 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 					PropertyPtr massProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::MassProperty, true);
 					frameData->addParticleProperty(massProperty);
 					FloatType* mass = massProperty->dataFloat();
-					for(size_t i = 0; i < natoms; i++, ++pos, ++atomType, ++atomId, ++radius, ++mass) {
+					for(size_t i = 0; i < (size_t)natoms; i++, ++pos, ++atomType, ++atomId, ++radius, ++mass) {
 						if(!setProgressValueIntermittent(i)) return {};
 						if(i != 0) stream.readLine();
 						bool invalidLine;
@@ -400,7 +400,7 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 			PropertyPtr velocityProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::VelocityProperty, true);
 			frameData->addParticleProperty(velocityProperty);
 
-			for(size_t i = 0; i < natoms; i++) {
+			for(size_t i = 0; i < (size_t)natoms; i++) {
 				if(!setProgressValueIntermittent(i)) return {};
 				stream.readLine();
 
@@ -483,7 +483,7 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 				bondTypeList->addTypeId(i);
 
 			setProgressMaximum(nbonds);
-			for(size_t i = 0; i < nbonds; i++) {
+			for(size_t i = 0; i < (size_t)nbonds; i++) {
 				if(!setProgressValueIntermittent(i)) return {};
 				stream.readLine();
 
@@ -492,7 +492,7 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 					throw Exception(tr("Invalid bond specification (line %1): %2").arg(stream.lineNumber()).arg(stream.lineString()));
 
 				size_t atomIndex1;
-    			if(atomId1 < 0 || atomId1 >= identifierProperty->size() || atomId1 != identifierProperty->getInt64(atomId1)) {
+    			if(atomId1 < 0 || atomId1 >= (qlonglong)identifierProperty->size() || atomId1 != identifierProperty->getInt64(atomId1)) {
 					auto iter = atomIdMap.find(atomId1);
 					if(iter == atomIdMap.end())
     					throw Exception(tr("Nonexistent atom ID encountered in line %1 of data file.").arg(stream.lineNumber()));
@@ -501,7 +501,7 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 				else atomIndex1 = atomId1;
 
 				size_t atomIndex2;
-    			if(atomId2 < 0 || atomId2 >= identifierProperty->size() || atomId2 != identifierProperty->getInt64(atomId2)) {
+    			if(atomId2 < 0 || atomId2 >= (qlonglong)identifierProperty->size() || atomId2 != identifierProperty->getInt64(atomId2)) {
 					auto iter = atomIdMap.find(atomId2);
 					if(iter == atomIdMap.end())
     					throw Exception(tr("Nonexistent atom ID encountered in line %1 of data file.").arg(stream.lineNumber()));

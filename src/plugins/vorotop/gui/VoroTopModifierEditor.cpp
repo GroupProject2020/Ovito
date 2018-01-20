@@ -45,7 +45,6 @@ void VoroTopModifierEditor::createUI(const RolloutInsertionParameters& rolloutPa
 	layout->setSpacing(4);
 
 	QGridLayout* gridlayout = new QGridLayout();
-	QGridLayout* sublayout;
 	gridlayout->setContentsMargins(4,4,4,4);
 	gridlayout->setSpacing(4);
 	gridlayout->setColumnStretch(1, 1);
