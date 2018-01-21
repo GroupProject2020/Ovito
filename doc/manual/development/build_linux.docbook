@@ -30,7 +30,7 @@
          <row>
           <entry>Ubuntu</entry>
           <entry>
-<screen><command>sudo apt-get install build-essential git cmake-curses-gui qt5-default libboost-dev libqt5scintilla2-dev \
+<screen><command>sudo apt-get install build-essential git cmake-curses-gui qt5-default libqt5svg5-dev libboost-dev libqt5scintilla2-dev \
                      libavcodec-dev libavdevice-dev libavfilter-dev libavformat-dev libavresample-dev \
                      libavutil-dev libswscale-dev libnetcdf-dev libhdf5-dev libhdf5-serial-dev \
                      libbotan1.10-dev libmuparser-dev libqwt-qt5-dev python3-dev \
@@ -44,7 +44,7 @@
            <entry>
 <screen><command>sudo zypper install git docbook_5 libxslt-tools cmake gcc-c++ \
                      libQt5Concurrent-devel libQt5Core-devel libQt5Gui-devel libQt5Network-devel libQt5DBus-devel \
-                     libQt5OpenGL-devel libQt5PrintSupport-devel libQt5Widgets-devel libQt5Xml-devel \
+                     libQt5OpenGL-devel libQt5PrintSupport-devel libQt5Widgets-devel libQt5Xml-devel libQt5Svg-devel \
                      libavutil-devel libavresample-devel libavfilter-devel libavcodec-devel libavdevice-devel \
                      netcdf-devel libbotan-devel muparser-devel python3-devel python3-numpy python3-matplotlib \
                      python3-Sphinx python3-qt5 boost-devel hdf5-devel libswscale-devel libqscintilla-qt5-devel \

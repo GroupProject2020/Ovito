@@ -10,6 +10,7 @@ RUN apt-get install -qy  cmake \
                          git \
                          build-essential \
                          qt5-default \
+                         libqt5svg5-dev \
                          libboost-dev \
                          libqt5scintilla2-dev \
                          libavcodec-dev \

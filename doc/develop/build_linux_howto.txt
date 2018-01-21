@@ -310,6 +310,16 @@ cp -d $HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbb.so.* $HOME/progs
 cp -d $HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbbmalloc.so.* $HOME/progs/ospray_install/lib/
 
 **************************************************************************
+How to rebuild the Docker images for the Gitlab registry:
+**************************************************************************
+mkdir docker_image
+cd docker_image
+ln -s $HOME/prj/ovito/doc/develop/docker/linux_build/Dockerfile .
+docker login registry.gitlab.com
+docker build -t registry.gitlab.com/stuko/ovito/linux_build .
+docker push registry.gitlab.com/stuko/ovito/linux_build
+
+**************************************************************************
 Set the following flags in the CMake configuration to build all features:
 **************************************************************************
 export LD_LIBRARY_PATH=$HOME/progs/libav/lib:$LD_LIBRARY_PATH
