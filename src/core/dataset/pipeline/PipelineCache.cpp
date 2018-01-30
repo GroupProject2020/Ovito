@@ -96,8 +96,8 @@ void PipelineCache::clear()
 ******************************************************************************/
 void PipelineCache::invalidate()
 {
-	_mostRecentState.mutableStateValidity().setEmpty();
-	_currentAnimState.clear();
+	_mostRecentState.clear();
+	_currentAnimState.mutableStateValidity().setEmpty();
 }
 
 /******************************************************************************
@@ -107,7 +107,7 @@ void PipelineCache::invalidate()
 ******************************************************************************/
 const PipelineFlowState& PipelineCache::getStaleContents() const
 {
-	return _mostRecentState;
+	return _currentAnimState;
 }
 
 OVITO_END_INLINE_NAMESPACE

@@ -422,6 +422,19 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 		.arg(microstructure->vertices().size())
 		.arg(segmentCount));
 
+#if 0
+	// Verify dislocation network.
+	for(Microstructure::Vertex* vertex : microstructure->vertices()) {
+		Vector3 sum = Vector3::Zero();
+		for(auto e = vertex->edges(); e != nullptr; e = e->nextVertexEdge()) {
+			if(e->isDislocation()) sum += e->burgersVector();
+		}
+		if(!sum.isZero())
+			qDebug() << "Detected violation of Burgers vector conservation at location" << vertex->pos() << "(" << vertex->countDislocationArms() << "arms; delta_b =" << sum << ")";
+
+	}
+#endif
+
 	return frameData;
 }
 
