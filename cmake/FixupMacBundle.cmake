@@ -8,24 +8,24 @@ IF(APPLE)
 
 	SET(QT_PLUGINS_DIR "${_qt5Core_install_prefix}/plugins")
 
-	# Install needed Qt plugins by copying directories from the qt installation
-	# One can cull what gets copied by using 'REGEX "..." EXCLUDE'
+	# Install needed Qt plugins by copying directories from the Qt installation
 	SET(plugin_dest_dir "${MACOSX_BUNDLE_NAME}.app/Contents/PlugIns")
 	SET(qtconf_dest_dir "${MACOSX_BUNDLE_NAME}.app/Contents/Resources")
-	INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/imageformats" DESTINATION ${plugin_dest_dir} COMPONENT runtime PATTERN "*_debug.dylib" EXCLUDE)
-	INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/platforms" DESTINATION ${plugin_dest_dir} COMPONENT runtime PATTERN "*_debug.dylib" EXCLUDE)
+	INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/imageformats" DESTINATION ${plugin_dest_dir} COMPONENT "runtime" PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
+	INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/platforms" DESTINATION ${plugin_dest_dir} COMPONENT "runtime" PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
+	INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/iconengines" DESTINATION ${plugin_dest_dir} COMPONENT "runtime" PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
 
 	# Install a qt.conf file.
 	# This inserts some cmake code into the install script to write the file
 	INSTALL(CODE "
 	    file(WRITE \"\${CMAKE_INSTALL_PREFIX}/${qtconf_dest_dir}/qt.conf\" \"[Paths]\\nPlugins = PlugIns/\")
-	    " COMPONENT runtime)
+	    " COMPONENT "runtime")
 
 	# Purge any previous version of the nested bundle to avoid errors during bundle fixup.
 	IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
 		INSTALL(CODE "
 			FILE(REMOVE_RECURSE \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App\")
-			" COMPONENT runtime)
+			" COMPONENT "runtime")
 	ENDIF()
 
 	# Use BundleUtilities to get all other dependencies for the application to work.
@@ -52,6 +52,7 @@ IF(APPLE)
 			\"\${CMAKE_INSTALL_PREFIX}/${OVITO_RELATIVE_PLUGINS_DIRECTORY}\" 
 			\"\${CMAKE_INSTALL_PREFIX}/${plugin_dest_dir}/imageformats\"
 			\"\${CMAKE_INSTALL_PREFIX}/${plugin_dest_dir}/platforms\"
+			\"\${CMAKE_INSTALL_PREFIX}/${plugin_dest_dir}/iconengines\"
 			/opt/local/lib)
 
 		# Returns the path that others should refer to the item by when the item is embedded inside a bundle.
@@ -82,14 +83,14 @@ IF(APPLE)
 		SET(BU_CHMOD_BUNDLE_ITEMS ON)	# Make copies of system libraries writable before install_name_tool tries to change them.
 		INCLUDE(BundleUtilities)
 		FIXUP_BUNDLE(\"\${APPS}\" \"\${BUNDLE_LIBS}\" \"\${DIRS}\" IGNORE_ITEM \"Python\")
-		" COMPONENT runtime)
+		" COMPONENT "runtime")
 
 	IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
 		# Remove __pycache__ files from installation bundle.
 		INSTALL(CODE "
 			MESSAGE(\"Removing __pycache__ files.\")
 			EXECUTE_PROCESS(COMMAND find \"\${CMAKE_INSTALL_PREFIX}\" -name __pycache__ -delete)
-			" COMPONENT runtime)
+			" COMPONENT "runtime")
 
 		# Create a nested bundle for 'ovitos'.
 		# This is to prevent the program icon from showing up in the dock when 'ovitos' is run.
@@ -106,12 +107,12 @@ IF(APPLE)
 				GET_FILENAME_COMPONENT(FILE_ENTRY_NAME \"\${FILE_ENTRY}\" NAME)
 				EXECUTE_PROCESS(COMMAND \"\${CMAKE_COMMAND}\" -E create_symlink \"../../../\${FILE_ENTRY_NAME}\" \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/Ovito.App/Contents/MacOS/\${FILE_ENTRY_NAME}\")
 			ENDFOREACH()
-		" COMPONENT runtime)
+		" COMPONENT "runtime")
 	ENDIF()	
 
 	# Sign bundle (starting from the inside out with all executables/libraries, 
 	# then the nested 'ovitos' bundle, finally the main bundle).
-	SET(SigningIdentity "Alexander Stukowski")
+	SET(SigningIdentity "Developer ID Application: Alexander Stukowski")
 	INSTALL(CODE "
 		CMAKE_POLICY(SET CMP0012 NEW)
 
@@ -144,6 +145,6 @@ IF(APPLE)
 		# Verify signing process:
 		EXECUTE_PROCESS(COMMAND codesign --verify --verbose --deep \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app\")
 		EXECUTE_PROCESS(COMMAND spctl --assess --type execute \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app\")
-		" COMPONENT runtime)
+		" COMPONENT "runtime")
 
 ENDIF()
