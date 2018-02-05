@@ -139,9 +139,10 @@ void CalculateDisplacementsModifier::DisplacementEngine::perform()
 				if(useMinimumImageConvention()) {
 					for(size_t k = 0; k < 3; k++) {
 						if(refCell().pbcFlags()[k]) {
-							if((*u + refCell().matrix().column(k)).squaredLength() < u->squaredLength())
+							while((*u + refCell().matrix().column(k)).squaredLength() < u->squaredLength())
 								*u += refCell().matrix().column(k);
-							else if((*u - refCell().matrix().column(k)).squaredLength() < u->squaredLength())
+
+							while((*u - refCell().matrix().column(k)).squaredLength() < u->squaredLength())
 								*u -= refCell().matrix().column(k);
 						}
 					}

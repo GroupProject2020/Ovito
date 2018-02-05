@@ -19,11 +19,10 @@
     This display object is responsible for visualizing per-particle vector quantities.
     
     The <link linkend="particles.modifiers.displacement_vectors">Displacement vectors</link> modifier, for example, 
-    calculates the displacement vector of each particle and stores it in the <literal>Displacement</literal>
-    property. To visualize the computed vectors as arrows, the modifier attaches a <emphasis>vector display object</emphasis>,
-    which newly appears under the "Display" section of the <link linkend="usage.modification_pipeline.pipeline_listbox">modification pipeline editor</link>.
-    The settings provided by this display object, which control the appearance of the vector arrows,
-    are described below.
+    stores the calculated displacement vectors in the <literal>Displacement</literal>
+    property associated with each particle. This property has an attached <emphasis>vector display</emphasis>,
+    which appears in the user interface under the "Display" section of the <link linkend="usage.modification_pipeline.pipeline_listbox">data pipeline editor</link> (see screenshot).
+    The checkbox next to the "Displacements" entry activates the display of the arrows in the viewports.
   </para>
   <para>
     By default all vector arrows have the same display color. It is possible to assign each vector an individual

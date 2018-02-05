@@ -113,11 +113,8 @@ void CalculateDisplacementsModifierEditor::createUI(const RolloutInsertionParame
 	layout->addSpacing(6);
 	layout->addWidget(statusLabel());
 
-	// Open a sub-editor for the vector display object.
-	new SubObjectParameterUI(this, PROPERTY_FIELD(CalculateDisplacementsModifier::vectorDisplay), rolloutParams.after(rollout));
-
 	// Open a sub-editor for the reference object.
-	new SubObjectParameterUI(this, PROPERTY_FIELD(CalculateDisplacementsModifier::referenceConfiguration), RolloutInsertionParameters().setTitle(tr("Reference")));
+	new SubObjectParameterUI(this, PROPERTY_FIELD(CalculateDisplacementsModifier::referenceConfiguration), rolloutParams.after(rollout).setTitle(tr("Reference")));
 
 	connect(this, &PropertiesEditor::contentsChanged, this, &CalculateDisplacementsModifierEditor::onContentsChanged);
 }

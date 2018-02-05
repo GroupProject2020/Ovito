@@ -111,7 +111,7 @@ Here, we accessed the :py:attr:`FileSource.num_frames <ovito.pipeline.FileSource
 frames the input trajectory contains.
 
 Keep in mind that a :py:class:`~ovito.pipeline.Pipeline` is a reusable object, which normally should be set up only once and 
-then used many times to process multiple frames or input files. Thus, adding modifiers to the pipeline *within* the loop is 
+then used many times to process multiple frames or input files. Thus, adding modifiers to the pipeline *inside* the for-loop is 
 wrong::
 
     # WRONG (!!!):
@@ -120,7 +120,7 @@ wrong::
         data = pipeline.compute(frame)
         ...
 
-Note how this loop would keep appending additional modifier instances to the same pipeline, making it longer and longer with every iteration.
+Note how this loop would keep appending additional modifiers to the same pipeline, making it longer and longer with every iteration.
 As a result, the computation of atomic strain values would be performed over and over again for the same data
 when :py:meth:`~ovito.pipeline.Pipeline.compute` is called. 
 Instead, the addition of the modifier should be performed exactly once *before* entering the loop::
