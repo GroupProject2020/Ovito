@@ -200,5 +200,14 @@ bool FileExporter::exportFrame(int frameNumber, TimePoint time, const QString& f
 	return true;
 }
 
+/******************************************************************************
+* Helper function that is called by sub-classes prior to file output in order to
+* activate the default "C" locale.
+******************************************************************************/
+void FileExporter::activateCLocale()
+{
+	std::setlocale(LC_ALL, "C");
+}
+
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

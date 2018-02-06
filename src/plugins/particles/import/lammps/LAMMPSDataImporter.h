@@ -90,6 +90,7 @@ public:
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
 	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
+		activateCLocale();
 		return std::make_shared<FrameLoader>(frame, localFilename, atomStyle());
 	}
 

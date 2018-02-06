@@ -82,6 +82,10 @@ public:
 	/// \throws Util::Exception if the export operation has failed due to an error.
 	virtual bool exportNodes(TaskManager& taskManager);
 
+	/// Helper function that is called by sub-classes prior to file output in order to
+	/// activate the default "C" locale.
+	static void activateCLocale();
+
 protected:
 
 	/// Initializes the object.

@@ -73,16 +73,19 @@ public:
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
 	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
+		activateCLocale();
 		return std::make_shared<FrameLoader>(frame, localFilename, useCustomColumnMapping(), customColumnMapping());
 	}
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
 	static std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename, bool useCustomColumnMapping, const InputColumnMapping& customColumnMapping) {
+		activateCLocale();
 		return std::make_shared<FrameLoader>(frame, localFilename, useCustomColumnMapping, customColumnMapping);
 	}
 
 	/// Creates an asynchronous frame discovery object that scans the input file for contained animation frames.
 	virtual std::shared_ptr<FileSourceImporter::FrameFinder> createFrameFinder(const QUrl& sourceUrl, const QString& localFilename) override {
+		activateCLocale();
 		return std::make_shared<FrameFinder>(sourceUrl, localFilename);
 	}
 

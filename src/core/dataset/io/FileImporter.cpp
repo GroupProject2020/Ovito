@@ -86,5 +86,14 @@ OORef<FileImporter> FileImporter::autodetectFileFormat(DataSet* dataset, const Q
 	return nullptr;
 }
 
+/******************************************************************************
+* Helper function that is called by sub-classes prior to file parsing in order to
+* activate the default "C" locale.
+******************************************************************************/
+void FileImporter::activateCLocale()
+{
+	std::setlocale(LC_ALL, "C");
+}
+
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

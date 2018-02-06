@@ -113,7 +113,7 @@ bool Application::initialize()
 	defaultQtMessageHandler = qInstallMessageHandler(qtMessageOutput);
 
 	// Activate default "C" locale, which will be used to parse numbers in strings.
-	std::setlocale(LC_NUMERIC, "C");
+	std::setlocale(LC_ALL, "C");
 
 	// Suppress console messages "qt.network.ssl: QSslSocket: cannot resolve ..."
 	qputenv("QT_LOGGING_RULES", "qt.network.ssl.warning=false");

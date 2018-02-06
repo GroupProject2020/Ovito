@@ -77,6 +77,7 @@ Future<LAMMPSDataImporter::LAMMPSAtomStyle> LAMMPSDataImporter::inspectFileHeade
 		.then(executor(), [this, frame](const QString& filename) {
 
 			// Start task that inspects the file header to determine the LAMMPS atom style.
+			activateCLocale();
 			FrameLoaderPtr inspectionTask = std::make_shared<FrameLoader>(frame, filename, atomStyle(), true);
 			return dataset()->container()->taskManager().runTaskAsync(inspectionTask)
 				.then([](const FileSourceImporter::FrameDataPtr& frameData) {

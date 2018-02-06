@@ -109,6 +109,10 @@ public:
 	/// \brief Tries to detect the format of the given file.
 	/// \return The importer class that can handle the given file. If the file format could not be recognized then NULL is returned.
 	static OORef<FileImporter> autodetectFileFormat(DataSet* dataset, const QString& localFile, const QUrl& sourceLocation = QUrl());
+
+	/// Helper function that is called by sub-classes prior to file parsing in order to
+	/// activate the default "C" locale.
+	static void activateCLocale();
 };
 
 OVITO_END_INLINE_NAMESPACE

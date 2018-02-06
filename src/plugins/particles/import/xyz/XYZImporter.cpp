@@ -96,6 +96,7 @@ Future<InputColumnMapping> XYZImporter::inspectFileHeader(const Frame& frame)
 		.then(executor(), [this, frame](const QString& filename) {
 
 			// Start task that inspects the file header to determine the number of data columns.
+			activateCLocale();
 			FrameLoaderPtr inspectionTask = std::make_shared<FrameLoader>(frame, filename);
 			return dataset()->container()->taskManager().runTaskAsync(inspectionTask)
 				.then([](const FileSourceImporter::FrameDataPtr& frameData) {

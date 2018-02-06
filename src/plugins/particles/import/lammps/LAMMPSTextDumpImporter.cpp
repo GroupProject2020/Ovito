@@ -70,6 +70,7 @@ Future<InputColumnMapping> LAMMPSTextDumpImporter::inspectFileHeader(const Frame
 		.then(executor(), [this, frame](const QString& filename) {
 
 			// Start task that inspects the file header to determine the contained data columns.
+			activateCLocale();
 			FrameLoaderPtr inspectionTask = std::make_shared<FrameLoader>(frame, filename);
 			return dataset()->container()->taskManager().runTaskAsync(inspectionTask)
 				.then([](const FileSourceImporter::FrameDataPtr& frameData) {
@@ -159,7 +160,7 @@ FileSourceImporter::FrameDataPtr LAMMPSTextDumpImporter::FrameLoader::loadFile(Q
 	// Open file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());
 	setProgressText(tr("Reading LAMMPS dump file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
-
+	
 	// Jump to byte offset.
 	if(frame().byteOffset != 0)
 		stream.seek(frame().byteOffset);
