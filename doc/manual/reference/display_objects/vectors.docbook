@@ -20,15 +20,19 @@
     
     The <link linkend="particles.modifiers.displacement_vectors">Displacement vectors</link> modifier, for example, 
     stores the calculated displacement vectors in the <literal>Displacement</literal>
-    property associated with each particle. This property has an attached <emphasis>vector display</emphasis>,
+    property associated with each particle. This property has a vector display object attached,
     which appears in the user interface under the "Display" section of the <link linkend="usage.modification_pipeline.pipeline_listbox">data pipeline editor</link> (see screenshot).
     The checkbox next to the "Displacements" entry activates the display of the arrows in the viewports.
   </para>
-  <para>
-    By default all vector arrows have the same display color. It is possible to assign each vector an individual
-    color by setting the <literal>Vector Color</literal> particle property. This can be done using the
-    <link linkend="particles.modifiers.compute_property">Compute Property</link> modifier.
-  </para>
+
+   <simplesect>
+    <title>Arrow coloring</title>
+    <para>
+      By default, all arrows are shown with the uniform color set in this parameter panel. If desired, you can give each vector arrow an individual
+      color by assigning the <literal>Vector Color</literal> particle property, for example using the <link linkend="particles.modifiers.color_coding">Color Coding</link> or
+      <link linkend="particles.modifiers.compute_property">Compute Property</link> modifiers.
+    </para>
+   </simplesect>
 
    <simplesect>
     <title>Parameters</title>
@@ -42,19 +46,10 @@
         </listitem>
       </varlistentry>
 
-<!--
-      <varlistentry>
-        <term>Rendering quality</term>
-        <listitem>
-          <para>Selects the OpenGL rendering method used to display the arrows.</para>
-        </listitem>
-      </varlistentry>
--->
-
       <varlistentry>
         <term>Scaling factor</term>
         <listitem>
-          <para>Vectors are scaled by this factor for display. The default is 1.</para>
+          <para>Vectors are scaled by this factor for visualization purposes. The default value is 1.</para>
         </listitem>
       </varlistentry>
 
@@ -68,7 +63,7 @@
       <varlistentry>
         <term>Alignment</term>
         <listitem>
-          <para>Controls how arrows are positioned relative to the particles.</para>
+          <para>Controls how arrows are positioned relative to the particles they are associated with.</para>
         </listitem>
       </varlistentry>
 
@@ -76,8 +71,8 @@
         <term>Arrow color</term>
         <listitem>
           <para>The display color of arrows. This uniform color is used when the <literal>Vector Color</literal>
-          particle property is not defined. Otherwise the per-particle colors defined by the <literal>Vector Color</literal> property 
-          are used when rendering vector arrows.</para>
+          particle property is not present. Otherwise the per-particle colors defined by the <literal>Vector Color</literal> property 
+          are used to render the arrows.</para>
         </listitem>
       </varlistentry>
 
