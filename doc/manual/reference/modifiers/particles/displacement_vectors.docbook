@@ -16,14 +16,17 @@
        <imagedata fileref="images/modifiers/displacement_vectors_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
   
-  This modifier calculates the displacement vectors of particles from two 
-  snapshots of the system: a <emphasis>reference</emphasis> (or initial) configuration and a <emphasis>current</emphasis> configuration. 
-  The displacement vector of a particle is computed by subtracting its reference 
-  position from its current position.</para>
+    This modifier calculates the displacement vectors of particles from two 
+    snapshots of the system: a <emphasis>reference</emphasis> (or initial) configuration and a <emphasis>current</emphasis> configuration. 
+    The displacement vector of a particle is computed by subtracting its reference 
+    position from its current position.
+  </para>
 
-  <para>The modifier considers the currently present particle positions as the current configuration. 
-  The reference particle positions are by default taken from frame 0 of the loaded animation sequence. 
-  Alternatively, the modifier supports loading the reference particle positions from a separate data file.</para>
+  <para>
+    The modifier considers the currently present particle positions as the current configuration. 
+    The reference particle positions are by default taken from frame 0 of the loaded animation sequence. 
+    Alternatively, the modifier supports loading the reference particle positions from a separate data file.
+  </para>
 
   <simplesect>
     <title>Modifier output</title>
@@ -47,10 +50,10 @@
       If desired, OVITO allows you to pick an animation frame other than 0 as reference.
     </para>
     <para>
-      Alternatively, you can let OVITO perform an incremental displacement calculation using 
+      Alternatively, you can let OVITO calculate incremental displacements using 
       the <emphasis>"Relative to current frame"</emphasis> option. In this mode, a sliding reference
-      configuration is used for the calculation, based on a relative time offset with respect to the current configuration.
-      Negative offset values correspond to a reference configuration preceding the current configuration
+      configuration is used, based on a relative time offset with respect to the current configuration.
+      Negative offsets correspond to a reference configuration preceding the current configuration
       in time. An offset of -1, for example, lets OVITO use the animation frame immediately preceding 
       the current frame as reference. Note that, in this case, displacements cannot be calculated at
       frame 0, because there is no preceding frame.
@@ -75,7 +78,7 @@
       codes reorder particles during a simulation run for performance reasons. If you forget to dump the particle IDs or atom IDs
       in addition to the positions during a simulation, you should be aware that OVITO may compute wrong displacement vectors because of
       an invalid default particle mapping. You can use the <link linkend="utilities.particle_inspection">Particle Inspection utility</link>
-      to check the presence of the <literal>Particle Identifier</literal> property after file import.
+      to check for the presence of the <literal>Particle Identifier</literal> property after file import.
     </para>
   </simplesect>
   
@@ -121,7 +124,7 @@
     <title>Minimum image convention</title>      
       <para>
         This option tells OVITO whether or not to use the <link xlink:href="https://en.wikipedia.org/wiki/Periodic_boundary_conditions#Practical_implementation:_continuity_and_the_minimum_image_convention">minimum image convention</link>
-        when calculating the displacement vectors in a system with periodic boundary condition.
+        when calculating the displacement vectors in a system with periodic boundary conditions.
         You should deactivate this option if you work with <emphasis>unwrapped</emphasis> particle coordinates. In this case
         OVITO assumes that particle trajectories are all continuous. On the other hand, if you work with 
         <emphasis>wrapped</emphasis> particle coordinates, this option should be turned on. The minimum image convention
@@ -143,7 +146,14 @@
   <simplesect>
   <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.CalculateDisplacementsModifier"><classname>CalculateDisplacementsModifier</classname> (Python API)</link>
+      <simplelist>
+      <member><link linkend="particles.modifiers.atomic_strain">Atomic strain modifier</link></member>
+      <member><link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.CalculateDisplacementsModifier"><classname>CalculateDisplacementsModifier</classname> (Python API)</link></member>
+      </simplelist>
+    </para>
+  
+    <para>
+      
     </para>
   </simplesect>  
   
