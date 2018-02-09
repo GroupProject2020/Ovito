@@ -47,7 +47,7 @@ public:
 		Frame() = default;
 
 		/// Initialization constructor.
-		Frame(const QUrl& url, qint64 offset = 0, int linenum = 0, const QDateTime& modTime = QDateTime(), const QString& name = QString())	:
+		Frame(const QUrl& url, qint64 offset = 0, int linenum = 1, const QDateTime& modTime = QDateTime(), const QString& name = QString())	:
 			sourceFile(url), byteOffset(offset), lineNumber(linenum), lastModificationTime(modTime), label(name) {}
 
 		/// The source file that contains the data of the animation frame.
@@ -57,7 +57,7 @@ public:
 		qint64 byteOffset = 0;
 
 		/// The line number in the source file where the frame data is stored, if the file has a text-based format.
-		int lineNumber = 0;
+		int lineNumber = 1;
 
 		/// The last modification time of the source file.
 		/// This is used to detect changes of the source file, which let the stored byte offset become invalid.
@@ -85,7 +85,7 @@ public:
 		/// Transfers the loaded data into a pipeline state structure.
 		/// This function is called by the system from the main thread after the asynchronous loading task
 		/// has finished. An implementation of this method should try to re-use any existing data objects.
-		virtual PipelineFlowState handOver(DataSet* dataset, const PipelineFlowState& existing, bool isNewFile) = 0;
+		virtual PipelineFlowState handOver(DataSet* dataset, const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource) = 0;
 
 		/// Returns the status of the load operation.
 		const PipelineStatus& status() const { return _status; }
@@ -241,5 +241,3 @@ OVITO_CORE_EXPORT LoadStream& operator>>(LoadStream& stream, FileSourceImporter:
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

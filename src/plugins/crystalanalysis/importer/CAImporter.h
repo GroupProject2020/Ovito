@@ -108,7 +108,7 @@ protected:
 		
 		/// Inserts the loaded data into the provided pipeline state structure. This function is
 		/// called by the system from the main thread after the asynchronous loading task has finished.
-		virtual PipelineFlowState handOver(DataSet* dataset, const PipelineFlowState& existing, bool isNewFile) override;
+		virtual PipelineFlowState handOver(DataSet* dataset, const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource) override;
 
 		void addPattern(PatternInfo pattern) {
 			_patterns.push_back(std::move(pattern));

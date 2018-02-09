@@ -32,6 +32,7 @@
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <plugins/stdobj/simcell/SimulationCellDisplay.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
+#include <core/dataset/io/FileSource.h>
 #include "ParticleFrameData.h"
 #include "ParticleImporter.h"
 
@@ -90,7 +91,7 @@ void ParticleFrameData::TypeList::sortTypesById()
 * This function is called by the system from the main thread after the
 * asynchronous loading task has finished.
 ******************************************************************************/
-PipelineFlowState ParticleFrameData::handOver(DataSet* dataset, const PipelineFlowState& existing, bool isNewFile)
+PipelineFlowState ParticleFrameData::handOver(DataSet* dataset, const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource)
 {
 	PipelineFlowState output;
 
@@ -244,6 +245,16 @@ PipelineFlowState ParticleFrameData::handOver(DataSet* dataset, const PipelineFl
 
 	// Pass timestep information and other metadata to modification pipeline.
 	output.attributes() = std::move(_attributes);
+
+	// If the file parser has detected that the input file contains additional frame data following the
+	// current frame, active the 'contains multiple frames' option for the importer. This will trigger
+	// a scanning process for the entire file to discover all contained frames.
+	if(_detectedAdditionalFrames && isNewFile) {
+		if(ParticleImporter* importer = dynamic_object_cast<ParticleImporter>(fileSource->importer())) {
+			importer->setMultiTimestepFile(true);
+		}
+	}
+
 	return output;
 }
 

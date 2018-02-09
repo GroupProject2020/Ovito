@@ -36,13 +36,19 @@ CachingPipelineObject::CachingPipelineObject(DataSet* dataset) : PipelineObject(
 }
 
 /******************************************************************************
-* Marks the state in the data cache as invalid.
+* Throws away the cached pipeline state.
 ******************************************************************************/
-void CachingPipelineObject::invalidatePipelineCache()
+void CachingPipelineObject::invalidatePipelineCache(TimeInterval keepInterval)
 {
-	_pipelineCache.clear();
-	_inProgressEvalFuture.reset();
-	_inProgressEvalTime = TimeNegativeInfinity();
+	// Reduce the cache validity to the interval to be kept.
+	_pipelineCache.invalidate(false, keepInterval);
+
+	// Abort any pipeline evaluation currently in progress unless it 
+	// falls inside the time interval that should be kept.
+	if(!keepInterval.contains(_inProgressEvalTime)) {
+		_inProgressEvalFuture.reset();
+		_inProgressEvalTime = TimeNegativeInfinity();
+	}
 }
 
 /******************************************************************************

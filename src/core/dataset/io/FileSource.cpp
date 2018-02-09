@@ -131,9 +131,6 @@ bool FileSource::setSource(QUrl sourceUrl, FileSourceImporter* importer, bool au
 	_sourceUrl.set(this, PROPERTY_FIELD(sourceUrl), sourceUrl);
 	_importer.set(this, PROPERTY_FIELD(importer), importer);
 
-	// Cancel any frame loading operations currently in progress.
-	//cancelLoadOperations();
-
 	// Set flag which indicates that the file being loaded is a newly selected one.
 	_isNewFile = true;
 
@@ -157,7 +154,7 @@ bool FileSource::setSource(QUrl sourceUrl, FileSourceImporter* importer, bool au
 void FileSource::updateListOfFrames()
 {
 	// Update the list of frames.
-	SharedFuture<QVector<FileSourceImporter::Frame>> framesFuture = requestFrameList(true);
+	SharedFuture<QVector<FileSourceImporter::Frame>> framesFuture = requestFrameList(true, true);
 
 	// Show progress in the main window.
 	dataset()->container()->taskManager().registerTask(framesFuture);
@@ -185,9 +182,10 @@ void FileSource::setListOfFrames(const QVector<FileSourceImporter::Frame>& frame
 	for(int frameIndex = frames.size(); frameIndex < _frames.size(); frameIndex++)
 		invalidateFrameCache(frameIndex);
 
-	// Invalidate the last frame of the old list, because its validity interval is reduced when additional frames are added.
-	if(frames.size() > _frames.size())
-		invalidateFrameCache(_frames.size() - 1);
+	// When adding additional frames to the end, the cache validity interval of the last frame must be reduced.
+	if(frames.size() > _frames.size()) {
+		invalidatePipelineCache({ TimeNegativeInfinity(), sourceFrameToAnimationTime(_frames.size())-1 });
+	}
 
 	// Invalidate all cached frames that have changed.
 	for(int frameIndex = 0; frameIndex < _frames.size() && frameIndex < frames.size(); frameIndex++) {
@@ -270,7 +268,7 @@ Future<PipelineFlowState> FileSource::evaluateInternal(TimePoint time)
 /******************************************************************************
 * Scans the external data file and returns the list of discovered input frames.
 ******************************************************************************/
-SharedFuture<QVector<FileSourceImporter::Frame>> FileSource::requestFrameList(bool forceReload)
+SharedFuture<QVector<FileSourceImporter::Frame>> FileSource::requestFrameList(bool forceRescan, bool forceReloadOfCurrentFrame)
 {
 	// Without an importer object the list of frames is empty.
 	if(!importer())
@@ -278,25 +276,25 @@ SharedFuture<QVector<FileSourceImporter::Frame>> FileSource::requestFrameList(bo
 
 	// Return the active future when the frame loading process is currently in progress.
 	if(_framesListFuture.isValid()) {
-		if(!forceReload || !_framesListFuture.isFinished())
+		if(!forceRescan || !_framesListFuture.isFinished())
 			return _framesListFuture;
 		_framesListFuture.reset();
 	}
 
 	// Return the cached frames list if available.
-	if(!_frames.empty() && !forceReload) {
+	if(!_frames.empty() && !forceRescan) {
 		return _frames;
 	}
 
 	// Forward request to the importer object.
 	// Intercept future results when they become available and cache them.
 	_framesListFuture = importer()->discoverFrames(sourceUrl())
-		.then(executor(), [this, forceReload](QVector<FileSourceImporter::Frame>&& frameList) {
+		.then(executor(), [this, forceReloadOfCurrentFrame](QVector<FileSourceImporter::Frame>&& frameList) {
 //			qDebug() << "FileSource::requestFrameList: received frames list (" << frameList.size() << "frames). Storing it";
 			setListOfFrames(frameList);
 
 			// If update was triggered by user, also reload the current frame.
-			if(forceReload)
+			if(forceReloadOfCurrentFrame)
 				notifyDependents(ReferenceEvent::TargetChanged);
 
 			// Simply forward the frame list to the caller.
@@ -335,7 +333,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 //	qDebug() << "FileSource::requestFrameInternal: called for frame" << frame;
 
 	// First request the list of source frames and wait until it becomes available.
-	return requestFrameList()
+	return requestFrameList(false, false)
 		.then(executor(), [this, frame](const QVector<FileSourceImporter::Frame>& sourceFrames) -> Future<PipelineFlowState> {
 //			qDebug() << "FileSource::requestFrameInternal: received frames list";
 
@@ -371,7 +369,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 					
 					// Without an importer object we have to give up immediately.
 					if(!importer()) {
-						// Just return what we have stored.
+						// In case of an error, just return the stale data that we have cached.
 						return PipelineFlowState(PipelineStatus(PipelineStatus::Error, tr("The file source path has not been set.")),
 								dataObjects(), TimeInterval::infinite());
 					}
@@ -402,7 +400,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 							// Let the data container insert its data into the pipeline state.
 							_handOverInProgress = true;
 							try {
-								PipelineFlowState output = frameData->handOver(dataset(), existingState, _isNewFile);
+								PipelineFlowState output = frameData->handOver(dataset(), existingState, _isNewFile, this);
 								_isNewFile = false;
 								_handOverInProgress = false;
 								existingState.clear();
@@ -423,7 +421,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 									setStoredFrameIndex(frame);
 								}
 
-								// Never directly output the current subobjects to the pipeline; 
+								// Never output the current sub-objects directly to the pipeline; 
 								// always clone them to avoid unwanted side effects.
 								output.cloneObjectsIfNeeded(false);
 
@@ -436,7 +434,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 						});
 				});
 
-			// Change status to 'Pending' during long-running load operations.
+			// Change status to 'pending' during long-running load operations.
 			if(!loadFrameFuture.isFinished()) {
 				if(_numActiveFrameLoaders++ == 0)
 					notifyDependents(ReferenceEvent::ObjectStatusChanged);

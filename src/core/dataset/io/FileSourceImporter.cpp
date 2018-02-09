@@ -281,7 +281,7 @@ void FileSourceImporter::FrameFinder::discoverFramesInFile(QFile& file, const QU
 {
 	// By default, register a single frame.
 	QFileInfo fileInfo(file.fileName());
-	frames.push_back({ sourceUrl, 0, 0, fileInfo.lastModified(), fileInfo.fileName() });
+	frames.push_back({ sourceUrl, 0, 1, fileInfo.lastModified(), fileInfo.fileName() });
 }
 
 /******************************************************************************
@@ -297,7 +297,7 @@ Future<QVector<FileSourceImporter::Frame>> FileSourceImporter::findWildcardMatch
 	if(pattern.contains('*') == false && pattern.contains('?') == false) {
 
 		// It's not a wildcard pattern. Register just a single frame.
-		frames.push_back(Frame(sourceUrl, 0, 0, fileInfo.lastModified(), fileInfo.fileName()));
+		frames.push_back(Frame(sourceUrl, 0, 1, fileInfo.lastModified(), fileInfo.fileName()));
 	}
 	else {
 
@@ -372,7 +372,7 @@ Future<QVector<FileSourceImporter::Frame>> FileSourceImporter::findWildcardMatch
 			else
 				url.setPath(fileInfo.filePath());
 			frames.push_back(Frame(
-				url, 0, 0,
+				url, 0, 1,
 				isLocalPath ? fileInfo.lastModified() : QDateTime(),
 				iter));
 		}

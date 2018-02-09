@@ -225,7 +225,6 @@ void LAMMPSBinaryDumpImporter::FrameFinder::discoverFramesInFile(QFile& file, co
 		Frame frame;
 		frame.sourceFile = sourceUrl;
 		frame.byteOffset = byteOffset;
-		frame.lineNumber = 0;
 		frame.lastModificationTime = lastModified;
 		frame.label = QString("Timestep %1").arg(header.ntimestep);
 		frames.push_back(frame);
@@ -442,6 +441,10 @@ FileSourceImporter::FrameDataPtr LAMMPSBinaryDumpImporter::FrameLoader::loadFile
 				p = simCell * p;
 		}
 	}
+
+	// Detect if there are more simulation frames following in the file.
+	if(!file.atEnd())
+		frameData->signalAdditionalFrames();	
 
 	frameData->setStatus(tr("%1 particles at timestep %2").arg(header.natoms).arg(header.ntimestep));
 	return frameData;

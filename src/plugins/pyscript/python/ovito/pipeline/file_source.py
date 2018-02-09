@@ -42,6 +42,11 @@ def _FileSource_load(self, location, **params):
     # Raise Python error if loading failed.
     if self.status.type == PipelineStatus.Type.Error:
         raise RuntimeError(self.status.text)
+
+    # Block until list of animation frames has been loaded
+    if not self.wait_for_frames_list():
+        raise RuntimeError("Operation has been canceled by the user.")
+        
     
 FileSource.load = _FileSource_load
 

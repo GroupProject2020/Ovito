@@ -65,7 +65,7 @@ bool ModifierApplication::referenceEvent(RefTarget* source, ReferenceEvent* even
 	else if(event->type() == ReferenceEvent::TargetChanged) {
 		// Invalidate cached results when the modifier or the upstream pipeline change.
 		invalidatePipelineCache();
-		// Trigger a preliminary viewport update if requested by the modifier.
+		// Trigger a preliminary viewport update if desired by the modifier.
 		if(source == modifier() && modifier()->performPreliminaryUpdateAfterChange()) {
 			notifyDependents(ReferenceEvent::PreliminaryStateAvailable);
 		}

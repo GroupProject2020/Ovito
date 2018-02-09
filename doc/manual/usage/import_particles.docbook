@@ -9,69 +9,66 @@
          xmlns:ns="http://docbook.org/ns/docbook">
   <title>Importing data</title>
 
-  <para>To load a simulation file from your local filesystem into OVITO, select 
+  <para>
+    To load a simulation file from your local computer in OVITO, select 
     <menuchoice><guimenu>File</guimenu><guimenuitem>Load File</guimenuitem></menuchoice> from the menu or use the corresponding button in the toolbar.
-    OVITO detects the format of the file automatically (see the <link linkend="usage.import.formats">list of supported formats</link> below). 
-    Compressed text-based files with a <filename>.gz</filename> suffix can directly be read by OVITO.
+    OVITO detects the format of the file automatically (see <link linkend="usage.import.formats">supported formats</link> below). 
+    Compressed text-based files having a <filename>.gz</filename> suffix can be directly read by OVITO.
   </para>
   <para>
-    Loading a data file creates a new visual object in the three-dimensional scene to display the data. 
-    This object maintains a reference to the original source file, and it is possible to reload the data from the external
-    file or to replace the source data with a different file later on. 
-    The <link linkend="scene_objects.file_source">"External File" panel</link>, which is shown in the screenshot below,
-    contains a toolbar with corresponding command buttons. Switching to a another input file 
-    is useful if you have set up a visualization or a <link linkend="usage.modification_pipeline">data filtering sequence</link> and now want to 
-    re-use it on a different simulation dataset.
+    <informalfigure>
+        <screenshot><mediaobject><imageobject>
+        <imagedata fileref="images/scene_objects/file_wildcard_pattern.png" format="PNG" scale="50" />
+        </imageobject></mediaobject></screenshot>
+    </informalfigure>
+    The imported data appears as a visual object in the three-dimensional scene in OVITO's viewports
+    and the file also appears under the "<emphasis>Input</emphasis>" section of the pipeline editor as indicated in the screenshot.
+    Note that the program maintains a link to the original file on disk from which it obtained the data.
+    Selecting the file object in the pipeline editor opens the <link linkend="scene_objects.file_source">"External File" panel</link>,
+    which is also visible in the screenshot.
+    This panel manages the external link to the source file. The tool buttons at the top of the panel let you reload 
+    the data from the input file in case it was changed by an external program, or you can pick a different file as data source if desired. 
+    Replacing the input file is sometimes useful if you have already set up a <link linkend="usage.modification_pipeline">data analysis pipeline</link> and now want 
+    to re-use it on a different input dataset.
   </para>
 
   <simplesect xml:id="usage.import.sequence">
     <title>Simulation sequences</title>
-    <para>    
-	    <figure>
-	    	<title>The <link linkend="scene_objects.file_source">External File</link> panel</title>
-	        <screenshot><mediaobject><imageobject>
-	        <imagedata fileref="images/scene_objects/file_wildcard_pattern.png" format="PNG" scale="45" />
-	        </imageobject></mediaobject></screenshot>
-	    </figure>
-       OVITO can load and display animated simulation trajectories. The following scenarios are supported:
+    <para> 
+       OVITO can load and animate simulation trajectories that consist of a sequence of snapshots or frames. 
+       The following scenarios are supported by the software:
        <variablelist>
-         <varlistentry><term>Series of files, each containing one frame:</term><listitem>
+         <varlistentry><term>Series of files:</term><listitem>
            <para>
-		       This is the default scenario. The program tries to automatically recognize sequences of files in a directory 
-		       by looking for other files with a similar name as the one you picked. 
-		       To this end, OVITO replaces the last number (if any) in the filename with the wildcard character <literal>*</literal> to generate a search pattern 
-		       and find other files in the same directory belonging to the time series. 
-		       For instance, if you load the file <filename>anim1c_5000.dump</filename>, OVITO generates the search pattern
+		       When importing a new file, the program automatically tries to detect if it is part of a numbered sequence of files 
+           with similar names. To this end, OVITO replaces the last number (if any) in the filename you picked with the wildcard 
+           character <literal>*</literal> to generate a search pattern, which is used to look in the same directory for other files belonging to the same sequence. 
+		       For instance, if you import a file named <filename>anim1c_5000.dump</filename>, OVITO will generate the search pattern
 		       <filename>anim1c_*.dump</filename> to find all matching frames (e.g. <filename>anim1c_0.dump</filename>,
 		       <filename>anim1c_1000.dump</filename>, <filename>anim1c_2000.dump</filename>, etc). It is possible to
-		       manually change the search pattern afterwards if the one generated by OVITO does not fit (see the screenshot on the right). 
+		       manually adjust this search pattern afterwards in case the generated one does not fit.
+           The corresponding input field is highlighted in the screenshot. 
            </para>
          </listitem></varlistentry>
          
-         <varlistentry><term>Single file containing multiple frames:</term><listitem>
+         <varlistentry><term>File containing multiple frames:</term><listitem>
            <para>
-		       The LAMMPS dump and the XYZ file formats can store multiple simulation timesteps in one file.
-		       By default, OVITO loads only the first frame from the file to save time. You have to explicitly tell OVITO to look 
-		       for additional frames by checking the <emphasis>File contains time series</emphasis> option
-		       highlighted in the screenshot. OVITO will then quickly scan the entire file to find all simulation frames.
-           </para>
-         </listitem></varlistentry>
-                  
-         <varlistentry><term>Series of files, each containing several frames:</term><listitem>
-           <para>
-		       To load multiple files, each one containing multiple simulation frames, follow these steps: Load the first file from the sequence. 
-		       Then check the <emphasis>File contains time series</emphasis> option. Finally, edit the file pattern
-		       to include the '<literal>*</literal>' wildcard character to let OVITO find all other matching files in the directory. 
+		       OVITO will automatically detect when the imported file contains multiple frames and will load them as an animation sequence.
+           For some file types, such as XYZ and LAMMPS dump files, this is indicated by the check box <emphasis>Contains multiple timesteps</emphasis>
+           highlighted in the screenshot. Note that OVITO typically keeps only a single frame in memory. Other frames are loaded from the source data
+           file only as needed, for example if you play back the animation or move the time slider.
            </para>
          </listitem></varlistentry>
          
-		 <varlistentry><term>Separate topology and trajectory files:</term><listitem>
+    		 <varlistentry><term>Separate files for topology and trajectories:</term><listitem>
            <para>
-		     Some MD simulation codes work with separate topology and trajectory files. The topology file contains the static definitions of 
-		     atoms, types, bonds, etc. while the trajectory file contains the trajectories of motion computed by the simulation code.
-		     In such case, load the topology file in OVITO first (e.g. a LAMMPS <emphasis>data</emphasis> file).
-		     The apply the <link linkend="particles.modifiers.load_trajectory">Load trajectory</link> modifier to the dataset to load the time-dependent atomic positions
-		     from the trajectory file (e.g. a LAMMPS <emphasis>dump</emphasis> file).
+            Some MD simulation codes work with separate topology and trajectory files. The topology file stores the static definition of 
+            atoms, types, bonds, etc. while the trajectory file contains just the motion trajectories computed by the simulation.
+            In such a case, you should load the topology file first (e.g. a LAMMPS <emphasis>data</emphasis> file).
+            Then use the <link linkend="particles.modifiers.load_trajectory">Load trajectory</link> modifier to load the time-dependent atomic positions
+            from the separate trajectory file (e.g. a LAMMPS <emphasis>dump</emphasis> file). This modifier will 
+            merge both pieces of information, the static topology and the trajectories, on the fly into a single time-dependent 
+            dataset.
            </para>
          </listitem></varlistentry>         
                   
@@ -79,9 +76,8 @@
     </para>
     
     <para>
-       OVITO displays a timeline and a slider control at the bottom of main window when a simulation sequence is loaded, 
-       which allows you to jump between frames. Note that OVITO only loads the currently displayed simulation frame into memory to avoid
-       running out of memory in the case of large datasets and/or long trajectories.
+       OVITO will display a timeline and a time slider at the bottom of main window when a simulation sequence with more than one frame 
+       was loaded. Find out more about OVITO's animation functions in the <link linkend="usage.animation">Animation</link> section of this manual.
     </para>
     
   </simplesect>
@@ -89,33 +85,33 @@
   <simplesect xml:id="usage.import.remote">
     <title>Importing files from remote computers</title>
     <para>
-       OVITO comes with a built-in SSH client to directly access files on remote machines. This capability is useful when working with simulation data stored on 
-       remote HPC clusters and saves you from transferring the data to your local desktop computer first.
-       To open a simulation file on a remote machine, choose  
+       OVITO comes with a built-in SSH client for accessing files on remote machines. It can save you from transferring  
+       data stored in remote locations, for example on a HCP cluster, to your local desktop computer first.
+       To open a simulation file stored on a remote machine, select 
        <menuchoice><guimenu>File</guimenu><guimenuitem>Load Remote File</guimenuitem></menuchoice> from the menu.  
     </para>
     <para>
-       OVITO currently does not allow you to browse directories on remote machines. That means you have to directly specify
-       the full path to a remote file as an URL of the form:
+       OVITO does not let you browse directories on remote machines. That means you have to directly specify
+       the full path to the remote file as an URL of the form:
        <screen><command>    sftp://user@hostname/path/filename</command></screen>
        Where <command>sftp://</command> is the file access protocol (Secure File Transfer Protocol), 
        <command>user</command> the SSH login name on the remote machine,
        <command>hostname</command> the name of the remote machine,
        and <command>/path/filename</command> the simulation file to import. It is possible to 
-       specify a non-standard port number by appending <command>:portnumber</command> to the hostname.
+       specify a non-standard port number by inserting <command>:port</command> after the hostname.
     </para>
     <para>
-       When OVITO connects to the remote machine, it will ask for the login password. Once established, 
-       the SSH connection is kept alive until the end of the program session. OVITO makes a temporary copy of a remote file on the local computer before
-       reading the data to speed up subsequent accesses to simulation frames. The local file copies are cached until the end of the program session or 
-       until you press <emphasis>Reload</emphasis> in the <link linkend="scene_objects.file_source">External File panel</link>.
+       When OVITO connects to the remote machine, it will ask for the login password. Key-based authentication is not supported. Once established, 
+       the SSH connection is kept alive until the end of the program session. OVITO makes a temporary copy of the remote file on the local computer before
+       loading the data into memory to speed up subsequent accesses to simulation frames. The local file copies are cached until the end of the program session or 
+       until you hit <emphasis>Reload</emphasis> in the <link linkend="scene_objects.file_source">External File</link> panel.
     </para>
   </simplesect>
    
-  <simplesect xml:id="usage.import.tips">
+  <simplesect xml:id="usage.import.command_line">
     <title>Using the command line</title>
     <para>
-      If you OVITO from a terminal, you can directly specify a file to load. This works with both local and remote
+      If you launch OVITO from a terminal, you can directly specify a file to load. This works for local as well as remote
       files:
        <screen>
     <command>ovito /path/filename</command>
@@ -124,16 +120,36 @@
     </para>
   </simplesect> 
   
+  <simplesect xml:id="usage.import.multiple_datasets">
+    <title>Visualizing multiple datasets</title>
+    <para>
+      OVITO allows you to load several datasets and show them side by side in one picture, 
+      and it allows you to load the same dataset more than once in order to visualize it in several different ways for comparison. 
+      To do this, simply use the <menuchoice><guimenu>File</guimenu><guimenuitem>Load File</guimenuitem></menuchoice> function from the menu repeatedly.
+      When OVITO asks you whether to replace the already loaded dataset or not, select the "<emphasis>Add to scene</emphasis>" option. 
+      All loaded datasets (more precisely, all data pipelines that are part of the scene) are listed in the drop-down box at the top 
+      of the command panel (see screenshot). This drop-down box selects the active pipeline, which is shown in the 
+      <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link>.
+    </para>
+    <para>
+      Tip: You can position each object in the three-dimensional scene as desired using the
+      move and rotate tools found in the upper toolbar.
+    </para>
+  </simplesect>
+  
   <simplesect xml:id="usage.import.formats">
   <title>Supported file formats</title>
   <para>
-  	OVITO can read data in the following formats:
+  	OVITO provides file readers for a variety of input formats, in particular data formats written by molecular dynamics
+    and other atomistic simulation codes. In addition, it can load, process and visualize other types of data, for example
+    triangle meshes and voxel data grids.
     <informaltable>
-        <tgroup cols="2">
+        <tgroup cols="3">
           <thead>
             <row>
               <entry>File format</entry>
               <entry>Description</entry>
+              <entry>Data type</entry>
             </row>
           </thead>
 
@@ -141,11 +157,12 @@
             <row>
               <entry>LAMMPS&#xA0;dump</entry>
               <entry><para>File format used by the <link xlink:href="http://lammps.sandia.gov">LAMMPS molecular dynamics code</link>. OVITO supports both text-based and binary dump files.</para></entry>
+              <entry>particles</entry>
             </row>
             <row>
               <entry>LAMMPS&#xA0;data</entry>
-              <entry><para>File format used by the <link xlink:href="http://lammps.sandia.gov/doc/read_data.html">LAMMPS molecular dynamics code</link>.</para>
-              </entry>
+              <entry><para>File format used by the <link xlink:href="http://lammps.sandia.gov/doc/read_data.html">LAMMPS molecular dynamics code</link>.</para></entry>
+              <entry>particles, bonds</entry>
             </row>
             <row>
               <entry>XYZ</entry>
@@ -154,72 +171,68 @@
 			    The program also supports the <link xlink:href="http://libatoms.github.io/QUIP/io.html#module-ase.io.extxyz">extended XYZ format</link>, which includes information on the simulation cell,
 			    boundary conditions, and per-particle fields.</para>
                 </entry>
+              <entry>particles</entry>
             </row>
             <row>
               <entry>POSCAR / XDATCAR / CHGCAR</entry>
               <entry><para>File formats used by the <emphasis>ab initio</emphasis> simulation package <link xlink:href="http://www.vasp.at/">VASP</link>.
                     OVITO can read and visualize charge density data from CHGCAR files.</para></entry>
+              <entry>particles, voxel&#xA0;grid</entry>
             </row>
             <row>
               <entry>IMD</entry>
               <entry><para>File format used by the molecular dynamics code <link xlink:href="http://imd.itap.physik.uni-stuttgart.de/">IMD</link>.</para></entry>
+              <entry>particles</entry>
             </row>
             <row>
               <entry>CFG</entry>
               <entry><para>File format used by the <link xlink:href="http://li.mit.edu/Archive/Graphics/A/">AtomEye</link> visualization program.</para></entry>
+              <entry>particles</entry>
             </row>
             <row>
               <entry>PARCAS</entry>
               <entry><para>Binary file format written by the MD code <emphasis>Parcas</emphasis> developed in K. Nordlund's group at University of Helsinki.</para></entry>
+              <entry>particles</entry>
             </row>
             <row>
               <entry>NetCDF</entry>
               <entry><para>Binary format for molecular dynamics data following the <link xlink:href="http://ambermd.org/netcdf/nctraj.pdf">AMBER format convention</link>. NetCDF files are produced by the LAMMPS <link xlink:href="http://lammps.sandia.gov/doc/dump_netcdf.html">dump netcdf</link> command.</para></entry>
+              <entry>particles</entry>
             </row>
             <row>
               <entry>PDB</entry>
               <entry><para>Protein Data Bank (PDB) files (experimental support).</para></entry>
+              <entry>particles, bonds</entry>
             </row>
             <row>
               <entry>FHI-aims</entry>
               <entry><para>Geometry and log-file formats used by the <emphasis>ab initio</emphasis> simulation package <link xlink:href="https://aimsclub.fhi-berlin.mpg.de/index.php">FHI-aims</link>.</para></entry>
+              <entry>particles</entry>
             </row>
             <row>
               <entry>GSD/HOOMD</entry>
               <entry><para>Binary format for molecular dynamics data used by the <link xlink:href="http://glotzerlab.engin.umich.edu/hoomd-blue/">HOOMD-blue code</link>. See <link xlink:href="http://gsd.readthedocs.io">GSD (General Simulation Data) format</link>.</para></entry>
+              <entry>particles</entry>
             </row>
             <row>
               <entry>CASTEP</entry>
               <entry><para>File format used by the <link xlink:href="http://www.castep.org">CASTEP</link> ab initio code. OVITO can read the <link xlink:href="http://www.tcm.phy.cam.ac.uk/castep/documentation/WebHelp/content/modules/castep/expcastepfileformats.htm"><literal>.cell</literal>, <literal>.md</literal> and <literal>.geom</literal> formats</link>.</para></entry>
+              <entry>particles</entry>
             </row>
             <row>
               <entry>XSF</entry>
               <entry><para>File format used by the <link xlink:href="http://www.xcrysden.org/doc/XSF.html">XCrySDen</link> program.</para></entry>
+              <entry>particles, voxel&#xA0;grid</entry>
             </row>
-          </tbody>
-        </tgroup>
-      </informaltable>  
-  </para>
-  <para>
-  	OVITO can load triangle meshes (polygonal data) in the following format:  
-    <informaltable>
-        <tgroup cols="2">
-          <thead>
-            <row>
-              <entry>File format</entry>
-              <entry>Description</entry>
-            </row>
-          </thead>
-
-          <tbody>
             <row>
               <entry>VTK</entry>
               <entry><para>Format used by the <emphasis>Visualization Toolkit</emphasis> (VTK). This text-based format is documented <link xlink:href="http://www.vtk.org/VTK/img/file-formats.pdf">here</link>. Note that OVITO supports only triangular cells.</para></entry>
+              <entry>triangle&#xA0;mesh</entry>
             </row>
           </tbody>
         </tgroup>
       </informaltable>  
-  </para>
+    </para>
   </simplesect>
   
 </section>

@@ -59,6 +59,10 @@ public:
 	/// Note: This method operates asynchronously.
 	void updateListOfFrames();
 
+	/// \brief Implementation method for scanning the external data file to find all contained frames.
+	/// This is an implementation detail. Please use the high-level method updateListOfFrames() instead. 
+	SharedFuture<QVector<FileSourceImporter::Frame>> requestFrameList(bool forceRescan, bool forceReloadOfCurrentFrame);
+
 	/// \brief Returns the number of frames that are provided by the data source.
 	int numberOfFrames() const { return _frames.size(); }
 
@@ -147,9 +151,6 @@ private:
 
 	/// Clears the cache entry for the given input frame.
 	void invalidateFrameCache(int frameIndex = -1);
-
-	/// Scans the external data file and returns the list of discovered input frames.
-	SharedFuture<QVector<FileSourceImporter::Frame>> requestFrameList(bool forceReload = false);
 
 private:
 

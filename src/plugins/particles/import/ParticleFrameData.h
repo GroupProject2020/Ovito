@@ -145,7 +145,7 @@ public:
 
 	/// Inserts the loaded data into the provided pipeline state structure. This function is
 	/// called by the system from the main thread after the asynchronous loading task has finished.
-	virtual PipelineFlowState handOver(DataSet* dataset, const PipelineFlowState& existing, bool isNewFile) override;
+	virtual PipelineFlowState handOver(DataSet* dataset, const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource) override;
 
 	/// Returns the current simulation cell matrix.
 	const SimulationCell& simulationCell() const { return _simulationCell; }
@@ -260,6 +260,10 @@ public:
 	/// Returns the bonds between particles (if present).
 	const BondsPtr& bonds() const { return _bonds; }
 
+	/// Indicates that the file parser found additional frames
+	/// in the input file stored back to back with the frame currently being loaded.
+	void signalAdditionalFrames() { _detectedAdditionalFrames = true; }
+
 private:
 
 	/// Inserts the stored particle or bond types into the given property object.
@@ -290,10 +294,12 @@ private:
 	
 	/// The metadata read from the file header.
 	QVariantMap _attributes;
+
+	/// Flag that indicates that the file parser has found additional frames
+	/// in the input file stored back to back with the currently loaded frame.
+	bool _detectedAdditionalFrames = false;
 };
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

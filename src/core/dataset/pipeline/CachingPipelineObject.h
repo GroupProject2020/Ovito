@@ -49,8 +49,9 @@ public:
 	/// \brief Returns the results of an immediate and preliminary evaluation of the data pipeline.
 	virtual PipelineFlowState evaluatePreliminary() override { return _pipelineCache.getStaleContents(); }
 
-	/// \brief Marks the state in the data cache as invalid.
-	void invalidatePipelineCache();
+	/// \brief Invalidates (and throws away) the cached pipeline state.
+	/// \param keepInterval An optional time interval over which the cached data should be retained.
+	void invalidatePipelineCache(TimeInterval keepInterval = TimeInterval::empty());
 
 	/// \brief Returns the internal output cache.
 	const PipelineCache& pipelineCache() const { return _pipelineCache; }

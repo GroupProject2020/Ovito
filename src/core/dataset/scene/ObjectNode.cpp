@@ -57,9 +57,9 @@ ObjectNode::~ObjectNode()
 void ObjectNode::invalidatePipelineCache()
 {
 	// Invalidate data caches.
-	_pipelineDataCache.clear();
-	_pipelineDisplayCache.invalidate();	// Do not completely discard these cached objects, 
-										// because we might be able to re-use the transformed data objects. 
+	_pipelineDataCache.invalidate(false);
+	_pipelineDisplayCache.invalidate(true);	// Do not completely discard these cached objects, 
+											// because we might be able to re-use the transformed data objects. 
 	_pipelinePreliminaryCache.clear();
 
 	// Also mark the cached bounding box of this node as invalid.
@@ -248,7 +248,7 @@ bool ObjectNode::referenceEvent(RefTarget* source, ReferenceEvent* event)
 				
 				// Invalidate the display pipeline cache whenever an asynchronous display object changes.
 				// Do not completely discard these cached objects, because we might be able to re-use the transformed data objects. 
-				_pipelineDisplayCache.invalidate();
+				_pipelineDisplayCache.invalidate(true);
 
 				// Trigger a pipeline re-evaluation.
 				notifyDependents(ReferenceEvent::TargetChanged);

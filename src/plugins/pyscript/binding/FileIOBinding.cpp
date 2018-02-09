@@ -101,6 +101,11 @@ void defineIOSubmodule(py::module m)
 			SharedFuture<PipelineFlowState> future = fs.evaluate(time);
 			return ScriptEngine::activeTaskManager().waitForTask(future);
 		})
+		// Required by the implementations of import_file() and FileSource.load():
+		.def("wait_for_frames_list", [](FileSource& fs) {
+			auto future = fs.requestFrameList(false, false);
+			return ScriptEngine::activeTaskManager().waitForTask(future);
+		})		
 		.def_property_readonly("num_frames", &FileSource::numberOfFrames,
 				"The number of frames the imported file or file sequence contains (read-only).")
 		// For backward compatibility with OVITO 2.9:

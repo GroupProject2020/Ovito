@@ -524,6 +524,10 @@ FileSourceImporter::FrameDataPtr XYZImporter::FrameLoader::loadFile(QFile& file)
 		}
 	}
 
+	// Detect if there are more simulation frames following in the file.
+	if(!stream.eof())
+		frameData->signalAdditionalFrames();	
+
 	if(commentLine.isEmpty())
 		frameData->setStatus(tr("%1 particles").arg(numParticles));
 	else

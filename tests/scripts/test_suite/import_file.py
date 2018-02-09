@@ -40,7 +40,7 @@ import_file(test_data_dir + "VTK/mesh_test.vtk")
 import_file(test_data_dir + "VTK/ThomsonTet_Gr1_rotmatNonRand_unstructGrid.vtk")
 import_file(test_data_dir + "VTK/box_a.vtk")
 node = import_file(test_data_dir + "LAMMPS/multi_sequence_*.dump")
-assert(ovito.dataset.anim.last_frame == 2)
+assert(ovito.dataset.anim.last_frame == 10)
 node = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin", 
                             columns = ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z"])
 try:
@@ -52,9 +52,9 @@ try:
 except RuntimeError:
     pass
 
-node = import_file(test_data_dir + "LAMMPS/animation*.dump")
-assert(ovito.dataset.anim.last_frame == 0)
-node = import_file(test_data_dir + "LAMMPS/animation*.dump", multiple_frames = True)
+node = import_file(test_data_dir + "LAMMPS/animation1.dump")
+assert(ovito.dataset.anim.last_frame == 10)
+node = import_file(test_data_dir + "LAMMPS/animation1.dump", multiple_frames = True)
 assert(ovito.dataset.anim.last_frame == 10)
 
 node = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin", 

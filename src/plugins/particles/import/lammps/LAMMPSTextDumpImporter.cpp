@@ -333,6 +333,10 @@ FileSourceImporter::FrameDataPtr LAMMPSTextDumpImporter::FrameLoader::loadFile(Q
 			// Detect dimensionality of system.
 			frameData->simulationCell().set2D(!columnMapping.hasZCoordinates());
 
+			// Detect if there are more simulation frames following in the file.
+			if(!stream.eof())
+				frameData->signalAdditionalFrames();
+
 			frameData->setStatus(tr("%1 particles at timestep %2").arg(numParticles).arg(timestep));
 			return frameData; // Done!
 		}

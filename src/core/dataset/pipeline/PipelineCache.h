@@ -55,12 +55,13 @@ public:
 	/// in which case the method returns false.
 	bool insert(Future<PipelineFlowState>& stateFuture, const TimeInterval& validityInterval, RefTarget* ownerObject);
 
-	/// Completely discards all cached pipeline states and releases all memory.
-	void clear();
-
-	/// Marks the cached state as stale, but holds on to it.
-	/// The contents of the cache can still be access via getStaleContents() after this method has been called.
-	void invalidate();
+	/// Marks the contents of the cache as outdated and throws away the stored data.
+	///
+	/// \param keepStaleContents Requests the cache to not throw away some of the data. This will mark the cached state as stale, but holds on to it.
+	///                          The stored data can still be access via getStaleContents() after this method has been called.
+	/// \param keepInterval An optional time interval over which the cached data should be retained. The validity interval of the cached contents 
+	///                     will be reduced to this interval.
+	void invalidate(bool keepStaleContents = false, TimeInterval keepInterval = TimeInterval::empty());
 
 private:
 

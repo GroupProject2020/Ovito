@@ -83,21 +83,19 @@ bool PipelineCache::insert(Future<PipelineFlowState>& stateFuture, const TimeInt
 }
 
 /******************************************************************************
-* Discards all cached pipeline states.
-******************************************************************************/
-void PipelineCache::clear()
-{
-	_mostRecentState.clear();
-	_currentAnimState.clear();
-}
-
-/******************************************************************************
 * Marks the cached state as stale, but holds on to it.
 ******************************************************************************/
-void PipelineCache::invalidate()
+void PipelineCache::invalidate(bool keepStaleContents, TimeInterval keepInterval)
 {
-	_mostRecentState.clear();
-	_currentAnimState.mutableStateValidity().setEmpty();
+	// Reduce the cache validity to the interval to be kept.
+	_mostRecentState.intersectStateValidity(keepInterval);
+	_currentAnimState.intersectStateValidity(keepInterval);
+	
+	// If the remaining validity interval is empty, we can clear the caches.
+	if(_mostRecentState.stateValidity().isEmpty())
+		_mostRecentState.clear();
+	if(_currentAnimState.stateValidity().isEmpty() && !keepStaleContents)
+		_currentAnimState.clear();
 }
 
 /******************************************************************************

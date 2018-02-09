@@ -8,7 +8,7 @@
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Select particle type</title>
+  <title>Select type</title>
 
   <warning><para>This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
    development version of OVITO.</para></warning>

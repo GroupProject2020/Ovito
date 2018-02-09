@@ -32,7 +32,7 @@ namespace Ovito { namespace Mesh {
 * This function is called by the system from the main thread after the
 * asynchronous loading task has finished.
 ******************************************************************************/
-PipelineFlowState TriMeshFrameData::handOver(DataSet* dataset, const PipelineFlowState& existing, bool isNewFile)
+PipelineFlowState TriMeshFrameData::handOver(DataSet* dataset, const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource)
 {
 	PipelineFlowState output;
 

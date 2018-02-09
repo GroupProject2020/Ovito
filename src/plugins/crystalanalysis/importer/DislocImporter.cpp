@@ -556,10 +556,10 @@ void DislocImporter::FrameLoader::connectSlipFaces(Microstructure& microstructur
 * This function is called by the system from the main thread after the
 * asynchronous loading task has finished.
 ******************************************************************************/
-PipelineFlowState DislocImporter::DislocFrameData::handOver(DataSet* dataset, const PipelineFlowState& existing, bool isNewFile)
+PipelineFlowState DislocImporter::DislocFrameData::handOver(DataSet* dataset, const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource)
 {
 	// Insert simulation cell.
-	PipelineFlowState output = ParticleFrameData::handOver(dataset, existing, isNewFile);
+	PipelineFlowState output = ParticleFrameData::handOver(dataset, existing, isNewFile, fileSource);
 
 	// Insert pattern catalog.
 	OORef<PatternCatalog> patternCatalog = existing.findObject<PatternCatalog>();

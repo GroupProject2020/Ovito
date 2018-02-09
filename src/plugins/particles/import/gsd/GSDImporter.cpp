@@ -63,8 +63,7 @@ void GSDImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sou
 	for(uint64_t i = 0; i < nFrames; i++) {
 		Frame frame;
 		frame.sourceFile = sourceUrl;
-		frame.byteOffset = 0;
-		frame.lineNumber = i;
+		frame.byteOffset = i;
 		frame.lastModificationTime = lastModified;
 		frame.label = tr("Frame %1").arg(i);
 		frames.push_back(frame);
@@ -93,7 +92,7 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 	uint64_t nFrames = gsd.numerOfFrames();
 
 	// The animation frame to read from the GSD file.
-	uint64_t frameNumber = frame().lineNumber;
+	uint64_t frameNumber = frame().byteOffset;
 
 	// Parse simulation step.
 	uint64_t simulationStep = gsd.readOptionalScalar<uint64_t>("configuration/step", frameNumber, 0);

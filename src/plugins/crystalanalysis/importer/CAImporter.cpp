@@ -574,6 +574,7 @@ FileSourceImporter::FrameDataPtr CAImporter::FrameLoader::loadFile(QFile& file)
 		}
 		else if(stream.lineStartsWith("CA_FILE_VERSION ")) {
 			// Beginning of next frame.
+			frameData->signalAdditionalFrames();
 			break;
 		}
 		else if(stream.line()[0] != '\0') {
@@ -593,10 +594,10 @@ FileSourceImporter::FrameDataPtr CAImporter::FrameLoader::loadFile(QFile& file)
 * This function is called by the system from the main thread after the
 * asynchronous loading task has finished.
 ******************************************************************************/
-PipelineFlowState CAImporter::CrystalAnalysisFrameData::handOver(DataSet* dataset, const PipelineFlowState& existing, bool isNewFile)
+PipelineFlowState CAImporter::CrystalAnalysisFrameData::handOver(DataSet* dataset, const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource)
 {
 	// Insert simulation cell.
-	PipelineFlowState output = ParticleFrameData::handOver(dataset, existing, isNewFile);
+	PipelineFlowState output = ParticleFrameData::handOver(dataset, existing, isNewFile, fileSource);
 
 	// Insert defect surface.
 	if(_defectSurface) {

@@ -115,7 +115,6 @@ void XSFImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sou
 	for(int i = 0; i < nFrames; i++) {
 		Frame frame;
 		frame.sourceFile = sourceUrl;
-		frame.byteOffset = 0;
 		frame.lineNumber = i;
 		frame.lastModificationTime = lastModified;
 		frame.label = tr("Frame %1").arg(i);

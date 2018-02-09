@@ -13,7 +13,7 @@
   <para>
   
     <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/modifiers/common_neighbor_analysis_panel.png" format="PNG" />
+       <imagedata fileref="images/modifiers/common_neighbor_analysis_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
   
   This analysis modifier performs the <emphasis>Common Neighbor Analysis</emphasis> (CNA) [<link
@@ -71,57 +71,78 @@
   </variablelist>
   </para>
 
-  <para>
-  The modifier classifies each particle according to its structural environment and stores 
-  the results in a new particle property named <literal>Structure Type</literal>.
-  This allows you to subsequently select and filter out particles of a certain structural type, e.g. by using the 
-  <link linkend="particles.modifiers.select_particle_type">Select Particle Type</link> modifier.
-  The structural types are encoded as integer values:
-    <itemizedlist>
-    
-      <listitem>
-        <para>0 = Other, unknown coordination structure</para>
-      </listitem>
-    
-      <listitem>
-        <para>1 = FCC, face-centered cubic</para>
-      </listitem>
+ <simplesect>
+  <title>Modifier outputs</title>
+    <para>
+      The modifier outputs the classification results as a new particle property named <literal>Structure Type</literal>.
+      This information allows you to subsequently select particles of a certain structural type, e.g. using the 
+      <link linkend="particles.modifiers.select_particle_type">Select Type</link> modifier.
+      The structural type determined by the algorithm is encoded as an integer value:
+      <itemizedlist>
+      
+        <listitem>
+          <para>0 = Other, unknown coordination structure</para>
+        </listitem>
+      
+        <listitem>
+          <para>1 = FCC, face-centered cubic</para>
+        </listitem>
 
-      <listitem>
-        <para>2 = HCP, hexagonal close-packed</para>
-      </listitem>
+        <listitem>
+          <para>2 = HCP, hexagonal close-packed</para>
+        </listitem>
 
-      <listitem>
-        <para>3 = BCC, body-centered cubic</para>
-      </listitem>
+        <listitem>
+          <para>3 = BCC, body-centered cubic</para>
+        </listitem>
 
-      <listitem>
-        <para>4 = ICO, icosahedral coordination</para>
-      </listitem>
+        <listitem>
+          <para>4 = ICO, icosahedral coordination</para>
+        </listitem>
 
-    </itemizedlist>
-  </para>
+      </itemizedlist>
+    </para>
+    <para>
+      In addition, the modifier assigns colors to the particles (by setting the <literal>Color</literal> 
+      particle property) to indicate their computed structural type. The color representing each structural type
+      can be customized by double-clicking the corresponding entry in the table or, permanently, in the <link linkend="application_settings.particles">
+      application settings dialog</link>.
+    </para>
+    <para>
+      Furthermore, the modifier emits global attributes to the data pipeline reporting the total number of particles matching 
+      each of the supported structural types. These attributes are named <literal>CommonNeighborAnalysis.counts.XXX</literal>, where "<literal>XXX</literal>"
+      stands for the name of a structure. These analysis statistics may be exported using OVITO's <link linkend="usage.export">data export function</link>
+      or displayed as live information in the viewports using a <link linkend="viewport_overlays.text_label">text label</link>.
+    </para>
+  </simplesect>
+
+   <simplesect>
+    <title>Usage notes</title>  
+    <para>
+      The modifier needs to see the complete set of input particles to perform the analysis. It should therefore be placed at the 
+      beginning of the data pipeline, preceding any modifiers that delete some of the particles.
+    </para>    
+    <para>
+      The <emphasis>Use only selected particles</emphasis> option restricts the analysis to the
+      currently selected particles. In this case, unselected particles will be ignored 
+      (as if they did not exist) and are all assigned the structure type "Other".
+      This option is useful if you want to identify defects in a crystal type 
+      not directly supported by the common neighbor analysis algorithm but having a sub-lattice that is supported.
+    </para>  
+  </simplesect>
   
-  <para>
-    To identify diamond lattice structures, please use the 
-    <link linkend="particles.modifiers.identify_diamond_structure">Identify Diamond Structure</link> modifier instead.
-  </para>
+  <simplesect>
+    <title>Alternatives</title>  
+    <para>
+      OVITO provides implementations of other structure identification methods, for instance the
+      <link linkend="particles.modifiers.bond_angle_analysis">Bond-angle Analysis</link> modifier,
+      the <link linkend="particles.modifiers.identify_diamond_structure">Identify Diamond Structure</link> modifier or
+      the <link linkend="particles.modifiers.polyhedral_template_matching">Polyhedral Template Matching</link> modifier.
+      Furthermore, the <link linkend="particles.modifiers.centrosymmetry">Centrosymmetry</link> modifier can be used to 
+      detect defects in crystal lattices.
+    </para>
+  </simplesect>
 
-  <para>
-    The CNA modifier requires access to the complete set of input particles to perform the analysis. It should therefore be placed at the 
-    beginning of the processing pipeline, preceding any modifiers that delete particles.
-  </para>
-  
-  <para>
-    The <emphasis>Use only selected particles</emphasis> option restricts the analysis to the
-    currently selected particles. If this option is activated, unselected particles will be ignored 
-    (as if they did not exist) and will be assigned the structure type "Other".
-    This option can be useful if you want to identify defects in a crystal structure
-    not supported by the CNA method, but which has a sublattice that can be identified by the CNA
-    (and you do not want to delete particles belonging to the other sublattice(s) for some reason).
-    This option has no effect in <emphasis>bond-based</emphasis> mode.
-  </para>
-  
   <simplesect>
   <title>See also</title>
     <para>

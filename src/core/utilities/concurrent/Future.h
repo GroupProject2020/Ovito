@@ -241,14 +241,12 @@ typename detail::resulting_future_type<FC,std::add_rvalue_reference_t<typename F
 		executor.createWork([cont = std::forward<FC>(cont), trackingState](bool workCanceled) mutable {
 
 		// Don't need to run continuation function when our promise has been canceled in the meantime.
-		if(workCanceled || trackingState->isCanceled()) {
+		if(trackingState->isCanceled()) {
 			trackingState->setStarted();
 			trackingState->setFinished();
 			return;
 		}
-
-		// If promise was canceled, skip continuation function.
-		if(trackingState->creatorState()->isCanceled()) {
+		if(workCanceled || trackingState->creatorState()->isCanceled()) {
 			trackingState->setStarted();
 			trackingState->cancel();
 			trackingState->setFinished();
@@ -292,14 +290,12 @@ typename detail::resulting_future_type<FC,std::tuple<Future<R...>>>::type Future
 		executor.createWork([cont = std::forward<FC>(cont), trackingState](bool workCanceled) mutable {
 
 		// Don't need to run continuation function when our promise has been canceled in the meantime.
-		if(workCanceled || trackingState->isCanceled()) {
+		if(trackingState->isCanceled()) {
 			trackingState->setStarted();
 			trackingState->setFinished();
 			return;
 		}
-
-		// If promise was canceled, skip continuation function.
-		if(trackingState->creatorState()->isCanceled()) {
+		if(workCanceled || trackingState->creatorState()->isCanceled()) {
 			trackingState->setStarted();
 			trackingState->cancel();
 			trackingState->setFinished();
