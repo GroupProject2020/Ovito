@@ -4,7 +4,7 @@ from ovito.vis import *
 import os
 import os.path
 
-node = import_file("../../files/LAMMPS/animation.dump.gz", multiple_frames = True)
+node = import_file("../../files/LAMMPS/animation.dump.gz")
 node.add_to_scene()
 
 vp = ovito.dataset.viewports.active_vp

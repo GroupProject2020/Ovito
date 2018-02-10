@@ -143,6 +143,9 @@ The :py:class:`!Bonds.Enumerator` helper class has been renamed to :py:class:`~o
 File I/O
 ------------------------------------
 
+The :py:func:`ovito.io.import_file` function no longer needs the ``multiple_frames`` keyword to load simulation files
+containing more than one frame. This happens automatically now.
+
 The :py:func:`ovito.io.export_file` function now accepts not only a :py:class:`~ovito.pipeline.Pipeline` object which 
 generates the data to be exported, but alternatively also any :py:class:`~ovito.data.DataCollection` or individual 
 data objects.

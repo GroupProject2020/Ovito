@@ -3,7 +3,7 @@ from ovito.modifiers import PythonScriptModifier, CalculateDisplacementsModifier
 import numpy
 
 # Load input data and create a data pipeline.
-pipeline = import_file("input/simulation.dump", multiple_frames = True)
+pipeline = import_file("input/simulation.dump")
 
 # Calculate per-particle displacements with respect to initial simulation frame:
 pipeline.modifiers.append(CalculateDisplacementsModifier())

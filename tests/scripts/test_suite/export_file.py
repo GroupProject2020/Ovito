@@ -23,7 +23,7 @@ os.remove("_export_file_test.data")
 ovito.dataset.anim.last_frame = 7
 export_file(node1, "_export_file_test.dump", "lammps/dump", columns = ["Position.X", "Position.Y", "Position.Z"], frame = 5)
 os.remove("_export_file_test.dump")
-export_file(node1, "_export_file_test.dump", "lammps_dump", columns = ["Position.X", "Position.Y", "Position.Z"], multiple_frames = True)
+export_file(node1, "_export_file_test.dump", "lammps_dump", columns = ["Position.X", "Position.Y", "Position.Z"])
 os.remove("_export_file_test.dump")
 export_file(node1, "_export_file_test.*.dump", "lammps/dump", columns = ["Position.X", "Position.Y", "Position.Z"], multiple_frames = True, start_frame = 1, end_frame = 5, every_nth_frame = 2)
 os.remove("_export_file_test.1.dump")

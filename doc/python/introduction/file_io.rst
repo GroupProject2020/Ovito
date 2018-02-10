@@ -45,14 +45,8 @@ the :py:func:`~ovito.io.import_file` function::
     pipeline = import_file("/path/frame.*.dump")
 
 OVITO will automatically find all files in the directory matching the pattern and load them as one trajectory. File formats that
-can store multiple frames are automatically loaded as trajectories by OVITO. Exceptions are the *LAMMPS dump* and *XYZ* formats,
-which can store multiple frames back-to-back. In these particluar cases you have to explicitly inform OVITO about the fact that the imported file 
-contains multiple frames by using the ``multiple_frames`` keyword argument::
-
-    pipeline = import_file("trajectory.xyz", multiple_frames = True)
-
-This will let OVITO scan the entire file and discover all contained simulation frames. 
-You can check how many frames were found by querying the :py:attr:`FileSource.num_frames <ovito.pipeline.FileSource.num_frames>` property::
+can store multiple frames are automatically loaded as trajectories by OVITO. You can check how many frames were found by querying the 
+:py:attr:`FileSource.num_frames <ovito.pipeline.FileSource.num_frames>` property::
 
    print(pipeline.source.num_frames)
 

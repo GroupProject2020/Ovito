@@ -4,7 +4,7 @@ from ovito.data import *
 from ovito.vis import *
 from ovito.pipeline import TrajectoryLineGenerator
 
-node = import_file("../../files/LAMMPS/animation.dump.gz", multiple_frames = True)
+node = import_file("../../files/LAMMPS/animation.dump.gz")
 node.add_to_scene()
 print("Number of frames:", node.source.num_frames)
 
