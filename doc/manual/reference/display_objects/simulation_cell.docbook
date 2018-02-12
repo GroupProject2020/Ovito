@@ -60,7 +60,7 @@
    <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.SimulationCellDisplay"><classname>SimulationCellDisplay</classname> (Python API)</link>
+      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.SimulationCellVis"><classname>SimulationCellVis</classname> (Python API)</link>
     </para>
    </simplesect>
     

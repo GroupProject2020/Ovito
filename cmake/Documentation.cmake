@@ -66,7 +66,7 @@ IF(OVITO_BUILD_DOCUMENTATION)
 		ADD_CUSTOM_TARGET(scripting_documentation ALL 
 					COMMAND "$<TARGET_FILE:ovitos>" ${SPHINX_PROCESSOR} "-b" "html" "-a" "-E" 
 					"-D" "version=${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}" 
-					"-D" "release=${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}.${OVITO_VERSION_REVISION}"
+					"-D" "release=${OVITO_VERSION_STRING}"
 					"." "${OVITO_SHARE_DIRECTORY}/doc/manual/html/python/" 
 					WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/doc/python/"
 					COMMENT "Generating scripting documentation")

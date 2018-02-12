@@ -124,7 +124,7 @@
     <title>Minimum image convention</title>      
       <para>
         This option tells OVITO whether or not to use the <link xlink:href="https://en.wikipedia.org/wiki/Periodic_boundary_conditions#Practical_implementation:_continuity_and_the_minimum_image_convention">minimum image convention</link>
-        when calculating the displacement vectors in a system with periodic boundary conditions.
+        when calculating the displacement vectors for systems with periodic boundary conditions.
         You should deactivate this option if you work with <emphasis>unwrapped</emphasis> particle coordinates. In this case
         OVITO assumes that particle trajectories are all continuous. On the other hand, if you work with 
         <emphasis>wrapped</emphasis> particle coordinates, this option should be turned on. The minimum image convention

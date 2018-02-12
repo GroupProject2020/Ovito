@@ -49,13 +49,13 @@
 <literallayout><link xlink:href="http://iopscience.iop.org/0965-0393/18/8/085001/">A. Stukowski and K. Albe.
 Modelling Simul. Mater. Sci. Eng. 18, 085001 (2010)</link></literallayout>
     </para></blockquote>
-    The current implementation in OVITO follows a newer, more general approach, which has been developed in 
+    The current implementation in OVITO follows a newer, more general approach, which has been published in 
     a follow-up paper:
     <blockquote><para>
 <literallayout><link xlink:href="http://dx.doi.org/10.1088/0965-0393/20/8/085007">A. Stukowski, V.V. Bulatov and A. Arsenlis.
 Modelling Simul. Mater. Sci. Eng. 20, 085007 (2012)</link></literallayout>
     </para></blockquote>
-    Please cite the latter reference when using the <emphasis>Dislocation analysis</emphasis> modifier. A
+    Please cite the latter reference when using dislocation analysis results in your work. A
     short overview on how the DXA works can be found at the end of this page.
   </para>
 

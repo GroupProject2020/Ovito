@@ -96,7 +96,7 @@
    <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.ParticleDisplay"><classname>ParticleDisplay</classname> (Python API)</link>
+      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.ParticleVis"><classname>ParticleVis</classname> (Python API)</link>
     </para>
    </simplesect>
     

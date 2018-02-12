@@ -70,17 +70,21 @@
 		<row><entry><link xlink:href="http://www.riverbankcomputing.com/software/qscintilla/">QScintilla2</link></entry><entry>optional</entry>
 		<entry>Text editing widget required by the <literal>PyScript</literal> plugin.</entry></row>
 		<row><entry><link xlink:href="http://muparser.beltoforion.de/">muparser</link></entry><entry>included</entry>
-		<entry>A math expression parser library. OVITO's source distribution contains a copy of this library, which will be used if not found on the system.</entry></row>
+		<entry>A math expression parser library. OVITO's source distribution contains a copy of this library, which will be used if no local installation is found on the system.</entry></row>
 		<row><entry><link xlink:href="http://sourceforge.net/projects/qwt/">Qwt</link></entry><entry>included</entry>
 		<entry>For plotting and data visualization.</entry></row>
 		<row><entry><link xlink:href="http://botan.randombit.net/">Botan</link></entry><entry>included</entry>
-		<entry>A crypto library used by OVITO's built-in SSH client. OVITO's source distribution contains a copy of this library, which will be used if not found on the system.</entry></row>
+		<entry>A crypto library used by OVITO's built-in SSH client. OVITO's source distribution contains a copy of this library, which will be used if no local installation is found on the system.</entry></row>
 		<row><entry><link xlink:href="https://github.com/qtproject/qt-creator/tree/master/src/libs/ssh">QtCreator SSH library</link></entry><entry>included</entry>
 		<entry>Required for the built-in SSH client. OVITO's source distribution contains a slightly modified copy of this library, which is automatically used.</entry></row>
 		<row><entry><link xlink:href="http://jedi.ks.uiuc.edu/~johns/raytracer/">Tachyon</link></entry><entry>included</entry>
-		<entry>Required to build the <literal>Tachyon</literal> renderer plugin. OVITO's source distribution contains a slightly modified copy of this library, which is automatically used.</entry></row>
+		<entry>Required to build the <link linkend="rendering.tachyon_renderer">Tachyon renderer</link> plugin. OVITO's source distribution contains a slightly modified copy of this library, which is automatically used.</entry></row>
 		<row><entry><link xlink:href="http://math.lbl.gov/voro++/">Voro++</link></entry><entry>included</entry>
-		<entry>Voronoi cell construction routine required by the <link linkend="particles.modifiers.voronoi_analysis">Voronoi analysis</link> modifier. OVITO's source distribution contains a copy of this library, which will be used if not found on the system.</entry></row>
+		<entry>Voronoi cell construction routine required by the <link linkend="particles.modifiers.voronoi_analysis">Voronoi analysis</link> modifier. OVITO's source distribution contains a copy of this library, which will be used if no local installation is found on the system.</entry></row>
+		<row><entry><link xlink:href="http://www.ospray.org">OSPRay</link></entry><entry>optional</entry>
+		<entry>Required to build the <link linkend="rendering.ospray_renderer">OSPRay renderer</link> plugin. </entry></row>
+		<row><entry><link xlink:href="https://embree.github.io">Embree</link></entry><entry>optional</entry>
+		<entry>Required to build the <link linkend="rendering.ospray_renderer">OSPRay renderer</link> plugin. </entry></row>
 	</tbody></tgroup>
 	</informaltable> 
     </para>

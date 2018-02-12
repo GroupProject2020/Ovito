@@ -64,12 +64,12 @@ separate trajectory file::
 
     pipeline = import_file("topology.data")
     traj_mod = LoadTrajectoryModifier()
-    traj_mod.source.load('trajectory.dump', multiple_frames=True)
+    traj_mod.source.load('trajectory.dump')
     pipeline.modifiers.append(traj_mod)
 
 **Accessing individual frames of a trajectory**
 
-Once a simulation trajectory was loaded using :py:func:`~ovito.io.import_file`, we can step through the invidual frames of the sequence using a ``for``-loop::
+Once a simulation trajectory was loaded using :py:func:`~ovito.io.import_file`, we can step through the individual frames of the sequence using a ``for``-loop::
 
    for frame in range(pipeline.source.num_frames):
        data = pipeline.compute(frame)
