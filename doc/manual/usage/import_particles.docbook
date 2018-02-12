@@ -22,7 +22,7 @@
         </imageobject></mediaobject></screenshot>
     </informalfigure>
     The imported data will appear in the viewports as a new visual object in the three-dimensional scene
-    and also as an entry in the "Data Source" section of the pipeline editor as indicated in the screenshot on the right.
+    and also as an entry in the "Data source" section of the pipeline editor as indicated in the screenshot on the right.
     Note that the program maintains a link to the original file on disk from which it obtained the data.
     Selecting the data source entry in the pipeline editor opens the <link linkend="scene_objects.file_source">"External File" panel</link>,
     which is also visible in the screenshot.

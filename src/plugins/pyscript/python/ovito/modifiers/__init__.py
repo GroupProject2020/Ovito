@@ -34,6 +34,7 @@ Python class name                              User interface name
 :py:class:`ConstructSurfaceModifier`           :guilabel:`Construct surface mesh`
 :py:class:`CoordinationNumberModifier`         :guilabel:`Coordination analysis`
 :py:class:`CoordinationPolyhedraModifier`      :guilabel:`Coordination polyhedra`
+:py:class:`CorrelationFunctionModifier`        :guilabel:`Correlation function`
 :py:class:`CreateBondsModifier`                :guilabel:`Create bonds`
 :py:class:`CreateIsosurfaceModifier`           :guilabel:`Create isosurface`
 :py:class:`DeleteSelectedModifier`             :guilabel:`Delete selected` 

@@ -8,24 +8,24 @@
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Surface mesh display</title>
+  <title>Surface mesh</title>
 
   <para>
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/display_objects/surface_mesh_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
     
-    This display object controls the rendering of triangulated surface meshes (two-dimensional manifolds)
-    as produced by, for example, the <link linkend="particles.modifiers.construct_surface_mesh">Construct surface mesh</link>,
-    <link linkend="particles.modifiers.create_isosurface">Create isosurface</link>, 
+    This <link linkend="display_objects">visual element</link> renders triangulated surface meshes (two-dimensional manifolds)
+    as produced by e.g the <link linkend="particles.modifiers.construct_surface_mesh">Construct surface mesh</link>,
+    <link linkend="particles.modifiers.create_isosurface">Create isosurface</link> 
     or <link linkend="particles.modifiers.dislocation_analysis">Dislocation analysis</link> modifiers.
   </para>
 
   <para>
-    Surfaces meshes in OVITO typically represent closed two-dimensional manifolds that may be periodic 
-    if periodic boundary conditions are active. For visualization purposes, a periodic mesh is first converted to a non-periodic
-    representation by cutting it at the simulation cell boundaries. OVITO can generate so called 
-    'cap polygons' to fill the holes that occur at the intersection of the closed surface with the periodic boundary.
+    Surfaces meshes in OVITO represent closed two-dimensional manifolds which are embedded in the domain bounded by the 
+    simulation box. In case of periodic boundary conditions, the surface mesh itself may be periodic. For visualization purposes, such a periodic mesh is 
+    first converted to a non-periodic representation by cutting it at the simulation cell boundaries. OVITO can generate so called 
+    'cap polygons' to fill the holes that arise at the intersection of the closed surface with the periodic boundary.
   </para>
 
    <simplesect>

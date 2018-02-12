@@ -8,28 +8,25 @@
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Vector display</title>
+  <title>Vectors</title>
 
   <para>
-      
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/display_objects/vectors_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
-    
-    This display object is responsible for visualizing per-particle vector quantities.
-    
+    This <link linkend="display_objects">visual element</link> visualizes a per-particle vector quantity as arrows.
     The <link linkend="particles.modifiers.displacement_vectors">Displacement vectors</link> modifier, for example, 
     stores the calculated displacement vectors in the <literal>Displacement</literal>
-    property associated with each particle. This property has a vector display object attached,
-    which appears in the user interface under the "Display" section of the <link linkend="usage.modification_pipeline.pipeline_listbox">data pipeline editor</link> (see screenshot).
-    The checkbox next to the "Displacements" entry activates the display of the arrows in the viewports.
+    property associated with each particle. The property is linked to a <emphasis>Vectors</emphasis> visual element,
+    which appears under the "Visual elements" section of the <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link> (see screenshot),
+    and which produces the graphical visualization of the vector data.
   </para>
 
    <simplesect>
     <title>Arrow coloring</title>
     <para>
-      By default, all arrows are shown with the uniform color set in this parameter panel. If desired, you can give each vector arrow an individual
-      color by assigning the <literal>Vector Color</literal> particle property, for example using the <link linkend="particles.modifiers.color_coding">Color Coding</link> or
+      Note that, by default, all arrows are rendered in the same uniform color. If desired, however, you can give each arrow an individual
+      color by setting the <literal>Vector Color</literal> particle property, for example using the <link linkend="particles.modifiers.color_coding">Color Coding</link> or
       <link linkend="particles.modifiers.compute_property">Compute Property</link> modifiers.
     </para>
    </simplesect>

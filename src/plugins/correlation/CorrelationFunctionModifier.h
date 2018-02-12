@@ -273,8 +273,7 @@ private:
 private:
 
 	/// This global mutex is used to serialize access to the FFTW3 planner routines, which are not thread-safe.
-	static QMutex _fftwMutex;
-	
+	static QMutex _fftwMutex;	
 
 	/// The particle property that serves as the first data source for the correlation function.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(ParticlePropertyReference, sourceProperty1, setSourceProperty1);

@@ -8,7 +8,7 @@
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Particle display</title>
+  <title>Particles</title>
 
   <para>
       
@@ -16,9 +16,7 @@
        <imagedata fileref="images/display_objects/particles_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
     
-    This <link linkend="display_objects">display object</link> is responsible for rendering particles, and its parameters control the visual appearance
-    of particles. You can open this parameter panel
-    by selecting the <emphasis>Particles</emphasis> entry in the <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link>.  
+    This <link linkend="display_objects">visual element</link> renders particles as spheres and other geometric shapes.
   </para>
 
    <simplesect>

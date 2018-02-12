@@ -26,7 +26,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import)
 
 IMPLEMENT_OVITO_CLASS(ParticleImporter);	
 DEFINE_PROPERTY_FIELD(ParticleImporter, isMultiTimestepFile);
-SET_PROPERTY_FIELD_LABEL(ParticleImporter, isMultiTimestepFile, "Contains multiple timsteps");
+SET_PROPERTY_FIELD_LABEL(ParticleImporter, isMultiTimestepFile, "Contains multiple timesteps");
 
 /******************************************************************************
 * Is called when the value of a property of this object has changed.

@@ -8,16 +8,14 @@
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Simulation cell display</title>
+  <title>Simulation cell</title>
 
-  <para>
-      
+  <para>      
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/display_objects/simulation_cell_panel.png" format="PNG" scale="50" />
-    </imageobject></mediaobject></screenshot></informalfigure>
-    
-    This <link linkend="display_objects">display object</link> is responsible for the visual appearance of
-    the <link linkend="scene_objects.simulation_cell">simulation cell</link>. 
+    </imageobject></mediaobject></screenshot></informalfigure>    
+    This <link linkend="display_objects">visual element</link> renders the <link linkend="scene_objects.simulation_cell">simulation cell</link>
+    as a wireframe box. 
   </para>
 
    <simplesect>

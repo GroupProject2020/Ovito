@@ -126,7 +126,7 @@ void PipelineListModel::refreshList()
 				items.push_back(new PipelineListItem(displayObj));
 		}
 		if(!items.empty())
-			items.push_front(new PipelineListItem(nullptr, nullptr, tr("Visual Elements")));
+			items.push_front(new PipelineListItem(nullptr, nullptr, tr("Visual elements")));
 
 		// Walk up the pipeline.
 		PipelineObject* firstPipelineObj = cmnObject;
@@ -154,7 +154,7 @@ void PipelineListModel::refreshList()
 				cmnObject = modApp->input();
 			}
 			else if(cmnObject) {
-				items.push_back(new PipelineListItem(nullptr, nullptr, tr("Data Source")));
+				items.push_back(new PipelineListItem(nullptr, nullptr, tr("Data source")));
 
 				// Create an entry for the data object.
 				PipelineListItem* item = new PipelineListItem(cmnObject);

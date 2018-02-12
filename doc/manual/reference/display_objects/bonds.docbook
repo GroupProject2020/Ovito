@@ -8,7 +8,7 @@
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Bonds display</title>
+  <title>Bonds</title>
 
   <para>
       
@@ -16,8 +16,8 @@
        <imagedata fileref="images/display_objects/bonds_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
     
-    This display object is responsible for rendering bonds between particles.
-    Bonds can be loaded from a simulation file created within OVITO using the 
+    This <link linkend="display_objects">visual element</link> renders bonds between pairs of particles.
+    Bonds can either be loaded from a data file, or can be created within OVITO, e.g. using the 
     <link linkend="particles.modifiers.create_bonds">Create bonds</link> modifier.
   </para>
 
