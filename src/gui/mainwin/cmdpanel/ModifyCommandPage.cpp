@@ -113,7 +113,7 @@ ModifyCommandPage::ModifyCommandPage(MainWindow* mainWindow, QWidget* parent) : 
 	connect(toggleModifierStateAction, &QAction::triggered, this, &ModifyCommandPage::onModifierToggleState);
 
 	editToolbar->addSeparator();
-	QAction* manageModifierTemplatesAction = _actionManager->createCommandAction(ACTION_MODIFIER_MANAGE_TEMPLATES, tr("Manage modifier templates..."), ":/gui/actions/modify/modifier_save_preset.bw.svg");
+	QAction* manageModifierTemplatesAction = _actionManager->createCommandAction(ACTION_MODIFIER_MANAGE_TEMPLATES, tr("Manage Modifier Templates..."), ":/gui/actions/modify/modifier_save_preset.bw.svg");
 	connect(manageModifierTemplatesAction, &QAction::triggered, [mainWindow]() {
 		ApplicationSettingsDialog dlg(mainWindow, &ModifierTemplatesPage::OOClass());
 		dlg.exec();

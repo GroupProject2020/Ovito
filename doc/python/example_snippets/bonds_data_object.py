@@ -14,13 +14,13 @@ print("Number of generated bonds: ", len(bonds))
 for i in range(len(bonds)):
     print('Bond %i from atom %i to atom %i' % (i, bonds[i,0], bonds[i,1]))
 
-from ovito.vis import BondsDisplay
+from ovito.vis import BondsVis
 import numpy
 
 # Configure visual appearance of bonds:
-bonds.display.enabled = True
-bonds.display.shading = BondsDisplay.Shading.Flat
-bonds.display.width = 0.3
+bonds.vis.enabled = True
+bonds.vis.shading = BondsVis.Shading.Flat
+bonds.vis.width = 0.3
 
 # Computing bond vectors.
 data = pipeline.compute()

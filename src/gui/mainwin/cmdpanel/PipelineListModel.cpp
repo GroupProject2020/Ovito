@@ -126,7 +126,7 @@ void PipelineListModel::refreshList()
 				items.push_back(new PipelineListItem(displayObj));
 		}
 		if(!items.empty())
-			items.push_front(new PipelineListItem(nullptr, nullptr, tr("Display")));
+			items.push_front(new PipelineListItem(nullptr, nullptr, tr("Visual Elements")));
 
 		// Walk up the pipeline.
 		PipelineObject* firstPipelineObj = cmnObject;
@@ -154,7 +154,7 @@ void PipelineListModel::refreshList()
 				cmnObject = modApp->input();
 			}
 			else if(cmnObject) {
-				items.push_back(new PipelineListItem(nullptr, nullptr, tr("Input")));
+				items.push_back(new PipelineListItem(nullptr, nullptr, tr("Data Source")));
 
 				// Create an entry for the data object.
 				PipelineListItem* item = new PipelineListItem(cmnObject);
@@ -379,7 +379,7 @@ bool PipelineListModel::setData(const QModelIndex& index, const QVariant& value,
 		DisplayObject* displayObj = dynamic_object_cast<DisplayObject>(item->object());
 		if(displayObj) {
 			UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(),
-					(value == Qt::Checked) ? tr("Enable display") : tr("Disable display"), [displayObj, &value]() {
+					(value == Qt::Checked) ? tr("Enable visual element") : tr("Disable visual element"), [displayObj, &value]() {
 				displayObj->setEnabled(value == Qt::Checked);
 			});
 		}

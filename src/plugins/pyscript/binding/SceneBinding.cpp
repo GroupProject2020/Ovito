@@ -66,16 +66,23 @@ void defineSceneSubmodule(py::module m)
 			"is part of a :py:class:`~ovito.data.DataCollection`. The :py:mod:`ovito.data` module "
 			"lists the different data object types implemented in OVITO. "
 			"\n\n"
-			"Certain data objects are associated with a :py:class:`~ovito.vis.Display` object, which is responsible for "
+			"Certain data objects are associated with a :py:class:`~ovito.vis.DataVis` object, which is responsible for "
 			"generating the visual representation of the data and rendering it in the viewports. "
-			"The :py:attr:`.display` property provides access to the attached display object, which can be "
+			"The :py:attr:`.vis` property provides access to the attached visual element, which can be "
 			"configured as needed to change the visual appearance of the data. "
-			"The different types of display objects that exist in OVITO are documented in the :py:mod:`ovito.vis` module. ")
-		.def_property("display", &DataObject::displayObject, &DataObject::setDisplayObject,
-			"The :py:class:`~ovito.vis.Display` object associated with this data object, which is responsible for "
-        	"rendering the data. If this field contains ``None``, the data is non-visual and doesn't appear in rendered images or the viewports.")
+			"The different visual element types of OVITO are documented in the :py:mod:`ovito.vis` module. ")
+
+		.def_property("vis", &DataObject::displayObject, &DataObject::setDisplayObject,
+			"The :py:class:`~ovito.vis.DataVis` element associated with this data object, which is responsible for "
+        	"rendering the data visually. If this field contains ``None``, the data is non-visual and doesn't appear in "
+			"rendered images or the viewports.")
+
 		// Used by DataCollection.copy_if_needed():
 		.def_property_readonly("num_strong_references", &DataObject::numberOfStrongReferences)
+
+		// For backward compatibility with OVITO 2.9.0:
+		.def_property("display", &DataObject::displayObject, &DataObject::setDisplayObject)
+
 	;
 	expose_mutable_subobject_list(DataObject_py,
 								  std::mem_fn(&DataObject::displayObjects), 
@@ -86,6 +93,30 @@ void defineSceneSubmodule(py::module m)
 		.def_property_readonly("status", &PipelineObject::status)
 		.def("anim_time_to_source_frame", &PipelineObject::animationTimeToSourceFrame)
 		.def("source_frame_to_anim_time", &PipelineObject::sourceFrameToAnimationTime)
+
+		// Required by implementation of FileSource.compute():
+		.def("_evaluate", [](PipelineObject& obj, TimePoint time) {
+
+			// Full evaluation of the data pipeline is not possible while interactive viewport rendering 
+			// is in progress. If rendering is in progress, we return a preliminary pipeline state only.
+			if(obj.dataset()->viewportConfig()->isRendering()) {
+				PipelineFlowState state = obj.evaluatePreliminary();
+				// Silently ignore errors during preliminary pipeline evaluation.
+				if(state.status().type() == PipelineStatus::Error)
+					state.setStatus(PipelineStatus(PipelineStatus::Warning, state.status().text()));
+				return state;
+			}
+			else {
+				// Start an asynchronous pipeline evaluation.
+				SharedFuture<PipelineFlowState> future = obj.evaluate(time);
+				// Block until evaluation is complete and result is available.
+				if(!ScriptEngine::activeTaskManager().waitForTask(future)) {
+					PyErr_SetString(PyExc_KeyboardInterrupt, "Operation has been canceled by the user.");
+					throw py::error_already_set();
+				}
+				return future.result();
+			}
+		})		
 	;
 
 	ovito_abstract_class<CachingPipelineObject, PipelineObject>{m}
@@ -111,7 +142,7 @@ void defineSceneSubmodule(py::module m)
 			".. literalinclude:: ../example_snippets/pipeline_flow_state.py\n"
 			"   :lines: 5-14\n"
 			"\n\n"
-			"Note: The rule does not apply to :py:class:`~ovito.vis.Display` objects. These objects, which are typically attached "
+			"Note: The rule does not apply to :py:class:`~ovito.vis.DataVis` visualization elements. These objects, which are typically attached "
 			"to data objects, are not modified by a data pipeline. It typically is okay to modify them even though they are shallow copies "
 			"shared by multiple data objects: "
 			"\n\n"
@@ -370,8 +401,8 @@ void defineSceneSubmodule(py::module m)
 		// Required by implementation of Pipeline.compute():
 		.def("evaluate_pipeline", [](ObjectNode& node, TimePoint time) {
 
-			// Full evaluation of the data pipeline not possible while interactive viewport rendering 
-			// is in progress. In this case we return a preliminary pipeline state only.
+			// Full evaluation of the data pipeline is not possible while interactive viewport rendering 
+			// is in progress. If rendering is in progress, we return a preliminary pipeline state only.
 			if(node.dataset()->viewportConfig()->isRendering()) {
 				PipelineFlowState state = node.evaluatePipelinePreliminary(false);
 				// Silently ignore errors during preliminary pipeline evaluation.

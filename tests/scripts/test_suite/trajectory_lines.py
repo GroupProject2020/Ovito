@@ -29,11 +29,11 @@ traj_node.source.only_selected = False
 traj_data = traj_node.source.generate()
 assert(traj_data)
 
-dis = traj_data.display
-print(dis.width)
-print(dis.color)
-print(dis.shading)
-print(dis.upto_current_time)
-assert(dis.shading == TrajectoryLineDisplay.Shading.Flat)
+vis = traj_data.vis
+print(vis.width)
+print(vis.color)
+print(vis.shading)
+print(vis.upto_current_time)
+assert(vis.shading == TrajectoryLineVis.Shading.Flat)
 
-dis.shading = TrajectoryLineDisplay.Shading.Normal
+vis.shading = TrajectoryLineVis.Shading.Normal

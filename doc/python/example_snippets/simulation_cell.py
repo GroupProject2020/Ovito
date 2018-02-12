@@ -21,4 +21,4 @@ with cell:
     cell[:,1] *= 2.0
 
 # Change display color of simulation cell to red:
-cell.display.rendering_color = (1.0, 0.0, 0.0)
+cell.vis.rendering_color = (1.0, 0.0, 0.0)

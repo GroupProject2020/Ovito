@@ -14,7 +14,7 @@ modifier.isolevel = 0.02
 print("  property: {}".format(modifier.property))
 modifier.property = "Charge density"
 
-print("  mesh_display: {}".format(modifier.mesh_display))
+print("  vis: {}".format(modifier.vis))
 
 node.compute()
 print("Output:")

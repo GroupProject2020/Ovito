@@ -206,7 +206,7 @@ def render(painter, **args):
 	if xy is None: return
 	
 	# Get particle display radius.
-	radius = node.source.particle_properties.position.display.radius
+	radius = node.source.particle_properties.position.vis.radius
 
 	# Calculate screen-space size of particle in pixels.
 	screen_radius = project_radius(positions[0], radius, painter, args)

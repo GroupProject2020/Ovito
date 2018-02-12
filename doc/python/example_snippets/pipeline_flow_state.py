@@ -13,6 +13,6 @@ cell.pbc = (True, True, True)
 cell = data.copy_if_needed(data.expect(SimulationCell))
 cell.pbc = (True, True, True)
 
-# No need to copy the DataObject when modifying only its Display object
+# No need to copy the DataObject when modifying only its DataVis object
 cell = data.expect(SimulationCell)
-cell.display.line_width = 0.5
+cell.vis.line_width = 0.5

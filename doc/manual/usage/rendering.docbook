@@ -7,35 +7,34 @@
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Rendering images and movies</title>
+  <title>Rendering</title>
 
   <para>
     <informalfigure>
       <screenshot><mediaobject><imageobject>
-      <imagedata fileref="images/rendering/render_tab.png" format="PNG" />
+      <imagedata fileref="images/rendering/render_tab.png" format="PNG" scale="50" />
       </imageobject></mediaobject></screenshot>
     </informalfigure>
-	  OVITO can produce images and movies for publications and presentations. This is done from the 
-    <emphasis>Render</emphasis> tab of the command panel as shown on the right.
+	  After you have created a pipeline for data analysis and visualization, at some point you may want to
+    produce images or a movie for publications or presentations. For this, go to the 
+    <emphasis>Render</emphasis> tab in the command panel as shown on the right.
   </para>
-  
-  <simplesect xml:id="usage.rendering.render_settings">
-    <title>Render settings</title>     
-      <para>
-      The rendering tab contains the <link linkend="core.render_settings">Render settings</link> panel, which lets you control various 
-      aspects of image generation like the output resolution and the background color.
-      The <guibutton>Render Active Viewport</guibutton> button starts the rendering process for the viewport that is currently active.
-      OVITO will open a window to display the generated image, which can be saved to disk or copied to the clipboard.
-      You can optionally specify an output filename beforehand in the <link linkend="core.render_settings">Render settings</link> panel, 
-      under which the generated image or movie will be saved. 
-    </para>
-    <para>
-      OVITO provides several different rendering engines you can choose from. The default one is the <link linkend="rendering.opengl_renderer">OpenGL renderer</link>, 
-      which is also used by the interactive viewports for real-time display. This renderer is very fast and produces pictures that are more or less identical to
-      what you see in the interactive viewports. An alternative option is the <link linkend="rendering.tachyon_renderer">Tachyon renderer</link>, a software-based
-      raytracing engine. It can generate high-quality rendering including shadows, ambient occlusion shading and depth of field. But it typically takes much longer to 
-      generate an image with this renderer. A third option is the <link linkend="rendering.povray_renderer">POV-Ray rendering backend</link>, which offloads the rendering to the external POV-Ray raytracing program,
-      which must be installed on your computer.
+  <para>
+    The <guibutton>Render Active Viewport</guibutton> button launches the image rendering process for the active viewport (marked with a yellow border).
+    OVITO will open a separate window to show the generated image, which can be saved to disk or copied to the clipboard from there.
+  </para>
+  <para>
+    The <link linkend="core.render_settings">Render Settings</link> panel controls various 
+    settings such as the resolution of the generated image, the background color and the filename
+    under which the image or movie should be saved by OVITO. Note that you have the choice to either pick an output filename
+    in advance or after rendering is completed (the window displaying the rendered image has a save button for it).
+  </para>
+  <para>
+    OVITO comes with several rendering engines to choose from, which differ in terms of speed, visual quality and memory requirements. 
+    The default <link linkend="rendering.opengl_renderer">OpenGL renderer</link> is the fastest and produces pictures that are more or less 
+    identical to what you see in the interactive viewports. The <link linkend="rendering.tachyon_renderer">Tachyon renderer</link>, on the other hand,
+    is a software-based raytracing engine, which can generate high-quality renderings including shadows, ambient occlusion shading and depth of field effects. 
+    See the <link linkend="rendering">Rendering</link> reference section for a description of all rendering engines included with OVITO.
       <informalfigure role="inline">
       <informaltable frame="none">
         <tgroup cols="2">
@@ -55,22 +54,19 @@
       </informaltable>
       </informalfigure>
     </para>
-  </simplesect>
 
   <simplesect xml:id="usage.rendering.animation">
-    <title>Creating movies</title>     
+    <title>Creating animations</title>     
     <para>
-      When a simulation sequence has been loaded into OVITO, the program can render an animated movie of it and save it to a video file. 
-      Select <guilabel>Complete animation</guilabel> in the <link linkend="core.render_settings">Render settings</link> panel and set a file name and encoding format for the 
-      output video. OVITO's built-in video encoder supports common video formats such as AVI and MPEG. 
-    </para>
-    <para>
-      To set the playback speed (frames per second) of the output video, click the <link linkend="animation.animation_settings_dialog">Animation settings</link> button.
-      Alternatively, you can produce a series of image files, one per frame, and combine them to a video later using an external video encoding tool.
-      More information on OVITO's animation capabilities can be found <link linkend="usage.animation">here</link>.
+      OVITO can produce videos from the loaded simulation sequence. To render an animation,
+      select the <guilabel>Complete animation</guilabel> option in the <link linkend="core.render_settings">Render Settings</link> panel and 
+      set an output filename for the video. OVITO's built-in video encoder supports video formats such as AVI and MPEG. 
+      The frame rate for the output video is set in the <link linkend="animation.animation_settings_dialog">animation settings</link> dialog.
+      Alternatively, you can produce a series of image files, one per frame, and later combine them to a video using an external video encoding tool.
     </para>
   </simplesect>
 
+<!--
   <simplesect xml:id="usage.rendering.show_render_frame">
     <title>Viewport preview mode</title>
     <para>
@@ -88,11 +84,11 @@
           </tbody>
         </tgroup>
       </informaltable></informalfigure>
-      To preview the precise area of the active viewport that will be visible in the rendered image or movie, you can activate
-      the <menuchoice><guimenuitem>Preview Mode</guimenuitem></menuchoice> for this viewport. 
+      To gauge the precise viewport region that will be visible in a rendered image, 
+      you can activate the <menuchoice><guimenuitem>Preview Mode</guimenuitem></menuchoice> for the active viewport. 
       This option can be found in the <link linkend="usage.viewports.menu">viewport menu</link>, which can be opened by clicking
       the viewport's caption in the upper left corner.
      </para>
    </simplesect>
-  
+  -->
 </section>

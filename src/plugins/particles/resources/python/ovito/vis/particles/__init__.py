@@ -3,16 +3,16 @@ import ovito.vis
 
 # Load the native code module
 import ovito.plugins.PyScript
-from ovito.plugins.Particles import ParticleDisplay, VectorDisplay, BondsDisplay, TrajectoryLineDisplay
+from ovito.plugins.Particles import ParticleVis, VectorVis, BondsVis, TrajectoryLineVis
 
 # Inject selected classes into parent module.
-ovito.vis.ParticleDisplay = ParticleDisplay
-ovito.vis.VectorDisplay = VectorDisplay
-ovito.vis.BondsDisplay = BondsDisplay
-ovito.vis.TrajectoryLineDisplay = TrajectoryLineDisplay
-ovito.vis.__all__ += ['ParticleDisplay', 'VectorDisplay', 'BondsDisplay', 'TrajectoryLineDisplay']
+ovito.vis.ParticleVis = ParticleVis
+ovito.vis.VectorVis = VectorVis
+ovito.vis.BondsVis = BondsVis
+ovito.vis.TrajectoryLineVis = TrajectoryLineVis
+ovito.vis.__all__ += ['ParticleVis', 'VectorVis', 'BondsVis', 'TrajectoryLineVis']
 
 # Inject enum types.
-ovito.vis.VectorDisplay.Shading = ovito.plugins.PyScript.ArrowShadingMode
-ovito.vis.BondsDisplay.Shading = ovito.plugins.PyScript.ArrowShadingMode
-ovito.vis.TrajectoryLineDisplay.Shading = ovito.plugins.PyScript.ArrowShadingMode
+ovito.vis.VectorVis.Shading = ovito.plugins.PyScript.ArrowShadingMode
+ovito.vis.BondsVis.Shading = ovito.plugins.PyScript.ArrowShadingMode
+ovito.vis.TrajectoryLineVis.Shading = ovito.plugins.PyScript.ArrowShadingMode

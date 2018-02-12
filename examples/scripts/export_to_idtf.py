@@ -46,8 +46,8 @@ def export_particle(parent_node_name, index, pos, color, radius):
 
 def export_particles(node_name, data):
     positions = data.particle_properties.position.array
-    particle_display = data.particle_properties.position.display
-    assert(particle_display.shape == ParticleDisplay.Shape.Sphere)  # Only spherical particles can be exported at the moment.
+    particle_display = data.particle_properties.position.vis
+    assert(particle_display.shape == ParticleVis.Shape.Sphere)  # Only spherical particles can be exported at the moment.
     
     color = (1,0,0)
     color_property = None
@@ -110,10 +110,10 @@ def export_node(node):
 
     data = node.compute()
     
-    if data.number_of_particles != 0 and data.particle_properties.position.display.enabled:
+    if data.number_of_particles != 0 and data.particle_properties.position.vis.enabled:
         export_particles(group_name, data)
         
-    if 'Simulation cell' in data and data.cell.display.enabled:
+    if 'Simulation cell' in data and data.cell.vis.enabled:
         export_simulation_cell(group_name, data.cell)
 
 # Loop over scene nodes.

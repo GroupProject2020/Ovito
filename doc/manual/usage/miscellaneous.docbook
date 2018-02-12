@@ -10,42 +10,28 @@
   <title>Miscellaneous</title>
 
   <simplesect xml:id="usage.saving_loading_scene">
-  <title>Saving and restoring program state</title>
+  <title>Saving the program state</title>
     <para>
-      The complete working state of the program, including the viewports, the modification pipeline, and display settings, can be saved to a <emphasis>state file</emphasis>
-      by choosing <menuchoice><guimenu>File</guimenu><guimenuitem>Save Program State</guimenuitem></menuchoice> from the menu. This allows you to continue working at a later time 
-      and to preserve the current visualization setup for future use. For instance, you can use a state file as a template to visualize multiple simulations 
-      using the same camera setup and modifier sequence. 
-    </para>
-    <para>       
-      Keep in mind that OVITO does not store any simulation data in the state file by default to keep it small. 
-      It only saves a reference to the original simulation data file that was imported into OVITO, and the data 
-      is restored from that external file when you load the state file.
+      You can save the complete working state of the program, including the data pipeline, viewports, render settings, etc., to a <literal>.ovito</literal> <emphasis>state file</emphasis>
+      (main menu: <menuchoice><guimenu>File</guimenu><guimenuitem>Save Program State</guimenuitem></menuchoice>). This allows you 
+      to preserve the current visualization setup for future use. For instance, you can use the state file as a template to visualize multiple simulations 
+      using the same camera setup and data analysis pipeline. 
     </para>
   </simplesect>
 
   <simplesect xml:id="usage.spinner_widgets">
-    <title>Spinner widgets</title>
+    <title>Spinner controls</title>
     <para>
-    <informalfigure>
-        <mediaobject><imageobject>
-        <imagedata fileref="images/command_panel/spinner_widget.png" format="PNG" />
-        </imageobject></mediaobject>
-    </informalfigure>
-      A spinner is a graphical user interface element used in the program to let 
-      you change numeric parameters (see screenshot on the right).
-      Here is how you use the spinner widget.
-      You can click or drag the spinner's up and down arrows to change the value in the adjacent text box.
-      Do one of the following:
       <informalfigure>
-        <mediaobject><imageobject>
-        <imagedata fileref="images/command_panel/particle_inspection_utility.png" format="PNG" />
-        </imageobject></mediaobject>
+          <mediaobject><imageobject>
+          <imagedata fileref="images/command_panel/spinner_widget.png" format="PNG" />
+          </imageobject></mediaobject>
       </informalfigure>
+      A spinner widget is a user interface element used throughout the program for editing numerical parameters (see screenshot on the right).
+      Here is how you use the spinner widget to vary the parameter value:
     <itemizedlist>    
-      <listitem><para>Click the spinner's up arrow to increment the value; click the down arrow to decrement the value in a stepwise manner.</para></listitem> 
-      <listitem><para>Click and hold for continuously changing the value. Drag upward to increase the value, or drag downward to decrease it.
-      For continuous parameters this is often the fastest method.</para></listitem> 
+      <listitem><para>Click the spinner's up arrow once to increment the value; click the down arrow to decrement the value in a stepwise manner.</para></listitem> 
+      <listitem><para>Click and hold the mouse button to vary the value continuously. Drag upward to increase the value, or drag downward to decrease it.</para></listitem>
     </itemizedlist> 
     </para>
   </simplesect>
@@ -53,6 +39,11 @@
   <simplesect xml:id="usage.particle_inspection_utility">
     <title>Particle inspection utility</title>
     <para>
+      <informalfigure>
+        <mediaobject><imageobject>
+          <imagedata fileref="images/command_panel/particle_inspection_utility.png" format="PNG" scale="50" />
+        </imageobject></mediaobject>  
+      </informalfigure>
       The "Utilities" tab of OVITO's command panel, which is shown in the screenshot on the right, contains the 
       <link linkend="utilities.particle_inspection">Particle Inspection utility</link> for 
       displaying the properties of individual particles. The tool also allows you to measure distances between pairs of particles.

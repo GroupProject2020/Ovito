@@ -15,14 +15,14 @@ This module contains classes related to :ref:`data visualization and image rende
 
 **Data visualization:**
 
-  * :py:class:`Display` (base class of all display classes below)
-  * :py:class:`BondsDisplay`
-  * :py:class:`DislocationDisplay`
-  * :py:class:`ParticleDisplay`
-  * :py:class:`SimulationCellDisplay`
-  * :py:class:`SurfaceMeshDisplay`
-  * :py:class:`TrajectoryLineDisplay`
-  * :py:class:`VectorDisplay`
+  * :py:class:`DataVis` (base class for all visual elements)
+  * :py:class:`BondsVis`
+  * :py:class:`DislocationVis`
+  * :py:class:`ParticleVis`
+  * :py:class:`SimulationCellVis`
+  * :py:class:`SurfaceMeshVis`
+  * :py:class:`TrajectoryLineVis`
+  * :py:class:`VectorVis`
 
 **Viewport overlays:**
 
@@ -38,12 +38,12 @@ import PyQt5.QtGui
 
 # Load the native modules.
 from ..plugins.PyScript import (RenderSettings, Viewport, ViewportConfiguration, OpenGLRenderer, 
-                                Display, CoordinateTripodOverlay, PythonViewportOverlay, TextLabelOverlay,
+                                DataVis, CoordinateTripodOverlay, PythonViewportOverlay, TextLabelOverlay,
                                 FrameBuffer)
 
 import ovito
 
-__all__ = ['RenderSettings', 'Viewport', 'ViewportConfiguration', 'OpenGLRenderer', 'Display',
+__all__ = ['RenderSettings', 'Viewport', 'ViewportConfiguration', 'OpenGLRenderer', 'DataVis',
         'CoordinateTripodOverlay', 'PythonViewportOverlay', 'TextLabelOverlay']
 
 def _get_RenderSettings_custom_range(self):

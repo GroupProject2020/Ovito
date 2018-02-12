@@ -19,8 +19,8 @@
     This panel shows information regarding the data that was loaded by OVITO from an external file and allows
     you to change the data source by picking a different input file.  
                 
-	The file source panel is automatically displayed after you <link linkend="usage.import">import a data file</link>.
-	You can access it again later by selecting the <link linkend="usage.modification_pipeline.input">corresponding entry</link> in the modification pipeline editor.
+    The file source panel is automatically displayed after you <link linkend="usage.import">import a data file</link>.
+    You can access it again later by selecting the "Data Source" entry in the <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link>.
   </para>
 
    <simplesect>

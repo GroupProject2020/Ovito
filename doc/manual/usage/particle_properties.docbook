@@ -10,7 +10,7 @@
   <title>Particle properties</title>
 
   <simplesect>
-    <title>What are properties?</title>
+    <title>Definition</title>
 	  <para>
 			<emphasis>Particle properties</emphasis> are attributes (typically numerical information) associated with each particle.
 			They play a central role in the data model of OVITO. Common examples for particle properties are position, chemical type or velocity.
@@ -19,46 +19,51 @@
 			The set of properties associated with all particles can dynamically change though.
 		</para>
 		<para>
-		  Note that the concept of properties is very general and applies to other entities as well. For instance, in OVITO bonds between particles may be
-			associated with <emphasis>bond properties</emphasis>, e.g. bond type or bond color. So, even though the following introduction primarily focuses on particle properties,
+		  Note that this concept of uniform properties is very general and applies to other entity classes as well. For instance, in OVITO the interatomic bonds may be
+			associated with <emphasis>bond properties</emphasis>, e.g. bond type or bond color. So keep in mind that, even though the following introduction primarily focuses on particle properties,
 			it applies to other classes of properties in the same manner.
 		</para>
 		<para>
 			OVITO allows you to associate an arbitrary number of properties with the particles. Each property is identified by its unique name, for example <literal>Position</literal> or
-			<literal>Potential Energy</literal>. There is a built-in list of commonly-used property names, including the two mentioned ones, but
+			<literal>Potential Energy</literal>. OVITO has a built-in list of commonly-used property names including the mentioned two, but
 			you are free to define properties with other names as needed. The <literal>Position</literal> property plays a special role though, because it is always present.
 			Clearly, there cannot be any particles without a position. Other standard properties such as <literal>Color</literal>, <literal>Radius</literal> or <literal>Selection</literal>
 			have a special meaning to the program as well, because their values affect how OVITO renders the particles. By assigning values to these properties, 
 			you control the visual appearance of particles.
 		</para>
 	  <para>
-			In OVITO, per-particle property values can have different data types (integer or decimal) and dimensionality (e.g. scalar, vector, tensor), depending on the 
+			In OVITO, per-particle property values can have different data types (real or integer) and dimensionality (e.g. scalar, vector, tensor), depending on the 
 			property at hand. The <literal>Position</literal> property, for instance, is a vector property with three components per particle, referred to as 
 			<literal>Position.X</literal>, <literal>Position.Y</literal> and <literal>Position.Z</literal> within OVITO's user interface. 
 	  </para>
 	</simplesect>
 
   <simplesect>
-    <title>How can you assign properties?</title>
+    <title>How are properties assigned?</title>
 		<para>
 		  An initial set of properties is automatically created by OVITO whenever you open a simulation data file.
 			The values of standard properties such as <literal>Position</literal>, <literal>Particle Type</literal> and <literal>Velocity</literal>
-			are typically initialized from the data found in the loaded file. Some file formats such as <emphasis>LAMMPS dump</emphasis> and the extended <emphasis>XYZ</emphasis>
-			format supported by OVITO	can store an arbitrary number of extra data columns with additional per-atom attributes. 
-			These attributes found the input file are automatically mapped to corresponding particle properties during import.
+			are typically initialized from the data in the loaded file. Some file formats such as <emphasis>LAMMPS dump</emphasis> and the <link xlink:href="http://libatoms.github.io/QUIP/io.html#module-ase.io.extxyz">extended XYZ
+			format</link> can store an arbitrary number of extra data columns with additional per-atom attributes. 
+			These attributes from the input file are automatically mapped to corresponding particle properties during import.
 		</para>
 		<para>
+			<informalfigure>
+					<screenshot><mediaobject><imageobject>
+					<imagedata fileref="images/usage/properties/particle_inspection_example.png" format="PNG" scale="50" />
+					</imageobject></mediaobject></screenshot>
+			</informalfigure>
 		  To find out which properties are currently associated with the particles, you can use OVITO's <link linkend="utilities.particle_inspection">
-			Particle Inspection Utility</link>. Alternatively, you can simply position the mouse cursor over a particle in the viewports,
+			Particle Inspection Utility</link>, which is shown in the screenshot. Alternatively, you can simply position the mouse cursor over a particle in the viewports,
 			and OVITO will display the values of all its properties in the status bar.
 		</para>
 		<para>
 		  OVITO provides a rich set of functions for modifying the assigned properties of particles. These so-called <emphasis>modifiers</emphasis>
-			will be introduced in more detail in a following section of this manual. But to already give you a first idea:
-			The <link linkend="particles.modifiers.assign_color">Assign color</link> modifier function allows you to assign a uniform color of your choice
+			will be introduced in more detail in a following section of this manual. But to already give you an idea:
+			The <link linkend="particles.modifiers.assign_color">Assign color</link> modifier function lets you assign a uniform color of your choice
 			to all currently selected particles. It does that by setting the <literal>Color</literal> property of the
 			particles to the given RGB value (if the <literal>Color</literal> property doesn't exist yet, it is automatically created). 
-			Which of the particles are currently selected is determined by the value of their <literal>Selection</literal> property (convention is: 0=unselected, 1=selected). 
+			Which of the particles are currently selected is determined by the value of their <literal>Selection</literal> property (convention: 0=unselected, 1=selected). 
 		</para>
 		<para>
 		  Fittingly, OVITO provides a number of particle selection modifiers, which allow you to set the value of the <literal>Selection</literal> property.
@@ -67,89 +72,114 @@
 		</para>
 		<para>
 		  Another typical modifier is the <link linkend="particles.modifiers.coordination_analysis">Coordination Analysis</link> modifier.
-			It computes the number of neighbors of each particle with a given cutoff range and stores the computation results in a new particle property named <literal>Coordination</literal>. 
+			It computes the number of neighbors of each particle within a given cutoff range and stores the computation results in a new particle property named <literal>Coordination</literal>. 
 			Subsequently, you can refer to the values of this property, for example to select particles having a coordination number in a certain range
 			or to color particles based on their coordination number (see <link linkend="particles.modifiers.color_coding">Color Coding</link> modifier).
 		</para>			
 		<para>
-		  Of course it is possible to export the particle property values to a file. OVITO supports a variety of output formats for that (see the 
-			<link linkend="usage.export">Data export</link> section of this manual). For instance, the <emphasis>XYZ</emphasis> format is a simple table
-			format with an arbitrary set of output columns.
+		  Of course it is possible to export the particle property values to an output file. OVITO supports a variety of output formats for that (see the 
+			<link linkend="usage.export">data export</link> section of this manual). For instance, the <emphasis>XYZ</emphasis> format is a simple table
+			format supporting an arbitrary set of output columns.
 	  </para>
   </simplesect>
 
   <simplesect>
-    <title>Standard properties</title>
+    <title>Special particle properties</title>
 	  <para>
-			Furthermore, one can distinguish two types of particle properties: Standard properties and user-defined properties.
-			Standard properties have a predefined name, data type, and a specific meaning within OVITO.
-			The standard property <literal>Position</literal>, for instance, is used by the program to store the coordinates
-			of particles, and the <literal>Color</literal> property stores the display color of particles. 
-			User-defined properties, in contrast, simply contain arbitrary per-particle quantities (as read from a simulation file or .
-			This data is not interpreted by OVITO in a particular way. 
-			However, it can be used within the program, for instance, to <link linkend="particles.modifiers.expression_select">select particles</link>,
-			<link linkend="particles.modifiers.color_coding">color particles</link>, or <link linkend="particles.modifiers.compute_property">perform other computations</link>.
-	  </para>
-	
-	  <para>As explained above, certain standard properties have a special meaning and control how OVITO displays particles. 
-	  The following table lists some important standard properties and their function:
+			As mentioned above, certain particle properties play a special role in OVITO, because their values control the visual
+			appearance of the particles as well as other aspects. The following table lists these properties and describes their function:
 	   <informaltable>
-	        <tgroup cols="3">
-				<colspec colnum="1" colname="name" colwidth="2*" />
-				<colspec colnum="2" colname="datatype" colwidth="1*" />
-				<colspec colnum="3" colname="description" colwidth="4*" />
-	          <thead>
-	            <row>
-	              <entry>Standard property</entry>
-	              <entry>Data type / Components</entry>
-	              <entry>Description</entry>
-	            </row>
-	          </thead>
-	
-	          <tbody>
-	            <row>
-	              <entry><literal>Position</literal></entry>
-	              <entry>X, Y, Z</entry>
-	              <entry><para>The particle coordinates.</para></entry>
-	            </row>
-	            <row>
-	              <entry><literal>Color</literal></entry>
-	              <entry>R, G, B</entry>
-	              <entry><para>If present, this property controls the display color of particles.</para></entry>
-	            </row>
-	            <row>
-	              <entry><literal>Radius</literal></entry>
-	              <entry>Real</entry>
-	              <entry><para>If present, this property controls the display size of particles.</para></entry>
-	            </row>
-	            <row>
-	              <entry><literal>Particle Type</literal></entry>
-	              <entry>Integer</entry>
-	              <entry><para>Stores the type identifier of each particle. This determines the particle display size and color 
-	              unless the <emphasis>Radius</emphasis> or <emphasis>Color</emphasis> property are present.</para></entry>
-	            </row>
-	            <row>
-	              <entry><literal>Particle Identifier</literal></entry>
-	              <entry>Integer</entry>
-	              <entry><para>Stores the unique ID of each particle. This is used by some modifiers
-	              to track particles over time if the storage order of particles changes between simulation
-	              frames.</para></entry>
-	            </row>
-	            <row>
-	              <entry><literal>Transparency</literal></entry>
-	              <entry>Real</entry>
-	              <entry><para>A value between 0 and 1 controlling the particle transparency.</para></entry>
-	            </row>
-	            <row>
-	              <entry><literal>Selection</literal></entry>
-	              <entry>Integer</entry>
-	              <entry><para>Stores the selection state of particles (1 for selected particles; 0 otherwise).</para></entry>
-	            </row>
-	          </tbody>
-	        </tgroup>
-	      </informaltable>
-	      The <link linkend="particles.modifiers.compute_property">Compute Property</link> modifier gives you full control over the values of these properties.
-	    </para>
-  </simplesect>    
+				<tgroup cols="3">
+					<colspec colnum="1" colname="name" colwidth="2*" />
+					<colspec colnum="2" colname="datatype" colwidth="1*" />
+					<colspec colnum="3" colname="description" colwidth="4*" />
+					<thead>
+						<row>
+							<entry>Particle&#xA0;property</entry>
+							<entry>Data&#xA0;type / Components</entry>
+							<entry>Description</entry>
+						</row>
+					</thead>	
+					<tbody>
+						<row>
+							<entry><literal>Position</literal></entry>
+							<entry>Real (X,&#xA0;Y,&#xA0;Z)</entry>
+							<entry><para>The particle coordinates. For 2-dim. systems, <emphasis>Z</emphasis> will be 0.</para></entry>
+						</row>
+						<row>
+							<entry><literal>Color</literal></entry>
+							<entry>Real (R,&#xA0;G,&#xA0;B)</entry>
+							<entry><para>If present, this property controls the display color of particles. Red, green and blue components are in the range [0,1].</para></entry>
+						</row>
+						<row>
+							<entry><literal>Radius</literal></entry>
+							<entry>Real</entry>
+							<entry><para>If present, this property controls the display size of particles.</para></entry>
+						</row>
+						<row>
+							<entry><literal>Particle&#xA0;Type</literal></entry>
+							<entry>Integer</entry>
+							<entry><para>Stores the type identifier of each particle. This also determines the display size and color 
+							if the <emphasis>Radius</emphasis> or <emphasis>Color</emphasis> property are not present.</para></entry>
+						</row>
+						<row>
+							<entry><literal>Particle&#xA0;Identifier</literal></entry>
+							<entry>Integer</entry>
+							<entry><para>Stores the unique ID of each particle. This information will be used by some modifiers
+   							to track particles over time even if the storage order changes.</para></entry>
+						</row>
+						<row>
+							<entry><literal>Transparency</literal></entry>
+							<entry>Real</entry>
+							<entry><para>A value in the range [0,1] controlling the particle's transparency. If not present, particles are rendered fully opaque.</para></entry>
+						</row>
+						<row>
+							<entry><literal>Selection</literal></entry>
+							<entry>Integer</entry>
+							<entry><para>Stores the current selection state of particles (1 for selected particles; 0 otherwise).</para></entry>
+						</row>
+					</tbody>
+				</tgroup>
+			</informaltable>
+		</para>
+	</simplesect>
+
+	<simplesect>
+		<title>Special bond properties</title>
+	  <para>
+	    <informaltable>
+				<tgroup cols="3">
+					<colspec colnum="1" colname="name" colwidth="2*" />
+					<colspec colnum="2" colname="datatype" colwidth="1*" />
+					<colspec colnum="3" colname="description" colwidth="4*" />
+					<thead>
+						<row>
+							<entry>Bond&#xA0;property</entry>
+							<entry>Data&#xA0;type / Components</entry>
+							<entry>Description</entry>
+						</row>
+					</thead>	
+					<tbody>
+						<row>
+							<entry><literal>Bond&#xA0;Type</literal></entry>
+							<entry>Integer</entry>
+							<entry><para>Stores the type identifier of each bond. This also determines the bond display color 
+							if the <emphasis>Color</emphasis> property is not present.</para></entry>
+						</row>
+						<row>
+							<entry><literal>Color</literal></entry>
+							<entry>Real (R,&#xA0;G,&#xA0;B)</entry>
+							<entry><para>If present, this property controls the display color of individual bonds. Red, green and blue components are in the range [0,1].</para></entry>
+						</row>
+						<row>
+							<entry><literal>Selection</literal></entry>
+							<entry>Integer</entry>
+							<entry><para>Stores the current selection state of bonds (1 for selected bonds; 0 otherwise).</para></entry>
+						</row>
+					</tbody>
+				</tgroup>
+			</informaltable>
+		</para>
+	</simplesect>    
 
 </section>

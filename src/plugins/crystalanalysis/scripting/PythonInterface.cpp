@@ -24,7 +24,6 @@
 #include <plugins/crystalanalysis/modifier/dxa/DislocationAnalysisModifier.h>
 #include <plugins/crystalanalysis/modifier/dxa/StructureAnalysis.h>
 #include <plugins/crystalanalysis/modifier/elasticstrain/ElasticStrainModifier.h>
-//#include <plugins/crystalanalysis/modifier/grains/GrainSegmentationModifier.h>
 #include <plugins/crystalanalysis/objects/dislocations/DislocationDisplay.h>
 #include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
 #include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
@@ -99,8 +98,8 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 				"if ``False``, the modifier constructs the surface around all particles."
 				"\n\n"
 				":Default: ``False``\n")
-		.def_property_readonly("mesh_display", &ConstructSurfaceModifier::surfaceMeshDisplay,
-				"The :py:class:`~ovito.vis.SurfaceMeshDisplay` controlling the visual representation of the computed surface.\n")
+		.def_property_readonly("vis", &ConstructSurfaceModifier::surfaceMeshDisplay,
+				"The :py:class:`~ovito.vis.SurfaceMeshVis` controlling the visual representation of the computed surface.\n")
 	;
 
 	auto DislocationAnalysisModifier_py = ovito_class<DislocationAnalysisModifier, StructureIdentificationModifier>(m,
@@ -310,16 +309,18 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 	ovito_class<VTKDislocationsExporter, FileExporter>{m}
 	;
 	
-	auto DislocationDisplay_py = ovito_class<DislocationDisplay, DisplayObject>(m,
-			":Base class: :py:class:`ovito.vis.Display`\n\n"
+	auto DislocationVis_py = ovito_class<DislocationDisplay, DisplayObject>(m,
+			":Base class: :py:class:`ovito.vis.DataVis`\n\n"
 			"Controls the visual appearance of dislocation lines extracted by a :py:class:`~ovito.modifier.DislocationAnalysisModifier`. "
-			"An instance of this class is attached to every :py:class:`~ovito.data.DislocationNetwork` data object. ")
+			"An instance of this class is attached to every :py:class:`~ovito.data.DislocationNetwork` data object. ",
+			// Python class name:
+			"DislocationVis")
 		.def_property("shading", &DislocationDisplay::shadingMode, &DislocationDisplay::setShadingMode,
 				"The shading style used for the lines.\n"
 				"Possible values:"
 				"\n\n"
-				"   * ``DislocationDisplay.Shading.Normal`` (default) \n"
-				"   * ``DislocationDisplay.Shading.Flat``\n"
+				"   * ``DislocationVis.Shading.Normal`` (default) \n"
+				"   * ``DislocationVis.Shading.Flat``\n"
 				"\n")
 		.def_property("burgers_vector_width", &DislocationDisplay::burgersVectorWidth, &DislocationDisplay::setBurgersVectorWidth,
 				"Specifies the width of Burgers vector arrows (in length units)."
@@ -349,13 +350,13 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 				"Controls how the display color of dislocation lines is chosen."
 				"Possible values:"
 				"\n\n"
-				"   * ``DislocationDisplay.ColoringMode.ByDislocationType`` (default) \n"
-				"   * ``DislocationDisplay.ColoringMode.ByBurgersVector``\n"
-				"   * ``DislocationDisplay.ColoringMode.ByCharacter``\n"
+				"   * ``DislocationVis.ColoringMode.ByDislocationType`` (default) \n"
+				"   * ``DislocationVis.ColoringMode.ByBurgersVector``\n"
+				"   * ``DislocationVis.ColoringMode.ByCharacter``\n"
 				"\n")
 	;
 
-	py::enum_<DislocationDisplay::LineColoringMode>(DislocationDisplay_py, "ColoringMode")
+	py::enum_<DislocationDisplay::LineColoringMode>(DislocationVis_py, "ColoringMode")
 		.value("ByDislocationType", DislocationDisplay::ColorByDislocationType)
 		.value("ByBurgersVector", DislocationDisplay::ColorByBurgersVector)
 		.value("ByCharacter", DislocationDisplay::ColorByCharacter)
@@ -365,9 +366,9 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 			":Base class: :py:class:`ovito.data.DataObject`\n\n"
 			"This data object types stores the network of dislocation lines extracted by a :py:class:`~ovito.modifiers.DislocationAnalysisModifier`."
 			"\n\n"
-			"Instances of this class are associated with a :py:class:`~ovito.vis.DislocationDisplay` "
+			"Instances of this class are associated with a :py:class:`~ovito.vis.DislocationVis` "
 			"that controls the visual appearance of the dislocation lines. It can be accessed through "
-			"the :py:attr:`~DataObject.display` attribute of the :py:class:`~DataObject` base class."
+			"the :py:attr:`~DataObject.vis` attribute of the :py:class:`~DataObject` base class."
 			"\n\n"
 			"Example:\n\n"
 			".. literalinclude:: ../example_snippets/dislocation_analysis_modifier.py\n"
@@ -450,7 +451,9 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 	ovito_class<PartitionMesh, PeriodicDomainDataObject>{m}
 	;
 
-	ovito_class<PartitionMeshDisplay, DisplayObject>(m)
+	ovito_class<PartitionMeshDisplay, DisplayObject>(m, nullptr,
+		// Python class name:
+		"PartitionMeshVis")
 		.def_property("surface_color", &PartitionMeshDisplay::surfaceColor, &PartitionMeshDisplay::setSurfaceColor,
 				"The display color of the outer free surface."
 				"\n\n"

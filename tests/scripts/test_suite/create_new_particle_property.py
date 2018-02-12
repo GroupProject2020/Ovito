@@ -32,7 +32,7 @@ with cell:
     cell[...] = [[10,0,0,0],
                  [0,10,0,0],
                  [0,0,10,0]]
-cell.display.line_width = 0.1
+cell.vis.line_width = 0.1
 data.objects.append(cell)
 
 # Create bonds between particles:

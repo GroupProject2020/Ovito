@@ -1,6 +1,6 @@
 from ovito.pipeline import TrajectoryLineGenerator, Pipeline
 from ovito.io import import_file
-from ovito.vis import TrajectoryLineDisplay
+from ovito.vis import TrajectoryLineVis
 
 # Load a particle simulation sequence:
 pipeline = import_file('input/simulation.*.dump')
@@ -19,10 +19,10 @@ traj_pipeline.source = TrajectoryLineGenerator(
 # particle positions over the entire animation interval.
 traj_object = traj_pipeline.source.generate()
 
-# Configure trajectory line display:
-traj_object.display.width = 0.4
-traj_object.display.color = (1,0,0)
-traj_object.display.shading = TrajectoryLineDisplay.Shading.Flat
+# Configure trajectory line visualization:
+traj_object.vis.width = 0.4
+traj_object.vis.color = (1,0,0)
+traj_object.vis.shading = TrajectoryLineVis.Shading.Flat
 
 # Insert both pipelines into the scene to make both the particles and 
 # the trajectory lines visible in rendered images:

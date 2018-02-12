@@ -155,12 +155,14 @@ void defineRenderingSubmodule(py::module m)
 	;
 
 	ovito_abstract_class<DisplayObject, RefTarget>(m,
-			"Abstract base class for display objects that render and control the visual appearance of data objects. "
-			"A :py:class:`~ovito.data.DataObject` may be associated with a corresponding :py:class:`!Display` object (see " ":py:attr:`DataObject.display <ovito.data.DataObject.display>` property), making it a *visual* data object that appears in the viewports and in rendered images. "
+			"Abstract base class for visualization elemnts that are reponsible for the visual appearance of data objects in the visualization. "
+			"Some :py:class:`~ovito.data.DataObject` are associated with a corresponding :py:class:`!DataVis` element "
+			"(see " ":py:attr:`DataObject.vis <ovito.data.DataObject.vis>` property), making them *visual* data objects that appear "
+			"in the viewports and in rendered images. "
 			"\n\n" 
-			"See the :py:mod:`ovito.vis` module for the list of display object classes available in OVITO. ",
+			"See the :py:mod:`ovito.vis` module for the list of visual element types available in OVITO. ",
 			// Python class name:
-			"Display")
+			"DataVis")
 		.def_property("enabled", &DisplayObject::isEnabled, &DisplayObject::setEnabled,
 				"Boolean flag controlling the visibility of the data. If set to ``False``, the "
 				"data will not be visible in the viewports or in rendered images."

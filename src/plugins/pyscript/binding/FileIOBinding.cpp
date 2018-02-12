@@ -75,21 +75,23 @@ void defineIOSubmodule(py::module m)
 			"This object type can serve as a :py:attr:`Pipeline.source` and takes care of reading the input for the :py:class:`Pipeline` from an external data file. "
 			"\n\n"
 			"You normally do not need to create an instance of this class; the :py:func:`~ovito.io.import_file` function does it for you and wires the configured :py:class:`!FileSource` "
-			"to the :py:attr:`~ovito.pipeline.Pipeline`. Subsequently, the :py:meth:`FileSource.load` method allows you to load a different input file if needed:"
+			"to the :py:attr:`~ovito.pipeline.Pipeline`. If desired, the :py:meth:`FileSource.load` method allows you to load a different input file later on:"
 			"\n\n"
 			".. literalinclude:: ../example_snippets/file_source_load_method.py\n"
 			"\n"
-			"File sources can furthermore be used in conjunction with certain modifiers. "
+			"File sources are furthermore used in conjunction with certain modifiers. "
 			"The :py:class:`~ovito.modifiers.CalculateDisplacementsModifier` can make use of a :py:class:`!FileSource` to load a reference configuration from a separate input file. "
 			"Another example is the :py:class:`~ovito.modifiers.LoadTrajectoryModifier`, "
 			"which employs its own :py:class:`!FileSource` instance to load the particle trajectories from disk. "
 			"\n\n"
 			"**Data access**"
 			"\n\n"
-		    "The :py:class:`!FileSource` class derives from the :py:class:`~ovito.data.DataCollection` base class. "
-			"This means it also functions as a container for data objects, which were loaded from the external file and then cached in the :py:class:`!FileSource` object. "
-			"You can directly access the cached data through the methods and properties inherited from the :py:class:`~ovito.data.DataCollection` interface. "
-			"Note that the :py:class:`!FileSource`'s contents reflect only the outcome of the most recent load operation. "
+		    "You can call the file source's :py:meth:`.compute` method to retrieve the data read from the file in the form " 
+			"of a the :py:class:`~ovito.data.PipelineFlowState`."
+			"\n\n"
+		    "Note that the :py:class:`!FileSource` itself derives from the :py:class:`~ovito.data.DataCollection` base class. "
+			"With that it serves as a cache for the data read from the external file during the more recent load operation. " 
+			"You may directly access this data through the methods and properties inherited from the :py:class:`~ovito.data.DataCollection` interface. "
 			"\n\n"
 			".. literalinclude:: ../example_snippets/file_source_data_access.py\n"
 			)
@@ -105,9 +107,9 @@ void defineIOSubmodule(py::module m)
 		.def("wait_for_frames_list", [](FileSource& fs) {
 			auto future = fs.requestFrameList(false, false);
 			return ScriptEngine::activeTaskManager().waitForTask(future);
-		})		
+		})
 		.def_property_readonly("num_frames", &FileSource::numberOfFrames,
-				"The number of frames the imported file or file sequence contains (read-only).")
+				"The number of frames found in the input file or sequence of input files (read-only).")
 		// For backward compatibility with OVITO 2.9:
 		// Returns the zero-based frame index that is currently loaded and kept in memory by the FileSource.
 		.def_property_readonly("loaded_frame", &FileSource::storedFrameIndex)

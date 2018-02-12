@@ -21,15 +21,15 @@
         <imagedata fileref="images/scene_objects/file_wildcard_pattern.png" format="PNG" scale="50" />
         </imageobject></mediaobject></screenshot>
     </informalfigure>
-    The imported data appears as a visual object in the three-dimensional scene in OVITO's viewports
-    and the file also appears under the "<emphasis>Input</emphasis>" section of the pipeline editor as indicated in the screenshot.
+    The imported data will appear in the viewports as a new visual object in the three-dimensional scene
+    and also as an entry in the "Data Source" section of the pipeline editor as indicated in the screenshot on the right.
     Note that the program maintains a link to the original file on disk from which it obtained the data.
-    Selecting the file object in the pipeline editor opens the <link linkend="scene_objects.file_source">"External File" panel</link>,
+    Selecting the data source entry in the pipeline editor opens the <link linkend="scene_objects.file_source">"External File" panel</link>,
     which is also visible in the screenshot.
     This panel manages the external link to the source file. The tool buttons at the top of the panel let you reload 
     the data from the input file in case it was changed by an external program, or you can pick a different file as data source if desired. 
-    Replacing the input file is sometimes useful if you have already set up a <link linkend="usage.modification_pipeline">data analysis pipeline</link> and now want 
-    to re-use it on a different input dataset.
+    As you will see, replacing the input file is sometimes useful if you have set up a complex <link linkend="usage.modification_pipeline">data analysis pipeline</link> and want 
+    to re-use it on a different input dataset later on.
   </para>
 
   <simplesect xml:id="usage.import.sequence">
@@ -43,19 +43,19 @@
 		       When importing a new file, the program automatically tries to detect if it is part of a numbered sequence of files 
            with similar names. To this end, OVITO replaces the last number (if any) in the filename you picked with the wildcard 
            character <literal>*</literal> to generate a search pattern, which is used to look in the same directory for other files belonging to the same sequence. 
-		       For instance, if you import a file named <filename>anim1c_5000.dump</filename>, OVITO will generate the search pattern
+		       For instance, if you imported a file named <filename>anim1c_5000.dump</filename>, OVITO will generate the search pattern
 		       <filename>anim1c_*.dump</filename> to find all matching frames (e.g. <filename>anim1c_0.dump</filename>,
 		       <filename>anim1c_1000.dump</filename>, <filename>anim1c_2000.dump</filename>, etc). It is possible to
-		       manually adjust this search pattern afterwards in case the generated one does not fit.
+		       manually adjust this search pattern afterwards in case the generated one is not adequate.
            The corresponding input field is highlighted in the screenshot. 
            </para>
          </listitem></varlistentry>
          
          <varlistentry><term>File containing multiple frames:</term><listitem>
            <para>
-		       OVITO will automatically detect when the imported file contains multiple frames and will load them as an animation sequence.
-           For some file types, such as XYZ and LAMMPS dump files, this is indicated by the check box <emphasis>Contains multiple timesteps</emphasis>
-           highlighted in the screenshot. Note that OVITO typically keeps only a single frame in memory. Other frames are loaded from the source data
+		       OVITO will automatically detect when the imported file contains multiple frames and loads them as an animation sequence.
+           For some file types, such as XYZ and LAMMPS dump files, this mode is indicated by the <emphasis>Contains multiple timesteps</emphasis>
+           check box highlighted in the screenshot. Note that OVITO typically keeps only a single frame at a time in memory. Other frames are loaded from the source data
            file only as needed, for example if you play back the animation or move the time slider.
            </para>
          </listitem></varlistentry>
@@ -111,7 +111,7 @@
   <simplesect xml:id="usage.import.command_line">
     <title>Using the command line</title>
     <para>
-      If you launch OVITO from a terminal, you can directly specify a file to load. This works for local as well as remote
+      If you launch OVITO from a terminal, you can directly specify a file to load. This works for local and remote
       files:
        <screen>
     <command>ovito /path/filename</command>
@@ -124,16 +124,17 @@
     <title>Visualizing multiple datasets</title>
     <para>
       OVITO allows you to load several datasets and show them side by side in one picture, 
-      and it allows you to load the same dataset more than once in order to visualize it in several different ways for comparison. 
-      To do this, simply use the <menuchoice><guimenu>File</guimenu><guimenuitem>Load File</guimenuitem></menuchoice> function from the menu repeatedly.
-      When OVITO asks you whether to replace the already loaded dataset or not, select the "<emphasis>Add to scene</emphasis>" option. 
+      and it allows you to load the same file more than once in order to visualize the data in several different ways for comparison. 
+      To do this, simply invoke the <menuchoice><guimenu>File</guimenu><guimenuitem>Load File</guimenuitem></menuchoice> function from the menu repeatedly.
+      When OVITO asks you whether to replace the already loaded dataset or not, pick the "<emphasis>Add to scene</emphasis>" option. 
       All loaded datasets (more precisely, all data pipelines that are part of the scene) are listed in the drop-down box at the top 
-      of the command panel (see screenshot). This drop-down box selects the active pipeline, which is shown in the 
+      of the command panel (see screenshot). This drop-down box switches the pipeline that is currently shown in the 
       <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link>.
     </para>
     <para>
-      Tip: You can position each object in the three-dimensional scene as desired using the
-      move and rotate tools found in the upper toolbar.
+      Tip: You can reposition each object in the three-dimensional scene as desired using the
+      <emphasis>Move</emphasis> and <emphasis>Rotate</emphasis> tools found in the upper toolbar. 
+      In this way you can visualize multiple datasets in juxtaposition.
     </para>
   </simplesect>
   
@@ -167,9 +168,9 @@
             <row>
               <entry>XYZ</entry>
               <entry><para>A simple column-based text format, which is documented <link xlink:href="http://en.wikipedia.org/wiki/XYZ_file_format">here</link>.</para>
-			    <para>The basic XYZ format does not contain simulation cell information. OVITO takes the axis-aligned bounding box of particles as the simulation box in this case.
-			    The program also supports the <link xlink:href="http://libatoms.github.io/QUIP/io.html#module-ase.io.extxyz">extended XYZ format</link>, which includes information on the simulation cell,
-			    boundary conditions, and per-particle fields.</para>
+                <para>The basic XYZ format does not contain simulation cell information. OVITO takes the axis-aligned bounding box of particles as the simulation box in this case.
+                The program also supports the <link xlink:href="http://libatoms.github.io/QUIP/io.html#module-ase.io.extxyz">extended XYZ format</link>, which includes information on the simulation cell,
+                boundary conditions, and per-particle fields.</para>
                 </entry>
               <entry>particles</entry>
             </row>

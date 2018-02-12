@@ -56,7 +56,7 @@
     <para>
      <informalfigure>
         <screenshot><mediaobject><imageobject>
-            <imagedata fileref="images/viewport_control_toolbar/viewport_toolbar.png" format="png" />
+            <imagedata fileref="images/viewport_control_toolbar/viewport_toolbar.png" format="png" scale="20" />
         </imageobject></mediaobject></screenshot>
       </informalfigure> 
       The viewport toolbar is located below the viewports and contains buttons to activate various navigation input modes.

@@ -81,7 +81,7 @@
   <simplesect>
   <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.Display"><classname>Display</classname> (Python API)</link>
+      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.DataVis"><classname>DataVis</classname> (Python API)</link>
     </para>
   </simplesect> 
 

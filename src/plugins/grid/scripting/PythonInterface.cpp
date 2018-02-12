@@ -58,8 +58,8 @@ PYBIND11_PLUGIN(Grid)
 				":Default: 0.0\n")
 		.def_property("property", &CreateIsosurfaceModifier::sourceProperty, &CreateIsosurfaceModifier::setSourceProperty,
 				"The name of the voxel property from which the isosurface should be constructed.")
-		.def_property_readonly("mesh_display", &CreateIsosurfaceModifier::surfaceMeshDisplay,
-				"The :py:class:`~ovito.vis.SurfaceMeshDisplay` controlling the visual representation of the generated isosurface.\n")
+		.def_property_readonly("vis", &CreateIsosurfaceModifier::surfaceMeshDisplay,
+				"The :py:class:`~ovito.vis.SurfaceMeshVis` controlling the visual representation of the generated isosurface.\n")
 	;	
 
 	return m.ptr();

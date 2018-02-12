@@ -23,12 +23,12 @@ modifier.radius = 3.8
 print("  smoothing_level: {}".format(modifier.smoothing_level))
 modifier.smoothing_level = 0
 
-print("  cap_color: {}".format(modifier.mesh_display.cap_color))
-print("  cap_transparency: {}".format(modifier.mesh_display.cap_transparency))
-print("  show_cap: {}".format(modifier.mesh_display.show_cap))
-print("  smooth_shading: {}".format(modifier.mesh_display.smooth_shading))
-print("  surface_color: {}".format(modifier.mesh_display.surface_color))
-print("  surface_transparency: {}".format(modifier.mesh_display.surface_transparency))
+print("  cap_color: {}".format(modifier.vis.cap_color))
+print("  cap_transparency: {}".format(modifier.vis.cap_transparency))
+print("  show_cap: {}".format(modifier.vis.show_cap))
+print("  smooth_shading: {}".format(modifier.vis.smooth_shading))
+print("  surface_color: {}".format(modifier.vis.surface_color))
+print("  surface_transparency: {}".format(modifier.vis.surface_transparency))
 
 node.compute()
 
