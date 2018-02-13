@@ -8,14 +8,18 @@
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
   <title>Miscellaneous</title>
+  
+  <para>
+    The following sections briefly introduce various useful functions and features of the program in arbitrary order.
+  </para>
 
   <simplesect xml:id="usage.saving_loading_scene">
   <title>Saving the program state</title>
     <para>
       You can save the complete working state of the program, including the data pipeline, viewports, render settings, etc., to a <literal>.ovito</literal> <emphasis>state file</emphasis>
       (main menu: <menuchoice><guimenu>File</guimenu><guimenuitem>Save Program State</guimenuitem></menuchoice>). This allows you 
-      to preserve the current visualization setup for future use. For instance, you can use the state file as a template to visualize multiple simulations 
-      using the same camera setup and data analysis pipeline. 
+      to preserve the current visualization setup for future use. For instance, you can use a state file as a template to visualize multiple simulations 
+      using the same data analysis pipeline and camera setup.
     </para>
   </simplesect>
 
@@ -28,11 +32,8 @@
           </imageobject></mediaobject>
       </informalfigure>
       A spinner widget is a user interface element used throughout the program for editing numerical parameters (see screenshot on the right).
-      Here is how you use the spinner widget to vary the parameter value:
-    <itemizedlist>    
-      <listitem><para>Click the spinner's up arrow once to increment the value; click the down arrow to decrement the value in a stepwise manner.</para></listitem> 
-      <listitem><para>Click and hold the mouse button to vary the value continuously. Drag upward to increase the value, or drag downward to decrease it.</para></listitem>
-    </itemizedlist> 
+      Here is how you use the spinner widget to vary the parameter value: (1) Click the spinner's up arrow once to increment the value; click the down arrow to decrement the value in a stepwise manner.
+      (2) Alternatively, click and hold down the mouse button to vary the value continuously. Drag the cursor upward/downward to increase/decrease the parameter value.
     </para>
   </simplesect>
 
@@ -41,17 +42,55 @@
     <para>
       <informalfigure>
         <mediaobject><imageobject>
-          <imagedata fileref="images/command_panel/particle_inspection_utility.png" format="PNG" scale="50" />
+          <imagedata fileref="images/command_panel/particle_inspection_utility.png" format="PNG" scale="40" />
         </imageobject></mediaobject>  
       </informalfigure>
       The "Utilities" tab of OVITO's command panel, which is shown in the screenshot on the right, contains the 
       <link linkend="utilities.particle_inspection">Particle Inspection utility</link> for 
-      displaying the properties of individual particles. The tool also allows you to measure distances between pairs of particles.
+      displaying the properties of individual particles. The tool also lets you measure distances between pairs of particles
+      and angles formed by particle triplets.
     </para>
+  </simplesect>
+
+  <simplesect xml:id="usage.viewport_overlays">
+    <title>Viewport overlays</title>
     <para>
-      There is also a utility on the same command panel tab that lets you visualize 
-      <link linkend="howto.visualize_particle_trajectories">particle trajectory lines</link>.
+      To be written...
+    </para>
+  </simplesect>
+
+  <simplesect xml:id="usage.modifier_templates">
+    <title>Modifier templates</title>
+    <para>
+      To be written...
     </para>
   </simplesect>
   
+  <simplesect xml:id="usage.scripting">
+    <title>Python scripting</title>
+    <para>
+      OVITO provides a scripting interface that lets you automate analysis and visualization tasks. 
+      This can be useful, for example, when a large number of input files needs to be batch-processed. 
+      The scripting interface provides programmatic access to most program features such as input and output 
+      of data files, modifiers, and rendering of images and movies.
+    </para>
+    <para>
+      Scripts for OVITO are written in the Python programming language. If you are not familiar with Python, 
+      you can find several tutorials and books online that cover this subject. Note that OVITO is based on the Python 3.x language standard.
+    </para>
+    <para>
+      OVITO's scripting interface is documented in a separate 
+      <link xlink:href="python/index.html">Scripting Reference</link> manual. You can accessed it directly from OVITO's help menu.
+    </para>
+    <para>
+      In addition to automating tasks, the scripting interface allows you to extend OVITO. 
+      For example, the <link linkend="particles.modifiers.python_script">Python script modifier</link>
+      provides a mechanism for you to write your own data manipulation function and integrate it into
+      OVITO's modification pipeline system. Furthermore, the <link linkend="viewport_overlays.python_script">
+      Python script overlay</link> lets you write your own Python function to add arbitrary 2D graphics
+      to rendered images or movies, for example to enrich the visualization with additional information 
+      like a <link linkend="howto.scale_bar">scale bar</link>.
+    </para>  
+  </simplesect>
+
 </section>

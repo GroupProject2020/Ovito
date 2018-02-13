@@ -10,78 +10,101 @@
   <title>Exporting data</title>
 
   <para>
-  To export particles, their properties, and other data to a file (or a series of files), select <menuchoice><guimenu>File</guimenu><guimenuitem>Export File</guimenuitem></menuchoice> from the menu.
-  After choosing an output filename and format, the export settings dialog lets you specify the animation frames and the particle properties to be exported 
-  (depending on the selected file format).
-  </para>
-  
-  <para>If you choose an output filename ending with <filename>.gz</filename>, the file will automatically be compressed by OVITO.</para>
-  
-  <para>
-  Note that OVITO always exports the results of the modification pipeline. That means, if you have deleted some particles for instance, OVITO will export
-  only the remaining particles to the output file. 
+    The <menuchoice><guimenu>File</guimenu><guimenuitem>Export File</guimenuitem></menuchoice> function of OVITO exports the results of
+    the current data pipeline to a file. Depending on the selected output format (see table below), different fragments of the dataset are exported,
+    e.g. the particles and their properties, the bonds, other computed quantities, etc.
+    Furthermore, you can choose which animation frame(s) should be exported (just the current frame or a range), and whether the 
+    datasets are saved to a single output file or to a sequence of files, one per frame.
   </para>
   
   <para>
-  OVITO provides various analysis functions that can compute <emphasis>scalar</emphasis> quantities like the surface area of a solid, the density of defects in a crystal, or the number of atoms
-  in a system forming a particular lattice structure. To export such global quantities, pick the <emphasis>Calculation Results Text File</emphasis> format.
-  OVITO will write a data table with the computed quantities that you selected for export to a simple text file. The text file can then be used for plotting
-  the data with an external tool.
+    OVITO will ask you for a destination filename. Note that, if you append the <filename>.gz</filename> suffix, the output file(s) will automatically be 
+    compressed for text-based file formats.
   </para>
+
+  <simplesect>
+    <title>Exporting scalar values</title>
+    <para>
+      Some of OVITO's analysis functions produce single output values (in contrast to per-particle property values), e.g. the total number of atoms of a 
+      particular type or the computed surface area of a solid. Such global quantities computed by the pipeline system may be time-dependent (i.e. the are 
+      recomputed on every frame) and thus represent time series.
+    </para>
+    <para>
+      For exporting a time series of one or more such values, OVITO provides the "<emphasis>Table of Values</emphasis>" format.
+      This output format generates a table with the selected quantities as functions of time and saves it as a plain text file. 
+      You can then plot the exported data with an external tool of your choice.
+    </para>
+  </simplesect>
   
   <simplesect xml:id="usage.export.formats">
   <title>Supported output formats</title>
   <para>
     <informaltable>
-        <tgroup cols="2">
+        <tgroup cols="3">
           <thead>
             <row>
-              <entry>File format</entry>
+              <entry>File&#xA0;format</entry>
               <entry>Description</entry>
+              <entry>Exported&#xA0;data</entry>
             </row>
           </thead>
 
           <tbody>
             <row>
-              <entry>LAMMPS dump</entry>
+              <entry>LAMMPS&#xA0;dump</entry>
               <entry><para>Text-based file format produced and read by the <link xlink:href="http://lammps.sandia.gov">LAMMPS molecular dynamics code</link>.</para></entry>
+              <entry>particles</entry>
             </row>
             <row>
-              <entry>LAMMPS data</entry>
+              <entry>LAMMPS&#xA0;data</entry>
               <entry><para>File format read by the <link xlink:href="http://lammps.sandia.gov">LAMMPS molecular dynamics code</link>.</para></entry>
+              <entry>particles, bonds</entry>
             </row>
             <row>
               <entry>XYZ</entry>
               <entry><para>A simple column-based text format, which is documented <link xlink:href="http://en.wikipedia.org/wiki/XYZ_file_format">here</link> and <link xlink:href="http://libatoms.github.io/QUIP/io.html#module-ase.io.extxyz">here</link>.</para></entry>
+              <entry>particles</entry>
             </row>
             <row>
               <entry>POSCAR</entry>
               <entry><para>File format used by the <emphasis>ab initio</emphasis> simulation package <link xlink:href="http://www.vasp.at/">VASP</link>.</para></entry>
+              <entry>particles</entry>
             </row>
             <row>
               <entry>IMD</entry>
               <entry><para>File format used by the molecular dynamics code <link xlink:href="http://imd.itap.physik.uni-stuttgart.de/">IMD</link>.</para></entry>
+              <entry>particles</entry>
             </row>
             <row>
               <entry>FHI-aims</entry>
               <entry><para>File format used by the <emphasis>ab initio</emphasis> simulation package <link xlink:href="https://aimsclub.fhi-berlin.mpg.de/index.php">FHI-aims</link>.</para></entry>
+              <entry>particles</entry>
             </row>
             <row>
               <entry>NetCDF</entry>
               <entry><para>Binary format for molecular dynamics data following the <link xlink:href="http://ambermd.org/netcdf/nctraj.pdf">AMBER format convention</link>.</para></entry>
+              <entry>particles</entry>
             </row>
             <row>
-              <entry>Crystal Analysis (CA)</entry>
-              <entry><para>A text-based file format used by the <emphasis>Crystal Analysis Tool</emphasis>, which can store dislocation line networks extracted by the 
-              <link linkend="particles.modifiers.dislocation_analysis">Dislocation Analysis</link> modifier. The format is documented <link linkend="particles.modifiers.dislocation_analysis.fileformat">here</link>.</para></entry>
+              <entry>Table&#xA0;of&#xA0;values</entry>
+              <entry><para>A simple tabular text file with scalar quantities computed by OVITO's data pipeline.</para></entry>
+              <entry>global&#xA0;values</entry>
             </row>
             <row>
-              <entry>Calculation Results File</entry>
-              <entry><para>A simple tabular text file with scalar quantities computed by OVITO's analysis modifiers.</para></entry>
+              <entry>VTK</entry>
+              <entry><para>Text-based format used by the ParaView software.</para></entry>
+              <entry>surface&#xA0;meshes</entry>
             </row>
             <row>
-              <entry>POV-Ray scene</entry>
-              <entry><para>Exports the entire scene to a file than can be rendered with <link xlink:href="http://www.povray.org/">POV-Ray (Persistence of Vision Raytracer)</link>.</para></entry>
+              <entry>POV-Ray&#xA0;scene</entry>
+              <entry><para>Exports the entire scene to a file that can be rendered with <link xlink:href="http://www.povray.org/">POV-Ray</link>.</para></entry>
+              <entry>any</entry>
+            </row>
+            <row>
+              <entry>Crystal&#xA0;Analysis&#xA0;(.ca)</entry>
+              <entry><para>Format that can store dislocation lines extracted from an atomistic crystal model by the <link linkend="particles.modifiers.dislocation_analysis">Dislocation Analysis</link> modifier. 
+              The format is documented <link linkend="particles.modifiers.dislocation_analysis.fileformat">here</link>.</para></entry>
+              <entry>dislocations</entry>
             </row>
           </tbody>
         </tgroup>

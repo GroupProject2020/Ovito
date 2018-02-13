@@ -104,7 +104,7 @@ particle property. So all our custom analysis modifier needs to do is to sum up 
   :lines: 12-23
 
 When used within the graphical program, the MSD value computed by this custom modifier may be exported to a text file as a function of simulation time using
-OVITO's standard file export feature (Select ``Calculation Results Text File`` as output format).
+OVITO's standard file export feature (Select ``Table of Values`` as output format).
 
 Alternatively, we can make use of the custom modifier from within a non-interactive batch script, which is executed
 by the ``ovitos`` interpreter. Then we have to insert the :py:class:`~ovito.modifiers.CalculateDisplacementsModifier` programmatically:

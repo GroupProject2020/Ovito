@@ -111,7 +111,7 @@
         <term>Number of clusters</term>
         <listitem>
           <para>To export the total number of clusters to a text file (possibly as a function of simulation time), use OVITO's
-          standard <link linkend="usage.export">file export function</link>. Choose the output file format <emphasis>Calculation Results Text File</emphasis>
+          standard <link linkend="usage.export">file export function</link>. Choose the output file format "<emphasis>Table of Values</emphasis>"
           and select the <code>ClusterAnalysis.cluster_count</code> attribute for export. 
           </para>
         </listitem>
@@ -119,7 +119,7 @@
       <varlistentry>
         <term>Particles of each cluster</term>
         <listitem>
-          <para>To export the list of particles belonging to each invidual cluster, also use OVITO's
+          <para>To export the list of particles belonging to each individual cluster, also use OVITO's
           standard <link linkend="usage.export">file export function</link>. Choose e.g. <emphasis>XYZ</emphasis> as the output file format
           and select the <code>Cluster</code> property for export. This will produce a text file containing the
           cluster ID assigned to each particle.
