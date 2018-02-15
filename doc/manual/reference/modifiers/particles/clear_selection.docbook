@@ -10,16 +10,16 @@
          xmlns:ns="http://docbook.org/ns/docbook">
   <title>Clear selection</title>
 
-  <warning><para>This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
-   development version of OVITO.</para></warning>
-
   <para>
-    This modifier clears the current particle selection by removing 
-    the <literal>Selection</literal> <link linkend="usage.particle_properties">particle property</link>.
+    This modifier clears the current selection of elements by removing 
+    the <literal>Selection</literal> property if it exists. 
+    The <emphasis>Operate on</emphasis> field selects the kind of elements (particles, bonds, etc.) the modifier should act on.
+    See the introduction on <link linkend="usage.particle_properties">particle properties</link> to learn more
+    about the role of the special <literal>Selection</literal> property.
   </para>
   
   <simplesect>
-  <title>See also</title>
+    <title>See also</title>
     <para>
       <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.ClearSelectionModifier"><classname>ClearSelectionModifier</classname> (Python API)</link>
     </para>

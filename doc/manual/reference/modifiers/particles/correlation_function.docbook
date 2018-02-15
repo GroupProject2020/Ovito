@@ -18,7 +18,7 @@
 
   This modifier calculates the spatial correlation function between two particle properties.</para>
 
-  <para>OVITO uses the FFT to compute the convolution. It then computes a radial average in reciprocal and real space. This gives the correlation function up to half of the cell size. The modifier can additionally compute the short-ranged part of the correlation function from a direct summation over neighbors.</para>
+  <para>OVITO uses a fast Fourier transformation (FFT) to compute the convolution. It then computes a radial average in reciprocal and real space. This gives the correlation function up to half of the cell size. The modifier can additionally compute the short-ranged part of the correlation function from a direct summation over neighbors.</para>
 
   <para>For example, when both particle properties (<inlineequation>P<subscript>1</subscript></inlineequation> and <inlineequation>P<subscript>2</subscript></inlineequation>) are constant and unity, the modifier returns the pair distribution function. The reciprocal space representation is then the structure factor.</para>
 
@@ -91,7 +91,7 @@
   <simplesect>
     <title>Acknowledgment</title>
     <para>
-      This modifier has been contributed by Lars Pastewka.
+      This code for this modifier has been contributed to OVITO by Lars Pastewka.
     </para>
   </simplesect>
 

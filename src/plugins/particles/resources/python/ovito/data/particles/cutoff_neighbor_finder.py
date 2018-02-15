@@ -42,11 +42,13 @@ class CutoffNeighborFinder(ovito.plugins.Particles.CutoffNeighborFinder):
         :returns: A Python iterator that visits all neighbors of the central particle within the cutoff distance. 
                   For each neighbor the iterator returns an object with the following attributes:
                   
-                      * **index**: The index of the current neighbor particle (starting at 0).
+                      * **index**: The global index of the current neighbor particle (starting at 0).
                       * **distance**: The distance of the current neighbor from the central particle.
                       * **distance_squared**: The squared neighbor distance.
                       * **delta**: The three-dimensional vector connecting the central particle with the current neighbor (taking into account periodicity).
                       * **pbc_shift**: The periodic shift vector, which specifies how often each periodic boundary of the simulation cell is crossed when going from the central particle to the current neighbor.
+        
+        The global index of the neighbor returned by the iterator can be used to look up other properties of the neighbor.
         
         Note that all periodic images of particles within the cutoff radius are visited. Thus, the same particle index may appear multiple times in the neighbor
         list of a central particle. In fact, the central particle may be among its own neighbors in a sufficiently small periodic simulation cell.

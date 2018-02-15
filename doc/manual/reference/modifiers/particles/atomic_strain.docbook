@@ -12,7 +12,7 @@
 
   <para>  
     <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/modifiers/atomic_strain_panel.png" format="PNG" />
+       <imagedata fileref="images/modifiers/atomic_strain_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
     This modifier calculates the atomic-level deformation gradient and the strain tensor at each particle from the relative motion 
     of its neighbors. The two per-particle tensors represent versions of the corresponding <link xlink:href="https://en.wikipedia.org/wiki/Finite_strain_theory#Deformation_gradient_tensor">
@@ -214,7 +214,7 @@
   </simplesect>
 
   <simplesect>
-  <title>See also</title>
+    <title>See also</title>
     <para>
       <simplelist>
       <member><link linkend="particles.modifiers.displacement_vectors">Displacement vectors modifier</link></member>

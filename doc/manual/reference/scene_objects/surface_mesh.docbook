@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<section version="5.0"
+         xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
+         xml:id="scene_objects.surface_mesh"
+         xmlns="http://docbook.org/ns/docbook"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:xs="http://www.w3.org/2001/XMLSchema"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+         xmlns:ns="http://docbook.org/ns/docbook">
+  <title>Surface mesh</title>
+
+  <para>
+    To be written...
+  </para>
+
+  <simplesect>
+  <title>See also</title>
+  <para>
+      <link xlink:href="python/modules/ovito_data.html#ovito.data.SurfaceMesh"><classname>SurfaceMesh</classname> (Python API)</link>
+  </para>
+  </simplesect>
+
+</section>

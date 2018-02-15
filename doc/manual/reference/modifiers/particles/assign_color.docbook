@@ -10,29 +10,56 @@
          xmlns:ns="http://docbook.org/ns/docbook">
   <title>Assign color</title>
 
-  <warning><para>This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
-   development version of OVITO.</para></warning>
-
   <para>
     <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/modifiers/assign_color_panel.png" format="PNG" />
+       <imagedata fileref="images/modifiers/assign_color_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
 
-  This modifier assigns a uniform color to all selected particles by setting their <literal>Color</literal> property. If no
-  selection is defined, the color is assigned to all particles.</para>
-
-  <para>Note that OVITO uses a red color by default to highlight selected particles.
-  Since this highlighting would mask the actual color assigned by this
-  modifier, the modifier clears the current selection by default. 
-  If you need to preserve the selection for further use down the pipeline, you can suppress this behavior
-  by checking the <guilabel>Keep selection</guilabel> option.</para>
-  
-  <para>
-   The color assigned by the modifier is an <link linkend="usage.animation.keyframes">animatable parameter</link>.
+    This modifier assigns a given uniform color to all selected elements (particles, bonds, etc.) by setting their 
+    <literal>Color</literal> property. Which elements are currently selected is determined by the value of their
+    <literal>Selection</literal> property. If no selection is defined, i.e. if the <literal>Selection</literal> property
+    does not exist, the color is assigned to all elements by the modifier.
   </para>
 
+  <para>
+    The <emphasis>Operate on</emphasis> field selects the kind of elements the modifier should act on.
+    Depending on this choice, the modifier does the following:
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Operate on</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>Particles</entry>
+            <entry><para>The color is assigned to selected particles by setting their <literal>Color</literal> property.</para></entry>
+          </row>
+          <row>
+            <entry>Bonds</entry>
+            <entry><para>The color is assigned to selected bonds by setting their <literal>Color</literal> property.</para></entry>
+          </row>
+          <row>
+            <entry>Particle vectors</entry>
+            <entry><para>The color is assigned to <link linkend="display_objects.vectors">vector arrows</link> associated with selected particles by setting their <literal>Vector Color</literal> property.</para></entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </informaltable>  
+  </para>
+
+  <para>
+    Note that OVITO uses a red color to highlight selected particles in the interactive viewports.
+    Since this accentuation would mask the actual particle color assigned by this modifier, the modifier clears the current selection 
+    by default (by deleting the <literal>Selection</literal> property). If you would like to preserve the particle selection 
+    so that is remains available to subsequent modifiers in the data pipeline, you can request the modifier to not
+    delete the <literal>Selection</literal> property by activating the <guilabel>Keep selection</guilabel> option.
+  </para>
+  
   <simplesect>
-  <title>See also</title>
+    <title>See also</title>
     <para>
       <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.AssignColorModifier"><classname>AssignColorModifier</classname> (Python API)</link>
     </para>

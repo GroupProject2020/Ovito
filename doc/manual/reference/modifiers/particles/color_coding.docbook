@@ -10,31 +10,60 @@
          xmlns:ns="http://docbook.org/ns/docbook">
   <title>Color coding</title>
 
-  <warning><para>This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
-   development version of OVITO.</para></warning>
-
   <para>
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/modifiers/color_coding_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
   
-    This modifier assigns colors to particles, bonds, or arrows based on one of their properties. 
-    It thus provides a simple method to visualize scalar per-particle or per-bond quantities.
+    This modifier assigns colors to particles, bonds, or vector glyphs according to a selected input property. 
+    It thus provides a simple method to visualize the values of a per-particle or a per-bond quantity by means of a coloring
+    scheme.
   </para>
   
   <para>
-    The values of the selected input property are first mapped and clamped to the unit interval [0,1] according to the
-    <emphasis>Start value</emphasis> and <emphasis>End value</emphasis>
-    parameters of the modifier. The normalized values are then mapped to a color using the selected 
-    color gradient map and finally assigned to the particles or bonds.
+    The <emphasis>Operate on</emphasis> field selects the kind of elements the modifier should assign color to.
+    Depending on this choice, the modifier does the following:
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Operate on</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>Particles</entry>
+            <entry><para>Particles are colored by setting their <literal>Color</literal> particle property.</para></entry>
+          </row>
+          <row>
+            <entry>Bonds</entry>
+            <entry><para>Bonds are colored by setting their <literal>Color</literal> bond property.</para></entry>
+          </row>
+          <row>
+            <entry>Particle vectors</entry>
+            <entry><para><link linkend="display_objects.vectors">Vector glyphs</link> are colored by setting the <literal>Vector Color</literal> 
+              property of the associated particles.</para></entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </informaltable>
   </para>
 
   <para>
-    The <guibutton>Adjust range</guibutton> button resets the <emphasis>Start value</emphasis> and
+    The color to be assigned to a given element (e.g. particle) is determined as follows by the modifier:
+    First, the value of the selected input property of the element is linearly mapped (and clamped) to the unit interval [0,1] according to the
+    <emphasis>Start value</emphasis> and <emphasis>End value</emphasis>
+    parameters of the modifier. This normalized value is then mapped to an RGB color value based on the selected 
+    color gradient type.
+  </para>
+
+  <para>
+    The <guibutton>Adjust range</guibutton> function resets the <emphasis>Start value</emphasis> and
     <emphasis>End value</emphasis> parameters to the minimum and maximum value
-    of the selected input property, respectively. This ensures that no clamping occurs when property values are mapped to colors.
-    The <guibutton>Adjust range (all frames)</guibutton> button does the same but considers every frame
-    of the animation sequence when determining the range of values, not just the currently loaded frame.
+    of the selected input property, respectively. This ensures that no clamping of value occurs for the current
+    simulation frame. The <guibutton>Adjust range (all frames)</guibutton> button does the same but will take into account all frames
+    of the loaded animation sequence when determining the range of property values.
     The <guibutton>Reverse range</guibutton> button
     swaps the <emphasis>Start value</emphasis> and <emphasis>End
     value</emphasis> parameters to effectively reverse the color scale.
@@ -43,12 +72,11 @@
   <simplesect>
     <title>Custom color maps</title>
     <para>
-      The modifier provides a set of predefined color maps that you can choose from. If you want to define your
-      own color scale, select <guilabel>Load custom color map...</guilabel> from the gradient list box. 
-      The program will then ask you to pick an image file which contains the colors of you custom color map. 
-      With this feature you can import arbitrary color maps into OVITO by preparing a
-      corresponding image with an external image editor. OVITO uses the colors along one row of 
-      pixels of the image to generate a user-defined color map. Here are two example color map images:
+      The modifier offers a set of predefined color maps that you can choose from. If you would like to define your
+      own type of color map instead, select <guilabel>Load custom color map...</guilabel> from the gradient list box. 
+      The program will ask you to pick an image file containing the custom color gradient. 
+      You can prepare an appropriate image using any image editing program. OVITO will use the colors 
+      along one row of pixels of the imported image to generate the user-defined color map. Here are two examples of color map images:
         <screenshot><mediaobject><imageobject>
           <imagedata fileref="images/modifiers/color_coding_custom_map.png" format="PNG" />
         </imageobject></mediaobject></screenshot>
@@ -82,7 +110,7 @@
       <varlistentry>
         <term>Property</term>
         <listitem>
-          <para>The input particle property or bond property to be used for color mapping.</para>
+          <para>The input particle property or bond property whose values should be used for coloring.</para>
         </listitem>
       </varlistentry>
 
@@ -101,7 +129,7 @@
       </varlistentry>
       
       <varlistentry>
-        <term>Color only selected particles/bonds</term>
+        <term>Color only selected elements</term>
         <listitem>
           <para>This option restricts the assignment of colors to currently selected particles or bonds. 
           The colors of unselected particles or bonds will remain unchanged.</para>
@@ -112,9 +140,9 @@
         <term>Keep selection</term>
         <listitem>
           <para>OVITO uses a red color by default to highlight selected particles in the interactive viewports.
-  Since this highlighting would mask the actual colors assigned by this
+  Since this highlighting would mask the true colors assigned by this
   modifier, the modifier clears the current selection by default. 
-  If you want to preserve the selection, because you want to use it further down the data pipeline, activate this option.</para>
+  This options allows you to preserve the current selection and make it available to subsequent modifiers in the data pipeline.</para>
         </listitem>
       </varlistentry>
 

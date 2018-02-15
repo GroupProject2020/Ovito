@@ -1,3 +1,5 @@
+# -*- coding: UTF-8 -*-
+
 # Load system libraries
 import numpy
 

@@ -11,10 +11,18 @@
   <title>Compute bond lengths</title>
 
   <para>
-  This modifier simply computes the length of each bond in the system and stores 
-  it as bond property named <code>Length</code>. 
-  You can use this in conjuncion with the <link linkend="particles.modifiers.color_coding">Color Coding</link>
-  modifier to color bonds according to their length.
+    This modifier computes the length of each bond and stores it in a newly created bond property named <code>Length</code>. 
+  </para>
+
+  <para>
+    A typical use case of this modifier is in conjunction with the <link linkend="particles.modifiers.color_coding">Color Coding</link>
+    modifier to visualize the length of each bond. Furthermore, the <link linkend="particles.modifiers.histogram">Histogram</link>
+    lets you plot the overall distribution of bond lengths in a system computed by this modifier.
+  </para>
+
+  <para>
+    Depending on the situation, the <link linkend="particles.modifiers.coordination_analysis">Coordination Analysis</link> modifier may provide an
+    alternative to this modifier. It computes the distribution of neighbor distances in a system of (non-bonded) particles. 
   </para>
 
   <simplesect>

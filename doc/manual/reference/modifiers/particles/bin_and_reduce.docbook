@@ -13,24 +13,24 @@
   <para>
   
     <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/modifiers/bin_and_reduce_panel.png" format="PNG" />
+       <imagedata fileref="images/modifiers/bin_and_reduce_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
   
-  This modifier applies a <emphasis>reduction</emphasis> operation to a certain property
-  of all particles within a spatial bin.
+    This modifier applies a <emphasis>reduction</emphasis> operation to a certain property
+    of all particles within a spatial bin.
   </para>
   
   <para>
-  The reduction operation can be the sum, the average (mean), or the minimum or maximum value of
-  the property inside the bin.
+    The reduction operation can be the sum, the average (mean), or the minimum or maximum value of
+    the property inside the bin.
   </para>
 
   <para>
-  The spatial bins are aligned parallel to the simulation cell axes.
+    The spatial bins are aligned parallel to the simulation cell axes.
   </para>
 
   <para>
-  The bin grid can be one- or two-dimensional.
+    The bin grid can be one- or two-dimensional.
   </para>
 
   <simplesect>
@@ -97,12 +97,12 @@
   <simplesect>
     <title>Acknowledgment</title>
     <para>
-      This modifier has been contributed by Lars Pastewka.
+      The code for this modifier has been contributed to OVITO by Lars Pastewka.
     </para>
   </simplesect>
 
   <simplesect>
-  <title>See also</title>
+    <title>See also</title>
     <para>
       <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.BinAndReduceModifier"><classname>BinAndReduceModifier</classname> (Python API)</link>
     </para>

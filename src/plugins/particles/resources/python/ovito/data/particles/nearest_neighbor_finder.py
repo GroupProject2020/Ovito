@@ -49,11 +49,13 @@ class NearestNeighborFinder(ovito.plugins.Particles.NearestNeighborFinder):
         :returns: A Python iterator that visits the *N* nearest neighbors of the central particle in order of ascending distance. 
                   For each visited neighbor the iterator returns an object with the following attributes:
                   
-                      * **index**: The index of the current neighbor particle.
+                      * **index**: The global index of the current neighbor particle.
                       * **distance**: The distance of the current neighbor from the central particle.
                       * **distance_squared**: The squared neighbor distance.
                       * **delta**: The three-dimensional vector connecting the central particle with the current neighbor (correctly taking into account periodic boundary conditions).
         
+        The global index of the neighbor returned by the iterator can be used to look up other properties of the neighbor.
+
         Note that several periodic images of the same particle may be visited. Thus, the same particle index may appear multiple times in the neighbor
         list of a central particle. In fact, the central particle may be among its own neighbors in a sufficiently small periodic simulation cell.
         However, the computed neighbor vector (``delta``) will be unique for each visited image of a neighboring particle.
