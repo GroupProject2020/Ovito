@@ -11,36 +11,36 @@
   <title>Compute property</title>
 
   <para>
-  
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/modifiers/compute_property_panel.png" format="PNG" />
-    </imageobject></mediaobject></screenshot></informalfigure>
-  
-  This modifier evaluates a user-defined mathematical expression for every particle 
-  and assigns the results to a particle property. It can be used to assign new 
-  properties to particles or to modify existing properties.</para>
-
+    </imageobject></mediaobject></screenshot></informalfigure>  
+    This modifier evaluates a user-defined mathematical formula for every particle 
+    and assigns the numerical results to an output particle property. It can be used to give
+    particles new properties or to modify the values of existing properties.
+  </para>
   <para>
-  The math formula specified by the user can depend on existing particle properties or global parameters such as the simulation box size or animation time. 
-  The list of available input variables that can be referenced in the formula is displayed in the lower panel.
+    The user-defined formula that determines the output property value can include references to input properties and global parameters such as the 
+    simulation box size or animation time. All available input variables, which may be used within the formula, are listed in the 
+    bottom panel of the modifier.
   </para> 
   
   <simplesect>
-    <title>Output property</title>
-  
-  <para>OVITO differentiates between <emphasis>standard</emphasis> particle properties and <emphasis>custom</emphasis> particle properties.
-  The properties of the former type have specific meanings to OVITO (e.g. <literal>Position</literal> or <literal>Particle Identifier</literal>) while custom properties
-  have arbitrary, user-defined names (e.g. <literal>MyPropertyA</literal>) and the stored data is not interpreted by OVITO in any way.
-  The <emphasis>Compute property</emphasis> modifier allows you to create or modify both types of particle properties. If you use the 
-  modifier to assign values to certain standard properties such as <literal>Position</literal>, <literal>Color</literal>, or <literal>Radius</literal>,
-  it will immediately affect the visual appearance of particles (see this <link linkend="howto.transparent_particles">example</link>).
-  </para>
-  
-  <para>
-  The list of all standard properties known to OVITO can be found in the <emphasis>Output property</emphasis> drop-down list. If you want to create a custom particle property,
-  simply enter a name of your choice into the text field. Note that property names in OVITO are case-sensitive.
-  </para>
-  
+    <title>Output property</title>  
+    <para>
+      As described in the <link linkend="usage.particle_properties">introduction on particle properties</link>, certain properties have a special
+      meaning to the program as their values control the visual appearance of particles. Thus, if you set or modify the values of such properties
+      using the <emphasis>Compute property</emphasis> modifier, it will affect the particle display accordingly.
+
+      (e.g. <literal>Position</literal> or <literal>Particle Identifier</literal>) while custom properties
+      have arbitrary, user-defined names (e.g. <literal>MyPropertyA</literal>) and the stored data is not interpreted by OVITO in any way.
+      The <emphasis>Compute property</emphasis> modifier allows you to create or modify both types of particle properties. If you use the 
+      modifier to assign values to certain standard properties such as <literal>Position</literal>, <literal>Color</literal>, or <literal>Radius</literal>,
+      it will immediately affect the visual appearance of particles (see this <link linkend="howto.transparent_particles">example</link>).
+    </para>    
+    <para>
+      The list of all standard properties known to OVITO can be found in the <emphasis>Output property</emphasis> drop-down list. If you want to create a custom particle property,
+      simply enter a name of your choice into the text field. Note that property names in OVITO are case-sensitive.
+    </para>  
   </simplesect>
   
   <simplesect>

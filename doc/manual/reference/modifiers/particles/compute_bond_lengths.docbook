@@ -11,7 +11,7 @@
   <title>Compute bond lengths</title>
 
   <para>
-    This modifier computes the length of each bond and stores it in a newly created bond property named <code>Length</code>. 
+    This modifier computes the length of each bond and stores the value in a new bond property named <code>Length</code>. 
   </para>
 
   <para>
@@ -21,12 +21,12 @@
   </para>
 
   <para>
-    Depending on the situation, the <link linkend="particles.modifiers.coordination_analysis">Coordination Analysis</link> modifier may provide an
-    alternative to this modifier. It computes the distribution of neighbor distances in a system of (non-bonded) particles. 
+    Note that, depending on the situation, the <link linkend="particles.modifiers.coordination_analysis">Coordination Analysis</link> modifier may provide an
+    alternative. It computes the distribution of neighbor distances in a system of particles without explicit bonds.
   </para>
 
   <simplesect>
-  <title>See also</title>
+    <title>See also</title>
     <para>
       <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.ComputeBondLengthsModifier"><classname>ComputeBondLengthsModifier</classname> (Python API)</link>
     </para>
