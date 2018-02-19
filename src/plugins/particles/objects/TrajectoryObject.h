@@ -41,6 +41,9 @@ public:
 	/// \brief Constructor.
 	Q_INVOKABLE TrajectoryObject(DataSet* dataset);
 
+	/// Do not show this data object in the pipeline editor.
+	virtual bool isSubObjectEditable() const override { return false; }
+
 	/// Returns the trajectory points.
 	const QVector<Point3>& points() const { return _points; }
 
@@ -78,5 +81,3 @@ private:
 
 }	// End of namespace
 }	// End of namespace
-
-

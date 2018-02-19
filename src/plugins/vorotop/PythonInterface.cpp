@@ -56,7 +56,7 @@ PYBIND11_PLUGIN(VoroTop)
 			"The modifier calculates the Voronoi cell topology of each particle, uses the provided "
     		"filter to determine the structure type, and stores the results in the ``Structure Type`` particle property. "
 			"This allows the user to subsequently select particles  of a certain structural type, e.g. by using the "
-			":py:class:`SelectParticleTypeModifier`. "
+			":py:class:`SelectTypeModifier`. "
 			"\n\n"
 			"This method is well-suited for analyzing finite-temperature systems, including those heated to "
     		"their bulk melting temperatures.  This robust behavior relieves the need to quench a sample "

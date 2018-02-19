@@ -44,7 +44,7 @@ DEFINE_PROPERTY_FIELD(SliceModifier, inverse);
 DEFINE_PROPERTY_FIELD(SliceModifier, applyToSelection);	
 SET_PROPERTY_FIELD_LABEL(SliceModifier, normalController, "Normal");
 SET_PROPERTY_FIELD_LABEL(SliceModifier, distanceController, "Distance");
-SET_PROPERTY_FIELD_LABEL(SliceModifier, widthController, "Slice width");
+SET_PROPERTY_FIELD_LABEL(SliceModifier, widthController, "Slab width");
 SET_PROPERTY_FIELD_LABEL(SliceModifier, createSelection, "Create selection (do not delete)");
 SET_PROPERTY_FIELD_LABEL(SliceModifier, inverse, "Reverse orientation");
 SET_PROPERTY_FIELD_LABEL(SliceModifier, applyToSelection, "Apply to selection only");
@@ -82,7 +82,7 @@ TimeInterval SliceModifier::modifierValidity(TimePoint time)
 }
 
 /******************************************************************************
-* Returns the slicing plane.
+* Returns the slicing plane and the slab width.
 ******************************************************************************/
 std::tuple<Plane3, FloatType> SliceModifier::slicingPlane(TimePoint time, TimeInterval& validityInterval)
 {
@@ -102,11 +102,11 @@ std::tuple<Plane3, FloatType> SliceModifier::slicingPlane(TimePoint time, TimeIn
 	if(inverse())
 		plane = -plane;
 
-	FloatType sliceWidth = 0;
+	FloatType slabWidth = 0;
 	if(widthController()) 
-		sliceWidth = widthController()->getFloatValue(time, validityInterval);
+		slabWidth = widthController()->getFloatValue(time, validityInterval);
 
-	return std::make_tuple(plane, sliceWidth);
+	return std::make_tuple(plane, slabWidth);
 }
 
 /******************************************************************************
@@ -132,17 +132,17 @@ void SliceModifier::renderVisual(TimePoint time, ObjectNode* contextNode, SceneR
 
 	// Obtain modifier parameter values. 
 	Plane3 plane;
-	FloatType sliceWidth;
-	std::tie(plane, sliceWidth) = slicingPlane(time, interval);
+	FloatType slabWidth;
+	std::tie(plane, slabWidth) = slicingPlane(time, interval);
 
 	ColorA color(0.8f, 0.3f, 0.3f);
-	if(sliceWidth <= 0) {
+	if(slabWidth <= 0) {
 		renderPlane(renderer, plane, bb, color);
 	}
 	else {
-		plane.dist += sliceWidth / 2;
+		plane.dist += slabWidth / 2;
 		renderPlane(renderer, plane, bb, color);
-		plane.dist -= sliceWidth;
+		plane.dist -= slabWidth;
 		renderPlane(renderer, plane, bb, color);
 	}
 }
@@ -228,7 +228,7 @@ void SliceModifier::initializeModifier(ModifierApplication* modApp)
 {
 	MultiDelegatingModifier::initializeModifier(modApp);
 
-	// Get the input simulation cell to initially place the slicing plane in
+	// Get the input simulation cell to initially place the cutting plane in
 	// the center of the cell.
 	PipelineFlowState input = modApp->evaluateInputPreliminary();
 	SimulationCellObject* cell = input.findObject<SimulationCellObject>();

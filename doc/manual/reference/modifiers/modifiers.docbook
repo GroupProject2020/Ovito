@@ -34,19 +34,19 @@
             </row>
             <row>
               <entry><link linkend="particles.modifiers.atomic_strain">Atomic strain</link></entry>
-              <entry>Calculates the atomic-level strain tensors based on an initial reference and a deformed configuration. </entry>
+              <entry>Calculates local strain tensors based on the relative motion of neighboring particles. </entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.bin_and_reduce">Bin and reduce</link></entry>
-              <entry>Agregates a particle property over a one- or two-dimensional bin grid.</entry>
+              <entry>Aggregates a particle property over a one- or two-dimensional bin grid.</entry>
             </row>          
             <row>
               <entry><link linkend="particles.modifiers.bond_angle_analysis">Bond-angle analysis</link></entry>
-              <entry>Performs the bond-angle analysis of Ackland and Jones to determine the local crystal structure.</entry>
+              <entry>Identification of common crystal structures based on the bond-angle analysis method of Ackland and Jones.</entry>
             </row>          
             <row>
               <entry><link linkend="particles.modifiers.construct_surface_mesh">Construct surface mesh</link></entry>
-              <entry>Constructs a polyhedral mesh representing the surface of an atomistic solid.</entry>
+              <entry>Constructs a triangle mesh representing the surface of a solid.</entry>
             </row>          
             <row>
               <entry><link linkend="particles.modifiers.correlation_function">Correlation function</link></entry>
@@ -54,7 +54,7 @@
             </row>
             <row>
               <entry><link linkend="particles.modifiers.dislocation_analysis">Dislocation analysis (DXA)</link></entry>
-              <entry>Detects dislocation lines in a crystal.</entry>
+              <entry>Identifies dislocation defects in a crystal.</entry>
             </row>          
             <row>
               <entry><link linkend="particles.modifiers.displacement_vectors">Displacement vectors</link></entry>
@@ -70,11 +70,11 @@
             </row>
             <row>
               <entry><link linkend="particles.modifiers.common_neighbor_analysis">Common neighbor analysis</link></entry>
-              <entry>Performs the common neighbor analysis (CNA) to determine the local crystal structure.</entry>
+              <entry>Performs the common neighbor analysis (CNA) to determine local crystal structures.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.coordination_analysis">Coordination analysis</link></entry>
-              <entry>Determines the number of near neighbors of each particle and computes the radial distribution function.</entry>
+              <entry>Determines the number of neighbors of each particle and computes the radial distribution function for the system.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.elastic_strain">Elastic strain calculation</link></entry>
@@ -82,19 +82,19 @@
             </row>
             <row>
               <entry><link linkend="particles.modifiers.histogram">Histogram</link></entry>
-              <entry>Computes the histogram of a particle property.</entry>
+              <entry>Computes the histogram of a property.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.identify_diamond_structure">Identify diamond structure</link></entry>
-              <entry>Finds atoms that are arranged in a cubic or hexagonal diamond lattice.</entry>
+              <entry>Identifies atoms that are arranged in a cubic or hexagonal diamond lattice.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.polyhedral_template_matching">Polyhedral Template Matching</link></entry>
-              <entry>Identifies the local crystal structure using the PTM method.</entry>
+              <entry>Identifies common crystal structures using the PTM method.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.scatter_plot">Scatter plot</link></entry>
-              <entry>Generates a scatter plot of two particle properties.</entry>
+              <entry>Generates a scatter plot of two properties.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.voronoi_analysis">Voronoi analysis</link></entry>
@@ -119,11 +119,11 @@
             </row>
             <row>
               <entry><link linkend="particles.modifiers.assign_color">Assign color</link></entry>
-              <entry>Assigns a color to all selected particles.</entry>
+              <entry>Assigns a color to all selected elements.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.color_coding">Color coding</link></entry>
-              <entry>Colors particles or bonds based on a property.</entry>
+              <entry>Colors particles or bonds based on the value of a property.</entry>
             </row>
 
 		<!-- FIELDS -->
@@ -132,7 +132,7 @@
             </row>
             <row>
               <entry><link linkend="particles.modifiers.create_isosurface">Create isosurface</link></entry>
-              <entry>Constructs isosurfaces from scalar field data.</entry>
+              <entry>Generates an isosurface from a scalar field.</entry>
             </row>
 
 		<!-- MODIFICATION -->
@@ -141,7 +141,7 @@
             </row>
             <row>
               <entry><link linkend="particles.modifiers.affine_transformation">Affine transformation</link></entry>
-              <entry>Applies an affine transformation to particle coordinates.</entry>
+              <entry>Applies an affine transformation to the system.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.create_bonds">Create bonds</link></entry>
@@ -164,12 +164,12 @@
               <entry>Shows coordination polyhedra</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.delete_selected_particles">Delete selected particles</link></entry>
-              <entry>Deletes all selected particles.</entry>
+              <entry><link linkend="particles.modifiers.delete_selected_particles">Delete selected</link></entry>
+              <entry>Deletes all selected elements.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.freeze_property">Freeze property</link></entry>
-              <entry>Takes a snapshot of the current state of a particle property and preserves it over time.</entry>
+              <entry>Freezes the values of a dynamic particle property at a given animation time to make them available at other times.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.load_trajectory">Load trajectory</link></entry>
@@ -177,15 +177,15 @@
             </row>
             <row>
               <entry><link linkend="particles.modifiers.python_script">Python script</link></entry>
-              <entry>Allows you to write your own modifier type in Python..</entry>
+              <entry>Allows you to write your own modifier in Python.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.show_periodic_images">Show periodic images</link></entry>
-              <entry>Duplicates particles to display the periodic images of particles.</entry>
+              <entry><link linkend="particles.modifiers.show_periodic_images">Replicate</link></entry>
+              <entry>Duplicates particles and other data elements to visualize periodic images of the system.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.slice">Slice</link></entry>
-              <entry>Cuts out a slice or a cross-section from the structure.</entry>
+              <entry>Cuts the structure along an infinite plane.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.wrap_at_periodic_boundaries">Wrap at periodic boundaries</link></entry>
@@ -198,7 +198,7 @@
             </row>
             <row>
               <entry><link linkend="particles.modifiers.clear_selection">Clear selection</link></entry>
-              <entry>Resets the selection state of all particles.</entry>
+              <entry>Resets the selection state of all elements.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.expand_selection">Expand selection</link></entry>
@@ -206,19 +206,19 @@
             </row>
             <row>
               <entry><link linkend="particles.modifiers.manual_selection">Manual selection</link></entry>
-              <entry>Allows to select particles with the mouse.</entry>
+              <entry>Allows you to select particles with the mouse.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.invert_selection">Invert selection</link></entry>
-              <entry>Inverts the selection state of each particle.</entry>
+              <entry>Inverts the selection state of each element.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.expression_select">Expression selection</link></entry>
               <entry>Selects particles based on a user-defined criterion.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.select_particle_type">Select particle type</link></entry>
-              <entry>Selects particles of one or more types.</entry>
+              <entry><link linkend="particles.modifiers.select_particle_type">Select type</link></entry>
+              <entry>Selects all elements of a given type.</entry>
             </row>
           </tbody>
         </tgroup>

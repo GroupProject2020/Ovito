@@ -13,22 +13,22 @@
   <para>
       
     <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/scene_objects/file_source_panel.png" format="PNG" />
+       <imagedata fileref="images/scene_objects/file_source_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
     
-    This panel shows information regarding the data that was loaded by OVITO from an external file and allows
-    you to change the data source by picking a different input file.  
-                
-    The file source panel is automatically displayed after you <link linkend="usage.import">import a data file</link>.
-    You can access it again later by selecting the "Data source" entry in the <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link>.
+    This panel lets you manage how OVITO loads the input data for the data pipeline 
+    from an external source. The panel is automatically opened after you first <link linkend="usage.import">import a data file</link>.
+    You can open it at any later time by selecting the first entry from the "Data source" section of the 
+    <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link>.
   </para>
 
    <simplesect>
      <title>Toolbar</title>
     
      <para>
+      The toolbar at the top of the panel provides access to several basic functions, which will be described below:
       <informalfigure role="inline"><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/scene_objects/file_source_toolbar.png" format="PNG" />
+       <imagedata fileref="images/scene_objects/file_source_toolbar.svg" format="SVG" />
       </imageobject></mediaobject></screenshot></informalfigure>
      
      <variablelist>
@@ -36,20 +36,21 @@
         <term>Pick new file</term>
 
         <listitem>
-          <para>Allows you to select a different data file to replace the input data of the current
-          modification pipeline. All modifiers are retained, but the data they act on changes.
+          <para>
+            Allows you to select a different file on disk, which will subsequently serves as new data source for the current
+            data pipeline. All modifiers in the pipeline are retained, but the data they operate on is replaced.
           </para>
-          <para>Note that when you load a new simulation file using this function, OVITO does <emphasis>not</emphasis>
-          automatically recognize any consecutive file series it belongs to (unlike when you use the 
-          <link linkend="usage.import"><menuchoice><guimenuitem>Load File</guimenuitem></menuchoice></link> from the file menu).
-          Thus, to load a new time series, you will have to specify the file pattern for the time series explicitly 
-          after loading the first file from the series.        
+          <para>
+            Note that, when you switch to a new input file using this function, OVITO will <emphasis>not</emphasis>
+            automatically recognize whether it is part of a sequence of numbered files. It will load just that one file you picked.
+            In order to load en entire sequence of files, you will have to manually specify a corresponding filename pattern 
+            afterwards.  
           </para>
 		  <para>
-		    By default, after loading the new file, OVITO automatically adjusts the visible region in the viewports
-		    to show the new simulation box. If you want to suppress the automatic zoom and keep the current view, 
-		    create a fixed viewport camera using the 
-		    <menuchoice><guimenuitem>Create Camera</guimenuitem></menuchoice> function from the <link linkend="usage.viewports.menu">viewport menu</link> first.
+		    After loading the new file, OVITO automatically adjusts the viewports
+		    to show the entire dataset. If you want to suppress this behavior and keep the current view configuration, 
+		    first use the <menuchoice><guimenuitem>Create Camera</guimenuitem></menuchoice> function from the 
+        <link linkend="usage.viewports.menu">viewport menu</link> before loading the new data file.
 		  </para>
           </listitem>
       </varlistentry>
@@ -58,7 +59,7 @@
         <term>Pick new remote file</term>
         <listitem>
           <para>
-            Same as above, but allows you to enter a new remote URL instead of picking a local file.
+            Same as above, but allows you to enter a new remote URL instead of picking a file in the local filesystem.
           </para>
         </listitem>
       </varlistentry>
@@ -67,8 +68,8 @@
         <term>Reload data</term>
         <listitem>
           <para>
-          Reloads the data of the current animation frame from the external file. This is useful
-          if the external data file has changed, for example after re-running a simulation with different parameters.
+            Reloads the data for the current animation frame from the external file. This is useful
+            if the file has been changed externally, for example after re-running a simulation.
           </para>
         </listitem>
       </varlistentry>
@@ -79,26 +80,11 @@
           <para>
              Searches the directory for new files that match the current file pattern. When working
              with a file that contains multiple simulation frames, the file is re-scanned to rebuild the list of
-             frames.
-             This function is useful when a simulation is still running and produces additional output files.
+             frames. 
           </para>
         </listitem>
       </varlistentry>
          
-      <varlistentry>
-        <term>Store data in state file</term>
-        <listitem>
-          <para>
-            OVITO allows you to save the current program state in a <emphasis>state file</emphasis> (<filename>.ovito</filename>). By default,
-            the input simulation data is <emphasis>not</emphasis> stored in that state file to save disk space.
-            Instead it is read again from the original simulation file when you load the state file.
-            Activating this function will embed a copy of the external simulation data in the state file, making
-            it easier to transfer the state file to a different computer. However, this currently works only
-            for the current animation frame. OVITO never embeds an entire time series in the state file.
-          </para>
-        </listitem>
-      </varlistentry>
-                  
     </variablelist>
          
      </para>    
@@ -106,24 +92,11 @@
    </simplesect>
    
    <simplesect>
-     <title>Animation</title>
+     <title>Animation panel</title>
      <para>
-        This sub-panel contains controls that determine how the simulation frames loaded from the input file(s) are
-        mapped to OVITO's internal animation timeline. Please see the documentation of the <link linkend="usage.animation">animation system</link> for further information.
-     </para>
-   </simplesect>
-
-   <simplesect>
-     <title>Specific format settings</title>
-     <para>
-        Depending on the loaded file type, an additional panel is displayed that allows you to specify further settings.
-        In the screenshot above, for example, the <emphasis>LAMMPS dump</emphasis> panel provides additional settings
-        that controls the import of data from a LAMMPS dump file.        
-     </para>
-     <para>
-        The option <guibutton>File contains time series</guibutton> tells OVITO that the input file contains more than
-        one simulation frames. After activating this check box, OVITO scans the entire file to discover all frames
-        and displays them in the animation timeline.
+        This sub-panel controls how simulation frames loaded from the input file(s) are mapped to
+        OVITO's animation timeline. Please see the <link linkend="usage.animation">animation section</link> 
+        in this user manual for further information on this advanced topic.
      </para>
    </simplesect>
     

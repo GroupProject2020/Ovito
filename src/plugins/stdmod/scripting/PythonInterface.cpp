@@ -69,11 +69,13 @@ PYBIND11_PLUGIN(StdMod)
 				"The normal vector of the slicing plane. Does not have to be a unit vector."
 				"\n\n"
 				":Default: ``(1,0,0)``\n")
-		.def_property("slice_width", &SliceModifier::sliceWidth, &SliceModifier::setSliceWidth,
-				"The width of the slab to cut. If zero, the modifier cuts away everything on one "
-				"side of the slicing plane."
+		.def_property("slab_width", &SliceModifier::slabWidth, &SliceModifier::setSlabWidth,
+				"The thicknes of the slab to cut. If zero, the modifier cuts away everything on one "
+				"side of the cutting plane."
 				"\n\n"
 				":Default: 0.0\n")
+		// For backward compatibility with OVITO 2.9.0:
+		.def_property("slice_width", &SliceModifier::slabWidth, &SliceModifier::setSlabWidth)
 		.def_property("inverse", &SliceModifier::inverse, &SliceModifier::setInverse,
 				"Reverses the sense of the slicing plane."
 				"\n\n"

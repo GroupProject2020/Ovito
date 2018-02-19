@@ -96,7 +96,7 @@ void StructureAnalysis::generateCellTooSmallError(int dimension)
 {
 	static const QString axes[3] = { QStringLiteral("X"), QStringLiteral("Y"), QStringLiteral("Z") };
 	throw Exception(DislocationAnalysisModifier::tr("Simulation box is too short along cell vector %1 (%2) to perform analysis. "
-			"Please extend it first using the 'Show periodic images' modifier.").arg(dimension+1).arg(axes[dimension]));
+			"Please extend it first using the 'Replicate' modifier.").arg(dimension+1).arg(axes[dimension]));
 }
 
 /******************************************************************************

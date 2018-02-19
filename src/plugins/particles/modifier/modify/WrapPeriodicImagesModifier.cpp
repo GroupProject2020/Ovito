@@ -51,14 +51,14 @@ PipelineFlowState WrapPeriodicImagesModifier::evaluatePreliminary(TimePoint time
 	SimulationCellObject* simCellObj = pih.expectSimulationCell();
 	std::array<bool, 3> pbc = simCellObj->pbcFlags();
 	if(!pbc[0] && !pbc[1] && !pbc[2])
-		return PipelineStatus(PipelineStatus::Warning, tr("The simulation cell has no periodic boundary conditions."));
+		return PipelineStatus(PipelineStatus::Warning, tr("No periodic boundary conditions are enabled for the simulation cell."));
 
 	if(simCellObj->is2D())
-		 throwException(tr("In the current program version this modifier only supports three-dimensional simulation cells."));
+		 throwException(tr("In the current program version, this modifier only supports three-dimensional simulation cells."));
 
 	const AffineTransformation& simCell = simCellObj->cellMatrix();
 	if(std::abs(simCell.determinant()) < FLOATTYPE_EPSILON)
-		 throwException(tr("The simulation cell is degenerated."));
+		 throwException(tr("The simulation cell is degenerate."));
 	AffineTransformation inverseSimCell = simCell.inverse();
 
 	pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);

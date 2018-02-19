@@ -40,7 +40,7 @@ the :py:attr:`~ovito.vis.Display.enabled` attribute to turn the display on or of
 
     >>> cell.display.enabled = False         # This hides the simulation cell
     
-The visual display of particles is controlled by a :py:class:`~ovito.vis.ParticleDisplay` object, which
+The visual display of particles is controlled by a :py:class:`~ovito.vis.ParticleVis` object, which
 is attached to the position :py:class:`~ovito.data.ParticleProperty`. For example, to display 
 cubic particles, we would write::
 
@@ -74,7 +74,7 @@ or via the :py:attr:`~ovito.data.DataObject.display` attribute of the resulting 
     >>> node.output.particle_properties.displacement.display.enabled = True     # Enable the display of arrows
     >>> node.output.particle_properties.displacement.display.color = (0,0,1)    # Give arrows a blue color
     
-Similarly, the :py:class:`~ovito.modifiers.CreateBondsModifier` attached a :py:class:`~ovito.vis.BondsDisplay`
+Similarly, the :py:class:`~ovito.modifiers.CreateBondsModifier` attached a :py:class:`~ovito.vis.BondsVis`
 to the :py:class:`~ovito.data.Bonds` data object it computes.
     
 .. _rendering_viewports:

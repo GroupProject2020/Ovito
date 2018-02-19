@@ -26,9 +26,9 @@
     Note that the program maintains a link to the original file on disk from which it obtained the data.
     Selecting the data source entry in the pipeline editor opens the <link linkend="scene_objects.file_source">"External File" panel</link>,
     which is also visible in the screenshot.
-    This panel manages the external link to the source file. The tool buttons at the top of the panel let you reload 
+    This panel manages the link to the external data file. The tool buttons at the top of the panel let you reload 
     the data from the input file in case it was changed by an external program, or you can pick a different file as data source if desired. 
-    As you will see, replacing the input file is sometimes useful if you have set up a complex <link linkend="usage.modification_pipeline">data analysis pipeline</link> and want 
+    As you will see, switching the input file is sometimes useful if you have set up a complex <link linkend="usage.modification_pipeline">data analysis pipeline</link> and want 
     to re-use it on a different input dataset later on.
   </para>
 

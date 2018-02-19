@@ -232,10 +232,10 @@ Setting display parameters
 Many data objects such as the :py:class:`~ovito.data.Bonds` or :py:class:`~ovito.data.SimulationCell` object are associated with
 a corresponding :py:class:`~ovito.vis.Display` object, which is responsible for rendering (visualizing) the data in the viewports.
 The necessary :py:class:`~ovito.vis.Display` object is created automatically when the data object is created and is attached to it by OVITO. 
-It can be accessed through the :py:attr:`~ovito.data.DataObject.display` attribute of the :py:class:`~ovito.data.DataObject` base class. 
+It can be accessed through the :py:attr:`~ovito.data.DataObject.vis` attribute of the :py:class:`~ovito.data.DataObject` base class. 
 
 If the script modifier function injects a new data objects into the pipeline, it can configure the parameters of the attached display object.
-In the following example, the parameters of the :py:class:`~ovito.vis.BondsDisplay` are being initialized::
+In the following example, the parameters of the :py:class:`~ovito.vis.BondsVis` are being initialized::
 
    def modify(frame, input, output):
    
@@ -245,15 +245,15 @@ In the following example, the parameters of the :py:class:`~ovito.vis.BondsDispl
        ...
        
        # Configure visual appearance of bonds.
-       bonds.display.color = (1.0, 1.0, 1.0)
-       bonds.display.use_particle_colors = False
-       bonds.display.width = 0.4
+       bonds.vis.color = (1.0, 1.0, 1.0)
+       bonds.vis.use_particle_colors = False
+       bonds.vis.width = 0.4
        
 However, every time our modifier function is executed, it will create a new :py:class:`~ovito.data.Bonds` object together with a 
-new :py:class:`~ovito.vis.BondsDisplay` instance. If the modifier is used in an interactive OVITO session, this will lead to unexpected behavior 
+new :py:class:`~ovito.vis.BondsVis` instance. If the modifier is used in an interactive OVITO session, this will lead to unexpected behavior 
 when the user tries to change the display settings.
 All parameter changes made by the user will get lost as soon as the modification pipeline is re-evaluated. To mitigate the problem, it is a good idea to 
-create the :py:class:`~ovito.vis.BondsDisplay` just once outside the modifier function and then attach it to the :py:class:`~ovito.data.Bonds`
+create the :py:class:`~ovito.vis.BondsVis` just once outside the modifier function and then attach it to the :py:class:`~ovito.data.Bonds`
 object created by the modifier function::
 
    bonds_display = BondsDisplay(color=(1,0,0), use_particle_colors=False, width=0.4)

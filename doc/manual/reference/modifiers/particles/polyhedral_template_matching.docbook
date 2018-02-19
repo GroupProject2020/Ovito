@@ -13,7 +13,7 @@
   <para>
     
     <informalfigure><screenshot><mediaobject><imageobject>
-      <imagedata fileref="images/modifiers/polyhedral_template_matching_panel.png" format="PNG" />
+      <imagedata fileref="images/modifiers/polyhedral_template_matching_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
 
   This modifier classifies the local structural environment of particles

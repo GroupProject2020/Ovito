@@ -10,42 +10,52 @@
          xmlns:ns="http://docbook.org/ns/docbook">
   <title>Select type</title>
 
-  <warning><para>This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
-   development version of OVITO.</para></warning>
-
   <para>
- 
     <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/modifiers/select_particle_type_panel.png" format="PNG" />
+       <imagedata fileref="images/modifiers/select_particle_type_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
 
-  This modifier selects particles of a certain type.</para>
+    This modifier selects particles, bonds and other data elements on the basis of a type property.
+  </para>
+
+  <para>
+    Common examples for type properties are the <literal>Particle Type</literal> and the <literal>Structure Type</literal> property
+    of particles or the <literal>Bond Type</literal> property of bonds. This modifier allows you to select
+    elements of a certain type (or types), i.e., elements whose type property matches one of the given values.
+  </para>
 
   <simplesect>
     <title>Parameters</title>
 
     <variablelist>
+
+      <varlistentry>
+        <term>Operate on</term>
+        <listitem>
+          <para>Selects the class of elements (particles, bonds, etc.) the modifier should operate on.</para>
+        </listitem>
+      </varlistentry>
+
       <varlistentry>
         <term>Property</term>
         <listitem>
-          <para>Controls what input property, for instance the chemical type or the structural type, 
-          should be used to select particles. The drop-down box lists all available source properties
-          that store type information.</para>
+          <para>The type property to be used as source for the selection. The drop-down box lists all available properties
+              that store type information.</para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
         <term>Types</term>
         <listitem>
-          <para>The list of types defined in the source property. 
-          Check one or multiple types to let the modifier select the corresponding particles.</para>
+          <para>The list of types defined for the selected source property. 
+          Check one or more of them to let the modifier select all matching data elements.</para>
         </listitem>
       </varlistentry>
     </variablelist>
   </simplesect>
 
   <simplesect>
-  <title>See also</title>
+    <title>See also</title>
     <para>
       <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.SelectTypeModifier"><classname>SelectTypeModifier</classname> (Python API)</link>
     </para>

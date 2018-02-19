@@ -10,19 +10,15 @@
          xmlns:ns="http://docbook.org/ns/docbook">
   <title>Slice</title>
 
-  <warning><para>This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
-   development version of OVITO.</para></warning>
-
   <para>
-  
-   <informalfigure>
+    <informalfigure>
       <informaltable frame="none">
         <tgroup cols="2">
           <tbody>
             <row valign="bottom">
               <entry>Input:</entry>
-              <entry>Output (slice width = 0):</entry>
-              <entry>Output (slice width > 0):</entry>
+              <entry>Output (slab width = 0):</entry>
+              <entry>Output (slab width > 0):</entry>
             </row>
             <row valign="top">
             <entry>
@@ -47,26 +43,12 @@
     </informalfigure>
       
     <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/modifiers/slice_panel.png" format="PNG" />
+       <imagedata fileref="images/modifiers/slice_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
   
-  This modifier deletes all particles located on one side of an infinite cutting plane. 
-  Alternatively, the modifier can cut out a slice of particles as shown in the third picture on the right.</para>
-
-  <para>Several buttons in the modifier's parameter panel allow to position and align the slicing plane:</para>
-
-  <para><guibutton>Move plane to simulation box center</guibutton> positions the plane in the 
-  center of the simulation cell. The current plane orientation is kept.</para>
-
-  <para><guibutton>Align view direction to plane normal</guibutton> rotates the viewing
-  direction of the active viewport such that it is perpendicular to the cutting plane.</para>
-
-  <para><guibutton>Align plane normal to view direction</guibutton> rotates the cutting plan
-  such that it is perpendicular to the current viewing direction.</para>
-
-  <para><guibutton>Pick three particles</guibutton> lets the user select three particles
-  in the viewport with the mouse. The slicing plane will be repositioned such that it intersects
-  all three particles.</para>
+    This modifier either deletes or selects all elements on one side of an infinite cutting plane. 
+    Alternatively, the modifier can cut out a slab of a given thickness from the structure (see pictures on the right).
+  </para>
   
   <simplesect>
     <title>Parameters</title>
@@ -75,55 +57,93 @@
       <varlistentry>
         <term>Distance</term>
         <listitem>
-          <para>The (signed) distance of the slicing plane from the coordinate
-          system's origin along the direction of the normal vector.</para>
+          <para>
+          The (signed) distance of the cutting plane from the origin
+          of the simulation coordinate system, measured parallel to the cutting plane 
+          normal.</para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
         <term>Normal (X,Y,Z)</term>
         <listitem>
-          <para>Components of the slicing plane's normal vector. The vector does not
-          have to be a unit vector.</para>
+          <para>Components of the cutting plane normal vector. This vector does not
+          have to be a unit vector. Note that you can click on the blue label 
+          next to each input field to reset the normal vector to point
+          along the corresponding coordinate axis.</para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
-        <term>Slice width</term>
+        <term>Slab width</term>
         <listitem>
-          <para>Specifies the width of the slice to cut from the particle
-          set. If this parameter is zero, all particles on the positive side of the
-          slicing plane are deleted. If the <emphasis>slice width</emphasis>
-          parameter is non-zero, all particles whose distance from the slicing
-          plane is more than half of the slice width are deleted.</para>
+          <para>
+          Specifies the width of the slab to cut out from the input structure. 
+          If this value is zero, which it is by default, everything on one side of the
+          cutting plane is deleted. If the <emphasis>slab width</emphasis>
+          parameter is set to a positive value, a slab of the given thickness is cut out.</para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
         <term>Reverse orientation</term>
         <listitem>
-          <para>Effectively flips the slicing plane's orientation. Removes particles on the opposite side of the plane.</para>
+          <para>Effectively flips the cutting plane's orientation. If the <emphasis>slab width</emphasis>
+          parameter is zero, activating this option will remove all elements on the opposite side 
+          of the plane. Otherwise this option will let the modifier cut away a slab of 
+          the given thickness from the input structure.</para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
         <term>Create selection (do not delete)</term>
         <listitem>
-          <para>Lets the modifier select particles instead of deleting them.</para>
+          <para>This option lets the modifier select elements instead of deleting them.</para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
         <term>Apply to selection only</term>
         <listitem>
-          <para>Restricts the effect of the modifier to particles that are currently selected.</para>
+          <para>Restricts the effect of the modifier to the subset of elements that are currently selected.</para>
         </listitem>
       </varlistentry>
     </variablelist>
   </simplesect>
 
   <simplesect>
-  <title>See also</title>
+    <title>Alignment functions</title>
+
+    <para>
+      The following buttons in the panel let you automatically position and align the cutting plane:
+      <itemizedlist>
+        <listitem><para><guibutton>Move plane to simulation box center</guibutton> positions the plane in the 
+          center of the simulation cell. The current plane orientation is kept.</para></listitem>
+
+        <listitem><para><guibutton>Align view direction to plane normal</guibutton> rotates the viewing
+        direction of the active viewport such that it is parallel to the cutting plane's normal vector.</para></listitem>
+
+        <listitem><para><guibutton>Align plane normal to view direction</guibutton> rotates the cutting plan
+        such that its normal vector becomes parallel to the viewing direction of the active viewport.</para></listitem>
+
+        <listitem><para><guibutton>Pick three points</guibutton> lets you pick three spatial points
+        in the viewports. The cutting plane will be repositioned such that it goes
+        through all three points.</para></listitem>
+      </itemizedlist>
+    </para>        
+  </simplesect>
+  
+  <simplesect>
+    <title>Animation</title>
+    <para>
+      The position of the cutting plane can be animated. Use the <guibutton>A</guibutton> button
+      next to each numerical parameter field to open the corresponding keyframe animation dialog.
+      See the <link linkend="usage.animation">animation section</link> of this manual for more information on this topic.
+    </para>
+  </simplesect>
+
+  <simplesect>
+    <title>See also</title>
     <para>
       <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.SliceModifier"><classname>SliceModifier</classname> (Python API)</link>
     </para>

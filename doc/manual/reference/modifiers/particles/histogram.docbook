@@ -10,21 +10,14 @@
          xmlns:ns="http://docbook.org/ns/docbook">
   <title>Histogram</title>
 
-  <warning><para>This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
-   development version of OVITO.</para></warning>
-
   <para>
   
     <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/modifiers/histogram_panel.png" format="PNG" />
+       <imagedata fileref="images/modifiers/histogram_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
   
-    This modifier computes a histogram of the values of a particle or bond property. 
-  </para>
-  
-  <para>
-    Additionally, the modifier allows to select all particles or bonds whose property values
-    lie within a certain interval.
+    This modifier computes the histogram of values of a certain property, taken over all particles, bonds or other data elements in a system. 
+    The modifier furthermore lets you select all data elements that fall within a specified value range.
   </para>
   
   <simplesect>
@@ -33,28 +26,29 @@
     <variablelist>
 
       <varlistentry>
-        <term>Input</term>
+        <term>Operate on</term>
         <listitem>
-          <para>Selects whether input property values should be taken from particles or bonds.</para>
+          <para>Selects the class of data elements the modifier should operate on (e.g. particles, bonds, etc).
+              The drop-down list will only let you select classes that are present in the modifier's pipeline input.</para>
         </listitem>
       </varlistentry>
-    
+
       <varlistentry>
         <term>Property</term>
         <listitem>
-          <para>The particle or bond property the histogram should be computed for.</para>
+          <para>The source property for the histogram.</para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
         <term>Number of histogram bins</term>
         <listitem>
-          <para>Controls the resolution of the generated histogram.</para>
+          <para>Controls the resolution of the computed histogram.</para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
-        <term>Use only selected particles/bonds</term>
+        <term>Use only selected elements</term>
         <listitem>
           <para>Restricts the histogram calculation to the subset of particles or bonds that are currently selected.</para>
         </listitem>
@@ -63,7 +57,16 @@
       <varlistentry>
         <term>Select value range</term>
         <listitem>
-          <para>Lets the modifier select all particles or bonds whose property value lies in the specified range.</para>
+          <para>This option lets the modifier perform a selection of all data element whose property values fall into the specified range.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Plot axes</term>
+        <listitem>
+          <para>
+            These modifier parameters control the histogram plot shown in the panel and let you zoom into 
+            a sub-region.</para>
         </listitem>
       </varlistentry>
       

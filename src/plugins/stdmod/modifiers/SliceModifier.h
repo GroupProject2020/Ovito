@@ -78,7 +78,7 @@ public:
 
 	// Property access functions:
 
-	/// Returns the plane's distance from the origin.
+	/// Returns the signed distance of the cutting plane from the origin.
 	FloatType distance() const { return distanceController() ? distanceController()->currentFloatValue() : 0; }
 
 	/// Sets the plane's distance from the origin.
@@ -87,16 +87,16 @@ public:
 	/// Returns the plane's normal vector.
 	Vector3 normal() const { return normalController() ? normalController()->currentVector3Value() : Vector3(0,0,1); }
 
-	/// Sets the plane's distance from the origin.
+	/// Sets the plane's normal vector.
 	void setNormal(const Vector3& newNormal) { if(normalController()) normalController()->setCurrentVector3Value(newNormal); }
 
-	/// Returns the slice width.
-	FloatType sliceWidth() const { return widthController() ? widthController()->currentFloatValue() : 0; }
+	/// Returns the width of the slab produced by the modifier.
+	FloatType slabWidth() const { return widthController() ? widthController()->currentFloatValue() : 0; }
 
-	/// Sets the slice width.
-	void setSliceWidth(FloatType newWidth) { if(widthController()) widthController()->setCurrentFloatValue(newWidth); }
+	/// Sets the width of the slab produced by the modifier.
+	void setSlabWidth(FloatType newWidth) { if(widthController()) widthController()->setCurrentFloatValue(newWidth); }
 
-	/// Returns the slicing plane and slice width.
+	/// Returns the slicing plane and the slab width.
 	std::tuple<Plane3, FloatType> slicingPlane(TimePoint time, TimeInterval& validityInterval);
 
 protected:
@@ -119,7 +119,7 @@ protected:
 	/// This controller stores the distance of the slicing plane from the origin.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD(Controller, distanceController, setDistanceController);
 
-	/// Controls the slice width.
+	/// Controls the slab width.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD(Controller, widthController, setWidthController);
 
 	/// Controls whether the data elements should only be selected instead of being deleted.

@@ -8,15 +8,23 @@
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Delete selected particles</title>
+  <title>Delete selected</title>
 
-  <warning><para>This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
-   development version of OVITO.</para></warning>
-
-  <para>This modifier deletes all currently selected particles.</para>
+  <para>
+    <informalfigure><screenshot><mediaobject><imageobject>
+      <imagedata fileref="images/modifiers/delete_selected_panel.png" format="PNG" scale="50" />
+    </imageobject></mediaobject></screenshot></informalfigure>
+    This modifier deletes all currently selected data elements (i.e. particles, bonds).
+  </para>
+  
+  <para>
+    The checkbox list in the modifier's parameter panel lets you control which classes of data elements (particles, bonds, etc.) the modifier
+    should act on. Element classes that are not present in the modifier's pipeline input, are grayed out.
+    The modifier will delete those data elements from the selected classes whose <literal>Selection</literal> property is non-zero.
+  </para>
   
   <simplesect>
-  <title>See also</title>
+    <title>See also</title>
     <para>
       <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.DeleteSelectedModifier"><classname>DeleteSelectedModifier</classname> (Python API)</link>
     </para>

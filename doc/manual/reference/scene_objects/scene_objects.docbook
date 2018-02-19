@@ -12,23 +12,114 @@
 
   <para>
     <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/scene_objects/data_source_and_objects.png" format="PNG" scale="50" />
+       <imagedata fileref="images/scene_objects/data_source_and_data_objects.svg" format="SVG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
 
-    In OVITO a <emphasis>data source</emphasis> generates one more more <emphasis>data objects</emphasis>, which
-    are then dynamically processed by the <link linkend="particles.modifiers">modifiers</link> in the 
-    <link linkend="usage.modification_pipeline">data pipeline</link> and finally rendered on screen. 
-    One key type of data source in OVITO is the <link linkend="scene_objects.file_source">external file source</link>.
-    It is responsible for loading data from disk and passing it on to the data pipeline system of OVITO. 
-    There are different kinds of data objects, one example being particle properties. 
-    Certain data objects such as the <link linkend="scene_objects.particle_types">particle type property</link>
-    and the <link linkend="scene_objects.simulation_cell">simulation cell</link> 
-    show up in the <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link> as 
-    sub-entries of the <link linkend="scene_objects.file_source">external file source</link> (see screenshot).
+    Within the framework of OVITO, a <emphasis>data source</emphasis> holds, provides or generates the input data 
+    for the <link linkend="usage.modification_pipeline">data pipeline</link>. In the pipeline editor shown 
+    in the screenshot the current data source appears as first item under the "Data source" section.
+    The primary type of source you will work with is the <link linkend="scene_objects.file_source">External file</link>
+    source, which loads the data from a file stored on your local computer or a remote machine.
+  </para>
+
+  <para>
+    A dataset loaded from a file typically consists of several <emphasis>data objects</emphasis>, which represent different
+    facets of the information. They are the things that are being processed by modifiers while the flow through the data pipeline.
+    Some of these data objects, but not all, appear as sub-entries of the data source 
+    in the pipeline editor (see screenshot). These sub-entries provide access to e.g. the list of particle types or the 
+    dimensions of the simulation cell. 
+  </para>
+
+  <para>
+    <informaltable>
+      <tgroup cols="2">
+        <colspec colname='name'/>
+        <colspec colname='descr'/>
+        <thead>
+          <row>
+            <entry>Data&#xA0;source</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>          
+          <row>
+            <entry><link linkend="scene_objects.file_source">External&#xA0;file</link></entry>
+            <entry>Reads data from external file and hands it to the pipeline</entry>
+          </row>
+          <row>
+            <entry>Particle&#xA0;trajectories</entry>
+            <entry>Generates static trajectory lines from the time-dependent particle positions of another data pipeline (see <link linkend="howto.visualize_particle_trajectories">Create trajectory lines</link> utility)</entry>
+          </row>
+          <row>
+            <entry>Static&#xA0;source</entry>
+            <entry>Generic storage for one or more data objects</entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </informaltable>
+  </para>
+
+  <para>
+    <informaltable>
+      <tgroup cols="2">
+        <colspec colname='name'/>
+        <colspec colname='descr'/>
+        <thead>
+          <row>
+            <entry>Data&#xA0;object</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>Property</entry>
+            <entry>A regular property of particle, bonds, voxels or other elements</entry>
+          </row>
+          <row>
+            <entry><link linkend="scene_objects.particle_types">Particle&#xA0;types</link>,
+              <link linkend="scene_objects.particle_types">Bond&#xA0;types</link>,
+              <link linkend="scene_objects.particle_types">Molecule&#xA0;types</link></entry>
+            <entry>Typed property letting you change the names, display colors and radii of the defined types</entry>
+          </row>
+          <row>
+            <entry><link linkend="scene_objects.simulation_cell">Simulation&#xA0;cell</link></entry>
+            <entry>The simulation cell geometry and boundary conditions</entry>
+          </row>
+          <row>
+            <entry><link linkend="scene_objects.surface_mesh">Surface&#xA0;mesh</link></entry>
+            <entry>Mesh representing a two-dimensional closed manifold embedded in the simulation domain</entry>
+          </row>
+          <row>
+            <entry>Triangle&#xA0;mesh</entry>
+            <entry>A general mesh made of triangle elements</entry>
+          </row>
+          <row>
+            <entry>Camera</entry>
+            <entry>A viewport camera object created using the <link linkend="usage.viewports.menu">Create camera</link> function in the viewport menu</entry>
+          </row>
+          <row>
+            <entry>Bonds</entry>
+            <entry>The list of pair-wise bonds defined in a particle system</entry>
+          </row>
+          <row>
+            <entry>Particle&#xA0;trajectories</entry>
+            <entry>The lines generated through the <link linkend="howto.visualize_particle_trajectories">Create trajectory lines</link> utility</entry>
+          </row>
+          <row>
+            <entry>Voxel&#xA0;grid</entry>
+            <entry>A structured grid of voxel elements</entry>
+          </row>
+          <row>
+            <entry>Dislocations</entry>
+            <entry>Lines generated by the <link linkend="particles.modifiers.dislocation_analysis">Dislocation analysis (DXA)</link> modifier</entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </informaltable>
   </para>
 
   <simplesect>
-  <title>See also</title>
+    <title>See also</title>
     <para>
       <link xlink:href="python/modules/ovito_data.html#ovito.data.DataObject"><classname>DataObject</classname> (Python API)</link>
     </para>
@@ -37,5 +128,6 @@
   <xi:include href="file_source.docbook"/>
   <xi:include href="particle_types.docbook"/>
   <xi:include href="simulation_cell.docbook"/>
+  <xi:include href="surface_mesh.docbook"/>
   
 </section>

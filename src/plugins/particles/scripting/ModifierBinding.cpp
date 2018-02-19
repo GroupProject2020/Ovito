@@ -666,15 +666,23 @@ void defineModifiersSubmodule(py::module m)
 
 	ovito_class<CoordinationNumberModifier, AsynchronousModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
-			"Computes coordination numbers of particles and the radial distribution function (RDF) of the system."
+			"Computes coordination numbers of individual particles and the radial distribution function (RDF) for the entire system. "
 			"\n\n"
-			"The modifier stores the computed coordination numbers in the ``\"Coordination\"`` particle property."
+			"The modifier stores the computed per-particle coordination numbers in the ``\"Coordination\"`` output particle property. "
+			"The data points of the radial pair distribution histogram computed by the modifier can be accessed through "
+			"its :py:attr:`.rdf` attribute after the pipeline evalution is complete. "
 			"\n\n"
-			"Example showing how to export the RDF data to a text file:\n\n"
+			"**Examples:**"
+			"\n\n"
+			"The following script (to be executed with :program:`ovitos`) demonstrates how to load a particle configuration, compute the RDF using the modifier and export the data to a text file:\n\n"
 			".. literalinclude:: ../example_snippets/coordination_analysis_modifier.py\n"
+			"\n\n"
+			"The second script below demonstrates how to compute the RDF for every frame of a simulation sequence and build a time-averaged "
+			"RDF histogram from the data:\n\n"
+			".. literalinclude:: ../example_snippets/coordination_analysis_modifier_averaging.py\n"
 			"\n\n")
 		.def_property("cutoff", &CoordinationNumberModifier::cutoff, &CoordinationNumberModifier::setCutoff,
-				"The neighbor cutoff distance."
+				"Specifies the cutoff distance for the coordination number calculation and also the range up to which the modifier calculates the RDF. "
 				"\n\n"
 				":Default: 3.2\n")
 		.def_property("number_of_bins", &CoordinationNumberModifier::numberOfBins, &CoordinationNumberModifier::setNumberOfBins,
@@ -1188,7 +1196,7 @@ void defineModifiersSubmodule(py::module m)
 			"Constructs coordination polyhedra around currently selected particles. "
 			"A coordination polyhedron is the convex hull spanned by the bonded neighbors of a particle. ")
 		.def_property_readonly("vis", &CoordinationPolyhedraModifier::surfaceMeshDisplay,
-				"A :py:class:`~ovito.vis.SurfaceMeshDisplay` instance controlling the visual representation of the generated polyhedra.\n")
+				"A :py:class:`~ovito.vis.SurfaceMeshVis` instance controlling the visual representation of the generated polyhedra.\n")
 	;
 	
 }

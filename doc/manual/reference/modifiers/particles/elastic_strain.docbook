@@ -31,11 +31,11 @@
         </informaltable>
       </informalfigure>
     <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/modifiers/elastic_strain_panel.png" format="PNG" />
+       <imagedata fileref="images/modifiers/elastic_strain_panel.png" format="PNG"  scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
       
     This modifier computes the atomic-level elastic strain and deformation gradient tensors in crystalline systems.
-    It can be used to calculate and analyze local elastic distortions in a crystal lattice. Furthermore, it allows to determine the local
+    It can be used to analyze elastic distortions in a crystal lattice. Furthermore, it allows to determine the local
     crystal orientation in polycrystalline systems.
   </para>
   
@@ -68,7 +68,7 @@
   </para>
   
   <para>
-    Note that OVITO also provides the <link linkend="particles.modifiers.atomic_strain">atomic strain</link> calculation modifier,
+    Note that OVITO also provides the <link linkend="particles.modifiers.atomic_strain">Atomic Strain</link> modifier,
     which determines the <emphasis>total</emphasis> deformation at each atom from the relative displacements
     of its neighbors. Computing the total displacements (which don't have to be purely elastic) requires two simulation snapshots 
     of the system: the reference configuration, which specifies the initial atomic coordinates, and the deformed configuration. The elastic strain calculation,
@@ -92,11 +92,11 @@
     The atomic-level elastic deformation gradient tensor can only be computed for atoms for which the local mapping
     of their neighbors to the ideal crystal lattice is determinable. In practice this is only the case for atoms
     that are located in a structural environment that resembles the perfect crystal sufficiently well. 
-    OVITO identifies such atoms in an internal preprocessig step
+    OVITO identifies such atoms in an internal preprocessing step
     using the common neighbor analysis method (see the <link linkend="particles.modifiers.common_neighbor_analysis">Common Neighbor Analysis</link> and 
     <link linkend="particles.modifiers.identify_diamond_structure">Identify Diamond Structure</link> modifiers for more information).  
     <emphasis role="strong">F<superscript>e</superscript></emphasis> will only be calculated for atoms that 
-    have been successully identified as crystalline atoms. Atoms in highly distorted environments, in contrast,
+    have been successfully identified as crystalline atoms. Atoms in highly distorted environments, in contrast,
     for example in crystal defects such as surfaces or general grain boundaries, are excluded from the computation. 
     The algorithm will assign a null tensor to these atoms, for which the local elastic deformation is undefined. 
   </para>

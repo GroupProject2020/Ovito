@@ -13,7 +13,7 @@
   <para>
   
     <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/modifiers/voronoi_analysis_panel.png" format="PNG" />
+       <imagedata fileref="images/modifiers/voronoi_analysis_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
   
     This analysis modifier calculates the Voronoi tessellation of the simulation box, taking the particle positions as Voronoi cell centers. 
@@ -32,7 +32,7 @@
     which is a vector of integers constituting a histogram of the number of edges on the faces of the Voronoi cell.
     This index vector can be considered a characteristic signature of a particle's coordination structure and the topology of the Voronoi polyhedron.
     For instance, an icosahedral coordination structure corresponds to the Voronoi index vector (0,0,0,0,12,0,...).
-    In other words, this index vector denotes a polyhdron with exactly 12 faces with 5 edges each. 
+    In other words, this index vector denotes a polyhedron with exactly 12 faces with 5 edges each. 
     To select all atoms having this kind of icosahedral coordination structure, we can use the 
     <link linkend="particles.modifiers.expression_select">Expression selection</link>
     modifier with the Boolean expression:
@@ -69,7 +69,7 @@
     <title>Face area and edge length thresholds</title>
 
   <para>
-    Voronoi polyhedra are known to be unstable with regard to small pertubations of the particle positions in 
+    Voronoi polyhedra are known to be unstable with regard to small perturbations of the particle positions in 
     many cases. To address this issue, at least partially, the modifier provides threshold parameters for the
     <emphasis>area</emphasis> of Voronoi faces and the <emphasis>length</emphasis> of face edges to filter out very small,
     almost degenerate faces and edges.
@@ -80,7 +80,7 @@
     not included in the computed Voronoi index and it also not counted toward the coordination number of the central particle.
     The threshold face area can either be specified as an absolute value or relative to the total surface area of the Voronoi polyhedron.
     The purpose of these thresholds is to exclude very small faces/edges, which occur sporadically
-    in the presence of pertubations, from the analysis and the counting. Also see <link xlink:href="http://www.pnas.org/content/112/43/E5769.short">this paper on the topic</link>.
+    in the presence of perturbations, from the analysis and the counting. Also see <link xlink:href="http://www.pnas.org/content/112/43/E5769.short">this paper on the topic</link>.
   </para>
   </simplesect>
   
@@ -203,13 +203,8 @@
     </variablelist>
   </simplesect>
   
-  <simplesect> 
-    <title>Acknowledgment</title>
-    <para>This modifier uses the <link xlink:href="http://math.lbl.gov/voro++/">Voro++ package</link> of Chris Rycroft to compute Voronoi polyhedra.</para>
-  </simplesect>
-  
   <simplesect>
-  <title>See also</title>
+    <title>See also</title>
     <para>
       <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.VoronoiAnalysisModifier"><classname>VoronoiAnalysisModifier</classname> (Python API)</link>
     </para>

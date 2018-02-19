@@ -10,40 +10,45 @@
          xmlns:ns="http://docbook.org/ns/docbook">
   <title>Scatter plot</title>
 
-  <warning><para>This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
-   development version of OVITO.</para></warning>
-
   <para>
   
     <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/modifiers/scatter_plot_panel.png" format="PNG" />
+       <imagedata fileref="images/modifiers/scatter_plot_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
   
-    This modifier computes and displays a scatter plot for two particle properties.
-    This type of plot can be used to study possible correlations between two particle properties.    
-    A scatter plot consists of one data point per input particle. The first property determines
+    This modifier generates a scatter plot on the basis of two input properties.
+    This type of plot can be used to study potential correlations between the values of two properties.
+    A scatter plot consists of one data point per input element (e.g. particle, bond, etc.). The first property determines
     the X-coordinates and the second property the Y-coordinates of the points.
   </para>
   
   <para>
-    Optionally, the modifier can be used to select particles within a specified X- or Y-range.
+    In addition, the modifier can be used to select all data elements that fall within a certain range along the X or Y axis.
   </para>
   
   <simplesect>
     <title>Parameters</title>
 
+      <varlistentry>
+        <term>Operate on</term>
+        <listitem>
+          <para>Selects the class of data elements the modifier should operate on (e.g. particles, bonds, etc).
+              The drop-down list will only let you select classes that are present in the modifier's pipeline input.</para>
+        </listitem>
+      </varlistentry>
+
     <variablelist>
       <varlistentry>
         <term>X-axis property</term>
         <listitem>
-          <para>The per-particle property that serves as data source for the x-coordinates of data points.</para>
+          <para>The property that should serve as data source for the x-coordinates of data points.</para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
         <term>Y-axis property</term>
         <listitem>
-          <para>The per-particle property that serves as data source for the y-coordinates of data points.</para>
+          <para>The property that should serve as data source for the y-coordinates of data points.</para>
         </listitem>
       </varlistentry>
       

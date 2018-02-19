@@ -14,9 +14,9 @@
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/modifiers/affine_transformation_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
-    This modifier applies an affine transformation to data elements. It may be used to translate, scale, rotate or shear 
-    the particles, the simulation cell and/or other data elements. The transformation can either be explicitly specified as a 3 x 3 
-    matrix plus a translation, or implicitly by prescribing a target geometry for the simulation cell.
+    This modifier applies an affine transformation to the system. It may be used to translate, scale, rotate or shear 
+    the particles, the simulation cell and/or other elements. The transformation can either be explicitly specified in terms of a 3 x 3 
+    matrix plus a translation vector, or implicitly by prescribing a target geometry for the simulation cell.
   </para>
   
   <para>
@@ -39,22 +39,20 @@
   <simplesect>
     <title>Transform to target box</title>
     <para>
-      This option of the modifier lets it dynamically compute the affine transformation from the current simulation cell shape and the 
-      target shape you specify. Thus, after the transformation has been applied to the input cell, it will take on the 
-      given target shape. The contents of the simulation cell (e.g. particles, surface meshes, etc.) will be mapped to the new
-      cell accordingly.
+      This option lets the modifier automatically compute the affine transformation from the current shape of the input simulation cell and the specified 
+      target shape. After application of the implicitly determined transformation, the cell will take on the 
+      given constant target shape. The contents of the simulation cell (e.g. particles, surface meshes, etc.) will be mapped to the new
+      cell shape accordingly.
     </para>
     <para>
-      Note that you can employ this option to overwrite the current 
-      simulation box dimensions (which may vary with time) with new constant values.
+      Note that you can use this as a way to permanently overwrite the original simulation box and fix its dimensions to constant values.
     </para>
   </simplesect>
 
   <simplesect>
     <title>Transformed elements</title>
     <para>
-      You can select the types of data elements that should be affected by the transformation. 
-      Data types that are currently not present in the modifier's data pipeline input will be grayed out.
+      You can select the kinds of elements that should be transformed by the modifier: 
       <informaltable>
         <tgroup cols="2">
           <thead>

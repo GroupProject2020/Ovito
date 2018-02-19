@@ -77,19 +77,19 @@
       The program will ask you to pick an image file containing the custom color gradient. 
       You can prepare an appropriate image using any image editing program. OVITO will use the colors 
       along one row of pixels of the imported image to generate the user-defined color map. Here are two examples of color map images:
-        <screenshot><mediaobject><imageobject>
-          <imagedata fileref="images/modifiers/color_coding_custom_map.png" format="PNG" />
-        </imageobject></mediaobject></screenshot>
-        <screenshot><mediaobject><imageobject>
-          <imagedata fileref="images/modifiers/color_coding_custom_map2.png" format="PNG" />
-        </imageobject></mediaobject></screenshot>
+      <screenshot><mediaobject><imageobject>
+        <imagedata fileref="images/modifiers/color_coding_custom_map.png" format="PNG" />
+      </imageobject></mediaobject></screenshot>
+      <screenshot><mediaobject><imageobject>
+        <imagedata fileref="images/modifiers/color_coding_custom_map2.png" format="PNG" />
+      </imageobject></mediaobject></screenshot>
     </para>
   </simplesect>
 
   <simplesect>
     <title>Color legend</title>
     <para>
-       You can insert a color legend into rendered images and videos by adding a 
+       You can superimpose a legend for the color coding into rendered images by adding a 
        <link linkend="viewport_overlays"><guilabel>Color legend</guilabel></link> overlay to the active viewport.
     </para>
   </simplesect>
@@ -139,10 +139,12 @@
       <varlistentry>
         <term>Keep selection</term>
         <listitem>
-          <para>OVITO uses a red color by default to highlight selected particles in the interactive viewports.
-  Since this highlighting would mask the true colors assigned by this
-  modifier, the modifier clears the current selection by default. 
-  This options allows you to preserve the current selection and make it available to subsequent modifiers in the data pipeline.</para>
+          <para>
+            OVITO uses a red color by default to highlight selected particles in the interactive viewports.
+            Since this highlighting would mask the true colors assigned by this
+            modifier, the modifier clears the current selection by default. 
+            This options allows you to preserve the current selection and make it available to subsequent modifiers in the data pipeline.
+          </para>
         </listitem>
       </varlistentry>
 
@@ -150,7 +152,7 @@
   </simplesect>
 
   <simplesect>
-  <title>See also</title>
+    <title>See also</title>
     <para>
       <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.ColorCodingModifier"><classname>ColorCodingModifier</classname> (Python API)</link>
     </para>

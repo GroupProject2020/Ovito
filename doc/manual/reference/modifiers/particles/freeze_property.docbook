@@ -10,126 +10,118 @@
          xmlns:ns="http://docbook.org/ns/docbook">
   <title>Freeze property</title>
 
-  <warning><para>This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
-   development version of OVITO.</para></warning>
-
   <para>
     <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/modifiers/freeze_property_panel.png" format="png" />
-    </imageobject></mediaobject></screenshot></informalfigure>  
-    When this modifier is inserted into a modification pipeline, it takes a snapshot of the current values of the selected particle property. 
-    It will subsequently write the stored values back to the selected output particle property (which, by default, is the same as the source property), overwriting 
-    the current values of that property. Thus, this modifier can be used to <emphasis>freeze</emphasis> a particle property that, otherwise, would be changing with 
-    simulation time.
+       <imagedata fileref="images/modifiers/freeze_property_panel.png" format="png" scale="50" />
+    </imageobject></mediaobject></screenshot></informalfigure>
+    This modifier copies the instantaneous values of a particle property from a specified animation time to all other times.
+    This basically fixes or freezes the property values. The <emphasis>Freeze Property</emphasis> modifier is useful in situations
+    where varying information from different timesteps of a simulation shall be put in relation to each other.
   </para>
-  
+
   <para>
-    The modifier automatically takes a snapshot of the current state whenever the user selects a new source property for the modifier.
-    The snapshot is always taken at the current animation time. You can explicitly take a new snapshot at any later time by clicking the
-    <guibutton>Take new snapshot</guibutton> button, which will replace the per-particle values stored by the modifier with the current 
-    values produce by the modification pipeline.
+    The modifier operates as follows: The per-particle values of the selected input property are retrieved at the selected time (frame 0 of the 
+    loaded animation by default). These values are then written back to the selected output property, which may or may not be the same
+    as the input property. This will happen for all frames of the current animation. Thus, it will be appear as if the values of the output
+    property remain at the same constant values the input property had at the selected animation time.
+    The modifier can be used to "freeze" particle property values that, otherwise, would be changing with simulation time.
   </para>
-  
+    
   <para>
-     By default, the stored property values are written back to the same property from which the snapshot 
-     was originally taken, overwriting the current values of that property. If you want to preserve the current values, you can let the modifier
-     write the stored snapshot to a new property instead by entering a different name in the <guilabel>Output property</guilabel> field.
-     Then both the current property values and the ones stored by the modifier will be available to other 
-     modifiers following in the modification pipeline.
+    If the input and output properties are not the same, the modifier performs a copy operation of the property values. However,
+    keep in mind that it doesn't do so on an ordinary frame-by-frame basis: It rather copies the values of the input property sampled 
+    at a particular point in time across the temporal domain. If you want to simply copy a particle property on a frame-by-frame basis,
+    you can use the <link linkend="particles.modifiers.compute_property">Compute Property</link> modifier instead.
+  </para>
+
+  <para>
+    The <emphasis>Freeze Property</emphasis> modifier can be used for various purposes, which will be illustrated with the help
+    of the following examples. In general it provides a way to make per-particle information available at an animation time where it wouldn't 
+    be available otherwise.
   </para>
   
   <simplesect>
     <title>Example 1</title>
-	<para>
-	<informalfigure>
-      <informaltable frame="none">
-        <tgroup cols="3">
-          <tbody>
-            <row valign="bottom">
-              <entry>Initial frame:</entry>
-              <entry>Without <emphasis>Freeze Property</emphasis> modifier:</entry>
-              <entry>With <emphasis>Freeze Property</emphasis> modifier:</entry>
-            </row>
-            <row valign="top">
-              <entry>
-		        <mediaobject><imageobject>
-		        <imagedata fileref="images/modifiers/freeze_property_example1_initial.png" format="PNG" />
-		        </imageobject></mediaobject>
-              </entry>
-              <entry>
-                <mediaobject><imageobject>
-		        <imagedata fileref="images/modifiers/freeze_property_example1_without.png" format="PNG" />
-		        </imageobject></mediaobject>
-              </entry>
-              <entry>
-		        <mediaobject><imageobject>
-		        <imagedata fileref="images/modifiers/freeze_property_example1_with.png" format="PNG" />
-		        </imageobject></mediaobject>
-              </entry>
-            </row>
-          </tbody>
-        </tgroup>
-      </informaltable>
-    </informalfigure>
-       The first picture shows the initial frame of a simulation sequence where the <link linkend="particles.modifiers.color_coding">Color coding</link> 
-	   modifier has been used to color particles according to their position along the X axis. 
-	   Then the solid is sheared and particles move (second picture).
-	   This motion causes the colors of individual particles to change, because they are dynamically computed by the 
-	   <link linkend="particles.modifiers.color_coding">Color coding</link> modifier on every simulation frame
-	   based on the current positions.
-	</para>
-	<para>
-	   To suppress this dynamic updating of particle colors, we can use the <emphasis>Freeze property</emphasis> modifier. 
-	   It allows us the take a snapshot of the particle colors at the beginning of the simulation. Subsequently, the modifier will 
-	   overwrite any new colors generated by the <emphasis>Color coding</emphasis> modifier with the stored colors 
-	   (third picture). Thus, the <emphasis>Freeze property</emphasis> modifier allows us to "bake in" a dynamic particle property 
-	   such as the color so that it becomes static and does not change with simulation time.
-	</para>
+    <para>
+    <informalfigure>
+        <informaltable frame="none">
+          <tgroup cols="3">
+            <tbody>
+              <row valign="bottom">
+                <entry>Initial frame:</entry>
+                <entry>Without <emphasis>Freeze Property</emphasis> modifier:</entry>
+                <entry>With <emphasis>Freeze Property</emphasis> modifier:</entry>
+              </row>
+              <row valign="top">
+                <entry>
+              <mediaobject><imageobject>
+              <imagedata fileref="images/modifiers/freeze_property_example1_initial.png" format="PNG" />
+              </imageobject></mediaobject>
+                </entry>
+                <entry>
+                  <mediaobject><imageobject>
+              <imagedata fileref="images/modifiers/freeze_property_example1_without.png" format="PNG" />
+              </imageobject></mediaobject>
+                </entry>
+                <entry>
+              <mediaobject><imageobject>
+              <imagedata fileref="images/modifiers/freeze_property_example1_with.png" format="PNG" />
+              </imageobject></mediaobject>
+                </entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </informaltable>
+      </informalfigure>
+      The first picture shows the initial frame of a simulation sequence. The <link linkend="particles.modifiers.color_coding">Color coding</link> 
+      modifier was used here to color particles according to their X coordinates. 
+      During the course of the simulation, the particles move as a shear deformation is applied (second picture).
+      Due to this motion, the particle colors are automatically updated by OVITO's pipeline system, because the <link linkend="particles.modifiers.color_coding">Color coding</link> dynamically 
+      recomputes the colors on every simulation frame on the basis of the <emphasis>current</emphasis> particle coordinates.
+    </para>
+    <para>
+      Sometimes this type of dynamic recalculation is not desired. Instead, we would like particles to keep their initial colors
+      that were assigned to them by the <link linkend="particles.modifiers.color_coding">Color coding</link> modifier at frame 0.
+      The <emphasis>Freeze property</emphasis> modifier allows us to suppress the dynamic updating by resetting the
+      the <literal>Color</literal> property to the values it had at the initial frame. In other words, the modifier lets us 
+      "bake in" the values of a dynamically computed particle property such that it becomes static and no longer changes with simulation time.
+    </para>
   </simplesect>
 
   
   <simplesect>
     <title>Example 2</title>
-	<para>
-	   The modifier is also useful if we want to compare per-particle properties that change over time with their initial
-	   values at the beginning of a simulation. Let's suppose, for instance, we want to determine the amount by which 
-	   the charge of each particle changes during a simulation. We assume in this example that the current particle charges 
-	   have been computed by our simulation code for each simulation frame and that they are stored in 
-	   the particle property <literal>Charge</literal>. 
-	</para>
-	<para>
-	   We can use the <emphasis>Freeze property</emphasis> modifier to take a snapshot of the initial particle charges at frame 0
-	   by selecting <literal>Charge</literal> as the source property. In this case we do not want to overwrite the current charge 
-	   values with the initial ones, because we want to compare them with each other.
-	   This is why we set the modifier's <emphasis>Output property</emphasis> to the name <literal>InitialCharge</literal>. 
-	   This will let the modifier write its stored values to a new property with a different name and preserve the current values
-	   stored in the <literal>Charge</literal> property.
-	</para>
-	<para>
-	  Finally, we can use the <link linkend="particles.modifiers.compute_property">Compute property</link> modifier to compute
-	  the difference between the particle properties <literal>Charge</literal> (which is time-dependent) and <literal>InitialCharge</literal> 
-	  (which is static thanks to the <emphasis>Freeze property</emphasis> modifier) at each frame of the simulation sequence.
-	</para>
+    <para>
+      The modifier is useful for comparing a per-particle property that changes over time with its initial
+      value at the beginning of a simulation. Let's suppose, for instance, we want to compute the difference by which 
+      each particle's potential energy changes during the course of a simulation. 
+      For this example, let's assume that the varying potential energy of each particle, as computed by the simulation code at each timestep,
+      has been loaded from the simulation data file and is available as a particle property named <literal>Potential Energy</literal>. 
+    </para>
+    <para>
+      We can use the <emphasis>Freeze property</emphasis> modifier to take a snapshot of the initial particle energies at frame 0
+      by selecting <literal>Potential Energy</literal> as the source property. In this case we do not want to overwrite the current  
+      values with the initial ones, because we are going to compute the difference between the two.
+      That is why we set the <emphasis>output property</emphasis> parameter to the user-defined property name <literal>Initial Energy</literal>. 
+      This will let the modifier put the stored energy values to a new property and preserve the current values
+      of the <literal>Potential Energy</literal> property.
+    </para>
+    <para>
+      Finally, we can use the <link linkend="particles.modifiers.compute_property">Compute Property</link> modifier to compute
+      the difference between the particle property <literal>Potential Energy</literal> (which is time-dependent) and the newly generated property <literal>Initial Energy</literal> 
+      (which remain static, thanks to the <emphasis>Freeze property</emphasis> modifier).
+    </para>
   </simplesect>
     
   <simplesect>
     <title>Example 3</title>
 	  <para>
-	     Another typical scenario for this modifier is described in <link linkend="howto.marker_particles">this tutorial</link>.
+	     Another typical application for this modifier is described in <link linkend="howto.marker_particles">this tutorial</link>.
 	  </para>
-  </simplesect>  
-    
-  <simplesect>
-    <title>Implementation note</title>
-    <para>
-      If the <literal>Particle Identifier</literal> property is defined, the modifier use the IDs to 
-      assign the stored property values to the correct particles. If no particle IDs are defined, then the 
-      number of particles and the order in which they are stored must not change in between simulation frames.
-    </para>
-  </simplesect>  
+  </simplesect>
   
   <simplesect>
-  <title>See also</title>
+    <title>See also</title>
     <para>
       <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.FreezePropertyModifier"><classname>FreezePropertyModifier</classname> (Python API)</link>
     </para>

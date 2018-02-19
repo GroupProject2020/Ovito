@@ -15,10 +15,10 @@
   </para>
 
   <simplesect>
-  <title>See also</title>
-  <para>
-      <link xlink:href="python/modules/ovito_data.html#ovito.data.SurfaceMesh"><classname>SurfaceMesh</classname> (Python API)</link>
-  </para>
+    <title>See also</title>
+    <para>
+        <link xlink:href="python/modules/ovito_data.html#ovito.data.SurfaceMesh"><classname>SurfaceMesh</classname> (Python API)</link>
+    </para>
   </simplesect>
 
 </section>

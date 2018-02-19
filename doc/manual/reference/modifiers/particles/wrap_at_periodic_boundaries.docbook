@@ -36,20 +36,19 @@
       </informaltable>
     </informalfigure>
   
-  This modifier maps particles that are located outside of the simulation cell
-  back into the box by "wrapping" their coordinates around at
-  the periodic boundaries of the simulation box.</para>
+    This modifier remaps particles that are located outside of the simulation box
+    back into the box by "wrapping" their coordinates around at
+    the boundaries of the simulation box (see example on the right).
+  </para>
+
+  <para>
+    The wrapping is only performed in those directions for which periodic
+    boundary conditions (PBC) are enabled. The PBC flags are usually read from the
+    input simulation file and can be changed in the <link linkend="scene_objects.simulation_cell">Simulation cell</link> panel.
+  </para>
 
   <simplesect>
-    <title>Implementation note</title>
-      <para>The modifier acts only in spatial directions for which periodic
-      boundary conditions (PBC) are enabled. The PBC flags are usually read from the
-      simulation file.
-      </para>
-  </simplesect>
-
-  <simplesect>
-  <title>See also</title>
+    <title>See also</title>
     <para>
       <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.WrapPeriodicImagesModifier"><classname>WrapPeriodicImagesModifier</classname> (Python API)</link>
     </para>

@@ -8,13 +8,13 @@ node.add_to_scene()
 node.modifiers.append(SliceModifier(
     distance = -12,
     inverse = True,
-    slice_width = 18.0
+    slab_width = 18.0
 ))
 
 node.modifiers.append(SliceModifier(
     distance = 12,
     inverse = True,
-    slice_width = 18.0
+    slab_width = 18.0
 ))
 
 modifier = ClusterAnalysisModifier()

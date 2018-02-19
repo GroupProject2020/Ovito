@@ -11,31 +11,35 @@
   <title>Coordination analysis</title>
 
   <para>
-  
     <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/modifiers/coordination_analysis_panel.png" format="PNG" />
+       <imagedata fileref="images/modifiers/coordination_analysis_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
-  
-    This modifier determines the number of neighbors of each particle which are within 
-    a given cutoff radius. This is the so-called <emphasis>coordination number</emphasis> of a particle.
-    The modifier stores the results in the <literal>Coordination</literal> particle property.
+    This modifier performs two things:
+    It determines the number of neighbors of each particle that are within 
+    a given cutoff range, the so-called <emphasis>coordination number</emphasis> of a particle, and 
+    stores this value in the <literal>Coordination</literal> output particle property.
+    In addition, the modifier computes the radial pair distribution function (radial PDF, or simply RDF) for the entire particle system.
+    The radial pair distribution function <emphasis>g</emphasis>(<emphasis>r</emphasis>) measures the probability of finding a particle at distance <emphasis>r</emphasis> 
+    given that there is a particle at position <emphasis>r</emphasis>=0; it is essentially a histogram of inter-particle distances. The pair distribution function is 
+    normalized by the average number density of particles (i.e. the total number of particles in the simulation cell divided by its volume).
+    See the <link xlink:href="https://en.wikipedia.org/wiki/Radial_distribution_function">Wikipedia</link> for more information on this distribution function.
   </para>
 
   <para>
-    In addition, the modifier also computes the radial pair distribution function (RDF) of the particle system.
-    The RDF <emphasis>g</emphasis>(<emphasis>r</emphasis>) measures the probability of finding a particle at distance <emphasis>r</emphasis> given that there is a particle at position 0; 
-    it is essentially a histogram of inter-particle distances. The pair distribution function is normalized by the number 
-    density of particles (i.e. total number of particles divided by the simulation cell volume).
-  </para>
-  
-  <para>
-    The current version of the modifier can only calculate the <emphasis>global</emphasis> RDF ignoring the types
+    The current version of the modifier can only calculate the global RDF ignoring the types
     of particles. As explained in <link xlink:href="http://forum.ovito.org/index.php?topic=131.0">this forum post</link>, you can also compute the <emphasis>partial</emphasis> RDFs for a system
-    containing more than one particle species using a different approach.
+    containing more than one particle species using a different, more elaborate approach.
+  </para>
+
+  <para>
+    In the current program version, the <emphasis>Coordination Analysis</emphasis> modifier is restricted to the calculation of the instantaneous RDF for the current
+    simulation frame only. If you want to calculate the RDF averaged over all frames of a simulation trajectory, you also need to use OVITO's
+    scripting capabilities instead of the graphical user interface. See the <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.CoordinationNumberModifier">corresponding section</link> 
+    of the scripting manual for an example.
   </para>
 
   <simplesect>
-  <title>See also</title>
+    <title>See also</title>
     <para>
       <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.CoordinationNumberModifier"><classname>CoordinationNumberModifier</classname> (Python API)</link>
     </para>

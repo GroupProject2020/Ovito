@@ -13,18 +13,18 @@
   <para>
 
     <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/modifiers/expression_select_panel.png" format="PNG" />
+       <imagedata fileref="images/modifiers/expression_select_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
 
-  This modifier allows you to select particles based on a user-defined criterion.
-  You enter an Boolean expression, which is evaluated by the modifier for every particle
-  in the system. Those particles for which the expression yields a non-zero value ("<emphasis>true</emphasis>")
-  will be selected; all other particles, for which the expression evaluates to zero ("<emphasis>false</emphasis>"), are deselected. 
+    This modifier allows you to select particles based on a user-defined criterion by entering a Boolean expression, 
+    which is evaluated by the modifier for every particle in the system. 
+    Those particles for which the expression yields a non-zero value ("<emphasis>true</emphasis>")
+    will be selected; all other particles, for which the expression evaluates to zero ("<emphasis>false</emphasis>"), are deselected. 
   </para>
-
-  <para>The Boolean expression can contain references to particle properties and global quantities like the simulation cell size or animation timestep. 
+  <para>
+    The Boolean expression can contain references to particle properties and global quantities, e.g. the simulation cell size or the current timestep number. 
     Hence, the modifier can be used to select particles based on properties such as position,
-    type, energy etc., and any combination thereof. The list of available
+    type, energy, etc. and any combination thereof. The list of available
     input variables is displayed in the lower panel as shown in the screenshot.
   </para>
   <para>
@@ -32,16 +32,17 @@
     and several conditions can be combined using logical AND and OR operators (<literal>&amp;&amp;</literal> and <literal>||</literal>).
   </para>
   <para> 
-  Note that variable names and function names are case-sensitive.
+    Note that variable names and function names are case-sensitive.
   </para>
 
   <simplesect>
     <title>Expression syntax</title>
 
-    <para>The expression syntax supported by the modifier is very
-    similar to the one used by the C programming language. Arithmetic expressions can be created from
-    float literals, variables or functions using the following operators
-    in this order of precedence:
+    <para>
+      The expression syntax supported by the modifier is very
+      similar to the one used by the C programming language. Arithmetic expressions can be created from
+      float literals, variables or functions using the following operators
+      in this order of precedence:
     <informaltable>
     <tgroup cols="2">
     <thead>
@@ -283,17 +284,18 @@
   </simplesect>
 
   <simplesect>
-    <title>Examples</title>
+    <title>Usage examples</title>
 
-    <para>Here are two examples for Boolean expressions:</para>
+    <para>The first expression below will select all particles of numeric type 1 or 2, similar to what the <link linkend="particles.modifiers.select_particle_type">Select Type</link> modifier
+    would do. The second expression will select particles within a cylindrical space region of radius 10 around the coordinate origin:</para>
 
     <para><programlisting>ParticleType==1 || ParticleType==2
     
-sqrt(Position.X*Position.X + Position.Y*Position.Y) &lt; 10</programlisting></para>
+sqrt(Position.X*Position.X + Position.Y*Position.Y) &lt; 10.0</programlisting></para>
   </simplesect>
 
   <simplesect>
-  <title>See also</title>
+    <title>See also</title>
     <para>
       <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.ExpressionSelectionModifier"><classname>ExpressionSelectionModifier</classname> (Python API)</link>
     </para>

@@ -55,14 +55,22 @@
   <simplesect xml:id="usage.viewport_overlays">
     <title>Viewport overlays</title>
     <para>
-      To be written...
+      <link linkend="viewport_overlays">Viewport overlays</link> are a way to superimpose additional information 
+      such as text labels, a color legend, a coordinate tripod and other graphics on top of the three-dimensional scene. 
+      The program offers several different types of overlays, which can be added to individual viewports from the 
+      <link linkend="viewport_overlays"><guilabel>Overlays</guilabel></link> tab of the command panel.
     </para>
   </simplesect>
 
   <simplesect xml:id="usage.modifier_templates">
     <title>Modifier templates</title>
     <para>
-      To be written...
+      When working with OVITO on a regular basis, you may find yourself using the same modifiers again and again. 
+      Some modifiers are often used in the same combination to accomplish specific analysis, filter or visualization
+      tasks. To make your life easier and to safe you from repetitive work, OVITO allows you to define so-called <emphasis>modifier
+      templates</emphasis>. These are preconfigured modifiers or combinations of modifiers that can be inserted into
+      the data pipeline with just a single click. See <link linkend="modifier_templates">this section</link> to learn
+      more about this program feature.
     </para>
   </simplesect>
   

@@ -373,15 +373,15 @@ PYBIND11_PLUGIN(Particles)
 	;
 
 	py::class_<ParticleBondMap>(m, "BondsEnumerator",
-		"Utility class that enable efficient iteration over the bonds connected to specific particles. "
+		"Utility class that permits efficient iteration over the bonds connected to specific particles. "
 		"\n\n"
-    	"The constructor takes a :py:class:`Bonds` object as input, which contains an unordered list of all "
-    	"bonds in a system. The :py:class:`!BondsEnumerator` will build a lookup table for quick enumeration  "
+    	"The constructor takes a :py:class:`Bonds` object as input, which holds the unordered list of all "
+    	"bonds in a system. From this unordered list, the :py:class:`!BondsEnumerator` will build a lookup table for quick enumeration  "
 		"of bonds of particular particles. "
 		"\n\n"
-		"All bonds connected to a given particle can be visited using the :py:meth:`.bonds_of_particle` method. "
+		"All bonds connected to a given particle can be subsequently visited using the :py:meth:`.bonds_of_particle` method. "
 		"\n\n"
-		"Warning: Do not modify the :py:class:`Bonds` instance while using the :py:class:`!BondsEnumerator`. "
+		"Warning: Do not modify the underlying :py:class:`Bonds` list while using the :py:class:`!BondsEnumerator`. "
 		"Adding or deleting bonds would render the internal lookup table of the :py:class:`!BondsEnumerator` invalid. "
 		"\n\n"
 		"**Usage example**"
@@ -400,7 +400,7 @@ PYBIND11_PLUGIN(Particles)
 	;
 
 	ovito_class<ParticleType, ElementType>(m,
-			"Represents a particle or atom type. A :py:class:`!ParticleType` instance is always owned by a :py:class:`ParticleTypeProperty`. ")
+			"Represents a particle type or atom type. A :py:class:`!ParticleType` instance is always owned by a :py:class:`ParticleProperty`. ")
 		.def_property("id", &ParticleType::id, &ParticleType::setId,
 				"The identifier of the particle type.")
 		.def_property("color", &ParticleType::color, &ParticleType::setColor,
