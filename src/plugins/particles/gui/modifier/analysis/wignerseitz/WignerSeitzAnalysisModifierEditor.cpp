@@ -56,7 +56,9 @@ void WignerSeitzAnalysisModifierEditor::createUI(const RolloutInsertionParameter
 	
 	BooleanParameterUI* perTypeOccupancyUI = new BooleanParameterUI(this, PROPERTY_FIELD(WignerSeitzAnalysisModifier::perTypeOccupancy));
 	sublayout->addWidget(perTypeOccupancyUI->checkBox(), 0, 0);
-	perTypeOccupancyUI->checkBox()->setText(tr("Per-type occupancies"));
+
+	BooleanParameterUI* keepCurrentConfigUI = new BooleanParameterUI(this, PROPERTY_FIELD(WignerSeitzAnalysisModifier::keepCurrentConfig));
+	sublayout->addWidget(keepCurrentConfigUI->checkBox(), 1, 0);
 
 	QGroupBox* mappingGroupBox = new QGroupBox(tr("Affine mapping of simulation cell"));
 	layout->addWidget(mappingGroupBox);

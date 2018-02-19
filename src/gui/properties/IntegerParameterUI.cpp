@@ -107,7 +107,7 @@ void IntegerParameterUI::updateUI()
 ******************************************************************************/
 int IntegerParameterUI::minValue() const
 {
-	return (spinner() ? (int)spinner()->minValue() : std::numeric_limits<int>::min());
+	return (spinner() ? (int)spinner()->minValue() : std::numeric_limits<int>::lowest());
 }
 
 /******************************************************************************

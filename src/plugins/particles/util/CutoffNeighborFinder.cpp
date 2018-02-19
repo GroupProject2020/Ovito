@@ -280,7 +280,7 @@ void CutoffNeighborFinder::Query::next()
 					}
 					else if(_currentBin[k] < 0) {
 						int s = (_currentBin[k] - _builder.binDim[k] + 1) / _builder.binDim[k];
-						if(s < std::numeric_limits<int8_t>::min())
+						if(s < std::numeric_limits<int8_t>::lowest())
 							throw Exception(QString("Periodic simulation cell is too small or cutoff radius is too large to generate neighbor lists."));
 						_pbcShift[k] = (int8_t)s;
 						_currentBin[k] -= s * _builder.binDim[k];

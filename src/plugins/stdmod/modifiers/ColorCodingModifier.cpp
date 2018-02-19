@@ -207,11 +207,11 @@ bool ColorCodingModifier::determinePropertyValueRange(const PipelineFlowState& s
 		return false;
 
 	// Clamp to finite range.
-	if(!std::isfinite(minValue)) minValue = std::numeric_limits<FloatType>::min();
+	if(!std::isfinite(minValue)) minValue = std::numeric_limits<FloatType>::lowest();
 	if(!std::isfinite(maxValue)) maxValue = std::numeric_limits<FloatType>::max();
 
 	if(minValue < min) min = minValue;
-	if(maxValue > min) max = maxValue;
+	if(maxValue > max) max = maxValue;
 
 	return true;
 }
@@ -224,7 +224,7 @@ bool ColorCodingModifier::determinePropertyValueRange(const PipelineFlowState& s
 bool ColorCodingModifier::adjustRange()
 {
 	FloatType minValue = std::numeric_limits<FloatType>::max();
-	FloatType maxValue = std::numeric_limits<FloatType>::min();
+	FloatType maxValue = std::numeric_limits<FloatType>::lowest();
 	
 	// Loop over all input data.
 	bool success = false;
@@ -259,7 +259,7 @@ bool ColorCodingModifier::adjustRangeGlobal(TaskManager& taskManager)
 	task.setProgressMaximum(interval.duration() / dataset()->animationSettings()->ticksPerFrame() + 1);
 
 	FloatType minValue = std::numeric_limits<FloatType>::max();
-	FloatType maxValue = std::numeric_limits<FloatType>::min();
+	FloatType maxValue = std::numeric_limits<FloatType>::lowest();
 
 	// Loop over all animation frames, evaluate data pipeline, and determine
 	// minimum and maximum values.
@@ -283,7 +283,7 @@ bool ColorCodingModifier::adjustRangeGlobal(TaskManager& taskManager)
 		// Adjust range of color coding to the min/max values.
 		if(startValueController() && minValue != std::numeric_limits<FloatType>::max())
 			startValueController()->setCurrentFloatValue(minValue);
-		if(endValueController() && maxValue != std::numeric_limits<FloatType>::min())
+		if(endValueController() && maxValue != std::numeric_limits<FloatType>::lowest())
 			endValueController()->setCurrentFloatValue(maxValue);
 
 		return true;
@@ -364,7 +364,7 @@ PipelineStatus ColorCodingModifierDelegate::apply(Modifier* modifier, const Pipe
 	if(mod->endValueController()) endValue = mod->endValueController()->getFloatValue(time, output.mutableStateValidity());
 
 	// Clamp to finite range.
-	if(!std::isfinite(startValue)) startValue = std::numeric_limits<FloatType>::min();
+	if(!std::isfinite(startValue)) startValue = std::numeric_limits<FloatType>::lowest();
 	if(!std::isfinite(endValue)) endValue = std::numeric_limits<FloatType>::max();
 
 	// Get the particle selection property if enabled by the user.

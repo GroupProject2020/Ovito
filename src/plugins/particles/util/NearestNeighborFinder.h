@@ -125,8 +125,8 @@ public:
 	}
 
 	/// Returns the index of the particle closest to the given point.
-	int findClosestParticle(const Point3& query_point, FloatType& closestDistanceSq, bool includeSelf = true) const {
-		int closestIndex = -1;
+	size_t findClosestParticle(const Point3& query_point, FloatType& closestDistanceSq, bool includeSelf = true) const {
+		size_t closestIndex = std::numeric_limits<size_t>::max();
 		closestDistanceSq = FLOATTYPE_MAX;
 		auto visitor = [&closestIndex, &closestDistanceSq](const Neighbor& n, FloatType& mrs) {
 			if(n.distanceSq < closestDistanceSq) {

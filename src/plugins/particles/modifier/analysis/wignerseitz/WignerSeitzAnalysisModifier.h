@@ -83,6 +83,12 @@ private:
 		/// Replaces the property storage for the computed occupancies.
 		void setOccupancyNumbers(PropertyPtr prop) { _occupancyNumbers = std::move(prop); }		
 
+		/// Returns the property storage that contains the type of site each atom has been assigned to.
+		const PropertyPtr& siteTypes() const { return _siteTypes; }
+
+		/// Replaces the property storage for the type of site each atom has been assigned to.
+		void setSiteTypes(PropertyPtr prop) { _siteTypes = std::move(prop); }		
+
 		/// Returns the reference state.
 		const PipelineFlowState& referenceState() const { return _referenceState; }
 		
@@ -90,6 +96,7 @@ private:
 
 		const PipelineFlowState _referenceState;
 		PropertyPtr _occupancyNumbers;
+		PropertyPtr _siteTypes;
 		size_t _vacancyCount = 0;
 		size_t _interstitialCount = 0;
 	};
@@ -102,10 +109,12 @@ private:
 		/// Constructor.
 		WignerSeitzAnalysisEngine(std::shared_ptr<WignerSeitzAnalysisResults> results, ConstPropertyPtr positions, const SimulationCell& simCell,
 				ConstPropertyPtr refPositions, const SimulationCell& simCellRef, AffineMappingType affineMapping,
-				ConstPropertyPtr typeProperty, int ptypeMinId, int ptypeMaxId) :
+				ConstPropertyPtr typeProperty, int ptypeMinId, int ptypeMaxId, ConstPropertyPtr referenceTypeProperty) :
 			RefConfigEngineBase(std::move(positions), simCell, std::move(refPositions), simCellRef,
 				nullptr, nullptr, affineMapping, false),
-			_typeProperty(std::move(typeProperty)), _ptypeMinId(ptypeMinId), _ptypeMaxId(ptypeMaxId),
+			_typeProperty(std::move(typeProperty)), 
+			_ptypeMinId(ptypeMinId), _ptypeMaxId(ptypeMaxId),
+			_referenceTypeProperty(referenceTypeProperty),
 			_results(std::move(results)) {}
 
 		/// Computes the modifier's results.
@@ -117,6 +126,7 @@ private:
 	private:
 
 		const ConstPropertyPtr _typeProperty;
+		const ConstPropertyPtr _referenceTypeProperty;
 		int _ptypeMinId;
 		int _ptypeMaxId;
 		std::shared_ptr<WignerSeitzAnalysisResults> _results;
@@ -124,6 +134,9 @@ private:
 
 	/// Enable per-type occupancy numbers.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, perTypeOccupancy, setPerTypeOccupancy, PROPERTY_FIELD_MEMORIZE)
+
+	/// Enable output of displaced atomic configuration.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, keepCurrentConfig, setKeepCurrentConfig, PROPERTY_FIELD_MEMORIZE)
 };
 
 OVITO_END_INLINE_NAMESPACE

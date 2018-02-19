@@ -4,10 +4,10 @@ from ovito.modifiers import *
 import numpy as np
 import os
 
-node = import_file("../../files/NetCDF/sheared_aSi.nc")
+pipeline = import_file("../../files/NetCDF/sheared_aSi.nc")
 
 modifier = WignerSeitzAnalysisModifier()
-node.modifiers.append(modifier)
+pipeline.modifiers.append(modifier)
 modifier.reference.load("../../files/NetCDF/sheared_aSi.nc")
 
 ovito.dataset.anim.current_frame = 4
@@ -29,23 +29,25 @@ modifier.use_frame_offset = False
 print("  per_type_occupancies: {}".format(modifier.per_type_occupancies))
 modifier.per_type_occupancies = False
 
-node.compute()
+print("  keep_current_config: {}".format(modifier.keep_current_config))
+modifier.keep_current_config = False
+
+data = pipeline.compute()
 
 print("Output:")
-print("  vacancy_count= {}".format(node.output.attributes['WignerSeitz.vacancy_count']))
-print("  interstitial_count= {}".format(node.output.attributes['WignerSeitz.interstitial_count']))
-print(node.output.particle_properties["Occupancy"].array)
+print("  vacancy_count= {}".format(data.attributes['WignerSeitz.vacancy_count']))
+print("  interstitial_count= {}".format(data.attributes['WignerSeitz.interstitial_count']))
+print(data.particle_properties["Occupancy"].array)
 
-assert(node.output.attributes['WignerSeitz.vacancy_count'] == 970)
+assert(data.attributes['WignerSeitz.vacancy_count'] == 970)
 
-node.source.load('../../files/CFG/shear.void.120.cfg')
-print(len(node.source.particle_properties.particle_type.type_list))
+pipeline.source.load('../../files/CFG/shear.void.120.cfg')
+print(len(pipeline.source.particle_properties['Particle Type'].types))
 modifier.per_type_occupancies = True
-node.compute()
-print("number_of_particles: %i" % node.output.number_of_particles)
-print("occupancy.shape=%s" % str(node.output.particle_properties["Occupancy"].array.shape))
-#assert(node.output["Occupancy"].array.shape == (node.output.number_of_particles, 3))
-print(node.output.particle_properties["Occupancy"].array)
+data = pipeline.compute()
+print("number_of_particles: %i" % data.number_of_particles)
+print("occupancy.shape=%s" % str(data.particle_properties["Occupancy"].shape))
+print(data.particle_properties["Occupancy"][...])
 
-export_file(node, "_output.dump", "lammps/dump", columns = [ "Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z", "Occupancy","Occupancy.1"])
+export_file(pipeline, "_output.dump", "lammps/dump", columns = [ "Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z", "Occupancy","Occupancy.1"])
 os.remove("_output.dump")

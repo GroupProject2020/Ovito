@@ -32,13 +32,16 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 
 IMPLEMENT_OVITO_CLASS(WignerSeitzAnalysisModifier);
 DEFINE_PROPERTY_FIELD(WignerSeitzAnalysisModifier, perTypeOccupancy);
-SET_PROPERTY_FIELD_LABEL(WignerSeitzAnalysisModifier, perTypeOccupancy, "Output per-type occupancies");
+DEFINE_PROPERTY_FIELD(WignerSeitzAnalysisModifier, keepCurrentConfig);
+SET_PROPERTY_FIELD_LABEL(WignerSeitzAnalysisModifier, perTypeOccupancy, "Compute per-type occupancies");
+SET_PROPERTY_FIELD_LABEL(WignerSeitzAnalysisModifier, keepCurrentConfig, "Keep current configuration");
 
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
 WignerSeitzAnalysisModifier::WignerSeitzAnalysisModifier(DataSet* dataset) : ReferenceConfigurationModifier(dataset),
-	_perTypeOccupancy(false)
+	_perTypeOccupancy(false), 
+	_keepCurrentConfig(false)
 {
 }
 
@@ -49,10 +52,10 @@ Future<AsynchronousModifier::ComputeEnginePtr> WignerSeitzAnalysisModifier::crea
 {
 	ParticleInputHelper pih(dataset(), input);
 
-	// Get the current positions.
+	// Get the current particle positions.
 	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
 
-	// Get the reference position property.
+	// Get the reference particle position.
 	ParticleProperty* refPosProperty = ParticleProperty::findInState(referenceState, ParticleProperty::PositionProperty);
 	if(!refPosProperty)
 		throwException(tr("Reference configuration does not contain particle positions."));
@@ -63,21 +66,21 @@ Future<AsynchronousModifier::ComputeEnginePtr> WignerSeitzAnalysisModifier::crea
 	if(!refCell)
 		throwException(tr("Reference configuration does not contain simulation cell info."));
 
-	// Check simulation cell(s).
+	// Validate simulation cells.
 	if(inputCell->is2D())
 		throwException(tr("Wigner-Seitz analysis is not supported for 2d systems."));
 	if(inputCell->volume3D() < FLOATTYPE_EPSILON)
-		throwException(tr("Simulation cell is degenerate in the deformed configuration."));
+		throwException(tr("Simulation cell is degenerate in the current configuration."));
 	if(refCell->volume3D() < FLOATTYPE_EPSILON)
 		throwException(tr("Simulation cell is degenerate in the reference configuration."));
 
-	// Get the particle types.
+	// Get the particle types of the current configuration.
 	ConstPropertyPtr typeProperty;
 	int ptypeMinId = std::numeric_limits<int>::max();
 	int ptypeMaxId = std::numeric_limits<int>::lowest();
 	if(perTypeOccupancy()) {
 		ParticleProperty* ptypeProp = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::TypeProperty);
-		// Determine range of particle type IDs.
+		// Determine value range of particle type IDs.
 		for(ElementType* pt : ptypeProp->elementTypes()) {
 			if(pt->id() < ptypeMinId) ptypeMinId = pt->id();
 			if(pt->id() > ptypeMaxId) ptypeMaxId = pt->id();
@@ -89,11 +92,23 @@ Future<AsynchronousModifier::ComputeEnginePtr> WignerSeitzAnalysisModifier::crea
 	// We are going to need the reference state in the apply() method.
 	auto resultStorage = std::make_shared<WignerSeitzAnalysisResults>(validityInterval, referenceState);
 
-	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	auto engine = std::make_shared<WignerSeitzAnalysisEngine>(resultStorage, posProperty->storage(), inputCell->data(),
-			refPosProperty->storage(), refCell->data(), affineMapping(), std::move(typeProperty), ptypeMinId, ptypeMaxId);
+	// If output of the displaced configuration is requested, obtain types of the reference sites.
+	ConstPropertyPtr referenceTypeProperty;
+	if(keepCurrentConfig()) {
+		if(ParticleProperty* prop =  ParticleProperty::findInState(referenceState, ParticleProperty::TypeProperty))
+			referenceTypeProperty = prop->storage();
+		
+		// Create output property:
+		resultStorage->setSiteTypes(std::make_shared<PropertyStorage>(posProperty->size(), PropertyStorage::Int, 1, 0, tr("Site Type"), false));
+	}
 
-	// Make sure the results storage, and with it the reference state, stay alive until we are back in the main thread.
+	// Create compute engine instance. Pass all relevant modifier parameters and the input data to the engine.
+	auto engine = std::make_shared<WignerSeitzAnalysisEngine>(resultStorage, posProperty->storage(), inputCell->data(),
+			refPosProperty->storage(), refCell->data(), affineMapping(), std::move(typeProperty), ptypeMinId, ptypeMaxId,
+			std::move(referenceTypeProperty));
+
+	// This is to ensure that the results storage, and with it the reference state, stay alive and do not get 
+	// released before the compute engine finishes and control has returned to the main thread.
 	engine->finally(dataset()->executor(), [resultStorage = std::move(resultStorage)]() {});
 
 	return engine;
@@ -107,11 +122,11 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 	setProgressText(tr("Performing Wigner-Seitz cell analysis"));
 
 	if(affineMapping() == TO_CURRENT_CELL)
-		throw Exception(tr("Mapping coordinates to the current cell is not supported by the W-S analysis routine."));
+		throw Exception(tr("Remapping coordinates to the current cell is not supported by the Wigner-Seitz analysis routine. Only remapping to the reference cell or no mapping at all are supported options."));
 
 	size_t particleCount = positions()->size();
 	if(refPositions()->size() == 0)
-		throw Exception(tr("Reference configuration for WS analysis contains no sites."));
+		throw Exception(tr("Reference configuration for Wigner-Seitz analysis contains no atomic sites."));
 
 	// Prepare the closest-point query structure.
 	NearestNeighborFinder neighborTree(0);
@@ -132,59 +147,87 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 		ncomponents = typemax - typemin + 1;
 	}
 
+	AffineTransformation tm;
+	if(affineMapping() == TO_REFERENCE_CELL)
+		tm = refCell().matrix() * cell().inverseMatrix();
+
+	// Create array for atomic counting.
+	size_t arraySize = refPositions()->size() * ncomponents;
+	std::vector<std::atomic_int> occupancyArray(arraySize);
+	for(auto& o : occupancyArray)
+		o.store(0, std::memory_order_relaxed);
+
+	// Allocate atoms -> sites lookup map if needed.
+	std::vector<size_t> atomsToSites;
+	if(_results->siteTypes()) {
+		atomsToSites.resize(positions()->size());
+	}
+
+	// Assign particles to reference sites.
+	if(ncomponents == 1) {
+		// Without per-type occupancies:
+		parallelFor(positions()->size(), *this, [this, &neighborTree, tm, &occupancyArray, &atomsToSites](size_t index) {
+			const Point3& p = positions()->getPoint3(index);
+			FloatType closestDistanceSq;
+			size_t closestIndex = neighborTree.findClosestParticle((affineMapping() == TO_REFERENCE_CELL) ? (tm * p) : p, closestDistanceSq);
+			OVITO_ASSERT(closestIndex < occupancyArray.size());
+			occupancyArray[closestIndex].fetch_add(1, std::memory_order_relaxed);
+			if(!atomsToSites.empty())
+				atomsToSites[index] = closestIndex;
+		});
+	}
+	else {
+		// With per-type occupancies:
+		parallelFor(positions()->size(), *this, [this, &neighborTree, typemin, ncomponents, tm, &occupancyArray, &atomsToSites](size_t index) {
+			const Point3& p = positions()->getPoint3(index);
+			FloatType closestDistanceSq;
+			size_t closestIndex = neighborTree.findClosestParticle((affineMapping() == TO_REFERENCE_CELL) ? (tm * p) : p, closestDistanceSq);
+			int offset = particleTypes()->getInt(index) - typemin;
+			OVITO_ASSERT(closestIndex * ncomponents + offset < occupancyArray.size());
+			occupancyArray[closestIndex * ncomponents + offset].fetch_add(1, std::memory_order_relaxed);
+			if(!atomsToSites.empty())
+				atomsToSites[index] = closestIndex;
+		});
+	}
+	if(isCanceled()) return;
+	
 	// Create output storage.
-	_results->setOccupancyNumbers(std::make_shared<PropertyStorage>(refPositions()->size(), PropertyStorage::Int, ncomponents, 0, tr("Occupancy"), true));
+	_results->setOccupancyNumbers(std::make_shared<PropertyStorage>(
+		_results->siteTypes() ? positions()->size() : refPositions()->size(), 
+		PropertyStorage::Int, ncomponents, 0, tr("Occupancy"), false));
 	if(ncomponents > 1 && typemin != 1) {
 		QStringList componentNames;
 		for(int i = typemin; i <= typemax; i++)
 			componentNames.push_back(QString::number(i));
 		_results->occupancyNumbers()->setComponentNames(componentNames);
 	}
-
-	AffineTransformation tm;
-	if(affineMapping() == TO_REFERENCE_CELL)
-		tm = refCell().matrix() * cell().inverseMatrix();
-
-	// Create array for atomic counting.
-	size_t arraySize = _results->occupancyNumbers()->size() * _results->occupancyNumbers()->componentCount();
-	std::vector<std::atomic_int> occupancyArray(arraySize);
-	for(auto& o : occupancyArray)
-		o.store(0, std::memory_order_relaxed);
-
-	// Assign particles to reference sites.
-	if(ncomponents == 1) {
-		parallelFor(positions()->size(), *this, [this, &neighborTree, tm, &occupancyArray](size_t index) {
-			const Point3& p = positions()->getPoint3(index);
-			FloatType closestDistanceSq;
-			int closestIndex = neighborTree.findClosestParticle((affineMapping() == TO_REFERENCE_CELL) ? (tm * p) : p, closestDistanceSq);
-			OVITO_ASSERT(closestIndex >= 0 && closestIndex < _results->occupancyNumbers()->size());
-			occupancyArray[closestIndex].fetch_add(1, std::memory_order_relaxed);
-		});
-	}
-	else {
-		parallelFor(positions()->size(), *this, [this, &neighborTree, typemin, ncomponents, tm, &occupancyArray](size_t index) {
-			const Point3& p = positions()->getPoint3(index);
-			FloatType closestDistanceSq;
-			int closestIndex = neighborTree.findClosestParticle((affineMapping() == TO_REFERENCE_CELL) ? (tm * p) : p, closestDistanceSq);
-			OVITO_ASSERT(closestIndex >= 0 && closestIndex < _results->occupancyNumbers()->size());
-			int offset = particleTypes()->getInt(index) - typemin;
-			OVITO_ASSERT(offset >= 0 && offset < _results->occupancyNumbers()->componentCount());
-			occupancyArray[closestIndex * ncomponents + offset].fetch_add(1, std::memory_order_relaxed);
-		});
-	}
 	
 	// Copy data from atomic array to output buffer.
-	std::copy(occupancyArray.begin(), occupancyArray.end(), _results->occupancyNumbers()->dataInt());
+	if(!_results->siteTypes()) {
+		std::copy(occupancyArray.begin(), occupancyArray.end(), _results->occupancyNumbers()->dataInt());
+	}
+	else {
+		// Map occupancy numbers from sites to atoms.
+		int* occ = _results->occupancyNumbers()->dataInt();
+		int* st = _results->siteTypes()->dataInt();
+		for(size_t siteIndex : atomsToSites) {
+			for(int j = 0; j < ncomponents; j++) {
+				*occ++ = occupancyArray[siteIndex * ncomponents + j];
+			}
+			*st++ = _referenceTypeProperty ? _referenceTypeProperty->getInt(siteIndex) : 0;
+		}
+		OVITO_ASSERT(occ == _results->occupancyNumbers()->dataInt() + _results->occupancyNumbers()->size() * _results->occupancyNumbers()->componentCount());
+	}
 
 	// Count defects.
 	if(ncomponents == 1) {
-		for(int oc : _results->occupancyNumbers()->constIntRange()) {
+		for(int oc : occupancyArray) {
 			if(oc == 0) _results->incrementVacancyCount();
 			else if(oc > 1) _results->incrementInterstitialCount(oc - 1);
 		}
 	}
 	else {
-		const int* o = _results->occupancyNumbers()->constDataInt();
+		auto o = occupancyArray.cbegin();
 		for(size_t i = 0; i < refPositions()->size(); i++) {
 			int oc = 0;
 			for(int j = 0; j < ncomponents; j++) {
@@ -204,22 +247,36 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 ******************************************************************************/
 PipelineFlowState WignerSeitzAnalysisModifier::WignerSeitzAnalysisResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	// Replace pipeline contents with reference configuration.
-	PipelineFlowState output = referenceState();
-	output.setStateValidity(input.stateValidity());
-	output.attributes() = input.attributes();
+	PipelineFlowState output;
+	if(!siteTypes()) {
+		// Replace complete pipeline state with the reference configuration (except global attributes).
+		output = referenceState();
+		output.setStateValidity(input.stateValidity());
+		output.attributes() = input.attributes();
+	}
+	else {
+		// Keep current particle configuration.
+		output = input;
+	}
 
-	ParticleOutputHelper poh(modApp->dataset(), output);	
+	ParticleOutputHelper poh(modApp->dataset(), output);
 
 	if(occupancyNumbers()->size() != poh.outputParticleCount())
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
 
 	ParticleProperty* posProperty = ParticleProperty::findInState(output, ParticleProperty::PositionProperty);
 	if(!posProperty)
-		modApp->throwException(tr("This modifier cannot be evaluated, because the reference configuration does not contain any particles."));		
+		modApp->throwException(tr("This modifier cannot be evaluated, because the reference configuration does not contain any particles."));
 	OVITO_ASSERT(poh.outputParticleCount() == posProperty->size());
 
 	poh.outputProperty<ParticleProperty>(occupancyNumbers());
+	if(siteTypes()) {
+		PropertyObject* outProp = poh.outputProperty<ParticleProperty>(siteTypes());
+		// Transfer particle type list from reference type property to output site type property.
+		if(ParticleProperty* inProp =  ParticleProperty::findInState(referenceState(), ParticleProperty::TypeProperty)) {
+			outProp->setElementTypes(inProp->elementTypes());
+		}
+	}
 
 	output.attributes().insert(QStringLiteral("WignerSeitz.vacancy_count"), QVariant::fromValue(vacancyCount()));
 	output.attributes().insert(QStringLiteral("WignerSeitz.interstitial_count"), QVariant::fromValue(interstitialCount()));
