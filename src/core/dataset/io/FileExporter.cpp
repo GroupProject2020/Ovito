@@ -39,6 +39,7 @@ DEFINE_PROPERTY_FIELD(FileExporter, wildcardFilename);
 DEFINE_PROPERTY_FIELD(FileExporter, startFrame);
 DEFINE_PROPERTY_FIELD(FileExporter, endFrame);
 DEFINE_PROPERTY_FIELD(FileExporter, everyNthFrame);
+DEFINE_PROPERTY_FIELD(FileExporter, floatOutputPrecision);
 SET_PROPERTY_FIELD_LABEL(FileExporter, outputFilename, "Output filename");
 SET_PROPERTY_FIELD_LABEL(FileExporter, exportAnimation, "Export animation");
 SET_PROPERTY_FIELD_LABEL(FileExporter, useWildcardFilename, "Use wildcard filename");
@@ -46,6 +47,8 @@ SET_PROPERTY_FIELD_LABEL(FileExporter, wildcardFilename, "Wildcard filename");
 SET_PROPERTY_FIELD_LABEL(FileExporter, startFrame, "Start frame");
 SET_PROPERTY_FIELD_LABEL(FileExporter, endFrame, "End frame");
 SET_PROPERTY_FIELD_LABEL(FileExporter, everyNthFrame, "Every Nth frame");
+SET_PROPERTY_FIELD_LABEL(FileExporter, floatOutputPrecision, "Output precision");
+SET_PROPERTY_FIELD_UNITS_AND_RANGE(FileExporter, floatOutputPrecision, IntegerParameterUnit, 1, std::numeric_limits<FloatType>::max_digits10);
 
 /******************************************************************************
 * Constructs a new instance of the class.
@@ -55,7 +58,8 @@ FileExporter::FileExporter(DataSet* dataset) : RefTarget(dataset),
 	_useWildcardFilename(false), 
 	_startFrame(0), 
 	_endFrame(-1),
-	_everyNthFrame(1)
+	_everyNthFrame(1),
+	_floatOutputPrecision(10)
 {
 	// Use the entire animation interval as default export interval.
 	setStartFrame(0);

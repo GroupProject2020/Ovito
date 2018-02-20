@@ -85,6 +85,11 @@ def export_file(data, file, format, **params):
         
             for i in range(pipeline.source.num_frames):
                 export_file(pipeline, "output.%i.dump" % i, "lammps/dump", frame=i)
+
+        **Floating-point formatting precision**
+
+        For text-based file formats, you can set the desired formatting precision for floating-point numbers using the
+        ``precision`` keyword parameter. The default output precision is 10 digits, the maximum is 17.
        
         **LAMMPS atom style**
         
@@ -100,7 +105,7 @@ def export_file(data, file, format, **params):
         
         The *txt* file format allows you to export global quantities computed by the data pipeline to a text file. 
         For example, to write out the number of FCC atoms identified by a :py:class:`~ovito.modifiers.CommonNeighborAnalysisModifier`
-        as a function of simulation time, one would do the following::
+        as a function of simulation time, one would use the following::
         
             export_file(pipeline, "data.txt", "txt", 
                 columns=["Timestep", "CommonNeighborAnalysis.counts.FCC"], 

@@ -114,7 +114,7 @@ FileExporterSettingsDialog::FileExporterSettingsDialog(MainWindow* mainWindow, F
 	fileGroupLayout->addWidget(radioBtn, 0, 0, 1, 2);
 	radioBtn->setChecked(!_exporter->useWildcardFilename());
 
-	radioBtn = new QRadioButton(tr("Multiple files (wild-card pattern):"));
+	radioBtn = new QRadioButton(tr("File series (wild-card pattern):"));
 	_fileGroupButtonGroup->addButton(radioBtn, 1);
 	fileGroupLayout->addWidget(radioBtn, 1, 0, 1, 2);
 	radioBtn->setChecked(_exporter->useWildcardFilename());

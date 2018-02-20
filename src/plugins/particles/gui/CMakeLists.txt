@@ -64,6 +64,7 @@ SET(SourceFiles
 	import/xyz/XYZImporterEditor.cpp
 	export/FileColumnParticleExporterEditor.cpp
 	export/lammps/LAMMPSDataExporterEditor.cpp
+	export/lammps/LAMMPSDumpExporterEditor.cpp
 	export/xyz/XYZExporterEditor.cpp
 )
 

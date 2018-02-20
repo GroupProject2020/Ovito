@@ -105,6 +105,7 @@ bool ParticleExporter::openOutputFile(const QString& filePath, int numberOfFrame
 
 	_outputFile.setFileName(filePath);
 	_outputStream.reset(new CompressedTextWriter(_outputFile, dataset()));
+	_outputStream->setFloatPrecision(floatOutputPrecision());
 
 	return true;
 }

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,43 +20,32 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/particles/export/xyz/XYZExporter.h>
-#include <gui/properties/VariantComboBoxParameterUI.h>
+#include <plugins/particles/export/lammps/LAMMPSDumpExporter.h>
 #include <gui/properties/IntegerParameterUI.h>
-#include "XYZExporterEditor.h"
+#include "LAMMPSDumpExporterEditor.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVITO_BEGIN_INLINE_NAMESPACE(Formats) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_CLASS(XYZExporterEditor);
-SET_OVITO_OBJECT_EDITOR(XYZExporter, XYZExporterEditor);
+IMPLEMENT_OVITO_CLASS(LAMMPSDumpExporterEditor);
+SET_OVITO_OBJECT_EDITOR(LAMMPSDumpExporter, LAMMPSDumpExporterEditor);
 
 /******************************************************************************
 * Sets up the UI widgets of the editor.
 ******************************************************************************/
-void XYZExporterEditor::createUI(const RolloutInsertionParameters& rolloutParams)
+void LAMMPSDumpExporterEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create a rollout.
-	QWidget* rollout = createRollout(tr("XYZ File"), rolloutParams);
+	QWidget* rollout = createRollout(tr("LAMMPS Dump File"), rolloutParams);
 
     // Create the rollout contents.
 	QGridLayout* layout = new QGridLayout(rollout);
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(4);
-	layout->setColumnStretch(1,1);
-	layout->setColumnStretch(4,1);
-	layout->setColumnMinimumWidth(2,10);
-	layout->addWidget(new QLabel(tr("XYZ format style:")), 0, 0);
-
-	VariantComboBoxParameterUI* subFormatUI = new VariantComboBoxParameterUI(this, PROPERTY_FIELD(XYZExporter::subFormat));
-	subFormatUI->comboBox()->addItem("Extended (default)", QVariant::fromValue(XYZExporter::ExtendedFormat));
-	subFormatUI->comboBox()->addItem("Parcas", QVariant::fromValue(XYZExporter::ParcasFormat));
-	layout->addWidget(subFormatUI->comboBox(), 0, 1);
+	layout->setColumnStretch(2,1);
 
 	IntegerParameterUI* precisionUI = new IntegerParameterUI(this, PROPERTY_FIELD(FileExporter::floatOutputPrecision));
-	layout->addWidget(precisionUI->label(), 0, 3);
-	layout->addLayout(precisionUI->createFieldLayout(), 0, 4);
-
-	FileColumnParticleExporterEditor::createUI(rolloutParams.before(rollout));
+	layout->addWidget(precisionUI->label(), 0, 0);
+	layout->addLayout(precisionUI->createFieldLayout(), 0, 1);	
 }
 
 OVITO_END_INLINE_NAMESPACE

@@ -29,7 +29,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVI
 
 IMPLEMENT_OVITO_CLASS(XYZExporter);	
 DEFINE_PROPERTY_FIELD(XYZExporter, subFormat);
-SET_PROPERTY_FIELD_LABEL(XYZExporter, subFormat, "Format style");
+SET_PROPERTY_FIELD_LABEL(XYZExporter, subFormat, "XYZ format style");
 
 /******************************************************************************
 * Writes the particles of one animation frame to the current output file.
@@ -43,7 +43,7 @@ bool XYZExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 
 	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
 	exportTask.setProgressText(tr("Writing file %1").arg(filePath));
-	
+
 	// Get particle positions.
 	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
 
@@ -73,12 +73,10 @@ bool XYZExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 			const AffineTransformation& simCell = simulationCell->cellMatrix();
 			// Save cell information in extended XYZ format:
 			// see http://jrkermode.co.uk/quippy/io.html#extendedxyz for details
-			QString latticeStr;
-			latticeStr = latticeStr.sprintf("Lattice=\"%16.8f %16.8f %16.8f %16.8f %16.8f %16.8f %16.8f %16.8f %16.8f\" ",
-							simCell.column(0).x(), simCell.column(0).y(), simCell.column(0).z(),
-							simCell.column(1).x(), simCell.column(1).y(), simCell.column(1).z(),
-							simCell.column(2).x(), simCell.column(2).y(), simCell.column(2).z());
-			textStream() << latticeStr;
+			textStream() << QStringLiteral("Lattice=\"");
+			textStream() << simCell.column(0).x() << " " << simCell.column(0).y() << " " << simCell.column(0).z() << " ";
+			textStream() << simCell.column(1).x() << " " << simCell.column(1).y() << " " << simCell.column(1).z() << " ";
+			textStream() << simCell.column(2).x() << " " << simCell.column(2).y() << " " << simCell.column(2).z() << "\" ";
 		}
 		// Save column information in extended XYZ format:
 		// see http://jrkermode.co.uk/quippy/io.html#extendedxyz for details

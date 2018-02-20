@@ -59,6 +59,7 @@ void defineIOSubmodule(py::module m)
 		.def_property("start_frame", &FileExporter::startFrame, &FileExporter::setStartFrame)
 		.def_property("end_frame", &FileExporter::endFrame, &FileExporter::setEndFrame)
 		.def_property("every_nth_frame", &FileExporter::everyNthFrame, &FileExporter::setEveryNthFrame)
+		.def_property("precision", &FileExporter::floatOutputPrecision, &FileExporter::setFloatOutputPrecision)
 		
 		// These are required by implementation of export_file():
 		.def("set_pipeline", [](FileExporter& exporter, SceneNode* node) { exporter.setOutputData({ node }); })

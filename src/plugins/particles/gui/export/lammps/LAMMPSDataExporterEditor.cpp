@@ -23,6 +23,7 @@
 #include <plugins/particles/export/lammps/LAMMPSDataExporter.h>
 #include <plugins/particles/import/lammps/LAMMPSDataImporter.h>
 #include <gui/properties/VariantComboBoxParameterUI.h>
+#include <gui/properties/IntegerParameterUI.h>
 #include "LAMMPSDataExporterEditor.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVITO_BEGIN_INLINE_NAMESPACE(Formats) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -43,6 +44,8 @@ void LAMMPSDataExporterEditor::createUI(const RolloutInsertionParameters& rollou
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(4);
 	layout->setColumnStretch(1,1);
+	layout->setColumnStretch(4,1);
+	layout->setColumnMinimumWidth(2,10);
 	layout->addWidget(new QLabel(tr("LAMMPS atom style:")), 0, 0);
 
 	VariantComboBoxParameterUI* atomStyleUI = new VariantComboBoxParameterUI(this, PROPERTY_FIELD(LAMMPSDataExporter::atomStyle));
@@ -55,6 +58,10 @@ void LAMMPSDataExporterEditor::createUI(const RolloutInsertionParameters& rollou
 	atomStyleUI->comboBox()->addItem("molecular", QVariant::fromValue(LAMMPSDataImporter::AtomStyle_Molecular));
 	atomStyleUI->comboBox()->addItem("sphere", QVariant::fromValue(LAMMPSDataImporter::AtomStyle_Sphere));
 	layout->addWidget(atomStyleUI->comboBox(), 0, 1);
+
+	IntegerParameterUI* precisionUI = new IntegerParameterUI(this, PROPERTY_FIELD(FileExporter::floatOutputPrecision));
+	layout->addWidget(precisionUI->label(), 0, 3);
+	layout->addLayout(precisionUI->createFieldLayout(), 0, 4);	
 }
 
 OVITO_END_INLINE_NAMESPACE

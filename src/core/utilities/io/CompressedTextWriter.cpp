@@ -143,7 +143,7 @@ CompressedTextWriter& CompressedTextWriter::operator<<(size_t i)
 ******************************************************************************/
 CompressedTextWriter& CompressedTextWriter::operator<<(FloatType f)
 {
-	char buffer[32];
+	char buffer[std::numeric_limits<FloatType>::max_digits10 + 8];
 	char *s = buffer;
 
 	// Workaround for Boost bug #5983 (https://svn.boost.org/trac/boost/ticket/5983)
@@ -155,19 +155,19 @@ CompressedTextWriter& CompressedTextWriter::operator<<(FloatType f)
 
 		// Define Boost Karma generator to control floating-point to string conversion.
 		struct floattype_format_policy : karma::real_policies<FloatType> {
-		    static unsigned int precision(FloatType n) { return 10; }
+			floattype_format_policy(unsigned int precision) : _precision(precision) {}
+		    unsigned int precision(FloatType n) const { return _precision; }
+			unsigned int _precision;
 		};
-		static const karma::real_generator<FloatType, floattype_format_policy> floattype_generator;
-
-		karma::generate(s, floattype_generator, f);
+		karma::generate(s, karma::real_generator<FloatType, floattype_format_policy>(_floatPrecision), f);
 	}
 	else {
 		// Use sprintf() to handle denormalized floating point numbers.
 #if !defined(Q_CC_MSVC) || _MSC_VER >= 1900
-		s += std::snprintf(buffer, sizeof(buffer), "%g", f);
+		s += std::snprintf(buffer, sizeof(buffer), "%.*g", _floatPrecision, f);
 #else
 		// MSVC 2013 is not fully C++11 standard compliant. Need to use _snprintf() instead.
-		s += _snprintf(buffer, sizeof(buffer), "%g", f);
+		s += _snprintf(buffer, sizeof(buffer), "%.*g", _floatPrecision, f);
 #endif
 	}
 

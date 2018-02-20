@@ -11,10 +11,10 @@ test_data_dir = "../../files/"
 
 node1 = import_file(test_data_dir + "LAMMPS/class2.data", atom_style = "full")
 export_file(node1, "_export_file_test.data", "lammps/data", atom_style = "full")
-export_file(node1, "_export_file_test.data", "lammps_data", atom_style = "bond")
+export_file(node1, "_export_file_test.data", "lammps_data", atom_style = "bond", precision=17)
 export_file(node1, "_export_file_test.data", "lammps/dump", columns = ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z"])
 export_file(node1, "_export_file_test.data", "fhi-aims")
-export_file(node1, "_export_file_test.data", "imd")
+export_file(node1, "_export_file_test.data", "imd", precision=400)
 export_file(node1, "_export_file_test.data", "vasp")
 export_file(node1, "_export_file_test.data", "povray")
 export_file(node1, "_export_file_test.data", "netcdf/amber", columns = ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z"])

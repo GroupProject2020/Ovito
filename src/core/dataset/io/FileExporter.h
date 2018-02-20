@@ -123,6 +123,9 @@ private:
 	/// Controls the interval between exported frames.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, everyNthFrame, setEveryNthFrame);
 
+	/// Controls the desired precision with which floating-point numbers are written if the format is text-based.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, floatOutputPrecision, setFloatOutputPrecision);
+
 	/// Holds the scene objects to be exported.
 	QVector<OORef<SceneNode>> _nodesToExport;
 };
