@@ -140,10 +140,9 @@
         <term>Keep selection</term>
         <listitem>
           <para>
-            OVITO uses a red color by default to highlight selected particles in the interactive viewports.
-            Since this highlighting would mask the true colors assigned by this
-            modifier, the modifier clears the current selection by default. 
-            This options allows you to preserve the current selection and make it available to subsequent modifiers in the data pipeline.
+            OVITO highlights selected particles in red in the interactive viewports.
+            Since this would mask the actual colors assigned by this modifier, the modifier clears the current selection by default. 
+            This option retains the current selection so that it remains available to subsequent modifiers in the data pipeline.
           </para>
         </listitem>
       </varlistentry>

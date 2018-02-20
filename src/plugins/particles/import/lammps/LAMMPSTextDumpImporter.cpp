@@ -274,9 +274,10 @@ FileSourceImporter::FrameDataPtr LAMMPSTextDumpImporter::FrameLoader::loadFile(Q
 			InputColumnReader columnParser(columnMapping, *frameData, numParticles);
 
 			// If possible, use memory-mapped file access for best performance.
-			const char* s;
+			const char* s_start;
 			const char* s_end;
-			std::tie(s, s_end) = stream.mmap();
+			std::tie(s_start, s_end) = stream.mmap();
+			auto s = s_start;
 			int lineNumber = stream.lineNumber() + 1;
 			try {
 				for(size_t i = 0; i < numParticles; i++, lineNumber++) {
@@ -290,7 +291,10 @@ FileSourceImporter::FrameDataPtr LAMMPSTextDumpImporter::FrameLoader::loadFile(Q
 			catch(Exception& ex) {
 				throw ex.prependGeneralMessage(tr("Parsing error in line %1 of LAMMPS dump file.").arg(lineNumber));
 			}
-			if(s) stream.munmap();
+			if(s) {
+				stream.munmap();
+				stream.seek(stream.byteOffset() + (s - s_start));
+			}
 
 			// Sort the particle type list since we created particles on the go and their order depends on the occurrence of types in the file.
 			columnParser.sortParticleTypes();
@@ -334,8 +338,11 @@ FileSourceImporter::FrameDataPtr LAMMPSTextDumpImporter::FrameLoader::loadFile(Q
 			frameData->simulationCell().set2D(!columnMapping.hasZCoordinates());
 
 			// Detect if there are more simulation frames following in the file.
-			if(!stream.eof())
-				frameData->signalAdditionalFrames();
+			if(!stream.eof()) {
+				stream.readLine();
+				if(stream.lineStartsWith("ITEM: TIMESTEP"))
+					frameData->signalAdditionalFrames();
+			}
 
 			frameData->setStatus(tr("%1 particles at timestep %2").arg(numParticles).arg(timestep));
 			return frameData; // Done!
