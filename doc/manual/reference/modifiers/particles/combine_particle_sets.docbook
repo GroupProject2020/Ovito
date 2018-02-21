@@ -23,7 +23,7 @@
   <para>
     Note: The simulation cell loaded from the second file is ignored. The modifier does not replace or extend the 
     exiting simulation box. If needed, you can use e.g. the <link linkend="particles.modifiers.affine_transformation">Affine transformation</link> modifier to expand the
-    simulation cell to accommodate all particles.
+    simulation cell to accommodate all particles of the merged datasets.
   </para>
 
   <para>
@@ -34,8 +34,8 @@
   </para>
 
   <para>
-    New unique IDs are assigned to the added particles from the merged file to ensure that they
-    do not collide with any of the existing IDs in current dataset.
+    New unique IDs are assigned to the added particles and molecules from the merged file to ensure that they
+    do not collide with any of the existing IDs in the current dataset.
   </para>
 
   <simplesect>

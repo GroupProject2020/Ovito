@@ -483,6 +483,14 @@ public:
 		return m;
 	}
 
+	/// Returns an element type ID that is not yet used by any of the existing element types.
+	int generateUniqueElementTypeId() const {
+		int maxId = 1;
+		for(ElementType* type : elementTypes())
+			maxId = std::max(maxId, type->id() + 1);
+		return maxId;
+	}
+
 	////////////////////////////// Support functions for the Python bindings //////////////////////////////
 
 	/// Indicates to the Python binding layer that this property object has been temporarily put into a 
