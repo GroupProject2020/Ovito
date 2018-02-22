@@ -143,6 +143,12 @@ public:
 	}
 
 	/// \brief Returns a read-only pointer to the first point element in the property storage.
+	/// \note This method may only be used if this property is of data type Vector3I or an integer channel with 3 components.
+	const Vector3I* constDataVector3I() const {
+		return storage()->constDataVector3I();
+	}
+
+	/// \brief Returns a read-only pointer to the first point element in the property storage.
 	/// \note This method may only be used if this property is of data type Point3I or an integer channel with 3 components.
 	const Point3I* constDataPoint3I() const {
 		return storage()->constDataPoint3I();
@@ -197,6 +203,11 @@ public:
 	}
 
 	/// \brief Returns a range of const iterators over the elements stored in this object.
+	boost::iterator_range<const Vector3I*> constVector3IRange() const {
+		return storage()->constVector3IRange();
+	}
+
+	/// \brief Returns a range of const iterators over the elements stored in this object.
 	boost::iterator_range<const Point3I*> constPoint3IRange() const {
 		return storage()->constPoint3IRange();
 	}
@@ -244,6 +255,12 @@ public:
 	/// \note This method may only be used if this property is of data type Point3 or a FloatType channel with 3 components.
 	Point3* dataPoint3() {
 		return modifiableStorage()->dataPoint3();
+	}
+
+	/// \brief Returns a read-write pointer to the first point element in the property storage.
+	/// \note This method may only be used if this property is of data type Vector3I or an integer channel with 3 components.
+	Vector3I* dataVector3I() {
+		return modifiableStorage()->dataVector3I();
 	}
 
 	/// \brief Returns a read-write pointer to the first point element in the property storage.
@@ -301,6 +318,11 @@ public:
 	}
 
 	/// \brief Returns a range of iterators over the elements stored in this object.
+	boost::iterator_range<Vector3I*> vector3IRange() {
+		return modifiableStorage()->vector3IRange();
+	}
+
+	/// \brief Returns a range of iterators over the elements stored in this object.
 	boost::iterator_range<Point3I*> point3IRange() {
 		return modifiableStorage()->point3IRange();
 	}
@@ -354,6 +376,11 @@ public:
 	const Point3& getPoint3(size_t index) const {
 		return storage()->getPoint3(index);
 	}
+
+	/// Returns a Vector3I element at the given index (if this is a point property).
+	const Vector3I& getVector3I(size_t index) const {
+		return storage()->getVector3I(index);
+	}	
 
 	/// Returns a Point3I element at the given index (if this is a point property).
 	const Point3I& getPoint3I(size_t index) const {
@@ -414,6 +441,11 @@ public:
 	void setPoint3(size_t index, const Point3& newValue) {
 		modifiableStorage()->setPoint3(index, newValue);
 	}
+
+	/// Sets the value of a Vector3I element at the given index (if this is a point property).
+	void setVector3I(size_t index, const Vector3I& newValue) {
+		modifiableStorage()->setVector3I(index, newValue);
+	}	
 
 	/// Sets the value of a Point3I element at the given index (if this is a point property).
 	void setPoint3I(size_t index, const Point3I& newValue) {

@@ -23,7 +23,6 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/BondsStorage.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/particles/objects/BondProperty.h>
 #include <plugins/grid/objects/VoxelProperty.h>
@@ -231,6 +230,9 @@ public:
 		_bondProperties.erase(_bondProperties.begin() + index);
 	}
 
+	/// Determines the PBC shift vectors for bonds using the minimum image convention.
+	void generateBondPeriodicImageProperty();
+
 	/// Returns the shape of the voxel grid.
 	const std::vector<size_t>& voxelGridShape() const { return _voxelGridShape; }
 
@@ -254,12 +256,6 @@ public:
 	/// Returns the metadata read from the file header.
 	QVariantMap& attributes() { return _attributes; }
 
-	/// Sets the bonds between particles.
-	void setBonds(BondsPtr bonds) { _bonds = std::move(bonds); }
-
-	/// Returns the bonds between particles (if present).
-	const BondsPtr& bonds() const { return _bonds; }
-
 	/// Indicates that the file parser found additional frames
 	/// in the input file stored back to back with the frame currently being loaded.
 	void signalAdditionalFrames() { _detectedAdditionalFrames = true; }
@@ -276,9 +272,6 @@ private:
 
 	/// Particle properties.
 	std::vector<PropertyPtr> _particleProperties;
-
-	/// The list of bonds between particles (if present).
-	BondsPtr _bonds;
 
 	/// Bond properties.
 	std::vector<PropertyPtr> _bondProperties;

@@ -76,7 +76,7 @@ public:
 		
 	private:
 		
-		PropertyPtr _brightness;	
+		PropertyPtr _brightness;
 	};
 
 	/// Computes the modifier's results.

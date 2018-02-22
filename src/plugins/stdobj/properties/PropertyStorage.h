@@ -167,6 +167,14 @@ public:
 	}
 
 	/// \brief Returns a read-only pointer to the first point element in the property storage.
+	/// \note This method may only be used if this property is of data type Vector3I or an integer channel with 3 components.
+	const Vector3I* constDataVector3I() const {
+		OVITO_ASSERT(dataType() == qMetaTypeId<Vector3I>() || (dataType() == Int && componentCount() == 3));
+		OVITO_STATIC_ASSERT(sizeof(Vector3I) == sizeof(int) * 3);
+		return reinterpret_cast<const Vector3I*>(constData());
+	}
+
+	/// \brief Returns a read-only pointer to the first point element in the property storage.
 	/// \note This method may only be used if this property is of data type Point3I or an integer channel with 3 components.
 	const Point3I* constDataPoint3I() const {
 		OVITO_ASSERT(dataType() == qMetaTypeId<Point3I>() || (dataType() == Int && componentCount() == 3));
@@ -236,6 +244,11 @@ public:
 	}
 
 	/// \brief Returns a range of const iterators over the elements stored in this object.
+	boost::iterator_range<const Vector3I*> constVector3IRange() const {
+		return boost::make_iterator_range(constDataVector3I(), constDataVector3I() + size());
+	}
+
+	/// \brief Returns a range of const iterators over the elements stored in this object.
 	boost::iterator_range<const Point3I*> constPoint3IRange() const {
 		return boost::make_iterator_range(constDataPoint3I(), constDataPoint3I() + size());
 	}
@@ -286,6 +299,14 @@ public:
 	Vector3* dataVector3() {
 		OVITO_ASSERT(dataType() == qMetaTypeId<Vector3>() || (dataType() == Float && componentCount() == 3));
 		return reinterpret_cast<Vector3*>(data());
+	}
+
+	/// \brief Returns a read-write pointer to the first point element in the property storage.
+	/// \note This method may only be used if this property is of data type Vector3I or an integer channel with 3 components.
+	Vector3I* dataVector3I() {
+		OVITO_ASSERT(dataType() == qMetaTypeId<Vector3I>() || (dataType() == Int && componentCount() == 3));
+		OVITO_STATIC_ASSERT(sizeof(Vector3I) == sizeof(int) * 3);
+		return reinterpret_cast<Vector3I*>(data());
 	}
 
 	/// \brief Returns a read-write pointer to the first point element in the property storage.
@@ -365,6 +386,11 @@ public:
 	}
 
 	/// \brief Returns a range of iterators over the elements stored in this object.
+	boost::iterator_range<Vector3I*> vector3IRange() {
+		return boost::make_iterator_range(dataVector3I(), dataVector3I() + size());
+	}
+
+	/// \brief Returns a range of iterators over the elements stored in this object.
 	boost::iterator_range<Point3I*> point3IRange() {
 		return boost::make_iterator_range(dataPoint3I(), dataPoint3I() + size());
 	}
@@ -430,6 +456,12 @@ public:
 	const Point3& getPoint3(size_t index) const {
 		OVITO_ASSERT(index < size());
 		return constDataPoint3()[index];
+	}
+
+	/// Returns a Vector3I element at the given index (if this is a point property).
+	const Vector3I& getVector3I(size_t index) const {
+		OVITO_ASSERT(index < size());
+		return constDataVector3I()[index];
 	}
 
 	/// Returns a Point3I element at the given index (if this is a point property).
@@ -510,6 +542,12 @@ public:
 		dataPoint3()[index] = newValue;
 	}
 
+	/// Sets the value of a Vector3I element at the given index (if this is an integer vector property).
+	void setVector3I(size_t index, const Vector3I& newValue) {
+		OVITO_ASSERT(index < size());
+		dataVector3I()[index] = newValue;
+	}	
+
 	/// Sets the value of a Point3I element at the given index (if this is a point property).
 	void setPoint3I(size_t index, const Point3I& newValue) {
 		OVITO_ASSERT(index < size());
@@ -545,7 +583,7 @@ public:
 	void filterResize(const boost::dynamic_bitset<>& mask);
 
 	/// Copies the contents from the given source into this storage using a mapping.
-	void mappedCopy(const PropertyStorage& source, const std::vector<int>& mapping);
+	void mappedCopy(const PropertyStorage& source, const std::vector<size_t>& mapping);
 
 	/// Writes the object to an output stream.
 	void saveToStream(SaveStream& stream, bool onlyMetadata) const;

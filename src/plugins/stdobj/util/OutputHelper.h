@@ -91,7 +91,7 @@ public:
 		return static_object_cast<PropertyObjectType>(outputProperty(PropertyObjectType::OOClass(), storage));
 	}
 
-	/// Makes sure a DataObject from this flow state is no shared with others and is safe to modify.
+	/// Enures that a DataObject from this flow state is not shared with others and is safe to modify.
 	template<class ObjectType>
 	ObjectType* cloneIfNeeded(ObjectType* obj, bool deepCopy = false) {
 		OVITO_ASSERT(output().contains(obj));
@@ -115,7 +115,7 @@ public:
 		return *_cloneHelper;
 	}
 
-	/// Return the DataSet that provides a context for all performed operations.
+	/// Returns the DataSet that provides a context for all performed operations.
 	DataSet* dataset() const { return _dataset; }
 	
 private:

@@ -16,16 +16,16 @@ from ovito.plugins.PyScript import CloneHelper
 # Load the native code module
 from ovito.plugins.Particles import ParticleProperty
 
-# Helper class used to implement the DataCollection.particle_properties attribute.
-class ParticlePropertiesView(collections.Mapping):
+# Helper class that is part of the implementation of the DataCollection.particles attribute.
+class ParticlesView(collections.Mapping):
     """
     A dictionary view of all :py:class:`ParticleProperty` objects in a :py:class:`DataCollection`.
-    An instance of this class is returned by :py:attr:`DataCollection.particle_properties`.
+    An instance of this class is returned by :py:attr:`DataCollection.particles`.
 
     It implements the ``collections.abc.Mapping`` interface. That means it can be used
     like a standard read-only Python ``dict`` object to access the particle properties by name, e.g.:
 
-    .. literalinclude:: ../example_snippets/particle_properties_view.py
+    .. literalinclude:: ../example_snippets/particles_view.py
         :lines: 7-11
 
     New particle properties can be added with the :py:meth:`create` method.
@@ -71,7 +71,7 @@ class ParticlePropertiesView(collections.Mapping):
         The method allows to create *standard* as well as *user-defined* particle properties. 
         To create a *standard* particle property, one of the :ref:`standard property names <particle-types-list>` must be provided as *name* argument:
         
-        .. literalinclude:: ../example_snippets/particle_properties_view.py
+        .. literalinclude:: ../example_snippets/particles_view.py
             :lines: 15-17
         
         The size of the provided *data* array must match the number of particles in the data collection, i.e., 
@@ -80,12 +80,12 @@ class ParticlePropertiesView(collections.Mapping):
         create an array of random RGB values with the correct size.
         Alternatively, you can set the property values after construction: 
 
-        .. literalinclude:: ../example_snippets/particle_properties_view.py
+        .. literalinclude:: ../example_snippets/particles_view.py
             :lines: 23-25
 
         To create a *user-defined* particle property, use a non-standard property name:
         
-        .. literalinclude:: ../example_snippets/particle_properties_view.py
+        .. literalinclude:: ../example_snippets/particles_view.py
             :lines: 29-30
         
         In this case the data type and the number of vector components of the new property are inferred from
@@ -94,7 +94,7 @@ class ParticlePropertiesView(collections.Mapping):
         Alternatively, the *dtype* and *components* parameters can be specified explicitly
         if initialization of the property values should happen after property creation:
 
-        .. literalinclude:: ../example_snippets/particle_properties_view.py
+        .. literalinclude:: ../example_snippets/particles_view.py
             :lines: 34-36
 
         If the property to be created already exists in the data collection, it is replaced with a new one.
@@ -105,7 +105,7 @@ class ParticlePropertiesView(collections.Mapping):
         :py:meth:`!create` method. The *data* array has to be provided in this case to specify the number of particles
         to create:
 
-        .. literalinclude:: ../example_snippets/particle_properties_view.py
+        .. literalinclude:: ../example_snippets/particles_view.py
             :lines: 40-45
         
         After the initial ``Positions`` property has been created, the number of particles is now specified and any subsequently added properties 
@@ -196,8 +196,8 @@ class ParticlePropertiesView(collections.Mapping):
 
             # Initialize property with per-particle data if provided.
             if data is not None:
-                with prop as marray:
-                    marray[...] = data
+                with prop:
+                    prop[...] = data
             
             # Insert new property into data collection.
             self._data.objects.append(prop)

@@ -48,7 +48,7 @@ class DataCollection(with_metaclass(abc.ABCMeta)):
     .. literalinclude:: ../example_snippets/data_collection.py
            :lines: 11-12
 
-    Additionally, the convenience accessor fields :py:attr:`.particle_properties` and :py:attr:`.bond_properties` provide filtered views of 
+    Additionally, the convenience accessor fields :py:attr:`.particles` and :py:attr:`.bonds` provide filtered views of 
     just the :py:class:`~ovito.data.ParticleProperty` and :py:class:`~ovito.data.BondProperty` objects in the collection:
 
     .. literalinclude:: ../example_snippets/data_collection.py
@@ -82,8 +82,8 @@ class DataCollection(with_metaclass(abc.ABCMeta)):
         does not matter.
 
         Note that the :py:class:`!DataCollection` class also provides convenience views of the data objects contained in the :py:attr:`!objects`
-        list: For example, the :py:attr:`.particle_properties` dictionary lists all :py:class:`ParticleProperty` instances in the 
-        data collection by name and the :py:attr:`.bond_properties` does the same for all :py:class:`BondProperty` instances.
+        list: For example, the :py:attr:`.particles` dictionary lists all :py:class:`ParticleProperty` instances in the 
+        data collection by name and the :py:attr:`.bonds` does the same for all :py:class:`BondProperty` instances.
         Since these dictionaries are views, they always reflect the current contents of the master :py:attr:`!objects` list.
         """
         raise RuntimeError("This method should be overwritten by concrete implementations of the DataCollection interface.")

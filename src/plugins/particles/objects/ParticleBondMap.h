@@ -23,71 +23,13 @@
 
 
 #include <plugins/particles/Particles.h>
+#include <plugins/particles/objects/BondProperty.h>
 
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/range/iterator_range.hpp>
+#include <utility>
 
 namespace Ovito { namespace Particles {
-
-/**
- * A bond between two particles.
- */
-struct Bond 
-{
-	/// The index of the first particle.
-	/// Note that we are using int instead of size_t here to save some memory.
-	size_t index1;
-
-	/// The index of the second particle.
-	/// Note that we are using int instead of size_t here to save some memory.
-	size_t index2;
-
-	/// If the bond crosses a periodic boundary, this indicates the direction.
-	Vector_3<int8_t> pbcShift;
-
-	/// Returns the flipped version of this bond, where the two particles are swapped
-	/// and the PBC shift vector is reversed.
-	Bond flipped() const { return {index2, index1, -pbcShift}; }
-
-	/// For a pair of bonds, A<->B and B<->A, determines whether this bond
-	/// counts as the 'odd' or the 'even' bond of the pair.
-	bool isOdd() const {
-		// Is this bond connecting two different particles?
-		// If yes, it's easy to determine whether it's an even or an odd bond.
-		if(index1 > index2) return true;
-		else if(index1 < index2) return false;
-		// Whether the bond is 'odd' is determined by the PBC shift vector.
-		if(pbcShift[0] != 0) return pbcShift[0] < 0;
-		if(pbcShift[1] != 0) return pbcShift[1] < 0;
-		// A particle shouldn't be bonded to itself unless the bond crosses a periodic cell boundary:
-		OVITO_ASSERT(pbcShift != Vector_3<int8_t>::Zero());
-		return pbcShift[2] < 0;
-	}
-};
-
-/**
- * \brief A list of bonds that connect pairs of particles.
- */
-class OVITO_PARTICLES_EXPORT BondsStorage : public std::vector<Bond>
-{
-public:
-
-	/// Writes the stored data to an output stream.
-	void saveToStream(SaveStream& stream, bool onlyMetadata) const;
-
-	/// Reads the stored data from an input stream.
-	void loadFromStream(LoadStream& stream);
-
-	/// Reduces the size of the storage array, removing bonds for which 
-	/// the corresponding bits in the bit array are set.
-	void filterResize(const boost::dynamic_bitset<>& mask);	
-};
-
-/// Typically, BondsStorage objects are shallow copied. That's why we use a shared_ptr to hold on to them.
-using BondsPtr = std::shared_ptr<BondsStorage>;
-
-/// This pointer type is used to indicate that we only need read-only access to the bond data.
-using ConstBondsPtr = std::shared_ptr<const BondsStorage>;
 
 /**
  * \brief Helper class that allows to efficiently iterate over the bonds that are adjacent to a particle.
@@ -144,11 +86,14 @@ public:
 
 		Bond dereference() const {
 			OVITO_ASSERT(_currentIndex < _bondMap->_nextBond.size());
-			const Bond& bond = _bondMap->_bonds[_currentIndex / 2];
-			if((_currentIndex & 1) == 0)
-				return bond;
-			else
-				return bond.flipped();
+			size_t bindex = _currentIndex / 2;
+			Bond bond = { (size_t)_bondMap->_bondTopology->getInt64Component(bindex, 0), (size_t)_bondMap->_bondTopology->getInt64Component(bindex, 1),
+								_bondMap->_bondPeriodicImages ? _bondMap->_bondPeriodicImages->getVector3I(bindex) : Vector3I::Zero() };
+			if(_currentIndex & 1) {
+				std::swap(bond.index1, bond.index2);
+				bond.pbcShift = -bond.pbcShift;
+			}
+			return bond;
 		}
 	};
 
@@ -156,7 +101,7 @@ public:
 public:
 
 	/// Initializes the helper class.
-	ParticleBondMap(const BondsStorage& bonds);
+	ParticleBondMap(ConstPropertyPtr bondTopology, ConstPropertyPtr bondPeriodicImages = {});
 
 	/// Returns an iterator range over the indices of the bonds adjacent to the given particle.
 	/// Returns real indices into the bonds list. Note that bonds can point away from and to the given particle.
@@ -182,19 +127,18 @@ public:
 	size_t findBond(const Bond& bond) const {
 		size_t index = (bond.index1 < _startIndices.size()) ? _startIndices[bond.index1] : endOfListValue();
 		for(; index != endOfListValue(); index = _nextBond[index]) {
-			const Bond& current_bond = _bonds[index/2];
 			if((index & 1) == 0) {
-				OVITO_ASSERT(current_bond.index1 == bond.index1);
-				if(current_bond.index2 == bond.index2 && current_bond.pbcShift == bond.pbcShift)
+				OVITO_ASSERT(_bondTopology->getInt64Component(index/2, 0) == bond.index1);
+				if(_bondTopology->getInt64Component(index/2, 1) == bond.index2 && (!_bondPeriodicImages || _bondPeriodicImages->getVector3I(index/2) == bond.pbcShift))
 					return index/2;
 			}
 			else {
-				OVITO_ASSERT(current_bond.index2 == bond.index1);
-				if(current_bond.index1 == bond.index2 && current_bond.pbcShift == -bond.pbcShift)
+				OVITO_ASSERT(_bondTopology->getInt64Component(index/2, 1) == bond.index1);
+				if(_bondTopology->getInt64Component(index/2, 0) == bond.index2 && (!_bondPeriodicImages || _bondPeriodicImages->getVector3I(index/2) == -bond.pbcShift))
 					return index/2;
 			}
 		}
-		return _bonds.size();
+		return _bondTopology->size();
 	}
 
 private:
@@ -204,8 +148,11 @@ private:
 	
 private:
 
-	/// The bonds storage this map has been created for.
-	const BondsStorage& _bonds;
+	/// The bond property containing the bond definitions.
+	const ConstPropertyPtr _bondTopology;
+
+	/// The bond property containing PBC shift vectors.
+	const ConstPropertyPtr _bondPeriodicImages;
 
 	/// Contains the first bond index for each particle (the head of a linked list).
 	std::vector<size_t> _startIndices;

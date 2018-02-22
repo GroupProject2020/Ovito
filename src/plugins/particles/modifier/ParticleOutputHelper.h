@@ -48,6 +48,9 @@ public:
 	/// Returns the number of bonds in the output.
 	size_t outputBondCount() const { return _outputBondCount; }
 
+	/// Sets the number of bonds in the output.
+	void setOutputBondCount(size_t count) { _outputBondCount = count; }
+
 	/// Deletes the particles for which bits are set in the given bit-mask.
 	/// Returns the number of deleted particles.
 	size_t deleteParticles(const boost::dynamic_bitset<>& mask);
@@ -57,7 +60,7 @@ public:
 	size_t deleteBonds(const boost::dynamic_bitset<>& mask);
 	
 	/// Adds a set of new bonds to the system.
-	BondsObject* addBonds(const BondsPtr& newBonds, BondsDisplay* bondsDisplay, const std::vector<PropertyPtr>& bondProperties = {});
+	void addBonds(const std::vector<Bond>& newBonds, BondsDisplay* bondsDisplay, const std::vector<PropertyPtr>& bondProperties = {});
 
 protected:
 

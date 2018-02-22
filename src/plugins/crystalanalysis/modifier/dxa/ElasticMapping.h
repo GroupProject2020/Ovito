@@ -27,7 +27,6 @@
 #include <core/utilities/MemoryPool.h>
 #include <plugins/crystalanalysis/data/Cluster.h>
 #include <plugins/crystalanalysis/data/ClusterGraph.h>
-#include <plugins/particles/objects/BondsStorage.h>
 #include "StructureAnalysis.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
@@ -117,9 +116,6 @@ public:
 	/// or cannot be determined.
 	bool isElasticMappingCompatible(DelaunayTessellation::CellHandle cell) const;
 
-	/// Returns the list of edges, which don't have a lattice vector.
-	const BondsPtr& unassignedEdges() const { return _unassignedEdges; }
-
 	/// Returns the cluster to which a vertex of the tessellation has been assigned (may be NULL).
 	Cluster* clusterOfVertex(int vertexIndex) const {
 		OVITO_ASSERT(vertexIndex < (int)_vertexClusters.size());
@@ -176,9 +172,6 @@ private:
 
 	/// Stores the cluster assigned to each vertex atom of the tessellation.
 	std::vector<Cluster*> _vertexClusters;
-
-	/// List of edges, which don't have a lattice vector.
-	BondsPtr _unassignedEdges;
 };
 
 }	// End of namespace

@@ -20,46 +20,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include "BondsStorage.h"
-#include "BondsObject.h"
+#include "ParticleBondMap.h"
 
 namespace Ovito { namespace Particles {
 
-/******************************************************************************
-* Saves the class' contents to the given stream.
-******************************************************************************/
-void BondsStorage::saveToStream(SaveStream& stream, bool onlyMetadata) const
-{
-	stream.beginChunk(0x01);
-	if(!onlyMetadata) {
-		stream.writeSizeT(size());
-		stream.writeSizeT(sizeof(Bond));
-		stream.write(data(), size() * sizeof(Bond));
-	}
-	else {
-		stream.writeSizeT(0);
-		stream.writeSizeT(sizeof(Bond));
-	}
-	stream.endChunk();
-}
-
-/******************************************************************************
-* Loads the class' contents from the given stream.
-******************************************************************************/
-void BondsStorage::loadFromStream(LoadStream& stream)
-{
-	stream.expectChunk(0x01);
-	size_t bondCount;
-	stream.readSizeT(bondCount);
-	resize(bondCount);
-	size_t bondSize;
-	stream.readSizeT(bondSize);
-	if(bondSize != sizeof(Bond) && bondCount != 0)
-		throw Exception(BondsObject::tr("Data type size mismatch in stored bond list."));
-	stream.read(data(), size() * sizeof(Bond));
-	stream.closeChunk();
-}
-
+#if 0
 /******************************************************************************
 * Reduces the size of the storage array, removing elements for which 
 * the corresponding bits in the bit array are set.
@@ -80,27 +45,30 @@ void BondsStorage::filterResize(const boost::dynamic_bitset<>& mask)
 	}
 	erase(b, end());
 }
+#endif
 
 /******************************************************************************
 * Initializes the helper class.
 ******************************************************************************/
-ParticleBondMap::ParticleBondMap(const BondsStorage& bonds) :
-	_bonds(bonds),
-	_nextBond(bonds.size()*2, bonds.size()*2)
+ParticleBondMap::ParticleBondMap(ConstPropertyPtr bondTopology, ConstPropertyPtr bondPeriodicImages) :
+	_bondTopology(std::move(bondTopology)),
+	_bondPeriodicImages(std::move(bondPeriodicImages)),
+	_nextBond(_bondTopology->size()*2, _bondTopology->size()*2)
 {
-	size_t bondIndex = bonds.size() - 1;
-	for(auto bond = bonds.crbegin(); bond != bonds.crend(); ++bond, bondIndex--) {
-		if(bond->index1 >= _startIndices.size())
-			_startIndices.resize(bond->index1 + 1, endOfListValue());
-		if(bond->index2 >= _startIndices.size())
-			_startIndices.resize(bond->index2 + 1, endOfListValue());
+	for(size_t bondIndex = _bondTopology->size(); bondIndex-- != 0; ) {
+		size_t index1 = _bondTopology->getInt64Component(bondIndex, 0);
+		size_t index2 = _bondTopology->getInt64Component(bondIndex, 1);
+		if(index1 >= _startIndices.size())
+			_startIndices.resize(index1 + 1, endOfListValue());
+		if(index2 >= _startIndices.size())
+			_startIndices.resize(index2 + 1, endOfListValue());
 
 		size_t evenIndex = bondIndex * 2;
 		size_t oddIndex  = evenIndex + 1;
-		_nextBond[evenIndex] = _startIndices[bond->index1];
-		_nextBond[oddIndex]  = _startIndices[bond->index2];
-		_startIndices[bond->index1] = evenIndex;
-		_startIndices[bond->index2] = oddIndex;
+		_nextBond[evenIndex] = _startIndices[index1];
+		_nextBond[oddIndex]  = _startIndices[index2];
+		_startIndices[index1] = evenIndex;
+		_startIndices[index2] = oddIndex;
 	}
 }
 

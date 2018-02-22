@@ -24,9 +24,9 @@
 #include <plugins/particles/objects/ParticleType.h>
 #include <plugins/particles/objects/ParticleDisplay.h>
 #include <plugins/particles/objects/VectorDisplay.h>
-#include <plugins/particles/objects/BondsObject.h>
 #include <plugins/particles/objects/BondsDisplay.h>
 #include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/ParticleBondMap.h>
 #include <plugins/particles/objects/BondType.h>
 #include <plugins/particles/objects/TrajectoryObject.h>
 #include <plugins/particles/objects/TrajectoryGenerator.h>
@@ -49,62 +49,6 @@ void defineModifiersSubmodule(py::module parentModule);	// Defined in ModifierBi
 void defineImportersSubmodule(py::module parentModule);	// Defined in ImporterBinding.cpp
 void defineExportersSubmodule(py::module parentModule);	// Defined in ExporterBinding.cpp
 
-py::dict BondsObject__array_interface__(const BondsObject& p)
-{
-	py::dict ai;
-	ai["shape"] = py::make_tuple(p.storage()->size(), 2);
-	if(sizeof(size_t) == 4) {
-#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
-		ai["typestr"] = py::bytes("<u4");
-#else
-		ai["typestr"] = py::bytes(">u4");
-#endif
-	}
-	else if(sizeof(size_t) == 8) {
-#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
-		ai["typestr"] = py::bytes("<u8");
-#else
-		ai["typestr"] = py::bytes(">u8");
-#endif
-	}
-	const size_t* data;
-	if(!p.storage()->empty()) {
-		data = &p.storage()->front().index1;
-	}
-	else {
-		static const size_t null_data = 0;
-		data = &null_data;
-	}
-	ai["data"] = py::make_tuple(reinterpret_cast<std::intptr_t>(data), true);
-	ai["strides"] = py::make_tuple(sizeof(Bond), sizeof(size_t));
-	ai["version"] = py::cast(3);
-	return ai;
-}
-
-py::dict BondsObject__pbc_vectors(const BondsObject& p)
-{
-	py::dict ai;
-	ai["shape"] = py::make_tuple(p.storage()->size(), 3);
-	OVITO_STATIC_ASSERT(sizeof(int8_t) == 1);
-#if Q_BYTE_ORDER == Q_LITTLE_ENDIAN
-	ai["typestr"] = py::bytes("<i1");
-#else
-	ai["typestr"] = py::bytes(">i1");
-#endif
-	const int8_t* data;
-	if(!p.storage()->empty()) {
-		data = &p.storage()->front().pbcShift.x();
-	}
-	else {
-		static const int8_t null_data = 0;
-		data = &null_data;
-	}
-	ai["data"] = py::make_tuple(reinterpret_cast<std::intptr_t>(data), true);
-	ai["strides"] = py::make_tuple(sizeof(Bond), sizeof(int8_t));
-	ai["version"] = py::cast(3);
-	return ai;
-}
-
 PYBIND11_PLUGIN(Particles)
 {
 	// Register the classes of this plugin with the global PluginManager.
@@ -125,7 +69,7 @@ PYBIND11_PLUGIN(Particles)
 			"is basically an array of values whose length matches the number of particles. "
 			"\n\n"
 			"The set of properties currently associated with all particles is exposed by the "
-			":py:attr:`DataCollection.particle_properties` view, which allows accessing them by name "
+			":py:attr:`DataCollection.particles` view, which allows accessing them by name "
 			"and adding new properties. " 
 			"\n\n"
 			"**Standard properties**"
@@ -139,10 +83,10 @@ PYBIND11_PLUGIN(Particles)
 			"\n\n"
 			"**Creating particle properties**"
 			"\n\n"
-			"New properties can be created and assigned to particles with the :py:meth:`ParticlePropertiesView.create` factory method. "
+			"New properties can be created and assigned to particles with the :py:meth:`ParticlesView.create` factory method. "
 			"User-defined modifier functions, for example, use this to output their computation results. "
 			"\n\n"
-			"**Particle type property**"
+			"**Typed particle properties**"
 			"\n\n"
 			"The standard property ``'Particle Type'`` stores the types of particles encoded as integer values, e.g.: "
 			"\n\n"
@@ -301,6 +245,7 @@ PYBIND11_PLUGIN(Particles)
 		.value("MoleculeType", ParticleProperty::MoleculeTypeProperty)
 	;								
 
+#if 0
 	auto BondsObject_py = ovito_class<BondsObject, DataObject>(m,
 			":Base class: :py:class:`ovito.data.DataObject`\n\n"
 			"Stores the list of bonds between pairs of particles. "
@@ -324,7 +269,7 @@ PYBIND11_PLUGIN(Particles)
 			"\n\n"
 			"Like particles, bonds may be associated with *bond properties*. These properties are stored "
 			"in separate data objects of type :py:class:`BondProperty`, which are accessible through the "
-			":py:attr:`DataCollection.bond_properties` field of the data collection. "
+			":py:attr:`DataCollection.bonds` field of the data collection. "
 			"\n\n"
 			"**Bond display settings**"
 			"\n\n"
@@ -371,6 +316,7 @@ PYBIND11_PLUGIN(Particles)
 		.def_property_readonly("size", &BondsObject::size)
 		.def("__len__", &BondsObject::size)
 	;
+#endif	
 
 	py::class_<ParticleBondMap>(m, "BondsEnumerator",
 		"Utility class that permits efficient iteration over the bonds connected to specific particles. "
@@ -387,9 +333,12 @@ PYBIND11_PLUGIN(Particles)
 		"**Usage example**"
 		"\n\n"
 		".. literalinclude:: ../example_snippets/bonds_enumerator.py\n")
-		.def("__init__", [](ParticleBondMap& instance, BondsObject& bonds) {
-            	new (&instance) ParticleBondMap(*bonds.storage());
-			}, py::arg("bonds"), py::keep_alive<1, 2>())
+		// Customized constructor function:
+		.def("__init__", [](ParticleBondMap& instance, py::object data_collection) {
+				throw Exception("BondsEnumerator constructor not implemented");
+				//new (&instance) ParticleBondMap(*bonds.storage());
+			}, 
+			py::arg("data_collection"))
 		.def("bonds_of_particle", [](const ParticleBondMap& bondMap, size_t particleIndex) {
 			auto range = bondMap.bondIndicesOfParticle(particleIndex);
 			return py::make_iterator<py::return_value_policy::automatic>(range.begin(), range.end());
@@ -591,8 +540,7 @@ PYBIND11_PLUGIN(Particles)
 			"Both property classes derives from the common :py:class:`Property` base class. Please see its documentation on how to access per-bond values. "
 			"\n\n"
 			"The set of properties currently associated with the bonds is exposed by the "
-			":py:attr:`DataCollection.bond_properties` view, which allows accessing them by name "
-			"and adding new properties. " 
+			":py:attr:`DataCollection.bonds` view, which allows accessing them by name and adding new properties. " 
 			"\n\n"
 			"Note that the topological definition of bonds, i.e. the connectivity between particles, is stored separately from the bond properties in "
 			"the :py:class:`Bonds` data object. ",

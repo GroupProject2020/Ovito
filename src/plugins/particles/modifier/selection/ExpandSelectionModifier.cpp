@@ -22,7 +22,7 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/util/CutoffNeighborFinder.h>
 #include <plugins/particles/util/NearestNeighborFinder.h>
-#include <plugins/particles/objects/BondsObject.h>
+#include <plugins/particles/objects/BondProperty.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <core/utilities/concurrent/ParallelFor.h>
@@ -90,8 +90,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ExpandSelectionModifier::createEn
 		return std::make_shared<ExpandSelectionNearestEngine>(posProperty->storage(), inputCell->data(), inputSelection->storage(), numberOfIterations(), numNearestNeighbors());
 	}
 	else if(mode() == BondedNeighbors) {
-		BondsObject* bonds = pih.expectBonds();
-		return std::make_shared<ExpandSelectionBondedEngine>(posProperty->storage(), inputCell->data(), inputSelection->storage(), numberOfIterations(), bonds->storage());
+		return std::make_shared<ExpandSelectionBondedEngine>(posProperty->storage(), inputCell->data(), inputSelection->storage(), numberOfIterations(), pih.expectBonds()->storage());
 	}
 	else {
 		throwException(tr("Invalid selection expansion mode."));
@@ -157,14 +156,15 @@ void ExpandSelectionModifier::ExpandSelectionBondedEngine::expandSelection()
 	OVITO_ASSERT(inputSelection()->constDataInt() != results()->outputSelection()->dataInt());
 
 	size_t particleCount = inputSelection()->size();
-	parallelFor(_bonds->size(), *this, [this, particleCount](size_t index) {
-		const Bond& bond = (*_bonds)[index];
-		if(bond.index1 >= particleCount || bond.index2 >= particleCount)
+	parallelFor(_bondTopology->size(), *this, [this, particleCount](size_t index) {
+		size_t index1 = _bondTopology->getInt64Component(index, 0);
+		size_t index2 = _bondTopology->getInt64Component(index, 1);
+		if(index1 >= particleCount || index2 >= particleCount)
 			return;
-		if(inputSelection()->getInt(bond.index1))
-			results()->outputSelection()->setInt(bond.index2, 1);
-		if(inputSelection()->getInt(bond.index2))
-			results()->outputSelection()->setInt(bond.index1, 1);
+		if(inputSelection()->getInt(index1))
+			results()->outputSelection()->setInt(index2, 1);
+		if(inputSelection()->getInt(index2))
+			results()->outputSelection()->setInt(index1, 1);
 	});
 }
 

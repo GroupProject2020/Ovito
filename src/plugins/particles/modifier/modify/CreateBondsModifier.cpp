@@ -164,8 +164,8 @@ void CreateBondsModifier::initializeModifier(ModifierApplication* modApp)
 
 	// Adopt the upstream BondsDisplay object if there already is one.
 	PipelineFlowState input = modApp->evaluateInputPreliminary();
-	if(BondsObject* bondsObj = input.findObject<BondsObject>()) {
-		for(DisplayObject* displayObj : bondsObj->displayObjects()) {
+	if(BondProperty* topologyProperty = BondProperty::findInState(input, BondProperty::TopologyProperty)) {
+		for(DisplayObject* displayObj : topologyProperty->displayObjects()) {
 			if(BondsDisplay* bondsDisplay = dynamic_object_cast<BondsDisplay>(displayObj)) {
 				setBondsDisplay(bondsDisplay);
 				break;
@@ -255,7 +255,7 @@ void CreateBondsModifier::BondsEngine::perform()
 
 				// Skip every other bond to create only one bond per particle pair.
 				if(!bond.isOdd())
-					results->bonds()->push_back(bond);
+					results->bonds().push_back(bond);
 			}
 			// Update progress indicator.
 			if(!setProgressValueIntermittent(particleIndex))
@@ -276,7 +276,7 @@ void CreateBondsModifier::BondsEngine::perform()
 						Bond bond = { particleIndex, neighborQuery.current(), neighborQuery.unwrappedPbcShift() };
 						// Skip every other bond to create only one bond per particle pair.
 						if(!bond.isOdd())				
-							results->bonds()->push_back(bond);
+							results->bonds().push_back(bond);
 					}
 				}
 			}
@@ -304,7 +304,7 @@ PipelineFlowState CreateBondsModifier::BondsEngineResults::apply(TimePoint time,
 	ParticleOutputHelper poh(modApp->dataset(), output);
 	poh.addBonds(bonds(), modifier->bondsDisplay());
 
-	size_t bondsCount = bonds()->size();
+	size_t bondsCount = bonds().size();
 	output.attributes().insert(QStringLiteral("CreateBonds.num_bonds"), QVariant::fromValue(bondsCount));
 
 	// If the number of bonds is unusually high, we better turn off bonds display to prevent the program from freezing.

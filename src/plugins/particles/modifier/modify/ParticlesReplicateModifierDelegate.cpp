@@ -22,7 +22,6 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
-#include <plugins/particles/objects/BondsObject.h>
 #include <plugins/particles/objects/BondProperty.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
@@ -62,11 +61,11 @@ PipelineStatus ParticlesReplicateModifierDelegate::apply(Modifier* modifier, con
 
 	Box3I newImages = mod->replicaRange();
 
-	// Enlarge particle property arrays.
+	// Extend particle property arrays.
 	size_t oldParticleCount = pih.inputParticleCount();
 	size_t newParticleCount = oldParticleCount * numCopies;
-
 	poh.setOutputParticleCount(newParticleCount);
+
 	const AffineTransformation& simCell = pih.expectSimulationCell()->cellMatrix();
 
 	// Replicate particle property values.
@@ -116,77 +115,72 @@ PipelineStatus ParticlesReplicateModifierDelegate::apply(Modifier* modifier, con
 	}
 
 	// Replicate bonds.
-	size_t oldBondCount = 0;
-	size_t newBondCount = 0;
-	for(DataObject* obj : output.objects()) {
-		OORef<BondsObject> existingBonds = dynamic_object_cast<BondsObject>(obj);
-		if(!existingBonds)
-			continue;
+	if(OORef<BondProperty> oldTopology = BondProperty::findInState(input, BondProperty::TopologyProperty)) {
 
-		// Create modifiable copy.
-		BondsObject* newBonds = poh.cloneIfNeeded(existingBonds.get());
+		size_t oldBondCount = pih.inputBondCount();
+		size_t newBondCount = oldBondCount * numCopies;
+		poh.setOutputBondCount(newBondCount);
 
-		// Duplicate bonds and adjust particle indices and PBC shift vectors as needed.
-		// Some bonds may no longer cross periodic boundaries.
-		oldBondCount = newBonds->storage()->size();
-		newBondCount = oldBondCount * numCopies;
-		newBonds->modifiableStorage()->resize(newBondCount);
-		auto outBond = newBonds->modifiableStorage()->begin();
-		Point3I image;
-		for(image[0] = newImages.minc.x(); image[0] <= newImages.maxc.x(); image[0]++) {
-			for(image[1] = newImages.minc.y(); image[1] <= newImages.maxc.y(); image[1]++) {
-				for(image[2] = newImages.minc.z(); image[2] <= newImages.maxc.z(); image[2]++) {
-					auto inBond = existingBonds->storage()->cbegin();
-					for(size_t bindex = 0; bindex < oldBondCount; bindex++, ++inBond, ++outBond) {
-						Point3I newImage;
-						Vector_3<int8_t> newShift;
-						for(size_t dim = 0; dim < 3; dim++) {
-							int i = image[dim] + (int)inBond->pbcShift[dim] - newImages.minc[dim];
-							newImage[dim] = SimulationCell::modulo(i, nPBC[dim]) + newImages.minc[dim];
-							newShift[dim] = i >= 0 ? (i / nPBC[dim]) : ((i-nPBC[dim]+1) / nPBC[dim]);
-							if(!mod->adjustBoxSize())
-								newShift[dim] *= nPBC[dim];
+		OORef<BondProperty> oldPeriodicImages = BondProperty::findInState(input, BondProperty::PeriodicImageProperty);
+
+		// Replicate bond property values.
+		for(DataObject* obj : output.objects()) {
+			OORef<BondProperty> existingProperty = dynamic_object_cast<BondProperty>(obj);
+			if(!existingProperty || existingProperty->size() != oldBondCount)
+				continue;
+
+			// Create modifiable copy.
+			BondProperty* newProperty = poh.cloneIfNeeded(existingProperty.get());
+			newProperty->resize(newBondCount, false);
+
+			size_t destinationIndex = 0;
+			Point3I image;
+			for(image[0] = newImages.minc.x(); image[0] <= newImages.maxc.x(); image[0]++) {
+				for(image[1] = newImages.minc.y(); image[1] <= newImages.maxc.y(); image[1]++) {
+					for(image[2] = newImages.minc.z(); image[2] <= newImages.maxc.z(); image[2]++) {
+						if(newProperty->type() == BondProperty::TopologyProperty) {
+							// Special handling for the topology property.
+							for(size_t bindex = 0; bindex < oldBondCount; bindex++, destinationIndex++) {
+								Point3I newImage;
+								for(size_t dim = 0; dim < 3; dim++) {
+									int i = image[dim] + (oldPeriodicImages ? oldPeriodicImages->getIntComponent(bindex, dim) : 0) - newImages.minc[dim];
+									newImage[dim] = SimulationCell::modulo(i, nPBC[dim]) + newImages.minc[dim];
+								}
+								OVITO_ASSERT(newImage.x() >= newImages.minc.x() && newImage.x() <= newImages.maxc.x());
+								OVITO_ASSERT(newImage.y() >= newImages.minc.y() && newImage.y() <= newImages.maxc.y());
+								OVITO_ASSERT(newImage.z() >= newImages.minc.z() && newImage.z() <= newImages.maxc.z());
+								size_t imageIndex1 =   ((image.x()-newImages.minc.x()) * nPBC[1] * nPBC[2])
+													+ ((image.y()-newImages.minc.y()) * nPBC[2])
+													+  (image.z()-newImages.minc.z());
+								size_t imageIndex2 =   ((newImage.x()-newImages.minc.x()) * nPBC[1] * nPBC[2])
+													+ ((newImage.y()-newImages.minc.y()) * nPBC[2])
+													+  (newImage.z()-newImages.minc.z());
+								newProperty->setInt64Component(destinationIndex, 0, existingProperty->getInt64Component(bindex, 0) + imageIndex1 * oldParticleCount);
+								newProperty->setInt64Component(destinationIndex, 1, existingProperty->getInt64Component(bindex, 1) + imageIndex2 * oldParticleCount);
+								OVITO_ASSERT(newProperty->getInt64Component(destinationIndex, 0) < newParticleCount);
+								OVITO_ASSERT(newProperty->getInt64Component(destinationIndex, 1) < newParticleCount);
+							}
 						}
-						OVITO_ASSERT(newImage.x() >= newImages.minc.x() && newImage.x() <= newImages.maxc.x());
-						OVITO_ASSERT(newImage.y() >= newImages.minc.y() && newImage.y() <= newImages.maxc.y());
-						OVITO_ASSERT(newImage.z() >= newImages.minc.z() && newImage.z() <= newImages.maxc.z());
-						size_t imageIndex1 =   ((image.x()-newImages.minc.x()) * nPBC[1] * nPBC[2])
-										 	 + ((image.y()-newImages.minc.y()) * nPBC[2])
-											 +  (image.z()-newImages.minc.z());
-						size_t imageIndex2 =   ((newImage.x()-newImages.minc.x()) * nPBC[1] * nPBC[2])
-										 	 + ((newImage.y()-newImages.minc.y()) * nPBC[2])
-											 +  (newImage.z()-newImages.minc.z());
-						outBond->pbcShift = newShift;
-						outBond->index1 = inBond->index1 + imageIndex1 * oldParticleCount;
-						outBond->index2 = inBond->index2 + imageIndex2 * oldParticleCount;
-						OVITO_ASSERT(outBond->index1 < newParticleCount);
-						OVITO_ASSERT(outBond->index2 < newParticleCount);
+						else if(newProperty->type() == BondProperty::PeriodicImageProperty) {
+							// Special handling for the PBC shift vector property.
+							for(size_t bindex = 0; bindex < oldBondCount; bindex++, destinationIndex++) {
+								Vector3I newShift;
+								for(size_t dim = 0; dim < 3; dim++) {
+									int i = image[dim] + (oldPeriodicImages ? oldPeriodicImages->getIntComponent(bindex, dim) : 0) - newImages.minc[dim];
+									newShift[dim] = i >= 0 ? (i / nPBC[dim]) : ((i-nPBC[dim]+1) / nPBC[dim]);
+									if(!mod->adjustBoxSize())
+										newShift[dim] *= nPBC[dim];
+								}
+								newProperty->setVector3I(destinationIndex, newShift);
+							}
+						}
+						else {
+							// Simply duplicate data for other properties.
+							memcpy((char*)newProperty->data() + (destinationIndex * newProperty->stride()),
+									existingProperty->constData(), newProperty->stride() * oldBondCount);
+							destinationIndex += oldBondCount;
+						}
 					}
-				}
-			}
-		}
-	}
-
-	// Replicate bond property values.
-	for(DataObject* obj : output.objects()) {
-		OORef<BondProperty> existingProperty = dynamic_object_cast<BondProperty>(obj);
-		if(!existingProperty || existingProperty->size() != oldBondCount)
-			continue;
-
-		// Create modifiable copy.
-		BondProperty* newProperty = poh.cloneIfNeeded(existingProperty.get());
-		newProperty->resize(newBondCount, false);
-
-		size_t destinationIndex = 0;
-		for(int imageX = newImages.minc.x(); imageX <= newImages.maxc.x(); imageX++) {
-			for(int imageY = newImages.minc.y(); imageY <= newImages.maxc.y(); imageY++) {
-				for(int imageZ = newImages.minc.z(); imageZ <= newImages.maxc.z(); imageZ++) {
-
-					// Duplicate property data.
-					memcpy((char*)newProperty->data() + (destinationIndex * newProperty->stride()),
-							existingProperty->constData(), newProperty->stride() * oldBondCount);
-
-					destinationIndex += oldBondCount;
 				}
 			}
 		}

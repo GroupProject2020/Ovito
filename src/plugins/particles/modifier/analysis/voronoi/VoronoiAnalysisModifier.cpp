@@ -23,7 +23,7 @@
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <plugins/particles/util/NearestNeighborFinder.h>
-#include <plugins/particles/objects/BondsObject.h>
+#include <plugins/particles/objects/BondProperty.h>
 #include <core/utilities/concurrent/ParallelFor.h>
 #include <core/utilities/units/UnitsManager.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
@@ -211,18 +211,18 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 						coordNumber++;
 						if(faceOrder > localMaxFaceOrder)
 							localMaxFaceOrder = faceOrder;
-						if(_results->bonds() && neighbor_id >= 0 && neighbor_id != index) {
+						if(_computeBonds && neighbor_id >= 0 && neighbor_id != index) {
 							OVITO_ASSERT(neighbor_id < _positions->size());
 							Vector3 delta = _positions->getPoint3(index) - _positions->getPoint3(neighbor_id);
-							Vector_3<int8_t> pbcShift = Vector_3<int8_t>::Zero();
+							Vector3I pbcShift = Vector3I::Zero();
 							for(size_t dim = 0; dim < 3; dim++) {
 								if(_simCell.pbcFlags()[dim])
-									pbcShift[dim] = (int8_t)floor(_simCell.inverseMatrix().prodrow(delta, dim) + FloatType(0.5));
+									pbcShift[dim] = (int)floor(_simCell.inverseMatrix().prodrow(delta, dim) + FloatType(0.5));
 							}
 							Bond bond = { index, (size_t)neighbor_id, pbcShift };
 							if(bond.isOdd()) continue;
 							QMutexLocker locker(mutex);
-							_results->bonds()->push_back(bond);
+							_results->bonds().push_back(bond);
 						}
 						faceOrder--;
 						if(_results->voronoiIndices() && faceOrder < (int)_results->voronoiIndices()->componentCount())
@@ -518,7 +518,7 @@ PipelineFlowState VoronoiAnalysisModifier::VoronoiAnalysisResults::apply(TimePoi
 						"Voronoi cell volume sum: %2").arg(simulationBoxVolume()).arg(voronoiVolumeSum())));
 	}
 
-	if(bonds() && modifier->computeBonds()) {
+	if(modifier->computeBonds()) {
 		// Insert output object into the pipeline.
 		poh.addBonds(bonds(), modifier->bondsDisplay());
 	}

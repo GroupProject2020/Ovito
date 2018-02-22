@@ -25,7 +25,6 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/particles/objects/BondProperty.h>
-#include <plugins/particles/objects/BondsObject.h>
 #include <plugins/stdmod/modifiers/AssignColorModifier.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
@@ -125,7 +124,7 @@ class BondsAssignColorModifierDelegate : public AssignColorModifierDelegate
 
 		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
 		virtual bool isApplicableTo(const PipelineFlowState& input) const override {
-			return input.findObject<BondsObject>() != nullptr;
+			return input.findObject<BondProperty>() != nullptr;
 		}
 
 		/// The name by which Python scripts can refer to this modifier delegate.

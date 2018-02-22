@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/BondsObject.h>
 #include <plugins/particles/objects/BondsDisplay.h>
 #include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/ParticleBondMap.h>
 #include <core/dataset/DataSet.h>
 #include "ParticleOutputHelper.h"
 
@@ -36,7 +36,7 @@ ParticleOutputHelper::ParticleOutputHelper(DataSet* dataset, PipelineFlowState& 
 {
 	// Find the 'Position' particle property and optionally a BondsObject in the input flow state.
 	ParticleProperty* posProperty = nullptr;
-	BondsObject* bondsObj = nullptr;
+	BondProperty* topologyProperty = nullptr;
 	for(DataObject* obj : output.objects()) {
 		if(ParticleProperty* p = dynamic_object_cast<ParticleProperty>(obj)) {
 			if(p->type() == ParticleProperty::PositionProperty) {
@@ -45,14 +45,16 @@ ParticleOutputHelper::ParticleOutputHelper(DataSet* dataset, PipelineFlowState& 
 				posProperty = p;
 			}
 		}
-		else if(BondsObject* b = dynamic_object_cast<BondsObject>(obj)) {
-			if(bondsObj)
-				dataset->throwException(PropertyObject::tr("Detected invalid modifier input. Its contains multiple bonds arrays."));
-			bondsObj = b;
+		else if(BondProperty* p = dynamic_object_cast<BondProperty>(obj)) {
+			if(p->type() == BondProperty::TopologyProperty) {
+				if(topologyProperty)
+					dataset->throwException(PropertyObject::tr("Detected invalid modifier input. There are multiple bond topology properties."));
+				topologyProperty = p;
+			}
 		}
 	}
 	_outputParticleCount = (posProperty != nullptr) ? posProperty->size() : 0;
-	_outputBondCount = (bondsObj != nullptr) ? bondsObj->size() : 0;	
+	_outputBondCount = (topologyProperty != nullptr) ? topologyProperty->size() : 0;
 	
 	// Verify input, make sure array lengths of particle properties are consistent.
 	for(DataObject* obj : output.objects()) {
@@ -93,29 +95,46 @@ size_t ParticleOutputHelper::deleteParticles(const boost::dynamic_bitset<>& mask
 		}
 	}
 
-	// Delete dangling bonds, i.e. those that are incident on a deleted particle.
-	boost::dynamic_bitset<> deletedBondsMask;
-	size_t newBondCount = 0;
-	size_t oldBoundCount = outputBondCount();
-	for(DataObject* obj : output().objects()) {
-		if(BondsObject* existingBondsObject = dynamic_object_cast<BondsObject>(obj)) {
-			// Create copy of bonds object.
-			BondsObject* newBondsObject = cloneIfNeeded(existingBondsObject);
-			// Remap particle indices of stored bonds and remove dangling bonds.
-			deletedBondsMask = newBondsObject->particlesDeleted(mask);
-			newBondCount = newBondsObject->size();
-		}
-	}
-	_outputBondCount = newBondCount;
+	// Delete dangling bonds, i.e. those that are incident on deleted particles.
+	if(BondProperty* topologyProperty = BondProperty::findInState(output(), BondProperty::TopologyProperty)) {
 
-	// Filter bond properties.
-	for(DataObject* outobj : output().objects()) {
-		if(BondProperty* existingProperty = dynamic_object_cast<BondProperty>(outobj)) {
-			OVITO_ASSERT(existingProperty->size() == oldBoundCount);
-			BondProperty* newProperty = cloneIfNeeded(existingProperty);
-			newProperty->filterResize(deletedBondsMask);
-			OVITO_ASSERT(newProperty->size() == newBondCount);
+		boost::dynamic_bitset<> deletedBondsMask(topologyProperty->size());
+		size_t newBondCount = 0;
+		size_t oldBondCount = outputBondCount();
+		OVITO_ASSERT(oldBondCount == topologyProperty->size());
+
+		// Build map from old particle indices to new indices.
+		std::vector<size_t> indexMap(oldParticleCount);
+		auto index = indexMap.begin();
+		size_t count = 0;
+		for(size_t i = 0; i < oldParticleCount; i++)
+			*index++ = mask.test(i) ? std::numeric_limits<size_t>::max() : count++;
+
+		// Remap particle indices of stored bonds and remove dangling bonds.
+		BondProperty* newTopology = cloneIfNeeded(topologyProperty);
+		for(size_t bondIndex = 0; bondIndex < oldBondCount; bondIndex++) {
+			size_t index1 = newTopology->getInt64Component(bondIndex, 0);
+			size_t index2 = newTopology->getInt64Component(bondIndex, 1);
+
+			// Remove invalid bonds, i.e. whose particle indices are out of bounds.
+			if(index1 >= oldParticleCount || index2 >= oldParticleCount) {
+				deletedBondsMask.set(bondIndex);
+				continue;
+			}
+
+			// Remove dangling bonds whose particles have gone.
+			if(mask.test(index1) || mask.test(index2)) {
+				deletedBondsMask.set(bondIndex);
+				continue;
+			}
+
+			// Keep bond and remap particle indices.
+			newTopology->setInt64Component(bondIndex, 0, indexMap[index1]);
+			newTopology->setInt64Component(bondIndex, 1, indexMap[index2]);
 		}
+
+		// Delete the marked bonds.
+		deleteBonds(deletedBondsMask);
 	}
 
 	return deleteCount;
@@ -124,83 +143,116 @@ size_t ParticleOutputHelper::deleteParticles(const boost::dynamic_bitset<>& mask
 /******************************************************************************
 * Adds a set of new bonds to the system.
 ******************************************************************************/
-BondsObject* ParticleOutputHelper::addBonds(const BondsPtr& newBonds, BondsDisplay* bondsDisplay, const std::vector<PropertyPtr>& bondProperties)
+void ParticleOutputHelper::addBonds(const std::vector<Bond>& newBonds, BondsDisplay* bondsDisplay, const std::vector<PropertyPtr>& bondProperties)
 {
-	OVITO_ASSERT(newBonds);
-
-	// Check if there is an existing bonds object coming from upstream.
-	OORef<BondsObject> bondsObj = output().findObject<BondsObject>();
-	if(!bondsObj) {
+	// Check if there are existing bonds.
+	OORef<BondProperty> existingBondsTopology = BondProperty::findInState(output(), BondProperty::TopologyProperty);
+	if(!existingBondsTopology) {
 		OVITO_ASSERT(outputBondCount() == 0);
 
-		// Create a new output data object.
-		bondsObj = new BondsObject(dataset());
-		bondsObj->setStorage(newBonds);
-		if(bondsDisplay)
-			bondsObj->setDisplayObject(bondsDisplay);
+		// Create essential bond properties.
+		PropertyPtr topologyProperty = BondProperty::createStandardStorage(newBonds.size(), BondProperty::TopologyProperty, false);
+		PropertyPtr periodicImageProperty = BondProperty::createStandardStorage(newBonds.size(), BondProperty::PeriodicImageProperty, false);
 
-		// Insert output object into the pipeline.
-		output().addObject(bondsObj);
-		_outputBondCount = newBonds->size();
-
-		// Insert bond properties.
-		for(const auto& bprop : bondProperties) {
-			OVITO_ASSERT(bprop->size() == newBonds->size());
-			outputProperty<BondProperty>(bprop);
+		// Copy data into property arrays.
+		auto t = topologyProperty->dataInt64();
+		auto pbc = periodicImageProperty->dataVector3I();
+		for(const Bond& bond : newBonds) {
+			*t++ = bond.index1;
+			*t++ = bond.index2;
+			*pbc++ = bond.pbcShift;
 		}
 
-		return bondsObj;
+		// Insert property objects into the output pipeline state.
+		OORef<BondProperty> topologyPropertyObj = BondProperty::createFromStorage(dataset(), topologyProperty);
+		OORef<BondProperty> periodicImagePropertyObj = BondProperty::createFromStorage(dataset(), periodicImageProperty);
+		if(bondsDisplay)
+			topologyPropertyObj->setDisplayObject(bondsDisplay);
+		output().addObject(topologyPropertyObj);
+		output().addObject(periodicImagePropertyObj);
+		setOutputBondCount(newBonds.size());
+
+		// Insert other bond properties.
+		for(const auto& bprop : bondProperties) {
+			OVITO_ASSERT(bprop->size() == newBonds.size());
+			OVITO_ASSERT(bprop->type() != BondProperty::TopologyProperty);
+			OVITO_ASSERT(bprop->type() != BondProperty::PeriodicImageProperty);
+			outputProperty<BondProperty>(bprop);
+		}
 	}
 	else {
 
-		// Duplicate the existing bonds object and append the newly created bonds to it.
-		OORef<BondsObject> bondsObjCopy = cloneHelper().cloneObject(bondsObj, false);
-		BondsStorage* bonds = bondsObjCopy->modifiableStorage().get();
-		OVITO_ASSERT(bonds != nullptr);
-
 		// This is needed to determine which bonds already exist.
-		ParticleBondMap bondMap(*bondsObj->storage());
+		OORef<BondProperty> existingPeriodicImages = BondProperty::findInState(output(), BondProperty::PeriodicImageProperty);
+		ParticleBondMap bondMap(existingBondsTopology->storage(), existingPeriodicImages ? existingPeriodicImages->storage() : nullptr);
 
-		// Add bonds one by one.
-		size_t originalBondCount = bonds->size();
-		std::vector<int> mapping(newBonds->size());
-		for(size_t bondIndex = 0; bondIndex < newBonds->size(); bondIndex++) {
+		// Check which bonds are new and need to be merged.
+		size_t originalBondCount = existingBondsTopology->size();
+		std::vector<size_t> mapping(newBonds.size());
+		for(size_t bondIndex = 0; bondIndex < newBonds.size(); bondIndex++) {
 			// Check if there is already a bond like this.
-			const Bond& bond = (*newBonds)[bondIndex];
+			const Bond& bond = newBonds[bondIndex];
 			auto existingBondIndex = bondMap.findBond(bond);
 			if(existingBondIndex == originalBondCount) {
-				// Create new bond.
-				bonds->push_back(bond);
+				// It's a new bond.
 				mapping[bondIndex] = _outputBondCount;
 				_outputBondCount++;
 			}
 			else {
+				// It's an already existing bond.
 				mapping[bondIndex] = existingBondIndex;
 			}
 		}
 
-		// Replace original bonds object with the extended one.
-		output().replaceObject(bondsObj, bondsObjCopy);
+		// Duplicate the existing property objects.
+		OORef<BondProperty> newBondsTopology = cloneHelper().cloneObject(existingBondsTopology, false);
+		output().replaceObject(existingBondsTopology, newBondsTopology);
+
+		OORef<BondProperty> newBondsPeriodicImages;
+		if(OORef<BondProperty> existingBondsPeriodicImages = BondProperty::findInState(output(), BondProperty::PeriodicImageProperty)) {
+			newBondsPeriodicImages = cloneHelper().cloneObject(existingBondsPeriodicImages, false);
+			output().replaceObject(existingBondsPeriodicImages, newBondsPeriodicImages);
+		}
+		else {
+			newBondsPeriodicImages = BondProperty::createFromStorage(dataset(), BondProperty::createStandardStorage(outputBondCount(), BondProperty::PeriodicImageProperty, true));
+			output().addObject(newBondsPeriodicImages);
+		}
+
+		// Copy bonds information into the extended arrays.
+		newBondsTopology->resize(outputBondCount(), true);
+		newBondsPeriodicImages->resize(outputBondCount(), true);
+		for(size_t bondIndex = 0; bondIndex < newBonds.size(); bondIndex++) {
+			if(mapping[bondIndex] >= originalBondCount) {
+				const Bond& bond = newBonds[bondIndex];
+				newBondsTopology->setInt64Component(mapping[bondIndex], 0, bond.index1);
+				newBondsTopology->setInt64Component(mapping[bondIndex], 1, bond.index2);
+				newBondsPeriodicImages->setVector3I(mapping[bondIndex], bond.pbcShift);
+			}
+		}
 
 		// Extend existing bond property arrays.
 		for(DataObject* outobj : output().objects()) {
-			BondProperty* originalBondPropertyObject = dynamic_object_cast<BondProperty>(outobj);
-			if(!originalBondPropertyObject || originalBondPropertyObject->size() != originalBondCount)
-				continue;
+			if(BondProperty* originalBondPropertyObject = dynamic_object_cast<BondProperty>(outobj)) {
+				if(originalBondPropertyObject == newBondsTopology) continue;
+				if(originalBondPropertyObject == newBondsPeriodicImages) continue;
+				if(originalBondPropertyObject->size() != originalBondCount) continue;
 
-			// Create a modifiable copy.
-			OORef<BondProperty> newBondPropertyObject = cloneHelper().cloneObject(originalBondPropertyObject, false);
+				// Create a modifiable copy.
+				OORef<BondProperty> newBondPropertyObject = cloneHelper().cloneObject(originalBondPropertyObject, false);
 
-			// Extend array.
-			newBondPropertyObject->resize(outputBondCount(), true);
+				// Extend array.
+				newBondPropertyObject->resize(outputBondCount(), true);
 
-			// Replace bond property in pipeline flow state.
-			output().replaceObject(originalBondPropertyObject, newBondPropertyObject);
+				// Replace bond property in pipeline flow state.
+				output().replaceObject(originalBondPropertyObject, newBondPropertyObject);
+			}
 		}
 
-		// Insert new bond properties.
+		// Merge new bond properties.
 		for(const auto& bprop : bondProperties) {
-			OVITO_ASSERT(bprop->size() == newBonds->size());
+			OVITO_ASSERT(bprop->size() == newBonds.size());
+			OVITO_ASSERT(bprop->type() != BondProperty::TopologyProperty);
+			OVITO_ASSERT(bprop->type() != BondProperty::PeriodicImageProperty);
 
 			OORef<BondProperty> propertyObject;
 
@@ -216,8 +268,6 @@ BondsObject* ParticleOutputHelper::addBonds(const BondsPtr& newBonds, BondsDispl
 			// Copy bond property data.
 			propertyObject->modifiableStorage()->mappedCopy(*bprop, mapping);
 		}
-
-		return bondsObjCopy;
 	}
 }
 
@@ -235,8 +285,6 @@ size_t ParticleOutputHelper::deleteBonds(const boost::dynamic_bitset<>& mask)
 	if(deleteCount == 0)
 		return 0;	// Nothing to delete.
 
-	_outputBondCount = newBondCount;
-
 	// Modify bond properties and the BondsObject.
 	for(DataObject* obj : output().objects()) {
 		if(BondProperty* existingProperty = dynamic_object_cast<BondProperty>(obj)) {
@@ -245,14 +293,8 @@ size_t ParticleOutputHelper::deleteBonds(const boost::dynamic_bitset<>& mask)
 			newProperty->filterResize(mask);
 			OVITO_ASSERT(newProperty->size() == newBondCount);
 		}
-		else if(BondsObject* existingBondsObject = dynamic_object_cast<BondsObject>(obj)) {
-			// Create copy of bonds object.
-			BondsObject* newBondsObject = cloneIfNeeded(existingBondsObject);
-			newBondsObject->filterResize(mask);
-			OVITO_ASSERT(newBondCount == newBondsObject->size());
-		}
 	}
-	_outputBondCount = newBondCount;
+	setOutputBondCount(newBondCount);
 
 	return deleteCount;
 }

@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/BondsStorage.h>
+#include <plugins/particles/objects/BondProperty.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
@@ -183,16 +183,16 @@ private:
 	public:
 
 		/// Constructor.
-		ExpandSelectionBondedEngine(ConstPropertyPtr positions, const SimulationCell& simCell, ConstPropertyPtr inputSelection, int numIterations, ConstBondsPtr bonds) :
+		ExpandSelectionBondedEngine(ConstPropertyPtr positions, const SimulationCell& simCell, ConstPropertyPtr inputSelection, int numIterations, ConstPropertyPtr bondTopology) :
 			ExpandSelectionEngine(std::move(positions), simCell, std::move(inputSelection), numIterations), 
-			_bonds(std::move(bonds)) {}
+			_bondTopology(std::move(bondTopology)) {}
 
 		/// Expands the selection by one step.
 		virtual void expandSelection() override;
 
 	private:
 
-		const ConstBondsPtr _bonds;
+		const ConstPropertyPtr _bondTopology;
 	};
 
 private:

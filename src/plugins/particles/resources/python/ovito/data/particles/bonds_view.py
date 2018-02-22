@@ -15,18 +15,17 @@ from ovito.plugins.PyScript import CloneHelper
 
 # Load the native code module
 from ovito.plugins.Particles import BondProperty
-from .bonds import Bonds
 
-# Helper class used to implement the DataCollection.bond_properties attribute.
-class BondPropertiesView(collections.Mapping):
+# Helper class that is part of the implementation of the DataCollection.bonds attribute.
+class BondsView(collections.Mapping):
     """
     A dictionary view of all :py:class:`BondProperty` objects in a :py:class:`DataCollection`.
-    An instance of this class is returned by :py:attr:`DataCollection.bond_properties`.
+    An instance of this class is returned by :py:attr:`DataCollection.bonds`.
 
     It implements the ``collections.abc.Mapping`` interface. That means it can be used
     like a standard read-only Python ``dict`` object to access the bond properties by name, e.g.:
 
-    .. literalinclude:: ../example_snippets/bond_properties_view.py
+    .. literalinclude:: ../example_snippets/bonds_view.py
         :lines: 8-12
 
     New bond properties can be added with the :py:meth:`create` method.
@@ -72,19 +71,19 @@ class BondPropertiesView(collections.Mapping):
         The method can create *standard* and *user-defined* bond properties. To create a *standard* bond property,
         one of the :ref:`standard property names <bond-types-list>` must be provided as *name* argument:
         
-        .. literalinclude:: ../example_snippets/bond_properties_view.py
+        .. literalinclude:: ../example_snippets/bonds_view.py
             :lines: 15-17
         
         The size of the provided *data* array must match the number of bond in the data collection, i.e., 
         it must equal the length of the :py:class:`Bonds` objects as well as all other bond properties that already exist in the same data collection.
         Alternatively, you can set the property values after construction: 
 
-        .. literalinclude:: ../example_snippets/bond_properties_view.py
+        .. literalinclude:: ../example_snippets/bonds_view.py
             :lines: 23-25
 
         To create a *user-defined* bond property, use a non-standard property name:
         
-        .. literalinclude:: ../example_snippets/bond_properties_view.py
+        .. literalinclude:: ../example_snippets/bonds_view.py
             :lines: 29-30
         
         In this case the data type and the number of vector components of the new property are inferred from
@@ -93,7 +92,7 @@ class BondPropertiesView(collections.Mapping):
         Alternatively, the *dtype* and *components* parameters can be specified explicitly
         if initialization of the property values should happen after property creation:
 
-        .. literalinclude:: ../example_snippets/bond_properties_view.py
+        .. literalinclude:: ../example_snippets/bonds_view.py
             :lines: 34-36
 
         If the property to be created already exists in the data collection, it is replaced with a new one.
@@ -207,3 +206,29 @@ class BondPropertiesView(collections.Mapping):
         
         return prop
 
+    # This is here for backward compatibility with OVITO 2.9.0.
+    @property
+    def pbc_vectors(self):
+        # A NumPy array providing read access to the PBC shift vectors of bonds.
+            
+        # The returned array's shape is *N x 3*, where *N* is the number of bonds. It contains the
+        # periodic shift vector for each bond.
+            
+        # A PBC shift vector consists of three integers, which specify how many times (and in which direction)
+        # the corresonding bond crosses the periodic boundaries of the simulation cell when going from the first particle 
+        # to the second. For example, a shift vector (0,-1,0)
+        # indicates that the bond crosses the periodic boundary in the negative Y direction 
+        # once. In other words, the particle where the bond originates from is located
+        # close to the lower edge of the simulation cell in the Y direction while the second particle is located 
+        # close to the opposite side of the box.
+            
+        # The PBC shift vectors are important for visualizing the bonds between particles with wrapped coordinates, 
+        # which are located on opposite sides of a periodic cell. When the PBC shift vector of a bond is (0,0,0), OVITO assumes that 
+        # both particles connected by the bond are part of the same periodic image and the bond is rendered such that
+        # it directly connects the two particles without going through a cell boundary.        
+        return numpy.asarray(self['Periodic Image'])
+
+    # This is here for backward compatibility with OVITO 2.9.0.
+    @property
+    def array(self):
+        return numpy.asarray(self['Topology'])

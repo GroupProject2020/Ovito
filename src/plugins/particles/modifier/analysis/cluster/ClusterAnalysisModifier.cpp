@@ -20,7 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/BondsObject.h>
+#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/ParticleBondMap.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
@@ -81,8 +82,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ClusterAnalysisModifier::createEn
 		return std::make_shared<CutoffClusterAnalysisEngine>(posProperty->storage(), inputCell->data(), sortBySize(), std::move(selectionProperty), cutoff());
 	}
 	else if(neighborMode() == Bonding) {
-		BondsObject* bonds = pih.expectBonds();
-		return std::make_shared<BondClusterAnalysisEngine>(posProperty->storage(), inputCell->data(), sortBySize(), std::move(selectionProperty), bonds->storage());
+		return std::make_shared<BondClusterAnalysisEngine>(posProperty->storage(), inputCell->data(), sortBySize(), std::move(selectionProperty), pih.expectBonds()->storage());
 	}
 	else {
 		throwException(tr("Invalid cluster neighbor mode"));
@@ -202,7 +202,7 @@ void ClusterAnalysisModifier::BondClusterAnalysisEngine::doClustering()
 	setProgressMaximum(particleCount);
 
 	// Prepare particle bond map.
-	ParticleBondMap bondMap(*bonds());
+	ParticleBondMap bondMap(bondTopology());
 
 	PropertyStorage& particleClusters = *_results->particleClusters();
 	
@@ -238,9 +238,9 @@ void ClusterAnalysisModifier::BondClusterAnalysisEngine::doClustering()
 
 			// Iterate over all bonds of the current particle.
 			for(size_t neighborBondIndex : bondMap.bondIndicesOfParticle(currentParticle)) {
-				const Bond& neighborBond = (*bonds())[neighborBondIndex];
-				OVITO_ASSERT(neighborBond.index1 == currentParticle || neighborBond.index2 == currentParticle);
-				size_t neighborIndex = (neighborBond.index1 == currentParticle) ? neighborBond.index2 : neighborBond.index1;
+				OVITO_ASSERT(bondTopology()->getInt64Component(neighborBondIndex, 0) == currentParticle || bondTopology()->getInt64Component(neighborBondIndex, 1) == currentParticle);
+				size_t neighborIndex = bondTopology()->getInt64Component(neighborBondIndex, 0); 
+				if(neighborIndex == currentParticle) neighborIndex = bondTopology()->getInt64Component(neighborBondIndex, 1);
 				if(neighborIndex >= particleCount)
 					continue;
 				if(particleClusters.getInt64(neighborIndex) != -1) 

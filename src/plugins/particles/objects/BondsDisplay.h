@@ -28,7 +28,6 @@
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/rendering/ArrowPrimitive.h>
 #include <core/rendering/SceneRenderer.h>
-#include "BondsObject.h"
 #include "ParticleProperty.h"
 #include "BondProperty.h"
 
@@ -59,7 +58,7 @@ public:
 
 	/// Determines the display colors of half-bonds.
 	/// Returns an array with two colors per full bond, because the two half-bonds may have different colors.
-	std::vector<Color> halfBondColors(size_t particleCount, BondsObject* bondsObject,
+	std::vector<Color> halfBondColors(size_t particleCount, BondProperty* topologyProperty,
 			BondProperty* bondColorProperty, BondProperty* bondTypeProperty, BondProperty* bondSelectionProperty,
 			ParticleDisplay* particleDisplay, ParticleProperty* particleColorProperty, ParticleProperty* particleTypeProperty);
 
@@ -91,7 +90,8 @@ protected:
 	/// This helper structure is used to detect any changes in the input data
 	/// that require updating the geometry buffer.
 	SceneObjectCacheHelper<
-		VersionedDataObjectRef,		// The bonds data object + revision number
+		VersionedDataObjectRef,		// Bond topology property + revision number
+		VersionedDataObjectRef,		// Bond PBC vector property + revision number
 		VersionedDataObjectRef,		// Particle position property + revision number
 		VersionedDataObjectRef,		// Particle color property + revision number
 		VersionedDataObjectRef,		// Particle type property + revision number
@@ -110,7 +110,8 @@ protected:
 	/// This helper structure is used to detect changes in the input data
 	/// that require recomputing the bounding box.
 	SceneObjectCacheHelper<
-		VersionedDataObjectRef,		// The bonds data object + revision number
+		VersionedDataObjectRef,		// Bond topology property + revision number
+		VersionedDataObjectRef,		// Bond PBC vector property + revision number
 		VersionedDataObjectRef,		// Particle position property + revision number
 		VersionedDataObjectRef,		// Simulation cell + revision number
 		FloatType					// Bond width
@@ -129,7 +130,7 @@ class OVITO_PARTICLES_EXPORT BondPickInfo : public ObjectPickInfo
 public:
 
 	/// Constructor.
-	BondPickInfo(BondsObject* bondsObj, const PipelineFlowState& pipelineState) : _bondsObj(bondsObj), _pipelineState(pipelineState) {}
+	BondPickInfo(const PipelineFlowState& pipelineState) : _pipelineState(pipelineState) {}
 
 	/// The pipeline flow state containing the bonds.
 	const PipelineFlowState& pipelineState() const { return _pipelineState; }
@@ -141,9 +142,6 @@ private:
 
 	/// The pipeline flow state containing the bonds.
 	PipelineFlowState _pipelineState;
-
-	/// The bonds data object.
-	OORef<BondsObject> _bondsObj;
 };
 
 }	// End of namespace

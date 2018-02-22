@@ -165,25 +165,15 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 		gsd.readIntArray("bonds/group", frameNumber, bondList.data(), numBonds, 2);
 
 		// Convert to OVITO format.
-		frameData->setBonds(std::make_shared<BondsStorage>());
-		frameData->bonds()->reserve(numBonds);
-		for(auto b = bondList.cbegin(); b != bondList.cend(); ) {
-			size_t atomIndex1 = *b++;
-			size_t atomIndex2 = *b++;
-			if(atomIndex1 >= numParticles || atomIndex2 >= numParticles)
+		PropertyPtr bondTopologyProperty = BondProperty::createStandardStorage(numBonds, BondProperty::TopologyProperty, false);
+		frameData->addBondProperty(bondTopologyProperty);
+		auto bondTopoPtr = bondTopologyProperty->dataInt64();
+		for(auto b = bondList.cbegin(); b != bondList.cend(); ++b, ++bondTopoPtr) {
+			if(*b >= numParticles)
 				throw Exception(tr("Nonexistent atom tag in bond list in GSD file."));
-
-			// Use minimum image convention to determine PBC shift vector of the bond.
-			Vector3 delta = frameData->simulationCell().absoluteToReduced(posProperty->getPoint3(atomIndex2) - posProperty->getPoint3(atomIndex1));
-			Vector_3<int8_t> shift = Vector_3<int8_t>::Zero();
-			for(size_t dim = 0; dim < 3; dim++) {
-				if(frameData->simulationCell().pbcFlags()[dim])
-					shift[dim] -= (int8_t)floor(delta[dim] + FloatType(0.5));
-			}
-
-			// Create a bond.
-			frameData->bonds()->push_back({ atomIndex1, atomIndex2, shift });
+			*bondTopoPtr = *b;
 		}
+		frameData->generateBondPeriodicImageProperty();
 
 		// Read bond types.
 		if(gsd.hasChunk("bonds/types", frameNumber)) {

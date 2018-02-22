@@ -187,7 +187,7 @@ bool CutoffNeighborFinder::prepare(FloatType cutoffRadius, const PropertyStorage
 						shift = -(binLocation[k]+1)/binDim[k]+1;
 					else
 						shift = -binLocation[k]/binDim[k];
-					a.pbcShift[k] = (int8_t)shift;
+					a.pbcShift[k] = shift;
 					a.pos += (FloatType)shift * simCell.matrix().column(k);
 					binLocation[k] = SimulationCell::modulo(binLocation[k], binDim[k]);
 				}
@@ -247,7 +247,7 @@ void CutoffNeighborFinder::Query::next()
 			_neighborIndex = _neighbor - _builder.particles.data();
 			_neighbor = _neighbor->nextInBin;
 			_distsq = _delta.squaredLength();
-			if(_distsq <= _builder._cutoffRadiusSquared && (_neighborIndex != _centerIndex || _pbcShift != Vector_3<int8_t>::Zero()))
+			if(_distsq <= _builder._cutoffRadiusSquared && (_neighborIndex != _centerIndex || _pbcShift != Vector3I::Zero()))
 				return;
 		};
 
@@ -272,17 +272,13 @@ void CutoffNeighborFinder::Query::next()
 				else {
 					if(_currentBin[k] >= _builder.binDim[k]) {
 						int s = _currentBin[k] / _builder.binDim[k];
-						if(s > std::numeric_limits<int8_t>::max())
-							throw Exception(QString("Periodic simulation cell is too small or cutoff radius is too large to generate neighbor lists."));
-						_pbcShift[k] = (int8_t)s;
+						_pbcShift[k] = s;
 						_currentBin[k] -= s * _builder.binDim[k];
 						_shiftedCenter -= _builder.simCell.matrix().column(k) * (FloatType)s;
 					}
 					else if(_currentBin[k] < 0) {
 						int s = (_currentBin[k] - _builder.binDim[k] + 1) / _builder.binDim[k];
-						if(s < std::numeric_limits<int8_t>::lowest())
-							throw Exception(QString("Periodic simulation cell is too small or cutoff radius is too large to generate neighbor lists."));
-						_pbcShift[k] = (int8_t)s;
+						_pbcShift[k] = s;
 						_currentBin[k] -= s * _builder.binDim[k];
 						_shiftedCenter -= _builder.simCell.matrix().column(k) * (FloatType)s;
 					}

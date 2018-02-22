@@ -23,7 +23,7 @@
 #include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
 #include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
 #include <plugins/crystalanalysis/objects/patterns/StructurePattern.h>
-#include <plugins/particles/objects/BondsObject.h>
+#include <plugins/particles/objects/BondProperty.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <plugins/mesh/tri/TriMeshObject.h>
@@ -317,9 +317,6 @@ PipelineFlowState DislocationAnalysisResults::apply(TimePoint time, ModifierAppl
 	if(atomClusters())
 		poh.outputProperty<ParticleProperty>(atomClusters());
 
-	if(unassignedEdges())
-		poh.addBonds(unassignedEdges(), nullptr);
-
 	DislocationAnalysisModifierApplication* myModApp = static_object_cast<DislocationAnalysisModifierApplication>(modApp);
 	output.attributes().insert(QStringLiteral("DislocationAnalysis.total_line_length"), QVariant::fromValue(totalLineLength));
 	output.attributes().insert(QStringLiteral("DislocationAnalysis.counts.OTHER"), QVariant::fromValue(myModApp->structureCounts()[StructureAnalysis::LATTICE_OTHER]));
@@ -357,4 +354,3 @@ PipelineFlowState DislocationAnalysisResults::apply(TimePoint time, ModifierAppl
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-

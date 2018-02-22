@@ -23,8 +23,8 @@ It also provides container classes for such data objects and some additional uti
   * :py:class:`ParticleType`
   * :py:class:`BondType`
   * :py:class:`DislocationSegment`
-  * :py:class:`ParticlePropertiesView`
-  * :py:class:`BondPropertiesView`
+  * :py:class:`ParticlesView`
+  * :py:class:`BondsView`
 
 **Utility classes:**
 

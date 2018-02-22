@@ -1,39 +1,29 @@
 # Load dependencies
 import ovito
 from ovito.data import DataCollection
-from .particle_properties_view import ParticlePropertiesView
-from .bond_properties_view import BondPropertiesView
+from .particles_view import ParticlesView
+from .bonds_view import BondsView
 
 # Load the native code module
-from ovito.plugins.Particles import ParticleProperty, BondProperty, Bonds
+from ovito.plugins.Particles import ParticleProperty, BondProperty
 
-# Implementation of the DataCollection.particle_properties attribute.
-def _DataCollection_particle_properties(self):
+# Implementation of the DataCollection.particles attribute.
+def _DataCollection_particles(self):
     """
-    Returns a :py:class:`ParticlePropertiesView`, which allows accessing all :py:class:`ParticleProperty` 
-    objects stored in this data collection by name. Furthermore, it provides convenience functions
-    for adding new particle properties to the collection.
-    """     
-    return ParticlePropertiesView(self)
-DataCollection.particle_properties = property(_DataCollection_particle_properties)
+    Returns a :py:class:`ParticlesView` object representing the particles, which provides name-based access to the :py:class:`ParticleProperty` 
+    instances stored in this :py:class:`!DataCollection`. Furthermore, the view object provides convenience functions for creating new particle properties.
+    """
+    return ParticlesView(self)
+DataCollection.particles = property(_DataCollection_particles)
 
-# Implementation of the DataCollection.bond_properties attribute.
-def _DataCollection_bond_properties(self):
+# Implementation of the DataCollection.bonds attribute.
+def _DataCollection_bonds(self):
     """
-    Returns a :py:class:`BondPropertiesView`, which allows to access all :py:class:`BondProperty` 
+    Returns a :py:class:`BondsView`, which allows to access all :py:class:`BondProperty` 
     objects stored in this data collection by name. Furthermore, it provides convenience functions
     for adding new bond properties to the collection.
     """
-    return BondPropertiesView(self)
-DataCollection.bond_properties = property(_DataCollection_bond_properties)
-
-# Implementation of the DataCollection.bonds attribute.
-# Here for backward compatibility with OVITO 2.9.0.
-def _DataCollection_bonds(self):
-    # Returns the :py:class:`Bonds` data object contained in this data collection or ``None`` if
-    # there is no :py:class:`Bonds` object. Note that a data collection 
-    # may contain at most one :py:class:`Bonds` instance at a time by convention.
-    return self.find(Bonds)
+    return BondsView(self)
 DataCollection.bonds = property(_DataCollection_bonds)
 
 # Implementation of the DataCollection.number_of_particles property.
@@ -85,7 +75,7 @@ DataCollection.create_from_ase_atoms = classmethod(_DataCollection_create_from_a
 # Implementation of the DataCollection.create_particle_property() method.
 # Here only for backward compatibility with OVITO 2.9.0.
 def _DataCollection_create_particle_property(self, property_type, data = None):
-    return self.particle_properties.create(property_type, data = data)
+    return self.particles.create(property_type, data = data)
 DataCollection.create_particle_property = _DataCollection_create_particle_property
 
 # Implementation of the DataCollection.create_user_particle_property() method.
@@ -93,13 +83,13 @@ DataCollection.create_particle_property = _DataCollection_create_particle_proper
 def _DataCollection_create_user_particle_property(self, name, data_type, num_components=1, data = None):
     if data_type == 'int': data_type = int
     elif data_type == 'float': data_type = float
-    return self.particle_properties.create(name, dtype = data_type, components = num_components, data = data)
+    return self.particles.create(name, dtype = data_type, components = num_components, data = data)
 DataCollection.create_user_particle_property = _DataCollection_create_user_particle_property
 
 # Implementation of the DataCollection.create_bond_property() method.
 # Here only for backward compatibility with OVITO 2.9.0.
 def _DataCollection_create_bond_property(self, property_type, data = None):
-    return self.bond_properties.create(property_type, data = data)
+    return self.bonds.create(property_type, data = data)
 DataCollection.create_bond_property = _DataCollection_create_bond_property
 
 # Implementation of the DataCollection.create_user_bond_property() method.
@@ -107,7 +97,7 @@ DataCollection.create_bond_property = _DataCollection_create_bond_property
 def _DataCollection_create_user_bond_property(self, name, data_type, num_components=1, data = None):
     if data_type == 'int': data_type = int
     elif data_type == 'float': data_type = float
-    return self.bond_properties.create(name, dtype = data_type, components = num_components, data = data)
+    return self.bonds.create(name, dtype = data_type, components = num_components, data = data)
 DataCollection.create_user_bond_property = _DataCollection_create_user_bond_property
 
 # Extend the DataCollection class with a 'number_of_bonds' property.
@@ -115,3 +105,11 @@ DataCollection.create_user_bond_property = _DataCollection_create_user_bond_prop
 def _get_DataCollection_number_of_bonds(self):
     return self.number_of_half_bonds
 DataCollection.number_of_bonds = property(_get_DataCollection_number_of_bonds)
+
+# Implementation of the DataCollection.particle_properties attribute.
+# Here only for backward compatibility with OVITO 2.9.0.
+DataCollection.particle_properties = property(lambda self: self.particles)
+
+# Implementation of the DataCollection.bond_properties attribute.
+# Here only for backward compatibility with OVITO 2.9.0.
+DataCollection.bond_properties = property(lambda self: self.bonds)

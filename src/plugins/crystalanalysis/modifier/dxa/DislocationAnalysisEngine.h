@@ -73,9 +73,6 @@ public:
 		_isBadEverywhere = isCompletelyBad;
 	}
 
-	/// Returns the list of edges, which don't have a lattice vector.
-	const BondsPtr& unassignedEdges() const { return _unassignedEdges; }
-		
 	/// Returns the defect interface.
 	const SurfaceMeshPtr& interfaceMesh() const { return _interfaceMesh; }
 
@@ -113,9 +110,6 @@ private:
 
 	/// Indicates that the entire simulation cell is part of the 'bad' crystal region.
 	bool _isBadEverywhere;
-
-	/// List of edges, which don't have a lattice vector.
-	BondsPtr _unassignedEdges;
 
 	/// The total volume of the input simulation cell.
 	FloatType _simCellVolume;

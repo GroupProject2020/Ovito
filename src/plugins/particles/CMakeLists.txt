@@ -25,8 +25,7 @@ SET(SourceFiles
 	objects/ParticleType.cpp
 	objects/BondType.cpp
 	objects/BondProperty.cpp
-	objects/BondsStorage.cpp
-	objects/BondsObject.cpp
+	objects/ParticleBondMap.cpp
 	objects/BondsDisplay.cpp
 	objects/TrajectoryObject.cpp
 	objects/TrajectoryDisplay.cpp

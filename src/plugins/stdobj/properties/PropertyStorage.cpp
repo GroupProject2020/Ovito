@@ -188,6 +188,18 @@ void PropertyStorage::filterResize(const boost::dynamic_bitset<>& mask)
 		}
 		resize(dst - dataInt(), true);
 	}
+	else if(dataType() == PropertyStorage::Int64 && stride() == sizeof(qlonglong)*2) {
+		// Pair 64-bit integer
+		auto src = constDataInt64();
+		auto dst = dataInt64();
+		for(size_t i = 0; i < s; ++i, src += 2) {
+			if(!mask.test(i)) {
+				*dst++ = src[0];
+				*dst++ = src[1];
+			}
+		}
+		resize((dst - dataInt64())/2, true);
+	}	
 	else if(dataType() == PropertyStorage::Int64 && stride() == sizeof(qlonglong)) {
 		// Single 64-bit integer
 		auto src = constDataInt64();
@@ -215,6 +227,15 @@ void PropertyStorage::filterResize(const boost::dynamic_bitset<>& mask)
 		}
 		resize(dst - dataColor(), true);
 	}
+	else if(dataType() == PropertyStorage::Int && stride() == sizeof(Point3I)) {
+		// Triple int.
+		auto src = constDataPoint3I();
+		auto dst = dataPoint3I();
+		for(size_t i = 0; i < s; ++i, ++src) {
+			if(!mask.test(i)) *dst++ = *src;
+		}
+		resize(dst - dataPoint3I(), true);
+	}
 	else {
 		// Generic case:
 		const uint8_t* src = _data.get();
@@ -233,7 +254,7 @@ void PropertyStorage::filterResize(const boost::dynamic_bitset<>& mask)
 * Copies the contents from the given source into this property storage using
 * a mapping of indices.
 ******************************************************************************/
-void PropertyStorage::mappedCopy(const PropertyStorage& source, const std::vector<int>& mapping)
+void PropertyStorage::mappedCopy(const PropertyStorage& source, const std::vector<size_t>& mapping)
 {
 	OVITO_ASSERT(source.size() == mapping.size());
 	OVITO_ASSERT(stride() == source.stride());
@@ -244,7 +265,6 @@ void PropertyStorage::mappedCopy(const PropertyStorage& source, const std::vecto
 		auto src = reinterpret_cast<const FloatType*>(source.constData());
 		auto dst = reinterpret_cast<FloatType*>(data());
 		for(size_t i = 0; i < source.size(); ++i, ++src) {
-			OVITO_ASSERT(mapping[i] >= 0);
 			OVITO_ASSERT(mapping[i] < this->size());
 			dst[mapping[i]] = *src;
 		}
@@ -254,7 +274,6 @@ void PropertyStorage::mappedCopy(const PropertyStorage& source, const std::vecto
 		auto src = reinterpret_cast<const int*>(source.constData());
 		auto dst = reinterpret_cast<int*>(data());
 		for(size_t i = 0; i < source.size(); ++i, ++src) {
-			OVITO_ASSERT(mapping[i] >= 0);
 			OVITO_ASSERT(mapping[i] < this->size());
 			dst[mapping[i]] = *src;
 		}
@@ -264,7 +283,6 @@ void PropertyStorage::mappedCopy(const PropertyStorage& source, const std::vecto
 		auto src = reinterpret_cast<const qlonglong*>(source.constData());
 		auto dst = reinterpret_cast<qlonglong*>(data());
 		for(size_t i = 0; i < source.size(); ++i, ++src) {
-			OVITO_ASSERT(mapping[i] >= 0);
 			OVITO_ASSERT(mapping[i] < this->size());
 			dst[mapping[i]] = *src;
 		}
@@ -274,7 +292,6 @@ void PropertyStorage::mappedCopy(const PropertyStorage& source, const std::vecto
 		auto src = reinterpret_cast<const Point3*>(source.constData());
 		auto dst = reinterpret_cast<Point3*>(data());
 		for(size_t i = 0; i < source.size(); ++i, ++src) {
-			OVITO_ASSERT(mapping[i] >= 0);
 			OVITO_ASSERT(mapping[i] < this->size());
 			dst[mapping[i]] = *src;
 		}
@@ -284,17 +301,24 @@ void PropertyStorage::mappedCopy(const PropertyStorage& source, const std::vecto
 		auto src = reinterpret_cast<const Color*>(source.constData());
 		auto dst = reinterpret_cast<Color*>(data());
 		for(size_t i = 0; i < source.size(); ++i, ++src) {
-			OVITO_ASSERT(mapping[i] >= 0);
 			OVITO_ASSERT(mapping[i] < this->size());
 			dst[mapping[i]] = *src;
 		}
 	}
+	else if(stride() == sizeof(Point3I)) {
+		// Triple int
+		auto src = reinterpret_cast<const Point3I*>(source.constData());
+		auto dst = reinterpret_cast<Point3I*>(data());
+		for(size_t i = 0; i < source.size(); ++i, ++src) {
+			OVITO_ASSERT(mapping[i] < this->size());
+			dst[mapping[i]] = *src;
+		}
+	}	
 	else {
 		// General case:
 		const uint8_t* src = source._data.get();
 		uint8_t* dst = _data.get();
 		for(size_t i = 0; i < source.size(); i++, src += stride()) {
-			OVITO_ASSERT(mapping[i] >= 0);
 			OVITO_ASSERT(mapping[i] < this->size());
 			memcpy(dst + stride() * mapping[i], src, stride());
 		}

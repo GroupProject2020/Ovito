@@ -24,6 +24,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/BondsDisplay.h>
+#include <plugins/particles/objects/BondsDisplay.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
 
@@ -80,13 +81,14 @@ private:
 		/// changing inputs from the pipeline without recomputation while the calculation of new results is 
 		/// still in progress.
 		virtual bool isReapplicable() const override { return false; }
-	
-		/// Returns the generated bonds.
-		const std::shared_ptr<BondsStorage>& bonds() { return _bonds; }
-		
+
+		/// Returns the list of generated bonds.
+		std::vector<Bond>& bonds() { return _bonds; }
+
 	private:
 
-		std::shared_ptr<BondsStorage> _bonds = std::make_shared<BondsStorage>();
+		/// The list of generated bonds.
+		std::vector<Bond> _bonds;
 	};
 
 	/// Compute engine that creates bonds between particles.
@@ -190,5 +192,3 @@ OVITO_END_INLINE_NAMESPACE
 
 Q_DECLARE_METATYPE(Ovito::Particles::CreateBondsModifier::CutoffMode);
 Q_DECLARE_TYPEINFO(Ovito::Particles::CreateBondsModifier::CutoffMode, Q_PRIMITIVE_TYPE);
-
-

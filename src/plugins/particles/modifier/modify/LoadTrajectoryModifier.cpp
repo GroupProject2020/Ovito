@@ -22,7 +22,7 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
-#include <plugins/particles/objects/BondsObject.h>
+#include <plugins/particles/objects/BondProperty.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/io/FileSource.h>
@@ -197,18 +197,20 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 				ParticleProperty* outputPosProperty = poh.outputStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
 				AffineTransformation inverseSimCell = simCell.inverse();
 
-				for(DataObject* obj : output.objects()) {
-					if(BondsObject* bondsObj = dynamic_object_cast<BondsObject>(obj)) {
-						bondsObj = poh.cloneIfNeeded(bondsObj);
+				if(BondProperty* topologyProperty = BondProperty::findInState(poh.output(), BondProperty::TopologyProperty)) {
+					BondProperty* periodicImageProperty = poh.outputStandardProperty<BondProperty>(BondProperty::PeriodicImageProperty, true);
 
-						// Wrap bonds crossing a periodic boundary by resetting their PBC shift vectors.
-						for(Bond& bond : *bondsObj->modifiableStorage()) {
-							const Point3& p1 = outputPosProperty->getPoint3(bond.index1);
-							const Point3& p2 = outputPosProperty->getPoint3(bond.index2);
-							for(size_t dim = 0; dim < 3; dim++) {
-								if(pbc[dim]) {
-									bond.pbcShift[dim] = (int8_t)floor(inverseSimCell.prodrow(p1 - p2, dim) + FloatType(0.5));
-								}
+					// Wrap bonds crossing a periodic boundary by resetting their PBC shift vectors.
+					for(size_t bondIndex = 0; bondIndex < topologyProperty->size(); bondIndex++) {
+						size_t particleIndex1 = topologyProperty->getInt64Component(bondIndex, 0);
+						size_t particleIndex2 = topologyProperty->getInt64Component(bondIndex, 1);
+						if(particleIndex1 >= posProperty->size() || particleIndex2 >= posProperty->size())
+							continue;
+						const Point3& p1 = posProperty->getPoint3(particleIndex1);
+						const Point3& p2 = posProperty->getPoint3(particleIndex2);
+						for(size_t dim = 0; dim < 3; dim++) {
+							if(pbc[dim]) {
+								periodicImageProperty->setIntComponent(bondIndex, dim, (int)floor(inverseSimCell.prodrow(p1 - p2, dim) + FloatType(0.5)));
 							}
 						}
 					}

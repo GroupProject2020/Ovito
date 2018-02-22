@@ -59,7 +59,7 @@ private:
 		/// The position of the particle, wrapped at periodic boundaries.
 		Point3 pos;
 		/// The offset applied to the particle when wrapping it at periodic boundaries.
-		Vector_3<int8_t> pbcShift;
+		Vector3I pbcShift;
 		/// Pointer to next particle in linked list.
 		const NeighborListParticle* nextInBin;
 	};
@@ -115,14 +115,14 @@ public:
 
 		/// Returns the PBC shift vector between the central particle and the current neighbor.
 		/// The vector is non-zero if the current neighbor vector crosses a periodic boundary.
-		const Vector_3<int8_t>& pbcShift() const { return _pbcShift; }
+		const Vector3I& pbcShift() const { return _pbcShift; }
 
 		/// Returns the PBC shift vector between the central particle and the current neighbor as if the two particles
 		/// were not wrapped at the periodic boundaries of the simulation cell.
-		Vector_3<int8_t> unwrappedPbcShift() const {
+		Vector3I unwrappedPbcShift() const {
 			const auto& s1 = _builder.particles[_centerIndex].pbcShift;
 			const auto& s2 = _builder.particles[_neighborIndex].pbcShift;
-			return Vector_3<int8_t>(
+			return Vector3I(
 					_pbcShift.x() - s1.x() + s2.x(),
 					_pbcShift.y() - s1.y() + s2.y(),
 					_pbcShift.z() - s1.z() + s2.z());
@@ -139,7 +139,7 @@ public:
 		Point3I _currentBin;
 		const NeighborListParticle* _neighbor;
 		size_t _neighborIndex;
-		Vector_3<int8_t> _pbcShift;
+		Vector3I _pbcShift;
 		Vector3 _delta;
 		FloatType _distsq;
 	};

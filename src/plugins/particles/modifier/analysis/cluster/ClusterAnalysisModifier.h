@@ -25,7 +25,7 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/particles/util/CutoffNeighborFinder.h>
-#include <plugins/particles/objects/BondsStorage.h>
+#include <plugins/particles/objects/BondProperty.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
 
@@ -169,19 +169,19 @@ private:
 	public:
 
 		/// Constructor.
-		BondClusterAnalysisEngine(ConstPropertyPtr positions, const SimulationCell& simCell, bool sortBySize, ConstPropertyPtr selection, ConstBondsPtr bonds) :
+		BondClusterAnalysisEngine(ConstPropertyPtr positions, const SimulationCell& simCell, bool sortBySize, ConstPropertyPtr selection, ConstPropertyPtr bondTopology) :
 			ClusterAnalysisEngine(std::move(positions), simCell, sortBySize, std::move(selection)),
-			_bonds(std::move(bonds)) {}
+			_bondTopology(std::move(bondTopology)) {}
 
 		/// Performs the actual clustering algorithm.
 		virtual void doClustering() override;
 
 		/// Returns the list of input bonds.
-		const ConstBondsPtr& bonds() const { return _bonds; }
+		const ConstPropertyPtr& bondTopology() const { return _bondTopology; }
 
 	private:
 
-		const ConstBondsPtr _bonds;
+		const ConstPropertyPtr _bondTopology;
 	};
 
 	/// The neighbor mode.

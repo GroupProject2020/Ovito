@@ -24,8 +24,8 @@
 #include <plugins/particles/util/CutoffNeighborFinder.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
-#include <plugins/particles/objects/BondsObject.h>
 #include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/ParticleBondMap.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/utilities/concurrent/ParallelFor.h>
 #include <core/dataset/DataSetContainer.h>
@@ -81,9 +81,9 @@ Future<AsynchronousModifier::ComputeEnginePtr> CommonNeighborAnalysisModifier::c
 		return std::make_shared<AdaptiveCNAEngine>(posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty));
 	}
 	else if(mode() == BondMode) {
-		// Get input bonds.
-		BondsObject* bondsObj = pih.expectBonds();
-		return std::make_shared<BondCNAEngine>(posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty), bondsObj->storage());
+		BondProperty* periodicImagesProperty = BondProperty::findInState(input, BondProperty::PeriodicImageProperty);
+		return std::make_shared<BondCNAEngine>(posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty), 
+			pih.expectBonds()->storage(), periodicImagesProperty ? periodicImagesProperty->storage() : nullptr);
 	}
 	else {
 		return std::make_shared<FixedCNAEngine>(posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty), cutoff());
@@ -157,25 +157,29 @@ void CommonNeighborAnalysisModifier::BondCNAEngine::perform()
 	setProgressText(tr("Performing common neighbor analysis"));
 
 	// Prepare particle bond map.
-	ParticleBondMap bondMap(*bonds());
+	ParticleBondMap bondMap(bondTopology(), bondPeriodicImages());
 
-	auto results = std::make_shared<BondCNAResults>(positions()->size(), bonds()->size());
+	auto results = std::make_shared<BondCNAResults>(positions()->size(), bondTopology()->size());
 	PropertyStorage& cnaIndices = *results->cnaIndices();
 
 	// Compute per-bond CNA indices.
 	bool maxNeighborLimitExceeded = false;
 	bool maxCommonNeighborBondLimitExceeded = false;
-	parallelFor(bonds()->size(), *this, [this, &cnaIndices, &bondMap, &maxNeighborLimitExceeded, &maxCommonNeighborBondLimitExceeded](size_t bondIndex) {
-		const Bond& currentBond = (*bonds())[bondIndex];
+	parallelFor(bondTopology()->size(), *this, [this, &cnaIndices, &bondMap, &maxNeighborLimitExceeded, &maxCommonNeighborBondLimitExceeded](size_t bondIndex) {
+		size_t currentBondParticle1 = bondTopology()->getInt64Component(bondIndex, 0);
+		size_t currentBondParticle2 = bondTopology()->getInt64Component(bondIndex, 1);
+		if(currentBondParticle1 >= positions()->size()) return;
+		if(currentBondParticle2 >= positions()->size()) return;
+		Vector3I currentBondPbcShift = bondPeriodicImages() ? bondPeriodicImages()->getVector3I(bondIndex) : Vector3I::Zero();
 
 		// Determine common neighbors shared by both particles.
 		int numCommonNeighbors = 0;
-		std::array<std::pair<size_t, Vector_3<int8_t>>, 32> commonNeighbors;
-		for(Bond neighborBond1 : bondMap.bondsOfParticle(currentBond.index1)) {
-			OVITO_ASSERT(neighborBond1.index1 == currentBond.index1);
-			for(Bond neighborBond2 : bondMap.bondsOfParticle(currentBond.index2)) {
-				OVITO_ASSERT(neighborBond2.index1 == currentBond.index2);
-				if(neighborBond2.index2 == neighborBond1.index2 && neighborBond1.pbcShift == currentBond.pbcShift + neighborBond2.pbcShift) {
+		std::array<std::pair<size_t, Vector3I>, 32> commonNeighbors;
+		for(Bond neighborBond1 : bondMap.bondsOfParticle(currentBondParticle1)) {
+			OVITO_ASSERT(neighborBond1.index1 == currentBondParticle1);
+			for(Bond neighborBond2 : bondMap.bondsOfParticle(currentBondParticle2)) {
+				OVITO_ASSERT(neighborBond2.index1 == currentBondParticle2);
+				if(neighborBond2.index2 == neighborBond1.index2 && neighborBond1.pbcShift == currentBondPbcShift + neighborBond2.pbcShift) {
 					if(numCommonNeighbors == commonNeighbors.size()) {
 						maxNeighborLimitExceeded = true;
 						return;

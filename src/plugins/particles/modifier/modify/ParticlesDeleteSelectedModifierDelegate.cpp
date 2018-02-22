@@ -22,7 +22,6 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
-#include <plugins/particles/objects/BondsObject.h>
 #include <plugins/particles/objects/BondProperty.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <core/dataset/DataSet.h>
@@ -80,7 +79,7 @@ PipelineStatus ParticlesDeleteSelectedModifierDelegate::apply(Modifier* modifier
 ******************************************************************************/
 bool BondsDeleteSelectedModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<BondsObject>() != nullptr;
+	return input.findObject<BondProperty>() != nullptr;
 }
 
 /******************************************************************************

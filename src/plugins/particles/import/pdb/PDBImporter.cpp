@@ -211,6 +211,7 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 	}
 
 	// Parse bonds.
+	PropertyPtr bondTopologyProperty;
 	while(!stream.eof()) {
 		stream.readLine();
 		int lineLength = qstrlen(stream.line());
@@ -230,9 +231,15 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 					size_t atomIndex2 = std::find(particleIdentifierProperty->constDataInt64(), particleIdentifierProperty->constDataInt64() + particleIdentifierProperty->size(), atomSerialNumber2) - particleIdentifierProperty->constDataInt64();
 					if(atomIndex1 >= particleIdentifierProperty->size() || atomIndex2 >= particleIdentifierProperty->size())
 						throw Exception(tr("Nonexistent atom ID encountered in line %1 of PDB file.").arg(stream.lineNumber()));
-					if(!frameData->bonds())
-						frameData->setBonds(std::make_shared<BondsStorage>());
-					frameData->bonds()->push_back({ atomIndex1, atomIndex2, Vector_3<int8_t>::Zero() });
+					if(!bondTopologyProperty) {
+						bondTopologyProperty = BondProperty::createStandardStorage(1, BondProperty::TopologyProperty, false);
+						frameData->addBondProperty(bondTopologyProperty);
+					}
+					else {
+						bondTopologyProperty->resize(bondTopologyProperty->size() + 1, true);
+					}
+					bondTopologyProperty->setInt64Component(bondTopologyProperty->size() - 1, 0, atomIndex1);
+					bondTopologyProperty->setInt64Component(bondTopologyProperty->size() - 1, 1, atomIndex2);
 				}
 			}
 		}
@@ -253,6 +260,9 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 				Vector3(0, 0, boundingBox.sizeZ()),
 				boundingBox.minc - Point3::Origin()));
 	}
+
+	if(bondTopologyProperty)
+		frameData->generateBondPeriodicImageProperty();
 
 	frameData->setStatus(tr("Number of particles: %1").arg(numAtoms));
 	return frameData;

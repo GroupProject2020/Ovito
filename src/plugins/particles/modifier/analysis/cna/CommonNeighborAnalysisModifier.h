@@ -24,7 +24,6 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/modifier/analysis/StructureIdentificationModifier.h>
-#include <plugins/particles/objects/BondsStorage.h>
 #include <plugins/particles/objects/BondProperty.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 
@@ -200,19 +199,24 @@ private:
 	public:
 
 		/// Constructor.
-		BondCNAEngine(ConstPropertyPtr positions, const SimulationCell& simCell, QVector<bool> typesToIdentify, ConstPropertyPtr selection, ConstBondsPtr bonds) :
+		BondCNAEngine(ConstPropertyPtr positions, const SimulationCell& simCell, QVector<bool> typesToIdentify, ConstPropertyPtr selection, ConstPropertyPtr bondTopology, ConstPropertyPtr bondPeriodicImages) :
 			StructureIdentificationEngine(std::move(positions), simCell, std::move(typesToIdentify), std::move(selection)), 
-			_bonds(std::move(bonds)) {}
+			_bondTopology(std::move(bondTopology)),
+			_bondPeriodicImages(std::move(bondPeriodicImages)) {}
 
 		/// Computes the modifier's results.
 		virtual void perform() override;
 
 		/// Returns the input bonds between particles.
-		const ConstBondsPtr& bonds() const { return _bonds; }
+		const ConstPropertyPtr& bondTopology() const { return _bondTopology; }
+
+		/// Returns the periodic image shift vector for input bonds.
+		const ConstPropertyPtr& bondPeriodicImages() const { return _bondPeriodicImages; }
 
 	private:
 
-		const ConstBondsPtr _bonds;
+		const ConstPropertyPtr _bondTopology;
+		const ConstPropertyPtr _bondPeriodicImages;
 	};
 
 	/// Determines the coordination structure of a single particle using the common neighbor analysis method.

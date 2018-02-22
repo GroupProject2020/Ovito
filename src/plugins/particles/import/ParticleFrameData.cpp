@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/BondsObject.h>
+#include <plugins/particles/objects/BondProperty.h>
 #include <plugins/particles/objects/BondsDisplay.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/particles/objects/ParticleDisplay.h>
@@ -84,6 +84,35 @@ void ParticleFrameData::TypeList::sortTypesById()
 {
 	auto compare = [](const TypeDefinition& a, const TypeDefinition& b) -> bool { return a.id < b.id; };
 	std::sort(_types.begin(), _types.end(), compare);
+}
+
+/******************************************************************************
+* Determines the PBC shift vectors for bonds using the minimum image convention.
+******************************************************************************/
+void ParticleFrameData::generateBondPeriodicImageProperty()
+{
+	PropertyPtr posProperty = findStandardParticleProperty(ParticleProperty::PositionProperty);
+	if(!posProperty) return;
+	
+	PropertyPtr bondTopologyProperty = findStandardBondProperty(BondProperty::TopologyProperty);
+	if(!bondTopologyProperty) return;
+		
+	PropertyPtr bondPeriodicImageProperty = BondProperty::createStandardStorage(bondTopologyProperty->size(), BondProperty::PeriodicImageProperty, true);
+	addBondProperty(bondPeriodicImageProperty);
+	
+	if(!simulationCell().pbcFlags()[0] && !simulationCell().pbcFlags()[1] && !simulationCell().pbcFlags()[2])
+		return;
+
+	for(size_t bondIndex = 0; bondIndex < bondTopologyProperty->size(); bondIndex++) {
+		size_t index1 = bondTopologyProperty->getInt64Component(bondIndex, 0);
+		size_t index2 = bondTopologyProperty->getInt64Component(bondIndex, 1);
+		OVITO_ASSERT(index1 < posProperty->size() && index2 < posProperty->size());
+		Vector3 delta = simulationCell().absoluteToReduced(posProperty->getPoint3(index2) - posProperty->getPoint3(index1));		
+		for(size_t dim = 0; dim < 3; dim++) {
+			if(simulationCell().pbcFlags()[dim])
+				bondPeriodicImageProperty->setIntComponent(bondIndex, dim, -(int)floor(delta[dim] + FloatType(0.5)));
+		}
+	}
 }
 
 /******************************************************************************
@@ -162,51 +191,31 @@ PipelineFlowState ParticleFrameData::handOver(DataSet* dataset, const PipelineFl
 		output.addObject(propertyObj);
 	}
 
-	// Transfer bonds.
-	if(bonds()) {
-		OORef<BondsObject> bondsObj = existing.findObject<BondsObject>();
-		if(!bondsObj) {
-			bondsObj = new BondsObject(dataset);
-			bondsObj->setStorage(std::move(_bonds));
+	// Transfer bond properties.
+	for(auto& property : _bondProperties) {
 
-			// Set up display object for the bonds.
-			if(!bondsObj->displayObjects().empty()) {
-				if(BondsDisplay* bondsDisplay = dynamic_object_cast<BondsDisplay>(bondsObj->displayObjects().front())) {
-					bondsDisplay->loadUserDefaults();
-				}
+		// Look for existing property object.
+		OORef<BondProperty> propertyObj;
+		for(DataObject* dataObj : existing.objects()) {
+			BondProperty* po = dynamic_object_cast<BondProperty>(dataObj);
+			if(po && po->type() == property->type() && po->name() == property->name()) {
+				propertyObj = po;
+				break;
 			}
+		}
+
+		if(propertyObj) {
+			propertyObj->setStorage(std::move(property));
 		}
 		else {
-			bondsObj->setStorage(std::move(_bonds));
+			propertyObj = BondProperty::createFromStorage(dataset, std::move(property));
 		}
-		output.addObject(bondsObj);
 
-		// Transfer bond properties.
-		for(auto& property : _bondProperties) {
+		// Transfer bond types.
+		auto typeList = _typeLists.find(propertyObj->storage().get());
+		insertTypes(propertyObj, (typeList != _typeLists.end()) ? typeList->second.get() : nullptr, isNewFile, true);
 
-			// Look for existing property object.
-			OORef<BondProperty> propertyObj;
-			for(DataObject* dataObj : existing.objects()) {
-				BondProperty* po = dynamic_object_cast<BondProperty>(dataObj);
-				if(po && po->type() == property->type() && po->name() == property->name()) {
-					propertyObj = po;
-					break;
-				}
-			}
-
-			if(propertyObj) {
-				propertyObj->setStorage(std::move(property));
-			}
-			else {
-				propertyObj = BondProperty::createFromStorage(dataset, std::move(property));
-			}
-
-			// Transfer bond types.
-			auto typeList = _typeLists.find(propertyObj->storage().get());
-			insertTypes(propertyObj, (typeList != _typeLists.end()) ? typeList->second.get() : nullptr, isNewFile, true);
-	
-			output.addObject(propertyObj);
-		}
+		output.addObject(propertyObj);
 	}
 
 	// Transfer voxel data.

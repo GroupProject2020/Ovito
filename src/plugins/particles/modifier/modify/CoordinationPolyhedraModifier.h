@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/BondsStorage.h>
+#include <plugins/particles/objects/BondProperty.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
 #include <plugins/mesh/surface/SurfaceMeshDisplay.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
@@ -95,11 +95,15 @@ private:
 
 		/// Constructor.
 		ComputePolyhedraEngine(ConstPropertyPtr positions, 
-			ConstPropertyPtr selection, ConstPropertyPtr particleTypes, 
-			std::shared_ptr<const BondsStorage> bonds, const SimulationCell& simCell) :
-			_positions(std::move(positions)), _selection(std::move(selection)), 
+				ConstPropertyPtr selection, ConstPropertyPtr particleTypes, 
+				ConstPropertyPtr bondTopology, ConstPropertyPtr bondPeriodicImages, const SimulationCell& simCell) :
+			_positions(std::move(positions)), 
+			_selection(std::move(selection)), 
 			_particleTypes(std::move(particleTypes)), 
-			_bonds(std::move(bonds)), _simCell(simCell), _results(std::make_shared<ComputePolyhedraResults>()) {}
+			_bondTopology(std::move(bondTopology)), 
+			_bondPeriodicImages(std::move(bondPeriodicImages)),
+			_simCell(simCell),
+			_results(std::make_shared<ComputePolyhedraResults>()) {}
 
 		/// Computes the modifier's results and stores them in this object for later retrieval.
 		virtual void perform() override;
@@ -117,7 +121,8 @@ private:
 		const ConstPropertyPtr _positions;
 		const ConstPropertyPtr _selection;
 		const ConstPropertyPtr _particleTypes;
-		const std::shared_ptr<const BondsStorage> _bonds;
+		const ConstPropertyPtr _bondTopology;
+		const ConstPropertyPtr _bondPeriodicImages;
 		const SimulationCell _simCell;
 		std::shared_ptr<ComputePolyhedraResults> _results;
 	};

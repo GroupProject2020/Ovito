@@ -470,8 +470,9 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 				throw Exception(tr("Atoms section must precede Bonds section in data file (error in line %1).").arg(stream.lineNumber()));
 
 			// Create bonds storage.
-			frameData->setBonds(std::make_shared<BondsStorage>());
-			frameData->bonds()->reserve(nbonds);
+			PropertyPtr bondTopologyProperty = BondProperty::createStandardStorage(nbonds, BondProperty::TopologyProperty, false);
+			frameData->addBondProperty(bondTopologyProperty);
+			qlonglong* atomIndex = bondTopologyProperty->dataInt64();
 
 			// Create bond type property.
 			PropertyPtr typeProperty = BondProperty::createStandardStorage(nbonds, BondProperty::TypeProperty, true);
@@ -492,39 +493,29 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
     			if(sscanf(stream.line(), "%llu %u %llu %llu", &bondId, bondType, &atomId1, &atomId2) != 4)
 					throw Exception(tr("Invalid bond specification (line %1): %2").arg(stream.lineNumber()).arg(stream.lineString()));
 
-				size_t atomIndex1;
     			if(atomId1 < 0 || atomId1 >= (qlonglong)identifierProperty->size() || atomId1 != identifierProperty->getInt64(atomId1)) {
 					auto iter = atomIdMap.find(atomId1);
 					if(iter == atomIdMap.end())
     					throw Exception(tr("Nonexistent atom ID encountered in line %1 of data file.").arg(stream.lineNumber()));
-					atomIndex1 = iter->second;
+					*atomIndex = iter->second;
 				}
-				else atomIndex1 = atomId1;
+				else *atomIndex = atomId1;
+				++atomIndex;
 
-				size_t atomIndex2;
-    			if(atomId2 < 0 || atomId2 >= (qlonglong)identifierProperty->size() || atomId2 != identifierProperty->getInt64(atomId2)) {
+				if(atomId2 < 0 || atomId2 >= (qlonglong)identifierProperty->size() || atomId2 != identifierProperty->getInt64(atomId2)) {
 					auto iter = atomIdMap.find(atomId2);
 					if(iter == atomIdMap.end())
     					throw Exception(tr("Nonexistent atom ID encountered in line %1 of data file.").arg(stream.lineNumber()));
-					atomIndex2 = iter->second;
+					*atomIndex = iter->second;
 				}
-				else atomIndex2 = atomId2;
+				else *atomIndex = atomId2;
+				++atomIndex;
 
 				if(*bondType < 1 || *bondType > nbondtypes)
 					throw Exception(tr("Bond type out of range in Bonds section of LAMMPS data file at line %1.").arg(stream.lineNumber()));
     			bondType++;
-
-				// Use minimum image convention to determine PBC shift vector of the bond.
-				Vector3 delta = frameData->simulationCell().absoluteToReduced(posProperty->getPoint3(atomIndex2) - posProperty->getPoint3(atomIndex1));
-				Vector_3<int8_t> shift = Vector_3<int8_t>::Zero();
-				for(size_t dim = 0; dim < 3; dim++) {
-					if(frameData->simulationCell().pbcFlags()[dim])
-						shift[dim] -= (int8_t)floor(delta[dim] + FloatType(0.5));
-				}
-
-				// Create a bonds.
-				frameData->bonds()->push_back({ atomIndex1, atomIndex2, shift });
 			}
+			frameData->generateBondPeriodicImageProperty();
 		}
 		else if(keyword.isEmpty() == false) {
 			throw Exception(tr("Unknown or unsupported keyword in line %1 of LAMMPS data file: %2.").arg(stream.lineNumber()-1).arg(QString::fromLocal8Bit(keyword)));

@@ -22,7 +22,6 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/particles/objects/BondProperty.h>
-#include <plugins/particles/objects/BondsObject.h>
 #include <core/utilities/concurrent/TaskManager.h>
 #include <core/dataset/scene/ObjectNode.h>
 #include <core/dataset/scene/SelectionSet.h>
@@ -82,10 +81,10 @@ bool ParticleExporter::getParticleData(SceneNode* sceneNode, TimePoint time, Pip
 	}
 
 	// Verify data, make sure array length is consistent for all bond properties.
-	if(BondsObject* bonds = state.findObject<BondsObject>()) {
+	if(BondProperty* bondTopologyProperty = BondProperty::findInState(state, BondProperty::TopologyProperty)) {
 		for(DataObject* obj : state.objects()) {
 			if(BondProperty* p = dynamic_object_cast<BondProperty>(obj)) {
-				if(p->size() != bonds->size())
+				if(p->size() != bondTopologyProperty->size())
 					throwException(tr("Data produced by pipeline is invalid. The array size of some bond properties is not consistent with the number of bonds."));
 			}
 		}

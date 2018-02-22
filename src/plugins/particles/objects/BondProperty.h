@@ -57,6 +57,9 @@ public:
 
 		/// Is called by the system after construction of the meta-class instance.
 		virtual void initialize() override;
+
+		/// Gives the property class the opportunity to set up a newly created property object.
+		virtual void prepareNewProperty(PropertyObject* property) const override;
 	};
 
 	Q_OBJECT
@@ -70,7 +73,9 @@ public:
 		SelectionProperty = PropertyStorage::GenericSelectionProperty,
 		ColorProperty = PropertyStorage::GenericColorProperty,
 		TypeProperty = PropertyStorage::GenericTypeProperty,
-		LengthProperty = PropertyStorage::FirstSpecificProperty
+		LengthProperty = PropertyStorage::FirstSpecificProperty,
+		TopologyProperty,
+		PeriodicImageProperty,
 	};
 
 public:
@@ -107,6 +112,41 @@ public:
  */
 using BondPropertyReference = TypedPropertyReference<BondProperty>;
 
+/**
+ * A helper data structure describing a single bond between two particles.
+ */
+struct Bond 
+{
+	/// The index of the first particle.
+	/// Note that we are using int instead of size_t here to save some memory.
+	size_t index1;
+
+	/// The index of the second particle.
+	/// Note that we are using int instead of size_t here to save some memory.
+	size_t index2;
+
+	/// If the bond crosses a periodic boundary, this indicates the direction.
+	Vector3I pbcShift;
+
+	/// Returns the flipped version of this bond, where the two particles are swapped
+	/// and the PBC shift vector is reversed.
+	Bond flipped() const { return Bond{ index2, index1, -pbcShift }; }
+
+	/// For a pair of bonds, A<->B and B<->A, determines whether this bond
+	/// counts as the 'odd' or the 'even' bond of the pair.
+	bool isOdd() const {
+		// Is this bond connecting two different particles?
+		// If yes, it's easy to determine whether it's an even or an odd bond.
+		if(index1 > index2) return true;
+		else if(index1 < index2) return false;
+		// Whether the bond is 'odd' is determined by the PBC shift vector.
+		if(pbcShift[0] != 0) return pbcShift[0] < 0;
+		if(pbcShift[1] != 0) return pbcShift[1] < 0;
+		// A particle shouldn't be bonded to itself unless the bond crosses a periodic cell boundary:
+		OVITO_ASSERT(pbcShift != Vector3I::Zero());
+		return pbcShift[2] < 0;
+	}
+};
 
 }	// End of namespace
 }	// End of namespace

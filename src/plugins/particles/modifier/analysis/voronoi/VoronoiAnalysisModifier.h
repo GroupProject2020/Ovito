@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/BondsStorage.h>
+#include <plugins/particles/objects/BondProperty.h>
 #include <plugins/particles/objects/BondsDisplay.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
@@ -77,12 +77,11 @@ private:
 	public:
 
 		/// Constructor.
-		VoronoiAnalysisResults(const TimeInterval& validityInterval, size_t particleCount, int edgeCount, bool computeIndices, bool computeBonds) :
+		VoronoiAnalysisResults(const TimeInterval& validityInterval, size_t particleCount, int edgeCount, bool computeIndices) :
 			ComputeEngineResults(validityInterval),
 			_coordinationNumbers(ParticleProperty::createStandardStorage(particleCount, ParticleProperty::CoordinationProperty, true)),
 			_atomicVolumes(std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Float, 1, 0, QStringLiteral("Atomic Volume"), true)),
-			_voronoiIndices(computeIndices ? std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Int, edgeCount, 0, QStringLiteral("Voronoi Index"), true) : nullptr),
-			_bonds(computeBonds ? std::make_shared<BondsStorage>() : nullptr) {}
+			_voronoiIndices(computeIndices ? std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Int, edgeCount, 0, QStringLiteral("Voronoi Index"), true) : nullptr) {}
 
 		/// Injects the computed results into the data pipeline.
 		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
@@ -108,15 +107,15 @@ private:
 		/// Returns the maximum number of edges of any Voronoi face.
 		std::atomic<int>& maxFaceOrder() { return _maxFaceOrder; }
 
-		/// Returns the computed nearest neighbor bonds.
-		const BondsPtr& bonds() const { return _bonds; }
+		/// Returns the generated nearest neighbor bonds.
+		std::vector<Bond>& bonds() { return _bonds; }
 
 	private:
 
 		const PropertyPtr _coordinationNumbers;
 		const PropertyPtr _atomicVolumes;
 		const PropertyPtr _voronoiIndices;
-		const BondsPtr _bonds;
+		std::vector<Bond> _bonds;
 
 		/// The total volume of the simulation cell computed by the modifier.
 		double _simulationBoxVolume = 0;
@@ -144,7 +143,8 @@ private:
 			_edgeThreshold(edgeThreshold),
 			_faceThreshold(faceThreshold),
 			_relativeFaceThreshold(relativeFaceThreshold),
-			_results(std::make_shared<VoronoiAnalysisResults>(validityInterval, positions->size(), edgeCount, computeIndices, computeBonds)) {}
+			_computeBonds(computeBonds),
+			_results(std::make_shared<VoronoiAnalysisResults>(validityInterval, positions->size(), edgeCount, computeIndices)) {}
 			
 		/// Computes the modifier's results.
 		virtual void perform() override;
@@ -162,6 +162,7 @@ private:
 		std::vector<FloatType> _radii;
 		const ConstPropertyPtr _positions;
 		const ConstPropertyPtr _selection;
+		bool _computeBonds;
 		std::shared_ptr<VoronoiAnalysisResults> _results;
 	};
 

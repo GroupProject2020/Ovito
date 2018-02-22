@@ -163,7 +163,7 @@ PropertyPtr ParticleProperty::OOMetaClass::createStandardStorage(size_t particle
 	case PeriodicImageProperty:
 		dataType = PropertyStorage::Int;
 		componentCount = 3;
-		stride = componentCount * sizeof(FloatType);
+		stride = componentCount * sizeof(int);
 		break;
 	default:
 		OVITO_ASSERT_MSG(false, "ParticleProperty::createStandardStorage()", "Invalid standard property type");

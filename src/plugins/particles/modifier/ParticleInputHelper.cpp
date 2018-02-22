@@ -21,7 +21,6 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/ParticleDisplay.h>
-#include <plugins/particles/objects/BondsObject.h>
 #include <plugins/particles/objects/BondsDisplay.h>
 #include <plugins/particles/objects/BondProperty.h>
 #include <core/dataset/DataSet.h>
@@ -47,8 +46,8 @@ ParticleInputHelper::ParticleInputHelper(DataSet* dataset, const PipelineFlowSta
 	}
 	
 	// Determine number of input bonds.
-	BondsObject* bondsObj = input.findObject<BondsObject>();
-	_inputBondCount = (bondsObj != nullptr) ? bondsObj->size() : 0;	
+	BondProperty* topologyProperty = inputStandardProperty<BondProperty>(BondProperty::TopologyProperty);
+	_inputBondCount = (topologyProperty != nullptr) ? topologyProperty->size() : 0;
 
 	// Verify input, make sure array lengths of bond properties are consistent.
 	for(DataObject* obj : input.objects()) {
@@ -60,14 +59,15 @@ ParticleInputHelper::ParticleInputHelper(DataSet* dataset, const PipelineFlowSta
 }
 
 /******************************************************************************
-* Returns the input bonds.
+* Returns the bond topology property.
+* Throws an exception if the input does not contain any bonds.
 ******************************************************************************/
-BondsObject* ParticleInputHelper::expectBonds() const
+BondProperty* ParticleInputHelper::expectBonds() const
 {
-	BondsObject* bondsObj = input().findObject<BondsObject>();
-	if(!bondsObj)
-		dataset()->throwException(BondsObject::tr("The modifier cannot be evaluated because the input does not contain any bonds."));
-	return bondsObj;
+	BondProperty* prop = inputStandardProperty<BondProperty>(BondProperty::TopologyProperty);
+	if(!prop)
+		dataset()->throwException(PropertyObject::tr("The modifier cannot be evaluated because the input does not contain any bonds."));
+	return prop;
 }
 
 /******************************************************************************
@@ -103,12 +103,12 @@ std::vector<Color> ParticleInputHelper::inputParticleColors(TimePoint time, Time
 std::vector<Color> ParticleInputHelper::inputBondColors(TimePoint time, TimeInterval& validityInterval)
 {
 	// Obtain the bond display object.
-	BondsObject* bondObj = input().findObject<BondsObject>();
-	if(bondObj) {
-		for(DisplayObject* displayObj : bondObj->displayObjects()) {
+	BondProperty* topologyProperty = inputStandardProperty<BondProperty>(BondProperty::TopologyProperty);
+	if(topologyProperty) {
+		for(DisplayObject* displayObj : topologyProperty->displayObjects()) {
 			if(BondsDisplay* bondsDisplay = dynamic_object_cast<BondsDisplay>(displayObj)) {
 
-				// Obtain the particle display object.
+				// Additionally, look up the particle display object.
 				ParticleDisplay* particleDisplay = nullptr;
 				if(ParticleProperty* positionProperty = inputStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty)) {
 					for(DisplayObject* displayObj : positionProperty->displayObjects()) {
@@ -120,7 +120,7 @@ std::vector<Color> ParticleInputHelper::inputBondColors(TimePoint time, TimeInte
 				// Query half-bond colors from display object.
 				std::vector<Color> halfBondColors = bondsDisplay->halfBondColors(
 						inputParticleCount(), 
-						bondObj,
+						inputStandardProperty<BondProperty>(BondProperty::TopologyProperty),
 						inputStandardProperty<BondProperty>(BondProperty::ColorProperty),
 						inputStandardProperty<BondProperty>(BondProperty::TypeProperty),
 						inputStandardProperty<BondProperty>(BondProperty::SelectionProperty),

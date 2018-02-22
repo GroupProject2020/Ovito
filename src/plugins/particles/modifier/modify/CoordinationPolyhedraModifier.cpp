@@ -22,7 +22,8 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
 #include <plugins/mesh/surface/SurfaceMeshDisplay.h>
-#include <plugins/particles/objects/BondsObject.h>
+#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/ParticleBondMap.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <core/dataset/DataSet.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
@@ -53,7 +54,7 @@ CoordinationPolyhedraModifier::CoordinationPolyhedraModifier(DataSet* dataset) :
 ******************************************************************************/
 bool CoordinationPolyhedraModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<ParticleProperty>() && input.findObject<BondsObject>();
+	return input.findObject<ParticleProperty>() && input.findObject<BondProperty>();
 }
 
 /******************************************************************************
@@ -79,14 +80,18 @@ Future<AsynchronousModifier::ComputeEnginePtr> CoordinationPolyhedraModifier::cr
 	ParticleProperty* posProperty = ph.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
 	ParticleProperty* typeProperty = ph.inputStandardProperty<ParticleProperty>(ParticleProperty::TypeProperty);
 	ParticleProperty* selectionProperty = ph.inputStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty);
-	BondsObject* bondsObj = input.findObject<BondsObject>();
+	BondProperty* topologyProperty = ph.expectBonds();
+	BondProperty* bondPeriodicImagesProperty = ph.inputStandardProperty<BondProperty>(BondProperty::PeriodicImageProperty);
 	SimulationCellObject* simCell = ph.expectSimulationCell();
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<ComputePolyhedraEngine>(posProperty->storage(),
+	return std::make_shared<ComputePolyhedraEngine>(
+			posProperty->storage(),
 			selectionProperty ? selectionProperty->storage() : nullptr,
 			typeProperty ? typeProperty->storage() : nullptr, 
-			bondsObj ? bondsObj->storage() : nullptr, simCell->data());
+			topologyProperty->storage(), 
+			bondPeriodicImagesProperty ? bondPeriodicImagesProperty->storage() : nullptr, 
+			simCell->data());
 }
 
 /******************************************************************************
@@ -96,8 +101,6 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::perform()
 {
 	if(!_selection)
 		throw Exception(tr("Please select particles first for which coordination polyhedra should be generated."));
-	if(!_bonds)
-		throw Exception(tr("Please create bonds between particles first. They are needed for coordination polyhedra."));
 
 	setProgressText(tr("Generating coordination polyhedra"));
 
@@ -106,7 +109,7 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::perform()
 	setProgressMaximum(npoly);
 
 	std::vector<Point3> bondVectors;
-	ParticleBondMap bondMap(*_bonds);
+	ParticleBondMap bondMap(_bondTopology, _bondPeriodicImages);
 
 	for(size_t i = 0; i < _positions->size(); i++) {
 		if(_selection->getInt(i) == 0) continue;

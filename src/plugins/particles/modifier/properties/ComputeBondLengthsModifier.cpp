@@ -20,7 +20,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/BondsObject.h>
 #include <plugins/particles/objects/BondProperty.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
@@ -44,7 +43,7 @@ ComputeBondLengthsModifier::ComputeBondLengthsModifier(DataSet* dataset) : Modif
 ******************************************************************************/
 bool ComputeBondLengthsModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<BondsObject>() != nullptr;
+	return input.findObject<BondProperty>() != nullptr;
 }
 
 /******************************************************************************
@@ -55,7 +54,8 @@ PipelineFlowState ComputeBondLengthsModifier::evaluatePreliminary(TimePoint time
 	// Inputs:
 	ParticleInputHelper pih(dataset(), input);
 	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
-	BondsObject* bondsObj = pih.expectBonds();
+	BondProperty* bondTopology = pih.expectBonds();
+	BondProperty* bondPeriodicImages = BondProperty::findInState(input, BondProperty::PeriodicImageProperty);
 	SimulationCellObject* simCell = input.findObject<SimulationCellObject>();
 	AffineTransformation cellMatrix = simCell ? simCell->cellMatrix() : AffineTransformation::Identity();
 
@@ -65,16 +65,17 @@ PipelineFlowState ComputeBondLengthsModifier::evaluatePreliminary(TimePoint time
 	BondProperty* lengthProperty = poh.outputStandardProperty<BondProperty>(BondProperty::LengthProperty, false);
 
 	// Perform bond length calculation.
-	parallelFor(bondsObj->size(), [posProperty, bondsObj, simCell, &cellMatrix, lengthProperty](size_t bondIndex) {
-		const Bond& bond = (*bondsObj->storage())[bondIndex];
-		if(posProperty->size() > bond.index1 && posProperty->size() > bond.index2) {
-			const Point3& p1 = posProperty->getPoint3(bond.index1);
-			const Point3& p2 = posProperty->getPoint3(bond.index2);
+	parallelFor(bondTopology->size(), [posProperty, bondTopology, bondPeriodicImages, simCell, &cellMatrix, lengthProperty](size_t bondIndex) {
+		size_t index1 = bondTopology->getInt64Component(bondIndex, 0);
+		size_t index2 = bondTopology->getInt64Component(bondIndex, 1);
+		if(posProperty->size() > index1 && posProperty->size() > index2) {
+			const Point3& p1 = posProperty->getPoint3(index1);
+			const Point3& p2 = posProperty->getPoint3(index2);
 			Vector3 delta = p2 - p1;
-			if(simCell) {
-				if(bond.pbcShift.x()) delta += cellMatrix.column(0) * (FloatType)bond.pbcShift.x();
-				if(bond.pbcShift.y()) delta += cellMatrix.column(1) * (FloatType)bond.pbcShift.y();
-				if(bond.pbcShift.z()) delta += cellMatrix.column(2) * (FloatType)bond.pbcShift.z();
+			if(simCell && bondPeriodicImages) {
+				if(int dx = bondPeriodicImages->getIntComponent(bondIndex, 0)) delta += cellMatrix.column(0) * (FloatType)dx;
+				if(int dy = bondPeriodicImages->getIntComponent(bondIndex, 1)) delta += cellMatrix.column(1) * (FloatType)dy;
+				if(int dz = bondPeriodicImages->getIntComponent(bondIndex, 2)) delta += cellMatrix.column(2) * (FloatType)dz;
 			}
 			lengthProperty->setFloat(bondIndex, delta.length());
 		}

@@ -75,10 +75,6 @@ namespace Ovito {
 
 		class ParticleProperty;
 		class ParticleType;
-		class BondsStorage;
-		using BondsPtr = std::shared_ptr<BondsStorage>;
-		using ConstBondsPtr = std::shared_ptr<const BondsStorage>;
-		class BondsObject;
 		class BondProperty;
 		class BondType;
 		class ParticleDisplay;

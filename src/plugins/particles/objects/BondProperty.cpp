@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
+#include <plugins/particles/objects/BondsDisplay.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
 #include "BondProperty.h"
-#include "BondsObject.h"
 
 namespace Ovito { namespace Particles {
 
@@ -33,6 +33,19 @@ IMPLEMENT_OVITO_CLASS(BondProperty);
 ******************************************************************************/
 BondProperty::BondProperty(DataSet* dataset) : PropertyObject(dataset)
 {
+}
+
+/******************************************************************************
+* Gives the property class the opportunity to set up a newly created 
+* property object.
+******************************************************************************/
+void BondProperty::OOMetaClass::prepareNewProperty(PropertyObject* property) const
+{
+	if(property->type() == BondProperty::TopologyProperty) {
+		OORef<BondsDisplay> displayObj = new BondsDisplay(property->dataset());
+		displayObj->loadUserDefaults();
+		property->addDisplayObject(displayObj);
+	}
 }
 
 /******************************************************************************
@@ -62,6 +75,16 @@ PropertyPtr BondProperty::OOMetaClass::createStandardStorage(size_t bondsCount, 
 		stride = componentCount * sizeof(FloatType);
 		OVITO_ASSERT(stride == sizeof(Color));
 		break;
+	case TopologyProperty:
+		dataType = PropertyStorage::Int64;
+		componentCount = 2;
+		stride = componentCount * sizeof(qlonglong);
+		break;		
+	case PeriodicImageProperty:
+		dataType = PropertyStorage::Int;
+		componentCount = 3;
+		stride = componentCount * sizeof(int);
+		break;		
 	default:
 		OVITO_ASSERT_MSG(false, "BondProperty::createStandardStorage", "Invalid standard property type");
 		throw Exception(tr("This is not a valid standard bond property type: %1").arg(type));
@@ -80,10 +103,12 @@ PropertyPtr BondProperty::OOMetaClass::createStandardStorage(size_t bondsCount, 
 ******************************************************************************/
 size_t BondProperty::OOMetaClass::elementCount(const PipelineFlowState& state) const
 {
-	if(BondsObject* bonds = state.findObject<BondsObject>())
-		return bonds->size();
-	else
-		return 0;
+	for(DataObject* obj : state.objects()) {
+		if(BondProperty* property = dynamic_object_cast<BondProperty>(obj)) {
+			return property->size();
+		}
+	}
+	return 0;
 }
 
 /******************************************************************************
@@ -92,7 +117,7 @@ size_t BondProperty::OOMetaClass::elementCount(const PipelineFlowState& state) c
 ******************************************************************************/
 bool BondProperty::OOMetaClass::isDataPresent(const PipelineFlowState& state) const
 {
-	return state.findObject<BondsObject>() != nullptr;
+	return state.findObject<BondProperty>() != nullptr;
 }
 
 /******************************************************************************
@@ -111,12 +136,16 @@ void BondProperty::OOMetaClass::initialize()
 	setPythonName(QStringLiteral("bonds"));
 
 	const QStringList emptyList;
+	const QStringList abList = QStringList() << "A" << "B";
+	const QStringList xyzList = QStringList() << "X" << "Y" << "Z";
 	const QStringList rgbList = QStringList() << "R" << "G" << "B";
 	
 	registerStandardProperty(TypeProperty, tr("Bond Type"), PropertyStorage::Int, emptyList, tr("Bond types"));
 	registerStandardProperty(SelectionProperty, tr("Selection"), PropertyStorage::Int, emptyList);
 	registerStandardProperty(ColorProperty, tr("Color"), PropertyStorage::Float, rgbList, tr("Bond colors"));
 	registerStandardProperty(LengthProperty, tr("Length"), PropertyStorage::Float, emptyList);
+	registerStandardProperty(TopologyProperty, tr("Topology"), PropertyStorage::Int64, abList);
+	registerStandardProperty(PeriodicImageProperty, tr("Periodic Image"), PropertyStorage::Int, xyzList);
 }
 
 }	// End of namespace

@@ -39,10 +39,9 @@ public:
 	/// Constructor.
 	ParticleInputHelper(DataSet* dataset, const PipelineFlowState& input);
 
-	/// Returns the input bonds.
-	/// The returned object may not be modified. If the input does
-	/// not contain any bonds, an exception is thrown.
-	BondsObject* expectBonds() const;
+	/// Throws an exception if the input does not contain any bonds.
+	/// Returns the bond topology property.
+	BondProperty* expectBonds() const;
 
 	/// Returns the number of particles in the input.
 	size_t inputParticleCount() const { return _inputParticleCount; }

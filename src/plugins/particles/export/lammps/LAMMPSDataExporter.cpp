@@ -21,8 +21,8 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/BondProperty.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
-#include <plugins/particles/objects/BondsObject.h>
 #include <core/utilities/concurrent/Promise.h>
 #include "LAMMPSDataExporter.h"
 
@@ -54,7 +54,7 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 	ParticleProperty* radiusProperty = ParticleProperty::findInState(state, ParticleProperty::RadiusProperty);	
 	ParticleProperty* massProperty = ParticleProperty::findInState(state, ParticleProperty::MassProperty);
 	ParticleProperty* moleculeProperty = ParticleProperty::findInState(state, ParticleProperty::MoleculeProperty);
-	BondsObject* bondsObj = state.findObject<BondsObject>();
+	BondProperty* bondTopologyProperty = BondProperty::findInState(state, BondProperty::TopologyProperty);
 	BondProperty* bondTypeProperty = BondProperty::findInState(state, BondProperty::TypeProperty);
 
 	// Get simulation cell info.
@@ -98,12 +98,12 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 	FloatType yz = c.y();
 
 	// Decide if we want to export bonds.
-	bool writeBonds = (bondsObj != nullptr) && (atomStyle() != LAMMPSDataImporter::AtomStyle_Atomic);
+	bool writeBonds = (bondTopologyProperty != nullptr) && (atomStyle() != LAMMPSDataImporter::AtomStyle_Atomic);
 
 	textStream() << "# LAMMPS data file written by OVITO\n";
 	textStream() << posProperty->size() << " atoms\n";
 	if(writeBonds)
-		textStream() << bondsObj->storage()->size() << " bonds\n";
+		textStream() << bondTopologyProperty->size() << " bonds\n";
 
 	if(particleTypeProperty && particleTypeProperty->size() > 0) {
 		int numParticleTypes = std::max(
@@ -132,7 +132,7 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 
 	size_t totalProgressCount = posProperty->size();
 	if(velocityProperty) totalProgressCount += posProperty->size();
-	if(writeBonds) totalProgressCount += bondsObj->storage()->size();
+	if(writeBonds) totalProgressCount += bondTopologyProperty->size();
 	size_t currentProgress = 0;
 
 	// Write "Atoms" section.
@@ -233,15 +233,16 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 		textStream() << "\nBonds\n\n";
 
 		int bondIndex = 1;
-		for(size_t i = 0; i < bondsObj->storage()->size(); i++) {
-			const Bond& bond = (*bondsObj->storage())[i];
+		for(size_t i = 0; i < bondTopologyProperty->size(); i++) {
+			size_t atomIndex1 = bondTopologyProperty->getInt64Component(i, 0);
+			size_t atomIndex2 = bondTopologyProperty->getInt64Component(i, 1);
 			textStream() << bondIndex++;
 			textStream() << ' ';
 			textStream() << (bondTypeProperty ? bondTypeProperty->getInt(i) : 1);
 			textStream() << ' ';
-			textStream() << (identifierProperty ? identifierProperty->getInt64(bond.index1) : (bond.index1+1));
+			textStream() << (identifierProperty ? identifierProperty->getInt64(atomIndex1) : (atomIndex1+1));
 			textStream() << ' ';
-			textStream() << (identifierProperty ? identifierProperty->getInt64(bond.index2) : (bond.index2+1));
+			textStream() << (identifierProperty ? identifierProperty->getInt64(atomIndex2) : (atomIndex2+1));
 			textStream() << '\n';
 
 			currentProgress++;
@@ -251,7 +252,7 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 					return false;
 			}
 		}
-		OVITO_ASSERT(bondIndex == bondsObj->storage()->size() + 1);
+		OVITO_ASSERT(bondIndex == bondTopologyProperty->size() + 1);
 	}
 
 	return !exportTask.isCanceled();
