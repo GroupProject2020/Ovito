@@ -28,12 +28,12 @@ class ParticlesView(collections.Mapping):
     .. literalinclude:: ../example_snippets/particles_view.py
         :lines: 7-11
 
-    New particle properties can be added with the :py:meth:`create` method.
+    New particle properties can be added with the :py:meth:`.create_property` method.
     """
 
     def __init__(self, data_collection):
         self._data = data_collection
-        
+
     def __len__(self):
         # Count the number of ParticleProperty objects in the collection.
         return sum(isinstance(obj, ParticleProperty) for obj in self._data.objects)
@@ -62,7 +62,15 @@ class ParticlesView(collections.Mapping):
     def __repr__(self):
         return repr(dict(self))
 
-    def create(self, name, dtype=None, components=None, data=None):
+    @property
+    def count(self):
+        """ This read-only attribute returns the number of particles in the :py:class:`DataCollection`. """
+        for obj in self._data.objects:
+            if isinstance(obj, ParticleProperty) and obj.type == ParticleProperty.Type.Position:
+                return obj.size
+        return 0
+
+    def create_property(self, name, dtype=None, components=None, data=None):
         """
         Adds a new particle property to the data collection and optionally initializes it with 
         the per-particle data provided by the *data* parameter. The method returns the new :py:class:`ParticleProperty` 
@@ -72,13 +80,10 @@ class ParticlesView(collections.Mapping):
         To create a *standard* particle property, one of the :ref:`standard property names <particle-types-list>` must be provided as *name* argument:
         
         .. literalinclude:: ../example_snippets/particles_view.py
-            :lines: 15-17
+            :lines: 16-17
         
-        The size of the provided *data* array must match the number of particles in the data collection, i.e., 
-        it must equal the length of all other particle properties that already exist in the same data collection.
-        In the example above the length of the existing ``Position`` particle property is used as reference to 
-        create an array of random RGB values with the correct size.
-        Alternatively, you can set the property values after construction: 
+        The length of the provided *data* array must match the number of particles, which is given by the :py:attr:`.count` attribute.
+        You can also set the values of the property after its construction: 
 
         .. literalinclude:: ../example_snippets/particles_view.py
             :lines: 23-25
@@ -100,8 +105,8 @@ class ParticlesView(collections.Mapping):
         If the property to be created already exists in the data collection, it is replaced with a new one.
         The existing per-particle data from the old property is however retained if *data* is ``None``.
 
-        Note: If the data collection contains no particles yet, that is, if not even the ``Position`` standard property
-        is present in the data collection, then the ``Position`` standard property can still be created from scratch as a first particle property by the 
+        Note: If the data collection contains no particles yet, that is, even the ``Position`` property
+        is not present in the data collection yet, then the ``Position`` standard property can still be created from scratch as a first particle property by the 
         :py:meth:`!create` method. The *data* array has to be provided in this case to specify the number of particles
         to create:
 
@@ -222,3 +227,7 @@ class ParticlesView(collections.Mapping):
             self._data.objects[idx] = prop
         
         return prop
+
+    # Here only for backward compatibility with OVITO 2.9.0:
+    def create(self, name, dtype=None, components=None, data=None):
+        return self.create_property(name, dtype=dtype, components=components, data=data)

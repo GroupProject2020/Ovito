@@ -6,32 +6,32 @@ pipeline = import_file("input/simulation.dump")
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 data = pipeline.compute()
 
-positions = data.particle_properties['Position']
-has_selection = 'Selection' in data.particle_properties
-name_list = data.particle_properties.keys()
-# snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-# snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-num_particles = len(data.particle_properties['Position'])
-colors = numpy.random.random_sample(size = (num_particles, 3))
-data.particle_properties.create('Color', data=colors)
+positions = data.particles['Position']
+has_selection = 'Selection' in data.particles
+name_list = data.particles.keys()
 # snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
+# snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+colors = numpy.random.random_sample(size = (data.particles.count, 3))
+data.particles.create_property('Color', data=colors)
+# snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
 
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-prop = data.particle_properties.create('Color')
+prop = data.particles.create_property('Color')
 with prop:
     prop[...] = numpy.random.random_sample(size = prop.shape)
 # snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-values = numpy.arange(0, num_particles, dtype=int)
-data.particle_properties.create('myint', data=values)
+values = numpy.arange(0, data.particles.count, dtype=int)
+data.particles.create_property('myint', data=values)
 # snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-prop = data.particle_properties.create('myvector', dtype=float, components=3)
+prop = data.particles.create_property('myvector', dtype=float, components=3)
 with prop:
     prop[...] = numpy.random.random_sample(size = prop.shape)
 # snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -42,5 +42,5 @@ data = ovito.pipeline.StaticSource()
 
 # Create 10 particles with random xyz coordinates:
 positions = numpy.random.random_sample(size = (10,3))
-data.particle_properties.create('Position', data=positions)
+data.particles.create_property('Position', data=positions)
 # snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

@@ -161,7 +161,7 @@
             </row>
             <row>
               <entry><link linkend="particles.modifiers.coordination_polyhedra">Coordination polyhedra</link></entry>
-              <entry>Shows coordination polyhedra</entry>
+              <entry>Shows coordination polyhedra.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.delete_selected_particles">Delete selected</link></entry>
@@ -170,6 +170,10 @@
             <row>
               <entry><link linkend="particles.modifiers.freeze_property">Freeze property</link></entry>
               <entry>Freezes the values of a dynamic particle property at a given animation time to make them available at other times.</entry>
+            </row>
+            <row>
+              <entry><link linkend="particles.modifiers.interpolate_trajectory">Interpolate trajectory</link></entry>
+              <entry>Computes intermediate particle positions by interpolating a sequence of coarser snapshots.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.load_trajectory">Load trajectory</link></entry>
@@ -282,6 +286,8 @@
   <xi:include href="particles/histogram.docbook"/>
   
   <xi:include href="particles/identify_diamond.docbook"/>
+
+  <xi:include href="particles/interpolate_trajectory.docbook"/>
 
   <xi:include href="particles/invert_selection.docbook"/>
 

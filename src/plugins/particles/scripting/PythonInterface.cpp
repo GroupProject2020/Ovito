@@ -83,7 +83,7 @@ PYBIND11_PLUGIN(Particles)
 			"\n\n"
 			"**Creating particle properties**"
 			"\n\n"
-			"New properties can be created and assigned to particles with the :py:meth:`ParticlesView.create` factory method. "
+			"New properties can be created and assigned to particles with the :py:meth:`ParticlesView.create_property` factory method. "
 			"User-defined modifier functions, for example, use this to output their computation results. "
 			"\n\n"
 			"**Typed particle properties**"
@@ -91,7 +91,7 @@ PYBIND11_PLUGIN(Particles)
 			"The standard property ``'Particle Type'`` stores the types of particles encoded as integer values, e.g.: "
 			"\n\n"
 			"    >>> data = node.compute()\n"
-			"    >>> tprop = data.particle_properties['Particle Type']\n"
+			"    >>> tprop = data.particles['Particle Type']\n"
 			"    >>> print(tprop[...])\n"
 			"    [2 1 3 ..., 2 1 2]\n"
 			"\n\n"
@@ -321,13 +321,13 @@ PYBIND11_PLUGIN(Particles)
 	py::class_<ParticleBondMap>(m, "BondsEnumerator",
 		"Utility class that permits efficient iteration over the bonds connected to specific particles. "
 		"\n\n"
-    	"The constructor takes a :py:class:`Bonds` object as input, which holds the unordered list of all "
-    	"bonds in a system. From this unordered list, the :py:class:`!BondsEnumerator` will build a lookup table for quick enumeration  "
+    	"The constructor takes a :py:class:`DataCollection` object as input. "
+		"From the unordered list of bonds in the data collection, the :py:class:`!BondsEnumerator` will build a lookup table for quick enumeration  "
 		"of bonds of particular particles. "
 		"\n\n"
 		"All bonds connected to a given particle can be subsequently visited using the :py:meth:`.bonds_of_particle` method. "
 		"\n\n"
-		"Warning: Do not modify the underlying :py:class:`Bonds` list while using the :py:class:`!BondsEnumerator`. "
+		"Warning: Do not modify the underlying bonds list in the data collection while the :py:class:`!BondsEnumerator` is in use. "
 		"Adding or deleting bonds would render the internal lookup table of the :py:class:`!BondsEnumerator` invalid. "
 		"\n\n"
 		"**Usage example**"
@@ -335,8 +335,21 @@ PYBIND11_PLUGIN(Particles)
 		".. literalinclude:: ../example_snippets/bonds_enumerator.py\n")
 		// Customized constructor function:
 		.def("__init__", [](ParticleBondMap& instance, py::object data_collection) {
-				throw Exception("BondsEnumerator constructor not implemented");
-				//new (&instance) ParticleBondMap(*bonds.storage());
+				// Get the 'Topology' and the 'Periodic image' bond propertie from the data collection:
+				py::object topologyPropertyName = py::cast(BondProperty::OOClass().standardPropertyName(BondProperty::TopologyProperty));
+				py::object pbcShiftPropertyName = py::cast(BondProperty::OOClass().standardPropertyName(BondProperty::PeriodicImageProperty));
+
+				py::object bonds_view = data_collection.attr("bonds");
+				if(!bonds_view.contains(topologyPropertyName))
+					throw Exception("BondsEnumerator construction failed. Data collection doesn't contain any bonds.");
+				py::object topology_prop = bonds_view[topologyPropertyName];
+				py::object pbd_shift_prop;
+				if(bonds_view.contains(pbcShiftPropertyName))
+					pbd_shift_prop = bonds_view[pbcShiftPropertyName];
+				// Initialize BondsEnumerator instance.
+				new (&instance) ParticleBondMap(
+						topology_prop.cast<BondProperty*>()->storage(),
+						pbd_shift_prop ? pbd_shift_prop.cast<BondProperty*>()->storage() : nullptr);
 			}, 
 			py::arg("data_collection"))
 		.def("bonds_of_particle", [](const ParticleBondMap& bondMap, size_t particleIndex) {
@@ -345,7 +358,7 @@ PYBIND11_PLUGIN(Particles)
 		},
 		py::keep_alive<0, 1>(),
 		"Returns an iterator that yields the indices of the bonds connected to the given particle. "
-        "They can be used to index into the :py:class:`Bonds` array. ");
+        "The indices can be used to index into the :py:class:`BondProperty` arrays. ");
 	;
 
 	ovito_class<ParticleType, ElementType>(m,
@@ -459,7 +472,10 @@ PYBIND11_PLUGIN(Particles)
 
 	ovito_class<BondsDisplay, DisplayObject>(m,
 			":Base class: :py:class:`ovito.vis.DataVis`\n\n"
-			"Controls the visual appearance of particle bonds. An instance of this class is attached to every :py:class:`~ovito.data.Bonds` data object.",
+			"Controls the visual appearance of bonds between particles."
+			"\n\n"
+			"An instance of this class is attached to the ``Topology`` :py:class:`~ovito.data.BondProperty` "
+			"and can be accessed via its :py:attr:`~ovito.data.DataObject.vis` property. ",
 			// Python class name:
 			"BondsVis")
 		.def_property("width", &BondsDisplay::bondWidth, &BondsDisplay::setBondWidth,
@@ -534,7 +550,7 @@ PYBIND11_PLUGIN(Particles)
 			"\n\n"
 			"In OVITO's data model, an arbitrary set of properties can be associated with bonds, "
 			"each property being represented by a :py:class:`!BondProperty` object. A :py:class:`!BondProperty` "
-			"is basically an array of values whose length matches the numer of bonds in the data collection (i.e. the length of the :py:class:`Bonds` array). "
+			"is basically an array of values whose length matches the numer of bonds in the data collection (see :py:attr:`BondsView.count`). "
 			"\n\n"
 			":py:class:`!BondProperty` objects have the same fields and behave the same way as :py:class:`ParticleProperty` objects. "
 			"Both property classes derives from the common :py:class:`Property` base class. Please see its documentation on how to access per-bond values. "
@@ -542,8 +558,8 @@ PYBIND11_PLUGIN(Particles)
 			"The set of properties currently associated with the bonds is exposed by the "
 			":py:attr:`DataCollection.bonds` view, which allows accessing them by name and adding new properties. " 
 			"\n\n"
-			"Note that the topological definition of bonds, i.e. the connectivity between particles, is stored separately from the bond properties in "
-			"the :py:class:`Bonds` data object. ",
+			"Note that the topological definition of bonds, i.e. the connectivity between particles, is stored "
+			"in the :py:class:`!BondProperty` named ``Topology``. ",
 			// Python class name:
 			"BondProperty")
 		// Used by BondPropertiesView.create():
@@ -566,8 +582,10 @@ PYBIND11_PLUGIN(Particles)
 				"``BondProperty.Type.User``                              (a user-defined property with a non-standard name)  int/float \n"
 				"``BondProperty.Type.BondType``                          :guilabel:`Bond Type`                               int       \n"
 				"``BondProperty.Type.Selection``                         :guilabel:`Selection`                               int       \n"
-				"``BondProperty.Type.Color``                             :guilabel:`Color`                                   float     \n"
+				"``BondProperty.Type.Color``                             :guilabel:`Color`                                   float (3x)\n"
 				"``BondProperty.Type.Length``                            :guilabel:`Length`                                  float     \n"
+				"``BondProperty.Type.Topology``                          :guilabel:`Topology`                                int (2x)  \n"
+				"``BondProperty.Type.PeriodicImage``                     :guilabel:`Periodic Image`                          int (3x)  \n"
 				"======================================================= =================================================== ==========\n"
 				)
 	;
@@ -585,7 +603,9 @@ PYBIND11_PLUGIN(Particles)
 		.value("Selection", BondProperty::SelectionProperty)
 		.value("Color", BondProperty::ColorProperty)
 		.value("Length", BondProperty::LengthProperty)
-	;								
+		.value("Topology", BondProperty::TopologyProperty)
+		.value("PeriodicImage", BondProperty::PeriodicImageProperty)
+	;
 
 	ovito_class<BondType, ElementType>(m,
 			"Represents a bond type. A :py:class:`!BondType` instance is always owned by a :py:class:`BondTypeProperty`. ")

@@ -45,6 +45,7 @@ Python class name                              User interface name
 :py:class:`FreezePropertyModifier`             :guilabel:`Freeze property`
 :py:class:`HistogramModifier`                  :guilabel:`Histogram`
 :py:class:`IdentifyDiamondModifier`            :guilabel:`Identify diamond structure`
+:py:class:`InterpolateTrajectoryModifier`      :guilabel:`Interpolate trajectory`
 :py:class:`InvertSelectionModifier`            :guilabel:`Invert selection`
 :py:class:`LoadTrajectoryModifier`             :guilabel:`Load trajectory`
 :py:class:`ManualSelectionModifier`            :guilabel:`Manual selection`

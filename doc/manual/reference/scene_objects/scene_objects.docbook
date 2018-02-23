@@ -98,10 +98,6 @@
             <entry>A viewport camera object created using the <link linkend="usage.viewports.menu">Create camera</link> function in the viewport menu</entry>
           </row>
           <row>
-            <entry>Bonds</entry>
-            <entry>The list of pair-wise bonds defined in a particle system</entry>
-          </row>
-          <row>
             <entry>Particle&#xA0;trajectories</entry>
             <entry>The lines generated through the <link linkend="howto.visualize_particle_trajectories">Create trajectory lines</link> utility</entry>
           </row>

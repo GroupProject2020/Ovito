@@ -30,6 +30,7 @@
 #include <plugins/particles/modifier/properties/ComputePropertyModifier.h>
 #include <plugins/particles/modifier/properties/FreezePropertyModifier.h>
 #include <plugins/particles/modifier/properties/ComputeBondLengthsModifier.h>
+#include <plugins/particles/modifier/properties/InterpolateTrajectoryModifier.h>
 #include <plugins/particles/modifier/selection/ManualSelectionModifier.h>
 #include <plugins/particles/modifier/selection/ExpandSelectionModifier.h>
 #include <plugins/particles/modifier/selection/ExpressionSelectionModifier.h>
@@ -100,6 +101,15 @@ void defineModifiersSubmodule(py::module m)
 			" * ``Length`` (:py:class:`~ovito.data.BondProperty`):\n"
 			"   The output bond property containing the length of each bond.\n"
 			"\n")
+	;
+
+	ovito_class<InterpolateTrajectoryModifier, Modifier>(m,
+			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
+			"")
+		.def_property("minimum_image_convention", &InterpolateTrajectoryModifier::useMinimumImageConvention, &InterpolateTrajectoryModifier::setUseMinimumImageConvention,
+				"..."
+				"\n\n"
+				":Default: ``True``\n")
 	;
 
 	ovito_class<ComputePropertyModifier, AsynchronousModifier>(m,

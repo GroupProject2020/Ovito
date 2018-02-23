@@ -34,7 +34,7 @@ SET_OVITO_OBJECT_EDITOR(InterpolateTrajectoryModifier, InterpolateTrajectoryModi
 ******************************************************************************/
 void InterpolateTrajectoryModifierEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
-	QWidget* rollout = createRollout(tr("Interpolate trajectory"), rolloutParams);
+	QWidget* rollout = createRollout(tr("Interpolate trajectory"), rolloutParams, "particles.modifiers.interpolate_trajectory.html");
 
     // Create the rollout contents.
 	QVBoxLayout* layout = new QVBoxLayout(rollout);

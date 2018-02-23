@@ -28,7 +28,7 @@ class BondsView(collections.Mapping):
     .. literalinclude:: ../example_snippets/bonds_view.py
         :lines: 8-12
 
-    New bond properties can be added with the :py:meth:`create` method.
+    New bond properties can be added with the :py:meth:`.create_property` method.
     """
     
     def __init__(self, data_collection):
@@ -62,7 +62,15 @@ class BondsView(collections.Mapping):
     def __repr__(self):
         return repr(dict(self))
 
-    def create(self, name, dtype=None, components=None, data=None):
+    @property
+    def count(self):
+        """ This read-only attribute returns the number of bonds in the :py:class:`DataCollection`. """
+        for obj in self._data.objects:
+            if isinstance(obj, BondProperty) and obj.type == BondProperty.Type.Topology:
+                return obj.size
+        return 0
+
+    def create_property(self, name, dtype=None, components=None, data=None):
         """ 
         Adds a new bond property to the data collection and optionally initializes it with 
         the per-bond data provided by the *data* parameter. The method returns the new :py:class:`BondProperty` 
@@ -72,7 +80,7 @@ class BondsView(collections.Mapping):
         one of the :ref:`standard property names <bond-types-list>` must be provided as *name* argument:
         
         .. literalinclude:: ../example_snippets/bonds_view.py
-            :lines: 15-17
+            :lines: 16-17
         
         The size of the provided *data* array must match the number of bond in the data collection, i.e., 
         it must equal the length of the :py:class:`Bonds` objects as well as all other bond properties that already exist in the same data collection.
@@ -97,6 +105,12 @@ class BondsView(collections.Mapping):
 
         If the property to be created already exists in the data collection, it is replaced with a new one.
         The existing per-bond data from the old property is however retained if *data* is ``None``.
+
+        Note: If the data collection contains no bonds yet, that is, even the ``Topology`` property
+        is not present in the data collection yet, then the ``Topology`` property can still be created from scratch as a first bond property by the 
+        :py:meth:`!create` method. The *data* array has to be provided in this case to specify the number of bonds
+        to create. After the initial ``Topology`` property has been created, the number of bonds is now specified and any subsequently added properties 
+        must have the exact same length.
 
         :param name: Either a :ref:`standard property type constant <bond-types-list>` or a name string.
         :param data: An optional data array with per-bond values for initializing the new property.
@@ -148,22 +162,26 @@ class BondsView(collections.Mapping):
                 raise TypeError("Invalid property data type. Only 'int', 'int64' or 'float' are allowed.")            
         
         # Check if property already exists in the data collection.
-        # Also look up the Bonds data object to determine the number of bonds.
+        # Also look up the 'Topology' bond property to determine the number of bonds.
         existing_prop = None
-        bonds_obj = None
+        topology_prop = None
         for obj in self._data.objects:
             if isinstance(obj, BondProperty):
+                if obj.type == BondProperty.Type.Topology:
+                    topology_prop = obj
                 if property_type != BondProperty.Type.User and obj.type == property_type:
                     existing_prop = obj
                 elif property_type == BondProperty.Type.User and obj.name == property_name:
                     existing_prop = obj
-            elif isinstance(obj, Bonds):
-                bonds_obj = obj
 
-        # First we have to determine the number of bonds.
-        if bonds_obj is None:
-            raise RuntimeError("Cannot create bond property, because the data collection contains no bonds yet.")
-        num_bonds = bonds_obj.size
+        # First determine the number of bonds from the 'Topology' bond property.
+        if topology_prop is None:
+            if property_type != BondProperty.Type.Topology or data is None:
+                raise RuntimeError("Cannot create bond property, because the data collection contains no bonds yet.")
+            else:
+                num_bonds = len(data)
+        else:
+            num_bonds = topology_prop.size
 
         # Check data array dimensions.
         if data is not None:
@@ -232,3 +250,7 @@ class BondsView(collections.Mapping):
     @property
     def array(self):
         return numpy.asarray(self['Topology'])
+
+    # Here only for backward compatibility with OVITO 2.9.0:
+    def create(self, name, dtype=None, components=None, data=None):
+        return self.create_property(name, dtype=dtype, components=components, data=data)

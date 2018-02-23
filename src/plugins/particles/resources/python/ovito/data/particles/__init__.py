@@ -30,3 +30,6 @@ ovito.data.__all__ += ['ParticleProperty', 'ParticleType',
             'BondProperty', 'BondType', 'BondsEnumerator', 
             'CutoffNeighborFinder', 'NearestNeighborFinder',
             'ParticlesView', 'BondsView']
+
+# For backward compatibility with OVITO 2.9.0:
+ovito.data.Bonds = BondsView

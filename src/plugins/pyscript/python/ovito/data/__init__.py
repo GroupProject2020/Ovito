@@ -10,21 +10,20 @@ It also provides container classes for such data objects and some additional uti
 **Data objects:**
 
   * :py:class:`DataObject` (base of all data object types)
-  * :py:class:`Bonds`
-  * :py:class:`BondProperty`
-  * :py:class:`DislocationNetwork`
-  * :py:class:`ParticleProperty`
   * :py:class:`Property`
+  * :py:class:`ParticleProperty`
+  * :py:class:`BondProperty`
   * :py:class:`SimulationCell`
   * :py:class:`SurfaceMesh`
+  * :py:class:`DislocationNetwork`
 
 **Auxiliary data classes:**
 
+  * :py:class:`ParticlesView`
   * :py:class:`ParticleType`
+  * :py:class:`BondsView`
   * :py:class:`BondType`
   * :py:class:`DislocationSegment`
-  * :py:class:`ParticlesView`
-  * :py:class:`BondsView`
 
 **Utility classes:**
 

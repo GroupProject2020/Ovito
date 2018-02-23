@@ -28,32 +28,19 @@ DataCollection.bonds = property(_DataCollection_bonds)
 
 # Implementation of the DataCollection.number_of_particles property.
 # Here only for backward compatibility with OVITO 2.9.0.
-def _get_DataCollection_number_of_particles(self):
-    # The number of particles in the data collection. 
-    # Implementation note: This value is derived from the length of the ``Position`` standard :py:class:`ParticleProperty` stored 
-    # in this data collection. The number of particles is 0 if the ``Position`` particle property does not exist. """
-    # The number of particles is determined by the size of the 'Position' particle property.
-    for obj in self.objects:
-        if isinstance(obj, ParticleProperty) and obj.type == ParticleProperty.Type.Position:
-            return obj.size
-    return 0
-DataCollection.number_of_particles = property(_get_DataCollection_number_of_particles)
+DataCollection.number_of_particles = property(lambda self: self.particles.count)
 
 # Extend the DataCollection class with a 'number_of_half_bonds' property.
 # Here only for backward compatibility with OVITO 2.9.0.
-def _get_DataCollection_number_of_half_bonds(self):
-    return self.number_of_full_bonds * 2
-DataCollection.number_of_half_bonds = property(_get_DataCollection_number_of_half_bonds)
+DataCollection.number_of_half_bonds = property(lambda self: self.number_of_full_bonds * 2)
 
 # Extend the DataCollection class with a 'number_of_full_bonds' property.
 # Here only for backward compatibility with OVITO 2.9.0.
-def _get_DataCollection_number_of_full_bonds(self):
-    # The number of (full) bonds stored in the data collection. 
-    for obj in self.objects:
-        if isinstance(obj, Bonds):
-            return obj.size
-    return 0
-DataCollection.number_of_full_bonds = property(_get_DataCollection_number_of_full_bonds)
+DataCollection.number_of_full_bonds = property(lambda self: self.bonds.count)
+
+# Extend the DataCollection class with a 'number_of_bonds' property.
+# This is for backward compatibility with OVITO 2.8.2:
+DataCollection.number_of_bonds = property(lambda self: self.number_of_half_bonds)
 
 # Implementation of the DataCollection.to_ase_atoms() method.
 # Here only for backward compatibility with OVITO 2.9.0.
@@ -99,12 +86,6 @@ def _DataCollection_create_user_bond_property(self, name, data_type, num_compone
     elif data_type == 'float': data_type = float
     return self.bonds.create(name, dtype = data_type, components = num_components, data = data)
 DataCollection.create_user_bond_property = _DataCollection_create_user_bond_property
-
-# Extend the DataCollection class with a 'number_of_bonds' property.
-# This is for backward compatibility with OVITO 2.8.2:
-def _get_DataCollection_number_of_bonds(self):
-    return self.number_of_half_bonds
-DataCollection.number_of_bonds = property(_get_DataCollection_number_of_bonds)
 
 # Implementation of the DataCollection.particle_properties attribute.
 # Here only for backward compatibility with OVITO 2.9.0.
