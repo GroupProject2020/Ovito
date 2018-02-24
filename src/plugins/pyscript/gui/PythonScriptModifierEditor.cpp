@@ -154,9 +154,9 @@ void PythonScriptModifierEditor::onOpenEditor()
 /******************************************************************************
 * This method is called when a reference target changes.
 ******************************************************************************/
-bool PythonScriptModifierEditor::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool PythonScriptModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(source == editObject() && event->type() == ReferenceEvent::ObjectStatusChanged) {
+	if(source == editObject() && event.type() == ReferenceEvent::ObjectStatusChanged) {
 		onContentsChanged(editObject());
 	}
 	return ModifierPropertiesEditor::referenceEvent(source, event);

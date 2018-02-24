@@ -160,9 +160,9 @@ void XFormMode::onSelectionChangeComplete(SelectionSet* selection)
 /******************************************************************************
 * Is called when the selected scene node generates a notification event.
 ******************************************************************************/
-void XFormMode::onSceneNodeEvent(ReferenceEvent* event)
+void XFormMode::onSceneNodeEvent(const ReferenceEvent& event)
 {
-	if(event->type() == ReferenceEvent::TransformationChanged) {
+	if(event.type() == ReferenceEvent::TransformationChanged) {
 		updateCoordinateDisplay(inputManager()->mainWindow()->coordinateDisplay());
 	}
 }

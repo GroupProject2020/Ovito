@@ -41,7 +41,7 @@ SET_PROPERTY_FIELD_LABEL(LAMMPSTextDumpImporter, useCustomColumnMapping, "Custom
 void LAMMPSTextDumpImporter::setCustomColumnMapping(const InputColumnMapping& mapping)
 {
 	_customColumnMapping = mapping;
-	notifyDependents(ReferenceEvent::TargetChanged);
+	notifyTargetChanged();
 }
 
 /******************************************************************************

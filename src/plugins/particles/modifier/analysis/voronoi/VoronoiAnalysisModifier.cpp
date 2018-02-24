@@ -85,7 +85,7 @@ bool VoronoiAnalysisModifier::OOMetaClass::isApplicableTo(const PipelineFlowStat
 /******************************************************************************
 * Handles reference events sent by reference targets of this object.
 ******************************************************************************/
-bool VoronoiAnalysisModifier::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool VoronoiAnalysisModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	// Do not propagate messages from the attached display object.
 	if(source == bondsDisplay())

@@ -112,7 +112,7 @@ public:
 protected:
 
 	/// Is called when a RefTarget referenced by this object has generated an event.
-	virtual bool referenceEvent(RefTarget* source, ReferenceEvent* event) override;
+	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
 	
 private:
 

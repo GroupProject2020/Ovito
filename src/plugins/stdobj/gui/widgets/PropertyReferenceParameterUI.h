@@ -100,7 +100,7 @@ public Q_SLOTS:
 protected:
 
 	/// This method is called when a reference target changes.
-	virtual bool referenceEvent(RefTarget* source, ReferenceEvent* event) override;
+	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
 
 	/// Returns the value currently set for the property field.
 	PropertyReference getPropertyReference();

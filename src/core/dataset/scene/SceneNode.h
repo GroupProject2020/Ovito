@@ -222,7 +222,7 @@ public:
 protected:
 
 	/// From RefMaker.
-	virtual bool referenceEvent(RefTarget* source, ReferenceEvent* event) override;
+	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
 
 	/// From RefMaker.
 	virtual void referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget) override;

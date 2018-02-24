@@ -444,10 +444,10 @@ void FileSourceEditor::onFrameSelected(int index)
 /******************************************************************************
 * This method is called when a reference target changes.
 ******************************************************************************/
-bool FileSourceEditor::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool FileSourceEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	if(source == editObject()) {
-		if(event->type() == ReferenceEvent::ObjectStatusChanged || event->type() == ReferenceEvent::TitleChanged) {
+		if(event.type() == ReferenceEvent::ObjectStatusChanged || event.type() == ReferenceEvent::TitleChanged) {
 			updateInformationLabel();
 		}
 	}

@@ -93,7 +93,7 @@ void CreateIsosurfaceModifier::initializeModifier(ModifierApplication* modApp)
 /******************************************************************************
 * Handles reference events sent by reference targets of this object.
 ******************************************************************************/
-bool CreateIsosurfaceModifier::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool CreateIsosurfaceModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	// Do not propagate messages from the attached display object.
 	if(source == surfaceMeshDisplay())

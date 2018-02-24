@@ -270,11 +270,11 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 /******************************************************************************
 * This method is called when a reference target changes.
 ******************************************************************************/
-bool CorrelationFunctionModifierEditor::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool CorrelationFunctionModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if (event->sender() == editObject() &&
-		(event->type() == ReferenceEvent::TargetChanged ||
-		 event->type() == ReferenceEvent::ObjectStatusChanged)) {
+	if (event.sender() == editObject() &&
+		(event.type() == ReferenceEvent::TargetChanged ||
+		 event.type() == ReferenceEvent::ObjectStatusChanged)) {
 		plotAllDataLater(this);
 	}
 	return ModifierPropertiesEditor::referenceEvent(source, event);

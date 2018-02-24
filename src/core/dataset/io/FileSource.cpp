@@ -290,12 +290,11 @@ SharedFuture<QVector<FileSourceImporter::Frame>> FileSource::requestFrameList(bo
 	// Intercept future results when they become available and cache them.
 	_framesListFuture = importer()->discoverFrames(sourceUrl())
 		.then(executor(), [this, forceReloadOfCurrentFrame](QVector<FileSourceImporter::Frame>&& frameList) {
-//			qDebug() << "FileSource::requestFrameList: received frames list (" << frameList.size() << "frames). Storing it";
 			setListOfFrames(frameList);
 
 			// If update was triggered by user, also reload the current frame.
 			if(forceReloadOfCurrentFrame)
-				notifyDependents(ReferenceEvent::TargetChanged);
+				notifyTargetChanged();
 
 			// Simply forward the frame list to the caller.
 			return std::move(frameList);
@@ -330,12 +329,9 @@ SharedFuture<PipelineFlowState> FileSource::requestFrame(int frame)
 ******************************************************************************/
 Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 {
-//	qDebug() << "FileSource::requestFrameInternal: called for frame" << frame;
-
 	// First request the list of source frames and wait until it becomes available.
 	return requestFrameList(false, false)
 		.then(executor(), [this, frame](const QVector<FileSourceImporter::Frame>& sourceFrames) -> Future<PipelineFlowState> {
-//			qDebug() << "FileSource::requestFrameInternal: received frames list";
 
 			// Is the requested frame out of range?
 			if(frame >= sourceFrames.size()) {
@@ -377,13 +373,11 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 					// Create the frame loader for the requested frame.
 					FileSourceImporter::FrameLoaderPtr frameLoader = importer()->createFrameLoader(frameInfo, filename);
 					OVITO_ASSERT(frameLoader);
-//					qDebug() << "FileSource::requestFrameInternal: created frame loader " << frameLoader.get();
 					
 					// Execute the loader in a background thread.
 					// Collect results from the loader in the UI thread once it has finished running.
 					return dataset()->container()->taskManager().runTaskAsync(frameLoader)
 						.then(executor(), [this, frame, frameInfo, interval](FileSourceImporter::FrameDataPtr&& frameData) {
-//							qDebug() << "FileSource::requestFrameInternal: frame loader finished -> handing over data";
 
 							UndoSuspender noUndo(this);
 							PipelineFlowState existingState;
@@ -455,7 +449,6 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 		//    valid pipeline state with an error code.
 		//
 		.then_future(executor(), [this, frame](Future<PipelineFlowState> future) {
-				//qDebug() << "FileSource::requestFrameInternal: post-processing results of future" << future.sharedState().get() << " (frame" << frame << ")";
 				OVITO_ASSERT(future.isFinished());
 				OVITO_ASSERT(!future.isCanceled());
 				try {
@@ -487,7 +480,7 @@ void FileSource::reloadFrame(int frameIndex)
 		Application::instance()->fileManager()->removeFromCache(frames()[frameIndex].sourceFile);
 
 	invalidateFrameCache(frameIndex);
-	notifyDependents(ReferenceEvent::TargetChanged);
+	notifyTargetChanged();
 }
 
 /******************************************************************************
@@ -669,14 +662,14 @@ RefTarget* FileSource::editableSubObject(int index)
 /******************************************************************************
 * Handles reference events sent by reference targets of this object.
 ******************************************************************************/
-bool FileSource::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool FileSource::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(event->type() == ReferenceEvent::TargetChanged && dataObjects().contains(static_cast<DataObject*>(source))) {
+	if(event.type() == ReferenceEvent::TargetChanged && dataObjects().contains(static_cast<DataObject*>(source))) {
 		if(_handOverInProgress) {
 			// Block TargetChanged messages from sub-objects while a data hand-over is in progress.
 			return false;
 		}
-		else if(!event->sender()->isBeingLoaded()) {
+		else if(!event.sender()->isBeingLoaded()) {
 			// Whenever the user changes the sub-objects, update the pipeline state stored in the cache.
 			PipelineFlowState state = evaluatePreliminary();
 			state.clearObjects();

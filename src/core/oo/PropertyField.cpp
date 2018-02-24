@@ -46,7 +46,10 @@ void PropertyFieldBase::generateTargetChangedEvent(RefMaker* owner, const Proper
 
 	// Send change message.
 	OVITO_ASSERT(owner->isRefTarget());
-	static_object_cast<RefTarget>(owner)->notifyDependents(messageType);
+	if(messageType != ReferenceEvent::TargetChanged)
+		static_object_cast<RefTarget>(owner)->notifyDependents(messageType);
+	else
+		static_object_cast<RefTarget>(owner)->notifyTargetChanged(&descriptor);
 }
 
 /******************************************************************************

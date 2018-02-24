@@ -61,12 +61,12 @@ Q_SIGNALS:
 	/// \brief This Qt signal is emitted by the listener each time it receives a notification
 	///        event from the current target.
 	/// \param event The notification event.
-	void notificationEvent(ReferenceEvent* event);
+	void notificationEvent(const ReferenceEvent& event);
 
 protected:
 
 	/// \brief Is called when the RefTarget referenced by this listener has generated an event.
-	virtual bool referenceEvent(RefTarget* source, ReferenceEvent* event) override;
+	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
 
 private:
 
@@ -145,7 +145,7 @@ Q_SIGNALS:
 	///        event from a target.
 	/// \param source The object that sent the notification event.
 	/// \param event The notification event.
-	void notificationEvent(RefTarget* source, ReferenceEvent* event);
+	void notificationEvent(RefTarget* source, const ReferenceEvent& event);
 
 protected:
 
@@ -156,7 +156,7 @@ protected:
 	}
 
 	/// \brief Is called when a RefTarget referenced by this listener has generated an event.
-	virtual bool referenceEvent(RefTarget* source, ReferenceEvent* event) override;
+	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
 
 private:
 

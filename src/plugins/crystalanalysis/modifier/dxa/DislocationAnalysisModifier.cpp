@@ -184,7 +184,7 @@ OORef<ModifierApplication> DislocationAnalysisModifier::createModifierApplicatio
 /******************************************************************************
 * Handles reference events sent by reference targets of this object.
 ******************************************************************************/
-bool DislocationAnalysisModifier::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool DislocationAnalysisModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	// Do not propagate messages from the attached display objects or the pattern catalog.
 	if(source == defectMeshDisplay() || source == interfaceMeshDisplay() || source == dislocationDisplay())

@@ -141,14 +141,14 @@ public:
 	/// This counter is increment every time the object changes.
 	unsigned int revisionNumber() const Q_DECL_NOTHROW { return _revisionNumber; }
 
-	/// \brief Sends an event to all dependents of this RefTarget.
-	/// \param event The notification event to be sent to all dependents of this RefTarget.
-	virtual void notifyDependentsImpl(ReferenceEvent& event) override;
-
 protected:
 
+	/// \brief Sends an event to all dependents of this RefTarget.
+	/// \param event The notification event to be sent to all dependents of this RefTarget.
+	virtual void notifyDependentsImpl(const ReferenceEvent& event) override;
+
 	/// Handles reference events sent by reference targets of this object.
-	virtual bool referenceEvent(RefTarget* source, ReferenceEvent* event) override;
+	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
 
 	/// Saves the class' contents to the given stream.
 	virtual void saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData) override;

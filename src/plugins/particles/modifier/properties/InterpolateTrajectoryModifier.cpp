@@ -231,9 +231,9 @@ PipelineFlowState InterpolateTrajectoryModifier::evaluatePreliminary(TimePoint t
 /******************************************************************************
 * Is called when a RefTarget referenced by this object has generated an event.
 ******************************************************************************/
-bool InterpolateTrajectoryModifierApplication::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool InterpolateTrajectoryModifierApplication::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(event->type() == ReferenceEvent::TargetChanged) {
+	if(event.type() == ReferenceEvent::TargetChanged) {
 		invalidateFrameCache();
 	}
 	return ModifierApplication::referenceEvent(source, event);

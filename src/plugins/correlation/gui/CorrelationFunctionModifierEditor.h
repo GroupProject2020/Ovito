@@ -51,7 +51,7 @@ protected:
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
 
 	/// This method is called when a reference target changes.
-	virtual bool referenceEvent(RefTarget* source, ReferenceEvent* event) override;
+	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
 
 	/// Replots one of the correlation function computed by the modifier.
 	void plotData(const QVector<FloatType> &xData, const QVector<FloatType> &yData,

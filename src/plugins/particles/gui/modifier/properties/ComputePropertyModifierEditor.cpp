@@ -113,12 +113,12 @@ void ComputePropertyModifierEditor::createUI(const RolloutInsertionParameters& r
 /******************************************************************************
 * This method is called when a reference target changes.
 ******************************************************************************/
-bool ComputePropertyModifierEditor::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool ComputePropertyModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(source == editObject() && (event->type() == ReferenceEvent::TargetChanged || event->type() == ReferenceEvent::ObjectStatusChanged)) {
+	if(source == editObject() && (event.type() == ReferenceEvent::TargetChanged || event.type() == ReferenceEvent::ObjectStatusChanged)) {
 		if(!editorUpdatePending) {
 			editorUpdatePending = true;
-			QMetaObject::invokeMethod(this, "updateEditorFields", Qt::QueuedConnection, Q_ARG(bool, event->type() == ReferenceEvent::TargetChanged));
+			QMetaObject::invokeMethod(this, "updateEditorFields", Qt::QueuedConnection, Q_ARG(bool, event.type() == ReferenceEvent::TargetChanged));
 		}
 	}
 	return ModifierPropertiesEditor::referenceEvent(source, event);

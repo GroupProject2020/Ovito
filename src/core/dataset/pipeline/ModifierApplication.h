@@ -59,9 +59,6 @@ public:
 	/// Returns the current status of the pipeline object.
 	virtual PipelineStatus status() const override;
 
-	/// Sends an event to all dependents of this RefTarget.
-	virtual void notifyDependentsImpl(ReferenceEvent& event) override;
-
 	/// \brief Given an animation time, computes the source frame to show.
 	virtual int animationTimeToSourceFrame(TimePoint time) const override;
 	
@@ -79,8 +76,11 @@ protected:
 		return CachingPipelineObject::performPreliminaryUpdateAfterEvaluation() && (!modifier() || modifier()->performPreliminaryUpdateAfterEvaluation());
 	}
 
+	/// Sends an event to all dependents of this RefTarget.
+	virtual void notifyDependentsImpl(const ReferenceEvent& event) override;
+
 	/// \brief Is called when a RefTarget referenced by this object has generated an event.
-	virtual bool referenceEvent(RefTarget* source, ReferenceEvent* event) override;
+	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
 
 	/// Is called when the value of a reference field of this object changes.
 	virtual void referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget) override;

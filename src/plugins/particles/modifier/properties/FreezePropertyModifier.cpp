@@ -246,9 +246,9 @@ void FreezePropertyModifierApplication::updateStoredData(ParticleProperty* prope
 /******************************************************************************
 * Is called when a RefTarget referenced by this object has generated an event.
 ******************************************************************************/
-bool FreezePropertyModifierApplication::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool FreezePropertyModifierApplication::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(event->type() == ReferenceEvent::TargetChanged) {
+	if(event.type() == ReferenceEvent::TargetChanged) {
 		// Invalidate cached state.
 		invalidateFrozenState();
 	}

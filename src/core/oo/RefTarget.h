@@ -86,6 +86,10 @@ protected:
 
 	//////////////////////////// Reference event handling ////////////////////////////////
 
+	/// \brief Sends an event to all dependents of this RefTarget.
+	/// \param event The notification event to be sent to all dependents of this RefTarget.
+	virtual void notifyDependentsImpl(const ReferenceEvent& event);
+
 	/// \brief Is called when the value of a reference field of this RefMaker changes.
 	/// \param field Specifies the reference field of this RefMaker that has been changed.
 	///              This is always a single reference ReferenceField.
@@ -101,8 +105,7 @@ protected:
 	///
 	/// The RefTarget implementation of this virtual method generates a ReferenceEvent::ReferenceChanged notification event
 	virtual void referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget) override {
-		ReferenceFieldEvent event(ReferenceEvent::ReferenceChanged, this, field, oldTarget, newTarget);
-		notifyDependentsImpl(event);
+		notifyDependentsImpl(ReferenceFieldEvent(ReferenceEvent::ReferenceChanged, this, &field, oldTarget, newTarget));
 	}
 
 	/// \brief Is called when a RefTarget has been added to a VectorReferenceField of this RefMaker.
@@ -120,8 +123,7 @@ protected:
 	///
 	/// The RefTarget implementation of this virtual method generates a ReferenceEvent::ReferenceAdded notification event
 	virtual void referenceInserted(const PropertyFieldDescriptor& field, RefTarget* newTarget, int listIndex) override {
-		ReferenceFieldEvent event(ReferenceEvent::ReferenceAdded, this, field, NULL, newTarget, listIndex);
-		notifyDependentsImpl(event);
+		notifyDependentsImpl(ReferenceFieldEvent(ReferenceEvent::ReferenceAdded, this, &field, nullptr, newTarget, listIndex));
 	}
 
 	/// \brief Is called when a RefTarget has been removed from a VectorReferenceField of this RefMaker.
@@ -139,15 +141,14 @@ protected:
 	///
 	/// The RefTarget implementation of this virtual method generates a ReferenceEvent::ReferenceRemoved notification event
 	virtual void referenceRemoved(const PropertyFieldDescriptor& field, RefTarget* oldTarget, int listIndex) override {
-		ReferenceFieldEvent event(ReferenceEvent::ReferenceRemoved, this, field, oldTarget, NULL, listIndex);
-		notifyDependentsImpl(event);
+		notifyDependentsImpl(ReferenceFieldEvent(ReferenceEvent::ReferenceRemoved, this, &field, oldTarget, nullptr, listIndex));
 	}
 
 	/// \brief Handles a notification event from a RefTarget referenced by this object.
 	/// \param source Specifies the RefTarget that delivered the event.
 	/// \param event The notification event.
 	/// \return If \c true then the message is passed on to all dependents of this object.
-	virtual bool handleReferenceEvent(RefTarget* source, ReferenceEvent* event) override;
+	virtual bool handleReferenceEvent(RefTarget* source, const ReferenceEvent& event) override;
 
 	//////////////////////////////// Object cloning //////////////////////////////////////
 
@@ -179,15 +180,18 @@ public:
 	//////////////////////////////// Notification events ////////////////////////////////////
 
 	/// \brief Sends an event to all dependents of this RefTarget.
-	/// \param event The notification event to be sent to all dependents of this RefTarget.
-	virtual void notifyDependentsImpl(ReferenceEvent& event);
-
-	/// \brief Sends an event to all dependents of this RefTarget.
 	/// \param eventType The event type passed to the ReferenceEvent constructor.
 	inline void notifyDependents(ReferenceEvent::Type eventType) {
-		OVITO_CHECK_OBJECT_POINTER(this);
-		ReferenceEvent event(eventType, this);
-		notifyDependentsImpl(event);
+		OVITO_ASSERT(eventType != ReferenceEvent::TargetChanged);
+		OVITO_ASSERT(eventType != ReferenceEvent::ReferenceChanged);
+		OVITO_ASSERT(eventType != ReferenceEvent::ReferenceAdded);
+		OVITO_ASSERT(eventType != ReferenceEvent::ReferenceRemoved);
+		notifyDependentsImpl(ReferenceEvent(eventType, this));
+	}
+
+	/// \brief Sends a ReferenceEvent::TargetChanged event to all dependents of this RefTarget.
+	inline void notifyTargetChanged(const PropertyFieldDescriptor* field = nullptr) {
+		notifyDependentsImpl(PropertyFieldEvent(ReferenceEvent::TargetChanged, this, field));
 	}
 
 	////////////////////////////////// Dependency graph ///////////////////////////////////////

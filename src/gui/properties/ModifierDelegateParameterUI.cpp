@@ -65,13 +65,13 @@ void ModifierDelegateParameterUI::resetUI()
 /******************************************************************************
 * This method is called when a reference target changes.
 ******************************************************************************/
-bool ModifierDelegateParameterUI::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool ModifierDelegateParameterUI::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(source == editObject() && event->type() == ReferenceEvent::ModifierInputChanged) {
+	if(source == editObject() && event.type() == ReferenceEvent::ModifierInputChanged) {
 		// The modifier's input from the pipeline has changed -> update list of available delegates
 		updateUI();
 	}
-	else if(source == editObject() && event->type() == ReferenceEvent::ReferenceChanged && static_cast<ReferenceFieldEvent*>(event)->field() == PROPERTY_FIELD(DelegatingModifier::delegate)) {
+	else if(source == editObject() && event.type() == ReferenceEvent::ReferenceChanged && static_cast<const ReferenceFieldEvent&>(event).field() == &PROPERTY_FIELD(DelegatingModifier::delegate)) {
 		// The modifier has been assigned a new delegate -> update list of delegates
 		updateUI();
 	}

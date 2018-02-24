@@ -260,11 +260,11 @@ void AnimationTrackBar::addController(RefTarget* target, RefTarget* owner, const
 /******************************************************************************
 * Is called whenever one of the objects being monitored sends a notification signal.
 ******************************************************************************/
-void AnimationTrackBar::onObjectNotificationEvent(RefTarget* source, ReferenceEvent* event)
+void AnimationTrackBar::onObjectNotificationEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	// Rebuild the complete controller list whenever the reference object changes.
-	if(event->type() == ReferenceEvent::ReferenceChanged
-			|| event->type() == ReferenceEvent::ReferenceAdded || event->type() == ReferenceEvent::ReferenceRemoved) {
+	if(event.type() == ReferenceEvent::ReferenceChanged
+			|| event.type() == ReferenceEvent::ReferenceAdded || event.type() == ReferenceEvent::ReferenceRemoved) {
 		if(!_objects.targets().empty()) {
 			_objects.clear();
 			_controllers.clear();
@@ -276,15 +276,15 @@ void AnimationTrackBar::onObjectNotificationEvent(RefTarget* source, ReferenceEv
 /******************************************************************************
 * Is called whenever one of the controllers being monitored sends a notification signal.
 ******************************************************************************/
-void AnimationTrackBar::onControllerNotificationEvent(RefTarget* source, ReferenceEvent* event)
+void AnimationTrackBar::onControllerNotificationEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(event->type() == ReferenceEvent::TargetChanged ||
-			event->type() == ReferenceEvent::ReferenceChanged
-			|| event->type() == ReferenceEvent::ReferenceAdded || event->type() == ReferenceEvent::ReferenceRemoved) {
+	if(event.type() == ReferenceEvent::TargetChanged ||
+			event.type() == ReferenceEvent::ReferenceChanged
+			|| event.type() == ReferenceEvent::ReferenceAdded || event.type() == ReferenceEvent::ReferenceRemoved) {
 		// Repaint track bar whenever a key has been created, deleted, or moved.
 		update();
 	}
-	else if(event->type() == ReferenceEvent::TargetDeleted) {
+	else if(event.type() == ReferenceEvent::TargetDeleted) {
 		_parameterNames.removeAt(_controllers.targets().indexOf(static_cast<KeyframeController*>(source)));
 	}
 }

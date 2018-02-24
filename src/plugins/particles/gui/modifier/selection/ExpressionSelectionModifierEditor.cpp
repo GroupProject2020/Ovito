@@ -67,9 +67,9 @@ void ExpressionSelectionModifierEditor::createUI(const RolloutInsertionParameter
 /******************************************************************************
 * This method is called when a reference target changes.
 ******************************************************************************/
-bool ExpressionSelectionModifierEditor::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool ExpressionSelectionModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(source == editObject() && event->type() == ReferenceEvent::TargetChanged) {
+	if(source == editObject() && event.type() == ReferenceEvent::TargetChanged) {
 		updateEditorFields();
 	}
 	return ModifierPropertiesEditor::referenceEvent(source, event);

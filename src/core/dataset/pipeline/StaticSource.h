@@ -85,26 +85,26 @@ public:
 	/// Sets the attributes that will be passed along with the data objects.
 	void setAttributes(QVariantMap attributes) { 
 		_attributes = std::move(attributes);
-		notifyDependents(ReferenceEvent::TargetChanged);
+		notifyTargetChanged();
 	}
 
 	/// Removes all attributes that will be passed along with the data objects.
 	void clearAttributes() {
 		if(_attributes.empty()) return;
 		_attributes.clear(); 
-		notifyDependents(ReferenceEvent::TargetChanged);
+		notifyTargetChanged();
 	}
 
 	/// Removes the attribute with the given name if it exists.
 	void removeAttribute(const QString& name) {
 		if(_attributes.remove(name))
-			notifyDependents(ReferenceEvent::TargetChanged);
+			notifyTargetChanged();
 	}
 
 	/// Adds or replaces an attribute with the given name.
 	void setAttribute(const QString& name, const QVariant& value) {
 		_attributes.insert(name, value);
-		notifyDependents(ReferenceEvent::TargetChanged);
+		notifyTargetChanged();
 	}
 	
 	/// Returns the number of sub-objects that should be displayed in the modifier stack.

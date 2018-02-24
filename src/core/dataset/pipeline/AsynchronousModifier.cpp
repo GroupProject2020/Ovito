@@ -55,17 +55,27 @@ OORef<ModifierApplication> AsynchronousModifier::createModifierApplication()
 ******************************************************************************/
 Future<PipelineFlowState> AsynchronousModifier::evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
+	// Check if there are existing computation results stored in the ModifierApplication that can be re-used.
+	if(AsynchronousModifierApplication* asyncModApp = dynamic_object_cast<AsynchronousModifierApplication>(modApp)) {
+		const AsynchronousModifier::ComputeEngineResultsPtr& lastResults = asyncModApp->lastComputeResults();
+		if(lastResults && lastResults->validityInterval().contains(time)) {
+			// Re-use the computation results and apply them to the input data.
+			UndoSuspender noUndo(this);
+			PipelineFlowState resultState = lastResults->apply(time, modApp, std::move(input));
+			resultState.mutableStateValidity().intersect(lastResults->validityInterval());
+			return resultState;
+		}
+	}
+
 	// Let the subclass create the computation engine based on the input data.
 	Future<ComputeEnginePtr> engineFuture = createEngine(time, modApp, input);
 	return engineFuture.then(executor(), [this, time, input = input, modApp = QPointer<ModifierApplication>(modApp)](const ComputeEnginePtr& engine) mutable {
-//			qDebug() << "AsynchronousModifier::evaluate: create compute engine" << engine.get();
 			
 			// Execute the engine in a worker thread.
 			// Collect results from the engine in the UI thread once it has finished running.
 			return dataset()->container()->taskManager().runTaskAsync(engine)
 				.then(executor(), [this, time, modApp, input = std::move(input)](const ComputeEngineResultsPtr& results) mutable {
 					if(modApp && modApp->modifier() == this) {
-//						qDebug() << "AsynchronousModifier::evaluate: compute engine completed:" << results.get() << "modifier=" << this;
 						
 						// Keep a copy of the results in the ModifierApplication for later.
 						if(AsynchronousModifierApplication* asyncModApp = dynamic_object_cast<AsynchronousModifierApplication>(modApp.data()))
@@ -90,9 +100,9 @@ PipelineFlowState AsynchronousModifier::evaluatePreliminary(TimePoint time, Modi
 {
 	// If results are still available from the last pipeline evaluation, apply them to the input data.
 	if(AsynchronousModifierApplication* asyncModApp = dynamic_object_cast<AsynchronousModifierApplication>(modApp)) {
-		if(asyncModApp->lastComputeResults()) {
-			PipelineFlowState resultState = asyncModApp->lastComputeResults()->apply(time, modApp, input);
-			resultState.mutableStateValidity().intersect(asyncModApp->lastComputeResults()->validityInterval());
+		if(const AsynchronousModifier::ComputeEngineResultsPtr& lastResults = asyncModApp->lastComputeResults()) {
+			PipelineFlowState resultState = lastResults->apply(time, modApp, input);
+			resultState.mutableStateValidity().intersect(lastResults->validityInterval());
 			return resultState;
 		}
 	}

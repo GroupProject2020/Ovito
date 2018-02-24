@@ -104,7 +104,7 @@ public:
 	/// the corresponding bits in the bit array are set.
 	void filterResize(const boost::dynamic_bitset<>& mask) {
 		modifiableStorage()->filterResize(mask);
-		notifyDependents(ReferenceEvent::TargetChanged);
+		notifyTargetChanged();
 	}
 
 	/// \brief Returns a read-only pointer to the raw elements stored in this property object.

@@ -187,7 +187,7 @@ void CameraObject::setIsTargetCamera(bool enable)
 	}
 
 	dataset()->undoStack().pushIfRecording<TargetChangedRedoOperation>(this);
-	notifyDependents(ReferenceEvent::TargetChanged);
+	notifyTargetChanged();
 }
 
 /******************************************************************************

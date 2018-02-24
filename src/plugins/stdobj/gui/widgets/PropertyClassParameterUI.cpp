@@ -70,9 +70,9 @@ void PropertyClassParameterUI::resetUI()
 /******************************************************************************
 * This method is called when a reference target changes.
 ******************************************************************************/
-bool PropertyClassParameterUI::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool PropertyClassParameterUI::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(source == editObject() && event->type() == ReferenceEvent::ModifierInputChanged) {
+	if(source == editObject() && event.type() == ReferenceEvent::ModifierInputChanged) {
 		// The modifier's input from the pipeline has changed -> update list of available delegates
 		updateUI();
 	}

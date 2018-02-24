@@ -46,7 +46,7 @@ SET_PROPERTY_FIELD_LABEL(XYZImporter, autoRescaleCoordinates, "Detect reduced co
 void XYZImporter::setColumnMapping(const InputColumnMapping& mapping)
 {
 	_columnMapping = mapping;
-	notifyDependents(ReferenceEvent::TargetChanged);
+	notifyTargetChanged();
 }
 
 /******************************************************************************

@@ -60,7 +60,7 @@ bool CoordinationPolyhedraModifier::OOMetaClass::isApplicableTo(const PipelineFl
 /******************************************************************************
 * Handles reference events sent by reference targets of this object.
 ******************************************************************************/
-bool CoordinationPolyhedraModifier::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool CoordinationPolyhedraModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	// Do not propagate messages from the attached display object.
 	if(source == surfaceMeshDisplay())

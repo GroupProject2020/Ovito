@@ -81,6 +81,18 @@ OORef<ModifierApplication> PolyhedralTemplateMatchingModifier::createModifierApp
 }
 
 /******************************************************************************
+* Is called when the value of a property of this object has changed.
+******************************************************************************/
+void PolyhedralTemplateMatchingModifier::propertyChanged(const PropertyFieldDescriptor& field)
+{
+	if(field == PROPERTY_FIELD(rmsdCutoff)) {
+		// Immediately update viewports when RMSD cutoff has been changed by the user.
+		notifyDependents(ReferenceEvent::PreliminaryStateAvailable);
+	}
+	StructureIdentificationModifier::propertyChanged(field);
+}
+
+/******************************************************************************
 * Creates and initializes a computation engine that will compute the modifier's results.
 ******************************************************************************/
 Future<AsynchronousModifier::ComputeEnginePtr> PolyhedralTemplateMatchingModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)

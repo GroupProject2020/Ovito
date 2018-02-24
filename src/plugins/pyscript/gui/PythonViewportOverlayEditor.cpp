@@ -129,9 +129,9 @@ void PythonViewportOverlayEditor::onOpenEditor()
 /******************************************************************************
 * This method is called when a reference target changes.
 ******************************************************************************/
-bool PythonViewportOverlayEditor::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool PythonViewportOverlayEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(source == editObject() && event->type() == ReferenceEvent::ObjectStatusChanged) {
+	if(source == editObject() && event.type() == ReferenceEvent::ObjectStatusChanged) {
 		onContentsChanged(editObject());
 	}
 	return PropertiesEditor::referenceEvent(source, event);

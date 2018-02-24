@@ -60,13 +60,12 @@ GuiDataSetContainer::GuiDataSetContainer(MainWindow* mainWindow) : DataSetContai
 /******************************************************************************
 * Is called when a RefTarget referenced by this object has generated an event.
 ******************************************************************************/
-bool GuiDataSetContainer::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool GuiDataSetContainer::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	if(source == currentSet()) {
 		if(Application::instance()->guiMode()) {
-			if(event->type() == ReferenceEvent::TargetChanged) {
+			if(event.type() == ReferenceEvent::TargetChanged) {
 				// Update viewports as soon as the scene becomes ready.
-//				qDebug() << "************* GuiDataSetContainer::referenceEvent **************** (sender=" << event->sender() << ", state counter=" << PromiseState::instanceCount() << ")";
 				if(!_sceneReadyScheduled) {
 					_sceneReadyScheduled = true;
 					currentSet()->whenSceneReady().finally(executor(), [this]() {
@@ -75,10 +74,9 @@ bool GuiDataSetContainer::referenceEvent(RefTarget* source, ReferenceEvent* even
 					});
 				}
 			}
-			else if(event->type() == ReferenceEvent::PreliminaryStateAvailable) {
+			else if(event.type() == ReferenceEvent::PreliminaryStateAvailable) {
 				// Update viewports when a new preliminiary state from one of the data pipelines
 				// becomes available (unless we are playing an animation).
-//				qDebug() << "GuiDataSetContainer::referenceEvent: PreliminaryStateAvailable (sender=" << event->sender() << ") vp suspended=" << currentSet()->viewportConfig()->isSuspended();
 				if(currentSet()->animationSettings()->isPlaybackActive() == false)
 					currentSet()->viewportConfig()->updateViewports();
 			}

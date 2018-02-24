@@ -44,26 +44,26 @@ PipelineListItem::PipelineListItem(RefTarget* object, PipelineListItem* parent, 
 * This method is called when the object presented by the modifier
 * list item generates a message.
 ******************************************************************************/
-bool PipelineListItem::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool PipelineListItem::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	// The modifier stack list must be updated if a modifier has been added or removed
 	// from a PipelineObject.
-	if((event->type() == ReferenceEvent::ReferenceAdded || event->type() == ReferenceEvent::ReferenceRemoved || event->type() == ReferenceEvent::ReferenceChanged)
+	if((event.type() == ReferenceEvent::ReferenceAdded || event.type() == ReferenceEvent::ReferenceRemoved || event.type() == ReferenceEvent::ReferenceChanged)
 		&& source == object() && dynamic_object_cast<PipelineObject>(object()))
 	{
 		Q_EMIT subitemsChanged(this);
 	}
 	/// Update item if an object has been enabled or disabled.
-	else if(event->type() == ReferenceEvent::TargetEnabledOrDisabled && source == object() && event->sender() == object()) {
+	else if(event.type() == ReferenceEvent::TargetEnabledOrDisabled && source == object() && event.sender() == object()) {
 		Q_EMIT itemChanged(this);
 	}
 	/// Update an entry if the evaluation status of the modifier has changed.
-	else if(event->type() == ReferenceEvent::ObjectStatusChanged || event->type() == ReferenceEvent::TitleChanged) {
+	else if(event.type() == ReferenceEvent::ObjectStatusChanged || event.type() == ReferenceEvent::TitleChanged) {
 		Q_EMIT itemChanged(this);
 	}
 	/// If the list of sub-objects changes for one of the entries, we need
 	/// to update everything.
-	else if(event->type() == ReferenceEvent::SubobjectListChanged && source == object() && event->sender() == object()) {
+	else if(event.type() == ReferenceEvent::SubobjectListChanged && source == object() && event.sender() == object()) {
 		Q_EMIT subitemsChanged(this);
 	}
 

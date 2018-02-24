@@ -66,7 +66,7 @@ public:
 	/// Sets the Python script function to be executed by the overlay.
 	void setScriptFunction(py::function func) {
 		_overlayScriptFunction = std::move(func);
-		notifyDependents(ReferenceEvent::TargetChanged);
+		notifyTargetChanged();
 	}
 
 	/// Loads the default values of this object's parameter fields.

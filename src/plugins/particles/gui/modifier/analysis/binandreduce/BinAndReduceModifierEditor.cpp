@@ -159,9 +159,9 @@ void BinAndReduceModifierEditor::createUI(const RolloutInsertionParameters& roll
 /******************************************************************************
 * This method is called when a reference target changes.
 ******************************************************************************/
-bool BinAndReduceModifierEditor::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool BinAndReduceModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(event->sender() == editObject() && event->type() == ReferenceEvent::ObjectStatusChanged) {
+	if(event.sender() == editObject() && event.type() == ReferenceEvent::ObjectStatusChanged) {
 		plotLater(this);
 	}
 	return ModifierPropertiesEditor::referenceEvent(source, event);

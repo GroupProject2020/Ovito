@@ -116,10 +116,10 @@ bool StructureListParameterUI::setItemData(RefTarget* target, const QModelIndex&
 /******************************************************************************
 * This method is called when a reference target changes.
 ******************************************************************************/
-bool StructureListParameterUI::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool StructureListParameterUI::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	if(source == editObject()) {
-		if(event->type() == ReferenceEvent::ObjectStatusChanged) {
+		if(event.type() == ReferenceEvent::ObjectStatusChanged) {
 			// Update the structure count and fraction columns.
 			_model->updateColumns(2, 3);
 		}

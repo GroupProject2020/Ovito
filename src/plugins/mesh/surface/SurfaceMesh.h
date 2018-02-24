@@ -73,7 +73,7 @@ public:
 			return true;
 		if(!smoothMesh(*modifiableStorage(), domain()->data(), numIterations, promise, k_PB, lambda))
 			return false;
-		notifyDependents(ReferenceEvent::TargetChanged);
+		notifyTargetChanged();
 		return true;
 	}
 

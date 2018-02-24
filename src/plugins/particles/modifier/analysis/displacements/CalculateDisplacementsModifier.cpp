@@ -55,7 +55,7 @@ CalculateDisplacementsModifier::CalculateDisplacementsModifier(DataSet* dataset)
 /*********************************************sourceFrameToAnimationTime*********************************
 * Handles reference events sent by reference targets of this object.
 ******************************************************************************/
-bool CalculateDisplacementsModifier::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool CalculateDisplacementsModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	// Do not propagate messages sent by the attached display object.
 	if(source == vectorDisplay())

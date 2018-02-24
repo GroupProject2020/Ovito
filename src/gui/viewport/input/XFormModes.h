@@ -146,7 +146,7 @@ protected Q_SLOT:
 	void onSelectionChangeComplete(SelectionSet* selection);
 
 	/// Is called when the selected scene node generates a notification event.
-	void onSceneNodeEvent(ReferenceEvent* event);
+	void onSceneNodeEvent(const ReferenceEvent& event);
 
 	/// Is called when the current animation time has changed.
 	void onTimeChanged(TimePoint time);

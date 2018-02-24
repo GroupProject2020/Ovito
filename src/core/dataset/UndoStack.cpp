@@ -325,7 +325,7 @@ void UndoStack::CompoundOperation::debugPrint(int level)
 ******************************************************************************/
 void TargetChangedUndoOperation::undo()
 {
-	_target->notifyDependents(ReferenceEvent::TargetChanged);
+	_target->notifyTargetChanged();
 }
 
 /******************************************************************************
@@ -333,7 +333,7 @@ void TargetChangedUndoOperation::undo()
 ******************************************************************************/
 void TargetChangedRedoOperation::redo()
 {
-	_target->notifyDependents(ReferenceEvent::TargetChanged);
+	_target->notifyTargetChanged();
 }
 
 OVITO_END_INLINE_NAMESPACE

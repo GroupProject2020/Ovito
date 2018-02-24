@@ -65,7 +65,7 @@ protected Q_SLOTS:
 	void onActiveViewportChanged(Viewport* activeViewport);
 
 	/// This is called when the viewport generates a reference event.
-	void viewportEvent(ReferenceEvent* event);
+	void viewportEvent(const ReferenceEvent& event);
 
 	/// Is called when a new overlay has been selected in the list box.
 	void onItemSelectionChanged();

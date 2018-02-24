@@ -77,8 +77,8 @@ protected:
 	/// shouldPropagate() method returns true.
 	///
 	/// \sa RefTarget::notifyDependents()
-	virtual bool referenceEvent(RefTarget* source, ReferenceEvent* event) {
-		return event->shouldPropagate();
+	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) {
+		return event.shouldPropagate();
 	}
 
 	/// \brief Is called when the value of a reference field of this RefMaker changes.
@@ -133,7 +133,7 @@ protected:
 	/// \param source Specifies the RefTarget referenced by this RefMaker that delivered the event.
 	/// \param event The notification event.
 	/// \return If \c true then the event is passed on to the dependents of this object.
-	virtual bool handleReferenceEvent(RefTarget* source, ReferenceEvent* event);
+	virtual bool handleReferenceEvent(RefTarget* source, const ReferenceEvent& event);
 
 	/// \brief Is called when the value of a property of this object has changed.
 	/// \param field Specifies the property field of this RefMaker that has changed.

@@ -67,7 +67,7 @@ void defineAppSubmodule(py::module m)
 		// This is used by DataCollection.__getitem__():
 		.def_property_readonly("object_title", &RefTarget::objectTitle)
 		// This internal method is used in various places:
-		.def("notify_object_changed", [](RefTarget& target) { target.notifyDependents(ReferenceEvent::TargetChanged); })
+		.def("notify_object_changed", [](RefTarget& target) { target.notifyTargetChanged(); })
 	;
 
 	// Note that, for DataSet, we are not using OORef<> as holder type like we normally do for other OvitoObject-derived classes, because

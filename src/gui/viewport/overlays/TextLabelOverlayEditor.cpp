@@ -171,9 +171,9 @@ void TextLabelOverlayEditor::createUI(const RolloutInsertionParameters& rolloutP
 /******************************************************************************
 * This method is called when a reference target changes.
 ******************************************************************************/
-bool TextLabelOverlayEditor::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool TextLabelOverlayEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(source == editObject() && event->type() == ReferenceEvent::TargetChanged) {
+	if(source == editObject() && event.type() == ReferenceEvent::TargetChanged) {
 		updateEditorFields();
 	}
 	return PropertiesEditor::referenceEvent(source, event);

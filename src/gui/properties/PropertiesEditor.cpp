@@ -128,9 +128,9 @@ QWidget* PropertiesEditor::createRollout(const QString& title, const RolloutInse
 /******************************************************************************
 * This method is called when a reference target changes.
 ******************************************************************************/
-bool PropertiesEditor::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool PropertiesEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(source == editObject() && event->type() == ReferenceEvent::TargetChanged) {
+	if(source == editObject() && event.type() == ReferenceEvent::TargetChanged) {
 		Q_EMIT contentsChanged(source);
 	}
 	return RefMaker::referenceEvent(source, event);

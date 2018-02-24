@@ -128,16 +128,16 @@ const VectorReferenceFieldBase& RefMaker::getVectorReferenceField(const Property
 /******************************************************************************
 * Handles a notification event from a RefTarget referenced by this object.
 ******************************************************************************/
-bool RefMaker::handleReferenceEvent(RefTarget* source, ReferenceEvent* event)
+bool RefMaker::handleReferenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	OVITO_CHECK_OBJECT_POINTER(this);
 	
 	// Handle delete messages.
-	if(event->type() ==  ReferenceEvent::TargetDeleted) {
-		OVITO_ASSERT(source == event->sender());
+	if(event.type() ==  ReferenceEvent::TargetDeleted) {
+		OVITO_ASSERT(source == event.sender());
 		referenceEvent(source, event);
 		OVITO_CHECK_OBJECT_POINTER(this);
-		clearReferencesTo(event->sender());
+		clearReferencesTo(event.sender());
 		return false;
 	}
 

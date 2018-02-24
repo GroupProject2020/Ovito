@@ -76,7 +76,7 @@ void fullToVoigt(size_t particleCount, T *full, T *voigt) {
 void AMBERNetCDFImporter::setCustomColumnMapping(const InputColumnMapping& mapping)
 {
 	_customColumnMapping = mapping;
-	notifyDependents(ReferenceEvent::TargetChanged);
+	notifyTargetChanged();
 }
 
 /******************************************************************************

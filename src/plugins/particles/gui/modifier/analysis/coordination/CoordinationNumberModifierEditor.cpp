@@ -88,9 +88,9 @@ void CoordinationNumberModifierEditor::createUI(const RolloutInsertionParameters
 /******************************************************************************
 * This method is called when a reference target changes.
 ******************************************************************************/
-bool CoordinationNumberModifierEditor::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool CoordinationNumberModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(event->sender() == editObject() && event->type() == ReferenceEvent::ObjectStatusChanged) {
+	if(event.sender() == editObject() && event.type() == ReferenceEvent::ObjectStatusChanged) {
 		plotRDFLater(this);
 	}
 	return ModifierPropertiesEditor::referenceEvent(source, event);

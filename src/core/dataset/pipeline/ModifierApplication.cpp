@@ -47,9 +47,9 @@ ModifierApplication::ModifierApplication(DataSet* dataset) : CachingPipelineObje
 /******************************************************************************
 * Is called when a RefTarget referenced by this object has generated an event.
 ******************************************************************************/
-bool ModifierApplication::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool ModifierApplication::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(event->type() == ReferenceEvent::TargetEnabledOrDisabled && source == modifier()) {
+	if(event.type() == ReferenceEvent::TargetEnabledOrDisabled && source == modifier()) {
 
 		if(modifier()->isEnabled() == false) {
 			setStatus(PipelineStatus(PipelineStatus::Success, tr("Modifier is currently disabled.")));
@@ -58,11 +58,11 @@ bool ModifierApplication::referenceEvent(RefTarget* source, ReferenceEvent* even
 		// Propagate enabled/disabled notification events from the modifier.
 		return true;
 	}
-	if(event->type() == ReferenceEvent::PipelineChanged && source == input()) {
+	if(event.type() == ReferenceEvent::PipelineChanged && source == input()) {
 		// Propagate pipeline changed events and updates to the preliminary state from upstream.
 		return true;
 	}
-	else if(event->type() == ReferenceEvent::TargetChanged) {
+	else if(event.type() == ReferenceEvent::TargetChanged) {
 		// Invalidate cached results when the modifier or the upstream pipeline change.
 		invalidatePipelineCache();
 		// Trigger a preliminary viewport update if desired by the modifier.
@@ -70,7 +70,7 @@ bool ModifierApplication::referenceEvent(RefTarget* source, ReferenceEvent* even
 			notifyDependents(ReferenceEvent::PreliminaryStateAvailable);
 		}
 	}
-	else if(event->type() == ReferenceEvent::PreliminaryStateAvailable && source == input()) {
+	else if(event.type() == ReferenceEvent::PreliminaryStateAvailable && source == input()) {
 		// Inform modifier that the input state has changed.
 		if(modifier()) 
 			modifier()->notifyDependents(ReferenceEvent::ModifierInputChanged);
@@ -105,7 +105,7 @@ void ModifierApplication::referenceReplaced(const PropertyFieldDescriptor& field
 /******************************************************************************
 * Sends an event to all dependents of this RefTarget.
 ******************************************************************************/
-void ModifierApplication::notifyDependentsImpl(ReferenceEvent& event)
+void ModifierApplication::notifyDependentsImpl(const ReferenceEvent& event)
 {
 	if(event.type() == ReferenceEvent::ObjectStatusChanged) {
 		// When this ModifierApplication's status changes, the status of the 

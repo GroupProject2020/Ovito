@@ -94,10 +94,10 @@ protected Q_SLOTS:
 	void onRebuildControllerList();
 
 	/// Is called whenever one of the objects being monitored sends a notification signal.
-	void onObjectNotificationEvent(RefTarget* source, ReferenceEvent* event);
+	void onObjectNotificationEvent(RefTarget* source, const ReferenceEvent& event);
 
 	/// Is called whenever one of the controller being monitored sends a notification signal.
-	void onControllerNotificationEvent(RefTarget* source, ReferenceEvent* event);
+	void onControllerNotificationEvent(RefTarget* source, const ReferenceEvent& event);
 
 	/// Deletes the selected animation keys.
 	void onDeleteSelectedKeys();

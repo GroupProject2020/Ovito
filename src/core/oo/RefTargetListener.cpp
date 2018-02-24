@@ -33,7 +33,7 @@ DEFINE_REFERENCE_FIELD(VectorRefTargetListenerBase, targets);
 /******************************************************************************
 * Is called when the RefTarget referenced by this listener has sent a message.
 ******************************************************************************/
-bool RefTargetListenerBase::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool RefTargetListenerBase::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	// Emit Qt signal.
 	Q_EMIT notificationEvent(event);
@@ -44,7 +44,7 @@ bool RefTargetListenerBase::referenceEvent(RefTarget* source, ReferenceEvent* ev
 /******************************************************************************
 * Is called when the RefTarget referenced by this listener has sent a message.
 ******************************************************************************/
-bool VectorRefTargetListenerBase::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool VectorRefTargetListenerBase::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	// Emit Qt signal.
 	Q_EMIT notificationEvent(source, event);

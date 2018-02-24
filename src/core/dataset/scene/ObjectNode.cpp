@@ -213,33 +213,33 @@ void ObjectNode::updateDisplayObjectList(TimePoint time)
 /******************************************************************************
 * This method is called when a referenced object has changed.
 ******************************************************************************/
-bool ObjectNode::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool ObjectNode::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	if(source == dataProvider()) {
-		if(event->type() == ReferenceEvent::TargetChanged) {
+		if(event.type() == ReferenceEvent::TargetChanged) {
 			invalidatePipelineCache();
 		}
-		else if(event->type() == ReferenceEvent::TargetDeleted) {
+		else if(event.type() == ReferenceEvent::TargetDeleted) {
 			invalidatePipelineCache();
 
 			// Data provider has been deleted -> delete node as well.
 			if(!dataset()->undoStack().isUndoingOrRedoing())
 				deleteNode();
 		}
-		else if(event->type() == ReferenceEvent::TitleChanged) {
+		else if(event.type() == ReferenceEvent::TitleChanged) {
 			notifyDependents(ReferenceEvent::TitleChanged);
 		}
-		else if(event->type() == ReferenceEvent::PipelineChanged) {
+		else if(event.type() == ReferenceEvent::PipelineChanged) {
 			// Forward pipeline changed events from the pipeline.
 			return true;
 		}
-		else if(event->type() == ReferenceEvent::PreliminaryStateAvailable) {
+		else if(event.type() == ReferenceEvent::PreliminaryStateAvailable) {
 			// Invalidate our preliminary state cache.
 			_pipelinePreliminaryCache.clear();
 		}
 	}
 	else if(_displayObjects.contains(source)) {
-		if(event->type() == ReferenceEvent::TargetChanged) {
+		if(event.type() == ReferenceEvent::TargetChanged) {
 			
 			// Update cached bounding box when display settings change.
 			invalidateBoundingBox();
@@ -251,7 +251,7 @@ bool ObjectNode::referenceEvent(RefTarget* source, ReferenceEvent* event)
 				_pipelineDisplayCache.invalidate(true);
 
 				// Trigger a pipeline re-evaluation.
-				notifyDependents(ReferenceEvent::TargetChanged);
+				notifyTargetChanged(&PROPERTY_FIELD(displayObjects));
 			}
 			else {
 				// Trigger an immediate viewport repaint without pipeline re-evaluation.

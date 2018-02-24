@@ -95,9 +95,9 @@ Qt::ItemFlags ModifierDelegateListParameterUI::getItemFlags(RefTarget* target, c
 /******************************************************************************
 * This method is called when a reference target changes.
 ******************************************************************************/
-bool ModifierDelegateListParameterUI::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool ModifierDelegateListParameterUI::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(event->type() == ReferenceEvent::ModifierInputChanged) {
+	if(event.type() == ReferenceEvent::ModifierInputChanged) {
 		updateColumns(0, 0);
 	}
 	return RefTargetListParameterUI::referenceEvent(source, event);

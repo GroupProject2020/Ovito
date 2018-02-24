@@ -93,7 +93,7 @@ void RenderSettings::setImageFilename(const QString& filename)
 {
 	if(filename == imageFilename()) return;
 	_imageInfo.setFilename(filename);
-	notifyDependents(ReferenceEvent::TargetChanged);
+	notifyTargetChanged();
 }
 
 /******************************************************************************
@@ -103,7 +103,7 @@ void RenderSettings::setImageInfo(const ImageInfo& imageInfo)
 {
 	if(imageInfo == _imageInfo) return;
 	_imageInfo = imageInfo;
-	notifyDependents(ReferenceEvent::TargetChanged);
+	notifyTargetChanged();
 }
 
 #define RENDER_SETTINGS_FILE_FORMAT_VERSION		1

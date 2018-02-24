@@ -338,9 +338,9 @@ void Viewport::zoomToBox(const Box3& box)
 /******************************************************************************
 * Is called when a RefTarget referenced by this object has generated an event.
 ******************************************************************************/
-bool Viewport::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool Viewport::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(event->type() == ReferenceEvent::TargetChanged) {
+	if(event.type() == ReferenceEvent::TargetChanged) {
 		if(source == viewNode()) {
 			// Update viewport when camera node has moved.
 			updateViewport();
@@ -351,7 +351,7 @@ bool Viewport::referenceEvent(RefTarget* source, ReferenceEvent* event)
 			updateViewport();
 		}
 	}
-	else if(source == viewNode() && event->type() == ReferenceEvent::TitleChanged) {
+	else if(source == viewNode() && event.type() == ReferenceEvent::TitleChanged) {
 		// Update viewport title when camera node has been renamed.
 		updateViewportTitle();
 		updateViewport();

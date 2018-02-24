@@ -118,7 +118,7 @@ void TrajectoryObject::setTrajectories(int trajectoryCount, const QVector<Point3
 	_points = points;
 	_sampleTimes = sampleTimes;
 
-	notifyDependents(ReferenceEvent::TargetChanged);
+	notifyTargetChanged();
 }
 
 }	// End of namespace

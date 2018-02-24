@@ -140,18 +140,18 @@ ObjectScriptEditor* ObjectScriptEditor::findEditorForObject(RefTarget* scriptabl
 /******************************************************************************
 * Is called when the scriptable object generates an event.
 ******************************************************************************/
-void ObjectScriptEditor::onNotificationEvent(ReferenceEvent* event)
+void ObjectScriptEditor::onNotificationEvent(const ReferenceEvent& event)
 {
-	if(event->type() == ReferenceEvent::TargetDeleted) {
+	if(event.type() == ReferenceEvent::TargetDeleted) {
 		// Close editor window when object is being deleted.
 		this->deleteLater();
 	}
-	else if(event->type() == ReferenceEvent::TargetChanged) {
+	else if(event.type() == ReferenceEvent::TargetChanged) {
 		// Update editor when object has been assigned a new script.
 		updateEditorContents();
 		updateOutputWindow();
 	}
-	else if(event->type() == ReferenceEvent::ObjectStatusChanged) {
+	else if(event.type() == ReferenceEvent::ObjectStatusChanged) {
 		// Update script logging window.
 		updateOutputWindow();
 	}

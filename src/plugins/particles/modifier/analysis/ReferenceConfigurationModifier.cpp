@@ -296,9 +296,9 @@ bool ReferenceConfigurationModifier::RefConfigEngineBase::buildParticleMapping(b
 /******************************************************************************
 * Is called when a RefTarget referenced by this object has generated an event.
 ******************************************************************************/
-bool ReferenceConfigurationModifierApplication::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool ReferenceConfigurationModifierApplication::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(event->type() == ReferenceEvent::TargetChanged) {
+	if(event.type() == ReferenceEvent::TargetChanged) {
 		// Invalidate cached state.
 		_referenceCache.clear();
 		_cacheValidity.setEmpty();

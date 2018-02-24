@@ -38,9 +38,9 @@ ModifierPropertiesEditor::ModifierPropertiesEditor()
 /******************************************************************************
 * This method is called when a reference target changes.
 ******************************************************************************/
-bool ModifierPropertiesEditor::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool ModifierPropertiesEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(event->type() == ReferenceEvent::ObjectStatusChanged) {
+	if(event.type() == ReferenceEvent::ObjectStatusChanged) {
 		updateStatusLabel();
 	}
 	return PropertiesEditor::referenceEvent(source, event);

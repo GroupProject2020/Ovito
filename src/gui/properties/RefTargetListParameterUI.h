@@ -141,7 +141,7 @@ protected Q_SLOTS:
 protected:
 
 	/// This method is called when a reference target changes. 
-	virtual bool referenceEvent(RefTarget* source, ReferenceEvent* event) override;
+	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
 
 	/// Returns the data stored under the given role for the given RefTarget.
 	/// This method is part of the data model used by the list widget and can be overriden

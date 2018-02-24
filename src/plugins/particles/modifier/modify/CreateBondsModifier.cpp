@@ -75,7 +75,7 @@ void CreateBondsModifier::setPairCutoffs(const PairCutoffsList& pairCutoffs)
 
 	_pairCutoffs = pairCutoffs;
 
-	notifyDependents(ReferenceEvent::TargetChanged);
+	notifyTargetChanged();
 }
 
 /******************************************************************************
@@ -145,7 +145,7 @@ OORef<RefTarget> CreateBondsModifier::clone(bool deepCopy, CloneHelper& cloneHel
 /******************************************************************************
 * Handles reference events sent by reference targets of this object.
 ******************************************************************************/
-bool CreateBondsModifier::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool CreateBondsModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	// Do not propagate messages from the attached display object.
 	if(source == bondsDisplay())

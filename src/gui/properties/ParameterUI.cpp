@@ -80,23 +80,23 @@ PropertyParameterUI::PropertyParameterUI(QObject* parent, const PropertyFieldDes
 /******************************************************************************
 * This method is called when a reference target changes.
 ******************************************************************************/
-bool PropertyParameterUI::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool PropertyParameterUI::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	if(isReferenceFieldUI()) {
-		if(source == editObject() && event->type() == ReferenceEvent::ReferenceChanged) {
-			if(*propertyField() == static_cast<ReferenceFieldEvent*>(event)->field()) {
+		if(source == editObject() && event.type() == ReferenceEvent::ReferenceChanged) {
+			if(propertyField() == static_cast<const ReferenceFieldEvent&>(event).field()) {
 				// The parameter value object stored in the reference field of the edited object
 				// has been replaced by another one, so update our own reference to the parameter value object.
 				if(editObject()->getReferenceField(*propertyField()) != parameterObject())
 					resetUI();
 			}
 		}
-		else if(source == parameterObject() && event->type() == ReferenceEvent::TargetChanged) {
+		else if(source == parameterObject() && event.type() == ReferenceEvent::TargetChanged) {
 			// The parameter value object has changed -> update value shown in UI.
 			updateUI();
 		}
 	}
-	else if(source == editObject() && event->type() == ReferenceEvent::TargetChanged) {
+	else if(source == editObject() && event.type() == ReferenceEvent::TargetChanged) {
 		// The edited object has changed -> update value shown in UI.
 		updateUI();
 	}

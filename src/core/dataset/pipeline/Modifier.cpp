@@ -39,7 +39,8 @@ SET_PROPERTY_FIELD_CHANGE_EVENT(Modifier, title, ReferenceEvent::TitleChanged);
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-Modifier::Modifier(DataSet* dataset) : RefTarget(dataset), _isEnabled(true)
+Modifier::Modifier(DataSet* dataset) : RefTarget(dataset), 
+	_isEnabled(true)
 {
 }
 

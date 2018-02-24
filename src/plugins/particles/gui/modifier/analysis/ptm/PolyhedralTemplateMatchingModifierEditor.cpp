@@ -113,9 +113,9 @@ void PolyhedralTemplateMatchingModifierEditor::createUI(const RolloutInsertionPa
 /******************************************************************************
 * This method is called when a reference target changes.
 ******************************************************************************/
-bool PolyhedralTemplateMatchingModifierEditor::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool PolyhedralTemplateMatchingModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(event->sender() == editObject() && (event->type() == ReferenceEvent::ObjectStatusChanged || event->type() == ReferenceEvent::TargetChanged)) {
+	if(event.sender() == editObject() && (event.type() == ReferenceEvent::ObjectStatusChanged || event.type() == ReferenceEvent::TargetChanged)) {
 		plotHistogramLater(this);
 	}
 	return ModifierPropertiesEditor::referenceEvent(source, event);

@@ -163,24 +163,24 @@ void OverlayCommandPage::onActiveViewportChanged(Viewport* activeViewport)
 /******************************************************************************
 * This is called when the viewport generates a reference event.
 ******************************************************************************/
-void OverlayCommandPage::viewportEvent(ReferenceEvent* event)
+void OverlayCommandPage::viewportEvent(const ReferenceEvent& event)
 {
-	if(event->type() == ReferenceEvent::ReferenceAdded) {
-		ReferenceFieldEvent* refEvent = static_cast<ReferenceFieldEvent*>(event);
-		if(refEvent->field() == PROPERTY_FIELD(Viewport::overlays)) {
-			ViewportOverlay* overlay = static_object_cast<ViewportOverlay>(refEvent->newTarget());
+	if(event.type() == ReferenceEvent::ReferenceAdded) {
+		const ReferenceFieldEvent& refEvent = static_cast<const ReferenceFieldEvent&>(event);
+		if(refEvent.field() == &PROPERTY_FIELD(Viewport::overlays)) {
+			ViewportOverlay* overlay = static_object_cast<ViewportOverlay>(refEvent.newTarget());
 			QListWidgetItem* item = new OverlayListItem(overlay);
-			_overlayListWidget->insertItem(refEvent->index(), item);
-			_overlayListWidget->setCurrentRow(refEvent->index(), QItemSelectionModel::ClearAndSelect);
+			_overlayListWidget->insertItem(refEvent.index(), item);
+			_overlayListWidget->setCurrentRow(refEvent.index(), QItemSelectionModel::ClearAndSelect);
 		}
 	}
-	else if(event->type() == ReferenceEvent::ReferenceRemoved) {
-		ReferenceFieldEvent* refEvent = static_cast<ReferenceFieldEvent*>(event);
-		if(refEvent->field() == PROPERTY_FIELD(Viewport::overlays)) {
-			delete _overlayListWidget->item(refEvent->index());
+	else if(event.type() == ReferenceEvent::ReferenceRemoved) {
+		const ReferenceFieldEvent& refEvent = static_cast<const ReferenceFieldEvent&>(event);
+		if(refEvent.field() == &PROPERTY_FIELD(Viewport::overlays)) {
+			delete _overlayListWidget->item(refEvent.index());
 		}
 	}
-	else if(event->type() == ReferenceEvent::TitleChanged) {
+	else if(event.type() == ReferenceEvent::TitleChanged) {
 		_activeViewportLabel->setText(tr("Selected viewport: %1").arg(activeViewport()->viewportTitle()));
 	}
 }

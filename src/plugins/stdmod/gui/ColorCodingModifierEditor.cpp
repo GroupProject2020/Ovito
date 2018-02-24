@@ -193,13 +193,13 @@ void ColorCodingModifierEditor::updateColorGradient()
 /******************************************************************************
 * This method is called when a reference target changes.
 ******************************************************************************/
-bool ColorCodingModifierEditor::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool ColorCodingModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(source == editObject() && event->type() == ReferenceEvent::ReferenceChanged) {
-		if(static_cast<ReferenceFieldEvent*>(event)->field() == PROPERTY_FIELD(ColorCodingModifier::colorGradient)) {
+	if(source == editObject() && event.type() == ReferenceEvent::ReferenceChanged) {
+		if(static_cast<const ReferenceFieldEvent&>(event).field() == &PROPERTY_FIELD(ColorCodingModifier::colorGradient)) {
 			updateColorGradient();
 		}
-		else if(static_cast<ReferenceFieldEvent*>(event)->field() == PROPERTY_FIELD(DelegatingModifier::delegate)) {
+		else if(static_cast<const ReferenceFieldEvent&>(event).field() == &PROPERTY_FIELD(DelegatingModifier::delegate)) {
 			// When the delegate of the modifier changes, update the list of available input properties.
 			ColorCodingModifierDelegate* delegate = static_object_cast<ColorCodingModifierDelegate>(static_object_cast<ColorCodingModifier>(editObject())->delegate());
 			_sourcePropertyUI->setPropertyClass(delegate ? &delegate->propertyClass() : nullptr);

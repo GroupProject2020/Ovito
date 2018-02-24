@@ -54,11 +54,6 @@ public:
 		/// Injects the computed results into the data pipeline.
 		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) = 0;
 
-		/// Indicates whether the outdated computation results may be reused and tentatively applied to 
-		/// changing inputs from the pipeline without recomputation while the calculation of new results is 
-		/// still in progress.
-		virtual bool isReapplicable() const { return true; }
-
 		/// Returns the validity period of the stored results.
 		const TimeInterval& validityInterval() const { return _validityInterval; }
 
@@ -105,6 +100,18 @@ public:
 	/// Decides whether a preliminary viewport update is performed every time the modifier 
 	/// itself changes. For asynchronous modifier this is disabled.
 	virtual bool performPreliminaryUpdateAfterChange() override { return false; }
+	
+	/// This method indicates whether outdated computation results should be immediately discarded
+	/// whenever the inputs of the modifier changes. By default, the method returns false to indicate
+	/// that the results should be kept as long as a new computation is in progress. During this 
+	/// transient phase, the old resuls may still be used by the pipeline for preliminary viewport updates.
+	virtual bool discardResultsOnInputChange() const { return false; }
+
+	/// This method indicates whether cached computation results of the modifier should be discarded whenever
+	/// a parameter of the modifier changes. The default implementation returns true. Subclasses can override
+	/// this method if the asynchronous computation results do not depend on certain parameters and their change
+	/// should not trigger a recomputation.
+	virtual bool discardResultsOnModifierChange(const PropertyFieldEvent& event) const { return true; }
 	
 protected:
 

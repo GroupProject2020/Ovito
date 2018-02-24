@@ -175,9 +175,9 @@ void ScatterPlotModifierEditor::createUI(const RolloutInsertionParameters& rollo
 /******************************************************************************
 * This method is called when a reference target changes.
 ******************************************************************************/
-bool ScatterPlotModifierEditor::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool ScatterPlotModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(event->sender() == editObject() && event->type() == ReferenceEvent::ObjectStatusChanged) {
+	if(event.sender() == editObject() && event.type() == ReferenceEvent::ObjectStatusChanged) {
 		plotLater(this);
 	}
 	return ModifierPropertiesEditor::referenceEvent(source, event);

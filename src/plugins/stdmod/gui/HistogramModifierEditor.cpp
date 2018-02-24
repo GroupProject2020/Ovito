@@ -173,9 +173,9 @@ void HistogramModifierEditor::createUI(const RolloutInsertionParameters& rollout
 /******************************************************************************
 * This method is called when a reference target changes.
 ******************************************************************************/
-bool HistogramModifierEditor::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool HistogramModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(event->sender() == editObject() && (event->type() == ReferenceEvent::ObjectStatusChanged || event->type() == ReferenceEvent::TargetChanged)) {
+	if(event.sender() == editObject() && (event.type() == ReferenceEvent::ObjectStatusChanged || event.type() == ReferenceEvent::TargetChanged)) {
 		plotHistogramLater(this);
 	}
 	return ModifierPropertiesEditor::referenceEvent(source, event);

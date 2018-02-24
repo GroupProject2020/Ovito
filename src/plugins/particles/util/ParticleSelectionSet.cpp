@@ -38,7 +38,7 @@ public:
 	virtual void undo() override {
 		_selection.swap(_owner->_selection);
 		_selectedIdentifiers.swap(_owner->_selectedIdentifiers);
-		_owner->notifyDependents(ReferenceEvent::TargetChanged);
+		_owner->notifyTargetChanged();
 	}
 	virtual QString displayName() const override { 
 		return QStringLiteral("Replace particle selection set"); 
@@ -140,7 +140,7 @@ void ParticleSelectionSet::resetSelection(const PipelineFlowState& state)
 			}
 		}
 
-		notifyDependents(ReferenceEvent::TargetChanged);
+		notifyTargetChanged();
 	}
 	else {
 		// Reset selection snapshot if input doesn't contain a selection state.
@@ -165,7 +165,7 @@ void ParticleSelectionSet::clearSelection(const PipelineFlowState& state)
 		_selection.resize(ParticleProperty::OOClass().elementCount(state), false);
 		_selectedIdentifiers.clear();
 	}
-	notifyDependents(ReferenceEvent::TargetChanged);
+	notifyTargetChanged();
 }
 
 /******************************************************************************
@@ -215,7 +215,7 @@ void ParticleSelectionSet::setParticleSelection(const PipelineFlowState& state, 
 		}
 	}
 
-	notifyDependents(ReferenceEvent::TargetChanged);
+	notifyTargetChanged();
 }
 
 /******************************************************************************
@@ -251,7 +251,7 @@ void ParticleSelectionSet::toggleParticleIdentifier(qlonglong particleId)
 		else
 			_selectedIdentifiers.insert(particleId);
 	}
-	notifyDependents(ReferenceEvent::TargetChanged);
+	notifyTargetChanged();
 }
 
 /******************************************************************************
@@ -264,7 +264,7 @@ void ParticleSelectionSet::toggleParticleIndex(size_t particleIndex)
 
 	if(particleIndex < _selection.size())
 		_selection.flip(particleIndex);
-	notifyDependents(ReferenceEvent::TargetChanged);
+	notifyTargetChanged();
 }
 
 /******************************************************************************
@@ -287,7 +287,7 @@ void ParticleSelectionSet::selectAll(const PipelineFlowState& state)
 		_selection.resize(ParticleProperty::OOClass().elementCount(state), true);
 		_selectedIdentifiers.clear();
 	}
-	notifyDependents(ReferenceEvent::TargetChanged);
+	notifyTargetChanged();
 }
 
 /******************************************************************************
@@ -318,7 +318,7 @@ PipelineStatus ParticleSelectionSet::applySelection(ParticleProperty* outputSele
 				nselected++;
 		}
 	}
-	outputSelectionProperty->notifyDependents(ReferenceEvent::TargetChanged);
+	outputSelectionProperty->notifyTargetChanged();
 
 	return PipelineStatus(PipelineStatus::Success, tr("%1 particles selected").arg(nselected));
 }

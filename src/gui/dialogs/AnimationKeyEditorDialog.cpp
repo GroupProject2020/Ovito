@@ -234,11 +234,11 @@ public:
 	}
 
 	/// Is called when the animation controller generates a notification event.
-	void onCtrlEvent(ReferenceEvent* event) {
-		if(event->type() == ReferenceEvent::ReferenceRemoved) {
-			ReferenceFieldEvent* refEvent = static_cast<ReferenceFieldEvent*>(event);
-			if(refEvent->field() == PROPERTY_FIELD(KeyframeController::keys)) {
-				int index = keys().indexOf(static_object_cast<AnimationKey>(refEvent->oldTarget()));
+	void onCtrlEvent(const ReferenceEvent& event) {
+		if(event.type() == ReferenceEvent::ReferenceRemoved) {
+			const ReferenceFieldEvent& refEvent = static_cast<const ReferenceFieldEvent&>(event);
+			if(refEvent.field() == &PROPERTY_FIELD(KeyframeController::keys)) {
+				int index = keys().indexOf(static_object_cast<AnimationKey>(refEvent.oldTarget()));
 				if(index >= 0) {
 					beginRemoveRows(QModelIndex(), index, index);
 					_keys.remove(index);
@@ -247,26 +247,26 @@ public:
 				OVITO_ASSERT(keys().size() == ctrl()->keys().size());
 			}
 		}
-		else if(event->type() == ReferenceEvent::ReferenceAdded) {
-			ReferenceFieldEvent* refEvent = static_cast<ReferenceFieldEvent*>(event);
-			if(refEvent->field() == PROPERTY_FIELD(KeyframeController::keys)) {
+		else if(event.type() == ReferenceEvent::ReferenceAdded) {
+			const ReferenceFieldEvent& refEvent = static_cast<const ReferenceFieldEvent&>(event);
+			if(refEvent.field() == &PROPERTY_FIELD(KeyframeController::keys)) {
 				OVITO_ASSERT(keys().size() == ctrl()->keys().size() - 1);
-				beginInsertRows(QModelIndex(), refEvent->index(), refEvent->index());
-				_keys.insert(refEvent->index(), static_object_cast<AnimationKey>(refEvent->newTarget()));
+				beginInsertRows(QModelIndex(), refEvent.index(), refEvent.index());
+				_keys.insert(refEvent.index(), static_object_cast<AnimationKey>(refEvent.newTarget()));
 				endInsertRows();
 			}
 		}
 	}
 
 	/// Is called when an animation key generates a notification event.
-	void onKeyEvent(RefTarget* source, ReferenceEvent* event) {
-		if(event->type() == ReferenceEvent::TargetChanged) {
+	void onKeyEvent(RefTarget* source, const ReferenceEvent& event) {
+		if(event.type() == ReferenceEvent::TargetChanged) {
 			int index = keys().indexOf(static_object_cast<AnimationKey>(source));
 			OVITO_ASSERT(index >= 0);
 			Q_EMIT dataChanged(createIndex(index, 0), createIndex(index, columnCount() - 1));
 			Q_EMIT headerDataChanged(Qt::Vertical, index, index);
 		}
-		else if(event->type() == ReferenceEvent::TargetDeleted) {
+		else if(event.type() == ReferenceEvent::TargetDeleted) {
 			int index = keys().indexOf(static_object_cast<AnimationKey>(source));
 			OVITO_ASSERT(index >= 0);
 			beginRemoveRows(QModelIndex(), index, index);

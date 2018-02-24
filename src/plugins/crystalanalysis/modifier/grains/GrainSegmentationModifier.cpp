@@ -130,7 +130,7 @@ void GrainSegmentationModifier::propertyChanged(const PropertyFieldDescriptor& f
 /******************************************************************************
 * Handles reference events sent by reference targets of this object.
 ******************************************************************************/
-bool GrainSegmentationModifier::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool GrainSegmentationModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	// Do not propagate messages from the attached display object.
 	if(source == meshDisplay())

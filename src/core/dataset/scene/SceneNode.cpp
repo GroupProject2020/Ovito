@@ -179,9 +179,9 @@ LookAtController* SceneNode::setLookatTargetNode(SceneNode* targetNode)
 /******************************************************************************
 * From RefMaker.
 ******************************************************************************/
-bool SceneNode::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool SceneNode::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(event->type() == ReferenceEvent::TargetChanged) {
+	if(event.type() == ReferenceEvent::TargetChanged) {
 		if(source == transformationController()) {
 			// TM has changed -> rebuild world tm cache.
 			invalidateWorldTransformation();
@@ -191,7 +191,7 @@ bool SceneNode::referenceEvent(RefTarget* source, ReferenceEvent* event)
 			invalidateBoundingBox();
 		}
 	}
-	else if(event->type() == ReferenceEvent::TargetDeleted && source == lookatTargetNode()) {
+	else if(event.type() == ReferenceEvent::TargetDeleted && source == lookatTargetNode()) {
 		// Lookat target node has been deleted -> delete this node too.
 		if(!dataset()->undoStack().isUndoingOrRedoing())
 			deleteNode();

@@ -36,16 +36,33 @@ AsynchronousModifierApplication::AsynchronousModifierApplication(DataSet* datase
 /******************************************************************************
 * Is called when a RefTarget referenced by this object has generated an event.
 ******************************************************************************/
-bool AsynchronousModifierApplication::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool AsynchronousModifierApplication::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(event->type() == ReferenceEvent::TargetEnabledOrDisabled && source == modifier()) {
+	if(event.type() == ReferenceEvent::TargetEnabledOrDisabled && source == modifier()) {
 		// Throw away cached results when the modifier is disabled.
 		_lastComputeResults.reset();
 	}
-	else if(event->type() == ReferenceEvent::PreliminaryStateAvailable && source == input()) {
+	else if(event.type() == ReferenceEvent::PreliminaryStateAvailable && source == input()) {
 		// Throw away cached results when the modifier's input changes.
-		if(_lastComputeResults && !_lastComputeResults->isReapplicable())
-			_lastComputeResults.reset();
+		if(_lastComputeResults) {
+			AsynchronousModifier* asyncModifier = dynamic_object_cast<AsynchronousModifier>(modifier());
+			if(!asyncModifier || asyncModifier->discardResultsOnInputChange())
+				_lastComputeResults.reset();
+		}
+	}
+	else if(event.type() == ReferenceEvent::TargetChanged && source == input()) {
+		// Whenever the modifier's inputs change, mark the cached computation results as outdated:
+		if(_lastComputeResults)
+			_lastComputeResults->setValidityInterval(TimeInterval::empty());
+	}
+	else if(event.type() == ReferenceEvent::TargetChanged && source == modifier()) {
+		// Whenever the modifier object changes, mark the cached computation results as outdated,
+		// unless the modifier requests otherwise.
+		if(_lastComputeResults) {
+			AsynchronousModifier* asyncModifier = dynamic_object_cast<AsynchronousModifier>(modifier());
+			if(!asyncModifier || asyncModifier->discardResultsOnModifierChange(static_cast<const PropertyFieldEvent&>(event)))
+				_lastComputeResults->setValidityInterval(TimeInterval::empty());
+		}
 	}
 	return ModifierApplication::referenceEvent(source, event);
 }

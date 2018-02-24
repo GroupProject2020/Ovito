@@ -234,26 +234,26 @@ int RefTargetListParameterUI::setSelectedObject(RefTarget* selObj)
 /******************************************************************************
 * This method is called when a reference target changes.
 ******************************************************************************/
-bool RefTargetListParameterUI::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool RefTargetListParameterUI::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	if(source == editObject()) {
-		if(event->type() == ReferenceEvent::ReferenceAdded) {
-			ReferenceFieldEvent* refevent = static_cast<ReferenceFieldEvent*>(event);
-			if(refevent->field() == referenceField()) {
+		if(event.type() == ReferenceEvent::ReferenceAdded) {
+			const ReferenceFieldEvent& refevent = static_cast<const ReferenceFieldEvent&>(event);
+			if(refevent.field() == &referenceField()) {
 				int rowIndex;
-				if(refevent->index() < _targetToRow.size())
-					rowIndex = _targetToRow[refevent->index()];
+				if(refevent.index() < _targetToRow.size())
+					rowIndex = _targetToRow[refevent.index()];
 				else
 					rowIndex = _rowToTarget.size();
-				if(refevent->newTarget() != nullptr)
+				if(refevent.newTarget() != nullptr)
 					_model->beginInsert(rowIndex);
-				_targets.insert(this, PROPERTY_FIELD(targets), refevent->index(), refevent->newTarget());
-				_targetToRow.insert(refevent->index(), rowIndex);
+				_targets.insert(this, PROPERTY_FIELD(targets), refevent.index(), refevent.newTarget());
+				_targetToRow.insert(refevent.index(), rowIndex);
 				for(int i = rowIndex; i < _rowToTarget.size(); i++)
 					_rowToTarget[i]++;
-				if(refevent->newTarget() != nullptr) {
-					_rowToTarget.insert(rowIndex, refevent->index());
-					for(int i=refevent->index()+1; i<_targetToRow.size(); i++)
+				if(refevent.newTarget() != nullptr) {
+					_rowToTarget.insert(rowIndex, refevent.index());
+					for(int i=refevent.index()+1; i<_targetToRow.size(); i++)
 						_targetToRow[i]++;
 					_model->endInsert();
 				}
@@ -274,20 +274,20 @@ bool RefTargetListParameterUI::referenceEvent(RefTarget* source, ReferenceEvent*
 #endif
 			}
 		}
-		else if(event->type() == ReferenceEvent::ReferenceRemoved) {
-			ReferenceFieldEvent* refevent = static_cast<ReferenceFieldEvent*>(event);
-			if(refevent->field() == referenceField()) {
-				int rowIndex = _targetToRow[refevent->index()];
-				if(refevent->oldTarget())
+		else if(event.type() == ReferenceEvent::ReferenceRemoved) {
+			const ReferenceFieldEvent& refevent = static_cast<const ReferenceFieldEvent&>(event);
+			if(refevent.field() == &referenceField()) {
+				int rowIndex = _targetToRow[refevent.index()];
+				if(refevent.oldTarget())
 					_model->beginRemove(rowIndex);
-				OVITO_ASSERT(refevent->oldTarget() == _targets[refevent->index()]);
-				_targets.remove(this, PROPERTY_FIELD(targets), refevent->index());
-				_targetToRow.remove(refevent->index());
+				OVITO_ASSERT(refevent.oldTarget() == _targets[refevent.index()]);
+				_targets.remove(this, PROPERTY_FIELD(targets), refevent.index());
+				_targetToRow.remove(refevent.index());
 				for(int i=rowIndex; i<_rowToTarget.size(); i++)
 					_rowToTarget[i]--;
-				if(refevent->oldTarget()) {
+				if(refevent.oldTarget()) {
 					_rowToTarget.remove(rowIndex);
-					for(int i=refevent->index(); i<_targetToRow.size(); i++)
+					for(int i=refevent.index(); i<_targetToRow.size(); i++)
 						_targetToRow[i]--;
 					_model->endRemove();
 				}
@@ -309,7 +309,7 @@ bool RefTargetListParameterUI::referenceEvent(RefTarget* source, ReferenceEvent*
 			}
 		}
 	} 
-	else if(event->type() == ReferenceEvent::TitleChanged || event->type() == ReferenceEvent::TargetChanged) {
+	else if(event.type() == ReferenceEvent::TitleChanged || event.type() == ReferenceEvent::TargetChanged) {
 		OVITO_ASSERT(_targetToRow.size() == _targets.size());
 		for(int i = 0; i < targets().size(); i++) {
 			if(targets()[i] == source) {

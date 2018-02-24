@@ -64,7 +64,7 @@ const PropertyPtr& PropertyObject::modifiableStorage()
 void PropertyObject::resize(size_t newSize, bool preserveData)
 {
 	modifiableStorage()->resize(newSize, preserveData);
-	notifyDependents(ReferenceEvent::TargetChanged);
+	notifyTargetChanged();
 }
 
 /******************************************************************************
@@ -78,7 +78,7 @@ void PropertyObject::setName(const QString& newName)
 	// Make the property change undoable.
 	dataset()->undoStack().pushIfRecording<SimplePropertyChangeOperation>(this, "name");
 	modifiableStorage()->setName(newName);
-	notifyDependents(ReferenceEvent::TargetChanged);
+	notifyTargetChanged();
 }
 
 /******************************************************************************

@@ -77,11 +77,6 @@ private:
 		/// Injects the computed results into the data pipeline.
 		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 	
-		/// Indicates whether the outdated computation results may be reused and tentatively applied to 
-		/// changing inputs from the pipeline without recomputation while the calculation of new results is 
-		/// still in progress.
-		virtual bool isReapplicable() const override { return false; }
-
 		/// Returns the list of generated bonds.
 		std::vector<Bond>& bonds() { return _bonds; }
 
@@ -135,6 +130,9 @@ public:
 	/// This method is called by the system after the modifier has been inserted into a data pipeline.
 	virtual void initializeModifier(ModifierApplication* modApp) override;
 
+	/// Indicate that outdated computation results should never be reused if the modifier's inputs have changed.
+	virtual bool discardResultsOnInputChange() const override { return true; }
+
 	/// Returns the cutoff radii for pairs of particle types.
 	const PairCutoffsList& pairCutoffs() const { return _pairCutoffs; }
 
@@ -159,7 +157,7 @@ protected:
 	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) override;
 
 	/// Handles reference events sent by reference targets of this object.
-	virtual bool referenceEvent(RefTarget* source, ReferenceEvent* event) override;
+	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
 
 	/// Creates a computation engine that will compute the modifier's results.
 	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;

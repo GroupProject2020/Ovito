@@ -211,9 +211,9 @@ QVariant DislocationTypeListParameterUI::getItemData(RefTarget* target, const QM
 /******************************************************************************
 * This method is called when a reference target changes.
 ******************************************************************************/
-bool DislocationTypeListParameterUI::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool DislocationTypeListParameterUI::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(source == modApp() && event->type() == ReferenceEvent::ObjectStatusChanged) {
+	if(source == modApp() && event.type() == ReferenceEvent::ObjectStatusChanged) {
 		// Update the result columns.
 		_model->updateColumns(2, 3);
 	}

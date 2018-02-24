@@ -75,7 +75,7 @@ void SelectionSet::remove(SceneNode* node)
 /******************************************************************************
 * Is called when a RefTarget referenced by this object has generated an event.
 ******************************************************************************/
-bool SelectionSet::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool SelectionSet::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	// Do not propagate events from selected nodes.
 	return false;

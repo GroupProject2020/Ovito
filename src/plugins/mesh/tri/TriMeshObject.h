@@ -55,7 +55,7 @@ public:
 
 	/// Returns a reference to the triangle mesh encapsulated by this data object.
 	/// The reference can be used to modify the mesh. However, each time the mesh has been modified,
-	/// this->notifyDependents(ReferenceEvent::TargetChanged) must be called to increment
+	/// this->notifyTargetChanged() must be called to increment
 	/// the data object's revision number.
 	TriMesh& mesh() { return _mesh; }
 

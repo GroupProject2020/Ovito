@@ -66,7 +66,7 @@ bool ConstructSurfaceModifier::OOMetaClass::isApplicableTo(const PipelineFlowSta
 /******************************************************************************
 * Handles reference events sent by reference targets of this object.
 ******************************************************************************/
-bool ConstructSurfaceModifier::referenceEvent(RefTarget* source, ReferenceEvent* event)
+bool ConstructSurfaceModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	// Do not propagate messages from the attached display object.
 	if(source == surfaceMeshDisplay())

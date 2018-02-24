@@ -61,7 +61,7 @@ public Q_SLOTS:
 protected Q_SLOTS:
 
 	/// Is called when the scriptable object generates an event.
-	void onNotificationEvent(ReferenceEvent* event);
+	void onNotificationEvent(const ReferenceEvent& event);
 
 	/// Replaces the editor contents with the script from the owning object.
 	void updateEditorContents();

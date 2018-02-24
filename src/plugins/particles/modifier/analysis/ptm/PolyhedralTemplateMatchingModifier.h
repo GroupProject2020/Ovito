@@ -84,10 +84,21 @@ public:
 	/// Creates a new modifier application that refers to this modifier instance.
 	virtual OORef<ModifierApplication> createModifierApplication() override;
 		
+	/// This method indicates whether cached computation results of the modifier should be discarded whenever
+	/// a parameter of the modifier changes.
+	virtual bool discardResultsOnModifierChange(const PropertyFieldEvent& event) const override { 
+		// Avoid a recomputation from scratch if the RMSD cutoff has been changed.
+		if(event.field() == &PROPERTY_FIELD(rmsdCutoff)) return false;
+		return StructureIdentificationModifier::discardResultsOnModifierChange(event);
+	}
+
 protected:
 
 	/// Creates a computation engine that will compute the modifier's results.
 	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	
+	/// Is called when the value of a property of this object has changed.
+	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
 	
 private:
 

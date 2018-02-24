@@ -66,7 +66,7 @@ void RefTarget::deleteReferenceObject()
 /******************************************************************************
 * Notifies all registered dependents by sending out a message.
 ******************************************************************************/
-void RefTarget::notifyDependentsImpl(ReferenceEvent& event)
+void RefTarget::notifyDependentsImpl(const ReferenceEvent& event)
 {
 	OVITO_CHECK_OBJECT_POINTER(this);
 	OVITO_ASSERT_MSG(event.sender() == this, "RefTarget::notifyDependentsImpl()", "The notifying object is not the sender given in the event object.");
@@ -87,7 +87,7 @@ void RefTarget::notifyDependentsImpl(ReferenceEvent& event)
 		if(i >= dependents().size()) continue;
 		OVITO_CHECK_OBJECT_POINTER(this);
 		OVITO_CHECK_OBJECT_POINTER(dependents()[i]);
-		dependents()[i]->handleReferenceEvent(this, &event);
+		dependents()[i]->handleReferenceEvent(this, event);
 	}
 
 	OVITO_ASSERT(this->__isObjectAlive());
@@ -107,7 +107,7 @@ void RefTarget::notifyDependentsImpl(ReferenceEvent& event)
 * This implementation calls the onRefTargetMessage method
 * and passes the message on to dependents of this RefTarget.
 ******************************************************************************/
-bool RefTarget::handleReferenceEvent(RefTarget* source, ReferenceEvent* event)
+bool RefTarget::handleReferenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	OVITO_CHECK_OBJECT_POINTER(this);
 
