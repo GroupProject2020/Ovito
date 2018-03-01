@@ -45,20 +45,20 @@ OORef<FileImporter> FileImporter::autodetectFileFormat(DataSet* dataset, const Q
 		TaskManager& taskManager = dataset->container()->taskManager();
 
 		// Resolve filename if it contains a wildcard.
-		Future<QVector<FileSourceImporter::Frame>> framesFuture = FileSourceImporter::findWildcardMatches(url, taskManager);
+		Future<std::vector<QUrl>> framesFuture = FileSourceImporter::findWildcardMatches(url, taskManager);
 		if(!taskManager.waitForTask(framesFuture))
 			dataset->throwException(tr("Operation has been canceled by the user."));
-		QVector<FileSourceImporter::Frame> frames = framesFuture.result();
-		if(frames.empty())
+		const std::vector<QUrl>& urls = framesFuture.result();
+		if(urls.empty())
 			dataset->throwException(tr("There are no files in the directory matching the filename pattern."));
 
 		// Download file so we can determine its format.
-		SharedFuture<QString> fetchFileFuture = Application::instance()->fileManager()->fetchUrl(taskManager, frames.front().sourceFile);
+		SharedFuture<QString> fetchFileFuture = Application::instance()->fileManager()->fetchUrl(taskManager, urls.front());
 		if(!taskManager.waitForTask(fetchFileFuture))
 			dataset->throwException(tr("Operation has been canceled by the user."));
 
 		// Detect file format.
-		return autodetectFileFormat(dataset, fetchFileFuture.result(), frames.front().sourceFile.path());
+		return autodetectFileFormat(dataset, fetchFileFuture.result(), urls.front());
 	}
 	catch(Exception& ex) {
 		// Provide a context object for any errors that occur during file inspection.

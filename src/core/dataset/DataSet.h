@@ -28,7 +28,7 @@
 #include <core/dataset/animation/TimeInterval.h>
 #include <core/dataset/UndoStack.h>
 #include <core/dataset/animation/AnimationSettings.h>
-#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/scene/RootSceneNode.h>
 #include <core/dataset/scene/SelectionSet.h>
 #include <core/rendering/RenderSettings.h>
 #include <core/viewport/ViewportConfiguration.h>
@@ -215,7 +215,7 @@ private:
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(AnimationSettings, animationSettings, setAnimationSettings, PROPERTY_FIELD_NO_CHANGE_MESSAGE|PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
 
 	/// Root node of the scene node tree.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SceneRoot, sceneRoot, setSceneRoot, PROPERTY_FIELD_NO_CHANGE_MESSAGE|PROPERTY_FIELD_ALWAYS_DEEP_COPY);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(RootSceneNode, sceneRoot, setSceneRoot, PROPERTY_FIELD_NO_CHANGE_MESSAGE|PROPERTY_FIELD_ALWAYS_DEEP_COPY);
 
 	/// The current node selection set.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SelectionSet, selection, setSelection, PROPERTY_FIELD_NO_CHANGE_MESSAGE|PROPERTY_FIELD_ALWAYS_DEEP_COPY);
@@ -257,7 +257,7 @@ private:
 	TimePoint _pipelineEvaluationTime;
 
 	/// The current scene node whose pipeline is being evaluated.
-	QPointer<ObjectNode> _currentEvaluationNode;
+	QPointer<PipelineSceneNode> _currentEvaluationNode;
 
 	/// The DataSetContainer which currently hosts this DataSet.
 	QPointer<DataSetContainer> _container;

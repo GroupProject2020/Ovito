@@ -81,7 +81,7 @@ PipelineStatus PipelineListItem::status() const
 	else if(PipelineObject* pipelineObj = dynamic_object_cast<PipelineObject>(object())) {
 		return pipelineObj->status();
 	}
-	else if(DisplayObject* displayObj = dynamic_object_cast<DisplayObject>(object())) {
+	else if(DataVis* displayObj = dynamic_object_cast<DataVis>(object())) {
 		return displayObj->status();
 	}
 	else {

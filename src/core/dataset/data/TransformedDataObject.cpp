@@ -26,7 +26,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_
 	
 IMPLEMENT_OVITO_CLASS(TransformedDataObject);
 DEFINE_PROPERTY_FIELD(TransformedDataObject, sourceDataObject);
-DEFINE_PROPERTY_FIELD(TransformedDataObject, generatorDisplayObjectRevision);
+DEFINE_PROPERTY_FIELD(TransformedDataObject, visElementRevision);
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

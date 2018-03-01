@@ -64,12 +64,12 @@ SET(SourceFiles
 	dataset/io/FileSource.cpp
 	dataset/io/AttributeFileExporter.cpp
 	dataset/scene/SceneNode.cpp
-	dataset/scene/ObjectNode.cpp
-	dataset/scene/SceneRoot.cpp
+	dataset/scene/PipelineSceneNode.cpp
+	dataset/scene/RootSceneNode.cpp
 	dataset/scene/SelectionSet.cpp
-	dataset/data/DisplayObject.cpp
+	dataset/data/DataVis.cpp
 	dataset/data/DataObject.cpp
-	dataset/data/TransformingDisplayObject.cpp
+	dataset/data/TransformingDataVis.cpp
 	dataset/data/TransformedDataObject.cpp
 	dataset/data/camera/AbstractCameraObject.cpp
 	dataset/pipeline/PipelineFlowState.cpp

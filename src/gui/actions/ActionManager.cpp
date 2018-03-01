@@ -23,7 +23,7 @@
 #include <core/dataset/UndoStack.h>
 #include <core/dataset/DataSetContainer.h>
 #include <core/dataset/scene/SelectionSet.h>
-#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/scene/RootSceneNode.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <gui/viewport/input/NavigationModes.h>
 #include <gui/viewport/input/ViewportInputMode.h>

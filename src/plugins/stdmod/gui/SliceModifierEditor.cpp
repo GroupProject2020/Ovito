@@ -22,7 +22,7 @@
 #include <plugins/stdmod/gui/StdModGui.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/animation/AnimationSettings.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/dataset/scene/SelectionSet.h>
 #include <core/viewport/Viewport.h>
 #include <core/viewport/ViewportConfiguration.h>
@@ -167,7 +167,7 @@ void SliceModifierEditor::onAlignPlaneToView()
 	if(!vp) return;
 
 	// Get the object to world transformation for the currently selected object.
-	ObjectNode* node = dynamic_object_cast<ObjectNode>(dataset()->selection()->firstNode());
+	PipelineSceneNode* node = dynamic_object_cast<PipelineSceneNode>(dataset()->selection()->firstNode());
 	if(!node) return;
 	const AffineTransformation& nodeTM = node->getWorldTransform(dataset()->animationSettings()->time(), interval);
 
@@ -201,7 +201,7 @@ void SliceModifierEditor::onAlignViewToPlane()
 	if(!vp) return;
 
 	// Get the object to world transformation for the currently selected object
-	ObjectNode* node = dynamic_object_cast<ObjectNode>(dataset()->selection()->firstNode());
+	PipelineSceneNode* node = dynamic_object_cast<PipelineSceneNode>(dataset()->selection()->firstNode());
 	if(!node) return;
 	const AffineTransformation& nodeTM = node->getWorldTransform(dataset()->animationSettings()->time(), interval);
 
@@ -356,9 +356,9 @@ void PickPlanePointsInputMode::alignPlane(SliceModifier* mod)
 		// Get the object to world transformation for the currently selected node.
 		ModifierApplication* modApp = mod->someModifierApplication();
 		if(!modApp) return;
-		QSet<ObjectNode*> nodes = modApp->dependentNodes();
+		QSet<PipelineSceneNode*> nodes = modApp->dependentNodes();
 		if(nodes.empty()) return;
-		ObjectNode* node = *nodes.begin();
+		PipelineSceneNode* node = *nodes.begin();
 		TimeInterval interval;
 		const AffineTransformation& nodeTM = node->getWorldTransform(mod->dataset()->animationSettings()->time(), interval);
 

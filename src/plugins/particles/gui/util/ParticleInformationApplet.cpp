@@ -91,7 +91,7 @@ void ParticleInformationApplet::openUtility(MainWindow* mainWindow, RolloutConta
 	// Update the list of variables that can be referenced in the selection expression.
 	try {
 		if(DataSet* dataset = _mainWindow->datasetContainer().currentSet()) {
-			if(ObjectNode* node = dynamic_object_cast<ObjectNode>(dataset->selection()->firstNode())) {
+			if(PipelineSceneNode* node = dynamic_object_cast<PipelineSceneNode>(dataset->selection()->firstNode())) {
 				const PipelineFlowState& state = node->evaluatePipelinePreliminary(false);
 				ParticleExpressionEvaluator evaluator;
 				evaluator.initialize(QStringList(), state, 0);
@@ -145,7 +145,7 @@ void ParticleInformationApplet::updateInformationDisplay()
 				throwException(tr("The entered expression contains the assignment operator '='. Please use the comparison operator '==' instead."));
 			
 			// Get the currently selected scene node and obtains its pipeline results.
-			ObjectNode* node = dynamic_object_cast<ObjectNode>(dataset->selection()->firstNode());
+			PipelineSceneNode* node = dynamic_object_cast<PipelineSceneNode>(dataset->selection()->firstNode());
 			if(!node) throwException(tr("No scene object is currently selected."));
 			const PipelineFlowState& state = node->evaluatePipelinePreliminary(false);
 			TimeInterval iv;

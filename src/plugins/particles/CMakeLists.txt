@@ -21,16 +21,16 @@
 
 SET(SourceFiles 
 	objects/ParticleProperty.cpp
-	objects/ParticleDisplay.cpp
+	objects/ParticlesVis.cpp
 	objects/ParticleType.cpp
 	objects/BondType.cpp
 	objects/BondProperty.cpp
 	objects/ParticleBondMap.cpp
-	objects/BondsDisplay.cpp
+	objects/BondsVis.cpp
 	objects/TrajectoryObject.cpp
-	objects/TrajectoryDisplay.cpp
+	objects/TrajectoryVis.cpp
 	objects/TrajectoryGenerator.cpp
-	objects/VectorDisplay.cpp
+	objects/VectorVis.cpp
 	modifier/ParticleInputHelper.cpp
 	modifier/ParticleOutputHelper.cpp
 	modifier/coloring/AmbientOcclusionModifier.cpp

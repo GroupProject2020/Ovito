@@ -182,7 +182,8 @@ private:
 		checkErrorCondition();
 	}
 
-	template<typename T> friend	LoadStream& operator>>(LoadStream& stream, T& v);
+	template<typename T> friend LoadStream& operator>>(LoadStream& stream, T& v);
+	friend LoadStream& operator>>(LoadStream& stream, QUrl& url);
 
 private:
 
@@ -343,6 +344,35 @@ inline LoadStream& operator>>(LoadStream& stream, boost::dynamic_bitset<>& bs)
 	std::vector<boost::dynamic_bitset<>::block_type> blocks(bs.num_blocks());
 	stream.read(blocks.data(), blocks.size() * sizeof(boost::dynamic_bitset<>::block_type));
 	boost::from_block_range(blocks.begin(), blocks.end(), bs);
+	return stream;
+}
+
+/// \brief Reads a URL from the input stream.
+/// \relates LoadStream
+///
+/// \param stream The source stream.
+/// \param url The object that the will receive the loaded data.
+/// \return The source stream.
+/// \throw Exception if an I/O error has occurred.
+inline LoadStream& operator>>(LoadStream& stream, QUrl& url)
+{
+	// Load original URL from stream.
+	stream.loadValue(url, std::false_type());
+	// Additionally load the relative path.
+	QString relativePath;
+	stream >> relativePath;
+	// Resolve relative path against path of current input file.
+	if(relativePath.isEmpty() == false && url.isLocalFile()) {
+		QFileInfo relativeFileInfo(relativePath);
+		OVITO_ASSERT(!relativeFileInfo.isAbsolute());
+		if(QFileDevice* fileDevice = qobject_cast<QFileDevice*>(stream.dataStream().device())) {
+			QFileInfo streamFile(fileDevice->fileName());
+			if(streamFile.isAbsolute()) {
+				url = QUrl::fromLocalFile(QFileInfo(streamFile.dir(), relativeFileInfo.filePath()).absoluteFilePath());
+			}
+		}
+	}
+
 	return stream;
 }
 

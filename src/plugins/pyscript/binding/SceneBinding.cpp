@@ -21,8 +21,8 @@
 
 #include <plugins/pyscript/PyScript.h>
 #include <core/dataset/scene/SceneNode.h>
-#include <core/dataset/scene/ObjectNode.h>
-#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
+#include <core/dataset/scene/RootSceneNode.h>
 #include <core/dataset/scene/SelectionSet.h>
 #include <core/dataset/data/DataObject.h>
 #include <core/dataset/pipeline/Modifier.h>
@@ -72,7 +72,7 @@ void defineSceneSubmodule(py::module m)
 			"configured as needed to change the visual appearance of the data. "
 			"The different visual element types of OVITO are documented in the :py:mod:`ovito.vis` module. ")
 
-		.def_property("vis", &DataObject::displayObject, &DataObject::setDisplayObject,
+		.def_property("vis", &DataObject::visElement, &DataObject::setVisElement,
 			"The :py:class:`~ovito.vis.DataVis` element associated with this data object, which is responsible for "
         	"rendering the data visually. If this field contains ``None``, the data is non-visual and doesn't appear in "
 			"rendered images or the viewports.")
@@ -81,13 +81,13 @@ void defineSceneSubmodule(py::module m)
 		.def_property_readonly("num_strong_references", &DataObject::numberOfStrongReferences)
 
 		// For backward compatibility with OVITO 2.9.0:
-		.def_property("display", &DataObject::displayObject, &DataObject::setDisplayObject)
+		.def_property("display", &DataObject::visElement, &DataObject::setVisElement)
 
 	;
 	expose_mutable_subobject_list(DataObject_py,
-								  std::mem_fn(&DataObject::displayObjects), 
-								  std::mem_fn(&DataObject::insertDisplayObject), 
-								  std::mem_fn(&DataObject::removeDisplayObject), "display_objects", "DisplayObjectList");
+								  std::mem_fn(&DataObject::visElements), 
+								  std::mem_fn(&DataObject::insertVisElement), 
+								  std::mem_fn(&DataObject::removeVisElement), "vis_list", "DataVisList");
 
 	ovito_abstract_class<PipelineObject, RefTarget>{m}
 		.def_property_readonly("status", &PipelineObject::status)
@@ -128,23 +128,29 @@ void defineSceneSubmodule(py::module m)
 			// Doc string:			
 			":Base class: :py:class:`ovito.data.DataCollection`"
 			"\n\n"
-			"A specific form of :py:class:`~ovito.data.DataCollection` flowing down "
+			"This is form of :py:class:`~ovito.data.DataCollection` flowing down "
 			"a data pipeline and being manipulated by modifiers on the way. A :py:class:`!PipelineFlowState` is "
-			"returned by the :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` method. "
+			"returned by the :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` or the "
+			":py:meth:`FileSource.compute() <ovito.pipeline.FileSource.compute>` method. "
 			"\n\n"
-			"Note that OVITO's data pipeline system typically works with shallow copies of data collections. Thus, data objects "
-			"may be shared by more than one data collection. This implies that modifying a data object is potentially unsafe as it can "
-			"cause unexpected side effects. To avoid accidentally modifying data that is owned by the pipeline system and shared by multiple data collections, "
-			"the following rule must be strictly followed: Before modifying a data object in a :py:class:`!PipelineFlowState` "
-			"you have to use the :py:meth:`~DataCollection.copy_if_needed` method to ensure the object is really a deep copy "
+			"Note that OVITO's data pipeline system works with shallow copies of data. Thus, data objects "
+			"may be shared by more than one data collection. This implies that modifying a data object is a potentially unsafe operation, which could "
+			"produce unexpected side effects such as corrupting OVITO's internal data caches: "
+			"\n\n"
+			".. literalinclude:: ../example_snippets/pipeline_flow_state.py\n"
+			"   :lines: 5-10\n"
+			"\n\n"
+			"To avoid accidentally modifying data that is owned by the pipeline system, "
+			"the following rule must be strictly followed: Before modifying a data object in a :py:class:`!PipelineFlowState`, "
+			"you have to use the :py:meth:`~DataCollection.copy_if_needed` method to ensure the object is really a unique instance "
 			"exclusively owned by the :py:class:`!PipelineFlowState`: "
 			"\n\n"
 			".. literalinclude:: ../example_snippets/pipeline_flow_state.py\n"
-			"   :lines: 5-14\n"
+			"   :lines: 12-14\n"
 			"\n\n"
-			"Note: The rule does not apply to :py:class:`~ovito.vis.DataVis` visualization elements. These objects, which are typically attached "
-			"to data objects, are not modified by a data pipeline. It typically is okay to modify them even though they are shallow copies "
-			"shared by multiple data objects: "
+			"Note: This rule does not apply to the :py:class:`~ovito.vis.DataVis` elements, because they " 
+			"are globally shared and do not get modified by the data pipeline system. "
+			"It is generally okay to just modify a visualization element without first copying the data object it is attached to:"
 			"\n\n"
 			".. literalinclude:: ../example_snippets/pipeline_flow_state.py\n"
 			"   :lines: 16-\n")
@@ -342,7 +348,7 @@ void defineSceneSubmodule(py::module m)
 								  std::mem_fn(&SceneNode::removeChildNode), "children", "SceneNodeChildren");		
 	
 
-	ovito_class<ObjectNode, SceneNode>(m,
+	ovito_class<PipelineSceneNode, SceneNode>(m,
 			"This class represents a data pipeline, i.e. a data source plus a chain of zero or more modifiers "
 			"that manipulate the data on the way through the pipeline. "
 			"\n\n"
@@ -391,15 +397,15 @@ void defineSceneSubmodule(py::module m)
 			"to a file. ",
 			// Python class name:
 			"Pipeline")
-		.def_property("data_provider", &ObjectNode::dataProvider, &ObjectNode::setDataProvider)
-		.def_property("source", &ObjectNode::sourceObject, &ObjectNode::setSourceObject,
+		.def_property("data_provider", &PipelineSceneNode::dataProvider, &PipelineSceneNode::setDataProvider)
+		.def_property("source", &PipelineSceneNode::pipelineSource, &PipelineSceneNode::setPipelineSource,
 				"The object that provides the data entering the pipeline. "
 				"This typically is a :py:class:`FileSource` instance if the node was created by a call to :py:func:`~ovito.io.import_file`. "
 				"You can assign a new source to the pipeline if needed. See the :py:mod:`ovito.pipeline` module for a list of available pipeline source types. "
 				"Note that you can even make several pipelines share the same source object. ")
 		
 		// Required by implementation of Pipeline.compute():
-		.def("evaluate_pipeline", [](ObjectNode& node, TimePoint time) {
+		.def("evaluate_pipeline", [](PipelineSceneNode& node, TimePoint time) {
 
 			// Full evaluation of the data pipeline is not possible while interactive viewport rendering 
 			// is in progress. If rendering is in progress, we return a preliminary pipeline state only.
@@ -423,7 +429,7 @@ void defineSceneSubmodule(py::module m)
 		})
 	;
 
-	ovito_class<SceneRoot, SceneNode>{m}
+	ovito_class<RootSceneNode, SceneNode>{m}
 	;
 
 	auto SelectionSet_py = ovito_class<SelectionSet, RefTarget>{m}

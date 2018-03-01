@@ -25,7 +25,7 @@
 #include <core/viewport/Viewport.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/dataset/animation/AnimationSettings.h>
-#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/scene/RootSceneNode.h>
 #include <core/dataset/scene/SelectionSet.h>
 #include <core/rendering/RenderSettings.h>
 #include <core/rendering/FrameBuffer.h>
@@ -58,7 +58,7 @@ DataSet::DataSet(DataSet* self) : RefTarget(this), _unitsManager(this)
 {
 	setViewportConfig(createDefaultViewportConfiguration());
 	setAnimationSettings(new AnimationSettings(this));
-	setSceneRoot(new SceneRoot(this));
+	setSceneRoot(new RootSceneNode(this));
 	setSelection(new SelectionSet(this));
 	setRenderSettings(new RenderSettings(this));
 
@@ -129,7 +129,7 @@ bool DataSet::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 
 			// If any of the scene nodes change, we should interrupt the pipeline evaluation that is in progress.
 			// Ignore messages from display objects, because they usually don't require a pipeline re-evaluation.
-			if(_pipelineEvaluationFuture.isValid() && dynamic_object_cast<DisplayObject>(event.sender()) == nullptr) {
+			if(_pipelineEvaluationFuture.isValid() && dynamic_object_cast<DataVis>(event.sender()) == nullptr) {
 				// Restart pipeline evaluation immediately:
 				makeSceneReady(true);
 			}
@@ -295,7 +295,7 @@ void DataSet::makeSceneReady(bool forceReevaluation)
 	_pipelineEvaluationWatcher.reset();
 
 	SharedFuture<PipelineFlowState> newPipelineEvaluationFuture;
-	sceneRoot()->visitObjectNodes([this,&newPipelineEvaluationFuture](ObjectNode* node) {
+	sceneRoot()->visitObjectNodes([this,&newPipelineEvaluationFuture](PipelineSceneNode* node) {
 		// Request display objects as well.
 		SharedFuture<PipelineFlowState> stateFuture = node->evaluateRenderingPipeline(_pipelineEvaluationTime);
 		if(!stateFuture.isFinished()) {

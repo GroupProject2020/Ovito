@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/BondsDisplay.h>
+#include <plugins/particles/objects/BondsVis.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
 #include "BondProperty.h"
 
@@ -42,9 +42,9 @@ BondProperty::BondProperty(DataSet* dataset) : PropertyObject(dataset)
 void BondProperty::OOMetaClass::prepareNewProperty(PropertyObject* property) const
 {
 	if(property->type() == BondProperty::TopologyProperty) {
-		OORef<BondsDisplay> displayObj = new BondsDisplay(property->dataset());
-		displayObj->loadUserDefaults();
-		property->addDisplayObject(displayObj);
+		OORef<BondsVis> vis = new BondsVis(property->dataset());
+		vis->loadUserDefaults();
+		property->addVisElement(vis);
 	}
 }
 

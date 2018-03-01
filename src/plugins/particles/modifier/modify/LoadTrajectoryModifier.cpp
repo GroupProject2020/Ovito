@@ -80,7 +80,7 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 		// Make sure the obtained configuration is valid and ready to use.
 		if(trajState.status().type() == PipelineStatus::Error) {
 			if(FileSource* fileSource = dynamic_object_cast<FileSource>(trajectorySource())) {
-				if(fileSource->sourceUrl().isEmpty())
+				if(fileSource->sourceUrls().empty())
 					throwException(tr("Please pick the input file containing the trajectories."));
 			}
 			output.setStatus(trajState.status());

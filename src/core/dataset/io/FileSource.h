@@ -44,12 +44,12 @@ public:
 	/// Constructor.
 	Q_INVOKABLE FileSource(DataSet* dataset);
 	
-	/// \brief Sets the source location for importing data.
-	/// \param sourceUrl The new source location.
+	/// \brief Sets the source location(s) for importing data.
+	/// \param sourceUrls The new source location(s).
 	/// \param importer The importer object that will parse the input file.
 	/// \param autodetectFileSequences Enables the automatic detection of file sequences.
 	/// \return false if the operation has been canceled by the user.
-	bool setSource(QUrl sourceUrl, FileSourceImporter* importer, bool autodetectFileSequences);
+	bool setSource(std::vector<QUrl> sourceUrls, FileSourceImporter* importer, bool autodetectFileSequences);
 
 	/// \brief This triggers a reload of input data from the external file for the given frame.
 	/// \param frameIndex The index of the input frame to refresh; or -1 to refresh all frames.
@@ -147,7 +147,7 @@ private:
 
 	/// Updates the internal list of input frames. 
 	/// Invalidates cached frames in case they did change.
-	void setListOfFrames(const QVector<FileSourceImporter::Frame>& frames);
+	void setListOfFrames(QVector<FileSourceImporter::Frame> frames);
 
 	/// Clears the cache entry for the given input frame.
 	void invalidateFrameCache(int frameIndex = -1);
@@ -160,8 +160,8 @@ private:
 	/// Controls whether the scene's animation interval is adjusted to the number of frames found in the input file.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, adjustAnimationIntervalEnabled, setAdjustAnimationIntervalEnabled);
 
-	/// The source file (may include a wild-card pattern).
-	DECLARE_PROPERTY_FIELD_FLAGS(QUrl, sourceUrl, PROPERTY_FIELD_NO_UNDO);
+	/// The list of source files (may include wild-card patterns).
+	DECLARE_PROPERTY_FIELD_FLAGS(std::vector<QUrl>, sourceUrls, PROPERTY_FIELD_NO_UNDO);
 
 	/// Controls the mapping of input file frames to animation frames (i.e. the numerator of the playback rate for the file sequence).
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, playbackSpeedNumerator, setPlaybackSpeedNumerator);
@@ -175,7 +175,7 @@ private:
 	/// Stores the prototypes of the loaded data objects.
 	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD_FLAGS(DataObject, dataObjects, setDataObjects, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_NO_CHANGE_MESSAGE | PROPERTY_FIELD_DONT_SAVE_RECOMPUTABLE_DATA);
 
-	/// The list of frames contained in the data file.
+	/// The list of frames of the data source.
 	QVector<FileSourceImporter::Frame> _frames;
 
 	/// The active future if loading the list of frames is in progress.

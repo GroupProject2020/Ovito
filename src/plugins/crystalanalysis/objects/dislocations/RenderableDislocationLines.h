@@ -59,7 +59,7 @@ public:
 	Q_INVOKABLE RenderableDislocationLines(DataSet* dataset) : TransformedDataObject(dataset) {}
 
 	/// \brief Initialization constructor.
-	RenderableDislocationLines(TransformingDisplayObject* creator, DataObject* sourceData) : TransformedDataObject(creator, sourceData) {}
+	RenderableDislocationLines(TransformingDataVis* creator, DataObject* sourceData) : TransformedDataObject(creator, sourceData) {}
 
 private:
 	

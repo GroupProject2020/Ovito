@@ -21,10 +21,10 @@
 
 SET(SourceFiles 
 	tri/TriMeshObject.cpp
-	tri/TriMeshDisplay.cpp
+	tri/TriMeshVis.cpp
 	surface/SurfaceMesh.cpp
 	surface/RenderableSurfaceMesh.cpp
-	surface/SurfaceMeshDisplay.cpp		
+	surface/SurfaceMeshVis.cpp		
 	io/TriMeshFrameData.cpp
 	io/VTKFileImporter.cpp
 	io/VTKTriangleMeshExporter.cpp

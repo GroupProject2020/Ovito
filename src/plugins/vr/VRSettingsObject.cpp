@@ -22,7 +22,7 @@
 #include <core/Core.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/dataset/DataSet.h>
-#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/scene/RootSceneNode.h>
 #include <core/viewport/ViewportSettings.h>
 #include "VRSettingsObject.h"
 

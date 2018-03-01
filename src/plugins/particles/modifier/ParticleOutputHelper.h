@@ -60,7 +60,7 @@ public:
 	size_t deleteBonds(const boost::dynamic_bitset<>& mask);
 	
 	/// Adds a set of new bonds to the system.
-	void addBonds(const std::vector<Bond>& newBonds, BondsDisplay* bondsDisplay, const std::vector<PropertyPtr>& bondProperties = {});
+	void addBonds(const std::vector<Bond>& newBonds, BondsVis* bondsVis, const std::vector<PropertyPtr>& bondProperties = {});
 
 protected:
 
@@ -74,5 +74,3 @@ protected:
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

@@ -46,7 +46,7 @@ which lists all stored data objects (including the particle properties)::
     >>> data_collection['Simulation cell']
     <SimulationCell at 0x7fd54ba34c40>
 
-A :py:class:`~ovito.ObjectNode` has two :py:class:`DataCollections <ovito.data.DataCollection>`: one caching
+A :py:class:`~ovito.PipelineSceneNode` has two :py:class:`DataCollections <ovito.data.DataCollection>`: one caching
 the original input data of the modification pipeline, which was read from the external file, and another one caching 
 the output of the pipeline after the modifiers have been applied. For example::
 

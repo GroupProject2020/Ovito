@@ -103,8 +103,8 @@ public:
 	/// Returns true if the list model is currently in a valid state.
 	bool isUpToDate() const { return !_needListUpdate; }
 
-	/// The list of currently selected ObjectNode instances.
-	const QVector<ObjectNode*>& selectedNodes() const { return _selectedNodes.targets(); }
+	/// The list of currently selected PipelineSceneNode instances.
+	const QVector<PipelineSceneNode*>& selectedNodes() const { return _selectedNodes.targets(); }
 
 	/// Returns the container of the dataset being edited.
 	DataSetContainer& datasetContainer() { return _datasetContainer; }
@@ -150,8 +150,8 @@ private:
 	/// List of visible items in the model.
 	QList<OORef<PipelineListItem>> _items;
 
-	/// Holds references to the currently selected ObjectNode instances.
-	VectorRefTargetListener<ObjectNode> _selectedNodes;
+	/// Holds references to the currently selected PipelineSceneNode instances.
+	VectorRefTargetListener<PipelineSceneNode> _selectedNodes;
 
 	/// The item in the list that should be selected on the next list update.
 	RefTarget* _nextObjectToSelect;

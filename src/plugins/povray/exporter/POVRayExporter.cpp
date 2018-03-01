@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <core/Core.h>
-#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/scene/RootSceneNode.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/utilities/concurrent/Promise.h>
 #include <core/utilities/concurrent/TaskManager.h>

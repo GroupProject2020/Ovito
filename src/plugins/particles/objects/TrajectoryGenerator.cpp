@@ -22,7 +22,7 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <core/dataset/animation/AnimationSettings.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/app/Application.h>
 #include <core/dataset/io/FileSource.h>
@@ -125,7 +125,7 @@ TrajectoryObject* TrajectoryGenerator::generateTrajectories(TaskManager& taskMan
 	TimeInterval interval;
 	if(useCustomInterval())
 		interval = customInterval();
-	else if(FileSource* fs = dynamic_object_cast<FileSource>(source()->sourceObject()))
+	else if(FileSource* fs = dynamic_object_cast<FileSource>(source()->pipelineSource()))
 		interval = TimeInterval(0, dataset()->animationSettings()->frameToTime(fs->numberOfFrames() - 1));
 	else 
 		interval = dataset()->animationSettings()->animationInterval();

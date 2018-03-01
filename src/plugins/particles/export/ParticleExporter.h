@@ -40,7 +40,7 @@ class OVITO_PARTICLES_EXPORT ParticleExporter : public FileExporter
 	
 public:
 
-	/// \brief Evaluates the pipeline of an ObjectNode and makes sure that the data to be
+	/// \brief Evaluates the pipeline of an PipelineSceneNode and makes sure that the data to be
 	///        exported contains particles and throws an exception if not.
 	bool getParticleData(SceneNode* sceneNode, TimePoint time, PipelineFlowState& state, TaskManager& taskManager);
 

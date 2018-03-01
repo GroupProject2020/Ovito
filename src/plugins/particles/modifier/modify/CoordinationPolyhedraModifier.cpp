@@ -21,7 +21,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
-#include <plugins/mesh/surface/SurfaceMeshDisplay.h>
+#include <plugins/mesh/surface/SurfaceMeshVis.h>
 #include <plugins/particles/objects/BondProperty.h>
 #include <plugins/particles/objects/ParticleBondMap.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
@@ -33,20 +33,20 @@
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 
 IMPLEMENT_OVITO_CLASS(CoordinationPolyhedraModifier);
-DEFINE_REFERENCE_FIELD(CoordinationPolyhedraModifier, surfaceMeshDisplay);
-SET_PROPERTY_FIELD_LABEL(CoordinationPolyhedraModifier, surfaceMeshDisplay, "Surface mesh display");
+DEFINE_REFERENCE_FIELD(CoordinationPolyhedraModifier, surfaceMeshVis);
+SET_PROPERTY_FIELD_LABEL(CoordinationPolyhedraModifier, surfaceMeshVis, "Surface mesh vis");
 
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
 CoordinationPolyhedraModifier::CoordinationPolyhedraModifier(DataSet* dataset) : AsynchronousModifier(dataset)
 {
-	// Create the display object for rendering the created polyhedra.
-	setSurfaceMeshDisplay(new SurfaceMeshDisplay(dataset));
-	_surfaceMeshDisplay->setShowCap(false);
-	_surfaceMeshDisplay->setSmoothShading(false);
-	_surfaceMeshDisplay->setSurfaceTransparency(FloatType(0.25));
-	_surfaceMeshDisplay->setObjectTitle(tr("Polyhedra"));
+	// Create the vis element for rendering the created polyhedra.
+	setSurfaceMeshVis(new SurfaceMeshVis(dataset));
+	surfaceMeshVis()->setShowCap(false);
+	surfaceMeshVis()->setSmoothShading(false);
+	surfaceMeshVis()->setSurfaceTransparency(FloatType(0.25));
+	surfaceMeshVis()->setObjectTitle(tr("Polyhedra"));
 }
 
 /******************************************************************************
@@ -62,8 +62,8 @@ bool CoordinationPolyhedraModifier::OOMetaClass::isApplicableTo(const PipelineFl
 ******************************************************************************/
 bool CoordinationPolyhedraModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	// Do not propagate messages from the attached display object.
-	if(source == surfaceMeshDisplay())
+	// Do not propagate messages from the attached vis element.
+	if(source == surfaceMeshVis())
 		return false;
 
 	return AsynchronousModifier::referenceEvent(source, event);
@@ -328,9 +328,9 @@ PipelineFlowState CoordinationPolyhedraModifier::ComputePolyhedraResults::apply(
 	OORef<SurfaceMesh> meshObj(new SurfaceMesh(modApp->dataset()));
 	meshObj->setStorage(mesh());
 	meshObj->setDomain(input.findObject<SimulationCellObject>());
-	meshObj->addDisplayObject(modifier->surfaceMeshDisplay());
+	meshObj->addVisElement(modifier->surfaceMeshVis());
 
-	// Insert output object into the pipeline.
+	// Insert data object into the output data collection.
 	output.addObject(meshObj);
 
 	return output;

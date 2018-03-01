@@ -22,7 +22,7 @@
 #include <plugins/stdmod/StdMod.h>
 #include <core/viewport/Viewport.h>
 #include <core/viewport/ViewportConfiguration.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/dataset/scene/SelectionSet.h>
 #include <core/dataset/animation/controller/Controller.h>
 #include <core/dataset/animation/AnimationSettings.h>
@@ -112,7 +112,7 @@ std::tuple<Plane3, FloatType> SliceModifier::slicingPlane(TimePoint time, TimeIn
 /******************************************************************************
 * Lets the modifier render itself into the viewport.
 ******************************************************************************/
-void SliceModifier::renderModifierVisual(TimePoint time, ObjectNode* contextNode, ModifierApplication* modApp, SceneRenderer* renderer, bool renderOverlay)
+void SliceModifier::renderModifierVisual(TimePoint time, PipelineSceneNode* contextNode, ModifierApplication* modApp, SceneRenderer* renderer, bool renderOverlay)
 {
 	if(!renderOverlay && isObjectBeingEdited() && renderer->isInteractive() && !renderer->isPicking()) {
 		renderVisual(time, contextNode, renderer);
@@ -122,7 +122,7 @@ void SliceModifier::renderModifierVisual(TimePoint time, ObjectNode* contextNode
 /******************************************************************************
 * Renders the modifier's visual representation and computes its bounding box.
 ******************************************************************************/
-void SliceModifier::renderVisual(TimePoint time, ObjectNode* contextNode, SceneRenderer* renderer)
+void SliceModifier::renderVisual(TimePoint time, PipelineSceneNode* contextNode, SceneRenderer* renderer)
 {
 	TimeInterval interval;
 

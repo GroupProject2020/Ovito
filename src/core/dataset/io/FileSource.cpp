@@ -27,7 +27,7 @@
 #include <core/app/Application.h>
 #include <core/viewport/Viewport.h>
 #include <core/viewport/ViewportConfiguration.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/dataset/io/FileImporter.h>
 #include <core/dataset/DataSetContainer.h>
 #include <core/dataset/UndoStack.h>
@@ -38,21 +38,21 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
 IMPLEMENT_OVITO_CLASS(FileSource);
 DEFINE_REFERENCE_FIELD(FileSource, importer);
 DEFINE_PROPERTY_FIELD(FileSource, adjustAnimationIntervalEnabled);
-DEFINE_PROPERTY_FIELD(FileSource, sourceUrl);
+DEFINE_PROPERTY_FIELD(FileSource, sourceUrls);
 DEFINE_PROPERTY_FIELD(FileSource, playbackSpeedNumerator);
 DEFINE_PROPERTY_FIELD(FileSource, playbackSpeedDenominator);
 DEFINE_PROPERTY_FIELD(FileSource, playbackStartTime);
 DEFINE_REFERENCE_FIELD(FileSource, dataObjects);
 SET_PROPERTY_FIELD_LABEL(FileSource, importer, "File Importer");
 SET_PROPERTY_FIELD_LABEL(FileSource, adjustAnimationIntervalEnabled, "Adjust animation length to time series");
-SET_PROPERTY_FIELD_LABEL(FileSource, sourceUrl, "Source location");
+SET_PROPERTY_FIELD_LABEL(FileSource, sourceUrls, "Source location");
 SET_PROPERTY_FIELD_LABEL(FileSource, playbackSpeedNumerator, "Playback rate numerator");
 SET_PROPERTY_FIELD_LABEL(FileSource, playbackSpeedDenominator, "Playback rate denominator");
 SET_PROPERTY_FIELD_LABEL(FileSource, playbackStartTime, "Playback start time");
 SET_PROPERTY_FIELD_LABEL(FileSource, dataObjects, "Objects");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(FileSource, playbackSpeedNumerator, IntegerParameterUnit, 1);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(FileSource, playbackSpeedDenominator, IntegerParameterUnit, 1);
-SET_PROPERTY_FIELD_CHANGE_EVENT(FileSource, sourceUrl, ReferenceEvent::TitleChanged);
+SET_PROPERTY_FIELD_CHANGE_EVENT(FileSource, sourceUrls, ReferenceEvent::TitleChanged);
 
 /******************************************************************************
 * Constructs the object.
@@ -68,25 +68,30 @@ FileSource::FileSource(DataSet* dataset) : CachingPipelineObject(dataset),
 /******************************************************************************
 * Sets the source location for importing data.
 ******************************************************************************/
-bool FileSource::setSource(QUrl sourceUrl, FileSourceImporter* importer, bool autodetectFileSequences)
+bool FileSource::setSource(std::vector<QUrl> sourceUrls, FileSourceImporter* importer, bool autodetectFileSequences)
 {
-	// Make file paths absolute.
-	if(sourceUrl.isLocalFile()) {
-		QFileInfo fileInfo(sourceUrl.toLocalFile());
-		if(fileInfo.isRelative())
-			sourceUrl = QUrl::fromLocalFile(fileInfo.absoluteFilePath());
+	// Make relative file paths absolute.
+	for(QUrl& url : sourceUrls) {
+		if(url.isLocalFile()) {
+			QFileInfo fileInfo(url.toLocalFile());
+			if(fileInfo.isRelative())
+				url = QUrl::fromLocalFile(fileInfo.absoluteFilePath());
+		}
 	}
 
-	if(this->sourceUrl() == sourceUrl && this->importer() == importer)
+	if(this->sourceUrls() == sourceUrls && this->importer() == importer)
 		return true;
 
-	QFileInfo fileInfo(sourceUrl.path());
-	_originallySelectedFilename = fileInfo.fileName();
+	if(!sourceUrls.empty()) {
+		QFileInfo fileInfo(sourceUrls.front().path());
+		_originallySelectedFilename = fileInfo.fileName();
+	}
+	else _originallySelectedFilename.clear();
 
 	if(importer) {
-		// If URL is not already a wildcard pattern, generate a default pattern by
+		// If single URL is not already a wildcard pattern, generate a default pattern by
 		// replacing last sequence of numbers in the filename with a wildcard character.
-		if(autodetectFileSequences && importer->autoGenerateWildcardPattern() && !_originallySelectedFilename.contains('*') && !_originallySelectedFilename.contains('?')) {
+		if(autodetectFileSequences && sourceUrls.size() == 1 && importer->autoGenerateWildcardPattern() && !_originallySelectedFilename.contains('*')) {
 			int startIndex, endIndex;
 			for(endIndex = _originallySelectedFilename.length() - 1; endIndex >= 0; endIndex--)
 				if(_originallySelectedFilename.at(endIndex).isNumber()) break;
@@ -94,13 +99,14 @@ bool FileSource::setSource(QUrl sourceUrl, FileSourceImporter* importer, bool au
 				for(startIndex = endIndex-1; startIndex >= 0; startIndex--)
 					if(!_originallySelectedFilename.at(startIndex).isNumber()) break;
 				QString wildcardPattern = _originallySelectedFilename.left(startIndex+1) + '*' + _originallySelectedFilename.mid(endIndex+1);
+				QFileInfo fileInfo(sourceUrls.front().path());
 				fileInfo.setFile(fileInfo.dir(), wildcardPattern);
-				sourceUrl.setPath(fileInfo.filePath());
-				OVITO_ASSERT(sourceUrl.isValid());
+				sourceUrls.front().setPath(fileInfo.filePath());
+				OVITO_ASSERT(sourceUrls.front().isValid());
 			}
 		}
 
-		if(this->sourceUrl() == sourceUrl && this->importer() == importer)
+		if(this->sourceUrls() == sourceUrls && this->importer() == importer)
 			return true;
 	}
 
@@ -110,28 +116,28 @@ bool FileSource::setSource(QUrl sourceUrl, FileSourceImporter* importer, bool au
 	// Make the call to setSource() undoable.
 	class SetSourceOperation : public UndoableOperation {
 	public:
-		SetSourceOperation(FileSource* obj) : _obj(obj), _oldUrl(obj->sourceUrl()), _oldImporter(obj->importer()) {}
+		SetSourceOperation(FileSource* obj) : _obj(obj), _oldUrls(obj->sourceUrls()), _oldImporter(obj->importer()) {}
 		virtual void undo() override {
-			QUrl url = _obj->sourceUrl();
+			std::vector<QUrl> urls = _obj->sourceUrls();
 			OORef<FileSourceImporter> importer = _obj->importer();
-			_obj->setSource(_oldUrl, _oldImporter, false);
-			_oldUrl = url;
+			_obj->setSource(std::move(_oldUrls), _oldImporter, false);
+			_oldUrls = std::move(urls);
 			_oldImporter = importer;
 		}
 		virtual QString displayName() const override { 
 			return QStringLiteral("Set file source url"); 
 		}		
 	private:
-		QUrl _oldUrl;
+		std::vector<QUrl> _oldUrls;
 		OORef<FileSourceImporter> _oldImporter;
 		OORef<FileSource> _obj;
 	};
 	dataset()->undoStack().pushIfRecording<SetSourceOperation>(this);
 
-	_sourceUrl.set(this, PROPERTY_FIELD(sourceUrl), sourceUrl);
+	_sourceUrls.set(this, PROPERTY_FIELD(sourceUrls), std::move(sourceUrls));
 	_importer.set(this, PROPERTY_FIELD(importer), importer);
 
-	// Set flag which indicates that the file being loaded is a newly selected one.
+	// Set flag indicating that the file being loaded is a newly selected one.
 	_isNewFile = true;
 
 	// Trigger a reload of the current frame.
@@ -174,7 +180,7 @@ void FileSource::updateListOfFrames()
 * Updates the internal list of input frames. 
 * Invalidates cached frames in case they did change.
 ******************************************************************************/
-void FileSource::setListOfFrames(const QVector<FileSourceImporter::Frame>& frames)
+void FileSource::setListOfFrames(QVector<FileSourceImporter::Frame> frames)
 {
 	_framesListFuture.reset();
 
@@ -194,7 +200,7 @@ void FileSource::setListOfFrames(const QVector<FileSourceImporter::Frame>& frame
 	}
 	
 	// Replace our internal list of frames.
-	_frames = frames;
+	_frames = std::move(frames);
 
 	// When loading a new file sequence, jump to the frame initially selected by the user in the
 	// file selection dialog.
@@ -288,7 +294,7 @@ SharedFuture<QVector<FileSourceImporter::Frame>> FileSource::requestFrameList(bo
 
 	// Forward request to the importer object.
 	// Intercept future results when they become available and cache them.
-	_framesListFuture = importer()->discoverFrames(sourceUrl())
+	_framesListFuture = importer()->discoverFrames(sourceUrls())
 		.then(executor(), [this, forceReloadOfCurrentFrame](QVector<FileSourceImporter::Frame>&& frameList) {
 			setListOfFrames(frameList);
 
@@ -550,27 +556,8 @@ void FileSource::adjustAnimationInterval(int gotoFrameIndex)
 void FileSource::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData)
 {
 	CachingPipelineObject::saveToStream(stream, excludeRecomputableData);
-	stream.beginChunk(0x02);
+	stream.beginChunk(0x03);
 	stream << _frames;
-
-	// Store the relative path to the external file (in addition to the absolute path, which is automatically saved).
-	QUrl relativePath = sourceUrl();
-	if(relativePath.isLocalFile() && !relativePath.isRelative()) {
-		// Extract relative portion of path (only if both the scene file path and the external file path are absolute).
-		QFileDevice* fileDevice = qobject_cast<QFileDevice*>(stream.dataStream().device());
-		if(fileDevice) {
-			QFileInfo sceneFile(fileDevice->fileName());
-			if(sceneFile.isAbsolute()) {
-				QFileInfo externalFile(relativePath.toLocalFile());
-				// Currently this only works for files in the same directory.
-				if(externalFile.path() == sceneFile.path()) {
-					relativePath = QUrl::fromLocalFile(externalFile.fileName());
-				}
-			}
-		}
-	}
-	stream << relativePath;
-
 	stream.endChunk();
 }
 
@@ -580,34 +567,8 @@ void FileSource::saveToStream(ObjectSaveStream& stream, bool excludeRecomputable
 void FileSource::loadFromStream(ObjectLoadStream& stream)
 {
 	CachingPipelineObject::loadFromStream(stream);
-	stream.expectChunk(0x02);
+	stream.expectChunk(0x03);
 	stream >> _frames;
-
-	QUrl relativePath;
-	stream >> relativePath;
-
-	// If the absolute path no longer exists, replace it with the relative one resolved against
-	// the scene file's path.
-	if(sourceUrl().isLocalFile() && relativePath.isLocalFile()) {
-		QFileInfo relativeFileInfo(relativePath.toLocalFile());
-		if(relativeFileInfo.isAbsolute() == false) {
-			QFileDevice* fileDevice = qobject_cast<QFileDevice*>(stream.dataStream().device());
-			if(fileDevice) {
-				QFileInfo sceneFile(fileDevice->fileName());
-				if(sceneFile.isAbsolute()) {
-					_sourceUrl.set(this, PROPERTY_FIELD(sourceUrl), QUrl::fromLocalFile(QFileInfo(sceneFile.dir(), relativeFileInfo.filePath()).absoluteFilePath()));
-
-					// Also update the paths stored in the frame records.
-					for(FileSourceImporter::Frame& frame : _frames) {
-						if(frame.sourceFile.isLocalFile()) {
-							QFileInfo frameFile(frame.sourceFile.toLocalFile());
-							frame.sourceFile = QUrl::fromLocalFile(QFileInfo(sceneFile.dir(), frameFile.fileName()).absoluteFilePath());
-						}
-					}
-				}
-			}
-		}
-	}
 	stream.closeChunk();
 }
 
@@ -621,8 +582,8 @@ QString FileSource::objectTitle()
 	if(frameIndex >= 0) {
 		filename = QFileInfo(frames()[frameIndex].sourceFile.path()).fileName();
 	}
-	else if(!sourceUrl().isEmpty()) {
-		filename = QFileInfo(sourceUrl().path()).fileName();
+	else if(!sourceUrls().empty()) {
+		filename = QFileInfo(sourceUrls().front().path()).fileName();
 	}
 	if(importer())
 		return QString("%2 [%1]").arg(importer()->objectTitle()).arg(filename);

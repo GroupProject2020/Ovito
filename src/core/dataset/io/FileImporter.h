@@ -91,14 +91,14 @@ public:
 	///        with the new file is available.
 	virtual bool isReplaceExistingPossible(const QUrl& sourceUrl) { return false; }
 
-	/// \brief Imports a file into the scene.
-	/// \param sourceUrl The location of the file to import.
+	/// \brief Imports a file or file sequence into the scene.
+	/// \param sourceUrls The location of the file(s) to import.
 	/// \param importMode Controls how the imported data is inserted into the scene.
 	/// \param autodetectFileSequences Enables the automatic detection of file sequences.
 	/// \return \c true if the file has been successfully imported.
 	//	        \c false if the operation has been canceled by the user.
 	/// \throw Exception when the import operation has failed.
-	virtual bool importFile(const QUrl& sourceUrl, ImportMode importMode, bool autodetectFileSequences) = 0;
+	virtual bool importFile(std::vector<QUrl> sourceUrls, ImportMode importMode, bool autodetectFileSequences) = 0;
 
 	/// \brief Tries to detect the format of the given file.
 	/// \return The importer class that can handle the given file. If the file format could not be recognized then NULL is returned.

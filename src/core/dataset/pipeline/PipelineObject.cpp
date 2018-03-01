@@ -23,7 +23,7 @@
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/PipelineObject.h>
 #include <core/dataset/animation/AnimationSettings.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
@@ -39,14 +39,14 @@ PipelineObject::PipelineObject(DataSet* dataset) : RefTarget(dataset)
 /******************************************************************************
 * Returns a list of object nodes that have this object in their pipeline.
 ******************************************************************************/
-QSet<ObjectNode*> PipelineObject::dependentNodes() const
+QSet<PipelineSceneNode*> PipelineObject::dependentNodes() const
 {
-	QSet<ObjectNode*> nodeList;
+	QSet<PipelineSceneNode*> nodeList;
 	for(RefMaker* dependent : this->dependents()) {
 		if(PipelineObject* pobj = dynamic_object_cast<PipelineObject>(dependent)) {
 			nodeList.unite(pobj->dependentNodes());
 		}
-		else if(ObjectNode* node = dynamic_object_cast<ObjectNode>(dependent)) {
+		else if(PipelineSceneNode* node = dynamic_object_cast<PipelineSceneNode>(dependent)) {
             if(node->dataProvider() == this)
 	    		nodeList.insert(node);
 		}

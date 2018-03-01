@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <core/Core.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/dataset/scene/SelectionSet.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/utilities/concurrent/TaskManager.h>
@@ -104,11 +104,11 @@ void AttributeFileExporter::loadUserDefaults()
 }
 
 /******************************************************************************
-* Evaluates the pipeline of an ObjectNode and returns the computed attributes.
+* Evaluates the pipeline of an PipelineSceneNode and returns the computed attributes.
 ******************************************************************************/
 bool AttributeFileExporter::getAttributes(SceneNode* sceneNode, TimePoint time, QVariantMap& attributes, TaskManager& taskManager)
 {
-	ObjectNode* objectNode = dynamic_object_cast<ObjectNode>(sceneNode);
+	PipelineSceneNode* objectNode = dynamic_object_cast<PipelineSceneNode>(sceneNode);
 	if(!objectNode)
 		throwException(tr("The scene node to be exported is not an object node."));
 

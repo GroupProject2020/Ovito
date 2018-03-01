@@ -10,7 +10,7 @@
 //  (at your option) any later version.
 //
 //  OVITO is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  but WITHOUT ANY WARxRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
 //
@@ -22,15 +22,15 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/particles/objects/ParticleType.h>
-#include <plugins/particles/objects/ParticleDisplay.h>
-#include <plugins/particles/objects/VectorDisplay.h>
-#include <plugins/particles/objects/BondsDisplay.h>
+#include <plugins/particles/objects/ParticlesVis.h>
+#include <plugins/particles/objects/VectorVis.h>
+#include <plugins/particles/objects/BondsVis.h>
 #include <plugins/particles/objects/BondProperty.h>
 #include <plugins/particles/objects/ParticleBondMap.h>
 #include <plugins/particles/objects/BondType.h>
 #include <plugins/particles/objects/TrajectoryObject.h>
 #include <plugins/particles/objects/TrajectoryGenerator.h>
-#include <plugins/particles/objects/TrajectoryDisplay.h>
+#include <plugins/particles/objects/TrajectoryVis.h>
 #include <plugins/particles/util/CutoffNeighborFinder.h>
 #include <plugins/particles/util/NearestNeighborFinder.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
@@ -373,19 +373,17 @@ PYBIND11_PLUGIN(Particles)
 				"The display name of this particle type.")
 	;
 
-	auto ParticleVis_py = ovito_class<ParticleDisplay, DisplayObject>(m,
+	auto ParticlesVis_py = ovito_class<ParticlesVis, DataVis>(m,
 			":Base class: :py:class:`ovito.vis.DataVis`\n\n"
-			"This object controls the visual appearance of particles."
+			"This object controls the visual appearance of particles. "
 			"\n\n"
 			"An instance of this class is attached to the ``Position`` :py:class:`~ovito.data.ParticleProperty` "
-			"and can be accessed via its :py:attr:`~ovito.data.DataObject.vis` property. "
+			"and can be accessed through its :py:attr:`~ovito.data.DataObject.vis` property. "
 			"\n\n"
 			"For example, the following script demonstrates how to change the display shape of particles to a square:"
 			"\n\n"
-			".. literalinclude:: ../example_snippets/particle_display.py\n",
-			// Python class name:
-			"ParticleVis")
-		.def_property("radius", &ParticleDisplay::defaultParticleRadius, &ParticleDisplay::setDefaultParticleRadius,
+			".. literalinclude:: ../example_snippets/particle_display.py\n")
+		.def_property("radius", &ParticlesVis::defaultParticleRadius, &ParticlesVis::setDefaultParticleRadius,
 				"The standard display radius of particles. "
 				"This value is only used if no per-particle or per-type radii have been set. "
 				"A per-type radius can be set via :py:attr:`ovito.data.ParticleType.radius`. "
@@ -393,32 +391,32 @@ PYBIND11_PLUGIN(Particles)
 				":py:class:`~ovito.data.ParticleProperty`, e.g. using the :py:class:`~ovito.modifiers.ComputePropertyModifier`. "
 				"\n\n"
 				":Default: 1.2\n")
-		.def_property_readonly("default_color", &ParticleDisplay::defaultParticleColor)
-		.def_property_readonly("selection_color", &ParticleDisplay::selectionParticleColor)
-		.def_property("rendering_quality", &ParticleDisplay::renderingQuality, &ParticleDisplay::setRenderingQuality)
-		.def_property("shape", &ParticleDisplay::particleShape, &ParticleDisplay::setParticleShape,
+		.def_property_readonly("default_color", &ParticlesVis::defaultParticleColor)
+		.def_property_readonly("selection_color", &ParticlesVis::selectionParticleColor)
+		.def_property("rendering_quality", &ParticlesVis::renderingQuality, &ParticlesVis::setRenderingQuality)
+		.def_property("shape", &ParticlesVis::particleShape, &ParticlesVis::setParticleShape,
 				"The display shape of particles.\n"
 				"Possible values are:"
 				"\n\n"
-				"   * ``ParticleVis.Shape.Sphere`` (default) \n"
-				"   * ``ParticleVis.Shape.Box``\n"
-				"   * ``ParticleVis.Shape.Circle``\n"
-				"   * ``ParticleVis.Shape.Square``\n"
-				"   * ``ParticleVis.Shape.Cylinder``\n"
-				"   * ``ParticleVis.Shape.Spherocylinder``\n"
+				"   * ``ParticlesVis.Shape.Sphere`` (default) \n"
+				"   * ``ParticlesVis.Shape.Box``\n"
+				"   * ``ParticlesVis.Shape.Circle``\n"
+				"   * ``ParticlesVis.Shape.Square``\n"
+				"   * ``ParticlesVis.Shape.Cylinder``\n"
+				"   * ``ParticlesVis.Shape.Spherocylinder``\n"
 				"\n")
 		;
 
-	py::enum_<ParticleDisplay::ParticleShape>(ParticleVis_py, "Shape")
-		.value("Sphere", ParticleDisplay::Sphere)
-		.value("Box", ParticleDisplay::Box)
-		.value("Circle", ParticleDisplay::Circle)
-		.value("Square", ParticleDisplay::Square)
-		.value("Cylinder", ParticleDisplay::Cylinder)
-		.value("Spherocylinder", ParticleDisplay::Spherocylinder)
+	py::enum_<ParticlesVis::ParticleShape>(ParticlesVis_py, "Shape")
+		.value("Sphere", ParticlesVis::Sphere)
+		.value("Box", ParticlesVis::Box)
+		.value("Circle", ParticlesVis::Circle)
+		.value("Square", ParticlesVis::Square)
+		.value("Cylinder", ParticlesVis::Cylinder)
+		.value("Spherocylinder", ParticlesVis::Spherocylinder)
 	;
 
-	auto VectorVis_py = ovito_class<VectorDisplay, DisplayObject>(m,
+	auto VectorVis_py = ovito_class<VectorVis, DataVis>(m,
 			":Base class: :py:class:`ovito.vis.DataVis`\n\n"
 			"Controls the visual appearance of vectors (arrow elements)."
 			"\n\n"
@@ -430,19 +428,19 @@ PYBIND11_PLUGIN(Particles)
 			".. literalinclude:: ../example_snippets/vector_display.py\n",
 			// Python class name:
 			"VectorVis")
-		.def_property("shading", &VectorDisplay::shadingMode, &VectorDisplay::setShadingMode,
+		.def_property("shading", &VectorVis::shadingMode, &VectorVis::setShadingMode,
 				"The shading style used for the arrows.\n"
 				"Possible values:"
 				"\n\n"
 				"   * ``VectorVis.Shading.Normal`` (default) \n"
 				"   * ``VectorVis.Shading.Flat``\n"
 				"\n")
-		.def_property("rendering_quality", &VectorDisplay::renderingQuality, &VectorDisplay::setRenderingQuality)
-		.def_property("reverse", &VectorDisplay::reverseArrowDirection, &VectorDisplay::setReverseArrowDirection,
+		.def_property("rendering_quality", &VectorVis::renderingQuality, &VectorVis::setRenderingQuality)
+		.def_property("reverse", &VectorVis::reverseArrowDirection, &VectorVis::setReverseArrowDirection,
 				"Boolean flag controlling the reversal of arrow directions."
 				"\n\n"
 				":Default: ``False``\n")
-		.def_property("alignment", &VectorDisplay::arrowPosition, &VectorDisplay::setArrowPosition,
+		.def_property("alignment", &VectorVis::arrowPosition, &VectorVis::setArrowPosition,
 				"Controls the positioning of arrows with respect to the particles.\n"
 				"Possible values:"
 				"\n\n"
@@ -450,51 +448,51 @@ PYBIND11_PLUGIN(Particles)
 				"   * ``VectorVis.Alignment.Center``\n"
 				"   * ``VectorVis.Alignment.Head``\n"
 				"\n")
-		.def_property("color", &VectorDisplay::arrowColor, &VectorDisplay::setArrowColor,
+		.def_property("color", &VectorVis::arrowColor, &VectorVis::setArrowColor,
 				"The display color of arrows."
 				"\n\n"
 				":Default: ``(1.0, 1.0, 0.0)``\n")
-		.def_property("width", &VectorDisplay::arrowWidth, &VectorDisplay::setArrowWidth,
+		.def_property("width", &VectorVis::arrowWidth, &VectorVis::setArrowWidth,
 				"Controls the width of arrows (in natural length units)."
 				"\n\n"
 				":Default: 0.5\n")
-		.def_property("scaling", &VectorDisplay::scalingFactor, &VectorDisplay::setScalingFactor,
+		.def_property("scaling", &VectorVis::scalingFactor, &VectorVis::setScalingFactor,
 				"The uniform scaling factor applied to vectors."
 				"\n\n"
 				":Default: 1.0\n")
 	;
 
-	py::enum_<VectorDisplay::ArrowPosition>(VectorVis_py, "Alignment")
-		.value("Base", VectorDisplay::Base)
-		.value("Center", VectorDisplay::Center)
-		.value("Head", VectorDisplay::Head)
+	py::enum_<VectorVis::ArrowPosition>(VectorVis_py, "Alignment")
+		.value("Base", VectorVis::Base)
+		.value("Center", VectorVis::Center)
+		.value("Head", VectorVis::Head)
 	;
 
-	ovito_class<BondsDisplay, DisplayObject>(m,
+	ovito_class<BondsVis, DataVis>(m,
 			":Base class: :py:class:`ovito.vis.DataVis`\n\n"
 			"Controls the visual appearance of bonds between particles."
 			"\n\n"
 			"An instance of this class is attached to the ``Topology`` :py:class:`~ovito.data.BondProperty` "
-			"and can be accessed via its :py:attr:`~ovito.data.DataObject.vis` property. ",
+			"and can be accessed through its :py:attr:`~ovito.data.DataObject.vis` property. ",
 			// Python class name:
 			"BondsVis")
-		.def_property("width", &BondsDisplay::bondWidth, &BondsDisplay::setBondWidth,
+		.def_property("width", &BondsVis::bondWidth, &BondsVis::setBondWidth,
 				"The display width of bonds (in natural length units)."
 				"\n\n"
 				":Default: 0.4\n")
-		.def_property("color", &BondsDisplay::bondColor, &BondsDisplay::setBondColor,
+		.def_property("color", &BondsVis::bondColor, &BondsVis::setBondColor,
 				"The display color of bonds. Used only if :py:attr:`.use_particle_colors` == False."
 				"\n\n"
 				":Default: ``(0.6, 0.6, 0.6)``\n")
-		.def_property("shading", &BondsDisplay::shadingMode, &BondsDisplay::setShadingMode,
+		.def_property("shading", &BondsVis::shadingMode, &BondsVis::setShadingMode,
 				"The shading style used for bonds.\n"
 				"Possible values:"
 				"\n\n"
 				"   * ``BondsVis.Shading.Normal`` (default) \n"
 				"   * ``BondsVis.Shading.Flat``\n"
 				"\n")
-		.def_property("rendering_quality", &BondsDisplay::renderingQuality, &BondsDisplay::setRenderingQuality)
-		.def_property("use_particle_colors", &BondsDisplay::useParticleColors, &BondsDisplay::setUseParticleColors,
+		.def_property("rendering_quality", &BondsVis::renderingQuality, &BondsVis::setRenderingQuality)
+		.def_property("use_particle_colors", &BondsVis::useParticleColors, &BondsVis::setUseParticleColors,
 				"If ``True``, bonds are assigned the same color as the particles they are adjacent to."
 				"\n\n"
 				":Default: ``True``\n")
@@ -634,7 +632,7 @@ PYBIND11_PLUGIN(Particles)
 			"It is used to statically visualize the trajectories of particles. "
 			"The trajectory line generation must be explicitly triggered by a call to :py:meth:`.generate`. "
 			"The visual appearance of the trajectory lines is controlled by a " 
-			":py:class:`~ovito.vis.TrajectoryLineDisplay` attached to the generated :py:class:`~ovito.data.TrajectoryLines` data object. "
+			":py:class:`~ovito.vis.TrajectoryVis` element attached to the generated :py:class:`~ovito.data.TrajectoryLines` data object. "
 			"\n\n"
 			"**Usage example:**"
 			"\n\n"
@@ -698,27 +696,25 @@ PYBIND11_PLUGIN(Particles)
 			"and also returned to the caller. ")
 	;	
 
-	ovito_class<TrajectoryDisplay, DisplayObject>(m,
+	ovito_class<TrajectoryVis, DataVis>(m,
 			":Base class: :py:class:`ovito.vis.DataVis`\n\n"
-			"Controls the visual appearance of particle trajectory lines. An instance of this class is attached to every :py:class:`~ovito.data.TrajectoryLineGenerator` data object.",
-			// Python class name:
-			"TrajectoryLineVis")
-		.def_property("width", &TrajectoryDisplay::lineWidth, &TrajectoryDisplay::setLineWidth,
+			"Controls the visual appearance of particle trajectory lines. An instance of this class is attached to every :py:class:`~ovito.data.TrajectoryLineGenerator` data object.")
+		.def_property("width", &TrajectoryVis::lineWidth, &TrajectoryVis::setLineWidth,
 				"The display width of trajectory lines."
 				"\n\n"
 				":Default: 0.2\n")
-		.def_property("color", &TrajectoryDisplay::lineColor, &TrajectoryDisplay::setLineColor,
+		.def_property("color", &TrajectoryVis::lineColor, &TrajectoryVis::setLineColor,
 				"The display color of trajectory lines."
 				"\n\n"
 				":Default: ``(0.6, 0.6, 0.6)``\n")
-		.def_property("shading", &TrajectoryDisplay::shadingMode, &TrajectoryDisplay::setShadingMode,
+		.def_property("shading", &TrajectoryVis::shadingMode, &TrajectoryVis::setShadingMode,
 				"The shading style used for trajectory lines.\n"
 				"Possible values:"
 				"\n\n"
-				"   * ``TrajectoryLineVis.Shading.Normal`` \n"
-				"   * ``TrajectoryLineVis.Shading.Flat`` (default)\n"
+				"   * ``TrajectoryVis.Shading.Normal`` \n"
+				"   * ``TrajectoryVis.Shading.Flat`` (default)\n"
 				"\n")
-		.def_property("upto_current_time", &TrajectoryDisplay::showUpToCurrentTime, &TrajectoryDisplay::setShowUpToCurrentTime,
+		.def_property("upto_current_time", &TrajectoryVis::showUpToCurrentTime, &TrajectoryVis::setShowUpToCurrentTime,
 				"If ``True``, trajectory lines are only rendered up to the particle positions at the current animation time. "
 				"Otherwise, the complete trajectory lines are displayed."
 				"\n\n"

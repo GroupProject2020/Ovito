@@ -23,7 +23,7 @@
 
 
 #include <core/Core.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include "ViewportOverlay.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -56,7 +56,7 @@ public:
 
 public:
 
-	Q_PROPERTY(Ovito::ObjectNode* sourceNode READ sourceNode WRITE setSourceNode);
+	Q_PROPERTY(Ovito::PipelineSceneNode* sourceNode READ sourceNode WRITE setSourceNode);
 
 private:
 
@@ -87,8 +87,8 @@ private:
 	/// Controls the outlining of the font.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, outlineEnabled, setOutlineEnabled, PROPERTY_FIELD_MEMORIZE);
 
-	/// The ObjectNode providing global attributes that can be reference in the text.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(ObjectNode, sourceNode, setSourceNode, PROPERTY_FIELD_NO_SUB_ANIM);
+	/// The PipelineSceneNode providing global attributes that can be reference in the text.
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(PipelineSceneNode, sourceNode, setSourceNode, PROPERTY_FIELD_NO_SUB_ANIM);
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -23,7 +23,7 @@ SET(SourceFiles
 	camera/CameraObject.cpp
 	camera/TargetObject.cpp
 	simcell/SimulationCellObject.cpp
-	simcell/SimulationCellDisplay.cpp
+	simcell/SimulationCellVis.cpp
 	simcell/PeriodicDomainDataObject.cpp
 	properties/PropertyStorage.cpp
 	properties/PropertyObject.cpp

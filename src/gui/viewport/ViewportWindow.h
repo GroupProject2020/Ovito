@@ -39,7 +39,7 @@ struct OVITO_GUI_EXPORT ViewportPickResult
 	explicit operator bool() const { return objectNode != nullptr; }
 
 	/// The object node that was picked.
-	OORef<ObjectNode> objectNode;
+	OORef<PipelineSceneNode> objectNode;
 
 	/// The object-specific information attached to the pick record.
 	OORef<ObjectPickInfo> pickInfo;

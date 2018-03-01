@@ -23,7 +23,7 @@
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/particles/objects/BondProperty.h>
 #include <core/utilities/concurrent/TaskManager.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/dataset/scene/SelectionSet.h>
 #include "ParticleExporter.h"
 
@@ -51,12 +51,12 @@ void ParticleExporter::selectStandardOutputData()
 }
 
 /******************************************************************************
-* Evaluates the pipeline of an ObjectNode and makes sure that the data to be
+* Evaluates the pipeline of an PipelineSceneNode and makes sure that the data to be
 * exported contains particles and throws an exception if not.
 ******************************************************************************/
 bool ParticleExporter::getParticleData(SceneNode* sceneNode, TimePoint time, PipelineFlowState& state, TaskManager& taskManager)
 {
-	ObjectNode* objectNode = dynamic_object_cast<ObjectNode>(sceneNode);
+	PipelineSceneNode* objectNode = dynamic_object_cast<PipelineSceneNode>(sceneNode);
 	if(!objectNode)
 		throwException(tr("The scene node to be exported is not an object node."));
 

@@ -47,7 +47,7 @@ def export_particle(parent_node_name, index, pos, color, radius):
 def export_particles(node_name, data):
     positions = data.particle_properties.position.array
     particle_display = data.particle_properties.position.vis
-    assert(particle_display.shape == ParticleVis.Shape.Sphere)  # Only spherical particles can be exported at the moment.
+    assert(particle_display.shape == ParticlesVis.Shape.Sphere)  # Only spherical particles can be exported at the moment.
     
     color = (1,0,0)
     color_property = None

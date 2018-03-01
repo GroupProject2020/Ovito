@@ -42,7 +42,7 @@ DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, edgeCount);
 DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, edgeThreshold);
 DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, faceThreshold);
 DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, relativeFaceThreshold);
-DEFINE_REFERENCE_FIELD(VoronoiAnalysisModifier, bondsDisplay);
+DEFINE_REFERENCE_FIELD(VoronoiAnalysisModifier, bondsVis);
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, onlySelected, "Use only selected particles");
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, useRadii, "Use particle radii");
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, computeIndices, "Compute Voronoi indices");
@@ -51,7 +51,7 @@ SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, edgeCount, "Maximum edge count
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, edgeThreshold, "Edge length threshold");
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, faceThreshold, "Absolute face area threshold");
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, relativeFaceThreshold, "Relative face area threshold");
-SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, bondsDisplay, "Bonds display");
+SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, bondsVis, "Bonds vis");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(VoronoiAnalysisModifier, edgeThreshold, WorldParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(VoronoiAnalysisModifier, faceThreshold, FloatParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(VoronoiAnalysisModifier, relativeFaceThreshold, PercentParameterUnit, 0, 1);
@@ -70,8 +70,8 @@ VoronoiAnalysisModifier::VoronoiAnalysisModifier(DataSet* dataset) : Asynchronou
 	_computeBonds(false),
 	_relativeFaceThreshold(0)
 {
-	// Create the display object for bonds rendering.
-	setBondsDisplay(new BondsDisplay(dataset));
+	// Create the vis element for bonds rendering.
+	setBondsVis(new BondsVis(dataset));
 }
 
 /******************************************************************************
@@ -87,8 +87,8 @@ bool VoronoiAnalysisModifier::OOMetaClass::isApplicableTo(const PipelineFlowStat
 ******************************************************************************/
 bool VoronoiAnalysisModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	// Do not propagate messages from the attached display object.
-	if(source == bondsDisplay())
+	// Do not propagate messages from the attached vis element.
+	if(source == bondsVis())
 		return false;
 
 	return AsynchronousModifier::referenceEvent(source, event);
@@ -520,7 +520,7 @@ PipelineFlowState VoronoiAnalysisModifier::VoronoiAnalysisResults::apply(TimePoi
 
 	if(modifier->computeBonds()) {
 		// Insert output object into the pipeline.
-		poh.addBonds(bonds(), modifier->bondsDisplay());
+		poh.addBonds(bonds(), modifier->bondsVis());
 	}
 
 	output.attributes().insert(QStringLiteral("Voronoi.max_face_order"), QVariant::fromValue(maxFaceOrder().load()));

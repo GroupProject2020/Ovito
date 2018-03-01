@@ -25,7 +25,7 @@
 #include <core/viewport/Viewport.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/scene/SelectionSet.h>
-#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/scene/RootSceneNode.h>
 #include <core/dataset/animation/AnimationSettings.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View)

@@ -22,7 +22,7 @@
 #include <plugins/particles/Particles.h>
 #include <core/dataset/DataSet.h>
 #include "TrajectoryObject.h"
-#include "TrajectoryDisplay.h"
+#include "TrajectoryVis.h"
 
 namespace Ovito { namespace Particles {
 
@@ -33,7 +33,7 @@ IMPLEMENT_OVITO_CLASS(TrajectoryObject);
 ******************************************************************************/
 TrajectoryObject::TrajectoryObject(DataSet* dataset) : DataObject(dataset), _trajectoryCount(0)
 {
-	addDisplayObject(new TrajectoryDisplay(dataset));
+	addVisElement(new TrajectoryVis(dataset));
 }
 
 /******************************************************************************

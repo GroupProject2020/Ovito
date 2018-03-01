@@ -21,7 +21,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/util/CutoffNeighborFinder.h>
-#include <plugins/particles/objects/BondsDisplay.h>
+#include <plugins/particles/objects/BondsVis.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <core/dataset/DataSet.h>
@@ -35,14 +35,16 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 IMPLEMENT_OVITO_CLASS(CreateBondsModifier);
 DEFINE_PROPERTY_FIELD(CreateBondsModifier, cutoffMode);
 DEFINE_PROPERTY_FIELD(CreateBondsModifier, uniformCutoff);
+DEFINE_PROPERTY_FIELD(CreateBondsModifier, pairCutoffs);
 DEFINE_PROPERTY_FIELD(CreateBondsModifier, minimumCutoff);
 DEFINE_PROPERTY_FIELD(CreateBondsModifier, onlyIntraMoleculeBonds);
-DEFINE_REFERENCE_FIELD(CreateBondsModifier, bondsDisplay);
+DEFINE_REFERENCE_FIELD(CreateBondsModifier, bondsVis);
 SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, cutoffMode, "Cutoff mode");
 SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, uniformCutoff, "Cutoff radius");
+SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, pairCutoffs, "Pair-wise cutoffs");
 SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, minimumCutoff, "Lower cutoff");
 SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, onlyIntraMoleculeBonds, "Suppress inter-molecular bonds");
-SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, bondsDisplay, "Bonds display");
+SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, bondsVis, "Bonds vis");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CreateBondsModifier, uniformCutoff, WorldParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CreateBondsModifier, minimumCutoff, WorldParameterUnit, 0);
 
@@ -50,10 +52,13 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CreateBondsModifier, minimumCutoff, WorldPa
 * Constructs the modifier object.
 ******************************************************************************/
 CreateBondsModifier::CreateBondsModifier(DataSet* dataset) : AsynchronousModifier(dataset),
-	_cutoffMode(UniformCutoff), _uniformCutoff(3.2), _onlyIntraMoleculeBonds(false), _minimumCutoff(0)
+	_cutoffMode(UniformCutoff), 
+	_uniformCutoff(3.2), 
+	_onlyIntraMoleculeBonds(false), 
+	_minimumCutoff(0)
 {
-	// Create the display object for bonds rendering and assign it to the data object.
-	setBondsDisplay(new BondsDisplay(dataset));
+	// Create the vis element for rendering the bonds.
+	setBondsVis(new BondsVis(dataset));
 }
 
 /******************************************************************************
@@ -62,20 +67,6 @@ CreateBondsModifier::CreateBondsModifier(DataSet* dataset) : AsynchronousModifie
 bool CreateBondsModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
 	return input.findObject<ParticleProperty>() != nullptr;
-}
-
-/******************************************************************************
-* Sets the cutoff radii for pairs of particle types.
-******************************************************************************/
-void CreateBondsModifier::setPairCutoffs(const PairCutoffsList& pairCutoffs)
-{
-	// Make the property change undoable.
-	dataset()->undoStack().undoablePropertyChange<PairCutoffsList>(this,
-			&CreateBondsModifier::pairCutoffs, &CreateBondsModifier::setPairCutoffs);
-
-	_pairCutoffs = pairCutoffs;
-
-	notifyTargetChanged();
 }
 
 /******************************************************************************
@@ -108,47 +99,12 @@ FloatType CreateBondsModifier::getPairCutoff(const QString& typeA, const QString
 }
 
 /******************************************************************************
-* Saves the class' contents to the given stream.
-******************************************************************************/
-void CreateBondsModifier::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData)
-{
-	AsynchronousModifier::saveToStream(stream, excludeRecomputableData);
-
-	stream.beginChunk(0x01);
-	stream << _pairCutoffs;
-	stream.endChunk();
-}
-
-/******************************************************************************
-* Loads the class' contents from the given stream.
-******************************************************************************/
-void CreateBondsModifier::loadFromStream(ObjectLoadStream& stream)
-{
-	AsynchronousModifier::loadFromStream(stream);
-
-	stream.expectChunk(0x01);
-	stream >> _pairCutoffs;
-	stream.closeChunk();
-}
-
-/******************************************************************************
-* Creates a copy of this object.
-******************************************************************************/
-OORef<RefTarget> CreateBondsModifier::clone(bool deepCopy, CloneHelper& cloneHelper)
-{
-	// Let the base class create an instance of this class.
-	OORef<CreateBondsModifier> clone = static_object_cast<CreateBondsModifier>(AsynchronousModifier::clone(deepCopy, cloneHelper));
-	clone->_pairCutoffs = this->_pairCutoffs;
-	return clone;
-}
-
-/******************************************************************************
 * Handles reference events sent by reference targets of this object.
 ******************************************************************************/
 bool CreateBondsModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	// Do not propagate messages from the attached display object.
-	if(source == bondsDisplay())
+	// Do not propagate messages from the attached vis element.
+	if(source == bondsVis())
 		return false;
 
 	return AsynchronousModifier::referenceEvent(source, event);
@@ -162,12 +118,12 @@ void CreateBondsModifier::initializeModifier(ModifierApplication* modApp)
 {
 	AsynchronousModifier::initializeModifier(modApp);
 
-	// Adopt the upstream BondsDisplay object if there already is one.
+	// Adopt the upstream BondsVis object if there already is one.
 	PipelineFlowState input = modApp->evaluateInputPreliminary();
 	if(BondProperty* topologyProperty = BondProperty::findInState(input, BondProperty::TopologyProperty)) {
-		for(DisplayObject* displayObj : topologyProperty->displayObjects()) {
-			if(BondsDisplay* bondsDisplay = dynamic_object_cast<BondsDisplay>(displayObj)) {
-				setBondsDisplay(bondsDisplay);
+		for(DataVis* vis : topologyProperty->visElements()) {
+			if(BondsVis* bondsVis = dynamic_object_cast<BondsVis>(vis)) {
+				setBondsVis(bondsVis);
 				break;
 			}
 		}
@@ -302,14 +258,14 @@ PipelineFlowState CreateBondsModifier::BondsEngineResults::apply(TimePoint time,
 	// Add our bonds to the system.
 	PipelineFlowState output = input;
 	ParticleOutputHelper poh(modApp->dataset(), output);
-	poh.addBonds(bonds(), modifier->bondsDisplay());
+	poh.addBonds(bonds(), modifier->bondsVis());
 
 	size_t bondsCount = bonds().size();
 	output.attributes().insert(QStringLiteral("CreateBonds.num_bonds"), QVariant::fromValue(bondsCount));
 
 	// If the number of bonds is unusually high, we better turn off bonds display to prevent the program from freezing.
 	if(bondsCount > 1000000) {
-		modifier->bondsDisplay()->setEnabled(false);		
+		modifier->bondsVis()->setEnabled(false);		
 		output.setStatus(PipelineStatus(PipelineStatus::Warning, tr("Created %1 bonds, which is a lot. As a precaution, the display of bonds has been disabled. You can manually enable it again if needed.").arg(bondsCount)));
 	}
 	else {

@@ -25,7 +25,7 @@
 #include <core/Core.h>
 #include <core/oo/RefTarget.h>
 #include <core/dataset/animation/TimeInterval.h>
-#include <core/dataset/data/DisplayObject.h>
+#include <core/dataset/data/DataVis.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
@@ -97,38 +97,41 @@ public:
 		return static_object_cast<T>(convertTo(T::OOClass(), time));
 	}
 
-	/// \brief Attaches a display object to this scene object that will be responsible for rendering the
-	///        data object.
-	void addDisplayObject(DisplayObject* displayObj) { 
-		_displayObjects.push_back(this, PROPERTY_FIELD(displayObjects), displayObj); 
+	/// \brief Attaches a visualization elements to this data object that will be responsible for rendering the
+	///        data.
+	void addVisElement(DataVis* vis) {
+		OVITO_ASSERT(vis != nullptr); 
+		_visElements.push_back(this, PROPERTY_FIELD(visElements), vis); 
 	}
 
-	/// \brief Attaches a display object to this scene object that will be responsible for rendering the
-	///        data object.
-	void insertDisplayObject(int index, DisplayObject* displayObj) { 
-		_displayObjects.insert(this, PROPERTY_FIELD(displayObjects), index, displayObj); 
+	/// \brief Attaches a visualization element to this data object that will be responsible for rendering the
+	///        data.
+	void insertVisElement(int index, DataVis* vis) { 
+		OVITO_ASSERT(vis != nullptr);
+		_visElements.insert(this, PROPERTY_FIELD(visElements), index, vis); 
 	}
 
-	/// \brief Removes a display object from this scene object.
-	void removeDisplayObject(int index) {
-		_displayObjects.remove(this, PROPERTY_FIELD(displayObjects), index); 
+	/// \brief Detaches a visualization element from this data object.
+	void removeVisElement(int index) {
+		_visElements.remove(this, PROPERTY_FIELD(visElements), index); 
 	}
 
-	/// \brief Attaches a display object to this scene object that will be responsible for rendering the
-	///        data object. All existing display objects will be replaced.
-	void setDisplayObject(DisplayObject* displayObj) {
-		_displayObjects.clear(this, PROPERTY_FIELD(displayObjects));
-		_displayObjects.push_back(this, PROPERTY_FIELD(displayObjects), displayObj);
+	/// \brief Attaches a visual element to this data object that will be responsible for rendering the
+	///        data. Any existing visual elements will be replaced.
+	void setVisElement(DataVis* vis) {
+		OVITO_ASSERT(vis != nullptr);
+		_visElements.clear(this, PROPERTY_FIELD(visElements));
+		_visElements.push_back(this, PROPERTY_FIELD(visElements), vis);
 	}
 
-	/// \brief Returns the first display object attached to this data object or NULL if there is 
-	///        no display object attached.
-	DisplayObject* displayObject() const {
-		return !displayObjects().empty() ? displayObjects().front() : nullptr;
+	/// \brief Returns the first visualization element attached to this data object or NULL if there is 
+	///        no element attached.
+	DataVis* visElement() const {
+		return !visElements().empty() ? visElements().front() : nullptr;
 	}
 
-	/// \brief Returns a list of object nodes that have this object as a static data source.
-	QSet<ObjectNode*> dependentNodes() const;
+	/// \brief Returns a list of pipelines that use this object as a static data source.
+	QSet<PipelineSceneNode*> dependentNodes() const;
 
 	/// \brief Returns the number of strong references to this data object.
 	///        Strong references are either RefMaker derived classes that hold a reference to this data object
@@ -158,8 +161,8 @@ protected:
 
 private:
 
-	/// The attached display objects that are responsible for rendering this object's data.
-	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD_FLAGS(DisplayObject, displayObjects, setDisplayObjects, PROPERTY_FIELD_NEVER_CLONE_TARGET);
+	/// The attached visual elements that are responsible for rendering this object's data.
+	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD_FLAGS(DataVis, visElements, setVisElements, PROPERTY_FIELD_NEVER_CLONE_TARGET);
 
 	/// The revision counter of this object.
 	/// The counter is increment every time the object changes.

@@ -8,7 +8,7 @@ node = import_file("../../files/LAMMPS/animation.dump.gz")
 node.add_to_scene()
 print("Number of frames:", node.source.num_frames)
 
-traj_node = ovito.ObjectNode()
+traj_node = ovito.PipelineSceneNode()
 traj_node.add_to_scene()
 traj_node.source = TrajectoryLineGenerator()
 
@@ -34,6 +34,6 @@ print(vis.width)
 print(vis.color)
 print(vis.shading)
 print(vis.upto_current_time)
-assert(vis.shading == TrajectoryLineVis.Shading.Flat)
+assert(vis.shading == TrajectoryVis.Shading.Flat)
 
-vis.shading = TrajectoryLineVis.Shading.Normal
+vis.shading = TrajectoryVis.Shading.Normal

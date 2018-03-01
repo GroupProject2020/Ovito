@@ -74,7 +74,7 @@ public:
 	virtual TimeInterval modifierValidity(TimePoint time) override;
 
 	/// Lets the modifier render itself into the viewport.
-	virtual void renderModifierVisual(TimePoint time, ObjectNode* contextNode, ModifierApplication* modApp, SceneRenderer* renderer, bool renderOverlay) override;
+	virtual void renderModifierVisual(TimePoint time, PipelineSceneNode* contextNode, ModifierApplication* modApp, SceneRenderer* renderer, bool renderOverlay) override;
 
 	// Property access functions:
 
@@ -105,7 +105,7 @@ protected:
 	virtual void initializeModifier(ModifierApplication* modApp) override;
 
 	/// \brief Renders the modifier's visual representation and computes its bounding box.
-	void renderVisual(TimePoint time, ObjectNode* contextNode, SceneRenderer* renderer);
+	void renderVisual(TimePoint time, PipelineSceneNode* contextNode, SceneRenderer* renderer);
 
 	/// Renders the plane in the viewport.
 	void renderPlane(SceneRenderer* renderer, const Plane3& plane, const Box3& box, const ColorA& color) const;

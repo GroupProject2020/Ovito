@@ -75,30 +75,36 @@ void defineIOSubmodule(py::module m)
 			":Base class: :py:class:`ovito.data.DataCollection`\n\n"
 			"This object type can serve as a :py:attr:`Pipeline.source` and takes care of reading the input for the :py:class:`Pipeline` from an external data file. "
 			"\n\n"
-			"You normally do not need to create an instance of this class; the :py:func:`~ovito.io.import_file` function does it for you and wires the configured :py:class:`!FileSource` "
-			"to the :py:attr:`~ovito.pipeline.Pipeline`. If desired, the :py:meth:`FileSource.load` method allows you to load a different input file later on:"
+			"You normally do not need to create an instance of this class yourself; the :py:func:`~ovito.io.import_file` function does it for you and wires the configured :py:class:`!FileSource` "
+			"to the :py:attr:`~ovito.pipeline.Pipeline`. If desired, the :py:meth:`FileSource.load` method allows you to load a different input file later on and replace the inputs of the pipeline:"
 			"\n\n"
 			".. literalinclude:: ../example_snippets/file_source_load_method.py\n"
 			"\n"
-			"File sources are furthermore used in conjunction with certain modifiers. "
-			"The :py:class:`~ovito.modifiers.CalculateDisplacementsModifier` can make use of a :py:class:`!FileSource` to load a reference configuration from a separate input file. "
+			"Furthermore, additional :py:class:`!FileSource` instances are typically used in conjunction with certain modifiers. "
+			"The :py:class:`~ovito.modifiers.CalculateDisplacementsModifier` can make use of a :py:class:`!FileSource` to load reference particle positions from a separate input file. "
 			"Another example is the :py:class:`~ovito.modifiers.LoadTrajectoryModifier`, "
-			"which employs its own :py:class:`!FileSource` instance to load the particle trajectories from disk. "
+			"which employs its own separate :py:class:`!FileSource` instance to load the particle trajectories from disk and combine them "
+			"with the topology data previously loaded by the main :py:class:`!FileSource` of the data pipeline. "
 			"\n\n"
 			"**Data access**"
 			"\n\n"
-		    "You can call the file source's :py:meth:`.compute` method to retrieve a :py:class:`~ovito.data.PipelineFlowState` containing the data that was read "
+		    "You can call a file source's :py:meth:`.compute` method to retrieve a :py:class:`~ovito.data.PipelineFlowState` containing the data that was read "
 			"from the input file. Typically you would use this method to access a :py:class:`~ovito.pipeline.Pipeline`'s "
-			"unmodified input data. "
-			"\n\n"
-		    "Note that the :py:class:`!FileSource` itself derives from the :py:class:`~ovito.data.DataCollection` base class. "
-			"It operates like a cache for the data that was read from the external file during the most recent load operation. " 
-			"You may directly access this cached data through the methods and properties inherited from the :py:class:`~ovito.data.DataCollection` interface. "
+			"unmodified input data: "
 			"\n\n"
 			".. literalinclude:: ../example_snippets/file_source_data_access.py\n"
+			"   :lines: 3-8\n"
+			"\n\n"
+		    "Note that the :py:class:`!FileSource` object itself derives from the :py:class:`~ovito.data.DataCollection` base class. "
+			"It operates like a cache for the frame data that was read from the external file during the most recent load operation. " 
+			"You may directly access this cached data through the methods and properties inherited from the :py:class:`~ovito.data.DataCollection` interface: "
+			"\n\n"
+			".. literalinclude:: ../example_snippets/file_source_data_access.py\n"
+			"   :lines: 10-11\n"
 			)
 		.def_property_readonly("importer", &FileSource::importer)
-		.def_property_readonly("source_path", &FileSource::sourceUrl)
+		// Required by the implementation of FileSource.source_path:
+		.def("get_source_paths", &FileSource::sourceUrls)
 		.def("set_source", &FileSource::setSource)
 		// Required by the implementation of FileSource.load():
 		.def("wait_until_ready", [](FileSource& fs, TimePoint time) {
@@ -111,7 +117,8 @@ void defineIOSubmodule(py::module m)
 			return ScriptEngine::activeTaskManager().waitForTask(future);
 		})
 		.def_property_readonly("num_frames", &FileSource::numberOfFrames,
-				"The number of frames found in the input file or sequence of input files (read-only).")
+				"This read-only attribute reports the number of frames found in the input file or sequence of input files. "
+				"The data for the individual frames can be obtained using the :py:meth:`.compute` method.")
 		// For backward compatibility with OVITO 2.9:
 		// Returns the zero-based frame index that is currently loaded and kept in memory by the FileSource.
 		.def_property_readonly("loaded_frame", &FileSource::storedFrameIndex)
@@ -123,17 +130,20 @@ void defineIOSubmodule(py::module m)
 					return frameInfo.sourceFile;
 				})
 		.def_property("adjust_animation_interval", &FileSource::adjustAnimationIntervalEnabled, &FileSource::setAdjustAnimationIntervalEnabled,
-				"A Boolean flag that controls whether the animation length in OVITO is automatically adjusted to match the number of frames in the "
-				"loaded file or file sequence."
+				"This Boolean flag controls whether the global animation length in OVITO is automatically adjusted to match the :py:attr:`.num_frames` value "
+				"of this :py:class:`!FileSource`."
 				"\n\n"
-				"The current length of the animation in OVITO is managed by the global :py:class:`~ovito.anim.AnimationSettings` object. The number of frames in the external file "
-				"or file sequence is indicated by the :py:attr:`.num_frames` attribute of this :py:class:`!FileSource`. If :py:attr:`.adjust_animation_interval` "
-				"is ``True``, then the animation length will be automatically adjusted to match the number of frames provided by the :py:class:`!FileSource`. "
+				"The length of the current animation interval is managed by the global :py:class:`~ovito.anim.AnimationSettings` object. "
+				"The current animation interval determines the length of movies rendered by OVITO and the length of the timeline that is displayed in the "
+				"graphical program version of OVITO. "
+				"If :py:attr:`!adjust_animation_interval` is ``True``, then the global animation length will automatically be adjusted to match the "
+				":py:attr:`.num_frames` value of this :py:class:`!FileSource`. "
 				"\n\n"
-				"In some situations it makes sense to turn this option off, for example, if you import several data files into "
-				"OVITO simultaneously, but their frame counts do not match. "
-				"\n\n"
-				":Default: ``True``\n")
+				"Keep in mind that is possible to have multiple data pipelines in the same scene, each having its own :py:class:`!FileSource`. "
+				"By default, OVITO sets :py:attr:`!adjust_animation_interval` to ``True`` only for the very first :py:class:`!FileSource` that is created ("
+				"typically through a call to :py:func:`~ovito.io.import_file`). The animation length will subsequently be slaved to the number of frames "
+				"loaded by this master :py:class:`!FileSource`. In some situations it makes sense to turn the :py:attr:`!adjust_animation_interval` option off again "
+				"and adjust the animation length manually by modifying the global :py:class:`~ovito.anim.AnimationSettings` object directly. ")
 
 		// The following methods are required for the DataCollection.attributes property.
 		.def_property_readonly("attribute_names", [](FileSource& obj) -> QStringList {

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,8 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleDisplay.h>
-#include <plugins/particles/objects/BondsDisplay.h>
+#include <plugins/particles/objects/ParticlesVis.h>
+#include <plugins/particles/objects/BondsVis.h>
 #include <plugins/particles/objects/BondProperty.h>
 #include <core/dataset/DataSet.h>
 #include "ParticleInputHelper.h"
@@ -77,14 +77,13 @@ std::vector<Color> ParticleInputHelper::inputParticleColors(TimePoint time, Time
 {
 	std::vector<Color> colors(inputParticleCount());
 
-	// Obtain the particle display object.
-	ParticleProperty* positionProperty = inputStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
-	if(positionProperty) {
-		for(DisplayObject* displayObj : positionProperty->displayObjects()) {
-			if(ParticleDisplay* particleDisplay = dynamic_object_cast<ParticleDisplay>(displayObj)) {
+	// Obtain the particle vis element.
+	if(ParticleProperty* positionProperty = inputStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty)) {
+		for(DataVis* vis : positionProperty->visElements()) {
+			if(ParticlesVis* particleVis = dynamic_object_cast<ParticlesVis>(vis)) {
 
-				// Query particle colors from display object.
-				particleDisplay->particleColors(colors,
+				// Query particle colors from vis element.
+				particleVis->particleColors(colors,
 						inputStandardProperty<ParticleProperty>(ParticleProperty::ColorProperty),
 						inputStandardProperty<ParticleProperty>(ParticleProperty::TypeProperty));
 
@@ -102,29 +101,28 @@ std::vector<Color> ParticleInputHelper::inputParticleColors(TimePoint time, Time
 ******************************************************************************/
 std::vector<Color> ParticleInputHelper::inputBondColors(TimePoint time, TimeInterval& validityInterval)
 {
-	// Obtain the bond display object.
-	BondProperty* topologyProperty = inputStandardProperty<BondProperty>(BondProperty::TopologyProperty);
-	if(topologyProperty) {
-		for(DisplayObject* displayObj : topologyProperty->displayObjects()) {
-			if(BondsDisplay* bondsDisplay = dynamic_object_cast<BondsDisplay>(displayObj)) {
+	// Obtain the bond vis element.
+	if(BondProperty* topologyProperty = inputStandardProperty<BondProperty>(BondProperty::TopologyProperty)) {
+		for(DataVis* vis : topologyProperty->visElements()) {
+			if(BondsVis* bondsVis = dynamic_object_cast<BondsVis>(vis)) {
 
-				// Additionally, look up the particle display object.
-				ParticleDisplay* particleDisplay = nullptr;
+				// Additionally, look up the particle vis element.
+				ParticlesVis* particleVis = nullptr;
 				if(ParticleProperty* positionProperty = inputStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty)) {
-					for(DisplayObject* displayObj : positionProperty->displayObjects()) {
-						particleDisplay = dynamic_object_cast<ParticleDisplay>(displayObj);
-						if(particleDisplay) break;
+					for(DataVis* vis2 : positionProperty->visElements()) {
+						if((particleVis = dynamic_object_cast<ParticlesVis>(vis2)))
+							break;
 					}
 				}
 
-				// Query half-bond colors from display object.
-				std::vector<Color> halfBondColors = bondsDisplay->halfBondColors(
+				// Query half-bond colors from vis element.
+				std::vector<Color> halfBondColors = bondsVis->halfBondColors(
 						inputParticleCount(), 
 						inputStandardProperty<BondProperty>(BondProperty::TopologyProperty),
 						inputStandardProperty<BondProperty>(BondProperty::ColorProperty),
 						inputStandardProperty<BondProperty>(BondProperty::TypeProperty),
 						inputStandardProperty<BondProperty>(BondProperty::SelectionProperty),
-						particleDisplay, 
+						particleVis, 
 						inputStandardProperty<ParticleProperty>(ParticleProperty::ColorProperty),
 						inputStandardProperty<ParticleProperty>(ParticleProperty::TypeProperty));
 				OVITO_ASSERT(inputBondCount() * 2 == halfBondColors.size());
@@ -151,14 +149,13 @@ std::vector<FloatType> ParticleInputHelper::inputParticleRadii(TimePoint time, T
 {
 	std::vector<FloatType> radii(inputParticleCount());
 
-	// Obtain the particle display object.
-	ParticleProperty* positionProperty = inputStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
-	if(positionProperty) {
-		for(DisplayObject* displayObj : positionProperty->displayObjects()) {
-			if(ParticleDisplay* particleDisplay = dynamic_object_cast<ParticleDisplay>(displayObj)) {
+	// Obtain the particle vis element.
+	if(ParticleProperty* positionProperty = inputStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty)) {
+		for(DataVis* vis : positionProperty->visElements()) {
+			if(ParticlesVis* particleVis = dynamic_object_cast<ParticlesVis>(vis)) {
 
-				// Query particle radii from display object.
-				particleDisplay->particleRadii(radii,
+				// Query particle radii from vis element.
+				particleVis->particleRadii(radii,
 						inputStandardProperty<ParticleProperty>(ParticleProperty::RadiusProperty),
 						inputStandardProperty<ParticleProperty>(ParticleProperty::TypeProperty));
 
@@ -174,4 +171,3 @@ std::vector<FloatType> ParticleInputHelper::inputParticleRadii(TimePoint time, T
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-

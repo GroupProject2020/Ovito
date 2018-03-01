@@ -50,7 +50,7 @@ public:
 	virtual PipelineFlowState evaluatePreliminary() { return {}; }
 
 	/// \brief Returns a list of object nodes that have this object in their pipeline.
-	QSet<ObjectNode*> dependentNodes() const;
+	QSet<PipelineSceneNode*> dependentNodes() const;
 
 	/// \brief Sets the current status of the pipeline object.
 	void setStatus(const PipelineStatus& status);

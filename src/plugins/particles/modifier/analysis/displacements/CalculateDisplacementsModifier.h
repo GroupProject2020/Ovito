@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/VectorDisplay.h>
+#include <plugins/particles/objects/VectorVis.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/particles/modifier/analysis/ReferenceConfigurationModifier.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
@@ -109,8 +109,8 @@ private:
 		std::shared_ptr<DisplacementResults> _results;
 	};
 
-	/// The vector display object for rendering the displacement vectors.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(VectorDisplay, vectorDisplay, setVectorDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
+	/// The visualization element for rendering the displacement vectors.
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(VectorVis, vectorVis, setVectorVis, PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
 };
 
 OVITO_END_INLINE_NAMESPACE

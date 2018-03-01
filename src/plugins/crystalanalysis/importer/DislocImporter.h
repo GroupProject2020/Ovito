@@ -71,8 +71,8 @@ public:
 
 protected:
 
-	/// This method is called when the scene node for the FileSource is created.
-	virtual void prepareSceneNode(ObjectNode* node, FileSource* importObj) override;
+	/// This method is called when the pipeline node for the FileSource is created.
+	virtual void setupPipeline(PipelineSceneNode* pipeline, FileSource* importObj) override;
 
 	/// The format-specific data holder.
 	class DislocFrameData : public ParticleFrameData

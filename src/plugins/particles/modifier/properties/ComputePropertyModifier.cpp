@@ -48,7 +48,7 @@ SET_PROPERTY_FIELD_LABEL(ComputePropertyModifier, cutoff, "Cutoff radius");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ComputePropertyModifier, cutoff, WorldParameterUnit, 0);
 
 IMPLEMENT_OVITO_CLASS(ComputePropertyModifierApplication);
-DEFINE_REFERENCE_FIELD(ComputePropertyModifierApplication, cachedDisplayObjects);
+DEFINE_REFERENCE_FIELD(ComputePropertyModifierApplication, cachedVisElements);
 
 /******************************************************************************
 * Constructs a new instance of this class.
@@ -407,18 +407,18 @@ PipelineFlowState ComputePropertyModifier::PropertyComputeResults::apply(TimePoi
 
 	ComputePropertyModifierApplication* myModApp = dynamic_object_cast<ComputePropertyModifierApplication>(modApp);
 	if(myModApp) {
-		// Replace display objects of output property with cached ones and cache any new display objects.
+		// Replace vis elements of output property with cached ones and cache any new vis elements.
 		// This is required to avoid losing the output property's display settings
 		// each time the modifier is re-evaluated or when serializing the modifier.
-		QVector<DisplayObject*> currentDisplayObjs = outputPropertyObj->displayObjects();
-		// Replace with cached display objects if they are of the same class type.
-		for(int i = 0; i < currentDisplayObjs.size() && i < myModApp->cachedDisplayObjects().size(); i++) {
-			if(currentDisplayObjs[i]->getOOClass() == myModApp->cachedDisplayObjects()[i]->getOOClass()) {
-				currentDisplayObjs[i] = myModApp->cachedDisplayObjects()[i];
+		QVector<DataVis*> currentVisElements = outputPropertyObj->visElements();
+		// Replace with cached vis elements if they are of the same class type.
+		for(int i = 0; i < currentVisElements.size() && i < myModApp->cachedVisElements().size(); i++) {
+			if(currentVisElements[i]->getOOClass() == myModApp->cachedVisElements()[i]->getOOClass()) {
+				currentVisElements[i] = myModApp->cachedVisElements()[i];
 			}
 		}
-		outputPropertyObj->setDisplayObjects(currentDisplayObjs);
-		myModApp->setCachedDisplayObjects(currentDisplayObjs);
+		outputPropertyObj->setVisElements(currentVisElements);
+		myModApp->setCachedVisElements(std::move(currentVisElements));
 	}
 
 	return output;

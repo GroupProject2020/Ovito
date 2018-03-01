@@ -10,7 +10,7 @@ Writing new modifiers
 
 OVITO provides a collection of built-in data manipulation and analysis modifiers, which can be found in the :py:mod:`ovito.modifiers` module.
 These modifier types are all implemented in C++, and the Python interface allows you to instantiate them, 
-insert them into the modification pipeline of an :py:class:`~ovito.ObjectNode`, and configure their parameters.
+insert them into the modification pipeline of an :py:class:`~ovito.PipelineSceneNode`, and configure their parameters.
 However, sometimes the capabilities provided by these built-in modifiers are not sufficent and you may want to
 write your own, completely new type of modifier that can participate in the data pipeline system of OVITO.
 The following sections describe how this is done.
@@ -37,7 +37,7 @@ OVITO's graphical user interface or programmatically from Python:
      for future use within the graphical program.
      
   2. Via the scripting interface, a custom modifier is inserted into the data pipeline
-     of an :py:class:`~ovito.ObjectNode` by creating an instance of the :py:class:`~ovito.modifiers.PythonScriptModifier`
+     of an :py:class:`~ovito.PipelineSceneNode` by creating an instance of the :py:class:`~ovito.modifiers.PythonScriptModifier`
      class as follows::
      
         from ovito.modifiers import PythonScriptModifier
@@ -62,7 +62,7 @@ is evaluated. The function receives the data produced by the upstream part of th
 loaded by a :py:class:`~ovito.io.FileSource` and further processed by other modifiers that 
 precede the custom modifier in the pipeline). Our Python modifier function then has the possibility to modify or extend
 the data as needed. After the user-defined Python function has done its work and returns, the output flows further down the pipeline, and, eventually, 
-the final results are stored in the :py:attr:`~ovito.ObjectNode.output` cache of the :py:class:`~ovito.ObjectNode` and are rendered in the viewports.
+the final results are stored in the :py:attr:`~ovito.PipelineSceneNode.output` cache of the :py:class:`~ovito.PipelineSceneNode` and are rendered in the viewports.
 
 It is important to note that the user-defined modifier function is subject to certain restrictions. Since it is repeatedly called by the pipeline system
 in a callback fashion, it may only manipulate the simulation data that flows through the pipeline and which it receives as an input. It should not manipulate the 
@@ -256,7 +256,7 @@ All parameter changes made by the user will get lost as soon as the modification
 create the :py:class:`~ovito.vis.BondsVis` just once outside the modifier function and then attach it to the :py:class:`~ovito.data.Bonds`
 object created by the modifier function::
 
-   bonds_display = BondsDisplay(color=(1,0,0), use_particle_colors=False, width=0.4)
+   bonds_display = BondsVis(color=(1,0,0), use_particle_colors=False, width=0.4)
    
    def modify(frame, input, output):   
        bonds = ovito.data.Bonds(display = bonds_display)

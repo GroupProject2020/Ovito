@@ -30,35 +30,35 @@
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
 IMPLEMENT_OVITO_CLASS(CalculateDisplacementsModifier);
-DEFINE_REFERENCE_FIELD(CalculateDisplacementsModifier, vectorDisplay);
-SET_PROPERTY_FIELD_LABEL(CalculateDisplacementsModifier, vectorDisplay, "Vector display");
+DEFINE_REFERENCE_FIELD(CalculateDisplacementsModifier, vectorVis);
+SET_PROPERTY_FIELD_LABEL(CalculateDisplacementsModifier, vectorVis, "Vector vis");
 
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
 CalculateDisplacementsModifier::CalculateDisplacementsModifier(DataSet* dataset) : ReferenceConfigurationModifier(dataset)
 {
-	// Create display object for vectors.
-	setVectorDisplay(new VectorDisplay(dataset));
-	vectorDisplay()->setObjectTitle(tr("Displacements"));
+	// Create vis element for vectors.
+	setVectorVis(new VectorVis(dataset));
+	vectorVis()->setObjectTitle(tr("Displacements"));
 
 	// Don't show vectors by default, because too many vectors can make the
 	// program freeze. User has to enable the display manually.
-	vectorDisplay()->setEnabled(false);
+	vectorVis()->setEnabled(false);
 
 	// Configure vector display such that arrows point from the reference particle positions
 	// to the current particle positions.
-	vectorDisplay()->setReverseArrowDirection(false);
-	vectorDisplay()->setArrowPosition(VectorDisplay::Head);
+	vectorVis()->setReverseArrowDirection(false);
+	vectorVis()->setArrowPosition(VectorVis::Head);
 }
 
-/*********************************************sourceFrameToAnimationTime*********************************
+/******************************************************************************
 * Handles reference events sent by reference targets of this object.
 ******************************************************************************/
 bool CalculateDisplacementsModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	// Do not propagate messages sent by the attached display object.
-	if(source == vectorDisplay())
+	// Do not propagate messages sent by the attached vis element.
+	if(source == vectorVis())
 		return false;
 
 	return ReferenceConfigurationModifier::referenceEvent(source, event);
@@ -167,7 +167,7 @@ PipelineFlowState CalculateDisplacementsModifier::DisplacementResults::apply(Tim
 	ParticleOutputHelper poh(modApp->dataset(), output);
 	if(displacements()->size() != poh.outputParticleCount())
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
-	poh.outputProperty<ParticleProperty>(displacements())->setDisplayObject(modifier->vectorDisplay());
+	poh.outputProperty<ParticleProperty>(displacements())->setVisElement(modifier->vectorVis());
 	poh.outputProperty<ParticleProperty>(displacementMagnitudes());
 	
 	return output;

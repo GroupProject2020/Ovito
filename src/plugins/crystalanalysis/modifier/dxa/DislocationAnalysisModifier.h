@@ -23,11 +23,11 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/crystalanalysis/objects/dislocations/DislocationDisplay.h>
+#include <plugins/crystalanalysis/objects/dislocations/DislocationVis.h>
 #include <plugins/crystalanalysis/modifier/dxa/StructureAnalysis.h>
 #include <plugins/particles/modifier/analysis/StructureIdentificationModifier.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
-#include <plugins/mesh/surface/SurfaceMeshDisplay.h>
+#include <plugins/mesh/surface/SurfaceMeshVis.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
@@ -78,14 +78,14 @@ private:
 	/// The catalog of structure patterns.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(PatternCatalog, patternCatalog, setPatternCatalog, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);
 
-	/// The display object for rendering the defect mesh.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SurfaceMeshDisplay, defectMeshDisplay, setDefectMeshDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);
+	/// The visualization element for rendering the defect mesh.
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SurfaceMeshVis, defectMeshVis, setDefectMeshVis, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);
 
-	/// The display object for rendering the interface mesh.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SurfaceMeshDisplay, interfaceMeshDisplay, setInterfaceMeshDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);
+	/// The visualization element for rendering the interface mesh.
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SurfaceMeshVis, interfaceMeshVis, setInterfaceMeshVis, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);
 
-	/// The display object for rendering the dislocations.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(DislocationDisplay, dislocationDisplay, setDislocationDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);
+	/// The visualization element for rendering the dislocations.
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(DislocationVis, dislocationVis, setDislocationVis, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);
 
 	/// The number of iterations of the mesh smoothing algorithm.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, defectMeshSmoothingLevel, setDefectMeshSmoothingLevel);
@@ -142,5 +142,3 @@ private:
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-
-

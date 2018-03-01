@@ -47,8 +47,8 @@ public:
 		Frame() = default;
 
 		/// Initialization constructor.
-		Frame(const QUrl& url, qint64 offset = 0, int linenum = 1, const QDateTime& modTime = QDateTime(), const QString& name = QString())	:
-			sourceFile(url), byteOffset(offset), lineNumber(linenum), lastModificationTime(modTime), label(name) {}
+		Frame(QUrl url, qint64 offset = 0, int linenum = 1, const QDateTime& modTime = QDateTime(), const QString& name = QString())	:
+			sourceFile(std::move(url)), byteOffset(offset), lineNumber(linenum), lastModificationTime(modTime), label(name) {}
 
 		/// The source file that contains the data of the animation frame.
 		QUrl sourceFile;
@@ -156,7 +156,7 @@ public:
 	protected:
 
 		/// Scans the given file for source frames.
-		virtual void discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<FileSourceImporter::Frame>& frames);
+		virtual void discoverFramesInFile(QFile& file, const QUrl& sourceUrl, QVector<Frame>& frames);
 
 	private:
 
@@ -182,7 +182,7 @@ public:
 	virtual bool isReplaceExistingPossible(const QUrl& sourceUrl) override;
 
 	/// \brief Imports the given file into the scene.
-	virtual bool importFile(const QUrl& sourceUrl, ImportMode importMode, bool autodetectFileSequences) override;
+	virtual bool importFile(std::vector<QUrl> sourceUrls, ImportMode importMode, bool autodetectFileSequences) override;
 
 	//////////////////////////// Specific methods ////////////////////////////////
 
@@ -191,18 +191,28 @@ public:
 	/// Subclasses can override this method to disable generation of wildcard patterns.
 	virtual bool autoGenerateWildcardPattern() { return true; }
 
+	/// Scans the given external path(s) (which may be a directory and a wild-card pattern,
+	/// or a single file containing multiple frames) to find all available animation frames.
+	///
+	/// \param sourceUrls The list of source files or wild-card patterns to scan for animation frames.
+	/// \return A Future that will yield the list of discovered animation frames.
+	///
+	/// The default implementation of this method checks if the given URLs contain a wild-card pattern.
+	/// If yes, it scans the directory to find all matching files.
+	virtual Future<QVector<Frame>> discoverFrames(const std::vector<QUrl>& sourceUrls);
+
 	/// Scans the given external path (which may be a directory and a wild-card pattern,
 	/// or a single file containing multiple frames) to find all available animation frames.
 	///
-	/// \param sourceUrl The source file or wild-card pattern to scan for animation frames.
+	/// \param sourceUrl The source file or wild-card patterns to scan for animation frames.
 	/// \return A Future that will yield the list of discovered animation frames.
 	///
-	/// The default implementation of this method checks if the given URL contains a wild-card pattern.
+	/// The default implementation of this method checks if the given URLs contain a wild-card pattern.
 	/// If yes, it scans the directory to find all matching files.
 	virtual Future<QVector<Frame>> discoverFrames(const QUrl& sourceUrl);
 
 	/// \brief Returns the list of files that match the given wildcard pattern.
-	static Future<QVector<Frame>> findWildcardMatches(const QUrl& sourceUrl, TaskManager& taskManager);
+	static Future<std::vector<QUrl>> findWildcardMatches(const QUrl& sourceUrl, TaskManager& taskManager);
 
 	/// \brief Sends a request to the FileSource owning this importer to reload the input file.
 	void requestReload(int frame = -1);
@@ -218,10 +228,10 @@ public:
 
 protected:
 
-	/// This method is called when the scene node for the FileSource is created.
-	/// It can be overwritten by importer subclasses to customize the node, add modifiers, etc.
+	/// This method is called when the pipeline scene node for the FileSource is created.
+	/// It can be overwritten by importer subclasses to customize the initial pipeline, add modifiers, etc.
 	/// The default implementation does nothing.
-	virtual void prepareSceneNode(ObjectNode* node, FileSource* importObj) {}
+	virtual void setupPipeline(PipelineSceneNode* node, FileSource* importObj) {}
 
 	/// Checks if a filename matches to the given wildcard pattern.
 	static bool matchesWildcardPattern(const QString& pattern, const QString& filename);
@@ -229,6 +239,9 @@ protected:
 	/// Determines whether the input file should be scanned to discover all contained frames.
 	/// The default implementation returns false.
 	virtual bool shouldScanFileForFrames(const QUrl& sourceUrl) { return false; }
+
+	/// Determines whether the URL contains a wildcard pattern.
+	static bool isWildcardPattern(const QUrl& sourceUrl);
 };
 
 /// \brief Writes an animation frame information record to a binary output stream.

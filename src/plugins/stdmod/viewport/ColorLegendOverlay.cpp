@@ -24,8 +24,8 @@
 #include <core/rendering/RenderSettings.h>
 #include <core/app/Application.h>
 #include <core/dataset/DataSet.h>
-#include <core/dataset/scene/SceneRoot.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/RootSceneNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include "ColorLegendOverlay.h"
 
@@ -86,7 +86,7 @@ ColorLegendOverlay::ColorLegendOverlay(DataSet* dataset) : ViewportOverlay(datas
 {
 	if(Application::instance()->guiMode()) {
 		// Find a ColorCodingModifiers in the scene that we can connect to.
-		dataset->sceneRoot()->visitObjectNodes([this](ObjectNode* node) {
+		dataset->sceneRoot()->visitObjectNodes([this](PipelineSceneNode* node) {
 			PipelineObject* obj = node->dataProvider();
 			while(obj) {
 				if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(obj)) {

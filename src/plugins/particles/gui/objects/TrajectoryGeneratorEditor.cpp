@@ -29,7 +29,7 @@
 #include <gui/properties/BooleanRadioButtonParameterUI.h>
 #include <gui/widgets/general/ElidedTextLabel.h>
 #include <gui/utilities/concurrent/ProgressDialog.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include "TrajectoryGeneratorEditor.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)

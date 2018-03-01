@@ -62,7 +62,7 @@ public:
  	/// \brief Selects the nodes from the scene to be exported by this exporter if no specific set of nodes was provided.
 	virtual void selectStandardOutputData() override; 	
 
-	/// \brief Evaluates the pipeline of an ObjectNode and returns the computed attributes.
+	/// \brief Evaluates the pipeline of an PipelineSceneNode and returns the computed attributes.
 	bool getAttributes(SceneNode* sceneNode, TimePoint time, QVariantMap& attributes, TaskManager& taskManager);
 
 protected:

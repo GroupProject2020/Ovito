@@ -5,7 +5,7 @@ pipeline = import_file('input/simulation.dump')
 
 # Retrieve the data for the first frame from the FileSource.
 data = pipeline.source.compute(0)
-print(data.particle_properties['Position'][...])
+print(data.particles['Position'][...])
 
-# Or access the data currently cached in the FileSource.
-print(pipeline.source.particle_properties['Position'][...])
+# Accessing data that is currently cached in the FileSource object itself:
+print(pipeline.source.particles['Position'][...])

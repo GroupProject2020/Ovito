@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleDisplay.h>
+#include <plugins/particles/objects/ParticlesVis.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
@@ -80,9 +80,9 @@ Future<AsynchronousModifier::ComputeEnginePtr> AmbientOcclusionModifier::createE
 
 	// Compute bounding box of input particles.
 	Box3 boundingBox;
-	for(DisplayObject* displayObj : posProperty->displayObjects()) {
-		if(ParticleDisplay* particleDisplay = dynamic_object_cast<ParticleDisplay>(displayObj)) {
-			boundingBox.addBox(particleDisplay->particleBoundingBox(posProperty, typeProperty, radiusProperty, shapeProperty));
+	for(DataVis* vis : posProperty->visElements()) {
+		if(ParticlesVis* particleVis = dynamic_object_cast<ParticlesVis>(vis)) {
+			boundingBox.addBox(particleVis->particleBoundingBox(posProperty, typeProperty, radiusProperty, shapeProperty));
 		}
 	}
 

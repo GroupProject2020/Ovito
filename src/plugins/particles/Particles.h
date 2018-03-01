@@ -77,9 +77,10 @@ namespace Ovito {
 		class ParticleType;
 		class BondProperty;
 		class BondType;
-		class ParticleDisplay;
-		class BondsDisplay;
-		class VectorDisplay;
+		class ParticlesVis;
+		class BondsVis;
+		class VectorVis;
+		class ParticleBondMap;
 
 		OVITO_BEGIN_INLINE_NAMESPACE(Import)
 			class ParticleFrameData;

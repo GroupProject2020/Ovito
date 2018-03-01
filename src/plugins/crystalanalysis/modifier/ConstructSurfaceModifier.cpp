@@ -34,11 +34,11 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 IMPLEMENT_OVITO_CLASS(ConstructSurfaceModifier);
 DEFINE_PROPERTY_FIELD(ConstructSurfaceModifier, smoothingLevel);
 DEFINE_PROPERTY_FIELD(ConstructSurfaceModifier, probeSphereRadius);
-DEFINE_REFERENCE_FIELD(ConstructSurfaceModifier, surfaceMeshDisplay);
+DEFINE_REFERENCE_FIELD(ConstructSurfaceModifier, surfaceMeshVis);
 DEFINE_PROPERTY_FIELD(ConstructSurfaceModifier, onlySelectedParticles);
 SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, smoothingLevel, "Smoothing level");
 SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, probeSphereRadius, "Probe sphere radius");
-SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, surfaceMeshDisplay, "Surface mesh display");
+SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, surfaceMeshVis, "Surface mesh vis");
 SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, onlySelectedParticles, "Use only selected particles");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ConstructSurfaceModifier, probeSphereRadius, WorldParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ConstructSurfaceModifier, smoothingLevel, IntegerParameterUnit, 0);
@@ -51,8 +51,8 @@ ConstructSurfaceModifier::ConstructSurfaceModifier(DataSet* dataset) : Asynchron
 	_probeSphereRadius(4), 
 	_onlySelectedParticles(false)
 {
-	// Create the display object.
-	setSurfaceMeshDisplay(new SurfaceMeshDisplay(dataset));
+	// Create the vis element.
+	setSurfaceMeshVis(new SurfaceMeshVis(dataset));
 }
 
 /******************************************************************************
@@ -68,8 +68,8 @@ bool ConstructSurfaceModifier::OOMetaClass::isApplicableTo(const PipelineFlowSta
 ******************************************************************************/
 bool ConstructSurfaceModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	// Do not propagate messages from the attached display object.
-	if(source == surfaceMeshDisplay())
+	// Do not propagate messages from the attached vis element.
+	if(source == surfaceMeshVis())
 		return false;
 
 	return AsynchronousModifier::referenceEvent(source, event);
@@ -195,7 +195,7 @@ PipelineFlowState ConstructSurfaceModifier::ConstructSurfaceResults::apply(TimeP
 	meshObj->setStorage(mesh());
 	meshObj->setIsCompletelySolid(isCompletelySolid());
 	meshObj->setDomain(input.findObject<SimulationCellObject>());
-	meshObj->addDisplayObject(modifier->surfaceMeshDisplay());
+	meshObj->addVisElement(modifier->surfaceMeshVis());
 
 	// Insert output object into the pipeline.
 	PipelineFlowState output = input;

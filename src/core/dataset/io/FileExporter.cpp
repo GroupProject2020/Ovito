@@ -25,7 +25,7 @@
 #include <core/utilities/concurrent/Promise.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/DataSetContainer.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include "FileExporter.h"
 

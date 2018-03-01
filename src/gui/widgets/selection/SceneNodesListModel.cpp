@@ -21,7 +21,7 @@
 
 #include <gui/GUI.h>
 #include <core/dataset/scene/SceneNode.h>
-#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/scene/RootSceneNode.h>
 #include <core/dataset/DataSetContainer.h>
 #include <core/dataset/DataSet.h>
 #include "SceneNodesListModel.h"
@@ -38,7 +38,7 @@ SceneNodesListModel::SceneNodesListModel(DataSetContainer& datasetContainer, QWi
 	connect(&datasetContainer, &DataSetContainer::dataSetChanged, this, &SceneNodesListModel::onDataSetChanged);
 
 	// Listen for events of the root node.
-	connect(&_rootNodeListener, &RefTargetListener<SceneRoot>::notificationEvent, this, &SceneNodesListModel::onRootNodeNotificationEvent);
+	connect(&_rootNodeListener, &RefTargetListener<RootSceneNode>::notificationEvent, this, &SceneNodesListModel::onRootNodeNotificationEvent);
 
 	// Listen for events of the other scene nodes.
 	connect(&_nodeListener, &VectorRefTargetListener<SceneNode>::notificationEvent, this, &SceneNodesListModel::onNodeNotificationEvent);

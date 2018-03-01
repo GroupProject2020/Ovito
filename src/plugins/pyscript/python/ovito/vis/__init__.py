@@ -18,10 +18,10 @@ This module contains classes related to :ref:`data visualization and image rende
   * :py:class:`DataVis` (base class for all visual elements)
   * :py:class:`BondsVis`
   * :py:class:`DislocationVis`
-  * :py:class:`ParticleVis`
+  * :py:class:`ParticlesVis`
   * :py:class:`SimulationCellVis`
   * :py:class:`SurfaceMeshVis`
-  * :py:class:`TrajectoryLineVis`
+  * :py:class:`TrajectoryVis`
   * :py:class:`VectorVis`
 
 **Viewport overlays:**
@@ -113,7 +113,7 @@ def _Viewport_render(self, settings = None):
     elif isinstance(settings, dict):
         settings = RenderSettings(settings)
     if len(self.dataset.scene_nodes) == 0:
-        print("Warning: The scene to be rendered is empty. Did you forget to add a node to the scene by calling ObjectNode.add_to_scene()?")
+        print("Warning: The scene to be rendered is empty. Did you forget to add a node to the scene by calling PipelineSceneNode.add_to_scene()?")
     if ovito.gui_mode:
         # Use the frame buffer of the GUI window for rendering.
         fb_window = self.dataset.container.window.frame_buffer_window

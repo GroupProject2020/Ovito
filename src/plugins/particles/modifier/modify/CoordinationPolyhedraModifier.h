@@ -25,7 +25,7 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/BondProperty.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
-#include <plugins/mesh/surface/SurfaceMeshDisplay.h>
+#include <plugins/mesh/surface/SurfaceMeshVis.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 
@@ -129,8 +129,8 @@ private:
 
 private:
 
-	/// The display object for rendering the computed mesh.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SurfaceMeshDisplay, surfaceMeshDisplay, setSurfaceMeshDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);
+	/// The visualization element for rendering the computed mesh.
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SurfaceMeshVis, surfaceMeshVis, setSurfaceMeshVis, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);
 };
 
 OVITO_END_INLINE_NAMESPACE

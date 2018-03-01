@@ -78,7 +78,7 @@ public:
 	///
 	/// The viewport transformation is already set up when this method is called
 	/// The default implementation does nothing.
-	virtual void renderModifierVisual(TimePoint time, ObjectNode* contextNode, ModifierApplication* modApp, SceneRenderer* renderer, bool renderOverlay) {}
+	virtual void renderModifierVisual(TimePoint time, PipelineSceneNode* contextNode, ModifierApplication* modApp, SceneRenderer* renderer, bool renderOverlay) {}
 
 	/// \brief Returns the list of applications of this modifier in pipelines.
 	/// \return The list of ModifierApplication objects that describe the particular applications of this Modifier.

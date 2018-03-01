@@ -21,16 +21,16 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/BondProperty.h>
-#include <plugins/particles/objects/BondsDisplay.h>
+#include <plugins/particles/objects/BondsVis.h>
 #include <plugins/particles/objects/ParticleProperty.h>
-#include <plugins/particles/objects/ParticleDisplay.h>
+#include <plugins/particles/objects/ParticlesVis.h>
 #include <plugins/particles/objects/ParticleType.h>
 #include <plugins/particles/objects/BondProperty.h>
 #include <plugins/particles/objects/BondType.h>
 #include <plugins/grid/objects/VoxelProperty.h>
 #include <plugins/grid/objects/VoxelGrid.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
-#include <plugins/stdobj/simcell/SimulationCellDisplay.h>
+#include <plugins/stdobj/simcell/SimulationCellVis.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
 #include <core/dataset/io/FileSource.h>
 #include "ParticleFrameData.h"
@@ -129,16 +129,16 @@ PipelineFlowState ParticleFrameData::handOver(DataSet* dataset, const PipelineFl
 	if(!cell) {
 		cell = new SimulationCellObject(dataset, simulationCell());
 
-		// Create the display object for the simulation cell.
-		if(SimulationCellDisplay* cellDisplay = dynamic_object_cast<SimulationCellDisplay>(cell->displayObject())) {
-			cellDisplay->loadUserDefaults();
+		// Create the vis element for the simulation cell.
+		if(SimulationCellVis* cellVis = dynamic_object_cast<SimulationCellVis>(cell->visElement())) {
+			cellVis->loadUserDefaults();
 
 			// Choose an appropriate line width depending on the cell's size.
 			FloatType cellDiameter = (
 					simulationCell().matrix().column(0) +
 					simulationCell().matrix().column(1) +
 					simulationCell().matrix().column(2)).length();
-			cellDisplay->setCellLineWidth(cellDiameter * FloatType(1.4e-3));
+			cellVis->setCellLineWidth(cellDiameter * FloatType(1.4e-3));
 		}
 	}
 	else {
@@ -171,7 +171,7 @@ PipelineFlowState ParticleFrameData::handOver(DataSet* dataset, const PipelineFl
 
 		// Auto-adjust particle display radius.
 		if(isNewFile && propertyObj->type() == ParticleProperty::PositionProperty) {
-			if(ParticleDisplay* particleDisplay = dynamic_object_cast<ParticleDisplay>(propertyObj->displayObject())) {
+			if(ParticlesVis* particleVis = dynamic_object_cast<ParticlesVis>(propertyObj->visElement())) {
 				FloatType cellDiameter = (
 						simulationCell().matrix().column(0) +
 						simulationCell().matrix().column(1) +
@@ -179,8 +179,8 @@ PipelineFlowState ParticleFrameData::handOver(DataSet* dataset, const PipelineFl
 				// Limit particle radius to a fraction of the cell diameter. 
 				// This is to avoid extremely large particles when the length scale of the simulation is <<1.
 				cellDiameter /= 2;
-				if(particleDisplay->defaultParticleRadius() > cellDiameter)
-					particleDisplay->setDefaultParticleRadius(cellDiameter);
+				if(particleVis->defaultParticleRadius() > cellDiameter)
+					particleVis->setDefaultParticleRadius(cellDiameter);
 			}
 		}
 

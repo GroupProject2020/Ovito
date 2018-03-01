@@ -24,7 +24,7 @@
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/viewport/Viewport.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include "ExpressionSelectionModifier.h"
 

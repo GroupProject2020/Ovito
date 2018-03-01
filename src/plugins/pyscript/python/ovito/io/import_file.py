@@ -3,16 +3,23 @@ from ..plugins.PyScript import FileImporter, FileSource, ImportMode, PipelineSta
 from ..data import DataCollection
 from ..pipeline import Pipeline
 import ovito
+import sys
+try:
+    # Python 3.x
+    import collections.abc as collections
+except ImportError:
+    # Python 2.x
+    import collections
 
 def import_file(location, **params):
     """ Imports data from an external file. 
     
-        This Python function corresponds to the *Load File* command in OVITO's
+        This Python function corresponds to the *Load File* menu command in OVITO's
         user interface. The format of the imported file is automatically detected (see `list of supported formats <../../usage.import.html#usage.import.formats>`_).
-        However, depending on the file's format, additional keyword parameters may need to be supplied 
+        But depending on the file's format, additional keyword parameters may need to be supplied 
         to specify how the data should be interpreted. These keyword parameters are documented below.
         
-        :param str location: The data file to import. This can be a local file path or a remote *sftp://* URL.
+        :param location: The path to import. This can be a local file or a remote *sftp://* URL, see below.
         :returns: The :py:class:`~ovito.pipeline.Pipeline` that has been created for the imported data.
 
         The function creates and returns a new :py:class:`~ovito.pipeline.Pipeline` wired to a
@@ -20,12 +27,12 @@ def import_file(location, **params):
         function requests a first evaluation of the new pipeline in order to fill the pipeline's input cache
         with data from the file.
         
-        Note that the newly created :py:class:`~ovito.pipeline.Pipeline` is not automatically inserted into the three-dimensional scene. 
-        That means it won't appear in rendered images nor the interactive viewports of the graphical OVITO program.
-        You need to explicitly insert the pipeline into the scene by calling :py:meth:`~ovito.pipeline.Pipeline.add_to_scene` if desired.
+        Note that the newly created :py:class:`~ovito.pipeline.Pipeline` is not inserted into the three-dimensional scene. 
+        That means the loaded dataset won't automatically appear in rendered images nor the interactive viewports of the graphical OVITO program.
+        For that, you need to explicitly insert the pipeline into the scene by calling :py:meth:`~ovito.pipeline.Pipeline.add_to_scene` if desired.
         
         Furthermore, note that the returned :py:class:`~ovito.pipeline.Pipeline` may be re-used to load a different 
-        input file later on. Instead of calling :py:func:`!import_file` again to load the next file,
+        input file later on. Instead of calling :py:func:`!import_file` again to load another file,
         you can use the :py:meth:`pipeline.source.load(...) <ovito.pipeline.FileSource.load>` method to replace the input file 
         of the already existing pipeline.
         
@@ -47,16 +54,24 @@ def import_file(location, **params):
         ``columns`` keyword. This can make sense, for example, if the file columns containing the particle coordinates
         do not follow the standard name scheme ``x``, ``y``, and ``z`` (e.g. when reading time-averaged atomic positions computed by LAMMPS). 
         
-        **Animation sequences**
+        **Frame sequences**
         
-        OVITO automatically detects when a file contains multiple frames (timesteps). It will only load the data of the first frame into memory
-        and maintain a table of contents for fast access to subsequent frames on demand.
-        Furthermore, it is possible to import a sequence of separate files by passing a filename containing a ``*`` wildcard character to :py:func:`!import_file`. 
-        There may be only one ``*`` in the filename (and not in a directory name). The wildcard matches only numbers in a filename, not other characters.
+        OVITO automatically detects if the imported file contains multiple data frames (timesteps). 
+        Alternatively (and additionally), it is possible to load a sequence of files in the same directory by using the ``*`` wildcard character 
+        in the filename. Note that ``*`` may appear only once, only in the filename component of the path, and only in place of numeric digits. 
+        Finally, it is possible to pass an explicit list of file paths to the :py:func:`!import_file` function, which will be loaded
+        as an animatable sequence. All modes can be combined, for example to load two file sets from different directories as one
+        consecutive sequence::
+
+           import_file('sim.xyz')     # Loads all frames from the given file 
+           import_file('sim.*.xyz')   # Loads 'sim.0.xyz', 'sim.100.xyz', 'sim.200.xyz', etc.
+           import_file(['sim_a.xyz', 'sim_b.xyz'])  # Loads an explicit list of files
+           import_file([
+                'dir_a/sim.*.xyz', 
+                'dir_b/sim.*.xyz']) # Loads several file sequences from different directories
         
-        The length of the imported frame sequence is reported by the :py:attr:`~ovito.pipeline.FileSource.num_frames` field of the pipeline's :py:class:`~ovito.pipeline.FileSource`
-        and is also reflected by the global :py:class:`~ovito.anim.AnimationSettings` object. You can step through the frames of the animation
-        sequence as follows:
+        The number of frames found in the input file(s) is reported by the :py:attr:`~ovito.pipeline.FileSource.num_frames` attribute of the pipeline's :py:class:`~ovito.pipeline.FileSource`
+        You can step through the frames with a ``for``-loop as follows:
         
         .. literalinclude:: ../example_snippets/import_access_animation_frames.py
          
@@ -76,9 +91,18 @@ def import_file(location, **params):
         the :py:func:`!import_file` function, then insert a :py:class:`~ovito.modifiers.LoadTrajectoryModifier` into the returned :py:class:`~ovito.pipeline.Pipeline`
         to also load the trajectory data.
     """
+
+    # Process input parameter
+    if isinstance(location, str if sys.version_info[0] >= 3 else basestring):
+        location_list = [location]
+    elif isinstance(location, collections.Sequence):
+        location_list = list(location)
+    else:
+        raise TypeError("Invalid input file location. Expected string or sequence of strings.")
+    first_location = location_list[0]
     
     # Determine the file's format.
-    importer = FileImporter.autodetect_format(ovito.dataset, location)
+    importer = FileImporter.autodetect_format(ovito.dataset, first_location)
     if not importer:
         raise RuntimeError("Could not detect the file format. The format might not be supported.")
     
@@ -89,31 +113,32 @@ def import_file(location, **params):
         importer.__setattr__(key, params[key])
 
     # Import data.
-    if not importer.import_file(location, ImportMode.AddToScene, False):
+    if not importer.import_file(location_list, ImportMode.AddToScene, False):
         raise RuntimeError("Operation has been canceled by the user.")
 
-    # Get the newly created ObjectNode.
-    node = ovito.dataset.selected_node
-    if not isinstance(node, Pipeline):
+    # Get the newly created pipeline.
+    pipeline = ovito.dataset.selected_pipeline
+    if not isinstance(pipeline, Pipeline):
         raise RuntimeError("File import failed. Nothing was imported.")
     
     try:
         # Block execution until file is loaded.
-        state = node.evaluate_pipeline(node.dataset.anim.time)
+        state = pipeline.evaluate_pipeline(pipeline.dataset.anim.time)
         
         # Raise exception if error occurs during loading.
         if state.status.type == PipelineStatus.Type.Error:
             raise RuntimeError(state.status.text)
 
-        # Block until list of animation frames has been loaded
-        if isinstance(node.source, FileSource) and not node.source.wait_for_frames_list():
+        # Block until full list of animation frames has been obtained.
+        if isinstance(pipeline.source, FileSource) and not pipeline.source.wait_for_frames_list():
             raise RuntimeError("Operation has been canceled by the user.")
     except:
-        # Delete newly created scene node when import failed.
-        node.delete()
+        # Delete newly created pipeline in case import fails.
+        pipeline.delete()
         raise
     
-    # Do not add node to scene by default.
-    node.remove_from_scene()
+    # The importer will insert the pipeline into the scene in the GUI by default.
+    # But in the scripting enviroment we immediately undo it.
+    pipeline.remove_from_scene()
     
-    return node    
+    return pipeline    

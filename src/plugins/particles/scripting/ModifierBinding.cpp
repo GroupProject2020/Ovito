@@ -574,7 +574,7 @@ void defineModifiersSubmodule(py::module m)
 				"If this option is set to true, the modifier will create bonds only between atoms that belong to the same molecule (i.e. which have the same molecule ID assigned to them)."
 				"\n\n"
 				":Default: ``False``\n")
-		.def_property_readonly("vis", &CreateBondsModifier::bondsDisplay,
+		.def_property("vis", &CreateBondsModifier::bondsVis, &CreateBondsModifier::setBondsVis,
 				"The :py:class:`~ovito.vis.BondsVis` object controlling the visual appearance of the bonds created by this modifier.")
 		.def_property("lower_cutoff", &CreateBondsModifier::minimumCutoff, &CreateBondsModifier::setMinimumCutoff,
 				"The minimum bond length. No bonds will be created between atoms whose distance is below this threshold."
@@ -850,7 +850,7 @@ void defineModifiersSubmodule(py::module m)
 			" * ``Displacement Magnitude`` (:py:class:`~ovito.data.ParticleProperty`):\n"
 			"   The length of the computed displacement vectors\n"
 			"\n")
-		.def_property_readonly("vis", &CalculateDisplacementsModifier::vectorDisplay,
+		.def_property("vis", &CalculateDisplacementsModifier::vectorVis, &CalculateDisplacementsModifier::setVectorVis,
 				"A :py:class:`~ovito.vis.VectorVis` instance controlling the visual representation of the computed "
 				"displacement vectors. "
 				"Note that the computed displacement vectors are not shown by default. You can enable "
@@ -1218,7 +1218,7 @@ void defineModifiersSubmodule(py::module m)
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"Constructs coordination polyhedra around currently selected particles. "
 			"A coordination polyhedron is the convex hull spanned by the bonded neighbors of a particle. ")
-		.def_property_readonly("vis", &CoordinationPolyhedraModifier::surfaceMeshDisplay,
+		.def_property("vis", &CoordinationPolyhedraModifier::surfaceMeshVis, &CoordinationPolyhedraModifier::setSurfaceMeshVis,
 				"A :py:class:`~ovito.vis.SurfaceMeshVis` instance controlling the visual representation of the generated polyhedra.\n")
 	;
 	

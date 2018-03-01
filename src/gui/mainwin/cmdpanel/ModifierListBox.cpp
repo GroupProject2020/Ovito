@@ -24,7 +24,7 @@
 #include <core/dataset/pipeline/Modifier.h>
 #include <core/dataset/pipeline/PipelineObject.h>
 #include <core/dataset/pipeline/ModifierTemplates.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/dataset/DataSetContainer.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include "ModifierListBox.h"
@@ -312,7 +312,7 @@ void ModifierListBox::updateAvailableModifiers()
 		inputState = pipelineObject->evaluatePreliminary();
 	}
 	else if(!_pipelineList->selectedNodes().empty()) {
-		ObjectNode* node = _pipelineList->selectedNodes().front();
+		PipelineSceneNode* node = _pipelineList->selectedNodes().front();
 		inputState = node->evaluatePipelinePreliminary(false);
 	}
 

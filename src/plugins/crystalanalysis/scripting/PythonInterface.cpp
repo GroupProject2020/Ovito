@@ -24,14 +24,14 @@
 #include <plugins/crystalanalysis/modifier/dxa/DislocationAnalysisModifier.h>
 #include <plugins/crystalanalysis/modifier/dxa/StructureAnalysis.h>
 #include <plugins/crystalanalysis/modifier/elasticstrain/ElasticStrainModifier.h>
-#include <plugins/crystalanalysis/objects/dislocations/DislocationDisplay.h>
+#include <plugins/crystalanalysis/objects/dislocations/DislocationVis.h>
 #include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
 #include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
 #include <plugins/crystalanalysis/objects/patterns/BurgersVectorFamily.h>
 #include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
 #include <plugins/crystalanalysis/objects/patterns/StructurePattern.h>
 #include <plugins/crystalanalysis/objects/partition_mesh/PartitionMesh.h>
-#include <plugins/crystalanalysis/objects/partition_mesh/PartitionMeshDisplay.h>
+#include <plugins/crystalanalysis/objects/partition_mesh/PartitionMeshVis.h>
 #include <plugins/crystalanalysis/importer/CAImporter.h>
 #include <plugins/crystalanalysis/exporter/CAExporter.h>
 #include <plugins/crystalanalysis/exporter/VTKDislocationsExporter.h>
@@ -98,7 +98,7 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 				"if ``False``, the modifier constructs the surface around all particles."
 				"\n\n"
 				":Default: ``False``\n")
-		.def_property_readonly("vis", &ConstructSurfaceModifier::surfaceMeshDisplay,
+		.def_property("vis", &ConstructSurfaceModifier::surfaceMeshVis, &ConstructSurfaceModifier::setSurfaceMeshVis,
 				"The :py:class:`~ovito.vis.SurfaceMeshVis` controlling the visual representation of the computed surface.\n")
 	;
 
@@ -309,44 +309,44 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 	ovito_class<VTKDislocationsExporter, FileExporter>{m}
 	;
 	
-	auto DislocationVis_py = ovito_class<DislocationDisplay, DisplayObject>(m,
+	auto DislocationVis_py = ovito_class<DislocationVis, DataVis>(m,
 			":Base class: :py:class:`ovito.vis.DataVis`\n\n"
 			"Controls the visual appearance of dislocation lines extracted by a :py:class:`~ovito.modifier.DislocationAnalysisModifier`. "
 			"An instance of this class is attached to every :py:class:`~ovito.data.DislocationNetwork` data object. ",
 			// Python class name:
 			"DislocationVis")
-		.def_property("shading", &DislocationDisplay::shadingMode, &DislocationDisplay::setShadingMode,
+		.def_property("shading", &DislocationVis::shadingMode, &DislocationVis::setShadingMode,
 				"The shading style used for the lines.\n"
 				"Possible values:"
 				"\n\n"
 				"   * ``DislocationVis.Shading.Normal`` (default) \n"
 				"   * ``DislocationVis.Shading.Flat``\n"
 				"\n")
-		.def_property("burgers_vector_width", &DislocationDisplay::burgersVectorWidth, &DislocationDisplay::setBurgersVectorWidth,
+		.def_property("burgers_vector_width", &DislocationVis::burgersVectorWidth, &DislocationVis::setBurgersVectorWidth,
 				"Specifies the width of Burgers vector arrows (in length units)."
 				"\n\n"
 				":Default: 0.6\n")
-		.def_property("burgers_vector_width", &DislocationDisplay::burgersVectorScaling, &DislocationDisplay::setBurgersVectorScaling,
+		.def_property("burgers_vector_width", &DislocationVis::burgersVectorScaling, &DislocationVis::setBurgersVectorScaling,
 				"The scaling factor applied to displayed Burgers vectors. This can be used to exaggerate the arrow size."
 				"\n\n"
 				":Default: 1.0\n")
-		.def_property("burgers_vector_color", &DislocationDisplay::burgersVectorColor, &DislocationDisplay::setBurgersVectorColor,
+		.def_property("burgers_vector_color", &DislocationVis::burgersVectorColor, &DislocationVis::setBurgersVectorColor,
 				"The color of Burgers vector arrows."
 				"\n\n"
 				":Default: ``(0.7, 0.7, 0.7)``\n")
-		.def_property("show_burgers_vectors", &DislocationDisplay::showBurgersVectors, &DislocationDisplay::setShowBurgersVectors,
+		.def_property("show_burgers_vectors", &DislocationVis::showBurgersVectors, &DislocationVis::setShowBurgersVectors,
 				"Boolean flag that enables the display of Burgers vector arrows."
 				"\n\n"
 				":Default: ``False``\n")
-		.def_property("show_line_directions", &DislocationDisplay::showLineDirections, &DislocationDisplay::setShowLineDirections,
+		.def_property("show_line_directions", &DislocationVis::showLineDirections, &DislocationVis::setShowLineDirections,
 				"Boolean flag that enables the visualization of line directions."
 				"\n\n"
 				":Default: ``False``\n")
-		.def_property("line_width", &DislocationDisplay::lineWidth, &DislocationDisplay::setLineWidth,
+		.def_property("line_width", &DislocationVis::lineWidth, &DislocationVis::setLineWidth,
 				"Controls the display width (in units of length of the simulation) of dislocation lines."
 				"\n\n"
 				":Default: ``1.0``\n")
-		.def_property("indicate_character", &DislocationDisplay::lineColoringMode, &DislocationDisplay::setLineColoringMode,
+		.def_property("indicate_character", &DislocationVis::lineColoringMode, &DislocationVis::setLineColoringMode,
 				"Controls how the display color of dislocation lines is chosen."
 				"Possible values:"
 				"\n\n"
@@ -356,10 +356,10 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 				"\n")
 	;
 
-	py::enum_<DislocationDisplay::LineColoringMode>(DislocationVis_py, "ColoringMode")
-		.value("ByDislocationType", DislocationDisplay::ColorByDislocationType)
-		.value("ByBurgersVector", DislocationDisplay::ColorByBurgersVector)
-		.value("ByCharacter", DislocationDisplay::ColorByCharacter)
+	py::enum_<DislocationVis::LineColoringMode>(DislocationVis_py, "ColoringMode")
+		.value("ByDislocationType", DislocationVis::ColorByDislocationType)
+		.value("ByBurgersVector", DislocationVis::ColorByBurgersVector)
+		.value("ByCharacter", DislocationVis::ColorByCharacter)
 	;
 
 	ovito_class<DislocationNetworkObject, PeriodicDomainDataObject>(m,
@@ -451,18 +451,18 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 	ovito_class<PartitionMesh, PeriodicDomainDataObject>{m}
 	;
 
-	ovito_class<PartitionMeshDisplay, DisplayObject>(m, nullptr,
+	ovito_class<PartitionMeshVis, DataVis>(m, nullptr,
 		// Python class name:
 		"PartitionMeshVis")
-		.def_property("surface_color", &PartitionMeshDisplay::surfaceColor, &PartitionMeshDisplay::setSurfaceColor,
+		.def_property("surface_color", &PartitionMeshVis::surfaceColor, &PartitionMeshVis::setSurfaceColor,
 				"The display color of the outer free surface."
 				"\n\n"
 				":Default: ``(1.0, 1.0, 1.0)``\n")
-		.def_property("surface_transparency", &PartitionMeshDisplay::surfaceTransparency, &PartitionMeshDisplay::setSurfaceTransparency,
+		.def_property("surface_transparency", &PartitionMeshVis::surfaceTransparency, &PartitionMeshVis::setSurfaceTransparency,
 				"The level of transparency of the displayed surface. Valid range is 0.0 -- 1.0."
 				"\n\n"
 				":Default: 0.0\n")
-		.def_property("smooth_shading", &PartitionMeshDisplay::smoothShading, &PartitionMeshDisplay::setSmoothShading,
+		.def_property("smooth_shading", &PartitionMeshVis::smoothShading, &PartitionMeshVis::setSmoothShading,
 				"Enables smooth shading of the triangulated surface mesh."
 				"\n\n"
 				":Default: ``True``\n")

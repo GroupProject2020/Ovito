@@ -21,11 +21,11 @@
 
 #include <core/Core.h>
 #include <core/dataset/scene/SceneNode.h>
-#include <core/dataset/scene/SceneRoot.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/RootSceneNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/dataset/pipeline/PipelineObject.h>
 #include <core/dataset/pipeline/Modifier.h>
-#include <core/dataset/data/DisplayObject.h>
+#include <core/dataset/data/DataVis.h>
 #include <core/dataset/DataSet.h>
 #include <core/app/Application.h>
 #include <core/rendering/RenderSettings.h>

@@ -35,9 +35,9 @@ namespace Ovito {
 		using namespace Ovito::StdMod;
 
 		class TriMeshObject;
-		class TriMeshDisplay;
+		class TriMeshVis;
 		class SurfaceMesh;
-		class SurfaceMeshDisplay;
+		class SurfaceMeshVis;
 	}
 }
 

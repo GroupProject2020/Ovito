@@ -23,7 +23,7 @@
 #include <plugins/stdobj/camera/TargetObject.h>
 #include <core/viewport/Viewport.h>
 #include <core/dataset/DataSet.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/rendering/RenderSettings.h>
 #include <core/rendering/SceneRenderer.h>
 #include <core/dataset/pipeline/StaticSource.h>
@@ -42,7 +42,7 @@ SET_PROPERTY_FIELD_LABEL(CameraObject, zoomController, "FOV size");
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(CameraObject, fovController, AngleParameterUnit, FloatType(1e-3), FLOATTYPE_PI - FloatType(1e-2));
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CameraObject, zoomController, WorldParameterUnit, 0);
 
-IMPLEMENT_OVITO_CLASS(CameraDisplayObject);
+IMPLEMENT_OVITO_CLASS(CameraVis);
 
 /******************************************************************************
 * Constructs a camera object.
@@ -54,7 +54,7 @@ CameraObject::CameraObject(DataSet* dataset) : AbstractCameraObject(dataset), _i
 	setZoomController(ControllerManager::createFloatController(dataset));
 	zoomController()->setFloatValue(0, 200);
 
-	addDisplayObject(new CameraDisplayObject(dataset));
+	addVisElement(new CameraVis(dataset));
 }
 
 /******************************************************************************
@@ -145,7 +145,7 @@ void CameraObject::setFieldOfView(TimePoint time, FloatType newFOV)
 ******************************************************************************/
 bool CameraObject::isTargetCamera() const
 {
-	for(ObjectNode* node : dependentNodes()) {
+	for(PipelineSceneNode* node : dependentNodes()) {
 		if(node->lookatTargetNode() != nullptr)
 			return true;
 	}
@@ -159,13 +159,13 @@ void CameraObject::setIsTargetCamera(bool enable)
 {
 	dataset()->undoStack().pushIfRecording<TargetChangedUndoOperation>(this);
 
-	for(ObjectNode* node : dependentNodes()) {
+	for(PipelineSceneNode* node : dependentNodes()) {
 		if(node->lookatTargetNode() == nullptr && enable) {
 			if(SceneNode* parentNode = node->parentNode()) {
 				AnimationSuspender noAnim(this);
 				OORef<TargetObject> targetObj = new TargetObject(dataset());
 				OORef<StaticSource> targetSource = new StaticSource(dataset(), targetObj);
-				OORef<ObjectNode> targetNode = new ObjectNode(dataset());
+				OORef<PipelineSceneNode> targetNode = new PipelineSceneNode(dataset());
 				targetNode->setDataProvider(targetSource);
 				targetNode->setNodeName(tr("%1.target").arg(node->nodeName()));
 				parentNode->addChildNode(targetNode);
@@ -195,7 +195,7 @@ void CameraObject::setIsTargetCamera(bool enable)
 ******************************************************************************/
 FloatType CameraObject::targetDistance() const
 {
-	for(ObjectNode* node : dependentNodes()) {
+	for(PipelineSceneNode* node : dependentNodes()) {
 		if(node->lookatTargetNode() != nullptr) {
 			TimeInterval iv;
 			Vector3 cameraPos = node->getWorldTransform(dataset()->animationSettings()->time(), iv).translation();
@@ -209,9 +209,9 @@ FloatType CameraObject::targetDistance() const
 }
 
 /******************************************************************************
-* Lets the display object render a camera object.
+* Lets the vis element render a camera object.
 ******************************************************************************/
-void CameraDisplayObject::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, ObjectNode* contextNode)
+void CameraVis::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
 {
 	// Camera objects are only visible in the interactive viewports.
 	if(renderer->isInteractive() == false || renderer->viewport() == nullptr)
@@ -395,7 +395,7 @@ void CameraDisplayObject::render(TimePoint time, DataObject* dataObject, const P
 /******************************************************************************
 * Computes the bounding box of the object.
 ******************************************************************************/
-Box3 CameraDisplayObject::boundingBox(TimePoint time, DataObject* dataObject, ObjectNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
+Box3 CameraVis::boundingBox(TimePoint time, DataObject* dataObject, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
 	// This is not a physical object. It doesn't have a size.
 	return Box3(Point3::Origin(), Point3::Origin());

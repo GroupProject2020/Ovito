@@ -51,7 +51,7 @@ public:
 private:
 
 	/// The object node providing the input particles.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(ObjectNode, source, setSource, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_NO_SUB_ANIM);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(PipelineSceneNode, source, setSource, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_NO_SUB_ANIM);
 
 	/// Controls which particles trajectories are created for.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, onlySelectedParticles, setOnlySelectedParticles);

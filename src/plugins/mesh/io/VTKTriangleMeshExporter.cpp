@@ -21,7 +21,7 @@
 
 #include <plugins/mesh/Mesh.h>
 #include <plugins/mesh/surface/RenderableSurfaceMesh.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/dataset/scene/SelectionSet.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/utilities/concurrent/TaskManager.h>
@@ -88,7 +88,7 @@ bool VTKTriangleMeshExporter::exportFrame(int frameNumber, TimePoint time, const
 	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
 	exportTask.setProgressText(tr("Writing file %1").arg(filePath));
 	
-	ObjectNode* objectNode = dynamic_object_cast<ObjectNode>(outputData().front());
+	PipelineSceneNode* objectNode = dynamic_object_cast<PipelineSceneNode>(outputData().front());
 	if(!objectNode)
 		throwException(tr("The scene node to be exported is not an object node."));
 

@@ -29,12 +29,12 @@ SET(SourceFiles
 	objects/patterns/PatternCatalog.cpp
 	objects/clusters/ClusterGraphObject.cpp
 	objects/dislocations/DislocationNetworkObject.cpp
-	objects/dislocations/DislocationDisplay.cpp
+	objects/dislocations/DislocationVis.cpp
 	objects/dislocations/RenderableDislocationLines.cpp
 	objects/microstructure/MicrostructureObject.cpp
 	objects/partition_mesh/PartitionMesh.cpp
-	objects/partition_mesh/PartitionMeshDisplay.cpp
-	objects/slip_surface/SlipSurfaceDisplay.cpp
+	objects/partition_mesh/PartitionMeshVis.cpp
+	objects/slip_surface/SlipSurfaceVis.cpp
 	data/ClusterGraph.cpp
 	data/DislocationNetwork.cpp
 	data/Microstructure.cpp

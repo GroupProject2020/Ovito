@@ -4,12 +4,17 @@ from ovito.io import import_file
 pipeline = import_file('input/simulation.*.dump')
 
 # Loop over all frames of the sequence.
-for frame in range(pipeline.source.num_frames):    
+for frame_index in range(pipeline.source.num_frames):    
 
-    # Evaluating the pipeline at the current animation frame loads the 
-    # corresponding input file from the sequence into memory:
-    data = pipeline.compute(frame)
+    # Calling FileSource.compute() loads the requested frame
+    # from the sequence into memory and returns the data as a
+    # PipelineFlowState data collection:
+    data = pipeline.source.compute(frame_index)
+
+    # The source path and the index of the current frame
+    # are attached as attributes to the data collection:
+    print("Frame source:", data.attributes['SourceFile'])
+    print("Frame index:", data.attributes['SourceFrame'])
     
-    # Work with the loaded data...
-    print("Particle positions at frame %i:" % frame)
-    print(data.particle_properties['Position'][...])
+    # Accessing the loaded frame data, e.g the particle positions:
+    print(data.particles['Position'][...])

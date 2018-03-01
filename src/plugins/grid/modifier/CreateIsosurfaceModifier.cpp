@@ -33,10 +33,10 @@ namespace Ovito { namespace Grid {
 IMPLEMENT_OVITO_CLASS(CreateIsosurfaceModifier);
 DEFINE_PROPERTY_FIELD(CreateIsosurfaceModifier, sourceProperty);
 DEFINE_REFERENCE_FIELD(CreateIsosurfaceModifier, isolevelController);
-DEFINE_REFERENCE_FIELD(CreateIsosurfaceModifier, surfaceMeshDisplay);
+DEFINE_REFERENCE_FIELD(CreateIsosurfaceModifier, surfaceMeshVis);
 SET_PROPERTY_FIELD_LABEL(CreateIsosurfaceModifier, sourceProperty, "Source property");
 SET_PROPERTY_FIELD_LABEL(CreateIsosurfaceModifier, isolevelController, "Isolevel");
-SET_PROPERTY_FIELD_LABEL(CreateIsosurfaceModifier, surfaceMeshDisplay, "Surface mesh display");
+SET_PROPERTY_FIELD_LABEL(CreateIsosurfaceModifier, surfaceMeshVis, "Surface mesh vis");
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -45,11 +45,11 @@ CreateIsosurfaceModifier::CreateIsosurfaceModifier(DataSet* dataset) : Asynchron
 {
 	setIsolevelController(ControllerManager::createFloatController(dataset));
 
-	// Create the display object.
-	setSurfaceMeshDisplay(new SurfaceMeshDisplay(dataset));
-	_surfaceMeshDisplay->setShowCap(false);
-	_surfaceMeshDisplay->setSmoothShading(true);
-	_surfaceMeshDisplay->setObjectTitle(tr("Isosurface"));
+	// Create the vis element.
+	setSurfaceMeshVis(new SurfaceMeshVis(dataset));
+	surfaceMeshVis()->setShowCap(false);
+	surfaceMeshVis()->setSmoothShading(true);
+	surfaceMeshVis()->setObjectTitle(tr("Isosurface"));
 }
 
 /******************************************************************************
@@ -95,8 +95,8 @@ void CreateIsosurfaceModifier::initializeModifier(ModifierApplication* modApp)
 ******************************************************************************/
 bool CreateIsosurfaceModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	// Do not propagate messages from the attached display object.
-	if(source == surfaceMeshDisplay())
+	// Do not propagate messages from the attached vis element.
+	if(source == surfaceMeshVis())
 		return false;
 
 	return AsynchronousModifier::referenceEvent(source, event);
@@ -197,9 +197,9 @@ PipelineFlowState CreateIsosurfaceModifier::ComputeIsosurfaceResults::apply(Time
 	meshObj->setStorage(mesh());
 	meshObj->setIsCompletelySolid(isCompletelySolid());
 	meshObj->setDomain(voxelGrid->domain());
-	meshObj->addDisplayObject(modifier->surfaceMeshDisplay());
+	meshObj->setVisElement(modifier->surfaceMeshVis());
 
-	// Insert output object into the pipeline.
+	// Insert data object into the output data collection.
 	PipelineFlowState output = input;
 	output.addObject(meshObj);
 	output.setStatus(PipelineStatus(PipelineStatus::Success, tr("Minimum value: %1\nMaximum value: %2").arg(minValue()).arg(maxValue())));

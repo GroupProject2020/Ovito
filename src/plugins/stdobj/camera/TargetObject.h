@@ -25,7 +25,8 @@
 #include <plugins/stdobj/StdObj.h>
 #include <core/dataset/data/DataObject.h>
 #include <core/dataset/data/VersionedDataObjectRef.h>
-#include <core/dataset/data/DisplayObject.h>
+#include <core/dataset/data/CacheStateHelper.h>
+#include <core/dataset/data/DataVis.h>
 #include <core/rendering/LinePrimitive.h>
 
 namespace Ovito { namespace StdObj {
@@ -37,37 +38,33 @@ class OVITO_STDOBJ_EXPORT TargetObject : public DataObject
 {
 	Q_OBJECT
 	OVITO_CLASS(TargetObject)
-	
+	Q_CLASSINFO("DisplayName", "Target");
+
 public:
 
 	/// Constructor.
 	Q_INVOKABLE TargetObject(DataSet* dataset);
-
-	/// \brief Returns the title of this object.
-	virtual QString objectTitle() override { return tr("Target"); }
 };
 
 /**
- * \brief A scene display object for target objects.
+ * \brief A visual element rendering target objects in the interactive viewports.
  */
-class OVITO_STDOBJ_EXPORT TargetDisplayObject : public DisplayObject
+class OVITO_STDOBJ_EXPORT TargetVis : public DataVis
 {
-	OVITO_CLASS(TargetDisplayObject)
 	Q_OBJECT
+	OVITO_CLASS(TargetVis)
+	Q_CLASSINFO("DisplayName", "Target icon");
 	
 public:
 
 	/// \brief Constructor.
-	Q_INVOKABLE TargetDisplayObject(DataSet* dataset) : DisplayObject(dataset) {}
+	Q_INVOKABLE TargetVis(DataSet* dataset) : DataVis(dataset) {}
 
-	/// \brief Lets the display object render a data object.
-	virtual void render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, ObjectNode* contextNode) override;
+	/// \brief Lets the vis element render a data object.
+	virtual void render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode) override;
 
 	/// \brief Computes the bounding box of the object.
-	virtual Box3 boundingBox(TimePoint time, DataObject* dataObject, ObjectNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval) override;
-
-	/// \brief Returns the title of this object.
-	virtual QString objectTitle() override { return tr("Target icon"); }
+	virtual Box3 boundingBox(TimePoint time, DataObject* dataObject, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval) override;
 
 protected:
 
@@ -79,7 +76,7 @@ protected:
 
 	/// This helper structure is used to detect any changes in the input data
 	/// that require updating the geometry buffer.
-	SceneObjectCacheHelper<
+	CacheStateHelper<
 		VersionedDataObjectRef,		// Scene object + revision number
 		Color						// Display color
 		> _geometryCacheHelper;

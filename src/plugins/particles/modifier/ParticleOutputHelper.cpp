@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/BondsDisplay.h>
+#include <plugins/particles/objects/BondsVis.h>
 #include <plugins/particles/objects/BondProperty.h>
 #include <plugins/particles/objects/ParticleBondMap.h>
 #include <core/dataset/DataSet.h>
@@ -143,7 +143,7 @@ size_t ParticleOutputHelper::deleteParticles(const boost::dynamic_bitset<>& mask
 /******************************************************************************
 * Adds a set of new bonds to the system.
 ******************************************************************************/
-void ParticleOutputHelper::addBonds(const std::vector<Bond>& newBonds, BondsDisplay* bondsDisplay, const std::vector<PropertyPtr>& bondProperties)
+void ParticleOutputHelper::addBonds(const std::vector<Bond>& newBonds, BondsVis* bondsVis, const std::vector<PropertyPtr>& bondProperties)
 {
 	// Check if there are existing bonds.
 	OORef<BondProperty> existingBondsTopology = BondProperty::findInState(output(), BondProperty::TopologyProperty);
@@ -166,8 +166,8 @@ void ParticleOutputHelper::addBonds(const std::vector<Bond>& newBonds, BondsDisp
 		// Insert property objects into the output pipeline state.
 		OORef<BondProperty> topologyPropertyObj = BondProperty::createFromStorage(dataset(), topologyProperty);
 		OORef<BondProperty> periodicImagePropertyObj = BondProperty::createFromStorage(dataset(), periodicImageProperty);
-		if(bondsDisplay)
-			topologyPropertyObj->setDisplayObject(bondsDisplay);
+		if(bondsVis)
+			topologyPropertyObj->setVisElement(bondsVis);
 		output().addObject(topologyPropertyObj);
 		output().addObject(periodicImagePropertyObj);
 		setOutputBondCount(newBonds.size());

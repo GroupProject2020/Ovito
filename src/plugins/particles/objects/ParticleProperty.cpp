@@ -23,8 +23,8 @@
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
 #include "ParticleProperty.h"
-#include "ParticleDisplay.h"
-#include "VectorDisplay.h"
+#include "ParticlesVis.h"
+#include "VectorVis.h"
 
 namespace Ovito { namespace Particles {
 
@@ -44,34 +44,34 @@ ParticleProperty::ParticleProperty(DataSet* dataset) : PropertyObject(dataset)
 void ParticleProperty::OOMetaClass::prepareNewProperty(PropertyObject* property) const
 {
 	if(property->type() == ParticleProperty::PositionProperty) {
-		OORef<ParticleDisplay> displayObj = new ParticleDisplay(property->dataset());
-		displayObj->loadUserDefaults();
-		property->addDisplayObject(displayObj);
+		OORef<ParticlesVis> vis = new ParticlesVis(property->dataset());
+		vis->loadUserDefaults();
+		property->addVisElement(vis);
 	}
 	else if(property->type() == ParticleProperty::DisplacementProperty) {
-		OORef<VectorDisplay> displayObj = new VectorDisplay(property->dataset());
-		displayObj->setObjectTitle(tr("Displacements"));
-		displayObj->loadUserDefaults();
-		displayObj->setEnabled(false);
-		property->addDisplayObject(displayObj);
+		OORef<VectorVis> vis = new VectorVis(property->dataset());
+		vis->setObjectTitle(tr("Displacements"));
+		vis->loadUserDefaults();
+		vis->setEnabled(false);
+		property->addVisElement(vis);
 	}
 	else if(property->type() == ParticleProperty::ForceProperty) {
-		OORef<VectorDisplay> displayObj = new VectorDisplay(property->dataset());
-		displayObj->setObjectTitle(tr("Forces"));
-		displayObj->loadUserDefaults();
-		displayObj->setEnabled(false);
-		displayObj->setReverseArrowDirection(false);
-		displayObj->setArrowPosition(VectorDisplay::Base);
-		property->addDisplayObject(displayObj);
+		OORef<VectorVis> vis = new VectorVis(property->dataset());
+		vis->setObjectTitle(tr("Forces"));
+		vis->loadUserDefaults();
+		vis->setEnabled(false);
+		vis->setReverseArrowDirection(false);
+		vis->setArrowPosition(VectorVis::Base);
+		property->addVisElement(vis);
 	}
 	else if(property->type() == ParticleProperty::DipoleOrientationProperty) {
-		OORef<VectorDisplay> displayObj = new VectorDisplay(property->dataset());
-		displayObj->setObjectTitle(tr("Dipoles"));
-		displayObj->loadUserDefaults();
-		displayObj->setEnabled(false);
-		displayObj->setReverseArrowDirection(false);
-		displayObj->setArrowPosition(VectorDisplay::Center);
-		property->addDisplayObject(displayObj);
+		OORef<VectorVis> vis = new VectorVis(property->dataset());
+		vis->setObjectTitle(tr("Dipoles"));
+		vis->loadUserDefaults();
+		vis->setEnabled(false);
+		vis->setReverseArrowDirection(false);
+		vis->setArrowPosition(VectorVis::Center);
+		property->addVisElement(vis);
 	}
 }
 

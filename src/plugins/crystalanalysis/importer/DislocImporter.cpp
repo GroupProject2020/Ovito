@@ -21,8 +21,8 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/objects/microstructure/MicrostructureObject.h>
-#include <plugins/crystalanalysis/objects/dislocations/DislocationDisplay.h>
-#include <plugins/crystalanalysis/objects/slip_surface/SlipSurfaceDisplay.h>
+#include <plugins/crystalanalysis/objects/dislocations/DislocationVis.h>
+#include <plugins/crystalanalysis/objects/slip_surface/SlipSurfaceVis.h>
 #include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
 #include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
 #include <plugins/crystalanalysis/modifier/microstructure/SimplifyMicrostructureModifier.h>
@@ -70,16 +70,16 @@ bool DislocImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl
 }
 
 /******************************************************************************
-* This method is called when the scene node for the FileSource is created.
+* This method is called when the pipeline node for the FileSource is created.
 ******************************************************************************/
-void DislocImporter::prepareSceneNode(ObjectNode* node, FileSource* importObj)
+void DislocImporter::setupPipeline(PipelineSceneNode* pipeline, FileSource* importObj)
 {
-	ParticleImporter::prepareSceneNode(node, importObj);
+	ParticleImporter::setupPipeline(pipeline, importObj);
 
 	// Insert a SimplyMicrostructureModifier into the data pipeline by default.
-	OORef<SimplifyMicrostructureModifier> modifier = new SimplifyMicrostructureModifier(node->dataset());
+	OORef<SimplifyMicrostructureModifier> modifier = new SimplifyMicrostructureModifier(pipeline->dataset());
 	modifier->loadUserDefaults();
-	node->applyModifier(modifier);
+	pipeline->applyModifier(modifier);
 }
 
 /******************************************************************************
@@ -641,13 +641,13 @@ PipelineFlowState DislocImporter::DislocFrameData::handOver(DataSet* dataset, co
 		if(!microstructureObj) {
 			microstructureObj = new MicrostructureObject(dataset);
 			// Create a display object for the dislocation lines.
-			OORef<DislocationDisplay> dislocationDisplayObj = new DislocationDisplay(dataset);
-			dislocationDisplayObj->loadUserDefaults();
-			microstructureObj->addDisplayObject(dislocationDisplayObj);
+			OORef<DislocationVis> dislocationVis = new DislocationVis(dataset);
+			dislocationVis->loadUserDefaults();
+			microstructureObj->addVisElement(dislocationVis);
 			// Create a display object for the slip surfaces.
-			OORef<SlipSurfaceDisplay> slipSurfaceDisplayObj = new SlipSurfaceDisplay(dataset);
-			slipSurfaceDisplayObj->loadUserDefaults();
-			microstructureObj->addDisplayObject(slipSurfaceDisplayObj);
+			OORef<SlipSurfaceVis> slipSurfaceVis = new SlipSurfaceVis(dataset);
+			slipSurfaceVis->loadUserDefaults();
+			microstructureObj->addVisElement(slipSurfaceVis);
 		}
 		microstructureObj->setDomain(output.findObject<SimulationCellObject>());
 		microstructureObj->setStorage(microstructure());

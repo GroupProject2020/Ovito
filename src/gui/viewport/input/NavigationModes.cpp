@@ -28,7 +28,7 @@
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/dataset/data/camera/AbstractCameraObject.h>
-#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/scene/RootSceneNode.h>
 #include <core/dataset/UndoStack.h>
 #include "ViewportInputManager.h"
 #include "NavigationModes.h"
@@ -161,6 +161,17 @@ void NavigationMode::renderOverlay3D(Viewport* vp, ViewportSceneRenderer* render
 	}
 }
 
+/******************************************************************************
+* Returns the camera object associated with the given viewport.
+******************************************************************************/
+AbstractCameraObject* NavigationMode::getViewportCamera(Viewport* vp)
+{
+	if(vp->viewNode() && vp->viewType() == Viewport::VIEW_SCENENODE) {
+		return dynamic_object_cast<AbstractCameraObject>(vp->viewNode()->pipelineSource());
+	}
+	return nullptr;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// Pan Mode ///////////////////////////////////
 
@@ -220,14 +231,10 @@ void ZoomMode::modifyView(ViewportWindow* vpwin, Viewport* vp, QPointF delta)
 	}
 	else {
 
-		AbstractCameraObject* cameraObj = nullptr;
 		FloatType oldFOV = _oldFieldOfView;
-		if(vp->viewNode() && vp->viewType() == Viewport::VIEW_SCENENODE) {
-			cameraObj = dynamic_object_cast<AbstractCameraObject>(vp->viewNode()->sourceObject());
-			if(cameraObj) {
-				TimeInterval iv;
-				oldFOV = cameraObj->fieldOfView(vp->dataset()->animationSettings()->time(), iv);
-			}
+		if(AbstractCameraObject* cameraObj = getViewportCamera(vp)) {
+			TimeInterval iv;
+			oldFOV = cameraObj->fieldOfView(vp->dataset()->animationSettings()->time(), iv);
 		}
 
 		FloatType newFOV = oldFOV * (FloatType)exp(0.003 * delta.y());
@@ -235,7 +242,7 @@ void ZoomMode::modifyView(ViewportWindow* vpwin, Viewport* vp, QPointF delta)
 		if(vp->viewNode() == nullptr || vp->viewType() != Viewport::VIEW_SCENENODE) {
 			vp->setFieldOfView(newFOV);
 		}
-		else if(cameraObj) {
+		else if(AbstractCameraObject* cameraObj = getViewportCamera(vp)) {
 			cameraObj->setFieldOfView(vp->dataset()->animationSettings()->time(), newFOV);
 		}
 	}
@@ -277,8 +284,7 @@ void ZoomMode::zoom(Viewport* vp, FloatType steps)
 				vp->viewNode()->transformationController()->translate(vp->dataset()->animationSettings()->time(), Vector3(0,0,-amount), sys);
 			}
 			else {
-				AbstractCameraObject* cameraObj = dynamic_object_cast<AbstractCameraObject>(vp->viewNode()->sourceObject());
-				if(cameraObj) {
+				if(AbstractCameraObject* cameraObj = getViewportCamera(vp)) {
 					TimeInterval iv;
 					FloatType oldFOV = cameraObj->fieldOfView(vp->dataset()->animationSettings()->time(), iv);
 					cameraObj->setFieldOfView(vp->dataset()->animationSettings()->time(), oldFOV * exp(-steps * FloatType(1e-3)));
@@ -296,14 +302,10 @@ void ZoomMode::zoom(Viewport* vp, FloatType steps)
 ******************************************************************************/
 void FOVMode::modifyView(ViewportWindow* vpwin, Viewport* vp, QPointF delta)
 {
-	AbstractCameraObject* cameraObj = nullptr;
 	FloatType oldFOV = _oldFieldOfView;
-	if(vp->viewNode() && vp->viewType() == Viewport::VIEW_SCENENODE) {
-		cameraObj = dynamic_object_cast<AbstractCameraObject>(vp->viewNode()->sourceObject());
-		if(cameraObj) {
-			TimeInterval iv;
-			oldFOV = cameraObj->fieldOfView(vp->dataset()->animationSettings()->time(), iv);
-		}
+	if(AbstractCameraObject* cameraObj = getViewportCamera(vp)) {
+		TimeInterval iv;
+		oldFOV = cameraObj->fieldOfView(vp->dataset()->animationSettings()->time(), iv);
 	}
 
 	FloatType newFOV;
@@ -319,7 +321,7 @@ void FOVMode::modifyView(ViewportWindow* vpwin, Viewport* vp, QPointF delta)
 	if(vp->viewNode() == nullptr || vp->viewType() != Viewport::VIEW_SCENENODE) {
 		vp->setFieldOfView(newFOV);
 	}
-	else if(cameraObj) {
+	else if(AbstractCameraObject* cameraObj = getViewportCamera(vp)) {
 		cameraObj->setFieldOfView(vp->dataset()->animationSettings()->time(), newFOV);
 	}
 }

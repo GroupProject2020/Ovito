@@ -28,7 +28,7 @@
 #include <plugins/crystalanalysis/data/ClusterGraph.h>
 #include <plugins/crystalanalysis/modifier/dxa/StructureAnalysis.h>
 #include <plugins/crystalanalysis/objects/partition_mesh/PartitionMesh.h>
-#include <plugins/crystalanalysis/objects/partition_mesh/PartitionMeshDisplay.h>
+#include <plugins/crystalanalysis/objects/partition_mesh/PartitionMeshVis.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
@@ -95,7 +95,7 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, onlySelectedParticles, setOnlySelectedParticles);
 
 	/// The display object for rendering the mesh.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(PartitionMeshDisplay, meshDisplay, setMeshDisplay);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD(PartitionMeshVis, meshDisplay, setMeshDisplay);
 
 	/// This stores the cached mesh produced by the modifier.
 	QExplicitlySharedDataPointer<PartitionMeshData> _partitionMesh;

@@ -23,8 +23,8 @@
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/utilities/units/UnitsManager.h>
 #include <core/dataset/scene/SelectionSet.h>
-#include <core/dataset/scene/ObjectNode.h>
-#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
+#include <core/dataset/scene/RootSceneNode.h>
 #include <gui/widgets/general/SpinnerWidget.h>
 #include <gui/mainwin/MainWindow.h>
 #include <gui/utilities/concurrent/ProgressDialog.h>
@@ -187,7 +187,7 @@ void CreateTrajectoryApplet::onCreateTrajectory()
 		// Get input particles.
 		OORef<ParticleProperty> posProperty;
 		OORef<ParticleProperty> selectionProperty;
-		ObjectNode* inputNode = dynamic_object_cast<ObjectNode>(dataset->selection()->firstNode());
+		PipelineSceneNode* inputNode = dynamic_object_cast<PipelineSceneNode>(dataset->selection()->firstNode());
 		if(inputNode) {
 			SharedFuture<PipelineFlowState> stateFuture = inputNode->evaluatePipeline(time);
 			if(!progressDialog.taskManager().waitForTask(stateFuture))
@@ -214,7 +214,7 @@ void CreateTrajectoryApplet::onCreateTrajectory()
 				dataset->throwException(tr("Input contains no particles. No trajectory lines were created."));
 		}
 
-		OORef<ObjectNode> node;
+		OORef<PipelineSceneNode> node;
 		{
 			// Do not create undo records for the following actions.
 			UndoSuspender noUndo(dataset);
@@ -241,13 +241,13 @@ void CreateTrajectoryApplet::onCreateTrajectory()
 			if(!trajGenerator->generateTrajectories(progressDialog.taskManager()))
 				return;
 
-			// Initialize trajectory display object.
+			// Initialize trajectory vis element.
 			for(DataObject* dataObj : trajGenerator->dataObjects())
-				for(DisplayObject* displayObj : dataObj->displayObjects())
-					displayObj->loadUserDefaults();			
+				for(DataVis* vis : dataObj->visElements())
+					vis->loadUserDefaults();			
 
 			// Create scene node.
-			node = new ObjectNode(dataset);
+			node = new PipelineSceneNode(dataset);
 			TimeInterval validityInterval;
 			node->transformationController()->setTransformationValue(time, inputNode->getWorldTransform(time, validityInterval), true);
 			node->setDataProvider(trajGenerator);

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,27 +25,26 @@
 #include <plugins/stdobj/StdObj.h>
 #include <core/dataset/data/camera/AbstractCameraObject.h>
 #include <core/dataset/data/VersionedDataObjectRef.h>
+#include <core/dataset/data/CacheStateHelper.h>
 #include <core/dataset/animation/controller/Controller.h>
-#include <core/dataset/data/DisplayObject.h>
+#include <core/dataset/data/DataVis.h>
 #include <core/rendering/LinePrimitive.h>
 
 namespace Ovito { namespace StdObj {
 
 /**
- * The default camera object.
+ * The standard camera object.
  */
 class OVITO_STDOBJ_EXPORT CameraObject : public AbstractCameraObject
 {
 	Q_OBJECT
 	OVITO_CLASS(CameraObject)
+	Q_CLASSINFO("DisplayName", "Camera");
 	
 public:
 
 	/// Constructor.
 	Q_INVOKABLE CameraObject(DataSet* dataset);
-
-	/// \brief Returns the title of this object.
-	virtual QString objectTitle() override { return tr("Camera"); }
 
 	/// Returns whether this camera is a target camera directory at a target object.
 	bool isTargetCamera() const;
@@ -98,26 +97,24 @@ private:
 };
 
 /**
- * \brief A scene display object for camera objects.
+ * \brief A visual element for rendering camera objects in the interactive viewports.
  */
-class OVITO_STDOBJ_EXPORT CameraDisplayObject : public DisplayObject
+class OVITO_STDOBJ_EXPORT CameraVis : public DataVis
 {
-	OVITO_CLASS(CameraDisplayObject)
 	Q_OBJECT
+	OVITO_CLASS(CameraVis)
+	Q_CLASSINFO("DisplayName", "Camera icon");
 	
 public:
 
 	/// \brief Constructor.
-	Q_INVOKABLE CameraDisplayObject(DataSet* dataset) : DisplayObject(dataset) {}
+	Q_INVOKABLE CameraVis(DataSet* dataset) : DataVis(dataset) {}
 
-	/// \brief Lets the display object render a camera object.
-	virtual void render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, ObjectNode* contextNode) override;
+	/// \brief Lets the vis element render a camera object.
+	virtual void render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode) override;
 
 	/// \brief Computes the bounding box of the object.
-	virtual Box3 boundingBox(TimePoint time, DataObject* dataObject, ObjectNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval) override;
-
-	/// \brief Returns the title of this object.
-	virtual QString objectTitle() override { return tr("Camera icon"); }
+	virtual Box3 boundingBox(TimePoint time, DataObject* dataObject, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval) override;
 
 protected:
 
@@ -132,14 +129,14 @@ protected:
 
 	/// This helper structure is used to detect any changes in the input data
 	/// that require updating the geometry buffer.
-	SceneObjectCacheHelper<
+	CacheStateHelper<
 		VersionedDataObjectRef,		// Camera object + revision number
 		Color						// Display color
 		> _geometryCacheHelper;
 
 	/// This helper structure is used to detect any changes in the input data
 	/// that require updating the geometry buffer.
-	SceneObjectCacheHelper<
+	CacheStateHelper<
 		Color,						// Display color
 		FloatType,					// Camera target distance
 		bool,						// Target line visible

@@ -23,7 +23,7 @@
 #include <core/dataset/data/DataObject.h>
 #include <core/dataset/pipeline/PipelineObject.h>
 #include <core/dataset/pipeline/Modifier.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/dataset/scene/SelectionSet.h>
 #include <core/dataset/DataSetContainer.h>
 #include <gui/actions/ActionManager.h>
@@ -48,7 +48,7 @@ PipelineListModel::PipelineListModel(DataSetContainer& datasetContainer, QObject
 	connect(&_statusPendingIcon, &QMovie::frameChanged, this, &PipelineListModel::iconAnimationFrameChanged);
 	_selectionModel = new QItemSelectionModel(this);
 	connect(_selectionModel, &QItemSelectionModel::selectionChanged, this, &PipelineListModel::selectedItemChanged);
-	connect(&_selectedNodes, &VectorRefTargetListener<ObjectNode>::notificationEvent, this, &PipelineListModel::onNodeEvent);
+	connect(&_selectedNodes, &VectorRefTargetListener<PipelineSceneNode>::notificationEvent, this, &PipelineListModel::onNodeEvent);
 	if(_sectionHeaderFont.pixelSize() < 0)
 		_sectionHeaderFont.setPointSize(_sectionHeaderFont.pointSize() * 4 / 5);
 	else
@@ -105,7 +105,7 @@ void PipelineListModel::refreshList()
 
     if(_datasetContainer.currentSet()) {
 		for(SceneNode* node : _datasetContainer.currentSet()->selection()->nodes()) {
-			if(ObjectNode* objNode = dynamic_object_cast<ObjectNode>(node)) {
+			if(PipelineSceneNode* objNode = dynamic_object_cast<PipelineSceneNode>(node)) {
 				_selectedNodes.push_back(objNode);
 
 				if(cmnObject == nullptr) cmnObject = objNode->dataProvider();
@@ -120,15 +120,15 @@ void PipelineListModel::refreshList()
 	QList<OORef<PipelineListItem>> items;
 	if(cmnObject) {
 
-		// Create list items for display objects.
-		for(ObjectNode* objNode : _selectedNodes.targets()) {
-			for(DisplayObject* displayObj : objNode->displayObjects())
-				items.push_back(new PipelineListItem(displayObj));
+		// Create list items for visualization elements.
+		for(PipelineSceneNode* pipeline : _selectedNodes.targets()) {
+			for(DataVis* vis : pipeline->visElements())
+				items.push_back(new PipelineListItem(vis));
 		}
 		if(!items.empty())
 			items.push_front(new PipelineListItem(nullptr, nullptr, tr("Visual elements")));
 
-		// Walk up the pipeline.
+		// Traverse the modifiers in the pipeline.
 		PipelineObject* firstPipelineObj = cmnObject;
 		do {
 			OVITO_CHECK_OBJECT_POINTER(cmnObject);
@@ -212,8 +212,8 @@ void PipelineListModel::refreshList()
 ******************************************************************************/
 void PipelineListModel::onNodeEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	// Update the entire modification list if the ObjectNode has been assigned a new
-	// data object, or if the list of display objects has changed.
+	// Update the entire modification list if the PipelineSceneNode has been assigned a new
+	// data object, or if the list of visual elements has changed.
 	if(event.type() == ReferenceEvent::ReferenceChanged 
 		|| event.type() == ReferenceEvent::ReferenceAdded 
 		|| event.type() == ReferenceEvent::ReferenceRemoved
@@ -279,9 +279,9 @@ void PipelineListModel::applyModifiers(const QVector<OORef<Modifier>>& modifiers
 	}
 
 	// Apply modifier to each selected node.
-	for(ObjectNode* objNode : selectedNodes()) {
+	for(PipelineSceneNode* pipeline : selectedNodes()) {
 		for(int index = modifiers.size() - 1; index >= 0; --index) {
-			objNode->applyModifier(modifiers[index]);
+			pipeline->applyModifier(modifiers[index]);
 		}
 	}
 }
@@ -340,8 +340,8 @@ QVariant PipelineListModel::data(const QModelIndex& index, int role) const
 		return QVariant::fromValue(item->status().text());
 	}
 	else if(role == Qt::CheckStateRole) {
-		if(DisplayObject* displayObj = dynamic_object_cast<DisplayObject>(item->object()))
-			return displayObj->isEnabled() ? Qt::Checked : Qt::Unchecked;
+		if(DataVis* vis = dynamic_object_cast<DataVis>(item->object()))
+			return vis->isEnabled() ? Qt::Checked : Qt::Unchecked;
 		else if(Modifier* modifier = dynamic_object_cast<Modifier>(item->object()))
 			return modifier->isEnabled() ? Qt::Checked : Qt::Unchecked;
 	}
@@ -376,21 +376,17 @@ bool PipelineListModel::setData(const QModelIndex& index, const QVariant& value,
 {
 	if(role == Qt::CheckStateRole) {
 		PipelineListItem* item = this->item(index.row());
-		DisplayObject* displayObj = dynamic_object_cast<DisplayObject>(item->object());
-		if(displayObj) {
+		if(DataVis* vis = dynamic_object_cast<DataVis>(item->object())) {
 			UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(),
-					(value == Qt::Checked) ? tr("Enable visual element") : tr("Disable visual element"), [displayObj, &value]() {
-				displayObj->setEnabled(value == Qt::Checked);
+					(value == Qt::Checked) ? tr("Enable visual element") : tr("Disable visual element"), [vis, &value]() {
+				vis->setEnabled(value == Qt::Checked);
 			});
 		}
-		else {
-			Modifier* modifier = dynamic_object_cast<Modifier>(item->object());
-			if(modifier) {
-				UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(),
-						(value == Qt::Checked) ? tr("Enable modifier") : tr("Disable modifier"), [modifier, &value]() {
-					modifier->setEnabled(value == Qt::Checked);
-				});
-			}
+		else if(Modifier* modifier = dynamic_object_cast<Modifier>(item->object())) {
+			UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(),
+					(value == Qt::Checked) ? tr("Enable modifier") : tr("Disable modifier"), [modifier, &value]() {
+				modifier->setEnabled(value == Qt::Checked);
+			});
 		}
 	}
 	return QAbstractListModel::setData(index, value, role);
@@ -407,7 +403,7 @@ Qt::ItemFlags PipelineListModel::flags(const QModelIndex& index) const
 			return Qt::NoItemFlags;
 		}
 		else {
-			if(dynamic_object_cast<DisplayObject>(item->object())) {
+			if(dynamic_object_cast<DataVis>(item->object())) {
 				return QAbstractListModel::flags(index) | Qt::ItemIsUserCheckable;
 			}
 			else if(dynamic_object_cast<Modifier>(item->object())) {

@@ -257,8 +257,8 @@ public:
 
 private:
 
-	/// The cached display objects that are attached to the output particle property.
-	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD_FLAGS(DisplayObject, cachedDisplayObjects, setCachedDisplayObjects, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_NO_CHANGE_MESSAGE | PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_NO_SUB_ANIM);
+	/// The cached visualization elements that are attached to the output particle property.
+	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD_FLAGS(DataVis, cachedVisElements, setCachedVisElements, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_NO_CHANGE_MESSAGE | PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_NO_SUB_ANIM);
 };
 
 OVITO_END_INLINE_NAMESPACE

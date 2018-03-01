@@ -24,8 +24,8 @@
 #include <core/dataset/DataSet.h>
 #include <core/dataset/DataSetContainer.h>
 #include <core/dataset/scene/SceneNode.h>
-#include <core/dataset/scene/ObjectNode.h>
-#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
+#include <core/dataset/scene/RootSceneNode.h>
 #include <core/dataset/scene/SelectionSet.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/viewport/ViewportConfiguration.h>

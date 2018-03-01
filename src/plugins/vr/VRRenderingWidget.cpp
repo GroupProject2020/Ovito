@@ -25,7 +25,7 @@
 #include <core/viewport/Viewport.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/viewport/ViewportSettings.h>
-#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/scene/RootSceneNode.h>
 #include <core/utilities/concurrent/Promise.h>
 #include "VRWindow.h"
 

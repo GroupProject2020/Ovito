@@ -39,14 +39,14 @@ namespace Ovito {
 			class StructurePattern;
 			class BurgersVectorFamily;
 			class PatternCatalog;
-			class DislocationDisplay;
+			class DislocationVis;
 			class DislocationNetworkObject;
 			class ClusterGraphObject;
 			class ClusterGraph;
 			class DislocationNetwork;
 			class Microstructure;
 			class PartitionMesh;
-			class PartitionMeshDisplay;
+			class PartitionMeshVis;
 			struct DislocationNode;
 			struct DislocationSegment;
 		}

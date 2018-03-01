@@ -22,7 +22,7 @@
 #include <plugins/stdobj/StdObj.h>
 #include <core/utilities/units/UnitsManager.h>
 #include "SimulationCellObject.h"
-#include "SimulationCellDisplay.h"
+#include "SimulationCellVis.h"
 
 namespace Ovito { namespace StdObj {
 	
@@ -44,8 +44,8 @@ SET_PROPERTY_FIELD_UNITS(SimulationCellObject, cellMatrix, WorldParameterUnit);
 ******************************************************************************/
 void SimulationCellObject::init(DataSet* dataset)
 {
-	// Attach a display object.
-	addDisplayObject(new SimulationCellDisplay(dataset));
+	// Attach a visualization element.
+	addVisElement(new SimulationCellVis(dataset));
 }
 
 }	// End of namespace

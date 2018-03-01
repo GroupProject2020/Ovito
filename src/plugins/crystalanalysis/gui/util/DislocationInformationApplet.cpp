@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/crystalanalysis/objects/dislocations/DislocationDisplay.h>
+#include <plugins/crystalanalysis/objects/dislocations/DislocationVis.h>
 #include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
 #include <gui/rendering/ViewportSceneRenderer.h>
 #include <gui/actions/ViewportModeAction.h>
@@ -109,7 +109,7 @@ void DislocationInformationApplet::updateInformationDisplay()
 		PatternCatalog* patternCatalog = flowState.findObject<PatternCatalog>();
 		if(patternCatalog != nullptr)
 			structure = patternCatalog->structureById(cluster->structure);
-		QString formattedBurgersVector = DislocationDisplay::formatBurgersVector(segment->burgersVector.localVec(), structure);
+		QString formattedBurgersVector = DislocationVis::formatBurgersVector(segment->burgersVector.localVec(), structure);
 		stream << tr("<tr%1><td>True Burgers vector:</td><td>%2</td></tr>").arg((row++ % 2) ? cellColor1 : cellColor2).arg(formattedBurgersVector);
 		Vector3 transformedVector = segment->burgersVector.toSpatialVector();
 		stream << tr("<tr%1><td>Spatial Burgers vector:</td><td>%2 %3 %4</td></tr>")
@@ -127,7 +127,7 @@ void DislocationInformationApplet::updateInformationDisplay()
 					Vector3 transformedVector = ClusterVector(*v, cluster).toSpatialVector();
 					stream << tr("<tr%1><td>Lattice vector %2:</td><td>%3 %4 %5</td></tr>")
 							.arg((row++ % 2) ? cellColor1 : cellColor2)
-							.arg(DislocationDisplay::formatBurgersVector(*v, structure).replace(QStringLiteral(" "), QStringLiteral("&nbsp;")))
+							.arg(DislocationVis::formatBurgersVector(*v, structure).replace(QStringLiteral(" "), QStringLiteral("&nbsp;")))
 							.arg(QLocale::c().toString(transformedVector.x(), 'f', 4), 7)
 							.arg(QLocale::c().toString(transformedVector.y(), 'f', 4), 7)
 							.arg(QLocale::c().toString(transformedVector.z(), 'f', 4), 7);
@@ -143,7 +143,7 @@ void DislocationInformationApplet::updateInformationDisplay()
 					Vector3 transformedVector = ClusterVector(*v, cluster).toSpatialVector();
 					stream << tr("<tr%1><td>Lattice vector %2:</td><td>%3 %4 %5</td></tr>")
 							.arg((row++ % 2) ? cellColor1 : cellColor2)
-							.arg(DislocationDisplay::formatBurgersVector(*v, structure).replace(QStringLiteral(" "), QStringLiteral("&nbsp;")))
+							.arg(DislocationVis::formatBurgersVector(*v, structure).replace(QStringLiteral(" "), QStringLiteral("&nbsp;")))
 							.arg(QLocale::c().toString(transformedVector.x(), 'f', 4), 7)
 							.arg(QLocale::c().toString(transformedVector.y(), 'f', 4), 7)
 							.arg(QLocale::c().toString(transformedVector.z(), 'f', 4), 7);
@@ -215,7 +215,7 @@ void DislocationInformationInputMode::mouseReleaseEvent(ViewportWindow* vpwin, Q
 bool DislocationInformationInputMode::pickDislocationSegment(ViewportWindow* vpwin, const QPoint& pos, PickResult& result) const
 {
 	result.objNode = nullptr;
-	result.displayObj = nullptr;
+	result.visElement = nullptr;
 
 	ViewportPickResult vpPickResult = vpwin->pick(pos);
 
@@ -231,7 +231,7 @@ bool DislocationInformationInputMode::pickDislocationSegment(ViewportWindow* vpw
 				// Save reference to the picked segment.
 				result.objNode = vpPickResult.objectNode;
 				result.segmentIndex = segmentIndex;
-				result.displayObj = pickInfo->displayObject();
+				result.visElement = pickInfo->visElement();
 
 				return true;
 			}
@@ -270,7 +270,7 @@ void DislocationInformationInputMode::renderOverlay3D(Viewport* vp, ViewportScen
 		if(!dislocationObj)
 			continue;
 
-		pickedDislocation.displayObj->renderOverlayMarker(vp->dataset()->animationSettings()->time(), dislocationObj, flowState, pickedDislocation.segmentIndex, renderer, pickedDislocation.objNode);
+		pickedDislocation.visElement->renderOverlayMarker(vp->dataset()->animationSettings()->time(), dislocationObj, flowState, pickedDislocation.segmentIndex, renderer, pickedDislocation.objNode);
 	}
 }
 

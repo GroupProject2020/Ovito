@@ -25,7 +25,7 @@
 #include <core/Core.h>
 #include <core/oo/RefTarget.h>
 #include <core/dataset/animation/TimeInterval.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/viewport/overlays/ViewportOverlay.h>
 #include "ViewportSettings.h"
 #include "ViewportWindowInterface.h"
@@ -325,7 +325,7 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, stereoscopicMode, setStereoscopicMode, PROPERTY_FIELD_NO_UNDO);
 
 	/// The scene node (camera) that has been selected as the view node.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(ObjectNode, viewNode, setViewNode, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_NO_SUB_ANIM);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(PipelineSceneNode, viewNode, setViewNode, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_NO_SUB_ANIM);
 
 	/// The title of the viewport.
 	DECLARE_PROPERTY_FIELD_FLAGS(QString, viewportTitle, PROPERTY_FIELD_NO_UNDO);

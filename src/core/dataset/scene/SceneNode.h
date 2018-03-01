@@ -143,9 +143,9 @@ public:
 	}
 
 	/// \brief Recursively visits all object nodes below this parent node
-	///        and invokes the given visitor function for every ObjectNode.
+	///        and invokes the given visitor function for every PipelineSceneNode.
 	///
-	/// \param fn A function that takes an ObjectNode pointer as argument and returns a boolean value.
+	/// \param fn A function that takes an PipelineSceneNode pointer as argument and returns a boolean value.
 	/// \return true if all object nodes have been visited; false if the loop has been
 	///         terminated early because the visitor function has returned false.
 	///
@@ -155,7 +155,7 @@ public:
 	template<class Function>
 	bool visitObjectNodes(Function fn) const {
 		for(SceneNode* child : children()) {
-			if(ObjectNode* objNode = dynamic_object_cast<ObjectNode>(child)) {
+			if(PipelineSceneNode* objNode = dynamic_object_cast<PipelineSceneNode>(child)) {
 				if(!fn(objNode))
 					return false;
 			}
@@ -285,7 +285,7 @@ private:
 	/// Validity time interval of the cached bounding box.
 	TimeInterval _boundingBoxValidity;
 
-	friend class SceneRoot;
+	friend class RootSceneNode;
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -24,7 +24,7 @@
 #include <core/dataset/UndoStack.h>
 #include <core/app/Application.h>
 #include <core/dataset/animation/AnimationSettings.h>
-#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/scene/RootSceneNode.h>
 #include <core/dataset/scene/SelectionSet.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/rendering/RenderSettings.h>
@@ -353,7 +353,7 @@ bool GuiDataSetContainer::importFile(const QUrl& url, const FileImporterClass* i
 		}
 	}
 
-	return importer->importFile(url, importMode, true);
+	return importer->importFile({url}, importMode, true);
 }
 
 OVITO_END_INLINE_NAMESPACE

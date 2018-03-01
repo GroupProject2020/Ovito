@@ -4,15 +4,14 @@ pipeline = import_file("input/simulation.dump")
 
 data = pipeline.compute()
 
-# WRONG: Modifying the SimulationCell data object is not permitted, 
+# Modifying the SimulationCell object as follows is not permitted, 
 # because it is owned by the pipeline:
 cell = data.expect(SimulationCell)
-cell.pbc = (True, True, True)
+cell.pbc = (True, True, True)  # WRONG!!!
 
-# CORRECT: copy first, then modify 
+# CORRECT: Copy data object first, then modify it: 
 cell = data.copy_if_needed(data.expect(SimulationCell))
 cell.pbc = (True, True, True)
 
-# No need to copy the DataObject when modifying only its DataVis object
 cell = data.expect(SimulationCell)
 cell.vis.line_width = 0.5

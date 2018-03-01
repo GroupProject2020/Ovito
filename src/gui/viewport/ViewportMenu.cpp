@@ -20,8 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <gui/GUI.h>
-#include <core/dataset/scene/SceneRoot.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/RootSceneNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/dataset/data/camera/AbstractCameraObject.h>
 #include <core/dataset/pipeline/StaticSource.h>
 #include <core/dataset/DataSet.h>
@@ -118,7 +118,7 @@ void ViewportMenu::onShowViewTypeMenu()
 	connect(viewNodeGroup, &QActionGroup::triggered, this, &ViewportMenu::onViewNode);
 
 	// Find all camera nodes in the scene.
-	_viewport->dataset()->sceneRoot()->visitObjectNodes([this, viewNodeGroup](ObjectNode* node) -> bool {
+	_viewport->dataset()->sceneRoot()->visitObjectNodes([this, viewNodeGroup](PipelineSceneNode* node) -> bool {
 		const PipelineFlowState& state = node->evaluatePipelinePreliminary(false);
 		OORef<AbstractCameraObject> camera = state.convertObject<AbstractCameraObject>(_viewport->dataset()->animationSettings()->time());
 		if(camera) {
@@ -189,7 +189,7 @@ void ViewportMenu::onAdjustView()
 ******************************************************************************/
 void ViewportMenu::onViewNode(QAction* action)
 {
-	ObjectNode* viewNode = static_cast<ObjectNode*>(action->data().value<void*>());
+	PipelineSceneNode* viewNode = static_cast<PipelineSceneNode*>(action->data().value<void*>());
 	OVITO_CHECK_OBJECT_POINTER(viewNode);
 
 	UndoableTransaction::handleExceptions(_viewport->dataset()->undoStack(), tr("Set camera"), [this, viewNode]() {
@@ -204,11 +204,11 @@ void ViewportMenu::onViewNode(QAction* action)
 void ViewportMenu::onCreateCamera()
 {
 	UndoableTransaction::handleExceptions(_viewport->dataset()->undoStack(), tr("Create camera"), [this]() {
-		SceneRoot* scene = _viewport->dataset()->sceneRoot();
+		RootSceneNode* scene = _viewport->dataset()->sceneRoot();
 		AnimationSuspender animSuspender(_viewport->dataset()->animationSettings());
 
 		// Create and initialize the camera object.
-		OORef<ObjectNode> cameraNode;
+		OORef<PipelineSceneNode> cameraNode;
 		{
 			UndoSuspender noUndo(_viewport->dataset()->undoStack());
 			
@@ -224,7 +224,7 @@ void ViewportMenu::onCreateCamera()
 				cameraObj->setFieldOfView(0, _viewport->fieldOfView());
 
 			// Create an object node with a data source for the camera.
-			cameraNode = new ObjectNode(_viewport->dataset());
+			cameraNode = new PipelineSceneNode(_viewport->dataset());
 			OORef<StaticSource> cameraSource = new StaticSource(_viewport->dataset(), cameraObj);
 			cameraNode->setDataProvider(cameraSource);
 

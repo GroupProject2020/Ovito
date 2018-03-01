@@ -18,7 +18,7 @@ Display objects
 In OVITO, *data objects* are separated from *display objects*, which are responsible for
 producing a visual representation of the data. For example, a :py:class:`~ovito.data.SimulationCell` 
 is a pure data object, which stores the simulation cell vectors and the periodic boundary flags. 
-The corresponding display object (a :py:class:`~ovito.vis.SimulationCellDisplay`)
+The corresponding display object (a :py:class:`~ovito.vis.SimulationCellVis`)
 takes this information to generate the actual box geometry to visualize the dimensions of the simulation
 cell in the viewports. The display object also stores parameters such as the simulation cell display color
 and line width, which control the visual appearance.
@@ -31,7 +31,7 @@ attribute of the :py:class:`~ovito.data.DataObject` base class::
     <SimulationCell at 0x7f9a414c8060>
     
     >>> cell.display                             # This is the attached display object
-    <SimulationCellDisplay at 0x7fc3650a1c20>
+    <SimulationCellVis at 0x7fc3650a1c20>
 
     >>> cell.display.rendering_color = (1,0,0)   # Giving the simulation box a red color
     
@@ -40,12 +40,12 @@ the :py:attr:`~ovito.vis.Display.enabled` attribute to turn the display on or of
 
     >>> cell.display.enabled = False         # This hides the simulation cell
     
-The visual display of particles is controlled by a :py:class:`~ovito.vis.ParticleVis` object, which
+The visual display of particles is controlled by a :py:class:`~ovito.vis.ParticlesVis` object, which
 is attached to the position :py:class:`~ovito.data.ParticleProperty`. For example, to display 
 cubic particles, we would write::
 
     >>> pos = node.source.particle_properties.position      # ParticleProperty storing the positions
-    >>> pos.display.shape = ParticleDisplay.Shape.Square
+    >>> pos.display.shape = ParticlesVis.Shape.Square
 
 .. note::
 
@@ -60,7 +60,7 @@ Some modifiers produce new data objects when the modification pipeline is evalua
 For example, the :py:class:`~ovito.modifiers.CalculateDisplacementsModifier` generates a new :py:class:`~ovito.data.ParticleProperty` 
 that stores the computed displacement vectors. To enable the display of displacement vectors
 as arrows, the :py:class:`~ovito.modifiers.CalculateDisplacementsModifier` attaches a
-:py:class:`~ovito.vis.VectorDisplay` to the new particle property. We can access this display object
+:py:class:`~ovito.vis.VectorVis` to the new particle property. We can access this display object
 in two equivalent ways: either directly though the :py:attr:`~ovito.modifiers.CalculateDisplacementsModifier.vector_display` attribute of the modifier::
 
     >>> modifier = CalculateDisplacementsModifier()

@@ -20,8 +20,8 @@
 ###############################################################################
 
 SET(SourceFiles 
-	tri/TriMeshDisplayEditor.cpp
-	surface/SurfaceMeshDisplayEditor.cpp
+	tri/TriMeshVisEditor.cpp
+	surface/SurfaceMeshVisEditor.cpp
 )
 
 OVITO_STANDARD_PLUGIN(MeshGui

@@ -21,7 +21,7 @@
 
 #include <plugins/mesh/Mesh.h>
 #include <plugins/mesh/tri/TriMeshObject.h>
-#include <plugins/mesh/tri/TriMeshDisplay.h>
+#include <plugins/mesh/tri/TriMeshVis.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
 #include "TriMeshFrameData.h"
 
@@ -40,16 +40,16 @@ PipelineFlowState TriMeshFrameData::handOver(DataSet* dataset, const PipelineFlo
 	OORef<TriMeshObject> triMeshObj = new TriMeshObject(dataset);
 	triMeshObj->mesh().swap(mesh());
 
-	// Assign a TriMeshDisplay to the TriMeshObject.
-	// Re-use existing display object if possible.
-	OORef<DisplayObject> triMeshDisplay;
+	// Assign a TriMeshVis to the TriMeshObject.
+	// Re-use existing vis element if possible.
+	OORef<DataVis> triMeshVis;
 	if(TriMeshObject* previousTriMeshObj = existing.findObject<TriMeshObject>())
-		triMeshDisplay = previousTriMeshObj->displayObject();
-	if(!triMeshDisplay) {
-		triMeshDisplay = new TriMeshDisplay(dataset);
-		triMeshDisplay->loadUserDefaults();
+		triMeshVis = previousTriMeshObj->visElement();
+	if(!triMeshVis) {
+		triMeshVis = new TriMeshVis(dataset);
+		triMeshVis->loadUserDefaults();
 	}
-	triMeshObj->setDisplayObject(triMeshDisplay);
+	triMeshObj->setVisElement(triMeshVis);
 
 	// Put object into output state.
 	output.addObject(triMeshObj);

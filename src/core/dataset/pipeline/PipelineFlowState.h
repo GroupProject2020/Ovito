@@ -31,7 +31,7 @@
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
 /**
- * \brief This object flows down the geometry pipeline of an ObjectNode.
+ * \brief This object flows down the geometry pipeline of an PipelineSceneNode.
  */
 class OVITO_CORE_EXPORT PipelineFlowState
 {

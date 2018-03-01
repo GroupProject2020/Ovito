@@ -22,7 +22,7 @@
 SET(SourceFiles 
 	camera/CameraObjectEditor.cpp
 	simcell/SimulationCellObjectEditor.cpp
-	simcell/SimulationCellDisplayEditor.cpp
+	simcell/SimulationCellVisEditor.cpp
 	widgets/PropertyClassParameterUI.cpp
 	widgets/PropertyReferenceParameterUI.cpp
 	widgets/PropertySelectionComboBox.cpp

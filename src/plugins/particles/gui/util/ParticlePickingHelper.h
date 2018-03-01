@@ -24,7 +24,7 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/viewport/Viewport.h>
 #include <core/rendering/LinePrimitive.h>
 #include <core/rendering/ParticlePrimitive.h>
@@ -57,7 +57,7 @@ public:
 		qlonglong particleId;
 
 		/// The scene node that contains the picked particle.
-		OORef<ObjectNode> objNode;
+		OORef<PipelineSceneNode> objNode;
 	};
 
 public:

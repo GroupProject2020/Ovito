@@ -23,7 +23,7 @@
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/dataset/pipeline/Modifier.h>
 #include <core/dataset/pipeline/ModifierTemplates.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/dataset/scene/SelectionSet.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/dataset/UndoStack.h>
@@ -282,7 +282,7 @@ void ModifyCommandPage::onDeleteModifier()
 		}
 
 		if(index <= 0) {
-			for(ObjectNode* objNode : _pipelineListModel->selectedNodes()) {
+			for(PipelineSceneNode* objNode : _pipelineListModel->selectedNodes()) {
 				ModifierApplication* toBeDeleted = dynamic_object_cast<ModifierApplication>(objNode->dataProvider());
 				if(toBeDeleted) {
 					objNode->setDataProvider(toBeDeleted->input());
@@ -305,19 +305,17 @@ void ModifyCommandPage::onModifierStackDoubleClicked(const QModelIndex& index)
 	PipelineListItem* item = _pipelineListModel->item(index.row());
 	OVITO_CHECK_OBJECT_POINTER(item);
 
-	Modifier* modifier = dynamic_object_cast<Modifier>(item->object());
-	if(modifier) {
+	if(Modifier* modifier = dynamic_object_cast<Modifier>(item->object())) {
 		// Toggle enabled state of modifier.
 		UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(), tr("Toggle modifier state"), [modifier]() {
 			modifier->setEnabled(!modifier->isEnabled());
 		});
 	}
 
-	DisplayObject* displayObj = dynamic_object_cast<DisplayObject>(item->object());
-	if(displayObj) {
-		// Toggle enabled state of display object.
-		UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(), tr("Toggle display state"), [displayObj]() {
-			displayObj->setEnabled(!displayObj->isEnabled());
+	if(DataVis* vis = dynamic_object_cast<DataVis>(item->object())) {
+		// Toggle enabled state of vis element.
+		UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(), tr("Toggle visual element"), [vis]() {
+			vis->setEnabled(!vis->isEnabled());
 		});
 	}
 }
@@ -347,7 +345,7 @@ void ModifyCommandPage::onModifierMoveUp()
 							modApp->setInput(predecessor);
 							break;
 						}
-						else if(ObjectNode* predecessor2 = dynamic_object_cast<ObjectNode>(dependent2)) {
+						else if(PipelineSceneNode* predecessor2 = dynamic_object_cast<PipelineSceneNode>(dependent2)) {
 							predecessor->setInput(modApp->input());
 							predecessor2->setDataProvider(modApp);
 							modApp->setInput(predecessor);
@@ -385,7 +383,7 @@ void ModifyCommandPage::onModifierMoveDown()
 						predecessor->setInput(successor);
 						break;
 					}
-					else if(ObjectNode* predecessor = dynamic_object_cast<ObjectNode>(dependent)) {
+					else if(PipelineSceneNode* predecessor = dynamic_object_cast<PipelineSceneNode>(dependent)) {
 						modApp->setInput(successor->input());
 						successor->setInput(modApp);
 						predecessor->setDataProvider(successor);

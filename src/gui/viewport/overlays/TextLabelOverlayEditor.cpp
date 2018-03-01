@@ -32,8 +32,8 @@
 #include <gui/viewport/overlays/MoveOverlayInputMode.h>
 #include <core/viewport/overlays/TextLabelOverlay.h>
 #include <core/dataset/animation/AnimationSettings.h>
-#include <core/dataset/scene/SceneRoot.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/RootSceneNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include "TextLabelOverlayEditor.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -70,7 +70,7 @@ void TextLabelOverlayEditor::createUI(const RolloutInsertionParameters& rolloutP
 			clear();
 			if(_overlay) {
 				// Find all ObjectNodes in the scene.
-				_overlay->dataset()->sceneRoot()->visitObjectNodes([this](ObjectNode* node) {
+				_overlay->dataset()->sceneRoot()->visitObjectNodes([this](PipelineSceneNode* node) {
 					addItem(node->objectTitle(), QVariant::fromValue(node));
 					return true;
 				});
@@ -88,7 +88,7 @@ void TextLabelOverlayEditor::createUI(const RolloutInsertionParameters& rolloutP
 	CustomParameterUI* sourcePUI = new CustomParameterUI(this, "sourceNode", nodeComboBox,
 			[nodeComboBox](const QVariant& value) {
 				nodeComboBox->clear();
-				ObjectNode* node = dynamic_object_cast<ObjectNode>(value.value<ObjectNode*>());
+				PipelineSceneNode* node = dynamic_object_cast<PipelineSceneNode>(value.value<PipelineSceneNode*>());
 				if(node) {
 					nodeComboBox->addItem(node->objectTitle(), QVariant::fromValue(node));
 				}
@@ -189,7 +189,7 @@ void TextLabelOverlayEditor::updateEditorFields()
 
 	QString str;
 	QStringList variableNames;
-	if(ObjectNode* node = overlay->sourceNode()) {
+	if(PipelineSceneNode* node = overlay->sourceNode()) {
 		const PipelineFlowState& flowState = node->evaluatePipelinePreliminary(false);
 		str.append(tr("<p>Dynamic variables that can be referenced in the label text:</b><ul>"));
 		for(const QString& attrName : flowState.attributes().keys()) {

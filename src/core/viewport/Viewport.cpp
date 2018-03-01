@@ -26,7 +26,7 @@
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/rendering/RenderSettings.h>
 #include <core/dataset/scene/SelectionSet.h>
-#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/scene/RootSceneNode.h>
 #include <core/dataset/data/camera/AbstractCameraObject.h>
 #include <core/dataset/DataSetContainer.h>
 

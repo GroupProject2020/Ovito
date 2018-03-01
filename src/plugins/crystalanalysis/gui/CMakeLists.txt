@@ -24,9 +24,9 @@ SET(SourceFiles
 	objects/patterns/BurgersVectorFamilyEditor.cpp
 	objects/patterns/StructurePatternEditor.cpp
 	objects/patterns/PatternCatalogEditor.cpp
-	objects/dislocations/DislocationDisplayEditor.cpp
-	objects/partition_mesh/PartitionMeshDisplayEditor.cpp
-	objects/slip_surface/SlipSurfaceDisplayEditor.cpp
+	objects/dislocations/DislocationVisEditor.cpp
+	objects/partition_mesh/PartitionMeshVisEditor.cpp
+	objects/slip_surface/SlipSurfaceVisEditor.cpp
 	modifier/ConstructSurfaceModifierEditor.cpp
 	modifier/DislocationAnalysisModifierEditor.cpp
 	modifier/ElasticStrainModifierEditor.cpp

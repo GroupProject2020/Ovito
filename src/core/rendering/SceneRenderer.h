@@ -57,7 +57,7 @@ protected:
 public:
 
 	/// Returns a human-readable string describing the picked object, which will be displayed in the status bar by OVITO.
-	virtual QString infoString(ObjectNode* objectNode, quint32 subobjectId) { return QString(); }
+	virtual QString infoString(PipelineSceneNode* objectNode, quint32 subobjectId) { return QString(); }
 };
 
 /**
@@ -197,7 +197,7 @@ public:
 	}
 
 	/// When picking mode is active, this registers an object being rendered.
-	virtual quint32 beginPickObject(ObjectNode* objNode, ObjectPickInfo* pickInfo = nullptr) { return 0; }
+	virtual quint32 beginPickObject(PipelineSceneNode* objNode, ObjectPickInfo* pickInfo = nullptr) { return 0; }
 
 	/// Call this when rendering of a pickable object is finished.
 	virtual void endPickObject() {}
@@ -237,7 +237,7 @@ protected:
 	void renderModifiers(bool renderOverlay);
 
 	/// \brief Renders the visual representation of the modifiers.
-	void renderModifiers(ObjectNode* objNode, bool renderOverlay);
+	void renderModifiers(PipelineSceneNode* pipeline, bool renderOverlay);
 
 	/// \brief Gets the trajectory of motion of a node.
 	std::vector<Point3> getNodeTrajectory(SceneNode* node);

@@ -112,24 +112,26 @@ namespace Ovito {
 		OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 			class SceneNode;
 			class DataObject;
-			class SceneRoot;
+			class RootSceneNode;
 			class SelectionSet;
 			class Modifier;
 			class ModifierClass;
 			using ModifierClassPtr = const ModifierClass*;
 			class ModifierApplication;
-			class ObjectNode;
+			class PipelineSceneNode;
 			class PipelineFlowState;
 			class PipelineObject;
 			class PipelineCache;
 			class CachingPipelineObject;
-			class DisplayObject;
-			class TransformingDisplayObject;
-			class AsynchronousDisplayObject;
+			class DataVis;
+			class TransformingDataVis;
 			class StaticSource;
 			class ModifierDelegate;
 			class DelegatingModifier;
 			class MultiDelegatingModifier;
+			OVITO_BEGIN_INLINE_NAMESPACE(StdObj)
+				class AbstractCameraObject;
+			OVITO_END_INLINE_NAMESPACE
 		OVITO_END_INLINE_NAMESPACE
 	OVITO_END_INLINE_NAMESPACE
 	OVITO_BEGIN_INLINE_NAMESPACE(Rendering)

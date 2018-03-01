@@ -23,8 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/BondsDisplay.h>
-#include <plugins/particles/objects/BondsDisplay.h>
+#include <plugins/particles/objects/BondsVis.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
 
@@ -133,12 +132,6 @@ public:
 	/// Indicate that outdated computation results should never be reused if the modifier's inputs have changed.
 	virtual bool discardResultsOnInputChange() const override { return true; }
 
-	/// Returns the cutoff radii for pairs of particle types.
-	const PairCutoffsList& pairCutoffs() const { return _pairCutoffs; }
-
-	/// Sets the cutoff radii for pairs of particle types.
-	void setPairCutoffs(const PairCutoffsList& pairCutoffs);
-
 	/// Sets the cutoff radius for a pair of particle types.
 	void setPairCutoff(const QString& typeA, const QString& typeB, FloatType cutoff);
 
@@ -146,15 +139,6 @@ public:
 	FloatType getPairCutoff(const QString& typeA, const QString& typeB) const;
 
 protected:
-
-	/// Saves the class' contents to the given stream.
-	virtual void saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData) override;
-
-	/// Loads the class' contents from the given stream.
-	virtual void loadFromStream(ObjectLoadStream& stream) override;
-
-	/// Creates a copy of this object.
-	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) override;
 
 	/// Handles reference events sent by reference targets of this object.
 	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
@@ -174,13 +158,13 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, minimumCutoff, setMinimumCutoff);
 
 	/// The cutoff radii for pairs of particle types.
-	PairCutoffsList _pairCutoffs;
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(PairCutoffsList, pairCutoffs, setPairCutoffs);
 
 	/// If true, bonds will only be created between atoms from the same molecule.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, onlyIntraMoleculeBonds, setOnlyIntraMoleculeBonds, PROPERTY_FIELD_MEMORIZE);
 
-	/// The display object for rendering the bonds.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(BondsDisplay, bondsDisplay, setBondsDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);
+	/// The vis element for rendering the bonds.
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(BondsVis, bondsVis, setBondsVis, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);
 };
 
 OVITO_END_INLINE_NAMESPACE

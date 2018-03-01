@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2017) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,11 +21,11 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <core/viewport/Viewport.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <gui/viewport/ViewportWindow.h>
 #include <plugins/particles/objects/ParticleProperty.h>
-#include <plugins/particles/objects/ParticleDisplay.h>
+#include <plugins/particles/objects/ParticlesVis.h>
 #include "ParticlePickingHelper.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util)
@@ -99,13 +99,13 @@ void ParticlePickingHelper::renderSelectionMarker(Viewport* vp, ViewportSceneRen
 	if(!posProperty)
 		return;
 
-	// Get the particle display object, which is attached to the position property object.
-	ParticleDisplay* particleDisplay = nullptr;
-	for(DisplayObject* displayObj : posProperty->displayObjects()) {
-		if((particleDisplay = dynamic_object_cast<ParticleDisplay>(displayObj)) != nullptr)
+	// Get the particle vis element, which is attached to the position property object.
+	ParticlesVis* particleVis = nullptr;
+	for(DataVis* vis : posProperty->visElements()) {
+		if((particleVis = dynamic_object_cast<ParticlesVis>(vis)))
 			break;
 	}
-	if(!particleDisplay)
+	if(!particleVis)
 		return;
 
 	// Set up transformation.
@@ -114,7 +114,7 @@ void ParticlePickingHelper::renderSelectionMarker(Viewport* vp, ViewportSceneRen
 	renderer->setWorldTransform(nodeTM);
 
 	// Render highlight marker.
-	particleDisplay->highlightParticle(particleIndex, flowState, renderer);
+	particleVis->highlightParticle(particleIndex, flowState, renderer);
 }
 
 OVITO_END_INLINE_NAMESPACE

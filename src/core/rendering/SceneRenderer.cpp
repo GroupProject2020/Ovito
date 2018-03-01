@@ -23,7 +23,7 @@
 #include <core/rendering/SceneRenderer.h>
 #include <core/rendering/RenderSettings.h>
 #include <core/dataset/scene/SceneNode.h>
-#include <core/dataset/scene/SceneRoot.h>
+#include <core/dataset/scene/RootSceneNode.h>
 #include <core/dataset/pipeline/PipelineObject.h>
 #include <core/dataset/pipeline/Modifier.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
@@ -89,7 +89,7 @@ bool SceneRenderer::renderScene(const PromiseBase& promise)
 {
 	OVITO_CHECK_OBJECT_POINTER(renderDataset());
 
-	if(SceneRoot* rootNode = renderDataset()->sceneRoot()) {
+	if(RootSceneNode* rootNode = renderDataset()->sceneRoot()) {
 		// Recursively render all scene nodes.
 		return renderNode(rootNode, promise);
 	}
@@ -109,16 +109,16 @@ bool SceneRenderer::renderNode(SceneNode* node, const PromiseBase& promise)
 	const AffineTransformation& nodeTM = node->getWorldTransform(time(), interval);
 	setWorldTransform(nodeTM);
 
-	if(ObjectNode* objNode = dynamic_object_cast<ObjectNode>(node)) {
+	if(PipelineSceneNode* pipeline = dynamic_object_cast<PipelineSceneNode>(node)) {
 
 		// Do not render node if it is the view node of the viewport or
 		// if it is the target of the view node.
-		if(!viewport() || !viewport()->viewNode() || (viewport()->viewNode() != objNode && viewport()->viewNode()->lookatTargetNode() != objNode)) {
+		if(!viewport() || !viewport()->viewNode() || (viewport()->viewNode() != node && viewport()->viewNode()->lookatTargetNode() != node)) {
 
 			// Evaluate data pipeline of object node and render the results.
 			SharedFuture<PipelineFlowState> pipelineStateFuture;
 			if(!isInteractive()) {
-				pipelineStateFuture = objNode->evaluateRenderingPipeline(time());
+				pipelineStateFuture = pipeline->evaluateRenderingPipeline(time());
 				if(!dataset()->container()->taskManager().waitForTask(pipelineStateFuture))
 					return false;
 
@@ -128,14 +128,14 @@ bool SceneRenderer::renderNode(SceneNode* node, const PromiseBase& promise)
 			}
 			const PipelineFlowState& state = pipelineStateFuture.isValid() ? 
 												pipelineStateFuture.result() : 
-												objNode->evaluatePipelinePreliminary(true);
+												pipeline->evaluatePipelinePreliminary(true);
 
-			// Render every display object of every data object in the pipeline state.
+			// Invoke all vis elements of all data objects in the pipeline state.
 			for(const auto& dataObj : state.objects()) {
-				for(DisplayObject* displayObj : dataObj->displayObjects()) {
-					OVITO_ASSERT(displayObj);
-					if(displayObj->isEnabled()) {
-						displayObj->render(time(), dataObj, state, this, objNode);
+				for(DataVis* vis : dataObj->visElements()) {
+					OVITO_ASSERT(vis);
+					if(vis->isEnabled()) {
+						vis->render(time(), dataObj, state, this, pipeline);
 					}
 				}	
 			}
@@ -226,29 +226,29 @@ void SceneRenderer::renderNodeTrajectory(SceneNode* node)
 void SceneRenderer::renderModifiers(bool renderOverlay)
 {
 	// Visit all objects in the scene.
-	renderDataset()->sceneRoot()->visitObjectNodes([this, renderOverlay](ObjectNode* objNode) -> bool {
-		renderModifiers(objNode, renderOverlay);
+	renderDataset()->sceneRoot()->visitObjectNodes([this, renderOverlay](PipelineSceneNode* pipeline) -> bool {
+		renderModifiers(pipeline, renderOverlay);
 		return true;
 	});
 }
 
 /******************************************************************************
-* Renders the visual representation of the modifiers.
+* Renders the visual representation of the modifiers in a pipeline.
 ******************************************************************************/
-void SceneRenderer::renderModifiers(ObjectNode* objNode, bool renderOverlay)
+void SceneRenderer::renderModifiers(PipelineSceneNode* pipeline, bool renderOverlay)
 {
-	ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(objNode->dataProvider());
+	ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(pipeline->dataProvider());
 	while(modApp) {
-
 		Modifier* mod = modApp->modifier();
 
-		// Setup object node transformation.
+		// Setup local transformation.
 		TimeInterval interval;
-		setWorldTransform(objNode->getWorldTransform(time(), interval));
+		setWorldTransform(pipeline->getWorldTransform(time(), interval));
 
 		// Render modifier.
-		mod->renderModifierVisual(time(), objNode, modApp, this, renderOverlay);
+		mod->renderModifierVisual(time(), pipeline, modApp, this, renderOverlay);
 
+		// Traverse up the pipeline.
 		modApp = dynamic_object_cast<ModifierApplication>(modApp->input());
 	}
 }

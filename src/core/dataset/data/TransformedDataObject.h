@@ -25,13 +25,13 @@
 #include <core/Core.h>
 #include <core/dataset/data/DataObject.h>
 #include <core/dataset/data/VersionedDataObjectRef.h>
-#include <core/dataset/data/TransformingDisplayObject.h>
+#include <core/dataset/data/TransformingDataVis.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 	
 /**
  * \brief Base class for transient data objects that are dynamically generated from other data objects
- *        by an asynchronous DisplayObject implementation.
+ *        by an asynchronous DataVis implementation.
  */
 class OVITO_CORE_EXPORT TransformedDataObject : public DataObject
 {
@@ -44,11 +44,12 @@ public:
 	TransformedDataObject(DataSet* dataset) : DataObject(dataset) {}
 
 	/// \brief Initialization constructor.
-	TransformedDataObject(TransformingDisplayObject* creator, DataObject* sourceData) :
+	TransformedDataObject(TransformingDataVis* creator, DataObject* sourceData) :
 		DataObject(creator->dataset()),
 		_sourceDataObject(sourceData),
-		_generatorDisplayObjectRevision(creator->revisionNumber()) {
-			setDisplayObject(creator);
+		_visElementRevision(creator->revisionNumber()) 
+		{
+			setVisElement(creator);
 		}
 
 	/// Indicate that this transient data object cannot be edited.
@@ -58,14 +59,14 @@ private:
 
 	/// Stores a weak reference to + revision version number of the original DataObject 
 	/// this TransformedDataObject was derived from. 
-	/// We use this detected changes to the source object and avoid unnecessary regeneration 
+	/// We use it to detect changes to the source object and avoid unnecessary regeneration 
 	/// of the transient data object.
 	DECLARE_RUNTIME_PROPERTY_FIELD(VersionedDataObjectRef, sourceDataObject, setSourceDataObject);
 
-	/// Stores a revision version number of the TransformingDisplayObject that created this TransformedDataObject. 
-	/// We use this detected changes to the TransformingDisplayObject's parameters that would require a re-generation of the
+	/// Stores a revision version number of the TransformingDataVis that created this TransformedDataObject. 
+	/// We use this to detect changes to the TransformingDataVis's parameters that require a re-generation of the
 	/// transient data object.
-	DECLARE_RUNTIME_PROPERTY_FIELD(unsigned int, generatorDisplayObjectRevision, setGeneratorDisplayObjectRevision);
+	DECLARE_RUNTIME_PROPERTY_FIELD(unsigned int, visElementRevision, setVisElementRevision);
 };
 
 OVITO_END_INLINE_NAMESPACE

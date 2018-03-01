@@ -27,7 +27,7 @@
 #include <plugins/stdobj/properties/GenericPropertyModifier.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <plugins/stdobj/simcell/PeriodicDomainDataObject.h>
-#include <plugins/stdobj/simcell/SimulationCellDisplay.h>
+#include <plugins/stdobj/simcell/SimulationCellVis.h>
 #include <plugins/pyscript/binding/PythonBinding.h>
 #include <core/app/PluginManager.h>
 
@@ -131,7 +131,7 @@ PYBIND11_PLUGIN(StdObj)
 		})
 	;
 
-	ovito_class<SimulationCellDisplay, DisplayObject>(m,
+	ovito_class<SimulationCellVis, DataVis>(m,
 			":Base class: :py:class:`ovito.vis.DataVis`\n\n"
 			"Controls the visual appearance of :py:class:`~ovito.data.SimulationCell` objects."
 			"The following script demonstrates how to change the line width of the simulation cell:"
@@ -139,16 +139,16 @@ PYBIND11_PLUGIN(StdObj)
 			".. literalinclude:: ../example_snippets/simulation_cell_display.py\n",
 			// Python class name:
 			"SimulationCellVis")
-		.def_property("line_width", &SimulationCellDisplay::cellLineWidth, &SimulationCellDisplay::setCellLineWidth,
+		.def_property("line_width", &SimulationCellVis::cellLineWidth, &SimulationCellVis::setCellLineWidth,
 				"The width of the simulation cell line (in simulation units of length)."
 				"\n\n"
 				":Default: 0.14% of the simulation box diameter\n")
-		.def_property("render_cell", &SimulationCellDisplay::renderCellEnabled, &SimulationCellDisplay::setRenderCellEnabled,
+		.def_property("render_cell", &SimulationCellVis::renderCellEnabled, &SimulationCellVis::setRenderCellEnabled,
 				"Boolean flag controlling the cell's visibility in rendered images. "
 				"If ``False``, the cell will only be visible in the interactive viewports. "
 				"\n\n"
 				":Default: ``True``\n")
-		.def_property("rendering_color", &SimulationCellDisplay::cellColor, &SimulationCellDisplay::setCellColor,
+		.def_property("rendering_color", &SimulationCellVis::cellColor, &SimulationCellVis::setCellColor,
 				"The line color used when rendering the cell."
 				"\n\n"
 				":Default: ``(0, 0, 0)``\n")

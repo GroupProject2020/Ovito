@@ -22,7 +22,7 @@
 #include <core/Core.h>
 #include <core/rendering/FrameBuffer.h>
 #include <core/rendering/RenderSettings.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/utilities/concurrent/Task.h>
 #include <core/utilities/concurrent/TaskManager.h>
 #include <core/utilities/units/UnitsManager.h>

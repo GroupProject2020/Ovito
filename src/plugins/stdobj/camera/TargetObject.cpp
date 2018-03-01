@@ -20,27 +20,27 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/stdobj/StdObj.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/rendering/SceneRenderer.h>
 #include "TargetObject.h"
 
 namespace Ovito { namespace StdObj {
 
 IMPLEMENT_OVITO_CLASS(TargetObject);
-IMPLEMENT_OVITO_CLASS(TargetDisplayObject);
+IMPLEMENT_OVITO_CLASS(TargetVis);
 
 /******************************************************************************
 * Constructs a target object.
 ******************************************************************************/
 TargetObject::TargetObject(DataSet* dataset) : DataObject(dataset)
 {
-	addDisplayObject(new TargetDisplayObject(dataset));
+	addVisElement(new TargetVis(dataset));
 }
 
 /******************************************************************************
-* Lets the display object render a data object.
+* Lets the vis element render a data object.
 ******************************************************************************/
-void TargetDisplayObject::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, ObjectNode* contextNode)
+void TargetVis::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
 {
 	// Target objects are only visible in the viewports.
 	if(renderer->isInteractive() == false || renderer->viewport() == nullptr)
@@ -115,7 +115,7 @@ void TargetDisplayObject::render(TimePoint time, DataObject* dataObject, const P
 /******************************************************************************
 * Computes the bounding box of the object.
 ******************************************************************************/
-Box3 TargetDisplayObject::boundingBox(TimePoint time, DataObject* dataObject, ObjectNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
+Box3 TargetVis::boundingBox(TimePoint time, DataObject* dataObject, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
 	// This is not a physical object. It doesn't have a size.
 	return Box3(Point3::Origin(), Point3::Origin());

@@ -27,7 +27,7 @@ atoms.set_calculator(spc)
 data = DataCollection.create_from_ase_atoms(atoms)
 
 # Create a node and insert it into the scene
-node = ObjectNode()
+node = PipelineSceneNode()
 node.source = data
 ovito.dataset.scene_nodes.append(node)
 

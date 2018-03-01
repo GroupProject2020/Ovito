@@ -168,8 +168,8 @@ void FileSourceEditor::onEditorContentsReplaced(RefTarget* newObject)
 ******************************************************************************/
 void FileSourceEditor::onPickLocalInputFile()
 {
-	FileSource* obj = static_object_cast<FileSource>(editObject());
-	if(!obj) return;
+	FileSource* fileSource = static_object_cast<FileSource>(editObject());
+	if(!fileSource) return;
 
 	try {
 		QUrl newSourceUrl;
@@ -182,8 +182,8 @@ void FileSourceEditor::onPickLocalInputFile()
 
 			// Let the user select a file.
 			ImportFileDialog dialog(importerClasses, dataset(), container()->window(), tr("Pick input file"));
-			if(obj->sourceUrl().isLocalFile())
-				dialog.selectFile(obj->sourceUrl().toLocalFile());
+			if(!fileSource->sourceUrls().empty() && fileSource->sourceUrls().front().isLocalFile())
+				dialog.selectFile(fileSource->sourceUrls().front().toLocalFile());
 			if(dialog.exec() != QDialog::Accepted)
 				return;
 
@@ -192,7 +192,7 @@ void FileSourceEditor::onPickLocalInputFile()
 		}
 
 		// Set the new input location.
-		importNewFile(obj, newSourceUrl, importerType);
+		importNewFile(fileSource, newSourceUrl, importerType);
 	}
 	catch(const Exception& ex) {
 		ex.reportError();
@@ -204,8 +204,8 @@ void FileSourceEditor::onPickLocalInputFile()
 ******************************************************************************/
 void FileSourceEditor::onPickRemoteInputFile()
 {
-	FileSource* obj = static_object_cast<FileSource>(editObject());
-	if(!obj) return;
+	FileSource* fileSource = static_object_cast<FileSource>(editObject());
+	if(!fileSource) return;
 
 	try {
 		QUrl newSourceUrl;
@@ -218,9 +218,11 @@ void FileSourceEditor::onPickRemoteInputFile()
 
 			// Let the user select a new URL.
 			ImportRemoteFileDialog dialog(importerClasses, dataset(), container()->window(), tr("Pick source"));
-			QUrl oldUrl = obj->sourceUrl();
-			if(obj->storedFrameIndex() >= 0 && obj->storedFrameIndex() < obj->frames().size())
-				oldUrl = obj->frames()[obj->storedFrameIndex()].sourceFile;
+			QUrl oldUrl;
+			if(fileSource->storedFrameIndex() >= 0 && fileSource->storedFrameIndex() < fileSource->frames().size())
+				oldUrl = fileSource->frames()[fileSource->storedFrameIndex()].sourceFile;
+			else if(!fileSource->sourceUrls().empty())
+				oldUrl = fileSource->sourceUrls().front();
 			dialog.selectFile(oldUrl);
 			if(dialog.exec() != QDialog::Accepted)
 				return;
@@ -230,7 +232,7 @@ void FileSourceEditor::onPickRemoteInputFile()
 		}
 
 		// Set the new input location.
-		importNewFile(obj, newSourceUrl, importerType);
+		importNewFile(fileSource, newSourceUrl, importerType);
 	}
 	catch(const Exception& ex) {
 		ex.reportError();
@@ -288,7 +290,7 @@ bool FileSourceEditor::importNewFile(FileSource* fileSource, const QUrl& url, Ov
 	}
 
 	// Set the new input location.
-	return fileSource->setSource(url, newImporter, false);
+	return fileSource->setSource({url}, newImporter, false);
 }
 
 /******************************************************************************
@@ -296,9 +298,8 @@ bool FileSourceEditor::importNewFile(FileSource* fileSource, const QUrl& url, Ov
 ******************************************************************************/
 void FileSourceEditor::onReloadFrame()
 {
-	FileSource* obj = static_object_cast<FileSource>(editObject());
-	if(obj) {
-		obj->reloadFrame(obj->storedFrameIndex());
+	if(FileSource* fileSource = static_object_cast<FileSource>(editObject())) {
+		fileSource->reloadFrame(fileSource->storedFrameIndex());
 	}
 }
 
@@ -307,10 +308,8 @@ void FileSourceEditor::onReloadFrame()
 ******************************************************************************/
 void FileSourceEditor::onReloadAnimation()
 {
-	FileSource* obj = static_object_cast<FileSource>(editObject());
-	OVITO_CHECK_OBJECT_POINTER(obj);
-	if(obj) {
-		obj->updateListOfFrames();
+	if(FileSource* fileSource = static_object_cast<FileSource>(editObject())) {
+		fileSource->updateListOfFrames();
 	}
 }
 
@@ -319,25 +318,26 @@ void FileSourceEditor::onReloadAnimation()
 ******************************************************************************/
 void FileSourceEditor::onWildcardPatternEntered()
 {
-	FileSource* obj = static_object_cast<FileSource>(editObject());
-	OVITO_CHECK_OBJECT_POINTER(obj);
+	FileSource* fileSource = static_object_cast<FileSource>(editObject());
+	OVITO_CHECK_OBJECT_POINTER(fileSource);
 
-	undoableTransaction(tr("Change wildcard pattern"), [this, obj]() {
-		if(!obj->importer())
+	undoableTransaction(tr("Change wildcard pattern"), [this, fileSource]() {
+		if(!fileSource->importer())
 			return;
 
 		QString pattern = _wildcardPatternTextbox->text().trimmed();
 		if(pattern.isEmpty())
 			return;
 
-		QUrl newUrl = obj->sourceUrl();
+		QUrl newUrl;
+		if(!fileSource->sourceUrls().empty()) newUrl = fileSource->sourceUrls().front();
 		QFileInfo fileInfo(newUrl.path());
 		fileInfo.setFile(fileInfo.dir(), pattern);
 		newUrl.setPath(fileInfo.filePath());
 		if(!newUrl.isValid())
 			throwException(tr("URL is not valid."));
 
-		obj->setSource(newUrl, obj->importer(), false);
+		fileSource->setSource({newUrl}, fileSource->importer(), false);
 	});
 	updateInformationLabel();
 }
@@ -347,8 +347,8 @@ void FileSourceEditor::onWildcardPatternEntered()
 ******************************************************************************/
 void FileSourceEditor::updateInformationLabel()
 {
-	FileSource* obj = static_object_cast<FileSource>(editObject());
-	if(!obj) {
+	FileSource* fileSource = static_object_cast<FileSource>(editObject());
+	if(!fileSource) {
 		_wildcardPatternTextbox->clear();
 		_wildcardPatternTextbox->setEnabled(false);
 		_sourcePathLabel->setText(QString());
@@ -361,25 +361,27 @@ void FileSourceEditor::updateInformationLabel()
 	}
 
 	QString wildcardPattern;
-	if(obj->sourceUrl().isLocalFile()) {
-		QFileInfo fileInfo(obj->sourceUrl().toLocalFile());
-		_sourcePathLabel->setText(fileInfo.dir().path());
-		wildcardPattern = fileInfo.fileName();
-	}
-	else {
-		QFileInfo fileInfo(obj->sourceUrl().path());
-		QUrl url = obj->sourceUrl();
-		url.setPath(fileInfo.path());
-		_sourcePathLabel->setText(url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded));
-		wildcardPattern = fileInfo.fileName();
+	if(!fileSource->sourceUrls().empty()) {
+		if(fileSource->sourceUrls().front().isLocalFile()) {
+			QFileInfo fileInfo(fileSource->sourceUrls().front().toLocalFile());
+			_sourcePathLabel->setText(fileInfo.dir().path());
+			wildcardPattern = fileInfo.fileName();
+		}
+		else {
+			QFileInfo fileInfo(fileSource->sourceUrls().front().path());
+			QUrl url = fileSource->sourceUrls().front();
+			url.setPath(fileInfo.path());
+			_sourcePathLabel->setText(url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded));
+			wildcardPattern = fileInfo.fileName();
+		}
 	}
 
 	_wildcardPatternTextbox->setText(wildcardPattern);
 	_wildcardPatternTextbox->setEnabled(true);
 
-	int frameIndex = obj->storedFrameIndex();
+	int frameIndex = fileSource->storedFrameIndex();
 	if(frameIndex >= 0) {
-		const FileSourceImporter::Frame& frameInfo = obj->frames()[frameIndex];
+		const FileSourceImporter::Frame& frameInfo = fileSource->frames()[frameIndex];
 		if(frameInfo.sourceFile.isLocalFile()) {
 			_filenameLabel->setText(QFileInfo(frameInfo.sourceFile.toLocalFile()).fileName());
 		}
@@ -394,7 +396,7 @@ void FileSourceEditor::updateInformationLabel()
 	// Count the number of files matching the wildcard pattern.
 	int fileSeriesCount = 0;
 	QUrl lastUrl;
-	for(const FileSourceImporter::Frame& frame : obj->frames()) {
+	for(const FileSourceImporter::Frame& frame : fileSource->frames()) {
 		if(frame.sourceFile != lastUrl) {
 			fileSeriesCount++;
 			lastUrl = frame.sourceFile;
@@ -407,27 +409,27 @@ void FileSourceEditor::updateInformationLabel()
 	else
 		_fileSeriesLabel->setText(tr("Found %1 matching files").arg(fileSeriesCount));
 
-	if(!obj->frames().empty())
-		_timeSeriesLabel->setText(tr("Showing frame %1 of %2").arg(obj->storedFrameIndex()+1).arg(obj->frames().count()));
+	if(!fileSource->frames().empty())
+		_timeSeriesLabel->setText(tr("Showing frame %1 of %2").arg(fileSource->storedFrameIndex()+1).arg(fileSource->frames().count()));
 	else
 		_timeSeriesLabel->setText(tr("No frames available"));
 
-	for(int index = 0; index < obj->frames().size(); index++) {
+	for(int index = 0; index < fileSource->frames().size(); index++) {
 		if(_framesListBox->count() <= index) {
-			_framesListBox->addItem(obj->frames()[index].label);
+			_framesListBox->addItem(fileSource->frames()[index].label);
 		}
 		else {
-			if(_framesListBox->itemText(index) != obj->frames()[index].label)
-				_framesListBox->setItemText(index, obj->frames()[index].label);
+			if(_framesListBox->itemText(index) != fileSource->frames()[index].label)
+				_framesListBox->setItemText(index, fileSource->frames()[index].label);
 		}
 	}
-	for(int index = _framesListBox->count() - 1; index >= obj->frames().size(); index--) {
+	for(int index = _framesListBox->count() - 1; index >= fileSource->frames().size(); index--) {
 		_framesListBox->removeItem(index);
 	}
 	_framesListBox->setCurrentIndex(frameIndex);
 	_framesListBox->setEnabled(_framesListBox->count() > 1);
 
-	_statusLabel->setStatus(obj->status());
+	_statusLabel->setStatus(fileSource->status());
 }
 
 /******************************************************************************
@@ -435,10 +437,10 @@ void FileSourceEditor::updateInformationLabel()
 ******************************************************************************/
 void FileSourceEditor::onFrameSelected(int index)
 {
-	FileSource* obj = static_object_cast<FileSource>(editObject());
-	if(!obj) return;
+	FileSource* fileSource = static_object_cast<FileSource>(editObject());
+	if(!fileSource) return;
 
-	dataset()->animationSettings()->setTime(obj->sourceFrameToAnimationTime(index));
+	dataset()->animationSettings()->setTime(fileSource->sourceFrameToAnimationTime(index));
 }
 
 /******************************************************************************

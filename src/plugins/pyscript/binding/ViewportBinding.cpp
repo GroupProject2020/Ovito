@@ -278,7 +278,7 @@ void defineViewportSubmodule(py::module m)
 				"\n\n"
 				"The string can contain placeholder references to dynamically computed attributes of the form ``[attribute]``, which will be replaced "
 				"by their actual value before rendering the text label. "
-				"Attributes are taken from the pipeline output of the :py:class:`~ovito.ObjectNode` assigned to the overlay's :py:attr:`.source_node` property. "
+				"Attributes are taken from the pipeline output of the :py:class:`~ovito.PipelineSceneNode` assigned to the overlay's :py:attr:`.source_node` property. "
 				"\n\n"
 				"The following example demonstrates how to insert a text label that displays the number of currently selected particles: "
 				"\n\n"
@@ -286,7 +286,7 @@ void defineViewportSubmodule(py::module m)
 				"\n\n"
 				":Default: \"Text label\"")
 		.def_property("source_node", &TextLabelOverlay::sourceNode, &TextLabelOverlay::setSourceNode,
-				"The :py:class:`~ovito.ObjectNode` whose modification pipeline is queried for dynamic attributes that can be referenced "
+				"The :py:class:`~ovito.PipelineSceneNode` whose modification pipeline is queried for dynamic attributes that can be referenced "
 				"in the text string. See the :py:attr:`.text` property for more information. ")
 		.def_property("text_color", &TextLabelOverlay::textColor, &TextLabelOverlay::setTextColor,
 				"The text rendering color."

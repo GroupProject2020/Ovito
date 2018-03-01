@@ -23,11 +23,11 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/crystalanalysis/objects/dislocations/DislocationDisplay.h>
+#include <plugins/crystalanalysis/objects/dislocations/DislocationVis.h>
 #include <gui/mainwin/cmdpanel/UtilityApplet.h>
 #include <gui/viewport/input/ViewportInputMode.h>
 #include <gui/viewport/input/ViewportInputManager.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
@@ -101,10 +101,10 @@ private:
 		int segmentIndex;
 
 		/// The scene node that contains the picked segment.
-		OORef<ObjectNode> objNode;
+		OORef<PipelineSceneNode> objNode;
 
-		/// The display object that rendered the picked segment.
-		OORef<DislocationDisplay> displayObj;
+		/// The vis element that rendered the picked segment.
+		OORef<DislocationVis> visElement;
 	};
 
 	/// Determines the dislocation segment under the mouse cursor.

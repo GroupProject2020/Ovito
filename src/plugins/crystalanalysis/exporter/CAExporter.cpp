@@ -29,7 +29,7 @@
 #include <core/utilities/concurrent/Promise.h>
 #include <core/utilities/concurrent/TaskManager.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include "CAExporter.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
@@ -42,7 +42,7 @@ IMPLEMENT_OVITO_CLASS(CAExporter);
 bool CAExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager)
 {
 	// Get particle data to be exported.
-	ObjectNode* objectNode = dynamic_object_cast<ObjectNode>(sceneNode);
+	PipelineSceneNode* objectNode = dynamic_object_cast<PipelineSceneNode>(sceneNode);
 	if(!objectNode)
 		throwException(tr("The scene node to be exported is not an object node."));
 

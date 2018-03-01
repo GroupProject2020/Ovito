@@ -20,14 +20,14 @@
 ###############################################################################
 
 SET(SourceFiles 
-	objects/ParticleDisplayEditor.cpp
+	objects/ParticlesVisEditor.cpp
 	objects/ParticleTypeEditor.cpp
 	objects/ParticlePropertyEditor.cpp
 	objects/BondTypeEditor.cpp
 	objects/BondPropertyEditor.cpp
-	objects/VectorDisplayEditor.cpp
-	objects/BondsDisplayEditor.cpp
-	objects/TrajectoryDisplayEditor.cpp
+	objects/VectorVisEditor.cpp
+	objects/BondsVisEditor.cpp
+	objects/TrajectoryVisEditor.cpp
 	objects/TrajectoryGeneratorEditor.cpp
 	modifier/coloring/AmbientOcclusionModifierEditor.cpp
 	modifier/modify/CreateBondsModifierEditor.cpp

@@ -22,7 +22,7 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/particles/objects/ParticleProperty.h>
-#include <plugins/particles/objects/VectorDisplay.h>
+#include <plugins/particles/objects/VectorVis.h>
 #include <plugins/stdobj/util/OutputHelper.h>
 #include "ParticlesAssignColorModifierDelegate.h"
 
@@ -48,12 +48,12 @@ PropertyObject* ParticlesAssignColorModifierDelegate::createOutputColorProperty(
 }
 
 /******************************************************************************
-* Returns whether this slice function can be applied to the given input data.
+* Returns whether this function can be applied to the given input data.
 ******************************************************************************/
 bool ParticleVectorsAssignColorModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
 	for(DataObject* obj : input.objects()) {
-        if(dynamic_object_cast<VectorDisplay>(obj->displayObject()))
+        if(dynamic_object_cast<VectorVis>(obj->visElement()))
             return true;
     }
     return false;
@@ -66,9 +66,8 @@ PropertyObject* ParticleVectorsAssignColorModifierDelegate::createOutputColorPro
 {
     PropertyObject* colorProperty = oh.outputStandardProperty<ParticleProperty>(ParticleProperty::VectorColorProperty, false);
     if(initializeWithExistingColors) {
-        VectorDisplay* vectorDisplay = dynamic_object_cast<VectorDisplay>(colorProperty->displayObject());
-        if(vectorDisplay) {
-            std::fill(colorProperty->dataColor(), colorProperty->dataColor() + colorProperty->size(), vectorDisplay->arrowColor());
+        if(VectorVis* vectorVis = dynamic_object_cast<VectorVis>(colorProperty->visElement())) {
+            std::fill(colorProperty->dataColor(), colorProperty->dataColor() + colorProperty->size(), vectorVis->arrowColor());
         }
     }
     return colorProperty;

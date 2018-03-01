@@ -23,7 +23,7 @@
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <plugins/particles/objects/BondProperty.h>
-#include <plugins/particles/objects/BondsDisplay.h>
+#include <plugins/particles/objects/BondsVis.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/dataset/io/FileSource.h>
 #include <core/dataset/animation/AnimationSettings.h>
@@ -80,7 +80,7 @@ Future<PipelineFlowState> CombineParticleSetsModifier::evaluate(TimePoint time, 
 		// Make sure the obtained dataset is valid and ready to use.
 		if(secondaryState.status().type() == PipelineStatus::Error) {
 			if(FileSource* fileSource = dynamic_object_cast<FileSource>(secondaryDataSource())) {
-				if(fileSource->sourceUrl().isEmpty())
+				if(fileSource->sourceUrls().empty())
 					throwException(tr("Please pick an input file to be merged."));
 			}
 			output.setStatus(secondaryState.status());

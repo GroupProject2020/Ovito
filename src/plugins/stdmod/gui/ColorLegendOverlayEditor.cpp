@@ -31,8 +31,8 @@
 #include <gui/viewport/input/ViewportInputManager.h>
 #include <gui/viewport/overlays/MoveOverlayInputMode.h>
 #include <gui/actions/ViewportModeAction.h>
-#include <core/dataset/scene/SceneRoot.h>
-#include <core/dataset/scene/ObjectNode.h>
+#include <core/dataset/scene/RootSceneNode.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <plugins/stdmod/viewport/ColorLegendOverlay.h>
 #include "ColorLegendOverlayEditor.h"
@@ -72,7 +72,7 @@ void ColorLegendOverlayEditor::createUI(const RolloutInsertionParameters& rollou
 			if(_overlay) {
 				// Find all ColorCodingModifiers in the scene. For this we have to visit all
 				// object nodes and iterate over their modification pipelines.
-				_overlay->dataset()->sceneRoot()->visitObjectNodes([this](ObjectNode* node) {
+				_overlay->dataset()->sceneRoot()->visitObjectNodes([this](PipelineSceneNode* node) {
 					PipelineObject* obj = node->dataProvider();
 					while(obj) {
 						if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(obj)) {

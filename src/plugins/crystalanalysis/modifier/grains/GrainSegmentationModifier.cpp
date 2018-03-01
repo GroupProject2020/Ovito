@@ -36,7 +36,7 @@ DEFINE_FLAGS_PROPERTY_FIELD(GrainSegmentationModifier, minGrainAtomCount, "MinGr
 DEFINE_FLAGS_REFERENCE_FIELD(GrainSegmentationModifier, patternCatalog, "PatternCatalog", PatternCatalog, PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
 DEFINE_FLAGS_PROPERTY_FIELD(GrainSegmentationModifier, smoothingLevel, "SmoothingLevel", PROPERTY_FIELD_MEMORIZE);
 DEFINE_FLAGS_PROPERTY_FIELD(GrainSegmentationModifier, probeSphereRadius, "Radius", PROPERTY_FIELD_MEMORIZE);
-DEFINE_FLAGS_REFERENCE_FIELD(GrainSegmentationModifier, meshDisplay, "MeshDisplay", PartitionMeshDisplay, PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
+DEFINE_FLAGS_REFERENCE_FIELD(GrainSegmentationModifier, meshDisplay, "MeshDisplay", PartitionMeshVis, PROPERTY_FIELD_ALWAYS_DEEP_COPY|PROPERTY_FIELD_MEMORIZE);
 DEFINE_PROPERTY_FIELD(GrainSegmentationModifier, onlySelectedParticles, "OnlySelectedParticles");
 DEFINE_PROPERTY_FIELD(GrainSegmentationModifier, outputPartitionMesh, "OutputPartitionMesh");
 SET_PROPERTY_FIELD_LABEL(GrainSegmentationModifier, inputCrystalStructure, "Input crystal structure");
@@ -79,7 +79,7 @@ GrainSegmentationModifier::GrainSegmentationModifier(DataSet* dataset) : Structu
 
 
 	// Create the display object.
-	_meshDisplay = new PartitionMeshDisplay(dataset);
+	_meshDisplay = new PartitionMeshVis(dataset);
 
 	// Create pattern catalog.
 	_patternCatalog = new PatternCatalog(dataset);
