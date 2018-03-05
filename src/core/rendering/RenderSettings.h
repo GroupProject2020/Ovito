@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -65,32 +65,18 @@ public:
 	void setBackgroundColor(const Color& color) { if(backgroundColorController()) backgroundColorController()->setCurrentColorValue(color); }
 
 	/// Returns the output filename of the rendered image.
-	const QString& imageFilename() const { return _imageInfo.filename(); }
+	const QString& imageFilename() const { return imageInfo().filename(); }
 	/// Sets the output filename of the rendered image.
 	void setImageFilename(const QString& filename);
-
-	/// Returns the output image info of the rendered image.
-	const ImageInfo& imageInfo() const { return _imageInfo; }
-	/// Sets the output image info for the rendered image.
-	void setImageInfo(const ImageInfo& imageInfo);
 
 public:
 
 	Q_PROPERTY(QString imageFilename READ imageFilename WRITE setImageFilename);
 
-protected:
-
-	/// Saves the class' contents to the given stream. 
-	virtual void saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData) override;
-	/// Loads the class' contents from the given stream. 
-	virtual void loadFromStream(ObjectLoadStream& stream) override;
-	/// Creates a copy of this object. 
-	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) override;
-	
 private:
 
 	/// Contains the output filename and format of the image to be rendered.
-	ImageInfo _imageInfo;
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(ImageInfo, imageInfo, setImageInfo);
 
 	/// The instance of the plugin renderer class. 
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SceneRenderer, renderer, setRenderer, PROPERTY_FIELD_MEMORIZE);
@@ -128,6 +114,9 @@ private:
 	/// Specifies the base number for filename generation when rendering an animation.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, fileNumberBase, setFileNumberBase);
 
+	/// The frames per second for encoding videos.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, framesPerSecond, setFramesPerSecond);
+
     friend class RenderSettingsEditor;
 };
 
@@ -136,5 +125,3 @@ OVITO_END_INLINE_NAMESPACE
 
 Q_DECLARE_METATYPE(Ovito::RenderSettings::RenderingRangeType);
 Q_DECLARE_TYPEINFO(Ovito::RenderSettings::RenderingRangeType, Q_PRIMITIVE_TYPE);
-
-

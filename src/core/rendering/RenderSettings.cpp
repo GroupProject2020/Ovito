@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,7 +21,6 @@
 
 #include <core/Core.h>
 #include <core/rendering/SceneRenderer.h>
-#include <core/viewport/Viewport.h>
 #include <core/app/PluginManager.h>
 #include <core/utilities/units/UnitsManager.h>
 #include "RenderSettings.h"
@@ -29,6 +28,7 @@
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
 
 IMPLEMENT_OVITO_CLASS(RenderSettings);
+DEFINE_PROPERTY_FIELD(RenderSettings, imageInfo);
 DEFINE_REFERENCE_FIELD(RenderSettings, renderer);
 DEFINE_REFERENCE_FIELD(RenderSettings, backgroundColorController);
 DEFINE_PROPERTY_FIELD(RenderSettings, outputImageWidth);
@@ -41,6 +41,8 @@ DEFINE_PROPERTY_FIELD(RenderSettings, customRangeStart);
 DEFINE_PROPERTY_FIELD(RenderSettings, customRangeEnd);
 DEFINE_PROPERTY_FIELD(RenderSettings, everyNthFrame);
 DEFINE_PROPERTY_FIELD(RenderSettings, fileNumberBase);
+DEFINE_PROPERTY_FIELD(RenderSettings, framesPerSecond);
+SET_PROPERTY_FIELD_LABEL(RenderSettings, imageInfo, "Image info");
 SET_PROPERTY_FIELD_LABEL(RenderSettings, renderer, "Renderer");
 SET_PROPERTY_FIELD_LABEL(RenderSettings, backgroundColorController, "Background color");
 SET_PROPERTY_FIELD_LABEL(RenderSettings, outputImageWidth, "Width");
@@ -53,9 +55,11 @@ SET_PROPERTY_FIELD_LABEL(RenderSettings, customRangeStart, "Range start");
 SET_PROPERTY_FIELD_LABEL(RenderSettings, customRangeEnd, "Range end");
 SET_PROPERTY_FIELD_LABEL(RenderSettings, everyNthFrame, "Every Nth frame");
 SET_PROPERTY_FIELD_LABEL(RenderSettings, fileNumberBase, "File number base");
+SET_PROPERTY_FIELD_LABEL(RenderSettings, framesPerSecond, "Frames per second");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(RenderSettings, outputImageWidth, IntegerParameterUnit, 1);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(RenderSettings, outputImageHeight, IntegerParameterUnit, 1);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(RenderSettings, everyNthFrame, IntegerParameterUnit, 1);
+SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(RenderSettings, framesPerSecond, IntegerParameterUnit, 0);
 
 /******************************************************************************
 * Constructor.
@@ -70,7 +74,8 @@ RenderSettings::RenderSettings(DataSet* dataset) : RefTarget(dataset),
 	_customRangeStart(0), 
 	_customRangeEnd(100), 
 	_everyNthFrame(1), 
-	_fileNumberBase(0)
+	_fileNumberBase(0),
+	_framesPerSecond(0)
 {
 	// Setup default background color.
 	setBackgroundColorController(ControllerManager::createColorController(dataset));
@@ -92,58 +97,9 @@ RenderSettings::RenderSettings(DataSet* dataset) : RefTarget(dataset),
 void RenderSettings::setImageFilename(const QString& filename)
 {
 	if(filename == imageFilename()) return;
-	_imageInfo.setFilename(filename);
-	notifyTargetChanged();
-}
-
-/******************************************************************************
-* Sets the output image info of the rendered image.
-******************************************************************************/
-void RenderSettings::setImageInfo(const ImageInfo& imageInfo)
-{
-	if(imageInfo == _imageInfo) return;
-	_imageInfo = imageInfo;
-	notifyTargetChanged();
-}
-
-#define RENDER_SETTINGS_FILE_FORMAT_VERSION		1
-
-/******************************************************************************
-* Saves the class' contents to the given stream. 
-******************************************************************************/
-void RenderSettings::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData)
-{
-	RefTarget::saveToStream(stream, excludeRecomputableData);
-
-	stream.beginChunk(RENDER_SETTINGS_FILE_FORMAT_VERSION);
-	stream << _imageInfo;
-	stream.endChunk();
-}
-
-/******************************************************************************
-* Loads the class' contents from the given stream. 
-******************************************************************************/
-void RenderSettings::loadFromStream(ObjectLoadStream& stream)
-{
-	RefTarget::loadFromStream(stream);
-
-	stream.expectChunk(RENDER_SETTINGS_FILE_FORMAT_VERSION);
-	stream >> _imageInfo;
-	stream.closeChunk();
-}
-
-/******************************************************************************
-* Creates a copy of this object. 
-******************************************************************************/
-OORef<RefTarget> RenderSettings::clone(bool deepCopy, CloneHelper& cloneHelper)
-{
-	// Let the base class create an instance of this class.
-	OORef<RenderSettings> clone = static_object_cast<RenderSettings>(RefTarget::clone(deepCopy, cloneHelper));
-	
-	/// Copy data values.
-	clone->_imageInfo = this->_imageInfo;
-
-	return clone;
+	ImageInfo newInfo = imageInfo();
+	newInfo.setFilename(filename);
+	setImageInfo(newInfo);
 }
 
 OVITO_END_INLINE_NAMESPACE

@@ -9,11 +9,13 @@ node = import_file("../../files/LAMMPS/animation.dump.gz")
 node.modifiers.append(CommonNeighborAnalysisModifier())
 node.add_to_scene()
 
-vp = ovito.dataset.viewports.active_vp
+vp = Viewport()
+vp.zoom_all()
 
-settings = RenderSettings(size = (16,16))
 if ovito.headless_mode:
-    settings.renderer = TachyonRenderer(ambient_occlusion = False, antialiasing = False)
+    renderer = TachyonRenderer(ambient_occlusion = False, antialiasing = False)
+else:
+    renderer = None
 
 def myrender(painter, **args):
     painter.drawText(10, 10, "Hello world")
@@ -23,18 +25,18 @@ vp.overlays.append(new_overlay)
 
 assert(len(vp.overlays) == 1)
 assert(vp.overlays[0] == new_overlay)
-vp.render(settings)
+vp.render_image(renderer=renderer, size=(10,10))
 
 def myrender2(painter, **args):
-    print("The following render function will provoke an intentional error:")
-    return this_is_an_intentional_error
+    print("Note: The following render function will generate an error intentionally:")
+    return this_error_is_intentional
 
 overlay2 = PythonViewportOverlay(function = myrender2)
 vp.overlays.append(overlay2)
 assert(len(vp.overlays) == 2)
 
 try:
-    vp.render(settings)
+    vp.render_image(renderer=renderer, size=(10,10))
     assert(False)
 except:
     pass

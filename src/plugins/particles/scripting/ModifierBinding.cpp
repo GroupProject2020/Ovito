@@ -547,15 +547,16 @@ void defineModifiersSubmodule(py::module m)
 
 	auto CreateBondsModifier_py = ovito_class<CreateBondsModifier, AsynchronousModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
-			"Creates bonds between nearby particles. The modifier outputs its results as a :py:class:`~ovito.data.Bonds` data object, which "
-			"can be accessed through the :py:attr:`DataCollection.bonds <ovito.data.DataCollection.bonds>` attribute of the pipeline output data collection."
+			"Creates bonds between nearby particles. "
 			"\n\n"
 			"**Modifier outputs:**"
 			"\n\n"
 			" * ``CreateBonds.num_bonds`` (:py:attr:`attribute <ovito.data.DataCollection.attributes>`):\n"
 			"   The number of full bonds created by the modifier.\n"
-			" * :py:attr:`~ovito.data.Bonds` object (:py:attr:`DataCollection.bonds <ovito.data.DataCollection.bonds>`):\n"
-			"   Contains the list of bonds created by the modifier.\n")
+			" * ``Topology`` (:py:class:`~ovito.data.BondProperty`):\n"
+			"   The connectivity information of each created bond.\n"
+			" * ``Periodic Image`` (:py:class:`~ovito.data.BondProperty`):\n"
+			"   The shift vector at periodic boundaries of each created bond.\n")
 		.def_property("mode", &CreateBondsModifier::cutoffMode, &CreateBondsModifier::setCutoffMode,
 				"Selects the mode of operation. Valid modes are:"
 				"\n\n"
@@ -993,8 +994,8 @@ void defineModifiersSubmodule(py::module m)
 			"   Stores the number of faces of each particle's Voronoi cell.\n"
 			" * ``Voronoi Index`` (:py:class:`~ovito.data.ParticleProperty`):\n"
 			"   Stores the Voronoi indices computed from each particle's Voronoi cell. This property is only generated when :py:attr:`.compute_indices` is set.\n"
-			" * ``Bonds`` (:py:class:`~ovito.data.Bonds`):\n"
-			"   The list of nearest neighbor bonds, one for each Voronoi face. Bonds are only generated when :py:attr:`.generate_bonds` is set.\n"
+			" * ``Topology`` (:py:class:`~ovito.data.BondProperty`):\n"
+			"   Contains the connectivity information of bonds. The modifier creates one bond for each Voronoi face (only if :py:attr:`.generate_bonds` is set)\n"
 			" * ``Voronoi.max_face_order`` (:py:attr:`attribute <ovito.data.DataCollection.attributes>`):\n"
 			"   This output attribute reports the maximum number of edges of any face in the computed Voronoi tessellation "
 			"   (ignoring edges and faces that are below the area and length thresholds)."

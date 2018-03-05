@@ -20,9 +20,9 @@ pipeline.modifiers.append(CommonNeighborAnalysisModifier(
 # Let OVITO's data pipeline do the heavy work.
 data = pipeline.compute()
 
-# A two-dimensional array containing the three CNA indices 
-# computed for each bond in the system.
-cna_indices = data.bond_properties['CNA Indices']
+# The 'CNA Indices' bond property is a a two-dimensional array 
+# containing the three CNA indices computed for each bond in the system.
+cna_indices = data.bonds['CNA Indices']
 
 # This helper function takes a two-dimensional array and computes the frequency 
 # histogram of the data rows using some NumPy magic. 
@@ -36,11 +36,10 @@ def row_histogram(a):
     return (a[indices], counts)
 
 # Used below for enumerating the bonds of each particle:
-bond_enumerator = BondsEnumerator(data.expect(Bonds))
+bond_enumerator = BondsEnumerator(data)
 
 # Loop over particles and print their CNA indices.
-num_particles = len(data.particle_properties['Position'])
-for particle_index in range(num_particles):
+for particle_index in range(data.particles.count):
     
     # Print particle index (1-based).
     sys.stdout.write("%i " % (particle_index+1))

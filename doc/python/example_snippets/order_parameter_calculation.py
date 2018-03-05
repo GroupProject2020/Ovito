@@ -34,11 +34,11 @@ num_neighbors = len(reference_vectors)
 def modify(frame, input, output):
 
     # Show a status text in the status bar:
-    yield "Calculating order parameters"
+    yield 'Calculating order parameters'
 
-    # Create output property.
-    order_params = output.particle_properties.create(
-        "Order Parameter", dtype=float, components=1)
+    # Create output particle property.
+    order_params = output.particles.create_property(
+        'Order Parameter', dtype=float, components=1)
     
     # Prepare neighbor lists.
     neigh_finder = NearestNeighborFinder(num_neighbors, input)
@@ -46,7 +46,7 @@ def modify(frame, input, output):
     # Request write access to the output property array.
     with order_params:
 
-        # Loop over all particles
+        # Loop over all particles.
         for i in range(len(order_params)):
             
             # Update progress indicator in the status bar
@@ -66,7 +66,7 @@ def modify(frame, input, output):
                 # Sum up the contribution from the best-matching vector.
                 oparam += np.min(squared_deviations)
 
-            # Store result in output particle property.
+            # Store result in output array.
             order_params[i] = oparam / num_neighbors		
 
 pipeline.modifiers.append(PythonScriptModifier(function = modify))

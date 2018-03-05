@@ -1,7 +1,7 @@
 .. _modifiers_overview:
 
 ===================================
-Data pipelines & modifiers
+Data pipelines
 ===================================
 
 The following introduction assumes that you have already read the :py:ref:`scripting_api_overview` page.
@@ -71,14 +71,14 @@ evaluating the pipeline a second time::
     >>> pipeline.modifiers[0].color = (0.8, 0.8, 1.0)
     >>> data_B = pipeline.compute()
 
-    >>> data_A.particle_properties['Color'][...]
+    >>> data_A.particles['Color'][...]
     array([[ 0.5,  1. ,  0. ],
            [ 0.5,  1. ,  0. ],
             ..., 
            [ 0.5,  1. ,  0. ],
            [ 0.5,  1. ,  0. ]])
 
-    >>> data_B.particle_properties['Color'][...]
+    >>> data_B.particles['Color'][...]
     array([[ 0.8,  0.8,  1. ],
            [ 0.8,  0.8,  1. ],
             ..., 
@@ -121,7 +121,7 @@ wrong::
         ...
 
 Note how this loop would keep appending additional modifiers to the same pipeline, making it longer and longer with every iteration.
-As a result, the computation of atomic strain values would be performed over and over again for the same data
+As a result, the atomic strain computation would be performed over and over again for the same data
 when :py:meth:`~ovito.pipeline.Pipeline.compute` is called. 
 Instead, the addition of the modifier should be performed exactly once *before* entering the loop::
 
@@ -160,7 +160,7 @@ where we can access it from a Python script::
     >>> cna = CommonNeighborAnalysis()
     >>> node.modifiers.append(cna)
     >>> node.compute()
-    >>> print(node.output.particle_properties.structure_type.array)
+    >>> print(node.output.particles['Structure Type'][...])
     [1 0 0 ..., 1 2 0]
     
 Note that the :py:class:`~ovito.modifiers.CommonNeighborAnalysisModifier` encodes the computed

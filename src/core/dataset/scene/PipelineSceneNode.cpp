@@ -70,12 +70,12 @@ void PipelineSceneNode::invalidatePipelineCache()
 /******************************************************************************
 * Asks the object for the preliminary results of the data pipeline.
 ******************************************************************************/
-const PipelineFlowState& PipelineSceneNode::evaluatePipelinePreliminary(bool includeDisplayObjects) 
+const PipelineFlowState& PipelineSceneNode::evaluatePipelinePreliminary(bool includeVisElements) 
 {
 	TimePoint time = dataset()->animationSettings()->time();
 
 	// First check if our real caches can serve the request.
-	if(includeDisplayObjects) {
+	if(includeVisElements) {
 		if(_pipelineRenderingCache.contains(time))
 			return _pipelineRenderingCache.getAt(time);
 	}

@@ -1,6 +1,6 @@
 import ovito
 from ovito.io import *
-from ovito.vis import OpenGLRenderer, RenderSettings
+from ovito.vis import OpenGLRenderer
 
 if not ovito.headless_mode:
 
@@ -14,5 +14,4 @@ if not ovito.headless_mode:
     print("  antialiasing_level: {}".format(renderer.antialiasing_level))
     renderer.antialiasing_level = 2
 
-    settings = RenderSettings(size = (100,100), renderer = renderer)
-    ovito.dataset.viewports.active_vp.render(settings)
+    ovito.dataset.viewports.active_vp.render_image(size = (100,100), renderer = renderer)

@@ -12,6 +12,7 @@ settings.renderer = TachyonRenderer(ambient_occlusion = False, antialiasing = Fa
 
 vp = Viewport()
 vp.type = Viewport.Type.PERSPECTIVE
+vp.type = Viewport.Type.Perspective
 vp.camera_pos = (350, -450, 450)
 vp.camera_dir = (-100, -50, -50)
 print(vp.fov)
@@ -27,6 +28,7 @@ overlay = TextLabelOverlay(
 
 vp.overlays.append(overlay)
 vp.render(settings)
+vp.render_image(renderer=settings.renderer, size=settings.size)
 
 for vp in ovito.dataset.viewports:
     print(vp)

@@ -17,7 +17,7 @@ def modify(frame, input, output):
     yield "Selecting overlapping particles"
 
     # Create 'Selection' output particle property
-    selection = output.particle_properties.create('Selection')
+    selection = output.particles.create_property('Selection')
     
     # Prepare neighbor finder
     finder = CutoffNeighborFinder(overlap_distance, input)
@@ -44,4 +44,4 @@ def modify(frame, input, output):
 
 pipeline.modifiers.append(PythonScriptModifier(function = modify))
 data = pipeline.compute()
-assert('Selection' in data.particle_properties.keys())
+assert('Selection' in data.particles.keys())

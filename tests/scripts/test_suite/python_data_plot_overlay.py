@@ -11,17 +11,20 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import PyQt5.QtGui
 
-node = import_file("../../files/CFG/fcc_coherent_twin.0.cfg")
-node.modifiers.append(CoordinationNumberModifier())
-node.modifiers.append(HistogramModifier(property = "Coordination"))
-node.add_to_scene()
-vp = ovito.dataset.viewports.active_vp
+pipeline = import_file("../../files/CFG/fcc_coherent_twin.0.cfg")
+pipeline.modifiers.append(CoordinationNumberModifier())
+pipeline.modifiers.append(HistogramModifier(property = "Coordination"))
+pipeline.add_to_scene()
+vp = Viewport()
+vp.zoom_all()
+
+check_value = False
 
 def render(painter, **args):
 
 	# Find the existing HistogramModifier in the pipeline 
 	# and get its histogram data.
-	for mod in ovito.dataset.selected_node.modifiers:
+	for mod in ovito.dataset.selected_pipeline.modifiers:
 		if isinstance(mod, HistogramModifier):
 			x = mod.histogram[:,0]
 			y = mod.histogram[:,1]
@@ -58,12 +61,16 @@ def render(painter, **args):
 	painter.drawImage(0,0,img)
 
 	print("Overlay function was executed")
+	global check_value
+	check_value = True
 
 overlay = PythonViewportOverlay()
 overlay.function = render
 vp.overlays.append(overlay)
 if ovito.headless_mode: 
-    ovito.dataset.render_settings.renderer = TachyonRenderer(ambient_occlusion = False, antialiasing = False)
+    renderer = TachyonRenderer(ambient_occlusion = False, antialiasing = False)
 else:
-    ovito.dataset.render_settings.renderer = OpenGLRenderer()
-vp.render()
+    renderer = OpenGLRenderer()
+vp.render_image(renderer = renderer, size = (320,240))
+
+assert(check_value)

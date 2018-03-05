@@ -88,9 +88,9 @@ objects generate a visual representation of the data. To render a picture of the
 typically create a new *ad hoc* :py:class:`~ovito.vis.Viewport` instance and configure it by setting 
 the camera position and orientation::
 
-    >>> from ovito.vis import *
+    >>> from ovito.vis import Viewport
     >>> vp = Viewport()
-    >>> vp.type = Viewport.Type.PERSPECTIVE
+    >>> vp.type = Viewport.Type.Perspective
     >>> vp.camera_pos = (-100, -150, 150)
     >>> vp.camera_dir = (2, 3, -3)
     >>> vp.fov = math.radians(60.0)

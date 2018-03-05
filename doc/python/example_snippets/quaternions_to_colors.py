@@ -46,15 +46,15 @@ def modify(frame, input, output):
     """ The user-defined modifier function """
     
     # Input:
-    orientations = input.particle_properties['Orientation']
+    orientations = input.particle['Orientation']
     
     # Output:
-    output.particle_properties.create('Color', data=quaternions_to_colors(orientations))
+    output.particls.create_property('Color', data=quaternions_to_colors(orientations))
 
 # The following is for automated testing only and not shown in the documentation:
 from ovito.io import import_file
 from ovito.modifiers import PythonScriptModifier, PolyhedralTemplateMatchingModifier
-node = import_file("input/simulation.dump")
-node.modifiers.append(PolyhedralTemplateMatchingModifier(output_orientation = True))
-node.modifiers.append(PythonScriptModifier(function = modify))
-node.compute()
+pipeline = import_file("input/simulation.dump")
+pipeline.modifiers.append(PolyhedralTemplateMatchingModifier(output_orientation = True))
+pipeline.modifiers.append(PythonScriptModifier(function = modify))
+pipeline.compute()

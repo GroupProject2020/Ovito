@@ -75,18 +75,15 @@ void defineAppSubmodule(py::module m)
 	// This would create a cyclic reference and potentially lead to a memory leak.
 	py::class_<DataSet>(m, "DataSet",
 			"This class encompasses all data of an OVITO program session (basically everything that gets saved in a ``.ovito`` state file). "
-			"It provides access to the interactive viewports, objects that are part of the three-dimensional scene, the current object selection and animation settings. "
+			"It provides access to the objects that are part of the three-dimensional scene. "
 			"\n\n"
 			"From a script's point of view, there exists exactly one universal instance of this class, which can be accessed through "
 			"the :py:data:`ovito.dataset` module-level attribute. A script cannot create another :py:class:`!DataSet` instance. ")
 		.def_property_readonly("scene_root", &DataSet::sceneRoot)
-		.def_property_readonly("anim", &DataSet::animationSettings,
-				"An :py:class:`~ovito.anim.AnimationSettings` object, which manages various animation-related settings in OVITO such as the number of frames, the current frame, playback speed etc.")
-		.def_property_readonly("viewports", &DataSet::viewportConfig,
-				"The list of :py:class:`~ovito.vis.Viewport` objects in OVITO's main window.")
-		.def_property_readonly("render_settings", &DataSet::renderSettings,
-				"The global :py:class:`~ovito.vis.RenderSettings` object, which stores the current settings for rendering pictures and movies. "
-				"These are the settings the user can edit in the graphical version of OVITO.")
+		// For backward compatibility with OVITO 2.9.0:
+		.def_property_readonly("anim", &DataSet::animationSettings)
+		.def_property_readonly("viewports", &DataSet::viewportConfig)
+		.def_property_readonly("render_settings", &DataSet::renderSettings)
 		.def("save", &DataSet::saveToFile,
 			"save(filename)"
 			"\n\n"
@@ -97,7 +94,7 @@ void defineAppSubmodule(py::module m)
 			py::arg("filename"))
 		// This is needed for the DataSet.selected_pipeline attribute:
 		.def_property_readonly("selection", &DataSet::selection)
-		// This is needed by Viewport.render():
+		// This is needed by Viewport.render_image():
 		.def("render_scene", &DataSet::renderScene)
 		.def_property_readonly("container", &DataSet::container, py::return_value_policy::reference)
 	;

@@ -7,7 +7,8 @@ import os.path
 node = import_file("../../files/LAMMPS/animation.dump.gz")
 node.add_to_scene()
 
-vp = ovito.dataset.viewports.active_vp
+vp = Viewport()
+vp.zoom_all()
 
 output_file = "_movie.avi"
 
@@ -15,14 +16,11 @@ if os.path.isfile(output_file):
     os.remove(output_file)
 assert(not os.path.isfile(output_file))
 
-settings = RenderSettings(
-    filename = output_file,
-    size = (64, 64),
-    range = RenderSettings.Range.ANIMATION        
-)
 if ovito.headless_mode: 
-    settings.renderer = TachyonRenderer(ambient_occlusion = False, antialiasing = False)
-vp.render(settings)
+    renderer = TachyonRenderer(ambient_occlusion = False, antialiasing = False)
+else:
+    renderer = None
+vp.render_anim(output_file, size=(64,64), renderer=renderer, fps=26)
 
 assert(os.path.isfile(output_file))
 os.remove(output_file)

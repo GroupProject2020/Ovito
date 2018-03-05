@@ -36,84 +36,80 @@ using namespace Ovito;
 void defineViewportSubmodule(py::module m)
 {
 	auto Viewport_py = ovito_class<Viewport, RefTarget>(m,
-			"A viewport defines the view on the three-dimensional scene. "
+			"A viewport represents a virtual \"window\" to the three-dimensional scene, "
+			"showing the objects in the scene from a certain view point, which is determined by the viewport's camera. "
 			"\n\n"
-			"You can create an instance of this class to define a camera position from which "
-			"a picture of the three-dimensional scene should be generated. After the camera "
-			"has been set up, you can render an image or movie using the viewport's "
-			":py:meth:`.render` method::"
+			"The virtual camera's position and orientation are controlled by the :py:attr:`.camera_pos` and :py:attr:`.camera_dir` fields. "
+			"Additionally, the :py:attr:`.type` field allows you to switch between perspective and parallel projection modes "
+			"or reset the camera to one of the standard axis-aligned orientations that are also found in the graphical version of OVITO. "
+			"The :py:meth:`.zoom_all` method repositions the camera automatically such that the entire scene becomes fully visible within the view. "
 			"\n\n"
-			"    vp = Viewport()\n"
-			"    vp.type = Viewport.Type.PERSPECTIVE\n"
-			"    vp.camera_pos = (100, 50, 50)\n"
-			"    vp.camera_dir = (-100, -50, -50)\n"
-			"\n"
-			"    rs = RenderSettings(size=(800,600), filename=\"image.png\")\n"
-			"    vp.render(rs)\n"
-			"\n"
-			"Note that the four interactive viewports in OVITO's main window are instances of this class. If you want to "
-			"manipulate these existing viewports, you can access them through the "
-			":py:attr:`DataSet.viewports <ovito.DataSet.viewports>` attribute.")
-		//.def_property_readonly("isRendering", &Viewport::isRendering)
-		//.def_property_readonly("isPerspective", &Viewport::isPerspectiveProjection)
+			"After the viewport camera has been set up, you can render an image or movie using the "
+			":py:meth:`.render_image` and :py:meth:`.render_anim` methods. For example: "
+			"\n\n"
+			".. literalinclude:: ../example_snippets/viewport.py"
+			"\n\n"
+			"Furthermore, so-called *overlays* may be assigned to a viewport. "
+			"Overlays are function objects that paint additional two-dimensional content on top of the rendered scene, e.g. "
+			"a coordinate axis tripod or a color legend. See the documentation of the :py:attr:`.overlays` property for more information. ")
 		.def_property("type", &Viewport::viewType, [](Viewport& vp, Viewport::ViewType vt) { vp.setViewType(vt); },
-				"The type of projection:"
+				"Specifies the projection type of the viewport. The following standard modes are available:"
 				"\n\n"
-				"  * ``Viewport.Type.PERSPECTIVE``\n"
-				"  * ``Viewport.Type.ORTHO``\n"
-				"  * ``Viewport.Type.TOP``\n"
-				"  * ``Viewport.Type.BOTTOM``\n"
-				"  * ``Viewport.Type.FRONT``\n"
-				"  * ``Viewport.Type.BACK``\n"
-				"  * ``Viewport.Type.LEFT``\n"
-				"  * ``Viewport.Type.RIGHT``\n"
-				"  * ``Viewport.Type.NONE``\n"
+				"  * ``Viewport.Type.Perspective``\n"
+				"  * ``Viewport.Type.Ortho``\n"
+				"  * ``Viewport.Type.Top``\n"
+				"  * ``Viewport.Type.Bottom``\n"
+				"  * ``Viewport.Type.Front``\n"
+				"  * ``Viewport.Type.Back``\n"
+				"  * ``Viewport.Type.Left``\n"
+				"  * ``Viewport.Type.Right``\n"
 				"\n"
-				"The first two types (``PERSPECTIVE`` and ``ORTHO``) allow you to set up custom views with arbitrary camera orientation.\n")
+				"The first two types (``Perspective`` and ``Ortho``) allow you to set up custom views with arbitrary camera orientations.\n")
 		.def_property("fov", &Viewport::fieldOfView, &Viewport::setFieldOfView,
 				"The field of view of the viewport's camera. "
 				"For perspective projections this is the camera's angle in the vertical direction (in radians). For orthogonal projections this is the visible range in the vertical direction (in world units).")
 		.def_property("cameraTransformation", &Viewport::cameraTransformation, &Viewport::setCameraTransformation)
 		.def_property("camera_dir", &Viewport::cameraDirection, &Viewport::setCameraDirection,
-				"The viewing direction vector of the viewport's camera. This can be an arbitrary vector with non-zero length.")
+				"The viewing direction vector of the viewport's camera.")
 		.def_property("camera_pos", &Viewport::cameraPosition, &Viewport::setCameraPosition,
-				"\nThe position of the viewport's camera. For example, to move the camera of the active viewport in OVITO's main window to a new location in space::"
-				"\n\n"
-				"    dataset.viewports.active_vp.camera_pos = (100, 80, -30)\n"
-				"\n\n")
+				"The position of the viewport's camera in the three-dimensional scene.")
 		.def_property_readonly("viewMatrix", [](Viewport& vp) -> const AffineTransformation& { return vp.projectionParams().viewMatrix; })
 		.def_property_readonly("inverseViewMatrix", [](Viewport& vp) -> const AffineTransformation& { return vp.projectionParams().inverseViewMatrix; })
 		.def_property_readonly("projectionMatrix", [](Viewport& vp) -> const Matrix4& { return vp.projectionParams().projectionMatrix; })
 		.def_property_readonly("inverseProjectionMatrix", [](Viewport& vp) -> const Matrix4& { return vp.projectionParams().inverseProjectionMatrix; })
-		//.def_property("renderPreviewMode", &Viewport::renderPreviewMode, &Viewport::setRenderPreviewMode)
-		//.def_property("gridVisible", &Viewport::isGridVisible, &Viewport::setGridVisible)
-		//.def_property("viewNode", &Viewport::viewNode, &Viewport::setViewNode)
-		//.def_property("gridMatrix", &Viewport::gridMatrix, &Viewport::setGridMatrix)
-		//.def_property_readonly("title", &Viewport::viewportTitle,
-		//		"The name of the viewport as shown in its top left corner (read-only).")
-		//.def("updateViewport", &Viewport::updateViewport)
-		//.def("redrawViewport", &Viewport::redrawViewport)
-		//.def("nonScalingSize", &Viewport::nonScalingSize)
 		.def("zoom_all", &Viewport::zoomToSceneExtents,
 				"Repositions the viewport camera such that all objects in the scene become completely visible. "
-				"The camera direction is not changed.")
-		//.def("zoomToSelectionExtents", &Viewport::zoomToSelectionExtents)
-		//.def("zoomToBox", &Viewport::zoomToBox)
+				"The camera direction is maintained by the method.")
 	;
 	expose_mutable_subobject_list(Viewport_py,
 								  std::mem_fn(&Viewport::overlays), 
 								  std::mem_fn(&Viewport::insertOverlay), 
 								  std::mem_fn(&Viewport::removeOverlay), "overlays", "ViewportOverlayList",
-								"A list-like sequence of viewport overlay objects that are attached to this viewport. "
-								"They render graphical content on top of the three-dimensional scene. "
+								"A list of viewport overlay objects that are attached to this viewport. "
+								"Overlays render graphical content on top of the three-dimensional scene. "
 								"See the following classes for more information:"
 								"\n\n"
 								"   * :py:class:`TextLabelOverlay`\n"
 								"   * :py:class:`ColorLegendOverlay`\n"
 								"   * :py:class:`CoordinateTripodOverlay`\n"
-								"   * :py:class:`PythonViewportOverlay`\n");		
+								"   * :py:class:`PythonViewportOverlay`\n"
+								"\n\n"
+								"To attach a new overlay to the viewport, use the ``append()`` method:"
+								"\n\n"
+								".. literalinclude:: ../example_snippets/viewport_add_overlay.py"
+								"\n\n");		
 
 	py::enum_<Viewport::ViewType>(Viewport_py, "Type")
+		.value("Top", Viewport::VIEW_TOP)
+		.value("Bottom", Viewport::VIEW_BOTTOM)
+		.value("Front", Viewport::VIEW_FRONT)
+		.value("Back", Viewport::VIEW_BACK)
+		.value("Left", Viewport::VIEW_LEFT)
+		.value("Right", Viewport::VIEW_RIGHT)
+		.value("Ortho", Viewport::VIEW_ORTHO)
+		.value("Perspective", Viewport::VIEW_PERSPECTIVE)
+		.value("SceneNode", Viewport::VIEW_SCENENODE)
+		// For backward compatibility with OVITO 2.9.0:
 		.value("NONE", Viewport::VIEW_NONE)
 		.value("TOP", Viewport::VIEW_TOP)
 		.value("BOTTOM", Viewport::VIEW_BOTTOM)
@@ -123,7 +119,6 @@ void defineViewportSubmodule(py::module m)
 		.value("RIGHT", Viewport::VIEW_RIGHT)
 		.value("ORTHO", Viewport::VIEW_ORTHO)
 		.value("PERSPECTIVE", Viewport::VIEW_PERSPECTIVE)
-		.value("SCENENODE", Viewport::VIEW_SCENENODE)
 	;
 
 	py::class_<ViewProjectionParameters>(m, "ViewProjectionParameters")

@@ -425,9 +425,7 @@ PYBIND11_PLUGIN(Particles)
 			"\n\n"
 			"For example, the following script demonstrates how to change the display color of force vectors loaded from an input file:"
 			"\n\n"
-			".. literalinclude:: ../example_snippets/vector_display.py\n",
-			// Python class name:
-			"VectorVis")
+			".. literalinclude:: ../example_snippets/vector_display.py\n")
 		.def_property("shading", &VectorVis::shadingMode, &VectorVis::setShadingMode,
 				"The shading style used for the arrows.\n"
 				"Possible values:"
@@ -470,22 +468,32 @@ PYBIND11_PLUGIN(Particles)
 
 	ovito_class<BondsVis, DataVis>(m,
 			":Base class: :py:class:`ovito.vis.DataVis`\n\n"
-			"Controls the visual appearance of bonds between particles."
+			"A visualization element for rendering bonds between particles. "
+			"An instance of this class is attached to the :py:class:`~ovito.data.BondProperty` named ``Topology``. "
 			"\n\n"
-			"An instance of this class is attached to the ``Topology`` :py:class:`~ovito.data.BondProperty` "
-			"and can be accessed through its :py:attr:`~ovito.data.DataObject.vis` property. ",
-			// Python class name:
-			"BondsVis")
+			"The parameters of this class control the visual appearance of bonds. "
+			"If you have imported a simulation file containing bonds, you can subsequently access the :py:class:`!BondsVis` object attached "
+			"to the ``Topology`` bond property through its :py:attr:`~ovito.data.DataObject.vis` field:"
+			"\n\n"
+			".. literalinclude:: ../example_snippets/bonds_vis.py\n"
+			"   :lines: 6-8\n"
+			"\n\n"
+			"If you are creating bonds within OVITO using a modifier, such as the :py:class:`~ovito.modifiers.CreateBondsModifier`, "
+			"the :py:class:`!BondsVis` element is typically managed by the modifier:"
+			"\n\n"
+			".. literalinclude:: ../example_snippets/bonds_vis.py\n"
+			"   :lines: 12-14\n")
 		.def_property("width", &BondsVis::bondWidth, &BondsVis::setBondWidth,
 				"The display width of bonds (in natural length units)."
 				"\n\n"
 				":Default: 0.4\n")
 		.def_property("color", &BondsVis::bondColor, &BondsVis::setBondColor,
-				"The display color of bonds. Used only if :py:attr:`.use_particle_colors` == False."
+				"The uniform display color of bonds. This value is only used if :py:attr:`.use_particle_colors` is false and "
+				"if the ``Color`` :py:class:`~ovito.data.BondProperty` is not defined. "
 				"\n\n"
 				":Default: ``(0.6, 0.6, 0.6)``\n")
 		.def_property("shading", &BondsVis::shadingMode, &BondsVis::setShadingMode,
-				"The shading style used for bonds.\n"
+				"Controls the shading style of bonds. "
 				"Possible values:"
 				"\n\n"
 				"   * ``BondsVis.Shading.Normal`` (default) \n"
@@ -493,7 +501,9 @@ PYBIND11_PLUGIN(Particles)
 				"\n")
 		.def_property("rendering_quality", &BondsVis::renderingQuality, &BondsVis::setRenderingQuality)
 		.def_property("use_particle_colors", &BondsVis::useParticleColors, &BondsVis::setUseParticleColors,
-				"If ``True``, bonds are assigned the same color as the particles they are adjacent to."
+				"If set to ``True``, bonds are rendered in the same color as the particles they are incident to. "
+				"Otherwise, a uniform :py:attr:`.color` is used. If the :py:class:`~ovito.data.BondProperty` named ``Color`` is "
+				"defined, then the per-bond colors are used in any case. "
 				"\n\n"
 				":Default: ``True``\n")
 	;
@@ -557,9 +567,7 @@ PYBIND11_PLUGIN(Particles)
 			":py:attr:`DataCollection.bonds` view, which allows accessing them by name and adding new properties. " 
 			"\n\n"
 			"Note that the topological definition of bonds, i.e. the connectivity between particles, is stored "
-			"in the :py:class:`!BondProperty` named ``Topology``. ",
-			// Python class name:
-			"BondProperty")
+			"in the :py:class:`!BondProperty` named ``Topology``. ")
 		// Used by BondPropertiesView.create():
 		.def_static("createStandardProperty", [](DataSet& dataset, size_t bondCount, BondProperty::Type type, bool initializeMemory) {
 			return BondProperty::createFromStorage(&dataset, BondProperty::createStandardStorage(bondCount, type, initializeMemory));

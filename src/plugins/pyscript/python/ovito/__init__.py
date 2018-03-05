@@ -31,7 +31,7 @@ import ovito.io
 if ovito.gui_mode:
     import ovito.plugins.PyScriptGui
 
-__all__ = ['version', 'version_string', 'gui_mode', 'headless_mode', 'dataset', 'DataSet', 'PipelineSceneNode']
+__all__ = ['version', 'version_string', 'dataset', 'DataSet']
 
 # Load the whole OVITO package. This is required to make all Python bindings available.
 for _, _name, _ in pkgutil.walk_packages(_package_source_path, __name__ + '.'):
@@ -65,4 +65,4 @@ DataSet.selected_pipeline = property(_get_DataSet_selected_pipeline, _set_DataSe
 # For backward compatibility with OVITO 2.9.0:
 DataSet.scene_nodes = property(lambda self: self.scene_pipelines)
 DataSet.selected_node = property(lambda self: self.selected_pipeline, _set_DataSet_selected_pipeline)
-PipelineSceneNode = ovito.pipeline.Pipeline
+ObjectNode = ovito.pipeline.Pipeline

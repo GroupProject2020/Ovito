@@ -206,7 +206,7 @@ def _Pipeline_add_to_scene(self):
         The visual representation of the computed data will appear in rendered images and in the interactive viewports of the 
         graphical OVITO version.
         
-        You can remove the pipeline from the scene again by calling :py:meth:`.remove_from_scene`.
+        You can remove the pipeline from the scene again using :py:meth:`.remove_from_scene`.
     """
     if not self in self.dataset.scene_pipelines:
         self.dataset.scene_pipelines.append(self)

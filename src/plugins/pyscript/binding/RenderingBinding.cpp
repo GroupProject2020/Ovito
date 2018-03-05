@@ -44,7 +44,7 @@ void defineRenderingSubmodule(py::module m)
 		.def_property_readonly("_image", [](const FrameBuffer& fb) { return reinterpret_cast<std::uintptr_t>(&fb.image()); })
 	;
 
-	py::object RenderSettings_py = ovito_class<RenderSettings, RefTarget>(m,
+	py::object RenderSettings_py = ovito_class<RenderSettings, RefTarget>(m /*,
 			"A data structure with parameters that control image and movie generation."
 			"\n\n"
 			"You typically pass an instance of this class to the :py:meth:`Viewport.render` method to specify various render settings "
@@ -72,7 +72,7 @@ void defineRenderingSubmodule(py::module m)
 			"\n\n"
 			"**Rendering animations**"
 			"\n\n"
-			"To render an animation, the rendering :py:attr:`.range` must be set to ``RenderSettings.Range.ANIMATION``. "
+			"To render an animation, the rendering :py:attr:`.range` must be set to ``RenderSettings.Range.Animation``. "
 			"The chosen output :py:attr:`.filename` determines the kind of file(s) that will be produced: "
 			"If the name suffix is :file:`.mp4`, :file:`.avi` or :file:`.mov`, a single encoded movie file "
 			"will be produced from all rendered frames. The playback speed of the final movie is determined by the "
@@ -87,7 +87,7 @@ void defineRenderingSubmodule(py::module m)
 			"   :lines: 23-26\n"
 			"\n\n"
 			"This produces image files named :file:`frame0000.png`, :file:`frame0001.png`, etc. "
-			)
+			*/)
 		.def_property("renderer", &RenderSettings::renderer, &RenderSettings::setRenderer,
 				"The renderer that is used to generate the image or movie. Depending on the selected renderer you "
 				"can use this to set additional parameters such as the anti-aliasing level."
@@ -98,12 +98,12 @@ void defineRenderingSubmodule(py::module m)
 				"Selects the animation frames to be rendered."
 				"\n\n"
 				"Possible values:\n"
-				"  * ``RenderSettings.Range.CURRENT_FRAME`` (default): Renders a single image at the current animation time.\n"
-				"  * ``RenderSettings.Range.ANIMATION``: Renders a movie of the entire animation sequence.\n"
-				"  * ``RenderSettings.Range.CUSTOM_INTERVAL``: Renders a movie of the animation interval given by the :py:attr:`.custom_range` attribute.\n")
+				"  * ``RenderSettings.Range.CurrentFrame`` (default): Renders a single image at the current animation time.\n"
+				"  * ``RenderSettings.Range.Animation``: Renders a movie of the entire animation sequence.\n"
+				"  * ``RenderSettings.Range.CustomInterval``: Renders a movie of the animation interval given by the :py:attr:`.custom_range` attribute.\n")
 		// Required by RenderSettings.filename implementation:
-		.def_property("outputImageWidth", &RenderSettings::outputImageWidth, &RenderSettings::setOutputImageWidth)
-		.def_property("outputImageHeight", &RenderSettings::outputImageHeight, &RenderSettings::setOutputImageHeight)
+		.def_property("output_image_width", &RenderSettings::outputImageWidth, &RenderSettings::setOutputImageWidth)
+		.def_property("output_image_height", &RenderSettings::outputImageHeight, &RenderSettings::setOutputImageHeight)
 		.def_property("background_color", &RenderSettings::backgroundColor, &RenderSettings::setBackgroundColor,
 				"Controls the background color of the rendered image."
 				"\n\n"
@@ -122,20 +122,24 @@ void defineRenderingSubmodule(py::module m)
 				"Use this flag when the image sequence has already been partially rendered and you want to render just the missing frames. "
 				"\n\n"
 				":Default: ``False``")
-		.def_property("customRangeStart", &RenderSettings::customRangeStart, &RenderSettings::setCustomRangeStart)
-		.def_property("customRangeEnd", &RenderSettings::customRangeEnd, &RenderSettings::setCustomRangeEnd)
-		.def_property("everyNthFrame", &RenderSettings::everyNthFrame, &RenderSettings::setEveryNthFrame)
-		.def_property("fileNumberBase", &RenderSettings::fileNumberBase, &RenderSettings::setFileNumberBase)
+		.def_property("custom_range_start", &RenderSettings::customRangeStart, &RenderSettings::setCustomRangeStart)
+		.def_property("custom_range_end", &RenderSettings::customRangeEnd, &RenderSettings::setCustomRangeEnd)
+		.def_property("every_nth_frame", &RenderSettings::everyNthFrame, &RenderSettings::setEveryNthFrame)
+		.def_property("file_number_base", &RenderSettings::fileNumberBase, &RenderSettings::setFileNumberBase)
+		.def_property("frames_per_second", &RenderSettings::framesPerSecond, &RenderSettings::setFramesPerSecond)
 	;
 
 	py::enum_<RenderSettings::RenderingRangeType>(RenderSettings_py, "Range")
+		.value("CurrentFrame", RenderSettings::CURRENT_FRAME)
+		.value("Animation", RenderSettings::ANIMATION_INTERVAL)
+		.value("CustomInterval", RenderSettings::CUSTOM_INTERVAL)
+		// For backward compatibility with OVITO 2.9.0:
 		.value("CURRENT_FRAME", RenderSettings::CURRENT_FRAME)
 		.value("ANIMATION", RenderSettings::ANIMATION_INTERVAL)
 		.value("CUSTOM_INTERVAL", RenderSettings::CUSTOM_INTERVAL)
 	;
 
-	ovito_abstract_class<SceneRenderer, RefTarget>(m)
-		.def_property_readonly("isInteractive", &SceneRenderer::isInteractive)
+	ovito_abstract_class<SceneRenderer, RefTarget>{m}
 	;
 
 	ovito_abstract_class<NonInteractiveSceneRenderer, SceneRenderer>{m}

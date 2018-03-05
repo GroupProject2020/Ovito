@@ -47,7 +47,7 @@ OVITO's Python interpreter
 ----------------------------------
 
 OVITO comes with a script interpreter, which can execute programs written in the Python language.
-The current version of OVITO is compatible with the `Python 3.4 <https://docs.python.org/3.4/>`_ language standard. 
+The current version of OVITO is compatible with the `Python 3.5 <https://docs.python.org/3.5/>`_ language standard. 
 You typically execute batch Python scripts from the terminal of your operating system using the :program:`ovitos` script interpreter that is installed 
 along with OVITO:
 
@@ -69,8 +69,8 @@ We can then execute the script from a Linux terminal as follows:
 
 .. code-block:: shell-session
 
-	me@linux:~/ovito-2.9.0-x86_64/bin$ ./ovitos hello.py
-	Hello, this is OVITO 2.9.0
+	me@linux:~/ovito-3.0.0-x86_64/bin$ ./ovitos hello.py
+	Hello, this is OVITO 3.0.0
 	
 By default, the :program:`ovitos` script interpreter displays only console output and no graphical output.
 This allows running OVITO scripts on remote machines or computing clusters that don't possess a graphics display. 
@@ -85,14 +85,17 @@ The :command:`-o` command line option lets :program:`ovitos` load an :file:`.ovi
 script. This allows you to preload an existing visualization setup that you have 
 previously prepared with the graphical version of OVITO and saved to a :file:`.ovito` file. This can save you programming
 work, because modifiers, parameters and the camera setup get already loaded from the state file and 
-don't need to be set up programatically in the batch script anymore.
+don't need to be set up programmatically in the batch script anymore.
 
 Activate graphical mode
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The :command:`-g` command line option opens graphical program session. Then OVITO's main window is shown
-and you can follow your script's actions as they are being executed. This is useful, for instance, if you want to visually 
-check the outcome of your script's action during the development phase.
+The :command:`-g` command line option of the script interpreter starts a graphical program session and the script
+will be run in the context of OVITO's main window. This allows you to follow your script commands as they are being 
+executed. This is useful, for instance, if you want to visually check the outcome of your script's action during the 
+development phase. Keep in mind that the viewports will only show pipelines that are part of the current scene. 
+Thus, it may be necessary to explicitly call :py:meth:`Pipeline.add_to_scene() <ovito.pipeline.Pipeline.add_to_scene>`
+to make your imported data visible in this mode.
 
 Number of parallel threads
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -128,7 +131,7 @@ with your local Python interpreter, it might be necessary to `build OVITO from s
 In case you have multiple Python interpreters installed on your system, make sure OVITO is being linked against the 
 version that you are going to run your scripts with.
 
-Once the graphical program and the :py:mod:`ovito` Python module have been successully built, 
+Once the graphical program and the :py:mod:`ovito` Python module have been successfully built, 
 you should add the following directory to the `PYTHONPATH <https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPATH>`_,
 so that the Python interpreter can find it:
 

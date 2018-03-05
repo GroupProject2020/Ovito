@@ -65,7 +65,7 @@ public:
 	SharedFuture<PipelineFlowState> evaluateRenderingPipeline(TimePoint time);
 
 	/// \brief Requests preliminary results from the data pipeline.
-	const PipelineFlowState& evaluatePipelinePreliminary(bool includeDisplayObjects);
+	const PipelineFlowState& evaluatePipelinePreliminary(bool includeVisElements);
 
 	/// \brief Applies a modifier by appending it to the end of the node's data pipeline.
 	/// \param mod The modifier to be inserted into the data flow pipeline.

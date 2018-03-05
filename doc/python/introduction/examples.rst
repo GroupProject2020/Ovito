@@ -157,7 +157,7 @@ The script creates different data objects and adds them to a new :py:class:`~ovi
 Finally, a :py:class:`~ovito.pipeline.Pipeline` is created and the :py:class:`~ovito.pipeline.StaticSource` is set as
 its data source.
 
-.. literalinclude:: ../../../tests/scripts/test_suite/create_new_particle_property.py
+.. literalinclude:: ../example_snippets/create_new_particle_property.py
 
 .. _example_visualize_local_lattice_orientation:
 

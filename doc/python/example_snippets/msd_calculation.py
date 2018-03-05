@@ -14,7 +14,7 @@ def modify(frame, input, output):
     # Access the per-particle displacement magnitudes computed by the 
     # CalculateDisplacementsModifier that precedes this user-defined modifier in the 
     # data pipeline:
-    displacement_magnitudes = input.particle_properties['Displacement']
+    displacement_magnitudes = input.particles['Displacement']
 
     # Compute MSD:
     msd = numpy.sum(displacement_magnitudes ** 2) / len(displacement_magnitudes)

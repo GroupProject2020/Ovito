@@ -29,7 +29,6 @@ Module Reference:
 .. toctree::
    
    modules/ovito
-   modules/ovito_anim
    modules/ovito_data
    modules/ovito_io
    modules/ovito_io_ase

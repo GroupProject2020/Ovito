@@ -10,8 +10,7 @@
       
       This module-level attribute points to the current :py:class:`~ovito.DataSet`
       which serves as context for all operations performed by the script. The :py:class:`~ovito.DataSet`
-      represents the program state and provides access to the viewports, the three-dimensional visualization scene, 
-      and the current animation and render settings.
+      represents the program state and provides access to the contents of the three-dimensional visualization scene.
 
    .. py:data:: version
       
