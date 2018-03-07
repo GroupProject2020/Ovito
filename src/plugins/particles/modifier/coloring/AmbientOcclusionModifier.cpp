@@ -147,7 +147,6 @@ void AmbientOcclusionModifier::AmbientOcclusionEngine::perform()
 
 			// Generate lighting direction on unit sphere.
 			FloatType y = (FloatType)sample * 2 / _samplingCount - FloatType(1) + FloatType(1) / _samplingCount;
-			//FloatType r = sqrt(FloatType(1) - y * y);
 			FloatType phi = (FloatType)sample * FLOATTYPE_PI * (FloatType(3) - sqrt(FloatType(5)));
 			Vector3 dir(cos(phi), y, sin(phi));
 
@@ -162,9 +161,9 @@ void AmbientOcclusionModifier::AmbientOcclusionEngine::perform()
 			projParams.aspectRatio = 1;
 			projParams.isPerspective = false;
 			projParams.inverseViewMatrix = projParams.viewMatrix.inverse();
-			projParams.fieldOfView = 0.5f * _boundingBox.size().length();
+			projParams.fieldOfView = FloatType(0.5) * _boundingBox.size().length();
 			projParams.znear = -bb.maxc.z();
-			projParams.zfar  = std::max(-bb.minc.z(), projParams.znear + 1.0f);
+			projParams.zfar  = std::max(-bb.minc.z(), projParams.znear + FloatType(1));
 			projParams.projectionMatrix = Matrix4::ortho(-projParams.fieldOfView, projParams.fieldOfView,
 								-projParams.fieldOfView, projParams.fieldOfView,
 								projParams.znear, projParams.zfar);
@@ -217,7 +216,14 @@ void AmbientOcclusionModifier::AmbientOcclusionEngine::perform()
 
 	if(!isCanceled()) {
 		setProgressValue(_samplingCount);
-		// Normalize brightness values.
+		// Normalize brightness values by particle area.
+		auto r = _particleRadii.cbegin();
+		for(FloatType& b : _results->brightness()->floatRange()) {
+			if(*r != 0)
+				b /= (*r) * (*r);
+			++r;
+		}
+		// Normalize brightness values by global maximum.
 		FloatType maxBrightness = *std::max_element(_results->brightness()->constDataFloat(), _results->brightness()->constDataFloat() + _results->brightness()->size());
 		if(maxBrightness != 0) {
 			for(FloatType& b : _results->brightness()->floatRange()) {

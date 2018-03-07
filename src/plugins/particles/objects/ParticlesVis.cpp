@@ -206,6 +206,8 @@ void ParticlesVis::particleRadii(std::vector<FloatType>& output, ParticlePropert
 				// Set particle radius only if the type's radius is non-zero.
 				if(it != radiusMap.end() && it->second != 0)
 					*c = it->second;
+				else
+					*c = defaultRadius;
 			}
 		}
 		else {
