@@ -69,10 +69,10 @@ def export_file(data, file, format, **params):
         
         **Exporting several simulation frames**
         
-        By default, only the current animation frame (given by the :py:attr:`~ovito.anim.AnimationSettings.current_frame` global variable) is exported.
+        By default, only the current animation frame (frame 0 by default) is exported by the function.
         To export a different frame, pass the ``frame`` keyword parameter to the :py:func:`!export_file` function. 
         Alternatively, you can export all frames of the current animation sequence at once by passing ``multiple_frames=True``. Refined
-        control of the exported frame sequence is possible using the keyword arguments ``start_frame``, ``end_frame``, and ``every_nth_frame``.
+        control of the exported frame sequence is available through the keyword arguments ``start_frame``, ``end_frame``, and ``every_nth_frame``.
         
         The *lammps/dump* and *xyz* file formats can store multiple frames in a single output file. For other formats, or
         if you intentionally want to generate one file per frame, you must pass a wildcard filename to :py:func:`!export_file`.

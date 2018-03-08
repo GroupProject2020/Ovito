@@ -80,8 +80,7 @@ def _FileSource_compute(self, frame = None):
     """ Requests data from this data source. The :py:class:`!FileSource` will load it from the external file if needed.
 
         The optional *frame* parameter determines the frame to retrieve, which must be in the range 0 through (:py:attr:`.num_frames`-1).
-        If no frame number is specified, the current animation position is used (given by the global setting 
-        :py:attr:`AnimationSettings.current_frame <ovito.anim.AnimationSettings.current_frame>`). This is frame 0 by default.
+        If no frame number is specified, the current animation position is used (frame 0 by default).
 
         The :py:class:`!FileSource` uses a caching mechanism to keep the data for one or more frames in memory. Thus, invoking :py:meth:`!compute`
         repeatedly to retrieve the same frame will typically be very fast.

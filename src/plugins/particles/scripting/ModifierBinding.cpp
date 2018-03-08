@@ -104,10 +104,15 @@ void defineModifiersSubmodule(py::module m)
 	;
 
 	ovito_class<InterpolateTrajectoryModifier, Modifier>(m,
-			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
-			"")
+			":Base class: :py:class:`ovito.pipeline.Modifier`"
+			"\n\n"
+			"This modifier interpolates the particle positions in between successive snapshots of a simulation trajectory. "
+    		"It can be used to create smoothly looking animations from relatively coarse sequences of simulation snapshots. ")
 		.def_property("minimum_image_convention", &InterpolateTrajectoryModifier::useMinimumImageConvention, &InterpolateTrajectoryModifier::setUseMinimumImageConvention,
-				"..."
+				"If this option is activated, the modifier will automatically detect if a particle has crossed a simulation box boundary between two "
+    			"successive simulation frames and compute the unwrapped displacement vector correctly. "
+				"You should leave this option activated unless the particle positions loaded from the input data file(s) were "
+				"stored in unwrapped form by the molecular dynamics code. "
 				"\n\n"
 				":Default: ``True``\n")
 	;

@@ -26,10 +26,11 @@ ovito.data.CutoffNeighborFinder = CutoffNeighborFinder
 ovito.data.NearestNeighborFinder = NearestNeighborFinder
 ovito.data.ParticlesView = ParticlesView
 ovito.data.BondsView = BondsView
+ovito.data.TrajectoryLines = ovito.plugins.Particles.TrajectoryLines
 ovito.data.__all__ += ['ParticleProperty', 'ParticleType',
             'BondProperty', 'BondType', 'BondsEnumerator', 
             'CutoffNeighborFinder', 'NearestNeighborFinder',
-            'ParticlesView', 'BondsView']
+            'ParticlesView', 'BondsView', 'TrajectoryLines']
 
 # For backward compatibility with OVITO 2.9.0:
 ovito.data.Bonds = BondsView

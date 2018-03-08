@@ -273,15 +273,15 @@ void defineViewportSubmodule(py::module m)
 				"\n\n"
 				"The string can contain placeholder references to dynamically computed attributes of the form ``[attribute]``, which will be replaced "
 				"by their actual value before rendering the text label. "
-				"Attributes are taken from the pipeline output of the :py:class:`~ovito.PipelineSceneNode` assigned to the overlay's :py:attr:`.source_node` property. "
+				"Attributes are taken from the pipeline output of the :py:class:`~ovito.pipeline.Pipeline` assigned to the overlay's :py:attr:`.source_pipeline` property. "
 				"\n\n"
 				"The following example demonstrates how to insert a text label that displays the number of currently selected particles: "
 				"\n\n"
 				".. literalinclude:: ../example_snippets/text_label_overlay_with_attributes.py"
 				"\n\n"
 				":Default: \"Text label\"")
-		.def_property("source_node", &TextLabelOverlay::sourceNode, &TextLabelOverlay::setSourceNode,
-				"The :py:class:`~ovito.PipelineSceneNode` whose modification pipeline is queried for dynamic attributes that can be referenced "
+		.def_property("source_pipeline", &TextLabelOverlay::sourceNode, &TextLabelOverlay::setSourceNode,
+				"The :py:class:`~ovito.pipeline.Pipeline` that is queried to obtain the attribute values referenced "
 				"in the text string. See the :py:attr:`.text` property for more information. ")
 		.def_property("text_color", &TextLabelOverlay::textColor, &TextLabelOverlay::setTextColor,
 				"The text rendering color."
@@ -299,11 +299,11 @@ void defineViewportSubmodule(py::module m)
 
 	ovito_class<PythonViewportOverlay, ViewportOverlay>(m,
 			"This overlay type can be attached to a viewport to run a Python script every time an "
-			"image of the viewport is rendered. The Python script can execute arbitrary drawing commands to "
-			"paint on top of the rendered image."
+			"image of the viewport is rendered. The Python script can issue arbitrary drawing commands to "
+			"paint on top of the three-dimensional scene. "
 			"\n\n"
 			"Note that an alternative to using the :py:class:`!PythonViewportOverlay` class is to directly manipulate the "
-			"static image returned by the :py:meth:`Viewport.render` method before saving it to disk. "
+			"image returned by the :py:meth:`Viewport.render_image` method before saving the image to disk. "
 			"\n\n"
 			"You can attach a Python overlay to a viewport by adding an instance of this class to the viewport's "
 			":py:attr:`~ovito.vis.Viewport.overlays` collection:"
@@ -319,7 +319,6 @@ void defineViewportSubmodule(py::module m)
 				"Additional keyword arguments are passed to the function in the *args* dictionary. "
 				"The following keys are defined: \n\n"
 				"   * ``viewport``: The :py:class:`~ovito.vis.Viewport` being rendered.\n"
-				"   * ``render_settings``: The active :py:class:`~ovito.vis.RenderSettings`.\n"
 				"   * ``is_perspective``: Flag indicating whether projection is perspective or parallel.\n"
 				"   * ``fov``: The field of view.\n"
 				"   * ``view_tm``: The camera transformation matrix.\n"

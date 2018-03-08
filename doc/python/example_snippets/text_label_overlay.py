@@ -1,8 +1,7 @@
-import ovito
-from ovito.vis import TextLabelOverlay
+from ovito.vis import TextLabelOverlay, Viewport
 from PyQt5 import QtCore
 
-# Create an overlay.
+# Create the overlay:
 overlay = TextLabelOverlay(
     text = 'Some text', 
     alignment = QtCore.Qt.AlignHCenter ^ QtCore.Qt.AlignBottom,
@@ -10,6 +9,6 @@ overlay = TextLabelOverlay(
     font_size = 0.03,
     text_color = (0,0,0))
 
-# Attach overlay to the active viewport.
-viewport = ovito.dataset.viewports.active_vp
+# Attach the overlay to a newly created viewport:
+viewport = Viewport(type = Viewport.Type.Top)
 viewport.overlays.append(overlay)

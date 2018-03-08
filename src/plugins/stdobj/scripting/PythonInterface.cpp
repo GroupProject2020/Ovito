@@ -132,13 +132,15 @@ PYBIND11_PLUGIN(StdObj)
 	;
 
 	ovito_class<SimulationCellVis, DataVis>(m,
-			":Base class: :py:class:`ovito.vis.DataVis`\n\n"
-			"Controls the visual appearance of :py:class:`~ovito.data.SimulationCell` objects."
-			"The following script demonstrates how to change the line width of the simulation cell:"
+			":Base class: :py:class:`ovito.vis.DataVis`"
 			"\n\n"
-			".. literalinclude:: ../example_snippets/simulation_cell_display.py\n",
-			// Python class name:
-			"SimulationCellVis")
+			"Controls the visual appearance of the simulation cell. "
+			"An instance of this class is attached to the :py:class:`~ovito.data.SimulationCell` object "
+			"and can be accessed through its :py:attr:`~ovito.data.DataObject.vis` field. "
+			"\n\n"
+			"The following example script demonstrates how to change the line width of the simulation cell:"
+			"\n\n"
+			".. literalinclude:: ../example_snippets/simulation_cell_vis.py\n")
 		.def_property("line_width", &SimulationCellVis::cellLineWidth, &SimulationCellVis::setCellLineWidth,
 				"The width of the simulation cell line (in simulation units of length)."
 				"\n\n"

@@ -15,6 +15,7 @@ It also provides container classes for such data objects and some additional uti
   * :py:class:`BondProperty`
   * :py:class:`SimulationCell`
   * :py:class:`SurfaceMesh`
+  * :py:class:`TrajectoryLines`
   * :py:class:`DislocationNetwork`
 
 **Auxiliary data classes:**

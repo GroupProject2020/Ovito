@@ -66,11 +66,4 @@
     </variablelist>
   </simplesect>
 
-  <simplesect>
-  <title>See also</title>
-    <para>
-      <link xlink:href="python/modules/ovito_anim.html#ovito.anim.AnimationSettings"><classname>AnimationSettings</classname> (Python API)</link>
-    </para>
-  </simplesect>  
-  
 </section>

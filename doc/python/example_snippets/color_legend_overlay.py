@@ -1,6 +1,5 @@
-import ovito
 from ovito.io import import_file
-from ovito.vis import ColorLegendOverlay
+from ovito.vis import ColorLegendOverlay, Viewport
 from ovito.modifiers import ColorCodingModifier
 from PyQt5.QtCore import Qt
 
@@ -20,6 +19,6 @@ overlay = ColorLegendOverlay(
     font_size = 0.12,
     format_string = '%.2f eV')
 
-# Attach the overlay to the Viewport that is going to be used for rendering:
-viewport = ovito.dataset.viewports.active_vp
+# Attach the overlay to a Viewport that is going to be used for rendering:
+viewport = Viewport(type = Viewport.Type.Top)
 viewport.overlays.append(overlay)

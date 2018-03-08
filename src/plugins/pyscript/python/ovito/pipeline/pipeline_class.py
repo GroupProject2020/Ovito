@@ -150,7 +150,7 @@ def _Pipeline_compute(self, frame = None):
         without changing the pipeline between calls, it may return immediately with cached results from an earlier evaluation.
         
         The optional *frame* parameter determines at which animation time the pipeline is evaluated. Animation frame numbering starts at 0. 
-        If no frame is specified, the current animation position (given by the global state variable :py:attr:`AnimationSettings.current_frame <ovito.anim.AnimationSettings.current_frame>`) is used.
+        If no frame is specified, the current animation position is used (frame 0 by default).
 
         The :py:meth:`!compute` method raises a ``RuntimeError`` when the pipeline could not be successfully evaluated for some reason.
         This can happen due to invalid modifier parameters or input file parsing errors, for example.

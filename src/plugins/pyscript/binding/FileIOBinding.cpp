@@ -119,6 +119,11 @@ void defineIOSubmodule(py::module m)
 		.def_property_readonly("num_frames", &FileSource::numberOfFrames,
 				"This read-only attribute reports the number of frames found in the input file or sequence of input files. "
 				"The data for the individual frames can be obtained using the :py:meth:`.compute` method.")
+		.def_property("adjust_animation_interval", &FileSource::adjustAnimationIntervalEnabled, &FileSource::setAdjustAnimationIntervalEnabled)
+		.def_property("playback_speed_numerator", &FileSource::playbackSpeedNumerator, &FileSource::setPlaybackSpeedNumerator)
+		.def_property("playback_speed_denominator", &FileSource::playbackSpeedDenominator, &FileSource::setPlaybackSpeedDenominator)
+		.def_property("playback_start_time", &FileSource::playbackStartTime, &FileSource::setPlaybackStartTime)
+		
 		// For backward compatibility with OVITO 2.9:
 		// Returns the zero-based frame index that is currently loaded and kept in memory by the FileSource.
 		.def_property_readonly("loaded_frame", &FileSource::storedFrameIndex)
@@ -129,21 +134,6 @@ void defineIOSubmodule(py::module m)
 					const FileSourceImporter::Frame& frameInfo = fs.frames()[fs.storedFrameIndex()];
 					return frameInfo.sourceFile;
 				})
-		.def_property("adjust_animation_interval", &FileSource::adjustAnimationIntervalEnabled, &FileSource::setAdjustAnimationIntervalEnabled,
-				"This Boolean flag controls whether the global animation length in OVITO is automatically adjusted to match the :py:attr:`.num_frames` value "
-				"of this :py:class:`!FileSource`."
-				"\n\n"
-				"The length of the current animation interval is managed by the global :py:class:`~ovito.anim.AnimationSettings` object. "
-				"The current animation interval determines the length of movies rendered by OVITO and the length of the timeline that is displayed in the "
-				"graphical program version of OVITO. "
-				"If :py:attr:`!adjust_animation_interval` is ``True``, then the global animation length will automatically be adjusted to match the "
-				":py:attr:`.num_frames` value of this :py:class:`!FileSource`. "
-				"\n\n"
-				"Keep in mind that is possible to have multiple data pipelines in the same scene, each having its own :py:class:`!FileSource`. "
-				"By default, OVITO sets :py:attr:`!adjust_animation_interval` to ``True`` only for the very first :py:class:`!FileSource` that is created ("
-				"typically through a call to :py:func:`~ovito.io.import_file`). The animation length will subsequently be slaved to the number of frames "
-				"loaded by this master :py:class:`!FileSource`. In some situations it makes sense to turn the :py:attr:`!adjust_animation_interval` option off again "
-				"and adjust the animation length manually by modifying the global :py:class:`~ovito.anim.AnimationSettings` object directly. ")
 
 		// The following methods are required for the DataCollection.attributes property.
 		.def_property_readonly("attribute_names", [](FileSource& obj) -> QStringList {
