@@ -4,7 +4,6 @@ from ovito.data import NearestNeighborFinder
 # Load input simulation file.
 pipeline = import_file("input/simulation.dump")
 data = pipeline.source
-positions = data.particle_properties['Position']
 
 # Initialize neighbor finder object.
 # Visit the 12 nearest neighbors of each particle.
@@ -12,7 +11,7 @@ N = 12
 finder = NearestNeighborFinder(N, data)
 
 # Loop over all input particles:
-for index in range(len(positions)):
+for index in range(data.particles.count):
     print("Nearest neighbors of particle %i:" % index)
     # Iterate over the neighbors of the current particle, starting with the closest:
     for neigh in finder.find(index):

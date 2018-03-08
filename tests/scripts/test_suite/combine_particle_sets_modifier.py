@@ -78,14 +78,14 @@ def verify_operation(input_file1, input_file2):
     assert(output_prop_names == input_prop_names_1 | input_prop_names_2)
 
     # Make sure all bond from both input datasets are in the output:
-    if pipeline.source.find(Bonds) and modifier.source.find(Bonds):
-        N_input1 = len(pipeline.source.expect(Bonds))
-        N_input2 = len(modifier.source.expect(Bonds))
-        N_output = len(data.expect(Bonds))
-        print("Number of input bonds in dataset 1: ", N_input1)
-        print("Number of input bonds in dataset 2: ", N_input2)
-        print("Number of output bonds: ", N_output)
-        assert(N_output == N_input1 + N_input2)
+    if pipeline.source.bonds.count != 0 and modifier.source.bonds.count != 0:
+        N_bonds_input1 = pipeline.source.bonds.count
+        N_bonds_input2 = modifier.source.bonds.count
+        N_bonds_output = data.bonds.count
+        print("Number of input bonds in dataset 1: ", N_bonds_input1)
+        print("Number of input bonds in dataset 2: ", N_bonds_input2)
+        print("Number of output bonds: ", N_bonds_output)
+        assert(N_bonds_output == N_bonds_input1 + N_bonds_input2)
 
         # Check if the bnd types have been combined correctly.
         input_types_1 = pipeline.source.bond_properties['Bond Type'].types
@@ -104,16 +104,18 @@ def verify_operation(input_file1, input_file2):
             print("Checking values of property '{}'".format(name))
             prop_in = pipeline.source.bond_properties[name]
             prop_out = data.bond_properties[name]
-            assert(numpy.all(prop_out[0:N_input1] == prop_in[...]))
+            assert(numpy.all(prop_out[0:N_bonds_input1] == prop_in[...]))
         for name in input_prop_names_2:
             print("Checking values of property '{}'".format(name))
             prop_in = modifier.source.bond_properties[name]
             prop_out = data.bond_properties[name]
-            if not prop_out.types:
-                assert(numpy.all(prop_out[N_input1:] == prop_in[...]))
+            if name == 'Topology':
+                assert(numpy.all(prop_out[N_bonds_input1:] == prop_in[...] + N_input1))
+            elif not prop_out.types:
+                assert(numpy.all(prop_out[N_bonds_input1:] == prop_in[...]))
             else:
-                for i in range(N_input2):
-                    assert(prop_out.type_by_id(prop_out[i+N_input1]).name == prop_in.type_by_id(prop_in[i]).name)
+                for i in range(N_bonds_input2):
+                    assert(prop_out.type_by_id(prop_out[i+N_bonds_input1]).name == prop_in.type_by_id(prop_in[i]).name)
         
 
 verify_operation("../../files/XYZ/SiH.extended.xyz", "../../files/XYZ/LiH.xyz")

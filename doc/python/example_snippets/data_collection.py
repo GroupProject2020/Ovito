@@ -18,8 +18,8 @@ assert(cell is not None and cell in data_collection.objects)
 
 # >>>>>>>
 cell = SimulationCell()
-data_collection = StaticSource()
-data_collection.objects.append(cell)
+my_data_collection = StaticSource()
+my_data_collection.objects.append(cell)
 # <<<<<<<
 
 # >>>>>>>

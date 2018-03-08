@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -245,79 +245,6 @@ PYBIND11_PLUGIN(Particles)
 		.value("MoleculeType", ParticleProperty::MoleculeTypeProperty)
 	;								
 
-#if 0
-	auto BondsObject_py = ovito_class<BondsObject, DataObject>(m,
-			":Base class: :py:class:`ovito.data.DataObject`\n\n"
-			"Stores the list of bonds between pairs of particles. "
-			"\n\n"
-			"Typically, bonds are loaded from a simulation data file or are dynamically created by modifiers in a data pipeline. "
-			"The following code example demonstrates how to access the bonds produced by a :py:class:`~.ovito.modifiers.CreateBondsModifier`: "
-			"\n\n"
-			".. literalinclude:: ../example_snippets/bonds_data_object.py\n"
-			"   :lines: 1-12\n"
-			"\n"
-			"The :py:class:`Bonds` object can be used like a Numpy array of shape *N* x 2, where *N* is the number bonds: "
-			"\n\n"
-			".. literalinclude:: ../example_snippets/bonds_data_object.py\n"
-			"   :lines: 14-15\n"
-			"\n"
-			"Access to the bonds array is read-only. Each bond in the arrray is defined by a pair of 0-based indices into the particles array. "
-			"Note that bonds are stored in the array in an arbitrary order. "
-			"If you need to enumerate all bonds of a particular particle, you should use the :py:class:`BondsEnumerator` utility class. "
-			"\n\n"
-			"**Bond properties**"
-			"\n\n"
-			"Like particles, bonds may be associated with *bond properties*. These properties are stored "
-			"in separate data objects of type :py:class:`BondProperty`, which are accessible through the "
-			":py:attr:`DataCollection.bonds` field of the data collection. "
-			"\n\n"
-			"**Bond display settings**"
-			"\n\n"
-			"Every :py:class:`!Bonds` object is associated with a :py:class:`~ovito.vis.BondsVis` element, "
-			"which controls the visual appearance of the bonds in rendered images. It can be accessed through the :py:attr:`~DataObject.vis` base class attribute: "
-			"\n\n"
-			".. literalinclude:: ../example_snippets/bonds_data_object.py\n"
-			"   :lines: 20-23\n"
-			"\n\n"
-			"**Computing bond vectors**"
-			"\n\n"
-			"Note that the :py:class:`!Bonds` class stores only the indices of the particles connected by bonds (the *topology*). "
-			"Sometimes it may be necessary to determine the corresponding spatial bond *vectors*. They can be computed "
-			"from the current positions of the particles:\n"
-			"\n"
-			".. literalinclude:: ../example_snippets/bonds_data_object.py\n"
-			"   :lines: 25-29\n"
-			"\n\n"
-			"Here, the first and the second column of the bonds array are used to index into the particle positions array. "
-			"The subtraction of the two indexed arrays yields the list of bond vectors. Each vector in this list points "
-			"from the first particle to the second particle of the corresponding bond."
-			"\n\n"
-			"Finally, we must correct for the effect of periodic boundary conditions when bonds "
-			"cross the box boundaries. This is achieved by adding the product of the cell matrix and the stored PBC "
-			"shift vectors to the bond vectors:\n"
-			"\n"
-			".. literalinclude:: ../example_snippets/bonds_data_object.py\n"
-			"   :lines: 30-\n"
-			"\n\n"
-			"The PBC vectors array is transposed here to facilitate the transformation "
-			"of the entire array of vectors with a single 3x3 cell matrix. In the code snippet we perform "
-			"the following calculation for every bond (*a*, *b*) in parallel:"
-			"\n\n"
-			"   v = x(b) - x(a) + dot(H, pbc)\n"
-			"\n\n"
-			"where *H* is the cell matrix and *pbc* is the bond's PBC shift vector of the form (n\\ :sub:`x`, n\\ :sub:`y`, n\\ :sub:`z`). "
-			"See the :py:attr:`.pbc_vectors` array for its meaning.\n"
-			,
-			// Python class name:
-			"Bonds")
-		.def_property_readonly("__array_interface__", &BondsObject__array_interface__)
-		.def_property_readonly("_pbc_vectors", &BondsObject__pbc_vectors)
-		.def("clear", &BondsObject::clear)
-		.def_property_readonly("size", &BondsObject::size)
-		.def("__len__", &BondsObject::size)
-	;
-#endif	
-
 	py::class_<ParticleBondMap>(m, "BondsEnumerator",
 		"Utility class that permits efficient iteration over the bonds connected to specific particles. "
 		"\n\n"
@@ -339,7 +266,15 @@ PYBIND11_PLUGIN(Particles)
 				py::object topologyPropertyName = py::cast(BondProperty::OOClass().standardPropertyName(BondProperty::TopologyProperty));
 				py::object pbcShiftPropertyName = py::cast(BondProperty::OOClass().standardPropertyName(BondProperty::PeriodicImageProperty));
 
-				py::object bonds_view = data_collection.attr("bonds");
+				py::object DataCollection = py::module::import("ovito.data").attr("DataCollection");
+				py::object BondsView = py::module::import("ovito.data").attr("BondsView");
+				py::object bonds_view;
+				if(py::isinstance(data_collection, DataCollection))
+					bonds_view = data_collection.attr("bonds");
+				else if(py::isinstance(data_collection, BondsView))
+					bonds_view = data_collection;
+				else
+					throw Exception("BondsEnumerator construction failed. Data collection expected as argument.");
 				if(!bonds_view.contains(topologyPropertyName))
 					throw Exception("BondsEnumerator construction failed. Data collection doesn't contain any bonds.");
 				py::object topology_prop = bonds_view[topologyPropertyName];

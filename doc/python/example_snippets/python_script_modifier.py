@@ -7,7 +7,7 @@ pipeline = import_file("input/simulation.dump")
 # Define our custom modifier function, which assigns a uniform color 
 # to all particles, similar to the built-in AssignColorModifier. 
 def assign_color(frame, input, output):
-    color_property = output.particle_properties.create('Color')
+    color_property = output.particles.create_property('Color')
     with color_property:
         color_property[:] = (0.2, 0.5, 1.0)
 
@@ -16,4 +16,4 @@ pipeline.modifiers.append(PythonScriptModifier(function = assign_color))
 
 # Evaluate data pipeline. This will result in a call to assign_color() from above.
 data = pipeline.compute()
-print(data.particle_properties['Color'][...])
+print(data.particles['Color'][...])

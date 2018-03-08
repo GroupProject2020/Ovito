@@ -35,7 +35,6 @@ __all__ = ['version', 'version_string', 'dataset', 'DataSet']
 
 # Load the whole OVITO package. This is required to make all Python bindings available.
 for _, _name, _ in pkgutil.walk_packages(_package_source_path, __name__ + '.'):
-    if _name.startswith("ovito.linalg"): continue  # For backward compatibility with OVITO 2.7.1. The old 'ovito.linalg' module has been deprecated but may still be present in some existing OVITO installations.
     if _name.startswith("ovito.plugins"): continue  # Do not load C++ plugin modules at this point, only Python modules
     try:
         importlib.import_module(_name)

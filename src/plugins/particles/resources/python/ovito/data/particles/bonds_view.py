@@ -19,16 +19,76 @@ from ovito.plugins.Particles import BondProperty
 # Helper class that is part of the implementation of the DataCollection.bonds attribute.
 class BondsView(collections.Mapping):
     """
-    A dictionary view of all :py:class:`BondProperty` objects in a :py:class:`DataCollection`.
-    An instance of this class is returned by :py:attr:`DataCollection.bonds`.
-
-    It implements the ``collections.abc.Mapping`` interface. That means it can be used
-    like a standard read-only Python ``dict`` object to access the bond properties by name, e.g.:
+    This class provides a dictionary view of all :py:class:`BondProperty` objects in a :py:class:`DataCollection`.
+    An instance is returned by the :py:attr:`~DataCollection.bonds` attribute of the data collection:
 
     .. literalinclude:: ../example_snippets/bonds_view.py
-        :lines: 8-12
+        :lines: 9-10
 
-    New bond properties can be added with the :py:meth:`.create_property` method.
+    The :py:attr:`.count` attribute of the :py:class:`!BondsView` class reports the number of bonds.
+
+    **Bond properties**
+    
+    Bonds can possess an arbitrary set of *bond properties*, just like particles possess `particle properties <../../usage.particle_properties.html>`_. 
+    The values of each bond property are stored in a separate :py:class:`BondProperty` data object. The :py:class:`!BondsView` 
+    class operates like a Python dictionary and provides access to all :py:class:`BondProperty` objects based on their unique name:
+
+    .. literalinclude:: ../example_snippets/bonds_view.py
+        :lines: 15-19
+
+    New bond properties can be added using the :py:meth:`.create_property` method. Removal of a property is possible
+    by deleting it from the :py:attr:`DataCollection.objects` list.
+
+    **Bond topology**
+    
+    If bonds exist in a data collection, then the ``Topology`` bond property is always present. It has the special role
+    of defining the connectivity between particles in the form of a *N* x 2 array of indices into the particles list. 
+    In other words, each bond is defined by a pair of particle indices. 
+    
+    .. literalinclude:: ../example_snippets/bonds_view.py
+        :lines: 23-25
+    
+    Bonds are stored in no particular order. If you need to enumerate all bonds connected to a certain particle, you can use the 
+    :py:class:`BondsEnumerator` utility class for that.
+    
+    **Bond display settings**
+
+    The ``Topology`` bond property has a :py:class:`~ovito.vis.BondsVis` element attached to it,
+    which controls the visual appearance of the bonds in rendered images. It can be accessed through the :py:attr:`~DataObject.vis` 
+    attribute:
+    
+    .. literalinclude:: ../example_snippets/bonds_view.py
+        :lines: 30-32
+    
+    **Computing bond vectors**
+    
+    Since each bond is defined by two indices into the particles array, we can use this to determine the corresponding spatial 
+    bond *vectors*. They can be computed from the positions of the particles:
+    
+    .. literalinclude:: ../example_snippets/bonds_view.py
+        :lines: 37-39
+    
+    Here, the first and the second column of the bonds topology array are used to index into the particle positions array.
+    The subtraction of the two indexed arrays yields the list of bond vectors. Each vector in this list points
+    from the first particle to the second particle of the corresponding bond.
+    
+    Finally, we might have to correct for the effect of periodic boundary conditions when a bond
+    connects two particles on opposite sides of the box. OVITO keeps track of such cases by means of the
+    the special ``Periodic Image`` bond property. It stores a shift vector for each bond, specifying the directions in which the bond
+    crosses periodic boundaries. We can use this information to correct the bond vectors computed above.
+    This is done by adding the product of the cell matrix and the shift vectors from the ``Periodic Image`` bond property:
+    
+    .. literalinclude:: ../example_snippets/bonds_view.py
+        :lines: 43-44
+    
+    The shift vectors array is transposed here to facilitate the transformation
+    of the entire array of vectors with a single 3x3 cell matrix. 
+    To summarize: In the two code snippets above we have performed
+    the following calculation for every bond (*a*, *b*) in parallel:
+    
+       v = x(b) - x(a) + dot(H, pbc)
+    
+    where *H* is the cell matrix and *pbc* is the bond's PBC shift vector of the form (n\ :sub:`x`, n\ :sub:`y`, n\ :sub:`z`).
     """
     
     def __init__(self, data_collection):
@@ -64,7 +124,9 @@ class BondsView(collections.Mapping):
 
     @property
     def count(self):
-        """ This read-only attribute returns the number of bonds in the :py:class:`DataCollection`. """
+        """ This read-only attribute returns the number of bonds in the :py:class:`DataCollection`. 
+            It always matches the lengths of all :py:class:`BondProperty` arrays in the data collection. 
+        """
         for obj in self._data.objects:
             if isinstance(obj, BondProperty) and obj.type == BondProperty.Type.Topology:
                 return obj.size
@@ -79,19 +141,18 @@ class BondsView(collections.Mapping):
         The method can create *standard* and *user-defined* bond properties. To create a *standard* bond property,
         one of the :ref:`standard property names <bond-types-list>` must be provided as *name* argument:
         
-        .. literalinclude:: ../example_snippets/bonds_view.py
+        .. literalinclude:: ../example_snippets/bonds_view_create_property.py
             :lines: 16-17
         
-        The size of the provided *data* array must match the number of bond in the data collection, i.e., 
-        it must equal the length of the :py:class:`Bonds` objects as well as all other bond properties that already exist in the same data collection.
-        Alternatively, you can set the property values after construction: 
+        The size of the provided *data* array must match the number of bonds in the data collection
+        given by the :py:attr:`.count` attribute. You can also set the property values after construction: 
 
-        .. literalinclude:: ../example_snippets/bonds_view.py
+        .. literalinclude:: ../example_snippets/bonds_view_create_property.py
             :lines: 23-25
 
         To create a *user-defined* bond property, use a non-standard property name:
         
-        .. literalinclude:: ../example_snippets/bonds_view.py
+        .. literalinclude:: ../example_snippets/bonds_view_create_property.py
             :lines: 29-30
         
         In this case the data type and the number of vector components of the new property are inferred from
@@ -100,7 +161,7 @@ class BondsView(collections.Mapping):
         Alternatively, the *dtype* and *components* parameters can be specified explicitly
         if initialization of the property values should happen after property creation:
 
-        .. literalinclude:: ../example_snippets/bonds_view.py
+        .. literalinclude:: ../example_snippets/bonds_view_create_property.py
             :lines: 34-36
 
         If the property to be created already exists in the data collection, it is replaced with a new one.
@@ -108,17 +169,17 @@ class BondsView(collections.Mapping):
 
         Note: If the data collection contains no bonds yet, that is, even the ``Topology`` property
         is not present in the data collection yet, then the ``Topology`` property can still be created from scratch as a first bond property by the 
-        :py:meth:`!create` method. The *data* array has to be provided in this case to specify the number of bonds
+        :py:meth:`!create_property` method. The *data* array has to be provided in this case to specify the number of bonds
         to create. After the initial ``Topology`` property has been created, the number of bonds is now specified and any subsequently added properties 
         must have the exact same length.
 
         :param name: Either a :ref:`standard property type constant <bond-types-list>` or a name string.
         :param data: An optional data array with per-bond values for initializing the new property.
-                     The size of the array must match the number of bonds in the data collection
+                     The size of the array must match the bond :py:attr:`.count`
                      and the shape must be consistent with the number of components of the property.
         :param dtype: The element data type when creating a user-defined property. Must be either ``int`` or ``float``.
         :param int components: The number of vector components when creating a user-defined property.
-        :returns: The newly created :py:class:`~ovito.data.BondProperty`
+        :returns: The newly created :py:class:`BondProperty`
         """
 
         # Input parameter validation and inferrence:

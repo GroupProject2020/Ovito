@@ -1,37 +1,45 @@
 from ovito.io import import_file
-from ovito.data import BondProperty
+from ovito.data import BondProperty, SimulationCell
 from ovito.modifiers import ComputeBondLengthsModifier
-import numpy
+from ovito.vis import BondsVis
 pipeline = import_file('input/bonds.data.gz', atom_style = 'bond')
 pipeline.modifiers.append(ComputeBondLengthsModifier())
+
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 data = pipeline.compute()
-
-bond_lengths = data.bonds['Length']
-has_selection = 'Selection' in data.bonds
-name_list = data.bonds.keys()
-# snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-# snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-colors = numpy.random.random_sample(size = (data.bonds.count, 3))
-data.bonds.create_property('Color', data=colors)
+print("Number of bonds:", data.bonds.count)
 # snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
-
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-prop = data.bonds.create_property('Color')
-with prop as arr:
-    arr[...] = numpy.random.random_sample(size = prop.shape)
+print("Bond property names:")
+print(data.bonds.keys())
+if 'Lengths' in data.bonds:
+    lengths_prop = data.bonds['Length']
+    assert(len(lengths_prop) == data.bonds.count)
 # snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-values = numpy.arange(0, data.bonds.count, dtype=int)
-data.bonds.create_property('myint', data=values)
+topology = data.bonds['Topology']
+for a,b in topology:
+    print("Bond from particle %i to particle %i" % (a,b))
+# snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+# snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+data.bonds['Topology'].vis.enabled = True
+data.bonds['Topology'].vis.shading = BondsVis.Shading.Flat
+data.bonds['Topology'].vis.width = 0.3
+# snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+import numpy
+# snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+topology = data.bonds['Topology']
+positions = data.particles['Position']
+bond_vectors = positions[topology[:,1]] - positions[topology[:,0]]
 # snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-prop = data.bonds.create_property('myvector', dtype=float, components=3)
-with prop:
-    prop[...] = numpy.random.random_sample(size = prop.shape)
+cell = data.expect(SimulationCell)
+bond_vectors += numpy.dot(cell[:,:3], data.bonds['Periodic Image'].T).T
 # snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

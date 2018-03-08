@@ -33,7 +33,7 @@ assert(node.output.number_of_full_bonds == len(node.output.bonds.array))
 assert(node.output.number_of_half_bonds == 21894)
 assert(node.output.number_of_half_bonds == node.output.number_of_full_bonds*2)
 
-bond_enumerator = Bonds.Enumerator(node.output.bonds)
+bond_enumerator = BondsEnumerator(node.output.bonds)
 for bond_index in bond_enumerator.bonds_of_particle(0):
     print("Bond index 0:", bond_index)
 for bond_index in bond_enumerator.bonds_of_particle(1):

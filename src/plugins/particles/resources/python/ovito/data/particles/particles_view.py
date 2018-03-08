@@ -107,7 +107,7 @@ class ParticlesView(collections.Mapping):
 
         Note: If the data collection contains no particles yet, that is, even the ``Position`` property
         is not present in the data collection yet, then the ``Position`` standard property can still be created from scratch as a first particle property by the 
-        :py:meth:`!create` method. The *data* array has to be provided in this case to specify the number of particles
+        :py:meth:`!create_property` method. The *data* array has to be provided in this case to specify the number of particles
         to create:
 
         .. literalinclude:: ../example_snippets/particles_view.py
@@ -118,11 +118,11 @@ class ParticlesView(collections.Mapping):
 
         :param name: Either a :ref:`standard property type constant <particle-types-list>` or a name string.
         :param data: An optional data array with per-particle values for initializing the new property.
-                     The size of the array must match the number of particles in the data collection
+                     The size of the array must match the particle :py:attr:`.count` in the data collection
                      and the shape must be consistent with the number of components of the property.
         :param dtype: The element data type when creating a user-defined property. Must be either ``int`` or ``float``.
         :param int components: The number of vector components when creating a user-defined property.
-        :returns: The newly created :py:class:`~ovito.data.ParticleProperty`
+        :returns: The newly created :py:class:`ParticleProperty`
         """
 
         # Input parameter validation and inferrence:

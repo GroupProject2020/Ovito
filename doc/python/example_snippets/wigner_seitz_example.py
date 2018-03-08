@@ -18,16 +18,16 @@ def modify(frame, input, output):
 
     # Retrieve the two-dimensional array with the site occupancy numbers.
     # Use [...] to cast it to a Numpy array.
-    occupancies = input.particle_properties['Occupancy'][...]
+    occupancies = input.particles['Occupancy'][...]
     
     # Get the site types as additional input:
-    site_type = input.particle_properties['Particle Type'][...]
+    site_type = input.particles['Particle Type'][...]
 
     # Calculate total occupancy of every site:
     total_occupancy = np.sum(occupancies, axis=1)
 
     # Set up a particle selection by creating the Selection property:
-    selection = output.create_particle_property(ParticleProperty.Type.Selection)
+    selection = output.particles.create_property('Selection')
     
     # Select A-sites occupied by exactly one B-atom (the second entry of the Occupancy
     # array must be 1, and all others 0). Note that the Occupancy array uses 0-based

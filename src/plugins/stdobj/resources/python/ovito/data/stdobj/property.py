@@ -71,6 +71,11 @@ def _Property_dtype(self):
     return numpy.asanyarray(self).dtype
 Property.dtype = property(_Property_dtype)
 
+# Implement 'T' attribute (array transposition).
+def _Property_T(self):
+    return numpy.asanyarray(self).T
+Property.T = property(_Property_T)
+
 # Context manager section entry method:
 def _Property__enter__(self):
     self.make_writable()

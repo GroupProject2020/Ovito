@@ -9,8 +9,8 @@ pipeline.modifiers.append(SliceModifier(normal=(0,0,1), distance=0))
 
 # Compute the effect of the slice modifier by evaluating the pipeline.
 output = pipeline.compute()
-print("Remaining particle count:", len(output.particle_properties['Position']))
+print("Remaining particle count:", output.particles.count)
 
 # Access the cached input data of the FileSource:
 input = pipeline.source
-print("Input particle count:", len(input.particle_properties['Position']))
+print("Input particle count:", input.particles.count)

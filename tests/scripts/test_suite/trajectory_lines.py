@@ -2,13 +2,13 @@ import ovito
 from ovito.io import *
 from ovito.data import *
 from ovito.vis import *
-from ovito.pipeline import TrajectoryLineGenerator
+from ovito.pipeline import TrajectoryLineGenerator, Pipeline
 
 node = import_file("../../files/LAMMPS/animation.dump.gz")
 node.add_to_scene()
 print("Number of frames:", node.source.num_frames)
 
-traj_node = ovito.PipelineSceneNode()
+traj_node = Pipeline()
 traj_node.add_to_scene()
 traj_node.source = TrajectoryLineGenerator()
 

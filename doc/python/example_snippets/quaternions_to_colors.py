@@ -46,10 +46,10 @@ def modify(frame, input, output):
     """ The user-defined modifier function """
     
     # Input:
-    orientations = input.particle['Orientation']
+    orientations = input.particles['Orientation']
     
     # Output:
-    output.particls.create_property('Color', data=quaternions_to_colors(orientations))
+    output.particles.create_property('Color', data=quaternions_to_colors(orientations))
 
 # The following is for automated testing only and not shown in the documentation:
 from ovito.io import import_file

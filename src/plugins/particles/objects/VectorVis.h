@@ -122,9 +122,6 @@ protected:
 		FloatType,					// Scaling factor
 		FloatType					// Arrow width
 		> _boundingBoxCacheHelper;
-
-	/// This is for backward compatibility with OVITO 2.6.0.
-	bool _flipVectors = false;
 };
 
 /**

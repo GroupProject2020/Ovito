@@ -7,8 +7,8 @@ pipeline.modifiers.append(CommonNeighborAnalysisModifier())
             
 def compute_fcc_fraction(frame, input, output):
     n_fcc = input.attributes['CommonNeighborAnalysis.counts.FCC']
-    n_total = len(input.particle_properties['Position'])
-    output.attributes['fcc_fraction'] = n_fcc / n_total
+    output.attributes['fcc_fraction'] = n_fcc / input.particles.count
+
 
 pipeline.modifiers.append(PythonScriptModifier(function = compute_fcc_fraction))
 print(pipeline.compute().attributes['fcc_fraction'])
