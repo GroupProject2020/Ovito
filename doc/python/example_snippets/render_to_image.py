@@ -1,10 +1,10 @@
-from ovito.vis import Viewport
+from ovito.vis import Viewport, TachyonRenderer
 from PyQt5.QtGui import QPainter
 
 # Render an image of the three-dimensional scene:
 vp = Viewport(type=Viewport.Type.Ortho, camera_dir=(2, 1, -1))
 vp.zoom_all()
-image = vp.render_image(size=(320,240))
+image = vp.render_image(size=(320,240), renderer=TachyonRenderer())
 
 # Paint on top of the rendered image using Qt's drawing functions:
 painter = QPainter(image)

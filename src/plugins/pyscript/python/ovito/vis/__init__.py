@@ -64,10 +64,10 @@ def _Viewport_render_image(self, size=(640,480), frame=0, filename=None, backgro
 
         Before rendering an image using this method, you should make sure the three-dimensional contains some
         visible objects. Typically this involves calling the :py:meth:`Pipeline.add_to_scene() <ovito.pipeline.Pipeline.add_to_scene>`
-        method on a pipeline to insert its output data into the scene:
+        method on a pipeline to insert its output data into the scene::
 
-        .. literalinclude:: ../example_snippets/viewport.py
-           :lines: 4-5
+           pipeline = import_file('simulation.dump')
+           pipeline.add_to_scene()
 
         **Selecting the rendering engine**
 
