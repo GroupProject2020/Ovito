@@ -96,7 +96,7 @@ the data pipeline is evaluated. This user-defined function has access to the pos
 and can output information and results as new properties or global attributes.
 
 As a first simple example, we look at the calculation of the mean square displacement (MSD) in a system of moving particles.
-OVITO already provides the built-in `Displacement Vectors <../../particles.modifiers.displacement_vectors.html>`_ modifier, which 
+OVITO already provides the built-in `Displacement Vectors <../../particles.modifiers.displacement_vectors.html>`__ modifier, which 
 calculates the displacement of every particle. It stores its results in the ``"Displacement Magnitude"``
 particle property. So all our custom analysis modifier needs to do is to sum up the squared displacement magnitudes and divide by the number of particles:
 
@@ -117,7 +117,7 @@ by the ``ovitos`` interpreter. Then we have to insert the :py:class:`~ovito.modi
 Implementing an advanced analysis modifier
 --------------------------------------------------
 
-In the paper `[Phys. Rev. Lett. 86, 5530] <https://doi.org/10.1103/PhysRevLett.86.5530>`_ an order parameter is specified as a means
+In the paper `[Phys. Rev. Lett. 86, 5530] <https://doi.org/10.1103/PhysRevLett.86.5530>`__ an order parameter is specified as a means
 of labeling an atom in the simulation as belonging to either the liquid or solid fcc crystal phase. In the following we will 
 develop a custom analysis modifier for OVITO, which calculates this per-atom order parameter.
 
@@ -165,7 +165,7 @@ its data source.
 Visualizing local lattice orientations using particle coloring
 ---------------------------------------------------------------
 
-The `Polyhedredral Template Matching (PTM) <../../particles.modifiers.polyhedral_template_matching.html>`_ function of OVITO allows 
+The `Polyhedredral Template Matching (PTM) <../../particles.modifiers.polyhedral_template_matching.html>`__ function of OVITO allows 
 computing the local lattice orientation for each atom in a (poly)crystal. The computed local orientations
 are stored by the modifier as quaternions, i.e. as rotations within the fundamental zone, in the particle property named ``Orientation``.
 Each per-particle quaternion can be translated into an RGB color to visualize the local lattice orientation.

@@ -154,7 +154,7 @@ void defineViewportSubmodule(py::module m)
 			".. literalinclude:: ../example_snippets/coordinate_tripod_overlay.py"
 			"\n\n")
 		.def_property("alignment", &CoordinateTripodOverlay::alignment, &CoordinateTripodOverlay::setAlignment,
-				"Selects the corner of the viewport where the tripod is displayed. This must be a valid `Qt.Alignment value <http://doc.qt.io/qt-5/qt.html#AlignmentFlag-enum>`_ value as shown in the example above."
+				"Selects the corner of the viewport where the tripod is displayed. This must be a valid `Qt.Alignment value <http://doc.qt.io/qt-5/qt.html#AlignmentFlag-enum>`__ value as shown in the example above."
 				"\n\n"
 				":Default: ``PyQt5.QtCore.Qt.AlignLeft ^ PyQt5.QtCore.Qt.AlignBottom``")
 		.def_property("size", &CoordinateTripodOverlay::tripodSize, &CoordinateTripodOverlay::setTripodSize,
@@ -253,7 +253,7 @@ void defineViewportSubmodule(py::module m)
 			"\n\n"
 			"Text labels can display dynamically computed values. See the :py:attr:`.text` property for an example.")
 		.def_property("alignment", &TextLabelOverlay::alignment, &TextLabelOverlay::setAlignment,
-				"Selects the corner of the viewport where the text is displayed (anchor position). This must be a valid `Qt.Alignment value <http://doc.qt.io/qt-5/qt.html#AlignmentFlag-enum>`_ as shown in the example above. "
+				"Selects the corner of the viewport where the text is displayed (anchor position). This must be a valid `Qt.Alignment value <http://doc.qt.io/qt-5/qt.html#AlignmentFlag-enum>`__ as shown in the example above. "
 				"\n\n"
 				":Default: ``PyQt5.QtCore.Qt.AlignLeft ^ PyQt5.QtCore.Qt.AlignTop``")
 		.def_property("offset_x", &TextLabelOverlay::offsetX, &TextLabelOverlay::setOffsetX,
@@ -313,7 +313,7 @@ void defineViewportSubmodule(py::module m)
 				"The Python function to be called every time the viewport is repainted or when an output image is being rendered."
 				"\n\n"
 				"The function must have a signature as shown in the example above. The *painter* parameter "
-				"passed to the user-defined function contains a `QPainter <http://pyqt.sourceforge.net/Docs/PyQt5/api/qpainter.html>`_ object, which provides "
+				"passed to the user-defined function contains a `QPainter <http://pyqt.sourceforge.net/Docs/PyQt5/api/qpainter.html>`__ object, which provides "
 				"painting methods to draw arbitrary 2D graphics on top of the image rendered by OVITO. "
 				"\n\n"
 				"Additional keyword arguments are passed to the function in the *args* dictionary. "

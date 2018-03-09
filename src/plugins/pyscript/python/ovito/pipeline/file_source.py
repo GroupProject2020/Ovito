@@ -87,7 +87,7 @@ def _FileSource_compute(self, frame = None):
 
         Note: The returned :py:class:`~ovito.data.PipelineFlowState` data collection contains data objects that are owned by the :py:class:`!FileSource`.
         That means it is not safe to modify these objects as this would lead to unexpected side effects. 
-        You should alway use the :py:meth:`DataCollection.copy_if_needed() <ovito.data.DataCollection.copy_if_needed>` method
+        You should always use the :py:meth:`DataCollection.copy_if_needed() <ovito.data.DataCollection.copy_if_needed>` method
         to make a copy of the data objects that you want to modify. See the :py:class:`~ovito.data.PipelineFlowState` class
         for more information.
 

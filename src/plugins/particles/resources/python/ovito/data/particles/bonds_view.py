@@ -29,7 +29,7 @@ class BondsView(collections.Mapping):
 
     **Bond properties**
     
-    Bonds can possess an arbitrary set of *bond properties*, just like particles possess `particle properties <../../usage.particle_properties.html>`_. 
+    Bonds can possess an arbitrary set of *bond properties*, just like particles possess `particle properties <../../usage.particle_properties.html>`__. 
     The values of each bond property are stored in a separate :py:class:`BondProperty` data object. The :py:class:`!BondsView` 
     class operates like a Python dictionary and provides access to all :py:class:`BondProperty` objects based on their unique name:
 

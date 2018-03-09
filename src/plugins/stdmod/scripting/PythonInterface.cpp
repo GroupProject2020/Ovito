@@ -499,11 +499,11 @@ PYBIND11_PLUGIN(StdMod)
 			".. literalinclude:: ../example_snippets/color_legend_overlay.py"
 			"\n")
 		.def_property("alignment", &ColorLegendOverlay::alignment, &ColorLegendOverlay::setAlignment,
-				"Selects the corner of the viewport where the color bar is displayed (anchor position). This must be a valid `Qt.Alignment value <http://doc.qt.io/qt-5/qt.html#AlignmentFlag-enum>`_ as shown in the code example above. "
+				"Selects the corner of the viewport where the color bar is displayed (anchor position). This must be a valid `Qt.Alignment value <http://doc.qt.io/qt-5/qt.html#AlignmentFlag-enum>`__ as shown in the code example above. "
 				"\n\n"
 				":Default: ``PyQt5.QtCore.Qt.AlignHCenter ^ PyQt5.QtCore.Qt.AlignBottom``")
 		.def_property("orientation", &ColorLegendOverlay::orientation, &ColorLegendOverlay::setOrientation,
-				"Selects the orientation of the color bar. This must be a valid `Qt.Orientation value <http://doc.qt.io/qt-5/qt.html#Orientation-enum>`_ as shown in the code example above. "
+				"Selects the orientation of the color bar. This must be a valid `Qt.Orientation value <http://doc.qt.io/qt-5/qt.html#Orientation-enum>`__ as shown in the code example above. "
 				"\n\n"
 				":Default: ``PyQt5.QtCore.Qt.Horizontal``")
 		.def_property("offset_x", &ColorLegendOverlay::offsetX, &ColorLegendOverlay::setOffsetX,
@@ -527,7 +527,7 @@ PYBIND11_PLUGIN(StdMod)
 				"\n\n"
 				":Default: 0.1\n")
 		.def_property("format_string", &ColorLegendOverlay::valueFormatString, &ColorLegendOverlay::setValueFormatString,
-				"The format string used with the `sprintf() <http://en.cppreference.com/w/cpp/io/c/fprintf>`_ function to "
+				"The format string used with the `sprintf() <http://en.cppreference.com/w/cpp/io/c/fprintf>`__ function to "
 				"generate the text representation of floating-point values. You can change this format string to control the "
 				"number of decimal places or add units to the numeric values, for example. "
 				"\n\n"

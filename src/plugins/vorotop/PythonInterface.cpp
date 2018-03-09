@@ -42,17 +42,17 @@ PYBIND11_PLUGIN(VoroTop)
 	auto VoroTopModifier_py = ovito_class<VoroTopModifier, StructureIdentificationModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"This modifier uses the Voronoi cell topology of particles to characterize their local environments "
-			"[`Lazar, Han, Srolovitz, PNAS 112:43 (2015) <http://dx.doi.org/10.1073/pnas.1505788112>`_]. "
+			"[`Lazar, Han, Srolovitz, PNAS 112:43 (2015) <http://dx.doi.org/10.1073/pnas.1505788112>`__]. "
 			"\n\n"
   			"The Voronoi cell of a particle is the region of space closer to it than to any other particle. "
   			"The topology of the Voronoi cell is the manner in which its faces are connected, and describes "
   			"the manner in which a particle's neighbors are arranged.  The topology of a Voronoi cell can be "
   			"completely described in a vector of integers called a *Weinberg vector* "
-			"[`Weinberg, IEEE Trans. Circuit Theory 13:2 (1966) <http://dx.doi.org/10.1109/TCT.1966.1082573>`_]. "
+			"[`Weinberg, IEEE Trans. Circuit Theory 13:2 (1966) <http://dx.doi.org/10.1109/TCT.1966.1082573>`__]. "
 			"\n\n"
 			"This modifier requires loading a *filter*, which specifies structure types and associated "
     		"Weinberg vectors.  Filters for several common structures can be obtained from the "
-			"`VoroTop <https://www.seas.upenn.edu/~mlazar/VoroTop/filters.html>`_ website. "
+			"`VoroTop <https://www.seas.upenn.edu/~mlazar/VoroTop/filters.html>`__ website. "
 			"The modifier calculates the Voronoi cell topology of each particle, uses the provided "
     		"filter to determine the structure type, and stores the results in the ``Structure Type`` particle property. "
 			"This allows the user to subsequently select particles  of a certain structural type, e.g. by using the "
@@ -62,7 +62,7 @@ PYBIND11_PLUGIN(VoroTop)
     		"their bulk melting temperatures.  This robust behavior relieves the need to quench a sample "
     		"(such as by energy minimization) prior to analysis. "
 			"Further information about the Voronoi topology approach for local structure analysis, as well "
-    		"as additional filters, can be found on the `VoroTop webpage <https://www.seas.upenn.edu/~mlazar/VoroTop/>`_. "
+    		"as additional filters, can be found on the `VoroTop webpage <https://www.seas.upenn.edu/~mlazar/VoroTop/>`__. "
 			"\n\n"
 			"**Modifier outputs:**"
 			"\n\n"
@@ -83,7 +83,7 @@ PYBIND11_PLUGIN(VoroTop)
 				":Default: ``False``\n")
 		.def_property("filter_file", &VoroTopModifier::filterFile, &VoroTopModifier::loadFilterDefinition,
 				"Path to the filter definition file used by the modifier. "
-				"Filters files are available from the `VoroTop <https://www.seas.upenn.edu/~mlazar/VoroTop/filters.html>`_ website. "
+				"Filters files are available from the `VoroTop <https://www.seas.upenn.edu/~mlazar/VoroTop/filters.html>`__ website. "
 				"\n\n"
 				":Default: ``''``\n")
 	;

@@ -15,7 +15,7 @@ The standard way of loading external data from disk is calling the global :py:fu
    pipeline = import_file("simulation.dump")
 
 This high-level function works similar to the `Load File` function in OVITO's graphical user interface and automatically detects the format of the input file. 
-See the `OVITO user manual <../../usage.import.html#usage.import.formats>`_ for a list of supported file formats.
+See the `OVITO user manual <../../usage.import.html#usage.import.formats>`__ for a list of supported file formats.
 The function returns a new :py:class:`~ovito.pipeline.Pipeline` object, whose associated :py:class:`~ovito.pipeline.FileSource` is set up to point
 to the specified data file. 
 

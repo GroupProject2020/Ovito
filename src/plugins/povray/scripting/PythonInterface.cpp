@@ -52,14 +52,14 @@ PYBIND11_PLUGIN(POVRay)
 			"its location must be explicitly specified by setting the :py:attr:`.povray_executable` attribute. "
 			"\n\n"
 			"For a more detailed description of the rendering parameters exposed by this Python class, please consult the "
-			"`official POV-Ray documentation <http://www.povray.org/documentation/>`_.")
+			"`official POV-Ray documentation <http://www.povray.org/documentation/>`__.")
 		.def_property("povray_executable", &POVRayRenderer::povrayExecutable, &POVRayRenderer::setPovrayExecutable,
 				"The absolute path to the external POV-Ray executable on the local computer, which is called by this rendering backend to render an image. "
 				"If no path is set, OVITO will look for ``povray`` in the default executable search path. "
 				"\n\n"
 				":Default: ``\"\"``")
 		.def_property("quality_level", &POVRayRenderer::qualityLevel, &POVRayRenderer::setQualityLevel,
-				"The `image rendering quality <http://www.povray.org/documentation/3.7.0/r3_2.html#r3_2_8_3>`_ parameter passed to POV-Ray."
+				"The `image rendering quality <http://www.povray.org/documentation/3.7.0/r3_2.html#r3_2_8_3>`__ parameter passed to POV-Ray."
 				"\n\n"
 				":Default: 9")
 		.def_property("antialiasing", &POVRayRenderer::antialiasingEnabled, &POVRayRenderer::setAntialiasingEnabled,
@@ -71,7 +71,7 @@ PYBIND11_PLUGIN(POVRay)
 				"\n\n"
 				":Default: ``True``")
 		.def_property("radiosity", &POVRayRenderer::radiosityEnabled, &POVRayRenderer::setRadiosityEnabled,
-				"Enables `radiosity light calculations <http://www.povray.org/documentation/3.7.0/r3_4.html#r3_4_4_3>`_."
+				"Enables `radiosity light calculations <http://www.povray.org/documentation/3.7.0/r3_4.html#r3_4_4_3>`__."
 				"\n\n"
 				":Default: ``False``")
 		.def_property("radiosity_raycount", &POVRayRenderer::radiosityRayCount, &POVRayRenderer::setRadiosityRayCount,
@@ -79,7 +79,7 @@ PYBIND11_PLUGIN(POVRay)
 				"\n\n"
 				":Default: 50")
 		.def_property("depth_of_field", &POVRayRenderer::depthOfFieldEnabled, &POVRayRenderer::setDepthOfFieldEnabled,
-				"This flag enables `focus blur <http://www.povray.org/documentation/3.7.0/r3_4.html#r3_4_2_3>`_ (depth-of-field) rendering."
+				"This flag enables `focus blur <http://www.povray.org/documentation/3.7.0/r3_4.html#r3_4_2_3>`__ (depth-of-field) rendering."
 				"\n\n"
 				":Default: ``False``")
 		.def_property("focal_length", &POVRayRenderer::dofFocalLength, &POVRayRenderer::setDofFocalLength,
@@ -95,7 +95,7 @@ PYBIND11_PLUGIN(POVRay)
 				"\n\n"
 				":Default: 1.0")
 		.def_property("omni_stereo", &POVRayRenderer::odsEnabled, &POVRayRenderer::setODSEnabled,
-				"This flag enables `omni­directional stereo projection <http://wiki.povray.org/content/HowTo:ODS>`_ for stereoscopic 360-degree VR videos and images. "
+				"This flag enables `omni­directional stereo projection <http://wiki.povray.org/content/HowTo:ODS>`__ for stereoscopic 360-degree VR videos and images. "
 				"Note that this requires POV-Ray 3.7.1 or newer. The eye separation distance is controlled by the :py:attr:`.interpupillary_distance` parameter. "
 				"\n\n"
 				":Default: ``False``")

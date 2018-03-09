@@ -6,7 +6,7 @@ Data pipelines
 
 The following introduction assumes that you have already read the :py:ref:`scripting_api_overview` page.
 
-Modifiers are composable function objects that form a `data processing pipeline <https://en.wikipedia.org/wiki/Pipeline_(software)>`_.
+Modifiers are composable function objects that form a `data processing pipeline <https://en.wikipedia.org/wiki/Pipeline_(software)>`__.
 They dynamically modify, filter, analyze or extend the data that flows down the pipeline. Here, with *data* we mean
 any form of information that OVITO can work with, e.g. particles and their properties, bonds, the simulation cell,
 triangles meshes, voxel data, etc. The main purpose of the pipeline concept is to enable a non-destructive and repeatable workflow, i.e.,

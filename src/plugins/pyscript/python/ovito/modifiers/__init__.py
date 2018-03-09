@@ -10,7 +10,7 @@ data :py:class:`~ovito.pipeline.Pipeline` as follows::
     mod.color = (0.2, 1.0, 0.9)
     pipeline.modifiers.append(mod)
     
-The following modifier types are available. Please consult the `OVITO user manual <../../particles.modifiers.html>`_ for a
+The following modifier types are available. Please consult the `OVITO user manual <../../particles.modifiers.html>`__ for a
 more in-depth description of what these modifiers do.
 
 ============================================== =========================================

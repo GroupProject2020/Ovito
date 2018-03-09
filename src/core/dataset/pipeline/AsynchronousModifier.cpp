@@ -78,8 +78,12 @@ Future<PipelineFlowState> AsynchronousModifier::evaluate(TimePoint time, Modifie
 					if(modApp && modApp->modifier() == this) {
 						
 						// Keep a copy of the results in the ModifierApplication for later.
-						if(AsynchronousModifierApplication* asyncModApp = dynamic_object_cast<AsynchronousModifierApplication>(modApp.data()))
+						if(AsynchronousModifierApplication* asyncModApp = dynamic_object_cast<AsynchronousModifierApplication>(modApp.data())) {
+							TimeInterval iv = results->validityInterval();
+							iv.intersect(input.stateValidity());
+							results->setValidityInterval(iv);
 							asyncModApp->setLastComputeResults(results);
+						}
 
 						UndoSuspender noUndo(this);
 

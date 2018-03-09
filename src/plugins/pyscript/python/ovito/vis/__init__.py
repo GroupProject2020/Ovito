@@ -57,7 +57,7 @@ def _Viewport_render_image(self, size=(640,480), frame=0, filename=None, backgro
                       When using this option, make sure to save the image in the PNG format in order to preserve the transparency information.
         :param renderer: The rendering engine to use. If none is specified, either OpenGL or Tachyon are used, 
                          depending on the availablity of OpenGL in the script execution context.  
-        :returns: A `QImage <http://pyqt.sourceforge.net/Docs/PyQt5/api/qimage.html>`_ object containing the rendered picture; 
+        :returns: A `QImage <http://pyqt.sourceforge.net/Docs/PyQt5/api/qimage.html>`__ object containing the rendered picture; 
                   or ``None`` if the rendering operation has been canceled by the user.
 
         **Populating the scene**
@@ -92,7 +92,7 @@ def _Viewport_render_image(self, size=(640,480), frame=0, filename=None, backgro
 
         If the ``filename`` parameter is left unspecified, the method does not save the rendered image to disk.
         This gives you the opportunity to paint additional graphics on top before saving the 
-        `QImage <http://pyqt.sourceforge.net/Docs/PyQt5/api/qimage.html>`_ using its ``save()`` method:
+        `QImage <http://pyqt.sourceforge.net/Docs/PyQt5/api/qimage.html>`__ using its ``save()`` method:
         
         .. literalinclude:: ../example_snippets/render_to_image.py
 
@@ -261,7 +261,7 @@ def _Viewport_render(self, settings = None):
     #    :param settings: A settings object, which specifies the resolution, background color, output filename etc. of the image to be rendered. 
     #                     If ``None``, the global settings are used (given by :py:attr:`DataSet.render_settings <ovito.DataSet.render_settings>`).
     #    :type settings: :py:class:`RenderSettings`
-    #    :returns: A `QImage <http://pyqt.sourceforge.net/Docs/PyQt5/api/qimage.html>`_ object on success, which contains the rendered picture; 
+    #    :returns: A `QImage <http://pyqt.sourceforge.net/Docs/PyQt5/api/qimage.html>`__ object on success, which contains the rendered picture; 
     #              ``None`` if the rendering operation has been canceled by the user.
     if settings is None:
         settings = self.dataset.render_settings

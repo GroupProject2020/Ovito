@@ -34,7 +34,7 @@ a callable Python function, which you write. It is executed automatically by the
 **Extending OVITO: User-defined viewport overlays** 
 
 Similar to scripted modifiers, you can also write custom viewport overlays. 
-A `Python script overlay <../../viewport_overlays.python_script.html>`_ is a user-defined function that gets called by OVITO every time 
+A `Python script overlay <../../viewport_overlays.python_script.html>`__ is a user-defined function that gets called by OVITO every time 
 an interactive viewport is repainted or an image is rendered. This allows you to enrich images or movies rendered by OVITO with custom graphics or text, e.g., to include 
 additional information like scale bars or data plots with information dynamically computed by OVITO.
 
@@ -47,7 +47,7 @@ OVITO's Python interpreter
 ----------------------------------
 
 OVITO comes with a script interpreter, which can execute programs written in the Python language.
-The current version of OVITO is compatible with the `Python 3.5 <https://docs.python.org/3.5/>`_ language standard. 
+The current version of OVITO is compatible with the `Python 3.5 <https://docs.python.org/3.5/>`__ language standard. 
 You typically execute batch Python scripts from the terminal of your operating system using the :program:`ovitos` script interpreter that is installed 
 along with OVITO:
 
@@ -106,20 +106,20 @@ to a certain number of parallel threads, use the :command:`--nthreads` command l
 Third-party Python modules
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The embedded script interpreter of OVITO is a preconfigured version of the standard `CPython <https://en.wikipedia.org/wiki/CPython>`_ interpreter with the
+The embedded script interpreter of OVITO is a preconfigured version of the standard `CPython <https://en.wikipedia.org/wiki/CPython>`__ interpreter with the
 :py:mod:`ovito` Python package included. This makes it possible to run scripts both within the graphical program OVITO as well as through the :program:`ovitos`
-command line interpreter. However, the :program:`ovitos` interpreter includes only the `NumPy <http://www.numpy.org/>`_, `matplotlib <http://matplotlib.org/>`_, 
-and `PyQt5 <http://pyqt.sourceforge.net/Docs/PyQt5/>`_ packages as preinstalled extensions.
+command line interpreter. However, the :program:`ovitos` interpreter includes only the `NumPy <http://www.numpy.org/>`__, `matplotlib <http://matplotlib.org/>`__, 
+and `PyQt5 <http://pyqt.sourceforge.net/Docs/PyQt5/>`__ packages as preinstalled extensions.
 
 If you want to call other third-party Python modules from your OVITO scripts, it may be possible to install them in the 
 :program:`ovitos` interpreter using the normal *pip* or *setuptools* mechanisms 
 (e.g., run :command:`ovitos -m pip install <package>` to install a module via *pip*).
 
-Installing Python extensions that include native code (e.g. `Scipy <http://www.scipy.org>`_) in the embedded interpreter 
+Installing Python extensions that include native code (e.g. `Scipy <http://www.scipy.org>`__) in the embedded interpreter 
 will likely fail, however. It is recommended to build OVITO from source on your local system in this case. 
 The graphical program as well as :program:`ovitos` will then make use of your system's standard Python installation.
 This makes all modules that are installed in your system interpreter accessible within OVITO and :program:`ovitos` as well.
-How to build OVITO from source is described `on this page <http://www.ovito.org/manual/development.html>`_.
+How to build OVITO from source is described `on this page <http://www.ovito.org/manual/development.html>`__.
 
 Using the ovito package from other Python interpreters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -127,12 +127,12 @@ Using the ovito package from other Python interpreters
 The :py:mod:`ovito` Python package can also be imported by Python scripts running in an external Python interpreter, not :program:`ovitos`. 
 However, because this module contains native extensions, it must be compiled specifically for the Python interpreter being used. 
 Since there is a chance that the binary extension module shipped with the prebuilt version of OVITO is not compatible 
-with your local Python interpreter, it might be necessary to `build OVITO from source <http://www.ovito.org/manual/development.html>`_.
+with your local Python interpreter, it might be necessary to `build OVITO from source <http://www.ovito.org/manual/development.html>`__.
 In case you have multiple Python interpreters installed on your system, make sure OVITO is being linked against the 
 version that you are going to run your scripts with.
 
 Once the graphical program and the :py:mod:`ovito` Python module have been successfully built, 
-you should add the following directory to the `PYTHONPATH <https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPATH>`_,
+you should add the following directory to the `PYTHONPATH <https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPATH>`__,
 so that the Python interpreter can find it:
 
 =============== ===========================================================

@@ -1,5 +1,5 @@
 """ 
-This module provides functions for interfacing with the ASE (`Atomistic Simulation Environment <https://wiki.fysik.dtu.dk/ase/>`_).
+This module provides functions for interfacing with the ASE (`Atomistic Simulation Environment <https://wiki.fysik.dtu.dk/ase/>`__).
 It contains two high-level functions for converting atomistic data back and forth between 
 OVITO and ASE:
 
@@ -24,11 +24,11 @@ __all__ = ['ovito_to_ase', 'ase_to_ovito']
 
 def ovito_to_ase(data_collection):
     """
-    Constructs an `ASE Atoms object <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`_ from the 
+    Constructs an `ASE Atoms object <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`__ from the 
     particle data in an existing OVITO :py:class:`~ovito.data.DataCollection`.
 
     :param: data_collection: The OVITO :py:class:`~ovito.data.DataCollection` to convert.
-    :return: An `ASE Atoms object <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`_ containing the
+    :return: An `ASE Atoms object <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`__ containing the
              converted particle data from the source :py:class:`~ovito.data.DataCollection`.
 
     Usage example:
@@ -85,13 +85,13 @@ def ovito_to_ase(data_collection):
 
 def ase_to_ovito(atoms, data_collection):
     """
-    Converts an `ASE Atoms object <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`_ to an OVITO :py:class:`~ovito.data.DataCollection`.
+    Converts an `ASE Atoms object <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`__ to an OVITO :py:class:`~ovito.data.DataCollection`.
 
     The second function parameter specifies the destination data collection that will be filled with the converted
     atomistic data from the ASE Atoms object. You can pass any object that implements the :py:class:`~ovito.data.DataCollection` interface, e.g.
     a :py:class:`~ovito.data.PipelineFlowState` or a :py:class:`~ovito.pipeline.StaticSource`. Any existing data in *data_collection* is removed first. 
 
-    :param atoms: The `ASE Atoms object <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`_ to be converted.
+    :param atoms: The `ASE Atoms object <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`__ to be converted.
     :param data_collection: An object supporting the :py:class:`~ovito.data.DataCollection` interface that receives the output.
 
     Usage example:

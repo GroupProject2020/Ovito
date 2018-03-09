@@ -15,7 +15,7 @@ def import_file(location, **params):
     """ Imports data from an external file. 
     
         This Python function corresponds to the *Load File* menu command in OVITO's
-        user interface. The format of the imported file is automatically detected (see `list of supported formats <../../usage.import.html#usage.import.formats>`_).
+        user interface. The format of the imported file is automatically detected (see `list of supported formats <../../usage.import.html#usage.import.formats>`__).
         But depending on the file's format, additional keyword parameters may need to be supplied 
         to specify how the data should be interpreted. These keyword parameters are documented below.
         

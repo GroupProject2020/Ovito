@@ -128,5 +128,3 @@ protected:
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

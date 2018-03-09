@@ -32,7 +32,7 @@ OVITO's graphical user interface or programmatically from Python:
   1. Within the graphical user interface, select *Python script* from the modifier drop-down list to insert
      a Python script modifier into the modification pipeline. OVITO provides a text input field
      which allows you to enter the definition of the ``modify()`` function. The 
-     `corresponding page <../../particles.modifiers.python_script.html>`_ in the OVITO
+     `corresponding page <../../particles.modifiers.python_script.html>`__ in the OVITO
      user manual provides more information on this procedure and on how you can save a custom script modifier 
      for future use within the graphical program.
      
@@ -192,7 +192,7 @@ They are executed in a background thread to not block the graphical user interfa
 
 That means, if our Python modifier function takes a long time to compute before returning control to OVITO, no input events 
 can be processed by the application and the user interface will freeze. To avoid this, you can make your modifier function asynchronous using 
-the ``yield`` Python statement (see the `Python docs <https://docs.python.org/3/reference/expressions.html#yieldexpr>`_ for more information). 
+the ``yield`` Python statement (see the `Python docs <https://docs.python.org/3/reference/expressions.html#yieldexpr>`__ for more information). 
 Calling ``yield`` within the modifier function temporarily yields control to the
 main program, giving it the chance to process waiting user input events or repaint the viewports::
 

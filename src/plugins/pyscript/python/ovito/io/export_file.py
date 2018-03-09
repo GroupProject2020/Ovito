@@ -45,10 +45,10 @@ def export_file(data, file, format, **params):
             * ``"vasp"`` -- POSCAR format
             * ``"xyz"`` -- XYZ format
             * ``"fhi-aims"`` -- FHI-aims format
-            * ``"netcdf/amber"`` -- Binary format for MD data following the `AMBER format convention <http://ambermd.org/netcdf/nctraj.pdf>`_ 
+            * ``"netcdf/amber"`` -- Binary format for MD data following the `AMBER format convention <http://ambermd.org/netcdf/nctraj.pdf>`__ 
             * ``"vtk/trimesh"`` -- ParaView VTK format for exporting :py:class:`~ovito.data.SurfaceMesh` objects
             * ``"vtk/disloc"`` -- ParaView VTK format for exporting :py:class:`~ovito.data.DislocationNetwork` objects
-            * ``"ca"`` -- `Text-based format for storing dislocation lines <../../particles.modifiers.dislocation_analysis.html#particles.modifiers.dislocation_analysis.fileformat>`_
+            * ``"ca"`` -- `Text-based format for storing dislocation lines <../../particles.modifiers.dislocation_analysis.html#particles.modifiers.dislocation_analysis.fileformat>`__
             * ``"povray"`` -- POV-Ray scene format
 
         Depending on the selected format, additional keyword arguments must be passed to :py:func:`!export_file`:

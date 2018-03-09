@@ -127,7 +127,7 @@ You can choose between three different rendering engines, which can produce the 
 of the scene. The default renderer is the :py:class:`~ovito.vis.OpenGLRenderer`, which implements a fast, hardware-accelerated
 OpenGL rendering method. The second option is the :py:class:`~ovito.vis.TachyonRenderer`, which is
 a software-only raytracing engine and which is able to produce better looking results in many cases.
-Finally, the :py:class:`~ovito.vis.POVRayRenderer` offloads the rendering to the external `POV-Ray <http://www.povray.org/>`_
+Finally, the :py:class:`~ovito.vis.POVRayRenderer` offloads the rendering to the external `POV-Ray <http://www.povray.org/>`__
 program, which must be installed on the local computer. 
 Each of these rendering backends has specific parameters, and you can access the current renderer 
 through the :py:attr:`RenderSettings.renderer <ovito.vis.RenderSettings.renderer>` attribute::
@@ -140,5 +140,5 @@ After the render settings have been specified, we can let OVITO render the image
 
     vp.render(settings)
 
-Note that :py:meth:`~ovito.vis.Viewport.render` returns a `QImage <http://pyqt.sourceforge.net/Docs/PyQt5/api/qimage.html>`_,
+Note that :py:meth:`~ovito.vis.Viewport.render` returns a `QImage <http://pyqt.sourceforge.net/Docs/PyQt5/api/qimage.html>`__,
 giving you the possibility to manipulate the rendered picture before saving it to disk.
