@@ -107,16 +107,18 @@ void StandardSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParam
 		throwException(tr("Failed to make OpenGL context current."));
 
 	OpenGLSceneRenderer::beginFrame(time, params, vp);
+}
+
+/******************************************************************************
+* Puts the GL context into its default initial state before rendering 
+* a frame begins.
+******************************************************************************/
+void StandardSceneRenderer::initializeGLState()
+{
+	OpenGLSceneRenderer::initializeGLState();
 
 	// Setup GL viewport.
 	setRenderingViewport(0, 0, _framebufferSize.width(), _framebufferSize.height());
-
-	// Set rendering background color.
-	if(!renderSettings()->generateAlphaChannel()) {
-		Color backgroundColor = renderSettings()->backgroundColor();
-		setClearColor(ColorA(backgroundColor));
-	}
-	else setClearColor(ColorA(0, 0, 0, 0));
 }
 
 /******************************************************************************
@@ -135,10 +137,13 @@ bool StandardSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderin
     QImage bufferImage = _framebufferObject->toImage();
 
 	// Scale it down to the output size.
-	QImage image = bufferImage.scaled(frameBuffer->image().width(), frameBuffer->image().height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+	QImage image = bufferImage.scaled(frameBuffer->width(), frameBuffer->height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 
 	// Copy OpenGL image to the output frame buffer.
-	frameBuffer->image() = image;
+	{
+		QPainter painter(&frameBuffer->image());
+		painter.drawImage(0, 0, image);
+	}
 	frameBuffer->update();
 
 	return true;

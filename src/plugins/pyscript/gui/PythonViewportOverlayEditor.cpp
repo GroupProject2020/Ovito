@@ -22,6 +22,7 @@
 #include <plugins/pyscript/PyScript.h>
 #include <plugins/pyscript/extensions/PythonViewportOverlay.h>
 #include <gui/mainwin/MainWindow.h>
+#include <gui/properties/BooleanParameterUI.h>
 #include "PythonViewportOverlayEditor.h"
 #include "ObjectScriptEditor.h"
 
@@ -53,6 +54,9 @@ void PythonViewportOverlayEditor::createUI(const RolloutInsertionParameters& rol
 	_outputDisplay->setReadOnly(true);
 	_outputDisplay->setLineWrapMode(QTextEdit::NoWrap);
 	layout->addWidget(_outputDisplay, 2, 0);
+
+	BooleanParameterUI* renderBehindScenePUI = new BooleanParameterUI(this, PROPERTY_FIELD(ViewportOverlay::renderBehindScene));
+	layout->addWidget(renderBehindScenePUI->checkBox(), 3, 0);
 
 	connect(this, &PropertiesEditor::contentsChanged, this, &PythonViewportOverlayEditor::onContentsChanged);
 }

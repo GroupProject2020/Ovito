@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -61,9 +61,12 @@ public:
 	/// Overlay implementations should override this method if they support positioning.
 	/// The default method implementation does nothing.
 	virtual void moveOverlayInViewport(const Vector2& delta) {};
+
+private:
+
+	/// Option for rendering the overlay contents behind the three-dimensional content.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, renderBehindScene, setRenderBehindScene);
 };
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

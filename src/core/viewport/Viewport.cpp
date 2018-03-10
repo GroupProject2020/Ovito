@@ -523,6 +523,15 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 		// Set up the viewport renderer.
 		renderer->beginFrame(time, _projParams, this);
 
+		// Render viewport "underlays".
+		if(renderPreviewMode() && !renderer->isPicking()) {
+			if(std::any_of(overlays().begin(), overlays().end(), [](ViewportOverlay* ov) { return ov->renderBehindScene(); })) {
+				// Let overlays paint into QImage buffer, which will then
+				// be painted into the OpenGL frame buffer.
+				renderOverlays(renderer, time, renderSettings, vpSize, boundingBox, true);
+			}
+		}
+
 		if(!_projParams.isPerspective || !stereoscopicMode() || renderer->isPicking()) {
 
 			// Pass final projection parameters to renderer.
@@ -539,7 +548,7 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 			convergence = std::max(convergence, _projParams.znear);
 			ViewProjectionParameters params = _projParams;
 
-			// Setup project of left eye.
+			// Setup projection of left eye.
 			FloatType top = params.znear * tan(params.fieldOfView / 2);
 			FloatType bottom = -top;
 			FloatType a = tan(params.fieldOfView / 2) / params.aspectRatio * convergence;
@@ -556,7 +565,7 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 			// Render image of left eye.
 			renderer->renderFrame(nullptr, SceneRenderer::StereoscopicLeft, renderPromise);
 
-			// Setup project of right eye.
+			// Setup projection of right eye.
 			left = -c * params.znear / convergence;
 			right = b * params.znear / convergence;
 			params.projectionMatrix = Matrix4::frustum(left, right, bottom, top, params.znear, params.zfar);
@@ -570,28 +579,12 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 		}
 
 		// Render viewport overlays.
-		if(renderPreviewMode() && !overlays().empty() && !renderer->isPicking()) {
-			// Let overlays paint into QImage buffer, which will then
-			// be painted over the OpenGL frame buffer.
-			QImage overlayBuffer(vpSize, QImage::Format_ARGB32_Premultiplied);
-			overlayBuffer.fill(0);
-			Box2 renderFrameBox = renderFrameRect();
-			QRect renderFrameRect(
-					(renderFrameBox.minc.x() + 1) * overlayBuffer.width() / 2,
-					(renderFrameBox.minc.y() + 1) * overlayBuffer.height() / 2,
-					renderFrameBox.width() * overlayBuffer.width() / 2,
-					renderFrameBox.height() * overlayBuffer.height() / 2);
-			ViewProjectionParameters renderProjParams = computeProjectionParameters(time, renderSettings->outputImageAspectRatio(), boundingBox);
-			for(ViewportOverlay* overlay : overlays()) {
-				QPainter painter(&overlayBuffer);
-				painter.setWindow(QRect(0, 0, renderSettings->outputImageWidth(), renderSettings->outputImageHeight()));
-				painter.setViewport(renderFrameRect);
-				painter.setRenderHint(QPainter::Antialiasing);
-				overlay->render(this, time, painter, renderProjParams, renderSettings, true, dataset()->container()->taskManager());
+		if(renderPreviewMode() && !renderer->isPicking()) {
+			if(std::any_of(overlays().begin(), overlays().end(), [](ViewportOverlay* ov) { return !ov->renderBehindScene(); })) {
+				// Let overlays paint into QImage buffer, which will then
+				// be painted over the OpenGL frame buffer.
+				renderOverlays(renderer, time, renderSettings, vpSize, boundingBox, false);
 			}
-			std::shared_ptr<ImagePrimitive> overlayBufferPrim = renderer->createImagePrimitive();
-			overlayBufferPrim->setImage(overlayBuffer);
-			overlayBufferPrim->renderViewport(renderer, Point2(-1,-1), Vector2(2, 2));
 		}
 
 		// Let GUI window render its custom overlays on top of the scene.
@@ -609,6 +602,36 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 		_isRendering = false;
 		throw;
 	}
+}
+
+/******************************************************************************
+* Renders the overlays to an image buffer.
+******************************************************************************/
+void Viewport::renderOverlays(SceneRenderer* renderer, TimePoint time, RenderSettings* renderSettings, QSize vpSize, const Box3& boundingBox, bool lowerLayer)
+{
+	// Let overlays paint into QImage buffer, which will then
+	// be painted over the OpenGL frame buffer.
+	QImage overlayBuffer(vpSize, QImage::Format_ARGB32_Premultiplied);
+	overlayBuffer.fill(0);
+	Box2 renderFrameBox = renderFrameRect();
+	QRect renderFrameRect(
+			(renderFrameBox.minc.x() + 1) * overlayBuffer.width() / 2,
+			(renderFrameBox.minc.y() + 1) * overlayBuffer.height() / 2,
+			renderFrameBox.width() * overlayBuffer.width() / 2,
+			renderFrameBox.height() * overlayBuffer.height() / 2);
+	ViewProjectionParameters renderProjParams = computeProjectionParameters(time, renderSettings->outputImageAspectRatio(), boundingBox);
+	for(ViewportOverlay* overlay : overlays()) {
+		if(overlay->renderBehindScene() == lowerLayer) {
+			QPainter painter(&overlayBuffer);
+			painter.setWindow(QRect(0, 0, renderSettings->outputImageWidth(), renderSettings->outputImageHeight()));
+			painter.setViewport(renderFrameRect);
+			painter.setRenderHint(QPainter::Antialiasing);
+			overlay->render(this, time, painter, renderProjParams, renderSettings, true, dataset()->container()->taskManager());
+		}
+	}
+	std::shared_ptr<ImagePrimitive> overlayBufferPrim = renderer->createImagePrimitive();
+	overlayBufferPrim->setImage(overlayBuffer);
+	overlayBufferPrim->renderViewport(renderer, Point2(-1,-1), Vector2(2, 2));
 }
 
 /******************************************************************************

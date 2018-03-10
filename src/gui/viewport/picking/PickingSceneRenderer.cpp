@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -71,10 +71,18 @@ void PickingSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParame
 		throwException(tr("Failed to bind OpenGL framebuffer object for offscreen rendering."));
 
 	ViewportSceneRenderer::beginFrame(time, params, vp);
+}
+
+/******************************************************************************
+* Puts the GL context into its default initial state before rendering 
+* a frame begins.
+******************************************************************************/
+void PickingSceneRenderer::initializeGLState()
+{
+	ViewportSceneRenderer::initializeGLState();
 
 	// Setup GL viewport.
-	setRenderingViewport(0, 0, size.width(), size.height());
-	setClearColor(ColorA(0, 0, 0, 0));
+	setRenderingViewport(0, 0, _framebufferObject->width(), _framebufferObject->height());
 }
 
 /******************************************************************************

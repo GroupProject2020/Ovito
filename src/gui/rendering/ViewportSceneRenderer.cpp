@@ -45,6 +45,15 @@ IMPLEMENT_OVITO_CLASS(ViewportSceneRenderer);
 void ViewportSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParameters& params, Viewport* vp)
 {
 	OpenGLSceneRenderer::beginFrame(time, params, vp);
+}
+
+/******************************************************************************
+* Puts the GL context into its default initial state before rendering 
+* a frame begins.
+******************************************************************************/
+void ViewportSceneRenderer::initializeGLState()
+{
+	OpenGLSceneRenderer::initializeGLState();
 
 	// Set viewport background color.
 	Color backgroundColor;

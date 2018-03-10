@@ -66,6 +66,9 @@ protected:
 	/// Returns the supersampling level to use.
 	virtual int antialiasingLevelInternal() override { return antialiasingLevel(); }
 
+	/// Puts the GL context into its default initial state before rendering a frame begins.
+	virtual void initializeGLState() override;
+
 private:
 
 	/// Controls the number of sub-pixels to render.
@@ -86,5 +89,3 @@ private:
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

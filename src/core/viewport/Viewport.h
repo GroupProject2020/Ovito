@@ -296,6 +296,9 @@ protected:
 	/// matches the true visible area.
 	void adjustProjectionForRenderFrame(ViewProjectionParameters& params);
 
+	/// Renders the overlays to an image buffer.
+	void renderOverlays(SceneRenderer* renderer, TimePoint time, RenderSettings* renderSettings, QSize vpSize, const Box3& boundingBox, bool lowerLayer);
+
 private Q_SLOTS:
 
 	/// This is called when the global viewport settings have changed.
@@ -333,7 +336,7 @@ private:
 	/// The list of overlay objects owned by this viewport.
 	DECLARE_VECTOR_REFERENCE_FIELD(ViewportOverlay, overlays);
 	
-		/// This flag is true during the rendering phase.
+	/// This flag is true during the rendering phase.
 	bool _isRendering;
 
 	/// Describes the current 3D projection used to render the contents of the viewport.

@@ -69,6 +69,11 @@ public:
 	/// Returns whether this renderer is rendering an interactive viewport.
 	virtual bool isInteractive() const override { return false; }
 
+protected:
+
+	/// Puts the GL context into its default initial state before rendering a frame begins.
+	virtual void initializeGLState() override;
+
 private:
 
 	/// The OpenGL framebuffer.

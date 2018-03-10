@@ -504,22 +504,43 @@ bool DataSet::renderFrame(TimePoint renderTime, int frameNumber, RenderSettings*
 
 	Promise<> renderTask = Promise<>::createSynchronous(&taskManager, true, true);
 
-	// Setup preliminary projection.
+	// Set up preliminary projection.
 	ViewProjectionParameters projParams = viewport->computeProjectionParameters(renderTime, settings->outputImageAspectRatio());
 		
-	// Render one frame.
-	frameBuffer->clear();
-	try {
-		// Request scene bounding box.
-		Box3 boundingBox = renderer->computeSceneBoundingBox(renderTime, projParams, nullptr, renderTask);
-		if(renderTask.isCanceled()) {
-			renderer->endFrame(false);
-			return false;
+	// Fill frame buffer with background color.
+	if(!renderSettings()->generateAlphaChannel()) {
+		frameBuffer->clear(ColorA(renderSettings()->backgroundColor()));
+	}
+	else {
+		frameBuffer->clear();
+	}
+	
+	// Request scene bounding box.
+	Box3 boundingBox = renderer->computeSceneBoundingBox(renderTime, projParams, nullptr, renderTask);
+	if(renderTask.isCanceled()) {
+		renderer->endFrame(false);
+		return false;
+	}
+
+	// Determine final view projection.
+	projParams = viewport->computeProjectionParameters(renderTime, settings->outputImageAspectRatio(), boundingBox);
+
+	// Render viewport "underlays".
+	for(ViewportOverlay* overlay : viewport->overlays()) {
+		if(overlay->renderBehindScene()) {
+			{
+				QPainter painter(&frameBuffer->image());
+				overlay->render(viewport, renderTime, painter, projParams, settings, false, taskManager);
+				if(renderTask.isCanceled())
+					return false;
+			}
+			frameBuffer->update();
 		}
+	}
 
-		// Determine final view projection.
-		projParams = viewport->computeProjectionParameters(renderTime, settings->outputImageAspectRatio(), boundingBox);
-
+	// Render one frame.
+	try {
+		// Let the scene renderer do its work.
 		renderer->beginFrame(renderTime, projParams, viewport);
 		if(!renderer->renderFrame(frameBuffer, SceneRenderer::NonStereoscopic, renderTask)) {
 			renderer->endFrame(false);
@@ -532,15 +553,17 @@ bool DataSet::renderFrame(TimePoint renderTime, int frameNumber, RenderSettings*
 		throw;
 	}
 
-	// Apply viewport overlays.
+	// Render viewport overlays on top.
 	for(ViewportOverlay* overlay : viewport->overlays()) {
-		{
-			QPainter painter(&frameBuffer->image());
-			overlay->render(viewport, renderTime, painter, projParams, settings, false, taskManager);
-			if(renderTask.isCanceled())
-				return false;
+		if(!overlay->renderBehindScene()) {
+			{
+				QPainter painter(&frameBuffer->image());
+				overlay->render(viewport, renderTime, painter, projParams, settings, false, taskManager);
+				if(renderTask.isCanceled())
+					return false;
+			}
+			frameBuffer->update();
 		}
-		frameBuffer->update();
 	}
 
 	// Save rendered image to disk.

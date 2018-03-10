@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -86,6 +86,11 @@ public:
 	/// Returns the Z-value at the given window position.
 	FloatType depthAtPixel(const QPoint& pos) const;
 
+protected:
+
+	/// Puts the GL context into its default initial state before rendering a frame begins.
+	virtual void initializeGLState() override;
+
 private:
 
 	/// The OpenGL framebuffer.
@@ -116,5 +121,3 @@ private:
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

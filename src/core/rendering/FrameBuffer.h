@@ -149,8 +149,8 @@ public:
 	/// Returns the descriptor of the image.
 	const ImageInfo& info() const { return _info; }
 	
-	/// Clears the framebuffer.
-	void clear() { _image.fill(0); }
+	/// Clears the framebuffer with a uniform color.
+	void clear(const ColorA& color = ColorA(0,0,0,0));
 
 	/// This method must be called each time the contents of the frame buffer have been modified.
 	/// Fires the contentReset() signal.

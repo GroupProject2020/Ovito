@@ -289,15 +289,37 @@ void OpenGLSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParamet
     OVITO_REPORT_OPENGL_ERRORS();
 
 	// Reset OpenGL state.
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	initializeGLState();
+	
+	// Clear background.
+	clearFrameBuffer();
+	OVITO_REPORT_OPENGL_ERRORS();
+}
+
+/******************************************************************************
+* Puts the GL context into its default initial state before rendering 
+* a frame begins.
+******************************************************************************/
+void OpenGLSceneRenderer::initializeGLState()
+{
+	// Set up OpenGL state.
+    OVITO_CHECK_OPENGL(glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE));
+	OVITO_CHECK_OPENGL(glDisable(GL_STENCIL_TEST));
+	OVITO_CHECK_OPENGL(glEnable(GL_DEPTH_TEST));
+	OVITO_CHECK_OPENGL(glDepthFunc(GL_LESS));
+	OVITO_CHECK_OPENGL(glDepthRange(0, 1));
+	OVITO_CHECK_OPENGL(glDepthMask(GL_TRUE));
+	OVITO_CHECK_OPENGL(glClearDepth(1));
+	OVITO_CHECK_OPENGL(glDisable(GL_SCISSOR_TEST));
+	_translucentPass = false;
+	setClearColor(ColorA(0, 0, 0, 0));
 
 	// Set up default viewport rectangle.
-    if(vp && vp->window()) {
-    	QSize vpSize = vp->window()->viewportWindowDeviceSize();
+    if(viewport() && viewport()->window()) {
+    	QSize vpSize = viewport()->window()->viewportWindowDeviceSize();
     	setRenderingViewport(0, 0, vpSize.width(), vpSize.height());
     }
-
-	OVITO_REPORT_OPENGL_ERRORS();
+    OVITO_REPORT_OPENGL_ERRORS();	
 }
 
 /******************************************************************************
@@ -319,26 +341,11 @@ bool OpenGLSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingT
 {
 	OVITO_ASSERT(_glcontext == QOpenGLContext::currentContext());
 
-	// Set up OpenGL state.
-    OVITO_REPORT_OPENGL_ERRORS();
-	OVITO_CHECK_OPENGL(glDisable(GL_STENCIL_TEST));
-	OVITO_CHECK_OPENGL(glEnable(GL_DEPTH_TEST));
-	OVITO_CHECK_OPENGL(glDepthFunc(GL_LESS));
-	OVITO_CHECK_OPENGL(glDepthRange(0, 1));
-	OVITO_CHECK_OPENGL(glDepthMask(GL_TRUE));
-	OVITO_CHECK_OPENGL(glClearDepth(1));
-	OVITO_CHECK_OPENGL(glDisable(GL_SCISSOR_TEST));
-	_translucentPass = false;
-
 	// Set up poor man's stereosopic rendering using red/green filtering.
 	if(stereoTask == StereoscopicLeft)
 		glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_FALSE);
 	else if(stereoTask == StereoscopicRight)
 		glColorMask(GL_FALSE, GL_TRUE, GL_TRUE, GL_TRUE);
-
-	// Clear background.
-	clearFrameBuffer();
-	OVITO_REPORT_OPENGL_ERRORS();
 
 	// Render the 3D scene objects.
 	if(renderScene(promise)) {

@@ -22,6 +22,7 @@
 #include <gui/GUI.h>
 #include <gui/properties/BooleanGroupBoxParameterUI.h>
 #include <gui/properties/StringParameterUI.h>
+#include <gui/properties/BooleanParameterUI.h>
 #include <gui/properties/ColorParameterUI.h>
 #include <gui/properties/FontParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
@@ -71,21 +72,24 @@ void CoordinateTripodOverlayEditor::createUI(const RolloutInsertionParameters& r
 	ViewportModeAction* moveOverlayAction = new ViewportModeAction(mainWindow(), tr("Move using mouse"), this, moveOverlayMode);
 	layout->addWidget(moveOverlayAction->createPushButton(), 3, 1);
 
+	BooleanParameterUI* renderBehindScenePUI = new BooleanParameterUI(this, PROPERTY_FIELD(ViewportOverlay::renderBehindScene));
+	layout->addWidget(renderBehindScenePUI->checkBox(), 4, 1);
+
 	FloatParameterUI* sizePUI = new FloatParameterUI(this, PROPERTY_FIELD(CoordinateTripodOverlay::tripodSize));
-	layout->addWidget(sizePUI->label(), 4, 0);
-	layout->addLayout(sizePUI->createFieldLayout(), 4, 1);
+	layout->addWidget(sizePUI->label(), 5, 0);
+	layout->addLayout(sizePUI->createFieldLayout(), 5, 1);
 
 	FloatParameterUI* lineWidthPUI = new FloatParameterUI(this, PROPERTY_FIELD(CoordinateTripodOverlay::lineWidth));
-	layout->addWidget(lineWidthPUI->label(), 5, 0);
-	layout->addLayout(lineWidthPUI->createFieldLayout(), 5, 1);
+	layout->addWidget(lineWidthPUI->label(), 6, 0);
+	layout->addLayout(lineWidthPUI->createFieldLayout(), 6, 1);
 
 	FloatParameterUI* fontSizePUI = new FloatParameterUI(this, PROPERTY_FIELD(CoordinateTripodOverlay::fontSize));
-	layout->addWidget(fontSizePUI->label(), 6, 0);
-	layout->addLayout(fontSizePUI->createFieldLayout(), 6, 1);
+	layout->addWidget(fontSizePUI->label(), 7, 0);
+	layout->addLayout(fontSizePUI->createFieldLayout(), 7, 1);
 
 	FontParameterUI* labelFontPUI = new FontParameterUI(this, PROPERTY_FIELD(CoordinateTripodOverlay::font));
-	layout->addWidget(labelFontPUI->label(), 7, 0);
-	layout->addWidget(labelFontPUI->fontPicker(), 7, 1);
+	layout->addWidget(labelFontPUI->label(), 8, 0);
+	layout->addWidget(labelFontPUI->fontPicker(), 8, 1);
 
 	// Create a second rollout.
 	rollout = createRollout(tr("Coordinate axes"), rolloutParams);

@@ -93,13 +93,18 @@ void AmbientOcclusionRenderer::beginFrame(TimePoint time, const ViewProjectionPa
 		throwException(tr("Failed to make OpenGL context current."));
 
 	OpenGLSceneRenderer::beginFrame(time, params, vp);
+}
+
+/******************************************************************************
+* Puts the GL context into its default initial state before rendering 
+* a frame begins.
+******************************************************************************/
+void AmbientOcclusionRenderer::initializeGLState()
+{
+	OpenGLSceneRenderer::initializeGLState();
 
 	// Setup GL viewport and background color.
 	setRenderingViewport(0, 0, _resolution.width(), _resolution.height());
-	setClearColor(ColorA(0, 0, 0, 0));
-
-	// Clear buffer.
-	clearFrameBuffer();
 	setDepthTestEnabled(true);
 }
 

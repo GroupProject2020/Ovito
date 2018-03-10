@@ -99,5 +99,13 @@ LoadStream& operator>>(LoadStream& stream, ImageInfo& i)
 	return stream;
 }
 
+/******************************************************************************
+* Clears the framebuffer with a uniform color.
+******************************************************************************/
+void FrameBuffer::clear(const ColorA& color)
+{
+	_image.fill(color);
+}
+
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

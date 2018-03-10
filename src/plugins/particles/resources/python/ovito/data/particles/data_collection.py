@@ -62,7 +62,7 @@ DataCollection.create_from_ase_atoms = classmethod(_DataCollection_create_from_a
 # Implementation of the DataCollection.create_particle_property() method.
 # Here only for backward compatibility with OVITO 2.9.0.
 def _DataCollection_create_particle_property(self, property_type, data = None):
-    return self.particles.create(property_type, data = data)
+    return self.particles.create_property(property_type, data = data)
 DataCollection.create_particle_property = _DataCollection_create_particle_property
 
 # Implementation of the DataCollection.create_user_particle_property() method.
@@ -70,13 +70,13 @@ DataCollection.create_particle_property = _DataCollection_create_particle_proper
 def _DataCollection_create_user_particle_property(self, name, data_type, num_components=1, data = None):
     if data_type == 'int': data_type = int
     elif data_type == 'float': data_type = float
-    return self.particles.create(name, dtype = data_type, components = num_components, data = data)
+    return self.particles.create_property(name, dtype = data_type, components = num_components, data = data)
 DataCollection.create_user_particle_property = _DataCollection_create_user_particle_property
 
 # Implementation of the DataCollection.create_bond_property() method.
 # Here only for backward compatibility with OVITO 2.9.0.
 def _DataCollection_create_bond_property(self, property_type, data = None):
-    return self.bonds.create(property_type, data = data)
+    return self.bonds.create_property(property_type, data = data)
 DataCollection.create_bond_property = _DataCollection_create_bond_property
 
 # Implementation of the DataCollection.create_user_bond_property() method.
@@ -84,7 +84,7 @@ DataCollection.create_bond_property = _DataCollection_create_bond_property
 def _DataCollection_create_user_bond_property(self, name, data_type, num_components=1, data = None):
     if data_type == 'int': data_type = int
     elif data_type == 'float': data_type = float
-    return self.bonds.create(name, dtype = data_type, components = num_components, data = data)
+    return self.bonds.create_property(name, dtype = data_type, components = num_components, data = data)
 DataCollection.create_user_bond_property = _DataCollection_create_user_bond_property
 
 # Implementation of the DataCollection.particle_properties attribute.

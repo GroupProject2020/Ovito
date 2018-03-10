@@ -21,6 +21,7 @@ def myrender(painter, **args):
     painter.drawText(10, 10, "Hello world")
 
 new_overlay = PythonViewportOverlay(function = myrender)
+new_overlay.behind_scene = True
 vp.overlays.append(new_overlay)
 
 assert(len(vp.overlays) == 1)

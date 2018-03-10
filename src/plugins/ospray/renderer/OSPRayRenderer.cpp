@@ -168,7 +168,11 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 
 		// Make sure the target frame buffer has the right memory format.
 		if(frameBuffer->image().format() != QImage::Format_ARGB32)
-		frameBuffer->image() = frameBuffer->image().convertToFormat(QImage::Format_ARGB32);
+			frameBuffer->image() = frameBuffer->image().convertToFormat(QImage::Format_ARGB32);
+
+		// Make a copy of the original frame buffer contents, because we are going to paint repeatedly on top
+		// of the buffer.
+		QImage frameBufferContents = frameBuffer->image();
 
 		// Calculate camera information.
 		Point3 cam_pos;
@@ -253,17 +257,11 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 		}
 		OSPReferenceWrapper<ospray::cpp::Data> lights(lightHandles.size(), OSP_LIGHT, lightHandles.data());
 		lights.commit();
-
-		TimeInterval iv;
-		Color backgroundColor;
-		renderSettings()->backgroundColorController()->getColorValue(time(), backgroundColor, iv);
-		ColorA bgColorWithAlpha(backgroundColor.r(), backgroundColor.g(), backgroundColor.b(), renderSettings()->generateAlphaChannel() ? FloatType(0) : FloatType(1));
 		
 		renderer.set("model",  world);
 		renderer.set("camera", camera);
 		renderer.set("lights", lights);
 		renderer.set("spp", std::max(samplesPerPixel(), 1));
-		renderer.set("bgColor", bgColorWithAlpha.r(), bgColorWithAlpha.g(), bgColorWithAlpha.b(), bgColorWithAlpha.a());
 		renderer.set("maxDepth", std::max(maxRayRecursion(), 1));
 		renderer.commit();
 
@@ -271,9 +269,6 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 		OSPReferenceWrapper<ospray::cpp::FrameBuffer> osp_fb(imgSize, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
 		osp_fb.clear(OSP_FB_COLOR | OSP_FB_ACCUM);
 
-		// Clear frame buffer.
-		frameBuffer->clear();
-	
 		// Define a custom load balancer for OSPRay that performs progressive updates of the frame buffer.
 		class OVITOTiledLoadBalancer : public ospray::TiledLoadBalancer 
 		{
@@ -322,29 +317,26 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 			std::function<bool(int,int,int,int)> _progressCallback;			
 		};
 		auto loadBalancer = std::make_unique<OVITOTiledLoadBalancer>();
-		loadBalancer->setProgressCallback([&osp_fb,frameBuffer,imgSize,&promise,bgColorWithAlpha,this](int x1, int y1, int x2, int y2) {
+		loadBalancer->setProgressCallback([&osp_fb,frameBuffer,&frameBufferContents,imgSize,&promise,this](int x1, int y1, int x2, int y2) {
 			// Access framebuffer data and copy it to our own framebuffer.
 			uchar* fb = (uchar*)osp_fb.map(OSP_FB_COLOR);
-			OVITO_ASSERT(frameBuffer->image().format() == QImage::Format_ARGB32);
+			OVITO_ASSERT(frameBufferContents.format() == QImage::Format_ARGB32);
 			int bperline = renderSettings()->outputImageWidth() * 4;
 			for(int y = y1; y < y2; y++) {
+				uchar* src1 = frameBufferContents.scanLine(frameBufferContents.height() - 1 - y) + x1 * 4;
+				uchar* src2 = fb + y*bperline + x1 * 4;
 				uchar* dst = frameBuffer->image().scanLine(frameBuffer->image().height() - 1 - y) + x1 * 4;
-				uchar* src = fb + y*bperline + x1 * 4;
-				for(int x = x1; x < x2; x++, dst += 4, src += 4) {
-					if(bgColorWithAlpha.a() == 0) {
-						dst[0] = src[2];
-						dst[1] = src[1];
-						dst[2] = src[0];
-						dst[3] = src[3];
-					}
-					else {
-						// Compose colors ("source over" mode).
-						FloatType srcAlpha = (FloatType)src[3] / 255;
-						dst[0] = (uchar)(((FloatType(1) - srcAlpha) * bgColorWithAlpha.b() * 255 + (FloatType)src[2] * srcAlpha));
-						dst[1] = (uchar)(((FloatType(1) - srcAlpha) * bgColorWithAlpha.g() * 255 + (FloatType)src[1] * srcAlpha));
-						dst[2] = (uchar)(((FloatType(1) - srcAlpha) * bgColorWithAlpha.r() * 255 + (FloatType)src[0] * srcAlpha));
-						dst[3] = 255;
-					}
+				for(int x = x1; x < x2; x++, dst += 4, src1 += 4, src2 += 4) {
+					// Compose colors ("source over" mode).
+					float srcAlpha = (float)src2[3] / 255.0f;
+					float r = (1.0f - srcAlpha) * src1[2] + srcAlpha * src2[0];
+					float g = (1.0f - srcAlpha) * src1[1] + srcAlpha * src2[1];
+					float b = (1.0f - srcAlpha) * src1[0] + srcAlpha * src2[2];
+					float a = (1.0f - srcAlpha) * src1[3] + srcAlpha * src2[3];
+					dst[2] = (uchar)(qBound(0.0f, r, 255.0f));
+					dst[1] = (uchar)(qBound(0.0f, g, 255.0f));
+					dst[0] = (uchar)(qBound(0.0f, b, 255.0f));
+					dst[3] = (uchar)(qBound(0.0f, a, 255.0f));
 				}
 			}
 			frameBuffer->update(QRect(x1, frameBuffer->image().height() - y2, x2 - x1, y2 - y1));

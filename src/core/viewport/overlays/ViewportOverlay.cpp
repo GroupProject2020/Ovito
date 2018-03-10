@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,11 +25,14 @@
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View)
 
 IMPLEMENT_OVITO_CLASS(ViewportOverlay);
+DEFINE_PROPERTY_FIELD(ViewportOverlay, renderBehindScene);
+SET_PROPERTY_FIELD_LABEL(ViewportOverlay, renderBehindScene, "Draw behind scene");
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-ViewportOverlay::ViewportOverlay(DataSet* dataset) : RefTarget(dataset)
+ViewportOverlay::ViewportOverlay(DataSet* dataset) : RefTarget(dataset),
+    _renderBehindScene(false)
 {
 }
 

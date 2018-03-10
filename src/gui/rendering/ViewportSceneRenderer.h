@@ -56,6 +56,9 @@ public:
 
 protected:
 
+	/// Puts the GL context into its default initial state before rendering a frame begins.
+	virtual void initializeGLState() override;
+
 	/// \brief This virtual method is responsible for rendering additional content that is only
 	///       visible in the interactive viewports.
 	virtual void renderInteractiveContent() override;
@@ -74,5 +77,3 @@ private:
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

@@ -153,6 +153,11 @@ void defineViewportSubmodule(py::module m)
 			"\n\n"
 			".. literalinclude:: ../example_snippets/coordinate_tripod_overlay.py"
 			"\n\n")
+		.def_property("behind_scene", &ViewportOverlay::renderBehindScene, &ViewportOverlay::setRenderBehindScene,
+				"This option puts the overlay behind the three-dimensional scene, i.e. as an \"underlay\" instead of an \"overlay\". "
+				"If set to to true, objects in the scene will occclude the overlay content. "
+				"\n\n"
+				":Default: ``False``")
 		.def_property("alignment", &CoordinateTripodOverlay::alignment, &CoordinateTripodOverlay::setAlignment,
 				"Selects the corner of the viewport where the tripod is displayed. This must be a valid `Qt.Alignment value <http://doc.qt.io/qt-5/qt.html#AlignmentFlag-enum>`__ value as shown in the example above."
 				"\n\n"
@@ -252,6 +257,11 @@ void defineViewportSubmodule(py::module m)
 			".. literalinclude:: ../example_snippets/text_label_overlay.py"
 			"\n\n"
 			"Text labels can display dynamically computed values. See the :py:attr:`.text` property for an example.")
+		.def_property("behind_scene", &ViewportOverlay::renderBehindScene, &ViewportOverlay::setRenderBehindScene,
+				"This option puts the overlay behind the three-dimensional scene, i.e. as an \"underlay\" instead of an \"overlay\". "
+				"If set to to true, objects in the scene will occclude the overlay content. "
+				"\n\n"
+				":Default: ``False``")
 		.def_property("alignment", &TextLabelOverlay::alignment, &TextLabelOverlay::setAlignment,
 				"Selects the corner of the viewport where the text is displayed (anchor position). This must be a valid `Qt.Alignment value <http://doc.qt.io/qt-5/qt.html#AlignmentFlag-enum>`__ as shown in the example above. "
 				"\n\n"
@@ -327,6 +337,11 @@ void defineViewportSubmodule(py::module m)
 				"Implementation note: Exceptions raised by the custom rendering function are not propagated to the calling context. "
 				"\n\n"
 				":Default: ``None``\n")
+		.def_property("behind_scene", &ViewportOverlay::renderBehindScene, &ViewportOverlay::setRenderBehindScene,
+				"This option puts the overlay behind the three-dimensional scene, i.e. as an \"underlay\" instead of an \"overlay\". "
+				"If set to to true, objects in the scene will occclude the overlay content. "
+				"\n\n"
+				":Default: ``False``")
 	;
 }
 

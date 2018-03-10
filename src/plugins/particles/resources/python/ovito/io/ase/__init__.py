@@ -46,17 +46,17 @@ def ovito_to_ase(data_collection):
     pbc = cell_obj.pbc if cell_obj is not None else None
     cell = cell_obj[:, :3].T if cell_obj is not None else None    
     info = {'cell_origin': cell_obj[:, 3] }if cell_obj is not None else None
-    positions = np.asarray(data_collection.particle_properties['Position'])
-    if 'Particle Type' in data_collection.particle_properties:
+    positions = np.array(data_collection.particles['Position'])
+    if 'Particle Type' in data_collection.particles:
         # ASE only accepts chemical symbols as atom type names.
         # If our atom type names are not chemical symbols, pass the numerical atom type to ASE instead.
         type_names = {}
-        for t in data_collection.particle_properties['Particle Type'].types:
+        for t in data_collection.particles['Particle Type'].types:
             if t.name in chemical_symbols:
                 type_names[t.id] = t.name
             else:
                 type_names[t.id] = t.id
-        symbols = [type_names[id] for id in data_collection.particle_properties['Particle Type']]
+        symbols = [type_names[id] for id in data_collection.particles['Particle Type']]
     else:
         symbols = None
     
@@ -68,7 +68,7 @@ def ovito_to_ase(data_collection):
                   info=info)
 
     # Convert any other particle properties to additional arrays
-    for name, prop in data_collection.particle_properties.items():
+    for name, prop in data_collection.particles.items():
         if name in ['Position',
                     'Particle Type']:
             continue
@@ -114,10 +114,10 @@ def ase_to_ovito(atoms, data_collection):
     data_collection.objects.append(cell)
 
     # Add ParticleProperty from atomic positions
-    data_collection.particle_properties.create(ParticleProperty.Type.Position, data=atoms.get_positions())
+    data_collection.particles.create_property(ParticleProperty.Type.Position, data=atoms.get_positions())
 
     # Set particle types from chemical symbols
-    types = data_collection.particle_properties.create(ParticleProperty.Type.ParticleType)
+    types = data_collection.particles.create_property(ParticleProperty.Type.ParticleType)
     symbols = atoms.get_chemical_symbols()
     type_list = list(set(symbols))
     for i, sym in enumerate(type_list):
@@ -143,10 +143,10 @@ def ase_to_ovito(atoms, data_collection):
                 continue
 
             # Create a corresponding OVITO standard property.
-            data_collection.particle_properties.create(ptype, data=array)
+            data_collection.particles.create_property(ptype, data=array)
 
     # Create extra properties in DataCollection
     for name, array in atoms.arrays.items():
         if name in ['positions', 'numbers']:
             continue
-        data_collection.particle_properties.create(name, data=array)
+        data_collection.particles.create_property(name, data=array)

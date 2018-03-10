@@ -153,6 +153,9 @@ void ColorLegendOverlayEditor::createUI(const RolloutInsertionParameters& rollou
 	ViewportModeAction* moveOverlayAction = new ViewportModeAction(mainWindow(), tr("Move using mouse"), this, moveOverlayMode);
 	sublayout->addWidget(moveOverlayAction->createPushButton(), 3, 0, 1, 2);
 
+	BooleanParameterUI* renderBehindScenePUI = new BooleanParameterUI(this, PROPERTY_FIELD(ViewportOverlay::renderBehindScene));
+	sublayout->addWidget(renderBehindScenePUI->checkBox(), 4, 0, 1, 2);
+
 	QGroupBox* sizeBox = new QGroupBox(tr("Size"));
 	layout->addWidget(sizeBox, row++, 0, 1, 2);
 	sublayout = new QGridLayout(sizeBox);

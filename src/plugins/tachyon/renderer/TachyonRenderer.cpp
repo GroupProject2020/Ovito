@@ -139,9 +139,7 @@ bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask 
 	TimeInterval iv;
 	Color backgroundColor;
 	renderSettings()->backgroundColorController()->getColorValue(time(), backgroundColor, iv);
-	colora bgcolor = { (float)backgroundColor.r(), (float)backgroundColor.g(), (float)backgroundColor.b(), 1.0f };
-	if(renderSettings()->generateAlphaChannel())
-		bgcolor.a = 0;
+	colora bgcolor = { (float)backgroundColor.r(), (float)backgroundColor.g(), (float)backgroundColor.b(), 0.0f };
 	rt_background(_rtscene, bgcolor);
 
 	// Set equation used for rendering specular highlights.
@@ -285,10 +283,16 @@ bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask 
 				uchar* dst = frameBuffer->image().scanLine(frameBuffer->image().height() - 1 - y) + xstart * 4;
 				uchar* src = img.bits() + y*bperline + xstart * 4;
 				for(int x = xstart; x < xstop; x++, dst += 4, src += 4) {
-					dst[0] = src[2];
-					dst[1] = src[1];
-					dst[2] = src[0];
-					dst[3] = src[3];
+					// Compose colors ("source over" mode).
+					float srcAlpha = (float)src[3] / 255.0f;
+					float r = (1.0f - srcAlpha) * dst[2] + srcAlpha * src[0];
+					float g = (1.0f - srcAlpha) * dst[1] + srcAlpha * src[1];
+					float b = (1.0f - srcAlpha) * dst[0] + srcAlpha * src[2];
+					float a = (1.0f - srcAlpha) * dst[3] + srcAlpha * src[3];
+					dst[2] = (uchar)(qBound(0.0f, r, 255.0f));
+					dst[1] = (uchar)(qBound(0.0f, g, 255.0f));
+					dst[0] = (uchar)(qBound(0.0f, b, 255.0f));
+					dst[3] = (uchar)(qBound(0.0f, a, 255.0f));
 				}
 			}
 			frameBuffer->update(QRect(xstart, frameBuffer->image().height() - ystop, xstop - xstart, ystop - ystart));

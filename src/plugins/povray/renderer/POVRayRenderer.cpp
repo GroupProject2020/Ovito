@@ -181,7 +181,7 @@ void POVRayRenderer::beginFrame(TimePoint time, const ViewProjectionParameters& 
 			_outputStream << "  direction "; write(direction); _outputStream << "\n";
 			_outputStream << "  right "; write(right); _outputStream << "\n";
 			_outputStream << "  up "; write(up); _outputStream << "\n";
-			_outputStream << "  angle " << (atan(tan(projParams().fieldOfView * 0.5) / projParams().aspectRatio) * 2.0 * 180.0 / FLOATTYPE_PI) << "\n";
+			_outputStream << "  angle " << (atan(tan(projParams().fieldOfView * FloatType(0.5)) / projParams().aspectRatio) * 2 * FloatType(180) / FLOATTYPE_PI) << "\n";
 
 			if(depthOfFieldEnabled()) {
 				_outputStream << "  aperture " << dofAperture() << "\n";
@@ -209,7 +209,7 @@ void POVRayRenderer::beginFrame(TimePoint time, const ViewProjectionParameters& 
 		}	
 		// Write camera transformation.
 		Rotation rot(projParams().viewMatrix);
-		_outputStream << "  Axis_Rotate_Trans("; write(rot.axis()); _outputStream << ", " << (rot.angle() * 180.0f / FLOATTYPE_PI) << ")\n";
+		_outputStream << "  Axis_Rotate_Trans("; write(rot.axis()); _outputStream << ", " << (rot.angle() * FloatType(180) / FLOATTYPE_PI) << ")\n";
 		_outputStream << "  translate "; write(projParams().inverseViewMatrix.translation()); _outputStream << "\n";
 	}
 	else {
@@ -340,11 +340,7 @@ bool POVRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 		parameters << "Output_File_Type=N";		// Output PNG image
 		parameters << QString("Output_File_Name=%1").arg(QDir::toNativeSeparators(_imageFile->fileName()));		// Output image to temporary file.
 		parameters << QString("Input_File_Name=%1").arg(QDir::toNativeSeparators(_sceneFile->fileName()));		// Read scene from temporary file.
-
-		if(renderSettings()->generateAlphaChannel())
-			parameters << "Output_Alpha=on";		// Output alpha channel
-		else
-			parameters << "Output_Alpha=off";		// No alpha channel
+		parameters << "Output_Alpha=on";		// Output alpha channel
 
 		if(povrayDisplayEnabled())
 			parameters << "Display=on";
@@ -419,13 +415,6 @@ bool POVRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 
 		// Fill frame buffer with background color.
 		QPainter painter(&frameBuffer->image());
-
-		if(!renderSettings()->generateAlphaChannel()) {
-			TimeInterval iv;
-			Color backgroundColor;
-			renderSettings()->backgroundColorController()->getColorValue(time(), backgroundColor, iv);			
-			painter.fillRect(frameBuffer->image().rect(), backgroundColor);
-		}
 
 		// Copy POV-Ray image to the internal frame buffer.
 		painter.drawImage(0, 0, povrayImage);

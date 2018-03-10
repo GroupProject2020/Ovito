@@ -138,23 +138,26 @@ void TextLabelOverlayEditor::createUI(const RolloutInsertionParameters& rolloutP
 	ViewportModeAction* moveOverlayAction = new ViewportModeAction(mainWindow(), tr("Move using mouse"), this, moveOverlayMode);
 	layout->addWidget(moveOverlayAction->createPushButton(), 5, 1, 1, 2);
 
+	BooleanParameterUI* renderBehindScenePUI = new BooleanParameterUI(this, PROPERTY_FIELD(ViewportOverlay::renderBehindScene));
+	layout->addWidget(renderBehindScenePUI->checkBox(), 6, 1, 1, 2);
+
 	FloatParameterUI* fontSizePUI = new FloatParameterUI(this, PROPERTY_FIELD(TextLabelOverlay::fontSize));
-	layout->addWidget(new QLabel(tr("Text size/color:")), 6, 0);
-	layout->addLayout(fontSizePUI->createFieldLayout(), 6, 1);
+	layout->addWidget(new QLabel(tr("Text size/color:")), 7, 0);
+	layout->addLayout(fontSizePUI->createFieldLayout(), 7, 1);
 
 	// Text color.
 	ColorParameterUI* textColorPUI = new ColorParameterUI(this, PROPERTY_FIELD(TextLabelOverlay::textColor));
-	layout->addWidget(textColorPUI->colorPicker(), 6, 2);
+	layout->addWidget(textColorPUI->colorPicker(), 7, 2);
 
 	BooleanParameterUI* outlineEnabledPUI = new BooleanParameterUI(this, PROPERTY_FIELD(TextLabelOverlay::outlineEnabled));
-	layout->addWidget(outlineEnabledPUI->checkBox(), 7, 1);
+	layout->addWidget(outlineEnabledPUI->checkBox(), 8, 1);
 
 	ColorParameterUI* outlineColorPUI = new ColorParameterUI(this, PROPERTY_FIELD(TextLabelOverlay::outlineColor));
-	layout->addWidget(outlineColorPUI->colorPicker(), 7, 2);
+	layout->addWidget(outlineColorPUI->colorPicker(), 8, 2);
 
 	FontParameterUI* labelFontPUI = new FontParameterUI(this, PROPERTY_FIELD(TextLabelOverlay::font));
-	layout->addWidget(labelFontPUI->label(), 8, 0);
-	layout->addWidget(labelFontPUI->fontPicker(), 8, 1, 1, 2);
+	layout->addWidget(labelFontPUI->label(), 9, 0);
+	layout->addWidget(labelFontPUI->fontPicker(), 9, 1, 1, 2);
 
 	QWidget* variablesRollout = createRollout(tr("Variables"), rolloutParams.after(rollout), "viewport_overlays.text_label.html");
     QVBoxLayout* variablesLayout = new QVBoxLayout(variablesRollout);
