@@ -21,6 +21,7 @@
 
 SET(SourceFiles 
 	camera/CameraObjectEditor.cpp
+	properties/PropertyInspectionApplet.cpp
 	simcell/SimulationCellObjectEditor.cpp
 	simcell/SimulationCellVisEditor.cpp
 	widgets/PropertyClassParameterUI.cpp
@@ -28,8 +29,11 @@ SET(SourceFiles
 	widgets/PropertySelectionComboBox.cpp
 )
 
+# Compile resources.
+QT5_ADD_RESOURCES(ResourceFiles resources/stdobj_gui.qrc)
+
 OVITO_STANDARD_PLUGIN(StdObjGui
-	SOURCES StdObjGui.cpp ${SourceFiles}
+	SOURCES StdObjGui.cpp ${SourceFiles} ${ResourceFiles}
 	PLUGIN_DEPENDENCIES StdObj
 	GUI_PLUGIN
 )

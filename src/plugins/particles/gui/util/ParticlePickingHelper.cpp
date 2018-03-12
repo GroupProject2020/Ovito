@@ -89,8 +89,8 @@ void ParticlePickingHelper::renderSelectionMarker(Viewport* vp, ViewportSceneRen
 			auto begin = identifierProperty->constDataInt64();
 			auto end = begin + identifierProperty->size();
 			auto iter = std::find(begin, end, pickRecord.particleId);
-			if(iter != end)
-				particleIndex = (iter - begin);
+			if(iter == end) return;
+			particleIndex = (iter - begin);
 		}
 	}
 
@@ -107,7 +107,7 @@ void ParticlePickingHelper::renderSelectionMarker(Viewport* vp, ViewportSceneRen
 	}
 	if(!particleVis)
 		return;
-
+		
 	// Set up transformation.
 	TimeInterval iv;
 	const AffineTransformation& nodeTM = pickRecord.objNode->getWorldTransform(vp->dataset()->animationSettings()->time(), iv);

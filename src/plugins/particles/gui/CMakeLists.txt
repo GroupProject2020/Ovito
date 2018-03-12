@@ -53,10 +53,11 @@ SET(SourceFiles
 	modifier/properties/FreezePropertyModifierEditor.cpp
 	modifier/properties/InterpolateTrajectoryModifierEditor.cpp
 	util/CutoffRadiusPresetsUI.cpp
-	util/ParticleInformationApplet.cpp
 	util/ParticlePickingHelper.cpp
 	util/CreateTrajectoryApplet.cpp
 	util/ParticleSettingsPage.cpp
+	util/ParticleInspectionApplet.cpp
+	util/BondInspectionApplet.cpp
 	import/InputColumnMappingDialog.cpp
 	import/lammps/LAMMPSTextDumpImporterEditor.cpp
 	import/lammps/LAMMPSBinaryDumpImporterEditor.cpp

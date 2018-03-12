@@ -223,12 +223,6 @@ bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask 
 	if(!renderScene(promise))
 		return false;
 
-	// Render visual 3D representation of the modifiers.
-	renderModifiers(false);
-
-	// Render visual 2D representation of the modifiers.
-	renderModifiers(true);
-
 	// Render scene.
 	promise.setProgressMaximum(renderSettings()->outputImageWidth() * renderSettings()->outputImageHeight());
 	promise.setProgressText(tr("Rendering image"));

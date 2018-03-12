@@ -83,6 +83,7 @@ void PickingSceneRenderer::initializeGLState()
 
 	// Setup GL viewport.
 	setRenderingViewport(0, 0, _framebufferObject->width(), _framebufferObject->height());
+	setClearColor(ColorA(0, 0, 0, 0));
 }
 
 /******************************************************************************

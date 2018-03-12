@@ -74,7 +74,7 @@ private:
 * The viewport input mode that lets the user select three points in space
 * to define the slicing plane.
 ******************************************************************************/
-class PickPlanePointsInputMode : public ViewportInputMode
+class PickPlanePointsInputMode : public ViewportInputMode, public ViewportGizmo
 {
 public:
 
@@ -89,9 +89,6 @@ public:
 
 	/// Lets the input mode render its overlay content in a viewport.
 	virtual void renderOverlay3D(Viewport* vp, ViewportSceneRenderer* renderer) override;
-
-	/// Indicates whether this input mode renders into the viewports.
-	virtual bool hasOverlay() override { return true; }
 
 protected:
 

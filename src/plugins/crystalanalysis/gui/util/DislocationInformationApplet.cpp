@@ -261,8 +261,6 @@ void DislocationInformationInputMode::mouseMoveEvent(ViewportWindow* vpwin, QMou
 ******************************************************************************/
 void DislocationInformationInputMode::renderOverlay3D(Viewport* vp, ViewportSceneRenderer* renderer)
 {
-	ViewportInputMode::renderOverlay3D(vp, renderer);
-
 	for(const auto& pickedDislocation : _pickedDislocations) {
 
 		const PipelineFlowState& flowState = pickedDislocation.objNode->evaluatePipelinePreliminary(true);

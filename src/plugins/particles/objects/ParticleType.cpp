@@ -118,7 +118,7 @@ Color ParticleType::getDefaultParticleColor(ParticleProperty::Type typeClass, co
 		settings.beginGroup("particles/defaults/color");
 		settings.beginGroup(QString::number((int)typeClass));
 		QVariant v = settings.value(particleTypeName);
-		if(v.isValid() && v.canConvert<Color>())
+		if(v.isValid() && v.type() == QVariant::Color)
 			return v.value<Color>();
 	}
 
@@ -153,7 +153,7 @@ void ParticleType::setDefaultParticleColor(ParticleProperty::Type typeClass, con
 	settings.beginGroup(QString::number((int)typeClass));
 
 	if(getDefaultParticleColor(typeClass, particleTypeName, 0, false) != color)
-		settings.setValue(particleTypeName, QVariant::fromValue(color));
+		settings.setValue(particleTypeName, QVariant::fromValue((QColor)color));
 	else
 		settings.remove(particleTypeName);
 }

@@ -70,7 +70,7 @@ private:
 /**
  * Viewport input mode that lets the user pick a dislocation.
  */
-class DislocationInformationInputMode : public ViewportInputMode
+class DislocationInformationInputMode : public ViewportInputMode, ViewportGizmo
 {
 public:
 
@@ -90,8 +90,17 @@ public:
 	/// \brief Lets the input mode render its overlay content in a viewport.
 	virtual void renderOverlay3D(Viewport* vp, ViewportSceneRenderer* renderer) override;
 
-	/// \brief Indicates whether this input mode renders into the viewports.
-	virtual bool hasOverlay() override { return true; }
+	/// This is called by the system when the input handler has become active.
+	virtual void activated(bool temporary) override {
+		ViewportInputMode::activated(temporary);
+		inputManager()->addViewportGizmo(this);
+	}
+
+	/// This is called by the system after the input handler is no longer the active handler.
+	virtual void deactivated(bool temporary) override {
+		inputManager()->removeViewportGizmo(this);
+		ViewportInputMode::deactivated(temporary);
+	}
 
 private:
 
@@ -122,5 +131,3 @@ private:
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-
-

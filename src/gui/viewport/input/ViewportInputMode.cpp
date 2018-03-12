@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,6 +21,7 @@
 
 #include <gui/GUI.h>
 #include <gui/viewport/ViewportWindow.h>
+#include <gui/mainwin/MainWindow.h>
 #include <core/viewport/Viewport.h>
 #include "ViewportInputManager.h"
 #include "ViewportInputMode.h"
@@ -43,7 +44,6 @@ ViewportInputMode::~ViewportInputMode()
 ******************************************************************************/
 void ViewportInputMode::activated(bool temporaryActivation)
 {
-	_showOrbitCenter = false;
 	Q_EMIT statusChanged(true);
 }
 
@@ -52,6 +52,7 @@ void ViewportInputMode::activated(bool temporaryActivation)
 ******************************************************************************/
 void ViewportInputMode::deactivated(bool temporary)
 {
+	inputManager()->removeViewportGizmo(inputManager()->pickOrbitCenterMode());
 	Q_EMIT statusChanged(false);
 }
 
@@ -153,7 +154,7 @@ void ViewportInputMode::mouseDoubleClickEvent(ViewportWindow* vpwin, QMouseEvent
 	_lastMousePressEvent.reset();
 	if(event->button() == Qt::LeftButton) {
 		inputManager()->pickOrbitCenterMode()->pickOrbitCenter(vpwin, event->pos());
-		_showOrbitCenter = true;
+		inputManager()->addViewportGizmo(inputManager()->pickOrbitCenterMode());
 		event->accept();
 	}
 }
@@ -167,12 +168,16 @@ void ViewportInputMode::focusOutEvent(ViewportWindow* vpwin, QFocusEvent* event)
 }
 
 /******************************************************************************
-* Lets the input mode render its overlay content in a viewport.
+* Redraws all viewports.
 ******************************************************************************/
-void ViewportInputMode::renderOverlay3D(Viewport* vp, ViewportSceneRenderer* renderer)
+void ViewportInputMode::requestViewportUpdate()
 {
-	if(_showOrbitCenter && isActive())
-		inputManager()->orbitMode()->renderOverlay3D(vp, renderer);
+	if(isActive()) {
+		DataSet* dataset = inputManager()->mainWindow()->datasetContainer().currentSet();
+		if(dataset && dataset->viewportConfig()) {
+			dataset->viewportConfig()->updateViewports();
+		}
+	}
 }
 
 OVITO_END_INLINE_NAMESPACE

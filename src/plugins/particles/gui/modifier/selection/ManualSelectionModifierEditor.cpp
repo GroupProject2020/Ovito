@@ -71,7 +71,7 @@ public:
  * Viewport input mode that allows to select a group of particles
  * by drawing a fence around them.
  */
-class FenceParticleInputMode : public ViewportInputMode
+class FenceParticleInputMode : public ViewportInputMode, public ViewportGizmo
 {
 public:
 
@@ -116,15 +116,11 @@ public:
 		ViewportInputMode::mouseReleaseEvent(vpwin, event);
 	}
 
-	/// Indicates whether this input mode renders 3d geometry into the viewports.
-	virtual bool hasOverlay() override { return true; }
-
 	/// Lets the input mode render its 2d overlay content in a viewport.
 	virtual void renderOverlay2D(Viewport* vp, ViewportSceneRenderer* renderer) override {
 		if(isActive() && vp == vp->dataset()->viewportConfig()->activeViewport() && _fence.size() >= 2) {
 			renderer->render2DPolyline(_fence.constData(), _fence.size(), ViewportSettings::getSettings().viewportColor(ViewportSettings::COLOR_SELECTION), true);
 		}
-		ViewportInputMode::renderOverlay2D(vp, renderer);
 	}
 
 protected:
@@ -139,12 +135,14 @@ protected:
 		inputManager()->mainWindow()->statusBar()->showMessage(
 				tr("Draw a fence around a group of particles. Use COMMAND and ALT keys to extend and reduce existing selection."));
 #endif
+		inputManager()->addViewportGizmo(this);
 	}
 
 	/// This is called by the system after the input handler is no longer the active handler.
 	virtual void deactivated(bool temporary) override {
 		_fence.clear();
 		inputManager()->mainWindow()->statusBar()->clearMessage();
+		inputManager()->removeViewportGizmo(this);
 		ViewportInputMode::deactivated(temporary);
 	}
 

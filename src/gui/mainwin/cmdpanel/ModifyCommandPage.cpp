@@ -273,6 +273,7 @@ void ModifyCommandPage::onDeleteModifier()
 					OVITO_ASSERT(selectedItem->modifierApplications().contains(toBeDeleted));
 					if(toBeDeleted) {
 						modApp->setInput(toBeDeleted->input());
+						toBeDeleted->setInput(nullptr);
 						_pipelineListModel->setNextToSelectObject(modApp->input());
 					}
 				}
@@ -286,6 +287,7 @@ void ModifyCommandPage::onDeleteModifier()
 				ModifierApplication* toBeDeleted = dynamic_object_cast<ModifierApplication>(objNode->dataProvider());
 				if(toBeDeleted) {
 					objNode->setDataProvider(toBeDeleted->input());
+					toBeDeleted->setInput(nullptr);
 					_pipelineListModel->setNextToSelectObject(objNode->dataProvider());
 				}
 			}

@@ -855,7 +855,6 @@ QString ParticlePickInfo::particleInfoString(const PipelineFlowState& pipelineSt
 		str += QStringLiteral(" ");
 		for(size_t component = 0; component < property->componentCount(); component++) {
 			if(component != 0) str += QStringLiteral(", ");
-			QString valueString;
 			if(property->dataType() == PropertyStorage::Int) {
 				str += QString::number(property->getIntComponent(particleIndex, component));
 				if(property->elementTypes().empty() == false) {

@@ -117,7 +117,6 @@ ENDIF()
 
 OVITO_STANDARD_PLUGIN(Particles
 	SOURCES Particles.cpp ${SourceFiles}
-	LIB_DEPENDENCIES muParser
 	PLUGIN_DEPENDENCIES Mesh Grid StdObj
 	PRIVATE_LIB_DEPENDENCIES VoroPlusPlus OpenGLRenderer PolyhedralTemplateMatching CombinatoriallyOptimalPointRegistration
 	OPTIONAL_PLUGIN_DEPENDENCIES PyScript StdMod

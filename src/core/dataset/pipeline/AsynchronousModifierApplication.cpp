@@ -55,6 +55,11 @@ bool AsynchronousModifierApplication::referenceEvent(RefTarget* source, const Re
 		if(_lastComputeResults)
 			_lastComputeResults->setValidityInterval(TimeInterval::empty());
 	}
+	else if(event.type() == ReferenceEvent::ModifierInputChanged && source == modifier()) {
+		// Whenever the modifier's inputs change, mark the cached computation results as outdated:
+		if(_lastComputeResults)
+			_lastComputeResults->setValidityInterval(TimeInterval::empty());
+	}
 	else if(event.type() == ReferenceEvent::TargetChanged && source == modifier()) {
 		// Whenever the modifier object changes, mark the cached computation results as outdated,
 		// unless the modifier requests otherwise.

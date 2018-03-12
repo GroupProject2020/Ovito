@@ -45,6 +45,7 @@ PipelineListModel::PipelineListModel(DataSetContainer& datasetContainer, QObject
 	_statusPendingIcon(":/gui/mainwin/status/status_pending.gif"),
 	_sectionHeaderFont(QGuiApplication::font())
 {
+	_statusPendingIcon.setCacheMode(QMovie::CacheAll);
 	connect(&_statusPendingIcon, &QMovie::frameChanged, this, &PipelineListModel::iconAnimationFrameChanged);
 	_selectionModel = new QItemSelectionModel(this);
 	connect(_selectionModel, &QItemSelectionModel::selectionChanged, this, &PipelineListModel::selectedItemChanged);

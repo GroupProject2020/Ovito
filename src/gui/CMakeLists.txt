@@ -32,6 +32,9 @@ SET(SourceFiles
 	mainwin/cmdpanel/UtilityCommandPage.cpp
 	mainwin/cmdpanel/OverlayCommandPage.cpp
 	mainwin/cmdpanel/UtilityApplet.cpp
+	mainwin/data_inspector/DataInspectorPanel.cpp
+	mainwin/data_inspector/DataInspectionApplet.cpp
+	mainwin/data_inspector/GlobalAttributesInspectionApplet.cpp
 	dialogs/AdjustCameraDialog.cpp
 	dialogs/AnimationKeyEditorDialog.cpp
 	dialogs/AnimationSettingsDialog.cpp

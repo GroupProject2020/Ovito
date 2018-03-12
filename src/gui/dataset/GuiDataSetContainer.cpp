@@ -49,7 +49,10 @@ GuiDataSetContainer::GuiDataSetContainer(MainWindow* mainWindow) : DataSetContai
 	if(Application::instance()->guiMode()) {
 		connect(this, &DataSetContainer::dataSetChanged, this, [this](DataSet* dataset) {
 			if(dataset) {
+				_sceneReadyScheduled = true;
+				Q_EMIT scenePreparationBegin();
 				dataset->whenSceneReady().finally(executor(), [this]() {
+					_sceneReadyScheduled = false;
 					sceneBecameReady();
 				});
 			}
@@ -68,6 +71,7 @@ bool GuiDataSetContainer::referenceEvent(RefTarget* source, const ReferenceEvent
 				// Update viewports as soon as the scene becomes ready.
 				if(!_sceneReadyScheduled) {
 					_sceneReadyScheduled = true;
+					Q_EMIT scenePreparationBegin();
 					currentSet()->whenSceneReady().finally(executor(), [this]() {
 						_sceneReadyScheduled = false;
 						sceneBecameReady();
@@ -92,6 +96,7 @@ void GuiDataSetContainer::sceneBecameReady()
 {
 	if(currentSet())
 		currentSet()->viewportConfig()->updateViewports();
+	Q_EMIT scenePreparationEnd();
 }
 
 /******************************************************************************

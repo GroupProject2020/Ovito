@@ -54,6 +54,7 @@ namespace Ovito {
 		class MainWindow;
 		class GuiApplication;
 		class ActionManager;
+		class DataInspectionApplet;
 		OVITO_BEGIN_INLINE_NAMESPACE(Widgets)
 			class PropertiesPanel;
 			class SpinnerWidget;
@@ -91,6 +92,7 @@ namespace Ovito {
 			class ViewportInputManager;
 			class ViewportInputMode;
 			class ViewportModeAction;
+			class ViewportGizmo;
 		OVITO_END_INLINE_NAMESPACE
 		OVITO_BEGIN_INLINE_NAMESPACE(Dialogs)
 			class FileExporterSettingsDialog;

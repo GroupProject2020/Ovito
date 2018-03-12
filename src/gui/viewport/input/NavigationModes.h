@@ -25,6 +25,7 @@
 #include <gui/GUI.h>
 #include <core/rendering/ArrowPrimitive.h>
 #include "ViewportInputMode.h"
+#include "ViewportGizmo.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
@@ -52,16 +53,10 @@ public:
 	/// Is called when a viewport looses the input focus.
 	virtual void focusOutEvent(ViewportWindow* vpwin, QFocusEvent* event) override;
 
-	/// \brief Lets the input mode render its overlay content in a viewport.
-	virtual void renderOverlay3D(Viewport* vp, ViewportSceneRenderer* renderer) override;
-
-	/// \brief Indicates whether this input mode renders into the viewports.
-	virtual bool hasOverlay() override { return true; }
-
 protected:
 
 	/// Protected constructor.
-	NavigationMode(QObject* parent) : ViewportInputMode(parent), _viewport(nullptr) {}
+	NavigationMode(QObject* parent) : ViewportInputMode(parent) {}
 
 	/// Computes the new view based on the new mouse position.
 	virtual void modifyView(ViewportWindow* vpwin, Viewport* vp, QPointF delta) {}
@@ -101,16 +96,13 @@ protected:
 	AffineTransformation _oldInverseViewMatrix;
 
 	/// The current viewport we are working in.
-	Viewport* _viewport;
+	Viewport* _viewport = nullptr;
 
 	/// Indicates whether this navigation mode is only temporarily activated.
 	bool _temporaryActivation;
 
 	/// The cached orbit center as determined when the navigation mode was activated.
 	Point3 _currentOrbitCenter;
-
-	/// The geometry buffer used to render the orbit center.
-	std::shared_ptr<ArrowPrimitive> _orbitCenterMarker;
 };
 
 /******************************************************************************
@@ -204,14 +196,14 @@ protected:
 /******************************************************************************
 * This input mode lets the user pick the center of rotation for the orbit mode.
 ******************************************************************************/
-class OVITO_GUI_EXPORT PickOrbitCenterMode : public ViewportInputMode
+class OVITO_GUI_EXPORT PickOrbitCenterMode : public ViewportInputMode, public ViewportGizmo
 {
 	Q_OBJECT
 
 public:
 
 	/// Constructor.
-	PickOrbitCenterMode(QObject* parent) : ViewportInputMode(parent), _showCursor(false) {
+	PickOrbitCenterMode(QObject* parent) : ViewportInputMode(parent) {
 		_hoverCursor = QCursor(QPixmap(":/gui/cursor/editing/cursor_mode_select.png"));
 	}
 
@@ -221,14 +213,11 @@ public:
 	/// Is called when the user moves the mouse.
 	virtual void mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* event) override;
 
-	/// \brief Lets the input mode render its overlay content in a viewport.
-	virtual void renderOverlay3D(Viewport* vp, ViewportSceneRenderer* renderer) override;
-
-	/// \brief Indicates whether this input mode renders into the viewports.
-	virtual bool hasOverlay() override { return true; }
-
 	/// \brief Sets the orbit rotation center to the space location under given mouse coordinates.
 	bool pickOrbitCenter(ViewportWindow* vpwin, const QPointF& pos);
+
+	/// \brief Lets the input mode render its overlay content in a viewport.
+	virtual void renderOverlay3D(Viewport* vp, ViewportSceneRenderer* renderer) override;
 
 private:
 
@@ -239,11 +228,12 @@ private:
 	QCursor _hoverCursor;
 
 	/// Indicates that the mouse cursor is over an object.
-	bool _showCursor;
+	bool _showCursor = false;
+
+	/// The geometry buffer used to render the orbit center.
+	std::shared_ptr<ArrowPrimitive> _orbitCenterMarker;	
 };
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

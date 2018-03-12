@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -122,17 +122,6 @@ void ViewportInputManager::pushInputMode(ViewportInputMode* newMode, bool tempor
 	}
 	newMode->activated(temporary);
 
-	// Update viewports if the old or the new mode displays overlays.
-	if((oldMode && oldMode->hasOverlay()) || newMode->hasOverlay()) {
-		DataSet* dataset = mainWindow()->datasetContainer().currentSet();
-		if(dataset && dataset->viewportConfig()) {
-			if(temporary && dataset->viewportConfig()->activeViewport())
-				dataset->viewportConfig()->activeViewport()->updateViewport();
-			else
-				dataset->viewportConfig()->updateViewports();
-		}
-	}
-
 	Q_EMIT inputModeChanged(oldMode, newMode);
 }
 
@@ -143,13 +132,13 @@ void ViewportInputManager::removeInputMode(ViewportInputMode* mode)
 {
 	OVITO_CHECK_POINTER(mode);
 
-	int index = _inputModeStack.indexOf(mode);
-	if(index < 0) return;
+	auto iter = std::find(_inputModeStack.begin(), _inputModeStack.end(), mode);
+	if(iter == _inputModeStack.end()) return;
 
 	OVITO_ASSERT(mode->_manager == this);
 
-	if(index == _inputModeStack.size() - 1) {
-		_inputModeStack.remove(index);
+	if(iter == _inputModeStack.end() - 1) {
+		_inputModeStack.erase(iter);
 		mode->deactivated(false);
 		if(!_inputModeStack.empty())
 			activeMode()->activated(false);
@@ -162,15 +151,44 @@ void ViewportInputManager::removeInputMode(ViewportInputMode* mode)
 			pushInputMode(_defaultMode);
 	}
 	else {
-		_inputModeStack.remove(index);
+		_inputModeStack.erase(iter);
 		mode->deactivated(false);
 		mode->_manager = nullptr;
 	}
+}
 
-	// Update viewports to show displays overlays.
-	DataSet* dataset = mainWindow()->datasetContainer().currentSet();
-	if(dataset && dataset->viewportConfig()) {
-		dataset->viewportConfig()->updateViewports();
+/******************************************************************************
+* Adds a gizmo to be shown in the interactive viewports.
+******************************************************************************/
+void ViewportInputManager::addViewportGizmo(ViewportGizmo* gizmo)
+{
+	OVITO_ASSERT(gizmo);
+	if(std::find(viewportGizmos().begin(), viewportGizmos().end(), gizmo) == viewportGizmos().end()) {
+		_viewportGizmos.push_back(gizmo);
+
+		// Update viewports to show displays overlays.
+		DataSet* dataset = mainWindow()->datasetContainer().currentSet();
+		if(dataset && dataset->viewportConfig()) {
+			dataset->viewportConfig()->updateViewports();
+		}
+	}
+}
+
+/******************************************************************************
+* Removes a gizmo, which will no longer be shown in the interactive viewports.
+******************************************************************************/
+void ViewportInputManager::removeViewportGizmo(ViewportGizmo* gizmo)
+{
+	OVITO_ASSERT(gizmo);
+	auto iter = std::find(_viewportGizmos.begin(), _viewportGizmos.end(), gizmo);
+	if(iter != _viewportGizmos.end()) {
+		_viewportGizmos.erase(iter);
+
+		// Update viewports to show displays overlays.
+		DataSet* dataset = mainWindow()->datasetContainer().currentSet();
+		if(dataset && dataset->viewportConfig()) {
+			dataset->viewportConfig()->updateViewports();
+		}
 	}
 }
 

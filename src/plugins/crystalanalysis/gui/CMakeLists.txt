@@ -33,6 +33,7 @@ SET(SourceFiles
 	modifier/SimplifyMicrostructureModifierEditor.cpp
 #	modifier/GrainSegmentationModifierEditor.cpp
 	util/DislocationInformationApplet.cpp
+	util/DislocationInspectionApplet.cpp
 )
 
 OVITO_STANDARD_PLUGIN(CrystalAnalysisGui

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -30,6 +30,7 @@
 #include <core/app/Application.h>
 #include <core/rendering/RenderSettings.h>
 #include <gui/viewport/input/ViewportInputManager.h>
+#include <gui/viewport/input/ViewportGizmo.h>
 #include <gui/viewport/ViewportWindow.h>
 #include <gui/mainwin/ViewportsPanel.h>
 #include <gui/mainwin/MainWindow.h>
@@ -80,19 +81,15 @@ void ViewportSceneRenderer::renderInteractiveContent()
 	// Render visual 2D representation of the modifiers.
 	renderModifiers(true);
 
-	// Render overlays of active input modes.
+	// Render viewport gizmos.
 	if(MainWindow* mainWindow = MainWindow::fromDataset(renderDataset())) {
-
-		// Render 3D overlays.
-		for(const auto& handler : mainWindow->viewportInputManager()->stack()) {
-			if(handler->hasOverlay())
-				handler->renderOverlay3D(viewport(), this);
+		// First, render 3D content.
+		for(ViewportGizmo* gizmo : mainWindow->viewportInputManager()->viewportGizmos()) {
+			gizmo->renderOverlay3D(viewport(), this);
 		}
-
-		// Render 2D overlays on top.
-		for(const auto& handler : mainWindow->viewportInputManager()->stack()) {
-			if(handler->hasOverlay())
-				handler->renderOverlay2D(viewport(), this);
+		// Then, render 2D content on top.
+		for(ViewportGizmo* gizmo : mainWindow->viewportInputManager()->viewportGizmos()) {
+			gizmo->renderOverlay2D(viewport(), this);
 		}
 	}
 }

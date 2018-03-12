@@ -158,6 +158,8 @@ void ParticleOutputHelper::addBonds(const std::vector<Bond>& newBonds, BondsVis*
 		auto t = topologyProperty->dataInt64();
 		auto pbc = periodicImageProperty->dataVector3I();
 		for(const Bond& bond : newBonds) {
+			OVITO_ASSERT(bond.index1 < outputParticleCount());
+			OVITO_ASSERT(bond.index2 < outputParticleCount());
 			*t++ = bond.index1;
 			*t++ = bond.index2;
 			*pbc++ = bond.pbcShift;
@@ -224,6 +226,8 @@ void ParticleOutputHelper::addBonds(const std::vector<Bond>& newBonds, BondsVis*
 		for(size_t bondIndex = 0; bondIndex < newBonds.size(); bondIndex++) {
 			if(mapping[bondIndex] >= originalBondCount) {
 				const Bond& bond = newBonds[bondIndex];
+				OVITO_ASSERT(bond.index1 < outputParticleCount());
+				OVITO_ASSERT(bond.index2 < outputParticleCount());
 				newBondsTopology->setInt64Component(mapping[bondIndex], 0, bond.index1);
 				newBondsTopology->setInt64Component(mapping[bondIndex], 1, bond.index2);
 				newBondsPeriodicImages->setVector3I(mapping[bondIndex], bond.pbcShift);

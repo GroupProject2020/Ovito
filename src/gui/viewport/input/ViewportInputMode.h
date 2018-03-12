@@ -45,7 +45,7 @@ public:
 	};
 
 	/// \brief Constructor.
-	ViewportInputMode(QObject* parent = nullptr) : QObject(parent), _manager(nullptr), _showOrbitCenter(false) {}
+	ViewportInputMode(QObject* parent = nullptr) : QObject(parent) {}
 
 	/// \brief Destructor.
 	virtual ~ViewportInputMode();
@@ -125,34 +125,8 @@ public:
 	/// This method can be overridden by subclasses to prevent the activation of temporary navigation modes.
 	virtual void activateTemporaryNavigationMode(ViewportInputMode* navigationMode);
 
-	/// \brief Indicates whether this input mode renders 3d geometry into the viewports.
-	/// \return \c true if the renderOverlay3D() method has been overridden for this class; \c false otherwise.
-	///
-	/// Subclasses should override this method to return \c true if they also override the renderOverlay3D() method.
-	/// The default implementation returns \c false.
-	virtual bool hasOverlay() { return _showOrbitCenter; }
-
-	/// \brief Lets the input mode render its 3d overlay content in a viewport.
-	/// \param vp The viewport into which the mode should render its specific overlay content.
-	/// \param renderer The renderer that should be used to display the overlay.
-	///
-	/// This method is called by the system every time the viewports are redrawn and this input
-	/// mode is on the input mode stack.
-	///
-	/// The default implementation of this method does nothing. If a subclasses implements this
-	/// method then it should also override the hasOverlay() function.
-	virtual void renderOverlay3D(Viewport* vp, ViewportSceneRenderer* renderer);
-
-	/// \brief Lets the input mode render its 2d overlay content in a viewport.
-	/// \param vp The viewport into which the mode should render its specific overlay content.
-	/// \param renderer The renderer that should be used to display the overlay.
-	///
-	/// This method is called by the system every time the viewports are redrawn and this input
-	/// mode is on the input mode stack.
-	///
-	/// The default implementation of this method does nothing. If a subclasses implements this
-	/// method then it should also override the hasOverlay() function.
-	virtual void renderOverlay2D(Viewport* vp, ViewportSceneRenderer* renderer) {}
+	/// \brief Redraws all viewports.
+	void requestViewportUpdate();
 
 Q_SIGNALS:
 
@@ -185,10 +159,7 @@ private:
 	QCursor _cursor;
 
 	/// The viewport input manager that has a reference to this mode.
-	ViewportInputManager* _manager;
-
-	/// This flag indicates that the current camera orbit should be shown in the viewports.
-	bool _showOrbitCenter;
+	ViewportInputManager* _manager = nullptr;
 
 	Q_OBJECT
 

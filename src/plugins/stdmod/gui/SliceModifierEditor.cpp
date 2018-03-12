@@ -265,6 +265,7 @@ void PickPlanePointsInputMode::activated(bool temporary)
 	inputManager()->mainWindow()->statusBar()->showMessage(tr("Pick three points to define a new slicing plane."));
 	if(!temporary)
 		_numPickedPoints = 0;
+	inputManager()->addViewportGizmo(this);
 }
 
 /******************************************************************************
@@ -277,6 +278,7 @@ void PickPlanePointsInputMode::deactivated(bool temporary)
 		_hasPreliminaryPoint = false;
 	}
 	inputManager()->mainWindow()->statusBar()->clearMessage();
+	inputManager()->removeViewportGizmo(this);
 	ViewportInputMode::deactivated(temporary);
 }
 
@@ -292,10 +294,11 @@ void PickPlanePointsInputMode::mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent
 	if(pickResult && _numPickedPoints < 3) {
 		_pickedPoints[_numPickedPoints] = pickResult.worldPosition;
 		_hasPreliminaryPoint = true;
-		vpwin->viewport()->dataset()->viewportConfig()->updateViewports();
+		requestViewportUpdate();
 	}
 	else { 
-		if(_hasPreliminaryPoint) vpwin->viewport()->dataset()->viewportConfig()->updateViewports();
+		if(_hasPreliminaryPoint)
+			requestViewportUpdate();
 		_hasPreliminaryPoint = false;
 	}
 }
@@ -309,7 +312,7 @@ void PickPlanePointsInputMode::mouseReleaseEvent(ViewportWindow* vpwin, QMouseEv
 
 		if(_numPickedPoints >= 3) {
 			_numPickedPoints = 0;
-			vpwin->viewport()->dataset()->viewportConfig()->updateViewports();
+			requestViewportUpdate();
 		}
 
 		ViewportPickResult pickResult = vpwin->pick(event->localPos());
@@ -324,7 +327,7 @@ void PickPlanePointsInputMode::mouseReleaseEvent(ViewportWindow* vpwin, QMouseEv
 				_pickedPoints[_numPickedPoints] = pickResult.worldPosition;
 				_numPickedPoints++;
 				_hasPreliminaryPoint = false;
-				vpwin->viewport()->dataset()->viewportConfig()->updateViewports();
+				requestViewportUpdate();
 
 				if(_numPickedPoints == 3) {
 
@@ -385,8 +388,6 @@ void PickPlanePointsInputMode::alignPlane(SliceModifier* mod)
 ******************************************************************************/
 void PickPlanePointsInputMode::renderOverlay3D(Viewport* vp, ViewportSceneRenderer* renderer)
 {
-	ViewportInputMode::renderOverlay3D(vp, renderer);
-
 	if(renderer->isPicking())
 		return;
 

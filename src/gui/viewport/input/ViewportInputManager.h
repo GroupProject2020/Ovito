@@ -53,7 +53,7 @@ public:
 
 	/// \brief Returns the stack of input modes.
 	/// \return The stack of input modes. The topmost mode is the active one.
-	const QVector<ViewportInputMode*>& stack() { return _inputModeStack; }
+	const std::vector<ViewportInputMode*>& stack() { return _inputModeStack; }
 
 	/// \brief Pushes an input mode onto the stack and makes it active.
 	/// \param mode The mode to be made active.
@@ -63,6 +63,15 @@ public:
 	/// \brief Removes an input mode from the stack and deactivates it if it is currently active.
 	/// \param mode The mode to remove from the stack.
 	void removeInputMode(ViewportInputMode* mode);
+
+	/// Returns the list of active viewport gizmos.
+	const std::vector<ViewportGizmo*>& viewportGizmos() const { return _viewportGizmos; }
+
+	/// Adds a gizmo to be shown in the interactive viewports.
+	void addViewportGizmo(ViewportGizmo* gizmo);
+
+	/// Removes a gizmo, which will no longer be shown in the interactive viewports.
+	void removeViewportGizmo(ViewportGizmo* gizmo);
 
 	/// \brief Returns the zoom input mode.
 	ZoomMode* zoomMode() const { return _zoomMode; }
@@ -106,7 +115,10 @@ Q_SIGNALS:
 private:
 
 	/// Stack of input modes. The topmost entry is the active one.
-	QVector<ViewportInputMode*> _inputModeStack;
+	std::vector<ViewportInputMode*> _inputModeStack;
+
+	/// List of active viewport gizmos.
+	std::vector<ViewportGizmo*> _viewportGizmos;
 
 	/// The default viewport input mode.
 	ViewportInputMode* _defaultMode;
@@ -139,5 +151,3 @@ private:
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

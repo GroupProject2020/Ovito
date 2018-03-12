@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -42,6 +42,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 void NavigationMode::activated(bool temporaryActivation)
 {
 	_temporaryActivation = temporaryActivation;
+	inputManager()->addViewportGizmo(inputManager()->pickOrbitCenterMode());
 	ViewportInputMode::activated(temporaryActivation);
 }
 
@@ -58,6 +59,7 @@ void NavigationMode::deactivated(bool temporary)
 		_viewport->dataset()->undoStack().endCompoundOperation(false);
 		_viewport = nullptr;
 	}
+	inputManager()->removeViewportGizmo(inputManager()->pickOrbitCenterMode());
 	ViewportInputMode::deactivated(temporary);
 }
 
@@ -127,37 +129,6 @@ void NavigationMode::mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* event)
 
 		// Force immediate viewport repaint.
 		MainWindow::fromDataset(_viewport->dataset())->processViewportUpdates();
-	}
-}
-
-/******************************************************************************
-* Lets the input mode render its overlay content in a viewport.
-******************************************************************************/
-void NavigationMode::renderOverlay3D(Viewport* vp, ViewportSceneRenderer* renderer)
-{
-	if(renderer->isPicking())
-		return;
-
-	// Render center of rotation.
-	Point3 center = vp->dataset()->viewportConfig()->orbitCenter();
-	FloatType symbolSize = vp->nonScalingSize(center);
-	renderer->setWorldTransform(AffineTransformation::translation(center - Point3::Origin()) * AffineTransformation::scaling(symbolSize));
-
-	if(!renderer->isBoundingBoxPass()) {
-		// Create line buffer.
-		if(!_orbitCenterMarker || !_orbitCenterMarker->isValid(renderer)) {
-			_orbitCenterMarker = renderer->createArrowPrimitive(ArrowPrimitive::CylinderShape, ArrowPrimitive::NormalShading, ArrowPrimitive::HighQuality);
-			_orbitCenterMarker->startSetElements(3);
-			_orbitCenterMarker->setElement(0, Point3(-1,0,0), Vector3(2,0,0), ColorA(1,0,0), FloatType(0.05));
-			_orbitCenterMarker->setElement(1, Point3(0,-1,0), Vector3(0,2,0), ColorA(0,1,0), FloatType(0.05));
-			_orbitCenterMarker->setElement(2, Point3(0,0,-1), Vector3(0,0,2), ColorA(0.4f,0.4f,1), FloatType(0.05));
-			_orbitCenterMarker->endSetElements();
-		}
-		_orbitCenterMarker->render(renderer);
-	}
-	else {
-		// Add marker to bounding box.
-		renderer->addToLocalBoundingBox(Box3(Point3::Origin(), symbolSize));
 	}
 }
 
@@ -460,7 +431,30 @@ bool PickOrbitCenterMode::findIntersection(ViewportWindow* vpwin, const QPointF&
 ******************************************************************************/
 void PickOrbitCenterMode::renderOverlay3D(Viewport* vp, ViewportSceneRenderer* renderer)
 {
-	inputManager()->orbitMode()->renderOverlay3D(vp, renderer);
+	if(renderer->isPicking())
+		return;
+
+	// Render center of rotation.
+	Point3 center = vp->dataset()->viewportConfig()->orbitCenter();
+	FloatType symbolSize = vp->nonScalingSize(center);
+	renderer->setWorldTransform(AffineTransformation::translation(center - Point3::Origin()) * AffineTransformation::scaling(symbolSize));
+
+	if(!renderer->isBoundingBoxPass()) {
+		// Create line buffer.
+		if(!_orbitCenterMarker || !_orbitCenterMarker->isValid(renderer)) {
+			_orbitCenterMarker = renderer->createArrowPrimitive(ArrowPrimitive::CylinderShape, ArrowPrimitive::NormalShading, ArrowPrimitive::HighQuality);
+			_orbitCenterMarker->startSetElements(3);
+			_orbitCenterMarker->setElement(0, Point3(-1,0,0), Vector3(2,0,0), ColorA(1,0,0), FloatType(0.05));
+			_orbitCenterMarker->setElement(1, Point3(0,-1,0), Vector3(0,2,0), ColorA(0,1,0), FloatType(0.05));
+			_orbitCenterMarker->setElement(2, Point3(0,0,-1), Vector3(0,0,2), ColorA(0.4f,0.4f,1), FloatType(0.05));
+			_orbitCenterMarker->endSetElements();
+		}
+		_orbitCenterMarker->render(renderer);
+	}
+	else {
+		// Add marker to bounding box.
+		renderer->addToLocalBoundingBox(Box3(Point3::Origin(), symbolSize));
+	}
 }
 
 OVITO_END_INLINE_NAMESPACE

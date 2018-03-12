@@ -83,17 +83,23 @@ public:
 	/// If yes, then the dataset is saved by calling fileSave().
 	bool askForSaveChanges();
 
+Q_SIGNALS:
+
+	/// Is emitted whenever the scene of the current dataset has been changed and is being made ready for rendering.
+	void scenePreparationBegin();
+
+	/// Is emitted whenever the scene of the current dataset became ready for rendering.
+	void scenePreparationEnd();
+
 protected:
 
 	/// Is called when a RefTarget referenced by this object has generated an event.
 	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;	
 
-private Q_SLOTS:
+private:
 
 	/// Is called when scene of the current dataset is ready to be displayed.
 	void sceneBecameReady();
-
-private:
 
 	/// The window this dataset container is linked to (may be NULL).
 	MainWindow* _mainWindow;

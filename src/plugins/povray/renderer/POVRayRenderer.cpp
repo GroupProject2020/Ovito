@@ -314,12 +314,6 @@ bool POVRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 	if(!renderScene(promise))
 		return false;
 
-	// Render visual 3D representation of the modifiers.
-	renderModifiers(false);
-
-	// Render visual 2D representation of the modifiers.
-	renderModifiers(true);
-	
 	if(_sceneFile && _imageFile) {
 		_outputStream.flush();
 		_sceneFile->close();

@@ -1,0 +1,10 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+
+<qresource prefix="/stdobj">
+	
+	<file>icons/reset_filter.svg</file>
+	
+</qresource> 
+
+</RCC>

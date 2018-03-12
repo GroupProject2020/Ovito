@@ -71,7 +71,7 @@ private:
 	public:
 
 		/// Constructor.
-		using ComputeEngineResults::ComputeEngineResults;
+		BondsEngineResults(size_t inputParticleCount) : _inputParticleCount(inputParticleCount) {}
 
 		/// Injects the computed results into the data pipeline.
 		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
@@ -83,6 +83,9 @@ private:
 
 		/// The list of generated bonds.
 		std::vector<Bond> _bonds;
+
+		/// Original number of input particles. 
+		size_t _inputParticleCount;
 	};
 
 	/// Compute engine that creates bonds between particles.

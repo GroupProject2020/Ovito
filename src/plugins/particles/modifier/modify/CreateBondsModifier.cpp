@@ -194,7 +194,7 @@ void CreateBondsModifier::BondsEngine::perform()
 
 	FloatType minCutoffSquared = _minCutoff * _minCutoff;
 
-	auto results = std::make_shared<BondsEngineResults>();
+	auto results = std::make_shared<BondsEngineResults>(_positions->size());
 
 	// Generate bonds.
 	size_t particleCount = _positions->size();
@@ -258,6 +258,10 @@ PipelineFlowState CreateBondsModifier::BondsEngineResults::apply(TimePoint time,
 	// Add our bonds to the system.
 	PipelineFlowState output = input;
 	ParticleOutputHelper poh(modApp->dataset(), output);
+
+	if(_inputParticleCount != poh.outputParticleCount())
+		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
+
 	poh.addBonds(bonds(), modifier->bondsVis());
 
 	size_t bondsCount = bonds().size();

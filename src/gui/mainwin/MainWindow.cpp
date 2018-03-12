@@ -40,6 +40,7 @@
 #include "ViewportsPanel.h"
 #include "TaskDisplayWidget.h"
 #include "cmdpanel/CommandPanel.h"
+#include "data_inspector/DataInspectorPanel.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
 
@@ -133,11 +134,7 @@ MainWindow::MainWindow() : _datasetContainer(this)
 	animationControlBar1->addSeparator();
 	animationControlBar1->addAction(actionManager()->getAction(ACTION_GOTO_END_OF_ANIMATION));
 	QToolBar* animationControlBar2 = new QToolBar();
-#if 1
 	animationControlBar2->addAction(actionManager()->getAction(ACTION_AUTO_KEY_MODE_TOGGLE));
-#else
-	animationControlBar2->addWidget(new AnimationFramesToolButton(datasetContainer()));
-#endif
 	QWidget* animationTimeSpinnerContainer = new QWidget();
 	QHBoxLayout* animationTimeSpinnerLayout = new QHBoxLayout(animationTimeSpinnerContainer);
 	animationTimeSpinnerLayout->setContentsMargins(0,0,0,0);
@@ -191,11 +188,40 @@ MainWindow::MainWindow() : _datasetContainer(this)
 	// Create the command panel.
 	_commandPanel = new CommandPanel(this, this);
 
-	createDockPanel(tr("Animation Panel"), "AnimationPanel", Qt::BottomDockWidgetArea, Qt::BottomDockWidgetArea, animationPanel);
-	createDockPanel(tr("Animation Control Panel"), "AnimationControlPanel", Qt::BottomDockWidgetArea, Qt::BottomDockWidgetArea, animationControlPanel);
-	createDockPanel(tr("Viewport Control"), "ViewportControlPanel", Qt::BottomDockWidgetArea, Qt::BottomDockWidgetArea, viewportControlPanel);
-	createDockPanel(tr("Command Panel"), "CommandPanel", Qt::RightDockWidgetArea, Qt::DockWidgetAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea), _commandPanel);
+	// Create the bottom docking widget.
+	QWidget* bottomDockWidget = new QWidget();
+	bottomDockWidget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
+	QGridLayout* bottomDockLayout = new QGridLayout(bottomDockWidget);
+	bottomDockLayout->setContentsMargins(0,0,0,0);
+	bottomDockLayout->setSpacing(0);
+	bottomDockLayout->setRowStretch(0, 1);
+	bottomDockLayout->addWidget(new DataInspectorPanel(this), 0, 0, 1, 5);
+	QFrame* separatorLine = new QFrame();
+	QPalette pal = separatorLine->palette();
+	pal.setColor(QPalette::WindowText, pal.color(QPalette::Mid));
+	separatorLine->setFrameShape(QFrame::HLine);
+	separatorLine->setFrameShadow(QFrame::Plain);
+	separatorLine->setPalette(pal);
+	bottomDockLayout->addWidget(separatorLine, 1, 0, 1, 5);
+	bottomDockLayout->addWidget(animationPanel, 2, 0);
+	separatorLine = new QFrame();
+	separatorLine->setFrameShape(QFrame::VLine);
+	separatorLine->setFrameShadow(QFrame::Plain);
+	separatorLine->setPalette(pal);
+	bottomDockLayout->addWidget(separatorLine, 2, 1);
+	bottomDockLayout->addWidget(animationControlPanel, 2, 2);
+	separatorLine = new QFrame();
+	separatorLine->setFrameShape(QFrame::VLine);
+	separatorLine->setFrameShadow(QFrame::Plain);
+	separatorLine->setPalette(pal);
+	bottomDockLayout->addWidget(separatorLine, 2, 3);
+	bottomDockLayout->addWidget(viewportControlPanel, 2, 4);
+	bottomDockWidget->setMaximumHeight(bottomDockWidget->sizeHint().height());
 
+	// Create docking widgets.
+	createDockPanel(tr("Bottom panel"), "BottomPanel", Qt::BottomDockWidgetArea, Qt::BottomDockWidgetArea, bottomDockWidget);
+	createDockPanel(tr("Command Panel"), "CommandPanel", Qt::RightDockWidgetArea, Qt::DockWidgetAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea), _commandPanel);
+	
 	// Create the frame buffer window.
 	_frameBufferWindow = new FrameBufferWindow(this);
 
@@ -227,7 +253,7 @@ MainWindow* MainWindow::fromDataset(DataSet* dataset)
 /******************************************************************************
 * Creates a dock panel.
 ******************************************************************************/
-void MainWindow::createDockPanel(const QString& caption, const QString& objectName, Qt::DockWidgetArea dockArea, Qt::DockWidgetAreas allowedAreas, QWidget* contents)
+QDockWidget* MainWindow::createDockPanel(const QString& caption, const QString& objectName, Qt::DockWidgetArea dockArea, Qt::DockWidgetAreas allowedAreas, QWidget* contents)
 {
 	QDockWidget* dockWidget = new QDockWidget(caption, this);
 	dockWidget->setObjectName(objectName);
@@ -236,6 +262,7 @@ void MainWindow::createDockPanel(const QString& caption, const QString& objectNa
 	dockWidget->setWidget(contents);
 	dockWidget->setTitleBarWidget(new QWidget());
 	addDockWidget(dockArea, dockWidget);
+	return dockWidget;
 }
 
 /******************************************************************************

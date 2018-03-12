@@ -109,6 +109,8 @@
 	<file>framebuffer/save_picture.bw.svg</file>	
 	<file>framebuffer/copy_picture_to_clipboard.bw.svg</file>
 	<file>framebuffer/auto_crop.bw.svg</file>
+
+	<file>mainwin/inspector/waiting.gif</file>
 	
 </qresource>
 

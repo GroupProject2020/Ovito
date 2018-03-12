@@ -67,13 +67,13 @@ public:
 	/// Returns the recommended size for this window.
 	virtual QSize sizeHint() const override { return QSize(1024,768); }
 	
-	/// \brief Loads the layout of the docked widgets from the settings store.
+	/// Loads the layout of the docked widgets from the settings store.
 	void restoreLayout();
 
-	/// \brief Saves the layout of the docked widgets to the settings store.
+	/// Saves the layout of the docked widgets to the settings store.
 	void saveLayout();
 
-	/// \brief Immediately repaints all viewports that are flagged for an update.
+	/// Immediately repaints all viewports that are flagged for an update.
 	void processViewportUpdates();
 
 	/// Returns the container that keeps a reference to the current dataset.
@@ -140,7 +140,7 @@ private:
 	void createMainToolbar();
 
 	/// Creates a dock panel.
-	void createDockPanel(const QString& caption, const QString& objectName, Qt::DockWidgetArea dockArea, Qt::DockWidgetAreas allowedAreas, QWidget* contents);
+	QDockWidget* createDockPanel(const QString& caption, const QString& objectName, Qt::DockWidgetArea dockArea, Qt::DockWidgetAreas allowedAreas, QWidget* contents);
 
 private:
 

@@ -14,6 +14,11 @@
 	<file>icons/arrow_alignment_base.png</file>
 	<file>icons/arrow_alignment_center.png</file>
 	<file>icons/arrow_alignment_head.png</file>
+
+	<file>icons/highlight_selection_on.svg</file>
+	<file>icons/highlight_selection_off.svg</file>
+	<file>icons/select_mode.svg</file>
+	<file>icons/measure_distances.svg</file>
 	
 </qresource> 
 

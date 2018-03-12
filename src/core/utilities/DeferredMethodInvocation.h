@@ -34,9 +34,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util)
  * into a single call to a widget's repaint method.
  *
  * Two class template parameters must be specified: The QObject derived class to which 
- * the member function to be called belong and the member function pointer.
+ * the member function to be called belongs and the member function pointer.
  */
-template<typename ObjectClass, void (ObjectClass::*method)()>
+template<typename ObjectClass, void (ObjectClass::*method)(), int delay_msec = 0>
 class DeferredMethodInvocation 
 {
 public:
@@ -46,7 +46,15 @@ public:
 		// to invoke the user function.
 		if(!_event) {
 			_event = new Event(this, obj);
-			QCoreApplication::postEvent(obj, _event);
+			if(!delay_msec) {
+				QCoreApplication::postEvent(obj, _event);
+			}
+			else {
+				QTimer::singleShot(delay_msec, obj, [this]() {
+					OVITO_ASSERT(_event != nullptr && _event->owner == this);
+					QCoreApplication::postEvent(_event->object, _event);
+				});
+			}
 		}
 	}
 

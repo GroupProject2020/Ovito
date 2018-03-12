@@ -31,6 +31,7 @@ SET(SourceFiles
 	properties/PropertyReference.cpp
 	properties/ElementType.cpp
 	properties/GenericPropertyModifier.cpp
+	properties/PropertyExpressionEvaluator.cpp
 	util/InputHelper.cpp
 	util/OutputHelper.cpp
 )
@@ -41,6 +42,7 @@ ENDIF()
 
 OVITO_STANDARD_PLUGIN(StdObj
 	SOURCES StdObj.cpp ${SourceFiles}
+	LIB_DEPENDENCIES muParser
 	OPTIONAL_PLUGIN_DEPENDENCIES PyScript	
 	PYTHON_WRAPPERS "${CMAKE_CURRENT_SOURCE_DIR}/resources/python/"
 )
