@@ -64,6 +64,10 @@ public:
 	
 	/// \brief Given a source frame index, returns the animation time at which it is shown.
 	virtual TimePoint sourceFrameToAnimationTime(int frame) const override;
+	
+	/// Traverses the pipeline from this modifier application up to the source and 
+	/// returns the source object that generates the input data for the pipeline.
+	PipelineObject* pipelineSource() const;
 		
 protected:
 

@@ -52,9 +52,8 @@
     <title>How to analyze the computation results</title>
 
   <para>
-    If you are interested in the indices computed by the modifier for a particular particle, you can use OVITO's
-    <link linkend="usage.particle_inspection_utility">Particle Inspection</link> utility to select the particle
-    in the viewports. It lists all properties of the particle, including the computed Voronoi indices.
+    If you are interested in the indices computed by the modifier for a particular particle, you can open OVITO's
+    <link linkend="data_inspector">Data Inspector</link>. It lists all properties of the particle, including the computed Voronoi indices.
     If you would like to perform a statistical analysis of the Voronoi polyhedra, e.g. to determine the Voronoi index vector that 
     occurs most frequently in your system, then you can use OVITO's Python scripting interface to access the computed per-particle indices.
     You can find an example script in the <link xlink:href="python/introduction/examples.html#computing-voronoi-indices">OVITO scripting manual</link>.

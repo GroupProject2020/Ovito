@@ -43,6 +43,7 @@ Python class name                              User interface name
 :py:class:`ExpandSelectionModifier`            :guilabel:`Expand selection`
 :py:class:`ExpressionSelectionModifier`        :guilabel:`Expression selection`
 :py:class:`FreezePropertyModifier`             :guilabel:`Freeze property`
+:py:class:`GenerateTrajectoryLinesModifier`    :guilabel:`Generate trajectory lines`
 :py:class:`HistogramModifier`                  :guilabel:`Histogram`
 :py:class:`IdentifyDiamondModifier`            :guilabel:`Identify diamond structure`
 :py:class:`InterpolateTrajectoryModifier`      :guilabel:`Interpolate trajectory`

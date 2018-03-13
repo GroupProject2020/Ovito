@@ -10,7 +10,6 @@ This module contains object types that are part of OVITO's data pipeline system.
 
   * :py:class:`StaticSource`
   * :py:class:`FileSource`
-  * :py:class:`TrajectoryLineGenerator`
 
 """
 

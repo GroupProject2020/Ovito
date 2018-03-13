@@ -50,7 +50,7 @@ class OVITO_PARTICLES_EXPORT CreateBondsModifier : public AsynchronousModifier
 	OVITO_CLASS_META(CreateBondsModifier, CreateBondsModifierClass)
 
 	Q_CLASSINFO("DisplayName", "Create bonds");
-	Q_CLASSINFO("ModifierCategory", "Modification");
+	Q_CLASSINFO("ModifierCategory", "Visualization");
 
 public:
 

@@ -77,7 +77,7 @@
       and it assumes that they are stored in the same order. This assumption is not always true as some simulation
       codes reorder particles during a simulation run for performance reasons. If you forget to dump the particle IDs or atom IDs
       in addition to the positions during a simulation, you should be aware that OVITO may compute wrong displacement vectors because of
-      an invalid default particle mapping. You can use the <link linkend="utilities.particle_inspection">Particle Inspection utility</link>
+      an invalid default particle mapping. You can use the <link linkend="data_inspector">Data Inspector</link>
       to check for the presence of the <literal>Particle Identifier</literal> property after file import.
     </para>
   </simplesect>

@@ -81,6 +81,7 @@ namespace Ovito {
 		class BondsVis;
 		class VectorVis;
 		class ParticleBondMap;
+		class TrajectoryObject;
 
 		OVITO_BEGIN_INLINE_NAMESPACE(Import)
 			class ParticleFrameData;

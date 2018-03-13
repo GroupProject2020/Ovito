@@ -47,10 +47,6 @@
             <entry>Reads data from external file and hands it to the pipeline</entry>
           </row>
           <row>
-            <entry>Particle&#xA0;trajectories</entry>
-            <entry>Generates static trajectory lines from the time-dependent particle positions of another data pipeline (see <link linkend="howto.visualize_particle_trajectories">Create trajectory lines</link> utility)</entry>
-          </row>
-          <row>
             <entry>Static&#xA0;source</entry>
             <entry>Generic storage for one or more data objects</entry>
           </row>
@@ -99,7 +95,7 @@
           </row>
           <row>
             <entry>Particle&#xA0;trajectories</entry>
-            <entry>The lines generated through the <link linkend="howto.visualize_particle_trajectories">Create trajectory lines</link> utility</entry>
+            <entry>The output of the <link linkend="particles.modifiers.generate_trajectory_lines">Generate trajectory lines</link> modifier</entry>
           </row>
           <row>
             <entry>Voxel&#xA0;grid</entry>

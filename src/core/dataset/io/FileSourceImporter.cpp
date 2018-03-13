@@ -192,7 +192,7 @@ bool FileSourceImporter::importFile(std::vector<QUrl> sourceUrls, ImportMode imp
 			pipeline->setDataProvider(fileSource);
 
 			// Let the importer subclass customize the pipeline scene node.
-			setupPipeline(existingPipeline, fileSource);
+			setupPipeline(pipeline, fileSource);
 		}
 
 		// Insert pipeline into scene.
@@ -207,7 +207,8 @@ bool FileSourceImporter::importFile(std::vector<QUrl> sourceUrls, ImportMode imp
 		// Adjust viewports to completely show the newly imported object.
 		// This needs to be done after the data has been completely loaded.
 		dataset()->whenSceneReady().finally(dataset()->executor(), [dataset = dataset()]() {
-			dataset->viewportConfig()->zoomToSelectionExtents();
+			if(dataset->viewportConfig()) 
+				dataset->viewportConfig()->zoomToSelectionExtents();
 		});
 	}
 

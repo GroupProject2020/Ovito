@@ -86,7 +86,7 @@ Modelling Simul. Mater. Sci. Eng. 20, 085007 (2012)</link></literallayout>
       <varlistentry>
         <term>Input crystal type</term>
         <listitem>
-          <para>This parameter specifies the lattice type of the input crystal. Currently, simple crystal stuctures such as
+          <para>This parameter specifies the lattice type of the input crystal. Currently, simple crystal structures such as
           FCC, HCP, BCC, and diamond are supported. The DXA ignores the chemical atom types. Thus,
           a zinc blende structure, for example, can simply be treated as a cubic diamond crystal.
           </para>
@@ -325,14 +325,14 @@ Modelling Simul. Mater. Sci. Eng. 20, 085007 (2012)</link></literallayout>
     </para>
     <para>
         Note that you can position the mouse cursor over an extracted dislocation line in the viewports to let OVITO display its properties in the status bar 
-        of the main window. Alternatively, you can use the "Inspect Dislocations" utility on the utilities tab of OVITO's command panel to 
-        list more properties of individual dislocation lines.
+        of the main window. Alternatively, you can use the <link linkend="data_inspector">Data Inspector</link> to 
+        look at the properties of individual dislocation lines.
     </para>
     <para>
         The dislocation lines extracted by the modifier can be exported using OVITO's <link linkend="usage.export">file export function</link>.
         Currently, a simple text-based output format is supported, which is also used by another code (<emphasis>Crystal Analysis Tool</emphasis>) that implements the DXA.
         The CA dislocation file format is specified below. OVITO can also import CA files,
-        which allows saving the results of a (possibly) expensive dislocation analysis to disk and then reloding them again later.
+        which allows saving the results of a (possibly) expensive dislocation analysis to disk and then reloading them again later.
     </para>
   </simplesect> 
        
@@ -429,7 +429,7 @@ Modelling Simul. Mater. Sci. Eng. 20, 085007 (2012)</link></literallayout>
       these core atoms as non-crystalline atoms. All tessellation edges adjacent to such atoms will be marked as "bad" by the algorithm, 
       effectively excluding them from any Burgers circuits to be constructed. This corresponds to the original principle formulated by 
       F. C. Frank, which states that a valid Burgers circuit must not pass through so-called bad crystal. Good crystal regions, in contrast, 
-      are defined as those parts where the mapping to the perfect reference crystal is nonambiguous. In fact, the DXA also divides space into 
+      are defined as those parts where the mapping to the perfect reference crystal is non-ambiguous. In fact, the DXA also divides space into 
       <emphasis>good</emphasis> and <emphasis>bad</emphasis> regions in this spirit as shown in figure (b). Those Delaunay elements (triangles in 2D, 
       tetrahedra in 3D systems) that are adjacent to one or more bad edges, which could not be mapped to an ideal lattice vector, are themselves 
       marked as bad elements, while all others are considered good volume elements.

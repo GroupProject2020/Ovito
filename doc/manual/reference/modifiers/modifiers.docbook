@@ -126,15 +126,6 @@
               <entry>Colors particles or bonds based on the value of a property.</entry>
             </row>
 
-		<!-- FIELDS -->
-            <row>
-              <entry namest="name" nameend="descr" align="center" role="subth">Fields</entry>
-            </row>
-            <row>
-              <entry><link linkend="particles.modifiers.create_isosurface">Create isosurface</link></entry>
-              <entry>Generates an isosurface from a scalar field.</entry>
-            </row>
-
 		<!-- MODIFICATION -->
             <row>
               <entry namest="name" nameend="descr" align="center" role="subth">Modification</entry>
@@ -142,10 +133,6 @@
             <row>
               <entry><link linkend="particles.modifiers.affine_transformation">Affine transformation</link></entry>
               <entry>Applies an affine transformation to the system.</entry>
-            </row>
-            <row>
-              <entry><link linkend="particles.modifiers.create_bonds">Create bonds</link></entry>
-              <entry>Creates bonds between particles.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.combine_particle_sets">Combine particle sets</link></entry>
@@ -158,10 +145,6 @@
             <row>
               <entry><link linkend="particles.modifiers.compute_property">Compute property</link></entry>
               <entry>Computes a new property for each particle based a user-defined formula.</entry>
-            </row>
-            <row>
-              <entry><link linkend="particles.modifiers.coordination_polyhedra">Coordination polyhedra</link></entry>
-              <entry>Shows coordination polyhedra.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.delete_selected_particles">Delete selected</link></entry>
@@ -224,6 +207,28 @@
               <entry><link linkend="particles.modifiers.select_particle_type">Select type</link></entry>
               <entry>Selects all elements of a given type.</entry>
             </row>
+
+		<!-- VISUALIZATION -->
+            <row>
+              <entry namest="name" nameend="descr" align="center" role="subth">Visualization</entry>
+            </row>
+            <row>
+              <entry><link linkend="particles.modifiers.create_bonds">Create bonds</link></entry>
+              <entry>Creates bonds between particles.</entry>
+            </row>
+            <row>
+              <entry><link linkend="particles.modifiers.create_isosurface">Create isosurface</link></entry>
+              <entry>Generates an isosurface from a scalar field.</entry>
+            </row>
+            <row>
+              <entry><link linkend="particles.modifiers.coordination_polyhedra">Coordination polyhedra</link></entry>
+              <entry>Shows coordination polyhedra.</entry>
+            </row>
+            <row>
+              <entry><link linkend="particles.modifiers.generate_trajectory_lines">Generate trajectory lines</link></entry>
+              <entry>Generates trajectory lines from the time-dependent particle positions.</entry>
+            </row>
+
           </tbody>
         </tgroup>
       </informaltable>
@@ -282,6 +287,8 @@
   <xi:include href="particles/expression_select.docbook"/>
 
   <xi:include href="particles/freeze_property.docbook"/>
+
+  <xi:include href="particles/generate_trajectory_lines.docbook"/>
 
   <xi:include href="particles/histogram.docbook"/>
   

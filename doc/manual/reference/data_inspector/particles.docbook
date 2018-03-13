@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<section version="5.0"
+         xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
+         xml:id="data_inspector.particles"
+         xmlns="http://docbook.org/ns/docbook"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:xs="http://www.w3.org/2001/XMLSchema"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+         xmlns:ns="http://docbook.org/ns/docbook">
+  <title>Particles page</title>
+
+  <para>
+    <informalfigure>
+      <mediaobject><imageobject>
+        <imagedata fileref="images/usage/miscellaneous/data_inspector.png" format="PNG" scale="85" />
+      </imageobject></mediaobject>  
+    </informalfigure>
+     
+    This <link linkend="utilities">utility applet</link> allows you to inspect the property values associated with individual particles 
+    and to measure distances and angles between pairs and triplets of particles.
+    The utility is invoked from "Utilities" tab of OVITO's command panel shown on the right.
+  </para>
+  <para>
+    After opening the utility, you can pick individual particles in the viewports using the mouse.
+    The current values of their properties are displayed in the utility's text panel.
+    It is possible to select multiple particles at once, in which case the pair-wise distances
+    between all selected particles and angles formed by all triplets are computed by OVITO.
+  </para>
+  <para>
+    The expression text box allows you to enter an expression to select certain particles based on their properties
+    instead of picking them using the mouse. The syntax of the Boolean expression must follow
+    the same rules as for the <link linkend="particles.modifiers.expression_select">Expression Selection</link> modifier.
+    Note that, for performance reasons, the utility only displays the properties of the first ten particles that match the expression.
+  </para>
+  <para>
+    Note that particle indices reported by the utility are zero-based and always refer to the set of
+    of particles currently visible. Thus, if you delete some particles, the indices of the remaining
+    ones are shifted (this is in contrast to particle <emphasis>identifiers</emphasis>, which stick).
+  </para>
+   
+</section>

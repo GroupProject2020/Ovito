@@ -333,14 +333,10 @@ void PipelineSceneNode::applyModifier(Modifier* modifier)
 ******************************************************************************/
 PipelineObject* PipelineSceneNode::pipelineSource() const
 {
-	PipelineObject* obj = dataProvider();
-	while(obj) {
-		if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(obj))
-			obj = modApp->input();
-		else
-			break;
-	}
-	return obj;
+	if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(dataProvider()))
+		return modApp->pipelineSource();
+	else
+		return dataProvider();
 }
 
 /******************************************************************************

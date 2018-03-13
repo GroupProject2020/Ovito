@@ -37,18 +37,18 @@
     </para>
   </simplesect>
 
-  <simplesect xml:id="usage.particle_inspection_utility">
-    <title>Particle inspection utility</title>
+  <simplesect xml:id="usage.data_inspector">
+    <title>Data inspector</title>
     <para>
       <informalfigure>
         <mediaobject><imageobject>
-          <imagedata fileref="images/command_panel/particle_inspection_utility.png" format="PNG" scale="40" />
+          <imagedata fileref="images/usage/miscellaneous/data_inspector.png" format="PNG" scale="80" />
         </imageobject></mediaobject>  
       </informalfigure>
-      The "Utilities" tab of OVITO's command panel, which is shown in the screenshot on the right, contains the 
-      <link linkend="utilities.particle_inspection">Particle Inspection utility</link> for 
-      displaying the properties of individual particles. The tool also lets you measure distances between pairs of particles
-      and angles formed by particle triplets.
+      The <link linkend="data_inspector">Data Inspector</link> is a panel that is located right below the viewport area in OVITO's main window.
+      It can be opened as shown in the screenshot on the right by clicking on the tab bar. 
+      The data inspector consists of several tabs that show different fragments of the current dataset, e.g. the property values of
+      all particles. The tool also lets you measure distances between pairs of particles. 
     </para>
   </simplesect>
 

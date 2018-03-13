@@ -31,6 +31,7 @@
 #include <plugins/particles/modifier/properties/FreezePropertyModifier.h>
 #include <plugins/particles/modifier/properties/ComputeBondLengthsModifier.h>
 #include <plugins/particles/modifier/properties/InterpolateTrajectoryModifier.h>
+#include <plugins/particles/modifier/properties/GenerateTrajectoryLinesModifier.h>
 #include <plugins/particles/modifier/selection/ManualSelectionModifier.h>
 #include <plugins/particles/modifier/selection/ExpandSelectionModifier.h>
 #include <plugins/particles/modifier/selection/ExpressionSelectionModifier.h>
@@ -1228,6 +1229,66 @@ void defineModifiersSubmodule(py::module m)
 				"A :py:class:`~ovito.vis.SurfaceMeshVis` instance controlling the visual representation of the generated polyhedra.\n")
 	;
 	
+	ovito_class<GenerateTrajectoryLinesModifier, Modifier>(m,
+			":Base class: :py:class:`ovito.pipeline.Modifier`"
+			"\n\n"
+			"This modifier periodically samples the time-dependent positions of particles to produce a :py:class:`~ovito.data.TrajectoryLines` object. "
+			"The modifier is typically used to visualize the trajectories of particles as static lines. "
+			"\n\n"
+			"The trajectory line generation must be explicitly triggered by a call to :py:meth:`.generate` as shown in the following example. "
+			"\n\n"
+			".. literalinclude:: ../example_snippets/trajectory_lines.py")
+		.def_property("only_selected", &GenerateTrajectoryLinesModifier::onlySelectedParticles, &GenerateTrajectoryLinesModifier::setOnlySelectedParticles,
+				"Controls whether trajectory lines should only by generated for currently selected particles."
+				"\n\n"
+				":Default: ``True``\n")
+		.def_property("unwrap_trajectories", &GenerateTrajectoryLinesModifier::unwrapTrajectories, &GenerateTrajectoryLinesModifier::setUnwrapTrajectories,
+				"Controls whether trajectory lines should be automatically unwrapped at the box boundaries when the particles cross a periodic boundary."
+				"\n\n"
+				":Default: ``True``\n")
+		.def_property("sampling_frequency", &GenerateTrajectoryLinesModifier::everyNthFrame, &GenerateTrajectoryLinesModifier::setEveryNthFrame,
+				"Length of the animation frame intervals at which the particle positions should be sampled."
+				"\n\n"
+				":Default: 1\n")
+		.def_property("frame_interval", [](GenerateTrajectoryLinesModifier& tgo) -> py::object {
+					if(tgo.useCustomInterval()) return py::make_tuple(
+						tgo.dataset()->animationSettings()->timeToFrame(tgo.customIntervalStart()),
+						tgo.dataset()->animationSettings()->timeToFrame(tgo.customIntervalEnd()));
+					else
+						return py::none();
+				},
+				[](GenerateTrajectoryLinesModifier& tgo, py::object arg) {
+					if(py::isinstance<py::none>(arg)) {
+						tgo.setUseCustomInterval(false);
+						return;
+					}
+					else if(py::isinstance<py::tuple>(arg)) {
+						py::tuple tup = py::reinterpret_borrow<py::tuple>(arg);
+						if(tup.size() == 2) {
+							int a  = tup[0].cast<int>();
+							int b  = tup[1].cast<int>();
+							tgo.setCustomIntervalStart(tgo.dataset()->animationSettings()->frameToTime(a));
+							tgo.setCustomIntervalEnd(tgo.dataset()->animationSettings()->frameToTime(b));
+							tgo.setUseCustomInterval(true);
+							return;
+						}
+					}
+					throw py::value_error("Tuple of two integers or None expected.");
+				},
+				"The animation frame interval over which the particle positions are sampled to generate the trajectory lines. "
+				"Set this to a tuple of two integers to specify the first and the last animation frame; or use ``None`` to generate trajectory lines "
+				"over the entire animation sequence."
+				"\n\n"
+				":Default: ``None``\n")
+		.def("generate", [](GenerateTrajectoryLinesModifier& modifier) {
+				if(!modifier.generateTrajectories(ScriptEngine::activeTaskManager()))
+					modifier.throwException(ScriptEngine::tr("Trajectory line generation has been canceled by the user."));
+			},
+			"Generates the trajectory lines by sampling the positions of the particles from the upstream pipeline in regular animation time intervals. "
+			"Make sure you call this method *after* the modifier has been inserted into the pipeline. ")
+		.def_property("vis", &GenerateTrajectoryLinesModifier::trajectoryVis, &GenerateTrajectoryLinesModifier::setTrajectoryVis,
+				"The :py:class:`~ovito.vis.TrajectoryVis` object controlling the visual appearance of the trajectory lines created by this modifier.")
+	;	
 }
 
 OVITO_END_INLINE_NAMESPACE

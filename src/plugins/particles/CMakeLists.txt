@@ -29,7 +29,6 @@ SET(SourceFiles
 	objects/BondsVis.cpp
 	objects/TrajectoryObject.cpp
 	objects/TrajectoryVis.cpp
-	objects/TrajectoryGenerator.cpp
 	objects/VectorVis.cpp
 	modifier/ParticleInputHelper.cpp
 	modifier/ParticleOutputHelper.cpp
@@ -61,6 +60,7 @@ SET(SourceFiles
 	modifier/properties/FreezePropertyModifier.cpp
 	modifier/properties/ComputeBondLengthsModifier.cpp
 	modifier/properties/InterpolateTrajectoryModifier.cpp
+	modifier/properties/GenerateTrajectoryLinesModifier.cpp
 	import/ParticleImporter.cpp
 	import/ParticleFrameData.cpp
 	import/InputColumnMapping.cpp

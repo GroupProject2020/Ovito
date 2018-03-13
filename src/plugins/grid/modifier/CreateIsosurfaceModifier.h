@@ -51,7 +51,7 @@ class OVITO_GRID_EXPORT CreateIsosurfaceModifier : public AsynchronousModifier
 	OVITO_CLASS_META(CreateIsosurfaceModifier, CreateIsosurfaceModifierClass)
 
 	Q_CLASSINFO("DisplayName", "Create isosurface");
-	Q_CLASSINFO("ModifierCategory", "Fields");
+	Q_CLASSINFO("ModifierCategory", "Visualization");
 	
 public:
 

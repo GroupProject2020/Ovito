@@ -43,8 +43,8 @@
 
   <para>
     The modifier outputs these micromechanical quantities as new particle properties. You can use the <link linkend="particles.modifiers.color_coding">Color coding modifier</link>, for example,
-    to visualize the values of these properties in OVITO or use the <link linkend="utilities.particle_inspection">Particle Inspection utility</link> to look at the results
-    computed for specific particles. Note that the displacements are only intermediate calculation results which are not output by the modifier.
+    to visualize the values of these properties in OVITO or look at specific particles using the <link linkend="data_inspector">Data Inspector</link>. 
+    Note that the displacements are only intermediate calculation results which are not output by the modifier.
     If you need them, please use the <link linkend="particles.modifiers.displacement_vectors">Displacement vectors modifier</link>.
   </para>
 
@@ -138,7 +138,7 @@
       and it assumes that they are stored in the same order. This assumption is not always true as some simulation
       codes reorder particles during a simulation run for performance reasons. If you forget to dump the particle IDs or atom IDs
       in addition to the positions during a simulation, you should be aware that OVITO may compute wrong displacement vectors because of
-      an invalid default particle mapping. You can use the <link linkend="utilities.particle_inspection">Particle Inspection utility</link>
+      an invalid default particle mapping. You can use the <link linkend="data_inspector">Data Inspector</link>
       to check for the presence of the <literal>Particle Identifier</literal> property after file import.
     </para>
   </simplesect>

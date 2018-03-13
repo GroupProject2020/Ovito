@@ -35,6 +35,7 @@ ovito.modifiers.ComputeBondLengthsModifier = ovito.plugins.Particles.ComputeBond
 ovito.modifiers.PolyhedralTemplateMatchingModifier = ovito.plugins.Particles.PolyhedralTemplateMatchingModifier
 ovito.modifiers.CoordinationPolyhedraModifier = ovito.plugins.Particles.CoordinationPolyhedraModifier
 ovito.modifiers.InterpolateTrajectoryModifier = ovito.plugins.Particles.InterpolateTrajectoryModifier
+ovito.modifiers.GenerateTrajectoryLinesModifier = ovito.plugins.Particles.GenerateTrajectoryLinesModifier
 ovito.modifiers.__all__ += ['AmbientOcclusionModifier', 
             'WrapPeriodicImagesModifier', 'ComputePropertyModifier', 'FreezePropertyModifier',
             'ManualSelectionModifier', 'ExpandSelectionModifier',
@@ -44,7 +45,7 @@ ovito.modifiers.__all__ += ['AmbientOcclusionModifier',
             'CalculateDisplacementsModifier', 'AtomicStrainModifier',
             'WignerSeitzAnalysisModifier', 'VoronoiAnalysisModifier', 'IdentifyDiamondModifier', 'LoadTrajectoryModifier',
             'CombineParticleSetsModifier', 'ComputeBondLengthsModifier', 'PolyhedralTemplateMatchingModifier',
-            'CoordinationPolyhedraModifier', 'InterpolateTrajectoryModifier']
+            'CoordinationPolyhedraModifier', 'InterpolateTrajectoryModifier', 'GenerateTrajectoryLinesModifier']
             
 # For backward compatibility with OVITO 2.9.0:
 ovito.modifiers.SelectExpressionModifier = ovito.plugins.Particles.ExpressionSelectionModifier

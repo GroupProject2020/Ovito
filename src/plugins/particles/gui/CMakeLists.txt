@@ -28,7 +28,6 @@ SET(SourceFiles
 	objects/VectorVisEditor.cpp
 	objects/BondsVisEditor.cpp
 	objects/TrajectoryVisEditor.cpp
-	objects/TrajectoryGeneratorEditor.cpp
 	modifier/coloring/AmbientOcclusionModifierEditor.cpp
 	modifier/modify/CreateBondsModifierEditor.cpp
 	modifier/modify/LoadTrajectoryModifierEditor.cpp
@@ -52,9 +51,9 @@ SET(SourceFiles
 	modifier/properties/ComputePropertyModifierEditor.cpp
 	modifier/properties/FreezePropertyModifierEditor.cpp
 	modifier/properties/InterpolateTrajectoryModifierEditor.cpp
+	modifier/properties/GenerateTrajectoryLinesModifierEditor.cpp
 	util/CutoffRadiusPresetsUI.cpp
 	util/ParticlePickingHelper.cpp
-	util/CreateTrajectoryApplet.cpp
 	util/ParticleSettingsPage.cpp
 	util/ParticleInspectionApplet.cpp
 	util/BondInspectionApplet.cpp

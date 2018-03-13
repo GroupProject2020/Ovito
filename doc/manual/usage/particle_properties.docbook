@@ -50,11 +50,11 @@
 		<para>
 			<informalfigure>
 					<screenshot><mediaobject><imageobject>
-					<imagedata fileref="images/usage/properties/particle_inspection_example.png" format="PNG" scale="50" />
+					<imagedata fileref="images/usage/properties/particle_inspection_example.png" format="PNG" scale="75" />
 					</imageobject></mediaobject></screenshot>
 			</informalfigure>
-		  To find out which properties are currently associated with the particles, you can use OVITO's <link linkend="utilities.particle_inspection">
-			Particle Inspection Utility</link>, which is shown in the screenshot. Alternatively, you can simply position the mouse cursor over a particle in the viewports,
+		  To find out which properties are currently associated with the particles, you can open OVITO's <link linkend="data_inspector">Data Inspector</link>, 
+			which is shown in the screenshot. Alternatively, you can simply position the mouse cursor over a particle in the viewports,
 			and OVITO will display the values of all its properties in the status bar.
 		</para>
 		<para>

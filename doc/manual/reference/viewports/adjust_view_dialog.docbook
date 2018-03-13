@@ -12,7 +12,7 @@
 
     <para>
      <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/adjust_view_dialog/adjust_view_dialog.png" format="PNG" />
+       <imagedata fileref="images/adjust_view_dialog/adjust_view_dialog.png" format="PNG" scale="75" />
      </imageobject></mediaobject></screenshot></informalfigure>
      
      This dialog box allows you to enter the position and orientation of a viewport's camera numerically.

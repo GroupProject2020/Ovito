@@ -62,8 +62,8 @@
             </row>
             <row>
               <entry>Trajectory&#xA0;lines</entry>
-              <entry>Displays the particle trajectory lines, which are created with the
-              <link linkend="howto.visualize_particle_trajectories"><guilabel>Create trajectory lines</guilabel></link> utility</entry>
+              <entry>Displays the particle trajectory lines created with the
+              <link linkend="particles.modifiers.generate_trajectory_lines">Generate trajectory lines</link> modifier</entry>
             </row>
             <row>
               <entry>Dislocations</entry>

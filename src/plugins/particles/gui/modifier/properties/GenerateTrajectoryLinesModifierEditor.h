@@ -28,17 +28,17 @@
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /**
- * \brief A properties editor for the TrajectoryGenerator class.
+ * \brief A properties editor for the GenerateTrajectoryLinesModifier class.
  */
-class TrajectoryGeneratorEditor : public PropertiesEditor
+class GenerateTrajectoryLinesModifierEditor : public PropertiesEditor
 {
 	Q_OBJECT
-	OVITO_CLASS(TrajectoryGeneratorEditor)
+	OVITO_CLASS(GenerateTrajectoryLinesModifierEditor)
 
 public:
 
 	/// Constructor.
-	Q_INVOKABLE TrajectoryGeneratorEditor() {}
+	Q_INVOKABLE GenerateTrajectoryLinesModifierEditor() {}
 
 protected:
 

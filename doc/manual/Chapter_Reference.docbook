@@ -25,7 +25,7 @@
   
   <xi:include href="reference/app_settings/application_settings.docbook"/>
   <xi:include href="reference/animation/animation_settings_dialog.docbook"/>
-  <xi:include href="reference/utilities/utilities.docbook"/>
+  <xi:include href="reference/data_inspector/data_inspector.docbook"/>
   <xi:include href="reference/rendering/rendering.docbook"/>
 
 </chapter>

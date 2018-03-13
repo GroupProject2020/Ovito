@@ -140,6 +140,10 @@ std::tuple<TimePoint,TimePoint,TimePoint> AnimationTimeSlider::tickRange(int tic
 	else if(ticksevery <= 50) ticksevery = 50;
 	else if(ticksevery <= 100) ticksevery = 100;
 	else if(ticksevery <= 500) ticksevery = 500;
+	else if(ticksevery <= 1000) ticksevery = 1000;
+	else if(ticksevery <= 2000) ticksevery = 2000;
+	else if(ticksevery <= 5000) ticksevery = 5000;
+	else if(ticksevery <= 10000) ticksevery = 10000;
 	if(ticksevery > 0) {
 		return std::make_tuple(
 				_animSettings->frameToTime(firstFrame),

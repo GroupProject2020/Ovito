@@ -140,7 +140,6 @@ SharedFuture<PipelineFlowState> ModifierApplication::evaluateInput(TimePoint tim
 		return PipelineFlowState();
 
 	// Request the input data.
-//	qDebug() << "ModifierApplication::evaluateInput requesting input from" << input();
 	return input()->evaluate(time);
 }
 
@@ -149,12 +148,9 @@ SharedFuture<PipelineFlowState> ModifierApplication::evaluateInput(TimePoint tim
 ******************************************************************************/
 Future<PipelineFlowState> ModifierApplication::evaluateInternal(TimePoint time)
 {
-//	qDebug() << "ModifierApplication::evaluateInternal modifier=" << modifier() << "time" << time << "this=" << this;
-
 	// Obtain input data and pass it on to the modifier.
 	return evaluateInput(time)
 		.then(executor(), [this, time](PipelineFlowState inputData) -> Future<PipelineFlowState> {
-//			qDebug() << "ModifierApplication::evaluateInternal received input for modifier=" << modifier() << inputData.stateValidity();
 
 			// Clear the status of the input unless it is an error.
 			if(inputData.status().type() != PipelineStatus::Error) {
@@ -191,8 +187,6 @@ Future<PipelineFlowState> ModifierApplication::evaluateInternal(TimePoint time)
 				});
 			}
 
-//			qDebug() << "ModifierApplication::evaluateInternal received future from modifier" << future.sharedState().get() << "isfinished=" << future.isFinished() << "iscanceled:" << future.isCanceled();
-
 			// Post-process the modifier results before returning them to the caller.
 			//
 			//  - Turn any exception that was thrown during modifier evaluation into a 
@@ -201,7 +195,6 @@ Future<PipelineFlowState> ModifierApplication::evaluateInternal(TimePoint time)
 			//  - Restrict the validity interval of the returned state to the validity interval of the modifier.
 			//
 			return future.then_future(executor(), [this, time, inputData = std::move(inputData)](Future<PipelineFlowState> future) mutable {
-//				qDebug() << "ModifierApplication::evaluateInternal: post-processing results of future" << future.sharedState().get() << "from modifier" << modifier() << "canceled=" << future.isCanceled();
 				OVITO_ASSERT(future.isFinished());
 				OVITO_ASSERT(!future.isCanceled());
 				try {
@@ -251,7 +244,6 @@ PipelineFlowState ModifierApplication::evaluatePreliminary()
 	// Use our real state cache if it is up to date.
 	PipelineFlowState state = CachingPipelineObject::evaluatePreliminary();
 	if(state.stateValidity().contains(dataset()->animationSettings()->time())) {
-//		qDebug() << "ModifierApplication::evaluatePreliminary() " << this << "for modifier" << modifier() << "returning cached state (validity=" << state.stateValidity() << "current time=" << dataset()->animationSettings()->time() << ")";
 		return state;
 	}
 
@@ -261,7 +253,6 @@ PipelineFlowState ModifierApplication::evaluatePreliminary()
 		// First get the preliminary results from the upstream pipeline.
 		state = input()->evaluatePreliminary();
 		try {
-//			qDebug() << "ModifierApplication::evaluatePreliminary() for modifier" << modifier() << " evaluating modifier preliminarily on state with" << state.objects().size() << "objects";
 			// Apply modifier:
 			if(modifier()->isEnabled())
 				state = modifier()->evaluatePreliminary(dataset()->animationSettings()->time(), this, state);
@@ -307,6 +298,22 @@ TimePoint ModifierApplication::sourceFrameToAnimationTime(int frame) const
 	if(input())
 		return input()->sourceFrameToAnimationTime(frame);
 	return CachingPipelineObject::sourceFrameToAnimationTime(frame);
+}
+
+/******************************************************************************
+* Traverses the pipeline from this modifier application up to the source and 
+* returns the source object that generates the input data for the pipeline.
+******************************************************************************/
+PipelineObject* ModifierApplication::pipelineSource() const
+{
+	PipelineObject* obj = input();
+	while(obj) {
+		if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(obj))
+			obj = modApp->input();
+		else
+			break;
+	}
+	return obj;
 }
 
 OVITO_END_INLINE_NAMESPACE

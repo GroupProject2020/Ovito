@@ -354,9 +354,9 @@ AnimationKeyEditorDialog::AnimationKeyEditorDialog(KeyframeController* ctrl, con
 	QToolBar* toolbar = new QToolBar();
 	toolbar->setOrientation(Qt::Vertical);
 	toolbar->setFloatable(false);
-	_addKeyAction = toolbar->addAction(QIcon(":/gui/actions/animation/add_animation_key.svg"), tr("Create animation key"));
+	_addKeyAction = toolbar->addAction(QIcon(":/gui/actions/animation/add_animation_key.bw.svg"), tr("Create animation key"));
 	connect(_addKeyAction, &QAction::triggered, this, &AnimationKeyEditorDialog::onAddKey);
-	_deleteKeyAction = toolbar->addAction(QIcon(":/gui/actions/animation/delete_animation_key.svg"), tr("Delete animation key"));
+	_deleteKeyAction = toolbar->addAction(QIcon(":/gui/actions/animation/delete_animation_key.bw.svg"), tr("Delete animation key"));
 	_deleteKeyAction->setEnabled(false);
 	connect(_deleteKeyAction, &QAction::triggered, this, &AnimationKeyEditorDialog::onDeleteKey);
 
