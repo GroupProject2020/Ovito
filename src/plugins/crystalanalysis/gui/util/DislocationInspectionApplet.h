@@ -27,6 +27,9 @@
 #include <plugins/crystalanalysis/objects/dislocations/DislocationVis.h>
 #include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
 #include <gui/mainwin/data_inspector/DataInspectionApplet.h>
+#include <gui/viewport/input/ViewportInputMode.h>
+#include <gui/viewport/input/ViewportInputManager.h>
+#include <gui/viewport/input/ViewportGizmo.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
@@ -56,6 +59,9 @@ public:
 	/// Updates the contents displayed in the inspector.
 	virtual void updateDisplay(const PipelineFlowState& state, PipelineSceneNode* sceneNode) override;
 
+	/// This is called when the applet is no longer visible.
+	virtual void deactivate(MainWindow* mainWindow) override;
+
 private:
 
 	/// A table model for displaying the dislocation list.
@@ -73,7 +79,7 @@ private:
 
 		/// Returns the number of columns.
 		virtual int columnCount(const QModelIndex& parent = QModelIndex()) const override {
-			return parent.isValid() ? 0 : 6;
+			return parent.isValid() ? 0 : 8;
 		}
 
 		/// Returns the data stored under the given 'role' for the item referred to by the 'index'.
@@ -94,6 +100,18 @@ private:
 							return _patternCatalog->structureById(segment->burgersVector.cluster()->structure)->name(); 
 						else
 							break;
+				case 6: { Point3 headLocation = segment->backwardNode().position();
+							if(_dislocationObj->domain()) headLocation = _dislocationObj->domain()->data().wrapPoint(headLocation);
+							return QStringLiteral("%1 %2 %3")
+								.arg(QLocale::c().toString(headLocation.x(), 'f', 4), 7)
+								.arg(QLocale::c().toString(headLocation.y(), 'f', 4), 7)
+								.arg(QLocale::c().toString(headLocation.z(), 'f', 4), 7); }
+				case 7: { Point3 tailLocation = segment->forwardNode().position();
+							if(_dislocationObj->domain()) tailLocation = _dislocationObj->domain()->data().wrapPoint(tailLocation);
+							return QStringLiteral("%1 %2 %3")
+								.arg(QLocale::c().toString(tailLocation.x(), 'f', 4), 7)
+								.arg(QLocale::c().toString(tailLocation.y(), 'f', 4), 7)
+								.arg(QLocale::c().toString(tailLocation.z(), 'f', 4), 7); }
 				}
 			}
 			else if(role == Qt::DecorationRole && index.column() == 1 && _patternCatalog) {
@@ -121,6 +139,8 @@ private:
 				case 3: return tr("Length");
 				case 4: return tr("Cluster");
 				case 5: return tr("Crystal structure");
+				case 6: return tr("Head vertex");
+				case 7: return tr("Tail vertex");
 				}
 			}
 			return QAbstractTableModel::headerData(section, orientation, role);
@@ -140,6 +160,45 @@ private:
 		OORef<PatternCatalog> _patternCatalog;
 	};
 
+
+	/// Viewport input mode that lets the user pick dislocations.
+	class PickingMode : public ViewportInputMode, ViewportGizmo
+	{
+	public:
+
+		/// Constructor.
+		PickingMode(DislocationInspectionApplet* applet) : ViewportInputMode(applet), _applet(applet) {}
+
+		/// This is called by the system after the input handler has become the active handler.
+		virtual void activated(bool temporaryActivation) override {
+			ViewportInputMode::activated(temporaryActivation);
+			inputManager()->addViewportGizmo(this);
+		}
+
+		/// This is called by the system after the input handler is no longer the active handler.
+		virtual void deactivated(bool temporary) override {
+			inputManager()->removeViewportGizmo(this);
+			ViewportInputMode::deactivated(temporary);
+		}		
+
+		/// Handles the mouse up events for a viewport.
+		virtual void mouseReleaseEvent(ViewportWindow* vpwin, QMouseEvent* event) override;
+
+		/// Handles the mouse move event for the given viewport.
+		virtual void mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* event) override;
+
+		/// Lets the input mode render its overlay content in a viewport.
+		virtual void renderOverlay3D(Viewport* vp, ViewportSceneRenderer* renderer) override;
+
+	private:
+
+		/// The owner object.
+		DislocationInspectionApplet* _applet;
+
+		/// Determines the dislocation segment under the mouse cursor.
+		int pickDislocationSegment(ViewportWindow* vpwin, const QPoint& pos) const;
+	};
+
 private:
 
 	/// The data display widget.
@@ -147,6 +206,12 @@ private:
 
 	/// The table model.
 	DislocationTableModel* _tableModel = nullptr;
+
+	/// The viewport input mode for picking dislocations.
+	PickingMode* _pickingMode;
+
+	/// The currently selected scene node.
+	QPointer<PipelineSceneNode> _sceneNode;	
 };
 
 }	// End of namespace

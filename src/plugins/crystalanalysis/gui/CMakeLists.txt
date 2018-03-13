@@ -32,7 +32,6 @@ SET(SourceFiles
 	modifier/ElasticStrainModifierEditor.cpp
 	modifier/SimplifyMicrostructureModifierEditor.cpp
 #	modifier/GrainSegmentationModifierEditor.cpp
-	util/DislocationInformationApplet.cpp
 	util/DislocationInspectionApplet.cpp
 )
 

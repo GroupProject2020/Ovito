@@ -78,6 +78,12 @@ public:
 	/// Constructor.
 	FenceParticleInputMode(ManualSelectionModifierEditor* editor) : ViewportInputMode(editor), _editor(editor) {}
 
+	/// Destructor.
+	virtual ~FenceParticleInputMode() {
+		if(isActive())
+			inputManager()->removeInputMode(this);
+	}
+
 	/// Handles the mouse down events for a Viewport.
 	virtual void mousePressEvent(ViewportWindow* vpwin, QMouseEvent* event) override {
 		_fence.clear();

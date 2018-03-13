@@ -30,7 +30,6 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
 ******************************************************************************/
 void OvitoObjectExecutor::Work::operator()() 
 {
-    //OVITO_ASSERT(!QCoreApplication::closingDown());
     OVITO_ASSERT(_event);
     if(!QCoreApplication::closingDown() && QThread::currentThread() != QCoreApplication::instance()->thread())
         std::move(*this).post();
