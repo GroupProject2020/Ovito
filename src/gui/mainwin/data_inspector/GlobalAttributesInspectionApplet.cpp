@@ -42,9 +42,10 @@ bool GlobalAttributesInspectionApplet::appliesTo(const PipelineFlowState& state)
 ******************************************************************************/
 QWidget* GlobalAttributesInspectionApplet::createWidget(MainWindow* mainWindow)
 {
-	_tableView = new QTableView();
+	_tableView = new QTableView();	
 	_tableModel = new AttributeTableModel(_tableView);
 	_tableView->setModel(_tableModel);
+	_tableView->setWordWrap(false);
 	_tableView->verticalHeader()->hide();
 	_tableView->horizontalHeader()->resizeSection(0, 180);
 	_tableView->horizontalHeader()->setStretchLastSection(true);

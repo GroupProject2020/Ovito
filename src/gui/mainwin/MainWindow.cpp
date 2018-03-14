@@ -86,19 +86,7 @@ MainWindow::MainWindow() : _datasetContainer(this)
 	animationPanelLayout->setSpacing(0);
 	animationPanelLayout->setContentsMargins(0, 1, 0, 0);
 	animationPanel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-#if defined(Q_OS_LINUX)
-	QHBoxLayout* animationPanelParentLayout = new QHBoxLayout(animationPanel);
-	animationPanelParentLayout->setSpacing(0);
-	animationPanelParentLayout->setContentsMargins(0, 0, 0, 0);
-	animationPanelParentLayout->addLayout(animationPanelLayout, 1);
-	QFrame* verticalRule = new QFrame(animationPanel);
-	verticalRule->setContentsMargins(0,0,0,0);
-	verticalRule->setFrameStyle(QFrame::VLine | QFrame::Sunken);
-	verticalRule->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
-	animationPanelParentLayout->addWidget(verticalRule);
-#else
 	animationPanel->setLayout(animationPanelLayout);
-#endif
 
 	// Create animation time slider
 	AnimationTimeSlider* timeSlider = new AnimationTimeSlider(this);
@@ -216,7 +204,6 @@ MainWindow::MainWindow() : _datasetContainer(this)
 	separatorLine->setPalette(pal);
 	bottomDockLayout->addWidget(separatorLine, 2, 3);
 	bottomDockLayout->addWidget(viewportControlPanel, 2, 4);
-	bottomDockWidget->setMaximumHeight(bottomDockWidget->sizeHint().height());
 
 	// Create docking widgets.
 	createDockPanel(tr("Bottom panel"), "BottomPanel", Qt::BottomDockWidgetArea, Qt::BottomDockWidgetArea, bottomDockWidget);

@@ -48,13 +48,14 @@ void PropertyInspectionApplet::createBaseWidgets()
 	_filterExpressionEdit = new AutocompleteLineEdit();
 	_filterExpressionEdit->setPlaceholderText(tr("Filter..."));
 	_cleanupHandler.add(_filterExpressionEdit);
-	_resetFilterAction = new QAction(QIcon(":/stdobj/icons/reset_filter.svg"), tr("Reset filter"));
+	_resetFilterAction = new QAction(QIcon(":/stdobj/icons/reset_filter.svg"), tr("Reset filter"), this);
 	_cleanupHandler.add(_resetFilterAction);
 	connect(_resetFilterAction, &QAction::triggered, _filterExpressionEdit, &QLineEdit::clear);
 	connect(_resetFilterAction, &QAction::triggered, _filterExpressionEdit, &AutocompleteLineEdit::editingFinished);
 	connect(_filterExpressionEdit, &AutocompleteLineEdit::editingFinished, this, &PropertyInspectionApplet::onFilterExpressionEntered);
 
 	_tableView = new QTableView();
+	_tableView->setWordWrap(false);
 	_tableModel = new PropertyTableModel(this, _tableView);
 	_filterModel = new PropertyFilterModel(this, _tableView);
 	_filterModel->setSourceModel(_tableModel);
@@ -205,7 +206,7 @@ QVariant PropertyInspectionApplet::PropertyTableModel::data(const QModelIndex& i
 		if(elementIndex < property->size()) {
 			QString str;
 			for(size_t component = 0; component < property->componentCount(); component++) {
-				if(component != 0) str += QStringLiteral(", ");
+				if(component != 0) str += QStringLiteral(" ");
 				if(property->dataType() == PropertyStorage::Int) {
 					str += QString::number(property->getIntComponent(elementIndex, component));
 					if(property->elementTypes().empty() == false) {

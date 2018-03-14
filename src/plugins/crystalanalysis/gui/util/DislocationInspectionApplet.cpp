@@ -81,6 +81,7 @@ QWidget* DislocationInspectionApplet::createWidget(MainWindow* mainWindow)
 	_tableView->setSelectionBehavior(QAbstractItemView::SelectRows);
 	_tableModel = new DislocationTableModel(_tableView);
 	_tableView->setModel(_tableModel);
+	_tableView->setWordWrap(false);
 	_tableView->horizontalHeader()->resizeSection(0, 60);
 	_tableView->horizontalHeader()->resizeSection(1, 140);
 	_tableView->horizontalHeader()->resizeSection(2, 200);

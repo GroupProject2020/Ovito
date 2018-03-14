@@ -92,7 +92,7 @@ DataInspectorPanel::DataInspectorPanel(MainWindow* mainWindow) :
 ******************************************************************************/
 void DataInspectorPanel::onTabBarClicked(int index)
 {
-	if(index == -1 || index == _tabBar->currentIndex() || _appletContainer->height() == 0) {
+	if(index == -1 || _appletContainer->height() == 0) {
 		_tabBar->setCurrentIndex(index);
 		if(_appletContainer->height() == 0)
 			parentWidget()->setMaximumHeight(16777215);
