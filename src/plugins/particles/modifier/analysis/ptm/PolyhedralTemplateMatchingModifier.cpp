@@ -30,7 +30,7 @@
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include "PolyhedralTemplateMatchingModifier.h"
 
-#include <ptm/index_ptm.h>
+#include <ptm/ptm_functions.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
@@ -68,6 +68,8 @@ PolyhedralTemplateMatchingModifier::PolyhedralTemplateMatchingModifier(DataSet* 
 	createStructureType(BCC, ParticleType::PredefinedStructureType::BCC);
 	createStructureType(ICO, ParticleType::PredefinedStructureType::ICO);
 	createStructureType(SC, ParticleType::PredefinedStructureType::SC);
+	createStructureType(CUBIC_DIAMOND, ParticleType::PredefinedStructureType::CUBIC_DIAMOND);
+	createStructureType(HEX_DIAMOND, ParticleType::PredefinedStructureType::HEX_DIAMOND);
 }
 
 /******************************************************************************
@@ -171,13 +173,13 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 			OVITO_ASSERT(numNeighbors <= MAX_NEIGHBORS);
 
 			// Bring neighbor coordinates into a form suitable for the PTM library.
-			double points[(MAX_NEIGHBORS+1) * 3];
+			double points[MAX_NEIGHBORS+1][3];
 			int32_t atomTypes[MAX_NEIGHBORS+1];
-			points[0] = points[1] = points[2] = 0;
+			points[0][0] = points[0][1] = points[0][2] = 0;
 			for(int i = 0; i < numNeighbors; i++) {
-				points[i*3 + 3] = neighQuery.results()[i].delta.x();
-				points[i*3 + 4] = neighQuery.results()[i].delta.y();
-				points[i*3 + 5] = neighQuery.results()[i].delta.z();
+				points[i+1][0] = neighQuery.results()[i].delta.x();
+				points[i+1][1] = neighQuery.results()[i].delta.y();
+				points[i+1][2] = neighQuery.results()[i].delta.z();
 			}
 
 			// Build list of particle types for alloy structure identification.
@@ -199,17 +201,23 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 			}
 			if(numNeighbors >= 14 && typesToIdentify()[BCC]) flags |= PTM_CHECK_BCC;
 
+			if(numNeighbors >= 16) {
+				if(typesToIdentify()[CUBIC_DIAMOND]) flags |= PTM_CHECK_DCUB;
+				if(typesToIdentify()[HEX_DIAMOND]) flags |= PTM_CHECK_DHEX;
+			}
+
 			// Call PTM library to identify local structure.
 			int32_t type, alloy_type = PTM_ALLOY_NONE;
 			double scale, interatomic_distance;
 			double rmsd;
 			double q[4];
 			double F[9], F_res[3];
-			ptm_index(ptm_local_handle, numNeighbors + 1, points, _results->alloyTypes() ? atomTypes : nullptr, flags, true,
+			ptm_index(ptm_local_handle, flags, numNeighbors + 1, points, _results->alloyTypes() ? atomTypes : nullptr, true,
 					&type, &alloy_type, &scale, &rmsd, q,
 					_results->deformationGradients() ? F : nullptr,
 					_results->deformationGradients() ? F_res : nullptr,
 					nullptr, nullptr, nullptr, &interatomic_distance, nullptr);
+
 
 			// Convert PTM classification to our own scheme and store computed quantities.
 			if(type == PTM_MATCH_NONE) {
@@ -222,6 +230,8 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 				else if(type == PTM_MATCH_HCP) _results->structures()->setInt(index, HCP);
 				else if(type == PTM_MATCH_ICO) _results->structures()->setInt(index, ICO);
 				else if(type == PTM_MATCH_BCC) _results->structures()->setInt(index, BCC);
+				else if(type == PTM_MATCH_DCUB) _results->structures()->setInt(index, CUBIC_DIAMOND);
+				else if(type == PTM_MATCH_DHEX) _results->structures()->setInt(index, HEX_DIAMOND);
 				else OVITO_ASSERT(false);
 				_results->rmsd()->setFloat(index, rmsd);
 				if(_results->interatomicDistances()) _results->interatomicDistances()->setFloat(index, interatomic_distance);
@@ -305,6 +315,8 @@ PipelineFlowState PolyhedralTemplateMatchingModifier::PTMResults::apply(TimePoin
 	output.attributes().insert(QStringLiteral("PolyhedralTemplateMatching.counts.BCC"), QVariant::fromValue(myModApp->structureCounts()[BCC]));
 	output.attributes().insert(QStringLiteral("PolyhedralTemplateMatching.counts.ICO"), QVariant::fromValue(myModApp->structureCounts()[ICO]));
 	output.attributes().insert(QStringLiteral("PolyhedralTemplateMatching.counts.SC"), QVariant::fromValue(myModApp->structureCounts()[SC]));
+	output.attributes().insert(QStringLiteral("PolyhedralTemplateMatching.counts.CUBIC_DIAMOND"), QVariant::fromValue(myModApp->structureCounts()[CUBIC_DIAMOND]));
+	output.attributes().insert(QStringLiteral("PolyhedralTemplateMatching.counts.HEX_DIAMOND"), QVariant::fromValue(myModApp->structureCounts()[HEX_DIAMOND]));
 	
 	PolyhedralTemplateMatchingModifier* modifier = static_object_cast<PolyhedralTemplateMatchingModifier>(modApp->modifier());
 	OVITO_ASSERT(modifier);

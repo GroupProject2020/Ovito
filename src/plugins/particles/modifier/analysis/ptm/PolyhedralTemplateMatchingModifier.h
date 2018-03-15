@@ -45,9 +45,9 @@ public:
 
 #ifndef Q_CC_MSVC
 	/// The maximum number of neighbor atoms taken into account for the PTM analysis.
-	static constexpr int MAX_NEIGHBORS = 18;
+	static constexpr int MAX_NEIGHBORS = 30;
 #else
-	enum { MAX_NEIGHBORS = 18 };
+	enum { MAX_NEIGHBORS = 30 };
 #endif
 
 	/// The structure types recognized by the PTM library.
@@ -57,7 +57,9 @@ public:
 		HCP,					//< Hexagonal close-packed
 		BCC,					//< Body-centered cubic
 		ICO,					//< Icosahedral structure
-		SC,						//< Simple cubic structure
+		SC,					//< Simple cubic structure
+		CUBIC_DIAMOND,				//< Cubic diamond structure
+		HEX_DIAMOND,				//< Hexagonal diamond structure
 
 		NUM_STRUCTURE_TYPES 	//< This just counts the number of defined structure types.
 	};

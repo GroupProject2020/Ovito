@@ -27,7 +27,7 @@
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/DataSetContainer.h>
 #include <core/utilities/concurrent/ParallelFor.h>
-#include <ptm/polar_decomposition.hpp>
+#include <ptm/qcprot/polar.hpp>
 #include "AtomicStrainModifier.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
