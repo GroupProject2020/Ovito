@@ -73,6 +73,7 @@ public:
 		ALLOY_L12_CU = 3,
 		ALLOY_L12_AU = 4,
 		ALLOY_B2 = 5,
+		ALLOY_SIC = 6,
 
 		NUM_ALLOY_TYPES 	//< This just counts the number of defined alloy types.
 	};
