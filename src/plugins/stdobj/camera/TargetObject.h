@@ -25,7 +25,6 @@
 #include <plugins/stdobj/StdObj.h>
 #include <core/dataset/data/DataObject.h>
 #include <core/dataset/data/VersionedDataObjectRef.h>
-#include <core/dataset/data/CacheStateHelper.h>
 #include <core/dataset/data/DataVis.h>
 #include <core/rendering/LinePrimitive.h>
 
@@ -65,21 +64,6 @@ public:
 
 	/// \brief Computes the bounding box of the object.
 	virtual Box3 boundingBox(TimePoint time, DataObject* dataObject, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval) override;
-
-protected:
-
-	/// The buffered geometry used to render the icon.
-	std::shared_ptr<LinePrimitive> _icon;
-
-	/// The icon geometry to be rendered in object picking mode.
-	std::shared_ptr<LinePrimitive> _pickingIcon;
-
-	/// This helper structure is used to detect any changes in the input data
-	/// that require updating the geometry buffer.
-	CacheStateHelper<
-		VersionedDataObjectRef,		// Scene object + revision number
-		Color						// Display color
-		> _geometryCacheHelper;
 };
 
 }	// End of namespace

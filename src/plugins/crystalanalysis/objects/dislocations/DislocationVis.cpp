@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2015) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,6 +22,9 @@
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/objects/microstructure/MicrostructureObject.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
+#include <core/dataset/data/VersionedDataObjectRef.h>
+#include <core/rendering/ParticlePrimitive.h>
+#include <core/rendering/ArrowPrimitive.h>
 #include <core/rendering/SceneRenderer.h>
 #include "DislocationVis.h"
 #include "RenderableDislocationLines.h"
@@ -137,21 +140,37 @@ Future<PipelineFlowState> DislocationVis::transformDataImpl(TimePoint time, Data
 ******************************************************************************/
 Box3 DislocationVis::boundingBox(TimePoint time, DataObject* dataObject, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
-	_cachedBoundingBox.setEmpty();
 	RenderableDislocationLines* renderableObj = dynamic_object_cast<RenderableDislocationLines>(dataObject);
-	if(!renderableObj) return _cachedBoundingBox;
+	if(!renderableObj) return {};
 	PeriodicDomainDataObject* domainObj = dynamic_object_cast<PeriodicDomainDataObject>(renderableObj->sourceDataObject().get());
-	if(!domainObj) return _cachedBoundingBox;
+	if(!domainObj) return {};
 	SimulationCellObject* cellObject = domainObj->domain();
-	if(!cellObject) return _cachedBoundingBox;
+	if(!cellObject) return {};
 	SimulationCell cell = cellObject->data();
 
-	// Detect if the input data has changed since the last time we computed the bounding box.
-	if(_boundingBoxCacheHelper.updateState(dataObject, cell,
-			lineWidth(), showBurgersVectors(), burgersVectorScaling(),
-			burgersVectorWidth()) || _cachedBoundingBox.isEmpty()) {
-		
-		// Recompute bounding box from data.
+	// The key type used for caching the computed bounding box:
+	using CacheKey = std::tuple<
+		VersionedDataObjectRef,	// Source object + revision number
+		SimulationCell,			// Simulation cell geometry
+		FloatType,				// Line width
+		bool,					// Burgers vector display
+		FloatType,				// Burgers vectors scaling
+		FloatType				// Burgers vector width
+	>;
+
+	// Look up the bounding box in the vis cache.
+	auto& bbox = dataset()->visCache().get<Box3>(CacheKey(
+			dataObject, 
+			cell,
+			lineWidth(), 
+			showBurgersVectors(), 
+			burgersVectorScaling(),
+			burgersVectorWidth()));
+
+	// Check if the cached bounding box information is still up to date.
+	if(bbox.isEmpty()) {
+
+		// If not, recompute bounding box from dislocation data.
 		Box3 bb = Box3(Point3(0,0,0), Point3(1,1,1)).transformed(cellObject->cellMatrix());
 		FloatType padding = std::max(lineWidth(), FloatType(0));
 
@@ -165,9 +184,9 @@ Box3 DislocationVis::boundingBox(TimePoint time, DataObject* dataObject, Pipelin
 				}
 			}
 		}
-		_cachedBoundingBox = bb.padBox(padding * FloatType(0.5));
+		bbox = bb.padBox(padding * FloatType(0.5));
 	}
-	return _cachedBoundingBox;
+	return bbox;
 }
 
 /******************************************************************************
@@ -187,23 +206,31 @@ void DislocationVis::render(TimePoint time, DataObject* dataObject, const Pipeli
 		return;
 	}
 
-	// Do we have to re-create the geometry buffers from scratch?
-	bool recreateBuffers = !_segmentBuffer || !_segmentBuffer->isValid(renderer)
-						|| !_cornerBuffer || !_cornerBuffer->isValid(renderer)
-						|| !_burgersArrowBuffer || !_burgersArrowBuffer->isValid(renderer);
+	// The key type used for caching the rendering primitives:
+	using CacheKey = std::tuple<
+		CompatibleRendererGroup,	// The scene renderer
+		VersionedDataObjectRef,	// Source object + revision number
+		VersionedDataObjectRef,	// Renderable object + revision number
+		SimulationCell,			// Simulation cell geometry
+		VersionedDataObjectRef,	// The pattern catalog
+		FloatType,				// Line width
+		bool,					// Burgers vector display
+		FloatType,				// Burgers vectors scaling
+		FloatType,				// Burgers vector width
+		Color,					// Burgers vector color
+		LineColoringMode		// Way to color lines
+	>;
+
+	// The values stored in the vis cache.
+	struct CacheValue {
+		std::shared_ptr<ArrowPrimitive> segments;
+		std::shared_ptr<ParticlePrimitive> corners;
+		std::shared_ptr<ArrowPrimitive> burgersArrows;
+	};
 
 	ArrowPrimitive::Shape segmentShape = (showLineDirections() ? ArrowPrimitive::ArrowShape : ArrowPrimitive::CylinderShape);
-
-	// Set up shading mode.
 	ParticlePrimitive::ShadingMode cornerShadingMode = (shadingMode() == ArrowPrimitive::NormalShading)
 			? ParticlePrimitive::NormalShading : ParticlePrimitive::FlatShading;
-	if(!recreateBuffers) {
-		recreateBuffers |= !_segmentBuffer->setShadingMode(shadingMode());
-		recreateBuffers |= !_cornerBuffer->setShadingMode(cornerShadingMode);
-		recreateBuffers |= !_burgersArrowBuffer->setShadingMode(shadingMode());
-		if(_segmentBuffer->shape() != segmentShape)
-			recreateBuffers = true;
-	}
 
 	// Get the renderable dislocation lines.
 	RenderableDislocationLines* renderableLines = dynamic_object_cast<RenderableDislocationLines>(dataObject);
@@ -228,21 +255,34 @@ void DislocationVis::render(TimePoint time, DataObject* dataObject, const Pipeli
 	// Get the pattern catalog.
 	PatternCatalog* patternCatalog = flowState.findObject<PatternCatalog>();
 
-	// Do we have to update contents of the geometry buffers?
-	bool updateContents = _geometryCacheHelper.updateState(
-			domainObj, renderableLines, cellObject->data(), patternCatalog, lineWidth(),
-			showBurgersVectors(), burgersVectorScaling(),
-			burgersVectorWidth(), burgersVectorColor(), lineColoringMode()) || recreateBuffers;
+	// Lookup the rendering primitives in the vis cache.
+	auto& primitives = dataset()->visCache().get<CacheValue>(CacheKey(
+		renderer, 
+		domainObj, 
+		renderableLines, 
+		cellObject->data(), 
+		patternCatalog, 
+		lineWidth(),
+		showBurgersVectors(), 
+		burgersVectorScaling(),
+		burgersVectorWidth(), 
+		burgersVectorColor(), 
+		lineColoringMode()));
 
-	// Re-create the geometry buffers if necessary.
-	if(recreateBuffers) {
-		_segmentBuffer = renderer->createArrowPrimitive(segmentShape, shadingMode(), ArrowPrimitive::HighQuality);
-		_cornerBuffer = renderer->createParticlePrimitive(cornerShadingMode, ParticlePrimitive::HighQuality);
-		_burgersArrowBuffer = renderer->createArrowPrimitive(ArrowPrimitive::ArrowShape, shadingMode(), ArrowPrimitive::HighQuality);
-	}
+	// Check if we already have valid rendering primitives that are up to date.
+	if(!primitives.segments || !primitives.corners || !primitives.burgersArrows 
+			|| !primitives.segments->isValid(renderer)
+			|| !primitives.corners->isValid(renderer)
+			|| !primitives.burgersArrows->isValid(renderer)
+			|| !primitives.segments->setShadingMode(shadingMode())
+			|| !primitives.corners->setShadingMode(cornerShadingMode)
+			|| !primitives.burgersArrows->setShadingMode(shadingMode())
+			|| primitives.segments->shape() != segmentShape) {
+	
+		primitives.segments = renderer->createArrowPrimitive(segmentShape, shadingMode(), ArrowPrimitive::HighQuality);
+		primitives.corners = renderer->createParticlePrimitive(cornerShadingMode, ParticlePrimitive::HighQuality);
+		primitives.burgersArrows = renderer->createArrowPrimitive(ArrowPrimitive::ArrowShape, shadingMode(), ArrowPrimitive::HighQuality);
 
-	// Update buffer contents.
-	if(updateContents) {
 		SimulationCell cellData = cellObject->data();
 		// First determine number of corner vertices/segments that are going to be rendered.
 		int lineSegmentCount = renderableLines->lineSegments().size();
@@ -253,7 +293,7 @@ void DislocationVis::render(TimePoint time, DataObject* dataObject, const Pipeli
 			if(s1.verts[1].equals(s2.verts[0])) cornerCount++;
 		}
 		// Allocate render buffer.
-		_segmentBuffer->startSetElements(lineSegmentCount);
+		primitives.segments->startSetElements(lineSegmentCount);
 		std::vector<int> subobjToSegmentMap(lineSegmentCount + cornerCount);
 		FloatType lineRadius = std::max(lineWidth() / 2, FloatType(0));
 		std::vector<Point3> cornerPoints;
@@ -302,7 +342,7 @@ void DislocationVis::render(TimePoint time, DataObject* dataObject, const Pipeli
 				else
 					lineColor = Color((FloatType(1)-angle) * 2, (FloatType(1)-angle) * 2, 1);
 			}
-			_segmentBuffer->setElement(lineSegmentIndex, lineSegment.verts[0], delta, ColorA(lineColor), lineRadius);
+			primitives.segments->setElement(lineSegmentIndex, lineSegment.verts[0], delta, ColorA(lineColor), lineRadius);
 			if(lineSegmentIndex != 0 && lineSegment.verts[0].equals(renderableLines->lineSegments()[lineSegmentIndex-1].verts[1])) {
 				subobjToSegmentMap[cornerPoints.size() + lineSegmentCount] = lineSegment.dislocationIndex;
 				cornerPoints.push_back(lineSegment.verts[0]);
@@ -310,15 +350,15 @@ void DislocationVis::render(TimePoint time, DataObject* dataObject, const Pipeli
 			}
 		}
 		OVITO_ASSERT(cornerPoints.size() == cornerCount);
-		_segmentBuffer->endSetElements();
-		_cornerBuffer->setSize(cornerPoints.size());
-		_cornerBuffer->setParticlePositions(cornerPoints.empty() ? nullptr : cornerPoints.data());
-		_cornerBuffer->setParticleColors(cornerColors.empty() ? nullptr : cornerColors.data());
-		_cornerBuffer->setParticleRadius(lineRadius);
+		primitives.segments->endSetElements();
+		primitives.corners->setSize(cornerPoints.size());
+		primitives.corners->setParticlePositions(cornerPoints.empty() ? nullptr : cornerPoints.data());
+		primitives.corners->setParticleColors(cornerColors.empty() ? nullptr : cornerColors.data());
+		primitives.corners->setParticleRadius(lineRadius);
 
 		if(dislocationsObj) {
 			if(showBurgersVectors()) {
-				_burgersArrowBuffer->startSetElements(dislocationsObj->segments().size());
+				primitives.burgersArrows->startSetElements(dislocationsObj->segments().size());
 				subobjToSegmentMap.reserve(subobjToSegmentMap.size() + dislocationsObj->segments().size());
 				int arrowIndex = 0;
 				ColorA arrowColor = burgersVectorColor();
@@ -334,33 +374,31 @@ void DislocationVis::render(TimePoint time, DataObject* dataObject, const Pipeli
 							break;
 						}
 					}
-					_burgersArrowBuffer->setElement(arrowIndex++, center, dir, arrowColor, arrowRadius);
+					primitives.burgersArrows->setElement(arrowIndex++, center, dir, arrowColor, arrowRadius);
 				}
 			}
 			else {
-				_burgersArrowBuffer->startSetElements(0);
+				primitives.burgersArrows->startSetElements(0);
 			}
-			_burgersArrowBuffer->endSetElements();
+			primitives.burgersArrows->endSetElements();
 			_pickInfo = new DislocationPickInfo(this, dislocationsObj, patternCatalog, std::move(subobjToSegmentMap));
 		}
 	}
 
-	if(_cornerBuffer && _segmentBuffer) {
-		renderer->beginPickObject(contextNode, _pickInfo);
+	renderer->beginPickObject(contextNode, _pickInfo);
 
-		// Render dislocation segments.
-		_segmentBuffer->render(renderer);
+	// Render dislocation segments.
+	primitives.segments->render(renderer);
 
-		// Render segment vertices.
-		_cornerBuffer->render(renderer);
+	// Render segment vertices.
+	primitives.corners->render(renderer);
 
-		// Render Burgers vectors.
-		if(_burgersArrowBuffer && showBurgersVectors()) {
-			_burgersArrowBuffer->render(renderer);
-		}
-
-		renderer->endPickObject();
+	// Render Burgers vectors.
+	if(primitives.burgersArrows && showBurgersVectors()) {
+		primitives.burgersArrows->render(renderer);
 	}
+
+	renderer->endPickObject();
 }
 
 /******************************************************************************

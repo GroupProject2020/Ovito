@@ -581,8 +581,6 @@ void defineModifiersSubmodule(py::module m)
 				"If this option is set to true, the modifier will create bonds only between atoms that belong to the same molecule (i.e. which have the same molecule ID assigned to them)."
 				"\n\n"
 				":Default: ``False``\n")
-		.def_property("vis", &CreateBondsModifier::bondsVis, &CreateBondsModifier::setBondsVis,
-				"The :py:class:`~ovito.vis.BondsVis` object controlling the visual appearance of the bonds created by this modifier.")
 		.def_property("lower_cutoff", &CreateBondsModifier::minimumCutoff, &CreateBondsModifier::setMinimumCutoff,
 				"The minimum bond length. No bonds will be created between atoms whose distance is below this threshold."
 				"\n\n"

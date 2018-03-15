@@ -25,12 +25,9 @@
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <core/dataset/data/TransformingDataVis.h>
-#include <core/dataset/data/VersionedDataObjectRef.h>
-#include <core/dataset/data/CacheStateHelper.h>
 #include <core/utilities/mesh/TriMesh.h>
 #include <core/utilities/mesh/HalfEdgeMesh.h>
 #include <core/utilities/concurrent/Task.h>
-#include <core/rendering/MeshPrimitive.h>
 #include <core/dataset/animation/controller/Controller.h>
 #include "PartitionMesh.h"
 
@@ -115,6 +112,7 @@ protected:
 	/// Controls the transparency of the surface mesh.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD(Controller, surfaceTransparencyController, setSurfaceTransparencyController);
 
+#if 0
 	/// The buffered geometry used to render the surface mesh.
 	std::shared_ptr<MeshPrimitive> _surfaceBuffer;
 
@@ -125,6 +123,7 @@ protected:
 		ColorA,						// Surface color
 		VersionedDataObjectRef		// Cluster graph
 		> _geometryCacheHelper;
+#endif		
 };
 
 }	// End of namespace

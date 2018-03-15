@@ -56,9 +56,6 @@ protected:
 	/// Is called when the value of a property of this object has changed.
 	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
 
-	/// Handles reference events sent by reference targets of this object.
-	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
-
 	/// Creates a computation engine that will compute the modifier's results.
 	virtual std::shared_ptr<ComputeEngine> createEngine(TimePoint time, TimeInterval validityInterval) override;
 
@@ -95,7 +92,7 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, onlySelectedParticles, setOnlySelectedParticles);
 
 	/// The display object for rendering the mesh.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(PartitionMeshVis, meshDisplay, setMeshDisplay);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(PartitionMeshVis, meshDisplay, setMeshDisplay, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES);
 
 	/// This stores the cached mesh produced by the modifier.
 	QExplicitlySharedDataPointer<PartitionMeshData> _partitionMesh;

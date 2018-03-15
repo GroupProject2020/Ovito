@@ -172,6 +172,9 @@ private:
 	/// Font used for section headers.
 	QFont _sectionHeaderFont;
 
+	/// Font used to highlight shared pipeline objects.
+	QFont _sharedObjectFont;
+
 	/// Container of the dataset being edited.
 	DataSetContainer& _datasetContainer;
 };

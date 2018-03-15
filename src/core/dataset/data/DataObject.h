@@ -162,7 +162,7 @@ protected:
 private:
 
 	/// The attached visual elements that are responsible for rendering this object's data.
-	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD_FLAGS(DataVis, visElements, setVisElements, PROPERTY_FIELD_NEVER_CLONE_TARGET);
+	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD_FLAGS(DataVis, visElements, setVisElements, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES);
 
 	/// The revision counter of this object.
 	/// The counter is increment every time the object changes.

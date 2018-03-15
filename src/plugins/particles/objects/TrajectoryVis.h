@@ -24,9 +24,6 @@
 
 #include <plugins/particles/Particles.h>
 #include <core/dataset/data/DataVis.h>
-#include <core/dataset/data/VersionedDataObjectRef.h>
-#include <core/dataset/data/CacheStateHelper.h>
-#include <core/rendering/SceneRenderer.h>
 #include "TrajectoryObject.h"
 
 namespace Ovito { namespace Particles {
@@ -68,31 +65,6 @@ protected:
 
 	/// Controls the shading mode for lines.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(ArrowPrimitive::ShadingMode, shadingMode, setShadingMode, PROPERTY_FIELD_MEMORIZE);
-
-	/// The buffered geometry used to render the trajectory lines.
-	std::shared_ptr<ArrowPrimitive> _segmentBuffer;
-
-	/// The buffered geometry used to render the trajectory line corners.
-	std::shared_ptr<ParticlePrimitive> _cornerBuffer;
-
-	/// This helper structure is used to detect any changes in the input data
-	/// that require updating the geometry buffers.
-	CacheStateHelper<
-		VersionedDataObjectRef,			// The trajectory data object + revision number
-		FloatType,						// Line width
-		Color,							// Line color,
-		TimePoint						// End time
-	> _geometryCacheHelper;
-
-	/// The bounding box that includes all trajectories.
-	Box3 _cachedBoundingBox;
-
-	/// This helper structure is used to detect changes in the input data
-	/// that require recomputing the bounding box.
-	CacheStateHelper<
-		VersionedDataObjectRef,		// The data object + revision number
-		FloatType					// Line width
-	> _boundingBoxCacheHelper;
 };
 
 }	// End of namespace

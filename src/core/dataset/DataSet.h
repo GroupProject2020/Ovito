@@ -36,6 +36,7 @@
 #include <core/utilities/concurrent/SharedFuture.h>
 #include <core/utilities/concurrent/Promise.h>
 #include <core/utilities/concurrent/PromiseWatcher.h>
+#include <core/utilities/MixedKeyCache.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
 
@@ -153,6 +154,9 @@ public:
 		return nullptr;
 	}	
 
+	/// Provides access to the global data cache used by visualzation elements.
+	MixedKeyCache& visCache() { return _visCache; }
+
 Q_SIGNALS:
 
 	/// \brief This signal is emitted whenever the current viewport configuration of this dataset
@@ -261,6 +265,9 @@ private:
 
 	/// The DataSetContainer which currently hosts this DataSet.
 	QPointer<DataSetContainer> _container;
+
+	/// Data cache used by visualzation elements.
+	MixedKeyCache _visCache;
 
 	friend class DataSetContainer;
 };

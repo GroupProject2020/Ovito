@@ -380,6 +380,18 @@ Box3 PipelineSceneNode::localBoundingBox(TimePoint time, TimeInterval& validity)
 	return bb;
 }
 
+/******************************************************************************
+* Deletes this node from the scene. 
+******************************************************************************/
+void PipelineSceneNode::deleteNode()
+{
+	// Remove pipeline.
+	setDataProvider(nullptr);
+
+	SceneNode::deleteNode();
+}
+
+
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

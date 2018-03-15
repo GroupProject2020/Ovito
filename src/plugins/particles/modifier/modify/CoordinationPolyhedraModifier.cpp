@@ -58,18 +58,6 @@ bool CoordinationPolyhedraModifier::OOMetaClass::isApplicableTo(const PipelineFl
 }
 
 /******************************************************************************
-* Handles reference events sent by reference targets of this object.
-******************************************************************************/
-bool CoordinationPolyhedraModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
-{
-	// Do not propagate messages from the attached vis element.
-	if(source == surfaceMeshVis())
-		return false;
-
-	return AsynchronousModifier::referenceEvent(source, event);
-}
-
-/******************************************************************************
 * Creates and initializes a computation engine that will compute the 
 * modifier's results.
 ******************************************************************************/

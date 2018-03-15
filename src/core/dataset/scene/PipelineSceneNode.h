@@ -80,6 +80,9 @@ public:
 	/// \return An world axis-aligned box.
 	virtual Box3 localBoundingBox(TimePoint time, TimeInterval& validity) override;
 	
+	/// \brief Deletes this node from the scene.
+	virtual void deleteNode() override;
+
 protected:
 
 	/// This method is called when a referenced object has changed.

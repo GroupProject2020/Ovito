@@ -88,18 +88,6 @@ OORef<ModifierApplication> GenerateTrajectoryLinesModifier::createModifierApplic
 }
 
 /******************************************************************************
-* Handles reference events sent by reference targets of this object.
-******************************************************************************/
-bool GenerateTrajectoryLinesModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
-{
-	// Do not propagate messages from the attached vis element.
-	if(source == trajectoryVis())
-		return false;
-
-	return Modifier::referenceEvent(source, event);
-}
-
-/******************************************************************************
 * Modifies the input data in an immediate, preliminary way.
 ******************************************************************************/
 PipelineFlowState GenerateTrajectoryLinesModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)

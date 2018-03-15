@@ -22,9 +22,11 @@
 #include <plugins/mesh/Mesh.h>
 #include <plugins/mesh/util/CapPolygonTessellator.h>
 #include <core/rendering/SceneRenderer.h>
+#include <core/rendering/MeshPrimitive.h>
 #include <core/utilities/mesh/TriMesh.h>
 #include <core/utilities/units/UnitsManager.h>
 #include <core/dataset/animation/controller/Controller.h>
+#include <core/dataset/data/VersionedDataObjectRef.h>
 #include <core/dataset/DataSetContainer.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include "SurfaceMeshVis.h"
@@ -177,46 +179,55 @@ void SurfaceMeshVis::render(TimePoint time, DataObject* dataObject, const Pipeli
 	ColorA color_surface(surfaceColor(), FloatType(1) - transp_surface);
 	ColorA color_cap(capColor(), FloatType(1) - transp_cap);
 
-	// Do we have to re-create the render primitives from scratch?
-	bool recreateSurfaceBuffer = !_surfaceBuffer || !_surfaceBuffer->isValid(renderer);
-	bool recreateCapBuffer = showCap() && (!_capBuffer || !_capBuffer->isValid(renderer));
+	// The key type used for caching the rendering primitive:
+	using SurfaceCacheKey = std::tuple<
+		CompatibleRendererGroup,	// The scene renderer
+		VersionedDataObjectRef,		// Mesh object
+		ColorA						// Surface color
+	>;
 
-	// Do we have to update the render primitives?
-	bool updateContents = _geometryCacheHelper.updateState(dataObject, color_surface, color_cap)
-					|| recreateSurfaceBuffer || recreateCapBuffer;
+	// The key type used for caching the rendering primitive:
+	using CapCacheKey = std::tuple<
+		CompatibleRendererGroup,	// The scene renderer
+		VersionedDataObjectRef,		// Mesh object
+		ColorA						// Cap color
+	>;
 
-	// Re-create the render primitives if necessary.
-	if(recreateSurfaceBuffer)
-		_surfaceBuffer = renderer->createMeshPrimitive();
-	if(recreateCapBuffer && _showCap)
-		_capBuffer = renderer->createMeshPrimitive();
+	// Lookup the rendering primitive in the vis cache.
+	auto& surfacePrimitive = dataset()->visCache().get<std::shared_ptr<MeshPrimitive>>(SurfaceCacheKey(renderer, dataObject, color_surface));
 
-	// Update render primitives.
-	if(updateContents) {
-
-		OORef<RenderableSurfaceMesh> meshObj = dataObject->convertTo<RenderableSurfaceMesh>(time);
-		if(meshObj) {
-			_surfaceBuffer->setMesh(meshObj->surfaceMesh(), color_surface);
-			//_surfaceBuffer->setCullFaces(true);
-			if(showCap()) {
-				_capBuffer->setMesh(meshObj->capPolygonsMesh(), color_cap);
-				//_capBuffer->setCullFaces(true);
-			}
+	// Check if we already have a valid rendering primitive that is up to date.
+	if(!surfacePrimitive || !surfacePrimitive->isValid(renderer)) {
+		if(OORef<RenderableSurfaceMesh> meshObj = dataObject->convertTo<RenderableSurfaceMesh>(time)) {
+			surfacePrimitive = renderer->createMeshPrimitive();
+			surfacePrimitive->setMesh(meshObj->surfaceMesh(), color_surface);
 		}
 		else {
-			_surfaceBuffer->setMesh(TriMesh(), ColorA(1,1,1,1));
-			if(showCap())
-				_capBuffer->setMesh(TriMesh(), ColorA(1,1,1,1));
+			surfacePrimitive.reset();
 		}
 	}
 
+	// Lookup the rendering primitive in the vis cache.
+	auto& capPrimitive = dataset()->visCache().get<std::shared_ptr<MeshPrimitive>>(CapCacheKey(renderer, dataObject, color_cap));
+
+	// Check if we already have a valid rendering primitive that is up to date.
+	if(!capPrimitive || !capPrimitive->isValid(renderer)) {
+		capPrimitive.reset();
+		if(OORef<RenderableSurfaceMesh> meshObj = dataObject->convertTo<RenderableSurfaceMesh>(time)) {
+			if(showCap()) {
+				capPrimitive = renderer->createMeshPrimitive();
+				capPrimitive->setMesh(meshObj->capPolygonsMesh(), color_cap);
+			}
+		}
+	}	
+
 	// Handle picking of triangles.
 	renderer->beginPickObject(contextNode);
-	_surfaceBuffer->render(renderer);
+	if(surfacePrimitive) surfacePrimitive->render(renderer);
 	if(showCap())
-		_capBuffer->render(renderer);
+		capPrimitive->render(renderer);
 	else
-		_capBuffer.reset();
+		capPrimitive.reset();
 	renderer->endPickObject();
 }
 

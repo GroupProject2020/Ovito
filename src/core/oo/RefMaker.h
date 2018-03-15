@@ -77,9 +77,7 @@ protected:
 	/// shouldPropagate() method returns true.
 	///
 	/// \sa RefTarget::notifyDependents()
-	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) {
-		return event.shouldPropagate();
-	}
+	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event);
 
 	/// \brief Is called when the value of a reference field of this RefMaker changes.
 	/// \param field Specifies the reference field of this RefMaker that has been changed.

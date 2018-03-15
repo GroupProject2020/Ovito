@@ -99,6 +99,9 @@ public:
 	/// Requests a new triangle mesh buffer from the renderer.
 	virtual std::shared_ptr<MeshPrimitive> createMeshPrimitive() override;
 
+	/// Determines if this renderer can share geometry data and other resources with the given other renderer.
+	virtual bool sharesResourcesWith(SceneRenderer* otherRenderer) const override;
+
 	/// Renders a 2d polyline in the viewport.
 	void render2DPolyline(const Point2* points, int count, const ColorA& color, bool closed);
 
@@ -266,6 +269,9 @@ private:
 
 	/// The OpenGL context this renderer uses.
 	QOpenGLContext* _glcontext;
+
+	/// The GL context group this renderer uses.
+	QPointer<QOpenGLContextGroup> _glcontextGroup;
 
 	/// The surface used by the GL context.
 	QSurface* _glsurface;

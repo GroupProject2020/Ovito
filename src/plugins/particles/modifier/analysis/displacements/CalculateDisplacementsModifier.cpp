@@ -53,18 +53,6 @@ CalculateDisplacementsModifier::CalculateDisplacementsModifier(DataSet* dataset)
 }
 
 /******************************************************************************
-* Handles reference events sent by reference targets of this object.
-******************************************************************************/
-bool CalculateDisplacementsModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
-{
-	// Do not propagate messages sent by the attached vis element.
-	if(source == vectorVis())
-		return false;
-
-	return ReferenceConfigurationModifier::referenceEvent(source, event);
-}
-
-/******************************************************************************
 * Creates and initializes a computation engine that will compute the modifier's results.
 ******************************************************************************/
 Future<AsynchronousModifier::ComputeEnginePtr> CalculateDisplacementsModifier::createEngineWithReference(TimePoint time, ModifierApplication* modApp, PipelineFlowState input, const PipelineFlowState& referenceState, TimeInterval validityInterval)

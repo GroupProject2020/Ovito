@@ -128,18 +128,6 @@ void GrainSegmentationModifier::propertyChanged(const PropertyFieldDescriptor& f
 }
 
 /******************************************************************************
-* Handles reference events sent by reference targets of this object.
-******************************************************************************/
-bool GrainSegmentationModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
-{
-	// Do not propagate messages from the attached display object.
-	if(source == meshDisplay())
-		return false;
-
-	return StructureIdentificationModifier::referenceEvent(source, event);
-}
-
-/******************************************************************************
 * Resets the modifier's result cache.
 ******************************************************************************/
 void GrainSegmentationModifier::invalidateCachedResults()

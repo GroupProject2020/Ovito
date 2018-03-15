@@ -92,7 +92,7 @@ protected:
 private:
 
 	/// Provides the input to which the modifier is applied.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(PipelineObject, input, setInput);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(PipelineObject, input, setInput, PROPERTY_FIELD_NEVER_CLONE_TARGET);
 
 	/// The modifier that is inserted into the pipeline.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD(Modifier, modifier, setModifier);

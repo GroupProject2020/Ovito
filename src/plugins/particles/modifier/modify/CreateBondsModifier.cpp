@@ -24,6 +24,7 @@
 #include <plugins/particles/objects/BondsVis.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/utilities/concurrent/ParallelFor.h>
@@ -38,15 +39,16 @@ DEFINE_PROPERTY_FIELD(CreateBondsModifier, uniformCutoff);
 DEFINE_PROPERTY_FIELD(CreateBondsModifier, pairCutoffs);
 DEFINE_PROPERTY_FIELD(CreateBondsModifier, minimumCutoff);
 DEFINE_PROPERTY_FIELD(CreateBondsModifier, onlyIntraMoleculeBonds);
-DEFINE_REFERENCE_FIELD(CreateBondsModifier, bondsVis);
 SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, cutoffMode, "Cutoff mode");
 SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, uniformCutoff, "Cutoff radius");
 SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, pairCutoffs, "Pair-wise cutoffs");
 SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, minimumCutoff, "Lower cutoff");
 SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, onlyIntraMoleculeBonds, "Suppress inter-molecular bonds");
-SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, bondsVis, "Bonds vis");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CreateBondsModifier, uniformCutoff, WorldParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CreateBondsModifier, minimumCutoff, WorldParameterUnit, 0);
+
+IMPLEMENT_OVITO_CLASS(CreateBondsModifierApplication);
+DEFINE_REFERENCE_FIELD(CreateBondsModifierApplication, bondsVis);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -57,8 +59,6 @@ CreateBondsModifier::CreateBondsModifier(DataSet* dataset) : AsynchronousModifie
 	_onlyIntraMoleculeBonds(false), 
 	_minimumCutoff(0)
 {
-	// Create the vis element for rendering the bonds.
-	setBondsVis(new BondsVis(dataset));
 }
 
 /******************************************************************************
@@ -67,6 +67,16 @@ CreateBondsModifier::CreateBondsModifier(DataSet* dataset) : AsynchronousModifie
 bool CreateBondsModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
 	return input.findObject<ParticleProperty>() != nullptr;
+}
+
+/******************************************************************************
+* Create a new modifier application that refers to this modifier instance.
+******************************************************************************/
+OORef<ModifierApplication> CreateBondsModifier::createModifierApplication()
+{
+	OORef<ModifierApplication> modApp = new CreateBondsModifierApplication(dataset());
+	modApp->setModifier(this);
+	return modApp;
 }
 
 /******************************************************************************
@@ -99,32 +109,21 @@ FloatType CreateBondsModifier::getPairCutoff(const QString& typeA, const QString
 }
 
 /******************************************************************************
-* Handles reference events sent by reference targets of this object.
+* Gets called when the data object of the node has been replaced.
 ******************************************************************************/
-bool CreateBondsModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
+void CreateBondsModifierApplication::referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget)
 {
-	// Do not propagate messages from the attached vis element.
-	if(source == bondsVis())
-		return false;
+	AsynchronousModifierApplication::referenceReplaced(field, oldTarget, newTarget);
 
-	return AsynchronousModifier::referenceEvent(source, event);
-}
-
-/******************************************************************************
-* This method is called by the system when the modifier has been inserted
-* into a pipeline.
-******************************************************************************/
-void CreateBondsModifier::initializeModifier(ModifierApplication* modApp)
-{
-	AsynchronousModifier::initializeModifier(modApp);
-
-	// Adopt the upstream BondsVis object if there already is one.
-	PipelineFlowState input = modApp->evaluateInputPreliminary();
-	if(BondProperty* topologyProperty = BondProperty::findInState(input, BondProperty::TopologyProperty)) {
-		for(DataVis* vis : topologyProperty->visElements()) {
-			if(BondsVis* bondsVis = dynamic_object_cast<BondsVis>(vis)) {
-				setBondsVis(bondsVis);
-				break;
+	// When the modifier application is newly inserted into a pipeline, adopt the upstream BondsVis object if any.
+	if(field == PROPERTY_FIELD(input)) {
+		PipelineFlowState inputState = evaluateInputPreliminary();
+		if(BondProperty* topologyProperty = BondProperty::findInState(inputState, BondProperty::TopologyProperty)) {
+			for(DataVis* vis : topologyProperty->visElements()) {
+				if(BondsVis* bondsVis = dynamic_object_cast<BondsVis>(vis)) {
+					setBondsVis(bondsVis);
+					break;
+				}
 			}
 		}
 	}
@@ -253,7 +252,8 @@ void CreateBondsModifier::BondsEngine::perform()
 PipelineFlowState CreateBondsModifier::BondsEngineResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	CreateBondsModifier* modifier = static_object_cast<CreateBondsModifier>(modApp->modifier());
-	OVITO_ASSERT(modifier);
+	CreateBondsModifierApplication* myModApp = static_object_cast<CreateBondsModifierApplication>(modApp);
+	OVITO_ASSERT(modifier);	
 
 	// Add our bonds to the system.
 	PipelineFlowState output = input;
@@ -262,14 +262,14 @@ PipelineFlowState CreateBondsModifier::BondsEngineResults::apply(TimePoint time,
 	if(_inputParticleCount != poh.outputParticleCount())
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
 
-	poh.addBonds(bonds(), modifier->bondsVis());
+	poh.addBonds(bonds(), myModApp->bondsVis());
 
 	size_t bondsCount = bonds().size();
 	output.attributes().insert(QStringLiteral("CreateBonds.num_bonds"), QVariant::fromValue(bondsCount));
 
 	// If the number of bonds is unusually high, we better turn off bonds display to prevent the program from freezing.
-	if(bondsCount > 1000000) {
-		modifier->bondsVis()->setEnabled(false);		
+	if(bondsCount > 1000000 && myModApp->bondsVis()) {
+		myModApp->bondsVis()->setEnabled(false);		
 		output.setStatus(PipelineStatus(PipelineStatus::Warning, tr("Created %1 bonds, which is a lot. As a precaution, the display of bonds has been disabled. You can manually enable it again if needed.").arg(bondsCount)));
 	}
 	else {

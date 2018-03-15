@@ -26,6 +26,7 @@
 #include <plugins/particles/objects/BondsVis.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
+#include <core/dataset/pipeline/AsynchronousModifierApplication.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 
@@ -129,8 +130,8 @@ public:
 	/// Constructor.
 	Q_INVOKABLE CreateBondsModifier(DataSet* dataset);
 
-	/// This method is called by the system after the modifier has been inserted into a data pipeline.
-	virtual void initializeModifier(ModifierApplication* modApp) override;
+	/// \brief Create a new modifier application that refers to this modifier instance.
+	virtual OORef<ModifierApplication> createModifierApplication() override;
 
 	/// Indicate that outdated computation results should never be reused if the modifier's inputs have changed.
 	virtual bool discardResultsOnInputChange() const override { return true; }
@@ -142,9 +143,6 @@ public:
 	FloatType getPairCutoff(const QString& typeA, const QString& typeB) const;
 
 protected:
-
-	/// Handles reference events sent by reference targets of this object.
-	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
 
 	/// Creates a computation engine that will compute the modifier's results.
 	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
@@ -165,9 +163,33 @@ private:
 
 	/// If true, bonds will only be created between atoms from the same molecule.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, onlyIntraMoleculeBonds, setOnlyIntraMoleculeBonds, PROPERTY_FIELD_MEMORIZE);
+};
+
+/**
+ * Used by the CreateBondsModifier to store working data.
+ */
+class OVITO_PARTICLES_EXPORT CreateBondsModifierApplication : public AsynchronousModifierApplication
+{
+	OVITO_CLASS(CreateBondsModifierApplication)
+	Q_OBJECT
+
+public:
+
+	/// Constructor.
+	Q_INVOKABLE CreateBondsModifierApplication(DataSet* dataset) : AsynchronousModifierApplication(dataset) {
+		// Create the vis element for rendering the bonds.
+		setBondsVis(new BondsVis(dataset));
+	}
+
+protected:
+
+	/// Is called when the value of a reference field of this object changes.
+	virtual void referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget) override;
+
+private:
 
 	/// The vis element for rendering the bonds.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(BondsVis, bondsVis, setBondsVis, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(BondsVis, bondsVis, setBondsVis, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE);
 };
 
 OVITO_END_INLINE_NAMESPACE

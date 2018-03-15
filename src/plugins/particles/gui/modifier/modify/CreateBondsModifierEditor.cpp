@@ -89,7 +89,7 @@ void CreateBondsModifierEditor::createUI(const RolloutInsertionParameters& rollo
 	layout1->addWidget(statusLabel());
 
 	// Open a sub-editor for the bonds vis element.
-	new SubObjectParameterUI(this, PROPERTY_FIELD(CreateBondsModifier::bondsVis), rolloutParams.after(rollout));
+	//new SubObjectParameterUI(this, PROPERTY_FIELD(CreateBondsModifier::bondsVis), rolloutParams.after(rollout));
 
 	// Update pair-wise cutoff table whenever a modifier has been loaded into the editor.
 	connect(this, &CreateBondsModifierEditor::contentsReplaced, this, &CreateBondsModifierEditor::updatePairCutoffList);

@@ -258,39 +258,28 @@ void ModifyCommandPage::onDeleteModifier()
 	PipelineListItem* selectedItem = _pipelineListModel->selectedItem();
 	if(!selectedItem) return;
 
-	Modifier* modifier = dynamic_object_cast<Modifier>(selectedItem->object());
+	OORef<Modifier> modifier = dynamic_object_cast<Modifier>(selectedItem->object());
 	if(!modifier) return;
 
 	UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(), tr("Delete modifier"), [selectedItem, modifier, this]() {
 
-		// Determine the modifier item preceding the item to be deleted.
-		int index = _pipelineListModel->items().indexOf(selectedItem);
-		while(index > 0) {
-			PipelineListItem* predecessor = _pipelineListModel->items()[index-1];
-			if(dynamic_object_cast<Modifier>(predecessor->object())) {
-				for(ModifierApplication* modApp : predecessor->modifierApplications()) {
-					ModifierApplication* toBeDeleted = dynamic_object_cast<ModifierApplication>(modApp->input());
-					OVITO_ASSERT(selectedItem->modifierApplications().contains(toBeDeleted));
-					if(toBeDeleted) {
-						modApp->setInput(toBeDeleted->input());
-						toBeDeleted->setInput(nullptr);
+		for(OORef<ModifierApplication> modApp : selectedItem->modifierApplications()) {
+			auto dependentsList = modApp->dependents();
+			for(RefMaker* dependent : dependentsList) {
+				if(ModifierApplication* precedingModApp = dynamic_object_cast<ModifierApplication>(dependent)) {
+					if(precedingModApp->input() == modApp) {
+						precedingModApp->setInput(modApp->input());
 						_pipelineListModel->setNextToSelectObject(modApp->input());
 					}
 				}
-				break;
-			}
-			index--;
-		}
-
-		if(index <= 0) {
-			for(PipelineSceneNode* objNode : _pipelineListModel->selectedNodes()) {
-				ModifierApplication* toBeDeleted = dynamic_object_cast<ModifierApplication>(objNode->dataProvider());
-				if(toBeDeleted) {
-					objNode->setDataProvider(toBeDeleted->input());
-					toBeDeleted->setInput(nullptr);
-					_pipelineListModel->setNextToSelectObject(objNode->dataProvider());
+				else if(PipelineSceneNode* pipeline = dynamic_object_cast<PipelineSceneNode>(dependent)) {
+					if(pipeline->dataProvider() == modApp) {
+						pipeline->setDataProvider(modApp->input());
+						_pipelineListModel->setNextToSelectObject(pipeline->dataProvider());
+					}
 				}
 			}
+			modApp->setInput(nullptr);
 		}
 
 		// Delete modifier if there are no more applications left.

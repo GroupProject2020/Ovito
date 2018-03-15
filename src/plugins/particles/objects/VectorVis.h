@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,10 +24,6 @@
 
 #include <plugins/particles/Particles.h>
 #include <core/dataset/data/DataVis.h>
-#include <core/dataset/data/VersionedDataObjectRef.h>
-#include <core/dataset/data/CacheStateHelper.h>
-#include <core/rendering/ArrowPrimitive.h>
-#include <core/rendering/SceneRenderer.h>
 #include "ParticleProperty.h"
 
 namespace Ovito { namespace Particles {
@@ -94,34 +90,6 @@ protected:
 
 	/// Controls the rendering quality mode for arrows.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(ArrowPrimitive::RenderingQuality, renderingQuality, setRenderingQuality);
-
-	/// The buffered geometry used to render the arrows.
-	std::shared_ptr<ArrowPrimitive> _buffer;
-
-	/// This helper structure is used to detect any changes in the input data
-	/// that require updating the geometry buffer.
-	CacheStateHelper<
-		VersionedDataObjectRef,			// Vector property + revision number
-		VersionedDataObjectRef,			// Particle position property + revision number
-		FloatType,						// Scaling factor
-		FloatType,						// Arrow width
-		Color,							// Arrow color
-		bool,							// Reverse arrow direction
-		ArrowPosition,					// Arrow position
-		VersionedDataObjectRef			// Vector color property + revision number
-		> _geometryCacheHelper;
-
-	/// The bounding box that includes all arrows.
-	Box3 _cachedBoundingBox;
-
-	/// This helper structure is used to detect changes in the input
-	/// that require recalculating the bounding box.
-	CacheStateHelper<
-		VersionedDataObjectRef,		// Vector property + revision number
-		VersionedDataObjectRef,		// Particle position property + revision number
-		FloatType,					// Scaling factor
-		FloatType					// Arrow width
-		> _boundingBoxCacheHelper;
 };
 
 /**

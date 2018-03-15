@@ -82,7 +82,9 @@ void SelectTypeModifier::propertyChanged(const PropertyFieldDescriptor& field)
 	// Whenever the selected property class of this modifier is changed, clear the source property reference.
 	// Otherwise it might be pointing to the wrong kind of property.
 	if(field == PROPERTY_FIELD(GenericPropertyModifier::propertyClass) && !isBeingLoaded()) {
-		setSourceProperty({});
+		if(propertyClass() != sourceProperty().propertyClass()) {
+			setSourceProperty({});
+		}
 	}
 	GenericPropertyModifier::propertyChanged(field);
 }

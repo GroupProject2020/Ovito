@@ -24,6 +24,7 @@
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <plugins/particles/util/NearestNeighborFinder.h>
 #include <plugins/particles/objects/BondProperty.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/utilities/concurrent/ParallelFor.h>
 #include <core/utilities/units/UnitsManager.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
@@ -80,18 +81,6 @@ VoronoiAnalysisModifier::VoronoiAnalysisModifier(DataSet* dataset) : Asynchronou
 bool VoronoiAnalysisModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
 	return input.findObject<ParticleProperty>() != nullptr;
-}
-
-/******************************************************************************
-* Handles reference events sent by reference targets of this object.
-******************************************************************************/
-bool VoronoiAnalysisModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
-{
-	// Do not propagate messages from the attached vis element.
-	if(source == bondsVis())
-		return false;
-
-	return AsynchronousModifier::referenceEvent(source, event);
 }
 
 /******************************************************************************

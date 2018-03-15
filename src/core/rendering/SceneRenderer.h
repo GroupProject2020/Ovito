@@ -213,6 +213,9 @@ public:
 	/// This method is mainly used with the interactive viewport renderer.
 	virtual void setHighlightMode(int pass) {}
 
+	/// Determines if this renderer can share geometry data and other resources with the given other renderer.
+	virtual bool sharesResourcesWith(SceneRenderer* otherRenderer) const = 0;
+
 protected:
 
 	/// Constructor.
@@ -273,6 +276,32 @@ private:
 
 	/// Working variable used for computing the bounding box of the entire scene.
 	Box3 _sceneBoundingBox;
+};
+
+/**
+ * Helper class that is used by vis elements to determine if two scene renderers
+ * are compatible and can share resources.
+ */
+class CompatibleRendererGroup 
+{
+public:
+
+	/// Constructor. 
+	CompatibleRendererGroup(SceneRenderer* renderer) : _renderer(renderer) {}
+
+	/// Comparison operator.
+	bool operator==(const CompatibleRendererGroup& other) const {
+		return !_renderer.isNull() && !other._renderer.isNull() && _renderer->sharesResourcesWith(other._renderer.data());
+	}
+
+	/// Comparison operator.
+	bool operator!=(const CompatibleRendererGroup& other) const {
+		return _renderer.isNull() || other._renderer.isNull() || !_renderer->sharesResourcesWith(other._renderer.data());
+	}
+
+private:
+
+	QPointer<SceneRenderer> _renderer;
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -27,6 +27,15 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
 IMPLEMENT_OVITO_CLASS(NonInteractiveSceneRenderer);
 
 /******************************************************************************
+* Determines if this renderer can share geometry data and other resources with 
+* the given other renderer.
+******************************************************************************/
+bool NonInteractiveSceneRenderer::sharesResourcesWith(SceneRenderer* otherRenderer) const
+{
+	return dynamic_object_cast<NonInteractiveSceneRenderer>(otherRenderer) != nullptr;
+}
+
+/******************************************************************************
 * This method is called just before renderFrame() is called.
 ******************************************************************************/
 void NonInteractiveSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParameters& params, Viewport* vp)

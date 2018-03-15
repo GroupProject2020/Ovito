@@ -24,12 +24,6 @@
 
 #include <plugins/stdobj/StdObj.h>
 #include <core/dataset/data/DataVis.h>
-#include <core/dataset/data/VersionedDataObjectRef.h>
-#include <core/dataset/data/CacheStateHelper.h>
-#include <core/rendering/LinePrimitive.h>
-#include <core/rendering/ArrowPrimitive.h>
-#include <core/rendering/ParticlePrimitive.h>
-#include "SimulationCellObject.h"
 
 namespace Ovito { namespace StdObj {
 	
@@ -40,7 +34,8 @@ class OVITO_STDOBJ_EXPORT SimulationCellVis : public DataVis
 {
 	Q_OBJECT
 	OVITO_CLASS(SimulationCellVis)
-	
+	Q_CLASSINFO("DisplayName", "Simulation cell");
+
 public:
 
 	/// \brief Constructor.
@@ -73,34 +68,6 @@ protected:
 
 	/// Controls the rendering color of the simulation cell.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(Color, cellColor, setCellColor, PROPERTY_FIELD_MEMORIZE);
-
-	/// The geometry buffer used to render the simulation cell in wireframe mode.
-	std::shared_ptr<LinePrimitive> _wireframeGeometry;
-
-	/// The geometry buffer used to render the wireframe simulation cell in object picking mode.
-	std::shared_ptr<LinePrimitive> _wireframePickingGeometry;
-
-	/// This helper structure is used to detect any changes in the input simulation cell
-	/// that require updating the display geometry buffer for wireframe rendering.
-	CacheStateHelper<
-		VersionedDataObjectRef,		// the SimulationCellObject
-		ColorA
-		> _wireframeGeometryCacheHelper;
-
-	/// The geometry buffer used to render the edges of the cell.
-	std::shared_ptr<ArrowPrimitive> _edgeGeometry;
-
-	/// The geometry buffer used to render the corners of the cell.
-	std::shared_ptr<ParticlePrimitive> _cornerGeometry;
-
-	/// This helper structure is used to detect any changes in the input simulation cell
-	/// that require updating the display geometry buffer for solid rendering mode.
-	CacheStateHelper<
-		VersionedDataObjectRef,			// The simulation cell + revision number
-		FloatType, Color				// Line width + color
-		> _solidGeometryCacheHelper;
-
-	Q_CLASSINFO("DisplayName", "Simulation cell");
 };
 
 }	// End of namespace

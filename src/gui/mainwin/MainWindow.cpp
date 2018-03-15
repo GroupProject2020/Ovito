@@ -111,6 +111,7 @@ MainWindow::MainWindow() : _datasetContainer(this)
 
 	_coordinateDisplay = new CoordinateDisplayWidget(datasetContainer(), animationPanel);
 	_statusBarLayout->addWidget(_coordinateDisplay);
+	_statusBarLayout->addStrut(std::max(_coordinateDisplay->sizeHint().height(), taskDisplay->sizeHint().height()));
 
 	// Create the animation control toolbar.
 	QToolBar* animationControlBar1 = new QToolBar();
@@ -291,6 +292,10 @@ void MainWindow::createMainMenu()
 	fileMenu->addAction(actionManager()->getAction(ACTION_FILE_OPEN));
 	fileMenu->addAction(actionManager()->getAction(ACTION_FILE_SAVE));
 	fileMenu->addAction(actionManager()->getAction(ACTION_FILE_SAVEAS));
+	if(QAction* runScriptFileAction = actionManager()->findAction(ACTION_SCRIPTING_RUN_FILE)) {
+		fileMenu->addSeparator();
+		fileMenu->addAction(runScriptFileAction);
+	}
 	fileMenu->addSeparator();
 	fileMenu->addAction(actionManager()->getAction(ACTION_FILE_NEW_WINDOW));
 	fileMenu->addSeparator();
@@ -302,20 +307,10 @@ void MainWindow::createMainMenu()
 	editMenu->addAction(actionManager()->getAction(ACTION_EDIT_UNDO));
 	editMenu->addAction(actionManager()->getAction(ACTION_EDIT_REDO));
 	editMenu->addSeparator();
+	editMenu->addAction(actionManager()->getAction(ACTION_EDIT_CLONE_PIPELINE));
 	editMenu->addAction(actionManager()->getAction(ACTION_EDIT_DELETE));
-
-	// Build the scripting menu.
-	QAction* runScriptFileAction = actionManager()->findAction(ACTION_SCRIPTING_RUN_FILE);
-	if(runScriptFileAction) {
-		QMenu* scriptingMenu = menuBar->addMenu(tr("&Scripting"));
-		scriptingMenu->setObjectName(QStringLiteral("ScriptingMenu"));
-		scriptingMenu->addAction(runScriptFileAction);
-	}
-
-	// Build the options menu.
-	QMenu* optionsMenu = menuBar->addMenu(tr("&Options"));
-	optionsMenu->setObjectName(QStringLiteral("OptionsMenu"));
-	optionsMenu->addAction(actionManager()->getAction(ACTION_SETTINGS_DIALOG));
+	editMenu->addSeparator();
+	editMenu->addAction(actionManager()->getAction(ACTION_SETTINGS_DIALOG));
 
 	// Build the help menu.
 	QMenu* helpMenu = menuBar->addMenu(tr("&Help"));

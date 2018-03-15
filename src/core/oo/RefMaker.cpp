@@ -146,6 +146,30 @@ bool RefMaker::handleReferenceEvent(RefTarget* source, const ReferenceEvent& eve
 }
 
 /******************************************************************************
+* Is called when a RefTarget referenced by this object has generated an event.
+******************************************************************************/
+bool RefMaker::referenceEvent(RefTarget* source, const ReferenceEvent& event) 
+{
+	if(event.shouldPropagate()) {
+		// Check if message is comming from a reference field for which message propagation is explicitly disabled.
+		for(const PropertyFieldDescriptor* field : getOOMetaClass().propertyFields()) {
+			if(!field->isReferenceField()) continue;
+			if(!field->flags().testFlag(PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES)) continue;
+			if(field->isVector() == false) {
+				if(getReferenceField(*field) == source)
+					return false;
+			}
+			else {
+				if(getVectorReferenceField(*field).contains(source)) 
+					return false;
+			}
+		}
+		return true;
+	}	
+	return false;
+}
+
+/******************************************************************************
 * Checks if this RefMaker has any reference to the given RefTarget.
 ******************************************************************************/
 bool RefMaker::hasReferenceTo(RefTarget* target) const

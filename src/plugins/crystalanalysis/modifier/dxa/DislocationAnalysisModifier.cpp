@@ -182,18 +182,6 @@ OORef<ModifierApplication> DislocationAnalysisModifier::createModifierApplicatio
 }
 
 /******************************************************************************
-* Handles reference events sent by reference targets of this object.
-******************************************************************************/
-bool DislocationAnalysisModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
-{
-	// Do not propagate messages from the attached vis elements.
-	if(source == defectMeshVis() || source == interfaceMeshVis() || source == dislocationVis())
-		return false;
-
-	return StructureIdentificationModifier::referenceEvent(source, event);
-}
-
-/******************************************************************************
 * Creates and initializes a computation engine that will compute the modifier's results.
 ******************************************************************************/
 Future<AsynchronousModifier::ComputeEnginePtr> DislocationAnalysisModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)

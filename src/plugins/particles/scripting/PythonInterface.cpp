@@ -33,6 +33,7 @@
 #include <plugins/particles/util/CutoffNeighborFinder.h>
 #include <plugins/particles/util/NearestNeighborFinder.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <plugins/stdobj/scripting/PythonBinding.h>
 #include <plugins/pyscript/binding/PythonBinding.h>
 #include <core/utilities/io/CompressedTextWriter.h>

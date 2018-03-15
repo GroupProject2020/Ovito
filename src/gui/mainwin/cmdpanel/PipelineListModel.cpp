@@ -21,6 +21,7 @@
 
 #include <gui/GUI.h>
 #include <core/dataset/data/DataObject.h>
+#include <core/dataset/data/DataVis.h>
 #include <core/dataset/pipeline/PipelineObject.h>
 #include <core/dataset/pipeline/Modifier.h>
 #include <core/dataset/scene/PipelineSceneNode.h>
@@ -54,6 +55,8 @@ PipelineListModel::PipelineListModel(DataSetContainer& datasetContainer, QObject
 		_sectionHeaderFont.setPointSize(_sectionHeaderFont.pointSize() * 4 / 5);
 	else
 		_sectionHeaderFont.setPixelSize(_sectionHeaderFont.pixelSize() * 4 / 5);
+
+	_sharedObjectFont.setItalic(true);
 }
 
 /******************************************************************************
@@ -364,6 +367,22 @@ QVariant PipelineListModel::data(const QModelIndex& index, int role) const
 	else if(role == Qt::FontRole) {
 		if(item->object() == nullptr) {
 			return _sectionHeaderFont;
+		}
+		else if(Modifier* modifier = dynamic_object_cast<Modifier>(item->object())) {
+			QSet<PipelineSceneNode*> pipelines;
+			for(ModifierApplication* modApp : modifier->modifierApplications()) {
+				pipelines += modApp->dependentNodes();
+			}
+			if(pipelines.size() > 1)
+				return _sharedObjectFont;
+		}
+		else if(PipelineObject* pipelineObject = dynamic_object_cast<PipelineObject>(item->object())) {
+			if(pipelineObject->dependentNodes().size() > 1)
+				return _sharedObjectFont;
+		}
+		else if(DataVis* visElement = dynamic_object_cast<DataVis>(item->object())) {
+			if(visElement->dependentNodes().size() > 1)
+				return _sharedObjectFont;
 		}
 	}
 

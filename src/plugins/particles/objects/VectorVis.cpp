@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,7 +22,9 @@
 #include <plugins/particles/Particles.h>
 #include <core/utilities/units/UnitsManager.h>
 #include <core/utilities/concurrent/ParallelFor.h>
+#include <core/dataset/data/VersionedDataObjectRef.h>
 #include <core/rendering/SceneRenderer.h>
+#include <core/rendering/ArrowPrimitive.h>
 #include "VectorVis.h"
 #include "ParticlesVis.h"
 
@@ -67,15 +69,27 @@ Box3 VectorVis::boundingBox(TimePoint time, DataObject* dataObject, PipelineScen
 	if(vectorProperty && (vectorProperty->dataType() != PropertyStorage::Float || vectorProperty->componentCount() != 3))
 		vectorProperty = nullptr;
 
-	// Detect if the input data has changed since the last time we computed the bounding box.
-	if(_boundingBoxCacheHelper.updateState(
+	// The key type used for caching the computed bounding box:
+	using CacheKey = std::tuple<
+		VersionedDataObjectRef,		// Vector property + revision number
+		VersionedDataObjectRef,		// Particle position property + revision number
+		FloatType,					// Scaling factor
+		FloatType					// Arrow width
+	>;
+
+	// Look up the bounding box in the vis cache.
+	auto& bbox = dataset()->visCache().get<Box3>(CacheKey(
 			vectorProperty,
 			positionProperty,
-			scalingFactor(), arrowWidth()) || _cachedBoundingBox.isEmpty()) {
-		// Recompute bounding box.
-		_cachedBoundingBox = arrowBoundingBox(vectorProperty, positionProperty);
+			scalingFactor(), 
+			arrowWidth()));
+
+	// Check if the cached bounding box information is still up to date.
+	if(bbox.isEmpty()) {
+		// If not, recompute bounding box from particle data.
+		bbox = arrowBoundingBox(vectorProperty, positionProperty);
 	}
-	return _cachedBoundingBox;
+	return bbox;
 }
 
 /******************************************************************************
@@ -136,29 +150,38 @@ void VectorVis::render(TimePoint time, DataObject* dataObject, const PipelineFlo
 		return;
 	}
 	
-	// Do we have to re-create the geometry buffer from scratch?
-	bool recreateBuffer = !_buffer || !_buffer->isValid(renderer);
+	// The key type used for caching the rendering primitive:
+	using CacheKey = std::tuple<
+		CompatibleRendererGroup,	// The scene renderer
+		VersionedDataObjectRef,		// Vector property + revision number
+		VersionedDataObjectRef,		// Particle position property + revision number
+		FloatType,					// Scaling factor
+		FloatType,					// Arrow width
+		Color,						// Arrow color
+		bool,						// Reverse arrow direction
+		ArrowPosition,				// Arrow position
+		VersionedDataObjectRef		// Vector color property + revision number
+	>;
 
-	// Set shading mode and rendering quality.
-	if(!recreateBuffer) {
-		recreateBuffer |= !(_buffer->setShadingMode(shadingMode()));
-		recreateBuffer |= !(_buffer->setRenderingQuality(renderingQuality()));
-	}
-
-	// Do we have to update contents of the geometry buffer?
-	bool updateContents = _geometryCacheHelper.updateState(
+	// Lookup the rendering primitive in the vis cache.
+	auto& arrowPrimitive = dataset()->visCache().get<std::shared_ptr<ArrowPrimitive>>(CacheKey(
+			renderer,
 			vectorProperty,
 			positionProperty,
-			scalingFactor(), arrowWidth(), arrowColor(), reverseArrowDirection(), arrowPosition(),
-			vectorColorProperty)
-			|| recreateBuffer;
+			scalingFactor(), 
+			arrowWidth(), 
+			arrowColor(), 
+			reverseArrowDirection(), 
+			arrowPosition(),
+			vectorColorProperty));
 
-	// Re-create the geometry buffer if necessary.
-	if(recreateBuffer)
-		_buffer = renderer->createArrowPrimitive(ArrowPrimitive::ArrowShape, shadingMode(), renderingQuality());
-
-	// Update buffer contents.
-	if(updateContents) {
+	// Check if we already have a valid rendering primitive that is up to date.
+	if(!arrowPrimitive 
+			|| !arrowPrimitive->isValid(renderer)
+			|| !arrowPrimitive->setShadingMode(shadingMode())
+			|| !arrowPrimitive->setRenderingQuality(renderingQuality())) {
+	
+		arrowPrimitive = renderer->createArrowPrimitive(ArrowPrimitive::ArrowShape, shadingMode(), renderingQuality());
 
 		// Determine number of non-zero vectors.
 		int vectorCount = 0;
@@ -169,14 +192,14 @@ void VectorVis::render(TimePoint time, DataObject* dataObject, const PipelineFlo
 			}
 		}
 
-		_buffer->startSetElements(vectorCount);
+		arrowPrimitive->startSetElements(vectorCount);
 		if(vectorCount) {
 			FloatType scalingFac = scalingFactor();
 			if(reverseArrowDirection())
 				scalingFac = -scalingFac;
 			ColorA color(arrowColor());
 			FloatType width = arrowWidth();
-			ArrowPrimitive* buffer = _buffer.get();
+			ArrowPrimitive* buffer = arrowPrimitive.get();
 			const Point3* pos = positionProperty->constDataPoint3();
 			const Color* pcol = vectorColorProperty ? vectorColorProperty->constDataColor() : nullptr;
 			int index = 0;
@@ -199,14 +222,14 @@ void VectorVis::render(TimePoint time, DataObject* dataObject, const PipelineFlo
 			OVITO_ASSERT(!pcol || pcol == vectorColorProperty->constDataColor() + vectorColorProperty->size());
 			OVITO_ASSERT(index == vectorCount);
 		}
-		_buffer->endSetElements();
+		arrowPrimitive->endSetElements();
 	}
 
 	if(renderer->isPicking()) {
 		OORef<VectorPickInfo> pickInfo(new VectorPickInfo(this, flowState, vectorProperty));
 		renderer->beginPickObject(contextNode, pickInfo);
 	}
-	_buffer->render(renderer);
+	arrowPrimitive->render(renderer);
 	if(renderer->isPicking()) {
 		renderer->endPickObject();
 	}

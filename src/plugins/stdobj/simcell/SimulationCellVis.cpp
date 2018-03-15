@@ -22,6 +22,10 @@
 #include <plugins/stdobj/StdObj.h>
 #include <core/utilities/units/UnitsManager.h>
 #include <core/rendering/SceneRenderer.h>
+#include <core/rendering/LinePrimitive.h>
+#include <core/rendering/ArrowPrimitive.h>
+#include <core/rendering/ParticlePrimitive.h>
+#include <core/dataset/data/VersionedDataObjectRef.h>
 #include "SimulationCellVis.h"
 #include "SimulationCellObject.h"
 
@@ -88,17 +92,34 @@ void SimulationCellVis::render(TimePoint time, DataObject* dataObject, const Pip
 void SimulationCellVis::renderWireframe(TimePoint time, SimulationCellObject* cell, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
 {
 	if(!renderer->isBoundingBoxPass()) {
+
+		// The key type used for caching the geometry primitive:
+		using CacheKey = std::tuple<
+			CompatibleRendererGroup,	// The scene renderer
+			VersionedDataObjectRef,		// The SimulationCellObject
+			ColorA						// The wireframe color.
+		>;
+
+		// The values stored in the vis cache.
+		struct CacheValue {
+			std::shared_ptr<LinePrimitive> lines;
+			std::shared_ptr<LinePrimitive> pickLines;
+		};
+
 		ColorA color = ViewportSettings::getSettings().viewportColor(contextNode->isSelected() ? ViewportSettings::COLOR_SELECTION : ViewportSettings::COLOR_UNSELECTED);
 
-		if(_wireframeGeometryCacheHelper.updateState(cell, color)
-				|| !_wireframeGeometry
-				|| !_wireframeGeometry->isValid(renderer)
-				|| !_wireframePickingGeometry
-				|| !_wireframePickingGeometry->isValid(renderer)) {
-			_wireframeGeometry = renderer->createLinePrimitive();
-			_wireframePickingGeometry = renderer->createLinePrimitive();
-			_wireframeGeometry->setVertexCount(cell->is2D() ? 8 : 24);
-			_wireframePickingGeometry->setVertexCount(_wireframeGeometry->vertexCount(), renderer->defaultLinePickingWidth());
+		// Lookup the rendering primitive in the vis cache.
+		auto& wireframePrimitives = dataset()->visCache().get<CacheValue>(CacheKey(renderer, cell, color));
+
+		// Check if we already have a valid rendering primitive that is up to date.
+		if(!wireframePrimitives.lines || !wireframePrimitives.pickLines 
+				|| !wireframePrimitives.lines->isValid(renderer)
+				|| !wireframePrimitives.pickLines->isValid(renderer)) {
+
+			wireframePrimitives.lines = renderer->createLinePrimitive();
+			wireframePrimitives.pickLines = renderer->createLinePrimitive();
+			wireframePrimitives.lines->setVertexCount(cell->is2D() ? 8 : 24);
+			wireframePrimitives.pickLines->setVertexCount(wireframePrimitives.lines->vertexCount(), renderer->defaultLinePickingWidth());
 			Point3 corners[8];
 			corners[0] = cell->cellOrigin();
 			if(cell->is2D()) corners[0].z() = 0;
@@ -122,17 +143,17 @@ void SimulationCellVis::renderWireframe(TimePoint time, SimulationCellObject* ce
 				corners[1], corners[5],
 				corners[2], corners[6],
 				corners[3], corners[7]};
-			_wireframeGeometry->setVertexPositions(vertices);
-			_wireframeGeometry->setLineColor(color);
-			_wireframePickingGeometry->setVertexPositions(vertices);
-			_wireframePickingGeometry->setLineColor(color);
+			wireframePrimitives.lines->setVertexPositions(vertices);
+			wireframePrimitives.lines->setLineColor(color);
+			wireframePrimitives.pickLines->setVertexPositions(vertices);
+			wireframePrimitives.pickLines->setLineColor(color);
 		}
 
 		renderer->beginPickObject(contextNode);
 		if(!renderer->isPicking())
-			_wireframeGeometry->render(renderer);
+			wireframePrimitives.lines->render(renderer);
 		else
-			_wireframePickingGeometry->render(renderer);
+			wireframePrimitives.pickLines->render(renderer);
 		renderer->endPickObject();
 	}
 	else {
@@ -147,13 +168,31 @@ void SimulationCellVis::renderWireframe(TimePoint time, SimulationCellObject* ce
 void SimulationCellVis::renderSolid(TimePoint time, SimulationCellObject* cell, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
 {
 	if(!renderer->isBoundingBoxPass()) {
-		if(_solidGeometryCacheHelper.updateState(cell, cellLineWidth(), cellColor())
-				|| !_edgeGeometry || !_cornerGeometry
-				|| !_edgeGeometry->isValid(renderer)
-				|| !_cornerGeometry->isValid(renderer)) {
-			_edgeGeometry = renderer->createArrowPrimitive(ArrowPrimitive::CylinderShape, ArrowPrimitive::NormalShading, ArrowPrimitive::HighQuality);
-			_cornerGeometry = renderer->createParticlePrimitive(ParticlePrimitive::NormalShading, ParticlePrimitive::HighQuality);
-			_edgeGeometry->startSetElements(cell->is2D() ? 4 : 12);
+
+		// The key type used for caching the geometry primitive:
+		using CacheKey = std::tuple<
+			CompatibleRendererGroup,	// The scene renderer
+			VersionedDataObjectRef,		// The simulation cell + revision number
+			FloatType, Color			// Line width + color
+		>;
+
+		// The values stored in the vis cache.
+		struct CacheValue {
+			std::shared_ptr<ArrowPrimitive> lines;
+			std::shared_ptr<ParticlePrimitive> corners;
+		};
+		
+		// Lookup the rendering primitive in the vis cache.
+		auto& solidPrimitives = dataset()->visCache().get<CacheValue>(CacheKey(renderer, cell, cellLineWidth(), cellColor()));
+
+		// Check if we already have a valid rendering primitive that is up to date.
+		if(!solidPrimitives.lines || !solidPrimitives.corners 
+				|| !solidPrimitives.lines->isValid(renderer)
+				|| !solidPrimitives.corners->isValid(renderer)) {
+		
+			solidPrimitives.lines = renderer->createArrowPrimitive(ArrowPrimitive::CylinderShape, ArrowPrimitive::NormalShading, ArrowPrimitive::HighQuality);
+			solidPrimitives.corners  = renderer->createParticlePrimitive(ParticlePrimitive::NormalShading, ParticlePrimitive::HighQuality);
+			solidPrimitives.lines->startSetElements(cell->is2D() ? 4 : 12);
 			ColorA color = (ColorA)cellColor();
 			Point3 corners[8];
 			corners[0] = cell->cellOrigin();
@@ -165,29 +204,29 @@ void SimulationCellVis::renderSolid(TimePoint time, SimulationCellObject* cell, 
 			corners[5] = corners[1] + cell->cellVector3();
 			corners[6] = corners[2] + cell->cellVector3();
 			corners[7] = corners[3] + cell->cellVector3();
-			_edgeGeometry->setElement(0, corners[0], corners[1] - corners[0], color, cellLineWidth());
-			_edgeGeometry->setElement(1, corners[1], corners[2] - corners[1], color, cellLineWidth());
-			_edgeGeometry->setElement(2, corners[2], corners[3] - corners[2], color, cellLineWidth());
-			_edgeGeometry->setElement(3, corners[3], corners[0] - corners[3], color, cellLineWidth());
+			solidPrimitives.lines->setElement(0, corners[0], corners[1] - corners[0], color, cellLineWidth());
+			solidPrimitives.lines->setElement(1, corners[1], corners[2] - corners[1], color, cellLineWidth());
+			solidPrimitives.lines->setElement(2, corners[2], corners[3] - corners[2], color, cellLineWidth());
+			solidPrimitives.lines->setElement(3, corners[3], corners[0] - corners[3], color, cellLineWidth());
 			if(cell->is2D() == false) {
-				_edgeGeometry->setElement(4, corners[4], corners[5] - corners[4], color, cellLineWidth());
-				_edgeGeometry->setElement(5, corners[5], corners[6] - corners[5], color, cellLineWidth());
-				_edgeGeometry->setElement(6, corners[6], corners[7] - corners[6], color, cellLineWidth());
-				_edgeGeometry->setElement(7, corners[7], corners[4] - corners[7], color, cellLineWidth());
-				_edgeGeometry->setElement(8, corners[0], corners[4] - corners[0], color, cellLineWidth());
-				_edgeGeometry->setElement(9, corners[1], corners[5] - corners[1], color, cellLineWidth());
-				_edgeGeometry->setElement(10, corners[2], corners[6] - corners[2], color, cellLineWidth());
-				_edgeGeometry->setElement(11, corners[3], corners[7] - corners[3], color, cellLineWidth());
+				solidPrimitives.lines->setElement(4, corners[4], corners[5] - corners[4], color, cellLineWidth());
+				solidPrimitives.lines->setElement(5, corners[5], corners[6] - corners[5], color, cellLineWidth());
+				solidPrimitives.lines->setElement(6, corners[6], corners[7] - corners[6], color, cellLineWidth());
+				solidPrimitives.lines->setElement(7, corners[7], corners[4] - corners[7], color, cellLineWidth());
+				solidPrimitives.lines->setElement(8, corners[0], corners[4] - corners[0], color, cellLineWidth());
+				solidPrimitives.lines->setElement(9, corners[1], corners[5] - corners[1], color, cellLineWidth());
+				solidPrimitives.lines->setElement(10, corners[2], corners[6] - corners[2], color, cellLineWidth());
+				solidPrimitives.lines->setElement(11, corners[3], corners[7] - corners[3], color, cellLineWidth());
 			}
-			_edgeGeometry->endSetElements();
-			_cornerGeometry->setSize(cell->is2D() ? 4 : 8);
-			_cornerGeometry->setParticlePositions(corners);
-			_cornerGeometry->setParticleRadius(cellLineWidth());
-			_cornerGeometry->setParticleColor(cellColor());
+			solidPrimitives.lines->endSetElements();
+			solidPrimitives.corners ->setSize(cell->is2D() ? 4 : 8);
+			solidPrimitives.corners ->setParticlePositions(corners);
+			solidPrimitives.corners ->setParticleRadius(cellLineWidth());
+			solidPrimitives.corners ->setParticleColor(cellColor());
 		}
 		renderer->beginPickObject(contextNode);
-		_edgeGeometry->render(renderer);
-		_cornerGeometry->render(renderer);
+		solidPrimitives.lines->render(renderer);
+		solidPrimitives.corners ->render(renderer);
 		renderer->endPickObject();
 	}
 	else {

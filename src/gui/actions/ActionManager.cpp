@@ -30,6 +30,7 @@
 #include <gui/viewport/input/ViewportInputManager.h>
 #include <gui/actions/ViewportModeAction.h>
 #include <gui/mainwin/MainWindow.h>
+#include <gui/dialogs/ClonePipelineDialog.h>
 #include "ActionManager.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
@@ -39,9 +40,10 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
 ******************************************************************************/
 ActionManager::ActionManager(MainWindow* mainWindow) : QObject(mainWindow)
 {
-	// Actions need to be updated whenever a new dataset is loaded.
+	// Actions need to be updated whenever a new dataset is loaded or the current selection changes.
 	connect(&mainWindow->datasetContainer(), &DataSetContainer::dataSetChanged, this, &ActionManager::onDataSetChanged);
 	connect(&mainWindow->datasetContainer(), &DataSetContainer::animationSettingsReplaced, this, &ActionManager::onAnimationSettingsReplaced);
+	connect(&mainWindow->datasetContainer(), &DataSetContainer::selectionChangeComplete, this, &ActionManager::onSelectionChangeComplete);
 
 	createCommandAction(ACTION_QUIT, tr("Exit"), ":/gui/actions/file/file_quit.bw.svg", tr("Quit the application."), QKeySequence::Quit);
 	createCommandAction(ACTION_FILE_NEW, tr("Reset State"), ":/gui/actions/file/file_new.bw.svg", tr("Resets the program to its initial state."), QKeySequence::New);
@@ -59,9 +61,11 @@ ActionManager::ActionManager(MainWindow* mainWindow) : QObject(mainWindow)
 
 	createCommandAction(ACTION_EDIT_UNDO, tr("Undo"), ":/gui/actions/edit/edit_undo.bw.svg", tr("Reverse a user action."), QKeySequence::Undo);
 	createCommandAction(ACTION_EDIT_REDO, tr("Redo"), ":/gui/actions/edit/edit_redo.bw.svg", tr("Redo the previously undone user action."), QKeySequence::Redo);
-	createCommandAction(ACTION_EDIT_DELETE, tr("Delete"), ":/gui/actions/edit/edit_delete.bw.svg", tr("Deletes the selected objects."));
+	
+	createCommandAction(ACTION_EDIT_CLONE_PIPELINE, tr("Clone pipeline"), ":/gui/actions/edit/clone_pipeline.bw.svg", tr("Duplicates the current pipeline to show multiple datasets side by side."));
+	createCommandAction(ACTION_EDIT_DELETE, tr("Delete pipeline"), ":/gui/actions/edit/edit_delete.bw.svg", tr("Deletes the selected object from the scene."));
 
-	createCommandAction(ACTION_SETTINGS_DIALOG, tr("&Settings..."), ":/gui/actions/file/preferences.bw.svg", QString(), QKeySequence::Preferences);
+	createCommandAction(ACTION_SETTINGS_DIALOG, tr("&Application settings..."), ":/gui/actions/file/preferences.bw.svg", QString(), QKeySequence::Preferences);
 
 	createCommandAction(ACTION_RENDER_ACTIVE_VIEWPORT, tr("Render Active Viewport"), ":/gui/actions/rendering/render_active_viewport.bw.svg");
 
@@ -176,6 +180,15 @@ void ActionManager::onAnimationIntervalChanged(TimeInterval newAnimationInterval
 }
 
 /******************************************************************************
+* This is called whenever the scene node selection changed.
+******************************************************************************/
+void ActionManager::onSelectionChangeComplete(SelectionSet* selection)
+{
+	getAction(ACTION_EDIT_DELETE)->setEnabled(selection && !selection->nodes().empty());
+	getAction(ACTION_EDIT_CLONE_PIPELINE)->setEnabled(selection && !selection->nodes().empty());
+}
+
+/******************************************************************************
 * Invokes the command action with the given ID.
 ******************************************************************************/
 void ActionManager::invokeAction(const QString& actionId)
@@ -239,7 +252,7 @@ QAction* ActionManager::createViewportModeAction(const QString& id, ViewportInpu
 ******************************************************************************/
 void ActionManager::on_EditDelete_triggered()
 {
-	UndoableTransaction::handleExceptions(_dataset->undoStack(), tr("Delete"), [this]() {
+	UndoableTransaction::handleExceptions(_dataset->undoStack(), tr("Delete pipeline"), [this]() {
 		// Delete all nodes in selection set.
 		for(SceneNode* node : _dataset->selection()->nodes())
 			node->deleteNode();
@@ -248,6 +261,17 @@ void ActionManager::on_EditDelete_triggered()
 		if(_dataset->sceneRoot()->children().isEmpty() == false)
 			_dataset->selection()->setNode(_dataset->sceneRoot()->children().front());
 	});
+}
+
+/******************************************************************************
+* Handles ACTION_EDIT_CLONE_PIPELINE command
+******************************************************************************/
+void ActionManager::on_ClonePipeline_triggered()
+{
+	if(PipelineSceneNode* node = dynamic_object_cast<PipelineSceneNode>(_dataset->selection()->firstNode())) {
+		ClonePipelineDialog dialog(node, mainWindow());
+		dialog.exec();
+	}
 }
 
 OVITO_END_INLINE_NAMESPACE

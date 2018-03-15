@@ -69,11 +69,6 @@ public:
 	/// Updates the stored trajectories from the source particle object.
 	bool generateTrajectories(TaskManager& taskManager);
 
-protected:
-
-	/// Handles reference events sent by reference targets of this object.
-	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
-
 private:
 
 	/// Controls which particles trajectories are created for.
@@ -95,7 +90,7 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, unwrapTrajectories, setUnwrapTrajectories);
 
 	/// The vis element for rendering the trajectory lines.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(TrajectoryVis, trajectoryVis, setTrajectoryVis, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);	
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(TrajectoryVis, trajectoryVis, setTrajectoryVis, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE | PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES);
 };
 
 

@@ -19,6 +19,11 @@
 	<file>actions/edit/mode_move.bw.svg</file>
 	<file>actions/edit/mode_rotate.bw.svg</file>
 	<file>actions/edit/mode_scale.png</file>
+	<file>actions/edit/clone_pipeline.bw.svg</file>	
+	<file>actions/edit/clone_displace_mode_none.svg</file>	
+	<file>actions/edit/clone_displace_mode_x.svg</file>	
+	<file>actions/edit/clone_displace_mode_y.svg</file>	
+	<file>actions/edit/clone_displace_mode_z.svg</file>	
 	
 	<file>actions/file/file_new.bw.svg</file>
 	<file>actions/file/file_open.bw.svg</file>

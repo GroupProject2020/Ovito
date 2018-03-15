@@ -49,6 +49,7 @@ SET(SourceFiles
 	dialogs/LoadImageFileDialog.cpp
 	dialogs/RemoteAuthenticationDialog.cpp
 	dialogs/FileExporterSettingsDialog.cpp
+	dialogs/ClonePipelineDialog.cpp
 	actions/ActionManager.cpp
 	actions/FileActions.cpp
 	actions/ViewportActions.cpp

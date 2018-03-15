@@ -58,11 +58,13 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
 #define ACTION_HELP_OPENGL_INFO			"HelpOpenGLInfo"
 
 /// This action undoes the last operation.
-#define ACTION_EDIT_UNDO		"EditUndo"
+#define ACTION_EDIT_UNDO			"EditUndo"
 /// This action does the last undone operation again.
-#define ACTION_EDIT_REDO		"EditRedo"
-/// This action deletes the selected objects.
-#define ACTION_EDIT_DELETE		"EditDelete"
+#define ACTION_EDIT_REDO			"EditRedo"
+/// This action deletes the selected scene object.
+#define ACTION_EDIT_DELETE			"EditDelete"
+/// This action duplicates the selected scene object.
+#define ACTION_EDIT_CLONE_PIPELINE	"ClonePipeline"
 
 /// This action maximizes the active viewport.
 #define ACTION_VIEWPORT_MAXIMIZE					"ViewportMaximize"
@@ -197,6 +199,9 @@ private Q_SLOTS:
 	/// This is called when the active animation interval has changed.
 	void onAnimationIntervalChanged(TimeInterval newAnimationInterval);
 
+	/// This is called whenever the scene node selection changed.
+	void onSelectionChangeComplete(SelectionSet* selection);
+
 	void on_Quit_triggered();
 	void on_HelpAbout_triggered();
 	void on_HelpOpenGLInfo_triggered();
@@ -225,6 +230,7 @@ private Q_SLOTS:
 	void on_AnimationSettings_triggered();
 	void on_RenderActiveViewport_triggered();
 	void on_EditDelete_triggered();
+	void on_ClonePipeline_triggered();
 
 private:
 
@@ -246,5 +252,3 @@ private:
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

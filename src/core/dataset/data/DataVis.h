@@ -88,6 +88,9 @@ public:
 	/// \undoable
 	void setObjectTitle(const QString& title) { setTitle(title); }
 
+	/// \brief Returns all pipeline nodes whose pipeline produced this visualization element.
+	QSet<PipelineSceneNode*> dependentNodes() const;
+
 private:
 
 	/// Controls whether the visualization element is enabled.
