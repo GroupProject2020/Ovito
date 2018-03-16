@@ -152,13 +152,18 @@ void ModifyCommandPage::onSelectionChangeComplete(SelectionSet* newSelection)
 void ModifyCommandPage::onSelectedItemChanged()
 {
 	PipelineListItem* currentItem = _pipelineListModel->selectedItem();
-	RefTarget* object = currentItem ? currentItem->object() : nullptr;
+	RefTarget* editObject = nullptr;
 
-	if(currentItem != nullptr)
+	if(currentItem != nullptr) {
 		_aboutRollout->hide();
+		if(currentItem->modifierApplications().empty())
+			editObject = currentItem->object();
+		else
+			editObject = currentItem->modifierApplications().front();
+	}
 
-	if(object != _propertiesPanel->editObject()) {
-		_propertiesPanel->setEditObject(object);
+	if(editObject != _propertiesPanel->editObject()) {
+		_propertiesPanel->setEditObject(editObject);
 		if(_datasetContainer.currentSet())
 			_datasetContainer.currentSet()->viewportConfig()->updateViewports();
 	}

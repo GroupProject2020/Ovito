@@ -201,6 +201,7 @@ void defineSceneSubmodule(py::module m)
 					l.append(py::cast(modApp));
 				return l;
 			})
+		// Internal method required by implementation of Pipeline.modifiers:
 		.def("create_modifier_application", &Modifier::createModifierApplication)
 		.def("initialize_modifier", &Modifier::initializeModifier)
 	;
@@ -209,7 +210,7 @@ void defineSceneSubmodule(py::module m)
 	;
 	
 	ovito_class<ModifierApplication, CachingPipelineObject>{m}
-		.def_property_readonly("modifier", &ModifierApplication::modifier)
+		.def_property("modifier", &ModifierApplication::modifier, &ModifierApplication::setModifier)
 		.def_property("input", &ModifierApplication::input, &ModifierApplication::setInput)
 	;
 

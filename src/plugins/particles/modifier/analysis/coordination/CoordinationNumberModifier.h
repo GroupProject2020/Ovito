@@ -59,9 +59,6 @@ public:
 	/// Constructor.
 	Q_INVOKABLE CoordinationNumberModifier(DataSet* dataset);
 
-	/// \brief Create a new modifier application that refers to this modifier instance.
-	virtual OORef<ModifierApplication> createModifierApplication() override;
-
 protected:
 	
 	/// Creates a computation engine that will compute the modifier's results.

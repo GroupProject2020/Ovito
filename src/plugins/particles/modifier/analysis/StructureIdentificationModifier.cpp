@@ -34,6 +34,7 @@ DEFINE_REFERENCE_FIELD(StructureIdentificationModifier, structureTypes);
 DEFINE_PROPERTY_FIELD(StructureIdentificationModifier, onlySelectedParticles);
 SET_PROPERTY_FIELD_LABEL(StructureIdentificationModifier, structureTypes, "Structure types");
 SET_PROPERTY_FIELD_LABEL(StructureIdentificationModifier, onlySelectedParticles, "Use only selected particles");
+SET_MODIFIER_APPLICATION_TYPE(StructureIdentificationModifier, StructureIdentificationModifierApplication);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -49,16 +50,6 @@ StructureIdentificationModifier::StructureIdentificationModifier(DataSet* datase
 bool StructureIdentificationModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
 	return input.findObject<ParticleProperty>() != nullptr;
-}
-
-/******************************************************************************
-* Create a new modifier application that refers to this modifier instance.
-******************************************************************************/
-OORef<ModifierApplication> StructureIdentificationModifier::createModifierApplication()
-{
-	OORef<ModifierApplication> modApp = new StructureIdentificationModifierApplication(dataset());
-	modApp->setModifier(this);
-	return modApp;
 }
 
 /******************************************************************************

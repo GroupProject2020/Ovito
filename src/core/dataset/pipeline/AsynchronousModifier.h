@@ -88,9 +88,6 @@ public:
 	/// Constructor.
 	AsynchronousModifier(DataSet* dataset);
 
-	/// Create a new modifier application that refers to this modifier instance.
-	virtual OORef<ModifierApplication> createModifierApplication() override;
-	
 	/// Asks the object for the result of the data pipeline.
 	virtual Future<PipelineFlowState> evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 

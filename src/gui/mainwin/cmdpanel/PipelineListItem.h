@@ -74,7 +74,7 @@ private:
 	/// The object represented by this item in the list box.
 	DECLARE_REFERENCE_FIELD_FLAGS(RefTarget, object, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
-	/// The list of modifier application if this is a modifier item.
+	/// The list of modifier applications if this is a modifier item.
 	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD_FLAGS(ModifierApplication, modifierApplications, setModifierApplications, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
 	/// If this is a sub-object entry then this points to the parent.

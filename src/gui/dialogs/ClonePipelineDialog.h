@@ -94,8 +94,9 @@ private:
 	QGraphicsItem* _joinLine;
 
 	QActionGroup* _displacementDirectionGroup;
-
-	QLineEdit* _nameEdit;
+	QCheckBox* _shareVisElements;
+	QLineEdit* _originalNameEdit;
+	QLineEdit* _cloneNameEdit;
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -57,9 +57,6 @@ public:
 	/// \brief Constructor.
 	Q_INVOKABLE GenerateTrajectoryLinesModifier(DataSet* dataset);
 
-	/// Creates a new modifier application that refers to this modifier instance.
-	virtual OORef<ModifierApplication> createModifierApplication() override;
-
 	/// Modifies the input data in an immediate, preliminary way.
 	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 

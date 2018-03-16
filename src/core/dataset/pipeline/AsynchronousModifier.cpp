@@ -41,16 +41,6 @@ AsynchronousModifier::AsynchronousModifier(DataSet* dataset) : Modifier(dataset)
 }
 
 /******************************************************************************
-* Create a new modifier application that refers to this modifier instance.
-******************************************************************************/
-OORef<ModifierApplication> AsynchronousModifier::createModifierApplication()
-{
-	OORef<ModifierApplication> modApp = new AsynchronousModifierApplication(dataset());
-	modApp->setModifier(this);
-	return modApp;
-}
-
-/******************************************************************************
 * Asks the object for the result of the data pipeline.
 ******************************************************************************/
 Future<PipelineFlowState> AsynchronousModifier::evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)

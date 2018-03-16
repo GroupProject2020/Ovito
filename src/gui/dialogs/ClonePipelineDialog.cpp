@@ -48,20 +48,24 @@ ClonePipelineDialog::ClonePipelineDialog(PipelineSceneNode* node, QWidget* paren
 	_pipelineView->setSceneRect(_pipelineView->sceneRect().marginsAdded(QMarginsF(15,15,15,15)));
 	_pipelineView->setRenderHint(QPainter::Antialiasing);
 	sublayout1->addWidget(_pipelineView, 1);
+	_shareVisElements = new QCheckBox(tr("Share visual elements"));
+	sublayout1->addWidget(_shareVisElements);
 
 	QGroupBox* displacementBox = new QGroupBox(tr("Displace cloned pipeline"));
 	mainLayout->addWidget(displacementBox);
 	QHBoxLayout* sublayout2 = new QHBoxLayout(displacementBox);
 	QToolBar* displacementToolBar = new QToolBar(displacementBox);
-	sublayout2->addWidget(displacementToolBar);
-	sublayout2->addStretch(1);
+	displacementToolBar->setToolButtonStyle(Qt::ToolButtonIconOnly);
 	displacementToolBar->setIconSize(QSize(64,64));
+	displacementToolBar->setStyleSheet("QToolBar { padding: 0px; margin: 0px; border: 0px none black; spacing: 8px; } QToolButton { padding: 0px; margin: 0px; }");
+	sublayout2->addWidget(displacementToolBar);
 	_displacementDirectionGroup = new QActionGroup(this);
 	_displacementDirectionGroup->setExclusive(true);
 	QAction* displacementNoneAction = displacementToolBar->addAction(QIcon(":/gui/actions/edit/clone_displace_mode_none.svg"), tr("Do not displace clone"));
 	QAction* displacementXAction = displacementToolBar->addAction(QIcon(":/gui/actions/edit/clone_displace_mode_x.svg"), tr("Displace clone along X axis"));
 	QAction* displacementYAction = displacementToolBar->addAction(QIcon(":/gui/actions/edit/clone_displace_mode_y.svg"), tr("Displace clone along Y axis"));
 	QAction* displacementZAction = displacementToolBar->addAction(QIcon(":/gui/actions/edit/clone_displace_mode_z.svg"), tr("Displace clone along Z axis"));
+	sublayout2->addStretch(1);
 	displacementNoneAction->setCheckable(true);
 	displacementXAction->setCheckable(true);
 	displacementYAction->setCheckable(true);
@@ -76,12 +80,19 @@ ClonePipelineDialog::ClonePipelineDialog(PipelineSceneNode* node, QWidget* paren
 	_displacementDirectionGroup->addAction(displacementYAction);
 	_displacementDirectionGroup->addAction(displacementZAction);
 
-	QGroupBox* nameBox = new QGroupBox(tr("Cloned pipeline name (optional)"));
+	QGroupBox* nameBox = new QGroupBox(tr("Pipeline names"));
 	mainLayout->addWidget(nameBox);
 	sublayout2 = new QHBoxLayout(nameBox);
-	_nameEdit = new QLineEdit(nameBox);
-	sublayout2->addWidget(_nameEdit);
-	_nameEdit->setPlaceholderText(node->objectTitle());
+	sublayout2->setSpacing(2);
+	_originalNameEdit = new QLineEdit(nameBox);
+	_cloneNameEdit = new QLineEdit(nameBox);
+	sublayout2->addWidget(new QLabel(tr("Original:")));
+	sublayout2->addWidget(_originalNameEdit, 1);
+	sublayout2->addSpacing(10);
+	sublayout2->addWidget(new QLabel(tr("Clone:")));
+	sublayout2->addWidget(_cloneNameEdit, 1);
+	_originalNameEdit->setPlaceholderText(node->objectTitle());
+	_cloneNameEdit->setPlaceholderText(node->objectTitle());
 
 	QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel | QDialogButtonBox::Help, Qt::Horizontal, this);
 	connect(buttonBox, &QDialogButtonBox::accepted, this, &ClonePipelineDialog::onAccept);
@@ -129,10 +140,12 @@ void ClonePipelineDialog::initializeGraphicsScene()
 	QGraphicsSimpleTextItem* textItem;
 
 	auto addShadowEffect = [this](QGraphicsItem* item) {
+#if 0   // Shadows diabled to work around Qt bug https://bugreports.qt.io/browse/QTBUG-65035 
 		QGraphicsDropShadowEffect* effect = new QGraphicsDropShadowEffect(this);
 		effect->setOffset(3);
 		effect->setBlurRadius(2);
 		item->setGraphicsEffect(effect);
+#endif
 	};
 
 	// Create the boxes for the two pipeline heads.
@@ -211,6 +224,25 @@ void ClonePipelineDialog::initializeGraphicsScene()
 		addShadowEffect(s.objItem3);
 
 		QToolBar* modeSelectorBar = new QToolBar();
+		modeSelectorBar->setStyleSheet(
+			"QToolBar { "
+			"   padding: 4px; margin: 0px; border: 0px none black; spacing: 4px; "
+			"   background: none; "
+			"} "
+			"QToolButton { "
+			"   padding: 4px; "
+			"   border-radius: 2px; "
+			"   border: 1px outset #8f8f91; "
+			"   background-color: rgb(220,220,220); "
+			"} "
+			"QToolButton:pressed { "
+			"   border-style: inset; "
+      		"   background-color: rgb(240,240,240); "
+			"} "
+			"QToolButton:checked { "
+			"   border-style: inset; "
+      		"   background-color: rgb(180,180,220); "
+			"}");
 		QAction* copyAction = modeSelectorBar->addAction(tr("Copy"));
 		QAction* joinAction = modeSelectorBar->addAction(tr("Join"));
 		unifiedMapper->setMapping(joinAction, line-1);
@@ -363,15 +395,18 @@ void ClonePipelineDialog::onAccept()
 				precedingObj = s->pipelineObject;
 			}
 			else if(s->cloneMode() == CloneMode::Copy) {
-				OORef<PipelineObject> clonedObject = cloneHelper.cloneObject(s->pipelineObject, true);
-				if(ModifierApplication* clonedModApp = dynamic_object_cast<ModifierApplication>(clonedObject))
+				OORef<PipelineObject> clonedObject = cloneHelper.cloneObject(s->pipelineObject, !_shareVisElements->isChecked());
+				if(ModifierApplication* clonedModApp = dynamic_object_cast<ModifierApplication>(clonedObject)) {
 					clonedModApp->setInput(precedingObj);
-				else if(FileSource* clonedFileSource = dynamic_object_cast<FileSource>(clonedObject))
+					clonedModApp->setModifier(cloneHelper.cloneObject(clonedModApp->modifier(), true));
+				}
+				else if(FileSource* clonedFileSource = dynamic_object_cast<FileSource>(clonedObject)) {
 					clonedFileSource->setAdjustAnimationIntervalEnabled(false);
+				}
 				precedingObj = clonedObject;
 			}
 			else if(s->cloneMode() == CloneMode::Share) {
-				OORef<ModifierApplication> clonedModApp = cloneHelper.cloneObject(s->modApp, false);
+				OORef<ModifierApplication> clonedModApp = cloneHelper.cloneObject(s->modApp, !_shareVisElements->isChecked());
 				clonedModApp->setInput(precedingObj);
 				precedingObj = clonedModApp;
 			}
@@ -382,9 +417,14 @@ void ClonePipelineDialog::onAccept()
 		clonedPipeline->setDataProvider(precedingObj);
 
 		// Give the cloned pipeline the user-defined name.
-		QString nodeName = _nameEdit->text().trimmed();
+		QString nodeName = _cloneNameEdit->text().trimmed();
 		if(nodeName.isEmpty() == false)
 			clonedPipeline->setNodeName(nodeName);
+
+		// Give the original pipeline the user-defined name.
+		nodeName = _originalNameEdit->text().trimmed();
+		if(nodeName.isEmpty() == false)
+			_originalNode->setNodeName(nodeName);
 		
 		// Translate cloned pipeline.
 		int displacementMode = _displacementDirectionGroup->checkedAction()->data().toInt();

@@ -30,9 +30,11 @@
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Properties)
 
 IMPLEMENT_OVITO_CLASS(InterpolateTrajectoryModifier);
-IMPLEMENT_OVITO_CLASS(InterpolateTrajectoryModifierApplication);
 DEFINE_PROPERTY_FIELD(InterpolateTrajectoryModifier, useMinimumImageConvention);
 SET_PROPERTY_FIELD_LABEL(InterpolateTrajectoryModifier, useMinimumImageConvention, "Use minimum image convention");
+
+IMPLEMENT_OVITO_CLASS(InterpolateTrajectoryModifierApplication);
+SET_MODIFIER_APPLICATION_TYPE(InterpolateTrajectoryModifier, InterpolateTrajectoryModifierApplication);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -48,16 +50,6 @@ InterpolateTrajectoryModifier::InterpolateTrajectoryModifier(DataSet* dataset) :
 bool InterpolateTrajectoryModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
 	return input.findObject<ParticleProperty>() != nullptr;
-}
-
-/******************************************************************************
-* Create a new modifier application that refers to this modifier instance.
-******************************************************************************/
-OORef<ModifierApplication> InterpolateTrajectoryModifier::createModifierApplication()
-{
-	OORef<ModifierApplication> modApp = new InterpolateTrajectoryModifierApplication(dataset());
-	modApp->setModifier(this);
-	return modApp;
 }
 
 /******************************************************************************

@@ -322,6 +322,7 @@ void PipelineSceneNode::applyModifier(Modifier* modifier)
 	OVITO_ASSERT(modifier);
 
 	OORef<ModifierApplication> modApp = modifier->createModifierApplication();
+	modApp->setModifier(modifier);
 	modApp->setInput(dataProvider());
 	modifier->initializeModifier(modApp);
 	setDataProvider(modApp);
@@ -387,6 +388,9 @@ void PipelineSceneNode::deleteNode()
 {
 	// Remove pipeline.
 	setDataProvider(nullptr);
+
+	// Discard references to display objects.
+	_visElements.clear(this, PROPERTY_FIELD(visElements));
 
 	SceneNode::deleteNode();
 }

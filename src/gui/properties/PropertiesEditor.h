@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -62,7 +62,7 @@ public:
 protected:
 
 	/// \brief The constructor.
-	PropertiesEditor();
+	PropertiesEditor() = default;
 
 public:
 
@@ -116,10 +116,9 @@ public Q_SLOTS:
 	///                  as the previous object. 
 	///
 	/// This method generates a contentsReplaced() and a contentsChanged() signal.
-	void setEditObject(RefTarget* newObject, RefTarget* newContextObject = nullptr) {
+	void setEditObject(RefTarget* newObject) {
 		OVITO_ASSERT_MSG(!editObject() || !newObject || newObject->getOOClass().isDerivedFrom(editObject()->getOOClass()),
 				"PropertiesEditor::setEditObject()", "This properties editor was not made for this object class.");
-		_contextObject.set(this, PROPERTY_FIELD(contextObject), newContextObject);
 		_editObject.set(this, PROPERTY_FIELD(editObject), newObject);
 	}
 
@@ -150,16 +149,13 @@ protected:
 private:
 	
 	/// The container widget the editor is shown in.
-	PropertiesPanel* _container;
+	PropertiesPanel* _container = nullptr;
 
 	/// The main window that hosts the editor.
-	MainWindow* _mainWindow;
+	MainWindow* _mainWindow = nullptr;
 
 	/// The object being edited in this editor.
 	DECLARE_REFERENCE_FIELD_FLAGS(RefTarget, editObject, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
-
-	/// The auxiliary object being edited.
-	DECLARE_REFERENCE_FIELD_FLAGS(RefTarget, contextObject, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 	
 	/// The list of rollout widgets that have been created by editor.
 	/// The cleanup handler is used to delete them when the editor is being deleted.

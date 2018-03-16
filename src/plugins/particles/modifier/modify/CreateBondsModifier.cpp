@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -49,6 +49,7 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CreateBondsModifier, minimumCutoff, WorldPa
 
 IMPLEMENT_OVITO_CLASS(CreateBondsModifierApplication);
 DEFINE_REFERENCE_FIELD(CreateBondsModifierApplication, bondsVis);
+SET_MODIFIER_APPLICATION_TYPE(CreateBondsModifier, CreateBondsModifierApplication);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -67,16 +68,6 @@ CreateBondsModifier::CreateBondsModifier(DataSet* dataset) : AsynchronousModifie
 bool CreateBondsModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
 	return input.findObject<ParticleProperty>() != nullptr;
-}
-
-/******************************************************************************
-* Create a new modifier application that refers to this modifier instance.
-******************************************************************************/
-OORef<ModifierApplication> CreateBondsModifier::createModifierApplication()
-{
-	OORef<ModifierApplication> modApp = new CreateBondsModifierApplication(dataset());
-	modApp->setModifier(this);
-	return modApp;
 }
 
 /******************************************************************************

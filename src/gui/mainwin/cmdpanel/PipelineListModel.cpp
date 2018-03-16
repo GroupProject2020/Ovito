@@ -94,7 +94,7 @@ void PipelineListModel::refreshList()
 
 	// Determine the currently selected object and
 	// select it again after the list has been rebuilt (and it is still there).
-	// If _nextObjectToSelect is already non-NULL then the caller
+	// If _nextObjectToSelect is already non-null then the caller
 	// has specified an object to be selected.
 	if(_nextObjectToSelect == nullptr) {
 		if(PipelineListItem* item = selectedItem())
@@ -102,8 +102,8 @@ void PipelineListModel::refreshList()
 	}
 	RefTarget* defaultObjectToSelect = nullptr;
 
-	// Collect all selected ObjectNodes.
-	// Also check if all selected object nodes reference the same pipeline object.
+	// Collect all selected pipeline nodes.
+	// Also check if all selected pipeline nodes reference the same pipeline.
 	_selectedNodes.clear();
     PipelineObject* cmnObject = nullptr;
 
@@ -271,6 +271,7 @@ void PipelineListModel::applyModifiers(const QVector<OORef<Modifier>>& modifiers
 				for(ModifierApplication* predecessorModApp : predecessor->modifierApplications()) {
 					for(Modifier* modifier : modifiers) {
 						OORef<ModifierApplication> modApp = modifier->createModifierApplication();
+						modApp->setModifier(modifier);
 						modApp->setInput(predecessorModApp->input());
 						modifier->initializeModifier(modApp);
 						predecessorModApp->setInput(modApp);
@@ -371,22 +372,22 @@ QVariant PipelineListModel::data(const QModelIndex& index, int role) const
 		else if(Modifier* modifier = dynamic_object_cast<Modifier>(item->object())) {
 			QSet<PipelineSceneNode*> pipelines;
 			for(ModifierApplication* modApp : modifier->modifierApplications()) {
-				pipelines += modApp->dependentNodes();
+				pipelines += modApp->dependentNodes(true);
 			}
 			if(pipelines.size() > 1)
 				return _sharedObjectFont;
 		}
 		else if(PipelineObject* pipelineObject = dynamic_object_cast<PipelineObject>(item->object())) {
-			if(pipelineObject->dependentNodes().size() > 1)
+			if(pipelineObject->dependentNodes(true).size() > 1)
 				return _sharedObjectFont;
 		}
 		else if(DataVis* visElement = dynamic_object_cast<DataVis>(item->object())) {
-			if(visElement->dependentNodes().size() > 1)
+			if(visElement->dependentNodes(true).size() > 1)
 				return _sharedObjectFont;
 		}
 	}
 
-	return QVariant();
+	return {};
 }
 
 /******************************************************************************

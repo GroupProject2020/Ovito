@@ -35,7 +35,6 @@
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
 IMPLEMENT_OVITO_CLASS(PolyhedralTemplateMatchingModifier);
-IMPLEMENT_OVITO_CLASS(PolyhedralTemplateMatchingModifierApplication);
 DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, rmsdCutoff);
 DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputRmsd);
 DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputInteratomicDistance);
@@ -49,6 +48,9 @@ SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputOrientation, 
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputDeformationGradient, "Output deformation gradients");
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputAlloyTypes, "Output alloy types");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(PolyhedralTemplateMatchingModifier, rmsdCutoff, FloatParameterUnit, 0);
+
+IMPLEMENT_OVITO_CLASS(PolyhedralTemplateMatchingModifierApplication);
+SET_MODIFIER_APPLICATION_TYPE(PolyhedralTemplateMatchingModifier, PolyhedralTemplateMatchingModifierApplication);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -68,16 +70,6 @@ PolyhedralTemplateMatchingModifier::PolyhedralTemplateMatchingModifier(DataSet* 
 	createStructureType(BCC, ParticleType::PredefinedStructureType::BCC);
 	createStructureType(ICO, ParticleType::PredefinedStructureType::ICO);
 	createStructureType(SC, ParticleType::PredefinedStructureType::SC);
-}
-
-/******************************************************************************
-* Creates a new modifier application that refers to this modifier instance.
-******************************************************************************/
-OORef<ModifierApplication> PolyhedralTemplateMatchingModifier::createModifierApplication()
-{
-	OORef<ModifierApplication> modApp = new PolyhedralTemplateMatchingModifierApplication(dataset());
-	modApp->setModifier(this);
-	return modApp;
 }
 
 /******************************************************************************

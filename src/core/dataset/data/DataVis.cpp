@@ -55,13 +55,15 @@ void DataVis::setStatus(const PipelineStatus& status)
 /******************************************************************************
 * Returns all pipeline nodes whose pipeline produced this visualization element.
 ******************************************************************************/
-QSet<PipelineSceneNode*> DataVis::dependentNodes() const
+QSet<PipelineSceneNode*> DataVis::dependentNodes(bool skipRemovedNodes) const
 {
 	QSet<PipelineSceneNode*> nodeList;
 	for(RefMaker* dependent : this->dependents()) {
 		if(PipelineSceneNode* node = dynamic_object_cast<PipelineSceneNode>(dependent)) {
-            if(node->visElements().contains(const_cast<DataVis*>(this)))
-	    		nodeList.insert(node);
+            if(node->visElements().contains(const_cast<DataVis*>(this))) {
+				if(!skipRemovedNodes || node->isInScene())
+		    		nodeList.insert(node);
+			}
 		}
 	}
 	return nodeList;

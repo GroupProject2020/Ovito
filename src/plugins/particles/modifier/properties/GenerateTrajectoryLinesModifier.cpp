@@ -53,6 +53,7 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(GenerateTrajectoryLinesModifier, everyNthFr
 
 IMPLEMENT_OVITO_CLASS(GenerateTrajectoryLinesModifierApplication);
 DEFINE_REFERENCE_FIELD(GenerateTrajectoryLinesModifierApplication, trajectoryData);
+SET_MODIFIER_APPLICATION_TYPE(GenerateTrajectoryLinesModifier, GenerateTrajectoryLinesModifierApplication);
 
 /******************************************************************************
 * Constructor.
@@ -75,16 +76,6 @@ GenerateTrajectoryLinesModifier::GenerateTrajectoryLinesModifier(DataSet* datase
 bool GenerateTrajectoryLinesModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
 	return input.findObject<ParticleProperty>() != nullptr;
-}
-
-/******************************************************************************
-* Create a new modifier application that refers to this modifier instance.
-******************************************************************************/
-OORef<ModifierApplication> GenerateTrajectoryLinesModifier::createModifierApplication()
-{
-	OORef<ModifierApplication> modApp = new GenerateTrajectoryLinesModifierApplication(dataset());
-	modApp->setModifier(this);
-	return modApp;
 }
 
 /******************************************************************************

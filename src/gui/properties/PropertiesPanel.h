@@ -46,12 +46,9 @@ public:
 	
 	/// Returns the target object being edited in the panel.
 	RefTarget* editObject() const;
-
-	/// Returns the auxiliary object being edited in the panel.
-	RefTarget* contextObject() const;
 	
 	/// Sets the target object being edited in the panel.
-	void setEditObject(RefTarget* editObject, RefTarget* contextObject = nullptr);
+	void setEditObject(RefTarget* editObject);
 
 	/// Returns the editor that is responsible for the object being edited.
 	PropertiesEditor* editor() const { return _editor; }

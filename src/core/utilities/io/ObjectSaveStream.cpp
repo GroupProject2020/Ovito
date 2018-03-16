@@ -51,9 +51,9 @@ void ObjectSaveStream::saveObject(OvitoObject* object, bool excludeRecomputableD
 		*this << (quint32)0;
 	}
 	else {
-		// Instead of saveing the object's data, we only assign a unique instance ID to the object here
-		// and write the ID to the stream. The object's contents will get saved when the stream
-		// is closed.
+		// Instead of saving the object's data, we only assign a unique instance ID to the object here
+		// and write that ID to the stream. The object itself will get saved later when the stream
+		// is being closed.
 		OVITO_CHECK_OBJECT_POINTER(object);
 		OVITO_ASSERT(_objects.size() == _objectMap.size());
 		quint32& id = _objectMap[object];

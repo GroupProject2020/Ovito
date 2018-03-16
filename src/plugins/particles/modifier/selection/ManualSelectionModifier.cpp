@@ -35,6 +35,7 @@ IMPLEMENT_OVITO_CLASS(ManualSelectionModifier);
 IMPLEMENT_OVITO_CLASS(ManualSelectionModifierApplication);
 DEFINE_REFERENCE_FIELD(ManualSelectionModifierApplication, selectionSet);
 SET_PROPERTY_FIELD_LABEL(ManualSelectionModifierApplication, selectionSet, "Particle selection set");
+SET_MODIFIER_APPLICATION_TYPE(ManualSelectionModifier, ManualSelectionModifierApplication);
 
 /******************************************************************************
 * Asks the modifier whether it can be applied to the given input data.
@@ -42,16 +43,6 @@ SET_PROPERTY_FIELD_LABEL(ManualSelectionModifierApplication, selectionSet, "Part
 bool ManualSelectionModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
 	return input.findObject<ParticleProperty>() != nullptr;
-}
-
-/******************************************************************************
-* Create a new modifier application that refers to this modifier instance.
-******************************************************************************/
-OORef<ModifierApplication> ManualSelectionModifier::createModifierApplication()
-{
-	OORef<ModifierApplication> modApp = new ManualSelectionModifierApplication(dataset());
-	modApp->setModifier(this);
-	return modApp;
 }
 
 /******************************************************************************

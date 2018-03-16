@@ -38,6 +38,16 @@ SET_PROPERTY_FIELD_LABEL(ModifierApplication, input, "Input");
 SET_PROPERTY_FIELD_CHANGE_EVENT(ModifierApplication, input, ReferenceEvent::PipelineChanged);
 
 /******************************************************************************
+* Returns the global class registry, which allows looking up the 
+* ModifierApplication subclass for a Modifier subclass.
+******************************************************************************/
+ModifierApplication::Registry& ModifierApplication::registry() 
+{
+	static Registry singleton;
+	return singleton;
+}
+
+/******************************************************************************
 * Constructor.
 ******************************************************************************/
 ModifierApplication::ModifierApplication(DataSet* dataset) : CachingPipelineObject(dataset)

@@ -118,9 +118,6 @@ public:
 	/// Constructor.
 	StructureIdentificationModifier(DataSet* dataset);
 
-	/// \brief Create a new modifier application that refers to this modifier instance.
-	virtual OORef<ModifierApplication> createModifierApplication() override;
-
 protected:
 
 	/// Saves the class' contents to the given stream.

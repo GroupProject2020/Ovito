@@ -33,20 +33,16 @@
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 
 IMPLEMENT_OVITO_CLASS(CoordinationPolyhedraModifier);
-DEFINE_REFERENCE_FIELD(CoordinationPolyhedraModifier, surfaceMeshVis);
-SET_PROPERTY_FIELD_LABEL(CoordinationPolyhedraModifier, surfaceMeshVis, "Surface mesh vis");
+
+IMPLEMENT_OVITO_CLASS(CoordinationPolyhedraModifierApplication);
+DEFINE_REFERENCE_FIELD(CoordinationPolyhedraModifierApplication, surfaceMeshVis);
+SET_MODIFIER_APPLICATION_TYPE(CoordinationPolyhedraModifier, CoordinationPolyhedraModifierApplication);
 
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
 CoordinationPolyhedraModifier::CoordinationPolyhedraModifier(DataSet* dataset) : AsynchronousModifier(dataset)
 {
-	// Create the vis element for rendering the created polyhedra.
-	setSurfaceMeshVis(new SurfaceMeshVis(dataset));
-	surfaceMeshVis()->setShowCap(false);
-	surfaceMeshVis()->setSmoothShading(false);
-	surfaceMeshVis()->setSurfaceTransparency(FloatType(0.25));
-	surfaceMeshVis()->setObjectTitle(tr("Polyhedra"));
 }
 
 /******************************************************************************
@@ -309,6 +305,7 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::constructConvexHull(
 ******************************************************************************/
 PipelineFlowState CoordinationPolyhedraModifier::ComputePolyhedraResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
+	CoordinationPolyhedraModifierApplication* myModApp = static_object_cast<CoordinationPolyhedraModifierApplication>(modApp);
 	CoordinationPolyhedraModifier* modifier = static_object_cast<CoordinationPolyhedraModifier>(modApp->modifier());
 	PipelineFlowState output = input;
 
@@ -316,7 +313,7 @@ PipelineFlowState CoordinationPolyhedraModifier::ComputePolyhedraResults::apply(
 	OORef<SurfaceMesh> meshObj(new SurfaceMesh(modApp->dataset()));
 	meshObj->setStorage(mesh());
 	meshObj->setDomain(input.findObject<SimulationCellObject>());
-	meshObj->addVisElement(modifier->surfaceMeshVis());
+	meshObj->setVisElement(myModApp->surfaceMeshVis());
 
 	// Insert data object into the output data collection.
 	output.addObject(meshObj);

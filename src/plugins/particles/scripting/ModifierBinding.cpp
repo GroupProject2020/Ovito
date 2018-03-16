@@ -1223,8 +1223,6 @@ void defineModifiersSubmodule(py::module m)
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"Constructs coordination polyhedra around currently selected particles. "
 			"A coordination polyhedron is the convex hull spanned by the bonded neighbors of a particle. ")
-		.def_property("vis", &CoordinationPolyhedraModifier::surfaceMeshVis, &CoordinationPolyhedraModifier::setSurfaceMeshVis,
-				"A :py:class:`~ovito.vis.SurfaceMeshVis` instance controlling the visual representation of the generated polyhedra.\n")
 	;
 	
 	ovito_class<GenerateTrajectoryLinesModifier, Modifier>(m,

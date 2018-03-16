@@ -49,9 +49,23 @@ Modifier::Modifier(DataSet* dataset) : RefTarget(dataset),
 ******************************************************************************/
 OORef<ModifierApplication> Modifier::createModifierApplication()
 {
-	OORef<ModifierApplication> modApp = new ModifierApplication(dataset());
-	modApp->setModifier(this);
-	return modApp;
+	// Look which ModifierApplication class has been registered for this Modifier class.
+	for(OvitoClassPtr clazz = &getOOClass(); clazz != nullptr; clazz = clazz->superClass()) {
+		if(OvitoClassPtr modAppClass = ModifierApplication::registry().getModAppClass(clazz)) {
+			if(!modAppClass->isDerivedFrom(ModifierApplication::OOClass()))
+				throwException(tr("The modifier application class %1 assigned to the Modifier-derived class %2 is not derived from ModifierApplication.").arg(modAppClass->name(), clazz->name()));
+#ifdef OVITO_DEBUG
+			for(OvitoClassPtr superClazz = clazz->superClass(); superClazz != nullptr; superClazz = superClazz->superClass()) {
+				if(OvitoClassPtr modAppSuperClass = ModifierApplication::registry().getModAppClass(superClazz)) {
+					if(!modAppClass->isDerivedFrom(*modAppSuperClass))
+						throwException(tr("The modifier application class %1 assigned to the Modifier-derived class %2 is not derived from the ModifierApplication specialization %3.").arg(modAppClass->name(), clazz->name(), modAppSuperClass->name()));
+				}
+			}
+#endif
+			return static_object_cast<ModifierApplication>(modAppClass->createInstance(dataset()));
+		}
+	}
+	return new ModifierApplication(dataset());
 }
 
 /******************************************************************************

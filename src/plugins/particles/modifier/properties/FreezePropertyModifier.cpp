@@ -41,6 +41,7 @@ IMPLEMENT_OVITO_CLASS(FreezePropertyModifierApplication);
 DEFINE_REFERENCE_FIELD(FreezePropertyModifierApplication, property);
 DEFINE_REFERENCE_FIELD(FreezePropertyModifierApplication, identifiers);
 DEFINE_REFERENCE_FIELD(FreezePropertyModifierApplication, cachedVisElements);
+SET_MODIFIER_APPLICATION_TYPE(FreezePropertyModifier, FreezePropertyModifierApplication);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -56,16 +57,6 @@ FreezePropertyModifier::FreezePropertyModifier(DataSet* dataset) : Modifier(data
 bool FreezePropertyModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
 	return input.findObject<ParticleProperty>() != nullptr;
-}
-
-/******************************************************************************
-* Create a new modifier application that refers to this modifier instance.
-******************************************************************************/
-OORef<ModifierApplication> FreezePropertyModifier::createModifierApplication()
-{
-	OORef<ModifierApplication> modApp = new FreezePropertyModifierApplication(dataset());
-	modApp->setModifier(this);
-	return modApp;
 }
 
 /******************************************************************************

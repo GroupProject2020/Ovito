@@ -44,9 +44,9 @@ PropertiesPanel::~PropertiesPanel()
 /******************************************************************************
 * Sets the target object being edited in the panel.
 ******************************************************************************/
-void PropertiesPanel::setEditObject(RefTarget* newEditObject, RefTarget* newContextObject)
+void PropertiesPanel::setEditObject(RefTarget* newEditObject)
 {
-	if(newEditObject == editObject() && newContextObject == contextObject() && (newEditObject != nullptr) == (editor() != nullptr))
+	if(newEditObject == editObject() && (newEditObject != nullptr) == (editor() != nullptr))
 		return;
 
 	if(editor()) {
@@ -56,7 +56,7 @@ void PropertiesPanel::setEditObject(RefTarget* newEditObject, RefTarget* newCont
 		if(newEditObject != nullptr && editor()->editObject() != nullptr
 			&& editor()->editObject()->getOOClass() == newEditObject->getOOClass()) {
 			
-			editor()->setEditObject(newEditObject, newContextObject);
+			editor()->setEditObject(newEditObject);
 			return;
 		}
 		else {
@@ -70,7 +70,7 @@ void PropertiesPanel::setEditObject(RefTarget* newEditObject, RefTarget* newCont
 		_editor = PropertiesEditor::create(newEditObject);
 		if(editor() && _mainWindow) {
 			editor()->initialize(this, _mainWindow, RolloutInsertionParameters());
-			editor()->setEditObject(newEditObject, newContextObject);
+			editor()->setEditObject(newEditObject);
 		}
 	}
 }
@@ -82,15 +82,6 @@ RefTarget* PropertiesPanel::editObject() const
 {
 	if(!editor()) return nullptr;
 	return editor()->editObject();
-}
-
-/******************************************************************************
-* Returns the auxiliary object being edited in the panel
-******************************************************************************/
-RefTarget* PropertiesPanel::contextObject() const
-{
-	if(!editor()) return nullptr;
-	return editor()->contextObject();
 }
 
 OVITO_END_INLINE_NAMESPACE

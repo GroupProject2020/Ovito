@@ -89,7 +89,7 @@ public:
 	void setObjectTitle(const QString& title) { setTitle(title); }
 
 	/// \brief Returns all pipeline nodes whose pipeline produced this visualization element.
-	QSet<PipelineSceneNode*> dependentNodes() const;
+	QSet<PipelineSceneNode*> dependentNodes(bool skipRemovedNodes = false) const;
 
 private:
 

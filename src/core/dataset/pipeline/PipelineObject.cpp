@@ -39,16 +39,18 @@ PipelineObject::PipelineObject(DataSet* dataset) : RefTarget(dataset)
 /******************************************************************************
 * Returns a list of object nodes that have this object in their pipeline.
 ******************************************************************************/
-QSet<PipelineSceneNode*> PipelineObject::dependentNodes() const
+QSet<PipelineSceneNode*> PipelineObject::dependentNodes(bool skipRemovedNodes) const
 {
 	QSet<PipelineSceneNode*> nodeList;
 	for(RefMaker* dependent : this->dependents()) {
 		if(PipelineObject* pobj = dynamic_object_cast<PipelineObject>(dependent)) {
-			nodeList.unite(pobj->dependentNodes());
+			nodeList.unite(pobj->dependentNodes(skipRemovedNodes));
 		}
 		else if(PipelineSceneNode* node = dynamic_object_cast<PipelineSceneNode>(dependent)) {
-            if(node->dataProvider() == this)
-	    		nodeList.insert(node);
+            if(node->dataProvider() == this) {
+				if(!skipRemovedNodes || node->isInScene())
+		    		nodeList.insert(node);
+			}
 		}
 	}
 	return nodeList;

@@ -58,6 +58,7 @@ SET_PROPERTY_FIELD_LABEL(HistogramModifier, yAxisRangeEnd, "Y-range end");
 SET_PROPERTY_FIELD_LABEL(HistogramModifier, sourceProperty, "Source property");
 SET_PROPERTY_FIELD_LABEL(HistogramModifier, onlySelected, "Use only selected elements");
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(HistogramModifier, numberOfBins, IntegerParameterUnit, 1, 100000);
+SET_MODIFIER_APPLICATION_TYPE(HistogramModifier, HistogramModifierApplication);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -78,16 +79,6 @@ HistogramModifier::HistogramModifier(DataSet* dataset) : GenericPropertyModifier
 	// Operate on particle properties by default.
 	setPropertyClass(static_cast<const PropertyClass*>(
 		PluginManager::instance().findClass(QStringLiteral("Particles"), QStringLiteral("ParticleProperty"))));	
-}
-
-/******************************************************************************
-* Create a new modifier application that refers to this modifier instance.
-******************************************************************************/
-OORef<ModifierApplication> HistogramModifier::createModifierApplication()
-{
-	OORef<ModifierApplication> modApp = new HistogramModifierApplication(dataset());
-	modApp->setModifier(this);
-	return modApp;
 }
 
 /******************************************************************************

@@ -59,9 +59,6 @@ public:
 	/// \brief Constructs a new instance of this class.
 	Q_INVOKABLE ComputePropertyModifier(DataSet* dataset);
 
-	/// \brief Create a new modifier application that refers to this modifier instance.
-	virtual OORef<ModifierApplication> createModifierApplication() override;
-
 	/// \brief This virtual method is called by the system when the modifier has been inserted into a PipelineObject.
 	virtual void initializeModifier(ModifierApplication* modApp) override;
 

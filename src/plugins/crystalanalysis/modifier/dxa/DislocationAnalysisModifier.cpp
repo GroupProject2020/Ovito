@@ -68,6 +68,7 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(DislocationAnalysisModifier, lineSmoothingL
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(DislocationAnalysisModifier, linePointInterval, FloatParameterUnit, 0);
 
 IMPLEMENT_OVITO_CLASS(DislocationAnalysisModifierApplication);
+SET_MODIFIER_APPLICATION_TYPE(DislocationAnalysisModifier, DislocationAnalysisModifierApplication);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -169,16 +170,6 @@ DislocationAnalysisModifier::DislocationAnalysisModifier(DataSet* dataset) : Str
 	hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("<0001>"), Vector3(0.0f, 0.0f, sqrt(4.0f/3.0f)), Color(0.2f,0.2f,1)));
 	hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f), 0.0f), Color(1,0,1)));
 	hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/3<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f)/3.0f, 0.0f), Color(1,0.5f,0)));
-}
-
-/******************************************************************************
-* Creates a new modifier application that refers to this modifier instance.
-******************************************************************************/
-OORef<ModifierApplication> DislocationAnalysisModifier::createModifierApplication()
-{
-	OORef<ModifierApplication> modApp = new DislocationAnalysisModifierApplication(dataset());
-	modApp->setModifier(this);
-	return modApp;
 }
 
 /******************************************************************************

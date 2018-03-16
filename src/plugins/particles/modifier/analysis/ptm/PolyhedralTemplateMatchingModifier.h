@@ -81,9 +81,6 @@ public:
 	/// Constructor.
 	Q_INVOKABLE PolyhedralTemplateMatchingModifier(DataSet* dataset);
 
-	/// Creates a new modifier application that refers to this modifier instance.
-	virtual OORef<ModifierApplication> createModifierApplication() override;
-		
 	/// This method indicates whether cached computation results of the modifier should be discarded whenever
 	/// a parameter of the modifier changes.
 	virtual bool discardResultsOnModifierChange(const PropertyFieldEvent& event) const override { 
