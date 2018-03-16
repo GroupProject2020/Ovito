@@ -34,14 +34,16 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 IMPLEMENT_OVITO_CLASS(ConstructSurfaceModifier);
 DEFINE_PROPERTY_FIELD(ConstructSurfaceModifier, smoothingLevel);
 DEFINE_PROPERTY_FIELD(ConstructSurfaceModifier, probeSphereRadius);
-DEFINE_REFERENCE_FIELD(ConstructSurfaceModifier, surfaceMeshVis);
 DEFINE_PROPERTY_FIELD(ConstructSurfaceModifier, onlySelectedParticles);
 SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, smoothingLevel, "Smoothing level");
 SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, probeSphereRadius, "Probe sphere radius");
-SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, surfaceMeshVis, "Surface mesh vis");
 SET_PROPERTY_FIELD_LABEL(ConstructSurfaceModifier, onlySelectedParticles, "Use only selected particles");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ConstructSurfaceModifier, probeSphereRadius, WorldParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ConstructSurfaceModifier, smoothingLevel, IntegerParameterUnit, 0);
+
+IMPLEMENT_OVITO_CLASS(ConstructSurfaceModifierApplication);
+DEFINE_REFERENCE_FIELD(ConstructSurfaceModifierApplication, surfaceMeshVis);
+SET_MODIFIER_APPLICATION_TYPE(ConstructSurfaceModifier, ConstructSurfaceModifierApplication);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -51,8 +53,6 @@ ConstructSurfaceModifier::ConstructSurfaceModifier(DataSet* dataset) : Asynchron
 	_probeSphereRadius(4), 
 	_onlySelectedParticles(false)
 {
-	// Create the vis element.
-	setSurfaceMeshVis(new SurfaceMeshVis(dataset));
 }
 
 /******************************************************************************
@@ -175,15 +175,15 @@ void ConstructSurfaceModifier::ConstructSurfaceEngine::perform()
 ******************************************************************************/
 PipelineFlowState ConstructSurfaceModifier::ConstructSurfaceResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
+	ConstructSurfaceModifierApplication* myModApp = static_object_cast<ConstructSurfaceModifierApplication>(modApp);
 	ConstructSurfaceModifier* modifier = static_object_cast<ConstructSurfaceModifier>(modApp->modifier());
-	OVITO_ASSERT(modifier);
 
 	// Create the output data object.
 	OORef<SurfaceMesh> meshObj(new SurfaceMesh(modApp->dataset()));
 	meshObj->setStorage(mesh());
 	meshObj->setIsCompletelySolid(isCompletelySolid());
 	meshObj->setDomain(input.findObject<SimulationCellObject>());
-	meshObj->addVisElement(modifier->surfaceMeshVis());
+	meshObj->addVisElement(myModApp->surfaceMeshVis());
 
 	// Insert output object into the pipeline.
 	PipelineFlowState output = input;
@@ -202,4 +202,3 @@ PipelineFlowState ConstructSurfaceModifier::ConstructSurfaceResults::apply(TimeP
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-

@@ -48,8 +48,6 @@ ClonePipelineDialog::ClonePipelineDialog(PipelineSceneNode* node, QWidget* paren
 	_pipelineView->setSceneRect(_pipelineView->sceneRect().marginsAdded(QMarginsF(15,15,15,15)));
 	_pipelineView->setRenderHint(QPainter::Antialiasing);
 	sublayout1->addWidget(_pipelineView, 1);
-	_shareVisElements = new QCheckBox(tr("Share visual elements"));
-	sublayout1->addWidget(_shareVisElements);
 
 	QGroupBox* displacementBox = new QGroupBox(tr("Displace cloned pipeline"));
 	mainLayout->addWidget(displacementBox);
@@ -395,7 +393,7 @@ void ClonePipelineDialog::onAccept()
 				precedingObj = s->pipelineObject;
 			}
 			else if(s->cloneMode() == CloneMode::Copy) {
-				OORef<PipelineObject> clonedObject = cloneHelper.cloneObject(s->pipelineObject, !_shareVisElements->isChecked());
+				OORef<PipelineObject> clonedObject = cloneHelper.cloneObject(s->pipelineObject, false);
 				if(ModifierApplication* clonedModApp = dynamic_object_cast<ModifierApplication>(clonedObject)) {
 					clonedModApp->setInput(precedingObj);
 					clonedModApp->setModifier(cloneHelper.cloneObject(clonedModApp->modifier(), true));
@@ -406,7 +404,7 @@ void ClonePipelineDialog::onAccept()
 				precedingObj = clonedObject;
 			}
 			else if(s->cloneMode() == CloneMode::Share) {
-				OORef<ModifierApplication> clonedModApp = cloneHelper.cloneObject(s->modApp, !_shareVisElements->isChecked());
+				OORef<ModifierApplication> clonedModApp = cloneHelper.cloneObject(s->modApp, false);
 				clonedModApp->setInput(precedingObj);
 				precedingObj = clonedModApp;
 			}

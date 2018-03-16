@@ -54,7 +54,11 @@ ModifierListBox::ModifierListBox(QWidget* parent, PipelineListModel* pipelineLis
 	for(ModifierClassPtr clazz : PluginManager::instance().metaclassMembers<Modifier>()) {
 		// Sort modifiers into categories.
 		QString categoryName = clazz->modifierCategory();
-		if(!categoryName.isEmpty()) {
+		if(categoryName == QStringLiteral("-")) {
+			// This modifier requests to be hidden from the user.
+			// Do not add it to the list of available modifiers.
+		}
+		else if(!categoryName.isEmpty()) {
 			// Check if category has already been created.
 			bool found = false;
 			for(auto& category : modifierCategories) {

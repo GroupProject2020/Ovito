@@ -25,9 +25,10 @@
 #include <core/dataset/data/TransformingDataVis.h>
 #include <core/dataset/pipeline/PipelineObject.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
-#include <core/viewport/Viewport.h>
 #include <core/dataset/DataSetContainer.h>
 #include <core/dataset/animation/AnimationSettings.h>
+#include <core/viewport/Viewport.h>
+#include <core/oo/CloneHelper.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
@@ -116,10 +117,13 @@ SharedFuture<PipelineFlowState> PipelineSceneNode::evaluatePipeline(TimePoint ti
 
 	// Evaluate the pipeline and store the obtained results in the cache before returning them to the caller.
 	return dataProvider()->evaluate(time)
-		.then(executor(), [this, time](const PipelineFlowState& state) {
+		.then(executor(), [this, time](PipelineFlowState state) {
 
 			// The pipeline should never return a state without proper validity interval.
 			OVITO_ASSERT(state.stateValidity().contains(time));
+
+			// Inject our unique copies of visual elements into the pipeline output.
+			replaceVisualElements(state);
 
 			// We maintain a data cache for the current animation time.
 			if(_pipelineCache.insert(state, this)) {
@@ -127,7 +131,7 @@ SharedFuture<PipelineFlowState> PipelineSceneNode::evaluatePipeline(TimePoint ti
 			}
 
 			// Simply forward the pipeline results to the caller by default.
-			return state;
+			return std::move(state);
 		});
 }
 
@@ -191,11 +195,11 @@ void PipelineSceneNode::updateVisElementList(TimePoint time)
 {
 	const PipelineFlowState& state = _pipelineCache.getAt(time);
 
-	// First discard those elements which are no longer needed.
+	// First, discard those elements which are no longer needed.
 	for(int i = visElements().size() - 1; i >= 0; i--) {
 		DataVis* vis = visElements()[i];
 		// Check if the element is still being referenced by any of the data objects
-		// came out of the pipeline.
+		// that came out of the pipeline.
 		if(std::none_of(state.objects().begin(), state.objects().end(),
 				[vis](DataObject* obj) { return obj->visElements().contains(vis); })) {
 			_visElements.remove(this, PROPERTY_FIELD(visElements), i);
@@ -395,6 +399,50 @@ void PipelineSceneNode::deleteNode()
 	SceneNode::deleteNode();
 }
 
+/******************************************************************************
+* Replaces the given visual element in this pipeline's output with a unique copy.
+******************************************************************************/
+void PipelineSceneNode::makeVisElementUnique(DataVis* visElement)
+{
+	OVITO_ASSERT(visElement != nullptr);
+	OVITO_ASSERT(_uniqueVisElementMapping.find(visElement) == _uniqueVisElementMapping.end());
+
+	// Clone the visual element.
+	CloneHelper cloneHelper;
+	OORef<DataVis> clonedVisElement = cloneHelper.cloneObject(visElement, true);
+
+	// Put the copy into our mapping table, which will subsequently be applied 
+	// after every pipeline evaluation to replace the upstream visual element
+	// with our local copy.
+	_uniqueVisElementMapping.emplace(visElement, std::move(clonedVisElement));
+
+	// Let everyone know that this scene node has changed.
+	notifyTargetChanged();
+}
+
+/******************************************************************************
+* Replaces upstream visual elements with our own unique copies.
+******************************************************************************/
+void PipelineSceneNode::replaceVisualElements(PipelineFlowState& state)
+{
+	if(_uniqueVisElementMapping.empty())
+		return;	// Nothing to do.
+
+	CloneHelper cloneHelper;
+	for(DataObject* dataObj : state.objects()) {
+
+		// Skip data objects having no visual elements.
+		if(dataObj->visElements().empty()) continue;
+
+		// Clone the data object so that we can replace its visual elements.
+		if(dataObj->numberOfStrongReferences() > 1) {
+			OORef<DataObject> clone = cloneHelper.cloneObject(dataObj, false);
+			if(!state.replaceObject(dataObj, clone)) 
+				continue;
+			dataObj = clone;
+		}
+	}	
+}
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

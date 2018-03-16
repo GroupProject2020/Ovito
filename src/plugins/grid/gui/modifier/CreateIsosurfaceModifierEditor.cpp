@@ -64,9 +64,6 @@ void CreateIsosurfaceModifierEditor::createUI(const RolloutInsertionParameters& 
 	// Status label.
 	layout1->addSpacing(8);
 	layout1->addWidget(statusLabel());
-
-	// Open a sub-editor for the mesh vis element.
-	new SubObjectParameterUI(this, PROPERTY_FIELD(CreateIsosurfaceModifier::surfaceMeshVis), rolloutParams.after(rollout));
 }
 
 OVITO_END_INLINE_NAMESPACE

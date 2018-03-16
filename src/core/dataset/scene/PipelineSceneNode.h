@@ -83,6 +83,9 @@ public:
 	/// \brief Deletes this node from the scene.
 	virtual void deleteNode() override;
 
+	/// \brief Replaces the given visual element in this pipeline's output with a unique copy.
+	void makeVisElementUnique(DataVis* visElement);
+
 protected:
 
 	/// This method is called when a referenced object has changed.
@@ -103,6 +106,9 @@ protected:
 	/// Rebuilds the list of visual elements maintained by the scene node.
 	void updateVisElementList(TimePoint time);
 
+	/// Replaces upstream visual elements with our own unique copies.
+	void replaceVisualElements(PipelineFlowState& state);
+
 private:
 
 	/// The terminal object of the pipeline that outputs the data to be rendered by this PipelineSceneNode.
@@ -121,6 +127,9 @@ private:
 
 	/// The cached results from a preliminary pipeline evaluation.
 	PipelineFlowState _pipelinePreliminaryCache;
+
+	/// The mapping of upstream visual elements to unique copies of the visual elements.
+	std::map<QPointer<DataVis>, OORef<DataVis>> _uniqueVisElementMapping;
 };
 
 OVITO_END_INLINE_NAMESPACE

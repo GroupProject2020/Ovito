@@ -43,7 +43,6 @@ DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, edgeCount);
 DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, edgeThreshold);
 DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, faceThreshold);
 DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, relativeFaceThreshold);
-DEFINE_REFERENCE_FIELD(VoronoiAnalysisModifier, bondsVis);
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, onlySelected, "Use only selected particles");
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, useRadii, "Use particle radii");
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, computeIndices, "Compute Voronoi indices");
@@ -52,11 +51,15 @@ SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, edgeCount, "Maximum edge count
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, edgeThreshold, "Edge length threshold");
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, faceThreshold, "Absolute face area threshold");
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, relativeFaceThreshold, "Relative face area threshold");
-SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, bondsVis, "Bonds vis");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(VoronoiAnalysisModifier, edgeThreshold, WorldParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(VoronoiAnalysisModifier, faceThreshold, FloatParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(VoronoiAnalysisModifier, relativeFaceThreshold, PercentParameterUnit, 0, 1);
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(VoronoiAnalysisModifier, edgeCount, IntegerParameterUnit, 3, 18);
+
+IMPLEMENT_OVITO_CLASS(VoronoiAnalysisModifierApplication);
+DEFINE_REFERENCE_FIELD(VoronoiAnalysisModifierApplication, bondsVis);
+SET_MODIFIER_APPLICATION_TYPE(VoronoiAnalysisModifier, VoronoiAnalysisModifierApplication);
+
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -71,8 +74,6 @@ VoronoiAnalysisModifier::VoronoiAnalysisModifier(DataSet* dataset) : Asynchronou
 	_computeBonds(false),
 	_relativeFaceThreshold(0)
 {
-	// Create the vis element for bonds rendering.
-	setBondsVis(new BondsVis(dataset));
 }
 
 /******************************************************************************
@@ -481,6 +482,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 ******************************************************************************/
 PipelineFlowState VoronoiAnalysisModifier::VoronoiAnalysisResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
+	VoronoiAnalysisModifierApplication* myModApp = static_object_cast<VoronoiAnalysisModifierApplication>(modApp);
 	VoronoiAnalysisModifier* modifier = static_object_cast<VoronoiAnalysisModifier>(modApp->modifier());
 	
 	PipelineFlowState output = input;
@@ -509,7 +511,7 @@ PipelineFlowState VoronoiAnalysisModifier::VoronoiAnalysisResults::apply(TimePoi
 
 	if(modifier->computeBonds()) {
 		// Insert output object into the pipeline.
-		poh.addBonds(bonds(), modifier->bondsVis());
+		poh.addBonds(bonds(), myModApp->bondsVis());
 	}
 
 	output.attributes().insert(QStringLiteral("Voronoi.max_face_order"), QVariant::fromValue(maxFaceOrder().load()));

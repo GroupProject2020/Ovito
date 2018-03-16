@@ -119,6 +119,7 @@ void StandardSceneRenderer::initializeGLState()
 
 	// Setup GL viewport.
 	setRenderingViewport(0, 0, _framebufferSize.width(), _framebufferSize.height());
+	setClearColor(ColorA(renderSettings()->backgroundColor(), 0));
 }
 
 /******************************************************************************

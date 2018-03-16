@@ -606,6 +606,7 @@ void defineModifiersSubmodule(py::module m)
 				":return: The cutoff distance set for the type pair. Returns zero if no cutoff has been set for the pair.\n",
 				py::arg("type_a"), py::arg("type_b"))
 	;
+	ovito_class<CreateBondsModifierApplication, AsynchronousModifierApplication>{m};
 
 	py::enum_<CreateBondsModifier::CutoffMode>(CreateBondsModifier_py, "Mode")
 		.value("Uniform", CreateBondsModifier::UniformCutoff)
@@ -854,16 +855,19 @@ void defineModifiersSubmodule(py::module m)
 			"   The computed displacement vectors\n"			
 			" * ``Displacement Magnitude`` (:py:class:`~ovito.data.ParticleProperty`):\n"
 			"   The length of the computed displacement vectors\n"
+			"\n\n"
+			"**Usage example**"
+			"\n\n"
+			"A :py:class:`~ovito.vis.VectorVis` instance controlling the visual representation of the computed "
+			"displacement vectors. "
+			"Note that the computed displacement vectors are not shown by default. You can enable "
+			"the arrow display as follows: "
+			"\n\n"
+			".. literalinclude:: ../example_snippets/calculate_displacements.py\n"
+			"   :lines: 3-\n"
 			"\n")
-		.def_property("vis", &CalculateDisplacementsModifier::vectorVis, &CalculateDisplacementsModifier::setVectorVis,
-				"A :py:class:`~ovito.vis.VectorVis` instance controlling the visual representation of the computed "
-				"displacement vectors. "
-				"Note that the computed displacement vectors are not shown by default. You can enable "
-				"the arrow display as follows: "
-				"\n\n"
-				".. literalinclude:: ../example_snippets/calculate_displacements.py\n"
-				"   :lines: 3-\n")
 	;
+	ovito_class<CalculateDisplacementsModifierApplication, ReferenceConfigurationModifierApplication>{m};
 
 	ovito_class<AtomicStrainModifier, ReferenceConfigurationModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.ReferenceConfigurationModifier`"
@@ -1066,6 +1070,7 @@ void defineModifiersSubmodule(py::module m)
 				":Minimum: 3\n"
 				":Default: 6\n")
 	;
+	ovito_class<VoronoiAnalysisModifierApplication, AsynchronousModifierApplication>{m};
 
 	ovito_class<LoadTrajectoryModifier, Modifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
@@ -1224,6 +1229,7 @@ void defineModifiersSubmodule(py::module m)
 			"Constructs coordination polyhedra around currently selected particles. "
 			"A coordination polyhedron is the convex hull spanned by the bonded neighbors of a particle. ")
 	;
+	ovito_class<CoordinationPolyhedraModifierApplication, AsynchronousModifierApplication>{m};
 	
 	ovito_class<GenerateTrajectoryLinesModifier, Modifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
@@ -1282,9 +1288,8 @@ void defineModifiersSubmodule(py::module m)
 			},
 			"Generates the trajectory lines by sampling the positions of the particles from the upstream pipeline in regular animation time intervals. "
 			"Make sure you call this method *after* the modifier has been inserted into the pipeline. ")
-		.def_property("vis", &GenerateTrajectoryLinesModifier::trajectoryVis, &GenerateTrajectoryLinesModifier::setTrajectoryVis,
-				"The :py:class:`~ovito.vis.TrajectoryVis` object controlling the visual appearance of the trajectory lines created by this modifier.")
-	;	
+	;
+	ovito_class<GenerateTrajectoryLinesModifierApplication, ModifierApplication>{m};
 }
 
 OVITO_END_INLINE_NAMESPACE

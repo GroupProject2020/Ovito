@@ -94,7 +94,6 @@ private:
 	QGraphicsItem* _joinLine;
 
 	QActionGroup* _displacementDirectionGroup;
-	QCheckBox* _shareVisElements;
 	QLineEdit* _originalNameEdit;
 	QLineEdit* _cloneNameEdit;
 };

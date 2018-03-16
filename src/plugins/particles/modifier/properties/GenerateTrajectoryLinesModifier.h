@@ -85,9 +85,6 @@ private:
 
 	/// Controls whether trajectories are unwrapped when crossing periodic boundaries.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, unwrapTrajectories, setUnwrapTrajectories);
-
-	/// The vis element for rendering the trajectory lines.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(TrajectoryVis, trajectoryVis, setTrajectoryVis, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE | PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES);
 };
 
 
@@ -102,12 +99,18 @@ class OVITO_PARTICLES_EXPORT GenerateTrajectoryLinesModifierApplication : public
 public:
 
 	/// Constructor.
-	Q_INVOKABLE GenerateTrajectoryLinesModifierApplication(DataSet* dataset) : ModifierApplication(dataset) {}
+	Q_INVOKABLE GenerateTrajectoryLinesModifierApplication(DataSet* dataset) : ModifierApplication(dataset) {
+		// Create the vis element for rendering the trajectories created by the modifier.
+		setTrajectoryVis(new TrajectoryVis(dataset));
+	}
 
 private:
 
 	/// The cached trajectory line data.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(TrajectoryObject, trajectoryData, setTrajectoryData, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_NO_SUB_ANIM);
+
+	/// The vis element for rendering the trajectory lines.
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(TrajectoryVis, trajectoryVis, setTrajectoryVis, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE | PROPERTY_FIELD_OPEN_SUBEDITOR);
 };
 
 }	// End of namespace

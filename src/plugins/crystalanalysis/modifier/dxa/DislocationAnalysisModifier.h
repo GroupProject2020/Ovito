@@ -72,15 +72,6 @@ private:
 	/// The catalog of structure patterns.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(PatternCatalog, patternCatalog, setPatternCatalog, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);
 
-	/// The visualization element for rendering the defect mesh.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SurfaceMeshVis, defectMeshVis, setDefectMeshVis, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE | PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES);
-
-	/// The visualization element for rendering the interface mesh.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SurfaceMeshVis, interfaceMeshVis, setInterfaceMeshVis, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE | PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES);
-
-	/// The visualization element for rendering the dislocations.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(DislocationVis, dislocationVis, setDislocationVis, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE | PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES);
-
 	/// The number of iterations of the mesh smoothing algorithm.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, defectMeshSmoothingLevel, setDefectMeshSmoothingLevel);
 	
@@ -110,7 +101,22 @@ class OVITO_PARTICLES_EXPORT DislocationAnalysisModifierApplication : public Str
 public:
 
 	/// Constructor.
-	Q_INVOKABLE DislocationAnalysisModifierApplication(DataSet* dataset) : StructureIdentificationModifierApplication(dataset) {}
+	Q_INVOKABLE DislocationAnalysisModifierApplication(DataSet* dataset) : StructureIdentificationModifierApplication(dataset) {
+		// Create the vis elements.
+		setDislocationVis(new DislocationVis(dataset));
+
+		setDefectMeshVis(new SurfaceMeshVis(dataset));
+		defectMeshVis()->setShowCap(true);
+		defectMeshVis()->setSmoothShading(true);
+		defectMeshVis()->setCapTransparency(0.5);
+		defectMeshVis()->setObjectTitle(tr("Defect mesh"));
+
+		setInterfaceMeshVis(new SurfaceMeshVis(dataset));
+		interfaceMeshVis()->setShowCap(false);
+		interfaceMeshVis()->setSmoothShading(false);
+		interfaceMeshVis()->setCapTransparency(0.5);
+		interfaceMeshVis()->setObjectTitle(tr("Interface mesh"));		
+	}
 
 	/// Returns the number of segments found per dislocation type.
 	const std::map<BurgersVectorFamily*,int>& segmentCounts() const { return _segmentCounts; }
@@ -131,6 +137,15 @@ private:
 	
 	/// The total length of segments found per dislocation type.
 	std::map<BurgersVectorFamily*,FloatType> _dislocationLengths;
+
+	/// The visualization element for rendering the defect mesh.
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SurfaceMeshVis, defectMeshVis, setDefectMeshVis, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE);
+
+	/// The visualization element for rendering the interface mesh.
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SurfaceMeshVis, interfaceMeshVis, setInterfaceMeshVis, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE);
+
+	/// The visualization element for rendering the dislocations.
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(DislocationVis, dislocationVis, setDislocationVis, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE);
 };
 
 }	// End of namespace

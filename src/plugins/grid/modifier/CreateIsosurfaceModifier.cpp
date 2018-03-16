@@ -33,10 +33,12 @@ namespace Ovito { namespace Grid {
 IMPLEMENT_OVITO_CLASS(CreateIsosurfaceModifier);
 DEFINE_PROPERTY_FIELD(CreateIsosurfaceModifier, sourceProperty);
 DEFINE_REFERENCE_FIELD(CreateIsosurfaceModifier, isolevelController);
-DEFINE_REFERENCE_FIELD(CreateIsosurfaceModifier, surfaceMeshVis);
 SET_PROPERTY_FIELD_LABEL(CreateIsosurfaceModifier, sourceProperty, "Source property");
 SET_PROPERTY_FIELD_LABEL(CreateIsosurfaceModifier, isolevelController, "Isolevel");
-SET_PROPERTY_FIELD_LABEL(CreateIsosurfaceModifier, surfaceMeshVis, "Surface mesh vis");
+
+IMPLEMENT_OVITO_CLASS(CreateIsosurfaceModifierApplication);
+DEFINE_REFERENCE_FIELD(CreateIsosurfaceModifierApplication, surfaceMeshVis);
+SET_MODIFIER_APPLICATION_TYPE(CreateIsosurfaceModifier, CreateIsosurfaceModifierApplication);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -44,12 +46,6 @@ SET_PROPERTY_FIELD_LABEL(CreateIsosurfaceModifier, surfaceMeshVis, "Surface mesh
 CreateIsosurfaceModifier::CreateIsosurfaceModifier(DataSet* dataset) : AsynchronousModifier(dataset)
 {
 	setIsolevelController(ControllerManager::createFloatController(dataset));
-
-	// Create the vis element.
-	setSurfaceMeshVis(new SurfaceMeshVis(dataset));
-	surfaceMeshVis()->setShowCap(false);
-	surfaceMeshVis()->setSmoothShading(true);
-	surfaceMeshVis()->setObjectTitle(tr("Isosurface"));
 }
 
 /******************************************************************************
@@ -173,8 +169,8 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 ******************************************************************************/
 PipelineFlowState CreateIsosurfaceModifier::ComputeIsosurfaceResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
+	CreateIsosurfaceModifierApplication* myModApp = static_object_cast<CreateIsosurfaceModifierApplication>(modApp);
 	CreateIsosurfaceModifier* modifier = static_object_cast<CreateIsosurfaceModifier>(modApp->modifier());
-	OVITO_ASSERT(modifier);
 
 	// Find the input voxel grid.
 	VoxelGrid* voxelGrid = input.findObject<VoxelGrid>();
@@ -185,7 +181,7 @@ PipelineFlowState CreateIsosurfaceModifier::ComputeIsosurfaceResults::apply(Time
 	meshObj->setStorage(mesh());
 	meshObj->setIsCompletelySolid(isCompletelySolid());
 	meshObj->setDomain(voxelGrid->domain());
-	meshObj->setVisElement(modifier->surfaceMeshVis());
+	meshObj->setVisElement(myModApp->surfaceMeshVis());
 
 	// Insert data object into the output data collection.
 	PipelineFlowState output = input;
