@@ -134,6 +134,8 @@ void ClonePipelineDialog::initializeGraphicsScene()
 	qreal lineHeight = 50;
 	_pipelineSeparation = 420;
 	QFontMetrics fontMetrics(_pipelineScene.font());
+	QFont smallFont = _pipelineScene.font();
+	smallFont.setPointSizeF(smallFont.pointSizeF() * 3 / 4);
 
 	QGraphicsSimpleTextItem* textItem;
 
@@ -166,6 +168,12 @@ void ClonePipelineDialog::initializeGraphicsScene()
 	_pipelineScene.addLine(0, 0, 0, lineHeight/2)->moveBy(0,0);
 	_pipelineScene.addLine(0, 0, 0, lineHeight/2)->moveBy(_pipelineSeparation,0);
 	_joinLine = _pipelineScene.addLine(0, -lineHeight/2, _pipelineSeparation, -lineHeight/2);
+	textItem = _pipelineScene.addSimpleText(tr(" Pipeline branch "), smallFont);
+	QGraphicsRectItem* boxItem = _pipelineScene.addRect(textItem->boundingRect(), borderPen, Qt::white);
+	boxItem->setPos(-textItem->boundingRect().center());
+	boxItem->moveBy(_pipelineSeparation/2, -lineHeight/2);
+	boxItem->setParentItem(_joinLine);
+	textItem->setParentItem(boxItem);
 
 	QSignalMapper* unifiedMapper = new QSignalMapper(this);
 	QSignalMapper* nonunifiedMapper = new QSignalMapper(this);

@@ -45,7 +45,7 @@ public:
 	/// \brief A virtual destructor.
 	///
 	/// The default implementation does nothing.
-	virtual ~UndoableOperation() {}
+	virtual ~UndoableOperation() = default;
 
 	/// \brief Provides a localized, human readable description of this operation.
 	/// \return A localized string that describes the operation. It is shown in the
@@ -420,9 +420,6 @@ private:
 		/// \param name The localized and human-readable display name for this compound operation.
 		CompoundOperation(const QString& name) : _displayName(name) {}
 
-		/// \brief Deletes all sub-operations of this compound operation.
-		virtual ~CompoundOperation() {}
-
 		/// \brief Provides a localized, human readable description of this operation.
 		/// \return A localized string that describes the operation. It is shown in the
 		///         edit menu of the application.
@@ -578,5 +575,3 @@ private:
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

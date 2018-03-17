@@ -377,33 +377,16 @@ void ParticlesVis::render(TimePoint time, DataObject* dataObject, const Pipeline
 
 	if(particleShape() != Cylinder && particleShape() != Spherocylinder) {
 
-		// The key type used for caching the rendering primitives:
+		// The key type used for caching the rendering primitive:
 		using ParticleCacheKey = std::tuple<
 			CompatibleRendererGroup,	// The scene renderer
-			VersionedDataObjectRef		// The 'Position' particle property
-		>;
-
-		// The key type used for caching the radii:
-		using RadiiCacheKey = std::tuple<
-			std::shared_ptr<ParticlePrimitive>,		// The geometry primitive
+			VersionedDataObjectRef,		// The 'Position' particle property
+			FloatType,					// Default particle radius
 			VersionedDataObjectRef,		// Radius property + revision number
 			VersionedDataObjectRef,		// Type property + revision number
-			FloatType					// Default particle radius
-		>;
-
-		// The key type used for caching the colors:
-		using ColorsCacheKey = std::tuple<
-			std::shared_ptr<ParticlePrimitive>,		// The geometry primitive
 			VersionedDataObjectRef,		// Color property + revision number
-			VersionedDataObjectRef,		// Type property + revision number
 			VersionedDataObjectRef,		// Selection property + revision number
 			VersionedDataObjectRef,		// Transparency property + revision number
-			VersionedDataObjectRef		// Position property + revision number
-		>;
-
-		// The key type used for caching the shapes:
-		using ShapesCacheKey = std::tuple<
-			std::shared_ptr<ParticlePrimitive>,		// The geometry primitive
 			VersionedDataObjectRef,		// Shape property + revision number
 			VersionedDataObjectRef		// Orientation property + revision number
 		>;
@@ -418,7 +401,18 @@ void ParticlesVis::render(TimePoint time, DataObject* dataObject, const Pipeline
 			primitiveShadingMode = ParticlePrimitive::FlatShading;
 
 		// Look up the rendering primitive in the vis cache.
-		auto& particlePrimitive = dataset()->visCache().get<std::shared_ptr<ParticlePrimitive>>(ParticleCacheKey(renderer, positionProperty));
+		auto& particlePrimitive = dataset()->visCache().get<std::shared_ptr<ParticlePrimitive>>(ParticleCacheKey(
+			renderer, 
+			positionProperty,
+			defaultParticleRadius(),
+			radiusProperty,
+			typeProperty,
+			colorProperty,
+			selectionProperty,
+			transparencyProperty,
+			shapeProperty, 
+			orientationProperty));
+
 		// Check if we already have a valid rendering primitive that is up to date.
 		if(!particlePrimitive 
 				|| !particlePrimitive->isValid(renderer) 
@@ -433,16 +427,8 @@ void ParticlesVis::render(TimePoint time, DataObject* dataObject, const Pipeline
 			particlePrimitive->setSize(particleCount);
 			// Fill in the position data.
 			particlePrimitive->setParticlePositions(positionProperty->constDataPoint3());
-		}
 
-		// Check if the radii stored in the rendering primitive need to be updated.
-		bool& radiiUpToDate = dataset()->visCache().get<bool>(RadiiCacheKey(
-				particlePrimitive, 
-				radiusProperty,
-				typeProperty,
-				defaultParticleRadius()));
-		// Update the primtive buffer if necessary.
-		if(!radiiUpToDate && particleCount != 0) {
+			// Fill in radius data.
 			if(radiusProperty && radiusProperty->size() == particleCount) {
 				// Allocate memory buffer.
 				std::vector<FloatType> particleRadii(particleCount);
@@ -478,20 +464,7 @@ void ParticlesVis::render(TimePoint time, DataObject* dataObject, const Pipeline
 				// Assign a constant radius to all particles.
 				particlePrimitive->setParticleRadius(defaultParticleRadius());
 			}
-			radiiUpToDate = true;
-		}
-
-		// Check if the colors stored in the rendering primitive need to be updated.
-		bool& colorsUpToDate = dataset()->visCache().get<bool>(ColorsCacheKey(
-				particlePrimitive, 
-				colorProperty,
-				typeProperty,
-				selectionProperty,
-				transparencyProperty,
-				positionProperty));
-
-		// Update color buffer if necessary.
-		if(!colorsUpToDate && particleCount != 0) {
+			// Fill in color data.			
 			if(colorProperty && !selectionProperty && !transparencyProperty && colorProperty->size() == particleCount) {
 				// Direct particle colors.
 				particlePrimitive->setParticleColors(colorProperty->constDataColor());
@@ -516,26 +489,13 @@ void ParticlesVis::render(TimePoint time, DataObject* dataObject, const Pipeline
 					particlePrimitive->setParticleColors(colorsWithAlpha.data());
 				}
 			}
-			colorsUpToDate = true;
-		}
-
-		// Check if the shapes stored in the rendering primitive need to be updated.
-		bool& shapesUpToDate = dataset()->visCache().get<bool>(ShapesCacheKey(
-				particlePrimitive, 
-				shapeProperty, 
-				orientationProperty));
-		// Update shapes and orientation buffer.
-		if(!shapesUpToDate && particleCount != 0) {
+			
+			// Fill in shape data.
 			if(shapeProperty && shapeProperty->size() == particleCount)
 				particlePrimitive->setParticleShapes(shapeProperty->constDataVector3());
-			else
-				particlePrimitive->clearParticleShapes();
 
 			if(orientationProperty && orientationProperty->size() == particleCount)
 				particlePrimitive->setParticleOrientations(orientationProperty->constDataQuaternion());
-			else
-				particlePrimitive->clearParticleOrientations();
-			shapesUpToDate = true;
 		}
 
 		if(renderer->isPicking()) {

@@ -175,6 +175,12 @@ private:
 	/// Font used to highlight shared pipeline objects.
 	QFont _sharedObjectFont;
 
+	/// The background brush used for list section headers.
+	QBrush _sectionHeaderBackgroundBrush;
+
+	/// The foreground brush used for list section headers.
+	QBrush _sectionHeaderForegroundBrush;
+
 	/// Container of the dataset being edited.
 	DataSetContainer& _datasetContainer;
 };

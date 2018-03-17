@@ -306,6 +306,9 @@ void MainWindow::createMainMenu()
 	editMenu->setObjectName(QStringLiteral("EditMenu"));
 	editMenu->addAction(actionManager()->getAction(ACTION_EDIT_UNDO));
 	editMenu->addAction(actionManager()->getAction(ACTION_EDIT_REDO));
+#ifdef OVITO_DEBUG
+	editMenu->addAction(actionManager()->getAction(ACTION_EDIT_CLEAR_UNDO_STACK));
+#endif
 	editMenu->addSeparator();
 	editMenu->addAction(actionManager()->getAction(ACTION_EDIT_CLONE_PIPELINE));
 	editMenu->addAction(actionManager()->getAction(ACTION_EDIT_DELETE));

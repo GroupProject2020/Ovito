@@ -82,22 +82,6 @@ void DataObject::loadFromStream(ObjectLoadStream& stream)
 	stream.closeChunk();
 }
 
-/******************************************************************************
-* Returns a list of pipelines that use this object as a static data source.
-******************************************************************************/
-QSet<PipelineSceneNode*> DataObject::dependentNodes(bool skipRemovedNodes) const
-{
-	QSet<PipelineSceneNode*> nodeList;
-	for(RefMaker* dependent : this->dependents()) {
-		if(StaticSource* staticSource = dynamic_object_cast<StaticSource>(dependent)) {
-			if(staticSource->dataObjects().contains(const_cast<DataObject*>(this))) {
-				nodeList.unite(staticSource->dependentNodes(skipRemovedNodes));
-			}
-		}
-	}
-	return nodeList;
-}
-
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

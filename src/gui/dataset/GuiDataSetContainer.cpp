@@ -246,6 +246,9 @@ bool GuiDataSetContainer::fileLoad(const QString& filename)
 
 		dataSet = stream.loadObject<DataSet>();
 		stream.close();
+
+		if(!dataSet)
+			throw Exception(tr("State file '%1' does not contain a dataset.").arg(filename), this);		
 	}
 	catch(Exception& ex) {
 		// Provide a local context for the error.

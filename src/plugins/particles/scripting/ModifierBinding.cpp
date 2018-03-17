@@ -573,6 +573,8 @@ void defineModifiersSubmodule(py::module m)
 				"In ``Pairwise`` mode a separate cutoff distance must be specified for all pairs of atom types between which bonds are to be created. "
 				"\n\n"
 				":Default: ``CreateBondsModifier.Mode.Uniform``\n")
+		.def_property("vis", &CreateBondsModifier::bondsVis, &CreateBondsModifier::setBondsVis,
+				"The :py:class:`~ovito.vis.BondsVis` object controlling the visual appearance of the bonds created by this modifier.")
 		.def_property("cutoff", &CreateBondsModifier::uniformCutoff, &CreateBondsModifier::setUniformCutoff,
 				"The maximum cutoff distance for the creation of bonds between particles. This parameter is only used if :py:attr:`.mode` is ``Uniform``. "
 				"\n\n"
@@ -606,7 +608,6 @@ void defineModifiersSubmodule(py::module m)
 				":return: The cutoff distance set for the type pair. Returns zero if no cutoff has been set for the pair.\n",
 				py::arg("type_a"), py::arg("type_b"))
 	;
-	ovito_class<CreateBondsModifierApplication, AsynchronousModifierApplication>{m};
 
 	py::enum_<CreateBondsModifier::CutoffMode>(CreateBondsModifier_py, "Mode")
 		.value("Uniform", CreateBondsModifier::UniformCutoff)
@@ -855,19 +856,16 @@ void defineModifiersSubmodule(py::module m)
 			"   The computed displacement vectors\n"			
 			" * ``Displacement Magnitude`` (:py:class:`~ovito.data.ParticleProperty`):\n"
 			"   The length of the computed displacement vectors\n"
-			"\n\n"
-			"**Usage example**"
-			"\n\n"
-			"A :py:class:`~ovito.vis.VectorVis` instance controlling the visual representation of the computed "
-			"displacement vectors. "
-			"Note that the computed displacement vectors are not shown by default. You can enable "
-			"the arrow display as follows: "
-			"\n\n"
-			".. literalinclude:: ../example_snippets/calculate_displacements.py\n"
-			"   :lines: 3-\n"
-			"\n")
+			"\n\n")
+		.def_property("vis", &CalculateDisplacementsModifier::vectorVis, &CalculateDisplacementsModifier::setVectorVis,
+				"A :py:class:`~ovito.vis.VectorVis` element controlling the visual representation of the computed "
+				"displacement vectors. "
+				"Note that the computed displacement vectors are not shown by default. You can enable "
+				"the display of arrows as follows: "
+				"\n\n"
+				".. literalinclude:: ../example_snippets/calculate_displacements.py\n"
+				"   :lines: 3-\n")	
 	;
-	ovito_class<CalculateDisplacementsModifierApplication, ReferenceConfigurationModifierApplication>{m};
 
 	ovito_class<AtomicStrainModifier, ReferenceConfigurationModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.ReferenceConfigurationModifier`"
@@ -1070,7 +1068,6 @@ void defineModifiersSubmodule(py::module m)
 				":Minimum: 3\n"
 				":Default: 6\n")
 	;
-	ovito_class<VoronoiAnalysisModifierApplication, AsynchronousModifierApplication>{m};
 
 	ovito_class<LoadTrajectoryModifier, Modifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
@@ -1228,8 +1225,9 @@ void defineModifiersSubmodule(py::module m)
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"Constructs coordination polyhedra around currently selected particles. "
 			"A coordination polyhedron is the convex hull spanned by the bonded neighbors of a particle. ")
+		.def_property("vis", &CoordinationPolyhedraModifier::surfaceMeshVis, &CoordinationPolyhedraModifier::setSurfaceMeshVis,
+				"A :py:class:`~ovito.vis.SurfaceMeshVis` element controlling the visual representation of the generated polyhedra.\n")
 	;
-	ovito_class<CoordinationPolyhedraModifierApplication, AsynchronousModifierApplication>{m};
 	
 	ovito_class<GenerateTrajectoryLinesModifier, Modifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
@@ -1288,6 +1286,8 @@ void defineModifiersSubmodule(py::module m)
 			},
 			"Generates the trajectory lines by sampling the positions of the particles from the upstream pipeline in regular animation time intervals. "
 			"Make sure you call this method *after* the modifier has been inserted into the pipeline. ")
+		.def_property("vis", &GenerateTrajectoryLinesModifier::trajectoryVis, &GenerateTrajectoryLinesModifier::setTrajectoryVis,
+			"The :py:class:`~ovito.vis.TrajectoryVis` element controlling the visual appearance of the trajectory lines created by this modifier.")
 	;
 	ovito_class<GenerateTrajectoryLinesModifierApplication, ModifierApplication>{m};
 }

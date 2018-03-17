@@ -40,6 +40,7 @@ DEFINE_PROPERTY_FIELD(GenerateTrajectoryLinesModifier, customIntervalStart);
 DEFINE_PROPERTY_FIELD(GenerateTrajectoryLinesModifier, customIntervalEnd);
 DEFINE_PROPERTY_FIELD(GenerateTrajectoryLinesModifier, everyNthFrame);
 DEFINE_PROPERTY_FIELD(GenerateTrajectoryLinesModifier, unwrapTrajectories);
+DEFINE_REFERENCE_FIELD(GenerateTrajectoryLinesModifier, trajectoryVis);
 SET_PROPERTY_FIELD_LABEL(GenerateTrajectoryLinesModifier, onlySelectedParticles, "Only selected particles");
 SET_PROPERTY_FIELD_LABEL(GenerateTrajectoryLinesModifier, useCustomInterval, "Custom time interval");
 SET_PROPERTY_FIELD_LABEL(GenerateTrajectoryLinesModifier, customIntervalStart, "Custom interval start");
@@ -52,7 +53,6 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(GenerateTrajectoryLinesModifier, everyNthFr
 
 IMPLEMENT_OVITO_CLASS(GenerateTrajectoryLinesModifierApplication);
 DEFINE_REFERENCE_FIELD(GenerateTrajectoryLinesModifierApplication, trajectoryData);
-DEFINE_REFERENCE_FIELD(GenerateTrajectoryLinesModifierApplication, trajectoryVis);
 SET_MODIFIER_APPLICATION_TYPE(GenerateTrajectoryLinesModifier, GenerateTrajectoryLinesModifierApplication);
 
 /******************************************************************************
@@ -66,6 +66,8 @@ GenerateTrajectoryLinesModifier::GenerateTrajectoryLinesModifier(DataSet* datase
 	_everyNthFrame(1), 
 	_unwrapTrajectories(true)
 {
+	// Create the vis element for rendering the trajectories created by the modifier.
+	setTrajectoryVis(new TrajectoryVis(dataset));
 }
 
 /******************************************************************************
@@ -237,7 +239,7 @@ bool GenerateTrajectoryLinesModifier::generateTrajectories(TaskManager& taskMana
 		// Store generated trajectory lines in the modifier application.
 		OORef<TrajectoryObject> trajObj = new TrajectoryObject(dataset());
 		trajObj->setTrajectories(particleCount, points, sampleTimes);
-		trajObj->setVisElement(myModApp->trajectoryVis());
+		trajObj->setVisElement(trajectoryVis());
 		myModApp->setTrajectoryData(trajObj);
 	}
 	return true;

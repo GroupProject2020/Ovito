@@ -89,7 +89,8 @@ public:
 	void setObjectTitle(const QString& title) { setTitle(title); }
 
 	/// \brief Returns all pipeline nodes whose pipeline produced this visualization element.
-	QSet<PipelineSceneNode*> dependentNodes(bool skipRemovedNodes = false) const;
+	/// \param onlyScenePipelines If true, pipelines which are currently not part of the scene are ignored.
+	QSet<PipelineSceneNode*> pipelines(bool onlyScenePipelines) const;
 
 private:
 

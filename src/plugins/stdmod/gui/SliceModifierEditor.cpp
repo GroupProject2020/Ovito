@@ -359,7 +359,7 @@ void PickPlanePointsInputMode::alignPlane(SliceModifier* mod)
 		// Get the object to world transformation for the currently selected node.
 		ModifierApplication* modApp = mod->someModifierApplication();
 		if(!modApp) return;
-		QSet<PipelineSceneNode*> nodes = modApp->dependentNodes(true);
+		QSet<PipelineSceneNode*> nodes = modApp->pipelines(true);
 		if(nodes.empty()) return;
 		PipelineSceneNode* node = *nodes.begin();
 		TimeInterval interval;

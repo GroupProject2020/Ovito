@@ -48,6 +48,9 @@ DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, lineSmoothingEnabled);
 DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, lineSmoothingLevel);
 DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, lineCoarseningEnabled);
 DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, linePointInterval);
+DEFINE_REFERENCE_FIELD(DislocationAnalysisModifier, dislocationVis);
+DEFINE_REFERENCE_FIELD(DislocationAnalysisModifier, defectMeshVis);
+DEFINE_REFERENCE_FIELD(DislocationAnalysisModifier, interfaceMeshVis);
 SET_PROPERTY_FIELD_LABEL(DislocationAnalysisModifier, inputCrystalStructure, "Input crystal structure");
 SET_PROPERTY_FIELD_LABEL(DislocationAnalysisModifier, maxTrialCircuitSize, "Trial circuit length");
 SET_PROPERTY_FIELD_LABEL(DislocationAnalysisModifier, circuitStretchability, "Circuit stretchability");
@@ -65,9 +68,6 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(DislocationAnalysisModifier, lineSmoothingL
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(DislocationAnalysisModifier, linePointInterval, FloatParameterUnit, 0);
 
 IMPLEMENT_OVITO_CLASS(DislocationAnalysisModifierApplication);
-DEFINE_REFERENCE_FIELD(DislocationAnalysisModifierApplication, dislocationVis);
-DEFINE_REFERENCE_FIELD(DislocationAnalysisModifierApplication, defectMeshVis);
-DEFINE_REFERENCE_FIELD(DislocationAnalysisModifierApplication, interfaceMeshVis);
 SET_MODIFIER_APPLICATION_TYPE(DislocationAnalysisModifier, DislocationAnalysisModifierApplication);
 
 /******************************************************************************
@@ -85,6 +85,21 @@ DislocationAnalysisModifier::DislocationAnalysisModifier(DataSet* dataset) : Str
 	_lineSmoothingLevel(1),
 	_linePointInterval(2.5)
 {
+	// Create the vis elements.
+	setDislocationVis(new DislocationVis(dataset));
+
+	setDefectMeshVis(new SurfaceMeshVis(dataset));
+	defectMeshVis()->setShowCap(true);
+	defectMeshVis()->setSmoothShading(true);
+	defectMeshVis()->setCapTransparency(0.5);
+	defectMeshVis()->setObjectTitle(tr("Defect mesh"));
+
+	setInterfaceMeshVis(new SurfaceMeshVis(dataset));
+	interfaceMeshVis()->setShowCap(false);
+	interfaceMeshVis()->setSmoothShading(false);
+	interfaceMeshVis()->setCapTransparency(0.5);
+	interfaceMeshVis()->setObjectTitle(tr("Interface mesh"));		
+	
 	// Create pattern catalog.
 	setPatternCatalog(new PatternCatalog(dataset));
 	while(patternCatalog()->patterns().empty() == false)
@@ -209,7 +224,7 @@ PipelineFlowState DislocationAnalysisResults::apply(TimePoint time, ModifierAppl
 	defectMeshObj->setStorage(defectMesh());
 	defectMeshObj->setIsCompletelySolid(isBadEverywhere());	
 	defectMeshObj->setDomain(input.findObject<SimulationCellObject>());
-	defectMeshObj->setVisElement(myModApp->defectMeshVis());
+	defectMeshObj->setVisElement(modifier->defectMeshVis());
 	output.addObject(defectMeshObj);
 
 	// Output interface mesh.
@@ -218,7 +233,7 @@ PipelineFlowState DislocationAnalysisResults::apply(TimePoint time, ModifierAppl
 		interfaceMeshObj->setStorage(interfaceMesh());
 		interfaceMeshObj->setIsCompletelySolid(isBadEverywhere());
 		interfaceMeshObj->setDomain(input.findObject<SimulationCellObject>());
-		interfaceMeshObj->setVisElement(myModApp->interfaceMeshVis());
+		interfaceMeshObj->setVisElement(modifier->interfaceMeshVis());
 		output.addObject(interfaceMeshObj);
 	}
 
@@ -233,7 +248,7 @@ PipelineFlowState DislocationAnalysisResults::apply(TimePoint time, ModifierAppl
 	OORef<DislocationNetworkObject> dislocationsObj(new DislocationNetworkObject(modApp->dataset()));
 	dislocationsObj->setStorage(dislocationNetwork());
 	dislocationsObj->setDomain(input.findObject<SimulationCellObject>());
-	dislocationsObj->setVisElement(myModApp->dislocationVis());
+	dislocationsObj->setVisElement(modifier->dislocationVis());
 	output.addObject(dislocationsObj);
 
 	std::map<BurgersVectorFamily*,FloatType> dislocationLengths;

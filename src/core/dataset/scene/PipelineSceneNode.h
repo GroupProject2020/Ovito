@@ -83,8 +83,8 @@ public:
 	/// \brief Deletes this node from the scene.
 	virtual void deleteNode() override;
 
-	/// \brief Replaces the given visual element in this pipeline's output with a unique copy.
-	void makeVisElementUnique(DataVis* visElement);
+	/// \brief Replaces the given visual element in this pipeline's output with an independent copy.
+	DataVis* makeVisElementIndependent(DataVis* visElement);
 
 protected:
 
@@ -94,19 +94,28 @@ protected:
 	/// Is called when the value of a reference field of this object changes.
 	virtual void referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget) override;
 
+	/// Is called when a RefTarget has been added to a VectorReferenceField of this RefMaker.
+	virtual void referenceInserted(const PropertyFieldDescriptor& field, RefTarget* newTarget, int listIndex) override;
+
+	/// Is called when a RefTarget has been added to a VectorReferenceField of this RefMaker.
+	virtual void referenceRemoved(const PropertyFieldDescriptor& field, RefTarget* oldTarget, int listIndex) override;
+
 	/// Saves the class' contents to the given stream.
 	virtual void saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData) override;
 
 	/// Loads the class' contents from the given stream.
 	virtual void loadFromStream(ObjectLoadStream& stream) override;
 
+	/// This method is called once for this object after it has been completely loaded from a stream.
+	virtual void loadFromStreamComplete() override;
+	
 	/// Invalidates the data pipeline cache of the scene node.
 	void invalidatePipelineCache();
 
 	/// Rebuilds the list of visual elements maintained by the scene node.
 	void updateVisElementList(TimePoint time);
 
-	/// Replaces upstream visual elements with our own unique copies.
+	/// Replaces upstream visual elements with the independent versions managed by this node.
 	void replaceVisualElements(PipelineFlowState& state);
 
 private:
@@ -119,6 +128,13 @@ private:
 	/// pipeline is newly evaluated.
 	DECLARE_VECTOR_REFERENCE_FIELD_FLAGS(DataVis, visElements, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
+	/// List of weak references to visual elements coming from the pipeline which shall be replaced with
+	/// independent versions owned by this node.
+	DECLARE_VECTOR_REFERENCE_FIELD_FLAGS(DataVis, replacedVisElements, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_NO_CHANGE_MESSAGE | PROPERTY_FIELD_WEAK_REF);
+
+	/// Visual elements owned by the node which replace the ones produced by the pipeline.
+	DECLARE_VECTOR_REFERENCE_FIELD_FLAGS(DataVis, replacementVisElements, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
+
 	/// The cached results from the data pipeline.
 	PipelineCache _pipelineCache;
 
@@ -127,9 +143,6 @@ private:
 
 	/// The cached results from a preliminary pipeline evaluation.
 	PipelineFlowState _pipelinePreliminaryCache;
-
-	/// The mapping of upstream visual elements to unique copies of the visual elements.
-	std::map<QPointer<DataVis>, OORef<DataVis>> _uniqueVisElementMapping;
 };
 
 OVITO_END_INLINE_NAMESPACE

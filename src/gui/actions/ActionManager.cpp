@@ -61,6 +61,7 @@ ActionManager::ActionManager(MainWindow* mainWindow) : QObject(mainWindow)
 
 	createCommandAction(ACTION_EDIT_UNDO, tr("Undo"), ":/gui/actions/edit/edit_undo.bw.svg", tr("Reverse a user action."), QKeySequence::Undo);
 	createCommandAction(ACTION_EDIT_REDO, tr("Redo"), ":/gui/actions/edit/edit_redo.bw.svg", tr("Redo the previously undone user action."), QKeySequence::Redo);
+	createCommandAction(ACTION_EDIT_CLEAR_UNDO_STACK, tr("Clear undo stack"), nullptr, tr("Discards all existing undo records."));
 	
 	createCommandAction(ACTION_EDIT_CLONE_PIPELINE, tr("Clone pipeline"), ":/gui/actions/edit/clone_pipeline.bw.svg", tr("Duplicates the current pipeline to show multiple datasets side by side."));
 	createCommandAction(ACTION_EDIT_DELETE, tr("Delete pipeline"), ":/gui/actions/edit/edit_delete.bw.svg", tr("Deletes the selected object from the scene."));
@@ -110,12 +111,15 @@ void ActionManager::onDataSetChanged(DataSet* newDataSet)
 	disconnect(_redoTextChangedConnection);
 	disconnect(_undoTriggeredConnection);
 	disconnect(_redoTriggeredConnection);
+	disconnect(_clearUndoStackTriggeredConnection);
 	_dataset = newDataSet;
 	QAction* undoAction = getAction(ACTION_EDIT_UNDO);
 	QAction* redoAction = getAction(ACTION_EDIT_REDO);
+	QAction* clearUndoStackAction = getAction(ACTION_EDIT_CLEAR_UNDO_STACK);
 	if(newDataSet) {
 		undoAction->setEnabled(newDataSet->undoStack().canUndo());
 		redoAction->setEnabled(newDataSet->undoStack().canRedo());
+		clearUndoStackAction->setEnabled(true);
 		undoAction->setText(tr("Undo %1").arg(newDataSet->undoStack().undoText()));
 		redoAction->setText(tr("Redo %1").arg(newDataSet->undoStack().redoText()));
 		_canUndoChangedConnection = connect(&newDataSet->undoStack(), &UndoStack::canUndoChanged, undoAction, &QAction::setEnabled);
@@ -128,10 +132,12 @@ void ActionManager::onDataSetChanged(DataSet* newDataSet)
 		});
 		_undoTriggeredConnection = connect(undoAction, &QAction::triggered, &newDataSet->undoStack(), &UndoStack::undo);
 		_redoTriggeredConnection = connect(redoAction, &QAction::triggered, &newDataSet->undoStack(), &UndoStack::redo);
+		_clearUndoStackTriggeredConnection = connect(clearUndoStackAction, &QAction::triggered, &newDataSet->undoStack(), &UndoStack::clear);
 	}
 	else {
 		undoAction->setEnabled(false);
 		redoAction->setEnabled(false);
+		clearUndoStackAction->setEnabled(false);
 	}
 }
 

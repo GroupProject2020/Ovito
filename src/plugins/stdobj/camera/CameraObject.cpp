@@ -145,9 +145,15 @@ void CameraObject::setFieldOfView(TimePoint time, FloatType newFOV)
 ******************************************************************************/
 bool CameraObject::isTargetCamera() const
 {
-	for(PipelineSceneNode* node : dependentNodes()) {
-		if(node->lookatTargetNode() != nullptr)
-			return true;
+	for(RefMaker* dependent : dependents()) {
+		if(StaticSource* staticSource = dynamic_object_cast<StaticSource>(dependent)) {
+			if(staticSource->dataObjects().contains(const_cast<CameraObject*>(this))) {
+				for(PipelineSceneNode* node : staticSource->pipelines(true)) {
+					if(node->lookatTargetNode() != nullptr)
+						return true;
+				}
+			}
+		}
 	}
 	return false;
 }
@@ -159,30 +165,36 @@ void CameraObject::setIsTargetCamera(bool enable)
 {
 	dataset()->undoStack().pushIfRecording<TargetChangedUndoOperation>(this);
 
-	for(PipelineSceneNode* node : dependentNodes()) {
-		if(node->lookatTargetNode() == nullptr && enable) {
-			if(SceneNode* parentNode = node->parentNode()) {
-				AnimationSuspender noAnim(this);
-				OORef<TargetObject> targetObj = new TargetObject(dataset());
-				OORef<StaticSource> targetSource = new StaticSource(dataset(), targetObj);
-				OORef<PipelineSceneNode> targetNode = new PipelineSceneNode(dataset());
-				targetNode->setDataProvider(targetSource);
-				targetNode->setNodeName(tr("%1.target").arg(node->nodeName()));
-				parentNode->addChildNode(targetNode);
-				// Position the new target to match the current orientation of the camera.
-				TimeInterval iv;
-				const AffineTransformation& cameraTM = node->getWorldTransform(dataset()->animationSettings()->time(), iv);
-				Vector3 cameraPos = cameraTM.translation();
-				Vector3 cameraDir = cameraTM.column(2).normalized();
-				Vector3 targetPos = cameraPos - targetDistance() * cameraDir;
-				targetNode->transformationController()->translate(0, targetPos, AffineTransformation::Identity());
-				node->setLookatTargetNode(targetNode);
+	for(RefMaker* dependent : dependents()) {
+		if(StaticSource* staticSource = dynamic_object_cast<StaticSource>(dependent)) {
+			if(staticSource->dataObjects().contains(this)) {
+				for(PipelineSceneNode* node : staticSource->pipelines(true)) {
+					if(node->lookatTargetNode() == nullptr && enable) {
+						if(SceneNode* parentNode = node->parentNode()) {
+							AnimationSuspender noAnim(this);
+							OORef<TargetObject> targetObj = new TargetObject(dataset());
+							OORef<StaticSource> targetSource = new StaticSource(dataset(), targetObj);
+							OORef<PipelineSceneNode> targetNode = new PipelineSceneNode(dataset());
+							targetNode->setDataProvider(targetSource);
+							targetNode->setNodeName(tr("%1.target").arg(node->nodeName()));
+							parentNode->addChildNode(targetNode);
+							// Position the new target to match the current orientation of the camera.
+							TimeInterval iv;
+							const AffineTransformation& cameraTM = node->getWorldTransform(dataset()->animationSettings()->time(), iv);
+							Vector3 cameraPos = cameraTM.translation();
+							Vector3 cameraDir = cameraTM.column(2).normalized();
+							Vector3 targetPos = cameraPos - targetDistance() * cameraDir;
+							targetNode->transformationController()->translate(0, targetPos, AffineTransformation::Identity());
+							node->setLookatTargetNode(targetNode);
+						}
+					}
+					else if(node->lookatTargetNode() != nullptr && !enable) {
+						OORef<SceneNode> targetNode = node->lookatTargetNode();
+						node->setLookatTargetNode(nullptr);
+						targetNode->deleteNode();
+					}
+				}
 			}
-		}
-		else if(node->lookatTargetNode() != nullptr && !enable) {
-			OORef<SceneNode> targetNode = node->lookatTargetNode();
-			node->setLookatTargetNode(nullptr);
-			targetNode->deleteNode();
 		}
 	}
 
@@ -195,12 +207,18 @@ void CameraObject::setIsTargetCamera(bool enable)
 ******************************************************************************/
 FloatType CameraObject::targetDistance() const
 {
-	for(PipelineSceneNode* node : dependentNodes()) {
-		if(node->lookatTargetNode() != nullptr) {
-			TimeInterval iv;
-			Vector3 cameraPos = node->getWorldTransform(dataset()->animationSettings()->time(), iv).translation();
-			Vector3 targetPos = node->lookatTargetNode()->getWorldTransform(dataset()->animationSettings()->time(), iv).translation();
-			return (cameraPos - targetPos).length();
+	for(RefMaker* dependent : dependents()) {
+		if(StaticSource* staticSource = dynamic_object_cast<StaticSource>(dependent)) {
+			if(staticSource->dataObjects().contains(const_cast<CameraObject*>(this))) {
+				for(PipelineSceneNode* node : staticSource->pipelines(true)) {
+					if(node->lookatTargetNode() != nullptr) {
+						TimeInterval iv;
+						Vector3 cameraPos = node->getWorldTransform(dataset()->animationSettings()->time(), iv).translation();
+						Vector3 targetPos = node->lookatTargetNode()->getWorldTransform(dataset()->animationSettings()->time(), iv).translation();
+						return (cameraPos - targetPos).length();
+					}
+				}
+			}
 		}
 	}
 

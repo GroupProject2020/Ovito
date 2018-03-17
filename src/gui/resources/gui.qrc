@@ -104,6 +104,7 @@
 	<file>actions/modify/modifier_move_up.bw.svg</file>
 	<file>actions/modify/modifier_move_down.bw.svg</file>
 	<file>actions/modify/modifier_save_preset.bw.svg</file>
+	<file>actions/modify/make_element_independent.bw.svg</file>
 	
 	<file>actions/overlays/delete_overlay.png</file>
 	<file>actions/overlays/overlay_move_up.bw.svg</file>

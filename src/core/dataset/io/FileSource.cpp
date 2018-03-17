@@ -660,12 +660,12 @@ void FileSource::referenceInserted(const PropertyFieldDescriptor& field, RefTarg
 /******************************************************************************
 * Is called when a RefTarget has been added to a VectorReferenceField of this RefMaker.
 ******************************************************************************/
-void FileSource::referenceRemoved(const PropertyFieldDescriptor& field, RefTarget* newTarget, int listIndex)
+void FileSource::referenceRemoved(const PropertyFieldDescriptor& field, RefTarget* oldTarget, int listIndex)
 {
 	if(field == PROPERTY_FIELD(dataObjects))
 		notifyDependents(ReferenceEvent::SubobjectListChanged);
 
-	CachingPipelineObject::referenceRemoved(field, newTarget, listIndex);
+	CachingPipelineObject::referenceRemoved(field, oldTarget, listIndex);
 }
 
 

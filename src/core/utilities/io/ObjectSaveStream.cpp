@@ -45,7 +45,7 @@ ObjectSaveStream::~ObjectSaveStream()
 /******************************************************************************
 * Saves an object with runtime type information to the stream.
 ******************************************************************************/
-void ObjectSaveStream::saveObject(OvitoObject* object, bool excludeRecomputableData)
+void ObjectSaveStream::saveObject(OvitoObject* object, bool excludeRecomputableData, bool weakReference)
 {
 	if(object == nullptr) {
 		*this << (quint32)0;
@@ -58,7 +58,7 @@ void ObjectSaveStream::saveObject(OvitoObject* object, bool excludeRecomputableD
 		OVITO_ASSERT(_objects.size() == _objectMap.size());
 		quint32& id = _objectMap[object];
 		if(id == 0) {
-			_objects.emplace_back(object, excludeRecomputableData);
+			_objects.push_back({object, excludeRecomputableData, weakReference});
 			id = (quint32)_objects.size();
 
 			if(object->getOOClass() == DataSet::OOClass())
@@ -66,9 +66,14 @@ void ObjectSaveStream::saveObject(OvitoObject* object, bool excludeRecomputableD
 
 			OVITO_ASSERT(_dataset == nullptr || !object->getOOClass().isDerivedFrom(RefTarget::OOClass()) || static_object_cast<RefTarget>(object)->dataset() == _dataset);
 		}
-		else if(!excludeRecomputableData) {
-			OVITO_ASSERT(_objects[id-1].first == object);
-			_objects[id-1].second = false;
+		else {
+			OVITO_ASSERT(_objects[id-1].object == object);
+			if(!excludeRecomputableData) {
+				_objects[id-1].excludeRecomputableData = false;
+			}
+			if(!weakReference) {
+				_objects[id-1].weakReference = false;
+			}
 		}
 		*this << id;
 	}
@@ -91,10 +96,15 @@ void ObjectSaveStream::close()
 		// as we save objects which are already in the list.
 		beginChunk(0x100);
 		for(size_t i = 0; i < _objects.size(); i++) {
-			OvitoObject* obj = _objects[i].first;
-			OVITO_CHECK_OBJECT_POINTER(obj);
-			objectOffsets.push_back(filePosition());
-			obj->saveToStream(*this, _objects[i].second);
+			if(!_objects[i].weakReference) {
+				OVITO_CHECK_OBJECT_POINTER(_objects[i].object);
+				objectOffsets.push_back(filePosition());
+				_objects[i].object->saveToStream(*this, _objects[i].excludeRecomputableData);
+			}
+			else {
+				// Weak reference was not turned into a stron reference -> don't write object to file.
+				objectOffsets.push_back(0);
+			}
 		}
 		endChunk();
 		
@@ -102,10 +112,11 @@ void ObjectSaveStream::close()
 		qint64 classTableStart = filePosition();
 		std::map<OvitoClassPtr, quint32> classes;
 		beginChunk(0x200);
-		for(const auto& obj : _objects) {
-			OvitoClassPtr clazz = &obj.first->getOOClass();
+		for(const auto& record : _objects) {
+			if(record.weakReference) continue;
+			OvitoClassPtr clazz = &record.object->getOOClass();
 			if(classes.find(clazz) == classes.end()) {
-				classes.insert(make_pair(clazz, (quint32)classes.size()));
+				classes.insert(make_pair(clazz, (quint32)classes.size()+1));
 				// Write the basic runtime type information (name and plugin ID) of the class to the stream.
 				beginChunk(0x201);
 				OvitoClass::serializeRTTI(*this, clazz);
@@ -123,8 +134,13 @@ void ObjectSaveStream::close()
 		qint64 objectTableStart = filePosition();
 		beginChunk(0x300);
 		auto offsetIterator = objectOffsets.cbegin();
-		for(const auto& obj : _objects) {
-			*this << classes[&obj.first->getOOClass()];
+		for(const auto& record : _objects) {
+			if(!record.weakReference) {
+				*this << classes[&record.object->getOOClass()];
+			}
+			else {
+				*this << (quint32)0;
+			}
 			*this << *offsetIterator++;
 		}
 		endChunk();

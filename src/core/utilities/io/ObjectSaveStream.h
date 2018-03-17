@@ -59,15 +59,22 @@ public:
 	/// \brief Serializes an object and writes its data to the output stream.
 	/// \throw Exception if an I/O error has occurred.
 	/// \sa ObjectLoadStream::loadObject()
-	void saveObject(OvitoObject* object, bool excludeRecomputableData = false);
+	void saveObject(OvitoObject* object, bool excludeRecomputableData = false, bool weakReference = false);
 
 private:
 
+	/// A data record kept for each object written to the stream.
+	struct ObjectRecord {
+		OvitoObject* object;
+		bool excludeRecomputableData;
+		bool weakReference;
+	};
+
 	/// Contains all objects stored so far and their IDs.
-	std::map<OvitoObject*, quint32> _objectMap;
+	std::unordered_map<OvitoObject*, quint32> _objectMap;
 
 	/// Contains all objects ordered by ID.
-	std::vector<std::pair<OvitoObject*, bool>> _objects;
+	std::vector<ObjectRecord> _objects;
 
 	/// The current dataset being saved.
 	DataSet* _dataset = nullptr;

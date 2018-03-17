@@ -306,11 +306,8 @@ void ModifierListBox::updateAvailableModifiers()
 	if(!dataset) return;
 
 	PipelineFlowState inputState;
-	if(dynamic_object_cast<Modifier>(currentItem->object())) {
-		if(!currentItem->modifierApplications().empty()) {
-			ModifierApplication* modApp = currentItem->modifierApplications().front();
-			inputState = modApp->evaluatePreliminary();
-		}
+	if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(currentItem->object())) {
+		inputState = modApp->evaluatePreliminary();
 	}
 	else if(PipelineObject* pipelineObject = dynamic_object_cast<PipelineObject>(currentItem->object())) {
 		inputState = pipelineObject->evaluatePreliminary();

@@ -55,18 +55,18 @@ void DataVis::setStatus(const PipelineStatus& status)
 /******************************************************************************
 * Returns all pipeline nodes whose pipeline produced this visualization element.
 ******************************************************************************/
-QSet<PipelineSceneNode*> DataVis::dependentNodes(bool skipRemovedNodes) const
+QSet<PipelineSceneNode*> DataVis::pipelines(bool onlyScenePipelines) const
 {
-	QSet<PipelineSceneNode*> nodeList;
+	QSet<PipelineSceneNode*> pipelineList;
 	for(RefMaker* dependent : this->dependents()) {
-		if(PipelineSceneNode* node = dynamic_object_cast<PipelineSceneNode>(dependent)) {
-            if(node->visElements().contains(const_cast<DataVis*>(this))) {
-				if(!skipRemovedNodes || node->isInScene())
-		    		nodeList.insert(node);
+		if(PipelineSceneNode* pipeline = dynamic_object_cast<PipelineSceneNode>(dependent)) {
+            if(pipeline->visElements().contains(const_cast<DataVis*>(this))) {
+				if(!onlyScenePipelines || pipeline->isInScene())
+		    		pipelineList.insert(pipeline);
 			}
 		}
 	}
-	return nodeList;
+	return pipelineList;
 }
 
 OVITO_END_INLINE_NAMESPACE

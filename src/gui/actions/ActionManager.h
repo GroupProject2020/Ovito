@@ -58,13 +58,15 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
 #define ACTION_HELP_OPENGL_INFO			"HelpOpenGLInfo"
 
 /// This action undoes the last operation.
-#define ACTION_EDIT_UNDO			"EditUndo"
+#define ACTION_EDIT_UNDO				"EditUndo"
 /// This action does the last undone operation again.
-#define ACTION_EDIT_REDO			"EditRedo"
+#define ACTION_EDIT_REDO				"EditRedo"
 /// This action deletes the selected scene object.
-#define ACTION_EDIT_DELETE			"EditDelete"
+#define ACTION_EDIT_DELETE				"EditDelete"
 /// This action duplicates the selected scene object.
-#define ACTION_EDIT_CLONE_PIPELINE	"ClonePipeline"
+#define ACTION_EDIT_CLONE_PIPELINE		"ClonePipeline"
+/// This action clears the current undo stack.
+#define ACTION_EDIT_CLEAR_UNDO_STACK	"EditClearUndoStack"
 
 /// This action maximizes the active viewport.
 #define ACTION_VIEWPORT_MAXIMIZE					"ViewportMaximize"
@@ -97,6 +99,8 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
 #define ACTION_MODIFIER_TOGGLE_STATE		"ModifierToggleEnabledState"
 /// This action opens the dialog box for managing modifier templates.
 #define ACTION_MODIFIER_MANAGE_TEMPLATES	"ModifierManageTemplates"
+/// This action creates a unique copy of the selected pipeline item.
+#define ACTION_PIPELINE_MAKE_INDEPENDENT			"PipelineMakeUnique"
 
 /// This action jumps to the start of the animation
 #define ACTION_GOTO_START_OF_ANIMATION		"AnimationGotoStart"
@@ -240,6 +244,7 @@ private:
 	QMetaObject::Connection _redoTextChangedConnection;
 	QMetaObject::Connection _undoTriggeredConnection;
 	QMetaObject::Connection _redoTriggeredConnection;
+	QMetaObject::Connection _clearUndoStackTriggeredConnection;
 	QMetaObject::Connection _autoKeyModeChangedConnection;
 	QMetaObject::Connection _autoKeyModeToggledConnection;
 	QMetaObject::Connection _animationIntervalChangedConnection;
