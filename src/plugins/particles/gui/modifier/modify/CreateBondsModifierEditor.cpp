@@ -24,6 +24,7 @@
 #include <gui/properties/IntegerRadioButtonParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
 #include <gui/properties/BooleanParameterUI.h>
+#include <gui/properties/SubObjectParameterUI.h>
 #include "CreateBondsModifierEditor.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -86,6 +87,9 @@ void CreateBondsModifierEditor::createUI(const RolloutInsertionParameters& rollo
 	// Status label.
 	layout1->addSpacing(10);
 	layout1->addWidget(statusLabel());
+
+	// Open a sub-editor for the bonds vis element.
+	new SubObjectParameterUI(this, PROPERTY_FIELD(CreateBondsModifier::bondsVis), rolloutParams.after(rollout));
 
 	// Update pair-wise cutoff table whenever a modifier has been loaded into the editor.
 	connect(this, &CreateBondsModifierEditor::contentsReplaced, this, &CreateBondsModifierEditor::updatePairCutoffList);

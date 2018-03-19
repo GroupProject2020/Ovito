@@ -24,6 +24,7 @@
 #include <gui/properties/IntegerParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
 #include <gui/properties/BooleanParameterUI.h>
+#include <gui/properties/SubObjectParameterUI.h>
 #include "ConstructSurfaceModifierEditor.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
@@ -59,6 +60,9 @@ void ConstructSurfaceModifierEditor::createUI(const RolloutInsertionParameters& 
 	layout->setRowMinimumHeight(3, 10);
 	layout->addWidget(statusLabel(), 4, 0, 1, 2);
 	statusLabel()->setMinimumHeight(100);
+
+	// Open a sub-editor for the mesh vis element.
+	new SubObjectParameterUI(this, PROPERTY_FIELD(ConstructSurfaceModifier::surfaceMeshVis), rolloutParams.after(rollout));
 }
 
 }	// End of namespace

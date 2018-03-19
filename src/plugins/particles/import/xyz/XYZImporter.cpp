@@ -199,6 +199,10 @@ bool XYZImporter::mapVariableToProperty(InputColumnMapping& columnMapping, int c
 	else if(loweredName == "torque") columnMapping[column].mapStandardColumn(ParticleProperty::TorqueProperty, vec);
 	else if(loweredName == "spin") columnMapping[column].mapStandardColumn(ParticleProperty::SpinProperty, vec);
 	else if(loweredName == "centro_symmetry") columnMapping[column].mapStandardColumn(ParticleProperty::CentroSymmetryProperty);
+	else if(loweredName == "aspherical_shape") columnMapping[column].mapStandardColumn(ParticleProperty::AsphericalShapeProperty, vec);
+	else if(loweredName == "vector_color") columnMapping[column].mapStandardColumn(ParticleProperty::VectorColorProperty, vec);
+	else if(loweredName == "molecule") columnMapping[column].mapStandardColumn(ParticleProperty::MoleculeProperty);
+	else if(loweredName == "molecule_type") columnMapping[column].mapStandardColumn(ParticleProperty::MoleculeTypeProperty);
 	else {
 		// Only int or float custom properties are supported
 		if(dataType == PropertyStorage::Float || dataType == PropertyStorage::Int || dataType == PropertyStorage::Int64)

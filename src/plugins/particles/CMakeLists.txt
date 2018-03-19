@@ -79,6 +79,7 @@ SET(SourceFiles
 	import/gsd/gsd.c
 	import/castep/CastepCellImporter.cpp
 	import/castep/CastepMDImporter.cpp
+	import/cube/GaussianCubeImporter.cpp
 	import/xsf/XSFImporter.cpp
 	export/ParticleExporter.cpp
 	export/FileColumnParticleExporter.cpp

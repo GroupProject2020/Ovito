@@ -122,6 +122,10 @@ bool XYZExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 			case ParticleProperty::TorqueProperty: columnName = QStringLiteral("torque"); break;
 			case ParticleProperty::SpinProperty: columnName = QStringLiteral("spin"); break;
 			case ParticleProperty::CentroSymmetryProperty: columnName = QStringLiteral("centro_symmetry"); break;
+			case ParticleProperty::AsphericalShapeProperty: columnName = QStringLiteral("aspherical_shape"); break;
+			case ParticleProperty::VectorColorProperty: columnName = QStringLiteral("vector_color"); break;
+			case ParticleProperty::MoleculeProperty: columnName = QStringLiteral("molecule"); break;
+			case ParticleProperty::MoleculeTypeProperty: columnName = QStringLiteral("molecule_type"); break;
 			default:
 				columnName = pref.name();
 				columnName.remove(QRegExp("[^A-Za-z\\d_]"));

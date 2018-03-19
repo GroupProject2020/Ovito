@@ -27,6 +27,7 @@
 #include <gui/properties/BooleanParameterUI.h>
 #include <gui/properties/IntegerRadioButtonParameterUI.h>
 #include <gui/properties/BooleanRadioButtonParameterUI.h>
+#include <gui/properties/SubObjectParameterUI.h>
 #include <gui/widgets/general/ElidedTextLabel.h>
 #include <gui/utilities/concurrent/ProgressDialog.h>
 #include "GenerateTrajectoryLinesModifierEditor.h"
@@ -130,6 +131,9 @@ void GenerateTrajectoryLinesModifierEditor::createUI(const RolloutInsertionParam
 	QPushButton* createTrajectoryButton = new QPushButton(tr("Generate trajectory lines"));
 	layout->addWidget(createTrajectoryButton);
 	connect(createTrajectoryButton, &QPushButton::clicked, this, &GenerateTrajectoryLinesModifierEditor::onRegenerateTrajectory);
+
+	// Open a sub-editor for the trajectory vis element.
+	new SubObjectParameterUI(this, PROPERTY_FIELD(GenerateTrajectoryLinesModifier::trajectoryVis), rolloutParams.after(rollout));
 }
 
 /******************************************************************************
