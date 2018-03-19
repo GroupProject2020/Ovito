@@ -70,7 +70,7 @@ public:
 	/// \brief Applies a modifier by appending it to the end of the node's data pipeline.
 	/// \param mod The modifier to be inserted into the data flow pipeline.
 	/// \undoable
-	void applyModifier(Modifier* mod);
+	ModifierApplication* applyModifier(Modifier* mod);
 
 	/// \brief Returns the title of this object.
 	virtual QString objectTitle() override;

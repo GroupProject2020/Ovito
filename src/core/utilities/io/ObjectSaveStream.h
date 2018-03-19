@@ -59,7 +59,7 @@ public:
 	/// \brief Serializes an object and writes its data to the output stream.
 	/// \throw Exception if an I/O error has occurred.
 	/// \sa ObjectLoadStream::loadObject()
-	void saveObject(OvitoObject* object, bool excludeRecomputableData = false, bool weakReference = false);
+	void saveObject(OvitoObject* object, bool excludeRecomputableData = false);
 
 private:
 
@@ -67,7 +67,6 @@ private:
 	struct ObjectRecord {
 		OvitoObject* object;
 		bool excludeRecomputableData;
-		bool weakReference;
 	};
 
 	/// Contains all objects stored so far and their IDs.

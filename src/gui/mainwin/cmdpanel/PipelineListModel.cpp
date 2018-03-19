@@ -38,7 +38,6 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 ******************************************************************************/
 PipelineListModel::PipelineListModel(DataSetContainer& datasetContainer, QObject* parent) : QAbstractListModel(parent),
 	_datasetContainer(datasetContainer),
-	_nextObjectToSelect(nullptr), _needListUpdate(false),
 	_statusInfoIcon(":/gui/mainwin/status/status_info.png"),
 	_statusWarningIcon(":/gui/mainwin/status/status_warning.png"),
 	_statusErrorIcon(":/gui/mainwin/status/status_error.png"),
@@ -50,7 +49,7 @@ PipelineListModel::PipelineListModel(DataSetContainer& datasetContainer, QObject
 	connect(&_statusPendingIcon, &QMovie::frameChanged, this, &PipelineListModel::iconAnimationFrameChanged);
 	_selectionModel = new QItemSelectionModel(this);
 	connect(_selectionModel, &QItemSelectionModel::selectionChanged, this, &PipelineListModel::selectedItemChanged);
-	connect(&_selectedNodes, &VectorRefTargetListener<PipelineSceneNode>::notificationEvent, this, &PipelineListModel::onNodeEvent);
+	connect(&_selectedNode, &RefTargetListener<PipelineSceneNode>::notificationEvent, this, &PipelineListModel::onNodeEvent);
 	if(_sectionHeaderFont.pixelSize() < 0)
 		_sectionHeaderFont.setPointSize(_sectionHeaderFont.pointSize() * 4 / 5);
 	else
@@ -104,71 +103,57 @@ void PipelineListModel::refreshList()
 	}
 	RefTarget* defaultObjectToSelect = nullptr;
 
-	// Collect all selected pipeline nodes.
-	// Also check if all selected pipeline nodes reference the same pipeline.
-	_selectedNodes.clear();
-    PipelineObject* cmnObject = nullptr;
-
+	// Determine the selected pipeline.
+	_selectedNode.setTarget(nullptr);
     if(_datasetContainer.currentSet()) {
-		for(SceneNode* node : _datasetContainer.currentSet()->selection()->nodes()) {
-			if(PipelineSceneNode* objNode = dynamic_object_cast<PipelineSceneNode>(node)) {
-				_selectedNodes.push_back(objNode);
-
-				if(cmnObject == nullptr) cmnObject = objNode->dataProvider();
-				else if(cmnObject != objNode->dataProvider()) {
-					cmnObject = nullptr;
-					break;	// The scene nodes are not compatible.
-				}
-			}
-		}
+		SelectionSet* selectionSet = _datasetContainer.currentSet()->selection();
+		_selectedNode.setTarget(dynamic_object_cast<PipelineSceneNode>(selectionSet->firstNode()));
     }
 
 	QList<OORef<PipelineListItem>> items;
-	if(cmnObject) {
+	if(selectedNode()) {
 
 		// Create list items for visualization elements.
-		for(PipelineSceneNode* pipeline : _selectedNodes.targets()) {
-			for(DataVis* vis : pipeline->visElements())
-				items.push_back(new PipelineListItem(vis, PipelineListItem::Object));
-		}
+		for(DataVis* vis : selectedNode()->visElements())
+			items.push_back(new PipelineListItem(vis, PipelineListItem::Object));
 		if(!items.empty())
 			items.push_front(new PipelineListItem(nullptr, PipelineListItem::VisualElementsHeader));
 
 		// Traverse the modifiers in the pipeline.
-		PipelineObject* firstPipelineObj = cmnObject;
-		do {
-			OVITO_CHECK_OBJECT_POINTER(cmnObject);
+		PipelineObject* pipelineObject = selectedNode()->dataProvider();
+		PipelineObject* firstPipelineObj = pipelineObject;
+		while(pipelineObject) {
 
 			// Create entries for the modifier applications.
-			if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(cmnObject)) {
+			if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(pipelineObject)) {
 
-				if(cmnObject == firstPipelineObj)
+				if(pipelineObject == firstPipelineObj)
 					items.push_back(new PipelineListItem(nullptr, PipelineListItem::ModificationsHeader));
 
-				if(cmnObject->isPipelineBranch(true))
+				if(pipelineObject->isPipelineBranch(true))
 					items.push_back(new PipelineListItem(nullptr, PipelineListItem::PipelineBranch));
 
 				PipelineListItem* item = new PipelineListItem(modApp, PipelineListItem::Object);
 				items.push_back(item);
 
-				cmnObject = modApp->input();
+				pipelineObject = modApp->input();
 			}
-			else if(cmnObject) {
+			else if(pipelineObject) {
 
-				if(cmnObject->isPipelineBranch(true))
+				if(pipelineObject->isPipelineBranch(true))
 					items.push_back(new PipelineListItem(nullptr, PipelineListItem::PipelineBranch));
 				
 				items.push_back(new PipelineListItem(nullptr, PipelineListItem::DataSourceHeader));
 
 				// Create an entry for the data object.
-				PipelineListItem* item = new PipelineListItem(cmnObject, PipelineListItem::Object);
+				PipelineListItem* item = new PipelineListItem(pipelineObject, PipelineListItem::Object);
 				items.push_back(item);
 				if(defaultObjectToSelect == nullptr)
-					defaultObjectToSelect = cmnObject;
+					defaultObjectToSelect = pipelineObject;
 
 				// Create list items for the object's editable sub-objects.
-				for(int i = 0; i < cmnObject->editableSubObjectCount(); i++) {
-					RefTarget* subobject = cmnObject->editableSubObject(i);
+				for(int i = 0; i < pipelineObject->editableSubObjectCount(); i++) {
+					RefTarget* subobject = pipelineObject->editableSubObject(i);
 					if(subobject != nullptr && subobject->isSubObjectEditable()) {
 						items.push_back(new PipelineListItem(subobject, PipelineListItem::SubObject, item));
 					}
@@ -177,7 +162,6 @@ void PipelineListModel::refreshList()
 				break;
 			}
 		}
-		while(cmnObject);
 	}
 
 	int selIndex = -1;
@@ -212,9 +196,9 @@ void PipelineListModel::refreshList()
 }
 
 /******************************************************************************
-* Handles notification events generated by the selected object nodes.
+* Handles notification events generated by the selected pipeline node.
 ******************************************************************************/
-void PipelineListModel::onNodeEvent(RefTarget* source, const ReferenceEvent& event)
+void PipelineListModel::onNodeEvent(const ReferenceEvent& event)
 {
 	// Update the entire modification list if the PipelineSceneNode has been assigned a new
 	// data object, or if the list of visual elements has changed.
@@ -255,7 +239,6 @@ void PipelineListModel::applyModifiers(const QVector<OORef<Modifier>>& modifiers
 	// Get the selected pipeline entry. The new modifier is inserted right behind it in the pipeline.
 	PipelineListItem* currentItem = selectedItem();
 
-	_nextObjectToSelect = nullptr;
 	if(currentItem) {
 		while(currentItem->parent()) {
 			currentItem = currentItem->parent();
@@ -267,7 +250,7 @@ void PipelineListModel::applyModifiers(const QVector<OORef<Modifier>>& modifiers
 				modApp->setModifier(modifier);
 				modApp->setInput(pobj);
 				modifier->initializeModifier(modApp);
-				if(!_nextObjectToSelect) _nextObjectToSelect = modApp;
+				setNextToSelectObject(modApp);
 				for(RefMaker* dependent : dependentsList) {
 					if(ModifierApplication* predecessorModApp = dynamic_object_cast<ModifierApplication>(dependent)) {
 						predecessorModApp->setInput(modApp);
@@ -283,10 +266,8 @@ void PipelineListModel::applyModifiers(const QVector<OORef<Modifier>>& modifiers
 	}
 
 	// Insert modifiers at the end of the selected pipelines.
-	for(PipelineSceneNode* pipeline : selectedNodes()) {
-		for(int index = modifiers.size() - 1; index >= 0; --index) {
-			pipeline->applyModifier(modifiers[index]);
-		}
+	for(int index = modifiers.size() - 1; index >= 0; --index) {
+		setNextToSelectObject(selectedNode()->applyModifier(modifiers[index]));
 	}
 }
 
@@ -337,7 +318,7 @@ QVariant PipelineListModel::data(const QModelIndex& index, int role) const
 		if(DataVis* vis = dynamic_object_cast<DataVis>(item->object()))
 			return vis->isEnabled() ? Qt::Checked : Qt::Unchecked;
 		else if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(item->object()))
-			return modApp->modifier()->isEnabled() ? Qt::Checked : Qt::Unchecked;
+			return (modApp->modifier() && modApp->modifier()->isEnabled()) ? Qt::Checked : Qt::Unchecked;
 	}
 	else if(role == Qt::TextAlignmentRole) {
 		if(item->object() == nullptr) {
@@ -358,26 +339,10 @@ QVariant PipelineListModel::data(const QModelIndex& index, int role) const
 		}
 	}
 	else if(role == Qt::FontRole) {
-		if(item->object() == nullptr) {
+		if(item->object() == nullptr)
 			return _sectionHeaderFont;
-		}
-		else if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(item->object())) {
-			if(modApp->modifier()) {
-				QSet<PipelineSceneNode*> pipelines;
-				for(ModifierApplication* modApp : modApp->modifier()->modifierApplications())
-					pipelines.unite(modApp->pipelines(true));
-				if(pipelines.size() > 1)
-					return _sharedObjectFont;
-			}
-		}
-		else if(PipelineObject* pipelineObject = dynamic_object_cast<PipelineObject>(item->object())) {
-			if(pipelineObject->pipelines(true).size() > 1)
-				return _sharedObjectFont;
-		}
-		else if(DataVis* visElement = dynamic_object_cast<DataVis>(item->object())) {
-			if(visElement->pipelines(true).size() > 1)
-				return _sharedObjectFont;
-		}
+		else if(isSharedObject(item->object()))
+			return _sharedObjectFont;
 	}
 
 	return {};
@@ -399,7 +364,7 @@ bool PipelineListModel::setData(const QModelIndex& index, const QVariant& value,
 		else if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(item->object())) {
 			UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(),
 					(value == Qt::Checked) ? tr("Enable modifier") : tr("Disable modifier"), [modApp, &value]() {
-				modApp->modifier()->setEnabled(value == Qt::Checked);
+				if(modApp->modifier()) modApp->modifier()->setEnabled(value == Qt::Checked);
 			});
 		}
 	}
@@ -523,6 +488,28 @@ bool PipelineListModel::dropMimeData(const QMimeData* data, Qt::DropAction actio
 #endif	
 
 	return true;
+}
+
+/******************************************************************************
+* Helper method that determines if the given object is part of more than one pipeline.
+******************************************************************************/
+bool PipelineListModel::isSharedObject(RefTarget* obj)
+{
+	if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(obj)) {
+		if(modApp->modifier()) {
+			QSet<PipelineSceneNode*> pipelines;
+			for(ModifierApplication* ma : modApp->modifier()->modifierApplications())
+				pipelines.unite(ma->pipelines(true));
+			return pipelines.size() > 1;
+		}
+	}
+	else if(PipelineObject* pipelineObject = dynamic_object_cast<PipelineObject>(obj)) {
+		return pipelineObject->pipelines(true).size() > 1;
+	}
+	else if(DataVis* visElement = dynamic_object_cast<DataVis>(obj)) {
+		return visElement->pipelines(true).size() > 1;
+	}
+	return false;
 }
 
 OVITO_END_INLINE_NAMESPACE

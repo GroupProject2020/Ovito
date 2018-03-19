@@ -305,13 +305,13 @@ void RefMaker::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableDa
 			stream.beginChunk(0x02);
 			try {
 				if(field->isVector() == false) {
-					stream.saveObject(getReferenceField(*field), field->dontSaveRecomputableData(), field->isWeakReference());
+					stream.saveObject(getReferenceField(*field), field->dontSaveRecomputableData());
 				}
 				else {
 					const QVector<RefTarget*>& list = getVectorReferenceField(*field);
 					stream << (qint32)list.size();
 					for(RefTarget* target : list)
-						stream.saveObject(target, field->dontSaveRecomputableData(), field->isWeakReference());
+						stream.saveObject(target, field->dontSaveRecomputableData());
 				}
 			}
 			catch(Exception& ex) {

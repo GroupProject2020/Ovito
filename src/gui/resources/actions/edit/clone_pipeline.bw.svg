@@ -11,10 +11,10 @@
    height="24"
    viewBox="0 0 24 24"
    width="24"
-   id="svg2"
    version="1.1"
-   inkscape:version="0.91 r13725"
-   sodipodi:docname="clone_pipeline.bw.svg">
+   id="svg6"
+   sodipodi:docname="clone_pipeline.bw.svg"
+   inkscape:version="0.92.2 5c3e80d, 2017-08-06">
   <metadata
      id="metadata12">
     <rdf:RDF>
@@ -23,6 +23,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -37,23 +38,24 @@
      guidetolerance="10"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
-     inkscape:window-width="1920"
-     inkscape:window-height="1142"
+     inkscape:window-width="1440"
+     inkscape:window-height="855"
      id="namedview8"
      showgrid="false"
      inkscape:zoom="9.8333333"
-     inkscape:cx="12.20339"
+     inkscape:cx="-24.305085"
      inkscape:cy="12"
      inkscape:window-x="0"
-     inkscape:window-y="0"
+     inkscape:window-y="1"
      inkscape:window-maximized="1"
-     inkscape:current-layer="svg2" />
+     inkscape:current-layer="svg6" />
   <path
      d="M0 0h24v24H0z"
      fill="none"
-     id="path4" />
+     id="path2" />
   <path
-     d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"
-     id="path6"
-     style="fill:#505050;fill-opacity:1" />
+     d="M 9.440678,1.7627119 6.5102542,4.6931356 10.195678,8.3785593 8.3785593,10.195678 4.6931356,6.5102542 1.7627119,9.440678 V 1.7627119 Z m 5.118644,0 h 7.677966 V 9.440678 L 19.306864,6.5102542 13.279661,12.524661 v 9.712627 H 10.720339 V 11.475339 l 6.769407,-6.7822034 z"
+     id="path4"
+     style="fill:#505050;fill-opacity:1;stroke-width:1.27966106"
+     inkscape:connector-curvature="0" />
 </svg>

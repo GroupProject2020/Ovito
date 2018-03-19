@@ -668,6 +668,19 @@ void FileSource::referenceRemoved(const PropertyFieldDescriptor& field, RefTarge
 	CachingPipelineObject::referenceRemoved(field, oldTarget, listIndex);
 }
 
+/******************************************************************************
+* Creates a copy of this object.
+******************************************************************************/
+OORef<RefTarget> FileSource::clone(bool deepCopy, CloneHelper& cloneHelper)
+{
+	// Let the base class create an instance of this class.
+	OORef<FileSource> clone = static_object_cast<FileSource>(CachingPipelineObject::clone(deepCopy, cloneHelper));
+
+	// There should always be only one FileSource controlling the animation interval length.
+	clone->setAdjustAnimationIntervalEnabled(false);
+
+	return clone;
+}
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

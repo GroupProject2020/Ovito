@@ -327,7 +327,7 @@ QString PipelineSceneNode::objectTitle()
 * Applies a modifier by appending it to the end of the node's modification
 * pipeline.
 ******************************************************************************/
-void PipelineSceneNode::applyModifier(Modifier* modifier)
+ModifierApplication* PipelineSceneNode::applyModifier(Modifier* modifier)
 {
 	OVITO_ASSERT(modifier);
 
@@ -336,6 +336,7 @@ void PipelineSceneNode::applyModifier(Modifier* modifier)
 	modApp->setInput(dataProvider());
 	modifier->initializeModifier(modApp);
 	setDataProvider(modApp);
+	return modApp;
 }
 
 /******************************************************************************

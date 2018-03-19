@@ -312,8 +312,7 @@ void ModifierListBox::updateAvailableModifiers()
 	else if(PipelineObject* pipelineObject = dynamic_object_cast<PipelineObject>(currentItem->object())) {
 		inputState = pipelineObject->evaluatePreliminary();
 	}
-	else if(!_pipelineList->selectedNodes().empty()) {
-		PipelineSceneNode* node = _pipelineList->selectedNodes().front();
+	else if(PipelineSceneNode* node = _pipelineList->selectedNode()) {
 		inputState = node->evaluatePipelinePreliminary(false);
 	}
 

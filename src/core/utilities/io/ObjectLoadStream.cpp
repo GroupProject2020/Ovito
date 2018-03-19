@@ -77,12 +77,9 @@ ObjectLoadStream::ObjectLoadStream(QDataStream& source) : LoadStream(source)
 	_objects.resize(objectCount);
 	for(ObjectRecord& record : _objects) {
 		record.object = nullptr;
-		quint32 id;
-		*this >> id;
-		if(id != 0)
-			record.classInfo = _classes[id-1].get();
-		else
-			record.classInfo = nullptr;
+		quint32 classId;
+		*this >> classId;
+		record.classInfo = _classes[classId].get();
 		*this >> record.fileOffset;
 	}
 	closeChunk();
@@ -98,13 +95,12 @@ ObjectLoadStream::ObjectLoadStream(QDataStream& source) : LoadStream(source)
 ******************************************************************************/
 OORef<OvitoObject> ObjectLoadStream::loadObjectInternal()
 {
-	quint32 id;
-	*this >> id;
-	if(id == 0) return nullptr;
+	quint32 objectId;
+	*this >> objectId;
+	if(objectId == 0) return nullptr;
 	else {
-		ObjectRecord& record = _objects[id - 1];
+		ObjectRecord& record = _objects[objectId - 1];
 		if(record.object != nullptr) return record.object;
-		if(record.classInfo == nullptr) return nullptr;	// This was a weak object reference
 		else {
 			// When loading a RefTarget-derived class from the stream, we must already have a current DataSet as context.
 			OVITO_ASSERT(_dataset != nullptr || record.classInfo->clazz == &DataSet::OOClass() || !record.classInfo->clazz->isDerivedFrom(RefTarget::OOClass()));
@@ -121,7 +117,7 @@ OORef<OvitoObject> ObjectLoadStream::loadObjectInternal()
 				OVITO_ASSERT(!record.classInfo->clazz->isDerivedFrom(RefTarget::OOClass()) || _dataset != nullptr);
 			}
 
-			_objectsToLoad.push_back(id - 1);
+			_objectsToLoad.push_back(objectId - 1);
 			return record.object;
 		}
 	}

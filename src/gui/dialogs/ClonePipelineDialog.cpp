@@ -23,7 +23,6 @@
 #include <gui/mainwin/MainWindow.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/dataset/scene/PipelineSceneNode.h>
-#include <core/dataset/io/FileSource.h>
 #include <core/oo/CloneHelper.h>
 #include "ClonePipelineDialog.h"
 
@@ -40,14 +39,11 @@ ClonePipelineDialog::ClonePipelineDialog(PipelineSceneNode* node, QWidget* paren
 	initializeGraphicsScene();
 	
 	QVBoxLayout* mainLayout = new QVBoxLayout(this);
-	QGroupBox* pipelineBox = new QGroupBox(tr("Pipeline layout"));
-	mainLayout->addWidget(pipelineBox);
-
-	QVBoxLayout* sublayout1 = new QVBoxLayout(pipelineBox);
+	
 	_pipelineView = new QGraphicsView(&_pipelineScene, this);
 	_pipelineView->setSceneRect(_pipelineView->sceneRect().marginsAdded(QMarginsF(15,15,15,15)));
 	_pipelineView->setRenderHint(QPainter::Antialiasing);
-	sublayout1->addWidget(_pipelineView, 1);
+	mainLayout->addWidget(_pipelineView, 1);
 
 	QGroupBox* displacementBox = new QGroupBox(tr("Displace cloned pipeline"));
 	mainLayout->addWidget(displacementBox);
@@ -95,9 +91,9 @@ ClonePipelineDialog::ClonePipelineDialog(PipelineSceneNode* node, QWidget* paren
 	QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel | QDialogButtonBox::Help, Qt::Horizontal, this);
 	connect(buttonBox, &QDialogButtonBox::accepted, this, &ClonePipelineDialog::onAccept);
 	connect(buttonBox, &QDialogButtonBox::rejected, this, &ClonePipelineDialog::reject);
-	//connect(buttonBox, &QDialogButtonBox::helpRequested, [this]() {
-	//	MainWindow::openHelpTopic("viewports.adjust_view_dialog.html");
-	//});
+	connect(buttonBox, &QDialogButtonBox::helpRequested, [this]() {
+		MainWindow::openHelpTopic("clone_pipeline.html");
+	});
 	mainLayout->addWidget(buttonBox);
 }
 
@@ -290,7 +286,7 @@ void ClonePipelineDialog::initializeGraphicsScene()
 			joinAction->setChecked(true);
 
 		if(line == 1) {
-			textItem = _pipelineScene.addSimpleText(tr("Clone mode:"));
+			textItem = _pipelineScene.addSimpleText(tr("Cloning mode:"));
 			textItem->setPos(-textItem->boundingRect().center() + selectorItem->boundingRect().center());
 			textItem->moveBy(_pipelineSeparation + 40, 0);
 		}
@@ -405,9 +401,6 @@ void ClonePipelineDialog::onAccept()
 				if(ModifierApplication* clonedModApp = dynamic_object_cast<ModifierApplication>(clonedObject)) {
 					clonedModApp->setInput(precedingObj);
 					clonedModApp->setModifier(cloneHelper.cloneObject(clonedModApp->modifier(), true));
-				}
-				else if(FileSource* clonedFileSource = dynamic_object_cast<FileSource>(clonedObject)) {
-					clonedFileSource->setAdjustAnimationIntervalEnabled(false);
 				}
 				precedingObj = clonedObject;
 			}
