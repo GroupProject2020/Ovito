@@ -217,6 +217,10 @@ protected:
 	/// The default implementation returns \c false.
 	virtual bool loadPropertyFieldFromStream(ObjectLoadStream& stream, const RefMakerClass::SerializedClassInfo::PropertyFieldInfo& serializedField) { return false; }
 
+	/// This method is called after the reference counter of this object has reached zero
+	/// and before the object is being deleted.
+	virtual void aboutToBeDeleted() override;
+
 public:
 
 	/// \brief Returns true if this object is an instance of a RefTarget derived class.
@@ -318,10 +322,6 @@ public:
 	__declspec(noreturn)
 #endif
 	void throwException(const QString& msg) const;
-
-	/// This method is called after the reference counter of this object has reached zero
-	/// and before the object is being deleted.
-	virtual void aboutToBeDeleted() override;
 
 private:
 

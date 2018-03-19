@@ -49,12 +49,6 @@ public:
 	virtual ~RefTargetListenerBase() {
 		clearAllReferences();
 	}
-
-	/// \brief This method is called after the reference counter of this object has reached zero
-	///        and before the object is being deleted.
-	virtual void aboutToBeDeleted() override {
-		OVITO_ASSERT_MSG(false, "RefTargetListenerBase::aboutToBeDeleted()", "Invalid use of this class. A RefTargetListener should not be used with reference counting pointers.");
-	}
 	
 Q_SIGNALS:
 
@@ -64,6 +58,12 @@ Q_SIGNALS:
 	void notificationEvent(const ReferenceEvent& event);
 
 protected:
+
+	/// This method is called after the reference counter of this object has reached zero
+	/// and before the object is being deleted.
+	virtual void aboutToBeDeleted() override {
+		OVITO_ASSERT_MSG(false, "RefTargetListenerBase::aboutToBeDeleted()", "Invalid use of this class. A RefTargetListener should not be used with reference counting pointers.");
+	}
 
 	/// \brief Is called when the RefTarget referenced by this listener has generated an event.
 	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
@@ -149,8 +149,8 @@ Q_SIGNALS:
 
 protected:
 
-	/// \brief This method is called after the reference counter of this object has reached zero
-	///        and before the object is being deleted.
+	/// This method is called after the reference counter of this object has reached zero
+	/// and before the object is being deleted.
 	virtual void aboutToBeDeleted() override {
 		OVITO_ASSERT_MSG(false, "VectorRefTargetListenerBase::aboutToBeDeleted()", "Invalid use of this class. A VectorRefTargetListener should not be used with reference counting pointers.");
 	}

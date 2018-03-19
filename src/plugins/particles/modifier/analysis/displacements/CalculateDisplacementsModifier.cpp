@@ -30,16 +30,25 @@
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
 IMPLEMENT_OVITO_CLASS(CalculateDisplacementsModifier);
-
-IMPLEMENT_OVITO_CLASS(CalculateDisplacementsModifierApplication);
-DEFINE_REFERENCE_FIELD(CalculateDisplacementsModifierApplication, vectorVis);
-SET_MODIFIER_APPLICATION_TYPE(CalculateDisplacementsModifier, CalculateDisplacementsModifierApplication);
+DEFINE_REFERENCE_FIELD(CalculateDisplacementsModifier, vectorVis);
 
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
 CalculateDisplacementsModifier::CalculateDisplacementsModifier(DataSet* dataset) : ReferenceConfigurationModifier(dataset)
 {
+	// Create vis element for vectors.
+	setVectorVis(new VectorVis(dataset));
+	vectorVis()->setObjectTitle(tr("Displacements"));
+
+	// Don't show vectors by default, because too many vectors can make the
+	// program freeze. User has to enable the display manually.
+	vectorVis()->setEnabled(false);
+
+	// Configure vector display such that arrows point from the reference particle positions
+	// to the current particle positions.
+	vectorVis()->setReverseArrowDirection(false);
+	vectorVis()->setArrowPosition(VectorVis::Head);
 }
 
 /******************************************************************************
@@ -139,14 +148,13 @@ void CalculateDisplacementsModifier::DisplacementEngine::perform()
 ******************************************************************************/
 PipelineFlowState CalculateDisplacementsModifier::DisplacementResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	CalculateDisplacementsModifierApplication* myModApp = static_object_cast<CalculateDisplacementsModifierApplication>(modApp);
 	CalculateDisplacementsModifier* modifier = static_object_cast<CalculateDisplacementsModifier>(modApp->modifier());
 
 	PipelineFlowState output = input;
 	ParticleOutputHelper poh(modApp->dataset(), output);
 	if(displacements()->size() != poh.outputParticleCount())
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
-	poh.outputProperty<ParticleProperty>(displacements())->setVisElement(myModApp->vectorVis());
+	poh.outputProperty<ParticleProperty>(displacements())->setVisElement(modifier->vectorVis());
 	poh.outputProperty<ParticleProperty>(displacementMagnitudes());
 	
 	return output;

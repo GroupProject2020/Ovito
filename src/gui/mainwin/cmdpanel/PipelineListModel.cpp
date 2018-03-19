@@ -55,6 +55,8 @@ PipelineListModel::PipelineListModel(DataSetContainer& datasetContainer, QObject
 		_sectionHeaderFont.setPointSize(_sectionHeaderFont.pointSize() * 4 / 5);
 	else
 		_sectionHeaderFont.setPixelSize(_sectionHeaderFont.pixelSize() * 4 / 5);
+	_sectionHeaderBackgroundBrush = QBrush(Qt::lightGray, Qt::Dense4Pattern);
+	_sectionHeaderForegroundBrush = QBrush(Qt::blue);
 
 	_sharedObjectFont.setItalic(true);
 }
@@ -127,10 +129,10 @@ void PipelineListModel::refreshList()
 		// Create list items for visualization elements.
 		for(PipelineSceneNode* pipeline : _selectedNodes.targets()) {
 			for(DataVis* vis : pipeline->visElements())
-				items.push_back(new PipelineListItem(vis));
+				items.push_back(new PipelineListItem(vis, PipelineListItem::Object));
 		}
 		if(!items.empty())
-			items.push_front(new PipelineListItem(nullptr, nullptr, tr("Visual elements")));
+			items.push_front(new PipelineListItem(nullptr, PipelineListItem::VisualElementsHeader));
 
 		// Traverse the modifiers in the pipeline.
 		PipelineObject* firstPipelineObj = cmnObject;
@@ -141,27 +143,25 @@ void PipelineListModel::refreshList()
 			if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(cmnObject)) {
 
 				if(cmnObject == firstPipelineObj)
-					items.push_back(new PipelineListItem(nullptr, nullptr, tr("Modifications")));
+					items.push_back(new PipelineListItem(nullptr, PipelineListItem::ModificationsHeader));
 
-				PipelineListItem* item = new PipelineListItem(modApp->modifier());
-				item->setModifierApplications({1, modApp});
+				if(cmnObject->isPipelineBranch(true))
+					items.push_back(new PipelineListItem(nullptr, PipelineListItem::PipelineBranch));
+
+				PipelineListItem* item = new PipelineListItem(modApp, PipelineListItem::Object);
 				items.push_back(item);
-
-				// Create list items for the modifier's editable sub-objects.
-				for(int j = 0; j < modApp->modifier()->editableSubObjectCount(); j++) {
-					RefTarget* subobject = modApp->modifier()->editableSubObject(j);
-					if(subobject != nullptr && subobject->isSubObjectEditable()) {
-						items.push_back(new PipelineListItem(subobject, item));
-					}
-				}
 
 				cmnObject = modApp->input();
 			}
 			else if(cmnObject) {
-				items.push_back(new PipelineListItem(nullptr, nullptr, tr("Data source")));
+
+				if(cmnObject->isPipelineBranch(true))
+					items.push_back(new PipelineListItem(nullptr, PipelineListItem::PipelineBranch));
+				
+				items.push_back(new PipelineListItem(nullptr, PipelineListItem::DataSourceHeader));
 
 				// Create an entry for the data object.
-				PipelineListItem* item = new PipelineListItem(cmnObject);
+				PipelineListItem* item = new PipelineListItem(cmnObject, PipelineListItem::Object);
 				items.push_back(item);
 				if(defaultObjectToSelect == nullptr)
 					defaultObjectToSelect = cmnObject;
@@ -170,7 +170,7 @@ void PipelineListModel::refreshList()
 				for(int i = 0; i < cmnObject->editableSubObjectCount(); i++) {
 					RefTarget* subobject = cmnObject->editableSubObject(i);
 					if(subobject != nullptr && subobject->isSubObjectEditable()) {
-						items.push_back(new PipelineListItem(subobject, item));
+						items.push_back(new PipelineListItem(subobject, PipelineListItem::SubObject, item));
 					}
 				}
 
@@ -183,7 +183,7 @@ void PipelineListModel::refreshList()
 	int selIndex = -1;
 	int selDefaultIndex = -1;
 	for(int i = 0; i < items.size(); i++) {
-		if(_nextObjectToSelect && (_nextObjectToSelect == items[i]->object() || items[i]->modifierApplications().contains(dynamic_object_cast<ModifierApplication>(_nextObjectToSelect))))
+		if(_nextObjectToSelect && _nextObjectToSelect == items[i]->object())
 			selIndex = i;
 		if(defaultObjectToSelect && defaultObjectToSelect == items[i]->object())
 			selDefaultIndex = i;
@@ -252,38 +252,37 @@ void PipelineListModel::applyModifiers(const QVector<OORef<Modifier>>& modifiers
 	if(modifiers.empty())
 		return;
 
-	// Get the selected pipeline entry. The new modifier is inserted right behind it.
+	// Get the selected pipeline entry. The new modifier is inserted right behind it in the pipeline.
 	PipelineListItem* currentItem = selectedItem();
 
-	// On the next list update, the new modifier should be selected.
-	_nextObjectToSelect = modifiers.front();
-
+	_nextObjectToSelect = nullptr;
 	if(currentItem) {
 		while(currentItem->parent()) {
 			currentItem = currentItem->parent();
 		}
-		// Determine the item preceding the selected item.
-		int index = _items.indexOf(currentItem);
-		while(index > 0) {
-			index--;
-			PipelineListItem* predecessor = _items[index];
-			if(Modifier* predecessorModifier = dynamic_object_cast<Modifier>(predecessor->object())) {
-				for(ModifierApplication* predecessorModApp : predecessor->modifierApplications()) {
-					for(Modifier* modifier : modifiers) {
-						OORef<ModifierApplication> modApp = modifier->createModifierApplication();
-						modApp->setModifier(modifier);
-						modApp->setInput(predecessorModApp->input());
-						modifier->initializeModifier(modApp);
+		if(OORef<PipelineObject> pobj = dynamic_object_cast<PipelineObject>(currentItem->object())) {
+			for(Modifier* modifier : modifiers) {
+				auto dependentsList = pobj->dependents();
+				OORef<ModifierApplication> modApp = modifier->createModifierApplication();
+				modApp->setModifier(modifier);
+				modApp->setInput(pobj);
+				modifier->initializeModifier(modApp);
+				if(!_nextObjectToSelect) _nextObjectToSelect = modApp;
+				for(RefMaker* dependent : dependentsList) {
+					if(ModifierApplication* predecessorModApp = dynamic_object_cast<ModifierApplication>(dependent)) {
 						predecessorModApp->setInput(modApp);
-						predecessorModApp = modApp;
 					}
-					return;
+					else if(PipelineSceneNode* pipeline = dynamic_object_cast<PipelineSceneNode>(dependent)) {
+						pipeline->setDataProvider(modApp);
+					}
 				}
+				pobj = modApp;
 			}
+			return;
 		}
 	}
 
-	// Apply modifier to each selected node.
+	// Insert modifiers at the end of the selected pipelines.
 	for(PipelineSceneNode* pipeline : selectedNodes()) {
 		for(int index = modifiers.size() - 1; index >= 0; --index) {
 			pipeline->applyModifier(modifiers[index]);
@@ -317,17 +316,7 @@ QVariant PipelineListModel::data(const QModelIndex& index, int role) const
 	PipelineListItem* item = this->item(index.row());
 
 	if(role == Qt::DisplayRole) {
-		if(item->object()) {
-			if(item->isSubObject())
-#ifdef Q_OS_LINUX
-			return QStringLiteral("  ⇾ ") + item->object()->objectTitle();
-#else
-			return QStringLiteral("    ") + item->object()->objectTitle();
-#endif
-			else
-				return item->object()->objectTitle();
-		}
-		else return item->title();
+		return item->title();
 	}
 	else if(role == Qt::DecorationRole) {
 		if(item->object()) {
@@ -347,8 +336,8 @@ QVariant PipelineListModel::data(const QModelIndex& index, int role) const
 	else if(role == Qt::CheckStateRole) {
 		if(DataVis* vis = dynamic_object_cast<DataVis>(item->object()))
 			return vis->isEnabled() ? Qt::Checked : Qt::Unchecked;
-		else if(Modifier* modifier = dynamic_object_cast<Modifier>(item->object()))
-			return modifier->isEnabled() ? Qt::Checked : Qt::Unchecked;
+		else if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(item->object()))
+			return modApp->modifier()->isEnabled() ? Qt::Checked : Qt::Unchecked;
 	}
 	else if(role == Qt::TextAlignmentRole) {
 		if(item->object() == nullptr) {
@@ -357,32 +346,36 @@ QVariant PipelineListModel::data(const QModelIndex& index, int role) const
 	}
 	else if(role == Qt::BackgroundRole) {
 		if(item->object() == nullptr) {
-			return QBrush(Qt::lightGray, Qt::Dense4Pattern);
+			if(item->itemType() != PipelineListItem::PipelineBranch)
+				return _sectionHeaderBackgroundBrush;
+			else
+				return QBrush(Qt::lightGray, Qt::Dense6Pattern);
 		}
 	}
 	else if(role == Qt::ForegroundRole) {
 		if(item->object() == nullptr) {
-			return QBrush(Qt::blue);
+			return _sectionHeaderForegroundBrush;
 		}
 	}
 	else if(role == Qt::FontRole) {
 		if(item->object() == nullptr) {
 			return _sectionHeaderFont;
 		}
-		else if(Modifier* modifier = dynamic_object_cast<Modifier>(item->object())) {
-			QSet<PipelineSceneNode*> pipelines;
-			for(ModifierApplication* modApp : modifier->modifierApplications()) {
-				pipelines += modApp->dependentNodes(true);
+		else if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(item->object())) {
+			if(modApp->modifier()) {
+				QSet<PipelineSceneNode*> pipelines;
+				for(ModifierApplication* modApp : modApp->modifier()->modifierApplications())
+					pipelines.unite(modApp->pipelines(true));
+				if(pipelines.size() > 1)
+					return _sharedObjectFont;
 			}
-			if(pipelines.size() > 1)
-				return _sharedObjectFont;
 		}
 		else if(PipelineObject* pipelineObject = dynamic_object_cast<PipelineObject>(item->object())) {
-			if(pipelineObject->dependentNodes(true).size() > 1)
+			if(pipelineObject->pipelines(true).size() > 1)
 				return _sharedObjectFont;
 		}
 		else if(DataVis* visElement = dynamic_object_cast<DataVis>(item->object())) {
-			if(visElement->dependentNodes(true).size() > 1)
+			if(visElement->pipelines(true).size() > 1)
 				return _sharedObjectFont;
 		}
 	}
@@ -403,10 +396,10 @@ bool PipelineListModel::setData(const QModelIndex& index, const QVariant& value,
 				vis->setEnabled(value == Qt::Checked);
 			});
 		}
-		else if(Modifier* modifier = dynamic_object_cast<Modifier>(item->object())) {
+		else if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(item->object())) {
 			UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(),
-					(value == Qt::Checked) ? tr("Enable modifier") : tr("Disable modifier"), [modifier, &value]() {
-				modifier->setEnabled(value == Qt::Checked);
+					(value == Qt::Checked) ? tr("Enable modifier") : tr("Disable modifier"), [modApp, &value]() {
+				modApp->modifier()->setEnabled(value == Qt::Checked);
 			});
 		}
 	}
@@ -427,7 +420,7 @@ Qt::ItemFlags PipelineListModel::flags(const QModelIndex& index) const
 			if(dynamic_object_cast<DataVis>(item->object())) {
 				return QAbstractListModel::flags(index) | Qt::ItemIsUserCheckable;
 			}
-			else if(dynamic_object_cast<Modifier>(item->object())) {
+			else if(dynamic_object_cast<ModifierApplication>(item->object())) {
 #if 0				
 				return QAbstractListModel::flags(index) | Qt::ItemIsUserCheckable | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled;
 #else
@@ -509,8 +502,8 @@ bool PipelineListModel::dropMimeData(const QMimeData* data, Qt::DropAction actio
 
 	// The list item being dragged.
     PipelineListItem* movedItem = item(indexList[0]);
-	if(movedItem->modifierApplications().size() != 1)
-		return false;
+//	if(!movedItem->modifierApplication())
+//		return false;
 
 #if 0		
 	// The ModifierApplication being dragged.

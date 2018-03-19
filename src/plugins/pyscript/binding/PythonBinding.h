@@ -413,7 +413,7 @@ public:
 			}
 			catch(...) {
 				// Clean up if an exception occured during object initialization. 
-				instance.aboutToBeDeleted();
+				instance.deleteObjectInternal();
 				instance.~OvitoObjectClass();
 				throw;
 			}
@@ -434,7 +434,7 @@ public:
 			}
 			catch(...) {
 				// Clean up if an exception occured during object initialization. 
-				instance.aboutToBeDeleted();
+				instance.deleteObjectInternal();
 				instance.~OvitoObjectClass();
 				throw;
 			}

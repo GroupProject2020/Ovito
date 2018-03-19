@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -29,13 +29,12 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 
 IMPLEMENT_OVITO_CLASS(PipelineListItem);
 DEFINE_REFERENCE_FIELD(PipelineListItem, object);
-DEFINE_REFERENCE_FIELD(PipelineListItem, modifierApplications);
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-PipelineListItem::PipelineListItem(RefTarget* object, PipelineListItem* parent, const QString& title) :
-	_parent(parent), _title(title)
+PipelineListItem::PipelineListItem(RefTarget* object, PipelineItemType itemType, PipelineListItem* parent) :
+	_parent(parent), _itemType(itemType)
 {
 	_object.set(this, PROPERTY_FIELD(object), object);
 }
@@ -48,22 +47,17 @@ bool PipelineListItem::referenceEvent(RefTarget* source, const ReferenceEvent& e
 {
 	// The modifier stack list must be updated if a modifier has been added or removed
 	// from a PipelineObject.
-	if((event.type() == ReferenceEvent::ReferenceAdded || event.type() == ReferenceEvent::ReferenceRemoved || event.type() == ReferenceEvent::ReferenceChanged)
-		&& source == object() && dynamic_object_cast<PipelineObject>(object()))
+	if((event.type() == ReferenceEvent::ReferenceAdded || event.type() == ReferenceEvent::ReferenceRemoved || event.type() == ReferenceEvent::ReferenceChanged) && dynamic_object_cast<PipelineObject>(object()))
 	{
 		Q_EMIT subitemsChanged(this);
 	}
-	/// Update item if an object has been enabled or disabled.
-	else if(event.type() == ReferenceEvent::TargetEnabledOrDisabled && source == object() && event.sender() == object()) {
-		Q_EMIT itemChanged(this);
-	}
-	/// Update an entry if the evaluation status of the modifier has changed.
-	else if(event.type() == ReferenceEvent::ObjectStatusChanged || event.type() == ReferenceEvent::TitleChanged) {
+	/// Update item if it has been enabled/disabled, its status has changed, or its title has changed.
+	else if(event.type() == ReferenceEvent::TargetEnabledOrDisabled || event.type() == ReferenceEvent::ObjectStatusChanged || event.type() == ReferenceEvent::TitleChanged) {
 		Q_EMIT itemChanged(this);
 	}
 	/// If the list of sub-objects changes for one of the entries, we need
 	/// to update everything.
-	else if(event.type() == ReferenceEvent::SubobjectListChanged && source == object() && event.sender() == object()) {
+	else if(event.type() == ReferenceEvent::SubobjectListChanged) {
 		Q_EMIT subitemsChanged(this);
 	}
 
@@ -75,8 +69,8 @@ bool PipelineListItem::referenceEvent(RefTarget* source, const ReferenceEvent& e
 ******************************************************************************/
 PipelineStatus PipelineListItem::status() const
 {
-	if(Modifier* modifier = dynamic_object_cast<Modifier>(object())) {
-		return modifier->globalStatus();
+	if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(object())) {
+		return modApp->status();
 	}
 	else if(PipelineObject* pipelineObj = dynamic_object_cast<PipelineObject>(object())) {
 		return pipelineObj->status();
@@ -85,7 +79,28 @@ PipelineStatus PipelineListItem::status() const
 		return displayObj->status();
 	}
 	else {
-		return PipelineStatus();
+		return {};
+	}
+}
+
+/******************************************************************************
+* Returns the text for this list item.
+******************************************************************************/
+QString PipelineListItem::title() const
+{ 
+	switch(_itemType) {
+	case Object: return object()->objectTitle();
+	case SubObject:
+#ifdef Q_OS_LINUX
+		return QStringLiteral("  ⇾ ") + object()->objectTitle();
+#else
+		return QStringLiteral("    ") + object()->objectTitle();
+#endif
+	case VisualElementsHeader: return tr("Visual elements");
+	case ModificationsHeader: return tr("Modifications");
+	case DataSourceHeader: return tr("Data source");
+	case PipelineBranch: return tr("Pipeline branch");
+	default: return {};
 	}
 }
 

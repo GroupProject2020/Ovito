@@ -88,6 +88,13 @@ public:
 	/// returns the source object that generates the input data for the pipeline.
 	PipelineObject* pipelineSource() const;
 		
+	/// \brief Returns the title of this modifier application.
+	virtual QString objectTitle() override {
+		// Inherit title from modifier.
+		if(modifier()) return modifier()->objectTitle();
+		else return CachingPipelineObject::objectTitle();
+	}
+
 protected:
 
 	/// \brief Asks the object for the result of the data pipeline.

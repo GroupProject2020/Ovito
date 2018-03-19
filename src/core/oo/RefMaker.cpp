@@ -305,13 +305,13 @@ void RefMaker::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableDa
 			stream.beginChunk(0x02);
 			try {
 				if(field->isVector() == false) {
-					stream.saveObject(getReferenceField(*field), field->dontSaveRecomputableData());
+					stream.saveObject(getReferenceField(*field), field->dontSaveRecomputableData(), field->isWeakReference());
 				}
 				else {
 					const QVector<RefTarget*>& list = getVectorReferenceField(*field);
 					stream << (qint32)list.size();
 					for(RefTarget* target : list)
-						stream.saveObject(target, field->dontSaveRecomputableData());
+						stream.saveObject(target, field->dontSaveRecomputableData(), field->isWeakReference());
 				}
 			}
 			catch(Exception& ex) {
@@ -387,7 +387,7 @@ void RefMaker::loadFromStream(ObjectLoadStream& stream)
 						qint32 numEntries;
 						stream >> numEntries;
 						OVITO_ASSERT(numEntries >= 0);
-						for(qint32 i=0; i<numEntries; i++) {
+						for(qint32 i = 0; i < numEntries; i++) {
 							OORef<RefTarget> target = stream.loadObject<RefTarget>();
 							if(target && !target->getOOClass().isDerivedFrom(*fieldEntry.targetClass)) {
 								throwException(tr("Incompatible object stored in reference field %1 of class %2. Expected class %3 but found class %4 in file.")

@@ -82,6 +82,9 @@ protected Q_SLOTS:
 	/// Handles the ACTION_MODIFIER_TOGGLE_STATE command, which toggles the enabled/disable state of the selected modifier.
 	void onModifierToggleState(bool newState);
 
+	/// Handles the ACTION_PIPELINE_MAKE_INDEPENDENT command, which replaces the selected pipeline item with an independent copy.
+	void onMakeElementIndependent();
+
 	/// Is called by the system when fetching the news web page from the server is completed.
 	void onWebRequestFinished(QNetworkReply* reply);
 

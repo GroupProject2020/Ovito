@@ -105,35 +105,6 @@ private:
 
 		std::shared_ptr<DisplacementResults> _results;
 	};
-};
-
-/**
- * Used by the CalculateDisplacementsModifier to store the visualization element for the computed displacement vectors.
- */
-class OVITO_PARTICLES_EXPORT CalculateDisplacementsModifierApplication : public ReferenceConfigurationModifierApplication
-{
-	OVITO_CLASS(CalculateDisplacementsModifierApplication)
-	Q_OBJECT
-
-public:
-
-	/// Constructor.
-	Q_INVOKABLE CalculateDisplacementsModifierApplication(DataSet* dataset) : ReferenceConfigurationModifierApplication(dataset) {
-		// Create vis element for vectors.
-		setVectorVis(new VectorVis(dataset));
-		vectorVis()->setObjectTitle(tr("Displacements"));
-
-		// Don't show vectors by default, because too many vectors can make the
-		// program freeze. User has to enable the display manually.
-		vectorVis()->setEnabled(false);
-
-		// Configure vector display such that arrows point from the reference particle positions
-		// to the current particle positions.
-		vectorVis()->setReverseArrowDirection(false);
-		vectorVis()->setArrowPosition(VectorVis::Head);
-	}
-
-private:
 
 	/// The vis element for rendering the displacement vectors.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(VectorVis, vectorVis, setVectorVis, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE);

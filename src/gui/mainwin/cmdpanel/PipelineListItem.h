@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -30,9 +30,7 @@
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /**
- * An item of the ModificationListModel.
- *
- * Holds a reference to an object/modifier.
+ * An item of the ModificationListModel representing a data source, data object, modifier application or vis element.
  */
 class PipelineListItem : public RefMaker
 {
@@ -41,8 +39,19 @@ class PipelineListItem : public RefMaker
 
 public:
 
+	enum PipelineItemType {
+		Object,
+		SubObject,
+		VisualElementsHeader,
+		ModificationsHeader,
+		DataSourceHeader,
+		PipelineBranch
+	};
+
+public:
+
 	/// Constructor.
-	PipelineListItem(RefTarget* object, PipelineListItem* parent = nullptr, const QString& title = QString());
+	PipelineListItem(RefTarget* object, PipelineItemType itemType, PipelineListItem* parent = nullptr);
 
 	/// Returns true if this is a sub-object entry.
 	bool isSubObject() const { return _parent != nullptr; }
@@ -53,8 +62,11 @@ public:
 	/// Returns the status of the object represented by the list item.
 	PipelineStatus status() const;
 
-	/// Returns the title text if this is a section header item.
-	const QString title() const { return _title; }
+	/// Returns the title text for this list item.
+	QString title() const;
+
+	/// Returns the type of this list item.
+	PipelineItemType itemType() const { return _itemType; }
 
 Q_SIGNALS:
 
@@ -74,14 +86,11 @@ private:
 	/// The object represented by this item in the list box.
 	DECLARE_REFERENCE_FIELD_FLAGS(RefTarget, object, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
-	/// The list of modifier applications if this is a modifier item.
-	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD_FLAGS(ModifierApplication, modifierApplications, setModifierApplications, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
+	/// The type of this list item.
+	PipelineItemType _itemType;
 
 	/// If this is a sub-object entry then this points to the parent.
 	PipelineListItem* _parent;
-
-	/// Title text if this is a section header item.
-	QString _title;
 };
 
 OVITO_END_INLINE_NAMESPACE

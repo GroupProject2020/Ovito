@@ -84,7 +84,7 @@ private:
 	OORef<OvitoObject> loadObjectInternal();
 
 	/// Data structure describing a single object instance loaded from the file.
-	struct ObjectEntry {
+	struct ObjectRecord {
 		
 		/// The object instance created from the serialized data.
 		OORef<OvitoObject> object;
@@ -100,13 +100,13 @@ private:
 	std::vector<std::unique_ptr<OvitoClass::SerializedClassInfo>> _classes;
 	
 	/// List all the object instances stored in the file.
-	std::vector<ObjectEntry> _objects;
+	std::vector<ObjectRecord> _objects;
 
 	/// Objects that need to be loaded.
 	std::vector<quint32> _objectsToLoad;
 	
 	/// The object currently being loaded from the stream.
-	ObjectEntry* _currentObject = nullptr;
+	ObjectRecord* _currentObject = nullptr;
 	
 	/// The current dataset being loaded.
 	DataSet* _dataset = nullptr;

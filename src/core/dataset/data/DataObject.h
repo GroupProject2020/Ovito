@@ -130,9 +130,6 @@ public:
 		return !visElements().empty() ? visElements().front() : nullptr;
 	}
 
-	/// \brief Returns a list of pipelines that use this object as a static data source.
-	QSet<PipelineSceneNode*> dependentNodes(bool skipRemovedNodes = false) const;
-
 	/// \brief Returns the number of strong references to this data object.
 	///        Strong references are either RefMaker derived classes that hold a reference to this data object
 	///        or PipelineFlowState instances that contain this data object.
