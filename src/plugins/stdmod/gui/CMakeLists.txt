@@ -32,6 +32,7 @@ SET(SourceFiles
 	ScatterPlotModifierEditor.cpp
 	ReplicateModifierEditor.cpp
 	ColorLegendOverlayEditor.cpp
+	ExpressionSelectionModifierEditor.cpp
 )
 
 OVITO_STANDARD_PLUGIN(StdModGui

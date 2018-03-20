@@ -34,7 +34,6 @@
 #include <plugins/particles/modifier/properties/GenerateTrajectoryLinesModifier.h>
 #include <plugins/particles/modifier/selection/ManualSelectionModifier.h>
 #include <plugins/particles/modifier/selection/ExpandSelectionModifier.h>
-#include <plugins/particles/modifier/selection/ExpressionSelectionModifier.h>
 #include <plugins/particles/modifier/analysis/StructureIdentificationModifier.h>
 #include <plugins/particles/modifier/analysis/binandreduce/BinAndReduceModifier.h>
 #include <plugins/particles/modifier/analysis/bondangle/BondAngleAnalysisModifier.h>
@@ -238,28 +237,6 @@ void defineModifiersSubmodule(py::module m)
 		.value("Cutoff", ExpandSelectionModifier::CutoffRange)
 		.value("Nearest", ExpandSelectionModifier::NearestNeighbors)
 		.value("Bonded", ExpandSelectionModifier::BondedNeighbors)
-	;
-
-	ovito_class<ExpressionSelectionModifier, Modifier>(m,
-			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
-			"This modifier selects particles based on a user-defined Boolean expression. "
-			"Those particles will be selected for which the expression yields a non-zero value. "
-			"\n\n"
-			"**Modifier outputs:**"
-			"\n\n"
-			" * ``Selection`` (:py:class:`~ovito.data.ParticleProperty`):\n"
-			"   This particle property is set to 1 for selected particles and 0 for others.\n"
-			" * ``SelectExpression.num_selected`` (:py:attr:`attribute <ovito.data.DataCollection.attributes>`):\n"
-			"   The number of particles selected by the modifier.\n"
-			"\n\n"
-			"**Example:**"
-			"\n\n"
-			".. literalinclude:: ../example_snippets/select_expression_modifier.py\n"
-			"   :lines: 6-\n"
-			"\n")
-		.def_property("expression", &ExpressionSelectionModifier::expression, &ExpressionSelectionModifier::setExpression,
-				"A string containing the Boolean expression to be evaluated for every particle. "
-				"The expression syntax is documented in `OVITO's user manual <../../particles.modifiers.expression_select.html>`__.")
 	;
 
 	auto BinAndReduceModifier_py = ovito_class<BinAndReduceModifier, Modifier>(m,

@@ -46,7 +46,6 @@ SET(SourceFiles
 	modifier/analysis/wignerseitz/WignerSeitzAnalysisModifierEditor.cpp
 	modifier/analysis/ptm/PolyhedralTemplateMatchingModifierEditor.cpp
 	modifier/selection/ExpandSelectionModifierEditor.cpp
-	modifier/selection/ExpressionSelectionModifierEditor.cpp
 	modifier/selection/ManualSelectionModifierEditor.cpp
 	modifier/properties/ComputePropertyModifierEditor.cpp
 	modifier/properties/FreezePropertyModifierEditor.cpp

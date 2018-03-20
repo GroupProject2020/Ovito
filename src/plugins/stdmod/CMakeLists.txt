@@ -31,6 +31,7 @@ SET(SourceFiles
 	modifiers/HistogramModifier.cpp
 	modifiers/ScatterPlotModifier.cpp
 	modifiers/ReplicateModifier.cpp
+	modifiers/ExpressionSelectionModifier.cpp
 	viewport/ColorLegendOverlay.cpp	
 )
 
