@@ -1,9 +1,9 @@
 /*******************************************************************************
  *  -/_|:|_|_\- 
  *
- *  This code is a modification of Theobald's QCP rotation code.
+ *  This code is a modification of D.L. Theobald's QCP rotation code.
  *  It has been adapted to calculate the polar decomposition of a 3x3 matrix
- *  Adaption by PM Larsen
+ *  Adaption by P.M. Larsen
  *
  *  Original Author(s):	  Douglas L. Theobald
  *				  Department of Biochemistry
@@ -80,15 +80,19 @@
  *	2011/07/08	  put in fabs() to fix taking sqrt of small neg numbers, fp error
  *	2012/07/26	  minor changes to comments and main.c, more info (v.1.4)
  *
- *      2016/05/29        QCP method adapted for polar decomposition of a 3x3 matrix.  For use in Polyhedral Template Matching.
+ *      2016/05/29        QCP method adapted for polar decomposition of a 3x3 matrix,
+ *			  for use in Polyhedral Template Matching.
  *  
  ******************************************************************************/
 
 #include <cstdbool>
 #include <cmath>
+#include <algorithm>
+#include <cstring>
+#include "quat.hpp"
 
 
-static void matmul(double* A, double* x, double* b)
+static void matmul_3x3(double* A, double* x, double* b)
 {
 	b[0] = A[0] * x[0] + A[1] * x[3] + A[2] * x[6];
 	b[3] = A[3] * x[0] + A[4] * x[3] + A[5] * x[6];
@@ -103,38 +107,23 @@ static void matmul(double* A, double* x, double* b)
 	b[8] = A[6] * x[2] + A[7] * x[5] + A[8] * x[8];
 }
 
-static void quaternion_to_rotation_matrix(double* q, double* u)
+static double matrix_determinant_3x3(double* A)
 {
-	double a = q[0];
-	double b = q[1];
-	double c = q[2];
-	double d = q[3];
-
-	u[0] = a*a + b*b - c*c - d*d;
-	u[1] = 2*b*c - 2*a*d;
-	u[2] = 2*b*d + 2*a*c;
-
-	u[3] = 2*b*c + 2*a*d;
-	u[4] = a*a - b*b + c*c - d*d;
-	u[5] = 2*c*d - 2*a*b;
-
-	u[6] = 2*b*d - 2*a*c;
-	u[7] = 2*c*d + 2*a*b;
-	u[8] = a*a - b*b - c*c + d*d;
+	return    A[0] * (A[4]*A[8] - A[5]*A[7])
+		- A[1] * (A[3]*A[8] - A[5]*A[6])
+		+ A[2] * (A[3]*A[7] - A[4]*A[6]);
 }
 
-int polar_decomposition_3x3(double* _A, bool right_sided, double* U, double* P)
+static void flip_matrix(double* A)
+{
+	for (int i=0;i<9;i++)
+		A[i] = -A[i];
+}
+
+static bool optimal_quaternion(double* A, bool polar, double E0, double* p_nrmsdsq, double* qopt)
 {
 	const double evecprec = 1e-6;
 	const double evalprec = 1e-11;
-
-	double A[9] = {_A[0], _A[1], _A[2], _A[3], _A[4], _A[5], _A[6], _A[7], _A[8]};
-	double det = A[0] * (A[4]*A[8] - A[5]*A[7]) - A[1] * (A[3]*A[8] - A[5]*A[6]) + A[2] * (A[3]*A[7] - A[4]*A[6]);
-	if (det < 0)
-	{
-		for (int i=0;i<9;i++)
-			A[i] = -A[i];
-	}
 
 	double	Sxx = A[0], Sxy = A[1], Sxz = A[2],
 		Syx = A[3], Syy = A[4], Syz = A[5],
@@ -144,7 +133,9 @@ int polar_decomposition_3x3(double* _A, bool right_sided, double* U, double* P)
 		Sxy2 = Sxy * Sxy, Syz2 = Syz * Syz, Sxz2 = Sxz * Sxz,
 		Syx2 = Syx * Syx, Szy2 = Szy * Szy, Szx2 = Szx * Szx;
 
-	double SyzSzymSyySzz2 = 2.0*(Syz*Szy - Syy*Szz);
+	double fnorm_squared = Sxx2 + Syy2 + Szz2 + Sxy2 + Syz2 + Sxz2 + Syx2 + Szy2 + Szx2;
+
+	double SyzSzymSyySzz2 = 2.0 * (Syz * Szy - Syy * Szz);
 	double Sxx2Syy2Szz2Syz2Szy2 = Syy2 + Szz2 - Sxx2 + Syz2 + Szy2;
 	double SxzpSzx = Sxz + Szx;
 	double SyzpSzy = Syz + Szy;
@@ -165,15 +156,10 @@ int polar_decomposition_3x3(double* _A, bool right_sided, double* U, double* P)
 		 + (+(SxypSyx)*(SyzmSzy)+(SxzmSzx)*(SxxmSyy-Szz)) * (-(SxymSyx)*(SyzpSzy)+(SxzmSzx)*(SxxpSyy-Szz));
 
 	C[1] = 8.0 * (Sxx*Syz*Szy + Syy*Szx*Sxz + Szz*Sxy*Syx - Sxx*Syy*Szz - Syz*Szx*Sxy - Szy*Syx*Sxz);
-
-	C[2] = -2.0 * (Sxx2 + Syy2 + Szz2 + Sxy2 + Syx2 + Sxz2 + Szx2 + Syz2 + Szy2);
-
-	double fnorm_squared = 0.0;
-	for (int i=0;i<9;i++)
-		fnorm_squared += A[i]*A[i];
+	C[2] = -2.0 * fnorm_squared;
 
 	//Newton-Raphson
-	double mxEigenV = sqrt(3 * fnorm_squared);
+	double mxEigenV = polar ? sqrt(3 * fnorm_squared) : E0;
 	if (mxEigenV > evalprec)
 	{
 		for (int i=0;i<50;i++)
@@ -192,6 +178,8 @@ int polar_decomposition_3x3(double* _A, bool right_sided, double* U, double* P)
 	{
 		mxEigenV = 0.0;
 	}
+
+	(*p_nrmsdsq) = std::max(0.0, 2.0 * (E0 - mxEigenV));
 
 	double a11 = SxxpSyy + Szz - mxEigenV;
 	double a12 = SyzmSzy;
@@ -219,90 +207,132 @@ int polar_decomposition_3x3(double* _A, bool right_sided, double* U, double* P)
 	double a3143_4133 = a31 * a43 - a41 * a33;
 	double a3144_4134 = a31 * a44 - a41 * a34;
 	double a3142_4132 = a31 * a42 - a41 * a32;
+	double a1324_1423 = a13 * a24 - a14 * a23;
+	double a1224_1422 = a12 * a24 - a14 * a22;
+	double a1223_1322 = a12 * a23 - a13 * a22;
+	double a1124_1421 = a11 * a24 - a14 * a21;
+	double a1123_1321 = a11 * a23 - a13 * a21;
+	double a1122_1221 = a11 * a22 - a12 * a21;
 
-	double q1 =  a22*a3344_4334-a23*a3244_4234+a24*a3243_4233;
-	double q2 = -a21*a3344_4334+a23*a3144_4134-a24*a3143_4133;
-	double q3 =  a21*a3244_4234-a22*a3144_4134+a24*a3142_4132;
-	double q4 = -a21*a3243_4233+a22*a3143_4133-a23*a3142_4132;
+	double q[4][4];
+	q[0][0] =  a12 * a3344_4334 - a13 * a3244_4234 + a14 * a3243_4233;
+	q[0][1] = -a11 * a3344_4334 + a13 * a3144_4134 - a14 * a3143_4133;
+	q[0][2] =  a11 * a3244_4234 - a12 * a3144_4134 + a14 * a3142_4132;
+	q[0][3] = -a11 * a3243_4233 + a12 * a3143_4133 - a13 * a3142_4132;
 
-	double qsqr = q1 * q1 + q2 * q2 + q3 * q3 + q4 * q4;
-	double q[4];
+	q[1][0] =  a22 * a3344_4334 - a23 * a3244_4234 + a24 * a3243_4233;
+	q[1][1] = -a21 * a3344_4334 + a23 * a3144_4134 - a24 * a3143_4133;
+	q[1][2] =  a21 * a3244_4234 - a22 * a3144_4134 + a24 * a3142_4132;
+	q[1][3] = -a21 * a3243_4233 + a22 * a3143_4133 - a23 * a3142_4132;
 
-	bool too_small = false;
-	//The following code tries to calculate another column in the adjoint matrix when the norm of the 
-	//current column is too small.
-	//Usually this block will never be activated.  To be absolutely safe this should be
-	//uncommented, but it is most likely unnecessary.
-	if (qsqr < evecprec)
+	q[2][0] =  a32 * a1324_1423 - a33 * a1224_1422 + a34 * a1223_1322;
+	q[2][1] = -a31 * a1324_1423 + a33 * a1124_1421 - a34 * a1123_1321;
+	q[2][2] =  a31 * a1224_1422 - a32 * a1124_1421 + a34 * a1122_1221;
+	q[2][3] = -a31 * a1223_1322 + a32 * a1123_1321 - a33 * a1122_1221;
+
+	q[3][0] =  a42 * a1324_1423 - a43 * a1224_1422 + a44 * a1223_1322;
+	q[3][1] = -a41 * a1324_1423 + a43 * a1124_1421 - a44 * a1123_1321;
+	q[3][2] =  a41 * a1224_1422 - a42 * a1124_1421 + a44 * a1122_1221;
+	q[3][3] = -a41 * a1223_1322 + a42 * a1123_1321 - a43 * a1122_1221;
+
+	double qsqr[4];
+	for (int i=0;i<4;i++)
+		qsqr[i] = q[i][0]*q[i][0] + q[i][1]*q[i][1] + q[i][2]*q[i][2] + q[i][3]*q[i][3];
+
+	int bi = 0;
+	double max = 0;
+	for (int i=0;i<4;i++)
 	{
-		q1 =  a12*a3344_4334 - a13*a3244_4234 + a14*a3243_4233;
-		q2 = -a11*a3344_4334 + a13*a3144_4134 - a14*a3143_4133;
-		q3 =  a11*a3244_4234 - a12*a3144_4134 + a14*a3142_4132;
-		q4 = -a11*a3243_4233 + a12*a3143_4133 - a13*a3142_4132;
-		qsqr = q1*q1 + q2*q2 + q3*q3 + q4*q4;
-
-		if (qsqr < evecprec)
+		if (qsqr[i] > max)
 		{
-			double a1324_1423 = a13 * a24 - a14 * a23, a1224_1422 = a12 * a24 - a14 * a22;
-			double a1223_1322 = a12 * a23 - a13 * a22, a1124_1421 = a11 * a24 - a14 * a21;
-			double a1123_1321 = a11 * a23 - a13 * a21, a1122_1221 = a11 * a22 - a12 * a21;
-
-			q1 =  a42 * a1324_1423 - a43 * a1224_1422 + a44 * a1223_1322;
-			q2 = -a41 * a1324_1423 + a43 * a1124_1421 - a44 * a1123_1321;
-			q3 =  a41 * a1224_1422 - a42 * a1124_1421 + a44 * a1122_1221;
-			q4 = -a41 * a1223_1322 + a42 * a1123_1321 - a43 * a1122_1221;
-			qsqr = q1*q1 + q2*q2 + q3*q3 + q4*q4;
-
-			if (qsqr < evecprec)
-			{
-				q1 =  a32 * a1324_1423 - a33 * a1224_1422 + a34 * a1223_1322;
-				q2 = -a31 * a1324_1423 + a33 * a1124_1421 - a34 * a1123_1321;
-				q3 =  a31 * a1224_1422 - a32 * a1124_1421 + a34 * a1122_1221;
-				q4 = -a31 * a1223_1322 + a32 * a1123_1321 - a33 * a1122_1221;
-				qsqr = q1*q1 + q2*q2 + q3*q3 + q4*q4;
-				
-				if (qsqr < evecprec)
-				{
-					//if qsqr is still too small, return the identity matrix.
-					q[0] = 1.0;
-					q[1] = 0.0;
-					q[2] = 0.0;
-					q[3] = 0.0;
-					U[0] = U[4] = U[8] = 1.0;
-					U[1] = U[2] = U[3] = U[5] = U[6] = U[7] = 0.0;
-					too_small = true;
-				}
-			}
+			bi = i;
+			max = qsqr[i];
 		}
 	}
 
-	if (!too_small)
+	bool too_small = false;
+	if (qsqr[bi] < evecprec)
 	{
-		double normq = sqrt(qsqr);
-		q1 /= normq;
-		q2 /= normq;
-		q3 /= normq;
-		q4 /= normq;
-		q[0] = -q1;
-		q[1] = q2;
-		q[2] = q3;
-		q[3] = q4;
-		quaternion_to_rotation_matrix(q, U);
+		//if qsqr is still too small, return the identity rotation.
+		q[bi][0] = 1;
+		q[bi][1] = 0;
+		q[bi][2] = 0;
+		q[bi][3] = 0;
+		too_small = true;
 	}
+	else
+	{
+		double normq = sqrt(qsqr[bi]);
+		q[bi][0] /= normq;
+		q[bi][1] /= normq;
+		q[bi][2] /= normq;
+		q[bi][3] /= normq;
+	}
+
+	memcpy(qopt, q[bi], 4 * sizeof(double));
+	return !too_small;
+}
+
+int polar_decomposition_3x3(double* _A, bool right_sided, double* U, double* P)
+{
+	double A[9];
+	memcpy(A, _A, 9 * sizeof(double));
+
+	double det = matrix_determinant_3x3(A);
+	if (det < 0)
+		flip_matrix(A);
+
+	double q[4];
+	double nrmsdsq = 0;
+	optimal_quaternion(A, true, -1, &nrmsdsq, q);
+	q[0] = -q[0];
+	quaternion_to_rotation_matrix(q, U);
 
 	if (det < 0)
-	{
-		for (int i=0;i<9;i++)
-			U[i] = -U[i];
-	}
+		flip_matrix(U);
 
-	double invU[9] = {U[0], U[3], U[6], U[1], U[4], U[7], U[2], U[5], U[8]};
+	double UT[9] = {U[0], U[3], U[6], U[1], U[4], U[7], U[2], U[5], U[8]};
 
 	if (right_sided)
-		matmul(invU, _A, P);
+		matmul_3x3(UT, _A, P);
 	else
-		matmul(_A, invU, P);
+		matmul_3x3(_A, UT, P);
 
-	return !too_small;
+	return 0;
+}
+
+void InnerProduct(double *A, int num, const double (*coords1)[3], double (*coords2)[3], int8_t* permutation)
+{
+	A[0] = A[1] = A[2] = A[3] = A[4] = A[5] = A[6] = A[7] = A[8] = 0.0;
+
+	for (int i = 0; i < num; ++i)
+	{
+		double x1 = coords1[i][0];
+		double y1 = coords1[i][1];
+		double z1 = coords1[i][2];
+
+		double x2 = coords2[permutation[i]][0];
+		double y2 = coords2[permutation[i]][1];
+		double z2 = coords2[permutation[i]][2];
+
+		A[0] += x1 * x2;
+		A[1] += x1 * y2;
+		A[2] += x1 * z2;
+
+		A[3] += y1 * x2;
+		A[4] += y1 * y2;
+		A[5] += y1 * z2;
+
+		A[6] += z1 * x2;
+		A[7] += z1 * y2;
+		A[8] += z1 * z2;  
+	}
+}
+
+int FastCalcRMSDAndRotation(double *A, double E0, double *p_nrmsdsq, double *q, double* U)
+{
+	optimal_quaternion(A, false, E0, p_nrmsdsq, q);
+	quaternion_to_rotation_matrix(q, U);
+	return 0;
 }
 

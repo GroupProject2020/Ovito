@@ -21,15 +21,17 @@
 
 SET(PTM_SOURCE_FILES
 	alloy_types.cpp
-	canonical.cpp
+	canonical_coloured.cpp
 	convex_hull_incremental.cpp
 	deformation_gradient.cpp
 	graph_data.cpp
+	graph_tools.cpp
 	index_ptm.cpp
+	initialize_data.cpp
 	neighbour_ordering.cpp
 	normalize_vertices.cpp
-	polar_decomposition.cpp
-	qcprot/qcprot.cpp
+	structure_matcher.cpp
+	qcprot/polar.cpp
 	qcprot/quat.cpp
 )
 

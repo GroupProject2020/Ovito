@@ -5,324 +5,56 @@
 #include <cmath>
 #include <cfloat>
 #include <cassert>
+#include <algorithm>
 #include "convex_hull_incremental.hpp"
-#include "canonical.hpp"
 #include "graph_data.hpp"
 #include "deformation_gradient.hpp"
 #include "alloy_types.hpp"
 #include "neighbour_ordering.hpp"
 #include "normalize_vertices.hpp"
-#include "fundamental_mappings.hpp"
-#include "qcprot/qcprot.hpp"
 #include "qcprot/quat.hpp"
-#include "polar_decomposition.hpp"
-#include "index_ptm.h"
+#include "qcprot/polar.hpp"
+#include "initialize_data.hpp"
+#include "structure_matcher.hpp"
+#include "ptm_functions.h"
+#include "ptm_constants.h"
 
 
-#define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
-#define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
-
-
-typedef struct
+//todo: verify that c == norm(template[1])
+static double calculate_interatomic_distance(int type, double scale)
 {
-	int type;
-	int num_nbrs;
-	int num_facets;
-	int max_degree;
-	int num_graphs;
-	graph_t* graphs;
-	const double (*points)[3];
-	const double (*penrose)[3];
-	const int8_t (*mapping)[15];
-} refdata_t;
-
-typedef struct
-{
-	double rmsd;
-	double scale;
-	double q[4];		//rotation in quaternion form (rigid body transformation)
-	int8_t mapping[15];
-	refdata_t* ref_struct;
-} result_t;
-
-
-//refdata_t structure_sc =  { .type = PTM_MATCH_SC,  .num_nbrs =  6, .num_facets =  8, .max_degree = 4, .num_graphs = NUM_SC_GRAPHS,  .graphs = graphs_sc,  .points = ptm_template_sc,  .penrose = penrose_sc , .mapping = mapping_sc };
-refdata_t structure_sc =  { PTM_MATCH_SC,   6,  8, 4, NUM_SC_GRAPHS,  graphs_sc,  ptm_template_sc,  penrose_sc , mapping_sc };
-refdata_t structure_fcc = { PTM_MATCH_FCC, 12, 20, 6, NUM_FCC_GRAPHS, graphs_fcc, ptm_template_fcc, penrose_fcc, mapping_fcc};
-refdata_t structure_hcp = { PTM_MATCH_HCP, 12, 20, 6, NUM_HCP_GRAPHS, graphs_hcp, ptm_template_hcp, penrose_hcp, mapping_hcp};
-refdata_t structure_ico = { PTM_MATCH_ICO, 12, 20, 6, NUM_ICO_GRAPHS, graphs_ico, ptm_template_ico, penrose_ico, mapping_ico};
-refdata_t structure_bcc = { PTM_MATCH_BCC, 14, 24, 8, NUM_BCC_GRAPHS, graphs_bcc, ptm_template_bcc, penrose_bcc, mapping_bcc};
-
-static int graph_degree(int num_facets, int8_t facets[][3], int num_nodes, int8_t* degree)
-{
-	memset(degree, 0, sizeof(int8_t) * num_nodes);
-
-	for (int i = 0;i<num_facets;i++)
-	{
-		int a = facets[i][0];
-		int b = facets[i][1];
-		int c = facets[i][2];
-
-		degree[a]++;
-		degree[b]++;
-		degree[c]++;
-	}
-
-	int8_t max_degree = 0;
-	for (int i = 0;i<num_nodes;i++)
-		max_degree = MAX(max_degree, degree[i]);
-
-	return max_degree;
-}
-
-static void make_facets_clockwise(int num_facets, int8_t (*facets)[3], const double (*points)[3])
-{
-	double plane_normal[3];
-	double origin[3] = {0, 0, 0};
-
-	for (int i = 0;i<num_facets;i++)
-		add_facet(points, facets[i][0], facets[i][1], facets[i][2], facets[i], plane_normal, origin);
-}
-
-static int initialize_graphs(refdata_t* s)
-{
-	for (int i = 0;i<s->num_graphs;i++)
-	{
-		int8_t degree[PTM_MAX_NBRS];
-		int _max_degree = graph_degree(s->num_facets, s->graphs[i].facets, s->num_nbrs, degree);
-		assert(_max_degree <= s->max_degree);
-
-		make_facets_clockwise(s->num_facets, s->graphs[i].facets, &s->points[1]);
-		int ret = canonical_form(s->num_facets, s->graphs[i].facets, s->num_nbrs, degree, s->graphs[i].canonical_labelling, &s->graphs[i].hash);
-		if (ret != 0)
-			return ret;
-	}
-
-	return PTM_NO_ERROR;
-}
-
-bool ptm_initialized = false;
-int ptm_initialize_global()
-{
-	if (ptm_initialized)
-		return PTM_NO_ERROR;
-
-	int ret = initialize_graphs(&structure_sc);
-	ret |= initialize_graphs(&structure_fcc);
-	ret |= initialize_graphs(&structure_hcp);
-	ret |= initialize_graphs(&structure_ico);
-	ret |= initialize_graphs(&structure_bcc);
-
-	if (ret == PTM_NO_ERROR)
-		ptm_initialized = true;
-
-	return ret;
-}
-
-static void check_graphs(	refdata_t* s,
-				uint64_t hash,
-				int8_t* canonical_labelling,
-				double (*normalized)[3],
-				result_t* res)
-{
-	int num_points = s->num_nbrs + 1;
-	const double (*ideal_points)[3] = s->points;
-	int8_t inverse_labelling[PTM_MAX_POINTS];
-	int8_t mapping[PTM_MAX_POINTS];
-
-	for (int i=0; i<num_points; i++)
-		inverse_labelling[ canonical_labelling[i] ] = i;
-
-	double G1 = 0, G2 = 0;
-	for (int i=0;i<num_points;i++)
-	{
-		double x1 = ideal_points[i][0];
-		double y1 = ideal_points[i][1];
-		double z1 = ideal_points[i][2];
-
-		double x2 = normalized[i][0];
-		double y2 = normalized[i][1];
-		double z2 = normalized[i][2];
-
-		G1 += x1 * x1 + y1 * y1 + z1 * z1;
-		G2 += x2 * x2 + y2 * y2 + z2 * z2;
-	}
-	double E0 = (G1 + G2) / 2;
-
-	for (int i = 0;i<s->num_graphs;i++)
-	{
-		if (hash == s->graphs[i].hash)
-		{
-			graph_t* gref = &s->graphs[i];
-
-			for (int j = 0;j<gref->num_automorphisms;j++)
-			{
-				for (int k=0;k<num_points;k++)
-					mapping[automorphisms[gref->automorphism_index + j][k]] = inverse_labelling[ gref->canonical_labelling[k] ];
-
-				double A0[9], q[4], rmsd;
-				InnerProduct(A0, num_points, ideal_points, normalized, mapping);
-
-				double rot[9];
-				FastCalcRMSDAndRotation(q, A0, &rmsd, E0, num_points, -1, rot);
-
-				double k0 = 0;
-				for (int ii=0;ii<num_points;ii++)
-				{
-					for (int jj=0;jj<3;jj++)
-					{
-						double v = 0.0;
-						for (int kk=0;kk<3;kk++)
-							v += rot[jj*3+kk] * ideal_points[ii][kk];
-
-						k0 += v * normalized[mapping[ii]][jj];
-					}
-				}
-
-				double scale = k0 / G2;
-				rmsd = sqrt(fabs(G1 - scale*k0) / num_points);
-				if (rmsd < res->rmsd)
-				{
-					res->rmsd = rmsd;
-					res->scale = scale;
-					res->ref_struct = s;
-					memcpy(res->q, q, 4 * sizeof(double));
-					memcpy(res->mapping, mapping, sizeof(int8_t) * num_points);
-				}
-			}
-		}
-	}
-}
-
-static int match_general(refdata_t* s, double (*ch_points)[3], double* points, convexhull_t* ch, result_t* res)
-{
-	int8_t degree[PTM_MAX_NBRS];
-	int8_t facets[PTM_MAX_FACETS][3];
-	int ret = get_convex_hull(s->num_nbrs + 1, (const double (*)[3])ch_points, s->num_facets, ch, facets);
-	ch->ok = ret == 0;
-
-#ifdef DEBUG
-	printf("s->type: %d\tret: %d\n", s->type, ret);
-#endif
-	if (ret != 0)
-		return PTM_NO_ERROR;
-
-	int max_degree = graph_degree(s->num_facets, facets, s->num_nbrs, degree);
-	if (max_degree > s->max_degree)
-		return PTM_NO_ERROR;
-
-	if (s->type == PTM_MATCH_SC)
-		for (int i = 0;i<s->num_nbrs;i++)
-			if (degree[i] != 4)
-				return PTM_NO_ERROR;
-
-	double normalized[PTM_MAX_POINTS][3];
-	subtract_barycentre(s->num_nbrs + 1, points, normalized);
-
-	int8_t canonical_labelling[PTM_MAX_POINTS];
-	uint64_t hash = 0;
-	ret = canonical_form(s->num_facets, facets, s->num_nbrs, degree, canonical_labelling, &hash);
-	if (ret != PTM_NO_ERROR)
-		return ret;
-
-#ifdef DEBUG
-	printf("hash: %lx\n", hash);
-	printf("degree:\t");
-	for (int i = 0;i<s->num_nbrs;i++)
-		printf("%2d ", degree[i]);
-	printf("\n");
-#endif
-	check_graphs(s, hash, canonical_labelling, normalized, res);
-	return PTM_NO_ERROR;
-}
-
-static int match_fcc_hcp_ico(double (*ch_points)[3], double* points, int32_t flags, convexhull_t* ch, result_t* res)
-{
-	int num_nbrs = structure_fcc.num_nbrs;
-	int num_facets = structure_fcc.num_facets;
-	int max_degree = structure_fcc.max_degree;
-
-	int8_t degree[PTM_MAX_NBRS];
-	int8_t facets[PTM_MAX_FACETS][3];
-	int ret = get_convex_hull(num_nbrs + 1, (const double (*)[3])ch_points, num_facets, ch, facets);
-	ch->ok = ret == 0;
-
-#ifdef DEBUG
-	printf("s->type: %d\tret: %d\n", 2, ret);
-#endif
-	if (ret != 0)
-		return PTM_NO_ERROR;
-
-	int _max_degree = graph_degree(num_facets, facets, num_nbrs, degree);
-	if (_max_degree > max_degree)
-		return PTM_NO_ERROR;
-
-	double normalized[PTM_MAX_POINTS][3];
-	subtract_barycentre(num_nbrs + 1, points, normalized);
-
-	int8_t canonical_labelling[PTM_MAX_POINTS];
-	uint64_t hash = 0;
-	ret = canonical_form(num_facets, facets, num_nbrs, degree, canonical_labelling, &hash);
-	if (ret != PTM_NO_ERROR)
-		return ret;
-
-#ifdef DEBUG
-	printf("hash: %lx\n", hash);
-	printf("degree:\t");
-	for (int i = 0;i<num_nbrs;i++)
-		printf("%2d ", degree[i]);
-	printf("\n");
-#endif
-	if (flags & PTM_CHECK_FCC)	check_graphs(&structure_fcc, hash, canonical_labelling, normalized, res);
-	if (flags & PTM_CHECK_HCP)	check_graphs(&structure_hcp, hash, canonical_labelling, normalized, res);
-	if (flags & PTM_CHECK_ICO)	check_graphs(&structure_ico, hash, canonical_labelling, normalized, res);
-	return PTM_NO_ERROR;
-}
-
-/*static double calculate_lattice_constant(int type, double scale)
-{
-	assert(type >= 1 && type <= 5);
-	double c[6] = {0, 2 / sqrt(2), 2 / sqrt(2), 14. / sqrt(3) - 7, 2 / sqrt(2), 1};
+	assert(type >= 1 && type <= 7);
+	double c[8] = {0, 1, 1, (7. - 3.5 * sqrt(3)), 1, 1, sqrt(3) * 4. / (6 * sqrt(2) + sqrt(3)), sqrt(3) * 4. / (6 * sqrt(2) + sqrt(3))};
 	return c[type] / scale;
-}*/
+}
 
 static double calculate_lattice_constant(int type, double interatomic_distance)
 {
-	assert(type >= 1 && type <= 5);
-	double c[6] = {0, 2 / sqrt(2), 2 / sqrt(2), 2. / sqrt(3), 2 / sqrt(2), 1};
+	assert(type >= 1 && type <= 7);
+	double c[8] = {0, 2 / sqrt(2), 2 / sqrt(2), 2. / sqrt(3), 2 / sqrt(2), 1, 4 / sqrt(3), 4 / sqrt(3)};
 	return c[type] * interatomic_distance;
 }
 
-static double calculate_interatomic_distance(int type, double scale)
+static int rotate_into_fundamental_zone(int type, double* q)
 {
-	assert(type >= 1 && type <= 5);
-	double c[6] = {0, 1, 1, (7. - 3.5 * sqrt(3)), 1, 1};
-	return c[type] / scale;
+	if (type == PTM_MATCH_SC)	return rotate_quaternion_into_cubic_fundamental_zone(q);
+	if (type == PTM_MATCH_FCC)	return rotate_quaternion_into_cubic_fundamental_zone(q);
+	if (type == PTM_MATCH_BCC)	return rotate_quaternion_into_cubic_fundamental_zone(q);
+	if (type == PTM_MATCH_ICO)	return rotate_quaternion_into_icosahedral_fundamental_zone(q);
+	if (type == PTM_MATCH_HCP)	return rotate_quaternion_into_hcp_fundamental_zone(q);
+	if (type == PTM_MATCH_DCUB)	return rotate_quaternion_into_diamond_cubic_fundamental_zone(q);
+	if (type == PTM_MATCH_DHEX)	return rotate_quaternion_into_diamond_hexagonal_fundamental_zone(q);
+	return -1;
 }
 
-int ptm_index(	ptm_local_handle_t local_handle, int num_points, double* unpermuted_points, int32_t* unpermuted_numbers, int32_t flags, bool topological_ordering,
-		int32_t* p_type, int32_t* p_alloy_type, double* p_scale, double* p_rmsd, double* q, double* F, double* F_res, double* U, double* P, int8_t* mapping, double* p_interatomic_distance, double* p_lattice_constant)
+static void order_points(ptm_local_handle_t local_handle, int num_points, double (*unpermuted_points)[3], int32_t* unpermuted_numbers, bool topological_ordering,
+			int8_t* ordering, double (*points)[3], int32_t* numbers)
 {
-	if (flags & PTM_CHECK_SC)
-		assert(num_points >= structure_sc.num_nbrs + 1);
-
-	if (flags & PTM_CHECK_BCC)
-		assert(num_points >= structure_bcc.num_nbrs + 1);
-
-	if (flags & (PTM_CHECK_FCC | PTM_CHECK_HCP | PTM_CHECK_ICO))
-		assert(num_points >= structure_fcc.num_nbrs + 1);
-
-
-#define MAX_INPUT_POINTS 19
-	assert(num_points <= MAX_INPUT_POINTS);
-
-	int ret = 0;
-	double ch_points[MAX_INPUT_POINTS][3];
-	int8_t ordering[MAX_INPUT_POINTS];
 	if (topological_ordering)
 	{
-		normalize_vertices(num_points, unpermuted_points, ch_points);
-		ret = calculate_neighbour_ordering((void*)local_handle, num_points, (const double (*)[3])ch_points, ordering);
+		double normalized_points[PTM_MAX_INPUT_POINTS][3];
+		normalize_vertices(num_points, unpermuted_points, normalized_points);
+		int ret = calculate_neighbour_ordering((void*)local_handle, num_points, (const double (*)[3])normalized_points, ordering);
 		if (ret != 0)
 			topological_ordering = false;
 	}
@@ -331,29 +63,19 @@ int ptm_index(	ptm_local_handle_t local_handle, int num_points, double* unpermut
 		for (int i=0;i<num_points;i++)
 			ordering[i] = i;
 
-	double points[PTM_MAX_POINTS][3];
-	int32_t numbers[PTM_MAX_POINTS];
-	num_points = MIN(15, num_points);
 	for (int i=0;i<num_points;i++)
 	{
-		memcpy(points[i], &unpermuted_points[3 * ordering[i]], 3 * sizeof(double));
+		memcpy(points[i], &unpermuted_points[ordering[i]], 3 * sizeof(double));
 
 		if (unpermuted_numbers != NULL)
 			numbers[i] = unpermuted_numbers[ordering[i]];
 	}
+}
 
-	convexhull_t ch;
-	ch.ok = false;
-	normalize_vertices(num_points, (double*)points, ch_points);
-
-#ifdef DEBUG
-	for (int i = 0;i<num_points;i++)
-		printf("%.2f\t%.2f\t%.2f\n", unpermuted_points[i*3 + 0], unpermuted_points[i*3 + 1], unpermuted_points[i*3 + 2]);
-#endif
-
-	result_t res;
-	res.ref_struct = NULL;
-	res.rmsd = INFINITY;
+static void output_data(result_t* res, int num_points, int32_t* unpermuted_numbers, double (*points)[3], int32_t* numbers, int8_t* ordering,
+			int32_t* p_type, int32_t* p_alloy_type, double* p_scale, double* p_rmsd, double* q, double* F, double* F_res,
+			double* U, double* P, int8_t* mapping, double* p_interatomic_distance, double* p_lattice_constant)
+{
 	*p_type = PTM_MATCH_NONE;
 	if (p_alloy_type != NULL)
 		*p_alloy_type = PTM_ALLOY_NONE;
@@ -361,106 +83,137 @@ int ptm_index(	ptm_local_handle_t local_handle, int num_points, double* unpermut
 	if (mapping != NULL)
 		memset(mapping, -1, num_points * sizeof(int8_t));
 
+	const refdata_t* ref = res->ref_struct;
+	if (ref == NULL)
+		return;
+
+	*p_type = ref->type;
+	if (p_alloy_type != NULL && unpermuted_numbers != NULL)
+		*p_alloy_type = find_alloy_type(ref, res->mapping, numbers);
+
+	int bi = rotate_into_fundamental_zone(ref->type, res->q);
+	int8_t temp[PTM_MAX_POINTS];
+	for (int i=0;i<ref->num_nbrs+1;i++)
+		temp[ref->mapping[bi][i]] = res->mapping[i];
+
+	memcpy(res->mapping, temp, (ref->num_nbrs+1) * sizeof(int8_t));
+
+	if (F != NULL && F_res != NULL)
+	{
+		double scaled_points[PTM_MAX_INPUT_POINTS][3];
+
+		subtract_barycentre(ref->num_nbrs + 1, points, scaled_points);
+		for (int i = 0;i<ref->num_nbrs + 1;i++)
+		{
+			scaled_points[i][0] *= res->scale;
+			scaled_points[i][1] *= res->scale;
+			scaled_points[i][2] *= res->scale;
+		}
+		calculate_deformation_gradient(ref->num_nbrs + 1, ref->points, res->mapping, scaled_points, ref->penrose, F, F_res);
+
+		if (P != NULL && U != NULL)
+			polar_decomposition_3x3(F, false, U, P);
+	}
+
+	if (mapping != NULL)
+		for (int i=0;i<ref->num_nbrs + 1;i++)
+			mapping[i] = ordering[res->mapping[i]];
+
+	double interatomic_distance = calculate_interatomic_distance(ref->type, res->scale);
+	double lattice_constant = calculate_lattice_constant(ref->type, interatomic_distance);
+
+	if (p_interatomic_distance != NULL)
+		*p_interatomic_distance = interatomic_distance;
+
+	if (p_lattice_constant != NULL)
+		*p_lattice_constant = lattice_constant;
+
+	*p_rmsd = res->rmsd;
+	*p_scale = res->scale;
+	memcpy(q, res->q, 4 * sizeof(double));
+}
+
+
+extern bool ptm_initialized;
+
+int ptm_index(	ptm_local_handle_t local_handle, int32_t flags,
+		int num_points, double (*unpermuted_points)[3], int32_t* unpermuted_numbers, bool topological_ordering,
+		int32_t* p_type, int32_t* p_alloy_type, double* p_scale, double* p_rmsd, double* q, double* F, double* F_res,
+		double* U, double* P, int8_t* mapping, double* p_interatomic_distance, double* p_lattice_constant)
+{
+	assert(ptm_initialized);
+	assert(num_points <= PTM_MAX_INPUT_POINTS);
 
 	if (flags & PTM_CHECK_SC)
-	{
-		ret = match_general(&structure_sc, ch_points, (double*)points, &ch, &res);
-		//if (ret != PTM_NO_ERROR)
-		//	return ret;
-#ifdef DEBUG
-		printf("match sc  ret: %d\t%p\n", ret, res.ref_struct);
-#endif
-	}
-
-	if (flags & (PTM_CHECK_FCC | PTM_CHECK_HCP | PTM_CHECK_ICO))
-	{
-		ret = match_fcc_hcp_ico(ch_points, (double*)points, flags, &ch, &res);
-		//if (ret != PTM_NO_ERROR)
-		//	return ret;
-#ifdef DEBUG
-		printf("match fcc ret: %d\t%p\n", ret, res.ref_struct);
-#endif
-	}
+		assert(num_points >= PTM_NUM_POINTS_SC);
 
 	if (flags & PTM_CHECK_BCC)
+		assert(num_points >= PTM_NUM_POINTS_BCC);
+
+	if (flags & (PTM_CHECK_FCC | PTM_CHECK_HCP | PTM_CHECK_ICO))
+		assert(num_points >= PTM_NUM_POINTS_FCC);
+
+	if (flags & (PTM_CHECK_DCUB | PTM_CHECK_DHEX))
+		assert(num_points >= PTM_NUM_POINTS_DCUB);
+
+	int ret = 0;
+	result_t res;
+	res.ref_struct = NULL;
+	res.rmsd = INFINITY;
+
+	int8_t ordering[PTM_MAX_INPUT_POINTS];
+	double points[PTM_MAX_POINTS][3];
+	int32_t numbers[PTM_MAX_POINTS];
+
+	int8_t dordering[PTM_MAX_INPUT_POINTS];
+	double dpoints[PTM_MAX_POINTS][3];
+	int32_t dnumbers[PTM_MAX_POINTS];
+
+	convexhull_t ch;
+	double ch_points[PTM_MAX_INPUT_POINTS][3];
+
+	if (flags & (PTM_CHECK_SC | PTM_CHECK_FCC | PTM_CHECK_HCP | PTM_CHECK_ICO | PTM_CHECK_BCC))
 	{
-		ret = match_general(&structure_bcc, ch_points, (double*)points, &ch, &res);
-		//if (ret != PTM_NO_ERROR)
-		//	return ret;
-#ifdef DEBUG
-		printf("match bcc ret: %d\t%p\n", ret, res.ref_struct);
-#endif
+		int num_lpoints = std::min(std::min(PTM_MAX_POINTS, 20), num_points);
+		order_points(local_handle, num_lpoints, unpermuted_points, unpermuted_numbers, topological_ordering, ordering, points, numbers);
+		normalize_vertices(num_lpoints, points, ch_points);
+		ch.ok = false;
+
+		if (flags & PTM_CHECK_SC)
+			ret = match_general(&structure_sc, ch_points, points, &ch, &res);
+
+		if (flags & (PTM_CHECK_FCC | PTM_CHECK_HCP | PTM_CHECK_ICO))
+			ret = match_fcc_hcp_ico(ch_points, points, flags, &ch, &res);
+
+		if (flags & PTM_CHECK_BCC)
+			ret = match_general(&structure_bcc, ch_points, points, &ch, &res);
 	}
 
-	refdata_t* ref = res.ref_struct;
-	if (ref != NULL)
+	if (flags & (PTM_CHECK_DCUB | PTM_CHECK_DHEX))
 	{
-		*p_type = ref->type;
-
-		if (p_alloy_type != NULL && unpermuted_numbers != NULL)
+		ret = calculate_diamond_neighbour_ordering(num_points, unpermuted_points, unpermuted_numbers, dordering, dpoints, dnumbers);
+		if (ret == 0)
 		{
-			if (ref->type == PTM_MATCH_FCC)
-				*p_alloy_type = find_fcc_alloy_type(res.mapping, numbers);
-			else if (ref->type == PTM_MATCH_BCC)
-				*p_alloy_type = find_bcc_alloy_type(res.mapping, numbers);
+			normalize_vertices(PTM_NUM_NBRS_DCUB + 1, dpoints, ch_points);
+			ch.ok = false;
+
+			ret = match_dcub_dhex(ch_points, dpoints, flags, &ch, &res);
 		}
-
-		int bi = -1;
-		if      (ref->type == PTM_MATCH_SC)	bi = rotate_quaternion_into_cubic_fundamental_zone(res.q);
-		else if (ref->type == PTM_MATCH_FCC)	bi = rotate_quaternion_into_cubic_fundamental_zone(res.q);
-		else if (ref->type == PTM_MATCH_BCC)	bi = rotate_quaternion_into_cubic_fundamental_zone(res.q);
-		else if (ref->type == PTM_MATCH_ICO)	bi = rotate_quaternion_into_icosahedral_fundamental_zone(res.q);
-		else if (ref->type == PTM_MATCH_HCP)	bi = rotate_quaternion_into_hcp_fundamental_zone(res.q);
-
-		int8_t temp[15];
-		for (int i=0;i<ref->num_nbrs+1;i++)
-			temp[ref->mapping[bi][i]] = res.mapping[i];
-
-		memcpy(res.mapping, temp, (ref->num_nbrs+1) * sizeof(int8_t));
-
-		if (F != NULL && F_res != NULL)
-		{
-			subtract_barycentre(ref->num_nbrs + 1, (double*)points, ch_points);
-			for (int i = 0;i<ref->num_nbrs + 1;i++)
-			{
-				ch_points[i][0] *= res.scale;
-				ch_points[i][1] *= res.scale;
-				ch_points[i][2] *= res.scale;
-			}
-			calculate_deformation_gradient(ref->num_nbrs + 1, ref->points, res.mapping, ch_points, ref->penrose, F, F_res);
-
-			if (P != NULL && U != NULL)
-				polar_decomposition_3x3(F, false, U, P);
-		}
-
-		if (mapping != NULL)
-			for (int i=0;i<ref->num_nbrs + 1;i++)
-				mapping[i] = ordering[res.mapping[i]];
-
-		double interatomic_distance = calculate_interatomic_distance(ref->type, res.scale);
-		double lattice_constant = calculate_lattice_constant(ref->type, interatomic_distance);
-
-		if (p_interatomic_distance != NULL)
-			*p_interatomic_distance = interatomic_distance;
-
-		if (p_lattice_constant != NULL)
-			*p_lattice_constant = lattice_constant;
 	}
 
-	*p_rmsd = res.rmsd;
-	*p_scale = res.scale;
-	memcpy(q, res.q, 4 * sizeof(double));
+	if (res.ref_struct != NULL && (res.ref_struct->type == PTM_MATCH_DCUB || res.ref_struct->type == PTM_MATCH_DHEX))
+	{
+		output_data(	&res, num_points, unpermuted_numbers, dpoints, dnumbers, dordering,
+				p_type, p_alloy_type, p_scale, p_rmsd, q, F, F_res,
+				U, P, mapping, p_interatomic_distance, p_lattice_constant);
+	}
+	else
+	{
+		output_data(	&res, num_points, unpermuted_numbers, points, numbers, ordering,
+				p_type, p_alloy_type, p_scale, p_rmsd, q, F, F_res,
+				U, P, mapping, p_interatomic_distance, p_lattice_constant);
+	}
 
 	return PTM_NO_ERROR;
-}
-
-ptm_local_handle_t ptm_initialize_local()
-{
-	return (ptm_local_handle_t)voronoi_initialize_local();
-}
-
-void ptm_uninitialize_local(ptm_local_handle_t ptr)
-{
-	voronoi_uninitialize_local(ptr);
 }
 

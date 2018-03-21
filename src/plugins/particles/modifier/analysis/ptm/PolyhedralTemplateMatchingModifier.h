@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -45,9 +45,9 @@ public:
 
 #ifndef Q_CC_MSVC
 	/// The maximum number of neighbor atoms taken into account for the PTM analysis.
-	static constexpr int MAX_NEIGHBORS = 18;
+	static constexpr int MAX_NEIGHBORS = 30;
 #else
-	enum { MAX_NEIGHBORS = 18 };
+	enum { MAX_NEIGHBORS = 30 };
 #endif
 
 	/// The structure types recognized by the PTM library.
@@ -58,6 +58,8 @@ public:
 		BCC,					//< Body-centered cubic
 		ICO,					//< Icosahedral structure
 		SC,						//< Simple cubic structure
+		CUBIC_DIAMOND,			//< Cubic diamond structure
+		HEX_DIAMOND,			//< Hexagonal diamond structure
 
 		NUM_STRUCTURE_TYPES 	//< This just counts the number of defined structure types.
 	};
@@ -68,9 +70,10 @@ public:
 		ALLOY_NONE = 0,
 		ALLOY_PURE = 1,
 		ALLOY_L10 = 2,
-		ALLOY_L12_CU = 3,
-		ALLOY_L12_AU = 4,
+		ALLOY_L12_A = 3,
+		ALLOY_L12_B = 4,
 		ALLOY_B2 = 5,
+		ALLOY_ZINCBLENDE_WURTZITE = 6,
 
 		NUM_ALLOY_TYPES 	//< This just counts the number of defined alloy types.
 	};
@@ -193,6 +196,9 @@ private:
 
 	/// Controls the output of alloy structure types.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, outputAlloyTypes, setOutputAlloyTypes, PROPERTY_FIELD_MEMORIZE);
+
+	/// Contains the list of alloy types recognized by this analysis modifier.
+	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD(ElementType, alloyTypes, setAlloyTypes);	
 };
 
 
@@ -237,5 +243,3 @@ OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-
