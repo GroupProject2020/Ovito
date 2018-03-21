@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -19,14 +19,15 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <plugins/particles/Particles.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
+#include <plugins/stdmod/StdMod.h>
+#include <plugins/stdobj/util/InputHelper.h>
+#include <plugins/stdobj/util/OutputHelper.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
+#include <core/app/PluginManager.h>
 #include "FreezePropertyModifier.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Properties)
+namespace Ovito { namespace StdMod {
 
 IMPLEMENT_OVITO_CLASS(FreezePropertyModifier);
 DEFINE_PROPERTY_FIELD(FreezePropertyModifier, sourceProperty);
@@ -46,17 +47,12 @@ SET_MODIFIER_APPLICATION_TYPE(FreezePropertyModifier, FreezePropertyModifierAppl
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
-FreezePropertyModifier::FreezePropertyModifier(DataSet* dataset) : Modifier(dataset), 
+FreezePropertyModifier::FreezePropertyModifier(DataSet* dataset) : GenericPropertyModifier(dataset), 
 	_freezeTime(0)
 {
-}
-
-/******************************************************************************
-* Asks the modifier whether it can be applied to the given input data.
-******************************************************************************/
-bool FreezePropertyModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
-{
-	return input.findObject<ParticleProperty>() != nullptr;
+	// Operate on particle properties by default.
+	setPropertyClass(static_cast<const PropertyClass*>(
+		PluginManager::instance().findClass(QStringLiteral("Particles"), QStringLiteral("ParticleProperty"))));	
 }
 
 /******************************************************************************
@@ -65,19 +61,36 @@ bool FreezePropertyModifier::OOMetaClass::isApplicableTo(const PipelineFlowState
 ******************************************************************************/
 void FreezePropertyModifier::initializeModifier(ModifierApplication* modApp)
 {
-	Modifier::initializeModifier(modApp);
+	GenericPropertyModifier::initializeModifier(modApp);
 
 	// Use the first available particle property from the input state as data source when the modifier is newly created.
-	if(sourceProperty().isNull()) {
+	if(sourceProperty().isNull() && propertyClass()) {	
 		PipelineFlowState input = modApp->evaluateInputPreliminary();
 		for(DataObject* o : input.objects()) {
-			if(ParticleProperty* property = dynamic_object_cast<ParticleProperty>(o)) {
-				setSourceProperty(ParticlePropertyReference(property));
-				setDestinationProperty(sourceProperty());
-				break;
+			if(PropertyObject* property = dynamic_object_cast<PropertyObject>(o)) {
+				if(propertyClass()->isMember(property)) {
+					setSourceProperty(PropertyReference(property));
+					setDestinationProperty(sourceProperty());
+					break;
+				}
 			}
 		}
 	}
+}
+
+/******************************************************************************
+* Is called when the value of a property of this object has changed.
+******************************************************************************/
+void FreezePropertyModifier::propertyChanged(const PropertyFieldDescriptor& field)
+{
+	// Whenever the selected property class of this modifier is changed, clear the source property reference.
+	if(field == PROPERTY_FIELD(GenericPropertyModifier::propertyClass) && !isBeingLoaded()) {
+		if(propertyClass() != sourceProperty().propertyClass()) {
+			setSourceProperty({});
+			setDestinationProperty({});
+		}
+	}
+	GenericPropertyModifier::propertyChanged(field);
 }
 
 /******************************************************************************
@@ -101,16 +114,17 @@ Future<PipelineFlowState> FreezePropertyModifier::evaluate(TimePoint time, Modif
 			// Extract the input property.
 			if(FreezePropertyModifierApplication* myModApp = dynamic_object_cast<FreezePropertyModifierApplication>(modApp.data())) {
 				if(myModApp->modifier() == this && !sourceProperty().isNull()) {
-					if(ParticleProperty* property = sourceProperty().findInState(frozenState)) {
+					if(PropertyObject* property = sourceProperty().findInState(frozenState)) {
 
-						// Cacne the property to be frozen in the ModifierApplication.
-						myModApp->updateStoredData(property, ParticleProperty::findInState(frozenState, ParticleProperty::IdentifierProperty), frozenState.stateValidity());
+						// Cache the property to be frozen in the ModifierApplication.
+						myModApp->updateStoredData(property, 
+							propertyClass() ? propertyClass()->findInState(frozenState, PropertyStorage::GenericIdentifierProperty) : nullptr, frozenState.stateValidity());
 
 						// Perform the actual replacement of the property in the input pipeline state.
 						return evaluatePreliminary(time, modApp, std::move(input));
 					}
 					else {
-						throwException(tr("The particle property '%1' is not present in the input state").arg(sourceProperty().name()));
+						throwException(tr("The property '%1' is not present in the input state").arg(sourceProperty().name()));
 					}
 				}
 				myModApp->invalidateFrozenState();
@@ -126,8 +140,11 @@ Future<PipelineFlowState> FreezePropertyModifier::evaluate(TimePoint time, Modif
 PipelineFlowState FreezePropertyModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	PipelineFlowState output = input;
-	ParticleInputHelper pih(dataset(), input);
-	ParticleOutputHelper poh(dataset(), output);
+	InputHelper ih(dataset(), input);
+	OutputHelper oh(dataset(), output);
+	
+	if(!propertyClass())
+		throwException(tr("No property class selected."));
 	
 	if(sourceProperty().isNull()) {
 		output.setStatus(PipelineStatus(PipelineStatus::Warning, tr("No source property selected.")));
@@ -141,16 +158,16 @@ PipelineFlowState FreezePropertyModifier::evaluatePreliminary(TimePoint time, Mo
 	if(!myModApp || !myModApp->property())
 		throwException(tr("No stored property values available."));
 
-	// Get the particle property that will be overwritten by the stored one.
-	ParticleProperty* outputProperty;
-	if(destinationProperty().type() != ParticleProperty::UserProperty) {
-		outputProperty = poh.outputStandardProperty<ParticleProperty>(destinationProperty().type(), true);
+	// Get the property that will be overwritten by the stored one.
+	PropertyObject* outputProperty;
+	if(destinationProperty().type() != PropertyStorage::GenericUserProperty) {
+		outputProperty = oh.outputStandardProperty(*propertyClass(), destinationProperty().type(), true);
 		if(outputProperty->dataType() != myModApp->property()->dataType()
 			|| outputProperty->componentCount() != myModApp->property()->componentCount())
 			throwException(tr("Types of source property and output property are not compatible. Cannot restore saved property values."));
 	}
 	else {
-		outputProperty = poh.outputCustomProperty<ParticleProperty>(destinationProperty().name(), 
+		outputProperty = oh.outputCustomProperty(*propertyClass(), destinationProperty().name(), 
 			myModApp->property()->dataType(), myModApp->property()->componentCount(),
 			0, true);
 	}
@@ -158,7 +175,7 @@ PipelineFlowState FreezePropertyModifier::evaluatePreliminary(TimePoint time, Mo
 	
 	// Check if particle IDs are present and if the order of particles has changed
 	// since we took the snapshot of the property values.
-	ParticleProperty* idProperty = pih.inputStandardProperty<ParticleProperty>(ParticleProperty::IdentifierProperty);
+	PropertyObject* idProperty = ih.inputStandardProperty(*propertyClass(), PropertyStorage::GenericIdentifierProperty);
 	if(myModApp->identifiers() && idProperty && 
 			(idProperty->size() != myModApp->identifiers()->size() || 
 			!std::equal(idProperty->constDataInt64(), idProperty->constDataInt64() + idProperty->size(), myModApp->identifiers()->constDataInt64()))) {
@@ -168,7 +185,7 @@ PipelineFlowState FreezePropertyModifier::evaluatePreliminary(TimePoint time, Mo
 		size_t index = 0;
 		for(auto id : myModApp->identifiers()->constInt64Range()) {
 			if(!idmap.insert(std::make_pair(id,index)).second)
-				throwException(tr("Detected duplicate particle ID %1 in saved snapshot. Cannot apply saved property values.").arg(id));
+				throwException(tr("Detected duplicate element ID %1 in saved snapshot. Cannot apply saved property values.").arg(id));
 			index++;
 		}
 
@@ -180,15 +197,15 @@ PipelineFlowState FreezePropertyModifier::evaluatePreliminary(TimePoint time, Mo
 		for(size_t index = 0; index < outputProperty->size(); index++, ++id, dest += stride) {
 			auto mapEntry = idmap.find(*id);
 			if(mapEntry == idmap.end())
-				throwException(tr("Detected new particle ID %1, which didn't exist when the snapshot was created. Cannot restore saved property values.").arg(*id));
+				throwException(tr("Detected new element ID %1, which didn't exist when the snapshot was created. Cannot restore saved property values.").arg(*id));
 			memcpy(dest, src + stride * mapEntry->second, stride);
 		}
 	}
 	else {
 		
-		// Make sure the number of particles didn't change when no particle IDs are defined.
-		if(myModApp->property()->size() != poh.outputParticleCount())
-			throwException(tr("Number of input particles has changed. Cannot restore saved property values. There were %1 particles when the snapshot was created. Now there are %2.").arg(myModApp->property()->size()).arg(poh.outputParticleCount()));
+		// Make sure the number of elements didn't change when no IDs are defined.
+		if(myModApp->property()->size() != outputProperty->size())
+			throwException(tr("Number of input element has changed. Cannot restore saved property values. There were %1 elements when the snapshot was created. Now there are %2.").arg(myModApp->property()->size()).arg(outputProperty->size()));
 
 		if(outputProperty->type() == myModApp->property()->type()
 				&& outputProperty->name() == myModApp->property()->name()
@@ -226,7 +243,7 @@ PipelineFlowState FreezePropertyModifier::evaluatePreliminary(TimePoint time, Mo
 * particle identifier list, which will allow to restore the saved property
 * values even if the order of particles changes.
 ******************************************************************************/
-void FreezePropertyModifierApplication::updateStoredData(ParticleProperty* property, ParticleProperty* identifiers, TimeInterval validityInterval)
+void FreezePropertyModifierApplication::updateStoredData(PropertyObject* property, PropertyObject* identifiers, TimeInterval validityInterval)
 {
 	CloneHelper cloneHelper;
 	setProperty(cloneHelper.cloneObject(property, false));
@@ -246,7 +263,5 @@ bool FreezePropertyModifierApplication::referenceEvent(RefTarget* source, const 
 	return ModifierApplication::referenceEvent(source, event);
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

@@ -152,6 +152,9 @@ public:
 	/// \brief Returns the name of the application that wrote the current file.
 	const QString& applicationName() const { return _applicationName; }
 
+	/// \brief Returns the version of the application that wrote the current file.
+	const QString& applicationVersionString() const { return _applicationVersionString; }
+
 	/// \brief Returns the major version number of the program that wrote the file.
 	quint32 applicationMajorVersion() const { return _applicationMajorVersion; }
 
@@ -208,6 +211,8 @@ private:
 	quint32 _applicationMinorVersion;
 	/// The revision version number of the program that wrote the current file.
 	quint32 _applicationRevisionVersion;
+	/// The version of the application that wrote the current file.
+	QString _applicationVersionString;
 
 	/// The list of open chunks.
 	std::vector<std::pair<int, qint64>> _chunks;

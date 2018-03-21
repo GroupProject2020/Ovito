@@ -41,6 +41,14 @@ public:
 	/// \brief Constructor.
 	DataInspectorPanel(MainWindow* mainWindow);
 
+public Q_SLOTS:
+
+	/// Hides the inspector panel.
+	void collapse();
+
+	/// Shows the inspector panel.
+	void open();
+
 protected Q_SLOTS:
 
 	/// This is called whenever the scene node selection has changed.

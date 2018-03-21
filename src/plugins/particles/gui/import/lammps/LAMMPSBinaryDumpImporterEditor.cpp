@@ -50,10 +50,10 @@ bool LAMMPSBinaryDumpImporterEditor::inspectNewFile(FileImporter* importer, cons
 		if(lammpsImporter->columnMapping().empty()) {
 			QSettings settings;
 			settings.beginGroup("viz/importer/lammps_binary_dump/");
-			if(settings.contains("columnmapping")) {
+			if(settings.contains("colmapping")) {
 				try {
 					InputColumnMapping storedMapping;
-					storedMapping.fromByteArray(settings.value("columnmapping").toByteArray());
+					storedMapping.fromByteArray(settings.value("colmapping").toByteArray());
 					std::copy_n(storedMapping.begin(), std::min(storedMapping.size(), mapping.size()), mapping.begin());
 				}
 				catch(Exception& ex) {
@@ -92,7 +92,7 @@ bool LAMMPSBinaryDumpImporterEditor::showEditColumnMappingDialog(LAMMPSBinaryDum
 		// Remember the user-defined mapping for the next time.
 		QSettings settings;
 		settings.beginGroup("viz/importer/lammps_binary_dump/");
-		settings.setValue("columnmapping", dialog.mapping().toByteArray());
+		settings.setValue("colmapping", dialog.mapping().toByteArray());
 		settings.endGroup();
 		return true;
 	}

@@ -184,7 +184,9 @@ MainWindow::MainWindow() : _datasetContainer(this)
 	bottomDockLayout->setContentsMargins(0,0,0,0);
 	bottomDockLayout->setSpacing(0);
 	bottomDockLayout->setRowStretch(0, 1);
-	bottomDockLayout->addWidget(new DataInspectorPanel(this), 0, 0, 1, 5);
+	DataInspectorPanel* dataInspector = new DataInspectorPanel(this);
+	bottomDockLayout->addWidget(dataInspector, 0, 0, 1, 5);	
+	QTimer::singleShot(0, dataInspector, &DataInspectorPanel::collapse);
 	QFrame* separatorLine = new QFrame();
 	QPalette pal = separatorLine->palette();
 	pal.setColor(QPalette::WindowText, pal.color(QPalette::Mid));
@@ -209,7 +211,7 @@ MainWindow::MainWindow() : _datasetContainer(this)
 	// Create docking widgets.
 	createDockPanel(tr("Bottom panel"), "BottomPanel", Qt::BottomDockWidgetArea, Qt::BottomDockWidgetArea, bottomDockWidget);
 	createDockPanel(tr("Command Panel"), "CommandPanel", Qt::RightDockWidgetArea, Qt::DockWidgetAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea), _commandPanel);
-	
+
 	// Create the frame buffer window.
 	_frameBufferWindow = new FrameBufferWindow(this);
 

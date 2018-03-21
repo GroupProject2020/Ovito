@@ -35,6 +35,7 @@
 #include <plugins/stdmod/modifiers/ScatterPlotModifier.h>
 #include <plugins/stdmod/modifiers/ReplicateModifier.h>
 #include <plugins/stdmod/modifiers/ExpressionSelectionModifier.h>
+#include <plugins/stdmod/modifiers/FreezePropertyModifier.h>
 #include <core/app/PluginManager.h>
 
 namespace Ovito { namespace StdMod {
@@ -201,7 +202,7 @@ PYBIND11_PLUGIN(StdMod)
 			"\n\n"
 			"The modifier will act on particles only by default. This can be changed by setting the :py:attr:`.operate_on` field. ")
 		.def_property("operate_on", modifierPropertyClassGetter(), modifierPropertyClassSetter(),
-				"Selects the kind of data elements this modifier operate on. "
+				"Selects the kind of data elements this modifier should operate on. "
 				"Supported values are: ``'particles'``, ``'bonds'``, ``'voxels'``. "
 				"\n\n"
 				":Default: ``'particles'``\n")		
@@ -217,7 +218,7 @@ PYBIND11_PLUGIN(StdMod)
 			"\n\n"
 			"The modifier will act on particles only by default. This can be changed by setting the :py:attr:`.operate_on` field. ")
 		.def_property("operate_on", modifierPropertyClassGetter(), modifierPropertyClassSetter(),
-				"Selects the kind of data elements this modifier operate on. "
+				"Selects the kind of data elements this modifier should operate on. "
 				"Supported values are: ``'particles'``, ``'bonds'``, ``'voxels'``. "
 				"\n\n"
 				":Default: ``'particles'``\n")		
@@ -397,8 +398,8 @@ PYBIND11_PLUGIN(StdMod)
 			".. literalinclude:: ../example_snippets/histogram_modifier.py\n"
 			"\n\n")
 		.def_property("operate_on", modifierPropertyClassGetter(), modifierPropertyClassSetter(),
-				"Selects the kind of data elements this modifier operate on. "
-				"Supported values are: ``'particles'``, ``'bonds'``, ``'oxels'``. "
+				"Selects the kind of data elements this modifier should operate on. "
+				"Supported values are: ``'particles'``, ``'bonds'``, ``'voxels'``. "
 				"\n\n"
 				"Note: Assigning a new value to this attribute resets the :py:attr:`.property` field. "
 				"\n\n"
@@ -600,7 +601,62 @@ PYBIND11_PLUGIN(StdMod)
 				"\n\n"
 				":Default: ``'particles'``\n")
 	;
-	
+
+	ovito_class<FreezePropertyModifier, GenericPropertyModifier>(m,
+			":Base class: :py:class:`ovito.pipeline.Modifier`"
+			"\n\n"
+			"This modifier obtains the value of a property by evaluating the data pipeline at a fixed animation time (frame 0 by default), "
+			"and injects it back into the pipeline, optionally under a different name than the original property. "
+			"Thus, the :py:class:`!FreezePropertyModifier` allows you to *freeze* a dynamically changing property and overwrite its values with those from a fixed point in time. "
+			"\n\n"
+			"The modifier can operate on properties of different kinds: "
+			"\n\n"
+			"  * Particles (:py:class:`~ovito.data.ParticleProperty`)\n"
+			"  * Bonds (:py:class:`~ovito.data.BondProperty`)\n"
+			"  * Voxel grids (:py:class:`~ovito.data.VoxelProperty`)\n"
+			"\n\n"
+			"The modifier will operate on particle properties by default. You can change this by setting the modifier's :py:attr:`.operate_on` field. "
+			"\n\n"
+			"**Example:**"
+			"\n\n"
+			".. literalinclude:: ../example_snippets/freeze_property_modifier.py\n"
+			"   :emphasize-lines: 12-14\n"
+			"\n")
+		.def_property("source_property", &FreezePropertyModifier::sourceProperty, [](FreezePropertyModifier& mod, py::object val) {					
+					mod.setSourceProperty(convertPythonPropertyReference(val, mod.propertyClass()));
+				},
+				"The name of the input property that should be evaluated by the modifier at the animation frame give by :py:attr:`.freeze_at`. "
+				"\n\n"
+				"Note: Make sure that :py:attr:`.operate_on` is set to the desired value *before* setting this attribute, "
+				"because changing :py:attr:`.operate_on` will implicitly reset the :py:attr:`!source_property` attribute. ")
+		.def_property("destination_property", &FreezePropertyModifier::destinationProperty, [](FreezePropertyModifier& mod, py::object val) {					
+					mod.setDestinationProperty(convertPythonPropertyReference(val, mod.propertyClass()));
+				},
+				"The name of the output property that should be created by the modifier. "
+				"It may be the same as :py:attr:`.source_property`. If the destination property already exists in the modifier's input, the values are overwritten. "
+				"\n\n"
+				"Note: Make sure that :py:attr:`.operate_on` is set to the desired value *before* setting this attribute, "
+				"because changing :py:attr:`.operate_on` will implicitly reset the :py:attr:`!destination_property` attribute. ")
+		.def_property("freeze_at", 
+				[](FreezePropertyModifier& mod) {
+					return mod.dataset()->animationSettings()->timeToFrame(mod.freezeTime());
+				},
+				[](FreezePropertyModifier& mod, int frame) {
+					mod.setFreezeTime(mod.dataset()->animationSettings()->frameToTime(frame));
+				},
+				"The animation frame number at which to freeze the input property's values. "
+				"\n\n"
+				":Default: 0\n")
+		.def_property("operate_on", modifierPropertyClassGetter(), modifierPropertyClassSetter(),
+				"Selects the kind of properties this modifier should operate on. "
+				"Supported values are: ``'particles'``, ``'bonds'``, ``'voxels'``. "
+				"\n\n"
+				"Note: Assigning a new value to this attribute resets the :py:attr:`.source_property` and :py:attr:`.destination_property` fields. "
+				"\n\n"
+				":Default: ``'particles'``\n")
+	;
+	ovito_class<FreezePropertyModifierApplication, ModifierApplication>{m};
+
 	return m.ptr();
 }
 

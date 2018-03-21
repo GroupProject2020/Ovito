@@ -52,7 +52,7 @@ LoadStream::LoadStream(QDataStream& source) : _is(source), _isOpen(false)
 	if(magic1 != 0x0FACC5AB || magic2 != 0x0AFCCA5A)
 		throw Exception(tr("Unknown file format. This is not a valid state file written by %1.").arg(QCoreApplication::applicationName()));
 
-	_is.setVersion(QDataStream::Qt_5_1);
+	_is.setVersion(QDataStream::Qt_5_4);
 	_is.setFloatingPointPrecision(_fpPrecision == 4 ? QDataStream::SinglePrecision : QDataStream::DoublePrecision);
 	_isOpen = true;
 
@@ -63,16 +63,20 @@ LoadStream::LoadStream(QDataStream& source) : _is(source), _isOpen(false)
 	*this >> _applicationMajorVersion;
 	*this >> _applicationMinorVersion;
 	*this >> _applicationRevisionVersion;
+	if(_fileFormat >= 30001)
+		*this >> _applicationVersionString;
+	else
+		_applicationVersionString = QStringLiteral("%1.%2.%3").arg(_applicationMajorVersion).arg(_applicationMinorVersion).arg(_applicationRevisionVersion);
 
 	// Check file format version.
 	if(_fileFormat > OVITO_FILE_FORMAT_VERSION)
-		throw Exception(tr("Unsupported file format revision %1. This file has been written by %2 %3.%4.%5. Please upgrade to the newest program version to open this file.")
-				.arg(_fileFormat).arg(_applicationName).arg(_applicationMajorVersion).arg(_applicationMinorVersion).arg(_applicationRevisionVersion));
+		throw Exception(tr("Unsupported file format revision %1. This file has been written by %2 %3. Please upgrade to the newest program version to open this file.")
+				.arg(_fileFormat).arg(_applicationName).arg(_applicationVersionString));
 
 	// OVITO 3.x cannot read state files written by OVITO 2.x:
 	if(_fileFormat < 30001)
-		throw Exception(tr("This file has been written by %1 %2.%3.%4 and %5 %6.x cannot read it anymore. Please use the old program version to open the file.")
-			.arg(_applicationName).arg(_applicationMajorVersion).arg(_applicationMinorVersion).arg(_applicationRevisionVersion).arg(QCoreApplication::applicationName()).arg(Application::applicationVersionMajor()));	
+		throw Exception(tr("This file has been written by %1 %2 and %3 %4.x cannot read it anymore. Please use the old program version to open the file.")
+			.arg(_applicationName).arg(_applicationVersionString).arg(QCoreApplication::applicationName()).arg(Application::applicationVersionMajor()));	
 }
 
 /******************************************************************************

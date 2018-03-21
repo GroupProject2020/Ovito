@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,10 +22,10 @@
 #pragma once
 
 
-#include <plugins/particles/gui/ParticlesGui.h>
+#include <plugins/stdmod/gui/StdModGui.h>
 #include <gui/properties/ModifierPropertiesEditor.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Properties) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace StdMod {
 
 /**
  * A properties editor for the FreezePropertyModifier class.
@@ -38,7 +38,7 @@ class FreezePropertyModifierEditor : public ModifierPropertiesEditor
 public:
 
 	/// Default constructor
-	Q_INVOKABLE FreezePropertyModifierEditor() {}
+	Q_INVOKABLE FreezePropertyModifierEditor() = default;
 
 protected:
 
@@ -51,8 +51,5 @@ private Q_SLOTS:
 	void onSourcePropertyChanged();
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

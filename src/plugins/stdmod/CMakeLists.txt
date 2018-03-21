@@ -32,6 +32,7 @@ SET(SourceFiles
 	modifiers/ScatterPlotModifier.cpp
 	modifiers/ReplicateModifier.cpp
 	modifiers/ExpressionSelectionModifier.cpp
+	modifiers/FreezePropertyModifier.cpp
 	viewport/ColorLegendOverlay.cpp	
 )
 

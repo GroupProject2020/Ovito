@@ -28,7 +28,6 @@
 #include <plugins/particles/modifier/modify/CombineParticleSetsModifier.h>
 #include <plugins/particles/modifier/modify/CoordinationPolyhedraModifier.h>
 #include <plugins/particles/modifier/properties/ComputePropertyModifier.h>
-#include <plugins/particles/modifier/properties/FreezePropertyModifier.h>
 #include <plugins/particles/modifier/properties/ComputeBondLengthsModifier.h>
 #include <plugins/particles/modifier/properties/InterpolateTrajectoryModifier.h>
 #include <plugins/particles/modifier/properties/GenerateTrajectoryLinesModifier.h>
@@ -164,37 +163,6 @@ void defineModifiersSubmodule(py::module m)
 				":Default: 3.0\n")
 	;
 	ovito_class<ComputePropertyModifierApplication, AsynchronousModifierApplication>{m};
-
-	ovito_class<FreezePropertyModifier, Modifier>(m,
-			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
-			"This modifier obtains the value of a particle property by evaluating the data pipeline at a fixed animation time (frame 0 by default), "
-			"and injects it back into the pipeline, optionally under a different name than the original property. "
-			"Thus, the :py:class:`!FreezePropertyModifier` allows to *freeze* a dynamically changing property and overwrite its values with those from a fixed point in time. "
-			"\n\n"
-			"**Example:**"
-			"\n\n"
-			".. literalinclude:: ../example_snippets/freeze_property_modifier.py\n"
-			"   :emphasize-lines: 12-14\n"
-			"\n")
-		.def_property("source_property", &FreezePropertyModifier::sourceProperty, &FreezePropertyModifier::setSourceProperty,
-				"The name of the input particle property that should be evaluated by the modifier at the animation frame give by :py:attr:`.freeze_at`. "
-				"It can be one of the :ref:`standard particle properties <particle-types-list>` or a custom particle property. ")
-		.def_property("destination_property", &FreezePropertyModifier::destinationProperty, &FreezePropertyModifier::setDestinationProperty,
-				"The name of the output particle property that should be created by the modifier. "
-				"It can be one of the :ref:`standard particle properties <particle-types-list>` or a custom particle property. It may be the same as the :py:attr:`.source_property`. "
-				"If the destination property already exists in the input, its values are overwritten. ")
-		.def_property("freeze_at", 
-				[](FreezePropertyModifier& mod) {
-					return mod.dataset()->animationSettings()->timeToFrame(mod.freezeTime());
-				},
-				[](FreezePropertyModifier& mod, int frame) {
-					mod.setFreezeTime(mod.dataset()->animationSettings()->frameToTime(frame));
-				},
-				"The animation frame number at which to freeze the input property's values. "
-				"\n\n"
-				":Default: 0\n")
-	;
-	ovito_class<FreezePropertyModifierApplication, ModifierApplication>{m};
 
 	ovito_class<ManualSelectionModifier, Modifier>(m)
 		.def("reset_selection", &ManualSelectionModifier::resetSelection)

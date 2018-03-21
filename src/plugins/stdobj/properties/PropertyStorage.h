@@ -59,6 +59,7 @@ public:
 		GenericSelectionProperty = 1,
 		GenericColorProperty = 2,
 		GenericTypeProperty = 3,
+		GenericIdentifierProperty = 4,
 		
 		// This is value at which type IDs of specific standard properties start:
 		FirstSpecificProperty = 1000

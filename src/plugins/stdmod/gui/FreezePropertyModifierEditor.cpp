@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -19,13 +19,14 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/particles/modifier/properties/FreezePropertyModifier.h>
+#include <plugins/stdmod/gui/StdModGui.h>
+#include <plugins/stdmod/modifiers/FreezePropertyModifier.h>
 #include <plugins/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
+#include <plugins/stdobj/gui/widgets/PropertyClassParameterUI.h>
 #include <gui/properties/IntegerParameterUI.h>
 #include "FreezePropertyModifierEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Properties) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace StdMod {
 
 IMPLEMENT_OVITO_CLASS(FreezePropertyModifierEditor);
 SET_OVITO_OBJECT_EDITOR(FreezePropertyModifier, FreezePropertyModifierEditor);
@@ -42,16 +43,25 @@ void FreezePropertyModifierEditor::createUI(const RolloutInsertionParameters& ro
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(2);
 
-	PropertyReferenceParameterUI* sourcePropertyUI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(FreezePropertyModifier::sourceProperty), &ParticleProperty::OOClass(), false, true);
+	PropertyClassParameterUI* pclassUI = new PropertyClassParameterUI(this, PROPERTY_FIELD(GenericPropertyModifier::propertyClass));
+	layout->addWidget(new QLabel(tr("Operate on:")));
+	layout->addWidget(pclassUI->comboBox());
+	layout->addSpacing(8);
+
+	PropertyReferenceParameterUI* sourcePropertyUI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(FreezePropertyModifier::sourceProperty), nullptr, false, true);
 	layout->addWidget(new QLabel(tr("Property to freeze:"), rollout));
 	layout->addWidget(sourcePropertyUI->comboBox());
 	connect(sourcePropertyUI, &PropertyReferenceParameterUI::valueEntered, this, &FreezePropertyModifierEditor::onSourcePropertyChanged);
 	layout->addSpacing(8);
 
-	PropertyReferenceParameterUI* destPropertyUI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(FreezePropertyModifier::destinationProperty), &ParticleProperty::OOClass(), false, false);
+	PropertyReferenceParameterUI* destPropertyUI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(FreezePropertyModifier::destinationProperty), nullptr, false, false);
 	layout->addWidget(new QLabel(tr("Output property:"), rollout));
 	layout->addWidget(destPropertyUI->comboBox());
 	layout->addSpacing(8);
+	connect(this, &PropertiesEditor::contentsChanged, this, [sourcePropertyUI,destPropertyUI](RefTarget* editObject) {
+		sourcePropertyUI->setPropertyClass(editObject ? static_object_cast<GenericPropertyModifier>(editObject)->propertyClass() : nullptr);
+		destPropertyUI->setPropertyClass(editObject ? static_object_cast<GenericPropertyModifier>(editObject)->propertyClass() : nullptr);
+	});
 	
 	QGridLayout* gridlayout = new QGridLayout();
 	gridlayout->setContentsMargins(0,0,0,0);
@@ -82,8 +92,5 @@ void FreezePropertyModifierEditor::onSourcePropertyChanged()
 	});
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

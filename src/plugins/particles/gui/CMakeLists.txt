@@ -48,7 +48,6 @@ SET(SourceFiles
 	modifier/selection/ExpandSelectionModifierEditor.cpp
 	modifier/selection/ManualSelectionModifierEditor.cpp
 	modifier/properties/ComputePropertyModifierEditor.cpp
-	modifier/properties/FreezePropertyModifierEditor.cpp
 	modifier/properties/InterpolateTrajectoryModifierEditor.cpp
 	modifier/properties/GenerateTrajectoryLinesModifierEditor.cpp
 	util/CutoffRadiusPresetsUI.cpp

@@ -10,7 +10,7 @@
   <title>Pipeline cloning</title>
 
   <para>
-    The <emphasis>Clone pipeline</emphasis> lets you duplicate a <link linkend="usage.modification_pipeline">data pipeline<link>
+    The <emphasis>Clone pipeline</emphasis> lets you duplicate a <link linkend="usage.modification_pipeline">data pipeline</link>
     in order to visualize multiple datasets side by side, or the same dataset in multiple ways. It can be invoked by 
     selecting <menuchoice><guimenu>Edit</guimenu><guimenuitem>Clone pipeline</guimenuitem></menuchoice> from the menu.
   </para>

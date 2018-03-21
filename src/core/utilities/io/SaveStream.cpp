@@ -47,7 +47,7 @@ SaveStream::SaveStream(QDataStream& destination) : _os(destination), _isOpen(fal
 	
 	// This is the version of the stream file format.
 	*this << (quint32)OVITO_FILE_FORMAT_VERSION;
-	_os.setVersion(QDataStream::Qt_5_1);
+	_os.setVersion(QDataStream::Qt_5_4);
 	_os.setFloatingPointPrecision(sizeof(FloatType) == 4 ? QDataStream::SinglePrecision : QDataStream::DoublePrecision);
 
 	// Store the floating-point precision used throughout the file.
@@ -60,6 +60,7 @@ SaveStream::SaveStream(QDataStream& destination) : _os(destination), _isOpen(fal
 	*this << (quint32)Application::applicationVersionMajor();
 	*this << (quint32)Application::applicationVersionMinor();
 	*this << (quint32)Application::applicationVersionRevision();
+	*this << QCoreApplication::applicationVersion();
 }
 
 /******************************************************************************

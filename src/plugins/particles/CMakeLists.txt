@@ -57,7 +57,6 @@ SET(SourceFiles
 	modifier/selection/ParticlesExpressionSelectionModifierDelegate.cpp
 	modifier/selection/ManualSelectionModifier.cpp
 	modifier/properties/ComputePropertyModifier.cpp
-	modifier/properties/FreezePropertyModifier.cpp
 	modifier/properties/ComputeBondLengthsModifier.cpp
 	modifier/properties/InterpolateTrajectoryModifier.cpp
 	modifier/properties/GenerateTrajectoryLinesModifier.cpp

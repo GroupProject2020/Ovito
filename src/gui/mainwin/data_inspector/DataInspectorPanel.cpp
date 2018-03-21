@@ -97,17 +97,37 @@ void DataInspectorPanel::onTabBarClicked(int index)
 		if(_appletContainer->height() == 0)
 			parentWidget()->setMaximumHeight(16777215);
 		if(_appletContainer->height() != 0) {
-			parentWidget()->setMaximumHeight(parentWidget()->minimumSizeHint().height());
-			parentWidget()->parentWidget()->updateGeometry();
-			QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-			parentWidget()->setMaximumHeight(16777215);
+			collapse();
 		}
 		else {
-			parentWidget()->setMinimumHeight(parentWidget()->minimumSizeHint().height() + _mainWindow->centralWidget()->height() / 3);
-			parentWidget()->parentWidget()->updateGeometry();
-			QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-			parentWidget()->setMinimumHeight(0);
+			open();
 		}
+	}
+}
+
+/******************************************************************************
+* Hides the inspector panel.
+******************************************************************************/
+void DataInspectorPanel::collapse()
+{
+	if(_appletContainer->height() != 0) {
+		parentWidget()->setMaximumHeight(parentWidget()->minimumSizeHint().height());
+		parentWidget()->parentWidget()->updateGeometry();
+		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+		parentWidget()->setMaximumHeight(16777215);
+	}
+}
+
+/******************************************************************************
+* Shows the inspector panel.
+******************************************************************************/
+void DataInspectorPanel::open()
+{
+	if(_appletContainer->height() == 0) {
+		parentWidget()->setMinimumHeight(parentWidget()->minimumSizeHint().height() + _mainWindow->centralWidget()->height() / 3);
+		parentWidget()->parentWidget()->updateGeometry();
+		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+		parentWidget()->setMinimumHeight(0);
 	}
 }
 
