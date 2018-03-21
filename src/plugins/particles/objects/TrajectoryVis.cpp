@@ -21,6 +21,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <core/utilities/units/UnitsManager.h>
+#include <core/dataset/data/VersionedDataObjectRef.h>
 #include <core/rendering/SceneRenderer.h>
 #include "TrajectoryVis.h"
 
@@ -55,15 +56,22 @@ Box3 TrajectoryVis::boundingBox(TimePoint time, DataObject* dataObject, Pipeline
 {
 	TrajectoryObject* trajObj = dynamic_object_cast<TrajectoryObject>(dataObject);
 
-	// Detect if the input data has changed since the last time we computed the bounding box.
-	if(_boundingBoxCacheHelper.updateState(trajObj, lineWidth())) {
-		// Compute bounding box.
-		_cachedBoundingBox.setEmpty();
-		if(trajObj) {
-			_cachedBoundingBox.addPoints(trajObj->points().constData(), trajObj->points().size());
-		}
+	// The key type used for caching the computed bounding box:
+	using CacheKey = std::tuple<
+		VersionedDataObjectRef,		// The data object + revision number
+		FloatType					// Line width
+	>;
+
+	// Look up the bounding box in the vis cache.
+	auto& bbox = dataset()->visCache().get<Box3>(CacheKey(trajObj, lineWidth()));
+
+	// Check if the cached bounding box information is still up to date.
+	if(bbox.isEmpty()) {
+		// If not, recompute bounding box from trajectory data.
+		if(trajObj)
+			bbox.addPoints(trajObj->points().constData(), trajObj->points().size());
 	}
-	return _cachedBoundingBox;
+	return bbox;
 }
 
 /******************************************************************************
@@ -79,66 +87,81 @@ void TrajectoryVis::render(TimePoint time, DataObject* dataObject, const Pipelin
 	
 	TrajectoryObject* trajObj = dynamic_object_cast<TrajectoryObject>(dataObject);
 
-	// Do we have to re-create the geometry buffers from scratch?
-	bool recreateBuffers = !_segmentBuffer || !_segmentBuffer->isValid(renderer)
-						|| !_cornerBuffer || !_cornerBuffer->isValid(renderer);
+	// The key type used for caching the rendering primitive:
+	using CacheKey = std::tuple<
+		CompatibleRendererGroup,	// The scene renderer
+		VersionedDataObjectRef,		// The trajectory data object + revision number
+		FloatType,					// Line width
+		Color,						// Line color,
+		TimePoint					// End time
+	>;
 
-	// Set up shading mode.
+	// The values stored in the vis cache.
+	struct CacheValue {
+		std::shared_ptr<ArrowPrimitive> segments;
+		std::shared_ptr<ParticlePrimitive> corners;
+	};
+
+	// The shading mode.
 	ParticlePrimitive::ShadingMode cornerShadingMode = (shadingMode() == ArrowPrimitive::NormalShading)
 			? ParticlePrimitive::NormalShading : ParticlePrimitive::FlatShading;
-	if(!recreateBuffers) {
-		recreateBuffers |= !_segmentBuffer->setShadingMode(shadingMode());
-		recreateBuffers |= !_cornerBuffer->setShadingMode(cornerShadingMode);
-	}
-
 	TimePoint endTime = showUpToCurrentTime() ? time : TimePositiveInfinity();
 
-	// Do we have to update contents of the geometry buffers?
-	bool updateContents = _geometryCacheHelper.updateState(trajObj, lineWidth(), lineColor(), endTime) || recreateBuffers;
+	// Lookup the rendering primitives in the vis cache.
+	auto& renderingPrimitives = dataset()->visCache().get<CacheValue>(CacheKey(
+			renderer,
+			trajObj, 
+			lineWidth(), 
+			lineColor(), 
+			endTime));
 
-	// Re-create the geometry buffers if necessary.
-	if(recreateBuffers) {
-		_segmentBuffer = renderer->createArrowPrimitive(ArrowPrimitive::CylinderShape, shadingMode(), ArrowPrimitive::HighQuality);
-		_cornerBuffer = renderer->createParticlePrimitive(cornerShadingMode, ParticlePrimitive::HighQuality);
-	}
+	// Check if we already have a valid rendering primitives that are up to date.
+	if(!renderingPrimitives.segments || !renderingPrimitives.corners
+			|| !renderingPrimitives.segments->isValid(renderer)
+			|| !renderingPrimitives.corners->isValid(renderer)
+			|| !renderingPrimitives.segments->setShadingMode(shadingMode())
+			|| !renderingPrimitives.corners->setShadingMode(cornerShadingMode)) {
 
-	if(updateContents) {
+		// Re-create the geometry buffers.
 		FloatType lineRadius = lineWidth() / 2;
 		if(trajObj && lineRadius > 0) {
+			renderingPrimitives.segments = renderer->createArrowPrimitive(ArrowPrimitive::CylinderShape, shadingMode(), ArrowPrimitive::HighQuality);
+			renderingPrimitives.corners = renderer->createParticlePrimitive(cornerShadingMode, ParticlePrimitive::HighQuality);
+
 			int timeSamples = std::upper_bound(trajObj->sampleTimes().cbegin(), trajObj->sampleTimes().cend(), endTime) - trajObj->sampleTimes().cbegin();
 
 			int lineSegmentCount = std::max(0, timeSamples - 1) * trajObj->trajectoryCount();
 
-			_segmentBuffer->startSetElements(lineSegmentCount);
+			renderingPrimitives.segments->startSetElements(lineSegmentCount);
 			int lineSegmentIndex = 0;
 			for(int pindex = 0; pindex < trajObj->trajectoryCount(); pindex++) {
 				for(int tindex = 0; tindex < timeSamples - 1; tindex++) {
 					const Point3& p1 = trajObj->points()[tindex * trajObj->trajectoryCount() + pindex];
 					const Point3& p2 = trajObj->points()[(tindex+1) * trajObj->trajectoryCount() + pindex];
-					_segmentBuffer->setElement(lineSegmentIndex++, p1, p2 - p1, ColorA(lineColor()), lineRadius);
+					renderingPrimitives.segments->setElement(lineSegmentIndex++, p1, p2 - p1, ColorA(lineColor()), lineRadius);
 				}
 			}
-			_segmentBuffer->endSetElements();
+			renderingPrimitives.segments->endSetElements();
 
 			int pointCount = std::max(0, timeSamples - 2) * trajObj->trajectoryCount();
-			_cornerBuffer->setSize(pointCount);
+			renderingPrimitives.corners->setSize(pointCount);
 			if(pointCount)
-				_cornerBuffer->setParticlePositions(trajObj->points().constData() + trajObj->trajectoryCount());
-			_cornerBuffer->setParticleColor(ColorA(lineColor()));
-			_cornerBuffer->setParticleRadius(lineRadius);
+				renderingPrimitives.corners->setParticlePositions(trajObj->points().constData() + trajObj->trajectoryCount());
+			renderingPrimitives.corners->setParticleColor(ColorA(lineColor()));
+			renderingPrimitives.corners->setParticleRadius(lineRadius);
 		}
 		else {
-			_segmentBuffer.reset();
-			_cornerBuffer.reset();
+			renderingPrimitives.segments.reset();
+			renderingPrimitives.corners.reset();
 		}
 	}
 
-	if(!_segmentBuffer)
+	if(!renderingPrimitives.segments)
 		return;
 
 	renderer->beginPickObject(contextNode);
-	_segmentBuffer->render(renderer);
-	_cornerBuffer->render(renderer);
+	renderingPrimitives.segments->render(renderer);
+	renderingPrimitives.corners->render(renderer);
 	renderer->endPickObject();
 }
 

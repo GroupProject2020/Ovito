@@ -84,6 +84,7 @@ SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeS
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeEnd, "Y-range end");
 
 IMPLEMENT_OVITO_CLASS(CorrelationFunctionModifierApplication);
+SET_MODIFIER_APPLICATION_TYPE(CorrelationFunctionModifier, CorrelationFunctionModifierApplication);
 
 // This global mutex is used to serialize access to the FFTW3 planner 
 // routines, which are not thread-safe.
@@ -124,16 +125,6 @@ CorrelationFunctionModifier::CorrelationFunctionModifier(DataSet* dataset) : Asy
 bool CorrelationFunctionModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
 	return input.findObject<ParticleProperty>() != nullptr;
-}
-
-/******************************************************************************
-* Create a new modifier application that refers to this modifier instance.
-******************************************************************************/
-OORef<ModifierApplication> CorrelationFunctionModifier::createModifierApplication()
-{
-	OORef<ModifierApplication> modApp = new CorrelationFunctionModifierApplication(dataset());
-	modApp->setModifier(this);
-	return modApp;
 }
 
 /******************************************************************************

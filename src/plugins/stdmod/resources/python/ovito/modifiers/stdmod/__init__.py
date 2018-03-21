@@ -4,7 +4,8 @@ import ovito.modifiers
 # Load the native code modules.
 from ovito.plugins.StdMod import (SliceModifier, AffineTransformationModifier, ClearSelectionModifier, 
                                 InvertSelectionModifier, ColorCodingModifier, AssignColorModifier, 
-                                DeleteSelectedModifier, ScatterPlotModifier, ReplicateModifier)
+                                DeleteSelectedModifier, ScatterPlotModifier, ReplicateModifier,
+                                ExpressionSelectionModifier)
 
 # Load submodules.
 from .select_type_modifier import SelectTypeModifier
@@ -22,10 +23,11 @@ ovito.modifiers.ScatterPlotModifier = ScatterPlotModifier
 ovito.modifiers.ReplicateModifier = ReplicateModifier
 ovito.modifiers.SelectTypeModifier = SelectTypeModifier
 ovito.modifiers.HistogramModifier = HistogramModifier
+ovito.modifiers.ExpressionSelectionModifier = ExpressionSelectionModifier
 ovito.modifiers.__all__ += ['SliceModifier', 'AffineTransformationModifier', 
             'ClearSelectionModifier', 'InvertSelectionModifier', 'ColorCodingModifier',
             'AssignColorModifier', 'DeleteSelectedModifier', 'SelectTypeModifier', 'HistogramModifier', 
-            'ScatterPlotModifier', 'ReplicateModifier']
+            'ScatterPlotModifier', 'ReplicateModifier', 'ExpressionSelectionModifier']
 
 # For backward compatibility with OVITO 2.9.0:
 def _ColorCodingModifier_set_particle_property(self, v): self.property = v
@@ -56,4 +58,5 @@ AffineTransformationModifier.transform_vector_properties = property(lambda self:
 ovito.modifiers.DeleteSelectedParticlesModifier = DeleteSelectedModifier
 ovito.modifiers.SelectParticleTypeModifier = SelectTypeModifier
 ovito.modifiers.ShowPeriodicImagesModifier = ReplicateModifier
-ovito.modifiers.__all__ += ['DeleteSelectedParticlesModifier', 'SelectParticleTypeModifier', 'ShowPeriodicImagesModifier']
+ovito.modifiers.SelectExpressionModifier = ExpressionSelectionModifier
+ovito.modifiers.__all__ += ['DeleteSelectedParticlesModifier', 'SelectParticleTypeModifier', 'ShowPeriodicImagesModifier', 'SelectExpressionModifier']

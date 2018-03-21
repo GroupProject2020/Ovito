@@ -46,26 +46,39 @@ void TargetVis::render(TimePoint time, DataObject* dataObject, const PipelineFlo
 	if(renderer->isInteractive() == false || renderer->viewport() == nullptr)
 		return;
 
+	// Setup transformation matrix to always show the icon at the same size.
+	Point3 objectPos = Point3::Origin() + renderer->worldTransform().translation();
+	FloatType scaling = FloatType(0.2) * renderer->viewport()->nonScalingSize(objectPos);
+	renderer->setWorldTransform(renderer->worldTransform() * AffineTransformation::scaling(scaling));
+
 	if(!renderer->isBoundingBoxPass()) {
 
-		// Do we have to re-create the geometry buffer from scratch?
-		bool recreateBuffer = !_icon || !_icon->isValid(renderer)
-				|| !_pickingIcon || !_pickingIcon->isValid(renderer);
+		// The key type used for caching the geometry primitive:
+		using CacheKey = std::tuple<
+			CompatibleRendererGroup,	// The scene renderer
+			VersionedDataObjectRef,		// Scene object + revision number
+			Color						// Display color
+		>;
+
+		// The values stored in the vis cache.
+		struct CacheValue {
+			std::shared_ptr<LinePrimitive> icon;
+			std::shared_ptr<LinePrimitive> pickIcon;
+		};
 
 		// Determine icon color depending on selection state.
 		Color color = ViewportSettings::getSettings().viewportColor(contextNode->isSelected() ? ViewportSettings::COLOR_SELECTION : ViewportSettings::COLOR_CAMERAS);
 
-		// Do we have to update contents of the geometry buffers?
-		bool updateContents = _geometryCacheHelper.updateState(dataObject, color) || recreateBuffer;
+		// Lookup the rendering primitive in the vis cache.
+		auto& targetPrimitives = dataset()->visCache().get<CacheValue>(CacheKey(renderer, dataObject, color));
 
-		// Re-create the geometry buffers if necessary.
-		if(recreateBuffer) {
-			_icon = renderer->createLinePrimitive();
-			_pickingIcon = renderer->createLinePrimitive();
-		}
+		// Check if we already have a valid rendering primitive that is up to date.
+		if(!targetPrimitives.icon || !targetPrimitives.pickIcon 
+				|| !targetPrimitives.icon->isValid(renderer)
+				|| !targetPrimitives.pickIcon->isValid(renderer)) {
 
-		// Update geometry buffers.
-		if(updateContents) {
+			targetPrimitives.icon = renderer->createLinePrimitive();
+			targetPrimitives.pickIcon = renderer->createLinePrimitive();
 
 			// Initialize lines.
 			static const Point3 linePoints[] = {
@@ -83,27 +96,20 @@ void TargetVis::render(TimePoint time, DataObject* dataObject, const PipelineFlo
 					{-1, -1,  1}, {-1, 1, 1}
 			};
 
-			_icon->setVertexCount(24);
-			_icon->setVertexPositions(linePoints);
-			_icon->setLineColor(ColorA(color));
+			targetPrimitives.icon->setVertexCount(24);
+			targetPrimitives.icon->setVertexPositions(linePoints);
+			targetPrimitives.icon->setLineColor(ColorA(color));
 
-			_pickingIcon->setVertexCount(24, renderer->defaultLinePickingWidth());
-			_pickingIcon->setVertexPositions(linePoints);
-			_pickingIcon->setLineColor(ColorA(color));
+			targetPrimitives.pickIcon->setVertexCount(24, renderer->defaultLinePickingWidth());
+			targetPrimitives.pickIcon->setVertexPositions(linePoints);
+			targetPrimitives.pickIcon->setLineColor(ColorA(color));
 		}
-	}
 
-	// Setup transformation matrix to always show the icon at the same size.
-	Point3 objectPos = Point3::Origin() + renderer->worldTransform().translation();
-	FloatType scaling = FloatType(0.2) * renderer->viewport()->nonScalingSize(objectPos);
-	renderer->setWorldTransform(renderer->worldTransform() * AffineTransformation::scaling(scaling));
-
-	if(!renderer->isBoundingBoxPass()) {
 		renderer->beginPickObject(contextNode);
 		if(!renderer->isPicking())
-			_icon->render(renderer);
+			targetPrimitives.icon->render(renderer);
 		else
-			_pickingIcon->render(renderer);
+			targetPrimitives.pickIcon->render(renderer);
 		renderer->endPickObject();
 	}
 	else {

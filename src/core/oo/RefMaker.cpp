@@ -146,6 +146,30 @@ bool RefMaker::handleReferenceEvent(RefTarget* source, const ReferenceEvent& eve
 }
 
 /******************************************************************************
+* Is called when a RefTarget referenced by this object has generated an event.
+******************************************************************************/
+bool RefMaker::referenceEvent(RefTarget* source, const ReferenceEvent& event) 
+{
+	if(event.shouldPropagate()) {
+		// Check if message is comming from a reference field for which message propagation is explicitly disabled.
+		for(const PropertyFieldDescriptor* field : getOOMetaClass().propertyFields()) {
+			if(!field->isReferenceField()) continue;
+			if(!field->flags().testFlag(PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES)) continue;
+			if(field->isVector() == false) {
+				if(getReferenceField(*field) == source)
+					return false;
+			}
+			else {
+				if(getVectorReferenceField(*field).contains(source)) 
+					return false;
+			}
+		}
+		return true;
+	}	
+	return false;
+}
+
+/******************************************************************************
 * Checks if this RefMaker has any reference to the given RefTarget.
 ******************************************************************************/
 bool RefMaker::hasReferenceTo(RefTarget* target) const
@@ -363,7 +387,7 @@ void RefMaker::loadFromStream(ObjectLoadStream& stream)
 						qint32 numEntries;
 						stream >> numEntries;
 						OVITO_ASSERT(numEntries >= 0);
-						for(qint32 i=0; i<numEntries; i++) {
+						for(qint32 i = 0; i < numEntries; i++) {
 							OORef<RefTarget> target = stream.loadObject<RefTarget>();
 							if(target && !target->getOOClass().isDerivedFrom(*fieldEntry.targetClass)) {
 								throwException(tr("Incompatible object stored in reference field %1 of class %2. Expected class %3 but found class %4 in file.")

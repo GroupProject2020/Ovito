@@ -77,9 +77,7 @@ protected:
 	/// shouldPropagate() method returns true.
 	///
 	/// \sa RefTarget::notifyDependents()
-	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) {
-		return event.shouldPropagate();
-	}
+	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event);
 
 	/// \brief Is called when the value of a reference field of this RefMaker changes.
 	/// \param field Specifies the reference field of this RefMaker that has been changed.
@@ -219,6 +217,10 @@ protected:
 	/// The default implementation returns \c false.
 	virtual bool loadPropertyFieldFromStream(ObjectLoadStream& stream, const RefMakerClass::SerializedClassInfo::PropertyFieldInfo& serializedField) { return false; }
 
+	/// This method is called after the reference counter of this object has reached zero
+	/// and before the object is being deleted.
+	virtual void aboutToBeDeleted() override;
+
 public:
 
 	/// \brief Returns true if this object is an instance of a RefTarget derived class.
@@ -320,10 +322,6 @@ public:
 	__declspec(noreturn)
 #endif
 	void throwException(const QString& msg) const;
-
-	/// This method is called after the reference counter of this object has reached zero
-	/// and before the object is being deleted.
-	virtual void aboutToBeDeleted() override;
 
 private:
 

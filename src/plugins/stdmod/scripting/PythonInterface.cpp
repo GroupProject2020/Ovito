@@ -34,6 +34,7 @@
 #include <plugins/stdmod/modifiers/HistogramModifier.h>
 #include <plugins/stdmod/modifiers/ScatterPlotModifier.h>
 #include <plugins/stdmod/modifiers/ReplicateModifier.h>
+#include <plugins/stdmod/modifiers/ExpressionSelectionModifier.h>
 #include <core/app/PluginManager.h>
 
 namespace Ovito { namespace StdMod {
@@ -568,6 +569,38 @@ PYBIND11_PLUGIN(StdMod)
 				":Default: ``False``\n")
 	;
 
+	ovito_class<ExpressionSelectionModifier, DelegatingModifier>(m,
+			":Base class: :py:class:`ovito.pipeline.Modifier`"
+			"\n\n"
+			"Selects elements based on a user-defined Boolean expression. The modifier can operate on different kinds of data elements: "
+			"\n\n"
+			"  * Particles (setting the ``'Selection'`` :ref:`particle property <particle-types-list>`)\n"
+			"  * Bonds (setting the ``'Selection'`` :ref:`bond property <bond-types-list>`)\n"
+			"\n\n"
+			"The modifier will act on particles by default. You can change this by setting the modifier's :py:attr:`.operate_on` field. "			
+			"\n\n"
+			"**Modifier outputs:**"
+			"\n\n"
+			" * ``Selection`` (:py:class:`~ovito.data.Property`):\n"
+			"   This property is set to 1 for selected elements and 0 for others.\n"
+			" * ``SelectExpression.num_selected`` (:py:attr:`attribute <ovito.data.DataCollection.attributes>`):\n"
+			"   The number of particles selected by the modifier.\n"
+			"\n\n"
+			"**Example:**"
+			"\n\n"
+			".. literalinclude:: ../example_snippets/select_expression_modifier.py\n"
+			"   :lines: 6-\n"
+			"\n")
+		.def_property("expression", &ExpressionSelectionModifier::expression, &ExpressionSelectionModifier::setExpression,
+				"A string containing the Boolean expression to be evaluated for every element. "
+				"The expression syntax is documented in `OVITO's user manual <../../particles.modifiers.expression_select.html>`__.")
+		.def_property("operate_on", modifierDelegateGetter(), modifierDelegateSetter(ExpressionSelectionModifierDelegate::OOClass()),
+				"Selects the kind of data elements this modifier should operate on. "
+				"Supported values are: ``'particles'``, ``'bonds'``. "
+				"\n\n"
+				":Default: ``'particles'``\n")
+	;
+	
 	return m.ptr();
 }
 

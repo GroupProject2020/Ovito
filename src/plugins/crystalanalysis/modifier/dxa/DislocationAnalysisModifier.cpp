@@ -43,14 +43,14 @@ DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, circuitStretchability);
 DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, outputInterfaceMesh);
 DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, onlyPerfectDislocations);
 DEFINE_REFERENCE_FIELD(DislocationAnalysisModifier, patternCatalog);
-DEFINE_REFERENCE_FIELD(DislocationAnalysisModifier, dislocationVis);
-DEFINE_REFERENCE_FIELD(DislocationAnalysisModifier, defectMeshVis);
-DEFINE_REFERENCE_FIELD(DislocationAnalysisModifier, interfaceMeshVis);
 DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, defectMeshSmoothingLevel);
 DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, lineSmoothingEnabled);
 DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, lineSmoothingLevel);
 DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, lineCoarseningEnabled);
 DEFINE_PROPERTY_FIELD(DislocationAnalysisModifier, linePointInterval);
+DEFINE_REFERENCE_FIELD(DislocationAnalysisModifier, dislocationVis);
+DEFINE_REFERENCE_FIELD(DislocationAnalysisModifier, defectMeshVis);
+DEFINE_REFERENCE_FIELD(DislocationAnalysisModifier, interfaceMeshVis);
 SET_PROPERTY_FIELD_LABEL(DislocationAnalysisModifier, inputCrystalStructure, "Input crystal structure");
 SET_PROPERTY_FIELD_LABEL(DislocationAnalysisModifier, maxTrialCircuitSize, "Trial circuit length");
 SET_PROPERTY_FIELD_LABEL(DislocationAnalysisModifier, circuitStretchability, "Circuit stretchability");
@@ -68,6 +68,7 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(DislocationAnalysisModifier, lineSmoothingL
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(DislocationAnalysisModifier, linePointInterval, FloatParameterUnit, 0);
 
 IMPLEMENT_OVITO_CLASS(DislocationAnalysisModifierApplication);
+SET_MODIFIER_APPLICATION_TYPE(DislocationAnalysisModifier, DislocationAnalysisModifierApplication);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -97,8 +98,8 @@ DislocationAnalysisModifier::DislocationAnalysisModifier(DataSet* dataset) : Str
 	interfaceMeshVis()->setShowCap(false);
 	interfaceMeshVis()->setSmoothShading(false);
 	interfaceMeshVis()->setCapTransparency(0.5);
-	interfaceMeshVis()->setObjectTitle(tr("Interface mesh"));
-
+	interfaceMeshVis()->setObjectTitle(tr("Interface mesh"));		
+	
 	// Create pattern catalog.
 	setPatternCatalog(new PatternCatalog(dataset));
 	while(patternCatalog()->patterns().empty() == false)
@@ -172,28 +173,6 @@ DislocationAnalysisModifier::DislocationAnalysisModifier(DataSet* dataset) : Str
 }
 
 /******************************************************************************
-* Creates a new modifier application that refers to this modifier instance.
-******************************************************************************/
-OORef<ModifierApplication> DislocationAnalysisModifier::createModifierApplication()
-{
-	OORef<ModifierApplication> modApp = new DislocationAnalysisModifierApplication(dataset());
-	modApp->setModifier(this);
-	return modApp;
-}
-
-/******************************************************************************
-* Handles reference events sent by reference targets of this object.
-******************************************************************************/
-bool DislocationAnalysisModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
-{
-	// Do not propagate messages from the attached vis elements.
-	if(source == defectMeshVis() || source == interfaceMeshVis() || source == dislocationVis())
-		return false;
-
-	return StructureIdentificationModifier::referenceEvent(source, event);
-}
-
-/******************************************************************************
 * Creates and initializes a computation engine that will compute the modifier's results.
 ******************************************************************************/
 Future<AsynchronousModifier::ComputeEnginePtr> DislocationAnalysisModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
@@ -234,6 +213,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> DislocationAnalysisModifier::crea
 ******************************************************************************/
 PipelineFlowState DislocationAnalysisResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
+	DislocationAnalysisModifierApplication* myModApp = static_object_cast<DislocationAnalysisModifierApplication>(modApp);
 	DislocationAnalysisModifier* modifier = static_object_cast<DislocationAnalysisModifier>(modApp->modifier());
 	
 	PipelineFlowState output = StructureIdentificationResults::apply(time, modApp, input);
@@ -317,7 +297,6 @@ PipelineFlowState DislocationAnalysisResults::apply(TimePoint time, ModifierAppl
 	if(atomClusters())
 		poh.outputProperty<ParticleProperty>(atomClusters());
 
-	DislocationAnalysisModifierApplication* myModApp = static_object_cast<DislocationAnalysisModifierApplication>(modApp);
 	output.attributes().insert(QStringLiteral("DislocationAnalysis.total_line_length"), QVariant::fromValue(totalLineLength));
 	output.attributes().insert(QStringLiteral("DislocationAnalysis.counts.OTHER"), QVariant::fromValue(myModApp->structureCounts()[StructureAnalysis::LATTICE_OTHER]));
 	output.attributes().insert(QStringLiteral("DislocationAnalysis.counts.FCC"), QVariant::fromValue(myModApp->structureCounts()[StructureAnalysis::LATTICE_FCC]));

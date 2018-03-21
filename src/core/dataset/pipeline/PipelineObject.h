@@ -49,8 +49,16 @@ public:
 	/// \brief Returns the results of an immediate and preliminary evaluation of the data pipeline.
 	virtual PipelineFlowState evaluatePreliminary() { return {}; }
 
-	/// \brief Returns a list of object nodes that have this object in their pipeline.
-	QSet<PipelineSceneNode*> dependentNodes() const;
+	/// \brief Returns a list of pipeline nodes that have this object in their pipeline.
+	/// \param onlyScenePipelines If true, pipelines which are currently not part of the scene are ignored.
+	QSet<PipelineSceneNode*> pipelines(bool onlyScenePipelines) const;
+
+	/// \brief Determines whether the data pipeline branches above this pipeline object, 
+	///        i.e. whether this pipeline object has multiple dependents, all using this pipeline
+	///        object as input. 
+	///
+	/// \param onlyScenePipelines If true, branches to pipelines which are currently not part of the scene are ignored.
+	bool isPipelineBranch(bool onlyScenePipelines) const;
 
 	/// \brief Sets the current status of the pipeline object.
 	void setStatus(const PipelineStatus& status);

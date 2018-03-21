@@ -52,6 +52,23 @@ void DataVis::setStatus(const PipelineStatus& status)
 	}
 }
 
+/******************************************************************************
+* Returns all pipeline nodes whose pipeline produced this visualization element.
+******************************************************************************/
+QSet<PipelineSceneNode*> DataVis::pipelines(bool onlyScenePipelines) const
+{
+	QSet<PipelineSceneNode*> pipelineList;
+	for(RefMaker* dependent : this->dependents()) {
+		if(PipelineSceneNode* pipeline = dynamic_object_cast<PipelineSceneNode>(dependent)) {
+            if(pipeline->visElements().contains(const_cast<DataVis*>(this))) {
+				if(!onlyScenePipelines || pipeline->isInScene())
+		    		pipelineList.insert(pipeline);
+			}
+		}
+	}
+	return pipelineList;
+}
+
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

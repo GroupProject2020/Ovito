@@ -84,6 +84,12 @@ protected:
 	}
 #endif
 
+	//////////////////////////////// from OvitoObject //////////////////////////////////////
+
+	/// This method is called after the reference counter of this object has reached zero
+	/// and before the object is being deleted.
+	virtual void aboutToBeDeleted() override;
+
 	//////////////////////////// Reference event handling ////////////////////////////////
 
 	/// \brief Sends an event to all dependents of this RefTarget.
@@ -284,12 +290,6 @@ public:
 	/// The default implementation returns true.
 	virtual bool isSubObjectEditable() const { return true; }
 
-	//////////////////////////////// from OvitoObject //////////////////////////////////////
-
-	/// \brief This method is called after the reference counter of this object has reached zero
-	///        and before the object is being deleted.
-	virtual void aboutToBeDeleted() override;
-			
 private:
 
 	/// The list of reference fields that hold a reference to this target.

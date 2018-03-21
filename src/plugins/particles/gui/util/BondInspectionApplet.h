@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/stdobj/properties/PropertyExpressionEvaluator.h>
+#include <plugins/particles/util/ParticleExpressionEvaluator.h>
 #include <plugins/stdobj/gui/properties/PropertyInspectionApplet.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -53,9 +53,7 @@ protected:
 
 	/// Creates the evaluator object for filter expressions.
 	virtual std::unique_ptr<PropertyExpressionEvaluator> createExpressionEvaluator() override {
-		auto evaluator = std::make_unique<PropertyExpressionEvaluator>();
-		evaluator->setIndexVarName("BondIndex");
-		return evaluator;
+		return std::make_unique<BondExpressionEvaluator>();
 	}
 
 	/// Determines whether the given property represents a color.

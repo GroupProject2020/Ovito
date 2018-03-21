@@ -33,22 +33,13 @@ IMPLEMENT_OVITO_CLASS(PythonScriptModifier);
 IMPLEMENT_OVITO_CLASS(PythonScriptModifierApplication);
 DEFINE_PROPERTY_FIELD(PythonScriptModifier, script);
 SET_PROPERTY_FIELD_LABEL(PythonScriptModifier, script, "script");
+SET_MODIFIER_APPLICATION_TYPE(PythonScriptModifier, PythonScriptModifierApplication);
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
 PythonScriptModifier::PythonScriptModifier(DataSet* dataset) : Modifier(dataset)
 {
-}
-
-/******************************************************************************
-* Create a new modifier application that refers to this modifier instance.
-******************************************************************************/
-OORef<ModifierApplication> PythonScriptModifier::createModifierApplication()
-{
-	OORef<ModifierApplication> modApp = new PythonScriptModifierApplication(dataset());
-	modApp->setModifier(this);
-	return modApp;
 }
 
 /******************************************************************************

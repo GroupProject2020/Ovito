@@ -60,6 +60,7 @@ SET_PROPERTY_FIELD_LABEL(ScatterPlotModifier, yAxisRangeStart, "Y-range start");
 SET_PROPERTY_FIELD_LABEL(ScatterPlotModifier, yAxisRangeEnd, "Y-range end");
 SET_PROPERTY_FIELD_LABEL(ScatterPlotModifier, xAxisProperty, "X-axis property");
 SET_PROPERTY_FIELD_LABEL(ScatterPlotModifier, yAxisProperty, "Y-axis property");
+SET_MODIFIER_APPLICATION_TYPE(ScatterPlotModifier, ScatterPlotModifierApplication);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -81,16 +82,6 @@ ScatterPlotModifier::ScatterPlotModifier(DataSet* dataset) : GenericPropertyModi
 	// Operate on particle properties by default.
 	setPropertyClass(static_cast<const PropertyClass*>(
 		PluginManager::instance().findClass(QStringLiteral("Particles"), QStringLiteral("ParticleProperty"))));	
-}
-
-/******************************************************************************
-* Create a new modifier application that refers to this modifier instance.
-******************************************************************************/
-OORef<ModifierApplication> ScatterPlotModifier::createModifierApplication()
-{
-	OORef<ModifierApplication> modApp = new ScatterPlotModifierApplication(dataset());
-	modApp->setModifier(this);
-	return modApp;
 }
 
 /******************************************************************************

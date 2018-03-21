@@ -145,9 +145,15 @@ void CameraObject::setFieldOfView(TimePoint time, FloatType newFOV)
 ******************************************************************************/
 bool CameraObject::isTargetCamera() const
 {
-	for(PipelineSceneNode* node : dependentNodes()) {
-		if(node->lookatTargetNode() != nullptr)
-			return true;
+	for(RefMaker* dependent : dependents()) {
+		if(StaticSource* staticSource = dynamic_object_cast<StaticSource>(dependent)) {
+			if(staticSource->dataObjects().contains(const_cast<CameraObject*>(this))) {
+				for(PipelineSceneNode* node : staticSource->pipelines(true)) {
+					if(node->lookatTargetNode() != nullptr)
+						return true;
+				}
+			}
+		}
 	}
 	return false;
 }
@@ -159,30 +165,36 @@ void CameraObject::setIsTargetCamera(bool enable)
 {
 	dataset()->undoStack().pushIfRecording<TargetChangedUndoOperation>(this);
 
-	for(PipelineSceneNode* node : dependentNodes()) {
-		if(node->lookatTargetNode() == nullptr && enable) {
-			if(SceneNode* parentNode = node->parentNode()) {
-				AnimationSuspender noAnim(this);
-				OORef<TargetObject> targetObj = new TargetObject(dataset());
-				OORef<StaticSource> targetSource = new StaticSource(dataset(), targetObj);
-				OORef<PipelineSceneNode> targetNode = new PipelineSceneNode(dataset());
-				targetNode->setDataProvider(targetSource);
-				targetNode->setNodeName(tr("%1.target").arg(node->nodeName()));
-				parentNode->addChildNode(targetNode);
-				// Position the new target to match the current orientation of the camera.
-				TimeInterval iv;
-				const AffineTransformation& cameraTM = node->getWorldTransform(dataset()->animationSettings()->time(), iv);
-				Vector3 cameraPos = cameraTM.translation();
-				Vector3 cameraDir = cameraTM.column(2).normalized();
-				Vector3 targetPos = cameraPos - targetDistance() * cameraDir;
-				targetNode->transformationController()->translate(0, targetPos, AffineTransformation::Identity());
-				node->setLookatTargetNode(targetNode);
+	for(RefMaker* dependent : dependents()) {
+		if(StaticSource* staticSource = dynamic_object_cast<StaticSource>(dependent)) {
+			if(staticSource->dataObjects().contains(this)) {
+				for(PipelineSceneNode* node : staticSource->pipelines(true)) {
+					if(node->lookatTargetNode() == nullptr && enable) {
+						if(SceneNode* parentNode = node->parentNode()) {
+							AnimationSuspender noAnim(this);
+							OORef<TargetObject> targetObj = new TargetObject(dataset());
+							OORef<StaticSource> targetSource = new StaticSource(dataset(), targetObj);
+							OORef<PipelineSceneNode> targetNode = new PipelineSceneNode(dataset());
+							targetNode->setDataProvider(targetSource);
+							targetNode->setNodeName(tr("%1.target").arg(node->nodeName()));
+							parentNode->addChildNode(targetNode);
+							// Position the new target to match the current orientation of the camera.
+							TimeInterval iv;
+							const AffineTransformation& cameraTM = node->getWorldTransform(dataset()->animationSettings()->time(), iv);
+							Vector3 cameraPos = cameraTM.translation();
+							Vector3 cameraDir = cameraTM.column(2).normalized();
+							Vector3 targetPos = cameraPos - targetDistance() * cameraDir;
+							targetNode->transformationController()->translate(0, targetPos, AffineTransformation::Identity());
+							node->setLookatTargetNode(targetNode);
+						}
+					}
+					else if(node->lookatTargetNode() != nullptr && !enable) {
+						OORef<SceneNode> targetNode = node->lookatTargetNode();
+						node->setLookatTargetNode(nullptr);
+						targetNode->deleteNode();
+					}
+				}
 			}
-		}
-		else if(node->lookatTargetNode() != nullptr && !enable) {
-			OORef<SceneNode> targetNode = node->lookatTargetNode();
-			node->setLookatTargetNode(nullptr);
-			targetNode->deleteNode();
 		}
 	}
 
@@ -195,12 +207,18 @@ void CameraObject::setIsTargetCamera(bool enable)
 ******************************************************************************/
 FloatType CameraObject::targetDistance() const
 {
-	for(PipelineSceneNode* node : dependentNodes()) {
-		if(node->lookatTargetNode() != nullptr) {
-			TimeInterval iv;
-			Vector3 cameraPos = node->getWorldTransform(dataset()->animationSettings()->time(), iv).translation();
-			Vector3 targetPos = node->lookatTargetNode()->getWorldTransform(dataset()->animationSettings()->time(), iv).translation();
-			return (cameraPos - targetPos).length();
+	for(RefMaker* dependent : dependents()) {
+		if(StaticSource* staticSource = dynamic_object_cast<StaticSource>(dependent)) {
+			if(staticSource->dataObjects().contains(const_cast<CameraObject*>(this))) {
+				for(PipelineSceneNode* node : staticSource->pipelines(true)) {
+					if(node->lookatTargetNode() != nullptr) {
+						TimeInterval iv;
+						Vector3 cameraPos = node->getWorldTransform(dataset()->animationSettings()->time(), iv).translation();
+						Vector3 targetPos = node->lookatTargetNode()->getWorldTransform(dataset()->animationSettings()->time(), iv).translation();
+						return (cameraPos - targetPos).length();
+					}
+				}
+			}
 		}
 	}
 
@@ -219,25 +237,36 @@ void CameraVis::render(TimePoint time, DataObject* dataObject, const PipelineFlo
 
 	TimeInterval iv;
 
+	std::shared_ptr<LinePrimitive> cameraIcon;
+	std::shared_ptr<LinePrimitive> cameraPickIcon;
 	if(!renderer->isBoundingBoxPass()) {
-		// Do we have to re-create the geometry buffer from scratch?
-		bool recreateBuffer = !_cameraIcon || !_cameraIcon->isValid(renderer)
-				|| !_pickingCameraIcon || !_pickingCameraIcon->isValid(renderer);
+
+		// The key type used for caching the geometry primitive:
+		using CacheKey = std::tuple<
+			CompatibleRendererGroup,	// The scene renderer
+			VersionedDataObjectRef,		// Camera object + revision number
+			Color						// Display color
+		>;
+
+		// The values stored in the vis cache.
+		struct CacheValue {
+			std::shared_ptr<LinePrimitive> icon;
+			std::shared_ptr<LinePrimitive> pickIcon;
+		};
 
 		// Determine icon color depending on selection state.
 		Color color = ViewportSettings::getSettings().viewportColor(contextNode->isSelected() ? ViewportSettings::COLOR_SELECTION : ViewportSettings::COLOR_CAMERAS);
 
-		// Do we have to update contents of the geometry buffers?
-		bool updateContents = _geometryCacheHelper.updateState(dataObject, color) || recreateBuffer;
+		// Lookup the rendering primitive in the vis cache.
+		auto& cameraPrimitives = dataset()->visCache().get<CacheValue>(CacheKey(renderer, dataObject, color));
 
-		// Re-create the geometry buffers if necessary.
-		if(recreateBuffer) {
-			_cameraIcon = renderer->createLinePrimitive();
-			_pickingCameraIcon = renderer->createLinePrimitive();
-		}
+		// Check if we already have a valid rendering primitive that is up to date.
+		if(!cameraPrimitives.icon || !cameraPrimitives.pickIcon 
+				|| !cameraPrimitives.icon->isValid(renderer)
+				|| !cameraPrimitives.pickIcon->isValid(renderer)) {
 
-		// Fill geometry buffers.
-		if(updateContents) {
+			cameraPrimitives.icon = renderer->createLinePrimitive();
+			cameraPrimitives.pickIcon = renderer->createLinePrimitive();
 
 			// Initialize lines.
 			static std::vector<Point3> iconVertices;
@@ -272,14 +301,16 @@ void CameraVis::render(TimePoint time, DataObject* dataObject, const PipelineFlo
 				}
 			}
 
-			_cameraIcon->setVertexCount(iconVertices.size());
-			_cameraIcon->setVertexPositions(iconVertices.data());
-			_cameraIcon->setLineColor(ColorA(color));
+			cameraPrimitives.icon->setVertexCount(iconVertices.size());
+			cameraPrimitives.icon->setVertexPositions(iconVertices.data());
+			cameraPrimitives.icon->setLineColor(ColorA(color));
 
-			_pickingCameraIcon->setVertexCount(iconVertices.size(), renderer->defaultLinePickingWidth());
-			_pickingCameraIcon->setVertexPositions(iconVertices.data());
-			_pickingCameraIcon->setLineColor(ColorA(color));
+			cameraPrimitives.pickIcon->setVertexCount(iconVertices.size(), renderer->defaultLinePickingWidth());
+			cameraPrimitives.pickIcon->setVertexPositions(iconVertices.data());
+			cameraPrimitives.pickIcon->setLineColor(ColorA(color));
 		}
+		cameraIcon = cameraPrimitives.icon;
+		cameraPickIcon = cameraPrimitives.pickIcon;
 	}
 
 	// Determine the camera and target positions when rendering a target camera.
@@ -308,54 +339,65 @@ void CameraVis::render(TimePoint time, DataObject* dataObject, const PipelineFlo
 	}
 
 	if(!renderer->isBoundingBoxPass()) {
-		// Do we have to re-create the geometry buffer from scratch?
-		bool recreateBuffer = !_cameraCone || !_cameraCone->isValid(renderer);
+		if(!renderer->isPicking()) {
+			// The key type used for caching the geometry primitive:
+			using CacheKey = std::tuple<
+				CompatibleRendererGroup,	// The scene renderer
+				Color,						// Display color
+				FloatType,					// Camera target distance
+				bool,						// Target line visible
+				FloatType,					// Cone aspect ratio
+				FloatType					// Cone angle
+			>;
 
-		// Do we have to update contents of the geometry buffer?
-		Color color = ViewportSettings::getSettings().viewportColor(ViewportSettings::COLOR_CAMERAS);
-		bool updateContents = _coneCacheHelper.updateState(color, targetDistance, showTargetLine, aspectRatio, coneAngle) || recreateBuffer;
+			Color color = ViewportSettings::getSettings().viewportColor(ViewportSettings::COLOR_CAMERAS);
+			
+			// Lookup the rendering primitive in the vis cache.
+			auto& conePrimitive = dataset()->visCache().get<std::shared_ptr<LinePrimitive>>(CacheKey(
+					renderer,
+					color, 
+					targetDistance, 
+					showTargetLine, 
+					aspectRatio, 
+					coneAngle));
 
-		// Re-create the geometry buffer if necessary.
-		if(recreateBuffer)
-			_cameraCone = renderer->createLinePrimitive();
+			// Check if we already have a valid rendering primitive that is up to date.
+			if(!conePrimitive || !conePrimitive->isValid(renderer)) {
+				conePrimitive = renderer->createLinePrimitive();
+				std::vector<Point3> targetLineVertices;
+				if(targetDistance != 0) {
+					if(showTargetLine) {
+						targetLineVertices.push_back(Point3::Origin());
+						targetLineVertices.push_back(Point3(0,0,-targetDistance));
+					}
+					if(aspectRatio != 0 && coneAngle != 0) {
+						FloatType sizeY = tan(FloatType(0.5) * coneAngle) * targetDistance;
+						FloatType sizeX = sizeY / aspectRatio;
+						targetLineVertices.push_back(Point3::Origin());
+						targetLineVertices.push_back(Point3(sizeX, sizeY, -targetDistance));
+						targetLineVertices.push_back(Point3::Origin());
+						targetLineVertices.push_back(Point3(-sizeX, sizeY, -targetDistance));
+						targetLineVertices.push_back(Point3::Origin());
+						targetLineVertices.push_back(Point3(-sizeX, -sizeY, -targetDistance));
+						targetLineVertices.push_back(Point3::Origin());
+						targetLineVertices.push_back(Point3(sizeX, -sizeY, -targetDistance));
 
-		// Fill geometry buffer.
-		if(updateContents) {
-			std::vector<Point3> targetLineVertices;
-			if(targetDistance != 0) {
-				if(showTargetLine) {
-					targetLineVertices.push_back(Point3::Origin());
-					targetLineVertices.push_back(Point3(0,0,-targetDistance));
+						targetLineVertices.push_back(Point3(sizeX, sizeY, -targetDistance));
+						targetLineVertices.push_back(Point3(-sizeX, sizeY, -targetDistance));
+						targetLineVertices.push_back(Point3(-sizeX, sizeY, -targetDistance));
+						targetLineVertices.push_back(Point3(-sizeX, -sizeY, -targetDistance));
+						targetLineVertices.push_back(Point3(-sizeX, -sizeY, -targetDistance));
+						targetLineVertices.push_back(Point3(sizeX, -sizeY, -targetDistance));
+						targetLineVertices.push_back(Point3(sizeX, -sizeY, -targetDistance));
+						targetLineVertices.push_back(Point3(sizeX, sizeY, -targetDistance));
+					}
 				}
-				if(aspectRatio != 0 && coneAngle != 0) {
-					FloatType sizeY = tan(FloatType(0.5) * coneAngle) * targetDistance;
-					FloatType sizeX = sizeY / aspectRatio;
-					targetLineVertices.push_back(Point3::Origin());
-					targetLineVertices.push_back(Point3(sizeX, sizeY, -targetDistance));
-					targetLineVertices.push_back(Point3::Origin());
-					targetLineVertices.push_back(Point3(-sizeX, sizeY, -targetDistance));
-					targetLineVertices.push_back(Point3::Origin());
-					targetLineVertices.push_back(Point3(-sizeX, -sizeY, -targetDistance));
-					targetLineVertices.push_back(Point3::Origin());
-					targetLineVertices.push_back(Point3(sizeX, -sizeY, -targetDistance));
-
-					targetLineVertices.push_back(Point3(sizeX, sizeY, -targetDistance));
-					targetLineVertices.push_back(Point3(-sizeX, sizeY, -targetDistance));
-					targetLineVertices.push_back(Point3(-sizeX, sizeY, -targetDistance));
-					targetLineVertices.push_back(Point3(-sizeX, -sizeY, -targetDistance));
-					targetLineVertices.push_back(Point3(-sizeX, -sizeY, -targetDistance));
-					targetLineVertices.push_back(Point3(sizeX, -sizeY, -targetDistance));
-					targetLineVertices.push_back(Point3(sizeX, -sizeY, -targetDistance));
-					targetLineVertices.push_back(Point3(sizeX, sizeY, -targetDistance));
-				}
+				conePrimitive->setVertexCount(targetLineVertices.size());
+				conePrimitive->setVertexPositions(targetLineVertices.data());
+				conePrimitive->setLineColor(ColorA(color));
 			}
-			_cameraCone->setVertexCount(targetLineVertices.size());
-			_cameraCone->setVertexPositions(targetLineVertices.data());
-			_cameraCone->setLineColor(ColorA(color));
+			conePrimitive->render(renderer);
 		}
-
-		if(!renderer->isPicking())
-			_cameraCone->render(renderer);
 	}
 	else {
 		// Add camera view cone to bounding box.
@@ -381,9 +423,9 @@ void CameraVis::render(TimePoint time, DataObject* dataObject, const PipelineFlo
 	if(!renderer->isBoundingBoxPass()) {
 		renderer->beginPickObject(contextNode);
 		if(!renderer->isPicking())
-			_cameraIcon->render(renderer);
+			cameraIcon->render(renderer);
 		else
-			_pickingCameraIcon->render(renderer);
+			cameraPickIcon->render(renderer);
 		renderer->endPickObject();
 	}
 	else {

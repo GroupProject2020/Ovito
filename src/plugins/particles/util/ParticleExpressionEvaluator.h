@@ -24,6 +24,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/BondProperty.h>
 #include <plugins/stdobj/properties/PropertyExpressionEvaluator.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -53,6 +54,26 @@ protected:
 
 	/// Initializes the list of input variables from the given input state.
 	virtual void createInputVariables(const std::vector<ConstPropertyPtr>& inputProperties, const SimulationCell* simCell, const QVariantMap& attributes, int animationFrame) override;
+};
+
+/**
+ * \brief Helper class that evaluates one or more math expressions for every bond.
+ */
+class OVITO_PARTICLES_EXPORT BondExpressionEvaluator : public PropertyExpressionEvaluator
+{
+public:
+
+	/// Constructor.
+	BondExpressionEvaluator() {
+		setIndexVarName("BondIndex");
+	}
+
+	using PropertyExpressionEvaluator::initialize;
+
+	/// Specifies the expressions to be evaluated for each bond and creates the input variables.
+	void initialize(const QStringList& expressions, const PipelineFlowState& inputState, int animationFrame = 0) {
+		PropertyExpressionEvaluator::initialize(expressions, inputState, BondProperty::OOClass(), animationFrame);
+	}
 };
 
 OVITO_END_INLINE_NAMESPACE

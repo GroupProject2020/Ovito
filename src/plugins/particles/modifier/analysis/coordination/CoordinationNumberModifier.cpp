@@ -41,6 +41,7 @@ SET_PROPERTY_FIELD_LABEL(CoordinationNumberModifier, cutoff, "Cutoff radius");
 SET_PROPERTY_FIELD_LABEL(CoordinationNumberModifier, numberOfBins, "Number of histogram bins");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CoordinationNumberModifier, cutoff, WorldParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(CoordinationNumberModifier, numberOfBins, IntegerParameterUnit, 4, 100000);
+SET_MODIFIER_APPLICATION_TYPE(CoordinationNumberModifier, CoordinationNumberModifierApplication);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -57,16 +58,6 @@ CoordinationNumberModifier::CoordinationNumberModifier(DataSet* dataset) : Async
 bool CoordinationNumberModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
 	return input.findObject<ParticleProperty>() != nullptr;
-}
-
-/******************************************************************************
-* Create a new modifier application that refers to this modifier instance.
-******************************************************************************/
-OORef<ModifierApplication> CoordinationNumberModifier::createModifierApplication()
-{
-	OORef<ModifierApplication> modApp = new CoordinationNumberModifierApplication(dataset());
-	modApp->setModifier(this);
-	return modApp;
 }
 
 /******************************************************************************

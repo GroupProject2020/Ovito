@@ -167,6 +167,7 @@ void PartitionMeshVis::PrepareMeshEngine::perform()
 ******************************************************************************/
 void PartitionMeshVis::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
 {
+#if 0	
 	// Ignore render calls for the original PartitionMesh.
 	// We are only interested in the RenderableSurfaceMesh.
 	if(dynamic_object_cast<PartitionMesh>(dataObject) != nullptr)
@@ -217,6 +218,7 @@ void PartitionMeshVis::render(TimePoint time, DataObject* dataObject, const Pipe
 	renderer->beginPickObject(contextNode);
 	_surfaceBuffer->render(renderer);
 	renderer->endPickObject();
+#endif	
 }
 
 /******************************************************************************

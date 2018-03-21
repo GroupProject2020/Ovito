@@ -99,7 +99,7 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 				"\n\n"
 				":Default: ``False``\n")
 		.def_property("vis", &ConstructSurfaceModifier::surfaceMeshVis, &ConstructSurfaceModifier::setSurfaceMeshVis,
-				"The :py:class:`~ovito.vis.SurfaceMeshVis` controlling the visual representation of the computed surface.\n")
+				"The :py:class:`~ovito.vis.SurfaceMeshVis` element controlling the visual representation of the computed surface.\n")
 	;
 
 	auto DislocationAnalysisModifier_py = ovito_class<DislocationAnalysisModifier, StructureIdentificationModifier>(m,
@@ -451,9 +451,7 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 	ovito_class<PartitionMesh, PeriodicDomainDataObject>{m}
 	;
 
-	ovito_class<PartitionMeshVis, DataVis>(m, nullptr,
-		// Python class name:
-		"PartitionMeshVis")
+	ovito_class<PartitionMeshVis, DataVis>{m}
 		.def_property("surface_color", &PartitionMeshVis::surfaceColor, &PartitionMeshVis::setSurfaceColor,
 				"The display color of the outer free surface."
 				"\n\n"

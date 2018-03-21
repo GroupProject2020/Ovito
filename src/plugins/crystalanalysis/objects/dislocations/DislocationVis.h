@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2015) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,11 +24,6 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <core/dataset/data/TransformingDataVis.h>
-#include <core/dataset/data/VersionedDataObjectRef.h>
-#include <core/dataset/data/CacheStateHelper.h>
-#include <core/rendering/ParticlePrimitive.h>
-#include <core/rendering/ArrowPrimitive.h>
-#include <core/rendering/SceneRenderer.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
 #include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
@@ -138,44 +133,6 @@ protected:
 
 protected:
 
-	/// The geometry buffer used to render the dislocation segments.
-	std::shared_ptr<ArrowPrimitive> _segmentBuffer;
-
-	/// The geometry buffer used to render the segment corners.
-	std::shared_ptr<ParticlePrimitive> _cornerBuffer;
-
-	/// The buffered geometry used to render the Burgers vectors.
-	std::shared_ptr<ArrowPrimitive> _burgersArrowBuffer;
-
-	/// This helper structure is used to detect any changes in the input data
-	/// that require updating the geometry buffers.
-	CacheStateHelper<
-		VersionedDataObjectRef,	// Source object + revision number
-		VersionedDataObjectRef,	// Renderable object + revision number
-		SimulationCell,			// Simulation cell geometry
-		VersionedDataObjectRef,	// The pattern catalog
-		FloatType,				// Line width
-		bool,					// Burgers vector display
-		FloatType,				// Burgers vectors scaling
-		FloatType,				// Burgers vector width
-		Color,					// Burgers vector color
-		LineColoringMode		// Way to color lines
-		> _geometryCacheHelper;
-
-	/// The cached bounding box.
-	Box3 _cachedBoundingBox;
-
-	/// This helper structure is used to detect changes in the input
-	/// that require recalculating the bounding box.
-	CacheStateHelper<
-		VersionedDataObjectRef,	// Source object + revision number
-		SimulationCell,			// Simulation cell geometry
-		FloatType,				// Line width
-		bool,					// Burgers vector display
-		FloatType,				// Burgers vectors scaling
-		FloatType				// Burgers vector width
-		> _boundingBoxCacheHelper;
-
 	/// The rendering width for dislocation lines.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, lineWidth, setLineWidth, PROPERTY_FIELD_MEMORIZE);
 
@@ -207,5 +164,3 @@ protected:
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-
-

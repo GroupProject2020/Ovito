@@ -57,7 +57,11 @@ enum PropertyFieldFlag
 	/// Indicates that the reference field is NOT an animatable parameter owned by the RefMaker object.
 	PROPERTY_FIELD_NO_SUB_ANIM					= (1<<9),
 	/// Indicates that the object(s) stored in the reference field should not save their recomputable data to a scene file.
-	PROPERTY_FIELD_DONT_SAVE_RECOMPUTABLE_DATA	= (1<<10)
+	PROPERTY_FIELD_DONT_SAVE_RECOMPUTABLE_DATA	= (1<<10),
+	/// Blocks propagating messages sent by the target.
+	PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES		= (1<<11),
+	/// Automatically opens a sub-editor for the given reference field. 
+	PROPERTY_FIELD_OPEN_SUBEDITOR				= (1<<12)
 };
 Q_DECLARE_FLAGS(PropertyFieldFlags, PropertyFieldFlag);
 

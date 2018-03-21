@@ -304,7 +304,7 @@ void ManualSelectionModifierEditor::onFence(const QVector<Point2>& fence, Viewpo
 			ParticleProperty* posProperty = ParticleProperty::findInState(modInput, ParticleProperty::PositionProperty);
 			if(!posProperty) continue;
 
-			for(PipelineSceneNode* node : modApp->dependentNodes()) {
+			for(PipelineSceneNode* node : modApp->pipelines(true)) {
 
 				// Create projection matrix that transforms particle positions to screen space.
 				TimeInterval interval;

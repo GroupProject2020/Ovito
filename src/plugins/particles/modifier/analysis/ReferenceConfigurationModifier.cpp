@@ -44,6 +44,7 @@ SET_PROPERTY_FIELD_LABEL(ReferenceConfigurationModifier, useReferenceFrameOffset
 SET_PROPERTY_FIELD_LABEL(ReferenceConfigurationModifier, referenceFrameNumber, "Reference frame number");
 SET_PROPERTY_FIELD_LABEL(ReferenceConfigurationModifier, referenceFrameOffset, "Reference frame offset");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ReferenceConfigurationModifier, referenceFrameNumber, IntegerParameterUnit, 0);
+SET_MODIFIER_APPLICATION_TYPE(ReferenceConfigurationModifier, ReferenceConfigurationModifierApplication);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -63,16 +64,6 @@ ReferenceConfigurationModifier::ReferenceConfigurationModifier(DataSet* dataset)
 bool ReferenceConfigurationModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
 	return input.findObject<ParticleProperty>() != nullptr;
-}
-
-/******************************************************************************
-* Create a new modifier application that refers to this modifier instance.
-******************************************************************************/
-OORef<ModifierApplication> ReferenceConfigurationModifier::createModifierApplication()
-{
-	OORef<ModifierApplication> modApp = new ReferenceConfigurationModifierApplication(dataset());
-	modApp->setModifier(this);
-	return modApp;
 }
 	
 /******************************************************************************

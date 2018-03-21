@@ -25,12 +25,9 @@
 #include <plugins/mesh/Mesh.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <core/dataset/data/TransformingDataVis.h>
-#include <core/dataset/data/CacheStateHelper.h>
-#include <core/dataset/data/VersionedDataObjectRef.h>
 #include <core/utilities/mesh/TriMesh.h>
 #include <core/utilities/mesh/HalfEdgeMesh.h>
 #include <core/utilities/concurrent/Task.h>
-#include <core/rendering/MeshPrimitive.h>
 #include <core/dataset/animation/controller/Controller.h>
 
 namespace Ovito { namespace Mesh {
@@ -142,20 +139,6 @@ private:
 
 	/// Controls the transparency of the surface cap mesh.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD(Controller, capTransparencyController, setCapTransparencyController);
-
-	/// The buffered geometry used to render the surface mesh.
-	std::shared_ptr<MeshPrimitive> _surfaceBuffer;
-
-	/// The buffered geometry used to render the surface cap.
-	std::shared_ptr<MeshPrimitive> _capBuffer;
-
-	/// This helper structure is used to detect any changes in the input data
-	/// that require updating the geometry buffer.
-	CacheStateHelper<
-		VersionedDataObjectRef,		// Mesh object
-		ColorA,						// Surface color
-		ColorA						// Cap color
-		> _geometryCacheHelper;
 };
 
 }	// End of namespace

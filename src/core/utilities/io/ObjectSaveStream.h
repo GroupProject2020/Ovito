@@ -63,11 +63,17 @@ public:
 
 private:
 
+	/// A data record kept for each object written to the stream.
+	struct ObjectRecord {
+		OvitoObject* object;
+		bool excludeRecomputableData;
+	};
+
 	/// Contains all objects stored so far and their IDs.
-	std::map<OvitoObject*, quint32> _objectMap;
+	std::unordered_map<OvitoObject*, quint32> _objectMap;
 
 	/// Contains all objects ordered by ID.
-	std::vector<std::pair<OvitoObject*, bool>> _objects;
+	std::vector<ObjectRecord> _objects;
 
 	/// The current dataset being saved.
 	DataSet* _dataset = nullptr;

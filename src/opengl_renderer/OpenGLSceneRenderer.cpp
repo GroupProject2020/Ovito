@@ -216,6 +216,19 @@ QSurfaceFormat OpenGLSceneRenderer::getDefaultSurfaceFormat()
 }
 
 /******************************************************************************
+* Determines if this renderer can share geometry data and other resources with 
+* the given other renderer.
+******************************************************************************/
+bool OpenGLSceneRenderer::sharesResourcesWith(SceneRenderer* otherRenderer) const
+{
+	// Two OpenGL renderers are compatible and share resources if they use the same QOpenGLContextGroup.
+	OpenGLSceneRenderer* otherGLRenderer = dynamic_object_cast<OpenGLSceneRenderer>(otherRenderer);
+	if(!otherGLRenderer) return false;
+	if(_glcontextGroup.isNull()) return false;
+	return _glcontextGroup == otherGLRenderer->_glcontextGroup;
+}
+
+/******************************************************************************
 * This method is called just before renderFrame() is called.
 ******************************************************************************/
 void OpenGLSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParameters& params, Viewport* vp)
@@ -229,6 +242,7 @@ void OpenGLSceneRenderer::beginFrame(TimePoint time, const ViewProjectionParamet
 	_glcontext = QOpenGLContext::currentContext();
 	if(!_glcontext)
 		throwException(tr("Cannot render scene: There is no active OpenGL context"));
+	_glcontextGroup = _glcontext->shareGroup();
 	_glsurface = _glcontext->surface();
 	OVITO_ASSERT(_glsurface != nullptr);
 

@@ -119,6 +119,9 @@ public:
 	/// Renders the triangle mesh stored in the given buffer.
 	virtual void renderMesh(const DefaultMeshPrimitive& meshBuffer) = 0;
 
+	/// Determines if this renderer can share geometry data and other resources with the given other renderer.
+	virtual bool sharesResourcesWith(SceneRenderer* otherRenderer) const override;
+
 private:
 
 	/// The current model-to-world transformation matrix.
@@ -127,5 +130,3 @@ private:
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

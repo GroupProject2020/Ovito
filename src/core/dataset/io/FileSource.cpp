@@ -660,14 +660,27 @@ void FileSource::referenceInserted(const PropertyFieldDescriptor& field, RefTarg
 /******************************************************************************
 * Is called when a RefTarget has been added to a VectorReferenceField of this RefMaker.
 ******************************************************************************/
-void FileSource::referenceRemoved(const PropertyFieldDescriptor& field, RefTarget* newTarget, int listIndex)
+void FileSource::referenceRemoved(const PropertyFieldDescriptor& field, RefTarget* oldTarget, int listIndex)
 {
 	if(field == PROPERTY_FIELD(dataObjects))
 		notifyDependents(ReferenceEvent::SubobjectListChanged);
 
-	CachingPipelineObject::referenceRemoved(field, newTarget, listIndex);
+	CachingPipelineObject::referenceRemoved(field, oldTarget, listIndex);
 }
 
+/******************************************************************************
+* Creates a copy of this object.
+******************************************************************************/
+OORef<RefTarget> FileSource::clone(bool deepCopy, CloneHelper& cloneHelper)
+{
+	// Let the base class create an instance of this class.
+	OORef<FileSource> clone = static_object_cast<FileSource>(CachingPipelineObject::clone(deepCopy, cloneHelper));
+
+	// There should always be only one FileSource controlling the animation interval length.
+	clone->setAdjustAnimationIntervalEnabled(false);
+
+	return clone;
+}
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

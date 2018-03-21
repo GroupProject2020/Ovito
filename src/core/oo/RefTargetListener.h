@@ -49,12 +49,6 @@ public:
 	virtual ~RefTargetListenerBase() {
 		clearAllReferences();
 	}
-
-	/// \brief This method is called after the reference counter of this object has reached zero
-	///        and before the object is being deleted.
-	virtual void aboutToBeDeleted() override {
-		OVITO_ASSERT_MSG(false, "RefTargetListenerBase::aboutToBeDeleted()", "Invalid use of this class. A RefTargetListener should not be used with reference counting pointers.");
-	}
 	
 Q_SIGNALS:
 
@@ -65,13 +59,19 @@ Q_SIGNALS:
 
 protected:
 
+	/// This method is called after the reference counter of this object has reached zero
+	/// and before the object is being deleted.
+	virtual void aboutToBeDeleted() override {
+		OVITO_ASSERT_MSG(false, "RefTargetListenerBase::aboutToBeDeleted()", "Invalid use of this class. A RefTargetListener should not be used with reference counting pointers.");
+	}
+
 	/// \brief Is called when the RefTarget referenced by this listener has generated an event.
 	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
 
 private:
 
 	/// The RefTarget which is being monitored by this listener.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(RefTarget, target, setTarget, PROPERTY_FIELD_NEVER_CLONE_TARGET|PROPERTY_FIELD_NO_UNDO|PROPERTY_FIELD_NO_CHANGE_MESSAGE|PROPERTY_FIELD_WEAK_REF);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(RefTarget, target, setTarget, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_NO_CHANGE_MESSAGE | PROPERTY_FIELD_WEAK_REF);
 };
 
 /**
@@ -149,8 +149,8 @@ Q_SIGNALS:
 
 protected:
 
-	/// \brief This method is called after the reference counter of this object has reached zero
-	///        and before the object is being deleted.
+	/// This method is called after the reference counter of this object has reached zero
+	/// and before the object is being deleted.
 	virtual void aboutToBeDeleted() override {
 		OVITO_ASSERT_MSG(false, "VectorRefTargetListenerBase::aboutToBeDeleted()", "Invalid use of this class. A VectorRefTargetListener should not be used with reference counting pointers.");
 	}
@@ -161,7 +161,7 @@ protected:
 private:
 
 	/// The list of RefTargets which are being monitored by this listener.
-	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD_FLAGS(RefTarget, targets, setTargets, PROPERTY_FIELD_NEVER_CLONE_TARGET|PROPERTY_FIELD_NO_UNDO|PROPERTY_FIELD_NO_CHANGE_MESSAGE|PROPERTY_FIELD_WEAK_REF);
+	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD_FLAGS(RefTarget, targets, setTargets, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_NO_CHANGE_MESSAGE | PROPERTY_FIELD_WEAK_REF);
 };
 
 /**

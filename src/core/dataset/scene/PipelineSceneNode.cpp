@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,17 +25,19 @@
 #include <core/dataset/data/TransformingDataVis.h>
 #include <core/dataset/pipeline/PipelineObject.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
-#include <core/viewport/Viewport.h>
 #include <core/dataset/DataSetContainer.h>
 #include <core/dataset/animation/AnimationSettings.h>
+#include <core/viewport/Viewport.h>
+#include <core/oo/CloneHelper.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
 IMPLEMENT_OVITO_CLASS(PipelineSceneNode);
 DEFINE_REFERENCE_FIELD(PipelineSceneNode, dataProvider);
 DEFINE_REFERENCE_FIELD(PipelineSceneNode, visElements);
+DEFINE_REFERENCE_FIELD(PipelineSceneNode, replacedVisElements);
+DEFINE_REFERENCE_FIELD(PipelineSceneNode, replacementVisElements);
 SET_PROPERTY_FIELD_LABEL(PipelineSceneNode, dataProvider, "Pipeline object");
-SET_PROPERTY_FIELD_LABEL(PipelineSceneNode, visElements, "Display objects");
 SET_PROPERTY_FIELD_CHANGE_EVENT(PipelineSceneNode, dataProvider, ReferenceEvent::PipelineChanged);
 
 /******************************************************************************
@@ -90,10 +92,15 @@ const PipelineFlowState& PipelineSceneNode::evaluatePipelinePreliminary(bool inc
 	}
 
 	// If not, update the preliminary state cache from the pipeline.
-	if(dataProvider())
+	if(dataProvider()) {
 		_pipelinePreliminaryCache = dataProvider()->evaluatePreliminary();
-	else
+
+		// Inject our unique copies of visual elements into the pipeline output.
+		replaceVisualElements(_pipelinePreliminaryCache);
+	}
+	else {
 		_pipelinePreliminaryCache.clear();
+	}
 
 	// The preliminary state cache is time-independent.
 	_pipelinePreliminaryCache.setStateValidity(TimeInterval::infinite());
@@ -116,10 +123,13 @@ SharedFuture<PipelineFlowState> PipelineSceneNode::evaluatePipeline(TimePoint ti
 
 	// Evaluate the pipeline and store the obtained results in the cache before returning them to the caller.
 	return dataProvider()->evaluate(time)
-		.then(executor(), [this, time](const PipelineFlowState& state) {
+		.then(executor(), [this, time](PipelineFlowState state) {
 
 			// The pipeline should never return a state without proper validity interval.
 			OVITO_ASSERT(state.stateValidity().contains(time));
+
+			// Inject our unique copies of visual elements into the pipeline output.
+			replaceVisualElements(state);
 
 			// We maintain a data cache for the current animation time.
 			if(_pipelineCache.insert(state, this)) {
@@ -127,7 +137,7 @@ SharedFuture<PipelineFlowState> PipelineSceneNode::evaluatePipeline(TimePoint ti
 			}
 
 			// Simply forward the pipeline results to the caller by default.
-			return state;
+			return std::move(state);
 		});
 }
 
@@ -191,11 +201,11 @@ void PipelineSceneNode::updateVisElementList(TimePoint time)
 {
 	const PipelineFlowState& state = _pipelineCache.getAt(time);
 
-	// First discard those elements which are no longer needed.
+	// First, discard those elements which are no longer needed.
 	for(int i = visElements().size() - 1; i >= 0; i--) {
 		DataVis* vis = visElements()[i];
 		// Check if the element is still being referenced by any of the data objects
-		// came out of the pipeline.
+		// that came out of the pipeline.
 		if(std::none_of(state.objects().begin(), state.objects().end(),
 				[vis](DataObject* obj) { return obj->visElements().contains(vis); })) {
 			_visElements.remove(this, PROPERTY_FIELD(visElements), i);
@@ -317,14 +327,16 @@ QString PipelineSceneNode::objectTitle()
 * Applies a modifier by appending it to the end of the node's modification
 * pipeline.
 ******************************************************************************/
-void PipelineSceneNode::applyModifier(Modifier* modifier)
+ModifierApplication* PipelineSceneNode::applyModifier(Modifier* modifier)
 {
 	OVITO_ASSERT(modifier);
 
 	OORef<ModifierApplication> modApp = modifier->createModifierApplication();
+	modApp->setModifier(modifier);
 	modApp->setInput(dataProvider());
 	modifier->initializeModifier(modApp);
 	setDataProvider(modApp);
+	return modApp;
 }
 
 /******************************************************************************
@@ -378,6 +390,152 @@ Box3 PipelineSceneNode::localBoundingBox(TimePoint time, TimeInterval& validity)
 	}
 	validity.intersect(state.stateValidity());
 	return bb;
+}
+
+/******************************************************************************
+* Deletes this node from the scene. 
+******************************************************************************/
+void PipelineSceneNode::deleteNode()
+{
+	// Remove pipeline.
+	setDataProvider(nullptr);
+
+	// Discard transient references to visual elements.
+	_visElements.clear(this, PROPERTY_FIELD(visElements));
+
+	SceneNode::deleteNode();
+}
+
+/******************************************************************************
+* Is called when a RefTarget has been added to a VectorReferenceField of this RefMaker.
+******************************************************************************/
+void PipelineSceneNode::referenceInserted(const PropertyFieldDescriptor& field, RefTarget* newTarget, int listIndex)
+{
+	if(field == PROPERTY_FIELD(replacementVisElements)) {
+		invalidatePipelineCache();
+	}
+	SceneNode::referenceInserted(field, newTarget, listIndex);
+}
+
+/******************************************************************************
+* Is called when a RefTarget has been added to a VectorReferenceField of this RefMaker.
+******************************************************************************/
+void PipelineSceneNode::referenceRemoved(const PropertyFieldDescriptor& field, RefTarget* oldTarget, int listIndex)
+{
+	if(field == PROPERTY_FIELD(replacedVisElements) && !isAboutToBeDeleted()) {
+		// If an upstream vis element is being removed from the list, because the weakly referenced vis element is being deleted, 
+		// then also discard our corresponding replacement element managed by the node.
+		if(dataset()->undoStack().isUndoingOrRedoing() == false) {
+			OVITO_ASSERT(replacedVisElements().size() + 1 == replacementVisElements().size());
+			_replacementVisElements.remove(this, PROPERTY_FIELD(replacementVisElements), listIndex); 
+		}
+		invalidatePipelineCache();
+	}
+	SceneNode::referenceRemoved(field, oldTarget, listIndex);
+}
+
+/******************************************************************************
+* This method is called once for this object after it has been completely 
+* loaded from a stream.
+******************************************************************************/
+void PipelineSceneNode::loadFromStreamComplete()
+{
+	SceneNode::loadFromStreamComplete();
+
+	// Remove null entries from the replacedVisElements list due to expired weak references.
+	for(int i = replacedVisElements().size() - 1; i >= 0; i--) {
+		if(replacedVisElements()[i] == nullptr) {
+			_replacedVisElements.remove(this, PROPERTY_FIELD(replacedVisElements), i); 
+		}
+	}
+	OVITO_ASSERT(replacedVisElements().size() == replacementVisElements().size());
+	OVITO_ASSERT(!dataset()->undoStack().isRecording());
+}
+
+/******************************************************************************
+* Replaces the given visual element in this pipeline's output with an 
+* independent copy.
+******************************************************************************/
+DataVis* PipelineSceneNode::makeVisElementIndependent(DataVis* visElement)
+{
+	OVITO_ASSERT(visElement != nullptr);
+	OVITO_ASSERT(!replacedVisElements().contains(visElement));
+	OVITO_ASSERT(replacedVisElements().size() == replacementVisElements().size());
+
+	OORef<DataVis> clonedVisElement;
+	{
+		UndoSuspender noUndo(this);
+
+		// Clone the visual element.
+		CloneHelper cloneHelper;
+		clonedVisElement = cloneHelper.cloneObject(visElement, true);
+	}
+	if(dataset()->undoStack().isRecording())
+		dataset()->undoStack().push(std::make_unique<TargetChangedUndoOperation>(this));
+
+	// Put the copy into our mapping table, which will subsequently be applied 
+	// after every pipeline evaluation to replace the upstream visual element
+	// with our local copy.
+	int index = replacementVisElements().indexOf(visElement);
+	if(index == -1) {
+		_replacedVisElements.push_back(this, PROPERTY_FIELD(replacedVisElements), visElement); 
+		_replacementVisElements.push_back(this, PROPERTY_FIELD(replacementVisElements), clonedVisElement); 
+	}
+	else {
+		_replacementVisElements.set(this, PROPERTY_FIELD(replacementVisElements), index, clonedVisElement); 
+	}
+	OVITO_ASSERT(replacedVisElements().size() == replacementVisElements().size());
+
+	if(dataset()->undoStack().isRecording())
+		dataset()->undoStack().push(std::make_unique<TargetChangedRedoOperation>(this));
+
+	notifyTargetChanged();
+
+	return clonedVisElement;
+}
+
+/******************************************************************************
+* Replaces upstream visual elements with our own unique copies.
+******************************************************************************/
+void PipelineSceneNode::replaceVisualElements(PipelineFlowState& state)
+{
+	OVITO_ASSERT(replacedVisElements().size() == replacementVisElements().size());
+	OVITO_ASSERT(std::find(replacedVisElements().begin(), replacedVisElements().end(), nullptr) == replacedVisElements().end());
+
+	if(replacedVisElements().empty())
+		return;	// Nothing to do.
+
+	CloneHelper cloneHelper;
+	for(DataObject* dataObj : state.objects()) {
+
+		// Skip data objects having no visual elements.
+		if(dataObj->visElements().empty()) continue;
+
+		// In the data object's list of visual elements, replace those
+		// for which the pipeline node manages its own copy.
+		QVector<DataVis*> visualElements = dataObj->visElements();
+		bool didReplace = false;
+		for(auto& vis : visualElements) {
+			OVITO_ASSERT(vis != nullptr);
+			int index = replacedVisElements().indexOf(vis);
+			if(index >= 0) {
+				vis = replacementVisElements()[index];
+				didReplace = true;
+			}
+		}
+
+		if(didReplace) {
+			// Clone the data object so that we can replace its visual elements.
+			if(dataObj->numberOfStrongReferences() > 1) {
+				OORef<DataObject> clone = cloneHelper.cloneObject(dataObj, false);
+				if(!state.replaceObject(dataObj, clone)) 
+					continue;
+				dataObj = clone;
+			}
+			// Assign the new visual element list to the data object.
+			dataObj->setVisElements(std::move(visualElements));
+		}
+	}	
 }
 
 OVITO_END_INLINE_NAMESPACE

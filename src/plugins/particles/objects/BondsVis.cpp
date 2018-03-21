@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,7 +21,9 @@
 
 #include <plugins/particles/Particles.h>
 #include <core/utilities/units/UnitsManager.h>
+#include <core/dataset/data/VersionedDataObjectRef.h>
 #include <core/rendering/SceneRenderer.h>
+#include <core/rendering/ArrowPrimitive.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include "BondsVis.h"
 #include "ParticlesVis.h"
@@ -55,7 +57,7 @@ BondsVis::BondsVis(DataSet* dataset) : DataVis(dataset),
 }
 
 /******************************************************************************
-* Computes the bounding box of the object.
+* Computes the bounding box of the visual element.
 ******************************************************************************/
 Box3 BondsVis::boundingBox(TimePoint time, DataObject* dataObject, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
@@ -65,16 +67,27 @@ Box3 BondsVis::boundingBox(TimePoint time, DataObject* dataObject, PipelineScene
 	ParticleProperty* positionProperty = ParticleProperty::findInState(flowState, ParticleProperty::PositionProperty);
 	SimulationCellObject* simulationCell = flowState.findObject<SimulationCellObject>();
 
-	// Detect if the input data has changed since the last time we computed the bounding box.
-	if(_boundingBoxCacheHelper.updateState(
+	// The key type used for caching the computed bounding box:
+	using CacheKey = std::tuple<
+		VersionedDataObjectRef,		// Bond topology property + revision number
+		VersionedDataObjectRef,		// Bond PBC vector property + revision number
+		VersionedDataObjectRef,		// Particle position property + revision number
+		VersionedDataObjectRef,		// Simulation cell + revision number
+		FloatType					// Bond width
+	>;
+
+	// Look up the bounding box in the vis cache.
+	auto& bbox = dataset()->visCache().get<Box3>(CacheKey(
 			bondTopologyProperty,
 			bondPeriodicImageProperty,
 			positionProperty,
 			simulationCell,
-			bondWidth())) {
+			bondWidth()));
 
-		// Recompute bounding box.
-		_cachedBoundingBox.setEmpty();
+	// Check if the cached bounding box information is still up to date.
+	if(bbox.isEmpty()) {
+
+		// If not, recompute bounding box from bond data.
 		if(bondTopologyProperty && positionProperty) {
 
 			size_t particleCount = positionProperty->size();
@@ -87,23 +100,23 @@ Box3 BondsVis::boundingBox(TimePoint time, DataObject* dataObject, PipelineScene
 				if(index1 >= particleCount || index2 >= particleCount)
 					continue;
 
-				_cachedBoundingBox.addPoint(positions[index1]);
-				_cachedBoundingBox.addPoint(positions[index2]);
+				bbox.addPoint(positions[index1]);
+				bbox.addPoint(positions[index2]);
 				if(bondPeriodicImageProperty && bondPeriodicImageProperty->getVector3I(bondIndex) != Vector3I::Zero()) {
 					Vector3 vec = positions[index2] - positions[index1];
 					const Vector3I& pbcShift = bondPeriodicImageProperty->getVector3I(bondIndex);
 					for(size_t k = 0; k < 3; k++) {
 						if(pbcShift[k] != 0) vec += cell.column(k) * (FloatType)pbcShift[k];
 					}
-					_cachedBoundingBox.addPoint(positions[index1] + (vec * FloatType(0.5)));
-					_cachedBoundingBox.addPoint(positions[index2] - (vec * FloatType(0.5)));
+					bbox.addPoint(positions[index1] + (vec * FloatType(0.5)));
+					bbox.addPoint(positions[index2] - (vec * FloatType(0.5)));
 				}
 			}
 
-			_cachedBoundingBox = _cachedBoundingBox.padBox(bondWidth() / 2);
+			bbox = bbox.padBox(bondWidth() / 2);
 		}
 	}
-	return _cachedBoundingBox;
+	return bbox;
 }
 
 /******************************************************************************
@@ -138,7 +151,26 @@ void BondsVis::render(TimePoint time, DataObject* dataObject, const PipelineFlow
 		return;
 	}
 
-	if(_geometryCacheHelper.updateState(
+	// The key type used for caching the rendering primitive:
+	using CacheKey = std::tuple<
+		CompatibleRendererGroup,	// The scene renderer
+		VersionedDataObjectRef,		// Bond topology property + revision number
+		VersionedDataObjectRef,		// Bond PBC vector property + revision number
+		VersionedDataObjectRef,		// Particle position property + revision number
+		VersionedDataObjectRef,		// Particle color property + revision number
+		VersionedDataObjectRef,		// Particle type property + revision number
+		VersionedDataObjectRef,		// Bond color property + revision number
+		VersionedDataObjectRef,		// Bond type property + revision number
+		VersionedDataObjectRef,		// Bond selection property + revision number
+		VersionedDataObjectRef,		// Simulation cell + revision number
+		FloatType,					// Bond width
+		Color,						// Bond color
+		bool						// Use particle colors
+	>;
+
+	// Lookup the rendering primitive in the vis cache.
+	auto& arrowPrimitive = dataset()->visCache().get<std::shared_ptr<ArrowPrimitive>>(CacheKey(
+			renderer,
 			bondTopologyProperty,
 			bondPeriodicImageProperty,
 			positionProperty,
@@ -148,17 +180,22 @@ void BondsVis::render(TimePoint time, DataObject* dataObject, const PipelineFlow
 			bondTypeProperty,
 			bondSelectionProperty,
 			simulationCell,
-			bondWidth(), bondColor(), useParticleColors())
-			|| !_buffer	|| !_buffer->isValid(renderer)
-			|| !_buffer->setShadingMode(shadingMode())
-			|| !_buffer->setRenderingQuality(renderingQuality())) {
+			bondWidth(), 
+			bondColor(), 
+			useParticleColors()));
+
+	// Check if we already have a valid rendering primitive that is up to date.
+	if(!arrowPrimitive 
+			|| !arrowPrimitive->isValid(renderer)
+			|| !arrowPrimitive->setShadingMode(shadingMode())
+			|| !arrowPrimitive->setRenderingQuality(renderingQuality())) {
 
 		FloatType bondRadius = bondWidth() / 2;
 		if(bondTopologyProperty && positionProperty && bondRadius > 0) {
 
 			// Create bond geometry buffer.
-			_buffer = renderer->createArrowPrimitive(ArrowPrimitive::CylinderShape, shadingMode(), renderingQuality());
-			_buffer->startSetElements((int)bondTopologyProperty->size() * 2);
+			arrowPrimitive = renderer->createArrowPrimitive(ArrowPrimitive::CylinderShape, shadingMode(), renderingQuality());
+			arrowPrimitive->startSetElements((int)bondTopologyProperty->size() * 2);
 
 			// Obtain particle vis element.
 			ParticlesVis* particleVis = nullptr;
@@ -173,7 +210,7 @@ void BondsVis::render(TimePoint time, DataObject* dataObject, const PipelineFlow
 			std::vector<Color> colors = halfBondColors(positionProperty->size(), bondTopologyProperty,
 					bondColorProperty, bondTypeProperty, bondSelectionProperty,
 					particleVis, particleColorProperty, particleTypeProperty);
-			OVITO_ASSERT(colors.size() == _buffer->elementCount());
+			OVITO_ASSERT(colors.size() == arrowPrimitive->elementCount());
 
 			// Cache some variables.
 			size_t particleCount = positionProperty->size();
@@ -191,21 +228,21 @@ void BondsVis::render(TimePoint time, DataObject* dataObject, const PipelineFlow
 						for(size_t k = 0; k < 3; k++)
 							if(int d = bondPeriodicImageProperty->getIntComponent(bondIndex, k)) vec += cell.column(k) * (FloatType)d;
 					}
-					_buffer->setElement(elementIndex++, positions[index1], vec * FloatType( 0.5), (ColorA)*color++, bondRadius);
-					_buffer->setElement(elementIndex++, positions[index2], vec * FloatType(-0.5), (ColorA)*color++, bondRadius);
+					arrowPrimitive->setElement(elementIndex++, positions[index1], vec * FloatType( 0.5), (ColorA)*color++, bondRadius);
+					arrowPrimitive->setElement(elementIndex++, positions[index2], vec * FloatType(-0.5), (ColorA)*color++, bondRadius);
 				}
 				else {
-					_buffer->setElement(elementIndex++, Point3::Origin(), Vector3::Zero(), (ColorA)*color++, 0);
-					_buffer->setElement(elementIndex++, Point3::Origin(), Vector3::Zero(), (ColorA)*color++, 0);
+					arrowPrimitive->setElement(elementIndex++, Point3::Origin(), Vector3::Zero(), (ColorA)*color++, 0);
+					arrowPrimitive->setElement(elementIndex++, Point3::Origin(), Vector3::Zero(), (ColorA)*color++, 0);
 				}
 			}
 
-			_buffer->endSetElements();
+			arrowPrimitive->endSetElements();
 		}
-		else _buffer.reset();
+		else arrowPrimitive.reset();
 	}
 
-	if(!_buffer)
+	if(!arrowPrimitive)
 		return;
 
 	if(renderer->isPicking()) {
@@ -213,7 +250,7 @@ void BondsVis::render(TimePoint time, DataObject* dataObject, const PipelineFlow
 		renderer->beginPickObject(contextNode, pickInfo);
 	}
 
-	_buffer->render(renderer);
+	arrowPrimitive->render(renderer);
 
 	if(renderer->isPicking()) {
 		renderer->endPickObject();

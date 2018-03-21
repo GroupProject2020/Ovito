@@ -12,22 +12,23 @@
    viewBox="0 0 24 24"
    width="24"
    version="1.1"
-   id="svg10348"
+   id="svg6"
    sodipodi:docname="modifier_save_preset.bw.svg"
    inkscape:version="0.92.2 5c3e80d, 2017-08-06">
   <metadata
-     id="metadata10354">
+     id="metadata12">
     <rdf:RDF>
       <cc:Work
          rdf:about="">
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
   <defs
-     id="defs10352" />
+     id="defs10" />
   <sodipodi:namedview
      pagecolor="#ffffff"
      bordercolor="#666666"
@@ -39,23 +40,22 @@
      inkscape:pageshadow="2"
      inkscape:window-width="1440"
      inkscape:window-height="855"
-     id="namedview10350"
+     id="namedview8"
      showgrid="false"
      inkscape:zoom="9.8333333"
-     inkscape:cx="-6.2033899"
+     inkscape:cx="12"
      inkscape:cy="12"
      inkscape:window-x="0"
      inkscape:window-y="1"
      inkscape:window-maximized="1"
-     inkscape:current-layer="svg10348" />
+     inkscape:current-layer="svg6" />
   <path
-     d="M 2.440678,2.440678 H 21.559322 V 21.559322 H 2.440678 Z"
-     id="path10344"
-     inkscape:connector-curvature="0"
-     style="fill:none;stroke-width:0.79661018" />
+     d="M0 0h24v24H0z"
+     fill="none"
+     id="path2" />
   <path
-     d="M 17.576271,4.0338983 H 6.4237288 c -0.8762712,0 -1.5932203,0.7169492 -1.5932203,1.5932203 V 16.779661 c 0,0.876271 0.7169491,1.59322 1.5932203,1.59322 H 9.6101695 L 12,20.762712 14.389831,18.372881 h 3.18644 c 0.876271,0 1.593221,-0.716949 1.593221,-1.59322 V 5.6271186 c 0,-0.8762711 -0.71695,-1.5932203 -1.593221,-1.5932203 z M 13.497627,12.701017 12,15.983051 10.502373,12.701017 7.220339,11.20339 10.502373,9.7057627 12,6.4237288 13.497627,9.7057627 16.779661,11.20339 Z"
-     id="path10346"
-     inkscape:connector-curvature="0"
-     style="stroke-width:0.79661018;fill:#505050;fill-opacity:1" />
+     d="m 18.525424,3.5423729 h -3.89661 C 14.237288,2.4610169 13.211864,1.6779661 12,1.6779661 c -1.211864,0 -2.2372881,0.7830508 -2.6288136,1.8644068 H 5.4745763 c -1.0254238,0 -1.8644068,0.838983 -1.8644068,1.8644068 V 18.457627 c 0,1.025424 0.838983,1.864407 1.8644068,1.864407 H 18.525424 c 1.025423,0 1.864407,-0.838983 1.864407,-1.864407 V 5.4067797 c 0,-1.0254238 -0.838984,-1.8644068 -1.864407,-1.8644068 z m -6.525424,0 c 0.512712,0 0.932203,0.4194915 0.932203,0.9322034 0,0.5127118 -0.419491,0.9322034 -0.932203,0.9322034 -0.512712,0 -0.932203,-0.4194916 -0.932203,-0.9322034 0,-0.5127119 0.419491,-0.9322034 0.932203,-0.9322034 z M 13.864407,16.59322 H 7.3389831 v -1.864406 h 6.5254239 z m 2.79661,-3.728813 H 7.3389831 V 11 h 9.3220339 z m 0,-3.7288138 H 7.3389831 V 7.2711864 h 9.3220339 z"
+     id="path4"
+     style="fill:#505050;fill-opacity:1;stroke-width:0.93220341"
+     inkscape:connector-curvature="0" />
 </svg>

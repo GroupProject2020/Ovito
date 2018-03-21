@@ -57,9 +57,6 @@ public:
 	/// Constructor.
 	Q_INVOKABLE InterpolateTrajectoryModifier(DataSet* dataset);
 
-	/// Creates a new modifier application that refers to this modifier instance.
-	virtual OORef<ModifierApplication> createModifierApplication() override;
-
 	/// Modifies the input data.
 	virtual Future<PipelineFlowState> evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 		

@@ -155,7 +155,7 @@ bool FileSourceImporter::importFile(std::vector<QUrl> sourceUrls, ImportMode imp
 
 	QString filename;
 	if(!sourceUrls.empty()) filename = QFileInfo(sourceUrls.front().path()).fileName();
-	UndoableTransaction transaction(dataset()->undoStack(), tr("Import '%1'").arg(filename));
+	UndoableTransaction transaction(dataset()->undoStack(), tr("Import"));
 
 	// Do not create any animation keys during import.
 	AnimationSuspender animSuspender(this);

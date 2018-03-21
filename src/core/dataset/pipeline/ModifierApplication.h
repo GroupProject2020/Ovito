@@ -41,6 +41,25 @@ class OVITO_CORE_EXPORT ModifierApplication : public CachingPipelineObject
 {
 	Q_OBJECT
 	OVITO_CLASS(ModifierApplication)
+
+public:
+
+	/// Registry for modifier application classes.
+	class OVITO_CORE_EXPORT Registry : private std::map<OvitoClassPtr, OvitoClassPtr>
+	{
+	public:
+		void registerModAppClass(OvitoClassPtr modifierClass, OvitoClassPtr modAppClass) {
+			insert(std::make_pair(modifierClass, modAppClass));
+		}
+		OvitoClassPtr getModAppClass(OvitoClassPtr modifierClass) const {
+			auto entry = find(modifierClass);
+			if(entry != end()) return entry->second;
+			else return nullptr;
+		}
+	};
+
+	/// Returns the global class registry, which allows looking up the ModifierApplication subclass for a Modifier subclass.
+	static Registry& registry();
 	
 public:
 
@@ -69,6 +88,13 @@ public:
 	/// returns the source object that generates the input data for the pipeline.
 	PipelineObject* pipelineSource() const;
 		
+	/// \brief Returns the title of this modifier application.
+	virtual QString objectTitle() override {
+		// Inherit title from modifier.
+		if(modifier()) return modifier()->objectTitle();
+		else return CachingPipelineObject::objectTitle();
+	}
+
 protected:
 
 	/// \brief Asks the object for the result of the data pipeline.
@@ -92,14 +118,19 @@ protected:
 private:
 
 	/// Provides the input to which the modifier is applied.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(PipelineObject, input, setInput);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(PipelineObject, input, setInput, PROPERTY_FIELD_NEVER_CLONE_TARGET);
 
 	/// The modifier that is inserted into the pipeline.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(Modifier, modifier, setModifier);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(Modifier, modifier, setModifier, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_OPEN_SUBEDITOR);
 
 	/// Indicates whether the modifier of this ModifierApplication is currently being evaluated.
 	int _numEvaluationsInProgress = 0;
 };
+
+/// This macro assigns a ModifierApplication-derived class to a Modifier-derived class.
+#define SET_MODIFIER_APPLICATION_TYPE(ModifierClass, ModifierApplicationClass) \
+	static const int __modAppSetter##ModifierClass = (Ovito::ModifierApplication::registry().registerModAppClass(&ModifierClass::OOClass(), &ModifierApplicationClass::OOClass()), 0);
+
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

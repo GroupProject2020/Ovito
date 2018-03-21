@@ -199,6 +199,10 @@ bool XYZImporter::mapVariableToProperty(InputColumnMapping& columnMapping, int c
 	else if(loweredName == "torque") columnMapping[column].mapStandardColumn(ParticleProperty::TorqueProperty, vec);
 	else if(loweredName == "spin") columnMapping[column].mapStandardColumn(ParticleProperty::SpinProperty, vec);
 	else if(loweredName == "centro_symmetry") columnMapping[column].mapStandardColumn(ParticleProperty::CentroSymmetryProperty);
+	else if(loweredName == "aspherical_shape") columnMapping[column].mapStandardColumn(ParticleProperty::AsphericalShapeProperty, vec);
+	else if(loweredName == "vector_color") columnMapping[column].mapStandardColumn(ParticleProperty::VectorColorProperty, vec);
+	else if(loweredName == "molecule") columnMapping[column].mapStandardColumn(ParticleProperty::MoleculeProperty);
+	else if(loweredName == "molecule_type") columnMapping[column].mapStandardColumn(ParticleProperty::MoleculeTypeProperty);
 	else {
 		// Only int or float custom properties are supported
 		if(dataType == PropertyStorage::Float || dataType == PropertyStorage::Int || dataType == PropertyStorage::Int64)
@@ -243,9 +247,20 @@ FileSourceImporter::FrameDataPtr XYZImporter::FrameLoader::loadFile(QFile& file)
 	auto frameData = std::make_shared<XYZFrameData>();
 
 	// Parse number of atoms.
-	int numParticles;
-	if(sscanf(stream.readLine(), "%u", &numParticles) != 1 || numParticles < 0 || numParticles > 1e9)
-		throw Exception(tr("Invalid number of particles in line %1 of XYZ file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
+	unsigned long long numParticlesLong;
+	int charCount;
+	if(sscanf(stream.readLine(), "%llu%n", &numParticlesLong, &charCount) != 1)
+		throw Exception(tr("Invalid number of particles in line %1 of XYZ file: %2").arg(stream.lineNumber()).arg(stream.lineString().trimmed()));
+
+	// Check trailing whitespace. There should be nothing else but the number of atoms on the first line.
+	for(const char* p = stream.line() + charCount; *p != '\0'; ++p) {
+		if(!isspace(*p))
+			throw Exception(tr("Parsing error in line %1 of XYZ file. According to the XYZ format specification, the first line should contain the number of particles. This is not a valid integer number of particles:\n\n\"%2\"").arg(stream.lineNumber()).arg(stream.lineString().trimmed()));
+	}
+	if(numParticlesLong > (unsigned long long)std::numeric_limits<int>::max())
+		throw Exception(tr("Too many particles in XYZ file. This program version can read XYZ file with up to %1 particles only.").arg(std::numeric_limits<int>::max()));
+	int numParticles = (int)numParticlesLong;
+		
 	setProgressMaximum(numParticles);
 	QString fileExcerpt = stream.lineString();
 

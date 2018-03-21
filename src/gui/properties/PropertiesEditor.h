@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -62,7 +62,7 @@ public:
 protected:
 
 	/// \brief The constructor.
-	PropertiesEditor();
+	PropertiesEditor() = default;
 
 public:
 
@@ -149,10 +149,10 @@ protected:
 private:
 	
 	/// The container widget the editor is shown in.
-	PropertiesPanel* _container;
+	PropertiesPanel* _container = nullptr;
 
 	/// The main window that hosts the editor.
-	MainWindow* _mainWindow;
+	MainWindow* _mainWindow = nullptr;
 
 	/// The object being edited in this editor.
 	DECLARE_REFERENCE_FIELD_FLAGS(RefTarget, editObject, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);

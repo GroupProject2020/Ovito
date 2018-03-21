@@ -92,7 +92,7 @@ public:
 	ModifierApplication* someModifierApplication() const;
 
 	/// \brief Create a new modifier application that refers to this modifier instance.
-	virtual OORef<ModifierApplication> createModifierApplication();
+	OORef<ModifierApplication> createModifierApplication();
 
 	/// \brief Returns the title of this modifier object.
 	virtual QString objectTitle() override {

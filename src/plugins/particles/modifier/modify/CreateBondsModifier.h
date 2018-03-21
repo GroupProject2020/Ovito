@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -129,7 +129,8 @@ public:
 	/// Constructor.
 	Q_INVOKABLE CreateBondsModifier(DataSet* dataset);
 
-	/// This method is called by the system after the modifier has been inserted into a data pipeline.
+	/// \brief This method is called by the system when the modifier has been inserted into a data pipeline.
+	/// \param modApp The ModifierApplication object that has been created for this modifier.
 	virtual void initializeModifier(ModifierApplication* modApp) override;
 
 	/// Indicate that outdated computation results should never be reused if the modifier's inputs have changed.
@@ -142,9 +143,6 @@ public:
 	FloatType getPairCutoff(const QString& typeA, const QString& typeB) const;
 
 protected:
-
-	/// Handles reference events sent by reference targets of this object.
-	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
 
 	/// Creates a computation engine that will compute the modifier's results.
 	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
@@ -167,7 +165,7 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, onlyIntraMoleculeBonds, setOnlyIntraMoleculeBonds, PROPERTY_FIELD_MEMORIZE);
 
 	/// The vis element for rendering the bonds.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(BondsVis, bondsVis, setBondsVis, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(BondsVis, bondsVis, setBondsVis, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE | PROPERTY_FIELD_OPEN_SUBEDITOR);
 };
 
 OVITO_END_INLINE_NAMESPACE

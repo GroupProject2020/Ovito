@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,9 +24,6 @@
 
 #include <plugins/mesh/Mesh.h>
 #include <core/dataset/data/DataVis.h>
-#include <core/dataset/data/VersionedDataObjectRef.h>
-#include <core/dataset/data/CacheStateHelper.h>
-#include <core/rendering/MeshPrimitive.h>
 #include <core/dataset/animation/controller/Controller.h>
 #include <core/dataset/animation/AnimationSettings.h>
 
@@ -65,16 +62,6 @@ private:
 
 	/// Controls the transparency of the mesh.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD(Controller, transparencyController, setTransparencyController);
-
-	/// The buffered geometry used to render the mesh.
-	std::shared_ptr<MeshPrimitive> _buffer;
-
-	/// This helper structure is used to detect any changes in the input data
-	/// that require updating the geometry buffer.
-	CacheStateHelper<
-		VersionedDataObjectRef,		// Mesh object
-		ColorA						// Display color
-		> _geometryCacheHelper;
 };
 
 }	// End of namespace

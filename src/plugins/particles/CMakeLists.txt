@@ -54,7 +54,7 @@ SET(SourceFiles
 	modifier/analysis/wignerseitz/WignerSeitzAnalysisModifier.cpp
 	modifier/analysis/ptm/PolyhedralTemplateMatchingModifier.cpp
 	modifier/selection/ExpandSelectionModifier.cpp
-	modifier/selection/ExpressionSelectionModifier.cpp
+	modifier/selection/ParticlesExpressionSelectionModifierDelegate.cpp
 	modifier/selection/ManualSelectionModifier.cpp
 	modifier/properties/ComputePropertyModifier.cpp
 	modifier/properties/FreezePropertyModifier.cpp
@@ -79,6 +79,7 @@ SET(SourceFiles
 	import/gsd/gsd.c
 	import/castep/CastepCellImporter.cpp
 	import/castep/CastepMDImporter.cpp
+	import/cube/GaussianCubeImporter.cpp
 	import/xsf/XSFImporter.cpp
 	export/ParticleExporter.cpp
 	export/FileColumnParticleExporter.cpp

@@ -78,6 +78,7 @@ def _Pipeline_modifiers(self):
             modapplist = self._modAppList()
             modapp = newMod.create_modifier_application()
             assert(isinstance(modapp, ModifierApplication))
+            modapp.modifier = newMod
             if index == len(modapplist) - 1 and index >= 0:
                 assert(self.pipeline.data_provider == modapplist[-1])
                 self.pipeline.data_provider = modapp
@@ -115,6 +116,7 @@ def _Pipeline_modifiers(self):
             modapplist = self._modAppList()
             modapp = mod.create_modifier_application()
             assert(isinstance(modapp, ModifierApplication))
+            modapp.modifier = mod
             if index == len(modapplist) and index >= 0: 
                 assert(self.pipeline.data_provider == modapplist[-1])
                 self.pipeline.data_provider = modapp
@@ -132,6 +134,7 @@ def _Pipeline_modifiers(self):
                 raise TypeError("Expected a modifier")
             modapp = mod.create_modifier_application()
             assert(isinstance(modapp, ModifierApplication))
+            modapp.modifier = mod
             modapp.input = self.pipeline.data_provider
             self.pipeline.data_provider = modapp
             mod.initialize_modifier(modapp)

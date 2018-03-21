@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,6 +22,8 @@
 #include <plugins/mesh/Mesh.h>
 #include <plugins/mesh/tri/TriMeshObject.h>
 #include <core/rendering/SceneRenderer.h>
+#include <core/rendering/MeshPrimitive.h>
+#include <core/dataset/data/VersionedDataObjectRef.h>
 #include <core/utilities/units/UnitsManager.h>
 #include "TriMeshVis.h"
 
@@ -61,32 +63,34 @@ Box3 TriMeshVis::boundingBox(TimePoint time, DataObject* dataObject, PipelineSce
 void TriMeshVis::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
 {
 	if(!renderer->isBoundingBoxPass()) {
-		// Do we have to re-create the geometry buffer from scratch?
-		bool recreateBuffer = !_buffer || !_buffer->isValid(renderer);
+
+		// The key type used for caching the rendering primitive:
+		using CacheKey = std::tuple<
+			CompatibleRendererGroup,	// The scene renderer
+			VersionedDataObjectRef,		// Mesh object
+			ColorA						// Display color
+		>;
 
 		FloatType transp = 0;
 		TimeInterval iv;
 		if(transparencyController()) transp = transparencyController()->getFloatValue(time, iv);
 		ColorA color_mesh(color(), FloatType(1) - transp);
 
-		// Do we have to update contents of the geometry buffer?
-		bool updateContents = _geometryCacheHelper.updateState(dataObject, color_mesh) || recreateBuffer;
+		// Lookup the rendering primitive in the vis cache.
+		auto& meshPrimitive = dataset()->visCache().get<std::shared_ptr<MeshPrimitive>>(CacheKey(renderer, dataObject, color_mesh));
 
-		// Re-create the geometry buffer if necessary.
-		if(recreateBuffer)
-			_buffer = renderer->createMeshPrimitive();
-
-		// Update buffer contents.
-		if(updateContents) {
+		// Check if we already have a valid rendering primitive that is up to date.
+		if(!meshPrimitive || !meshPrimitive->isValid(renderer)) {
+			meshPrimitive = renderer->createMeshPrimitive();
 			OORef<TriMeshObject> triMeshObj = dataObject->convertTo<TriMeshObject>(time);
 			if(triMeshObj)
-				_buffer->setMesh(triMeshObj->mesh(), color_mesh);
+				meshPrimitive->setMesh(triMeshObj->mesh(), color_mesh);
 			else
-				_buffer->setMesh(TriMesh(), ColorA(1,1,1,1));
+				meshPrimitive->setMesh(TriMesh(), ColorA(1,1,1,1));
 		}
 
 		renderer->beginPickObject(contextNode);
-		_buffer->render(renderer);
+		meshPrimitive->render(renderer);
 		renderer->endPickObject();
 	}
 	else {

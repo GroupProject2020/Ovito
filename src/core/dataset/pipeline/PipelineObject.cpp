@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,6 +22,7 @@
 #include <core/Core.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/PipelineObject.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/dataset/scene/PipelineSceneNode.h>
 
@@ -37,21 +38,46 @@ PipelineObject::PipelineObject(DataSet* dataset) : RefTarget(dataset)
 }
 
 /******************************************************************************
-* Returns a list of object nodes that have this object in their pipeline.
+* Returns a list of pipeline nodes that have this object in their pipeline.
 ******************************************************************************/
-QSet<PipelineSceneNode*> PipelineObject::dependentNodes() const
+QSet<PipelineSceneNode*> PipelineObject::pipelines(bool onlyScenePipelines) const
 {
-	QSet<PipelineSceneNode*> nodeList;
+	QSet<PipelineSceneNode*> pipelineList;
 	for(RefMaker* dependent : this->dependents()) {
 		if(PipelineObject* pobj = dynamic_object_cast<PipelineObject>(dependent)) {
-			nodeList.unite(pobj->dependentNodes());
+			pipelineList.unite(pobj->pipelines(onlyScenePipelines));
 		}
-		else if(PipelineSceneNode* node = dynamic_object_cast<PipelineSceneNode>(dependent)) {
-            if(node->dataProvider() == this)
-	    		nodeList.insert(node);
+		else if(PipelineSceneNode* pipeline = dynamic_object_cast<PipelineSceneNode>(dependent)) {
+            if(pipeline->dataProvider() == this) {
+				if(!onlyScenePipelines || pipeline->isInScene())
+		    		pipelineList.insert(pipeline);
+			}
 		}
 	}
-	return nodeList;
+	return pipelineList;
+}
+
+/******************************************************************************
+* Determines whether the data pipeline branches above this pipeline object, 
+* i.e. whether this pipeline object has multiple dependents, all using this pipeline
+* object as input.
+******************************************************************************/
+bool PipelineObject::isPipelineBranch(bool onlyScenePipelines) const
+{
+	int pipelineCount = 0;
+	for(RefMaker* dependent : this->dependents()) {
+		if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(dependent)) {
+			if(modApp->input() == this && modApp->pipelines(onlyScenePipelines).empty() == false)
+				pipelineCount++;
+		}
+		else if(PipelineSceneNode* pipeline = dynamic_object_cast<PipelineSceneNode>(dependent)) {
+            if(pipeline->dataProvider() == this) {
+				if(!onlyScenePipelines || pipeline->isInScene())
+		    		pipelineCount++;
+			}
+		}
+	}
+	return pipelineCount > 1;
 }
 
 /******************************************************************************

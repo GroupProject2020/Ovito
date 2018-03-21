@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -78,6 +78,12 @@ public:
 	/// Returns true if this object is currently being loaded from an ObjectLoadStream.
 	bool isBeingLoaded() const;
 
+	/// Returns true if this object is about to be deleted, i.e. if the reference count has reached zero 
+	/// and aboutToBeDeleted() is being invoked.
+	bool isAboutToBeDeleted() const {
+		return objectReferenceCount() >= INVALID_REFERENCE_COUNT;
+	}
+
 	/// \brief Returns the current value of the object's reference counter.
 	/// \return The reference count for this object, i.e. the number of references
 	///         pointing to this object.
@@ -101,10 +107,22 @@ public:
 	/// in the context (and the thread) of this OvitoObject.
 	OvitoObjectExecutor executor() { return OvitoObjectExecutor(this); }
 
-	/// This method is called after the reference counter of this object has reached zero
-	/// and before the object is being finally deleted. You should not call this method from user
-	/// code and typically it is not necessary to override this method.
-	virtual void aboutToBeDeleted() { OVITO_CHECK_OBJECT_POINTER(this); }
+	/// \brief Internal method that calls this object's aboutToBeDeleted() routine.
+	/// It is automatically called when the object's reference counter reaches zero.
+	void deleteObjectInternal() {
+		OVITO_CHECK_OBJECT_POINTER(this);
+		OVITO_ASSERT(_referenceCount == 0);
+
+		// Set the reference counter to a positive value to prevent the object
+		// from being deleted a second time during the call to aboutToBeDeleted().
+		_referenceCount = INVALID_REFERENCE_COUNT;
+		aboutToBeDeleted();
+
+		// After returning from aboutToBeDeleted(), the reference count should be back at the 
+		// original value (no new references).
+		OVITO_ASSERT(_referenceCount == INVALID_REFERENCE_COUNT);
+		_referenceCount = 0;
+	}
 
 protected:
 
@@ -148,10 +166,18 @@ protected:
 	/// The default implementation of this method does nothing.
 	virtual void loadFromStreamComplete() {}
 
+	/// This method is called after the reference counter of this object has reached zero
+	/// and before the object is being finally deleted. You should not call this method from user
+	/// code and typically it is not necessary to override this method.
+	virtual void aboutToBeDeleted() { OVITO_CHECK_OBJECT_POINTER(this); }
+
 private:
 
 	/// The current number of references to this object.
 	size_t _referenceCount = 0;
+
+	/// This is the special value the reference count of the object is set to while it is being deleted:
+	constexpr static auto INVALID_REFERENCE_COUNT = std::numeric_limits<decltype(_referenceCount)>::max() / 2;
 
 	/// \brief Increments the reference count by one.
 	void incrementReferenceCount() Q_DECL_NOTHROW {
@@ -168,12 +194,7 @@ private:
 		OVITO_ASSERT_MSG(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread(), "OvitoObject::decrementReferenceCount()", "OORef class may only be used in main thread.");
 		OVITO_ASSERT_MSG(_referenceCount > 0, "OvitoObject::decrementReferenceCount()", "Reference count became negative.");
 		if(--_referenceCount == 0) {
-			// Set the reference counter to a positive value to prevent the object
-			// from being deleted a second time during the call to aboutToBeDeleted().
-			_referenceCount = 0xFFFF;
-			aboutToBeDeleted();
-			OVITO_ASSERT(_referenceCount == 0xFFFF);
-			_referenceCount = 0;
+			deleteObjectInternal();
 			delete this;
 		}
 	}
@@ -282,5 +303,3 @@ Q_DECLARE_SMART_POINTER_METATYPE(Ovito::OORef);
 
 #include <core/utilities/io/ObjectSaveStream.h>
 #include <core/utilities/io/ObjectLoadStream.h>
-
-

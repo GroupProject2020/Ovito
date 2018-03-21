@@ -15,7 +15,6 @@ ovito.modifiers.ComputePropertyModifier = ovito.plugins.Particles.ComputePropert
 ovito.modifiers.FreezePropertyModifier = ovito.plugins.Particles.FreezePropertyModifier
 ovito.modifiers.ManualSelectionModifier = ovito.plugins.Particles.ManualSelectionModifier
 ovito.modifiers.ExpandSelectionModifier = ovito.plugins.Particles.ExpandSelectionModifier
-ovito.modifiers.ExpressionSelectionModifier = ovito.plugins.Particles.ExpressionSelectionModifier
 ovito.modifiers.BinAndReduceModifier = ovito.plugins.Particles.BinAndReduceModifier
 ovito.modifiers.StructureIdentificationModifier = ovito.plugins.Particles.StructureIdentificationModifier
 ovito.modifiers.CommonNeighborAnalysisModifier = ovito.plugins.Particles.CommonNeighborAnalysisModifier
@@ -39,14 +38,10 @@ ovito.modifiers.GenerateTrajectoryLinesModifier = ovito.plugins.Particles.Genera
 ovito.modifiers.__all__ += ['AmbientOcclusionModifier', 
             'WrapPeriodicImagesModifier', 'ComputePropertyModifier', 'FreezePropertyModifier',
             'ManualSelectionModifier', 'ExpandSelectionModifier',
-            'ExpressionSelectionModifier', 'BinAndReduceModifier',
+            'BinAndReduceModifier',
             'StructureIdentificationModifier', 'CommonNeighborAnalysisModifier', 'BondAngleAnalysisModifier',
             'CreateBondsModifier', 'CentroSymmetryModifier', 'ClusterAnalysisModifier', 'CoordinationNumberModifier',
             'CalculateDisplacementsModifier', 'AtomicStrainModifier',
             'WignerSeitzAnalysisModifier', 'VoronoiAnalysisModifier', 'IdentifyDiamondModifier', 'LoadTrajectoryModifier',
             'CombineParticleSetsModifier', 'ComputeBondLengthsModifier', 'PolyhedralTemplateMatchingModifier',
             'CoordinationPolyhedraModifier', 'InterpolateTrajectoryModifier', 'GenerateTrajectoryLinesModifier']
-            
-# For backward compatibility with OVITO 2.9.0:
-ovito.modifiers.SelectExpressionModifier = ovito.plugins.Particles.ExpressionSelectionModifier
-ovito.modifiers.__all__ += ['SelectExpressionModifier']

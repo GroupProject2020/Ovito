@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
-//
-//  Copyright (2016) Alexander Stukowski
+// 
+//  Copyright (2013) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,23 +22,23 @@
 #pragma once
 
 
-#include <plugins/particles/gui/ParticlesGui.h>
-#include <gui/properties/ModifierPropertiesEditor.h>
+#include <gui/GUI.h>
+#include <gui/properties/PropertiesEditor.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Selection) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
 
 /**
- * A properties editor for the ExpressionSelectionModifier class.
+ * \brief The default properties editor used for RefTarget-derived classes if they do not define their own editor type.
  */
-class ExpressionSelectionModifierEditor : public ModifierPropertiesEditor
+class DefaultPropertiesEditor : public PropertiesEditor
 {
 	Q_OBJECT
-	OVITO_CLASS(ExpressionSelectionModifierEditor)
+	OVITO_CLASS(DefaultPropertiesEditor)
 	
 public:
 
-	/// Default constructor.
-	Q_INVOKABLE ExpressionSelectionModifierEditor() {}
+	/// Constructor.
+	Q_INVOKABLE DefaultPropertiesEditor() = default;
 
 protected:
 
@@ -48,21 +48,21 @@ protected:
 	/// This method is called when a reference target changes.
 	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
 
-protected Q_SLOTS:
-
-	/// Updates the enabled/disabled status of the editor's controls.
-	void updateEditorFields();
+	/// Is called when the value of a reference field of this RefMaker changes.
+	virtual void referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget) override;
 
 private:
 
-	QLabel* variableNamesList;
-	AutocompleteTextEdit* expressionEdit;
+	/// Rebuilds the list of sub-editors for the current edit object.
+	void updateSubEditors();
+
+	/// The editors for the referenced sub-objects.
+	std::vector<OORef<PropertiesEditor>> _subEditors;
+
+	/// Specifies where the sub-editors are opened and whether the sub-editors are opened in a collapsed state.
+	RolloutInsertionParameters _rolloutParams;
 };
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-}	// End of namespace
-
-

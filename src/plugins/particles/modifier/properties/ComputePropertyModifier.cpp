@@ -49,6 +49,7 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ComputePropertyModifier, cutoff, WorldParam
 
 IMPLEMENT_OVITO_CLASS(ComputePropertyModifierApplication);
 DEFINE_REFERENCE_FIELD(ComputePropertyModifierApplication, cachedVisElements);
+SET_MODIFIER_APPLICATION_TYPE(ComputePropertyModifier, ComputePropertyModifierApplication);
 
 /******************************************************************************
 * Constructs a new instance of this class.
@@ -69,16 +70,6 @@ ComputePropertyModifier::ComputePropertyModifier(DataSet* dataset) : Asynchronou
 bool ComputePropertyModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
 	return input.findObject<ParticleProperty>() != nullptr;
-}
-
-/******************************************************************************
-* Create a new modifier application that refers to this modifier instance.
-******************************************************************************/
-OORef<ModifierApplication> ComputePropertyModifier::createModifierApplication()
-{
-	OORef<ModifierApplication> modApp = new ComputePropertyModifierApplication(dataset());
-	modApp->setModifier(this);
-	return modApp;
 }
 
 /******************************************************************************

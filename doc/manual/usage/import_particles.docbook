@@ -123,6 +123,11 @@
   <simplesect xml:id="usage.import.multiple_datasets">
     <title>Visualizing multiple datasets</title>
     <para>
+      <informalfigure>
+          <screenshot><mediaobject><imageobject>
+          <imagedata fileref="images/usage/importexport/pipeline_selector.png" format="PNG" scale="50" />
+          </imageobject></mediaobject></screenshot>
+      </informalfigure>
       OVITO allows you to load several datasets and show them side by side in one picture, 
       and it allows you to load the same file more than once in order to visualize the data in several different ways for comparison. 
       To do this, simply invoke the <menuchoice><guimenu>File</guimenu><guimenuitem>Load File</guimenuitem></menuchoice> function from the menu repeatedly.
@@ -223,6 +228,11 @@
             <row>
               <entry>XSF</entry>
               <entry><para>File format used by the <link xlink:href="http://www.xcrysden.org/doc/XSF.html">XCrySDen</link> program.</para></entry>
+              <entry>particles, voxel&#xA0;grid</entry>
+            </row>
+            <row>
+              <entry>Cube</entry>
+              <entry><para>File format used by the <emphasis>Gaussian</emphasis> simulation package. A description of the format can be found  <link xlink:href="http://paulbourke.net/dataformats/cube/">here</link>.</para></entry>
               <entry>particles, voxel&#xA0;grid</entry>
             </row>
             <row>

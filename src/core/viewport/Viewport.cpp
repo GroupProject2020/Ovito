@@ -344,7 +344,6 @@ bool Viewport::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 		if(source == viewNode()) {
 			// Update viewport when camera node has moved.
 			updateViewport();
-			return false;
 		}
 		else if(_overlays.contains(source)) {
 			// Update viewport when one of the overlays has changed.
@@ -355,7 +354,6 @@ bool Viewport::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 		// Update viewport title when camera node has been renamed.
 		updateViewportTitle();
 		updateViewport();
-		return false;
 	}
 	return RefTarget::referenceEvent(source, event);
 }
@@ -595,6 +593,9 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 		// Finish rendering.
 		renderer->endFrame(true);
 		renderer->endRender();
+
+		// Discard unused vis element resources.
+		dataset()->visCache().discardUnusedObjects();
 
 		_isRendering = false;
 	}

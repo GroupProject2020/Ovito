@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -56,17 +56,10 @@ OORef<PropertiesEditor> PropertiesEditor::create(RefTarget* obj)
 	}
 	catch(Exception& ex) {
 		if(ex.context() == nullptr) ex.setContext(obj->dataset());
-		ex.prependGeneralMessage(tr("Could no create editor component for the %1 object.").arg(obj->objectTitle()));
+		ex.prependGeneralMessage(tr("Failed to create editor component for the '%1' object.").arg(obj->objectTitle()));
 		ex.reportError();
 	}
 	return nullptr;
-}
-
-/******************************************************************************
-* The constructor.
-******************************************************************************/
-PropertiesEditor::PropertiesEditor() : RefMaker(), _container(nullptr), _mainWindow(nullptr)
-{
 }
 
 /******************************************************************************

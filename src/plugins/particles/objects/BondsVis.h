@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,11 +24,6 @@
 
 #include <plugins/particles/Particles.h>
 #include <core/dataset/data/DataVis.h>
-#include <core/dataset/data/VersionedDataObjectRef.h>
-#include <core/dataset/data/CacheStateHelper.h>
-#include <plugins/stdobj/simcell/SimulationCellObject.h>
-#include <core/rendering/ArrowPrimitive.h>
-#include <core/rendering/SceneRenderer.h>
 #include "ParticleProperty.h"
 #include "BondProperty.h"
 
@@ -45,13 +40,13 @@ class OVITO_PARTICLES_EXPORT BondsVis : public DataVis
 	
 public:
 
-	/// \brief Constructor.
+	/// Constructor.
 	Q_INVOKABLE BondsVis(DataSet* dataset);
 
-	/// \brief Renders the associated data object.
+	/// Renders the visual element.
 	virtual void render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode) override;
 
-	/// \brief Computes the display bounding box of the data object.
+	/// Computes the bounding box of the visual element.
 	virtual Box3 boundingBox(TimePoint time, DataObject* dataObject, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval) override;
 
 	/// Returns the display color used for selected bonds.
@@ -84,39 +79,6 @@ protected:
 
 	/// Controls the rendering quality mode for bonds.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(ArrowPrimitive::RenderingQuality, renderingQuality, setRenderingQuality);
-
-	/// The buffered geometry used to render the bonds.
-	std::shared_ptr<ArrowPrimitive> _buffer;
-
-	/// This helper structure is used to detect any changes in the input data
-	/// that require updating the geometry buffer.
-	CacheStateHelper<
-		VersionedDataObjectRef,		// Bond topology property + revision number
-		VersionedDataObjectRef,		// Bond PBC vector property + revision number
-		VersionedDataObjectRef,		// Particle position property + revision number
-		VersionedDataObjectRef,		// Particle color property + revision number
-		VersionedDataObjectRef,		// Particle type property + revision number
-		VersionedDataObjectRef,		// Bond color property + revision number
-		VersionedDataObjectRef,		// Bond type property + revision number
-		VersionedDataObjectRef,		// Bond selection property + revision number
-		VersionedDataObjectRef,		// Simulation cell + revision number
-		FloatType,					// Bond width
-		Color,						// Bond color
-		bool						// Use particle colors
-	> _geometryCacheHelper;
-
-	/// The bounding box that includes all bonds.
-	Box3 _cachedBoundingBox;
-
-	/// This helper structure is used to detect changes in the input data
-	/// that require recomputing the bounding box.
-	CacheStateHelper<
-		VersionedDataObjectRef,		// Bond topology property + revision number
-		VersionedDataObjectRef,		// Bond PBC vector property + revision number
-		VersionedDataObjectRef,		// Particle position property + revision number
-		VersionedDataObjectRef,		// Simulation cell + revision number
-		FloatType					// Bond width
-	> _boundingBoxCacheHelper;
 };
 
 /**
@@ -147,5 +109,3 @@ private:
 
 }	// End of namespace
 }	// End of namespace
-
-

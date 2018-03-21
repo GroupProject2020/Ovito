@@ -44,9 +44,6 @@ public:
 	/// Constructor.
 	Q_INVOKABLE ScatterPlotModifier(DataSet* dataset);
 	
-	/// \brief Create a new modifier application that refers to this modifier instance.
-	virtual OORef<ModifierApplication> createModifierApplication() override;
-
 	/// This method is called by the system after the modifier has been inserted into a data pipeline.
 	virtual void initializeModifier(ModifierApplication* modApp) override;
 

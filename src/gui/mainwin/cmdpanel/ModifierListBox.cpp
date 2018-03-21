@@ -54,7 +54,11 @@ ModifierListBox::ModifierListBox(QWidget* parent, PipelineListModel* pipelineLis
 	for(ModifierClassPtr clazz : PluginManager::instance().metaclassMembers<Modifier>()) {
 		// Sort modifiers into categories.
 		QString categoryName = clazz->modifierCategory();
-		if(!categoryName.isEmpty()) {
+		if(categoryName == QStringLiteral("-")) {
+			// This modifier requests to be hidden from the user.
+			// Do not add it to the list of available modifiers.
+		}
+		else if(!categoryName.isEmpty()) {
 			// Check if category has already been created.
 			bool found = false;
 			for(auto& category : modifierCategories) {
@@ -302,17 +306,13 @@ void ModifierListBox::updateAvailableModifiers()
 	if(!dataset) return;
 
 	PipelineFlowState inputState;
-	if(dynamic_object_cast<Modifier>(currentItem->object())) {
-		if(!currentItem->modifierApplications().empty()) {
-			ModifierApplication* modApp = currentItem->modifierApplications().front();
-			inputState = modApp->evaluatePreliminary();
-		}
+	if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(currentItem->object())) {
+		inputState = modApp->evaluatePreliminary();
 	}
 	else if(PipelineObject* pipelineObject = dynamic_object_cast<PipelineObject>(currentItem->object())) {
 		inputState = pipelineObject->evaluatePreliminary();
 	}
-	else if(!_pipelineList->selectedNodes().empty()) {
-		PipelineSceneNode* node = _pipelineList->selectedNodes().front();
+	else if(PipelineSceneNode* node = _pipelineList->selectedNode()) {
 		inputState = node->evaluatePipelinePreliminary(false);
 	}
 

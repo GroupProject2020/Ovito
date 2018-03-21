@@ -38,6 +38,16 @@ SET_PROPERTY_FIELD_LABEL(ModifierApplication, input, "Input");
 SET_PROPERTY_FIELD_CHANGE_EVENT(ModifierApplication, input, ReferenceEvent::PipelineChanged);
 
 /******************************************************************************
+* Returns the global class registry, which allows looking up the 
+* ModifierApplication subclass for a Modifier subclass.
+******************************************************************************/
+ModifierApplication::Registry& ModifierApplication::registry() 
+{
+	static Registry singleton;
+	return singleton;
+}
+
+/******************************************************************************
 * Constructor.
 ******************************************************************************/
 ModifierApplication::ModifierApplication(DataSet* dataset) : CachingPipelineObject(dataset)
@@ -50,13 +60,14 @@ ModifierApplication::ModifierApplication(DataSet* dataset) : CachingPipelineObje
 bool ModifierApplication::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	if(event.type() == ReferenceEvent::TargetEnabledOrDisabled && source == modifier()) {
-
 		if(modifier()->isEnabled() == false) {
+			// Ignore modifier's status if it is currently disabled. 
 			setStatus(PipelineStatus(PipelineStatus::Success, tr("Modifier is currently disabled.")));
 		}
-
-		// Propagate enabled/disabled notification events from the modifier.
-		return true;
+		else {
+			// Propagate enabled/disabled notification events from the modifier.
+			return true;
+		}
 	}
 	if(event.type() == ReferenceEvent::PipelineChanged && source == input()) {
 		// Propagate pipeline changed events and updates to the preliminary state from upstream.
@@ -93,6 +104,7 @@ void ModifierApplication::referenceReplaced(const PropertyFieldDescriptor& field
 			newMod->notifyDependents(ReferenceEvent::ObjectStatusChanged);
 			newMod->notifyDependents(ReferenceEvent::ModifierInputChanged);
 		}
+		notifyDependents(ReferenceEvent::TargetEnabledOrDisabled);
 	}
 	else if(field == PROPERTY_FIELD(input) && modifier()) {
 		// Update the status of the Modifier when ModifierApplication is inserted/removed into pipeline.

@@ -34,7 +34,6 @@
 #include <plugins/particles/modifier/properties/GenerateTrajectoryLinesModifier.h>
 #include <plugins/particles/modifier/selection/ManualSelectionModifier.h>
 #include <plugins/particles/modifier/selection/ExpandSelectionModifier.h>
-#include <plugins/particles/modifier/selection/ExpressionSelectionModifier.h>
 #include <plugins/particles/modifier/analysis/StructureIdentificationModifier.h>
 #include <plugins/particles/modifier/analysis/binandreduce/BinAndReduceModifier.h>
 #include <plugins/particles/modifier/analysis/bondangle/BondAngleAnalysisModifier.h>
@@ -238,28 +237,6 @@ void defineModifiersSubmodule(py::module m)
 		.value("Cutoff", ExpandSelectionModifier::CutoffRange)
 		.value("Nearest", ExpandSelectionModifier::NearestNeighbors)
 		.value("Bonded", ExpandSelectionModifier::BondedNeighbors)
-	;
-
-	ovito_class<ExpressionSelectionModifier, Modifier>(m,
-			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
-			"This modifier selects particles based on a user-defined Boolean expression. "
-			"Those particles will be selected for which the expression yields a non-zero value. "
-			"\n\n"
-			"**Modifier outputs:**"
-			"\n\n"
-			" * ``Selection`` (:py:class:`~ovito.data.ParticleProperty`):\n"
-			"   This particle property is set to 1 for selected particles and 0 for others.\n"
-			" * ``SelectExpression.num_selected`` (:py:attr:`attribute <ovito.data.DataCollection.attributes>`):\n"
-			"   The number of particles selected by the modifier.\n"
-			"\n\n"
-			"**Example:**"
-			"\n\n"
-			".. literalinclude:: ../example_snippets/select_expression_modifier.py\n"
-			"   :lines: 6-\n"
-			"\n")
-		.def_property("expression", &ExpressionSelectionModifier::expression, &ExpressionSelectionModifier::setExpression,
-				"A string containing the Boolean expression to be evaluated for every particle. "
-				"The expression syntax is documented in `OVITO's user manual <../../particles.modifiers.expression_select.html>`__.")
 	;
 
 	auto BinAndReduceModifier_py = ovito_class<BinAndReduceModifier, Modifier>(m,
@@ -573,6 +550,8 @@ void defineModifiersSubmodule(py::module m)
 				"In ``Pairwise`` mode a separate cutoff distance must be specified for all pairs of atom types between which bonds are to be created. "
 				"\n\n"
 				":Default: ``CreateBondsModifier.Mode.Uniform``\n")
+		.def_property("vis", &CreateBondsModifier::bondsVis, &CreateBondsModifier::setBondsVis,
+				"The :py:class:`~ovito.vis.BondsVis` object controlling the visual appearance of the bonds created by this modifier.")
 		.def_property("cutoff", &CreateBondsModifier::uniformCutoff, &CreateBondsModifier::setUniformCutoff,
 				"The maximum cutoff distance for the creation of bonds between particles. This parameter is only used if :py:attr:`.mode` is ``Uniform``. "
 				"\n\n"
@@ -581,8 +560,6 @@ void defineModifiersSubmodule(py::module m)
 				"If this option is set to true, the modifier will create bonds only between atoms that belong to the same molecule (i.e. which have the same molecule ID assigned to them)."
 				"\n\n"
 				":Default: ``False``\n")
-		.def_property("vis", &CreateBondsModifier::bondsVis, &CreateBondsModifier::setBondsVis,
-				"The :py:class:`~ovito.vis.BondsVis` object controlling the visual appearance of the bonds created by this modifier.")
 		.def_property("lower_cutoff", &CreateBondsModifier::minimumCutoff, &CreateBondsModifier::setMinimumCutoff,
 				"The minimum bond length. No bonds will be created between atoms whose distance is below this threshold."
 				"\n\n"
@@ -856,15 +833,15 @@ void defineModifiersSubmodule(py::module m)
 			"   The computed displacement vectors\n"			
 			" * ``Displacement Magnitude`` (:py:class:`~ovito.data.ParticleProperty`):\n"
 			"   The length of the computed displacement vectors\n"
-			"\n")
+			"\n\n")
 		.def_property("vis", &CalculateDisplacementsModifier::vectorVis, &CalculateDisplacementsModifier::setVectorVis,
-				"A :py:class:`~ovito.vis.VectorVis` instance controlling the visual representation of the computed "
+				"A :py:class:`~ovito.vis.VectorVis` element controlling the visual representation of the computed "
 				"displacement vectors. "
 				"Note that the computed displacement vectors are not shown by default. You can enable "
-				"the arrow display as follows: "
+				"the display of arrows as follows: "
 				"\n\n"
 				".. literalinclude:: ../example_snippets/calculate_displacements.py\n"
-				"   :lines: 3-\n")
+				"   :lines: 3-\n")	
 	;
 
 	ovito_class<AtomicStrainModifier, ReferenceConfigurationModifier>(m,
@@ -1226,7 +1203,7 @@ void defineModifiersSubmodule(py::module m)
 			"Constructs coordination polyhedra around currently selected particles. "
 			"A coordination polyhedron is the convex hull spanned by the bonded neighbors of a particle. ")
 		.def_property("vis", &CoordinationPolyhedraModifier::surfaceMeshVis, &CoordinationPolyhedraModifier::setSurfaceMeshVis,
-				"A :py:class:`~ovito.vis.SurfaceMeshVis` instance controlling the visual representation of the generated polyhedra.\n")
+				"A :py:class:`~ovito.vis.SurfaceMeshVis` element controlling the visual representation of the generated polyhedra.\n")
 	;
 	
 	ovito_class<GenerateTrajectoryLinesModifier, Modifier>(m,
@@ -1287,8 +1264,9 @@ void defineModifiersSubmodule(py::module m)
 			"Generates the trajectory lines by sampling the positions of the particles from the upstream pipeline in regular animation time intervals. "
 			"Make sure you call this method *after* the modifier has been inserted into the pipeline. ")
 		.def_property("vis", &GenerateTrajectoryLinesModifier::trajectoryVis, &GenerateTrajectoryLinesModifier::setTrajectoryVis,
-				"The :py:class:`~ovito.vis.TrajectoryVis` object controlling the visual appearance of the trajectory lines created by this modifier.")
-	;	
+			"The :py:class:`~ovito.vis.TrajectoryVis` element controlling the visual appearance of the trajectory lines created by this modifier.")
+	;
+	ovito_class<GenerateTrajectoryLinesModifierApplication, ModifierApplication>{m};
 }
 
 OVITO_END_INLINE_NAMESPACE

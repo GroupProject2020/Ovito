@@ -88,6 +88,10 @@ public:
 	/// \undoable
 	void setObjectTitle(const QString& title) { setTitle(title); }
 
+	/// \brief Returns all pipeline nodes whose pipeline produced this visualization element.
+	/// \param onlyScenePipelines If true, pipelines which are currently not part of the scene are ignored.
+	QSet<PipelineSceneNode*> pipelines(bool onlyScenePipelines) const;
+
 private:
 
 	/// Controls whether the visualization element is enabled.

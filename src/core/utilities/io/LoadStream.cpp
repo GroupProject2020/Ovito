@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -70,7 +70,7 @@ LoadStream::LoadStream(QDataStream& source) : _is(source), _isOpen(false)
 				.arg(_fileFormat).arg(_applicationName).arg(_applicationMajorVersion).arg(_applicationMinorVersion).arg(_applicationRevisionVersion));
 
 	// OVITO 3.x cannot read state files written by OVITO 2.x:
-	if(_fileFormat < 30000)
+	if(_fileFormat < 30001)
 		throw Exception(tr("This file has been written by %1 %2.%3.%4 and %5 %6.x cannot read it anymore. Please use the old program version to open the file.")
 			.arg(_applicationName).arg(_applicationMajorVersion).arg(_applicationMinorVersion).arg(_applicationRevisionVersion).arg(QCoreApplication::applicationName()).arg(Application::applicationVersionMajor()));	
 }

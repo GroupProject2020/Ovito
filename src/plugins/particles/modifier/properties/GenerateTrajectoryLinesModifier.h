@@ -57,9 +57,6 @@ public:
 	/// \brief Constructor.
 	Q_INVOKABLE GenerateTrajectoryLinesModifier(DataSet* dataset);
 
-	/// Creates a new modifier application that refers to this modifier instance.
-	virtual OORef<ModifierApplication> createModifierApplication() override;
-
 	/// Modifies the input data in an immediate, preliminary way.
 	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
@@ -68,11 +65,6 @@ public:
 
 	/// Updates the stored trajectories from the source particle object.
 	bool generateTrajectories(TaskManager& taskManager);
-
-protected:
-
-	/// Handles reference events sent by reference targets of this object.
-	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
 
 private:
 
@@ -95,9 +87,8 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, unwrapTrajectories, setUnwrapTrajectories);
 
 	/// The vis element for rendering the trajectory lines.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(TrajectoryVis, trajectoryVis, setTrajectoryVis, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_MEMORIZE);	
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(TrajectoryVis, trajectoryVis, setTrajectoryVis, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE | PROPERTY_FIELD_OPEN_SUBEDITOR);
 };
-
 
 /**
  * Used by the GenerateTrajectoryLinesModifier to store the generated trajeectory lines.

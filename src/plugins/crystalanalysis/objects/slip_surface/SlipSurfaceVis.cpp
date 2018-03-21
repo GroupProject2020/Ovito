@@ -162,6 +162,7 @@ Box3 SlipSurfaceVis::boundingBox(TimePoint time, DataObject* dataObject, Pipelin
 ******************************************************************************/
 void SlipSurfaceVis::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
 {
+#if 0	
 	// Ignore render calls for the original MicrostructureObject.
 	// We are only interested in the RenderableSurfaceMesh.
 	if(dynamic_object_cast<MicrostructureObject>(dataObject) != nullptr)
@@ -209,6 +210,7 @@ void SlipSurfaceVis::render(TimePoint time, DataObject* dataObject, const Pipeli
 	renderer->beginPickObject(contextNode);
 	_surfaceBuffer->render(renderer);
 	renderer->endPickObject();
+#endif	
 }
 
 /******************************************************************************

@@ -75,12 +75,12 @@ ObjectLoadStream::ObjectLoadStream(QDataStream& source) : LoadStream(source)
 	setFilePosition(objectTableStart);
 	expectChunk(0x300);
 	_objects.resize(objectCount);
-	for(ObjectEntry& entry : _objects) {
-		entry.object = nullptr;
-		quint32 id;
-		*this >> id;
-		entry.classInfo = _classes[id].get();
-		*this >> entry.fileOffset;
+	for(ObjectRecord& record : _objects) {
+		record.object = nullptr;
+		quint32 classId;
+		*this >> classId;
+		record.classInfo = _classes[classId].get();
+		*this >> record.fileOffset;
 	}
 	closeChunk();
 
@@ -95,30 +95,30 @@ ObjectLoadStream::ObjectLoadStream(QDataStream& source) : LoadStream(source)
 ******************************************************************************/
 OORef<OvitoObject> ObjectLoadStream::loadObjectInternal()
 {
-	quint32 id;
-	*this >> id;
-	if(id == 0) return nullptr;
+	quint32 objectId;
+	*this >> objectId;
+	if(objectId == 0) return nullptr;
 	else {
-		ObjectEntry& entry = _objects[id - 1];
-		if(entry.object != nullptr) return entry.object;
+		ObjectRecord& record = _objects[objectId - 1];
+		if(record.object != nullptr) return record.object;
 		else {
 			// When loading a RefTarget-derived class from the stream, we must already have a current DataSet as context.
-			OVITO_ASSERT(_dataset != nullptr || entry.classInfo->clazz == &DataSet::OOClass() || !entry.classInfo->clazz->isDerivedFrom(RefTarget::OOClass()));
+			OVITO_ASSERT(_dataset != nullptr || record.classInfo->clazz == &DataSet::OOClass() || !record.classInfo->clazz->isDerivedFrom(RefTarget::OOClass()));
 
 			// Create an instance of the object class.
-			entry.object = entry.classInfo->clazz->createInstance(_dataset);
+			record.object = record.classInfo->clazz->createInstance(_dataset);
 			
 			// When deserializing a DataSet, use it as the context for all subsequently deserialized objects.
-			if(entry.classInfo->clazz == &DataSet::OOClass()) {
+			if(record.classInfo->clazz == &DataSet::OOClass()) {
 				OVITO_ASSERT(_dataset == nullptr);
-				setDataset(static_object_cast<DataSet>(entry.object.get()));
+				setDataset(static_object_cast<DataSet>(record.object.get()));
 			}
 			else {
-				OVITO_ASSERT(!entry.classInfo->clazz->isDerivedFrom(RefTarget::OOClass()) || _dataset != nullptr);
+				OVITO_ASSERT(!record.classInfo->clazz->isDerivedFrom(RefTarget::OOClass()) || _dataset != nullptr);
 			}
 
-			_objectsToLoad.push_back(id - 1);
-			return entry.object;
+			_objectsToLoad.push_back(objectId - 1);
+			return record.object;
 		}
 	}
 }
@@ -171,9 +171,9 @@ void ObjectLoadStream::close()
 		}
 
 		// Now that all references are in place call post-processing function on each loaded object.
-		for(const ObjectEntry& entry : _objects) {
-			if(entry.object)
-				entry.object->loadFromStreamComplete();
+		for(const ObjectRecord& record : _objects) {
+			if(record.object)
+				record.object->loadFromStreamComplete();
 		}
 	}
 	LoadStream::close();

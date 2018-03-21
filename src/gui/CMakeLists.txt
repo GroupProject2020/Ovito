@@ -49,6 +49,7 @@ SET(SourceFiles
 	dialogs/LoadImageFileDialog.cpp
 	dialogs/RemoteAuthenticationDialog.cpp
 	dialogs/FileExporterSettingsDialog.cpp
+	dialogs/ClonePipelineDialog.cpp
 	actions/ActionManager.cpp
 	actions/FileActions.cpp
 	actions/ViewportActions.cpp
@@ -89,6 +90,7 @@ SET(SourceFiles
 	properties/BooleanRadioButtonParameterUI.cpp
 	properties/ColorParameterUI.cpp
 	properties/CustomParameterUI.cpp
+	properties/DefaultPropertiesEditor.cpp
 	properties/FilenameParameterUI.cpp
 	properties/FloatParameterUI.cpp
 	properties/FontParameterUI.cpp

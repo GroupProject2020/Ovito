@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -19,13 +19,14 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/particles/modifier/selection/ExpressionSelectionModifier.h>
+#include <plugins/stdmod/gui/StdModGui.h>
+#include <plugins/stdmod/modifiers/ExpressionSelectionModifier.h>
 #include <gui/properties/StringParameterUI.h>
+#include <gui/properties/ModifierDelegateParameterUI.h>
 #include <gui/widgets/general/AutocompleteTextEdit.h>
 #include "ExpressionSelectionModifierEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Selection) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace StdMod {
 
 IMPLEMENT_OVITO_CLASS(ExpressionSelectionModifierEditor);
 SET_OVITO_OBJECT_EDITOR(ExpressionSelectionModifier, ExpressionSelectionModifierEditor);
@@ -41,6 +42,10 @@ void ExpressionSelectionModifierEditor::createUI(const RolloutInsertionParameter
 	QVBoxLayout* layout = new QVBoxLayout(rollout);
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(0);
+
+	ModifierDelegateParameterUI* delegateUI = new ModifierDelegateParameterUI(this, ExpressionSelectionModifierDelegate::OOClass());
+	layout->addWidget(new QLabel(tr("Operate on:")));
+	layout->addWidget(delegateUI->comboBox());
 
 	layout->addWidget(new QLabel(tr("Boolean expression:")));
 	StringParameterUI* expressionUI = new StringParameterUI(this, PROPERTY_FIELD(ExpressionSelectionModifier::expression));
@@ -58,7 +63,7 @@ void ExpressionSelectionModifierEditor::createUI(const RolloutInsertionParameter
 	variableNamesList = new QLabel();
 	variableNamesList->setWordWrap(true);
 	variableNamesList->setTextInteractionFlags(Qt::TextInteractionFlags(Qt::TextSelectableByMouse | Qt::TextSelectableByKeyboard | Qt::LinksAccessibleByMouse | Qt::LinksAccessibleByKeyboard));
-	variablesLayout->addWidget(variableNamesList);
+	variablesLayout->addWidget(variableNamesList, 1);
 
 	// Update input variables list if another modifier has been loaded into the editor.
 	connect(this, &ExpressionSelectionModifierEditor::contentsReplaced, this, &ExpressionSelectionModifierEditor::updateEditorFields);
@@ -69,7 +74,7 @@ void ExpressionSelectionModifierEditor::createUI(const RolloutInsertionParameter
 ******************************************************************************/
 bool ExpressionSelectionModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(source == editObject() && event.type() == ReferenceEvent::TargetChanged) {
+	if(source == editObject() && event.type() == ReferenceEvent::ObjectStatusChanged) {
 		updateEditorFields();
 	}
 	return ModifierPropertiesEditor::referenceEvent(source, event);
@@ -84,11 +89,9 @@ void ExpressionSelectionModifierEditor::updateEditorFields()
 	if(!mod) return;
 
 	variableNamesList->setText(mod->inputVariableTable() + QStringLiteral("<p></p>"));
+	container()->updateRolloutsLater();
 	expressionEdit->setWordList(mod->inputVariableNames());
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

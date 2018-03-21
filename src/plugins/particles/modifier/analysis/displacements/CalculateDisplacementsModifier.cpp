@@ -31,7 +31,6 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 
 IMPLEMENT_OVITO_CLASS(CalculateDisplacementsModifier);
 DEFINE_REFERENCE_FIELD(CalculateDisplacementsModifier, vectorVis);
-SET_PROPERTY_FIELD_LABEL(CalculateDisplacementsModifier, vectorVis, "Vector vis");
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -50,18 +49,6 @@ CalculateDisplacementsModifier::CalculateDisplacementsModifier(DataSet* dataset)
 	// to the current particle positions.
 	vectorVis()->setReverseArrowDirection(false);
 	vectorVis()->setArrowPosition(VectorVis::Head);
-}
-
-/******************************************************************************
-* Handles reference events sent by reference targets of this object.
-******************************************************************************/
-bool CalculateDisplacementsModifier::referenceEvent(RefTarget* source, const ReferenceEvent& event)
-{
-	// Do not propagate messages sent by the attached vis element.
-	if(source == vectorVis())
-		return false;
-
-	return ReferenceConfigurationModifier::referenceEvent(source, event);
 }
 
 /******************************************************************************

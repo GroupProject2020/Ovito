@@ -85,12 +85,12 @@ void StaticSource::referenceInserted(const PropertyFieldDescriptor& field, RefTa
 /******************************************************************************
 * Is called when a RefTarget has been added to a VectorReferenceField of this RefMaker.
 ******************************************************************************/
-void StaticSource::referenceRemoved(const PropertyFieldDescriptor& field, RefTarget* newTarget, int listIndex)
+void StaticSource::referenceRemoved(const PropertyFieldDescriptor& field, RefTarget* oldTarget, int listIndex)
 {
 	if(field == PROPERTY_FIELD(dataObjects))
 		notifyDependents(ReferenceEvent::SubobjectListChanged);
 
-        PipelineObject::referenceRemoved(field, newTarget, listIndex);
+        PipelineObject::referenceRemoved(field, oldTarget, listIndex);
 }
 
 OVITO_END_INLINE_NAMESPACE
