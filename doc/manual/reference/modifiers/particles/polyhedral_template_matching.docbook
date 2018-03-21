@@ -19,18 +19,19 @@
   This modifier classifies the local structural environment of particles
   using the <emphasis>Polyhedral Template Matching</emphasis> (PTM) method [<link
   xlink:href="https://dx.doi.org/10.1088/0965-0393/24/5/055007">P.M. Larsen et al., Modelling Simul. Mater. Sci. Eng. 24, 055007</link>]
-  (<link xlink:href="http://arxiv.org/abs/1603.05143">preprint available</link>)
-  and allows identifying the local crystalline structure of simple condensed phases (FCC, BCC, etc.) formed by atoms.
+  and allows identifying the local crystalline structure of simple condensed phases.
+  A preprint of the PTM paper is available <link xlink:href="http://arxiv.org/abs/1603.05143">here</link>.
   </para>
   
   <para>
   The PTM approach promises greater reliability than e.g. <link linkend="particles.modifiers.common_neighbor_analysis">Common Neighbor Analysis (CNA)</link> in the 
-  presence of strong thermal fluctuations and strain. Furthermore, it provides a direct calculation of the local (per-atom) orientation, elastic deformation, strain and alloy type.
+  presence of strong thermal fluctuations and strains. Furthermore, it provides a direct calculation of the local (per-atom) crystal orientation, elastic deformation, 
+  strain and alloy type.
   </para>
 
   <para>
-  The modifier assigns the <literal>Structure Type</literal> property to each particle with
-  the assigned structural type encoded as an integer value:
+  The modifier sets the <literal>Structure Type</literal> property for each particle to
+  the structural type determined by the PTM algorithm, which is encoded as an integer value:
   <itemizedlist>
   
     <listitem>
@@ -57,10 +58,19 @@
       <para>5 = SC, simple cubic</para>
     </listitem>
 
+    <listitem>
+      <para>6 = Cubic diamond</para>
+    </listitem>
+
+    <listitem>
+      <para>7 = Hexagonal diamond</para>
+    </listitem>
+
   </itemizedlist>
   </para>
     <para>
-      The structural types to be searched for can be changed by checking/unchecking the tick box for each type.
+      The set of structural types to be identified by the algorithm can be specified using the corresponding tick boxes in the type list.
+      By default, the modifier will try to find all listed structure types.
     </para>
 
   <simplesect>
@@ -80,9 +90,9 @@
       though possibly at the expense of false negatives. The role of the RMSD cutoff is discussed in section 5.1 of the PTM paper.
     </para>  
     <para>
-      A resonable value for the RMSD cutoff parameter is 0.1, which works well for identifying defects in crystalline solids.
+      A reasonable value for the RMSD cutoff parameter is 0.1, which works well for identifying defects in crystalline solids.
       Note that, for the sake of reproducibility, the chosen RMSD cutoff value should typically be reported in a publication if you use 
-      the PTM method to gain quantitative results (e.g. measure crystal defect fractions).
+      the PTM method to gain quantitative results (e.g. measure crystal defect densities).
     </para>
   </simplesect>
 
@@ -96,7 +106,7 @@
       The PTM modifier provides an option to output the local interatomic distance (or nearest neighbor distance) as a new particle property, which is computed from the internal scale factor for those atoms
       that match one of the known structure types. 
       Note that you can compute a local lattice constant (including hydrostatic strain) from the interatomic distance by dividing it by the 
-      factor <literal>sqrt(1/2)</literal> (for FCC,HCP) or <literal>sqrt(3/4)</literal> (for BCC) using, e.g., the <link linkend="particles.modifiers.compute_property">Compute property</link> modifier
+      factor <literal>sqrt(1/2)</literal> (for FCC, HCP) or <literal>sqrt(3/4)</literal> (for BCC) using, e.g., the <link linkend="particles.modifiers.compute_property">Compute property</link> modifier
     </para>
   </simplesect>
 
@@ -127,10 +137,11 @@
     <para>
       Atom types are generally ignored by the PTM when identifying the <emphasis>structural</emphasis> type (e.g. FCC, BCC, etc.). However, the algorithm can additionally      
       identify the local <emphasis>alloy</emphasis> type by taking into account the chemical species of atoms (given by the <literal>Particle Type</literal> property, which must be defined).
-      The binary alloy types currently identified by the PTM algorithm are A2 and B2 for BCC, and A1, L1<subscript>0</subscript> and L1<subscript>2</subscript> for FCC.      
+      The binary alloy types currently identified by the PTM algorithm are A2 and B2 for BCC; 
+      A1, L1<subscript>0</subscript> and L1<subscript>2</subscript> for FCC; zinblende for cubic diamond; and wurtzite for hexagonal diamond structures.
     </para>
     <para>
-      The local alloy type is output as an additional integer particle property named <literal>Alloy Type</literal>:
+      The local alloy type is output as an additional particle property named <literal>Alloy Type</literal> with the following values:
     <itemizedlist>
   
     <listitem>
@@ -146,19 +157,23 @@
     </listitem>
 
     <listitem>
-      <para>3 = L1<subscript>2</subscript> (Cu-type)</para>
+      <para>3 = L1<subscript>2</subscript> (A-site)</para>
     </listitem>
 
     <listitem>
-      <para>4 = L1<subscript>2</subscript> (Au-type)</para>
+      <para>4 = L1<subscript>2</subscript> (B-site)</para>
     </listitem>
 
     <listitem>
       <para>5 = B2</para>
     </listitem>
+
+    <listitem>
+      <para>6 = zincblende / wurtzite</para>
+    </listitem>
     
   </itemizedlist>
-    The alloy type of a lattice atom is found by comparing the types of its neighbors to its own type. See the paper for details.
+    The algorithm determines the alloy type of a lattice atom by comparing the types of its neighbors to its own type. See the paper for details.
     You can subsequently use the <link linkend="particles.modifiers.expression_select">Expression selection</link> modifier to select atoms of a
     certain alloy type to give them a distinct color, for example.
     </para>
@@ -217,6 +232,6 @@
     <para>
       <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.PolyhedralTemplateMatchingModifier"><classname>PolyhedralTemplateMatchingModifier</classname> (Python API)</link>
     </para>
-  </simplesect>  
+  </simplesect>
   
 </section>

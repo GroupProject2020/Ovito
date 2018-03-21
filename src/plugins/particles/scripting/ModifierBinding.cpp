@@ -1091,6 +1091,8 @@ void defineModifiersSubmodule(py::module m)
 			"   * ``PolyhedralTemplateMatchingModifier.Type.BCC`` (3)\n"
 			"   * ``PolyhedralTemplateMatchingModifier.Type.ICO`` (4)\n"
 			"   * ``PolyhedralTemplateMatchingModifier.Type.SC`` (5)\n"
+			"   * ``PolyhedralTemplateMatchingModifier.Type.CUBIC_DIAMOND`` (6)\n"
+			"   * ``PolyhedralTemplateMatchingModifier.Type.HEX_DIAMOND`` (7)\n"
 			"\n"
 			"**Modifier outputs:**"
 			"\n\n"
@@ -1106,6 +1108,10 @@ void defineModifiersSubmodule(py::module m)
 			"   The number of icosahedral particles found.\n"
 			" * ``PolyhedralTemplateMatching.counts.SC`` (:py:attr:`attribute <ovito.data.DataCollection.attributes>`):\n"
 			"   The number of simple cubic particles found.\n"
+			" * ``PolyhedralTemplateMatching.counts.CUBIC_DIAMOND`` (:py:attr:`attribute <ovito.data.DataCollection.attributes>`):\n"
+			"   The number of cubic diamond particles found.\n"
+			" * ``PolyhedralTemplateMatching.counts.HEX_DIAMOND`` (:py:attr:`attribute <ovito.data.DataCollection.attributes>`):\n"
+			"   The number of hexagonal diamond particles found.\n"
 			" * ``Structure Type`` (:py:class:`~ovito.data.ParticleProperty`):\n"
 			"   This output particle property will contain the per-particle structure types assigned by the modifier.\n"
 			" * ``RMSD`` (:py:class:`~ovito.data.ParticleProperty`):\n"
@@ -1130,9 +1136,10 @@ void defineModifiersSubmodule(py::module m)
 			"      * ``PolyhedralTemplateMatchingModifier.AlloyType.NONE`` (0)\n"
 			"      * ``PolyhedralTemplateMatchingModifier.AlloyType.PURE`` (1)\n"
 			"      * ``PolyhedralTemplateMatchingModifier.AlloyType.L10`` (2)\n"
-			"      * ``PolyhedralTemplateMatchingModifier.AlloyType.L12_CU`` (3)\n"
-			"      * ``PolyhedralTemplateMatchingModifier.AlloyType.L12_AU`` (4)\n"
+			"      * ``PolyhedralTemplateMatchingModifier.AlloyType.L12_A`` (3)\n"
+			"      * ``PolyhedralTemplateMatchingModifier.AlloyType.L12_B`` (4)\n"
 			"      * ``PolyhedralTemplateMatchingModifier.AlloyType.B2`` (5)\n"
+			"      * ``PolyhedralTemplateMatchingModifier.AlloyType.ZINCBLENDE_WURTZITE`` (6)\n"
 			" * ``Color`` (:py:class:`~ovito.data.ParticleProperty`):\n"
 			"   The modifier assigns a color to each particle based on its identified structure type. "
 			"   You can change the color representing a structural type as follows::"
@@ -1187,15 +1194,18 @@ void defineModifiersSubmodule(py::module m)
 		.value("BCC", PolyhedralTemplateMatchingModifier::BCC)
 		.value("ICO", PolyhedralTemplateMatchingModifier::ICO)
 		.value("SC", PolyhedralTemplateMatchingModifier::SC)
+		.value("CUBIC_DIAMOND", PolyhedralTemplateMatchingModifier::CUBIC_DIAMOND)
+		.value("HEX_DIAMOND", PolyhedralTemplateMatchingModifier::HEX_DIAMOND)
 	;
 
 	py::enum_<PolyhedralTemplateMatchingModifier::AlloyType>(PolyhedralTemplateMatchingModifier_py, "AlloyType")
 		.value("NONE", PolyhedralTemplateMatchingModifier::ALLOY_NONE)
 		.value("PURE", PolyhedralTemplateMatchingModifier::ALLOY_PURE)
 		.value("L10", PolyhedralTemplateMatchingModifier::ALLOY_L10)
-		.value("L12_CU", PolyhedralTemplateMatchingModifier::ALLOY_L12_CU)
-		.value("L12_AU", PolyhedralTemplateMatchingModifier::ALLOY_L12_AU)
+		.value("L12_A", PolyhedralTemplateMatchingModifier::ALLOY_L12_A)
+		.value("L12_B", PolyhedralTemplateMatchingModifier::ALLOY_L12_B)
 		.value("B2", PolyhedralTemplateMatchingModifier::ALLOY_B2)
+		.value("ZINCBLENDE_WURTZITE", PolyhedralTemplateMatchingModifier::ALLOY_ZINCBLENDE_WURTZITE)
 	;
 
 	ovito_class<CoordinationPolyhedraModifier, AsynchronousModifier>(m,

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -41,12 +41,14 @@ DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputInteratomicDista
 DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputOrientation);
 DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputDeformationGradient);
 DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputAlloyTypes);
+DEFINE_REFERENCE_FIELD(PolyhedralTemplateMatchingModifier, alloyTypes);
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, rmsdCutoff, "RMSD cutoff");
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputRmsd, "Output RMSD values");
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputInteratomicDistance, "Output interatomic distance");
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputOrientation, "Output orientations");
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputDeformationGradient, "Output deformation gradients");
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputAlloyTypes, "Output alloy types");
+SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, alloyTypes, "Alloy types");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(PolyhedralTemplateMatchingModifier, rmsdCutoff, FloatParameterUnit, 0);
 
 IMPLEMENT_OVITO_CLASS(PolyhedralTemplateMatchingModifierApplication);
@@ -72,6 +74,22 @@ PolyhedralTemplateMatchingModifier::PolyhedralTemplateMatchingModifier(DataSet* 
 	createStructureType(SC, ParticleType::PredefinedStructureType::SC);
 	createStructureType(CUBIC_DIAMOND, ParticleType::PredefinedStructureType::CUBIC_DIAMOND);
 	createStructureType(HEX_DIAMOND, ParticleType::PredefinedStructureType::HEX_DIAMOND);
+
+	// Define the alloy types.
+	for(int id = 0; id < NUM_ALLOY_TYPES; id++) {
+		OORef<ParticleType> atype = new ParticleType(dataset);
+		atype->setId(id);
+		atype->setColor({0.75f, 0.75f, 0.75f});
+		_alloyTypes.push_back(this, PROPERTY_FIELD(alloyTypes), std::move(atype));	
+	}
+	alloyTypes()[ALLOY_NONE]->setColor({0.95f, 0.95f, 0.95f});
+	alloyTypes()[ALLOY_NONE]->setName(tr("Other"));
+	alloyTypes()[ALLOY_PURE]->setName(tr("Pure"));
+	alloyTypes()[ALLOY_L10]->setName(tr("L10"));
+	alloyTypes()[ALLOY_L12_A]->setName(tr("L12 (A-site)"));
+	alloyTypes()[ALLOY_L12_B]->setName(tr("L12 (B-site)"));
+	alloyTypes()[ALLOY_B2]->setName(tr("B2"));
+	alloyTypes()[ALLOY_ZINCBLENDE_WURTZITE]->setName(tr("Zincblende/Wurtzite"));
 }
 
 /******************************************************************************
@@ -92,14 +110,14 @@ void PolyhedralTemplateMatchingModifier::propertyChanged(const PropertyFieldDesc
 Future<AsynchronousModifier::ComputeEnginePtr> PolyhedralTemplateMatchingModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	if(structureTypes().size() != NUM_STRUCTURE_TYPES)
-		throwException(tr("The number of structure types has changed. Please remove this modifier from the modification pipeline and insert it again."));
+		throwException(tr("The number of structure types has changed. Please remove this modifier from the data pipeline and insert it again."));
 
 	// Get modifier input.
 	ParticleInputHelper pih(dataset(), input);
 	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
 	SimulationCellObject* simCell = pih.expectSimulationCell();
 	if(simCell->is2D())
-		throwException(tr("The PTM modifier does not support 2d simulation cells."));
+		throwException(tr("The PTM modifier does not support 2D simulation cells."));
 
 	// Get particle selection.
 	ConstPropertyPtr selectionProperty;
@@ -329,7 +347,9 @@ PipelineFlowState PolyhedralTemplateMatchingModifier::PTMResults::apply(TimePoin
 		poh.outputProperty<ParticleProperty>(deformationGradients());
 	}
 	if(alloyTypes() && modifier->outputAlloyTypes()) {
-		poh.outputProperty<ParticleProperty>(alloyTypes());
+		ParticleProperty* alloyProperty = poh.outputProperty<ParticleProperty>(alloyTypes());
+		// Attach alloy types to output particle property.
+		alloyProperty->setElementTypes(modifier->alloyTypes());		
 	}
 
 	// Store the RMSD histogram in the ModifierApplication.
