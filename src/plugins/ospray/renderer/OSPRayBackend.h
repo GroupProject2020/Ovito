@@ -25,9 +25,11 @@
 #include <core/Core.h>
 #include <core/oo/RefTarget.h>
 
-// Foward declaration from OSPRay library:
+// Foward declarations from OSPRay library:
 namespace ospray { namespace cpp {
 	class Renderer;
+	class Material;
+	class Light;
 }}
 
 namespace Ovito { namespace OSPRay {
@@ -47,7 +49,13 @@ public:
 	OSPRayBackend(DataSet* dataset) : RefTarget(dataset) {}
 
 	/// Creates the OSPRay renderer object and configures it.
-	virtual ospray::cpp::Renderer createOSPRenderer() = 0;
+	virtual ospray::cpp::Renderer createOSPRenderer(const Color& backgroundColor) = 0;
+
+	/// Creates an OSPRay material.
+	virtual ospray::cpp::Material createOSPMaterial(const char* type) = 0;	
+
+	/// Creates an OSPRay light.
+	virtual ospray::cpp::Light createOSPLight(const char* type) = 0;	
 };
 
 /**
@@ -65,7 +73,13 @@ public:
 	Q_INVOKABLE OSPRaySciVisBackend(DataSet* dataset);
 
 	/// Creates the OSPRay renderer object and configures it.
-	virtual ospray::cpp::Renderer createOSPRenderer() override;
+	virtual ospray::cpp::Renderer createOSPRenderer(const Color& backgroundColor) override;
+
+	/// Creates an OSPRay material.
+	virtual ospray::cpp::Material createOSPMaterial(const char* type) override;	
+
+	/// Creates an OSPRay light.
+	virtual ospray::cpp::Light createOSPLight(const char* type) override;	
 	
 private:
 
@@ -94,8 +108,14 @@ public:
 	Q_INVOKABLE OSPRayPathTracerBackend(DataSet* dataset);
 
 	/// Creates the OSPRay renderer object and configures it.
-	virtual ospray::cpp::Renderer createOSPRenderer() override;
+	virtual ospray::cpp::Renderer createOSPRenderer(const Color& backgroundColor) override;
 	
+	/// Creates an OSPRay material.
+	virtual ospray::cpp::Material createOSPMaterial(const char* type) override;	
+
+	/// Creates an OSPRay light.
+	virtual ospray::cpp::Light createOSPLight(const char* type) override;	
+
 private:
 
 	/// Controls ray recursion depth at which to start Russian roulette termination.

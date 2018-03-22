@@ -279,10 +279,11 @@ bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask 
 				for(int x = xstart; x < xstop; x++, dst += 4, src += 4) {
 					// Compose colors ("source over" mode).
 					float srcAlpha = (float)src[3] / 255.0f;
+					float dstAlpha = (float)dst[3] / 255.0f;
 					float r = (1.0f - srcAlpha) * dst[2] + srcAlpha * src[0];
 					float g = (1.0f - srcAlpha) * dst[1] + srcAlpha * src[1];
 					float b = (1.0f - srcAlpha) * dst[0] + srcAlpha * src[2];
-					float a = (1.0f - srcAlpha) * dst[3] + srcAlpha * src[3];
+					float a = dst[3] + (1.0f - dstAlpha) * src[3];
 					dst[2] = (uchar)(qBound(0.0f, r, 255.0f));
 					dst[1] = (uchar)(qBound(0.0f, g, 255.0f));
 					dst[0] = (uchar)(qBound(0.0f, b, 255.0f));

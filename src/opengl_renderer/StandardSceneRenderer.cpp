@@ -135,15 +135,16 @@ bool StandardSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderin
 	glcontext()->swapBuffers(_offscreenSurface.data());
 
 	// Fetch rendered image from OpenGL framebuffer.
-    QImage bufferImage = _framebufferObject->toImage();
+	QImage bufferImage = _framebufferObject->toImage();
+	// We need it in ARGB32 format for best results.
+	QImage bufferImageArgb32(bufferImage.constBits(), bufferImage.width(), bufferImage.height(), QImage::Format_ARGB32);
+	// Rescale supersampled image to final size.
+	QImage scaledImage = bufferImageArgb32.scaled(frameBuffer->image().width(), frameBuffer->image().height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
 
-	// Scale it down to the output size.
-	QImage image = bufferImage.scaled(frameBuffer->width(), frameBuffer->height(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-
-	// Copy OpenGL image to the output frame buffer.
+	// Transfer OpenGL image to the output frame buffer.
 	{
 		QPainter painter(&frameBuffer->image());
-		painter.drawImage(0, 0, image);
+		painter.drawImage(painter.window(), scaledImage);
 	}
 	frameBuffer->update();
 

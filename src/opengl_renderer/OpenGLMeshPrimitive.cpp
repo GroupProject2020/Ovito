@@ -251,7 +251,7 @@ void OpenGLMeshPrimitive::render(SceneRenderer* renderer)
 		if(_hasAlpha) {
 			vpRenderer->glEnable(GL_BLEND);
 			vpRenderer->glBlendEquation(GL_FUNC_ADD);
-			vpRenderer->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
+			vpRenderer->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE_MINUS_DST_COLOR, GL_ONE);
 		}
 		_vertexBuffer.bindColors(vpRenderer, shader, 4, offsetof(ColoredVertexWithNormal, color));
 		_vertexBuffer.bindNormals(vpRenderer, shader, offsetof(ColoredVertexWithNormal, normal));

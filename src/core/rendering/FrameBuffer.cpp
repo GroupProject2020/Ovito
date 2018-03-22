@@ -30,6 +30,16 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
 #define IMAGE_FORMAT_FILE_FORMAT_VERSION		1
 
 /******************************************************************************
+* Constructor.
+******************************************************************************/
+FrameBuffer::FrameBuffer(int width, int height, QObject* parent) : QObject(parent), _image(width, height, QImage::Format_ARGB32) 
+{
+	_info.setImageWidth(width);
+	_info.setImageHeight(height);
+	clear();
+}
+
+/******************************************************************************
 * Detects the file format based on the filename suffix.
 ******************************************************************************/
 bool ImageInfo::guessFormatFromFilename()

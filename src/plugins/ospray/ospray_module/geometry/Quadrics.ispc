@@ -264,7 +264,7 @@ export void QuadricsGeometry_set(void  *uniform _self
   
   self->super.model = model;
   self->super.geomID = geomID;
-  self->super.primitives = numQuadrics;
+  self->super.numPrimitives = numQuadrics;
   self->materialList = (Material **)materialList;
   self->texcoord = texcoord;
   self->color = (uint8 *uniform)color;

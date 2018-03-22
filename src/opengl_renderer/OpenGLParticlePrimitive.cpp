@@ -711,7 +711,7 @@ void OpenGLParticlePrimitive::renderBoxes(OpenGLSceneRenderer* renderer)
 	if(!renderer->isPicking() && translucentParticles()) {
 		renderer->glEnable(GL_BLEND);
 		renderer->glBlendEquation(GL_FUNC_ADD);
-		renderer->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
+		renderer->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE_MINUS_DST_COLOR, GL_ONE);
 	}
 
 	GLint pickingBaseID = 0;

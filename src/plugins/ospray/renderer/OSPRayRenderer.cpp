@@ -31,6 +31,10 @@
 #include "OSPRayRenderer.h"
 
 #include <ospray/ospray_cpp.h>
+#include <ospray/version.h>
+#if QT_VERSION_CHECK(OSPRAY_VERSION_MAJOR, OSPRAY_VERSION_MINOR, OSPRAY_VERSION_PATCH) < QT_VERSION_CHECK(1,5,0)
+	#error "OVITO requires OSPRay version 1.5.0 or newer."
+#endif
 #include <render/LoadBalancer.h>
 #include <ospcommon/tasking/parallel_for.h>
 
@@ -138,14 +142,14 @@ bool OSPRayRenderer::startRender(DataSet* dataset, RenderSettings* settings)
 
 		// Restore previous state.
 		QDir::setCurrent(oldWDir.absolutePath());
+
+		// Use only the number of parallel rendering threads allowed by the user. 
+		ospDeviceSet1i(device, "numThreads", Application::instance()->idealThreadCount());
+		ospDeviceCommit(device);
+
+		// Activate OSPRay device.
+		ospSetCurrentDevice(device);
 	}
-
-	// Use only the number of parallel rendering threads allowed by the user. 
-	ospDeviceSet1i(device, "numThreads", Application::instance()->idealThreadCount());
-	ospDeviceCommit(device);
-
-	// Activate OSPRay device.
-	ospSetCurrentDevice(device);
 
 	return true;
 }
@@ -167,8 +171,7 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 		imgSize.y = renderSettings()->outputImageHeight();
 
 		// Make sure the target frame buffer has the right memory format.
-		if(frameBuffer->image().format() != QImage::Format_ARGB32)
-			frameBuffer->image() = frameBuffer->image().convertToFormat(QImage::Format_ARGB32);
+		OVITO_ASSERT(frameBuffer->image().format() == QImage::Format_ARGB32);
 
 		// Make a copy of the original frame buffer contents, because we are going to paint repeatedly on top
 		// of the buffer.
@@ -213,11 +216,11 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 		camera.commit();
 
 		// Create OSPRay renderer
-		OSPReferenceWrapper<ospray::cpp::Renderer> renderer{backend()->createOSPRenderer()};
+		OSPReferenceWrapper<ospray::cpp::Renderer> renderer{backend()->createOSPRenderer(renderSettings()->backgroundColor())};
 		_ospRenderer = &renderer;
 
 		// Create standard material.
-		OSPReferenceWrapper<ospray::cpp::Material> material{renderer.newMaterial("OBJMaterial")};
+		OSPReferenceWrapper<ospray::cpp::Material> material{backend()->createOSPMaterial("OBJMaterial")};
 		material.set("Ns", materialShininess());
 		material.set("Ks", materialSpecularBrightness(), materialSpecularBrightness(), materialSpecularBrightness());
 		material.commit();
@@ -233,7 +236,7 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 		// Create direct light.
 		std::vector<OSPReferenceWrapper<ospray::cpp::Light>> lightSources;
 		if(directLightSourceEnabled()) {
-			OSPReferenceWrapper<ospray::cpp::Light> light{renderer.newLight("distant")};
+			OSPReferenceWrapper<ospray::cpp::Light> light{backend()->createOSPLight("distant")};
 			Vector3 lightDir = projParams().inverseViewMatrix * Vector3(0.2f,-0.2f,-1.0f);
 			light.set("direction", lightDir.x(), lightDir.y(), lightDir.z());
 			light.set("intensity", defaultLightSourceIntensity());
@@ -244,7 +247,7 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 
 		// Create and setup ambient light source.
 		if(ambientLightEnabled()) {
-			OSPReferenceWrapper<ospray::cpp::Light> light{renderer.newLight("ambient")};
+			OSPReferenceWrapper<ospray::cpp::Light> light{backend()->createOSPLight("ambient")};
 			light.set("intensity", ambientBrightness());
 			lightSources.push_back(std::move(light));
 		}
@@ -296,7 +299,7 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 #else
 					ospray::Tile __aligned(64) tile(tileID, fb->size, accumID);
 #endif
-					ospray::tasking::parallel_for(numJobs(renderer->spp, accumID), [&](int tIdx) {
+					ospray::tasking::parallel_for(numJobs(renderer->spp, accumID), [&](size_t tIdx) {
 						renderer->renderTile(perFrameData, tile, tIdx);
 					});
 					fb->setTile(tile);

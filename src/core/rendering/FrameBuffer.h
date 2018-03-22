@@ -115,11 +115,7 @@ public:
 	FrameBuffer(QObject* parent = nullptr) : QObject(parent) {}
 
 	/// Constructor.
-	FrameBuffer(int width, int height, QObject* parent = nullptr) : QObject(parent), _image(width, height, QImage::Format_ARGB32) {
-		_info.setImageWidth(width);
-		_info.setImageHeight(height);
-		clear();
-	}
+	FrameBuffer(int width, int height, QObject* parent = nullptr);
 
 	/// Returns the internal QImage that is used to store the pixel data.
 	QImage& image() { return _image; }

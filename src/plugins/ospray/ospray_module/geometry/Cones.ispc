@@ -277,7 +277,7 @@ export void ConesGeometry_set(void  *uniform _self
   
   self->super.model = model;
   self->super.geomID = geomID;
-  self->super.primitives = numCones;
+  self->super.numPrimitives = numCones;
   self->materialList = (Material **)materialList;
   self->texcoord = texcoord;
   self->color = (uint8 *uniform)color;
