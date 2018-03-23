@@ -149,9 +149,12 @@ cmake -DCMAKE_INSTALL_PREFIX=$HOME/progs/ospray_install \
       ..
 make -j4 install
 cd ../../ospray_install/lib
-install_name_tool -id $PWD/libospray.1.4.1.dylib libospray.1.4.1.dylib
+install_name_tool -id $PWD/libospray.1.5.0.dylib libospray.1.5.0.dylib
 install_name_tool -id $PWD/libospray_common.0.dylib libospray_common.0.dylib
+install_name_tool -id $PWD/libospray_module_ispc.0.dylib libospray_module_ispc.dylib
 install_name_tool -change @rpath/libospray_common.0.dylib $PWD/libospray_common.0.dylib libospray.dylib
+install_name_tool -change @rpath/libospray_common.0.dylib $PWD/libospray_common.0.dylib libospray_module_ispc.dylib
+install_name_tool -change @rpath/libospray.0.dylib $PWD/libospray.0.dylib libospray_module_ispc.dylib
 
 **************************************************************************
 Build OVITO:
@@ -172,7 +175,7 @@ cmake -DOVITO_BUILD_DOCUMENTATION=ON \
       -DQSCINTILLA_LIBRARY=$HOME/progs/QScintilla_gpl-2.10.2/Qt4Qt5/libqscintilla2_qt5.dylib \
       -DnetCDF_DIR=$HOME/progs/netcdf/lib/cmake/netCDF \
       -DOVITO_BUILD_PLUGIN_OSPRAY=ON \
-      -Dospray_DIR=$HOME/progs/ospray_install/lib/cmake/ospray-1.4.1 \
+      -Dospray_DIR=$HOME/progs/ospray_install/lib/cmake/ospray-1.5.0 \
 	  -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-2.17.0 \
       -DISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-osx/ispc \
 	  -DTBB_ROOT=$HOME/progs/tbb2018_20170919oss \
