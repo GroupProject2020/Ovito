@@ -55,13 +55,14 @@ bool StructureIdentificationModifier::OOMetaClass::isApplicableTo(const Pipeline
 /******************************************************************************
 * Create an instance of the ParticleType class to represent a structure type.
 ******************************************************************************/
-void StructureIdentificationModifier::createStructureType(int id, ParticleType::PredefinedStructureType predefType)
+ParticleType* StructureIdentificationModifier::createStructureType(int id, ParticleType::PredefinedStructureType predefType)
 {
 	OORef<ParticleType> stype(new ParticleType(dataset()));
 	stype->setId(id);
 	stype->setName(ParticleType::getPredefinedStructureTypeName(predefType));
 	stype->setColor(ParticleType::getDefaultParticleColor(ParticleProperty::StructureTypeProperty, stype->name(), id));
 	addStructureType(stype);
+	return stype;
 }
 
 /******************************************************************************

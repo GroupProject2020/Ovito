@@ -17,8 +17,8 @@
     </imageobject></mediaobject></screenshot></informalfigure>
 
   This modifier classifies the local structural environment of particles
-  using the <emphasis>Polyhedral Template Matching</emphasis> (PTM) method [<link
-  xlink:href="https://dx.doi.org/10.1088/0965-0393/24/5/055007">P.M. Larsen et al., Modelling Simul. Mater. Sci. Eng. 24, 055007</link>]
+  using the <emphasis>Polyhedral Template Matching</emphasis> (PTM) method of P. M. Larsen et al. [<link
+  xlink:href="https://dx.doi.org/10.1088/0965-0393/24/5/055007">Modelling Simul. Mater. Sci. Eng. 24, 055007</link>]
   and allows identifying the local crystalline structure of simple condensed phases.
   A preprint of the PTM paper is available <link xlink:href="http://arxiv.org/abs/1603.05143">here</link>.
   </para>
@@ -26,7 +26,7 @@
   <para>
   The PTM approach promises greater reliability than e.g. <link linkend="particles.modifiers.common_neighbor_analysis">Common Neighbor Analysis (CNA)</link> in the 
   presence of strong thermal fluctuations and strains. Furthermore, it provides a direct calculation of the local (per-atom) crystal orientation, elastic deformation, 
-  strain and alloy type.
+  strain and chemical ordering type.
   </para>
 
   <para>
@@ -69,8 +69,8 @@
   </itemizedlist>
   </para>
     <para>
-      The set of structural types to be identified by the algorithm can be specified using the corresponding tick boxes in the type list.
-      By default, the modifier will try to find all listed structure types.
+      By default, the modifier will try to identify only the following structure types: FCC, HCP, BCC.
+      Using the tick boxes in the list, you can specify the set of structural types the modifier should look for.
     </para>
 
   <simplesect>
@@ -97,7 +97,7 @@
   </simplesect>
 
   <simplesect>
-    <title>Interatomic distance</title>
+    <title>Interatomic distances</title>
     <para>
       The internal scale factor computed by the PTM method (see the paper) is the amount by which the atom coordinates are scaled in order to minimize the RMSD between the atom and template coordinates, 
       after translation and rotation. It is proportional to the reciprocal local interatomic distance (including hydrostatic strain components).
@@ -111,7 +111,7 @@
   </simplesect>
 
   <simplesect>
-    <title>Local lattice orientation</title>
+    <title>Local lattice orientations</title>
     <para>
      The PTM modifier can calculate the local lattice orientation for atoms that match one of the structural types. The computed orientation is stored
      as a quaternion in the <literal>Orientation</literal> particle property. 
@@ -125,7 +125,7 @@
   </simplesect>
 
   <simplesect>
-    <title>Elastic deformation gradient</title>
+    <title>Elastic deformation gradients</title>
     <para>
       The local elastic deformation gradient is calculated as the affine transformation of the ideal template which minimizes the sum of squared distances 
       from the actual atomic coordinates. 
@@ -133,19 +133,19 @@
   </simplesect>
 
   <simplesect>
-    <title>Alloy structures</title>
+    <title>Ordering types</title>
     <para>
-      Atom types are generally ignored by the PTM when identifying the <emphasis>structural</emphasis> type (e.g. FCC, BCC, etc.). However, the algorithm can additionally      
-      identify the local <emphasis>alloy</emphasis> type by taking into account the chemical species of atoms (given by the <literal>Particle Type</literal> property, which must be defined).
-      The binary alloy types currently identified by the PTM algorithm are A2 and B2 for BCC; 
+      The chemical types of atoms are generally ignored by the PTM when identifying the <emphasis>structural</emphasis> phases (e.g. FCC, BCC, etc.). However, the algorithm can additionally      
+      identify the local chemical ordering type by taking into account the species of atoms (given by the values of the <literal>Particle Type</literal> property, which must be defined).
+      The binary ordering types identified by the current version of the PTM algorithm are A2 and B2 for BCC; 
       A1, L1<subscript>0</subscript> and L1<subscript>2</subscript> for FCC; zinblende for cubic diamond; and wurtzite for hexagonal diamond structures.
     </para>
     <para>
-      The local alloy type is output as an additional particle property named <literal>Alloy Type</literal> with the following values:
+      The local ordering type is output as an additional particle property named <literal>Ordering Type</literal> with the following values:
     <itemizedlist>
   
     <listitem>
-      <para>0 = Other, unknown alloy type</para>
+      <para>0 = Other, unknown or no ordering</para>
     </listitem>
   
     <listitem>
@@ -173,14 +173,14 @@
     </listitem>
     
   </itemizedlist>
-    The algorithm determines the alloy type of a lattice atom by comparing the types of its neighbors to its own type. See the paper for details.
+    The algorithm determines the ordering type at a lattice atom by comparing the types of its neighbors to the type of the central atom. See the paper for details.
     You can subsequently use the <link linkend="particles.modifiers.expression_select">Expression selection</link> modifier to select atoms of a
-    certain alloy type to give them a distinct color, for example.
+    certain structural type and a certain ordering type to give them a distinct color, for example.
     </para>
   </simplesect>
 
-    <simplesect>
-    <title>Notes</title>  
+  <simplesect>
+  <title>Notes</title>  
   <para>
     In addition to the PTM, OVITO provides alternative structure identification tools 
     like the <link linkend="particles.modifiers.common_neighbor_analysis">Common Neighbor Analysis</link> modifier or the 

@@ -1046,9 +1046,11 @@ void defineModifiersSubmodule(py::module m)
 	;
 
 	auto PolyhedralTemplateMatchingModifier_py = ovito_class<PolyhedralTemplateMatchingModifier, StructureIdentificationModifier>(m,
-			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
+			":Base class: :py:class:`ovito.pipeline.Modifier`"
+			"\n\n"
 			"Uses the Polyhedral Template Matching (PTM) method to classify the local structural neighborhood "
-			"of each particle. "
+			"of each particle. Additionally, the modifier can compute local orientations, elastic lattice strains and identify "
+			"local chemical ordering. "
 			"\n\n"
 			"The modifier stores its results as integer values in the ``\"Structure Type\"`` particle property. "
 			"The following constants are defined: "
@@ -1095,63 +1097,65 @@ void defineModifiersSubmodule(py::module m)
 			" * ``Elastic Deformation Gradient`` (:py:class:`~ovito.data.ParticleProperty`):\n"
 			"   This particle property will contain the local elastic deformation gradient tensors computed by the PTM method.\n"
 			"   The modifier will output this property only if the :py:attr:`.output_deformation_gradient` flag is set.\n"
-			" * ``Alloy Type`` (:py:class:`~ovito.data.ParticleProperty`):\n"
-			"   This output particle property contains the alloy type assigned to particles by the modifier.\n"
-			"   (only if the :py:attr:`.output_alloy_types` flag is set).\n"
-			"   The alloy types get stored as integer values in the ``\"Alloy Type\"`` particle property. "
-			"   The following alloy type constants are defined: "
+			" * ``Ordering Type`` (:py:class:`~ovito.data.ParticleProperty`):\n"
+			"   This output particle property contains the compound ordering types assigned to particles by the modifier \n"
+			"   (only if the :py:attr:`.output_ordering` flag is set).\n"
+			"   The ordering types are encoded as integer values in the ``\"Ordering Type\"`` particle property. "
+			"   The following type constants are defined: "
 			"\n\n"
-			"      * ``PolyhedralTemplateMatchingModifier.AlloyType.NONE`` (0)\n"
-			"      * ``PolyhedralTemplateMatchingModifier.AlloyType.PURE`` (1)\n"
-			"      * ``PolyhedralTemplateMatchingModifier.AlloyType.L10`` (2)\n"
-			"      * ``PolyhedralTemplateMatchingModifier.AlloyType.L12_A`` (3)\n"
-			"      * ``PolyhedralTemplateMatchingModifier.AlloyType.L12_B`` (4)\n"
-			"      * ``PolyhedralTemplateMatchingModifier.AlloyType.B2`` (5)\n"
-			"      * ``PolyhedralTemplateMatchingModifier.AlloyType.ZINCBLENDE_WURTZITE`` (6)\n"
+			"      * ``PolyhedralTemplateMatchingModifier.OrderingType.NONE`` (0)\n"
+			"      * ``PolyhedralTemplateMatchingModifier.OrderingType.PURE`` (1)\n"
+			"      * ``PolyhedralTemplateMatchingModifier.OrderingType.L10`` (2)\n"
+			"      * ``PolyhedralTemplateMatchingModifier.OrderingType.L12_A`` (3)\n"
+			"      * ``PolyhedralTemplateMatchingModifier.OrderingType.L12_B`` (4)\n"
+			"      * ``PolyhedralTemplateMatchingModifier.OrderingType.B2`` (5)\n"
+			"      * ``PolyhedralTemplateMatchingModifier.OrderingType.ZINCBLENDE_WURTZITE`` (6)\n"
 			" * ``Color`` (:py:class:`~ovito.data.ParticleProperty`):\n"
 			"   The modifier assigns a color to each particle based on its identified structure type. "
-			"   You can change the color representing a structural type as follows::"
-			"\n\n"
-			"      modifier = PolyhedralTemplateMatchingModifier()\n"
-			"      # Give all FCC atoms a blue color:\n"
-			"      modifier.structures[PolyhedralTemplateMatchingModifier.Type.FCC].color = (0.0, 0.0, 1.0)\n"
-			"\n")
+			"   See the :py:attr:`structures` list for how to change the display color of a structural type. ")
 		.def_property("rmsd_cutoff", &PolyhedralTemplateMatchingModifier::rmsdCutoff, &PolyhedralTemplateMatchingModifier::setRmsdCutoff,
 				"The maximum allowed root mean square deviation for positive structure matches. "
-				"If the cutoff is non-zero, template matches that yield a RMSD value above the cutoff are classified as \"Other\". "
+				"If the this threshold value is non-zero, template matches that yield a RMSD value above the cutoff are classified as \"Other\". "
 				"This can be used to filter out spurious template matches (false positives). "
 				"\n\n"
-				"If this parameter is zero, no cutoff is applied."
-				"\n\n"
-				":Default: 0.0\n")
+				":Default: 0.1\n")
 		.def_property("only_selected", &PolyhedralTemplateMatchingModifier::onlySelectedParticles, &PolyhedralTemplateMatchingModifier::setOnlySelectedParticles,
-				"Lets the modifier perform the analysis only on the basis of currently selected particles. Unselected particles will be treated as if they did not exist."
+				"Lets the modifier perform the analysis only on the basis of currently selected particles. Unselected particles will be treated as if they did not exist "
+				"and will all be assigned to the \"Other\" structure category. "
 				"\n\n"
 				":Default: ``False``\n")
 		.def_property("output_rmsd", &PolyhedralTemplateMatchingModifier::outputRmsd, &PolyhedralTemplateMatchingModifier::setOutputRmsd,
-				"Boolean flag that controls whether the modifier outputs the computed per-particle RMSD values to the pipeline."
+				"Boolean flag that controls whether the modifier outputs the computed per-particle RMSD values as a new particle property named ``RMSD``."
 				"\n\n"
 				":Default: ``False``\n")
 		.def_property("output_interatomic_distance", &PolyhedralTemplateMatchingModifier::outputInteratomicDistance, &PolyhedralTemplateMatchingModifier::setOutputInteratomicDistance,
-				"Boolean flag that controls whether the modifier outputs the computed per-particle interatomic distance to the pipeline."
+				"Boolean flag that controls whether the modifier outputs the computed per-particle interatomic distance as a new particle property named ``Interatomic Distance``."
 				"\n\n"
 				":Default: ``False``\n")
 		.def_property("output_orientation", &PolyhedralTemplateMatchingModifier::outputOrientation, &PolyhedralTemplateMatchingModifier::setOutputOrientation,
-				"Boolean flag that controls whether the modifier outputs the computed per-particle lattice orientation to the pipeline."
+				"Boolean flag that controls whether the modifier outputs the computed per-particle lattice orientations as a new particle property named ``Orientation``. "
+				"The lattice orientation is specified in terms of a quaternion that describes the rotation of the crystal with repect to a reference lattice orientation. "
+				"See the OVITO user manual for details. "
 				"\n\n"
 				":Default: ``False``\n")
 		.def_property("output_deformation_gradient", &PolyhedralTemplateMatchingModifier::outputDeformationGradient, &PolyhedralTemplateMatchingModifier::setOutputDeformationGradient,
-				"Boolean flag that controls whether the modifier outputs the computed per-particle elastic deformation gradients to the pipeline."
+				"Boolean flag that controls whether the modifier outputs the computed per-particle elastic deformation gradients as a new particle property named ``Elastic Deformation Gradient``."
+				"The elastic deformation gradient describes the local deformation and rigid-body rotation of the crystal with repect to an ideal reference lattice configuration. "
+				"See the OVITO user manual for details. "
 				"\n\n"
 				":Default: ``False``\n")
-		.def_property("output_alloy_types", &PolyhedralTemplateMatchingModifier::outputAlloyTypes, &PolyhedralTemplateMatchingModifier::setOutputAlloyTypes,
-				"Boolean flag that controls whether the modifier identifies localalloy types and outputs them to the pipeline."
+		.def_property("output_ordering", &PolyhedralTemplateMatchingModifier::outputOrderingTypes, &PolyhedralTemplateMatchingModifier::setOutputOrderingTypes,
+				"Boolean flag that controls whether the modifier should identify local ordering types and output them as a new particle property named ``Ordering Type``. "
 				"\n\n"
 				":Default: ``False``\n")
 	;
 	expose_subobject_list(PolyhedralTemplateMatchingModifier_py, std::mem_fn(&PolyhedralTemplateMatchingModifier::structureTypes), "structures", "PolyhedralTemplateMatchingStructureTypeList",
-		"A list of :py:class:`~ovito.data.ParticleType` instances managed by this modifier, one for each structural type. "
-		"You can adjust the color of structural types as shown in the code example above.");
+		"This list contains one :py:class:`~ovito.data.ParticleType` instance each for structural type the modifier can identify. "
+		"You can adjust the display color of a structural type as shown in the code example below and turn the identification "
+		"of individual types on or off: "
+		"\n\n"
+		".. literalinclude:: ../example_snippets/polyhedral_template_matching.py\n"
+		"   :lines: 5-\n");
 	
 	ovito_class<PolyhedralTemplateMatchingModifierApplication, StructureIdentificationModifierApplication>{m};
 
@@ -1166,14 +1170,14 @@ void defineModifiersSubmodule(py::module m)
 		.value("HEX_DIAMOND", PolyhedralTemplateMatchingModifier::HEX_DIAMOND)
 	;
 
-	py::enum_<PolyhedralTemplateMatchingModifier::AlloyType>(PolyhedralTemplateMatchingModifier_py, "AlloyType")
-		.value("NONE", PolyhedralTemplateMatchingModifier::ALLOY_NONE)
-		.value("PURE", PolyhedralTemplateMatchingModifier::ALLOY_PURE)
-		.value("L10", PolyhedralTemplateMatchingModifier::ALLOY_L10)
-		.value("L12_A", PolyhedralTemplateMatchingModifier::ALLOY_L12_A)
-		.value("L12_B", PolyhedralTemplateMatchingModifier::ALLOY_L12_B)
-		.value("B2", PolyhedralTemplateMatchingModifier::ALLOY_B2)
-		.value("ZINCBLENDE_WURTZITE", PolyhedralTemplateMatchingModifier::ALLOY_ZINCBLENDE_WURTZITE)
+	py::enum_<PolyhedralTemplateMatchingModifier::OrderingType>(PolyhedralTemplateMatchingModifier_py, "OrderingType")
+		.value("NONE", PolyhedralTemplateMatchingModifier::ORDERING_NONE)
+		.value("PURE", PolyhedralTemplateMatchingModifier::ORDERING_PURE)
+		.value("L10", PolyhedralTemplateMatchingModifier::ORDERING_L10)
+		.value("L12_A", PolyhedralTemplateMatchingModifier::ORDERING_L12_A)
+		.value("L12_B", PolyhedralTemplateMatchingModifier::ORDERING_L12_B)
+		.value("B2", PolyhedralTemplateMatchingModifier::ORDERING_B2)
+		.value("ZINCBLENDE_WURTZITE", PolyhedralTemplateMatchingModifier::ORDERING_ZINCBLENDE_WURTZITE)
 	;
 
 	ovito_class<CoordinationPolyhedraModifier, AsynchronousModifier>(m,

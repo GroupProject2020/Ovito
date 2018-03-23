@@ -40,15 +40,15 @@ DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputRmsd);
 DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputInteratomicDistance);
 DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputOrientation);
 DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputDeformationGradient);
-DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputAlloyTypes);
-DEFINE_REFERENCE_FIELD(PolyhedralTemplateMatchingModifier, alloyTypes);
+DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputOrderingTypes);
+DEFINE_REFERENCE_FIELD(PolyhedralTemplateMatchingModifier, orderingTypes);
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, rmsdCutoff, "RMSD cutoff");
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputRmsd, "Output RMSD values");
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputInteratomicDistance, "Output interatomic distance");
-SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputOrientation, "Output orientations");
+SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputOrientation, "Output lattice orientations");
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputDeformationGradient, "Output deformation gradients");
-SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputAlloyTypes, "Output alloy types");
-SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, alloyTypes, "Alloy types");
+SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputOrderingTypes, "Output ordering types");
+SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, orderingTypes, "Ordering types");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(PolyhedralTemplateMatchingModifier, rmsdCutoff, FloatParameterUnit, 0);
 
 IMPLEMENT_OVITO_CLASS(PolyhedralTemplateMatchingModifierApplication);
@@ -58,38 +58,38 @@ SET_MODIFIER_APPLICATION_TYPE(PolyhedralTemplateMatchingModifier, PolyhedralTemp
 * Constructs the modifier object.
 ******************************************************************************/
 PolyhedralTemplateMatchingModifier::PolyhedralTemplateMatchingModifier(DataSet* dataset) : StructureIdentificationModifier(dataset),
-		_rmsdCutoff(0), 
+		_rmsdCutoff(0.1), 
 		_outputRmsd(false), 
 		_outputInteratomicDistance(false),
 		_outputOrientation(false), 
 		_outputDeformationGradient(false), 
-		_outputAlloyTypes(false)
+		_outputOrderingTypes(false)
 {
 	// Define the structure types.
 	createStructureType(OTHER, ParticleType::PredefinedStructureType::OTHER);
 	createStructureType(FCC, ParticleType::PredefinedStructureType::FCC);
 	createStructureType(HCP, ParticleType::PredefinedStructureType::HCP);
 	createStructureType(BCC, ParticleType::PredefinedStructureType::BCC);
-	createStructureType(ICO, ParticleType::PredefinedStructureType::ICO);
-	createStructureType(SC, ParticleType::PredefinedStructureType::SC);
-	createStructureType(CUBIC_DIAMOND, ParticleType::PredefinedStructureType::CUBIC_DIAMOND);
-	createStructureType(HEX_DIAMOND, ParticleType::PredefinedStructureType::HEX_DIAMOND);
+	createStructureType(ICO, ParticleType::PredefinedStructureType::ICO)->setEnabled(false);
+	createStructureType(SC, ParticleType::PredefinedStructureType::SC)->setEnabled(false);
+	createStructureType(CUBIC_DIAMOND, ParticleType::PredefinedStructureType::CUBIC_DIAMOND)->setEnabled(false);
+	createStructureType(HEX_DIAMOND, ParticleType::PredefinedStructureType::HEX_DIAMOND)->setEnabled(false);
 
-	// Define the alloy types.
-	for(int id = 0; id < NUM_ALLOY_TYPES; id++) {
-		OORef<ParticleType> atype = new ParticleType(dataset);
-		atype->setId(id);
-		atype->setColor({0.75f, 0.75f, 0.75f});
-		_alloyTypes.push_back(this, PROPERTY_FIELD(alloyTypes), std::move(atype));	
+	// Define the ordering types.
+	for(int id = 0; id < NUM_ORDERING_TYPES; id++) {
+		OORef<ParticleType> otype = new ParticleType(dataset);
+		otype->setId(id);
+		otype->setColor({0.75f, 0.75f, 0.75f});
+		_orderingTypes.push_back(this, PROPERTY_FIELD(orderingTypes), std::move(otype));	
 	}
-	alloyTypes()[ALLOY_NONE]->setColor({0.95f, 0.95f, 0.95f});
-	alloyTypes()[ALLOY_NONE]->setName(tr("Other"));
-	alloyTypes()[ALLOY_PURE]->setName(tr("Pure"));
-	alloyTypes()[ALLOY_L10]->setName(tr("L10"));
-	alloyTypes()[ALLOY_L12_A]->setName(tr("L12 (A-site)"));
-	alloyTypes()[ALLOY_L12_B]->setName(tr("L12 (B-site)"));
-	alloyTypes()[ALLOY_B2]->setName(tr("B2"));
-	alloyTypes()[ALLOY_ZINCBLENDE_WURTZITE]->setName(tr("Zincblende/Wurtzite"));
+	orderingTypes()[ORDERING_NONE]->setColor({0.95f, 0.95f, 0.95f});
+	orderingTypes()[ORDERING_NONE]->setName(tr("Other"));
+	orderingTypes()[ORDERING_PURE]->setName(tr("Pure"));
+	orderingTypes()[ORDERING_L10]->setName(tr("L10"));
+	orderingTypes()[ORDERING_L12_A]->setName(tr("L12 (A-site)"));
+	orderingTypes()[ORDERING_L12_B]->setName(tr("L12 (B-site)"));
+	orderingTypes()[ORDERING_B2]->setName(tr("B2"));
+	orderingTypes()[ORDERING_ZINCBLENDE_WURTZITE]->setName(tr("Zincblende/Wurtzite"));
 }
 
 /******************************************************************************
@@ -124,9 +124,9 @@ Future<AsynchronousModifier::ComputeEnginePtr> PolyhedralTemplateMatchingModifie
 	if(onlySelectedParticles())
 		selectionProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty)->storage();
 
-	// Get particle types.
+	// Get particle types if needed.
 	ConstPropertyPtr typeProperty;
-	if(outputAlloyTypes())
+	if(outputOrderingTypes())
 		typeProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::TypeProperty)->storage();
 
 	// Initialize PTM library.
@@ -134,7 +134,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> PolyhedralTemplateMatchingModifie
 
 	return std::make_shared<PTMEngine>(posProperty->storage(), std::move(typeProperty), simCell->data(),
 			getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty),
-			outputInteratomicDistance(), outputOrientation(), outputDeformationGradient(), outputAlloyTypes());
+			outputInteratomicDistance(), outputOrientation(), outputDeformationGradient(), outputOrderingTypes());
 }
 
 /******************************************************************************
@@ -192,8 +192,8 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 				points[i+1][2] = neighQuery.results()[i].delta.z();
 			}
 
-			// Build list of particle types for alloy structure identification.
-			if(_results->alloyTypes()) {
+			// Build list of particle types for ordering identification.
+			if(_results->orderingTypes()) {
 				atomTypes[0] = _particleTypes->getInt(index);
 				for(int i = 0; i < numNeighbors; i++) {
 					atomTypes[i + 1] = _particleTypes->getInt(neighQuery.results()[i].index);
@@ -222,7 +222,7 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 			double rmsd;
 			double q[4];
 			double F[9], F_res[3];
-			ptm_index(ptm_local_handle, flags, numNeighbors + 1, points, _results->alloyTypes() ? atomTypes : nullptr, true,
+			ptm_index(ptm_local_handle, flags, numNeighbors + 1, points, _results->orderingTypes() ? atomTypes : nullptr, true,
 					&type, &alloy_type, &scale, &rmsd, q,
 					_results->deformationGradients() ? F : nullptr,
 					_results->deformationGradients() ? F_res : nullptr,
@@ -251,8 +251,8 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 						_results->deformationGradients()->setFloatComponent(index, j, (FloatType)F[j]);
 				}
 			}
-			if(_results->alloyTypes())
-				_results->alloyTypes()->setInt(index, alloy_type);
+			if(_results->orderingTypes())
+				_results->orderingTypes()->setInt(index, alloy_type);
 		}
 
 		// Release thread-local storage of PTM routine.
@@ -346,10 +346,10 @@ PipelineFlowState PolyhedralTemplateMatchingModifier::PTMResults::apply(TimePoin
 	if(deformationGradients() && modifier->outputDeformationGradient()) {
 		poh.outputProperty<ParticleProperty>(deformationGradients());
 	}
-	if(alloyTypes() && modifier->outputAlloyTypes()) {
-		ParticleProperty* alloyProperty = poh.outputProperty<ParticleProperty>(alloyTypes());
-		// Attach alloy types to output particle property.
-		alloyProperty->setElementTypes(modifier->alloyTypes());		
+	if(orderingTypes() && modifier->outputOrderingTypes()) {
+		ParticleProperty* orderingProperty = poh.outputProperty<ParticleProperty>(orderingTypes());
+		// Attach ordering types to output particle property.
+		orderingProperty->setElementTypes(modifier->orderingTypes());		
 	}
 
 	// Store the RMSD histogram in the ModifierApplication.

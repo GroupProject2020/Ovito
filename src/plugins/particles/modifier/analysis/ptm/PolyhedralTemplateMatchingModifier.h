@@ -65,19 +65,19 @@ public:
 	};
 	Q_ENUMS(StructureType);
 
-	/// The alloy types recognized by the PTM library.
-	enum AlloyType {
-		ALLOY_NONE = 0,
-		ALLOY_PURE = 1,
-		ALLOY_L10 = 2,
-		ALLOY_L12_A = 3,
-		ALLOY_L12_B = 4,
-		ALLOY_B2 = 5,
-		ALLOY_ZINCBLENDE_WURTZITE = 6,
+	/// The lattice ordering types recognized by the PTM library.
+	enum OrderingType {
+		ORDERING_NONE = 0,
+		ORDERING_PURE = 1,
+		ORDERING_L10 = 2,
+		ORDERING_L12_A = 3,
+		ORDERING_L12_B = 4,
+		ORDERING_B2 = 5,
+		ORDERING_ZINCBLENDE_WURTZITE = 6,
 
-		NUM_ALLOY_TYPES 	//< This just counts the number of defined alloy types.
+		NUM_ORDERING_TYPES 	//< This just counts the number of defined ordering types.
 	};
-	Q_ENUMS(AlloyType);
+	Q_ENUMS(OrderingType);
 
 public:
 
@@ -108,13 +108,13 @@ private:
 	public:
 
 		/// Constructor.
-		PTMResults(size_t particleCount, bool outputInteratomicDistance, bool outputOrientation, bool outputDeformationGradient, bool outputAlloyTypes) :
+		PTMResults(size_t particleCount, bool outputInteratomicDistance, bool outputOrientation, bool outputDeformationGradient, bool outputOrderingTypes) :
 			StructureIdentificationResults(particleCount),
 			_rmsd(std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Float, 1, 0, tr("RMSD"), false)),
 			_interatomicDistances(outputInteratomicDistance ? std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Float, 1, 0, tr("Interatomic Distance"), true) : nullptr),
 			_orientations(outputOrientation ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::OrientationProperty, true) : nullptr),
 			_deformationGradients(outputDeformationGradient ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::ElasticDeformationGradientProperty, true) : nullptr),
-			_alloyTypes(outputAlloyTypes ? std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Int, 1, 0, tr("Alloy Type"), true) : nullptr) {}
+			_orderingTypes(outputOrderingTypes ? std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Int, 1, 0, tr("Ordering Type"), true) : nullptr) {}
 
 		/// Injects the computed results into the data pipeline.
 		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
@@ -123,7 +123,7 @@ private:
 		const PropertyPtr& interatomicDistances() const { return _interatomicDistances; }
 		const PropertyPtr& orientations() const { return _orientations; }
 		const PropertyPtr& deformationGradients() const { return _deformationGradients; }
-		const PropertyPtr& alloyTypes() const { return _alloyTypes; }
+		const PropertyPtr& orderingTypes() const { return _orderingTypes; }
 		
 		/// Returns the histogram of computed RMSD values.
 		const QVector<int>& rmsdHistogramData() const { return _rmsdHistogramData; }
@@ -148,7 +148,7 @@ private:
 		const PropertyPtr _interatomicDistances;
 		const PropertyPtr _orientations;
 		const PropertyPtr _deformationGradients;
-		const PropertyPtr _alloyTypes;
+		const PropertyPtr _orderingTypes;
 		/// The histogram of computed RMSD values.
 		QVector<int> _rmsdHistogramData;	
 		/// The bin size of the RMSD histogram;
@@ -163,10 +163,10 @@ private:
 		/// Constructor.
 		PTMEngine(ConstPropertyPtr positions, ConstPropertyPtr particleTypes, const SimulationCell& simCell,
 				QVector<bool> typesToIdentify, ConstPropertyPtr selection,
-				bool outputInteratomicDistance, bool outputOrientation, bool outputDeformationGradient, bool outputAlloyTypes) :
+				bool outputInteratomicDistance, bool outputOrientation, bool outputDeformationGradient, bool outputOrderingTypes) :
 			StructureIdentificationEngine(positions, simCell, std::move(typesToIdentify), std::move(selection)),
 			_particleTypes(std::move(particleTypes)),
-			_results(std::make_shared<PTMResults>(positions->size(), outputInteratomicDistance, outputOrientation, outputDeformationGradient, outputAlloyTypes)) {}
+			_results(std::make_shared<PTMResults>(positions->size(), outputInteratomicDistance, outputOrientation, outputDeformationGradient, outputOrderingTypes)) {}
 
 		/// Computes the modifier's results.
 		virtual void perform() override;
@@ -194,11 +194,11 @@ private:
 	/// Controls the output of elastic deformation gradients.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, outputDeformationGradient, setOutputDeformationGradient);
 
-	/// Controls the output of alloy structure types.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, outputAlloyTypes, setOutputAlloyTypes, PROPERTY_FIELD_MEMORIZE);
+	/// Controls the output of alloy ordering types.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, outputOrderingTypes, setOutputOrderingTypes, PROPERTY_FIELD_MEMORIZE);
 
-	/// Contains the list of alloy types recognized by this analysis modifier.
-	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD(ElementType, alloyTypes, setAlloyTypes);	
+	/// Contains the list of ordering types recognized by this analysis modifier.
+	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD(ElementType, orderingTypes, setOrderingTypes);	
 };
 
 

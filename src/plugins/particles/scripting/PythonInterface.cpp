@@ -297,7 +297,8 @@ PYBIND11_PLUGIN(Particles)
 	;
 
 	ovito_class<ParticleType, ElementType>(m,
-			"Represents a particle type or atom type. A :py:class:`!ParticleType` instance is always owned by a :py:class:`ParticleProperty`. ")
+			"Represents a particle type or atom type. :py:class:`!ParticleType` instancea are typically part of a typed :py:class:`ParticleProperty`, "
+			"but this class is also used in other contexts, for example to define the list of structural types identified by the :py:class:`~ovito.modifiers.PolyhedralTemplateMatchingModifier`. ")
 		.def_property("id", &ParticleType::id, &ParticleType::setId,
 				"The identifier of the particle type.")
 		.def_property("color", &ParticleType::color, &ParticleType::setColor,
@@ -306,6 +307,11 @@ PYBIND11_PLUGIN(Particles)
 				"The display radius to use for particles of this type.")
 		.def_property("name", &ParticleType::name, &ParticleType::setName,
 				"The display name of this particle type.")
+		.def_property("enabled", &ParticleType::enabled, &ParticleType::setEnabled,
+				"This flag only has a meaning in the context of structure analysis and identification. "
+				"Modifiers such as the :py:class:`~ovito.modifiers.PolyhedralTemplateMatchingModifier` or the :py:class:`~ovito.modifiers.CommonNeighborAnalysisModifier` "
+				"manage a list of structural types that they can identify (e.g. FCC, BCC, etc.). The identification of individual structure types "
+				"can be turned on or off by setting their :py:attr:`!enabled` flag.")
 	;
 
 	auto ParticlesVis_py = ovito_class<ParticlesVis, DataVis>(m,

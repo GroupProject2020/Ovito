@@ -35,7 +35,8 @@ StructureListParameterUI::StructureListParameterUI(PropertiesEditor* parentEdito
 	: RefTargetListParameterUI(parentEditor, PROPERTY_FIELD(StructureIdentificationModifier::structureTypes)),
 	  _showCheckBoxes(showCheckBoxes)
 {
-	connect(tableWidget(220), &QTableWidget::doubleClicked, this, &StructureListParameterUI::onDoubleClickStructureType);
+	connect(tableWidget(180), &QTableWidget::doubleClicked, this, &StructureListParameterUI::onDoubleClickStructureType);
+	connect(parentEditor, &PropertiesEditor::contentsReplaced, tableWidget(), &QTableView::resizeRowsToContents);
 	tableWidget()->setAutoScroll(false);
 }
 

@@ -130,7 +130,7 @@ protected:
 	void addStructureType(ParticleType* type) { _structureTypes.push_back(this, PROPERTY_FIELD(structureTypes), type); }
 
 	/// Create an instance of the ParticleType class to represent a structure type.
-	void createStructureType(int id, ParticleType::PredefinedStructureType predefType);
+	ParticleType* createStructureType(int id, ParticleType::PredefinedStructureType predefType);
 
 	/// Returns a bit flag array which indicates what structure types to search for.
 	QVector<bool> getTypesToIdentify(int numTypes) const;
