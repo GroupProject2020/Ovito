@@ -88,7 +88,6 @@ void PolyhedralTemplateMatchingModifierEditor::createUI(const RolloutInsertionPa
 
 	StructureListParameterUI* structureTypesPUI = new StructureListParameterUI(this, true);
 	layout1->addSpacing(10);
-	layout1->addWidget(new QLabel(tr("Structure types:")));
 	layout1->addWidget(structureTypesPUI->tableWidget());
 	QLabel* label = new QLabel(tr("<p style=\"font-size: small;\">Double-click to change colors. Defaults can be set in the application settings.</p>"));
 	label->setWordWrap(true);

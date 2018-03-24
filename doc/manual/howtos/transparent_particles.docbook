@@ -10,37 +10,44 @@
   <title>Semi-transparent particles</title>
 
   <para>
-     <figure>
-      <title>Semi-transparent particles</title>
+     <informalfigure>
       <screenshot><mediaobject><imageobject>
             <imagedata fileref="images/howtos/semitransparent_particles.png" format="png" />
        </imageobject></mediaobject></screenshot>
-    </figure> 
-    Particles can be made semi-transparent by setting the <literal>Transparency</literal> particle property.
-    A <literal>Transparency</literal> value of 0 lets a particle appear fully opaque, while any value between
-    0 and 1 lets it appear translucent.
+    </informalfigure> 
+    Particles can be made semi-transparent by setting their <literal>Transparency</literal> particle property.
+    A <literal>Transparency</literal> value of 0.0 lets a particle appear fully opaque, while any value 
+    in the range 0.0-1.0 renders the particle translucent.
   </para>
   
   <para>
-    The easiest method of setting the <literal>Transparency</literal> property is by using the 
+    The easiest way to set the <literal>Transparency</literal> property is the 
     <link linkend="particles.modifiers.compute_property">Compute property</link> modifier.
-    In the example here, a simple math formula was used to set the <literal>Transparency</literal> property
-    of particles depending on their position:
-    <screen>   ReducedPosition.X</screen>
-    The expression <literal>ReducedPosition.X</literal> evaluates to a particle's X position in reduced coordinates,
-    which varies between 0 to 1 from one side of the simulation box to the other. When assigning the computed values
-    to the <literal>Transparency</literal> property, particles on the left appear fully opaque while particles
-    on the right side of the simulation box become fully transparent.
+    Simply enter the desired transparency value into the expression field and the
+    <link linkend="particles.modifiers.compute_property">Compute property</link> modifier will assign that value to 
+    all particles.
+  </para>
+
+  <para>
+    Sometimes you want to make only a subset of the particles semi-transparent. For this, first select the particles, 
+    then apply the <link linkend="particles.modifiers.compute_property">Compute property</link> modifier. 
+    Activate its <emphasis>Compute only for selected particles</emphasis> option to restrict the assignment of the 
+    <literal>Transparency</literal> value to the currently selected particles only. Unselected particles will keep their
+    transparency values (0 by default).
+  </para>  
+
+  <para>
+    For demonstration purposes, in the example shown on the right, the <link linkend="particles.modifiers.compute_property">Compute property</link> 
+    modifier was used to set the <literal>Transparency</literal> property according to a simple math formula: "<literal>ReducedPosition.X</literal>".
+    Thus, instead of assigning a uniform transparency value to all particles, each particle's value is computed
+    individually from its X position divided by the simulation cell size, 
+    which varies between 0 to 1 from one side of the simulation box to the other.
   </para>
   
   <para>
-    You can make just the selected particles transparent by checking the <emphasis>Compute only for selected particles</emphasis> option in the
-    <link linkend="particles.modifiers.compute_property">Compute property</link> modifier.
-  </para>
-  
-  <para>
-    Note: The current program version cannot display particles with <link linkend="howto.aspherical_particles">cylindrical or spherocylindrical shape</link> 
-    that are semi-transparent. These aspherical particles will always appear fully opaque.
+    Note: The current program version does not support rendering of semi-transparent particles which have a 
+    cylindrical or spherocylindrical shape.
+    Such <link linkend="howto.aspherical_particles">aspherical particles</link> will always appear fully opaque, irrespective of their <literal>Transparency</literal> property.
   </para>
 
 </section>

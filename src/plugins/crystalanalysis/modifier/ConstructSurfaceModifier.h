@@ -52,7 +52,7 @@ class OVITO_CRYSTALANALYSIS_EXPORT ConstructSurfaceModifier : public Asynchronou
 	OVITO_CLASS_META(ConstructSurfaceModifier, OOMetaClass)
 
 	Q_CLASSINFO("DisplayName", "Construct surface mesh");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
+	Q_CLASSINFO("ModifierCategory", "Visualization");
 
 public:
 

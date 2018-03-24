@@ -7,7 +7,7 @@
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Visualize motion with marker atoms</title>
+  <title>Visualize internal motion using marker particles</title>
 
   <para>
      <figure>
@@ -16,9 +16,10 @@
             <imagedata fileref="images/howtos/shear_marker.gif" format="gif" />
        </imageobject></mediaobject></screenshot>
     </figure> 
-    Marker atoms can be used to make the internal deformation in a solid visible as shown 
-    in the example on the right. Another possible application is tracking diffusing
-    particles in a fluid over the course of a simulation.
+    Marker or tracer particles are a way to make the internal deformation or diffusion within a system visible 
+    as shown in the simple example on the right. The following recipe explains how to 
+    make sure that the set of selected marker particles, once defined on the first frame,
+    remains the same over the entire course of the simulation.
   </para>
   
   <para>

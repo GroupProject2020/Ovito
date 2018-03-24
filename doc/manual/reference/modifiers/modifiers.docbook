@@ -45,10 +45,6 @@
               <entry>Identification of common crystal structures based on the bond-angle analysis method of Ackland and Jones.</entry>
             </row>          
             <row>
-              <entry><link linkend="particles.modifiers.construct_surface_mesh">Construct surface mesh</link></entry>
-              <entry>Constructs a triangle mesh representing the surface of a solid.</entry>
-            </row>          
-            <row>
               <entry><link linkend="particles.modifiers.correlation_function">Correlation function</link></entry>
               <entry>Calculates the spatial cross-correlation function between two particle properties.</entry>
             </row>
@@ -212,6 +208,10 @@
             <row>
               <entry namest="name" nameend="descr" align="center" role="subth">Visualization</entry>
             </row>
+            <row>
+              <entry><link linkend="particles.modifiers.construct_surface_mesh">Construct surface mesh</link></entry>
+              <entry>Constructs a triangle mesh representing the surface of a solid.</entry>
+            </row>          
             <row>
               <entry><link linkend="particles.modifiers.create_bonds">Create bonds</link></entry>
               <entry>Creates bonds between particles.</entry>
