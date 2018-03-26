@@ -19,8 +19,6 @@
 #
 ###############################################################################
 
-ADD_SUBDIRECTORY(botan)
-ADD_SUBDIRECTORY(qssh)
 ADD_SUBDIRECTORY(ssh_wrapper)
 IF(OVITO_BUILD_GUI)
     ADD_SUBDIRECTORY(qwt)

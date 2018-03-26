@@ -36,9 +36,16 @@ class GuiFileManager : public FileManager
 
 public:
 
-	/// \brief Shows a dialog which asks the user for the login credentials.
+	/// \brief Asks the user for the login password for a SSH server.
 	/// \return True on success, false if user has canceled the operation.
-	virtual bool askUserForCredentials(QUrl& url) override;
+	virtual bool askUserForPassword(const QString& hostname, const QString& username, QString& password) override;
+
+	/// \brief Asks the user for the passphrase for a private SSH key.
+	/// \return True on success, false if user has canceled the operation.
+	virtual bool askUserForKeyPassphrase(const QString& hostname, const QString& prompt, QString& passphrase) override;
+
+	/// \brief Informs the user about an unknown SSH host.
+	virtual bool detectedUnknownSshServer(const QString& hostname, const QString& unknownHostMessage, const QString& hostPublicKeyHash) override;	
 };
 
 OVITO_END_INLINE_NAMESPACE

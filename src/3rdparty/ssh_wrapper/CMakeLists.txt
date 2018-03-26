@@ -20,7 +20,7 @@
 ###############################################################################
 
 # Locate the libssh library.
-FIND_PACKAGE(LIBSSH REQUIRED)
+FIND_PACKAGE(Libssh REQUIRED)
 
 # Build library
 ADD_LIBRARY(sshwrapper SHARED

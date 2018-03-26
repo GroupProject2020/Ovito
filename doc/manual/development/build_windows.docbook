@@ -10,7 +10,7 @@
   <title>Building OVITO on Windows</title>
 
  <simplesect>
-    <title>Installing dependencies</title>
+  <title>Installing dependencies</title>
   <para>
     OVITO for Windows is typically built using Microsoft's Visual C++ 2015 compiler. However, building
     it with the MinGW compiler should still be possible too. 

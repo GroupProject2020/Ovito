@@ -332,13 +332,13 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 				for(int x = x1; x < x2; x++, dst += 4, src1 += 4, src2 += 4) {
 					// Compose colors ("source over" mode).
 					float srcAlpha = (float)src2[3] / 255.0f;
-					float r = (1.0f - srcAlpha) * src1[2] + srcAlpha * src2[0];
-					float g = (1.0f - srcAlpha) * src1[1] + srcAlpha * src2[1];
-					float b = (1.0f - srcAlpha) * src1[0] + srcAlpha * src2[2];
-					float a = (1.0f - srcAlpha) * src1[3] + srcAlpha * src2[3];
-					dst[2] = (uchar)(qBound(0.0f, r, 255.0f));
+					float r = (1.0f - srcAlpha) * (float)src1[0] + srcAlpha * (float)src2[2];
+					float g = (1.0f - srcAlpha) * (float)src1[1] + srcAlpha * (float)src2[1];
+					float b = (1.0f - srcAlpha) * (float)src1[2] + srcAlpha * (float)src2[0];
+					float a = (1.0f - srcAlpha) * (float)src1[3] + srcAlpha * (float)src2[3];
+					dst[0] = (uchar)(qBound(0.0f, r, 255.0f));
 					dst[1] = (uchar)(qBound(0.0f, g, 255.0f));
-					dst[0] = (uchar)(qBound(0.0f, b, 255.0f));
+					dst[2] = (uchar)(qBound(0.0f, b, 255.0f));
 					dst[3] = (uchar)(qBound(0.0f, a, 255.0f));
 				}
 			}
@@ -426,10 +426,10 @@ void OSPRayRenderer::renderParticles(const DefaultParticlePrimitive& particleBuf
 			(*sphereIter)[1] = tp.y();
 			(*sphereIter)[2] = tp.z();
 			(*sphereIter)[3] = *r;
-			(*colorIter)[0] = c->r();
-			(*colorIter)[1] = c->g();
-			(*colorIter)[2] = c->b();
-			(*colorIter)[3] = c->a();
+			(*colorIter)[0] = qBound(0.0f, (float)c->r(), 1.0f);
+			(*colorIter)[1] = qBound(0.0f, (float)c->g(), 1.0f);
+			(*colorIter)[2] = qBound(0.0f, (float)c->b(), 1.0f);
+			(*colorIter)[3] = qBound(0.0f, (float)c->a(), 1.0f);
 			++sphereIter;
 			++colorIter;
 		}

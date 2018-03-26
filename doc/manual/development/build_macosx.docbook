@@ -17,7 +17,7 @@
     Apple's Clang compiler that is shipped with Xcode.
     It's easiest to use <link xlink:href="https://www.macports.org/">MacPorts</link> to install many of the required dependencies.
     After installing MacPorts, run 
-<screen><command>sudo port install netcdf python35 py35-sphinx py35-numpy py35-sip zlib \
+<screen><command>sudo port install netcdf python35 py35-sphinx py35-numpy py35-sip zlib libssh \
                   boost cmake docbook-xml doxygen libxslt yasm
 </command></screen>
   </para>

@@ -24,6 +24,8 @@
 #include <QByteArray>
 #include <QDebug>
 
+#include <libssh/callbacks.h>
+
 namespace Ovito { namespace Ssh {
 
 /******************************************************************************
@@ -62,7 +64,7 @@ void SshConnection::connectToHost()
 ******************************************************************************/
 void SshConnection::disconnectFromHost()
 {
-    if(_state != StateClosed && _state != StateClosing) {
+    if(_state != StateClosed && _state != StateClosing && _state != StateCanceledByUser) {
 
         // Prevent recursion
         setState(StateClosing, false);
@@ -81,37 +83,48 @@ void SshConnection::disconnectFromHost()
 }
 
 /******************************************************************************
+* Cancels the connection.
+******************************************************************************/
+void SshConnection::cancel()
+{
+    disconnectFromHost();
+    setState(StateCanceledByUser, false);
+}
+
+/******************************************************************************
 * Sets the internal state variable to a new value.
 ******************************************************************************/
 void SshConnection::setState(State state, bool emitStateChangedSignal)
 {
-    if(_state == state)
-        return;
+    if(_state != state) {
 
-    _state = state;
+        _state = state;
+        qDebug() << "set ssh state=" << state;
 
-    if(_state == StateError)
-        destroySocketNotifiers();
+        if(_state == StateError)
+            destroySocketNotifiers();
 
-    // Emit signals:
-    switch(_state) {
-    case StateClosed:           Q_EMIT disconnected();            break;
-    case StateClosing:                                            break;
-    case StateInit:                                               break;
-    case StateConnecting:                                         break;
-    case StateServerIsKnown:                                      break;
-    case StateUnknownHost:      Q_EMIT unknownHost();             break;
-    case StateAuthChoose:       Q_EMIT chooseAuth();              break;
-    case StateAuthContinue:                                       break;
-    case StateAuthNone:                                           break;
-    case StateAuthAutoPubkey:                                     break;
-    case StateAuthPassword:                                       break;
-    case StateAuthNeedPassword: Q_EMIT needPassword();            break;
-    case StateAuthKbi:                                            break;
-    case StateAuthKbiQuestions: Q_EMIT needKbiAnswers();          break;
-    case StateAuthAllFailed:    Q_EMIT allAuthsFailed();          break;
-    case StateOpened:           Q_EMIT connected();               break;
-    case StateError:            Q_EMIT error();                   break;
+        // Emit signals:
+        switch(_state) {
+        case StateClosed:           Q_EMIT disconnected();            break;
+        case StateClosing:                                            break;
+        case StateInit:                                               break;
+        case StateConnecting:                                         break;
+        case StateServerIsKnown:                                      break;
+        case StateUnknownHost:      Q_EMIT unknownHost();             break;
+        case StateAuthChoose:       Q_EMIT chooseAuth();              break;
+        case StateAuthContinue:                                       break;
+        case StateAuthNone:                                           break;
+        case StateAuthAutoPubkey:                                     break;
+        case StateAuthPassword:                                       break;
+        case StateAuthNeedPassword: Q_EMIT needPassword();            break;
+        case StateAuthKbi:                                            break;
+        case StateAuthKbiQuestions: Q_EMIT needKbiAnswers();          break;
+        case StateAuthAllFailed:    Q_EMIT allAuthsFailed();          break;
+        case StateOpened:           Q_EMIT connected();               break;
+        case StateError:            Q_EMIT error();                   break;
+        case StateCanceledByUser:   Q_EMIT canceled();                break;
+        }
     }
 
     if(emitStateChangedSignal)
@@ -123,14 +136,16 @@ void SshConnection::setState(State state, bool emitStateChangedSignal)
 ******************************************************************************/
 void SshConnection::processStateGuard()
 {
-    Q_ASSERT(!_processingState);
+    if(_processingState)
+        return;
 
     _processingState = true;
     processState();
     _processingState = false;
 
-    if(_writeNotifier && _enableWritableNofifier)
-        _writeNotifier->setEnabled(true);
+    if(_writeNotifier && _enableWritableNofifier) {
+        enableWritableSocketNotifier();
+    }
 }
 
 /******************************************************************************
@@ -138,8 +153,6 @@ void SshConnection::processStateGuard()
 ******************************************************************************/
 void SshConnection::processState()
 {
-    qDebug() << "processState() state=" << _state;
-
     switch(_state) {
     case StateClosed:
     case StateClosing:
@@ -149,6 +162,7 @@ void SshConnection::processState()
     case StateAuthKbiQuestions:
     case StateAuthAllFailed:
     case StateError:
+    case StateCanceledByUser:
         return;
 
     case StateInit:
@@ -161,9 +175,21 @@ void SshConnection::processState()
         }
         ::ssh_set_blocking(_session, 0);
 
-        {
+        // Enable debug log output if OVITO_SSH_LOG environment variable is set.
+        if(!qEnvironmentVariableIsEmpty("OVITO_SSH_LOG")) {
+            ::ssh_set_log_level(SSH_LOG_TRACE);
             int verbosity = SSH_LOG_FUNCTIONS;
             setLibsshOption(SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
+        }
+
+        // Set authentication callback.
+        {
+            static struct ssh_callbacks_struct cb;
+            memset(&cb, 0, sizeof(cb));
+            cb.userdata = this;
+            cb.auth_function = &SshConnection::authenticationCallback;
+            ssh_callbacks_init(&cb);
+            ::ssh_set_callbacks(_session, &cb);
         }
 
         if((_connectionParams.userName.isEmpty() || setLibsshOption(SSH_OPTIONS_USER, qPrintable(_connectionParams.userName)))
@@ -337,6 +363,11 @@ void SshConnection::enableWritableSocketNotifier()
         _enableWritableNofifier = true;
     } 
     else if(_writeNotifier) {
+        auto status = ::ssh_get_status(_session);
+        if(status == SSH_CLOSED_ERROR || status == SSH_CLOSED) {
+            setState(StateError, false);
+            return;
+        }
         _writeNotifier->setEnabled(true);
     }
 }
@@ -360,6 +391,22 @@ void SshConnection::handleSocketWritable()
     _enableWritableNofifier = false;
     _writeNotifier->setEnabled(false);
     processStateGuard();
+}
+
+/******************************************************************************
+* Enable or disable one or more authentications.
+******************************************************************************/
+void SshConnection::useAuth(UseAuths auths, bool enabled)
+{
+    if(enabled) {
+        _useAuths |= auths;
+        if(_state == StateAuthChoose || _state == StateAuthAllFailed) {
+            setState(StateAuthContinue, true);
+        }
+    }
+    else {
+        _useAuths &= ~auths;
+    }
 }
 
 /******************************************************************************
@@ -388,6 +435,7 @@ void SshConnection::tryNextAuth()
     case StateAuthAllFailed:
     case StateOpened:
     case StateError:
+    case StateCanceledByUser:
         break;
 
     case StateAuthNone:
@@ -438,7 +486,6 @@ void SshConnection::tryNextAuth()
     else if(_useAuths & UseAuthPassword) {
         _useAuths &= ~UseAuthPassword;
         setState(StateAuthPassword, true);
-
     } 
     else if(_useAuths & UseAuthKbi) {
         _useAuths &= ~UseAuthKbi;
@@ -454,8 +501,9 @@ void SshConnection::setPassword(QString password)
     _passwordSet = true;
     _password = std::move(password);
 
-    if(_state == StateAuthNeedPassword)
+    if(_state == StateAuthNeedPassword) {
         setState(StateAuthPassword, true);
+    }
 }
 
 /******************************************************************************
@@ -501,7 +549,7 @@ QString SshConnection::unknownHostMessage()
 
     case HostUnknown:
     case HostKnownHostsFileMissing:
-        return tr("This host is unknown.");
+        return tr("The authenticity of the host can't be established or the host is unknown.");
 
     case HostKeyChanged:
         return tr(
@@ -579,6 +627,54 @@ QString SshConnection::errorMessage() const
         return QString(::ssh_get_error(_session));
     else
         return tr("Could not initialize SSH session.");
+}
+
+/******************************************************************************
+* Returns the username used to log in to the server.
+******************************************************************************/
+QString SshConnection::username() const
+{
+    QString user;
+    char* s;
+    if(::ssh_options_get(_session, SSH_OPTIONS_USER, &s) == SSH_OK) {
+        user = s;
+        ::ssh_string_free_char(s);
+    }
+    return user;
+}
+
+/******************************************************************************
+* Returns the host this connection is to.
+******************************************************************************/
+QString SshConnection::hostname() const
+{
+    QString host;
+    char* s;
+    if(::ssh_options_get(_session, SSH_OPTIONS_HOST, &s) == SSH_OK) {
+        host = s;
+        ::ssh_string_free_char(s);
+    }
+    return host;
+}
+
+/******************************************************************************
+* This is a callback that gets called by libssh whenever a passphrase is required.
+******************************************************************************/
+int SshConnection::authenticationCallback(const char* prompt, char* buf, size_t len, int echo, int verify, void* userdata)
+{
+    SshConnection* connection = static_cast<SshConnection*>(userdata);
+    if(!connection)
+        return -1;
+
+    connection->_keyPassphrase.clear();
+    Q_EMIT connection->needPassphrase(prompt);
+    if(!connection->_keyPassphrase.isEmpty()) {
+        QByteArray utf8pw = connection->_keyPassphrase.toUtf8();
+        qstrncpy(buf, utf8pw.constData(), len);
+        return 0;
+    }
+
+    return -1;
 }
 
 } // End of namespace

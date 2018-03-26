@@ -61,10 +61,6 @@ public:
 	/// \return A Future that will provide the list of file names.
 	Future<QStringList> listDirectoryContents(TaskManager& taskManager, const QUrl& url);
 
-	/// \brief Shows a dialog which asks the user for the login credentials.
-	/// \return True on success, false if user has canceled the operation.
-	virtual bool askUserForCredentials(QUrl& url);
-
 	/// \brief Constructs a URL from a path entered by the user.
 	QUrl urlFromUserInput(const QString& path);
 
@@ -74,6 +70,19 @@ public:
     /// Releases an SSH connection after it is no longer used.
     void releaseSshConnection(Ssh::SshConnection* connection);
 
+protected:
+
+	/// \brief Asks the user for the login password for a SSH server.
+	/// \return True on success, false if user has canceled the operation.
+	virtual bool askUserForPassword(const QString& hostname, const QString& username, QString& password);
+
+	/// \brief Asks the user for the passphrase for a private SSH key.
+	/// \return True on success, false if user has canceled the operation.
+	virtual bool askUserForKeyPassphrase(const QString& hostname, const QString& prompt, QString& passphrase);
+
+	/// \brief Informs the user about an unknown SSH host.
+	virtual bool detectedUnknownSshServer(const QString& hostname, const QString& unknownHostMessage, const QString& hostPublicKeyHash);
+
 private Q_SLOTS:
     
     /// Is called whenever an SSH connection is closed.
@@ -81,6 +90,15 @@ private Q_SLOTS:
 
 	/// Is called whenever a SSH connection to an yet unknown server is being established.
 	void unknownSshServer();
+
+	/// Is called whenever a SSH connection to a server requires password authentication.
+	void needSshPassword();
+
+	/// Is called when an authentication attempt for a SSH connection failed.
+	void sshAuthenticationFailed(int auth);
+
+	/// Is called whenever a private SSH key requires a passphrase.
+	void needSshPassphrase(QString prompt);
 
 private:
 

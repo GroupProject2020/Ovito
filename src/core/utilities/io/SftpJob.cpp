@@ -78,6 +78,11 @@ void SftpJob::start()
 		return;
 	}
 
+	// Get notified if user has canceled the promise.
+	_promiseWatcher = new PromiseWatcher(this);
+	connect(_promiseWatcher, &PromiseWatcher::canceled, this, &SftpJob::onSshConnectionCanceled);
+	_promiseWatcher->watch(_promiseState);
+
 	SshConnectionParameters connectionParams;
 	connectionParams.host = _url.host();
 	connectionParams.userName = _url.userName();
@@ -92,6 +97,8 @@ void SftpJob::start()
 
 	// Listen for signals of the connection.
 	connect(_connection, &SshConnection::error, this, &SftpJob::onSshConnectionError);
+	connect(_connection, &SshConnection::canceled, this, &SftpJob::onSshConnectionCanceled);
+	connect(_connection, &SshConnection::allAuthsFailed, this, &SftpJob::onSshConnectionAuthenticationFailed);
 	if(_connection->isConnected()) {
 		onSshConnectionEstablished();
 		return;
@@ -107,6 +114,10 @@ void SftpJob::start()
 ******************************************************************************/
 void SftpJob::shutdown(bool success)
 {
+	if(_promiseWatcher) {		
+		disconnect(_promiseWatcher, 0, this, 0);
+		_promiseWatcher->deleteLater();
+	}
 #if 0
 	if(_sftpChannel) {
 		QObject::disconnect(_sftpChannel.data(), 0, this, 0);
@@ -150,32 +161,30 @@ void SftpJob::shutdown(bool success)
 ******************************************************************************/
 void SftpJob::onSshConnectionError()
 {
-#if 0
-	// If authentication failed, ask the user to re-enter username/password.
-	if(error == QSsh::SshAuthenticationError && !_promiseState->isCanceled()) {
-		OVITO_ASSERT(!_sftpChannel);
-		if(Application::instance()->fileManager()->askUserForCredentials(_url)) {
-			// Start over with new login information.
-			QObject::disconnect(_connection, 0, this, 0);
-			QSsh::releaseConnection(_connection);
-			_connection = nullptr;
-			start();
-			return;
-		}
-		else {
-			_promiseState->cancel();
-		}
-	}
-	else {
-		_promiseState->setException(std::make_exception_ptr(
-			Exception(tr("Cannot access URL\n\n%1\n\nSSH connection error: %2").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)).
-				arg(_connection->errorString()))));
-	}
-#else
 	_promiseState->setException(std::make_exception_ptr(
 		Exception(tr("Cannot access URL\n\n%1\n\nSSH connection error: %2").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)).
 			arg(_connection->errorMessage()))));
-#endif
+
+	shutdown(false);
+}
+
+/******************************************************************************
+* Handles SSH authentication errors.
+******************************************************************************/
+void SftpJob::onSshConnectionAuthenticationFailed()
+{
+	_promiseState->setException(std::make_exception_ptr(
+		Exception(tr("Cannot access URL\n\n%1\n\nSSH authentication failed").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)))));
+
+	shutdown(false);
+}
+
+/******************************************************************************
+* Handles SSH connection cancelation by user.
+******************************************************************************/
+void SftpJob::onSshConnectionCanceled()
+{
+	_promiseState->cancel();
 	shutdown(false);
 }
 

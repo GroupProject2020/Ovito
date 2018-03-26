@@ -71,6 +71,12 @@ protected Q_SLOTS:
 	/// Handles SSH connection errors.
 	void onSshConnectionError();
 
+	/// Handles SSH authentication errors.
+	void onSshConnectionAuthenticationFailed();
+
+	/// Handles SSH connection cancelation by user.
+	void onSshConnectionCanceled();
+
 	/// Is called when the SSH connection has been established.
     void onSshConnectionEstablished();
 
@@ -93,6 +99,9 @@ protected:
 
     /// The associated future interface of the job.
     PromiseStatePtr _promiseState;
+
+	/// This is for listening to signals from the promise object.
+	PromiseWatcher* _promiseWatcher = nullptr;
 
     /// Indicates whether this SFTP job is currently active.
     bool _isActive = false;

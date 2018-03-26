@@ -60,6 +60,18 @@ public:
         HostKnownHostsFileMissing   = SSH_SERVER_FILE_NOT_FOUND
     };
 
+    Q_FLAGS(AuthMehodFlag)
+    enum AuthMehodFlag
+    {
+        AuthMethodUnknown           = SSH_AUTH_METHOD_UNKNOWN,
+        AuthMethodNone              = SSH_AUTH_METHOD_NONE,
+        AuthMethodPassword          = SSH_AUTH_METHOD_PASSWORD,
+        AuthMethodPublicKey         = SSH_AUTH_METHOD_PUBLICKEY,
+        AuthMethodHostBased         = SSH_AUTH_METHOD_HOSTBASED,
+        AuthMethodKbi               = SSH_AUTH_METHOD_INTERACTIVE
+    };
+    Q_DECLARE_FLAGS(AuthMethods, AuthMehodFlag)
+
     Q_FLAGS(UseAuthFlag)
     enum UseAuthFlag
     {
@@ -91,6 +103,18 @@ public:
     /// Sets the password for use in password authentication.
     void setPassword(QString password);
 
+    /// Returns the password used to authenticate this connection to the server.
+    const QString& password() const { return _password; }
+
+    /// Sets the private key passphrase entered by the user.
+    void setPassphrase(const QString& keyPassphrase) { _keyPassphrase = keyPassphrase; }
+
+    /// Returns the username used to log in to the server.
+    QString username() const;
+
+    /// Returns the host this connection is to.
+    QString hostname() const;
+
     /// Returns the know/unknown status of the current remote host.
     HostState unknownHostType() const { return _unknownHostType; }
 
@@ -103,6 +127,30 @@ public:
     /// This turns the current remote host into a known host by adding it to the knows_hosts file. 
     bool markCurrentHostKnown();
 
+    /// Enable or disable one or more authentications.
+    void useAuth(UseAuths auths, bool enabled);
+
+    /// Enable or disable the use of 'None' SSH authentication.
+    void useNoneAuth(bool enabled) { useAuth(UseAuthNone, enabled); }
+
+    /// Enable or disable the use of automatic public key authentication.
+    void useAutoKeyAuth(bool enabled) { useAuth(UseAuthAutoPubKey, enabled); }
+
+    /// Enable or disable the use of password based SSH authentication.
+    void usePasswordAuth(bool enabled) { useAuth(UseAuthPassword, enabled); }
+
+    /// Enable or disable the use of Keyboard Interactive SSH authentication.
+    void useKbiAuth(bool enabled) { useAuth(UseAuthKbi, enabled); }
+
+    /// Returns the supported authentication methods.
+    AuthMethods supportedAuthMethods() const { return AuthMethods(::ssh_userauth_list(_session, 0)); }
+
+    /// Get all enabled authentication methods.
+    UseAuths enabledAuths() const { return _useAuths; }
+
+    /// Get all failed authentication methods.
+    UseAuths failedAuths() const { return _failedAuths; }
+
 public Q_SLOTS:
 
     /// Opens the connection to the host.
@@ -110,6 +158,9 @@ public Q_SLOTS:
 
     /// Closes the connection to the host.
     void disconnectFromHost();
+
+    /// Cancels the connection.
+    void cancel();
 
 Q_SIGNALS:
 
@@ -119,10 +170,12 @@ Q_SIGNALS:
     void needKbiAnswers();      ///< Use setKbiAnswers() set answers
     void authFailed(int auth);  ///< One authentication attempt has failed
     void allAuthsFailed();      ///< All authentication attempts have failed
+    void needPassphrase(QString prompt);      ///< Use setPassprhase() to set passphrase
     void connected();
     void disconnected();
     void error();
     void stateChanged();
+    void canceled();
 
 private Q_SLOTS:
 
@@ -154,7 +207,8 @@ private:
         StateAuthKbiQuestions = 13,
         StateAuthAllFailed = 14,
         StateOpened = 15,
-        StateError = 16
+        StateError = 16,
+        StateCanceledByUser = 17
     };
 
     /// Sets the internal state variable to a new value.
@@ -181,6 +235,9 @@ private:
     /// Handles the server's reponse to an authentication attempt.
     void handleAuthResponse(int rc, UseAuthFlag auth);
 
+    /// This is a callback that gets called by libssh whenever a passphrase is required.
+    static int authenticationCallback(const char* prompt, char* buf, size_t len, int echo, int verify, void* userdata);
+
     /// The SSH connection parameters.
     SshConnectionParameters _connectionParams;
 
@@ -189,6 +246,9 @@ private:
 
     /// The passwort that has been set.
     QString _password;
+
+    /// The private key passphrase entered by the user.
+    QString _keyPassphrase;
 
     /// The libssh sesssion handle.
     ssh_session _session = 0;

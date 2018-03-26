@@ -181,6 +181,8 @@ bool GuiApplication::startupApplication()
 			catch(const Exception& ex) {
 				ex.reportError();
 			}
+			if(!container->currentSet())
+				return false;
 			container->currentSet()->undoStack().setClean();
 		}
 	}

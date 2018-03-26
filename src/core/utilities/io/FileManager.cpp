@@ -28,6 +28,7 @@
 #include "SftpJob.h"
 
 #include <QTemporaryFile>
+#include <QTimer>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
 
@@ -183,7 +184,10 @@ SshConnection* FileManager::acquireSshConnection(const SshConnectionParameters& 
     // Create a new connection:
     SshConnection* const connection = new SshConnection(sshParams);
     connect(connection, &SshConnection::disconnected, this, &FileManager::cleanupSshConnection);
-    connect(connection, &SshConnection::unknownHost, this, &FileManager::cleanupSshConnection);
+    connect(connection, &SshConnection::unknownHost, this, &FileManager::unknownSshServer);
+	connect(connection, &SshConnection::needPassword, this, &FileManager::needSshPassword);
+	connect(connection, &SshConnection::authFailed, this, &FileManager::sshAuthenticationFailed);
+	connect(connection, &SshConnection::needPassphrase, this, &FileManager::needSshPassphrase);
     _acquiredConnections.append(connection);
 
     return connection;
@@ -217,41 +221,113 @@ void FileManager::releaseSshConnection(SshConnection* connection)
 ******************************************************************************/
 void FileManager::cleanupSshConnection()
 {
-    SshConnection* currentConnection = qobject_cast<SshConnection*>(sender());
-    if(!currentConnection)
+    SshConnection* connection = qobject_cast<SshConnection*>(sender());
+    if(!connection)
         return;
 
-    if(_unacquiredConnections.removeOne(currentConnection)) {
-        disconnect(currentConnection, 0, this, 0);
-        currentConnection->deleteLater();
+    if(_unacquiredConnections.removeOne(connection)) {
+        disconnect(connection, 0, this, 0);
+        connection->deleteLater();
     }
 }
 
 /******************************************************************************
-*  Is called whenever a SSH connection to an yet unknown server is being established.
+* Is called whenever a SSH connection to an yet unknown server is being established.
 ******************************************************************************/
 void FileManager::unknownSshServer()
 {
-    SshConnection* currentConnection = qobject_cast<SshConnection*>(sender());
-    if(!currentConnection)
+    SshConnection* connection = qobject_cast<SshConnection*>(sender());
+    if(!connection)
         return;
 
-	
+	if(detectedUnknownSshServer(connection->hostname(), connection->unknownHostMessage(), connection->hostPublicKeyHash())) {
+		if(connection->markCurrentHostKnown())
+			return;
+	}
+	connection->cancel();
 } 
 
 /******************************************************************************
-* Shows a dialog which asks the user for the login credentials.
+* Informs the user about an unknown SSH host.
 ******************************************************************************/
-bool FileManager::askUserForCredentials(QUrl& url)
+bool FileManager::detectedUnknownSshServer(const QString& hostname, const QString& unknownHostMessage, const QString& hostPublicKeyHash)
 {
-	std::string username;
-	std::string password;
-	std::cout << "Please enter the SSH username for the remote machine '" << qPrintable(url.host()) << "': " << std::flush;
-	std::cin >> username;
-	std::cout << "Please enter the SSH password (set echo off beforehand!): " << std::flush;
-	std::cin >> password;
-	url.setUserName(QString::fromStdString(username));
-	url.setPassword(QString::fromStdString(password));
+	return false;
+}
+
+/******************************************************************************
+* Is called when an authentication attempt for a SSH connection failed.
+******************************************************************************/
+void FileManager::sshAuthenticationFailed(int auth)
+{
+    SshConnection* connection = qobject_cast<SshConnection*>(sender());
+    if(!connection)
+        return;
+
+	SshConnection::AuthMethods supported = connection->supportedAuthMethods();
+	if(auth & SshConnection::UseAuthPassword && supported & SshConnection::AuthMethodPassword) {
+        connection->usePasswordAuth(true);
+	}
+	else if(auth & SshConnection::UseAuthKbi && supported & SshConnection::AuthMethodKbi) {
+        connection->useKbiAuth(true);
+	}
+}
+
+/******************************************************************************
+* Is called whenever a SSH connection to a server requires password authentication.
+******************************************************************************/
+void FileManager::needSshPassword()
+{
+    SshConnection* connection = qobject_cast<SshConnection*>(sender());
+    if(!connection)
+        return;
+
+	QString password = connection->password();
+	if(askUserForPassword(connection->hostname(), connection->username(), password)) {		
+		connection->setPassword(password);
+	}
+	else {
+		connection->cancel();
+	}
+}
+
+/******************************************************************************
+* Asks the user for the login password for a SSH server.
+******************************************************************************/
+bool FileManager::askUserForPassword(const QString& hostname, const QString& username, QString& password)
+{
+	std::string pw;
+	std::cout << "Please enter the password for user '" << qPrintable(username) << "' ";
+	std::cout << "on SSH remote host '" << qPrintable(hostname) << "' (set echo off beforehand!): " << std::flush;	
+	std::cin >> pw;
+	password = QString::fromStdString(pw);
+	return true;
+}
+
+/******************************************************************************
+* Is called whenever a private SSH key requires a passphrase.
+******************************************************************************/
+void FileManager::needSshPassphrase(QString prompt)
+{
+    SshConnection* connection = qobject_cast<SshConnection*>(sender());
+    if(!connection)
+        return;
+
+	QString passphrase;
+	if(askUserForKeyPassphrase(connection->hostname(), prompt, passphrase)) {
+		connection->setPassphrase(passphrase);
+	}
+}
+
+/******************************************************************************
+* Asks the user for the passphrase for a private SSH key.
+******************************************************************************/
+bool FileManager::askUserForKeyPassphrase(const QString& hostname, const QString& prompt, QString& passphrase)
+{
+	std::string pp;
+	std::cout << qPrintable(prompt) << std::flush;	
+	std::cin >> pp;
+	passphrase = QString::fromStdString(pp);
 	return true;
 }
 

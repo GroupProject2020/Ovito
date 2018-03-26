@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,39 +20,60 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <gui/GUI.h>
-#include <gui/dialogs/RemoteAuthenticationDialog.h>
 #include <core/app/Application.h>
 #include "GuiFileManager.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
 
 /******************************************************************************
-* Shows a dialog which asks the user for the login credentials.
+* Asks the user for the login password for a SSH server.
 ******************************************************************************/
-bool GuiFileManager::askUserForCredentials(QUrl& url)
+bool GuiFileManager::askUserForPassword(const QString& hostname, const QString& username, QString& password)
 {
 	if(Application::instance()->guiMode()) {
-
-		// Ask for new username/password.
-		RemoteAuthenticationDialog dialog(nullptr, tr("Remote authentication"),
-				url.password().isEmpty() ?
-				tr("<p>Please enter username and password to access the remote machine</p><p><b>%1</b></p>").arg(url.host()) :
-				tr("<p>Authentication failed. Please enter the correct username and password to access the remote machine</p><p><b>%1</b></p>").arg(url.host()));
-
-		dialog.setUsername(url.userName());
-		dialog.setPassword(url.password());
-		if(dialog.exec() == QDialog::Accepted) {
-			url.setUserName(dialog.username());
-			url.setPassword(dialog.password());
-			return true;
-		}
-		return false;
+		bool ok;
+		password = QInputDialog::getText(nullptr, tr("SSH Password Authentication"), 
+			tr("OVITO is trying to connect to remote host '%1'.\n\nPlease enter the password for user '%2':").arg(hostname).arg(username),
+			QLineEdit::Password, password, &ok);
+		return ok;
 	}
 	else {
-		return FileManager::askUserForCredentials(url);
+		return FileManager::askUserForPassword(hostname, username, password);
 	}
 }
 
+/******************************************************************************
+* Asks the user for the passphrase for a private SSH key.
+******************************************************************************/
+bool GuiFileManager::askUserForKeyPassphrase(const QString& hostname, const QString& prompt, QString& passphrase)
+{
+	if(Application::instance()->guiMode()) {
+		bool ok;
+		passphrase = QInputDialog::getText(nullptr, tr("SSH Remote Connection"), 
+			tr("OVITO is trying to connect to remote host '%1'.\n\n%2").arg(hostname).arg(prompt),
+			QLineEdit::Password, passphrase, &ok);
+		return ok;
+	}
+	else {
+		return FileManager::askUserForKeyPassphrase(hostname, prompt, passphrase);
+	}
+}
+
+/******************************************************************************
+* Informs the user about an unknown SSH host.
+******************************************************************************/
+bool GuiFileManager::detectedUnknownSshServer(const QString& hostname, const QString& unknownHostMessage, const QString& hostPublicKeyHash)
+{
+	if(Application::instance()->guiMode()) {
+		return QMessageBox::question(nullptr, tr("SSH Unknown Remote Host"),
+			tr("OVITO is trying to connect to remote host '%1'.\n%2 Key fingerprint is %3\n\nAre you sure you want to continue connecting?")
+			.arg(hostname).arg(unknownHostMessage).arg(hostPublicKeyHash),
+			QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes;
+	}
+	else {
+		return FileManager::detectedUnknownSshServer(hostname, unknownHostMessage, hostPublicKeyHash);
+	}
+}
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

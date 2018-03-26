@@ -121,8 +121,10 @@ bool StandaloneApplication::initialize(int& argc, char** argv)
 		}
 
 		// Prepares application to start running.
-		if(!startupApplication())
-			return true;
+		if(!startupApplication()) {
+			shutdown();
+			return false;
+		}
 
 		// Notify registered application services.
 		for(const auto& service : applicationServices())
