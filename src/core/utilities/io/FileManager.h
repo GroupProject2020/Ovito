@@ -26,6 +26,12 @@
 #include <core/utilities/concurrent/Future.h>
 
 #include <QMutex>
+#include <QCache>
+
+namespace Ovito { namespace Ssh {
+	class SshConnection;
+	struct SshConnectionParameters;
+}}
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
 
@@ -38,23 +44,22 @@ class OVITO_CORE_EXPORT FileManager : public QObject
 
 public:
 
+	/// Constructor.
+	FileManager();
+
+	/// Destructor.
+	~FileManager();
+
 	/// \brief Makes a file available on this computer.
 	/// \return A Future that will provide the local file name of the downloaded file.
 	SharedFuture<QString> fetchUrl(TaskManager& taskManager, const QUrl& url);
 
-	/// \brief Removes a cached remote file so that it will be downloaded again next
-	///        time it is requested.
+	/// \brief Removes a cached remote file so that it will be downloaded again next time it is requested.
 	void removeFromCache(const QUrl& url);
 
 	/// \brief Lists all files in a remote directory.
 	/// \return A Future that will provide the list of file names.
 	Future<QStringList> listDirectoryContents(TaskManager& taskManager, const QUrl& url);
-
-	/// \brief Looks up login name and password for the given host in the credential cache.
-	QPair<QString,QString> findCredentials(const QString& host);
-
-	/// \brief Saves the login name and password for the given host in the credential cache.
-	void cacheCredentials(const QString& host, const QString& username, const QString& password);
 
 	/// \brief Shows a dialog which asks the user for the login credentials.
 	/// \return True on success, false if user has canceled the operation.
@@ -63,17 +68,30 @@ public:
 	/// \brief Constructs a URL from a path entered by the user.
 	QUrl urlFromUserInput(const QString& path);
 
+    /// Create a new SSH connection or returns an existing connection having the same parameters.
+    Ssh::SshConnection* acquireSshConnection(const Ssh::SshConnectionParameters& sshParams);
+
+    /// Releases an SSH connection after it is no longer used.
+    void releaseSshConnection(Ssh::SshConnection* connection);
+
+private Q_SLOTS:
+    
+    /// Is called whenever an SSH connection is closed.
+    void cleanupSshConnection();
+
+	/// Is called whenever a SSH connection to an yet unknown server is being established.
+	void unknownSshServer();
+
 private:
 
 	/// Is called when a remote file has been fetched.
 	void fileFetched(QUrl url, QTemporaryFile* localFile);
 
 	/// Strips a URL from username and password information.
-	QUrl normalizeUrl(const QUrl& url) const {
-		QUrl strippedUrl = url;
-		strippedUrl.setUserName(QString());
-		strippedUrl.setPassword(QString());
-		return strippedUrl;
+	static QUrl normalizeUrl(QUrl url) {
+		url.setUserName({});
+		url.setPassword({});
+		return std::move(url);
 	}
 
 private:
@@ -81,14 +99,17 @@ private:
 	/// The remote files that are currently being fetched.
 	std::map<QUrl, SharedFuture<QString>> _pendingFiles;
 
-	/// The remote files that have already been downloaded to the local cache.
-	QMap<QUrl, QTemporaryFile*> _cachedFiles;
+	/// Cache holding the remote files that have already been downloaded.
+	QCache<QUrl, QTemporaryFile> _cachedFiles{std::numeric_limits<int>::max()};
 
 	/// The mutex to synchronize access to above data structures.
 	QMutex _mutex{QMutex::Recursive};
 
-	/// Cache of login/password information for remote machines.
-	QMap<QString, QPair<QString,QString>> _credentialCache;
+	/// Holds open SSH connections, which are currently active.
+    QList<Ssh::SshConnection*> _acquiredConnections;	
+
+	/// Holds SSH connections, which are still open but not in use.
+    QList<Ssh::SshConnection*> _unacquiredConnections;
 
 	friend class SftpDownloadJob;
 };
@@ -96,5 +117,3 @@ private:
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

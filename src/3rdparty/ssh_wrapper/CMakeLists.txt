@@ -19,24 +19,27 @@
 #
 ###############################################################################
 
-ADD_SUBDIRECTORY(botan)
-ADD_SUBDIRECTORY(qssh)
-ADD_SUBDIRECTORY(ssh_wrapper)
-IF(OVITO_BUILD_GUI)
-    ADD_SUBDIRECTORY(qwt)
-ENDIF()
-IF(OVITO_BUILD_PLUGIN_PARTICLES)
-    ADD_SUBDIRECTORY(muparser)
-    ADD_SUBDIRECTORY(voro++)
-    ADD_SUBDIRECTORY(ptm)
-    ADD_SUBDIRECTORY(copr)
-ENDIF()
-IF(OVITO_BUILD_PLUGIN_TACHYON)
-	ADD_SUBDIRECTORY(tachyon)
-ENDIF()
-IF(OVITO_BUILD_PLUGIN_CRYSTALANALYSIS)
-	ADD_SUBDIRECTORY(geogram)
-ENDIF()
-IF(OVITO_BUILD_PLUGIN_NETCDFPLUGIN OR OVITO_BUILD_PLUGIN_CRYSTALANALYSIS)
-    ADD_SUBDIRECTORY(netcdf_integration)
+# Locate the libssh library.
+FIND_PACKAGE(LIBSSH REQUIRED)
+
+# Build library
+ADD_LIBRARY(sshwrapper SHARED
+	sshconnection.cpp
+)
+
+# Link to libssh.
+TARGET_INCLUDE_DIRECTORIES(sshwrapper PUBLIC ${LIBSSH_INCLUDE_DIRS})
+TARGET_LINK_LIBRARIES(sshwrapper PUBLIC ${LIBSSH_LIBRARIES})
+
+# Link to Qt5.
+TARGET_LINK_LIBRARIES(sshwrapper PUBLIC Qt5::Core)
+
+# Make this library part of the installation package.
+INSTALL(TARGETS sshwrapper EXPORT OVITO 
+	RUNTIME DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "runtime"
+	LIBRARY DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "runtime")
+
+# Export target to make it accessible for external plugins.
+IF(CMAKE_VERSION VERSION_LESS "3")
+	EXPORT(TARGETS sshwrapper NAMESPACE "Ovito::" FILE "${${PROJECT_NAME}_BINARY_DIR}/OVITOTargets.cmake")
 ENDIF()

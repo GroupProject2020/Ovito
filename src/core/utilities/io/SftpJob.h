@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,13 +25,12 @@
 #include <core/Core.h>
 #include <core/utilities/concurrent/Future.h>
 
-// QtNetwork module
-#include <QtNetwork>
+#include <QQueue>
+#include <QTemporaryFile>
 
-// QSsh library:
-#include <sshconnection.h>
-#include <sshconnectionmanager.h>
-#include <sftpchannel.h>
+namespace Ovito { namespace Ssh {
+	class SshConnection;
+}}
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
@@ -49,7 +48,7 @@ public:
 
 	/// Destructor.
 	virtual ~SftpJob() {
-		OVITO_ASSERT(_sftpChannel == nullptr);
+//		OVITO_ASSERT(_sftpChannel == nullptr);
 		OVITO_ASSERT(_connection == nullptr);
 	}
 
@@ -70,7 +69,7 @@ protected:
 protected Q_SLOTS:
 
 	/// Handles SSH connection errors.
-	void onSshConnectionError(QSsh::SshError error);
+	void onSshConnectionError();
 
 	/// Is called when the SSH connection has been established.
     void onSshConnectionEstablished();
@@ -87,10 +86,10 @@ protected:
 	QUrl _url;
 
 	/// The SSH connection.
-	QSsh::SshConnection* _connection;
+	Ovito::Ssh::SshConnection* _connection = nullptr;
 
 	/// The SFTP channel.
-    QSsh::SftpChannel::Ptr _sftpChannel;
+    //QSsh::SftpChannel::Ptr _sftpChannel;
 
     /// The associated future interface of the job.
     PromiseStatePtr _promiseState;
@@ -98,7 +97,7 @@ protected:
     /// Indicates whether this SFTP job is currently active.
     bool _isActive = false;
 
-    /// List SFTP jobs that are waiting to be executed.
+    /// Queue of SFTP jobs that are waiting to be executed.
     static QQueue<SftpJob*> _queuedJobs;
 
     /// Keeps track of how many SFTP jobs are currently active.
@@ -116,7 +115,7 @@ public:
 
 	/// Constructor.
 	SftpDownloadJob(const QUrl& url, Promise<QString>&& promise) :
-		SftpJob(url, promise.sharedState()), _promise(std::move(promise)), _timerId(0) {}
+		SftpJob(url, promise.sharedState()), _promise(std::move(promise)) {}
 
 protected:
 
@@ -132,10 +131,10 @@ protected:
 protected Q_SLOTS:
 
 	/// Is called after the file has been downloaded.
-	void onSftpJobFinished(QSsh::SftpJobId jobId, const QString& errorMessage);
+//	void onSftpJobFinished(QSsh::SftpJobId jobId, const QString& errorMessage);
 
 	/// Is called when the file info for the requested file arrived.
-	void onFileInfoAvailable(QSsh::SftpJobId job, const QList<QSsh::SftpFileInfo>& fileInfoList);
+//	void onFileInfoAvailable(QSsh::SftpJobId job, const QList<QSsh::SftpFileInfo>& fileInfoList);
 
 private:
 
@@ -143,10 +142,10 @@ private:
     QScopedPointer<QTemporaryFile> _localFile;
 
     /// The SFTP file download job.
-    QSsh::SftpJobId _downloadJob;
+    //QSsh::SftpJobId _downloadJob;
 
     /// The progress monitor timer.
-    int _timerId;
+    int _timerId = 0;
 
 	/// The promise through which the result of this download job is returned.
 	Promise<QString> _promise;
@@ -173,10 +172,10 @@ protected:
 protected Q_SLOTS:
 
 	/// Is called after the file has been downloaded.
-	void onSftpJobFinished(QSsh::SftpJobId jobId, const QString& errorMessage);
+//	void onSftpJobFinished(QSsh::SftpJobId jobId, const QString& errorMessage);
 
 	/// Is called when the file info for the requested file arrived.
-	void onFileInfoAvailable(QSsh::SftpJobId job, const QList<QSsh::SftpFileInfo>& fileInfoList);
+//	void onFileInfoAvailable(QSsh::SftpJobId job, const QList<QSsh::SftpFileInfo>& fileInfoList);
 
 private:
 
@@ -184,7 +183,7 @@ private:
     QStringList _fileList;
 
     /// The SFTP job.
-    QSsh::SftpJobId _listingJob;
+    //QSsh::SftpJobId _listingJob;
 
 	/// The promise through which the result of this download job is returned.
 	Promise<QStringList> _promise;	

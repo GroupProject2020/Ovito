@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,10 +23,34 @@
 #include <core/utilities/concurrent/Future.h>
 #include <core/utilities/concurrent/TaskManager.h>
 #include <core/dataset/DataSetContainer.h>
+#include <3rdparty/ssh_wrapper/sshconnection.h>
 #include "FileManager.h"
 #include "SftpJob.h"
 
+#include <QTemporaryFile>
+
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
+
+using namespace Ovito::Ssh;
+
+/******************************************************************************
+* Constructor.
+******************************************************************************/
+FileManager::FileManager()
+{
+}
+
+/******************************************************************************
+* Destructor.
+******************************************************************************/
+FileManager::~FileManager()
+{
+    for(SshConnection* connection : _unacquiredConnections) {
+        disconnect(connection, 0, this, 0);
+        delete connection;
+    }
+    Q_ASSERT(_acquiredConnections.empty());
+}
 
 /******************************************************************************
 * Makes a file available on this computer.
@@ -44,14 +68,12 @@ SharedFuture<QString> FileManager::fetchUrl(TaskManager& taskManager, const QUrl
 		return filePath;
 	}
 	else if(url.scheme() == QStringLiteral("sftp")) {
+		QUrl normalizedUrl = normalizeUrl(url);
 		QMutexLocker lock(&_mutex);
 
-		QUrl normalizedUrl = normalizeUrl(url);
-
 		// Check if requested URL is already in the cache.
-		auto cacheEntry = _cachedFiles.find(normalizedUrl);
-		if(cacheEntry != _cachedFiles.end()) {
-			return cacheEntry.value()->fileName();
+		if(auto cacheEntry = _cachedFiles.object(normalizedUrl)) {
+			return cacheEntry->fileName();
 		}
 
 		// Check if requested URL is already being loaded.
@@ -95,12 +117,7 @@ Future<QStringList> FileManager::listDirectoryContents(TaskManager& taskManager,
 void FileManager::removeFromCache(const QUrl& url)
 {
 	QMutexLocker lock(&_mutex);
-
-	auto cacheEntry = _cachedFiles.find(normalizeUrl(url));
-	if(cacheEntry != _cachedFiles.end()) {
-		cacheEntry.value()->deleteLater();
-		_cachedFiles.erase(cacheEntry);
-	}
+	_cachedFiles.remove(normalizeUrl(url));
 }
 
 /******************************************************************************
@@ -108,9 +125,8 @@ void FileManager::removeFromCache(const QUrl& url)
 ******************************************************************************/
 void FileManager::fileFetched(QUrl url, QTemporaryFile* localFile)
 {
-	QMutexLocker lock(&_mutex);
-
 	QUrl normalizedUrl = normalizeUrl(url);
+	QMutexLocker lock(&_mutex);
 
 	auto inProgressEntry = _pendingFiles.find(normalizedUrl);
 	if(inProgressEntry != _pendingFiles.end())
@@ -120,35 +136,11 @@ void FileManager::fileFetched(QUrl url, QTemporaryFile* localFile)
 
 	if(localFile) {
 		// Store downloaded file in local cache.
-		auto cacheEntry = _cachedFiles.find(normalizedUrl);
-		if(cacheEntry != _cachedFiles.end())
-			cacheEntry.value()->deleteLater();
 		OVITO_ASSERT(localFile->thread() == this->thread());
 		localFile->setParent(this);
-		_cachedFiles[normalizedUrl] = localFile;
+		if(!_cachedFiles.insert(normalizedUrl, localFile, 0))
+			throw Exception(tr("Failed to insert downloaded file into file cache."));
 	}
-}
-
-/******************************************************************************
-* Looks up login name and password for the given host in the credential cache.
-******************************************************************************/
-QPair<QString,QString> FileManager::findCredentials(const QString& host)
-{
-	QMutexLocker lock(&_mutex);
-	auto loginInfo = _credentialCache.find(host);
-	if(loginInfo != _credentialCache.end())
-		return loginInfo.value();
-	else
-		return qMakePair(QString(), QString());
-}
-
-/******************************************************************************
-* Saves the login name and password for the given host in the credential cache.
-******************************************************************************/
-void FileManager::cacheCredentials(const QString& host, const QString& username, const QString& password)
-{
-	QMutexLocker lock(&_mutex);
-	_credentialCache.insert(host, qMakePair(username, password));
 }
 
 /******************************************************************************
@@ -161,6 +153,91 @@ QUrl FileManager::urlFromUserInput(const QString& path)
 	else
 		return QUrl::fromLocalFile(path);
 }
+
+/******************************************************************************
+* Create a new SSH connection or returns an existing connection having the same parameters.
+******************************************************************************/
+SshConnection* FileManager::acquireSshConnection(const SshConnectionParameters& sshParams)
+{
+    OVITO_ASSERT(QThread::currentThread() == QCoreApplication::instance()->thread());
+
+    // Check in-use connections:
+    for(SshConnection* connection : _acquiredConnections) {
+        if(connection->connectionParameters() != sshParams)
+            continue;
+
+        _acquiredConnections.append(connection);
+        return connection;
+    }
+
+    // Check cached open connections:
+    for(SshConnection* connection : _unacquiredConnections) {
+        if(!connection->isConnected() || connection->connectionParameters() != sshParams)
+            continue;
+
+        _unacquiredConnections.removeOne(connection);
+        _acquiredConnections.append(connection);
+        return connection;
+    }
+
+    // Create a new connection:
+    SshConnection* const connection = new SshConnection(sshParams);
+    connect(connection, &SshConnection::disconnected, this, &FileManager::cleanupSshConnection);
+    connect(connection, &SshConnection::unknownHost, this, &FileManager::cleanupSshConnection);
+    _acquiredConnections.append(connection);
+
+    return connection;
+}
+
+/******************************************************************************
+* Releases an SSH connection after it is no longer used.
+******************************************************************************/
+void FileManager::releaseSshConnection(SshConnection* connection)
+{
+    OVITO_ASSERT(QThread::currentThread() == QCoreApplication::instance()->thread());
+
+    bool wasAquired = _acquiredConnections.removeOne(connection);
+    OVITO_ASSERT(wasAquired);
+    if(_acquiredConnections.contains(connection))
+        return;
+
+    if(!connection->isConnected()) {
+        disconnect(connection, 0, this, 0);
+        connection->deleteLater();
+    }
+    else {
+        connection->disconnectFromHost(); // Clean up after neglectful clients.
+        Q_ASSERT(!_unacquiredConnections.contains(connection));
+        _unacquiredConnections.append(connection);
+    }
+}
+
+/******************************************************************************
+*  Is called whenever an SSH connection is closed.
+******************************************************************************/
+void FileManager::cleanupSshConnection()
+{
+    SshConnection* currentConnection = qobject_cast<SshConnection*>(sender());
+    if(!currentConnection)
+        return;
+
+    if(_unacquiredConnections.removeOne(currentConnection)) {
+        disconnect(currentConnection, 0, this, 0);
+        currentConnection->deleteLater();
+    }
+}
+
+/******************************************************************************
+*  Is called whenever a SSH connection to an yet unknown server is being established.
+******************************************************************************/
+void FileManager::unknownSshServer()
+{
+    SshConnection* currentConnection = qobject_cast<SshConnection*>(sender());
+    if(!currentConnection)
+        return;
+
+	
+} 
 
 /******************************************************************************
 * Shows a dialog which asks the user for the login credentials.
@@ -177,7 +254,6 @@ bool FileManager::askUserForCredentials(QUrl& url)
 	url.setPassword(QString::fromStdString(password));
 	return true;
 }
-
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

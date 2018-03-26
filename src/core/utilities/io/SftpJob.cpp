@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,10 +23,12 @@
 #include <core/utilities/concurrent/Future.h>
 #include <core/utilities/io/FileManager.h>
 #include <core/app/Application.h>
-
+#include <3rdparty/ssh_wrapper/sshconnection.h>
 #include "SftpJob.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+
+using namespace Ovito::Ssh;
 
 /// List SFTP jobs that are waiting to be executed.
 QQueue<SftpJob*> SftpJob::_queuedJobs;
@@ -40,7 +42,7 @@ enum { MaximumNumberOfSimulateousSftpJobs = 2 };
 * Constructor.
 ******************************************************************************/
 SftpJob::SftpJob(const QUrl& url, const PromiseStatePtr& promiseState) :
-		_url(url), _connection(nullptr), _promiseState(promiseState)
+		_url(url), _promiseState(promiseState)
 {
 	// Run all event handlers of this class in the main thread.
 	moveToThread(QCoreApplication::instance()->thread());
@@ -76,39 +78,28 @@ void SftpJob::start()
 		return;
 	}
 
-	QSsh::SshConnectionParameters connectionParams;
+	SshConnectionParameters connectionParams;
 	connectionParams.host = _url.host();
 	connectionParams.userName = _url.userName();
 	connectionParams.password = _url.password();
-	if(connectionParams.userName.isEmpty() || connectionParams.password.isEmpty()) {
-		QPair<QString,QString> credentials = Application::instance()->fileManager()->findCredentials(connectionParams.host);
-		if(credentials.first.isEmpty() == false) {
-			connectionParams.userName = credentials.first;
-			connectionParams.password = credentials.second;
-		}
-	}
-	connectionParams.port = _url.port(22);
-	connectionParams.authenticationType = QSsh::SshConnectionParameters::AuthenticationTypeTryAllPasswordBasedMethods;
-	connectionParams.options &= ~QSsh::SshEnableStrictConformanceChecks;
-	connectionParams.timeout = 10;
+	connectionParams.port = _url.port(0);
 
-	_promiseState->setProgressText(tr("Connecting to remote server %1").arg(_url.host()));
+	_promiseState->setProgressText(tr("Connecting to remote server %1").arg(connectionParams.host));
 
 	// Open connection
-	_connection = QSsh::acquireConnection(connectionParams);
+	_connection = Application::instance()->fileManager()->acquireSshConnection(connectionParams);
 	OVITO_CHECK_POINTER(_connection);
 
 	// Listen for signals of the connection.
-	connect(_connection, &QSsh::SshConnection::error, this, &SftpJob::onSshConnectionError);
-	if(_connection->state() == QSsh::SshConnection::Connected) {
+	connect(_connection, &SshConnection::error, this, &SftpJob::onSshConnectionError);
+	if(_connection->isConnected()) {
 		onSshConnectionEstablished();
 		return;
 	}
-	QObject::connect(_connection, &QSsh::SshConnection::connected, this, &SftpJob::onSshConnectionEstablished);
+	connect(_connection, &SshConnection::connected, this, &SftpJob::onSshConnectionEstablished);
 
 	// Start to connect.
-	if(_connection->state() == QSsh::SshConnection::Unconnected)
-		_connection->connectToHost();
+	_connection->connectToHost();
 }
 
 /******************************************************************************
@@ -116,14 +107,16 @@ void SftpJob::start()
 ******************************************************************************/
 void SftpJob::shutdown(bool success)
 {
+#if 0
 	if(_sftpChannel) {
 		QObject::disconnect(_sftpChannel.data(), 0, this, 0);
 		_sftpChannel->closeChannel();
 		_sftpChannel.clear();
 	}
+#endif
 	if(_connection) {
-		QObject::disconnect(_connection, 0, this, 0);
-		QSsh::releaseConnection(_connection);
+		disconnect(_connection, 0, this, 0);
+		Application::instance()->fileManager()->releaseSshConnection(_connection);
 		_connection = nullptr;
 	}
 
@@ -138,7 +131,7 @@ void SftpJob::shutdown(bool success)
 	// Schedule this object for deletion.
 	deleteLater();
 
-	// If there are now less jobs active simultaneously, execute one of the waiting jobs.
+	// If there are now fewer active jobs, execute one of the waiting jobs.
 	if(_numActiveJobs < MaximumNumberOfSimulateousSftpJobs && !_queuedJobs.isEmpty()) {
 		SftpJob* waitingJob = _queuedJobs.dequeue();
 		if(waitingJob->_promiseState->isCanceled() == false) {
@@ -155,8 +148,9 @@ void SftpJob::shutdown(bool success)
 /******************************************************************************
 * Handles SSH connection errors.
 ******************************************************************************/
-void SftpJob::onSshConnectionError(QSsh::SshError error)
+void SftpJob::onSshConnectionError()
 {
+#if 0
 	// If authentication failed, ask the user to re-enter username/password.
 	if(error == QSsh::SshAuthenticationError && !_promiseState->isCanceled()) {
 		OVITO_ASSERT(!_sftpChannel);
@@ -177,6 +171,11 @@ void SftpJob::onSshConnectionError(QSsh::SshError error)
 			Exception(tr("Cannot access URL\n\n%1\n\nSSH connection error: %2").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)).
 				arg(_connection->errorString()))));
 	}
+#else
+	_promiseState->setException(std::make_exception_ptr(
+		Exception(tr("Cannot access URL\n\n%1\n\nSSH connection error: %2").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)).
+			arg(_connection->errorMessage()))));
+#endif
 	shutdown(false);
 }
 
@@ -190,16 +189,14 @@ void SftpJob::onSshConnectionEstablished()
 		return;
 	}
 
-	// After successful login, store login information in cache.
-	QSsh::SshConnectionParameters connectionParams = _connection->connectionParameters();
-	Application::instance()->fileManager()->cacheCredentials(connectionParams.host, connectionParams.userName, connectionParams.password);
-
 	_promiseState->setProgressText(tr("Opening SFTP file transfer channel"));
 
+#if 0
 	_sftpChannel = _connection->createSftpChannel();
 	connect(_sftpChannel.data(), &QSsh::SftpChannel::initialized, this, &SftpJob::onSftpChannelInitialized);
 	connect(_sftpChannel.data(), &QSsh::SftpChannel::channelError, this, &SftpJob::onSftpChannelError);
 	_sftpChannel->initialize();
+#endif
 }
 
 /******************************************************************************
@@ -239,7 +236,7 @@ void SftpDownloadJob::onSftpChannelInitialized()
 		shutdown(false);
 		return;
 	}
-
+#if 0
 	connect(_sftpChannel.data(), &QSsh::SftpChannel::finished, this, &SftpDownloadJob::onSftpJobFinished);
 	connect(_sftpChannel.data(), &QSsh::SftpChannel::fileInfoAvailable, this, &SftpDownloadJob::onFileInfoAvailable);
 	try {
@@ -268,8 +265,10 @@ void SftpDownloadJob::onSftpChannelInitialized()
 		_promiseState->captureException();
 		shutdown(false);
 	}
+#endif
 }
 
+#if 0
 /******************************************************************************
 * Is called after the file has been downloaded.
 ******************************************************************************/
@@ -303,6 +302,7 @@ void SftpDownloadJob::onFileInfoAvailable(QSsh::SftpJobId job, const QList<QSsh:
 		}
 	}
 }
+#endif
 
 /******************************************************************************
 * Is invoked when the QObject's timer fires.
@@ -331,6 +331,7 @@ void SftpListDirectoryJob::onSftpChannelInitialized()
 		return;
 	}
 
+#if 0
 	connect(_sftpChannel.data(), &QSsh::SftpChannel::finished, this, &SftpListDirectoryJob::onSftpJobFinished);
 	connect(_sftpChannel.data(), &QSsh::SftpChannel::fileInfoAvailable, this, &SftpListDirectoryJob::onFileInfoAvailable);
 	try {
@@ -346,8 +347,10 @@ void SftpListDirectoryJob::onSftpChannelInitialized()
 		_promiseState->captureException();
 		shutdown(false);
 	}
+#endif
 }
 
+#if 0
 /******************************************************************************
 * Is called after the file has been downloaded.
 ******************************************************************************/
@@ -382,6 +385,7 @@ void SftpListDirectoryJob::onFileInfoAvailable(QSsh::SftpJobId job, const QList<
 			_fileList.push_back(fileInfo.name);
 	}
 }
+#endif
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
