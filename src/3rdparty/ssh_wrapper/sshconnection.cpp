@@ -20,6 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "sshconnection.h"
+#include "sftpchannel.h"
 
 #include <QByteArray>
 #include <QDebug>
@@ -69,14 +70,21 @@ void SshConnection::disconnectFromHost()
         // Prevent recursion
         setState(StateClosing, false);
 
-        // Child objects must handle this and release all libssh resources.
-        //Q_EMIT doCleanup();
+        // Close all open SFTP channels.
+        Q_EMIT doCleanup();
+
+        // Close SFTP session.
+        if(_sftp)
+            ::sftp_free(_sftp);
+        _sftp = nullptr;
 
         destroySocketNotifiers();
 
-        ::ssh_disconnect(_session);
-        ::ssh_free(_session);
-        _session = 0;
+        if(_session) {
+            ::ssh_disconnect(_session);
+            ::ssh_free(_session);
+            _session = 0;
+        }
 
         setState(StateClosed, true);
     }
@@ -170,6 +178,7 @@ void SshConnection::processState()
 
         _session = ::ssh_new();
         if(!_session) {
+            _errorMessage = tr("Failed to create SSH session object.");
             setState(StateError, false);
             return;
         }
@@ -291,11 +300,6 @@ void SshConnection::processState()
     case StateOpened:
         if(::ssh_get_status(_session) == SSH_CLOSED || ::ssh_get_status(_session) == SSH_CLOSED_ERROR) {
             setState(StateError, false);
-        }
-        else {
-            // Activate processState() function on all children so that they can
-            // process their events and read and write IO.
-//            emit doProcessState();
         }
         return;
     }        
@@ -623,7 +627,9 @@ bool SshConnection::markCurrentHostKnown()
 ******************************************************************************/
 QString SshConnection::errorMessage() const
 {
-    if(_session)
+    if(_errorMessage.isEmpty() == false)
+        return _errorMessage;
+    else if(_session)
         return QString(::ssh_get_error(_session));
     else
         return tr("Could not initialize SSH session.");
@@ -675,6 +681,27 @@ int SshConnection::authenticationCallback(const char* prompt, char* buf, size_t 
     }
 
     return -1;
+}
+
+/******************************************************************************
+* Create a new SFTP channel for this connection.
+******************************************************************************/
+SftpChannel* SshConnection::createSftpChannel()
+{
+    Q_ASSERT(isConnected());
+
+    // Create the SFTP session.
+    if(!_sftp) {
+        // Switch SSH session to blocking mode. SFTP functions do not support non-blocking mode.
+        ::ssh_set_blocking(_session, 1);
+        _sftp = ::sftp_new(_session);
+        if(!_sftp) {
+            _errorMessage = "Failed to create SFTP session.";
+            setState(StateError, false);
+        }
+    }
+
+    return new SftpChannel(this);
 }
 
 } // End of namespace

@@ -25,6 +25,7 @@ FIND_PACKAGE(Libssh REQUIRED)
 # Build library
 ADD_LIBRARY(sshwrapper SHARED
 	sshconnection.cpp
+	sftpchannel.cpp
 )
 
 # Link to libssh.

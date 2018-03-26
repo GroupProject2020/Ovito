@@ -27,8 +27,11 @@
 #include <QSocketNotifier>
 
 #include <libssh/libssh.h>
+#include <libssh/sftp.h>
 
 namespace Ovito { namespace Ssh {
+
+class SftpChannel;
 
 struct SshConnectionParameters
 {
@@ -151,6 +154,9 @@ public:
     /// Get all failed authentication methods.
     UseAuths failedAuths() const { return _failedAuths; }
 
+    /// Create a new SFTP channel for this connection.
+    SftpChannel* createSftpChannel();
+
 public Q_SLOTS:
 
     /// Opens the connection to the host.
@@ -176,6 +182,7 @@ Q_SIGNALS:
     void error();
     void stateChanged();
     void canceled();
+    void doCleanup();
 
 private Q_SLOTS:
 
@@ -251,10 +258,13 @@ private:
     QString _keyPassphrase;
 
     /// The libssh sesssion handle.
-    ssh_session _session = 0;
+    ssh_session _session = nullptr;
 
     /// The current state of the connection.
     State _state = StateClosed;
+
+    /// The error message describing the last error.
+    QString _errorMessage;
 
     /// Indicates that a call to processState() is in progress.
     bool _processingState = false;
@@ -269,6 +279,11 @@ private:
     UseAuths _useAuths = UseAuths(UseAuthNone | UseAuthAutoPubKey | UseAuthPassword);
     UseAuths _failedAuths = UseAuthEmpty;
     UseAuthFlag _succeededAuth = UseAuthEmpty;
+
+    /// The SFTP session handle.
+    sftp_session _sftp = nullptr;
+
+    friend class SftpChannel;
 };
 
 } // End of namespace

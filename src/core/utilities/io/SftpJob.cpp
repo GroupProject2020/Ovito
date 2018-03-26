@@ -24,6 +24,7 @@
 #include <core/utilities/io/FileManager.h>
 #include <core/app/Application.h>
 #include <3rdparty/ssh_wrapper/sshconnection.h>
+#include <3rdparty/ssh_wrapper/sftpchannel.h>
 #include "SftpJob.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -118,13 +119,11 @@ void SftpJob::shutdown(bool success)
 		disconnect(_promiseWatcher, 0, this, 0);
 		_promiseWatcher->deleteLater();
 	}
-#if 0
 	if(_sftpChannel) {
-		QObject::disconnect(_sftpChannel.data(), 0, this, 0);
-		_sftpChannel->closeChannel();
-		_sftpChannel.clear();
+		QObject::disconnect(_sftpChannel, 0, this, 0);
+		_sftpChannel->deleteLater();
+		_sftpChannel = nullptr;
 	}
-#endif
 	if(_connection) {
 		disconnect(_connection, 0, this, 0);
 		Application::instance()->fileManager()->releaseSshConnection(_connection);
@@ -200,12 +199,11 @@ void SftpJob::onSshConnectionEstablished()
 
 	_promiseState->setProgressText(tr("Opening SFTP file transfer channel"));
 
-#if 0
+	qDebug() << "onSshConnectionEstablished: creating SFTP channel";
 	_sftpChannel = _connection->createSftpChannel();
-	connect(_sftpChannel.data(), &QSsh::SftpChannel::initialized, this, &SftpJob::onSftpChannelInitialized);
-	connect(_sftpChannel.data(), &QSsh::SftpChannel::channelError, this, &SftpJob::onSftpChannelError);
+	connect(_sftpChannel, &SftpChannel::initialized, this, &SftpJob::onSftpChannelInitialized);
+	connect(_sftpChannel, &SftpChannel::channelError, this, &SftpJob::onSftpChannelError);
 	_sftpChannel->initialize();
-#endif
 }
 
 /******************************************************************************
@@ -214,7 +212,7 @@ void SftpJob::onSshConnectionEstablished()
 void SftpJob::onSftpChannelError(const QString& reason)
 {
 	_promiseState->setException(std::make_exception_ptr(
-		Exception(tr("Cannot access URL\n\n%1\n\nSFTP error: %2").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)).arg(reason))));
+		Exception(tr("Cannot access remote URL\n\n%1\n\n%2").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)).arg(reason))));
 	shutdown(false);
 }
 
@@ -223,9 +221,6 @@ void SftpJob::onSftpChannelError(const QString& reason)
 ******************************************************************************/
 void SftpDownloadJob::shutdown(bool success)
 {
-	if(_timerId)
-		killTimer(_timerId);
-
 	if(_localFile && success)
 		_promise.setResults(_localFile->fileName());
 	else
@@ -245,9 +240,9 @@ void SftpDownloadJob::onSftpChannelInitialized()
 		shutdown(false);
 		return;
 	}
-#if 0
-	connect(_sftpChannel.data(), &QSsh::SftpChannel::finished, this, &SftpDownloadJob::onSftpJobFinished);
-	connect(_sftpChannel.data(), &QSsh::SftpChannel::fileInfoAvailable, this, &SftpDownloadJob::onFileInfoAvailable);
+
+	qDebug() << "onSftpChannelInitialized";
+	connect(_sftpChannel, &SftpChannel::finished, this, &SftpDownloadJob::onSftpJobFinished);
 	try {
 
 		// Set progress text.
@@ -259,47 +254,31 @@ void SftpDownloadJob::onSftpChannelInitialized()
 			throw Exception(tr("Failed to create temporary file: %1").arg(_localFile->errorString()));
 		_localFile->close();
 
-		// Request file info.
-		_sftpChannel->statFile(_url.path());
-
 		// Start to download file.
-		_downloadJob = _sftpChannel->downloadFile(_url.path(), _localFile->fileName(), QSsh::SftpOverwriteExisting);
-		if(_downloadJob == QSsh::SftpInvalidJob)
-			throw Exception(tr("Failed to download remote file %1.").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
-
-		// Start timer to monitor download progress.
-		_timerId = startTimer(500);
+		_sftpChannel->downloadFile(_url.path(), _localFile.data());
 	}
     catch(Exception&) {
 		_promiseState->captureException();
 		shutdown(false);
 	}
-#endif
 }
 
-#if 0
 /******************************************************************************
 * Is called after the file has been downloaded.
 ******************************************************************************/
-void SftpDownloadJob::onSftpJobFinished(QSsh::SftpJobId jobId, const QString& errorMessage) 
+void SftpDownloadJob::onSftpJobFinished() 
 {
-	if(jobId != _downloadJob)
-		return;
-
 	if(_promiseState->isCanceled()) {
 		shutdown(false);
 		return;
 	}
-    if(!errorMessage.isEmpty()) {
-		_promiseState->setException(std::make_exception_ptr(Exception(tr("Cannot access URL\n\n%1\n\nSFTP error: %2")
-					.arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded))
-					.arg(errorMessage))));
-		shutdown(false);
-		return;
-    }
+
+	qDebug() << "onSftpJobFinished()";
+
     shutdown(true);
 }
 
+#if 0
 /******************************************************************************
 * Is called when the file info for the requested file arrived.
 ******************************************************************************/
@@ -313,6 +292,7 @@ void SftpDownloadJob::onFileInfoAvailable(QSsh::SftpJobId job, const QList<QSsh:
 }
 #endif
 
+#if 0
 /******************************************************************************
 * Is invoked when the QObject's timer fires.
 ******************************************************************************/
@@ -329,6 +309,7 @@ void SftpDownloadJob::timerEvent(QTimerEvent* event)
     		shutdown(false);
 	}
 }
+#endif
 
 /******************************************************************************
 * Is called when the SFTP channel has been created.

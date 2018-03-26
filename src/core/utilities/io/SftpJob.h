@@ -30,6 +30,7 @@
 
 namespace Ovito { namespace Ssh {
 	class SshConnection;
+	class SftpChannel;
 }}
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -48,7 +49,7 @@ public:
 
 	/// Destructor.
 	virtual ~SftpJob() {
-//		OVITO_ASSERT(_sftpChannel == nullptr);
+		OVITO_ASSERT(_sftpChannel == nullptr);
 		OVITO_ASSERT(_connection == nullptr);
 	}
 
@@ -95,7 +96,7 @@ protected:
 	Ovito::Ssh::SshConnection* _connection = nullptr;
 
 	/// The SFTP channel.
-    //QSsh::SftpChannel::Ptr _sftpChannel;
+    Ovito::Ssh::SftpChannel* _sftpChannel = nullptr;
 
     /// The associated future interface of the job.
     PromiseStatePtr _promiseState;
@@ -134,13 +135,10 @@ protected:
     /// Is called when the SFTP channel has been created.
 	virtual void onSftpChannelInitialized() override;
 
-	/// Is invoked when the QObject's timer fires.
-    void timerEvent(QTimerEvent* event) override;
-
 protected Q_SLOTS:
 
 	/// Is called after the file has been downloaded.
-//	void onSftpJobFinished(QSsh::SftpJobId jobId, const QString& errorMessage);
+	void onSftpJobFinished();
 
 	/// Is called when the file info for the requested file arrived.
 //	void onFileInfoAvailable(QSsh::SftpJobId job, const QList<QSsh::SftpFileInfo>& fileInfoList);
@@ -149,12 +147,6 @@ private:
 
     /// The local copy of the file.
     QScopedPointer<QTemporaryFile> _localFile;
-
-    /// The SFTP file download job.
-    //QSsh::SftpJobId _downloadJob;
-
-    /// The progress monitor timer.
-    int _timerId = 0;
 
 	/// The promise through which the result of this download job is returned.
 	Promise<QString> _promise;
