@@ -132,8 +132,6 @@ void FileManager::fileFetched(QUrl url, QTemporaryFile* localFile)
 	auto inProgressEntry = _pendingFiles.find(normalizedUrl);
 	if(inProgressEntry != _pendingFiles.end())
 		_pendingFiles.erase(inProgressEntry);
-	else
-		OVITO_ASSERT(false);
 
 	if(localFile) {
 		// Store downloaded file in local cache.
@@ -210,7 +208,6 @@ void FileManager::releaseSshConnection(SshConnection* connection)
         connection->deleteLater();
     }
     else {
-        connection->disconnectFromHost(); // Clean up after neglectful clients.
         Q_ASSERT(!_unacquiredConnections.contains(connection));
         _unacquiredConnections.append(connection);
     }

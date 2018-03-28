@@ -24,8 +24,10 @@
 #include <core/utilities/io/FileManager.h>
 #include <core/app/Application.h>
 #include <3rdparty/ssh_wrapper/sshconnection.h>
-#include <3rdparty/ssh_wrapper/sftpchannel.h>
+#include <3rdparty/ssh_wrapper/scpchannel.h>
 #include "SftpJob.h"
+
+#include <QTimer>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
@@ -34,10 +36,11 @@ using namespace Ovito::Ssh;
 /// List SFTP jobs that are waiting to be executed.
 QQueue<SftpJob*> SftpJob::_queuedJobs;
 
-/// Keeps track of how many SFTP jobs are currently active.
+/// Tracks of how many jobs are currently active.
 int SftpJob::_numActiveJobs = 0;
 
-enum { MaximumNumberOfSimulateousSftpJobs = 2 };
+/// The maximum number of simultaneous jobs at a time.
+constexpr int MaximumNumberOfSimulateousJobs = 2;
 
 /******************************************************************************
 * Constructor.
@@ -60,7 +63,7 @@ void SftpJob::start()
 	if(!_isActive) {
 		// Keep a counter of active jobs.
 		// If there are too many jobs active simultaneously, queue them to be executed later.
-		if(_numActiveJobs >= MaximumNumberOfSimulateousSftpJobs) {
+		if(_numActiveJobs >= MaximumNumberOfSimulateousJobs) {
 			_queuedJobs.enqueue(this);
 			return;
 		}
@@ -81,7 +84,7 @@ void SftpJob::start()
 
 	// Get notified if user has canceled the promise.
 	_promiseWatcher = new PromiseWatcher(this);
-	connect(_promiseWatcher, &PromiseWatcher::canceled, this, &SftpJob::onSshConnectionCanceled);
+	connect(_promiseWatcher, &PromiseWatcher::canceled, this, &SftpJob::connectionCanceled);
 	_promiseWatcher->watch(_promiseState);
 
 	SshConnectionParameters connectionParams;
@@ -90,21 +93,21 @@ void SftpJob::start()
 	connectionParams.password = _url.password();
 	connectionParams.port = _url.port(0);
 
-	_promiseState->setProgressText(tr("Connecting to remote server %1").arg(connectionParams.host));
+	_promiseState->setProgressText(tr("Connecting to remote host %1").arg(connectionParams.host));
 
 	// Open connection
 	_connection = Application::instance()->fileManager()->acquireSshConnection(connectionParams);
 	OVITO_CHECK_POINTER(_connection);
 
 	// Listen for signals of the connection.
-	connect(_connection, &SshConnection::error, this, &SftpJob::onSshConnectionError);
-	connect(_connection, &SshConnection::canceled, this, &SftpJob::onSshConnectionCanceled);
-	connect(_connection, &SshConnection::allAuthsFailed, this, &SftpJob::onSshConnectionAuthenticationFailed);
+	connect(_connection, &SshConnection::error, this, &SftpJob::connectionError);
+	connect(_connection, &SshConnection::canceled, this, &SftpJob::connectionCanceled);
+	connect(_connection, &SshConnection::allAuthsFailed, this, &SftpJob::authenticationFailed);
 	if(_connection->isConnected()) {
-		onSshConnectionEstablished();
+		QTimer::singleShot(0, this, &SftpJob::connectionEstablished);
 		return;
 	}
-	connect(_connection, &SshConnection::connected, this, &SftpJob::onSshConnectionEstablished);
+	connect(_connection, &SshConnection::connected, this, &SftpJob::connectionEstablished);
 
 	// Start to connect.
 	_connection->connectToHost();
@@ -116,13 +119,9 @@ void SftpJob::start()
 void SftpJob::shutdown(bool success)
 {
 	if(_promiseWatcher) {		
+		_promiseWatcher->reset();
 		disconnect(_promiseWatcher, 0, this, 0);
 		_promiseWatcher->deleteLater();
-	}
-	if(_sftpChannel) {
-		QObject::disconnect(_sftpChannel, 0, this, 0);
-		_sftpChannel->deleteLater();
-		_sftpChannel = nullptr;
 	}
 	if(_connection) {
 		disconnect(_connection, 0, this, 0);
@@ -130,6 +129,7 @@ void SftpJob::shutdown(bool success)
 		_connection = nullptr;
 	}
 
+	qDebug() << "Settings promise state finished: promise=" << _promiseState.get();
 	_promiseState->setFinished();
 
 	// Update the counter of active jobs.
@@ -141,8 +141,8 @@ void SftpJob::shutdown(bool success)
 	// Schedule this object for deletion.
 	deleteLater();
 
-	// If there are now fewer active jobs, execute one of the waiting jobs.
-	if(_numActiveJobs < MaximumNumberOfSimulateousSftpJobs && !_queuedJobs.isEmpty()) {
+	// If there jobs waiting in the queue, execute next job.
+	if(!_queuedJobs.isEmpty() && _numActiveJobs < MaximumNumberOfSimulateousJobs) {
 		SftpJob* waitingJob = _queuedJobs.dequeue();
 		if(waitingJob->_promiseState->isCanceled() == false) {
 			waitingJob->start();
@@ -158,7 +158,7 @@ void SftpJob::shutdown(bool success)
 /******************************************************************************
 * Handles SSH connection errors.
 ******************************************************************************/
-void SftpJob::onSshConnectionError()
+void SftpJob::connectionError()
 {
 	_promiseState->setException(std::make_exception_ptr(
 		Exception(tr("Cannot access URL\n\n%1\n\nSSH connection error: %2").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)).
@@ -170,7 +170,7 @@ void SftpJob::onSshConnectionError()
 /******************************************************************************
 * Handles SSH authentication errors.
 ******************************************************************************/
-void SftpJob::onSshConnectionAuthenticationFailed()
+void SftpJob::authenticationFailed()
 {
 	_promiseState->setException(std::make_exception_ptr(
 		Exception(tr("Cannot access URL\n\n%1\n\nSSH authentication failed").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)))));
@@ -181,8 +181,11 @@ void SftpJob::onSshConnectionAuthenticationFailed()
 /******************************************************************************
 * Handles SSH connection cancelation by user.
 ******************************************************************************/
-void SftpJob::onSshConnectionCanceled()
+void SftpJob::connectionCanceled()
 {
+	qDebug() << "SftpJob::connectionCanceled():" << _url.toString() << "promise=" << _promiseState.get();
+	// If use has canceled the SSH connection, 
+	// cancel the file retrievel operation as well.
 	_promiseState->cancel();
 	shutdown(false);
 }
@@ -190,29 +193,36 @@ void SftpJob::onSshConnectionCanceled()
 /******************************************************************************
 * Is called when the SSH connection has been established.
 ******************************************************************************/
-void SftpJob::onSshConnectionEstablished()
+void SftpDownloadJob::connectionEstablished()
 {
 	if(_promiseState->isCanceled()) {
 		shutdown(false);
 		return;
 	}
 
-	_promiseState->setProgressText(tr("Opening SFTP file transfer channel"));
-
-	qDebug() << "onSshConnectionEstablished: creating SFTP channel";
-	_sftpChannel = _connection->createSftpChannel();
-	connect(_sftpChannel, &SftpChannel::initialized, this, &SftpJob::onSftpChannelInitialized);
-	connect(_sftpChannel, &SftpChannel::channelError, this, &SftpJob::onSftpChannelError);
-	_sftpChannel->initialize();
+	// Open the SCP channel.
+	_promiseState->setProgressText(tr("Opening SCP channel to remote host %1").arg(_connection->hostname()));
+	qDebug() << "Opening SCP channel for path" << _url.path();
+	_scpChannel = new ScpChannel(_connection, _url.path());
+	connect(_scpChannel, &ScpChannel::receivingFile, this, &SftpDownloadJob::receivingFile);
+	connect(_scpChannel, &ScpChannel::receivedData, this, &SftpDownloadJob::receivedData);
+	connect(_scpChannel, &ScpChannel::receivedFileComplete, this, &SftpDownloadJob::receivedFileComplete);
+	connect(_scpChannel, &ScpChannel::error, this, &SftpDownloadJob::channelError);
+	connect(_scpChannel, &ScpChannel::closed, this, &SftpDownloadJob::connectionCanceled);
+	connect(_scpChannel, &ScpChannel::closed, _scpChannel, &QObject::deleteLater);
+	_scpChannel->openChannel();
 }
 
 /******************************************************************************
-* Is called when the SFTP channel could not be created.
+* Is called when the SCP channel failed.
 ******************************************************************************/
-void SftpJob::onSftpChannelError(const QString& reason)
+void SftpDownloadJob::channelError()
 {
 	_promiseState->setException(std::make_exception_ptr(
-		Exception(tr("Cannot access remote URL\n\n%1\n\n%2").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)).arg(reason))));
+		Exception(tr("Cannot access remote URL\n\n%1\n\n%2")
+			.arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded))
+			.arg(_scpChannel->errorMessage()))));
+	
 	shutdown(false);
 }
 
@@ -221,41 +231,64 @@ void SftpJob::onSftpChannelError(const QString& reason)
 ******************************************************************************/
 void SftpDownloadJob::shutdown(bool success)
 {
+	// Close SCP channel.
+	if(_scpChannel) {
+		disconnect(_scpChannel, 0, this, 0);
+		_scpChannel->closeChannel();
+		_scpChannel = nullptr;
+	}
+
+	// Close local file and clean up.
+	if(_localFile) {
+		if(_fileMapping) {
+			// Make sure the received data was successfully written to the temporary file.
+			if(!_localFile->unmap(_fileMapping) || !_localFile->flush() || _localFile->error() != QFileDevice::NoError) {
+				_promiseState->setException(std::make_exception_ptr(Exception(
+					tr("Failed to write to local file %1: %2").arg(_localFile->fileName()).arg(_localFile->errorString()))));
+				success = false;
+			}
+			_fileMapping = nullptr;
+		}
+		_localFile->close();
+	}
 	if(_localFile && success)
 		_promise.setResults(_localFile->fileName());
 	else
 		_localFile.reset();
 
+	// Close SSH connection.
 	SftpJob::shutdown(success);
 
+	// Hand downloaded file over to FileManager cache.
 	Application::instance()->fileManager()->fileFetched(_url, _localFile.take());
 }
 
 /******************************************************************************
-* Is called when the SFTP channel has been created.
+* Is called when the remote host starts sending the file.
 ******************************************************************************/
-void SftpDownloadJob::onSftpChannelInitialized()
+void SftpDownloadJob::receivingFile(qint64 fileSize)
 {
 	if(_promiseState->isCanceled()) {
 		shutdown(false);
 		return;
 	}
+	_promiseState->setProgressMaximum(std::min((qint64)std::numeric_limits<int>::max(), fileSize / 1024));
+	_promiseState->setProgressText(tr("Fetching remote file %1").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	qDebug() << "Start receiving file of size:" << fileSize << "bytes";
 
-	qDebug() << "onSftpChannelInitialized";
-	connect(_sftpChannel, &SftpChannel::finished, this, &SftpDownloadJob::onSftpJobFinished);
+	// Create the destination file.
 	try {
-
-		// Set progress text.
-		_promiseState->setProgressText(tr("Fetching remote file %1").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
-
-		// Create temporary file.
 		_localFile.reset(new QTemporaryFile());
-		if(!_localFile->open())
+		if(!_localFile->open() || !_localFile->resize(fileSize))
 			throw Exception(tr("Failed to create temporary file: %1").arg(_localFile->errorString()));
-		_localFile->close();
 
-		// Start to download file.
-		_sftpChannel->downloadFile(_url.path(), _localFile.data());
+		// Map the file to memory and let the SCP channel write the received data to the memory buffer.
+		if(fileSize) {
+			_fileMapping = _localFile->map(0, fileSize);
+			if(!_fileMapping)
+				throw Exception(tr("Failed to map temporary file to memory: %1").arg(_localFile->errorString()));
+		}
+		_scpChannel->setDestinationBuffer(reinterpret_cast<char*>(_fileMapping));
 	}
     catch(Exception&) {
 		_promiseState->captureException();
@@ -266,116 +299,108 @@ void SftpDownloadJob::onSftpChannelInitialized()
 /******************************************************************************
 * Is called after the file has been downloaded.
 ******************************************************************************/
-void SftpDownloadJob::onSftpJobFinished() 
+void SftpDownloadJob::receivedFileComplete() 
 {
 	if(_promiseState->isCanceled()) {
 		shutdown(false);
 		return;
 	}
-
-	qDebug() << "onSftpJobFinished()";
-
-    shutdown(true);
-}
-
-#if 0
-/******************************************************************************
-* Is called when the file info for the requested file arrived.
-******************************************************************************/
-void SftpDownloadJob::onFileInfoAvailable(QSsh::SftpJobId job, const QList<QSsh::SftpFileInfo>& fileInfoList)
-{
-	if(fileInfoList.empty() == false ) {
-		if(fileInfoList[0].sizeValid) {
-			_promiseState->setProgressMaximum(fileInfoList[0].size / 1000);
-		}
-	}
-}
-#endif
-
-#if 0
-/******************************************************************************
-* Is invoked when the QObject's timer fires.
-******************************************************************************/
-void SftpDownloadJob::timerEvent(QTimerEvent* event)
-{
-	SftpJob::timerEvent(event);
-
-	if(_localFile) {
-		qint64 size = _localFile->size();
-		if(size >= 0 && _promiseState->progressMaximum() > 0) {
-			_promiseState->setProgressValue(size / 1000);
-		}
-    	if(_promiseState->isCanceled())
-    		shutdown(false);
-	}
-}
-#endif
-
-/******************************************************************************
-* Is called when the SFTP channel has been created.
-******************************************************************************/
-void SftpListDirectoryJob::onSftpChannelInitialized()
-{
-	if(_promiseState->isCanceled()) {
-		shutdown(false);
-		return;
-	}
-
-#if 0
-	connect(_sftpChannel.data(), &QSsh::SftpChannel::finished, this, &SftpListDirectoryJob::onSftpJobFinished);
-	connect(_sftpChannel.data(), &QSsh::SftpChannel::fileInfoAvailable, this, &SftpListDirectoryJob::onFileInfoAvailable);
-	try {
-		// Set progress text.
-		_promiseState->setProgressText(tr("Listing remote directory %1").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
-
-		// Request file list.
-		_listingJob = _sftpChannel->listDirectory(_url.path());
-		if(_listingJob == QSsh::SftpInvalidJob)
-			throw Exception(tr("Failed to list contents of remote directory %1.").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
-	}
-    catch(Exception&) {
-		_promiseState->captureException();
-		shutdown(false);
-	}
-#endif
-}
-
-#if 0
-/******************************************************************************
-* Is called after the file has been downloaded.
-******************************************************************************/
-void SftpListDirectoryJob::onSftpJobFinished(QSsh::SftpJobId jobId, const QString& errorMessage) 
-{
-	if(jobId != _listingJob)
-		return;
-
-	if(_promiseState->isCanceled()) {
-		shutdown(false);
-		return;
-	}
-    if(!errorMessage.isEmpty()) {
-    	_promiseState->setException(std::make_exception_ptr(Exception(tr("Cannot access URL\n\n%1\n\nSFTP error: %2")
-					.arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded))
-					.arg(errorMessage))));
-		shutdown(false);
-		return;
-    }
-
-	_promise.setResults(_fileList);
     shutdown(true);
 }
 
 /******************************************************************************
-* Is called when the file info for the requested file arrived.
+* Is called when the remote host sent some file data.
 ******************************************************************************/
-void SftpListDirectoryJob::onFileInfoAvailable(QSsh::SftpJobId job, const QList<QSsh::SftpFileInfo>& fileInfoList)
+void SftpDownloadJob::receivedData(qint64 totalReceivedBytes)
 {
-	for(const QSsh::SftpFileInfo& fileInfo : fileInfoList) {
-		if(fileInfo.type == QSsh::FileTypeRegular)
-			_fileList.push_back(fileInfo.name);
+	_promiseState->setProgressValue(std::min((qint64)std::numeric_limits<int>::max(), totalReceivedBytes / 1024));
+	if(_promiseState->isCanceled()) {
+		shutdown(false);
 	}
 }
+
+/******************************************************************************
+* Is called when the SSH connection has been established.
+******************************************************************************/
+void SftpListDirectoryJob::connectionEstablished()
+{
+	if(_promiseState->isCanceled()) {
+		shutdown(false);
+		return;
+	}
+
+#if 0
+	// Open the SCP channel.
+	_promiseState->setProgressText(tr("Opening SCP channel to remote host %1").arg(_connection->hostname()));
+	qDebug() << "Opening SCP channel for path" << (_url.path() + QStringLiteral("/*"));
+	_scpChannel = new ScpChannel(_connection, _url.path() + QStringLiteral("/*"));
+	connect(_scpChannel, &ScpChannel::error, this, &SftpListDirectoryJob::channelError);
+	connect(_scpChannel, &ScpChannel::receivingDirectory, this, &SftpListDirectoryJob::receivingDirectory);
+	connect(_scpChannel, &ScpChannel::receivedDirectoryComplete, this, &SftpListDirectoryJob::receivedDirectoryComplete);
+	connect(_scpChannel, &ScpChannel::closed, this, &SftpListDirectoryJob::connectionCanceled);
+	connect(_scpChannel, &ScpChannel::closed, _scpChannel, &QObject::deleteLater);
+	_scpChannel->openChannel();
 #endif
+
+	_promise.setResults(QStringList() << "relax.1100.dump");
+    shutdown(true);
+
+}
+
+/******************************************************************************
+* Is called before transmission of the directory listing begins.
+******************************************************************************/
+void SftpListDirectoryJob::receivingDirectory()
+{
+	if(_promiseState->isCanceled()) {
+		shutdown(false);
+		return;
+	}
+
+	// Set progress text.
+	_promiseState->setProgressText(tr("Listing remote directory %1").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+}
+
+/******************************************************************************
+* Is called when the SCP channel failed.
+******************************************************************************/
+void SftpListDirectoryJob::channelError()
+{
+	_promiseState->setException(std::make_exception_ptr(
+		Exception(tr("Cannot access remote URL\n\n%1\n\n%2")
+			.arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded))
+			.arg(_scpChannel->errorMessage()))));
+	
+	shutdown(false);
+}
+
+/******************************************************************************
+* Is called after the directory listing has been fully transmitted.
+******************************************************************************/
+void SftpListDirectoryJob::receivedDirectoryComplete(const QStringList& listing)
+{
+	if(_promiseState->isCanceled()) {
+		shutdown(false);
+		return;
+	}
+
+	_promise.setResults(listing);
+    shutdown(true);
+}
+
+/******************************************************************************
+* Closes the SSH connection.
+******************************************************************************/
+void SftpListDirectoryJob::shutdown(bool success)
+{
+	if(_scpChannel) {
+		disconnect(_scpChannel, 0, this, 0);
+		_scpChannel->closeChannel();
+		_scpChannel = nullptr;
+	}
+
+	SftpJob::shutdown(success);
+}
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

@@ -116,9 +116,13 @@ void PromiseState::setFinishedNoSelfLock()
 		std::move(cont)();
 	_continuations.clear();
 
+	qDebug() << "PromiseState::setFinishedNoSelfLock(): promise=" << this;
+
 	// Inform promise watchers.
-	for(PromiseWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList)
+	for(PromiseWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList) {
+		qDebug() << " --Watcher:" << watcher;
 		QMetaObject::invokeMethod(watcher, "promiseFinished", Qt::QueuedConnection);
+	}
 
 	// Inform promise trackers.
 	while(_trackers) {

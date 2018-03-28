@@ -23,6 +23,7 @@
 
 #include <QObject>
 #include <QFile>
+#include <QByteArray>
 
 #include <libssh/sftp.h>
 
@@ -46,7 +47,13 @@ public:
     void initialize();
 
     /// Downloads a file from the remote server to a local directory.
-    void downloadFile(const QString& remotePath, QFile* destination);
+    qint64 downloadFile(const QString& remotePath, QFile* destination);
+
+    /// Retrieves the list of files in the given directory.
+    void listDirectory(const QString& remotePath);
+
+    /// Returns the list of files in the directory after a successful call to listDirectory().  
+    const QStringList& directoryListing() const { return _directoryListing; }
 
 Q_SIGNALS:
 
@@ -56,6 +63,9 @@ Q_SIGNALS:
     /// This signal is generated when an error has occurred.
     void channelError(const QString& reason);
 
+    /// This signal is generated when new data was received from the remote host.
+    void progress(qint64 nbytes);
+
     /// This signal is generated when the file transfer has been completed.
     void finished();
 
@@ -64,10 +74,16 @@ private Q_SLOTS:
     /// Closes the SFTP transfer.
     void cleanup();
 
+    /// Is called when the SSH connection has received an update.
+    void processState();
+
 private:
 
     /// The underlying SSH connection.
     SshConnection* _connection;
+
+    /// The SFTP session handle.
+    sftp_session _sftp = nullptr;
 
     /// The SFTP file handle.
     sftp_file _sftpFile = nullptr;
@@ -77,6 +93,15 @@ private:
 
     /// The receive buffer.
     QByteArray _buffer;
+
+    /// The libssh asynchronous file read request.
+    int _asyncReadRequest = 0;
+
+    /// The number of bytes received so far. 
+    qint64 _receivedBytes = 0;
+
+    /// The list of files in the requested directory.
+    QStringList _directoryListing;
 };
 
 } // End of namespace

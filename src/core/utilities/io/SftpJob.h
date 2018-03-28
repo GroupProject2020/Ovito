@@ -30,7 +30,7 @@
 
 namespace Ovito { namespace Ssh {
 	class SshConnection;
-	class SftpChannel;
+	class ScpChannel;
 }}
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -49,7 +49,6 @@ public:
 
 	/// Destructor.
 	virtual ~SftpJob() {
-		OVITO_ASSERT(_sftpChannel == nullptr);
 		OVITO_ASSERT(_connection == nullptr);
 	}
 
@@ -70,22 +69,16 @@ protected:
 protected Q_SLOTS:
 
 	/// Handles SSH connection errors.
-	void onSshConnectionError();
+	void connectionError();
 
 	/// Handles SSH authentication errors.
-	void onSshConnectionAuthenticationFailed();
+	void authenticationFailed();
 
 	/// Handles SSH connection cancelation by user.
-	void onSshConnectionCanceled();
+	void connectionCanceled();
 
 	/// Is called when the SSH connection has been established.
-    void onSshConnectionEstablished();
-
-    /// Is called when an SFTP error occurs.
-    void onSftpChannelError(const QString& reason);
-
-    /// Is called when the SFTP channel has been created.
-	virtual void onSftpChannelInitialized() = 0;
+    virtual void connectionEstablished() = 0;
 
 protected:
 
@@ -94,9 +87,6 @@ protected:
 
 	/// The SSH connection.
 	Ovito::Ssh::SshConnection* _connection = nullptr;
-
-	/// The SFTP channel.
-    Ovito::Ssh::SftpChannel* _sftpChannel = nullptr;
 
     /// The associated future interface of the job.
     PromiseStatePtr _promiseState;
@@ -132,21 +122,33 @@ protected:
 	/// Closes the SSH connection.
 	virtual void shutdown(bool success) override;
 
-    /// Is called when the SFTP channel has been created.
-	virtual void onSftpChannelInitialized() override;
+	/// Is called when the SSH connection has been established.
+    virtual void connectionEstablished() override;
 
 protected Q_SLOTS:
 
-	/// Is called after the file has been downloaded.
-	void onSftpJobFinished();
+    /// Is called when the remote host starts sending the file.
+	void receivingFile(qint64 fileSize);
 
-	/// Is called when the file info for the requested file arrived.
-//	void onFileInfoAvailable(QSsh::SftpJobId job, const QList<QSsh::SftpFileInfo>& fileInfoList);
+    /// Is called when the remote host sent some file data.
+	void receivedData(qint64 totalReceivedBytes);
+
+	/// Is called after the file has been downloaded.
+	void receivedFileComplete();
+
+    /// Is called when an SCP error occurs in the channel.
+    void channelError();
 
 private:
 
+	/// The SCP channel.
+    Ovito::Ssh::ScpChannel* _scpChannel = nullptr;
+
     /// The local copy of the file.
     QScopedPointer<QTemporaryFile> _localFile;
+
+	/// The memory-mapped destination file.
+	uchar* _fileMapping = nullptr;
 
 	/// The promise through which the result of this download job is returned.
 	Promise<QString> _promise;
@@ -167,24 +169,27 @@ public:
 
 protected:
 
-    /// Is called when the SFTP channel has been created.
-	virtual void onSftpChannelInitialized() override;
+	/// Closes the SSH connection.
+	virtual void shutdown(bool success) override;
+
+	/// Is called when the SSH connection has been established.
+    virtual void connectionEstablished() override;
 
 protected Q_SLOTS:
 
-	/// Is called after the file has been downloaded.
-//	void onSftpJobFinished(QSsh::SftpJobId jobId, const QString& errorMessage);
+    /// Is called before transmission of the directory listing begins.
+    void receivingDirectory();
 
-	/// Is called when the file info for the requested file arrived.
-//	void onFileInfoAvailable(QSsh::SftpJobId job, const QList<QSsh::SftpFileInfo>& fileInfoList);
+    /// Is called after the directory listing has been fully transmitted.
+    void receivedDirectoryComplete(const QStringList& listing);
+
+    /// Is called when an SCP error occurs in the channel.
+    void channelError();
 
 private:
 
-    /// The list of files.
-    QStringList _fileList;
-
-    /// The SFTP job.
-    //QSsh::SftpJobId _listingJob;
+	/// The SCP channel.
+    Ovito::Ssh::ScpChannel* _scpChannel = nullptr;
 
 	/// The promise through which the result of this download job is returned.
 	Promise<QStringList> _promise;	

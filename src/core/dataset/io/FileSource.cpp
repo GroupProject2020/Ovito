@@ -168,7 +168,8 @@ void FileSource::updateListOfFrames()
 	// Catch exceptions and display error messages.
 	framesFuture.finally_future(executor(), [](SharedFuture<QVector<FileSourceImporter::Frame>> future) {
 		try {
-			future.results();
+			if(!future.isCanceled())
+				future.results();
 		}
 		catch(const Exception& ex) {
 			ex.reportError();
