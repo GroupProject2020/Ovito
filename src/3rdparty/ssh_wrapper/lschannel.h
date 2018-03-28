@@ -26,46 +26,28 @@
 
 namespace Ovito { namespace Ssh {
 
-class ScpChannel : public ProcessChannel
+class LsChannel : public ProcessChannel
 {
     Q_OBJECT
 
 public:
 
     /// Constructor.
-    explicit ScpChannel(SshConnection* connection, const QString& location);
+    explicit LsChannel(SshConnection* connection, const QString& location);
 
-    /// Sets the destination buffer for the received file data.
-    void setDestinationBuffer(char* buffer) {
-        _dataBuffer = buffer;
-        processData();
-    }
+    /// Returns the directory listing received from remote host.
+    const QStringList& directoryListing() const { return _directoryListing; } 
+
+    /// Returns whether the requested remote location is a directory.
+    bool isDirectoryLocation() const { return command().endsWith(QStringLiteral("/*")); }
 
 Q_SIGNALS:
 
-    /// This signal is generated before transmission of a file begins.
-    void receivingFile(qint64 fileSize);
+    /// This signal is generated before transmission of a directory listing begins.
+    void receivingDirectory();
 
-    /// This signal is generated during data transmission.
-    void receivedData(qint64 totalReceivedBytes);
-
-    /// This signal is generated after a file has been fully transmitted.
-    void receivedFileComplete();
-
-private:
-
-    enum State {
-        StateConnecting,
-        StateConnected,
-        StateReceivingFile,
-        StateFileComplete
-    };
-
-    /// Part of the state machine implementation.
-    void setState(State state) { _state = state; }
-
-    /// Returns the current state of the channel.
-    State state() const { return _state; }
+    /// This signal is generated after a directory listing has been fully transmitted.
+    void receivedDirectoryComplete(const QStringList& listing);
 
 private Q_SLOTS:
 
@@ -77,10 +59,7 @@ private Q_SLOTS:
 
 private:
 
-    State _state = StateConnecting;
-    char* _dataBuffer = nullptr;
-    qint64 _bytesReceived = 0;
-    qint64 _fileSize = 0;
+    QStringList _directoryListing;
 };
 
 

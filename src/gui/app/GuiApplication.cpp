@@ -175,17 +175,15 @@ bool GuiApplication::startupApplication()
 		QString importFilename = cmdLineParser().positionalArguments().front();
 		if(!importFilename.endsWith(".ovito", Qt::CaseInsensitive)) {
 			QUrl importURL = Application::instance()->fileManager()->urlFromUserInput(importFilename);
-			QTimer::singleShot(0, this, [container,importURL]() {
 			try {
 				container->importFile(importURL);
 			}
 			catch(const Exception& ex) {
 				ex.reportError();
 			}
-//			if(!container->currentSet())
-//				return false;
-//			container->currentSet()->undoStack().setClean();
-			});sdv
+			if(!container->currentSet())
+				return false;
+			container->currentSet()->undoStack().setClean();
 		}
 	}
 

@@ -23,6 +23,7 @@
 #include "sshconnection.h"
 
 #include <QDebug>
+#include <QThread>
 #include <QTimer>
 
 namespace Ovito { namespace Ssh {
@@ -36,7 +37,7 @@ ProcessChannel::ProcessChannel(SshConnection* connection, const QString& command
 {
     connect(connection, &SshConnection::error,          this, &ProcessChannel::handleSessionError);
     connect(connection, &SshConnection::doProcessState, this, &ProcessChannel::processState);
-    connect(connection, &SshConnection::doCleanup,      this, &ProcessChannel::closeChannel);
+    connect(connection, &SshConnection::doCleanup,      this, &ProcessChannel::closeChannel);    
 }
 
 /******************************************************************************
@@ -44,7 +45,7 @@ ProcessChannel::ProcessChannel(SshConnection* connection, const QString& command
 ******************************************************************************/
 ProcessChannel::~ProcessChannel()
 {
-    qDebug() << "ProcessChannel::~ProcessChannel()";
+    qDebug() << "~ProcessChannel():" << this << "state=" << _state;
     closeChannel();
 }
 
@@ -84,20 +85,20 @@ void ProcessChannel::openChannel()
 ******************************************************************************/
 void ProcessChannel::closeChannel()
 {
-    qDebug() << "ProcessChannel::closeChannel()";
     if(state() != StateClosed && state() != StateClosing) {
-        qDebug() << "Closing channel";
 
         // Prevent recursion
         setState(StateClosing, false);
 
         Q_EMIT readChannelFinished();
 
-        if(_channel) {
-            if(::ssh_channel_is_open(_channel))
-                ::ssh_channel_close(_channel);
+        if(channel()) {
+            if(::ssh_channel_is_open(channel())) {
+                qDebug() << "Closed channel=" << channel();
+                ::ssh_channel_close(channel());
+            }
 
-            ::ssh_channel_free(_channel);
+            ::ssh_channel_free(channel());
             _channel = nullptr;
         }
 
@@ -183,6 +184,16 @@ void ProcessChannel::processState()
             return;
 
         case SSH_OK:
+            qDebug() << "Opened channel=" << channel() << this;
+
+            // Register callback functions for libssh channel:
+            memset(&_channelCallbacks, 0, sizeof(_channelCallbacks));
+            _channelCallbacks.userdata = this;
+            _channelCallbacks.channel_data_function = &ProcessChannel::channelDataCallback;
+            ssh_callbacks_init(&_channelCallbacks);
+            ::ssh_set_channel_callbacks(channel(), &_channelCallbacks);
+
+            // Continue with next step.
             setState(StateExec, true);
             return;
 
@@ -229,13 +240,25 @@ void ProcessChannel::processState()
                 Q_EMIT stderr()->readyRead();
             }
             _exitCode = ::ssh_channel_get_exit_status(channel());
-            closeChannel();
             Q_EMIT finished(_exitCode);
+            closeChannel();
         }
         return;        
     }
 
     Q_ASSERT_X(false, __func__, "Case was not handled properly");
+}
+
+/******************************************************************************
+* Callback function, which is called by libssh when data is available on the channel.
+******************************************************************************/
+int ProcessChannel::channelDataCallback(ssh_session session, ssh_channel channel, void* data, uint32_t len, int is_stderr, void* userdata)
+{
+    if(ProcessChannel* procChannel = static_cast<ProcessChannel*>(userdata)) {
+        Q_ASSERT(QThread::currentThread() == procChannel->thread());
+        procChannel->processState();
+    }
+    return 0;
 }
 
 } // End of namespace

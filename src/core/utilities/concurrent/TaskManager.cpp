@@ -213,12 +213,7 @@ bool TaskManager::waitForTask(const PromiseStatePtr& sharedState)
 
 	// Start a local event loop and wait for the task to generate a signal when it finishes.
 	QEventLoop eventLoop;
-//	connect(watcher, &PromiseWatcher::finished, &eventLoop, &QEventLoop::quit);
-	connect(watcher, &PromiseWatcher::finished, &eventLoop, [watcher, &eventLoop]() {
-		qDebug() << "Watcher sent finished signal: " << watcher << " --> Stopping event loop!";
-		eventLoop.wakeUp();
-		eventLoop.exit(0);
-	});
+	connect(watcher, &PromiseWatcher::finished, &eventLoop, &QEventLoop::quit);
 
 #ifdef Q_OS_UNIX
 	// Boolean flag which is set by the POSIX signal handler when user
@@ -237,9 +232,7 @@ bool TaskManager::waitForTask(const PromiseStatePtr& sharedState)
 #endif
 	
 	startLocalEventHandling();
-	qDebug() << "---Waiting for task" << sharedState.get() << "using watcher:" << watcher;
 	eventLoop.exec();
-	qDebug() << "Done waiting for task---" << sharedState.get();
 	stopLocalEventHandling();
 
 #ifdef Q_OS_UNIX

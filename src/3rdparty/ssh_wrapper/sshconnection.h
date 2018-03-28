@@ -27,6 +27,7 @@
 #include <QSocketNotifier>
 
 #include <libssh/libssh.h>
+#include <libssh/callbacks.h>
 
 namespace Ovito { namespace Ssh {
 
@@ -275,8 +276,10 @@ private:
     UseAuths _failedAuths = UseAuthEmpty;
     UseAuthFlag _succeededAuth = UseAuthEmpty;
 
+    /// The structure with the callback funtions registered with libssh.
+    struct ssh_callbacks_struct _sessionCallbacks;
+
     friend class SshChannel;
-    friend class SftpChannel;
     friend class ProcessChannel;
 };
 

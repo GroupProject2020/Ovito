@@ -33,7 +33,7 @@ bool GuiFileManager::askUserForPassword(const QString& hostname, const QString& 
 	if(Application::instance()->guiMode()) {
 		bool ok;
 		password = QInputDialog::getText(nullptr, tr("SSH Password Authentication"), 
-			tr("OVITO is trying to connect to remote host '%1'.\n\nPlease enter the password for user '%2':").arg(hostname).arg(username),
+			tr("<p>OVITO is trying to connect to remote host <b>%1</b>.</p></p>Please enter the password for user <b>%2</b>:</p>").arg(hostname.toHtmlEscaped()).arg(username.toHtmlEscaped()),
 			QLineEdit::Password, password, &ok);
 		return ok;
 	}
@@ -50,7 +50,7 @@ bool GuiFileManager::askUserForKeyPassphrase(const QString& hostname, const QStr
 	if(Application::instance()->guiMode()) {
 		bool ok;
 		passphrase = QInputDialog::getText(nullptr, tr("SSH Remote Connection"), 
-			tr("OVITO is trying to connect to remote host '%1'.\n\n%2").arg(hostname).arg(prompt),
+			tr("<p>OVITO is trying to connect to remote host <b>%1</b>.</p><p>%2</p>").arg(hostname.toHtmlEscaped()).arg(prompt.toHtmlEscaped()),
 			QLineEdit::Password, passphrase, &ok);
 		return ok;
 	}
@@ -66,8 +66,8 @@ bool GuiFileManager::detectedUnknownSshServer(const QString& hostname, const QSt
 {
 	if(Application::instance()->guiMode()) {
 		return QMessageBox::question(nullptr, tr("SSH Unknown Remote Host"),
-			tr("OVITO is trying to connect to remote host '%1'.\n%2 Key fingerprint is %3\n\nAre you sure you want to continue connecting?")
-			.arg(hostname).arg(unknownHostMessage).arg(hostPublicKeyHash),
+			tr("<p>OVITO is trying to connect to remote host <b>%1</b>.</p><p>%2</p><p>Key fingerprint is %3</p><p>Are you sure you want to continue connecting?</p>")
+			.arg(hostname.toHtmlEscaped()).arg(unknownHostMessage.toHtmlEscaped()).arg(hostPublicKeyHash),
 			QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes;
 	}
 	else {

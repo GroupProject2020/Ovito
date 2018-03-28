@@ -23,6 +23,8 @@
 
 #include "sshchannel.h"
 
+#include <libssh/callbacks.h>
+
 namespace Ovito { namespace Ssh {
 
 class ProcessChannel : public SshChannel
@@ -51,6 +53,10 @@ public:
 
     /// Returns the exit code returned by the remote process.
     int exitCode() const { return _exitCode; }
+
+    /// Returns the command executed on the remote host.
+    const QString& command() const { return _command; }
+
 
 Q_SIGNALS:
 
@@ -113,6 +119,9 @@ private:
     /// Returns the stderr channel.
     StderrChannel* stderr() const { return _stderr; }
 
+    /// Callback function, which is called by libssh when data is available on the channel.
+    static int channelDataCallback(ssh_session session, ssh_channel channel, void* data, uint32_t len, int is_stderr, void* userdata);
+
 private Q_SLOTS:
 
     /// State machine implementation.
@@ -129,6 +138,7 @@ private:
     QString _command;
     StderrChannel* _stderr;
     int _exitCode = 0;
+    struct ssh_channel_callbacks_struct _channelCallbacks;
 };
 
 

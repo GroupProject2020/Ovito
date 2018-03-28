@@ -27,8 +27,8 @@ ADD_LIBRARY(sshwrapper SHARED
 	sshconnection.cpp
 	sshchannel.cpp
 	processchannel.cpp
-	sftpchannel.cpp
 	scpchannel.cpp
+	lschannel.cpp
 )
 
 # Link to libssh.

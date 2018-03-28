@@ -20,13 +20,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "sshconnection.h"
-#include "sftpchannel.h"
 
 #include <QByteArray>
 #include <QDebug>
 #include <QCoreApplication>
-
-#include <libssh/callbacks.h>
 
 namespace Ovito { namespace Ssh {
 
@@ -86,7 +83,6 @@ void SshConnection::disconnectFromHost()
         }
 
         setState(StateClosed, true);
-        qDebug() << "SSH connection closed";
     }
 }
 
@@ -107,7 +103,6 @@ void SshConnection::setState(State state, bool emitStateChangedSignal)
     if(_state != state) {
 
         _state = state;
-        qDebug() << "set ssh state=" << state;
 
         if(_state == StateError)
             destroySocketNotifiers();
@@ -191,15 +186,12 @@ void SshConnection::processState()
             setLibsshOption(SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
         }
 
-        // Set authentication callback.
-        {
-            static struct ssh_callbacks_struct cb;
-            memset(&cb, 0, sizeof(cb));
-            cb.userdata = this;
-            cb.auth_function = &SshConnection::authenticationCallback;
-            ssh_callbacks_init(&cb);
-            ::ssh_set_callbacks(_session, &cb);
-        }
+        // Register authentication callback.
+        memset(&_sessionCallbacks, 0, sizeof(_sessionCallbacks));
+        _sessionCallbacks.userdata = this;
+        _sessionCallbacks.auth_function = &SshConnection::authenticationCallback;
+        ssh_callbacks_init(&_sessionCallbacks);
+        ::ssh_set_callbacks(_session, &_sessionCallbacks);
 
         if((_connectionParams.userName.isEmpty() || setLibsshOption(SSH_OPTIONS_USER, qPrintable(_connectionParams.userName)))
                 && setLibsshOption(SSH_OPTIONS_HOST, qPrintable(_connectionParams.host))

@@ -29,7 +29,8 @@ namespace Ovito { namespace Ssh {
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-SshChannel::SshChannel(SshConnection* connection, QObject* parent, bool isStderr) : QIODevice(parent), _connection(connection), _isStderr(isStderr)
+SshChannel::SshChannel(SshConnection* connection, QObject* parent, bool isStderr) : 
+    QIODevice(parent), _connection(connection), _isStderr(isStderr)
 {
 }
 
@@ -135,7 +136,9 @@ void SshChannel::checkIO()
             data[read_available] = 0;
 
             read_size = ::ssh_channel_read_nonblocking(_channel, data, read_available, _isStderr);
-            Q_ASSERT(read_size >= 0);
+            if(read_size < 0) {
+                return;
+            }
 
             _readBuffer.reserve(_bufferSize);
             _readBuffer.append(data, read_size);
@@ -198,14 +201,21 @@ void SshChannel::sendEof()
 ******************************************************************************/
 QString SshChannel::errorMessage() const
 {
-    if(_connection->_state == SshConnection::StateError)
-        return _connection->errorMessage();
-    else if(!QIODevice::errorString().isEmpty())
+    if(connection()->_state == SshConnection::StateError) {
+        return connection()->errorMessage();
+    }
+    if(connection()->_session && ::ssh_get_error_code(connection()->_session) != SSH_NO_ERROR) {
+        QString msg(::ssh_get_error(connection()->_session));
+        if(!msg.isEmpty()) return msg;        
+    }
+    if(_channel && ::ssh_get_error_code(_channel) != SSH_NO_ERROR) {
+        QString msg(::ssh_get_error(_channel));
+        if(!msg.isEmpty()) return msg;        
+    }
+    if(!QIODevice::errorString().isEmpty()) {
         return QIODevice::errorString();
-    else if(_channel)
-        return QString(::ssh_get_error(_channel));
-    else
-        return {};
+    }
+    return {};
 }
 
 } // End of namespace

@@ -22,6 +22,7 @@
 #include "scpchannel.h"
 
 #include <QDebug>
+#include <QTimer>
 
 namespace Ovito { namespace Ssh {
 
@@ -37,17 +38,6 @@ ScpChannel::ScpChannel(SshConnection* connection, const QString& location) :
         setState(StateConnecting);
         processState();
     });
-}
-
-/******************************************************************************
-* Part of the state machine implementation.
-******************************************************************************/
-void ScpChannel::setState(State state)
-{
-    if(_state != state) {
-        qDebug() << "Setting SCP channel state:" << state;
-        _state = state;
-    }
 }
 
 /******************************************************************************
@@ -77,12 +67,11 @@ void ScpChannel::processData()
 
             if(line[0] == 'C') {
                 qlonglong fs;
-                if(sscanf(line, "C%*i %lld", &fs) != 1 || fs < 0) {
+                if(sscanf(line, "C%*d %lld", &fs) != 1 || fs < 0) {
                     setErrorString(tr("Received invalid C line from SCP remote process: %1").arg(QString::fromLocal8Bit(line)));
                     Q_EMIT error();
                     return;
                 }
-                qDebug() << "Received reply line:" << line;
                 _fileSize = fs;
                 _bytesReceived = 0;
 

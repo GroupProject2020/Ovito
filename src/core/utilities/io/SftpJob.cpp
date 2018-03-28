@@ -25,6 +25,7 @@
 #include <core/app/Application.h>
 #include <3rdparty/ssh_wrapper/sshconnection.h>
 #include <3rdparty/ssh_wrapper/scpchannel.h>
+#include <3rdparty/ssh_wrapper/lschannel.h>
 #include "SftpJob.h"
 
 #include <QTimer>
@@ -129,7 +130,6 @@ void SftpJob::shutdown(bool success)
 		_connection = nullptr;
 	}
 
-	qDebug() << "Settings promise state finished: promise=" << _promiseState.get();
 	_promiseState->setFinished();
 
 	// Update the counter of active jobs.
@@ -183,7 +183,6 @@ void SftpJob::authenticationFailed()
 ******************************************************************************/
 void SftpJob::connectionCanceled()
 {
-	qDebug() << "SftpJob::connectionCanceled():" << _url.toString() << "promise=" << _promiseState.get();
 	// If use has canceled the SSH connection, 
 	// cancel the file retrievel operation as well.
 	_promiseState->cancel();
@@ -202,14 +201,12 @@ void SftpDownloadJob::connectionEstablished()
 
 	// Open the SCP channel.
 	_promiseState->setProgressText(tr("Opening SCP channel to remote host %1").arg(_connection->hostname()));
-	qDebug() << "Opening SCP channel for path" << _url.path();
 	_scpChannel = new ScpChannel(_connection, _url.path());
 	connect(_scpChannel, &ScpChannel::receivingFile, this, &SftpDownloadJob::receivingFile);
 	connect(_scpChannel, &ScpChannel::receivedData, this, &SftpDownloadJob::receivedData);
 	connect(_scpChannel, &ScpChannel::receivedFileComplete, this, &SftpDownloadJob::receivedFileComplete);
 	connect(_scpChannel, &ScpChannel::error, this, &SftpDownloadJob::channelError);
 	connect(_scpChannel, &ScpChannel::closed, this, &SftpDownloadJob::connectionCanceled);
-	connect(_scpChannel, &ScpChannel::closed, _scpChannel, &QObject::deleteLater);
 	_scpChannel->openChannel();
 }
 
@@ -235,6 +232,7 @@ void SftpDownloadJob::shutdown(bool success)
 	if(_scpChannel) {
 		disconnect(_scpChannel, 0, this, 0);
 		_scpChannel->closeChannel();
+		_scpChannel->deleteLater();
 		_scpChannel = nullptr;
 	}
 
@@ -274,7 +272,6 @@ void SftpDownloadJob::receivingFile(qint64 fileSize)
 	}
 	_promiseState->setProgressMaximum(std::min((qint64)std::numeric_limits<int>::max(), fileSize / 1024));
 	_promiseState->setProgressText(tr("Fetching remote file %1").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
-	qDebug() << "Start receiving file of size:" << fileSize << "bytes";
 
 	// Create the destination file.
 	try {
@@ -329,22 +326,14 @@ void SftpListDirectoryJob::connectionEstablished()
 		return;
 	}
 
-#if 0
 	// Open the SCP channel.
-	_promiseState->setProgressText(tr("Opening SCP channel to remote host %1").arg(_connection->hostname()));
-	qDebug() << "Opening SCP channel for path" << (_url.path() + QStringLiteral("/*"));
-	_scpChannel = new ScpChannel(_connection, _url.path() + QStringLiteral("/*"));
-	connect(_scpChannel, &ScpChannel::error, this, &SftpListDirectoryJob::channelError);
-	connect(_scpChannel, &ScpChannel::receivingDirectory, this, &SftpListDirectoryJob::receivingDirectory);
-	connect(_scpChannel, &ScpChannel::receivedDirectoryComplete, this, &SftpListDirectoryJob::receivedDirectoryComplete);
-	connect(_scpChannel, &ScpChannel::closed, this, &SftpListDirectoryJob::connectionCanceled);
-	connect(_scpChannel, &ScpChannel::closed, _scpChannel, &QObject::deleteLater);
-	_scpChannel->openChannel();
-#endif
-
-	_promise.setResults(QStringList() << "relax.1100.dump");
-    shutdown(true);
-
+	_promiseState->setProgressText(tr("Opening channel to remote host %1").arg(_connection->hostname()));
+	_lsChannel = new LsChannel(_connection, _url.path());
+	connect(_lsChannel, &LsChannel::error, this, &SftpListDirectoryJob::channelError);
+	connect(_lsChannel, &LsChannel::receivingDirectory, this, &SftpListDirectoryJob::receivingDirectory);
+	connect(_lsChannel, &LsChannel::receivedDirectoryComplete, this, &SftpListDirectoryJob::receivedDirectoryComplete);
+	connect(_lsChannel, &LsChannel::closed, this, &SftpListDirectoryJob::connectionCanceled);
+	_lsChannel->openChannel();
 }
 
 /******************************************************************************
@@ -369,7 +358,7 @@ void SftpListDirectoryJob::channelError()
 	_promiseState->setException(std::make_exception_ptr(
 		Exception(tr("Cannot access remote URL\n\n%1\n\n%2")
 			.arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded))
-			.arg(_scpChannel->errorMessage()))));
+			.arg(_lsChannel->errorMessage()))));
 	
 	shutdown(false);
 }
@@ -393,10 +382,11 @@ void SftpListDirectoryJob::receivedDirectoryComplete(const QStringList& listing)
 ******************************************************************************/
 void SftpListDirectoryJob::shutdown(bool success)
 {
-	if(_scpChannel) {
-		disconnect(_scpChannel, 0, this, 0);
-		_scpChannel->closeChannel();
-		_scpChannel = nullptr;
+	if(_lsChannel) {
+		disconnect(_lsChannel, 0, this, 0);
+		_lsChannel->closeChannel();
+		_lsChannel->deleteLater();
+		_lsChannel = nullptr;
 	}
 
 	SftpJob::shutdown(success);

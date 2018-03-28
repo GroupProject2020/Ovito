@@ -31,6 +31,7 @@
 namespace Ovito { namespace Ssh {
 	class SshConnection;
 	class ScpChannel;
+	class LsChannel;
 }}
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -188,8 +189,8 @@ protected Q_SLOTS:
 
 private:
 
-	/// The SCP channel.
-    Ovito::Ssh::ScpChannel* _scpChannel = nullptr;
+	/// The listing channel.
+    Ovito::Ssh::LsChannel* _lsChannel = nullptr;
 
 	/// The promise through which the result of this download job is returned.
 	Promise<QStringList> _promise;	
