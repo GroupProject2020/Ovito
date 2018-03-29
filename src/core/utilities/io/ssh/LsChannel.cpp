@@ -19,10 +19,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "lschannel.h"
-
-#include <QDebug>
-#include <QTimer>
+#include <core/Core.h>
+#include "LsChannel.h"
 
 namespace Ovito { namespace Ssh {
 

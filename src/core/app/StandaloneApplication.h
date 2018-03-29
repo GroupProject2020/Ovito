@@ -67,7 +67,12 @@ public:
 
 	/// Returns the list of application services created at application startup.
 	const std::vector<OORef<ApplicationService>>& applicationServices() const { return _applicationServices; }	
-		
+
+protected Q_SLOTS:
+
+	/// Is called at program startup once the event loop is running.
+	virtual void postStartupInitialization();
+
 protected:
 
 	/// Defines the program's command line parameters.
@@ -76,7 +81,7 @@ protected:
 	/// Interprets the command line parameters provided to the application.
 	virtual bool processCommandLineParameters();
 
-	/// Prepares application to start running.
+	/// Prepares application at startup.
 	virtual bool startupApplication() = 0;
 
 protected:

@@ -52,6 +52,9 @@ protected:
 	/// Prepares application to start running.
 	virtual bool startupApplication() override;
 
+	/// Is called at program startup once the event loop is running.
+	virtual void postStartupInitialization() override;
+
 	/// Creates the global FileManager class instance.
 	virtual FileManager* createFileManager() override;
 

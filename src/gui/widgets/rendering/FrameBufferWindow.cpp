@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -31,8 +31,6 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 FrameBufferWindow::FrameBufferWindow(QWidget* parent) :
 	QMainWindow(parent, (Qt::WindowFlags)(Qt::Tool | Qt::CustomizeWindowHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint))
 {
-	_frameBufferWidget = new FrameBufferWidget();
-
 	class MyScrollArea : public QScrollArea {
 	public:
 		MyScrollArea(QWidget* parent) : QScrollArea(parent) {}
@@ -46,6 +44,7 @@ FrameBufferWindow::FrameBufferWindow(QWidget* parent) :
 	};
 
 	QScrollArea* scrollArea = new MyScrollArea(this);
+	_frameBufferWidget = new FrameBufferWidget();
 	scrollArea->setWidget(_frameBufferWidget);
 	setCentralWidget(scrollArea);
 

@@ -19,11 +19,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "sshconnection.h"
-
-#include <QByteArray>
-#include <QDebug>
-#include <QCoreApplication>
+#include <core/Core.h>
+#include "SshConnection.h"
 
 namespace Ovito { namespace Ssh {
 
@@ -71,7 +68,7 @@ void SshConnection::disconnectFromHost()
         // Prevent recursion
         setState(StateClosing, false);
 
-        // Close all open SFTP channels.
+        // Close all open channels.
         Q_EMIT doCleanup();
 
         destroySocketNotifiers();
@@ -169,7 +166,7 @@ void SshConnection::processState()
         return;
 
     case StateInit:
-        Q_ASSERT(!_session);
+        OVITO_ASSERT(!_session);
 
         _session = ::ssh_new();
         if(!_session) {
@@ -309,7 +306,7 @@ void SshConnection::processState()
 ******************************************************************************/
 bool SshConnection::setLibsshOption(enum ssh_options_e type, const void* value)
 {
-    Q_ASSERT(_session);
+    OVITO_ASSERT(_session);
     if(_state == StateError)
         return false;
     if(::ssh_options_set(_session, type, value) != 0) {

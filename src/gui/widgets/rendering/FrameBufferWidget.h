@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -46,6 +46,12 @@ public:
 	/// Returns the preferred size of the widget.
 	virtual QSize sizeHint() const override;
 
+	/// Returns the current zoom factor.
+	qreal zoomFactor() const { return _zoomFactor; }
+
+	/// Zooms in or out if the image.
+	void setZoomFactor(qreal zoom);
+
 protected:
 
 	/// This is called by the system to paint the viewport area.
@@ -66,6 +72,9 @@ private:
 
 	/// The FrameBuffer that is shown in the widget. 
 	std::shared_ptr<FrameBuffer> _frameBuffer;
+
+	/// The current zoom factor.
+	qreal _zoomFactor = 1;
 
 private:
 

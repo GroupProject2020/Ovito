@@ -24,8 +24,6 @@
 #include <core/dataset/DataSet.h>
 #include "AnimationSettings.h"
 
-#include <QTimer>
-
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Anim)
 
 IMPLEMENT_OVITO_CLASS(AnimationSettings);

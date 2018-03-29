@@ -21,8 +21,8 @@
 
 #pragma once
 
-#include <QFileDevice>
-#include "processchannel.h"
+#include <core/Core.h>
+#include "ProcessChannel.h"
 
 namespace Ovito { namespace Ssh {
 
@@ -38,9 +38,6 @@ public:
     /// Returns the directory listing received from remote host.
     const QStringList& directoryListing() const { return _directoryListing; } 
 
-    /// Returns whether the requested remote location is a directory.
-    bool isDirectoryLocation() const { return command().endsWith(QStringLiteral("/*")); }
-
 Q_SIGNALS:
 
     /// This signal is generated before transmission of a directory listing begins.
@@ -50,9 +47,6 @@ Q_SIGNALS:
     void receivedDirectoryComplete(const QStringList& listing);
 
 private Q_SLOTS:
-
-    /// State machine implementation.
-    void processState();
 
     /// Is called whenever data arrives from the remote process.
     void processData();

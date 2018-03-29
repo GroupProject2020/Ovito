@@ -19,10 +19,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "scpchannel.h"
-
-#include <QDebug>
-#include <QTimer>
+#include <core/Core.h>
+#include "ScpChannel.h"
 
 namespace Ovito { namespace Ssh {
 
@@ -35,20 +33,9 @@ ScpChannel::ScpChannel(SshConnection* connection, const QString& location) :
     connect(this, &QIODevice::readyRead, this, &ScpChannel::processData);
 
     connect(this, &ProcessChannel::opened, this, [this]() {
-        setState(StateConnecting);
-        processState();
-    });
-}
-
-/******************************************************************************
-* State machine implementation.
-******************************************************************************/
-void ScpChannel::processState()
-{
-    if(state() == StateConnecting) {
         setState(StateConnected);
         write("", 1);
-    }
+    });
 }
 
 /******************************************************************************
@@ -87,6 +74,7 @@ void ScpChannel::processData()
             else if(line[0] == 0x01 || line[0] == 0x02) {
                 QString msg = QString::fromLocal8Bit(line.mid(1)).trimmed();
                 setErrorString(tr("SCP error: %1").arg(msg));
+                qDebug() << "Server reported error:" << msg;
                 Q_EMIT error();
             }
             else {
@@ -100,6 +88,7 @@ void ScpChannel::processData()
         qint64 avail = std::min(bytesAvailable(), _fileSize - _bytesReceived);
         qint64 nread = read(_dataBuffer + _bytesReceived, avail);
         if(nread < 0) {
+            qDebug() << "Read negative number of bytes from remote stream.";
             Q_EMIT error();
             return;
         }

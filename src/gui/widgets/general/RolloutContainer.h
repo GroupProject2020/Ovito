@@ -228,7 +228,7 @@ public Q_SLOTS:
 
 	/// Updates the size of all rollouts soon.
 	void updateRolloutsLater() {
-		QTimer::singleShot(0, this, SLOT(updateRollouts()));
+		QTimer::singleShot(0, this, &RolloutContainer::updateRollouts);
 	}
 
 };
@@ -236,5 +236,3 @@ public Q_SLOTS:
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

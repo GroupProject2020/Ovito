@@ -23,12 +23,10 @@
 #include <core/utilities/concurrent/Future.h>
 #include <core/utilities/io/FileManager.h>
 #include <core/app/Application.h>
-#include <3rdparty/ssh_wrapper/sshconnection.h>
-#include <3rdparty/ssh_wrapper/scpchannel.h>
-#include <3rdparty/ssh_wrapper/lschannel.h>
+#include <core/utilities/io/ssh/SshConnection.h>
+#include <core/utilities/io/ssh/ScpChannel.h>
+#include <core/utilities/io/ssh/LsChannel.h>
 #include "SftpJob.h"
-
-#include <QTimer>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
@@ -41,7 +39,7 @@ QQueue<SftpJob*> SftpJob::_queuedJobs;
 int SftpJob::_numActiveJobs = 0;
 
 /// The maximum number of simultaneous jobs at a time.
-constexpr int MaximumNumberOfSimulateousJobs = 2;
+constexpr int MaximumNumberOfSimulateousJobs = 1;
 
 /******************************************************************************
 * Constructor.
@@ -73,6 +71,8 @@ void SftpJob::start()
 			_isActive = true;
 		}
 	}
+
+	qDebug() << "Starting SFTP Job: " << this << _url.toString();	
 
 	// This background task started to run.
 	_promiseState->setStarted();
@@ -119,6 +119,8 @@ void SftpJob::start()
 ******************************************************************************/
 void SftpJob::shutdown(bool success)
 {
+	qDebug() << "Shutting down SFTP Job: " << this << _url.toString();	
+
 	if(_promiseWatcher) {		
 		_promiseWatcher->reset();
 		disconnect(_promiseWatcher, 0, this, 0);

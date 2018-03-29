@@ -21,8 +21,7 @@
 
 #pragma once
 
-#include <QIODevice>
-
+#include <core/Core.h>
 #include <libssh/libssh.h>
 
 namespace Ovito { namespace Ssh {
@@ -100,6 +99,8 @@ protected:
     int _writeSize = 1024 * 16;
     QByteArray _readBuffer;
     QByteArray _writeBuffer;
+
+    bool _ioInProgress = false;
 };
 
 } // End of namespace

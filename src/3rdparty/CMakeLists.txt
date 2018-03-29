@@ -19,7 +19,6 @@
 #
 ###############################################################################
 
-ADD_SUBDIRECTORY(ssh_wrapper)
 IF(OVITO_BUILD_GUI)
     ADD_SUBDIRECTORY(qwt)
 ENDIF()

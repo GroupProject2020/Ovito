@@ -64,7 +64,7 @@ void TaskDisplayWidget::taskStarted(PromiseWatcher* taskWatcher)
 {
 	// Show progress indicator only if the task doesn't finish within 200 milliseconds.
 	if(isHidden())
-		QTimer::singleShot(200, this, SLOT(showIndicator()));
+		QTimer::singleShot(200, this, &TaskDisplayWidget::showIndicator);
 	else
 		updateIndicator();
 

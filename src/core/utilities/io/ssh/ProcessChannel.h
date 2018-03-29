@@ -21,7 +21,8 @@
 
 #pragma once
 
-#include "sshchannel.h"
+#include <core/Core.h>
+#include "SshChannel.h"
 
 #include <libssh/callbacks.h>
 
@@ -70,17 +71,22 @@ protected:
     /// Schedules an I/O operation.
     virtual void queueCheckIO() override;
 
+    virtual void timerEvent(QTimerEvent* event) override {
+        SshChannel::timerEvent(event);
+        processState();
+    }
+
 private:
 
     enum State {
-        StateClosed,
-        StateClosing,
-        StateWaitSession,
-        StateOpening,
-        StateExec,
-        StateOpen,
-        StateError,
-        StateSessionError
+        StateClosed = 0,
+        StateClosing = 1,
+        StateWaitSession = 2,
+        StateOpening = 3,
+        StateExec = 4,
+        StateOpen = 5,
+        StateError = 6,
+        StateSessionError = 7
     };
 
     class StderrChannel : public SshChannel
@@ -89,11 +95,6 @@ private:
 
         /// Constructor.
         StderrChannel(ProcessChannel* parent) : SshChannel(parent->connection(), parent, true) {}
-
-        /// Closes the channel.
-        virtual void close() override {
-            static_cast<ProcessChannel*>(parent())->close();
-        }
 
     protected:
 
@@ -139,6 +140,8 @@ private:
     StderrChannel* _stderr;
     int _exitCode = 0;
     struct ssh_channel_callbacks_struct _channelCallbacks;
+    int _timerId = 0;
+    bool _ioCheckQueued = false;
 };
 
 

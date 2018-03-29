@@ -19,12 +19,9 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "processchannel.h"
-#include "sshconnection.h"
-
-#include <QDebug>
-#include <QThread>
-#include <QTimer>
+#include <core/Core.h>
+#include "ProcessChannel.h"
+#include "SshConnection.h"
 
 namespace Ovito { namespace Ssh {
 
@@ -37,7 +34,7 @@ ProcessChannel::ProcessChannel(SshConnection* connection, const QString& command
 {
     connect(connection, &SshConnection::error,          this, &ProcessChannel::handleSessionError);
     connect(connection, &SshConnection::doProcessState, this, &ProcessChannel::processState);
-    connect(connection, &SshConnection::doCleanup,      this, &ProcessChannel::closeChannel);    
+    connect(connection, &SshConnection::doCleanup,      this, &ProcessChannel::closeChannel); 
 }
 
 /******************************************************************************
@@ -45,7 +42,6 @@ ProcessChannel::ProcessChannel(SshConnection* connection, const QString& command
 ******************************************************************************/
 ProcessChannel::~ProcessChannel()
 {
-    qDebug() << "~ProcessChannel():" << this << "state=" << _state;
     closeChannel();
 }
 
@@ -85,25 +81,34 @@ void ProcessChannel::openChannel()
 ******************************************************************************/
 void ProcessChannel::closeChannel()
 {
+    if(_timerId) {
+        killTimer(_timerId);
+        _timerId = 0;
+    }
     if(state() != StateClosed && state() != StateClosing) {
 
         // Prevent recursion
         setState(StateClosing, false);
 
         Q_EMIT readChannelFinished();
+        while(canReadLine()) {
+            readLine();
+        }
+        while(_stderr->canReadLine()) {
+            _stderr->readLine();
+        }
 
         if(channel()) {
-            if(::ssh_channel_is_open(channel())) {
-                qDebug() << "Closed channel=" << channel();
-                ::ssh_channel_close(channel());
+            if(::ssh_channel_close(channel()) != SSH_OK) {
+                qWarning() << "Failed to close SSH channel:" << errorMessage();
             }
-
             ::ssh_channel_free(channel());
             _channel = nullptr;
         }
 
         QIODevice::close();
-        static_cast<QIODevice*>(stderr())->close();
+        stderr()->close();
+        OVITO_ASSERT(!isOpen());
 
         _readBuffer.clear();
         _writeBuffer.clear();
@@ -143,7 +148,10 @@ void ProcessChannel::setState(State state, bool processState)
 ******************************************************************************/
 void ProcessChannel::queueCheckIO()
 {
-    QTimer::singleShot(0, this, &ProcessChannel::processState);
+    if(!_ioCheckQueued) {
+        _ioCheckQueued = true;
+        QMetaObject::invokeMethod(this, "processState", Qt::QueuedConnection);
+    }
 }
 
 /******************************************************************************
@@ -151,6 +159,7 @@ void ProcessChannel::queueCheckIO()
 ******************************************************************************/
 void ProcessChannel::processState()
 {
+    _ioCheckQueued = false;
     switch(state()) {
 
     case StateClosed:
@@ -160,8 +169,9 @@ void ProcessChannel::processState()
         return;
 
     case StateWaitSession:
-        if(connection()->isConnected())
+        if(connection()->isConnected()) {
             setState(StateOpening, true);
+        }
         return;
 
     case StateOpening:
@@ -173,6 +183,8 @@ void ProcessChannel::processState()
             }
             stderr()->_channel = channel();
         }
+        OVITO_ASSERT(connection()->isConnected());
+        OVITO_ASSERT(::ssh_is_connected(connection()->_session));
 
         switch(auto rc = ::ssh_channel_open_session(channel())) {
         case SSH_AGAIN:
@@ -184,7 +196,12 @@ void ProcessChannel::processState()
             return;
 
         case SSH_OK:
-            qDebug() << "Opened channel=" << channel() << this;
+            if(!::ssh_channel_is_open(channel())) {
+                setErrorString(tr("Failed to open SSH channel."));
+                setState(StateError, false);
+                return;
+            }
+            OVITO_ASSERT(connection()->isConnected());
 
             // Register callback functions for libssh channel:
             memset(&_channelCallbacks, 0, sizeof(_channelCallbacks));
@@ -192,6 +209,9 @@ void ProcessChannel::processState()
             _channelCallbacks.channel_data_function = &ProcessChannel::channelDataCallback;
             ssh_callbacks_init(&_channelCallbacks);
             ::ssh_set_channel_callbacks(channel(), &_channelCallbacks);
+
+            // Additionally, to be safe, start a timer to periodically check for incoming data.
+            _timerId = startTimer(100);
 
             // Continue with next step.
             setState(StateExec, true);
@@ -203,6 +223,7 @@ void ProcessChannel::processState()
         }
 
     case StateExec: {
+        OVITO_ASSERT(::ssh_channel_is_open(channel()));
         switch(auto rc = ::ssh_channel_request_exec(channel(), qPrintable(_command))) {
         case SSH_AGAIN:
             connection()->enableWritableSocketNotifier();
@@ -213,7 +234,7 @@ void ProcessChannel::processState()
             return;
 
         case SSH_OK:
-            // Set Unbuffered to disable QIODevice buffers.
+            // Set Unbuffered flag to disable QIODevice buffers.
             QIODevice::open(ReadWrite | Unbuffered);
             stderr()->open(ReadWrite | Unbuffered);
             setState(StateOpen, true);
@@ -255,8 +276,8 @@ void ProcessChannel::processState()
 int ProcessChannel::channelDataCallback(ssh_session session, ssh_channel channel, void* data, uint32_t len, int is_stderr, void* userdata)
 {
     if(ProcessChannel* procChannel = static_cast<ProcessChannel*>(userdata)) {
-        Q_ASSERT(QThread::currentThread() == procChannel->thread());
-        procChannel->processState();
+        OVITO_ASSERT(QThread::currentThread() == procChannel->thread());
+        procChannel->queueCheckIO();
     }
     return 0;
 }

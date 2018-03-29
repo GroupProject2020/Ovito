@@ -21,9 +21,7 @@
 
 #pragma once
 
-#include <QFlags>
-#include <QObject>
-#include <QString>
+#include <core/Core.h>
 #include <QSocketNotifier>
 
 #include <libssh/libssh.h>

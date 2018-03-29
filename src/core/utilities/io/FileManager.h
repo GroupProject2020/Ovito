@@ -25,15 +25,15 @@
 #include <core/Core.h>
 #include <core/utilities/concurrent/Future.h>
 
-#include <QMutex>
 #include <QCache>
 
-namespace Ovito { namespace Ssh {
+namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
+
+namespace Ssh {
+	// These classes are defined elsewhere:
 	class SshConnection;
 	struct SshConnectionParameters;
-}}
-
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
+}
 
 /**
  * \brief The file manager provides transparent access to remote files.

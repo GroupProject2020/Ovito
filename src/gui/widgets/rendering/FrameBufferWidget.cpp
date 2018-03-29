@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -53,7 +53,7 @@ void FrameBufferWidget::setFrameBuffer(const std::shared_ptr<FrameBuffer>& newFr
 QSize FrameBufferWidget::sizeHint() const 
 {
 	if(_frameBuffer) {
-		return _frameBuffer->size();
+		return _frameBuffer->size() * _zoomFactor;
 	}
 	return QWidget::sizeHint();
 } 
@@ -65,8 +65,18 @@ void FrameBufferWidget::paintEvent(QPaintEvent* event)
 {
 	if(frameBuffer()) {
 		QPainter painter(this);
-		painter.drawImage(0, 0, frameBuffer()->image());
+		QSize imgSize = frameBuffer()->image().size();
+		painter.drawImage(QRect(QPoint(0, 0), imgSize * _zoomFactor), frameBuffer()->image());
 	}
+}
+
+/******************************************************************************
+* Zooms in or out if the image.
+******************************************************************************/
+void FrameBufferWidget::setZoomFactor(qreal zoom)
+{
+	_zoomFactor = qBound(1e-1, zoom, 1e1);
+	update();
 }
 
 /******************************************************************************
@@ -74,6 +84,9 @@ void FrameBufferWidget::paintEvent(QPaintEvent* event)
 ******************************************************************************/
 void FrameBufferWidget::onFrameBufferContentReset()
 {
+	// Reset zoom factor.
+	_zoomFactor = 1;
+
 	// Resize widget.
 	if(_frameBuffer) {
 		resize(_frameBuffer->size());

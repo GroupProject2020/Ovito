@@ -117,7 +117,6 @@ FileManager* GuiApplication::createFileManager()
 ******************************************************************************/
 bool GuiApplication::startupApplication()
 {
-	GuiDataSetContainer* container;
 	if(guiMode()) {
 		// Set up graphical user interface.
 
@@ -132,8 +131,7 @@ bool GuiApplication::startupApplication()
 
 		// Create the main window.
 		MainWindow* mainWin = new MainWindow();
-		container = &mainWin->datasetContainer();
-		_datasetContainer = container;
+		_datasetContainer = &mainWin->datasetContainer();
 
 		// Make the application shutdown as soon as the last main window has been closed.
 		QGuiApplication::setQuitOnLastWindowClosed(true);
@@ -148,10 +146,19 @@ bool GuiApplication::startupApplication()
 	}
 	else {
 		// Create a dataset container.
-		container = new GuiDataSetContainer();
-		container->setParent(this);
-		_datasetContainer = container;
+		_datasetContainer = new GuiDataSetContainer();
+		_datasetContainer->setParent(this);
 	}
+
+	return true;
+}
+
+/******************************************************************************
+* Is called at program startup once the event loop is running.
+******************************************************************************/
+void GuiApplication::postStartupInitialization()
+{
+	GuiDataSetContainer* container = static_object_cast<GuiDataSetContainer>(datasetContainer());
 
 	// Load state file specified on the command line.
 	if(cmdLineParser().positionalArguments().empty() == false) {
@@ -181,13 +188,12 @@ bool GuiApplication::startupApplication()
 			catch(const Exception& ex) {
 				ex.reportError();
 			}
-			if(!container->currentSet())
-				return false;
-			container->currentSet()->undoStack().setClean();
+			if(container->currentSet())
+				container->currentSet()->undoStack().setClean();
 		}
 	}
 
-	return true;
+	StandaloneApplication::postStartupInitialization();
 }
 
 /******************************************************************************

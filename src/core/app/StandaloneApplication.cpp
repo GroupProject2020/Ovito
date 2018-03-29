@@ -126,9 +126,8 @@ bool StandaloneApplication::initialize(int& argc, char** argv)
 			return false;
 		}
 
-		// Notify registered application services.
-		for(const auto& service : applicationServices())
-			service->applicationStarted();
+		// Complete the startup process once the event loop is running.
+		QTimer::singleShot(0, this, &StandaloneApplication::postStartupInitialization);
 	}
 	catch(const Exception& ex) {
 		ex.reportError(true);
@@ -136,6 +135,16 @@ bool StandaloneApplication::initialize(int& argc, char** argv)
 		return false;
 	}
 	return true;
+}
+
+/******************************************************************************
+* Is called at program startup once the event loop is running.
+******************************************************************************/
+void StandaloneApplication::postStartupInitialization()
+{
+	// Notify registered application services that application is running.
+	for(const auto& service : applicationServices())
+		service->applicationStarted();
 }
 
 /******************************************************************************

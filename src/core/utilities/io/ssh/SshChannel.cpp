@@ -19,10 +19,9 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "sshchannel.h"
-#include "sshconnection.h"
-
-#include <QDebug>
+#include <core/Core.h>
+#include "SshChannel.h"
+#include "SshConnection.h"
 
 namespace Ovito { namespace Ssh {
 
@@ -116,13 +115,14 @@ qint64 SshChannel::writeData(const char* data, qint64 len)
 ******************************************************************************/
 void SshChannel::checkIO()
 {
-    if(!_channel) return;
+    if(!channel() || !isOpen() || _ioInProgress) return;
+    _ioInProgress = true;
 
     bool emit_ready_read = false;
     bool emit_bytes_written = false;
 
     int read_size = 0;
-    int read_available = ::ssh_channel_poll(_channel, _isStderr);
+    int read_available = ::ssh_channel_poll(channel(), _isStderr);
     if(read_available > 0) {
 
         // Dont read more than buffer size specifies.
@@ -135,8 +135,10 @@ void SshChannel::checkIO()
             char data[read_available + 1];
             data[read_available] = 0;
 
-            read_size = ::ssh_channel_read_nonblocking(_channel, data, read_available, _isStderr);
+            read_size = ::ssh_channel_read_nonblocking(channel(), data, read_available, _isStderr);
             if(read_size < 0) {
+                qWarning() << "ssh_channel_read_nonblocking() returned negative value.";
+                _ioInProgress = false;
                 return;
             }
 
@@ -157,8 +159,8 @@ void SshChannel::checkIO()
             writable = _writeSize;
 
         if(writable > 0) {
-            written = ::ssh_channel_write(_channel, _writeBuffer.constData(), writable);
-            Q_ASSERT(written >= 0);
+            written = ::ssh_channel_write(channel(), _writeBuffer.constData(), writable);
+            OVITO_ASSERT(written >= 0);
             _writeBuffer.remove(0, written);
 
             if(written > 0)
@@ -172,7 +174,7 @@ void SshChannel::checkIO()
 
     // Send EOF once all data has been written to channel.
     if(_eofState == EofQueued && _writeBuffer.size() == 0) {
-        ::ssh_channel_send_eof(_channel);
+        ::ssh_channel_send_eof(channel());
         _eofState = EofSent;
     }
 
@@ -184,6 +186,7 @@ void SshChannel::checkIO()
     if(emit_bytes_written) {
         Q_EMIT bytesWritten(written);
     }
+    _ioInProgress = false;
 }
 
 /******************************************************************************
@@ -204,6 +207,9 @@ QString SshChannel::errorMessage() const
     if(connection()->_state == SshConnection::StateError) {
         return connection()->errorMessage();
     }
+    if(!QIODevice::errorString().isEmpty()) {
+        return QIODevice::errorString();
+    }
     if(connection()->_session && ::ssh_get_error_code(connection()->_session) != SSH_NO_ERROR) {
         QString msg(::ssh_get_error(connection()->_session));
         if(!msg.isEmpty()) return msg;        
@@ -211,9 +217,6 @@ QString SshChannel::errorMessage() const
     if(_channel && ::ssh_get_error_code(_channel) != SSH_NO_ERROR) {
         QString msg(::ssh_get_error(_channel));
         if(!msg.isEmpty()) return msg;        
-    }
-    if(!QIODevice::errorString().isEmpty()) {
-        return QIODevice::errorString();
     }
     return {};
 }

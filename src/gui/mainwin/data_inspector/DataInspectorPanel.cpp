@@ -69,6 +69,7 @@ DataInspectorPanel::DataInspectorPanel(MainWindow* mainWindow) :
 
 	_appletContainer = new QStackedWidget();
 	_appletContainer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Ignored);
+	_appletContainer->resize(0,0);
 	QLabel* label = new QLabel(tr("There is no data to be displayed"));
 	label->setAlignment(Qt::AlignCenter);
 	_appletContainer->addWidget(label);
@@ -84,7 +85,9 @@ DataInspectorPanel::DataInspectorPanel(MainWindow* mainWindow) :
 	connect(&datasetContainer(), &GuiDataSetContainer::scenePreparationEnd, this, &DataInspectorPanel::onScenePreparationEnd, Qt::QueuedConnection);
 	connect(&datasetContainer(), &DataSetContainer::timeChanged, this, &DataInspectorPanel::onScenePreparationBegin);
 	connect(&datasetContainer(), &DataSetContainer::timeChangeComplete, this, &DataInspectorPanel::onScenePreparationEnd, Qt::QueuedConnection);	
-	connect(&_selectedNodeListener, &RefTargetListenerBase::notificationEvent, this, &DataInspectorPanel::onSceneNodeNotificationEvent);	
+	connect(&_selectedNodeListener, &RefTargetListenerBase::notificationEvent, this, &DataInspectorPanel::onSceneNodeNotificationEvent);
+
+	updateTabs({});
 }
 
 /******************************************************************************

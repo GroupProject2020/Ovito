@@ -23,12 +23,11 @@
 #include <core/utilities/concurrent/Future.h>
 #include <core/utilities/concurrent/TaskManager.h>
 #include <core/dataset/DataSetContainer.h>
-#include <3rdparty/ssh_wrapper/sshconnection.h>
+#include <core/utilities/io/ssh/SshConnection.h>
 #include "FileManager.h"
 #include "SftpJob.h"
 
 #include <QTemporaryFile>
-#include <QTimer>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
 

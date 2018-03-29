@@ -21,8 +21,8 @@
 
 #pragma once
 
-#include <QFileDevice>
-#include "processchannel.h"
+#include <core/Core.h>
+#include "ProcessChannel.h"
 
 namespace Ovito { namespace Ssh {
 
@@ -55,7 +55,7 @@ Q_SIGNALS:
 private:
 
     enum State {
-        StateConnecting,
+        StateClosed,
         StateConnected,
         StateReceivingFile,
         StateFileComplete
@@ -69,15 +69,12 @@ private:
 
 private Q_SLOTS:
 
-    /// State machine implementation.
-    void processState();
-
     /// Is called whenever data arrives from the remote process.
     void processData();
 
 private:
 
-    State _state = StateConnecting;
+    State _state = StateClosed;
     char* _dataBuffer = nullptr;
     qint64 _bytesReceived = 0;
     qint64 _fileSize = 0;

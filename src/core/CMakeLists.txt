@@ -25,6 +25,9 @@ FIND_PACKAGE(Libav)
 # Find the zlib library. It is required for reading/writing compressed data files.
 FIND_PACKAGE(ZLIB REQUIRED)
 
+# Locate the libssh library. It is required for the built-in SSH client.
+FIND_PACKAGE(Libssh REQUIRED)
+
 SET(SourceFiles 
 	utilities/Exception.cpp
 	utilities/linalg/AffineDecomposition.cpp
@@ -90,6 +93,11 @@ SET(SourceFiles
 	utilities/io/SftpJob.cpp
 	utilities/io/CompressedTextReader.cpp
 	utilities/io/CompressedTextWriter.cpp
+	utilities/io/ssh/SshConnection.cpp
+	utilities/io/ssh/SshChannel.cpp
+	utilities/io/ssh/ProcessChannel.cpp
+	utilities/io/ssh/ScpChannel.cpp
+	utilities/io/ssh/LsChannel.cpp	
 	utilities/concurrent/PromiseWatcher.cpp
 	utilities/concurrent/Promise.cpp
 	utilities/concurrent/PromiseState.cpp
@@ -138,8 +146,9 @@ TARGET_COMPILE_DEFINITIONS(Core PRIVATE "OVITO_PLUGIN_NAME=\"Core\"")
 # Set default include directory.
 TARGET_INCLUDE_DIRECTORIES(Core PUBLIC "$<BUILD_INTERFACE:${OVITO_SOURCE_BASE_DIR}/src>")
 
-# Required by built-in SSH client.
-TARGET_LINK_LIBRARIES(Core PRIVATE sshwrapper)
+# Link to libssh.
+TARGET_INCLUDE_DIRECTORIES(Core PRIVATE ${LIBSSH_INCLUDE_DIRS})
+TARGET_LINK_LIBRARIES(Core PRIVATE ${LIBSSH_LIBRARIES})
 
 # Link to zlib library.
 TARGET_LINK_LIBRARIES(Core PRIVATE "${ZLIB_LIBRARIES}")
