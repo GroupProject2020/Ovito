@@ -25,7 +25,7 @@
 #include <core/dataset/DataSetContainer.h>
 #include <core/utilities/io/ssh/SshConnection.h>
 #include "FileManager.h"
-#include "SftpJob.h"
+#include "RemoteFileJob.h"
 
 #include <QTemporaryFile>
 
@@ -79,14 +79,18 @@ SharedFuture<QString> FileManager::fetchUrl(TaskManager& taskManager, const QUrl
 		// Check if requested URL is already being loaded.
 		auto inProgressEntry = _pendingFiles.find(normalizedUrl);
 		if(inProgressEntry != _pendingFiles.end()) {
-			return inProgressEntry->second;
+			SharedFuture<QString> future = inProgressEntry->second.lock();
+			if(future.isValid())
+				return future;
+			else
+				_pendingFiles.erase(inProgressEntry);
 		}
 
 		// Start the background download job.
 		Promise<QString> promise = Promise<QString>::createSynchronous(&taskManager, false, true);
 		SharedFuture<QString> future(promise.future());
 		_pendingFiles.emplace(normalizedUrl, future);
-		new SftpDownloadJob(url, std::move(promise));
+		new DownloadRemoteFileJob(std::move(url), std::move(promise));
 		return future;
 	}
 	else {
@@ -102,7 +106,7 @@ Future<QStringList> FileManager::listDirectoryContents(TaskManager& taskManager,
 	if(url.scheme() == QStringLiteral("sftp")) {
 		Promise<QStringList> promise = Promise<QStringList>::createSynchronous(&taskManager, false, false);
 		Future<QStringList> future = promise.future();
-		new SftpListDirectoryJob(url, std::move(promise));
+		new ListRemoteDirectoryJob(url, std::move(promise));
 		return future;
 	}
 	else {

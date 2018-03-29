@@ -41,7 +41,7 @@ public:
 	using promise_type = typename Future<R...>::promise_type;
 
 	/// Default constructor that constructs an invalid SharedFuture that is not associated with any shared state.
-	SharedFuture() noexcept {}
+	SharedFuture() noexcept = default;
 
 	/// Constructor that constructs a shared future from a normal future.
 	SharedFuture(Future<R...>&& other) noexcept : FutureBase(std::move(other)) {}

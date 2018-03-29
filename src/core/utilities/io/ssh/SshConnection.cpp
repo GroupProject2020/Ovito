@@ -573,11 +573,15 @@ QString SshConnection::hostPublicKeyHash()
 {
     ssh_key key;
 #if LIBSSH_VERSION_INT > SSH_VERSION_INT(0, 7, 5)
-    if(::ssh_get_server_publickey(_session, &key) != SSH_OK)
+    if(::ssh_get_server_publickey(_session, &key) != SSH_OK) {
+        qWarning() << "Call to ssh_get_server_publickey() failed";
         return {};
+    }
 #else
-    if(::ssh_get_publickey(_session, &key) != SSH_OK)
+    if(::ssh_get_publickey(_session, &key) != SSH_OK) {
+        qWarning() << "Call to ssh_get_publickey() failed";
         return {};
+    }
 #endif
 
     unsigned char* hash;
@@ -593,6 +597,8 @@ QString SshConnection::hostPublicKeyHash()
     ::ssh_string_free_char(hexa);
     ::ssh_clean_pubkey_hash(&hash);
     ::ssh_key_free(key);
+
+    qDebug() << "hostPublicKeyHash:" << string;
 
     return string;
 }

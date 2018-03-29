@@ -110,7 +110,7 @@ public:
 	using promise_type = Promise<R...>;
 
 	/// Default constructor that constructs an invalid Future that is not associated with any shared state.
-	Future() noexcept {}
+	Future() noexcept = default;
 
 	/// A future is not copy constructible.
 	Future(const Future& other) = delete;

@@ -26,7 +26,6 @@
 #include <core/utilities/concurrent/Future.h>
 
 #include <QQueue>
-#include <QTemporaryFile>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
@@ -38,27 +37,19 @@ namespace Ssh {
 }
 
 /**
- * \brief Base class for background jobs that access remote files and directories via SFTP.
+ * \brief Base class for background jobs that access remote files and directories via SSH.
  */
-class SftpJob : public QObject
+class RemoteFileJob : public QObject
 {
 	Q_OBJECT
 
 public:
 
 	/// Constructor.
-	SftpJob(const QUrl& url, const PromiseStatePtr& promiseState);
-
-	/// Destructor.
-	virtual ~SftpJob() {
-		OVITO_ASSERT(_connection == nullptr);
-	}
+	RemoteFileJob(QUrl url, const PromiseStatePtr& promiseState);
 
 	/// Returns the URL being accessed.
 	const QUrl& url() const { return _url; }
-
-	/// Changes the URL being accessed.
-	void setUrl(const QUrl& url) { _url = url; }
 
 protected:
 
@@ -85,7 +76,7 @@ protected Q_SLOTS:
 protected:
 
 	/// The URL of the file or directory.
-	QUrl _url;
+	const QUrl _url;
 
 	/// The SSH connection.
 	Ovito::Ssh::SshConnection* _connection = nullptr;
@@ -96,28 +87,28 @@ protected:
 	/// This is for listening to signals from the promise object.
 	PromiseWatcher* _promiseWatcher = nullptr;
 
-    /// Indicates whether this SFTP job is currently active.
+    /// Indicates whether this job is currently active.
     bool _isActive = false;
 
-    /// Queue of SFTP jobs that are waiting to be executed.
-    static QQueue<SftpJob*> _queuedJobs;
+    /// Queue of jobs that are waiting to be executed.
+    static QQueue<RemoteFileJob*> _queuedJobs;
 
-    /// Keeps track of how many SFTP jobs are currently active.
+    /// Keeps track of how many jobs are currently active.
     static int _numActiveJobs;
 };
 
 /**
- * \brief A background jobs that downloads a remote file via SFTP.
+ * \brief A background jobs that downloads a file stored on a remote host to the local computer.
  */
-class SftpDownloadJob : public SftpJob
+class DownloadRemoteFileJob : public RemoteFileJob
 {
 	Q_OBJECT
 
 public:
 
 	/// Constructor.
-	SftpDownloadJob(const QUrl& url, Promise<QString>&& promise) :
-		SftpJob(url, promise.sharedState()), _promise(std::move(promise)) {}
+	DownloadRemoteFileJob(QUrl url, Promise<QString>&& promise) :
+		RemoteFileJob(std::move(url), promise.sharedState()), _promise(std::move(promise)) {}
 
 protected:
 
@@ -157,17 +148,17 @@ private:
 };
 
 /**
- * \brief A background jobs that lists the files in a remote directory, which is accessed via SFTP.
+ * \brief A background jobs that lists the files in a directory on a remote host.
  */
-class SftpListDirectoryJob : public SftpJob
+class ListRemoteDirectoryJob : public RemoteFileJob
 {
 	Q_OBJECT
 
 public:
 
 	/// Constructor.
-	SftpListDirectoryJob(const QUrl& url, Promise<QStringList>&& promise) :
-		SftpJob(url, promise.sharedState()), _promise(std::move(promise)) {}
+	ListRemoteDirectoryJob(QUrl url, Promise<QStringList>&& promise) :
+		RemoteFileJob(std::move(url), promise.sharedState()), _promise(std::move(promise)) {}
 
 protected:
 
@@ -185,7 +176,7 @@ protected Q_SLOTS:
     /// Is called after the directory listing has been fully transmitted.
     void receivedDirectoryComplete(const QStringList& listing);
 
-    /// Is called when an SCP error occurs in the channel.
+    /// Is called when an error occurs in the SSH channel.
     void channelError();
 
 private:
@@ -193,7 +184,7 @@ private:
 	/// The listing channel.
     Ovito::Ssh::LsChannel* _lsChannel = nullptr;
 
-	/// The promise through which the result of this download job is returned.
+	/// The promise through which the result of this job is returned.
 	Promise<QStringList> _promise;	
 };
 

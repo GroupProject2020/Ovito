@@ -277,6 +277,8 @@ private:
     /// The structure with the callback funtions registered with libssh.
     struct ssh_callbacks_struct _sessionCallbacks;
 
+    QElapsedTimer _timeSinceLastChannelClosed;
+
     friend class SshChannel;
     friend class ProcessChannel;
 };

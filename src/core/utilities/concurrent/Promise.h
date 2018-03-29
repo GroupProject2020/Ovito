@@ -142,7 +142,7 @@ public:
 protected:
 
 	/// Default constructor.
-	PromiseBase() noexcept {}
+	PromiseBase() noexcept = default;
 
 	/// Move constructor.
 	PromiseBase(PromiseBase&& p) noexcept = default;
@@ -166,7 +166,7 @@ public:
 	using future_type = Future<R...>;
 
 	/// Default constructor.
-	Promise() {}
+	Promise() noexcept = default;
 
 	/// Creates a promise that is used to report progress in the main thread.
 	static Promise createSynchronous(TaskManager* taskManager, bool startedState, bool registerWithManager) {
@@ -235,6 +235,37 @@ private:
 #ifdef OVITO_DEBUG
 	bool _futureCreated = false;
 #endif
+};
+
+
+/******************************************************************************
+* A weak reference to a Promise
+******************************************************************************/
+template<typename... R>
+class WeakPromise : private std::weak_ptr<PromiseState>
+{
+public:
+
+	constexpr WeakPromise() noexcept = default;
+
+	WeakPromise(const Promise<R...>& promise) noexcept : std::weak_ptr<PromiseState>(promise.sharedState()) {}
+
+	WeakPromise& operator=(const Promise<R...>& p) noexcept {
+		std::weak_ptr<PromiseState>::operator=(p.sharedState());
+		return *this;
+	}
+
+	void reset() noexcept { 
+		std::weak_ptr<PromiseState>::reset(); 
+	}
+
+	Promise<R...> lock() const noexcept {
+		return Promise<R...>(std::weak_ptr<PromiseState>::lock());
+	}
+
+	bool expired() const noexcept {
+		return std::weak_ptr<PromiseState>::expired();
+	}
 };
 
 OVITO_END_INLINE_NAMESPACE

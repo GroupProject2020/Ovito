@@ -33,7 +33,7 @@ SET(SourceFiles
 	utilities/linalg/AffineDecomposition.cpp
 	utilities/io/SaveStream.cpp
 	utilities/io/LoadStream.cpp
-	utilities/io/gzdevice/qtiocompressor.cpp
+	utilities/io/gzdevice/GzipIODevice.cpp
 	app/Application.cpp
 	app/ApplicationService.cpp
 	app/PluginManager.cpp
@@ -90,7 +90,7 @@ SET(SourceFiles
 	utilities/io/ObjectSaveStream.cpp
 	utilities/io/ObjectLoadStream.cpp
 	utilities/io/FileManager.cpp
-	utilities/io/SftpJob.cpp
+	utilities/io/RemoteFileJob.cpp
 	utilities/io/CompressedTextReader.cpp
 	utilities/io/CompressedTextWriter.cpp
 	utilities/io/ssh/SshConnection.cpp

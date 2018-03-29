@@ -35,8 +35,6 @@ std::atomic_size_t PromiseState::_instanceCounter{0};
 PromiseState::~PromiseState()
 {
 	// No-op destructor.
-	
-//	qDebug() << "~PromiseState: " << this << "isFinished=" << isFinished() << "isCanceled=" << isCanceled();
 
 	// Shared states must always end up in the finished state.
 	OVITO_ASSERT(isFinished());
@@ -54,7 +52,6 @@ void PromiseState::decrementShareCount() noexcept
 	int oldCount = _shareCount.fetch_sub(1, std::memory_order_release);
 	OVITO_ASSERT(oldCount >= 1);
 	if(oldCount == 1) {
-//		qDebug() << "PromiseState::decrementShareCount(): canceling state" << this;
 		cancel();
 	}
 }

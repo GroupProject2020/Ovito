@@ -142,6 +142,9 @@ private:
     struct ssh_channel_callbacks_struct _channelCallbacks;
     int _timerId = 0;
     bool _ioCheckQueued = false;
+    bool _isConnectDelayed = false;
+
+    static constexpr int SSH_CHANNEL_GRACE_PERIOD = 100;
 };
 
 

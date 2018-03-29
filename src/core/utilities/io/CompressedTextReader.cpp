@@ -39,7 +39,7 @@ CompressedTextReader::CompressedTextReader(QFileDevice& input, const QString& or
 	// Check if file is compressed (i.e. filename ends with .gz).
 	if(_filename.endsWith(".gz", Qt::CaseInsensitive)) {
 		// Open compressed file for reading.
-		_uncompressor.setStreamFormat(QtIOCompressor::GzipFormat);
+		_uncompressor.setStreamFormat(GzipIODevice::GzipFormat);
 		if(!_uncompressor.open(QIODevice::ReadOnly))
 			throw Exception(tr("Failed to open input file: %1").arg(_uncompressor.errorString()));
 		_stream = &_uncompressor;

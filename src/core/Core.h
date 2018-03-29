@@ -78,6 +78,9 @@
 #include <QCommandLineParser>
 #include <QGuiApplication>
 #include <QTimer>
+#include <QCache>
+#include <QMutex>
+#include <QTemporaryFile>
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 4, 0)
 #  error "OVITO requires Qt 5.4 or newer."

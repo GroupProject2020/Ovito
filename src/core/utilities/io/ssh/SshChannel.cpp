@@ -115,7 +115,7 @@ qint64 SshChannel::writeData(const char* data, qint64 len)
 ******************************************************************************/
 void SshChannel::checkIO()
 {
-    if(!channel() || !isOpen() || _ioInProgress) return;
+    if(!channel() || _ioInProgress) return;
     _ioInProgress = true;
 
     bool emit_ready_read = false;

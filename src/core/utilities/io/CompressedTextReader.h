@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,7 +23,7 @@
 
 
 #include <core/Core.h>
-#include <core/utilities/io/gzdevice/qtiocompressor.h>
+#include <core/utilities/io/gzdevice/GzipIODevice.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
 
@@ -158,8 +158,8 @@ private:
 	/// The underlying input device.
 	QFileDevice& _device;
 
-	/// The uncompressing filter.
-	QtIOCompressor _uncompressor;
+	/// The uncompressing filter stream.
+	GzipIODevice _uncompressor;
 
 	/// The input stream from which uncompressed data is read.
 	QIODevice* _stream;
@@ -173,5 +173,3 @@ private:
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

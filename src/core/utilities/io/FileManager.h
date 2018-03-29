@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,8 +24,6 @@
 
 #include <core/Core.h>
 #include <core/utilities/concurrent/Future.h>
-
-#include <QCache>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
 
@@ -115,7 +113,7 @@ private:
 private:
 
 	/// The remote files that are currently being fetched.
-	std::map<QUrl, SharedFuture<QString>> _pendingFiles;
+	std::map<QUrl, WeakSharedFuture<QString>> _pendingFiles;
 
 	/// Cache holding the remote files that have already been downloaded.
 	QCache<QUrl, QTemporaryFile> _cachedFiles{std::numeric_limits<int>::max()};
@@ -129,7 +127,7 @@ private:
 	/// Holds SSH connections, which are still open but not in use.
     QList<Ssh::SshConnection*> _unacquiredConnections;
 
-	friend class SftpDownloadJob;
+	friend class DownloadRemoteFileJob;
 };
 
 OVITO_END_INLINE_NAMESPACE

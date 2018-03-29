@@ -38,7 +38,7 @@ CompressedTextWriter::CompressedTextWriter(QFileDevice& output, DataSet* context
 	// Check if file should be compressed (i.e. filename ends with .gz).
 	if(_filename.endsWith(".gz", Qt::CaseInsensitive)) {
 		// Open file for writing.
-		_compressor.setStreamFormat(QtIOCompressor::GzipFormat);
+		_compressor.setStreamFormat(GzipIODevice::GzipFormat);
 		if(!_compressor.open(QIODevice::WriteOnly))
 			throw Exception(tr("Failed to open output file '%1' for writing: %2").arg(_compressor.errorString()), _context);
 		_stream = &_compressor;

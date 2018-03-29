@@ -99,11 +99,15 @@ void ProcessChannel::closeChannel()
         }
 
         if(channel()) {
+#if LIBSSH_VERSION_INT >= SSH_VERSION_INT(7,0,0)
+            ::ssh_remove_channel_callbacks(channel(), &_channelCallbacks);
+#endif            
             if(::ssh_channel_close(channel()) != SSH_OK) {
                 qWarning() << "Failed to close SSH channel:" << errorMessage();
             }
             ::ssh_channel_free(channel());
             _channel = nullptr;
+            connection()->_timeSinceLastChannelClosed.start();            
         }
 
         QIODevice::close();
@@ -170,7 +174,17 @@ void ProcessChannel::processState()
 
     case StateWaitSession:
         if(connection()->isConnected()) {
-            setState(StateOpening, true);
+            if(!connection()->_timeSinceLastChannelClosed.isValid() || connection()->_timeSinceLastChannelClosed.elapsed() >= SSH_CHANNEL_GRACE_PERIOD) {
+                setState(StateOpening, true);
+            }
+            else if(!_isConnectDelayed) {
+                _isConnectDelayed = true;
+                int delay = std::max(0, SSH_CHANNEL_GRACE_PERIOD - (int)connection()->_timeSinceLastChannelClosed.elapsed());
+                QTimer::singleShot(delay, this, [this]() {                    
+                    _isConnectDelayed = false;
+                    processState();
+                });
+            }
         }
         return;
 
@@ -179,12 +193,22 @@ void ProcessChannel::processState()
             _channel = ::ssh_channel_new(connection()->_session);
             if(!_channel) {
                 qCritical() << "Failed to create SSH channel.";
+                setErrorString(tr("Failed to create SSH channel: %1").arg(errorMessage()));
+                setState(StateError, false);
+                // If creating a channel doesn't work anymore, close the entire SSH connection.
+                connection()->disconnectFromHost();
                 return;
             }
             stderr()->_channel = channel();
         }
         OVITO_ASSERT(connection()->isConnected());
-        OVITO_ASSERT(::ssh_is_connected(connection()->_session));
+        if(!::ssh_is_connected(connection()->_session)) {
+            setErrorString(tr("Failed to create SSH channel: SSH connection lost"));
+            setState(StateError, false);
+            // If creating a channel doesn't work anymore, close the entire SSH connection.
+            connection()->disconnectFromHost();
+            return;
+        }
 
         switch(auto rc = ::ssh_channel_open_session(channel())) {
         case SSH_AGAIN:
@@ -196,19 +220,24 @@ void ProcessChannel::processState()
             return;
 
         case SSH_OK:
+            OVITO_ASSERT(::ssh_is_connected(connection()->_session));
             if(!::ssh_channel_is_open(channel())) {
-                setErrorString(tr("Failed to open SSH channel."));
+                setErrorString(tr("Failed to open SSH channel: %1").arg(errorMessage()));
                 setState(StateError, false);
+                // If opening a channel doesn't work anymore, close the entire SSH connection.
+                connection()->disconnectFromHost();
                 return;
             }
             OVITO_ASSERT(connection()->isConnected());
 
+#if LIBSSH_VERSION_INT >= SSH_VERSION_INT(7,0,0)
             // Register callback functions for libssh channel:
             memset(&_channelCallbacks, 0, sizeof(_channelCallbacks));
             _channelCallbacks.userdata = this;
             _channelCallbacks.channel_data_function = &ProcessChannel::channelDataCallback;
             ssh_callbacks_init(&_channelCallbacks);
             ::ssh_set_channel_callbacks(channel(), &_channelCallbacks);
+#endif            
 
             // Additionally, to be safe, start a timer to periodically check for incoming data.
             _timerId = startTimer(100);
