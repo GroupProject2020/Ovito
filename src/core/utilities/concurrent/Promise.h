@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -237,39 +237,6 @@ private:
 #endif
 };
 
-
-/******************************************************************************
-* A weak reference to a Promise
-******************************************************************************/
-template<typename... R>
-class WeakPromise : private std::weak_ptr<PromiseState>
-{
-public:
-
-	constexpr WeakPromise() noexcept = default;
-
-	WeakPromise(const Promise<R...>& promise) noexcept : std::weak_ptr<PromiseState>(promise.sharedState()) {}
-
-	WeakPromise& operator=(const Promise<R...>& p) noexcept {
-		std::weak_ptr<PromiseState>::operator=(p.sharedState());
-		return *this;
-	}
-
-	void reset() noexcept { 
-		std::weak_ptr<PromiseState>::reset(); 
-	}
-
-	Promise<R...> lock() const noexcept {
-		return Promise<R...>(std::weak_ptr<PromiseState>::lock());
-	}
-
-	bool expired() const noexcept {
-		return std::weak_ptr<PromiseState>::expired();
-	}
-};
-
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

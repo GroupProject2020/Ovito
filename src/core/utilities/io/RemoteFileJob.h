@@ -34,6 +34,7 @@ namespace Ssh {
 	class SshConnection;
 	class ScpChannel;
 	class LsChannel;
+	class CatChannel;
 }
 
 /**

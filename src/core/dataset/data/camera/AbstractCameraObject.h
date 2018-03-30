@@ -34,12 +34,14 @@ class OVITO_CORE_EXPORT AbstractCameraObject : public DataObject
 {
 	Q_OBJECT
 	OVITO_CLASS(AbstractCameraObject)
-	
+
+protected:
+
+	/// Constructor.
+	using DataObject::DataObject;
+
 public:
 	
-	/// \brief Constructor.
-	AbstractCameraObject(DataSet* dataset) : DataObject(dataset) {}
-
 	/// \brief Returns a structure describing the camera's projection.
 	/// \param[in] time The animation time for which the camera's projection parameters should be determined.
 	/// \param[in,out] projParams The structure that is to be filled with the projection parameters.
@@ -66,5 +68,3 @@ OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

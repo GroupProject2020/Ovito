@@ -98,6 +98,7 @@ SET(SourceFiles
 	utilities/io/ssh/ProcessChannel.cpp
 	utilities/io/ssh/ScpChannel.cpp
 	utilities/io/ssh/LsChannel.cpp	
+	utilities/io/ssh/CatChannel.cpp	
 	utilities/concurrent/PromiseWatcher.cpp
 	utilities/concurrent/Promise.cpp
 	utilities/concurrent/PromiseState.cpp

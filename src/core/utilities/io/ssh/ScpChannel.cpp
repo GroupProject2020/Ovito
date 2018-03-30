@@ -35,6 +35,7 @@ ScpChannel::ScpChannel(SshConnection* connection, const QString& location) :
     connect(this, &ProcessChannel::opened, this, [this]() {
         setState(StateConnected);
         write("", 1);
+        timer.start();
     });
 }
 
@@ -88,7 +89,7 @@ void ScpChannel::processData()
         qint64 avail = std::min(bytesAvailable(), _fileSize - _bytesReceived);
         qint64 nread = read(_dataBuffer + _bytesReceived, avail);
         if(nread < 0) {
-            qDebug() << "Read negative number of bytes from remote stream.";
+            qDebug() << "Read a negative number of bytes from remote stream.";
             Q_EMIT error();
             return;
         }
@@ -119,8 +120,8 @@ void ScpChannel::processData()
                 Q_EMIT error();
             }
             else {
-                qWarning() << "Received unknown response line from SCP remote process:" << line;
-                setErrorString(tr("Received unknown response line from SCP remote process."));
+                qWarning() << "Received unexpected response line from SCP remote process:" << line;
+                setErrorString(tr("Received unexpected response line from SCP remote process."));
                 Q_EMIT error();
             }
         }

@@ -133,7 +133,7 @@ public:
 	/// \brief Returns the number of strong references to this data object.
 	///        Strong references are either RefMaker derived classes that hold a reference to this data object
 	///        or PipelineFlowState instances that contain this data object.
-	unsigned int numberOfStrongReferences() const { 
+	int numberOfStrongReferences() const { 
 		return _referringFlowStates + dependents().size();
 	}
 
@@ -167,7 +167,7 @@ private:
 	unsigned int _revisionNumber = 0;
 
 	/// Counts the current number of PipelineFlowState containers that contain this data object.
-	unsigned int _referringFlowStates = 0;
+	int _referringFlowStates = 0;
 
 	friend class StrongDataObjectRef;
 };

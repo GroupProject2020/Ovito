@@ -26,6 +26,7 @@
 #include <core/utilities/io/ssh/SshConnection.h>
 #include <core/utilities/io/ssh/ScpChannel.h>
 #include <core/utilities/io/ssh/LsChannel.h>
+#include <core/utilities/io/ssh/CatChannel.h>
 #include "RemoteFileJob.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -226,7 +227,7 @@ void DownloadRemoteFileJob::channelError()
 ******************************************************************************/
 void DownloadRemoteFileJob::shutdown(bool success)
 {
-	// Close SCP channel.
+	// Close file channel.
 	if(_scpChannel) {
 		disconnect(_scpChannel, 0, this, 0);
 		_scpChannel->closeChannel();

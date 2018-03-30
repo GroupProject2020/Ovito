@@ -190,6 +190,9 @@ void SshConnection::processState()
         ssh_callbacks_init(&_sessionCallbacks);
         ::ssh_set_callbacks(_session, &_sessionCallbacks);
 
+        // Activate download stream compression.
+        setLibsshOption(SSH_OPTIONS_COMPRESSION_S_C, "yes");
+
         if((_connectionParams.userName.isEmpty() || setLibsshOption(SSH_OPTIONS_USER, qPrintable(_connectionParams.userName)))
                 && setLibsshOption(SSH_OPTIONS_HOST, qPrintable(_connectionParams.host))
                 && (_connectionParams.port == 0 || setLibsshOption(SSH_OPTIONS_PORT, &_connectionParams.port)))

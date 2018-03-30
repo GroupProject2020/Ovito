@@ -29,6 +29,8 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util)
 using ZlibByte = Bytef;
 using ZlibSize = uInt;
 
+OVITO_STATIC_ASSERT((std::is_same<ZlibByte, unsigned char>::value));
+
 struct ZLibState
 {
     z_stream _zlibStream;
@@ -40,7 +42,6 @@ struct ZLibState
         _zlibStream.zfree = Z_NULL;
         _zlibStream.opaque = Z_NULL;
     }
-
 };
 
 /// Flushes the zlib stream.
@@ -85,7 +86,7 @@ bool GzipIODevice::writeBytes(qint64 outputSize)
     do {
         const qint64 bytesWritten = _device->write(reinterpret_cast<char*>(_buffer.get()), outputSize);
         if(bytesWritten == -1) {
-            setErrorString(tr("Error writing to underlying device: %1").arg(_device->errorString()));
+            setErrorString(tr("Error writing to underlying I/O device: %1").arg(_device->errorString()));
             return false;
         }
         totalBytesWritten += bytesWritten;
@@ -106,7 +107,7 @@ void GzipIODevice::setZlibError(const QString& errorMessage, int zlibErrorCode)
     if(zlibErrorString)
         errorString = errorMessage + zlibErrorString;
     else
-        errorString = errorMessage + tr(" Unknown error, code ") + QString::number(zlibErrorCode);
+        errorString = tr("%1 - Unknown error (code %2)").arg(errorMessage).arg(zlibErrorCode);
 
     setErrorString(errorString);
 }
@@ -349,7 +350,7 @@ qint64 GzipIODevice::readData(char* data, qint64 maxSize)
     if(_state == Error)
         return -1;
 
-    // We are ging to try to fill the data buffer
+    // We will to try to fill the data buffer
     _zlibStruct->_zlibStream.next_out = reinterpret_cast<ZlibByte*>(data);
     _zlibStruct->_zlibStream.avail_out = maxSize;
 
@@ -409,7 +410,7 @@ qint64 GzipIODevice::readData(char* data, qint64 maxSize)
 /*!
     Compresses and writes data to the underlying device.
 */
-qint64 GzipIODevice::writeData(const char *data, qint64 maxSize)
+qint64 GzipIODevice::writeData(const char* data, qint64 maxSize)
 {
     if(maxSize < 1)
         return 0;

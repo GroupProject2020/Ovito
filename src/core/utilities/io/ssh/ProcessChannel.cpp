@@ -278,7 +278,8 @@ void ProcessChannel::processState()
     case StateOpen:
         // Send/received data.
         checkIO();
-        stderr()->checkIO();
+        if(state() == StateOpen)
+            stderr()->checkIO();
         // Check if end of transmission from remote side has been reached.
         if(state() == StateOpen && ::ssh_channel_poll(channel(), false) == SSH_EOF && ::ssh_channel_poll(channel(), true) == SSH_EOF) {
             // EOF state affects atEnd() and canReadLine() behavior,

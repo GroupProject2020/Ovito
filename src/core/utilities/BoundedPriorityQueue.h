@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -53,7 +53,7 @@ public:
 	typedef const value_type* const_iterator;
 
 	/// Constructor.
-	BoundedPriorityQueue(int size, const Compare& comp = Compare()) : _count(0), _maxSize(size), _comp(comp) {
+	BoundedPriorityQueue(int size, const Compare& comp = Compare()) : _maxSize(size), _comp(comp) {
 		OVITO_ASSERT(size <= QUEUE_SIZE_LIMIT);
 	}
 
@@ -121,7 +121,7 @@ public:
 
 protected:
 
-	int _count;
+	int _count = 0;
 	int _maxSize;
 	std::array<value_type, QUEUE_SIZE_LIMIT> _data;
 	Compare _comp;
@@ -129,6 +129,3 @@ protected:
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-
-
