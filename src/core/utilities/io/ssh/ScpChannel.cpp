@@ -35,7 +35,6 @@ ScpChannel::ScpChannel(SshConnection* connection, const QString& location) :
     connect(this, &ProcessChannel::opened, this, [this]() {
         setState(StateConnected);
         write("", 1);
-        timer.start();
     });
 }
 

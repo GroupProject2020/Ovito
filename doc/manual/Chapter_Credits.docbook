@@ -17,7 +17,7 @@
 
   <para>The following third-party codes and libraries are used as part of OVITO:
     <itemizedlist>
-      <listitem><para><link xlink:href="http://www.qt.io/developers/">Qt</link> and <link xlink:href="http://www.qt.io/ide/">Qt Creator</link> (GNU General Public License v3).</para></listitem>
+      <listitem><para><link xlink:href="http://www.qt.io/developers/">Qt</link> (GNU General Public License v3).</para></listitem>
       <listitem><para><link xlink:href="http://sourceforge.net/projects/qwt/">Qwt</link> (<link linkend="appendix.license.qwt">license</link>).</para></listitem>
       <listitem><para><link xlink:href="http://www.boost.org">Boost</link> library (<link linkend="appendix.license.boost">license</link>)</para></listitem>
       <listitem><para><link xlink:href="http://www.python.org">Python</link> (PSF license)</para></listitem>
@@ -27,7 +27,8 @@
       by John E. Stone (<link linkend="appendix.license.tachyon">license</link>).</para></listitem>
       <listitem><para><link xlink:href="http://muparser.beltoforion.de">muParser</link>
       by Ingo Berg (<link linkend="appendix.license.muparser">license</link>).</para></listitem>
-      <listitem><para><link xlink:href="http://botan.randombit.net">Botan</link> library (BSD-2 license).</para></listitem>
+      <listitem><para><link xlink:href="http://libssh.org">Libssh</link> library (GNU Lesser General Public License v2.1).</para></listitem>
+      <listitem><para><link xlink:href="http://openssl.org">OpenSSL</link> library (<link linkend="appendix.license.openssl">license</link>).</para></listitem>
       <listitem><para><link xlink:href="http://libav.org">Libav</link> library (GNU General Public License v2).</para></listitem>
       <listitem><para><link xlink:href="http://www.unidata.ucar.edu/software/netcdf/">netCDF</link> library (<link linkend="appendix.license.netcdf">license</link>).</para></listitem>
       <listitem><para><link xlink:href="https://support.hdfgroup.org/HDF5/">HDF5</link> library (<link linkend="appendix.license.hdf5">license</link>).</para></listitem>
@@ -90,5 +91,8 @@
   <xi:include href="licenses/scintilla.docbook"/>
 
   <xi:include href="licenses/qwt.docbook"/>
+
+  <xi:include href="licenses/openssl.docbook"/>
+
   
 </chapter>

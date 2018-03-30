@@ -60,7 +60,7 @@
 		<row><entry><link xlink:href="http://www.boost.org/">Boost</link></entry><entry>required</entry>
 		<entry>OVITO uses some utility classes from this C++ library.</entry></row>
 		<row><entry><link xlink:href="http://www.libssh.org/">libssh</link></entry><entry>required</entry>
-		<entry>Used by OVITO's built-in SSH client for remote file access.</entry></row>
+		<entry>Used by OVITO's built-in SSH client for remote data access.</entry></row>
 		<row><entry><link xlink:href="https://github.com/pybind/pybind11">pybind11</link></entry><entry>included</entry>
 		<entry>Required by OVITO's Python script engine (<literal>PyScript</literal> plugin).</entry></row>
 		<row><entry><link xlink:href="http://libav.org/">Libav</link></entry><entry>optional</entry>

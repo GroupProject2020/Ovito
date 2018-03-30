@@ -310,6 +310,15 @@ cp -d $HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbb.so.* $HOME/progs
 cp -d $HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbbmalloc.so.* $HOME/progs/ospray_install/lib/
 
 **************************************************************************
+Download and build libssh
+**************************************************************************
+cmake \
+    -DCMAKE_INSTALL_PREFIX=$HOME/progs/libssh_install \
+    -DCMAKE_BUILD_TYPE=Release \
+	-DWITH_SERVER=OFF \
+	..
+
+**************************************************************************
 How to rebuild the Docker images for the Gitlab registry:
 **************************************************************************
 mkdir docker_image
@@ -348,6 +357,8 @@ $HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
   -DTBB_INCLUDE_DIR=$HOME/progs/tbb2018_20170919oss/include/ \
   -DTBB_LIBRARY=$HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbb.so \
   -DTBB_LIBRARY_MALLOC=$HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbbmalloc.so \
+  -DLIBSSH_INCLUDE_DIR=$HOME/progs/libssh_install/include \
+  -DLIBSSH_LIBRARY=$HOME/progs/libssh_install/lib/libssh.so \
   ../source/
 
 

@@ -86,23 +86,22 @@
     <title>Importing files from remote computers</title>
     <para>
        OVITO comes with a built-in SSH client for accessing files on remote machines. It can save you from transferring  
-       data stored in remote locations, for example on a HCP cluster, to your local desktop computer first.
+       data stored in remote locations, for example on HPC clusters, to your local desktop computer first.
        To open a simulation file stored on a remote machine, select 
        <menuchoice><guimenu>File</guimenu><guimenuitem>Load Remote File</guimenuitem></menuchoice> from the menu.  
     </para>
     <para>
-       OVITO does not let you browse directories on remote machines. That means you have to directly specify
-       the full path to the remote file as an URL of the form:
+       The current program version doe not let you browse directories on remote machines. That means you have to specify
+       the full path of the remote file as an URL of the form:
        <screen><command>    sftp://user@hostname/path/filename</command></screen>
-       Where <command>sftp://</command> is the file access protocol (Secure File Transfer Protocol), 
+       Where <command>sftp://</command> is the remote file access protocol, 
        <command>user</command> the SSH login name on the remote machine,
        <command>hostname</command> the name of the remote machine,
-       and <command>/path/filename</command> the simulation file to import. It is possible to 
-       specify a non-standard port number by inserting <command>:port</command> after the hostname.
+       and <command>/path/filename</command> the full path to the simulation file to import. 
     </para>
     <para>
-       When OVITO connects to the remote machine, it will ask for the login password. Key-based authentication is not supported. Once established, 
-       the SSH connection is kept alive until the end of the program session. OVITO makes a temporary copy of the remote file on the local computer before
+       When OVITO connects to the remote machine, it will ask for the login password or the passphrase for the private key to be used for authentication. 
+       Once established, the SSH connection is kept alive until the end of the program session. OVITO makes a temporary copy of the remote file on the local computer before
        loading the data into memory to speed up subsequent accesses to simulation frames. The local file copies are cached until the end of the program session or 
        until you hit <emphasis>Reload</emphasis> in the <link linkend="scene_objects.file_source">External File</link> panel.
     </para>
