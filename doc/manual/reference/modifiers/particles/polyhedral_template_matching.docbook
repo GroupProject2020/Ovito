@@ -12,17 +12,20 @@
 
   <para>
   This modifier classifies the local structural environment of particles
-  using the <emphasis>Polyhedral Template Matching</emphasis> (PTM) method, which allows identification of the local crystalline structure of simple condensed phases.  This structure identification method has been described in <blockquote><para><literallayout><link xlink:href="https://dx.doi.org/10.1088/0965-0393/24/5/055007">P. M. Larsen et al.
+  using the <emphasis>Polyhedral Template Matching</emphasis> (PTM) method, which allows identification of the local 
+  crystalline structure of simple condensed phases.  
+  This structure identification method has been described in <blockquote><para><literallayout><link xlink:href="https://dx.doi.org/10.1088/0965-0393/24/5/055007">P. M. Larsen et al.
 Robust Structural Identification via Polyhedral Template Matching
 Modelling Simul. Mater. Sci. Eng. 24, 055007 (2016)
 doi:10.1088/0965-0393/24/5/055007
-</link> </literallayout></para></blockquote>Please cite this paper when you use this structure identification algorithm in your work. A preprint is available <link xlink:href="http://arxiv.org/abs/1603.05143">here</link>.</para>
+</link></literallayout></para></blockquote>Please cite this paper when you use this structure identification algorithm in your work. A preprint is available <link xlink:href="http://arxiv.org/abs/1603.05143">here</link>.</para>
   <para>
   The PTM approach promises greater reliability than e.g. <link linkend="particles.modifiers.common_neighbor_analysis">Common Neighbor Analysis (CNA)</link> in the 
   presence of strong thermal fluctuations and strains. Furthermore, it provides a direct calculation of the local (per-atom) crystal orientation, elastic deformation, 
   strain and chemical ordering type.
-  </para> <para>
-The modifier identifies local crystalline order by matching the local atomic neighborhood to the templates of the structural types determined by the PTM algorithm.  The templates use a mixture of nearest neighbors, and neighbors of neighbors: <informalfigure>
+  </para> 
+  <para>
+      The modifier identifies local crystalline order by matching the local atomic neighborhood to the templates of the structural types determined by the PTM algorithm.  The templates use a mixture of nearest neighbors, and neighbors of neighbors: <informalfigure>
       <informaltable frame="none" colsep="0" rowsep="0">
         <tgroup cols="7">
           <colspec colname="c1" />
@@ -86,8 +89,8 @@ The modifier identifies local crystalline order by matching the local atomic nei
         </tgroup>
       </informaltable>
     </informalfigure>
-Determination of diamond structures is an extension of the published PTM method, though it follows similar principles.
-    </para>
+    Determination of diamond structures is an extension of the published PTM method, though it follows similar principles.
+  </para>
 
   <para>
   The modifier sets the <literal>Structure Type</literal> property for each particle, which is encoded as an integer value:
@@ -169,7 +172,7 @@ Determination of diamond structures is an extension of the published PTM method,
       The PTM modifier provides an option to output the local interatomic distance (or nearest neighbor distance) as a new particle property, which is computed from the internal scale factor for those atoms
       that match one of the known structure types. 
       Note that you can compute a local lattice constant (including hydrostatic strain) from the interatomic distance by dividing it by the 
-      factor <literal>sqrt(1/2)</literal> (for FCC, HCP), <literal>sqrt(3/4)</literal> (for BCC), or  <literal>sqrt(3/16)</literal> (for cubic diamond and hexagonal diamond) using, e.g., the <link linkend="particles.modifiers.compute_property">Compute property</link> modifier
+      factor <inlineequation><mathphrase>sqrt(1/2)</mathphrase></inlineequation> (for FCC, HCP), <inlineequation><mathphrase>sqrt(3/4)</mathphrase></inlineequation> (for BCC), or <inlineequation><mathphrase>sqrt(3/16)</mathphrase></inlineequation> (for cubic diamond and hexagonal diamond) using, e.g., the <link linkend="particles.modifiers.compute_property">Compute property</link> modifier
     </para>
   </simplesect>
 
@@ -187,10 +190,12 @@ Determination of diamond structures is an extension of the published PTM method,
     </para>
 
 
-<para>
-The orientations are calculated relative to the following template coordinates:
+    <para>
+      The orientations are calculated relative to the following reference templates. In the table, the neighbor positions of each reference configuration 
+      are given in Cartesian coordinates with the central particle located at the origin.
       <informaltable frame="all" colsep="1" rowsep="0">
-        <tgroup cols="21">
+        <tgroup cols="22">
+          <colspec colname="index" colsep="1"/>
           <colspec colname="FCCx" colsep="0"/>
           <colspec colname="FCCy" colsep="0" />
           <colspec colname="FCCz" colsep="1"/>
@@ -220,6 +225,7 @@ The orientations are calculated relative to the following template coordinates:
           <colspec colname="DHEXz" />
           <thead>
             <row>
+              <entry namest="index" nameend="index">Neighbor</entry>
               <entry namest="FCCx"  nameend="FCCz"> FCC</entry>
               <entry namest="HCPx"  nameend="HCPz"> HCP</entry>
               <entry namest="BCCx"  nameend="BCCz"> BCC</entry>
@@ -230,17 +236,8 @@ The orientations are calculated relative to the following template coordinates:
             </row>
           </thead>
           <tbody>
-<row valign="top" align="right">
-<entry>0</entry><entry>0</entry><entry>0</entry>
-<entry>0</entry><entry>0</entry><entry>0</entry>
-<entry>0</entry><entry>0</entry><entry>0</entry>
-<entry>0</entry><entry>0</entry><entry>0</entry>
-<entry>0</entry><entry>0</entry><entry>0</entry>
-<entry>0</entry><entry>0</entry><entry>0</entry>
-<entry>0</entry><entry>0</entry><entry>0</entry>
-</row>
-
-<row valign="top" align="right">
+<row valign="center" align="right">
+<entry align="center">1</entry>
 <entry>0</entry>
 <entry>k<subscript>1</subscript></entry>
 <entry>k<subscript>1</subscript></entry>	
@@ -263,7 +260,8 @@ The orientations are calculated relative to the following template coordinates:
 <entry>k<subscript>6</subscript></entry>
 <entry>k<subscript>6</subscript></entry>
 </row>
-<row valign="top" align="right">
+<row valign="center" align="right">
+<entry align="center">2</entry>
 <entry>0</entry>
 <entry>-k<subscript>1</subscript></entry>
 <entry>-k<subscript>1</subscript></entry>	
@@ -286,7 +284,8 @@ The orientations are calculated relative to the following template coordinates:
 <entry>k<subscript>6</subscript></entry>
 <entry>-k<subscript>6</subscript></entry>
 </row>
-<row valign="top" align="right">
+<row valign="center" align="right">
+<entry align="center">3</entry>
 <entry>0</entry>
 <entry>k<subscript>1</subscript></entry>
 <entry>-k<subscript>1</subscript></entry>	
@@ -309,7 +308,8 @@ The orientations are calculated relative to the following template coordinates:
 <entry>-k<subscript>6</subscript></entry>
 <entry>-k<subscript>6</subscript></entry>
 </row>
-<row valign="top" align="right">
+<row valign="center" align="right">
+<entry align="center">4</entry>
 <entry>0</entry>
 <entry>-k<subscript>1</subscript></entry>
 <entry>k<subscript>1</subscript></entry>	
@@ -332,7 +332,8 @@ The orientations are calculated relative to the following template coordinates:
 <entry>-k<subscript>6</subscript></entry>
 <entry>k<subscript>6</subscript></entry>
 </row>
-<row valign="top" align="right">
+<row valign="center" align="right">
+<entry align="center">5</entry>
 <entry>k<subscript>1</subscript></entry>
 <entry>0</entry>
 <entry>k<subscript>1</subscript></entry>	
@@ -355,7 +356,8 @@ The orientations are calculated relative to the following template coordinates:
 <entry>8k<subscript>6</subscript>/3</entry>
 <entry>2k<subscript>6</subscript>/3</entry>
 </row>
-<row valign="top" align="right">
+<row valign="center" align="right">
+<entry align="center">6</entry>
 <entry>-k<subscript>1</subscript></entry>
 <entry>0</entry>
 <entry>-k<subscript>1</subscript></entry>	
@@ -378,7 +380,8 @@ The orientations are calculated relative to the following template coordinates:
 <entry>2k<subscript>6</subscript>/3</entry>
 <entry>2k<subscript>6</subscript>/3</entry>
 </row>
-<row valign="top" align="right">
+<row valign="center" align="right">
+<entry align="center">7</entry>
 <entry>k<subscript>1</subscript></entry>
 <entry>0</entry>
 <entry>-k<subscript>1</subscript></entry>	
@@ -401,7 +404,8 @@ The orientations are calculated relative to the following template coordinates:
 <entry>2k<subscript>6</subscript>/3</entry>
 <entry>8k<subscript>6</subscript>/3</entry>
 </row>
-<row valign="top" align="right">
+<row valign="center" align="right">
+<entry align="center">8</entry>
 <entry>-k<subscript>1</subscript></entry>
 <entry>0</entry>
 <entry>k<subscript>1</subscript></entry>	
@@ -424,7 +428,8 @@ The orientations are calculated relative to the following template coordinates:
 <entry>-0</entry>
 <entry>-2k<subscript>6</subscript></entry>
 </row>
-<row valign="top" align="right">
+<row valign="center" align="right">
+<entry align="center">9</entry>
 <entry>k<subscript>1</subscript></entry>
 <entry>k<subscript>1</subscript></entry>
 <entry>0</entry>	
@@ -447,7 +452,8 @@ The orientations are calculated relative to the following template coordinates:
 <entry>2k<subscript>6</subscript></entry>
 <entry>-0</entry>
 </row>
-<row valign="top" align="right">
+<row valign="center" align="right">
+<entry align="center">10</entry>
 <entry>-k<subscript>1</subscript></entry>
 <entry>-k<subscript>1</subscript></entry>
 <entry>0</entry>	
@@ -470,7 +476,8 @@ The orientations are calculated relative to the following template coordinates:
 <entry>2k<subscript>6</subscript></entry>
 <entry>-2k<subscript>6</subscript></entry>
 </row>
-<row valign="top" align="right">
+<row valign="center" align="right">
+<entry align="center">11</entry>
 <entry>k<subscript>1</subscript></entry>
 <entry>-k<subscript>1</subscript></entry>
 <entry>0</entry>	
@@ -493,7 +500,8 @@ The orientations are calculated relative to the following template coordinates:
 <entry>-2k<subscript>6</subscript></entry>
 <entry>-2k<subscript>6</subscript></entry>
 </row>
-<row valign="top" align="right">
+<row valign="center" align="right">
+<entry align="center">12</entry>
 <entry>-k<subscript>1</subscript></entry>
 <entry>k<subscript>1</subscript></entry>
 <entry>0</entry>	
@@ -516,7 +524,8 @@ The orientations are calculated relative to the following template coordinates:
 <entry>-2k<subscript>6</subscript></entry>
 <entry>-0</entry>
 </row>
-<row valign="top" align="right">
+<row valign="center" align="right">
+<entry align="center">13</entry>
 <entry></entry>
 <entry></entry>
 <entry></entry>	
@@ -539,7 +548,8 @@ The orientations are calculated relative to the following template coordinates:
 <entry>-0</entry>
 <entry>-2k<subscript>6</subscript></entry>
 </row>
-<row valign="top" align="right">
+<row valign="center" align="right">
+<entry align="center">14</entry>
 <entry></entry>
 <entry></entry>
 <entry></entry>	
@@ -562,7 +572,8 @@ The orientations are calculated relative to the following template coordinates:
 <entry>-2k<subscript>6</subscript></entry>
 <entry>-0</entry>
 </row>
-<row valign="top" align="right">
+<row valign="center" align="right">
+<entry align="center">15</entry>
 <entry></entry>
 <entry></entry>
 <entry></entry>	
@@ -585,7 +596,8 @@ The orientations are calculated relative to the following template coordinates:
 <entry>-2k<subscript>6</subscript></entry>
 <entry>2k<subscript>6</subscript></entry>
 </row>
-<row valign="top" align="right">
+<row valign="center" align="right" rowsep="1">
+<entry align="center">16</entry>
 <entry></entry>
 <entry></entry>
 <entry></entry>	
@@ -608,14 +620,22 @@ The orientations are calculated relative to the following template coordinates:
 <entry>-0</entry>
 <entry>2k<subscript>6</subscript></entry>
 </row>
+        <row>
+          <entry namest="index" nameend="DHEXz" align="left">
+            <inlineequation><mathphrase>k<subscript>1</subscript> = sqrt(2) / 2</mathphrase></inlineequation>, 
+            <inlineequation><mathphrase>k<subscript>2</subscript> = 14 / (8 sqrt(3) + 12)</mathphrase></inlineequation>,
+            <inlineequation><mathphrase>k<subscript>3</subscript> = sqrt(2/(5 + sqrt(5)))</mathphrase></inlineequation>, 
+            <inlineequation><mathphrase>k<subscript>4</subscript> = sqrt(1/10 (5 + sqrt(5)))</mathphrase></inlineequation>,
+            <inlineequation><mathphrase>k<subscript>5</subscript> = 1</mathphrase></inlineequation>,
+            <inlineequation><mathphrase>k<subscript>6</subscript> = 4/(6 sqrt(2) + sqrt(3))</mathphrase></inlineequation>
+          </entry>
+        </row>
 
           </tbody>
         </tgroup>
       </informaltable>
-Here, <literal>k<subscript>1</subscript> = sqrt(2) / 2</literal>, <literal>k<subscript>2</subscript> = 14 / (8 sqrt(3) + 12)</literal>, <literal>k<subscript>3</subscript> = sqrt(2/(5 + sqrt(5)))</literal>, <literal>k<subscript>4</subscript> = sqrt(1/10 (5 + sqrt(5)))</literal>, <literal>k<subscript>5</subscript> = 1</literal>, and <literal>k<subscript>6</subscript> = 4/(6 sqrt(2) + sqrt(3))</literal>.
-
-The reference templates are scaled such that the mean distance of the neighbors is 1.  This is a slight departure from the templates in the published PTM paper, in that the central atom is no longer included in this calculation.
-</para>
+      The reference templates are scaled such that the mean distance of the neighbors is 1.  This is a slight departure from the templates in the published PTM paper, in that the central atom is no longer included in this calculation.
+  </para>
 
   </simplesect>
 

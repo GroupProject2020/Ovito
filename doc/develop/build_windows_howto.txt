@@ -118,6 +118,20 @@ qmake ..\..\QScintilla_gpl-2.10.1\Qt4Qt5\qscintilla.pro
 nmake
 
 **************************************************************************
+libssh
+**************************************************************************
+cd libssh
+mkdir build64
+cd build64
+cmake ^
+   -DCMAKE_BUILD_TYPE=Release ^
+   -DCMAKE_INSTALL_PREFIX=../64bit/libssh_install ^
+   -DZLIB_INCLUDE_DIR=%cd:\=/%/../64bit/zlib_install/include ^
+   -DZLIB_LIBRARY=%cd:\=/%/../64bit/zlib_install/lib/zlib.lib ^
+   ..
+nmake
+
+**************************************************************************
 libav
 **************************************************************************
 - Install MSYS2

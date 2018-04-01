@@ -22,7 +22,7 @@ Computer Physics Communications (2016), doi:10.1016/j.cpc.2016.04.001</link></li
   </para>
 
   <para>
-  The algorithm analyzes the local enviroment of each atom up to the second neighbor shell to determine the local structural type.
+  The algorithm analyzes the local environment of each atom up to the second neighbor shell to determine the local structural type.
   The results are stored in the <literal>Structure Type</literal> particle property, with the type assigned to each atom encoded as an integer value:
   <informaltable>
         <tgroup cols="3">

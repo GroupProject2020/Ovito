@@ -109,7 +109,6 @@ New analysis features:
 New I/O functions:
 
 - Export to Blender (Paul Erhart, Filip Sund <filip.sund@fys.uio.no>)
-- Add support for more file formats using OpenBabel.
 
 Performance improvements:
 
