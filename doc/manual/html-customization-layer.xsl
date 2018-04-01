@@ -27,6 +27,7 @@
 <xsl:param name="generate.id.attributes" select="1"/>
 <xsl:param name="highlight.source" select="1"/>
 <xsl:param name="css.decoration" select="0" />
+<xsl:param name="table.borders.with.css" select="1" />
 
 <xsl:param name="generate.toc">
 appendix  toc,title

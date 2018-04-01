@@ -11,27 +11,86 @@
   <title>Polyhedral template matching</title>
 
   <para>
-    
-    <informalfigure><screenshot><mediaobject><imageobject>
-      <imagedata fileref="images/modifiers/polyhedral_template_matching_panel.png" format="PNG" scale="50" />
-    </imageobject></mediaobject></screenshot></informalfigure>
-
   This modifier classifies the local structural environment of particles
-  using the <emphasis>Polyhedral Template Matching</emphasis> (PTM) method of P. M. Larsen et al. [<link
-  xlink:href="https://dx.doi.org/10.1088/0965-0393/24/5/055007">Modelling Simul. Mater. Sci. Eng. 24, 055007</link>]
-  and allows identifying the local crystalline structure of simple condensed phases.
-  A preprint of the PTM paper is available <link xlink:href="http://arxiv.org/abs/1603.05143">here</link>.
-  </para>
-  
+  using the <emphasis>Polyhedral Template Matching</emphasis> (PTM) method, which allows identification of the local crystalline structure of simple condensed phases.  This structure identification method has been described in <blockquote><para><literallayout><link xlink:href="https://dx.doi.org/10.1088/0965-0393/24/5/055007">P. M. Larsen et al.
+Robust Structural Identification via Polyhedral Template Matching
+Modelling Simul. Mater. Sci. Eng. 24, 055007 (2016)
+doi:10.1088/0965-0393/24/5/055007
+</link> </literallayout></para></blockquote>Please cite this paper when you use this structure identification algorithm in your work. A preprint is available <link xlink:href="http://arxiv.org/abs/1603.05143">here</link>.</para>
   <para>
   The PTM approach promises greater reliability than e.g. <link linkend="particles.modifiers.common_neighbor_analysis">Common Neighbor Analysis (CNA)</link> in the 
   presence of strong thermal fluctuations and strains. Furthermore, it provides a direct calculation of the local (per-atom) crystal orientation, elastic deformation, 
   strain and chemical ordering type.
-  </para>
+  </para> <para>
+The modifier identifies local crystalline order by matching the local atomic neighborhood to the templates of the structural types determined by the PTM algorithm.  The templates use a mixture of nearest neighbors, and neighbors of neighbors: <informalfigure>
+      <informaltable frame="none" colsep="0" rowsep="0">
+        <tgroup cols="7">
+          <colspec colname="c1" />
+          <colspec colname="c2" />
+          <colspec colname="c3" />
+          <colspec colname="c4" />
+          <colspec colname="c5" />
+          <colspec colname="c6" />
+          <colspec colname="c7" />
+          <tbody>
+            <row valign="top">
+              <entry namest="c1" nameend="c7">Central atom (white), nearest neighbors (blue), and neighbors of neighbors (green).</entry>
+            </row>
+            <row valign="top">
+              <entry>
+		        <mediaobject><imageobject>
+		        <imagedata fileref="images/modifiers/ptm_schematic_fcc.png" format="PNG" />
+		        </imageobject></mediaobject>
+              </entry>
+              <entry>
+		        <mediaobject><imageobject>
+		        <imagedata fileref="images/modifiers/ptm_schematic_hcp.png" format="PNG" />
+		        </imageobject></mediaobject>
+              </entry>
+              <entry>
+		        <mediaobject><imageobject>
+		        <imagedata fileref="images/modifiers/ptm_schematic_bcc.png" format="PNG" />
+		        </imageobject></mediaobject>
+              </entry>
+              <entry>
+		        <mediaobject><imageobject>
+		        <imagedata fileref="images/modifiers/ptm_schematic_ico.png" format="PNG" />
+		        </imageobject></mediaobject>
+              </entry>
+              <entry>
+		        <mediaobject><imageobject>
+		        <imagedata fileref="images/modifiers/ptm_schematic_sc.png" format="PNG" />
+		        </imageobject></mediaobject>
+              </entry>
+              <entry>
+		        <mediaobject><imageobject>
+		        <imagedata fileref="images/modifiers/ptm_schematic_dcub.png" format="PNG" />
+		        </imageobject></mediaobject>
+              </entry>
+              <entry>
+		        <mediaobject><imageobject>
+		        <imagedata fileref="images/modifiers/ptm_schematic_dhex.png" format="PNG" />
+		        </imageobject></mediaobject>
+              </entry>
+            </row>
+            <row valign="top">
+              <entry>FCC</entry>
+              <entry>HCP</entry>
+              <entry>BCC</entry>
+              <entry>Icosahedral</entry>
+              <entry>Simple Cubic</entry>
+              <entry>Cubic diamond</entry>
+              <entry>Hexagonal diamond</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </informalfigure>
+Determination of diamond structures is an extension of the published PTM method, though it follows similar principles.
+    </para>
 
   <para>
-  The modifier sets the <literal>Structure Type</literal> property for each particle to
-  the structural type determined by the PTM algorithm, which is encoded as an integer value:
+  The modifier sets the <literal>Structure Type</literal> property for each particle, which is encoded as an integer value:
   <itemizedlist>
   
     <listitem>
@@ -73,6 +132,10 @@
       Using the tick boxes in the list, you can specify the set of structural types the modifier should look for.
     </para>
 
+    <informalfigure><screenshot><mediaobject><imageobject>
+      <imagedata fileref="images/modifiers/polyhedral_template_matching_panel.png" format="PNG" scale="50" />
+    </imageobject></mediaobject></screenshot></informalfigure>
+
   <simplesect>
     <title>Root-Mean-Square Deviation (RMSD)</title>
     <para>
@@ -106,7 +169,7 @@
       The PTM modifier provides an option to output the local interatomic distance (or nearest neighbor distance) as a new particle property, which is computed from the internal scale factor for those atoms
       that match one of the known structure types. 
       Note that you can compute a local lattice constant (including hydrostatic strain) from the interatomic distance by dividing it by the 
-      factor <literal>sqrt(1/2)</literal> (for FCC, HCP) or <literal>sqrt(3/4)</literal> (for BCC) using, e.g., the <link linkend="particles.modifiers.compute_property">Compute property</link> modifier
+      factor <literal>sqrt(1/2)</literal> (for FCC, HCP), <literal>sqrt(3/4)</literal> (for BCC), or  <literal>sqrt(3/16)</literal> (for cubic diamond and hexagonal diamond) using, e.g., the <link linkend="particles.modifiers.compute_property">Compute property</link> modifier
     </para>
   </simplesect>
 
@@ -122,6 +185,438 @@
      For atoms that do not match any of the known structure types, no local lattice orientation can be computed. They are assigned the
      invalid quaternion (0,0,0,0). 
     </para>
+
+
+<para>
+The orientations are calculated relative to the following template coordinates:
+      <informaltable frame="all" colsep="1" rowsep="0">
+        <tgroup cols="21">
+          <colspec colname="FCCx" colsep="0"/>
+          <colspec colname="FCCy" colsep="0" />
+          <colspec colname="FCCz" colsep="1"/>
+
+          <colspec colname="HCPx" colsep="0" />
+          <colspec colname="HCPy" colsep="0" />
+          <colspec colname="HCPz" colsep="1" />
+
+          <colspec colname="BCCx" colsep="0" />
+          <colspec colname="BCCy" colsep="0" />
+          <colspec colname="BCCz" colsep="1" />
+
+          <colspec colname="ICOx" colsep="0" />
+          <colspec colname="ICOy" colsep="0" />
+          <colspec colname="ICOz" colsep="1" />
+
+          <colspec colname="SCx" colsep="0" />
+          <colspec colname="SCy" colsep="0" />
+          <colspec colname="SCz" colsep="1" />
+
+          <colspec colname="DCUBx" colsep="0" />
+          <colspec colname="DCUBy" colsep="0" />
+          <colspec colname="DCUBz" colsep="1" />
+
+          <colspec colname="DHEXx" colsep="0" />
+          <colspec colname="DHEXy" colsep="0" />
+          <colspec colname="DHEXz" />
+          <thead>
+            <row>
+              <entry namest="FCCx"  nameend="FCCz"> FCC</entry>
+              <entry namest="HCPx"  nameend="HCPz"> HCP</entry>
+              <entry namest="BCCx"  nameend="BCCz"> BCC</entry>
+              <entry namest="ICOx"  nameend="ICOz"> ICO</entry>
+              <entry namest="SCx"   nameend="SCz">  Simple cubic</entry>
+              <entry namest="DCUBx" nameend="DCUBz">Cubic diamond</entry>
+              <entry namest="DHEXx" nameend="DHEXz">Hexagonal diamond</entry>
+            </row>
+          </thead>
+          <tbody>
+<row valign="top" align="right">
+<entry>0</entry><entry>0</entry><entry>0</entry>
+<entry>0</entry><entry>0</entry><entry>0</entry>
+<entry>0</entry><entry>0</entry><entry>0</entry>
+<entry>0</entry><entry>0</entry><entry>0</entry>
+<entry>0</entry><entry>0</entry><entry>0</entry>
+<entry>0</entry><entry>0</entry><entry>0</entry>
+<entry>0</entry><entry>0</entry><entry>0</entry>
+</row>
+
+<row valign="top" align="right">
+<entry>0</entry>
+<entry>k<subscript>1</subscript></entry>
+<entry>k<subscript>1</subscript></entry>	
+<entry>k<subscript>1</subscript></entry>
+<entry>0</entry>
+<entry>k<subscript>1</subscript></entry>	
+<entry>-k<subscript>2</subscript></entry>
+<entry>-k<subscript>2</subscript></entry>
+<entry>-k<subscript>2</subscript></entry>	
+<entry>0</entry>
+<entry>k<subscript>3</subscript></entry>
+<entry>k<subscript>4</subscript></entry>	
+<entry>0</entry>
+<entry>0</entry>
+<entry>-k<subscript>5</subscript></entry>	
+<entry>-k<subscript>6</subscript></entry>
+<entry>k<subscript>6</subscript></entry>
+<entry>k<subscript>6</subscript></entry>	
+<entry>k<subscript>6</subscript></entry>
+<entry>k<subscript>6</subscript></entry>
+<entry>k<subscript>6</subscript></entry>
+</row>
+<row valign="top" align="right">
+<entry>0</entry>
+<entry>-k<subscript>1</subscript></entry>
+<entry>-k<subscript>1</subscript></entry>	
+<entry>-k<subscript>1</subscript>/3</entry>
+<entry>-4k<subscript>1</subscript>/3</entry>
+<entry>-k<subscript>1</subscript>/3</entry>	
+<entry>k<subscript>2</subscript></entry>
+<entry>k<subscript>2</subscript></entry>
+<entry>k<subscript>2</subscript></entry>	
+<entry>0</entry>
+<entry>-k<subscript>3</subscript></entry>
+<entry>-k<subscript>4</subscript></entry>	
+<entry>0</entry>
+<entry>0</entry>
+<entry>k<subscript>5</subscript></entry>	
+<entry>-k<subscript>6</subscript></entry>
+<entry>-k<subscript>6</subscript></entry>
+<entry>-k<subscript>6</subscript></entry>	
+<entry>-k<subscript>6</subscript></entry>
+<entry>k<subscript>6</subscript></entry>
+<entry>-k<subscript>6</subscript></entry>
+</row>
+<row valign="top" align="right">
+<entry>0</entry>
+<entry>k<subscript>1</subscript></entry>
+<entry>-k<subscript>1</subscript></entry>	
+<entry>k<subscript>1</subscript></entry>
+<entry>k<subscript>1</subscript></entry>
+<entry>0</entry>	
+<entry>k<subscript>2</subscript></entry>
+<entry>-k<subscript>2</subscript></entry>
+<entry>-k<subscript>2</subscript></entry>	
+<entry>0</entry>
+<entry>k<subscript>3</subscript></entry>
+<entry>-k<subscript>4</subscript></entry>	
+<entry>0</entry>
+<entry>-k<subscript>5</subscript></entry>
+<entry>0</entry>	
+<entry>k<subscript>6</subscript></entry>
+<entry>-k<subscript>6</subscript></entry>
+<entry>k<subscript>6</subscript></entry>	
+<entry>k<subscript>6</subscript></entry>
+<entry>-k<subscript>6</subscript></entry>
+<entry>-k<subscript>6</subscript></entry>
+</row>
+<row valign="top" align="right">
+<entry>0</entry>
+<entry>-k<subscript>1</subscript></entry>
+<entry>k<subscript>1</subscript></entry>	
+<entry>-k<subscript>1</subscript>/3</entry>
+<entry>-k<subscript>1</subscript>/3</entry>
+<entry>-4k<subscript>1</subscript>/3</entry>	
+<entry>-k<subscript>2</subscript></entry>
+<entry>k<subscript>2</subscript></entry>
+<entry>k<subscript>2</subscript></entry>	
+<entry>0</entry>
+<entry>-k<subscript>3</subscript></entry>
+<entry>k<subscript>4</subscript></entry>	
+<entry>0</entry>
+<entry>k<subscript>5</subscript></entry>
+<entry>0</entry>	
+<entry>k<subscript>6</subscript></entry>
+<entry>k<subscript>6</subscript></entry>
+<entry>-k<subscript>6</subscript></entry>	
+<entry>-k<subscript>6</subscript></entry>
+<entry>-k<subscript>6</subscript></entry>
+<entry>k<subscript>6</subscript></entry>
+</row>
+<row valign="top" align="right">
+<entry>k<subscript>1</subscript></entry>
+<entry>0</entry>
+<entry>k<subscript>1</subscript></entry>	
+<entry>0</entry>
+<entry>k<subscript>1</subscript></entry>
+<entry>k<subscript>1</subscript></entry>	
+<entry>-k<subscript>2</subscript></entry>
+<entry>k<subscript>2</subscript></entry>
+<entry>-k<subscript>2</subscript></entry>	
+<entry>-k<subscript>3</subscript></entry>
+<entry>-k<subscript>4</subscript></entry>
+<entry>0</entry>	
+<entry>-k<subscript>5</subscript></entry>
+<entry>0</entry>
+<entry>0</entry>	
+<entry>-2k<subscript>6</subscript></entry>
+<entry>0</entry>
+<entry>2k<subscript>6</subscript></entry>	
+<entry>2k<subscript>6</subscript>/3</entry>
+<entry>8k<subscript>6</subscript>/3</entry>
+<entry>2k<subscript>6</subscript>/3</entry>
+</row>
+<row valign="top" align="right">
+<entry>-k<subscript>1</subscript></entry>
+<entry>0</entry>
+<entry>-k<subscript>1</subscript></entry>	
+<entry>-4k<subscript>1</subscript>/3</entry>
+<entry>-k<subscript>1</subscript>/3</entry>
+<entry>-k<subscript>1</subscript>/3</entry>	
+<entry>k<subscript>2</subscript></entry>
+<entry>-k<subscript>2</subscript></entry>
+<entry>k<subscript>2</subscript></entry>	
+<entry>k<subscript>3</subscript></entry>
+<entry>k<subscript>4</subscript></entry>
+<entry>0</entry>	
+<entry>k<subscript>5</subscript></entry>
+<entry>0</entry>
+<entry>0</entry>	
+<entry>-2k<subscript>6</subscript></entry>
+<entry>2k<subscript>6</subscript></entry>
+<entry>0</entry>	
+<entry>8k<subscript>6</subscript>/3</entry>
+<entry>2k<subscript>6</subscript>/3</entry>
+<entry>2k<subscript>6</subscript>/3</entry>
+</row>
+<row valign="top" align="right">
+<entry>k<subscript>1</subscript></entry>
+<entry>0</entry>
+<entry>-k<subscript>1</subscript></entry>	
+<entry>-k<subscript>1</subscript></entry>
+<entry>k<subscript>1</subscript></entry>
+<entry>0</entry>	
+<entry>-k<subscript>2</subscript></entry>
+<entry>-k<subscript>2</subscript></entry>
+<entry>k<subscript>2</subscript></entry>	
+<entry>k<subscript>3</subscript></entry>
+<entry>-k<subscript>4</subscript></entry>
+<entry>0</entry>	
+<entry></entry>
+<entry></entry>
+<entry></entry>	
+<entry>0</entry>
+<entry>2k<subscript>6</subscript></entry>
+<entry>2k<subscript>6</subscript></entry>	
+<entry>2k<subscript>6</subscript>/3</entry>
+<entry>2k<subscript>6</subscript>/3</entry>
+<entry>8k<subscript>6</subscript>/3</entry>
+</row>
+<row valign="top" align="right">
+<entry>-k<subscript>1</subscript></entry>
+<entry>0</entry>
+<entry>k<subscript>1</subscript></entry>	
+<entry>0</entry>
+<entry>k<subscript>1</subscript></entry>
+<entry>-k<subscript>1</subscript></entry>	
+<entry>k<subscript>2</subscript></entry>
+<entry>k<subscript>2</subscript></entry>
+<entry>-k<subscript>2</subscript></entry>	
+<entry>-k<subscript>3</subscript></entry>
+<entry>k<subscript>4</subscript></entry>
+<entry>0</entry>	
+<entry></entry>
+<entry></entry>
+<entry></entry>	
+<entry>-2k<subscript>6</subscript></entry>
+<entry>-2k<subscript>6</subscript></entry>
+<entry>0</entry>	
+<entry>-2k<subscript>6</subscript></entry>
+<entry>-0</entry>
+<entry>-2k<subscript>6</subscript></entry>
+</row>
+<row valign="top" align="right">
+<entry>k<subscript>1</subscript></entry>
+<entry>k<subscript>1</subscript></entry>
+<entry>0</entry>	
+<entry>k<subscript>1</subscript></entry>
+<entry>0</entry>
+<entry>-k<subscript>1</subscript></entry>	
+<entry>0</entry>
+<entry>0</entry>
+<entry>-2k<subscript>2</subscript></entry>	
+<entry>-k<subscript>4</subscript></entry>
+<entry>0</entry>
+<entry>-k<subscript>3</subscript></entry>	
+<entry></entry>
+<entry></entry>
+<entry></entry>	
+<entry>-2k<subscript>6</subscript></entry>
+<entry>0</entry>
+<entry>-2k<subscript>6</subscript></entry>	
+<entry>-2k<subscript>6</subscript></entry>
+<entry>2k<subscript>6</subscript></entry>
+<entry>-0</entry>
+</row>
+<row valign="top" align="right">
+<entry>-k<subscript>1</subscript></entry>
+<entry>-k<subscript>1</subscript></entry>
+<entry>0</entry>	
+<entry>k<subscript>1</subscript></entry>
+<entry>-k<subscript>1</subscript></entry>
+<entry>0</entry>	
+<entry>0</entry>
+<entry>0</entry>
+<entry>2k<subscript>2</subscript></entry>	
+<entry>k<subscript>4</subscript></entry>
+<entry>0</entry>
+<entry>k<subscript>3</subscript></entry>	
+<entry></entry>
+<entry></entry>
+<entry></entry>	
+<entry>0</entry>
+<entry>-2k<subscript>6</subscript></entry>
+<entry>-2k<subscript>6</subscript></entry>	
+<entry>-0</entry>
+<entry>2k<subscript>6</subscript></entry>
+<entry>-2k<subscript>6</subscript></entry>
+</row>
+<row valign="top" align="right">
+<entry>k<subscript>1</subscript></entry>
+<entry>-k<subscript>1</subscript></entry>
+<entry>0</entry>	
+<entry>-k<subscript>1</subscript></entry>
+<entry>0</entry>
+<entry>k<subscript>1</subscript></entry>	
+<entry>0</entry>
+<entry>-2k<subscript>2</subscript></entry>
+<entry>0</entry>	
+<entry>k<subscript>4</subscript></entry>
+<entry>0</entry>
+<entry>-k<subscript>3</subscript></entry>	
+<entry></entry>
+<entry></entry>
+<entry></entry>	
+<entry>0</entry>
+<entry>-2k<subscript>6</subscript></entry>
+<entry>2k<subscript>6</subscript></entry>	
+<entry>-0</entry>
+<entry>-2k<subscript>6</subscript></entry>
+<entry>-2k<subscript>6</subscript></entry>
+</row>
+<row valign="top" align="right">
+<entry>-k<subscript>1</subscript></entry>
+<entry>k<subscript>1</subscript></entry>
+<entry>0</entry>	
+<entry>0</entry>
+<entry>-k<subscript>1</subscript></entry>
+<entry>k<subscript>1</subscript></entry>	
+<entry>0</entry>
+<entry>2k<subscript>2</subscript></entry>
+<entry>0</entry>	
+<entry>-k<subscript>4</subscript></entry>
+<entry>0</entry>
+<entry>k<subscript>3</subscript></entry>	
+<entry></entry>
+<entry></entry>
+<entry></entry>	
+<entry>2k<subscript>6</subscript></entry>
+<entry>-2k<subscript>6</subscript></entry>
+<entry>0</entry>	
+<entry>2k<subscript>6</subscript></entry>
+<entry>-2k<subscript>6</subscript></entry>
+<entry>-0</entry>
+</row>
+<row valign="top" align="right">
+<entry></entry>
+<entry></entry>
+<entry></entry>	
+<entry></entry>
+<entry></entry>
+<entry></entry>	
+<entry>-2k<subscript>2</subscript></entry>
+<entry>0</entry>
+<entry>0</entry>	
+<entry></entry>
+<entry></entry>
+<entry></entry>	
+<entry></entry>
+<entry></entry>
+<entry></entry>	
+<entry>2k<subscript>6</subscript></entry>
+<entry>0</entry>
+<entry>2k<subscript>6</subscript></entry>	
+<entry>2k<subscript>6</subscript></entry>
+<entry>-0</entry>
+<entry>-2k<subscript>6</subscript></entry>
+</row>
+<row valign="top" align="right">
+<entry></entry>
+<entry></entry>
+<entry></entry>	
+<entry></entry>
+<entry></entry>
+<entry></entry>	
+<entry>2k<subscript>2</subscript></entry>
+<entry>0</entry>
+<entry>0</entry>	
+<entry></entry>
+<entry></entry>
+<entry></entry>	
+<entry></entry>
+<entry></entry>
+<entry></entry>	
+<entry>0</entry>
+<entry>2k<subscript>6</subscript></entry>
+<entry>-2k<subscript>6</subscript></entry>	
+<entry>-2k<subscript>6</subscript></entry>
+<entry>-2k<subscript>6</subscript></entry>
+<entry>-0</entry>
+</row>
+<row valign="top" align="right">
+<entry></entry>
+<entry></entry>
+<entry></entry>	
+<entry></entry>
+<entry></entry>
+<entry></entry>	
+<entry></entry>
+<entry></entry>
+<entry></entry>	
+<entry></entry>
+<entry></entry>
+<entry></entry>	
+<entry></entry>
+<entry></entry>
+<entry></entry>	
+<entry>2k<subscript>6</subscript></entry>
+<entry>0</entry>
+<entry>-2k<subscript>6</subscript></entry>	
+<entry>-0</entry>
+<entry>-2k<subscript>6</subscript></entry>
+<entry>2k<subscript>6</subscript></entry>
+</row>
+<row valign="top" align="right">
+<entry></entry>
+<entry></entry>
+<entry></entry>	
+<entry></entry>
+<entry></entry>
+<entry></entry>	
+<entry></entry>
+<entry></entry>
+<entry></entry>	
+<entry></entry>
+<entry></entry>
+<entry></entry>	
+<entry></entry>
+<entry></entry>
+<entry></entry>	
+<entry>2k<subscript>6</subscript></entry>
+<entry>2k<subscript>6</subscript></entry>
+<entry>0</entry>	
+<entry>-2k<subscript>6</subscript></entry>
+<entry>-0</entry>
+<entry>2k<subscript>6</subscript></entry>
+</row>
+
+          </tbody>
+        </tgroup>
+      </informaltable>
+Here, <literal>k<subscript>1</subscript> = sqrt(2) / 2</literal>, <literal>k<subscript>2</subscript> = 14 / (8 sqrt(3) + 12)</literal>, <literal>k<subscript>3</subscript> = sqrt(2/(5 + sqrt(5)))</literal>, <literal>k<subscript>4</subscript> = sqrt(1/10 (5 + sqrt(5)))</literal>, <literal>k<subscript>5</subscript> = 1</literal>, and <literal>k<subscript>6</subscript> = 4/(6 sqrt(2) + sqrt(3))</literal>.
+
+The reference templates are scaled such that the mean distance of the neighbors is 1.  This is a slight departure from the templates in the published PTM paper, in that the central atom is no longer included in this calculation.
+</para>
+
   </simplesect>
 
   <simplesect>
@@ -183,10 +678,7 @@
   <title>Notes</title>  
   <para>
     In addition to the PTM, OVITO provides alternative structure identification tools 
-    like the <link linkend="particles.modifiers.common_neighbor_analysis">Common Neighbor Analysis</link> modifier or the 
-    <link linkend="particles.modifiers.bond_angle_analysis">Bond-Angle Analysis</link> modifier. 
-    Furthermore, the <link linkend="particles.modifiers.identify_diamond_structure">Identify Diamond Structure</link> analysis modifier can be 
-    used for identifying diamond lattice structures.
+    like the <link linkend="particles.modifiers.common_neighbor_analysis">Common Neighbor Analysis</link> modifier, the <link linkend="particles.modifiers.identify_diamond_structure">Identify Diamond Structure</link> modifier, or the <link linkend="particles.modifiers.bond_angle_analysis">Bond-Angle Analysis</link> modifier.
   </para>
 
   <para>
@@ -201,30 +693,6 @@
     This option can be useful if you want to identify defects in a crystal structure that is
     not directly supported by the PTM algorithm, but which possesses a known sublattice.
   </para>
-  </simplesect>  
-
-  <simplesect>
-    <title>Technical notes</title>
-    <para>
-    A few changes have been made to the PTM method since publication of the article:
-    <itemizedlist>
-  
-    <listitem>
-      <para>The reference templates are now scaled such that the mean distance of the neighbors is 1.  
-      The central atom is no longer included in this calculation.</para>
-    </listitem>
-
-    <listitem>
-      <para>The Voronoi cell calculation is now performed using the Voro++ library [<link xlink:href="http://math.lbl.gov/voro++/"></link>].</para>
-    </listitem>
-
-    <listitem>
-      <para>The polar decomposition now uses a fast NR-QCP method instead of the SVD.</para>
-    </listitem>
-  
-  </itemizedlist>
-  </para>
-  
   </simplesect>
   
   <simplesect>
@@ -235,3 +703,4 @@
   </simplesect>
   
 </section>
+
