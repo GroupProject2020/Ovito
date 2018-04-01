@@ -32,7 +32,9 @@ IF(NOT CMAKE_VERSION VERSION_LESS "3")
 	CMAKE_POLICY(SET CMP0045 OLD)	# Don't warn about non-existing targets in GET_TARGET_PROPERTY().
 	CMAKE_POLICY(SET CMP0042 NEW) 	# Enable MACOSX_RPATH target property by default.
 	CMAKE_POLICY(SET CMP0054 OLD) 	# Interpret if() arguments as variables or keywords even if quoted.
-	CMAKE_POLICY(SET CMP0068 OLD) 	# Use the 'RPATH' settings for 'install_name' on macOS.
+ENDIF()
+IF(NOT CMAKE_VERSION VERSION_LESS "3.9")
+	CMAKE_POLICY(SET CMP0068 OLD)   # Use the 'RPATH' settings for 'install_name' on macOS.
 ENDIF()
 
 # Check compiler requirement.

@@ -1,3 +1,10 @@
+# How to rebuild the docker image and update the Gitlab registry:
+#
+# docker login registry.gitlab.com
+# docker build -t registry.gitlab.com/stuko/ovito/linux_build .
+# docker push registry.gitlab.com/stuko/ovito/linux_build
+#
+
 # Base image
 FROM ubuntu:latest
 
@@ -22,9 +29,9 @@ RUN apt-get install -qy  cmake \
                          libswscale-dev \
                          libnetcdf-dev \
                          libfftw3-dev \
+                         libssh-dev \
                          libhdf5-dev \
                          libhdf5-serial-dev \
-                         libbotan1.10-dev \
                          libmuparser-dev \
                          libqwt-qt5-dev \
                          python3-dev \
