@@ -35,12 +35,10 @@ void defineRenderingSubmodule(py::module parentModule);	// Defined in RenderingB
 
 using namespace Ovito;
 
-PYBIND11_PLUGIN(PyScript)
+PYBIND11_MODULE(PyScript, m)
 {
 	py::options options;
 	options.disable_function_signatures();
-
-	py::module m("PyScript");
 
 	// Register Ovito-to-Python exception translator.
 	py::register_exception_translator([](std::exception_ptr p) {
@@ -99,8 +97,6 @@ PYBIND11_PLUGIN(PyScript)
 	// Add an attribute to the ovito module that provides access to the global task manager.
 	TaskManager* activeTaskManager = &Application::instance()->datasetContainer()->taskManager();
 	m.attr("task_manager") = py::cast(activeTaskManager, py::return_value_policy::reference);
-
-	return m.ptr();
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(PyScript);

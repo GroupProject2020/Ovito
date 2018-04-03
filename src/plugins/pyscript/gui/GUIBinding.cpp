@@ -30,15 +30,13 @@ namespace PyScript {
 
 using namespace Ovito;
 
-PYBIND11_PLUGIN(PyScriptGui)
+PYBIND11_MODULE(PyScriptGui, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
 	
 	py::options options;
 	options.disable_function_signatures();
-
-	py::module m("PyScriptGui");
 
 	py::class_<MainWindow>(m, "MainWindow")
 		.def_property_readonly("frame_buffer_window", &MainWindow::frameBufferWindow, py::return_value_policy::reference)
@@ -58,10 +56,8 @@ PYBIND11_PLUGIN(PyScriptGui)
 		.def("create_frame_buffer", &FrameBufferWindow::createFrameBuffer)
 		.def("show_and_activate", &FrameBufferWindow::showAndActivateWindow)
 	;
-
-	return m.ptr();
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(PyScriptGui);
 
-};
+}

@@ -31,7 +31,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Anim)
  * \brief Base template class for animation keys used by spline interpolation controllers.
  */
 template<class BaseKeyClass>
-class SplineAnimationKey : public BaseKeyClass
+class OVITO_CORE_EXPORT SplineAnimationKey : public BaseKeyClass
 {
 	OVITO_CLASS_TEMPLATE(SplineAnimationKey, BaseKeyClass)
 

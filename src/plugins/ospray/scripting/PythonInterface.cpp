@@ -29,15 +29,13 @@ namespace Ovito { namespace OSPRay { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 using namespace Ovito;
 using namespace PyScript;
 
-PYBIND11_PLUGIN(OSPRayRenderer)
+PYBIND11_MODULE(OSPRayRenderer, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
 	
 	py::options options;
 	options.disable_function_signatures();
-
-	py::module m("OSPRayRenderer");
 
 	ovito_class<OSPRayRenderer, NonInteractiveSceneRenderer>(m,
 			"This is one of the software-based rendering backends of OVITO. OSPRay is an open-source raytracing engine integrated into OVITO."
@@ -108,8 +106,6 @@ PYBIND11_PLUGIN(OSPRayRenderer)
 				"\n\n"
 				":Default: 0.05")
 	;
-
-	return m.ptr();
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(OSPRayRenderer);

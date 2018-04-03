@@ -142,9 +142,19 @@ bool StandaloneApplication::initialize(int& argc, char** argv)
 ******************************************************************************/
 void StandaloneApplication::postStartupInitialization()
 {
-	// Notify registered application services that application is running.
-	for(const auto& service : applicationServices())
-		service->applicationStarted();
+	try {
+		// Notify registered application services that application is running.
+		for(const auto& service : applicationServices())
+			service->applicationStarted();
+	}
+	catch(const Exception& ex) {
+		ex.reportError();
+		// Shutdown with error exit code when running in scripting mode.
+		setExitCode(1);
+		if(consoleMode()) {
+			QCoreApplication::exit(1);
+		}
+	}
 }
 
 /******************************************************************************

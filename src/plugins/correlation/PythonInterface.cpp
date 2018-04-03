@@ -30,15 +30,13 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 
 using namespace PyScript;
 
-PYBIND11_PLUGIN(CorrelationFunctionPlugin)
+PYBIND11_MODULE(CorrelationFunctionPlugin, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
 	
 	py::options options;
 	options.disable_function_signatures();
-
-	py::module m("CorrelationFunctionPlugin");
 
 	auto CorrelationFunctionModifier_py = ovito_class<CorrelationFunctionModifier, AsynchronousModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
@@ -162,8 +160,6 @@ PYBIND11_PLUGIN(CorrelationFunctionPlugin)
 	;
 
 	ovito_class<CorrelationFunctionModifierApplication, AsynchronousModifierApplication>{m};
-
-	return m.ptr();
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(CorrelationFunctionPlugin);

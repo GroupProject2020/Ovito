@@ -30,15 +30,13 @@ namespace Ovito { namespace POVRay { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 using namespace Ovito;
 using namespace PyScript;
 
-PYBIND11_PLUGIN(POVRay)
+PYBIND11_MODULE(POVRay, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
 
 	py::options options;
 	options.disable_function_signatures();
-
-	py::module m("POVRay");
 
 	ovito_class<POVRayRenderer, NonInteractiveSceneRenderer>(m,
 			"This is one of the rendering backends of OVITO. "
@@ -108,8 +106,6 @@ PYBIND11_PLUGIN(POVRay)
 
 	ovito_class<POVRayExporter, FileExporter>{m}
 	;
-
-	return m.ptr();
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(POVRay);

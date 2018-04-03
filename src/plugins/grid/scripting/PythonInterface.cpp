@@ -30,15 +30,13 @@ namespace Ovito { namespace Grid {
 
 using namespace PyScript;
 
-PYBIND11_PLUGIN(Grid)
+PYBIND11_MODULE(Grid, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
 	
 	py::options options;
 	options.disable_function_signatures();
-
-	py::module m("Grid");
 
 	auto VoxelProperty_py = ovito_abstract_class<VoxelProperty, PropertyObject>{m}
 	;
@@ -61,8 +59,6 @@ PYBIND11_PLUGIN(Grid)
 		.def_property("vis", &CreateIsosurfaceModifier::surfaceMeshVis, &CreateIsosurfaceModifier::setSurfaceMeshVis,
 				"The :py:class:`~ovito.vis.SurfaceMeshVis` controlling the visual representation of the generated isosurface.\n")
 	;
-
-	return m.ptr();
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(Grid);

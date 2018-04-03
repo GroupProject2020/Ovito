@@ -35,15 +35,13 @@ namespace Ovito { namespace StdObj {
 
 using namespace PyScript;
 
-PYBIND11_PLUGIN(StdObj)
+PYBIND11_MODULE(StdObj, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
 	
 	py::options options;
 	options.disable_function_signatures();
-
-	py::module m("StdObj");
 
 	ovito_abstract_class<GenericPropertyModifier, Modifier>{m}
 	;
@@ -281,8 +279,6 @@ PYBIND11_PLUGIN(StdObj)
 			return ai;
 		})		
 	;
-
-	return m.ptr();
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(StdObj);

@@ -49,15 +49,13 @@ void defineModifiersSubmodule(py::module parentModule);	// Defined in ModifierBi
 void defineImportersSubmodule(py::module parentModule);	// Defined in ImporterBinding.cpp
 void defineExportersSubmodule(py::module parentModule);	// Defined in ExporterBinding.cpp
 
-PYBIND11_PLUGIN(Particles)
+PYBIND11_MODULE(Particles, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
 	
 	py::options options;
 	options.disable_function_signatures();
-
-	py::module m("Particles");
 
 	auto ParticleProperty_py = ovito_abstract_class<ParticleProperty, PropertyObject>(m,
 			":Base class: :py:class:`ovito.data.Property`\n\n"
@@ -260,8 +258,8 @@ PYBIND11_PLUGIN(Particles)
 		"**Usage example**"
 		"\n\n"
 		".. literalinclude:: ../example_snippets/bonds_enumerator.py\n")
-		// Customized constructor function:
-		.def("__init__", [](ParticleBondMap& instance, py::object data_collection) {
+		// Factory function:
+		.def(py::init([](py::object data_collection) {
 				// Get the 'Topology' and the 'Periodic image' bond propertie from the data collection:
 				py::object topologyPropertyName = py::cast(BondProperty::OOClass().standardPropertyName(BondProperty::TopologyProperty));
 				py::object pbcShiftPropertyName = py::cast(BondProperty::OOClass().standardPropertyName(BondProperty::PeriodicImageProperty));
@@ -281,11 +279,11 @@ PYBIND11_PLUGIN(Particles)
 				py::object pbd_shift_prop;
 				if(bonds_view.contains(pbcShiftPropertyName))
 					pbd_shift_prop = bonds_view[pbcShiftPropertyName];
-				// Initialize BondsEnumerator instance.
-				new (&instance) ParticleBondMap(
+				// Create BondsEnumerator instance.
+				return new ParticleBondMap(
 						topology_prop.cast<BondProperty*>()->storage(),
 						pbd_shift_prop ? pbd_shift_prop.cast<BondProperty*>()->storage() : nullptr);
-			}, 
+			}), 
 			py::arg("data_collection"))
 		.def("bonds_of_particle", [](const ParticleBondMap& bondMap, size_t particleIndex) {
 			auto range = bondMap.bondIndicesOfParticle(particleIndex);
@@ -476,7 +474,7 @@ PYBIND11_PLUGIN(Particles)
 	;
 
 	auto NearestNeighborFinder_py = py::class_<NearestNeighborFinder>(m, "NearestNeighborFinder")
-		.def(py::init<size_t>())
+		.def(py::init<int>())
 		.def("prepare", [](NearestNeighborFinder& finder, ParticleProperty& positions, SimulationCellObject& cell) {
 			return finder.prepare(*positions.storage(), cell.data(), nullptr, nullptr);
 		})
@@ -493,8 +491,8 @@ PYBIND11_PLUGIN(Particles)
 
 	py::class_<NearestNeighborQuery>(NearestNeighborFinder_py, "Query")
 		.def(py::init<const NearestNeighborFinder&>())
-		.def("findNeighbors", static_cast<void (NearestNeighborQuery::*)(size_t)>(&NearestNeighborQuery::findNeighbors))
-		.def("findNeighborsAtLocation", static_cast<void (NearestNeighborQuery::*)(const Point3&, bool)>(&NearestNeighborQuery::findNeighbors))
+		.def("findNeighbors", py::overload_cast<size_t>(&NearestNeighborQuery::findNeighbors))
+		.def("findNeighborsAtLocation", py::overload_cast<const Point3&, bool>(&NearestNeighborQuery::findNeighbors))
 		.def_property_readonly("count", [](const NearestNeighborQuery& q) -> int { return q.results().size(); })
 		.def("__getitem__", [](const NearestNeighborQuery& q, int index) -> const NearestNeighborFinder::Neighbor& { return q.results()[index]; },
 			py::return_value_policy::reference_internal)
@@ -617,8 +615,6 @@ PYBIND11_PLUGIN(Particles)
 	defineModifiersSubmodule(m);	// Defined in ModifierBinding.cpp
 	defineImportersSubmodule(m);	// Defined in ImporterBinding.cpp
 	defineExportersSubmodule(m);	// Defined in ExporterBinding.cpp
-
-	return m.ptr();
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(Particles);

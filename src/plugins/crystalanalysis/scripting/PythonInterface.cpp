@@ -43,15 +43,13 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
 using namespace PyScript;
 
-PYBIND11_PLUGIN(CrystalAnalysis)
+PYBIND11_MODULE(CrystalAnalysis, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
 	
 	py::options options;
 	options.disable_function_signatures();
-
-	py::module m("CrystalAnalysis");
 
 	ovito_class<ConstructSurfaceModifier, AsynchronousModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
@@ -417,7 +415,7 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 				"by transforming the true Burgers vector from the local lattice coordinate system to the global simulation coordinate system "
 				"using the average orientation matrix of the crystal cluster the dislocation segment is embedded in.")
 		.def_property_readonly("points", [](const DislocationSegment& segment) {
-					py::array_t<FloatType> array({ segment.line.size(), 3 });
+					py::array_t<FloatType> array({ (size_t)segment.line.size(), (size_t)3 });
 					for(size_t i = 0; i < segment.line.size(); i++) {
 						for(size_t j = 0; j < 3; j++) {
 							array.mutable_at(i, j) = segment.line[i][j];
@@ -465,8 +463,6 @@ PYBIND11_PLUGIN(CrystalAnalysis)
 				"\n\n"
 				":Default: ``True``\n")
 	;
-
-	return m.ptr();
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(CrystalAnalysis);

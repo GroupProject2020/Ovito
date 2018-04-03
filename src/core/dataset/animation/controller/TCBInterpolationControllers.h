@@ -31,7 +31,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Anim)
  * \brief Base template class for animation keys used by Tension-Continuity-Bias interpolation controllers.
  */
 template<class BaseKeyClass>
-class TCBAnimationKey : public BaseKeyClass
+class OVITO_CORE_EXPORT TCBAnimationKey : public BaseKeyClass
 {
 	OVITO_CLASS_TEMPLATE(TCBAnimationKey, BaseKeyClass)
 	

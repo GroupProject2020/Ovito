@@ -30,15 +30,13 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVI
 
 using namespace PyScript;
 
-PYBIND11_PLUGIN(NetCDFPlugin)
+PYBIND11_MODULE(NetCDFPlugin, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
 	
 	py::options options;
 	options.disable_function_signatures();
-
-	py::module m("NetCDFPlugin");
 
 	ovito_class<AMBERNetCDFImporter, ParticleImporter>(m)
 		.def_property("custom_column_mapping", &AMBERNetCDFImporter::customColumnMapping, &AMBERNetCDFImporter::setCustomColumnMapping)
@@ -47,8 +45,6 @@ PYBIND11_PLUGIN(NetCDFPlugin)
 
 	ovito_class<AMBERNetCDFExporter, FileColumnParticleExporter>{m}
 	;
-
-	return m.ptr();
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(NetCDFPlugin);

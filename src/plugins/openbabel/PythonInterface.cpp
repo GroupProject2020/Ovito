@@ -29,7 +29,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVI
 
 using namespace PyScript;
 
-PYBIND11_PLUGIN(OpenBabelPlugin)
+PYBIND11_MODULE(OpenBabelPlugin, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
@@ -37,13 +37,9 @@ PYBIND11_PLUGIN(OpenBabelPlugin)
 	py::options options;
 	options.disable_function_signatures();
 
-	py::module m("OpenBabelPlugin");
-
 	ovito_abstract_class<OpenBabelImporter, ParticleImporter>{m};
 
 	ovito_class<CIFImporter, OpenBabelImporter>{m};
-
-	return m.ptr();
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(OpenBabelPlugin);

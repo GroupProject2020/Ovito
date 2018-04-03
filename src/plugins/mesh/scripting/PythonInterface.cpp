@@ -35,15 +35,13 @@ namespace Ovito { namespace Mesh {
 
 using namespace PyScript;
 
-PYBIND11_PLUGIN(Mesh)
+PYBIND11_MODULE(Mesh, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
 	
 	py::options options;
 	options.disable_function_signatures();
-
-	py::module m("Mesh");
 
 	ovito_class<TriMeshObject, DataObject>{m}
 	;
@@ -134,7 +132,7 @@ PYBIND11_PLUGIN(Mesh)
 			
 		.def("get_vertices", [](const SurfaceMesh& meshObj) {
 				const auto& mesh = *meshObj.storage();
-				py::array_t<FloatType> array({ mesh.vertices().size(), 3 });
+				py::array_t<FloatType> array({ (size_t)mesh.vertices().size(), (size_t)3 });
 				auto r = array.mutable_unchecked();
 				for(size_t i = 0; i < mesh.vertices().size(); i++) {
 					OVITO_ASSERT(mesh.vertices()[i]->index() == i);
@@ -148,7 +146,7 @@ PYBIND11_PLUGIN(Mesh)
 
 		.def("get_faces", [](const SurfaceMesh& meshObj) {
 				const auto& mesh = *meshObj.storage();
-				py::array_t<size_t> array({ mesh.faces().size(), 3 });
+				py::array_t<size_t> array({ (size_t)mesh.faces().size(), (size_t)3 });
 				auto r = array.mutable_unchecked();
 				for(size_t i = 0; i < mesh.faces().size(); i++) {
 					auto face = mesh.faces()[i];
@@ -166,7 +164,7 @@ PYBIND11_PLUGIN(Mesh)
 
 		.def("get_face_adjacency", [](const SurfaceMesh& meshObj) {
 				const auto& mesh = *meshObj.storage();
-				py::array_t<size_t> array({ mesh.faces().size(), 3 });
+				py::array_t<size_t> array({ (size_t)mesh.faces().size(), (size_t)3 });
 				auto r = array.mutable_unchecked();
 				for(size_t i = 0; i < mesh.faces().size(); i++) {
 					auto face = mesh.faces()[i];
@@ -184,7 +182,7 @@ PYBIND11_PLUGIN(Mesh)
 			"meshes are closed manifolds. ")
 
 		.def("get_cutting_planes", [](const SurfaceMesh& meshObj) {
-				py::array_t<FloatType> array({ (size_t)meshObj.cuttingPlanes().size(), 4 });
+				py::array_t<FloatType> array({ (size_t)meshObj.cuttingPlanes().size(), (size_t)4 });
 				auto r = array.mutable_unchecked();
 				for(size_t i = 0; i < meshObj.cuttingPlanes().size(); i++) {
 					r(i,0) = meshObj.cuttingPlanes()[i].normal.x();
@@ -283,8 +281,6 @@ PYBIND11_PLUGIN(Mesh)
 
 	ovito_class<VTKTriangleMeshExporter, FileExporter>{m}
 	;
-
-	return m.ptr();
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(Mesh);

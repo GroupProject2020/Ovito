@@ -29,15 +29,13 @@ namespace Ovito { namespace Tachyon { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 using namespace Ovito;
 using namespace PyScript;
 
-PYBIND11_PLUGIN(Tachyon)
+PYBIND11_MODULE(Tachyon, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
 	
 	py::options options;
 	options.disable_function_signatures();
-
-	py::module m("Tachyon");
 
 	ovito_class<TachyonRenderer, NonInteractiveSceneRenderer>(m,
 			"This is one of the software-based rendering backends of OVITO. Tachyon is an open-source raytracing engine integrated into OVITO."
@@ -93,8 +91,6 @@ PYBIND11_PLUGIN(Tachyon)
 				"\n\n"
 				":Default: 0.01")
 	;
-
-	return m.ptr();
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(Tachyon);

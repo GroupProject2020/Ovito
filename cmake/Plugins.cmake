@@ -1,5 +1,4 @@
-
-# Create an official OVITO plugin.
+# Creates an OVITO plugin library.
 MACRO(OVITO_STANDARD_PLUGIN target_name)
 
     # Parse macro parameters
@@ -74,6 +73,10 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 		TARGET_COMPILE_DEFINITIONS(${target_name} INTERFACE "OVITO_${_uppercase_plugin_name}_EXPORT=Q_DECL_IMPORT")
 	ENDIF()
 
+	# Set visibility of symbols in this shared library to hidden by default, except those exported in the source code.
+	SET_TARGET_PROPERTIES(${target_name} PROPERTIES CXX_VISIBILITY_PRESET "hidden")
+	SET_TARGET_PROPERTIES(${target_name} PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
+
 	IF(APPLE)
 		# This is required to avoid error by install_name_tool.
 		SET_TARGET_PROPERTIES(${target_name} PROPERTIES LINK_FLAGS "-headerpad_max_install_names")
@@ -108,14 +111,8 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
 		LIBRARY DESTINATION "${OVITO_RELATIVE_PLUGINS_DIRECTORY}" COMPONENT "runtime"
 		ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "development")
 	
-	# Export target to make it accessible for external plugins.
-	IF(CMAKE_VERSION VERSION_LESS "3")
-		EXPORT(TARGETS ${target_name} NAMESPACE "Ovito::" APPEND FILE "${ovito_BINARY_DIR}/OVITOTargets.cmake")
-	ENDIF()
-	
 	# Keep a list of plugins.
 	LIST(APPEND OVITO_PLUGIN_LIST ${target_name})
 	SET(OVITO_PLUGIN_LIST ${OVITO_PLUGIN_LIST} PARENT_SCOPE)
 
 ENDMACRO()
-

@@ -175,4 +175,4 @@ void defineAnimationSubmodule(py::module m)
 	;
 }
 
-};
+}

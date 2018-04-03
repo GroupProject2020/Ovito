@@ -43,7 +43,7 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
  * The only exception is the vector (0,0,0), which doesn't need to be associated
  * with a specific frame of reference.
  */
-class ClusterVector
+class OVITO_CRYSTALANALYSIS_EXPORT ClusterVector
 {
 public:
 

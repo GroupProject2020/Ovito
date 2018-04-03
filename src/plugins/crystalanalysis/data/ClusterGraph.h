@@ -31,7 +31,7 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 /**
  * This class stores the graph of clusters.
  */
-class ClusterGraph
+class OVITO_CRYSTALANALYSIS_EXPORT ClusterGraph
 {
 public:
 

@@ -155,7 +155,7 @@ void defineSceneSubmodule(py::module m)
 			".. literalinclude:: ../example_snippets/pipeline_flow_state.py\n"
 			"   :lines: 16-\n")
 		.def(py::init<>())
-		.def_property("status", &PipelineFlowState::status, &PipelineFlowState::setStatus)
+		.def_property("status", &PipelineFlowState::status, py::overload_cast<const PipelineStatus&>(&PipelineFlowState::setStatus))
 
 		// The following methods are required for the DataCollection.attributes property.
 		.def_property_readonly("attribute_names", [](PipelineFlowState& obj) -> QStringList {
@@ -504,4 +504,4 @@ py::cpp_function modifierDelegateSetter(const OvitoClass& delegateType)
 	};
 }
 
-};
+}

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -149,7 +149,7 @@ void TriMesh::loadFromStream(LoadStream& stream)
 	int nFaces;
 	stream >> nFaces;
 	_faces.resize(nFaces);
-	for(const auto& face : faces()) {
+	for(TriMeshFace& face : faces()) {
 		stream >> face._flags;
 		stream >> face._vertices[0];
 		stream >> face._vertices[1];

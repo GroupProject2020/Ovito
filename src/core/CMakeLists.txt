@@ -208,6 +208,10 @@ IF(OVITO_CLANG_TIDY_CMD)
 	SET_TARGET_PROPERTIES(Core PROPERTIES CXX_CLANG_TIDY "${OVITO_CLANG_TIDY_CMD}")
 ENDIF()
 
+# Set visibility of symbols in this shared library to hidden by default, except those exported in the source code.
+SET_TARGET_PROPERTIES(Core PROPERTIES CXX_VISIBILITY_PRESET "hidden")
+SET_TARGET_PROPERTIES(Core PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
+
 # Speed up compilation by using precompiled headers.
 IF(OVITO_USE_PRECOMPILED_HEADERS)
 	ADD_PRECOMPILED_HEADER(Core core/Core.h)
@@ -227,11 +231,6 @@ INSTALL(TARGETS Core EXPORT OVITO
 	RUNTIME DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "runtime"
 	LIBRARY DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "runtime"
 	ARCHIVE DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "development")
-
-# Export target to make it accessible for external plugins.
-IF(CMAKE_VERSION VERSION_LESS "3")
-	EXPORT(TARGETS Core NAMESPACE "Ovito::" APPEND FILE "${Ovito_BINARY_DIR}/OVITOTargets.cmake")
-ENDIF()
 
 # Install Libav video encoding libraries.
 IF(LIBAV_FOUND)	

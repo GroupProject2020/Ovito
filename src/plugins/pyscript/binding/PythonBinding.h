@@ -404,20 +404,11 @@ public:
 		: py::class_<OvitoObjectClass, BaseClass, OORef<OvitoObjectClass>>(scope, pythonClassName ? pythonClassName : OvitoObjectClass::OOClass().className(), docstring) {
 		// Define a constructor that takes a variable number of keyword arguments, which are used to initialize
 		// properties of the newly created object.
-		this->def("__init__", [](py::args args, py::kwargs kwargs) {
-			py::object obj = args[0];
-			OvitoObjectClass& instance = obj.cast<OvitoObjectClass&>();
-			constructInstance(instance);
-			try {
-				initializeParameters(std::move(obj), std::move(args), std::move(kwargs));
-			}
-			catch(...) {
-				// Clean up if an exception occured during object initialization. 
-				instance.deleteObjectInternal();
-				instance.~OvitoObjectClass();
-				throw;
-			}
-		});
+		this->def(py::init([](py::args args, py::kwargs kwargs) {
+			OORef<OvitoObjectClass> instance = constructInstance();
+			initializeParameters(py::cast(instance), std::move(args), std::move(kwargs));
+			return instance;
+		}));
 	}
 
 	/// Constructor.
@@ -425,29 +416,20 @@ public:
 		: py::class_<OvitoObjectClass, BaseClass, OORef<OvitoObjectClass>>(scope, pythonClassName ? pythonClassName : OvitoObjectClass::OOClass().className(), docstring, dyn_attr) {
 		// Define a constructor that takes a variable number of keyword arguments, which are used to initialize
 		// properties of the newly created object.
-		this->def("__init__", [](py::args args, py::kwargs kwargs) {			
-			py::object obj = args[0];
-			OvitoObjectClass& instance = obj.cast<OvitoObjectClass&>();
-			constructInstance(instance);
-			try {
-				initializeParameters(std::move(obj), std::move(args), std::move(kwargs));
-			}
-			catch(...) {
-				// Clean up if an exception occured during object initialization. 
-				instance.deleteObjectInternal();
-				instance.~OvitoObjectClass();
-				throw;
-			}
-		});
+		this->def(py::init([](py::args args, py::kwargs kwargs) {
+			OORef<OvitoObjectClass> instance = constructInstance();
+			initializeParameters(py::cast(instance), std::move(args), std::move(kwargs));
+			return instance;
+		}));
 	}
 
 private:
 
 	/// Constructs the object instance in place and passes the current DataSet to the C++ constructor.
-	static void constructInstance(OvitoObjectClass& instance) {
+	static OORef<OvitoObjectClass> constructInstance() {
 		DataSet* dataset = ScriptEngine::activeDataset();
 		if(!dataset) throw Exception("Invalid interpreter state. There is no active dataset.");			
-		new (&instance) OvitoObjectClass(dataset);
+		return {new OvitoObjectClass(dataset)};
 	}
 
 	/// Initalizes the properties of the new object using the values stored in a dictionary.

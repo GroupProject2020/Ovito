@@ -51,7 +51,7 @@ struct ClusterTransition;
  * Every cluster has a so-called self-transition (or identity transition),
  * which is the reverse of itself.
  */
-struct ClusterTransition
+struct OVITO_CRYSTALANALYSIS_EXPORT ClusterTransition
 {
 	/// The first cluster.
 	/// The transition matrix transforms vectors from this cluster to the coordinate system of cluster 2.
@@ -126,7 +126,7 @@ struct ClusterTransition
  * can be transformed to the other cluster's coordinate space. The corresponding transformation
  * matrix is referred to as a 'cluster transition', which constitutes a directed edge in the so-called cluster graph.
  */
-struct Cluster
+struct OVITO_CRYSTALANALYSIS_EXPORT Cluster
 {
 	/// The identifier of the cluster.
 	int id;

@@ -29,15 +29,13 @@ namespace Ovito { namespace VoroTop {
 
 using namespace PyScript;
 
-PYBIND11_PLUGIN(VoroTop)
+PYBIND11_MODULE(VoroTop, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
 	
 	py::options options;
 	options.disable_function_signatures();
-
-	py::module m("VoroTop");
 
 	auto VoroTopModifier_py = ovito_class<VoroTopModifier, StructureIdentificationModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
@@ -89,8 +87,6 @@ PYBIND11_PLUGIN(VoroTop)
 	;
 	expose_subobject_list(VoroTopModifier_py, std::mem_fn(&StructureIdentificationModifier::structureTypes), "structures", "VoroTopStructureTypeList",
 		"A list of :py:class:`~ovito.data.ParticleType` instances managed by this modifier, one for each structural type loaded from the :py:attr:`.filter_file`. ");
-
-	return m.ptr();
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(VoroTop);

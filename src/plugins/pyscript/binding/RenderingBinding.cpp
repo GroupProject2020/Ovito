@@ -214,4 +214,4 @@ void defineRenderingSubmodule(py::module m)
 	;
 }
 
-};
+}

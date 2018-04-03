@@ -42,15 +42,13 @@ namespace Ovito { namespace StdMod {
 
 using namespace PyScript;
 
-PYBIND11_PLUGIN(StdMod)
+PYBIND11_MODULE(StdMod, m)
 {
 	// Register the classes of this plugin with the global PluginManager.
 	PluginManager::instance().registerLoadedPluginClasses();
 	
 	py::options options;
 	options.disable_function_signatures();
-
-	py::module m("StdMod");
 
 	auto SliceModifier_py = ovito_class<SliceModifier, MultiDelegatingModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
@@ -656,8 +654,6 @@ PYBIND11_PLUGIN(StdMod)
 				":Default: ``'particles'``\n")
 	;
 	ovito_class<FreezePropertyModifierApplication, ModifierApplication>{m};
-
-	return m.ptr();
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(StdMod);

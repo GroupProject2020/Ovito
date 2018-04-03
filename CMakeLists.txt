@@ -22,17 +22,15 @@
 PROJECT(Ovito)
 
 # Make sure we have a recent version of CMake.
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12 FATAL_ERROR)
-CMAKE_POLICY(VERSION 2.8.12)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.1.0 FATAL_ERROR)
+CMAKE_POLICY(VERSION 3.1.0)
 
 # Choose CMake policies.
 CMAKE_POLICY(SET CMP0020 NEW) 	# Automatically link to qtmain.lib on Windows.
-IF(NOT CMAKE_VERSION VERSION_LESS "3")
-	CMAKE_POLICY(SET CMP0043 OLD)	# Suppress warning because COMPILE_DEFINITIONS_* target property is used.
-	CMAKE_POLICY(SET CMP0045 OLD)	# Don't warn about non-existing targets in GET_TARGET_PROPERTY().
-	CMAKE_POLICY(SET CMP0042 NEW) 	# Enable MACOSX_RPATH target property by default.
-	CMAKE_POLICY(SET CMP0054 OLD) 	# Interpret if() arguments as variables or keywords even if quoted.
-ENDIF()
+CMAKE_POLICY(SET CMP0043 OLD)	# Suppress warning because COMPILE_DEFINITIONS_* target property is used.
+CMAKE_POLICY(SET CMP0045 OLD)	# Don't warn about non-existing targets in GET_TARGET_PROPERTY().
+CMAKE_POLICY(SET CMP0042 NEW) 	# Enable MACOSX_RPATH target property by default.
+CMAKE_POLICY(SET CMP0054 OLD) 	# Interpret if() arguments as variables or keywords even if quoted.
 IF(NOT CMAKE_VERSION VERSION_LESS "3.9")
 	CMAKE_POLICY(SET CMP0068 OLD)   # Use the 'RPATH' settings for 'install_name' on macOS.
 ENDIF()
@@ -88,26 +86,12 @@ SET(OVITO_PLUGINS_LIST "")
 ENABLE_TESTING()
 
 # Activate C++14 language standard.
-IF(NOT CMAKE_VERSION VERSION_LESS "3.1")
-	SET(CMAKE_CXX_STANDARD 14)
-	SET(CMAKE_CXX_STANDARD_REQUIRED ON)
-ELSE()
-	IF(NOT MSVC)
-		IF(CMAKE_COMPILER_IS_GNUCXX)
-		    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0y")
-		ELSE()
-	    	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
-		ENDIF()
-	ELSE()
-		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++14")
-	ENDIF()
-ENDIF()
+SET(CMAKE_CXX_STANDARD 14)
+SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-IF(CYGWIN)
-	IF(CMAKE_COMPILER_IS_GNUCXX)
-		# Linking fails without -O3
-		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
-	ENDIF()
+IF(CYGWIN AND CMAKE_COMPILER_IS_GNUCXX)
+	# Linking fails without -O3
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 ENDIF()
 
 IF(APPLE)
@@ -274,6 +258,4 @@ INCLUDE(cmake/Packaging.cmake)
 
 # Export our targets so that external plugins can use them.
 CONFIGURE_FILE(cmake/OVITOConfig.cmake "${Ovito_BINARY_DIR}/" @ONLY)
-IF(NOT CMAKE_VERSION VERSION_LESS "3")
-	EXPORT(EXPORT OVITO NAMESPACE "Ovito::" FILE OVITOTargets.cmake)
-ENDIF()
+EXPORT(EXPORT OVITO NAMESPACE "Ovito::" FILE OVITOTargets.cmake)

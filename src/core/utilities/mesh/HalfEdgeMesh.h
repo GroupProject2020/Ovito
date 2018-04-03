@@ -44,7 +44,7 @@ struct EmptyHalfEdgeMeshStruct {};
  * Each face has a pointer to one of the edges adjacent to it.
  */
 template<template<typename> class EdgeBase, template<typename> class FaceBase, template<typename> class VertexBase>
-class HalfEdgeMesh
+class OVITO_CORE_EXPORT HalfEdgeMesh
 {
 public:
 
@@ -980,5 +980,3 @@ private:
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

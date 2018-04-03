@@ -36,7 +36,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPAC
 /**
  * \brief Represents a triangle in a TriMesh structure.
  */
-class TriMeshFace
+class OVITO_CORE_EXPORT TriMeshFace
 {
 public:
 

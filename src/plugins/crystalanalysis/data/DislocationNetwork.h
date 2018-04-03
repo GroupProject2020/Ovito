@@ -33,7 +33,7 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 /**
  * Every dislocation segment is delimited by two dislocation nodes.
  */
-struct DislocationNode
+struct OVITO_CRYSTALANALYSIS_EXPORT DislocationNode
 {
 	/// The dislocation segment delimited by this node.
 	DislocationSegment* segment;
@@ -253,7 +253,7 @@ inline const Point3& DislocationNode::position() const
 /**
  * This class holds the entire network of dislocation segments.
  */
-class DislocationNetwork
+class OVITO_CRYSTALANALYSIS_EXPORT DislocationNetwork
 {
 public:
 
@@ -305,6 +305,3 @@ private:
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-
-
-

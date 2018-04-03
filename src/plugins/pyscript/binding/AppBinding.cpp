@@ -104,11 +104,11 @@ void defineAppSubmodule(py::module m)
 
 	py::class_<CloneHelper>(m, "CloneHelper")
 		.def(py::init<>())
-		.def("clone", static_cast<OORef<RefTarget> (CloneHelper::*)(RefTarget*, bool)>(&CloneHelper::cloneObject<RefTarget>))
+		.def("clone", py::overload_cast<RefTarget*, bool>(&CloneHelper::cloneObject<RefTarget>))
 	;
 
 	py::class_<TaskManager>(m, "TaskManager")
 	;
 }
 
-};
+}
