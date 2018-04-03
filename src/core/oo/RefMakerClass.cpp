@@ -108,7 +108,7 @@ void RefMakerClass::loadClassInfo(LoadStream& stream, OvitoClass::SerializedClas
 		OvitoClassPtr definingClass = OvitoClass::deserializeRTTI(stream);
 		OVITO_ASSERT(definingClass->isDerivedFrom(RefMaker::OOClass()));
 		fieldInfo.definingClass = static_cast<const RefMakerClass*>(definingClass);
-		if(classInfo->clazz->isDerivedFrom(*fieldInfo.definingClass) == false) {
+		if(!classInfo->clazz->isDerivedFrom(*fieldInfo.definingClass)) {
 			qDebug() << "WARNING:" << classInfo->clazz->name() << "is not derived from" << fieldInfo.definingClass->name();
 			throw Exception(RefMaker::tr("The class hierarchy stored in the file differs from the class hierarchy of the program."));
 		}
@@ -121,7 +121,7 @@ void RefMakerClass::loadClassInfo(LoadStream& stream, OvitoClass::SerializedClas
 		if(fieldInfo.field) {
 			if(fieldInfo.field->isReferenceField() != fieldInfo.isReferenceField ||
 					fieldInfo.field->isVector() != ((fieldInfo.flags & PROPERTY_FIELD_VECTOR) != 0) ||
-					(fieldInfo.isReferenceField && fieldInfo.targetClass->isDerivedFrom(*fieldInfo.field->targetClass()) == false))
+					(fieldInfo.isReferenceField && !fieldInfo.targetClass->isDerivedFrom(*fieldInfo.field->targetClass())))
 				throw Exception(RefMaker::tr("File format error: The type of the property field '%1' in class %2 has changed.").arg(fieldInfo.identifier, fieldInfo.definingClass->name()));
 		}
 

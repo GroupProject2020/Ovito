@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -35,7 +35,7 @@ Exception::Exception(const QString& message, QObject* context) : _context(contex
 	_messages.push_back(message);
 }
 
-Exception::Exception(const QStringList& errorMessages, QObject* context) : _messages(errorMessages), _context(context)
+Exception::Exception(QStringList errorMessages, QObject* context) : _messages(std::move(errorMessages)), _context(context)
 {
 }
 
@@ -53,8 +53,9 @@ Exception& Exception::prependGeneralMessage(const QString& message)
 
 void Exception::logError() const
 {
-	for(const QString& msg : _messages)
-		qCritical("%s", qPrintable(msg));
+	for(const QString& msg : _messages) {
+		qCritical() << msg;
+	}
 }
 
 void Exception::reportError(bool blocking) const
@@ -67,4 +68,4 @@ void Exception::reportError(bool blocking) const
 }
 
 OVITO_END_INLINE_NAMESPACE
-}	// End of namespace
+}	// namespace Ovito

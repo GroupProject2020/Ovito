@@ -76,7 +76,7 @@ void SshConnection::disconnectFromHost()
         if(_session) {
             ::ssh_disconnect(_session);
             ::ssh_free(_session);
-            _session = 0;
+            _session = nullptr;
         }
 
         setState(StateClosed, true);
@@ -246,11 +246,11 @@ void SshConnection::processState()
         return;
 
     case StateAuthNone:
-        handleAuthResponse(::ssh_userauth_none(_session, 0), UseAuthNone);
+        handleAuthResponse(::ssh_userauth_none(_session, nullptr), UseAuthNone);
         return;
 
     case StateAuthAutoPubkey:
-        handleAuthResponse(::ssh_userauth_autopubkey(_session, 0), UseAuthAutoPubKey);
+        handleAuthResponse(::ssh_userauth_autopubkey(_session, nullptr), UseAuthAutoPubKey);
         return;
 
     case StateAuthPassword:
@@ -262,7 +262,7 @@ void SshConnection::processState()
         } 
         else {
             QByteArray utf8pw = _password.toUtf8();
-            auto rc = ::ssh_userauth_password(_session, 0, utf8pw.constData());
+            auto rc = ::ssh_userauth_password(_session, nullptr, utf8pw.constData());
 
             if(rc != SSH_AUTH_AGAIN) {
                 _passwordSet = false;
@@ -274,7 +274,7 @@ void SshConnection::processState()
         return;
 
     case StateAuthKbi: {
-        auto rc = ::ssh_userauth_kbdint(_session, 0, 0);
+        auto rc = ::ssh_userauth_kbdint(_session, nullptr, nullptr);
         if(rc == SSH_AUTH_INFO) {
             // Sometimes SSH_AUTH_INFO is returned even though there are no
             // KBI questions available, in that case, continue as if
@@ -630,7 +630,7 @@ bool SshConnection::markCurrentHostKnown()
 ******************************************************************************/
 QString SshConnection::errorMessage() const
 {
-    if(_errorMessage.isEmpty() == false)
+    if(!_errorMessage.isEmpty())
         return _errorMessage;
     else if(_session)
         return QString(::ssh_get_error(_session));

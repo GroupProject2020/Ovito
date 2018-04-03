@@ -60,6 +60,8 @@ OPTION(OVITO_BUILD_GUI "Build the graphical user interface." "ON")
 OPTION(OVITO_BUILD_MONOLITHIC "Build a monolithic executable, statically linking all plugins." "OFF")
 OPTION(OVITO_REDISTRIBUTABLE_PACKAGE "Create a redistributable program package that includes third-party libraries." "OFF")
 OPTION(OVITO_BUILD_APPSTORE_VERSION "Build binaries for the Apple App Store and Windows Store." "OFF")
+OPTION(OVITO_RUN_CLANG_TIDY "Run the clang-tidy tool to check code." "OFF")
+OPTION(OVITO_USE_PRECOMPILED_HEADERS "Use precompiled C++ headers to speed up build." "ON")
 
 # Define user options that control the building of OVITO's standard plugins.
 OPTION(OVITO_BUILD_PLUGIN_STDOBJ "Build the standard objects plugin." "ON")
@@ -253,6 +255,12 @@ ENDIF()
 FIND_PACKAGE(Boost REQUIRED)
 IF(NOT Boost_FOUND)
 	MESSAGE(FATAL_ERROR "The Boost library could not be found on your system. ${Boost_ERROR_REASON}")
+ENDIF()
+
+# Determine the command for running the clang-tidy tool.
+IF(OVITO_RUN_CLANG_TIDY AND NOT CMAKE_VERSION VERSION_LESS "3.6")
+	FIND_PROGRAM(CLANG_TIDY_EXE NAMES "clang-tidy" DOC "Path to clang-tidy executable")
+	SET(OVITO_CLANG_TIDY_CMD "${CLANG_TIDY_EXE}") # List of checks will be read from the .clang-tidy file.
 ENDIF()
 
 # Generate build targets.

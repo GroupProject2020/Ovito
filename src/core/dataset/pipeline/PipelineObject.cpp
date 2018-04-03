@@ -67,7 +67,7 @@ bool PipelineObject::isPipelineBranch(bool onlyScenePipelines) const
 	int pipelineCount = 0;
 	for(RefMaker* dependent : this->dependents()) {
 		if(ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(dependent)) {
-			if(modApp->input() == this && modApp->pipelines(onlyScenePipelines).empty() == false)
+			if(modApp->input() == this && !modApp->pipelines(onlyScenePipelines).empty())
 				pipelineCount++;
 		}
 		else if(PipelineSceneNode* pipeline = dynamic_object_cast<PipelineSceneNode>(dependent)) {

@@ -53,7 +53,7 @@ public:
 
 	/// Automatically calls close() to close the LoadStream.
 	/// \sa close()
-	virtual ~LoadStream() { close(); }
+	virtual ~LoadStream() { LoadStream::close(); }
 
 	/// Closes the LoadStream,  but not the underlying QDataStream that was passed to the constructor.
 	/// \sa isOpen()
@@ -191,7 +191,7 @@ private:
 private:
 
 	/// Indicates the input stream is still open.
-	bool _isOpen;
+	bool _isOpen = false;
 
 	/// The internal input stream.
 	QDataStream& _is;

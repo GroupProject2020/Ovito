@@ -25,11 +25,11 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
-void PromiseWatcher::watch(const PromiseStatePtr& sharedState, bool pendingAssignment)
+void PromiseWatcher::watch(const PromiseStatePtr& promiseState, bool pendingAssignment)
 {
 	OVITO_ASSERT_MSG(QCoreApplication::closingDown() || QThread::currentThread() == QCoreApplication::instance()->thread(), "PromiseWatcher::watch", "Function may only be called from the main thread.");
 
-	if(sharedState == _sharedState)
+	if(promiseState == _sharedState)
 		return;
 
 	if(_sharedState) {
@@ -39,7 +39,7 @@ void PromiseWatcher::watch(const PromiseStatePtr& sharedState, bool pendingAssig
 	        QCoreApplication::removePostedEvents(this);
 		}
 	}
-	_sharedState = sharedState;
+	_sharedState = promiseState;
 	if(_sharedState)
 		_sharedState->registerWatcher(this);
 }
@@ -76,7 +76,7 @@ void PromiseWatcher::promiseProgressValueChanged(int progressValue)
 		Q_EMIT progressValueChanged(progressValue);
 }
 
-void PromiseWatcher::promiseProgressTextChanged(QString progressText)
+void PromiseWatcher::promiseProgressTextChanged(const QString& progressText)
 {
 	if(isWatching() && !sharedState()->isCanceled())
 		Q_EMIT progressTextChanged(progressText);

@@ -108,8 +108,8 @@ void DelegatingModifier::applyDelegate(const PipelineFlowState& input, PipelineF
 	PipelineStatus status = output.status();
 	if(status.type() == PipelineStatus::Success || delegateStatus.type() == PipelineStatus::Error)
 		status.setType(delegateStatus.type());
-	if(delegateStatus.text().isEmpty() == false) {
-		if(status.text().isEmpty() == false)
+	if(!delegateStatus.text().isEmpty()) {
+		if(!status.text().isEmpty())
 			status.setText(status.text() + QStringLiteral("\n") + delegateStatus.text());
 		else
 			status.setText(delegateStatus.text());
@@ -183,8 +183,8 @@ void MultiDelegatingModifier::applyDelegates(const PipelineFlowState& input, Pip
 		PipelineStatus status = output.status();
 		if(status.type() == PipelineStatus::Success || delegateStatus.type() == PipelineStatus::Error)
 			status.setType(delegateStatus.type());
-		if(delegateStatus.text().isEmpty() == false) {
-			if(status.text().isEmpty() == false)
+		if(!delegateStatus.text().isEmpty()) {
+			if(!status.text().isEmpty())
 				status.setText(status.text() + QStringLiteral("\n") + delegateStatus.text());
 			else
 				status.setText(delegateStatus.text());

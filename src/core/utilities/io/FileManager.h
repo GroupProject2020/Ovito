@@ -43,7 +43,7 @@ class OVITO_CORE_EXPORT FileManager : public QObject
 public:
 
 	/// Constructor.
-	FileManager();
+	FileManager() = default;
 
 	/// Destructor.
 	~FileManager();
@@ -96,7 +96,7 @@ private Q_SLOTS:
 	void sshAuthenticationFailed(int auth);
 
 	/// Is called whenever a private SSH key requires a passphrase.
-	void needSshPassphrase(QString prompt);
+	void needSshPassphrase(const QString& prompt);
 
 private:
 

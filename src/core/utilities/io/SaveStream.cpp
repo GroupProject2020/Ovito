@@ -78,7 +78,7 @@ void SaveStream::close()
 ******************************************************************************/
 void SaveStream::write(const void* buffer, size_t numBytes)
 {
-	if(_os.device()->write((const char*)buffer, numBytes) != numBytes)
+	if(_os.device()->write(reinterpret_cast<const char*>(buffer), numBytes) != numBytes)
 		throw Exception(tr("Failed to write output file. %1").arg(_os.device()->errorString()));
 }
 
@@ -129,7 +129,7 @@ void SaveStream::endChunk()
 ******************************************************************************/
 void SaveStream::writePointer(void* pointer) 
 {
-	if(pointer == NULL) *this << (quint64)0;
+	if(pointer == nullptr) *this << (quint64)0;
 	else {
 		quint64& id = _pointerMap[pointer];
 		if(id == 0) id = (quint64)_pointerMap.size();

@@ -77,6 +77,10 @@ public:
 	/// transformation can be accessed through the #translation, #rotation,
 	/// #scaling and #sign member variables.
 	AffineDecomposition(const AffineTransformation& tm);
+
+private:
+
+	void decomp_affine(Matrix4& A);
 };
 
 OVITO_END_INLINE_NAMESPACE

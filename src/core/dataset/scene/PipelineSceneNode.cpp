@@ -50,7 +50,7 @@ PipelineSceneNode::PipelineSceneNode(DataSet* dataset) : SceneNode(dataset)
 /******************************************************************************
 * Destructor.
 ******************************************************************************/
-PipelineSceneNode::~PipelineSceneNode()
+PipelineSceneNode::~PipelineSceneNode() // NOLINT
 {
 }
 
@@ -216,7 +216,7 @@ void PipelineSceneNode::updateVisElementList(TimePoint time)
 	for(const auto& dataObj : state.objects()) {
 		for(DataVis* vis : dataObj->visElements()) {
 			OVITO_CHECK_OBJECT_POINTER(vis);
-			if(visElements().contains(vis) == false)
+			if(!visElements().contains(vis))
 				_visElements.push_back(this, PROPERTY_FIELD(visElements), vis);
 		}
 	}
@@ -425,7 +425,7 @@ void PipelineSceneNode::referenceRemoved(const PropertyFieldDescriptor& field, R
 	if(field == PROPERTY_FIELD(replacedVisElements) && !isAboutToBeDeleted()) {
 		// If an upstream vis element is being removed from the list, because the weakly referenced vis element is being deleted, 
 		// then also discard our corresponding replacement element managed by the node.
-		if(dataset()->undoStack().isUndoingOrRedoing() == false) {
+		if(!dataset()->undoStack().isUndoingOrRedoing()) {
 			OVITO_ASSERT(replacedVisElements().size() + 1 == replacementVisElements().size());
 			_replacementVisElements.remove(this, PROPERTY_FIELD(replacementVisElements), listIndex); 
 		}
@@ -533,7 +533,7 @@ void PipelineSceneNode::replaceVisualElements(PipelineFlowState& state)
 				dataObj = clone;
 			}
 			// Assign the new visual element list to the data object.
-			dataObj->setVisElements(std::move(visualElements));
+			dataObj->setVisElements(visualElements);
 		}
 	}	
 }

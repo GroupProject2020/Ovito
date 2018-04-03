@@ -76,8 +76,10 @@ public:
 	{
 	public:
 
+#ifdef Q_OS_LINUX
 		/// Destructor.
 		virtual ~ComputeEngine();
+#endif
 	};
 
 	/// A managed pointer to a ComputeEngine instance.

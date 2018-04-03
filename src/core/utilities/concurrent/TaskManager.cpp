@@ -25,7 +25,7 @@
 #include <core/dataset/DataSetContainer.h>
 
 #ifdef Q_OS_UNIX
-	#include <signal.h>
+	#include <csignal>
 #endif
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
@@ -69,16 +69,16 @@ void TaskManager::registerTask(const PromiseBase& promise)
 /******************************************************************************
 * Registers a promise with the task manager.
 ******************************************************************************/
-void TaskManager::registerTask(const PromiseStatePtr& promiseState) 
+void TaskManager::registerTask(const PromiseStatePtr& sharedState) 
 {
 	// Execute the function call in the main thread.
-	QMetaObject::invokeMethod(this, "addTaskInternal", Q_ARG(PromiseStatePtr, promiseState));
+	QMetaObject::invokeMethod(this, "addTaskInternal", Q_ARG(PromiseStatePtr, sharedState));
 }
 
 /******************************************************************************
 * Registers a promise with the task manager.
 ******************************************************************************/
-PromiseWatcher* TaskManager::addTaskInternal(PromiseStatePtr sharedState)
+PromiseWatcher* TaskManager::addTaskInternal(const PromiseStatePtr& sharedState)
 {
 	// Check if task is already registered.
 	for(PromiseWatcher* watcher : runningTasks()) {

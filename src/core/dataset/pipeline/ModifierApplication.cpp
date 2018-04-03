@@ -60,7 +60,7 @@ ModifierApplication::ModifierApplication(DataSet* dataset) : CachingPipelineObje
 bool ModifierApplication::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	if(event.type() == ReferenceEvent::TargetEnabledOrDisabled && source == modifier()) {
-		if(modifier()->isEnabled() == false) {
+		if(!modifier()->isEnabled()) {
 			// Ignore modifier's status if it is currently disabled. 
 			setStatus(PipelineStatus(PipelineStatus::Success, tr("Modifier is currently disabled.")));
 		}
@@ -172,7 +172,7 @@ Future<PipelineFlowState> ModifierApplication::evaluateInternal(TimePoint time)
 
 			// Without a modifier, this ModifierApplication becomes a no-op.
 			// The same is true when the Modifier is disabled.
-			if(!modifier() || modifier()->isEnabled() == false)
+			if(!modifier() || !modifier()->isEnabled())
 				return inputData;
 
 			// We don't want to create any undo records while performing the data modifications.

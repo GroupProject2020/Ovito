@@ -149,13 +149,13 @@ void TriMesh::loadFromStream(LoadStream& stream)
 	int nFaces;
 	stream >> nFaces;
 	_faces.resize(nFaces);
-	for(auto face = faces().begin(); face != faces().end(); ++face) {
-		stream >> face->_flags;
-		stream >> face->_vertices[0];
-		stream >> face->_vertices[1];
-		stream >> face->_vertices[2];
-		stream >> face->_smoothingGroups;
-		stream >> face->_materialIndex;
+	for(const auto& face : faces()) {
+		stream >> face._flags;
+		stream >> face._vertices[0];
+		stream >> face._vertices[1];
+		stream >> face._vertices[2];
+		stream >> face._smoothingGroups;
+		stream >> face._materialIndex;
 	}
 
 	stream.closeChunk();

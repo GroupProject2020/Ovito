@@ -160,7 +160,7 @@ OORef<RefTarget> RefTarget::clone(bool deepCopy, CloneHelper& cloneHelper)
 	// Clone properties and referenced objects.
 	for(const PropertyFieldDescriptor* field : getOOMetaClass().propertyFields()) {
 		if(field->isReferenceField()) {
-			if(field->isVector() == false) {
+			if(!field->isVector()) {
 				OVITO_ASSERT(field->singleStorageAccessFunc != nullptr);
 				const SingleReferenceFieldBase& sourceField = field->singleStorageAccessFunc(this);
 				// Clone reference target.

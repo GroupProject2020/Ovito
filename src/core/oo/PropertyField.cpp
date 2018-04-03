@@ -33,7 +33,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
 * Generates a notification event to inform the dependents of the field's owner
 * that it has changed.
 ******************************************************************************/
-void PropertyFieldBase::generateTargetChangedEvent(RefMaker* owner, const PropertyFieldDescriptor& descriptor, ReferenceEvent::Type messageType)
+void PropertyFieldBase::generateTargetChangedEvent(RefMaker* owner, const PropertyFieldDescriptor& descriptor, ReferenceEvent::Type eventType)
 {
 	// Make sure we are not trying to generate a change message for objects that are not RefTargets.
 	OVITO_ASSERT_MSG(!descriptor.shouldGenerateChangeEvent() || descriptor.definingClass()->isDerivedFrom(RefTarget::OOClass()),
@@ -46,8 +46,8 @@ void PropertyFieldBase::generateTargetChangedEvent(RefMaker* owner, const Proper
 
 	// Send change message.
 	OVITO_ASSERT(owner->isRefTarget());
-	if(messageType != ReferenceEvent::TargetChanged)
-		static_object_cast<RefTarget>(owner)->notifyDependents(messageType);
+	if(eventType != ReferenceEvent::TargetChanged)
+		static_object_cast<RefTarget>(owner)->notifyDependents(eventType);
 	else
 		static_object_cast<RefTarget>(owner)->notifyTargetChanged(&descriptor);
 }
@@ -129,7 +129,7 @@ void SingleReferenceFieldBase::swapReference(RefMaker* owner, const PropertyFiel
 
 	// Add the RefMaker to the list of dependents of the new target.
 	if(_pointer) {
-		if(_pointer->_dependents.contains(owner) == false)
+		if(!_pointer->_dependents.contains(owner))
 			_pointer->_dependents.push_back(owner);
 	}
 
@@ -219,8 +219,10 @@ OORef<RefTarget> VectorReferenceFieldBase::removeReference(RefMaker* owner, cons
 
 	// Release old reference target if there are no more references to it.
 	if(target) {
-		if(!descriptor.isWeakReference())
+		if(!descriptor.isWeakReference()) {
+			OVITO_ASSERT(target->objectReferenceCount() >= 2);
 			target->decrementReferenceCount();
+		}
 
 		// Remove the RefMaker from the old target's list of dependents.
 		OVITO_CHECK_OBJECT_POINTER(target);
@@ -280,7 +282,7 @@ int VectorReferenceFieldBase::addReference(RefMaker* owner, const PropertyFieldD
 		target->incrementReferenceCount();
 
 	// Add the RefMaker to the list of dependents of the new target.
-	if(target && target->_dependents.contains(owner) == false)
+	if(target && !target->_dependents.contains(owner))
 		target->_dependents.push_back(owner);
 
 	try {

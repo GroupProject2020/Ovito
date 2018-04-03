@@ -97,7 +97,7 @@ OORef<RefTarget> AnimationSettings::clone(bool deepCopy, CloneHelper& cloneHelpe
 /******************************************************************************
 * Is called when the current animation time has changed.
 ******************************************************************************/
-void AnimationSettings::onTimeChanged(TimePoint newTime)
+void AnimationSettings::onTimeChanged()
 {
 	if(_isTimeChanging)
 		return;

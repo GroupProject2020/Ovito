@@ -59,11 +59,11 @@ const PipelineFlowState& PipelineCache::getAt(TimePoint time) const
 * The cache may decide not to cache the state, in which case the method returns 
 * false.
 ******************************************************************************/
-bool PipelineCache::insert(const PipelineFlowState& state, RefTarget* ownerObject)
+bool PipelineCache::insert(PipelineFlowState state, RefTarget* ownerObject)
 {
-	_mostRecentState = state;
 	if(state.stateValidity().contains(ownerObject->dataset()->animationSettings()->time()))
 		_currentAnimState = state;
+	_mostRecentState = std::move(state);
 	return true;
 }
 

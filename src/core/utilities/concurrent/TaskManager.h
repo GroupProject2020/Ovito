@@ -125,7 +125,7 @@ Q_SIGNALS:
 private:
 
 	/// \brief Registers a promise with the progress manager.
-	Q_INVOKABLE PromiseWatcher* addTaskInternal(PromiseStatePtr sharedState);
+	Q_INVOKABLE PromiseWatcher* addTaskInternal(const PromiseStatePtr& sharedState);
 
 private Q_SLOTS:
 

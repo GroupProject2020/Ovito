@@ -37,7 +37,7 @@ AffineDecomposition::AffineDecomposition(const AffineTransformation& tm)
 {
     // Extends matrix to 4x4.
 	Matrix4 A(tm);
-    decomp_affine(A, this);
+    decomp_affine(A);
 
 	OVITO_ASSERT_MSG(std::abs(scaling.Q.dot(scaling.Q) - 1.0) <= FLOATTYPE_EPSILON, "AffineDecomposition", "Resulting quaternion is not normalized.");
 	if(std::abs(scaling.Q.w()) >= FloatType(1) || scaling.S.equals(Vector3(1,1,1)))
@@ -74,13 +74,13 @@ enum QuatPart {X, Y, Z, W};
 #define mat_pad(A) (A(W,X)=A(X,W)=A(W,Y)=A(Y,W)=A(W,Z)=A(Z,W)=0,A(W,W)=1)
 
 /* Copy nxn matrix A to C using "gets" for assignment **/
-#define mat_copy(C,gets,A,n) { for(size_t i=0; i<n; i++) for(size_t j=0; j<n; j++) C(i,j) gets (A(i,j)); }
+#define mat_copy(C,gets,A,n) { for(size_t i=0; i<(n); i++) for(size_t j=0; j<(n); j++) C(i,j) gets (A(i,j)); }
 
 /* Copy transpose of nxn matrix A to C using "gets" for assignment **/
-#define mat_tpose(AT,gets,A,n) { for(size_t i=0; i<n; i++) for(size_t j=0; j<n; j++) AT(i,j) gets (A(j,i)); }
+#define mat_tpose(AT,gets,A,n) { for(size_t i=0; i<(n); i++) for(size_t j=0; j<(n); j++) AT(i,j) gets (A(j,i)); }
 
 /* Assign nxn matrix C the element-wise combination of A and B using "op" **/
-#define mat_binop(C,gets,A,op,B,n) { for(size_t i=0; i<n; i++) for(size_t j=0; j<n; j++) C(i,j) gets (A(i,j)) op (B(i,j)); }
+#define mat_binop(C,gets,A,op,B,n) { for(size_t i=0; i<(n); i++) for(size_t j=0; j<(n); j++) C(i,j) gets (A(i,j)) op (B(i,j)); }
 
 /* Multiply the upper left 3x3 parts of A and B to get AB **/
 inline void mat_mult(const Matrix4& A, const Matrix4& B, Matrix4& AB)
@@ -379,7 +379,7 @@ Vector3 spect_decomp(Matrix4& S, Matrix4& U)
 			}
 		}
 	}
-	return Vector3(Diag[X], Diag[Y], Diag[Z]);
+	return {Diag[X], Diag[Y], Diag[Z]};
 }
 
 /******* Spectral Axis Adjustment *******/
@@ -395,8 +395,8 @@ Quaternion snuggle(Quaternion q, Vector3& k)
 {
 #define SQRTHALF ((FloatType)0.7071067811865475244)
 #define sgn(n,v)    ((n)?-(v):(v))
-#define swap(a,i,j) {a[3]=a[i]; a[i]=a[j]; a[j]=a[3];}
-#define cycle(a,p)  if (p) {a[3]=a[0]; a[0]=a[1]; a[1]=a[2]; a[2]=a[3];} else   {a[3]=a[2]; a[2]=a[1]; a[1]=a[0]; a[0]=a[3];}
+#define swap(a,i,j) {(a)[3]=(a)[i]; (a)[i]=(a)[j]; (a)[j]=(a)[3];}
+#define cycle(a,p)  if (p) {(a)[3]=(a)[0]; (a)[0]=(a)[1]; (a)[1]=(a)[2]; (a)[2]=(a)[3];} else   {(a)[3]=(a)[2]; (a)[2]=(a)[1]; (a)[1]=(a)[0]; (a)[0]=(a)[3];}
     Quaternion p;
     FloatType ka[4];
     int i, turn = -1;
@@ -496,23 +496,23 @@ Quaternion snuggle(Quaternion q, Vector3& k)
  * See Ken Shoemake and Tom Duff. AffineTransformation Animation and Polar Decomposition.
  * Proceedings of Graphics Interface 1992.
  */
-void decomp_affine(Matrix4& A, AffineDecomposition* parts)
+void AffineDecomposition::decomp_affine(Matrix4& A)
 {
     Matrix4 Q, S, U;
     Quaternion p;
     FloatType det;
-    parts->translation = Vector3(A(X,W), A(Y,W), A(Z,W));
+    this->translation = Vector3(A(X,W), A(Y,W), A(Z,W));
     det = polar_decomp(A, Q, S);
     if(det < 0.0) {
 		mat_copy(Q,=,-Q,3);
-		parts->sign = -1;
+		this->sign = -1;
     } 
-	else parts->sign = 1;
-    parts->rotation = Qt_FromMatrix(Q);
-	parts->scaling.S = spect_decomp(S, U);
-	parts->scaling.Q = Qt_FromMatrix(U);
-    p = snuggle(parts->scaling.Q, parts->scaling.S);
-    parts->scaling.Q = (parts->scaling.Q * p).normalized();
+    else this->sign = 1;
+    this->rotation = Qt_FromMatrix(Q);
+	this->scaling.S = spect_decomp(S, U);
+	this->scaling.Q = Qt_FromMatrix(U);
+    p = snuggle(this->scaling.Q, this->scaling.S);
+    this->scaling.Q = (this->scaling.Q * p).normalized();
 }
 
 OVITO_END_INLINE_NAMESPACE

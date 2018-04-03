@@ -139,7 +139,7 @@ void PromiseState::setException(std::exception_ptr&& ex)
 		return;
 	
 	OVITO_ASSERT(ex != std::exception_ptr());
-	_exceptionStore = std::move(ex);
+	_exceptionStore = std::move(ex); // NOLINT
 }
 
 void PromiseState::registerWatcher(PromiseWatcher* watcher)

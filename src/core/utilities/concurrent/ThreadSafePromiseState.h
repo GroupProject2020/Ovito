@@ -50,7 +50,7 @@ public:
 
 	/// Sets the current progress value (must be in the range 0 to progressMaximum()).
 	/// Returns false if the promise has been canceled.
-    virtual bool setProgressValue(int progressValue) override;
+    virtual bool setProgressValue(int value) override;
 
 	/// Increments the progress value by 1.
 	/// Returns false if the promise has been canceled.

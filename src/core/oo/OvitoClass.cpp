@@ -110,7 +110,8 @@ OORef<OvitoObject> OvitoClass::createInstance(DataSet* dataset) const
 				plugin()->loadPlugin();
 			}
 			catch(Exception& ex) {
-				throw ex.prependGeneralMessage(OvitoObject::tr("Could not create instance of class %1. Failed to load plugin '%2'").arg(name()).arg(plugin()->pluginId()));
+				ex.prependGeneralMessage(OvitoObject::tr("Could not create instance of class %1. Failed to load plugin '%2'").arg(name()).arg(plugin()->pluginId()));
+				throw ex;
 			}
 		}
 	}
@@ -143,6 +144,7 @@ OvitoObject* OvitoClass::createInstanceImpl(DataSet* dataset) const
 	OvitoObject* obj;
 
 	if(isDerivedFrom(RefTarget::OOClass()) && *this != DataSet::OOClass()) {
+		OVITO_ASSERT(dataset != nullptr);
 		UndoSuspender noUndo(dataset->undoStack());
 		obj = qobject_cast<OvitoObject*>(qtMetaObject()->newInstance(Q_ARG(DataSet*, dataset)));
 	}
@@ -151,7 +153,7 @@ OvitoObject* OvitoClass::createInstanceImpl(DataSet* dataset) const
 	}
 
 	if(!obj)
-		dataset->throwException(OvitoObject::tr("Failed to instantiate class '%1'.").arg(name()));
+		throw Exception(OvitoObject::tr("Failed to instantiate class '%1'.").arg(name()), dataset);
 
 	return obj;
 }

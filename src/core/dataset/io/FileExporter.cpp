@@ -133,7 +133,7 @@ bool FileExporter::exportNodes(TaskManager& taskManager)
 	if(exportAnimation() && useWildcardFilename()) {
 		if(wildcardFilename().isEmpty())
 			throwException(tr("Cannot write animation frame to separate files. Wildcard pattern has not been specified."));
-		if(wildcardFilename().contains(QChar('*')) == false)
+		if(!wildcardFilename().contains(QChar('*')))
 			throwException(tr("Cannot write animation frames to separate files. The filename must contain the '*' wildcard character, which gets replaced by the frame number."));
 	}
 

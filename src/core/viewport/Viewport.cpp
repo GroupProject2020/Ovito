@@ -285,7 +285,7 @@ void Viewport::zoomToSelectionExtents()
 	for(SceneNode* node : dataset()->selection()->nodes()) {
 		selectionBoundingBox.addBox(node->worldBoundingBox(dataset()->animationSettings()->time()));
 	}
-	if(selectionBoundingBox.isEmpty() == false)
+	if(!selectionBoundingBox.isEmpty())
 		zoomToBox(selectionBoundingBox);
 	else
 		zoomToSceneExtents();
@@ -678,7 +678,7 @@ Box2 Viewport::renderFrameRect() const
 	QSize vpSize = windowSize();
 	RenderSettings* renderSettings = dataset()->renderSettings();
 	if(!renderSettings || vpSize.width() == 0 || vpSize.height() == 0)
-		return Box2(Point2(-1), Point2(+1));
+		return { Point2(-1), Point2(+1) };
 
 	// Compute a rectangle that has the same aspect ratio as the rendered image.
 	FloatType renderAspectRatio = renderSettings->outputImageAspectRatio();
@@ -767,11 +767,11 @@ Ray3 Viewport::viewportRay(const Point2& viewportPoint)
 		Point3 ndc2(viewportPoint.x(), viewportPoint.y(), 0);
 		Point3 p1 = projectionParams().inverseViewMatrix * (projectionParams().inverseProjectionMatrix * ndc1);
 		Point3 p2 = projectionParams().inverseViewMatrix * (projectionParams().inverseProjectionMatrix * ndc2);
-		return Ray3(Point3::Origin() + _projParams.inverseViewMatrix.translation(), p1 - p2);
+		return { Point3::Origin() + _projParams.inverseViewMatrix.translation(), p1 - p2 };
 	}
 	else {
 		Point3 ndc(viewportPoint.x(), viewportPoint.y(), -1);
-		return Ray3(projectionParams().inverseViewMatrix * (projectionParams().inverseProjectionMatrix * ndc), projectionParams().inverseViewMatrix * Vector3(0,0,-1));
+		return { projectionParams().inverseViewMatrix * (projectionParams().inverseProjectionMatrix * ndc), projectionParams().inverseViewMatrix * Vector3(0,0,-1) };
 	}
 }
 

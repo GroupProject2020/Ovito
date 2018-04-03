@@ -51,7 +51,7 @@ Future<PipelineFlowState> AsynchronousModifier::evaluate(TimePoint time, Modifie
 		if(lastResults && lastResults->validityInterval().contains(time)) {
 			// Re-use the computation results and apply them to the input data.
 			UndoSuspender noUndo(this);
-			PipelineFlowState resultState = lastResults->apply(time, modApp, std::move(input));
+			PipelineFlowState resultState = lastResults->apply(time, modApp, input);
 			resultState.mutableStateValidity().intersect(lastResults->validityInterval());
 			return resultState;
 		}
@@ -78,7 +78,7 @@ Future<PipelineFlowState> AsynchronousModifier::evaluate(TimePoint time, Modifie
 						UndoSuspender noUndo(this);
 
 						// Apply the computed results to the input data.
-						PipelineFlowState resultState = results->apply(time, modApp, std::move(input));
+						PipelineFlowState resultState = results->apply(time, modApp, input);
 						resultState.mutableStateValidity().intersect(results->validityInterval());
 						return resultState;
 					}
@@ -124,19 +124,19 @@ void AsynchronousModifier::loadFromStream(ObjectLoadStream& stream)
 	stream.closeChunk();
 }
 
+#ifdef Q_OS_LINUX
 /******************************************************************************
 * Destructor of compute engine.
 ******************************************************************************/
 AsynchronousModifier::ComputeEngine::~ComputeEngine()
 {
-#ifdef Q_OS_LINUX
 	// Some compute engines allocate a considerable amount of memory in small chunks,
 	// which is sometimes not released back to the OS by the C memory allocator.
 	// This call to malloc_trim() will explicitly trigger an attempt to release free memory
 	// at the top of the heap.
 	::malloc_trim(0);
-#endif
 }
+#endif
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

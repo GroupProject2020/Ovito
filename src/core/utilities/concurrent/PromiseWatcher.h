@@ -87,7 +87,7 @@ private Q_SLOTS:
 	void promiseStarted();
 	void promiseProgressRangeChanged(int maximum);
 	void promiseProgressValueChanged(int progressValue);
-	void promiseProgressTextChanged(QString progressText);
+	void promiseProgressTextChanged(const QString& progressText);
 
 private:
 

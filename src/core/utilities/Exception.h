@@ -98,7 +98,7 @@ public:
 	/// \param errorMessages The list of message strings describing the error. The list should be ordered with
 	///                      the most general error description first, followed by the more detailed information.
 	/// \param context Pointer to an optional object that provides the context for this exception or error.
-	explicit Exception(const QStringList& errorMessages, QObject* context = nullptr);
+	explicit Exception(QStringList errorMessages, QObject* context = nullptr);
 
 	// Default destructor.
 	virtual ~Exception() = default;
@@ -163,6 +163,6 @@ private:
 };
 
 OVITO_END_INLINE_NAMESPACE
-}	// End of namespace
+}	// namespace Ovito
 
 

@@ -67,7 +67,7 @@ public:
 	SaveStream(QDataStream& destination);
 
 	/// \brief Automatically closes the stream by calling close().
-	virtual ~SaveStream() { close(); }
+	virtual ~SaveStream() { SaveStream::close(); }
 
 	/// \brief Closes this stream, but not the underlying output stream passed to the constructor.
 	/// \throw Exception if an I/O error has occurred.

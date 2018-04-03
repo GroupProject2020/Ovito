@@ -164,6 +164,9 @@ public:
 	/// Sets the stored status.
 	void setStatus(const PipelineStatus& status) { _status = status; }
 
+	/// Sets the stored status.
+	void setStatus(PipelineStatus&& status) { _status = std::move(status); }
+
 	/// Returns the auxiliary attributes associated with the state.
 	const QVariantMap& attributes() const { return _attributes; }
 

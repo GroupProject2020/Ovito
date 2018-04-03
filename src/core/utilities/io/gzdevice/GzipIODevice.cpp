@@ -48,7 +48,7 @@ struct ZLibState
 void GzipIODevice::flushZlib(int flushMode)
 {
     // No input.
-    _zlibStruct->_zlibStream.next_in = 0;
+    _zlibStruct->_zlibStream.next_in = nullptr;
     _zlibStruct->_zlibStream.avail_in = 0;
     int status;
     do {
@@ -125,7 +125,7 @@ GzipIODevice::GzipIODevice(QIODevice* device, int compressionLevel, int bufferSi
 /// Destructor.
 GzipIODevice::~GzipIODevice()
 {
-    close();
+    GzipIODevice::close();
     delete _zlibStruct;
 }
 
@@ -190,7 +190,7 @@ bool GzipIODevice::open(OpenMode mode)
             qWarning("GzipIODevice::open: underlying device must be open in one of the ReadOnly or WriteOnly modes");
             return false;
         } 
-        else if(write && !(deviceMode & WriteOnly)) {
+        if(write && !(deviceMode & WriteOnly)) {
             qWarning("GzipIODevice::open: underlying device must be open in one of the ReadOnly or WriteOnly modes");
             return false;
         }
@@ -199,7 +199,7 @@ bool GzipIODevice::open(OpenMode mode)
     } 
     else {
         _manageDevice = true;
-        if(_device->open(mode) == false) {
+        if(!_device->open(mode)) {
             setErrorString(tr("Error opening underlying device: %1").arg(_device->errorString()));
             return false;
         }
@@ -228,8 +228,8 @@ bool GzipIODevice::open(OpenMode mode)
     int status;
     if(read) {
         _state = NotReadFirstByte;
+        _zlibStruct->_zlibStream.next_in = nullptr;
         _zlibStruct->_zlibStream.avail_in = 0;
-        _zlibStruct->_zlibStream.next_in = 0;
         if(streamFormat() == ZlibFormat) {
             status = ::inflateInit(&_zlibStruct->_zlibStream);
         } 
@@ -256,7 +256,7 @@ bool GzipIODevice::open(OpenMode mode)
 /// Closes the GzipIODevice, and also the underlying device if it was opened by GzipIODevice.
 void GzipIODevice::close()
 {
-    if(isOpen() == false)
+    if(!isOpen())
         return;
 
     // Flush and close the zlib stream.
@@ -276,9 +276,9 @@ void GzipIODevice::close()
     if(_manageDevice)
         _device->close();
 
-    _zlibStruct->_zlibStream.next_in = 0;
+    _zlibStruct->_zlibStream.next_in = nullptr;
     _zlibStruct->_zlibStream.avail_in = 0;
-    _zlibStruct->_zlibStream.next_out = NULL;
+    _zlibStruct->_zlibStream.next_out = nullptr;
     _zlibStruct->_zlibStream.avail_out = 0;
     _state = Closed;
 
@@ -296,7 +296,7 @@ void GzipIODevice::close()
 */
 void GzipIODevice::flush()
 {
-    if(isOpen() == false || openMode() & ReadOnly)
+    if(!isOpen() || openMode() & ReadOnly)
         return;
 
     flushZlib(Z_SYNC_FLUSH);
@@ -312,7 +312,7 @@ void GzipIODevice::flush()
 */
 qint64 GzipIODevice::bytesAvailable() const
 {
-    if((openMode() & ReadOnly) == false)
+    if(!(openMode() & ReadOnly))
         return 0;
 
     qint64 numBytes = 0;
@@ -333,10 +333,7 @@ qint64 GzipIODevice::bytesAvailable() const
 
     numBytes += QIODevice::bytesAvailable();
 
-    if(numBytes > 0)
-        return 1;
-    else
-        return 0;
+    return (numBytes > 0) ? 1 : 0;
 }
 
 /*!
@@ -373,7 +370,7 @@ qint64 GzipIODevice::readData(char* data, qint64 maxSize)
                 // If we are not in a stream and get 0 bytes, we are probably trying to read from an empty device.
                 if(bytesAvalible == 0)
                     return 0;
-                else if(bytesAvalible > 0)
+                if(bytesAvalible > 0)
                     _state = InStream;
             }
         }
@@ -433,12 +430,12 @@ qint64 GzipIODevice::writeData(const char* data, qint64 maxSize)
         ZlibSize outputSize = _bufferSize - _zlibStruct->_zlibStream.avail_out;
 
         // Try to write data from the buffer to to the underlying device, return -1 on failure.
-        if(writeBytes(outputSize) == false)
+        if(!writeBytes(outputSize))
             return -1;
 
-    } 
-    while(_zlibStruct->_zlibStream.avail_out == 0); // run until output is not full.
-    OVITO_ASSERT(_zlibStruct->_zlibStream.avail_in == 0);
+    }
+    while(!_zlibStruct->_zlibStream.avail_out); // run until output is not full.
+    OVITO_ASSERT(!_zlibStruct->_zlibStream.avail_in);
 
     return maxSize;
 }

@@ -28,8 +28,8 @@ namespace Ovito { namespace Ssh {
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-ProcessChannel::ProcessChannel(SshConnection* connection, const QString& command) : SshChannel(connection, connection), 
-    _command(command),
+ProcessChannel::ProcessChannel(SshConnection* connection, QString command) : SshChannel(connection, connection), 
+    _command(std::move(command)),
     _stderr(new StderrChannel(this))
 {
     connect(connection, &SshConnection::error,          this, &ProcessChannel::handleSessionError);
@@ -48,7 +48,7 @@ ProcessChannel::~ProcessChannel()
 /******************************************************************************
 * Opens the QIODevice.
 ******************************************************************************/
-bool ProcessChannel::open(OpenMode)
+bool ProcessChannel::open(OpenMode /*mode*/)
 {
     openChannel();
     return true;

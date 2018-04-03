@@ -132,7 +132,7 @@ SET(SourceFiles
 IF(LIBAV_FOUND)
 	LIST(APPEND SourceFiles utilities/io/video/VideoEncoder.cpp)
 ELSE()
-	MESSAGE("LibAV video encoding library not found. Will build OVITO without video support.")
+	MESSAGE("Libav video encoding library not found. OVITO will be built without support for video output.")
 ENDIF()
 
 # Compile resources.
@@ -203,8 +203,15 @@ SET_SOURCE_FILES_PROPERTIES(app/Application.cpp app/StandaloneApplication.cpp PR
 SET_SOURCE_FILES_PROPERTIES(utilities/io/SaveStream.cpp utilities/io/LoadStream.cpp PROPERTIES COMPILE_DEFINITIONS 
     "OVITO_FILE_FORMAT_VERSION=${OVITO_FILE_FORMAT_VERSION}")
 
+# Run clang-tidy to check C++ code and perform static analysis.
+IF(OVITO_CLANG_TIDY_CMD)
+	SET_TARGET_PROPERTIES(Core PROPERTIES CXX_CLANG_TIDY "${OVITO_CLANG_TIDY_CMD}")
+ENDIF()
+
 # Speed up compilation by using precompiled headers.
-ADD_PRECOMPILED_HEADER(Core core/Core.h)
+IF(OVITO_USE_PRECOMPILED_HEADERS)
+	ADD_PRECOMPILED_HEADER(Core core/Core.h)
+ENDIF()
 
 IF(APPLE)
     # Activate @rpath on MacOS.

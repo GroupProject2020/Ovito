@@ -48,7 +48,7 @@ public:
 	ObjectLoadStream(QDataStream& source);
 
 	// Calls close() to close the ObjectLoadStream.
-	virtual ~ObjectLoadStream() { close(); }
+	virtual ~ObjectLoadStream() { ObjectLoadStream::close(); }
 
 	/// \brief Closes the ObjectLoadStream, but not the underlying QDataStream passed to the constructor.
 	virtual void close();

@@ -34,19 +34,12 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPAC
 using namespace Ovito::Ssh;
 
 /******************************************************************************
-* Constructor.
-******************************************************************************/
-FileManager::FileManager()
-{
-}
-
-/******************************************************************************
 * Destructor.
 ******************************************************************************/
 FileManager::~FileManager()
 {
     for(SshConnection* connection : _unacquiredConnections) {
-        disconnect(connection, 0, this, 0);
+        disconnect(connection, nullptr, this, nullptr);
         delete connection;
     }
     Q_ASSERT(_acquiredConnections.empty());
@@ -62,7 +55,7 @@ SharedFuture<QString> FileManager::fetchUrl(TaskManager& taskManager, const QUrl
 
 		// But first check if the file exists.
 		QString filePath = url.toLocalFile();
-		if(QFileInfo(url.toLocalFile()).exists() == false)
+		if(!QFileInfo(url.toLocalFile()).exists())
 			return Future<QString>::createFailed(Exception(tr("File does not exist:\n%1").arg(filePath), &taskManager.datasetContainer()));
 
 		return filePath;
@@ -90,7 +83,7 @@ SharedFuture<QString> FileManager::fetchUrl(TaskManager& taskManager, const QUrl
 		Promise<QString> promise = Promise<QString>::createSynchronous(&taskManager, false, true);
 		SharedFuture<QString> future(promise.future());
 		_pendingFiles.emplace(normalizedUrl, future);
-		new DownloadRemoteFileJob(std::move(url), std::move(promise));
+		new DownloadRemoteFileJob(url, std::move(promise));
 		return future;
 	}
 	else {
@@ -129,7 +122,7 @@ void FileManager::removeFromCache(const QUrl& url)
 ******************************************************************************/
 void FileManager::fileFetched(QUrl url, QTemporaryFile* localFile)
 {
-	QUrl normalizedUrl = normalizeUrl(url);
+	QUrl normalizedUrl = normalizeUrl(std::move(url));
 	QMutexLocker lock(&_mutex);
 
 	auto inProgressEntry = _pendingFiles.find(normalizedUrl);
@@ -207,7 +200,7 @@ void FileManager::releaseSshConnection(SshConnection* connection)
         return;
 
     if(!connection->isConnected()) {
-        disconnect(connection, 0, this, 0);
+        disconnect(connection, nullptr, this, nullptr);
         connection->deleteLater();
     }
     else {
@@ -226,7 +219,7 @@ void FileManager::cleanupSshConnection()
         return;
 
     if(_unacquiredConnections.removeOne(connection)) {
-        disconnect(connection, 0, this, 0);
+        disconnect(connection, nullptr, this, nullptr);
         connection->deleteLater();
     }
 }
@@ -307,7 +300,7 @@ bool FileManager::askUserForPassword(const QString& hostname, const QString& use
 /******************************************************************************
 * Is called whenever a private SSH key requires a passphrase.
 ******************************************************************************/
-void FileManager::needSshPassphrase(QString prompt)
+void FileManager::needSshPassphrase(const QString& prompt)
 {
     SshConnection* connection = qobject_cast<SshConnection*>(sender());
     if(!connection)

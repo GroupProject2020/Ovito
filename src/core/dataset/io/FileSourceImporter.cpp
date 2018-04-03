@@ -410,8 +410,7 @@ Future<std::vector<QUrl>> FileSourceImporter::findWildcardMatches(const QUrl& so
 			// Generate a new name from the original filename that yields the correct ordering.
 			QString newName;
 			QString number;
-			for(int index = 0; index < oldName.length(); index++) {
-				QChar c = oldName[index];
+			for(QChar c : oldName) {
 				if(!c.isDigit()) {
 					if(!number.isEmpty()) {
 						newName.append(number.rightJustified(10, '0'));

@@ -192,7 +192,6 @@ void Application::createQtApplication(int& argc, char** argv)
 	connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, []() {
 		qDebug() << "Received QCoreApplication::aboutToQuit signal!";
 	});
-
 }
 
 /******************************************************************************
@@ -214,7 +213,7 @@ FileManager* Application::createFileManager()
 /******************************************************************************
 * Handler function for exceptions.
 ******************************************************************************/
-void Application::reportError(const Exception& exception, bool blocking)
+void Application::reportError(const Exception& exception, bool /*blocking*/)
 {
 	for(int i = exception.messages().size() - 1; i >= 0; i--) {
 		std::cerr << "ERROR: " << qPrintable(exception.messages()[i]) << std::endl;

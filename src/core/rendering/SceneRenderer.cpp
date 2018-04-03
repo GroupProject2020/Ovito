@@ -47,7 +47,7 @@ SceneRenderer::SceneRenderer(DataSet* dataset) : RefTarget(dataset)
 ******************************************************************************/
 QSize SceneRenderer::outputSize() const
 {
-	return QSize(renderSettings()->outputImageWidth(), renderSettings()->outputImageHeight());
+	return { renderSettings()->outputImageWidth(), renderSettings()->outputImageHeight() };
 }
 
 /******************************************************************************

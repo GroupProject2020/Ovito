@@ -39,7 +39,7 @@ SshChannel::SshChannel(SshConnection* connection, QObject* parent, bool isStderr
 bool SshChannel::atEnd() const
 {
     return !_channel || isOpen() == false || (_readBuffer.isEmpty() 
-        && (::ssh_channel_is_open(_channel) == false || ::ssh_channel_poll(_channel, _isStderr) == SSH_EOF));
+        && (!::ssh_channel_is_open(_channel) || ::ssh_channel_poll(_channel, _isStderr) == SSH_EOF));
 }
 
 /******************************************************************************
@@ -66,8 +66,8 @@ bool SshChannel::canReadLine() const
     return QIODevice::canReadLine() ||
            _readBuffer.contains('\n') ||
            _readBuffer.size() >= _bufferSize ||
-            (_readBuffer.isEmpty() == false && (isOpen() == false || !_channel ||
-                ::ssh_channel_is_open(_channel) == false ||
+            (!_readBuffer.isEmpty() && (!isOpen() || !_channel ||
+                !::ssh_channel_is_open(_channel) ||
                 ::ssh_channel_poll(_channel, _isStderr) == SSH_EOF));
 }
 

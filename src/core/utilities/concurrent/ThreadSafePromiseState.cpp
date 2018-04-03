@@ -124,10 +124,10 @@ void ThreadSafePromiseState::endProgressSubSteps()
 	PromiseStateWithProgress::endProgressSubSteps();
 }
 
-void ThreadSafePromiseState::setProgressText(const QString& progressText)
+void ThreadSafePromiseState::setProgressText(const QString& text)
 {
     QMutexLocker locker(&_mutex);
-	PromiseStateWithProgress::setProgressText(progressText);
+	PromiseStateWithProgress::setProgressText(text);
 }
 
 OVITO_END_INLINE_NAMESPACE

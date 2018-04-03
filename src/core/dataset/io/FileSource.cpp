@@ -117,14 +117,14 @@ bool FileSource::setSource(std::vector<QUrl> sourceUrls, FileSourceImporter* imp
 	class SetSourceOperation : public UndoableOperation {
 	public:
 		SetSourceOperation(FileSource* obj) : _obj(obj), _oldUrls(obj->sourceUrls()), _oldImporter(obj->importer()) {}
-		virtual void undo() override {
+		void undo() override {
 			std::vector<QUrl> urls = _obj->sourceUrls();
 			OORef<FileSourceImporter> importer = _obj->importer();
 			_obj->setSource(std::move(_oldUrls), _oldImporter, false);
 			_oldUrls = std::move(urls);
 			_oldImporter = importer;
 		}
-		virtual QString displayName() const override { 
+		QString displayName() const override { 
 			return QStringLiteral("Set file source url"); 
 		}		
 	private:
@@ -345,7 +345,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 
 				TimeInterval interval = TimeInterval::infinite();
 				if(frame < 0) interval.setEnd(sourceFrameToAnimationTime(0) - 1);
-				else if(frame >= sourceFrames.size() && sourceFrames.size() > 0) interval.setStart(sourceFrameToAnimationTime(sourceFrames.size()));
+				else if(frame >= sourceFrames.size() && !sourceFrames.empty()) interval.setStart(sourceFrameToAnimationTime(sourceFrames.size()));
 
 				return PipelineFlowState(PipelineStatus(PipelineStatus::Error, tr("The file source path is empty or has not been set (no files found).")),
 						dataObjects(), interval);
@@ -417,7 +417,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 									for(const auto& o : output.objects()) {
 										dataObjects.push_back(o);
 									}
-									_dataObjects.set(this, PROPERTY_FIELD(dataObjects), std::move(dataObjects));
+									_dataObjects.set(this, PROPERTY_FIELD(dataObjects), dataObjects);
 									_attributes = output.attributes();
 									setStoredFrameIndex(frame);
 								}
@@ -526,7 +526,6 @@ void FileSource::adjustAnimationInterval(int gotoFrameIndex)
 	UndoSuspender noUndo(this);
 
 	// Adjust the length of the animation interval to match the number of frames in the loaded sequence.
-	int numFrames = std::max(1, numberOfFrames());
 	TimeInterval interval(sourceFrameToAnimationTime(0), sourceFrameToAnimationTime(std::max(numberOfFrames()-1,0)));
 	animSettings->setAnimationInterval(interval);
 

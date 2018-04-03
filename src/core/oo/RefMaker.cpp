@@ -155,7 +155,7 @@ bool RefMaker::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 		for(const PropertyFieldDescriptor* field : getOOMetaClass().propertyFields()) {
 			if(!field->isReferenceField()) continue;
 			if(!field->flags().testFlag(PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES)) continue;
-			if(field->isVector() == false) {
+			if(!field->isVector()) {
 				if(getReferenceField(*field) == source)
 					return false;
 			}
@@ -179,7 +179,7 @@ bool RefMaker::hasReferenceTo(RefTarget* target) const
 	
 	for(const PropertyFieldDescriptor* field : getOOMetaClass().propertyFields()) {
 		if(!field->isReferenceField()) continue;
-		if(field->isVector() == false) {
+		if(!field->isVector()) {
 			if(getReferenceField(*field) == target) 
 				return true;
 		}
@@ -207,7 +207,7 @@ void RefMaker::replaceReferencesTo(RefTarget* oldTarget, RefTarget* newTarget)
 	// Iterate over all reference fields in the class hierarchy.
 	for(const PropertyFieldDescriptor* field : getOOMetaClass().propertyFields()) {
 		if(!field->isReferenceField()) continue;
-		if(field->isVector() == false) {
+		if(!field->isVector()) {
 			SingleReferenceFieldBase& singleField = field->singleStorageAccessFunc(this);
 			if(singleField == oldTarget)
 				singleField.set(this, *field, newTarget);
@@ -238,7 +238,7 @@ void RefMaker::clearReferencesTo(RefTarget* target)
 	// Iterate over all reference fields in the class hierarchy.
 	for(const PropertyFieldDescriptor* field : getOOMetaClass().propertyFields()) {
 		if(!field->isReferenceField()) continue;
-		if(field->isVector() == false) {
+		if(!field->isVector()) {
 			SingleReferenceFieldBase& singleField = field->singleStorageAccessFunc(this);
 			if(singleField == target)
 				singleField.set(this, *field, nullptr);
@@ -278,7 +278,7 @@ void RefMaker::clearReferenceField(const PropertyFieldDescriptor& field)
 	OVITO_ASSERT_MSG(field.isReferenceField(), "RefMaker::clearReferenceField", "This function may not be used for property fields."); 
 	OVITO_ASSERT_MSG(getOOClass().isDerivedFrom(*field.definingClass()), "RefMaker::clearReferenceField()", "The reference field has not been defined in this class or its base classes.");
 
-	if(field.isVector() == false)
+	if(!field.isVector())
 		field.singleStorageAccessFunc(this).set(this, field, nullptr);
 	else
 		field.vectorStorageAccessFunc(this).clear(this, field);
@@ -304,7 +304,7 @@ void RefMaker::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableDa
 			// Write reference target object to stream.
 			stream.beginChunk(0x02);
 			try {
-				if(field->isVector() == false) {
+				if(!field->isVector()) {
 					stream.saveObject(getReferenceField(*field), field->dontSaveRecomputableData());
 				}
 				else {
@@ -315,7 +315,8 @@ void RefMaker::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableDa
 				}
 			}
 			catch(Exception& ex) {
-				throw ex.prependGeneralMessage(tr("Failed to serialize contents of reference field %1 of class %2.").arg(field->identifier()).arg(field->definingClass()->name()));
+				ex.prependGeneralMessage(tr("Failed to serialize contents of reference field %1 of class %2.").arg(field->identifier()).arg(field->definingClass()->name()));
+				throw ex;
 			}
 			stream.endChunk();
 		}
@@ -367,7 +368,7 @@ void RefMaker::loadFromStream(ObjectLoadStream& stream)
 					OVITO_CHECK_POINTER(fieldEntry.field);
 					OVITO_ASSERT(fieldEntry.field->isVector() == ((fieldEntry.field->flags() & PROPERTY_FIELD_VECTOR) != 0));
 					OVITO_ASSERT(fieldEntry.targetClass->isDerivedFrom(*fieldEntry.field->targetClass()));
-					if(fieldEntry.field->isVector() == false) {
+					if(!fieldEntry.field->isVector()) {
 						OORef<RefTarget> target = stream.loadObject<RefTarget>();
 						if(target && !target->getOOClass().isDerivedFrom(*fieldEntry.targetClass)) {
 							throwException(tr("Incompatible object stored in reference field %1 of class %2. Expected class %3 but found class %4 in file.")
@@ -470,7 +471,7 @@ void RefMaker::walkNode(QSet<RefTarget*>& nodes, const RefMaker* node)
 	// Iterate over all reference fields in the class hierarchy.
 	for(const PropertyFieldDescriptor* field : node->getOOMetaClass().propertyFields()) {
 		if(!field->isReferenceField()) continue;
-		if(field->isVector() == false) {
+		if(!field->isVector()) {
 			RefTarget* target = node->getReferenceField(*field);
 			if(target != nullptr && !nodes.contains(target)) {
 				nodes.insert(target);
@@ -508,7 +509,7 @@ void RefMaker::loadUserDefaults()
 		if(field->flags().testFlag(PROPERTY_FIELD_MEMORIZE)) {
 			if(field->isReferenceField()) {
 				// If it's a reference field, recursively call loadUserDefaults() on the reference object(s).
-				if(field->isVector() == false) {
+				if(!field->isVector()) {
 					if(RefTarget* target = getReferenceField(*field)) {
 						target->loadUserDefaults();
 

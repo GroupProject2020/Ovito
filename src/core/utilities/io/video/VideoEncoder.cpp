@@ -110,7 +110,7 @@ void VideoEncoder::openFile(const QString& filename, int width, int height, int 
 	AVOutputFormat* outputFormat;
 	if(format == nullptr) {
 		// Auto detect the output format from the file name.
-		outputFormat = av_guess_format(NULL, qPrintable(filename), NULL);
+		outputFormat = ::av_guess_format(nullptr, qPrintable(filename), nullptr);
 		if(!outputFormat)
 			throw Exception(tr("Could not deduce video output format from file extension."));
 	}
@@ -128,17 +128,17 @@ void VideoEncoder::openFile(const QString& filename, int width, int height, int 
 		throw Exception(tr("No video codec available."));
 
 	// Find the video encoder.
-	AVCodec* codec = avcodec_find_encoder(outputFormat->video_codec);
+	AVCodec* codec = ::avcodec_find_encoder(outputFormat->video_codec);
 	if(!codec)
 		throw Exception(tr("Video codec not found."));
 
 	// Add the video stream using the default format codec and initialize the codec.
-	_videoStream = avformat_new_stream(_formatContext.get(), codec);
+	_videoStream = ::avformat_new_stream(_formatContext.get(), codec);
 	if(!_videoStream)
 		throw Exception(tr("Failed to create video stream."));
 
 #if LIBAVCODEC_VERSION_MAJOR >= 57
-	_codecContext.reset(avcodec_alloc_context3(codec), [](AVCodecContext* ctxt) { avcodec_free_context(&ctxt); });
+	_codecContext.reset(::avcodec_alloc_context3(codec), [](AVCodecContext* ctxt) { ::avcodec_free_context(&ctxt); });
     if(!_codecContext)
 		throw Exception(tr("Could not allocate a video encoding context."));
 #else
@@ -164,39 +164,39 @@ void VideoEncoder::openFile(const QString& filename, int width, int height, int 
 	if(_formatContext->oformat->flags & AVFMT_GLOBALHEADER)
 		_codecContext->flags |= CODEC_FLAG_GLOBAL_HEADER;
 
-	av_dump_format(_formatContext.get(), 0, _formatContext->filename, 1);
+	::av_dump_format(_formatContext.get(), 0, _formatContext->filename, 1);
 
 	// Open the codec.
-	if((errCode = avcodec_open2(_codecContext.get(), NULL, NULL)) < 0)
+	if((errCode = ::avcodec_open2(_codecContext.get(), nullptr, nullptr)) < 0)
 		throw Exception(tr("Could not open video codec: %1").arg(errorMessage(errCode)));
 
 	// Allocate and init a YUV frame.
 #if LIBAVCODEC_VERSION_MAJOR >= 56
-	_frame.reset(av_frame_alloc(), &av_free);
+	_frame.reset(::av_frame_alloc(), &::av_free);
 #else
-	_frame.reset(avcodec_alloc_frame(), &av_free);
+	_frame.reset(::avcodec_alloc_frame(), &::av_free);
 #endif
 	if(!_frame)
 		throw Exception(tr("Could not allocate video frame."));
 
 	// Allocate memory.
 	int size = avpicture_get_size(_codecContext->pix_fmt, _codecContext->width, _codecContext->height);
-	_pictureBuf.reset(new quint8[size]);
+	_pictureBuf = std::make_unique<quint8[]>(size);
 
 	// Setup the planes.
-	avpicture_fill(reinterpret_cast<AVPicture*>(_frame.get()), _pictureBuf.get(), _codecContext->pix_fmt, _codecContext->width, _codecContext->height);
+	::avpicture_fill(reinterpret_cast<AVPicture*>(_frame.get()), _pictureBuf.get(), _codecContext->pix_fmt, _codecContext->width, _codecContext->height);
 
 	// Allocate memory for encoded frame.
 	_outputBuf.resize(width * height * 3);
 
 	// Open output file (if needed).
 	if(!(outputFormat->flags & AVFMT_NOFILE)) {
-		if(avio_open(&_formatContext->pb, _formatContext->filename, AVIO_FLAG_WRITE) < 0)
+		if(::avio_open(&_formatContext->pb, _formatContext->filename, AVIO_FLAG_WRITE) < 0)
 			throw Exception(tr("Failed to open output video file %1").arg(filename));
 	}
 
 	// Write stream header, if any.
-	if((errCode = avformat_write_header(_formatContext.get(), NULL)) < 0)
+	if((errCode = ::avformat_write_header(_formatContext.get(), nullptr)) < 0)
 		throw Exception(tr("Failed to write video file header: %1").arg(errorMessage(errCode)));
 
 	// Success.

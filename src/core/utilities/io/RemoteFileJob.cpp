@@ -45,8 +45,8 @@ constexpr int MaximumNumberOfSimulateousJobs = 2;
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-RemoteFileJob::RemoteFileJob(QUrl url, const PromiseStatePtr& promiseState) :
-		_url(std::move(url)), _promiseState(promiseState)
+RemoteFileJob::RemoteFileJob(QUrl url, PromiseStatePtr promiseState) :
+		_url(std::move(url)), _promiseState(std::move(promiseState))
 {
 	// Run all event handlers of this class in the main thread.
 	moveToThread(QCoreApplication::instance()->thread());
@@ -120,11 +120,11 @@ void RemoteFileJob::shutdown(bool success)
 {
 	if(_promiseWatcher) {
 		_promiseWatcher->reset();
-		disconnect(_promiseWatcher, 0, this, 0);
+		disconnect(_promiseWatcher, nullptr, this, nullptr);
 		_promiseWatcher->deleteLater();
 	}
 	if(_connection) {
-		disconnect(_connection, 0, this, 0);
+		disconnect(_connection, nullptr, this, nullptr);
 		Application::instance()->fileManager()->releaseSshConnection(_connection);
 		_connection = nullptr;
 	}
@@ -143,7 +143,7 @@ void RemoteFileJob::shutdown(bool success)
 	// If there jobs waiting in the queue, execute next job.
 	if(!_queuedJobs.isEmpty() && _numActiveJobs < MaximumNumberOfSimulateousJobs) {
 		RemoteFileJob* waitingJob = _queuedJobs.dequeue();
-		if(waitingJob->_promiseState->isCanceled() == false) {
+		if(!waitingJob->_promiseState->isCanceled()) {
 			waitingJob->start();
 		}
 		else {
@@ -229,7 +229,7 @@ void DownloadRemoteFileJob::shutdown(bool success)
 {
 	// Close file channel.
 	if(_scpChannel) {
-		disconnect(_scpChannel, 0, this, 0);
+		disconnect(_scpChannel, nullptr, this, nullptr);
 		_scpChannel->closeChannel();
 		_scpChannel->deleteLater();
 		_scpChannel = nullptr;
@@ -383,7 +383,7 @@ void ListRemoteDirectoryJob::receivedDirectoryComplete(const QStringList& listin
 void ListRemoteDirectoryJob::shutdown(bool success)
 {
 	if(_lsChannel) {
-		disconnect(_lsChannel, 0, this, 0);
+		disconnect(_lsChannel, nullptr, this, nullptr);
 		_lsChannel->closeChannel();
 		_lsChannel->deleteLater();
 		_lsChannel = nullptr;

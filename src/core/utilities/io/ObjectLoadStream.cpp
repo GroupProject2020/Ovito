@@ -131,7 +131,8 @@ void ObjectLoadStream::close()
 	// This prevents re-entrance in case of an exception.
 	if(!_currentObject) {
 
-		for(int i = 0; i < _objectsToLoad.size(); i++) {
+		// Note: Not using range-based for-loop here, because new objects may be appended to the list at any time.
+		for(int i = 0; i < _objectsToLoad.size(); i++) { // NOLINT(modernize-loop-convert)
 			quint32 index = _objectsToLoad[i];
 			_currentObject = &_objects[index];
 			OVITO_CHECK_POINTER(_currentObject);

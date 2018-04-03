@@ -112,10 +112,10 @@ const Color& ViewportSettings::viewportColor(ViewportColor which) const
 /******************************************************************************
 * Sets color values for drawing in the viewports.
 ******************************************************************************/
-void ViewportSettings::setViewportColor(ViewportColor which, const Color& clr)
+void ViewportSettings::setViewportColor(ViewportColor which, const Color& color)
 {
 	OVITO_ASSERT(which >= 0 && which < _viewportColors.size());
-	_viewportColors[which] = clr;
+	_viewportColors[which] = color;
 }
 
 /******************************************************************************
@@ -124,10 +124,10 @@ void ViewportSettings::setViewportColor(ViewportColor which, const Color& clr)
 Vector3 ViewportSettings::upVector() const
 {
 	switch(_upDirection) {
-	case X_AXIS: return Vector3(1,0,0);
-	case Y_AXIS: return Vector3(0,1,0);
-	case Z_AXIS: return Vector3(0,0,1);
-	default: return Vector3(0,0,1);
+	case X_AXIS: return { 1,0,0 };
+	case Y_AXIS: return { 0,1,0 };
+	case Z_AXIS: return { 0,0,1 };
+	default: return { 0,0,1 };
 	}
 }
 

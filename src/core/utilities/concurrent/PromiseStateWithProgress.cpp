@@ -127,7 +127,7 @@ void PromiseStateWithProgress::computeTotalProgress()
 void PromiseStateWithProgress::beginProgressSubStepsWithWeights(std::vector<int> weights)
 {
     OVITO_ASSERT(std::accumulate(weights.cbegin(), weights.cend(), 0) > 0);
-    subStepsStack.push_back(std::make_pair(0, std::move(weights)));
+    subStepsStack.emplace_back(0, std::move(weights));
     _progressMaximum = 0;
     _progressValue = 0;
     computeTotalProgress();

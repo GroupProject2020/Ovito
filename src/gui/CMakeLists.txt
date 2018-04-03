@@ -149,7 +149,9 @@ ELSE()
 ENDIF()
 
 # Speed up compilation by using precompiled headers.
-ADD_PRECOMPILED_HEADER(Gui gui/GUI.h)
+IF(OVITO_USE_PRECOMPILED_HEADERS)
+	ADD_PRECOMPILED_HEADER(Gui gui/GUI.h)
+ENDIF()
 
 IF(APPLE)
     # Activate @rpath on MacOS.

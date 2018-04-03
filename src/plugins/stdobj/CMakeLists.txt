@@ -48,7 +48,9 @@ OVITO_STANDARD_PLUGIN(StdObj
 )
 
 # Speed up compilation by using precompiled headers.
-ADD_PRECOMPILED_HEADER(StdObj plugins/stdobj/StdObj.h)
+IF(OVITO_USE_PRECOMPILED_HEADERS)
+	ADD_PRECOMPILED_HEADER(StdObj plugins/stdobj/StdObj.h)
+ENDIF()
 
 # Build corresponding GUI plugin.
 IF(OVITO_BUILD_GUI)

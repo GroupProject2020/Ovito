@@ -222,7 +222,7 @@ public Q_SLOTS:
 Q_SIGNALS:
 
 	/// This signal is emitted when the current animation time has changed.
-	void timeChanged(TimePoint newTime);
+	void timeChanged(TimePoint time);
 
 	/// This signal is emitted when the scene becomes ready after the current animation time has changed.
 	void timeChangeComplete();
@@ -245,7 +245,7 @@ Q_SIGNALS:
 private Q_SLOTS:
 
 	/// \brief Is called when the current animation time has changed.
-	void onTimeChanged(TimePoint newTime);
+	void onTimeChanged();
 
 	/// \brief Timer callback used during animation playback.
 	void onPlaybackTimer();

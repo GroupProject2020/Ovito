@@ -34,7 +34,7 @@ using namespace std;
 ObjectSaveStream::~ObjectSaveStream()
 {
 	try {
-		close();
+		ObjectSaveStream::close();
 	}
 	catch(Exception& ex) {
 		if(!ex.context()) ex.setContext(_dataset);
@@ -89,10 +89,10 @@ void ObjectSaveStream::close()
 		std::vector<qint64> objectOffsets;
 
 		// Serialize the data of each object.
-		// Note that additional objects may be appended to the end of the list
+		// Note: Not using range-based for-loop here, because additional objects may be appended to the end of the list
 		// as we save objects which are already in the list.
 		beginChunk(0x100);
-		for(size_t i = 0; i < _objects.size(); i++) {
+		for(size_t i = 0; i < _objects.size(); i++) { // NOLINT(modernize-loop-convert)
 			OVITO_CHECK_OBJECT_POINTER(_objects[i].object);
 			objectOffsets.push_back(filePosition());
 			_objects[i].object->saveToStream(*this, _objects[i].excludeRecomputableData);

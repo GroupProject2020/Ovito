@@ -228,14 +228,13 @@ public:
 	UndoStack();
 
 	/// \brief Begins composition of a macro command with the given text description.
-	/// \param text A human-readable name that is shown in the edit menu to describe
-	///             the operation.
+	/// \param displayName A human-readable name that is shown in the edit menu to describe the operation.
 	///
 	/// \note Each call to beginCompoundOperation() must be followed by a call to
 	///       endCompoundOperation() to commit the operation. Multiple compound operations
 	///       can be nested by multiple calls to beginCompoundOperation() followed by the same
 	///       number of calls to endCompoundOperation().
-	void beginCompoundOperation(const QString& text);
+	void beginCompoundOperation(const QString& displayName);
 
 	/// \brief Ends composition of a macro command.
 	/// \param commit If true, the macro operation is put on the undo stack. If false,

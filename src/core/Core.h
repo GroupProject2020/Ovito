@@ -23,8 +23,7 @@
 // Standard precompiled header file included by all source files in this module
 //
 
-#ifndef __OVITO_CORE_
-#define __OVITO_CORE_
+#pragma once
 
 /******************************************************************************
 * Standard Template Library (STL)
@@ -152,5 +151,3 @@
 #include <core/utilities/Color.h>
 #include <core/oo/OvitoObject.h>
 #include <core/dataset/DataSet.h>
-
-#endif

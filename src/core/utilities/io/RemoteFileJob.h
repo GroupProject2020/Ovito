@@ -47,7 +47,7 @@ class RemoteFileJob : public QObject
 public:
 
 	/// Constructor.
-	RemoteFileJob(QUrl url, const PromiseStatePtr& promiseState);
+	RemoteFileJob(QUrl url, PromiseStatePtr promiseState);
 
 	/// Returns the URL being accessed.
 	const QUrl& url() const { return _url; }

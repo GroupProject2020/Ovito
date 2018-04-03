@@ -77,4 +77,6 @@ OVITO_STANDARD_PLUGIN(ParticlesGui
 )
 
 # Speed up compilation by using precompiled headers.
-ADD_PRECOMPILED_HEADER(ParticlesGui plugins/particles/gui/ParticlesGui.h)
+IF(OVITO_USE_PRECOMPILED_HEADERS)
+	ADD_PRECOMPILED_HEADER(ParticlesGui plugins/particles/gui/ParticlesGui.h)
+ENDIF()

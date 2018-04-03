@@ -85,7 +85,7 @@ RenderSettings::RenderSettings(DataSet* dataset) : RefTarget(dataset),
 	OvitoClassPtr rendererClass = PluginManager::instance().findClass("OpenGLRenderer", "StandardSceneRenderer");
 	if(rendererClass == nullptr) {
 		QVector<OvitoClassPtr> classList = PluginManager::instance().listClasses(SceneRenderer::OOClass());
-		if(classList.isEmpty() == false) rendererClass = classList.front();
+		if(!classList.empty()) rendererClass = classList.front();
 	}
 	if(rendererClass)
 		setRenderer(static_object_cast<SceneRenderer>(rendererClass->createInstance(dataset)));

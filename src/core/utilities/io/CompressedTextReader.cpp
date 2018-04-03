@@ -31,7 +31,7 @@ CompressedTextReader::CompressedTextReader(QFileDevice& input, const QString& or
 	_device(input), _lineNumber(0), _byteOffset(0), _uncompressor(&input, 6, 0x100000), _mmapPointer(nullptr)
 {
 	// Try to find out what the filename is.
-	if(originalFilePath.isEmpty() == false)
+	if(!originalFilePath.isEmpty())
 		_filename = QFileInfo(originalFilePath).fileName();
 	else
 		_filename = input.fileName();
@@ -103,7 +103,7 @@ const char* CompressedTextReader::readLine(int maxSize)
 std::pair<const char*, const char*> CompressedTextReader::mmap(qint64 offset, qint64 size)
 {
 	OVITO_ASSERT(_mmapPointer == nullptr);
-	if(isCompressed() == false)
+	if(!isCompressed())
 		_mmapPointer = device().map(underlyingByteOffset(), size);
 	return std::make_pair(
 			reinterpret_cast<const char*>(_mmapPointer),

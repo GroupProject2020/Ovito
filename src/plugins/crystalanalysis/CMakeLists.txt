@@ -73,7 +73,9 @@ OVITO_STANDARD_PLUGIN(CrystalAnalysis
 )
 
 # Speed up compilation by using precompiled headers.
-ADD_PRECOMPILED_HEADER(CrystalAnalysis plugins/crystalanalysis/CrystalAnalysis.h)
+IF(OVITO_USE_PRECOMPILED_HEADERS)
+	ADD_PRECOMPILED_HEADER(CrystalAnalysis plugins/crystalanalysis/CrystalAnalysis.h)
+ENDIF()
 
 # Build corresponding GUI plugin.
 IF(OVITO_BUILD_GUI)

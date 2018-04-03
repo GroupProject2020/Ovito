@@ -210,7 +210,7 @@ void UndoStack::undo()
 	OVITO_ASSERT(isRecording() == false);
 	OVITO_ASSERT(isUndoingOrRedoing() == false);
 	OVITO_ASSERT_MSG(_compoundStack.empty(), "UndoStack::undo()", "Cannot undo last operation while a compound operation is open.");
-	if(canUndo() == false) return;
+	if(!canUndo()) return;
 
 	UndoableOperation* curOp = _operations[index()].get();
 	OVITO_CHECK_POINTER(curOp);
@@ -241,7 +241,7 @@ void UndoStack::redo()
 	OVITO_ASSERT(isRecording() == false);
 	OVITO_ASSERT(isUndoingOrRedoing() == false);
 	OVITO_ASSERT_MSG(_compoundStack.empty(), "UndoStack::redo()", "Cannot redo operation while a compound operation is open.");
-	if(canRedo() == false) return;
+	if(!canRedo()) return;
 
 	UndoableOperation* nextOp = _operations[index() + 1].get();
 	OVITO_CHECK_POINTER(nextOp);
@@ -280,9 +280,9 @@ void UndoStack::CompoundOperation::undo()
 ******************************************************************************/
 void UndoStack::CompoundOperation::redo()
 {
-	for(size_t i = 0; i < _subOperations.size(); i++) {
-		OVITO_CHECK_POINTER(_subOperations[i]);
-		_subOperations[i]->redo();
+	for(const auto& op : _subOperations) {
+		OVITO_CHECK_POINTER(op);
+		op->redo();
 	}
 }
 

@@ -35,13 +35,13 @@ class ProcessChannel : public SshChannel
 public:
 
     /// Constructor.
-    explicit ProcessChannel(SshConnection* connection, const QString& command);
+    explicit ProcessChannel(SshConnection* connection, QString command);
 
     /// Destructor.
     ~ProcessChannel();
 
     /// Opens the QIODevice. Same as openChannel().
-    virtual bool open(OpenMode ignored) override;
+    virtual bool open(OpenMode mode) override;
 
     /// Closes the QIODevice.
     virtual void close() override;

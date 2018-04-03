@@ -113,7 +113,7 @@ private:
     /// Writes outputSize bytes from buffer to the inderlying device.
     bool writeBytes(qint64 outputSize);
 
-    bool _manageDevice;
+    bool _manageDevice = false;
     int _compressionLevel;
     QIODevice* _device;
     State _state = Closed;

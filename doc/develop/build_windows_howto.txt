@@ -1,9 +1,11 @@
 **************************************************************************
 Compiler: 
     Microsoft Visual C++ 2015
+
+spellcheck: off
 **************************************************************************
 
-Typical layour for the build directory:
+Typical layout for the build directory:
 
 ovito/
   32bit/                (Build directory for 32-bit dependencies)
@@ -25,18 +27,20 @@ nmake install
 **************************************************************************
 Qt
 **************************************************************************
-Install the following components (Qt 5.9.2) in C:\Qt\ : 
+Install the following components (Qt 5.9.4) in C:\Qt\ : 
    msvc2015 32-bit
    msvc2015 64-bit
 
 **************************************************************************
 Python 3.x
 **************************************************************************
-Select installation component "pip", deselect all other components.
-cd Scripts
-easy_install sphinx
 
------ Install NumPy from http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy ---
+----- Install Sphinx ---
+Scripts\pip3 install sphinx
+
+----- Install NumPy ---
+Scripts\pip3 install numpy
+Scripts\pip3 install matplotlib
 
 ----- Install SIP ----
 ..\64bit\Python\python.exe configure.py
@@ -56,10 +60,6 @@ nmake install
    --enable QtWidgets
 nmake
 nmake install
-
----- Install matplotlib ----
-..\64bit\python\python.exe -m pip install -U pip setuptools
-..\64bit\python\python.exe -m pip install matplotlib
 
 **************************************************************************
 Boost libraries (release 1.62):
@@ -116,6 +116,13 @@ mkdir qscintilla
 cd qscintilla
 qmake ..\..\QScintilla_gpl-2.10.1\Qt4Qt5\qscintilla.pro
 nmake
+
+**************************************************************************
+OpenSSL
+**************************************************************************
+- Download source code
+- Install ActiveState Perl
+- Follow build instructions for Win64 platform.
 
 **************************************************************************
 libssh
@@ -190,9 +197,9 @@ cmake -G "NMake Makefiles" ^
    -DBOOST_INCLUDEDIR=%cd:\=/%/../../boost_1_62_0 ^
    -DQSCINTILLA_INCLUDE_DIR=%cd:\=/%/../../QScintilla_gpl-2.10.1\Qt4Qt5 ^
    -DQSCINTILLA_LIBRARY=%cd:\=/%/../qscintilla/release/qscintilla2_qt5.lib ^
-   -DPYTHON_LIBRARY=%cd:\=/%/../Python/libs/python34.lib ^
+   -DPYTHON_LIBRARY=%cd:\=/%/../Python/libs/python36.lib ^
    -DPYTHON_INCLUDE_DIR=%cd:\=/%/../Python/include ^
-   -DPYTHON_EXECUTABLE=%cd:\=/%/../Python/bin/python.exe ^
+   -DPYTHON_EXECUTABLE=%cd:\=/%/../Python/python.exe ^
    -DXSLT_PROCESSOR=../../libxslt-1.1.26.win32/bin/xsltproc.exe ^
    -DSPHINX_PROCESSOR_PATH=%cd:\=/%/../Python/Scripts ^
    -DLIBAV_INCLUDE_DIR=%cd:\=/%/../libav_install/include ^
@@ -205,6 +212,8 @@ cmake -G "NMake Makefiles" ^
    -DOPENVR_LIBRARY=%cd:\=/%/../openvr/lib/win64/openvr_api.lib ^
    -DFFTW3_INCLUDE_DIR=%cd:\=/%/../fftw ^
    -DFFTW3_LIBRARY=%cd:\=/%/../fftw/libfftw3-3.lib ^
+   -DLIBAV_INCLUDE_DIR=%cd:\=/%/../libav_install/include ^
+   -DLIBAV_LIBRARY_DIR=%cd:\=/%/../libav_install/bin ^
    ../../source
    
 nmake install
@@ -237,6 +246,8 @@ cmake -G "NMake Makefiles" ^
    -DSPHINX_PROCESSOR_PATH=%cd:\=/%/../Python/Scripts ^
    -DLIBAV_INCLUDE_DIR=%cd:\=/%/../libav_install/include ^
    -DLIBAV_LIBRARY_DIR=%cd:\=/%/../libav_install/bin ^
+   -DLIBSSH_INCLUDE_DIR=%cd:\=/%/../libsh_install/include ^
+   -DLIBSSH_LIBRARY=%cd:\=/%/../libssh_install/lib/ssh.lib ^
    -DOVITO_BUILD_DOCUMENTATION=ON ^
    -DOVITO_DOUBLE_PRECISION_FP=ON ^
    -DFFTW3_INCLUDE_DIR=%cd:\=/%/../fftw ^

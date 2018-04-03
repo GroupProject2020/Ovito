@@ -79,7 +79,7 @@ public:
 	virtual TimePoint sourceFrameToAnimationTime(int frame) const override;
 
 	/// \brief Requests a source frame from the input sequence.
-	SharedFuture<PipelineFlowState> requestFrame(int frameIndex);
+	SharedFuture<PipelineFlowState> requestFrame(int frame);
 
 	/// Returns the title of this object.
 	virtual QString objectTitle() override;
@@ -140,7 +140,7 @@ protected:
 private:
 
 	/// Requests a source frame from the input sequence.
-	Future<PipelineFlowState> requestFrameInternal(int frameIndex);
+	Future<PipelineFlowState> requestFrameInternal(int frame);
 
 	/// \brief Adjusts the animation interval of the current data set to the number of frames in the data source.
 	void adjustAnimationInterval(int gotoFrameIndex = -1);

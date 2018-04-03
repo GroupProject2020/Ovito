@@ -48,7 +48,9 @@ OVITO_STANDARD_PLUGIN(StdMod
 )
 
 # Speed up compilation by using precompiled headers.
-ADD_PRECOMPILED_HEADER(StdMod plugins/stdmod/StdMod.h)
+IF(OVITO_USE_PRECOMPILED_HEADERS)
+	ADD_PRECOMPILED_HEADER(StdMod plugins/stdmod/StdMod.h)
+ENDIF()
 
 # Build corresponding GUI plugin.
 IF(OVITO_BUILD_GUI)

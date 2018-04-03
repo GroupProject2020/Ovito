@@ -31,7 +31,7 @@ using namespace std;
 /******************************************************************************
 * Opens the stream for reading.
 ******************************************************************************/
-LoadStream::LoadStream(QDataStream& source) : _is(source), _isOpen(false)
+LoadStream::LoadStream(QDataStream& source) : _is(source)
 {
 	OVITO_ASSERT_MSG(!_is.device()->isSequential(), "LoadStream constructor", "LoadStream class requires a seekable input stream.");
     if(_is.device()->isSequential())
@@ -187,7 +187,7 @@ quint64 LoadStream::readPointer(void** patchPointer)
 {
 	quint64 id;
 	*this >> id;
-	if(id == 0) { *patchPointer = NULL; }
+	if(id == 0) { *patchPointer = nullptr; }
 	else {
 		if(_pointerMap.size() > id && _resolvedPointers[id])
 			*patchPointer = _pointerMap[id];

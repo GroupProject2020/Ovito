@@ -145,12 +145,8 @@ bool DataSet::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 			}
 		}
 			
-		if(source == sceneRoot() || source == selection() || source == renderSettings()) {
-			return true;	// Propagate change event to DataSetContainer.
-		}
-		else {
-			return false;	// Do not propagate change event to DataSetContainer.
-		}
+		// Propagate event only from certain sources to the DataSetContainer:
+		return (source == sceneRoot() || source == selection() || source == renderSettings());
 	}
 	return RefTarget::referenceEvent(source, event);
 }
@@ -348,7 +344,7 @@ void DataSet::pipelineEvaluationFinished()
 	OVITO_ASSERT(_pipelineEvaluationFuture.isFinished());
 
 	// Query results of the pipeline evaluation to see if an exception has been thrown.
-	if(_pipelineEvaluationFuture.isCanceled() == false) {
+	if(!_pipelineEvaluationFuture.isCanceled()) {
 		try { 
 			_pipelineEvaluationFuture.results();
 		}
