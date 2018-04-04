@@ -168,6 +168,8 @@ void PythonViewportOverlay::render(Viewport* viewport, TimePoint time, QPainter&
 									const ViewProjectionParameters& projParams, RenderSettings* renderSettings, 
 									bool interactiveViewport, TaskManager& taskManager)
 {
+	qDebug() << "PythonViewportOverlay::render interactiveViewport=" << interactiveViewport << "time=" << time; 
+
 	// Compile script source if needed.
 	if(!_overlayScriptFunction) {
 		compileScript();
@@ -192,7 +194,7 @@ void PythonViewportOverlay::render(Viewport* viewport, TimePoint time, QPainter&
 
 		// Get a local script engine.
 		ScriptEngine* engine = getScriptEngine();
-		engine->execute([this,engine,viewport,&painter,&projParams,renderSettings]() {
+		engine->execute([this,engine,viewport,&painter,&projParams,renderSettings,time]() {
 
 			// Pass viewport, QPainter, and other information to the Python script function.
 			// The QPainter pointer has to be converted to the representation used by PyQt.
@@ -208,6 +210,7 @@ void PythonViewportOverlay::render(Viewport* viewport, TimePoint time, QPainter&
 			kwargs["fov"] = py::cast(projParams.fieldOfView);
 			kwargs["view_tm"] = py::cast(projParams.viewMatrix);
 			kwargs["proj_tm"] = py::cast(projParams.projectionMatrix);
+			kwargs["frame"] = py::cast(dataset()->animationSettings()->timeToFrame(time));
 
 			py::object painter_ptr = py::cast(reinterpret_cast<std::uintptr_t>(&painter));
 			py::object qpainter_class = qtgui_module.attr("QPainter");
