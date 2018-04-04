@@ -49,6 +49,7 @@
 #include <plugins/stdobj/properties/PropertyStorage.h>
 #include <plugins/stdobj/scripting/PythonBinding.h>
 #include <plugins/pyscript/binding/PythonBinding.h>
+#include <plugins/pyscript/engine/ScriptEngine.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/dataset/io/FileSource.h>
 #include <core/dataset/animation/AnimationSettings.h>

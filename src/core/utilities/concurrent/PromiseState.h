@@ -284,7 +284,11 @@ class OVITO_CORE_EXPORT PromiseStateCountedPtr
 public:
 
 	/// Default constructor.
+#ifndef Q_CC_MSVC
 	PromiseStateCountedPtr() noexcept = default;
+#else
+	PromiseStateCountedPtr() noexcept {}
+#endif
 
 	/// Initialization constructor.
 	PromiseStateCountedPtr(PromiseStatePtr ptr) noexcept : _ptr(std::move(ptr)) {

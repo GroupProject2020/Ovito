@@ -142,7 +142,11 @@ public:
 protected:
 
 	/// Default constructor.
+#ifndef Q_CC_MSVC
 	PromiseBase() noexcept = default;
+#else
+	PromiseBase() noexcept {}
+#endif
 
 	/// Move constructor.
 	PromiseBase(PromiseBase&& p) noexcept = default;
@@ -166,7 +170,11 @@ public:
 	using future_type = Future<R...>;
 
 	/// Default constructor.
+#ifndef Q_CC_MSVC
 	Promise() noexcept = default;
+#else
+	Promise() noexcept {}
+#endif
 
 	/// Creates a promise that is used to report progress in the main thread.
 	static Promise createSynchronous(TaskManager* taskManager, bool startedState, bool registerWithManager) {

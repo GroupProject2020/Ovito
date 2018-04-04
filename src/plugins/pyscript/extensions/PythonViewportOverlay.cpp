@@ -24,6 +24,7 @@
 #include <core/viewport/Viewport.h>
 #include <core/rendering/RenderSettings.h>
 #include <core/dataset/DataSetContainer.h>
+#include <core/app/Application.h>
 #include "PythonViewportOverlay.h"
 
 namespace PyScript {

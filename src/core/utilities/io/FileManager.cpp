@@ -1,4 +1,4 @@
-///////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////
 // 
 //  Copyright (2018) Alexander Stukowski
 //
@@ -245,7 +245,13 @@ void FileManager::unknownSshServer()
 ******************************************************************************/
 bool FileManager::detectedUnknownSshServer(const QString& hostname, const QString& unknownHostMessage, const QString& hostPublicKeyHash)
 {
-	return false;
+	std::cout << "OVITO is connecting to remote host '" << qPrintable(hostname) << "' via SSH." << std::endl;
+	std::cout << qPrintable(unknownHostMessage) << std::endl;
+	std::cout << "Host key fingerprint is " << qPrintable(hostPublicKeyHash) << std::endl;
+	std::cout << "Are you sure you want to continue connecting (yes/no)? " << std::flush;
+	std::string reply;
+	std::cin >> reply;
+	return reply == "yes";
 }
 
 /******************************************************************************
@@ -256,7 +262,7 @@ void FileManager::sshAuthenticationFailed(int auth)
     SshConnection* connection = qobject_cast<SshConnection*>(sender());
     if(!connection)
         return;
-
+	
 	SshConnection::AuthMethods supported = connection->supportedAuthMethods();
 	if(auth & SshConnection::UseAuthPassword && supported & SshConnection::AuthMethodPassword) {
         connection->usePasswordAuth(true);

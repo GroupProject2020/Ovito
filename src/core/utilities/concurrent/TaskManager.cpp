@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -36,6 +36,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPAC
 TaskManager::TaskManager(DataSetContainer& owner) : _owner(owner)
 {
 	qRegisterMetaType<PromiseStatePtr>("PromiseStatePtr");
+	
+	// When the application is shutting down, we should cancel all pending tasks.
+	connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, this, &TaskManager::cancelAll);
 }
 
 /******************************************************************************
@@ -170,7 +173,7 @@ void TaskManager::waitForAll()
 ******************************************************************************/
 void TaskManager::startLocalEventHandling() 
 {
-	OVITO_ASSERT_MSG(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread(), "TaskManager::waitForTask", "Function may only be called from the main thread.");
+	OVITO_ASSERT_MSG(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread(), "TaskManager::startLocalEventHandling", "Function may only be called from the main thread.");
 	
 	_inLocalEventLoop++;
 }
@@ -181,7 +184,7 @@ void TaskManager::startLocalEventHandling()
 ******************************************************************************/
 void TaskManager::stopLocalEventHandling()
 {
-	OVITO_ASSERT_MSG(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread(), "TaskManager::waitForTask", "Function may only be called from the main thread.");
+	OVITO_ASSERT_MSG(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread(), "TaskManager::stopLocalEventHandling", "Function may only be called from the main thread.");
 	OVITO_ASSERT(_inLocalEventLoop > 0);
 
 	_inLocalEventLoop--;
@@ -226,8 +229,9 @@ bool TaskManager::waitForTask(const PromiseStatePtr& sharedState)
 	activeEventLoop = &eventLoop;
 	auto oldSignalHandler = ::signal(SIGINT, [](int) {
 		userInterrupt.storeRelease(1);
-		if(activeEventLoop)
+		if(activeEventLoop) {
 			QMetaObject::invokeMethod(activeEventLoop, "quit");
+		}
 	});
 #endif
 	
@@ -243,6 +247,11 @@ bool TaskManager::waitForTask(const PromiseStatePtr& sharedState)
 		return false;
 	}
 #endif
+
+	if(!sharedState->isFinished()) {
+		qWarning() << "Warning: TaskManager::waitForTask() returning with an unfinished promise state (canceled=" << sharedState->isCanceled() << ")";
+		sharedState->cancel();
+	}
 
 	return !sharedState->isCanceled();
 }

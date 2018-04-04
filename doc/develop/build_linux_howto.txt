@@ -344,7 +344,6 @@ $HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
   -DPYTHON_EXECUTABLE=$HOME/progs/python/bin/python3 \
   -DPYTHON_LIBRARY=$HOME/progs/python/lib/libpython3.5m.so.1.0 \
   -DPYTHON_INCLUDE_DIR=$HOME/progs/python/include/python3.5m \
-  -DSPHINX_PROCESSOR_PATH=$HOME/progs/python/bin \
   -DCMAKE_PREFIX_PATH=$HOME/progs/qt5/ \
   -DQSCINTILLA_INCLUDE_DIR=$HOME/progs/QScintilla_gpl-2.9.3/Qt4Qt5/ \
   -DQSCINTILLA_LIBRARY=$HOME/progs/QScintilla_gpl-2.9.3/Qt4Qt5/libqscintilla2.so.12 \

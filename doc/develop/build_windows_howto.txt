@@ -201,7 +201,6 @@ cmake -G "NMake Makefiles" ^
    -DPYTHON_INCLUDE_DIR=%cd:\=/%/../Python/include ^
    -DPYTHON_EXECUTABLE=%cd:\=/%/../Python/python.exe ^
    -DXSLT_PROCESSOR=../../libxslt-1.1.26.win32/bin/xsltproc.exe ^
-   -DSPHINX_PROCESSOR_PATH=%cd:\=/%/../Python/Scripts ^
    -DLIBAV_INCLUDE_DIR=%cd:\=/%/../libav_install/include ^
    -DLIBAV_LIBRARY_DIR=%cd:\=/%/../libav_install/bin ^
    -DOVITO_BUILD_DOCUMENTATION=ON ^
@@ -212,16 +211,11 @@ cmake -G "NMake Makefiles" ^
    -DOPENVR_LIBRARY=%cd:\=/%/../openvr/lib/win64/openvr_api.lib ^
    -DFFTW3_INCLUDE_DIR=%cd:\=/%/../fftw ^
    -DFFTW3_LIBRARY=%cd:\=/%/../fftw/libfftw3-3.lib ^
-   -DLIBAV_INCLUDE_DIR=%cd:\=/%/../libav_install/include ^
-   -DLIBAV_LIBRARY_DIR=%cd:\=/%/../libav_install/bin ^
+   -DLIBSSH_INCLUDE_DIR=%cd:\=/%/../libssh_install/include ^
+   -DLIBSSH_LIBRARY=%cd:\=/%/../libssh_install/lib/ssh.lib ^
+   -DOPENSSL_LIBRARY_DLL=%cd:\=/%/../openssl_install/bin/libeay32.dll ^
    ../../source
-   
-nmake install
 
----- Copy missing DLLs into installation dir of 32-bit version ----
-
-C:\Program Files (x86)\CMake 2.8\bin\libeay32.dll
-C:\Program Files (x86)\CMake 2.8\bin\ssleay32.dll
 
 **************************************************************************
 Debug version:
@@ -231,26 +225,27 @@ cd ovito_debug
 cmake -G "NMake Makefiles" ^
    -DCMAKE_BUILD_TYPE=Debug ^
    -DCMAKE_INSTALL_PREFIX=../ovito_debug_install ^
-   -DOVITO_REDISTRIBUTABLE_PACKAGE=ON ^
    -DZLIB_INCLUDE_DIR=%cd:\=/%/../zlib_install/include ^
    -DZLIB_LIBRARY=%cd:\=/%/../zlib_install/lib/zlib.lib ^
    -Dnetcdf_DIR=%cd:\=/%/../netcdf_install/lib/cmake/netCDF ^
    -DHDF5_DIR=%cd:\=/%/../hdf5_install/cmake ^
    -DBOOST_INCLUDEDIR=%cd:\=/%/../../boost_1_62_0 ^
-   -DQSCINTILLA_INCLUDE_DIR=%cd:\=/%/../../QScintilla_gpl-2.9.3\Qt4Qt5 ^
-   -DQSCINTILLA_LIBRARY=%cd:\=/%/../qscintilla/debug/qscintilla2.lib ^
-   -DPYTHON_LIBRARY=%cd:\=/%/../Python/libs/python34.lib ^
+   -DQSCINTILLA_INCLUDE_DIR=%cd:\=/%/../../QScintilla_gpl-2.10.1\Qt4Qt5 ^
+   -DQSCINTILLA_LIBRARY=%cd:\=/%/../qscintilla/release/qscintilla2_qt5.lib ^
+   -DPYTHON_LIBRARY=%cd:\=/%/../Python/libs/python36.lib ^
    -DPYTHON_INCLUDE_DIR=%cd:\=/%/../Python/include ^
    -DPYTHON_EXECUTABLE=%cd:\=/%/../Python/bin/python.exe ^
    -DXSLT_PROCESSOR=../../libxslt-1.1.26.win32/bin/xsltproc.exe ^
-   -DSPHINX_PROCESSOR_PATH=%cd:\=/%/../Python/Scripts ^
    -DLIBAV_INCLUDE_DIR=%cd:\=/%/../libav_install/include ^
    -DLIBAV_LIBRARY_DIR=%cd:\=/%/../libav_install/bin ^
-   -DLIBSSH_INCLUDE_DIR=%cd:\=/%/../libsh_install/include ^
+   -DLIBSSH_INCLUDE_DIR=%cd:\=/%/../libssh_install/include ^
    -DLIBSSH_LIBRARY=%cd:\=/%/../libssh_install/lib/ssh.lib ^
-   -DOVITO_BUILD_DOCUMENTATION=ON ^
+   -DOPENSSL_LIBRARY_DLL=%cd:\=/%/../openssl_install/bin/libeay32.dll ^
+   -DOVITO_BUILD_DOCUMENTATION=OFF ^
    -DOVITO_DOUBLE_PRECISION_FP=ON ^
+   -DOVITO_BUILD_MONOLITHIC=ON ^
+   -DOVITO_REDISTRIBUTABLE_PACKAGE=ON ^
    -DFFTW3_INCLUDE_DIR=%cd:\=/%/../fftw ^
-   -DFFTW3_LIBRARY=%cd:\=/%/../fftw/libfftw3f-3.lib ^
+   -DFFTW3_LIBRARY=%cd:\=/%/../fftw/libfftw3-3.lib ^
    ../../source
    

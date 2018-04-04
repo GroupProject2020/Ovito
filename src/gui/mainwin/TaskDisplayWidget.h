@@ -38,6 +38,14 @@ public:
 	/// Constructs the widget and associates it with the main window.
 	TaskDisplayWidget(MainWindow* mainWindow);
 
+public Q_SLOTS:
+
+	/// \brief Shows the progress indicator widgets.
+	void showIndicator();
+
+	/// \brief Updates the displayed information in the indicator widget.
+	void updateIndicator();
+
 private Q_SLOTS:
 
 	/// \brief Is called when a task has started to run.
@@ -48,12 +56,6 @@ private Q_SLOTS:
 
 	/// \brief Is called when the progress or status of a task has changed.
 	void taskProgressChanged();
-
-	/// \brief Shows the progress indicator widgets.
-	void showIndicator();
-
-	/// \brief Updates the displayed information in the indicator widget.
-	void updateIndicator();
 
 private:
 	

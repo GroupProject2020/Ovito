@@ -20,6 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/pyscript/PyScript.h>
+#include <plugins/pyscript/engine/ScriptEngine.h>
 #include <core/dataset/io/FileImporter.h>
 #include <core/dataset/io/FileExporter.h>
 #include <core/dataset/io/FileSourceImporter.h>
@@ -38,7 +39,7 @@ void defineIOSubmodule(py::module m)
 	ovito_abstract_class<FileImporter, RefTarget>{m}
 		// These are needed by implementation of import_file():
 		.def("import_file", &FileImporter::importFile)
-		.def_static("autodetect_format", (OORef<FileImporter> (*)(DataSet*, const QUrl&))&FileImporter::autodetectFileFormat)
+		.def_static("autodetect_format", static_cast<OORef<FileImporter> (*)(DataSet*, const QUrl&)>(&FileImporter::autodetectFileFormat))
 	;
 
 	// This is needed by implementation of import_file():

@@ -59,7 +59,6 @@ void PromiseState::decrementShareCount() noexcept
 void PromiseState::cancel() noexcept
 {
 	if(isCanceled() || isFinished()) return;
-//	qDebug() << "PromiseState::cancel: Canceling state" << this;
 	
 	_state = State(_state | Canceled);
 

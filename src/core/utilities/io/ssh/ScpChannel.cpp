@@ -28,7 +28,7 @@ namespace Ovito { namespace Ssh {
 * Constructor.
 ******************************************************************************/
 ScpChannel::ScpChannel(SshConnection* connection, const QString& location) : 
-    ProcessChannel(connection, QStringLiteral("scp -f %1").arg(location))
+    ProcessChannel(connection, QStringLiteral("scp -f \"%1\"").arg(location))
 {
     connect(this, &QIODevice::readyRead, this, &ScpChannel::processData);
 

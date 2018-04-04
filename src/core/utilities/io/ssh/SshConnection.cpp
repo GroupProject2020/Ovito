@@ -601,8 +601,6 @@ QString SshConnection::hostPublicKeyHash()
     ::ssh_clean_pubkey_hash(&hash);
     ::ssh_key_free(key);
 
-    qDebug() << "hostPublicKeyHash:" << string;
-
     return string;
 }
 

@@ -39,6 +39,7 @@ SET(SourceFiles
 	binding/FileIOBinding.cpp
 	binding/RenderingBinding.cpp
 	binding/AppBinding.cpp
+	binding/TypeCasting.cpp
 	extensions/PythonViewportOverlay.cpp
 	extensions/PythonScriptModifier.cpp
 )
@@ -151,11 +152,12 @@ ELSEIF(WIN32)
 	INSTALL(DIRECTORY "${PYTHON_LIBRARY_PATH}/../DLLs"
 		DESTINATION "${OVITO_RELATIVE_BINARY_DIRECTORY}" COMPONENT "runtime")
 
-	# Install Python interpreter dll.
+	# Install Python interpreter dlls.
 	OVITO_INSTALL_DLL("${PYTHON_LIBRARY_PATH}/../${PYTHON_LIBRARY_NAME}.dll")
+	OVITO_INSTALL_DLL("${PYTHON_LIBRARY_PATH}/../python3.dll")
 
 	# Install Visual C++ runtime needed by Python interpreter.
-	OVITO_INSTALL_DLL("${PYTHON_LIBRARY_PATH}/../msvcr100.dll")
+	OVITO_INSTALL_DLL("${PYTHON_LIBRARY_PATH}/../vcruntime140.dll")
 ENDIF()
 
 # Propagate list of plugins to parent scope.

@@ -39,6 +39,7 @@ void GuiApplication::registerCommandLineParameters(QCommandLineParser& parser)
 	StandaloneApplication::registerCommandLineParameters(parser);
 
 	parser.addOption(QCommandLineOption(QStringList{{"nogui"}}, tr("Run in console mode without showing the graphical user interface.")));
+	parser.addOption(QCommandLineOption(QStringList{{"noviewports"}}, tr("Do not create any viewports (for debugging purposes only).")));
 }
 
 /******************************************************************************

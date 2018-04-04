@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -42,6 +42,7 @@ TaskDisplayWidget::TaskDisplayWidget(MainWindow* mainWindow) : QWidget(nullptr),
 	_progressTextDisplay->setAlignment(Qt::Alignment(Qt::AlignRight | Qt::AlignVCenter));
 	_progressTextDisplay->setAutoFillBackground(true);
 	_progressTextDisplay->setMargin(2);
+	_progressTextDisplay->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
 	_progressBar = new QProgressBar(this);
 	_cancelTaskButton = new QToolButton(this);
 	_cancelTaskButton->setText(tr("Cancel"));
@@ -50,11 +51,13 @@ TaskDisplayWidget::TaskDisplayWidget(MainWindow* mainWindow) : QWidget(nullptr),
 	_cancelTaskButton->setIcon(cancelIcon);
 	progressWidgetLayout->addWidget(_progressBar);
 	progressWidgetLayout->addWidget(_cancelTaskButton);
+	progressWidgetLayout->addStrut(_progressTextDisplay->sizeHint().height());
 	setMinimumHeight(_progressTextDisplay->minimumSizeHint().height());
 
 	connect(_cancelTaskButton, &QAbstractButton::clicked, &mainWindow->datasetContainer().taskManager(), &TaskManager::cancelAll);
 	connect(&mainWindow->datasetContainer().taskManager(), &TaskManager::taskStarted, this, &TaskDisplayWidget::taskStarted);
 	connect(&mainWindow->datasetContainer().taskManager(), &TaskManager::taskFinished, this, &TaskDisplayWidget::taskFinished);
+	connect(this, &QObject::destroyed, _progressTextDisplay, &QObject::deleteLater);
 }
 
 /******************************************************************************

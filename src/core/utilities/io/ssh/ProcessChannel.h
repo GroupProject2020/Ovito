@@ -26,6 +26,13 @@
 
 #include <libssh/callbacks.h>
 
+#ifdef max
+    #undef max
+#endif
+#ifdef min
+    #undef min
+#endif
+
 namespace Ovito { namespace Ssh {
 
 class ProcessChannel : public SshChannel
@@ -108,7 +115,7 @@ private:
             static_cast<ProcessChannel*>(parent())->queueCheckIO();
         }
 
-        friend class ProcessChannel;        
+        friend class ProcessChannel;
     };
 
     /// Part of the state machine implementation.
@@ -118,7 +125,10 @@ private:
     State state() const { return _state; }
 
     /// Returns the stderr channel.
-    StderrChannel* stderr() const { return _stderr; }
+    StderrChannel* stderrChannel() const { return _stderr; }
+
+	/// Returns the underlying SSH connection.
+    using SshChannel::connection;
 
     /// Callback function, which is called by libssh when data is available on the channel.
     static int channelDataCallback(ssh_session session, ssh_channel channel, void* data, uint32_t len, int is_stderr, void* userdata);

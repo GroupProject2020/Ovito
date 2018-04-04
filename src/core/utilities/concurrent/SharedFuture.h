@@ -41,8 +41,11 @@ public:
 	using promise_type = typename Future<R...>::promise_type;
 
 	/// Default constructor that constructs an invalid SharedFuture that is not associated with any shared state.
+#ifndef Q_CC_MSVC
 	SharedFuture() noexcept = default;
-
+#else
+	SharedFuture() noexcept {}
+#endif
 	/// Constructor that constructs a shared future from a normal future.
 	SharedFuture(Future<R...>&& other) noexcept : FutureBase(std::move(other)) {}
 
@@ -178,7 +181,11 @@ class WeakSharedFuture : private std::weak_ptr<PromiseState>
 {
 public:
 
+#ifndef Q_CC_MSVC
 	constexpr WeakSharedFuture() noexcept = default;
+#else
+	constexpr WeakSharedFuture() noexcept : std::weak_ptr<PromiseState>() {}
+#endif
 
 	WeakSharedFuture(const SharedFuture<R...>& future) noexcept : std::weak_ptr<PromiseState>(future.sharedState()) {}
 

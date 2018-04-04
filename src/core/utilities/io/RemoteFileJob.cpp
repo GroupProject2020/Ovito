@@ -189,6 +189,20 @@ void RemoteFileJob::connectionCanceled()
 }
 
 /******************************************************************************
+* Handles closed SSH channel.
+******************************************************************************/
+void DownloadRemoteFileJob::channelClosed()
+{
+	if(!_promiseState->isFinished()) {
+		_promiseState->setException(std::make_exception_ptr(
+			Exception(tr("Cannot access URL\n\n%1\n\nSSH channel closed: %2").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)).
+				arg(_scpChannel->errorMessage()))));
+	}
+
+	shutdown(false);
+}
+
+/******************************************************************************
 * Is called when the SSH connection has been established.
 ******************************************************************************/
 void DownloadRemoteFileJob::connectionEstablished()
@@ -205,7 +219,7 @@ void DownloadRemoteFileJob::connectionEstablished()
 	connect(_scpChannel, &ScpChannel::receivedData, this, &DownloadRemoteFileJob::receivedData);
 	connect(_scpChannel, &ScpChannel::receivedFileComplete, this, &DownloadRemoteFileJob::receivedFileComplete);
 	connect(_scpChannel, &ScpChannel::error, this, &DownloadRemoteFileJob::channelError);
-	connect(_scpChannel, &ScpChannel::closed, this, &DownloadRemoteFileJob::connectionCanceled);
+	connect(_scpChannel, &ScpChannel::closed, this, &DownloadRemoteFileJob::channelClosed);
 	_scpChannel->openChannel();
 }
 
@@ -332,7 +346,7 @@ void ListRemoteDirectoryJob::connectionEstablished()
 	connect(_lsChannel, &LsChannel::error, this, &ListRemoteDirectoryJob::channelError);
 	connect(_lsChannel, &LsChannel::receivingDirectory, this, &ListRemoteDirectoryJob::receivingDirectory);
 	connect(_lsChannel, &LsChannel::receivedDirectoryComplete, this, &ListRemoteDirectoryJob::receivedDirectoryComplete);
-	connect(_lsChannel, &LsChannel::closed, this, &ListRemoteDirectoryJob::connectionCanceled);
+	connect(_lsChannel, &LsChannel::closed, this, &ListRemoteDirectoryJob::channelClosed);
 	_lsChannel->openChannel();
 }
 
@@ -390,6 +404,20 @@ void ListRemoteDirectoryJob::shutdown(bool success)
 	}
 
 	RemoteFileJob::shutdown(success);
+}
+
+/******************************************************************************
+* Handles closed SSH channel.
+******************************************************************************/
+void ListRemoteDirectoryJob::channelClosed()
+{
+	if(!_promiseState->isFinished()) {
+		_promiseState->setException(std::make_exception_ptr(
+			Exception(tr("Cannot access URL\n\n%1\n\nSSH channel closed: %2").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)).
+				arg(_lsChannel->errorMessage()))));
+	}
+
+	shutdown(false);
 }
 
 OVITO_END_INLINE_NAMESPACE

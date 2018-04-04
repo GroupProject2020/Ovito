@@ -133,6 +133,9 @@ protected Q_SLOTS:
     /// Is called when an SCP error occurs in the channel.
     void channelError();
 
+	/// Handles SSH channel close.
+	void channelClosed();
+
 private:
 
 	/// The SCP channel.
@@ -179,6 +182,9 @@ protected Q_SLOTS:
 
     /// Is called when an error occurs in the SSH channel.
     void channelError();
+
+	/// Handles SSH channel close.
+	void channelClosed();
 
 private:
 

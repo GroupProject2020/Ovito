@@ -111,7 +111,7 @@ void ProcessChannel::closeChannel()
         }
 
         QIODevice::close();
-        stderr()->close();
+        stderrChannel()->close();
         OVITO_ASSERT(!isOpen());
 
         _readBuffer.clear();
@@ -199,7 +199,7 @@ void ProcessChannel::processState()
                 connection()->disconnectFromHost();
                 return;
             }
-            stderr()->_channel = channel();
+            stderrChannel()->_channel = channel();
         }
         OVITO_ASSERT(connection()->isConnected());
         if(!::ssh_is_connected(connection()->_session)) {
@@ -265,7 +265,7 @@ void ProcessChannel::processState()
         case SSH_OK:
             // Set Unbuffered flag to disable QIODevice buffers.
             QIODevice::open(ReadWrite | Unbuffered);
-            stderr()->open(ReadWrite | Unbuffered);
+            stderrChannel()->open(ReadWrite | Unbuffered);
             setState(StateOpen, true);
             return;
 
@@ -279,7 +279,7 @@ void ProcessChannel::processState()
         // Send/received data.
         checkIO();
         if(state() == StateOpen)
-            stderr()->checkIO();
+            stderrChannel()->checkIO();
         // Check if end of transmission from remote side has been reached.
         if(state() == StateOpen && ::ssh_channel_poll(channel(), false) == SSH_EOF && ::ssh_channel_poll(channel(), true) == SSH_EOF) {
             // EOF state affects atEnd() and canReadLine() behavior,
@@ -287,8 +287,8 @@ void ProcessChannel::processState()
             if(!_readBuffer.isEmpty()) {
                 Q_EMIT readyRead();
             }
-            if(!stderr()->_readBuffer.isEmpty()) {
-                Q_EMIT stderr()->readyRead();
+            if(!stderrChannel()->_readBuffer.isEmpty()) {
+                Q_EMIT stderrChannel()->readyRead();
             }
             _exitCode = ::ssh_channel_get_exit_status(channel());
             Q_EMIT finished(_exitCode);

@@ -31,6 +31,7 @@
 #include <core/rendering/FrameBuffer.h>
 #include <core/rendering/SceneRenderer.h>
 #include <core/app/Application.h>
+#include <core/app/StandaloneApplication.h>
 #ifdef OVITO_VIDEO_OUTPUT_SUPPORT
 	#include <core/utilities/io/video/VideoEncoder.h>
 #endif
@@ -72,8 +73,9 @@ DataSet::~DataSet()
 {
 	// Stop pipeline evaluation, which might still be in progress.
 	_pipelineEvaluationWatcher.reset();
-	if(_pipelineEvaluationFuture.isValid())
+	if(_pipelineEvaluationFuture.isValid()) {
 		_pipelineEvaluationFuture.cancelRequest();
+	}
 }
 
 /******************************************************************************
@@ -85,25 +87,27 @@ OORef<ViewportConfiguration> DataSet::createDefaultViewportConfiguration()
 
 	OORef<ViewportConfiguration> defaultViewportConfig = new ViewportConfiguration(this);
 
-	OORef<Viewport> topView = new Viewport(this);
-	topView->setViewType(Viewport::VIEW_TOP);
-	defaultViewportConfig->addViewport(topView);
+	if(!StandaloneApplication::instance() || !StandaloneApplication::instance()->cmdLineParser().isSet("noviewports")) {
+		OORef<Viewport> topView = new Viewport(this);
+		topView->setViewType(Viewport::VIEW_TOP);
+		defaultViewportConfig->addViewport(topView);
 
-	OORef<Viewport> frontView = new Viewport(this);
-	frontView->setViewType(Viewport::VIEW_FRONT);
-	defaultViewportConfig->addViewport(frontView);
+		OORef<Viewport> frontView = new Viewport(this);
+		frontView->setViewType(Viewport::VIEW_FRONT);
+		defaultViewportConfig->addViewport(frontView);
 
-	OORef<Viewport> leftView = new Viewport(this);
-	leftView->setViewType(Viewport::VIEW_LEFT);
-	defaultViewportConfig->addViewport(leftView);
+		OORef<Viewport> leftView = new Viewport(this);
+		leftView->setViewType(Viewport::VIEW_LEFT);
+		defaultViewportConfig->addViewport(leftView);
 
-	OORef<Viewport> perspectiveView = new Viewport(this);
-	perspectiveView->setViewType(Viewport::VIEW_PERSPECTIVE);
-	perspectiveView->setCameraTransformation(ViewportSettings::getSettings().coordinateSystemOrientation() * AffineTransformation::lookAlong({90, -120, 100}, {-90, 120, -100}, {0,0,1}).inverse());
-	defaultViewportConfig->addViewport(perspectiveView);
+		OORef<Viewport> perspectiveView = new Viewport(this);
+		perspectiveView->setViewType(Viewport::VIEW_PERSPECTIVE);
+		perspectiveView->setCameraTransformation(ViewportSettings::getSettings().coordinateSystemOrientation() * AffineTransformation::lookAlong({90, -120, 100}, {-90, 120, -100}, {0,0,1}).inverse());
+		defaultViewportConfig->addViewport(perspectiveView);
 
-	defaultViewportConfig->setActiveViewport(perspectiveView);
-	defaultViewportConfig->setMaximizedViewport(nullptr);
+		defaultViewportConfig->setActiveViewport(perspectiveView);
+		defaultViewportConfig->setMaximizedViewport(nullptr);
+	}
 
 	return defaultViewportConfig;
 }
@@ -315,7 +319,7 @@ void DataSet::makeSceneReady(bool forceReevaluation)
 		_pipelineEvaluationFuture.cancelRequest();
 	}
 	_pipelineEvaluationFuture = std::move(newPipelineEvaluationFuture);
-		
+
 	// If all pipelines are already complete, we are done.
 	if(!_currentEvaluationNode) {
 		_sceneReadyPromise.setFinished();

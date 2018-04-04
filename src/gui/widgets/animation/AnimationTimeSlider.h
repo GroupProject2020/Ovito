@@ -56,6 +56,12 @@ public:
 	/// Computes the maximum width of a frame tick label.
 	int maxTickLabelWidth();
 
+	/// Returns the recommended size of the widget.
+	virtual QSize sizeHint() const override;
+
+	/// Returns the minimum size of the widget.
+	virtual QSize minimumSizeHint() const override { return sizeHint(); }
+
 protected:
 
 	/// Handles paint events.
@@ -73,12 +79,6 @@ protected:
 	/// Is called when the widgets looses the input focus.
 	virtual void focusOutEvent(QFocusEvent* event) override;
 	
-	/// Returns the recommended size of the widget.
-	virtual QSize sizeHint() const override;
-
-	/// Returns the minimum size of the widget.
-	virtual QSize minimumSizeHint() const override { return sizeHint(); }
-
 protected Q_SLOTS:
 
 	/// This is called when new animation settings have been loaded.

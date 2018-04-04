@@ -41,7 +41,11 @@ private:
 public:
 
     /// Default constructor.
+#ifndef MSVC
     StrongDataObjectRef() noexcept = default;
+#else
+    StrongDataObjectRef() noexcept {}
+#endif
     
     /// Initialization constructor.
     StrongDataObjectRef(DataObject* p) noexcept : _ref(p) {

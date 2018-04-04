@@ -55,16 +55,10 @@ IF(OVITO_BUILD_DOCUMENTATION)
 	
 	# Generate documentation for OVITO's scripting interface.
 	IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
-	
-		# Find Sphinx program.
-		FIND_PROGRAM(SPHINX_PROCESSOR NAMES "sphinx-build-script.py" "sphinx-build" HINTS "${SPHINX_PROCESSOR_PATH}" DOC "Path to the Sphinx build program used to generate the Python interface documentation.")
-		IF(NOT SPHINX_PROCESSOR)
-			MESSAGE(FATAL_ERROR "The Sphinx program (sphinx-build) was not found. Please install it and/or specify its location manually using the SPHINX_PROCESSOR setting.")
-		ENDIF()
 
 		# Use OVITO's built in Python interpreter to run the Sphinx doc program.
 		ADD_CUSTOM_TARGET(scripting_documentation ALL 
-					COMMAND "$<TARGET_FILE:ovitos>" ${SPHINX_PROCESSOR} "-b" "html" "-a" "-E" 
+					COMMAND "$<TARGET_FILE:ovitos>" "${CMAKE_SOURCE_DIR}/cmake/sphinx-build.py" "-b" "html" "-a" "-E" 
 					"-D" "version=${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}" 
 					"-D" "release=${OVITO_VERSION_STRING}"
 					"." "${OVITO_SHARE_DIRECTORY}/doc/manual/html/python/" 

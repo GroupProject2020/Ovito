@@ -27,6 +27,13 @@
 #include <libssh/libssh.h>
 #include <libssh/callbacks.h>
 
+#ifdef max
+    #undef max
+#endif
+#ifdef min
+    #undef min
+#endif
+
 namespace Ovito { namespace Ssh {
 
 struct SshConnectionParameters

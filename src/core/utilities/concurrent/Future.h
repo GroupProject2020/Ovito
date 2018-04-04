@@ -86,7 +86,11 @@ public:
 protected:
 
 	/// Default constructor, which creates a Future without a shared state.
+#ifndef Q_CC_MSVC
 	FutureBase() noexcept = default;
+#else
+	FutureBase() noexcept {}
+#endif
 
 	/// Constructor that creates a Future associated with a share state.
 	explicit FutureBase(PromiseStatePtr&& p) noexcept : _sharedState(std::move(p)) {}
@@ -110,7 +114,11 @@ public:
 	using promise_type = Promise<R...>;
 
 	/// Default constructor that constructs an invalid Future that is not associated with any shared state.
+#ifndef Q_CC_MSVC
 	Future() noexcept = default;
+#else
+	Future() noexcept {}
+#endif
 
 	/// A future is not copy constructible.
 	Future(const Future& other) = delete;
@@ -352,5 +360,3 @@ void FutureBase::finally(Executor&& executor, FC&& cont)
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

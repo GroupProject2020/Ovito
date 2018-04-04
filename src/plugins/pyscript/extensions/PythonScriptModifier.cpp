@@ -20,6 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/pyscript/PyScript.h>
+#include <plugins/pyscript/binding/PythonBinding.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/dataset/DataSetContainer.h>
 #include <core/dataset/UndoStack.h>

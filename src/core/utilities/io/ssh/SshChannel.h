@@ -24,6 +24,13 @@
 #include <core/Core.h>
 #include <libssh/libssh.h>
 
+#ifdef max
+    #undef max
+#endif
+#ifdef min
+    #undef min
+#endif
+
 namespace Ovito { namespace Ssh {
 
 class SshConnection;
