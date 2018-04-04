@@ -189,6 +189,25 @@ handle type_caster<Ovito::Vector3>::cast(const Ovito::Vector3& src, return_value
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
+// Automatic Python <--> Vector3I conversion
+///////////////////////////////////////////////////////////////////////////////////////
+bool type_caster<Ovito::Vector3I>::load(handle src, bool)
+{
+	if(!isinstance<sequence>(src)) return false;
+	sequence seq = reinterpret_borrow<sequence>(src);
+	if(seq.size() != value.size())
+		throw value_error("Expected sequence of length 3.");
+	for(size_t i = 0; i < value.size(); i++)
+		value[i] = seq[i].cast<Ovito::Vector3I::value_type>();
+	return true;
+}
+
+handle type_caster<Ovito::Vector3I>::cast(const Ovito::Vector3I& src, return_value_policy /* policy */, handle /* parent */) 
+{
+	return pybind11::make_tuple(src[0], src[1], src[2]).release();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
 // Automatic Python <--> Point3 conversion
 ///////////////////////////////////////////////////////////////////////////////////////
 bool type_caster<Ovito::Point3>::load(handle src, bool) 
@@ -203,6 +222,25 @@ bool type_caster<Ovito::Point3>::load(handle src, bool)
 }
 
 handle type_caster<Ovito::Point3>::cast(const Ovito::Point3& src, return_value_policy /* policy */, handle /* parent */) 
+{
+	return pybind11::make_tuple(src[0], src[1], src[2]).release();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+// Automatic Python <--> Point3I conversion
+///////////////////////////////////////////////////////////////////////////////////////
+bool type_caster<Ovito::Point3I>::load(handle src, bool) 
+{
+	if(!isinstance<sequence>(src)) return false;
+	sequence seq = reinterpret_borrow<sequence>(src);
+	if(seq.size() != value.size())
+		throw value_error("Expected sequence of length 3.");
+	for(size_t i = 0; i < value.size(); i++)
+		value[i] = seq[i].cast<Ovito::Point3I::value_type>();
+	return true;
+}
+
+handle type_caster<Ovito::Point3I>::cast(const Ovito::Point3I& src, return_value_policy /* policy */, handle /* parent */) 
 {
 	return pybind11::make_tuple(src[0], src[1], src[2]).release();
 }
@@ -342,16 +380,16 @@ namespace PyScript {
 ///////////////////////////////////////////////////////////////////////////////////////
 void ovito_class_initialization_helper::initializeParameters(py::object pyobj, const py::args& args, const py::kwargs& kwargs, const OvitoClass& clazz) 
 {
-	if(py::len(args) > 1) {
-		if(py::len(args) > 2 || !PyDict_Check(args[1].ptr()))
+	if(py::len(args) > 0) {
+		if(py::len(args) > 1 || !PyDict_Check(args[0].ptr()))
 			throw Exception("Constructor function accepts only keyword arguments.");
 	}
 	// Set attributes based on keyword arguments.
 	if(kwargs)
 		applyParameters(pyobj, kwargs, clazz);
 	// The caller may alternatively provide a dictionary with attributes.
-	if(py::len(args) == 2) {
-		applyParameters(pyobj, args[1].cast<py::dict>(), clazz);
+	if(py::len(args) == 1) {
+		applyParameters(pyobj, args[0].cast<py::dict>(), clazz);
 	}
 }
 

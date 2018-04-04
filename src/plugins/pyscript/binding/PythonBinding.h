@@ -37,7 +37,7 @@ namespace pybind11 { namespace detail {
 	OVITO_PYSCRIPT_EXPORT QString castToQString(handle src);
 
 	/// Automatic Python string <--> QString conversion
-    template<> OVITO_PYSCRIPT_EXPORT struct type_caster<QString> {
+    template<> struct OVITO_PYSCRIPT_EXPORT type_caster<QString> {
     public:
         PYBIND11_TYPE_CASTER(QString, _("QString"));
 		type_caster() noexcept;
@@ -46,7 +46,7 @@ namespace pybind11 { namespace detail {
     };
 
 	/// Automatic Python string <--> QUrl conversion
-    template<> OVITO_PYSCRIPT_EXPORT struct type_caster<QUrl> {
+    template<> struct OVITO_PYSCRIPT_EXPORT type_caster<QUrl> {
     public:
         PYBIND11_TYPE_CASTER(QUrl, _("QUrl"));
 		type_caster() noexcept;
@@ -55,7 +55,7 @@ namespace pybind11 { namespace detail {
     };	
 
 	/// Automatic Python <--> QVariant conversion
-    template<> OVITO_PYSCRIPT_EXPORT struct type_caster<QVariant> {
+    template<> struct OVITO_PYSCRIPT_EXPORT type_caster<QVariant> {
     public:
 		PYBIND11_TYPE_CASTER(QVariant, _("QVariant"));
         bool load(handle src, bool);
@@ -63,7 +63,7 @@ namespace pybind11 { namespace detail {
     };	
 
 	/// Automatic Python <--> QStringList conversion
-    template<> OVITO_PYSCRIPT_EXPORT struct type_caster<QStringList> {
+    template<> struct OVITO_PYSCRIPT_EXPORT type_caster<QStringList> {
     public:
 		PYBIND11_TYPE_CASTER(QStringList, _("QStringList"));
         bool load(handle src, bool);
@@ -71,23 +71,39 @@ namespace pybind11 { namespace detail {
     };
 
 	/// Automatic Python <--> Vector3 conversion
-    template<> OVITO_PYSCRIPT_EXPORT struct type_caster<Ovito::Vector3> {
+    template<> struct OVITO_PYSCRIPT_EXPORT type_caster<Ovito::Vector3> {
     public:
 		PYBIND11_TYPE_CASTER(Ovito::Vector3, _("Vector3"));
         bool load(handle src, bool);
         static handle cast(const Ovito::Vector3& src, return_value_policy policy, handle parent);
     };	
 
+	/// Automatic Python <--> Vector3I conversion
+    template<> struct OVITO_PYSCRIPT_EXPORT type_caster<Ovito::Vector3I> {
+    public:
+		PYBIND11_TYPE_CASTER(Ovito::Vector3I, _("Vector3I"));
+        bool load(handle src, bool);
+        static handle cast(const Ovito::Vector3I& src, return_value_policy policy, handle parent);
+    };	
+
 	/// Automatic Python <--> Point3 conversion
-    template<> OVITO_PYSCRIPT_EXPORT struct type_caster<Ovito::Point3> {
+    template<> struct OVITO_PYSCRIPT_EXPORT type_caster<Ovito::Point3> {
     public:
 		PYBIND11_TYPE_CASTER(Ovito::Point3, _("Point3"));
         bool load(handle src, bool);
         static handle cast(const Ovito::Point3& src, return_value_policy policy, handle parent);
     };		
 
+	/// Automatic Python <--> Point3I conversion
+    template<> struct OVITO_PYSCRIPT_EXPORT type_caster<Ovito::Point3I> {
+    public:
+		PYBIND11_TYPE_CASTER(Ovito::Point3I, _("Point3I"));
+        bool load(handle src, bool);
+        static handle cast(const Ovito::Point3I& src, return_value_policy policy, handle parent);
+    };		
+
 	/// Automatic Python <--> Color conversion
-    template<> OVITO_PYSCRIPT_EXPORT struct type_caster<Ovito::Color> {
+    template<> struct OVITO_PYSCRIPT_EXPORT type_caster<Ovito::Color> {
     public:
 		PYBIND11_TYPE_CASTER(Ovito::Color, _("Color"));
         bool load(handle src, bool);
@@ -95,7 +111,7 @@ namespace pybind11 { namespace detail {
     };	
 
 	/// Automatic Python <--> ColorA conversion
-    template<> OVITO_PYSCRIPT_EXPORT struct type_caster<Ovito::ColorA> {
+    template<> struct OVITO_PYSCRIPT_EXPORT type_caster<Ovito::ColorA> {
     public:
 		PYBIND11_TYPE_CASTER(Ovito::ColorA, _("ColorA<>"));
         bool load(handle src, bool);
@@ -103,7 +119,7 @@ namespace pybind11 { namespace detail {
     };
 
 	/// Automatic Python <--> AffineTransformation conversion
-    template<> OVITO_PYSCRIPT_EXPORT struct type_caster<Ovito::AffineTransformation> {
+    template<> struct OVITO_PYSCRIPT_EXPORT type_caster<Ovito::AffineTransformation> {
     public:
 		PYBIND11_TYPE_CASTER(Ovito::AffineTransformation, _("AffineTransformation"));
         bool load(handle src, bool);
@@ -111,7 +127,7 @@ namespace pybind11 { namespace detail {
     };	
 
 	/// Automatic Python <--> Matrix3 conversion
-    template<> OVITO_PYSCRIPT_EXPORT struct type_caster<Ovito::Matrix3> {
+    template<> struct OVITO_PYSCRIPT_EXPORT type_caster<Ovito::Matrix3> {
     public:
 		PYBIND11_TYPE_CASTER(Ovito::Matrix3, _("Matrix3"));
         bool load(handle src, bool);
@@ -119,7 +135,7 @@ namespace pybind11 { namespace detail {
 	};
 
 	/// Automatic Python <--> Matrix4 conversion
-    template<> OVITO_PYSCRIPT_EXPORT struct type_caster<Ovito::Matrix4> {
+    template<> struct OVITO_PYSCRIPT_EXPORT type_caster<Ovito::Matrix4> {
     public:
 		PYBIND11_TYPE_CASTER(Ovito::Matrix4, _("Matrix4"));
         bool load(handle src, bool);
