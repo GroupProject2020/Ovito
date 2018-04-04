@@ -8,6 +8,7 @@ spellcheck: off
 Typical layout for the build directory:
 
 ovito/
+
   32bit/                (Build directory for 32-bit dependencies)
      ovito_release/     (Build directory for 32-bit OVITO version)
   64bit/                (Build directory for 64-bit dependencies)

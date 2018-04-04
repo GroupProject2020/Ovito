@@ -10,7 +10,7 @@ import numpy
 
 # Load dependencies
 import ovito
-from ovito.data import DataCollection
+from ovito.data import DataCollection, Property
 from ovito.plugins.PyScript import CloneHelper
 
 # Load the native code module
@@ -214,11 +214,11 @@ class BondsView(collections.Mapping):
 
             # Translate data type from Python to Qt metatype id.
             if dtype == int or dtype == numpy.int_:
-                dtype = PyQt5.QtCore.QMetaType.Int
+                dtype = Property.DataType.Int
             elif dtype == numpy.longlong or dtype == numpy.int64:
-                dtype = PyQt5.QtCore.QMetaType.LongLong
+                dtype = Property.DataType.Int64
             elif dtype == float:
-                dtype = PyQt5.QtCore.QMetaType.type('FloatType')
+                dtype = Property.DataType.Float
             else:
                 raise TypeError("Invalid property data type. Only 'int', 'int64' or 'float' are allowed.")            
         

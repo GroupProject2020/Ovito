@@ -38,6 +38,7 @@ PropertyStorage::PropertyStorage(size_t elementCount, int dataType, size_t compo
 	_name(name),
 	_type(type)
 {
+	OVITO_ASSERT(dataType == Int || dataType == Int64 || dataType == Float);
 	OVITO_ASSERT(_dataTypeSize > 0);
 	OVITO_ASSERT(_componentCount > 0);
 	if(_stride == 0) _stride = _dataTypeSize * _componentCount;

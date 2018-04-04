@@ -4,6 +4,7 @@ try:
 except ImportError:
     # Python 2.x
     import collections
+import sys
     
 # Load the native modules.
 from ..plugins.PyScript import Pipeline, PipelineStatus, ModifierApplication, Modifier
@@ -180,8 +181,9 @@ def _Pipeline_compute(self, frame = None):
     # Wait for worker threads to finish.
     # This is to avoid warning messages 'QThreadStorage: Thread exited after QThreadStorage destroyed'
     # during Python program exit.
-    import PyQt5.QtCore
-    PyQt5.QtCore.QThreadPool.globalInstance().waitForDone(0)
+    if not hasattr(sys, '__OVITO_BUILD_MONOLITHIC'):
+        import PyQt5.QtCore
+        PyQt5.QtCore.QThreadPool.globalInstance().waitForDone(0)
 
     return state
 

@@ -63,7 +63,7 @@ bool XYZImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& s
 		return false;
 
 	// Skip initial whitespace.
-	const char* p = stream.line();
+	const unsigned char* p = reinterpret_cast<const unsigned char*>(stream.line());
 	while(isspace(*p)) {
 		if(*p == '\0') return false;
 		++p;

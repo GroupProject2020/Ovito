@@ -159,7 +159,7 @@ PYBIND11_MODULE(StdObj, m)
 	ovito_class<ElementType, RefTarget>{m}
 	;
 
-	ovito_abstract_class<PropertyObject, DataObject>(m,
+	auto Property_py = ovito_abstract_class<PropertyObject, DataObject>(m,
 			":Base class: :py:class:`ovito.data.DataObject`\n\n"
 			"Stores the values for an array of elements (e.g. particle or bonds). "
 			"\n\n"
@@ -278,6 +278,12 @@ PYBIND11_MODULE(StdObj, m)
 			ai["version"] = py::cast(3);
 			return ai;
 		})		
+	;
+	
+	py::enum_<PropertyStorage::StandardDataType>(Property_py, "DataType")
+		.value("Int", PropertyStorage::Int)
+		.value("Int64", PropertyStorage::Int64)
+		.value("Float", PropertyStorage::Float)
 	;
 }
 
