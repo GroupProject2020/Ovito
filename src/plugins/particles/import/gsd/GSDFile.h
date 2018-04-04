@@ -50,7 +50,6 @@ public:
 
 	/// Constructor.
 	GSDFile(const char* filename, const gsd_open_flag flags = GSD_OPEN_READONLY) {
-		memset(&_handle, 0, sizeof(_handle));
 		switch(::gsd_open(&_handle, filename, flags)) {
 			case 0: break; // Success
 			case -1: throw Exception(GSDImporter::tr("Failed to open GSD file for reading. I/O error."));

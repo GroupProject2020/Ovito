@@ -36,17 +36,10 @@ bool GSDImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& s
 	QString filename = QDir::toNativeSeparators(input.fileName());
 
 	gsd_handle handle;
-	memset(&handle, 0, sizeof(handle));
 	if(::gsd_open(&handle, filename.toLocal8Bit().constData(), GSD_OPEN_READONLY) == 0) {
 		::gsd_close(&handle);
-		OVITO_ASSERT(!handle.fd);
 		return true;
 	}
-	::gsd_close(&handle);
-
-	// Workaround for bug in GSD library: not closing the file handle after gsd_open() failed.
-	if(handle.fd)
-		::close(handle.fd);
 
 	return false;
 }
