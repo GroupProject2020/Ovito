@@ -1,0 +1,12 @@
+FormatStyle: file
+Checks: '
+-*,
+boost-*,
+bugprone-*,
+clang-analyzer-*,-clang-analyzer-cplusplus.NewDeleteLeaks,
+misc-*,-misc-throw-by-value-catch-by-reference,-misc-unused-parameters,
+modernize-*,-modernize-use-auto,
+performance-*,
+portability-*,
+readability-*,-readability-implicit-bool-conversion,-readability-braces-around-statements,-readability-else-after-return
+'

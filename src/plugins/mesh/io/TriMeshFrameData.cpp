@@ -22,6 +22,7 @@
 #include <plugins/mesh/Mesh.h>
 #include <plugins/mesh/tri/TriMeshObject.h>
 #include <plugins/mesh/tri/TriMeshVis.h>
+#include <core/app/Application.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
 #include "TriMeshFrameData.h"
 
@@ -47,7 +48,8 @@ PipelineFlowState TriMeshFrameData::handOver(DataSet* dataset, const PipelineFlo
 		triMeshVis = previousTriMeshObj->visElement();
 	if(!triMeshVis) {
 		triMeshVis = new TriMeshVis(dataset);
-		triMeshVis->loadUserDefaults();
+		if(Application::instance()->guiMode())
+			triMeshVis->loadUserDefaults();
 	}
 	triMeshObj->setVisElement(triMeshVis);
 

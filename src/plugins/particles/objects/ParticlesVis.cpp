@@ -80,7 +80,7 @@ Box3 ParticlesVis::boundingBox(TimePoint time, DataObject* dataObject, PipelineS
 	// Check if the cached bounding box information is still up to date.
 	if(bbox.isEmpty()) {
 		// If not, recompute bounding box from particle data.
-		bbox = particleBoundingBox(positionProperty, typeProperty, radiusProperty, shapeProperty);
+		bbox = particleBoundingBox(positionProperty, typeProperty, radiusProperty, shapeProperty, true);
 	}
 	return bbox;
 }
@@ -128,7 +128,7 @@ Box3 ParticlesVis::particleBoundingBox(ParticleProperty* positionProperty, Parti
 	}
 
 	// Extend the bounding box by the largest particle radius.
-	return bbox.padBox(std::max(maxAtomRadius * (FloatType)sqrt(3), FloatType(0)));
+	return bbox.padBox(std::max(maxAtomRadius * sqrt(FloatType(3)), FloatType(0)));
 }
 
 /******************************************************************************

@@ -76,7 +76,7 @@ OORef<FileImporter> FileImporter::autodetectFileFormat(DataSet* dataset, const Q
 		try {
 			QFile file(localFile);
 			if(importerClass->checkFileFormat(file, sourceLocation)) {
-				return static_object_cast<FileImporter>(importerClass->createInstance(dataset));;
+				return static_object_cast<FileImporter>(importerClass->createInstance(dataset));
 			}
 		}
 		catch(const Exception&) {

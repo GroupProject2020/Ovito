@@ -32,6 +32,7 @@
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <plugins/stdobj/simcell/SimulationCellVis.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
+#include <core/app/Application.h>
 #include <core/dataset/io/FileSource.h>
 #include "ParticleFrameData.h"
 #include "ParticleImporter.h"
@@ -131,14 +132,15 @@ PipelineFlowState ParticleFrameData::handOver(DataSet* dataset, const PipelineFl
 
 		// Create the vis element for the simulation cell.
 		if(SimulationCellVis* cellVis = dynamic_object_cast<SimulationCellVis>(cell->visElement())) {
-			cellVis->loadUserDefaults();
+			if(Application::instance()->guiMode())
+				cellVis->loadUserDefaults();
 
 			// Choose an appropriate line width depending on the cell's size.
 			FloatType cellDiameter = (
 					simulationCell().matrix().column(0) +
 					simulationCell().matrix().column(1) +
 					simulationCell().matrix().column(2)).length();
-			cellVis->setCellLineWidth(cellDiameter * FloatType(1.4e-3));
+			cellVis->setCellLineWidth(std::max(cellDiameter * FloatType(1.4e-3), FloatType(1e-8)));
 		}
 	}
 	else {
@@ -179,7 +181,7 @@ PipelineFlowState ParticleFrameData::handOver(DataSet* dataset, const PipelineFl
 				// Limit particle radius to a fraction of the cell diameter. 
 				// This is to avoid extremely large particles when the length scale of the simulation is <<1.
 				cellDiameter /= 2;
-				if(particleVis->defaultParticleRadius() > cellDiameter)
+				if(particleVis->defaultParticleRadius() > cellDiameter && cellDiameter != 0)
 					particleVis->setDefaultParticleRadius(cellDiameter);
 			}
 		}

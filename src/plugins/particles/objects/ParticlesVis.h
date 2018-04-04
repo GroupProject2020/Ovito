@@ -86,7 +86,7 @@ public:
 	ColorA particleColor(size_t particleIndex, ParticleProperty* colorProperty, ParticleProperty* typeProperty, ParticleProperty* selectionProperty, ParticleProperty* transparencyProperty);
 
 	/// Computes the bounding box of the particles.
-	Box3 particleBoundingBox(ParticleProperty* positionProperty, ParticleProperty* typeProperty, ParticleProperty* radiusProperty, ParticleProperty* shapeProperty, bool includeParticleRadius = true);
+	Box3 particleBoundingBox(ParticleProperty* positionProperty, ParticleProperty* typeProperty, ParticleProperty* radiusProperty, ParticleProperty* shapeProperty, bool includeParticleRadius);
 
 	/// Render a marker around a particle to highlight it in the viewports.
 	void highlightParticle(size_t particleIndex, const PipelineFlowState& flowState, SceneRenderer* renderer);
@@ -98,7 +98,7 @@ public:
 
     Q_PROPERTY(Ovito::ParticlePrimitive::RenderingQuality renderingQuality READ renderingQuality WRITE setRenderingQuality);
     Q_PROPERTY(Ovito::Particles::ParticlesVis::ParticleShape particleShape READ particleShape WRITE setParticleShape);
-	
+
 private:
 
 	/// Controls the default display radius of atomic particles.

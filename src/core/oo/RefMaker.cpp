@@ -20,6 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <core/Core.h>
+#include <core/app/Application.h>
 #include <core/oo/RefTarget.h>
 #include <core/dataset/UndoStack.h>
 #include <core/dataset/DataSet.h>
@@ -504,6 +505,11 @@ void RefMaker::walkNode(QSet<RefTarget*>& nodes, const RefMaker* node)
 ******************************************************************************/
 void RefMaker::loadUserDefaults()
 {
+#ifdef OVITO_DEBUG
+	if(!Application::instance()->guiMode())
+		qWarning() << "Warning: loadUserDefaults() called in scripting mode for" << this;
+#endif
+
 	// Iterate over all property fields in the class hierarchy.
 	for(const PropertyFieldDescriptor* field : getOOMetaClass().propertyFields()) {
 		if(field->flags().testFlag(PROPERTY_FIELD_MEMORIZE)) {

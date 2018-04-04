@@ -213,7 +213,8 @@ bool GuiDataSetContainer::askForSaveChanges()
 bool GuiDataSetContainer::fileNew()
 {
 	OORef<DataSet> newSet = new DataSet();
-	newSet->loadUserDefaults();
+	if(Application::instance()->guiMode())
+		newSet->loadUserDefaults();
 	setCurrentSet(newSet);
 	return true;
 }

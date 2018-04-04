@@ -21,6 +21,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/BondsVis.h>
+#include <core/app/Application.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
 #include "BondProperty.h"
 
@@ -43,7 +44,8 @@ void BondProperty::OOMetaClass::prepareNewProperty(PropertyObject* property) con
 {
 	if(property->type() == BondProperty::TopologyProperty) {
 		OORef<BondsVis> vis = new BondsVis(property->dataset());
-		vis->loadUserDefaults();
+		if(Application::instance()->guiMode())
+			vis->loadUserDefaults();
 		property->addVisElement(vis);
 	}
 }

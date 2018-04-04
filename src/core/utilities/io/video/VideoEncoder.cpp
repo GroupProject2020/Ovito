@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -215,25 +215,25 @@ void VideoEncoder::closeFile()
 
 	// Write stream trailer.
 	if(_isOpen)
-		av_write_trailer(_formatContext.get());
+		::av_write_trailer(_formatContext.get());
 
 	// Close codec.
 	if(_codecContext)
-		avcodec_close(_codecContext.get());
+		::avcodec_close(_codecContext.get());
 
 #if LIBAVCODEC_VERSION_MAJOR < 57
 	// Free streams.
 	if(_formatContext) {
 		for(size_t i = 0; i < _formatContext->nb_streams; i++) {
-			av_freep(&_formatContext->streams[i]->codec);
-			av_freep(&_formatContext->streams[i]);
+			::av_freep(&_formatContext->streams[i]->codec);
+			::av_freep(&_formatContext->streams[i]);
 		}
 	}
 #endif
 
 	// Close the output file.
 	if(_formatContext->pb)
-		avio_close(_formatContext->pb);
+		::avio_close(_formatContext->pb);
 
 	// Cleanup.
 	_pictureBuf.reset();
@@ -265,61 +265,61 @@ void VideoEncoder::writeFrame(const QImage& image)
 	QImage finalImage = image.convertToFormat(QImage::Format_RGB32);
 
 	// Create conversion context.
-	_imgConvertCtx = sws_getCachedContext(_imgConvertCtx, videoWidth, videoHeight, AV_PIX_FMT_BGRA,
-			videoWidth, videoHeight, _codecContext->pix_fmt, SWS_BICUBIC, NULL, NULL, NULL);
+	_imgConvertCtx = ::sws_getCachedContext(_imgConvertCtx, videoWidth, videoHeight, AV_PIX_FMT_BGRA,
+			videoWidth, videoHeight, _codecContext->pix_fmt, SWS_BICUBIC, nullptr, nullptr, nullptr);
 	if(!_imgConvertCtx)
 		throw Exception(tr("Cannot initialize SWS conversion context to convert video frame."));
 
 	// Convert image to codec pixel format.
 	uint8_t *srcplanes[3];
 	srcplanes[0] = (uint8_t*)finalImage.bits();
-	srcplanes[1] = 0;
-	srcplanes[2] = 0;
+	srcplanes[1] = nullptr;
+	srcplanes[2] = nullptr;
 
 	int srcstride[3];
 	srcstride[0] = finalImage.bytesPerLine();
 	srcstride[1] = 0;
 	srcstride[2] = 0;
 
-	sws_scale(_imgConvertCtx, srcplanes, srcstride, 0, videoHeight, _frame->data, _frame->linesize);
+	::sws_scale(_imgConvertCtx, srcplanes, srcstride, 0, videoHeight, _frame->data, _frame->linesize);
 
 #if !defined(FF_API_OLD_ENCODE_VIDEO) && LIBAVCODEC_VERSION_MAJOR < 55
-	int out_size = avcodec_encode_video(_codecContext, _outputBuf.data(), _outputBuf.size(), _frame.get());
+	int out_size = ::avcodec_encode_video(_codecContext, _outputBuf.data(), _outputBuf.size(), _frame.get());
 	// If zero size, it means the image was buffered.
 	if(out_size > 0) {
 		AVPacket pkt;
-		av_init_packet(&pkt);
+		::av_init_packet(&pkt);
 		if(_codecContext->coded_frame->pts != AV_NOPTS_VALUE)
-			pkt.pts = av_rescale_q(_codecContext->coded_frame->pts, _codecContext->time_base, _videoStream->time_base);
+			pkt.pts = ::av_rescale_q(_codecContext->coded_frame->pts, _codecContext->time_base, _videoStream->time_base);
 		if(_codecContext->coded_frame->key_frame)
 			pkt.flags |= AV_PKT_FLAG_KEY;
 
 		pkt.stream_index = _videoStream->index;
 		pkt.data = _outputBuf.data();
 		pkt.size = out_size;
-		if(av_interleaved_write_frame(_formatContext.get(), &pkt) < 0)
+		if(::av_interleaved_write_frame(_formatContext.get(), &pkt) < 0)
 			throw Exception(tr("Error while writing video frame."));
 	}
 #else
 	int got_packet_ptr;
 	AVPacket pkt = {0};
-	av_init_packet(&pkt);
+	::av_init_packet(&pkt);
 
-	if(avcodec_encode_video2(_codecContext.get(), &pkt, _frame.get(), &got_packet_ptr) < 0)
+	if(::avcodec_encode_video2(_codecContext.get(), &pkt, _frame.get(), &got_packet_ptr) < 0)
 		throw Exception(tr("Error while encoding video frame."));
 
 	if(got_packet_ptr && pkt.size) {
 		pkt.stream_index = _videoStream->index;
-		int errcode = av_write_frame(_formatContext.get(), &pkt);		
+		int errcode = ::av_write_frame(_formatContext.get(), &pkt);		
 		if(errcode < 0) {
-			av_free_packet(&pkt);
+			::av_free_packet(&pkt);
 			char msgbuf[1024];
-			if(av_strerror(errcode, msgbuf, sizeof(msgbuf)) == 0)
+			if(::av_strerror(errcode, msgbuf, sizeof(msgbuf)) == 0)
 				throw Exception(tr("Error while writing video frame: %1").arg(msgbuf));
 			else
 				throw Exception(tr("Error while writing video frame."));
 		}
-		av_free_packet(&pkt);
+		::av_free_packet(&pkt);
 	}
 #endif
 }
@@ -328,4 +328,3 @@ OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-

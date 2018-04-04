@@ -82,7 +82,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> AmbientOcclusionModifier::createE
 	Box3 boundingBox;
 	for(DataVis* vis : posProperty->visElements()) {
 		if(ParticlesVis* particleVis = dynamic_object_cast<ParticlesVis>(vis)) {
-			boundingBox.addBox(particleVis->particleBoundingBox(posProperty, typeProperty, radiusProperty, shapeProperty));
+			boundingBox.addBox(particleVis->particleBoundingBox(posProperty, typeProperty, radiusProperty, shapeProperty, true));
 		}
 	}
 

@@ -27,6 +27,7 @@
 #include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
 #include <plugins/crystalanalysis/modifier/microstructure/SimplifyMicrostructureModifier.h>
 #include <plugins/crystalanalysis/data/Microstructure.h>
+#include <core/app/Application.h>
 #include <core/utilities/io/CompressedTextReader.h>
 #include "DislocImporter.h"
 
@@ -78,7 +79,8 @@ void DislocImporter::setupPipeline(PipelineSceneNode* pipeline, FileSource* impo
 
 	// Insert a SimplyMicrostructureModifier into the data pipeline by default.
 	OORef<SimplifyMicrostructureModifier> modifier = new SimplifyMicrostructureModifier(pipeline->dataset());
-	modifier->loadUserDefaults();
+	if(Application::instance()->guiMode())
+		modifier->loadUserDefaults();
 	pipeline->applyModifier(modifier);
 }
 
@@ -642,11 +644,13 @@ PipelineFlowState DislocImporter::DislocFrameData::handOver(DataSet* dataset, co
 			microstructureObj = new MicrostructureObject(dataset);
 			// Create a display object for the dislocation lines.
 			OORef<DislocationVis> dislocationVis = new DislocationVis(dataset);
-			dislocationVis->loadUserDefaults();
+			if(Application::instance()->guiMode())
+				dislocationVis->loadUserDefaults();
 			microstructureObj->addVisElement(dislocationVis);
 			// Create a display object for the slip surfaces.
 			OORef<SlipSurfaceVis> slipSurfaceVis = new SlipSurfaceVis(dataset);
-			slipSurfaceVis->loadUserDefaults();
+			if(Application::instance()->guiMode())
+				slipSurfaceVis->loadUserDefaults();
 			microstructureObj->addVisElement(slipSurfaceVis);
 		}
 		microstructureObj->setDomain(output.findObject<SimulationCellObject>());

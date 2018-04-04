@@ -28,6 +28,7 @@
 #include <plugins/crystalanalysis/objects/partition_mesh/PartitionMeshVis.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
 #include <plugins/mesh/surface/SurfaceMeshVis.h>
+#include <core/app/Application.h>
 #include <core/utilities/io/CompressedTextReader.h>
 #include "CAImporter.h"
 
@@ -605,7 +606,8 @@ PipelineFlowState CAImporter::CrystalAnalysisFrameData::handOver(DataSet* datase
 		if(!defectSurfaceObj) {
 			defectSurfaceObj = new SurfaceMesh(dataset);
 			OORef<SurfaceMeshVis> vis = new SurfaceMeshVis(dataset);
-			vis->loadUserDefaults();
+			if(Application::instance()->guiMode())
+				vis->loadUserDefaults();
 			defectSurfaceObj->setVisElement(vis);
 		}
 		defectSurfaceObj->setDomain(output.findObject<SimulationCellObject>());
@@ -619,7 +621,8 @@ PipelineFlowState CAImporter::CrystalAnalysisFrameData::handOver(DataSet* datase
 		if(!partitionMeshObj) {
 			partitionMeshObj = new PartitionMesh(dataset);
 			OORef<PartitionMeshVis> vis = new PartitionMeshVis(dataset);
-			vis->loadUserDefaults();
+			if(Application::instance()->guiMode())
+				vis->loadUserDefaults();
 			partitionMeshObj->setVisElement(vis);
 		}
 		partitionMeshObj->setDomain(output.findObject<SimulationCellObject>());
@@ -693,7 +696,8 @@ PipelineFlowState CAImporter::CrystalAnalysisFrameData::handOver(DataSet* datase
 		if(!dislocationNetwork) {
 			dislocationNetwork = new DislocationNetworkObject(dataset);
 			OORef<DislocationVis> vis = new DislocationVis(dataset);
-			vis->loadUserDefaults();
+			if(Application::instance()->guiMode())
+				vis->loadUserDefaults();
 			dislocationNetwork->setVisElement(vis);
 		}
 		dislocationNetwork->setDomain(output.findObject<SimulationCellObject>());

@@ -20,6 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
+#include <core/app/Application.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
 #include "ParticleProperty.h"
@@ -45,20 +46,23 @@ void ParticleProperty::OOMetaClass::prepareNewProperty(PropertyObject* property)
 {
 	if(property->type() == ParticleProperty::PositionProperty) {
 		OORef<ParticlesVis> vis = new ParticlesVis(property->dataset());
-		vis->loadUserDefaults();
+		if(Application::instance()->guiMode())
+			vis->loadUserDefaults();
 		property->addVisElement(vis);
 	}
 	else if(property->type() == ParticleProperty::DisplacementProperty) {
 		OORef<VectorVis> vis = new VectorVis(property->dataset());
 		vis->setObjectTitle(tr("Displacements"));
-		vis->loadUserDefaults();
+		if(Application::instance()->guiMode())
+			vis->loadUserDefaults();
 		vis->setEnabled(false);
 		property->addVisElement(vis);
 	}
 	else if(property->type() == ParticleProperty::ForceProperty) {
 		OORef<VectorVis> vis = new VectorVis(property->dataset());
 		vis->setObjectTitle(tr("Forces"));
-		vis->loadUserDefaults();
+		if(Application::instance()->guiMode())
+			vis->loadUserDefaults();
 		vis->setEnabled(false);
 		vis->setReverseArrowDirection(false);
 		vis->setArrowPosition(VectorVis::Base);
@@ -67,7 +71,8 @@ void ParticleProperty::OOMetaClass::prepareNewProperty(PropertyObject* property)
 	else if(property->type() == ParticleProperty::DipoleOrientationProperty) {
 		OORef<VectorVis> vis = new VectorVis(property->dataset());
 		vis->setObjectTitle(tr("Dipoles"));
-		vis->loadUserDefaults();
+		if(Application::instance()->guiMode())
+			vis->loadUserDefaults();
 		vis->setEnabled(false);
 		vis->setReverseArrowDirection(false);
 		vis->setArrowPosition(VectorVis::Center);

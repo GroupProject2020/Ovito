@@ -89,12 +89,12 @@ PipelineStatus PipelineListItem::status() const
 QString PipelineListItem::title() const
 { 
 	switch(_itemType) {
-	case Object: return object()->objectTitle();
+	case Object: return object() ? object()->objectTitle() : QString();
 	case SubObject:
 #ifdef Q_OS_LINUX
-		return QStringLiteral("  ⇾ ") + object()->objectTitle();
+		return object() ? (QStringLiteral("  ⇾ ") + object()->objectTitle()) : QString();
 #else
-		return QStringLiteral("    ") + object()->objectTitle();
+		return object() ? (QStringLiteral("    ") + object()->objectTitle()) : QString();
 #endif
 	case VisualElementsHeader: return tr("Visual elements");
 	case ModificationsHeader: return tr("Modifications");
