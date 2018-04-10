@@ -86,8 +86,20 @@ private:
 		/// Returns the property storage that contains the type of site each atom has been assigned to.
 		const PropertyPtr& siteTypes() const { return _siteTypes; }
 
-		/// Replaces the property storage for the type of site each atom has been assigned to.
+		/// Replaces the property storage for the type of the site each atom has been assigned to.
 		void setSiteTypes(PropertyPtr prop) { _siteTypes = std::move(prop); }		
+
+		/// Returns the property storage that contains the index of the site each atom has been assigned to.
+		const PropertyPtr& siteIndices() const { return _siteIndices; }
+
+		/// Replaces the property storage for the index of the site each atom has been assigned to.
+		void setSiteIndices(PropertyPtr prop) { _siteIndices = std::move(prop); }		
+
+		/// Returns the property storage that contains the identifier of the site each atom has been assigned to.
+		const PropertyPtr& siteIdentifiers() const { return _siteIdentifiers; }
+
+		/// Replaces the property storage for the indeitifier of the site each atom has been assigned to.
+		void setSiteIdentifiers(PropertyPtr prop) { _siteIdentifiers = std::move(prop); }		
 
 		/// Returns the reference state.
 		const PipelineFlowState& referenceState() const { return _referenceState; }
@@ -97,6 +109,8 @@ private:
 		const PipelineFlowState _referenceState;
 		PropertyPtr _occupancyNumbers;
 		PropertyPtr _siteTypes;
+		PropertyPtr _siteIndices;
+		PropertyPtr _siteIdentifiers;
 		size_t _vacancyCount = 0;
 		size_t _interstitialCount = 0;
 	};
@@ -109,12 +123,13 @@ private:
 		/// Constructor.
 		WignerSeitzAnalysisEngine(std::shared_ptr<WignerSeitzAnalysisResults> results, ConstPropertyPtr positions, const SimulationCell& simCell,
 				ConstPropertyPtr refPositions, const SimulationCell& simCellRef, AffineMappingType affineMapping,
-				ConstPropertyPtr typeProperty, int ptypeMinId, int ptypeMaxId, ConstPropertyPtr referenceTypeProperty) :
+				ConstPropertyPtr typeProperty, int ptypeMinId, int ptypeMaxId, ConstPropertyPtr referenceTypeProperty, ConstPropertyPtr referenceIdentifierProperty) :
 			RefConfigEngineBase(std::move(positions), simCell, std::move(refPositions), simCellRef,
 				nullptr, nullptr, affineMapping, false),
 			_typeProperty(std::move(typeProperty)), 
 			_ptypeMinId(ptypeMinId), _ptypeMaxId(ptypeMaxId),
-			_referenceTypeProperty(referenceTypeProperty),
+			_referenceTypeProperty(std::move(referenceTypeProperty)),
+			_referenceIdentifierProperty(std::move(referenceIdentifierProperty)),
 			_results(std::move(results)) {}
 
 		/// Computes the modifier's results.
@@ -127,16 +142,17 @@ private:
 
 		const ConstPropertyPtr _typeProperty;
 		const ConstPropertyPtr _referenceTypeProperty;
+		const ConstPropertyPtr _referenceIdentifierProperty;
 		int _ptypeMinId;
 		int _ptypeMaxId;
 		std::shared_ptr<WignerSeitzAnalysisResults> _results;
 	};
 
-	/// Enable per-type occupancy numbers.
+	/// Enables per-type occupancy numbers.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, perTypeOccupancy, setPerTypeOccupancy, PROPERTY_FIELD_MEMORIZE)
 
-	/// Enable output of displaced atomic configuration.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, keepCurrentConfig, setKeepCurrentConfig, PROPERTY_FIELD_MEMORIZE)
+	/// Enables output of displaced atomic configuration instead of reference configuration.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, outputCurrentConfig, setOutputCurrentConfig, PROPERTY_FIELD_MEMORIZE)
 };
 
 OVITO_END_INLINE_NAMESPACE

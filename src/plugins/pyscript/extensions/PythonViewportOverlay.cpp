@@ -47,25 +47,24 @@ void PythonViewportOverlay::loadUserDefaults()
 {
 	ViewportOverlay::loadUserDefaults();
 
-	// Load example script.
+	// Load default demo script.
 	setScript("import ovito\n"
 			"\n"
 			"# This user-defined function is called by OVITO to let it draw arbitrary graphics on top of the viewport.\n"
-			"# It is passed a QPainter (see http://qt-project.org/doc/qt-5/qpainter.html).\n"
-			"def render(painter, **args):\n"
+			"def render(args):\n"
 			"\n"
 			"\t# This demo code prints the current animation frame into the upper left corner of the viewport.\n"
-			"\ttext1 = \"Frame {}\".format(ovito.dataset.anim.current_frame)\n"
-			"\tpainter.drawText(10, 10 + painter.fontMetrics().ascent(), text1)\n"
+			"\ttext1 = \"Frame {}\".format(args.frame)\n"
+			"\targs.painter.drawText(10, 10 + args.painter.fontMetrics().ascent(), text1)\n"
 			"\n"
 			"\t# Also print the current number of particles into the lower left corner of the viewport.\n"
 			"\tpipeline = ovito.dataset.selected_pipeline\n"
 			"\tif not pipeline is None:\n"			
 			"\t\tdata = pipeline.compute()\n"
-			"\t\tnum_particles = len(data.particle_properties['Position']) if 'Position' in data.particle_properties else 0\n"
+			"\t\tnum_particles = len(data.particles['Position']) if 'Position' in data.particles else 0\n"
 			"\telse: num_particles = 0\n"
 			"\ttext2 = \"{} particles\".format(num_particles)\n"
-			"\tpainter.drawText(10, painter.window().height() - 10, text2)\n"
+			"\targs.painter.drawText(10, args.painter.window().height() - 10, text2)\n"
 			"\n"
 			"\t# Print to the log window:\n"
 			"\tprint(text1)\n"
@@ -169,8 +168,6 @@ void PythonViewportOverlay::render(Viewport* viewport, TimePoint time, QPainter&
 									const ViewProjectionParameters& projParams, RenderSettings* renderSettings, 
 									bool interactiveViewport, TaskManager& taskManager)
 {
-	qDebug() << "PythonViewportOverlay::render interactiveViewport=" << interactiveViewport << "time=" << time; 
-
 	// Compile script source if needed.
 	if(!_overlayScriptFunction) {
 		compileScript();
@@ -198,28 +195,20 @@ void PythonViewportOverlay::render(Viewport* viewport, TimePoint time, QPainter&
 		engine->execute([this,engine,viewport,&painter,&projParams,renderSettings,time]() {
 
 			// Pass viewport, QPainter, and other information to the Python script function.
-			// The QPainter pointer has to be converted to the representation used by PyQt.
-
+			// The QPainter pointer has to be converted to the representation used by PyQt5.
 			py::module numpy_module = py::module::import("numpy");
 			py::module sip_module = py::module::import("sip");
 			py::module qtgui_module = py::module::import("PyQt5.QtGui");
-
-			py::dict kwargs;
-			kwargs["viewport"] = py::cast(viewport);
-			kwargs["render_settings"] = py::cast(renderSettings);
-			kwargs["is_perspective"] = py::cast(projParams.isPerspective);
-			kwargs["fov"] = py::cast(projParams.fieldOfView);
-			kwargs["view_tm"] = py::cast(projParams.viewMatrix);
-			kwargs["proj_tm"] = py::cast(projParams.projectionMatrix);
-			kwargs["frame"] = py::cast(dataset()->animationSettings()->timeToFrame(time));
-
 			py::object painter_ptr = py::cast(reinterpret_cast<std::uintptr_t>(&painter));
 			py::object qpainter_class = qtgui_module.attr("QPainter");
 			py::object sip_painter = sip_module.attr("wrapinstance")(painter_ptr, qpainter_class);
-			py::tuple arguments = py::make_tuple(std::move(sip_painter));
+
+			py::tuple arguments = py::make_tuple(py::cast(
+				ViewportOverlayArguments(time, viewport, projParams, renderSettings, std::move(sip_painter)), 
+				py::return_value_policy::move));
 
 			// Execute render() script function.
-			engine->callObject(_overlayScriptFunction, std::move(arguments), std::move(kwargs));
+			engine->callObject(_overlayScriptFunction, std::move(arguments));
 		});
 	}
 	catch(const Exception& ex) {

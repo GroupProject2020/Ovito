@@ -13,7 +13,7 @@
   <para>
   
     <informalfigure>
-      <informaltable frame="none">
+      <informaltable frame="none" colsep="0" rowsep="0">
         <tgroup cols="2">
           <tbody>
             <row valign="bottom">
@@ -68,14 +68,14 @@ Modelling Simul. Mater. Sci. Eng. 20, 085007 (2012)</link></literallayout>
   
   <para>
     Note that, even though the implementation of the DXA in OVITO is highly optimized, the algorithm is computationally
-    expensive and requires sufficient working memory. <emphasis role="strong">The minimum memory requirement is 1 kilobyte per input atom!</emphasis>
-    Thus, to analyze a dataset with 1 million atoms at least 1 GB of free memory is required.
+    expensive and requires sufficient working memory. <emphasis role="strong">The approximate memory requirement is 1 kilobyte per input atom!</emphasis>
+    Thus, to analyze a dataset with 1 million atoms up to 1 GB of free memory is required.
   </para>
 
   <para>
     OVITO allows you to save the dislocation lines extracted by the modifier to a so-called <emphasis>Crystal Analysis (CA) file</emphasis>
     using the program's <link linkend="usage.export">file export function</link>. This allows you to further process the 
-    dislocation lines outside of OVITO or to reload the dislocation data at a later time without the need to reperform the 
+    dislocation lines outside of OVITO or to reload the dislocation data at a later time without the need to re-perform the 
     computationally expensive analysis. The CA file format is documented <link linkend="particles.modifiers.dislocation_analysis.fileformat">below</link>.
   </para>
 
@@ -226,7 +226,7 @@ Modelling Simul. Mater. Sci. Eng. 20, 085007 (2012)</link></literallayout>
     <simplesect>
     <title>Outputs</title>
     <para>
-       After analyzing the atomistic input crystal, the modifier produces serveral pieces of output: 
+       After analyzing the atomistic input crystal, the modifier produces several pieces of output: 
        <variablelist>
           <varlistentry>
           <term>Dislocation lines</term>
@@ -236,7 +236,7 @@ Modelling Simul. Mater. Sci. Eng. 20, 085007 (2012)</link></literallayout>
                 Each end point may be part of a <emphasis>junction</emphasis>, where it is connected to 
                 other dislocations, or it may be a <emphasis>dangling</emphasis> end point. Dislocations that merge into a crystal's surface
                 or into other extended defects have dangling ends. If a dislocation is a loop, its starting point forms a 2-junction with its end point. 
-                Dislocation loops need not be loop-shaped; they can also be infinite lines, going through a periodic boundary of the simulation cell and conneting to itself.
+                Dislocation loops need not be loop-shaped; they can also be infinite lines, going through a periodic boundary of the simulation cell and connecting back to itself.
           </para>
           <para>
                 In addition to this geometric information, each dislocation has two additional properties: The ID of the crystallite cluster
@@ -296,7 +296,7 @@ Modelling Simul. Mater. Sci. Eng. 20, 085007 (2012)</link></literallayout>
           <para>
                 Each cluster created by the algorithm has a unique ID (a positive integer), and the modifier outputs the assignments of atoms to clusters as 
                 a new particle property named <literal>Cluster</literal>, containing the ID of the cluster the atom belongs to.
-                Atoms with an undentified coordination structure are not part of any cluster, which is indicated by the special value 0.
+                Atoms with an unidentified coordination structure are not part of any cluster, which is indicated by the special value 0.
           </para>
           </listitem>
           </varlistentry>
@@ -325,8 +325,8 @@ Modelling Simul. Mater. Sci. Eng. 20, 085007 (2012)</link></literallayout>
     </para>
     <para>
         Note that you can position the mouse cursor over an extracted dislocation line in the viewports to let OVITO display its properties in the status bar 
-        of the main window. Alternatively, you can use the <link linkend="data_inspector">Data Inspector</link> to 
-        look at the properties of individual dislocation lines.
+        of the main window. Alternatively, you can use OVITO's <link linkend="data_inspector.dislocations">data inspector</link> to 
+        see a full list of all dislocation lines found by the DXA and look at individual dislocation lines.
     </para>
     <para>
         The dislocation lines extracted by the modifier can be exported using OVITO's <link linkend="usage.export">file export function</link>.
@@ -344,7 +344,7 @@ Modelling Simul. Mater. Sci. Eng. 20, 085007 (2012)</link></literallayout>
     </para>
     <para>
       <informalfigure>
-      <informaltable frame="none">
+      <informaltable frame="none" colsep="0" rowsep="0">
        <tgroup cols="1">
           <tbody>
             <row>
@@ -396,7 +396,7 @@ Modelling Simul. Mater. Sci. Eng. 20, 085007 (2012)</link></literallayout>
     
     <para>
       <informalfigure>
-      <informaltable frame="none">
+      <informaltable frame="none" colsep="0" rowsep="0">
        <tgroup cols="1">
           <tbody>
             <row>
@@ -443,7 +443,7 @@ Modelling Simul. Mater. Sci. Eng. 20, 085007 (2012)</link></literallayout>
     </para>    
     <para>
       <informalfigure>
-      <informaltable frame="none">
+      <informaltable frame="none" colsep="0" rowsep="0">
        <tgroup cols="1">
           <tbody>
             <row>

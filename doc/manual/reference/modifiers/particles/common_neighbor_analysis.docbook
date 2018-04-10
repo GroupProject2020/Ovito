@@ -109,7 +109,7 @@
       application settings dialog</link>.
     </para>
     <para>
-      Furthermore, the modifier emits global attributes to the data pipeline reporting the total number of particles matching 
+      Furthermore, the modifier emits <link linkend="usage.global_attributes">global attributes</link> to the data pipeline reporting the total number of particles matching 
       each of the supported structural types. These attributes are named <literal>CommonNeighborAnalysis.counts.XXX</literal>, where "<literal>XXX</literal>"
       stands for the name of a structure. These analysis statistics may be exported using OVITO's <link linkend="usage.export">data export function</link>
       or displayed as live information in the viewports using a <link linkend="viewport_overlays.text_label">text label</link>.

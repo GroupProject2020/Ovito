@@ -307,42 +307,66 @@ void defineViewportSubmodule(py::module m)
 				":Default: ``False``\n")
 	;
 
-	ovito_class<PythonViewportOverlay, ViewportOverlay>(m,
-			"This overlay type can be attached to a viewport to run a Python script every time an "
-			"image of the viewport is rendered. The Python script can issue arbitrary drawing commands to "
-			"paint on top of the three-dimensional scene. "
+	auto PythonViewportOverlay_py = ovito_class<PythonViewportOverlay, ViewportOverlay>(m,
+			"This type of viewport overlay runs a custom Python script function every time an "
+			"image of the viewport is being rendered. The user-defined script function can paint arbitrary graphics on top of the "
+			"three-dimensional scene. "
 			"\n\n"
-			"Note that an alternative to using the :py:class:`!PythonViewportOverlay` class is to directly manipulate the "
+			"Note that instead of using a :py:class:`!PythonViewportOverlay` it is also possible to directly manipulate the "
 			"image returned by the :py:meth:`Viewport.render_image` method before saving the image to disk. "
+			"A :py:class:`!PythonViewportOverlay` is only necessary when rendering animations or if you want the overlay "
+			"to be usable from in the graphical program version. "
 			"\n\n"
-			"You can attach a Python overlay to a viewport by adding an instance of this class to the viewport's "
+			"You can attach the Python overlay to a viewport by adding it to the viewport's "
 			":py:attr:`~ovito.vis.Viewport.overlays` collection:"
 			"\n\n"
-			".. literalinclude:: ../example_snippets/python_viewport_overlay.py")
+			".. literalinclude:: ../example_snippets/python_viewport_overlay.py"
+			"\n\n"
+			"The user-defined Python function must accept a single argument (named ``args`` in the example above). "
+			"The system will pass in an instance of the :py:class:`.Arguments` class to the function, which contains "
+			"various state information, including the current animation frame number and the viewport being rendered "
+			"as well as a `QPainter <http://pyqt.sourceforge.net/Docs/PyQt5/api/qpainter.html>`__ object, which the "
+			"function should use to issue drawing calls. ")
 		.def_property("function", &PythonViewportOverlay::scriptFunction, &PythonViewportOverlay::setScriptFunction,
-				"The Python function to be called every time the viewport is repainted or when an output image is being rendered."
+				"A reference to the Python function to be called every time the viewport is repainted or when an output image is rendered."
 				"\n\n"
-				"The function must have a signature as shown in the example above. The *painter* parameter "
-				"passed to the user-defined function contains a `QPainter <http://pyqt.sourceforge.net/Docs/PyQt5/api/qpainter.html>`__ object, which provides "
-				"painting methods to draw arbitrary 2D graphics on top of the image rendered by OVITO. "
+				"The user-defined function must accept exactly one argument as shown in the example above. The system will "
+				"pass an :py:class:`.Arguments` object to the function, providing various contextual information on the current frame being rendered. "
 				"\n\n"
-				"Additional keyword arguments are passed to the function in the *args* dictionary. "
-				"The following keys are defined: \n\n"
-				"   * ``viewport``: The :py:class:`~ovito.vis.Viewport` being rendered.\n"
-				"   * ``is_perspective``: Flag indicating whether projection is perspective or parallel.\n"
-				"   * ``fov``: The field of view.\n"
-				"   * ``view_tm``: The camera transformation matrix.\n"
-				"   * ``proj_tm``: The projection matrix.\n"
-				"\n\n"
-				"Implementation note: Exceptions raised by the custom rendering function are not propagated to the calling context. "
+				"Implementation note: Exceptions raised within the custom rendering function are *not* propagated to the calling context. "
 				"\n\n"
 				":Default: ``None``\n")
 		.def_property("behind_scene", &ViewportOverlay::renderBehindScene, &ViewportOverlay::setRenderBehindScene,
-				"This option puts the overlay behind the three-dimensional scene, i.e. as an \"underlay\" instead of an \"overlay\". "
-				"If set to to true, objects in the scene will occclude the overlay content. "
+				"This option puts the overlay behind the three-dimensional scene, i.e. making it an \"underlay\" instead of an \"overlay\". "
+				"If set to to true, three-dimensional objects in the scene will occclude the graphics rendered by the overlay. "
 				"\n\n"
 				":Default: ``False``")
 	;
+
+	py::class_<ViewportOverlayArguments>(PythonViewportOverlay_py, "Arguments",
+		"This is the type of data structure passed by the system to the user-defined ``render()`` function of the viewport overlay. "
+		"It holds various context information about the frame being rendered. ")
+		.def_property_readonly("viewport", &ViewportOverlayArguments::viewport,
+			"The :py:class:`~ovito.vis.Viewport` being rendered.")
+		.def_property_readonly("is_perspective", [](const ViewportOverlayArguments& args) { return args.projParams().isPerspective; }, 
+			"Flag indicating whether the viewport uses a perspective projection or parallel projection.")
+		.def_property_readonly("fov", [](const ViewportOverlayArguments& args) { return args.projParams().fieldOfView; },
+			"The field of view of the viewport’s camera. For perspective projections, this is the frustum angle in the vertical direction "
+			"(in radians). For orthogonal projections this is the visible range in the vertical direction (in world units). ")
+		.def_property_readonly("view_tm", [](const ViewportOverlayArguments& args) { return args.projParams().viewMatrix; },
+			"The affine camera transformation matrix. This 3x4 matrix transforms vectors from world space to camera space.")
+		.def_property_readonly("proj_tm", [](const ViewportOverlayArguments& args) { return args.projParams().projectionMatrix; },
+			"The projection matrix. This 4x4 matrix transforms vectors from camera space to screen space.")
+		.def_property_readonly("frame", &ViewportOverlayArguments::frame, 
+			"The animation frame number being rendered (0-based).")
+		.def_property_readonly("painter", &ViewportOverlayArguments::painter, 
+			"The `QPainter <http://pyqt.sourceforge.net/Docs/PyQt5/api/qpainter.html>`__ object, which provides painting methods "
+			"for drawing on top of the image canvas. ")
+		.def_property_readonly("size", [](const ViewportOverlayArguments& args) {
+			return py::make_tuple(args.renderSettings()->outputImageWidth(), args.renderSettings()->outputImageHeight());
+		},
+			"A tuple with the width and height of the image being rendered in pixels.")
+	;	
 }
 
 }

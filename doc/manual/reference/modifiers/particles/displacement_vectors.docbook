@@ -24,8 +24,8 @@
 
   <para>
     The modifier considers the currently present particle positions as the current configuration. 
-    The reference particle positions are by default taken from frame 0 of the loaded animation sequence. 
-    Alternatively, the modifier supports loading the reference particle positions from a separate data file.
+    The reference particle positions are by default taken from frame 0 of the loaded animation sequence ("Upstream pipeline" option). 
+    Alternatively, the modifier supports loading the reference particle positions from a separate data file ("External file" option).
   </para>
 
   <simplesect>

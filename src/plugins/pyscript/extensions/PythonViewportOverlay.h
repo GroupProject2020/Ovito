@@ -109,6 +109,56 @@ private:
 	py::object _mainNamespacePrototype;
 };
 
+/**
+ * Helper class that serves as a way to pass information to user-defined overlay functions.
+ */
+class OVITO_PYSCRIPT_EXPORT ViewportOverlayArguments
+{
+public:
+
+	/// Constructor.
+	ViewportOverlayArguments(TimePoint time, Viewport* viewport, const ViewProjectionParameters& projParams, 
+		RenderSettings* renderSettings, py::object painter) :
+			_time(time),
+			_viewport(viewport),
+			_projParams(projParams),
+			_renderSettings(renderSettings),
+			_painter(std::move(painter)) {}
+
+	/// Returns the animation time of the frame being rendered.
+	TimePoint time() const { return _time; }
+
+	/// Returns the animation frame being rendered.
+	int frame() const { return renderSettings()->dataset()->animationSettings()->timeToFrame(time()); }
+
+	/// Returns the viewport being rendered.
+	Viewport* viewport() const { return _viewport; }
+	
+	/// Returns the viewport projection information.
+	const ViewProjectionParameters& projParams() const { return _projParams; }
+
+	/// Returns the current render settings.
+	RenderSettings* renderSettings() const { return _renderSettings; }
+	
+	/// Returns the QPainter wrapped as a Python object.
+	py::object painter() const { return _painter; }
+	
+private:
+
+	/// The animation time of the frame being rendered.
+	TimePoint _time;
+
+	/// The viewport being rendered.
+	Viewport* _viewport;
+
+	/// The viewport projection information.
+	const ViewProjectionParameters& _projParams;
+
+	/// The current render settings.
+	RenderSettings* _renderSettings;
+
+	/// The QPainter wrapped as a Python object.
+	py::object _painter;
+};
+
 }	// End of namespace
-
-

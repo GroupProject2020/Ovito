@@ -17,24 +17,28 @@
       </imageobject></mediaobject>  
     </informalfigure>
 
-    The data inspector is located below the viewport area in OVITO's main window. Normally, it is 
+    The data inspector gives you an overview of the numerical data loaded from the input file and/or computed within
+    OVITO. The data inspector panel is located below the viewport area in OVITO's main window. Normally, it is 
     in a collapsed state from where it can be opened by clicking anywhere in the tab bar.
-    The panel gives you access to the underlying data of the current dataset. For example, it 
+    The panel displays the raw data of the current dataset. For example, it 
     lists all particles and bonds with their property data. Furthermore, it provides tools
     to pick individual elements in the viewports with the mouse and inspect their properties.
   </para>
 
   <para>
-    The data inspector panel consists of one or more page tabs, which are dynamically shown depending on the contents
+    The panel consists of one or more page tabs, which are dynamically shown depending on the contents
     of the current dataset: 
     <itemizedlist>
       <listitem><para><link linkend="data_inspector.particles">Particles</link></para></listitem>
       <listitem><para><link linkend="data_inspector.bonds">Bonds</link></para></listitem>
-      <listitem><para><link linkend="data_inspector.dislocations">Dislocations</link></para></listitem>
       <listitem><para><link linkend="data_inspector.attributes">Attributes</link></para></listitem>
+      <listitem><para><link linkend="data_inspector.dislocations">Dislocations</link></para></listitem>
     </itemizedlist>
    </para>
   
   <xi:include href="particles.docbook"/>
+  <xi:include href="bonds.docbook"/>
+  <xi:include href="attributes.docbook"/>
+  <xi:include href="dislocations.docbook"/>
   
 </section>

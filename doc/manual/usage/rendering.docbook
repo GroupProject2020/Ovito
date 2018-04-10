@@ -36,7 +36,7 @@
     is a software-based raytracing engine, which can generate high-quality renderings including shadows, ambient occlusion shading and depth of field effects. 
     See the <link linkend="rendering">Rendering</link> reference section for a description of all rendering engines included with OVITO.
       <informalfigure role="inline">
-      <informaltable frame="none">
+      <informaltable frame="none" colsep="0" rowsep="0">
         <tgroup cols="2">
           <tbody>
             <row valign="bottom">
@@ -70,7 +70,7 @@
   <simplesect xml:id="usage.rendering.show_render_frame">
     <title>Viewport preview mode</title>
     <para>
-      <informalfigure><informaltable frame="none">
+      <informalfigure><informaltable frame="none" colsep="0" rowsep="0">
         <tgroup cols="2">
           <tbody>
             <row valign="bottom">

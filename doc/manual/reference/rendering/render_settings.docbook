@@ -15,28 +15,29 @@
        <imagedata fileref="images/rendering/render_settings_panel.png" format="PNG" scale="50" />
      </imageobject></mediaobject></screenshot></informalfigure>  
     
-    This rollout sets parameters for <link linkend="usage.rendering">image and movie rendering</link>, 
-    which are common to all rendering engines, e.g. the output resolution, background color, etc. 
-    The rollout is found under the <guilabel>Render</guilabel> tab of the command panel as indicated in the screenshot.
+    This rollout contains general settings related to <link linkend="usage.rendering">image and movie rendering</link>, 
+    e.g. resolution, output filename, background color, etc. 
+    The rollout is found on the <guilabel>Rendering</guilabel> page of the command panel as depicted in the screenshot.
   </para>
 
   <para>
-    To start the actual rendering process after you have set all parameters, use the <guibutton>Render Active Viewport</guibutton> 
-    button at the top of the panel or the corresponding button in the toolbar of the main window. OVITO will always render the currently
-    active viewport, which is highlighted with a yellow border. 
+    To start an image/movie rendering process, use the <guibutton>Render Active Viewport</guibutton> 
+    button above the panel or the corresponding button in the main toolbar. OVITO will always render the currently
+    active viewport, which is marked with a yellow border. Click in a viewport with the right mouse button 
+    to make it the active one.
   </para>
 
   <para>
-    By default, rendered images are only displayed in the frame buffer window. That means they will be lost as soon 
-    as you close that window or quit OVITO. To permanently save rendered images, you can either use the <guimenuitem>Save to file</guimenuitem> function
-    from the frame buffer window after rendering is complete, or set the <guimenuitem>Save to file</guimenuitem> option beforehand in the
-    <emphasis>Render Settings</emphasis> rollout as described below.
+    By default, rendered images are shown in the so-called frame buffer window but do get automatically saved to disk. 
+    That means they will be lost as soon as you close the frame buffer window or quit OVITO. To save rendered images, you can either use the <guimenuitem>Save to file</guimenuitem> function
+    found in the toolbar of the frame buffer window after rendering is complete, or activate the <guimenuitem>Save to file</guimenuitem> option in the
+    <emphasis>Render Settings</emphasis> panel, which is described below.
   </para>
 
   <para>
-    Note that the total length of the animation and the playback speed (frames per second) are set in 
+    When rendering a movie note that the total length of the animation and the playback speed (frames per second) are set in 
     the <link linkend="animation.animation_settings_dialog">animation settings dialog</link>, which can be opened 
-    by clicking the <guibutton>Animation settings</guibutton> button.
+    using the <guibutton>Animation settings</guibutton> button.
   </para>
 
   <simplesect>
@@ -47,10 +48,10 @@
         <term>Rendering range</term>
 
         <listitem>
-          <para>Lets you select the animation frames you want to render. 
-          If you decide to render an animation or a range of frames, 
-          make sure you also set the <guimenuitem>Save to file</guimenuitem> option and an output filename below. 
-          Otherwise the rendered frames will only be displayed in the frame buffer window but not permanently saved to disk.          
+          <para>Selects which animation frame(s) to render. 
+          If you decide to render an animation, i.e. a range of frames, 
+          make sure you also check the <guimenuitem>Save to file</guimenuitem> option and set an output filename below. 
+          Otherwise the rendered animation will not get permanently saved to disk.
           </para>
         </listitem>
       </varlistentry>
@@ -59,9 +60,9 @@
         <term>Every Nth frame</term>
 
         <listitem>
-          <para>This setting controls how many frames of the current animation are actually rendered. 
-          Setting this to 1 renders every animation frame. A value of 2 will render only every other frame, etc.
-          Thus, you can use this setting to reduce the number of video frames for very long animation sequences.
+          <para>This value determines which fraction of animation frames is actually rendered. 
+          Setting this parameter to 1 renders every animation frame. A value of 2 will render only every other frame, etc.
+          Thus, you can use this to reduce the number of generated video frames in case of extremely long simulation sequences.
           </para>
         </listitem>
       </varlistentry>
@@ -69,10 +70,10 @@
       <varlistentry>
         <term>File number base</term>
         <listitem>
-          <para>When saving an animation as a series of image files (rather than one movie file), 
-          OVITO automatically appends the frame number to the selected output filename. This setting lets you choose another base file number, 
+          <para>When saving the frames of an animation as a series of image files (rather than a single movie file), 
+          OVITO automatically appends the frame number to the output filename. This setting lets you specify another base file number, 
           i.e. an offset. This can be useful if you want to collect the video frames from several animation sequences
-          in one directory and later combine them into a movie using an external video encoding software.</para>
+          in one directory and later combine them into one contiguous movie using an external video encoding software.</para>
         </listitem>
       </varlistentry>
       
@@ -81,8 +82,8 @@
 
         <listitem>
           <para>Sets the width and height of the rendered image or movie in pixels. 
-          This setting also affects the aspect ratio of the displayed frame border when <link linkend="usage.viewports.menu">Preview Mode</link>
-          is active for a viewport.
+            Note that you can activate the <link linkend="usage.viewports.menu">Preview Mode</link> for a viewport to
+            see which area of the viewport will be visible in rendered images.
           </para>
         </listitem>
       </varlistentry>
@@ -90,12 +91,12 @@
       <varlistentry>
         <term>Save to file</term>
         <listitem>
-          <para>This option lets OVITO save the rendered image(s) or movie to disk in addition to just displaying them 
+          <para>This option tells OVITO to save the rendered image or movie to disk in addition to displaying it
           in the frame buffer window. Use the <guibutton>Choose...</guibutton> button to pick an output filename.</para>
-          <para>If you decide to render an animation sequence (see <emphasis>rendering range</emphasis> option above), all animation frames will be written to one movie
-          file if you pick a format such as AVI or MPEG. If you choose an image format (e.g. PNG, JPEG),
-          OVITO will instead produce a sequence of image files. In this case, the frame number will automatically be appended to the name of each image file written.
-          You may subsequently use an external video encoding software to produce a movie from the image file sequence.</para>
+          <para>When rendering an animation sequence, all animation frames will be written to a single movie
+          file if you pick a video format such as AVI or MPEG. If you choose an image format (e.g. PNG, JPEG),
+          OVITO will instead produce a sequence of image files, one per frame. In this case, the frame number will automatically 
+          be appended to the base filename you picked.</para>
         </listitem>
       </varlistentry>
       
@@ -108,7 +109,7 @@
           transparent that are not covered by any objects. This is useful if you intend to
           put the image in front of some other background later, for instance on a presentation slide.
           Note that transparency information (<emphasis>alpha channel</emphasis>) must be 
-          supported by the output format for this to work (best choice is the PNG format).</para>
+          supported by the output format for this to work. Best choice is the PNG format.</para>
         </listitem>
       </varlistentry>
 
@@ -118,8 +119,8 @@
           <para>This selects a different rendering engine. OVITO offers
           several rendering engines, which differ in terms of quality and rendering speed. 
           See the <link linkend="rendering">Rendering</link> page for a list of options.
-          The specific settings of the currently selected rendering engine are shown in a separate 
-          panel below the <emphasis>Render Settings</emphasis> rollout.
+          Each render engine has specific parameters and settings, which are shown in a separate 
+          panel below the <emphasis>Render settings</emphasis> rollout.
           </para>
         </listitem>
       </varlistentry>
@@ -128,11 +129,4 @@
 
   </simplesect>
 
-  <simplesect>
-  <title>See also</title>
-    <para>
-      <link xlink:href="python/modules/ovito_vis.html#ovito.vis.RenderSettings"><classname>RenderSettings</classname> (Python API)</link>
-    </para>
-  </simplesect>    
-  
 </section>

@@ -1,12 +1,11 @@
 from ovito.vis import PythonViewportOverlay, Viewport
 
-# The user-defined function that paints on top of the rendered image:
-def render_overlay(painter, **args):
-    painter.drawText(10, 10, "Hello world")
-
-# Create the overlay.
-overlay = PythonViewportOverlay(function = render_overlay)
-
-# Attach overlay to a newly created viewport.
+# Create a viewport:
 viewport = Viewport(type = Viewport.Type.Top)
-viewport.overlays.append(overlay)
+
+# The user-defined function that will paint on top of rendered images:
+def render_some_text(args):
+    args.painter.drawText(10, 10, "Hello world")
+
+# Attach overlay function to viewport:
+viewport.overlays.append(PythonViewportOverlay(function = render_some_text))

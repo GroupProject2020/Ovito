@@ -13,30 +13,37 @@
   <para>
     <informalfigure>
       <mediaobject><imageobject>
-        <imagedata fileref="images/usage/miscellaneous/data_inspector.png" format="PNG" scale="85" />
+        <imagedata fileref="images/data_inspector/particles_page.png" format="PNG" scale="85" />
       </imageobject></mediaobject>  
     </informalfigure>
      
-    This <link linkend="utilities">utility applet</link> allows you to inspect the property values associated with individual particles 
-    and to measure distances and angles between pairs and triplets of particles.
-    The utility is invoked from "Utilities" tab of OVITO's command panel shown on the right.
+    This page of the <link linkend="data_inspector">data inspector</link> shows all particles and their property values
+    as a data table. The leftmost column shows the index number of particles, which starts at 0 in OVITO. 
+    Each following column displays the values of a <link linkend="usage.particle_properties">particle property</link>.
   </para>
   <para>
-    After opening the utility, you can pick individual particles in the viewports using the mouse.
-    The current values of their properties are displayed in the utility's text panel.
-    It is possible to select multiple particles at once, in which case the pair-wise distances
-    between all selected particles and angles formed by all triplets are computed by OVITO.
+    You can dynamically filter the displayed list of particles by entering a Boolean expression in the input field at the top of the table.
+    Consider, for example, the table shown in the screenshot: To selectively list only those particles that have a coordination
+    number of 11, you could enter the expression <literal>Coordination==11</literal> into the filter field.
+    Multiple criteria can be combined using logical AND and OR operators. The expression syntax is the same
+    used by the <link linkend="particles.modifiers.expression_select">Expression Selection</link> modifier. 
+    To reset the filter and show the full list of particles again, use the <guibutton>X</guibutton> button.
   </para>
   <para>
-    The expression text box allows you to enter an expression to select certain particles based on their properties
-    instead of picking them using the mouse. The syntax of the Boolean expression must follow
-    the same rules as for the <link linkend="particles.modifiers.expression_select">Expression Selection</link> modifier.
-    Note that, for performance reasons, the utility only displays the properties of the first ten particles that match the expression.
+    The crosshair button activates a mouse input mode, which lets you pick individual particles in the viewports.
+    As you select particles in the viewports, the filter expression is automatically updated to show the properties of  
+    the highlighted particles. Hold down the <keycap>Ctrl</keycap> key (<keycap>Command</keycap> key on macOS) to 
+    select multiple particles. Click the crosshair button again or right click in a viewport to deactivate the input mode. 
   </para>
   <para>
-    Note that particle indices reported by the utility are zero-based and always refer to the set of
-    of particles currently visible. Thus, if you delete some particles, the indices of the remaining
-    ones are shifted (this is in contrast to particle <emphasis>identifiers</emphasis>, which stick).
+    The middle tool button shows a second table displaying the distances between particles.
+    Here, OVITO reports the pair-wise distances for the first four particles in the particle list.
+    Typically you want to filter the particle list (either using the interactive method or a filter expression)
+    to define a set of 2, 3 or 4 particles for which to compute the inter-particle distances.
+    Note that periodic boundary conditions are not taken into account when pair-wise distances are calculated
+    using this function. If you are interested in <emphasis>wrapped</emphasis> distances, then you should
+    <link linkend="particles.modifiers.create_bonds">create bonds</link> between the particles and measure the length of these 
+    bonds instead.
   </para>
    
 </section>

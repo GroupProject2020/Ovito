@@ -2,25 +2,37 @@
 Examples
 ==================================
 
-.. warning::
-   This section of the manual is out of date! It was not updated yet to reflect the changes made in the current
-   development version of OVITO.
+This page presents various example scripts in the following categories. 
+Make sure to read the intro section of each category first:
 
-This page provides a collection of example scripts:
+   * :ref:`batch_script_examples`
+      * :ref:`example_compute_voronoi_indices`
+      * :ref:`example_compute_cna_bond_indices`
+      * :ref:`example_creating_particles_programmatically`
+   * :ref:`modifier_script_examples`
+      * :ref:`example_msd_calculation`
+      * :ref:`example_order_parameter_calculation`
+      * :ref:`example_visualize_local_lattice_orientation`
+      * :ref:`example_select_overlapping_particles`
+   * :ref:`overlay_script_examples`
+      * :ref:`example_data_plot_overlay`
 
-   * :ref:`example_compute_voronoi_indices`
-   * :ref:`example_compute_cna_bond_indices`
-   * :ref:`example_msd_calculation`
-   * :ref:`example_order_parameter_calculation`
-   * :ref:`example_creating_particles_programmatically`
-   * :ref:`example_visualize_local_lattice_orientation`
-   * :ref:`example_select_overlapping_particles`
+.. _batch_script_examples:
+
+----------------------------------
+Batch scripts
+----------------------------------
+
+As described in :ref:`scripting_running`, batch scripts carry out sequences of program actions in a non-interactive manner 
+and are typically executed from the terminal using the :program:`ovitos` script interpreter. The following examples demonstrate
+how this can be used to automate various tasks and accomplish new things that cannot even be done with the graphical 
+program version.
 
 .. _example_compute_voronoi_indices:
 
-----------------------------------
-Computing Voronoi indices
-----------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Example B1: Computing Voronoi indices
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This script demonstrates the use of the Voronoi analysis modifier.
 The script calculates the distribution of Voronoi coordination polyhedra in an amorphous structure.
@@ -60,9 +72,9 @@ Program output:
 
 .. _example_compute_cna_bond_indices:
 
-------------------------------------
-Computing CNA bond indices
-------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Example B2: Computing CNA bond indices
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The following script demonstrates how to use the :py:class:`~ovito.modifiers.CreateBondsModifier`
 to create bonds between particles. The structural environment of each created bond
@@ -85,15 +97,37 @@ Python script:
 .. literalinclude:: ../../../examples/scripts/cna_bond_analysis.py
 
 
-.. _example_msd_calculation:
+.. _example_creating_particles_programmatically:
 
---------------------------------------------------------------------------
-Writing a custom modifier for calculating the mean square displacement
---------------------------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Example B3: Creating particles and bonds programmatically
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The following script demonstrates how to create particles, a simulation cell, and bonds on the fly
+without loading an external simulation file. This approach can be used to implement custom data importers
+or dynamically generate atomic structures, which can then be further processed with OVITO or exported to a file.
+
+The script creates different data objects and adds them to a new :py:class:`~ovito.pipeline.StaticSource` instance.
+Finally, a :py:class:`~ovito.pipeline.Pipeline` is created and the :py:class:`~ovito.pipeline.StaticSource` is set as
+its data source.
+
+.. literalinclude:: ../example_snippets/create_new_particle_property.py
+
+.. _modifier_script_examples:
+
+----------------------------------
+User-defined modifier functions
+----------------------------------
 
 OVITO allows you to implement your :ref:`own type of analysis modifier <writing_custom_modifiers>` by writing a Python function that gets called every time
 the data pipeline is evaluated. This user-defined function has access to the positions and other properties of particles 
 and can output information and results as new properties or global attributes.
+
+.. _example_msd_calculation:
+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Example M1: Calculating mean square displacement
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 As a first simple example, we look at the calculation of the mean square displacement (MSD) in a system of moving particles.
 OVITO already provides the built-in `Displacement Vectors <../../particles.modifiers.displacement_vectors.html>`__ modifier, which 
@@ -113,9 +147,9 @@ by the ``ovitos`` interpreter. Then we have to insert the :py:class:`~ovito.modi
 
 .. _example_order_parameter_calculation:
 
---------------------------------------------------
-Implementing an advanced analysis modifier
---------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Example M2: Custom order parameter calculation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In the paper `[Phys. Rev. Lett. 86, 5530] <https://doi.org/10.1103/PhysRevLett.86.5530>`__ an order parameter is specified as a means
 of labeling an atom in the simulation as belonging to either the liquid or solid fcc crystal phase. In the following we will 
@@ -143,27 +177,11 @@ order parameter of each atom. Two nested loops run over all input atoms and thei
 Note that the ``yield`` statements in the modifier function above are only needed to support progress feedback in the
 graphical version of OVITO and to give the pipeline system the possibility to interrupt the long-running calculation when needed. 
 
-.. _example_creating_particles_programmatically:
-
---------------------------------------------------
-Creating particles and bonds programmatically
---------------------------------------------------
-
-The following script demonstrates how to create particles, a simulation cell, and bonds on the fly
-without loading an external simulation file. This approach can be used to implement custom data importers
-or dynamically generate atomic structures, which can then be further processed with OVITO or exported to a file.
-
-The script creates different data objects and adds them to a new :py:class:`~ovito.pipeline.StaticSource` instance.
-Finally, a :py:class:`~ovito.pipeline.Pipeline` is created and the :py:class:`~ovito.pipeline.StaticSource` is set as
-its data source.
-
-.. literalinclude:: ../example_snippets/create_new_particle_property.py
-
 .. _example_visualize_local_lattice_orientation:
 
----------------------------------------------------------------
-Visualizing local lattice orientations using particle coloring
----------------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Example M3: Color mapping to visualize local lattice orientation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The `Polyhedredral Template Matching (PTM) <../../particles.modifiers.polyhedral_template_matching.html>`__ function of OVITO allows 
 computing the local lattice orientation for each atom in a (poly)crystal. The computed local orientations
@@ -180,9 +198,9 @@ In the graphical OVITO version, simply insert a new Python modifier and copy/pas
 
 .. _example_select_overlapping_particles:
 
---------------------------------------------------------------------------
-Custom modifier for selecting/removing overlapping particles
---------------------------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Example M4: Finding overlapping particles
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This example shows how to write a :ref:`user-defined modifier function <writing_custom_modifiers>` that searches for pairs of particles 
 whose distance of separation is within the specified cutoff distance. Then one of the two particles in the pair is selected by the modifier. 
@@ -195,3 +213,23 @@ neighboring particles that are within a certain range of a central particles. Th
 
 .. literalinclude:: ../example_snippets/select_close_particles.py
   :lines: 8-42
+
+.. _overlay_script_examples:
+
+----------------------------------------
+User-defined overlay functions
+----------------------------------------
+
+OVITO allows you to implement your type of viewport overlay by writing a Python function that gets called every time
+a viewport image is being rendered. 
+
+.. _example_data_plot_overlay:
+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Example O1: Including data plots in rendered images
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. literalinclude:: ../example_snippets/overlay_data_plot.py
+  :lines: 4-42
+
+...

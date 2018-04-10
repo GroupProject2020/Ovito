@@ -15,16 +15,16 @@
        <imagedata fileref="images/display_objects/surface_mesh_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
     
-    This <link linkend="display_objects">visual element</link> renders triangulated surface meshes (two-dimensional manifolds)
-    as produced by e.g the <link linkend="particles.modifiers.construct_surface_mesh">Construct surface mesh</link>,
+    This <link linkend="display_objects">visual element</link> renders triangulated surface meshes,
+    which are typically produced by e.g the <link linkend="particles.modifiers.construct_surface_mesh">Construct surface mesh</link>,
     <link linkend="particles.modifiers.create_isosurface">Create isosurface</link> 
     or <link linkend="particles.modifiers.dislocation_analysis">Dislocation analysis</link> modifiers.
   </para>
 
   <para>
-    Surfaces meshes in OVITO represent closed two-dimensional manifolds which are embedded in the domain bounded by the 
-    simulation box. In case of periodic boundary conditions, the surface mesh itself may be periodic. For visualization purposes, such a periodic mesh is 
-    first converted to a non-periodic representation by cutting it at the simulation cell boundaries. OVITO can generate so called 
+    <link linkend="scene_objects.surface_mesh">Surfaces meshes</link> in OVITO represent closed two-dimensional manifolds which are embedded in the spatial domain delimited by the 
+    simulation box. In case of periodic boundary conditions, the surface mesh itself may be periodic. For visualization purposes, such periodic meshes are 
+    first converted to a non-periodic representation by cutting them at the simulation cell boundaries. OVITO can generate so called 
     'cap polygons' to fill the holes that arise at the intersection of the closed surface with the periodic boundary.
   </para>
 

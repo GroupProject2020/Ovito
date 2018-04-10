@@ -17,8 +17,8 @@ if ovito.headless_mode:
 else:
     renderer = None
 
-def myrender(painter, **args):
-    painter.drawText(10, 10, "Hello world")
+def myrender(args):
+    args.painter.drawText(10, 10, "Hello world")
 
 new_overlay = PythonViewportOverlay(function = myrender)
 new_overlay.behind_scene = True
@@ -28,7 +28,7 @@ assert(len(vp.overlays) == 1)
 assert(vp.overlays[0] == new_overlay)
 vp.render_image(renderer=renderer, size=(10,10))
 
-def myrender2(painter, **args):
+def myrender2(args):
     print("Note: The following render function will generate an error intentionally:")
     return this_error_is_intentional
 

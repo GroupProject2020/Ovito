@@ -919,7 +919,7 @@ void defineModifiersSubmodule(py::module m)
 				"the property component ``Occupancy.1`` contains the number of particles of type 1 that occupy a site. "
 				"\n\n"
 				":Default: ``False``\n")
-		.def_property("keep_current_config", &WignerSeitzAnalysisModifier::keepCurrentConfig, &WignerSeitzAnalysisModifier::setKeepCurrentConfig,
+		.def_property("output_displaced", &WignerSeitzAnalysisModifier::outputCurrentConfig, &WignerSeitzAnalysisModifier::setOutputCurrentConfig,
 				"Specifies whether the modifier should output the atoms of the current configuration or replace them with the sites from the reference configuration. "
 				"\n\n"
 				"By default, the modifier throws away all atoms of the current configuration and outputs the atomic sites from the reference configuration instead. "

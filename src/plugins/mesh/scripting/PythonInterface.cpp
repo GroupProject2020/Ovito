@@ -57,7 +57,7 @@ PYBIND11_MODULE(Mesh, m)
 			":Base class: :py:class:`ovito.data.DataObject`"
 			"\n\n"
 			"This data object type stores a triangle mesh describing a surface or, more precisely, a two-dimensional manifold that is closed and orientable. "
-			"Typically, surface meshes are produced by modifers such as the :py:class:`~ovito.modifiers.ConstructSurfaceModifier`, "
+			"Typically, surface meshes are produced by modifiers such as the :py:class:`~ovito.modifiers.ConstructSurfaceModifier`, "
 			":py:class:`~ovito.modifiers.CreateIsosurfaceModifier` or :py:class:`~ovito.modifiers.CoordinationPolyhedraModifier`. "
 			"\n\n"
 			"**Periodic domains**"

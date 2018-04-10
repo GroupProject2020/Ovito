@@ -32,16 +32,16 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 
 IMPLEMENT_OVITO_CLASS(WignerSeitzAnalysisModifier);
 DEFINE_PROPERTY_FIELD(WignerSeitzAnalysisModifier, perTypeOccupancy);
-DEFINE_PROPERTY_FIELD(WignerSeitzAnalysisModifier, keepCurrentConfig);
+DEFINE_PROPERTY_FIELD(WignerSeitzAnalysisModifier, outputCurrentConfig);
 SET_PROPERTY_FIELD_LABEL(WignerSeitzAnalysisModifier, perTypeOccupancy, "Compute per-type occupancies");
-SET_PROPERTY_FIELD_LABEL(WignerSeitzAnalysisModifier, keepCurrentConfig, "Keep current configuration");
+SET_PROPERTY_FIELD_LABEL(WignerSeitzAnalysisModifier, outputCurrentConfig, "Output current configuration");
 
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
 WignerSeitzAnalysisModifier::WignerSeitzAnalysisModifier(DataSet* dataset) : ReferenceConfigurationModifier(dataset),
 	_perTypeOccupancy(false), 
-	_keepCurrentConfig(false)
+	_outputCurrentConfig(false)
 {
 }
 
@@ -94,18 +94,24 @@ Future<AsynchronousModifier::ComputeEnginePtr> WignerSeitzAnalysisModifier::crea
 
 	// If output of the displaced configuration is requested, obtain types of the reference sites.
 	ConstPropertyPtr referenceTypeProperty;
-	if(keepCurrentConfig()) {
+	ConstPropertyPtr referenceIdentifierProperty;
+	if(outputCurrentConfig()) {
 		if(ParticleProperty* prop =  ParticleProperty::findInState(referenceState, ParticleProperty::TypeProperty))
 			referenceTypeProperty = prop->storage();
 		
-		// Create output property:
+		// Create output properties:
 		resultStorage->setSiteTypes(std::make_shared<PropertyStorage>(posProperty->size(), PropertyStorage::Int, 1, 0, tr("Site Type"), false));
+		resultStorage->setSiteIndices(std::make_shared<PropertyStorage>(posProperty->size(), PropertyStorage::Int64, 1, 0, tr("Site Index"), false));
+		if(ParticleProperty* idProp = ParticleProperty::findInState(referenceState, ParticleProperty::IdentifierProperty)) {
+			resultStorage->setSiteIdentifiers(std::make_shared<PropertyStorage>(posProperty->size(), PropertyStorage::Int64, 1, 0, tr("Site Identifier"), false));
+			referenceIdentifierProperty = idProp->storage();
+		}
 	}
 
 	// Create compute engine instance. Pass all relevant modifier parameters and the input data to the engine.
 	auto engine = std::make_shared<WignerSeitzAnalysisEngine>(resultStorage, posProperty->storage(), inputCell->data(),
 			refPosProperty->storage(), refCell->data(), affineMapping(), std::move(typeProperty), ptypeMinId, ptypeMaxId,
-			std::move(referenceTypeProperty));
+			std::move(referenceTypeProperty), std::move(referenceIdentifierProperty));
 
 	// This is to ensure that the results storage, and with it the reference state, stay alive and do not get 
 	// released before the compute engine finishes and control has returned to the main thread.
@@ -210,11 +216,15 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 		// Map occupancy numbers from sites to atoms.
 		int* occ = _results->occupancyNumbers()->dataInt();
 		int* st = _results->siteTypes()->dataInt();
+		auto sidx = _results->siteIndices()->dataInt64();
+		auto sid = _results->siteIdentifiers() ? _results->siteIdentifiers()->dataInt64() : nullptr;
 		for(size_t siteIndex : atomsToSites) {
 			for(int j = 0; j < ncomponents; j++) {
 				*occ++ = occupancyArray[siteIndex * ncomponents + j];
 			}
 			*st++ = _referenceTypeProperty ? _referenceTypeProperty->getInt(siteIndex) : 0;
+			*sidx++ = siteIndex;
+			if(sid) *sid++ = _referenceIdentifierProperty->getInt64(siteIndex); 
 		}
 		OVITO_ASSERT(occ == _results->occupancyNumbers()->dataInt() + _results->occupancyNumbers()->size() * _results->occupancyNumbers()->componentCount());
 	}
@@ -277,6 +287,10 @@ PipelineFlowState WignerSeitzAnalysisModifier::WignerSeitzAnalysisResults::apply
 			outProp->setElementTypes(inProp->elementTypes());
 		}
 	}
+	if(siteIndices())
+		poh.outputProperty<ParticleProperty>(siteIndices());
+	if(siteIdentifiers())
+		poh.outputProperty<ParticleProperty>(siteIdentifiers());
 
 	output.attributes().insert(QStringLiteral("WignerSeitz.vacancy_count"), QVariant::fromValue(vacancyCount()));
 	output.attributes().insert(QStringLiteral("WignerSeitz.interstitial_count"), QVariant::fromValue(interstitialCount()));

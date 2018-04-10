@@ -121,7 +121,7 @@
     </para>
     <para>
       If you want to load the reference particle positions from a separate file instead of taking
-      them from the currently loaded dataset, you can select "External file" as data source.
+      them from the currently loaded dataset, you can select the "External file" data source option.
       Activating this option will show an additional panel <guilabel>"Reference: External file"</guilabel> allowing you to
       pick the file containing the undeformed particle positions.
     </para>

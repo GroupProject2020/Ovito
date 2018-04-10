@@ -94,7 +94,7 @@ Computer Physics Communications (2016), doi:10.1016/j.cpc.2016.04.001</link></li
     <title>How it works</title>
     <para>
      <informalfigure>
-      <informaltable frame="none">
+      <informaltable frame="none" colsep="0" rowsep="0">
         <tgroup cols="2">
           <colspec colname="c1" />
 		  <colspec colname="c2" />

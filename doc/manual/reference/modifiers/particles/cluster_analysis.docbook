@@ -13,7 +13,7 @@
   <para>
   
     <informalfigure>
-      <informaltable frame="none">
+      <informaltable frame="none" colsep="0" rowsep="0">
         <tgroup cols="2">
           <tbody>
             <row valign="bottom">
@@ -38,7 +38,7 @@
     </informalfigure>
       
     <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/modifiers/cluster_analysis_panel.png" format="PNG" />
+       <imagedata fileref="images/modifiers/cluster_analysis_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
   
     This modifier decomposes a particle system into disconnected groups of particles (clusters) based on a local neighboring criterion.
@@ -56,7 +56,7 @@
     You can choose between the distance-based neighbor criterion, in which case two particles are considered
     neighbors if they are within a specified range of each other, and the bond-based criterion, in which case
     two particles are considered neighbors if they are connected by a bond. 
-    A particle without any neighbors forms a 1-particle cluster of its own.
+    A particle without any neighbors forms a single-particle cluster of its own.
   </para>
   <para>
     The modifier assigns numeric IDs to the clusters it forms (ranging from 1 to <emphasis>N</emphasis>, the total number of clusters).
@@ -139,7 +139,7 @@ import numpy
 
 output_filepath = "cluster_sizes.txt"
 data = ovito.dataset.selected_pipeline.compute()
-cluster_sizes = numpy.bincount(data.particle_properties['Cluster'])
+cluster_sizes = numpy.bincount(data.particles['Cluster'])
 numpy.savetxt(output_filepath, cluster_sizes)
     </programlisting></para>
     <para>
@@ -156,7 +156,7 @@ import numpy
 for frame in range(ovito.dataset.anim.last_frame + 1):
     output_filepath = "cluster_sizes.%i.txt" % frame
     data = ovito.dataset.selected_pipeline.compute(frame)
-    cluster_sizes = numpy.bincount(data.particle_properties['Cluster'])
+    cluster_sizes = numpy.bincount(data.particles['Cluster'])
     numpy.savetxt(output_filepath, cluster_sizes)
     </programlisting></para>
         </listitem>

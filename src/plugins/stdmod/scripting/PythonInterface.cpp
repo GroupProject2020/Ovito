@@ -437,11 +437,21 @@ PYBIND11_MODULE(StdMod, m)
 				":Default: ``False``\n")
 		.def_property_readonly("_histogram_data", py::cpp_function([](HistogramModifier& mod) {
 				HistogramModifierApplication* modApp = dynamic_object_cast<HistogramModifierApplication>(mod.someModifierApplication());
-				if(!modApp) mod.throwException(HistogramModifier::tr("Modifier has not been evaluated yet. Histogram data is not yet available."));
+				if(!modApp || modApp->histogramData().empty()) mod.throwException(HistogramModifier::tr("Modifier has not been evaluated yet. Histogram data is not yet available."));
 				py::array_t<size_t> array(modApp->histogramData().size(), modApp->histogramData().data(), py::cast(modApp));
 				// Mark array as read-only.
 				reinterpret_cast<py::detail::PyArray_Proxy*>(array.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
 				return array;
+			}))
+		.def_property_readonly("_interval_start", py::cpp_function([](HistogramModifier& mod) {
+				HistogramModifierApplication* modApp = dynamic_object_cast<HistogramModifierApplication>(mod.someModifierApplication());
+				if(!modApp) mod.throwException(HistogramModifier::tr("Modifier has not been evaluated yet. Histogram data is not yet available."));
+				return modApp->intervalStart();
+			}))
+		.def_property_readonly("_interval_end", py::cpp_function([](HistogramModifier& mod) {
+				HistogramModifierApplication* modApp = dynamic_object_cast<HistogramModifierApplication>(mod.someModifierApplication());
+				if(!modApp) mod.throwException(HistogramModifier::tr("Modifier has not been evaluated yet. Histogram data is not yet available."));
+				return modApp->intervalEnd();
 			}))
 	;
 	ovito_class<HistogramModifierApplication, ModifierApplication>{m};

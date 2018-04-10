@@ -13,7 +13,7 @@
   <para>
   
    <informalfigure>
-      <informaltable frame="none">
+      <informaltable frame="none" colsep="0" rowsep="0">
         <tgroup cols="2">
           <tbody>
             <row valign="bottom">
@@ -45,9 +45,8 @@
   </para>
   
   <para>
-    To visualize the bonds, the modifier automatically also creates a new <link linkend="display_objects.bonds">bonds
-    visual element</link>, which renders the bonds as cylinders between the particles. The lower parameter panel shown in the screenshot belongs to this 
-    <link linkend="display_objects.bonds">visual element</link> and lets you configure the appearance of the bonds. 
+    To visualize the bonds, the modifier automatically creates a new <link linkend="display_objects.bonds">bonds
+    visual element</link>, which renders the bonds as cylinders in between the particles.  
   </para>
 
   <para>

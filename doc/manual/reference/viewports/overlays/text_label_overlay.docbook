@@ -15,10 +15,10 @@
        <imagedata fileref="images/viewport_overlays/text_label_overlay_panel.png" format="PNG" />
     </imageobject></mediaobject></screenshot></informalfigure>
     This <link linkend="viewport_overlays">viewport overlay</link> displays a user-defined text string
-    in the rendered image. The text can contain placeholders, which are replaced by computed
-    values from OVITO's data pipeline. This makes it possible to display dynamic information
-    such as the current simulation timestep, number of atoms, or analysis results in a
-    rendered image or movie. 
+    in the rendered image. The text can contain placeholders to be replaced with the values
+    of <link linkend="usage.global_attributes">global attributes</link> computed by OVITO's data pipeline. 
+    This makes it possible to display dynamic information such as the current simulation timestep, number of atoms, 
+    or analysis results in a rendered image or movie. 
   </para>
   
   <para>

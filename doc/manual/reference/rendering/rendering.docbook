@@ -11,13 +11,19 @@
   <title>Rendering</title>
 
   <para>
+
     <informalfigure><screenshot><mediaobject><imageobject>
-       <imagedata fileref="images/rendering/render_settings_panel.png" format="PNG" scale="50" />
+       <imagedata fileref="images/rendering/render_settings_panel.png" format="PNG" scale="45" />
     </imageobject></mediaobject></screenshot></informalfigure>
   
-  The following rendering backends are available in OVITO: 
+    <link linkend="usage.rendering">Rendering</link> is the process of producing high-quality output images and movies
+    of the loaded dataset for publication and other purposes. 
+    The <link linkend="core.render_settings">rendering page</link> of the command panel depicted in the screenshot 
+    lets you control various settings related to image and movie generation. 
+    Furthermore, OVITO provides several different rendering engines,
+    which are listed in the following table and differ in terms of visual quality and speed. 
   
-  <informaltable>
+    <informaltable>
         <tgroup cols="2">
           <colspec colname='name'/>
           <colspec colname='descr'/>
@@ -30,7 +36,7 @@
           <tbody>          
             <row>
               <entry><link linkend="rendering.opengl_renderer">OpenGL&#xA0;renderer</link></entry>
-              <entry>Hardware-accelerated rendering engine, which is also used for the interactive viewports</entry>
+              <entry>Hardware-accelerated renderer, which is also used for realtime display in the interactive viewports</entry>
             </row>
             <row>
               <entry><link linkend="rendering.tachyon_renderer">Tachyon&#xA0;renderer</link></entry>
@@ -38,11 +44,11 @@
             </row>
             <row>
               <entry><link linkend="rendering.ospray_renderer">OSPRay&#xA0;renderer</link></entry>
-              <entry>Another rendering engine with similar features but reduced memory requirements</entry>
+              <entry>Another highly optimized software rendering engine with similar features as the Tachyon renderer but reduced memory requirements</entry>
             </row>
             <row>
               <entry><link linkend="rendering.povray_renderer">POV-Ray&#xA0;renderer</link></entry>
-              <entry>Lets you render OVITO scenes with the external POV-Ray program</entry>
+              <entry>This engine automatically invokes the external POV-Ray software to render OVITO scenes</entry>
             </row>
           </tbody>
         </tgroup>

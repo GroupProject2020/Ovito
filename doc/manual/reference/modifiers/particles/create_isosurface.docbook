@@ -10,9 +10,6 @@
          xmlns:ns="http://docbook.org/ns/docbook">
   <title>Create isosurface</title>
 
-  <warning><para>This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
-   development version of OVITO.</para></warning>
-
   <para>
   
     <informalfigure><screenshot><mediaobject><imageobject>
@@ -20,11 +17,11 @@
     </imageobject></mediaobject></screenshot></informalfigure>
     
     <informalfigure>
-      <informaltable frame="none">
+      <informaltable frame="none" colsep="0" rowsep="0">
         <tgroup cols="1">
           <tbody>
             <row valign="bottom">
-              <entry>Example: Two isosurfaces of charge density:</entry>
+              <entry>Example: Two isosurfaces of the charge density field:</entry>
             </row>
             <row valign="top">
               <entry>
@@ -38,13 +35,16 @@
       </informaltable>
     </informalfigure>
 
-    This modifier computes an <link xlink:href="https://en.wikipedia.org/wiki/Isosurface">isosurface</link> for a field quantity defined on a structured data grid.
-    Note that the modifier is available only if a field quantity has been loaded. In the current program version,
-    the only file parser that provides such data is the POSCAR reader, which can load charge densities
-    computed by the VASP DFT code from <emphasis>CHGCAR</emphasis> files.
+    This modifier generates an <link xlink:href="https://en.wikipedia.org/wiki/Isosurface">isosurface</link> for a field quantity defined on a structured data grid.
+    The generated isosurface is represented as a <link linkend="scene_objects.surface_mesh">surface mesh</link> in OVITO and its visual appearance is controlled by 
+    the accompanying <link linkend="display_objects.surface_mesh">surface mesh visual element</link>.
   </para>
   <para>
-    Note: The modifier may be applied more than once to create multiple surfaces at different iso-levels.
+    See the <link linkend="usage.import.formats">list of file formats</link> supported by OVITO to find out how to load
+    voxel data grids into the program.
+  </para>
+  <para>
+    Note that you can apply the modifier more than once to create multiple surfaces at different iso-levels.
   </para>
 
   <simplesect>
@@ -53,6 +53,5 @@
       <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.CreateIsosurfaceModifier"><classname>CreateIsosurfaceModifier</classname> (Python API)</link>
     </para>
   </simplesect>  
-  
-     
+       
 </section>

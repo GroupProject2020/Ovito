@@ -133,6 +133,8 @@ _ssl _ssl.c \
 make
 make install
 
+# Disable user site packages:
+# Edit "$HOME/progs/python/lib/python3.5/site.py" and set: ENABLE_USER_SITE = False
 
 **************************************************************************
 Install Sphinx:

@@ -35,14 +35,14 @@
     filter to determine the structure type, and stores the results in the <code class="literal">
     Structure Type</code> particle property.  This allows the user to subsequently select particles 
     of a certain structural type, e.g. by using the <link 
-    linkend="particles.modifiers.select_particle_type">Select Particle Type</link> modifier. This 
+    linkend="particles.modifiers.select_particle_type">Select type</link> modifier. The VoroTop
     modifier requires access to the complete set of input particles to perform the analysis, and 
     should therefore be placed at the beginning of the processing pipeline, preceding any modifiers 
     that delete particles.
   </para>
 
   <para>
-    This method is well-suited for analyzing finite-temperature systems, including those heated to 
+    The VoroTop analysis method is well-suited for analyzing finite-temperature systems, including those heated to 
     their bulk melting temperatures.  This robust behavior relieves the need to quench a sample 
     (such as by energy minimization) prior to analysis.
   </para>

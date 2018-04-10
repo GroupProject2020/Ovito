@@ -22,7 +22,7 @@
     compressed for text-based file formats.
   </para>
 
-  <simplesect>
+  <simplesect xml:id="usage.global_attributes">
     <title>Exporting scalar values</title>
     <para>
       Some of OVITO's analysis functions produce single output values (in contrast to per-particle property values), e.g. the total number of atoms of a 

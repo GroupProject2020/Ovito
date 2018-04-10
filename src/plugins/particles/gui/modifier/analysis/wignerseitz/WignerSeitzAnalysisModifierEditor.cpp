@@ -55,10 +55,17 @@ void WignerSeitzAnalysisModifierEditor::createUI(const RolloutInsertionParameter
 	sublayout->setSpacing(4);
 	
 	BooleanParameterUI* perTypeOccupancyUI = new BooleanParameterUI(this, PROPERTY_FIELD(WignerSeitzAnalysisModifier::perTypeOccupancy));
-	sublayout->addWidget(perTypeOccupancyUI->checkBox(), 0, 0);
 
-	BooleanParameterUI* keepCurrentConfigUI = new BooleanParameterUI(this, PROPERTY_FIELD(WignerSeitzAnalysisModifier::keepCurrentConfig));
-	sublayout->addWidget(keepCurrentConfigUI->checkBox(), 1, 0);
+	sublayout->setColumnMinimumWidth(0, 16);
+	sublayout->addWidget(new QLabel(tr("Output mode:")), 0, 0, 1, 2);
+	BooleanRadioButtonParameterUI* outputCurrentConfigUI = new BooleanRadioButtonParameterUI(this, PROPERTY_FIELD(WignerSeitzAnalysisModifier::outputCurrentConfig));
+	outputCurrentConfigUI->buttonFalse()->setText(tr("Sites (reference config)"));
+	sublayout->addWidget(outputCurrentConfigUI->buttonFalse(), 1, 1);
+	outputCurrentConfigUI->buttonTrue()->setText(tr("Atoms (displaced config)"));
+	sublayout->addWidget(outputCurrentConfigUI->buttonTrue(), 2, 1);
+
+	sublayout->setRowMinimumHeight(3, 6);
+	sublayout->addWidget(perTypeOccupancyUI->checkBox(), 4, 0, 1, 2);
 
 	QGroupBox* mappingGroupBox = new QGroupBox(tr("Affine mapping of simulation cell"));
 	layout->addWidget(mappingGroupBox);

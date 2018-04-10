@@ -16,14 +16,14 @@
        <imagedata fileref="images/modifiers/expression_select_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
 
-    This modifier allows you to select particles based on a user-defined criterion by entering a Boolean expression, 
-    which is evaluated by the modifier for every particle in the system. 
-    Those particles for which the expression yields a non-zero value ("<emphasis>true</emphasis>")
-    will be selected; all other particles, for which the expression evaluates to zero ("<emphasis>false</emphasis>"), are deselected. 
+    This modifier let you select particles or bonds based on user-defined criteria, i.e. by entering a Boolean expression, 
+    which is evaluated by the modifier for every particle/bond in the system. 
+    Those element for which the expression yields a non-zero value ("<emphasis>true</emphasis>")
+    will be selected; all other elements, for which the expression evaluates to zero ("<emphasis>false</emphasis>"), are deselected. 
   </para>
   <para>
-    The Boolean expression can contain references to particle properties and global quantities, e.g. the simulation cell size or the current timestep number. 
-    Hence, the modifier can be used to select particles based on properties such as position,
+    The Boolean expression can contain references to particle and bond properties as well as global quantities, e.g. the simulation cell size or the current timestep number. 
+    Hence, the modifier can be used to dynamically select elements based on properties such as position,
     type, energy, etc. and any combination thereof. The list of available
     input variables is displayed in the lower panel as shown in the screenshot.
   </para>
@@ -40,7 +40,7 @@
 
     <para>
       The expression syntax supported by the modifier is very
-      similar to the one used by the C programming language. Arithmetic expressions can be created from
+      similar to the C programming language. Arithmetic expressions can be created from
       float literals, variables or functions using the following operators
       in this order of precedence:
     <informaltable>
@@ -287,7 +287,7 @@
     <title>Usage examples</title>
 
     <para>The first expression below will select all particles of numeric type 1 or 2, similar to what the <link linkend="particles.modifiers.select_particle_type">Select Type</link> modifier
-    would do. The second expression will select particles within a cylindrical space region of radius 10 around the coordinate origin:</para>
+    does. The second expression will select particles within a cylindrical region of radius 10:</para>
 
     <para><programlisting>ParticleType==1 || ParticleType==2
     

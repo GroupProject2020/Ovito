@@ -12,7 +12,7 @@
 
   <para>
     <informalfigure>
-      <informaltable frame="none">
+      <informaltable frame="none" colsep="0" rowsep="0">
         <tgroup cols="2">
           <tbody>
             <row valign="bottom">
@@ -47,7 +47,7 @@
     </imageobject></mediaobject></screenshot></informalfigure>
   
     This modifier either deletes or selects all elements on one side of an infinite cutting plane. 
-    Alternatively, the modifier can cut out a slab of a given thickness from the structure (see pictures on the right).
+    Alternatively, the modifier can cut out a slab of a given thickness from the structure (see pictures).
   </para>
   
   <simplesect>

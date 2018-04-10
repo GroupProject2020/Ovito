@@ -11,9 +11,8 @@
   
   <para>This page is intentionally left blank. Please use the "Next" button to go to the first sub-section.</para>
   
-  <xi:include href="reference/modifiers/modifiers.docbook"/>
-  <xi:include href="reference/modifiers/clone_pipeline.docbook"/>
   <xi:include href="reference/scene_objects/scene_objects.docbook"/>
+  <xi:include href="reference/modifiers/modifiers.docbook"/>
   <xi:include href="reference/display_objects/display_objects.docbook"/>
   <section xml:id="viewports">
     <title>Viewports</title>

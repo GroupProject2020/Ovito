@@ -36,6 +36,10 @@ Install the following components (Qt 5.9.4) in C:\Qt\ :
 Python 3.x
 **************************************************************************
 
+----- Disable user site packages -----
+Edit config file "64bit\Python\Lib\site.py" and set
+  ENABLE_USER_SITE = False
+
 ----- Install Sphinx ---
 Scripts\pip3 install sphinx
 

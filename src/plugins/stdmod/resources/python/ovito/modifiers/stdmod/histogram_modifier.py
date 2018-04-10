@@ -23,9 +23,9 @@ def _HistogramModifier_histogram(self):
     if len(ydata) != self.bin_count:
         raise RuntimeError("The modifier has not computed its results yet.")
     # Compute bin center positions
-    binsize = (self.xrange_end - self.xrange_start) / len(ydata)
-    xdata = numpy.linspace(self.xrange_start + binsize * 0.5, self.xrange_end + binsize * 0.5, len(ydata), endpoint = False)
-    return numpy.transpose((xdata,ydata))
+    binsize = (self._interval_end - self._interval_start) / len(ydata)
+    xdata = numpy.linspace(self._interval_start + binsize * 0.5, self._interval_end + binsize * 0.5, len(ydata), endpoint = False)
+    return numpy.transpose((xdata, ydata))
 HistogramModifier.histogram = property(_HistogramModifier_histogram)
 
 

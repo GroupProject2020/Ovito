@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<section version="5.0"
+         xsi:schemaLocation="http://docbook.org/ns/docbook http://docbook.org/xml/5.0/xsd/docbook.xsd"
+         xml:id="data_inspector.dislocations"
+         xmlns="http://docbook.org/ns/docbook"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns:xs="http://www.w3.org/2001/XMLSchema"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:xi="http://www.w3.org/2001/XInclude"
+         xmlns:ns="http://docbook.org/ns/docbook">
+  <title>Dislocations page</title>
+
+  <para>
+    <informalfigure>
+      <mediaobject><imageobject>
+        <imagedata fileref="images/data_inspector/dislocations_page.png" format="PNG" scale="95" />
+      </imageobject></mediaobject>  
+    </informalfigure>
+     
+    This page of the <link linkend="data_inspector">data inspector</link> lists all dislocation lines
+    found in a crystal by the <link linkend="particles.modifiers.dislocation_analysis">Dislocation analysis (DXA)</link> modifier.
+  </para>
+  <para>
+    The crosshair button above the table activates a mouse input mode which lets you pick individual dislocation lines in the viewports.
+    As you select lines in the viewports, the corresponding rows in the table get highlighted. 
+    Hold down the <keycap>Ctrl</keycap> key (<keycap>Command</keycap> key on macOS) to 
+    select multiple dislocation lines. This also works the other way around: With the highlighting mode active, 
+    you can select table rows and OVITO will highlight the corresponding dislocations in the viewports. 
+    Click the crosshair button again or right click in a viewport to deactivate the highlight mode. 
+  </para>
+   
+</section>
