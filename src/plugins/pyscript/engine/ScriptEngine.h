@@ -35,13 +35,23 @@ namespace py = pybind11;
  */
 class OVITO_PYSCRIPT_EXPORT ScriptEngine : public QObject, public std::enable_shared_from_this<ScriptEngine>
 {
-public:
+private:
 
 	/// \brief Initializes the scripting engine and sets up the environment.
 	/// \param dataset The engine will execute scripts in the context of this dataset.
 	/// \param taskManager The engine will execute scripts in the context of this task manager.
 	/// \param privateContext If true, then changes made by the script will not be visible on the global scope.
 	ScriptEngine(DataSet* dataset, TaskManager& taskManager, bool privateContext);
+	
+public:
+
+	/// \brief Create a scripting engine and sets up the scripting environment.
+	/// \param dataset The new engine will execute scripts in the context of this dataset.
+	/// \param taskManager The new engine will execute scripts in the context of this task manager.
+	/// \param privateContext If true, then changes made by the script will not be visible on the global scope.
+	static std::shared_ptr<ScriptEngine> createEngine(DataSet* dataset, TaskManager& taskManager, bool privateContext) {
+		return std::shared_ptr<ScriptEngine>(new ScriptEngine(dataset, taskManager, privateContext));
+	}
 
 	/// \brief Destructor
 	virtual ~ScriptEngine();

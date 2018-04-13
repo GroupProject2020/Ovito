@@ -55,9 +55,8 @@ void RunScriptAction::registerActions(ActionManager& actionManager)
 			// Show a progress dialog while script is running.
 			ProgressDialog progressDialog(actionManager.mainWindow(), tr("Script execution"));	
 
-			ScriptEngine engine(dataset, progressDialog.taskManager(), true);
-
-			engine.executeFile(scriptFile);
+			auto engine = ScriptEngine::createEngine(dataset, progressDialog.taskManager(), true);
+			engine->executeFile(scriptFile);
 		}
 		catch(const Exception& ex) {
 			ex.reportError();

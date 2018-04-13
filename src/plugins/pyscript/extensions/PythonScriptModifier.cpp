@@ -127,7 +127,7 @@ ScriptEngine* PythonScriptModifier::getScriptEngine()
 	const std::shared_ptr<ScriptEngine>& engine = ScriptEngine::activeEngine();
 	if(!engine) {
 		if(!_scriptEngine) {
-			_scriptEngine = std::make_shared<ScriptEngine>(dataset(), dataset()->container()->taskManager(), true);
+			_scriptEngine = ScriptEngine::createEngine(dataset(), dataset()->container()->taskManager(), true);
 			connect(_scriptEngine.get(), &ScriptEngine::scriptOutput, this, &PythonScriptModifier::onScriptOutput);
 			connect(_scriptEngine.get(), &ScriptEngine::scriptError, this, &PythonScriptModifier::onScriptOutput);
 			_mainNamespacePrototype = _scriptEngine->mainNamespace();

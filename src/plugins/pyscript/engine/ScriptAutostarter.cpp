@@ -73,7 +73,7 @@ void ScriptAutostarter::applicationStarted()
 		UndoSuspender noUndo(dataset);
 
 		// Set up script engine.
-		auto engine = std::make_shared<ScriptEngine>(dataset, Application::instance()->datasetContainer()->taskManager(), false);
+		auto engine = ScriptEngine::createEngine(dataset, Application::instance()->datasetContainer()->taskManager(), false);
 
 		// Pass command line parameters to the script.
 		QStringList scriptArguments = StandaloneApplication::instance()->cmdLineParser().values("scriptarg");

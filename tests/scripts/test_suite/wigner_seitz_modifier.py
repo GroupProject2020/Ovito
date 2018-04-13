@@ -29,8 +29,8 @@ modifier.use_frame_offset = False
 print("  per_type_occupancies: {}".format(modifier.per_type_occupancies))
 modifier.per_type_occupancies = False
 
-print("  keep_current_config: {}".format(modifier.keep_current_config))
-modifier.keep_current_config = False
+print("  output_displaced: {}".format(modifier.output_displaced))
+modifier.output_displaced = False
 
 data = pipeline.compute()
 
