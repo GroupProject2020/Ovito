@@ -137,7 +137,25 @@ bool LAMMPSDumpExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 		case ParticleProperty::IdentifierProperty: columnName = QStringLiteral("id"); break;
 		case ParticleProperty::TypeProperty: columnName = QStringLiteral("type"); break;
 		case ParticleProperty::MassProperty: columnName = QStringLiteral("mass"); break;
+		case ParticleProperty::SelectionProperty: columnName = QStringLiteral("selection"); break;
 		case ParticleProperty::RadiusProperty: columnName = QStringLiteral("radius"); break;
+		case ParticleProperty::MoleculeProperty: columnName = QStringLiteral("mol"); break;
+		case ParticleProperty::ChargeProperty: columnName = QStringLiteral("q"); break;
+		case ParticleProperty::PotentialEnergyProperty: columnName = QStringLiteral("c_epot"); break;
+		case ParticleProperty::KineticEnergyProperty: columnName = QStringLiteral("c_kpot"); break;
+		case ParticleProperty::OrientationProperty:
+			if(pref.vectorComponent() == 0) columnName = QStringLiteral("c_orient[1]");
+			else if(pref.vectorComponent() == 1) columnName = QStringLiteral("c_orient[2]");
+			else if(pref.vectorComponent() == 2) columnName = QStringLiteral("c_orient[3]");
+			else if(pref.vectorComponent() == 2) columnName = QStringLiteral("c_orient[4]");
+			else columnName = QStringLiteral("orientation");
+			break;
+		case ParticleProperty::AsphericalShapeProperty:
+			if(pref.vectorComponent() == 0) columnName = QStringLiteral("c_shape[1]");
+			else if(pref.vectorComponent() == 1) columnName = QStringLiteral("c_shape[2]");
+			else if(pref.vectorComponent() == 2) columnName = QStringLiteral("c_shape[3]");
+			else columnName = QStringLiteral("aspherical_shape");
+			break;
 		default:
 			columnName = pref.nameWithComponent();
 			columnName.remove(QRegExp("[^A-Za-z\\d_]"));

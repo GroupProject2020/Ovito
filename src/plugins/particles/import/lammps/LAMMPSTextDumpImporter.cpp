@@ -409,6 +409,13 @@ InputColumnMapping LAMMPSTextDumpImporter::generateAutomaticColumnMapping(const 
 		else if(name == "c_stress[4]") columnMapping[i].mapStandardColumn(ParticleProperty::StressTensorProperty, 3);
 		else if(name == "c_stress[5]") columnMapping[i].mapStandardColumn(ParticleProperty::StressTensorProperty, 4);
 		else if(name == "c_stress[6]") columnMapping[i].mapStandardColumn(ParticleProperty::StressTensorProperty, 5);
+		else if(name == "c_orient[1]") columnMapping[i].mapStandardColumn(ParticleProperty::OrientationProperty, 0);
+		else if(name == "c_orient[2]") columnMapping[i].mapStandardColumn(ParticleProperty::OrientationProperty, 1);
+		else if(name == "c_orient[3]") columnMapping[i].mapStandardColumn(ParticleProperty::OrientationProperty, 2);
+		else if(name == "c_orient[4]") columnMapping[i].mapStandardColumn(ParticleProperty::OrientationProperty, 3);
+		else if(name == "c_shape[1]") columnMapping[i].mapStandardColumn(ParticleProperty::AsphericalShapeProperty, 0);
+		else if(name == "c_shape[2]") columnMapping[i].mapStandardColumn(ParticleProperty::AsphericalShapeProperty, 1);
+		else if(name == "c_shape[3]") columnMapping[i].mapStandardColumn(ParticleProperty::AsphericalShapeProperty, 2);
 		else if(name == "selection") columnMapping[i].mapStandardColumn(ParticleProperty::SelectionProperty, 0);
 		else {
 			columnMapping[i].mapCustomColumn(name, PropertyStorage::Float);
