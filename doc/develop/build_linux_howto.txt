@@ -24,10 +24,8 @@ sudo apt-get install \
    libxrender-dev \
    xsltproc \
    docbook-xml \
-   libssl-dev \
    liblapack3gf \
    ncurses-dev \
-   libssl-dev \
    libreadline-dev \
    povray \
    libfftw3-dev
@@ -47,7 +45,15 @@ sudo update-alternatives --config gcc
 sudo update-alternatives --config g++
 
 **************************************************************************
-Build Qt libraries (version 5.7):
+OpenSSL
+*************************************************************************
+./Configure linux-x86_64 --prefix=/usr --openssldir=/usr shared
+make
+make test
+sudo make install
+
+**************************************************************************
+Build Qt libraries (version 5.10):
 **************************************************************************
 
 ./configure \
@@ -56,17 +62,16 @@ Build Qt libraries (version 5.7):
 	-shared \
 	-no-qml-debug \
 	-nomake examples \
+	-ssl \
+	-openssl-linked \
 	-qt-libpng \
 	-qt-libjpeg \
 	-qt-pcre \
 	-qt-xcb \
 	-qt-xkbcommon-x11 \
-	-no-nis \
 	-no-cups \
 	-no-glib \
 	-no-xinput2 \
-	-no-alsa \
-	-no-pulseaudio \
 	-pch \
 	-no-eglfs \
 	-no-linuxfb \
@@ -96,6 +101,7 @@ Build Qt libraries (version 5.7):
 	-skip qtwebengine \
 	-skip qtwebsockets \
 	-skip qtwebview \
+	-skip qtwebglplugin \
 	-prefix $HOME/progs/qt5
 
 make
@@ -116,42 +122,36 @@ make
 sudo make install
 
 **************************************************************************
-Build Python (version 3.5.x):
+Build Python (version 3.6.x):
 **************************************************************************
 
 Edit Modules/Setup.dist to enable SSL module:
 
 # Socket module helper for socket(2)
-_socket socketmodule.c timemodule.c
+_socket socketmodule.c 
 
 SSL=/usr
 _ssl _ssl.c \
 	-DUSE_SSL -I$(SSL)/include -I$(SSL)/include/openssl \
 	-L$(SSL)/lib -lssl -lcrypto
 
-./configure --enable-shared --prefix=$HOME/progs/python
+./configure --enable-shared --enable-optimizations --prefix=$HOME/progs/python
 make
 make install
 
+#####################################
 # Disable user site packages:
-# Edit "$HOME/progs/python/lib/python3.5/site.py" and set: ENABLE_USER_SITE = False
+
+Edit "$HOME/progs/python/lib/python3.6/site.py" and set: ENABLE_USER_SITE = False
 
 **************************************************************************
-Install Sphinx:
+Install Python packages:
 **************************************************************************
 cd $HOME/progs/python/bin
-LD_LIBRARY_PATH=$PWD/../lib ./python3 -m pip install sphinx
-
-**************************************************************************
-Build NumPy:
-**************************************************************************
-LD_LIBRARY_PATH=$HOME/progs/python/lib $HOME/progs/python/bin/python3 setup.py install
-
-**************************************************************************
-Install IPython:
-**************************************************************************
-cd $HOME/progs/python/bin
+LD_LIBRARY_PATH=$HOME/progs/python/lib ./pip3 install numpy
+LD_LIBRARY_PATH=$HOME/progs/python/lib ./pip3 install sphinx
 LD_LIBRARY_PATH=$HOME/progs/python/lib ./pip3 install ipython
+LD_LIBRARY_PATH=$HOME/progs/python/lib ./pip3 install matplotlib
 
 **************************************************************************
 Build SIP:
@@ -182,20 +182,10 @@ make
 make install
 
 **************************************************************************
-Install matplotlib:
-**************************************************************************
-cd $HOME/progs/python/bin
-LD_LIBRARY_PATH=$HOME/progs/python/lib ./pip3 install matplotlib
-
-**************************************************************************
 Build Boost libraries:
 **************************************************************************
-echo "using python : 3.5 : /home/stuko/progs/python : /home/stuko/progs/python/include/python3.5m ; " > user-config.jam
 ./bootstrap.sh \
-	--with-libraries=system,thread,python \
-	--with-python=$HOME/progs/python/bin/python \
-	--with-python-root=$HOME/progs/python \
-	--with-python-version=3.5 \
+	--with-libraries=system,thread \
 	--prefix=$HOME/progs/boost
 
 ./b2 --user-config=$PWD/user-config.jam release link=shared install
@@ -314,11 +304,13 @@ cp -d $HOME/progs/tbb2018_20170919oss/lib/intel64/gcc4.7/libtbbmalloc.so.* $HOME
 **************************************************************************
 Download and build libssh
 **************************************************************************
-cmake \
+$HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
     -DCMAKE_INSTALL_PREFIX=$HOME/progs/libssh_install \
     -DCMAKE_BUILD_TYPE=Release \
 	-DWITH_SERVER=OFF \
 	..
+make
+make install
 
 **************************************************************************
 How to rebuild the Docker images for the Gitlab registry:
@@ -344,8 +336,8 @@ $HOME/progs/cmake-3.6.3-Linux-x86_64/bin/cmake \
   -DHDF5_DIR=$HOME/progs/hdf5/share/cmake \
   -DnetCDF_DIR=$HOME/progs/netcdf/lib/cmake/netCDF \
   -DPYTHON_EXECUTABLE=$HOME/progs/python/bin/python3 \
-  -DPYTHON_LIBRARY=$HOME/progs/python/lib/libpython3.5m.so.1.0 \
-  -DPYTHON_INCLUDE_DIR=$HOME/progs/python/include/python3.5m \
+  -DPYTHON_LIBRARY=$HOME/progs/python/lib/libpython3.6m.so.1.0 \
+  -DPYTHON_INCLUDE_DIR=$HOME/progs/python/include/python3.6m \
   -DCMAKE_PREFIX_PATH=$HOME/progs/qt5/ \
   -DQSCINTILLA_INCLUDE_DIR=$HOME/progs/QScintilla_gpl-2.9.3/Qt4Qt5/ \
   -DQSCINTILLA_LIBRARY=$HOME/progs/QScintilla_gpl-2.9.3/Qt4Qt5/libqscintilla2.so.12 \

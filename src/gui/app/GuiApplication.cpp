@@ -89,12 +89,13 @@ void GuiApplication::createQtApplication(int& argc, char** argv)
 		// Enable high-resolution toolbar icons on hi-dpi screens.  
 		QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 
-		new QApplication(argc, argv);
-
 #if defined(Q_OS_LINUX)
 		// Enforce Fusion UI style on Linux.
+		qunsetenv("QT_STYLE_OVERRIDE"); 
 		QApplication::setStyle("Fusion");
 #endif
+
+		new QApplication(argc, argv);
 	}
 
 	// Set the global default OpenGL surface format.
