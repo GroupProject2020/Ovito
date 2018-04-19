@@ -57,7 +57,7 @@ FileSourceImporter::FrameDataPtr VTKFileImporter::FrameLoader::loadFile(QFile& f
 
 	// Jump to byte offset.
 	if(frame().byteOffset != 0)
-		stream.seek(frame().byteOffset);
+		stream.seek(frame().byteOffset, frame().lineNumber);
 
 	// Read first line.
 	stream.readLine(1024);

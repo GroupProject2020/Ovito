@@ -79,7 +79,7 @@ FileSourceImporter::FrameDataPtr FHIAimsImporter::FrameLoader::loadFile(QFile& f
 
 	// Jump to byte offset.
 	if(frame().byteOffset != 0)
-		stream.seek(frame().byteOffset);
+		stream.seek(frame().byteOffset, frame().lineNumber);
 
 	// Create the destination container for loaded data.
 	auto frameData = std::make_shared<ParticleFrameData>();

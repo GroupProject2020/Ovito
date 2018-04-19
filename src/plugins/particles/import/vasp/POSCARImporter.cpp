@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -36,9 +36,6 @@ IMPLEMENT_OVITO_CLASS(POSCARImporter);
 ******************************************************************************/
 bool POSCARImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl& sourceLocation) const
 {
-	// Regular expression for whitespace characters.
-	QRegularExpression ws_re(QStringLiteral("\\s+"));
-
 	// Open input file.
 	CompressedTextReader stream(input, sourceLocation.path());
 
@@ -52,14 +49,15 @@ bool POSCARImporter::OOMetaClass::checkFileFormat(QFileDevice& input, const QUrl
 		return false;
 
 	// Read cell matrix
+	char c;
 	for(int i = 0; i < 3; i++) {
-		stream.readLine();
-		if(stream.lineString().split(ws_re, QString::SkipEmptyParts).size() != 3)
-			return false;
 		double x,y,z;
-		if(sscanf(stream.line(), "%lg %lg %lg", &x, &y, &z) != 3 || stream.eof())
+		if(sscanf(stream.readLine(), "%lg %lg %lg %c", &x, &y, &z, &c) != 3 || stream.eof())
 			return false;
 	}
+
+	// Regular expression for whitespace characters.
+	QRegularExpression ws_re(QStringLiteral("\\s+"));	
 
 	// Parse number of atoms per type.
 	int nAtomTypes = 0;
@@ -98,44 +96,76 @@ void POSCARImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& 
 	setProgressText(tr("Scanning file %1").arg(sourceUrl.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
 	setProgressMaximum(stream.underlyingSize() / 1000);
 
-	// Regular expression for whitespace characters.
-	QRegularExpression ws_re(QStringLiteral("\\s+"));
-
 	QFileInfo fileInfo(stream.device().fileName());
 	QString filename = fileInfo.fileName();
 	int frameNumber = 0;
-
-	// Skip comment line
-	stream.readLine();
-
-	// Skip scaling factor
-	stream.readLine();
-
-	// Skip cell matrix
-	for(int i = 0; i < 3; i++)
-		stream.readLine();
-
-	// Parse atom type names and atom type counts.
 	QStringList atomTypeNames;
 	QVector<int> atomCounts;
-	parseAtomTypeNamesAndCounts(stream, atomTypeNames, atomCounts);
 
-	// Read successive frames.
+	// Read frames.
 	Frame frame;
 	frame.sourceFile = sourceUrl;
 	frame.lastModificationTime = fileInfo.lastModified();
 	while(!stream.eof() && !isCanceled()) {
 		frame.byteOffset = stream.byteOffset();
 		frame.lineNumber = stream.lineNumber();
+		frame.parserData = 1;
 		frame.label = QString("%1 (Frame %2)").arg(filename).arg(frameNumber++);
-		frames.push_back(frame);
 
+		// Read comment line
 		stream.readLine();
-		for(int acount : atomCounts) {
-			for(int i = 0; i < acount; i++) {
+		if(frameNumber == 1 || !stream.lineStartsWith("Direct configuration=")) {
+			for(int headerIndex = 0; headerIndex < 2; headerIndex++) {
+
+				// Read scaling factor
+				FloatType scaling_factor = 0;
+				if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING, &scaling_factor) != 1 || scaling_factor <= 0)
+					throw Exception(tr("Invalid scaling factor in line %1 of VASP file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
+
+				// Read cell matrix
+				AffineTransformation cell;
+				for(size_t i = 0; i < 3; i++) {
+					if(sscanf(stream.readLine(),
+							FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING,
+							&cell(0,i), &cell(1,i), &cell(2,i)) != 3 || cell.column(i) == Vector3::Zero())
+						throw Exception(tr("Invalid cell vector in line %1 of VASP file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
+				}
+
+				// Parse atom type names and atom type counts.
+				atomTypeNames.clear();
+				atomCounts.clear();
+				parseAtomTypeNamesAndCounts(stream, atomTypeNames, atomCounts);
+
+				auto byteOffset = stream.byteOffset();
+				auto lineNumber = stream.lineNumber();
+
+				// Read in 'Selective dynamics' flag
+				// and coordinate system type.
 				stream.readLine();
+
+				if(frameNumber == 1 && headerIndex == 0 && stream.lineStartsWith("energy calculation")) {
+					frame.byteOffset = byteOffset;
+					frame.lineNumber = lineNumber;
+					continue;
+				}
+
+				if(stream.line()[0] == 'S' || stream.line()[0] == 's')
+					stream.readLine();
+		
+				break;
 			}
 		}
+		
+		// Read atoms coordinates list.
+		for(int acount : atomCounts) {
+			for(int i = 0; i < acount; i++) {
+				Point3 p;
+				if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING,
+						&p.x(), &p.y(), &p.z()) != 3)
+					throw Exception(tr("Invalid atomic coordinates in line %1 of VASP file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
+			}
+		}
+		frames.push_back(frame);
 
 		setProgressValueIntermittent(stream.underlyingByteOffset() / 1000);
 		if(isCanceled())
@@ -150,24 +180,33 @@ FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile(QFile& fi
 {
 	// Open file for reading.
 	CompressedTextReader stream(file, frame().sourceFile.path());
-	setProgressText(tr("Reading POSCAR file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
+	setProgressText(tr("Reading VASP file %1").arg(frame().sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
 
 	// Create the destination container for loaded data.
 	std::shared_ptr<ParticleFrameData> frameData = std::make_shared<ParticleFrameData>();
 
-	// Regular expression for whitespace characters.
-	QRegularExpression ws_re(QStringLiteral("\\s+"));
+	// Jump to requested animation frame.
+	if(frame().byteOffset != 0)
+		stream.seek(frame().byteOffset, frame().lineNumber);
 
 	// Read comment line.
 	stream.readLine();
 	QString trimmedComment = stream.lineString().trimmed();
+	bool singleHeaderFile = false;
+	if(frame().byteOffset != 0 && trimmedComment.startsWith(QStringLiteral("Direct configuration="))) {
+		// Jump back to beginning of file.
+		stream.seek(0);
+		singleHeaderFile = true;
+		stream.readLine();
+		trimmedComment = stream.lineString().trimmed();
+	}
 	if(!trimmedComment.isEmpty())
 		frameData->attributes().insert(QStringLiteral("Comment"), QVariant::fromValue(trimmedComment));
 
 	// Read global scaling factor
 	FloatType scaling_factor = 0;
 	if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING, &scaling_factor) != 1 || scaling_factor <= 0)
-		throw Exception(tr("Invalid scaling factor (line 1): %1").arg(stream.lineString()));
+		throw Exception(tr("Invalid scaling factor in line %1 of VASP file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
 
 	// Read cell matrix
 	AffineTransformation cell = AffineTransformation::Identity();
@@ -175,7 +214,7 @@ FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile(QFile& fi
 		if(sscanf(stream.readLine(),
 				FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING,
 				&cell(0,i), &cell(1,i), &cell(2,i)) != 3 || cell.column(i) == Vector3::Zero())
-			throw Exception(tr("Invalid cell vector (line %1): %2").arg(stream.lineNumber()).arg(stream.lineString()));
+			throw Exception(tr("Invalid cell vector in line %1 of VASP file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
 	}
 	cell = cell * scaling_factor;
 	frameData->simulationCell().setMatrix(cell);
@@ -186,11 +225,10 @@ FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile(QFile& fi
 	parseAtomTypeNamesAndCounts(stream, atomTypeNames, atomCounts);
 	int totalAtomCount = std::accumulate(atomCounts.begin(), atomCounts.end(), 0);
 	if(totalAtomCount <= 0)
-		throw Exception(tr("Invalid atom counts (line %1): %2").arg(stream.lineNumber()).arg(stream.lineString()));
+		throw Exception(tr("Invalid atom counts in line %1 of VASP file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
 
-	// Jump to requested animation frame.
-	if(frame().byteOffset != 0)
-		stream.seek(frame().byteOffset);
+	if(frame().byteOffset != 0 && singleHeaderFile)
+		stream.seek(frame().byteOffset, frame().lineNumber);
 
 	// Read in 'Selective dynamics' flag
 	stream.readLine();
@@ -222,7 +260,7 @@ FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile(QFile& fi
 			*a = typeId;
 			if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING,
 					&p->x(), &p->y(), &p->z()) != 3)
-				throw Exception(tr("Invalid atom coordinates (line %1): %2").arg(stream.lineNumber()).arg(stream.lineString()));
+				throw Exception(tr("Invalid atomic coordinates in line %1 of VASP file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
 			if(!isCartesian)
 				*p = cell * (*p);
 			else
@@ -233,8 +271,8 @@ FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile(QFile& fi
 	QString statusString = tr("%1 atoms").arg(totalAtomCount);	
 
 	// Parse optional atomic velocity vectors or CHGCAR electron density data. 
-	// Do this only for the first frame.
-	if(frame().byteOffset == 0) {
+	// Do this only for the first frame and if it is not a XDATCAR file.
+	if(frame().byteOffset == 0 && frame().parserData == 0) {
 		if(!stream.eof())
 			stream.readLineTrimLeft();
 		if(!stream.eof() && stream.line()[0] > ' ') {
@@ -250,7 +288,7 @@ FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile(QFile& fi
 				for(int i = 0; i < atomCounts[atype-1]; i++, ++v) {
 					if(sscanf(stream.readLine(), FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING,
 							&v->x(), &v->y(), &v->z()) != 3)
-						throw Exception(tr("Invalid atom velocity vector (line %1): %2").arg(stream.lineNumber()).arg(stream.lineString()));
+						throw Exception(tr("Invalid atomic velocity vector in line %1 of VASP file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
 					if(!isCartesian)
 						*v = cell * (*v);
 				}
@@ -276,7 +314,7 @@ FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile(QFile& fi
 							s = stream.readLine();
 						}
 						if(!parseFloatType(token, s, *data))
-							throw Exception(tr("Invalid value in charge density section (line %1): \"%2\"").arg(stream.lineNumber()).arg(QString::fromLocal8Bit(token, s - token)));
+							throw Exception(tr("Invalid value in charge density section of VASP file (line %1): \"%2\"").arg(stream.lineNumber()).arg(QString::fromLocal8Bit(token, s - token)));
 						*data /= cellVolume;
 						if(*s != '\0')
 							s++;

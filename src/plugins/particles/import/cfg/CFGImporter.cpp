@@ -171,7 +171,7 @@ FileSourceImporter::FrameDataPtr CFGImporter::FrameLoader::loadFile(QFile& file)
 
 	// Jump to byte offset.
 	if(frame().byteOffset != 0)
-		stream.seek(frame().byteOffset);
+		stream.seek(frame().byteOffset, frame().lineNumber);
 
 	// Parse header of CFG file.
 	CFGHeader header;

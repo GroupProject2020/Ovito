@@ -95,7 +95,7 @@ FileSourceImporter::FrameDataPtr FHIAimsLogFileImporter::FrameLoader::loadFile(Q
 
 	// Jump to byte offset.
 	if(frame().byteOffset != 0)
-		stream.seek(frame().byteOffset);
+		stream.seek(frame().byteOffset, frame().lineNumber);
 
 	// Create the destination container for loaded data.
 	auto frameData = std::make_shared<ParticleFrameData>();
@@ -131,7 +131,7 @@ FileSourceImporter::FrameDataPtr FHIAimsLogFileImporter::FrameLoader::loadFile(Q
 	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
 
 	// Return to beginning of frame.
-	stream.seek(frame().byteOffset);
+	stream.seek(frame().byteOffset, frame().lineNumber);
 
 	// Second pass: read atom coordinates and types.
 	for(int i = 0; i < totalAtomCount; i++) {

@@ -469,8 +469,8 @@ bool FileSourceImporter::matchesWildcardPattern(const QString& pattern, const QS
 ******************************************************************************/
 SaveStream& operator<<(SaveStream& stream, const FileSourceImporter::Frame& frame)
 {
-	stream.beginChunk(0x02);
-	stream << frame.sourceFile << frame.byteOffset << frame.lineNumber << frame.lastModificationTime << frame.label;
+	stream.beginChunk(0x03);
+	stream << frame.sourceFile << frame.byteOffset << frame.lineNumber << frame.lastModificationTime << frame.label << frame.parserData;
 	stream.endChunk();
 	return stream;
 }
@@ -480,8 +480,8 @@ SaveStream& operator<<(SaveStream& stream, const FileSourceImporter::Frame& fram
 ******************************************************************************/
 LoadStream& operator>>(LoadStream& stream, FileSourceImporter::Frame& frame)
 {
-	stream.expectChunk(0x02);
-	stream >> frame.sourceFile >> frame.byteOffset >> frame.lineNumber >> frame.lastModificationTime >> frame.label;
+	stream.expectChunk(0x03);
+	stream >> frame.sourceFile >> frame.byteOffset >> frame.lineNumber >> frame.lastModificationTime >> frame.label >> frame.parserData;
 	stream.closeChunk();
 	return stream;
 }

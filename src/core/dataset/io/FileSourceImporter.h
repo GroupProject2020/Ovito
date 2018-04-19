@@ -47,8 +47,8 @@ public:
 		Frame() = default;
 
 		/// Initialization constructor.
-		Frame(QUrl url, qint64 offset = 0, int linenum = 1, const QDateTime& modTime = QDateTime(), const QString& name = QString())	:
-			sourceFile(std::move(url)), byteOffset(offset), lineNumber(linenum), lastModificationTime(modTime), label(name) {}
+		Frame(QUrl url, qint64 offset = 0, int linenum = 1, const QDateTime& modTime = QDateTime(), const QString& name = QString(), qint64 parserInfo = 0)	:
+			sourceFile(std::move(url)), byteOffset(offset), lineNumber(linenum), lastModificationTime(modTime), label(name), parserData(parserInfo) {}
 
 		/// The source file that contains the data of the animation frame.
 		QUrl sourceFile;
@@ -66,12 +66,16 @@ public:
 		/// The name or label of the source frame.
 		QString label;
 
+		/// An informational field that can be used by the file parser to store additional info about the frame.
+		qint64 parserData = 0; 
+
 		/// Compares two data records.
 		bool operator!=(const Frame& other) const {
 			return (sourceFile != other.sourceFile) ||
 					(byteOffset != other.byteOffset) ||
 					(lineNumber != other.lineNumber) ||
-					(lastModificationTime != other.lastModificationTime);
+					(lastModificationTime != other.lastModificationTime) ||
+					(parserData != other.parserData);
 		}
 	};
 

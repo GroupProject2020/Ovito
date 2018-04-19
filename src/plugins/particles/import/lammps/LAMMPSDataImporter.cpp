@@ -99,7 +99,7 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 
 	// Jump to byte offset.
 	if(frame().byteOffset != 0)
-		stream.seek(frame().byteOffset);
+		stream.seek(frame().byteOffset, frame().lineNumber);
 
 	// Read comment line
 	stream.readLine();

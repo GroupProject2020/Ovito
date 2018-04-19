@@ -110,10 +110,12 @@ public:
 	/// Jumps to the given byte position in the (uncompressed) input stream.
 	/// \throw Exception if an I/O error has occurred.
 	/// \sa byteOffset()
-	void seek(qint64 pos) {
+	void seek(qint64 pos, int lineNumber = 0) {
 		if(!_stream->seek(pos))
 			throw Exception(tr("Failed to seek to byte offset %1 in file %2: %3").arg(pos).arg(_filename).arg(_stream->errorString()));
 		_byteOffset = pos;
+		if(lineNumber) _lineNumber = lineNumber;
+		else if(pos == 0) _lineNumber = 0;
 	}
 
 	/// Returns the current read position in the input file (which may be a compressed data stream).

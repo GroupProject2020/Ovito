@@ -125,10 +125,10 @@ void XYZImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sou
 
 	while(!stream.eof() && !isCanceled()) {
 		qint64 byteOffset = stream.byteOffset();
+		int lineNumber = stream.lineNumber();
 
 		// Parse number of atoms.
 		stream.readLine();
-		int startLineNumber = stream.lineNumber();
 
 		if(stream.line()[0] == '\0') break;
 		if(sscanf(stream.line(), "%u", &numParticles) != 1 || numParticles < 0 || numParticles > 1e9)
@@ -138,7 +138,7 @@ void XYZImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sou
 		Frame frame;
 		frame.sourceFile = sourceUrl;
 		frame.byteOffset = byteOffset;
-		frame.lineNumber = startLineNumber;
+		frame.lineNumber = lineNumber;
 		frame.lastModificationTime = lastModified;
 		frame.label = QString("%1 (Frame %2)").arg(filename).arg(frameNumber++);
 		frames.push_back(frame);
@@ -241,7 +241,7 @@ FileSourceImporter::FrameDataPtr XYZImporter::FrameLoader::loadFile(QFile& file)
 
 	// Jump to byte offset.
 	if(frame().byteOffset != 0)
-		stream.seek(frame().byteOffset);
+		stream.seek(frame().byteOffset, frame().lineNumber);
 
 	// Create the destination container for loaded data.
 	auto frameData = std::make_shared<XYZFrameData>();

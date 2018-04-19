@@ -265,7 +265,7 @@ FileSourceImporter::FrameDataPtr XSFImporter::FrameLoader::loadFile(QFile& file)
 			}
 
 			// Jump back to start of atoms list.
-			stream.seek(atomsListOffset);
+			stream.seek(atomsListOffset, atomsLineNumber);
 
 			// Parse atoms data.
 			InputColumnReader columnParser(columnMapping, *frameData, natoms);

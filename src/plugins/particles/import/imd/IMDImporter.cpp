@@ -57,7 +57,7 @@ FileSourceImporter::FrameDataPtr IMDImporter::FrameLoader::loadFile(QFile& file)
 
 	// Jump to byte offset.
 	if(frame().byteOffset != 0)
-		stream.seek(frame().byteOffset);
+		stream.seek(frame().byteOffset, frame().lineNumber);
 
 	// Create the destination container for loaded data.
 	auto frameData = std::make_shared<ParticleFrameData>();
@@ -161,7 +161,7 @@ FileSourceImporter::FrameDataPtr IMDImporter::FrameLoader::loadFile(QFile& file)
 	setProgressMaximum(numAtoms);
 
 	// Jump back to beginning of atom list.
-	stream.seek(headerOffset);
+	stream.seek(headerOffset, headerLineNumber);
 
 	// Parse data columns.
 	InputColumnReader columnParser(columnMapping, *frameData, numAtoms);

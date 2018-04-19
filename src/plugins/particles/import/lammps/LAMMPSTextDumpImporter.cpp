@@ -99,19 +99,19 @@ void LAMMPSTextDumpImporter::FrameFinder::discoverFramesInFile(QFile& file, cons
 
 	while(!stream.eof() && !isCanceled()) {
 		qint64 byteOffset = stream.byteOffset();
+		int lineNumber = stream.lineNumber();
 
 		// Parse next line.
 		stream.readLine();
 
 		do {
-			int startLineNumber = stream.lineNumber();
 			if(stream.lineStartsWith("ITEM: TIMESTEP")) {
 				if(sscanf(stream.readLine(), "%i", &timestep) != 1)
 					throw Exception(tr("LAMMPS dump file parsing error. Invalid timestep number (line %1):\n%2").arg(stream.lineNumber()).arg(QString::fromLocal8Bit(stream.line())));
 				Frame frame;
 				frame.sourceFile = sourceUrl;
 				frame.byteOffset = byteOffset;
-				frame.lineNumber = startLineNumber;
+				frame.lineNumber = lineNumber;
 				frame.lastModificationTime = lastModified;
 				frame.label = QString("Timestep %1").arg(timestep);
 				frames.push_back(frame);
@@ -163,7 +163,7 @@ FileSourceImporter::FrameDataPtr LAMMPSTextDumpImporter::FrameLoader::loadFile(Q
 	
 	// Jump to byte offset.
 	if(frame().byteOffset != 0)
-		stream.seek(frame().byteOffset);
+		stream.seek(frame().byteOffset, frame().lineNumber);
 
 	// Create the destination container for loaded data.
 	auto frameData = std::make_shared<LAMMPSFrameData>();

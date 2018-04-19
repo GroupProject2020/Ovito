@@ -82,12 +82,13 @@ void CastepMDImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl
 
 	while(!stream.eof()) {
 		auto byteOffset = stream.byteOffset();
+		auto lineNumber = stream.lineNumber();
 		const char* line = stream.readLineTrimLeft();
 		if(boost::algorithm::icontains(line, "<-- h")) {
 			Frame frame;
 			frame.sourceFile = sourceUrl;
 			frame.byteOffset = byteOffset;
-			frame.lineNumber = stream.lineNumber();
+			frame.lineNumber = lineNumber;
 			frame.lastModificationTime = lastModified;
 			frame.label = QString("%1 (Frame %2)").arg(filename).arg(frameNumber++);
 			frames.push_back(frame);
@@ -113,7 +114,7 @@ FileSourceImporter::FrameDataPtr CastepMDImporter::FrameLoader::loadFile(QFile& 
 
 	// Jump to byte offset.
 	if(frame().byteOffset != 0)
-		stream.seek(frame().byteOffset);
+		stream.seek(frame().byteOffset, frame().lineNumber);
 
 	std::vector<Point3> coords;
 	std::vector<int> types;
