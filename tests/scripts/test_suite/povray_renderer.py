@@ -6,9 +6,9 @@ import sys
 if "ovito.plugins.POVRay" not in sys.modules: sys.exit()
 
 test_data_dir = "../../files/"
-node1 = import_file(test_data_dir + "LAMMPS/class2.data", atom_style = "full")
-node1.add_to_scene()
-node1.source.particles['Position'].vis.radius = 0.3
+pipeline1 = import_file(test_data_dir + "LAMMPS/class2.data", atom_style = "full")
+pipeline1.add_to_scene()
+pipeline1.compute().particles['Position'].vis.radius = 0.3
 
 renderer = POVRayRenderer(show_window = False)
 

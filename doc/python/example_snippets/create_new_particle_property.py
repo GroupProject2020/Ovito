@@ -1,9 +1,9 @@
 import ovito
-from ovito.data import SimulationCell, ParticleType
+from ovito.data import DataCollection, SimulationCell, ParticleType
 from ovito.pipeline import StaticSource, Pipeline
 
-# Creare the data collection (initially empty):
-data = StaticSource()
+# Create the data collection (initially empty):
+data = DataCollection()
 
 # XYZ coordinates of the three atoms to create:
 pos = [(1.0, 1.5, 0.3),
@@ -39,6 +39,7 @@ data.objects.append(cell)
 bond_topology = [[0,1], [1,2], [2,0]]
 data.bonds.create_property('Topology', data=bond_topology)
 
-# Create a pipeline and insert it into the scene:
-pipeline = Pipeline(source = data)
+# Create a pipeline, set source and insert it into the scene:
+pipeline = Pipeline(source = StaticSource())
+pipeline.source.assign(data)
 pipeline.add_to_scene()

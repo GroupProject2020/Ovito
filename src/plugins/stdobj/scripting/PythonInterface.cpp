@@ -174,7 +174,7 @@ PYBIND11_MODULE(StdObj, m)
 			"\n\n"
 			"A :py:class:`!Property` object behaves almost like a Numpy array. For example, you can access the property value for the *i*-th data element using indexing:: "
 			"\n\n"
-			"     property = data.particle_properties['Velocity']\n"
+			"     property = data.particles['Velocity']\n"
 			"     print('Velocity vector of first particle:', property[0])\n"
 			"     print('Z-velocity of second particle:', property[1,2])\n"
 			"     for v in property: print(v)\n"

@@ -3,7 +3,6 @@ This root module contains the :py:class:`DataSet` class, which serves as a "univ
 performed operations. At all times there is exactly one :py:class:`DataSet` instance that 
 provides a context for the operations the Python script performs. It is accessible through the 
 module-level :py:data:`ovito.dataset` attribute.
-
 """
 
 import os.path
@@ -19,7 +18,7 @@ __path__ = pkgutil.extend_path(__path__, __name__)
 from .plugins.PyScript import (version, version_string, gui_mode, headless_mode, DataSet, dataset, task_manager)
 from .plugins.PyScript import (Pipeline, RootSceneNode, PipelineObject, PipelineStatus)
 
-# Load sub-modules (in the right order because there are dependencies among them)
+# Load sub-modules (in the right order because there are dependencies between them)
 import ovito.anim
 import ovito.data
 import ovito.vis
@@ -44,16 +43,19 @@ for _, _name, _ in pkgutil.walk_packages(_package_source_path, __name__ + '.'):
 
 def _DataSet_scene_pipelines(self):
     """ The list of :py:class:`~ovito.pipeline.Pipeline` objects that are currently part of the three-dimensional scene.
-        Only data of pipelines in this list is visible in the viewports and in rendered images. You can add or remove pipelines either by calling
-        their :py:meth:`~ovito.pipeline.Pipeline.add_to_scene` and :py:meth:`~ovito.pipeline.Pipeline.remove_from_scene` methods or by manipulating the :py:attr:`!scene_pipelines` list using 
+        Only the data of pipelines in this list will be visible in the viewports and in rendered images. You can add or remove pipelines either by calling
+        their :py:meth:`~ovito.pipeline.Pipeline.add_to_scene` and :py:meth:`~ovito.pipeline.Pipeline.remove_from_scene` methods or by manipulating this list using 
         standard Python ``append()`` and ``del`` statements. 
     """
     return self.scene_root.children
 DataSet.scene_pipelines = property(_DataSet_scene_pipelines)
 
 def _get_DataSet_selected_pipeline(self):
-    """ The :py:class:`~ovito.pipeline.Pipeline` that is currently selected in OVITO's graphical user interface, 
-        or ``None`` if no pipeline is selected. """
+    """ The :py:class:`~ovito.pipeline.Pipeline` that is currently selected, 
+        or ``None`` if no pipeline is selected. 
+
+        Typically, this is the last pipeline added to the scene using :py:meth:`Pipeline.add_to_scene() <ovito.pipeline.Pipeline.add_to_scene>`.
+    """
     return self.selection.nodes[0] if self.selection.nodes else None
 def _set_DataSet_selected_pipeline(self, node):
     """ Sets the :py:class:`~ovito.pipeline.Pipeline` that is currently selected in the graphical user interface of OVITO. """

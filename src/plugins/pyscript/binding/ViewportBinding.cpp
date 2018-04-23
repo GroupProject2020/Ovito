@@ -345,7 +345,7 @@ void defineViewportSubmodule(py::module m)
 
 	py::class_<ViewportOverlayArguments>(PythonViewportOverlay_py, "Arguments",
 		"This is the type of data structure passed by the system to the user-defined ``render()`` function of the viewport overlay. "
-		"It holds various context information about the frame being rendered. ")
+		"It holds various context information about the frame being rendered and provides utility methods for projecting points from 3d to 2d space. ")
 		.def_property_readonly("viewport", &ViewportOverlayArguments::viewport,
 			"The :py:class:`~ovito.vis.Viewport` being rendered.")
 		.def_property_readonly("is_perspective", [](const ViewportOverlayArguments& args) { return args.projParams().isPerspective; }, 
@@ -354,18 +354,50 @@ void defineViewportSubmodule(py::module m)
 			"The field of view of the viewport’s camera. For perspective projections, this is the frustum angle in the vertical direction "
 			"(in radians). For orthogonal projections this is the visible range in the vertical direction (in world units). ")
 		.def_property_readonly("view_tm", [](const ViewportOverlayArguments& args) { return args.projParams().viewMatrix; },
-			"The affine camera transformation matrix. This 3x4 matrix transforms vectors from world space to camera space.")
+			"The affine camera transformation matrix. This 3x4 matrix transforms points/vectors from world space to camera space.")
 		.def_property_readonly("proj_tm", [](const ViewportOverlayArguments& args) { return args.projParams().projectionMatrix; },
-			"The projection matrix. This 4x4 matrix transforms vectors from camera space to screen space.")
+			"The projection matrix. This 4x4 matrix transforms points from camera space to screen space.")
 		.def_property_readonly("frame", &ViewportOverlayArguments::frame, 
 			"The animation frame number being rendered (0-based).")
-		.def_property_readonly("painter", &ViewportOverlayArguments::painter, 
+		.def_property_readonly("painter", &ViewportOverlayArguments::pypainter, 
 			"The `QPainter <http://pyqt.sourceforge.net/Docs/PyQt5/api/qpainter.html>`__ object, which provides painting methods "
 			"for drawing on top of the image canvas. ")
 		.def_property_readonly("size", [](const ViewportOverlayArguments& args) {
-			return py::make_tuple(args.renderSettings()->outputImageWidth(), args.renderSettings()->outputImageHeight());
-		},
+				return py::make_tuple(args.renderSettings()->outputImageWidth(), args.renderSettings()->outputImageHeight());
+			},
 			"A tuple with the width and height of the image being rendered in pixels.")
+		.def("project_point", [](ViewportOverlayArguments& args, const Point3& worldPos) -> py::object {
+				auto screenPos = args.projectPoint(worldPos);
+				if(!screenPos) return py::none();
+				return py::make_tuple(screenPos->x(), screenPos->y());
+			},
+			"project_point(world_xyz)"
+			"\n\n"
+			"Projects a point, given in world-space coordinates, to screen space. This method can be used to determine "
+			"where a 3d point would appear in the rendered image."
+			"\n\n"
+			"Note that the projected point may lay outside of the visible viewport region. Furthermore, for viewports with a "
+			"perspective projection, the input point may lie behind the virtual camera. In this case no corresponding "
+			"projected point in 2d screen space exists and the method returns ``None``. "
+			"\n\n"
+			":param world_xyz: The (x,y,z) coordinates of the input point\n"
+			":return: A (x,y) pair of pixel coordinates; or ``None`` if *world_xyz* is behind the viewer.\n",
+			py::arg("world_xyz"))
+		.def("project_size", &ViewportOverlayArguments::projectSize,
+			"project_size(world_xyz, r)"
+			"\n\n"
+			"Projects a size from 3d world space to 2d screen space. This method can be used to determine "
+			"how large a 3d object, for example a sphere with the given radius *r*, would appear in the rendered image. "
+			"\n\n"
+			"Additionally to the size *r* to be projected, the method takes a coordinate triplet (x,y,z) "
+			"as input. It specifies the location of the base point from where the distance is measured. "
+			"\n\n"
+			":param world_xyz: The (x,y,z) world-space coordinates of the base point\n"
+			":param r: The world-space size or distance to be converted to screen-space\n"
+			":return: The computed screen-space size measured in pixels.\n",
+			py::arg("world_xyz"), py::arg("r"))
+		.def_property_readonly("dataset", [](ViewportOverlayArguments& args) { return ScriptEngine::activeDataset(); }, py::return_value_policy::reference,
+			"The current :py:class:`~ovito.DataSet`, which provides access to the data pipelines in the scene being rendered. ")
 	;	
 }
 

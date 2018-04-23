@@ -7,25 +7,25 @@ import ovito.plugins.Particles
 
 class NearestNeighborFinder(ovito.plugins.Particles.NearestNeighborFinder):
     """ 
-    A utility class that finds the *N* nearest neighbors of a particle or a spatial location.
+    A utility class that finds the *N* nearest neighbors of a particle or around a spatial location.
     
     The constructor takes the (maximum) number of requested nearest neighbors, *N*, and a :py:class:`DataCollection <ovito.data.DataCollection>` 
-    containing the input particle positions and the cell geometry (including periodic boundary flags).
+    containing the input particles and the cell geometry (including periodic boundary flags).
     *N* must be a positive integer not greater than 30 (which is the built-in maximum supported by this class).
     
     Once the :py:class:`!NearestNeighborFinder` has been constructed, you can call its :py:meth:`.find` method to 
     iterate over the sorted list of nearest neighbors of a specific particle, for example:
     
     .. literalinclude:: ../example_snippets/nearest_neighbor_finder.py
-       :lines: 1-19
+       :lines: 1-23
     
-    Furthermore, the class provides the :py:meth:`find_at` method, which allows to query the nearest neighbors at an 
-    arbitrary spatial position (doesn't have to be a physical particle):
+    Furthermore, the class offers the :py:meth:`find_at` method, which lets you determine the *N* nearest particles around an 
+    arbitrary spatial location:
 
     .. literalinclude:: ../example_snippets/nearest_neighbor_finder.py    
-       :lines: 21-
+       :lines: 25-
 
-    Note, if you want to find all neighbor particles within a certain cutoff radius of a central particle,
+    Note: In case you rather want to find all neighbor particles within a certain cutoff range of a particle,
     use the :py:class:`CutoffNeighborFinder` class instead.
     """
         
@@ -34,11 +34,11 @@ class NearestNeighborFinder(ovito.plugins.Particles.NearestNeighborFinder):
         super(self.__class__, self).__init__(N)
         if N<=0 or N>30:
             raise ValueError("The requested number of nearest neighbors is out of range.")
-        if 'Position' not in data_collection.particle_properties:
+        if 'Position' not in data_collection.particles:
             raise KeyError("DataCollection does not contain any particles.")
-        pos_property = data_collection.particle_properties['Position']
+        pos_property = data_collection.particles['Position']
         self.particle_count = len(pos_property)
-        if not self.prepare(data_collection.particle_properties.position, data_collection.expect(SimulationCell)):
+        if not self.prepare(pos_property, data_collection.expect(SimulationCell)):
             raise RuntimeError("Operation has been canceled by the user.")
         
     def find(self, index):
@@ -54,7 +54,7 @@ class NearestNeighborFinder(ovito.plugins.Particles.NearestNeighborFinder):
                       * **distance_squared**: The squared neighbor distance.
                       * **delta**: The three-dimensional vector connecting the central particle with the current neighbor (correctly taking into account periodic boundary conditions).
         
-        The global index of the neighbor returned by the iterator can be used to look up other properties of the neighbor.
+        The global index returned by the iterator can be used to look up properties of the neighbor as demonstrated in the first example code above.
 
         Note that several periodic images of the same particle may be visited. Thus, the same particle index may appear multiple times in the neighbor
         list of a central particle. In fact, the central particle may be among its own neighbors in a sufficiently small periodic simulation cell.
@@ -87,7 +87,7 @@ class NearestNeighborFinder(ovito.plugins.Particles.NearestNeighborFinder):
                       * **distance_squared**: The squared distance to the query location.
                       * **delta**: The three-dimensional vector from the query point to the current particle (correctly taking into account periodic boundary conditions).
 
-        If there exists a particle that is exactly located at the query position given by *coords*, then it will be returned by this function.
+        If there exists a particle that is exactly located at the query location given by *coords*, then it will be returned by this function.
         This is in contrast to the :py:meth:`find` function, which does not visit the central particle itself.
         
         The number of neighbors actually visited may be smaller than the requested number, *N*, if the

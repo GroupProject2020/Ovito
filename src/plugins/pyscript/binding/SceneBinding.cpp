@@ -62,15 +62,16 @@ void defineSceneSubmodule(py::module m)
 
 	auto DataObject_py = ovito_abstract_class<DataObject, RefTarget>(m,
 			"Abstract base class for all data objects. A :py:class:`!DataObject` represents "
-			"a piece of data processed and produced by a data pipeline. Typically, a data object "
-			"is part of a :py:class:`~ovito.data.DataCollection`. The :py:mod:`ovito.data` module "
-			"lists the different data object types implemented in OVITO. "
+			"a data fragment processed and produced by a data pipeline. See the :py:mod:`ovito.data` module "
+			"for a list of the different types of data objects in OVITO. Typically, a data object is contained in a "
+			":py:class:`~ovito.data.DataCollection` together with other data objects, forming a *data set*. "
+			"Furthermore, data objects may be shared by several data collections. "
 			"\n\n"
 			"Certain data objects are associated with a :py:class:`~ovito.vis.DataVis` object, which is responsible for "
 			"generating the visual representation of the data and rendering it in the viewports. "
-			"The :py:attr:`.vis` property provides access to the attached visual element, which can be "
+			"The :py:attr:`.vis` field provides access to the attached visual element, which can be "
 			"configured as needed to change the visual appearance of the data. "
-			"The different visual element types of OVITO are documented in the :py:mod:`ovito.vis` module. ")
+			"The different visual element types of OVITO are all documented in the :py:mod:`ovito.vis` module. ")
 
 		.def_property("vis", &DataObject::visElement, &DataObject::setVisElement,
 			"The :py:class:`~ovito.vis.DataVis` element associated with this data object, which is responsible for "
@@ -122,38 +123,105 @@ void defineSceneSubmodule(py::module m)
 	ovito_abstract_class<CachingPipelineObject, PipelineObject>{m}
 	;
 
-	auto PipelineFlowState_py = py::class_<PipelineFlowState>(m,
+	auto DataCollection_py = py::class_<PipelineFlowState>(m,
 			// Python class name:
-			"PipelineFlowState",
-			// Doc string:			
-			":Base class: :py:class:`ovito.data.DataCollection`"
+			"DataCollection",
+			// Doc string:
+			"A :py:class:`!DataCollection` is a container that holds together multiple *data objects*, each representing "
+			"a different facet of a dataset. Data collections are the main entities that are generated and processed in OVITO's "
+			"data pipeline system. :py:class:`!DataCollection` instances are typically returned by the :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` and the "
+			":py:meth:`FileSource.compute() <ovito.pipeline.FileSource.compute>` methods and contain the results of a data pipeline. "
 			"\n\n"
-			"This is form of :py:class:`~ovito.data.DataCollection` flowing down "
-			"a data pipeline and being manipulated by modifiers on the way. A :py:class:`!PipelineFlowState` is "
-			"returned by the :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` or the "
-			":py:meth:`FileSource.compute() <ovito.pipeline.FileSource.compute>` method. "
+			"Within a data collection, you will typically find a bunch of data objects,  "
+			"which collectively form the dataset, for example: "
 			"\n\n"
-			"Note that OVITO's data pipeline system works with shallow copies of data. Thus, data objects "
-			"may be shared by more than one data collection. This implies that modifying a data object is a potentially unsafe operation, which could "
-			"produce unexpected side effects such as corrupting OVITO's internal data caches: "
+			" * :py:class:`~ovito.data.ParticleProperty` (array of per-particle values)\n"
+			" * :py:class:`~ovito.data.SimulationCell` (cell vectors and boundary conditions)\n"
+			" * :py:class:`~ovito.data.BondProperty` (array of per-bond values)\n"
+			" * :py:class:`~ovito.data.SurfaceMesh` (triangle mesh representing a two-dimensional manifold)\n"
+			" * :py:class:`~ovito.data.DislocationNetwork` (discrete dislocation lines)\n"
+			" * ... and more\n"
+			"\n"
+			"All these types derive from the common :py:class:`~ovito.data.DataObject` base class. A :py:class:`!DataCollection` comprises two main parts: "
 			"\n\n"
-			".. literalinclude:: ../example_snippets/pipeline_flow_state.py\n"
-			"   :lines: 5-10\n"
+			" 1. The :py:attr:`.objects` list, which can hold an arbitrary number of data objects of the types listed above.\n"
+			" 2. The :py:attr:`.attributes` dictionary, which stores auxialliary data in the form of simple key-value pairs.\n"
 			"\n\n"
-			"To avoid accidentally modifying data that is owned by the pipeline system, "
-			"the following rule must be strictly followed: Before modifying a data object in a :py:class:`!PipelineFlowState`, "
-			"you have to use the :py:meth:`~DataCollection.copy_if_needed` method to ensure the object is really a unique instance "
-			"exclusively owned by the :py:class:`!PipelineFlowState`: "
+			"**Data object access**"
 			"\n\n"
-			".. literalinclude:: ../example_snippets/pipeline_flow_state.py\n"
-			"   :lines: 12-14\n"
+			"The :py:meth:`find` and :py:meth:`find_all` methods allow you to look up data objects in the :py:attr:`.objects` list of a data collection "
+			"by type. For example, to retrieve the :py:class:`~ovito.data.SimulationCell` from a data collection: "
 			"\n\n"
-			"Note: This rule does not apply to the :py:class:`~ovito.vis.DataVis` elements, because they " 
-			"are globally shared and do not get modified by the data pipeline system. "
-			"It is generally okay to just modify a visualization element without first copying the data object it is attached to:"
+			".. literalinclude:: ../example_snippets/data_collection.py\n"
+			"  :lines: 9-10"
 			"\n\n"
-			".. literalinclude:: ../example_snippets/pipeline_flow_state.py\n"
-			"   :lines: 16-\n")
+			"The :py:meth:`find` method yields ``None`` if there is no instance of the given type in the collection. "
+			"Alternatively, you can use the :py:meth:`.expect` method, which will instead raise an exception in case the requested object type is not present: "
+			"\n\n"
+			".. literalinclude:: ../example_snippets/data_collection.py\n"
+			"  :lines: 15-15"
+			"\n\n"
+			"It is possible to programmatically add or remove data objects from the data collection by manipulating its :py:attr:`.objects` list. "
+			"For instance, to populate a new data collection with a :py:class:`~ovito.data.SimulationCell` object we can write: "
+			"\n\n"
+			".. literalinclude:: ../example_snippets/data_collection.py\n"
+			"  :lines: 20-22"
+			"\n\n"
+			"There are certain conventions regarding the numbers and types of data objects that may be present in a data collection. "
+			"For example, there should never be more than one :py:class:`~ovito.data.SimulationCell` instance in a data collection. "
+			"In contrast, there may be an arbitrary number of :py:class:`~ovito.data.ParticleProperty` instances in a data collection, "
+			"but they all must have unique names and the same array length. Furthermore, there must always be one :py:class:`~ovito.data.ParticleProperty` named ``Position`` "
+			"in a data collection, or no :py:class:`~ovito.data.ParticleProperty` at all. When manipulating the :py:attr:`.objects` list of a data "
+			"collection directly, it is your responsibility to make sure that these conventions are followed. "
+			"\n\n"
+			"**Particle and bond access**"
+			"\n\n"
+			"To simplify the work with particles and bonds, which are represented by a bunch of :py:class:`~ovito.data.ParticleProperty` or "
+			":py:class:`~ovito.data.BondProperty` instances, respectively, the :py:class:`!DataCollection` class provides two special " 
+			"accessor fields. The :py:attr:`.particles` field represents a dictionary-like view of all the :py:class:`~ovito.data.ParticleProperty` data objects that are contained in a data collection. "
+			"It thus works like a dynamic filter for the :py:attr:`.objects` list and permits name-based access to individual particle properties: "
+			"\n\n"
+			".. literalinclude:: ../example_snippets/data_collection.py\n"
+			"  :lines: 26-27"
+			"\n\n"
+			"Similarly, the :py:attr:`.bonds` field is a dictionary-like view of all the :py:class:`~ovito.data.BondProperty` instances in "
+			"a data collection. If you are adding or removing particle or bond properties in a data collection, you should "
+			"always do so through these accessor fields instead of manipulating the :py:attr:`.objects` list directly. "
+			"This will ensure that certain invariants are always maintained, e.g. the uniqueness of property names and the consistent size "
+			"of all property arrays. "
+			"\n\n"
+			"**Attribute access**"
+			"\n\n"
+			"In addition to data objects, which represent complex forms of data, a data collection can store an arbitrary number of *attributes*, which are simple key-value pairs. The :py:attr:`.attributes` field of the data collection behaves like a Python dictionary and allows you to " 
+			"read, manipulate or newly insert attributes, which are typically numeric values or string values. "
+			"\n\n"
+			"**Data ownership**"
+			"\n\n"
+			"One data object may be part of several :py:class:`!DataCollection` instances at a time, i.e. it may be shared by several data collections. " 
+			"OVITO' pipeline system uses shallow data copies for performance reasons and to implement efficient data caching. " 
+			"Modifiers typically manipulate only certain data objects in a collection. For example, the :py:class:`~ovito.modifiers.ColorCodingModifier` "
+			"will selectively modify the values of the ``Color`` particle property but won't touch any of the other data objects "
+			"present in the input data collection. The unmodified data objects will simply be passed through to the output data collection "
+			"without creating a new copy of the data values. As a consequence of this design, both the input data collection and the "
+			"output collection of the pipeline may refer to the same data objects. In such a situation, no data collection owns the "
+			"data objects exclusively anymore. "
+			"\n\n"
+			"Thus, in general it is not safe to manipulate the contents of a data object in a data collection, because that could lead to "
+			"unwanted side effects or corruption of data maintained by the pipeline system. For example, modifying the particle positions in a data collection "
+			"that was returned by a system function is forbidden (or rather discouraged): "
+			"\n\n"
+			".. literalinclude:: ../example_snippets/data_collection.py\n"
+			"  :lines: 30-33"
+			"\n\n"
+			"Before manipulating the contents of a data object in any way, it is crucial to ensure that no second data collection is referring to the same object. "
+			"The :py:meth:`.copy_if_needed` method helps you ensure that a data object is exclusive owned by a certain data collection: "
+			"\n\n"
+			".. literalinclude:: ../example_snippets/data_collection.py\n"
+			"  :lines: 37-44"
+			"\n\n"
+			":py:meth:`.copy_if_needed` first checks whether the given object is currently shared by more than one data collection. If yes, "
+			"a deep copy of the object is made and the original object in the data collection is replaced with the copy. "
+			"Now we can be confident that the copied data object is exclusively owned by the data collection and it's safe to modify it without risking side effects. ")
 		.def(py::init<>())
 		.def_property("status", &PipelineFlowState::status, py::overload_cast<const PipelineStatus&>(&PipelineFlowState::setStatus))
 
@@ -182,10 +250,23 @@ void defineSceneSubmodule(py::module m)
 				}
 			})
 	;
-	expose_mutable_subobject_list(PipelineFlowState_py,
+	expose_mutable_subobject_list(DataCollection_py,
 								  std::mem_fn(&PipelineFlowState::objects), 
 								  std::mem_fn(&PipelineFlowState::insertObject), 
-								  std::mem_fn(&PipelineFlowState::removeObjectByIndex), "objects", "PipelineFlowStateObjectsList");
+								  std::mem_fn(&PipelineFlowState::removeObjectByIndex), "objects", "DataCollectionObjectsList",
+			"The list of data objects that make up the data collection. Data objects are instances of :py:class:`DataObject`-derived "
+			"classes, for example :py:class:`ParticleProperty`, :py:class:`Bonds` or :py:class:`SimulationCell`. "
+			"\n\n"
+			"You can add or remove objects from the :py:attr:`!objects` list to insert them or remove them from the :py:class:`!DataCollection`.  "
+			"However, it is your responsibility to ensure that the data objects are all in a consistent state. For example, "
+			"all :py:class:`ParticleProperty` objects in a data collection must have the same lengths at all times, because "
+			"the length implicitly specifies the number of particles. The order in which data objects are stored in the data collection "
+			"does not matter. "
+			"\n\n"
+			"Note that the :py:class:`!DataCollection` class also provides convenience views of the data objects contained in the :py:attr:`!objects` "
+			"list: For example, the :py:attr:`.particles` dictionary lists all :py:class:`ParticleProperty` instances in the " 
+			"data collection by name and the :py:attr:`.bonds` does the same for all :py:class:`BondProperty` instances. "
+			"Since these dictionaries are views, they always reflect the current contents of the master :py:attr:`!objects` list. ");
 
 	ovito_abstract_class<Modifier, RefTarget>(m,
 			"This is the base class for all modifier types in OVITO. See the :py:mod:`ovito.modifiers` module "
@@ -295,44 +376,37 @@ void defineSceneSubmodule(py::module m)
 	;
 
 	auto StaticSource_py = ovito_class<StaticSource, PipelineObject>(m,
-		":Base class: :py:class:`ovito.data.DataCollection`\n\n"
 		"Serves as a data :py:attr:`~Pipeline.source` for a :py:class:`Pipeline`. "
-		"Being a type of :py:class:`~ovito.data.DataCollection`, a :py:class:`!StaticSource` can store a set of data objects, which will be passed to the :py:class:`Pipeline` as input data. "
+		"A :py:class:`!StaticSource` stores a :py:class:`~ovito.data.DataCollection`, which will be passed to the :py:class:`Pipeline` as input data. "
 		"One typically fills a :py:class:`!StaticSource` with some data objects and wires it to a :py:class:`Pipeline` as follows: "
 		"\n\n"
 		".. literalinclude:: ../example_snippets/static_source.py\n"
-		"\n\n"
-		"Another common use of the :py:class:`!StaticSource` class is in conjunction with the :py:func:`ovito.io.ase.ase_to_ovito` function. "
 		)
-		// The following methods are required for the DataCollection.attributes property.
-		.def_property_readonly("attribute_names", [](StaticSource& obj) -> QStringList {
-				return obj.attributes().keys();
-			})
-		.def("get_attribute", [](StaticSource& obj, const QString& attrName) -> py::object {
-				auto item = obj.attributes().find(attrName);
-				if(item == obj.attributes().end())
-					return py::none();
-				else
-					return py::cast(item.value());
-			})
-		.def("set_attribute", [](StaticSource& obj, const QString& attrName, py::object value) {
-				if(value.is_none()) {
-					obj.removeAttribute(attrName);
-				}
-				else {
-					if(PyLong_Check(value.ptr()))
-						obj.setAttribute(attrName, QVariant::fromValue(PyLong_AsLong(value.ptr())));
-					else if(PyFloat_Check(value.ptr()))
-						obj.setAttribute(attrName, QVariant::fromValue(PyFloat_AsDouble(value.ptr())));
-					else
-						obj.setAttribute(attrName, QVariant::fromValue(castToQString(value.cast<py::str>())));
-				}
-			})
+
+		.def("assign", [](StaticSource& source, const PipelineFlowState& state) {
+			source.setAttributes(state.attributes());
+			source.setDataObjects({});
+			for(DataObject* obj : state.objects())
+				source.addDataObject(obj);
+		},
+		"assign(data)"
+		"\n\n"
+		"Sets the contents of this :py:class:`!StaticSource`. "
+		"\n\n"
+		":param data: The :py:class:`~ovito.data.DataCollection` to be copied into this static source object.\n",
+		py::arg("data"))
+
+		.def("compute", [](StaticSource& source, py::object /*frame*/) {
+			return source.evaluatePreliminary();
+		},
+		"compute(frame=None)"
+		"\n\n"
+		"Retrieves the data of this data source, which was previously stored by a call to :py:meth:`.assign`. "
+		"\n\n"
+		":param frame: This parameter is ignored, because the data of a :py:class:`!StaticSource` is not time-dependent.\n"
+		":return: A new :py:class:`~ovito.data.DataCollection` containing the data stored in this :py:class:`!StaticSource`.\n",
+		py::arg("frame") = py::none())
 	;
-	expose_mutable_subobject_list(StaticSource_py,
-		std::mem_fn(&StaticSource::dataObjects), 
-		std::mem_fn(&StaticSource::insertDataObject), 
-		std::mem_fn(&StaticSource::removeDataObject), "objects", "StaticSourceDataObjectList");		
 
 	auto SceneNode_py = ovito_abstract_class<SceneNode, RefTarget>(m)
 		.def_property("name", &SceneNode::nodeName, &SceneNode::setNodeName)
@@ -349,32 +423,32 @@ void defineSceneSubmodule(py::module m)
 								  std::mem_fn(&SceneNode::removeChildNode), "children", "SceneNodeChildren");		
 	
 
-	ovito_class<PipelineSceneNode, SceneNode>(m,
-			"This class represents a data pipeline, i.e. a data source plus a chain of zero or more modifiers "
-			"that manipulate the data on the way through the pipeline. "
+	auto Pipeline_py = ovito_class<PipelineSceneNode, SceneNode>(m,
+			"This class encapsulates a data pipeline, consisting of a *data source* and a chain of zero or more *modifiers*, "
+			"which manipulate the data on the way through the pipeline. "
 			"\n\n"
 			"**Pipeline creation**\n"
 			"\n\n"
-			"Pipelines have a *data source*, which loads or dynamically generates the input data entering the "
+			"A pipeline always has a *data source*, which loads or dynamically generates the input data entering the "
 			"pipeline. This source object is accessible through the :py:attr:`Pipeline.source` field and may be replaced if needed. "
-			"For pipelines created by the :py:func:`~ovito.io.import_file` function, the data source is set to be a "
+			"For pipelines created by the :py:func:`~ovito.io.import_file` function, the data source is automatically set to be a "
 			":py:class:`FileSource` instance, which is responsible for loading the input data "
 			"from the external file and feeding it into the pipeline. Another type of data source is the "
-			":py:class:`StaticSource`, which allows to explicitly specify the set of data objects that enter the pipeline. "
+			":py:class:`StaticSource`, which allows to explicitly specify the set of data objects entering the pipeline. "
 			"\n\n"
 			"The modifiers that are part of the pipeline are accessible through the :py:attr:`Pipeline.modifiers` list. "
 			"This list is initially empty and you can populate it with modifiers of various kinds (see the :py:mod:`ovito.modifiers` module). "
-			"Note that it is possible to employ the same :py:class:`Modifier` instance in more than one pipeline. It is "
-			"also valid to assign the same source object as :py:attr:`.source` of several pipelines to make them share the same input data. "
+			"Note that it is possible to employ the same :py:class:`Modifier` instance in more than one pipeline. And it is "
+			"valid to share the same data source between several pipelines to let them process the same input data. "
 			"\n\n"
 			"**Pipeline evaluation**\n"
 			"\n\n"
-			"Once the pipeline is set up, an evaluation can be requested by calling :py:meth:`.compute()`, which means that the input data is loaded/generated by the :py:attr:`.source` "
+			"Once the pipeline is set up, an evaluation can be requested by calling :py:meth:`.compute()`, which means that the input data will be loaded/generated by the :py:attr:`.source` "
 			"and all modifiers of the pipeline are applied to the data one after the other. The :py:meth:`.compute()` method "
-			"returns a :py:class:`~ovito.data.PipelineFlowState` structure containing all the data objects produced by the pipeline. "
-			"Under the hood, an automatic caching system makes sure that unnecessary file accesses and computations are avoided. "
+			"returns a new :py:class:`~ovito.data.DataCollection` containing all the data objects produced by the pipeline. "
+			"Under the hood, an automatic caching system ensure that unnecessary file accesses and computations are avoided. "
 			"Repeatedly calling :py:meth:`compute` will not trigger a recalculation of the pipeline's results unless you "
-			"modify the pipeline source, the sequence of modifiers or any of the modifier's parameters in some way. "
+			"alter the pipeline's source, the sequence of modifiers or any of the modifier's parameters. "
 			"\n\n"
 			"**Usage example**\n"
 			"\n\n"
@@ -384,24 +458,27 @@ void defineSceneSubmodule(py::module m)
 			".. literalinclude:: ../example_snippets/pipeline_example.py\n"
 			"   :lines: 1-12\n"
 			"\n\n"
-			"It is possible to also access the input data that enters the modification pipeline. It is cached by the :py:class:`FileSource` "
-			"constituting the :py:attr:`.source` of the pipeline: "
+			"Note that you can access the input data of the pipeline by calling the :py:meth:`FileSource.compute` method: "
 			"\n\n"
 			".. literalinclude:: ../example_snippets/pipeline_example.py\n"
 			"   :lines: 14-16\n"
 			"\n\n"
-			"**Data visualization and export**\n"
+			"**Data visualization**\n"
 			"\n\n"
-			"Finally, if you are interested in producing a graphical rendering of the data generated by a :py:class:`Pipeline`, "
-			"you need to make the pipeline part of the current three-dimensional scene by calling the :py:meth:`.add_to_scene` method. "
-			"Another possibility is to pass the pipeline to the :py:func:`ovito.io.export_file` function to export its output data "
-			"to a file. ",
+			"If you intend to produce a graphical rendering of a pipeline's output data, "
+			"you need to make the pipeline part of the current three-dimensional scene by calling its :py:meth:`.add_to_scene` method. "
+			"The visual appearance of the output data is controlled by so-called visual elements, which are generated within the pipeline. "
+			"The :py:meth:`.get_vis` method helps you look up a visual element of a particular type. "
+			"\n\n"
+			"**Data export**\n"
+			"\n\n"
+			"To export the generated data of the pipeline to an output file, simply call the :py:func:`ovito.io.export_file` function with the pipeline. ",
 			// Python class name:
 			"Pipeline")
 		.def_property("data_provider", &PipelineSceneNode::dataProvider, &PipelineSceneNode::setDataProvider)
 		.def_property("source", &PipelineSceneNode::pipelineSource, &PipelineSceneNode::setPipelineSource,
 				"The object that provides the data entering the pipeline. "
-				"This typically is a :py:class:`FileSource` instance if the node was created by a call to :py:func:`~ovito.io.import_file`. "
+				"This typically is a :py:class:`FileSource` instance if the pipeline was created by a call to :py:func:`~ovito.io.import_file`. "
 				"You can assign a new source to the pipeline if needed. See the :py:mod:`ovito.pipeline` module for a list of available pipeline source types. "
 				"Note that you can even make several pipelines share the same source object. ")
 		
@@ -415,7 +492,7 @@ void defineSceneSubmodule(py::module m)
 				// Silently ignore errors during preliminary pipeline evaluation.
 				if(state.status().type() == PipelineStatus::Error)
 					state.setStatus(PipelineStatus(PipelineStatus::Warning, state.status().text()));
-				return state;
+				return std::move(state);
 			}
 			else {
 				// Start an asynchronous pipeline evaluation.
@@ -429,6 +506,7 @@ void defineSceneSubmodule(py::module m)
 			}
 		})
 	;
+	expose_subobject_list(Pipeline_py, std::mem_fn(&PipelineSceneNode::visElements), "vis_elements", "PipelineVisElementsList");
 
 	ovito_class<RootSceneNode, SceneNode>{m}
 	;

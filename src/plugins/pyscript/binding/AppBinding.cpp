@@ -97,6 +97,15 @@ void defineAppSubmodule(py::module m)
 		// This is needed by Viewport.render_image():
 		.def("render_scene", &DataSet::renderScene)
 		.def_property_readonly("container", &DataSet::container, py::return_value_policy::reference)
+
+		// This is called by various Python functions that perform long-running operations.
+		.def("request_long_operation", [](DataSet& ds) {
+				if(ds.viewportConfig() && ds.viewportConfig()->isRendering()) {
+					throw Exception(DataSet::tr("This operation is not permitted while viewport rendering is in progress. "
+							"Your script called an OVITO function that triggers a potentially long-running operation. "
+							"In order to not block the user interface, such operations are not allowed during interactice viewport rendering."), &ds);
+				}
+			})
 	;
 
 	py::class_<DataSetContainer>{m, "DataSetContainer"}

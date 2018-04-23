@@ -3,6 +3,7 @@ if "ovito.modifiers.crystalanalysis" not in sys.modules: sys.exit()
 
 from ovito.io import import_file, export_file
 from ovito.modifiers import DislocationAnalysisModifier
+from ovito.data import DislocationNetwork
 
 pipeline = import_file("input/simulation.dump")
 
@@ -17,7 +18,7 @@ cell_volume = data.attributes['DislocationAnalysis.cell_volume']
 print("Dislocation density: %f" % (total_line_length / cell_volume))
 
 # Print list of dislocation lines:
-network = data.dislocations
+network = data.expect(DislocationNetwork)
 print("Found %i dislocation segments" % len(network.segments))
 for segment in network.segments:
     print("Segment %i: length=%f, Burgers vector=%s" % (segment.id, segment.length, segment.true_burgers_vector))

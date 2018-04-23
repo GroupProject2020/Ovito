@@ -3,12 +3,15 @@ from ovito.data import NearestNeighborFinder
 
 # Load input simulation file.
 pipeline = import_file("input/simulation.dump")
-data = pipeline.source
+data = pipeline.compute()
 
 # Initialize neighbor finder object.
 # Visit the 12 nearest neighbors of each particle.
 N = 12
 finder = NearestNeighborFinder(N, data)
+
+# Prefetch the property array containing the particle type information:
+ptypes = data.particles['Particle Type']
 
 # Loop over all input particles:
 for index in range(data.particles.count):
@@ -16,6 +19,8 @@ for index in range(data.particles.count):
     # Iterate over the neighbors of the current particle, starting with the closest:
     for neigh in finder.find(index):
         print(neigh.index, neigh.distance, neigh.delta)
+        # The index can be used to access properties of the current neighbor, e.g.
+        type_of_neighbor = ptypes[neigh.index]
 
 # Find particles closest to some spatial point (x,y,z):
 coords = (0, 0, 0)

@@ -11,6 +11,6 @@ pipeline.modifiers.append(SliceModifier(normal=(0,0,1), distance=0))
 output = pipeline.compute()
 print("Remaining particle count:", output.particles.count)
 
-# Access the cached input data of the FileSource:
-input = pipeline.source
+# Access the pipeline's input data provided by the FileSource:
+input = pipeline.source.compute()
 print("Input particle count:", input.particles.count)

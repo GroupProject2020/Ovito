@@ -4,7 +4,7 @@ from ovito.vis import BondsVis
 
 # >>>>>>>>
 pipeline = import_file('input/bonds.data.gz', atom_style='bond')
-bonds_vis = pipeline.source.bonds['Topology'].vis
+bonds_vis = pipeline.get_vis(BondsVis)
 bonds_vis.width = 0.4
 # <<<<<<<<
 

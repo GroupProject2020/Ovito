@@ -418,7 +418,6 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 										dataObjects.push_back(o);
 									}
 									_dataObjects.set(this, PROPERTY_FIELD(dataObjects), dataObjects);
-									_attributes = output.attributes();
 									setStoredFrameIndex(frame);
 								}
 

@@ -36,9 +36,6 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPAC
 TaskManager::TaskManager(DataSetContainer& owner) : _owner(owner)
 {
 	qRegisterMetaType<PromiseStatePtr>("PromiseStatePtr");
-	
-	// When the application is shutting down, we should cancel all pending tasks.
-	connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, this, &TaskManager::cancelAll);
 }
 
 /******************************************************************************
@@ -197,18 +194,21 @@ bool TaskManager::waitForTask(const PromiseStatePtr& sharedState)
 {
 	OVITO_ASSERT_MSG(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread(), "TaskManager::waitForTask", "Function may be called only from the main thread.");
 
+	// Before entering the local event loop, check if task has already finished.
+	if(sharedState->isFinished()) {
+		return !sharedState->isCanceled();
+	}
+
 	// Make sure this method is not called while rendering a viewport.
 	// Qt doesn't allow a local event loops during paint event processing.
 	if(DataSet* dataset = _owner.currentSet()) {
 		if(dataset->viewportConfig()->isRendering()) {
 			qWarning() << "WARNING: Do not call TaskManager::waitForTask() during interactive viewport rendering!";
-			OVITO_ASSERT(false);
+			//OVITO_ASSERT(false);
+			sharedState->setException(std::make_exception_ptr(Exception(tr("This operation is not permitted during interactive viewport rendering. "
+				"Note that certain long-running operations, e.g. I/O operations or complex computations, cannot be performed while viewport rendering is in progress. "), dataset)));
+			return !sharedState->isCanceled();;
 		}
-	}
-
-	// Before entering the local event loop, check if task has already finished.
-	if(sharedState->isFinished()) {
-		return !sharedState->isCanceled();
 	}
 
 	// Register the task in case it hasn't been registered with this TaskManager yet.

@@ -3,10 +3,9 @@ from ovito.data import *
 from ovito.modifiers import *
 
 # Tests access to a ParticleType objects
-# it contains.
 
-node = import_file("../../files/CFG/shear.void.120.cfg")
-tprop = node.source.particle_properties['Particle Type']
+pipeline = import_file("../../files/CFG/shear.void.120.cfg")
+tprop = pipeline.compute().particles['Particle Type']
 
 assert(len(tprop.types) == 3)
 assert(tprop.types[0].id == 1)
@@ -24,8 +23,8 @@ assert(tprop.type_by_name(tprop.types[1].name) == tprop.types[1])
 assert(tprop.type_by_name(tprop.types[2].name) == tprop.types[2])
 
 # Let the CNA modifier create a structural type property.
-node.modifiers.append(CommonNeighborAnalysisModifier())
-sprop = node.compute().particle_properties['Structure Type']
+pipeline.modifiers.append(CommonNeighborAnalysisModifier())
+sprop = pipeline.compute().particles['Structure Type']
 
 assert(len(sprop.types) >= 1)
 assert(sprop.type_by_id(CommonNeighborAnalysisModifier.Type.HCP).id == CommonNeighborAnalysisModifier.Type.HCP)

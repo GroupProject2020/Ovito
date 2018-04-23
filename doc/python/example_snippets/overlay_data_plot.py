@@ -1,21 +1,21 @@
 test_flag = False
 
 # >>>>>>>>> snippet start here >>>>>>>>>>>>>>>
+import ovito
+from ovito.modifiers import HistogramModifier
 import matplotlib
 matplotlib.use('Agg') # Activate 'agg' backend for off-screen plotting.
 import matplotlib.pyplot as plt
 import PyQt5.QtGui
-import ovito
-from ovito.modifiers import HistogramModifier
 
 def render(args):
     # Look up the HistogramModifier in the pipeline whose data we will plot.
     hist_modifier = None
-    for mod in ovito.dataset.selected_pipeline.modifiers:
+    for mod in args.dataset.selected_pipeline.modifiers:
         if isinstance(mod, HistogramModifier):
             hist_modifier = mod
             break
-    if not hist_modifier: raise RuntimeError('Histogram modifier not present')
+    if not hist_modifier: raise RuntimeError('Histogram modifier is not present')
 
     #  Compute plot size in inches (DPI determines label size)
     dpi = 80

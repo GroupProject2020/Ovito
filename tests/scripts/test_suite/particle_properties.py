@@ -1,18 +1,21 @@
 from ovito.io import *
 
-node = import_file("../../files/CFG/shear.void.120.cfg")
+pipeline = import_file("../../files/CFG/shear.void.120.cfg")
+data = pipeline.compute()
 
-print(node.source)
-print("Number of data objects: ", len(node.source.objects))
+print(data)
+print("Number of data objects: ", len(data.objects))
 
-print(node.source.particle_properties)
+print(data.particle_properties)
+print(data.particles)
 
-print(list(node.source.particle_properties.keys()))
-print(list(node.source.particle_properties.values()))
+print(list(data.particles.keys()))
+print(list(data.particles.values()))
 
-print(node.source.particle_properties["Position"])
+print(data.particles["Position"])
+print(data.particles.position)
 
-pos = node.source.particle_properties.position
+pos = data.particles['Position']
 print("pos=", pos)
 print("pos.array=", pos.array)
 print("pos.array[0]=", pos.array[0])
@@ -20,6 +23,7 @@ print("pos[0]=", pos[0])
 print("pos[0:3]=", pos[0:3])
 print("len(pos)={}".format(len(pos)))
 print("pos.marray=", pos.marray)
+assert(len(pos) == data.particles.count)
 
 with pos:
     pos[0][0] = 1.0

@@ -5,7 +5,7 @@ from ovito.modifiers import CalculateDisplacementsModifier
 # >>>>>>>>
 pipeline = import_file('input/simulation.dump')
 pipeline.add_to_scene()
-vector_vis = pipeline.source.particles['Force'].vis
+vector_vis = pipeline.get_vis(VectorVis)
 vector_vis.color = (1,0,0)
 # <<<<<<<<
 

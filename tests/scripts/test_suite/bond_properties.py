@@ -2,20 +2,19 @@ from ovito.io import *
 from ovito.data import *
 import numpy
 
-node = import_file("../../files/LAMMPS/bonds.data.gz", atom_style = 'bond')
+pipeline = import_file("../../files/LAMMPS/bonds.data.gz", atom_style = 'bond')
+data = pipeline.compute()
 
-print("node.source:", node.source)
+data.create_bond_property(BondProperty.Type.Color)
+data.create_user_bond_property("MyProperty", "int", 2)
+values = numpy.ones(data.number_of_full_bonds)
+data.create_user_bond_property("MyProperty2", "float", 1, values)
 
-node.source.create_bond_property(BondProperty.Type.Color)
-node.source.create_user_bond_property("MyProperty", "int", 2)
-values = numpy.ones(node.source.number_of_full_bonds)
-node.source.create_user_bond_property("MyProperty2", "float", 1, values)
-
-print("Number of data objects: ", len(node.source.objects))
-print(node.source.bond_properties)
-print(node.source.bond_properties.bond_type)
-print(list(node.source.bond_properties.keys()))
-print(list(node.source.bond_properties.values()))
-print(node.source.bond_properties["Bond Type"])
-print(node.source.bond_properties.bond_type.array)
-print(node.source.bond_properties["MyProperty2"].array)
+print("Number of data objects: ", len(data.objects))
+print(data.bond_properties)
+print(data.bond_properties.bond_type)
+print(list(data.bond_properties.keys()))
+print(list(data.bond_properties.values()))
+print(data.bond_properties["Bond Type"])
+print(data.bond_properties.bond_type.array)
+print(data.bond_properties["MyProperty2"].array)

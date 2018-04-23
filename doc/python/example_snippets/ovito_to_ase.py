@@ -9,7 +9,7 @@ from ovito.io.ase import ovito_to_ase
 # Create an OVITO data pipeline from an external file:
 pipeline = import_file('input/simulation.dump')
 
-# Evaluate pipeline to obtain a PipelineFlowState data collection:
+# Evaluate pipeline to obtain a DataCollection:
 data = pipeline.compute()
 
 # Convert it to an ASE Atoms object:

@@ -17,9 +17,8 @@ data = node.source
 atoms = ovito_to_ase(data)
 print(atoms)
 
-ase_to_ovito(atoms, data)
-ase_to_ovito(atoms, PipelineFlowState())
-ase_to_ovito(atoms, StaticSource())
+data = ase_to_ovito(atoms)
+assert(isinstance(data, DataCollection))
 
 # Backward compatibility with OVITO 2.9.0:
 atoms = data.to_ase_atoms()
@@ -27,5 +26,4 @@ print(atoms)
 
 # Backward compatibility with OVITO 2.9.0:
 data2 = DataCollection.create_from_ase_atoms(atoms)
-print(data2)
-
+assert(isinstance(data2, DataCollection))

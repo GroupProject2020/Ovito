@@ -24,11 +24,8 @@ Data pipelines and data sources
 The :py:class:`!ovito.PipelineSceneNode` class has been renamed to :py:class:`~ovito.pipeline.Pipeline` and
 moved into the new :py:mod:`ovito.pipeline` module. The old class name reflected the fact that instances
 are part of the scene graph in OVITO. However, this aspect is less important from 
-the Python script perspective and therefore :py:class:`~ovito.pipeline.Pipeline` is a more natural naming
-choice.
+the Python script perspective and therefore :py:class:`~ovito.pipeline.Pipeline` is a more natural name choice.
 
-:py:class:`~ovito.data.DataCollection` is now an abstract base class for the concrete classes
-:py:class:`~ovito.pipeline.StaticSource`, :py:class:`~ovito.pipeline.FileSource` and :py:class:`~ovito.data.PipelineFlowState`. 
 The :py:class:`~ovito.pipeline.StaticSource` is a type of data source for a :py:class:`~ovito.pipeline.Pipeline` 
 and can hold a set of data objects that should be processed by the pipeline. The :py:class:`~ovito.pipeline.FileSource`
 class maintains its role as a data source for a pipeline, reading the input data from an external file.
@@ -43,7 +40,7 @@ after a call to :py:meth:`!PipelineSceneNode.compute`. Now the computation resul
    data = pipeline.compute()
    print(data.particles)
 
-In the example above, the variable ``data`` points to a :py:class:`~ovito.data.PipelineFlowState` returned by :py:meth:`~ovito.pipeline.Pipeline.compute`.
+In the example above, the variable ``data`` points to a :py:class:`~ovito.data.DataCollection` returned by :py:meth:`~ovito.pipeline.Pipeline.compute`.
 
 The ``DataCollection`` class
 ----------------------------------------

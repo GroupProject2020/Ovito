@@ -93,24 +93,6 @@ public:
 	/// Returns the current status of the pipeline object.
 	virtual PipelineStatus status() const override;
 
-	/// Inserts an object into the current list of active data objects of this file source.
-	void insertDataObject(int index, DataObject* obj) { 
-		OVITO_ASSERT(!dataObjects().contains(obj)); 
-		_dataObjects.insert(this, PROPERTY_FIELD(dataObjects), index, obj); 
-	}
-
-	/// Appends an object to the current list of active data objects of this file source.
-	void addDataObject(DataObject* obj) { 
-		OVITO_ASSERT(!dataObjects().contains(obj)); 
-		_dataObjects.push_back(this, PROPERTY_FIELD(dataObjects), obj); 
-	}
-	
-	/// Removes an object from the current list of active data objects of this file source.
-	void removeDataObject(int index) { _dataObjects.remove(this, PROPERTY_FIELD(dataObjects), index); }
-
-	/// Returns the global attributes loaded from the current file, which are passed along with the data objects into the pipeline.
-	const QVariantMap& attributes() const { return _attributes; }
-		
 protected:
 
 	/// Asks the object for the results of the data pipeline.
@@ -199,9 +181,6 @@ private:
 
 	/// Indicates whether the data from a frame loader is currently being handed over to the FileSource.
 	bool _handOverInProgress = false;
-
-	/// The global attributes loaded for the current animation frame.
-	QVariantMap _attributes;
 };
 
 OVITO_END_INLINE_NAMESPACE

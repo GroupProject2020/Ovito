@@ -22,7 +22,7 @@ def export_file(data, file, format, **params):
 
            * :py:class:`~ovito.data.DataCollection`:
              Exports the data contained in a data collection. Data objects in the collection that are not compatible
-             with the chosen output format are ignored. Since a data collection represents a static snapshot, no frame
+             with the chosen output format are ignored. Since a data collection represents a static dataset, no frame
              sequences can be written.
 
            * :py:class:`~ovito.data.DataObject`:
@@ -111,8 +111,9 @@ def export_file(data, file, format, **params):
                 columns=["Timestep", "CommonNeighborAnalysis.counts.FCC"], 
                 multiple_frames=True)
             
-        See the documentation of the individual analysis modifiers to find out which global quantities the 
-        compute. You can also determine which :py:attr:`~ovito.data.DataCollection.attributes` are available as follows::
+        See the documentation of the individual analysis modifiers to find out which global quantities they 
+        compute. You can also determine at runtime which :py:attr:`~ovito.data.DataCollection.attributes` are available 
+        in the output data collection of a :py:class:`~ovito.pipeline.Pipeline`::
         
             print(pipeline.compute().attributes)
 
@@ -145,6 +146,10 @@ def export_file(data, file, format, **params):
         exporter.wildcard_filename = file
         exporter.use_wildcard_filename = True
     
+    # Exporting to a file is a long-running operation, which is not permitted during viewport rendering or pipeline evaluation.
+    # In these situations, the following function call will raise an exception.
+    ovito.dataset.request_long_operation()
+    
     # Pass data to be exported to the exporter:
     if isinstance(data, Pipeline):
         # Evaluate pipeline once to raise an exception if the evaluation fails.
@@ -154,14 +159,15 @@ def export_file(data, file, format, **params):
     elif isinstance(data, PipelineObject):
         exporter.set_pipeline(Pipeline(source = data))
     elif isinstance(data, DataCollection):
-        source = StaticSource()
-        source.objects.extend(data.objects)
-        source.attributes.update(data.attributes)
-        exporter.set_pipeline(Pipeline(source = source))
+        static_source = StaticSource()
+        static_source.assign(data)
+        exporter.set_pipeline(Pipeline(source = static_source))
     elif isinstance(data, DataObject):
-        source = StaticSource()
-        source.objects.append(data)
-        exporter.set_pipeline(Pipeline(source = source))
+        data_collection = DataCollection()
+        data_collection.objects.append(data)
+        static_source = StaticSource()
+        static_source.assign(data_collection)
+        exporter.set_pipeline(Pipeline(source = static_source))
     elif data is None:
         exporter.select_standard_output_data()
     else:

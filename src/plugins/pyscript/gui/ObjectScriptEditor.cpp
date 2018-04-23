@@ -47,6 +47,9 @@ ObjectScriptEditor::ObjectScriptEditor(QWidget* parentWidget, RefTarget* scripta
 	_codeEditor->setMarginLineNumbers(1, true);
 	_codeEditor->setAutoIndent(true);
 	_codeEditor->setTabWidth(4);
+	_codeEditor->setIndentationsUseTabs(false);
+	_codeEditor->setIndentationGuides(true);
+	_codeEditor->setBackspaceUnindents(true);
 	_codeEditor->setFont(font);
 	_codeEditor->setUtf8(true);
 	QsciLexerPython* lexer = new QsciLexerPython(_codeEditor);

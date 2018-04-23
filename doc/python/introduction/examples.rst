@@ -15,7 +15,9 @@ Make sure to read the intro section of each category first:
       * :ref:`example_visualize_local_lattice_orientation`
       * :ref:`example_select_overlapping_particles`
    * :ref:`overlay_script_examples`
+      * :ref:`example_scale_bar_overlay`
       * :ref:`example_data_plot_overlay`
+      * :ref:`example_highlight_particle_overlay`
 
 .. _batch_script_examples:
 
@@ -223,13 +225,43 @@ User-defined overlay functions
 OVITO allows you to implement your type of viewport overlay by writing a Python function that gets called every time
 a viewport image is being rendered. 
 
+.. _example_scale_bar_overlay:
+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Example O1: Scale bar
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The following script renders a scale bar into the viewport (with a fixed length of 4 nm, as shown in the example picture). 
+You can copy/paste the source code into the script input field and adjust the parameters in the code as needed.
+
+.. image:: /../manual/images/viewport_overlays/python_script_scale_bar_example.png
+
+.. literalinclude:: ../example_snippets/overlay_scale_bar.py
+  :lines: 4-35
+
 .. _example_data_plot_overlay:
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Example O1: Including data plots in rendered images
+Example O2: Including data plots in rendered images
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The following script demonstrates how to use the `Matplotlib <http://matplotlib.org>`_ Python module to render a histogram
+on top the three-dimensional visualization. The histogram data is dynamically computed by a :py:class:`~ovito.modifiers.HistogramModifier` 
+in the data pipeline in this example.
+
+.. image:: /../manual/images/viewport_overlays/python_script_scale_bar_example.png
 
 .. literalinclude:: ../example_snippets/overlay_data_plot.py
   :lines: 4-42
 
-...
+.. _example_highlight_particle_overlay:
+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Example O3: Highlight a particle
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. image:: /../manual/images/viewport_overlays/python_script_highlight_example.png
+
+.. literalinclude:: ../example_snippets/overlay_highlight_particle.py
+  :lines: 4-54
+

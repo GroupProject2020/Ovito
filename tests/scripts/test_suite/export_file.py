@@ -1,7 +1,7 @@
 import ovito
 from ovito.io import (import_file, export_file)
 from ovito.vis import *
-from ovito.data import PipelineFlowState
+from ovito.data import DataCollection
 from ovito.pipeline import StaticSource
 import os
 import os.path
@@ -41,12 +41,10 @@ os.remove("_export_file_test.dump")
 export_file(None, "_export_file_test.pov", "povray")
 os.remove("_export_file_test.pov")
 
-# Export a PipelineFlowState:
+# Export a DataCollection:
 export_file(node1.compute(1), "_export_file_test.dump", "lammps/dump", columns = ["Position.X", "Position.Y", "Position.Z"])
 os.remove("_export_file_test.dump")
 
-# Export a StaticSource:
-source = StaticSource()
-source.particle_properties.create('Position', data=[[0,0,0]])
-export_file(source, "_export_file_test.xyz", "xyz", columns = ["Position.X", "Position.Y", "Position.Z"])
-os.remove("_export_file_test.xyz")
+# Export a data object:
+export_file(node1.compute(1).particles['Position'], "_export_file_test.dump", "xyz", columns = ["Position.X", "Position.Y", "Position.Z"])
+os.remove("_export_file_test.dump")

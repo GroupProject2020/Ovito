@@ -3,7 +3,8 @@ from ovito.data import SimulationCell
 import numpy
 
 pipeline = import_file("../../files/LAMMPS/animation.dump.gz")
-cell = pipeline.source.expect(SimulationCell)
+data = pipeline.compute()
+cell = data.expect(SimulationCell)
 
 print("  input pbc flags: {}".format(cell.pbc))
 cell.pbc = (False, True, True)
@@ -11,9 +12,6 @@ cell.pbc = (False, True, True)
 print("  input cell:\n{}".format(cell))
 with cell:
     cell[...] = [[10,0,0,0],[0,2,0,0],[0,0,1,0]]
-
-data = pipeline.compute()
-cell = data.expect(SimulationCell)
 
 assert(cell[0,0] == 10)
 assert(cell[1,1] == 2)

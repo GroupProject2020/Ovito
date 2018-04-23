@@ -1,11 +1,10 @@
 from ovito.io import *
 from ovito.data import *
 
-# Tests access to BondType objects
-# it contains.
+# Tests access to BondType objects.
 
-node = import_file("../../files/LAMMPS/class2.data", atom_style = 'full')
-tprop = node.source.bond_properties['Bond Type']
+pipeline = import_file("../../files/LAMMPS/class2.data", atom_style = 'full')
+tprop = pipeline.source.compute().bonds['Bond Type']
 
 for t in tprop.types:
     print(t.id, t.name)

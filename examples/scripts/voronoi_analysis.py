@@ -27,9 +27,9 @@ import numpy
 pipeline = import_file("../data/CuZr_metallic_glass.dump.gz")
 
 # Set atomic radii (required for polydisperse Voronoi tessellation).
-atypes = pipeline.source.particles['Particle Type'].types
-atypes[0].radius = 1.35        # Cu atomic radius (atom type 1 in input file)
-atypes[1].radius = 1.55        # Zr atomic radius (atom type 2 in input file)
+atom_types = pipeline.source.compute().particles['Particle Type'].types
+atom_types[0].radius = 1.35   # Cu atomic radius (atom type 1 in input file)
+atom_types[1].radius = 1.55   # Zr atomic radius (atom type 2 in input file)
 
 # Set up the Voronoi analysis modifier.
 voro = VoronoiAnalysisModifier(

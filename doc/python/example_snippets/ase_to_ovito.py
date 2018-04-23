@@ -10,8 +10,10 @@ from ase.atoms import Atoms
 # The ASE Atoms object to convert:
 ase_atoms = Atoms('CO', positions=[(0, 0, 0), (0, 0, 1.1)])
 
-# Create a new Pipeline with a StaticSource as data source:
-pipeline = Pipeline(source = StaticSource())
+# Convert the ASE object to an OVITO DataCollection:
+data = ase_to_ovito(ase_atoms)
 
-# Convert the ASE object; use the StaticSource as destination container:
-ase_to_ovito(ase_atoms, pipeline.source)
+# We may now create a Pipeline object with a StaticSource and use the 
+# converted dataset as input for a data pipeline:
+pipeline = Pipeline(source = StaticSource())
+pipeline.source.assign(data)

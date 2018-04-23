@@ -59,7 +59,7 @@ void PythonViewportOverlay::loadUserDefaults()
 			"\n"
 			"\t# Also print the current number of particles into the lower left corner of the viewport.\n"
 			"\tpipeline = ovito.dataset.selected_pipeline\n"
-			"\tif not pipeline is None:\n"			
+			"\tif not pipeline is None:\n"
 			"\t\tdata = pipeline.compute()\n"
 			"\t\tnum_particles = len(data.particles['Position']) if 'Position' in data.particles else 0\n"
 			"\telse: num_particles = 0\n"
@@ -204,7 +204,7 @@ void PythonViewportOverlay::render(Viewport* viewport, TimePoint time, QPainter&
 			py::object sip_painter = sip_module.attr("wrapinstance")(painter_ptr, qpainter_class);
 
 			py::tuple arguments = py::make_tuple(py::cast(
-				ViewportOverlayArguments(time, viewport, projParams, renderSettings, std::move(sip_painter)), 
+				ViewportOverlayArguments(time, viewport, projParams, renderSettings, std::move(sip_painter), painter), 
 				py::return_value_policy::move));
 
 			// Execute render() script function.
@@ -220,6 +220,46 @@ void PythonViewportOverlay::render(Viewport* viewport, TimePoint time, QPainter&
 
 	if(thisPointer)
 		thisPointer->notifyDependents(ReferenceEvent::ObjectStatusChanged);
+}
+
+/******************************************************************************
+* Projects a point from world space to window space.
+******************************************************************************/
+boost::optional<Point2> ViewportOverlayArguments::projectPoint(const Point3& world_pos) const
+{
+	// Transform to view space:
+	Point3 view_pos = projParams().viewMatrix * world_pos;
+	// Project to screen space:
+	Vector4 screen_pos = projParams().projectionMatrix * Vector4(view_pos.x(), view_pos.y(), view_pos.z(), 1);
+	// Check if point is behind the viewer. If yes, stop here.
+	if((projParams().isPerspective && view_pos.z() >= 0) || screen_pos.w() == 0) 
+		return {};
+	screen_pos.x() /= screen_pos.w();
+	screen_pos.y() /= screen_pos.w();
+	// Translate to window coordinates.
+	const auto& win_rect = _painter.window();
+	FloatType x = win_rect.left() + win_rect.width() * (screen_pos.x() + 1) / 2;
+	FloatType y = win_rect.bottom() - win_rect.height() * (screen_pos.y() + 1) / 2 + 1;
+	return { Point2(x, y) };
+}
+
+/******************************************************************************
+* Projects a size from 3d world space to 2d window space.
+******************************************************************************/
+FloatType ViewportOverlayArguments::projectSize(const Point3& world_pos, FloatType radius3d) const
+{
+	if(projParams().isPerspective) {
+		// Transform to view space.
+		Point3 view_pos = projParams().viewMatrix * world_pos;
+		// Project to screen space.
+		Point3 screen_pos1 = projParams().projectionMatrix * view_pos;
+		view_pos.y() += radius3d;
+		Point3 screen_pos2 = projParams().projectionMatrix * view_pos;
+		return (screen_pos1 - screen_pos2).length() * _painter.window().height() / 2;
+	}
+	else {
+		return radius3d / projParams().fieldOfView * _painter.window().height() / 2;
+	}
 }
 
 }	// End of namespace

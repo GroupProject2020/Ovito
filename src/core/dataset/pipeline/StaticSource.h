@@ -35,7 +35,8 @@ class OVITO_CORE_EXPORT StaticSource : public PipelineObject
 {
 	Q_OBJECT
 	OVITO_CLASS(StaticSource)
-	
+	Q_CLASSINFO("DisplayName", "Pipeline source");
+
 public:
 
 	/// \brief Standard constructor.
@@ -51,7 +52,7 @@ public:
 	StaticSource(DataSet* dataset, const PipelineFlowState& state) : StaticSource(dataset) {
 		for(DataObject* obj : state.objects())
 			_dataObjects.push_back(this, PROPERTY_FIELD(dataObjects), obj);
-		_attributes = state.attributes();
+		setAttributes(state.attributes());
 	}
 	
 	/// \brief Asks the object for the result of the data pipeline.
@@ -78,33 +79,25 @@ public:
 		}
 		return nullptr;
 	}
-	
-	/// Returns the set of attributes which are passed along with the data objects.
-	const QVariantMap& attributes() const { return _attributes; }
-	
-	/// Sets the attributes that will be passed along with the data objects.
-	void setAttributes(QVariantMap attributes) { 
-		_attributes = std::move(attributes);
-		notifyTargetChanged();
-	}
 
 	/// Removes all attributes that will be passed along with the data objects.
 	void clearAttributes() {
-		if(_attributes.empty()) return;
-		_attributes.clear(); 
-		notifyTargetChanged();
+		if(attributes().empty()) return;
+		setAttributes({});
 	}
 
 	/// Removes the attribute with the given name if it exists.
 	void removeAttribute(const QString& name) {
-		if(_attributes.remove(name))
-			notifyTargetChanged();
+		QVariantMap newAttr = attributes();
+		if(newAttr.remove(name))
+			setAttributes(std::move(newAttr));
 	}
 
 	/// Adds or replaces an attribute with the given name.
 	void setAttribute(const QString& name, const QVariant& value) {
-		_attributes.insert(name, value);
-		notifyTargetChanged();
+		QVariantMap newAttr = attributes();
+		newAttr.insert(name, value);
+		setAttributes(std::move(newAttr));
 	}
 	
 	/// Returns the number of sub-objects that should be displayed in the modifier stack.
@@ -127,9 +120,7 @@ private:
 	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD_FLAGS(DataObject, dataObjects, setDataObjects, PROPERTY_FIELD_ALWAYS_DEEP_COPY);
 
 	/// Global attributes that are passed along with the data objects.
-	QVariantMap _attributes;
-
-	Q_CLASSINFO("DisplayName", "Pipeline source");
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(QVariantMap, attributes, setAttributes);
 };
 
 OVITO_END_INLINE_NAMESPACE

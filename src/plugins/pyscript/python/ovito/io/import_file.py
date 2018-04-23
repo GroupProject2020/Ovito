@@ -100,6 +100,10 @@ def import_file(location, **params):
     else:
         raise TypeError("Invalid input file location. Expected string or sequence of strings.")
     first_location = location_list[0]
+
+    # Importing a file is a long-running operation, which is not permitted during viewport rendering or pipeline evaluation.
+    # In these situations, the following function call will raise an exception.
+    ovito.dataset.request_long_operation()
     
     # Determine the file's format.
     importer = FileImporter.autodetect_format(ovito.dataset, first_location)

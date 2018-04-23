@@ -2,6 +2,7 @@
 from ..plugins.PyScript import FileImporter, FileSource, PipelineStatus
 from ..data import DataCollection
 import sys
+import ovito
 try:
     # Python 3.x
     import collections.abc as collections
@@ -9,13 +10,9 @@ except ImportError:
     # Python 2.x
     import collections
 
-# Make FileSource a DataCollection.
-DataCollection.registerDataCollectionType(FileSource)
-assert(issubclass(FileSource, DataCollection))
-
 # Implementation of FileSource.load() method:
 def _FileSource_load(self, location, **params):
-    """ Associates this data source with a new input file, where it will retrieve its data from.
+    """ Sets a new input file, from which this data source will retrieve its data from.
     
         The function accepts additional keyword arguments, which are forwarded to the format-specific file importer.
         For further information, please see the documentation of the :py:func:`~ovito.io.import_file` function,
@@ -32,6 +29,10 @@ def _FileSource_load(self, location, **params):
     else:
         raise TypeError("Invalid input file location. Expected string or sequence of strings.")
     first_location = location_list[0]
+
+    # Importing a file is a long-running operation, which is not permitted during viewport rendering or pipeline evaluation.
+    # In these situations, the following function call will raise an exception.
+    ovito.dataset.request_long_operation()
 
     # Determine the file's format.
     importer = FileImporter.autodetect_format(self.dataset, first_location)
@@ -69,7 +70,7 @@ FileSource.load = _FileSource_load
 # Implementation of FileSource.source_path property.
 def _get_FileSource_source_path(self):
     """ This read-only attribute returns the path(s) or URL(s) of the file(s) where this :py:class:`!FileSource` retrieves its input data from. 
-        You can change the source path with a call to :py:meth:`.load`. """
+        You can change the source path by calling :py:meth:`.load`. """
     path_list = self.get_source_paths()
     if len(path_list) == 1: return path_list[0]
     elif len(path_list) == 0: return ""
@@ -85,14 +86,14 @@ def _FileSource_compute(self, frame = None):
         The :py:class:`!FileSource` uses a caching mechanism to keep the data for one or more frames in memory. Thus, invoking :py:meth:`!compute`
         repeatedly to retrieve the same frame will typically be very fast.
 
-        Note: The returned :py:class:`~ovito.data.PipelineFlowState` data collection contains data objects that are owned by the :py:class:`!FileSource`.
+        Note: The returned :py:class:`~ovito.data.DataCollection` contains data objects that are owned by the :py:class:`!FileSource`.
         That means it is not safe to modify these objects as this would lead to unexpected side effects. 
         You should always use the :py:meth:`DataCollection.copy_if_needed() <ovito.data.DataCollection.copy_if_needed>` method
-        to make a copy of the data objects that you want to modify. See the :py:class:`~ovito.data.PipelineFlowState` class
+        to make a copy of the data objects that you want to modify. See the :py:class:`~ovito.data.DataCollection` class
         for more information.
 
         :param int frame: The animation frame number at which the source should be evaluated. 
-        :returns: A :py:class:`~ovito.data.PipelineFlowState` containing the loaded data.
+        :return: A :py:class:`~ovito.data.DataCollection` containing the loaded data.
     """
     if frame is not None:
         time = self.source_frame_to_anim_time(frame)

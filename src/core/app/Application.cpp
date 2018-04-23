@@ -188,10 +188,6 @@ void Application::createQtApplication(int& argc, char** argv)
 	else {
 		new QGuiApplication(argc, argv);
 	}
-
-	connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, []() {
-		qDebug() << "Received QCoreApplication::aboutToQuit signal!";
-	});
 }
 
 /******************************************************************************

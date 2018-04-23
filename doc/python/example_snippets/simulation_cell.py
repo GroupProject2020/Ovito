@@ -2,7 +2,7 @@ from ovito.io import import_file
 from ovito.data import SimulationCell
 
 pipeline = import_file("input/simulation.dump")
-cell = pipeline.source.expect(SimulationCell)
+cell = pipeline.compute().expect(SimulationCell)
 
 # Print cell matrix to the console. [...] is for casting to Numpy. 
 print(cell[...])

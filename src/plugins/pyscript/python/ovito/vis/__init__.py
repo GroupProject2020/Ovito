@@ -106,6 +106,10 @@ def _Viewport_render_image(self, size=(640,480), frame=0, filename=None, backgro
     assert(background[2] >= 0.0 and background[2] <= 1.0)
     assert(renderer is None or isinstance(renderer, ovito.plugins.PyScript.SceneRenderer))
 
+    # Rendering is a long-running operation, which is not permitted during viewport rendering or pipeline evaluation.
+    # In these situations, the following function call will raise an exception.
+    ovito.dataset.request_long_operation()
+
     # Configure a RenderSettings object:
     settings = RenderSettings()
     settings.output_image_width, settings.output_image_height = size
@@ -172,6 +176,10 @@ def _Viewport_render_anim(self, filename, size=(640,480), fps=10, background=(1,
     assert(background[1] >= 0.0 and background[1] <= 1.0)
     assert(background[2] >= 0.0 and background[2] <= 1.0)
     assert(renderer is None or isinstance(renderer, ovito.plugins.PyScript.SceneRenderer))
+    
+    # Rendering is a long-running operation, which is not permitted during viewport rendering or pipeline evaluation.
+    # In these situations, the following function call will raise an exception.
+    ovito.dataset.request_long_operation()
     
     # Configure a RenderSettings object:
     settings = RenderSettings()

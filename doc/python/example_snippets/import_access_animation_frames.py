@@ -7,8 +7,8 @@ pipeline = import_file('input/simulation.*.dump')
 for frame_index in range(pipeline.source.num_frames):    
 
     # Calling FileSource.compute() loads the requested frame
-    # from the sequence into memory and returns the data as a
-    # PipelineFlowState data collection:
+    # from the sequence into memory and returns the data as a new
+    # DataCollection:
     data = pipeline.source.compute(frame_index)
 
     # The source path and the index of the current frame

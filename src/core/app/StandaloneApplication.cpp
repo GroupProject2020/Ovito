@@ -195,6 +195,10 @@ bool StandaloneApplication::processCommandLineParameters()
 ******************************************************************************/
 int StandaloneApplication::runApplication()
 {
+	// When the application is shutting down, we should cancel all pending tasks.
+	if(_datasetContainer)
+		connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit, &_datasetContainer->taskManager(), &TaskManager::cancelAll);
+	
 	if(guiMode()) {
 		// Enter the main event loop.
 		return QCoreApplication::exec();

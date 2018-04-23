@@ -37,17 +37,17 @@ data = pipeline.compute()
 print("Output:")
 print("  vacancy_count= {}".format(data.attributes['WignerSeitz.vacancy_count']))
 print("  interstitial_count= {}".format(data.attributes['WignerSeitz.interstitial_count']))
-print(data.particle_properties["Occupancy"].array)
+print(data.particles["Occupancy"][...])
 
 assert(data.attributes['WignerSeitz.vacancy_count'] == 970)
 
 pipeline.source.load('../../files/CFG/shear.void.120.cfg')
-print(len(pipeline.source.particle_properties['Particle Type'].types))
+print(len(pipeline.source.compute().particles['Particle Type'].types))
 modifier.per_type_occupancies = True
 data = pipeline.compute()
 print("number_of_particles: %i" % data.number_of_particles)
-print("occupancy.shape=%s" % str(data.particle_properties["Occupancy"].shape))
-print(data.particle_properties["Occupancy"][...])
+print("occupancy.shape=%s" % str(data.particles["Occupancy"].shape))
+print(data.particles["Occupancy"][...])
 
 export_file(pipeline, "_output.dump", "lammps/dump", columns = [ "Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z", "Occupancy","Occupancy.1"])
 os.remove("_output.dump")

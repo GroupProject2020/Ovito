@@ -25,6 +25,7 @@
 #include <plugins/pyscript/PyScript.h>
 #include <plugins/pyscript/engine/ScriptEngine.h>
 #include <core/viewport/overlays/ViewportOverlay.h>
+#include <boost/optional.hpp>
 
 namespace PyScript {
 
@@ -118,12 +119,13 @@ public:
 
 	/// Constructor.
 	ViewportOverlayArguments(TimePoint time, Viewport* viewport, const ViewProjectionParameters& projParams, 
-		RenderSettings* renderSettings, py::object painter) :
+		RenderSettings* renderSettings, py::object pypainter, QPainter& painter) :
 			_time(time),
 			_viewport(viewport),
 			_projParams(projParams),
 			_renderSettings(renderSettings),
-			_painter(std::move(painter)) {}
+			_pypainter(std::move(pypainter)),
+			_painter(painter) {}
 
 	/// Returns the animation time of the frame being rendered.
 	TimePoint time() const { return _time; }
@@ -140,8 +142,17 @@ public:
 	/// Returns the current render settings.
 	RenderSettings* renderSettings() const { return _renderSettings; }
 	
+	/// Returns the QPainter.
+	QPainter& painter() { return _painter; }
+
 	/// Returns the QPainter wrapped as a Python object.
-	py::object painter() const { return _painter; }
+	const py::object& pypainter() const { return _pypainter; }
+	
+	/// Projects a point from world space to window space.
+	boost::optional<Point2> projectPoint(const Point3& world_pos) const;
+
+	/// Projects a size from 3d world space to 2d window space.
+	FloatType projectSize(const Point3& world_pos, FloatType radius3d) const;
 	
 private:
 
@@ -157,8 +168,11 @@ private:
 	/// The current render settings.
 	RenderSettings* _renderSettings;
 
+	/// The QPainter.
+	QPainter& _painter;
+
 	/// The QPainter wrapped as a Python object.
-	py::object _painter;
+	py::object _pypainter;
 };
 
 }	// End of namespace

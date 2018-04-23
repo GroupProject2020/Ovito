@@ -1,11 +1,11 @@
 """
-This module contains object types that represent various kinds of data, which are produced and processed by OVITO's data pipeline system.
-It also provides container classes for such data objects and some additional utility classes to work with neighbor lists and bonds.
+This module contains various types of data objects, which are produced and processed within OVITO's data pipeline system.
+It also provides the :py:class:`DataCollection` container class for such data objects and some additional utility classes to
+compute neighbor lists to iterate over the bonds of particles.
 
-**Data collection types:**
+**Data container:**
 
   * :py:class:`DataCollection`
-  * :py:class:`PipelineFlowState`
   
 **Data objects:**
 
@@ -37,13 +37,9 @@ It also provides container classes for such data objects and some additional uti
 import numpy as np
 
 # Load the native modules.
-from ..plugins.PyScript import PipelineFlowState, DataObject, CloneHelper
+from ..plugins.PyScript import DataObject
 
 # Load submodules.
 from .data_collection import DataCollection
 
-# Make PipelineFlowState a DataCollection.
-DataCollection.registerDataCollectionType(PipelineFlowState)
-assert(issubclass(PipelineFlowState, DataCollection))
-
-__all__ = ['DataCollection', 'DataObject', 'PipelineFlowState']
+__all__ = ['DataCollection', 'DataObject']

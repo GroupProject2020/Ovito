@@ -1,5 +1,5 @@
 from ovito.io import import_file
-from ovito.data import ParticleProperty
+from ovito.data import ParticleProperty, DataCollection
 import ovito.pipeline
 import numpy
 pipeline = import_file("input/simulation.dump")
@@ -38,7 +38,7 @@ with prop:
 
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # An empty data collection to begin with:
-data = ovito.pipeline.StaticSource()
+data = DataCollection()
 
 # Create 10 particles with random xyz coordinates:
 positions = numpy.random.random_sample(size = (10,3))

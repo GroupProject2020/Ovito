@@ -27,7 +27,9 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_
 
 IMPLEMENT_OVITO_CLASS(StaticSource);
 DEFINE_REFERENCE_FIELD(StaticSource, dataObjects);
+DEFINE_PROPERTY_FIELD(StaticSource, attributes);
 SET_PROPERTY_FIELD_LABEL(StaticSource, dataObjects, "Objects");
+SET_PROPERTY_FIELD_LABEL(StaticSource, attributes, "Attributes");
 
 /******************************************************************************
 * Constructor.

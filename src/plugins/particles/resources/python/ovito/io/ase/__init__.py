@@ -83,16 +83,12 @@ def ovito_to_ase(data_collection):
 
     return atoms
 
-def ase_to_ovito(atoms, data_collection):
+def ase_to_ovito(atoms):
     """
     Converts an `ASE Atoms object <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`__ to an OVITO :py:class:`~ovito.data.DataCollection`.
 
-    The second function parameter specifies the destination data collection that will be filled with the converted
-    atomistic data from the ASE Atoms object. You can pass any object that implements the :py:class:`~ovito.data.DataCollection` interface, e.g.
-    a :py:class:`~ovito.data.PipelineFlowState` or a :py:class:`~ovito.pipeline.StaticSource`. Any existing data in *data_collection* is removed first. 
-
     :param atoms: The `ASE Atoms object <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`__ to be converted.
-    :param data_collection: An object supporting the :py:class:`~ovito.data.DataCollection` interface that receives the output.
+    :return: A new :py:class:`~ovito.data.DataCollection` containing the converted data.
 
     Usage example:
 
@@ -100,10 +96,7 @@ def ase_to_ovito(atoms, data_collection):
        :lines: 6-
     
     """
-    assert(isinstance(data_collection, DataCollection))
-
-    # Clear the data collection first before filling it with the converted atoms data.
-    del data_collection.objects[:]
+    data_collection = DataCollection()
 
     # Set the unit cell and origin (if specified in atoms.info)
     cell = SimulationCell()
@@ -150,3 +143,5 @@ def ase_to_ovito(atoms, data_collection):
         if name in ['positions', 'numbers']:
             continue
         data_collection.particles.create_property(name, data=array)
+
+    return data_collection

@@ -7,9 +7,9 @@ except ImportError:
 import sys
     
 # Load the native modules.
-from ..plugins.PyScript import Pipeline, PipelineStatus, ModifierApplication, Modifier
+from ..plugins.PyScript import Pipeline, PipelineStatus, ModifierApplication, Modifier, DataVis
 
-# Implementation of the Pipeline.modifiers. 
+# Implementation of the Pipeline.modifiers collection. 
 def _Pipeline_modifiers(self):
     """ The sequence of modifiers in the pipeline.
     
@@ -159,14 +159,14 @@ def _Pipeline_compute(self, frame = None):
         The :py:meth:`!compute` method raises a ``RuntimeError`` when the pipeline could not be successfully evaluated for some reason.
         This can happen due to invalid modifier parameters or input file parsing errors, for example.
 
-        Note: The returned :py:class:`~ovito.data.PipelineFlowState` data collection contains data objects that are owned by the pipeline.
+        Note: The returned :py:class:`~ovito.data.DataCollection` contains data objects that are owned by the pipeline.
         That means it is not safe to modify these objects as this would lead to unexpected side effects. 
         You can however use the :py:meth:`DataCollection.copy_if_needed() <ovito.data.DataCollection.copy_if_needed>` method
-        to make a copy of data objects that you want to modify in place. See the :py:class:`~ovito.data.PipelineFlowState` class
+        to make a copy of data objects that you want to modify in place. See the :py:class:`~ovito.data.DataCollection` class
         for more information.
 
         :param int frame: The animation frame number at which the pipeline should be evaluated. 
-        :returns: A :py:class:`~ovito.data.PipelineFlowState` containing the output of the data pipeline.
+        :returns: A :py:class:`~ovito.data.DataCollection` containing the output of the data pipeline.
     """
     if frame is not None:
         time = self.dataset.anim.frame_to_time(frame)
@@ -186,12 +186,39 @@ def _Pipeline_compute(self, frame = None):
         PyQt5.QtCore.QThreadPool.globalInstance().waitForDone(0)
 
     return state
-
 Pipeline.compute = _Pipeline_compute
 
 # Provides access to the last results computed by the pipeline.
 # This is attribute for backward compatibility with OVITO 2.9.0
 Pipeline.output = property(lambda self: self.compute())
+
+# Implementation of the Pipeline.get_vis() method:
+def _Pipeline_get_vis(self, vis_type):
+    """
+    Looks up a visual element of a specified type in this pipeline's output.
+    This method implicitly calls :py:meth:`.compute` and visits all data objects in the 
+    pipeline's output until it finds one that has a visual element of the given class type attached. 
+
+    :param vis_type: The :py:class:`~ovito.vis.DataVis` subclass to be looked up.
+    :return: An instance of the given :py:class:`~ovit.vis.DataVis`-derived class; or ``None`` if there is no such visual element in this pipeline's output.
+
+    The method can be used to easily access particular visual elements. The following code example demonstrates how the :py:class:`~ovito.vis.ParticlesVis`
+    element that is attached to the ``Position`` particle property can be looked up:
+
+    .. literalinclude:: ../example_snippets/pipeline_get_vis.py
+       :lines: 7-14
+
+    See the :py:mod:`ovito.vis` module for a list of visual element types in OVITO that can be looked up using this method.
+
+    """
+    if not issubclass(vis_type, DataVis):
+        raise ValueError("Not a subclass of ovito.vis.DataVis: {}".format(vis_type))
+    self.compute()
+    for vis in self.vis_elements:
+        if isinstance(vis, vis_type):
+            return vis
+    return None
+Pipeline.get_vis = _Pipeline_get_vis
 
 def _Pipeline_remove_from_scene(self):
     """ Removes the visual representation of the pipeline from the scene by deleting it from the :py:attr:`ovito.DataSet.scene_pipelines` list.
