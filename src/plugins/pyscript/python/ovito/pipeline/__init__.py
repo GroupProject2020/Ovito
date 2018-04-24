@@ -1,12 +1,12 @@
 """
 This module contains object types that are part of OVITO's data pipeline system.
 
-**Pipeline:**
+**Pipelines:**
 
   * :py:class:`Pipeline`
-  * :py:class:`Modifier`
+  * :py:class:`Modifier` (base class)
 
-**Pipeline data sources:**
+**Data sources:**
 
   * :py:class:`StaticSource`
   * :py:class:`FileSource`

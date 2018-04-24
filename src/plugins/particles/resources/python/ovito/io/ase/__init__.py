@@ -40,6 +40,7 @@ def ovito_to_ase(data_collection):
 
     from ase.atoms import Atoms
     from ase.data import chemical_symbols
+    assert(isinstance(data_collection, DataCollection))
 
     # Extract basic data: pbc, cell, positions, particle types
     cell_obj = data_collection.find(SimulationCell)

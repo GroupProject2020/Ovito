@@ -12,7 +12,7 @@ except ImportError:
     sys.exit()
 
 node = import_file("../../files/LAMMPS/bonds.data.gz", atom_style = 'bond')
-data = node.source
+data = node.source.compute()
 
 atoms = ovito_to_ase(data)
 print(atoms)
