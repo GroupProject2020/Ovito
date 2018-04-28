@@ -20,6 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <core/Core.h>
+#include <core/app/Application.h>
 #include <core/utilities/concurrent/PromiseWatcher.h>
 #include <core/dataset/DataSet.h>
 #include "AnimationSettings.h"
@@ -37,8 +38,10 @@ DEFINE_PROPERTY_FIELD(AnimationSettings, loopPlayback);
 * Constructor.
 ******************************************************************************/
 AnimationSettings::AnimationSettings(DataSet* dataset) : RefTarget(dataset),
-		_ticksPerFrame(TICKS_PER_SECOND/10), _playbackSpeed(1),
-		_animationInterval(0, 0), _time(0),
+		_ticksPerFrame(TICKS_PER_SECOND/10), 
+		_playbackSpeed(1),
+		_animationInterval(0, 0), 
+		_time(0),
 		_loopPlayback(true)
 {
 	// Call our own listener when the current animation time changes.
@@ -187,19 +190,42 @@ void AnimationSettings::jumpToNextFrame()
 }
 
 /******************************************************************************
+* Starts or stops animation playback in the viewports.
+******************************************************************************/
+void AnimationSettings::setAnimationPlayback(bool on) 
+{
+	if(on) {
+		bool reverse = false;
+		if(Application::instance()->guiMode()) {
+			reverse |= (QGuiApplication::keyboardModifiers() & Qt::ShiftModifier);
+		}
+		startAnimationPlayback(reverse ? -1 : 1);
+	}
+	else {
+		stopAnimationPlayback();
+	}
+}
+
+/******************************************************************************
 * Starts playback of the animation in the viewports.
 ******************************************************************************/
-void AnimationSettings::startAnimationPlayback()
+void AnimationSettings::startAnimationPlayback(FloatType playbackRate)
 {
-	if(!isPlaybackActive()) {
-		_isPlaybackActive = true;
-		Q_EMIT playbackChanged(_isPlaybackActive);
+	if(_activePlaybackRate != playbackRate) {
+		_activePlaybackRate = playbackRate;
+		Q_EMIT playbackChanged(_activePlaybackRate != 0);
 
-		if(time() < animationInterval().end()) {
-			scheduleNextAnimationFrame();
+		if(_activePlaybackRate > 0) {
+			if(time() < animationInterval().end())
+				scheduleNextAnimationFrame();
+			else
+				continuePlaybackAtTime(animationInterval().start());
 		}
-		else {
-			continuePlaybackAtTime(animationInterval().start());
+		else if(_activePlaybackRate < 0) {
+			if(time() > animationInterval().start())
+				scheduleNextAnimationFrame();
+			else
+				continuePlaybackAtTime(animationInterval().end());
 		}
 	}
 }
@@ -228,10 +254,10 @@ void AnimationSettings::scheduleNextAnimationFrame()
 {
 	if(!isPlaybackActive()) return;
 
-	int timerSpeed = 1000;
+	int timerSpeed = 1000 / std::abs(_activePlaybackRate);
 	if(playbackSpeed() > 1) timerSpeed /= playbackSpeed();
 	else if(playbackSpeed() < -1) timerSpeed *= -playbackSpeed();
-	QTimer::singleShot(timerSpeed / framesPerSecond(), this, SLOT(onPlaybackTimer()));
+	QTimer::singleShot(timerSpeed / framesPerSecond(), this, &AnimationSettings::onPlaybackTimer);
 }
 
 /******************************************************************************
@@ -240,8 +266,8 @@ void AnimationSettings::scheduleNextAnimationFrame()
 void AnimationSettings::stopAnimationPlayback()
 {
 	if(isPlaybackActive()) {
-		_isPlaybackActive = false;
-		Q_EMIT playbackChanged(_isPlaybackActive);
+		_activePlaybackRate = 0;
+		Q_EMIT playbackChanged(false);
 	}
 }
 
@@ -255,7 +281,7 @@ void AnimationSettings::onPlaybackTimer()
 		return;
 
 	// Add one frame to current time
-	int newFrame = timeToFrame(time()) + 1;
+	int newFrame = timeToFrame(time()) + (_activePlaybackRate > 0 ? 1 : -1);
 	TimePoint newTime = frameToTime(newFrame);
 
 	// Loop back to first frame if end has been reached.
@@ -265,6 +291,15 @@ void AnimationSettings::onPlaybackTimer()
 		}
 		else {
 			newTime = animationInterval().end();
+			stopAnimationPlayback();
+		}
+	}
+	else if(newTime < animationInterval().start()) {
+		if(loopPlayback() && animationInterval().duration() > 0) {
+			newTime = animationInterval().end();
+		}
+		else {
+			newTime = animationInterval().start();
 			stopAnimationPlayback();
 		}
 	}

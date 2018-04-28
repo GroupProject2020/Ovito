@@ -181,7 +181,7 @@ public:
 	bool isTimeChanging() const { return _isTimeChanging; }
 
 	/// Returns whether the animation is currently being played back in the viewports.
-	bool isPlaybackActive() const { return _isPlaybackActive; }
+	bool isPlaybackActive() const { return _activePlaybackRate != 0; }
 
 public Q_SLOTS:
 
@@ -205,16 +205,13 @@ public Q_SLOTS:
 	void jumpToPreviousFrame();
 
 	/// \brief Starts playback of the animation in the viewports.
-	void startAnimationPlayback();
+	void startAnimationPlayback(FloatType playbackRate = FloatType(1));
 
 	/// \brief Stops playback of the animation in the viewports.
 	void stopAnimationPlayback();
 
 	/// \brief Starts or stops animation playback in the viewports.
-	void setAnimationPlayback(bool on) {
-		if(on) startAnimationPlayback();
-		else stopAnimationPlayback();
-	}
+	void setAnimationPlayback(bool on);
 
 	/// Sets whether the animation is played back in a loop in the interactive viewports.
     void setLoopPlaybackSlot(bool loop) { setLoopPlayback(loop); }
@@ -304,7 +301,7 @@ private:
 	bool _isTimeChanging = false;
 
 	/// Indicates that the animation is currently being played back in the viewports.
-	bool _isPlaybackActive = false;
+	FloatType _activePlaybackRate = 0;
 };
 
 /**
