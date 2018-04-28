@@ -44,6 +44,8 @@ void ScriptEngine::setActiveDataset(DataSet* dataset)
 
 	// Add an attribute to the ovito module that provides access to the active dataset.
 	py::module ovito_module = py::module::import("ovito");
+	py::setattr(ovito_module, "scene", py::cast(dataset, py::return_value_policy::reference));
+	// This is for backward compatibility with OVITO 2.9.0:
 	py::setattr(ovito_module, "dataset", py::cast(dataset, py::return_value_policy::reference));
 
 	// Add an attribute to the ovito module that provides access to the global task manager.
@@ -94,7 +96,6 @@ ScriptEngine::ScriptEngine(DataSet* dataset, TaskManager& taskManager, bool priv
 			_mainNamespace = py::getattr(main_module, "__dict__");
 		}
 		
-		// Add the 'dataset' attribute to the ovito module that provides access to the active dataset.
 		setActiveDataset(dataset);
 	}
 	catch(py::error_already_set& ex) {

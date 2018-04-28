@@ -92,6 +92,8 @@ PYBIND11_MODULE(PyScript, m)
 
 	// Add an attribute to the ovito module that provides access to the active dataset.
 	DataSet* activeDataset = Application::instance()->datasetContainer()->currentSet();
+	m.attr("scene") = py::cast(activeDataset, py::return_value_policy::reference);
+	// This is for backward compatibility with OVITO 2.9.0:
 	m.attr("dataset") = py::cast(activeDataset, py::return_value_policy::reference);
 
 	// Add an attribute to the ovito module that provides access to the global task manager.

@@ -1,8 +1,6 @@
 """ 
-This root module contains the :py:class:`DataSet` class, which serves as a "universe" for all
-performed operations. At all times there is exactly one :py:class:`DataSet` instance that 
-provides a context for the operations the Python script performs. It is accessible through the 
-module-level :py:data:`ovito.dataset` attribute.
+This root module contains the :py:class:`Scene` class, which serves as a "universe" for all actions
+performed by a script. The scene object is accessible through the module-level :py:data:`ovito.scene` variable.
 """
 
 import os.path
@@ -15,7 +13,7 @@ _package_source_path = __path__ # Make a copy of the original path, which will b
 __path__ = pkgutil.extend_path(__path__, __name__)
 
 # Load the native module with the core bindings.
-from .plugins.PyScript import (version, version_string, gui_mode, headless_mode, DataSet, dataset, task_manager)
+from .plugins.PyScript import (version, version_string, gui_mode, headless_mode, Scene, scene, dataset, task_manager)
 from .plugins.PyScript import (Pipeline, RootSceneNode, PipelineObject, PipelineStatus)
 
 # Load sub-modules (in the right order because there are dependencies between them)
@@ -30,7 +28,7 @@ import ovito.io
 if ovito.gui_mode:
     import ovito.plugins.PyScriptGui
 
-__all__ = ['version', 'version_string', 'dataset', 'DataSet']
+__all__ = ['version', 'version_string', 'scene', 'Scene']
 
 # Load the whole OVITO package. This is required to make all Python bindings available.
 for _, _name, _ in pkgutil.walk_packages(_package_source_path, __name__ + '.'):
@@ -41,29 +39,31 @@ for _, _name, _ in pkgutil.walk_packages(_package_source_path, __name__ + '.'):
         print("Error while loading OVITO submodule %s:" % _name, sys.exc_info()[0])
         raise
 
-def _DataSet_scene_pipelines(self):
+def _Scene_pipelines(self):
     """ The list of :py:class:`~ovito.pipeline.Pipeline` objects that are currently part of the three-dimensional scene.
-        Only the data of pipelines in this list will be visible in the viewports and in rendered images. You can add or remove pipelines either by calling
-        their :py:meth:`~ovito.pipeline.Pipeline.add_to_scene` and :py:meth:`~ovito.pipeline.Pipeline.remove_from_scene` methods or by manipulating this list using 
-        standard Python ``append()`` and ``del`` statements. 
+        Only pipelines in this list will display their output data in the viewports and in rendered images. You can add or remove a pipeline either by calling
+        its :py:meth:`~ovito.pipeline.Pipeline.add_to_scene` and :py:meth:`~ovito.pipeline.Pipeline.remove_from_scene` methods or by directly manipulating this list using 
+        standard Python ``append()`` and ``del`` statements:
+
+        .. literalinclude:: ../example_snippets/scene_pipelines.py
     """
     return self.scene_root.children
-DataSet.scene_pipelines = property(_DataSet_scene_pipelines)
+Scene.pipelines = property(_Scene_pipelines)
 
-def _get_DataSet_selected_pipeline(self):
-    """ The :py:class:`~ovito.pipeline.Pipeline` that is currently selected, 
-        or ``None`` if no pipeline is selected. 
-
-        Typically, this is the last pipeline added to the scene using :py:meth:`Pipeline.add_to_scene() <ovito.pipeline.Pipeline.add_to_scene>`.
+def _get_Scene_selected_pipeline(self):
+    """ The :py:class:`~ovito.pipeline.Pipeline` that is currently selected in the graphical OVITO program, 
+        or ``None`` if no pipeline is selected. Typically, this is the last pipeline that was added to the scene using
+        :py:meth:`Pipeline.add_to_scene() <ovito.pipeline.Pipeline.add_to_scene>`.
     """
     return self.selection.nodes[0] if self.selection.nodes else None
-def _set_DataSet_selected_pipeline(self, node):
+def _set_Scene_selected_pipeline(self, pipeline):
     """ Sets the :py:class:`~ovito.pipeline.Pipeline` that is currently selected in the graphical user interface of OVITO. """
-    if node: self.selection.nodes = [node]
+    if pipeline: self.selection.nodes = [pipeline]
     else: del self.selection.nodes[:]
-DataSet.selected_pipeline = property(_get_DataSet_selected_pipeline, _set_DataSet_selected_pipeline)
+Scene.selected_pipeline = property(_get_Scene_selected_pipeline, _set_Scene_selected_pipeline)
 
 # For backward compatibility with OVITO 2.9.0:
-DataSet.scene_nodes = property(lambda self: self.scene_pipelines)
-DataSet.selected_node = property(lambda self: self.selected_pipeline, _set_DataSet_selected_pipeline)
+Scene.scene_nodes = property(lambda self: self.pipelines)
+Scene.selected_node = property(lambda self: self.selected_pipeline, _set_Scene_selected_pipeline)
 ObjectNode = ovito.pipeline.Pipeline
+DataSet = ovito.Scene

@@ -26,12 +26,12 @@ def import_file(location, **params):
         external data file as input. The pipeline will be wired to a :py:class:`~ovito.pipeline.FileSource`, which 
         reads the input data from the external file and passes it on to the pipeline. You can access the 
         data by calling the :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` method or, alternatively,
-        by calling :py:meth:`FileSource.compute() <ovito.pipeline.FileSource.compute>` on the data :py:attr:`~ovito.pipeline.Pipeline.source`.
-        As long as the new :py:class:`~ovito.pipeline.Pipeline` contains no modifiers yet, both methods returns the same data.
+        :py:meth:`FileSource.compute() <ovito.pipeline.FileSource.compute>` on the data :py:attr:`~ovito.pipeline.Pipeline.source`.
+        As long as the new :py:class:`~ovito.pipeline.Pipeline` contains no modifiers yet, both methods will return the same data.
         
-        Note that the :py:class:`~ovito.pipeline.Pipeline` is not inserted into the three-dimensional scene. 
-        That means the loaded data won't automatically appear in rendered images or the interactive viewports of OVITO.
-        For that, you need to explicitly insert the pipeline into the scene by calling its :py:meth:`~ovito.pipeline.Pipeline.add_to_scene` method if desired.
+        Note that the :py:class:`~ovito.pipeline.Pipeline` is not automatically inserted into the three-dimensional scene. 
+        That means the loaded data won't appear in rendered images or the interactive viewports of OVITO by default.
+        For that to happen, you need to explicitly insert the pipeline into the scene by calling its :py:meth:`~ovito.pipeline.Pipeline.add_to_scene` method if desired.
         
         Furthermore, note that you can re-use the returned :py:class:`~ovito.pipeline.Pipeline` if you want to load a different 
         data file later on. Instead of calling :py:func:`!import_file` again to load another file,
@@ -123,7 +123,7 @@ def import_file(location, **params):
         raise RuntimeError("Operation has been canceled by the user.")
 
     # Get the newly created pipeline.
-    pipeline = ovito.dataset.selected_pipeline
+    pipeline = ovito.scene.selected_pipeline
     if not isinstance(pipeline, Pipeline):
         raise RuntimeError("File import failed. Nothing was imported.")
     

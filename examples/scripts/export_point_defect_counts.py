@@ -5,23 +5,24 @@
     You should run this script from within the graphical user interface
     using the Scripting->Run Script File menu option.
 """
-import ovito
 from ovito.data import *
 from ovito.modifiers import *
+from ovito import scene
 
 # Find the WS modifier in the pipeline:
+pipeline = scene.selected_pipeline
 ws_mod = None
-for modifier in ovito.dataset.selected_node.modifiers:
+for modifier in pipeline.modifiers:
     if isinstance(modifier, WignerSeitzAnalysisModifier):
         ws_mod = modifier
 if ws_mod is None:
-    raise RuntimeError("No Wigner-Seitz modifier found in the modification pipeline.")
+    raise RuntimeError("No Wigner-Seitz modifier found in the data pipeline.")
 
 # Open output file for writing:
 fout = open("outputfile.txt", "w")
 
-for frame in range(ovito.dataset.anim.first_frame, ovito.dataset.anim.last_frame+1):
-    ovito.dataset.selected_node.compute(frame)
+for frame in range(pipeline.source.num_frames):
+    data = pipeline.compute(frame)
     num_vacancies = ws_mod.vacancy_count
     num_interstitials = ws_mod.interstitial_count
     print(frame, num_vacancies, num_interstitials, file = fout)

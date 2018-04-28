@@ -29,8 +29,8 @@ def export_file(data, file, format, **params):
              Exports the data object as if it were the only part of a :py:class:`~ovito.data.DataCollection`.
 
            * ``None``:
-             All pipelines that are part of the current scene (see :py:attr:`ovito.DataSet.scene_pipelines`) are
-             exported. This option makes sense for scene descriptions such as the POV-Ray format.
+             All pipelines that are part of the current scene (see :py:attr:`ovito.Scene.pipelines`) are
+             exported. This option makes sense for scene description formats such as the POV-Ray format.
 
         **Output format**
 

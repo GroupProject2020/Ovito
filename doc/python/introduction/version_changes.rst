@@ -4,49 +4,47 @@
 API version changes
 ===================================
 
-This page documents changes to the Python programming interface introduced by new OVITO program releases.
+This page documents changes to the Python programming interface introduced with new OVITO program releases.
 It is supposed to help script authors adapt their scripts to the most recent version of the Python API.
 
 ------------------------------------
-Migration from OVITO 2.x to 3.0
+Migrating from OVITO 2.x to 3.0
 ------------------------------------
 
-This major program update introduces significant interface changes. Various classes and methods
-have been deprecated and replaced with new facilities. The old interfaces no longer show up in the Python reference documentation,
+Release 3 of OVITO introduces significant interface changes. Various classes and methods
+have been deprecated and replaced with new facilities. The old interfaces of OVITO 2.x no longer show up in the Python reference documentation,
 however, a backward compatibility layer has been put in place to support execution of old scripts. 
-Thus, in many cases old Python scripts written for OVITO 2.x should still work, at least for now, but it is recommended
+Thus, in many cases, old Python scripts written for OVITO 2.x should still work, at least for now, but it is recommended
 to update them in order to use the new programming interfaces described in the following.
 The backward compatibility layer will be removed in a future version of OVITO.
 
 Data pipelines and data sources
 ------------------------------------
 
-The :py:class:`!ovito.PipelineSceneNode` class has been renamed to :py:class:`~ovito.pipeline.Pipeline` and
-moved into the new :py:mod:`ovito.pipeline` module. The old class name reflected the fact that instances
+The :py:class:`!ovito.ObjectNode` class has been renamed to :py:class:`~ovito.pipeline.Pipeline` and
+moved to the new :py:mod:`ovito.pipeline` module. The old class name reflected the fact that instances
 are part of the scene graph in OVITO. However, this aspect is less important from 
-the Python script perspective and therefore :py:class:`~ovito.pipeline.Pipeline` is a more natural name choice.
+the Python script perspective and therefore :py:class:`~ovito.pipeline.Pipeline` is the more natural naming choice.
 
 The :py:class:`~ovito.pipeline.StaticSource` is a type of data source for a :py:class:`~ovito.pipeline.Pipeline` 
 and can hold a set of data objects that should be processed by the pipeline. The :py:class:`~ovito.pipeline.FileSource`
-class maintains its role as a data source for a pipeline, reading the input data from an external file.
-The :py:class:`~ovito.data.PipelineFlowState` is a type of data collection that is returned by the 
-:py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline>` method and holds the results of a pipeline evaluation.
+class maintains its role as the main data source type for pipelines, reading the input data from an external file.
 
-The :py:attr:`!PipelineSceneNode.output` field has been deprecated. It used to provide access to the cached results of the data pipeline 
-after a call to :py:meth:`!PipelineSceneNode.compute`. Now the computation results should be stored in a local variable instead::
+The :py:attr:`!ObjectNode.output` field has been removed. It used to provide access to the cached results of the data pipeline 
+after a call to :py:meth:`!ObjectNode.compute`. Now the computation results should be stored in a local variable instead::
 
    pipeline = import_file('simulation.dump')
    ...
    data = pipeline.compute()
-   print(data.particles)
 
-In the example above, the variable ``data`` points to a :py:class:`~ovito.data.DataCollection` returned by :py:meth:`~ovito.pipeline.Pipeline.compute`.
+:py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` returns a new :py:class:`~ovito.data.DataCollection` containing
+the output data of the pipeline.
 
 The ``DataCollection`` class
 ----------------------------------------
 
 The :py:class:`~ovito.data.DataCollection` class no longer implements a dictionary interface to provide access to the contained data objects.
-Instead, the new :py:attr:`~ovito.data.DataCollection.objects` field exposes all objects in an unordered list. 
+Instead, the new :py:attr:`~ovito.data.DataCollection.objects` field exposes all objects as an unordered list. 
 The :py:meth:`!add`, :py:meth:`!remove` and :py:meth:`!replace` methods have been deprecated. 
 Instead, you can insert/remove data objects as follows::
 
@@ -56,18 +54,17 @@ Instead, you can insert/remove data objects as follows::
 
 The :py:class:`~ovito.data.DataCollection` properties :py:attr:`!.cell`, :py:attr:`!.surface` and :py:attr:`!.dislocations` have been deprecated.
 Instead, the new general methods :py:meth:`~ovito.data.DataCollection.find` and :py:meth:`~ovito.data.DataCollection.expect`
-should be used to retrieve particular data objects, e.g.::
+should be used instead to retrieve data objects based on their type, e.g.::
 
     cell = data.expect(SimulationCell)
 
 The properties :py:attr:`!.number_of_particles`, :py:attr:`!.number_of_half_bonds` and :py:attr:`!.number_of_full_bonds` have 
-been deprecated. Instead, these numbers should be obtained from the length of the ``Position`` particle property and the
-:py:class:`~ovito.data.Bonds` objects, respectively::
+been deprecated. Instead, these numbers are now reported by the following properties::
 
-    num_particles = len(data.particle_properties['Position'])
-    num_bonds = len(data.expect(Bonds))
+    num_particles = data.particles.count
+    num_bonds = data.bonds.count
 
-The :py:meth:`!create_particle_property` and :py:meth:`!create_user_particle_property` methods have 
+The :py:meth:`!create_particle_property` and :py:meth:`!create_user_particle_property` methods for creating new particle and bond properties have 
 been replaced by the :py:meth:`~ovito.data.ParticlesView.create_property` method in the new :py:class:`~ovito.data.ParticlesView` helper class, which 
 is returned by the :py:attr:`DataCollection.particles <ovito.data.DataCollection.particles>` attribute.
 Similarly, the :py:meth:`!create_bond_property` and :py:meth:`!create_user_bond_property` methods have 
@@ -77,7 +74,7 @@ is returned by the :py:attr:`DataCollection.bonds <ovito.data.DataCollection.bon
 Particle and bond properties
 ----------------------------------------
 
-The :py:class:`~ovito.data.ParticleProperty` and :py:class:`~ovito.data.BondProperty` classes now have a common base class,
+The :py:class:`~ovito.data.ParticleProperty` and :py:class:`~ovito.data.BondProperty` classes now inherit from a common base class,
 :py:class:`~ovito.data.Property`, which provides the functionality common to all property types in OVITO.
 
 Access to *standard* particle and bond properties via Python named attributes has been deprecated. Instead, they 
@@ -88,7 +85,7 @@ should be looked up by name, similar to *user-defined* properties::
     pos_property = data.particles['Position']  # <-- Correct
 
 Note that the :py:attr:`DataCollection.particles <ovito.data.DataCollection.particles>` object
-behaves like a (read-only) dictionary of particle properties, providing a filtered view of the data :py:attr:`~ovito.data.DataCollection.objects` list in the :py:class:`~ovito.data.DataCollection`.
+behaves like a (read-only) dictionary of particle properties, providing a filtered view of the data :py:attr:`~ovito.data.DataCollection.objects` list of the :py:class:`~ovito.data.DataCollection`.
 
 The :py:attr:`!array` and :py:attr:`!marray` accessor attributes of the :py:class:`~ovito.data.ParticleProperty` and :py:class:`~ovito.data.BondProperty`
 classes have been deprecated. Instead, these classes themselves now behave like Numpy arrays::
@@ -168,8 +165,15 @@ as destination for the atoms data, e.g. a :py:class:`~ovito.pipeline.StaticSourc
 Changes to the global ``DataSet`` class
 ------------------------------------------
 
+The :py:attr:`!ovito.DataSet` class has been renamed to :py:class:`ovito.Scene` and the singleton class instance is now 
+accessible as global variable :py:data:`ovito.scene`.
+
 The :py:attr:`!DataSet.selected_node` and :py:attr:`!DataSet.scene_nodes` fields have been renamed to
-:py:attr:`DataSet.selected_pipeline <ovito.DataSet.selected_pipeline>` and :py:attr:`DataSet.scene_pipelines <ovito.DataSet.scene_pipelines>` respectively.
+:py:attr:`Scene.selected_pipeline <ovito.Scene.selected_pipeline>` and :py:attr:`Scene.pipelines <ovito.Scene.pipelines>` respectively.
+
+The :py:class:`!AnimationSettings` class and the :py:attr:`!DataSet.anim` attribute have been deprecated.
+Because of this, scripts no longer have control over the current time slider position. To determine the number of 
+loaded animation frames, use the :py:attr:`FileSource.num_frames <ovito.pipeline.FileSource.num_frames>` attribute instead.
 
 Changes to modifiers
 ------------------------------------------
@@ -194,6 +198,34 @@ bonds, surfaces, etc.) the modifier should act on:
    * :py:class:`~ovito.modifiers.InvertSelectionModifier` 
    * :py:class:`~ovito.modifiers.HistogramModifier` 
    * :py:class:`~ovito.modifiers.SelectTypeModifier` 
+
+Changes to rendering functions
+------------------------------------------
+
+The :py:class:`!RenderSettings` class and the :py:meth:`Viewport.render` method have been deprecated. 
+Instead, the :py:class:`~ovito.vis.Viewport` class now supports the new :py:meth:`~ovito.vis.Viewport.render_image`
+and :py:meth:`~ovito.vis.Viewport.render_anim` methods, which directly accept the required render settings as keyword function 
+parameters. 
+
+Changes to the PythonViewportOverlay class
+------------------------------------------
+
+The signature of user-defined overlay functions has been changed. The :py:class:`~ovito.vis.PythonViewportOverlay` 
+now passes a single parameter of the :py:class:`PythonViewportOverlay.Arguments <ovito.vis.PythonViewportOverlay.Arguments>`
+type to the user function, which contains all necessary information. This helper class also provides additional utility methods for
+projecting points from 3d space to 2d screen space, which may be used by the user-defined overlay function.
+
+Changes to display objects
+------------------------------------------
+
+The :py:class:`!Display` base class has been renamed to :py:class:`~ovito.vis.DataVis`. Instead of *display objects*, the documentation now uses the term
+*visual elements* when referring to the objects attached to some data objects, which are responsible for rendering 
+the data. The :py:mod:`ovito.vis` module provides various visual element types, each derived from the common :py:class:`~ovito.vis.DataVis`
+base class.
+
+The :py:class:`~ovito.pipeline.Pipeline` class now provides the new :py:meth:`~ovito.pipeline.Pipeline.get_vis` method, which 
+provides easier access to the visual elements leaving the data pipeline. Instead of accessing a visual element via the :py:attr:`~ovito.data.DataObject.vis` 
+attribute of the data object it is attached to, the visual element can now directly be looked up based on its class type.
 
 SurfaceMesh data object
 ------------------------------------------

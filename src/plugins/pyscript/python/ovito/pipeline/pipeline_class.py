@@ -221,8 +221,8 @@ def _Pipeline_get_vis(self, vis_type):
 Pipeline.get_vis = _Pipeline_get_vis
 
 def _Pipeline_remove_from_scene(self):
-    """ Removes the visual representation of the pipeline from the scene by deleting it from the :py:attr:`ovito.DataSet.scene_pipelines` list.
-        The output data computed by the pipeline will disappear from the viewports after calling this method.
+    """ Removes the visual representation of the pipeline from the scene by deleting it from the :py:attr:`ovito.Scene.pipelines` list.
+        The output data of the pipeline will disappear from the viewports.
     """
     # Remove pipeline from its parent's list of children
     if self.parent_node is not None:
@@ -234,14 +234,14 @@ def _Pipeline_remove_from_scene(self):
 Pipeline.remove_from_scene = _Pipeline_remove_from_scene
 
 def _Pipeline_add_to_scene(self):
-    """ Inserts the pipeline into the three-dimensional scene by appending it to the :py:attr:`ovito.DataSet.scene_pipelines` list.
+    """ Inserts the pipeline into the three-dimensional scene by appending it to the :py:attr:`ovito.Scene.pipelines` list.
         The visual representation of the computed data will appear in rendered images and in the interactive viewports of the 
         graphical OVITO version.
         
         You can remove the pipeline from the scene again using :py:meth:`.remove_from_scene`.
     """
-    if not self in self.dataset.scene_pipelines:
-        self.dataset.scene_pipelines.append(self)
+    if not self in self.dataset.pipelines:
+        self.dataset.pipelines.append(self)
     
     # Select piepline
     self.dataset.selected_pipeline = self

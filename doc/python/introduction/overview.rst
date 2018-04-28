@@ -7,81 +7,74 @@ Overview
 The scripting interface gives you access to most of OVITO's program features. Using Python scripting, you can
 do many things that are already familiar from the graphical user interface (and even some more):
 
-  * Import data from simulation files
+  * Import and export data to and from simulation files
   * Use modifiers and set up a data processing pipeline
-  * Export computed data to an output file
-  * Render images or movies of the three-dimensional scene and control the camera
-  * Change the appearance of particles and other visual objects
-  * Access data, e.g. particle properties and analysis results, computed by OVITO
-  * Write your own data modification and analysis functions and extend OVITO's capabilities
-
-But before discussing these specific topics, let's first take a look at OVITO's object model.
+  * Render images or movies of the three-dimensional scene
+  * Access computation results of OVITO
+  * Write your own data modification functions and extend OVITO's capabilities
 
 ------------------------------------
 OVITO's data pipeline architecture
 ------------------------------------
 
-If you have used OVITO's graphical user interface before, you are already familiar with 
-its central concept: the data processing pipeline. After loading a simulation file, you typically apply modifiers 
-that act on the input data. The output of this sequence of modifiers (which form the *data pipeline*) is computed by OVITO 
-and displayed in the interactive viewports. From a Python script's perspective, a data pipeline is represented
-by an instance of the :py:class:`~ovito.pipeline.Pipeline` class, which stores the list of applied modifiers
-in its :py:attr:`~ovito.pipeline.Pipeline.modifiers` field.
+If you have used OVITO's graphical user interface before, you should already be familiar with one of
+its central concepts: the data processing pipeline. After loading a simulation file, you typically apply one or more modifiers 
+that act on the input data. The result of this sequence of modifiers (which form the *data pipeline*) is computed by OVITO 
+and displayed in the interactive viewports. From a Python script's perspective, the data pipeline is represented
+by an instance of the :py:class:`~ovito.pipeline.Pipeline` class, which stores the list of applied modifiers.
 
-In addition to the modifier list, a data pipeline always has some kind of *data source*, which is an associated object providing 
+A data pipeline always has some kind of *data source*, which is a separate object providing 
 the input data being passed to the pipeline's first modifier. Typically, the data source is an instance of the
-:py:class:`~ovito.pipeline.FileSource` class. It is responsible for dynamically loading data from an external file.
-OVITO also allows you to select other kinds of data sources for a pipeline, for example in case you want to 
-directly specify the input data programmatically instead of loading it from file. 
+:py:class:`~ovito.pipeline.FileSource` class. It is responsible for loading data from an external file upon request.
 
 .. image:: graphics/Pipeline_overview.*
    :width: 75 %
    :align: center
 
 A :py:class:`~ovito.pipeline.Pipeline` may be placed into the *scene*, i.e. the three-dimensional world that is visible
-through OVITO's viewports and in rendered images. Only a :py:class:`~ovito.pipeline.Pipeline` that is part of the *scene*
-will visually shows its computation results. You add a :py:class:`~ovito.pipeline.Pipeline` to the scene by calling its
+through OVITO's viewports and in rendered images. Only pipelines that are part of the current scene
+will be visible. You can add a :py:class:`~ovito.pipeline.Pipeline` to the scene by calling its
 :py:meth:`~ovito.pipeline.Pipeline.add_to_scene` method.
 
-All pipeline objects currently part of the scene, and all other program state information that would get saved along in 
-a :file:`.ovito` file (e.g. current render settings, viewport cameras, etc.), comprise a :py:class:`~ovito.DataSet`. 
-Python scripts always run in the context of exactly one global :py:class:`~ovito.DataSet` instance. This 
-instance is accessible through the :py:data:`ovito.dataset` global variable. 
+The scene, including all program state information that would get saved along in a :file:`.ovito` file, is represented 
+by the :py:class:`~ovito.Scene` class. A Python script always runs in the context of exactly one global :py:class:`~ovito.Scene` instance, 
+which is accessible through the :py:data:`ovito.scene` global variable. 
 
 ------------------------------------
-Loading data from disk
+Importing data from disk
 ------------------------------------
 
-A new instance of the :py:class:`~ovito.pipeline.Pipeline` class is automatically created when you import a data file  
+A new instance of the :py:class:`~ovito.pipeline.Pipeline` is automatically created when you import a data file  
 using the :py:func:`ovito.io.import_file` function::
 
    >>> from ovito.io import import_file
    >>> pipeline = import_file("simulation.dump")
    
-This high-level function creates a :py:class:`~ovito.pipeline.Pipeline` (without modifiers yet) 
-and wires it to a new :py:class:`~ovito.pipeline.FileSource` (which will subsequently load the actual data 
-from the given file). The pipeline's data source is accessible through the :py:attr:`~ovito.pipeline.Pipeline.source`
+This high-level function creates a :py:class:`~ovito.pipeline.Pipeline` (without any modifiers yet) 
+and wires it to a new :py:class:`~ovito.pipeline.FileSource`, which will subsequently load the actual data 
+from the given file. The pipeline's data source is accessible through the :py:attr:`~ovito.pipeline.Pipeline.source`
 property:: 
 
    >>> print(pipeline.source)
    <FileSource at 0x7f9ea70aefb0>
 
-This allows you to later replace the pipeline's input data with a different external file if needed.
-The :ref:`file_io_overview` section of this documentation provides more information on importing data into OVITO
+The :py:class:`~ovito.pipeline.FileSource` can be reconfigured to load a new input file, allowing you to replace the pipeline's input data with 
+a different external file if needed. The :ref:`file_io_overview` section of this documentation provides more information on importing data into OVITO
 and exporting it to output files.
 
 ------------------------------------
 Applying modifiers
 ------------------------------------
 
-We can now build up a processing pipeline by inserting modifiers
-into the pipeline's :py:attr:`~ovito.pipeline.Pipeline.modifiers` list::
+Initially, the :py:class:`~ovito.pipeline.Pipeline` created by the :py:func:`~ovito.io.import_file` function has no modifiers in it.
+That means it will directly output the unchanged data loaded by the :py:class:`~ovito.pipeline.FileSource`.
+We can change that by inserting modifiers into the pipeline's :py:attr:`~ovito.pipeline.Pipeline.modifiers` list::
 
    >>> from ovito.modifiers import *
    >>> pipeline.modifiers.append(ColorCodingModifier(property = 'Potential Energy'))
    >>> pipeline.modifiers.append(SliceModifier(normal = (0,0,1)))
 
-As shown in the example above, modifiers are constructed by invoking the constructor of one of the modifier classes, which are
+As shown in the example above, modifiers are constructed by instantiating one of the built-in modifier classes, which are
 all found in the :py:mod:`ovito.modifiers` module. Note how a modifier's parameters can be initialized in two different ways:
 
 .. note::
@@ -179,11 +172,10 @@ Accessing the pipeline's input data
 
 In the preceding section we saw how the :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` allows us to 
 obtain the output of the processing pipeline. Sometimes we are also interested in the unmodified data that *enters* the modification pipeline.
-This input data, which is read from the external data file, is cached by the pipeline's :py:class:`~ovito.pipeline.FileSource`.
-The :py:class:`~ovito.pipeline.FileSource` itself is a special form of :py:class:`~ovito.data.DataCollection` and provides the same 
-programming interface for accessing the contained data objects::
+This input data, which is read from the external data file, is provided by the pipeline's :py:class:`~ovito.pipeline.FileSource`.
+The :py:class:`~ovito.pipeline.FileSource` also has a :py:meth:`~ovito.pipeline.FileSource.compute` method returning a :py:class:`~ovito.data.DataCollection`::
 
-    >>> input_data = pipeline.source
+    >>> input_data = pipeline.source.compute()
     >>> input_data.objects
     [SimulationCell(), ParticleProperty('Particle Identifier'), 
         ParticleProperty('Position'), ParticleProperty('Potential Energy')]
@@ -208,7 +200,9 @@ the three-dimensional scene::
     >>> vp.fov = math.radians(60.0)
     
 The :py:class:`~ovito.vis.Viewport`'s parameters control the position and orientation of the camera, the type of projection (perspective or parallel), 
-and the field of view (FOV) angle. The :py:meth:`Viewport.render_image() <ovito.vis.Viewport.render_image>` method renders an image::
+and the field of view (FOV) angle. To automatically position the camera such that all objects of the scene are fully visible, you may call 
+the viewport's :py:meth:`~ovito.vis.Viewport.zoom_all` method. 
+Finally, the :py:meth:`Viewport.render_image() <ovito.vis.Viewport.render_image>` method renders an image and saves it to disk::
 
     >>> vp.render_image(filename="myimage.png", size=(800,600))
 

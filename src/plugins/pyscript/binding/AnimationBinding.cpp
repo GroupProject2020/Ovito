@@ -62,19 +62,7 @@ void defineAnimationSubmodule(py::module m)
 		.def(py::self != TimeInterval())
 	;
 
-	ovito_class<AnimationSettings, RefTarget>(m,
-			"Stores animation-related settings of the current :py:attr:`~ovito.DataSet`. You can access "
-			"an instance of this class through the dataset's :py:attr:`~ovito.DataSet.anim` attribute."
-			"\n\n"
-			"Animation settings comprise the animation length (number of frames) and the current animation time. "
-			"For example, to step through each animation frame and perform some action::"
-			"\n\n"
-			"    from ovito import dataset\n"
-			"    \n"
-			"    for frame in range(0, dataset.anim.last_frame + 1):\n"
-			"        dataset.anim.current_frame = frame    # Jump to the animation frame.\n"
-			"        perform_something()\n"
-			"\n")
+	ovito_class<AnimationSettings, RefTarget>(m)
 		.def_property("time", &AnimationSettings::time, &AnimationSettings::setTime)
 		//.def_property("animation_interval", &AnimationSettings::animationInterval, &AnimationSettings::setAnimationInterval)
 		.def_property("frames_per_second", &AnimationSettings::framesPerSecond, &AnimationSettings::setFramesPerSecond,

@@ -1,5 +1,5 @@
 test_flag = False
-
+import ovito
 # >>>>>>>>> snippet start here >>>>>>>>>>>>>>>
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *

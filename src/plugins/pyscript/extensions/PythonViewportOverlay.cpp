@@ -48,27 +48,21 @@ void PythonViewportOverlay::loadUserDefaults()
 	ViewportOverlay::loadUserDefaults();
 
 	// Load default demo script.
-	setScript("import ovito\n"
-			"\n"
+	setScript(
 			"# This user-defined function is called by OVITO to let it draw arbitrary graphics on top of the viewport.\n"
 			"def render(args):\n"
-			"\n"
-			"\t# This demo code prints the current animation frame into the upper left corner of the viewport.\n"
-			"\ttext1 = \"Frame {}\".format(args.frame)\n"
-			"\targs.painter.drawText(10, 10 + args.painter.fontMetrics().ascent(), text1)\n"
-			"\n"
-			"\t# Also print the current number of particles into the lower left corner of the viewport.\n"
-			"\tpipeline = ovito.dataset.selected_pipeline\n"
-			"\tif not pipeline is None:\n"
-			"\t\tdata = pipeline.compute()\n"
-			"\t\tnum_particles = len(data.particles['Position']) if 'Position' in data.particles else 0\n"
-			"\telse: num_particles = 0\n"
-			"\ttext2 = \"{} particles\".format(num_particles)\n"
-			"\targs.painter.drawText(10, args.painter.window().height() - 10, text2)\n"
-			"\n"
-			"\t# Print to the log window:\n"
-			"\tprint(text1)\n"
-			"\tprint(text2)\n");	
+			"    \n"
+			"    # This demo code prints the current animation frame into the upper left corner of the viewport.\n"
+			"    text1 = \"Frame {}\".format(args.frame)\n"
+			"    args.painter.drawText(10, 10 + args.painter.fontMetrics().ascent(), text1)\n"
+			"    \n"
+			"    # Also print the current number of particles into the lower left corner of the viewport.\n"
+			"    pipeline = args.scene.selected_pipeline\n"
+			"    if pipeline:\n"
+			"        data = pipeline.compute()\n"
+			"        num_particles = data.particles.count\n"
+			"        text2 = \"{} particles\".format(num_particles)\n"
+			"        args.painter.drawText(10, args.painter.window().height() - 10, text2)\n");	
 }
 
 /******************************************************************************

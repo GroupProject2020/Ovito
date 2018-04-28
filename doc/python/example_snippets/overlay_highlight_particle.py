@@ -7,8 +7,8 @@ from PyQt5.QtGui import *
 
 def render(args):
     
-    # Get output data collection of selected pipeline.
-    data = args.dataset.selected_pipeline.compute()
+    # Get output data collection of first scene pipeline.
+    data = args.scene.pipelines[0].compute()
     positions = data.particles['Position']
     pindex = 0 # The index of the particle to be highlighted
     

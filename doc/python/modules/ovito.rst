@@ -6,11 +6,16 @@
    :members:
    :imported-members:
 
-   .. py:data:: dataset
+   .. py:data:: scene
       
-      This module-level attribute points to the current :py:class:`~ovito.DataSet`
-      which serves as context for all operations performed by the script. The :py:class:`~ovito.DataSet`
-      represents the program state and provides access to the contents of the three-dimensional visualization scene.
+      This module-level variable points to the global :py:class:`~ovito.Scene` object,
+      which serves as context for all operations performed by the script. The :py:class:`~ovito.Scene` object
+      represents the program state and provides access to the contents of the visualization scene::
+
+         import ovito
+         
+         # Retrieve the output data of the pipeline that is currently selected in OVITO:
+         data = ovito.scene.selected_pipeline.compute()
 
    .. py:data:: version
       

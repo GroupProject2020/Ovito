@@ -15,16 +15,16 @@ pipeline.modifiers.append(traj_mod)
 
 print("Number of source frames:", pipeline.source.num_frames)
 print("Number of trajectory frames:", traj_mod.source.num_frames)
-print("Number of animation frames:", ovito.dataset.anim.last_frame - ovito.dataset.anim.first_frame + 1)
+print("Number of animation frames:", ovito.scene.anim.last_frame - ovito.scene.anim.first_frame + 1)
 assert(traj_mod.source.num_frames == 2)
-assert(ovito.dataset.anim.last_frame == 1)
+assert(ovito.scene.anim.last_frame == 1)
 
-for frame in range(ovito.dataset.anim.first_frame, ovito.dataset.anim.last_frame + 1):
+for frame in range(ovito.scene.anim.first_frame, ovito.scene.anim.last_frame + 1):
     data = pipeline.compute(frame)
     print("Frame %i:" % frame)
-    print(data.particle_properties['Position'][...])
+    print(data.particles['Position'][...])
 
-pos0 = pipeline.compute(0).particle_properties['Position']
-pos1 = pipeline.compute(1).particle_properties['Position']
+pos0 = pipeline.compute(0).particles['Position']
+pos1 = pipeline.compute(1).particles['Position']
 
 assert(not numpy.allclose(pos0, pos1))

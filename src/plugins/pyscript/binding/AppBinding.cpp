@@ -73,12 +73,12 @@ void defineAppSubmodule(py::module m)
 	// Note that, for DataSet, we are not using OORef<> as holder type like we normally do for other OvitoObject-derived classes, because
 	// we don't want a ScriptEngine to hold a counted reference to a DataSet that it belongs to.
 	// This would create a cyclic reference and potentially lead to a memory leak.
-	py::class_<DataSet>(m, "DataSet",
+	py::class_<DataSet>(m, "Scene",
 			"This class encompasses all data of an OVITO program session (basically everything that gets saved in a ``.ovito`` state file). "
 			"It provides access to the objects that are part of the three-dimensional scene. "
 			"\n\n"
-			"From a script's point of view, there exists exactly one universal instance of this class, which can be accessed through "
-			"the :py:data:`ovito.dataset` module-level attribute. A script cannot create another :py:class:`!DataSet` instance. ")
+			"From a script's point of view, there exists exactly one universal instance of this class at any time, which can be accessed through "
+			"the :py:data:`ovito.scene` module-level variable. A script cannot create another :py:class:`!Scene` instance. ")
 		.def_property_readonly("scene_root", &DataSet::sceneRoot)
 		// For backward compatibility with OVITO 2.9.0:
 		.def_property_readonly("anim", &DataSet::animationSettings)
@@ -87,12 +87,19 @@ void defineAppSubmodule(py::module m)
 		.def("save", &DataSet::saveToFile,
 			"save(filename)"
 			"\n\n"
-		    "Saves the dataset including the viewports, all pipeline that are currently part of the scene, and other settings to an OVITO state file. "
-    		"This function works like the *Save State As* function in OVITO's file menu."
+		    "Saves the scene including all data pipelines that are currently in it to an OVITO state file. "
+    		"This function works like the *Save State As* menu function of OVITO. Note that pipelines that have not been added to the scene "
+			"will not be saved to the state file. "
 			"\n\n"
-			":param str filename: The path of the file to be written\n",
+			":param str filename: The output file path\n"
+			"\n\n"
+			"The saved program state can be loaded again using the :command:`-o` :ref:`command line option <preloading_program_state>` of :program:`ovitos` "
+			"or in the `graphical version of OVITO <../../usage.import.html#usage.import.command_line>`__. "
+			"After loading the state file, the :py:attr:`.pipelines` list will contain again all :py:class:`~ovito.pipeline.Pipeline` objects "
+			"that were part of the scene when it was saved. "
+			,
 			py::arg("filename"))
-		// This is needed for the DataSet.selected_pipeline attribute:
+		// This is needed for the Scene.selected_pipeline attribute:
 		.def_property_readonly("selection", &DataSet::selection)
 		// This is needed by Viewport.render_image():
 		.def("render_scene", &DataSet::renderScene)

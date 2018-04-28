@@ -1,7 +1,6 @@
 test_flag = False
 
 # >>>>>>>>> snippet start here >>>>>>>>>>>>>>>
-import ovito
 from ovito.modifiers import HistogramModifier
 import matplotlib
 matplotlib.use('Agg') # Activate 'agg' backend for off-screen plotting.
@@ -11,7 +10,7 @@ import PyQt5.QtGui
 def render(args):
     # Look up the HistogramModifier in the pipeline whose data we will plot.
     hist_modifier = None
-    for mod in args.dataset.selected_pipeline.modifiers:
+    for mod in args.scene.pipelines[0].modifiers:
         if isinstance(mod, HistogramModifier):
             hist_modifier = mod
             break
@@ -40,6 +39,7 @@ def render(args):
     
     # Paint QImage onto viewport canvas 
     args.painter.drawImage(0, 0, img)	
+
 
 # <<<<<<<<<<<<< snippet ends here <<<<<<<<<<<<<
     global test_flag

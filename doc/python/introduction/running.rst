@@ -12,9 +12,9 @@ functions to the program. The following sections provide a brief overview of the
 Batch scripts are a way to integrate OVITO's powerful data processing and visualization capabilities into custom
 workflows for post-processing of simulations. Such script are typically run from the terminal using the :program:`ovitos` 
 script interpreter (not :program:`ovito`!), which works similar to a standard Python interpreter and which will be introduced below. 
-Batch scripts run non-interactively and without a graphical user interface, but they can leverage most program functions
+Batch scripts run non-interactively and outside the graphical user interface, but they can leverage most program features
 you already know from the graphical OVITO version, e.g. loading simulation data, setting up data pipelines, rendering pictures and animations,
-accessing computation results and exporting data to an output file.
+accessing computation results and exporting data to output files.
  
 **Macro scripts** 
 
@@ -80,12 +80,14 @@ This allows running OVITO scripts on remote machines or computing clusters that 
 script's name are passed to the script via the ``sys.argv`` variable. Furthermore, it is possible to start 
 an interactive interpreter session by running :program:`ovitos` without any arguments.
 
+.. _preloading_program_state:
+
 Preloading program state
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The :command:`-o` command line option tells :program:`ovitos` to load an :file:`.ovito` state file before executing the
 script. This allows you to preload an existing data pipeline or visualization setup that you have 
-previously prepared using the graphical version of OVITO. All actions of the batch will be carried out in the context of this preloaded program state. 
+previously prepared using the graphical version of OVITO. All actions of the script will subsequently be carried out in the context of this preloaded program state. 
 This can save you programming work, because things like modifiers and the camera setup already get loaded from the state file and 
 you don't need to set them up programmatically in the batch script anymore.
 

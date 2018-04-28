@@ -396,8 +396,8 @@ void defineViewportSubmodule(py::module m)
 			":param r: The world-space size or distance to be converted to screen-space\n"
 			":return: The computed screen-space size measured in pixels.\n",
 			py::arg("world_xyz"), py::arg("r"))
-		.def_property_readonly("dataset", [](ViewportOverlayArguments& args) { return ScriptEngine::activeDataset(); }, py::return_value_policy::reference,
-			"The current :py:class:`~ovito.DataSet`, which provides access to the data pipelines in the scene being rendered. ")
+		.def_property_readonly("scene", [](ViewportOverlayArguments& args) { return ScriptEngine::activeDataset(); }, py::return_value_policy::reference,
+			"The current three-dimensional :py:class:`~ovito.Scene` being rendered, including all visible data pipelines. ")
 	;	
 }
 

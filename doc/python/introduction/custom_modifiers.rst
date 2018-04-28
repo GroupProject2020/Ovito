@@ -1,7 +1,7 @@
 .. _writing_custom_modifiers:
 
 ===================================
-Writing your own modifier
+Writing new modifiers
 ===================================
 
 .. warning::

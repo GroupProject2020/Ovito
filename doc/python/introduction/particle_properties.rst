@@ -1,13 +1,25 @@
-.. _particle_properties_intro:
+.. _data_model_intro:
 
 ===================================
-Particle properties
+Data model
 ===================================
 
 .. warning::
    This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
    development version of OVITO.
 
+
+The :py:class:`~ovito.data.DataCollection` class of OVITO represents the data for one simulation frame. 
+An instance of this class enters a data pipeline, gets processed by the modifiers in the pipeline, and 
+is finally returned by the :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` method. 
+A :py:class:`~ovito.data.DataCollection` is simply a general container for a set of *data objects*, each representing a different fragment of a dataset, for
+example the simulation cell or particle and bond properties.
+
+.. _particle_properties_intro:
+
+-----------------------------------
+Particle properties
+-----------------------------------
 
 OVITO stores particle properties such as the position, mass, color, etc. in separate data arrays. 
 A particle system is therefore nothing else than as a loose collection of :py:class:`~ovito.data.ParticleProperty` instances, 

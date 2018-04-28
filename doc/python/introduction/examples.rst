@@ -1,5 +1,5 @@
 ==================================
-Examples
+Code examples
 ==================================
 
 This page presents various example scripts in the following categories. 

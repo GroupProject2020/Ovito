@@ -125,8 +125,8 @@ def _Viewport_render_image(self, size=(640,480), frame=0, filename=None, backgro
     old_frame = self.dataset.anim.current_frame
     self.dataset.anim.current_frame = int(frame)
 
-    if len(self.dataset.scene_pipelines) == 0:
-        print("Warning: The scene to be rendered is empty. Did you forget to add a pipeline to the scene by calling Pipeline.add_to_scene()?")
+    if len(self.dataset.pipelines) == 0:
+        print("Warning: The scene to be rendered is empty. Did you forget to add a pipeline to the scene using Pipeline.add_to_scene()?")
 
     if ovito.gui_mode:
         # Use the frame buffer of the GUI window for rendering.
@@ -197,8 +197,8 @@ def _Viewport_render_anim(self, filename, size=(640,480), fps=10, background=(1,
     else:
         settings.range = RenderSettings.Range.Animation
 
-    if len(self.dataset.scene_pipelines) == 0:
-        print("Warning: The scene to be rendered is empty. Did you forget to add a pipeline to the scene by calling Pipeline.add_to_scene()?")
+    if len(self.dataset.pipelines) == 0:
+        print("Warning: The scene to be rendered is empty. Did you forget to add a pipeline to the scene using Pipeline.add_to_scene()?")
 
     if ovito.gui_mode:
         # Use the frame buffer of the GUI window for rendering.
@@ -275,8 +275,8 @@ def _Viewport_render(self, settings = None):
         settings = self.dataset.render_settings
     elif isinstance(settings, dict):
         settings = RenderSettings(settings)
-    if len(self.dataset.scene_pipelines) == 0:
-        print("Warning: The scene to be rendered is empty. Did you forget to add a pipeline to the scene by calling Pipeline.add_to_scene()?")
+    if len(self.dataset.pipelines) == 0:
+        print("Warning: The scene to be rendered is empty. Did you forget to add a pipeline to the scene using Pipeline.add_to_scene()?")
     if ovito.gui_mode:
         # Use the frame buffer of the GUI window for rendering.
         fb_window = self.dataset.container.window.frame_buffer_window
