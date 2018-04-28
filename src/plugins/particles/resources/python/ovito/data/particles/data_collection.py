@@ -53,10 +53,7 @@ DataCollection.to_ase_atoms = _DataCollection_to_ase_atoms
 # Here only for backward compatibility with OVITO 2.9.0.
 def _DataCollection_create_from_ase_atoms(cls, atoms):
     from ovito.io.ase import ase_to_ovito
-    from ovito.pipeline import StaticSource
-    data = StaticSource()
-    ase_to_ovito(atoms, data)
-    return data
+    return ase_to_ovito(atoms)
 DataCollection.create_from_ase_atoms = classmethod(_DataCollection_create_from_ase_atoms)
 
 # Implementation of the DataCollection.create_particle_property() method.
