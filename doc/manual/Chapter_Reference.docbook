@@ -21,6 +21,7 @@
 
   	  <xi:include href="reference/viewports/adjust_view_dialog.docbook"/>
   	  <xi:include href="reference/viewports/overlays/viewport_overlays.docbook"/>
+  	  <xi:include href="reference/viewports/input_modes.docbook"/>
   </section>
   
   <xi:include href="reference/app_settings/application_settings.docbook"/>

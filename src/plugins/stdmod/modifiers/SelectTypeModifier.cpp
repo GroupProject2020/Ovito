@@ -141,11 +141,11 @@ PipelineFlowState SelectTypeModifier::evaluatePreliminary(TimePoint time, Modifi
 		else s = 0;
 	}
 
-	output.attributes().insert(QStringLiteral("SelectType.num_selected"), QVariant::fromValue(nSelected));
+	oh.outputAttribute(QStringLiteral("SelectType.num_selected"), QVariant::fromValue(nSelected));
 	
 	// For backward compatibility with OVITO 2.9.0:
 	if(propertyClass()->pythonName() == QStringLiteral("particles"))
-		output.attributes().insert(QStringLiteral("SelectParticleType.num_selected"), QVariant::fromValue(nSelected));
+		oh.outputAttribute(QStringLiteral("SelectParticleType.num_selected"), QVariant::fromValue(nSelected));
 
 	QString statusMessage = tr("%1 out of %2 %3 selected (%4%)")
 		.arg(nSelected)

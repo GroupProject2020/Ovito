@@ -43,7 +43,7 @@ PYBIND11_MODULE(Tachyon, m)
 			"An instance of this class can be passed to the :py:meth:`Viewport.render_image` or :py:meth:`Viewport.render_anim` methods. "
 			"\n\n"
 			"Tachyon can render scenes with ambient occlusion lighting, semi-transparent objects, and depth-of-field focal blur. "
-			"See the `OVITO user documentation <../../rendering.tachyon_renderer.html>`__ for more information on this rendering engine. ")
+			"See the corresponding `user manual page <../../rendering.tachyon_renderer.html>`__ for more information on this rendering backend. ")
 		.def_property("antialiasing", &TachyonRenderer::antialiasingEnabled, &TachyonRenderer::setAntialiasingEnabled,
 				"Enables supersampling to reduce aliasing effects."
 				"\n\n"

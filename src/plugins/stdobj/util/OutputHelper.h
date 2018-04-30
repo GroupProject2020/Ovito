@@ -91,6 +91,9 @@ public:
 		return static_object_cast<PropertyObjectType>(outputProperty(PropertyObjectType::OOClass(), storage));
 	}
 
+	/// Emits a new global attribute to the pipeline.
+	void outputAttribute(const QString& key, QVariant value);
+
 	/// Enures that a DataObject from this flow state is not shared with others and is safe to modify.
 	template<class ObjectType>
 	ObjectType* cloneIfNeeded(ObjectType* obj, bool deepCopy = false) {

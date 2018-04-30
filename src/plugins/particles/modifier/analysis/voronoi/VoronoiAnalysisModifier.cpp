@@ -511,7 +511,7 @@ PipelineFlowState VoronoiAnalysisModifier::VoronoiAnalysisResults::apply(TimePoi
 		poh.addBonds(bonds(), modifier->bondsVis());
 	}
 
-	output.attributes().insert(QStringLiteral("Voronoi.max_face_order"), QVariant::fromValue(maxFaceOrder().load()));
+	poh.outputAttribute(QStringLiteral("Voronoi.max_face_order"), QVariant::fromValue(maxFaceOrder().load()));
 
 	if(voronoiIndices() && maxFaceOrder() > voronoiIndices()->componentCount()) {
 		output.setStatus(PipelineStatus(PipelineStatus::Warning,

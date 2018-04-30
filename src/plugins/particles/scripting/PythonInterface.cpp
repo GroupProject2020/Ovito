@@ -315,6 +315,7 @@ PYBIND11_MODULE(Particles, m)
 	auto ParticlesVis_py = ovito_class<ParticlesVis, DataVis>(m,
 			":Base class: :py:class:`ovito.vis.DataVis`\n\n"
 			"This element controls the visual appearance of particles. "
+			"See also the corresponding `user manual page <../../display_objects.particles.html>`__ for this visual element. "
 			"\n\n"
 			"An instance of this class is attached to the :py:class:`~ovito.data.ParticleProperty` named ``Position`` "
 			"and can be accessed through its :py:attr:`~ovito.data.DataObject.vis` field: "
@@ -355,10 +356,11 @@ PYBIND11_MODULE(Particles, m)
 
 	auto VectorVis_py = ovito_class<VectorVis, DataVis>(m,
 			":Base class: :py:class:`ovito.vis.DataVis`\n\n"
-			"Controls the visual appearance of vector arrow elements."
+			"Controls the visual appearance of vector arrow elements. "
 			"\n\n"
 			"A :py:class:`!VectorVis` element is typically attached to a :py:class:`~ovito.data.ParticleProperty` that represents a three-dimensional "
 			"vector quantity, for example the ``Displacement`` property or the ``Force`` property. "
+			"See also the corresponding `user manual page <../../display_objects.vectors.html>`__ for this visual element. "
 			"\n\n"
 			"The parameters of this class control the visual appearance of the arrow elements that are rendered at each particle to "
 			"visualize the vector values. If you have imported a vector particle property named either ``Force``, ``Dipole`` or ``Displacement`` "
@@ -419,6 +421,7 @@ PYBIND11_MODULE(Particles, m)
 			"An instance of this class is attached to the :py:class:`~ovito.data.BondProperty` named ``Topology``. "
 			"\n\n"
 			"The parameters of this class control the visual appearance of bonds. "
+			"See also the corresponding `user manual page <../../display_objects.bonds.html>`__ for this visual element. "
 			"If you have imported a simulation file containing bonds, you can subsequently access the :py:class:`!BondsVis` object attached "
 			"to the ``Topology`` bond property through its :py:attr:`~ovito.data.DataObject.vis` field:"
 			"\n\n"

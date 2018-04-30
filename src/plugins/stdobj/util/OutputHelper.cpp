@@ -158,5 +158,25 @@ PropertyObject* OutputHelper::outputCustomProperty(const PropertyClass& property
 	}
 }
 
+
+/******************************************************************************
+* Emits a new global attribute to the pipeline.
+******************************************************************************/
+void OutputHelper::outputAttribute(const QString& key, QVariant value)
+{
+	if(!output().attributes().contains(key)) {
+		output().attributes().insert(key, std::move(value));
+	}
+	else {
+		for(int i = 2; ; i++) {
+			QString uniqueKey = key + QChar('.') + QString::number(i);
+			if(!output().attributes().contains(uniqueKey)) {
+				output().attributes().insert(uniqueKey, std::move(value));
+				break;
+			}
+		}
+	}
+}
+
 }	// End of namespace
 }	// End of namespace

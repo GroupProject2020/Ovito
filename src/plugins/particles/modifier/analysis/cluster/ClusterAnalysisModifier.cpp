@@ -270,9 +270,9 @@ PipelineFlowState ClusterAnalysisModifier::ClusterAnalysisResults::apply(TimePoi
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
 	poh.outputProperty<ParticleProperty>(particleClusters());
 
-	output.attributes().insert(QStringLiteral("ClusterAnalysis.cluster_count"), QVariant::fromValue(numClusters()));
+	poh.outputAttribute(QStringLiteral("ClusterAnalysis.cluster_count"), QVariant::fromValue(numClusters()));
 	if(modifier->sortBySize())
-		output.attributes().insert(QStringLiteral("ClusterAnalysis.largest_size"), QVariant::fromValue(largestClusterSize()));
+		poh.outputAttribute(QStringLiteral("ClusterAnalysis.largest_size"), QVariant::fromValue(largestClusterSize()));
 
 	output.setStatus(PipelineStatus(PipelineStatus::Success, tr("Found %n cluster(s)", "", numClusters())));
 	return output;

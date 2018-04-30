@@ -254,7 +254,7 @@ PipelineFlowState CreateBondsModifier::BondsEngineResults::apply(TimePoint time,
 	poh.addBonds(bonds(), modifier->bondsVis());
 
 	size_t bondsCount = bonds().size();
-	output.attributes().insert(QStringLiteral("CreateBonds.num_bonds"), QVariant::fromValue(bondsCount));
+	poh.outputAttribute(QStringLiteral("CreateBonds.num_bonds"), QVariant::fromValue(bondsCount));
 
 	// If the number of bonds is unusually high, we better turn off bonds display to prevent the program from freezing.
 	if(bondsCount > 1000000 && modifier->bondsVis()) {

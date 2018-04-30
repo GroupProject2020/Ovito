@@ -96,7 +96,7 @@ PipelineStatus ExpressionSelectionModifierDelegate::apply(Modifier* modifier, co
 		output.intersectStateValidity(time);
 
 	// Report the total number of selected elements as a pipeline attribute.
-	output.attributes().insert(QStringLiteral("SelectExpression.num_selected"), QVariant::fromValue(nselected.load()));
+	oh.outputAttribute(QStringLiteral("SelectExpression.num_selected"), QVariant::fromValue(nselected.load()));
 
 	// Update status display in the UI.
 	QString statusMessage = tr("%1 out of %2 elements selected (%3%)").arg(nselected.load()).arg(selProperty->size()).arg((FloatType)nselected.load() * 100 / std::max((size_t)1,selProperty->size()), 0, 'f', 1);

@@ -42,6 +42,7 @@ PYBIND11_MODULE(CorrelationFunctionPlugin, m)
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
 			"This modifier calculates the spatial correlation function between two particle properties. "
+			"See also the corresponding `user manual page <../../particles.modifiers.correlation_function.html>`__ for this modifier. "
 			"\n\n"
 			"The algorithm uses the FFT to compute the convolution. It then computes a radial average in reciprocal and real space. "
 			"This gives the correlation function up to half of the cell size. The modifier can additionally compute the short-ranged part of the "

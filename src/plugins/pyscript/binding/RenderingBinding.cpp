@@ -150,7 +150,7 @@ void defineRenderingSubmodule(py::module m)
 			"\n\n"
 			"This is the default built-in rendering engine that is also used by OVITO to render the contents of the interactive viewports. "
 			"Since it accelerates the generation of images by using the computer's graphics hardware, it is very fast. "
-			"See the `OVITO user documentation <../../rendering.opengl_renderer.html>`__ for more information on this rendering engine. " 
+			"See the corresponding `user manual page <../../rendering.opengl_renderer.html>`__ for more information on this rendering engine. " 
 			"\n\n"
 			"Note that this renderer requires OpenGL graphics support, and Python scripts may be running in environments where it is not available. "
 			"A typical example for such situations are remote SSH connections, which can prevent OVITO from accessing the X window and OpenGL systems. "

@@ -318,20 +318,19 @@ PipelineFlowState PolyhedralTemplateMatchingModifier::PTMResults::apply(TimePoin
 	PipelineFlowState output = StructureIdentificationResults::apply(time, modApp, input);
 	
 	// Also output structure type counts, which have been computed by the base class.
+	ParticleOutputHelper poh(modApp->dataset(), output);
 	StructureIdentificationModifierApplication* myModApp = static_object_cast<StructureIdentificationModifierApplication>(modApp);
-	output.attributes().insert(QStringLiteral("PolyhedralTemplateMatching.counts.OTHER"), QVariant::fromValue(myModApp->structureCounts()[OTHER]));
-	output.attributes().insert(QStringLiteral("PolyhedralTemplateMatching.counts.FCC"), QVariant::fromValue(myModApp->structureCounts()[FCC]));
-	output.attributes().insert(QStringLiteral("PolyhedralTemplateMatching.counts.HCP"), QVariant::fromValue(myModApp->structureCounts()[HCP]));
-	output.attributes().insert(QStringLiteral("PolyhedralTemplateMatching.counts.BCC"), QVariant::fromValue(myModApp->structureCounts()[BCC]));
-	output.attributes().insert(QStringLiteral("PolyhedralTemplateMatching.counts.ICO"), QVariant::fromValue(myModApp->structureCounts()[ICO]));
-	output.attributes().insert(QStringLiteral("PolyhedralTemplateMatching.counts.SC"), QVariant::fromValue(myModApp->structureCounts()[SC]));
-	output.attributes().insert(QStringLiteral("PolyhedralTemplateMatching.counts.CUBIC_DIAMOND"), QVariant::fromValue(myModApp->structureCounts()[CUBIC_DIAMOND]));
-	output.attributes().insert(QStringLiteral("PolyhedralTemplateMatching.counts.HEX_DIAMOND"), QVariant::fromValue(myModApp->structureCounts()[HEX_DIAMOND]));
+	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.OTHER"), QVariant::fromValue(myModApp->structureCounts()[OTHER]));
+	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.FCC"), QVariant::fromValue(myModApp->structureCounts()[FCC]));
+	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.HCP"), QVariant::fromValue(myModApp->structureCounts()[HCP]));
+	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.BCC"), QVariant::fromValue(myModApp->structureCounts()[BCC]));
+	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.ICO"), QVariant::fromValue(myModApp->structureCounts()[ICO]));
+	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.SC"), QVariant::fromValue(myModApp->structureCounts()[SC]));
+	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.CUBIC_DIAMOND"), QVariant::fromValue(myModApp->structureCounts()[CUBIC_DIAMOND]));
+	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.HEX_DIAMOND"), QVariant::fromValue(myModApp->structureCounts()[HEX_DIAMOND]));
 	
 	PolyhedralTemplateMatchingModifier* modifier = static_object_cast<PolyhedralTemplateMatchingModifier>(modApp->modifier());
 	OVITO_ASSERT(modifier);
-
-	ParticleOutputHelper poh(modApp->dataset(), output);
 
 	// Output per-particle properties.
 	if(rmsd() && modifier->outputRmsd()) {

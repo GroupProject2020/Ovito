@@ -297,13 +297,13 @@ PipelineFlowState DislocationAnalysisResults::apply(TimePoint time, ModifierAppl
 	if(atomClusters())
 		poh.outputProperty<ParticleProperty>(atomClusters());
 
-	output.attributes().insert(QStringLiteral("DislocationAnalysis.total_line_length"), QVariant::fromValue(totalLineLength));
-	output.attributes().insert(QStringLiteral("DislocationAnalysis.counts.OTHER"), QVariant::fromValue(myModApp->structureCounts()[StructureAnalysis::LATTICE_OTHER]));
-	output.attributes().insert(QStringLiteral("DislocationAnalysis.counts.FCC"), QVariant::fromValue(myModApp->structureCounts()[StructureAnalysis::LATTICE_FCC]));
-	output.attributes().insert(QStringLiteral("DislocationAnalysis.counts.HCP"), QVariant::fromValue(myModApp->structureCounts()[StructureAnalysis::LATTICE_HCP]));
-	output.attributes().insert(QStringLiteral("DislocationAnalysis.counts.BCC"), QVariant::fromValue(myModApp->structureCounts()[StructureAnalysis::LATTICE_BCC]));
-	output.attributes().insert(QStringLiteral("DislocationAnalysis.counts.CubicDiamond"), QVariant::fromValue(myModApp->structureCounts()[StructureAnalysis::LATTICE_CUBIC_DIAMOND]));
-	output.attributes().insert(QStringLiteral("DislocationAnalysis.counts.HexagonalDiamond"), QVariant::fromValue(myModApp->structureCounts()[StructureAnalysis::LATTICE_HEX_DIAMOND]));
+	poh.outputAttribute(QStringLiteral("DislocationAnalysis.total_line_length"), QVariant::fromValue(totalLineLength));
+	poh.outputAttribute(QStringLiteral("DislocationAnalysis.counts.OTHER"), QVariant::fromValue(myModApp->structureCounts()[StructureAnalysis::LATTICE_OTHER]));
+	poh.outputAttribute(QStringLiteral("DislocationAnalysis.counts.FCC"), QVariant::fromValue(myModApp->structureCounts()[StructureAnalysis::LATTICE_FCC]));
+	poh.outputAttribute(QStringLiteral("DislocationAnalysis.counts.HCP"), QVariant::fromValue(myModApp->structureCounts()[StructureAnalysis::LATTICE_HCP]));
+	poh.outputAttribute(QStringLiteral("DislocationAnalysis.counts.BCC"), QVariant::fromValue(myModApp->structureCounts()[StructureAnalysis::LATTICE_BCC]));
+	poh.outputAttribute(QStringLiteral("DislocationAnalysis.counts.CubicDiamond"), QVariant::fromValue(myModApp->structureCounts()[StructureAnalysis::LATTICE_CUBIC_DIAMOND]));
+	poh.outputAttribute(QStringLiteral("DislocationAnalysis.counts.HexagonalDiamond"), QVariant::fromValue(myModApp->structureCounts()[StructureAnalysis::LATTICE_HEX_DIAMOND]));
 
 	for(const auto& dlen : dislocationLengths) {
 		StructurePattern* pattern = dislocationStructurePatterns[dlen.first];
@@ -315,9 +315,9 @@ PipelineFlowState DislocationAnalysisResults::apply(TimePoint time, ModifierAppl
 			bstr.replace(QChar(']'), QChar('>'));
 		}
 		else bstr = "other";
-		output.attributes().insert(QStringLiteral("DislocationAnalysis.length.%1").arg(bstr), QVariant::fromValue(dlen.second));
+		poh.outputAttribute(QStringLiteral("DislocationAnalysis.length.%1").arg(bstr), QVariant::fromValue(dlen.second));
 	}
-	output.attributes().insert(QStringLiteral("DislocationAnalysis.cell_volume"), QVariant::fromValue(simCellVolume()));
+	poh.outputAttribute(QStringLiteral("DislocationAnalysis.cell_volume"), QVariant::fromValue(simCellVolume()));
 
 	// Store the summary results in the ModifierApplication.
 	myModApp->setResults(std::move(segmentCounts), std::move(dislocationLengths));

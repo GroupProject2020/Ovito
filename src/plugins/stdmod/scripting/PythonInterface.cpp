@@ -55,13 +55,14 @@ PYBIND11_MODULE(StdMod, m)
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
 			"Deletes or selects data elements in a semi-infinite region bounded by a plane or in a slab bounded by a pair of parallel planes. "
-			"The modifier can operate on several kinds of data elements: "
+			"See also the corresponding `user manual page <../../particles.modifiers.slice.html>`__ for this modifier. "
+			"The modifier can operate on several classes of data elements: "
 			"\n\n"
 			"  * Particles (including bonds)\n"
 			"  * Surfaces (:py:class:`~ovito.data.SurfaceMesh`) \n"
 			"  * Dislocation lines (:py:class:`~ovito.data.DislocationNetwork`)\n"
 			"\n\n"
-			"The modifier will act on all of them by default. Restriction to a subset is possible by setting the :py:attr:`.operate_on` field. ")
+			"The modifier will act on all element classes simultaneously by default. Restricting the slice operation to a subset of classes is possible by setting the :py:attr:`.operate_on` field. ")
 		.def_property("distance", &SliceModifier::distance, &SliceModifier::setDistance,
 				"The distance of the slicing plane from the origin (along its normal vector)."
 				"\n\n"
@@ -100,15 +101,16 @@ PYBIND11_MODULE(StdMod, m)
 	auto AffineTransformationModifier_py = ovito_class<AffineTransformationModifier, MultiDelegatingModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
-			"Applies an affine transformation to data elements in order to move, rotate, shear or scale them."
-			"The modifier can operate on several kinds of data elements: "
+			"This modifier applies an affine transformation to data elements in order to move, rotate, shear or scale them. "
+			"See also the corresponding `user manual page <../../particles.modifiers.affine_transformation.html>`__ for this modifier. "
+			"The transformation modifier can operate on several types of elements: "
 			"\n\n"
 			"  * Particle positions\n"
 			"  * Particle vector properties (``'Velocity'``, ``'Force'``, ``'Displacement'``)\n"
 			"  * Simulation cells (:py:class:`~ovito.data.SimulationCell`) \n"
 			"  * Surfaces (:py:class:`~ovito.data.SurfaceMesh`) \n"
 			"\n\n"
-			"The modifier will act on all of them by default. Restriction to a subset is possible by setting the :py:attr:`.operate_on` field. "
+			"The modifier will act on all of them simultaneously by default. Restricting the modifier to a subset is possible by setting the :py:attr:`.operate_on` field. "
 			"Example::"
 			"\n\n"
 			"    xy_shear = 0.05\n"
@@ -117,7 +119,7 @@ PYBIND11_MODULE(StdMod, m)
 			"              transformation = [[1,xy_shear,0,0],\n"
 			"                                [0,       1,0,0],\n"
 			"                                [0,       0,1,0]])\n"
-			"\n")
+			"\n\n")
 		.def_property("transformation", MatrixGetter<AffineTransformationModifier, AffineTransformation, &AffineTransformationModifier::transformationTM>(), 
 										MatrixSetter<AffineTransformationModifier, AffineTransformation, &AffineTransformationModifier::setTransformationTM>(),
 				"The 3x4 transformation matrix being applied to input elements. "
@@ -158,7 +160,16 @@ PYBIND11_MODULE(StdMod, m)
 	auto ReplicateModifier_py = ovito_class<ReplicateModifier, MultiDelegatingModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
-			"This modifier replicates all particles and bonds to generate periodic images. ")
+			"This modifier replicates all particles and bonds to generate periodic images. "
+			"See also the corresponding `user manual page <../../particles.modifiers.show_periodic_images.html>`__ for this modifier. "
+			"The modifier can operate on several classes of data elements: "
+			"\n\n"
+			"  * Particles (including bonds)\n"
+			"  * Surfaces (:py:class:`~ovito.data.SurfaceMesh`) \n"
+			"  * Dislocation lines (:py:class:`~ovito.data.DislocationNetwork`)\n"
+			"  * Voxel data grids\n"
+			"\n\n"
+			"The modifier will act on all element classes simultaneously by default. Restricting the replicate operation to a subset of classes is possible by setting the :py:attr:`.operate_on` field. ")
 		.def_property("num_x", &ReplicateModifier::numImagesX, &ReplicateModifier::setNumImagesX,
 				"A positive integer specifying the number of copies to generate in the *x* direction (including the existing primary image)."
 				"\n\n"
@@ -189,7 +200,7 @@ PYBIND11_MODULE(StdMod, m)
 			"A set of strings specifying the kinds of data elements this modifier should operate on. "
 			"By default the set contains all data element types supported by the modifier. "
 			"\n\n"
-			":Default: ``{'particles', 'vector_properties', 'cell', 'surfaces'}``\n");
+			":Default: ``{'particles', 'voxels', 'surfaces', 'dislocations'}``\n");
 
 	ovito_class<ClearSelectionModifier, GenericPropertyModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
@@ -199,7 +210,9 @@ PYBIND11_MODULE(StdMod, m)
 			"  * Particles (removing the ``'Selection'`` :ref:`particle property <particle-types-list>`)\n"
 			"  * Bonds (removing the ``'Selection'`` :ref:`bond property <bond-types-list>`)\n"
 			"\n\n"
-			"The modifier will act on particles only by default. This can be changed by setting the :py:attr:`.operate_on` field. ")
+			"The modifier will act on particles only by default. This can be changed by setting the :py:attr:`.operate_on` field. "
+			"See also the corresponding `user manual page <../../particles.modifiers.clear_selection.html>`__ for this modifier. "
+			)
 		.def_property("operate_on", modifierPropertyClassGetter(), modifierPropertyClassSetter(),
 				"Selects the kind of data elements this modifier should operate on. "
 				"Supported values are: ``'particles'``, ``'bonds'``, ``'voxels'``. "
@@ -215,7 +228,9 @@ PYBIND11_MODULE(StdMod, m)
 			"  * Particles (inverting the ``'Selection'`` :ref:`particle property <particle-types-list>`)\n"
 			"  * Bonds (inverting the ``'Selection'`` :ref:`bond property <bond-types-list>`)\n"
 			"\n\n"
-			"The modifier will act on particles only by default. This can be changed by setting the :py:attr:`.operate_on` field. ")
+			"The modifier will act on particles only by default. This can be changed by setting the :py:attr:`.operate_on` field. "
+			"See also the corresponding `user manual page <../../particles.modifiers.invert_selection.html>`__ for this modifier. "
+			)
 		.def_property("operate_on", modifierPropertyClassGetter(), modifierPropertyClassSetter(),
 				"Selects the kind of data elements this modifier should operate on. "
 				"Supported values are: ``'particles'``, ``'bonds'``, ``'voxels'``. "
@@ -227,6 +242,7 @@ PYBIND11_MODULE(StdMod, m)
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
 			"Assigns colors to elements based on some scalar input property to visualize the property values. "
+			"See also the corresponding `user manual page <../../particles.modifiers.color_coding.html>`__ for this modifier. "
 			"The modifier can operate on several kinds of data elements: "
 			"\n\n"
 			"  * Particles (setting the ``'Color'`` :ref:`particle property <particle-types-list>`)\n"
@@ -335,6 +351,7 @@ PYBIND11_MODULE(StdMod, m)
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
 			"Selects all elements of a certain type (e.g. atoms of a chemical type). "
+			"See also the corresponding `user manual page <../../particles.modifiers.select_particle_type.html>`__ for this modifier. "
 			"The modifier can operate on different kinds of data elements: "
 			"\n\n"
 			"  * Particles\n"
@@ -380,7 +397,9 @@ PYBIND11_MODULE(StdMod, m)
 	auto HistogramModifier_py = ovito_class<HistogramModifier, GenericPropertyModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
-			"Generates a histogram from the values of a property. The modifier can operate on properties of different kinds of elements: "
+			"Generates a histogram from the values of a property. "
+			"See also the corresponding `user manual page <../../particles.modifiers.histogram.html>`__ for this modifier. "
+			"The modifier can operate on properties of different kinds of elements: "
 			"\n\n"
 			"  * Particles (:py:class:`~ovito.data.ParticleProperty`)\n"
 			"  * Bonds (:py:class:`~ovito.data.BondProperty`)\n"
@@ -462,7 +481,9 @@ PYBIND11_MODULE(StdMod, m)
 	ovito_class<AssignColorModifier, DelegatingModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
-			"Assigns a uniform color to all selected elements. The modifier can operate on several kinds of data elements: "
+			"Assigns a uniform color to all selected elements. "
+			"See also the corresponding `user manual page <../../particles.modifiers.assign_color.html>`__ for this modifier. "
+			"The modifier can operate on several kinds of data elements: "
 			"\n\n"
 			"  * Particles (setting the ``'Color'`` :ref:`particle property <particle-types-list>`)\n"
 			"  * Particle vectors (setting the ``'Vector Color'`` :ref:`particle property <particle-types-list>`)\n"
@@ -494,7 +515,9 @@ PYBIND11_MODULE(StdMod, m)
 			"  * Particles (deleting particles whose ``'Selection'`` :ref:`property <particle-types-list>` is non-zero)\n"
 			"  * Bonds (deleting bonds whose ``'Selection'`` :ref:`property <bond-types-list>` is non-zero)\n"
 			"\n\n"
-			"The modifier will act on all of them by default. Restriction to a subset is possible by setting the :py:attr:`.operate_on` field. ")
+			"The modifier will act on all of them simultaneously by default. Restricting the delete operation to a subset is possible by setting the :py:attr:`.operate_on` field. "
+			"See also the corresponding `user manual page <../../particles.modifiers.delete_selected_particles.html>`__ for this modifier. "
+			)
 	;	
 	modifier_operate_on_list(DeleteSelectedModifier_py, std::mem_fn(&DeleteSelectedModifier::delegates), "operate_on", 
 			"A set of strings specifying the kinds of data elements this modifier should operate on. "
@@ -582,7 +605,9 @@ PYBIND11_MODULE(StdMod, m)
 	ovito_class<ExpressionSelectionModifier, DelegatingModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
 			"\n\n"
-			"Selects elements based on a user-defined Boolean expression. The modifier can operate on different kinds of data elements: "
+			"Selects elements based on a user-defined Boolean expression. "
+			"See also the corresponding `user manual page <../../particles.modifiers.expression_select.html>`__ for this modifier. "
+			"The modifier can operate on different classes of elements: "
 			"\n\n"
 			"  * Particles (setting the ``'Selection'`` :ref:`particle property <particle-types-list>`)\n"
 			"  * Bonds (setting the ``'Selection'`` :ref:`bond property <bond-types-list>`)\n"
@@ -617,6 +642,7 @@ PYBIND11_MODULE(StdMod, m)
 			"This modifier obtains the value of a property by evaluating the data pipeline at a fixed animation time (frame 0 by default), "
 			"and injects it back into the pipeline, optionally under a different name than the original property. "
 			"Thus, the :py:class:`!FreezePropertyModifier` allows you to *freeze* a dynamically changing property and overwrite its values with those from a fixed point in time. "
+			"See also the corresponding `user manual page <../../particles.modifiers.freeze_property.html>`__ for this modifier. "
 			"\n\n"
 			"The modifier can operate on properties of different kinds: "
 			"\n\n"

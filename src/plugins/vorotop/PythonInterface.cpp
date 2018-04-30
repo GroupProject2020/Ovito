@@ -62,6 +62,8 @@ PYBIND11_MODULE(VoroTop, m)
 			"Further information about the Voronoi topology approach for local structure analysis, as well "
     		"as additional filters, can be found on the `VoroTop webpage <https://www.seas.upenn.edu/~mlazar/VoroTop/>`__. "
 			"\n\n"
+			"See also the corresponding `user manual page <../../particles.modifiers.vorotop_analysis.html>`__ for this modifier. "
+			"\n\n"
 			"**Modifier outputs:**"
 			"\n\n"
 			" * ``Structure Type`` (:py:class:`~ovito.data.ParticleProperty`):\n"

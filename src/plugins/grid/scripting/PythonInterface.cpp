@@ -43,7 +43,8 @@ PYBIND11_MODULE(Grid, m)
 
 	ovito_class<CreateIsosurfaceModifier, AsynchronousModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
-			"Generates an isosurface from a field defined on a structured data grid (voxel data)."
+			"Generates an isosurface from a field defined on a structured data grid (voxel data). "
+			"See also the corresponding `user manual page <../../particles.modifiers.create_isosurface.html>`__ for this modifier. "
 			"\n\n"
 			"**Modifier outputs:**"
 			"\n\n"

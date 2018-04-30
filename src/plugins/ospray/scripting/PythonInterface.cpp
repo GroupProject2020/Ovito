@@ -44,7 +44,7 @@ PYBIND11_MODULE(OSPRayRenderer, m)
 			"\n\n"
 			"OSPRay can render scenes with ambient occlusion lighting, semi-transparent objects, and depth-of-field focal blur. "
 			"For technical details of the supported rendering algorithms and parameters, see the `www.ospray.org <http://www.ospray.org>`__ website. "
-			"See also the `OVITO user documentation <../../rendering.ospray_renderer.html>`__ for more information on this rendering engine. ")
+			"See also the corresponding `user manual page <../../rendering.ospray_renderer.html>`__ for more information on this rendering engine. ")
 		.def_property("refinement_iterations", &OSPRayRenderer::refinementIterations, &OSPRayRenderer::setRefinementIterations,
 				"The OSPRay renderer supports a feature called adaptive accumulation, which is a progressive rendering method. "
 				"During each rendering pass, the rendered image is progressively refined. "

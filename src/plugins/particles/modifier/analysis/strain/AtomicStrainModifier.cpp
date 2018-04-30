@@ -337,7 +337,7 @@ PipelineFlowState AtomicStrainModifier::AtomicStrainResults::apply(TimePoint tim
 	if(stretchTensors())
 		poh.outputProperty<ParticleProperty>(stretchTensors());
 
-	output.attributes().insert(QStringLiteral("AtomicStrain.invalid_particle_count"), QVariant::fromValue(numInvalidParticles()));
+	poh.outputAttribute(QStringLiteral("AtomicStrain.invalid_particle_count"), QVariant::fromValue(numInvalidParticles()));
 
 	if(numInvalidParticles() != 0)
 		output.setStatus(PipelineStatus(PipelineStatus::Warning, tr("Could not compute local deformation for %1 particles because of too few neighbors. Increase cutoff radius to include more neighbors.").arg(numInvalidParticles())));

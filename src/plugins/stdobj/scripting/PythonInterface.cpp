@@ -135,6 +135,7 @@ PYBIND11_MODULE(StdObj, m)
 			"Controls the visual appearance of the simulation cell. "
 			"An instance of this class is attached to the :py:class:`~ovito.data.SimulationCell` object "
 			"and can be accessed through its :py:attr:`~ovito.data.DataObject.vis` field. "
+			"See also the corresponding `user manual page <../../display_objects.simulation_cell.html>`__ for this visual element. "
 			"\n\n"
 			"The following example script demonstrates how to change the line width of the simulation cell:"
 			"\n\n"
