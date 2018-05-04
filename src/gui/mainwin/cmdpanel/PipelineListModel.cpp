@@ -244,7 +244,8 @@ void PipelineListModel::applyModifiers(const QVector<OORef<Modifier>>& modifiers
 			currentItem = currentItem->parent();
 		}
 		if(OORef<PipelineObject> pobj = dynamic_object_cast<PipelineObject>(currentItem->object())) {
-			for(Modifier* modifier : modifiers) {
+			for(int i = modifiers.size() - 1; i >= 0; i--) {
+				Modifier* modifier = modifiers[i];
 				auto dependentsList = pobj->dependents();
 				OORef<ModifierApplication> modApp = modifier->createModifierApplication();
 				modApp->setModifier(modifier);

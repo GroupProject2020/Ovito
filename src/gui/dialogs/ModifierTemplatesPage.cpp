@@ -109,16 +109,16 @@ void ModifierTemplatesPage::onCreateTemplate()
 		QVector<OORef<Modifier>> modifierList;
 		for(int index = 0; index < pipelineModel->rowCount(); index++) {
 			PipelineListItem* item = pipelineModel->item(index);
-			Modifier* modifier = dynamic_object_cast<Modifier>(item->object());
-			if(modifier) {
-				QListWidgetItem* listItem = new QListWidgetItem(modifier->objectTitle(), modifierListWidget);
+			ModifierApplication* modApp = dynamic_object_cast<ModifierApplication>(item->object());
+			if(modApp && modApp->modifier()) {
+				QListWidgetItem* listItem = new QListWidgetItem(modApp->modifier()->objectTitle(), modifierListWidget);
 				listItem->setFlags(Qt::ItemFlags(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemNeverHasChildren));
 				if(pipelineModel->selectedItem() == item) {
-					selectedModifier = modifier;
+					selectedModifier = modApp->modifier();
 					listItem->setCheckState(Qt::Checked);
 				}
 				else listItem->setCheckState(Qt::Unchecked);
-				modifierList.push_back(modifier);
+				modifierList.push_back(modApp->modifier());
 			}
 		}
 		if(modifierList.empty())
