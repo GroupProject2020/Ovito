@@ -279,7 +279,7 @@ void defineModifiersSubmodule(py::module m)
 					if(mod.is1D() && modApp->binData()->size() == mod.numberOfBinsX()) {
 						shape.push_back(mod.numberOfBinsX());
 					}
-					else if(!mod.is1D() && modApp->binData()->size() == (size_t)mod.numberOfBinsY() * (size_t)mod.numberOfBinsY()) {
+					else if(!mod.is1D() && modApp->binData()->size() == (size_t)mod.numberOfBinsX() * (size_t)mod.numberOfBinsY()) {
 						shape.push_back(mod.numberOfBinsY());
 						shape.push_back(mod.numberOfBinsX());
 					}
