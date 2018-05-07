@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //  Copyright (2014) Lars Pastewka
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -26,6 +26,7 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
 #include <plugins/particles/objects/ParticleProperty.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/dataset/pipeline/Modifier.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
@@ -70,26 +71,11 @@ public:
 	/// \brief Modifies the input data.
 	virtual Future<PipelineFlowState> evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
-	/// Returns the stored average data.
-	const QVector<double>& binData() const { return _binData; }
-
 	/// Set start and end value of the plotting property axis.
 	void setPropertyAxisRange(FloatType start, FloatType end) { 
 		setPropertyAxisRangeStart(start); 
 		setPropertyAxisRangeEnd(end); 
 	}
-
-	/// Returns the start value of the plotting x-axis.
-	FloatType xAxisRangeStart() const { return _xAxisRangeStart; }
-
-	/// Returns the end value of the plotting x-axis.
-	FloatType xAxisRangeEnd() const { return _xAxisRangeEnd; }
-
-	/// Returns the start value of the plotting y-axis.
-	FloatType yAxisRangeStart() const { return _yAxisRangeStart; }
-
-	/// Returns the end value of the plotting y-axis.
-	FloatType yAxisRangeEnd() const { return _yAxisRangeEnd; }
 
     /// Returns true if binning in a single direction only.
     bool is1D() {
@@ -142,22 +128,34 @@ private:
 
 	/// Controls whether the modifier should take into account only selected particles.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, onlySelected, setOnlySelected);
+};
 
-	/// Stores the start value of the plotting x-axis.
-	FloatType _xAxisRangeStart;
+/**
+ * \brief The type of ModifierApplication create for a BinAndReduceModifier 
+ *        when it is inserted into in a data pipeline.
+ */
+class OVITO_PARTICLES_EXPORT BinAndReduceModifierApplication : public ModifierApplication
+{
+	OVITO_CLASS(BinAndReduceModifierApplication)
+	Q_OBJECT
+	
+public:
 
-	/// Stores the end value of the plotting x-axis.
-	FloatType _xAxisRangeEnd;
+	/// Constructor.
+	Q_INVOKABLE BinAndReduceModifierApplication(DataSet* dataset) : ModifierApplication(dataset) {}
 
-	/// Stores the start value of the plotting y-axis.
-	FloatType _yAxisRangeStart;
+	using Interval = std::pair<FloatType,FloatType>;
+ 
+private:
 
-	/// Stores the end value of the plotting y-axis.
-	FloatType _yAxisRangeEnd;
+	/// The 1-dimensional bin values.
+	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(PropertyPtr, binData, setBinData, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
-	/// Stores the averaged data.
-	/// Use double precision numbers to avoid precision loss when adding up a large number of values.
-	QVector<double> _binData;
+	/// The interval along the first axis.
+	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(Interval, range1, setRange1, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
+
+	/// The interval along the second axis.
+	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(Interval, range2, setRange2, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 };
 
 OVITO_END_INLINE_NAMESPACE

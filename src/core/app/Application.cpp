@@ -121,6 +121,9 @@ bool Application::initialize()
 	// Register our floating-point data type with the Qt type system.
 	qRegisterMetaType<FloatType>("FloatType");
 
+	// Register generic object reference type with the Qt type system.
+	qRegisterMetaType<OORef<OvitoObject>>("OORef<OvitoObject>");
+
 	// Register Qt stream operators for basic types.
 	qRegisterMetaTypeStreamOperators<Vector2>("Ovito::Vector2");
 	qRegisterMetaTypeStreamOperators<Vector3>("Ovito::Vector3");

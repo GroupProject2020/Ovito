@@ -106,7 +106,7 @@ void CoordinationNumberModifierEditor::plotRDF()
 	if(!modApp || !modifier)
 		return;
 
-	if(modApp->rdfX().empty())
+	if(!modApp->rdfX() || !modApp->rdfY())
 		return;
 
 	if(!_plotCurve) {
@@ -118,14 +118,18 @@ void CoordinationNumberModifierEditor::plotRDF()
 		plotGrid->setPen(Qt::gray, 0, Qt::DotLine);
 		plotGrid->attach(_rdfPlot);
 	}
-    _plotCurve->setSamples(modApp->rdfX().data(), modApp->rdfY().data(), modApp->rdfX().size());
+
+	QVector<double> x(modApp->rdfX()->size());
+	QVector<double> y(modApp->rdfY()->size());
+	if(modApp->rdfX()->copyTo(x.begin()) && modApp->rdfY()->copyTo(y.begin()))
+	    _plotCurve->setSamples(x, y);
 
 	// Determine lower X bound where the histogram is non-zero.
 	_rdfPlot->setAxisAutoScale(QwtPlot::xBottom);
 	double maxx = modifier->cutoff();
-	for(int i = 0; i < modApp->rdfX().size(); i++) {
-		if(modApp->rdfY()[i] != 0) {
-			double minx = std::floor(modApp->rdfX()[i] * 9.0 / maxx) / 10.0 * maxx;
+	for(int i = 0; i < x.size(); i++) {
+		if(y[i] != 0) {
+			double minx = std::floor(x[i] * 9.0 / maxx) / 10.0 * maxx;
 			_rdfPlot->setAxisScale(QwtPlot::xBottom, minx, maxx);
 			break;
 		}
@@ -143,7 +147,7 @@ void CoordinationNumberModifierEditor::onSaveData()
 	if(!modApp)
 		return;
 
-	if(modApp->rdfX().empty())
+	if(!modApp->rdfX() || !modApp->rdfY() || modApp->rdfY()->size() != modApp->rdfX()->size())
 		return;
 
 	QString fileName = QFileDialog::getSaveFileName(mainWindow(),
@@ -162,8 +166,8 @@ void CoordinationNumberModifierEditor::onSaveData()
 		stream << "# 1: Bin number" << endl;
 		stream << "# 2: r" << endl;
 		stream << "# 3: g(r)" << endl;
-		for(int i = 0; i < modApp->rdfX().size(); i++) {
-			stream << i << "\t" << modApp->rdfX()[i] << "\t" << modApp->rdfY()[i] << endl;
+		for(size_t i = 0; i < modApp->rdfX()->size(); i++) {
+			stream << i << "\t" << modApp->rdfX()->getFloat(i) << "\t" << modApp->rdfY()->getFloat(i) << endl;
 		}
 	}
 	catch(const Exception& ex) {

@@ -36,7 +36,9 @@ class OVITO_STDMOD_EXPORT HistogramModifier : public GenericPropertyModifier
 {
 	Q_OBJECT
 	OVITO_CLASS(HistogramModifier)
-	
+	Q_CLASSINFO("DisplayName", "Histogram");
+	Q_CLASSINFO("ModifierCategory", "Analysis");
+
 public:
 
 	/// Constructor.
@@ -102,9 +104,6 @@ private:
 
 	/// Controls whether the modifier should take into account only selected elements.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, onlySelected, setOnlySelected);
-
-	Q_CLASSINFO("DisplayName", "Histogram");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
 };
 
 /**
@@ -120,31 +119,16 @@ public:
 
 	/// Constructor.
 	Q_INVOKABLE HistogramModifierApplication(DataSet* dataset) : ModifierApplication(dataset) {}
- 
-	/// Returns the stored histogram data.
-	const QVector<size_t>& histogramData() const { return _histogramData; }
 
-	/// Returns the start of the histogram's range along the x-axis. 
-	FloatType intervalStart() const { return _intervalStart; }
-
-	/// Returns the end of the histogram's range along the x-axis. 
-	FloatType intervalEnd() const { return _intervalEnd; }
-	
-	/// Replaces the stored data.
-	void setHistogramData(QVector<size_t> histogramData, FloatType intervalStart, FloatType intervalEnd) {
-		_histogramData = std::move(histogramData);
-		_intervalStart = intervalStart;
-		_intervalEnd = intervalEnd;
-		notifyDependents(ReferenceEvent::ObjectStatusChanged);
-	}
+	using HistogramInterval = std::pair<FloatType,FloatType>;
  
 private:
 
-	/// Stores the histogram data.
-	QVector<size_t> _histogramData;
+	/// The bin values of the histogram.
+	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(PropertyPtr, binCounts, setBinCounts, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
-	FloatType _intervalStart;
-	FloatType _intervalEnd;
+	/// The interval of the histogram.
+	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(HistogramInterval, histogramInterval, setHistogramInterval, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 };
 
 }	// End of namespace

@@ -173,13 +173,14 @@ bool BinAndReduceModifierEditor::referenceEvent(RefTarget* source, const Referen
 void BinAndReduceModifierEditor::plotData()
 {
 	BinAndReduceModifier* modifier = static_object_cast<BinAndReduceModifier>(editObject());
-	if(!modifier)
+	BinAndReduceModifierApplication* modApp = dynamic_object_cast<BinAndReduceModifierApplication>(someModifierApplication());
+	if(!modifier || !modApp || !modifier->isEnabled())
 		return;
 
 	int binDataSizeX = std::max(1, modifier->numberOfBinsX());
 	int binDataSizeY = std::max(1, modifier->numberOfBinsY());
     if(modifier->is1D()) binDataSizeY = 1;
-    size_t binDataSize = binDataSizeX * binDataSizeY;
+    size_t binDataSize = (size_t)binDataSizeX * (size_t)binDataSizeY;
 
     if(modifier->is1D()) {
     	_plot->setAxisTitle(QwtPlot::yRight, QString());
@@ -205,20 +206,20 @@ void BinAndReduceModifierEditor::plotData()
 
         if(_plotRaster) _plotRaster->hide();
 
-        if(modifier->binData().empty()) {
+        if(!modApp->binData() || modApp->binData()->size() != binDataSize) {
             _plotCurve->hide();
             return;
         }
         _plotCurve->show();
 
         QVector<QPointF> plotData(binDataSize + 1);
-        double binSize = (modifier->xAxisRangeEnd() - modifier->xAxisRangeStart()) / binDataSize;
+        double binSize = (modApp->range1().second - modApp->range1().first) / binDataSize;
         for(int i = 1; i <= binDataSize; i++) {
-            plotData[i].rx() = binSize * i + modifier->xAxisRangeStart();
-            plotData[i].ry() = modifier->binData()[i-1];
+            plotData[i].rx() = binSize * i + modApp->range1().first;
+            plotData[i].ry() = modApp->binData()->getFloat(i-1);
         }
-        plotData.front().rx() = modifier->xAxisRangeStart();
-        plotData.front().ry() = modifier->binData().front();
+        plotData.front().rx() = modApp->range1().first;
+        plotData.front().ry() = modApp->binData()->getFloat(0);
         _plotCurve->setSamples(plotData);
 
 		_plot->setAxisAutoScale(QwtPlot::xBottom);
@@ -257,19 +258,21 @@ void BinAndReduceModifierEditor::plotData()
             _plot->plotLayout()->setAlignCanvasToScales(true);
         }
 
-        if(modifier->binData().empty()) {
+        if(!modApp->binData() || modApp->binData()->size() != binDataSize) {
             _plotRaster->hide();
             return;
         }
         _plotRaster->show();
 
         _plot->enableAxis(QwtPlot::yRight);
-        _rasterData->setValueMatrix(modifier->binData(), binDataSizeX);
-        _rasterData->setInterval(Qt::XAxis, QwtInterval(modifier->xAxisRangeStart(), modifier->xAxisRangeEnd(), QwtInterval::ExcludeMaximum));
-        _rasterData->setInterval(Qt::YAxis, QwtInterval(modifier->yAxisRangeStart(), modifier->yAxisRangeEnd(), QwtInterval::ExcludeMaximum));
+        QVector<double> values(modApp->binData()->size());
+        std::copy(modApp->binData()->constDataFloat(), modApp->binData()->constDataFloat() + modApp->binData()->size(), values.begin());
+        _rasterData->setValueMatrix(values, binDataSizeX);
+        _rasterData->setInterval(Qt::XAxis, QwtInterval(modApp->range1().first, modApp->range1().second, QwtInterval::ExcludeMaximum));
+        _rasterData->setInterval(Qt::YAxis, QwtInterval(modApp->range2().first, modApp->range2().second, QwtInterval::ExcludeMaximum));
         QwtInterval zInterval;
         if(!modifier->fixPropertyAxisRange()) {
-            auto minmax = std::minmax_element(modifier->binData().begin(), modifier->binData().end());
+            auto minmax = std::minmax_element(modApp->binData()->constDataFloat(), modApp->binData()->constDataFloat() + modApp->binData()->size());
             zInterval = QwtInterval(*minmax.first, *minmax.second, QwtInterval::ExcludeMaximum);
         }
         else {
@@ -277,8 +280,8 @@ void BinAndReduceModifierEditor::plotData()
         }
         _plot->axisScaleEngine(QwtPlot::yRight)->setAttribute(QwtScaleEngine::Inverted, zInterval.minValue() > zInterval.maxValue());
         _rasterData->setInterval(Qt::ZAxis, zInterval.normalized());
-		_plot->setAxisScale(QwtPlot::xBottom, modifier->xAxisRangeStart(), modifier->xAxisRangeEnd());
-		_plot->setAxisScale(QwtPlot::yLeft, modifier->yAxisRangeStart(), modifier->yAxisRangeEnd());
+		_plot->setAxisScale(QwtPlot::xBottom, modApp->range1().first, modApp->range1().second);
+		_plot->setAxisScale(QwtPlot::yLeft, modApp->range2().first, modApp->range2().second);
         _plot->axisWidget(QwtPlot::yRight)->setColorMap(zInterval.normalized(), new ColorMap());
         _plot->setAxisScale(QwtPlot::yRight, zInterval.minValue(), zInterval.maxValue());
         _plot->setAxisTitle(QwtPlot::yRight, modifier->sourceProperty().name());
@@ -307,10 +310,8 @@ void BinAndReduceModifierEditor::updateWidgets()
 void BinAndReduceModifierEditor::onSaveData()
 {
 	BinAndReduceModifier* modifier = static_object_cast<BinAndReduceModifier>(editObject());
-	if(!modifier)
-		return;
-
-	if(modifier->binData().empty())
+	BinAndReduceModifierApplication* modApp = dynamic_object_cast<BinAndReduceModifierApplication>(someModifierApplication());
+	if(!modifier || !modApp)
 		return;
 
 	QString fileName = QFileDialog::getSaveFileName(mainWindow(),
@@ -327,24 +328,28 @@ void BinAndReduceModifierEditor::onSaveData()
 
 		int binDataSizeX = std::max(1, modifier->numberOfBinsX());
 		int binDataSizeY = std::max(1, modifier->numberOfBinsY());
-        if (modifier->is1D()) binDataSizeY = 1;
-		FloatType binSizeX = (modifier->xAxisRangeEnd() - modifier->xAxisRangeStart()) / binDataSizeX;
-		FloatType binSizeY = (modifier->yAxisRangeEnd() - modifier->yAxisRangeStart()) / binDataSizeY;
+        if(modifier->is1D()) binDataSizeY = 1;
+		FloatType binSizeX = (modApp->range1().second - modApp->range1().first) / binDataSizeX;
+		FloatType binSizeY = (modApp->range2().second - modApp->range2().first) / binDataSizeY;
+
+        if(!modifier->isEnabled() || !modApp->binData() || modApp->binData()->size() != (size_t)binDataSizeX * (size_t)binDataSizeY)
+			throwException(tr("Modifier has not been evaluated as part of the data pipeline yet."));
 
 		QTextStream stream(&file);
-        if (binDataSizeY == 1) {
-            stream << "# " << modifier->sourceProperty().nameWithComponent() << " bin size: " << binSizeX << endl;
-			for(size_t i = 0; i < modifier->binData().size(); i++) {
-                stream << (binSizeX * (FloatType(i) + 0.5f) + modifier->xAxisRangeStart()) << " " << modifier->binData()[i] << endl;
+        if(binDataSizeY == 1) {
+            stream << "# " << modifier->sourceProperty().nameWithComponent() << ", bin size: " << binSizeX << ", bin count: " << binDataSizeX << endl;
+			for(int i = 0; i < binDataSizeX; i++) {
+                stream << (binSizeX * (FloatType(i) + FloatType(0.5)) + modApp->range1().first) << " " << modApp->binData()->getFloat(i) << "\n";
             }
         }
         else {
-            stream << "# " << modifier->sourceProperty().nameWithComponent() << " bin size X: " << binDataSizeX << ", bin size Y: " << binDataSizeY << endl;
+            stream << "# " << modifier->sourceProperty().nameWithComponent() << ", bin size X: " << binDataSizeX << ", bin count X: " << binDataSizeX << ", bin size Y: " << binDataSizeY << ", bin count Y: " << binDataSizeY << endl;
+            auto d = modApp->binData()->constDataFloat();
             for(int i = 0; i < binDataSizeY; i++) {
                 for(int j = 0; j < binDataSizeX; j++) {
-                    stream << modifier->binData()[i*binDataSizeX+j] << " ";
+                    stream << *d++ << " ";
                 }
-                stream << endl;
+                stream << "\n";
             }
         }
 	}

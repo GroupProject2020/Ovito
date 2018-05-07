@@ -168,6 +168,13 @@ public:
 	}
 
 	/// \brief Returns a read-only pointer to the first point element in the property storage.
+	/// \note This method may only be used if this property is of data type Point2 or a FloatType channel with 2 components.
+	const Point2* constDataPoint2() const {
+		OVITO_ASSERT(dataType() == qMetaTypeId<Point2>() || (dataType() == Float && componentCount() == 2));
+		return reinterpret_cast<const Point2*>(constData());
+	}	
+
+	/// \brief Returns a read-only pointer to the first point element in the property storage.
 	/// \note This method may only be used if this property is of data type Vector3I or an integer channel with 3 components.
 	const Vector3I* constDataVector3I() const {
 		OVITO_ASSERT(dataType() == qMetaTypeId<Vector3I>() || (dataType() == Int && componentCount() == 3));
@@ -233,6 +240,11 @@ public:
 	boost::iterator_range<const Point3*> constPoint3Range() const {
 		return boost::make_iterator_range(constDataPoint3(), constDataPoint3() + size());
 	}
+
+	/// \brief Returns a range of const iterators over the elements stored in this object.
+	boost::iterator_range<const Point2*> constPoint2Range() const {
+		return boost::make_iterator_range(constDataPoint2(), constDataPoint2() + size());
+	}	
 
 	/// \brief Returns a range of const iterators over the elements stored in this object.
 	boost::iterator_range<const Vector3*> constVector3Range() const {
@@ -318,6 +330,13 @@ public:
 	}
 
 	/// \brief Returns a read-write pointer to the first point element in the property storage.
+	/// \note This method may only be used if this property is of data type Point2 or a FloatType channel with 2 components.
+	Point2* dataPoint2() {
+		OVITO_ASSERT(dataType() == qMetaTypeId<Point2>() || (dataType() == Float && componentCount() == 2));
+		return reinterpret_cast<Point2*>(data());
+	}	
+
+	/// \brief Returns a read-write pointer to the first point element in the property storage.
 	/// \note This method may only be used if this property is of data type Point3I or an integer channel with 3 components.
 	Point3I* dataPoint3I() {
 		OVITO_ASSERT(dataType() == qMetaTypeId<Point3I>() || (dataType() == Int && componentCount() == 3));
@@ -375,6 +394,11 @@ public:
 	boost::iterator_range<Point3*> point3Range() {
 		return boost::make_iterator_range(dataPoint3(), dataPoint3() + size());
 	}
+
+	/// \brief Returns a range of iterators over the elements stored in this object.
+	boost::iterator_range<Point2*> point2Range() {
+		return boost::make_iterator_range(dataPoint2(), dataPoint2() + size());
+	}	
 
 	/// \brief Returns a range of iterators over the elements stored in this object.
 	boost::iterator_range<Vector3*> vector3Range() {
@@ -458,6 +482,12 @@ public:
 		OVITO_ASSERT(index < size());
 		return constDataPoint3()[index];
 	}
+
+	/// Returns a Point2 element at the given index (if this is a point property).
+	const Point2& getPoint2(size_t index) const {
+		OVITO_ASSERT(index < size());
+		return constDataPoint2()[index];
+	}	
 
 	/// Returns a Vector3I element at the given index (if this is a point property).
 	const Vector3I& getVector3I(size_t index) const {
@@ -543,6 +573,12 @@ public:
 		dataPoint3()[index] = newValue;
 	}
 
+	/// Sets the value of a Point2 element at the given index (if this is a point property).
+	void setPoint2(size_t index, const Point2& newValue) {
+		OVITO_ASSERT(index < size());
+		dataPoint2()[index] = newValue;
+	}	
+
 	/// Sets the value of a Vector3I element at the given index (if this is an integer vector property).
 	void setVector3I(size_t index, const Vector3I& newValue) {
 		OVITO_ASSERT(index < size());
@@ -591,6 +627,30 @@ public:
 
 	/// Reads the object from an input stream.
 	void loadFromStream(LoadStream& stream);
+
+	/// Copies the values in this property array to the given output iterator if it is compatible.
+	/// Returns false if copying was not possible, because the data type of the array and the output iterator
+	/// are not compatible.
+	template<typename Iter>
+	bool copyTo(Iter iter) const {
+		if(componentCount() != 1) return false;
+		if(dataType() == PropertyStorage::Int) {
+			for(auto v = constDataInt(), v_end = v + size(); v != v_end; ++v)
+				*iter++ = *v;
+			return true;
+		}
+		else if(dataType() == PropertyStorage::Int64) {
+			for(auto v = constDataInt64(), v_end = v + size(); v != v_end; ++v)
+				*iter++ = *v;
+			return true;
+		}
+		else if(dataType() == PropertyStorage::Float) {
+			for(auto v = constDataFloat(), v_end = v + size(); v != v_end; ++v)
+				*iter++ = *v;
+			return true;
+		}
+		return false;
+	}
 
 protected:
 

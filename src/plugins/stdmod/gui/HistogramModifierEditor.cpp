@@ -188,7 +188,7 @@ void HistogramModifierEditor::plotHistogram()
 {
 	HistogramModifier* modifier = static_object_cast<HistogramModifier>(editObject());
 	HistogramModifierApplication* modApp = dynamic_object_cast<HistogramModifierApplication>(someModifierApplication());
-	if(!modifier || !modApp || !modifier->isEnabled() || modApp->histogramData().empty()) {
+	if(!modifier || !modApp || !modifier->isEnabled() || !modApp->binCounts()) {
 		if(_plotCurve) _plotCurve->hide();
 		_histogramPlot->replot();
 		return;
@@ -198,19 +198,19 @@ void HistogramModifierEditor::plotHistogram()
 	_histogramPlot->setAxisTitle(QwtPlot::xBottom, axisTitle);
 
 	if(modifier->fixXAxisRange() == false) {
-		modifier->setXAxisRange(modApp->intervalStart(), modApp->intervalEnd());
+		modifier->setXAxisRange(modApp->histogramInterval().first, modApp->histogramInterval().second);
 	}
 	
-	size_t binCount = modApp->histogramData().size();
+	size_t binCount = modApp->binCounts()->size();
 	FloatType binSize = (modifier->xAxisRangeEnd() - modifier->xAxisRangeStart()) / binCount;
 	QVector<QPointF> plotData(binCount);
 	for(size_t i = 0; i < binCount; i++) {
 		plotData[i].rx() = binSize * (i + FloatType(0.5)) + modifier->xAxisRangeStart();
-		plotData[i].ry() = modApp->histogramData()[i];
+		plotData[i].ry() = modApp->binCounts()->getInt64(i);
 	}
 
 	if(modifier->fixYAxisRange() == false) {
-		auto minmaxHistogramData = std::minmax_element(modApp->histogramData().begin(), modApp->histogramData().end());
+		auto minmaxHistogramData = std::minmax_element(modApp->binCounts()->constDataInt64(), modApp->binCounts()->constDataInt64() + modApp->binCounts()->size());
 		modifier->setYAxisRange(*minmaxHistogramData.first, *minmaxHistogramData.second);
 	}
 
@@ -261,10 +261,7 @@ void HistogramModifierEditor::onSaveData()
 {
 	HistogramModifier* modifier = static_object_cast<HistogramModifier>(editObject());
 	HistogramModifierApplication* modApp = dynamic_object_cast<HistogramModifierApplication>(someModifierApplication());
-	if(!modifier || !modApp)
-		return;
-
-	if(modApp->histogramData().empty())
+	if(!modifier || !modApp || !modApp->binCounts())
 		return;
 
 	QString fileName = QFileDialog::getSaveFileName(mainWindow(),
@@ -282,11 +279,11 @@ void HistogramModifierEditor::onSaveData()
 
 		QString sourceTitle = modifier->sourceProperty().nameWithComponent();
 
-		FloatType binSize = (modifier->xAxisRangeEnd() - modifier->xAxisRangeStart()) / modApp->histogramData().size();
+		FloatType binSize = (modifier->xAxisRangeEnd() - modifier->xAxisRangeStart()) / modApp->binCounts()->size();
 		stream << "# " << sourceTitle << " histogram (bin size: " << binSize << ")" << endl;
-		for(int i = 0; i < modApp->histogramData().size(); i++) {
+		for(size_t i = 0; i < modApp->binCounts()->size(); i++) {
 			stream << (binSize * (FloatType(i) + FloatType(0.5)) + modifier->xAxisRangeStart()) << " " <<
-						modApp->histogramData()[i] << endl;
+						modApp->binCounts()->getInt64(i) << endl;
 		}
 	}
 	catch(const Exception& ex) {

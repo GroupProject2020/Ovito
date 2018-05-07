@@ -17,6 +17,7 @@ compute neighbor lists to iterate over the bonds of particles.
   * :py:class:`SurfaceMesh`
   * :py:class:`TrajectoryLines`
   * :py:class:`DislocationNetwork`
+  * :py:class:`PlotData`
 
 **Auxiliary data classes:**
 

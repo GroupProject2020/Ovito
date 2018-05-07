@@ -49,7 +49,6 @@ public:
 
 	/// \brief Sets the property's name.
 	/// \param name The new name string.
-	/// \undoable
 	void setName(const QString& name);
 
 	/// \brief Returns the number of elements.

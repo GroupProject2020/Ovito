@@ -26,6 +26,7 @@
 #include <plugins/particles/util/CutoffNeighborFinder.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
+#include <plugins/stdobj/properties/PropertyStorage.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
 #include <core/dataset/pipeline/AsynchronousModifierApplication.h>
 
@@ -72,8 +73,10 @@ private:
 	public:
 
 		/// Constructor.
-		CoordinationAnalysisResults(size_t particleCount) : 
-			_coordinationNumbers(ParticleProperty::createStandardStorage(particleCount, ParticleProperty::CoordinationProperty, true)) {}
+		CoordinationAnalysisResults(size_t particleCount, size_t rdfSampleCount) : 
+			_coordinationNumbers(ParticleProperty::createStandardStorage(particleCount, ParticleProperty::CoordinationProperty, true)),
+			_rdfX(std::make_shared<PropertyStorage>(rdfSampleCount, PropertyStorage::Float, 1, 0, tr("Pair separation distance"), false)), 
+			_rdfY(std::make_shared<PropertyStorage>(rdfSampleCount, PropertyStorage::Float, 1, 0, tr("g(r)"), true)) {}
 
 		/// Injects the computed results into the data pipeline.
 		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
@@ -81,17 +84,17 @@ private:
 		/// Returns the property storage that contains the computed coordination numbers.
 		const PropertyPtr& coordinationNumbers() const { return _coordinationNumbers; }
 
-		/// Returns the X coordinates of the RDF data points.
-		QVector<double>& rdfX() { return _rdfX; }
+		/// Returns the property storage containing the x-coordinates of the data points of the RDF histogram.
+		const PropertyPtr& rdfX() const { return _rdfX; }
 
-		/// Returns the Y coordinates of the RDF data points.
-		QVector<double>& rdfY() { return _rdfY; }
+		/// Returns the property storage containing the y-coordinates of the data points of the RDF histogram.
+		const PropertyPtr& rdfY() const { return _rdfY; }
 
 	private:
 
 		const PropertyPtr _coordinationNumbers;
-		QVector<double> _rdfX;
-		QVector<double> _rdfY;
+		const PropertyPtr _rdfX;
+		const PropertyPtr _rdfY;
 	};
 
 	/// Computes the modifier's results.
@@ -105,7 +108,7 @@ private:
 			_simCell(simCell),
 			_cutoff(cutoff),
 			_rdfSampleCount(rdfSampleCount),
-			_results(std::make_shared<CoordinationAnalysisResults>(positions->size())) {}
+			_results(std::make_shared<CoordinationAnalysisResults>(positions->size(), rdfSampleCount)) {}
 
 		/// Computes the modifier's results.
 		virtual void perform() override;
@@ -152,31 +155,16 @@ public:
 	/// Constructor.
 	Q_INVOKABLE CoordinationNumberModifierApplication(DataSet* dataset) : AsynchronousModifierApplication(dataset) {}
  
-	/// Returns the X coordinates of the RDF data points.
-	const QVector<double>& rdfX() const { return _rdfX; }
-	
-	/// Returns the Y coordinates of the RDF data points.
-	const QVector<double>& rdfY() const { return _rdfY; }
-	 
-	/// Sets the stored RDF data points.
-	void setRDF(QVector<double> x, QVector<double> y) {
-		_rdfX = std::move(x);
-		_rdfY = std::move(y);
-		notifyDependents(ReferenceEvent::ObjectStatusChanged);
-	}
- 
 private:
  
-	/// The X coordinates of the RDF data points.
-	QVector<double> _rdfX;
-	
-	/// The Y coordinates of the RDF data points.
-	QVector<double> _rdfY;
+	/// The x-coordinates of the RDF histogram points.
+	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(PropertyPtr, rdfX, setRdfX, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
+
+	/// The y-coordinates of the RDF histogram points.
+	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(PropertyPtr, rdfY, setRdfY, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 };
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

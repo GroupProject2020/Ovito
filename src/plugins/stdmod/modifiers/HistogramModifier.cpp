@@ -23,6 +23,7 @@
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <plugins/stdobj/properties/PropertyObject.h>
+#include <plugins/stdobj/plot/PlotObject.h>
 #include <plugins/stdobj/util/InputHelper.h>
 #include <plugins/stdobj/util/OutputHelper.h>
 #include <core/app/PluginManager.h>
@@ -32,7 +33,6 @@
 namespace Ovito { namespace StdMod {
 
 IMPLEMENT_OVITO_CLASS(HistogramModifier);
-IMPLEMENT_OVITO_CLASS(HistogramModifierApplication);
 DEFINE_PROPERTY_FIELD(HistogramModifier, numberOfBins);
 DEFINE_PROPERTY_FIELD(HistogramModifier, selectInRange);
 DEFINE_PROPERTY_FIELD(HistogramModifier, selectionRangeStart);
@@ -58,7 +58,13 @@ SET_PROPERTY_FIELD_LABEL(HistogramModifier, yAxisRangeEnd, "Y-range end");
 SET_PROPERTY_FIELD_LABEL(HistogramModifier, sourceProperty, "Source property");
 SET_PROPERTY_FIELD_LABEL(HistogramModifier, onlySelected, "Use only selected elements");
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(HistogramModifier, numberOfBins, IntegerParameterUnit, 1, 100000);
+
+IMPLEMENT_OVITO_CLASS(HistogramModifierApplication);
 SET_MODIFIER_APPLICATION_TYPE(HistogramModifier, HistogramModifierApplication);
+DEFINE_PROPERTY_FIELD(HistogramModifierApplication, binCounts);
+DEFINE_PROPERTY_FIELD(HistogramModifierApplication, histogramInterval);
+SET_PROPERTY_FIELD_CHANGE_EVENT(HistogramModifierApplication, binCounts, ReferenceEvent::ObjectStatusChanged);
+SET_PROPERTY_FIELD_CHANGE_EVENT(HistogramModifierApplication, histogramInterval, ReferenceEvent::ObjectStatusChanged);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -126,7 +132,7 @@ void HistogramModifier::propertyChanged(const PropertyFieldDescriptor& field)
 PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Reset the stored results in the ModifierApplication.
-	static_object_cast<HistogramModifierApplication>(modApp)->setHistogramData({},0,0);
+	static_object_cast<HistogramModifierApplication>(modApp)->setBinCounts({});
 	
 	if(!propertyClass())
 		throwException(tr("No input property class selected."));
@@ -274,9 +280,24 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 		intervalStart = intervalEnd = 0;
 	}
 
+	// Output a plot object.
+	auto xcoords = std::make_shared<PropertyStorage>(histogramData.size(), PropertyStorage::Float, 1, 0, sourceProperty().nameWithComponent(), false);
+	auto ycoords = std::make_shared<PropertyStorage>(histogramData.size(), PropertyStorage::Int64, 1, 0, tr("Count"), false);
+	FloatType binSize = (intervalEnd - intervalStart) / histogramData.size();
+	for(size_t i = 0; i < histogramData.size(); i++) {
+		xcoords->setFloat(i, binSize * (i + FloatType(0.5)) + intervalStart);
+		ycoords->setInt64(i, histogramData[i]);
+	}
+	OORef<PlotObject> plotObj = new PlotObject(modApp->dataset());
+	plotObj->setTitle(tr("Histogram [%1]").arg(sourceProperty().nameWithComponent()));
+	plotObj->setx(xcoords);
+	plotObj->sety(ycoords);
+	output.addObject(plotObj);
+
 	// Store results in the ModifierApplication.
-	static_object_cast<HistogramModifierApplication>(modApp)->setHistogramData(std::move(histogramData), intervalStart, intervalEnd);
-		
+	static_object_cast<HistogramModifierApplication>(modApp)->setBinCounts(ycoords);
+	static_object_cast<HistogramModifierApplication>(modApp)->setHistogramInterval({intervalStart, intervalEnd});
+	
 	QString statusMessage;
 	if(outputSelection) {
 		statusMessage = tr("%1 %2 selected (%3%)")

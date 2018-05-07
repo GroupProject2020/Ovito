@@ -54,7 +54,7 @@ void PythonScriptModifier::loadUserDefaults()
 	setScript("from ovito.data import *\n\n"
 			"def modify(frame, input, output):\n"
 			"\tprint(\"Input particle properties:\")\n"
-			"\tfor name in input.particle_properties.keys():\n"
+			"\tfor name in input.particles.keys():\n"
 			"\t\tprint(name)\n");
 }
 

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -25,6 +25,7 @@
 #include <core/app/Application.h>
 #include <core/dataset/DataSet.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/plot/PlotObject.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/utilities/units/UnitsManager.h>
 #include "CoordinationNumberModifier.h"
@@ -34,14 +35,19 @@
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
 IMPLEMENT_OVITO_CLASS(CoordinationNumberModifier);
-IMPLEMENT_OVITO_CLASS(CoordinationNumberModifierApplication);
 DEFINE_PROPERTY_FIELD(CoordinationNumberModifier, cutoff);
 DEFINE_PROPERTY_FIELD(CoordinationNumberModifier, numberOfBins);
 SET_PROPERTY_FIELD_LABEL(CoordinationNumberModifier, cutoff, "Cutoff radius");
 SET_PROPERTY_FIELD_LABEL(CoordinationNumberModifier, numberOfBins, "Number of histogram bins");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CoordinationNumberModifier, cutoff, WorldParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(CoordinationNumberModifier, numberOfBins, IntegerParameterUnit, 4, 100000);
+
+IMPLEMENT_OVITO_CLASS(CoordinationNumberModifierApplication);
 SET_MODIFIER_APPLICATION_TYPE(CoordinationNumberModifier, CoordinationNumberModifierApplication);
+DEFINE_PROPERTY_FIELD(CoordinationNumberModifierApplication, rdfX);
+DEFINE_PROPERTY_FIELD(CoordinationNumberModifierApplication, rdfY);
+SET_PROPERTY_FIELD_CHANGE_EVENT(CoordinationNumberModifierApplication, rdfX, ReferenceEvent::ObjectStatusChanged);
+SET_PROPERTY_FIELD_CHANGE_EVENT(CoordinationNumberModifierApplication, rdfY, ReferenceEvent::ObjectStatusChanged);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -75,7 +81,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CoordinationNumberModifier::creat
 	// The number of sampling intervals for the radial distribution function.
 	int rdfSampleCount = std::max(numberOfBins(), 4);
 	if(rdfSampleCount > 100000)
-		throwException(tr("Number of histogram bins is too large."));
+		throwException(tr("Requested number of histogram bins is too large. Limit is 100,000 histogram bins."));
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	return std::make_shared<CoordinationAnalysisEngine>(posProperty->storage(), inputCell->data(), cutoff(), rdfSampleCount);
@@ -97,8 +103,6 @@ void CoordinationNumberModifier::CoordinationAnalysisEngine::perform()
 	setProgressValue(0);
 	setProgressMaximum(particleCount / 1000);
 
-	QVector<double> rdfHistogram(_rdfSampleCount, 0.0);
-
 	// Perform analysis on each particle in parallel.
 	std::vector<QFuture<void>> workers;
 	size_t num_threads = Application::instance()->idealThreadCount();
@@ -110,8 +114,8 @@ void CoordinationNumberModifier::CoordinationAnalysisEngine::perform()
 		if(t == num_threads - 1) {
 			endIndex += particleCount % num_threads;
 		}
-		workers.push_back(QtConcurrent::run([&neighborListBuilder, startIndex, endIndex, &mutex, &rdfHistogram, this]() {
-			FloatType rdfBinSize = (_cutoff + FLOATTYPE_EPSILON) / _rdfSampleCount;
+		workers.push_back(QtConcurrent::run([&neighborListBuilder, startIndex, endIndex, &mutex, this]() {
+			FloatType rdfBinSize = _cutoff / _rdfSampleCount;
 			std::vector<double> threadLocalRDF(_rdfSampleCount, 0);
 			int* coordOutput = _results->coordinationNumbers()->dataInt() + startIndex;
 			for(size_t i = startIndex; i < endIndex; ++coordOutput) {
@@ -134,9 +138,10 @@ void CoordinationNumberModifier::CoordinationAnalysisEngine::perform()
 					return;
 			}
 			std::lock_guard<std::mutex> lock(mutex);
-			auto iter_out = rdfHistogram.begin();
-			for(auto iter = threadLocalRDF.cbegin(); iter != threadLocalRDF.cend(); ++iter, ++iter_out)
-				*iter_out += *iter;
+			// Combine RDF histograms.
+			auto bin = _results->rdfY()->dataFloat();
+			for(auto iter = threadLocalRDF.cbegin(); iter != threadLocalRDF.cend(); ++iter)
+				*bin++ += *iter;
 		}));
 		startIndex = endIndex;
 		endIndex += chunkSize;
@@ -146,28 +151,30 @@ void CoordinationNumberModifier::CoordinationAnalysisEngine::perform()
 		t.waitForFinished();
 
 	// Normalize RDF.
-	_results->rdfX().resize(_rdfSampleCount);
-	_results->rdfY().resize(_rdfSampleCount);
 	if(!cell().is2D()) {
 		double rho = positions()->size() / cell().volume3D();
 		double constant = 4.0/3.0 * FLOATTYPE_PI * rho * positions()->size();
 		double stepSize = cutoff() / _rdfSampleCount;
-		for(int i = 0; i < _rdfSampleCount; i++) {
+		auto rdfX = _results->rdfX()->dataFloat();
+		auto rdfY = _results->rdfY()->dataFloat();
+		for(int i = 0; i < _rdfSampleCount; i++, ++rdfX, ++rdfY) {
 			double r = stepSize * i;
 			double r2 = r + stepSize;
-			_results->rdfX()[i] = r + 0.5 * stepSize;
-			_results->rdfY()[i] = rdfHistogram[i] / (constant * (r2*r2*r2 - r*r*r));
+			*rdfX = r + 0.5 * stepSize;
+			*rdfY /= constant * (r2*r2*r2 - r*r*r);
 		}
 	}
 	else {
 		double rho = positions()->size() / cell().volume2D();
 		double constant = FLOATTYPE_PI * rho * positions()->size();
 		double stepSize = cutoff() / _rdfSampleCount;
-		for(int i = 0; i < _rdfSampleCount; i++) {
+		auto rdfX = _results->rdfX()->dataFloat();
+		auto rdfY = _results->rdfY()->dataFloat();
+		for(int i = 0; i < _rdfSampleCount; i++, ++rdfX, ++rdfY) {
 			double r = stepSize * i;
 			double r2 = r + stepSize;
-			_results->rdfX()[i] = r + 0.5 * stepSize;
-			_results->rdfY()[i] = rdfHistogram[i] / (constant * (r2*r2 - r*r));
+			*rdfX = r + 0.5 * stepSize;
+			*rdfY /= constant * (r2*r2 - r*r);
 		}
 	}
 
@@ -183,11 +190,19 @@ PipelineFlowState CoordinationNumberModifier::CoordinationAnalysisResults::apply
 	PipelineFlowState output = input;
 	ParticleOutputHelper poh(modApp->dataset(), output);
 	if(coordinationNumbers()->size() != poh.outputParticleCount())
-		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
+		modApp->throwException(tr("Cached modifier results became obsolete, because the number of input particles has changed."));
 	poh.outputProperty<ParticleProperty>(coordinationNumbers());
 
-	// Store the RDF data points in the ModifierApplication.
-	static_object_cast<CoordinationNumberModifierApplication>(modApp)->setRDF(rdfX(), rdfY());
+	// Output RDF histogram.
+	OORef<PlotObject> rdfPlotObj = new PlotObject(modApp->dataset());
+	rdfPlotObj->setx(rdfX());
+	rdfPlotObj->sety(rdfY());
+	rdfPlotObj->setTitle(tr("RDF"));
+	output.addObject(rdfPlotObj);
+
+	// Store the RDF data points in the ModifierApplication in order to display the RDF in the modifier's UI panel.
+	static_object_cast<CoordinationNumberModifierApplication>(modApp)->setRdfX(rdfX());
+	static_object_cast<CoordinationNumberModifierApplication>(modApp)->setRdfY(rdfY());
 		
 	return output;
 }

@@ -75,8 +75,6 @@ void PropertyObject::setName(const QString& newName)
 	if(newName == name())
 		return;
 
-	// Make the property change undoable.
-	dataset()->undoStack().pushIfRecording<SimplePropertyChangeOperation>(this, "name");
 	modifiableStorage()->setName(newName);
 	notifyTargetChanged();
 }

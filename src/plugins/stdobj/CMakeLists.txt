@@ -32,6 +32,7 @@ SET(SourceFiles
 	properties/ElementType.cpp
 	properties/GenericPropertyModifier.cpp
 	properties/PropertyExpressionEvaluator.cpp
+	plot/PlotObject.cpp
 	util/InputHelper.cpp
 	util/OutputHelper.cpp
 )

@@ -24,6 +24,7 @@ SET(SourceFiles
 	properties/PropertyInspectionApplet.cpp
 	simcell/SimulationCellObjectEditor.cpp
 	simcell/SimulationCellVisEditor.cpp
+	plot/PlotInspectionApplet.cpp
 	widgets/PropertyClassParameterUI.cpp
 	widgets/PropertyReferenceParameterUI.cpp
 	widgets/PropertySelectionComboBox.cpp
@@ -35,6 +36,7 @@ QT5_ADD_RESOURCES(ResourceFiles resources/stdobj_gui.qrc)
 OVITO_STANDARD_PLUGIN(StdObjGui
 	SOURCES StdObjGui.cpp ${SourceFiles} ${ResourceFiles}
 	PLUGIN_DEPENDENCIES StdObj
+	PRIVATE_LIB_DEPENDENCIES Qwt
 	GUI_PLUGIN
 )
 

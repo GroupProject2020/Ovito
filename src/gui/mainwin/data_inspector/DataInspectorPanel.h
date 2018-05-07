@@ -78,7 +78,7 @@ protected Q_SLOTS:
 protected:
 
 	virtual void mouseReleaseEvent(QMouseEvent* event) override {
-		if(event->button() == Qt::LeftButton) {
+		if(event->button() == Qt::LeftButton && event->y() < _tabBar->height()) {
 			onTabBarClicked(-1);
 			event->accept();
 		}

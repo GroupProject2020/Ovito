@@ -273,14 +273,18 @@ void defineModifiersSubmodule(py::module m)
 				"\n\n"
 				":Default: ``False``\n")
 		.def_property_readonly("bin_data", py::cpp_function([](BinAndReduceModifier& mod) {
+					BinAndReduceModifierApplication* modApp = dynamic_object_cast<BinAndReduceModifierApplication>(mod.someModifierApplication());
+					if(!modApp || !modApp->binData()) mod.throwException(BinAndReduceModifier::tr("Modifier has not been evaluated yet. Bin data is not yet available."));
 					std::vector<size_t> shape;
-					if(mod.is1D()) shape.push_back(mod.binData().size());
-					else {
+					if(mod.is1D() && modApp->binData()->size() == mod.numberOfBinsX()) {
+						shape.push_back(mod.numberOfBinsX());
+					}
+					else if(!mod.is1D() && modApp->binData()->size() == (size_t)mod.numberOfBinsY() * (size_t)mod.numberOfBinsY()) {
 						shape.push_back(mod.numberOfBinsY());
 						shape.push_back(mod.numberOfBinsX());
-						OVITO_ASSERT(shape[0] * shape[1] == mod.binData().size());
 					}
-					py::array_t<double> array(shape, mod.binData().data(), py::cast(&mod));
+					else mod.throwException(BinAndReduceModifier::tr("Modifier has not been evaluated yet. Bin data is not yet available."));
+					py::array_t<FloatType> array(shape, modApp->binData()->constDataFloat(), py::cast(modApp));
 					// Mark array as read-only.
 					reinterpret_cast<py::detail::PyArray_Proxy*>(array.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
 					return array;
@@ -292,19 +296,24 @@ void defineModifiersSubmodule(py::module m)
 				"\n\n"    
     			"Note that accessing this array is only possible after the modifier has computed its results. " 
     			"Thus, you have to call :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` first to ensure that the binning and reduction operation was performed.")
-		.def_property_readonly("axis_range_x", [](BinAndReduceModifier& modifier) {
-				return py::make_tuple(modifier.xAxisRangeStart(), modifier.xAxisRangeEnd());
-			},
-			"A 2-tuple containing the range of the generated bin grid along the first binning axis. "
-			"Note that this is an output attribute which is only valid after the modifier has performed the bin and reduce operation. "
-			"That means you have to call :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` first to evaluate the data pipeline.")
-		.def_property_readonly("axis_range_y", [](BinAndReduceModifier& modifier) {
-				return py::make_tuple(modifier.yAxisRangeStart(), modifier.yAxisRangeEnd());
-			},
-			"A 2-tuple containing the range of the generated bin grid along the second binning axis. "
-			"Note that this is an output attribute which is only valid after the modifier has performed the bin and reduce operation. "
-			"That means you have to call :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` first to evaluate the data pipeline.")
+		.def_property_readonly("axis_range_x", [](BinAndReduceModifier& mod) {
+					BinAndReduceModifierApplication* modApp = dynamic_object_cast<BinAndReduceModifierApplication>(mod.someModifierApplication());
+					if(!modApp || !modApp->binData()) mod.throwException(BinAndReduceModifier::tr("Modifier has not been evaluated yet. Bin data is not yet available."));
+					return py::make_tuple(modApp->range1().first, modApp->range1().second);
+				},
+				"A 2-tuple containing the range of the generated bin grid along the first binning axis. "
+				"Note that this is an output attribute which is only valid after the modifier has performed the bin and reduce operation. "
+				"That means you have to call :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` first to evaluate the data pipeline.")
+		.def_property_readonly("axis_range_y", [](BinAndReduceModifier& mod) {
+					BinAndReduceModifierApplication* modApp = dynamic_object_cast<BinAndReduceModifierApplication>(mod.someModifierApplication());
+					if(!modApp || !modApp->binData()) mod.throwException(BinAndReduceModifier::tr("Modifier has not been evaluated yet. Bin data is not yet available."));
+					return py::make_tuple(modApp->range2().first, modApp->range2().second);
+				},
+				"A 2-tuple containing the range of the generated bin grid along the second binning axis. "
+				"Note that this is an output attribute which is only valid after the modifier has performed the bin and reduce operation. "
+				"That means you have to call :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` first to evaluate the data pipeline.")
 	;
+	ovito_class<BinAndReduceModifierApplication, ModifierApplication>{m};
 
 	py::enum_<BinAndReduceModifier::ReductionOperationType>(BinAndReduceModifier_py, "Operation")
 		.value("Mean", BinAndReduceModifier::RED_MEAN)
@@ -673,15 +682,15 @@ void defineModifiersSubmodule(py::module m)
 		// For backward compatibility with OVITO 2.9.0:
 		.def_property_readonly("rdf_x", py::cpp_function([](CoordinationNumberModifier& mod) {
 					CoordinationNumberModifierApplication* modApp = dynamic_object_cast<CoordinationNumberModifierApplication>(mod.someModifierApplication());
-					if(!modApp) mod.throwException(CoordinationNumberModifier::tr("Modifier has not been evaluated yet. RDF data is not yet available."));
-					py::array_t<double> array((size_t)modApp->rdfX().size(), modApp->rdfX().data(), py::cast(static_cast<ModifierApplication*>(modApp)));
+					if(!modApp || !modApp->rdfX()) mod.throwException(CoordinationNumberModifier::tr("Modifier has not been evaluated yet. RDF data is not yet available."));
+					py::array_t<FloatType> array((size_t)modApp->rdfX()->size(), modApp->rdfX()->constDataFloat(), py::cast(static_cast<ModifierApplication*>(modApp)));
 					reinterpret_cast<py::detail::PyArray_Proxy*>(array.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
 					return array;
 				}))
 		.def_property_readonly("rdf_y", py::cpp_function([](CoordinationNumberModifier& mod) {
 					CoordinationNumberModifierApplication* modApp = dynamic_object_cast<CoordinationNumberModifierApplication>(mod.someModifierApplication());
-					if(!modApp) mod.throwException(CoordinationNumberModifier::tr("Modifier has not been evaluated yet. RDF data is not yet available."));
-					py::array_t<double> array((size_t)modApp->rdfY().size(), modApp->rdfY().data(), py::cast(static_cast<ModifierApplication*>(modApp)));
+					if(!modApp || !modApp->rdfY()) mod.throwException(CoordinationNumberModifier::tr("Modifier has not been evaluated yet. RDF data is not yet available."));
+					py::array_t<FloatType> array((size_t)modApp->rdfY()->size(), modApp->rdfY()->constDataFloat(), py::cast(static_cast<ModifierApplication*>(modApp)));
 					reinterpret_cast<py::detail::PyArray_Proxy*>(array.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
 					return array;
 				}))
