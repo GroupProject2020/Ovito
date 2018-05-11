@@ -45,7 +45,9 @@ void LAMMPSDumpExporterEditor::createUI(const RolloutInsertionParameters& rollou
 
 	IntegerParameterUI* precisionUI = new IntegerParameterUI(this, PROPERTY_FIELD(FileExporter::floatOutputPrecision));
 	layout->addWidget(precisionUI->label(), 0, 0);
-	layout->addLayout(precisionUI->createFieldLayout(), 0, 1);	
+	layout->addLayout(precisionUI->createFieldLayout(), 0, 1);
+
+	FileColumnParticleExporterEditor::createUI(rolloutParams.before(rollout));
 }
 
 OVITO_END_INLINE_NAMESPACE

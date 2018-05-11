@@ -93,7 +93,7 @@
             <row>
               <entry>VTK</entry>
               <entry><para>Text-based format used by the ParaView software.</para></entry>
-              <entry>surface&#xA0;meshes</entry>
+              <entry>dislocations, surface&#xA0;meshes</entry>
             </row>
             <row>
               <entry>POV-Ray&#xA0;scene</entry>
@@ -104,7 +104,7 @@
               <entry>Crystal&#xA0;Analysis&#xA0;(.ca)</entry>
               <entry><para>Format that can store dislocation lines extracted from an atomistic crystal model by the <link linkend="particles.modifiers.dislocation_analysis">Dislocation Analysis</link> modifier. 
               The format is documented <link linkend="particles.modifiers.dislocation_analysis.fileformat">here</link>.</para></entry>
-              <entry>dislocations</entry>
+              <entry>dislocations, surface&#xA0;meshes</entry>
             </row>
           </tbody>
         </tgroup>

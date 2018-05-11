@@ -23,14 +23,14 @@
 
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <gui/properties/PropertiesEditor.h>
+#include <plugins/particles/gui/export/FileColumnParticleExporterEditor.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export) OVITO_BEGIN_INLINE_NAMESPACE(Formats) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /**
  * \brief User interface component for the LAMMPSDumpExporter class.
  */
-class LAMMPSDumpExporterEditor : public PropertiesEditor
+class LAMMPSDumpExporterEditor : public FileColumnParticleExporterEditor
 {
 	OVITO_CLASS(LAMMPSDumpExporterEditor)
 	Q_OBJECT
