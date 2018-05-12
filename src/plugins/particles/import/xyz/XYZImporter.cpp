@@ -117,7 +117,6 @@ void XYZImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sou
 	// Regular expression for whitespace characters.
 	QRegularExpression ws_re(QStringLiteral("\\s+"));
 
-	int numParticles = 0;
 	QFileInfo fileInfo(stream.device().fileName());
 	QString filename = fileInfo.fileName();
 	QDateTime lastModified = fileInfo.lastModified();
@@ -131,8 +130,17 @@ void XYZImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sou
 		stream.readLine();
 
 		if(stream.line()[0] == '\0') break;
-		if(sscanf(stream.line(), "%u", &numParticles) != 1 || numParticles < 0 || numParticles > 1e9)
-			throw Exception(tr("Invalid number of particles in line %1 of XYZ file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
+
+		unsigned long long numParticlesLong;
+		int charCount;
+		if(sscanf(stream.line(), "%llu%n", &numParticlesLong, &charCount) != 1)
+			throw Exception(tr("Invalid number of particles in line %1 of XYZ file: %2").arg(stream.lineNumber()).arg(stream.lineString().trimmed()));
+
+		// Check trailing whitespace. There should be nothing else but the number of atoms on the first line.
+		for(const char* p = stream.line() + charCount; *p != '\0'; ++p) {
+			if(!isspace(*p))
+				throw Exception(tr("Parsing error in line %1 of XYZ file. According to the XYZ format specification, the first line of a frame section must contain just the number of particles. This is not a valid integer number:\n\n\"%2\"").arg(stream.lineNumber()).arg(stream.lineString().trimmed()));
+		}
 
 		// Create a new record for the time step.
 		Frame frame;
@@ -147,7 +155,7 @@ void XYZImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sou
 		stream.readLine();
 
 		// Skip atom lines.
-		for(int i = 0; i < numParticles; i++) {
+		for(unsigned long long i = 0; i < numParticlesLong; i++) {
 			stream.readLine();
 			if((i % 4096) == 0)
 				setProgressValue(stream.underlyingByteOffset() / 1000);
