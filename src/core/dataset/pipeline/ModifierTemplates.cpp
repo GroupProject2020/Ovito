@@ -21,6 +21,7 @@
 
 #include <core/Core.h>
 #include <core/dataset/pipeline/Modifier.h>
+#include <core/dataset/DataSet.h>
 #include "ModifierTemplates.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)

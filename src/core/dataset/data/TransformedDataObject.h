@@ -23,6 +23,7 @@
 
 
 #include <core/Core.h>
+#include <core/dataset/DataSet.h>
 #include <core/dataset/data/DataObject.h>
 #include <core/dataset/data/VersionedDataObjectRef.h>
 #include <core/dataset/data/TransformingDataVis.h>

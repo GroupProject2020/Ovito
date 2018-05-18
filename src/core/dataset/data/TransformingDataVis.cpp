@@ -22,6 +22,7 @@
 #include <core/Core.h>
 #include <core/utilities/concurrent/Future.h>
 #include <core/dataset/pipeline/PipelineStatus.h>
+#include <core/dataset/pipeline/PipelineFlowState.h>
 #include <core/dataset/data/TransformedDataObject.h>
 #include "TransformingDataVis.h"
 

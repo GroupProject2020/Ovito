@@ -199,13 +199,14 @@ cd libav-11.8
 ./configure \
 	--enable-pic \
 	--enable-shared \
-	--enable-gpl \
 	--disable-static \
 	--disable-doc \
 	--disable-network \
 	--disable-programs \
 	--disable-debug \
 	--disable-filters \
+	--disable-decoders \
+	--disable-demuxers \
 	--prefix=$HOME/progs/libav
 
 make install

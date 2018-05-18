@@ -159,7 +159,6 @@ export INCLUDE="$INCLUDE;C:/Users/stuko/ovito/64bit/zlib_install/include"
 ../../libav/configure \
    --toolchain=msvc \
    --disable-programs \
-   --enable-gpl \
    --disable-static \
    --enable-shared \
    --prefix=../libav_install \
@@ -170,6 +169,7 @@ export INCLUDE="$INCLUDE;C:/Users/stuko/ovito/64bit/zlib_install/include"
    --disable-network \
    --disable-filters \
    --disable-decoders \
+   --disable-demuxers \
    --disable-debug
 make install
 

@@ -24,6 +24,7 @@
 
 #include <core/Core.h>
 #include <core/utilities/concurrent/Future.h>
+#include <core/utilities/concurrent/SharedFuture.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
 

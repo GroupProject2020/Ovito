@@ -27,10 +27,7 @@ CMAKE_POLICY(VERSION 3.1.0)
 
 # Choose CMake policies.
 CMAKE_POLICY(SET CMP0020 NEW) 	# Automatically link to qtmain.lib on Windows.
-CMAKE_POLICY(SET CMP0043 OLD)	# Suppress warning because COMPILE_DEFINITIONS_* target property is used.
-CMAKE_POLICY(SET CMP0045 OLD)	# Don't warn about non-existing targets in GET_TARGET_PROPERTY().
 CMAKE_POLICY(SET CMP0042 NEW) 	# Enable MACOSX_RPATH target property by default.
-CMAKE_POLICY(SET CMP0054 OLD) 	# Interpret if() arguments as variables or keywords even if quoted.
 IF(NOT CMAKE_VERSION VERSION_LESS "3.3")
 	CMAKE_POLICY(SET CMP0063 NEW)   # Honor visibility properties for all target types.
 ENDIF()
@@ -76,7 +73,6 @@ OPTION(OVITO_BUILD_PLUGIN_PYSCRIPT "Build the Python scripting plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_NETCDFPLUGIN "Build the NetCDF plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_POVRAY "Build the POV-Ray renderer plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_OSPRAY "Build the OSPRay renderer plugin (experimental)." "OFF")
-OPTION(OVITO_BUILD_PLUGIN_OPENBABELPLUGIN "Build the OpenBabel plugin (experimental)." "OFF")
 OPTION(OVITO_BUILD_PLUGIN_CORRELATION "Build the correlation function plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_VR "Build the virtual reality plugin (experimental)." "OFF")
 OPTION(OVITO_BUILD_PLUGIN_VOROTOP "Build the VoroTop plugin." "ON")
@@ -233,7 +229,11 @@ ENDMACRO()
 SET(CMAKE_AUTOMOC ON)
 # As moc files are generated in the binary dir, tell CMake to always look for includes there.
 SET(CMAKE_INCLUDE_CURRENT_DIR ON)
-  
+
+MESSAGE("CMAKE_MODULE_PATH=${CMAKE_MODULE_PATH}")
+MESSAGE("CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}")
+
+
 # Find and set up Qt5 libraries.
 FOREACH(component IN ITEMS Core Concurrent Network Gui)
 	FIND_PACKAGE(Qt5${component} REQUIRED)

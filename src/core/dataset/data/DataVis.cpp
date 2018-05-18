@@ -21,6 +21,7 @@
 
 #include <core/Core.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
+#include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/utilities/concurrent/Future.h>
 #include "DataVis.h"
 

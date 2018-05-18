@@ -42,15 +42,6 @@ namespace ospray {
       // data isn't available to use until 'commit()' gets called
     }
 
-    /*! destructor - supposed to clean up all alloced memory */
-    Cones::~Cones()
-    {
-      if (_materialList) {
-        free(_materialList);
-        _materialList = nullptr;
-      }
-    }
-
     /*! 'finalize' is what ospray calls when everything is set and
         done, and a actual user geometry has to be built */
     void Cones::finalize(Model *model)
@@ -64,13 +55,31 @@ namespace ospray {
       offset_materialID = getParam1i("offset_materialID",-1);
       offset_colorID    = getParam1i("offset_colorID",-1);
       coneData          = getParamData("cones");
-      materialList      = getParamData("materialList");
       colorData         = getParamData("color");
       colorOffset       = getParam1i("color_offset",0);
-      auto colComps     = colorData && colorData->type == OSP_FLOAT3 ? 3 : 4;
-      colorStride       = getParam1i("color_stride", colComps * sizeof(float));
       texcoordData      = getParamData("texcoord");
       
+      if (colorData) {
+        if (hasParam("color_format")) {
+          colorFormat = static_cast<OSPDataType>(getParam1i("color_format", OSP_UNKNOWN));
+        } else {
+          colorFormat = colorData->type;
+        }
+        if (colorFormat != OSP_FLOAT4 && colorFormat != OSP_FLOAT3
+            && colorFormat != OSP_FLOAT3A && colorFormat != OSP_UCHAR4)
+        {
+          throw std::runtime_error("#ospray:geometry/cones: invalid "
+                                  "colorFormat specified! Must be one of: "
+                                  "OSP_FLOAT4, OSP_FLOAT3, OSP_FLOAT3A or "
+                                  "OSP_UCHAR4.");
+        }
+      } else {
+        colorFormat = OSP_UNKNOWN;
+      }
+      colorStride = getParam1i("color_stride",
+                              colorFormat == OSP_UNKNOWN ?
+                              0 : sizeOf(colorFormat));
+
       if(coneData.ptr == nullptr) {
         throw std::runtime_error("#ospray:geometry/cones: no 'cones' data specified");
       }
@@ -78,41 +87,33 @@ namespace ospray {
       // look at the data we were provided with ....
       numCones = coneData->numBytes / bytesPerCone;
 
-      if (_materialList) {
-        free(_materialList);
-        _materialList = nullptr;
-      }
-  
-      if (materialList) {
-        void **ispcMaterials = (void**) malloc(sizeof(void*)*materialList->numItems);
-        for (uint32_t i = 0; i < materialList->numItems; i++) {
-          Material *m = ((Material**)materialList->data)[i];
-          ispcMaterials[i] = m?m->getIE():nullptr;
-        }
-        _materialList = (void*)ispcMaterials;
+      if (numCones >= (1ULL << 30)) {
+        throw std::runtime_error("#ospray::Cones: too many cones in this "
+                                "cones geometry. Consider splitting this "
+                                "geometry in multiple geometries with fewer "
+                                "cones (you can still put all those "
+                                "geometries into a single model, but you can't "
+                                "put that many cones into a single geometry "
+                                "without causing address overflows)");
       }
 
-#if 0      
-      const char* conePtr = (const char*)coneData->data;
-      bounds = empty;
-      for(uint32_t i = 0; i < numCones; i++, conePtr += bytesPerCone) {
-        float r = offset_radius < 0 ? radius : *(const float*)(conePtr + offset_radius);
-        const vec3f& center = *(const vec3f*)(conePtr + offset_center);
-        const vec3f& axis = *(const vec3f*)(conePtr + offset_axis);
-        r = std::max(r, std::sqrt(axis[0]*axis[0] + axis[1]*axis[1] + axis[2]*axis[2]));
-        bounds.extend(box3f(center - r, center + r));
-      }
-#endif      
-      
-      ispc::ConesGeometry_set(getIE(), model->getIE(), coneData->data, _materialList,
+    // check whether we need 64-bit addressing
+    bool huge_mesh = false;
+    if (colorData && colorData->numBytes > INT32_MAX)
+      huge_mesh = true;
+    if (texcoordData && texcoordData->numBytes > INT32_MAX)
+      huge_mesh = true;
+
+      ispc::ConesGeometry_set(getIE(), model->getIE(), coneData->data, 
+        materialList ? ispcMaterialPtrs.data() : nullptr,
         texcoordData ? (ispc::vec2f *)texcoordData->data : nullptr,
         colorData ? colorData->data : nullptr,
-        colorOffset, colorStride,
-        colorData && colorData->type == OSP_FLOAT4,
+        colorOffset, colorStride, colorFormat,
         numCones, bytesPerCone,
         radius, materialID,
         offset_center, offset_axis, offset_radius,
-        offset_materialID, offset_colorID);
+        offset_materialID, offset_colorID,
+        huge_mesh);
     }
 
 

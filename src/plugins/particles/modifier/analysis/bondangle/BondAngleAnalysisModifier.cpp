@@ -116,12 +116,12 @@ BondAngleAnalysisModifier::StructureType BondAngleAnalysisModifier::determineStr
 	FloatType r0_sq = 0;
 	for(int j = 0; j < 6; j++)
 		r0_sq += neighborQuery.results()[j].distanceSq;
-	r0_sq /= 6.0f;
+	r0_sq /= 6;
 
 	// n0 near neighbors with: distsq<1.45*r0_sq
 	// n1 near neighbors with: distsq<1.55*r0_sq
-	FloatType n0_dist_sq = 1.45f * r0_sq;
-	FloatType n1_dist_sq = 1.55f * r0_sq;
+	FloatType n0_dist_sq = FloatType(1.45) * r0_sq;
+	FloatType n1_dist_sq = FloatType(1.55) * r0_sq;
 	int n0 = 0;
 	for(auto n = neighborQuery.results().begin(); n != neighborQuery.results().end(); ++n, ++n0) {
 		if(n->distanceSq > n0_dist_sq) break;
@@ -141,14 +141,14 @@ BondAngleAnalysisModifier::StructureType BondAngleAnalysisModifier::determineStr
 			FloatType bond_angle = j->delta.dot(k->delta) / (norm_j*norm_k);
 
 			// Build histogram for identifying the relevant peaks.
-			if(bond_angle < -0.945f) { chi[0]++; }
-			else if(-0.945f <= bond_angle && bond_angle < -0.915f) { chi[1]++; }
-			else if(-0.915f <= bond_angle && bond_angle < -0.755f) { chi[2]++; }
-			else if(-0.755f <= bond_angle && bond_angle < -0.195f) { chi[3]++; }
-			else if(-0.195f <= bond_angle && bond_angle < 0.195f) { chi[4]++; }
-			else if(0.195f <= bond_angle && bond_angle < 0.245f) { chi[5]++; }
-			else if(0.245f <= bond_angle && bond_angle < 0.795f) { chi[6]++; }
-			else if(0.795f <= bond_angle) { chi[7]++; }
+			if(bond_angle < FloatType(-0.945)) { chi[0]++; }
+			else if(FloatType(-0.945) <= bond_angle && bond_angle < FloatType(-0.915)) { chi[1]++; }
+			else if(FloatType(-0.915) <= bond_angle && bond_angle < FloatType(-0.755)) { chi[2]++; }
+			else if(FloatType(-0.755) <= bond_angle && bond_angle < FloatType(-0.195)) { chi[3]++; }
+			else if(FloatType(-0.195) <= bond_angle && bond_angle < FloatType(0.195)) { chi[4]++; }
+			else if(FloatType(0.195) <= bond_angle && bond_angle < FloatType(0.245)) { chi[5]++; }
+			else if(FloatType(0.245) <= bond_angle && bond_angle < FloatType(0.795)) { chi[6]++; }
+			else if(FloatType(0.795) <= bond_angle) { chi[7]++; }
 		}
 	}
 

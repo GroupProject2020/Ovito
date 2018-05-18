@@ -26,7 +26,7 @@
 #include <core/dataset/animation/TimeInterval.h>
 #include <core/oo/RefMaker.h>
 #include <core/dataset/pipeline/PipelineStatus.h>
-#include <core/dataset/data/StrongDataObjectRef.h>
+#include <core/dataset/data/DataObject.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
@@ -207,5 +207,3 @@ private:
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-#include <core/dataset/data/DataObject.h>

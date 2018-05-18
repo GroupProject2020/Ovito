@@ -28,9 +28,7 @@
 ###############################################################################
 
 # Locate the HDF5 library.
-IF(WIN32 OR (UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE))
-	FIND_PACKAGE(HDF5 COMPONENTS hdf5 REQUIRED NO_MODULE)
-ENDIF()
+FIND_PACKAGE(HDF5 COMPONENTS hdf5 REQUIRED NO_MODULE)
 
 # Locate the NetCDF library.
 FIND_PACKAGE(NetCDF REQUIRED)

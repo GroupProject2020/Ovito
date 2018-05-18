@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -26,10 +26,8 @@
 #include "common/Model.ih"
 #include "geometry/Geometry.ih"
 #include "math/sampling.ih"
-// embree
-#include "embree2/rtcore.isph"
-#include "embree2/rtcore_scene.isph"
-#include "embree2/rtcore_geometry_user.isph"
+#include "ospray/OSPDataType.h"
+#include "safe_gather.ih"
 
 struct Discs {
   /*! inherit from "Geometry" class: */
@@ -47,19 +45,43 @@ struct Discs {
   int        offset_colorID; 
   
   float      radius;
-
-  /*! list of multiple  materials, in case of per-disc materials */
-  Material **materialList;
-
   int        materialID;
 
   uint8     *color;
   int        color_stride;
   int        color_offset;
-  bool       has_alpha; // 4th color component is valid
+  int        color_format; 
  
   vec2f     *texcoord;
+  bool       huge_mesh;
 };
+
+
+inline int32 Discs_getMaterialID(const uniform Discs *uniform self, int32 primID)
+{
+  int32 materialID = -1;
+  if (self->offset_materialID >= 0) {
+    const uniform int32 primsPerPage = (1024*1024*64);
+    if (any(primID >= primsPerPage )) {
+      const int primPageID  = primID / primsPerPage;
+      const int localPrimID = primID % primsPerPage;
+      foreach_unique (primPage in primPageID) {
+        uniform uint8 *uniform pagePtr = self->data
+          + (((int64)primPage)
+             * primsPerPage
+             * self->stride);
+        uniform uint8 *varying discPtr = pagePtr + self->stride*localPrimID;
+        materialID = *((uniform uint32 *varying)(discPtr+self->offset_materialID));
+      }
+    } else {
+      uniform uint8 *varying discPtr = self->data + self->stride*primID;
+      materialID = *((uniform uint32 *varying)(discPtr+self->offset_materialID));
+    }
+  } else {
+    materialID = self->materialID;
+  }
+  return materialID;
+}
 
 static void Discs_postIntersect(uniform Geometry *uniform geometry,
                                   uniform Model *uniform model,
@@ -74,102 +96,114 @@ static void Discs_postIntersect(uniform Geometry *uniform geometry,
   if ((flags & DG_COLOR) && self->color) {
     uint32 colorID = 0;
     if (self->offset_colorID >= 0) {
-      uniform uint8 *varying discPtr =
-        self->data + self->stride*ray.primID;
+      uniform uint8 *varying discPtr = self->data + self->stride*ray.primID;
       colorID = *((uniform uint32 *varying)(discPtr+self->offset_colorID));
     } else
       colorID = ray.primID;
-    const uint64 colorAddr = self->color_offset+((uint64)colorID)*self->color_stride;
-    dg.color = *((vec4f *)((uint64)self->color+colorAddr));
-    if (!self->has_alpha)
-      dg.color.w = 1.f;
+    if (self->color_format == OSP_FLOAT4) {
+      dg.color = gather_byte_stride_vec4f(self->huge_mesh,
+                                          self->color + self->color_offset,
+                                          self->color_stride,
+                                          colorID);
+    } else if (self->color_format == OSP_FLOAT3
+        || self->color_format == OSP_FLOAT3A)
+    {
+      vec3f c = gather_byte_stride_vec3f(self->huge_mesh,
+                                         self->color + self->color_offset,
+                                         self->color_stride,
+                                         colorID);
+      dg.color = make_vec4f(c.x, c.y, c.z, 1.f);
+    } else if (self->color_format == OSP_UCHAR4) {
+      const uint32 c = gather_stride_uint32(self->huge_mesh,
+                                            self->color + self->color_offset,
+                                            self->color_stride,
+                                            colorID);
+      dg.color.x = (c & 0x000000ff) / 255.0;
+      dg.color.y = ((c & 0x0000ff00) >> 8) / 255.0;
+      dg.color.z = ((c & 0x00ff0000) >> 16) / 255.0;
+      dg.color.w = ((c & 0xff000000) >> 24) / 255.0;
+    }
   }
 
   if (flags & DG_TEXCOORD && self->texcoord)
     dg.st = self->texcoord[ray.primID];
   else
     dg.st = make_vec2f(0.0f);
-  
+
   if (flags & DG_MATERIALID) {
-    if (self->offset_materialID >= 0) {
-      const uniform int32 primsPerPage = (1024*1024*64);
-      if (any(ray.primID >= primsPerPage )) {
-        const int primPageID  = ray.primID / primsPerPage;
-        const int localPrimID = ray.primID % primsPerPage;
-        foreach_unique(primPage in primPageID) {
-          uniform uint8 *uniform pagePtr   = self->data
-            + (((int64)primPage)
-               * primsPerPage
-               * self->stride);
-          uniform uint8 *varying discPtr = pagePtr
-            + self->stride*localPrimID;
-          dg.materialID =
-            *((uniform uint32 *varying)(discPtr+self->offset_materialID));
-          if (self->materialList) {
-            dg.material = self->materialList[dg.materialID];
-          }
-        }
-      } else {
-        uniform uint8 *varying discPtr = self->data
-          + self->stride*ray.primID;
-        dg.materialID =
-          *((uniform uint32 *varying)(discPtr+self->offset_materialID));
-        if (self->materialList) {
-          dg.material = self->materialList[dg.materialID];
-        }
-      }
-    } else {
-      dg.materialID = self->materialID;
-      if (self->materialList) {
-        dg.material = self->materialList[dg.materialID];
-      }
-    }
+    dg.materialID = Discs_getMaterialID(self, ray.primID);
   }
 }
 
-unmasked void Discs_bounds(uniform Discs *uniform self,
-                             uniform size_t primID,
-                             uniform box3fa &bbox)
+unmasked void Discs_bounds(const RTCBoundsFunctionArguments *uniform args)
 {
-  uniform uint8 *uniform discPtr = self->data
-    + self->stride*((uniform int64)primID);
+  uniform Discs *uniform self = (uniform Discs *uniform)args->geometryUserPtr;
+  uniform int primID = args->primID;
+  uniform uint8 *uniform discPtr = self->data + self->stride*((uniform int64)primID);
   uniform bool offr = self->offset_radius >= 0;
   uniform float radius =
     offr ? *((uniform float *uniform)(discPtr+self->offset_radius)) :
     self->radius;
-  uniform vec3f center =
-    *((uniform vec3f*uniform)(discPtr+self->offset_center));
-  bbox = make_box3fa(center - radius, center + radius);
+  uniform vec3f center = *((uniform vec3f*uniform)(discPtr+self->offset_center));
+  box3fa *uniform out = (box3fa *uniform)args->bounds_o;
+  *out = make_box3fa(center - radius, center + radius);
 }
 
-void Discs_intersect(uniform Discs *uniform self,
-                       varying Ray &ray,
-                       uniform size_t primID)
+void Discs_intersect_kernel(const RTCIntersectFunctionNArguments *uniform args, const uniform bool isOcclusionTest)
 {
-  uniform uint8 *uniform discPtr =
-    self->data + self->stride*((uniform int64)primID);
+  // make sure to set the mask
+  if (!args->valid[programIndex]) return;
+
+  uniform Discs *uniform self = (uniform Discs *uniform)args->geometryUserPtr;
+  uniform unsigned int primID = args->primID;
+
+  // this assumes that the args->rayhit is actually a pointer to a varying ray!
+  varying Ray *uniform ray = (varying Ray *uniform)args->rayhit;
+
+  uniform uint8 *uniform discPtr = self->data + self->stride*((uniform int64)primID);
   uniform float radius = self->radius;
-  if (self->offset_radius >= 0) {
+  if(self->offset_radius >= 0) {
     radius = *((uniform float *uniform)(discPtr+self->offset_radius));
   }
   uniform vec3f center = *((uniform vec3f*uniform)(discPtr+self->offset_center));
   uniform vec3f normal = *((uniform vec3f*uniform)(discPtr+self->offset_normal));
 
   const float d = -dot(center, normal);
-  float t = -(d + dot(normal, ray.org));
-  const float td = dot(normal, ray.dir);
+  float t = -(d + dot(normal, ray->org));
+  const float td = dot(normal, ray->dir);
   if(td == 0.f) return;
 
   t = t / td;
-  if(t > ray.t0 && t < ray.t) {
-    const vec3f hitpnt = ray.org + t * ray.dir - center;
+  if(t > ray->t0 && t < ray->t) {
+    const vec3f hitpnt = ray->org + t * ray->dir - center;
     if(dot(hitpnt,hitpnt) < radius*radius) {
-      ray.t = t;
-      ray.primID = primID;
-      ray.geomID = self->super.geomID;
-      ray.Ng = normal;
+      if (isOcclusionTest) {
+        ray->t = neg_inf;
+      } else {
+        ray->t = t;
+        ray->primID = primID;
+        ray->geomID = self->super.geomID;
+        ray->instID = args->context->instID[0];
+        ray->Ng = normal;
+      }
     }
   }
+}
+
+unmasked void Discs_intersect(const struct RTCIntersectFunctionNArguments *uniform args)
+{
+  Discs_intersect_kernel(args,false);
+}
+
+unmasked void Discs_occluded(const struct RTCIntersectFunctionNArguments *uniform args)
+{
+  Discs_intersect_kernel(args,true);
+}
+
+int32 Discs_getMaterialID(const Geometry *uniform const _self, const int32 primID)
+{
+  const Discs *const uniform self = (const Discs *uniform)_self;
+  return Discs_getMaterialID(self, primID);
 }
 
 export void *uniform Discs_create(void *uniform cppEquivalent)
@@ -177,7 +211,7 @@ export void *uniform Discs_create(void *uniform cppEquivalent)
   uniform Discs *uniform self = uniform new uniform Discs;
   Geometry_Constructor(&self->super,cppEquivalent,
                        Discs_postIntersect,
-                       NULL,0,NULL);
+                       NULL,NULL,0,NULL);
   return self;
 }
 
@@ -189,7 +223,7 @@ export void DiscsGeometry_set(void  *uniform _self
     , void *uniform color
     , uniform int color_offset
     , uniform int color_stride
-    , uniform bool has_alpha
+    , uniform int color_format
     , uniform int numDiscs
     , uniform int bytesPerDisc
     , uniform float radius
@@ -199,22 +233,24 @@ export void DiscsGeometry_set(void  *uniform _self
     , uniform int offset_radius
     , uniform int offset_materialID
     , uniform int offset_colorID
+    , uniform bool huge_mesh
     )
 {
   uniform Discs *uniform self = (uniform Discs *uniform)_self;
   uniform Model *uniform model = (uniform Model *uniform)_model;
 
-  uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle,numDiscs);
+  RTCGeometry geom = rtcNewGeometry(ispc_embreeDevice(),RTC_GEOMETRY_TYPE_USER);
+  uniform uint32 geomID = rtcAttachGeometry(model->embreeSceneHandle,geom);
   
   self->super.model = model;
   self->super.geomID = geomID;
   self->super.numPrimitives = numDiscs;
-  self->materialList = (Material **)materialList;
+  self->super.materialList = (Material **)materialList;
   self->texcoord = texcoord;
   self->color = (uint8 *uniform)color;
   self->color_stride = color_stride;
   self->color_offset = color_offset;
-  self->has_alpha = has_alpha;
+  self->color_format = color_format;
   self->radius = radius;
   self->data = (uint8 *uniform)data;
   self->materialID = materialID;
@@ -226,11 +262,13 @@ export void DiscsGeometry_set(void  *uniform _self
   self->offset_materialID = offset_materialID;
   self->offset_colorID    = offset_colorID;
 
-  rtcSetUserData(model->embreeSceneHandle,geomID,self);
-  rtcSetBoundsFunction(model->embreeSceneHandle,geomID,
-                       (uniform RTCBoundsFunc)&Discs_bounds);
-  rtcSetIntersectFunction(model->embreeSceneHandle,geomID,
-                          (uniform RTCIntersectFuncVarying)&Discs_intersect);
-  rtcSetOccludedFunction(model->embreeSceneHandle,geomID,
-                         (uniform RTCOccludedFuncVarying)&Discs_intersect);
+  self->huge_mesh = huge_mesh;
+
+  rtcSetGeometryUserData(geom, self);
+  rtcSetGeometryUserPrimitiveCount(geom, numDiscs);
+  rtcSetGeometryBoundsFunction(geom,(uniform RTCBoundsFunction)&Discs_bounds, self);
+  rtcSetGeometryIntersectFunction(geom,(uniform RTCIntersectFunctionN)&Discs_intersect);
+  rtcSetGeometryOccludedFunction(geom,(uniform RTCOccludedFunctionN)&Discs_occluded);
+  rtcCommitGeometry(geom);
+  rtcReleaseGeometry(geom);
 }

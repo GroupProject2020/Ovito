@@ -1,0 +1,38 @@
+{
+    "build_type": {
+        "default": "debug",
+        "description": "The build type to use",
+        "choices": {
+            "debug": {
+                "short": "Debug",
+                "long": "Emit debug information without performing optimizations",
+                "buildType": "Debug"
+            },
+            "release": {
+                "short": "Release",
+                "long": "Enable optimizations, omit debug info",
+                "buildType": "Release"
+            }
+        }
+    },
+    "documentation": {
+        "default": "no",
+        "description": "Build the user documentation",
+        "choices": {
+            "yes": {
+                "short": "Docs",
+                "long": "Generate user documentation",
+                "settings": {
+                    "OVITO_BUILD_DOCUMENTATION" : "ON"
+                }
+            },
+            "no": {
+                "short": "NoDocs",
+                "long": "Don't generate user documentation",
+                "settings": {
+                    "OVITO_BUILD_DOCUMENTATION" : "OFF"
+                }
+            }
+        }
+    }    
+}

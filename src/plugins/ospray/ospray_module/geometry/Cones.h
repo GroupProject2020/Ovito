@@ -54,9 +54,6 @@ namespace ospray {
       /*! constructor - will create the 'ispc equivalent' */
       Cones();
 
-      /*! destructor - supposed to clean up all alloced memory */
-      virtual ~Cones() override;
-
       /*! 'finalize' is what ospray calls when everything is set and
         done, and a actual user geometry has to be built */
       virtual void finalize(Model *model) override;
@@ -77,14 +74,16 @@ namespace ospray {
           cones, each of which consists of two vec3fs + optional radius. */
       Ref<Data> coneData;
 
-      Ref<Data> materialList;
-      void     *_materialList {nullptr};
       Ref<Data> texcoordData;
 
       /*! data array from which we read the per-cone color data; if
         NULL we do not have per-cone data */
       Ref<Data> colorData;
       
+      /*! The color format of the colorData array, one of:
+          OSP_FLOAT3, OSP_FLOAT3A, OSP_FLOAT4 or OSP_UCHAR4 */
+      OSPDataType colorFormat;
+            
       /*! stride in colorData array for accessing i'th cone's
         color. color of cone i will be read as 3 floats from
         'colorOffset+i*colorStride */

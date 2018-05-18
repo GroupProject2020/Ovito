@@ -150,4 +150,3 @@
 #include <core/utilities/linalg/LinAlg.h>
 #include <core/utilities/Color.h>
 #include <core/oo/OvitoObject.h>
-#include <core/dataset/DataSet.h>

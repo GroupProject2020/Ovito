@@ -21,6 +21,7 @@
 
 #include <core/Core.h>
 #include <core/utilities/concurrent/Future.h>
+#include <core/utilities/concurrent/PromiseWatcher.h>
 #include <core/utilities/io/FileManager.h>
 #include <core/app/Application.h>
 #include <core/utilities/io/ssh/SshConnection.h>

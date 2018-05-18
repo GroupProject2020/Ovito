@@ -30,7 +30,7 @@
 		<row><entry>C++ compiler</entry><entry>required</entry>
 		<entry>Compiler must support the C++11 standard (e.g. GNU g++ 4.8 or newer)</entry></row>
 		<row><entry><link xlink:href="http://cmake.org/">CMake</link></entry><entry>required</entry>
-		<entry>The build system used by OVITO (CMake 2.8.12 or newer required)</entry></row>
+		<entry>The build system used by OVITO (CMake 3.1 or newer required)</entry></row>
 		<row><entry><link xlink:href="http://git-scm.com/">Git</link></entry><entry>required</entry>
 		<entry>The distributed version control system needed to retrieve OVITO's source code</entry></row>
 		<row><entry><link xlink:href="http://xmlsoft.org/XSLT/xsltproc2.html">xsltproc</link></entry><entry>optional</entry>
