@@ -21,6 +21,7 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <core/viewport/Viewport.h>
+#include <core/dataset/DataSet.h>
 #include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <gui/viewport/ViewportWindow.h>

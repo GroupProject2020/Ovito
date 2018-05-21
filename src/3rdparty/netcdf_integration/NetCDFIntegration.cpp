@@ -20,6 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <core/Core.h>
+#include <core/utilities/concurrent/PromiseState.h>
 #include "NetCDFIntegration.h"
 
 #include <netcdf.h>

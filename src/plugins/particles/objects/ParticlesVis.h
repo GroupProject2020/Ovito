@@ -23,6 +23,8 @@
 
 
 #include <plugins/particles/Particles.h>
+#include <core/rendering/SceneRenderer.h>
+#include <core/rendering/ParticlePrimitive.h>
 #include <core/dataset/data/DataVis.h>
 #include "ParticleProperty.h"
 

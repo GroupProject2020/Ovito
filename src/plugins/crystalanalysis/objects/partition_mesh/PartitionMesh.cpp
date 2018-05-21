@@ -21,6 +21,7 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <core/utilities/concurrent/ParallelFor.h>
+#include <core/utilities/concurrent/Promise.h>
 #include "PartitionMesh.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {

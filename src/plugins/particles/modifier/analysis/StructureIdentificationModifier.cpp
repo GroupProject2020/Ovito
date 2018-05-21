@@ -23,6 +23,7 @@
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <plugins/particles/objects/ParticleType.h>
 #include <core/viewport/Viewport.h>
+#include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include "StructureIdentificationModifier.h"
 

@@ -20,6 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/stdobj/StdObj.h>
+#include <core/dataset/DataSet.h>
 #include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/rendering/SceneRenderer.h>
 #include "TargetObject.h"

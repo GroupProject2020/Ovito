@@ -23,6 +23,7 @@
 #include <plugins/stdobj/properties/PropertyExpressionEvaluator.h>
 #include <plugins/stdobj/properties/PropertyObject.h>
 #include <plugins/stdobj/util/OutputHelper.h>
+#include <core/dataset/DataSet.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/viewport/Viewport.h>
 #include <core/dataset/scene/PipelineSceneNode.h>

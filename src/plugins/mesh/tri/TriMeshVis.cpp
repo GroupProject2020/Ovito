@@ -23,6 +23,7 @@
 #include <plugins/mesh/tri/TriMeshObject.h>
 #include <core/rendering/SceneRenderer.h>
 #include <core/rendering/MeshPrimitive.h>
+#include <core/dataset/DataSet.h>
 #include <core/dataset/data/VersionedDataObjectRef.h>
 #include <core/utilities/units/UnitsManager.h>
 #include "TriMeshVis.h"

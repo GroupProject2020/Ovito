@@ -16,14 +16,14 @@ def render(args):
         raise Exception("This overlay only works with non-perspective viewports.")
         
     # Compute length of bar in screen space
-    screen_length = 0.5 * bar_length * args.painter.window().height() / args.fov
+    screen_length = args.project_size((0,0,0), bar_length)
 
     # Define geometry of bar in screen space
     height = 0.07 * args.painter.window().height()
     margin = 0.02 * args.painter.window().height()
     rect = QRectF(margin, margin, screen_length, height)
 
-    # Render bar
+    # Render bar rectangle
     args.painter.fillRect(rect, bar_color)
 
     # Render text label

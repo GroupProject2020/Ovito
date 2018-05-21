@@ -25,6 +25,7 @@
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/app/PluginManager.h>
+#include <core/utilities/units/UnitsManager.h>
 #include "FreezePropertyModifier.h"
 
 namespace Ovito { namespace StdMod {

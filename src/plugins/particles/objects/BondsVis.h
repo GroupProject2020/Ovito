@@ -24,6 +24,8 @@
 
 #include <plugins/particles/Particles.h>
 #include <core/dataset/data/DataVis.h>
+#include <core/rendering/ArrowPrimitive.h>
+#include <core/rendering/SceneRenderer.h>
 #include "ParticleProperty.h"
 #include "BondProperty.h"
 

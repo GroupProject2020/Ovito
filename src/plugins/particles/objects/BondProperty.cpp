@@ -22,6 +22,7 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/BondsVis.h>
 #include <core/app/Application.h>
+#include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
 #include "BondProperty.h"
 

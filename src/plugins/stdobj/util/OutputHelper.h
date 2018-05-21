@@ -23,6 +23,7 @@
 
 
 #include <plugins/stdobj/StdObj.h>
+#include <core/dataset/DataSet.h>
 #include <core/dataset/data/DataObject.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
 #include <core/oo/CloneHelper.h>

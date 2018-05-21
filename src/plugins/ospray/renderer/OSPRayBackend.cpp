@@ -20,6 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <core/Core.h>
+#include <core/utilities/units/UnitsManager.h>
 #include "OSPRayBackend.h"
 
 #include <ospray/ospray_cpp.h>

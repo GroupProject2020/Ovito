@@ -24,6 +24,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <core/dataset/data/DataVis.h>
+#include <core/rendering/ArrowPrimitive.h>
 #include "TrajectoryObject.h"
 
 namespace Ovito { namespace Particles {

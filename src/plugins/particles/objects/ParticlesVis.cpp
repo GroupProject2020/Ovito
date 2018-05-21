@@ -22,6 +22,7 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/ParticleType.h>
 #include <core/utilities/units/UnitsManager.h>
+#include <core/dataset/DataSet.h>
 #include <core/dataset/data/VersionedDataObjectRef.h>
 #include <core/rendering/SceneRenderer.h>
 #include <core/rendering/ParticlePrimitive.h>

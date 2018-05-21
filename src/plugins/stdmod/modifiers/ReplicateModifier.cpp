@@ -23,6 +23,7 @@
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <plugins/stdobj/util/InputHelper.h>
 #include <plugins/stdobj/util/OutputHelper.h>
+#include <core/dataset/DataSet.h>
 #include <core/utilities/units/UnitsManager.h>
 #include "ReplicateModifier.h"
 

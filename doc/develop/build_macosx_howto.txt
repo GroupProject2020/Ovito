@@ -120,16 +120,16 @@ Download and build Intel Embree
 cd /Users/stuko/progs/
 git clone https://github.com/embree/embree.git
 cd embree
-git checkout v2.17.0
+git checkout v3.2.0
 mkdir build
 cd build
 export MACOSX_DEPLOYMENT_TARGET=10.9
 cmake -DCMAKE_INSTALL_PREFIX=$HOME/progs/embree_install \
       -DEMBREE_ISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-osx/ispc \
-	  -DTBB_INCLUDE_DIR=$HOME/progs/tbb2018_20180312oss/include/ \
-	  -DTBB_LIBRARY=$HOME/progs/tbb2018_20180312oss/lib/libtbb.dylib \
-	  -DTBB_LIBRARY_MALLOC=$HOME/progs/tbb2018_20180312oss/lib/libtbbmalloc.dylib \
-	  -DEMBREE_TUTORIALS=OFF \
+      -DTBB_INCLUDE_DIR=$HOME/progs/tbb2018_20180312oss/include/ \
+      -DTBB_LIBRARY=$HOME/progs/tbb2018_20180312oss/lib/libtbb.dylib \
+      -DTBB_LIBRARY_MALLOC=$HOME/progs/tbb2018_20180312oss/lib/libtbbmalloc.dylib \
+      -DEMBREE_TUTORIALS=OFF \
       ..
 make -j4 install
 
@@ -145,11 +145,11 @@ cd build
 export MACOSX_DEPLOYMENT_TARGET=10.9
 cmake -DCMAKE_INSTALL_PREFIX=$HOME/progs/ospray_install \
       -DISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-osx/ispc \
-	  -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-3.2.0 \
-	  -DOSPRAY_ENABLE_APPS=OFF \
-	  -DTBB_ROOT=$HOME/progs/tbb2018_20180312oss \
-	  -DBUILD_SHARED_LIBS=ON \
-	  -DCMAKE_CXX_STANDARD=14 \
+      -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-3.2.0 \
+      -DOSPRAY_ENABLE_APPS=OFF \
+      -DTBB_ROOT=$HOME/progs/tbb2018_20180312oss \
+      -DBUILD_SHARED_LIBS=ON \
+      -DCMAKE_CXX_STANDARD=14 \
       ..
 make -j4 install
 cd ../../ospray_install/lib

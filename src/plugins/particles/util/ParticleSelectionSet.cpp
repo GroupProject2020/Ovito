@@ -20,6 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
+#include <core/dataset/DataSet.h>
 #include <core/dataset/UndoStack.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include "ParticleSelectionSet.h"

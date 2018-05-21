@@ -22,8 +22,10 @@
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/objects/microstructure/MicrostructureObject.h>
 #include <plugins/stdobj/util/OutputHelper.h>
+#include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/utilities/concurrent/ParallelFor.h>
+#include <core/utilities/units/UnitsManager.h>
 #include "SimplifyMicrostructureModifier.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {

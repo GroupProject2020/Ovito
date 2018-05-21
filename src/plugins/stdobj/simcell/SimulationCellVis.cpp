@@ -25,6 +25,7 @@
 #include <core/rendering/LinePrimitive.h>
 #include <core/rendering/ArrowPrimitive.h>
 #include <core/rendering/ParticlePrimitive.h>
+#include <core/dataset/DataSet.h>
 #include <core/dataset/data/VersionedDataObjectRef.h>
 #include "SimulationCellVis.h"
 #include "SimulationCellObject.h"

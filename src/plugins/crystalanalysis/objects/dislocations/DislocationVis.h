@@ -24,6 +24,7 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <core/dataset/data/TransformingDataVis.h>
+#include <core/rendering/SceneRenderer.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
 #include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
