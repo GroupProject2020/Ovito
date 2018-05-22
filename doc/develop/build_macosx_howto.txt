@@ -10,6 +10,16 @@ sudo port install -s fftw-3 libssh
 Install Qt libraries, version 5.9.5
 **************************************************************************
 
+# This is a workaround to let VS Code Intellisense find the Qt headers:
+cd $HOME/progs/Qt/5.9.5/clang_64/
+mkdir headers
+cd headers
+ln -s $HOME/progs/Qt/5.9.5/clang_64/lib/QtConcurrent.framework/Versions/5/Headers/ QtCore
+ln -s $HOME/progs/Qt/5.9.5/clang_64/lib/QtGui.framework/Versions/5/Headers/ QtGui
+ln -s $HOME/progs/Qt/5.9.5/clang_64/lib/QtWidgets.framework/Versions/5/Headers/ QtWidgets
+ln -s $HOME/progs/Qt/5.9.5/clang_64/lib/QtConcurrent.framework/Versions/5/Headers/ QtConcurrent
+ln -s $HOME/progs/Qt/5.9.5/clang_64/lib/QtNetwork.framework/Versions/5/Headers/ QtNetwork
+
 **************************************************************************
 Download and build SIP
 **************************************************************************

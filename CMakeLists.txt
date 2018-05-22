@@ -230,10 +230,6 @@ SET(CMAKE_AUTOMOC ON)
 # As moc files are generated in the binary dir, tell CMake to always look for includes there.
 SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-MESSAGE("CMAKE_MODULE_PATH=${CMAKE_MODULE_PATH}")
-MESSAGE("CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}")
-
-
 # Find and set up Qt5 libraries.
 FOREACH(component IN ITEMS Core Concurrent Network Gui)
 	FIND_PACKAGE(Qt5${component} REQUIRED)

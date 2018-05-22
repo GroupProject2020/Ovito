@@ -32,8 +32,8 @@
 
 #include <ospray/ospray_cpp.h>
 #include <ospray/version.h>
-#if QT_VERSION_CHECK(OSPRAY_VERSION_MAJOR, OSPRAY_VERSION_MINOR, OSPRAY_VERSION_PATCH) < QT_VERSION_CHECK(1,5,0)
-	#error "OVITO requires OSPRay version 1.5.0 or newer."
+#if QT_VERSION_CHECK(OSPRAY_VERSION_MAJOR, OSPRAY_VERSION_MINOR, OSPRAY_VERSION_PATCH) < QT_VERSION_CHECK(1,6,0)
+	#error "OVITO requires OSPRay version 1.6.0 or newer."
 #endif
 #include <render/LoadBalancer.h>
 #include <ospcommon/tasking/parallel_for.h>
