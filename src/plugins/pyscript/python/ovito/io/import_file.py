@@ -129,7 +129,7 @@ def import_file(location, **params):
     
     try:
         # Block execution until file is loaded.
-        state = pipeline.evaluate_pipeline(pipeline.dataset.anim.time)
+        state = pipeline.evaluate_pipeline(0)  # Requesting frame 0 here, because full list of frames is not loaded yet at this point.
         
         # Raise exception if error occurs during loading.
         if state.status.type == PipelineStatus.Type.Error:
