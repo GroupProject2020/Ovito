@@ -372,7 +372,7 @@ Future<std::vector<QUrl>> FileSourceImporter::findWildcardMatches(const QUrl& so
 
 			isLocalPath = true;
 			directory = QFileInfo(sourceUrl.toLocalFile()).dir();
-			for(const QString& filename : directory.entryList(QDir::Files|QDir::NoDotAndDotDot, QDir::Name)) {
+			for(const QString& filename : directory.entryList(QDir::Files|QDir::NoDotAndDotDot|QDir::Hidden, QDir::Name)) {
 				if(matchesWildcardPattern(pattern, filename))
 					entries << filename;
 			}
