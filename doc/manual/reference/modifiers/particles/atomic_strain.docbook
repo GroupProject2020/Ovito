@@ -52,21 +52,26 @@
     <title>Role of the cutoff radius</title>
     <para>
       The <emphasis>cutoff radius</emphasis> is a parameter controlling the range of neighbors taken
-      into account when computing the atomic deformation gradient tensor of one particle. In other words in determines
-      the size of the spherical volume around the particle over which the relative motion of neighboring particles is averaged to obtain
-      the continuum deformation measure. As a rule of thumb: Use a small cutoff radius parameter to resolve all local details of the deformation field. 
+      into account when computing the atomic deformation gradient tensor for a particle. In other words this parameter determines
+      the size of a spherical volume around the particle over which the relative motion of neighboring particles is averaged to obtain
+      the continuum deformation measure. As a rule of thumb: Use a smaller cutoff radius parameter to resolve all local details of the deformation field. 
       On the other hand, a large cutoff radius will yield slowly varying (smooth) deformation values at the atomic sites.
+    </para>
+    <para>
+      A typical choice for the cutoff radius parameter is to use the first minimum of the pair distribution function, i.e. placing 
+      the cutoff halfway between the first and the second shell of neighbors in the system at hand. You can calculate the pair distribution
+      function for the current system using OVITO's <link linkend="particles.modifiers.coordination_analysis">Coordination Analysis</link> modifier. 
     </para>
     <para>
       Since the deformation gradient at each site is calculated from the relative motion of neighboring particles, it is important to ensure that sufficient
       neighbors are within the given cutoff range (in the undeformed configuration). This puts a lower limit on the 
-      cutoff radius that you can safely use. For three-dimensional systems, OVITO requires at a minimum three neighbor particles within
+      cutoff radius that you can safely use. For three-dimensional systems, OVITO requires at a minimum three neighbors within
       the cutoff range of the central particle in order to calculate a deformation gradient tensor. Furthermore, these three neighbors must not be co-planar.
-      If the cutoff radius has been chosen too small and there are only less than three neighbors within range of the central particle,
-      the deformation gradient calculation and all subsequent calculations will fail for this particle. The modifier will notify you about this situation
-      in the status field and will, for diagnostic purposes, select all "undercoordinated" particles for which the calculation failed.
-      Depending on the situation, you may react to this kind of condition by bumping up the cutoff radius parameter such that more neighbors become within range
-      and the calculation succeeds.
+      If the cutoff radius has been chosen too small and there are less than three neighbors within range of the central particle,
+      the deformation gradient calculation and all subsequent calculations will fail for the particle. The modifier will notify you about this situation
+      in the status field and will, for diagnostic purposes, select all such "undercoordinated" particles for which the calculation failed.
+      Depending on the situation, you may react to this kind of condition by bumping up the cutoff radius parameter in order for more neighbors 
+      to be included in the cutoff sphere.
     </para>
   </simplesect>
 
@@ -89,6 +94,14 @@
       gradient represents. This measure, the <emphasis>non-affine squared displacement</emphasis> (<inlineequation><mathphrase>D<superscript>2</superscript><subscript>min</subscript></mathphrase></inlineequation>), 
       is basically the <link xlink:href="http://li.mit.edu/A/Graphics/A/annotate_atomic_strain/Doc/main.pdf">residual of the least-squares fit</link> through which the deformation gradient is calculated.
       It may be used as a diagnostic for identifying local irreversible shear transformations in amorphous solids, for example.
+    </para>
+    <para>
+      When calculating <inlineequation><mathphrase>D<superscript>2</superscript><subscript>min</subscript></mathphrase></inlineequation>, OVITO follows the original formulation given by 
+      Falk and Langer, which consists of summing up the squared differences between the actual displacements of neighbors and 
+      the computed affine approximation. In the current implementation, this sum does <emphasis>not</emphasis> get divided by the
+      number of neighbors within the cutoff range. Thus, the calculated <inlineequation><mathphrase>D<superscript>2</superscript><subscript>min</subscript></mathphrase></inlineequation>
+      value for a particle will depend on the number of neighbors that are included in the selected cutoff volume and will naturally rise
+      if you increase the cutoff radius.
     </para>
 
     <para>The atomic deformation gradient <inlineequation><mathphrase>F</mathphrase></inlineequation> can be decomposed into the product 

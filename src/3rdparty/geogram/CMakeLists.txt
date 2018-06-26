@@ -30,6 +30,10 @@ aux_source_directories(SOURCES "Source Files\\api"       api)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/..)
 ADD_LIBRARY(geogram STATIC ${SOURCES})
 
+# Set visibility of symbols in this shared library to hidden by default, except those exported in the source code.
+SET_TARGET_PROPERTIES(geogram PROPERTIES CXX_VISIBILITY_PRESET "hidden")
+SET_TARGET_PROPERTIES(geogram PROPERTIES VISIBILITY_INLINES_HIDDEN ON)
+
 # Make header files of this library available to dependent targets.
 TARGET_INCLUDE_DIRECTORIES(geogram INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/..")
 SET_PROPERTY(TARGET geogram PROPERTY POSITION_INDEPENDENT_CODE ON)

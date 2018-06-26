@@ -50,7 +50,7 @@ ELSE()
 
     # Since we will link this into the Particles plugin, we need to use the same setting for the fPIC flag.
 	SET_PROPERTY(TARGET muParser PROPERTY POSITION_INDEPENDENT_CODE ON)
-	
+
 	# Export this target.
 	INSTALL(TARGETS muParser EXPORT OVITO 
 		RUNTIME DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}" COMPONENT "runtime"
