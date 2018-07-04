@@ -297,6 +297,7 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 	// Store results in the ModifierApplication.
 	static_object_cast<HistogramModifierApplication>(modApp)->setBinCounts(ycoords);
 	static_object_cast<HistogramModifierApplication>(modApp)->setHistogramInterval({intervalStart, intervalEnd});
+	notifyDependents(ReferenceEvent::ObjectStatusChanged);
 	
 	QString statusMessage;
 	if(outputSelection) {

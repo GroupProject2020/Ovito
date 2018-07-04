@@ -90,7 +90,7 @@ void CoordinationNumberModifierEditor::createUI(const RolloutInsertionParameters
 ******************************************************************************/
 bool CoordinationNumberModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(event.sender() == editObject() && event.type() == ReferenceEvent::ObjectStatusChanged) {
+	if(event.sender() == editObject() && (event.type() == ReferenceEvent::ObjectStatusChanged || event.type() == ReferenceEvent::TargetChanged)) {
 		plotRDFLater(this);
 	}
 	return ModifierPropertiesEditor::referenceEvent(source, event);
