@@ -122,6 +122,15 @@ public:
 	/// \brief Returns a human-readable text listing the input variables.
 	const QString& inputVariableTable() const { return _inputVariableTable; }
 
+	/// \brief Stores the given information about the available input variables in the modifier.
+	void setVariablesInfo(QStringList variableNames, QString variableTable) {
+		if(variableNames != _inputVariableNames || variableTable != _inputVariableTable) {
+			_inputVariableNames = std::move(variableNames);
+			_inputVariableTable = std::move(variableTable);
+			notifyDependents(ReferenceEvent::ObjectStatusChanged);
+		}
+	}
+
 protected:
 
 	/// \brief Is called when the value of a property of this object has changed.

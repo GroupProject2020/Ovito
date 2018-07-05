@@ -215,10 +215,14 @@ Future<AsynchronousModifier::ComputeEnginePtr> ComputePropertyModifier::createEn
 	}
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<PropertyComputeEngine>(validityInterval, time, std::move(outp), posProperty->storage(),
+	std::shared_ptr<PropertyComputeEngine> engine = std::make_shared<PropertyComputeEngine>(validityInterval, time, std::move(outp), posProperty->storage(),
 			std::move(selProperty), inputCell->data(), neighborModeEnabled() ? cutoff() : 0,
 			expressions(), neighborExpressions(),
 			std::move(inputProperties), currentFrame, input.attributes());
+
+	setVariablesInfo(engine->inputVariableNames(), engine->inputVariableTable());
+
+	return engine;
 }
 
 /******************************************************************************
