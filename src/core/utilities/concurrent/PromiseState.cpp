@@ -105,7 +105,9 @@ void PromiseState::setFinishedNoSelfLock()
 	_state = State(_state | Finished);
 
 	// Make sure that a result has been set (if not in canceled or error state).
-	OVITO_ASSERT_MSG(_exceptionStore || isCanceled() || _resultSet.load() || !_resultsTuple, "PromiseState::setFinishedNoSelfLock()", "Result has not been set for this promise state.");
+	OVITO_ASSERT_MSG(_exceptionStore || isCanceled() || _resultSet.load() || !_resultsTuple, 
+		"PromiseState::setFinishedNoSelfLock()", 
+		qPrintable(QStringLiteral("Result has not been set for the promise state. Please check program code setting the promise state. Progress text: %1").arg(progressText())));
 
 	// Run the continuation functions.
 	for(auto& cont : _continuations)

@@ -114,8 +114,10 @@ void ConstructSurfaceModifier::ConstructSurfaceEngine::perform()
 	size_t numInputParticles = positions()->size();
 	if(selection())
 		numInputParticles = positions()->size() - std::count(selection()->constDataInt(), selection()->constDataInt() + selection()->size(), 0);
-	if(numInputParticles <= 3)
+	if(numInputParticles <= 3) {
+		setResult(std::move(_results));
 		return;
+	}
 
 	// Algorithm is divided into several sub-steps.
 	// Assign weights to sub-steps according to estimated runtime.
