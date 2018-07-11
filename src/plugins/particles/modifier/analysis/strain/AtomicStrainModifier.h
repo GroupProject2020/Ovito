@@ -63,14 +63,15 @@ private:
 							bool calculateStrainTensors,
 							bool calculateNonaffineSquaredDisplacements, 
 							bool calculateRotations,
-							bool calculateStretchTensors) : 
+							bool calculateStretchTensors,
+							bool selectInvalidParticles) : 
 			ComputeEngineResults(validityInterval),
 			_shearStrains(std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Float, 1, 0, tr("Shear Strain"), false)),
 			_volumetricStrains(std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Float, 1, 0, tr("Volumetric Strain"), false)),
 			_strainTensors(calculateStrainTensors ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::StrainTensorProperty, false) : nullptr),
 			_deformationGradients(calculateDeformationGradients ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::DeformationGradientProperty, false) : nullptr),
 			_nonaffineSquaredDisplacements(calculateNonaffineSquaredDisplacements ? std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Float, 1, 0, tr("Nonaffine Squared Displacement"), false) : nullptr),
-			_invalidParticles(ParticleProperty::createStandardStorage(particleCount, ParticleProperty::SelectionProperty, false)),
+			_invalidParticles(selectInvalidParticles ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::SelectionProperty, false) : nullptr),
 			_rotations(calculateRotations ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::RotationProperty, false) : nullptr),
 			_stretchTensors(calculateStretchTensors ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::StretchTensorProperty, false) : nullptr) {}
 
@@ -131,7 +132,8 @@ private:
 				ConstPropertyPtr identifiers, ConstPropertyPtr refIdentifiers,
 				FloatType cutoff, AffineMappingType affineMapping, bool useMinimumImageConvention,
 				bool calculateDeformationGradients, bool calculateStrainTensors,
-				bool calculateNonaffineSquaredDisplacements, bool calculateRotations, bool calculateStretchTensors) :
+				bool calculateNonaffineSquaredDisplacements, bool calculateRotations, bool calculateStretchTensors,
+				bool selectInvalidParticles) :
 			RefConfigEngineBase(positions, simCell, refPositions, simCellRef,
 				std::move(identifiers), std::move(refIdentifiers), affineMapping, useMinimumImageConvention),
 			_cutoff(cutoff), 
@@ -141,7 +143,8 @@ private:
 							calculateStrainTensors,
 							calculateNonaffineSquaredDisplacements, 
 							calculateRotations,
-							calculateStretchTensors)) {}
+							calculateStretchTensors,
+							selectInvalidParticles)) {}
 
 		/// Computes the modifier's results.
 		virtual void perform() override;

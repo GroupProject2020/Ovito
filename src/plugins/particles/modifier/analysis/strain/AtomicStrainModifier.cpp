@@ -98,7 +98,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> AtomicStrainModifier::createEngin
 	return std::make_shared<AtomicStrainEngine>(validityInterval, posProperty->storage(), inputCell->data(), refPosProperty->storage(), refCell->data(),
 			identifierProperty ? identifierProperty->storage() : nullptr, refIdentifierProperty ? refIdentifierProperty->storage() : nullptr,
 			cutoff(), affineMapping(), useMinimumImageConvention(), calculateDeformationGradients(), calculateStrainTensors(),
-			calculateNonaffineSquaredDisplacements(), calculateRotations(), calculateStretchTensors());
+			calculateNonaffineSquaredDisplacements(), calculateRotations(), calculateStretchTensors(), selectInvalidParticles());
 }
 
 /******************************************************************************
@@ -208,7 +208,8 @@ void AtomicStrainModifier::AtomicStrainEngine::computeStrain(size_t particleInde
 	Matrix_3<double> inverseV;
 	double detThreshold = (double)sumSquaredDistance * 1e-12;
 	if(numNeighbors < 2 || (!cell().is2D() && numNeighbors < 3) || !V.inverse(inverseV, detThreshold) || std::abs(W.determinant()) <= detThreshold) {
-		_results->invalidParticles()->setInt(particleIndex, 1);
+		if(_results->invalidParticles())
+			_results->invalidParticles()->setInt(particleIndex, 1);
 		if(_results->deformationGradients()) {
 			for(Matrix_3<double>::size_type col = 0; col < 3; col++) {
 				for(Matrix_3<double>::size_type row = 0; row < 3; row++) {
@@ -299,7 +300,8 @@ void AtomicStrainModifier::AtomicStrainEngine::computeStrain(size_t particleInde
 	OVITO_ASSERT(std::isfinite(volumetricStrain));
 	_results->volumetricStrains()->setFloat(particleIndex, (FloatType)volumetricStrain);
 
-	_results->invalidParticles()->setInt(particleIndex, 0);
+	if(_results->invalidParticles())
+		_results->invalidParticles()->setInt(particleIndex, 0);
 }
 
 /******************************************************************************
@@ -310,7 +312,8 @@ PipelineFlowState AtomicStrainModifier::AtomicStrainResults::apply(TimePoint tim
 	PipelineFlowState output = input;
 	ParticleOutputHelper poh(modApp->dataset(), output);
 
-	if(invalidParticles()->size() != poh.outputParticleCount())
+	OVITO_ASSERT(shearStrains());
+	if(shearStrains()->size() != poh.outputParticleCount())
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
 
 	if(invalidParticles())
