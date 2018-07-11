@@ -16,16 +16,17 @@ def render(args):
     xy = args.project_point(positions[pindex])
     if xy is None: return
     
-    # Determine display radius of particle.
+    # Determine display radius of the particle.
+    radius = 0.0
     if 'Radius' in data.particles:
         radius = data.particles['Radius'][pindex]
-    elif 'Particle Type' in data.particles:
+    if radius <= 0 and 'Particle Type' in data.particles:
         particle_type = data.particles['Particle Type'][pindex]
         radius = data.particles['Particle Type'].type_by_id(particle_type).radius
-    else:
+    if radius <= 0:
         radius = node.get_vis(ParticlesVis).radius
 
-    # Calculate screen-space size of particle in pixels.
+    # Calculate screen-space size of the particle in pixels.
     screen_radius = args.project_size(positions[pindex], radius)
 
     # Draw a dashed circle around the particle.

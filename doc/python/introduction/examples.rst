@@ -249,7 +249,7 @@ The following script demonstrates how to use the `Matplotlib <http://matplotlib.
 on top the three-dimensional visualization. The histogram data is dynamically computed by a :py:class:`~ovito.modifiers.HistogramModifier` 
 in the data pipeline in this example.
 
-.. image:: /../manual/images/viewport_overlays/python_script_scale_bar_example.png
+.. image:: /../manual/images/viewport_overlays/python_script_plot_example.png
 
 .. literalinclude:: ../example_snippets/overlay_data_plot.py
   :lines: 4-42
