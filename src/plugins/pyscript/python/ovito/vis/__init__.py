@@ -45,7 +45,7 @@ import ovito
 __all__ = ['RenderSettings', 'Viewport', 'ViewportConfiguration', 'OpenGLRenderer', 'DataVis',
         'CoordinateTripodOverlay', 'PythonViewportOverlay', 'TextLabelOverlay']
 
-def _Viewport_render_image(self, size=(640,480), frame=0, filename=None, background=(1,1,1), alpha=False, renderer=None):
+def _Viewport_render_image(self, size=(640,480), frame=0, filename=None, background=(1.0,1.0,1.0), alpha=False, renderer=None):
     """ Renders an image of the viewport's view.
     
         :param size: A pair of integers specifying the horizontal and vertical dimensions of the output image in pixels. 
@@ -55,10 +55,10 @@ def _Viewport_render_image(self, size=(640,480), frame=0, filename=None, backgro
         :param background: A triplet of RGB values in the range [0,1] specifying the background color of the rendered image. 
         :param alpha: If true, the background is made transparent so that the rendered image may later be superimposed on a different backdrop.
                       When using this option, make sure to save the image in the PNG format in order to preserve the transparency information.
-        :param renderer: The rendering engine to use. If none is specified, either OpenGL or Tachyon are used, 
-                         depending on the availablity of OpenGL in the script execution context.  
+        :param renderer: The rendering engine to use. If set to ``None``, either OpenGL or Tachyon are used, 
+                         depending on the availablity of OpenGL in the current execution context.
         :returns: A `QImage <http://pyqt.sourceforge.net/Docs/PyQt5/api/qimage.html>`__ object containing the rendered picture; 
-                  or ``None`` if the rendering operation has been canceled by the user.
+                  or ``None`` if the rendering operation was canceled by the user.
 
         **Populating the scene**
 
@@ -69,7 +69,7 @@ def _Viewport_render_image(self, size=(640,480), frame=0, filename=None, backgro
            pipeline = import_file('simulation.dump')
            pipeline.add_to_scene()
 
-        **Selecting the rendering engine**
+        **Selecting a rendering engine**
 
         OVITO supports several different rendering backends for producing pictures of the three-dimensional scene:
             
@@ -90,9 +90,9 @@ def _Viewport_render_image(self, size=(640,480), frame=0, filename=None, backgro
         
         **Post-processing images**
 
-        If the ``filename`` parameter is left unspecified, the method does not save the rendered image to disk.
+        If the ``filename`` parameter is omitted, the method does not save the rendered image to disk.
         This gives you the opportunity to paint additional graphics on top before saving the 
-        `QImage <http://pyqt.sourceforge.net/Docs/PyQt5/api/qimage.html>`__ using its ``save()`` method:
+        `QImage <http://pyqt.sourceforge.net/Docs/PyQt5/api/qimage.html>`__ later using its ``save()`` method:
         
         .. literalinclude:: ../example_snippets/render_to_image.py
 
@@ -147,7 +147,7 @@ def _Viewport_render_image(self, size=(640,480), frame=0, filename=None, backgro
         self.dataset.anim.current_frame = old_frame
 Viewport.render_image = _Viewport_render_image
 
-def _Viewport_render_anim(self, filename, size=(640,480), fps=10, background=(1,1,1), renderer=None, range=None, every_nth=1):
+def _Viewport_render_anim(self, filename, size=(640,480), fps=10, background=(1.0,1.0,1.0), renderer=None, range=None, every_nth=1):
     """ Renders an animation sequence.
     
         :param str filename: The filename under which the rendered animation should be saved. 

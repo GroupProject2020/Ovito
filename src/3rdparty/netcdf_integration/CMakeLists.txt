@@ -28,7 +28,7 @@
 ###############################################################################
 
 # Locate the HDF5 library.
-FIND_PACKAGE(HDF5 COMPONENTS hdf5 REQUIRED NO_MODULE)
+FIND_PACKAGE(HDF5 REQUIRED)
 
 # Locate the NetCDF library.
 FIND_PACKAGE(NetCDF REQUIRED)
