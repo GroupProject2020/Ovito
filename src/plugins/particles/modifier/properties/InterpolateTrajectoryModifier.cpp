@@ -152,41 +152,41 @@ PipelineFlowState InterpolateTrajectoryModifier::evaluatePreliminary(TimePoint t
 	ParticleProperty* posProperty1 = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
 	ParticleProperty* posProperty2 = ParticleProperty::findInState(secondState, ParticleProperty::PositionProperty);
 	if(!posProperty2 || posProperty1->size() != posProperty2->size())
-		throwException(tr("Cannot interpolate between consecutive frames, because they contain different numbers of particles"));
+		throwException(tr("Cannot interpolate between consecutive simulation frames, because they contain different numbers of particles."));
 
 	ParticleProperty* idProperty1 = ParticleProperty::findInState(input, ParticleProperty::IdentifierProperty);
 	ParticleProperty* idProperty2 = ParticleProperty::findInState(secondState, ParticleProperty::IdentifierProperty);
 	ParticleProperty* outputPositions = poh.outputStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty, true);
 	if(idProperty1 && idProperty2 && idProperty1->size() == idProperty2->size() &&  
-			!std::equal(idProperty1->constDataInt(), idProperty1->constDataInt() + idProperty1->size(), idProperty2->constDataInt())) {
+			!std::equal(idProperty1->constDataInt64(), idProperty1->constDataInt64() + idProperty1->size(), idProperty2->constDataInt64())) {
 
 		// Build ID-to-index map.
-		std::unordered_map<int,int> idmap;
+		std::unordered_map<qlonglong,int> idmap;
 		int index = 0;
-		for(int id : idProperty2->constIntRange()) {
+		for(auto id : idProperty2->constInt64Range()) {
 			if(!idmap.insert(std::make_pair(id,index)).second)
-				throwException(tr("Detected duplicate particle ID %1.").arg(id));
+				throwException(tr("Detected duplicate particle ID: %1. Cannot interpolate trajectories in this case.").arg(id));
 			index++;
 		}
 
 		if(useMinimumImageConvention() && cell1 != nullptr) {
 			SimulationCell cell = cell1->data();
-			const int* id = idProperty1->constDataInt();
+			auto id = idProperty1->constDataInt64();
 			for(Point3& p1 : outputPositions->point3Range()) {
 				auto mapEntry = idmap.find(*id);
 				if(mapEntry == idmap.end())
-					throwException(tr("Cannot interpolate between consecutive frames, because the identity of particles changes."));
+					throwException(tr("Cannot interpolate between consecutive frames, because the identity of particles changes between frames."));
 				Vector3 delta = cell.wrapVector(posProperty2->getPoint3(mapEntry->second) - p1);
 				p1 += delta * t;
 				++id;
 			}
 		}
 		else {
-			const int* id = idProperty1->constDataInt();
+			auto id = idProperty1->constDataInt64();
 			for(Point3& p1 : outputPositions->point3Range()) {
 				auto mapEntry = idmap.find(*id);
 				if(mapEntry == idmap.end())
-					throwException(tr("Cannot interpolate between consecutive frames, because the identity of particles changes."));
+					throwException(tr("Cannot interpolate between consecutive frames, because the identity of particles changes between frames."));
 				p1 += (posProperty2->getPoint3(mapEntry->second) - p1) * t;
 				++id;
 			}
