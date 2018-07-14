@@ -24,7 +24,7 @@ def render(args):
         particle_type = data.particles['Particle Type'][pindex]
         radius = data.particles['Particle Type'].type_by_id(particle_type).radius
     if radius <= 0:
-        radius = node.get_vis(ParticlesVis).radius
+        radius = positions.vis.radius
 
     # Calculate screen-space size of the particle in pixels.
     screen_radius = args.project_size(positions[pindex], radius)

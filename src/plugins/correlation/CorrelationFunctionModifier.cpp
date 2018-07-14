@@ -179,6 +179,10 @@ Future<AsynchronousModifier::ComputeEnginePtr> CorrelationFunctionModifier::crea
 
 	// Get simulation cell.
 	SimulationCellObject* inputCell = pih.expectSimulationCell();
+	if(inputCell->is2D())
+		throwException(tr("Correlation function modifier does not support two-dimensional systems."));
+	if(inputCell->volume3D() < FLOATTYPE_EPSILON)
+		throwException(tr("Simulation cell is degenerate. Cannot compute correlation function."));
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	return std::make_shared<CorrelationAnalysisEngine>(posProperty->storage(),
@@ -348,9 +352,9 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 	AffineTransformation reciprocalCellMatrix = cell().inverseMatrix();
 
 	// Note: Cell vectors are in columns. Those are 3-vectors.
-	int nX = cellMatrix.column(0).length()/fftGridSpacing();
-	int nY = cellMatrix.column(1).length()/fftGridSpacing();
-	int nZ = cellMatrix.column(2).length()/fftGridSpacing();
+	int nX = std::max(1, (int)(cellMatrix.column(0).length() / fftGridSpacing()));
+	int nY = std::max(1, (int)(cellMatrix.column(1).length() / fftGridSpacing()));
+	int nZ = std::max(1, (int)(cellMatrix.column(2).length() / fftGridSpacing()));
 
 	// Map all quantities onto a spatial grid.
 	QVector<FloatType> gridProperty1, gridProperty2;
