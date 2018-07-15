@@ -551,6 +551,10 @@ FileSourceImporter::FrameDataPtr XYZImporter::FrameLoader::loadFile(QFile& file)
 	if(!stream.eof())
 		frameData->signalAdditionalFrames();	
 
+	// Sort particles by ID.
+	if(_sortParticles)
+		frameData->sortParticlesById();
+
 	if(commentLine.isEmpty())
 		frameData->setStatus(tr("%1 particles").arg(numParticles));
 	else

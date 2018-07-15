@@ -337,6 +337,44 @@ void ParticleFrameData::insertTypes(PropertyObject* typeProperty, TypeList* type
 	}
 }
 
+/******************************************************************************
+* Sorts the particles list with respect to particle IDs.
+* Does nothing if particles do not have IDs.
+******************************************************************************/
+void ParticleFrameData::sortParticlesById()
+{
+	PropertyPtr ids = findStandardParticleProperty(ParticleProperty::IdentifierProperty);
+	if(!ids) return;
+
+	// Determine new permutation of particles where they are sorted by ascending ID.
+	std::vector<size_t> permutation(ids->size());
+	std::iota(permutation.begin(), permutation.end(), (size_t)0);
+	std::sort(permutation.begin(), permutation.end(), [id = ids->constDataInt64()](size_t a, size_t b) { return id[a] < id[b]; });
+	std::vector<size_t> invertedPermutation(ids->size());
+	bool isAlreadySorted = true;
+	for(size_t i = 0; i < permutation.size(); i++) {
+		invertedPermutation[permutation[i]] = i;
+		if(permutation[i] != i) isAlreadySorted = false;
+	}
+	if(isAlreadySorted) return;
+
+	// Reorder all values in the particle property arrays.
+	for(const PropertyPtr& prop : particleProperties()) {
+		PropertyStorage copy(*prop);
+		prop->mappedCopy(copy, invertedPermutation);
+	}
+
+	// Update bond topology data to match new particle ordering.
+	if(PropertyPtr bondTopology = findStandardBondProperty(BondProperty::TopologyProperty)) {
+		auto particleIndex = bondTopology->dataInt64();
+		auto particleIndexEnd = particleIndex + bondTopology->size() * 2;
+		for(; particleIndex != particleIndexEnd; ++particleIndex) {
+			if(*particleIndex >= 0 && *particleIndex < invertedPermutation.size())
+				*particleIndex = invertedPermutation[*particleIndex];
+		}
+	}
+}
+
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

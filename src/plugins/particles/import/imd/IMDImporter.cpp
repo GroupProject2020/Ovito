@@ -175,6 +175,10 @@ FileSourceImporter::FrameDataPtr IMDImporter::FrameLoader::loadFile(QFile& file)
 		}
 	}
 
+	// Sort particles by ID if requested.
+	if(_sortParticles)
+		frameData->sortParticlesById();
+
 	frameData->setStatus(tr("Number of particles: %1").arg(numAtoms));
 	return frameData;
 }

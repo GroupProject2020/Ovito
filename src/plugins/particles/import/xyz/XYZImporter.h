@@ -77,7 +77,7 @@ public:
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
 	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
 		activateCLocale();
-		return std::make_shared<FrameLoader>(frame, localFilename, columnMapping(), autoRescaleCoordinates());
+		return std::make_shared<FrameLoader>(frame, localFilename, sortParticles(), columnMapping(), autoRescaleCoordinates());
 	}
 
 	/// Creates an asynchronous frame discovery object that scans the input file for contained animation frames.
@@ -115,8 +115,12 @@ private:
 	public:
 
 		/// Normal constructor.
-		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename, const InputColumnMapping& columnMapping, bool autoRescaleCoordinates)
-		  : FileSourceImporter::FrameLoader(frame, filename), _parseFileHeaderOnly(false), _columnMapping(columnMapping), _autoRescaleCoordinates(autoRescaleCoordinates) {}
+		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename, bool sortParticles, const InputColumnMapping& columnMapping, bool autoRescaleCoordinates)
+		  : FileSourceImporter::FrameLoader(frame, filename), 
+		  	_parseFileHeaderOnly(false), 
+			_sortParticles(sortParticles), 
+			_columnMapping(columnMapping), 
+			_autoRescaleCoordinates(autoRescaleCoordinates) {}
 
 		/// Constructor used when reading only the file header information.
 		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename)
@@ -129,6 +133,7 @@ private:
 
 	private:
 
+		bool _sortParticles;
 		bool _parseFileHeaderOnly;
 		bool _autoRescaleCoordinates;
 		InputColumnMapping _columnMapping;

@@ -201,16 +201,18 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 					BondProperty* periodicImageProperty = poh.outputStandardProperty<BondProperty>(BondProperty::PeriodicImageProperty, true);
 
 					// Wrap bonds crossing a periodic boundary by resetting their PBC shift vectors.
+					SimulationCell cell = trajectoryCell->data();
 					for(size_t bondIndex = 0; bondIndex < topologyProperty->size(); bondIndex++) {
 						size_t particleIndex1 = topologyProperty->getInt64Component(bondIndex, 0);
 						size_t particleIndex2 = topologyProperty->getInt64Component(bondIndex, 1);
-						if(particleIndex1 >= posProperty->size() || particleIndex2 >= posProperty->size())
+						if(particleIndex1 >= outputPosProperty->size() || particleIndex2 >= outputPosProperty->size())
 							continue;
-						const Point3& p1 = posProperty->getPoint3(particleIndex1);
-						const Point3& p2 = posProperty->getPoint3(particleIndex2);
-						for(size_t dim = 0; dim < 3; dim++) {
+						const Point3& p1 = outputPosProperty->getPoint3(particleIndex1);
+						const Point3& p2 = outputPosProperty->getPoint3(particleIndex2);
+						Vector3 delta = p1 - p2; 
+						for(int dim = 0; dim < 3; dim++) {
 							if(pbc[dim]) {
-								periodicImageProperty->setIntComponent(bondIndex, dim, (int)floor(inverseSimCell.prodrow(p1 - p2, dim) + FloatType(0.5)));
+								periodicImageProperty->setIntComponent(bondIndex, dim, (int)floor(inverseSimCell.prodrow(delta, dim) + FloatType(0.5)));
 							}
 						}
 					}

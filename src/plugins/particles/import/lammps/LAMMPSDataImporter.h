@@ -91,7 +91,7 @@ public:
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
 	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
 		activateCLocale();
-		return std::make_shared<FrameLoader>(frame, localFilename, atomStyle());
+		return std::make_shared<FrameLoader>(frame, localFilename, sortParticles(), atomStyle());
 	}
 
 	/// Inspects the header of the given file and returns the detected LAMMPS atom style.
@@ -125,8 +125,13 @@ private:
 
 		/// Constructor.
 		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename,
-				LAMMPSAtomStyle atomStyle = AtomStyle_Unknown,
-				bool detectAtomStyle = false) : FileSourceImporter::FrameLoader(frame, filename), _atomStyle(atomStyle), _detectAtomStyle(detectAtomStyle) {}
+				bool sortParticles,
+				LAMMPSAtomStyle atomStyle = AtomStyle_Unknown, 
+				bool detectAtomStyle = false) 
+			: FileSourceImporter::FrameLoader(frame, filename), 
+				_atomStyle(atomStyle), 
+				_detectAtomStyle(detectAtomStyle),
+				_sortParticles(sortParticles) {}
 
 		/// Detects or verifies the LAMMPS atom style used by the data file.
 		static std::tuple<LAMMPSAtomStyle,bool> detectAtomStyle(const char* firstLine, const QByteArray& keywordLine, LAMMPSAtomStyle style);
@@ -140,6 +145,7 @@ private:
 		LAMMPSAtomStyle _atomStyle;
 
 		bool _detectAtomStyle;
+		bool _sortParticles;
 	};
 
 	/// The LAMMPS atom style used by the data format.

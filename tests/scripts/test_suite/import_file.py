@@ -1,5 +1,6 @@
 import ovito
 from ovito.io import import_file
+import numpy as np
 
 test_data_dir = "../../files/"
 
@@ -61,6 +62,13 @@ node = import_file([test_data_dir + "LAMMPS/very_small_fp_number.dump", test_dat
 assert(ovito.dataset.anim.last_frame == 11)
 node = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin", 
                             columns = ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z"])
+ids = node.compute().particles['Particle Identifier']
+assert(not np.all(ids[:-1] <= ids[1:]))
+node = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin", 
+                            columns = ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z"],
+                            sort_particles = True)
+ids = node.compute().particles['Particle Identifier']
+assert(np.all(ids[:-1] <= ids[1:]))
 try:
     # This should generate an error:
     print("Note: The following error message is intentional.")

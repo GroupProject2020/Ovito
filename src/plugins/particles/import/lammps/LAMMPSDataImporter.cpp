@@ -78,7 +78,7 @@ Future<LAMMPSDataImporter::LAMMPSAtomStyle> LAMMPSDataImporter::inspectFileHeade
 
 			// Start task that inspects the file header to determine the LAMMPS atom style.
 			activateCLocale();
-			FrameLoaderPtr inspectionTask = std::make_shared<FrameLoader>(frame, filename, atomStyle(), true);
+			FrameLoaderPtr inspectionTask = std::make_shared<FrameLoader>(frame, filename, sortParticles(), atomStyle(), true);
 			return dataset()->container()->taskManager().runTaskAsync(inspectionTask)
 				.then([](const FileSourceImporter::FrameDataPtr& frameData) {
 					return static_cast<LAMMPSFrameData*>(frameData.get())->detectedAtomStyle();
@@ -531,6 +531,10 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 
 	if(!foundAtomsSection)
 		throw Exception("LAMMPS data file does not contain atomic coordinates.");
+
+	// Sort particles by ID.
+	if(_sortParticles)
+		frameData->sortParticlesById();
 
 	QString statusString = tr("Number of particles: %1").arg(natoms);
 	if(nbondtypes > 0 || nbonds > 0)

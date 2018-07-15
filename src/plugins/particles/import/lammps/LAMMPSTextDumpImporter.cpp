@@ -344,6 +344,10 @@ FileSourceImporter::FrameDataPtr LAMMPSTextDumpImporter::FrameLoader::loadFile(Q
 					frameData->signalAdditionalFrames();
 			}
 
+			// Sort particles by ID.
+			if(_sortParticles)
+				frameData->sortParticlesById();
+
 			frameData->setStatus(tr("%1 particles at timestep %2").arg(numParticles).arg(timestep));
 			return frameData; // Done!
 		}

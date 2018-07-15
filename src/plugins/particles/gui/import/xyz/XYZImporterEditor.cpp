@@ -124,21 +124,29 @@ bool XYZImporterEditor::showEditColumnMappingDialog(XYZImporter* importer, const
 void XYZImporterEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create a rollout.
-	QWidget* rollout = createRollout(tr("XYZ"), rolloutParams);
+	QWidget* rollout = createRollout(tr("XYZ reader"), rolloutParams);
 
     // Create the rollout contents.
 	QVBoxLayout* layout = new QVBoxLayout(rollout);
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(4);
 
-	QGroupBox* animFramesBox = new QGroupBox(tr("Timesteps"), rollout);
-	QVBoxLayout* sublayout = new QVBoxLayout(animFramesBox);
+	QGroupBox* optionsBox = new QGroupBox(tr("Options"), rollout);
+	QVBoxLayout* sublayout = new QVBoxLayout(optionsBox);
 	sublayout->setContentsMargins(4,4,4,4);
-	layout->addWidget(animFramesBox);
+	layout->addWidget(optionsBox);
 
 	// Multi-timestep file
 	BooleanParameterUI* multitimestepUI = new BooleanParameterUI(this, PROPERTY_FIELD(ParticleImporter::isMultiTimestepFile));
 	sublayout->addWidget(multitimestepUI->checkBox());
+
+	// Auto-rescale reduced coordinates.
+	BooleanParameterUI* rescaleReducedUI = new BooleanParameterUI(this, PROPERTY_FIELD(XYZImporter::autoRescaleCoordinates));
+	sublayout->addWidget(rescaleReducedUI->checkBox());
+
+	// Sort particles
+	BooleanParameterUI* sortParticlesUI = new BooleanParameterUI(this, PROPERTY_FIELD(ParticleImporter::sortParticles));
+	sublayout->addWidget(sortParticlesUI->checkBox());
 
 	QGroupBox* columnMappingBox = new QGroupBox(tr("File columns"), rollout);
 	sublayout = new QVBoxLayout(columnMappingBox);
@@ -148,15 +156,6 @@ void XYZImporterEditor::createUI(const RolloutInsertionParameters& rolloutParams
 	QPushButton* editMappingButton = new QPushButton(tr("Edit column mapping..."));
 	sublayout->addWidget(editMappingButton);
 	connect(editMappingButton, &QPushButton::clicked, this, &XYZImporterEditor::onEditColumnMapping);
-
-	QGroupBox* settingsBox = new QGroupBox(tr("Settings"), rollout);
-	sublayout = new QVBoxLayout(settingsBox);
-	sublayout->setContentsMargins(4,4,4,4);
-	layout->addWidget(settingsBox);
-
-	// Auto-rescale reduced coordinates.
-	BooleanParameterUI* rescaleReducedUI = new BooleanParameterUI(this, PROPERTY_FIELD(XYZImporter::autoRescaleCoordinates));
-	sublayout->addWidget(rescaleReducedUI->checkBox());
 }
 
 /******************************************************************************

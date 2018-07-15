@@ -64,7 +64,7 @@ public:
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
 	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
 		activateCLocale();
-		return std::make_shared<FrameLoader>(frame, localFilename);
+		return std::make_shared<FrameLoader>(frame, localFilename, sortParticles());
 	}
 
 private:
@@ -74,13 +74,18 @@ private:
 	{
 	public:
 
-		/// Inherit constructor from base class.
-		using FileSourceImporter::FrameLoader::FrameLoader;
+		/// Constructor.
+		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename, bool sortParticles)
+		  : FileSourceImporter::FrameLoader(frame, filename), _sortParticles(sortParticles) {}
 
 	protected:
 
 		/// Loads the frame data from the given file.
 		virtual FrameDataPtr loadFile(QFile& file) override;
+
+	private:
+
+		bool _sortParticles;
 	};
 };
 

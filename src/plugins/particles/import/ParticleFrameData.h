@@ -256,9 +256,13 @@ public:
 	/// Returns the metadata read from the file header.
 	QVariantMap& attributes() { return _attributes; }
 
-	/// Indicates that the file parser found additional frames
-	/// in the input file stored back to back with the frame currently being loaded.
+	/// Parsers call this method to indicate that the input file contains
+	/// additional frames stored back to back with the currently loaded one.
 	void signalAdditionalFrames() { _detectedAdditionalFrames = true; }
+
+	/// Sorts the particles list with respect to particle IDs.
+	/// Does nothing if particles do not have IDs.
+	void sortParticlesById();
 
 private:
 
@@ -288,8 +292,7 @@ private:
 	/// The metadata read from the file header.
 	QVariantMap _attributes;
 
-	/// Flag that indicates that the file parser has found additional frames
-	/// in the input file stored back to back with the currently loaded frame.
+	/// Flag that is set by the parser to indicate that the input file contains more than one frame.
 	bool _detectedAdditionalFrames = false;
 };
 

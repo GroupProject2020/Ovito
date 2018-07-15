@@ -300,6 +300,10 @@ FileSourceImporter::FrameDataPtr CFGImporter::FrameLoader::loadFile(QFile& file)
 			*p = H * (*p);
 	}
 
+	// Sort particles by ID if requested.
+	if(_sortParticles)
+		frameData->sortParticlesById();
+
 	frameData->setStatus(tr("Number of particles: %1").arg(header.numParticles));
 	return frameData;
 }

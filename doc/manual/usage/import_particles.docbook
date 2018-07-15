@@ -35,7 +35,7 @@
   <simplesect xml:id="usage.import.sequence">
     <title>Simulation sequences</title>
     <para> 
-       OVITO can load and animate simulation trajectories that consist of a sequence of snapshots or frames. 
+       OVITO can load and animate simulation trajectories that consist of a sequence of frames. 
        The following scenarios are supported by the software:
        <variablelist>
          <varlistentry><term>Series of files:</term><listitem>

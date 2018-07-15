@@ -669,6 +669,11 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 		}
 
 		closeNetCDF();
+
+		// Sort particles by ID if requested.
+		if(_sortParticles)
+			frameData->sortParticlesById();
+		
 		frameData->setStatus(tr("Loaded %1 particles").arg(particleCount));
 		return frameData;
 	}

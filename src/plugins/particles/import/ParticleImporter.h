@@ -38,7 +38,8 @@ class OVITO_PARTICLES_EXPORT ParticleImporter : public FileSourceImporter
 public:
 
 	/// \brief Constructs a new instance of this class.
-	ParticleImporter(DataSet* dataset) : FileSourceImporter(dataset), _isMultiTimestepFile(false) {}
+	ParticleImporter(DataSet* dataset) : FileSourceImporter(dataset), 
+		_isMultiTimestepFile(false), _sortParticles(false) {}
 
 	/// This method indicates whether a wildcard pattern should be automatically generated
 	/// when the user picks a new input filename.
@@ -58,6 +59,9 @@ private:
 
 	/// Indicates that the input file contains multiple timesteps.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, isMultiTimestepFile, setMultiTimestepFile);
+
+	/// Request sorting of the input particle with respect to IDs.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, sortParticles, setSortParticles);
 };
 
 OVITO_END_INLINE_NAMESPACE

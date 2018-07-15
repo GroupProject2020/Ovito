@@ -446,6 +446,10 @@ FileSourceImporter::FrameDataPtr LAMMPSBinaryDumpImporter::FrameLoader::loadFile
 	if(!file.atEnd())
 		frameData->signalAdditionalFrames();	
 
+	// Sort particles by ID.
+	if(_sortParticles)
+		frameData->sortParticlesById();
+
 	frameData->setStatus(tr("%1 particles at timestep %2").arg(header.natoms).arg(header.ntimestep));
 	return frameData;
 }

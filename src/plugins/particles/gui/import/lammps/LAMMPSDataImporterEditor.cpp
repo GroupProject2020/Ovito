@@ -22,6 +22,7 @@
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <plugins/particles/import/lammps/LAMMPSDataImporter.h>
 #include <core/app/PluginManager.h>
+#include <gui/properties/BooleanParameterUI.h>
 #include "LAMMPSDataImporterEditor.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -90,7 +91,22 @@ bool LAMMPSDataImporterEditor::inspectNewFile(FileImporter* importer, const QUrl
 ******************************************************************************/
 void LAMMPSDataImporterEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
-	// This editor class provides to UI.
+	// Create a rollout.
+	QWidget* rollout = createRollout(tr("LAMMPS data reader"), rolloutParams);
+
+    // Create the rollout contents.
+	QVBoxLayout* layout = new QVBoxLayout(rollout);
+	layout->setContentsMargins(4,4,4,4);
+	layout->setSpacing(4);
+
+	QGroupBox* optionsBox = new QGroupBox(tr("Options"), rollout);
+	QVBoxLayout* sublayout = new QVBoxLayout(optionsBox);
+	sublayout->setContentsMargins(4,4,4,4);
+	layout->addWidget(optionsBox);
+
+	// Sort particles
+	BooleanParameterUI* sortParticlesUI = new BooleanParameterUI(this, PROPERTY_FIELD(ParticleImporter::sortParticles));
+	sublayout->addWidget(sortParticlesUI->checkBox());
 }
 
 OVITO_END_INLINE_NAMESPACE

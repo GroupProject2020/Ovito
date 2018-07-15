@@ -59,6 +59,9 @@ SET(SourceFiles
 	import/lammps/LAMMPSTextDumpImporterEditor.cpp
 	import/lammps/LAMMPSBinaryDumpImporterEditor.cpp
 	import/lammps/LAMMPSDataImporterEditor.cpp
+	import/parcas/ParcasFileImporterEditor.cpp
+	import/imd/IMDImporterEditor.cpp
+	import/cfg/CFGImporterEditor.cpp
 	import/xyz/XYZImporterEditor.cpp
 	export/FileColumnParticleExporterEditor.cpp
 	export/lammps/LAMMPSDataExporterEditor.cpp

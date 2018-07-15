@@ -298,6 +298,10 @@ FileSourceImporter::FrameDataPtr ParcasFileImporter::FrameLoader::loadFile(QFile
 		if(!setProgressValueIntermittent(i)) return {};
 	}
 
+	// Sort particles by ID if requested.
+	if(_sortParticles)
+		frameData->sortParticlesById();
+		
 	frameData->setStatus(tr("%1 atoms at simulation time %2").arg(numAtoms).arg(simu_time));
 	return frameData;
 }

@@ -48,6 +48,7 @@ void defineImportersSubmodule(py::module m)
 {
 	ovito_abstract_class<ParticleImporter, FileSourceImporter>(m)
 		.def_property("multiple_frames", &ParticleImporter::isMultiTimestepFile, &ParticleImporter::setMultiTimestepFile)
+		.def_property("sort_particles", &ParticleImporter::sortParticles, &ParticleImporter::setSortParticles)
 	;
 
 	ovito_class<XYZImporter, ParticleImporter>(m)

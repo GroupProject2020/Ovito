@@ -69,21 +69,25 @@ bool LAMMPSTextDumpImporterEditor::showEditColumnMappingDialog(LAMMPSTextDumpImp
 void LAMMPSTextDumpImporterEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create a rollout.
-	QWidget* rollout = createRollout(tr("LAMMPS dump"), rolloutParams);
+	QWidget* rollout = createRollout(tr("LAMMPS dump reader"), rolloutParams);
 
     // Create the rollout contents.
 	QVBoxLayout* layout = new QVBoxLayout(rollout);
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(4);
 
-	QGroupBox* animFramesBox = new QGroupBox(tr("Timesteps"), rollout);
-	QVBoxLayout* sublayout = new QVBoxLayout(animFramesBox);
+	QGroupBox* optionsBox = new QGroupBox(tr("Options"), rollout);
+	QVBoxLayout* sublayout = new QVBoxLayout(optionsBox);
 	sublayout->setContentsMargins(4,4,4,4);
-	layout->addWidget(animFramesBox);
+	layout->addWidget(optionsBox);
 
 	// Multi-timestep file
 	BooleanParameterUI* multitimestepUI = new BooleanParameterUI(this, PROPERTY_FIELD(ParticleImporter::isMultiTimestepFile));
 	sublayout->addWidget(multitimestepUI->checkBox());
+
+	// Sort particles
+	BooleanParameterUI* sortParticlesUI = new BooleanParameterUI(this, PROPERTY_FIELD(ParticleImporter::sortParticles));
+	sublayout->addWidget(sortParticlesUI->checkBox());
 
 	QGroupBox* columnMappingBox = new QGroupBox(tr("File columns"), rollout);
 	sublayout = new QVBoxLayout(columnMappingBox);

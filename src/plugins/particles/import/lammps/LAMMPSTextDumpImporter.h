@@ -74,13 +74,13 @@ public:
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
 	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
 		activateCLocale();
-		return std::make_shared<FrameLoader>(frame, localFilename, useCustomColumnMapping(), customColumnMapping());
+		return std::make_shared<FrameLoader>(frame, localFilename, sortParticles(), useCustomColumnMapping(), customColumnMapping());
 	}
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
-	static std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename, bool useCustomColumnMapping, const InputColumnMapping& customColumnMapping) {
+	static std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename, bool sortParticles, bool useCustomColumnMapping, const InputColumnMapping& customColumnMapping) {
 		activateCLocale();
-		return std::make_shared<FrameLoader>(frame, localFilename, useCustomColumnMapping, customColumnMapping);
+		return std::make_shared<FrameLoader>(frame, localFilename, sortParticles, useCustomColumnMapping, customColumnMapping);
 	}
 
 	/// Creates an asynchronous frame discovery object that scans the input file for contained animation frames.
@@ -121,12 +121,19 @@ private:
 
 		/// Normal constructor.
 		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename,
+				bool sortParticles,
 				bool useCustomColumnMapping, const InputColumnMapping& customColumnMapping)
-			: FileSourceImporter::FrameLoader(frame, filename), _parseFileHeaderOnly(false), _useCustomColumnMapping(useCustomColumnMapping), _customColumnMapping(customColumnMapping) {}
+			: FileSourceImporter::FrameLoader(frame, filename), 
+				_parseFileHeaderOnly(false),
+				_sortParticles(sortParticles), 
+				_useCustomColumnMapping(useCustomColumnMapping), 
+				_customColumnMapping(customColumnMapping) {}
 
 		/// Constructor used when reading only the file header information.
 		FrameLoader(const FileSourceImporter::Frame& frame, const QString& filename)
-			: FileSourceImporter::FrameLoader(frame, filename), _parseFileHeaderOnly(true), _useCustomColumnMapping(false) {}
+			: FileSourceImporter::FrameLoader(frame, filename), 
+				_parseFileHeaderOnly(true), 
+				_useCustomColumnMapping(false) {}
 
 		/// Returns the file column mapping used to load the file.
 		const InputColumnMapping& columnMapping() const { return _customColumnMapping; }
@@ -138,6 +145,7 @@ private:
 
 	private:
 
+		bool _sortParticles;
 		bool _parseFileHeaderOnly;
 		bool _useCustomColumnMapping;
 		InputColumnMapping _customColumnMapping;

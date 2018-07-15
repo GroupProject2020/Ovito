@@ -215,7 +215,14 @@ public:
 	template<typename FC>
 	void finally_future(FC&& cont) { finally_future(detail::InlineExecutor(), std::forward<FC>(cont)); }
 
+#ifndef Q_CC_GNU
 protected:
+#else
+// This is a workaround for what is likely a bug in the GCC compiler, which doesn't respect the
+// template fiend class declarations made below. The AsynchronousTask<> template specialization
+// doesn't seem to get access to the Future constructor.
+public:
+#endif
 
 	/// Constructor that constructs a Future that is associated with the given shared state.
 	explicit Future(PromiseStatePtr p) noexcept : FutureBase(std::move(p)) {}

@@ -95,8 +95,17 @@ void AMBERNetCDFImporterEditor::createUI(const RolloutInsertionParameters& rollo
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(4);
 
+	QGroupBox* optionsBox = new QGroupBox(tr("Options"), rollout);
+	QVBoxLayout* sublayout = new QVBoxLayout(optionsBox);
+	sublayout->setContentsMargins(4,4,4,4);
+	layout->addWidget(optionsBox);
+
+	// Sort particles
+	BooleanParameterUI* sortParticlesUI = new BooleanParameterUI(this, PROPERTY_FIELD(ParticleImporter::sortParticles));
+	sublayout->addWidget(sortParticlesUI->checkBox());
+
 	QGroupBox* columnMappingBox = new QGroupBox(tr("File columns"), rollout);
-	QVBoxLayout* sublayout = new QVBoxLayout(columnMappingBox);
+	sublayout = new QVBoxLayout(columnMappingBox);
 	sublayout->setContentsMargins(4,4,4,4);
 	layout->addWidget(columnMappingBox);
 

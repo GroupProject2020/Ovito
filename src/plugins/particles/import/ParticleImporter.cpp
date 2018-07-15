@@ -26,7 +26,9 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import)
 
 IMPLEMENT_OVITO_CLASS(ParticleImporter);	
 DEFINE_PROPERTY_FIELD(ParticleImporter, isMultiTimestepFile);
-SET_PROPERTY_FIELD_LABEL(ParticleImporter, isMultiTimestepFile, "Contains multiple timesteps");
+DEFINE_PROPERTY_FIELD(ParticleImporter, sortParticles);
+SET_PROPERTY_FIELD_LABEL(ParticleImporter, isMultiTimestepFile, "File contains multiple timesteps");
+SET_PROPERTY_FIELD_LABEL(ParticleImporter, sortParticles, "Sort particles by ID");
 
 /******************************************************************************
 * Is called when the value of a property of this object has changed.
@@ -36,6 +38,10 @@ void ParticleImporter::propertyChanged(const PropertyFieldDescriptor& field)
 	if(field == PROPERTY_FIELD(isMultiTimestepFile)) {
 		// Automatically rescan input file for animation frames when this option has been changed.
 		requestFramesUpdate();
+	}
+	else if(field == PROPERTY_FIELD(sortParticles)) {
+		// Automatically reload input file when this option has been changed.
+		requestReload();
 	}
 	FileSourceImporter::propertyChanged(field);
 }
