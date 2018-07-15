@@ -367,6 +367,10 @@ void defineModifiersSubmodule(py::module m)
 			" * ``Color`` (:py:class:`~ovito.data.ParticleProperty`):\n"
 			"   The modifier assigns a color to each particle according to its identified structure type. "
 			"\n")
+		.def_property("color_by_type", &BondAngleAnalysisModifier::colorByType, &BondAngleAnalysisModifier::setColorByType,
+				"Controls whether the modifier assigns a color to each particle based on the identified structure type. "
+				"\n\n"
+				":Default: ``True``\n")
 	;
 	expose_subobject_list(BondAngleAnalysisModifier_py, std::mem_fn(&StructureIdentificationModifier::structureTypes), "structures", "BondAngleAnalysisStructureTypeList",
 		"A list of :py:class:`~ovito.data.ParticleType` instances managed by this modifier, one for each supported structure type. "
@@ -435,6 +439,10 @@ void defineModifiersSubmodule(py::module m)
 				"Lets the modifier perform the analysis only for selected particles. Particles that are not selected will be treated as if they did not exist."
 				"\n\n"
 				":Default: ``False``\n")
+		.def_property("color_by_type", &CommonNeighborAnalysisModifier::colorByType, &CommonNeighborAnalysisModifier::setColorByType,
+				"Controls whether the modifier assigns a color to each particle based on the identified structure type. "
+				"\n\n"
+				":Default: ``True``\n")
 	;
 	expose_subobject_list(CommonNeighborAnalysisModifier_py, std::mem_fn(&StructureIdentificationModifier::structureTypes), "structures", "CommonNeighborAnalysisStructureTypeList",
 		"A list of :py:class:`~ovito.data.ParticleType` instances managed by this modifier, one for each supported structure type. "
@@ -500,6 +508,10 @@ void defineModifiersSubmodule(py::module m)
 				"Lets the modifier perform the analysis only for selected particles. Particles that are not selected will be treated as if they did not exist."
 				"\n\n"
 				":Default: ``False``\n")
+		.def_property("color_by_type", &IdentifyDiamondModifier::colorByType, &IdentifyDiamondModifier::setColorByType,
+				"Controls whether the modifier assigns a color to each particle based on the identified structure type. "
+				"\n\n"
+				":Default: ``True``\n")
 	;
 	expose_subobject_list(IdentifyDiamondModifier_py, std::mem_fn(&StructureIdentificationModifier::structureTypes), "structures", "IdentifyDiamondStructureTypeList",
 		"A list of :py:class:`~ovito.data.ParticleType` instances managed by this modifier, one for each supported structure type. "
@@ -1159,6 +1171,10 @@ void defineModifiersSubmodule(py::module m)
 				"and will all be assigned to the \"Other\" structure category. "
 				"\n\n"
 				":Default: ``False``\n")
+		.def_property("color_by_type", &PolyhedralTemplateMatchingModifier::colorByType, &PolyhedralTemplateMatchingModifier::setColorByType,
+				"Controls whether the modifier assigns a color to each particle based on the identified structure type. "
+				"\n\n"
+				":Default: ``True``\n")
 		.def_property("output_rmsd", &PolyhedralTemplateMatchingModifier::outputRmsd, &PolyhedralTemplateMatchingModifier::setOutputRmsd,
 				"Boolean flag that controls whether the modifier outputs the computed per-particle RMSD values as a new particle property named ``RMSD``."
 				"\n\n"

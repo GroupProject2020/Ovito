@@ -33,15 +33,18 @@ IMPLEMENT_OVITO_CLASS(StructureIdentificationModifier);
 IMPLEMENT_OVITO_CLASS(StructureIdentificationModifierApplication);
 DEFINE_REFERENCE_FIELD(StructureIdentificationModifier, structureTypes);
 DEFINE_PROPERTY_FIELD(StructureIdentificationModifier, onlySelectedParticles);
+DEFINE_PROPERTY_FIELD(StructureIdentificationModifier, colorByType);
 SET_PROPERTY_FIELD_LABEL(StructureIdentificationModifier, structureTypes, "Structure types");
 SET_PROPERTY_FIELD_LABEL(StructureIdentificationModifier, onlySelectedParticles, "Use only selected particles");
+SET_PROPERTY_FIELD_LABEL(StructureIdentificationModifier, colorByType, "Color particles by type");
 SET_MODIFIER_APPLICATION_TYPE(StructureIdentificationModifier, StructureIdentificationModifierApplication);
 
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
 StructureIdentificationModifier::StructureIdentificationModifier(DataSet* dataset) : AsynchronousModifier(dataset),
-		_onlySelectedParticles(false)
+		_onlySelectedParticles(false),
+		_colorByType(true)
 {
 }
 
@@ -123,28 +126,40 @@ PipelineFlowState StructureIdentificationModifier::StructureIdentificationEngine
 	// Attach structure types to output particle property.
 	structureProperty->setElementTypes(modifier->structureTypes());
 
-	// Build structure type-to-color map.
-	std::vector<Color> structureTypeColors(modifier->structureTypes().size());
+	if(modifier->colorByType()) {
+
+		// Build structure type-to-color map.
+		std::vector<Color> structureTypeColors(modifier->structureTypes().size());
+		for(ElementType* stype : modifier->structureTypes()) {
+			OVITO_ASSERT(stype->id() >= 0);
+			if(stype->id() >= (int)structureTypeColors.size()) {
+				structureTypeColors.resize(stype->id() + 1);
+			}
+			structureTypeColors[stype->id()] = stype->color();
+		}
+
+		// Assign colors to particles based on their structure type.
+		ParticleProperty* colorProperty = poh.outputStandardProperty<ParticleProperty>(ParticleProperty::ColorProperty);
+		const int* s = structureProperty->constDataInt();
+		for(Color& c : colorProperty->colorRange()) {
+			if(*s >= 0 && *s < structureTypeColors.size()) {
+				c = structureTypeColors[*s];
+			}
+			else c.setWhite();
+			++s;
+		}
+	}
+
+	// Count the number of identified particles of each type.
 	std::vector<size_t> typeCounters(modifier->structureTypes().size(), 0);
 	for(ElementType* stype : modifier->structureTypes()) {
 		OVITO_ASSERT(stype->id() >= 0);
-		if(stype->id() >= (int)structureTypeColors.size()) {
-			structureTypeColors.resize(stype->id() + 1);
+		if(stype->id() >= (int)typeCounters.size())
 			typeCounters.resize(stype->id() + 1, 0);
-		}
-		structureTypeColors[stype->id()] = stype->color();
 	}
-
-	// Assign colors to particles based on their structure type.
-	ParticleProperty* colorProperty = poh.outputStandardProperty<ParticleProperty>(ParticleProperty::ColorProperty);
-	const int* s = structureProperty->constDataInt();
-	for(Color& c : colorProperty->colorRange()) {
-		if(*s >= 0 && *s < structureTypeColors.size()) {
-			c = structureTypeColors[*s];
-			typeCounters[*s]++;
-		}
-		else c.setWhite();
-		++s;
+	for(int t : structureProperty->constIntRange()) {
+		if(t >= 0 && t < typeCounters.size())
+			typeCounters[t]++;
 	}
 
 	// Store the per-type counts in the ModifierApplication.

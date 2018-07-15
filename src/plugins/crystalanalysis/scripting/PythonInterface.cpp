@@ -193,6 +193,14 @@ PYBIND11_MODULE(CrystalAnalysis, m)
 				"large Burgers circuits are needed to identify dissociated dislocations with a wide core. "
 				"\n\n"
 				":Default: False\n")
+		.def_property("color_by_type", &DislocationAnalysisModifier::colorByType, &DislocationAnalysisModifier::setColorByType,
+				"Controls whether the modifier assigns a color to each particle based on the identified structure type. "
+				"\n\n"
+				":Default: ``True``\n")
+		.def_property("only_selected", &DislocationAnalysisModifier::onlySelectedParticles, &DislocationAnalysisModifier::setOnlySelectedParticles,
+				"Lets the modifier perform the analysis only for selected particles. Particles that are not selected will be treated as if they did not exist."
+				"\n\n"
+				":Default: ``False``\n")
 		.def_property("output_interface_mesh", &DislocationAnalysisModifier::outputInterfaceMesh, &DislocationAnalysisModifier::setOutputInterfaceMesh)
 	;
 

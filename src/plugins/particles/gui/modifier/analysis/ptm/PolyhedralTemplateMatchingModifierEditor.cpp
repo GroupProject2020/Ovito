@@ -86,6 +86,10 @@ void PolyhedralTemplateMatchingModifierEditor::createUI(const RolloutInsertionPa
 	sublayout->addWidget(outputOrderingTypesUI->checkBox());
 	outputOrderingTypesUI->checkBox()->setText(tr("Ordering types"));
 
+	// Color by type
+	BooleanParameterUI* colorByTypeUI = new BooleanParameterUI(this, PROPERTY_FIELD(StructureIdentificationModifier::colorByType));
+	sublayout->addWidget(colorByTypeUI->checkBox());
+
 	StructureListParameterUI* structureTypesPUI = new StructureListParameterUI(this, true);
 	layout1->addSpacing(10);
 	layout1->addWidget(structureTypesPUI->tableWidget());

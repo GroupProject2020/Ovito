@@ -118,6 +118,14 @@ public:
 	/// Constructor.
 	StructureIdentificationModifier(DataSet* dataset);
 
+	/// This method indicates whether cached computation results of the modifier should be discarded whenever
+	/// a parameter of the modifier changes.
+	virtual bool discardResultsOnModifierChange(const PropertyFieldEvent& event) const override { 
+		// Avoid a recomputation from scratch if the color-by-type option is being changed.
+		if(event.field() == &PROPERTY_FIELD(colorByType)) return false;
+		return AsynchronousModifier::discardResultsOnModifierChange(event);
+	}
+
 protected:
 
 	/// Saves the class' contents to the given stream.
@@ -142,6 +150,9 @@ private:
 
 	/// Controls whether analysis should take into account only selected particles.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, onlySelectedParticles, setOnlySelectedParticles);
+
+	/// Controls whether the modifier colors particles based on their type.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, colorByType, setColorByType);
 };
 
 

@@ -85,14 +85,18 @@ void DislocationAnalysisModifierEditor::createUI(const RolloutInsertionParameter
 	sublayout->setSpacing(4);
 	sublayout->setColumnStretch(0, 1);
 
+	// Color by type
+	BooleanParameterUI* colorByTypeUI = new BooleanParameterUI(this, PROPERTY_FIELD(StructureIdentificationModifier::colorByType));
+	sublayout->addWidget(colorByTypeUI->checkBox(), 0, 0);
+
 	BooleanParameterUI* onlySelectedParticlesUI = new BooleanParameterUI(this, PROPERTY_FIELD(StructureIdentificationModifier::onlySelectedParticles));
-	sublayout->addWidget(onlySelectedParticlesUI->checkBox(), 0, 0);
+	sublayout->addWidget(onlySelectedParticlesUI->checkBox(), 1, 0);
 
 	BooleanParameterUI* outputInterfaceMeshUI = new BooleanParameterUI(this, PROPERTY_FIELD(DislocationAnalysisModifier::outputInterfaceMesh));
-	sublayout->addWidget(outputInterfaceMeshUI->checkBox(), 1, 0);
+	sublayout->addWidget(outputInterfaceMeshUI->checkBox(), 2, 0);
 
 	BooleanParameterUI* onlyPerfectDislocationsUI = new BooleanParameterUI(this, PROPERTY_FIELD(DislocationAnalysisModifier::onlyPerfectDislocations));
-	sublayout->addWidget(onlyPerfectDislocationsUI->checkBox(), 2, 0);
+	sublayout->addWidget(onlyPerfectDislocationsUI->checkBox(), 3, 0);
 
 	// Status label.
 	layout->addWidget(statusLabel());	
@@ -159,8 +163,6 @@ void DislocationAnalysisModifierEditor::createUI(const RolloutInsertionParameter
 DislocationTypeListParameterUI::DislocationTypeListParameterUI(QObject* parent)
 	: RefTargetListParameterUI(parent, PROPERTY_FIELD(StructurePattern::burgersVectorFamilies))
 {
-
-
 	connect(tableWidget(220), &QTableWidget::doubleClicked, this, &DislocationTypeListParameterUI::onDoubleClickDislocationType);
 	tableWidget()->setAutoScroll(false);
 }
@@ -242,4 +244,3 @@ void DislocationTypeListParameterUI::onDoubleClickDislocationType(const QModelIn
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-
