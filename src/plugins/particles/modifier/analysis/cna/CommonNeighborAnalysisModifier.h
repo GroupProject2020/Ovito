@@ -130,26 +130,27 @@ protected:
 
 private:
 
-	/// Holds the modifier's results.
-	class CNAResults : public StructureIdentificationResults
+	/// Base class for CNA compute engines.
+	class CNAEngine : public StructureIdentificationEngine
 	{
 	public:
 
 		/// Inherit constructor of base class.
-		using StructureIdentificationResults::StructureIdentificationResults;
+		using StructureIdentificationEngine::StructureIdentificationEngine;
 
 		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 	};
 
 	/// Analysis engine that performs the conventional common neighbor analysis.
-	class FixedCNAEngine : public StructureIdentificationEngine
+	class FixedCNAEngine : public CNAEngine
 	{
 	public:
 
 		/// Constructor.
-		FixedCNAEngine(ConstPropertyPtr positions, const SimulationCell& simCell, QVector<bool> typesToIdentify, ConstPropertyPtr selection, FloatType cutoff) :
-			StructureIdentificationEngine(std::move(positions), simCell, std::move(typesToIdentify), std::move(selection)), _cutoff(cutoff) {}
+		FixedCNAEngine(ParticleOrderingFingerprint fingerprint, ConstPropertyPtr positions, const SimulationCell& simCell, QVector<bool> typesToIdentify, ConstPropertyPtr selection, FloatType cutoff) :
+			CNAEngine(std::move(fingerprint), std::move(positions), simCell, std::move(typesToIdentify), std::move(selection)), 
+			_cutoff(cutoff) {}
 
 		/// Computes the modifier's results.
 		virtual void perform() override;
@@ -161,51 +162,44 @@ private:
 	};
 
 	/// Analysis engine that performs the adaptive common neighbor analysis.
-	class AdaptiveCNAEngine : public StructureIdentificationEngine
+	class AdaptiveCNAEngine : public CNAEngine
 	{
 	public:
 
 		/// Constructor.
-		using StructureIdentificationEngine::StructureIdentificationEngine;
+		using CNAEngine::CNAEngine;
 		
 		/// Computes the modifier's results.
 		virtual void perform() override;
 	};
 
-	/// Holds the modifier's results.
-	class BondCNAResults : public CNAResults
-	{
-	public:
-
-		/// Constructor.
-		BondCNAResults(size_t particleCount, size_t bondCount) :
-			CNAResults(particleCount),
-			_cnaIndices(std::make_shared<PropertyStorage>(bondCount, PropertyStorage::Int, 3, 0, tr("CNA Indices"), false)) {}
-
-		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-
-		/// Returns the output bonds property that stores the computed CNA indices.
-		const PropertyPtr& cnaIndices() const { return _cnaIndices; }
-
-	private:
-
-		PropertyPtr _cnaIndices;
-	};
-
 	/// Analysis engine that performs the common neighbor analysis based on existing bonds.
-	class BondCNAEngine : public StructureIdentificationEngine
+	class BondCNAEngine : public CNAEngine
 	{
 	public:
 
 		/// Constructor.
-		BondCNAEngine(ConstPropertyPtr positions, const SimulationCell& simCell, QVector<bool> typesToIdentify, ConstPropertyPtr selection, ConstPropertyPtr bondTopology, ConstPropertyPtr bondPeriodicImages) :
-			StructureIdentificationEngine(std::move(positions), simCell, std::move(typesToIdentify), std::move(selection)), 
+		BondCNAEngine(ParticleOrderingFingerprint fingerprint, ConstPropertyPtr positions, const SimulationCell& simCell, QVector<bool> typesToIdentify, ConstPropertyPtr selection, ConstPropertyPtr bondTopology, ConstPropertyPtr bondPeriodicImages) :
+			CNAEngine(std::move(fingerprint), std::move(positions), simCell, std::move(typesToIdentify), std::move(selection)), 
 			_bondTopology(std::move(bondTopology)),
-			_bondPeriodicImages(std::move(bondPeriodicImages)) {}
+			_bondPeriodicImages(std::move(bondPeriodicImages)),
+			_cnaIndices(std::make_shared<PropertyStorage>(_bondTopology->size(), PropertyStorage::Int, 3, 0, tr("CNA Indices"), false)) {}
+
+		/// This method is called by the system after the computation was successfully completed.
+		virtual void cleanup() override {
+			_bondTopology.reset();
+			_bondPeriodicImages.reset();
+			CNAEngine::cleanup();
+		}
 
 		/// Computes the modifier's results.
 		virtual void perform() override;
+
+		/// Injects the computed results into the data pipeline.
+		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+
+		/// Returns the output bonds property that stores the computed CNA indices.
+		const PropertyPtr& cnaIndices() const { return _cnaIndices; }
 
 		/// Returns the input bonds between particles.
 		const ConstPropertyPtr& bondTopology() const { return _bondTopology; }
@@ -215,8 +209,9 @@ private:
 
 	private:
 
-		const ConstPropertyPtr _bondTopology;
-		const ConstPropertyPtr _bondPeriodicImages;
+		ConstPropertyPtr _bondTopology;
+		ConstPropertyPtr _bondPeriodicImages;
+		PropertyPtr _cnaIndices;
 	};
 
 	/// Determines the coordination structure of a single particle using the common neighbor analysis method.

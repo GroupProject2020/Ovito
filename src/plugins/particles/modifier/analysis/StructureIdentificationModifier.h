@@ -25,6 +25,7 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/ParticleType.h>
 #include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/util/ParticleOrderingFingerprint.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
 #include <core/dataset/pipeline/AsynchronousModifierApplication.h>
@@ -53,45 +54,34 @@ class OVITO_PARTICLES_EXPORT StructureIdentificationModifier : public Asynchrono
 	
 public:
 
-	/// Holds the modifier's results.
-	class StructureIdentificationResults : public ComputeEngineResults
-	{
-	public:
-
-		/// Constructor.
-		StructureIdentificationResults(size_t particleCount) : 
-			_structures(ParticleProperty::createStandardStorage(particleCount, ParticleProperty::StructureTypeProperty, false)) {}
-
-		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-
-		/// Returns the property storage that contains the computed per-particle structure types.
-		const PropertyPtr& structures() const { return _structures; }
-
-	protected:
-
-		/// Gives subclasses the possibility to post-process per-particle structure types
-		/// before they are output to the data pipeline.
-		virtual PropertyPtr postProcessStructureTypes(TimePoint time, ModifierApplication* modApp, const PropertyPtr& structures) { 
-			return structures;
-		}
-
-	private:
-
-		const PropertyPtr _structures;
-	};
-
 	/// Computes the modifier's results.
 	class StructureIdentificationEngine : public ComputeEngine
 	{
 	public:
 
 		/// Constructor.
-		StructureIdentificationEngine(ConstPropertyPtr positions, const SimulationCell& simCell, QVector<bool> typesToIdentify, ConstPropertyPtr selection = {}) :
+		StructureIdentificationEngine(ParticleOrderingFingerprint fingerprint, ConstPropertyPtr positions, const SimulationCell& simCell, QVector<bool> typesToIdentify, ConstPropertyPtr selection = {}) :
+			ComputeEngine(),
 			_positions(std::move(positions)), 
 			_simCell(simCell),
 			_typesToIdentify(std::move(typesToIdentify)),
-			_selection(std::move(selection)) {}
+			_selection(std::move(selection)),
+			_structures(ParticleProperty::createStandardStorage(fingerprint.particleCount(), ParticleProperty::StructureTypeProperty, false)),
+			_inputFingerprint(std::move(fingerprint)) {}
+
+		/// This method is called by the system after the computation was successfully completed.
+		virtual void cleanup() override {
+			_positions.reset();
+			_selection.reset();
+			decltype(_typesToIdentify){}.swap(_typesToIdentify);
+			ComputeEngine::cleanup();
+		}
+
+		/// Injects the computed results into the data pipeline.
+		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+
+		/// Returns the property storage that contains the computed per-particle structure types.
+		const PropertyPtr& structures() const { return _structures; }
 
 		/// Returns the property storage that contains the input particle positions.
 		const ConstPropertyPtr& positions() const { return _positions; }
@@ -105,12 +95,22 @@ public:
 		/// Returns the list of structure types to search for.
 		const QVector<bool>& typesToIdentify() const { return _typesToIdentify; }
 
+	protected:
+
+		/// Gives subclasses the possibility to post-process per-particle structure types
+		/// before they are output to the data pipeline.
+		virtual PropertyPtr postProcessStructureTypes(TimePoint time, ModifierApplication* modApp, const PropertyPtr& structures) { 
+			return structures;
+		}
+
 	private:
 
-		const ConstPropertyPtr _positions;
-		const ConstPropertyPtr _selection;
+		ConstPropertyPtr _positions;
+		ConstPropertyPtr _selection;
 		const SimulationCell _simCell;
-		const QVector<bool> _typesToIdentify;
+		QVector<bool> _typesToIdentify;
+		const PropertyPtr _structures;
+		ParticleOrderingFingerprint _inputFingerprint;
 	};
 
 public:

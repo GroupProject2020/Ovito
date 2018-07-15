@@ -102,10 +102,10 @@ Future<AsynchronousModifier::ComputeEnginePtr> AmbientOcclusionModifier::createE
 	OORef<AmbientOcclusionRenderer> renderer(new AmbientOcclusionRenderer(dataset(), QSize(resolution, resolution), *offscreenSurface));
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	auto engine = std::make_shared<AmbientOcclusionEngine>(validityInterval, resolution, samplingCount(), posProperty->storage(), boundingBox, std::move(radii), renderer);
+	auto engine = std::make_shared<AmbientOcclusionEngine>(validityInterval, input, resolution, samplingCount(), posProperty->storage(), boundingBox, std::move(radii), renderer);
 
 	// Make sure the renderer and the offscreen surface stay alive until the compute engine finished.
-	engine->finally(dataset()->executor(), [offscreenSurface = std::move(offscreenSurface), renderer = std::move(renderer)]() {});
+	engine->task()->finally(dataset()->executor(), [offscreenSurface = std::move(offscreenSurface), renderer = std::move(renderer)]() {});
 
 	return engine;
 }
@@ -113,15 +113,17 @@ Future<AsynchronousModifier::ComputeEnginePtr> AmbientOcclusionModifier::createE
 /******************************************************************************
 * Compute engine constructor.
 ******************************************************************************/
-AmbientOcclusionModifier::AmbientOcclusionEngine::AmbientOcclusionEngine(const TimeInterval& validityInterval, int resolution, int samplingCount, PropertyPtr positions, 
+AmbientOcclusionModifier::AmbientOcclusionEngine::AmbientOcclusionEngine(const TimeInterval& validityInterval, ParticleOrderingFingerprint fingerprint, int resolution, int samplingCount, PropertyPtr positions, 
 		const Box3& boundingBox, std::vector<FloatType> particleRadii, AmbientOcclusionRenderer* renderer) :
+	ComputeEngine(validityInterval),
 	_resolution(resolution),
 	_samplingCount(samplingCount),
 	_positions(positions),
 	_boundingBox(boundingBox),
 	_particleRadii(std::move(particleRadii)),
 	_renderer(renderer),
-	_results(std::make_shared<AmbientOcclusionResults>(validityInterval, positions->size()))
+	_brightness(std::make_shared<PropertyStorage>(fingerprint.particleCount(), PropertyStorage::Float, 1, 0, QStringLiteral("Brightness"), true)),
+	_inputFingerprint(std::move(fingerprint))
 {
 }
 
@@ -130,19 +132,21 @@ AmbientOcclusionModifier::AmbientOcclusionEngine::AmbientOcclusionEngine(const T
 ******************************************************************************/
 void AmbientOcclusionModifier::AmbientOcclusionEngine::perform()
 {
-	if(_boundingBox.isEmpty() || positions()->size() == 0)
+	if(positions()->size() == 0)
+		return;
+	if(_boundingBox.isEmpty())
 		throw Exception(tr("Modifier input is degenerate or contains no particles."));
 
-	setProgressText(tr("Computing ambient occlusion"));
+	task()->setProgressText(tr("Computing ambient occlusion"));
 
 	_renderer->startRender(nullptr, nullptr);
 	try {
 		// The buffered particle geometry used to render the particles.
 		std::shared_ptr<ParticlePrimitive> particleBuffer;
 
-		setProgressMaximum(_samplingCount);
+		task()->setProgressMaximum(_samplingCount);
 		for(int sample = 0; sample < _samplingCount; sample++) {
-			if(!setProgressValue(sample))
+			if(!task()->setProgressValue(sample))
 				break;
 
 			// Generate lighting direction on unit sphere.
@@ -190,7 +194,7 @@ void AmbientOcclusionModifier::AmbientOcclusionEngine::perform()
 
 			// Extract brightness values from rendered image.
 			const QImage image = _renderer->image();
-			FloatType* brightnessValues = _results->brightness()->dataFloat();
+			FloatType* brightnessValues = brightness()->dataFloat();
 			for(int y = 0; y < _resolution; y++) {
 				const QRgb* pixel = reinterpret_cast<const QRgb*>(image.scanLine(y));
 				for(int x = 0; x < _resolution; x++, ++pixel) {
@@ -214,34 +218,32 @@ void AmbientOcclusionModifier::AmbientOcclusionEngine::perform()
 	}
 	_renderer->endRender();
 
-	if(!isCanceled()) {
-		setProgressValue(_samplingCount);
+	if(!task()->isCanceled()) {
+		task()->setProgressValue(_samplingCount);
 		// Normalize brightness values by particle area.
 		auto r = _particleRadii.cbegin();
-		for(FloatType& b : _results->brightness()->floatRange()) {
+		for(FloatType& b : brightness()->floatRange()) {
 			if(*r != 0)
 				b /= (*r) * (*r);
 			++r;
 		}
 		// Normalize brightness values by global maximum.
-		FloatType maxBrightness = *std::max_element(_results->brightness()->constDataFloat(), _results->brightness()->constDataFloat() + _results->brightness()->size());
+		FloatType maxBrightness = *std::max_element(brightness()->constDataFloat(), brightness()->constDataFloat() + brightness()->size());
 		if(maxBrightness != 0) {
-			for(FloatType& b : _results->brightness()->floatRange()) {
+			for(FloatType& b : brightness()->floatRange()) {
 				b /= maxBrightness;
 			}
 		}
 	}
-
-	// Return the results of the compute engine.
-	setResult(std::move(_results));
 }
 
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState AmbientOcclusionModifier::AmbientOcclusionResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+PipelineFlowState AmbientOcclusionModifier::AmbientOcclusionEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	OVITO_ASSERT(brightness());
+	if(_inputFingerprint.hasChanged(input))
+		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 
 	AmbientOcclusionModifier* modifier = static_object_cast<AmbientOcclusionModifier>(modApp->modifier());
 	OVITO_ASSERT(modifier);
@@ -249,12 +251,10 @@ PipelineFlowState AmbientOcclusionModifier::AmbientOcclusionResults::apply(TimeP
 	PipelineFlowState output = input;
 	ParticleInputHelper pih(modApp->dataset(), input);
 	ParticleOutputHelper poh(modApp->dataset(), output);
-	
-	if(poh.outputParticleCount() != brightness()->size())
-		modifier->throwException(tr("The number of input particles has changed. The stored results have become invalid."));
+	OVITO_ASSERT(brightness() && poh.outputParticleCount() == brightness()->size());
 	
 	// Get effective intensity.
-	FloatType intens = std::min(std::max(modifier->intensity(), FloatType(0)), FloatType(1));
+	FloatType intens = qBound(FloatType(0), modifier->intensity(), FloatType(1));
 
 	// Get output property object.
 	ParticleProperty* colorProperty = poh.outputStandardProperty<ParticleProperty>(ParticleProperty::ColorProperty);

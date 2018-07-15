@@ -69,7 +69,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CentroSymmetryModifier::createEng
 		throwException(tr("The number of neighbors to take into account for the centrosymmetry calculation must be a positive, even integer."));
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<CentroSymmetryEngine>(posProperty->storage(), simCell->data(), numNeighbors());
+	return std::make_shared<CentroSymmetryEngine>(input, posProperty->storage(), simCell->data(), numNeighbors());
 }
 
 /******************************************************************************
@@ -77,24 +77,21 @@ Future<AsynchronousModifier::ComputeEnginePtr> CentroSymmetryModifier::createEng
 ******************************************************************************/
 void CentroSymmetryModifier::CentroSymmetryEngine::perform()
 {
-	setProgressText(tr("Computing centrosymmetry parameters"));
+	task()->setProgressText(tr("Computing centrosymmetry parameters"));
 
 	// Prepare the neighbor list.
 	NearestNeighborFinder neighFinder(_nneighbors);
-	if(!neighFinder.prepare(*positions(), cell(), nullptr, this)) {
+	if(!neighFinder.prepare(*positions(), cell(), nullptr, task().get())) {
 		return;
 	}
 
 	// Output storage.
-	PropertyStorage& output = *_results->csp();
+	PropertyStorage& output = *csp();
 
 	// Perform analysis on each particle.
-	parallelFor(positions()->size(), *this, [&neighFinder, &output](size_t index) {
+	parallelFor(positions()->size(), *task(), [&neighFinder, &output](size_t index) {
 		output.setFloat(index, computeCSP(neighFinder, index));
 	});
-
-	// Return the results of the compute engine.
-	setResult(std::move(_results));	
 }
 
 /******************************************************************************
@@ -127,12 +124,14 @@ FloatType CentroSymmetryModifier::computeCSP(NearestNeighborFinder& neighFinder,
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState CentroSymmetryModifier::CentroSymmetryResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+PipelineFlowState CentroSymmetryModifier::CentroSymmetryEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
+	if(_inputFingerprint.hasChanged(input))
+		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
+
 	PipelineFlowState output = input;
 	ParticleOutputHelper poh(modApp->dataset(), output);
-	if(csp()->size() != poh.outputParticleCount())
-		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
+	OVITO_ASSERT(csp()->size() == poh.outputParticleCount());
 	poh.outputProperty<ParticleProperty>(csp());
 	return output;
 }

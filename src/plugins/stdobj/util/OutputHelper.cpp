@@ -72,7 +72,10 @@ PropertyObject* OutputHelper::outputStandardProperty(const PropertyClass& proper
 PropertyObject* OutputHelper::outputProperty(const PropertyClass& propertyClass, const PropertyPtr& storage)
 {
 	OVITO_CHECK_POINTER(storage);
-	OVITO_ASSERT(storage->size() == propertyClass.elementCount(output()));
+
+	// Length of new property array must match the existing number of elements.
+	if(storage->size() != propertyClass.elementCount(output()))
+		dataset()->throwException(PropertyObject::tr("Cannot add new %1 property '%2': Number of elements does not match.").arg(propertyClass.propertyClassDisplayName()).arg(storage->name()));
 
 	// Check if property already exists in the output.
 	PropertyObject* existingProperty;

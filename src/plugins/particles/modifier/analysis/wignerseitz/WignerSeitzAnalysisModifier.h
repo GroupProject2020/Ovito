@@ -53,17 +53,36 @@ protected:
 	
 private:
 
-	/// Stores the modifier's results.
-	class WignerSeitzAnalysisResults : public ComputeEngineResults 
+	/// Computes the modifier's results.
+	class WignerSeitzAnalysisEngine : public RefConfigEngineBase
 	{
 	public:
 
 		/// Constructor.
-		WignerSeitzAnalysisResults(const TimeInterval& validityInterval, PipelineFlowState referenceState) : ComputeEngineResults(validityInterval),
+		WignerSeitzAnalysisEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell,
+				PipelineFlowState referenceState, ConstPropertyPtr refPositions, const SimulationCell& simCellRef, AffineMappingType affineMapping,
+				ConstPropertyPtr typeProperty, int ptypeMinId, int ptypeMaxId, ConstPropertyPtr referenceTypeProperty, ConstPropertyPtr referenceIdentifierProperty) :
+			RefConfigEngineBase(validityInterval, std::move(positions), simCell, std::move(refPositions), simCellRef,
+				nullptr, nullptr, affineMapping, false),
+			_typeProperty(std::move(typeProperty)), 
+			_ptypeMinId(ptypeMinId), _ptypeMaxId(ptypeMaxId),
+			_referenceTypeProperty(std::move(referenceTypeProperty)),
+			_referenceIdentifierProperty(std::move(referenceIdentifierProperty)),
 			_referenceState(std::move(referenceState)) {}
 
+		/// This method is called by the system after the computation was successfully completed.
+		virtual void cleanup() override {
+			_typeProperty.reset();
+			_referenceTypeProperty.reset();
+			_referenceIdentifierProperty.reset();
+			RefConfigEngineBase::cleanup();
+		}
+
+		/// Computes the modifier's results.
+		virtual void perform() override;
+
 		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 		/// Returns the number of vacant sites found during the last analysis run.
 		size_t vacancyCount() const { return _vacancyCount; }
@@ -103,9 +122,17 @@ private:
 
 		/// Returns the reference state.
 		const PipelineFlowState& referenceState() const { return _referenceState; }
-		
+
+		/// Returns the property storage that contains the particle types.
+		const ConstPropertyPtr& particleTypes() const { return _typeProperty; }
+
 	private:
 
+		ConstPropertyPtr _typeProperty;
+		ConstPropertyPtr _referenceTypeProperty;
+		ConstPropertyPtr _referenceIdentifierProperty;
+		int _ptypeMinId;
+		int _ptypeMaxId;
 		const PipelineFlowState _referenceState;
 		PropertyPtr _occupancyNumbers;
 		PropertyPtr _siteTypes;
@@ -113,39 +140,6 @@ private:
 		PropertyPtr _siteIdentifiers;
 		size_t _vacancyCount = 0;
 		size_t _interstitialCount = 0;
-	};
-
-	/// Computes the modifier's results.
-	class WignerSeitzAnalysisEngine : public RefConfigEngineBase
-	{
-	public:
-
-		/// Constructor.
-		WignerSeitzAnalysisEngine(std::shared_ptr<WignerSeitzAnalysisResults> results, ConstPropertyPtr positions, const SimulationCell& simCell,
-				ConstPropertyPtr refPositions, const SimulationCell& simCellRef, AffineMappingType affineMapping,
-				ConstPropertyPtr typeProperty, int ptypeMinId, int ptypeMaxId, ConstPropertyPtr referenceTypeProperty, ConstPropertyPtr referenceIdentifierProperty) :
-			RefConfigEngineBase(std::move(positions), simCell, std::move(refPositions), simCellRef,
-				nullptr, nullptr, affineMapping, false),
-			_typeProperty(std::move(typeProperty)), 
-			_ptypeMinId(ptypeMinId), _ptypeMaxId(ptypeMaxId),
-			_referenceTypeProperty(std::move(referenceTypeProperty)),
-			_referenceIdentifierProperty(std::move(referenceIdentifierProperty)),
-			_results(std::move(results)) {}
-
-		/// Computes the modifier's results.
-		virtual void perform() override;
-
-		/// Returns the property storage that contains the particle types.
-		const ConstPropertyPtr& particleTypes() const { return _typeProperty; }
-
-	private:
-
-		const ConstPropertyPtr _typeProperty;
-		const ConstPropertyPtr _referenceTypeProperty;
-		const ConstPropertyPtr _referenceIdentifierProperty;
-		int _ptypeMinId;
-		int _ptypeMaxId;
-		std::shared_ptr<WignerSeitzAnalysisResults> _results;
 	};
 
 	/// Enables per-type occupancy numbers.

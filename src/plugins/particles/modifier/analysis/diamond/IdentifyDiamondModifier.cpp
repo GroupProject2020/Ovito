@@ -23,6 +23,7 @@
 #include <plugins/particles/util/NearestNeighborFinder.h>
 #include <plugins/particles/modifier/analysis/cna/CommonNeighborAnalysisModifier.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
+#include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <core/utilities/concurrent/ParallelFor.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
@@ -69,7 +70,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> IdentifyDiamondModifier::createEn
 		selectionProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty)->storage();
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<DiamondIdentificationEngine>(posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty));
+	return std::make_shared<DiamondIdentificationEngine>(input, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty));
 }
 
 /******************************************************************************
@@ -77,11 +78,11 @@ Future<AsynchronousModifier::ComputeEnginePtr> IdentifyDiamondModifier::createEn
 ******************************************************************************/
 void IdentifyDiamondModifier::DiamondIdentificationEngine::perform()
 {
-	setProgressText(tr("Finding nearest neighbors"));
+	task()->setProgressText(tr("Finding nearest neighbors"));
 
 	// Prepare the neighbor list builder.
 	NearestNeighborFinder neighborFinder(4);
-	if(!neighborFinder.prepare(*positions(), cell(), selection().get(), this))
+	if(!neighborFinder.prepare(*positions(), cell(), selection().get(), task().get()))
 		return;
 
 	// This data structure stores information about a single neighbor.
@@ -93,7 +94,7 @@ void IdentifyDiamondModifier::DiamondIdentificationEngine::perform()
 	std::vector<std::array<NeighborInfo,4>> neighLists(positions()->size());
 
 	// Determine four nearest neighbors of each atom and store vectors in the working array.
-	parallelFor(positions()->size(), *this, [this, &neighborFinder, &neighLists](size_t index) {
+	parallelFor(positions()->size(), *task(), [this, &neighborFinder, &neighLists](size_t index) {
 		// Skip particles that are not included in the analysis.
 		if(selection() && selection()->getInt(index) == 0)
 			return;
@@ -111,12 +112,11 @@ void IdentifyDiamondModifier::DiamondIdentificationEngine::perform()
 	});
 
 	// Create output storage.
-	auto results = std::make_shared<DiamondIdentificationResults>(positions()->size());
-	PropertyStorage& output = *results->structures();
+	PropertyStorage& output = *structures();
 
 	// Perform structure identification.
-	setProgressText(tr("Identifying diamond structures"));
-	parallelFor(positions()->size(), *this, [&neighLists, &output, this](size_t index) {
+	task()->setProgressText(tr("Identifying diamond structures"));
+	parallelFor(positions()->size(), *task(), [&neighLists, &output, this](size_t index) {
 		// Mark atom as 'other' by default.
 		output.setInt(index, OTHER);
 
@@ -222,26 +222,24 @@ void IdentifyDiamondModifier::DiamondIdentificationEngine::perform()
 			}
 		}
 	}
-
-	// Return the results of the compute engine.
-	setResult(std::move(results));
 }
 
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState IdentifyDiamondModifier::DiamondIdentificationResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+PipelineFlowState IdentifyDiamondModifier::DiamondIdentificationEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	PipelineFlowState outState = StructureIdentificationResults::apply(time, modApp, input);
+	PipelineFlowState outState = StructureIdentificationEngine::emitResults(time, modApp, input);
 
 	// Also output structure type counts, which have been computed by the base class.
 	StructureIdentificationModifierApplication* myModApp = static_object_cast<StructureIdentificationModifierApplication>(modApp);
-	outState.attributes().insert(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND"), QVariant::fromValue(myModApp->structureCounts()[CUBIC_DIAMOND]));
-	outState.attributes().insert(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND_FIRST_NEIGHBOR"), QVariant::fromValue(myModApp->structureCounts()[CUBIC_DIAMOND_FIRST_NEIGH]));
-	outState.attributes().insert(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND_SECOND_NEIGHBOR"), QVariant::fromValue(myModApp->structureCounts()[CUBIC_DIAMOND_SECOND_NEIGH]));
-	outState.attributes().insert(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND"), QVariant::fromValue(myModApp->structureCounts()[HEX_DIAMOND]));
-	outState.attributes().insert(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND_FIRST_NEIGHBOR"), QVariant::fromValue(myModApp->structureCounts()[HEX_DIAMOND_FIRST_NEIGH]));
-	outState.attributes().insert(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND_SECOND_NEIGHBOR"), QVariant::fromValue(myModApp->structureCounts()[HEX_DIAMOND_SECOND_NEIGH]));
+	ParticleOutputHelper poh(modApp->dataset(), outState);
+	poh.outputAttribute(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND"), QVariant::fromValue(myModApp->structureCounts()[CUBIC_DIAMOND]));
+	poh.outputAttribute(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND_FIRST_NEIGHBOR"), QVariant::fromValue(myModApp->structureCounts()[CUBIC_DIAMOND_FIRST_NEIGH]));
+	poh.outputAttribute(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND_SECOND_NEIGHBOR"), QVariant::fromValue(myModApp->structureCounts()[CUBIC_DIAMOND_SECOND_NEIGH]));
+	poh.outputAttribute(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND"), QVariant::fromValue(myModApp->structureCounts()[HEX_DIAMOND]));
+	poh.outputAttribute(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND_FIRST_NEIGHBOR"), QVariant::fromValue(myModApp->structureCounts()[HEX_DIAMOND_FIRST_NEIGH]));
+	poh.outputAttribute(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND_SECOND_NEIGHBOR"), QVariant::fromValue(myModApp->structureCounts()[HEX_DIAMOND_SECOND_NEIGH]));
 
 	return outState;
 }

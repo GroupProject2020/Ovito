@@ -108,7 +108,8 @@ Future<AsynchronousModifier::ComputeEnginePtr> VoroTopModifier::createEngine(Tim
         throwException(tr("VoroTop analysis modifier is limited to a maximum of %1 particles in the current program version.").arg(std::numeric_limits<int>::max()));
     
     // Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-    return std::make_shared<VoroTopAnalysisEngine>(validityInterval,
+    return std::make_shared<VoroTopAnalysisEngine>(input,
+                                                   validityInterval,
                                                    posProperty->storage(),
                                                    selectionProperty ? selectionProperty->storage() : nullptr,
                                                    std::move(radii),
@@ -121,12 +122,13 @@ Future<AsynchronousModifier::ComputeEnginePtr> VoroTopModifier::createEngine(Tim
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState VoroTopModifier::VoroTopAnalysisResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+PipelineFlowState VoroTopModifier::VoroTopAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {    
+	PipelineFlowState output = StructureIdentificationEngine::emitResults(time, modApp, input);
+
     // Cache loaded filter definition for future use.
     static_object_cast<VoroTopModifier>(modApp->modifier())->_filter = this->filter();
     
-	PipelineFlowState output = StructureIdentificationResults::apply(time, modApp, input);
     output.setStatus(PipelineStatus(PipelineStatus::Success, tr("%1 Weinberg vectors loaded").arg(filter() ? filter()->size() : 0)));
     return output;
 }
@@ -364,7 +366,7 @@ void VoroTopModifier::VoroTopAnalysisEngine::processCell(voro::voronoicell_neigh
 void VoroTopModifier::VoroTopAnalysisEngine::perform()
 {
     if(!filter()) {
-        setProgressText(tr("Loading VoroTop filter file"));
+        task()->setProgressText(tr("Loading VoroTop filter file"));
         if(_filterFile.isEmpty())
             throw Exception(tr("No filter file selected"));
         
@@ -374,18 +376,14 @@ void VoroTopModifier::VoroTopAnalysisEngine::perform()
         
         // Parse filter definition.
         _filter = std::make_shared<Filter>();
-        if(!_filter->load(stream, false, *this))
+        if(!_filter->load(stream, false, *task()))
             return;
     }
-
-    // Allocate storage for the modifier's results.
-    std::shared_ptr<VoroTopAnalysisResults> results = std::make_shared<VoroTopAnalysisResults>(positions()->size(), filter());
-    setResult(results);
 
     if(positions()->size() == 0)
         return;	// Nothing to do when there are zero particles.    
     
-    setProgressText(tr("Performing VoroTop analysis"));
+    task()->setProgressText(tr("Performing VoroTop analysis"));
     
     // Decide whether to use Voro++ container class or our own implementation.
     if(cell().isAxisAligned()) {
@@ -414,7 +412,7 @@ void VoroTopModifier::VoroTopAnalysisEngine::perform()
             for(size_t index = 0; index < positions()->size(); index++) {
                 // Skip unselected particles (if requested).
                 if(selection() && selection()->getInt(index) == 0) {
-                    results->structures()->setInt(index, 0);
+                    structures()->setInt(index, 0);
                     continue;
                 }
                 const Point3& p = positions()->getPoint3(index);
@@ -423,17 +421,17 @@ void VoroTopModifier::VoroTopAnalysisEngine::perform()
             }
             if(!count) return;
             
-            setProgressMaximum(count);
-            setProgressValue(0);
+            task()->setProgressMaximum(count);
+            task()->setProgressValue(0);
             voro::c_loop_all cl(voroContainer);
             voro::voronoicell_neighbor v;
             if(cl.start()) {
                 do {
-                    if(!incrementProgressValue())
+                    if(!task()->incrementProgressValue())
                         return;
                     if(!voroContainer.compute_cell(v,cl))
                         continue;
-                    processCell(v, cl.pid(), *results->structures(), nullptr);
+                    processCell(v, cl.pid(), *structures(), nullptr);
                     count--;
                 }
                 while(cl.inc());
@@ -448,7 +446,7 @@ void VoroTopModifier::VoroTopAnalysisEngine::perform()
             // Insert particles into Voro++ container.
             size_t count = 0;
             for(size_t index = 0; index < positions()->size(); index++) {
-                results->structures()->setInt(index, 0);
+                structures()->setInt(index, 0);
                 // Skip unselected particles (if requested).
                 if(selection() && selection()->getInt(index) == 0) {
                     continue;
@@ -459,17 +457,17 @@ void VoroTopModifier::VoroTopAnalysisEngine::perform()
             }
             
             if(!count) return;
-            setProgressMaximum(count);
-            setProgressValue(0);
+            task()->setProgressMaximum(count);
+            task()->setProgressValue(0);
             voro::c_loop_all cl(voroContainer);
             voro::voronoicell_neighbor v;
             if(cl.start()) {
                 do {
-                    if(!incrementProgressValue())
+                    if(!task()->incrementProgressValue())
                         return;
                     if(!voroContainer.compute_cell(v,cl))
                         continue;
-                    processCell(v, cl.pid(), *results->structures(), nullptr);
+                    processCell(v, cl.pid(), *structures(), nullptr);
                     count--;
                 }
                 while(cl.inc());
@@ -481,7 +479,7 @@ void VoroTopModifier::VoroTopAnalysisEngine::perform()
     else {
         // Prepare the nearest neighbor list generator.
         NearestNeighborFinder nearestNeighborFinder;
-        if(!nearestNeighborFinder.prepare(*positions(), cell(), selection().get(), this))
+        if(!nearestNeighborFinder.prepare(*positions(), cell(), selection().get(), task().get()))
             return;
         
         // Squared particle radii (input was just radii).
@@ -506,12 +504,12 @@ void VoroTopModifier::VoroTopAnalysisEngine::perform()
         QMutex mutex;
         
         // Perform analysis, particle-wise parallel.
-        parallelFor(positions()->size(), *this,
+        parallelFor(positions()->size(), *task(),
                     [&nearestNeighborFinder, this, boxDiameter,
-                     planeNormals, corner1, corner2, &mutex, &results](size_t index) {
+                     planeNormals, corner1, corner2, &mutex](size_t index) {
                         
                         // Reset structure type.
-                        results->structures()->setInt(index, 0);
+                        structures()->setInt(index, 0);
                         
                         // Skip unselected particles (if requested).
                         if(selection() && selection()->getInt(index) == 0)
@@ -559,7 +557,7 @@ void VoroTopModifier::VoroTopAnalysisEngine::perform()
                         // Visit all neighbors of the current particles.
                         nearestNeighborFinder.visitNeighbors(nearestNeighborFinder.particlePos(index), visitFunc);
                         
-                        processCell(v, index, *results->structures(), &mutex);
+                        processCell(v, index, *structures(), &mutex);
                     });
     }
 }

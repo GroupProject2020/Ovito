@@ -95,7 +95,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> AtomicStrainModifier::createEngin
 	ParticleProperty* refIdentifierProperty = ParticleProperty::findInState(referenceState, ParticleProperty::IdentifierProperty);
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<AtomicStrainEngine>(validityInterval, posProperty->storage(), inputCell->data(), refPosProperty->storage(), refCell->data(),
+	return std::make_shared<AtomicStrainEngine>(validityInterval, input, posProperty->storage(), inputCell->data(), refPosProperty->storage(), refCell->data(),
 			identifierProperty ? identifierProperty->storage() : nullptr, refIdentifierProperty ? refIdentifierProperty->storage() : nullptr,
 			cutoff(), affineMapping(), useMinimumImageConvention(), calculateDeformationGradients(), calculateStrainTensors(),
 			calculateNonaffineSquaredDisplacements(), calculateRotations(), calculateStretchTensors(), selectInvalidParticles());
@@ -106,7 +106,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> AtomicStrainModifier::createEngin
 ******************************************************************************/
 void AtomicStrainModifier::AtomicStrainEngine::perform()
 {
-	setProgressText(tr("Computing atomic displacements"));
+	task()->setProgressText(tr("Computing atomic displacements"));
 
 	// First determine the mapping from particles of the reference config to particles
 	// of the current config.
@@ -114,11 +114,12 @@ void AtomicStrainModifier::AtomicStrainEngine::perform()
 		return;
 
 	// Compute displacement vectors of particles in the reference configuration.
-	parallelForChunks(displacements()->size(), [this](size_t startIndex, size_t count) {
+	parallelForChunks(displacements()->size(), *task(), [this](size_t startIndex, size_t count, PromiseState& promise) {
 		Vector3* u = displacements()->dataVector3() + startIndex;
 		const Point3* p0 = refPositions()->constDataPoint3() + startIndex;
 		auto index = refToCurrentIndexMap().cbegin() + startIndex;
 		for(; count; --count, ++u, ++p0, ++index) {
+			if(promise.isCanceled()) return;
 			if(*index == std::numeric_limits<size_t>::max()) {
 				u->setZero();
 				continue;
@@ -135,23 +136,20 @@ void AtomicStrainModifier::AtomicStrainEngine::perform()
 			*u = refCell().matrix() * delta;
 		}
 	});
-	if(isCanceled())
+	if(task()->isCanceled())
 		return;
 
-	setProgressText(tr("Computing atomic strain tensors"));
+	task()->setProgressText(tr("Computing atomic strain tensors"));
 	
 	// Prepare the neighbor list for the reference configuration.
 	CutoffNeighborFinder neighborFinder;
-	if(!neighborFinder.prepare(_cutoff, *refPositions(), refCell(), nullptr, this))
+	if(!neighborFinder.prepare(_cutoff, *refPositions(), refCell(), nullptr, task().get()))
 		return;
 
 	// Perform individual strain calculation for each particle.
-	parallelFor(positions()->size(), *this, [this, &neighborFinder](size_t index) {
+	parallelFor(positions()->size(), *task(), [this, &neighborFinder](size_t index) {
 		computeStrain(index, neighborFinder);
 	});
-
-	// Return the results of the compute engine.
-	setResult(std::move(_results));
 }
 
 /******************************************************************************
@@ -208,59 +206,59 @@ void AtomicStrainModifier::AtomicStrainEngine::computeStrain(size_t particleInde
 	Matrix_3<double> inverseV;
 	double detThreshold = (double)sumSquaredDistance * 1e-12;
 	if(numNeighbors < 2 || (!cell().is2D() && numNeighbors < 3) || !V.inverse(inverseV, detThreshold) || std::abs(W.determinant()) <= detThreshold) {
-		if(_results->invalidParticles())
-			_results->invalidParticles()->setInt(particleIndex, 1);
-		if(_results->deformationGradients()) {
+		if(invalidParticles())
+			invalidParticles()->setInt(particleIndex, 1);
+		if(deformationGradients()) {
 			for(Matrix_3<double>::size_type col = 0; col < 3; col++) {
 				for(Matrix_3<double>::size_type row = 0; row < 3; row++) {
-					_results->deformationGradients()->setFloatComponent(particleIndex, col*3+row, FloatType(0));
+					deformationGradients()->setFloatComponent(particleIndex, col*3+row, FloatType(0));
 				}
 			}
 		}
-		if(_results->strainTensors())
-			_results->strainTensors()->setSymmetricTensor2(particleIndex, SymmetricTensor2::Zero());
-        if(_results->nonaffineSquaredDisplacements())
-            _results->nonaffineSquaredDisplacements()->setFloat(particleIndex, 0);
-		_results->shearStrains()->setFloat(particleIndex, 0);
-		_results->volumetricStrains()->setFloat(particleIndex, 0);
-		if(_results->rotations())
-			_results->rotations()->setQuaternion(particleIndex, Quaternion(0,0,0,0));
-		if(_results->stretchTensors())
-			_results->stretchTensors()->setSymmetricTensor2(particleIndex, SymmetricTensor2::Zero());
-		_results->addInvalidParticle();
+		if(strainTensors())
+			strainTensors()->setSymmetricTensor2(particleIndex, SymmetricTensor2::Zero());
+        if(nonaffineSquaredDisplacements())
+            nonaffineSquaredDisplacements()->setFloat(particleIndex, 0);
+		shearStrains()->setFloat(particleIndex, 0);
+		volumetricStrains()->setFloat(particleIndex, 0);
+		if(rotations())
+			rotations()->setQuaternion(particleIndex, Quaternion(0,0,0,0));
+		if(stretchTensors())
+			stretchTensors()->setSymmetricTensor2(particleIndex, SymmetricTensor2::Zero());
+		addInvalidParticle();
 		return;
 	}
 
 	// Calculate deformation gradient tensor F.
 	Matrix_3<double> F = W * inverseV;
-	if(_results->deformationGradients()) {
+	if(deformationGradients()) {
 		for(Matrix_3<double>::size_type col = 0; col < 3; col++) {
 			for(Matrix_3<double>::size_type row = 0; row < 3; row++) {
-				_results->deformationGradients()->setFloatComponent(particleIndex, col*3+row, (FloatType)F(row,col));
+				deformationGradients()->setFloatComponent(particleIndex, col*3+row, (FloatType)F(row,col));
 			}
 		}
 	}
 
 	// Polar decomposition F=RU.
-	if(_results->rotations() || _results->stretchTensors()) {
+	if(rotations() || stretchTensors()) {
 		Matrix_3<double> R, U;
 		polar_decomposition_3x3(F.elements(), false, R.elements(), U.elements());
-		if(_results->rotations()) {
-			_results->rotations()->setQuaternion(particleIndex, (Quaternion)QuaternionT<double>(R));
+		if(rotations()) {
+			rotations()->setQuaternion(particleIndex, (Quaternion)QuaternionT<double>(R));
 		}
-		if(_results->stretchTensors()) {
-			_results->stretchTensors()->setSymmetricTensor2(particleIndex,
+		if(stretchTensors()) {
+			stretchTensors()->setSymmetricTensor2(particleIndex,
 					SymmetricTensor2(U(0,0), U(1,1), U(2,2), U(0,1), U(0,2), U(1,2)));
 		}
 	}
 
 	// Calculate strain tensor.
 	SymmetricTensor2T<double> strain = (Product_AtA(F) - SymmetricTensor2T<double>::Identity()) * 0.5;
-	if(_results->strainTensors())
-		_results->strainTensors()->setSymmetricTensor2(particleIndex, (SymmetricTensor2)strain);
+	if(strainTensors())
+		strainTensors()->setSymmetricTensor2(particleIndex, (SymmetricTensor2)strain);
 
     // Calculate nonaffine displacement.
-    if(_results->nonaffineSquaredDisplacements()) {
+    if(nonaffineSquaredDisplacements()) {
 		FloatType D2min = 0;
 		Matrix3 Fftype = static_cast<Matrix3>(F);
 
@@ -283,7 +281,7 @@ void AtomicStrainModifier::AtomicStrainEngine::computeStrain(size_t particleInde
 			D2min += (Fftype * delta_ref - delta_cur).squaredLength();
 		}
 
-        _results->nonaffineSquaredDisplacements()->setFloat(particleIndex, D2min);
+        nonaffineSquaredDisplacements()->setFloat(particleIndex, D2min);
 	}
 
 	// Calculate von Mises shear strain.
@@ -293,28 +291,29 @@ void AtomicStrainModifier::AtomicStrainEngine::computeStrain(size_t particleInde
 	double shearStrain = sqrt(strain.xy()*strain.xy() + strain.xz()*strain.xz() + strain.yz()*strain.yz() +
 			(xydiff*xydiff + xzdiff*xzdiff + yzdiff*yzdiff) / 6.0);
 	OVITO_ASSERT(std::isfinite(shearStrain));
-	_results->shearStrains()->setFloat(particleIndex, (FloatType)shearStrain);
+	shearStrains()->setFloat(particleIndex, (FloatType)shearStrain);
 
 	// Calculate volumetric component.
 	double volumetricStrain = (strain(0,0) + strain(1,1) + strain(2,2)) / 3.0;
 	OVITO_ASSERT(std::isfinite(volumetricStrain));
-	_results->volumetricStrains()->setFloat(particleIndex, (FloatType)volumetricStrain);
+	volumetricStrains()->setFloat(particleIndex, (FloatType)volumetricStrain);
 
-	if(_results->invalidParticles())
-		_results->invalidParticles()->setInt(particleIndex, 0);
+	if(invalidParticles())
+		invalidParticles()->setInt(particleIndex, 0);
 }
 
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState AtomicStrainModifier::AtomicStrainResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+PipelineFlowState AtomicStrainModifier::AtomicStrainEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
+	if(_inputFingerprint.hasChanged(input))
+		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
+
 	PipelineFlowState output = input;
 	ParticleOutputHelper poh(modApp->dataset(), output);
-
 	OVITO_ASSERT(shearStrains());
-	if(shearStrains()->size() != poh.outputParticleCount())
-		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
+	OVITO_ASSERT(shearStrains()->size() == poh.outputParticleCount());
 
 	if(invalidParticles())
 		poh.outputProperty<ParticleProperty>(invalidParticles());

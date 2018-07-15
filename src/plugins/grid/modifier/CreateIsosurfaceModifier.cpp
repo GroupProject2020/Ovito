@@ -123,26 +123,26 @@ Future<AsynchronousModifier::ComputeEnginePtr> CreateIsosurfaceModifier::createE
 ******************************************************************************/
 void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 {
-	setProgressText(tr("Constructing isosurface"));
+	task()->setProgressText(tr("Constructing isosurface"));
 
 	if(_gridShape.size() != 3)
 		throw Exception(tr("Can construct isosurface only for three-dimensional voxel grids"));
 	if(property()->dataType() != PropertyStorage::Float)
 		throw Exception(tr("Can construct isosurface only for floating-point data"));
-	if(property()->size() != _gridShape[0]*_gridShape[1]*_gridShape[2])
+	if(property()->size() != _gridShape[0] * _gridShape[1] *_gridShape[2])
 		throw Exception(tr("Input voxel property has wrong dimensions."));
 
 	const FloatType* fieldData = property()->constDataFloat() + std::max(_vectorComponent, 0);
 
-	MarchingCubes mc(_gridShape[0], _gridShape[1], _gridShape[2], _simCell.pbcFlags(), fieldData, property()->componentCount(), *_results->mesh(), false);
-	if(!mc.generateIsosurface(_isolevel, *this))
+	MarchingCubes mc(_gridShape[0], _gridShape[1], _gridShape[2], _simCell.pbcFlags(), fieldData, property()->componentCount(), *mesh(), false);
+	if(!mc.generateIsosurface(_isolevel, *task()))
 		return;
-	_results->setIsCompletelySolid(mc.isCompletelySolid());
+	setIsCompletelySolid(mc.isCompletelySolid());
 
 	// Determin min/max field values.
 	const FloatType* fieldDataEnd = fieldData + _gridShape[0]*_gridShape[1]*_gridShape[2]*property()->componentCount();
 	for(; fieldData != fieldDataEnd; fieldData += property()->componentCount()) {
-		_results->updateMinMax(*fieldData);
+		updateMinMax(*fieldData);
 	}
 
 	// Transform mesh vertices from orthogonal grid space to world space.
@@ -150,27 +150,25 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 		FloatType(1) / (_gridShape[0] - (_simCell.pbcFlags()[0]?0:1)), 0, 0, 
 		0, FloatType(1) / (_gridShape[1] - (_simCell.pbcFlags()[1]?0:1)), 0, 
 		0, 0, FloatType(1) / (_gridShape[2] - (_simCell.pbcFlags()[2]?0:1)));
-	for(HalfEdgeMesh<>::Vertex* vertex : _results->mesh()->vertices())
+	for(HalfEdgeMesh<>::Vertex* vertex : mesh()->vertices())
 		vertex->setPos(tm * vertex->pos());
 
 	// Flip surface orientation if cell matrix is a mirror transformation.
 	if(tm.determinant() < 0) {
-		_results->mesh()->flipFaces();
+		mesh()->flipFaces();
 	}
 
-	if(isCanceled())
+	if(task()->isCanceled())
 		return;
 
-	if(!_results->mesh()->connectOppositeHalfedges())
+	if(!mesh()->connectOppositeHalfedges())
 		throw Exception(tr("Isosurface mesh is not closed."));
-
-	setResult(std::move(_results));
 }
 
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState CreateIsosurfaceModifier::ComputeIsosurfaceResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+PipelineFlowState CreateIsosurfaceModifier::ComputeIsosurfaceEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	CreateIsosurfaceModifier* modifier = static_object_cast<CreateIsosurfaceModifier>(modApp->modifier());
 

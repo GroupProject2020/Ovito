@@ -24,6 +24,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/BondsVis.h>
+#include <plugins/particles/util/ParticleOrderingFingerprint.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
 
@@ -65,36 +66,13 @@ public:
 
 private:
 
-	/// Holds the modifier's results.
-	class BondsEngineResults : public ComputeEngineResults
-	{
-	public:
-
-		/// Constructor.
-		BondsEngineResults(size_t inputParticleCount) : _inputParticleCount(inputParticleCount) {}
-
-		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-	
-		/// Returns the list of generated bonds.
-		std::vector<Bond>& bonds() { return _bonds; }
-
-	private:
-
-		/// The list of generated bonds.
-		std::vector<Bond> _bonds;
-
-		/// Original number of input particles. 
-		size_t _inputParticleCount;
-	};
-
 	/// Compute engine that creates bonds between particles.
 	class BondsEngine : public ComputeEngine
 	{
 	public:
 
 		/// Constructor.
-		BondsEngine(ConstPropertyPtr positions, ConstPropertyPtr particleTypes, 
+		BondsEngine(ParticleOrderingFingerprint fingerprint, ConstPropertyPtr positions, ConstPropertyPtr particleTypes, 
 				const SimulationCell& simCell, CutoffMode cutoffMode, FloatType maxCutoff, FloatType minCutoff, std::vector<std::vector<FloatType>> pairCutoffsSquared, 
 				ConstPropertyPtr moleculeIDs) :
 					_positions(std::move(positions)), 
@@ -104,10 +82,25 @@ private:
 					_maxCutoff(maxCutoff), 
 					_minCutoff(minCutoff), 
 					_pairCutoffsSquared(std::move(pairCutoffsSquared)), 
-					_moleculeIDs(std::move(moleculeIDs)) {}
+					_moleculeIDs(std::move(moleculeIDs)),
+					_inputFingerprint(std::move(fingerprint)) {}
+
+		/// This method is called by the system after the computation was successfully completed.
+		virtual void cleanup() override {
+			_positions.reset();
+			_particleTypes.reset();
+			_moleculeIDs.reset();
+			ComputeEngine::cleanup();
+		}
 
 		/// Computes the modifier's results.
 		virtual void perform() override;
+
+		/// Injects the computed results into the data pipeline.
+		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	
+		/// Returns the list of generated bonds.
+		std::vector<Bond>& bonds() { return _bonds; }
 
 		/// Returns the input particle positions.
 		const ConstPropertyPtr& positions() const { return _positions; }
@@ -118,10 +111,12 @@ private:
 		const FloatType _maxCutoff;
 		const FloatType _minCutoff;
 		const std::vector<std::vector<FloatType>> _pairCutoffsSquared;
-		const ConstPropertyPtr _positions;
-		const ConstPropertyPtr _particleTypes;
-		const ConstPropertyPtr _moleculeIDs;
+		ConstPropertyPtr _positions;
+		ConstPropertyPtr _particleTypes;
+		ConstPropertyPtr _moleculeIDs;
 		const SimulationCell _simCell;
+		ParticleOrderingFingerprint _inputFingerprint;
+		std::vector<Bond> _bonds;
 	};
 
 public:

@@ -104,18 +104,20 @@ QVector<bool> StructureIdentificationModifier::getTypesToIdentify(int numTypes) 
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState StructureIdentificationModifier::StructureIdentificationResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+PipelineFlowState StructureIdentificationModifier::StructureIdentificationEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	StructureIdentificationModifier* modifier = static_object_cast<StructureIdentificationModifier>(modApp->modifier());
 	OVITO_ASSERT(modifier);
+
+	if(_inputFingerprint.hasChanged(input))
+		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 
 	PipelineFlowState output = input;
 	ParticleOutputHelper poh(modApp->dataset(), output);
 
 	// Create output property object.
 	PropertyPtr outputStructures = postProcessStructureTypes(time, modApp, structures());
-	if(outputStructures->size() != poh.outputParticleCount())
-		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
+	OVITO_ASSERT(outputStructures->size() == poh.outputParticleCount());
 	ParticleProperty* structureProperty = poh.outputProperty<ParticleProperty>(outputStructures);
 
 	// Attach structure types to output particle property.

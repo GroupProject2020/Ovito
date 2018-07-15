@@ -79,10 +79,21 @@ protected:
 	public:
 
 		/// Constructor.
-		RefConfigEngineBase(ConstPropertyPtr positions, const SimulationCell& simCell,
+		RefConfigEngineBase(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell,
 				ConstPropertyPtr refPositions, const SimulationCell& simCellRef,
 				ConstPropertyPtr identifiers, ConstPropertyPtr refIdentifiers,
 				AffineMappingType affineMapping, bool useMinimumImageConvention);
+
+		/// This method is called by the system after the computation was successfully completed.
+		virtual void cleanup() override {
+			_positions.reset();
+			_refPositions.reset();
+			_identifiers.reset();
+			_refIdentifiers.reset();
+			decltype(_currentToRefIndexMap){}.swap(_currentToRefIndexMap);
+			decltype(_refToCurrentIndexMap){}.swap(_refToCurrentIndexMap);
+			ComputeEngine::cleanup();
+		}
 
 		/// Determines the mapping between particles in the reference configuration and
 		/// the current configuration and vice versa.
@@ -128,10 +139,10 @@ protected:
 		SimulationCell _simCellRef;
 		AffineTransformation _refToCurTM;
 		AffineTransformation _curToRefTM;
-		const ConstPropertyPtr _positions;
-		const ConstPropertyPtr _refPositions;
-		const ConstPropertyPtr _identifiers;
-		const ConstPropertyPtr _refIdentifiers;
+		ConstPropertyPtr _positions;
+		ConstPropertyPtr _refPositions;
+		ConstPropertyPtr _identifiers;
+		ConstPropertyPtr _refIdentifiers;
 		const AffineMappingType _affineMapping;
 		const bool _useMinimumImageConvention;
 		std::vector<size_t> _currentToRefIndexMap;

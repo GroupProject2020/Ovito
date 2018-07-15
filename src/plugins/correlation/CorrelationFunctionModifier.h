@@ -91,18 +91,73 @@ protected:
 
 private:
 
-	/// Stores the modifier's results.
-	class CorrelationAnalysisResults : public ComputeEngineResults 
+	/// Computes the modifier's results.
+	class CorrelationAnalysisEngine : public ComputeEngine
 	{
 	public:
 
 		/// Constructor.
-		CorrelationAnalysisResults(int numberOfNeighBins, bool doComputeNeighCorrelation) :
+		CorrelationAnalysisEngine(ConstPropertyPtr positions,
+								  ConstPropertyPtr sourceProperty1,
+								  size_t vecComponent1,
+								  ConstPropertyPtr sourceProperty2,
+								  size_t vecComponent2,
+								  const SimulationCell& simCell,
+								  FloatType fftGridSpacing,
+								  bool applyWindow,
+								  bool doComputeNeighCorrelation,
+								  FloatType neighCutoff,
+								  int numberOfNeighBins,
+								  AveragingDirectionType averagingDirection) :
+			_positions(std::move(positions)),
+			_sourceProperty1(std::move(sourceProperty1)), _vecComponent1(vecComponent1),
+			_sourceProperty2(std::move(sourceProperty2)), _vecComponent2(vecComponent2),
+			_simCell(simCell), _fftGridSpacing(fftGridSpacing),
+			_applyWindow(applyWindow), _neighCutoff(neighCutoff),
+			_averagingDirection(averagingDirection),
 			_neighCorrelation(doComputeNeighCorrelation ? numberOfNeighBins : 0, 0.0),
 			_neighCorrelationX(doComputeNeighCorrelation ? numberOfNeighBins : 0) {}
 
+		/// This method is called by the system after the computation was successfully completed.
+		virtual void cleanup() override {
+			_positions.reset();
+			_sourceProperty1.reset();
+			_sourceProperty2.reset();
+			ComputeEngine::cleanup();
+		}
+
+		/// Compute real and reciprocal space correlation function via FFT.
+		void computeFftCorrelation();
+
+		/// Compute real space correlation function via direction summation over neighbors.
+		void computeNeighCorrelation();
+
+		/// Compute means and covariance.
+		void computeLimits();
+
+		/// Computes the modifier's results and stores them in this object for later retrieval.
+		virtual void perform() override;
+
+		/// Returns the property storage that contains the input particle positions.
+		const ConstPropertyPtr& positions() const { return _positions; }
+
+		/// Returns the property storage that contains the first input particle property.
+		const ConstPropertyPtr& sourceProperty1() const { return _sourceProperty1; }
+
+		/// Returns the property storage that contains the second input particle property.
+		const ConstPropertyPtr& sourceProperty2() const { return _sourceProperty2; }
+
+		/// Returns the simulation cell data.
+		const SimulationCell& cell() const { return _simCell; }
+
+		/// Returns the FFT cutoff radius.
+		FloatType fftGridSpacing() const { return _fftGridSpacing; }
+
+		/// Returns the neighbor cutoff radius.
+		FloatType neighCutoff() const { return _neighCutoff; }
+
 		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 		/// Returns the real-space correlation function.
 		QVector<FloatType>& realSpaceCorrelation() { return _realSpaceCorrelation; }
@@ -145,101 +200,6 @@ private:
 
 	private:
 
-		QVector<FloatType> _realSpaceCorrelation;
-		QVector<FloatType> _realSpaceRDF;
-		QVector<FloatType> _realSpaceCorrelationX;
-		QVector<FloatType> _neighCorrelation;
-		QVector<FloatType> _neighRDF;
-		QVector<FloatType> _neighCorrelationX;
-		QVector<FloatType> _reciprocalSpaceCorrelation;
-		QVector<FloatType> _reciprocalSpaceCorrelationX;
-		FloatType _mean1 = 0;
-		FloatType _mean2 = 0;
-		FloatType _covariance = 0;
-	};
-
-	/// Computes the modifier's results.
-	class CorrelationAnalysisEngine : public ComputeEngine
-	{
-	public:
-
-		/// Constructor.
-		CorrelationAnalysisEngine(ConstPropertyPtr positions,
-								  ConstPropertyPtr sourceProperty1,
-								  size_t vecComponent1,
-								  ConstPropertyPtr sourceProperty2,
-								  size_t vecComponent2,
-								  const SimulationCell& simCell,
-								  FloatType fftGridSpacing,
-								  bool applyWindow,
-								  bool doComputeNeighCorrelation,
-								  FloatType neighCutoff,
-								  int numberOfNeighBins,
-								  AveragingDirectionType averagingDirection) :
-			_positions(std::move(positions)),
-			_sourceProperty1(std::move(sourceProperty1)), _vecComponent1(vecComponent1),
-			_sourceProperty2(std::move(sourceProperty2)), _vecComponent2(vecComponent2),
-			_simCell(simCell), _fftGridSpacing(fftGridSpacing),
-			_applyWindow(applyWindow), _neighCutoff(neighCutoff),
-			_averagingDirection(averagingDirection),
-			_results(std::make_shared<CorrelationAnalysisResults>(numberOfNeighBins, doComputeNeighCorrelation)) {}
-
-		/// Compute real and reciprocal space correlation function via FFT.
-		void computeFftCorrelation();
-
-		/// Compute real space correlation function via direction summation over neighbors.
-		void computeNeighCorrelation();
-
-		/// Compute means and covariance.
-		void computeLimits();
-
-		/// Computes the modifier's results and stores them in this object for later retrieval.
-		virtual void perform() override;
-
-		/// Returns the property storage that contains the input particle positions.
-		const ConstPropertyPtr& positions() const { return _positions; }
-
-		/// Returns the property storage that contains the first input particle property.
-		const ConstPropertyPtr& sourceProperty1() const { return _sourceProperty1; }
-
-		/// Returns the property storage that contains the second input particle property.
-		const ConstPropertyPtr& sourceProperty2() const { return _sourceProperty2; }
-
-		/// Returns the simulation cell data.
-		const SimulationCell& cell() const { return _simCell; }
-
-		/// Returns the FFT cutoff radius.
-		FloatType fftGridSpacing() const { return _fftGridSpacing; }
-
-		/// Returns the neighbor cutoff radius.
-		FloatType neighCutoff() const { return _neighCutoff; }
-
-		/// Returns the real-space correlation function.
-		QVector<FloatType>& realSpaceCorrelation() { return _results->realSpaceCorrelation(); }
-
-		/// Returns the RDF evaluated from an FFT correlation.
-		QVector<FloatType>& realSpaceRDF() { return _results->realSpaceRDF(); }
-
-		/// Returns the distances for which the real-space correlation function is tabulAveated.
-		QVector<FloatType>& realSpaceCorrelationX() { return _results->realSpaceCorrelationX(); }
-
-		/// Returns the short-ranged real-space correlation function.
-		QVector<FloatType>& neighCorrelation() { return _results->neighCorrelation(); }
-
-		/// Returns the RDF evalauted from a direct sum over neighbor shells.
-		QVector<FloatType>& neighRDF() { return _results->neighRDF(); }
-
-		/// Returns the distances for which the short-ranged real-space correlation function is tabulated.
-		QVector<FloatType>& neighCorrelationX() { return _results->neighCorrelationX(); }
-
-		/// Returns the reciprocal-space correlation function.
-		QVector<FloatType>& reciprocalSpaceCorrelation() { return _results->reciprocalSpaceCorrelation(); }
-
-		/// Returns the wavevectors for which the reciprocal-space correlation function is tabulated.
-		QVector<FloatType>& reciprocalSpaceCorrelationX() { return _results->reciprocalSpaceCorrelationX(); }
-
-	private:
-
 		/// Real-to-complex FFT.
 		void r2cFFT(int nX, int nY, int nZ, QVector<FloatType> &rData, QVector<std::complex<FloatType>> &cData);
 
@@ -261,10 +221,21 @@ private:
 		const FloatType _neighCutoff;
 		const AveragingDirectionType _averagingDirection;
 		const SimulationCell _simCell;
-		const ConstPropertyPtr _positions;
-		const ConstPropertyPtr _sourceProperty1;
-		const ConstPropertyPtr _sourceProperty2;
-		std::shared_ptr<CorrelationAnalysisResults> _results;
+		ConstPropertyPtr _positions;
+		ConstPropertyPtr _sourceProperty1;
+		ConstPropertyPtr _sourceProperty2;
+
+		QVector<FloatType> _realSpaceCorrelation;
+		QVector<FloatType> _realSpaceRDF;
+		QVector<FloatType> _realSpaceCorrelationX;
+		QVector<FloatType> _neighCorrelation;
+		QVector<FloatType> _neighRDF;
+		QVector<FloatType> _neighCorrelationX;
+		QVector<FloatType> _reciprocalSpaceCorrelation;
+		QVector<FloatType> _reciprocalSpaceCorrelationX;
+		FloatType _mean1 = 0;
+		FloatType _mean2 = 0;
+		FloatType _covariance = 0;
 	};
 
 private:

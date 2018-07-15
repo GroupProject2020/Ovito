@@ -25,6 +25,7 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/modifier/analysis/ReferenceConfigurationModifier.h>
 #include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/util/ParticleOrderingFingerprint.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
@@ -52,31 +53,44 @@ protected:
 	
 private:
 
-	/// Stores the modifier's results.
-	class AtomicStrainResults : public ComputeEngineResults 
+	/// Computes the modifier's results.
+	class AtomicStrainEngine : public RefConfigEngineBase
 	{
 	public:
 
 		/// Constructor.
-		AtomicStrainResults(const TimeInterval& validityInterval, size_t particleCount, 
-							bool calculateDeformationGradients, 
-							bool calculateStrainTensors,
-							bool calculateNonaffineSquaredDisplacements, 
-							bool calculateRotations,
-							bool calculateStretchTensors,
-							bool selectInvalidParticles) : 
-			ComputeEngineResults(validityInterval),
-			_shearStrains(std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Float, 1, 0, tr("Shear Strain"), false)),
-			_volumetricStrains(std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Float, 1, 0, tr("Volumetric Strain"), false)),
-			_strainTensors(calculateStrainTensors ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::StrainTensorProperty, false) : nullptr),
-			_deformationGradients(calculateDeformationGradients ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::DeformationGradientProperty, false) : nullptr),
-			_nonaffineSquaredDisplacements(calculateNonaffineSquaredDisplacements ? std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Float, 1, 0, tr("Nonaffine Squared Displacement"), false) : nullptr),
-			_invalidParticles(selectInvalidParticles ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::SelectionProperty, false) : nullptr),
-			_rotations(calculateRotations ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::RotationProperty, false) : nullptr),
-			_stretchTensors(calculateStretchTensors ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::StretchTensorProperty, false) : nullptr) {}
+		AtomicStrainEngine(const TimeInterval& validityInterval, ParticleOrderingFingerprint fingerprint, ConstPropertyPtr positions, const SimulationCell& simCell,
+				ConstPropertyPtr refPositions, const SimulationCell& simCellRef,
+				ConstPropertyPtr identifiers, ConstPropertyPtr refIdentifiers,
+				FloatType cutoff, AffineMappingType affineMapping, bool useMinimumImageConvention,
+				bool calculateDeformationGradients, bool calculateStrainTensors,
+				bool calculateNonaffineSquaredDisplacements, bool calculateRotations, bool calculateStretchTensors,
+				bool selectInvalidParticles) :
+			RefConfigEngineBase(validityInterval, positions, simCell, refPositions, simCellRef,
+				std::move(identifiers), std::move(refIdentifiers), affineMapping, useMinimumImageConvention),
+			_cutoff(cutoff), 
+			_displacements(ParticleProperty::createStandardStorage(refPositions->size(), ParticleProperty::DisplacementProperty, false)),
+			_shearStrains(std::make_shared<PropertyStorage>(fingerprint.particleCount(), PropertyStorage::Float, 1, 0, tr("Shear Strain"), false)),
+			_volumetricStrains(std::make_shared<PropertyStorage>(fingerprint.particleCount(), PropertyStorage::Float, 1, 0, tr("Volumetric Strain"), false)),
+			_strainTensors(calculateStrainTensors ? ParticleProperty::createStandardStorage(fingerprint.particleCount(), ParticleProperty::StrainTensorProperty, false) : nullptr),
+			_deformationGradients(calculateDeformationGradients ? ParticleProperty::createStandardStorage(fingerprint.particleCount(), ParticleProperty::DeformationGradientProperty, false) : nullptr),
+			_nonaffineSquaredDisplacements(calculateNonaffineSquaredDisplacements ? std::make_shared<PropertyStorage>(fingerprint.particleCount(), PropertyStorage::Float, 1, 0, tr("Nonaffine Squared Displacement"), false) : nullptr),
+			_invalidParticles(selectInvalidParticles ? ParticleProperty::createStandardStorage(fingerprint.particleCount(), ParticleProperty::SelectionProperty, false) : nullptr),
+			_rotations(calculateRotations ? ParticleProperty::createStandardStorage(fingerprint.particleCount(), ParticleProperty::RotationProperty, false) : nullptr),
+			_stretchTensors(calculateStretchTensors ? ParticleProperty::createStandardStorage(fingerprint.particleCount(), ParticleProperty::StretchTensorProperty, false) : nullptr),
+			_inputFingerprint(std::move(fingerprint)) {}
+
+		/// This method is called by the system after the computation was successfully completed.
+		virtual void cleanup() override {
+			_displacements.reset();
+			RefConfigEngineBase::cleanup();
+		}
+
+		/// Computes the modifier's results.
+		virtual void perform() override;
 
 		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 		/// Returns the property storage that contains the computed per-particle shear strain values.
 		const PropertyPtr& shearStrains() const { return _shearStrains; }
@@ -108,47 +122,6 @@ private:
 		/// Increments the invalid particle counter by one.
 		void addInvalidParticle() { _numInvalidParticles.fetchAndAddRelaxed(1); }
 
-	private:
-
-		QAtomicInt _numInvalidParticles;
-		const PropertyPtr _shearStrains;
-		const PropertyPtr _volumetricStrains;
-		const PropertyPtr _strainTensors;
-		const PropertyPtr _deformationGradients;
-		const PropertyPtr _nonaffineSquaredDisplacements;
-		const PropertyPtr _invalidParticles;
-		const PropertyPtr _rotations;
-		const PropertyPtr _stretchTensors;		
-	};
-
-	/// Computes the modifier's results.
-	class AtomicStrainEngine : public RefConfigEngineBase
-	{
-	public:
-
-		/// Constructor.
-		AtomicStrainEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell,
-				ConstPropertyPtr refPositions, const SimulationCell& simCellRef,
-				ConstPropertyPtr identifiers, ConstPropertyPtr refIdentifiers,
-				FloatType cutoff, AffineMappingType affineMapping, bool useMinimumImageConvention,
-				bool calculateDeformationGradients, bool calculateStrainTensors,
-				bool calculateNonaffineSquaredDisplacements, bool calculateRotations, bool calculateStretchTensors,
-				bool selectInvalidParticles) :
-			RefConfigEngineBase(positions, simCell, refPositions, simCellRef,
-				std::move(identifiers), std::move(refIdentifiers), affineMapping, useMinimumImageConvention),
-			_cutoff(cutoff), 
-			_displacements(ParticleProperty::createStandardStorage(refPositions->size(), ParticleProperty::DisplacementProperty, false)),
-			_results(std::make_shared<AtomicStrainResults>(validityInterval, positions->size(), 
-							calculateDeformationGradients, 
-							calculateStrainTensors,
-							calculateNonaffineSquaredDisplacements, 
-							calculateRotations,
-							calculateStretchTensors,
-							selectInvalidParticles)) {}
-
-		/// Computes the modifier's results.
-		virtual void perform() override;
-
 		/// Returns the property storage that contains the computed displacement vectors.
 		const PropertyPtr& displacements() const { return _displacements; }
 		
@@ -158,8 +131,17 @@ private:
 		void computeStrain(size_t particleIndex, CutoffNeighborFinder& neighborListBuilder);
 
 		const FloatType _cutoff;
-		const PropertyPtr _displacements;
-		std::shared_ptr<AtomicStrainResults> _results;
+		PropertyPtr _displacements;
+		QAtomicInt _numInvalidParticles;
+		const PropertyPtr _shearStrains;
+		const PropertyPtr _volumetricStrains;
+		const PropertyPtr _strainTensors;
+		const PropertyPtr _deformationGradients;
+		const PropertyPtr _nonaffineSquaredDisplacements;
+		const PropertyPtr _invalidParticles;
+		const PropertyPtr _rotations;
+		const PropertyPtr _stretchTensors;		
+		ParticleOrderingFingerprint _inputFingerprint;
 	};
 
 	/// Controls the cutoff radius for the neighbor lists.

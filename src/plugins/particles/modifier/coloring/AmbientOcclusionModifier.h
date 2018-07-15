@@ -23,6 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
+#include <plugins/particles/util/ParticleOrderingFingerprint.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
 
@@ -59,37 +60,30 @@ public:
 
 	enum { MAX_AO_RENDER_BUFFER_RESOLUTION = 4 };
 
-	/// Holds the modifier's results.
-	class AmbientOcclusionResults : public ComputeEngineResults
-	{
-	public:
-
-		/// Constructor.
-		AmbientOcclusionResults(const TimeInterval& validityInterval, size_t particleCount) : ComputeEngineResults(validityInterval),
-			_brightness(std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Float, 1, 0, tr("Brightness"), true)) {}
-
-		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-	
-		/// Returns the property storage that contains the computed per-particle brightness values.
-		const PropertyPtr& brightness() const { return _brightness; }
-		
-	private:
-		
-		PropertyPtr _brightness;
-	};
-
 	/// Computes the modifier's results.
 	class AmbientOcclusionEngine : public ComputeEngine
 	{
 	public:
 
 		/// Constructor.
-		AmbientOcclusionEngine(const TimeInterval& validityInterval, int resolution, int samplingCount, PropertyPtr positions, 
+		AmbientOcclusionEngine(const TimeInterval& validityInterval, ParticleOrderingFingerprint fingerprint, int resolution, int samplingCount, PropertyPtr positions, 
 			const Box3& boundingBox, std::vector<FloatType> particleRadii, AmbientOcclusionRenderer* renderer);
+
+		/// This method is called by the system after the computation was successfully completed.
+		virtual void cleanup() override {
+			_positions.reset();
+			decltype(_particleRadii){}.swap(_particleRadii);
+			ComputeEngine::cleanup();
+		}
 
 		/// Computes the modifier's results.
 		virtual void perform() override;
+
+		/// Injects the computed results into the data pipeline.
+		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	
+		/// Returns the property storage that contains the computed per-particle brightness values.
+		const PropertyPtr& brightness() const { return _brightness; }
 
 		/// Returns the property storage that contains the input particle positions.
 		const PropertyPtr& positions() const { return _positions; }
@@ -99,16 +93,25 @@ public:
 		AmbientOcclusionRenderer* _renderer;
 		const int _resolution;
 		const int _samplingCount;
-		const PropertyPtr _positions;
+		PropertyPtr _positions;
 		const Box3 _boundingBox;
-		const std::vector<FloatType> _particleRadii;
-		std::shared_ptr<AmbientOcclusionResults> _results;
+		std::vector<FloatType> _particleRadii;
+		PropertyPtr _brightness;
+		ParticleOrderingFingerprint _inputFingerprint;
 	};
 
 public:
 
 	/// Constructor.
 	Q_INVOKABLE AmbientOcclusionModifier(DataSet* dataset);
+
+	/// This method indicates whether cached computation results of the modifier should be discarded whenever
+	/// a parameter of the modifier changes.
+	virtual bool discardResultsOnModifierChange(const PropertyFieldEvent& event) const override { 
+		// Avoid a full recomputation when the user changes the intensity parameter.
+		if(event.field() == &PROPERTY_FIELD(intensity)) return false;
+		return AsynchronousModifier::discardResultsOnModifierChange(event);
+	}
 
 protected:
 

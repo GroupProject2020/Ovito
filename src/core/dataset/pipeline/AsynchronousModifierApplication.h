@@ -42,10 +42,10 @@ public:
 	Q_INVOKABLE AsynchronousModifierApplication(DataSet* dataset);
 
 	/// Returns the cached results of the AsynchronousModifier from the last pipeline evaluation.
-	const AsynchronousModifier::ComputeEngineResultsPtr& lastComputeResults() const { return _lastComputeResults; }
+	const AsynchronousModifier::ComputeEnginePtr& lastComputeResults() const { return _lastComputeResults; }
 
 	/// Sets the cached results of the AsynchronousModifier from the last pipeline evaluation.
-	void setLastComputeResults(AsynchronousModifier::ComputeEngineResultsPtr results) { _lastComputeResults = std::move(results); }
+	void setLastComputeResults(AsynchronousModifier::ComputeEnginePtr results) { _lastComputeResults = std::move(results); }
 
 protected:
 
@@ -58,7 +58,7 @@ protected:
 private:
 
 	/// The cached results of the AsynchronousModifier from the last pipeline evaluation.
-	AsynchronousModifier::ComputeEngineResultsPtr _lastComputeResults;
+	AsynchronousModifier::ComputeEnginePtr _lastComputeResults;
 };
 
 OVITO_END_INLINE_NAMESPACE

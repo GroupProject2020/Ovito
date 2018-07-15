@@ -114,6 +114,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> VoronoiAnalysisModifier::createEn
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	return std::make_shared<VoronoiAnalysisEngine>(
 			validityInterval,
+			input,
 			posProperty->storage(),
 			selectionProperty ? selectionProperty->storage() : nullptr,
 			std::move(radii),
@@ -131,12 +132,12 @@ Future<AsynchronousModifier::ComputeEnginePtr> VoronoiAnalysisModifier::createEn
 ******************************************************************************/
 void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 {
-	setProgressText(tr("Computing Voronoi cells"));
+	task()->setProgressText(tr("Computing Voronoi cells"));
 
 	// Compute the total simulation cell volume.
-	_results->setSimulationBoxVolume(_simCell.volume3D());
+	setSimulationBoxVolume(_simCell.volume3D());
 
-	if(_positions->size() == 0 || _results->simulationBoxVolume() == 0)
+	if(_positions->size() == 0 || simulationBoxVolume() == 0)
 		return;	// Nothing to do
 
 	// The squared edge length threshold.
@@ -147,12 +148,12 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 	{
 		// Compute cell volume.
 		double vol = v.volume();
-		_results->atomicVolumes()->setFloat(index, (FloatType)vol);
+		atomicVolumes()->setFloat(index, (FloatType)vol);
 
 		// Accumulate total volume of Voronoi cells.
 		// Loop is for lock-free write access to shared max counter.
-		double prevVolumeSum = _results->voronoiVolumeSum();
-		while(!_results->voronoiVolumeSum().compare_exchange_weak(prevVolumeSum, prevVolumeSum + vol));
+		double prevVolumeSum = voronoiVolumeSum();
+		while(!voronoiVolumeSum().compare_exchange_weak(prevVolumeSum, prevVolumeSum + vol));
 
 		// Compute total surface area of Voronoi cell when relative area threshold is used to 
 		// filter out small faces.
@@ -210,23 +211,23 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 							Bond bond = { index, (size_t)neighbor_id, pbcShift };
 							if(bond.isOdd()) continue;
 							QMutexLocker locker(mutex);
-							_results->bonds().push_back(bond);
+							bonds().push_back(bond);
 						}
 						faceOrder--;
-						if(_results->voronoiIndices() && faceOrder < (int)_results->voronoiIndices()->componentCount())
-							_results->voronoiIndices()->setIntComponent(index, faceOrder, _results->voronoiIndices()->getIntComponent(index, faceOrder) + 1);
+						if(voronoiIndices() && faceOrder < (int)voronoiIndices()->componentCount())
+							voronoiIndices()->setIntComponent(index, faceOrder, voronoiIndices()->getIntComponent(index, faceOrder) + 1);
 					}
 				}
 			}
 		}
 
 		// Store computed result.
-		_results->coordinationNumbers()->setInt(index, coordNumber);
+		coordinationNumbers()->setInt(index, coordNumber);
 
 		// Keep track of the maximum number of edges per face.
 		// Loop is for lock-free write access to shared max counter.
-		int prevMaxFaceOrder = _results->maxFaceOrder();
-		while(localMaxFaceOrder > prevMaxFaceOrder && !_results->maxFaceOrder().compare_exchange_weak(prevMaxFaceOrder, localMaxFaceOrder));
+		int prevMaxFaceOrder = maxFaceOrder();
+		while(localMaxFaceOrder > prevMaxFaceOrder && !maxFaceOrder().compare_exchange_weak(prevMaxFaceOrder, localMaxFaceOrder));
 	};
 
 	// Decide whether to use Voro++ container class or our own implementation.
@@ -263,14 +264,14 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 			}
 			if(!count) return;
 
-			setProgressValue(0);
-			setProgressMaximum(count);
+			task()->setProgressValue(0);
+			task()->setProgressMaximum(count);
 #if 1
 			voro::c_loop_all cl(voroContainer);
 			voro::voronoicell_neighbor v;
 			if(cl.start()) {
 				do {
-					if(!incrementProgressValue())
+					if(!task()->incrementProgressValue())
 						return;
 					if(!voroContainer.compute_cell(v,cl))
 						continue;
@@ -328,14 +329,14 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 			}
 
 			if(!count) return;
-			setProgressValue(0);
-			setProgressMaximum(count);
+			task()->setProgressValue(0);
+			task()->setProgressMaximum(count);
 
 			voro::c_loop_all cl(voroContainer);
 			voro::voronoicell_neighbor v;
 			if(cl.start()) {
 				do {
-					if(!incrementProgressValue())
+					if(!task()->incrementProgressValue())
 						return;
 					if(!voroContainer.compute_cell(v,cl))
 						continue;
@@ -392,7 +393,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 	else {
 		// Prepare the nearest neighbor list generator.
 		NearestNeighborFinder nearestNeighborFinder;
-		if(!nearestNeighborFinder.prepare(*positions(), _simCell, selection().get(), this))
+		if(!nearestNeighborFinder.prepare(*positions(), _simCell, selection().get(), task().get()))
 			return;
 
 		// Squared particle radii (input was just radii).
@@ -417,7 +418,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 		QMutex mutex;
 
 		// Perform analysis, particle-wise parallel.
-		parallelFor(_positions->size(), *this,
+		parallelFor(_positions->size(), *task(),
 				[&nearestNeighborFinder, this, sqEdgeThreshold, boxDiameter,
 				 planeNormals, corner1, corner2, &processCell, &mutex](size_t index) {
 
@@ -470,22 +471,20 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 			processCell(v, index, &mutex);
 		});
 	}
-
-	// Return the results of the compute engine.
-	setResult(std::move(_results));		
 }
 
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState VoronoiAnalysisModifier::VoronoiAnalysisResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+PipelineFlowState VoronoiAnalysisModifier::VoronoiAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
+	if(_inputFingerprint.hasChanged(input))
+		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
+
 	VoronoiAnalysisModifier* modifier = static_object_cast<VoronoiAnalysisModifier>(modApp->modifier());
 	
 	PipelineFlowState output = input;
 	ParticleOutputHelper poh(modApp->dataset(), output);
-	if(coordinationNumbers()->size() != poh.outputParticleCount())
-		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
 
 	poh.outputProperty<ParticleProperty>(coordinationNumbers());
 	poh.outputProperty<ParticleProperty>(atomicVolumes());

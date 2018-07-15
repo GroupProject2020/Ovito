@@ -24,6 +24,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/util/ParticleOrderingFingerprint.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
@@ -78,17 +79,35 @@ protected:
 
 private:
 
-	/// Holds the modifier's results.
-	class ExpandSelectionResults : public ComputeEngineResults
+	/// The modifier's compute engine.
+	class ExpandSelectionEngine : public ComputeEngine
 	{
 	public:
 
 		/// Constructor.
-		ExpandSelectionResults(const ConstPropertyPtr& inputSelection) :
-			_outputSelection(std::make_shared<PropertyStorage>(*inputSelection)) {}
+		ExpandSelectionEngine(ParticleOrderingFingerprint fingerprint, ConstPropertyPtr positions, const SimulationCell& simCell, ConstPropertyPtr inputSelection, int numIterations) :
+			_numIterations(numIterations),
+			_positions(std::move(positions)), 
+			_simCell(simCell),
+			_inputSelection(inputSelection),
+			_outputSelection(std::make_shared<PropertyStorage>(*inputSelection)),
+			_inputFingerprint(std::move(fingerprint)) {}
+
+		/// This method is called by the system after the computation was successfully completed.
+		virtual void cleanup() override {
+			_positions.reset();
+			_inputSelection.reset();
+			ComputeEngine::cleanup();
+		}
+
+		/// Computes the modifier's results.
+		virtual void perform() override;
+
+		/// Performs one iteration of the expansion.
+		virtual void expandSelection() = 0;
 
 		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 		
 		const PropertyPtr& outputSelection() { return _outputSelection; }
 		void setOutputSelection(PropertyPtr ptr) { _outputSelection = std::move(ptr); }
@@ -97,48 +116,22 @@ private:
 		void setNumSelectedParticlesInput(size_t count) { _numSelectedParticlesInput = count; }
 		void setNumSelectedParticlesOutput(size_t count) { _numSelectedParticlesOutput = count; }
 		
-	private:
-
-		PropertyPtr _outputSelection;
-		size_t _numSelectedParticlesInput;
-		size_t _numSelectedParticlesOutput;
-	};
-
-	/// The modifier's compute engine.
-	class ExpandSelectionEngine : public ComputeEngine
-	{
-	public:
-
-		/// Constructor.
-		ExpandSelectionEngine(ConstPropertyPtr positions, const SimulationCell& simCell, ConstPropertyPtr inputSelection, int numIterations) :
-			_numIterations(numIterations),
-			_positions(std::move(positions)), 
-			_simCell(simCell),
-			_inputSelection(std::move(inputSelection)),
-			_results(std::make_shared<ExpandSelectionResults>(_inputSelection)) { setResult(_results); }
-
-		/// Computes the modifier's results.
-		virtual void perform() override;
-
-		/// Performs one iteration of the expansion.
-		virtual void expandSelection() = 0;
-
 		const SimulationCell& simCell() const { return _simCell; }
 
 		const ConstPropertyPtr& positions() const { return _positions; }
 
 		const ConstPropertyPtr& inputSelection() const { return _inputSelection; }
 		
-		/// Returns a pointer to the engine's computation results.
-		ExpandSelectionResults* results() const { return _results.get(); }
-
 	protected:
 
 		const int _numIterations;
 		const SimulationCell _simCell;
-		const ConstPropertyPtr _positions;
+		ConstPropertyPtr _positions;
 		ConstPropertyPtr _inputSelection;
-		std::shared_ptr<ExpandSelectionResults> _results;
+		PropertyPtr _outputSelection;
+		size_t _numSelectedParticlesInput;
+		size_t _numSelectedParticlesOutput;
+		ParticleOrderingFingerprint _inputFingerprint;
 	};
 
 	/// Computes the expanded selection by using the nearest neighbor criterion.
@@ -147,8 +140,8 @@ private:
 	public:
 
 		/// Constructor.
-		ExpandSelectionNearestEngine(ConstPropertyPtr positions, const SimulationCell& simCell, ConstPropertyPtr inputSelection, int numIterations, int numNearestNeighbors) :
-			ExpandSelectionEngine(std::move(positions), simCell, std::move(inputSelection), numIterations), 
+		ExpandSelectionNearestEngine(ParticleOrderingFingerprint fingerprint, ConstPropertyPtr positions, const SimulationCell& simCell, ConstPropertyPtr inputSelection, int numIterations, int numNearestNeighbors) :
+			ExpandSelectionEngine(std::move(fingerprint), std::move(positions), simCell, std::move(inputSelection), numIterations), 
 			_numNearestNeighbors(numNearestNeighbors) {}
 
 		/// Expands the selection by one step.
@@ -165,8 +158,8 @@ private:
 	public:
 
 		/// Constructor.
-		ExpandSelectionCutoffEngine(ConstPropertyPtr positions, const SimulationCell& simCell, ConstPropertyPtr inputSelection, int numIterations, FloatType cutoff) :
-			ExpandSelectionEngine(std::move(positions), simCell, std::move(inputSelection), numIterations), 
+		ExpandSelectionCutoffEngine(ParticleOrderingFingerprint fingerprint, ConstPropertyPtr positions, const SimulationCell& simCell, ConstPropertyPtr inputSelection, int numIterations, FloatType cutoff) :
+			ExpandSelectionEngine(std::move(fingerprint), std::move(positions), simCell, std::move(inputSelection), numIterations), 
 			_cutoffRange(cutoff) {}
 
 		/// Expands the selection by one step.
@@ -183,16 +176,22 @@ private:
 	public:
 
 		/// Constructor.
-		ExpandSelectionBondedEngine(ConstPropertyPtr positions, const SimulationCell& simCell, ConstPropertyPtr inputSelection, int numIterations, ConstPropertyPtr bondTopology) :
-			ExpandSelectionEngine(std::move(positions), simCell, std::move(inputSelection), numIterations), 
+		ExpandSelectionBondedEngine(ParticleOrderingFingerprint fingerprint, ConstPropertyPtr positions, const SimulationCell& simCell, ConstPropertyPtr inputSelection, int numIterations, ConstPropertyPtr bondTopology) :
+			ExpandSelectionEngine(std::move(fingerprint), std::move(positions), simCell, std::move(inputSelection), numIterations), 
 			_bondTopology(std::move(bondTopology)) {}
+
+		/// This method is called by the system after the computation was successfully completed.
+		virtual void cleanup() override {
+			_bondTopology.reset();
+			ExpandSelectionEngine::cleanup();
+		}
 
 		/// Expands the selection by one step.
 		virtual void expandSelection() override;
 
 	private:
 
-		const ConstPropertyPtr _bondTopology;
+		ConstPropertyPtr _bondTopology;
 	};
 
 private:

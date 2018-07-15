@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -215,7 +215,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ComputePropertyModifier::createEn
 	}
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	std::shared_ptr<PropertyComputeEngine> engine = std::make_shared<PropertyComputeEngine>(validityInterval, time, std::move(outp), posProperty->storage(),
+	auto engine = std::make_shared<PropertyComputeEngine>(validityInterval, input, time, std::move(outp), posProperty->storage(),
 			std::move(selProperty), inputCell->data(), neighborModeEnabled() ? cutoff() : 0,
 			expressions(), neighborExpressions(),
 			std::move(inputProperties), currentFrame, input.attributes());
@@ -230,6 +230,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ComputePropertyModifier::createEn
 ******************************************************************************/
 ComputePropertyModifier::PropertyComputeEngine::PropertyComputeEngine(
 		const TimeInterval& validityInterval, 
+		ParticleOrderingFingerprint fingerprint, 
 		TimePoint time,
 		PropertyPtr outputProperty, 
 		ConstPropertyPtr positions, 
@@ -250,46 +251,48 @@ ComputePropertyModifier::PropertyComputeEngine::PropertyComputeEngine(
 	_frameNumber(frameNumber), 
 	_attributes(std::move(attributes)),
 	_inputProperties(std::move(inputProperties)),
-	_results(std::make_shared<PropertyComputeResults>(validityInterval, std::move(outputProperty))) 
+	_outputProperty(std::move(outputProperty)),
+	_inputFingerprint(std::move(fingerprint))
 {
 	OVITO_ASSERT(_expressions.size() == this->outputProperty()->componentCount());
-	setResult(_results);
 	
 	// Initialize expression evaluators.
-	_evaluator.initialize(_expressions, _inputProperties, &cell(), _attributes, _frameNumber);
-	_inputVariableNames = _evaluator.inputVariableNames();
-	_inputVariableTable = _evaluator.inputVariableTable();
+	_evaluator = std::make_unique<ParticleExpressionEvaluator>();
+	_neighborEvaluator = std::make_unique<ParticleExpressionEvaluator>();
+	_evaluator->initialize(_expressions, _inputProperties, &cell(), _attributes, _frameNumber);
+	_inputVariableNames = _evaluator->inputVariableNames();
+	_inputVariableTable = _evaluator->inputVariableTable();
 
 	// Only used when neighbor mode is active.
 	if(neighborMode()) {
-		_evaluator.registerGlobalParameter("Cutoff", _cutoff);
-		_evaluator.registerGlobalParameter("NumNeighbors", 0);
+		_evaluator->registerGlobalParameter("Cutoff", _cutoff);
+		_evaluator->registerGlobalParameter("NumNeighbors", 0);
 		OVITO_ASSERT(_neighborExpressions.size() == this->outputProperty()->componentCount());
-		_neighborEvaluator.initialize(_neighborExpressions, _inputProperties, &cell(), _attributes, _frameNumber);
-		_neighborEvaluator.registerGlobalParameter("Cutoff", _cutoff);
-		_neighborEvaluator.registerGlobalParameter("NumNeighbors", 0);
-		_neighborEvaluator.registerGlobalParameter("Distance", 0);
-		_neighborEvaluator.registerGlobalParameter("Delta.X", 0);
-		_neighborEvaluator.registerGlobalParameter("Delta.Y", 0);
-		_neighborEvaluator.registerGlobalParameter("Delta.Z", 0);
+		_neighborEvaluator->initialize(_neighborExpressions, _inputProperties, &cell(), _attributes, _frameNumber);
+		_neighborEvaluator->registerGlobalParameter("Cutoff", _cutoff);
+		_neighborEvaluator->registerGlobalParameter("NumNeighbors", 0);
+		_neighborEvaluator->registerGlobalParameter("Distance", 0);
+		_neighborEvaluator->registerGlobalParameter("Delta.X", 0);
+		_neighborEvaluator->registerGlobalParameter("Delta.Y", 0);
+		_neighborEvaluator->registerGlobalParameter("Delta.Z", 0);
 	}
 
 	// Determine if math expressions are time-dependent, i.e. if they reference the animation
 	// frame number. If yes, then we have to restrict the validity interval of the computation
 	// to the current time.
 	bool isTimeDependent = false;
-	ParticleExpressionEvaluator::Worker worker(_evaluator);
+	ParticleExpressionEvaluator::Worker worker(*_evaluator);
 	if(worker.isVariableUsed("Frame") || worker.isVariableUsed("Timestep"))
 		isTimeDependent = true;
 	else if(neighborMode()) {
-		ParticleExpressionEvaluator::Worker worker(_neighborEvaluator);
+		ParticleExpressionEvaluator::Worker worker(*_neighborEvaluator);
 		if(worker.isVariableUsed("Frame") || worker.isVariableUsed("Timestep"))
 			isTimeDependent = true;
 	}
 	if(isTimeDependent) {
-		TimeInterval iv = _results->validityInterval();
+		TimeInterval iv = this->validityInterval();
 		iv.intersect(time);
-		_results->setValidityInterval(iv);
+		setValidityInterval(iv);
 	}
 }
 
@@ -298,23 +301,23 @@ ComputePropertyModifier::PropertyComputeEngine::PropertyComputeEngine(
 ******************************************************************************/
 void ComputePropertyModifier::PropertyComputeEngine::perform()
 {
-	setProgressText(tr("Computing particle property '%1'").arg(outputProperty()->name()));
+	task()->setProgressText(tr("Computing particle property '%1'").arg(outputProperty()->name()));
 
 	// Only used when neighbor mode is active.
 	CutoffNeighborFinder neighborFinder;
 	if(neighborMode()) {
 		// Prepare the neighbor list.
-		if(!neighborFinder.prepare(_cutoff, *positions(), cell(), nullptr, this))
+		if(!neighborFinder.prepare(_cutoff, *positions(), cell(), nullptr, task().get()))
 			return;
 	}
 
-	setProgressValue(0);
-	setProgressMaximum(positions()->size());
+	task()->setProgressValue(0);
+	task()->setProgressMaximum(positions()->size());
 
 	// Parallelized loop over all particles.
-	parallelForChunks(positions()->size(), *this, [this, &neighborFinder](size_t startIndex, size_t count, PromiseState& promise) {
-		ParticleExpressionEvaluator::Worker worker(_evaluator);
-		ParticleExpressionEvaluator::Worker neighborWorker(_neighborEvaluator);
+	parallelForChunks(positions()->size(), *task(), [this, &neighborFinder](size_t startIndex, size_t count, PromiseState& promise) {
+		ParticleExpressionEvaluator::Worker worker(*_evaluator);
+		ParticleExpressionEvaluator::Worker neighborWorker(*_neighborEvaluator);
 
 		double* distanceVar;
 		double* deltaX;
@@ -392,12 +395,13 @@ void ComputePropertyModifier::PropertyComputeEngine::perform()
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState ComputePropertyModifier::PropertyComputeResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+PipelineFlowState ComputePropertyModifier::PropertyComputeEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
+	if(_inputFingerprint.hasChanged(input))
+		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
+
 	PipelineFlowState output = input;
 	ParticleOutputHelper poh(modApp->dataset(), output);
-	if(outputProperty()->size() != poh.outputParticleCount())
-		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
 	ParticleProperty* outputPropertyObj = poh.outputProperty<ParticleProperty>(outputProperty());
 
 	ComputePropertyModifierApplication* myModApp = dynamic_object_cast<ComputePropertyModifierApplication>(modApp);

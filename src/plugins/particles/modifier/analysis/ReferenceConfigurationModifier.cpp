@@ -164,11 +164,12 @@ Future<AsynchronousModifier::ComputeEnginePtr> ReferenceConfigurationModifier::c
 * Constructor.
 ******************************************************************************/
 ReferenceConfigurationModifier::RefConfigEngineBase::RefConfigEngineBase(
+	const TimeInterval& validityInterval,
 	ConstPropertyPtr positions, const SimulationCell& simCell,
 	ConstPropertyPtr refPositions, const SimulationCell& simCellRef,
 	ConstPropertyPtr identifiers, ConstPropertyPtr refIdentifiers,
 	AffineMappingType affineMapping, bool useMinimumImageConvention) :
-	ComputeEngine(),
+	ComputeEngine(validityInterval),
 	_positions(std::move(positions)),
 	_simCell(simCell),
 	_refPositions(std::move(refPositions)),
@@ -211,6 +212,8 @@ ReferenceConfigurationModifier::RefConfigEngineBase::RefConfigEngineBase(
 ******************************************************************************/
 bool ReferenceConfigurationModifier::RefConfigEngineBase::buildParticleMapping(bool requireCompleteCurrentToRefMapping, bool requireCompleteRefToCurrentMapping)
 {
+	OVITO_ASSERT(task());
+	
 	// Build particle-to-particle index maps.
 	_currentToRefIndexMap.resize(positions()->size());
 	_refToCurrentIndexMap.resize(refPositions()->size());
@@ -227,7 +230,7 @@ bool ReferenceConfigurationModifier::RefConfigEngineBase::buildParticleMapping(b
 			index++;
 		}
 
-		if(isCanceled())
+		if(task()->isCanceled())
 			return false;
 
 		// Check for duplicate identifiers in current configuration
@@ -239,7 +242,7 @@ bool ReferenceConfigurationModifier::RefConfigEngineBase::buildParticleMapping(b
 			index++;
 		}
 
-		if(isCanceled())
+		if(task()->isCanceled())
 			return false;
 
 		// Build index maps.
@@ -255,7 +258,7 @@ bool ReferenceConfigurationModifier::RefConfigEngineBase::buildParticleMapping(b
 			++id;
 		}
 
-		if(isCanceled())
+		if(task()->isCanceled())
 			return false;
 
 		id = refIdentifiers()->constDataInt64();
@@ -281,7 +284,7 @@ bool ReferenceConfigurationModifier::RefConfigEngineBase::buildParticleMapping(b
 		std::iota(_currentToRefIndexMap.begin(), _currentToRefIndexMap.end(), size_t(0));
 	}
 
-	return !isCanceled();
+	return !task()->isCanceled();
 }
 
 /******************************************************************************

@@ -26,6 +26,7 @@
 #include <plugins/particles/objects/BondProperty.h>
 #include <plugins/particles/objects/BondsVis.h>
 #include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/util/ParticleOrderingFingerprint.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
@@ -67,20 +68,42 @@ protected:
 
 private:
 
-	/// Stores the modifier's results.
-	class VoronoiAnalysisResults : public ComputeEngineResults 
+	/// Computes the modifier's results.
+	class VoronoiAnalysisEngine : public ComputeEngine
 	{
 	public:
 
 		/// Constructor.
-		VoronoiAnalysisResults(const TimeInterval& validityInterval, size_t particleCount, int edgeCount, bool computeIndices) :
-			ComputeEngineResults(validityInterval),
-			_coordinationNumbers(ParticleProperty::createStandardStorage(particleCount, ParticleProperty::CoordinationProperty, true)),
-			_atomicVolumes(std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Float, 1, 0, QStringLiteral("Atomic Volume"), true)),
-			_voronoiIndices(computeIndices ? std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Int, edgeCount, 0, QStringLiteral("Voronoi Index"), true) : nullptr) {}
+		VoronoiAnalysisEngine(const TimeInterval& validityInterval, ParticleOrderingFingerprint fingerprint, ConstPropertyPtr positions, ConstPropertyPtr selection, std::vector<FloatType> radii,
+							const SimulationCell& simCell,
+							int edgeCount, bool computeIndices, bool computeBonds, FloatType edgeThreshold, FloatType faceThreshold, FloatType relativeFaceThreshold) :
+			ComputeEngine(validityInterval),
+			_positions(positions),
+			_selection(std::move(selection)),
+			_radii(std::move(radii)),
+			_simCell(simCell),
+			_edgeThreshold(edgeThreshold),
+			_faceThreshold(faceThreshold),
+			_relativeFaceThreshold(relativeFaceThreshold),
+			_computeBonds(computeBonds),
+			_coordinationNumbers(ParticleProperty::createStandardStorage(fingerprint.particleCount(), ParticleProperty::CoordinationProperty, true)),
+			_atomicVolumes(std::make_shared<PropertyStorage>(fingerprint.particleCount(), PropertyStorage::Float, 1, 0, QStringLiteral("Atomic Volume"), true)),
+			_voronoiIndices(computeIndices ? std::make_shared<PropertyStorage>(fingerprint.particleCount(), PropertyStorage::Int, edgeCount, 0, QStringLiteral("Voronoi Index"), true) : nullptr),
+			_inputFingerprint(std::move(fingerprint)) {}
+			
+		/// This method is called by the system after the computation was successfully completed.
+		virtual void cleanup() override {
+			_positions.reset();
+			_selection.reset();
+			decltype(_radii){}.swap(_radii);
+			ComputeEngine::cleanup();
+		}
+
+		/// Computes the modifier's results.
+		virtual void perform() override;
 
 		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 		/// Returns the property storage that contains the computed coordination numbers.
 		const PropertyPtr& coordinationNumbers() const { return _coordinationNumbers; }
@@ -106,45 +129,6 @@ private:
 		/// Returns the generated nearest neighbor bonds.
 		std::vector<Bond>& bonds() { return _bonds; }
 
-	private:
-
-		const PropertyPtr _coordinationNumbers;
-		const PropertyPtr _atomicVolumes;
-		const PropertyPtr _voronoiIndices;
-		std::vector<Bond> _bonds;
-
-		/// The total volume of the simulation cell computed by the modifier.
-		double _simulationBoxVolume = 0;
-	
-		/// The volume sum of all Voronoi cells.
-		std::atomic<double> _voronoiVolumeSum{0.0};
-		
-		/// The maximum number of edges of a Voronoi face.
-		std::atomic<int> _maxFaceOrder{0};
-	};
-
-	/// Computes the modifier's results.
-	class VoronoiAnalysisEngine : public ComputeEngine
-	{
-	public:
-
-		/// Constructor.
-		VoronoiAnalysisEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, ConstPropertyPtr selection, std::vector<FloatType> radii,
-							const SimulationCell& simCell,
-							int edgeCount, bool computeIndices, bool computeBonds, FloatType edgeThreshold, FloatType faceThreshold, FloatType relativeFaceThreshold) :
-			_positions(positions),
-			_selection(std::move(selection)),
-			_radii(std::move(radii)),
-			_simCell(simCell),
-			_edgeThreshold(edgeThreshold),
-			_faceThreshold(faceThreshold),
-			_relativeFaceThreshold(relativeFaceThreshold),
-			_computeBonds(computeBonds),
-			_results(std::make_shared<VoronoiAnalysisResults>(validityInterval, positions->size(), edgeCount, computeIndices)) {}
-			
-		/// Computes the modifier's results.
-		virtual void perform() override;
-
 		const SimulationCell& simCell() const { return _simCell; }
 		const ConstPropertyPtr& positions() const { return _positions; }
 		const ConstPropertyPtr selection() const { return _selection; }
@@ -156,10 +140,24 @@ private:
 		const FloatType _relativeFaceThreshold;
 		const SimulationCell _simCell;
 		std::vector<FloatType> _radii;
-		const ConstPropertyPtr _positions;
-		const ConstPropertyPtr _selection;
+		ConstPropertyPtr _positions;
+		ConstPropertyPtr _selection;
 		bool _computeBonds;
-		std::shared_ptr<VoronoiAnalysisResults> _results;
+
+		const PropertyPtr _coordinationNumbers;
+		const PropertyPtr _atomicVolumes;
+		const PropertyPtr _voronoiIndices;
+		std::vector<Bond> _bonds;
+		ParticleOrderingFingerprint _inputFingerprint;
+
+		/// The total volume of the simulation cell computed by the modifier.
+		double _simulationBoxVolume = 0;
+	
+		/// The volume sum of all Voronoi cells.
+		std::atomic<double> _voronoiVolumeSum{0.0};
+		
+		/// The maximum number of edges of a Voronoi face.
+		std::atomic<int> _maxFaceOrder{0};	
 	};
 
 	/// Controls whether the modifier takes into account only selected particles.

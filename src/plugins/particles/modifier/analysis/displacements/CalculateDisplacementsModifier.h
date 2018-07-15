@@ -26,6 +26,7 @@
 #include <plugins/particles/objects/VectorVis.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/particles/modifier/analysis/ReferenceConfigurationModifier.h>
+#include <plugins/particles/util/ParticleOrderingFingerprint.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
@@ -53,18 +54,28 @@ protected:
 
 private:
 
-	/// Stores the modifier's results.
-	class DisplacementResults : public ComputeEngineResults 
+	/// Computes the modifier's results.
+	class DisplacementEngine : public RefConfigEngineBase
 	{
 	public:
 
 		/// Constructor.
-		DisplacementResults(const TimeInterval& validityInterval, size_t particleCount) : ComputeEngineResults(validityInterval),
-			_displacements(ParticleProperty::createStandardStorage(particleCount, ParticleProperty::DisplacementProperty, false)),
-			_displacementMagnitudes(ParticleProperty::createStandardStorage(particleCount, ParticleProperty::DisplacementMagnitudeProperty, false)) {}
+		DisplacementEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell,
+				ParticleOrderingFingerprint fingerprint,
+				ConstPropertyPtr refPositions, const SimulationCell& simCellRef,
+				ConstPropertyPtr identifiers, ConstPropertyPtr refIdentifiers,
+				AffineMappingType affineMapping, bool useMinimumImageConvention) :
+			RefConfigEngineBase(validityInterval, positions, simCell, std::move(refPositions), simCellRef,
+				std::move(identifiers), std::move(refIdentifiers), affineMapping, useMinimumImageConvention),
+			_displacements(ParticleProperty::createStandardStorage(fingerprint.particleCount(), ParticleProperty::DisplacementProperty, false)),
+			_displacementMagnitudes(ParticleProperty::createStandardStorage(fingerprint.particleCount(), ParticleProperty::DisplacementMagnitudeProperty, false)),
+			_inputFingerprint(std::move(fingerprint)) {}
+
+		/// Computes the modifier's results.
+		virtual void perform() override;
 
 		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 		/// Returns the property storage that contains the computed displacement vectors.
 		const PropertyPtr& displacements() const { return _displacements; }
@@ -76,34 +87,7 @@ private:
 
 		const PropertyPtr _displacements;
 		const PropertyPtr _displacementMagnitudes;
-	};
-
-	/// Computes the modifier's results.
-	class DisplacementEngine : public RefConfigEngineBase
-	{
-	public:
-
-		/// Constructor.
-		DisplacementEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, const SimulationCell& simCell,
-				ConstPropertyPtr refPositions, const SimulationCell& simCellRef,
-				ConstPropertyPtr identifiers, ConstPropertyPtr refIdentifiers,
-				AffineMappingType affineMapping, bool useMinimumImageConvention) :
-			RefConfigEngineBase(positions, simCell, std::move(refPositions), simCellRef,
-				std::move(identifiers), std::move(refIdentifiers), affineMapping, useMinimumImageConvention),
-			_results(std::make_shared<DisplacementResults>(validityInterval, positions->size())) {}
-
-		/// Computes the modifier's results.
-		virtual void perform() override;
-
-		/// Returns the property storage that contains the computed displacement vectors.
-		const PropertyPtr& displacements() const { return _results->displacements(); }
-		
-		/// Returns the property storage that contains the computed displacement vector magnitudes.
-		const PropertyPtr& displacementMagnitudes() const { return _results->displacementMagnitudes(); }
-		
-	private:
-
-		std::shared_ptr<DisplacementResults> _results;
+		ParticleOrderingFingerprint _inputFingerprint;
 	};
 
 	/// The vis element for rendering the displacement vectors.

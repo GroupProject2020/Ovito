@@ -79,10 +79,10 @@ Future<AsynchronousModifier::ComputeEnginePtr> ClusterAnalysisModifier::createEn
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	if(neighborMode() == CutoffRange) {
-		return std::make_shared<CutoffClusterAnalysisEngine>(posProperty->storage(), inputCell->data(), sortBySize(), std::move(selectionProperty), cutoff());
+		return std::make_shared<CutoffClusterAnalysisEngine>(input, posProperty->storage(), inputCell->data(), sortBySize(), std::move(selectionProperty), cutoff());
 	}
 	else if(neighborMode() == Bonding) {
-		return std::make_shared<BondClusterAnalysisEngine>(posProperty->storage(), inputCell->data(), sortBySize(), std::move(selectionProperty), pih.expectBonds()->storage());
+		return std::make_shared<BondClusterAnalysisEngine>(input, posProperty->storage(), inputCell->data(), sortBySize(), std::move(selectionProperty), pih.expectBonds()->storage());
 	}
 	else {
 		throwException(tr("Invalid cluster neighbor mode"));
@@ -94,45 +94,42 @@ Future<AsynchronousModifier::ComputeEnginePtr> ClusterAnalysisModifier::createEn
 ******************************************************************************/
 void ClusterAnalysisModifier::ClusterAnalysisEngine::perform()
 {
-	setProgressText(tr("Performing cluster analysis"));
+	task()->setProgressText(tr("Performing cluster analysis"));
 
 	// Initialize.
-	std::fill(_results->particleClusters()->dataInt64(), _results->particleClusters()->dataInt64() + _results->particleClusters()->size(), -1);
+	std::fill(particleClusters()->dataInt64(), particleClusters()->dataInt64() + particleClusters()->size(), -1);
 	
 	// Perform the actual clustering.
 	doClustering();
-	if(isCanceled())
+	if(task()->isCanceled())
 		return;
 
 	// Sort clusters by size.
-	if(_sortBySize && _results->numClusters() != 0) {
+	if(_sortBySize && numClusters() != 0) {
 
 		// Determine cluster sizes.
-		std::vector<size_t> clusterSizes(_results->numClusters() + 1, 0);
-		for(auto id : _results->particleClusters()->constInt64Range()) {
+		std::vector<size_t> clusterSizes(numClusters() + 1, 0);
+		for(auto id : particleClusters()->constInt64Range()) {
 			clusterSizes[id]++;
 		}
 
 		// Sort clusters by size.
-		std::vector<size_t> mapping(_results->numClusters() + 1);
+		std::vector<size_t> mapping(numClusters() + 1);
 		std::iota(mapping.begin(), mapping.end(), size_t(0));
 		std::sort(mapping.begin() + 1, mapping.end(), [&clusterSizes](size_t a, size_t b) {
 			return clusterSizes[a] > clusterSizes[b];
 		});
-		_results->setLargestClusterSize(clusterSizes[mapping[1]]);
+		setLargestClusterSize(clusterSizes[mapping[1]]);
 		clusterSizes.clear();
 		clusterSizes.shrink_to_fit();
 
 		// Remap cluster IDs.
-		std::vector<size_t> inverseMapping(_results->numClusters() + 1);
-		for(size_t i = 0; i <= _results->numClusters(); i++)
+		std::vector<size_t> inverseMapping(numClusters() + 1);
+		for(size_t i = 0; i <= numClusters(); i++)
 			inverseMapping[mapping[i]] = i;
-		for(auto& id : _results->particleClusters()->int64Range())
+		for(auto& id : particleClusters()->int64Range())
 			id = inverseMapping[id];
 	}
-
-	// Return the results of the compute engine.
-	setResult(std::move(_results));	
 }
 
 /******************************************************************************
@@ -142,14 +139,14 @@ void ClusterAnalysisModifier::CutoffClusterAnalysisEngine::doClustering()
 {
 	// Prepare the neighbor finder.
 	CutoffNeighborFinder neighborFinder;
-	if(!neighborFinder.prepare(cutoff(), *positions(), cell(), selection().get(), this))
+	if(!neighborFinder.prepare(cutoff(), *positions(), cell(), selection().get(), task().get()))
 		return;
 
 	size_t particleCount = positions()->size();
-	setProgressValue(0);
-	setProgressMaximum(particleCount);
+	task()->setProgressValue(0);
+	task()->setProgressMaximum(particleCount);
 
-	PropertyStorage& particleClusters = *_results->particleClusters();
+	PropertyStorage& particleClusters = *this->particleClusters();
 			
 	std::deque<size_t> toProcess;
 	for(size_t seedParticleIndex = 0; seedParticleIndex < particleCount; seedParticleIndex++) {
@@ -165,8 +162,8 @@ void ClusterAnalysisModifier::CutoffClusterAnalysisEngine::doClustering()
 			continue;
 
 		// Start a new cluster.
-		_results->setNumClusters(_results->numClusters() + 1);
-		qlonglong cluster = _results->numClusters();
+		setNumClusters(numClusters() + 1);
+		qlonglong cluster = numClusters();
 		particleClusters.setInt64(seedParticleIndex, cluster);
 
 		// Now recursively iterate over all neighbors of the seed particle and add them to the cluster too.
@@ -174,8 +171,8 @@ void ClusterAnalysisModifier::CutoffClusterAnalysisEngine::doClustering()
 		toProcess.push_back(seedParticleIndex);
 
 		do {
-			incrementProgressValue();
-			if(isCanceled())
+			task()->incrementProgressValue();
+			if(task()->isCanceled())
 				return;
 
 			size_t currentParticle = toProcess.front();
@@ -198,13 +195,13 @@ void ClusterAnalysisModifier::CutoffClusterAnalysisEngine::doClustering()
 void ClusterAnalysisModifier::BondClusterAnalysisEngine::doClustering()
 {
 	size_t particleCount = positions()->size();
-	setProgressValue(0);
-	setProgressMaximum(particleCount);
+	task()->setProgressValue(0);
+	task()->setProgressMaximum(particleCount);
 
 	// Prepare particle bond map.
 	ParticleBondMap bondMap(bondTopology());
 
-	PropertyStorage& particleClusters = *_results->particleClusters();
+	PropertyStorage& particleClusters = *this->particleClusters();
 	
 	std::deque<size_t> toProcess;
 	for(size_t seedParticleIndex = 0; seedParticleIndex < particleCount; seedParticleIndex++) {
@@ -220,8 +217,8 @@ void ClusterAnalysisModifier::BondClusterAnalysisEngine::doClustering()
 			continue;
 
 		// Start a new cluster.
-		_results->setNumClusters(_results->numClusters() + 1);
-		qlonglong cluster = _results->numClusters();
+		setNumClusters(numClusters() + 1);
+		qlonglong cluster = numClusters();
 		particleClusters.setInt64(seedParticleIndex, cluster);
 
 		// Now recursively iterate over all neighbors of the seed particle and add them to the cluster too.
@@ -229,8 +226,8 @@ void ClusterAnalysisModifier::BondClusterAnalysisEngine::doClustering()
 		toProcess.push_back(seedParticleIndex);
 
 		do {
-			incrementProgressValue();
-			if(isCanceled())
+			task()->incrementProgressValue();
+			if(task()->isCanceled())
 				return;
 
 			size_t currentParticle = toProcess.front();
@@ -260,14 +257,15 @@ void ClusterAnalysisModifier::BondClusterAnalysisEngine::doClustering()
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState ClusterAnalysisModifier::ClusterAnalysisResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+PipelineFlowState ClusterAnalysisModifier::ClusterAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
+	if(_inputFingerprint.hasChanged(input))
+		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
+
 	ClusterAnalysisModifier* modifier = static_object_cast<ClusterAnalysisModifier>(modApp->modifier());
 	
 	PipelineFlowState output = input;
 	ParticleOutputHelper poh(modApp->dataset(), output);
-	if(particleClusters()->size() != poh.outputParticleCount())
-		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
 	poh.outputProperty<ParticleProperty>(particleClusters());
 
 	poh.outputAttribute(QStringLiteral("ClusterAnalysis.cluster_count"), QVariant::fromValue(numClusters()));

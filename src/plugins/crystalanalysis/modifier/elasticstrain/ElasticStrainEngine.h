@@ -28,20 +28,31 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-/// Holds the results of the ElasticStrainModifier.
-class ElasticStrainResults : public StructureIdentificationModifier::StructureIdentificationResults
+/*
+ * Computation engine of the ElasticStrainModifier, which performs the actual strain tensor calculation.
+ */
+class ElasticStrainEngine : public StructureIdentificationModifier::StructureIdentificationEngine
 {
 public:
 
 	/// Constructor.
-	ElasticStrainResults(size_t particleCount, bool calculateStrainTensors, bool calculateDeformationGradients) :
-		StructureIdentificationResults(particleCount),
-		_volumetricStrains(std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Float, 1, 0, QStringLiteral("Volumetric Strain"), false)),
-		_strainTensors(calculateStrainTensors ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::ElasticStrainTensorProperty, false) : nullptr),
-		_deformationGradients(calculateDeformationGradients ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::ElasticDeformationGradientProperty, false) : nullptr) {}
-	
+	ElasticStrainEngine(ParticleOrderingFingerprint fingerprint, 
+			ConstPropertyPtr positions, const SimulationCell& simCell,
+			int inputCrystalStructure, std::vector<Matrix3> preferredCrystalOrientations,
+			bool calculateDeformationGradients, bool calculateStrainTensors,
+			FloatType latticeConstant, FloatType caRatio, bool pushStrainTensorsForward);
+
+	/// This method is called by the system after the computation was successfully completed.
+	virtual void cleanup() override {
+		_structureAnalysis.reset();
+		StructureIdentificationEngine::cleanup();
+	}
+
+	/// Computes the modifier's results and stores them in this object for later retrieval.
+	virtual void perform() override;
+
 	/// Injects the computed results into the data pipeline.
-	virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 	/// Returns the array of atom cluster IDs.
 	const PropertyPtr& atomClusters() const { return _atomClusters; }
@@ -59,9 +70,15 @@ public:
 	const PropertyPtr& strainTensors() const { return _strainTensors; }
 
 	/// Returns the property storage that contains the computed per-particle deformation gradient tensors.
-	const PropertyPtr& deformationGradients() const { return _deformationGradients; }
+	const PropertyPtr& deformationGradients() const { return _deformationGradients; }	
 
 private:
+
+	const int _inputCrystalStructure;
+	FloatType _latticeConstant;
+	FloatType _axialScaling;
+	const bool _pushStrainTensorsForward;
+	std::unique_ptr<StructureAnalysis> _structureAnalysis;
 
 	/// This stores the cached atom-to-cluster assignments computed by the modifier.
 	PropertyPtr _atomClusters;
@@ -79,49 +96,6 @@ private:
 	const PropertyPtr _deformationGradients;	
 };
 
-/*
- * Computation engine of the ElasticStrainModifier, which performs the actual strain tensor calculation.
- */
-class ElasticStrainEngine : public StructureIdentificationModifier::StructureIdentificationEngine
-{
-public:
-
-	/// Constructor.
-	ElasticStrainEngine(ConstPropertyPtr positions, const SimulationCell& simCell,
-			int inputCrystalStructure, std::vector<Matrix3> preferredCrystalOrientations,
-			bool calculateDeformationGradients, bool calculateStrainTensors,
-			FloatType latticeConstant, FloatType caRatio, bool pushStrainTensorsForward);
-
-	/// Computes the modifier's results and stores them in this object for later retrieval.
-	virtual void perform() override;
-
-	/// Returns the array of atom cluster IDs.
-	const PropertyPtr& atomClusters() const { return _results->atomClusters(); }
-
-	/// Returns the created cluster graph.
-	const std::shared_ptr<ClusterGraph>& clusterGraph() { return _results->clusterGraph(); }
-
-	/// Returns the property storage that contains the computed per-particle volumetric strain values.
-	const PropertyPtr& volumetricStrains() const { return _results->volumetricStrains(); }
-
-	/// Returns the property storage that contains the computed per-particle strain tensors.
-	const PropertyPtr& strainTensors() const { return _results->strainTensors(); }
-
-	/// Returns the property storage that contains the computed per-particle deformation gradient tensors.
-	const PropertyPtr& deformationGradients() const { return _results->deformationGradients(); }
-
-private:
-
-	const int _inputCrystalStructure;
-	FloatType _latticeConstant;
-	FloatType _axialScaling;
-	const bool _pushStrainTensorsForward;
-	std::shared_ptr<ElasticStrainResults> _results;
-	StructureAnalysis _structureAnalysis;
-};
-
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-
-

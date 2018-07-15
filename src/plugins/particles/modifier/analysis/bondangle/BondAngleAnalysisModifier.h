@@ -65,18 +65,6 @@ protected:
 
 private:
 
-	/// Holds the modifier's results.
-	class BondAngleAnalysisResults : public StructureIdentificationResults
-	{
-	public:
-
-		/// Inherit constructor of base class.
-		using StructureIdentificationResults::StructureIdentificationResults;
-
-		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-	};
-
 	/// Computes the modifier's results.
 	class BondAngleAnalysisEngine : public StructureIdentificationEngine
 	{
@@ -87,6 +75,9 @@ private:
 		
 		/// Computes the modifier's results.
 		virtual void perform() override;
+
+		/// Injects the computed results into the data pipeline.
+		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 	};
 
 	/// Determines the coordination structure of a single particle using the bond-angle analysis method.

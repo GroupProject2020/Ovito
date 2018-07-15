@@ -145,7 +145,7 @@ protected:
     		std::rethrow_exception(_exceptionStore);
     }
 
-	/// Accesor function for the internal results storage.
+	/// Accessor function for the internal results storage.
 	template<typename tuple_type, typename source_tuple_type, typename = std::enable_if_t<std::tuple_size<tuple_type>::value != 0>>
 	void setResults(source_tuple_type&& value) {
 		OVITO_ASSERT(_resultsTuple != nullptr);
@@ -156,7 +156,7 @@ protected:
 		*static_cast<tuple_type*>(_resultsTuple) = std::forward<source_tuple_type>(value);
 	}
 
-	/// Accesor function for the internal results storage.
+	/// Accessor function for the internal results storage.
 	template<typename tuple_type>
 	const std::enable_if_t<std::tuple_size<tuple_type>::value != 0, tuple_type>& getResults() const {
 		OVITO_ASSERT(_resultsTuple != nullptr);
@@ -166,13 +166,13 @@ protected:
 		return *static_cast<const tuple_type*>(_resultsTuple);
 	}
 
-	/// Accesor function for the internal results storage.
+	/// Accessor function for the internal results storage.
 	template<typename tuple_type>
 	const std::enable_if_t<std::tuple_size<tuple_type>::value == 0, tuple_type>& getResults() const {
 		return *static_cast<const tuple_type*>(_resultsTuple);
 	}
 
-	/// Accesor function for the internal results storage.
+	/// Accessor function for the internal results storage.
 	template<typename tuple_type>
 	std::enable_if_t<std::tuple_size<tuple_type>::value != 0, tuple_type> takeResults() {
 		OVITO_ASSERT(_resultsTuple != nullptr);
@@ -181,6 +181,12 @@ protected:
 		_resultSet = false;
 #endif
 		return std::move(*static_cast<tuple_type*>(_resultsTuple));
+	}
+
+	/// Accessor function for the internal results storage.
+	template<typename tuple_type>
+	std::enable_if_t<std::tuple_size<tuple_type>::value == 0, tuple_type> takeResults() {
+		return {};
 	}
 
 	template<class F>

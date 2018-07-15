@@ -101,23 +101,35 @@ protected:
 	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
 	
 private:
-
-	/// Holds the modifier's results.
-	class PTMResults : public StructureIdentificationResults
+	
+	/// Analysis engine that performs the PTM.
+	class PTMEngine : public StructureIdentificationEngine
 	{
 	public:
 
 		/// Constructor.
-		PTMResults(size_t particleCount, bool outputInteratomicDistance, bool outputOrientation, bool outputDeformationGradient, bool outputOrderingTypes) :
-			StructureIdentificationResults(particleCount),
-			_rmsd(std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Float, 1, 0, tr("RMSD"), false)),
-			_interatomicDistances(outputInteratomicDistance ? std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Float, 1, 0, tr("Interatomic Distance"), true) : nullptr),
-			_orientations(outputOrientation ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::OrientationProperty, true) : nullptr),
-			_deformationGradients(outputDeformationGradient ? ParticleProperty::createStandardStorage(particleCount, ParticleProperty::ElasticDeformationGradientProperty, true) : nullptr),
-			_orderingTypes(outputOrderingTypes ? std::make_shared<PropertyStorage>(particleCount, PropertyStorage::Int, 1, 0, tr("Ordering Type"), true) : nullptr) {}
+		PTMEngine(ConstPropertyPtr positions, ParticleOrderingFingerprint fingerprint, ConstPropertyPtr particleTypes, const SimulationCell& simCell,
+				QVector<bool> typesToIdentify, ConstPropertyPtr selection,
+				bool outputInteratomicDistance, bool outputOrientation, bool outputDeformationGradient, bool outputOrderingTypes) :
+			StructureIdentificationEngine(std::move(fingerprint), positions, simCell, std::move(typesToIdentify), std::move(selection)),
+			_particleTypes(std::move(particleTypes)),
+			_rmsd(std::make_shared<PropertyStorage>(positions->size(), PropertyStorage::Float, 1, 0, tr("RMSD"), false)),
+			_interatomicDistances(outputInteratomicDistance ? std::make_shared<PropertyStorage>(positions->size(), PropertyStorage::Float, 1, 0, tr("Interatomic Distance"), true) : nullptr),
+			_orientations(outputOrientation ? ParticleProperty::createStandardStorage(positions->size(), ParticleProperty::OrientationProperty, true) : nullptr),
+			_deformationGradients(outputDeformationGradient ? ParticleProperty::createStandardStorage(positions->size(), ParticleProperty::ElasticDeformationGradientProperty, true) : nullptr),
+			_orderingTypes(outputOrderingTypes ? std::make_shared<PropertyStorage>(positions->size(), PropertyStorage::Int, 1, 0, tr("Ordering Type"), true) : nullptr) {}
+
+		/// This method is called by the system after the computation was successfully completed.
+		virtual void cleanup() override {
+			_particleTypes.reset();
+			StructureIdentificationEngine::cleanup();
+		}
+
+		/// Computes the modifier's results.
+		virtual void perform() override;
 
 		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 		const PropertyPtr& rmsd() const { return _rmsd; }
 		const PropertyPtr& interatomicDistances() const { return _interatomicDistances; }
@@ -144,37 +156,16 @@ private:
 
 	private:
 
+		ConstPropertyPtr _particleTypes;
 		const PropertyPtr _rmsd;
 		const PropertyPtr _interatomicDistances;
 		const PropertyPtr _orientations;
 		const PropertyPtr _deformationGradients;
 		const PropertyPtr _orderingTypes;
 		/// The histogram of computed RMSD values.
-		QVector<int> _rmsdHistogramData;	
+		QVector<int> _rmsdHistogramData;
 		/// The bin size of the RMSD histogram;
-		FloatType _rmsdHistogramBinSize = 0;
-	};
-	
-	/// Analysis engine that performs the PTM.
-	class PTMEngine : public StructureIdentificationEngine
-	{
-	public:
-
-		/// Constructor.
-		PTMEngine(ConstPropertyPtr positions, ConstPropertyPtr particleTypes, const SimulationCell& simCell,
-				QVector<bool> typesToIdentify, ConstPropertyPtr selection,
-				bool outputInteratomicDistance, bool outputOrientation, bool outputDeformationGradient, bool outputOrderingTypes) :
-			StructureIdentificationEngine(positions, simCell, std::move(typesToIdentify), std::move(selection)),
-			_particleTypes(std::move(particleTypes)),
-			_results(std::make_shared<PTMResults>(positions->size(), outputInteratomicDistance, outputOrientation, outputDeformationGradient, outputOrderingTypes)) {}
-
-		/// Computes the modifier's results.
-		virtual void perform() override;
-
-	private:
-
-		const ConstPropertyPtr _particleTypes;
-		std::shared_ptr<PTMResults> _results;
+		FloatType _rmsdHistogramBinSize = 0;	
 	};
 
 private:

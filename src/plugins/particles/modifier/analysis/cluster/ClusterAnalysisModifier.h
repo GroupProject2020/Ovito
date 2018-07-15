@@ -25,6 +25,7 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/particles/util/CutoffNeighborFinder.h>
+#include <plugins/particles/util/ParticleOrderingFingerprint.h>
 #include <plugins/particles/objects/BondProperty.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
@@ -72,17 +73,32 @@ protected:
 
 private:
 
-	/// Stores the modifier's results.
-	class ClusterAnalysisResults : public ComputeEngineResults 
+	/// Computes the modifier's results.
+	class ClusterAnalysisEngine : public ComputeEngine
 	{
 	public:
 
 		/// Constructor.
-		ClusterAnalysisResults(size_t particleCount) : 
-			_particleClusters(ParticleProperty::createStandardStorage(particleCount, ParticleProperty::ClusterProperty, false)) {}
+		ClusterAnalysisEngine(ParticleOrderingFingerprint fingerprint, ConstPropertyPtr positions, const SimulationCell& simCell, bool sortBySize, ConstPropertyPtr selection) :
+			_positions(positions), 
+			_simCell(simCell), 
+			_sortBySize(sortBySize),
+			_selection(std::move(selection)),
+			_particleClusters(ParticleProperty::createStandardStorage(fingerprint.particleCount(), ParticleProperty::ClusterProperty, false)),
+			_inputFingerprint(std::move(fingerprint)) {}
+
+		/// This method is called by the system after the computation was successfully completed.
+		virtual void cleanup() override {
+			_positions.reset();
+			_selection.reset();
+			ComputeEngine::cleanup();
+		}
+
+		/// Computes the modifier's results.
+		virtual void perform() override;
 
 		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 		/// Returns the property storage that contains the computed cluster number of each particle.
 		const PropertyPtr& particleClusters() const { return _particleClusters; }
@@ -99,28 +115,6 @@ private:
 		/// Sets the size of the largest cluster.
 		void setLargestClusterSize(size_t size) { _largestClusterSize = size; }
 				
-	private:
-
-		size_t _numClusters = 0;
-		size_t _largestClusterSize = 0;
-		const PropertyPtr _particleClusters;
-	};
-
-	/// Computes the modifier's results.
-	class ClusterAnalysisEngine : public ComputeEngine
-	{
-	public:
-
-		/// Constructor.
-		ClusterAnalysisEngine(ConstPropertyPtr positions, const SimulationCell& simCell, bool sortBySize, ConstPropertyPtr selection) :
-			_positions(positions), _simCell(simCell), 
-			_sortBySize(sortBySize),
-			_selection(std::move(selection)),
-			_results(std::make_shared<ClusterAnalysisResults>(positions->size())) {}
-
-		/// Computes the modifier's results.
-		virtual void perform() override;
-
 		/// Performs the actual clustering algorithm.
 		virtual void doClustering() = 0;
 
@@ -137,9 +131,12 @@ private:
 
 		const SimulationCell _simCell;
 		const bool _sortBySize;
-		const ConstPropertyPtr _positions;
-		const ConstPropertyPtr _selection;
-		std::shared_ptr<ClusterAnalysisResults> _results;
+		ConstPropertyPtr _positions;
+		ConstPropertyPtr _selection;
+		size_t _numClusters = 0;
+		size_t _largestClusterSize = 0;
+		const PropertyPtr _particleClusters;
+		ParticleOrderingFingerprint _inputFingerprint;
 	};
 
 	/// Computes the modifier's results.
@@ -148,8 +145,8 @@ private:
 	public:
 
 		/// Constructor.
-		CutoffClusterAnalysisEngine(ConstPropertyPtr positions, const SimulationCell& simCell, bool sortBySize, ConstPropertyPtr selection, FloatType cutoff) :
-			ClusterAnalysisEngine(std::move(positions), simCell, sortBySize, std::move(selection)),
+		CutoffClusterAnalysisEngine(ParticleOrderingFingerprint fingerprint, ConstPropertyPtr positions, const SimulationCell& simCell, bool sortBySize, ConstPropertyPtr selection, FloatType cutoff) :
+			ClusterAnalysisEngine(std::move(fingerprint), std::move(positions), simCell, sortBySize, std::move(selection)),
 			_cutoff(cutoff) {}
 
 		/// Performs the actual clustering algorithm.
@@ -169,9 +166,15 @@ private:
 	public:
 
 		/// Constructor.
-		BondClusterAnalysisEngine(ConstPropertyPtr positions, const SimulationCell& simCell, bool sortBySize, ConstPropertyPtr selection, ConstPropertyPtr bondTopology) :
-			ClusterAnalysisEngine(std::move(positions), simCell, sortBySize, std::move(selection)),
+		BondClusterAnalysisEngine(ParticleOrderingFingerprint fingerprint, ConstPropertyPtr positions, const SimulationCell& simCell, bool sortBySize, ConstPropertyPtr selection, ConstPropertyPtr bondTopology) :
+			ClusterAnalysisEngine(std::move(fingerprint), std::move(positions), simCell, sortBySize, std::move(selection)),
 			_bondTopology(std::move(bondTopology)) {}
+
+		/// This method is called by the system after the computation was successfully completed.
+		virtual void cleanup() override {
+			_bondTopology.reset();
+			ClusterAnalysisEngine::cleanup();
+		}
 
 		/// Performs the actual clustering algorithm.
 		virtual void doClustering() override;
@@ -181,7 +184,7 @@ private:
 
 	private:
 
-		const ConstPropertyPtr _bondTopology;
+		ConstPropertyPtr _bondTopology;
 	};
 
 	/// The neighbor mode.

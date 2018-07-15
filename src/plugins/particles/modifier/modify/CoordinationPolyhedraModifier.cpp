@@ -89,11 +89,11 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::perform()
 	if(!_selection)
 		throw Exception(tr("Please select particles first for which coordination polyhedra should be generated."));
 
-	setProgressText(tr("Generating coordination polyhedra"));
+	task()->setProgressText(tr("Generating coordination polyhedra"));
 
 	// Determine number of selected particles. 
 	size_t npoly = std::count_if(_selection->constDataInt(), _selection->constDataInt() + _selection->size(), [](int s) { return s != 0; });
-	setProgressMaximum(npoly);
+	task()->setProgressMaximum(npoly);
 
 	std::vector<Point3> bondVectors;
 	ParticleBondMap bondMap(_bondTopology, _bondPeriodicImages);
@@ -117,12 +117,10 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::perform()
 		constructConvexHull(bondVectors);
 		bondVectors.clear();
 
-		if(!incrementProgressValue())
+		if(!task()->incrementProgressValue())
 			return;
 	}
 	mesh()->reindexVerticesAndFaces();
-
-	setResult(std::move(_results));
 }
 
 /******************************************************************************
@@ -306,7 +304,7 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::constructConvexHull(
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState CoordinationPolyhedraModifier::ComputePolyhedraResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+PipelineFlowState CoordinationPolyhedraModifier::ComputePolyhedraEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	CoordinationPolyhedraModifier* modifier = static_object_cast<CoordinationPolyhedraModifier>(modApp->modifier());
 	PipelineFlowState output = input;

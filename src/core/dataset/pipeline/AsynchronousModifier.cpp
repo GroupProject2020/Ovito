@@ -47,11 +47,11 @@ Future<PipelineFlowState> AsynchronousModifier::evaluate(TimePoint time, Modifie
 {
 	// Check if there are existing computation results stored in the ModifierApplication that can be re-used.
 	if(AsynchronousModifierApplication* asyncModApp = dynamic_object_cast<AsynchronousModifierApplication>(modApp)) {
-		const AsynchronousModifier::ComputeEngineResultsPtr& lastResults = asyncModApp->lastComputeResults();
+		const AsynchronousModifier::ComputeEnginePtr& lastResults = asyncModApp->lastComputeResults();
 		if(lastResults && lastResults->validityInterval().contains(time)) {
 			// Re-use the computation results and apply them to the input data.
 			UndoSuspender noUndo(this);
-			PipelineFlowState resultState = lastResults->apply(time, modApp, input);
+			PipelineFlowState resultState = lastResults->emitResults(time, modApp, input);
 			resultState.mutableStateValidity().intersect(lastResults->validityInterval());
 			return resultState;
 		}
@@ -59,27 +59,27 @@ Future<PipelineFlowState> AsynchronousModifier::evaluate(TimePoint time, Modifie
 
 	// Let the subclass create the computation engine based on the input data.
 	Future<ComputeEnginePtr> engineFuture = createEngine(time, modApp, input);
-	return engineFuture.then(executor(), [this, time, input = input, modApp = QPointer<ModifierApplication>(modApp)](const ComputeEnginePtr& engine) mutable {
+	return engineFuture.then(executor(), [this, time, input = input, modApp = QPointer<ModifierApplication>(modApp)](ComputeEnginePtr engine) mutable {
 			
 			// Execute the engine in a worker thread.
 			// Collect results from the engine in the UI thread once it has finished running.
-			return dataset()->container()->taskManager().runTaskAsync(engine)
-				.then(executor(), [this, time, modApp, input = std::move(input)](const ComputeEngineResultsPtr& results) mutable {
+			return dataset()->container()->taskManager().runTaskAsync(engine->task())
+				.then(executor(), [this, time, modApp, input = std::move(input), engine = std::move(engine)]() mutable {
 					if(modApp && modApp->modifier() == this) {
 						
 						// Keep a copy of the results in the ModifierApplication for later.
 						if(AsynchronousModifierApplication* asyncModApp = dynamic_object_cast<AsynchronousModifierApplication>(modApp.data())) {
-							TimeInterval iv = results->validityInterval();
+							TimeInterval iv = engine->validityInterval();
 							iv.intersect(input.stateValidity());
-							results->setValidityInterval(iv);
-							asyncModApp->setLastComputeResults(results);
+							engine->setValidityInterval(iv);
+							asyncModApp->setLastComputeResults(engine);
 						}
 
 						UndoSuspender noUndo(this);
 
 						// Apply the computed results to the input data.
-						PipelineFlowState resultState = results->apply(time, modApp, input);
-						resultState.mutableStateValidity().intersect(results->validityInterval());
+						PipelineFlowState resultState = engine->emitResults(time, modApp, input);
+						resultState.mutableStateValidity().intersect(engine->validityInterval());
 						return resultState;
 					}
 					else return std::move(input);
@@ -94,8 +94,8 @@ PipelineFlowState AsynchronousModifier::evaluatePreliminary(TimePoint time, Modi
 {
 	// If results are still available from the last pipeline evaluation, apply them to the input data.
 	if(AsynchronousModifierApplication* asyncModApp = dynamic_object_cast<AsynchronousModifierApplication>(modApp)) {
-		if(const AsynchronousModifier::ComputeEngineResultsPtr& lastResults = asyncModApp->lastComputeResults()) {
-			PipelineFlowState resultState = lastResults->apply(time, modApp, input);
+		if(const AsynchronousModifier::ComputeEnginePtr& lastResults = asyncModApp->lastComputeResults()) {
+			PipelineFlowState resultState = lastResults->emitResults(time, modApp, input);
 			resultState.mutableStateValidity().intersect(lastResults->validityInterval());
 			return resultState;
 		}
@@ -124,19 +124,41 @@ void AsynchronousModifier::loadFromStream(ObjectLoadStream& stream)
 	stream.closeChunk();
 }
 
-#ifdef Q_OS_LINUX
 /******************************************************************************
-* Destructor of compute engine.
+* This method is called by the system after the computation was 
+* successfully completed.
 ******************************************************************************/
-AsynchronousModifier::ComputeEngine::~ComputeEngine()
+void AsynchronousModifier::ComputeEngine::cleanup()
 {
-	// Some compute engines allocate a considerable amount of memory in small chunks,
-	// which is sometimes not released back to the OS by the C memory allocator.
-	// This call to malloc_trim() will explicitly trigger an attempt to release free memory
-	// at the top of the heap.
-	::malloc_trim(0);
+	// The asynchronous task object is no longer needed after compute operation is complete.
+	_task.reset();
 }
+
+/******************************************************************************
+* Is called when the asynchronous task begins to run.
+******************************************************************************/
+void AsynchronousModifier::ComputeEngine::ComputeEngineTask::perform()
+{
+	// Let the compute engine do the work.
+	_engine->perform();
+
+	if(!isCanceled()) {
+
+		// If compute job was successfully completed, release memory and references to the input data.
+		_engine->cleanup();
+
+		// Make sure the cleanup() method has really cleared the reference to this task object:
+		OVITO_ASSERT(isCanceled() || !_engine->task());
+
+#ifdef Q_OS_LINUX
+		// Some compute engines allocate a considerable amount of memory in small chunks,
+		// which is sometimes not released back to the OS by the C memory allocator.
+		// This call to malloc_trim() will explicitly trigger an attempt to release free memory
+		// at the top of the heap.
+		::malloc_trim(0);
 #endif
+	}
+}
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

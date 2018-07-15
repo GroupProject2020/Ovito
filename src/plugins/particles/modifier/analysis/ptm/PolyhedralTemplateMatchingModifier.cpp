@@ -132,7 +132,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> PolyhedralTemplateMatchingModifie
 	// Initialize PTM library.
 	ptm_initialize_global();
 
-	return std::make_shared<PTMEngine>(posProperty->storage(), std::move(typeProperty), simCell->data(),
+	return std::make_shared<PTMEngine>(posProperty->storage(), input, std::move(typeProperty), simCell->data(),
 			getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty),
 			outputInteratomicDistance(), outputOrientation(), outputDeformationGradient(), outputOrderingTypes());
 }
@@ -142,18 +142,18 @@ Future<AsynchronousModifier::ComputeEnginePtr> PolyhedralTemplateMatchingModifie
 ******************************************************************************/
 void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 {
-	setProgressText(tr("Performing polyhedral template matching"));
+	task()->setProgressText(tr("Performing polyhedral template matching"));
 
 	// Prepare the neighbor list.
 	NearestNeighborFinder neighFinder(MAX_NEIGHBORS);
-	if(!neighFinder.prepare(*positions(), cell(), selection().get(), this))
+	if(!neighFinder.prepare(*positions(), cell(), selection().get(), task().get()))
 		return;
 
-	setProgressValue(0);
-	setProgressMaximum(positions()->size());
+	task()->setProgressValue(0);
+	task()->setProgressMaximum(positions()->size());
 
 	// Perform analysis on each particle.
-	parallelForChunks(positions()->size(), *this, [this, &neighFinder](size_t startIndex, size_t count, PromiseState& promise) {
+	parallelForChunks(positions()->size(), *task(), [this, &neighFinder](size_t startIndex, size_t count, PromiseState& promise) {
 
 		// Initialize thread-local storage for PTM routine.
 		ptm_local_handle_t ptm_local_handle = ptm_initialize_local();
@@ -171,8 +171,8 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 
 			// Skip particles that are not included in the analysis.
 			if(selection() && !selection()->getInt(index)) {
-				_results->structures()->setInt(index, OTHER);
-				_results->rmsd()->setFloat(index, 0);
+				structures()->setInt(index, OTHER);
+				rmsd()->setFloat(index, 0);
 				continue;
 			}
 
@@ -193,7 +193,7 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 			}
 
 			// Build list of particle types for ordering identification.
-			if(_results->orderingTypes()) {
+			if(orderingTypes()) {
 				atomTypes[0] = _particleTypes->getInt(index);
 				for(int i = 0; i < numNeighbors; i++) {
 					atomTypes[i + 1] = _particleTypes->getInt(neighQuery.results()[i].index);
@@ -222,70 +222,67 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 			double rmsd;
 			double q[4];
 			double F[9], F_res[3];
-			ptm_index(ptm_local_handle, flags, numNeighbors + 1, points, _results->orderingTypes() ? atomTypes : nullptr, true,
+			ptm_index(ptm_local_handle, flags, numNeighbors + 1, points, orderingTypes() ? atomTypes : nullptr, true,
 					&type, &alloy_type, &scale, &rmsd, q,
-					_results->deformationGradients() ? F : nullptr,
-					_results->deformationGradients() ? F_res : nullptr,
+					deformationGradients() ? F : nullptr,
+					deformationGradients() ? F_res : nullptr,
 					nullptr, nullptr, nullptr, &interatomic_distance, nullptr);
 
 
 			// Convert PTM classification to our own scheme and store computed quantities.
 			if(type == PTM_MATCH_NONE) {
-				_results->structures()->setInt(index, OTHER);
-				_results->rmsd()->setFloat(index, 0);
+				structures()->setInt(index, OTHER);
+				this->rmsd()->setFloat(index, 0);
 			}
 			else {
-				if(type == PTM_MATCH_SC) _results->structures()->setInt(index, SC);
-				else if(type == PTM_MATCH_FCC) _results->structures()->setInt(index, FCC);
-				else if(type == PTM_MATCH_HCP) _results->structures()->setInt(index, HCP);
-				else if(type == PTM_MATCH_ICO) _results->structures()->setInt(index, ICO);
-				else if(type == PTM_MATCH_BCC) _results->structures()->setInt(index, BCC);
-				else if(type == PTM_MATCH_DCUB) _results->structures()->setInt(index, CUBIC_DIAMOND);
-				else if(type == PTM_MATCH_DHEX) _results->structures()->setInt(index, HEX_DIAMOND);
+				if(type == PTM_MATCH_SC) structures()->setInt(index, SC);
+				else if(type == PTM_MATCH_FCC) structures()->setInt(index, FCC);
+				else if(type == PTM_MATCH_HCP) structures()->setInt(index, HCP);
+				else if(type == PTM_MATCH_ICO) structures()->setInt(index, ICO);
+				else if(type == PTM_MATCH_BCC) structures()->setInt(index, BCC);
+				else if(type == PTM_MATCH_DCUB) structures()->setInt(index, CUBIC_DIAMOND);
+				else if(type == PTM_MATCH_DHEX) structures()->setInt(index, HEX_DIAMOND);
 				else OVITO_ASSERT(false);
-				_results->rmsd()->setFloat(index, rmsd);
-				if(_results->interatomicDistances()) _results->interatomicDistances()->setFloat(index, interatomic_distance);
-				if(_results->orientations()) _results->orientations()->setQuaternion(index, Quaternion((FloatType)q[1], (FloatType)q[2], (FloatType)q[3], (FloatType)q[0]));
-				if(_results->deformationGradients()) {
+				this->rmsd()->setFloat(index, rmsd);
+				if(interatomicDistances()) interatomicDistances()->setFloat(index, interatomic_distance);
+				if(orientations()) orientations()->setQuaternion(index, Quaternion((FloatType)q[1], (FloatType)q[2], (FloatType)q[3], (FloatType)q[0]));
+				if(deformationGradients()) {
 					for(size_t j = 0; j < 9; j++)
-						_results->deformationGradients()->setFloatComponent(index, j, (FloatType)F[j]);
+						deformationGradients()->setFloatComponent(index, j, (FloatType)F[j]);
 				}
 			}
-			if(_results->orderingTypes())
-				_results->orderingTypes()->setInt(index, alloy_type);
+			if(orderingTypes())
+				orderingTypes()->setInt(index, alloy_type);
 		}
 
 		// Release thread-local storage of PTM routine.
 		ptm_uninitialize_local(ptm_local_handle);
 	});
-	if(isCanceled() || positions()->size() == 0)
+	if(task()->isCanceled() || positions()->size() == 0)
 		return;
 
 	// Determine histogram bin size based on maximum RMSD value.
 	QVector<int> rmsdHistogramData(100, 0);
-	FloatType rmsdHistogramBinSize = FloatType(1.01) * *std::max_element(_results->rmsd()->constDataFloat(), _results->rmsd()->constDataFloat() + _results->rmsd()->size());
+	FloatType rmsdHistogramBinSize = FloatType(1.01) * *std::max_element(rmsd()->constDataFloat(), rmsd()->constDataFloat() + rmsd()->size());
 	rmsdHistogramBinSize /= rmsdHistogramData.size();
 	if(rmsdHistogramBinSize <= 0) rmsdHistogramBinSize = 1;
 
 	// Build RMSD histogram.
-	for(size_t index = 0; index < _results->structures()->size(); index++) {
-		if(_results->structures()->getInt(index) != OTHER) {
-			OVITO_ASSERT(_results->rmsd()->getFloat(index) >= 0);
-			int binIndex = _results->rmsd()->getFloat(index) / rmsdHistogramBinSize;
+	for(size_t index = 0; index < structures()->size(); index++) {
+		if(structures()->getInt(index) != OTHER) {
+			OVITO_ASSERT(rmsd()->getFloat(index) >= 0);
+			int binIndex = rmsd()->getFloat(index) / rmsdHistogramBinSize;
 			if(binIndex < rmsdHistogramData.size())
 				rmsdHistogramData[binIndex]++;
 		}
 	}
-	_results->setRmsdHistogram(std::move(rmsdHistogramData), rmsdHistogramBinSize);
-
-	// Return the results of the compute engine.
-	setResult(std::move(_results));	
+	setRmsdHistogram(std::move(rmsdHistogramData), rmsdHistogramBinSize);
 }
 
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PropertyPtr PolyhedralTemplateMatchingModifier::PTMResults::postProcessStructureTypes(TimePoint time, ModifierApplication* modApp, const PropertyPtr& structures)
+PropertyPtr PolyhedralTemplateMatchingModifier::PTMEngine::postProcessStructureTypes(TimePoint time, ModifierApplication* modApp, const PropertyPtr& structures)
 {
 	PolyhedralTemplateMatchingModifier* modifier = static_object_cast<PolyhedralTemplateMatchingModifier>(modApp->modifier());
 	OVITO_ASSERT(modifier);
@@ -313,13 +310,13 @@ PropertyPtr PolyhedralTemplateMatchingModifier::PTMResults::postProcessStructure
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState PolyhedralTemplateMatchingModifier::PTMResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+PipelineFlowState PolyhedralTemplateMatchingModifier::PTMEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	PipelineFlowState output = StructureIdentificationResults::apply(time, modApp, input);
+	PipelineFlowState output = StructureIdentificationEngine::emitResults(time, modApp, input);
 	
 	// Also output structure type counts, which have been computed by the base class.
-	ParticleOutputHelper poh(modApp->dataset(), output);
 	StructureIdentificationModifierApplication* myModApp = static_object_cast<StructureIdentificationModifierApplication>(modApp);
+	ParticleOutputHelper poh(modApp->dataset(), output);
 	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.OTHER"), QVariant::fromValue(myModApp->structureCounts()[OTHER]));
 	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.FCC"), QVariant::fromValue(myModApp->structureCounts()[FCC]));
 	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.HCP"), QVariant::fromValue(myModApp->structureCounts()[HCP]));

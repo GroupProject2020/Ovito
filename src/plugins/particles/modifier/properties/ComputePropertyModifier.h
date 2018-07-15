@@ -24,6 +24,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/util/ParticleExpressionEvaluator.h>
+#include <plugins/particles/util/ParticleOrderingFingerprint.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
@@ -141,26 +142,6 @@ protected:
 
 protected:
 
-	/// Holds the modifier's results.
-	class PropertyComputeResults : public ComputeEngineResults
-	{
-	public:
-
-		/// Constructor.
-		PropertyComputeResults(const TimeInterval& validityInterval, PropertyPtr outputProperty) : ComputeEngineResults(validityInterval),
-			_outputProperty(std::move(outputProperty)) {}
-
-		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-		
-		/// Returns the property storage that will receive the computed values.
-		const PropertyPtr& outputProperty() const { return _outputProperty; }
-		
-	private:
-
-		const PropertyPtr _outputProperty;
-	};
-
 	/// Asynchronous compute engine that does the actual work in a background thread.
 	class PropertyComputeEngine : public ComputeEngine
 	{
@@ -168,6 +149,7 @@ protected:
 
 		/// Constructor.
 		PropertyComputeEngine(const TimeInterval& validityInterval, 
+				ParticleOrderingFingerprint fingerprint, 
 				TimePoint time,
 				PropertyPtr outputProperty, 
 				ConstPropertyPtr positions, 
@@ -180,6 +162,19 @@ protected:
 				int frameNumber, 
 				QVariantMap attributes);
 				
+		/// This method is called by the system after the computation was successfully completed.
+		virtual void cleanup() override {
+			_positions.reset();
+			_selection.reset();
+			decltype(_inputProperties){}.swap(_inputProperties);
+			_attributes.clear();
+			_expressions.clear();
+			_neighborExpressions.clear();
+			_evaluator.reset();
+			_neighborEvaluator.reset();
+			ComputeEngine::cleanup();
+		}
+
 		/// Computes the modifier's results.
 		virtual void perform() override;
 
@@ -201,25 +196,29 @@ protected:
 		/// Indicates whether contributions from particle neighbors are taken into account.
 		bool neighborMode() const { return _cutoff != 0; }
 
+		/// Injects the computed results into the data pipeline.
+		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		
 		/// Returns the property storage that will receive the computed values.
-		const PropertyPtr& outputProperty() const { return _results->outputProperty(); }
+		const PropertyPtr& outputProperty() const { return _outputProperty; }
 
 	private:
 
 		const FloatType _cutoff;
 		const SimulationCell _simCell;
 		const int _frameNumber;
-		const QStringList _expressions;
-		const QVariantMap _attributes;
-		const QStringList _neighborExpressions;
-		const ConstPropertyPtr _positions;
-		const ConstPropertyPtr _selection;
-		const std::vector<ConstPropertyPtr> _inputProperties;
+		QStringList _expressions;
+		QVariantMap _attributes;
+		QStringList _neighborExpressions;
+		ConstPropertyPtr _positions;
+		ConstPropertyPtr _selection;
+		std::vector<ConstPropertyPtr> _inputProperties;
 		QStringList _inputVariableNames;
 		QString _inputVariableTable;
-		ParticleExpressionEvaluator _evaluator;
-		ParticleExpressionEvaluator _neighborEvaluator;
-		std::shared_ptr<PropertyComputeResults> _results;
+		std::unique_ptr<ParticleExpressionEvaluator> _evaluator;
+		std::unique_ptr<ParticleExpressionEvaluator> _neighborEvaluator;
+		const PropertyPtr _outputProperty;
+		ParticleOrderingFingerprint _inputFingerprint;
 	};
 
 	/// The math expressions for calculating the property values. One for every vector component.

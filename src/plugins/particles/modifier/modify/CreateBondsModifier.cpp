@@ -164,7 +164,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CreateBondsModifier::createEngine
 	ParticleProperty* moleculeProperty = onlyIntraMoleculeBonds() ? ph.inputStandardProperty<ParticleProperty>(ParticleProperty::MoleculeProperty) : nullptr;
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<BondsEngine>(posProperty->storage(),
+	return std::make_shared<BondsEngine>(input, posProperty->storage(),
 			typeProperty ? typeProperty->storage() : nullptr, simCell->data(), cutoffMode(),
 			maxCutoff, minimumCutoff(), std::move(pairCutoffSquaredTable), moleculeProperty ? moleculeProperty->storage() : nullptr);
 }
@@ -174,20 +174,18 @@ Future<AsynchronousModifier::ComputeEnginePtr> CreateBondsModifier::createEngine
 ******************************************************************************/
 void CreateBondsModifier::BondsEngine::perform()
 {
-	setProgressText(tr("Generating bonds"));
+	task()->setProgressText(tr("Generating bonds"));
 
 	// Prepare the neighbor list.
 	CutoffNeighborFinder neighborFinder;
-	if(!neighborFinder.prepare(_maxCutoff, *_positions, _simCell, nullptr, this))
+	if(!neighborFinder.prepare(_maxCutoff, *_positions, _simCell, nullptr, task().get()))
 		return;
 
 	FloatType minCutoffSquared = _minCutoff * _minCutoff;
 
-	auto results = std::make_shared<BondsEngineResults>(_positions->size());
-
 	// Generate bonds.
 	size_t particleCount = _positions->size();
-	setProgressMaximum(particleCount);
+	task()->setProgressMaximum(particleCount);
 	if(!_particleTypes) {
 		for(size_t particleIndex = 0; particleIndex < particleCount; particleIndex++) {
 			for(CutoffNeighborFinder::Query neighborQuery(neighborFinder, particleIndex); !neighborQuery.atEnd(); neighborQuery.next()) {
@@ -200,10 +198,10 @@ void CreateBondsModifier::BondsEngine::perform()
 
 				// Skip every other bond to create only one bond per particle pair.
 				if(!bond.isOdd())
-					results->bonds().push_back(bond);
+					bonds().push_back(bond);
 			}
 			// Update progress indicator.
-			if(!setProgressValueIntermittent(particleIndex))
+			if(!task()->setProgressValueIntermittent(particleIndex))
 				return;
 		}
 	}
@@ -221,35 +219,32 @@ void CreateBondsModifier::BondsEngine::perform()
 						Bond bond = { particleIndex, neighborQuery.current(), neighborQuery.unwrappedPbcShift() };
 						// Skip every other bond to create only one bond per particle pair.
 						if(!bond.isOdd())				
-							results->bonds().push_back(bond);
+							bonds().push_back(bond);
 					}
 				}
 			}
 			// Update progress indicator.
-			if(!setProgressValueIntermittent(particleIndex))
+			if(!task()->setProgressValueIntermittent(particleIndex))
 				return;
 		}
 	}
-	setProgressValue(particleCount);
-
-	// Return the results of the compute engine.
-	setResult(std::move(results));
+	task()->setProgressValue(particleCount);
 }
 
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState CreateBondsModifier::BondsEngineResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+PipelineFlowState CreateBondsModifier::BondsEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
+	if(_inputFingerprint.hasChanged(input))
+		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
+
 	CreateBondsModifier* modifier = static_object_cast<CreateBondsModifier>(modApp->modifier());
 	OVITO_ASSERT(modifier);	
 
 	// Add our bonds to the system.
 	PipelineFlowState output = input;
 	ParticleOutputHelper poh(modApp->dataset(), output);
-
-	if(_inputParticleCount != poh.outputParticleCount())
-		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
 
 	poh.addBonds(bonds(), modifier->bondsVis());
 

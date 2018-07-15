@@ -22,6 +22,7 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/util/NearestNeighborFinder.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
+#include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/utilities/concurrent/ParallelFor.h>
@@ -66,7 +67,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> BondAngleAnalysisModifier::create
 		selectionProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty)->storage();
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<BondAngleAnalysisEngine>(posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty));
+	return std::make_shared<BondAngleAnalysisEngine>(input, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty));
 }
 
 /******************************************************************************
@@ -74,28 +75,24 @@ Future<AsynchronousModifier::ComputeEnginePtr> BondAngleAnalysisModifier::create
 ******************************************************************************/
 void BondAngleAnalysisModifier::BondAngleAnalysisEngine::perform()
 {
-	setProgressText(tr("Performing bond-angle analysis"));
+	task()->setProgressText(tr("Performing bond-angle analysis"));
 
 	// Prepare the neighbor list.
 	NearestNeighborFinder neighborFinder(14);
-	if(!neighborFinder.prepare(*positions(), cell(), selection().get(), this))
+	if(!neighborFinder.prepare(*positions(), cell(), selection().get(), task().get()))
 		return;
 
 	// Create output storage.
-	auto results = std::make_shared<BondAngleAnalysisResults>(positions()->size());
-	PropertyStorage& output = *results->structures();
+	PropertyStorage& output = *structures();
 
 	// Perform analysis on each particle.
-	parallelFor(positions()->size(), *this, [this, &neighborFinder, &output](size_t index) {
+	parallelFor(positions()->size(), *task(), [this, &neighborFinder, &output](size_t index) {
 		// Skip particles that are not included in the analysis.
 		if(!selection() || selection()->getInt(index))
 			output.setInt(index, determineStructure(neighborFinder, index, typesToIdentify()));
 		else
 			output.setInt(index, OTHER);
 	});
-
-	// Return the results of the compute engine.
-	setResult(std::move(results));
 }
 
 /******************************************************************************
@@ -184,17 +181,18 @@ BondAngleAnalysisModifier::StructureType BondAngleAnalysisModifier::determineStr
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState BondAngleAnalysisModifier::BondAngleAnalysisResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+PipelineFlowState BondAngleAnalysisModifier::BondAngleAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	PipelineFlowState outState = StructureIdentificationResults::apply(time, modApp, input);
+	PipelineFlowState outState = StructureIdentificationEngine::emitResults(time, modApp, input);
 
 	// Also output structure type counts, which have been computed by the base class.
 	StructureIdentificationModifierApplication* myModApp = static_object_cast<StructureIdentificationModifierApplication>(modApp);
-	outState.attributes().insert(QStringLiteral("BondAngleAnalysis.counts.OTHER"), QVariant::fromValue(myModApp->structureCounts()[OTHER]));
-	outState.attributes().insert(QStringLiteral("BondAngleAnalysis.counts.FCC"), QVariant::fromValue(myModApp->structureCounts()[FCC]));
-	outState.attributes().insert(QStringLiteral("BondAngleAnalysis.counts.HCP"), QVariant::fromValue(myModApp->structureCounts()[HCP]));
-	outState.attributes().insert(QStringLiteral("BondAngleAnalysis.counts.BCC"), QVariant::fromValue(myModApp->structureCounts()[BCC]));
-	outState.attributes().insert(QStringLiteral("BondAngleAnalysis.counts.ICO"), QVariant::fromValue(myModApp->structureCounts()[ICO]));
+	ParticleOutputHelper poh(modApp->dataset(), outState);
+	poh.outputAttribute(QStringLiteral("BondAngleAnalysis.counts.OTHER"), QVariant::fromValue(myModApp->structureCounts()[OTHER]));
+	poh.outputAttribute(QStringLiteral("BondAngleAnalysis.counts.FCC"), QVariant::fromValue(myModApp->structureCounts()[FCC]));
+	poh.outputAttribute(QStringLiteral("BondAngleAnalysis.counts.HCP"), QVariant::fromValue(myModApp->structureCounts()[HCP]));
+	poh.outputAttribute(QStringLiteral("BondAngleAnalysis.counts.BCC"), QVariant::fromValue(myModApp->structureCounts()[BCC]));
+	poh.outputAttribute(QStringLiteral("BondAngleAnalysis.counts.ICO"), QVariant::fromValue(myModApp->structureCounts()[ICO]));
 
 	return outState;
 }

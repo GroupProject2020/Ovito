@@ -84,7 +84,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CoordinationNumberModifier::creat
 		throwException(tr("Requested number of histogram bins is too large. Limit is 100,000 histogram bins."));
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<CoordinationAnalysisEngine>(posProperty->storage(), inputCell->data(), cutoff(), rdfSampleCount);
+	return std::make_shared<CoordinationAnalysisEngine>(input, posProperty->storage(), inputCell->data(), cutoff(), rdfSampleCount);
 }
 
 /******************************************************************************
@@ -92,16 +92,16 @@ Future<AsynchronousModifier::ComputeEnginePtr> CoordinationNumberModifier::creat
 ******************************************************************************/
 void CoordinationNumberModifier::CoordinationAnalysisEngine::perform()
 {
-	setProgressText(tr("Computing coordination numbers"));
+	task()->setProgressText(tr("Computing coordination numbers"));
 
 	// Prepare the neighbor list.
 	CutoffNeighborFinder neighborListBuilder;
-	if(!neighborListBuilder.prepare(_cutoff, *positions(), cell(), nullptr, this))
+	if(!neighborListBuilder.prepare(_cutoff, *positions(), cell(), nullptr, task().get()))
 		return;
 
 	size_t particleCount = positions()->size();
-	setProgressValue(0);
-	setProgressMaximum(particleCount / 1000);
+	task()->setProgressValue(0);
+	task()->setProgressMaximum(particleCount / 1000);
 
 	// Perform analysis on each particle in parallel.
 	std::vector<QFuture<void>> workers;
@@ -117,7 +117,7 @@ void CoordinationNumberModifier::CoordinationAnalysisEngine::perform()
 		workers.push_back(QtConcurrent::run([&neighborListBuilder, startIndex, endIndex, &mutex, this]() {
 			FloatType rdfBinSize = _cutoff / _rdfSampleCount;
 			std::vector<double> threadLocalRDF(_rdfSampleCount, 0);
-			int* coordOutput = _results->coordinationNumbers()->dataInt() + startIndex;
+			int* coordOutput = coordinationNumbers()->dataInt() + startIndex;
 			for(size_t i = startIndex; i < endIndex; ++coordOutput) {
 
 				OVITO_ASSERT(*coordOutput == 0);
@@ -132,14 +132,14 @@ void CoordinationNumberModifier::CoordinationAnalysisEngine::perform()
 
 				// Update progress indicator.
 				if((i % 1000) == 0)
-					incrementProgressValue();
+					task()->incrementProgressValue();
 				// Abort loop when operation was canceled by the user.
-				if(isCanceled())
+				if(task()->isCanceled())
 					return;
 			}
 			std::lock_guard<std::mutex> lock(mutex);
 			// Combine RDF histograms.
-			auto bin = _results->rdfY()->dataFloat();
+			auto bin = rdfY()->dataFloat();
 			for(auto iter = threadLocalRDF.cbegin(); iter != threadLocalRDF.cend(); ++iter)
 				*bin++ += *iter;
 		}));
@@ -155,8 +155,8 @@ void CoordinationNumberModifier::CoordinationAnalysisEngine::perform()
 		double rho = positions()->size() / cell().volume3D();
 		double constant = 4.0/3.0 * FLOATTYPE_PI * rho * positions()->size();
 		double stepSize = cutoff() / _rdfSampleCount;
-		auto rdfX = _results->rdfX()->dataFloat();
-		auto rdfY = _results->rdfY()->dataFloat();
+		auto rdfX = this->rdfX()->dataFloat();
+		auto rdfY = this->rdfY()->dataFloat();
 		for(int i = 0; i < _rdfSampleCount; i++, ++rdfX, ++rdfY) {
 			double r = stepSize * i;
 			double r2 = r + stepSize;
@@ -168,8 +168,8 @@ void CoordinationNumberModifier::CoordinationAnalysisEngine::perform()
 		double rho = positions()->size() / cell().volume2D();
 		double constant = FLOATTYPE_PI * rho * positions()->size();
 		double stepSize = cutoff() / _rdfSampleCount;
-		auto rdfX = _results->rdfX()->dataFloat();
-		auto rdfY = _results->rdfY()->dataFloat();
+		auto rdfX = this->rdfX()->dataFloat();
+		auto rdfY = this->rdfY()->dataFloat();
 		for(int i = 0; i < _rdfSampleCount; i++, ++rdfX, ++rdfY) {
 			double r = stepSize * i;
 			double r2 = r + stepSize;
@@ -177,20 +177,19 @@ void CoordinationNumberModifier::CoordinationAnalysisEngine::perform()
 			*rdfY /= constant * (r2*r2 - r*r);
 		}
 	}
-
-	// Return the results of the compute engine.
-	setResult(std::move(_results));		
 }
 
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState CoordinationNumberModifier::CoordinationAnalysisResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+PipelineFlowState CoordinationNumberModifier::CoordinationAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
+	if(_inputFingerprint.hasChanged(input))
+		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
+
 	PipelineFlowState output = input;
 	ParticleOutputHelper poh(modApp->dataset(), output);
-	if(coordinationNumbers()->size() != poh.outputParticleCount())
-		modApp->throwException(tr("Cached modifier results became obsolete, because the number of input particles has changed."));
+	OVITO_ASSERT(coordinationNumbers()->size() == poh.outputParticleCount());
 	poh.outputProperty<ParticleProperty>(coordinationNumbers());
 
 	// Output RDF histogram.

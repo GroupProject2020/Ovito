@@ -77,7 +77,8 @@ Future<AsynchronousModifier::ComputeEnginePtr> CalculateDisplacementsModifier::c
 	ParticleProperty* refIdentifierProperty = ParticleProperty::findInState(referenceState, ParticleProperty::IdentifierProperty);
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<DisplacementEngine>(validityInterval, posProperty->storage(), inputCell->data(), refPosProperty->storage(), refCell->data(),
+	return std::make_shared<DisplacementEngine>(validityInterval, posProperty->storage(), inputCell->data(), 
+			input, refPosProperty->storage(), refCell->data(),
 			identifierProperty ? identifierProperty->storage() : nullptr, refIdentifierProperty ? refIdentifierProperty->storage() : nullptr,
 			affineMapping(), useMinimumImageConvention());
 }
@@ -94,13 +95,14 @@ void CalculateDisplacementsModifier::DisplacementEngine::perform()
 
 	// Compute displacement vectors.
 	if(affineMapping() != NO_MAPPING) {
-		parallelForChunks(displacements()->size(), [this](size_t startIndex, size_t count) {
+		parallelForChunks(displacements()->size(), *task(), [this](size_t startIndex, size_t count, PromiseState& promise) {
 			Vector3* u = displacements()->dataVector3() + startIndex;
 			FloatType* umag = displacementMagnitudes()->dataFloat() + startIndex;
 			const Point3* p = positions()->constDataPoint3() + startIndex;
 			auto index = currentToRefIndexMap().cbegin() + startIndex;
 			const AffineTransformation& reduced_to_absolute = (affineMapping() == TO_REFERENCE_CELL) ? refCell().matrix() : cell().matrix();
 			for(; count; --count, ++u, ++umag, ++p, ++index) {
+				if(promise.isCanceled()) return;
 				Point3 reduced_current_pos = cell().inverseMatrix() * (*p);
 				Point3 reduced_reference_pos = refCell().inverseMatrix() * refPositions()->getPoint3(*index);
 				Vector3 delta = reduced_current_pos - reduced_reference_pos;
@@ -116,12 +118,13 @@ void CalculateDisplacementsModifier::DisplacementEngine::perform()
 		});
 	}
 	else {
-		parallelForChunks(displacements()->size(), [this] (size_t startIndex, size_t count) {
+		parallelForChunks(displacements()->size(), *task(), [this] (size_t startIndex, size_t count, PromiseState& promise) {
 			Vector3* u = displacements()->dataVector3() + startIndex;
 			FloatType* umag = displacementMagnitudes()->dataFloat() + startIndex;
 			const Point3* p = positions()->constDataPoint3() + startIndex;
 			auto index = currentToRefIndexMap().cbegin() + startIndex;
 			for(; count; --count, ++u, ++umag, ++p, ++index) {
+				if(promise.isCanceled()) return;
 				*u = *p - refPositions()->getPoint3(*index);
 				if(useMinimumImageConvention()) {
 					for(size_t k = 0; k < 3; k++) {
@@ -138,22 +141,19 @@ void CalculateDisplacementsModifier::DisplacementEngine::perform()
 			}
 		});
 	}
-
-	// Return the results of the compute engine.
-	setResult(std::move(_results));
 }
 
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState CalculateDisplacementsModifier::DisplacementResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+PipelineFlowState CalculateDisplacementsModifier::DisplacementEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	CalculateDisplacementsModifier* modifier = static_object_cast<CalculateDisplacementsModifier>(modApp->modifier());
+	if(_inputFingerprint.hasChanged(input))
+		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 
+	CalculateDisplacementsModifier* modifier = static_object_cast<CalculateDisplacementsModifier>(modApp->modifier());
 	PipelineFlowState output = input;
 	ParticleOutputHelper poh(modApp->dataset(), output);
-	if(displacements()->size() != poh.outputParticleCount())
-		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
 	poh.outputProperty<ParticleProperty>(displacements())->setVisElement(modifier->vectorVis());
 	poh.outputProperty<ParticleProperty>(displacementMagnitudes());
 	

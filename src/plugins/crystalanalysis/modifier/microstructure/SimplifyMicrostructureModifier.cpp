@@ -80,7 +80,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> SimplifyMicrostructureModifier::c
 ******************************************************************************/
 void SimplifyMicrostructureModifier::SimplifyMicrostructureEngine::perform()
 {
-	setProgressText(tr("Simplifying microstructure"));
+	task()->setProgressText(tr("Simplifying microstructure"));
 
     // Make a one-to-one copy of the input microstructure first.
     _microstructure = std::make_shared<Microstructure>(*_inputMicrostructure);
@@ -94,16 +94,13 @@ void SimplifyMicrostructureModifier::SimplifyMicrostructureEngine::perform()
 	// In SIGGRAPH 95 Conference Proceedings, pages 351-358 (1995)
 
 	FloatType mu = FloatType(1) / (_kPB - FloatType(1)/_lambda);
-	setProgressMaximum(_smoothingLevel);
+	task()->setProgressMaximum(_smoothingLevel);
 
 	for(int iteration = 0; iteration < _smoothingLevel; iteration++) {
-		if(!setProgressValue(iteration)) return;
+		if(!task()->setProgressValue(iteration)) return;
 		smoothMeshIteration(_lambda);
 		smoothMeshIteration(mu);
 	}
-
-    // Pass the computation results back to the system.
-	setResult(std::make_shared<SimplifyMicrostructureResults>(microstructure()));
 }
 
 /******************************************************************************
@@ -148,7 +145,7 @@ void SimplifyMicrostructureModifier::SimplifyMicrostructureEngine::smoothMeshIte
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState SimplifyMicrostructureModifier::SimplifyMicrostructureResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+PipelineFlowState SimplifyMicrostructureModifier::SimplifyMicrostructureEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	PipelineFlowState output = input;
 	OutputHelper oh(modApp->dataset(), output);

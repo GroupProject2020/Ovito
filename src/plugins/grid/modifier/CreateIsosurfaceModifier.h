@@ -83,16 +83,32 @@ protected:
 
 private:
 
-	/// Holds the modifier's results.
-	class ComputeIsosurfaceResults : public ComputeEngineResults
+	/// Computation engine that builds the isosurface mesh.
+	class ComputeIsosurfaceEngine : public ComputeEngine
 	{
 	public:
 
 		/// Constructor.
-		using ComputeEngineResults::ComputeEngineResults;
+		ComputeIsosurfaceEngine(const TimeInterval& validityInterval, const std::vector<size_t>& gridShape, ConstPropertyPtr property, int vectorComponent, const SimulationCell& simCell, FloatType isolevel) :
+			ComputeEngine(validityInterval),
+			_gridShape(gridShape),
+			_property(std::move(property)), 
+			_vectorComponent(vectorComponent), 
+			_simCell(simCell), 
+			_isolevel(isolevel) {}
+
+		/// This method is called by the system after the computation was successfully completed.
+		virtual void cleanup() override {
+			_property.reset();
+			decltype(_gridShape){}.swap(_gridShape);
+			ComputeEngine::cleanup();
+		}
+
+		/// Computes the modifier's results.
+		virtual void perform() override;
 
 		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 		
 		/// Indicates whether the entire simulation cell is part of the solid region.
 		bool isCompletelySolid() const { return _isCompletelySolid; }
@@ -114,8 +130,17 @@ private:
 			if(val < _minValue) _minValue = val;
 			if(val > _maxValue) _maxValue = val;
 		}
-		
+
+		/// Returns the input voxel property.
+		const ConstPropertyPtr& property() const { return _property; }
+
 	private:
+
+		std::vector<size_t> _gridShape;
+		const FloatType _isolevel;
+		const int _vectorComponent;
+		ConstPropertyPtr _property;
+		const SimulationCell _simCell;
 
 		/// The surface mesh produced by the modifier.
 		std::shared_ptr<HalfEdgeMesh<>> _mesh = std::make_shared<HalfEdgeMesh<>>();
@@ -128,36 +153,6 @@ private:
 
 		/// The maximum field value that was encountered.
 		FloatType _maxValue = -FLOATTYPE_MAX;
-	};
-
-	/// Computation engine that builds the isosurface mesh.
-	class ComputeIsosurfaceEngine : public ComputeEngine
-	{
-	public:
-
-		/// Constructor.
-		ComputeIsosurfaceEngine(const TimeInterval& validityInterval, const std::vector<size_t>& gridShape, ConstPropertyPtr property, int vectorComponent, const SimulationCell& simCell, FloatType isolevel) :
-			_gridShape(gridShape),
-			_property(std::move(property)), 
-			_vectorComponent(vectorComponent), 
-			_simCell(simCell), 
-			_isolevel(isolevel), 
-			_results(std::make_shared<ComputeIsosurfaceResults>(validityInterval)) {}
-
-		/// Computes the modifier's results.
-		virtual void perform() override;
-
-		/// Returns the input voxel property.
-		const ConstPropertyPtr& property() const { return _property; }
-
-	private:
-
-		const std::vector<size_t> _gridShape;
-		const FloatType _isolevel;
-		const int _vectorComponent;
-		const ConstPropertyPtr _property;
-		const SimulationCell _simCell;
-		std::shared_ptr<ComputeIsosurfaceResults> _results;
 	};
 
 	/// The voxel property that serves input.

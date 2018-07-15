@@ -89,7 +89,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ConstructSurfaceModifier::createE
 ******************************************************************************/
 void ConstructSurfaceModifier::ConstructSurfaceEngine::perform()
 {
-	setProgressText(tr("Constructing surface mesh"));
+	task()->setProgressText(tr("Constructing surface mesh"));
 
 	if(_radius <= 0)
 		throw Exception(tr("Radius parameter must be positive."));
@@ -115,21 +115,20 @@ void ConstructSurfaceModifier::ConstructSurfaceEngine::perform()
 	if(selection())
 		numInputParticles = positions()->size() - std::count(selection()->constDataInt(), selection()->constDataInt() + selection()->size(), 0);
 	if(numInputParticles <= 3) {
-		setResult(std::move(_results));
 		return;
 	}
 
 	// Algorithm is divided into several sub-steps.
 	// Assign weights to sub-steps according to estimated runtime.
-	beginProgressSubStepsWithWeights({ 20, 1, 6, 1 });
+	task()->beginProgressSubStepsWithWeights({ 20, 1, 6, 1 });
 
 	// Generate Delaunay tessellation.
 	DelaunayTessellation tessellation;
 	if(!tessellation.generateTessellation(_simCell, positions()->constDataPoint3(), positions()->size(), ghostLayerSize,
-			selection() ? selection()->constDataInt() : nullptr, *this))
+			selection() ? selection()->constDataInt() : nullptr, *task()))
 		return;
 
-	nextProgressSubStep();
+	task()->nextProgressSubStep();
 
 	// Determines the region a solid Delaunay cell belongs to.
 	// We use this callback function to compute the total volume of the solid region.
@@ -139,42 +138,40 @@ void ConstructSurfaceModifier::ConstructSurfaceEngine::perform()
 			Vector3 ad = tessellation.vertexPosition(tessellation.cellVertex(cell, 1)) - p0;
 			Vector3 bd = tessellation.vertexPosition(tessellation.cellVertex(cell, 2)) - p0;
 			Vector3 cd = tessellation.vertexPosition(tessellation.cellVertex(cell, 3)) - p0;
-			_results->addSolidVolume(std::abs(ad.dot(cd.cross(bd))) / FloatType(6));
+			addSolidVolume(std::abs(ad.dot(cd.cross(bd))) / FloatType(6));
 		}
 		return 1;
 	};
 
-	ManifoldConstructionHelper<HalfEdgeMesh<>, true> manifoldConstructor(tessellation, *_results->mesh(), alpha, *positions());
-	if(!manifoldConstructor.construct(tetrahedronRegion, *this))
+	ManifoldConstructionHelper<HalfEdgeMesh<>, true> manifoldConstructor(tessellation, *mesh(), alpha, *positions());
+	if(!manifoldConstructor.construct(tetrahedronRegion, *task()))
 		return;
-	_results->setIsCompletelySolid(manifoldConstructor.spaceFillingRegion() == 1);
+	setIsCompletelySolid(manifoldConstructor.spaceFillingRegion() == 1);
 
-	nextProgressSubStep();
+	task()->nextProgressSubStep();
 
 	// Make sure every mesh vertex is only part of one surface manifold.
-	_results->mesh()->duplicateSharedVertices();
+	mesh()->duplicateSharedVertices();
 
-	nextProgressSubStep();
-	if(!SurfaceMesh::smoothMesh(*_results->mesh(), _simCell, _smoothingLevel, *this))
+	task()->nextProgressSubStep();
+	if(!SurfaceMesh::smoothMesh(*mesh(), _simCell, _smoothingLevel, *task()))
 		return;
 
 	// Compute surface area.
-	for(const HalfEdgeMesh<>::Face* facet : _results->mesh()->faces()) {
-		if(isCanceled()) return;
+	for(const HalfEdgeMesh<>::Face* facet : mesh()->faces()) {
+		if(task()->isCanceled()) return;
 		Vector3 e1 = _simCell.wrapVector(facet->edges()->vertex1()->pos() - facet->edges()->vertex2()->pos());
 		Vector3 e2 = _simCell.wrapVector(facet->edges()->prevFaceEdge()->vertex1()->pos() - facet->edges()->vertex2()->pos());
-		_results->addSurfaceArea(e1.cross(e2).length() / 2);
+		addSurfaceArea(e1.cross(e2).length() / 2);
 	}
 
-	endProgressSubSteps();
-
-	setResult(std::move(_results));
+	task()->endProgressSubSteps();
 }
 
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState ConstructSurfaceModifier::ConstructSurfaceResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+PipelineFlowState ConstructSurfaceModifier::ConstructSurfaceEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	ConstructSurfaceModifier* modifier = static_object_cast<ConstructSurfaceModifier>(modApp->modifier());
 

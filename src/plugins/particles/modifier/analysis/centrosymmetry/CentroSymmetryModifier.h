@@ -24,6 +24,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/util/ParticleOrderingFingerprint.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
 
@@ -71,26 +72,6 @@ protected:
 	static FloatType computeCSP(NearestNeighborFinder& neighList, size_t particleIndex);
 
 private:
-
-	/// Stores the modifier's results.
-	class CentroSymmetryResults : public ComputeEngineResults 
-	{
-	public:
-
-		/// Constructor.
-		CentroSymmetryResults(size_t particleCount) :
-			_csp(ParticleProperty::createStandardStorage(particleCount, ParticleProperty::CentroSymmetryProperty, false)) {}
-
-		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-
-		/// Returns the property storage that contains the computed per-particle CSP values.
-		const PropertyPtr& csp() const { return _csp; }		
-
-	private:
-
-		const PropertyPtr _csp;		
-	};
 	
 	/// Computes the modifier's results.
 	class CentroSymmetryEngine : public ComputeEngine
@@ -98,14 +79,27 @@ private:
 	public:
 
 		/// Constructor.
-		CentroSymmetryEngine(ConstPropertyPtr positions, const SimulationCell& simCell, int nneighbors) :
+		CentroSymmetryEngine(ParticleOrderingFingerprint fingerprint, ConstPropertyPtr positions, const SimulationCell& simCell, int nneighbors) :
 			_nneighbors(nneighbors),
-			_positions(positions),
+			_positions(std::move(positions)),
 			_simCell(simCell),
-			_results(std::make_shared<CentroSymmetryResults>(positions->size())) {}
+			_csp(ParticleProperty::createStandardStorage(fingerprint.particleCount(), ParticleProperty::CentroSymmetryProperty, false)),
+			_inputFingerprint(std::move(fingerprint)) {}
+
+		/// This method is called by the system after the computation was successfully completed.
+		virtual void cleanup() override {
+			_positions.reset();
+			ComputeEngine::cleanup();
+		}
 
 		/// Computes the modifier's results.
 		virtual void perform() override;
+
+		/// Injects the computed results into the data pipeline.
+		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+
+		/// Returns the property storage that contains the computed per-particle CSP values.
+		const PropertyPtr& csp() const { return _csp; }		
 
 		/// Returns the property storage that contains the input particle positions.
 		const ConstPropertyPtr& positions() const { return _positions; }
@@ -117,8 +111,9 @@ private:
 
 		const int _nneighbors;
 		const SimulationCell _simCell;
-		const ConstPropertyPtr _positions;
-		std::shared_ptr<CentroSymmetryResults> _results;
+		ConstPropertyPtr _positions;
+		const PropertyPtr _csp;		
+		ParticleOrderingFingerprint _inputFingerprint;
 	};
 
 	/// Specifies the number of nearest neighbors to take into account when computing the CSP.

@@ -70,26 +70,6 @@ protected:
 	
 private:
 
-	/// Holds the modifier's results.
-	class SimplifyMicrostructureResults : public ComputeEngineResults
-	{
-	public:
-
-		/// Constructor.
-		SimplifyMicrostructureResults(MicrostructurePtr microstructure) : _microstructure(std::move(microstructure)) {}
-
-		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-		
-		/// Returns the output microstructure.
-		const MicrostructurePtr& microstructure() { return _microstructure; }
-
-	private:
-
-		/// The output microstructure produced by the modifier.
-		const MicrostructurePtr _microstructure;
-	};
-
 	/// Computation engine of the modifier.
 	class SimplifyMicrostructureEngine : public ComputeEngine
 	{
@@ -104,8 +84,17 @@ private:
             _kPB(kPB),
             _lambda(lambda) {}
 
+		/// This method is called by the system after the computation was successfully completed.
+		virtual void cleanup() override {
+			_inputMicrostructure.reset();
+			ComputeEngine::cleanup();
+		}
+
 		/// Computes the modifier's results and stores them in this object for later retrieval.
 		virtual void perform() override;
+
+		/// Injects the computed results into the data pipeline.
+		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 		/// Returns the output microstructure.
 		const MicrostructurePtr& microstructure() const { return _microstructure; }
@@ -124,11 +113,13 @@ private:
         }
 
 		ConstMicrostructurePtr _inputMicrostructure;
-		MicrostructurePtr _microstructure;
 		const SimulationCell _cell;
         int _smoothingLevel;
         FloatType _kPB;
         FloatType _lambda;
+
+		/// The output microstructure produced by the modifier.
+		MicrostructurePtr _microstructure;
 	};
 
 	/// Controls the number of smoothing iterations to perform.

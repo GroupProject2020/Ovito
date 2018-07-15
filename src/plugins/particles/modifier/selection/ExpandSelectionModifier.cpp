@@ -84,13 +84,13 @@ Future<AsynchronousModifier::ComputeEnginePtr> ExpandSelectionModifier::createEn
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	if(mode() == CutoffRange) {
-		return std::make_shared<ExpandSelectionCutoffEngine>(posProperty->storage(), inputCell->data(), inputSelection->storage(), numberOfIterations(), cutoffRange());
+		return std::make_shared<ExpandSelectionCutoffEngine>(input, posProperty->storage(), inputCell->data(), inputSelection->storage(), numberOfIterations(), cutoffRange());
 	}
 	else if(mode() == NearestNeighbors) {
-		return std::make_shared<ExpandSelectionNearestEngine>(posProperty->storage(), inputCell->data(), inputSelection->storage(), numberOfIterations(), numNearestNeighbors());
+		return std::make_shared<ExpandSelectionNearestEngine>(input, posProperty->storage(), inputCell->data(), inputSelection->storage(), numberOfIterations(), numNearestNeighbors());
 	}
 	else if(mode() == BondedNeighbors) {
-		return std::make_shared<ExpandSelectionBondedEngine>(posProperty->storage(), inputCell->data(), inputSelection->storage(), numberOfIterations(), pih.expectBonds()->storage());
+		return std::make_shared<ExpandSelectionBondedEngine>(input, posProperty->storage(), inputCell->data(), inputSelection->storage(), numberOfIterations(), pih.expectBonds()->storage());
 	}
 	else {
 		throwException(tr("Invalid selection expansion mode."));
@@ -102,23 +102,23 @@ Future<AsynchronousModifier::ComputeEnginePtr> ExpandSelectionModifier::createEn
 ******************************************************************************/
 void ExpandSelectionModifier::ExpandSelectionEngine::perform()
 {
-	setProgressText(tr("Expanding particle selection"));
+	task()->setProgressText(tr("Expanding particle selection"));
 
-	results()->setNumSelectedParticlesInput(_inputSelection->size() - std::count(_inputSelection->constDataInt(), _inputSelection->constDataInt() + _inputSelection->size(), 0));
+	setNumSelectedParticlesInput(_inputSelection->size() - std::count(_inputSelection->constDataInt(), _inputSelection->constDataInt() + _inputSelection->size(), 0));
 
-	beginProgressSubSteps(_numIterations);
+	task()->beginProgressSubSteps(_numIterations);
 	for(int i = 0; i < _numIterations; i++) {
 		if(i != 0) {
-			_inputSelection = results()->outputSelection();
-			results()->setOutputSelection(std::make_shared<PropertyStorage>(*inputSelection()));
-			nextProgressSubStep();
+			_inputSelection = outputSelection();
+			setOutputSelection(std::make_shared<PropertyStorage>(*inputSelection()));
+			task()->nextProgressSubStep();
 		}
 		expandSelection();
-		if(isCanceled()) return;
+		if(task()->isCanceled()) return;
 	}
-	endProgressSubSteps();
+	task()->endProgressSubSteps();
 
-	results()->setNumSelectedParticlesOutput(results()->outputSelection()->size() - std::count(results()->outputSelection()->constDataInt(), results()->outputSelection()->constDataInt() + _inputSelection->size(), 0));
+	setNumSelectedParticlesOutput(outputSelection()->size() - std::count(outputSelection()->constDataInt(), outputSelection()->constDataInt() + _inputSelection->size(), 0));
 }
 
 /******************************************************************************
@@ -131,11 +131,11 @@ void ExpandSelectionModifier::ExpandSelectionNearestEngine::expandSelection()
 
 	// Prepare the neighbor list.
 	NearestNeighborFinder neighFinder(_numNearestNeighbors);
-	if(!neighFinder.prepare(*positions(), simCell(), nullptr, this))
+	if(!neighFinder.prepare(*positions(), simCell(), nullptr, task().get()))
 		return;
 
-	OVITO_ASSERT(inputSelection()->constDataInt() != results()->outputSelection()->dataInt());
-	parallelFor(positions()->size(), *this, [&neighFinder, this](size_t index) {
+	OVITO_ASSERT(inputSelection()->constDataInt() != outputSelection()->dataInt());
+	parallelFor(positions()->size(), *task(), [&neighFinder, this](size_t index) {
 		if(!inputSelection()->getInt(index)) return;
 
 		NearestNeighborFinder::Query<MAX_NEAREST_NEIGHBORS> neighQuery(neighFinder);
@@ -143,7 +143,7 @@ void ExpandSelectionModifier::ExpandSelectionNearestEngine::expandSelection()
 		OVITO_ASSERT(neighQuery.results().size() <= _numNearestNeighbors);
 
 		for(auto n = neighQuery.results().begin(); n != neighQuery.results().end(); ++n) {
-			results()->outputSelection()->setInt(n->index, 1);
+			outputSelection()->setInt(n->index, 1);
 		}
 	});
 }
@@ -153,18 +153,18 @@ void ExpandSelectionModifier::ExpandSelectionNearestEngine::expandSelection()
 ******************************************************************************/
 void ExpandSelectionModifier::ExpandSelectionBondedEngine::expandSelection()
 {
-	OVITO_ASSERT(inputSelection()->constDataInt() != results()->outputSelection()->dataInt());
+	OVITO_ASSERT(inputSelection()->constDataInt() != outputSelection()->dataInt());
 
 	size_t particleCount = inputSelection()->size();
-	parallelFor(_bondTopology->size(), *this, [this, particleCount](size_t index) {
+	parallelFor(_bondTopology->size(), *task(), [this, particleCount](size_t index) {
 		size_t index1 = _bondTopology->getInt64Component(index, 0);
 		size_t index2 = _bondTopology->getInt64Component(index, 1);
 		if(index1 >= particleCount || index2 >= particleCount)
 			return;
 		if(inputSelection()->getInt(index1))
-			results()->outputSelection()->setInt(index2, 1);
+			outputSelection()->setInt(index2, 1);
 		if(inputSelection()->getInt(index2))
-			results()->outputSelection()->setInt(index1, 1);
+			outputSelection()->setInt(index1, 1);
 	});
 }
 
@@ -175,14 +175,14 @@ void ExpandSelectionModifier::ExpandSelectionCutoffEngine::expandSelection()
 {
 	// Prepare the neighbor list.
 	CutoffNeighborFinder neighborListBuilder;
-	if(!neighborListBuilder.prepare(_cutoffRange, *positions(), simCell(), nullptr, this))
+	if(!neighborListBuilder.prepare(_cutoffRange, *positions(), simCell(), nullptr, task().get()))
 		return;
 
-	OVITO_ASSERT(inputSelection()->constDataInt() != results()->outputSelection()->dataInt());
-	parallelFor(positions()->size(), *this, [&neighborListBuilder, this](size_t index) {
+	OVITO_ASSERT(inputSelection()->constDataInt() != outputSelection()->dataInt());
+	parallelFor(positions()->size(), *task(), [&neighborListBuilder, this](size_t index) {
 		if(!inputSelection()->getInt(index)) return;
 		for(CutoffNeighborFinder::Query neighQuery(neighborListBuilder, index); !neighQuery.atEnd(); neighQuery.next()) {
-			results()->outputSelection()->setInt(neighQuery.current(), 1);
+			outputSelection()->setInt(neighQuery.current(), 1);
 		}
 	});
 }
@@ -190,12 +190,13 @@ void ExpandSelectionModifier::ExpandSelectionCutoffEngine::expandSelection()
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState ExpandSelectionModifier::ExpandSelectionResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+PipelineFlowState ExpandSelectionModifier::ExpandSelectionEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
+	if(_inputFingerprint.hasChanged(input))
+		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
+
 	PipelineFlowState output = input;
 	ParticleOutputHelper poh(modApp->dataset(), output);
-	if(outputSelection()->size() != poh.outputParticleCount())
-		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
 	poh.outputProperty<ParticleProperty>(outputSelection());
 
 	QString msg = tr("Added %1 particles to selection.\n"

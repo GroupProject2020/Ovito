@@ -365,8 +365,8 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 					 gridProperty1,
 					 _applyWindow);
 
-	incrementProgressValue();
-	if (isCanceled())
+	task()->incrementProgressValue();
+	if(task()->isCanceled())
 		return;
 
 	mapToSpatialGrid(sourceProperty2().get(),
@@ -383,8 +383,8 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 					 nX, nY, nZ,
 					 gridDensity,
 					 _applyWindow);
-	incrementProgressValue();
-	if (isCanceled())
+	task()->incrementProgressValue();
+	if(task()->isCanceled())
 		return;
 
 	// FIXME. Apply windowing function in nonperiodic directions here.
@@ -395,22 +395,22 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 	QVector<std::complex<FloatType>> ftProperty1;
 	r2cFFT(nX, nY, nZ, gridProperty1, ftProperty1);
 
-	incrementProgressValue();
-	if (isCanceled())
+	task()->incrementProgressValue();
+	if(task()->isCanceled())
 		return;
 
 	QVector<std::complex<FloatType>> ftProperty2;
 	r2cFFT(nX, nY, nZ, gridProperty2, ftProperty2);
 
-	incrementProgressValue();
-	if (isCanceled())
+	task()->incrementProgressValue();
+	if(task()->isCanceled())
 		return;
 
 	QVector<std::complex<FloatType>> ftDensity;
 	r2cFFT(nX, nY, nZ, gridDensity, ftDensity);
 
-	incrementProgressValue();
-	if (isCanceled())
+	task()->incrementProgressValue();
+	if(task()->isCanceled())
 		return;
 
 	// Note: Reciprocal cell vectors are in rows. Those are 4-vectors.
@@ -504,8 +504,8 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 		}
 	}
 
-	incrementProgressValue();
-	if(isCanceled())
+	task()->incrementProgressValue();
+	if(task()->isCanceled())
 		return;
 
 	// Compute long-ranged part of the real-space correlation function from the FFT convolution.
@@ -513,14 +513,14 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 	// Computer inverse Fourier transform of correlation function.
 	c2rFFT(nX, nY, nZ, ftProperty1, gridProperty1);
 
-	incrementProgressValue();
-	if(isCanceled())
+	task()->incrementProgressValue();
+	if(task()->isCanceled())
 		return;
 
 	c2rFFT(nX, nY, nZ, ftDensity, gridDensity);
 
-	incrementProgressValue();
-	if(isCanceled())
+	task()->incrementProgressValue();
+	if(task()->isCanceled())
 		return;
 
 	// Determine number of grid points for reciprocal-spacespace correlation function.
@@ -576,7 +576,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 		}
 	}
 
-	incrementProgressValue();
+	task()->incrementProgressValue();
 }
 
 /******************************************************************************
@@ -610,7 +610,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeighCorrela
 
 	// Prepare the neighbor list.
 	CutoffNeighborFinder neighborListBuilder;
-	if (!neighborListBuilder.prepare(_neighCutoff, *positions(), cell(), nullptr, this))
+	if(!neighborListBuilder.prepare(_neighCutoff, *positions(), cell(), nullptr, task().get()))
 		return;
 
 	// Perform analysis on each particle in parallel.
@@ -634,7 +634,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeighCorrela
 			std::vector<double> threadLocalCorrelation(neighCorrelation().size(), 0);
 			std::vector<int> threadLocalRDF(neighCorrelation().size(), 0);
 			for (size_t i = startIndex; i < endIndex;) {
-					for (CutoffNeighborFinder::Query neighQuery(neighborListBuilder, i); !neighQuery.atEnd(); neighQuery.next()) {
+				for (CutoffNeighborFinder::Query neighQuery(neighborListBuilder, i); !neighQuery.atEnd(); neighQuery.next()) {
 					size_t distanceBinIndex = (size_t)(sqrt(neighQuery.distanceSquared()) / gridSpacing);
 					distanceBinIndex = std::min(distanceBinIndex, threadLocalCorrelation.size() - 1);
 					FloatType data1 = 0.0, data2 = 0.0;
@@ -649,9 +649,9 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeighCorrela
 					threadLocalCorrelation[distanceBinIndex] += data1*data2;
 					threadLocalRDF[distanceBinIndex] += 1;
 				}
-					i++;
-					// Abort loop when operation was canceled by the user.
-				if (isCanceled())
+				i++;
+				// Abort loop when operation was canceled by the user.
+				if(task()->isCanceled())
 					return;
 			}
 			std::lock_guard<std::mutex> lock(mutex);
@@ -668,7 +668,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeighCorrela
 
 	for (auto& t: workers)
 		t.waitForFinished();
-	incrementProgressValue();
+	task()->incrementProgressValue();
 
 	// Normalize short-ranged real-space correlation function and populate x-array.
 	FloatType gridSpacing = (_neighCutoff + FLOATTYPE_EPSILON) / neighCorrelation().size();
@@ -681,7 +681,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeighCorrela
 		neighRDF()[distanceBinIndex] *= normalizationFactor/(distance2*distance2*distance2-distance*distance*distance);
 	}
 
-	incrementProgressValue();
+	task()->incrementProgressValue();
 }
 
 /******************************************************************************
@@ -731,9 +731,9 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeLimits()
 	mean1 /= sourceProperty1()->size();
 	mean2 /= sourceProperty2()->size();
 	covariance /= sourceProperty1()->size();
-	_results->setLimits(mean1, mean2, covariance);
+	setLimits(mean1, mean2, covariance);
 
-	incrementProgressValue();
+	task()->incrementProgressValue();
 }
 
 /******************************************************************************
@@ -741,36 +741,33 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeLimits()
 ******************************************************************************/
 void CorrelationFunctionModifier::CorrelationAnalysisEngine::perform()
 {
-	setProgressText(tr("Computing correlation function"));
-	setProgressValue(0);
+	task()->setProgressText(tr("Computing correlation function"));
+	task()->setProgressValue(0);
 	int range = 12;
 	if(!neighCorrelation().empty())
 		range += 2;
-	setProgressMaximum(range);
+	task()->setProgressMaximum(range);
 
 	// Compute reciprocal space correlation function and long-ranged part of
 	// the real-space correlation function from an FFT.
 	computeFftCorrelation();
-	if(isCanceled())
+	if(task()->isCanceled())
 		return;
 
 	// Compute short-ranged part of the real-space correlation function from a direct loop over particle neighbors.
 	if(!neighCorrelation().empty())
 		computeNeighCorrelation();
 
-	if(isCanceled())
+	if(task()->isCanceled())
 		return;
 
 	computeLimits();
-
-	// Return the results of the compute engine.
-	setResult(std::move(_results));
 }
 
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState CorrelationFunctionModifier::CorrelationAnalysisResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+PipelineFlowState CorrelationFunctionModifier::CorrelationAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Store the computed data in the ModifierApplication.
 	static_object_cast<CorrelationFunctionModifierApplication>(modApp)->setResults(

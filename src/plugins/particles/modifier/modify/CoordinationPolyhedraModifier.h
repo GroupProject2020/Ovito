@@ -66,25 +66,6 @@ protected:
 		
 private:
 
-	/// Holds the modifier's results.
-	class ComputePolyhedraResults : public ComputeEngineResults
-	{
-	public:
-
-		/// Constructor.
-		using ComputeEngineResults::ComputeEngineResults;
-
-		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-	
-		/// Returns the generated mesh.
-		const std::shared_ptr<HalfEdgeMesh<>>& mesh() const { return _mesh; }
-						
-	private:
-
-		std::shared_ptr<HalfEdgeMesh<>> _mesh = std::make_shared<HalfEdgeMesh<>>();
-	};
-
 	/// Computation engine that builds the polyhedra.
 	class ComputePolyhedraEngine : public ComputeEngine
 	{
@@ -99,14 +80,26 @@ private:
 			_particleTypes(std::move(particleTypes)), 
 			_bondTopology(std::move(bondTopology)), 
 			_bondPeriodicImages(std::move(bondPeriodicImages)),
-			_simCell(simCell),
-			_results(std::make_shared<ComputePolyhedraResults>()) {}
+			_simCell(simCell) {}
+
+		/// This method is called by the system after the computation was successfully completed.
+		virtual void cleanup() override {
+			_positions.reset();
+			_selection.reset();
+			_particleTypes.reset();
+			_bondTopology.reset();
+			_bondPeriodicImages.reset();
+			ComputeEngine::cleanup();
+		}
 
 		/// Computes the modifier's results and stores them in this object for later retrieval.
 		virtual void perform() override;
 
-		/// Returns the mesh.
-		const std::shared_ptr<HalfEdgeMesh<>>& mesh() const { return _results->mesh(); }
+		/// Injects the computed results into the data pipeline.
+		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	
+		/// Returns the generated mesh.
+		const std::shared_ptr<HalfEdgeMesh<>>& mesh() const { return _mesh; }
 				
 	private:
 
@@ -115,13 +108,13 @@ private:
 
 	private:
 
-		const ConstPropertyPtr _positions;
-		const ConstPropertyPtr _selection;
-		const ConstPropertyPtr _particleTypes;
-		const ConstPropertyPtr _bondTopology;
-		const ConstPropertyPtr _bondPeriodicImages;
+		ConstPropertyPtr _positions;
+		ConstPropertyPtr _selection;
+		ConstPropertyPtr _particleTypes;
+		ConstPropertyPtr _bondTopology;
+		ConstPropertyPtr _bondPeriodicImages;
 		const SimulationCell _simCell;
-		std::shared_ptr<ComputePolyhedraResults> _results;
+		std::shared_ptr<HalfEdgeMesh<>> _mesh = std::make_shared<HalfEdgeMesh<>>();
 	};
 
 	/// The vis element for rendering the polyhedra.

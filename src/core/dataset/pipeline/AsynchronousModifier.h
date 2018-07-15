@@ -39,47 +39,63 @@ class OVITO_CORE_EXPORT AsynchronousModifier : public Modifier
 public:
 
 	/**
-	 * Base class for data structures holding the results of an asynchronous modifier computation.
+	 * Abstract base class for compute engines.
 	 */
-	class OVITO_CORE_EXPORT ComputeEngineResults 
+	class OVITO_CORE_EXPORT ComputeEngine
 	{
 	public:
 
 		/// Constructor.
-		ComputeEngineResults(const TimeInterval& validityInterval = TimeInterval::infinite()) : _validityInterval(validityInterval) {}
+		ComputeEngine(const TimeInterval& validityInterval = TimeInterval::infinite()) : 
+			_validityInterval(validityInterval),
+			_task(std::make_shared<ComputeEngineTask>(this)) {}
 
 		/// Destructor.
-		virtual ~ComputeEngineResults() = default;
+		virtual ~ComputeEngine() = default;
+
+		/// This method is called by the system after the computation was successfully completed.
+		/// Subclasses should override this method in order to release working memory and any references to the input data. 
+		virtual void cleanup();
+
+		/// Computes the modifier's results.
+		virtual void perform() = 0;
 
 		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) = 0;
+		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) = 0;
 
 		/// Returns the validity period of the stored results.
 		const TimeInterval& validityInterval() const { return _validityInterval; }
 
 		/// Changes the stored validity period of the results.
 		void setValidityInterval(const TimeInterval& iv) { _validityInterval = iv; }
-		
+
+		/// Returns the AsynchronousTask object associated with this engine.
+		const std::shared_ptr<AsynchronousTask<>>& task() const { return _task; }
+
 	private:
+
+		/// Asynchronous task class for compute engines.
+		class OVITO_CORE_EXPORT ComputeEngineTask : public AsynchronousTask<>
+		{
+		public:
+
+			/// Constructor.
+			ComputeEngineTask(ComputeEngine* engine) : _engine(engine) {}
+
+			/// Is called when the asynchronous task begins to run.
+			virtual void perform() override;
+
+		private:
+
+			/// Pointer to the compute engine that owns this task object.
+			ComputeEngine* _engine;
+		};
 
 		/// The validity period of the stored results.
 		TimeInterval _validityInterval;
-	};
 
-	/// A managed pointer to a ComputeEngineResults instance.
-	using ComputeEngineResultsPtr = std::shared_ptr<ComputeEngineResults>;
-
-	/**
-	 * Abstract base class for compute engines of AsynchronousModifier implementaAsynchronousModifiertions.
-	 */
-	class OVITO_CORE_EXPORT ComputeEngine : public AsynchronousTask<ComputeEngineResultsPtr>
-	{
-	public:
-
-#ifdef Q_OS_LINUX
-		/// Destructor.
-		virtual ~ComputeEngine();
-#endif
+		/// The asynchronous task object associated with this engine.
+		std::shared_ptr<AsynchronousTask<>> _task;
 	};
 
 	/// A managed pointer to a ComputeEngine instance.
@@ -96,8 +112,7 @@ public:
 	/// Modifies the input data in an immediate, preliminary way.
 	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
-	/// Decides whether a preliminary viewport update is performed every time the modifier 
-	/// itself changes. For asynchronous modifier this is disabled.
+	/// Suppress preliminary viewport updates when a parameter of the asynchronous modifier changes.
 	virtual bool performPreliminaryUpdateAfterChange() override { return false; }
 	
 	/// This method indicates whether outdated computation results should be immediately discarded

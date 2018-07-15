@@ -22,8 +22,6 @@
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
-#include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
 #include <plugins/crystalanalysis/objects/patterns/StructurePattern.h>
 #include "ElasticStrainModifier.h"
 #include "ElasticStrainEngine.h"
@@ -104,42 +102,10 @@ Future<AsynchronousModifier::ComputeEnginePtr> ElasticStrainModifier::createEngi
 	}
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<ElasticStrainEngine>(posProperty->storage(),
+	return std::make_shared<ElasticStrainEngine>(input, posProperty->storage(),
 			simCell->data(), inputCrystalStructure(), std::move(preferredCrystalOrientations),
 			calculateDeformationGradients(), calculateStrainTensors(),
 			latticeConstant(), axialRatio(), pushStrainTensorsForward());
-}
-
-/******************************************************************************
-* Injects the computed results of the engine into the data pipeline.
-******************************************************************************/
-PipelineFlowState ElasticStrainResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
-{
-	ElasticStrainModifier* modifier = static_object_cast<ElasticStrainModifier>(modApp->modifier());
-	
-	PipelineFlowState output = StructureIdentificationResults::apply(time, modApp, input);
-	ParticleOutputHelper poh(modApp->dataset(), output);
-
-	// Output cluster graph.
-	OORef<ClusterGraphObject> clusterGraphObj(new ClusterGraphObject(modApp->dataset()));
-	clusterGraphObj->setStorage(clusterGraph());
-	output.addObject(clusterGraphObj);
-
-	// Output pattern catalog.
-	output.addObject(modifier->patternCatalog());
-
-	// Output particle properties.
-	poh.outputProperty<ParticleProperty>(atomClusters());
-	if(modifier->calculateStrainTensors() && strainTensors())
-		poh.outputProperty<ParticleProperty>(strainTensors());
-
-	if(modifier->calculateDeformationGradients() && deformationGradients())
-	poh.outputProperty<ParticleProperty>(deformationGradients());
-
-	if(volumetricStrains())
-		poh.outputProperty<ParticleProperty>(volumetricStrains());
-
-	return output;
 }
 
 }	// End of namespace

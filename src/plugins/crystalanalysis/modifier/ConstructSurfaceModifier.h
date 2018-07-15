@@ -72,16 +72,32 @@ protected:
 	
 private:
 
-	/// Holds the modifier's results.
-	class ConstructSurfaceResults : public ComputeEngineResults
+	/// Computation engine that builds the surface mesh.
+	class ConstructSurfaceEngine : public ComputeEngine
 	{
 	public:
 
 		/// Constructor.
-		ConstructSurfaceResults(FloatType totalVolume) : _totalVolume(totalVolume) {}
+		ConstructSurfaceEngine(ConstPropertyPtr positions, ConstPropertyPtr selection, const SimulationCell& simCell, FloatType radius, int smoothingLevel) :
+			_positions(std::move(positions)), 
+			_selection(std::move(selection)), 
+			_simCell(simCell), 
+			_radius(radius), 
+			_smoothingLevel(smoothingLevel), 
+			_totalVolume(std::abs(simCell.matrix().determinant())) {}
+
+		/// This method is called by the system after the computation was successfully completed.
+		virtual void cleanup() override {
+			_positions.reset();
+			_selection.reset();
+			ComputeEngine::cleanup();
+		}
+
+		/// Computes the modifier's results and stores them in this object for later retrieval.
+		virtual void perform() override;
 
 		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 		
 		/// Indicates whether the entire simulation cell is part of the solid region.
 		bool isCompletelySolid() const { return _isCompletelySolid; }
@@ -106,8 +122,20 @@ private:
 
 		/// Sums a contribution to the total surface area.
 		void addSurfaceArea(FloatType a) { _surfaceArea += a; }
-				
+
+		/// Returns the input particle positions.
+		const ConstPropertyPtr& positions() const { return _positions; }
+
+		/// Returns the input particle selection.
+		const ConstPropertyPtr& selection() const { return _selection; }
+
 	private:
+
+		const FloatType _radius;
+		const int _smoothingLevel;
+		ConstPropertyPtr _positions;
+		ConstPropertyPtr _selection;
+		const SimulationCell _simCell;
 
 		/// The surface mesh produced by the modifier.
 		SurfaceMeshPtr _mesh = std::make_shared<HalfEdgeMesh<>>();
@@ -123,35 +151,6 @@ private:
 	
 		/// The computed surface area.
 		double _surfaceArea = 0;
-	};
-
-	/// Computation engine that builds the surface mesh.
-	class ConstructSurfaceEngine : public ComputeEngine
-	{
-	public:
-
-		/// Constructor.
-		ConstructSurfaceEngine(ConstPropertyPtr positions, ConstPropertyPtr selection, const SimulationCell& simCell, FloatType radius, int smoothingLevel) :
-			_positions(std::move(positions)), _selection(std::move(selection)), _simCell(simCell), _radius(radius), _smoothingLevel(smoothingLevel), 
-			_results(std::make_shared<ConstructSurfaceResults>(std::abs(simCell.matrix().determinant()))) {}
-
-		/// Computes the modifier's results and stores them in this object for later retrieval.
-		virtual void perform() override;
-
-		/// Returns the input particle positions.
-		const ConstPropertyPtr& positions() const { return _positions; }
-
-		/// Returns the input particle selection.
-		const ConstPropertyPtr& selection() const { return _selection; }
-
-	private:
-
-		const FloatType _radius;
-		const int _smoothingLevel;
-		const ConstPropertyPtr _positions;
-		const ConstPropertyPtr _selection;
-		const SimulationCell _simCell;
-		std::shared_ptr<ConstructSurfaceResults> _results;
 	};
 
 	/// Controls the radius of the probe sphere.

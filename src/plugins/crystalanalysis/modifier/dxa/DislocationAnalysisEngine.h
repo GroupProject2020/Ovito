@@ -33,19 +33,39 @@
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
-/// Holds the results of the DislocationAnalysisEngine.
-class DislocationAnalysisResults : public StructureIdentificationModifier::StructureIdentificationResults
+/*
+ * Computation engine of the DislocationAnalysisModifier, which performs the actual dislocation analysis.
+ */
+class DislocationAnalysisEngine : public StructureIdentificationModifier::StructureIdentificationEngine
 {
 public:
 
 	/// Constructor.
-	DislocationAnalysisResults(size_t particleCount, FloatType simCellVolume) :
-		StructureIdentificationResults(particleCount),
-		_defectMesh(std::make_shared<HalfEdgeMesh<>>()),
-		_simCellVolume(simCellVolume) {}
-	
+	DislocationAnalysisEngine(ParticleOrderingFingerprint fingerprint, ConstPropertyPtr positions, const SimulationCell& simCell,
+			int inputCrystalStructure, int maxTrialCircuitSize, int maxCircuitElongation,
+			ConstPropertyPtr particleSelection,
+			ConstPropertyPtr crystalClusters,
+			std::vector<Matrix3> preferredCrystalOrientations,
+			bool onlyPerfectDislocations, int defectMeshSmoothingLevel,
+			int lineSmoothingLevel, FloatType linePointInterval,
+			bool outputInterfaceMesh);
+
+	/// This method is called by the system after the computation was successfully completed.
+	virtual void cleanup() override {
+		_structureAnalysis.reset();
+		_tessellation.reset();
+		_elasticMapping.reset();
+		_interfaceMesh.reset();
+		_dislocationTracer.reset();
+		_crystalClusters.reset();
+		StructureIdentificationEngine::cleanup();
+	}
+
+	/// Computes the modifier's results and stores them in this object for later retrieval.
+	virtual void perform() override;
+
 	/// Injects the computed results into the data pipeline.
-	virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 	/// Returns the computed defect mesh.
 	const SurfaceMeshPtr& defectMesh() { return _defectMesh; }
@@ -68,17 +88,9 @@ public:
 	/// Indicates whether the entire simulation cell is part of the 'bad' crystal region.
 	bool isBadEverywhere() const { return _isBadEverywhere; }
 
-	void setCompletelyGoodOrBad(bool isCompletelyGood, bool isCompletelyBad) {
-		_isGoodEverywhere = isCompletelyGood;
-		_isBadEverywhere = isCompletelyBad;
-	}
-
 	/// Returns the defect interface.
-	const SurfaceMeshPtr& interfaceMesh() const { return _interfaceMesh; }
+	const SurfaceMeshPtr& outputInterfaceMesh() const { return _outputInterfaceMesh; }
 
-	/// Sets the defect interface mesh.
-	void setInterfaceMesh(SurfaceMeshPtr mesh) { _interfaceMesh = std::move(mesh); }
-		
 	/// Returns the extracted dislocations.
 	const std::shared_ptr<DislocationNetwork>& dislocationNetwork() const { return _dislocationNetwork; }
 
@@ -88,13 +100,34 @@ public:
 	/// Returns the total volume of the input simulation cell.
 	FloatType simCellVolume() const { return _simCellVolume; }
 		
+	/// Returns the computed interface mesh.
+	const InterfaceMesh& interfaceMesh() const { return *_interfaceMesh; }
+
+	/// Gives access to the elastic mapping computation engine.
+	ElasticMapping& elasticMapping() { return *_elasticMapping; }
+
+	/// Returns the input particle property that stores the cluster assignment of atoms.
+	const ConstPropertyPtr& crystalClusters() const { return _crystalClusters; }
+
 private:
-	
+
+	int _inputCrystalStructure;
+	bool _onlyPerfectDislocations;
+	int _defectMeshSmoothingLevel;
+	int _lineSmoothingLevel;
+	FloatType _linePointInterval;
+	std::unique_ptr<StructureAnalysis> _structureAnalysis;
+	std::unique_ptr<DelaunayTessellation> _tessellation;
+	std::unique_ptr<ElasticMapping> _elasticMapping;
+	std::unique_ptr<InterfaceMesh> _interfaceMesh;
+	std::unique_ptr<DislocationTracer> _dislocationTracer;
+	ConstPropertyPtr _crystalClusters;	
+
 	/// This stores the cached defect mesh produced by the modifier.
-	SurfaceMeshPtr _defectMesh;
+	SurfaceMeshPtr _defectMesh = std::make_shared<HalfEdgeMesh<>>();
 	
 	/// This stores the cached defect interface produced by the modifier.
-	SurfaceMeshPtr _interfaceMesh;
+	SurfaceMeshPtr _outputInterfaceMesh;
 
 	/// This stores the cached atom-to-cluster assignments computed by the modifier.
 	PropertyPtr _atomClusters;
@@ -113,70 +146,6 @@ private:
 
 	/// The total volume of the input simulation cell.
 	FloatType _simCellVolume;
-};
-
-/*
- * Computation engine of the DislocationAnalysisModifier, which performs the actual dislocation analysis.
- */
-class DislocationAnalysisEngine : public StructureIdentificationModifier::StructureIdentificationEngine
-{
-public:
-
-	/// Constructor.
-	DislocationAnalysisEngine(ConstPropertyPtr positions, const SimulationCell& simCell,
-			int inputCrystalStructure, int maxTrialCircuitSize, int maxCircuitElongation,
-			ConstPropertyPtr particleSelection,
-			ConstPropertyPtr crystalClusters,
-			std::vector<Matrix3> preferredCrystalOrientations,
-			bool onlyPerfectDislocations, int defectMeshSmoothingLevel,
-			int lineSmoothingLevel, FloatType linePointInterval,
-			bool outputInterfaceMesh);
-
-	/// Computes the modifier's results and stores them in this object for later retrieval.
-	virtual void perform() override;
-
-	/// Returns the computed defect mesh.
-	const SurfaceMeshPtr& defectMesh() { return _results->defectMesh(); }	
-		
-	/// Returns the computed interface mesh.
-	const InterfaceMesh& interfaceMesh() const { return _interfaceMesh; }
-
-	/// Indicates whether the entire simulation cell is part of the 'good' crystal region.
-	bool isGoodEverywhere() const { return _interfaceMesh.isCompletelyGood(); }
-
-	/// Indicates whether the entire simulation cell is part of the 'bad' crystal region.
-	bool isBadEverywhere() const { return _interfaceMesh.isCompletelyBad(); }
-
-	/// Returns the array of atom cluster IDs.
-	const PropertyPtr& atomClusters() const { return _structureAnalysis.atomClusters(); }
-
-	/// Gives access to the elastic mapping computation engine.
-	ElasticMapping& elasticMapping() { return _elasticMapping; }
-
-	/// Returns the created cluster graph.
-	const std::shared_ptr<ClusterGraph>& clusterGraph() { return _structureAnalysis.clusterGraph(); }
-
-	/// Returns the extracted dislocation network.
-	const std::shared_ptr<DislocationNetwork>& dislocationNetwork() { return _dislocationTracer.network(); }
-
-	/// Returns the input particle property that stores the cluster assignment of atoms.
-	const ConstPropertyPtr& crystalClusters() const { return _crystalClusters; }
-
-private:
-
-	int _inputCrystalStructure;
-	bool _onlyPerfectDislocations;
-	int _defectMeshSmoothingLevel;
-	int _lineSmoothingLevel;
-	bool _outputInterfaceMesh;
-	FloatType _linePointInterval;
-	std::shared_ptr<DislocationAnalysisResults> _results;
-	StructureAnalysis _structureAnalysis;
-	DelaunayTessellation _tessellation;
-	ElasticMapping _elasticMapping;
-	InterfaceMesh _interfaceMesh;
-	DislocationTracer _dislocationTracer;
-	const ConstPropertyPtr _crystalClusters;	
 };
 
 }	// End of namespace

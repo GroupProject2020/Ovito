@@ -24,6 +24,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/util/CutoffNeighborFinder.h>
+#include <plugins/particles/util/ParticleOrderingFingerprint.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
@@ -67,19 +68,33 @@ protected:
 
 private:
 
-	/// Stores the modifier's results.
-	class CoordinationAnalysisResults : public ComputeEngineResults 
+	/// Computes the modifier's results.
+	class CoordinationAnalysisEngine : public ComputeEngine
 	{
 	public:
 
 		/// Constructor.
-		CoordinationAnalysisResults(size_t particleCount, size_t rdfSampleCount) : 
-			_coordinationNumbers(ParticleProperty::createStandardStorage(particleCount, ParticleProperty::CoordinationProperty, true)),
+		CoordinationAnalysisEngine(ParticleOrderingFingerprint fingerprint, ConstPropertyPtr positions, const SimulationCell& simCell, FloatType cutoff, int rdfSampleCount) :
+			_positions(std::move(positions)), 
+			_simCell(simCell),
+			_cutoff(cutoff),
+			_rdfSampleCount(rdfSampleCount),
+			_coordinationNumbers(ParticleProperty::createStandardStorage(fingerprint.particleCount(), ParticleProperty::CoordinationProperty, true)),
 			_rdfX(std::make_shared<PropertyStorage>(rdfSampleCount, PropertyStorage::Float, 1, 0, tr("Pair separation distance"), false)), 
-			_rdfY(std::make_shared<PropertyStorage>(rdfSampleCount, PropertyStorage::Float, 1, 0, tr("g(r)"), true)) {}
+			_rdfY(std::make_shared<PropertyStorage>(rdfSampleCount, PropertyStorage::Float, 1, 0, tr("g(r)"), true)),
+			_inputFingerprint(std::move(fingerprint)) {}
+
+		/// This method is called by the system after the computation was successfully completed.
+		virtual void cleanup() override {
+			_positions.reset();
+			ComputeEngine::cleanup();
+		}
+
+		/// Computes the modifier's results.
+		virtual void perform() override;
 
 		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 		/// Returns the property storage that contains the computed coordination numbers.
 		const PropertyPtr& coordinationNumbers() const { return _coordinationNumbers; }
@@ -89,29 +104,6 @@ private:
 
 		/// Returns the property storage containing the y-coordinates of the data points of the RDF histogram.
 		const PropertyPtr& rdfY() const { return _rdfY; }
-
-	private:
-
-		const PropertyPtr _coordinationNumbers;
-		const PropertyPtr _rdfX;
-		const PropertyPtr _rdfY;
-	};
-
-	/// Computes the modifier's results.
-	class CoordinationAnalysisEngine : public ComputeEngine
-	{
-	public:
-
-		/// Constructor.
-		CoordinationAnalysisEngine(ConstPropertyPtr positions, const SimulationCell& simCell, FloatType cutoff, int rdfSampleCount) :
-			_positions(positions), 
-			_simCell(simCell),
-			_cutoff(cutoff),
-			_rdfSampleCount(rdfSampleCount),
-			_results(std::make_shared<CoordinationAnalysisResults>(positions->size(), rdfSampleCount)) {}
-
-		/// Computes the modifier's results.
-		virtual void perform() override;
 
 		/// Returns the property storage that contains the input particle positions.
 		const ConstPropertyPtr& positions() const { return _positions; }
@@ -127,8 +119,11 @@ private:
 		const FloatType _cutoff;
 		const int _rdfSampleCount;
 		const SimulationCell _simCell;
-		const ConstPropertyPtr _positions;
-		std::shared_ptr<CoordinationAnalysisResults> _results;
+		ConstPropertyPtr _positions;
+		const PropertyPtr _coordinationNumbers;
+		const PropertyPtr _rdfX;
+		const PropertyPtr _rdfY;
+		ParticleOrderingFingerprint _inputFingerprint;
 	};
 
 private:

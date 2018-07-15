@@ -66,29 +66,20 @@ protected:
 	
 private:
 
-	/// Holds the modifier's results.
-	class DiamondIdentificationResults : public StructureIdentificationResults
-	{
-	public:
-
-		/// Inherit constructor of base class.
-		using StructureIdentificationResults::StructureIdentificationResults;
-
-		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-	};
-
 	/// Analysis engine that performs the structure identification
 	class DiamondIdentificationEngine : public StructureIdentificationEngine
 	{
 	public:
 
 		/// Constructor.
-		DiamondIdentificationEngine(ConstPropertyPtr positions, const SimulationCell& simCell, QVector<bool> typesToIdentify, ConstPropertyPtr selection) :
-			StructureIdentificationEngine(std::move(positions), simCell, std::move(typesToIdentify), std::move(selection)) {}
+		DiamondIdentificationEngine(ParticleOrderingFingerprint fingerprint, ConstPropertyPtr positions, const SimulationCell& simCell, QVector<bool> typesToIdentify, ConstPropertyPtr selection) :
+			StructureIdentificationEngine(std::move(fingerprint), std::move(positions), simCell, std::move(typesToIdentify), std::move(selection)) {}
 
 		/// Computes the modifier's results.
 		virtual void perform() override;
+
+		/// Injects the computed results into the data pipeline.
+		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 	};
 };
 

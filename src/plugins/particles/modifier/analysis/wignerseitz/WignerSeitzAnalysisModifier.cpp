@@ -88,10 +88,6 @@ Future<AsynchronousModifier::ComputeEnginePtr> WignerSeitzAnalysisModifier::crea
 		typeProperty = ptypeProp->storage();
 	}
 
-	// Create the results storage, which holds a copy of the reference state.
-	// We are going to need the reference state in the apply() method.
-	auto resultStorage = std::make_shared<WignerSeitzAnalysisResults>(validityInterval, referenceState);
-
 	// If output of the displaced configuration is requested, obtain types of the reference sites.
 	ConstPropertyPtr referenceTypeProperty;
 	ConstPropertyPtr referenceIdentifierProperty;
@@ -99,23 +95,24 @@ Future<AsynchronousModifier::ComputeEnginePtr> WignerSeitzAnalysisModifier::crea
 		if(ParticleProperty* prop =  ParticleProperty::findInState(referenceState, ParticleProperty::TypeProperty))
 			referenceTypeProperty = prop->storage();
 		
-		// Create output properties:
-		resultStorage->setSiteTypes(std::make_shared<PropertyStorage>(posProperty->size(), PropertyStorage::Int, 1, 0, tr("Site Type"), false));
-		resultStorage->setSiteIndices(std::make_shared<PropertyStorage>(posProperty->size(), PropertyStorage::Int64, 1, 0, tr("Site Index"), false));
 		if(ParticleProperty* idProp = ParticleProperty::findInState(referenceState, ParticleProperty::IdentifierProperty)) {
-			resultStorage->setSiteIdentifiers(std::make_shared<PropertyStorage>(posProperty->size(), PropertyStorage::Int64, 1, 0, tr("Site Identifier"), false));
 			referenceIdentifierProperty = idProp->storage();
 		}
 	}
 
 	// Create compute engine instance. Pass all relevant modifier parameters and the input data to the engine.
-	auto engine = std::make_shared<WignerSeitzAnalysisEngine>(resultStorage, posProperty->storage(), inputCell->data(),
+	auto engine = std::make_shared<WignerSeitzAnalysisEngine>(validityInterval, posProperty->storage(), inputCell->data(),
+			referenceState,
 			refPosProperty->storage(), refCell->data(), affineMapping(), std::move(typeProperty), ptypeMinId, ptypeMaxId,
 			std::move(referenceTypeProperty), std::move(referenceIdentifierProperty));
 
-	// This is to ensure that the results storage, and with it the reference state, stay alive and do not get 
-	// released before the compute engine finishes and control has returned to the main thread.
-	engine->finally(dataset()->executor(), [resultStorage = std::move(resultStorage)]() {});
+	// Create output properties:
+	if(outputCurrentConfig()) {
+		if(referenceIdentifierProperty)
+			engine->setSiteIdentifiers(std::make_shared<PropertyStorage>(posProperty->size(), PropertyStorage::Int64, 1, 0, tr("Site Identifier"), false));
+		engine->setSiteTypes(std::make_shared<PropertyStorage>(posProperty->size(), PropertyStorage::Int, 1, 0, tr("Site Type"), false));
+		engine->setSiteIndices(std::make_shared<PropertyStorage>(posProperty->size(), PropertyStorage::Int64, 1, 0, tr("Site Index"), false));
+	}
 
 	return engine;
 }
@@ -125,7 +122,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> WignerSeitzAnalysisModifier::crea
 ******************************************************************************/
 void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 {
-	setProgressText(tr("Performing Wigner-Seitz cell analysis"));
+	task()->setProgressText(tr("Performing Wigner-Seitz cell analysis"));
 
 	if(affineMapping() == TO_CURRENT_CELL)
 		throw Exception(tr("Remapping coordinates to the current cell is not supported by the Wigner-Seitz analysis routine. Only remapping to the reference cell or no mapping at all are supported options."));
@@ -136,7 +133,7 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 
 	// Prepare the closest-point query structure.
 	NearestNeighborFinder neighborTree(0);
-	if(!neighborTree.prepare(*refPositions(), refCell(), nullptr, this))
+	if(!neighborTree.prepare(*refPositions(), refCell(), nullptr, task().get()))
 		return;
 
 	// Determine the number of components of the occupancy property.
@@ -165,14 +162,14 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 
 	// Allocate atoms -> sites lookup map if needed.
 	std::vector<size_t> atomsToSites;
-	if(_results->siteTypes()) {
+	if(siteTypes()) {
 		atomsToSites.resize(positions()->size());
 	}
 
 	// Assign particles to reference sites.
 	if(ncomponents == 1) {
 		// Without per-type occupancies:
-		parallelFor(positions()->size(), *this, [this, &neighborTree, tm, &occupancyArray, &atomsToSites](size_t index) {
+		parallelFor(positions()->size(), *task(), [this, &neighborTree, tm, &occupancyArray, &atomsToSites](size_t index) {
 			const Point3& p = positions()->getPoint3(index);
 			FloatType closestDistanceSq;
 			size_t closestIndex = neighborTree.findClosestParticle((affineMapping() == TO_REFERENCE_CELL) ? (tm * p) : p, closestDistanceSq);
@@ -184,7 +181,7 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 	}
 	else {
 		// With per-type occupancies:
-		parallelFor(positions()->size(), *this, [this, &neighborTree, typemin, ncomponents, tm, &occupancyArray, &atomsToSites](size_t index) {
+		parallelFor(positions()->size(), *task(), [this, &neighborTree, typemin, ncomponents, tm, &occupancyArray, &atomsToSites](size_t index) {
 			const Point3& p = positions()->getPoint3(index);
 			FloatType closestDistanceSq;
 			size_t closestIndex = neighborTree.findClosestParticle((affineMapping() == TO_REFERENCE_CELL) ? (tm * p) : p, closestDistanceSq);
@@ -195,29 +192,29 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 				atomsToSites[index] = closestIndex;
 		});
 	}
-	if(isCanceled()) return;
+	if(task()->isCanceled()) return;
 	
 	// Create output storage.
-	_results->setOccupancyNumbers(std::make_shared<PropertyStorage>(
-		_results->siteTypes() ? positions()->size() : refPositions()->size(), 
+	setOccupancyNumbers(std::make_shared<PropertyStorage>(
+		siteTypes() ? positions()->size() : refPositions()->size(), 
 		PropertyStorage::Int, ncomponents, 0, tr("Occupancy"), false));
 	if(ncomponents > 1 && typemin != 1) {
 		QStringList componentNames;
 		for(int i = typemin; i <= typemax; i++)
 			componentNames.push_back(QString::number(i));
-		_results->occupancyNumbers()->setComponentNames(componentNames);
+		occupancyNumbers()->setComponentNames(componentNames);
 	}
 	
 	// Copy data from atomic array to output buffer.
-	if(!_results->siteTypes()) {
-		std::copy(occupancyArray.begin(), occupancyArray.end(), _results->occupancyNumbers()->dataInt());
+	if(!siteTypes()) {
+		std::copy(occupancyArray.begin(), occupancyArray.end(), occupancyNumbers()->dataInt());
 	}
 	else {
 		// Map occupancy numbers from sites to atoms.
-		int* occ = _results->occupancyNumbers()->dataInt();
-		int* st = _results->siteTypes()->dataInt();
-		auto sidx = _results->siteIndices()->dataInt64();
-		auto sid = _results->siteIdentifiers() ? _results->siteIdentifiers()->dataInt64() : nullptr;
+		int* occ = occupancyNumbers()->dataInt();
+		int* st = siteTypes()->dataInt();
+		auto sidx = siteIndices()->dataInt64();
+		auto sid = siteIdentifiers() ? siteIdentifiers()->dataInt64() : nullptr;
 		for(size_t siteIndex : atomsToSites) {
 			for(int j = 0; j < ncomponents; j++) {
 				*occ++ = occupancyArray[siteIndex * ncomponents + j];
@@ -226,14 +223,14 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 			*sidx++ = siteIndex;
 			if(sid) *sid++ = _referenceIdentifierProperty->getInt64(siteIndex); 
 		}
-		OVITO_ASSERT(occ == _results->occupancyNumbers()->dataInt() + _results->occupancyNumbers()->size() * _results->occupancyNumbers()->componentCount());
+		OVITO_ASSERT(occ == occupancyNumbers()->dataInt() + occupancyNumbers()->size() * occupancyNumbers()->componentCount());
 	}
 
 	// Count defects.
 	if(ncomponents == 1) {
 		for(int oc : occupancyArray) {
-			if(oc == 0) _results->incrementVacancyCount();
-			else if(oc > 1) _results->incrementInterstitialCount(oc - 1);
+			if(oc == 0) incrementVacancyCount();
+			else if(oc > 1) incrementInterstitialCount(oc - 1);
 		}
 	}
 	else {
@@ -243,19 +240,16 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 			for(int j = 0; j < ncomponents; j++) {
 				oc += *o++;
 			}
-			if(oc == 0) _results->incrementVacancyCount();
-			else if(oc > 1) _results->incrementInterstitialCount(oc - 1);
+			if(oc == 0) incrementVacancyCount();
+			else if(oc > 1) incrementInterstitialCount(oc - 1);
 		}
 	}
-	
-	// Return the results of the compute engine.
-	setResult(std::move(_results));
 }
 
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState WignerSeitzAnalysisModifier::WignerSeitzAnalysisResults::apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+PipelineFlowState WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	PipelineFlowState output;
 	if(!siteTypes()) {

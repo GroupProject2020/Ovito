@@ -65,43 +65,30 @@ protected:
 
 private:
 
-	/// Holds the modifier's results.
-	class VoroTopAnalysisResults : public StructureIdentificationResults
-	{
-	public:
-
-		/// Constructor.
-		VoroTopAnalysisResults(size_t particleCount, const std::shared_ptr<Filter>& filter) : 
-			StructureIdentificationResults(particleCount),
-			_filter(filter) {}
-
-		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState apply(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-	
-		/// Returns the VoroTop filter definition.
-		const std::shared_ptr<Filter>& filter() const { return _filter; }
-	
-	private:
-
-		/// The VoroTop filter definition.
-		std::shared_ptr<Filter> _filter;
-	};
-
 	/// Compute engine that performs the actual analysis in a background thread.
 	class VoroTopAnalysisEngine : public StructureIdentificationEngine
 	{
 	public:
 
 		/// Constructor.
-		VoroTopAnalysisEngine(const TimeInterval& validityInterval, ConstPropertyPtr positions, ConstPropertyPtr selection,
+		VoroTopAnalysisEngine(ParticleOrderingFingerprint fingerprint, const TimeInterval& validityInterval, ConstPropertyPtr positions, ConstPropertyPtr selection,
 							std::vector<FloatType> radii, const SimulationCell& simCell, const QString& filterFile, std::shared_ptr<Filter> filter, QVector<bool> typesToIdentify) :
-			StructureIdentificationEngine(std::move(positions), simCell, std::move(typesToIdentify), std::move(selection)),
+			StructureIdentificationEngine(std::move(fingerprint), std::move(positions), simCell, std::move(typesToIdentify), std::move(selection)),
 			_filterFile(filterFile),
 			_filter(std::move(filter)),
 			_radii(std::move(radii)) {}
 
+		/// This method is called by the system after the computation was successfully completed.
+		virtual void cleanup() override {
+			decltype(_radii){}.swap(_radii);
+			StructureIdentificationEngine::cleanup();
+		}
+
 		/// Computes the modifier's results and stores them in this object for later retrieval.
 		virtual void perform() override;
+
+		/// Injects the computed results into the data pipeline.
+		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 		/// Processes a single Voronoi cell.
 		void processCell(voro::voronoicell_neighbor& vcell, size_t particleIndex, PropertyStorage& structures, QMutex* mutex);
