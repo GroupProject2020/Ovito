@@ -69,6 +69,7 @@ public:
 		OVITO_ASSERT_MSG(isValid(), "SharedFuture::results()", "Future must be valid.");
 		OVITO_ASSERT_MSG(isFinished(), "SharedFuture::results()", "Future must be in fulfilled state.");
 		OVITO_ASSERT_MSG(!isCanceled(), "SharedFuture::results()", "Future must not be canceled.");
+		OVITO_ASSERT_MSG(std::tuple_size<tuple_type>::value != 0, "SharedFuture::results()", "Future must not be of type <void>.");
 	    sharedState()->throwPossibleException();
 		return sharedState()->template getResults<tuple_type>();
 	}

@@ -63,7 +63,8 @@ Future<PipelineFlowState> AsynchronousModifier::evaluate(TimePoint time, Modifie
 			
 			// Execute the engine in a worker thread.
 			// Collect results from the engine in the UI thread once it has finished running.
-			return dataset()->container()->taskManager().runTaskAsync(engine->task())
+			const auto& task = engine->task();
+			return dataset()->container()->taskManager().runTaskAsync(task)
 				.then(executor(), [this, time, modApp, input = std::move(input), engine = std::move(engine)]() mutable {
 					if(modApp && modApp->modifier() == this) {
 						
