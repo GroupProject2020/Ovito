@@ -35,47 +35,47 @@
               <entry namest="name" nameend="descr" align="center" role="subth">Analysis</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.atomic_strain">Atomic strain</link></entry>
+              <entry><link linkend="particles.modifiers.atomic_strain">Atomic&#xA0;strain</link></entry>
               <entry>Calculates local strain tensors based on the relative motion of neighboring particles. </entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.bin_and_reduce">Bin and reduce</link></entry>
+              <entry><link linkend="particles.modifiers.bin_and_reduce">Bin&#xA0;and&#xA0;reduce</link></entry>
               <entry>Aggregates a particle property over a one- or two-dimensional bin grid.</entry>
             </row>          
             <row>
-              <entry><link linkend="particles.modifiers.bond_angle_analysis">Bond-angle analysis</link></entry>
+              <entry><link linkend="particles.modifiers.bond_angle_analysis">Bond-angle&#xA0;analysis</link></entry>
               <entry>Identification of common crystal structures based on the bond-angle analysis method of Ackland and Jones.</entry>
             </row>          
             <row>
-              <entry><link linkend="particles.modifiers.correlation_function">Correlation function</link></entry>
+              <entry><link linkend="particles.modifiers.correlation_function">Correlation&#xA0;function</link></entry>
               <entry>Calculates the spatial cross-correlation function between two particle properties.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.dislocation_analysis">Dislocation analysis (DXA)</link></entry>
+              <entry><link linkend="particles.modifiers.dislocation_analysis">Dislocation&#xA0;analysis&#xA0;(DXA)</link></entry>
               <entry>Identifies dislocation defects in a crystal.</entry>
             </row>          
             <row>
-              <entry><link linkend="particles.modifiers.displacement_vectors">Displacement vectors</link></entry>
+              <entry><link linkend="particles.modifiers.displacement_vectors">Displacement&#xA0;vectors</link></entry>
               <entry>Calculates the displacements of particles based on an initial and a deformed configuration.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.centrosymmetry">Centrosymmetry parameter</link></entry>
+              <entry><link linkend="particles.modifiers.centrosymmetry">Centrosymmetry&#xA0;parameter</link></entry>
               <entry>Calculates the centrosymmetry parameter for every particle.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.cluster_analysis">Cluster analysis</link></entry>
+              <entry><link linkend="particles.modifiers.cluster_analysis">Cluster&#xA0;analysis</link></entry>
               <entry>Decomposes a particle system into clusters of particles.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.common_neighbor_analysis">Common neighbor analysis</link></entry>
+              <entry><link linkend="particles.modifiers.common_neighbor_analysis">Common&#xA0;neighbor&#xA0;analysis</link></entry>
               <entry>Performs the common neighbor analysis (CNA) to determine local crystal structures.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.coordination_analysis">Coordination analysis</link></entry>
+              <entry><link linkend="particles.modifiers.coordination_analysis">Coordination&#xA0;analysis</link></entry>
               <entry>Determines the number of neighbors of each particle and computes the radial distribution function for the system.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.elastic_strain">Elastic strain calculation</link></entry>
+              <entry><link linkend="particles.modifiers.elastic_strain">Elastic&#xA0;strain&#xA0;calculation</link></entry>
               <entry>Calculates the atomic-level elastic strain tensors in crystalline systems.</entry>
             </row>
             <row>
@@ -83,27 +83,27 @@
               <entry>Computes the histogram of a property.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.identify_diamond_structure">Identify diamond structure</link></entry>
+              <entry><link linkend="particles.modifiers.identify_diamond_structure">Identify&#xA0;diamond&#xA0;structure</link></entry>
               <entry>Identifies atoms that are arranged in a cubic or hexagonal diamond lattice.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.polyhedral_template_matching">Polyhedral Template Matching</link></entry>
+              <entry><link linkend="particles.modifiers.polyhedral_template_matching">Polyhedral&#xA0;template&#xA0;matching</link></entry>
               <entry>Identifies common crystal structures using the PTM method.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.scatter_plot">Scatter plot</link></entry>
+              <entry><link linkend="particles.modifiers.scatter_plot">Scatter&#xA0;plot</link></entry>
               <entry>Generates a scatter plot of two properties.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.voronoi_analysis">Voronoi analysis</link></entry>
+              <entry><link linkend="particles.modifiers.voronoi_analysis">Voronoi&#xA0;analysis</link></entry>
               <entry>Computes the coordination number, atomic volume, and Voronoi index of particles from their Voronoi polyhedra.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.vorotop_analysis">VoroTop analysis</link></entry>
+              <entry><link linkend="particles.modifiers.vorotop_analysis">VoroTop&#xA0;analysis</link></entry>
               <entry>Identifies local structure of particles using the topology of their Voronoi polyhedra.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.wigner_seitz_analysis">Wigner-Seitz defect analysis</link></entry>
+              <entry><link linkend="particles.modifiers.wigner_seitz_analysis">Wigner-Seitz&#xA0;defect&#xA0;analysis</link></entry>
               <entry>Identifies point defects (vacancies and interstitials) in a crystal lattice.</entry>
             </row>
 
@@ -112,15 +112,15 @@
               <entry namest="name" nameend="descr" align="center" role="subth">Coloring</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.ambient_occlusion">Ambient occlusion</link></entry>
+              <entry><link linkend="particles.modifiers.ambient_occlusion">Ambient&#xA0;occlusion</link></entry>
               <entry>Performs an ambient occlusion calculation to shade particles.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.assign_color">Assign color</link></entry>
+              <entry><link linkend="particles.modifiers.assign_color">Assign&#xA0;color</link></entry>
               <entry>Assigns a color to all selected elements.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.color_coding">Color coding</link></entry>
+              <entry><link linkend="particles.modifiers.color_coding">Color&#xA0;coding</link></entry>
               <entry>Colors particles or bonds based on the value of a property.</entry>
             </row>
 
@@ -129,39 +129,39 @@
               <entry namest="name" nameend="descr" align="center" role="subth">Modification</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.affine_transformation">Affine transformation</link></entry>
+              <entry><link linkend="particles.modifiers.affine_transformation">Affine&#xA0;transformation</link></entry>
               <entry>Applies an affine transformation to the system.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.combine_particle_sets">Combine particle sets</link></entry>
+              <entry><link linkend="particles.modifiers.combine_particle_sets">Combine&#xA0;particle&#xA0;sets</link></entry>
               <entry>Merges the particles from two separate files into one dataset.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.compute_bond_lengths">Compute bond lengths</link></entry>
+              <entry><link linkend="particles.modifiers.compute_bond_lengths">Compute&#xA0;bond&#xA0;lengths</link></entry>
               <entry>Computes the length of each bond in the system.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.compute_property">Compute property</link></entry>
+              <entry><link linkend="particles.modifiers.compute_property">Compute&#xA0;property</link></entry>
               <entry>Computes a new property for each particle based a user-defined formula.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.delete_selected_particles">Delete selected</link></entry>
+              <entry><link linkend="particles.modifiers.delete_selected_particles">Delete&#xA0;selected</link></entry>
               <entry>Deletes all selected elements.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.freeze_property">Freeze property</link></entry>
+              <entry><link linkend="particles.modifiers.freeze_property">Freeze&#xA0;property</link></entry>
               <entry>Freezes the values of a dynamic particle property at a given animation time to make them available at other times.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.interpolate_trajectory">Interpolate trajectory</link></entry>
+              <entry><link linkend="particles.modifiers.interpolate_trajectory">Interpolate&#xA0;trajectory</link></entry>
               <entry>Computes intermediate particle positions by interpolating a sequence of coarser snapshots.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.load_trajectory">Load trajectory</link></entry>
+              <entry><link linkend="particles.modifiers.load_trajectory">Load&#xA0;trajectory</link></entry>
               <entry>Loads time-dependent atomic positions from a separate trajectory file.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.python_script">Python script</link></entry>
+              <entry><link linkend="particles.modifiers.python_script">Python&#xA0;script</link></entry>
               <entry>Allows you to write your own modifier in Python.</entry>
             </row>
             <row>
@@ -173,7 +173,7 @@
               <entry>Cuts the structure along an infinite plane.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.wrap_at_periodic_boundaries">Wrap at periodic boundaries</link></entry>
+              <entry><link linkend="particles.modifiers.wrap_at_periodic_boundaries">Wrap&#xA0;at&#xA0;periodic&#xA0;boundaries</link></entry>
               <entry>Maps particles outside of the simulation box back into the box.</entry>
             </row>
 
@@ -182,27 +182,27 @@
               <entry namest="name" nameend="descr" align="center" role="subth">Selection</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.clear_selection">Clear selection</link></entry>
+              <entry><link linkend="particles.modifiers.clear_selection">Clear&#xA0;selection</link></entry>
               <entry>Resets the selection state of all elements.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.expand_selection">Expand selection</link></entry>
+              <entry><link linkend="particles.modifiers.expand_selection">Expand&#xA0;selection</link></entry>
               <entry>Selects particles that are neighbors of already selected particles.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.manual_selection">Manual selection</link></entry>
+              <entry><link linkend="particles.modifiers.manual_selection">Manual&#xA0;selection</link></entry>
               <entry>Allows you to select particles with the mouse.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.invert_selection">Invert selection</link></entry>
+              <entry><link linkend="particles.modifiers.invert_selection">Invert&#xA0;selection</link></entry>
               <entry>Inverts the selection state of each element.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.expression_select">Expression selection</link></entry>
+              <entry><link linkend="particles.modifiers.expression_select">Expression&#xA0;selection</link></entry>
               <entry>Selects particles based on a user-defined criterion.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.select_particle_type">Select type</link></entry>
+              <entry><link linkend="particles.modifiers.select_particle_type">Select&#xA0;type</link></entry>
               <entry>Selects all elements of a given type.</entry>
             </row>
 
@@ -211,23 +211,23 @@
               <entry namest="name" nameend="descr" align="center" role="subth">Visualization</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.construct_surface_mesh">Construct surface mesh</link></entry>
+              <entry><link linkend="particles.modifiers.construct_surface_mesh">Construct&#xA0;surface&#xA0;mesh</link></entry>
               <entry>Constructs a triangle mesh representing the surface of a solid.</entry>
             </row>          
             <row>
-              <entry><link linkend="particles.modifiers.create_bonds">Create bonds</link></entry>
+              <entry><link linkend="particles.modifiers.create_bonds">Create&#xA0;bonds</link></entry>
               <entry>Creates bonds between particles.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.create_isosurface">Create isosurface</link></entry>
+              <entry><link linkend="particles.modifiers.create_isosurface">Create&#xA0;isosurface</link></entry>
               <entry>Generates an isosurface from a scalar field.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.coordination_polyhedra">Coordination polyhedra</link></entry>
+              <entry><link linkend="particles.modifiers.coordination_polyhedra">Coordination&#xA0;polyhedra</link></entry>
               <entry>Shows coordination polyhedra.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.generate_trajectory_lines">Generate trajectory lines</link></entry>
+              <entry><link linkend="particles.modifiers.generate_trajectory_lines">Generate&#xA0;trajectory&#xA0;lines</link></entry>
               <entry>Generates trajectory lines from the time-dependent particle positions.</entry>
             </row>
 

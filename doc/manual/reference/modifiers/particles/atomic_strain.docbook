@@ -76,21 +76,107 @@
   </simplesect>
 
   <simplesect>
+    <title>Two-dimensional systems</title>
+    <para>
+      Depending on the selected <link linkend="scene_objects.simulation_cell">dimensionality</link> of the input simulation cell, 
+      the atomic strain calculation is either performed in 2D or 3D mode. In 3D mode, all 9 components of the atomic
+      deformation gradient tensor are calculated from the relative motion vectors of neighboring particles using
+      a least-squares fit. In 2D mode, only 4 independent components are calculated:
+      <informaltable>
+        <tgroup cols="3">
+          <thead>
+            <row>
+              <entry></entry>
+              <entry>3D mode</entry>
+              <entry>2D mode</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>Deformation gradient <mathphrase>F</mathphrase></entry>
+              <entry><screen>
+                <mathphrase>F<subscript>xx</subscript></mathphrase> <mathphrase>F<subscript>xy</subscript></mathphrase> <mathphrase>F<subscript>xz</subscript></mathphrase>
+                <mathphrase>F<subscript>yx</subscript></mathphrase> <mathphrase>F<subscript>yy</subscript></mathphrase> <mathphrase>F<subscript>yz</subscript></mathphrase>
+                <mathphrase>F<subscript>zx</subscript></mathphrase> <mathphrase>F<subscript>zy</subscript></mathphrase> <mathphrase>F<subscript>zz</subscript></mathphrase>
+                </screen>
+              </entry>
+              <entry><screen>
+                <mathphrase>F<subscript>xx</subscript></mathphrase> <mathphrase>F<subscript>xy</subscript></mathphrase> 0
+                <mathphrase>F<subscript>yx</subscript></mathphrase> <mathphrase>F<subscript>yy</subscript></mathphrase> 0
+                0   0  1
+                </screen>
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>  
+    </para>
+  </simplesect>
+
+  <simplesect>
     <title>More on the micromechanical quantities</title>
     <para>
-      The atomic strain calculation uses finite-strain theory. Accordingly, strain is measured using the
+      The atomic strain calculation in OVITO is based on finite-strain theory. Accordingly, strain is measured using the
       <link xlink:href="https://en.wikipedia.org/wiki/Finite_strain_theory#Finite_strain_tensors">Green-Lagrangian strain tensor</link> 
       <inlineequation><mathphrase>E=1/2(F<superscript>T</superscript>F-I)</mathphrase></inlineequation>. 
       On the basis of this symmetric strain tensor, the modifier also calculates the <emphasis>von Mises</emphasis> local shear invariant and the
       volumetric (hydrostatic) part of the strain tensor and outputs these scalar quantities as particle properties named
       <literal>Shear Strain</literal> and <literal>Volumetric Strain</literal>, respectively. The former is a good measure for shear deformations 
-      in arbitrary directions.
+      along arbitrary directions.
+      <informaltable>
+        <tgroup cols="3">
+          <thead>
+            <row>
+              <entry></entry>
+              <entry>3D mode</entry>
+              <entry>2D mode</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>Shear strain</entry>
+              <entry>
+                <inlineequation>
+                  [<mathphrase>E<subscript>xy</subscript></mathphrase><superscript>2</superscript> + 
+                   <mathphrase>E<subscript>xz</subscript></mathphrase><superscript>2</superscript> + 
+                   <mathphrase>E<subscript>yz</subscript></mathphrase><superscript>2</superscript> + 
+                    1/6
+                    ((<mathphrase>E<subscript>xx</subscript></mathphrase> - <mathphrase>E<subscript>yy</subscript></mathphrase>)<superscript>2</superscript> +
+                    (<mathphrase>E<subscript>xx</subscript></mathphrase> - <mathphrase>E<subscript>zz</subscript></mathphrase>)<superscript>2</superscript> +
+                    (<mathphrase>E<subscript>yy</subscript></mathphrase> - <mathphrase>E<subscript>zz</subscript></mathphrase>)<superscript>2</superscript>)]
+                    <superscript>1/2</superscript>
+                </inlineequation>
+              </entry>
+              <entry>
+                <inlineequation>
+                  [<mathphrase>E<subscript>xy</subscript></mathphrase><superscript>2</superscript> + 
+                    1/2 (<mathphrase>E<subscript>xx</subscript></mathphrase> - <mathphrase>E<subscript>yy</subscript></mathphrase>)<superscript>2</superscript>]
+                    <superscript>1/2</superscript>
+                </inlineequation>
+              </entry>
+            </row>
+            <row>
+              <entry>Volumetric strain</entry>
+              <entry>
+                <inlineequation>
+                  (<mathphrase>E<subscript>xx</subscript></mathphrase> + <mathphrase>E<subscript>yy</subscript></mathphrase> + <mathphrase>E<subscript>zz</subscript></mathphrase>) / 3
+                </inlineequation>
+              </entry>
+              <entry>
+                <inlineequation>
+                  (<mathphrase>E<subscript>xx</subscript></mathphrase> + <mathphrase>E<subscript>yy</subscript></mathphrase>) / 2
+                </inlineequation>
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>        
     </para>
     <para>
       The deformation gradient and the strain tensor both can only describe material deformations that are locally affine.
       In fact, the atomic deformation gradient tensor is computed such that it best describes only the affine component of the 
       true deformation, which may actually be non-affine within the spherical sampling volumes. Falk &amp; Langer (see reference below) have proposed a measure to
-      quantify the deviation of the true deformation of the particle system from the affine approximation that the local deformation
+      quantify the deviation of the true deformation from the affine approximation that the atomic deformation
       gradient represents. This measure, the <emphasis>non-affine squared displacement</emphasis> (<inlineequation><mathphrase>D<superscript>2</superscript><subscript>min</subscript></mathphrase></inlineequation>), 
       is basically the <link xlink:href="http://li.mit.edu/A/Graphics/A/annotate_atomic_strain/Doc/main.pdf">residual of the least-squares fit</link> through which the deformation gradient is calculated.
       It may be used as a diagnostic for identifying local irreversible shear transformations in amorphous solids, for example.
@@ -100,7 +186,7 @@
       Falk and Langer, which consists of summing up the squared differences between the actual displacements of neighbors and 
       the computed affine approximation. In the current implementation, this sum does <emphasis>not</emphasis> get divided by the
       number of neighbors within the cutoff range. Thus, the calculated <inlineequation><mathphrase>D<superscript>2</superscript><subscript>min</subscript></mathphrase></inlineequation>
-      value for a particle will depend on the number of neighbors that are included in the selected cutoff volume and will naturally rise
+      value for a particle is not normalized and will depend on the number of neighbors that are included in the selected cutoff volume. That means <inlineequation><mathphrase>D<superscript>2</superscript><subscript>min</subscript></mathphrase></inlineequation> values will naturally rise
       if you increase the cutoff radius.
     </para>
 
@@ -110,8 +196,8 @@
     <inlineequation><mathphrase>U</mathphrase></inlineequation> is symmetric positive definite. The local rotation <inlineequation><mathphrase>R</mathphrase></inlineequation> is encoded 
     as a quaternion <inlineequation>R=(X, Y, Z, W)</inlineequation> and is output by the modifier
     as a particle property named <literal>Rotation</literal>. From this, the angle of rotation (in radians) for each particle can subsequently be 
-    obtained as <inlineequation><mathphrase>theta=2*acos(Rotation.W)</mathphrase></inlineequation>,
-    e.g., using the <link linkend="particles.modifiers.compute_property">Compute Property modifier</link>.
+    obtained as <inlineequation><mathphrase>theta=2*acos(Rotation.W)</mathphrase></inlineequation>
+    using e.g. the <link linkend="particles.modifiers.compute_property">Compute Property</link> modifier.
     </para>
   </simplesect>
 

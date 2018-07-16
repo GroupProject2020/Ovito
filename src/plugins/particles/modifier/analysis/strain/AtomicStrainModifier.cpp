@@ -286,15 +286,27 @@ void AtomicStrainModifier::AtomicStrainEngine::computeStrain(size_t particleInde
 
 	// Calculate von Mises shear strain.
 	double xydiff = strain.xx() - strain.yy();
-	double xzdiff = strain.xx() - strain.zz();
-	double yzdiff = strain.yy() - strain.zz();
-	double shearStrain = sqrt(strain.xy()*strain.xy() + strain.xz()*strain.xz() + strain.yz()*strain.yz() +
-			(xydiff*xydiff + xzdiff*xzdiff + yzdiff*yzdiff) / 6.0);
+	double shearStrain;
+	if(!cell().is2D()) {
+		double xzdiff = strain.xx() - strain.zz();
+		double yzdiff = strain.yy() - strain.zz();
+		shearStrain = sqrt(strain.xy()*strain.xy() + strain.xz()*strain.xz() + strain.yz()*strain.yz() +
+				(xydiff*xydiff + xzdiff*xzdiff + yzdiff*yzdiff) / 6.0);
+	}
+	else {
+		shearStrain = sqrt(strain.xy()*strain.xy() + (xydiff*xydiff) / 2.0);
+	}
 	OVITO_ASSERT(std::isfinite(shearStrain));
 	shearStrains()->setFloat(particleIndex, (FloatType)shearStrain);
 
 	// Calculate volumetric component.
-	double volumetricStrain = (strain(0,0) + strain(1,1) + strain(2,2)) / 3.0;
+	double volumetricStrain;
+	if(!cell().is2D()) {
+		volumetricStrain = (strain(0,0) + strain(1,1) + strain(2,2)) / 3.0;
+	}
+	else {
+		volumetricStrain = (strain(0,0) + strain(1,1)) / 2.0;
+	}
 	OVITO_ASSERT(std::isfinite(volumetricStrain));
 	volumetricStrains()->setFloat(particleIndex, (FloatType)volumetricStrain);
 
