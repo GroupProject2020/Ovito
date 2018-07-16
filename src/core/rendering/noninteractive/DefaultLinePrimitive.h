@@ -35,7 +35,7 @@ class OVITO_CORE_EXPORT DefaultLinePrimitive : public LinePrimitive
 public:
 
 	/// Constructor.
-	DefaultLinePrimitive() {}
+	using LinePrimitive::LinePrimitive;
 
 	/// \brief Allocates a geometry buffer with the given number of vertices.
 	virtual void setVertexCount(int vertexCount, FloatType lineWidth) override {

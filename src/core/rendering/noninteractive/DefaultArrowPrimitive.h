@@ -45,8 +45,7 @@ public:
 public:
 
 	/// Constructor.
-	DefaultArrowPrimitive(ArrowPrimitive::Shape shape, ShadingMode shadingMode, RenderingQuality renderingQuality) :
-		ArrowPrimitive(shape, shadingMode, renderingQuality) {}
+	using ArrowPrimitive::ArrowPrimitive;
 
 	/// \brief Allocates a geometry buffer with the given number of elements.
 	virtual void startSetElements(int elementCount) override {

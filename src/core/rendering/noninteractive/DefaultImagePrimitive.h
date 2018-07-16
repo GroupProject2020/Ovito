@@ -35,7 +35,7 @@ class OVITO_CORE_EXPORT DefaultImagePrimitive : public ImagePrimitive
 public:
 
 	/// Constructor.
-	DefaultImagePrimitive() {}
+	using ImagePrimitive::ImagePrimitive;
 
 	/// \brief Returns true if the geometry buffer is filled and can be rendered with the given renderer.
 	virtual bool isValid(SceneRenderer* renderer) override;

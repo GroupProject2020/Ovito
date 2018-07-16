@@ -57,8 +57,8 @@ public:
 public:
 
 	/// Constructor.
-	ArrowPrimitive(Shape shape, ShadingMode shadingMode, RenderingQuality renderingQuality) :
-		_shape(shape), _shadingMode(shadingMode), _renderingQuality(renderingQuality) {}
+	ArrowPrimitive(Shape shape, ShadingMode shadingMode, RenderingQuality renderingQuality, bool translucentElements) :
+		_shape(shape), _shadingMode(shadingMode), _renderingQuality(renderingQuality), _translucentElements(translucentElements) {}
 
 	/// \brief Allocates a geometry buffer with the given number of elements.
 	virtual void startSetElements(int elementCount) = 0;
@@ -89,6 +89,9 @@ public:
 	/// \brief Returns the selected element shape.
 	Shape shape() const { return _shape; }
 
+	/// \brief Returns whether elements are displayed as semi-transparent if their alpha color value is smaller than one.
+	bool translucentElements() const { return _translucentElements; }
+
 private:
 
 	/// Controls the shading.
@@ -100,6 +103,9 @@ private:
 	/// The shape of the elements.
 	Shape _shape;
 
+	/// Indicates whether some of the elements may be semi-transparent.
+	/// If false, the alpha color value is ignored.
+	bool _translucentElements;
 };
 
 OVITO_END_INLINE_NAMESPACE

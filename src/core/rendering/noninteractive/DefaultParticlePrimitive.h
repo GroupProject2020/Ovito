@@ -35,8 +35,7 @@ class OVITO_CORE_EXPORT DefaultParticlePrimitive : public ParticlePrimitive
 public:
 
 	/// Constructor.
-	DefaultParticlePrimitive(ShadingMode shadingMode, RenderingQuality renderingQuality, ParticleShape shape, bool translucentParticles) :
-		ParticlePrimitive(shadingMode, renderingQuality, shape, translucentParticles) {}
+	using ParticlePrimitive::ParticlePrimitive;
 
 	/// \brief Allocates a geometry buffer with the given number of particles.
 	virtual void setSize(int particleCount) override {

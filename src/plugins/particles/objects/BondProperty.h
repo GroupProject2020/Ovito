@@ -76,6 +76,7 @@ public:
 		LengthProperty = PropertyStorage::FirstSpecificProperty,
 		TopologyProperty,
 		PeriodicImageProperty,
+		TransparencyProperty
 	};
 
 public:

@@ -31,12 +31,12 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAM
 /**
  * \brief Buffer object that stores a set of arrows to be rendered in the viewports.
  */
-class OpenGLArrowPrimitive : public ArrowPrimitive
+class OpenGLArrowPrimitive : public ArrowPrimitive, public std::enable_shared_from_this<OpenGLArrowPrimitive>
 {
 public:
 
 	/// Constructor.
-	OpenGLArrowPrimitive(OpenGLSceneRenderer* renderer, ArrowPrimitive::Shape shape, ShadingMode shadingMode, RenderingQuality renderingQuality);
+	OpenGLArrowPrimitive(OpenGLSceneRenderer* renderer, ArrowPrimitive::Shape shape, ShadingMode shadingMode, RenderingQuality renderingQuality, bool translucentElements);
 
 	/// \brief Allocates a geometry buffer with the given number of elements.
 	virtual void startSetElements(int elementCount) override;

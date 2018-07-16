@@ -35,7 +35,7 @@ class OVITO_CORE_EXPORT DefaultTextPrimitive : public TextPrimitive
 public:
 
 	/// Constructor.
-	DefaultTextPrimitive() {}
+	using TextPrimitive::TextPrimitive;
 
 	/// \brief Returns true if the geometry buffer is filled and can be rendered with the given renderer.
 	virtual bool isValid(SceneRenderer* renderer) override;

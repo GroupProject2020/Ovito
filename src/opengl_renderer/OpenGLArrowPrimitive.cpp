@@ -28,8 +28,8 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Rendering) OVITO_BEGIN_INLINE_NAM
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-OpenGLArrowPrimitive::OpenGLArrowPrimitive(OpenGLSceneRenderer* renderer, ArrowPrimitive::Shape shape, ShadingMode shadingMode, RenderingQuality renderingQuality) :
-	ArrowPrimitive(shape, shadingMode, renderingQuality),
+OpenGLArrowPrimitive::OpenGLArrowPrimitive(OpenGLSceneRenderer* renderer, ArrowPrimitive::Shape shape, ShadingMode shadingMode, RenderingQuality renderingQuality, bool translucentElements) :
+	ArrowPrimitive(shape, shadingMode, renderingQuality, translucentElements),
 	_contextGroup(QOpenGLContextGroup::currentContextGroup()),
 	_elementCount(-1), _cylinderSegments(16), _verticesPerElement(0),
 	_mappedVerticesWithNormals(nullptr), _mappedVerticesWithElementInfo(nullptr),
@@ -556,8 +556,22 @@ void OpenGLArrowPrimitive::render(SceneRenderer* renderer)
 	if(_elementCount <= 0 || !vpRenderer)
 		return;
 
+	// If object is translucent, don't render it during the first rendering pass.
+	// Queue primitive so that it gets rendered during the second pass.
+	if(!renderer->isPicking() && translucentElements() && vpRenderer->translucentPass() == false) {
+		vpRenderer->registerTranslucentPrimitive(shared_from_this());
+		return;
+	}
+
 	vpRenderer->rebindVAO();
 	
+	// Activate blend mode when rendering translucent elements.
+	if(!vpRenderer->isPicking() && translucentElements()) {
+		vpRenderer->glEnable(GL_BLEND);
+		vpRenderer->glBlendEquation(GL_FUNC_ADD);
+		vpRenderer->glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE_MINUS_DST_COLOR, GL_ONE);
+	}
+
 	if(shadingMode() == NormalShading) {
 		if(renderingQuality() == HighQuality && shape() == CylinderShape)
 			renderWithElementInfo(vpRenderer);
@@ -568,6 +582,10 @@ void OpenGLArrowPrimitive::render(SceneRenderer* renderer)
 		renderWithElementInfo(vpRenderer);
 	}
 	OVITO_REPORT_OPENGL_ERRORS();
+
+	// Deactivate blend mode after rendering translucent elements.
+	if(!vpRenderer->isPicking() && translucentElements())
+		vpRenderer->glDisable(GL_BLEND);
 }
 
 /******************************************************************************

@@ -35,7 +35,7 @@ class OVITO_CORE_EXPORT DefaultMarkerPrimitive : public MarkerPrimitive
 public:
 
 	/// Constructor.
-	DefaultMarkerPrimitive(MarkerShape shape) : MarkerPrimitive(shape) {}
+	using MarkerPrimitive::MarkerPrimitive;
 
 	/// \brief Allocates a geometry buffer with the given number of markers.
 	virtual void setCount(int markerCount) override {

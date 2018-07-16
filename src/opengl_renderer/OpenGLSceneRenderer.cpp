@@ -469,11 +469,12 @@ std::shared_ptr<ImagePrimitive> OpenGLSceneRenderer::createImagePrimitive()
 ******************************************************************************/
 std::shared_ptr<ArrowPrimitive> OpenGLSceneRenderer::createArrowPrimitive(ArrowPrimitive::Shape shape,
 		ArrowPrimitive::ShadingMode shadingMode,
-		ArrowPrimitive::RenderingQuality renderingQuality)
+		ArrowPrimitive::RenderingQuality renderingQuality,
+		bool translucentElements)
 {
 	OVITO_ASSERT(!isBoundingBoxPass());
 	makeContextCurrent();
-	return std::make_shared<OpenGLArrowPrimitive>(this, shape, shadingMode, renderingQuality);
+	return std::make_shared<OpenGLArrowPrimitive>(this, shape, shadingMode, renderingQuality, translucentElements);
 }
 
 /******************************************************************************

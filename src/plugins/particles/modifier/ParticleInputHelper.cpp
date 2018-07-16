@@ -116,12 +116,13 @@ std::vector<Color> ParticleInputHelper::inputBondColors(TimePoint time, TimeInte
 				}
 
 				// Query half-bond colors from vis element.
-				std::vector<Color> halfBondColors = bondsVis->halfBondColors(
+				std::vector<ColorA> halfBondColors = bondsVis->halfBondColors(
 						inputParticleCount(), 
 						inputStandardProperty<BondProperty>(BondProperty::TopologyProperty),
 						inputStandardProperty<BondProperty>(BondProperty::ColorProperty),
 						inputStandardProperty<BondProperty>(BondProperty::TypeProperty),
 						inputStandardProperty<BondProperty>(BondProperty::SelectionProperty),
+						nullptr, // No transparency needed here
 						particleVis, 
 						inputStandardProperty<ParticleProperty>(ParticleProperty::ColorProperty),
 						inputStandardProperty<ParticleProperty>(ParticleProperty::TypeProperty));
@@ -131,7 +132,7 @@ std::vector<Color> ParticleInputHelper::inputBondColors(TimePoint time, TimeInte
 				std::vector<Color> colors(inputBondCount());				
 				auto ci = halfBondColors.cbegin();
 				for(Color& co : colors) {
-					co = *ci;
+					co = Color(ci->r(), ci->g(), ci->b());
 					ci += 2;
 				}
 				return colors;

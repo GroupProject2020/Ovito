@@ -94,7 +94,8 @@ public:
 	/// Requests a new arrow geometry buffer from the renderer.
 	virtual std::shared_ptr<ArrowPrimitive> createArrowPrimitive(ArrowPrimitive::Shape shape,
 			ArrowPrimitive::ShadingMode shadingMode,
-			ArrowPrimitive::RenderingQuality renderingQuality) override;
+			ArrowPrimitive::RenderingQuality renderingQuality,
+			bool translucentElements) override;
 
 	/// Requests a new triangle mesh buffer from the renderer.
 	virtual std::shared_ptr<MeshPrimitive> createMeshPrimitive() override;

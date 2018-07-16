@@ -92,8 +92,9 @@ public:
 	virtual std::shared_ptr<ArrowPrimitive> createArrowPrimitive(
 			ArrowPrimitive::Shape shape,
 			ArrowPrimitive::ShadingMode shadingMode,
-			ArrowPrimitive::RenderingQuality renderingQuality) override {
-		return std::make_shared<DefaultArrowPrimitive>(shape, shadingMode, renderingQuality);
+			ArrowPrimitive::RenderingQuality renderingQuality,
+			bool translucentElements) override {
+		return std::make_shared<DefaultArrowPrimitive>(shape, shadingMode, renderingQuality, translucentElements);
 	}
 
 	/// Requests a new triangle mesh buffer from the renderer.

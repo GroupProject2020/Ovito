@@ -442,7 +442,7 @@ void PickOrbitCenterMode::renderOverlay3D(Viewport* vp, ViewportSceneRenderer* r
 	if(!renderer->isBoundingBoxPass()) {
 		// Create line buffer.
 		if(!_orbitCenterMarker || !_orbitCenterMarker->isValid(renderer)) {
-			_orbitCenterMarker = renderer->createArrowPrimitive(ArrowPrimitive::CylinderShape, ArrowPrimitive::NormalShading, ArrowPrimitive::HighQuality);
+			_orbitCenterMarker = renderer->createArrowPrimitive(ArrowPrimitive::CylinderShape, ArrowPrimitive::NormalShading, ArrowPrimitive::HighQuality, false);
 			_orbitCenterMarker->startSetElements(3);
 			_orbitCenterMarker->setElement(0, Point3(-1,0,0), Vector3(2,0,0), ColorA(1,0,0), FloatType(0.05));
 			_orbitCenterMarker->setElement(1, Point3(0,-1,0), Vector3(0,2,0), ColorA(0,1,0), FloatType(0.05));

@@ -68,6 +68,7 @@ PropertyPtr BondProperty::OOMetaClass::createStandardStorage(size_t bondsCount, 
 		stride = sizeof(int);
 		break;
 	case LengthProperty:
+	case TransparencyProperty:
 		dataType = PropertyStorage::Float;
 		componentCount = 1;
 		stride = sizeof(FloatType);
@@ -149,6 +150,7 @@ void BondProperty::OOMetaClass::initialize()
 	registerStandardProperty(LengthProperty, tr("Length"), PropertyStorage::Float, emptyList);
 	registerStandardProperty(TopologyProperty, tr("Topology"), PropertyStorage::Int64, abList);
 	registerStandardProperty(PeriodicImageProperty, tr("Periodic Image"), PropertyStorage::Int, xyzList);
+	registerStandardProperty(TransparencyProperty, tr("Transparency"), PropertyStorage::Float, emptyList);
 }
 
 }	// End of namespace

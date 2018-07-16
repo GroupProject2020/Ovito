@@ -542,6 +542,7 @@ PYBIND11_MODULE(Particles, m)
 				"``BondProperty.Type.Length``                            :guilabel:`Length`                                  float     \n"
 				"``BondProperty.Type.Topology``                          :guilabel:`Topology`                                int (2x)  \n"
 				"``BondProperty.Type.PeriodicImage``                     :guilabel:`Periodic Image`                          int (3x)  \n"
+				"``BondProperty.Type.Transparency``                      :guilabel:`Transparency`                            float     \n"
 				"======================================================= =================================================== ==========\n"
 				)
 	;
@@ -561,6 +562,7 @@ PYBIND11_MODULE(Particles, m)
 		.value("Length", BondProperty::LengthProperty)
 		.value("Topology", BondProperty::TopologyProperty)
 		.value("PeriodicImage", BondProperty::PeriodicImageProperty)
+		.value("Transparency", BondProperty::TransparencyProperty)
 	;
 
 	ovito_class<BondType, ElementType>(m,

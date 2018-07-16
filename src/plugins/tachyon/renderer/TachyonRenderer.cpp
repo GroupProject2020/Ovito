@@ -232,10 +232,10 @@ bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask 
 	// Use only the number of parallel rendering threads allowed by the user. 
 	scene->numthreads = Application::instance()->idealThreadCount();
 
-	/* if certain key aspects of the scene parameters have been changed */
-	/* since the last frame rendered, or when rendering the scene the   */
-	/* first time, various setup, initialization and memory allocation  */
-	/* routines need to be run in order to prepare for rendering.       */
+	// If certain key aspects of the scene parameters have been changed
+	// since the last frame rendered, or when rendering the scene the
+	// first time, various setup, initialization and memory allocation
+	// routines need to be run in order to prepare for rendering.
 	if(scene->scenecheck)
 		rendercheck(scene);
 

@@ -36,7 +36,7 @@ class OVITO_CORE_EXPORT DefaultMeshPrimitive : public MeshPrimitive
 public:
 
 	/// Constructor.
-	DefaultMeshPrimitive() {}
+	using MeshPrimitive::MeshPrimitive;
 
 	/// Sets the mesh to be stored in this buffer object.
 	virtual void setMesh(const TriMesh& mesh, const ColorA& meshColor) override {

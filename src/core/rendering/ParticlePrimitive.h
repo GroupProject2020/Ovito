@@ -133,7 +133,7 @@ private:
 	/// Controls the shape of particles.
 	ParticleShape _particleShape;
 
-	/// Determines whether particles may be semi-transparent.
+	/// Indicates whether some of the particles may be semi-transparent.
 	/// If false, the alpha color value is ignored.
 	bool _translucentParticles;
 };
@@ -147,5 +147,3 @@ Q_DECLARE_METATYPE(Ovito::ParticlePrimitive::ParticleShape);
 Q_DECLARE_TYPEINFO(Ovito::ParticlePrimitive::ShadingMode, Q_PRIMITIVE_TYPE);
 Q_DECLARE_TYPEINFO(Ovito::ParticlePrimitive::RenderingQuality, Q_PRIMITIVE_TYPE);
 Q_DECLARE_TYPEINFO(Ovito::ParticlePrimitive::ParticleShape, Q_PRIMITIVE_TYPE);
-
-

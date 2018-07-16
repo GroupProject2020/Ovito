@@ -168,7 +168,8 @@ public:
 	/// Requests a new arrow geometry buffer from the renderer.
 	virtual std::shared_ptr<ArrowPrimitive> createArrowPrimitive(ArrowPrimitive::Shape shape,
 			ArrowPrimitive::ShadingMode shadingMode = ArrowPrimitive::NormalShading,
-			ArrowPrimitive::RenderingQuality renderingQuality = ArrowPrimitive::MediumQuality) = 0;
+			ArrowPrimitive::RenderingQuality renderingQuality = ArrowPrimitive::MediumQuality,
+			bool translucentElements = false) = 0;
 
 	/// Requests a new triangle mesh geometry buffer from the renderer.
 	virtual std::shared_ptr<MeshPrimitive> createMeshPrimitive() = 0;
