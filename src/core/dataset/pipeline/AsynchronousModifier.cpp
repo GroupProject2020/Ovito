@@ -61,9 +61,11 @@ Future<PipelineFlowState> AsynchronousModifier::evaluate(TimePoint time, Modifie
 	Future<ComputeEnginePtr> engineFuture = createEngine(time, modApp, input);
 	return engineFuture.then(executor(), [this, time, input = input, modApp = QPointer<ModifierApplication>(modApp)](ComputeEnginePtr engine) mutable {
 			
+			// Explicitly create a local copy of the shared_ptr to keep the task object alive for some time.
+			auto task = engine->task();
+
 			// Execute the engine in a worker thread.
 			// Collect results from the engine in the UI thread once it has finished running.
-			const auto& task = engine->task();
 			return dataset()->container()->taskManager().runTaskAsync(task)
 				.then(executor(), [this, time, modApp, input = std::move(input), engine = std::move(engine)]() mutable {
 					if(modApp && modApp->modifier() == this) {
