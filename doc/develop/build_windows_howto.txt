@@ -187,10 +187,10 @@ Pvk2Pfx /pvk ovito.pvk  /spc ovito.cer /pfx ovito.pfx
 Certutil -addStore TrustedPeople ovito.cer
 
 **************************************************************************
-OVITO:
+OVITO statically linked release version:
 **************************************************************************
-mkdir ovito_release
-cd ovito_release
+mkdir ovito_static
+cd ovito_static
 cmake -G "NMake Makefiles" ^
    -DCMAKE_BUILD_TYPE=Release ^
    -DCMAKE_INSTALL_PREFIX=../ovito_release_install ^
