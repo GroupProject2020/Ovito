@@ -248,7 +248,7 @@ void SliceModifierEditor::onCenterOfBox()
 	if(SimulationCellObject* cell = input.findObject<SimulationCellObject>()) {
 
 		Point3 centerPoint = cell->cellMatrix() * Point3(0.5, 0.5, 0.5);
-		FloatType centerDistance = mod->normal().dot(centerPoint - Point3::Origin());
+		FloatType centerDistance = mod->normal().safelyNormalized().dot(centerPoint - Point3::Origin());
 
 		undoableTransaction(tr("Set plane position"), [mod, centerDistance]() {
 			mod->setDistance(centerDistance);
