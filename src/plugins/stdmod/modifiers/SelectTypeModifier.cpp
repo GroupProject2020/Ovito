@@ -59,7 +59,7 @@ void SelectTypeModifier::initializeModifier(ModifierApplication* modApp)
 	if(sourceProperty().isNull() && propertyClass()) {
 
 		// Select the first type property from the input with more than one type.
-		PipelineFlowState input = modApp->evaluateInputPreliminary();
+		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		PropertyReference bestProperty;
 		for(DataObject* o : input.objects()) {
 			if(PropertyObject* property = dynamic_object_cast<PropertyObject>(o)) {

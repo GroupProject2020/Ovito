@@ -267,6 +267,8 @@ void ViewportWindow::renderRenderFrame()
 ******************************************************************************/
 ViewportPickResult ViewportWindow::pick(const QPointF& pos)
 {
+	ViewportPickResult result;	
+
 	// Cannot perform picking while viewport is not visible or currently rendering or when updates are disabled.
 	if(isVisible() && !viewport()->isRendering() && !viewport()->dataset()->viewportConfig()->isSuspended()) {
 		try {
@@ -281,19 +283,17 @@ ViewportPickResult ViewportWindow::pick(const QPointF& pos)
 			quint32 subobjectId;
 			std::tie(objInfo, subobjectId) = _pickingRenderer->objectAtLocation(pixelPos);
 			if(objInfo) {
-				ViewportPickResult result;
-				result.objectNode = objInfo->objectNode;
-				result.pickInfo = objInfo->pickInfo;
-				result.worldPosition = _pickingRenderer->worldPositionFromLocation(pixelPos);
-				result.subobjectId = subobjectId;
-				return result;
+				result.setPipelineNode(objInfo->objectNode);
+				result.setPickInfo(objInfo->pickInfo);
+				result.setHitLocation(_pickingRenderer->worldPositionFromLocation(pixelPos));
+				result.setSubobjectId(subobjectId);
 			}
 		}
 		catch(const Exception& ex) {
 			ex.reportError();
 		}
 	}
-	return {};
+	return result;
 }
 
 /******************************************************************************

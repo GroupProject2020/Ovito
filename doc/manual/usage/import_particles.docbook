@@ -53,21 +53,21 @@
          
          <varlistentry><term>File containing multiple frames:</term><listitem>
            <para>
-		       OVITO will automatically detect when the imported file contains multiple frames and loads them as an animation sequence.
-           For some file types, such as XYZ and LAMMPS dump files, this mode is indicated by the <emphasis>Contains multiple timesteps</emphasis>
-           check box highlighted in the screenshot. Note that OVITO typically keeps only a single frame at a time in memory. Other frames are loaded from the source data
-           file only as needed, for example if you play back the animation or move the time slider.
+		       OVITO automatically detects when the imported file contains more than one frame and loads them as an animation sequence.
+           For some file types, e.g. XYZ and LAMMPS dump, this is indicated by the <emphasis>Contains multiple timesteps</emphasis>
+           checkbox highlighted in the screenshot. Note that OVITO typically keeps only the data of a single frame in memory at a time. 
+           Subsequent frames are loaded into memory only when needed, for example if you play back the animation or move the time slider.
            </para>
          </listitem></varlistentry>
          
-    		 <varlistentry><term>Separate files for topology and trajectories:</term><listitem>
+    		 <varlistentry><term>Separate topology and trajectory files:</term><listitem>
            <para>
-            Some MD simulation codes work with separate topology and trajectory files. The topology file stores the static definition of 
-            atoms, types, bonds, etc. while the trajectory file contains just the motion trajectories computed by the simulation.
-            In such a case, you should load the topology file first (e.g. a LAMMPS <emphasis>data</emphasis> file).
+            Some MD simulation codes work with separate topology and trajectory files. The topology file contains the static definition of 
+            atoms, types, bonds, etc. while the trajectory file stores the motion trajectories and other time-dependent data computed by the simulation code.
+            In such a case, you should open the topology file first (e.g. a LAMMPS <emphasis>data</emphasis> file).
             Then use the <link linkend="particles.modifiers.load_trajectory">Load trajectory</link> modifier to load the time-dependent atomic positions
             from the separate trajectory file (e.g. a LAMMPS <emphasis>dump</emphasis> file). This modifier will 
-            merge both pieces of information, the static topology and the trajectories, on the fly into a single time-dependent 
+            on the fly merge both pieces of information -the static topology and the trajectory data- into a single time-dependent 
             dataset.
            </para>
          </listitem></varlistentry>         
@@ -127,18 +127,22 @@
           <imagedata fileref="images/usage/importexport/pipeline_selector.png" format="PNG" scale="50" />
           </imageobject></mediaobject></screenshot>
       </informalfigure>
-      OVITO allows you to load several datasets and show them side by side in one picture, 
-      and it allows you to load the same file more than once in order to visualize the data in several different ways for comparison. 
-      To do this, simply invoke the <menuchoice><guimenu>File</guimenu><guimenuitem>Load File</guimenuitem></menuchoice> function from the menu repeatedly.
-      When OVITO asks you whether to replace the already loaded dataset or not, pick the "<emphasis>Add to scene</emphasis>" option. 
-      All loaded datasets (more precisely, all data pipelines that are part of the scene) are listed in the drop-down box at the top 
-      of the command panel (see screenshot). This drop-down box switches the pipeline that is currently shown in the 
-      <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link>.
+      OVITO allows you to load several datasets and visualize them side by side in one picture.
+      Or you can visualize the same input data in multiple ways, either side by side or superimposed on each other, 
+      using several different data pipelines.
+      To do this, either use the <menuchoice><guimenu>Edit</guimenu><guimenuitem><link linkend="clone_pipeline">Clone pipeline</link></guimenuitem></menuchoice> function to duplicate 
+      the currently selected pipeline, or 
+      simply invoke the <menuchoice><guimenu>File</guimenu><guimenuitem>Load File</guimenuitem></menuchoice> function 
+      repeatedly to load multiple datasets into the same scene.
+      When OVITO asks you whether to replace the already loaded dataset, pick the "<emphasis>Add to scene</emphasis>" option. 
+      All data pipelines in the current scene are listed in the drop-down box at the top 
+      of the command panel (see screenshot). This box selects the pipeline that is currently displayed in the 
+      <link linkend="usage.modification_pipeline.pipeline_listbox">pipeline editor</link> beneath it.
     </para>
     <para>
-      Tip: You can reposition each object in the three-dimensional scene as desired using the
+      Tip: You can reposition objects in the three-dimensional scene using the
       <emphasis>Move</emphasis> and <emphasis>Rotate</emphasis> tools found in the upper toolbar. 
-      In this way you can visualize multiple datasets in juxtaposition.
+      This is useful if you want to visualize multiple datasets in juxtaposition.
     </para>
   </simplesect>
   

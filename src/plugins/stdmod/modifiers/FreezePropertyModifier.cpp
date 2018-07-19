@@ -66,7 +66,7 @@ void FreezePropertyModifier::initializeModifier(ModifierApplication* modApp)
 
 	// Use the first available particle property from the input state as data source when the modifier is newly created.
 	if(sourceProperty().isNull() && propertyClass()) {	
-		PipelineFlowState input = modApp->evaluateInputPreliminary();
+		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		for(DataObject* o : input.objects()) {
 			if(PropertyObject* property = dynamic_object_cast<PropertyObject>(o)) {
 				if(propertyClass()->isMember(property)) {

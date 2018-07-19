@@ -55,7 +55,6 @@ SET(SourceFiles
 	modifier/analysis/ptm/PolyhedralTemplateMatchingModifier.cpp
 	modifier/selection/ExpandSelectionModifier.cpp
 	modifier/selection/ParticlesExpressionSelectionModifierDelegate.cpp
-	modifier/selection/ManualSelectionModifier.cpp
 	modifier/properties/ComputePropertyModifier.cpp
 	modifier/properties/ComputeBondLengthsModifier.cpp
 	modifier/properties/InterpolateTrajectoryModifier.cpp
@@ -92,7 +91,6 @@ SET(SourceFiles
 	util/NearestNeighborFinder.cpp
 	util/CutoffNeighborFinder.cpp
 	util/ParticleExpressionEvaluator.cpp
-	util/ParticleSelectionSet.cpp
 )
 
 IF(OVITO_BUILD_PLUGIN_STDMOD)

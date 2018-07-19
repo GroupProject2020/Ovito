@@ -37,6 +37,7 @@
 #include <plugins/stdmod/modifiers/ReplicateModifier.h>
 #include <plugins/stdmod/modifiers/ExpressionSelectionModifier.h>
 #include <plugins/stdmod/modifiers/FreezePropertyModifier.h>
+#include <plugins/stdmod/modifiers/ManualSelectionModifier.h>
 #include <core/app/PluginManager.h>
 
 namespace Ovito { namespace StdMod {
@@ -691,6 +692,14 @@ PYBIND11_MODULE(StdMod, m)
 				":Default: ``'particles'``\n")
 	;
 	ovito_class<FreezePropertyModifierApplication, ModifierApplication>{m};
+
+	ovito_class<ManualSelectionModifier, Modifier>(m)
+		.def("reset_selection", &ManualSelectionModifier::resetSelection)
+		.def("select_all", &ManualSelectionModifier::selectAll)
+		.def("clear_selection", &ManualSelectionModifier::clearSelection)
+		.def("toggle_selection", &ManualSelectionModifier::toggleElementSelection)
+	;
+	ovito_class<ManualSelectionModifierApplication, ModifierApplication>{m};
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(StdMod);

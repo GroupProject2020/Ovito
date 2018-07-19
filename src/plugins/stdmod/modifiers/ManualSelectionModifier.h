@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,32 +22,20 @@
 #pragma once
 
 
-#include <plugins/particles/Particles.h>
-#include <plugins/particles/util/ParticleSelectionSet.h>
-#include <core/dataset/pipeline/Modifier.h>
+#include <plugins/stdmod/StdMod.h>
+#include <plugins/stdobj/util/ElementSelectionSet.h>
+#include <plugins/stdobj/properties/GenericPropertyModifier.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Selection)
+namespace Ovito { namespace StdMod {
 
 /**
- * Modifiers that allows the user to select individual particles by hand.
+ * Modifiers that allows the user to select individual elements, e.g. particles or bonds, by hand.
  */
-class OVITO_PARTICLES_EXPORT ManualSelectionModifier : public Modifier
+class OVITO_STDMOD_EXPORT ManualSelectionModifier : public GenericPropertyModifier
 {
-	/// Give this modifier class its own metaclass.
-	class OOMetaClass : public Modifier::OOMetaClass 
-	{
-	public:
-
-		/// Inherit constructor from base metaclass.
-		using Modifier::OOMetaClass::OOMetaClass;
-
-		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
-	};
-
 	Q_OBJECT
-	OVITO_CLASS_META(ManualSelectionModifier, OOMetaClass)
+	OVITO_CLASS(ManualSelectionModifier)
 
 	Q_CLASSINFO("DisplayName", "Manual selection");
 	Q_CLASSINFO("ModifierCategory", "Selection");
@@ -55,7 +43,7 @@ class OVITO_PARTICLES_EXPORT ManualSelectionModifier : public Modifier
 public:
 
 	/// Constructor.
-	Q_INVOKABLE ManualSelectionModifier(DataSet* dataset) : Modifier(dataset) {}
+	Q_INVOKABLE ManualSelectionModifier(DataSet* dataset);
 
 	/// This method is called by the system after the modifier has been inserted into a data pipeline.
 	virtual void initializeModifier(ModifierApplication* modApp) override;
@@ -66,29 +54,32 @@ public:
 	/// Adopts the selection state from the modifier's input.
 	void resetSelection(ModifierApplication* modApp, const PipelineFlowState& state);
 
-	/// Selects all particles.
+	/// Selects all elements.
 	void selectAll(ModifierApplication* modApp, const PipelineFlowState& state);
 
-	/// Deselects all particles.
+	/// Deselects all elements.
 	void clearSelection(ModifierApplication* modApp, const PipelineFlowState& state);
 
-	/// Toggles the selection state of a single particle.
-	void toggleParticleSelection(ModifierApplication* modApp, const PipelineFlowState& state, size_t particleIndex);
+	/// Toggles the selection state of a single element.
+	void toggleElementSelection(ModifierApplication* modApp, const PipelineFlowState& state, size_t elementIndex);
 
-	/// Replaces the particle selection.
-	void setParticleSelection(ModifierApplication* modApp, const PipelineFlowState& state, const boost::dynamic_bitset<>& selection, ParticleSelectionSet::SelectionMode mode);
+	/// Replaces the selection.
+	void setSelection(ModifierApplication* modApp, const PipelineFlowState& state, const boost::dynamic_bitset<>& selection, ElementSelectionSet::SelectionMode mode);
 
 protected:
+	
+	/// Is called when the value of a property of this object has changed.
+	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
 
 	/// Returns the selection set object stored in the ModifierApplication, or, if it does not exist, creates one when requested.
-	ParticleSelectionSet* getSelectionSet(ModifierApplication* modApp, bool createIfNotExist);
+	ElementSelectionSet* getSelectionSet(ModifierApplication* modApp, bool createIfNotExist);
 };
 
 /**
  * \brief The type of ModifierApplication create for a ManualSelectionModifier 
  *        when it is inserted into in a data pipeline.
  */
-class OVITO_PARTICLES_EXPORT ManualSelectionModifierApplication : public ModifierApplication
+class OVITO_STDMOD_EXPORT ManualSelectionModifierApplication : public ModifierApplication
 {
 	Q_OBJECT
 	OVITO_CLASS(ManualSelectionModifierApplication)
@@ -101,13 +92,8 @@ public:
 private:
 
 	/// The per-application data of the modifier.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(ParticleSelectionSet, selectionSet, setSelectionSet, PROPERTY_FIELD_ALWAYS_CLONE);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(ElementSelectionSet, selectionSet, setSelectionSet, PROPERTY_FIELD_ALWAYS_CLONE);
 };
  
-
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

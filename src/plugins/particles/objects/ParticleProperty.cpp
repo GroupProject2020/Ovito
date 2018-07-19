@@ -23,6 +23,7 @@
 #include <core/app/Application.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
+#include <core/utilities/concurrent/ParallelFor.h>
 #include "ParticleProperty.h"
 #include "ParticlesVis.h"
 #include "VectorVis.h"
@@ -268,6 +269,106 @@ void ParticleProperty::OOMetaClass::initialize()
 	registerStandardProperty(RotationProperty, tr("Rotation"), PropertyStorage::Float, quaternionList);
 	registerStandardProperty(StretchTensorProperty, tr("Stretch Tensor"), PropertyStorage::Float, symmetricTensorList);
 	registerStandardProperty(MoleculeTypeProperty, tr("Molecule Type"), PropertyStorage::Float, emptyList, tr("Molecule types"));
+}
+
+/******************************************************************************
+* Returns the index of the element that was picked in a viewport.
+******************************************************************************/
+std::pair<size_t, PipelineFlowState> ParticleProperty::OOMetaClass::elementFromPickResult(const ViewportPickResult& pickResult) const
+{
+	// Check if a particle was picked.
+	if(ParticlePickInfo* pickInfo = dynamic_object_cast<ParticlePickInfo>(pickResult.pickInfo())) {
+		if(ParticleProperty* posProperty = ParticleProperty::findInState(pickInfo->pipelineState(), ParticleProperty::PositionProperty)) {
+			size_t particleIndex = pickInfo->particleIndexFromSubObjectID(pickResult.subobjectId());
+			if(particleIndex < posProperty->size())
+				return std::make_pair(particleIndex, pickInfo->pipelineState());
+		}
+	}
+
+	return std::pair<size_t, PipelineFlowState>(std::numeric_limits<size_t>::max(), {});
+}
+
+/******************************************************************************
+* Tries to remap an index from one data collection to another, considering the 
+* possibility that elements may have been added or removed. 
+******************************************************************************/
+size_t ParticleProperty::OOMetaClass::remapElementIndex(const PipelineFlowState& sourceState, size_t elementIndex, const PipelineFlowState& destState) const
+{
+	// If unique IDs are available try to use them to look up the particle in the other data collection. 
+	if(PropertyObject* sourceIdentifiers = findInState(sourceState, ParticleProperty::IdentifierProperty)) {
+		if(PropertyObject* destIdentifiers = findInState(destState, ParticleProperty::IdentifierProperty)) {
+			qlonglong id = sourceIdentifiers->getInt64(elementIndex);
+			size_t mappedId = std::find(destIdentifiers->constDataInt64(), destIdentifiers->constDataInt64() + destIdentifiers->size(), id) - destIdentifiers->constDataInt64();
+			if(mappedId != destIdentifiers->size())
+				return mappedId;
+		}
+	}
+
+	// Next, try to use the position to find the right particle in the other data collection. 
+	if(PropertyObject* sourcePositions = findInState(sourceState, ParticleProperty::PositionProperty)) {
+		if(PropertyObject* destPositions = findInState(destState, ParticleProperty::PositionProperty)) {
+			const Point3& pos = sourcePositions->getPoint3(elementIndex);
+			size_t mappedId = std::find(destPositions->constDataPoint3(), destPositions->constDataPoint3() + destPositions->size(), pos) - destPositions->constDataPoint3();
+			if(mappedId != destPositions->size())
+				return mappedId;
+		}
+	}
+
+	// Give up.
+	return PropertyClass::remapElementIndex(sourceState, elementIndex, destState);
+}
+
+/******************************************************************************
+* Determines which elements are located within the given 
+* viewport fence region (=2D polygon).
+******************************************************************************/
+boost::dynamic_bitset<> ParticleProperty::OOMetaClass::viewportFenceSelection(const QVector<Point2>& fence, const PipelineFlowState& state, PipelineSceneNode* node, const Matrix4& projectionTM) const
+{
+	if(PropertyObject* posProperty = findInState(state, ParticleProperty::PositionProperty)) {
+
+		if(!posProperty->visElement() || posProperty->visElement()->isEnabled() == false)
+			node->throwException(tr("Cannot select particles while the corresponding visual element is disabled. Please enable the display of particles first."));
+
+		boost::dynamic_bitset<> fullSelection(posProperty->size());
+		QMutex mutex;
+		parallelForChunks(posProperty->size(), [pos = posProperty->constDataPoint3(), &projectionTM, &fence, &mutex, &fullSelection](size_t startIndex, size_t chunkSize) {
+			boost::dynamic_bitset<> selection(fullSelection.size());
+			auto p = pos + startIndex;
+			for(size_t index = startIndex; chunkSize != 0; chunkSize--, index++, ++p) {
+
+				// Project particle center to screen coordinates.
+				Point3 projPos = projectionTM * (*p);
+
+				// Perform z-clipping.
+				if(std::fabs(projPos.z()) >= FloatType(1))
+					continue;
+
+				// Perform point-in-polygon test.
+				int intersectionsLeft = 0;
+				int intersectionsRight = 0;
+				for(auto p2 = fence.constBegin(), p1 = p2 + (fence.size()-1); p2 != fence.constEnd(); p1 = p2++) {
+					if(p1->y() == p2->y()) continue;
+					if(projPos.y() >= p1->y() && projPos.y() >= p2->y()) continue;
+					if(projPos.y() < p1->y() && projPos.y() < p2->y()) continue;
+					FloatType xint = (projPos.y() - p2->y()) / (p1->y() - p2->y()) * (p1->x() - p2->x()) + p2->x();
+					if(xint >= projPos.x())
+						intersectionsRight++;
+					else
+						intersectionsLeft++;
+				}
+				if(intersectionsRight & 1)
+					selection.set(index);
+			}
+			// Transfer thread-local results to output bit array.
+			QMutexLocker locker(&mutex);
+			fullSelection |= selection;
+		});
+		
+		return fullSelection;
+	}
+
+	// Give up.
+	return PropertyClass::viewportFenceSelection(fence, state, node, projectionTM);
 }
 
 }	// End of namespace

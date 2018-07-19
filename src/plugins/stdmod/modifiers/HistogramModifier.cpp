@@ -97,7 +97,7 @@ void HistogramModifier::initializeModifier(ModifierApplication* modApp)
 
 	// Use the first available property from the input state as data source when the modifier is newly created.
 	if(sourceProperty().isNull() && propertyClass()) {	
-		PipelineFlowState input = modApp->evaluateInputPreliminary();
+		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		PropertyReference bestProperty;
 		for(DataObject* o : input.objects()) {
 			if(PropertyObject* property = dynamic_object_cast<PropertyObject>(o)) {

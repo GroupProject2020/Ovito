@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,29 +22,29 @@
 #pragma once
 
 
-#include <plugins/particles/Particles.h>
+#include <plugins/stdobj/StdObj.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
 #include <core/oo/RefTarget.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util)
+namespace Ovito { namespace StdObj {
 
 /**
- * \brief Stores a particle selection set and provides modification functions.
+ * \brief Stores a selection set of particles or other elements and provides corresponding modification functions.
  *
- * This class is used by some modifiers to store the selection state of particles.
+ * This class is used by some modifiers to store the selection state of particles and other elements.
  *
  * This selection state can either be stored in an index-based fashion using a bit array,
- * or as a list of particle identifiers. The second storage scheme is less efficient,
- * but supports situations where the order or the number of particles change.
+ * or as a list of unique identifiers. The second storage scheme is less efficient,
+ * but supports situations where the order or the number of elements changes.
  */
-class OVITO_PARTICLES_EXPORT ParticleSelectionSet : public RefTarget
+class OVITO_STDOBJ_EXPORT ElementSelectionSet : public RefTarget
 {
 	Q_OBJECT
-	OVITO_CLASS(ParticleSelectionSet)
+	OVITO_CLASS(ElementSelectionSet)
 
 public:
 
-	/// Controls the mode of operation of the setParticleSelection() method.
+	/// Controls the mode of operation of the setSelection() method.
 	enum SelectionMode {
 		SelectionReplace,		//< Replace the selection with the new selection set.
 		SelectionAdd,			//< Add the selection set to the existing selection.
@@ -54,34 +54,34 @@ public:
 public:
 
 	/// Constructor.
-	Q_INVOKABLE ParticleSelectionSet(DataSet* dataset) : RefTarget(dataset), _useIdentifiers(true) {}
+	Q_INVOKABLE ElementSelectionSet(DataSet* dataset) : RefTarget(dataset), _useIdentifiers(true) {}
 
 	/// Returns the stored selection set as a bit array.
 	const boost::dynamic_bitset<>& selection() const { return _selection; }
 
 	/// Adopts the selection set from the given input state.
-	void resetSelection(const PipelineFlowState& state);
+	void resetSelection(const PipelineFlowState& state, const PropertyClass& propertyClass);
 
-	/// Clears the particle selection.
-	void clearSelection(const PipelineFlowState& state);
+	/// Clears the selection set.
+	void clearSelection(const PipelineFlowState& state, const PropertyClass& propertyClass);
 
-	/// Selects all particles in the given particle data set.
-	void selectAll(const PipelineFlowState& state);
+	/// Selects all elements in the given data set.
+	void selectAll(const PipelineFlowState& state, const PropertyClass& propertyClass);
 
-	/// Toggles the selection state of a single particle.
-	void toggleParticle(const PipelineFlowState& state, size_t particleIndex);
+	/// Toggles the selection state of a single element.
+	void toggleElement(const PipelineFlowState& state, const PropertyClass& propertyClass, size_t elementIndex);
 
-	/// Toggles the selection state of a single particle.
-	void toggleParticleIdentifier(qlonglong particleId);
+	/// Toggles the selection state of a single element.
+	void toggleElementById(qlonglong elementId);
 
-	/// Toggles the selection state of a single particle.
-	void toggleParticleIndex(size_t particleIndex);
+	/// Toggles the selection state of a single element.
+	void toggleElementByIndex(size_t elementIndex);
 
-	/// Replaces the particle selection.
-	void setParticleSelection(const PipelineFlowState& state, const boost::dynamic_bitset<>& selection, SelectionMode mode = SelectionReplace);
+	/// Replaces the selection.
+	void setSelection(const PipelineFlowState& state, const PropertyClass& propertyClass, const boost::dynamic_bitset<>& selection, SelectionMode mode = SelectionReplace);
 
-	/// Copies the stored selection set into the given output selection particle property.
-	PipelineStatus applySelection(ParticleProperty* outputSelectionProperty, ParticleProperty* identifierProperty);
+	/// Copies the stored selection set into the given output selection property.
+	PipelineStatus applySelection(PropertyObject* outputSelectionProperty, PropertyObject* identifierProperty);
 
 protected:
 
@@ -99,15 +99,14 @@ private:
 	/// Stores the selection set as a bit array.
 	boost::dynamic_bitset<> _selection;
 
-	/// Stores the selection as a list of particle identifiers.
+	/// Stores the selection as a list of element identifiers.
 	QSet<qlonglong> _selectedIdentifiers;
 
-	/// Controls whether the object should store the identifiers of selected particles (when available).
+	/// Controls whether the object should store the identifiers of selected elements (when available).
 	DECLARE_PROPERTY_FIELD(bool, useIdentifiers);
 
 	friend class ReplaceSelectionOperation;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

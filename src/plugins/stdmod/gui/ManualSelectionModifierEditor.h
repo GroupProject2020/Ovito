@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,14 +22,13 @@
 #pragma once
 
 
-#include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/particles/gui/util/ParticlePickingHelper.h>
-#include <plugins/particles/util/ParticleSelectionSet.h>
+#include <plugins/stdmod/gui/StdModGui.h>
+#include <plugins/stdobj/util/ElementSelectionSet.h>
 #include <gui/viewport/input/ViewportInputMode.h>
 #include <gui/properties/ModifierPropertiesEditor.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Selection) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
+namespace Ovito { namespace StdMod {
 /**
  * A properties editor for the ManualSelectionModifier class.
  */
@@ -43,11 +42,11 @@ public:
 	/// Default constructor
 	Q_INVOKABLE ManualSelectionModifierEditor() {}
 
-	/// This is called when the user has selected a particle.
-	void onParticlePicked(const ParticlePickingHelper::PickResult& pickResult);
+	/// This is called when the user has selected an element in the viewports.
+	void onElementPicked(const ViewportPickResult& pickResult, size_t elementIndex, const PipelineFlowState& state);
 
-	/// This is called when the user has drawn a fence around particles.
-	void onFence(const QVector<Point2>& fence, Viewport* viewport, ParticleSelectionSet::SelectionMode mode);
+	/// This is called when the user has drawn a selection fence around elements.
+	void onFence(const QVector<Point2>& fence, Viewport* viewport, ElementSelectionSet::SelectionMode mode);
 
 protected:
 
@@ -66,8 +65,5 @@ protected Q_SLOTS:
 	void clearSelection();
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

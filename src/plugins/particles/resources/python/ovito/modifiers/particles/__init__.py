@@ -12,7 +12,6 @@ from .coordination_number_modifier import CoordinationNumberModifier
 ovito.modifiers.AmbientOcclusionModifier = ovito.plugins.Particles.AmbientOcclusionModifier
 ovito.modifiers.WrapPeriodicImagesModifier = ovito.plugins.Particles.WrapPeriodicImagesModifier
 ovito.modifiers.ComputePropertyModifier = ovito.plugins.Particles.ComputePropertyModifier
-ovito.modifiers.ManualSelectionModifier = ovito.plugins.Particles.ManualSelectionModifier
 ovito.modifiers.ExpandSelectionModifier = ovito.plugins.Particles.ExpandSelectionModifier
 ovito.modifiers.BinAndReduceModifier = ovito.plugins.Particles.BinAndReduceModifier
 ovito.modifiers.StructureIdentificationModifier = ovito.plugins.Particles.StructureIdentificationModifier
@@ -36,7 +35,7 @@ ovito.modifiers.InterpolateTrajectoryModifier = ovito.plugins.Particles.Interpol
 ovito.modifiers.GenerateTrajectoryLinesModifier = ovito.plugins.Particles.GenerateTrajectoryLinesModifier
 ovito.modifiers.__all__ += ['AmbientOcclusionModifier', 
             'WrapPeriodicImagesModifier', 'ComputePropertyModifier',
-            'ManualSelectionModifier', 'ExpandSelectionModifier',
+            'ExpandSelectionModifier',
             'BinAndReduceModifier',
             'StructureIdentificationModifier', 'CommonNeighborAnalysisModifier', 'BondAngleAnalysisModifier',
             'CreateBondsModifier', 'CentroSymmetryModifier', 'ClusterAnalysisModifier', 'CoordinationNumberModifier',

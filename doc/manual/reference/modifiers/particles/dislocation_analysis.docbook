@@ -79,6 +79,10 @@ Modelling Simul. Mater. Sci. Eng. 20, 085007 (2012)</link></literallayout>
     computationally expensive analysis. The CA file format is documented <link linkend="particles.modifiers.dislocation_analysis.fileformat">below</link>.
   </para>
 
+  <para>
+    Note: The DXA produces dislocation lines and Burgers vectors that follow the left-hand start-finish (LH/SF) convention. 
+  </para>
+
    <simplesect>
     <title>Parameters</title>
 

@@ -31,7 +31,6 @@
 #include <plugins/particles/modifier/properties/ComputeBondLengthsModifier.h>
 #include <plugins/particles/modifier/properties/InterpolateTrajectoryModifier.h>
 #include <plugins/particles/modifier/properties/GenerateTrajectoryLinesModifier.h>
-#include <plugins/particles/modifier/selection/ManualSelectionModifier.h>
 #include <plugins/particles/modifier/selection/ExpandSelectionModifier.h>
 #include <plugins/particles/modifier/analysis/StructureIdentificationModifier.h>
 #include <plugins/particles/modifier/analysis/binandreduce/BinAndReduceModifier.h>
@@ -172,14 +171,6 @@ void defineModifiersSubmodule(py::module m)
 				":Default: 3.0\n")
 	;
 	ovito_class<ComputePropertyModifierApplication, AsynchronousModifierApplication>{m};
-
-	ovito_class<ManualSelectionModifier, Modifier>(m)
-		.def("reset_selection", &ManualSelectionModifier::resetSelection)
-		.def("select_all", &ManualSelectionModifier::selectAll)
-		.def("clear_selection", &ManualSelectionModifier::clearSelection)
-		.def("toggle_particle_selection", &ManualSelectionModifier::toggleParticleSelection)
-	;
-	ovito_class<ManualSelectionModifierApplication, ModifierApplication>{m};
 
 	auto ExpandSelectionModifier_py = ovito_class<ExpandSelectionModifier, AsynchronousModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"

@@ -122,7 +122,7 @@ void ComputePropertyModifier::initializeModifier(ModifierApplication* modApp)
 	AsynchronousModifier::initializeModifier(modApp);
 
 	// Generate list of available input variables.
-	PipelineFlowState input = modApp->evaluateInputPreliminary();
+	const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 	ParticleExpressionEvaluator evaluator;
 	evaluator.initialize(QStringList(), input);
 	_inputVariableNames = evaluator.inputVariableNames();

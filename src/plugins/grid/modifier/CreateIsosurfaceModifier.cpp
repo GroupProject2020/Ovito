@@ -79,7 +79,7 @@ void CreateIsosurfaceModifier::initializeModifier(ModifierApplication* modApp)
 
 	// Use the first available property from the input state as data source when the modifier is newly created.
 	if(sourceProperty().isNull()) {
-		PipelineFlowState input = modApp->evaluateInputPreliminary();
+		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		for(DataObject* o : input.objects()) {
 			VoxelProperty* property = dynamic_object_cast<VoxelProperty>(o);
 			if(property && property->componentCount() <= 1) {

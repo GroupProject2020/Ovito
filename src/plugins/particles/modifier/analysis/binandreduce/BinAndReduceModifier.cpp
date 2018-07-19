@@ -99,7 +99,7 @@ void BinAndReduceModifier::initializeModifier(ModifierApplication* modApp)
 
 	// Use the first available particle property from the input state as data source when the modifier is newly created.
 	if(sourceProperty().isNull()) {
-		PipelineFlowState input = modApp->evaluateInputPreliminary();
+		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		ParticlePropertyReference bestProperty;
 		for(DataObject* o : input.objects()) {
 			ParticleProperty* property = dynamic_object_cast<ParticleProperty>(o);

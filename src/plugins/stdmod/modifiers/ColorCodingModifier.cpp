@@ -127,7 +127,7 @@ void ColorCodingModifier::initializeModifier(ModifierApplication* modApp)
 	// Select the first available property from the input by default.
 	ColorCodingModifierDelegate* colorDelegate = static_object_cast<ColorCodingModifierDelegate>(delegate());
 	if(sourceProperty().isNull() && colorDelegate) {
-		PipelineFlowState input = modApp->evaluateInputPreliminary();
+		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		PropertyReference bestProperty;
 		for(DataObject* o : input.objects()) {
 			PropertyObject* property = dynamic_object_cast<PropertyObject>(o);
@@ -231,7 +231,7 @@ bool ColorCodingModifier::adjustRange()
 	// Loop over all input data.
 	bool success = false;
 	for(ModifierApplication* modApp : modifierApplications()) {
-		PipelineFlowState inputState = modApp->evaluateInputPreliminary();
+		const PipelineFlowState& inputState = modApp->evaluateInputPreliminary();
 
 		// Determine the minimum and maximum values of the selected property.
 		success |= determinePropertyValueRange(inputState, minValue, maxValue);

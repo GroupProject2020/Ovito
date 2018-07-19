@@ -62,9 +62,9 @@ void SelectionMode::mouseReleaseEvent(ViewportWindow* vpwin, QMouseEvent* event)
 	if(_viewport != nullptr) {
 		// Select object under mouse cursor.
 		ViewportPickResult pickResult = vpwin->pick(_clickPoint);
-		if(pickResult) {
+		if(pickResult.isValid()) {
 			_viewport->dataset()->undoStack().beginCompoundOperation(tr("Select"));
-			_viewport->dataset()->selection()->setNode(pickResult.objectNode);
+			_viewport->dataset()->selection()->setNode(pickResult.pipelineNode());
 			_viewport->dataset()->undoStack().endCompoundOperation();
 		}
 		_viewport = nullptr;
@@ -90,11 +90,11 @@ void SelectionMode::mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* event)
 {
 	// Change mouse cursor while hovering over an object.
 	ViewportPickResult pickResult = vpwin->pick(event->localPos());
-	setCursor(pickResult ? selectionCursor() : QCursor());
+	setCursor(pickResult.isValid() ? selectionCursor() : QCursor());
 
 	// Display a description of the object under the mouse cursor in the status bar.
-	if(pickResult && pickResult.pickInfo)
-		inputManager()->mainWindow()->statusBar()->showMessage(pickResult.pickInfo->infoString(pickResult.objectNode, pickResult.subobjectId));
+	if(pickResult.isValid() && pickResult.pickInfo())
+		inputManager()->mainWindow()->statusBar()->showMessage(pickResult.pickInfo()->infoString(pickResult.pipelineNode(), pickResult.subobjectId()));
 	else
 		inputManager()->mainWindow()->statusBar()->clearMessage();
 
@@ -185,11 +185,11 @@ void XFormMode::mousePressEvent(ViewportWindow* vpwin, QMouseEvent* event)
 
 			// Select object under mouse cursor.
 			ViewportPickResult pickResult = vpwin->pick(event->localPos());
-			if(pickResult) {
+			if(pickResult.isValid()) {
 				_viewport = vpwin->viewport();
 				_startPoint = event->localPos();
 				_viewport->dataset()->undoStack().beginCompoundOperation(undoDisplayName());
-				_viewport->dataset()->selection()->setNode(pickResult.objectNode);
+				_viewport->dataset()->selection()->setNode(pickResult.pipelineNode());
 				_viewport->dataset()->undoStack().beginCompoundOperation(undoDisplayName());
 				startXForm();
 			}
@@ -242,7 +242,7 @@ void XFormMode::mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* event)
 	else {
 
 		// Change mouse cursor while hovering over an object.
-		setCursor(vpwin->pick(event->localPos()) ? _xformCursor : QCursor());
+		setCursor(vpwin->pick(event->localPos()).isValid() ? _xformCursor : QCursor());
 	}
 	ViewportInputMode::mouseMoveEvent(vpwin, event);
 }

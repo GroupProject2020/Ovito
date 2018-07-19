@@ -14,18 +14,18 @@
        <imagedata fileref="images/ovito_screenshot.png" format="PNG" />
     </imageobject></mediaobject></screenshot></informalfigure>
   
-  OVITO is a scientific data visualization and analysis software for
-  atomistic simulation models in materials science and related disciplines.
-  OVITO is freely available for
-  Windows, Linux, and macOS under an open-source license. It is being developed by <link xlink:href="http://scholar.google.com/citations?user=f8Tw3eEAAAAJ">Dr. Alexander
-  Stukowski</link> at the <link xlink:href="http://www.mawi.tu-darmstadt.de/mm/mm_mm_sw/index.en.jsp">
-  Materials Science Department</link> of Darmstadt University of Technology, Germany.
+    OVITO is a scientific data visualization and analysis software for
+    atomistic simulation models in materials science and related physics and chemistry disciplines.
+    OVITO is freely available for
+    Windows, Linux, and macOS under an open-source license. It is being developed by <link xlink:href="http://scholar.google.com/citations?user=f8Tw3eEAAAAJ">Dr. Alexander
+    Stukowski</link> at the <link xlink:href="http://www.mawi.tu-darmstadt.de/mm/mm_mm_sw/index.en.jsp">
+    Materials Science Department</link> of Darmstadt University of Technology, Germany.
   </para>
   
   <para>
-  The first version of OVITO was released in December 2009 and its initial feature set was described in 
-  a <link xlink:href="http://stacks.iop.org/0965-0393/18/015012">journal article about OVITO</link> in 2010.
-  Today OVITO has more than active 100,000 users from the computational physics, materials science, and chemistry fields.
+    The first version of OVITO was released in 2009 and has been described in 
+    a <link xlink:href="http://stacks.iop.org/0965-0393/18/015012">journal article</link>. 
+    Today, OVITO has over 200,000 regular users from the computational physics, materials science and chemistry fields.
   </para>
   
   <simplesect>
@@ -42,31 +42,31 @@
       </listitem>
 
       <listitem>
-        <para>Interactive display of large numbers of particles and bonds using hardware-accelerated OpenGL rendering.</para>
+        <para>Interactive visualization of a large numbers of particles and bonds using hardware-accelerated OpenGL rendering.</para>
       </listitem>
 
       <listitem>
-        <para>Support for <link linkend="howto.aspherical_particles">various particle shapes</link>: spheres, cubes, ellipsoids, cylinders, and more.</para>
+        <para>Support for <link linkend="howto.aspherical_particles">various particle shapes</link>: spheres, cubes, ellipsoids, cylinders and more.</para>
       </listitem>
 
       <listitem>
-        <para>An easy-to-use interface, a flexible software design, and a <link linkend="usage.particle_properties">data model</link> that supports an arbitrary number of particle properties.</para>
+        <para>An easy-to-use graphical interface and a <link linkend="usage.particle_properties">data model</link> that supports an arbitrary number of particle properties.</para>
       </listitem>
 
       <listitem>
-        <para>High-quality <link linkend="usage.rendering">image and movie rendering</link> for publication and a <link linkend="usage.animation">keyframe-based animation system</link>.</para>
+        <para>High-quality <link linkend="usage.rendering">image and movie rendering</link> capabilities and a <link linkend="usage.animation">keyframe-based animation system</link>.</para>
       </listitem>
       
       <listitem>
         <para><link linkend="usage.scripting">A powerful Python-based scripting interface</link> 
-        that allows one to automate analysis and visualization tasks 
-        and <link linkend="particles.modifiers.python_script">extend OVITO</link> with new functions.</para>
-      </listitem>      
+        that allows you to automate data analysis and visualization tasks 
+        and to <link linkend="particles.modifiers.python_script">extend OVITO</link> in various ways.</para>
+      </listitem> 
       
       <listitem>
-        <para><link linkend="usage.modification_pipeline">Nondestructive data manipulation and analysis functions</link> 
+        <para><link linkend="usage.modification_pipeline">Non-destructive data manipulation and analysis functions</link> 
         are arranged in a data flow pipeline by the user. Parameters can be changed at 
-        any time and results will be immediately recalculated. Available <link linkend="particles.modifiers">modification functions</link> include:<itemizedlist>
+        any time and results will immediately be recalculated. Available <link linkend="particles.modifiers">modification functions</link> include:<itemizedlist>
 
             <listitem>
               <para><link linkend="particles.modifiers.expression_select">Dynamic particle selections based on Boolean expressions</link></para>
@@ -165,7 +165,7 @@
       </listitem>
       
       <listitem>
-        <para>A modular software design, which allows to extend OVITO via C++ plugins</para>
+        <para>A modular software design, which allows extending OVITO via C++ plugins</para>
       </listitem>
       
     </itemizedlist>

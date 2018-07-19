@@ -137,6 +137,7 @@ namespace Ovito {
 	OVITO_BEGIN_INLINE_NAMESPACE(Rendering)
 		class SceneRenderer;
 		class ObjectPickInfo;
+		class ViewportPickResult;
 		class RenderSettings;
 		class FrameBuffer;
 		OVITO_BEGIN_INLINE_NAMESPACE(Internal)

@@ -35,6 +35,7 @@ SET(SourceFiles
 	plot/PlotObject.cpp
 	util/InputHelper.cpp
 	util/OutputHelper.cpp
+	util/ElementSelectionSet.cpp
 )
 
 IF(OVITO_BUILD_PLUGIN_PYSCRIPT)

@@ -191,7 +191,7 @@
             </row>
             <row>
               <entry><link linkend="particles.modifiers.manual_selection">Manual&#xA0;selection</link></entry>
-              <entry>Allows you to select particles with the mouse.</entry>
+              <entry>Lets you select individual particles or bonds with the mouse.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.invert_selection">Invert&#xA0;selection</link></entry>

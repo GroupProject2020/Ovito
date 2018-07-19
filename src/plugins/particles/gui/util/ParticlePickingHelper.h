@@ -60,13 +60,6 @@ public:
 		OORef<PipelineSceneNode> objNode;
 	};
 
-public:
-
-	/// \brief Constructor.
-	ParticlePickingHelper() {}
-
-protected:
-
 	/// \brief Finds the particle under the mouse cursor.
 	/// \param vpwin The viewport window to perform hit testing in.
 	/// \param clickPoint The position of the mouse cursor in the viewport.

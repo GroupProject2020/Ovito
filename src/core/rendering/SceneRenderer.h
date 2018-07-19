@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -51,13 +51,13 @@ class OVITO_CORE_EXPORT ObjectPickInfo : public OvitoObject
 
 protected:
 
-	/// Constructor
-	ObjectPickInfo() {}
+	/// Constructor of abstract class.
+	ObjectPickInfo() = default;
 
 public:
 
 	/// Returns a human-readable string describing the picked object, which will be displayed in the status bar by OVITO.
-	virtual QString infoString(PipelineSceneNode* objectNode, quint32 subobjectId) { return QString(); }
+	virtual QString infoString(PipelineSceneNode* objectNode, quint32 subobjectId) { return {}; }
 };
 
 /**
@@ -305,7 +305,55 @@ private:
 	QPointer<SceneRenderer> _renderer;
 };
 
+/*
+ * Data structure returned by the ViewportWindow::pick() method,
+ * holding information about the object that was picked in a viewport at the current cursor location.
+ */
+class OVITO_CORE_EXPORT ViewportPickResult
+{
+public:
+
+	/// Indicates whether an object was picked or not.
+	bool isValid() const { return _pipelineNode != nullptr; }
+
+	/// Returns the scene node that has been picked.
+	PipelineSceneNode* pipelineNode() const { return _pipelineNode; }
+
+	/// Sets the scene node that has been picked.
+	void setPipelineNode(PipelineSceneNode* node) { _pipelineNode = node; }
+
+	/// Returns the object-specific data at the pick location.
+	ObjectPickInfo* pickInfo() const { return _pickInfo; }
+
+	/// Sets the object-specific data at the pick location.
+	void setPickInfo(ObjectPickInfo* info) { _pickInfo = info; }
+
+	/// Returns the coordinates of the hit point in world space.
+	const Point3& hitLocation() const { return _hitLocation; }
+
+	/// Sets the coordinates of the hit point in world space.
+	void setHitLocation(const Point3& location) { _hitLocation = location; }
+
+	/// Returns the subobject that was picked.
+	quint32 subobjectId() const { return _subobjectId; }
+
+	/// Sets the subobject that was picked.
+	void setSubobjectId(quint32 id) { _subobjectId = id; }
+
+private:
+
+	/// The scene node that was picked.
+	OORef<PipelineSceneNode> _pipelineNode;
+
+	/// The object-specific data at the pick location.
+	OORef<ObjectPickInfo> _pickInfo;
+
+	/// The coordinates of the hit point in world space.
+	Point3 _hitLocation;
+
+	/// The subobject that was picked.
+	quint32 _subobjectId = 0;
+};
+
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

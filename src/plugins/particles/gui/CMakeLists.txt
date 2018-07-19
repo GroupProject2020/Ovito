@@ -46,7 +46,6 @@ SET(SourceFiles
 	modifier/analysis/wignerseitz/WignerSeitzAnalysisModifierEditor.cpp
 	modifier/analysis/ptm/PolyhedralTemplateMatchingModifierEditor.cpp
 	modifier/selection/ExpandSelectionModifierEditor.cpp
-	modifier/selection/ManualSelectionModifierEditor.cpp
 	modifier/properties/ComputePropertyModifierEditor.cpp
 	modifier/properties/InterpolateTrajectoryModifierEditor.cpp
 	modifier/properties/GenerateTrajectoryLinesModifierEditor.cpp
@@ -55,6 +54,7 @@ SET(SourceFiles
 	util/ParticleSettingsPage.cpp
 	util/ParticleInspectionApplet.cpp
 	util/BondInspectionApplet.cpp
+	util/BondPickingHelper.cpp
 	import/InputColumnMappingDialog.cpp
 	import/lammps/LAMMPSTextDumpImporterEditor.cpp
 	import/lammps/LAMMPSBinaryDumpImporterEditor.cpp

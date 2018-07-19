@@ -136,7 +136,7 @@ public:
 
 	/// Given an sub-object ID returned by the Viewport::pick() method, looks up the
 	/// corresponding particle index.
-	qlonglong particleIndexFromSubObjectID(quint32 subobjID) const;
+	size_t particleIndexFromSubObjectID(quint32 subobjID) const;
 
 	/// Builds the info string for a particle to be displayed in the status bar.
 	static QString particleInfoString(const PipelineFlowState& pipelineState, size_t particleIndex);

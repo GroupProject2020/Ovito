@@ -34,6 +34,7 @@ SET(SourceFiles
 	ColorLegendOverlayEditor.cpp
 	ExpressionSelectionModifierEditor.cpp
 	FreezePropertyModifierEditor.cpp
+	ManualSelectionModifierEditor.cpp
 )
 
 OVITO_STANDARD_PLUGIN(StdModGui

@@ -290,9 +290,9 @@ void PickPlanePointsInputMode::mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent
 	ViewportInputMode::mouseMoveEvent(vpwin, event);
 
 	ViewportPickResult pickResult = vpwin->pick(event->localPos());
-	setCursor(pickResult ? SelectionMode::selectionCursor() : QCursor());
-	if(pickResult && _numPickedPoints < 3) {
-		_pickedPoints[_numPickedPoints] = pickResult.worldPosition;
+	setCursor(pickResult.isValid() ? SelectionMode::selectionCursor() : QCursor());
+	if(pickResult.isValid() && _numPickedPoints < 3) {
+		_pickedPoints[_numPickedPoints] = pickResult.hitLocation();
 		_hasPreliminaryPoint = true;
 		requestViewportUpdate();
 	}
@@ -316,15 +316,15 @@ void PickPlanePointsInputMode::mouseReleaseEvent(ViewportWindow* vpwin, QMouseEv
 		}
 
 		ViewportPickResult pickResult = vpwin->pick(event->localPos());
-		if(pickResult) {
+		if(pickResult.isValid()) {
 
 			// Do not select the same point twice.
 			bool ignore = false;
-			if(_numPickedPoints >= 1 && _pickedPoints[0].equals(pickResult.worldPosition, FLOATTYPE_EPSILON)) ignore = true;
-			if(_numPickedPoints >= 2 && _pickedPoints[1].equals(pickResult.worldPosition, FLOATTYPE_EPSILON)) ignore = true;
+			if(_numPickedPoints >= 1 && _pickedPoints[0].equals(pickResult.hitLocation(), FLOATTYPE_EPSILON)) ignore = true;
+			if(_numPickedPoints >= 2 && _pickedPoints[1].equals(pickResult.hitLocation(), FLOATTYPE_EPSILON)) ignore = true;
 
 			if(!ignore) {
-				_pickedPoints[_numPickedPoints] = pickResult.worldPosition;
+				_pickedPoints[_numPickedPoints] = pickResult.hitLocation();
 				_numPickedPoints++;
 				_hasPreliminaryPoint = false;
 				requestViewportUpdate();

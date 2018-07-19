@@ -15,17 +15,22 @@
        <imagedata fileref="images/modifiers/manual_selection_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
 
-    This modifier lets the user manually select particles in the viewports using the mouse courser,
-    overwriting any previously defined particle selection.
+    This modifier lets the you manually select individual particles or bonds in the viewports using the mouse.
+    You can use it to restrict the action of subsequent modifiers in the pipeline to a selected
+    subset of elements.
   </para>
   
   <para>
-    Two input modes are available to select particles: 
-    The <guibutton>Pick particles</guibutton> mode allows you to toggle the selection status of individual particles.
-    With the <guibutton>Fence selection</guibutton> mode, you can draw a closed fence around a group of particles in the viewports using the mouse.
-    All particles within the polygonal path will be selected. Hold down the <keycap>Ctrl</keycap>
-    key (<keycap>Command</keycap> on Mac) to add particles to an existing selection.
-    The <keycap>Alt</keycap> key can be used to remove particles from an existing selection.
+    Two selection tools are available: 
+    The <guibutton>Pick</guibutton> mode lets you toggle the selection status of individual particles or bonds 
+    by picking them with the mouse.
+    The <guibutton>Fence selection</guibutton> mode lets you draw a closed fence around a group of particles or bonds in the viewports.
+    All elements within the polygonal path will be selected. Hold down the <keycap>Ctrl</keycap>
+    key (<keycap>Command</keycap> on Mac) to add elements to the existing selection set.
+    The <keycap>Alt</keycap> key can be used to remove elements from an existing selection set.
+    <screenshot><mediaobject><imageobject>
+       <imagedata fileref="images/modifiers/manual_selection_fence_mode.png" format="PNG" scale="50" />
+    </imageobject></mediaobject></screenshot>
   </para>
   
 </section>

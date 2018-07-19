@@ -53,6 +53,16 @@ public:
 		/// Determines if the data elements which this property class applies to are present for the given data state.
 		virtual bool isDataPresent(const PipelineFlowState& state) const override;
 		
+		/// Returns the index of the element that was picked in a viewport.
+		virtual std::pair<size_t, PipelineFlowState> elementFromPickResult(const ViewportPickResult& pickResult) const override;
+
+		/// Tries to remap an index from one data collection to another, considering the possibility that
+		/// elements may have been added or removed. 
+		virtual size_t remapElementIndex(const PipelineFlowState& sourceState, size_t elementIndex, const PipelineFlowState& destState) const override;
+
+		/// Determines which elements are located within the given viewport fence region (=2D polygon).
+		virtual boost::dynamic_bitset<> viewportFenceSelection(const QVector<Point2>& fence, const PipelineFlowState& state, PipelineSceneNode* node, const Matrix4& projectionTM) const override;
+
 	protected:
 
 		/// Is called by the system after construction of the meta-class instance.

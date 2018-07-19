@@ -24,6 +24,7 @@
 
 #include <plugins/stdobj/StdObj.h>
 #include <core/dataset/data/DataObject.h>
+#include <core/dataset/pipeline/PipelineFlowState.h>
 
 namespace Ovito { namespace StdObj {
 
@@ -60,6 +61,22 @@ public:
 	
 	/// Creates a new property storage for one of the registered standard properties.
 	virtual PropertyPtr createStandardStorage(size_t elementCount, int typeId, bool initializeMemory) const { return {}; }
+
+	/// Returns the index of the data element that was picked in a viewport.
+	virtual std::pair<size_t, PipelineFlowState> elementFromPickResult(const ViewportPickResult& pickResult) const { 
+		return std::pair<size_t, PipelineFlowState>(std::numeric_limits<size_t>::max(), PipelineFlowState{});
+	}
+
+	/// Tries to remap an index from one data collection to another, considering the possibility that
+	/// elements may have been added or removed. 
+	virtual size_t remapElementIndex(const PipelineFlowState& sourceState, size_t elementIndex, const PipelineFlowState& destState) const {
+		return std::numeric_limits<size_t>::max();
+	}
+
+	/// Determines which elements are located within the given viewport fence region (=2D polygon).
+	virtual boost::dynamic_bitset<> viewportFenceSelection(const QVector<Point2>& fence, const PipelineFlowState& state, PipelineSceneNode* node, const Matrix4& projectionTM) const {
+		return boost::dynamic_bitset<>{}; // Return empty set to indicate missing fence selection support.
+	}
 	
 	/// Creates a new instace of the property object type.
 	OORef<PropertyObject> createFromStorage(DataSet* dataset, const PropertyPtr& storage) const;

@@ -240,10 +240,10 @@ void VectorVis::render(TimePoint time, DataObject* dataObject, const PipelineFlo
 * Given an sub-object ID returned by the Viewport::pick() method, looks up the
 * corresponding particle index.
 ******************************************************************************/
-int VectorPickInfo::particleIndexFromSubObjectID(quint32 subobjID) const
+size_t VectorPickInfo::particleIndexFromSubObjectID(quint32 subobjID) const
 {
 	if(_vectorProperty) {
-		int particleIndex = 0;
+		size_t particleIndex = 0;
 		for(const Vector3& v : _vectorProperty->constVector3Range()) {
 			if(v != Vector3::Zero()) {
 				if(subobjID == 0) return particleIndex;
@@ -252,7 +252,7 @@ int VectorPickInfo::particleIndexFromSubObjectID(quint32 subobjID) const
 			particleIndex++;
 		}
 	}
-	return -1;
+	return std::numeric_limits<size_t>::max();
 }
 
 /******************************************************************************
@@ -261,8 +261,8 @@ int VectorPickInfo::particleIndexFromSubObjectID(quint32 subobjID) const
 ******************************************************************************/
 QString VectorPickInfo::infoString(PipelineSceneNode* objectNode, quint32 subobjectId)
 {
-	int particleIndex = particleIndexFromSubObjectID(subobjectId);
-	if(particleIndex < 0) return QString();
+	size_t particleIndex = particleIndexFromSubObjectID(subobjectId);
+	if(particleIndex == std::numeric_limits<size_t>::max()) return QString();
 	return ParticlePickInfo::particleInfoString(pipelineState(), particleIndex);
 }
 

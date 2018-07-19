@@ -133,8 +133,7 @@ void PropertyReferenceParameterUI::updateUI()
 			_comboBox->clear();
 
 			// Obtain the list of input properties.
-			Modifier* mod = dynamic_object_cast<Modifier>(editObject());
-			if(mod) {
+			if(Modifier* mod = dynamic_object_cast<Modifier>(editObject())) {
 				for(ModifierApplication* modApp : mod->modifierApplications()) {
 					// Populate combo box with items from the upstream pipeline.
 					addItemsToComboBox(modApp->evaluateInputPreliminary());

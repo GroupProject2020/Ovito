@@ -38,17 +38,17 @@ bool ParticlePickingHelper::pickParticle(ViewportWindow* vpwin, const QPoint& cl
 {
 	ViewportPickResult vpPickResult = vpwin->pick(clickPoint);
 	// Check if user has clicked on something.
-	if(vpPickResult) {
+	if(vpPickResult.isValid()) {
 
 		// Check if that was a particle.
-		ParticlePickInfo* pickInfo = dynamic_object_cast<ParticlePickInfo>(vpPickResult.pickInfo);
+		ParticlePickInfo* pickInfo = dynamic_object_cast<ParticlePickInfo>(vpPickResult.pickInfo());
 		if(pickInfo) {
 			ParticleProperty* posProperty = ParticleProperty::findInState(pickInfo->pipelineState(), ParticleProperty::PositionProperty);
-			int particleIndex = pickInfo->particleIndexFromSubObjectID(vpPickResult.subobjectId);
-			if(posProperty && particleIndex >= 0) {
+			size_t particleIndex = pickInfo->particleIndexFromSubObjectID(vpPickResult.subobjectId());
+			if(posProperty && particleIndex < posProperty->size()) {
 				// Save reference to the selected particle.
 				TimeInterval iv;
-				result.objNode = vpPickResult.objectNode;
+				result.objNode = vpPickResult.pipelineNode();
 				result.particleIndex = particleIndex;
 				result.localPos = posProperty->getPoint3(result.particleIndex);
 				result.worldPos = result.objNode->getWorldTransform(vpwin->viewport()->dataset()->animationSettings()->time(), iv) * result.localPos;

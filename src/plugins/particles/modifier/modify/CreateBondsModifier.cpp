@@ -107,7 +107,7 @@ void CreateBondsModifier::initializeModifier(ModifierApplication* modApp)
 	AsynchronousModifier::initializeModifier(modApp);
 
 	// Adopt the upstream BondsVis object if there already is one.
-	PipelineFlowState input = modApp->evaluateInputPreliminary();
+	const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 	if(BondProperty* topologyProperty = BondProperty::findInState(input, BondProperty::TopologyProperty)) {
 		for(DataVis* vis : topologyProperty->visElements()) {
 			if(BondsVis* bondsVis = dynamic_object_cast<BondsVis>(vis)) {

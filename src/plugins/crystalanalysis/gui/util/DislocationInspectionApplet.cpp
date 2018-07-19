@@ -146,11 +146,11 @@ int DislocationInspectionApplet::PickingMode::pickDislocationSegment(ViewportWin
 	ViewportPickResult vpPickResult = vpwin->pick(pos);
 
 	// Check if user has clicked on something.
-	if(vpPickResult) {
+	if(vpPickResult.isValid()) {
 		// Check if that was a dislocation.
-		DislocationPickInfo* pickInfo = dynamic_object_cast<DislocationPickInfo>(vpPickResult.pickInfo);
-		if(pickInfo && vpPickResult.objectNode == _applet->_sceneNode) {
-			int segmentIndex = pickInfo->segmentIndexFromSubObjectID(vpPickResult.subobjectId);
+		DislocationPickInfo* pickInfo = dynamic_object_cast<DislocationPickInfo>(vpPickResult.pickInfo());
+		if(pickInfo && vpPickResult.pipelineNode() == _applet->_sceneNode) {
+			int segmentIndex = pickInfo->segmentIndexFromSubObjectID(vpPickResult.subobjectId());
 			if(segmentIndex >= 0 && segmentIndex < pickInfo->dislocationObj()->segments().size()) {
 				return segmentIndex;
 			}

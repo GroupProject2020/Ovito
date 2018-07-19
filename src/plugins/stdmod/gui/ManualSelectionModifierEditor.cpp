@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -19,67 +19,98 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/particles/modifier/selection/ManualSelectionModifier.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/stdmod/gui/StdModGui.h>
+#include <plugins/stdmod/modifiers/ManualSelectionModifier.h>
+#include <plugins/stdobj/gui/widgets/PropertyClassParameterUI.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/dataset/animation/AnimationSettings.h>
-#include <core/utilities/concurrent/ParallelFor.h>
 #include <gui/actions/ViewportModeAction.h>
 #include <gui/mainwin/MainWindow.h>
+#include <gui/rendering/ViewportSceneRenderer.h>
 #include <gui/viewport/ViewportWindow.h>
 #include <gui/viewport/input/ViewportInputManager.h>
 #include <gui/viewport/input/ViewportInputMode.h>
 #include "ManualSelectionModifierEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Selection) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace StdMod {
 
 IMPLEMENT_OVITO_CLASS(ManualSelectionModifierEditor);
 SET_OVITO_OBJECT_EDITOR(ManualSelectionModifier, ManualSelectionModifierEditor);
 
 /**
- * Viewport input mode that allows to pick individual particles and add and remove them
- * from the selection set.
+ * Viewport input mode that allows to pick individual elements, adding and removing them
+ * from the current selection set.
  */
-class SelectParticleInputMode : public ViewportInputMode, ParticlePickingHelper
+class PickElementMode : public ViewportInputMode
 {
 public:
 
 	/// Constructor.
-	SelectParticleInputMode(ManualSelectionModifierEditor* editor) : ViewportInputMode(editor), _editor(editor) {}
+	PickElementMode(ManualSelectionModifierEditor* editor) : ViewportInputMode(editor), _editor(editor) {}
 
 	/// Handles the mouse up events for a Viewport.
 	virtual void mouseReleaseEvent(ViewportWindow* vpwin, QMouseEvent* event) override {
 		if(event->button() == Qt::LeftButton) {
-			PickResult pickResult;
-			pickParticle(vpwin, event->pos(), pickResult);
-			if(pickResult.objNode) {
-				_editor->onParticlePicked(pickResult);
-			}
-			else {
-				inputManager()->mainWindow()->statusBar()->showMessage(tr("You did not click on a particle."), 1000);
+			ManualSelectionModifier* mod = static_object_cast<ManualSelectionModifier>(_editor->editObject());
+			if(mod && mod->propertyClass()) {
+				// Find out what's under the mouse cursor.
+				ViewportPickResult pickResult = vpwin->pick(event->pos());
+				if(pickResult.isValid()) {
+					// Look up the index of the element that was picked.
+					std::pair<size_t, PipelineFlowState> indexAndState = mod->propertyClass()->elementFromPickResult(pickResult);
+					if(indexAndState.first != std::numeric_limits<size_t>::max()) {
+						// Let the editor class handle it from here.
+						_editor->onElementPicked(pickResult, indexAndState.first, indexAndState.second);
+					}
+					else {
+						inputManager()->mainWindow()->statusBar()->showMessage(tr("You did not click on an element of type '%1'.").arg(mod->propertyClass()->elementDescriptionName()), 1000);
+					}
+				}
 			}
 		}
 		ViewportInputMode::mouseReleaseEvent(vpwin, event);
 	}
 
+	/// Handles the mouse events for a Viewport.
+	virtual void mouseMoveEvent(ViewportWindow* vpwin, QMouseEvent* event) override {
+		ViewportInputMode::mouseMoveEvent(vpwin, event);
+
+		// Check if a selectable element is beneath the mouse cursor position.
+		// If yes, indicate that by changing the mouse cursor shape.
+		ManualSelectionModifier* mod = static_object_cast<ManualSelectionModifier>(_editor->editObject());
+		if(mod && mod->propertyClass()) {
+			// Find out what's under the mouse cursor.
+			ViewportPickResult pickResult = vpwin->pick(event->pos());
+			if(pickResult.isValid()) {
+				// Look up the index of the element.
+				std::pair<size_t, PipelineFlowState> indexAndState = mod->propertyClass()->elementFromPickResult(pickResult);
+				if(indexAndState.first != std::numeric_limits<size_t>::max()) {
+					setCursor(SelectionMode::selectionCursor());
+					return;
+				}
+			}
+		}
+
+		// Switch back to default mouse cursor.
+		setCursor(QCursor());
+	}	
+
 	ManualSelectionModifierEditor* _editor;
 };
 
 /**
- * Viewport input mode that allows to select a group of particles
- * by drawing a fence around them.
+ * Viewport input mode that allows to select a group of elements by drawing a fence around them.
  */
-class FenceParticleInputMode : public ViewportInputMode, public ViewportGizmo
+class FenceSelectionMode : public ViewportInputMode, public ViewportGizmo
 {
 public:
 
 	/// Constructor.
-	FenceParticleInputMode(ManualSelectionModifierEditor* editor) : ViewportInputMode(editor), _editor(editor) {}
+	FenceSelectionMode(ManualSelectionModifierEditor* editor) : ViewportInputMode(editor), _editor(editor) {}
 
 	/// Destructor.
-	virtual ~FenceParticleInputMode() {
+	virtual ~FenceSelectionMode() {
 		if(isActive())
 			inputManager()->removeInputMode(this);
 	}
@@ -109,11 +140,11 @@ public:
 	virtual void mouseReleaseEvent(ViewportWindow* vpwin, QMouseEvent* event) override {
 		if(!_fence.isEmpty()) {
 			if(_fence.size() >= 3) {
-				ParticleSelectionSet::SelectionMode mode = ParticleSelectionSet::SelectionReplace;
+				ElementSelectionSet::SelectionMode mode = ElementSelectionSet::SelectionReplace;
 				if(event->modifiers().testFlag(Qt::ControlModifier))
-					mode = ParticleSelectionSet::SelectionAdd;
+					mode = ElementSelectionSet::SelectionAdd;
 				else if(event->modifiers().testFlag(Qt::AltModifier))
-					mode = ParticleSelectionSet::SelectionSubtract;
+					mode = ElementSelectionSet::SelectionSubtract;
 				_editor->onFence(_fence, vpwin->viewport(), mode);
 			}
 			_fence.clear();
@@ -134,13 +165,18 @@ protected:
 	/// This is called by the system when the input handler has become active.
 	virtual void activated(bool temporary) override {
 		ViewportInputMode::activated(temporary);
+		ManualSelectionModifier* mod = static_object_cast<ManualSelectionModifier>(_editor->editObject());
+		if(mod && mod->propertyClass()) {
 #ifndef Q_OS_MACX
-		inputManager()->mainWindow()->statusBar()->showMessage(
-				tr("Draw a fence around a group of particles. Use CONTROL and ALT keys to extend and reduce existing selection."));
+			inputManager()->mainWindow()->statusBar()->showMessage(
+					tr("Draw a fence around a group of %1 to select. Use CONTROL or ALT keys to extend or reduce existing selection set.")
+					.arg(mod->propertyClass()->elementDescriptionName()));
 #else
-		inputManager()->mainWindow()->statusBar()->showMessage(
-				tr("Draw a fence around a group of particles. Use COMMAND and ALT keys to extend and reduce existing selection."));
+			inputManager()->mainWindow()->statusBar()->showMessage(
+					tr("Draw a fence around a group of %1 to select. Use COMMAND or ALT keys to extend or reduce existing selection set.")
+					.arg(mod->propertyClass()->elementDescriptionName()));
 #endif
+		}
 		inputManager()->addViewportGizmo(this);
 	}
 
@@ -163,25 +199,34 @@ private:
 ******************************************************************************/
 void ManualSelectionModifierEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
-	QWidget* rollout = createRollout(tr("Manual particle selection"), rolloutParams, "particles.modifiers.manual_selection.html");
+	QWidget* rollout = createRollout(tr("Manual selection"), rolloutParams, "particles.modifiers.manual_selection.html");
 
     // Create the rollout contents.
 	QVBoxLayout* layout = new QVBoxLayout(rollout);
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(6);
 
+	QGroupBox* operateOnGroup = new QGroupBox(tr("Operate on"));
+	QVBoxLayout* sublayout = new QVBoxLayout(operateOnGroup);
+	sublayout->setContentsMargins(4,4,4,4);
+	sublayout->setSpacing(6);
+	layout->addWidget(operateOnGroup);
+
+	PropertyClassParameterUI* pclassUI = new PropertyClassParameterUI(this, PROPERTY_FIELD(GenericPropertyModifier::propertyClass));
+	sublayout->addWidget(pclassUI->comboBox());
+
 	QGroupBox* mouseSelectionGroup = new QGroupBox(tr("Viewport modes"));
-	QVBoxLayout* sublayout = new QVBoxLayout(mouseSelectionGroup);
+	sublayout = new QVBoxLayout(mouseSelectionGroup);
 	sublayout->setContentsMargins(4,4,4,4);
 	sublayout->setSpacing(6);
 	layout->addWidget(mouseSelectionGroup);
 
-	ViewportInputMode* selectParticleMode = new SelectParticleInputMode(this);
-	ViewportModeAction* pickModeAction = new ViewportModeAction(mainWindow(), tr("Pick particles"), this, selectParticleMode);
+	PickElementMode* pickElementMode = new PickElementMode(this);
+	ViewportModeAction* pickModeAction = new ViewportModeAction(mainWindow(), tr("Pick"), this, pickElementMode);
 	sublayout->addWidget(pickModeAction->createPushButton());
 
-	ViewportInputMode* fenceParticleMode = new FenceParticleInputMode(this);
-	ViewportModeAction* fenceModeAction = new ViewportModeAction(mainWindow(), tr("Fence selection"), this, fenceParticleMode);
+	FenceSelectionMode* fenceMode = new FenceSelectionMode(this);
+	ViewportModeAction* fenceModeAction = new ViewportModeAction(mainWindow(), tr("Fence selection"), this, fenceMode);
 	sublayout->addWidget(fenceModeAction->createPushButton());
 
 	// Deactivate input modes when editor is reset.
@@ -194,7 +239,7 @@ void ManualSelectionModifierEditor::createUI(const RolloutInsertionParameters& r
 	sublayout->setSpacing(6);
 	layout->addWidget(globalSelectionGroup);
 
-	QPushButton* selectAllBtn = new QPushButton(tr("Select all particles"));
+	QPushButton* selectAllBtn = new QPushButton(tr("Select all"));
 	connect(selectAllBtn, &QPushButton::clicked, this, &ManualSelectionModifierEditor::selectAll);
 	sublayout->addWidget(selectAllBtn);
 
@@ -227,7 +272,7 @@ void ManualSelectionModifierEditor::resetSelection()
 }
 
 /******************************************************************************
-* Selects all particles.
+* Selects all elements.
 ******************************************************************************/
 void ManualSelectionModifierEditor::selectAll()
 {
@@ -257,30 +302,34 @@ void ManualSelectionModifierEditor::clearSelection()
 }
 
 /******************************************************************************
-* This is called when the user has selected a particle.
+* This is called when the user has selected an element.
 ******************************************************************************/
-void ManualSelectionModifierEditor::onParticlePicked(const ParticlePickingHelper::PickResult& pickResult)
+void ManualSelectionModifierEditor::onElementPicked(const ViewportPickResult& pickResult, size_t elementIndex, const PipelineFlowState& state)
 {
 	ManualSelectionModifier* mod = static_object_cast<ManualSelectionModifier>(editObject());
-	if(!mod) return;
+	if(!mod || !mod->propertyClass()) return;
 
-	undoableTransaction(tr("Toggle particle selection"), [this, mod, &pickResult]() {
+	undoableTransaction(tr("Toggle selection"), [this, mod, elementIndex, &state, &pickResult]() {
 		for(ModifierApplication* modApp : modifierApplications()) {
-			PipelineFlowState modInput = modApp->evaluateInputPreliminary();
 
-			// Lookup the right particle in the modifier's input.
-			// Since we cannot rely on the particle's index or identifier, we use the
-			// particle location to unambiguously find the picked particle.
-			ParticleProperty* posProperty = ParticleProperty::findInState(modInput, ParticleProperty::PositionProperty);
-			if(!posProperty) continue;
+			// Make sure we are in the right data pipeline.
+			if(!modApp->pipelines(true).contains(pickResult.pipelineNode()))
+				continue;
 
-			size_t index = 0;
-			for(const Point3& p : posProperty->constPoint3Range()) {
-				if(p == pickResult.localPos) {
-					mod->toggleParticleSelection(modApp, modInput, index);
-					break;
-				}
-				index++;
+			// Get the modifier's input data.
+			const PipelineFlowState& modInput = modApp->evaluateInputPreliminary();
+
+			// Look up the right element in the modifier's input.
+			// Note that elements may have been added or removed further down the pipeline.
+			// Thus, we need to translate the element index into the pipeline output data collection
+			// into an index into the modifier's input data collection.
+			size_t translatedIndex = mod->propertyClass()->remapElementIndex(state, elementIndex, modInput);
+			if(translatedIndex != std::numeric_limits<size_t>::max()) {
+				mod->toggleElementSelection(modApp, modInput, translatedIndex);
+				break;
+			}
+			else {
+				mainWindow()->statusBar()->showMessage(tr("Cannot select this element, because it doesn't exist in the modifier's input data."), 2000);
 			}
 		}
 	});
@@ -289,24 +338,22 @@ void ManualSelectionModifierEditor::onParticlePicked(const ParticlePickingHelper
 /******************************************************************************
 * This is called when the user has drawn a fence around particles.
 ******************************************************************************/
-void ManualSelectionModifierEditor::onFence(const QVector<Point2>& fence, Viewport* viewport, ParticleSelectionSet::SelectionMode mode)
+void ManualSelectionModifierEditor::onFence(const QVector<Point2>& fence, Viewport* viewport, ElementSelectionSet::SelectionMode mode)
 {
 	ManualSelectionModifier* mod = static_object_cast<ManualSelectionModifier>(editObject());
-	if(!mod) return;
+	if(!mod || !mod->propertyClass()) return;
 
-	undoableTransaction(tr("Select particles"), [this, mod, &fence, viewport, mode]() {
+	undoableTransaction(tr("Select"), [this, mod, &fence, viewport, mode]() {
 		for(ModifierApplication* modApp : modifierApplications()) {
-			PipelineFlowState modInput = modApp->evaluateInputPreliminary();
 
-			// Lookup the right particle in the modifier's input.
-			// Since we cannot rely on the particle's index or identifier, we use the
-			// particle location to unambiguously find the picked particle.
-			ParticleProperty* posProperty = ParticleProperty::findInState(modInput, ParticleProperty::PositionProperty);
-			if(!posProperty) continue;
+			// Get the modifier's input data.
+			const PipelineFlowState& modInput = modApp->evaluateInputPreliminary();
 
+			// Iterate of the nodes that use this pipeline.
+			// We'll need their object-to-world transformation.
 			for(PipelineSceneNode* node : modApp->pipelines(true)) {
 
-				// Create projection matrix that transforms particle positions to screen space.
+				// Set up projection matrix transforming elements from object space to screen space.
 				TimeInterval interval;
 				const AffineTransformation& nodeTM = node->getWorldTransform(mod->dataset()->animationSettings()->time(), interval);
 				Matrix4 ndcToScreen = Matrix4::Identity();
@@ -315,52 +362,21 @@ void ManualSelectionModifierEditor::onFence(const QVector<Point2>& fence, Viewpo
 				ndcToScreen(0,3) = ndcToScreen(0,0);
 				ndcToScreen(1,3) = ndcToScreen(1,1);
 				ndcToScreen(1,1) = -ndcToScreen(1,1);	// Vertical flip.
-				Matrix4 tm = ndcToScreen * viewport->projectionParams().projectionMatrix * (viewport->projectionParams().viewMatrix * nodeTM);
+				Matrix4 projectionTM = ndcToScreen * viewport->projectionParams().projectionMatrix * (viewport->projectionParams().viewMatrix * nodeTM);
 
 				// Determine which particles are within the closed fence polygon.
-				boost::dynamic_bitset<> fullSelection(posProperty->size());
-				QMutex mutex;
-				parallelForChunks(posProperty->size(), [posProperty, tm, &fence, &mutex, &fullSelection](size_t startIndex, size_t chunkSize) {
-					boost::dynamic_bitset<> selection(posProperty->size());
-					for(size_t index = startIndex; chunkSize != 0; chunkSize--, index++) {
-
-						// Project particle center to screen coordinates.
-						Point3 projPos = tm * posProperty->getPoint3(index);
-
-						// Perform z-clipping.
-						if(std::fabs(projPos.z()) >= FloatType(1))
-							continue;
-
-						// Perform point in polygon test.
-						int intersectionsLeft = 0;
-						int intersectionsRight = 0;
-						for(auto p2 = fence.constBegin(), p1 = p2 + (fence.size()-1); p2 != fence.constEnd(); p1 = p2++) {
-							if(p1->y() == p2->y()) continue;
-							if(projPos.y() >= p1->y() && projPos.y() >= p2->y()) continue;
-							if(projPos.y() < p1->y() && projPos.y() < p2->y()) continue;
-							FloatType xint = (projPos.y() - p2->y()) / (p1->y() - p2->y()) * (p1->x() - p2->x()) + p2->x();
-							if(xint >= projPos.x())
-								intersectionsRight++;
-							else
-								intersectionsLeft++;
-						}
-						if(intersectionsRight & 1)
-							selection.set(index);
-					}
-					// Transfer thread-local results to output bit array.
-					QMutexLocker locker(&mutex);
-					fullSelection |= selection;
-				});
-
-				mod->setParticleSelection(modApp, modInput, fullSelection, mode);
+				boost::dynamic_bitset<> selection = mod->propertyClass()->viewportFenceSelection(fence, modInput, node, projectionTM);
+				if(selection.size() == mod->propertyClass()->elementCount(modInput)) {
+					mod->setSelection(modApp, modInput, selection, mode);
+				}
+				else {
+					mod->throwException(tr("Sorry, making a fence-based selection is not supported for %1.").arg(mod->propertyClass()->elementDescriptionName()));
+				}
 				break;
 			}
 		}
 	});
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

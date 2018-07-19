@@ -117,7 +117,7 @@ public:
 
 	/// Given an sub-object ID returned by the Viewport::pick() method, looks up the
 	/// corresponding particle index.
-	int particleIndexFromSubObjectID(quint32 subobjID) const;
+	size_t particleIndexFromSubObjectID(quint32 subobjID) const;
 
 private:
 

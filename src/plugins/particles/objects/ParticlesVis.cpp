@@ -873,7 +873,7 @@ Box3 ParticlesVis::highlightParticleBoundingBox(size_t particleIndex, const Pipe
 * Given an sub-object ID returned by the Viewport::pick() method, looks up the
 * corresponding particle index.
 ******************************************************************************/
-qlonglong ParticlePickInfo::particleIndexFromSubObjectID(quint32 subobjID) const
+size_t ParticlePickInfo::particleIndexFromSubObjectID(quint32 subobjID) const
 {
 	if(_visElement->particleShape() != ParticlesVis::Cylinder
 			&& _visElement->particleShape() != ParticlesVis::Spherocylinder) {
@@ -893,8 +893,8 @@ qlonglong ParticlePickInfo::particleIndexFromSubObjectID(quint32 subobjID) const
 ******************************************************************************/
 QString ParticlePickInfo::infoString(PipelineSceneNode* objectNode, quint32 subobjectId)
 {
-	qlonglong particleIndex = particleIndexFromSubObjectID(subobjectId);
-	if(particleIndex < 0) return QString();
+	size_t particleIndex = particleIndexFromSubObjectID(subobjectId);
+	if(particleIndex == std::numeric_limits<size_t>::max()) return QString();
 	return particleInfoString(pipelineState(), particleIndex);
 }
 

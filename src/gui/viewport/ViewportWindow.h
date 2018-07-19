@@ -24,32 +24,12 @@
 
 #include <gui/GUI.h>
 #include <core/viewport/ViewportWindowInterface.h>
+#include <core/rendering/SceneRenderer.h>
 #include <core/rendering/TextPrimitive.h>
 #include <core/rendering/ImagePrimitive.h>
 #include <core/rendering/LinePrimitive.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
-
-/******************************************************************************
-* This data structure is returned by the Viewport::pick() method.
-*******************************************************************************/
-struct OVITO_GUI_EXPORT ViewportPickResult
-{
-	/// Indicates whether an object was picked.
-	explicit operator bool() const { return objectNode != nullptr; }
-
-	/// The object node that was picked.
-	OORef<PipelineSceneNode> objectNode;
-
-	/// The object-specific information attached to the pick record.
-	OORef<ObjectPickInfo> pickInfo;
-
-	/// The coordinates of the hit point in world space.
-	Point3 worldPosition;
-
-	/// The subobject that was picked.
-	quint32 subobjectId = 0;
-};
 
 /**
  * \brief The internal render window/widget used by the Viewport class.

@@ -67,9 +67,8 @@ void AffineTransformationModifier::initializeModifier(ModifierApplication* modAp
 
 	// Take the simulation cell from the input object as the default destination cell geometry for absolute scaling.
 	if(targetCell() == AffineTransformation::Zero()) {
-		PipelineFlowState input = modApp->evaluateInputPreliminary();
-		SimulationCellObject* cell = input.findObject<SimulationCellObject>();
-		if(cell)
+		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
+		if(SimulationCellObject* cell = input.findObject<SimulationCellObject>())
 			setTargetCell(cell->cellMatrix());
 	}
 }
