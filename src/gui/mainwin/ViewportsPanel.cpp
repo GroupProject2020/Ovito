@@ -71,9 +71,15 @@ void ViewportsPanel::onViewportConfigurationReplaced(ViewportConfiguration* newV
 	if(newViewportConfiguration) {
 
 		// Create windows for the new viewports.
-		for(Viewport* vp : newViewportConfiguration->viewports()) {
-			OVITO_ASSERT(vp->window() == nullptr);
-			ViewportWindow* viewportWindow = new ViewportWindow(vp, this);
+		try {
+			for(Viewport* vp : newViewportConfiguration->viewports()) {
+				OVITO_ASSERT(vp->window() == nullptr);
+				ViewportWindow* viewportWindow = new ViewportWindow(vp, this);
+			}
+		}
+		catch(const Exception& ex) {
+			ex.reportError(true);
+			QMetaObject::invokeMethod(QCoreApplication::instance(), "quit", Qt::QueuedConnection);
 		}
 
 		// Repaint the viewport borders when another viewport has been activated.
@@ -175,7 +181,6 @@ void ViewportsPanel::layoutViewports()
 	if(!_viewportConfig) return;
 	const QVector<Viewport*>& viewports = _viewportConfig->viewports();
 	Viewport* maximizedViewport = _viewportConfig->maximizedViewport();
-	OVITO_ASSERT(viewports.size() == findChildren<QWidget*>().size());
 
 	// Count the number of visible windows.
 	int nvisible = 0;

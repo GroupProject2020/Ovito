@@ -38,15 +38,17 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 * Constructor.
 ******************************************************************************/
 ViewportWindow::ViewportWindow(Viewport* owner, QWidget* parentWidget) : QOpenGLWidget(parentWidget),
-		_viewport(owner), _updateRequested(false),
+		_viewport(owner), 
+		_updateRequested(false),
 		_mainWindow(MainWindow::fromDataset(owner->dataset())),
-		_renderDebugCounter(0), _cursorInContextMenuArea(false)
+		_renderDebugCounter(0), 
+		_cursorInContextMenuArea(false)
 {
 	setMouseTracking(true);
 	setFocusPolicy(Qt::ClickFocus);
 
 	// Determine OpenGL vendor string so other parts of the code can decide
-	// which OpenGL features are save to use.
+	// which OpenGL features are safe to use.
 	OpenGLSceneRenderer::determineOpenGLInfo();
 
 	// Associate the viewport with this window.
