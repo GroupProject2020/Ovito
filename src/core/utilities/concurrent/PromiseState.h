@@ -64,25 +64,25 @@ public:
     bool isFinished() const { return (_state & Finished); }
 
     /// Returns the maximum value for progress reporting. 
-    virtual int progressMaximum() const { return 0; }
+    virtual qlonglong progressMaximum() const { return 0; }
 
     /// Sets the current maximum value for progress reporting.
-    virtual void setProgressMaximum(int maximum) {}
+    virtual void setProgressMaximum(qlonglong maximum) {}
     
     /// Returns the current progress value (in the range 0 to progressMaximum()).
-    virtual int progressValue() const { return 0; }
+    virtual qlonglong progressValue() const { return 0; }
 
     /// Sets the current progress value (must be in the range 0 to progressMaximum()).
     /// Returns false if the promise has been canceled.
-    virtual bool setProgressValue(int progressValue) { return !isCanceled(); }
+    virtual bool setProgressValue(qlonglong progressValue) { return !isCanceled(); }
 
     /// Increments the progress value by 1.
     /// Returns false if the promise has been canceled.
-    virtual bool incrementProgressValue(int increment = 1) { return !isCanceled(); }
+    virtual bool incrementProgressValue(qlonglong increment = 1) { return !isCanceled(); }
 
     /// Sets the progress value of the promise but generates an update event only occasionally.
     /// Returns false if the promise has been canceled.
-    virtual bool setProgressValueIntermittent(int progressValue, int updateEvery = 2000) { return !isCanceled(); }
+    virtual bool setProgressValueIntermittent(qlonglong progressValue, int updateEvery = 2000) { return !isCanceled(); }
 
     /// Return the current status text set for this promise.
     virtual QString progressText() const { return QString(); }
@@ -107,10 +107,10 @@ public:
     virtual void endProgressSubSteps() {}
 
     /// Returns the maximum progress value that can be reached (taking into account sub-steps).
-    virtual int totalProgressMaximum() const { return 0; }
+    virtual qlonglong totalProgressMaximum() const { return 0; }
 
     /// Returns the current progress value (taking into account sub-steps).
-    virtual int totalProgressValue() const { return 0; }
+    virtual qlonglong totalProgressValue() const { return 0; }
 
     /// Cancels this shared state.
     virtual void cancel() noexcept;

@@ -112,7 +112,7 @@ void XYZImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sou
 {
 	CompressedTextReader stream(file, sourceUrl.path());
 	setProgressText(tr("Scanning file %1").arg(sourceUrl.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
-	setProgressMaximum(stream.underlyingSize() / 1000);
+	setProgressMaximum(stream.underlyingSize());
 
 	// Regular expression for whitespace characters.
 	QRegularExpression ws_re(QStringLiteral("\\s+"));
@@ -157,9 +157,7 @@ void XYZImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sou
 		// Skip atom lines.
 		for(unsigned long long i = 0; i < numParticlesLong; i++) {
 			stream.readLine();
-			if((i % 4096) == 0)
-				setProgressValue(stream.underlyingByteOffset() / 1000);
-			if(isCanceled())
+			if(!setProgressValueIntermittent(stream.underlyingByteOffset()))
 				return;
 		}
 	}
@@ -267,9 +265,8 @@ FileSourceImporter::FrameDataPtr XYZImporter::FrameLoader::loadFile(QFile& file)
 	}
 	if(numParticlesLong > (unsigned long long)std::numeric_limits<int>::max())
 		throw Exception(tr("Too many particles in XYZ file. This program version can read XYZ file with up to %1 particles only.").arg(std::numeric_limits<int>::max()));
-	int numParticles = (int)numParticlesLong;
 		
-	setProgressMaximum(numParticles);
+	setProgressMaximum(numParticlesLong);
 	QString fileExcerpt = stream.lineString();
 
 	// Regular expression for whitespace characters.
@@ -485,12 +482,12 @@ FileSourceImporter::FrameDataPtr XYZImporter::FrameLoader::loadFile(QFile& file)
 		// Read first atoms line and count number of data columns.
 		fileExcerpt += stream.lineString();
 		QString lineString;
-		for(int i = 0; i < 5 && i < numParticles; i++) {
+		for(size_t i = 0; i < 5 && i < numParticlesLong; i++) {
 			stream.readLine();
 			lineString = stream.lineString();
 			fileExcerpt += lineString;
 		}
-		if(numParticles > 5) fileExcerpt += QStringLiteral("...\n");
+		if(numParticlesLong > 5) fileExcerpt += QStringLiteral("...\n");
 		frameData->detectedColumnMapping().resize(lineString.split(ws_re, QString::SkipEmptyParts).size());
 		frameData->detectedColumnMapping().setFileExcerpt(fileExcerpt);
 
@@ -498,9 +495,9 @@ FileSourceImporter::FrameDataPtr XYZImporter::FrameLoader::loadFile(QFile& file)
 	}
 
 	// Parse data columns.
-	InputColumnReader columnParser(_columnMapping, *frameData, numParticles);
+	InputColumnReader columnParser(_columnMapping, *frameData, numParticlesLong);
 	try {
-		for(int i = 0; i < numParticles; i++) {
+		for(size_t i = 0; i < numParticlesLong; i++) {
 			if(!setProgressValueIntermittent(i)) return {};
 			stream.readLine();
 			columnParser.readParticle(i, stream.line());
@@ -516,7 +513,7 @@ FileSourceImporter::FrameDataPtr XYZImporter::FrameLoader::loadFile(QFile& file)
 	columnParser.sortParticleTypes();
 
 	PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticleProperty::PositionProperty);
-	if(posProperty && numParticles > 0) {
+	if(posProperty && numParticlesLong != 0) {
 		Box3 boundingBox;
 		boundingBox.addPoints(posProperty->constDataPoint3(), posProperty->size());
 
@@ -556,9 +553,9 @@ FileSourceImporter::FrameDataPtr XYZImporter::FrameLoader::loadFile(QFile& file)
 		frameData->sortParticlesById();
 
 	if(commentLine.isEmpty())
-		frameData->setStatus(tr("%1 particles").arg(numParticles));
+		frameData->setStatus(tr("%1 particles").arg(numParticlesLong));
 	else
-		frameData->setStatus(tr("%1 particles\n%2").arg(numParticles).arg(commentLine));
+		frameData->setStatus(tr("%1 particles\n%2").arg(numParticlesLong).arg(commentLine));
 	
 	return frameData;
 }

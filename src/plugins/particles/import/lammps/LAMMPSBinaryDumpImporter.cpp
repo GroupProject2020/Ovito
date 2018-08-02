@@ -59,7 +59,7 @@ struct LAMMPSBinaryDumpHeader
 		}
 
 	int ntimestep;
-	int natoms;
+	qlonglong natoms;
 	int boundaryFlags[3][2];
 	double bbox[3][2];
 	double tiltFactors[3];
@@ -192,7 +192,7 @@ void LAMMPSBinaryDumpImporter::FrameFinder::discoverFramesInFile(QFile& file, co
 	QDateTime lastModified = fileInfo.lastModified();
 
 	setProgressText(tr("Scanning binary LAMMPS dump file %1").arg(filename));
-	setProgressMaximum(file.size() / 1000);
+	setProgressMaximum(file.size());
 
 	while(!file.atEnd() && !isCanceled()) {
 		qint64 byteOffset = file.pos();
@@ -216,8 +216,7 @@ void LAMMPSBinaryDumpImporter::FrameFinder::discoverFramesInFile(QFile& file, co
 			if(!file.seek(filePos))
 				throw Exception(tr("Unexpected end of file."));
 
-			setProgressValue(filePos / 1000);
-			if(isCanceled())
+			if(!setProgressValue(filePos))
 				return;
 		}
 

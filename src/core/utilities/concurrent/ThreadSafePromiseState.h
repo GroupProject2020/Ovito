@@ -46,15 +46,15 @@ public:
 #endif	
 
 	/// Sets the current maximum value for progress reporting.
-    virtual void setProgressMaximum(int maximum) override;
+    virtual void setProgressMaximum(qlonglong maximum) override;
 
 	/// Sets the current progress value (must be in the range 0 to progressMaximum()).
 	/// Returns false if the promise has been canceled.
-    virtual bool setProgressValue(int value) override;
+    virtual bool setProgressValue(qlonglong value) override;
 
 	/// Increments the progress value by 1.
 	/// Returns false if the promise has been canceled.
-    virtual bool incrementProgressValue(int increment = 1) override;
+    virtual bool incrementProgressValue(qlonglong increment = 1) override;
 
 	/// Changes the status text of this promise.
     virtual void setProgressText(const QString& text) override;

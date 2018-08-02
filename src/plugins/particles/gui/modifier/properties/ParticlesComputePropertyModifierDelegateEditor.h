@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,21 +24,22 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <gui/properties/ModifierPropertiesEditor.h>
+#include <core/utilities/DeferredMethodInvocation.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Properties) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /**
- * A properties editor for the ComputePropertyModifier class.
+ * A properties editor for the ParticlesComputePropertyModifierDelegate class.
  */
-class ComputePropertyModifierEditor : public ModifierPropertiesEditor
+class ParticlesComputePropertyModifierDelegateEditor : public ModifierPropertiesEditor
 {
 	Q_OBJECT
-	OVITO_CLASS(ComputePropertyModifierEditor)
+	OVITO_CLASS(ParticlesComputePropertyModifierDelegateEditor)
 
 public:
 
 	/// Default constructor.
-	Q_INVOKABLE ComputePropertyModifierEditor() {}
+	Q_INVOKABLE ParticlesComputePropertyModifierDelegateEditor() {}
 
 protected:
 
@@ -53,25 +54,23 @@ protected Q_SLOTS:
 	/// Is called when the user has typed in an expression.
 	void onExpressionEditingFinished();
 
-	/// Updates the enabled/disabled status of the editor's controls.
-	void updateEditorFields(bool updateExpressions = true);
+	/// Updates the editor's input fields for the expressions.
+	void updateExpressionFields();
+
+	/// Updates the editor's display of the available expression variables.
+	void updateVariablesList();
 
 private:
 
-	QWidget* rollout;
-	QGroupBox* expressionsGroupBox;
-	QList<AutocompleteLineEdit*> expressionBoxes;
-	QList<QLabel*> expressionBoxLabels;
-	QGridLayout* expressionsLayout;
-
 	QGroupBox* neighborExpressionsGroupBox;
-	QList<AutocompleteLineEdit*> neighborExpressionBoxes;
-	QList<QLabel*> neighborExpressionBoxLabels;
+	QList<AutocompleteLineEdit*> neighborExpressionLineEdits;
+	QList<AutocompleteTextEdit*> neighborExpressionTextEdits;
+	QList<QLabel*> neighborExpressionLabels;
 	QGridLayout* neighborExpressionsLayout;
 
-	bool editorUpdatePending;
-
-	QLabel* variableNamesDisplay;
+	// For deferred invocation of the UI update functions.
+	DeferredMethodInvocation<ParticlesComputePropertyModifierDelegateEditor, &ParticlesComputePropertyModifierDelegateEditor::updateExpressionFields> updateExpressionFieldsLater;
+	DeferredMethodInvocation<ParticlesComputePropertyModifierDelegateEditor, &ParticlesComputePropertyModifierDelegateEditor::updateVariablesList> updateVariablesListLater;
 };
 
 OVITO_END_INLINE_NAMESPACE

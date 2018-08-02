@@ -129,6 +129,9 @@ namespace Ovito {
 			class ModifierDelegate;
 			class DelegatingModifier;
 			class MultiDelegatingModifier;
+			class AsynchronousModifier;
+			class AsynchronousModifierDelegate;
+			class AsynchronousDelegatingModifier;
 			OVITO_BEGIN_INLINE_NAMESPACE(StdObj)
 				class AbstractCameraObject;
 			OVITO_END_INLINE_NAMESPACE

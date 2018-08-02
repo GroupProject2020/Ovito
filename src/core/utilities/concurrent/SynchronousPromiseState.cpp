@@ -26,7 +26,7 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
-bool SynchronousPromiseState::setProgressValue(int value)
+bool SynchronousPromiseState::setProgressValue(qlonglong value)
 {
 	// Yield control to the event loop to process user interface events.
 	// This is necessary so that the user can interrupt the running opertion.
@@ -35,7 +35,7 @@ bool SynchronousPromiseState::setProgressValue(int value)
     return PromiseStateWithProgress::setProgressValue(value);
 }
 
-bool SynchronousPromiseState::incrementProgressValue(int increment)
+bool SynchronousPromiseState::incrementProgressValue(qlonglong increment)
 {
 	// Yield control to the event loop to process user interface events.
 	// This is necessary so that the user can interrupt the running opertion.

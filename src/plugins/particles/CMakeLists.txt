@@ -55,10 +55,10 @@ SET(SourceFiles
 	modifier/analysis/ptm/PolyhedralTemplateMatchingModifier.cpp
 	modifier/selection/ExpandSelectionModifier.cpp
 	modifier/selection/ParticlesExpressionSelectionModifierDelegate.cpp
-	modifier/properties/ComputePropertyModifier.cpp
 	modifier/properties/ComputeBondLengthsModifier.cpp
 	modifier/properties/InterpolateTrajectoryModifier.cpp
 	modifier/properties/GenerateTrajectoryLinesModifier.cpp
+	modifier/properties/ParticlesComputePropertyModifierDelegate.cpp
 	import/ParticleImporter.cpp
 	import/ParticleFrameData.cpp
 	import/InputColumnMapping.cpp

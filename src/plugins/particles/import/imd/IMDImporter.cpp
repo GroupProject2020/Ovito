@@ -154,7 +154,7 @@ FileSourceImporter::FrameDataPtr IMDImporter::FrameLoader::loadFile(QFile& file)
 		if(stream.readLine()[0] == '\0') break;
 		numAtoms++;
 
-		if((numAtoms % 1000) == 0 && isCanceled())
+		if(isCanceled())
 			return {};
 	}
 

@@ -86,7 +86,7 @@ void LAMMPSTextDumpImporter::FrameFinder::discoverFramesInFile(QFile& file, cons
 {
 	CompressedTextReader stream(file, sourceUrl.path());
 	setProgressText(tr("Scanning LAMMPS dump file %1").arg(stream.filename()));
-	setProgressMaximum(stream.underlyingSize() / 1000);
+	setProgressMaximum(stream.underlyingSize());
 
 	// Regular expression for whitespace characters.
 	QRegularExpression ws_re(QStringLiteral("\\s+"));
@@ -120,7 +120,7 @@ void LAMMPSTextDumpImporter::FrameFinder::discoverFramesInFile(QFile& file, cons
 			else if(stream.lineStartsWith("ITEM: NUMBER OF ATOMS")) {
 				// Parse number of atoms.
 				unsigned long long u;
-				if(sscanf(stream.readLine(), "%llu", &u) != 1 || u > 1e9)
+				if(sscanf(stream.readLine(), "%llu", &u) != 1 || u > 100'000'000'000ll)
 					throw Exception(tr("LAMMPS dump file parsing error. Invalid number of atoms in line %1:\n%2").arg(stream.lineNumber()).arg(stream.lineString()));
 				numParticles = (size_t)u;
 				break;
@@ -128,9 +128,7 @@ void LAMMPSTextDumpImporter::FrameFinder::discoverFramesInFile(QFile& file, cons
 			else if(stream.lineStartsWith("ITEM: ATOMS")) {
 				for(size_t i = 0; i < numParticles; i++) {
 					stream.readLine();
-					if((i % 4096) == 0)
-						setProgressValue(stream.underlyingByteOffset() / 1000);
-					if(isCanceled())
+					if(!setProgressValueIntermittent(stream.underlyingByteOffset()))
 						return;
 				}
 				break;

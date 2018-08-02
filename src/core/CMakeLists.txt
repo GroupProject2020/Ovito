@@ -84,6 +84,7 @@ SET(SourceFiles
 	dataset/pipeline/ModifierApplication.cpp
 	dataset/pipeline/ModifierTemplates.cpp
 	dataset/pipeline/AsynchronousModifierApplication.cpp
+	dataset/pipeline/AsynchronousDelegatingModifier.cpp
 	dataset/pipeline/StaticSource.cpp
 	dataset/pipeline/DelegatingModifier.cpp
 	utilities/units/UnitsManager.cpp

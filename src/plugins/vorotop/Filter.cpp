@@ -108,8 +108,8 @@ bool Filter::load(CompressedTextReader& stream, bool readHeaderOnly, PromiseStat
 		line = stream.readNonEmptyLine();
 
 		// Update progress indicator.
-		promise.setProgressValueIntermittent(stream.underlyingByteOffset());
-		if(promise.isCanceled()) return false;
+		if(!promise.setProgressValueIntermittent(stream.underlyingByteOffset()))
+			return false;
 	}
 
 	return !promise.isCanceled();

@@ -49,7 +49,7 @@ MarchingCubes::MarchingCubes(int size_x, int size_y, int size_z, std::array<bool
 ******************************************************************************/
 bool MarchingCubes::generateIsosurface(FloatType isolevel, PromiseState& promise)
 {
-    promise.setProgressMaximum(_size_z*2);
+    promise.setProgressMaximum(_size_z * 2);
     promise.setProgressValue(0);
     computeIntersectionPoints(isolevel, promise);
     if(promise.isCanceled()) return false;

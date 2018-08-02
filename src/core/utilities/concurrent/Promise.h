@@ -64,25 +64,25 @@ public:
 	bool isFinished() const { return sharedState()->isFinished(); }
 
 	/// Returns the maximum value for progress reporting. 
-    int progressMaximum() const { return sharedState()->progressMaximum(); }
+    qlonglong progressMaximum() const { return sharedState()->progressMaximum(); }
 
 	/// Sets the current maximum value for progress reporting.
-    void setProgressMaximum(int maximum) const { sharedState()->setProgressMaximum(maximum); }
+    void setProgressMaximum(qlonglong maximum) const { sharedState()->setProgressMaximum(maximum); }
     
 	/// Returns the current progress value (in the range 0 to progressMaximum()).
-	int progressValue() const { return sharedState()->progressValue(); }
+	qlonglong progressValue() const { return sharedState()->progressValue(); }
 
 	/// Sets the current progress value (must be in the range 0 to progressMaximum()).
 	/// Returns false if the promise has been canceled.
-    bool setProgressValue(int progressValue) const { return sharedState()->setProgressValue(progressValue); }
+    bool setProgressValue(qlonglong progressValue) const { return sharedState()->setProgressValue(progressValue); }
 
 	/// Increments the progress value by 1.
 	/// Returns false if the promise has been canceled.
-    bool incrementProgressValue(int increment = 1) const { return sharedState()->incrementProgressValue(increment); }
+    bool incrementProgressValue(qlonglong increment = 1) const { return sharedState()->incrementProgressValue(increment); }
 
 	/// Sets the progress value of the promise but generates an update event only occasionally.
 	/// Returns false if the promise has been canceled.
-    bool setProgressValueIntermittent(int progressValue, int updateEvery = 2000) const { return sharedState()->setProgressValueIntermittent(progressValue, updateEvery); }
+    bool setProgressValueIntermittent(qlonglong progressValue, int updateEvery = 2000) const { return sharedState()->setProgressValueIntermittent(progressValue, updateEvery); }
 
 	// Progress reporting for tasks with sub-steps:
 

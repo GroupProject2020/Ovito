@@ -38,7 +38,7 @@ QByteArray PropertyExpressionEvaluator::_validVariableNameChars("0123456789_abcd
 ******************************************************************************/
 void PropertyExpressionEvaluator::initialize(const QStringList& expressions, const PipelineFlowState& inputState, const PropertyClass& propertyClass, int animationFrame)
 {
-	// Build list of particle properties.
+	// Build list of properties.
 	std::vector<ConstPropertyPtr> inputProperties;
 	for(DataObject* obj : inputState.objects()) {
 		if(PropertyObject* prop = dynamic_object_cast<PropertyObject>(obj)) {
@@ -47,8 +47,9 @@ void PropertyExpressionEvaluator::initialize(const QStringList& expressions, con
 			}
 		}
 	}
+	_elementDescriptionName = propertyClass.elementDescriptionName();
 
-	// Get simulation cell.
+	// Get simulation cell information.
 	SimulationCell simCell;
 	SimulationCellObject* simCellObj = inputState.findObject<SimulationCellObject>();
 	if(simCellObj) simCell = simCellObj->data();
@@ -117,7 +118,7 @@ void PropertyExpressionEvaluator::createInputVariables(const std::vector<ConstPr
 			// Filter out invalid characters.
 			v.name = fullPropertyName.toStdString();
 
-			// Initialize data pointer into particle property storage.
+			// Initialize data pointer into property storage.
 			if(property->dataType() == PropertyStorage::Int)
 				v.dataPointer = reinterpret_cast<const char*>(property->constDataInt() + k);
 			else if(property->dataType() == PropertyStorage::Int64)
@@ -144,14 +145,17 @@ void PropertyExpressionEvaluator::createInputVariables(const std::vector<ConstPr
 	// Create constant variables.
 	ExpressionVariable constVar;
 
-	// Number of element
-	registerGlobalParameter("N", elementCount, tr("number of particles"));
+	// Number of elements
+	registerGlobalParameter("N", elementCount, tr("total number of %1").arg(_elementDescriptionName.isEmpty() ? QString("elements") : _elementDescriptionName));
 
 	// Animation frame
 	registerGlobalParameter("Frame", animationFrame, tr("animation frame number"));
 
 	// Global attributes.
 	for(auto entry = attributes.constBegin(); entry != attributes.constEnd(); ++entry) {
+		if(entry.value().type() == QVariant::String)
+			continue;
+
 		if(entry.value().canConvert<double>())
 			registerGlobalParameter(entry.key(), entry.value().toDouble());
 		else if(entry.value().canConvert<long>())
@@ -159,6 +163,9 @@ void PropertyExpressionEvaluator::createInputVariables(const std::vector<ConstPr
 	}
 
 	if(simCell) {
+		// Store simulation cell data.
+		_simCell = *simCell;
+
 		// Cell volume
 		registerGlobalParameter("CellVolume", simCell->volume3D(), tr("simulation cell volume"));
 
@@ -378,7 +385,7 @@ double PropertyExpressionEvaluator::Worker::evaluate(size_t elementIndex, size_t
 ******************************************************************************/
 QString PropertyExpressionEvaluator::inputVariableTable() const
 {
-	QString str(tr("<p>Available input variables:</p><p><b>Particle properties:</b><ul>"));
+	QString str(tr("<p>Available input variables:</p><p><b>Properties:</b><ul>"));
 	for(const ExpressionVariable& v : _inputVariables) {
 		if(v.type == FLOAT_PROPERTY || v.type == INT_PROPERTY || v.type == INT64_PROPERTY || v.type == ELEMENT_INDEX || v.type == DERIVED_PROPERTY) {
 			if(v.description.isEmpty())
@@ -387,7 +394,7 @@ QString PropertyExpressionEvaluator::inputVariableTable() const
 				str.append(QStringLiteral("<li>%1 (<i style=\"color: #555;\">%2</i>)</li>").arg(QString::fromStdString(v.name)).arg(v.description));
 		}
 	}
-	str.append(QStringLiteral("</ul></p><p><b>Global parameters:</b><ul>"));
+	str.append(QStringLiteral("</ul></p><p><b>Global values:</b><ul>"));
 	for(const ExpressionVariable& v : _inputVariables) {
 		if(v.type == GLOBAL_PARAMETER) {
 			if(v.description.isEmpty())

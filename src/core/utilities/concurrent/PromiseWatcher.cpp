@@ -64,13 +64,13 @@ void PromiseWatcher::promiseStarted()
     	Q_EMIT started();
 }
 
-void PromiseWatcher::promiseProgressRangeChanged(int maximum)
+void PromiseWatcher::promiseProgressRangeChanged(qlonglong maximum)
 {
 	if(isWatching() && !sharedState()->isCanceled())
 		Q_EMIT progressRangeChanged(maximum);
 }
 
-void PromiseWatcher::promiseProgressValueChanged(int progressValue)
+void PromiseWatcher::promiseProgressValueChanged(qlonglong progressValue)
 {
 	if(isWatching() && !sharedState()->isCanceled())
 		Q_EMIT progressValueChanged(progressValue);
@@ -92,12 +92,12 @@ bool PromiseWatcher::isFinished() const
 	return _finished;
 }
 
-int PromiseWatcher::progressMaximum() const
+qlonglong PromiseWatcher::progressMaximum() const
 {
 	return isWatching() ? sharedState()->totalProgressMaximum() : 0;
 }
 
-int PromiseWatcher::progressValue() const
+qlonglong PromiseWatcher::progressValue() const
 {
 	return isWatching() ? sharedState()->totalProgressValue() : 0;
 }

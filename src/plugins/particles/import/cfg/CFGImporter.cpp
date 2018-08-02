@@ -32,7 +32,7 @@ IMPLEMENT_OVITO_CLASS(CFGImporter);
 
 struct CFGHeader {
 
-	int numParticles;
+	qlonglong numParticles;
 	FloatType unitMultiplier;
 	Matrix3 H0;
 	Matrix3 transform;
@@ -113,8 +113,7 @@ void CFGHeader::parse(CompressedTextReader& stream)
 		string value = line.substr(valuestart);
 
 		if(key == "Number of particles") {
-			numParticles = atoi(value.c_str());
-			if(numParticles < 0 || numParticles > 1e9)
+			if(sscanf(value.c_str(), "%lld", &numParticles) != 1 || numParticles < 0 || numParticles > 100'000'000'000ll)
 				throw Exception(CFGImporter::tr("CFG file parsing error. Invalid number of atoms (line %1): %2").arg(stream.lineNumber()).arg(QString::fromStdString(value)));
 		}
 		else if(key == "A") unitMultiplier = atof(value.c_str());
@@ -229,10 +228,11 @@ FileSourceImporter::FrameDataPtr CFGImporter::FrameLoader::loadFile(QFile& file)
 
 	// Read per-particle data.
 	bool isFirstLine = true;
-	for(int particleIndex = 0; particleIndex < header.numParticles; ) {
+	for(size_t particleIndex = 0; particleIndex < header.numParticles; ) {
 
 		// Update progress indicator.
-		if(!setProgressValueIntermittent(particleIndex)) return {};
+		if(!setProgressValueIntermittent(particleIndex)) 
+			return {};
 
 		if(!isFirstLine)
 			stream.readLine();

@@ -155,16 +155,13 @@ bool IMDExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 	textStream() << "## IMD file written by " << QCoreApplication::applicationName() << "\n";
 	textStream() << "#E\n";
 
-	exportTask.setProgressMaximum(100);
+	exportTask.setProgressMaximum(atomsCount);
 	OutputColumnWriter columnWriter(colMapping, state);
 	for(size_t i = 0; i < atomsCount; i++) {
 		columnWriter.writeParticle(i, textStream());
 
-		if((i % 4096) == 0) {
-			exportTask.setProgressValue((quint64)i * 100 / atomsCount);
-			if(exportTask.isCanceled())
-				return false;
-		}
+		if(!exportTask.setProgressValueIntermittent(i))
+			return false;
 	}
 
 	return !exportTask.isCanceled();

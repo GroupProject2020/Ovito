@@ -162,15 +162,12 @@ bool XYZExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 	}
 	textStream() << '\n';
 
-	exportTask.setProgressMaximum(100);
+	exportTask.setProgressMaximum(atomsCount);
 	for(size_t i = 0; i < atomsCount; i++) {
 		columnWriter.writeParticle(i, textStream());
 
-		if((i % 4096) == 0) {
-			exportTask.setProgressValue((quint64)i * 100 / atomsCount);
-			if(exportTask.isCanceled())
-				return false;
-		}
+		if(!exportTask.setProgressValueIntermittent(i))
+			return false;
 	}
 
 	return !exportTask.isCanceled();

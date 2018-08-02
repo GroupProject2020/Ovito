@@ -88,19 +88,19 @@ void ThreadSafePromiseState::addContinuationImpl(std::function<void()>&& cont)
 	PromiseStateWithProgress::addContinuationImpl(std::move(cont));
 }
 
-void ThreadSafePromiseState::setProgressMaximum(int maximum)
+void ThreadSafePromiseState::setProgressMaximum(qlonglong maximum)
 {
     QMutexLocker locker(&_mutex);
 	PromiseStateWithProgress::setProgressMaximum(maximum);
 }
 
-bool ThreadSafePromiseState::setProgressValue(int value)
+bool ThreadSafePromiseState::setProgressValue(qlonglong value)
 {
     QMutexLocker locker(&_mutex);
     return PromiseStateWithProgress::setProgressValue(value);
 }
 
-bool ThreadSafePromiseState::incrementProgressValue(int increment)
+bool ThreadSafePromiseState::incrementProgressValue(qlonglong increment)
 {
     QMutexLocker locker(&_mutex);
 	return PromiseStateWithProgress::incrementProgressValue(increment);

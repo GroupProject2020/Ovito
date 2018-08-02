@@ -82,15 +82,19 @@ public:
 	/// \param container The properties panel that's the host of the editor.
 	/// \param mainWindow The main window that hosts the editor.
 	/// \param rolloutParams Specifies how the editor's rollouts should be created.
+	/// \param parentEditor The editor that owns this editor if it is a sub-object editor; NULL otherwise.
 	///
 	/// This method is called by the PropertiesPanel class to initialize the editor and to create the UI.
-	void initialize(PropertiesPanel* container, MainWindow* mainWindow, const RolloutInsertionParameters& rolloutParams);
+	void initialize(PropertiesPanel* container, MainWindow* mainWindow, const RolloutInsertionParameters& rolloutParams, PropertiesEditor* parentEditor);
 	
 	/// \brief Returns the rollout container widget this editor is placed in.
 	PropertiesPanel* container() const { return _container; }
 
 	/// \brief Returns the main window that hosts the editor.
 	MainWindow* mainWindow() const { return _mainWindow; }
+
+	/// Returns a pointer to the parent editor which has opened this editor for one of its sub-components.
+	PropertiesEditor* parentEditor() const { return _parentEditor; }
 
 	/// \brief Creates a new rollout in the rollout container and returns
 	///        the empty widget that can then be filled with UI controls.
@@ -153,6 +157,9 @@ private:
 
 	/// The main window that hosts the editor.
 	MainWindow* _mainWindow = nullptr;
+
+	/// Pointer to the parent editor which opened this editor for a sub-component.
+	PropertiesEditor* _parentEditor = nullptr;
 
 	/// The object being edited in this editor.
 	DECLARE_REFERENCE_FIELD_FLAGS(RefTarget, editObject, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);

@@ -85,7 +85,7 @@ void DefaultPropertiesEditor::updateSubEditors()
 						// Create a new sub-editor for this sub-object.
 						OORef<PropertiesEditor> editor = PropertiesEditor::create(subobject);
 						if(editor) {
-							editor->initialize(container(), mainWindow(), _rolloutParams);
+							editor->initialize(container(), mainWindow(), _rolloutParams, this);
 							editor->setEditObject(subobject);
 							_subEditors.erase(subEditorIter, _subEditors.end());
 							_subEditors.push_back(std::move(editor));

@@ -94,7 +94,7 @@ void POSCARImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& 
 {
 	CompressedTextReader stream(file, sourceUrl.path());
 	setProgressText(tr("Scanning file %1").arg(sourceUrl.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
-	setProgressMaximum(stream.underlyingSize() / 1000);
+	setProgressMaximum(stream.underlyingSize());
 
 	QFileInfo fileInfo(stream.device().fileName());
 	QString filename = fileInfo.fileName();
@@ -167,8 +167,7 @@ void POSCARImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& 
 		}
 		frames.push_back(frame);
 
-		setProgressValueIntermittent(stream.underlyingByteOffset() / 1000);
-		if(isCanceled())
+		if(!setProgressValueIntermittent(stream.underlyingByteOffset()))
 			return;
 	}
 }

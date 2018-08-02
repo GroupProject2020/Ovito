@@ -46,9 +46,9 @@ SET(SourceFiles
 	modifier/analysis/wignerseitz/WignerSeitzAnalysisModifierEditor.cpp
 	modifier/analysis/ptm/PolyhedralTemplateMatchingModifierEditor.cpp
 	modifier/selection/ExpandSelectionModifierEditor.cpp
-	modifier/properties/ComputePropertyModifierEditor.cpp
 	modifier/properties/InterpolateTrajectoryModifierEditor.cpp
 	modifier/properties/GenerateTrajectoryLinesModifierEditor.cpp
+	modifier/properties/ParticlesComputePropertyModifierDelegateEditor.cpp
 	util/CutoffRadiusPresetsUI.cpp
 	util/ParticlePickingHelper.cpp
 	util/ParticleSettingsPage.cpp

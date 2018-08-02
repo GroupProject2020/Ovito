@@ -38,25 +38,25 @@ class OVITO_CORE_EXPORT PromiseStateWithProgress : public PromiseState
 public:
 
 	/// Returns the maximum value for progress reporting. 
-    virtual int progressMaximum() const override { return _progressMaximum; }
+    virtual qlonglong progressMaximum() const override { return _progressMaximum; }
 
 	/// Sets the current maximum value for progress reporting.
-    virtual void setProgressMaximum(int maximum) override;
+    virtual void setProgressMaximum(qlonglong maximum) override;
     
 	/// Returns the current progress value (in the range 0 to progressMaximum()).
-	virtual int progressValue() const override { return _progressValue; }
+	virtual qlonglong progressValue() const override { return _progressValue; }
 
 	/// Sets the current progress value (must be in the range 0 to progressMaximum()).
 	/// Returns false if the promise has been canceled.
-    virtual bool setProgressValue(int value) override;
+    virtual bool setProgressValue(qlonglong value) override;
 
 	/// Increments the progress value by 1.
 	/// Returns false if the promise has been canceled.
-    virtual bool incrementProgressValue(int increment = 1) override;
+    virtual bool incrementProgressValue(qlonglong increment = 1) override;
 
 	/// Sets the progress value of the promise but generates an update event only occasionally.
 	/// Returns false if the promise has been canceled.
-    virtual bool setProgressValueIntermittent(int progressValue, int updateEvery = 2000) override;
+    virtual bool setProgressValueIntermittent(qlonglong progressValue, int updateEvery = 2000) override;
 
 	/// Return the current status text set for this promise.
     virtual QString progressText() const override { return _progressText; }
@@ -78,10 +78,10 @@ public:
     virtual void endProgressSubSteps() override;
 
 	/// Returns the maximum progress value that can be reached (taking into account sub-steps).
-    virtual int totalProgressMaximum() const override { return _totalProgressMaximum; }
+    virtual qlonglong totalProgressMaximum() const override { return _totalProgressMaximum; }
 
 	/// Returns the current progress value (taking into account sub-steps).
-    virtual int totalProgressValue() const override { return _totalProgressValue; }
+    virtual qlonglong totalProgressValue() const override { return _totalProgressValue; }
 
 protected:
 
@@ -91,10 +91,10 @@ protected:
 
     void computeTotalProgress();
 
-	int _totalProgressValue = 0;
-	int _totalProgressMaximum = 0;
-    int _progressValue = 0;
-    int _progressMaximum = 0;
+	qlonglong _totalProgressValue = 0;
+	qlonglong _totalProgressMaximum = 0;
+    qlonglong _progressValue = 0;
+    qlonglong _progressMaximum = 0;
     int _intermittentUpdateCounter = 0;
     QString _progressText;
     QElapsedTimer _progressTime;

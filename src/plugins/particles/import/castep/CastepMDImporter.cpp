@@ -58,7 +58,7 @@ void CastepMDImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl
 {
 	CompressedTextReader stream(file, sourceUrl.path());
 	setProgressText(tr("Scanning CASTEP file %1").arg(stream.filename()));
-	setProgressMaximum(stream.underlyingSize() / 1000);
+	setProgressMaximum(stream.underlyingSize());
 
 	// Look for string 'BEGIN header' to occur on first line.
 	if(!boost::algorithm::istarts_with(stream.readLineTrimLeft(32), "BEGIN header"))
@@ -66,13 +66,12 @@ void CastepMDImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl
 
 	// Fast forward to line 'END header'.
 	for(;;) {
-		if(isCanceled())
-			return;
 		if(stream.eof())
 			throw Exception(tr("Invalid CASTEP md/geom file. Unexpected end of file."));
 		if(boost::algorithm::istarts_with(stream.readLineTrimLeft(), "END header"))
 			break;
-		setProgressValueIntermittent(stream.underlyingByteOffset() / 1000);
+		if(!setProgressValueIntermittent(stream.underlyingByteOffset()))
+			return;
 	}
 
 	QFileInfo fileInfo(stream.device().fileName());
@@ -97,8 +96,7 @@ void CastepMDImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl
 			stream.readLine();
 		}
 
-		setProgressValueIntermittent(stream.underlyingByteOffset() / 1000);
-		if(isCanceled())
+		if(!setProgressValueIntermittent(stream.underlyingByteOffset()))
 			return;
 	}
 }

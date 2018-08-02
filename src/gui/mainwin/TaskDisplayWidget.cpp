@@ -124,9 +124,16 @@ void TaskDisplayWidget::updateIndicator()
 	else {
 		for(auto iter = taskManager.runningTasks().crbegin(); iter != taskManager.runningTasks().crend(); iter++) {
 			PromiseWatcher* watcher = *iter;
+			qlonglong maximum = watcher->progressMaximum();
 			if(watcher->progressMaximum() != 0 || watcher->progressText().isEmpty() == false) {
-				_progressBar->setRange(0, watcher->progressMaximum());
-				_progressBar->setValue(watcher->progressValue());
+				if(maximum < (qlonglong)std::numeric_limits<int>::max()) {
+					_progressBar->setRange(0, (int)maximum);
+					_progressBar->setValue((int)watcher->progressValue());
+				}
+				else {
+					_progressBar->setRange(0, 1000);
+					_progressBar->setValue((int)(watcher->progressValue() * 1000ll / maximum));
+				}
 				_progressTextDisplay->setText(watcher->progressText());
 				show();
 				break;

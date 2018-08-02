@@ -101,7 +101,7 @@ void CoordinationNumberModifier::CoordinationAnalysisEngine::perform()
 
 	size_t particleCount = positions()->size();
 	task()->setProgressValue(0);
-	task()->setProgressMaximum(particleCount / 1000);
+	task()->setProgressMaximum(particleCount / 1000ll);
 
 	// Perform analysis on each particle in parallel.
 	std::vector<QFuture<void>> workers;
@@ -131,7 +131,7 @@ void CoordinationNumberModifier::CoordinationAnalysisEngine::perform()
 				i++;
 
 				// Update progress indicator.
-				if((i % 1000) == 0)
+				if((i % 1000ll) == 0)
 					task()->incrementProgressValue();
 				// Abort loop when operation was canceled by the user.
 				if(task()->isCanceled())

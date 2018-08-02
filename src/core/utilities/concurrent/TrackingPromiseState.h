@@ -44,10 +44,10 @@ public:
 #endif	
 
 	/// Returns the maximum value for progress reporting. 
-    virtual int progressMaximum() const override { return trackedState() ? trackedState()->progressMaximum() : 0; }
+    virtual qlonglong progressMaximum() const override { return trackedState() ? trackedState()->progressMaximum() : 0; }
 
 	/// Returns the current progress value (in the range 0 to progressMaximum()).
-	virtual int progressValue() const override { return trackedState() ? trackedState()->progressValue() : 0; }
+	virtual qlonglong progressValue() const override { return trackedState() ? trackedState()->progressValue() : 0; }
 
 	/// Return the current status text set for this promise.
     virtual QString progressText() const override { return trackedState() ? trackedState()->progressText() : QString(); }

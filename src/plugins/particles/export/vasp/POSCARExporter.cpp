@@ -95,10 +95,10 @@ bool POSCARExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 		particleCounts[0] = posProperty->size();
 	}
 
-	size_t totalProgressCount = posProperty->size();
+	qlonglong totalProgressCount = posProperty->size();
 	if(velocityProperty) totalProgressCount += posProperty->size();
-	size_t currentProgress = 0;
-	exportTask.setProgressMaximum(100);
+	qlonglong currentProgress = 0;
+	exportTask.setProgressMaximum(totalProgressCount);
 
 	// Write atomic positions.
 	textStream() << "Cartesian\n";
@@ -109,13 +109,9 @@ bool POSCARExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 			if(particleTypeProperty && particleTypeProperty->getInt(i) != ptype)
 				continue;
 			textStream() << (p->x() - origin.x()) << ' ' << (p->y() - origin.y()) << ' ' << (p->z() - origin.z()) << '\n';
-			currentProgress++;
 
-			if((currentProgress % 1000) == 0) {
-				exportTask.setProgressValue(currentProgress * 100 / totalProgressCount);
-				if(exportTask.isCanceled())
-					return false;
-			}
+			if(!exportTask.setProgressValueIntermittent(currentProgress++))
+				return false;
 		}
 	}
 
@@ -129,13 +125,9 @@ bool POSCARExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 				if(particleTypeProperty && particleTypeProperty->getInt(i) != ptype)
 					continue;
 				textStream() << v->x() << ' ' << v->y() << ' ' << v->z() << '\n';
-				currentProgress++;
 
-				if((currentProgress % 1000) == 0) {
-					exportTask.setProgressValue(currentProgress * 100 / totalProgressCount);
-					if(exportTask.isCanceled())
-						return false;
-				}
+				if(!exportTask.setProgressValueIntermittent(currentProgress++))
+					return false;
 			}
 		}
 	}

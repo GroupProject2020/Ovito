@@ -32,6 +32,7 @@
 #include <core/dataset/pipeline/PipelineObject.h>
 #include <core/dataset/pipeline/StaticSource.h>
 #include <core/dataset/pipeline/DelegatingModifier.h>
+#include <core/dataset/pipeline/AsynchronousDelegatingModifier.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/app/PluginManager.h>
 #include <core/utilities/concurrent/TaskManager.h>
@@ -302,6 +303,9 @@ void defineSceneSubmodule(py::module m)
 	;
 
 	ovito_abstract_class<MultiDelegatingModifier, Modifier>{m}
+	;
+
+	ovito_abstract_class<AsynchronousDelegatingModifier, AsynchronousModifier>{m}
 	;
 
 	// This binding is required for the implementation of the modifier_operate_on_list() function:

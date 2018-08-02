@@ -78,9 +78,12 @@ StatusWidget* ModifierPropertiesEditor::statusLabel()
 ******************************************************************************/
 QVector<ModifierApplication*> ModifierPropertiesEditor::modifierApplications()
 {
-	Modifier* mod = static_object_cast<Modifier>(editObject());
-	if(!mod) return {};
-	return mod->modifierApplications();
+	if(Modifier* modifier = dynamic_object_cast<Modifier>(editObject()))
+		return modifier->modifierApplications();
+	else if(ModifierPropertiesEditor* parent = dynamic_object_cast<ModifierPropertiesEditor>(parentEditor()))
+		return parent->modifierApplications();
+	else
+		return {};
 }
 
 /******************************************************************************
@@ -88,8 +91,11 @@ QVector<ModifierApplication*> ModifierPropertiesEditor::modifierApplications()
 ******************************************************************************/
 ModifierApplication* ModifierPropertiesEditor::someModifierApplication()
 {
-	if(Modifier* modifier = static_object_cast<Modifier>(editObject()))
+	// TODO: Return the ModifierApplication that is part of the currently selected pipeline.
+	if(Modifier* modifier = dynamic_object_cast<Modifier>(editObject()))
 		return modifier->someModifierApplication();
+	else if(ModifierPropertiesEditor* parent = dynamic_object_cast<ModifierPropertiesEditor>(parentEditor()))
+		return parent->someModifierApplication();
 	else
 		return nullptr;
 }
@@ -100,10 +106,8 @@ ModifierApplication* ModifierPropertiesEditor::someModifierApplication()
 ******************************************************************************/
 PipelineFlowState ModifierPropertiesEditor::getSomeModifierInput()
 {
-	if(Modifier* modifier = static_object_cast<Modifier>(editObject())) {
-		if(ModifierApplication* modApp = modifier->someModifierApplication()) {
-			return modApp->evaluateInputPreliminary();
-		}
+	if(ModifierApplication* modApp = someModifierApplication()) {
+		return modApp->evaluateInputPreliminary();
 	}
 	return {};
 }

@@ -246,7 +246,7 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 											double progressValue = py::cast<double>(value);
 											if(progressValue >= 0.0 && progressValue <= 1.0) {
 												promise.setProgressMaximum(100);
-												promise.setProgressValue((int)(progressValue * 100.0));
+												promise.setProgressValue((qlonglong)(progressValue * 100.0));
 											}
 											else {
 												promise.setProgressMaximum(0);

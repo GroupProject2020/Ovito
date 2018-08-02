@@ -63,10 +63,10 @@ public:
 	bool isFinished() const;
 
 	/// Returns the maximum value for the progress of the shared state monitored by this object.
-	int progressMaximum() const;
+	qlonglong progressMaximum() const;
 
 	/// Returns the current value for the progress of the shared state monitored by this object.
-	int progressValue() const;
+	qlonglong progressValue() const;
 
 	/// Returns the status text of the shared state monitored by this object.
 	QString progressText() const;
@@ -76,8 +76,8 @@ Q_SIGNALS:
 	void canceled();
 	void finished();
 	void started();
-	void progressRangeChanged(int maximum);
-	void progressValueChanged(int progressValue);
+	void progressRangeChanged(qlonglong maximum);
+	void progressValueChanged(qlonglong progressValue);
 	void progressTextChanged(const QString& progressText);
 
 private Q_SLOTS:
@@ -85,8 +85,8 @@ private Q_SLOTS:
 	void promiseCanceled();
 	void promiseFinished();
 	void promiseStarted();
-	void promiseProgressRangeChanged(int maximum);
-	void promiseProgressValueChanged(int progressValue);
+	void promiseProgressRangeChanged(qlonglong maximum);
+	void promiseProgressValueChanged(qlonglong progressValue);
 	void promiseProgressTextChanged(const QString& progressText);
 
 private:

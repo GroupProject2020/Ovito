@@ -130,10 +130,9 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 	}
 	textStream() << '\n';
 
-	size_t totalProgressCount = posProperty->size();
+	qlonglong totalProgressCount = posProperty->size();
 	if(velocityProperty) totalProgressCount += posProperty->size();
 	if(writeBonds) totalProgressCount += bondTopologyProperty->size();
-	size_t currentProgress = 0;
 
 	// Write "Atoms" section.
 	textStream() << "Atoms";
@@ -150,7 +149,8 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 	}
 	textStream() << "\n\n";
 
-	exportTask.setProgressMaximum(100);
+	exportTask.setProgressMaximum(totalProgressCount);
+	qlonglong currentProgress = 0;
 	for(size_t i = 0; i < posProperty->size(); i++) {
 		// atom-ID
 		textStream() << (identifierProperty ? identifierProperty->getInt64(i) : (i+1));
@@ -195,12 +195,8 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 		}
 		textStream() << '\n';
 
-		currentProgress++;
-		if((currentProgress % 4096) == 0) {
-			exportTask.setProgressValue(currentProgress * 100 / totalProgressCount);
-			if(exportTask.isCanceled())
-				return false;
-		}
+		if(!exportTask.setProgressValueIntermittent(currentProgress++))
+			return false;
 	}
 
 	// Write velocities.
@@ -219,12 +215,8 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 			}
 			textStream() << '\n';
 
-			currentProgress++;
-			if((currentProgress % 4096) == 0) {
-				exportTask.setProgressValue(currentProgress * 100 / totalProgressCount);
-				if(exportTask.isCanceled())
-					return false;
-			}
+			if(!exportTask.setProgressValueIntermittent(currentProgress++))
+				return false;
 		}
 	}
 
@@ -232,7 +224,7 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 	if(writeBonds) {
 		textStream() << "\nBonds\n\n";
 
-		int bondIndex = 1;
+		size_t bondIndex = 1;
 		for(size_t i = 0; i < bondTopologyProperty->size(); i++) {
 			size_t atomIndex1 = bondTopologyProperty->getInt64Component(i, 0);
 			size_t atomIndex2 = bondTopologyProperty->getInt64Component(i, 1);
@@ -245,12 +237,8 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 			textStream() << (identifierProperty ? identifierProperty->getInt64(atomIndex2) : (atomIndex2+1));
 			textStream() << '\n';
 
-			currentProgress++;
-			if((currentProgress % 4096) == 0) {
-				exportTask.setProgressValue(currentProgress * 100 / totalProgressCount);
-				if(exportTask.isCanceled())
-					return false;
-			}
+			if(!exportTask.setProgressValueIntermittent(currentProgress++))
+				return false;
 		}
 		OVITO_ASSERT(bondIndex == bondTopologyProperty->size() + 1);
 	}

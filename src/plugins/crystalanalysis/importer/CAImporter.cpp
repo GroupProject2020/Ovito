@@ -61,7 +61,7 @@ void CAImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sour
 {
 	CompressedTextReader stream(file, sourceUrl.path());
 	setProgressText(tr("Scanning CA file %1").arg(stream.filename()));
-	setProgressMaximum(stream.underlyingSize() / 1000);
+	setProgressMaximum(stream.underlyingSize());
 
 	QFileInfo fileInfo(stream.device().fileName());
 	QString filename = fileInfo.fileName();
@@ -96,7 +96,7 @@ void CAImporter::FrameFinder::discoverFramesInFile(QFile& file, const QUrl& sour
 			stream.readLineTrimLeft();
 			if(stream.lineStartsWith("CA_FILE_VERSION ")) break;
 			if((stream.lineNumber() % 4096) == 0)
-				setProgressValue(stream.underlyingByteOffset() / 1000);
+				setProgressValue(stream.underlyingByteOffset());
 		}
 	}
 }

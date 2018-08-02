@@ -57,7 +57,7 @@ void FHIAimsLogFileImporter::FrameFinder::discoverFramesInFile(QFile& file, cons
 {
 	CompressedTextReader stream(file, sourceUrl.path());
 	setProgressText(tr("Scanning file %1").arg(sourceUrl.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
-	setProgressMaximum(stream.underlyingSize() / 1000);
+	setProgressMaximum(stream.underlyingSize());
 
 	// Regular expression for whitespace characters.
 	QRegularExpression ws_re(QStringLiteral("\\s+"));
@@ -80,7 +80,7 @@ void FHIAimsLogFileImporter::FrameFinder::discoverFramesInFile(QFile& file, cons
 			frames.push_back(frame);
 		}
 
-		setProgressValueIntermittent(stream.underlyingByteOffset() / 1000);
+		setProgressValueIntermittent(stream.underlyingByteOffset());
 	}
 }
 

@@ -71,6 +71,9 @@ public:
 	/// \brief Applies the modifier operation to the data in a pipeline flow state.
 	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp) = 0;
 
+	/// \brief Returns the modifier to which this delegate belongs.
+	Modifier* modifier() const;
+
 private:
 
 	/// Indicates whether this delegate is active or not.

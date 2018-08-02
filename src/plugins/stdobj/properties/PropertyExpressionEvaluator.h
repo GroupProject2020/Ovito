@@ -23,6 +23,7 @@
 
 
 #include <plugins/stdobj/StdObj.h>
+#include <plugins/stdobj/simcell/SimulationCell.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
 
 #include <muParser.h>
@@ -68,6 +69,9 @@ public:
 
 	/// Returns a human-readable text listing the input variables.
 	QString inputVariableTable() const;
+
+	/// Returns the stored simulation cell information.
+	const SimulationCell& simCell() const { return _simCell; }
 
 	/// Sets the name of the variable that provides the index of the current element.
 	void setIndexVarName(std::string name) { _indexVarName = std::move(name); }
@@ -216,7 +220,13 @@ protected:
 	size_t _maxThreadCount = 0;
 
 	/// The name of the variable that provides the index of the current element.
-	std::string _indexVarName; 
+	std::string _indexVarName;
+
+	/// Human-readable name describing the data elements, e.g. "particles".
+	QString _elementDescriptionName;
+
+	/// The simulation cell information.
+	SimulationCell _simCell;
 };
 
 }	// End of namespace

@@ -34,7 +34,23 @@ IMPLEMENT_OVITO_CLASS(DelegatingModifier);
 DEFINE_REFERENCE_FIELD(DelegatingModifier, delegate);	
 
 IMPLEMENT_OVITO_CLASS(MultiDelegatingModifier);
-DEFINE_REFERENCE_FIELD(MultiDelegatingModifier, delegates);	
+DEFINE_REFERENCE_FIELD(MultiDelegatingModifier, delegates);
+
+/******************************************************************************
+* Returns the modifier to which this delegate belongs.
+******************************************************************************/
+Modifier* ModifierDelegate::modifier() const
+{
+	for(RefMaker* dependent : this->dependents()) {
+		if(DelegatingModifier* modifier = dynamic_object_cast<DelegatingModifier>(dependent)) {
+			if(modifier->delegate() == this) return modifier;
+		}
+		else if(MultiDelegatingModifier* modifier = dynamic_object_cast<MultiDelegatingModifier>(dependent)) {
+			if(modifier->delegates().contains(const_cast<ModifierDelegate*>(this))) return modifier;
+		}
+	}
+	return nullptr;
+}
 
 /******************************************************************************
 * Constructs the modifier object.

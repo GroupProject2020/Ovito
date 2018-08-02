@@ -61,7 +61,7 @@ bool FHIAimsExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePo
 	}
 
 	// Output atoms.
-	exportTask.setProgressMaximum(100);
+	exportTask.setProgressMaximum(posProperty->size());
 	for(size_t i = 0; i < posProperty->size(); i++) {
 		const Point3& p = posProperty->getPoint3(i);
 		const ElementType* type = particleTypeProperty->elementType(particleTypeProperty->getInt(i));
@@ -75,11 +75,8 @@ bool FHIAimsExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePo
 			textStream() << ' ' << particleTypeProperty->getInt(i) << '\n';
 		}
 
-		if((i % 1000) == 0) {
-			exportTask.setProgressValue((qint64)i * 100 / posProperty->size());
-			if(exportTask.isCanceled())
-				return false;
-		}
+		if(!exportTask.setProgressValueIntermittent(i))
+			return false;
 	}
 
 	return !exportTask.isCanceled();

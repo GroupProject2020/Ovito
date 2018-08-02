@@ -30,7 +30,7 @@ enum {
     MaxProgressEmitsPerSecond = 20
 };
 
-void PromiseStateWithProgress::setProgressMaximum(int maximum)
+void PromiseStateWithProgress::setProgressMaximum(qlonglong maximum)
 {
 	if(maximum == _progressMaximum || isCanceled() || isFinished())
 		return;
@@ -39,14 +39,14 @@ void PromiseStateWithProgress::setProgressMaximum(int maximum)
     computeTotalProgress();
 
 	for(PromiseWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList)
-		QMetaObject::invokeMethod(watcher, "promiseProgressRangeChanged", Qt::QueuedConnection, Q_ARG(int, totalProgressMaximum()));
+		QMetaObject::invokeMethod(watcher, "promiseProgressRangeChanged", Qt::QueuedConnection, Q_ARG(qlonglong, totalProgressMaximum()));
 	for(TrackingPromiseState* tracker = _trackers.get(); tracker != nullptr; tracker = tracker->_nextInList.get()) {
 		for(PromiseWatcher* watcher = tracker->_watchers; watcher != nullptr; watcher = watcher->_nextInList)
-			QMetaObject::invokeMethod(watcher, "promiseProgressRangeChanged", Qt::QueuedConnection, Q_ARG(int, totalProgressMaximum()));
+			QMetaObject::invokeMethod(watcher, "promiseProgressRangeChanged", Qt::QueuedConnection, Q_ARG(qlonglong, totalProgressMaximum()));
 	}
 }
 
-bool PromiseStateWithProgress::setProgressValue(int value)
+bool PromiseStateWithProgress::setProgressValue(qlonglong value)
 {
 	_intermittentUpdateCounter = 0;
 
@@ -60,17 +60,17 @@ bool PromiseStateWithProgress::setProgressValue(int value)
 		_progressTime.start();
 
 		for(PromiseWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList)
-			QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(int, totalProgressValue()));
+			QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(qlonglong, totalProgressValue()));
 		for(TrackingPromiseState* tracker = _trackers.get(); tracker != nullptr; tracker = tracker->_nextInList.get()) {
 			for(PromiseWatcher* watcher = tracker->_watchers; watcher != nullptr; watcher = watcher->_nextInList)
-				QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(int, totalProgressValue()));
+				QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(qlonglong, totalProgressValue()));
 		}
     }
 
     return !isCanceled();
 }
 
-bool PromiseStateWithProgress::setProgressValueIntermittent(int progressValue, int updateEvery)
+bool PromiseStateWithProgress::setProgressValueIntermittent(qlonglong progressValue, int updateEvery)
 {
 	if(_intermittentUpdateCounter == 0 || _intermittentUpdateCounter > updateEvery) {
 		setProgressValue(progressValue);
@@ -79,7 +79,7 @@ bool PromiseStateWithProgress::setProgressValueIntermittent(int progressValue, i
 	return !isCanceled();
 }
 
-bool PromiseStateWithProgress::incrementProgressValue(int increment)
+bool PromiseStateWithProgress::incrementProgressValue(qlonglong increment)
 {
     if(isCanceled() || isFinished())
         return !isCanceled();
@@ -91,10 +91,10 @@ bool PromiseStateWithProgress::incrementProgressValue(int increment)
 		_progressTime.start();
 
 		for(PromiseWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList)
-			QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(int, totalProgressValue()));
+			QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(qlonglong, totalProgressValue()));
 		for(TrackingPromiseState* tracker = _trackers.get(); tracker != nullptr; tracker = tracker->_nextInList.get()) {
 			for(PromiseWatcher* watcher = tracker->_watchers; watcher != nullptr; watcher = watcher->_nextInList)
-				QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(int, totalProgressValue()));
+				QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(qlonglong, totalProgressValue()));
 		}
     }
 
@@ -120,7 +120,7 @@ void PromiseStateWithProgress::computeTotalProgress()
 			percentage = ((double)weightSum1 + percentage * level->second[level->first]) / (weightSum1 + weightSum2);
 		}
 		_totalProgressMaximum = 1000;
-		_totalProgressValue = int(percentage * 1000.0);
+		_totalProgressValue = qlonglong(percentage * 1000.0);
 	}
 }
 

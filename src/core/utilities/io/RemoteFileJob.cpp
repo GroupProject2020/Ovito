@@ -284,7 +284,7 @@ void DownloadRemoteFileJob::receivingFile(qint64 fileSize)
 		shutdown(false);
 		return;
 	}
-	_promiseState->setProgressMaximum(std::min((qint64)std::numeric_limits<int>::max(), fileSize / 1024));
+	_promiseState->setProgressMaximum(fileSize);
 	_promiseState->setProgressText(tr("Fetching remote file %1").arg(_url.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded)));
 
 	// Create the destination file.
@@ -328,7 +328,7 @@ void DownloadRemoteFileJob::receivedData(qint64 totalReceivedBytes)
 		shutdown(false);
 		return;
 	}
-	_promiseState->setProgressValue(std::min((qint64)std::numeric_limits<int>::max(), totalReceivedBytes / 1024));
+	_promiseState->setProgressValue(totalReceivedBytes);
 }
 
 /******************************************************************************

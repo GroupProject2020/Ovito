@@ -165,15 +165,12 @@ bool LAMMPSDumpExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 	textStream() << '\n';
 
 	OutputColumnWriter columnWriter(mapping, state);
-	exportTask.setProgressMaximum(1000);
+	exportTask.setProgressMaximum(atomsCount);
 	for(size_t i = 0; i < atomsCount; i++) {
 		columnWriter.writeParticle(i, textStream());
 
-		if((i % 4096) == 0) {
-			exportTask.setProgressValue((quint64)i * 1000 / atomsCount);
-			if(exportTask.isCanceled())
-				return false;
-		}
+		if(!exportTask.setProgressValueIntermittent(i))
+			return false;
 	}
 
 	return !exportTask.isCanceled();

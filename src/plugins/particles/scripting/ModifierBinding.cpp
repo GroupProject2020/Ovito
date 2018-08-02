@@ -27,7 +27,6 @@
 #include <plugins/particles/modifier/modify/LoadTrajectoryModifier.h>
 #include <plugins/particles/modifier/modify/CombineParticleSetsModifier.h>
 #include <plugins/particles/modifier/modify/CoordinationPolyhedraModifier.h>
-#include <plugins/particles/modifier/properties/ComputePropertyModifier.h>
 #include <plugins/particles/modifier/properties/ComputeBondLengthsModifier.h>
 #include <plugins/particles/modifier/properties/InterpolateTrajectoryModifier.h>
 #include <plugins/particles/modifier/properties/GenerateTrajectoryLinesModifier.h>
@@ -121,56 +120,6 @@ void defineModifiersSubmodule(py::module m)
 				"\n\n"
 				":Default: ``True``\n")
 	;
-
-	ovito_class<ComputePropertyModifier, AsynchronousModifier>(m,
-			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
-			"Evaluates a user-defined math expression for every particle and assigns the values to a particle property. "
-			"See also the corresponding `user manual page <../../particles.modifiers.compute_property.html>`__ for this modifier. "
-			"\n\n"
-			"Usage example:"
-			"\n\n"
-			".. literalinclude:: ../example_snippets/compute_property_modifier.py\n"
-			"   :lines: 6-\n"
-			"\n"
-			"Note that, in many cases, the :py:class:`PythonScriptModifier` is the better choice to perform computations on particle properties, "
-			"unless you need the advanced capabaility of the :py:class:`!ComputePropertyModifier` to evaluate expressions over the neighbors "
-			"of a particle. ")
-		.def_property("expressions", &ComputePropertyModifier::expressions, &ComputePropertyModifier::setExpressions,
-				"A list of strings containing the math expressions to compute, one for each vector component of the output property. "
-				"If the output property is a scalar property, the list should comprise one string only. "
-				"See the corresponding `user manual page <../../particles.modifiers.compute_property.html>`__ for a description of the expression syntax. "
-				"\n\n"
-				":Default: ``[\"0\"]``\n")
-		.def_property("neighbor_expressions", &ComputePropertyModifier::neighborExpressions, &ComputePropertyModifier::setNeighborExpressions,
-				"A list of strings containing the math expressions for the per-neighbor terms, one for each vector component of the output property. "
-				"If the output property is a scalar property, the list should comprise one string only. "
-				"\n\n"
-				"The neighbor expressions are only evaluated if :py:attr:`.neighbor_mode` is enabled."
-				"\n\n"
-				":Default: ``[\"0\"]``\n")
-		.def_property("output_property", &ComputePropertyModifier::outputProperty, &ComputePropertyModifier::setOutputProperty,
-				"The output particle property in which the modifier should store the computed values. "
-				"This can be one of the :ref:`standard property names <particle-types-list>` defined by OVITO or a user-defined property name. "
-				"Note that the modifier can only generate scalar custom properties, but standard properties may be vector properties. "
-				"\n\n"
-				":Default: ``\"Custom property\"``\n")
-		.def_property("component_count", &ComputePropertyModifier::propertyComponentCount, &ComputePropertyModifier::setPropertyComponentCount)
-		.def_property("only_selected", &ComputePropertyModifier::onlySelectedParticles, &ComputePropertyModifier::setOnlySelectedParticles,
-				"If ``True``, the property is only computed for selected particles and existing property values "
-				"are preserved for unselected particles."
-				"\n\n"
-				":Default: ``False``\n")
-		.def_property("neighbor_mode", &ComputePropertyModifier::neighborModeEnabled, &ComputePropertyModifier::setNeighborModeEnabled,
-				"Boolean flag that enabled the neighbor computation mode, where contributions from neighbor particles within the "
-				"cutoff radius are taken into account. "
-				"\n\n"
-				":Default: ``False``\n")
-		.def_property("cutoff_radius", &ComputePropertyModifier::cutoff, &ComputePropertyModifier::setCutoff,
-				"The cutoff radius up to which neighboring particles are visited. This parameter is only used if :py:attr:`.neighbor_mode` is enabled. "
-				"\n\n"
-				":Default: 3.0\n")
-	;
-	ovito_class<ComputePropertyModifierApplication, AsynchronousModifierApplication>{m};
 
 	auto ExpandSelectionModifier_py = ovito_class<ExpandSelectionModifier, AsynchronousModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"

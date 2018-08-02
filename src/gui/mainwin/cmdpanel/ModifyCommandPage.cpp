@@ -521,12 +521,14 @@ void ModifyCommandPage::createAboutPanel()
 		}
 
 		QString operatingSystemString;
-#if defined(Q_OS_MAC)
+#if defined(Q_OS_MACOS)
 		operatingSystemString = QStringLiteral("macosx");
-#elif defined(Q_OS_WIN)
+#elif defined(Q_OS_WIN) || defined(Q_OS_CYGWIN)
 		operatingSystemString = QStringLiteral("win");
-#elif defined(Q_OS_LINUX)
+#elif defined(Q_OS_LINUX) || defined(Q_OS_UNIX)
 		operatingSystemString = QStringLiteral("linux");
+#else
+		operatingSystemString = QStringLiteral("other");
 #endif
 
 		// Fetch newest web page from web server.

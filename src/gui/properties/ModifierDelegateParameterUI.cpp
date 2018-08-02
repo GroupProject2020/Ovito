@@ -23,6 +23,7 @@
 #include <gui/properties/PropertiesEditor.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/dataset/pipeline/DelegatingModifier.h>
+#include <core/dataset/pipeline/AsynchronousDelegatingModifier.h>
 #include <core/app/PluginManager.h>
 #include "ModifierDelegateParameterUI.h"
 
@@ -71,7 +72,9 @@ bool ModifierDelegateParameterUI::referenceEvent(RefTarget* source, const Refere
 		// The modifier's input from the pipeline has changed -> update list of available delegates
 		updateUI();
 	}
-	else if(source == editObject() && event.type() == ReferenceEvent::ReferenceChanged && static_cast<const ReferenceFieldEvent&>(event).field() == &PROPERTY_FIELD(DelegatingModifier::delegate)) {
+	else if(source == editObject() && event.type() == ReferenceEvent::ReferenceChanged && 
+			(static_cast<const ReferenceFieldEvent&>(event).field() == &PROPERTY_FIELD(DelegatingModifier::delegate) ||
+			static_cast<const ReferenceFieldEvent&>(event).field() == &PROPERTY_FIELD(AsynchronousDelegatingModifier::delegate))) {
 		// The modifier has been assigned a new delegate -> update list of delegates
 		updateUI();
 	}
@@ -86,8 +89,18 @@ void ModifierDelegateParameterUI::updateUI()
 {
 	ParameterUI::updateUI();
 	
-	DelegatingModifier* mod = dynamic_object_cast<DelegatingModifier>(editObject());
-	if(comboBox() && mod != nullptr) {
+	Modifier* mod = dynamic_object_cast<Modifier>(editObject());
+	RefTarget* delegate = nullptr;
+	if(DelegatingModifier* delegatingMod = dynamic_object_cast<DelegatingModifier>(mod))
+		delegate = delegatingMod->delegate();
+	else if(AsynchronousDelegatingModifier* delegatingMod = dynamic_object_cast<AsynchronousDelegatingModifier>(mod))
+		delegate = delegatingMod->delegate();
+	else if(mod)
+		OVITO_ASSERT(false);
+
+	OVITO_ASSERT(!delegate || _delegateType.isMember(delegate));
+
+	if(comboBox() && mod) {
 		comboBox()->clear();
 
 		// Obtain modifier inputs.
@@ -98,22 +111,29 @@ void ModifierDelegateParameterUI::updateUI()
 	
 		// Add list items for the registered delegate classes.
 		const QStandardItemModel* model = qobject_cast<const QStandardItemModel*>(comboBox()->model());
-		for(const ModifierDelegate::OOMetaClass* clazz : PluginManager::instance().metaclassMembers<ModifierDelegate>(_delegateType)) {
-			comboBox()->addItem(clazz->displayName(), QVariant::fromValue(static_cast<OvitoClassPtr>(clazz)));
+		for(const OvitoClassPtr& clazz : PluginManager::instance().listClasses(_delegateType)) {
+			comboBox()->addItem(clazz->displayName(), QVariant::fromValue(clazz));
 
 			// Check if this delegate can handle the current modifier input data.
 			// If not, disable the list entry for this delegate.
-			if(!std::any_of(modifierInputs.begin(), modifierInputs.end(), std::bind(&ModifierDelegate::OOMetaClass::isApplicableTo, clazz, std::placeholders::_1))) {
-				model->item(comboBox()->count() - 1)->setEnabled(false);
+			if(clazz->isDerivedFrom(ModifierDelegate::OOClass())) {
+				if(std::any_of(modifierInputs.begin(), modifierInputs.end(), std::bind(&ModifierDelegate::OOMetaClass::isApplicableTo, static_cast<const ModifierDelegate::OOMetaClass*>(clazz), std::placeholders::_1)))
+					continue;
 			}
+			else if(clazz->isDerivedFrom(AsynchronousModifierDelegate::OOClass())) {
+				if(std::any_of(modifierInputs.begin(), modifierInputs.end(), std::bind(&AsynchronousModifierDelegate::OOMetaClass::isApplicableTo, static_cast<const AsynchronousModifierDelegate::OOMetaClass*>(clazz), std::placeholders::_1)))
+					continue;
+			}
+
+			model->item(comboBox()->count() - 1)->setEnabled(false);
 		}
 
 		if(comboBox()->count() == 0)
 			comboBox()->addItem(tr("<No input types available>"));
 
 		// Select the right item in the list box.
-		if(mod->delegate()) {
-			int selIndex = comboBox()->findData(QVariant::fromValue(&mod->delegate()->getOOClass()));
+		if(delegate) {
+			int selIndex = comboBox()->findData(QVariant::fromValue(&delegate->getOOClass()));
 			comboBox()->setCurrentIndex(selIndex);
 		}
 		else {
@@ -132,12 +152,18 @@ void ModifierDelegateParameterUI::updateUI()
 ******************************************************************************/
 void ModifierDelegateParameterUI::updatePropertyValue()
 {
-	DelegatingModifier* mod = dynamic_object_cast<DelegatingModifier>(editObject());
-	if(comboBox() && mod != nullptr) {
+	Modifier* mod = dynamic_object_cast<Modifier>(editObject());
+	if(comboBox() && mod) {
 		undoableTransaction(tr("Change input type"), [this,mod]() {
-			OvitoClassPtr delegateType = comboBox()->currentData().value<OvitoClassPtr>();
-			if(delegateType && (mod->delegate() == nullptr || &mod->delegate()->getOOClass() != delegateType)) {
-				mod->setDelegate(static_object_cast<ModifierDelegate>(delegateType->createInstance(mod->dataset())));
+			if(OvitoClassPtr delegateType = comboBox()->currentData().value<OvitoClassPtr>()) {
+				if(DelegatingModifier* delegatingMod = dynamic_object_cast<DelegatingModifier>(mod)) {
+					if(delegatingMod->delegate() == nullptr || &delegatingMod->delegate()->getOOClass() != delegateType)
+						delegatingMod->setDelegate(static_object_cast<ModifierDelegate>(delegateType->createInstance(mod->dataset())));
+				}
+				else if(AsynchronousDelegatingModifier* delegatingMod = dynamic_object_cast<AsynchronousDelegatingModifier>(mod)) {
+					if(delegatingMod->delegate() == nullptr || &delegatingMod->delegate()->getOOClass() != delegateType)
+						delegatingMod->setDelegate(static_object_cast<AsynchronousModifierDelegate>(delegateType->createInstance(mod->dataset())));
+				}
 			}
 			Q_EMIT valueEntered();
 		});

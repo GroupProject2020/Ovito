@@ -65,13 +65,14 @@ OORef<PropertiesEditor> PropertiesEditor::create(RefTarget* obj)
 /******************************************************************************
 * This will bind the editor to the given container.
 ******************************************************************************/
-void PropertiesEditor::initialize(PropertiesPanel* container, MainWindow* mainWindow, const RolloutInsertionParameters& rolloutParams)
+void PropertiesEditor::initialize(PropertiesPanel* container, MainWindow* mainWindow, const RolloutInsertionParameters& rolloutParams, PropertiesEditor* parentEditor)
 {
 	OVITO_CHECK_POINTER(container);
 	OVITO_CHECK_POINTER(mainWindow);
 	OVITO_ASSERT_MSG(_container == nullptr, "PropertiesEditor::initialize()", "Editor can only be initialized once.");
 	_container = container;
 	_mainWindow = mainWindow;
+	_parentEditor = parentEditor;
 	createUI(rolloutParams);
 	Q_EMIT contentsReplaced(nullptr);
 }
