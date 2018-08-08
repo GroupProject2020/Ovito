@@ -663,7 +663,7 @@ PYBIND11_MODULE(StdMod, m)
 		.def_property("source_property", &FreezePropertyModifier::sourceProperty, [](FreezePropertyModifier& mod, py::object val) {					
 					mod.setSourceProperty(convertPythonPropertyReference(val, mod.propertyClass()));
 				},
-				"The name of the input property that should be evaluated by the modifier at the animation frame give by :py:attr:`.freeze_at`. "
+				"The name of the input property that should be evaluated by the modifier on the animation frame specified by :py:attr:`.freeze_at`. "
 				"\n\n"
 				"Note: Make sure that :py:attr:`.operate_on` is set to the desired value *before* setting this attribute, "
 				"because changing :py:attr:`.operate_on` will implicitly reset the :py:attr:`!source_property` attribute. ")

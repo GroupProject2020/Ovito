@@ -22,6 +22,7 @@
 #include <gui/GUI.h>
 #include <gui/widgets/general/SpinnerWidget.h>
 #include <gui/mainwin/MainWindow.h>
+#include <gui/actions/ActionManager.h>
 #include <gui/properties/PropertiesPanel.h>
 #include <gui/properties/NumericalParameterUI.h>
 #include <gui/dialogs/AnimationSettingsDialog.h>
@@ -373,10 +374,14 @@ AnimationKeyEditorDialog::AnimationKeyEditorDialog(KeyframeController* ctrl, con
 	mainLayout->addWidget(_keyPropPanel);
 
 	QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel | QDialogButtonBox::Help, Qt::Horizontal, this);
+	QPushButton* animSettingsButton = buttonBox->addButton(tr("Animation settings..."), QDialogButtonBox::ActionRole);
 	connect(buttonBox, &QDialogButtonBox::accepted, this, &AnimationKeyEditorDialog::onOk);
 	connect(buttonBox, &QDialogButtonBox::rejected, this, &AnimationKeyEditorDialog::reject);
 
-	// Implement Help button.
+	// Handler for Animation Settings... button.
+	connect(animSettingsButton, &QPushButton::clicked, mainWindow->actionManager()->getAction(ACTION_ANIMATION_SETTINGS), &QAction::trigger);
+
+	// Handler for Help button.
 	connect(buttonBox, &QDialogButtonBox::helpRequested, []() {
 		MainWindow::openHelpTopic(QStringLiteral("usage.animation.html"));
 	});
