@@ -27,7 +27,6 @@ ovito.modifiers.WignerSeitzAnalysisModifier = ovito.plugins.Particles.WignerSeit
 ovito.modifiers.VoronoiAnalysisModifier = ovito.plugins.Particles.VoronoiAnalysisModifier
 ovito.modifiers.IdentifyDiamondModifier = ovito.plugins.Particles.IdentifyDiamondModifier
 ovito.modifiers.LoadTrajectoryModifier = ovito.plugins.Particles.LoadTrajectoryModifier
-ovito.modifiers.CombineParticleSetsModifier = ovito.plugins.Particles.CombineParticleSetsModifier
 ovito.modifiers.ComputeBondLengthsModifier = ovito.plugins.Particles.ComputeBondLengthsModifier
 ovito.modifiers.PolyhedralTemplateMatchingModifier = ovito.plugins.Particles.PolyhedralTemplateMatchingModifier
 ovito.modifiers.CoordinationPolyhedraModifier = ovito.plugins.Particles.CoordinationPolyhedraModifier
@@ -41,5 +40,5 @@ ovito.modifiers.__all__ += ['AmbientOcclusionModifier',
             'CreateBondsModifier', 'CentroSymmetryModifier', 'ClusterAnalysisModifier', 'CoordinationNumberModifier',
             'CalculateDisplacementsModifier', 'AtomicStrainModifier',
             'WignerSeitzAnalysisModifier', 'VoronoiAnalysisModifier', 'IdentifyDiamondModifier', 'LoadTrajectoryModifier',
-            'CombineParticleSetsModifier', 'ComputeBondLengthsModifier', 'PolyhedralTemplateMatchingModifier',
+            'ComputeBondLengthsModifier', 'PolyhedralTemplateMatchingModifier',
             'CoordinationPolyhedraModifier', 'InterpolateTrajectoryModifier', 'GenerateTrajectoryLinesModifier']

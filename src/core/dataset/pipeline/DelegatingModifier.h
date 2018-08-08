@@ -69,7 +69,7 @@ protected:
 public:
 
 	/// \brief Applies the modifier operation to the data in a pipeline flow state.
-	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp) = 0;
+	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs) = 0;
 
 	/// \brief Returns the modifier to which this delegate belongs.
 	Modifier* modifier() const;
@@ -128,7 +128,7 @@ protected:
 	void createDefaultModifierDelegate(const OvitoClass& delegateType, const QString& defaultDelegateTypeName);
 
 	/// Lets the modifier's delegate operate on a pipeline flow state.
-	void applyDelegate(const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp);
+	void applyDelegate(const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs = {});
 
 protected:
 
@@ -181,7 +181,7 @@ protected:
 	void createModifierDelegates(const OvitoClass& delegateType);
 
 	/// Lets the registered modifier delegates operate on a pipeline flow state.
-	void applyDelegates(const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp);
+	void applyDelegates(const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs = {});
 
 protected:
 

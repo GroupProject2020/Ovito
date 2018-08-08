@@ -8,7 +8,7 @@ def verify_operation(input_file1, input_file2):
     print("Combining file '{}' with file '{}':".format(input_file1, input_file2))
 
     pipeline = import_file(input_file1)
-    modifier = CombineParticleSetsModifier()
+    modifier = CombineDatasetsModifier()
     modifier.source.load(input_file2)
     pipeline.modifiers.append(modifier)
 

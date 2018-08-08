@@ -297,6 +297,7 @@ SharedFuture<QVector<FileSourceImporter::Frame>> FileSource::requestFrameList(bo
 	// Intercept future results when they become available and cache them.
 	_framesListFuture = importer()->discoverFrames(sourceUrls())
 		.then(executor(), [this, forceReloadOfCurrentFrame](QVector<FileSourceImporter::Frame>&& frameList) {
+			UndoSuspender noUndo(this);
 			setListOfFrames(frameList);
 
 			// If update was triggered by user, also reload the current frame.

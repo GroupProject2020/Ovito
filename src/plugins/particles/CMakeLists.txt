@@ -37,7 +37,7 @@ SET(SourceFiles
 	modifier/modify/WrapPeriodicImagesModifier.cpp
 	modifier/modify/CreateBondsModifier.cpp
 	modifier/modify/LoadTrajectoryModifier.cpp
-	modifier/modify/CombineParticleSetsModifier.cpp
+	modifier/modify/ParticlesCombineDatasetsModifierDelegate.cpp
 	modifier/modify/CoordinationPolyhedraModifier.cpp
 	modifier/analysis/StructureIdentificationModifier.cpp
 	modifier/analysis/ReferenceConfigurationModifier.cpp

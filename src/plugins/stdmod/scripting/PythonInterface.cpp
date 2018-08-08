@@ -39,6 +39,7 @@
 #include <plugins/stdmod/modifiers/FreezePropertyModifier.h>
 #include <plugins/stdmod/modifiers/ManualSelectionModifier.h>
 #include <plugins/stdmod/modifiers/ComputePropertyModifier.h>
+#include <plugins/stdmod/modifiers/CombineDatasetsModifier.h>
 #include <core/app/PluginManager.h>
 
 namespace Ovito { namespace StdMod {
@@ -763,6 +764,20 @@ PYBIND11_MODULE(StdMod, m)
 				":Default: ``False``\n")
 	;
 	ovito_class<ComputePropertyModifierApplication, AsynchronousModifierApplication>{m};
+
+	ovito_class<CombineDatasetsModifier, MultiDelegatingModifier>(m,
+			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
+			"This modifier loads a set of particles from a separate simulation file and merges them into the current dataset. "
+			"See also the corresponding `user manual page <../../particles.modifiers.combine_particle_sets.html>`__ for this modifier. "
+			"\n\n"
+			"Example:"
+			"\n\n"
+			".. literalinclude:: ../example_snippets/combine_datasets_modifier.py")
+		.def_property("source", &CombineDatasetsModifier::secondaryDataSource, &CombineDatasetsModifier::setSecondaryDataSource,
+				"A :py:class:`~ovito.pipeline.FileSource` that provides the set of particles to be merged. "
+				"You can call its :py:meth:`~ovito.pipeline.FileSource.load` function to load a data file "
+				"as shown in the code example above.")
+	;
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(StdMod);

@@ -35,6 +35,7 @@ SET(SourceFiles
 	modifiers/FreezePropertyModifier.cpp
 	modifiers/ManualSelectionModifier.cpp
 	modifiers/ComputePropertyModifier.cpp
+	modifiers/CombineDatasetsModifier.cpp
 	viewport/ColorLegendOverlay.cpp	
 )
 

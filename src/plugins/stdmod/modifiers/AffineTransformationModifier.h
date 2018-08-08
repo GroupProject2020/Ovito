@@ -38,7 +38,7 @@ class OVITO_STDMOD_EXPORT AffineTransformationModifierDelegate : public Modifier
 protected:
 
 	/// Abstract class constructor.
-	AffineTransformationModifierDelegate(DataSet* dataset) : ModifierDelegate(dataset) {}
+	using ModifierDelegate::ModifierDelegate;
 };
 
 /**
@@ -71,7 +71,7 @@ public:
 	Q_INVOKABLE SimulationCellAffineTransformationModifierDelegate(DataSet* dataset) : AffineTransformationModifierDelegate(dataset) {}
 
 	/// Applies the modifier operation to the data in a pipeline flow state.
-	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp) override;
+	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs) override;
 };
 
 /**

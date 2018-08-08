@@ -43,7 +43,7 @@ bool ParticlesDeleteSelectedModifierDelegate::OOMetaClass::isApplicableTo(const 
 /******************************************************************************
 * Applies the modifier operation to the data in a pipeline flow state.
 ******************************************************************************/
-PipelineStatus ParticlesDeleteSelectedModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp)
+PipelineStatus ParticlesDeleteSelectedModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	ParticleInputHelper pih(dataset(), output); // Note: We treat the current output as input here.
 	ParticleOutputHelper poh(dataset(), output);
@@ -85,7 +85,7 @@ bool BondsDeleteSelectedModifierDelegate::OOMetaClass::isApplicableTo(const Pipe
 /******************************************************************************
 * Applies the modifier operation to the data in a pipeline flow state.
 ******************************************************************************/
-PipelineStatus BondsDeleteSelectedModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp)
+PipelineStatus BondsDeleteSelectedModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	ParticleInputHelper pih(dataset(), output); // Note: We treat the current output as input here.
 	ParticleOutputHelper poh(dataset(), output);

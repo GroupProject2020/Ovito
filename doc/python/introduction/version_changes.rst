@@ -187,6 +187,8 @@ The :py:class:`!SelectParticleTypeModifier` has been renamed to :py:class:`~ovit
 bonds too. Furthermore, it is now possible to specify the set of particle :py:attr:`~ovito.modifiers.SelectTypeModifier.types` to select
 in terms of type *names*. Before, it was only possible to select particles based on *numeric* type IDs.
 
+The :py:class:`!CombineParticleSetsModifier` has been renamed to :py:class:`~ovito.modifiers.CombineDatasetsModifier`.
+
 The following modifier classes have been generalized and gained a new :py:attr:`!operate_on` field that controls what kind(s) of data elements (e.g. particles,
 bonds, surfaces, etc.) the modifier should act on:
 
@@ -194,7 +196,9 @@ bonds, surfaces, etc.) the modifier should act on:
    * :py:class:`~ovito.modifiers.AssignColorModifier` 
    * :py:class:`~ovito.modifiers.ClearSelectionModifier`
    * :py:class:`~ovito.modifiers.ColorCodingModifier` 
+   * :py:class:`~ovito.modifiers.ComputePropertyModifier` 
    * :py:class:`~ovito.modifiers.DeleteSelectedModifier` 
+   * :py:class:`~ovito.modifiers.ExpressionSelectionModifier` 
    * :py:class:`~ovito.modifiers.InvertSelectionModifier` 
    * :py:class:`~ovito.modifiers.HistogramModifier` 
    * :py:class:`~ovito.modifiers.SelectTypeModifier` 

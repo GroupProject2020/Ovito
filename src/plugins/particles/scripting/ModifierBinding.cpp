@@ -25,7 +25,6 @@
 #include <plugins/particles/modifier/modify/WrapPeriodicImagesModifier.h>
 #include <plugins/particles/modifier/modify/CreateBondsModifier.h>
 #include <plugins/particles/modifier/modify/LoadTrajectoryModifier.h>
-#include <plugins/particles/modifier/modify/CombineParticleSetsModifier.h>
 #include <plugins/particles/modifier/modify/CoordinationPolyhedraModifier.h>
 #include <plugins/particles/modifier/properties/ComputeBondLengthsModifier.h>
 #include <plugins/particles/modifier/properties/InterpolateTrajectoryModifier.h>
@@ -1015,20 +1014,6 @@ void defineModifiersSubmodule(py::module m)
 		.def_property("source", &LoadTrajectoryModifier::trajectorySource, &LoadTrajectoryModifier::setTrajectorySource,
 				"A :py:class:`~ovito.pipeline.FileSource` that provides the trajectories of particles. "
 				"You can call its :py:meth:`~ovito.pipeline.FileSource.load` function to load a simulation trajectory file "
-				"as shown in the code example above.")
-	;
-
-	ovito_class<CombineParticleSetsModifier, Modifier>(m,
-			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
-			"This modifier loads a set of particles from a separate simulation file and merges them into the current dataset. "
-			"See also the corresponding `user manual page <../../particles.modifiers.combine_particle_sets.html>`__ for this modifier. "
-			"\n\n"
-			"Example:"
-			"\n\n"
-			".. literalinclude:: ../example_snippets/combine_particle_sets_modifier.py")
-		.def_property("source", &CombineParticleSetsModifier::secondaryDataSource, &CombineParticleSetsModifier::setSecondaryDataSource,
-				"A :py:class:`~ovito.pipeline.FileSource` that provides the set of particles to be merged. "
-				"You can call its :py:meth:`~ovito.pipeline.FileSource.load` function to load a data file "
 				"as shown in the code example above.")
 	;
 

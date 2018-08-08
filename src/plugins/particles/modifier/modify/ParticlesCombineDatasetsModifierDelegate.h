@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,51 +23,45 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <core/dataset/pipeline/Modifier.h>
-#include <core/dataset/pipeline/PipelineObject.h>
+#include <plugins/stdmod/modifiers/CombineDatasetsModifier.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 
 /**
  * \brief Combines two particle datasets into one.
  */
-class OVITO_PARTICLES_EXPORT CombineParticleSetsModifier : public Modifier
+class OVITO_PARTICLES_EXPORT ParticlesCombineDatasetsModifierDelegate : public CombineDatasetsModifierDelegate
 {
 	/// Give this modifier class its own metaclass.
-	class CombineParticleSetsModifierClass : public ModifierClass 
+	class OOMetaClass : public CombineDatasetsModifierDelegate::OOMetaClass 
 	{
 	public:
 
 		/// Inherit constructor from base metaclass.
-		using ModifierClass::ModifierClass;
+		using CombineDatasetsModifierDelegate::OOMetaClass::OOMetaClass;
 
-		/// Asks the metaclass whether the modifier can be applied to the given input data.
+		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
 		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+
+		/// The name by which Python scripts can refer to this modifier delegate.
+		virtual QString pythonDataName() const override { return QStringLiteral("particles"); }
 	};
 
 	Q_OBJECT
-	OVITO_CLASS_META(CombineParticleSetsModifier, CombineParticleSetsModifierClass)
+	OVITO_CLASS_META(ParticlesCombineDatasetsModifierDelegate, OOMetaClass)
 
-	Q_CLASSINFO("DisplayName", "Combine particle sets");
-	Q_CLASSINFO("ModifierCategory", "Modification");
+	Q_CLASSINFO("DisplayName", "Particles");
 
 public:
 
 	/// Constructor.
-	Q_INVOKABLE CombineParticleSetsModifier(DataSet* dataset);
+	Q_INVOKABLE ParticlesCombineDatasetsModifierDelegate(DataSet* dataset) : CombineDatasetsModifierDelegate(dataset) {}
 
-	/// Modifies the input data.
-	virtual Future<PipelineFlowState> evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-
-private:
-
-	/// The source for particle data to be merged into the pipeline.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(PipelineObject, secondaryDataSource, setSecondaryDataSource, PROPERTY_FIELD_NO_SUB_ANIM);
+	/// Applies the modifier operation to the data in a pipeline flow state.
+	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs) override;
 };
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

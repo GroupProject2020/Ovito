@@ -76,7 +76,7 @@ TimeInterval AssignColorModifier::modifierValidity(TimePoint time)
 /******************************************************************************
 * Applies the modifier operation to the data in a pipeline flow state.
 ******************************************************************************/
-PipelineStatus AssignColorModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp)
+PipelineStatus AssignColorModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	const AssignColorModifier* mod = static_object_cast<AssignColorModifier>(modifier);
 	InputHelper ih(dataset(), input);

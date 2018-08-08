@@ -27,7 +27,7 @@ Python class name                              User interface name
 :py:class:`ClearSelectionModifier`             :guilabel:`Clear selection`
 :py:class:`ClusterAnalysisModifier`            :guilabel:`Cluster analysis`
 :py:class:`ColorCodingModifier`                :guilabel:`Color coding`
-:py:class:`CombineParticleSetsModifier`        :guilabel:`Combine particle sets`
+:py:class:`CombineDatasetsModifier`            :guilabel:`Combine datasets`
 :py:class:`CommonNeighborAnalysisModifier`     :guilabel:`Common neighbor analysis`
 :py:class:`ComputeBondLengthsModifier`         :guilabel:`Compute bond lengths`
 :py:class:`ComputePropertyModifier`            :guilabel:`Compute property`

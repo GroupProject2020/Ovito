@@ -36,6 +36,7 @@ SET(SourceFiles
 	FreezePropertyModifierEditor.cpp
 	ManualSelectionModifierEditor.cpp
 	ComputePropertyModifierEditor.cpp
+	CombineDatasetsModifierEditor.cpp
 )
 
 OVITO_STANDARD_PLUGIN(StdModGui

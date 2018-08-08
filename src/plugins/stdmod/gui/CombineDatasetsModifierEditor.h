@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,23 +22,23 @@
 #pragma once
 
 
-#include <plugins/particles/gui/ParticlesGui.h>
+#include <plugins/stdmod/gui/StdModGui.h>
 #include <gui/properties/ModifierPropertiesEditor.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace StdMod {
 
 /**
- * A properties editor for the CombineParticleSetsModifier class.
+ * A properties editor for the CombineDatasetsModifier class.
  */
-class CombineParticleSetsModifierEditor : public ModifierPropertiesEditor
+class CombineDatasetsModifierEditor : public ModifierPropertiesEditor
 {
 	Q_OBJECT
-	OVITO_CLASS(CombineParticleSetsModifierEditor)
+	OVITO_CLASS(CombineDatasetsModifierEditor)
 
 public:
 
 	/// Default constructor.
-	Q_INVOKABLE CombineParticleSetsModifierEditor() {}
+	Q_INVOKABLE CombineDatasetsModifierEditor() {}
 
 protected:
 
@@ -46,8 +46,5 @@ protected:
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

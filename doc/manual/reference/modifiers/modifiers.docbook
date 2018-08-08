@@ -88,7 +88,7 @@
             </row>
             <row>
               <entry><link linkend="particles.modifiers.polyhedral_template_matching">Polyhedral&#xA0;template&#xA0;matching</link></entry>
-              <entry>Identifies common crystal structures using the PTM method.</entry>
+              <entry>Identifies common crystal structures using the PTM method and computes local crystal orientations.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.scatter_plot">Scatter&#xA0;plot</link></entry>
@@ -133,8 +133,8 @@
               <entry>Applies an affine transformation to the system.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.combine_particle_sets">Combine&#xA0;particle&#xA0;sets</link></entry>
-              <entry>Merges the particles from two separate files into one dataset.</entry>
+              <entry><link linkend="particles.modifiers.combine_particle_sets">Combine&#xA0;datasets</link></entry>
+              <entry>Merges the particles and bonds from two separate input files into one dataset.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.compute_bond_lengths">Compute&#xA0;bond&#xA0;lengths</link></entry>
@@ -142,7 +142,7 @@
             </row>
             <row>
               <entry><link linkend="particles.modifiers.compute_property">Compute&#xA0;property</link></entry>
-              <entry>Computes a new property for each particle based a user-defined formula.</entry>
+              <entry>Assigns property values to particles or bonds according to a user-defined formula.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.delete_selected_particles">Delete&#xA0;selected</link></entry>

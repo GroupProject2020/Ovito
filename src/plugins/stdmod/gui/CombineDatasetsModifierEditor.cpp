@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -19,23 +19,23 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/particles/modifier/modify/CombineParticleSetsModifier.h>
+#include <plugins/stdmod/gui/StdModGui.h>
+#include <plugins/stdmod/modifiers/CombineDatasetsModifier.h>
 #include <gui/properties/SubObjectParameterUI.h>
-#include "CombineParticleSetsModifierEditor.h"
+#include "CombineDatasetsModifierEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace StdMod {
 
-IMPLEMENT_OVITO_CLASS(CombineParticleSetsModifierEditor);
-SET_OVITO_OBJECT_EDITOR(CombineParticleSetsModifier, CombineParticleSetsModifierEditor);
+IMPLEMENT_OVITO_CLASS(CombineDatasetsModifierEditor);
+SET_OVITO_OBJECT_EDITOR(CombineDatasetsModifier, CombineDatasetsModifierEditor);
 
 /******************************************************************************
 * Sets up the UI widgets of the editor.
 ******************************************************************************/
-void CombineParticleSetsModifierEditor::createUI(const RolloutInsertionParameters& rolloutParams)
+void CombineDatasetsModifierEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create a rollout.
-	QWidget* rollout = createRollout(tr("Combine Particle Sets"), rolloutParams, "particles.modifiers.combine_particle_sets.html");
+	QWidget* rollout = createRollout(tr("Combine Datasets"), rolloutParams, "particles.modifiers.combine_particle_sets.html");
 
     // Create the rollout contents.
 	QVBoxLayout* layout = new QVBoxLayout(rollout);
@@ -47,11 +47,8 @@ void CombineParticleSetsModifierEditor::createUI(const RolloutInsertionParameter
 	layout->addWidget(statusLabel());
 
 	// Open a sub-editor for the source object.
-	new SubObjectParameterUI(this, PROPERTY_FIELD(CombineParticleSetsModifier::secondaryDataSource), RolloutInsertionParameters().setTitle(tr("Secondary Source")));
+	new SubObjectParameterUI(this, PROPERTY_FIELD(CombineDatasetsModifier::secondaryDataSource), RolloutInsertionParameters().setTitle(tr("Secondary Source")));
 }
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

@@ -72,7 +72,8 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 	
 	// Wait for the data to become available.
 	return trajStateFuture.then(executor(), [this, input = input](const PipelineFlowState& trajState) {
-	
+		UndoSuspender noUndo(this);
+
 		PipelineFlowState output = input;
 		ParticleInputHelper pih(dataset(), input);
 		ParticleOutputHelper poh(dataset(), output);

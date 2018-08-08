@@ -124,6 +124,7 @@ SharedFuture<PipelineFlowState> PipelineSceneNode::evaluatePipeline(TimePoint ti
 	// Evaluate the pipeline and store the obtained results in the cache before returning them to the caller.
 	return dataProvider()->evaluate(time)
 		.then(executor(), [this, time](PipelineFlowState state) {
+			UndoSuspender noUndo(this);
 
 			// The pipeline should never return a state without proper validity interval.
 			OVITO_ASSERT(state.stateValidity().contains(time));
@@ -154,6 +155,7 @@ SharedFuture<PipelineFlowState> PipelineSceneNode::evaluateRenderingPipeline(Tim
 	// Evaluate the pipeline and store the obtained results in the cache before returning them to the caller.
 	return evaluatePipeline(time)
 		.then(executor(), [this, time](const PipelineFlowState& state) {
+			UndoSuspender noUndo(this);
 
 			// Holds the results to be returned to the caller.
 			Future<PipelineFlowState> results;
@@ -169,6 +171,7 @@ SharedFuture<PipelineFlowState> PipelineSceneNode::evaluateRenderingPipeline(Tim
 						}
 						else {
 							results = results.then(transformingVis->executor(), [this, time, transformingVis, dataObj](PipelineFlowState&& state) {
+								UndoSuspender noUndo(this);
 								return transformingVis->transformData(time, dataObj, std::move(state), _pipelineRenderingCache.getStaleContents(), this);
 							});
 						}

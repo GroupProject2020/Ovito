@@ -108,8 +108,10 @@ PipelineFlowState DelegatingModifier::evaluatePreliminary(TimePoint time, Modifi
 /******************************************************************************
 * Lets the modifier's delegate operate on a pipeline flow state.
 ******************************************************************************/
-void DelegatingModifier::applyDelegate(const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp)
+void DelegatingModifier::applyDelegate(const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
+	OVITO_ASSERT(!dataset()->undoStack().isRecording());
+
 	if(!delegate() || !delegate()->isEnabled())
 		return;
 
@@ -118,7 +120,7 @@ void DelegatingModifier::applyDelegate(const PipelineFlowState& input, PipelineF
 		throwException(tr("The modifier input does not contain the expected kind of data."));
 
 	// Call the delegate function.
-	PipelineStatus delegateStatus = delegate()->apply(this, input, output, time, modApp);
+	PipelineStatus delegateStatus = delegate()->apply(this, input, output, time, modApp, additionalInputs);
 
 	// Append status text and code returned by the delegate function to the status returned to our caller.
 	PipelineStatus status = output.status();
@@ -184,8 +186,10 @@ PipelineFlowState MultiDelegatingModifier::evaluatePreliminary(TimePoint time, M
 /******************************************************************************
 * Lets the registered modifier delegates operate on a pipeline flow state.
 ******************************************************************************/
-void MultiDelegatingModifier::applyDelegates(const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp)
+void MultiDelegatingModifier::applyDelegates(const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
+	OVITO_ASSERT(!dataset()->undoStack().isRecording());
+
 	for(ModifierDelegate* delegate : delegates()) {
 
 		// Skip function if not applicable.
@@ -193,7 +197,7 @@ void MultiDelegatingModifier::applyDelegates(const PipelineFlowState& input, Pip
 			continue;
 
 		// Call the delegate function.
-		PipelineStatus delegateStatus = delegate->apply(this, input, output, time, modApp);
+		PipelineStatus delegateStatus = delegate->apply(this, input, output, time, modApp, additionalInputs);
 
 		// Append status text and code returned by the delegate function to the status returned to our caller.
 		PipelineStatus status = output.status();
