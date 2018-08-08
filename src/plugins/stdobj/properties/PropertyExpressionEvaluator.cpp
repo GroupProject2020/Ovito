@@ -30,7 +30,7 @@
 namespace Ovito { namespace StdObj {
 
 /// List of characters allowed in variable names.
-QByteArray PropertyExpressionEvaluator::_validVariableNameChars("0123456789_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.");
+QByteArray PropertyExpressionEvaluator::_validVariableNameChars("0123456789_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.@");
 
 /******************************************************************************
 * Specifies the expressions to be evaluated for each data element and create the
@@ -38,7 +38,7 @@ QByteArray PropertyExpressionEvaluator::_validVariableNameChars("0123456789_abcd
 ******************************************************************************/
 void PropertyExpressionEvaluator::initialize(const QStringList& expressions, const PipelineFlowState& inputState, const PropertyClass& propertyClass, int animationFrame)
 {
-	// Build list of properties.
+	// Build list of properties that will be made available as expression variables.
 	std::vector<ConstPropertyPtr> inputProperties;
 	for(DataObject* obj : inputState.objects()) {
 		if(PropertyObject* prop = dynamic_object_cast<PropertyObject>(obj)) {
@@ -71,9 +71,9 @@ void PropertyExpressionEvaluator::initialize(const QStringList& expressions, con
 	_expressions.resize(expressions.size());
 	std::transform(expressions.begin(), expressions.end(), _expressions.begin(), [](const QString& s) -> std::string { return s.toStdString(); });
 
-	// Determine number of input element.
+	// Determine number of input elements.
 	_elementCount = inputProperties.empty() ? 0 : inputProperties.front()->size();
-	_isTimeDependent = false;
+	_referencedVariablesKnown = false;
 }
 
 /******************************************************************************
@@ -81,77 +81,23 @@ void PropertyExpressionEvaluator::initialize(const QStringList& expressions, con
 ******************************************************************************/
 void PropertyExpressionEvaluator::createInputVariables(const std::vector<ConstPropertyPtr>& inputProperties, const SimulationCell* simCell, const QVariantMap& attributes, int animationFrame)
 {
-	_inputVariables.clear();
-
-	int propertyIndex = 1;
-	size_t elementCount = 0;
-	for(const ConstPropertyPtr& property : inputProperties) {
-		ExpressionVariable v;
-
-		// Properties with custom data type are not supported by this modifier.
-		if(property->dataType() == PropertyStorage::Int)
-			v.type = INT_PROPERTY;
-		else if(property->dataType() == PropertyStorage::Int64)
-			v.type = INT64_PROPERTY;
-		else if(property->dataType() == PropertyStorage::Float)
-			v.type = FLOAT_PROPERTY;
-		else
-			continue;
-		v.property = property;
-		elementCount = property->size();
-
-		// Derive a valid variable name from the property name by removing all invalid characters.
-		QString propertyName = property->name();
-		// If the name is empty, generate one.
-		if(propertyName.isEmpty())
-			propertyName = QString("Property%1").arg(propertyIndex);
-		// If the name starts with a number, prepend an underscore.
-		else if(propertyName[0].isDigit())
-			propertyName.prepend(QChar('_'));
-
-		for(size_t k = 0; k < property->componentCount(); k++) {
-
-			QString fullPropertyName = propertyName;
-			if(property->componentNames().size() == property->componentCount())
-				fullPropertyName += "." + property->componentNames()[k];
-
-			// Filter out invalid characters.
-			v.name = fullPropertyName.toStdString();
-
-			// Initialize data pointer into property storage.
-			if(property->dataType() == PropertyStorage::Int)
-				v.dataPointer = reinterpret_cast<const char*>(property->constDataInt() + k);
-			else if(property->dataType() == PropertyStorage::Int64)
-				v.dataPointer = reinterpret_cast<const char*>(property->constDataInt64() + k);
-			else
-				v.dataPointer = reinterpret_cast<const char*>(property->constDataFloat() + k);
-			v.stride = property->stride();
-
-			addVariable(ExpressionVariable(v));
-		}
-
-		propertyIndex++;
-	}
+	// Register the list of expression variables that refer to input properties.
+	registerPropertyVariables(inputProperties, 0);
 
 	// Create index variable.
-	if(!_indexVarName.empty()) {
-		ExpressionVariable pindexVar;
-		pindexVar.name = _indexVarName;
-		pindexVar.type = ELEMENT_INDEX;
-		pindexVar.description = tr("zero-based");
-		addVariable(std::move(pindexVar));
-	}
+	if(!_indexVarName.isEmpty())
+		registerIndexVariable(_indexVarName, 0, tr("zero-based"));
 
 	// Create constant variables.
 	ExpressionVariable constVar;
 
 	// Number of elements
-	registerGlobalParameter("N", elementCount, tr("total number of %1").arg(_elementDescriptionName.isEmpty() ? QString("elements") : _elementDescriptionName));
+	registerGlobalParameter("N", elementCount(), tr("total number of %1").arg(_elementDescriptionName.isEmpty() ? QString("elements") : _elementDescriptionName));
 
 	// Animation frame
 	registerGlobalParameter("Frame", animationFrame, tr("animation frame number"));
 
-	// Global attributes.
+	// Global attributes
 	for(auto entry = attributes.constBegin(); entry != attributes.constEnd(); ++entry) {
 		if(entry.value().type() == QVariant::String)
 			continue;
@@ -175,28 +121,92 @@ void PropertyExpressionEvaluator::createInputVariables(const std::vector<ConstPr
 		registerGlobalParameter("CellSize.Z", std::abs(simCell->matrix().column(2).z()), tr("size along Z"));
 	}
 
-	// Constant pi.
+	// Constant pi
 	registerConstant("pi", M_PI, QStringLiteral("%1...").arg(M_PI));
+}
+
+/******************************************************************************
+* Registers the list of expression variables that refer to input properties.
+******************************************************************************/
+void PropertyExpressionEvaluator::registerPropertyVariables(const std::vector<ConstPropertyPtr>& inputProperties, int variableClass, const char* namePrefix)
+{
+	int propertyIndex = 1;
+	for(const ConstPropertyPtr& property : inputProperties) {
+		ExpressionVariable v;
+
+		// Properties with custom data type are not supported by this modifier.
+		if(property->dataType() == PropertyStorage::Int)
+			v.type = INT_PROPERTY;
+		else if(property->dataType() == PropertyStorage::Int64)
+			v.type = INT64_PROPERTY;
+		else if(property->dataType() == PropertyStorage::Float)
+			v.type = FLOAT_PROPERTY;
+		else
+			continue;
+		v.property = property;
+		v.variableClass = variableClass;
+
+		// Derive a valid variable name from the property name by removing all invalid characters.
+		QString propertyName = property->name();
+		// If the name is empty, generate one.
+		if(propertyName.isEmpty())
+			propertyName = QString("Property%1").arg(propertyIndex);
+		// If the name starts with a number, prepend an underscore.
+		else if(propertyName[0].isDigit())
+			propertyName.prepend(QChar('_'));
+
+		for(size_t k = 0; k < property->componentCount(); k++) {
+
+			QString fullPropertyName = propertyName;
+			if(property->componentNames().size() == property->componentCount())
+				fullPropertyName += "." + property->componentNames()[k];
+			if(!namePrefix)
+				v.name = fullPropertyName.toStdString();
+			else
+				v.name = namePrefix + fullPropertyName.toStdString();
+
+			// Initialize data pointer into property storage.
+			if(property->dataType() == PropertyStorage::Int)
+				v.dataPointer = reinterpret_cast<const char*>(property->constDataInt() + k);
+			else if(property->dataType() == PropertyStorage::Int64)
+				v.dataPointer = reinterpret_cast<const char*>(property->constDataInt64() + k);
+			else if(property->dataType() == PropertyStorage::Float)
+				v.dataPointer = reinterpret_cast<const char*>(property->constDataFloat() + k);
+			else
+				continue;
+			v.stride = property->stride();
+
+			// Register variable.
+			addVariable(v);
+		}
+
+		propertyIndex++;
+	}
 }
 
 /******************************************************************************
 * Registers an input variable if the name does not exist yet.
 ******************************************************************************/
-void PropertyExpressionEvaluator::addVariable(ExpressionVariable&& v)
+size_t PropertyExpressionEvaluator::addVariable(ExpressionVariable v)
 {
 	// Replace invalid characters in variable name with an underscore.
-	std::string filteredName;
-	filteredName.reserve(v.name.size());
+	v.mangledName.clear();
+	v.mangledName.reserve(v.name.size());
 	for(char c : v.name) {
-		if(c != ' ')
-			filteredName.push_back(_validVariableNameChars.contains(c) ? c : '_');
+		// Remove whitespace from variable names.
+		if(c <= ' ') continue;
+		// Replace other invalid characters in variable names with an underscore.
+		v.mangledName.push_back(_validVariableNameChars.contains(c) ? c : '_');
 	}
-	if(filteredName.empty()) return;
-	v.name.swap(filteredName);
-	
-	// Check if name is unique.
-	if(std::none_of(_inputVariables.begin(), _inputVariables.end(), [&v](const ExpressionVariable& v2) -> bool { return v2.name == v.name; }))
-		_inputVariables.push_back(std::move(v));
+	if(!v.mangledName.empty()) {	
+		// Check if mangled name is unique.
+		if(std::none_of(_variables.begin(), _variables.end(), [&v](const ExpressionVariable& v2) -> bool { return v2.mangledName == v.mangledName; })) {
+			v.isRegistered = true;
+		}
+	}
+	_referencedVariablesKnown = false;
+	_variables.push_back(std::move(v));
+	return _variables.size() - 1;
 }
 
 /******************************************************************************
@@ -205,9 +215,28 @@ void PropertyExpressionEvaluator::addVariable(ExpressionVariable&& v)
 QStringList PropertyExpressionEvaluator::inputVariableNames() const
 {
 	QStringList vlist;
-	for(const ExpressionVariable& v : _inputVariables)
-		vlist << QString::fromStdString(v.name);
+	for(const ExpressionVariable& v : _variables) {
+		if(v.isRegistered)
+			vlist << QString::fromStdString(v.mangledName);
+	}
 	return vlist;
+}
+
+/******************************************************************************
+* Returns whether a variable is being referenced in one of the expressions.
+******************************************************************************/
+bool PropertyExpressionEvaluator::isVariableUsed(const char* varName)
+{
+	if(!_referencedVariablesKnown) {
+		Worker worker(*this);
+		_variables = worker._variables;
+		_referencedVariablesKnown = true;
+	}
+	for(const ExpressionVariable& var : _variables) {
+		if(var.name == varName && var.isReferenced) 
+			return true;
+	}
+	return false;
 }
 
 /******************************************************************************
@@ -216,20 +245,22 @@ QStringList PropertyExpressionEvaluator::inputVariableNames() const
 void PropertyExpressionEvaluator::evaluate(const std::function<void(size_t,size_t,double)>& callback, const std::function<bool(size_t)>& filter)
 {
 	// Make sure initialize() has been called.
-	OVITO_ASSERT(!_inputVariables.empty());
+	OVITO_ASSERT(!_variables.empty());
 
 	// Determine the number of parallel threads to use.
 	size_t nthreads = Application::instance()->idealThreadCount();
 	if(maxThreadCount() != 0 && nthreads > maxThreadCount()) nthreads = maxThreadCount();
 	if(elementCount() == 0)
 		return;
-	else if(elementCount() < 100)
+	else if(elementCount() < 100) // Not worth spawning multiple threads for so few elements.
 		nthreads = 1;
 	else if(nthreads > elementCount())
 		nthreads = elementCount();
 
 	if(nthreads == 1) {
 		Worker worker(*this);
+		_variables = worker._variables;
+		_referencedVariablesKnown = true;
 		worker.run(0, elementCount(), callback, filter);
 		if(worker._errorMsg.isEmpty() == false)
 			throw Exception(worker._errorMsg);
@@ -237,8 +268,13 @@ void PropertyExpressionEvaluator::evaluate(const std::function<void(size_t,size_
 	else if(nthreads > 1) {
 		std::vector<std::unique_ptr<Worker>> workers;
 		workers.reserve(nthreads);
-		for(size_t i = 0; i < nthreads; i++)
+		for(size_t i = 0; i < nthreads; i++) {
 			workers.emplace_back(new Worker(*this));
+			if(i == 0) {
+				_variables = workers.back()->_variables;
+				_referencedVariablesKnown = true;
+			}
+		}
 
 		// Spawn worker threads.
 		QFutureSynchronizer<void> synchronizer;
@@ -269,10 +305,13 @@ void PropertyExpressionEvaluator::evaluate(const std::function<void(size_t,size_
 PropertyExpressionEvaluator::Worker::Worker(PropertyExpressionEvaluator& evaluator)
 {
 	_parsers.resize(evaluator._expressions.size());
-	_inputVariables = evaluator._inputVariables;
 
-	// The list of used variables.
-	std::set<std::string> usedVariables;
+	// Make a per-thread copy of the input variables.
+	_variables = evaluator._variables;
+
+	// Reset variable flags.
+	for(ExpressionVariable& v : _variables)
+		v.isReferenced = false;
 
 	auto parser = _parsers.begin();
 	auto expr = evaluator._expressions.cbegin();
@@ -297,27 +336,23 @@ PropertyExpressionEvaluator::Worker::Worker(PropertyExpressionEvaluator& evaluat
 			parser->SetExpr(*expr);
 
 			// Register input variables.
-			for(auto& v : _inputVariables)
-				parser->DefineVar(v.name, &v.value);
+			for(ExpressionVariable& v : _variables) {
+				if(v.isRegistered)
+					parser->DefineVar(v.mangledName, &v.value);
+			}
 
 			// Query list of used variables.
-			for(const auto& vname : parser->GetUsedVar())
-				usedVariables.insert(vname.first);
+			for(const auto& vname : parser->GetUsedVar()) {
+				for(ExpressionVariable& var : _variables) {
+					if(var.isRegistered && var.mangledName == vname.first) {
+						var.isReferenced = true;
+					}
+				}
+			}
 		}
 		catch(mu::Parser::exception_type& ex) {
 			throw Exception(QString::fromStdString(ex.GetMsg()));
 		}
-	}
-
-	// If the current animation time is used in the math expression then we have to
-	// reduce the validity interval to the current time only.
-	if(usedVariables.find("Frame") != usedVariables.end() || usedVariables.find("Timestep") != usedVariables.end())
-		evaluator._isTimeDependent = true;
-
-	// Remove unused variables so they don't get updated unnecessarily.
-	for(ExpressionVariable& var : _inputVariables) {
-		if(usedVariables.find(var.name) != usedVariables.end())
-			_activeVariables.push_back(&var);
 	}
 }
 
@@ -353,23 +388,7 @@ double PropertyExpressionEvaluator::Worker::evaluate(size_t elementIndex, size_t
 			_lastElementIndex = elementIndex;
 
 			// Update variable values for the current data element.
-			for(ExpressionVariable* v : _activeVariables) {
-				if(v->type == FLOAT_PROPERTY) {
-					v->value = *reinterpret_cast<const FloatType*>(v->dataPointer + v->stride * elementIndex);
-				}
-				else if(v->type == INT_PROPERTY) {
-					v->value = *reinterpret_cast<const int*>(v->dataPointer + v->stride * elementIndex);
-				}
-				else if(v->type == INT64_PROPERTY) {
-					v->value = *reinterpret_cast<const qlonglong*>(v->dataPointer + v->stride * elementIndex);
-				}
-				else if(v->type == ELEMENT_INDEX) {
-					v->value = elementIndex;
-				}
-				else if(v->type == DERIVED_PROPERTY) {
-					v->value = v->function(elementIndex);
-				}
-			}
+			updateVariables(0, elementIndex);
 		}
 
 		// Evaluate expression for the current data element.
@@ -381,35 +400,70 @@ double PropertyExpressionEvaluator::Worker::evaluate(size_t elementIndex, size_t
 }
 
 /******************************************************************************
+* Retrieves the value of the variable and stores it in the memory location 
+* passed to muparser.
+******************************************************************************/
+void PropertyExpressionEvaluator::ExpressionVariable::updateValue(size_t elementIndex)
+{
+	if(!isReferenced) 
+		return;
+
+	switch(type) {
+	case FLOAT_PROPERTY:
+		if(elementIndex < property->size())
+			value = *reinterpret_cast<const FloatType*>(dataPointer + stride * elementIndex);
+		break;
+	case INT_PROPERTY:
+		if(elementIndex < property->size())
+			value = *reinterpret_cast<const int*>(dataPointer + stride * elementIndex);
+		break;
+	case INT64_PROPERTY:
+		if(elementIndex < property->size())
+			value = *reinterpret_cast<const qlonglong*>(dataPointer + stride * elementIndex);
+		break;
+	case ELEMENT_INDEX:
+		value = elementIndex;
+		break;
+	case DERIVED_PROPERTY:
+		value = function(elementIndex);
+		break;
+	case GLOBAL_PARAMETER:
+	case CONSTANT:
+		// Nothing to do.
+		break;
+	}
+}
+
+/******************************************************************************
 * Returns a human-readable text listing the input variables.
 ******************************************************************************/
 QString PropertyExpressionEvaluator::inputVariableTable() const
 {
 	QString str(tr("<p>Available input variables:</p><p><b>Properties:</b><ul>"));
-	for(const ExpressionVariable& v : _inputVariables) {
-		if(v.type == FLOAT_PROPERTY || v.type == INT_PROPERTY || v.type == INT64_PROPERTY || v.type == ELEMENT_INDEX || v.type == DERIVED_PROPERTY) {
+	for(const ExpressionVariable& v : _variables) {
+		if((v.type == FLOAT_PROPERTY || v.type == INT_PROPERTY || v.type == INT64_PROPERTY || v.type == ELEMENT_INDEX || v.type == DERIVED_PROPERTY) && v.isRegistered && v.variableClass == 0) {
 			if(v.description.isEmpty())
-				str.append(QStringLiteral("<li>%1</li>").arg(QString::fromStdString(v.name)));
+				str.append(QStringLiteral("<li>%1</li>").arg(QString::fromStdString(v.mangledName)));
 			else
-				str.append(QStringLiteral("<li>%1 (<i style=\"color: #555;\">%2</i>)</li>").arg(QString::fromStdString(v.name)).arg(v.description));
+				str.append(QStringLiteral("<li>%1 (<i style=\"color: #555;\">%2</i>)</li>").arg(QString::fromStdString(v.mangledName)).arg(v.description));
 		}
 	}
 	str.append(QStringLiteral("</ul></p><p><b>Global values:</b><ul>"));
-	for(const ExpressionVariable& v : _inputVariables) {
-		if(v.type == GLOBAL_PARAMETER) {
+	for(const ExpressionVariable& v : _variables) {
+		if(v.type == GLOBAL_PARAMETER && v.isRegistered) {
 			if(v.description.isEmpty())
-				str.append(QStringLiteral("<li>%1</li>").arg(QString::fromStdString(v.name)));
+				str.append(QStringLiteral("<li>%1</li>").arg(QString::fromStdString(v.mangledName)));
 			else
-				str.append(QStringLiteral("<li>%1 (<i style=\"color: #555;\">%2</i>)</li>").arg(QString::fromStdString(v.name)).arg(v.description));
+				str.append(QStringLiteral("<li>%1 (<i style=\"color: #555;\">%2</i>)</li>").arg(QString::fromStdString(v.mangledName)).arg(v.description));
 		}
 	}
 	str.append(QStringLiteral("</ul></p><p><b>Constants:</b><ul>"));
-	for(const ExpressionVariable& v : _inputVariables) {
-		if(v.type == CONSTANT) {
+	for(const ExpressionVariable& v : _variables) {
+		if(v.type == CONSTANT && v.isRegistered) {  
 			if(v.description.isEmpty())
-				str.append(QStringLiteral("<li>%1</li>").arg(QString::fromStdString(v.name)));
+				str.append(QStringLiteral("<li>%1</li>").arg(QString::fromStdString(v.mangledName)));
 			else
-				str.append(QStringLiteral("<li>%1 (<i style=\"color: #555;\">%2</i>)</li>").arg(QString::fromStdString(v.name)).arg(v.description));
+				str.append(QStringLiteral("<li>%1 (<i style=\"color: #555;\">%2</i>)</li>").arg(QString::fromStdString(v.mangledName)).arg(v.description));
 		}
 	}
 	str.append(QStringLiteral("</ul></p>"));

@@ -31,7 +31,7 @@
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 
 /**
- * \brief Function for the ComputePropertyModifier that operates on particles.
+ * \brief Delegate plugin for the ComputePropertyModifier that operates on particles.
  */
 class OVITO_PARTICLES_EXPORT ParticlesComputePropertyModifierDelegate : public ComputePropertyModifierDelegate
 {
@@ -135,6 +135,9 @@ private:
 		/// Determines whether any of the math expressions is explicitly time-dependent.
 		virtual bool isTimeDependent() override;
 
+		/// Returns a human-readable text listing the input variables.
+		virtual QString inputVariableTable() const override;
+				
 		/// Computes the modifier's results.
 		virtual void perform() override;
 
@@ -142,7 +145,7 @@ private:
 		const ConstPropertyPtr& positions() const { return _positions; }
 
 		/// Indicates whether contributions from particle neighbors are taken into account.
-		bool neighborMode() const { return _cutoff != 0; }
+		bool neighborMode() const { return _neighborMode; }
 
 		/// Injects the computed results into the data pipeline.
 		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
@@ -151,13 +154,11 @@ private:
 
 		const FloatType _cutoff;
 		QStringList _neighborExpressions;
+		bool _neighborMode;
 		ConstPropertyPtr _positions;
 		std::unique_ptr<ParticleExpressionEvaluator> _neighborEvaluator;
 		ParticleOrderingFingerprint _inputFingerprint;
 	};
-
-	/// Controls whether the contributions from neighbor terms are included in the computation.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, neighborModeEnabled, setNeighborModeEnabled);
 
 	/// The math expressions for calculating the neighbor-terms of the property function.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(QStringList, neighborExpressions, setNeighborExpressions);

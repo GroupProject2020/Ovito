@@ -24,6 +24,7 @@
 
 #include <plugins/pyscript/PyScript.h>
 #include <core/oo/OORef.h>
+#include <core/app/PluginManager.h>
 
 PYBIND11_DECLARE_HOLDER_TYPE(T, Ovito::OORef<T>, true);
 
@@ -613,10 +614,38 @@ void modifier_operate_on_list(PythonClass& parentClass, DelegateListGetter&& del
 		docstring);
 }
 
-/// Helper function that generates a getter function for the 'operate_on' attribute of a DelegatingModifier subclass
-OVITO_PYSCRIPT_EXPORT py::cpp_function modifierDelegateGetter();
+/// Helper function that generates a getter function for the 'operate_on' attribute of a DelegatingModifier or AsynchronousDelegatingModifier subclass
+template<typename DelegatingModifierClass>
+py::cpp_function modifierDelegateGetter()
+{
+	return [](const DelegatingModifierClass& mod) { 
+		return mod.delegate() ? mod.delegate()->getOOMetaClass().pythonDataName() : QString();
+	};
+}
 
-/// Helper function that generates a setter function for the 'operate_on' attribute of a DelegatingModifier subclass.
-OVITO_PYSCRIPT_EXPORT py::cpp_function modifierDelegateSetter(const OvitoClass& delegateType);
+/// Helper function that generates a setter function for the 'operate_on' attribute of a DelegatingModifier or AsynchronousDelegatingModifier subclass.
+template<typename DelegatingModifierClass>
+py::cpp_function modifierDelegateSetter()
+{
+	return [](DelegatingModifierClass& mod, const QString& typeName) { 
+		const OvitoClass& delegateType = DelegatingModifierClass::OOClass().delegateMetaclass();
+		if(mod.delegate() && mod.delegate()->getOOMetaClass().pythonDataName() == typeName)
+			return;
+		for(auto clazz : PluginManager::instance().metaclassMembers<typename DelegatingModifierClass::DelegateBaseType>(delegateType)) {
+			if(clazz->pythonDataName() == typeName) {
+				mod.setDelegate(static_object_cast<typename DelegatingModifierClass::DelegateBaseType>(clazz->createInstance(mod.dataset())));
+				return;
+			}
+		}
+		// Error: User did not specify a valid type name.
+		// Now build the list of valid names to generate a helpful error message.
+		QStringList delegateTypeNames; 
+		for(auto clazz : PluginManager::instance().metaclassMembers<typename DelegatingModifierClass::DelegateBaseType>(delegateType)) {
+			delegateTypeNames.push_back(QString("'%1'").arg(clazz->pythonDataName()));
+		}
+		mod.throwException(QStringLiteral("'%1' is not a valid type of data element this modifier can operate on. Supported types are: (%2)")
+			.arg(typeName).arg(delegateTypeNames.join(QStringLiteral(", "))));
+	};
+}
 
 }	// End of namespace

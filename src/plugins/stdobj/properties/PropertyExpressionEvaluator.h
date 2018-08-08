@@ -28,6 +28,7 @@
 
 #include <muParser.h>
 #include <boost/utility.hpp>
+#include <boost/optional.hpp>
 
 namespace Ovito { namespace StdObj {
 
@@ -74,19 +75,25 @@ public:
 	const SimulationCell& simCell() const { return _simCell; }
 
 	/// Sets the name of the variable that provides the index of the current element.
-	void setIndexVarName(std::string name) { _indexVarName = std::move(name); }
+	void setIndexVarName(QString name) { _indexVarName = std::move(name); }
 
-	/// Returns whether the expression results depend on animation time.
-	bool isTimeDependent() const { return _isTimeDependent; }
+	/// Returns the name of the variable that provides the index of the current element.
+	const QString& indexVarName() const { return _indexVarName; }
+
+	/// Returns whether a variable is being referenced in one of the expressions.
+	bool isVariableUsed(const char* varName);
+
+	/// Returns whether the expression depends on animation time.
+	bool isTimeDependent() { return isVariableUsed("Frame"); }
 
 	/// Registers a new input variable whose value is recomputed for each data element.
-	template<typename Function>
-	void registerComputedVariable(const QString& variableName, Function&& function, QString description = QString()) {
+	void registerComputedVariable(const QString& variableName, std::function<double(size_t)> function, QString description = QString(), int variableClass = 0) {
 		ExpressionVariable v;
 		v.type = DERIVED_PROPERTY;
 		v.name = variableName.toStdString();
-		v.function = std::forward<Function>(function);
+		v.function = std::move(function);
 		v.description = description;
+		v.variableClass = variableClass;
 		addVariable(std::move(v));
 	}
 
@@ -110,6 +117,19 @@ public:
 		addVariable(std::move(v));
 	}
 
+	/// Registers a new input variable whose value is reflects the current element index.
+	void registerIndexVariable(const QString& variableName, int variableClass, QString description = QString()) {
+		ExpressionVariable v;
+		v.type = ELEMENT_INDEX;
+		v.name = variableName.toStdString();
+		v.variableClass = variableClass;
+		v.description = description;
+		addVariable(std::move(v));
+	}
+
+	/// Registers a list of expression variables that refer to input properties.
+	void registerPropertyVariables(const std::vector<ConstPropertyPtr>& inputProperties, int variableClass, const char* namePrefix = nullptr);
+
 protected:
 
 	enum ExpressionVariableType {
@@ -124,6 +144,10 @@ protected:
 
 	/// Data structure representing an input variable.
 	struct ExpressionVariable {
+		/// Indicates whether this variable has been successfully registered with the muParser.
+		bool isRegistered = false;
+		/// Indicates whether this variable is referenced by at least one of the expressions.
+		bool isReferenced = false;
 		/// The variable's value for the current data element.
 		double value;
 		/// Pointer into the property storage.
@@ -132,14 +156,21 @@ protected:
 		size_t stride;
 		/// The type of variable.
 		ExpressionVariableType type;
-		/// The name of the variable.
+		/// The original name of the variable.
 		std::string name;
+		/// The name of the variable as registered with the muparser.
+		std::string mangledName;
 		/// Human-readable description.
 		QString description;
 		/// A function that computes the variable's value for each data element.
 		std::function<double(size_t)> function;
 		/// Reference the original property that contains the data.
 		ConstPropertyPtr property;
+		/// Indicates whether this variable is a caller-defined element variable.
+		int variableClass = 0;
+		
+		/// Retrieves the value of the variable and stores it in the memory location passed to muparser.
+		void updateValue(size_t elementIndex);
 	};
 
 public:
@@ -156,18 +187,27 @@ public:
 
 		/// Returns the storage address of a variable value.
 		double* variableAddress(const char* varName) {
-			for(ExpressionVariable& var : _inputVariables)
+			for(ExpressionVariable& var : _variables) {
 				if(var.name == varName)
 					return &var.value;
+			}
 			OVITO_ASSERT(false);
 			return nullptr;
 		}
 
 		// Returns whether the given variable is being referenced in one of the expressions.
 		bool isVariableUsed(const char* varName) const {
-			for(const ExpressionVariable* var : _activeVariables)
-				if(var->name == varName) return true;
+			for(const ExpressionVariable& var : _variables)
+				if(var.name == varName && var.isReferenced) return true;
 			return false;
+		}
+		
+		/// Updates the stored value of variables that depends on the current element index.
+		void updateVariables(int variableClass, size_t elementIndex) {
+			for(ExpressionVariable& v : _variables) {
+				if(v.variableClass == variableClass)
+					v.updateValue(elementIndex);
+			}
 		}
 
 	private:
@@ -179,10 +219,7 @@ public:
 		std::vector<mu::Parser> _parsers;
 
 		/// List of input variables used by the parsers of this thread.
-		QVector<ExpressionVariable> _inputVariables;
-
-		/// List of input variables which are actually used in the expression.
-		std::vector<ExpressionVariable*> _activeVariables;
+		std::vector<ExpressionVariable> _variables;
 
 		/// The index of the last data element for which the expressions were evaluated.
 		size_t _lastElementIndex = std::numeric_limits<size_t>::max();
@@ -199,16 +236,16 @@ protected:
 	virtual void createInputVariables(const std::vector<ConstPropertyPtr>& inputProperties, const SimulationCell* simCell, const QVariantMap& attributes, int animationFrame);
 
 	/// Registers an input variable if the name does not exist yet.
-	void addVariable(ExpressionVariable&& v);
+	size_t addVariable(ExpressionVariable v);
 
 	/// The list of expression that should be evaluated for each data element.
 	std::vector<std::string> _expressions;
 
-	/// The list of input variables.
-	QVector<ExpressionVariable> _inputVariables;
+	/// The list of input variables that can be referenced in the expressions.
+	std::vector<ExpressionVariable> _variables;
 
-	/// Indicates that the expression produces time-dependent results.
-	std::atomic<bool> _isTimeDependent{false};
+	/// Indicates whether the list of referenced variables has been determined.
+	bool _referencedVariablesKnown = false;
 
 	/// The number of input data elements.
 	size_t _elementCount = 0;
@@ -220,7 +257,7 @@ protected:
 	size_t _maxThreadCount = 0;
 
 	/// The name of the variable that provides the index of the current element.
-	std::string _indexVarName;
+	QString _indexVarName;
 
 	/// Human-readable name describing the data elements, e.g. "particles".
 	QString _elementDescriptionName;

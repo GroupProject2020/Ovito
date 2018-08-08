@@ -313,7 +313,7 @@ PYBIND11_MODULE(StdMod, m)
 				"of unselected elements will be preserved; if ``False``, all elements will be colored."
 				"\n\n"
 				":Default: ``False``\n")
-		.def_property("operate_on", modifierDelegateGetter(), modifierDelegateSetter(ColorCodingModifierDelegate::OOClass()),
+		.def_property("operate_on", modifierDelegateGetter<ColorCodingModifier>(), modifierDelegateSetter<ColorCodingModifier>(),
 				"Selects the kind of data elements this modifier should operate on. "
 				"Supported values are: ``'particles'``, ``'bonds'``, ``'vectors'``. "
 				"\n\n"
@@ -502,7 +502,7 @@ PYBIND11_MODULE(StdMod, m)
 				"\n\n"
 				":Default: ``(0.3, 0.3, 1.0)``\n")
 		.def_property("keep_selection", &AssignColorModifier::keepSelection, &AssignColorModifier::setKeepSelection)
-		.def_property("operate_on", modifierDelegateGetter(), modifierDelegateSetter(AssignColorModifierDelegate::OOClass()),
+		.def_property("operate_on", modifierDelegateGetter<AssignColorModifier>(), modifierDelegateSetter<AssignColorModifier>(),
 				"Selects the kind of data elements this modifier should operate on. "
 				"Supported values are: ``'particles'``, ``'bonds'``, ``'vectors'``. "
 				"\n\n"
@@ -631,7 +631,7 @@ PYBIND11_MODULE(StdMod, m)
 		.def_property("expression", &ExpressionSelectionModifier::expression, &ExpressionSelectionModifier::setExpression,
 				"A string containing the Boolean expression to be evaluated for every element. "
 				"The expression syntax is documented in `OVITO's user manual <../../particles.modifiers.expression_select.html>`__.")
-		.def_property("operate_on", modifierDelegateGetter(), modifierDelegateSetter(ExpressionSelectionModifierDelegate::OOClass()),
+		.def_property("operate_on", modifierDelegateGetter<ExpressionSelectionModifier>(), modifierDelegateSetter<ExpressionSelectionModifier>(),
 				"Selects the kind of data elements this modifier should operate on. "
 				"Supported values are: ``'particles'``, ``'bonds'``. "
 				"\n\n"
@@ -646,7 +646,7 @@ PYBIND11_MODULE(StdMod, m)
 			"Thus, the :py:class:`!FreezePropertyModifier` allows you to *freeze* a dynamically changing property and overwrite its values with those from a fixed point in time. "
 			"See also the corresponding `user manual page <../../particles.modifiers.freeze_property.html>`__ for this modifier. "
 			"\n\n"
-			"The modifier can operate on properties of different kinds: "
+			"The modifier can operate on properties of different kinds of elements: "
 			"\n\n"
 			"  * Particles (:py:class:`~ovito.data.ParticleProperty`)\n"
 			"  * Bonds (:py:class:`~ovito.data.BondProperty`)\n"
@@ -702,56 +702,65 @@ PYBIND11_MODULE(StdMod, m)
 	;
 	ovito_class<ManualSelectionModifierApplication, ModifierApplication>{m};
 
+	ovito_abstract_class<ComputePropertyModifierDelegate, AsynchronousModifierDelegate>{m}
+	;
 	ovito_class<ComputePropertyModifier, AsynchronousDelegatingModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
-			"Evaluates a user-defined math expression for every particle and assigns the values to a particle property. "
+			"Evaluates a user-defined math expression for every particle or bond and assigns the computed values to the selected output property. "
 			"See also the corresponding `user manual page <../../particles.modifiers.compute_property.html>`__ for this modifier. "
+			"\n\n"
+			"The modifier can compute properties of different kinds of elements: "
+			"\n\n"
+			"  * Particles (:py:class:`~ovito.data.ParticleProperty`)\n"
+			"  * Bonds (:py:class:`~ovito.data.BondProperty`)\n"
+			"\n\n"
+			"The modifier will operate on particles by default. You can change this by setting the modifier's :py:attr:`.operate_on` field. "
 			"\n\n"
 			"Usage example:"
 			"\n\n"
 			".. literalinclude:: ../example_snippets/compute_property_modifier.py\n"
 			"   :lines: 6-\n"
 			"\n"
-			"Note that, in many cases, the :py:class:`PythonScriptModifier` is the better choice to perform computations on particle properties, "
-			"unless you need the advanced capabaility of the :py:class:`!ComputePropertyModifier` to evaluate expressions over the neighbors "
-			"of a particle. ")
+			"Note that, as an alternative to this modifier, a :py:class:`PythonScriptModifier` with a user-defined modifier function may be the better choice to "
+			"set properties, in particular when it comes to problems that involve complex element indexing or conditional computations. "
+		)
+		.def_property("operate_on", modifierDelegateGetter<ComputePropertyModifier>(), modifierDelegateSetter<ComputePropertyModifier>(),
+				"Selects the kind of data elements this modifier should operate on. "
+				"Supported values are: ``'particles'``, ``'bonds'``. "
+				"\n\n"
+				":Default: ``'particles'``\n")
 		.def_property("expressions", &ComputePropertyModifier::expressions, &ComputePropertyModifier::setExpressions,
-				"A list of strings containing the math expressions to compute, one for each vector component of the output property. "
-				"If the output property is a scalar property, the list should comprise one string only. "
+				"A list of strings containing the math expressions to compute, one for each vector component of the selected output property. "
+				"If the output property is scalar, the list must comprise one expression string. "
+				"\n\n"
+				"Note: Before setting this field, make sure that :py:attr:`.output_property` is already set to the desired value, "
+				"because changing the :py:attr:`.output_property` will implicitly resize the :py:attr:`!expressions` list. "
+				"\n\n"
 				"See the corresponding `user manual page <../../particles.modifiers.compute_property.html>`__ for a description of the expression syntax. "
 				"\n\n"
-				":Default: ``[\"0\"]``\n")
-#if 0				
-		.def_property("neighbor_expressions", &ComputePropertyModifier::neighborExpressions, &ComputePropertyModifier::setNeighborExpressions,
-				"A list of strings containing the math expressions for the per-neighbor terms, one for each vector component of the output property. "
-				"If the output property is a scalar property, the list should comprise one string only. "
-				"\n\n"
-				"The neighbor expressions are only evaluated if :py:attr:`.neighbor_mode` is enabled."
-				"\n\n"
-				":Default: ``[\"0\"]``\n")
-#endif				
-		.def_property("output_property", &ComputePropertyModifier::outputProperty, &ComputePropertyModifier::setOutputProperty,
-				"The output particle property in which the modifier should store the computed values. "
+				":Default: ``[\"0\"]``\n")		
+		.def_property("output_property", &ComputePropertyModifier::outputProperty, [](ComputePropertyModifier& mod, py::object val) {					
+					auto* delegate = static_object_cast<ComputePropertyModifierDelegate>(mod.delegate());
+					mod.setOutputProperty(convertPythonPropertyReference(val, delegate ? &delegate->propertyClass() : nullptr));
+				},
+				"The output property that will receive the computed values. "
 				"This can be one of the :ref:`standard property names <particle-types-list>` defined by OVITO or a user-defined property name. "
-				"Note that the modifier can only generate scalar custom properties, but standard properties may be vector properties. "
 				"\n\n"
-				":Default: ``\"Custom property\"``\n")
+				"If :py:attr:`.operate_on` is set to ``'particles'``, this can be one of the :ref:`standard particle properties <particle-types-list>` "
+				"or a name of a new user-defined :py:class:`~ovito.data.ParticleProperty`. "
+				"If :py:attr:`.operate_on` is set to ``'bonds'``, this can be one of the :ref:`standard bond properties <bond-types-list>` "
+				"or a name of a new user-defined :py:class:`~ovito.data.BondProperty`. "
+				"\n\n"
+				"Note: Make sure that the :py:attr:`.operate_on` field is set to the desired value *before* setting this field, "
+				"because changing :py:attr:`.operate_on` will implicitly reset :py:attr:`!output_property` to its default value. "
+				"\n\n"
+				":Default: ``\"My property\"``\n")
 		.def_property("component_count", &ComputePropertyModifier::propertyComponentCount, &ComputePropertyModifier::setPropertyComponentCount)
 		.def_property("only_selected", &ComputePropertyModifier::onlySelectedElements, &ComputePropertyModifier::setOnlySelectedElements,
-				"If ``True``, the property is only computed for selected elements. "
+				"If ``True``, the property is only computed for currently selected elements. "
+				"In this case, the property values of unselected elements will be preserved if the output property already exists. "
 				"\n\n"
 				":Default: ``False``\n")
-#if 0
-		.def_property("neighbor_mode", &ComputePropertyModifier::neighborModeEnabled, &ComputePropertyModifier::setNeighborModeEnabled,
-				"Boolean flag that enabled the neighbor computation mode, where contributions from neighbor particles within the "
-				"cutoff radius are taken into account. "
-				"\n\n"
-				":Default: ``False``\n")
-		.def_property("cutoff_radius", &ComputePropertyModifier::cutoff, &ComputePropertyModifier::setCutoff,
-				"The cutoff radius up to which neighboring particles are visited. This parameter is only used if :py:attr:`.neighbor_mode` is enabled. "
-				"\n\n"
-				":Default: 3.0\n")
-#endif
 	;
 	ovito_class<ComputePropertyModifierApplication, AsynchronousModifierApplication>{m};
 }

@@ -28,7 +28,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 * Constructor.
 ******************************************************************************/
 AutocompleteLineEdit::AutocompleteLineEdit(QWidget* parent) : QLineEdit(parent),
-		_wordSplitter("(?:(?<![\\w\\.])(?=[\\w\\.])|(?<=[\\w\\.])(?![\\w\\.]))")
+		_wordSplitter("(?:(?<![\\w\\.@])(?=[\\w\\.@])|(?<=[\\w\\.@])(?![\\w\\.@]))")
 {
 	_wordListModel = new QStringListModel(this);
 	_completer = new QCompleter(this);

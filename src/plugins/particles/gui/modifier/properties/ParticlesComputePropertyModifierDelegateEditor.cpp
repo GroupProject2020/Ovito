@@ -21,7 +21,6 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <plugins/particles/modifier/properties/ParticlesComputePropertyModifierDelegate.h>
-#include <gui/properties/BooleanGroupBoxParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
 #include <gui/properties/StringParameterUI.h>
 #include <gui/properties/BooleanParameterUI.h>
@@ -46,30 +45,29 @@ void ParticlesComputePropertyModifierDelegateEditor::createUI(const RolloutInser
 	QVBoxLayout* mainLayout = new QVBoxLayout(neighorRollout);
 	mainLayout->setContentsMargins(4,4,4,4);
 
-	BooleanGroupBoxParameterUI* neighborModeUI = new BooleanGroupBoxParameterUI(this, PROPERTY_FIELD(ParticlesComputePropertyModifierDelegate::neighborModeEnabled));
-	mainLayout->addWidget(neighborModeUI->groupBox());
-
-	QGridLayout* gridlayout = new QGridLayout(neighborModeUI->childContainer());
-	gridlayout->setContentsMargins(4,4,4,4);
-	gridlayout->setColumnStretch(1, 1);
-	gridlayout->setRowStretch(1, 1);
+	QGroupBox* rangeGroupBox = new QGroupBox(tr("Evaluation range"));
+	mainLayout->addWidget(rangeGroupBox);
+	QGridLayout* rangeGroupBoxLayout = new QGridLayout(rangeGroupBox);
+	rangeGroupBoxLayout->setContentsMargins(4,4,4,4);
+	rangeGroupBoxLayout->setSpacing(1);
+	rangeGroupBoxLayout->setColumnStretch(1,1);
 
 	// Cutoff parameter.
 	FloatParameterUI* cutoffRadiusUI = new FloatParameterUI(this, PROPERTY_FIELD(ParticlesComputePropertyModifierDelegate::cutoff));
-	gridlayout->addWidget(cutoffRadiusUI->label(), 0, 0);
-	gridlayout->addLayout(cutoffRadiusUI->createFieldLayout(), 0, 1);
+	rangeGroupBoxLayout->addWidget(cutoffRadiusUI->label(), 0, 0);
+	rangeGroupBoxLayout->addLayout(cutoffRadiusUI->createFieldLayout(), 0, 1);
 
 	neighborExpressionsGroupBox = new QGroupBox(tr("Neighbor expression"));
-	gridlayout->addWidget(neighborExpressionsGroupBox, 1, 0, 1, 2);
+	mainLayout->addWidget(neighborExpressionsGroupBox);
 	neighborExpressionsLayout = new QGridLayout(neighborExpressionsGroupBox);
 	neighborExpressionsLayout->setContentsMargins(4,4,4,4);
 	neighborExpressionsLayout->setSpacing(1);
-	neighborExpressionsLayout->setRowMinimumHeight(1,4);
-	neighborExpressionsLayout->setColumnStretch(1,1);
+	neighborExpressionsLayout->setRowMinimumHeight(1, 4);
+	neighborExpressionsLayout->setColumnStretch(1, 1);
 
 	// Show multiline fields.
 	BooleanParameterUI* multilineFieldsUI = new BooleanParameterUI(this, PROPERTY_FIELD(ParticlesComputePropertyModifierDelegate::useMultilineFields));
-	neighborExpressionsLayout->addWidget(multilineFieldsUI->checkBox(), 0, 1);
+	neighborExpressionsLayout->addWidget(multilineFieldsUI->checkBox(), 0, 1, Qt::AlignRight | Qt::AlignBottom);
 
 	// Update input variables list if another modifier has been loaded into the editor.
 	connect(this, &ParticlesComputePropertyModifierDelegateEditor::contentsReplaced, this, &ParticlesComputePropertyModifierDelegateEditor::updateExpressionFields);
@@ -91,7 +89,6 @@ bool ParticlesComputePropertyModifierDelegateEditor::referenceEvent(RefTarget* s
 	}
 	return ModifierPropertiesEditor::referenceEvent(source, event);
 }
-
 
 /******************************************************************************
 * Updates the editor's display of the available expression variables.

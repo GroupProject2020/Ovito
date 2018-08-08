@@ -2,31 +2,59 @@ import ovito
 import ovito.io
 import ovito.modifiers
 
-import numpy
+import numpy as np
 
-node = ovito.io.import_file("../../files/CFG/shear.void.120.cfg")
+pipeline = ovito.io.import_file("../../files/CFG/shear.void.120.cfg")
 modifier = ovito.modifiers.ComputePropertyModifier()
-assert(len(modifier.expressions) == 1)
+pipeline.modifiers.append(modifier)
 
 print(modifier.expressions)
 print(modifier.only_selected)
 print(modifier.output_property)
 
-modifier.output_property = 'testprop' 
+assert(modifier.operate_on == "particles")
+assert(len(modifier.expressions) == 1)
+assert(modifier.expressions[0] == "0")
 
+# Test: Compute a simple custom vector property. 
+modifier.output_property = 'testprop' 
 modifier.expressions = ["Position.X * 2.0", "Position.Y / 2"]
 modifier.only_selected = False
+data = pipeline.compute()
+assert('testprop' in data.particles)
+expected_result = np.transpose([data.particles['Position'][:,0] * 2, data.particles['Position'][:,1] / 2])
+assert(np.array_equal(data.particles['testprop'], expected_result))
 
-print("Expressions: {}".format(list(modifier.expressions)))
-node.modifiers.append(modifier)
+# Test: "NumNeighbors" expression
+modifier.output_property = 'neighprop' 
+modifier.expressions = ["NumNeighbors"]
+modifier.neighbor_mode = True
+modifier.cutoff_radius = 3.2
+pipeline.modifiers.append(ovito.modifiers.CoordinationNumberModifier(cutoff = modifier.cutoff_radius))
+data = pipeline.compute()
+expected_result = data.particles['Coordination']
+assert(np.array_equal(data.particles['neighprop'], expected_result))
 
-modifier = ovito.modifiers.ComputePropertyModifier()
-modifier.output_property = "Color"
-modifier.expressions = ["Position.X / CellSize.X", "0", "0"]
-node.modifiers.append(modifier)
+# Test: neighbor_expressions
+modifier.output_property = 'neighprop' 
+modifier.expressions = ["0"]
+modifier.neighbor_expressions = ["1"]
+data = pipeline.compute()
+assert(np.array_equal(data.particles['neighprop'], expected_result))
 
-print(node.compute().particle_properties["testprop"].array)
-print(node.compute().particle_properties.position.array)
-print(node.compute().particle_properties.color.array)
+# Test: bond property computation
+pipeline.modifiers.insert(0, ovito.modifiers.CreateBondsModifier(cutoff = 3.2))
+modifier.operate_on = 'bonds' 
+modifier.output_property = 'testprop' 
+modifier.expressions = ["@1.ParticleType != @2.ParticleType"]
+data = pipeline.compute()
+expected_result = data.particles['Particle Type'][data.bonds['Topology'][:,0]] != data.particles['Particle Type'][data.bonds['Topology'][:,1]]
+assert(np.array_equal(data.bonds['testprop'], expected_result))
 
-assert(node.compute().particle_properties["testprop"].array[0,0] == node.compute().particle_properties.position.array[0,0] * 2.0)
+# Test: bond length computation
+pipeline.modifiers.append(ovito.modifiers.ComputeBondLengthsModifier())
+modifier.output_property = 'testprop' 
+modifier.expressions = ["BondLength"]
+data = pipeline.compute()
+expected_result = data.bonds['Length']
+assert(np.array_equal(data.bonds['testprop'], expected_result))

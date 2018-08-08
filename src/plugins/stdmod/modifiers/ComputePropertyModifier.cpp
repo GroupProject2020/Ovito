@@ -42,7 +42,7 @@ DEFINE_PROPERTY_FIELD(ComputePropertyModifier, useMultilineFields);
 SET_PROPERTY_FIELD_LABEL(ComputePropertyModifier, expressions, "Expressions");
 SET_PROPERTY_FIELD_LABEL(ComputePropertyModifier, outputProperty, "Output property");
 SET_PROPERTY_FIELD_LABEL(ComputePropertyModifier, onlySelectedElements, "Compute only for selected elements");
-SET_PROPERTY_FIELD_LABEL(ComputePropertyModifier, useMultilineFields, "Expand input fields");
+SET_PROPERTY_FIELD_LABEL(ComputePropertyModifier, useMultilineFields, "Expand field(s)");
 
 IMPLEMENT_OVITO_CLASS(ComputePropertyModifierApplication);
 DEFINE_REFERENCE_FIELD(ComputePropertyModifierApplication, cachedVisElements);
@@ -63,9 +63,6 @@ ComputePropertyModifier::ComputePropertyModifier(DataSet* dataset) : Asynchronou
 {
 	// Let this modifier act on particles by default.
 	createDefaultModifierDelegate(ComputePropertyModifierDelegate::OOClass(), QStringLiteral("ParticlesComputePropertyModifierDelegate"));
-	if(delegate()) {
-		setOutputProperty(PropertyReference(&delegate()->propertyClass(), QStringLiteral("My property")));
-	}
 }
 
 /******************************************************************************
@@ -112,8 +109,9 @@ void ComputePropertyModifier::propertyChanged(const PropertyFieldDescriptor& fie
 void ComputePropertyModifier::referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget)
 {
 	if(field == PROPERTY_FIELD(AsynchronousDelegatingModifier::delegate)) {
-		if(!dataset()->undoStack().isUndoingOrRedoing() && delegate()) {
+		if(!dataset()->undoStack().isUndoingOrRedoing() && !isBeingLoaded() && delegate()) {
 			delegate()->setComponentCount(expressions().size());
+			setOutputProperty(PropertyReference(&delegate()->propertyClass(), QStringLiteral("My property")));
 		}
 	}
 
@@ -243,7 +241,6 @@ ComputePropertyModifierDelegate::PropertyComputeEngine::PropertyComputeEngine(
 	
 	// Initialize expression evaluator.
 	_evaluator->initialize(_expressions, input, propertyClass, _frameNumber);
-	_inputVariableTable = _evaluator->inputVariableTable();
 }
 
 /******************************************************************************
@@ -257,17 +254,6 @@ QStringList ComputePropertyModifierDelegate::PropertyComputeEngine::inputVariabl
 	else {
 		return {};
 	}
-}
-
-/******************************************************************************
-* Determines whether any of the math expressions is explicitly time-dependent.
-******************************************************************************/
-bool ComputePropertyModifierDelegate::PropertyComputeEngine::isTimeDependent()
-{
-	PropertyExpressionEvaluator::Worker worker(*_evaluator);
-	if(worker.isVariableUsed("Frame"))
-		return true;
-	return false;
 }
 
 /******************************************************************************

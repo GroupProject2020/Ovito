@@ -5,7 +5,8 @@ import ovito.modifiers
 from ovito.plugins.StdMod import (SliceModifier, AffineTransformationModifier, ClearSelectionModifier, 
                                 InvertSelectionModifier, ColorCodingModifier, AssignColorModifier, 
                                 DeleteSelectedModifier, ScatterPlotModifier, ReplicateModifier,
-                                ExpressionSelectionModifier, FreezePropertyModifier, ManualSelectionModifier)
+                                ExpressionSelectionModifier, FreezePropertyModifier, ManualSelectionModifier,
+                                ComputePropertyModifier)
 
 # Load submodules.
 from .select_type_modifier import SelectTypeModifier
@@ -26,11 +27,12 @@ ovito.modifiers.HistogramModifier = HistogramModifier
 ovito.modifiers.ExpressionSelectionModifier = ExpressionSelectionModifier
 ovito.modifiers.FreezePropertyModifier = FreezePropertyModifier
 ovito.modifiers.ManualSelectionModifier = ManualSelectionModifier
+ovito.modifiers.ComputePropertyModifier = ComputePropertyModifier
 ovito.modifiers.__all__ += ['SliceModifier', 'AffineTransformationModifier', 
             'ClearSelectionModifier', 'InvertSelectionModifier', 'ColorCodingModifier',
             'AssignColorModifier', 'DeleteSelectedModifier', 'SelectTypeModifier', 'HistogramModifier', 
             'ScatterPlotModifier', 'ReplicateModifier', 'ExpressionSelectionModifier',
-            'FreezePropertyModifier', 'ManualSelectionModifier']
+            'FreezePropertyModifier', 'ManualSelectionModifier', 'ComputePropertyModifier']
 
 # For backward compatibility with OVITO 2.9.0:
 def _ColorCodingModifier_set_particle_property(self, v): self.property = v

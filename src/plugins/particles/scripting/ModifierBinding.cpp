@@ -30,6 +30,8 @@
 #include <plugins/particles/modifier/properties/ComputeBondLengthsModifier.h>
 #include <plugins/particles/modifier/properties/InterpolateTrajectoryModifier.h>
 #include <plugins/particles/modifier/properties/GenerateTrajectoryLinesModifier.h>
+#include <plugins/particles/modifier/properties/ParticlesComputePropertyModifierDelegate.h>
+#include <plugins/particles/modifier/properties/BondsComputePropertyModifierDelegate.h>
 #include <plugins/particles/modifier/selection/ExpandSelectionModifier.h>
 #include <plugins/particles/modifier/analysis/StructureIdentificationModifier.h>
 #include <plugins/particles/modifier/analysis/binandreduce/BinAndReduceModifier.h>
@@ -83,11 +85,10 @@ void defineModifiersSubmodule(py::module m)
 				":Default: 3\n")
 	;
 
-
 	ovito_class<WrapPeriodicImagesModifier, Modifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
-			"This modifier maps particles located outside of the simulation cell back into the box by \"wrapping\" their coordinates "
-			"around at the periodic boundaries of the simulation cell. This modifier has no parameters. "
+			"This modifier maps particles located outside of the simulation cell back into the cell by \"wrapping\" their coordinates "
+			"around at the periodic boundaries of the :py:class:`~ovito.data.SimulationCell`. This modifier has no parameters. "
 			"\n\n"
 			"See also the corresponding `user manual page <../../particles.modifiers.wrap_at_periodic_boundaries.html>`__ for this modifier. ")
 	;
@@ -1242,6 +1243,13 @@ void defineModifiersSubmodule(py::module m)
 			"The :py:class:`~ovito.vis.TrajectoryVis` element controlling the visual appearance of the trajectory lines created by this modifier.")
 	;
 	ovito_class<GenerateTrajectoryLinesModifierApplication, ModifierApplication>{m};
+
+	ovito_class<ParticlesComputePropertyModifierDelegate, ComputePropertyModifierDelegate>{m}
+		.def_property("neighbor_expressions", &ParticlesComputePropertyModifierDelegate::neighborExpressions, &ParticlesComputePropertyModifierDelegate::setNeighborExpressions)	
+		.def_property("cutoff_radius", &ParticlesComputePropertyModifierDelegate::cutoff, &ParticlesComputePropertyModifierDelegate::setCutoff)
+	;
+
+	ovito_class<BondsComputePropertyModifierDelegate, ComputePropertyModifierDelegate>{m};
 }
 
 OVITO_END_INLINE_NAMESPACE

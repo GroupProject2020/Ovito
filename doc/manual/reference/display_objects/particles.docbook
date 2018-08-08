@@ -16,7 +16,66 @@
        <imagedata fileref="images/display_objects/particles_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
     
-    This <link linkend="display_objects">visual element</link> renders particles as spheres and other geometric shapes.
+    This <link linkend="display_objects">visual element</link> is responsible for rendering particles in the viewports.
+    Typically, particles are visualized as simple spheres, but you can switch to other, more complex geometric shapes
+    if desired.
+  </para>
+  <para>
+    The <emphasis>Particles</emphasis> visual element provides a set of parameters controlling the 
+    visual representation of all particles, which will be described in the section below.
+    Additionally, the visualization is affected by certain properties, listed in the following table, that particles may optionally 
+    possess. By setting the values of these particle properties, for example using the <link linkend="particles.modifiers.compute_property">
+    Compute property</link> modifier, you can control the visualization on a per-particle basis.
+    <informaltable>
+      <tgroup cols="3">
+        <colspec colnum="1" colname="name" colwidth="2*" />
+        <colspec colnum="2" colname="datatype" colwidth="1*" />
+        <colspec colnum="3" colname="description" colwidth="4*" />
+        <thead>
+          <row>
+            <entry>Particle&#xA0;property</entry>
+            <entry>Data&#xA0;type / Components</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>	
+        <tbody>
+          <row>
+            <entry><literal>Color</literal></entry>
+            <entry>Real (R,&#xA0;G,&#xA0;B)</entry>
+            <entry><para>Controls the display color of individual particles. Red, green and blue components are in the range [0,1].</para></entry>
+          </row>
+          <row>
+            <entry><literal>Radius</literal></entry>
+            <entry>Real</entry>
+            <entry><para>Controls the display size of individual particles.</para></entry>
+          </row>
+          <row>
+            <entry><literal>Particle&#xA0;Type</literal></entry>
+            <entry>Integer</entry>
+            <entry><para>Used to determine size and color if the <emphasis>Radius</emphasis> or <emphasis>Color</emphasis> properties are not present.</para></entry>
+          </row>
+          <row>
+            <entry><literal>Transparency</literal></entry>
+            <entry>Real</entry>
+            <entry><para>Controls the transparency of individual particles. Must be in the range [0,1].</para></entry>
+          </row>
+          <row>
+            <entry><literal>Aspherical Shape</literal></entry>
+            <entry>Real (X,&#xA0;Y,&#xA0;Z)</entry>
+            <entry><para>Controls the size of particles with a non-symmetric shape. The exact interpretation
+            of this property depends on the selected <emphasis>Shape</emphasis> setting, see section below.</para></entry>
+          </row>
+          <row>
+            <entry><literal>Orientation</literal></entry>
+            <entry>Real (X,&#xA0;Y,&#xA0;Z,&#xA0;W)</entry>
+            <entry><para>Specifies the orientation of particles with non-symmetric shapes.
+                The rotation of each particle is specified in terms of a <link xlink:href="https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation">quaternion</link>.
+                See <link linkend="howto.aspherical_particles">this page</link> for more information.
+            </para></entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </informaltable>
   </para>
 
    <simplesect>
@@ -26,23 +85,52 @@
       <varlistentry>
         <term>Shape</term>
         <listitem>
-          <para>Selects the visual shape of particles.
-          Note that spherical particles can be turned into <link linkend="howto.aspherical_particles">ellipsoidal particles</link>
-          by setting the <literal>Aspherical Shape</literal> particle property. Similarly,
-          the size of box-shaped particles can be controlled with the same property.
-          </para>
-          <para>
-          The size of cylindrical and spherocylindrical particles is also controlled by the 
-          <literal>Aspherical Shape</literal> property. Here, the component <literal>Aspherical Shape.X</literal>
-          determines the radius of the cylinder, and <literal>Aspherical Shape.Z</literal> determines its
-          length. The vector component <literal>Aspherical Shape.Y</literal> is ignored.
-          </para>
-          <para>
-          The orientation of ellipsoidal, box, and cylindrical particles can be controlled 
-          using the <literal>Orientation</literal> particle property. With this property,
-          a quaternion can be specified for each particle which determines its orientation in space.
-          If the <literal>Orientation</literal> property is not defined, all particles
-          will be aligned with the global simulation coordinate axes.
+          <para>Selects the display shape of particles. The current program version offers the choice between 
+          the following modes:
+          <variablelist>
+            <varlistentry>
+              <term>Sphere/Ellipsoid</term>
+              <listitem>Particles are visualized as 3d spheres. Unless the <literal>Aspherical Shape</literal> particle property
+                has been defined; then they are rendered as <link linkend="howto.aspherical_particles">ellipsoidal particles</link>.
+                In this case, the three components of the <literal>Aspherical Shape</literal> vector property control the 
+                half lengths of the principal axes of each ellipsoid and the scalar <literal>Radius</literal> property is ignored.
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>Circle</term>
+              <listitem>Particles are visualized as flat-shaded circles facing the viewer.
+              Note that some <link linkend="rendering">rendering engines</link> do not support this mode.</listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>Cube/Box</term>
+              <listitem>Particles are visualized as cubes if the <literal>Aspherical Shape</literal> particle property 
+              is not present. The <literal>Radius</literal> property can be used to 
+              control the edge half-length of the cubes in this case.
+              If the <literal>Aspherical Shape</literal> particle property is present, particles are rendered as non-cubic boxes
+              with the given half-lengths along the three edges. 
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>Square</term>
+              <listitem>Particles are visualized as flat-shaded squares facing the viewer.
+              Note that some <link linkend="rendering">rendering engines</link> do not support this mode.</listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>Cylinder</term>
+              <listitem>Particles are visualized as cylinders. 
+                The X-component of the <literal>Aspherical Shape</literal> vector property controls the cylinder radius
+                of particles in this mode, and the Z-component controls the length of the cylindrical particles.
+                By default, cylinders are aligned along the z-axis. If present, the <literal>Orientation</literal>
+                particle property rotates the cylinders.
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>Spherocylinder</term>
+              <listitem>Particles are visualized as cylinders with round caps at each end (capsules). The behavior is the 
+              same as for mode <emphasis>Cylinder</emphasis>.
+              </listitem>
+            </varlistentry>
+          </variablelist>
           </para>
         </listitem>
       </varlistentry>
@@ -50,10 +138,10 @@
         <term>Default particle radius</term>
         <listitem>
           <para>Specifies the display size of particles that have an otherwise unspecified size. 
-          This size value is only used for particles for which <emphasis>none</emphasis> of the following applies:
+          This size value is only used for particles for which none of the following applies:
           <itemizedlist>
-            <listitem><para>The <literal>Radius</literal> property has been set.</para></listitem>
-            <listitem><para>A non-zero type-specific radius has been set for the particle's type.</para></listitem>
+            <listitem><para>The <literal>Radius</literal> particle property has a non-zero value.</para></listitem>
+            <listitem><para>The particle's type, as specified by the <literal>Particle Type</literal>, has a non-zero radius.</para></listitem>
           </itemizedlist>
           In other words, this parameter provides a fallback value if no display size has been set on a 
           per-particle basis or on a per-type basis.
@@ -63,7 +151,7 @@
       <varlistentry>
         <term>Rendering quality</term>
         <listitem>
-          <para>This parameter controls the method used to render the particles. The following modes are available and affect only the rendering of spherical particles:
+          <para>This parameter controls the method used for rendering the particles in the interactive viewports. The following modes are available and affect only the rendering of spherical particles:
 		    <variablelist>
 		      <varlistentry>
 		        <term>Low</term>

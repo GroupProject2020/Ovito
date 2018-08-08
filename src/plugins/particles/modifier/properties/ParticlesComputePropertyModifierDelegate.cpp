@@ -32,23 +32,20 @@
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
 
 IMPLEMENT_OVITO_CLASS(ParticlesComputePropertyModifierDelegate);
-DEFINE_PROPERTY_FIELD(ParticlesComputePropertyModifierDelegate, neighborModeEnabled);
 DEFINE_PROPERTY_FIELD(ParticlesComputePropertyModifierDelegate, neighborExpressions);
 DEFINE_PROPERTY_FIELD(ParticlesComputePropertyModifierDelegate, cutoff);
 DEFINE_PROPERTY_FIELD(ParticlesComputePropertyModifierDelegate, useMultilineFields);
-SET_PROPERTY_FIELD_LABEL(ParticlesComputePropertyModifierDelegate, neighborModeEnabled, "Include neighbor terms");
 SET_PROPERTY_FIELD_LABEL(ParticlesComputePropertyModifierDelegate, neighborExpressions, "Neighbor expressions");
 SET_PROPERTY_FIELD_LABEL(ParticlesComputePropertyModifierDelegate, cutoff, "Cutoff radius");
-SET_PROPERTY_FIELD_LABEL(ParticlesComputePropertyModifierDelegate, useMultilineFields, "Expand input fields");
+SET_PROPERTY_FIELD_LABEL(ParticlesComputePropertyModifierDelegate, useMultilineFields, "Expand field(s)");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ParticlesComputePropertyModifierDelegate, cutoff, WorldParameterUnit, 0);
 
 /******************************************************************************
 * Constructs a new instance of this class.
 ******************************************************************************/
 ParticlesComputePropertyModifierDelegate::ParticlesComputePropertyModifierDelegate(DataSet* dataset) : ComputePropertyModifierDelegate(dataset),
-	_neighborExpressions(QStringList("0")), 
+	_neighborExpressions(QStringList(QString())), 
 	_cutoff(3), 
-	_neighborModeEnabled(false),
 	_useMultilineFields(false)
 {
 }
@@ -64,7 +61,7 @@ void ParticlesComputePropertyModifierDelegate::setComponentCount(int componentCo
 	else if(componentCount > neighborExpressions().size()) {
 		QStringList newList = neighborExpressions();
 		while(newList.size() < componentCount)
-			newList.append("0");
+			newList.append(QString());
 		setNeighborExpressions(newList);
 	}
 }
@@ -85,7 +82,7 @@ std::shared_ptr<ComputePropertyModifierDelegate::PropertyComputeEngine> Particle
 	ParticleInputHelper pih(dataset(), input);
 	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
 
-	if(neighborModeEnabled() && neighborExpressions().size() != outputProperty->componentCount())
+	if(!neighborExpressions().empty() && neighborExpressions().size() != outputProperty->componentCount())
 		throwException(tr("Number of neighbor expressions does not match component count of output property."));
 
 	TimeInterval validityInterval = input.stateValidity();
@@ -115,7 +112,7 @@ std::shared_ptr<ComputePropertyModifierDelegate::PropertyComputeEngine> Particle
 			input,
 			posProperty->storage(),
 			neighborExpressions(),
-			neighborModeEnabled() ? cutoff() : 0);
+			cutoff());
 }
 
 /******************************************************************************
@@ -145,31 +142,64 @@ ParticlesComputePropertyModifierDelegate::ComputeEngine::ComputeEngine(
 	_inputFingerprint(input),
 	_positions(std::move(positions)),
 	_neighborExpressions(std::move(neighborExpressions)), 
-	_cutoff(cutoff),
+	_cutoff(cutoff),	
 	_neighborEvaluator(std::make_unique<ParticleExpressionEvaluator>())
 {
-	// Only used when neighbor mode is active.
-	if(neighborMode()) {
-		_evaluator->registerGlobalParameter("Cutoff", _cutoff);
-		_evaluator->registerGlobalParameter("NumNeighbors", 0);
-		OVITO_ASSERT(_neighborExpressions.size() == this->outputProperty()->componentCount());
-		_neighborEvaluator->initialize(_neighborExpressions, input, _frameNumber);
-		_neighborEvaluator->registerGlobalParameter("Cutoff", _cutoff);
-		_neighborEvaluator->registerGlobalParameter("NumNeighbors", 0);
-		_neighborEvaluator->registerGlobalParameter("Distance", 0);
-		_neighborEvaluator->registerGlobalParameter("Delta.X", 0);
-		_neighborEvaluator->registerGlobalParameter("Delta.Y", 0);
-		_neighborEvaluator->registerGlobalParameter("Delta.Z", 0);
+	// Make sure we have the right number of expression strings.
+	while(_neighborExpressions.size() < this->outputProperty()->componentCount())
+		_neighborExpressions.append(QString());
+	while(_neighborExpressions.size() > this->outputProperty()->componentCount())
+		_neighborExpressions.pop_back();
 
-		_inputVariableTable.append(QStringLiteral("<p><b>Neighbor-related values:</b><ul>"));
-		_inputVariableTable.append(QStringLiteral("<li>Cutoff (<i style=\"color: #555;\">radius</i>)</li>"));
-		_inputVariableTable.append(QStringLiteral("<li>NumNeighbors (<i style=\"color: #555;\">of central particle</i>)</li>"));
-		_inputVariableTable.append(QStringLiteral("<li>Distance (<i style=\"color: #555;\">from central particle</i>)</li>"));
-		_inputVariableTable.append(QStringLiteral("<li>Delta.X (<i style=\"color: #555;\">neighbor vector component</i>)</li>"));
-		_inputVariableTable.append(QStringLiteral("<li>Delta.Y (<i style=\"color: #555;\">neighbor vector component</i>)</li>"));
-		_inputVariableTable.append(QStringLiteral("<li>Delta.X (<i style=\"color: #555;\">neighbor vector component</i>)</li>"));
-		_inputVariableTable.append(QStringLiteral("</ul></p>"));
+	// Determine whether any neighbor expressions are present.
+	_neighborMode = false;
+	for(QString& expr : _neighborExpressions) {
+		if(expr.trimmed().isEmpty()) expr = QStringLiteral("0");
+		else if(expr.trimmed() != QStringLiteral("0")) _neighborMode = true;
 	}
+
+	_evaluator->registerGlobalParameter("Cutoff", _cutoff);
+	_evaluator->registerGlobalParameter("NumNeighbors", 0);
+
+	_neighborEvaluator->initialize(_neighborExpressions, input, _frameNumber);
+	_neighborEvaluator->registerGlobalParameter("Cutoff", _cutoff);
+	_neighborEvaluator->registerGlobalParameter("NumNeighbors", 0);
+	_neighborEvaluator->registerGlobalParameter("Distance", 0);
+	_neighborEvaluator->registerGlobalParameter("Delta.X", 0);
+	_neighborEvaluator->registerGlobalParameter("Delta.Y", 0);
+	_neighborEvaluator->registerGlobalParameter("Delta.Z", 0);
+	_neighborEvaluator->registerIndexVariable(QStringLiteral("@") + _neighborEvaluator->indexVarName(), 1);
+
+	// Build list of properties that will be made available as expression variables.
+	std::vector<ConstPropertyPtr> inputProperties;
+	for(DataObject* obj : input.objects()) {
+		if(ParticleProperty* prop = dynamic_object_cast<ParticleProperty>(obj)) {
+			inputProperties.push_back(prop->storage());
+		}
+	}
+	_neighborEvaluator->registerPropertyVariables(inputProperties, 1, "@");
+
+	// Activate neighbor mode if NumNeighbors variable is referenced in tghe central particle expression(s).
+	if(_evaluator->isVariableUsed("NumNeighbors"))
+		_neighborMode = true;
+}
+
+/********************************§**********************************************
+* Returns a human-readable text listing the input variables.
+******************************************************************************/
+QString ParticlesComputePropertyModifierDelegate::ComputeEngine::inputVariableTable() const
+{
+	QString table = ComputePropertyModifierDelegate::PropertyComputeEngine::inputVariableTable();
+	table.append(QStringLiteral("<p><b>Neighbor expression variables:</b><ul>"));
+	table.append(QStringLiteral("<li>Cutoff (<i style=\"color: #555;\">radius</i>)</li>"));
+	table.append(QStringLiteral("<li>NumNeighbors (<i style=\"color: #555;\">of central particle</i>)</li>"));
+	table.append(QStringLiteral("<li>Distance (<i style=\"color: #555;\">from central particle</i>)</li>"));
+	table.append(QStringLiteral("<li>Delta.X (<i style=\"color: #555;\">neighbor vector component</i>)</li>"));
+	table.append(QStringLiteral("<li>Delta.Y (<i style=\"color: #555;\">neighbor vector component</i>)</li>"));
+	table.append(QStringLiteral("<li>Delta.X (<i style=\"color: #555;\">neighbor vector component</i>)</li>"));
+	table.append(QStringLiteral("<li>@... (<i style=\"color: #555;\">central particle properties</i>)</li>"));
+	table.append(QStringLiteral("</ul></p>"));
+	return table;
 }
 
 /******************************************************************************
@@ -177,12 +207,7 @@ ParticlesComputePropertyModifierDelegate::ComputeEngine::ComputeEngine(
 ******************************************************************************/
 QStringList ParticlesComputePropertyModifierDelegate::ComputeEngine::delegateInputVariableNames() const
 {
-	if(neighborMode()) {
-		return _neighborEvaluator->inputVariableNames();
-	}
-	else {
-		return ComputePropertyModifierDelegate::PropertyComputeEngine::delegateInputVariableNames();
-	}
+	return _neighborEvaluator->inputVariableNames();
 }
 
 /******************************************************************************
@@ -194,11 +219,8 @@ bool ParticlesComputePropertyModifierDelegate::ComputeEngine::isTimeDependent()
 	if(ComputePropertyModifierDelegate::PropertyComputeEngine::isTimeDependent())
 		return true;
 
-	if(neighborMode()) {
-		ParticleExpressionEvaluator::Worker worker(*_neighborEvaluator);
-		if(worker.isVariableUsed("Frame"))
-			return true;
-	}
+	if(neighborMode())
+		return _neighborEvaluator->isTimeDependent();
 
 	return false;
 }
@@ -226,13 +248,14 @@ void ParticlesComputePropertyModifierDelegate::ComputeEngine::perform()
 		ParticleExpressionEvaluator::Worker worker(*_evaluator);
 		ParticleExpressionEvaluator::Worker neighborWorker(*_neighborEvaluator);
 
+		// Obtain addresses where variables are stored so we can update their values
+		// quickly later in the loop.
 		double* distanceVar;
 		double* deltaX;
 		double* deltaY;
 		double* deltaZ;
 		double* selfNumNeighbors = nullptr;
 		double* neighNumNeighbors = nullptr;
-
 		if(neighborMode()) {
 			distanceVar = neighborWorker.variableAddress("Distance");
 			deltaX = neighborWorker.variableAddress("Delta.X");
@@ -252,7 +275,7 @@ void ParticlesComputePropertyModifierDelegate::ComputeEngine::perform()
 			if((particleIndex % 1024) == 0)
 				promise.incrementProgressValue(1024);
 
-			// Stop loop if canceled.
+			// Exit if operation was canceled.
 			if(promise.isCanceled())
 				return;
 
@@ -261,20 +284,25 @@ void ParticlesComputePropertyModifierDelegate::ComputeEngine::perform()
 				continue;
 
 			if(selfNumNeighbors != nullptr) {
-				// Determine number of neighbors.
+				// Determine number of neighbors (only if this value is being referenced in the expressions).
 				int nneigh = 0;
 				for(CutoffNeighborFinder::Query neighQuery(neighborFinder, particleIndex); !neighQuery.atEnd(); neighQuery.next())
 					nneigh++;
 				*selfNumNeighbors = *neighNumNeighbors = nneigh;
 			}
 
+			// Update neighbor expression variables that provide access to the properties of the central particle.
+			if(neighborMode()) {
+				neighborWorker.updateVariables(1, particleIndex);
+			}
+
 			for(size_t component = 0; component < componentCount; component++) {
 
-				// Compute self term.
+				// Compute central term.
 				FloatType value = worker.evaluate(particleIndex, component);
 
 				if(neighborMode()) {
-					// Compute sum of neighbor terms.
+					// Compute and add neighbor terms.
 					for(CutoffNeighborFinder::Query neighQuery(neighborFinder, particleIndex); !neighQuery.atEnd(); neighQuery.next()) {
 						*distanceVar = sqrt(neighQuery.distanceSquared());
 						*deltaX = neighQuery.delta().x();
@@ -284,7 +312,7 @@ void ParticlesComputePropertyModifierDelegate::ComputeEngine::perform()
 					}
 				}
 
-				// Store results.
+				// Store results in output property.
 				if(outputProperty()->dataType() == PropertyStorage::Int) {
 					outputProperty()->setIntComponent(particleIndex, component, (int)value);
 				}

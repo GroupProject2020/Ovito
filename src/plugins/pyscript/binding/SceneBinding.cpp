@@ -299,13 +299,22 @@ void defineSceneSubmodule(py::module m)
 	ovito_class<AsynchronousModifierApplication, ModifierApplication>{m}
 	;
 
+	ovito_abstract_class<ModifierDelegate, RefTarget>{m}
+		.def_property("enabled", &ModifierDelegate::isEnabled, &ModifierDelegate::setEnabled)
+	;
+
+	ovito_abstract_class<AsynchronousModifierDelegate, RefTarget>{m}
+	;
+
 	ovito_abstract_class<DelegatingModifier, Modifier>{m}
+		.def_property("delegate", &DelegatingModifier::delegate, &DelegatingModifier::setDelegate)
 	;
 
 	ovito_abstract_class<MultiDelegatingModifier, Modifier>{m}
 	;
 
 	ovito_abstract_class<AsynchronousDelegatingModifier, AsynchronousModifier>{m}
+		.def_property("delegate", &AsynchronousDelegatingModifier::delegate, &AsynchronousDelegatingModifier::setDelegate)
 	;
 
 	// This binding is required for the implementation of the modifier_operate_on_list() function:
@@ -552,38 +561,6 @@ void defineSceneSubmodule(py::module m)
 				":Default: ``None``\n")
 	;
 	ovito_class<PythonScriptModifierApplication, ModifierApplication>{m};
-}
-
-/// Helper function that generates a getter function for the 'operate_on' attribute of a DelegatingModifier subclass
-py::cpp_function modifierDelegateGetter()
-{
-	return [](const DelegatingModifier& mod) { 
-		return mod.delegate() ? mod.delegate()->getOOMetaClass().pythonDataName() : QString();
-	};
-}
-
-/// Helper function that generates a setter function for the 'operate_on' attribute of a DelegatingModifier subclass.
-py::cpp_function modifierDelegateSetter(const OvitoClass& delegateType)
-{
-	return [&delegateType](DelegatingModifier& mod, const QString& typeName) { 
-		if(mod.delegate() && mod.delegate()->getOOMetaClass().pythonDataName() == typeName)
-			return;
-		for(auto clazz : PluginManager::instance().metaclassMembers<ModifierDelegate>(delegateType)) {
-			if(clazz->pythonDataName() == typeName) {
-				mod.setDelegate(static_object_cast<ModifierDelegate>(clazz->createInstance(mod.dataset())));
-				return;
-			}
-		}
-		// Error: User did not specify a valid type name.
-		// Now build the list of valid names to generate a helpful error message.
-		UndoSuspender noUndo(&mod);
-		QStringList delegateTypeNames; 
-		for(auto clazz : PluginManager::instance().metaclassMembers<ModifierDelegate>(delegateType)) {
-			delegateTypeNames.push_back(QString("'%1'").arg(clazz->pythonDataName()));
-		}
-		mod.throwException(DelegatingModifier::tr("'%1' is not a valid type of data element this modifier can operate on. Supported types are: (%2)")
-			.arg(typeName).arg(delegateTypeNames.join(QStringLiteral(", "))));
-	};
 }
 
 }

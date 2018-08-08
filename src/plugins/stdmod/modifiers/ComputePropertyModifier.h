@@ -78,7 +78,10 @@ protected:
 		virtual QStringList delegateInputVariableNames() const { return {}; }
 
 		/// Returns a human-readable text listing the input variables.
-		const QString& inputVariableTable() const { return _inputVariableTable; }
+		virtual QString inputVariableTable() const {
+			if(_evaluator) return _evaluator->inputVariableTable();
+			return {};
+		}
 
 		/// Injects the computed results into the data pipeline.
 		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
@@ -87,14 +90,13 @@ protected:
 		const PropertyPtr& outputProperty() const { return _outputProperty; }
 
 		/// Determines whether any of the math expressions is explicitly time-dependent.
-		virtual bool isTimeDependent();
+		virtual bool isTimeDependent() { return _evaluator->isTimeDependent(); }
 	
 	protected:
 
 		const int _frameNumber;
 		QStringList _expressions;
 		ConstPropertyPtr _selection;
-		QString _inputVariableTable;
 		std::unique_ptr<PropertyExpressionEvaluator> _evaluator;
 		const PropertyPtr _outputProperty;
 	};

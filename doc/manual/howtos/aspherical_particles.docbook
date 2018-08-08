@@ -36,7 +36,7 @@
     While the size of standard spherical and cubic particles is controlled by the <literal>Radius</literal> particle property,
     the size and shape of non-spherical and non-cubic particles is determined by the <literal>Aspherical Shape</literal> property.
     For OVITO to display non-spherical particles, this property must be defined and the 
-    desired type of shape must be selected in the <link linkend="display_objects.particles">Particle display</link> parameters panels. 
+    desired shape must be selected in the settings of the <link linkend="display_objects.particles">Particles</link> visual element. 
   </para>
   
   <para>
@@ -61,7 +61,7 @@
 
   <para>
     Both the <literal>Aspherical Shape</literal> and the <literal>Orientation</literal> properties are typically
-    read from simulation files. The LAMMPS (or LIGGGHTS) simulation code can output this information to dump files using the following LAMMPS script commands:
+    read from simulation files. The LAMMPS and LIGGGHTS simulation codes can output this information to dump files using the following LAMMPS script commands:
     <screen>   compute orient all property/atom quati quatj quatk quatw
    compute shape all property/atom shapex shapey shapez
    dump 1 all custom 100 ellipsoid.dump id type x y z &amp;

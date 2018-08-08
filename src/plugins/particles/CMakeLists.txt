@@ -59,6 +59,7 @@ SET(SourceFiles
 	modifier/properties/InterpolateTrajectoryModifier.cpp
 	modifier/properties/GenerateTrajectoryLinesModifier.cpp
 	modifier/properties/ParticlesComputePropertyModifierDelegate.cpp
+	modifier/properties/BondsComputePropertyModifierDelegate.cpp
 	import/ParticleImporter.cpp
 	import/ParticleFrameData.cpp
 	import/InputColumnMapping.cpp

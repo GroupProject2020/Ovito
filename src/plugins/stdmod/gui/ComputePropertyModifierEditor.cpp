@@ -88,7 +88,7 @@ void ComputePropertyModifierEditor::createUI(const RolloutInsertionParameters& r
 
 	// Show multiline fields.
 	BooleanParameterUI* multilineFieldsUI = new BooleanParameterUI(this, PROPERTY_FIELD(ComputePropertyModifier::useMultilineFields));
-	expressionsLayout->addWidget(multilineFieldsUI->checkBox(), 0, 1);
+	expressionsLayout->addWidget(multilineFieldsUI->checkBox(), 0, 1, Qt::AlignRight | Qt::AlignBottom);
 
 	// Status label.
 	mainLayout->addWidget(statusLabel());

@@ -7,11 +7,11 @@ import ovito.plugins.Particles
 
 # Load submodules.
 from .coordination_number_modifier import CoordinationNumberModifier
+from .compute_property_modifier import ComputePropertyModifier
 
 # Inject classes into parent module.
 ovito.modifiers.AmbientOcclusionModifier = ovito.plugins.Particles.AmbientOcclusionModifier
 ovito.modifiers.WrapPeriodicImagesModifier = ovito.plugins.Particles.WrapPeriodicImagesModifier
-ovito.modifiers.ComputePropertyModifier = ovito.plugins.Particles.ComputePropertyModifier
 ovito.modifiers.ExpandSelectionModifier = ovito.plugins.Particles.ExpandSelectionModifier
 ovito.modifiers.BinAndReduceModifier = ovito.plugins.Particles.BinAndReduceModifier
 ovito.modifiers.StructureIdentificationModifier = ovito.plugins.Particles.StructureIdentificationModifier
@@ -34,7 +34,7 @@ ovito.modifiers.CoordinationPolyhedraModifier = ovito.plugins.Particles.Coordina
 ovito.modifiers.InterpolateTrajectoryModifier = ovito.plugins.Particles.InterpolateTrajectoryModifier
 ovito.modifiers.GenerateTrajectoryLinesModifier = ovito.plugins.Particles.GenerateTrajectoryLinesModifier
 ovito.modifiers.__all__ += ['AmbientOcclusionModifier', 
-            'WrapPeriodicImagesModifier', 'ComputePropertyModifier',
+            'WrapPeriodicImagesModifier',
             'ExpandSelectionModifier',
             'BinAndReduceModifier',
             'StructureIdentificationModifier', 'CommonNeighborAnalysisModifier', 'BondAngleAnalysisModifier',

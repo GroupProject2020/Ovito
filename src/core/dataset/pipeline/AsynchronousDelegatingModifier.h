@@ -79,6 +79,9 @@ class OVITO_CORE_EXPORT AsynchronousDelegatingModifier : public AsynchronousModi
 {
 public:
 
+	/// The abstract base class of delegates used by this modifier type.
+	using DelegateBaseType = AsynchronousModifierDelegate;
+
 	/// Give this modifier class its own metaclass.
 	class DelegatingModifierClass : public ModifierClass 
 	{
@@ -95,7 +98,7 @@ public:
 			OVITO_ASSERT_MSG(false, "AsynchronousDelegatingModifier::OOMetaClass::delegateMetaclass()",
 				qPrintable(QStringLiteral("Delegating modifier class %1 does not define a corresponding delegate metaclass. "
 				"You must override the delegateMetaclass() method in the modifier's metaclass.").arg(name()))); 
-			return AsynchronousModifierDelegate::OOClass();
+			return DelegateBaseType::OOClass();
 		}
 	};
 		
