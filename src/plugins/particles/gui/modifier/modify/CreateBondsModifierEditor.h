@@ -58,9 +58,9 @@ private:
 
 	class PairCutoffTableModel : public QAbstractTableModel {
 	public:
-		typedef QVector<QPair<QString,QString>> ContentType;
+		typedef std::vector<std::pair<OORef<ElementType>,OORef<ElementType>>> ContentType;
 
-		PairCutoffTableModel(QObject* parent) : QAbstractTableModel(parent) {}
+		using QAbstractTableModel::QAbstractTableModel;
 		virtual int	rowCount(const QModelIndex& parent) const override { return _data.size(); }
 		virtual int	columnCount(const QModelIndex& parent) const override { return 3; }
 		virtual QVariant data(const QModelIndex& index, int role) const override;
@@ -80,10 +80,10 @@ private:
 				return Qt::ItemFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsEditable);
 		}
 		virtual bool setData(const QModelIndex& index, const QVariant& value, int role) override;
-		void setContent(CreateBondsModifier* modifier, const ContentType& data) {
+		void setContent(CreateBondsModifier* modifier, ContentType&& data) {
 			beginResetModel();
 			_modifier = modifier;
-			_data = data;
+			_data = std::move(data);
 			endResetModel();
 		}
 		void updateContent() { Q_EMIT dataChanged(index(0,2), index(_data.size()-1,2)); }

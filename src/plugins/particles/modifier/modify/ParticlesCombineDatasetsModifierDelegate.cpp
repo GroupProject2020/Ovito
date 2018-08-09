@@ -87,15 +87,22 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 				if(secondProp && secondProp->elementTypes().empty() == false && newProperty->componentCount() == 1 && newProperty->dataType() == PropertyStorage::Int) {
 					std::map<int,int> typeMap;
 					for(ElementType* type2 : secondProp->elementTypes()) {
-						ElementType* type1 = newProperty->elementType(type2->name());
-						if(type1 == nullptr) {
-							OORef<ElementType> type2clone = poh.cloneHelper().cloneObject(type2, false);
-							type2clone->setId(newProperty->generateUniqueElementTypeId());
-							newProperty->addElementType(type2clone);															
-							typeMap.insert(std::make_pair(type2->id(), type2clone->id()));
+						if(!type2->name().isEmpty()) {
+							ElementType* type1 = newProperty->elementType(type2->name());
+							if(type1 == nullptr) {
+								OORef<ElementType> type2clone = poh.cloneHelper().cloneObject(type2, false);
+								type2clone->setId(newProperty->generateUniqueElementTypeId());
+								newProperty->addElementType(type2clone);															
+								typeMap.insert(std::make_pair(type2->id(), type2clone->id()));
+							}
+							else if(type1->id() != type2->id()) {
+								typeMap.insert(std::make_pair(type2->id(), type1->id()));
+							}
 						}
-						else if(type1->id() != type2->id()) {
-							typeMap.insert(std::make_pair(type2->id(), type1->id()));
+						else if(!newProperty->elementType(type2->id())) {
+							OORef<ElementType> type2clone = poh.cloneHelper().cloneObject(type2, false);
+							newProperty->addElementType(type2clone);
+							OVITO_ASSERT(type2clone->id() == type2->id());
 						}
 					}
 					// Remap particle property values.
@@ -185,15 +192,22 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 					if(secondProp && secondProp->elementTypes().empty() == false && newProperty->componentCount() == 1 && newProperty->dataType() == PropertyStorage::Int) {
 						std::map<int,int> typeMap;
 						for(ElementType* type2 : secondProp->elementTypes()) {
-							ElementType* type1 = newProperty->elementType(type2->name());
-							if(type1 == nullptr) {
-								OORef<ElementType> type2clone = poh.cloneHelper().cloneObject(type2, false);
-								type2clone->setId(newProperty->generateUniqueElementTypeId());
-								newProperty->addElementType(type2clone);															
-								typeMap.insert(std::make_pair(type2->id(), type2clone->id()));
+							if(!type2->name().isEmpty()) {
+								ElementType* type1 = newProperty->elementType(type2->name());
+								if(type1 == nullptr) {
+									OORef<ElementType> type2clone = poh.cloneHelper().cloneObject(type2, false);
+									type2clone->setId(newProperty->generateUniqueElementTypeId());
+									newProperty->addElementType(type2clone);															
+									typeMap.insert(std::make_pair(type2->id(), type2clone->id()));
+								}
+								else if(type1->id() != type2->id()) {
+									typeMap.insert(std::make_pair(type2->id(), type1->id()));
+								}
 							}
-							else if(type1->id() != type2->id()) {
-								typeMap.insert(std::make_pair(type2->id(), type1->id()));
+							else if(!newProperty->elementType(type2->id())) {
+								OORef<ElementType> type2clone = poh.cloneHelper().cloneObject(type2, false);
+								newProperty->addElementType(type2clone);
+								OVITO_ASSERT(type2clone->id() == type2->id());
 							}
 						}
 						// Remap bond property values.

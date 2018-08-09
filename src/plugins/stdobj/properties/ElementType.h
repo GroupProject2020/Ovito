@@ -41,15 +41,29 @@ public:
 	/// \brief Constructs a new type.
 	Q_INVOKABLE ElementType(DataSet* dataset);
 
-	/// Returns the title of this object.
-	virtual QString objectTitle() override { return name(); }
+	/// \brief Returns the name of this type, or a dynamically generated string representing the 
+	///        numeric ID if the type has no assigned name.
+	QString nameOrId() const {
+		if(!name().isEmpty())
+			return name();
+		else
+			return generateDefaultTypeName(id());
+	}
+
+	/// \brief Returns an automatically generated name for a type based on its ID.
+	static QString generateDefaultTypeName(int id) {
+		return tr("Type %1").arg(id);
+	}	
+
+	/// \brief Returns the title of this object. Same as nameOrId().
+	virtual QString objectTitle() override { return nameOrId(); }
 
 protected:
 
 	/// Stores the unique identifier of the type.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, id, setId);
 
-	/// The human-readable name of this type.
+	/// The human-readable name assigned to this type.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, name, setName);
 
 	/// Stores the visualization color of the type.

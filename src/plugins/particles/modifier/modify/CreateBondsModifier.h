@@ -62,7 +62,7 @@ public:
 	Q_ENUMS(CutoffMode);
 
 	/// The container type used to store the pair-wise cutoffs.
-	typedef QMap<QPair<QString,QString>, FloatType> PairCutoffsList;
+	typedef QMap<QPair<QVariant,QVariant>, FloatType> PairwiseCutoffsList;
 
 private:
 
@@ -132,15 +132,18 @@ public:
 	virtual bool discardResultsOnInputChange() const override { return true; }
 
 	/// Sets the cutoff radius for a pair of particle types.
-	void setPairCutoff(const QString& typeA, const QString& typeB, FloatType cutoff);
+	void setPairwiseCutoff(const QVariant& typeA, const QVariant& typeB, FloatType cutoff);
 
 	/// Returns the pair-wise cutoff radius for a pair of particle types.
-	FloatType getPairCutoff(const QString& typeA, const QString& typeB) const;
+	FloatType getPairwiseCutoff(const QVariant& typeA, const QVariant& typeB) const;
 
 protected:
 
 	/// Creates a computation engine that will compute the modifier's results.
 	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+
+	/// Looks up a particle type in the type list based on the name or the numeric ID.
+	static ElementType* lookupParticleType(ParticleProperty* typeProperty, const QVariant& typeSpecification);
 		
 private:
 
@@ -154,7 +157,7 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, minimumCutoff, setMinimumCutoff);
 
 	/// The cutoff radii for pairs of particle types.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(PairCutoffsList, pairCutoffs, setPairCutoffs);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(PairwiseCutoffsList, pairwiseCutoffs, setPairwiseCutoffs);
 
 	/// If true, bonds will only be created between atoms from the same molecule.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, onlyIntraMoleculeBonds, setOnlyIntraMoleculeBonds, PROPERTY_FIELD_MEMORIZE);

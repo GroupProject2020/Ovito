@@ -56,9 +56,11 @@ public:
 		if(ParticleProperty* prop = ParticleProperty::findInState(state, ParticleProperty::IdentifierProperty)) {
 			if(!_particleIdentifiers) 
 				return true;
-			if(!std::equal(prop->constDataInt64(), prop->constDataInt64() + prop->size(),
-					_particleIdentifiers->constDataInt64(), _particleIdentifiers->constDataInt64() + _particleIdentifiers->size()))
-				return true;
+			if(prop->storage() != _particleIdentifiers) { 
+				if(!std::equal(prop->constDataInt64(), prop->constDataInt64() + prop->size(),
+						_particleIdentifiers->constDataInt64(), _particleIdentifiers->constDataInt64() + _particleIdentifiers->size()))
+					return true;
+			}
 		}
 		else if(_particleIdentifiers) {
 			return true;

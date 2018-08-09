@@ -282,7 +282,7 @@ void ModifierListBox::updateMRUList(const QString& selectedModifierName)
 * Updates the list box of modifier classes that can be applied to the current selected
 * item in the modification list.
 ******************************************************************************/
-void ModifierListBox::updateAvailableModifiers()
+void ModifierListBox::updateApplicableModifiersList()
 {
 	// Always select the "Add modification..." entry by default.
 	setCurrentIndex(0);

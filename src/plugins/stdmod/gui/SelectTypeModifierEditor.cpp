@@ -110,7 +110,7 @@ void SelectTypeModifierEditor::updateElementTypeList()
 					if(duplicate) continue;
 
 					// Add a new list item for the element type.
-					QListWidgetItem* item = new QListWidgetItem(type->name(), _elementTypesBox);
+					QListWidgetItem* item = new QListWidgetItem(type->nameOrId(), _elementTypesBox);
 					item->setData(Qt::UserRole, type->id());
 					item->setData(Qt::DecorationRole, (QColor)type->color());
 					if(mod->selectedTypeIDs().contains(type->id()))

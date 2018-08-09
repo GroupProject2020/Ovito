@@ -85,8 +85,16 @@ void ParticleTypeEditor::createUI(const RolloutInsertionParameters& rolloutParam
 
 		mainWindow()->statusBar()->showMessage(tr("Stored current color and radius as defaults for particle type '%1'.").arg(ptype->name()), 4000);
 	});
-	connect(this, &PropertiesEditor::contentsReplaced, [setAsDefaultBtn](RefTarget* newEditObject) {
+	connect(this, &PropertiesEditor::contentsReplaced, [setAsDefaultBtn,namePUI](RefTarget* newEditObject) {
 		setAsDefaultBtn->setEnabled(newEditObject != nullptr);
+
+		// Update the placeholder text of the name input field to reflect the numeric ID of the current particle type.
+		if(QLineEdit* lineEdit = qobject_cast<QLineEdit*>(namePUI->textBox())) {
+			if(ElementType* ptype = dynamic_object_cast<ElementType>(newEditObject))
+				lineEdit->setPlaceholderText(QStringLiteral("[%1]").arg(ElementType::generateDefaultTypeName(ptype->id())));
+			else
+				lineEdit->setPlaceholderText({});
+		}
 	});
 }
 

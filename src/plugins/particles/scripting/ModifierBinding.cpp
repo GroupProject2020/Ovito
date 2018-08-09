@@ -491,8 +491,8 @@ void defineModifiersSubmodule(py::module m)
 				"  * ``CreateBondsModifier.Mode.Uniform``\n"
 				"  * ``CreateBondsModifier.Mode.Pairwise``\n"
 				"\n\n"
-				"In ``Uniform`` mode one global :py:attr:`.cutoff` is used irrespective of the atom types. "
-				"In ``Pairwise`` mode a separate cutoff distance must be specified for all pairs of atom types between which bonds are to be created. "
+				"In ``Uniform`` mode one global :py:attr:`.cutoff` is used irrespective of the particle types. "
+				"In ``Pairwise`` mode a separate cutoff distance must be specified for all pairs of particle types between which bonds are to be created. "
 				"\n\n"
 				":Default: ``CreateBondsModifier.Mode.Uniform``\n")
 		.def_property("vis", &CreateBondsModifier::bondsVis, &CreateBondsModifier::setBondsVis,
@@ -506,27 +506,27 @@ void defineModifiersSubmodule(py::module m)
 				"\n\n"
 				":Default: ``False``\n")
 		.def_property("lower_cutoff", &CreateBondsModifier::minimumCutoff, &CreateBondsModifier::setMinimumCutoff,
-				"The minimum bond length. No bonds will be created between atoms whose distance is below this threshold."
+				"The minimum bond length. No bonds will be created between particles whose distance is below this threshold."
 				"\n\n"
 				":Default: 0.0\n")
-		.def("set_pairwise_cutoff", &CreateBondsModifier::setPairCutoff,
+		.def("set_pairwise_cutoff", &CreateBondsModifier::setPairwiseCutoff,
 				"set_pairwise_cutoff(type_a, type_b, cutoff)"
 				"\n\n"
-				"Sets the pair-wise cutoff distance for a pair of atom types. This information is only used if :py:attr:`.mode` is ``Pairwise``."
+				"Sets the cutoff range for creating bonds between a specific pair of particle types. This information is only used if :py:attr:`.mode` is set to ``Pairwise``."
 				"\n\n"
-				":param str type_a: The :py:attr:`~ovito.data.ParticleType.name` of the first atom type\n"
-				":param str type_b: The :py:attr:`~ovito.data.ParticleType.name` of the second atom type (order doesn't matter)\n"
-				":param float cutoff: The cutoff distance to be set for the type pair\n"
+				":param str,int type_a: The :py:attr:`~ovito.data.ParticleType.name` or numeric :py:attr:`~ovito.data.ParticleType.id` of the first particle type\n"
+				":param str,int type_b: The :py:attr:`~ovito.data.ParticleType.name` or numeric :py:attr:`~ovito.data.ParticleType.id` of the second particle type\n"
+				":param float cutoff: The cutoff distance to be used by the modifier for the type pair\n"
 				"\n\n"
-				"If you do not want to create any bonds between a pair of types, set the corresponding cutoff radius to zero (which is the default).",
+				"If you want no bonds to be created between a pair of types, set the corresponding cutoff radius to zero (which is the default).",
 				py::arg("type_a"), py::arg("type_b"), py::arg("cutoff"))
-		.def("get_pairwise_cutoff", &CreateBondsModifier::getPairCutoff,
+		.def("get_pairwise_cutoff", &CreateBondsModifier::getPairwiseCutoff,
 				"get_pairwise_cutoff(type_a, type_b) -> float"
 				"\n\n"
-				"Returns the pair-wise cutoff distance set for a pair of atom types."
+				"Returns the pair-wise cutoff distance that was previously set for a specific pair of particle types."
 				"\n\n"
-				":param str type_a: The :py:attr:`~ovito.data.ParticleType.name` of the first atom type\n"
-				":param str type_b: The :py:attr:`~ovito.data.ParticleType.name` of the second atom type (order doesn't matter)\n"
+				":param str,int type_a: The :py:attr:`~ovito.data.ParticleType.name` or numeric :py:attr:`~ovito.data.ParticleType.id` of the first particle type\n"
+				":param str,int type_b: The :py:attr:`~ovito.data.ParticleType.name` or numeric :py:attr:`~ovito.data.ParticleType.id` of the second particle type\n"
 				":return: The cutoff distance set for the type pair. Returns zero if no cutoff has been set for the pair.\n",
 				py::arg("type_a"), py::arg("type_b"))
 	;

@@ -121,6 +121,22 @@ handle type_caster<QUrl>::cast(const QUrl& src, return_value_policy /* policy */
 ///////////////////////////////////////////////////////////////////////////////////////
 bool type_caster<QVariant>::load(handle src, bool) 
 {
+	if(!src) return false;
+	try {
+		value = QVariant::fromValue(src.cast<int>());
+		return true;
+	}
+	catch(const cast_error&) { /* ignore */ }
+	try {
+		value = QVariant::fromValue(src.cast<Ovito::FloatType>());
+		return true;
+	}
+	catch(const cast_error&) { /* ignore */ }
+	try {
+		value = QVariant::fromValue(castToQString(src));
+		return true;
+	}
+	catch(const cast_error&) { /* ignore */ }
 	return false;
 }
 

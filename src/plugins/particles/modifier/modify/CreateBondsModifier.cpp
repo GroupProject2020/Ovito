@@ -36,13 +36,13 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 IMPLEMENT_OVITO_CLASS(CreateBondsModifier);
 DEFINE_PROPERTY_FIELD(CreateBondsModifier, cutoffMode);
 DEFINE_PROPERTY_FIELD(CreateBondsModifier, uniformCutoff);
-DEFINE_PROPERTY_FIELD(CreateBondsModifier, pairCutoffs);
+DEFINE_PROPERTY_FIELD(CreateBondsModifier, pairwiseCutoffs);
 DEFINE_PROPERTY_FIELD(CreateBondsModifier, minimumCutoff);
 DEFINE_PROPERTY_FIELD(CreateBondsModifier, onlyIntraMoleculeBonds);
 DEFINE_REFERENCE_FIELD(CreateBondsModifier, bondsVis);
 SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, cutoffMode, "Cutoff mode");
 SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, uniformCutoff, "Cutoff radius");
-SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, pairCutoffs, "Pair-wise cutoffs");
+SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, pairwiseCutoffs, "Pair-wise cutoffs");
 SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, minimumCutoff, "Lower cutoff");
 SET_PROPERTY_FIELD_LABEL(CreateBondsModifier, onlyIntraMoleculeBonds, "Suppress inter-molecular bonds");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CreateBondsModifier, uniformCutoff, WorldParameterUnit, 0);
@@ -72,9 +72,9 @@ bool CreateBondsModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& i
 /******************************************************************************
 * Sets the cutoff radius for a pair of particle types.
 ******************************************************************************/
-void CreateBondsModifier::setPairCutoff(const QString& typeA, const QString& typeB, FloatType cutoff)
+void CreateBondsModifier::setPairwiseCutoff(const QVariant& typeA, const QVariant& typeB, FloatType cutoff)
 {
-	PairCutoffsList newList = pairCutoffs();
+	PairwiseCutoffsList newList = pairwiseCutoffs();
 	if(cutoff > 0) {
 		newList[qMakePair(typeA, typeB)] = cutoff;
 		newList[qMakePair(typeB, typeA)] = cutoff;
@@ -83,18 +83,18 @@ void CreateBondsModifier::setPairCutoff(const QString& typeA, const QString& typ
 		newList.remove(qMakePair(typeA, typeB));
 		newList.remove(qMakePair(typeB, typeA));
 	}
-	setPairCutoffs(newList);
+	setPairwiseCutoffs(newList);
 }
 
 /******************************************************************************
 * Returns the pair-wise cutoff radius for a pair of particle types.
 ******************************************************************************/
-FloatType CreateBondsModifier::getPairCutoff(const QString& typeA, const QString& typeB) const
+FloatType CreateBondsModifier::getPairwiseCutoff(const QVariant& typeA, const QVariant& typeB) const
 {
-	auto iter = pairCutoffs().find(qMakePair(typeA, typeB));
-	if(iter != pairCutoffs().end()) return iter.value();
-	iter = pairCutoffs().find(qMakePair(typeB, typeA));
-	if(iter != pairCutoffs().end()) return iter.value();
+	auto iter = pairwiseCutoffs().find(qMakePair(typeA, typeB));
+	if(iter != pairwiseCutoffs().end()) return iter.value();
+	iter = pairwiseCutoffs().find(qMakePair(typeB, typeA));
+	if(iter != pairwiseCutoffs().end()) return iter.value();
 	return 0;
 }
 
@@ -118,6 +118,16 @@ void CreateBondsModifier::initializeModifier(ModifierApplication* modApp)
 	}
 }
 
+/******************************************************************************
+* Looks up a particle type in the type list based on the name or the numeric ID.
+******************************************************************************/
+ElementType* CreateBondsModifier::lookupParticleType(ParticleProperty* typeProperty, const QVariant& typeSpecification)
+{
+	if(typeSpecification.type() == QVariant::Int)
+		return typeProperty->elementType(typeSpecification.toInt());
+	else
+		return typeProperty->elementType(typeSpecification.toString());
+}
 
 /******************************************************************************
 * Creates and initializes a computation engine that will compute the 
@@ -140,11 +150,11 @@ Future<AsynchronousModifier::ComputeEnginePtr> CreateBondsModifier::createEngine
 		typeProperty = ph.expectStandardProperty<ParticleProperty>(ParticleProperty::TypeProperty);
 		if(typeProperty) {
 			maxCutoff = 0;
-			for(PairCutoffsList::const_iterator entry = pairCutoffs().begin(); entry != pairCutoffs().end(); ++entry) {
+			for(auto entry = pairwiseCutoffs().begin(); entry != pairwiseCutoffs().end(); ++entry) {
 				FloatType cutoff = entry.value();
 				if(cutoff > 0) {
-					ElementType* ptype1 = typeProperty->elementType(entry.key().first);
-					ElementType* ptype2 = typeProperty->elementType(entry.key().second);
+					ElementType* ptype1 = lookupParticleType(typeProperty, entry.key().first);
+					ElementType* ptype2 = lookupParticleType(typeProperty, entry.key().second);
 					if(ptype1 && ptype2 && ptype1->id() >= 0 && ptype2->id() >= 0) {
 						if((int)pairCutoffSquaredTable.size() <= std::max(ptype1->id(), ptype2->id())) pairCutoffSquaredTable.resize(std::max(ptype1->id(), ptype2->id()) + 1);
 						if((int)pairCutoffSquaredTable[ptype1->id()].size() <= ptype2->id()) pairCutoffSquaredTable[ptype1->id()].resize(ptype2->id() + 1, FloatType(0));

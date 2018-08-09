@@ -61,7 +61,7 @@ void CreateBondsModifierEditor::createUI(const RolloutInsertionParameters& rollo
 
 	layout1->addLayout(gridlayout);
 
-	QRadioButton* pairCutoffModeBtn = cutoffModePUI->addRadioButton(CreateBondsModifier::PairCutoff, tr("Pair-wise cutoff radii:"));
+	QRadioButton* pairCutoffModeBtn = cutoffModePUI->addRadioButton(CreateBondsModifier::PairCutoff, tr("Pair-wise cutoffs:"));
 	layout1->addWidget(pairCutoffModeBtn);
 
 	_pairCutoffTable = new QTableView();
@@ -111,11 +111,12 @@ void CreateBondsModifierEditor::updatePairCutoffList()
 	if(typeProperty) {
 		for(auto ptype1 = typeProperty->elementTypes().constBegin(); ptype1 != typeProperty->elementTypes().constEnd(); ++ptype1) {
 			for(auto ptype2 = ptype1; ptype2 != typeProperty->elementTypes().constEnd(); ++ptype2) {
-				pairCutoffs.push_back(qMakePair((*ptype1)->name(), (*ptype2)->name()));
+//				pairCutoffs.push_back(qMakePair((*ptype1)->nameOrId(), (*ptype2)->nameOrId()));
+				pairCutoffs.emplace_back(OORef<ElementType>(*ptype1), OORef<ElementType>(*ptype2));
 			}
 		}
 	}
-	_pairCutoffTableModel->setContent(mod, pairCutoffs);
+	_pairCutoffTableModel->setContent(mod, std::move(pairCutoffs));
 }
 
 /******************************************************************************
@@ -132,13 +133,21 @@ void CreateBondsModifierEditor::updatePairCutoffListValues()
 QVariant CreateBondsModifierEditor::PairCutoffTableModel::data(const QModelIndex& index, int role) const
 {
 	if(role == Qt::DisplayRole || role == Qt::EditRole) {
-		if(index.column() == 0) return _data[index.row()].first;
-		else if(index.column() == 1) return _data[index.row()].second;
+		if(index.column() == 0) return _data[index.row()].first->nameOrId();
+		else if(index.column() == 1) return _data[index.row()].second->nameOrId();
 		else if(index.column() == 2) {
-			FloatType cutoffRadius = _modifier->getPairCutoff(_data[index.row()].first, _data[index.row()].second);
+			const auto& type1 = _data[index.row()].first;
+			const auto& type2 = _data[index.row()].second;
+			FloatType cutoffRadius = _modifier->getPairwiseCutoff(
+				type1->name().isEmpty() ? QVariant::fromValue(type1->id()) : QVariant::fromValue(type1->name()),
+				type2->name().isEmpty() ? QVariant::fromValue(type2->id()) : QVariant::fromValue(type2->name()));
 			if(cutoffRadius > 0)
 				return QString("%1").arg(cutoffRadius);
 		}
+	}
+	else if(role == Qt::DecorationRole) {
+		if(index.column() == 0) return (QColor)_data[index.row()].first->color();
+		else if(index.column() == 1) return (QColor)_data[index.row()].second->color();
 	}
 	return QVariant();
 }
@@ -153,8 +162,12 @@ bool CreateBondsModifierEditor::PairCutoffTableModel::setData(const QModelIndex&
 		FloatType cutoff = (FloatType)value.toDouble(&ok);
 		if(!ok) cutoff = 0;
 		UndoableTransaction::handleExceptions(_modifier->dataset()->undoStack(), tr("Change cutoff"), [this, &index, cutoff]() {
-			auto const p = _data[index.row()];
-			_modifier->setPairCutoff(p.first, p.second, cutoff);
+			const auto& type1 = _data[index.row()].first;
+			const auto& type2 = _data[index.row()].second;
+			_modifier->setPairwiseCutoff(
+				type1->name().isEmpty() ? QVariant::fromValue(type1->id()) : QVariant::fromValue(type1->name()),
+				type2->name().isEmpty() ? QVariant::fromValue(type2->id()) : QVariant::fromValue(type2->name()),
+				cutoff);
 		});
 		return true;
 	}

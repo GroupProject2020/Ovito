@@ -41,7 +41,7 @@ public:
 
 	/// Is called just before the drop-down box is activated.
 	virtual void showPopup() override {
-		updateAvailableModifiers();
+		updateApplicableModifiersList();
 		_filterModel->invalidate();
 		setMaxVisibleItems(_model->rowCount());
 		_showAllModifiers = false;
@@ -57,7 +57,7 @@ private Q_SLOTS:
 
 	/// Updates the list box of modifier classes that can be applied to the currently selected
 	/// item in the modification list.
-	void updateAvailableModifiers();
+	void updateApplicableModifiersList();
 
 	/// Updates the MRU list after the user has selected a modifier.
 	void updateMRUList(const QString& selectedModifierName);
@@ -82,7 +82,7 @@ private:
 	/// The item model used for filtering/storting the displayed list of modifiers.
 	QSortFilterProxyModel* _filterModel;
 
-	/// This flag asks updateAvailableModifiers() to list all modifiers, not just the most recently used ones.
+	/// This flag asks updateApplicableModifiersList() to list all modifiers, not just the most recently used ones.
 	bool _showAllModifiers = false;
 
 	/// The number of modifier templates in the list.
@@ -100,5 +100,3 @@ private:
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

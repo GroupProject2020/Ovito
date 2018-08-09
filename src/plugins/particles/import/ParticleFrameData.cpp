@@ -277,42 +277,44 @@ void ParticleFrameData::insertTypes(PropertyObject* typeProperty, TypeList* type
 	QSet<ElementType*> activeTypes;
 	if(typeList) {
 		for(const auto& item : typeList->types()) {
-			QString name = item.name;
-			if(name.isEmpty())
-				name = ParticleImporter::tr("Type %1").arg(item.id);
-			OORef<ElementType> ptype = typeProperty->elementType(name);
-			if(ptype) {
-				ptype->setId(item.id);
-			}
-			else {
+			OORef<ElementType> ptype;
+			if(item.name.isEmpty()) 
 				ptype = typeProperty->elementType(item.id);
+			else {
+				ptype = typeProperty->elementType(item.name);
 				if(ptype) {
-					if(item.name.isEmpty() == false)
-						ptype->setName(item.name);
+					ptype->setId(item.id);
 				}
 				else {
-					if(!isBondProperty) {
-						ptype = new ParticleType(typeProperty->dataset());
-						if(item.radius == 0)
-							static_object_cast<ParticleType>(ptype)->setRadius(ParticleType::getDefaultParticleRadius((ParticleProperty::Type)typeProperty->type(), name, ptype->id()));
-					}
-					else {
-						ptype = new BondType(typeProperty->dataset());
-						if(item.radius == 0)
-							static_object_cast<BondType>(ptype)->setRadius(BondType::getDefaultBondRadius((BondProperty::Type)typeProperty->type(), name, ptype->id()));
-					}
-					ptype->setId(item.id);
-					ptype->setName(name);
-
-					if(item.color != Color(0,0,0))
-						ptype->setColor(item.color);
-					else if(!isBondProperty)
-						ptype->setColor(ParticleType::getDefaultParticleColor((ParticleProperty::Type)typeProperty->type(), name, ptype->id()));
-					else
-						ptype->setColor(BondType::getDefaultBondColor((BondProperty::Type)typeProperty->type(), name, ptype->id()));
-
-					typeProperty->addElementType(ptype);
+					ptype = typeProperty->elementType(item.id);
+					if(ptype && !item.name.isEmpty())
+						ptype->setName(item.name);
 				}
+			}
+			if(!ptype) {
+				if(!isBondProperty) {
+					ptype = new ParticleType(typeProperty->dataset());
+					ptype->setId(item.id);
+					ptype->setName(item.name);
+					if(item.radius == 0)
+						static_object_cast<ParticleType>(ptype)->setRadius(ParticleType::getDefaultParticleRadius((ParticleProperty::Type)typeProperty->type(), ptype->nameOrId(), ptype->id()));
+				}
+				else {
+					ptype = new BondType(typeProperty->dataset());
+					ptype->setId(item.id);
+					ptype->setName(item.name);
+					if(item.radius == 0)
+						static_object_cast<BondType>(ptype)->setRadius(BondType::getDefaultBondRadius((BondProperty::Type)typeProperty->type(), ptype->nameOrId(), ptype->id()));
+				}
+
+				if(item.color != Color(0,0,0))
+					ptype->setColor(item.color);
+				else if(!isBondProperty)
+					ptype->setColor(ParticleType::getDefaultParticleColor((ParticleProperty::Type)typeProperty->type(), ptype->nameOrId(), ptype->id()));
+				else
+					ptype->setColor(BondType::getDefaultBondColor((BondProperty::Type)typeProperty->type(), ptype->nameOrId(), ptype->id()));
+
+				typeProperty->addElementType(ptype);
 			}
 			activeTypes.insert(ptype);
 

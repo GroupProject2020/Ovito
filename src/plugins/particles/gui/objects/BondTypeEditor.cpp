@@ -48,7 +48,7 @@ void BondTypeEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 #endif
 	layout1->setColumnStretch(1, 1);
 	
-	// Text box for the name of particle type.
+	// Text box for the name of bond type.
 	StringParameterUI* namePUI = new StringParameterUI(this, PROPERTY_FIELD(BondType::name));
 	layout1->addWidget(new QLabel(tr("Name:")), 0, 0);
 	layout1->addWidget(namePUI->textBox(), 0, 1);
@@ -63,6 +63,16 @@ void BondTypeEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 	idPUI->setEnabled(false);
 	layout1->addWidget(new QLabel(tr("Numeric ID:")), 2, 0);
 	layout1->addWidget(idPUI->textBox(), 2, 1);
+
+	connect(this, &PropertiesEditor::contentsReplaced, [namePUI](RefTarget* newEditObject) {
+		// Update the placeholder text of the name input field to reflect the numeric ID of the current bond type.
+		if(QLineEdit* lineEdit = qobject_cast<QLineEdit*>(namePUI->textBox())) {
+			if(ElementType* ptype = dynamic_object_cast<ElementType>(newEditObject))
+				lineEdit->setPlaceholderText(QStringLiteral("[%1]").arg(ElementType::generateDefaultTypeName(ptype->id())));
+			else
+				lineEdit->setPlaceholderText({});
+		}
+	});	
 }
 
 OVITO_END_INLINE_NAMESPACE
