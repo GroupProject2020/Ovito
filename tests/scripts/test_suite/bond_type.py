@@ -7,6 +7,7 @@ pipeline = import_file("../../files/LAMMPS/class2.data", atom_style = 'full')
 tprop = pipeline.source.compute().bonds['Bond Type']
 
 for t in tprop.types:
+    t.name = "MyName" + str(t.id)
     print(t.id, t.name)
 
 assert(len(tprop.types) == 26)

@@ -354,8 +354,9 @@ std::vector<ColorA> BondsVis::halfBondColors(size_t particleCount, BondProperty*
 	if(transparencyProperty && transparencyProperty->size() * 2 == output.size()) {
 		auto c = output.begin();
 		for(FloatType t : transparencyProperty->constFloatRange()) {
-			c->a() = t; ++c;
-			c->a() = t; ++c;
+			FloatType alpha = qBound(FloatType(0), FloatType(1)-t, FloatType(1));
+			c->a() = alpha; ++c;
+			c->a() = alpha; ++c;
 		}
 	}
 

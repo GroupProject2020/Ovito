@@ -52,9 +52,11 @@ expected_result = data.particles['Particle Type'][data.bonds['Topology'][:,0]] !
 assert(np.array_equal(data.bonds['testprop'], expected_result))
 
 # Test: bond length computation
-pipeline.modifiers.append(ovito.modifiers.ComputeBondLengthsModifier())
-modifier.output_property = 'testprop' 
+pipeline.source.load("../../files/XSF/1symb.xsf")
+pipeline.modifiers.append(ovito.modifiers.ComputePropertyModifier(operate_on = 'bonds', output_property = 'MyLength', 
+    expressions = ['sqrt((@1.Position.X-@2.Position.X)^2 + (@1.Position.Y-@2.Position.Y)^2 + (@1.Position.Z-@2.Position.Z)^2)']))
+modifier.output_property = 'Length' 
 modifier.expressions = ["BondLength"]
 data = pipeline.compute()
-expected_result = data.bonds['Length']
-assert(np.array_equal(data.bonds['testprop'], expected_result))
+expected_result = data.bonds['MyLength']
+assert(np.allclose(data.bonds['Length'], expected_result))

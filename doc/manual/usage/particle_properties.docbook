@@ -144,7 +144,7 @@
 		</para>
 	</simplesect>
 
-	<simplesect>
+	<simplesect xml:id="usage.bond_properties">
 		<title>Special bond properties</title>
 	  <para>
 	    <informaltable>
@@ -161,15 +161,25 @@
 					</thead>	
 					<tbody>
 						<row>
+							<entry><literal>Topology</literal></entry>
+							<entry>Integer (A,&#xA0;B)</entry>
+							<entry><para>This bond property is always present and holds the indices of the two particles connected by a bond.</para></entry>
+						</row>
+						<row>
 							<entry><literal>Bond&#xA0;Type</literal></entry>
 							<entry>Integer</entry>
-							<entry><para>Stores the type identifier of each bond. This also determines the bond display color 
+							<entry><para>Stores the type identifier of each bond. The bond type determines the display color 
 							if the <emphasis>Color</emphasis> property is not present.</para></entry>
 						</row>
 						<row>
 							<entry><literal>Color</literal></entry>
 							<entry>Real (R,&#xA0;G,&#xA0;B)</entry>
 							<entry><para>If present, this property controls the display color of individual bonds. Red, green and blue components are in the range [0,1].</para></entry>
+						</row>
+						<row>
+							<entry><literal>Transparency</literal></entry>
+							<entry>Real</entry>
+							<entry><para>A value in the range [0,1] controlling the bonds's transparency. If not present, bonds are rendered fully opaque.</para></entry>
 						</row>
 						<row>
 							<entry><literal>Selection</literal></entry>

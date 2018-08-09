@@ -26,7 +26,6 @@
 #include <plugins/particles/modifier/modify/CreateBondsModifier.h>
 #include <plugins/particles/modifier/modify/LoadTrajectoryModifier.h>
 #include <plugins/particles/modifier/modify/CoordinationPolyhedraModifier.h>
-#include <plugins/particles/modifier/properties/ComputeBondLengthsModifier.h>
 #include <plugins/particles/modifier/properties/InterpolateTrajectoryModifier.h>
 #include <plugins/particles/modifier/properties/GenerateTrajectoryLinesModifier.h>
 #include <plugins/particles/modifier/properties/ParticlesComputePropertyModifierDelegate.h>
@@ -90,19 +89,6 @@ void defineModifiersSubmodule(py::module m)
 			"around at the periodic boundaries of the :py:class:`~ovito.data.SimulationCell`. This modifier has no parameters. "
 			"\n\n"
 			"See also the corresponding `user manual page <../../particles.modifiers.wrap_at_periodic_boundaries.html>`__ for this modifier. ")
-	;
-
-	ovito_class<ComputeBondLengthsModifier, Modifier>(m,
-			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
-			"Computes the length of every bond in the system and outputs the values as "
-			"a new bond property named ``Length``. "
-			"See also the corresponding `user manual page <../../particles.modifiers.compute_bond_lengths.html>`__ for this modifier. "
-			"\n\n"
-			"**Modifier outputs:**"
-			"\n\n"
-			" * ``Length`` (:py:class:`~ovito.data.BondProperty`):\n"
-			"   The output bond property containing the length of each bond.\n"
-			"\n")
 	;
 
 	ovito_class<InterpolateTrajectoryModifier, Modifier>(m,

@@ -22,8 +22,8 @@
   </para>
   <para>
     You can dynamically filter the displayed list of bonds by entering a Boolean expression in the input field at the top of the table.
-    Consider, for example, the table shown in the screenshot: Here, the <link linkend="particles.modifiers.compute_bond_lengths">Compute bond lengths</link> modifier
-    had been used to add the <literal>Length</literal> property to each bond (last table column).  
+    Consider, for example, the table shown in the screenshot: Here, the <link linkend="particles.modifiers.compute_property">Compute property</link> modifier
+    had been used to compute and assign the <literal>Length</literal> property to each bond (last table column).  
     To selectively list only those bonds that are very long, let's say longer than 1.5 Angstroms,
     we can enter the expression <literal>Length > 1.5</literal> into the filter field.
     Multiple criteria can be combined using logical AND and OR operators. For a detailed description of the expression syntax,

@@ -290,7 +290,7 @@ ColorA ParticlesVis::particleColor(size_t particleIndex, ParticleProperty* color
 
 	// Apply alpha component.
 	if(transparencyProperty && transparencyProperty->size() > particleIndex) {
-		c.a() = FloatType(1) - transparencyProperty->getFloat(particleIndex);
+		c.a() = qBound(FloatType(0), FloatType(1) - transparencyProperty->getFloat(particleIndex), FloatType(1));
 	}
 
 	return c;
@@ -521,7 +521,7 @@ void ParticlesVis::render(TimePoint time, DataObject* dataObject, const Pipeline
 						c_out->r() = c_in->r();
 						c_out->g() = c_in->g();
 						c_out->b() = c_in->b();
-						c_out->a() = FloatType(1) - (*t);
+						c_out->a() = qBound(FloatType(0), FloatType(1) - (*t), FloatType(1));
 					}
 					particlePrimitive->setParticleColors(colorsWithAlpha.data());
 				}

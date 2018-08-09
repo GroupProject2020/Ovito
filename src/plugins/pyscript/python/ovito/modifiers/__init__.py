@@ -29,7 +29,6 @@ Python class name                              User interface name
 :py:class:`ColorCodingModifier`                :guilabel:`Color coding`
 :py:class:`CombineDatasetsModifier`            :guilabel:`Combine datasets`
 :py:class:`CommonNeighborAnalysisModifier`     :guilabel:`Common neighbor analysis`
-:py:class:`ComputeBondLengthsModifier`         :guilabel:`Compute bond lengths`
 :py:class:`ComputePropertyModifier`            :guilabel:`Compute property`
 :py:class:`ConstructSurfaceModifier`           :guilabel:`Construct surface mesh`
 :py:class:`CoordinationNumberModifier`         :guilabel:`Coordination analysis`

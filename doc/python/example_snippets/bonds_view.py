@@ -1,9 +1,9 @@
 from ovito.io import import_file
 from ovito.data import BondProperty, SimulationCell
-from ovito.modifiers import ComputeBondLengthsModifier
+from ovito.modifiers import ComputePropertyModifier
 from ovito.vis import BondsVis
 pipeline = import_file('input/bonds.data.gz', atom_style = 'bond')
-pipeline.modifiers.append(ComputeBondLengthsModifier())
+pipeline.modifiers.append(ComputePropertyModifier(operate_on = 'bonds', output_property = 'Length', expressions = ['BondLength']))
 
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 data = pipeline.compute()
@@ -14,9 +14,9 @@ print("Number of bonds:", data.bonds.count)
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 print("Bond property names:")
 print(data.bonds.keys())
-if 'Lengths' in data.bonds:
-    lengths_prop = data.bonds['Length']
-    assert(len(lengths_prop) == data.bonds.count)
+if 'Length' in data.bonds:
+    length_prop = data.bonds['Length']
+    assert(len(length_prop) == data.bonds.count)
 # snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

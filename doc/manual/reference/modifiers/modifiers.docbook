@@ -137,10 +137,6 @@
               <entry>Merges the particles and bonds from two separate input files into one dataset.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.compute_bond_lengths">Compute&#xA0;bond&#xA0;lengths</link></entry>
-              <entry>Computes the length of each bond in the system.</entry>
-            </row>
-            <row>
               <entry><link linkend="particles.modifiers.compute_property">Compute&#xA0;property</link></entry>
               <entry>Assigns property values to particles or bonds according to a user-defined formula.</entry>
             </row>
@@ -259,8 +255,6 @@
   <xi:include href="particles/combine_particle_sets.docbook"/>
 
   <xi:include href="particles/common_neighbor_analysis.docbook"/>
-
-  <xi:include href="particles/compute_bond_lengths.docbook"/>
 
   <xi:include href="particles/compute_property.docbook"/>
 

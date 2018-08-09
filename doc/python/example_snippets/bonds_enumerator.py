@@ -1,12 +1,12 @@
 from ovito.io import import_file
 from ovito.data import BondsEnumerator
-from ovito.modifiers import ComputeBondLengthsModifier
+from ovito.modifiers import ComputePropertyModifier
 
 # Load a dataset containing atoms and bonds.
 pipeline = import_file('input/bonds.data.gz', atom_style='bond')
 
 # For demonstration purposes, let a modifier calculate the length of each bond.
-pipeline.modifiers.append(ComputeBondLengthsModifier())
+pipeline.modifiers.append(ComputePropertyModifier(operate_on='bonds', output_property='Length', expressions=['BondLength']))
 
 # Obtain pipeline results.
 data = pipeline.compute()

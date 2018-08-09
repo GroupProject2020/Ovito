@@ -38,6 +38,10 @@
 #include <plugins/particles/import/fhi_aims/FHIAimsImporter.h>
 #include <plugins/particles/import/fhi_aims/FHIAimsLogFileImporter.h>
 #include <plugins/particles/import/gsd/GSDImporter.h>
+#include <plugins/particles/import/xsf/XSFImporter.h>
+#include <plugins/particles/import/cube/GaussianCubeImporter.h>
+#include <plugins/particles/import/castep/CastepCellImporter.h>
+#include <plugins/particles/import/castep/CastepMDImporter.h>
 #include "PythonBinding.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -105,6 +109,18 @@ void defineImportersSubmodule(py::module m)
 	;
 
 	ovito_class<GSDImporter, ParticleImporter>{m}
+	;
+
+	ovito_class<CastepCellImporter, ParticleImporter>{m}
+	;
+
+	ovito_class<CastepMDImporter, ParticleImporter>{m}
+	;
+
+	ovito_class<GaussianCubeImporter, ParticleImporter>{m}
+	;
+
+	ovito_class<XSFImporter, ParticleImporter>{m}
 	;
 }
 
