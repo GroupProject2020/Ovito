@@ -53,7 +53,7 @@ QVariant StructureListParameterUI::getItemData(RefTarget* target, const QModelIn
 	if(stype && modifier && modApp) {
 		if(role == Qt::DisplayRole) {
 			if(index.column() == 1)
-				return stype->name();
+				return stype->nameOrId();
 			else if(index.column() == 2) {
 				if(stype->id() >= 0 && stype->id() < modApp->structureCounts().size())
 					return (int)modApp->structureCounts()[stype->id()];

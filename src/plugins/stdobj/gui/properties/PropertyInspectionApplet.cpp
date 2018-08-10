@@ -210,8 +210,10 @@ QVariant PropertyInspectionApplet::PropertyTableModel::data(const QModelIndex& i
 				if(property->dataType() == PropertyStorage::Int) {
 					str += QString::number(property->getIntComponent(elementIndex, component));
 					if(property->elementTypes().empty() == false) {
-						if(ElementType* ptype = property->elementType(property->getIntComponent(elementIndex, component)))
-							str += QStringLiteral(" (%1)").arg(ptype->name());
+						if(ElementType* ptype = property->elementType(property->getIntComponent(elementIndex, component))) {
+							if(!ptype->name().isEmpty())
+								str += QStringLiteral(" (%1)").arg(ptype->name());
+						}
 					}
 				}
 				else if(property->dataType() == PropertyStorage::Int64) {

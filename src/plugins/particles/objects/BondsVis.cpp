@@ -420,8 +420,10 @@ QString BondPickInfo::infoString(PipelineSceneNode* objectNode, quint32 subobjec
 				if(property->dataType() == PropertyStorage::Int) {
 					str += QString::number(property->getIntComponent(bondIndex, component));
 					if(property->elementTypes().empty() == false) {
-						if(ElementType* btype = property->elementType(property->getIntComponent(bondIndex, component)))
-							str += QString(" (%1)").arg(btype->name());
+						if(ElementType* btype = property->elementType(property->getIntComponent(bondIndex, component))) {
+							if(!btype->name().isEmpty())
+								str += QString(" (%1)").arg(btype->name());
+						}
 					}
 				}
 				else if(property->dataType() == PropertyStorage::Int64)
@@ -437,7 +439,7 @@ QString BondPickInfo::infoString(PipelineSceneNode* objectNode, quint32 subobjec
 			ElementType* type1 = typeProperty->elementType(typeProperty->getInt(index1));
 			ElementType* type2 = typeProperty->elementType(typeProperty->getInt(index2));
 			if(type1 && type2) {
-				str += QString(" | Particles: %1 - %2").arg(type1->name(), type2->name());
+				str += QString(" | Particles: %1 - %2").arg(type1->nameOrId(), type2->nameOrId());
 			}
 		}
 	}

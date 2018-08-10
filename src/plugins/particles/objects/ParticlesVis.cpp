@@ -918,8 +918,10 @@ QString ParticlePickInfo::particleInfoString(const PipelineFlowState& pipelineSt
 			if(property->dataType() == PropertyStorage::Int) {
 				str += QString::number(property->getIntComponent(particleIndex, component));
 				if(property->elementTypes().empty() == false) {
-					if(ElementType* ptype = property->elementType(property->getIntComponent(particleIndex, component)))
-						str += QString(" (%1)").arg(ptype->name());
+					if(ElementType* ptype = property->elementType(property->getIntComponent(particleIndex, component))) {
+						if(!ptype->name().isEmpty())
+							str += QString(" (%1)").arg(ptype->name());
+					}
 				}
 			}
 			else if(property->dataType() == PropertyStorage::Int64) {

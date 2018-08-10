@@ -73,7 +73,7 @@ bool POSCARExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 		for(auto c = particleCounts.begin(); c != particleCounts.end(); ++c) {
 			ElementType* particleType = particleTypeProperty->elementType(c.key());
 			if(particleType) {
-				QString typeName = particleType->name();
+				QString typeName = particleType->nameOrId();
 				typeName.replace(' ', '_');
 				textStream() << typeName << ' ';
 			}
