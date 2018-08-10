@@ -287,10 +287,7 @@ PYBIND11_MODULE(StdMod, m)
 				"If :py:attr:`.operate_on` is set to ``'bonds'``, this can be one of the :ref:`standard bond properties <bond-types-list>` "
 				"or a name of a user-defined :py:class:`~ovito.data.BondProperty`. "
 				"\n\n"
-				"When the input property has multiple components, then a component name must be appended to the property base name, e.g. ``\"Velocity.X\"``. "
-				"\n\n"
-				"Note: Make sure that :py:attr:`.operate_on` is set to the desired value *before* setting this attribute, "
-				"because changing :py:attr:`.operate_on` will implicitly reset the :py:attr:`!property` attribute. ")
+				"When the input property has multiple components, then a component name must be appended to the property base name, e.g. ``\"Velocity.X\"``. ")
 		.def_property("start_value", &ColorCodingModifier::startValue, &ColorCodingModifier::setStartValue,
 				"This parameter defines, together with the :py:attr:`.end_value` parameter, the normalization range for mapping the input property values to colors.")
 		.def_property("end_value", &ColorCodingModifier::endValue, &ColorCodingModifier::setEndValue,
@@ -317,8 +314,6 @@ PYBIND11_MODULE(StdMod, m)
 		.def_property("operate_on", modifierDelegateGetter<ColorCodingModifier>(), modifierDelegateSetter<ColorCodingModifier>(),
 				"Selects the kind of data elements this modifier should operate on. "
 				"Supported values are: ``'particles'``, ``'bonds'``, ``'vectors'``. "
-				"\n\n"
-				"Note: Assigning a new value to this attribute resets the :py:attr:`.property` field. "
 				"\n\n"
 				":Default: ``'particles'``\n")
 	;
@@ -381,15 +376,10 @@ PYBIND11_MODULE(StdMod, m)
 				"When selecting particles, possible input properties are ``\'Particle Type\'`` and ``\'Structure Type\'``, for example. "
 				"When selecting bonds, ``'Bond Type'`` is a typical input property for this modifier. "
 				"\n\n"
-				"Note: Make sure that :py:attr:`.operate_on` is set to the desired value *before* setting this attribute, "
-				"because changing :py:attr:`.operate_on` will implicitly reset the :py:attr:`!property` attribute. "
-				"\n\n"
 				":Default: ``''``\n")
 		.def_property("operate_on", modifierPropertyClassGetter(), modifierPropertyClassSetter(),
 				"Selects the kind of data elements this modifier should select. "
 				"Supported values are: ``'particles'``, ``'bonds'``. "
-				"\n\n"
-				"Note: Assigning a new value to this attribute resets the :py:attr:`.property` field. "
 				"\n\n"
 				":Default: ``'particles'``\n")
 		// Required by implementation of SelectTypeModifier.types attribute:
@@ -422,17 +412,12 @@ PYBIND11_MODULE(StdMod, m)
 				"Selects the kind of data elements this modifier should operate on. "
 				"Supported values are: ``'particles'``, ``'bonds'``, ``'voxels'``. "
 				"\n\n"
-				"Note: Assigning a new value to this attribute resets the :py:attr:`.property` field. "
-				"\n\n"
 				":Default: ``'particles'``\n")		
 		.def_property("property", &HistogramModifier::sourceProperty, [](HistogramModifier& mod, py::object val) {					
 					mod.setSourceProperty(convertPythonPropertyReference(val, mod.propertyClass()));
 				},
 				"The name of the input property for which to compute the histogram. "
 				"For vector properties a component name must be appended in the string, e.g. ``\"Velocity.X\"``. "
-				"\n\n"
-				"Note: Make sure that :py:attr:`.operate_on` is set to the desired value *before* setting this attribute, "
-				"because changing :py:attr:`.operate_on` will implicitly reset the :py:attr:`!property` attribute. "
 				"\n\n"
 				":Default: ``''``\n")
 		.def_property("bin_count", &HistogramModifier::numberOfBins, &HistogramModifier::setNumberOfBins,
@@ -663,18 +648,12 @@ PYBIND11_MODULE(StdMod, m)
 		.def_property("source_property", &FreezePropertyModifier::sourceProperty, [](FreezePropertyModifier& mod, py::object val) {					
 					mod.setSourceProperty(convertPythonPropertyReference(val, mod.propertyClass()));
 				},
-				"The name of the input property that should be evaluated by the modifier on the animation frame specified by :py:attr:`.freeze_at`. "
-				"\n\n"
-				"Note: Make sure that :py:attr:`.operate_on` is set to the desired value *before* setting this attribute, "
-				"because changing :py:attr:`.operate_on` will implicitly reset the :py:attr:`!source_property` attribute. ")
+				"The name of the input property that should be evaluated by the modifier on the animation frame specified by :py:attr:`.freeze_at`. ")
 		.def_property("destination_property", &FreezePropertyModifier::destinationProperty, [](FreezePropertyModifier& mod, py::object val) {					
 					mod.setDestinationProperty(convertPythonPropertyReference(val, mod.propertyClass()));
 				},
 				"The name of the output property that should be created by the modifier. "
-				"It may be the same as :py:attr:`.source_property`. If the destination property already exists in the modifier's input, the values are overwritten. "
-				"\n\n"
-				"Note: Make sure that :py:attr:`.operate_on` is set to the desired value *before* setting this attribute, "
-				"because changing :py:attr:`.operate_on` will implicitly reset the :py:attr:`!destination_property` attribute. ")
+				"It may be the same as :py:attr:`.source_property`. If the destination property already exists in the modifier's input, the values are overwritten. ")
 		.def_property("freeze_at", 
 				[](FreezePropertyModifier& mod) {
 					return mod.dataset()->animationSettings()->timeToFrame(mod.freezeTime());
@@ -688,8 +667,6 @@ PYBIND11_MODULE(StdMod, m)
 		.def_property("operate_on", modifierPropertyClassGetter(), modifierPropertyClassSetter(),
 				"Selects the kind of properties this modifier should operate on. "
 				"Supported values are: ``'particles'``, ``'bonds'``, ``'voxels'``. "
-				"\n\n"
-				"Note: Assigning a new value to this attribute resets the :py:attr:`.source_property` and :py:attr:`.destination_property` fields. "
 				"\n\n"
 				":Default: ``'particles'``\n")
 	;
@@ -734,9 +711,6 @@ PYBIND11_MODULE(StdMod, m)
 				"A list of strings containing the math expressions to compute, one for each vector component of the selected output property. "
 				"If the output property is scalar, the list must comprise one expression string. "
 				"\n\n"
-				"Note: Before setting this field, make sure that :py:attr:`.output_property` is already set to the desired value, "
-				"because changing the :py:attr:`.output_property` will implicitly resize the :py:attr:`!expressions` list. "
-				"\n\n"
 				"See the corresponding `user manual page <../../particles.modifiers.compute_property.html>`__ for a description of the expression syntax. "
 				"\n\n"
 				":Default: ``[\"0\"]``\n")		
@@ -752,11 +726,7 @@ PYBIND11_MODULE(StdMod, m)
 				"If :py:attr:`.operate_on` is set to ``'bonds'``, this can be one of the :ref:`standard bond properties <bond-types-list>` "
 				"or a name of a new user-defined :py:class:`~ovito.data.BondProperty`. "
 				"\n\n"
-				"Note: Make sure that the :py:attr:`.operate_on` field is set to the desired value *before* setting this field, "
-				"because changing :py:attr:`.operate_on` will implicitly reset :py:attr:`!output_property` to its default value. "
-				"\n\n"
 				":Default: ``\"My property\"``\n")
-		.def_property("component_count", &ComputePropertyModifier::propertyComponentCount, &ComputePropertyModifier::setPropertyComponentCount)
 		.def_property("only_selected", &ComputePropertyModifier::onlySelectedElements, &ComputePropertyModifier::setOnlySelectedElements,
 				"If ``True``, the property is only computed for currently selected elements. "
 				"In this case, the property values of unselected elements will be preserved if the output property already exists. "

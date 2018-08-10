@@ -151,11 +151,11 @@ void ColorCodingModifier::initializeModifier(ModifierApplication* modApp)
 ******************************************************************************/
 void ColorCodingModifier::referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget)
 {
-	// Whenever the delegate of this modifier is being replaced, reset the source property reference.
+	// Whenever the delegate of this modifier is being replaced, update the source property reference.
 	if(field == PROPERTY_FIELD(DelegatingModifier::delegate) && !isBeingLoaded()) {
 		ColorCodingModifierDelegate* colorDelegate = static_object_cast<ColorCodingModifierDelegate>(delegate());
-		if(!colorDelegate || &colorDelegate->propertyClass() != sourceProperty().propertyClass()) {
-			setSourceProperty({});
+		if(!dataset()->undoStack().isUndoingOrRedoing() && !isBeingLoaded() && colorDelegate) {
+			setSourceProperty(sourceProperty().convertToPropertyClass(&colorDelegate->propertyClass()));
 		}
 	}
 	DelegatingModifier::referenceReplaced(field, oldTarget, newTarget);

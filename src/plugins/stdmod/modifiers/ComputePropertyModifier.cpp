@@ -63,6 +63,9 @@ ComputePropertyModifier::ComputePropertyModifier(DataSet* dataset) : Asynchronou
 {
 	// Let this modifier act on particles by default.
 	createDefaultModifierDelegate(ComputePropertyModifierDelegate::OOClass(), QStringLiteral("ParticlesComputePropertyModifierDelegate"));
+	// Set default output property.
+	if(delegate())
+		setOutputProperty(PropertyReference(&delegate()->propertyClass(), QStringLiteral("My property")));
 }
 
 /******************************************************************************
@@ -79,28 +82,8 @@ void ComputePropertyModifier::setPropertyComponentCount(int newComponentCount)
 			newList.append("0");
 		setExpressions(newList);
 	}
-}
-
-/******************************************************************************
-* Is called when the value of a property of this object has changed.
-******************************************************************************/
-void ComputePropertyModifier::propertyChanged(const PropertyFieldDescriptor& field)
-{
-	if(field == PROPERTY_FIELD(outputProperty)) {
-		if(!dataset()->undoStack().isUndoingOrRedoing()) {
-			if(delegate() && outputProperty().type() != PropertyStorage::GenericUserProperty)
-				setPropertyComponentCount(delegate()->propertyClass().standardPropertyComponentCount(outputProperty().type()));
-			else
-				setPropertyComponentCount(1);
-		}
-	}
-	else if(field == PROPERTY_FIELD(expressions)) {
-		if(!dataset()->undoStack().isUndoingOrRedoing() && delegate()) {
-			delegate()->setComponentCount(expressions().size());
-		}
-	}
-
-	AsynchronousDelegatingModifier::propertyChanged(field);
+	if(delegate())
+		delegate()->setComponentCount(newComponentCount);
 }
 
 /******************************************************************************
@@ -110,8 +93,8 @@ void ComputePropertyModifier::referenceReplaced(const PropertyFieldDescriptor& f
 {
 	if(field == PROPERTY_FIELD(AsynchronousDelegatingModifier::delegate)) {
 		if(!dataset()->undoStack().isUndoingOrRedoing() && !isBeingLoaded() && delegate()) {
+			setOutputProperty(outputProperty().convertToPropertyClass(&delegate()->propertyClass()));
 			delegate()->setComponentCount(expressions().size());
-			setOutputProperty(PropertyReference(&delegate()->propertyClass(), QStringLiteral("My property")));
 		}
 	}
 
@@ -132,6 +115,8 @@ Future<AsynchronousModifier::ComputeEnginePtr> ComputePropertyModifier::createEn
 	const PropertyClass& propertyClass = delegate()->propertyClass();
 	if(!propertyClass.isDataPresent(input))
 		throwException(tr("Cannot compute property '%1', because the input data contains no %2.").arg(outputProperty().name()).arg(propertyClass.elementDescriptionName()));
+	if(outputProperty().propertyClass() != &propertyClass)
+		throwException(tr("Property %1 to be computed is not a %2 property.").arg(outputProperty().name()).arg(propertyClass.elementDescriptionName()));
 
 	// Get the number of input elements.
 	size_t nelements = propertyClass.elementCount(input);

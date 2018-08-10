@@ -416,7 +416,7 @@ void ovito_class_initialization_helper::applyParameters(py::object& pyobj, const
 {
 	// Iterate over the keys of the dictionary and set attributes of the
 	// newly created object.
-	for(auto item : params) {
+	for(const auto& item : params) {
 		// Check if the attribute exists. Otherwise raise error.
 		if(!py::hasattr(pyobj, item.first)) {
 			PyErr_SetObject(PyExc_AttributeError, 

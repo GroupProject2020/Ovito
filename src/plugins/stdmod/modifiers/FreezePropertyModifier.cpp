@@ -84,12 +84,10 @@ void FreezePropertyModifier::initializeModifier(ModifierApplication* modApp)
 ******************************************************************************/
 void FreezePropertyModifier::propertyChanged(const PropertyFieldDescriptor& field)
 {
-	// Whenever the selected property class of this modifier is changed, clear the source property reference.
-	if(field == PROPERTY_FIELD(GenericPropertyModifier::propertyClass) && !isBeingLoaded()) {
-		if(propertyClass() != sourceProperty().propertyClass()) {
-			setSourceProperty({});
-			setDestinationProperty({});
-		}
+	// Whenever the selected property class of this modifier changes, update the property references accordingly.
+	if(field == PROPERTY_FIELD(GenericPropertyModifier::propertyClass) && !isBeingLoaded() && !dataset()->undoStack().isUndoingOrRedoing()) {
+		setSourceProperty(sourceProperty().convertToPropertyClass(propertyClass()));
+		setDestinationProperty(destinationProperty().convertToPropertyClass(propertyClass()));
 	}
 	GenericPropertyModifier::propertyChanged(field);
 }

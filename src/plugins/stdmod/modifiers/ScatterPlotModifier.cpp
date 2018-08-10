@@ -117,11 +117,10 @@ void ScatterPlotModifier::initializeModifier(ModifierApplication* modApp)
 ******************************************************************************/
 void ScatterPlotModifier::propertyChanged(const PropertyFieldDescriptor& field)
 {
-	// Whenever the selected property class of this modifier is changed, clear the source property references.
-	// Otherwise they might be pointing to the wrong kind of property.
-	if(field == PROPERTY_FIELD(GenericPropertyModifier::propertyClass) && !isBeingLoaded()) {
-		setXAxisProperty({});
-		setYAxisProperty({});
+	// Whenever the selected property class of this modifier is changed, update the source property references.
+	if(field == PROPERTY_FIELD(GenericPropertyModifier::propertyClass) && !isBeingLoaded() && !dataset()->undoStack().isUndoingOrRedoing()) {
+		setXAxisProperty(xAxisProperty().convertToPropertyClass(propertyClass()));
+		setYAxisProperty(yAxisProperty().convertToPropertyClass(propertyClass()));
 	}
 	GenericPropertyModifier::propertyChanged(field);
 }
@@ -221,6 +220,11 @@ PipelineFlowState ScatterPlotModifier::evaluatePreliminary(TimePoint time, Modif
 			xyData[i].rx() = xProperty->getIntComponent(i, xVecComponent);
 		}
 	}
+	else if(xProperty->dataType() == PropertyStorage::Int64) {
+		for(size_t i = 0; i < xProperty->size(); i++) {
+			xyData[i].rx() = xProperty->getInt64Component(i, xVecComponent);
+		}
+	}
 	else throwException(tr("Property '%1' has a data type that is not supported by the scatter plot modifier.").arg(xProperty->name()));
 
 	// Collect Y coordinates.
@@ -232,6 +236,11 @@ PipelineFlowState ScatterPlotModifier::evaluatePreliminary(TimePoint time, Modif
 	else if(yProperty->dataType() == PropertyStorage::Int) {
 		for(size_t i = 0; i < yProperty->size(); i++) {
 			xyData[i].ry() = yProperty->getIntComponent(i, yVecComponent);
+		}
+	}
+	else if(yProperty->dataType() == PropertyStorage::Int64) {
+		for(size_t i = 0; i < yProperty->size(); i++) {
+			xyData[i].ry() = yProperty->getInt64Component(i, yVecComponent);
 		}
 	}
 	else throwException(tr("Property '%1' has a data type that is not supported by the scatter plot modifier.").arg(yProperty->name()));

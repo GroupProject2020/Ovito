@@ -85,6 +85,9 @@ public:
 
 	/// Finds the referenced property in the given pipeline state.
 	PropertyObject* findInState(const PipelineFlowState& state) const;
+
+	/// Returns a new property reference that uses the same name as the current one, but with a different property class.
+	PropertyReference convertToPropertyClass(PropertyClassPtr pclass) const;
 	
 private:
 

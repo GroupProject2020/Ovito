@@ -65,6 +65,21 @@ QString PropertyReference::nameWithComponent() const
 		return QString("%1.%2").arg(name()).arg(vectorComponent() + 1);
 }
 
+/******************************************************************************
+* Returns a new property reference that uses the same name as the current one, 
+* but with a different property class.
+******************************************************************************/
+PropertyReference PropertyReference::convertToPropertyClass(PropertyClassPtr pclass) const
+{
+	OVITO_ASSERT(pclass != nullptr);
+	PropertyReference newref = *this;
+	if(pclass != propertyClass()) {
+		newref._propertyClass = pclass;
+		newref._type = pclass->standardPropertyTypeId(name());
+	}
+	return newref; 
+}
+
 /// Writes a PropertyReference to an output stream.
 /// \relates PropertyReference
 SaveStream& operator<<(SaveStream& stream, const PropertyReference& r)

@@ -15,8 +15,7 @@ def ComputePropertyModifier_cutoff_radius(self):
     if self.operate_on != 'particles': return 3.0
     return self.delegate.cutoff_radius
 def ComputePropertyModifier_set_cutoff_radius(self, radius):
-    if self.operate_on != 'particles':
-        raise AttributeError("Setting cutoff_radius is only permitted if operate_on was previously set to 'particles'.")
+    self.operate_on = 'particles'
     self.delegate.cutoff_radius = radius
 ComputePropertyModifier.cutoff_radius = property(ComputePropertyModifier_cutoff_radius, ComputePropertyModifier_set_cutoff_radius)
 
@@ -35,8 +34,7 @@ def ComputePropertyModifier_neighbor_expressions(self):
     if self.operate_on != 'particles': return []
     return self.delegate.neighbor_expressions
 def ComputePropertyModifier_set_neighbor_expressions(self, expressions):
-    if self.operate_on != 'particles':
-        raise AttributeError("Setting neighbor_expressions is only permitted if operate_on was previously set to 'particles'.")
+    self.operate_on = 'particles'
     self.delegate.neighbor_expressions = expressions
 ComputePropertyModifier.neighbor_expressions = property(ComputePropertyModifier_neighbor_expressions, ComputePropertyModifier_set_neighbor_expressions)
 
@@ -50,8 +48,6 @@ def ComputePropertyModifier_neighbor_mode(self):
     if self.operate_on != 'particles': return False
     return True
 def ComputePropertyModifier_set_neighbor_mode(self, flag):
-    if self.operate_on != 'particles':
-        raise AttributeError("Setting neighbor_mode is only permitted if operate_on was previously set to 'particles'.")
     if flag != True:
-        raise ValueError("Setting neighbor_mode to False is not supported anymore. Please set the neighbor expression(s) to empty strings instead.")
+        raise ValueError("Setting neighbor_mode to False is not supported anymore in this version of OVITO. Please set the neighbor expression(s) to empty strings instead.")
 ComputePropertyModifier.neighbor_mode = property(ComputePropertyModifier_neighbor_mode, ComputePropertyModifier_set_neighbor_mode)

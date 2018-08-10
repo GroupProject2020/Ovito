@@ -44,7 +44,6 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(ParticlesComputePropertyModifierDelegate, c
 * Constructs a new instance of this class.
 ******************************************************************************/
 ParticlesComputePropertyModifierDelegate::ParticlesComputePropertyModifierDelegate(DataSet* dataset) : ComputePropertyModifierDelegate(dataset),
-	_neighborExpressions(QStringList(QString())), 
 	_cutoff(3), 
 	_useMultilineFields(false)
 {
@@ -82,8 +81,9 @@ std::shared_ptr<ComputePropertyModifierDelegate::PropertyComputeEngine> Particle
 	ParticleInputHelper pih(dataset(), input);
 	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
 
-	if(!neighborExpressions().empty() && neighborExpressions().size() != outputProperty->componentCount())
-		throwException(tr("Number of neighbor expressions does not match component count of output property."));
+	if(!neighborExpressions().empty() && neighborExpressions().size() != outputProperty->componentCount() && (neighborExpressions().size() != 1 || !neighborExpressions().front().isEmpty()))
+		throwException(tr("Number of neighbor expressions that have been specified (%1) does not match the number of components per particle (%2) of the output property '%3'.")
+			.arg(neighborExpressions().size()).arg(outputProperty->componentCount()).arg(outputProperty->name()));
 
 	TimeInterval validityInterval = input.stateValidity();
 

@@ -73,6 +73,14 @@ void ComputePropertyModifierEditor::createUI(const RolloutInsertionParameters& r
 		ComputePropertyModifier* modifier = static_object_cast<ComputePropertyModifier>(editObject);
 		outputPropertyUI->setPropertyClass((modifier && modifier->delegate()) ? &modifier->delegate()->propertyClass() : nullptr);
 	});
+	connect(outputPropertyUI, &PropertyReferenceParameterUI::valueEntered, this, [this]() {
+		if(ComputePropertyModifier* modifier = static_object_cast<ComputePropertyModifier>(editObject())) {
+			if(modifier->delegate() && modifier->outputProperty().type() != PropertyStorage::GenericUserProperty)
+				modifier->setPropertyComponentCount(modifier->delegate()->propertyClass().standardPropertyComponentCount(modifier->outputProperty().type()));
+			else
+				modifier->setPropertyComponentCount(1);
+		}
+	});
 
 	// Create the check box for the selection flag.
 	BooleanParameterUI* selectionFlagUI = new BooleanParameterUI(this, PROPERTY_FIELD(ComputePropertyModifier::onlySelectedElements));

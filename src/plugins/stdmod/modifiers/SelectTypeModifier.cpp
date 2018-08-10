@@ -79,12 +79,9 @@ void SelectTypeModifier::initializeModifier(ModifierApplication* modApp)
 ******************************************************************************/
 void SelectTypeModifier::propertyChanged(const PropertyFieldDescriptor& field)
 {
-	// Whenever the selected property class of this modifier is changed, clear the source property reference.
-	// Otherwise it might be pointing to the wrong kind of property.
-	if(field == PROPERTY_FIELD(GenericPropertyModifier::propertyClass) && !isBeingLoaded()) {
-		if(propertyClass() != sourceProperty().propertyClass()) {
-			setSourceProperty({});
-		}
+	// Whenever the selected property class of this modifier is changed, update the source property reference accordingly.
+	if(field == PROPERTY_FIELD(GenericPropertyModifier::propertyClass) && !isBeingLoaded() && !dataset()->undoStack().isUndoingOrRedoing()) {
+		setSourceProperty(sourceProperty().convertToPropertyClass(propertyClass()));
 	}
 	GenericPropertyModifier::propertyChanged(field);
 }
