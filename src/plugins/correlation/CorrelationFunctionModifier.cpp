@@ -42,6 +42,8 @@ DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, doComputeNeighCorrelation);
 DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, neighCutoff);
 DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, numberOfNeighBins);
 DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, normalizeRealSpace);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, normalizeRealSpaceByRDF);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, normalizeRealSpaceByCovariance);
 DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, typeOfRealSpacePlot);
 DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, normalizeReciprocalSpace);
 DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, typeOfReciprocalSpacePlot);
@@ -66,6 +68,8 @@ SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, doComputeNeighCorrelation,
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, neighCutoff, "Neighbor cutoff radius");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, numberOfNeighBins, "Number of neighbor bins");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, normalizeRealSpace, "Normalize correlation function");
+SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, normalizeRealSpaceByRDF, "Normalize by RDF");
+SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, normalizeRealSpaceByCovariance, "Normalize by covariance");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, normalizeReciprocalSpace, "Normalize correlation function");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CorrelationFunctionModifier, fftGridSpacing, WorldParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CorrelationFunctionModifier, neighCutoff, WorldParameterUnit, 0);
@@ -100,7 +104,9 @@ CorrelationFunctionModifier::CorrelationFunctionModifier(DataSet* dataset) : Asy
 	_doComputeNeighCorrelation(false), 
 	_neighCutoff(5.0), 
 	_numberOfNeighBins(50),
-	_normalizeRealSpace(DO_NOT_NORMALIZE), 
+	_normalizeRealSpace(VALUE_CORRELATION), 
+	_normalizeRealSpaceByRDF(false), 
+	_normalizeRealSpaceByCovariance(false), 
 	_typeOfRealSpacePlot(0), 
 	_normalizeReciprocalSpace(false), 
 	_typeOfReciprocalSpacePlot(0),

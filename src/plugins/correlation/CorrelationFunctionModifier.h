@@ -69,10 +69,8 @@ public:
     Q_ENUMS(AveragingDirectionType);
 
     enum NormalizationType { 
-		DO_NOT_NORMALIZE = 0,
-		NORMALIZE_BY_COVARIANCE = 1,
-		NORMALIZE_BY_RDF = 2,
-		DIFFERENCE = 3
+		VALUE_CORRELATION = 0,
+		DIFFERENCE_CORRELATION = 1
 	};
     Q_ENUMS(NormalizationType);
 
@@ -273,6 +271,10 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(AveragingDirectionType, averagingDirection, setAveragingDirection, PROPERTY_FIELD_MEMORIZE);
 	/// Controls the normalization of the real-space correlation function.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(NormalizationType, normalizeRealSpace, setNormalizeRealSpace, PROPERTY_FIELD_MEMORIZE);
+	/// Controls the normalization by rdf of the real-space correlation function.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, normalizeRealSpaceByRDF, setNormalizeRealSpaceByRDF, PROPERTY_FIELD_MEMORIZE);
+	/// Controls the normalization by covariance of the real-space correlation function.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, normalizeRealSpaceByCovariance, setNormalizeRealSpaceByCovariance, PROPERTY_FIELD_MEMORIZE);
 	/// Type of real-space plot (lin-lin, log-lin or log-log)
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, typeOfRealSpacePlot, setTypeOfRealSpacePlot);
 	/// Controls the whether the range of the x-axis of the plot should be fixed.

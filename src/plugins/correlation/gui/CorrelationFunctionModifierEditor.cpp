@@ -113,13 +113,14 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 	connect(doComputeNeighCorrelationUI->checkBox(), &QCheckBox::toggled, numberOfNeighBinsPUI, &IntegerParameterUI::setEnabled);
 
 	QGridLayout *normalizeRealSpaceLayout = new QGridLayout();
-	normalizeRealSpaceLayout->addWidget(new QLabel(tr("Normalization:"), rollout), 0, 0);
+	normalizeRealSpaceLayout->addWidget(new QLabel(tr("Type of plot:"), rollout), 0, 0);
 	VariantComboBoxParameterUI* normalizeRealSpacePUI = new VariantComboBoxParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::normalizeRealSpace));
-    normalizeRealSpacePUI->comboBox()->addItem("Do not normalize", QVariant::fromValue(CorrelationFunctionModifier::DO_NOT_NORMALIZE));
-    normalizeRealSpacePUI->comboBox()->addItem("by covariance", QVariant::fromValue(CorrelationFunctionModifier::NORMALIZE_BY_COVARIANCE));
-    normalizeRealSpacePUI->comboBox()->addItem("by RDF", QVariant::fromValue(CorrelationFunctionModifier::NORMALIZE_BY_RDF));
-    normalizeRealSpacePUI->comboBox()->addItem("Difference correlation", QVariant::fromValue(CorrelationFunctionModifier::DIFFERENCE));
+    normalizeRealSpacePUI->comboBox()->addItem("Value correlation", QVariant::fromValue(CorrelationFunctionModifier::VALUE_CORRELATION));
+    normalizeRealSpacePUI->comboBox()->addItem("Difference correlation", QVariant::fromValue(CorrelationFunctionModifier::DIFFERENCE_CORRELATION));
     normalizeRealSpaceLayout->addWidget(normalizeRealSpacePUI->comboBox(), 0, 1);
+
+	BooleanParameterUI* normalizeRealSpaceByRDFUI = new BooleanParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::normalizeRealSpaceByRDF));
+	BooleanParameterUI* normalizeRealSpaceByCovarianceUI = new BooleanParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::normalizeRealSpaceByCovariance));
 
 	QGridLayout* typeOfRealSpacePlotLayout = new QGridLayout();
 	IntegerRadioButtonParameterUI *typeOfRealSpacePlotPUI = new IntegerRadioButtonParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::typeOfRealSpacePlot));
@@ -183,6 +184,8 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 	realSpaceLayout->addWidget(doComputeNeighCorrelationUI->checkBox());
 	realSpaceLayout->addLayout(realSpaceGridLayout);
 	realSpaceLayout->addLayout(normalizeRealSpaceLayout);
+	realSpaceLayout->addWidget(normalizeRealSpaceByRDFUI->checkBox());
+	realSpaceLayout->addWidget(normalizeRealSpaceByCovarianceUI->checkBox());
 	realSpaceLayout->addLayout(typeOfRealSpacePlotLayout);
 	realSpaceLayout->addWidget(_realSpacePlot);
 	realSpaceLayout->addWidget(axesBox);
@@ -325,29 +328,31 @@ void CorrelationFunctionModifierEditor::plotAllData()
 	if(!modifier || !modApp)
 		return;
 
+	QVector<FloatType> y = modApp->realSpaceCorrelation();
+	// Plot real-space correlation function
+	if(!modApp->realSpaceCorrelationX().empty() && !y.empty()) {
+		if (modifier->normalizeRealSpaceByRDF())
+		    std::transform(y.begin(), y.end(), modApp->realSpaceRDF().constBegin(), y.begin(), std::divides<FloatType>());
+	}
+
 	FloatType offset = 0.0;
 	FloatType fac = 1.0;
-	if (modifier->normalizeRealSpace() == CorrelationFunctionModifier::NORMALIZE_BY_COVARIANCE) {
-		offset = modApp->mean1()*modApp->mean2();
-		fac = 1.0/(modApp->covariance()-offset);
-	}
-	else if (modifier->normalizeRealSpace() == CorrelationFunctionModifier::DIFFERENCE) {
+	if (modifier->normalizeRealSpace() == CorrelationFunctionModifier::DIFFERENCE_CORRELATION) {
 		offset = 0.5*(modApp->variance1() + modApp->variance2());
 		fac = -1.0;
 	}
+	if (modifier->normalizeRealSpaceByCovariance()) {
+		fac *= 1.0/modApp->covariance();
+	}
 	FloatType rfac = 1.0;
 	if (modifier->normalizeReciprocalSpace()) {
-		rfac = 1.0/(modApp->covariance()-modApp->mean1()*modApp->mean2());
+		rfac = 1.0/modApp->covariance();
 	}
 
 	modifier->updateRanges(offset, fac, rfac, modApp);
 
 	// Plot real-space correlation function
-	if(!modApp->realSpaceCorrelationX().empty() &&
-	   !modApp->realSpaceCorrelation().empty()) {
-	    QVector<FloatType> y = modApp->realSpaceCorrelation();
-		if (modifier->normalizeRealSpace() == CorrelationFunctionModifier::NORMALIZE_BY_RDF)
-		    std::transform(y.begin(), y.end(), modApp->realSpaceRDF().constBegin(), y.begin(), std::divides<FloatType>());
+	if(!modApp->realSpaceCorrelationX().empty() && !y.empty()) {
 		plotData(modApp->realSpaceCorrelationX(), y,
 				 _realSpacePlot, _realSpaceCurve,
 				 offset, fac);
@@ -369,12 +374,13 @@ void CorrelationFunctionModifierEditor::plotAllData()
 		const auto &rdfData = modApp->neighRDF();
 		size_t numberOfDataPoints = yData.size();
 		QVector<QPointF> plotData(numberOfDataPoints);
-		bool normByRDF = modifier->normalizeRealSpace() == CorrelationFunctionModifier::NORMALIZE_BY_RDF;
+		bool normByRDF = modifier->normalizeRealSpaceByRDF();
 		for (int i = 0; i < numberOfDataPoints; i++) {
 			FloatType xValue = xData[i];
-			FloatType yValue = fac*(yData[i]-offset);
+			FloatType yValue = yData[i];
 			if (normByRDF)
 				yValue /= rdfData[i];
+			yValue = fac*(yValue-offset);
 			plotData[i].rx() = xValue;
 			plotData[i].ry() = yValue;
 		}
