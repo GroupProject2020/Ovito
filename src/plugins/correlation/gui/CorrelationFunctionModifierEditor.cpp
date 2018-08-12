@@ -118,6 +118,7 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
     normalizeRealSpacePUI->comboBox()->addItem("Do not normalize", QVariant::fromValue(CorrelationFunctionModifier::DO_NOT_NORMALIZE));
     normalizeRealSpacePUI->comboBox()->addItem("by covariance", QVariant::fromValue(CorrelationFunctionModifier::NORMALIZE_BY_COVARIANCE));
     normalizeRealSpacePUI->comboBox()->addItem("by RDF", QVariant::fromValue(CorrelationFunctionModifier::NORMALIZE_BY_RDF));
+    normalizeRealSpacePUI->comboBox()->addItem("Difference correlation", QVariant::fromValue(CorrelationFunctionModifier::DIFFERENCE));
     normalizeRealSpaceLayout->addWidget(normalizeRealSpacePUI->comboBox(), 0, 1);
 
 	QGridLayout* typeOfRealSpacePlotLayout = new QGridLayout();
@@ -330,6 +331,10 @@ void CorrelationFunctionModifierEditor::plotAllData()
 		offset = modApp->mean1()*modApp->mean2();
 		fac = 1.0/(modApp->covariance()-offset);
 	}
+	else if (modifier->normalizeRealSpace() == CorrelationFunctionModifier::DIFFERENCE) {
+		offset = 0.5*(modApp->variance1() + modApp->variance2());
+		fac = -1.0;
+	}
 	FloatType rfac = 1.0;
 	if (modifier->normalizeReciprocalSpace()) {
 		rfac = 1.0/(modApp->covariance()-modApp->mean1()*modApp->mean2());
@@ -448,8 +453,8 @@ void CorrelationFunctionModifierEditor::onSaveData()
 		QTextStream stream(&file);
 
 		stream << "# This file contains the correlation between the following property:" << endl;
-		stream << "# " << modifier->sourceProperty1().name() << " with mean value " << modApp->mean1() << endl;
-		stream << "# " << modifier->sourceProperty2().name() << " with mean value " << modApp->mean2() << endl;
+		stream << "# " << modifier->sourceProperty1().name() << " with mean value " << modApp->mean1() << " and variance " << modApp->variance1() << endl;
+		stream << "# " << modifier->sourceProperty2().name() << " with mean value " << modApp->mean2() << " and variance " << modApp->variance2() << endl;
 		stream << "# Covariance is " << modApp->covariance() << endl << endl;
 
 		if (!modApp->realSpaceCorrelation().empty()) {

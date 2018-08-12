@@ -71,7 +71,8 @@ public:
     enum NormalizationType { 
 		DO_NOT_NORMALIZE = 0,
 		NORMALIZE_BY_COVARIANCE = 1,
-		NORMALIZE_BY_RDF = 2
+		NORMALIZE_BY_RDF = 2,
+		DIFFERENCE = 3
 	};
     Q_ENUMS(NormalizationType);
 
@@ -189,12 +190,21 @@ private:
 		/// Returns the mean of the second property.
 		FloatType mean2() const { return _mean2; }
 
+		/// Returns the variance of the first property.
+		FloatType variance1() const { return _variance1; }
+
+		/// Returns the variance of the second property.
+		FloatType variance2() const { return _variance2; }
+
 		/// Returns the (co)variance.
 		FloatType covariance() const { return _covariance; }
 
-		void setLimits(FloatType mean1, FloatType mean2, FloatType covariance) {
+		void setMoments(FloatType mean1, FloatType mean2, FloatType variance1,
+					    FloatType variance2, FloatType covariance) {
 			_mean1 = mean1;
 			_mean2 = mean2;
+			_variance1 = variance1;
+			_variance2 = variance2;
 			_covariance = covariance;
 		}
 
@@ -235,6 +245,8 @@ private:
 		QVector<FloatType> _reciprocalSpaceCorrelationX;
 		FloatType _mean1 = 0;
 		FloatType _mean2 = 0;
+		FloatType _variance1 = 0;
+		FloatType _variance2 = 0;
 		FloatType _covariance = 0;
 	};
 
@@ -339,13 +351,20 @@ public:
 	/// Returns the mean of the second property.
 	FloatType mean2() const { return _mean2; }
 
+	/// Returns the variance of the first property.
+	FloatType variance1() const { return _variance1; }
+
+	/// Returns the variance of the second property.
+	FloatType variance2() const { return _variance2; }
+
 	/// Returns the (co)variance.
 	FloatType covariance() const { return _covariance; }
 	 
 	/// Replaces the stored data.
 	void setResults(QVector<FloatType> realSpaceCorrelation, QVector<FloatType> realSpaceRDF, QVector<FloatType> realSpaceCorrelationX,
 		QVector<FloatType> neighCorrelation, QVector<FloatType> neighRDF, QVector<FloatType> neighCorrelationX, 
-		QVector<FloatType> reciprocalSpaceCorrelation, QVector<FloatType> reciprocalSpaceCorrelationX, FloatType mean1, FloatType mean2, FloatType covariance) 
+		QVector<FloatType> reciprocalSpaceCorrelation, QVector<FloatType> reciprocalSpaceCorrelationX,
+		FloatType mean1, FloatType mean2, FloatType variance1, FloatType variance2, FloatType covariance) 
 	{
 		_realSpaceCorrelation = std::move(realSpaceCorrelation);
 		_realSpaceRDF = std::move(realSpaceRDF);
@@ -357,6 +376,8 @@ public:
 		_reciprocalSpaceCorrelationX = std::move(reciprocalSpaceCorrelationX);
 		_mean1 = mean1;
 		_mean2 = mean2;
+		_variance1 = variance1;
+		_variance2 = variance2;
 		_covariance = covariance;
 		notifyDependents(ReferenceEvent::ObjectStatusChanged);
 	}
@@ -393,6 +414,12 @@ private:
 
 	/// Mean of the second property.
 	FloatType _mean2;
+
+	/// Variance of the first property.
+	FloatType _variance1;
+
+	/// Variance of the second property.
+	FloatType _variance2;
 
 	/// (Co)variance.
 	FloatType _covariance;
