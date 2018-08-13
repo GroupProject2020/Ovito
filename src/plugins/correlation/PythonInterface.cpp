@@ -155,9 +155,8 @@ PYBIND11_MODULE(CorrelationFunctionPlugin, m)
 			}))				
 	;
 	py::enum_<CorrelationFunctionModifier::NormalizationType>(CorrelationFunctionModifier_py, "Normalization")
-		.value("Off", CorrelationFunctionModifier::DO_NOT_NORMALIZE)
-		.value("ByCovariance", CorrelationFunctionModifier::NORMALIZE_BY_COVARIANCE)
-		.value("ByRDF", CorrelationFunctionModifier::NORMALIZE_BY_RDF)
+		.value("ValueCorrelation", CorrelationFunctionModifier::VALUE_CORRELATION)
+		.value("DifferenceCorrelation", CorrelationFunctionModifier::DIFFERENCE_CORRELATION)
 	;
 
 	ovito_class<CorrelationFunctionModifierApplication, AsynchronousModifierApplication>{m};

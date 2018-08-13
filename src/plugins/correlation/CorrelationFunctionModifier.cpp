@@ -42,6 +42,8 @@ DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, doComputeNeighCorrelation);
 DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, neighCutoff);
 DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, numberOfNeighBins);
 DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, normalizeRealSpace);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, normalizeRealSpaceByRDF);
+DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, normalizeRealSpaceByCovariance);
 DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, typeOfRealSpacePlot);
 DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, normalizeReciprocalSpace);
 DEFINE_PROPERTY_FIELD(CorrelationFunctionModifier, typeOfReciprocalSpacePlot);
@@ -66,6 +68,8 @@ SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, doComputeNeighCorrelation,
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, neighCutoff, "Neighbor cutoff radius");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, numberOfNeighBins, "Number of neighbor bins");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, normalizeRealSpace, "Normalize correlation function");
+SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, normalizeRealSpaceByRDF, "Normalize by RDF");
+SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, normalizeRealSpaceByCovariance, "Normalize by covariance");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, normalizeReciprocalSpace, "Normalize correlation function");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CorrelationFunctionModifier, fftGridSpacing, WorldParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CorrelationFunctionModifier, neighCutoff, WorldParameterUnit, 0);
@@ -100,7 +104,9 @@ CorrelationFunctionModifier::CorrelationFunctionModifier(DataSet* dataset) : Asy
 	_doComputeNeighCorrelation(false), 
 	_neighCutoff(5.0), 
 	_numberOfNeighBins(50),
-	_normalizeRealSpace(DO_NOT_NORMALIZE), 
+	_normalizeRealSpace(VALUE_CORRELATION), 
+	_normalizeRealSpaceByRDF(false), 
+	_normalizeRealSpaceByCovariance(false), 
 	_typeOfRealSpacePlot(0), 
 	_normalizeReciprocalSpace(false), 
 	_typeOfReciprocalSpacePlot(0),
@@ -713,6 +719,8 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeLimits()
 
 	FloatType mean1 = 0;
 	FloatType mean2 = 0;
+	FloatType variance1 = 0;
+	FloatType variance2 = 0;
 	FloatType covariance = 0;
 	for (int particleIndex = 0; particleIndex < sourceProperty1()->size(); particleIndex++) {
 		FloatType data1, data2;
@@ -726,12 +734,16 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeLimits()
 			data2 = intData2[particleIndex*componentCount2 + _vecComponent2];
 		mean1 += data1;
 		mean2 += data2;
+		variance1 += data1*data1;
+		variance2 += data2*data2;
 		covariance += data1*data2;
 	}
 	mean1 /= sourceProperty1()->size();
 	mean2 /= sourceProperty2()->size();
+	variance1 /= sourceProperty1()->size();
+	variance2 /= sourceProperty2()->size();
 	covariance /= sourceProperty1()->size();
-	setLimits(mean1, mean2, covariance);
+	setMoments(mean1, mean2, variance1, variance2, covariance);
 
 	task()->incrementProgressValue();
 }
@@ -773,7 +785,8 @@ PipelineFlowState CorrelationFunctionModifier::CorrelationAnalysisEngine::emitRe
 	static_object_cast<CorrelationFunctionModifierApplication>(modApp)->setResults(
 		realSpaceCorrelation(), realSpaceRDF(), realSpaceCorrelationX(),
 		neighCorrelation(), neighRDF(), neighCorrelationX(), 
-		reciprocalSpaceCorrelation(), reciprocalSpaceCorrelationX(), mean1(), mean2(), covariance());
+		reciprocalSpaceCorrelation(), reciprocalSpaceCorrelationX(),
+		mean1(), mean2(), variance1(), variance2(), covariance());
 		
 	return input;
 }
@@ -788,36 +801,42 @@ void CorrelationFunctionModifier::updateRanges(FloatType offset, FloatType fac, 
 
 	// Compute data ranges
 	if (!fixRealSpaceXAxisRange()) {
+		FloatType v1, v2;
 		if (!myModApp->realSpaceCorrelationX().empty() && !myModApp->neighCorrelationX().empty() && doComputeNeighCorrelation()) {
-			setRealSpaceXAxisRangeStart(std::min(myModApp->realSpaceCorrelationX().first(), myModApp->neighCorrelationX().first()));
-			setRealSpaceXAxisRangeEnd(std::max(myModApp->realSpaceCorrelationX().last(), myModApp->neighCorrelationX().last()));
+			v1 = std::min(myModApp->realSpaceCorrelationX().first(), myModApp->neighCorrelationX().first());
+			v2 = std::max(myModApp->realSpaceCorrelationX().last(), myModApp->neighCorrelationX().last());
 		}
 		else if (!myModApp->realSpaceCorrelationX().empty()) {
-			setRealSpaceXAxisRangeStart(myModApp->realSpaceCorrelationX().first());
-			setRealSpaceXAxisRangeEnd(myModApp->realSpaceCorrelationX().last());
+			v1 = myModApp->realSpaceCorrelationX().first();
+			v2 = myModApp->realSpaceCorrelationX().last();
 		}
 		else if (!myModApp->neighCorrelationX().empty() && doComputeNeighCorrelation()) {
-			setRealSpaceXAxisRangeStart(myModApp->neighCorrelationX().first());
-			setRealSpaceXAxisRangeEnd(myModApp->neighCorrelationX().last());
+			v1 = myModApp->neighCorrelationX().first();
+			v2 = myModApp->neighCorrelationX().last();
 		}
+		setRealSpaceXAxisRangeStart(std::min(v1, v2));
+		setRealSpaceXAxisRangeEnd(std::max(v1, v2));
 	}
 	if (!fixRealSpaceYAxisRange()) {
+		FloatType v1, v2;
 		if (!myModApp->realSpaceCorrelation().empty() && !myModApp->neighCorrelation().empty() && doComputeNeighCorrelation()) {
 			auto realSpace = std::minmax_element(myModApp->realSpaceCorrelation().begin(), myModApp->realSpaceCorrelation().end());
 			auto neigh = std::minmax_element(myModApp->neighCorrelation().begin(), myModApp->neighCorrelation().end());
-			setRealSpaceYAxisRangeStart(fac*(std::min(*realSpace.first, *neigh.first)-offset));
-			setRealSpaceYAxisRangeEnd(fac*(std::max(*realSpace.second, *neigh.second)-offset));
+			v1 = std::min(fac*(*realSpace.first-offset), fac*(*neigh.first-offset));
+			v2 = std::max(fac*(*realSpace.second-offset), fac*(*neigh.second-offset));
 		}
 		else if (!myModApp->realSpaceCorrelation().empty()) {
 			auto realSpace = std::minmax_element(myModApp->realSpaceCorrelation().begin(), myModApp->realSpaceCorrelation().end());
-			setRealSpaceYAxisRangeStart(fac*(*realSpace.first-offset));
-			setRealSpaceYAxisRangeEnd(fac*(*realSpace.second-offset));
+			v1 = fac*(*realSpace.first-offset);
+			v2 = fac*(*realSpace.second-offset);
 		}
 		else if (!myModApp->neighCorrelation().empty() && doComputeNeighCorrelation()) {
 			auto neigh = std::minmax_element(myModApp->neighCorrelation().begin(), myModApp->neighCorrelation().end());
-			setRealSpaceYAxisRangeStart(fac*(*neigh.first-offset));
-			setRealSpaceYAxisRangeEnd(fac*(*neigh.second-offset));
+			v1 = fac*(*neigh.first-offset);
+			v2 = fac*(*neigh.second-offset);
 		}	
+		setRealSpaceYAxisRangeStart(std::min(v1, v2));
+		setRealSpaceYAxisRangeEnd(std::max(v1, v2));
 	}
 	if (!fixReciprocalSpaceXAxisRange() && !myModApp->reciprocalSpaceCorrelationX().empty()) {
 		setReciprocalSpaceXAxisRangeStart(myModApp->reciprocalSpaceCorrelationX().first());
