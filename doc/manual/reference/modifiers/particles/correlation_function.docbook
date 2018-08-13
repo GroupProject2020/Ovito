@@ -18,9 +18,9 @@
 
   This modifier calculates the spatial correlation function between two particle properties, <inlineequation><mathphrase>C(r)=&#x3008;P<subscript>1</subscript>(0)P<subscript>2</subscript>(r)&#x3009;</mathphrase></inlineequation> where <inlineequation>P<subscript>1</subscript></inlineequation> and <inlineequation>P<subscript>2</subscript></inlineequation> are the two properties.</para>
 
-  <para>OVITO uses a fast Fourier transformation (FFT) to compute the convolution. It then computes a radial average in reciprocal and real space. This gives the correlation function up to half of the cell size. The modifier can additionally compute the short-ranged part of the correlation function from a direct summation over neighbors.</para>
+  <para>OVITO uses a fast Fourier transform (FFT) to compute the convolution. It then computes a radial average in reciprocal and real space. This gives the correlation function up to half of the cell size. The modifier can additionally compute the short-ranged part of the correlation function from a direct summation over neighbors.</para>
 
-  <para>For example, when both particle properties (<inlineequation>P<subscript>1</subscript></inlineequation> and <inlineequation>P<subscript>2</subscript></inlineequation>) are constant and unity, the modifier returns the pair distribution function. The reciprocal space representation is then the structure factor.</para>
+  <para>For example, when both particle properties (<inlineequation>P<subscript>1</subscript></inlineequation> and <inlineequation>P<subscript>2</subscript></inlineequation>) are constant and unity for all particles in the system, the modifier returns the pair distribution function. The reciprocal space representation is then the structure factor.</para>
 
   <simplesect>
     <title>Parameters</title>
@@ -103,7 +103,7 @@
   <simplesect>
     <title>Acknowledgment</title>
     <para>
-      This code for this modifier has been contributed to OVITO by Lars Pastewka.
+      The code for this modifier has been contributed to the OVITO project by Lars Pastewka.
     </para>
   </simplesect>
 
