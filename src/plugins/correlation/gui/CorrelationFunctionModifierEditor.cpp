@@ -332,7 +332,8 @@ void CorrelationFunctionModifierEditor::plotAllData()
 	// Plot real-space correlation function
 	if(!modApp->realSpaceCorrelationX().empty() && !y.empty()) {
 		if (modifier->normalizeRealSpaceByRDF())
-		    std::transform(y.begin(), y.end(), modApp->realSpaceRDF().constBegin(), y.begin(), std::divides<FloatType>());
+			std::transform(y.begin(), y.end(), modApp->realSpaceRDF().constBegin(), y.begin(),
+						   [](FloatType C, FloatType rdf) { return rdf > 1e-12 ? C/rdf : 0.0; });
 	}
 
 	FloatType offset = 0.0;
@@ -378,8 +379,9 @@ void CorrelationFunctionModifierEditor::plotAllData()
 		for (int i = 0; i < numberOfDataPoints; i++) {
 			FloatType xValue = xData[i];
 			FloatType yValue = yData[i];
-			if (normByRDF)
-				yValue /= rdfData[i];
+			if (normByRDF) {
+				yValue = rdfData[i] > 1e-12 ? yValue/rdfData[i] : 0.0;
+			}
 			yValue = fac*(yValue-offset);
 			plotData[i].rx() = xValue;
 			plotData[i].ry() = yValue;
