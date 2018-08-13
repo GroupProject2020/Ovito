@@ -16,7 +16,7 @@
        <imagedata fileref="images/modifiers/correlation_function_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
 
-  This modifier calculates the spatial correlation function between two particle properties.</para>
+  This modifier calculates the spatial correlation function between two particle properties, <inlineequation><mathphrase>C(r)=&#x3008;P<subscript>1</subscript>(0)P<subscript>2</subscript>(r)&#x3009;</mathphrase></inlineequation> where <inlineequation>P<subscript>1</subscript></inlineequation> and <inlineequation>P<subscript>2</subscript></inlineequation> are the two properties.</para>
 
   <para>OVITO uses a fast Fourier transformation (FFT) to compute the convolution. It then computes a radial average in reciprocal and real space. This gives the correlation function up to half of the cell size. The modifier can additionally compute the short-ranged part of the correlation function from a direct summation over neighbors.</para>
 
@@ -76,12 +76,24 @@
       </varlistentry>
 
       <varlistentry>
-        <term>Normalize correlation function</term>
+        <term>Type of plot</term>
         <listitem>
-          <para>If set to "by covariance" for the real-space correlation, the correlation function is normalized to approach unity at small distances and zero at large distances, i.e. the plot shows <inlineequation><mathphrase>(C(r)-&#x3008;P<subscript>1</subscript>&#x3009;&#x3008;P<subscript>2</subscript>&#x3009;)/(&#x3008;P<subscript>1</subscript>P<subscript>2</subscript>&#x3009;-&#x3008;P<subscript>1</subscript>&#x3009;&#x3008;P<subscript>2</subscript>&#x3009;)</mathphrase></inlineequation> rather than the unnormalized <inlineequation>C(r)</inlineequation>.
-          If set to "by RDF" for the real-space correlation, the correlation function is divided by the radial distribution function.
-          If activated for the reciprocal-space correlation function, the plot shows <inlineequation>C(q)/&#x3008;P<subscript>1</subscript>P<subscript>2</subscript>&#x3009;</inlineequation> rather than the unnormalized <inlineequation>C(q)</inlineequation>.
+          <para>"Value correlation" computes <inlineequation><mathphrase>C(r)=&#x3008;P<subscript>1</subscript>(0)P<subscript>2</subscript>(r)&#x3009;</mathphrase></inlineequation>. "Difference correlation" computes <inlineequation><mathphrase>&#x3008;(P<subscript>1</subscript>(0)-P<subscript>2</subscript>(r))<superscript>2</superscript>&#x3009;/2=(&#x3008;P<subscript>1</subscript><superscript>2</superscript>&#x3009;+&#x3008;P<subscript>2</subscript><superscript>2</superscript>&#x3009;)/2-C(r)</mathphrase></inlineequation>.
           </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Normalize by RDF</term>
+        <listitem>
+          <para>Divide the value correlation function <inlineequation><mathphrase>C(r)</mathphrase></inlineequation> by the radial distribution function (RDF). If difference correlation is selected, then <inlineequation><mathphrase>C(r)</mathphrase></inlineequation> is divided by the RDF before the difference correlation is computed.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Normalize by covariance</term>
+        <listitem>
+          <para>Divide the final value or difference correlation function by the covariance.</para>
         </listitem>
       </varlistentry>
 
