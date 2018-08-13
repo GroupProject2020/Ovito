@@ -209,9 +209,10 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 									pbcShift[dim] = (int)floor(_simCell.inverseMatrix().prodrow(delta, dim) + FloatType(0.5));
 							}
 							Bond bond = { index, (size_t)neighbor_id, pbcShift };
-							if(bond.isOdd()) continue;
-							QMutexLocker locker(mutex);
-							bonds().push_back(bond);
+							if(!bond.isOdd()) {
+								QMutexLocker locker(mutex);
+								bonds().push_back(bond);
+							}
 						}
 						faceOrder--;
 						if(voronoiIndices() && faceOrder < (int)voronoiIndices()->componentCount())
