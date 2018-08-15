@@ -328,12 +328,14 @@ void ModifierListBox::updateApplicableModifiersList()
 	int numCustom = 0;
 	for(const QString& name : modifierTemplates.templateList()) {
 		QStandardItem* modifierItem;
-		if(numCustom < _numModifierTemplates)
+		if(numCustom < _numModifierTemplates) {
 			modifierItem = _model->item(_model->rowCount() - 2 - _numModifierTemplates + numCustom);
+		}
 		else {
-			modifierItem = new QStandardItem("   " + name);
+			modifierItem = new QStandardItem();
 			_model->insertRow(_model->rowCount() - 2, modifierItem);
 		}
+		modifierItem->setText(QStringLiteral("   ") + name);
 		modifierItem->setData(QVariant::fromValue(name), Qt::UserRole);
 		numCustom++;
 	}

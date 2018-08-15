@@ -49,6 +49,9 @@ public Q_SLOTS:
 	/// Shows the inspector panel.
 	void open();
 
+	/// Expands or collapses the panel depending on the current state.
+	void toggle() { onTabBarClicked(-1); }
+
 protected Q_SLOTS:
 
 	/// This is called whenever the scene node selection has changed.
@@ -79,7 +82,7 @@ protected:
 
 	virtual void mouseReleaseEvent(QMouseEvent* event) override {
 		if(event->button() == Qt::LeftButton && event->y() < _tabBar->height()) {
-			onTabBarClicked(-1);
+			toggle();
 			event->accept();
 		}
 		QWidget::mouseReleaseEvent(event);
@@ -126,6 +129,15 @@ private:
 
 	/// UI element indicating that we are waiting for computations to complete.
 	QLabel* _waitingForSceneIndicator;
+
+	/// UI element for opening/closing the inspector panel.
+	QPushButton* _expandCollapseButton;
+
+	// The icon for the expand button state.
+	QIcon _expandIcon{":/gui/actions/modify/modifier_move_up.bw.svg"};
+
+	// The icon for the collapse button state.
+	QIcon _collapseIcon{":/gui/actions/modify/modifier_move_down.bw.svg"};
 
 	/// The active page of the inspector.
 	int _activeAppletIndex = -1;

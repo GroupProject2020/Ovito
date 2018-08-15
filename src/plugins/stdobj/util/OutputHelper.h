@@ -95,6 +95,10 @@ public:
 	/// Emits a new global attribute to the pipeline.
 	void outputAttribute(const QString& key, QVariant value);
 
+	/// Returns a name for a new plot object that does not collide with the name of an existing plot
+	/// object in the same data collection.
+	QString generateUniquePlotName(const QString& baseName) const;
+
 	/// Enures that a DataObject from this flow state is not shared with others and is safe to modify.
 	template<class ObjectType>
 	ObjectType* cloneIfNeeded(ObjectType* obj, bool deepCopy = false) {
@@ -112,6 +116,9 @@ public:
 
 	/// Returns a reference to the output state.
 	PipelineFlowState& output() { return _output; }
+
+	/// Returns a const-reference to the output state.
+	const PipelineFlowState& output() const { return _output; }
 
 	/// Returns a clone helper for creating shallow and deep copies of data objects.
 	CloneHelper& cloneHelper() {

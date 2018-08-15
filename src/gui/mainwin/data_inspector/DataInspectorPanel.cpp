@@ -66,6 +66,14 @@ DataInspectorPanel::DataInspectorPanel(MainWindow* mainWindow) :
 	QSize indicatorSize = _waitingForSceneAnim.currentImage().size();
 	layout->setRowMinimumHeight(0, indicatorSize.height());
 	layout->setColumnMinimumWidth(2, indicatorSize.width());
+	_expandCollapseButton = new QPushButton();
+	_expandCollapseButton->setFlat(true);
+	_expandCollapseButton->setFocusPolicy(Qt::NoFocus);
+	_expandCollapseButton->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Ignored);
+	_expandCollapseButton->setStyleSheet("QPushButton { padding: 1px; }");
+	_expandCollapseButton->setIcon(_expandIcon);
+	_expandCollapseButton->setToolTip(tr("Expand"));
+	layout->addWidget(_expandCollapseButton, 0, 4);
 
 	_appletContainer = new QStackedWidget();
 	_appletContainer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Ignored);
@@ -75,8 +83,9 @@ DataInspectorPanel::DataInspectorPanel(MainWindow* mainWindow) :
 	_appletContainer->addWidget(label);
 	for(DataInspectionApplet* applet : _applets)
 		_appletContainer->insertWidget(_appletContainer->count() - 1, applet->createWidget(_mainWindow));
-	layout->addWidget(_appletContainer, 1, 0, 1, 4);
+	layout->addWidget(_appletContainer, 1, 0, 1, -1);
 
+	connect(_expandCollapseButton, &QAbstractButton::clicked, this, &DataInspectorPanel::toggle);
 	connect(_tabBar, &QTabBar::tabBarClicked, this, &DataInspectorPanel::onTabBarClicked);
 	connect(_tabBar, &QTabBar::currentChanged, this, &DataInspectorPanel::onCurrentTabChanged);
 	connect(_appletContainer, &QStackedWidget::currentChanged, this, &DataInspectorPanel::onCurrentPageChanged);
@@ -96,7 +105,8 @@ DataInspectorPanel::DataInspectorPanel(MainWindow* mainWindow) :
 void DataInspectorPanel::onTabBarClicked(int index)
 {
 	if(index == -1 || _appletContainer->height() == 0) {
-		_tabBar->setCurrentIndex(index);
+		if(index != -1)
+			_tabBar->setCurrentIndex(index);
 		if(_appletContainer->height() == 0)
 			parentWidget()->setMaximumHeight(16777215);
 		if(_appletContainer->height() != 0) {
@@ -193,6 +203,8 @@ void DataInspectorPanel::resizeEvent(QResizeEvent* event)
 	bool isActive = (_appletContainer->height() > 0);
 	if(!_inspectorActive && isActive) {
 		_inspectorActive = true;
+		_expandCollapseButton->setIcon(_collapseIcon);
+		_expandCollapseButton->setToolTip(tr("Collapse"));
 		if(_activeAppletIndex >= 0 && _activeAppletIndex < _applets.size()) {
 			const PipelineFlowState& pipelineState = _selectedNodeListener.target() ? 
 				_selectedNodeListener.target()->evaluatePipelinePreliminary(true) :
@@ -202,6 +214,8 @@ void DataInspectorPanel::resizeEvent(QResizeEvent* event)
 	}
 	else if(_inspectorActive && !isActive) {
 		_inspectorActive = false;
+		_expandCollapseButton->setIcon(_expandIcon);
+		_expandCollapseButton->setToolTip(tr("Expand"));
 		if(_activeAppletIndex >= 0 && _activeAppletIndex < _applets.size()) {
 			_applets[_activeAppletIndex]->deactivate(_mainWindow);
 		}

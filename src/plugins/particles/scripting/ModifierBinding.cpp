@@ -617,18 +617,22 @@ void defineModifiersSubmodule(py::module m)
 				"The number of histogram bins to use when computing the RDF."
 				"\n\n"
 				":Default: 200\n")
+		.def_property("partial", &CoordinationNumberModifier::computePartialRDF, &CoordinationNumberModifier::setComputePartialRDF,
+				"Setting this flag to true requests calculation of element-specific (partial) RDFs. "
+				"\n\n"
+				":Default: ``False``\n")
 		// For backward compatibility with OVITO 2.9.0:
 		.def_property_readonly("rdf_x", py::cpp_function([](CoordinationNumberModifier& mod) {
 					CoordinationNumberModifierApplication* modApp = dynamic_object_cast<CoordinationNumberModifierApplication>(mod.someModifierApplication());
-					if(!modApp || !modApp->rdfX()) mod.throwException(CoordinationNumberModifier::tr("Modifier has not been evaluated yet. RDF data is not yet available."));
-					py::array_t<FloatType> array((size_t)modApp->rdfX()->size(), modApp->rdfX()->constDataFloat(), py::cast(static_cast<ModifierApplication*>(modApp)));
+					if(!modApp || !modApp->rdf()) mod.throwException(CoordinationNumberModifier::tr("Modifier has not been evaluated yet. RDF data is not yet available."));
+					py::array_t<FloatType> array((size_t)modApp->rdf()->x()->size(), modApp->rdf()->x()->constDataFloat(), py::cast(static_cast<DataObject*>(modApp->rdf())));
 					reinterpret_cast<py::detail::PyArray_Proxy*>(array.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
 					return array;
 				}))
 		.def_property_readonly("rdf_y", py::cpp_function([](CoordinationNumberModifier& mod) {
 					CoordinationNumberModifierApplication* modApp = dynamic_object_cast<CoordinationNumberModifierApplication>(mod.someModifierApplication());
-					if(!modApp || !modApp->rdfY()) mod.throwException(CoordinationNumberModifier::tr("Modifier has not been evaluated yet. RDF data is not yet available."));
-					py::array_t<FloatType> array((size_t)modApp->rdfY()->size(), modApp->rdfY()->constDataFloat(), py::cast(static_cast<ModifierApplication*>(modApp)));
+					if(!modApp || !modApp->rdf()) mod.throwException(CoordinationNumberModifier::tr("Modifier has not been evaluated yet. RDF data is not yet available."));
+					py::array_t<FloatType> array({modApp->rdf()->y()->size(), modApp->rdf()->y()->componentCount()}, modApp->rdf()->y()->constDataFloat(), py::cast(static_cast<DataObject*>(modApp->rdf())));
 					reinterpret_cast<py::detail::PyArray_Proxy*>(array.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
 					return array;
 				}))

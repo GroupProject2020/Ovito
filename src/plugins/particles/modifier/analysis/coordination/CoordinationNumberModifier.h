@@ -28,8 +28,11 @@
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
+#include <plugins/stdobj/plot/PlotObject.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
 #include <core/dataset/pipeline/AsynchronousModifierApplication.h>
+
+#include <boost/container/flat_map.hpp>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
@@ -74,19 +77,36 @@ private:
 	public:
 
 		/// Constructor.
-		CoordinationAnalysisEngine(ParticleOrderingFingerprint fingerprint, ConstPropertyPtr positions, const SimulationCell& simCell, FloatType cutoff, int rdfSampleCount) :
+		CoordinationAnalysisEngine(ParticleOrderingFingerprint fingerprint, ConstPropertyPtr positions, const SimulationCell& simCell, 
+				FloatType cutoff, int rdfSampleCount, ConstPropertyPtr particleTypes, boost::container::flat_map<int,QString> uniqueTypeIds) :
 			_positions(std::move(positions)), 
 			_simCell(simCell),
 			_cutoff(cutoff),
-			_rdfSampleCount(rdfSampleCount),
+			_computePartialRdfs(particleTypes),
+			_particleTypes(std::move(particleTypes)),
+			_uniqueTypeIds(std::move(uniqueTypeIds)),
 			_coordinationNumbers(ParticleProperty::createStandardStorage(fingerprint.particleCount(), ParticleProperty::CoordinationProperty, true)),
-			_rdfX(std::make_shared<PropertyStorage>(rdfSampleCount, PropertyStorage::Float, 1, 0, tr("Pair separation distance"), false)), 
-			_rdfY(std::make_shared<PropertyStorage>(rdfSampleCount, PropertyStorage::Float, 1, 0, tr("g(r)"), true)),
-			_inputFingerprint(std::move(fingerprint)) {}
+			_inputFingerprint(std::move(fingerprint))
+		{
+			size_t componentCount = _computePartialRdfs ? (this->uniqueTypeIds().size() * (this->uniqueTypeIds().size()+1) / 2) : 1;
+			_rdfX = std::make_shared<PropertyStorage>(rdfSampleCount, PropertyStorage::Float, 1, 0, tr("Pair separation distance"), false); 
+			_rdfY = std::make_shared<PropertyStorage>(rdfSampleCount, PropertyStorage::Float, componentCount, 0, tr("g(r)"), true);
+			if(_computePartialRdfs) {
+				QStringList names;
+				for(const auto& t1 : this->uniqueTypeIds()) {
+					for(const auto& t2 : this->uniqueTypeIds()) {
+						if(t1.first <= t2.first)
+							names.push_back(QStringLiteral("%1-%2").arg(t1.second, t2.second));
+					}
+				}
+				_rdfY->setComponentNames(std::move(names));
+			}
+		}
 
 		/// This method is called by the system after the computation was successfully completed.
 		virtual void cleanup() override {
 			_positions.reset();
+			_particleTypes.reset();
 			ComputeEngine::cleanup();
 		}
 
@@ -99,14 +119,17 @@ private:
 		/// Returns the property storage that contains the computed coordination numbers.
 		const PropertyPtr& coordinationNumbers() const { return _coordinationNumbers; }
 
-		/// Returns the property storage containing the x-coordinates of the data points of the RDF histogram.
+		/// Returns the property storage containing the x-coordinates of the data points of the RDF histograms.
 		const PropertyPtr& rdfX() const { return _rdfX; }
 
-		/// Returns the property storage containing the y-coordinates of the data points of the RDF histogram.
+		/// Returns the property storage array containing the y-coordinates of the data points of the RDF histograms.
 		const PropertyPtr& rdfY() const { return _rdfY; }
 
 		/// Returns the property storage that contains the input particle positions.
 		const ConstPropertyPtr& positions() const { return _positions; }
+
+		/// Returns the property storage that contains the input particle types.
+		const ConstPropertyPtr& particleTypes() const { return _particleTypes; }
 
 		/// Returns the simulation cell data.
 		const SimulationCell& cell() const { return _simCell; }
@@ -114,15 +137,20 @@ private:
 		/// Returns the cutoff radius.
 		FloatType cutoff() const { return _cutoff; }
 
+		/// Returns the set of particle type identifiers in the system.
+		const boost::container::flat_map<int,QString>& uniqueTypeIds() const { return _uniqueTypeIds; }
+
 	private:
 
 		const FloatType _cutoff;
-		const int _rdfSampleCount;
 		const SimulationCell _simCell;
+		bool _computePartialRdfs;
+		boost::container::flat_map<int,QString> _uniqueTypeIds;
 		ConstPropertyPtr _positions;
+		ConstPropertyPtr _particleTypes;
 		const PropertyPtr _coordinationNumbers;
-		const PropertyPtr _rdfX;
-		const PropertyPtr _rdfY;
+		PropertyPtr _rdfX;
+		PropertyPtr _rdfY;
 		ParticleOrderingFingerprint _inputFingerprint;
 	};
 
@@ -133,6 +161,9 @@ private:
 
 	/// Controls the number of RDF histogram bins.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, numberOfBins, setNumberOfBins, PROPERTY_FIELD_MEMORIZE);
+
+	/// Controls the computation of partials RDFs.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, computePartialRDF, setComputePartialRDF, PROPERTY_FIELD_MEMORIZE);
 };
 
 /**
@@ -140,7 +171,7 @@ private:
  *        when it is inserted into in a data pipeline. Its stores results computed by the
  *        modifier's compute engine so that they can be displayed in the modifier's UI panel.
  */
- class OVITO_PARTICLES_EXPORT CoordinationNumberModifierApplication : public AsynchronousModifierApplication
+class OVITO_PARTICLES_EXPORT CoordinationNumberModifierApplication : public AsynchronousModifierApplication
 {
 	Q_OBJECT
 	OVITO_CLASS(CoordinationNumberModifierApplication)
@@ -152,11 +183,8 @@ public:
  
 private:
  
-	/// The x-coordinates of the RDF histogram points.
-	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(PropertyPtr, rdfX, setRdfX, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
-
-	/// The y-coordinates of the RDF histogram points.
-	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(PropertyPtr, rdfY, setRdfY, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
+	/// The RDF histogram(s).
+	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(OORef<PlotObject>, rdf, setRdf, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 };
 
 OVITO_END_INLINE_NAMESPACE

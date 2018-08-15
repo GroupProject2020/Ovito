@@ -23,6 +23,7 @@
 #include <core/dataset/DataSet.h>
 #include <plugins/stdobj/properties/PropertyObject.h>
 #include <plugins/stdobj/properties/PropertyClass.h>
+#include <plugins/stdobj/plot/PlotObject.h>
 #include "OutputHelper.h"
 
 namespace Ovito { namespace StdObj {
@@ -175,10 +176,40 @@ void OutputHelper::outputAttribute(const QString& key, QVariant value)
 			QString uniqueKey = key + QChar('.') + QString::number(i);
 			if(!output().attributes().contains(uniqueKey)) {
 				output().attributes().insert(uniqueKey, std::move(value));
-				break;
+				return;
+			}
+		}
+		OVITO_ASSERT(false);
+	}
+}
+
+/******************************************************************************
+* Returns a name for a new plot object that does not collide with the name of 
+* an existing plot object in the same data collection.
+******************************************************************************/
+QString OutputHelper::generateUniquePlotName(const QString& baseName) const
+{
+	auto doesNameExist = [this](const QString& name) {
+		for(DataObject* obj : output().objects()) {
+			if(PlotObject* plotObj = dynamic_object_cast<PlotObject>(obj)) {
+				if(plotObj->title() == name)
+					return true;
+			}
+		}
+		return false;
+	};
+	if(!doesNameExist(baseName)) {
+		return baseName;
+	}
+	else {
+		for(int i = 2; ; i++) {
+			QString uniqueName = baseName + QChar('.') + QString::number(i);
+			if(!doesNameExist(uniqueName)) {
+				return uniqueName;
 			}
 		}
 	}
+	OVITO_ASSERT(false);
 }
 
 }	// End of namespace

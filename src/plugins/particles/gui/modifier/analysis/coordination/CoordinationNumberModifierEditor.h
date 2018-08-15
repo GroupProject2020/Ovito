@@ -28,6 +28,7 @@
 
 class QwtPlot;
 class QwtPlotCurve;
+class QwtPlotLegendItem;
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
@@ -62,11 +63,14 @@ protected Q_SLOTS:
 
 private:
 
-	/// The plotting widget for displaying the computed RDF.
+	/// The plotting widget for displaying the computed RDFs.
 	QwtPlot* _rdfPlot;
 
-	/// The plot item for the RDF.
-    QwtPlotCurve* _plotCurve = nullptr;
+	/// The plot items for the RDFs.
+    std::vector<QwtPlotCurve*> _plotCurves;
+
+	/// The plot legend.
+	QwtPlotLegendItem* _legendItem = nullptr;
 
 	/// For deferred invocation of the plot repaint function.
 	DeferredMethodInvocation<CoordinationNumberModifierEditor, &CoordinationNumberModifierEditor::plotRDF> plotRDFLater;

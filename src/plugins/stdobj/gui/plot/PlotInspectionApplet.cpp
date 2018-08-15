@@ -26,6 +26,7 @@
 #include <qwt/qwt_plot.h>
 #include <qwt/qwt_plot_curve.h>
 #include <qwt/qwt_plot_grid.h>
+#include <qwt/qwt_plot_legenditem.h>
 
 namespace Ovito { namespace StdObj {
 
@@ -97,32 +98,72 @@ void PlotInspectionApplet::currentPlotChanged(QListWidgetItem* current, QListWid
 	if(current)
 		plotObj = static_object_cast<PlotObject>(current->data(Qt::UserRole).value<OORef<OvitoObject>>());
 
-	_plotWidget->setAxisTitle(QwtPlot::xBottom, QString());
-	_plotWidget->setAxisTitle(QwtPlot::yLeft, QString());
+	static const Qt::GlobalColor curveColors[] = {
+		Qt::black, Qt::red, Qt::blue, Qt::green,
+		Qt::cyan, Qt::magenta, Qt::gray, Qt::darkRed, 
+		Qt::darkGreen, Qt::darkBlue, Qt::darkCyan, Qt::darkMagenta,
+		Qt::darkYellow, Qt::darkGray
+	};
+	
+	_plotWidget->setAxisTitle(QwtPlot::xBottom, QString{});
+	_plotWidget->setAxisTitle(QwtPlot::yLeft, QString{});
 	if(plotObj && plotObj->y()) {
-		if(!_plotCurve) {
-			_plotCurve = new QwtPlotCurve();
-			_plotCurve->setRenderHint(QwtPlotItem::RenderAntialiased, true);
-			_plotCurve->setBrush(QColor(255, 160, 100));
-			_plotCurve->attach(_plotWidget);
+		const auto& x = plotObj->x();
+		const auto& y = plotObj->y();
+		while(_plotCurves.size() < y->componentCount()) {
+			QwtPlotCurve* curve = new QwtPlotCurve();
+			curve->setRenderHint(QwtPlotItem::RenderAntialiased, true);
+			curve->setPen(QPen(curveColors[_plotCurves.size() % (sizeof(curveColors)/sizeof(curveColors[0]))], 1));
+			curve->attach(_plotWidget);
+			_plotCurves.push_back(curve);
+		}
+		while(_plotCurves.size() > y->componentCount()) {
+			delete _plotCurves.back();
+			_plotCurves.pop_back();
+		}
+		if(_plotCurves.size() == 1 && y->componentNames().empty()) {
+			_plotCurves[0]->setBrush(QColor(255, 160, 100));
+		}
+		else {
+			for(QwtPlotCurve* curve : _plotCurves)
+				curve->setBrush({});
+		}
+		if(y->componentNames().empty()) {
+			if(_legendItem) {
+				delete _legendItem;
+				_legendItem = nullptr;
+			}
+		}
+		else {
+			if(!_legendItem) {
+				_legendItem = new QwtPlotLegendItem();
+				_legendItem->setAlignment(Qt::AlignRight | Qt::AlignTop);
+				_legendItem->attach(_plotWidget);
+			}
 		}
 
-		QVector<double> xcoords(plotObj->y()->size());
-		QVector<double> ycoords(plotObj->y()->size());
-		if(!plotObj->x() || plotObj->x()->size() != xcoords.size() || !plotObj->x()->copyTo(xcoords.begin())) {
+		QVector<double> xcoords(y->size());
+		QVector<double> ycoords(y->size());
+		if(!x || x->size() != xcoords.size() || !x->copyTo(xcoords.begin())) {
 			std::iota(xcoords.begin(), xcoords.end(), 0);
 		}
-		else _plotWidget->setAxisTitle(QwtPlot::xBottom, plotObj->x()->name());
-		if(!plotObj->y() || plotObj->y()->size() != ycoords.size() || !plotObj->y()->copyTo(ycoords.begin())) {
-			std::fill(ycoords.begin(), ycoords.end(), 0.0);
+		else _plotWidget->setAxisTitle(QwtPlot::xBottom, x->name());
+		for(size_t cmpnt = 0; cmpnt < y->componentCount(); cmpnt++) {
+			if(!y->copyTo(ycoords.begin(), cmpnt)) {
+				std::fill(ycoords.begin(), ycoords.end(), 0.0);
+			}
+			else _plotWidget->setAxisTitle(QwtPlot::yLeft, y->name());
+			_plotCurves[cmpnt]->setSamples(xcoords, ycoords);
+			if(cmpnt < y->componentNames().size())
+				_plotCurves[cmpnt]->setTitle(y->componentNames()[cmpnt]);
 		}
-		else _plotWidget->setAxisTitle(QwtPlot::yLeft, plotObj->y()->name());
-		_plotCurve->setSamples(xcoords, ycoords);
 	}
-	else if(_plotCurve) {
-		_plotCurve->detach();
-		delete _plotCurve;
-		_plotCurve = nullptr;
+	else {
+		for(QwtPlotCurve* curve : _plotCurves)
+			delete curve;
+		_plotCurves.clear();
+		delete _legendItem;
+		_legendItem = nullptr;
 	}
 
 	_plotWidget->replot();

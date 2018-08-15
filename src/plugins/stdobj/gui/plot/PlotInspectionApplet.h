@@ -28,6 +28,7 @@
 
 class QwtPlot;
 class QwtPlotCurve;
+class QwtPlotLegendItem;
 
 namespace Ovito { namespace StdObj {
 
@@ -76,8 +77,11 @@ private:
 	/// The plotting widget.
 	QwtPlot* _plotWidget;
 
-	/// The plot item.
-    QwtPlotCurve* _plotCurve = nullptr;	
+	/// The plot item(s).
+    std::vector<QwtPlotCurve*> _plotCurves;	
+
+	/// The plot legend.
+	QwtPlotLegendItem* _legendItem = nullptr;
 };
 
 }	// End of namespace

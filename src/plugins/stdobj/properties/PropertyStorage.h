@@ -122,9 +122,9 @@ public:
 	const QStringList& componentNames() const { return _componentNames; }
 
 	/// \brief Sets the human-readable names for the vector components if this is a vector property.
-	void setComponentNames(const QStringList& names) {
+	void setComponentNames(QStringList names) {
 		OVITO_ASSERT(names.empty() || names.size() == componentCount());
-		_componentNames = names;
+		_componentNames = std::move(names);
 	}
 	
 	/// \brief Returns a read-only pointer to the raw elements stored in this property object.
@@ -632,20 +632,21 @@ public:
 	/// Returns false if copying was not possible, because the data type of the array and the output iterator
 	/// are not compatible.
 	template<typename Iter>
-	bool copyTo(Iter iter) const {
-		if(componentCount() != 1) return false;
+	bool copyTo(Iter iter, size_t component = 0) const {
+		size_t cmpntCount = componentCount();
+		if(component >= cmpntCount) return false;
 		if(dataType() == PropertyStorage::Int) {
-			for(auto v = constDataInt(), v_end = v + size(); v != v_end; ++v)
+			for(auto v = constDataInt() + component, v_end = v + size()*cmpntCount; v != v_end; v += cmpntCount)
 				*iter++ = *v;
 			return true;
 		}
 		else if(dataType() == PropertyStorage::Int64) {
-			for(auto v = constDataInt64(), v_end = v + size(); v != v_end; ++v)
+			for(auto v = constDataInt64() + component, v_end = v + size()*cmpntCount; v != v_end; v += cmpntCount)
 				*iter++ = *v;
 			return true;
 		}
 		else if(dataType() == PropertyStorage::Float) {
-			for(auto v = constDataFloat(), v_end = v + size(); v != v_end; ++v)
+			for(auto v = constDataFloat() + component, v_end = v + size()*cmpntCount; v != v_end; v += cmpntCount)
 				*iter++ = *v;
 			return true;
 		}
