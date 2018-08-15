@@ -23,7 +23,7 @@
 
 
 #include <plugins/stdobj/gui/StdObjGui.h>
-#include <plugins/stdobj/plot/PlotObject.h>
+#include <plugins/stdobj/series/DataSeriesObject.h>
 #include <gui/mainwin/data_inspector/DataInspectionApplet.h>
 
 class QwtPlot;
@@ -35,16 +35,16 @@ namespace Ovito { namespace StdObj {
 /**
  * \brief Data inspector page for 2d plots.
  */
-class OVITO_STDOBJGUI_EXPORT PlotInspectionApplet : public DataInspectionApplet
+class OVITO_STDOBJGUI_EXPORT SeriesInspectionApplet : public DataInspectionApplet
 {
 	Q_OBJECT
-	OVITO_CLASS(PlotInspectionApplet)
-	Q_CLASSINFO("DisplayName", "Data Plots");
+	OVITO_CLASS(SeriesInspectionApplet)
+	Q_CLASSINFO("DisplayName", "Data Series");
 
 public:
 
 	/// Constructor.
-	Q_INVOKABLE PlotInspectionApplet() {}
+	Q_INVOKABLE SeriesInspectionApplet() {}
 
 	/// Returns the key value for this applet that is used for ordering the applet tabs.
 	virtual int orderingKey() const override { return 200; }

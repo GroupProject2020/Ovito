@@ -1,10 +1,10 @@
 from ovito.io import import_file
-from ovito.modifiers import CoordinationNumberModifier
+from ovito.modifiers import CoordinationAnalysisModifier
 import numpy
 
 # Load a particle dataset, apply the modifier, and evaluate pipeline.
 pipeline = import_file("input/simulation.dump")
-modifier = CoordinationNumberModifier(cutoff = 5.0, number_of_bins = 200)
+modifier = CoordinationAnalysisModifier(cutoff = 5.0, number_of_bins = 200)
 pipeline.modifiers.append(modifier)
 pipeline.compute()
 

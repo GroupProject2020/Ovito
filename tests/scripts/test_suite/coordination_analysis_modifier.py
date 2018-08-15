@@ -4,7 +4,7 @@ import numpy as np
 
 pipeline = import_file("../../files/CFG/shear.void.120.cfg")
 
-modifier = CoordinationNumberModifier()
+modifier = CoordinationAnalysisModifier()
 pipeline.modifiers.append(modifier)
 
 print("Parameter defaults:")

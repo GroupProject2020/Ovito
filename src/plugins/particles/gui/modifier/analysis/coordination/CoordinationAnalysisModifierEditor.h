@@ -33,17 +33,17 @@ class QwtPlotLegendItem;
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /**
- * A properties editor for the CoordinationNumberModifier class.
+ * A properties editor for the CoordinationAnalysisModifier class.
  */
-class CoordinationNumberModifierEditor : public ModifierPropertiesEditor
+class CoordinationAnalysisModifierEditor : public ModifierPropertiesEditor
 {
 	Q_OBJECT
-	OVITO_CLASS(CoordinationNumberModifierEditor)
+	OVITO_CLASS(CoordinationAnalysisModifierEditor)
 
 public:
 
 	/// Default constructor.
-	Q_INVOKABLE CoordinationNumberModifierEditor() {}
+	Q_INVOKABLE CoordinationAnalysisModifierEditor() {}
 
 protected:
 
@@ -73,7 +73,7 @@ private:
 	QwtPlotLegendItem* _legendItem = nullptr;
 
 	/// For deferred invocation of the plot repaint function.
-	DeferredMethodInvocation<CoordinationNumberModifierEditor, &CoordinationNumberModifierEditor::plotRDF> plotRDFLater;
+	DeferredMethodInvocation<CoordinationAnalysisModifierEditor, &CoordinationAnalysisModifierEditor::plotRDF> plotRDFLater;
 };
 
 OVITO_END_INLINE_NAMESPACE

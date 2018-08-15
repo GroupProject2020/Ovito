@@ -24,7 +24,7 @@ SET(SourceFiles
 	properties/PropertyInspectionApplet.cpp
 	simcell/SimulationCellObjectEditor.cpp
 	simcell/SimulationCellVisEditor.cpp
-	plot/PlotInspectionApplet.cpp
+	series/SeriesInspectionApplet.cpp
 	widgets/PropertyClassParameterUI.cpp
 	widgets/PropertyReferenceParameterUI.cpp
 	widgets/PropertySelectionComboBox.cpp

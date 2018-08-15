@@ -23,7 +23,7 @@
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <plugins/stdobj/properties/PropertyObject.h>
-#include <plugins/stdobj/plot/PlotObject.h>
+#include <plugins/stdobj/series/DataSeriesObject.h>
 #include <plugins/stdobj/util/InputHelper.h>
 #include <plugins/stdobj/util/OutputHelper.h>
 #include <core/app/PluginManager.h>
@@ -163,11 +163,12 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 	}
 
 	PipelineFlowState output = input;	
+	OutputHelper oh(dataset(), output);
 	
 	// Create storage for output selection.
 	PropertyPtr outputSelection;
 	if(selectInRange()) {
-		outputSelection = OutputHelper(dataset(), output).outputStandardProperty(*propertyClass(), PropertyStorage::GenericSelectionProperty, true)->modifiableStorage();
+		outputSelection = oh.outputStandardProperty(*propertyClass(), PropertyStorage::GenericSelectionProperty, true)->modifiableStorage();
 	}
 
 	// Create selection property for output.
@@ -286,11 +287,11 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 		xcoords->setFloat(i, binSize * (i + FloatType(0.5)) + intervalStart);
 		ycoords->setInt64(i, histogramData[i]);
 	}
-	OORef<PlotObject> plotObj = new PlotObject(modApp->dataset());
-	plotObj->setTitle(tr("Histogram [%1]").arg(sourceProperty().nameWithComponent()));
-	plotObj->setx(xcoords);
-	plotObj->sety(ycoords);
-	output.addObject(plotObj);
+	OORef<DataSeriesObject> seriesObj = new DataSeriesObject(modApp->dataset());
+	seriesObj->setTitle(oh.generateUniqueSeriesName(QStringLiteral("Histogram [%1]").arg(sourceProperty().nameWithComponent())));
+	seriesObj->setx(xcoords);
+	seriesObj->sety(ycoords);
+	output.addObject(seriesObj);
 
 	// Store results in the ModifierApplication.
 	static_object_cast<HistogramModifierApplication>(modApp)->setBinCounts(ycoords);

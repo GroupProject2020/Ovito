@@ -55,7 +55,7 @@
       simulation frame. To calculate an average RDF over all frames of a simulation trajectory, you can use OVITO's
       scripting capabilities and let the <emphasis>Coordination analysis</emphasis> calculate the RDF for each frame and then average
       the histogram data over all frames with a few lines of Python code.
-      See the <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.CoordinationNumberModifier">corresponding section</link> 
+      See the <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.CoordinationAnalysisModifier">corresponding section</link> 
       of the scripting manual for an example.
     </para>
   <simplesect>
@@ -63,7 +63,7 @@
   <simplesect>
     <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.CoordinationNumberModifier"><classname>CoordinationNumberModifier</classname> (Python API)</link>
+      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.CoordinationAnalysisModifier"><classname>CoordinationAnalysisModifier</classname> (Python API)</link>
     </para>
   </simplesect>  
 

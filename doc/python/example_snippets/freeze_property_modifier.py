@@ -1,12 +1,12 @@
 from ovito.io import import_file, export_file
-from ovito.modifiers import (CoordinationNumberModifier, FreezePropertyModifier,
+from ovito.modifiers import (CoordinationAnalysisModifier, FreezePropertyModifier,
                             ExpressionSelectionModifier)
 
 # Load a input simulation sequence. 
 pl = import_file("input/simulation.*.dump")
 
 # Add modifier for computing the coordination numbers of particles.
-pl.modifiers.append(CoordinationNumberModifier(cutoff = 2.9))
+pl.modifiers.append(CoordinationAnalysisModifier(cutoff = 2.9))
 
 # Save the initial coordination numbers from frame 0 under a new name.
 modifier = FreezePropertyModifier(source_property = 'Coordination', 

@@ -21,27 +21,27 @@
 
 #include <plugins/stdobj/StdObj.h>
 #include <core/dataset/DataSet.h>
-#include "PlotObject.h"
+#include "DataSeriesObject.h"
 
 namespace Ovito { namespace StdObj {
 
-IMPLEMENT_OVITO_CLASS(PlotObject);
-DEFINE_PROPERTY_FIELD(PlotObject, title);
-DEFINE_PROPERTY_FIELD(PlotObject, x);
-DEFINE_PROPERTY_FIELD(PlotObject, y);
-SET_PROPERTY_FIELD_CHANGE_EVENT(PlotObject, title, ReferenceEvent::TitleChanged);
+IMPLEMENT_OVITO_CLASS(DataSeriesObject);
+DEFINE_PROPERTY_FIELD(DataSeriesObject, title);
+DEFINE_PROPERTY_FIELD(DataSeriesObject, x);
+DEFINE_PROPERTY_FIELD(DataSeriesObject, y);
+SET_PROPERTY_FIELD_CHANGE_EVENT(DataSeriesObject, title, ReferenceEvent::TitleChanged);
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-PlotObject::PlotObject(DataSet* dataset) : DataObject(dataset)
+DataSeriesObject::DataSeriesObject(DataSet* dataset) : DataObject(dataset)
 {
 }
 
 /******************************************************************************
-* Returns the display title of this property object in the user interface.
+* Returns the display title of this object in the user interface.
 ******************************************************************************/
-QString PlotObject::objectTitle() 
+QString DataSeriesObject::objectTitle() 
 {
 	return title();
 }
@@ -49,7 +49,7 @@ QString PlotObject::objectTitle()
 /******************************************************************************
 * Saves the class' contents to the given stream.
 ******************************************************************************/
-void PlotObject::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData)
+void DataSeriesObject::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData)
 {
 	DataObject::saveToStream(stream, excludeRecomputableData);
 
@@ -77,7 +77,7 @@ void PlotObject::saveToStream(ObjectSaveStream& stream, bool excludeRecomputable
 /******************************************************************************
 * Loads the class' contents from the given stream.
 ******************************************************************************/
-void PlotObject::loadFromStream(ObjectLoadStream& stream)
+void DataSeriesObject::loadFromStream(ObjectLoadStream& stream)
 {
 	DataObject::loadFromStream(stream);
 

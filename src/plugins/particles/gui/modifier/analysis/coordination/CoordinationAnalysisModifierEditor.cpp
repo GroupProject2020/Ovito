@@ -20,12 +20,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/particles/modifier/analysis/coordination/CoordinationNumberModifier.h>
+#include <plugins/particles/modifier/analysis/coordination/CoordinationAnalysisModifier.h>
 #include <gui/mainwin/MainWindow.h>
 #include <gui/properties/IntegerParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
 #include <gui/properties/BooleanParameterUI.h>
-#include "CoordinationNumberModifierEditor.h"
+#include "CoordinationAnalysisModifierEditor.h"
 
 #include <qwt/qwt_plot.h>
 #include <qwt/qwt_plot_curve.h>
@@ -34,13 +34,13 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_CLASS(CoordinationNumberModifierEditor);
-SET_OVITO_OBJECT_EDITOR(CoordinationNumberModifier, CoordinationNumberModifierEditor);
+IMPLEMENT_OVITO_CLASS(CoordinationAnalysisModifierEditor);
+SET_OVITO_OBJECT_EDITOR(CoordinationAnalysisModifier, CoordinationAnalysisModifierEditor);
 
 /******************************************************************************
 * Sets up the UI widgets of the editor.
 ******************************************************************************/
-void CoordinationNumberModifierEditor::createUI(const RolloutInsertionParameters& rolloutParams)
+void CoordinationAnalysisModifierEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create a rollout.
 	QWidget* rollout = createRollout(tr("Coordination analysis"), rolloutParams, "particles.modifiers.coordination_analysis.html");
@@ -55,18 +55,18 @@ void CoordinationNumberModifierEditor::createUI(const RolloutInsertionParameters
 	gridlayout->setColumnStretch(1, 1);
 
 	// Cutoff parameter.
-	FloatParameterUI* cutoffRadiusPUI = new FloatParameterUI(this, PROPERTY_FIELD(CoordinationNumberModifier::cutoff));
+	FloatParameterUI* cutoffRadiusPUI = new FloatParameterUI(this, PROPERTY_FIELD(CoordinationAnalysisModifier::cutoff));
 	gridlayout->addWidget(cutoffRadiusPUI->label(), 0, 0);
 	gridlayout->addLayout(cutoffRadiusPUI->createFieldLayout(), 0, 1);
 
 	// Number of bins parameter.
-	IntegerParameterUI* numBinsPUI = new IntegerParameterUI(this, PROPERTY_FIELD(CoordinationNumberModifier::numberOfBins));
+	IntegerParameterUI* numBinsPUI = new IntegerParameterUI(this, PROPERTY_FIELD(CoordinationAnalysisModifier::numberOfBins));
 	gridlayout->addWidget(numBinsPUI->label(), 1, 0);
 	gridlayout->addLayout(numBinsPUI->createFieldLayout(), 1, 1);
 	layout->addLayout(gridlayout);
 
 	// Partial RDFs option.
-	BooleanParameterUI* partialRdfPUI = new BooleanParameterUI(this, PROPERTY_FIELD(CoordinationNumberModifier::computePartialRDF));
+	BooleanParameterUI* partialRdfPUI = new BooleanParameterUI(this, PROPERTY_FIELD(CoordinationAnalysisModifier::computePartialRDF));
 	layout->addWidget(partialRdfPUI->checkBox());
 
 	_rdfPlot = new QwtPlot();
@@ -82,12 +82,12 @@ void CoordinationNumberModifierEditor::createUI(const RolloutInsertionParameters
 	layout->addSpacing(12);
 	layout->addWidget(new QLabel(tr("Radial distribution function:")));
 	layout->addWidget(_rdfPlot);
-	connect(this, &CoordinationNumberModifierEditor::contentsReplaced, this, &CoordinationNumberModifierEditor::plotRDF);
+	connect(this, &CoordinationAnalysisModifierEditor::contentsReplaced, this, &CoordinationAnalysisModifierEditor::plotRDF);
 
 	layout->addSpacing(12);
 	QPushButton* saveDataButton = new QPushButton(tr("Export data to text file"));
 	layout->addWidget(saveDataButton);
-	connect(saveDataButton, &QPushButton::clicked, this, &CoordinationNumberModifierEditor::onSaveData);
+	connect(saveDataButton, &QPushButton::clicked, this, &CoordinationAnalysisModifierEditor::onSaveData);
 
 	// Status label.
 	layout->addSpacing(6);
@@ -97,7 +97,7 @@ void CoordinationNumberModifierEditor::createUI(const RolloutInsertionParameters
 /******************************************************************************
 * This method is called when a reference target changes.
 ******************************************************************************/
-bool CoordinationNumberModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
+bool CoordinationAnalysisModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	if(event.sender() == editObject() && (event.type() == ReferenceEvent::ObjectStatusChanged || event.type() == ReferenceEvent::TargetChanged)) {
 		plotRDFLater(this);
@@ -108,10 +108,10 @@ bool CoordinationNumberModifierEditor::referenceEvent(RefTarget* source, const R
 /******************************************************************************
 * Updates the plot of the RDF computed by the modifier.
 ******************************************************************************/
-void CoordinationNumberModifierEditor::plotRDF()
+void CoordinationAnalysisModifierEditor::plotRDF()
 {
-	CoordinationNumberModifier* modifier = static_object_cast<CoordinationNumberModifier>(editObject());
-	CoordinationNumberModifierApplication* modApp = dynamic_object_cast<CoordinationNumberModifierApplication>(someModifierApplication());
+	CoordinationAnalysisModifier* modifier = static_object_cast<CoordinationAnalysisModifier>(editObject());
+	CoordinationAnalysisModifierApplication* modApp = dynamic_object_cast<CoordinationAnalysisModifierApplication>(someModifierApplication());
 	if(!modApp || !modifier || !modApp->rdf() || modApp->rdf()->x()->size() != modApp->rdf()->y()->size())
 		return;
 
@@ -191,9 +191,9 @@ void CoordinationNumberModifierEditor::plotRDF()
 /******************************************************************************
 * This is called when the user has clicked the "Save Data" button.
 ******************************************************************************/
-void CoordinationNumberModifierEditor::onSaveData()
+void CoordinationAnalysisModifierEditor::onSaveData()
 {
-	OORef<CoordinationNumberModifierApplication> modApp = dynamic_object_cast<CoordinationNumberModifierApplication>(someModifierApplication());
+	OORef<CoordinationAnalysisModifierApplication> modApp = dynamic_object_cast<CoordinationAnalysisModifierApplication>(someModifierApplication());
 	if(!modApp)
 		return;
 

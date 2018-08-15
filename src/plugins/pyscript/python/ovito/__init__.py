@@ -31,10 +31,11 @@ if ovito.gui_mode:
 __all__ = ['version', 'version_string', 'scene', 'Scene']
 
 # Load the whole OVITO package. This is required to make all Python bindings available.
-for _, _name, _ in pkgutil.walk_packages(_package_source_path, __name__ + '.'):
+for _, _name, _ispkg in pkgutil.walk_packages(_package_source_path, __name__ + '.'):
     if _name.startswith("ovito.plugins"): continue  # Do not load C++ plugin modules at this point, only Python modules
     try:
-        importlib.import_module(_name)
+        if _ispkg:
+            importlib.import_module(_name)
     except:
         print("Error while loading OVITO submodule %s:" % _name, sys.exc_info()[0])
         raise

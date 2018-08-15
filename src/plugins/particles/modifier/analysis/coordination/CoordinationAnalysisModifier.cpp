@@ -25,35 +25,35 @@
 #include <core/app/Application.h>
 #include <core/dataset/DataSet.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
-#include <plugins/stdobj/plot/PlotObject.h>
+#include <plugins/stdobj/series/DataSeriesObject.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/utilities/units/UnitsManager.h>
 #include <core/utilities/concurrent/ParallelFor.h>
-#include "CoordinationNumberModifier.h"
+#include "CoordinationAnalysisModifier.h"
 
 #include <QtConcurrent>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-IMPLEMENT_OVITO_CLASS(CoordinationNumberModifier);
-DEFINE_PROPERTY_FIELD(CoordinationNumberModifier, cutoff);
-DEFINE_PROPERTY_FIELD(CoordinationNumberModifier, numberOfBins);
-DEFINE_PROPERTY_FIELD(CoordinationNumberModifier, computePartialRDF);
-SET_PROPERTY_FIELD_LABEL(CoordinationNumberModifier, cutoff, "Cutoff radius");
-SET_PROPERTY_FIELD_LABEL(CoordinationNumberModifier, numberOfBins, "Number of histogram bins");
-SET_PROPERTY_FIELD_LABEL(CoordinationNumberModifier, computePartialRDF, "Compute partial RDFs");
-SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CoordinationNumberModifier, cutoff, WorldParameterUnit, 0);
-SET_PROPERTY_FIELD_UNITS_AND_RANGE(CoordinationNumberModifier, numberOfBins, IntegerParameterUnit, 4, 100000);
+IMPLEMENT_OVITO_CLASS(CoordinationAnalysisModifier);
+DEFINE_PROPERTY_FIELD(CoordinationAnalysisModifier, cutoff);
+DEFINE_PROPERTY_FIELD(CoordinationAnalysisModifier, numberOfBins);
+DEFINE_PROPERTY_FIELD(CoordinationAnalysisModifier, computePartialRDF);
+SET_PROPERTY_FIELD_LABEL(CoordinationAnalysisModifier, cutoff, "Cutoff radius");
+SET_PROPERTY_FIELD_LABEL(CoordinationAnalysisModifier, numberOfBins, "Number of histogram bins");
+SET_PROPERTY_FIELD_LABEL(CoordinationAnalysisModifier, computePartialRDF, "Compute partial RDFs");
+SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CoordinationAnalysisModifier, cutoff, WorldParameterUnit, 0);
+SET_PROPERTY_FIELD_UNITS_AND_RANGE(CoordinationAnalysisModifier, numberOfBins, IntegerParameterUnit, 4, 100000);
 
-IMPLEMENT_OVITO_CLASS(CoordinationNumberModifierApplication);
-SET_MODIFIER_APPLICATION_TYPE(CoordinationNumberModifier, CoordinationNumberModifierApplication);
-DEFINE_PROPERTY_FIELD(CoordinationNumberModifierApplication, rdf);
-SET_PROPERTY_FIELD_CHANGE_EVENT(CoordinationNumberModifierApplication, rdf, ReferenceEvent::ObjectStatusChanged);
+IMPLEMENT_OVITO_CLASS(CoordinationAnalysisModifierApplication);
+SET_MODIFIER_APPLICATION_TYPE(CoordinationAnalysisModifier, CoordinationAnalysisModifierApplication);
+DEFINE_PROPERTY_FIELD(CoordinationAnalysisModifierApplication, rdf);
+SET_PROPERTY_FIELD_CHANGE_EVENT(CoordinationAnalysisModifierApplication, rdf, ReferenceEvent::ObjectStatusChanged);
 
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
-CoordinationNumberModifier::CoordinationNumberModifier(DataSet* dataset) : AsynchronousModifier(dataset),
+CoordinationAnalysisModifier::CoordinationAnalysisModifier(DataSet* dataset) : AsynchronousModifier(dataset),
 	_cutoff(3.2), 
 	_numberOfBins(200),
 	_computePartialRDF(false)
@@ -63,7 +63,7 @@ CoordinationNumberModifier::CoordinationNumberModifier(DataSet* dataset) : Async
 /******************************************************************************
 * Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-bool CoordinationNumberModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool CoordinationAnalysisModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
 	return input.findObject<ParticleProperty>() != nullptr;
 }
@@ -71,7 +71,7 @@ bool CoordinationNumberModifier::OOMetaClass::isApplicableTo(const PipelineFlowS
 /******************************************************************************
 * Creates and initializes a computation engine that will compute the modifier's results.
 ******************************************************************************/
-Future<AsynchronousModifier::ComputeEnginePtr> CoordinationNumberModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<AsynchronousModifier::ComputeEnginePtr> CoordinationAnalysisModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get the current positions.
 	ParticleInputHelper pih(dataset(), input);
@@ -112,9 +112,9 @@ Future<AsynchronousModifier::ComputeEnginePtr> CoordinationNumberModifier::creat
 /******************************************************************************
 * Performs the actual computation. This method is executed in a worker thread.
 ******************************************************************************/
-void CoordinationNumberModifier::CoordinationAnalysisEngine::perform()
+void CoordinationAnalysisModifier::CoordinationAnalysisEngine::perform()
 {
-	task()->setProgressText(tr("Computing coordination numbers"));
+	task()->setProgressText(tr("Coordination analysis"));
 
 	// Prepare the neighbor list service.
 	CutoffNeighborFinder neighborListBuilder;
@@ -125,54 +125,23 @@ void CoordinationNumberModifier::CoordinationAnalysisEngine::perform()
 	task()->setProgressValue(0);
 	task()->setProgressMaximum(particleCount);
 
-	// Perform neighbor counting in parallel.
+	// Parallel calculation loop:
 	std::mutex mutex;
-	if(!_computePartialRdfs) {
-		// Total RDF case:
-		parallelForChunks(particleCount, *task(), [&neighborListBuilder, &mutex, this](size_t startIndex, size_t chunkSize, PromiseState& promise) {
-			size_t binCount = rdfX()->size();
-			FloatType rdfBinSize = cutoff() / binCount;
-			std::vector<size_t> threadLocalRDF(binCount, 0);
-			for(size_t i = startIndex, endIndex = startIndex + chunkSize; i < endIndex; ) {
-				int& coordination = coordinationNumbers()->dataInt()[i];
-				OVITO_ASSERT(coordination == 0);
+	parallelForChunks(particleCount, *task(), [&neighborListBuilder, &mutex, this](size_t startIndex, size_t chunkSize, PromiseState& promise) {
+		size_t typeCount = _computePartialRdfs ? uniqueTypeIds().size() : 1;
+		size_t binCount = rdfY()->size();
+		size_t rdfCount = rdfY()->componentCount();
+		FloatType rdfBinSize = cutoff() / binCount;
+		std::vector<size_t> threadLocalRDF(rdfY()->size() * rdfY()->componentCount(), 0);
+		for(size_t i = startIndex, endIndex = startIndex + chunkSize; i < endIndex; ) {
+			int& coordination = coordinationNumbers()->dataInt()[i];
+			OVITO_ASSERT(coordination == 0);
+
+			size_t typeIndex1 = _computePartialRdfs ? uniqueTypeIds().index_of(uniqueTypeIds().find(particleTypes()->getInt(i))) : 0;
+			if(typeIndex1 < typeCount) {
 				for(CutoffNeighborFinder::Query neighQuery(neighborListBuilder, i); !neighQuery.atEnd(); neighQuery.next()) {
 					coordination++;
-					size_t rdfBin = (size_t)(sqrt(neighQuery.distanceSquared()) / rdfBinSize);
-					threadLocalRDF[std::min(rdfBin, binCount - 1)]++;
-				}
-				i++;
-
-				// Update progress indicator.
-				if((i % 1024ll) == 0)
-					promise.incrementProgressValue(1024);
-				// Abort loop when operation was canceled by the user.
-				if(promise.isCanceled())
-					return;
-			}
-			// Combine per-thread RDF data into one master histogram.
-			std::lock_guard<std::mutex> lock(mutex);
-			auto bin = rdfY()->dataFloat();
-			for(auto iter = threadLocalRDF.cbegin(); iter != threadLocalRDF.cend(); ++iter)
-				*bin++ += *iter;
-		});
-	}
-	else {
-		// Partial RDFs case:
-		parallelForChunks(particleCount, *task(), [&neighborListBuilder, &mutex, this](size_t startIndex, size_t chunkSize, PromiseState& promise) {
-			size_t typeCount = uniqueTypeIds().size();
-			size_t binCount = rdfY()->size();
-			size_t rdfCount = rdfY()->componentCount();
-			FloatType rdfBinSize = cutoff() / binCount;
-			std::vector<size_t> threadLocalRDF(rdfY()->size() * rdfY()->componentCount(), 0);
-			for(size_t i = startIndex, endIndex = startIndex + chunkSize; i < endIndex; ) {
-				int& coordination = coordinationNumbers()->dataInt()[i];
-				OVITO_ASSERT(coordination == 0);
-
-				size_t typeIndex1 = uniqueTypeIds().index_of(uniqueTypeIds().find(particleTypes()->getInt(i)));
-				if(typeIndex1 < typeCount) {
-					for(CutoffNeighborFinder::Query neighQuery(neighborListBuilder, i); !neighQuery.atEnd(); neighQuery.next()) {
-						coordination++;
+					if(_computePartialRdfs) {
 						size_t typeIndex2 = uniqueTypeIds().index_of(uniqueTypeIds().find(particleTypes()->getInt(neighQuery.current())));
 						if(typeIndex2 < typeCount) {
 							size_t lowerIndex = std::min(typeIndex1, typeIndex2);
@@ -183,23 +152,27 @@ void CoordinationNumberModifier::CoordinationAnalysisEngine::perform()
 							threadLocalRDF[rdfIndex + std::min(rdfBin, binCount - 1) * rdfCount]++;
 						}
 					}
+					else {
+						size_t rdfBin = (size_t)(sqrt(neighQuery.distanceSquared()) / rdfBinSize);
+						threadLocalRDF[std::min(rdfBin, binCount - 1)]++;
+					}
 				}
-				i++;
-
-				// Update progress indicator.
-				if((i % 1024ll) == 0)
-					promise.incrementProgressValue(1024);
-				// Abort loop when operation was canceled by the user.
-				if(promise.isCanceled())
-					return;
 			}
-			// Combine per-thread RDFs into a set of master histograms.
-			std::lock_guard<std::mutex> lock(mutex);
-			auto bin = rdfY()->dataFloat();
-			for(auto iter = threadLocalRDF.cbegin(); iter != threadLocalRDF.cend(); ++iter)
-				*bin++ += *iter;
-		});
-	}
+			i++;
+
+			// Update progress indicator.
+			if((i % 1024ll) == 0)
+				promise.incrementProgressValue(1024);
+			// Abort loop when operation was canceled by the user.
+			if(promise.isCanceled())
+				return;
+		}
+		// Combine per-thread RDFs into a set of master histograms.
+		std::lock_guard<std::mutex> lock(mutex);
+		auto bin = rdfY()->dataFloat();
+		for(auto iter = threadLocalRDF.cbegin(); iter != threadLocalRDF.cend(); ++iter)
+			*bin++ += *iter;
+	});
 	if(task()->isCanceled())
 		return;
 
@@ -256,25 +229,27 @@ void CoordinationNumberModifier::CoordinationAnalysisEngine::perform()
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState CoordinationNumberModifier::CoordinationAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+PipelineFlowState CoordinationAnalysisModifier::CoordinationAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	if(_inputFingerprint.hasChanged(input))
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 
 	PipelineFlowState output = input;
 	ParticleOutputHelper poh(modApp->dataset(), output);
+
+	// Output coordination numbers as a new particle property.
 	OVITO_ASSERT(coordinationNumbers()->size() == poh.outputParticleCount());
 	poh.outputProperty<ParticleProperty>(coordinationNumbers());
 
 	// Output RDF histogram(s).
-	OORef<PlotObject> rdfPlotObj = new PlotObject(modApp->dataset());
-	rdfPlotObj->setx(rdfX());
-	rdfPlotObj->sety(rdfY());
-	rdfPlotObj->setTitle(poh.generateUniquePlotName(QStringLiteral("RDF")));
-	output.addObject(rdfPlotObj);
+	OORef<DataSeriesObject> seriesObj = new DataSeriesObject(modApp->dataset());
+	seriesObj->setx(rdfX());
+	seriesObj->sety(rdfY());
+	seriesObj->setTitle(poh.generateUniqueSeriesName(QStringLiteral("RDF")));
+	output.addObject(seriesObj);
 
 	// Store the RDF data in the ModifierApplication in order to display the RDF in the modifier's UI panel.
-	static_object_cast<CoordinationNumberModifierApplication>(modApp)->setRdf(std::move(rdfPlotObj));
+	static_object_cast<CoordinationAnalysisModifierApplication>(modApp)->setRdf(std::move(seriesObj));
 
 	return output;
 }

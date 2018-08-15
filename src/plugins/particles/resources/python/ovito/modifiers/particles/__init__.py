@@ -6,7 +6,7 @@ import ovito.modifiers.stdmod
 import ovito.plugins.Particles
 
 # Load submodules.
-from .coordination_number_modifier import CoordinationNumberModifier
+from .coordination_analysis_modifier import CoordinationAnalysisModifier
 from .compute_property_modifier import ComputePropertyModifier
 
 # Inject classes into parent module.
@@ -20,7 +20,7 @@ ovito.modifiers.BondAngleAnalysisModifier = ovito.plugins.Particles.BondAngleAna
 ovito.modifiers.CreateBondsModifier = ovito.plugins.Particles.CreateBondsModifier
 ovito.modifiers.CentroSymmetryModifier = ovito.plugins.Particles.CentroSymmetryModifier
 ovito.modifiers.ClusterAnalysisModifier = ovito.plugins.Particles.ClusterAnalysisModifier
-ovito.modifiers.CoordinationNumberModifier = ovito.plugins.Particles.CoordinationNumberModifier
+ovito.modifiers.CoordinationAnalysisModifier = ovito.plugins.Particles.CoordinationAnalysisModifier
 ovito.modifiers.CalculateDisplacementsModifier = ovito.plugins.Particles.CalculateDisplacementsModifier
 ovito.modifiers.AtomicStrainModifier = ovito.plugins.Particles.AtomicStrainModifier
 ovito.modifiers.WignerSeitzAnalysisModifier = ovito.plugins.Particles.WignerSeitzAnalysisModifier
@@ -36,8 +36,12 @@ ovito.modifiers.__all__ += ['AmbientOcclusionModifier',
             'ExpandSelectionModifier',
             'BinAndReduceModifier',
             'StructureIdentificationModifier', 'CommonNeighborAnalysisModifier', 'BondAngleAnalysisModifier',
-            'CreateBondsModifier', 'CentroSymmetryModifier', 'ClusterAnalysisModifier', 'CoordinationNumberModifier',
+            'CreateBondsModifier', 'CentroSymmetryModifier', 'ClusterAnalysisModifier', 'CoordinationAnalysisModifier',
             'CalculateDisplacementsModifier', 'AtomicStrainModifier',
             'WignerSeitzAnalysisModifier', 'VoronoiAnalysisModifier', 'IdentifyDiamondModifier', 'LoadTrajectoryModifier',
             'PolyhedralTemplateMatchingModifier',
             'CoordinationPolyhedraModifier', 'InterpolateTrajectoryModifier', 'GenerateTrajectoryLinesModifier']
+
+# For backward compatibility with OVITO 2.9.0:
+ovito.modifiers.CoordinationNumberModifier = CoordinationAnalysisModifier
+ovito.modifiers.__all__ += ['CoordinationNumberModifier']

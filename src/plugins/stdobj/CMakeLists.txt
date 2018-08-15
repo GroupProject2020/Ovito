@@ -32,7 +32,7 @@ SET(SourceFiles
 	properties/ElementType.cpp
 	properties/GenericPropertyModifier.cpp
 	properties/PropertyExpressionEvaluator.cpp
-	plot/PlotObject.cpp
+	series/DataSeriesObject.cpp
 	util/InputHelper.cpp
 	util/OutputHelper.cpp
 	util/ElementSelectionSet.cpp

@@ -23,7 +23,7 @@
 #include <core/dataset/DataSet.h>
 #include <plugins/stdobj/properties/PropertyObject.h>
 #include <plugins/stdobj/properties/PropertyClass.h>
-#include <plugins/stdobj/plot/PlotObject.h>
+#include <plugins/stdobj/series/DataSeriesObject.h>
 #include "OutputHelper.h"
 
 namespace Ovito { namespace StdObj {
@@ -184,15 +184,15 @@ void OutputHelper::outputAttribute(const QString& key, QVariant value)
 }
 
 /******************************************************************************
-* Returns a name for a new plot object that does not collide with the name of 
-* an existing plot object in the same data collection.
+* Returns a name for a new data series object that does not collide with the 
+* name of an existing data series in the same data collection.
 ******************************************************************************/
-QString OutputHelper::generateUniquePlotName(const QString& baseName) const
+QString OutputHelper::generateUniqueSeriesName(const QString& baseName) const
 {
 	auto doesNameExist = [this](const QString& name) {
 		for(DataObject* obj : output().objects()) {
-			if(PlotObject* plotObj = dynamic_object_cast<PlotObject>(obj)) {
-				if(plotObj->title() == name)
+			if(DataSeriesObject* seriesObj = dynamic_object_cast<DataSeriesObject>(obj)) {
+				if(seriesObj->title() == name)
 					return true;
 			}
 		}

@@ -1,12 +1,12 @@
 from ovito.io import import_file
-from ovito.modifiers import CoordinationNumberModifier
+from ovito.modifiers import CoordinationAnalysisModifier
 import numpy
 
 # Load a simulation trajectory consisting of several frames:
 pipeline = import_file("input/simulation.dump")
 
 # Insert the modifier into the pipeline:
-modifier = CoordinationNumberModifier(cutoff = 5.0, number_of_bins = 200)
+modifier = CoordinationAnalysisModifier(cutoff = 5.0, number_of_bins = 200)
 pipeline.modifiers.append(modifier)
 
 # Initialize array for accumulated RDF histogram to zero:

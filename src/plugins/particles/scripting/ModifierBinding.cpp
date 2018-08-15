@@ -37,7 +37,7 @@
 #include <plugins/particles/modifier/analysis/cna/CommonNeighborAnalysisModifier.h>
 #include <plugins/particles/modifier/analysis/centrosymmetry/CentroSymmetryModifier.h>
 #include <plugins/particles/modifier/analysis/cluster/ClusterAnalysisModifier.h>
-#include <plugins/particles/modifier/analysis/coordination/CoordinationNumberModifier.h>
+#include <plugins/particles/modifier/analysis/coordination/CoordinationAnalysisModifier.h>
 #include <plugins/particles/modifier/analysis/displacements/CalculateDisplacementsModifier.h>
 #include <plugins/particles/modifier/analysis/strain/AtomicStrainModifier.h>
 #include <plugins/particles/modifier/analysis/wignerseitz/WignerSeitzAnalysisModifier.h>
@@ -591,7 +591,7 @@ void defineModifiersSubmodule(py::module m)
 		.value("Bonding", ClusterAnalysisModifier::Bonding)
 	;
 
-	ovito_class<CoordinationNumberModifier, AsynchronousModifier>(m,
+	ovito_class<CoordinationAnalysisModifier, AsynchronousModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
 			"Computes coordination numbers of individual particles and the radial distribution function (RDF) for the entire system. "
 			"See also the corresponding `user manual page <../../particles.modifiers.coordination_analysis.html>`__ for this modifier. "
@@ -609,35 +609,35 @@ void defineModifiersSubmodule(py::module m)
 			"RDF histogram from the data:\n\n"
 			".. literalinclude:: ../example_snippets/coordination_analysis_modifier_averaging.py\n"
 			"\n\n")
-		.def_property("cutoff", &CoordinationNumberModifier::cutoff, &CoordinationNumberModifier::setCutoff,
+		.def_property("cutoff", &CoordinationAnalysisModifier::cutoff, &CoordinationAnalysisModifier::setCutoff,
 				"Specifies the cutoff distance for the coordination number calculation and also the range up to which the modifier calculates the RDF. "
 				"\n\n"
 				":Default: 3.2\n")
-		.def_property("number_of_bins", &CoordinationNumberModifier::numberOfBins, &CoordinationNumberModifier::setNumberOfBins,
+		.def_property("number_of_bins", &CoordinationAnalysisModifier::numberOfBins, &CoordinationAnalysisModifier::setNumberOfBins,
 				"The number of histogram bins to use when computing the RDF."
 				"\n\n"
 				":Default: 200\n")
-		.def_property("partial", &CoordinationNumberModifier::computePartialRDF, &CoordinationNumberModifier::setComputePartialRDF,
+		.def_property("partial", &CoordinationAnalysisModifier::computePartialRDF, &CoordinationAnalysisModifier::setComputePartialRDF,
 				"Setting this flag to true requests calculation of element-specific (partial) RDFs. "
 				"\n\n"
 				":Default: ``False``\n")
 		// For backward compatibility with OVITO 2.9.0:
-		.def_property_readonly("rdf_x", py::cpp_function([](CoordinationNumberModifier& mod) {
-					CoordinationNumberModifierApplication* modApp = dynamic_object_cast<CoordinationNumberModifierApplication>(mod.someModifierApplication());
-					if(!modApp || !modApp->rdf()) mod.throwException(CoordinationNumberModifier::tr("Modifier has not been evaluated yet. RDF data is not yet available."));
+		.def_property_readonly("rdf_x", py::cpp_function([](CoordinationAnalysisModifier& mod) {
+					CoordinationAnalysisModifierApplication* modApp = dynamic_object_cast<CoordinationAnalysisModifierApplication>(mod.someModifierApplication());
+					if(!modApp || !modApp->rdf()) mod.throwException(CoordinationAnalysisModifier::tr("Modifier has not been evaluated yet. RDF data is not yet available."));
 					py::array_t<FloatType> array((size_t)modApp->rdf()->x()->size(), modApp->rdf()->x()->constDataFloat(), py::cast(static_cast<DataObject*>(modApp->rdf())));
 					reinterpret_cast<py::detail::PyArray_Proxy*>(array.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
 					return array;
 				}))
-		.def_property_readonly("rdf_y", py::cpp_function([](CoordinationNumberModifier& mod) {
-					CoordinationNumberModifierApplication* modApp = dynamic_object_cast<CoordinationNumberModifierApplication>(mod.someModifierApplication());
-					if(!modApp || !modApp->rdf()) mod.throwException(CoordinationNumberModifier::tr("Modifier has not been evaluated yet. RDF data is not yet available."));
+		.def_property_readonly("rdf_y", py::cpp_function([](CoordinationAnalysisModifier& mod) {
+					CoordinationAnalysisModifierApplication* modApp = dynamic_object_cast<CoordinationAnalysisModifierApplication>(mod.someModifierApplication());
+					if(!modApp || !modApp->rdf()) mod.throwException(CoordinationAnalysisModifier::tr("Modifier has not been evaluated yet. RDF data is not yet available."));
 					py::array_t<FloatType> array({modApp->rdf()->y()->size(), modApp->rdf()->y()->componentCount()}, modApp->rdf()->y()->constDataFloat(), py::cast(static_cast<DataObject*>(modApp->rdf())));
 					reinterpret_cast<py::detail::PyArray_Proxy*>(array.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
 					return array;
 				}))
 	;
-	ovito_class<CoordinationNumberModifierApplication, AsynchronousModifierApplication>{m};
+	ovito_class<CoordinationAnalysisModifierApplication, AsynchronousModifierApplication>{m};
 
 	auto ReferenceConfigurationModifier_py = ovito_abstract_class<ReferenceConfigurationModifier, AsynchronousModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"

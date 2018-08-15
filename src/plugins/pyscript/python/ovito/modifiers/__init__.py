@@ -31,7 +31,7 @@ Python class name                              User interface name
 :py:class:`CommonNeighborAnalysisModifier`     :guilabel:`Common neighbor analysis`
 :py:class:`ComputePropertyModifier`            :guilabel:`Compute property`
 :py:class:`ConstructSurfaceModifier`           :guilabel:`Construct surface mesh`
-:py:class:`CoordinationNumberModifier`         :guilabel:`Coordination analysis`
+:py:class:`CoordinationAnalysisModifier`       :guilabel:`Coordination analysis`
 :py:class:`CoordinationPolyhedraModifier`      :guilabel:`Coordination polyhedra`
 :py:class:`CorrelationFunctionModifier`        :guilabel:`Correlation function`
 :py:class:`CreateBondsModifier`                :guilabel:`Create bonds`

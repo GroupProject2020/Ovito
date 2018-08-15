@@ -35,7 +35,7 @@ SET(SourceFiles
 	modifier/analysis/binandreduce/BinAndReduceModifierEditor.cpp
 	modifier/analysis/bondangle/BondAngleAnalysisModifierEditor.cpp
 	modifier/analysis/cna/CommonNeighborAnalysisModifierEditor.cpp
-	modifier/analysis/coordination/CoordinationNumberModifierEditor.cpp
+	modifier/analysis/coordination/CoordinationAnalysisModifierEditor.cpp
 	modifier/analysis/displacements/CalculateDisplacementsModifierEditor.cpp
 	modifier/analysis/centrosymmetry/CentroSymmetryModifierEditor.cpp
 	modifier/analysis/strain/AtomicStrainModifierEditor.cpp

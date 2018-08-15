@@ -43,7 +43,8 @@ namespace Ovito {
         template<class PropertyObjectType> class TypedPropertyReference;
         class SimulationCell;
         class SimulationCellObject;
-        class SimulationCellVis;    
+        class SimulationCellVis;
+        class DataSeriesObject;
     }
 }
 

@@ -69,7 +69,7 @@ in the pipeline after making a change to the pipeline::
 
     # Now altering the pipeline by e.g. changing parameters or appending modifiers: 
     pipeline.modifiers[0].color = (0.8, 0.8, 1.0)
-    pipeline.modifiers.append(CoordinationNumberModifier(cutoff = 5.0))
+    pipeline.modifiers.append(CoordinationAnalysisModifier(cutoff = 5.0))
    
     # Evaluate the pipeline a second time, now getting new results:
     outdata2 = pipeline.compute()

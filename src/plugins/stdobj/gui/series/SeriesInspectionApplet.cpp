@@ -21,7 +21,7 @@
 
 #include <plugins/stdobj/gui/StdObjGui.h>
 #include <gui/mainwin/MainWindow.h>
-#include "PlotInspectionApplet.h"
+#include "SeriesInspectionApplet.h"
 
 #include <qwt/qwt_plot.h>
 #include <qwt/qwt_plot_curve.h>
@@ -30,22 +30,22 @@
 
 namespace Ovito { namespace StdObj {
 
-IMPLEMENT_OVITO_CLASS(PlotInspectionApplet);
+IMPLEMENT_OVITO_CLASS(SeriesInspectionApplet);
 
 /******************************************************************************
 * Determines whether the given pipeline flow state contains data that can be 
 * displayed by this applet.
 ******************************************************************************/
-bool PlotInspectionApplet::appliesTo(const PipelineFlowState& state)
+bool SeriesInspectionApplet::appliesTo(const PipelineFlowState& state)
 {
-	return state.findObject<PlotObject>() != nullptr;
+	return state.findObject<DataSeriesObject>() != nullptr;
 }
 
 /******************************************************************************
 * Lets the applet create the UI widget that is to be placed into the data 
 * inspector panel. 
 ******************************************************************************/
-QWidget* PlotInspectionApplet::createWidget(MainWindow* mainWindow)
+QWidget* SeriesInspectionApplet::createWidget(MainWindow* mainWindow)
 {
 	QSplitter* splitter = new QSplitter();
 	_plotSelectionWidget = new QListWidget();
@@ -58,14 +58,14 @@ QWidget* PlotInspectionApplet::createWidget(MainWindow* mainWindow)
 	splitter->addWidget(_plotWidget);
 	splitter->setStretchFactor(0, 1);
 	splitter->setStretchFactor(1, 4);
-	connect(_plotSelectionWidget, &QListWidget::currentItemChanged, this, &PlotInspectionApplet::currentPlotChanged);
+	connect(_plotSelectionWidget, &QListWidget::currentItemChanged, this, &SeriesInspectionApplet::currentPlotChanged);
 	return splitter;
 }
 
 /******************************************************************************
 * Updates the contents displayed in the inspector.
 ******************************************************************************/
-void PlotInspectionApplet::updateDisplay(const PipelineFlowState& state, PipelineSceneNode* sceneNode)
+void SeriesInspectionApplet::updateDisplay(const PipelineFlowState& state, PipelineSceneNode* sceneNode)
 {
 	// Remember which plot was previously selected.
 	QString selectedPlotTitle;
@@ -75,9 +75,9 @@ void PlotInspectionApplet::updateDisplay(const PipelineFlowState& state, Pipelin
 	// Rebuild list of plots.
 	plotSelectionWidget()->clear();
 	for(DataObject* obj : state.objects()) {
-		if(PlotObject* plotObj = dynamic_object_cast<PlotObject>(obj)) {
-			QListWidgetItem* item = new QListWidgetItem(plotObj->title(), plotSelectionWidget());
-			item->setData(Qt::UserRole, QVariant::fromValue<OORef<OvitoObject>>(plotObj));
+		if(DataSeriesObject* seriesObj = dynamic_object_cast<DataSeriesObject>(obj)) {
+			QListWidgetItem* item = new QListWidgetItem(seriesObj->title(), plotSelectionWidget());
+			item->setData(Qt::UserRole, QVariant::fromValue<OORef<OvitoObject>>(seriesObj));
 
 			// Select again the previously selected plot.
 			if(item->text() == selectedPlotTitle)
@@ -92,11 +92,11 @@ void PlotInspectionApplet::updateDisplay(const PipelineFlowState& state, Pipelin
 /******************************************************************************
 * Is called when the user selects a different plot item in the list.
 ******************************************************************************/
-void PlotInspectionApplet::currentPlotChanged(QListWidgetItem* current, QListWidgetItem* previous)
+void SeriesInspectionApplet::currentPlotChanged(QListWidgetItem* current, QListWidgetItem* previous)
 {
-	OORef<PlotObject> plotObj;
+	OORef<DataSeriesObject> seriesObj;
 	if(current)
-		plotObj = static_object_cast<PlotObject>(current->data(Qt::UserRole).value<OORef<OvitoObject>>());
+		seriesObj = static_object_cast<DataSeriesObject>(current->data(Qt::UserRole).value<OORef<OvitoObject>>());
 
 	static const Qt::GlobalColor curveColors[] = {
 		Qt::black, Qt::red, Qt::blue, Qt::green,
@@ -107,9 +107,9 @@ void PlotInspectionApplet::currentPlotChanged(QListWidgetItem* current, QListWid
 	
 	_plotWidget->setAxisTitle(QwtPlot::xBottom, QString{});
 	_plotWidget->setAxisTitle(QwtPlot::yLeft, QString{});
-	if(plotObj && plotObj->y()) {
-		const auto& x = plotObj->x();
-		const auto& y = plotObj->y();
+	if(seriesObj && seriesObj->y()) {
+		const auto& x = seriesObj->x();
+		const auto& y = seriesObj->y();
 		while(_plotCurves.size() < y->componentCount()) {
 			QwtPlotCurve* curve = new QwtPlotCurve();
 			curve->setRenderHint(QwtPlotItem::RenderAntialiased, true);

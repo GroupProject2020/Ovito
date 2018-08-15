@@ -29,21 +29,21 @@
 namespace Ovito { namespace StdObj {
 	
 /**
- * \brief Holds a data plot series.
+ * \brief Holds a series of data values.
  */
-class OVITO_STDOBJ_EXPORT PlotObject : public DataObject
+class OVITO_STDOBJ_EXPORT DataSeriesObject : public DataObject
 {
 	Q_OBJECT
-	OVITO_CLASS(PlotObject)
+	OVITO_CLASS(DataSeriesObject)
 	
 public:
 
-	/// \brief Creates a plot object.
-	PlotObject(DataSet* dataset);
+	/// \brief Creates a data series object.
+	DataSeriesObject(DataSet* dataset);
 
 	//////////////////////////////// from RefTarget //////////////////////////////
 
-	/// Returns the display title of this property object in the user interface.
+	/// Returns the display title of this object in the user interface.
 	virtual QString objectTitle() override;
 
 protected:
@@ -56,7 +56,7 @@ protected:
 
 private:
 
-	/// The title of the plot.
+	/// The title of the data series.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, title, setTitle);
 
 	/// The x coordinates of the data points.

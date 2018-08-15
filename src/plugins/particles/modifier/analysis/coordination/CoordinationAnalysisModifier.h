@@ -28,7 +28,7 @@
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
-#include <plugins/stdobj/plot/PlotObject.h>
+#include <plugins/stdobj/series/DataSeriesObject.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
 #include <core/dataset/pipeline/AsynchronousModifierApplication.h>
 
@@ -39,10 +39,10 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 /**
  * \brief This modifier computes the coordination number of each particle (i.e. the number of neighbors within a given cutoff radius).
  */
-class OVITO_PARTICLES_EXPORT CoordinationNumberModifier : public AsynchronousModifier
+class OVITO_PARTICLES_EXPORT CoordinationAnalysisModifier : public AsynchronousModifier
 {
 	/// Give this modifier class its own metaclass.
-	class CoordinationNumberModifierClass : public AsynchronousModifier::OOMetaClass 
+	class CoordinationAnalysisModifierClass : public AsynchronousModifier::OOMetaClass 
 	{
 	public:
 
@@ -54,15 +54,16 @@ class OVITO_PARTICLES_EXPORT CoordinationNumberModifier : public AsynchronousMod
 	};
 		
 	Q_OBJECT
-	OVITO_CLASS_META(CoordinationNumberModifier, CoordinationNumberModifierClass)
+	OVITO_CLASS_META(CoordinationAnalysisModifier, CoordinationAnalysisModifierClass)
 
+	Q_CLASSINFO("ClassNameAlias", "CoordinationAnalysisModifier");
 	Q_CLASSINFO("DisplayName", "Coordination analysis");
 	Q_CLASSINFO("ModifierCategory", "Analysis");
 
 public:
 
 	/// Constructor.
-	Q_INVOKABLE CoordinationNumberModifier(DataSet* dataset);
+	Q_INVOKABLE CoordinationAnalysisModifier(DataSet* dataset);
 
 protected:
 	
@@ -167,24 +168,24 @@ private:
 };
 
 /**
- * \brief The type of ModifierApplication created for a CoordinationNumberModifier 
- *        when it is inserted into in a data pipeline. Its stores results computed by the
+ * \brief The type of ModifierApplication created for a CoordinationAnalysisModifier 
+ *        when it is inserted into in a data pipeline. It stores results computed by the
  *        modifier's compute engine so that they can be displayed in the modifier's UI panel.
  */
-class OVITO_PARTICLES_EXPORT CoordinationNumberModifierApplication : public AsynchronousModifierApplication
+class OVITO_PARTICLES_EXPORT CoordinationAnalysisModifierApplication : public AsynchronousModifierApplication
 {
 	Q_OBJECT
-	OVITO_CLASS(CoordinationNumberModifierApplication)
+	OVITO_CLASS(CoordinationAnalysisModifierApplication)
 
 public:
 
 	/// Constructor.
-	Q_INVOKABLE CoordinationNumberModifierApplication(DataSet* dataset) : AsynchronousModifierApplication(dataset) {}
+	Q_INVOKABLE CoordinationAnalysisModifierApplication(DataSet* dataset) : AsynchronousModifierApplication(dataset) {}
  
 private:
  
 	/// The RDF histogram(s).
-	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(OORef<PlotObject>, rdf, setRdf, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
+	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(OORef<DataSeriesObject>, rdf, setRdf, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 };
 
 OVITO_END_INLINE_NAMESPACE

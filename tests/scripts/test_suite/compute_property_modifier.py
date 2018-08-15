@@ -30,7 +30,7 @@ modifier.output_property = 'neighprop'
 modifier.expressions = ["NumNeighbors"]
 modifier.neighbor_mode = True
 modifier.cutoff_radius = 3.2
-pipeline.modifiers.append(ovito.modifiers.CoordinationNumberModifier(cutoff = modifier.cutoff_radius))
+pipeline.modifiers.append(ovito.modifiers.CoordinationAnalysisModifier(cutoff = modifier.cutoff_radius))
 data = pipeline.compute()
 expected_result = data.particles['Coordination']
 assert(np.array_equal(data.particles['neighprop'], expected_result))
