@@ -38,8 +38,23 @@ class OVITO_STDOBJ_EXPORT DataSeriesObject : public DataObject
 	
 public:
 
-	/// \brief Creates a data series object.
+	/// Constructor.
 	DataSeriesObject(DataSet* dataset);
+
+	/// Returns the text label for the x-axis.
+	const QString& getAxisLabelXAny() const {
+		if(x() && !x()->name().isEmpty()) return x()->name();
+		else return axisLabelX();
+	}
+
+	/// Returns the text label for the y-axis.
+	const QString& getAxisLabelYAny() const {
+		if(y() && !y()->name().isEmpty()) return y()->name();
+		else return axisLabelY();
+	}
+
+	/// Determines the X value for the given array index.
+	FloatType getXValue(size_t index) const;
 
 	//////////////////////////////// from RefTarget //////////////////////////////
 
@@ -59,11 +74,23 @@ private:
 	/// The title of the data series.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, title, setTitle);
 
-	/// The x coordinates of the data points.
-	DECLARE_RUNTIME_PROPERTY_FIELD(PropertyPtr, x, setx);
+	/// The x-coordinates of the data points (optional).
+	DECLARE_RUNTIME_PROPERTY_FIELD(PropertyPtr, x, setX);
 
-	/// The y coordinates of the data points.
-	DECLARE_RUNTIME_PROPERTY_FIELD(PropertyPtr, y, sety);
+	/// The y-coordinates of the data points.
+	DECLARE_RUNTIME_PROPERTY_FIELD(PropertyPtr, y, setY);
+
+	/// The lower bound of the x-interval of the histogram if data points have no explicit x-coordinates.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, intervalStart, setIntervalStart);
+
+	/// The upper bound of the x-interval of the histogram if data points have no explicit x-coordinates.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, intervalEnd, setIntervalEnd);
+
+	/// The label of the x-axis (optional).
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, axisLabelX, setAxisLabelX);
+
+	/// The label of the y-axis (optional).
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, axisLabelY, setAxisLabelY);
 };
 
 }	// End of namespace

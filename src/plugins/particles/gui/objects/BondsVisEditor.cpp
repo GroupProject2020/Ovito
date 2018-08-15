@@ -73,7 +73,7 @@ void BondsVisEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 
 	// Use particle colors.
 	BooleanParameterUI* useParticleColorsUI = new BooleanParameterUI(this, PROPERTY_FIELD(BondsVis::useParticleColors));
-	layout->addWidget(useParticleColorsUI->checkBox(), 4, 0, 1, 2);
+	layout->addWidget(useParticleColorsUI->checkBox(), 4, 1);
 }
 
 OVITO_END_INLINE_NAMESPACE

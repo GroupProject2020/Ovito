@@ -84,7 +84,7 @@ void PythonScriptModifierEditor::onContentsChanged(RefTarget* editObject)
 	if(modifier) {
 		_editScriptButton->setEnabled(true);
 		QString text = modifier->scriptCompilationOutput();
-		if(PythonScriptModifierApplication* modApp = dynamic_object_cast<PythonScriptModifierApplication>(someModifierApplication()))
+		if(PythonScriptModifierApplication* modApp = dynamic_object_cast<PythonScriptModifierApplication>(modifierApplication()))
 			text += modApp->logOutput();
 		_outputDisplay->setText(text);
 	}

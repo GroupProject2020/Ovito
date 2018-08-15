@@ -161,7 +161,7 @@ void BinAndReduceModifierEditor::createUI(const RolloutInsertionParameters& roll
 ******************************************************************************/
 bool BinAndReduceModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(event.sender() == editObject() && event.type() == ReferenceEvent::ObjectStatusChanged) {
+	if(source == modifierApplication() && event.type() == ReferenceEvent::ObjectStatusChanged) {
 		plotLater(this);
 	}
 	return ModifierPropertiesEditor::referenceEvent(source, event);
@@ -173,7 +173,7 @@ bool BinAndReduceModifierEditor::referenceEvent(RefTarget* source, const Referen
 void BinAndReduceModifierEditor::plotData()
 {
 	BinAndReduceModifier* modifier = static_object_cast<BinAndReduceModifier>(editObject());
-	BinAndReduceModifierApplication* modApp = dynamic_object_cast<BinAndReduceModifierApplication>(someModifierApplication());
+	BinAndReduceModifierApplication* modApp = dynamic_object_cast<BinAndReduceModifierApplication>(modifierApplication());
 	if(!modifier || !modApp || !modifier->isEnabled())
 		return;
 
@@ -310,7 +310,7 @@ void BinAndReduceModifierEditor::updateWidgets()
 void BinAndReduceModifierEditor::onSaveData()
 {
 	BinAndReduceModifier* modifier = static_object_cast<BinAndReduceModifier>(editObject());
-	BinAndReduceModifierApplication* modApp = dynamic_object_cast<BinAndReduceModifierApplication>(someModifierApplication());
+	BinAndReduceModifierApplication* modApp = dynamic_object_cast<BinAndReduceModifierApplication>(modifierApplication());
 	if(!modifier || !modApp)
 		return;
 

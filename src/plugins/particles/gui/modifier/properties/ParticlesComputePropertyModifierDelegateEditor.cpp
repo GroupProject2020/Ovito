@@ -95,7 +95,7 @@ bool ParticlesComputePropertyModifierDelegateEditor::referenceEvent(RefTarget* s
 ******************************************************************************/
 void ParticlesComputePropertyModifierDelegateEditor::updateVariablesList()
 {
-	if(ComputePropertyModifierApplication* modApp = dynamic_object_cast<ComputePropertyModifierApplication>(someModifierApplication())) {
+	if(ComputePropertyModifierApplication* modApp = dynamic_object_cast<ComputePropertyModifierApplication>(modifierApplication())) {
 		const QStringList& inputVariableNames = modApp->delegateInputVariableNames();
 		for(AutocompleteLineEdit* box : neighborExpressionLineEdits)
 			box->setWordList(inputVariableNames);

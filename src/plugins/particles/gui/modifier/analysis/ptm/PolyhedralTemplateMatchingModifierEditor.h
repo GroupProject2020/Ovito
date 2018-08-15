@@ -23,11 +23,10 @@
 
 
 #include <plugins/particles/gui/ParticlesGui.h>
+#include <plugins/stdobj/gui/widgets/DataSeriesPlotWidget.h>
 #include <gui/properties/ModifierPropertiesEditor.h>
 #include <core/utilities/DeferredMethodInvocation.h>
 
-class QwtPlot;
-class QwtPlotCurve;
 class QwtPlotZoneItem;
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -61,13 +60,10 @@ protected:
 private:
 
 	/// The graph widget to display the RMSD histogram.
-	QwtPlot* _plot;
-
-	/// The plot item for the histogram.
-    QwtPlotCurve* _plotCurve = nullptr;
+	DataSeriesPlotWidget* _rmsdPlotWidget;
 
 	/// Marks the RMSD cutoff in the histogram plot.
-	QwtPlotZoneItem* _rmsdRange = nullptr;
+	QwtPlotZoneItem* _rmsdRangeIndicator;
 
 	/// For deferred invocation of the plot repaint function.
 	DeferredMethodInvocation<PolyhedralTemplateMatchingModifierEditor, &PolyhedralTemplateMatchingModifierEditor::plotHistogram> plotHistogramLater;

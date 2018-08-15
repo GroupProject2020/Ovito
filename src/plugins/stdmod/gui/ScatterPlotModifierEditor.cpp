@@ -177,7 +177,7 @@ void ScatterPlotModifierEditor::createUI(const RolloutInsertionParameters& rollo
 ******************************************************************************/
 bool ScatterPlotModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(event.sender() == editObject() && event.type() == ReferenceEvent::ObjectStatusChanged) {
+	if(source == modifierApplication() && event.type() == ReferenceEvent::ObjectStatusChanged) {
 		plotLater(this);
 	}
 	return ModifierPropertiesEditor::referenceEvent(source, event);
@@ -189,7 +189,7 @@ bool ScatterPlotModifierEditor::referenceEvent(RefTarget* source, const Referenc
 void ScatterPlotModifierEditor::plotScatterPlot()
 {
 	ScatterPlotModifier* modifier = static_object_cast<ScatterPlotModifier>(editObject());
-	ScatterPlotModifierApplication* modApp = dynamic_object_cast<ScatterPlotModifierApplication>(someModifierApplication());
+	ScatterPlotModifierApplication* modApp = dynamic_object_cast<ScatterPlotModifierApplication>(modifierApplication());
 	
 	if(!modifier || !modApp || !modifier->isEnabled()) {
 		if(_plotCurve) _plotCurve->hide();
@@ -300,7 +300,7 @@ void ScatterPlotModifierEditor::plotScatterPlot()
 void ScatterPlotModifierEditor::onSaveData()
 {
 	ScatterPlotModifier* modifier = static_object_cast<ScatterPlotModifier>(editObject());
-	ScatterPlotModifierApplication* modApp = dynamic_object_cast<ScatterPlotModifierApplication>(someModifierApplication());
+	ScatterPlotModifierApplication* modApp = dynamic_object_cast<ScatterPlotModifierApplication>(modifierApplication());
 	if(!modifier || !modApp)
 		return;
 

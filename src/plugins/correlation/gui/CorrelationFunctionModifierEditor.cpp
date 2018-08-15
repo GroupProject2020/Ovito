@@ -276,9 +276,7 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 ******************************************************************************/
 bool CorrelationFunctionModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if (event.sender() == editObject() &&
-		(event.type() == ReferenceEvent::TargetChanged ||
-		 event.type() == ReferenceEvent::ObjectStatusChanged)) {
+	if(source == modifierApplication() && event.type() == ReferenceEvent::ObjectStatusChanged) {
 		plotAllDataLater(this);
 	}
 	return ModifierPropertiesEditor::referenceEvent(source, event);
@@ -324,7 +322,7 @@ void CorrelationFunctionModifierEditor::plotData(const QVector<FloatType> &xData
 void CorrelationFunctionModifierEditor::plotAllData()
 {
 	CorrelationFunctionModifier* modifier = static_object_cast<CorrelationFunctionModifier>(editObject());
-	CorrelationFunctionModifierApplication* modApp = dynamic_object_cast<CorrelationFunctionModifierApplication>(someModifierApplication());
+	CorrelationFunctionModifierApplication* modApp = dynamic_object_cast<CorrelationFunctionModifierApplication>(modifierApplication());
 	if(!modifier || !modApp)
 		return;
 
@@ -441,7 +439,7 @@ void CorrelationFunctionModifierEditor::plotAllData()
 void CorrelationFunctionModifierEditor::onSaveData()
 {
 	CorrelationFunctionModifier* modifier = static_object_cast<CorrelationFunctionModifier>(editObject());
-	CorrelationFunctionModifierApplication* modApp = dynamic_object_cast<CorrelationFunctionModifierApplication>(someModifierApplication());
+	CorrelationFunctionModifierApplication* modApp = dynamic_object_cast<CorrelationFunctionModifierApplication>(modifierApplication());
 	if(!modifier || !modApp)
 		return;
 

@@ -75,7 +75,7 @@ public:
 	/// \brief Returns the results of an immediate and preliminary evaluation of the data pipeline.
 	virtual PipelineFlowState evaluatePreliminary() override;
 	
-	/// Returns the current status of the pipeline object.
+	/// \brief Returns the current status of the pipeline object.
 	virtual PipelineStatus status() const override;
 
 	/// \brief Given an animation time, computes the source frame to show.
@@ -84,7 +84,7 @@ public:
 	/// \brief Given a source frame index, returns the animation time at which it is shown.
 	virtual TimePoint sourceFrameToAnimationTime(int frame) const override;
 	
-	/// Traverses the pipeline from this modifier application up to the source and 
+	/// \brief Traverses the pipeline from this modifier application up to the source and 
 	/// returns the source object that generates the input data for the pipeline.
 	PipelineObject* pipelineSource() const;
 		

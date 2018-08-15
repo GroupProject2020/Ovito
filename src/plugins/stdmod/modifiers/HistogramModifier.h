@@ -26,6 +26,7 @@
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <plugins/stdobj/properties/GenericPropertyModifier.h>
 #include <plugins/stdobj/properties/PropertyReference.h>
+#include <plugins/stdobj/series/DataSeriesObject.h>
 
 namespace Ovito { namespace StdMod {
 
@@ -120,15 +121,10 @@ public:
 	/// Constructor.
 	Q_INVOKABLE HistogramModifierApplication(DataSet* dataset) : ModifierApplication(dataset) {}
 
-	using HistogramInterval = std::pair<FloatType,FloatType>;
- 
 private:
 
-	/// The bin values of the histogram.
-	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(PropertyPtr, binCounts, setBinCounts, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
-
-	/// The interval of the histogram.
-	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(HistogramInterval, histogramInterval, setHistogramInterval, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
+	/// The computed histogram.
+	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(OORef<DataSeriesObject>, histogram, setHistogram, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 };
 
 }	// End of namespace

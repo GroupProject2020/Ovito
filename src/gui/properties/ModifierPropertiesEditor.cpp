@@ -21,11 +21,13 @@
 
 #include <gui/GUI.h>
 #include <core/dataset/pipeline/Modifier.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include "ModifierPropertiesEditor.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
 
 IMPLEMENT_OVITO_CLASS(ModifierPropertiesEditor);
+DEFINE_REFERENCE_FIELD(ModifierPropertiesEditor, modifierApplication);
 
 /******************************************************************************
 * Constructor.
@@ -40,10 +42,33 @@ ModifierPropertiesEditor::ModifierPropertiesEditor()
 ******************************************************************************/
 bool ModifierPropertiesEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(event.type() == ReferenceEvent::ObjectStatusChanged) {
+	if(source == modifierApplication() && event.type() == ReferenceEvent::ObjectStatusChanged) {
 		updateStatusLabel();
 	}
 	return PropertiesEditor::referenceEvent(source, event);
+}
+
+/******************************************************************************
+* Is called when the value of a reference field of this RefMaker changes.
+******************************************************************************/
+void ModifierPropertiesEditor::referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget)
+{
+	// Whenever a new Modifier is being loaded into the editor, 
+	// update our reference to the current ModifierApplication.
+	if(field == PROPERTY_FIELD(editObject)) {
+		ModifierApplication* newModApp = nullptr;
+		if(Modifier* modifier = dynamic_object_cast<Modifier>(newTarget)) {
+			// Look up the ModifierApplication that is currently open in the parent editor of this modifier's editor.
+			if(parentEditor())
+				newModApp = dynamic_object_cast<ModifierApplication>(parentEditor()->editObject());
+		}
+		else if(ModifierPropertiesEditor* parent = dynamic_object_cast<ModifierPropertiesEditor>(parentEditor())) {
+			newModApp = parent->modifierApplication();
+		}
+		_modifierApplication.set(this, PROPERTY_FIELD(modifierApplication), newModApp);
+	}
+
+	PropertiesEditor::referenceReplaced(field, oldTarget, newTarget);
 }
 
 /******************************************************************************
@@ -53,8 +78,8 @@ void ModifierPropertiesEditor::updateStatusLabel()
 {
 	if(!_statusLabel) return;
 
-	if(Modifier* modifier = static_object_cast<Modifier>(editObject())) {
-		_statusLabel->setStatus(modifier->globalStatus());
+	if(ModifierApplication* modApp = modifierApplication()) {
+		_statusLabel->setStatus(modApp->status());
 	}
 	else {
 		_statusLabel->clearStatus();
@@ -87,26 +112,12 @@ QVector<ModifierApplication*> ModifierPropertiesEditor::modifierApplications()
 }
 
 /******************************************************************************
-* Returns one of the ModifierApplications of the modifier currently being edited.
+* Return the input data of the Modifier being edited (for the current 
+* ModifierApplication).
 ******************************************************************************/
-ModifierApplication* ModifierPropertiesEditor::someModifierApplication()
+PipelineFlowState ModifierPropertiesEditor::getModifierInput()
 {
-	// TODO: Return the ModifierApplication that is part of the currently selected pipeline.
-	if(Modifier* modifier = dynamic_object_cast<Modifier>(editObject()))
-		return modifier->someModifierApplication();
-	else if(ModifierPropertiesEditor* parent = dynamic_object_cast<ModifierPropertiesEditor>(parentEditor()))
-		return parent->someModifierApplication();
-	else
-		return nullptr;
-}
-
-/******************************************************************************
-* Return the input data of the Modifier being edited for one of its 
-* ModifierApplications.
-******************************************************************************/
-PipelineFlowState ModifierPropertiesEditor::getSomeModifierInput()
-{
-	if(ModifierApplication* modApp = someModifierApplication()) {
+	if(ModifierApplication* modApp = modifierApplication()) {
 		return modApp->evaluateInputPreliminary();
 	}
 	return {};

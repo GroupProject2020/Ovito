@@ -25,6 +25,7 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/modifier/analysis/StructureIdentificationModifier.h>
 #include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/stdobj/series/DataSeriesObject.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
@@ -137,17 +138,11 @@ private:
 		const PropertyPtr& deformationGradients() const { return _deformationGradients; }
 		const PropertyPtr& orderingTypes() const { return _orderingTypes; }
 		
-		/// Returns the histogram of computed RMSD values.
-		const QVector<int>& rmsdHistogramData() const { return _rmsdHistogramData; }
+		/// Returns the RMSD value range of the histogram.
+		FloatType rmsdHistogramRange() const { return _rmsdHistogramRange; }
 
-		/// Returns the bin size of the RMSD histogram.
-		FloatType rmsdHistogramBinSize() const { return _rmsdHistogramBinSize; }
-	
-		/// Replaces the stored histogram data.
-		void setRmsdHistogram(QVector<int> counts, FloatType rmsdHistogramBinSize) {
-			_rmsdHistogramData = std::move(counts);
-			_rmsdHistogramBinSize = rmsdHistogramBinSize;
-		}
+		/// Returns the histogram of computed RMSD values.
+		const PropertyPtr& rmsdHistogram() const { return _rmsdHistogram; }
 
 	protected:
 		
@@ -162,10 +157,8 @@ private:
 		const PropertyPtr _orientations;
 		const PropertyPtr _deformationGradients;
 		const PropertyPtr _orderingTypes;
-		/// The histogram of computed RMSD values.
-		QVector<int> _rmsdHistogramData;
-		/// The bin size of the RMSD histogram;
-		FloatType _rmsdHistogramBinSize = 0;	
+		PropertyPtr _rmsdHistogram;
+		FloatType _rmsdHistogramRange;
 	};
 
 private:
@@ -208,26 +201,10 @@ public:
 	/// Constructor.
 	Q_INVOKABLE PolyhedralTemplateMatchingModifierApplication(DataSet* dataset) : StructureIdentificationModifierApplication(dataset) {}
  
-	/// Returns the histogram of computed RMSD values.
-	const QVector<int>& rmsdHistogramData() const { return _rmsdHistogramData; }
-
-	/// Returns the bin size of the RMSD histogram.
-	FloatType rmsdHistogramBinSize() const { return _rmsdHistogramBinSize; }
-	 
-	/// Replaces the stored histogram data.
-	void setRmsdHistogram(QVector<int> counts, FloatType rmsdHistogramBinSize) {
-		_rmsdHistogramData = std::move(counts);
-		_rmsdHistogramBinSize = rmsdHistogramBinSize;
-		notifyDependents(ReferenceEvent::ObjectStatusChanged);
-	}
- 
 private:
  
-	/// The histogram of computed RMSD values.
-	QVector<int> _rmsdHistogramData;	
-
-	/// The bin size of the RMSD histogram;
-	FloatType _rmsdHistogramBinSize = 0;
+	/// The RMSD histogram.
+	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(OORef<DataSeriesObject>, rmsdHistogram, setRmsdHistogram, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 };
 
 OVITO_END_INLINE_NAMESPACE

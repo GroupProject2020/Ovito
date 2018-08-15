@@ -18,14 +18,7 @@ def _HistogramModifier_histogram(self):
     Note that accessing this array is only possible after the modifier has computed its results. 
     Thus, you have to call :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` first to ensure that the histogram was generated.
     """
-    # Get bin counts
-    ydata = self._histogram_data
-    if len(ydata) != self.bin_count:
-        raise RuntimeError("The modifier has not computed its results yet.")
-    # Compute bin center positions
-    binsize = (self._interval_end - self._interval_start) / len(ydata)
-    xdata = numpy.linspace(self._interval_start + binsize * 0.5, self._interval_end + binsize * 0.5, len(ydata), endpoint = False)
-    return numpy.transpose((xdata, ydata))
+    return numpy.transpose((self._histogram_data_x, self._histogram_data_y))
 HistogramModifier.histogram = property(_HistogramModifier_histogram)
 
 

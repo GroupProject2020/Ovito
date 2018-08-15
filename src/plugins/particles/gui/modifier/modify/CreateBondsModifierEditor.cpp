@@ -106,12 +106,10 @@ void CreateBondsModifierEditor::updatePairCutoffList()
 
 	// Obtain the list of particle types in the modifier's input.
 	PairCutoffTableModel::ContentType pairCutoffs;
-	PipelineFlowState inputState = getSomeModifierInput();
-	ParticleProperty* typeProperty = ParticleProperty::findInState(inputState, ParticleProperty::TypeProperty);
-	if(typeProperty) {
+	const PipelineFlowState& inputState = getModifierInput();
+	if(ParticleProperty* typeProperty = ParticleProperty::findInState(inputState, ParticleProperty::TypeProperty)) {
 		for(auto ptype1 = typeProperty->elementTypes().constBegin(); ptype1 != typeProperty->elementTypes().constEnd(); ++ptype1) {
 			for(auto ptype2 = ptype1; ptype2 != typeProperty->elementTypes().constEnd(); ++ptype2) {
-//				pairCutoffs.push_back(qMakePair((*ptype1)->nameOrId(), (*ptype2)->nameOrId()));
 				pairCutoffs.emplace_back(OORef<ElementType>(*ptype1), OORef<ElementType>(*ptype2));
 			}
 		}

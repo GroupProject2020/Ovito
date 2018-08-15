@@ -244,7 +244,7 @@ void SliceModifierEditor::onCenterOfBox()
 
 	// Get the simulation cell from the input object to center the slicing plane in
 	// the center of the simulation cell.
-	PipelineFlowState input = getSomeModifierInput();
+	const PipelineFlowState& input = getModifierInput();
 	if(SimulationCellObject* cell = input.findObject<SimulationCellObject>()) {
 
 		Point3 centerPoint = cell->cellMatrix() * Point3(0.5, 0.5, 0.5);

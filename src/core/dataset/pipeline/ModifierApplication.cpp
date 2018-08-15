@@ -119,13 +119,7 @@ void ModifierApplication::referenceReplaced(const PropertyFieldDescriptor& field
 ******************************************************************************/
 void ModifierApplication::notifyDependentsImpl(const ReferenceEvent& event)
 {
-	if(event.type() == ReferenceEvent::ObjectStatusChanged) {
-		// When this ModifierApplication's status changes, the status of the 
-		// referenced Modifier does potentially change as well.
-		if(modifier())
-			modifier()->notifyDependents(ReferenceEvent::ObjectStatusChanged);
-	}
-	else if(event.type() == ReferenceEvent::TargetChanged) {
+	if(event.type() == ReferenceEvent::TargetChanged) {
 		// Invalidate cached results when this modifier application changes.
 		invalidatePipelineCache();
 	}
@@ -213,7 +207,7 @@ Future<PipelineFlowState> ModifierApplication::evaluateInternal(TimePoint time)
 					try {
 						PipelineFlowState state = future.result();
 						if(modifier()) state.intersectStateValidity(modifier()->modifierValidity(time));
-						if(inputData.status().type() != PipelineStatus::Error)
+						if(inputData.status().type() != PipelineStatus::Error || state.status().type() == PipelineStatus::Success)
 							setStatus(state.status());
 						else
 							setStatus(PipelineStatus());

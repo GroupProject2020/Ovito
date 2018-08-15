@@ -28,6 +28,7 @@ SET(SourceFiles
 	widgets/PropertyClassParameterUI.cpp
 	widgets/PropertyReferenceParameterUI.cpp
 	widgets/PropertySelectionComboBox.cpp
+	widgets/DataSeriesPlotWidget.cpp
 )
 
 # Compile resources.

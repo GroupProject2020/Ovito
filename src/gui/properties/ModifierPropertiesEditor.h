@@ -47,19 +47,19 @@ public:
 	/// Editor class implementation can add this widget to their user interface.
 	StatusWidget* statusLabel();
 
-	/// Returns the list of ModifierApplications of the modifier currently being edited.
+	/// Returns the list of all ModifierApplications of the modifier currently being edited.
 	QVector<ModifierApplication*> modifierApplications();
 
-	/// Returns one of the ModifierApplications of the modifier currently being edited.
-	ModifierApplication* someModifierApplication();
-
-	/// Return the input data of the Modifier being edited for one of its ModifierApplications.
-	PipelineFlowState getSomeModifierInput();
+	/// Return the input data of the Modifier being edited (for the selected ModifierApplication).
+	PipelineFlowState getModifierInput();
 
 protected:
 
 	/// This method is called when a reference target changes.
 	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
+
+	/// Is called when the value of a reference field of this RefMaker changes.
+	virtual void referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget) override;
 
 private Q_SLOTS:
 
@@ -70,6 +70,9 @@ private:
 
 	// UI component for displaying the modifier's status.
 	QPointer<StatusWidget> _statusLabel;
+
+	/// The modifier application being edited.
+	DECLARE_REFERENCE_FIELD_FLAGS(ModifierApplication, modifierApplication, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 };
 
 OVITO_END_INLINE_NAMESPACE

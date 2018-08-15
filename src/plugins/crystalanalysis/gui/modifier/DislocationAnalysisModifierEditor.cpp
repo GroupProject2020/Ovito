@@ -113,7 +113,7 @@ void DislocationAnalysisModifierEditor::createUI(const RolloutInsertionParameter
 	layout->addWidget(new QLabel(tr("Dislocation analysis results:")));
 	layout->addWidget(_burgersFamilyListUI->tableWidget());
 	connect(this, &PropertiesEditor::contentsChanged, [this](RefTarget* editObject) {
-		_burgersFamilyListUI->setModApp(static_object_cast<DislocationAnalysisModifierApplication>(someModifierApplication()));
+		_burgersFamilyListUI->setModApp(static_object_cast<DislocationAnalysisModifierApplication>(modifierApplication()));
 	});
 
 	// Line postprocessing.

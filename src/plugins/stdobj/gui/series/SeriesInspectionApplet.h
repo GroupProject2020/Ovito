@@ -24,11 +24,8 @@
 
 #include <plugins/stdobj/gui/StdObjGui.h>
 #include <plugins/stdobj/series/DataSeriesObject.h>
+#include <plugins/stdobj/gui/widgets/DataSeriesPlotWidget.h>
 #include <gui/mainwin/data_inspector/DataInspectionApplet.h>
-
-class QwtPlot;
-class QwtPlotCurve;
-class QwtPlotLegendItem;
 
 namespace Ovito { namespace StdObj {
 
@@ -58,8 +55,8 @@ public:
 	/// Lets the applet update the contents displayed in the inspector.
 	virtual void updateDisplay(const PipelineFlowState& state, PipelineSceneNode* sceneNode) override;
 
-	/// Returns the widget for selecting the current data plot.
-	QListWidget* plotSelectionWidget() const { return _plotSelectionWidget; }
+	/// Returns the widget for selecting the current data series.
+	QListWidget* seriesSelectionWidget() const { return _seriesSelectionWidget; }
 
 	/// Returns the plotting widget.
 	QwtPlot* plotWidget() const { return _plotWidget; }
@@ -71,17 +68,11 @@ private Q_SLOTS:
 
 private:
 
-	/// The widget for selecting the current data plot.
-	QListWidget* _plotSelectionWidget = nullptr;
+	/// The widget for selecting the current data series.
+	QListWidget* _seriesSelectionWidget = nullptr;
 
 	/// The plotting widget.
-	QwtPlot* _plotWidget;
-
-	/// The plot item(s).
-    std::vector<QwtPlotCurve*> _plotCurves;	
-
-	/// The plot legend.
-	QwtPlotLegendItem* _legendItem = nullptr;
+	DataSeriesPlotWidget* _plotWidget;
 };
 
 }	// End of namespace

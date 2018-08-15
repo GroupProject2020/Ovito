@@ -52,6 +52,7 @@ SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, orderingTypes, "Ord
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(PolyhedralTemplateMatchingModifier, rmsdCutoff, FloatParameterUnit, 0);
 
 IMPLEMENT_OVITO_CLASS(PolyhedralTemplateMatchingModifierApplication);
+DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifierApplication, rmsdHistogram);
 SET_MODIFIER_APPLICATION_TYPE(PolyhedralTemplateMatchingModifier, PolyhedralTemplateMatchingModifierApplication);
 
 /******************************************************************************
@@ -262,21 +263,21 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 		return;
 
 	// Determine histogram bin size based on maximum RMSD value.
-	QVector<int> rmsdHistogramData(100, 0);
-	FloatType rmsdHistogramBinSize = FloatType(1.01) * *std::max_element(rmsd()->constDataFloat(), rmsd()->constDataFloat() + rmsd()->size());
-	rmsdHistogramBinSize /= rmsdHistogramData.size();
+	const size_t numHistogramBins = 100;
+	_rmsdHistogram = std::make_shared<PropertyStorage>(numHistogramBins, PropertyStorage::Int64, 1, 0, tr("Count"), true); 
+	FloatType rmsdHistogramBinSize = FloatType(1.01) * *std::max_element(rmsd()->constDataFloat(), rmsd()->constDataFloat() + rmsd()->size()) / numHistogramBins;
 	if(rmsdHistogramBinSize <= 0) rmsdHistogramBinSize = 1;
+	_rmsdHistogramRange = rmsdHistogramBinSize * numHistogramBins;
 
-	// Build RMSD histogram.
+	// Perform binning of RMSD values.
 	for(size_t index = 0; index < structures()->size(); index++) {
 		if(structures()->getInt(index) != OTHER) {
 			OVITO_ASSERT(rmsd()->getFloat(index) >= 0);
 			int binIndex = rmsd()->getFloat(index) / rmsdHistogramBinSize;
-			if(binIndex < rmsdHistogramData.size())
-				rmsdHistogramData[binIndex]++;
+			if(binIndex < numHistogramBins)
+				_rmsdHistogram->dataInt64()[binIndex]++;
 		}
 	}
-	setRmsdHistogram(std::move(rmsdHistogramData), rmsdHistogramBinSize);
 }
 
 /******************************************************************************
@@ -348,8 +349,17 @@ PipelineFlowState PolyhedralTemplateMatchingModifier::PTMEngine::emitResults(Tim
 		orderingProperty->setElementTypes(modifier->orderingTypes());		
 	}
 
-	// Store the RMSD histogram in the ModifierApplication.
-	static_object_cast<PolyhedralTemplateMatchingModifierApplication>(modApp)->setRmsdHistogram(rmsdHistogramData(), rmsdHistogramBinSize());
+	// Output RMSD histogram.
+	OORef<DataSeriesObject> seriesObj = new DataSeriesObject(modApp->dataset());
+	seriesObj->setY(rmsdHistogram());
+	seriesObj->setAxisLabelX(tr("RMSD"));
+	seriesObj->setIntervalStart(0);
+	seriesObj->setIntervalEnd(rmsdHistogramRange());
+	seriesObj->setTitle(poh.generateUniqueSeriesName(QStringLiteral("RMSD")));
+	output.addObject(seriesObj);
+
+	// Store the RMSD histogram in the ModifierApplication in order to display it in the modifier's UI panel.
+	static_object_cast<PolyhedralTemplateMatchingModifierApplication>(modApp)->setRmsdHistogram(std::move(seriesObj));
 	
 	return output;
 }

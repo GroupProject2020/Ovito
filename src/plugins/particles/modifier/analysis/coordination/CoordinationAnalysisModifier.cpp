@@ -48,7 +48,6 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(CoordinationAnalysisModifier, numberOfBins, I
 IMPLEMENT_OVITO_CLASS(CoordinationAnalysisModifierApplication);
 SET_MODIFIER_APPLICATION_TYPE(CoordinationAnalysisModifier, CoordinationAnalysisModifierApplication);
 DEFINE_PROPERTY_FIELD(CoordinationAnalysisModifierApplication, rdf);
-SET_PROPERTY_FIELD_CHANGE_EVENT(CoordinationAnalysisModifierApplication, rdf, ReferenceEvent::ObjectStatusChanged);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -243,8 +242,10 @@ PipelineFlowState CoordinationAnalysisModifier::CoordinationAnalysisEngine::emit
 
 	// Output RDF histogram(s).
 	OORef<DataSeriesObject> seriesObj = new DataSeriesObject(modApp->dataset());
-	seriesObj->setx(rdfX());
-	seriesObj->sety(rdfY());
+	seriesObj->setY(rdfY());
+	seriesObj->setIntervalStart(0);
+	seriesObj->setIntervalEnd(cutoff());
+	seriesObj->setAxisLabelX(tr("Pair separation distance"));
 	seriesObj->setTitle(poh.generateUniqueSeriesName(QStringLiteral("RDF")));
 	output.addObject(seriesObj);
 

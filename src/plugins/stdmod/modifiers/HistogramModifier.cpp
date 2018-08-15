@@ -61,10 +61,7 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(HistogramModifier, numberOfBins, IntegerParam
 
 IMPLEMENT_OVITO_CLASS(HistogramModifierApplication);
 SET_MODIFIER_APPLICATION_TYPE(HistogramModifier, HistogramModifierApplication);
-DEFINE_PROPERTY_FIELD(HistogramModifierApplication, binCounts);
-DEFINE_PROPERTY_FIELD(HistogramModifierApplication, histogramInterval);
-SET_PROPERTY_FIELD_CHANGE_EVENT(HistogramModifierApplication, binCounts, ReferenceEvent::ObjectStatusChanged);
-SET_PROPERTY_FIELD_CHANGE_EVENT(HistogramModifierApplication, histogramInterval, ReferenceEvent::ObjectStatusChanged);
+DEFINE_PROPERTY_FIELD(HistogramModifierApplication, histogram);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -130,7 +127,7 @@ void HistogramModifier::propertyChanged(const PropertyFieldDescriptor& field)
 PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Reset the stored results in the ModifierApplication.
-	static_object_cast<HistogramModifierApplication>(modApp)->setBinCounts({});
+	static_object_cast<HistogramModifierApplication>(modApp)->setHistogram(nullptr);
 	
 	if(!propertyClass())
 		throwException(tr("No input property class selected."));
@@ -142,9 +139,6 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 		throwException(tr("Modifier was set to operate on '%1', but the selected input is a '%2' property.")
 			.arg(propertyClass()->pythonName()).arg(sourceProperty().propertyClass()->propertyClassDisplayName()));
 		
-	// Allocate output data array.
-	QVector<size_t> histogramData(std::max(1, numberOfBins()), 0);
-
 	// Get the input property.
 	PropertyObject* property = sourceProperty().findInState(input);
 	if(!property)
@@ -154,7 +148,7 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 	if(vecComponent >= property->componentCount())
 		throwException(tr("The selected vector component is out of range. The property '%1' has only %2 components per element.").arg(property->name()).arg(property->componentCount()));
 	size_t vecComponentCount = property->componentCount();
-		
+
 	// Get the input selection if filtering was enabled by the user.
 	ConstPropertyPtr inputSelection;
 	if(onlySelected()) {
@@ -180,6 +174,10 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 	FloatType intervalStart = xAxisRangeStart();
 	FloatType intervalEnd = xAxisRangeEnd();
 
+	// Allocate output data array.
+	auto histogram = std::make_shared<PropertyStorage>(std::max(1, numberOfBins()), PropertyStorage::Int64, 1, 0, tr("Count"), true);
+	auto histogramData = histogram->dataInt64();
+
 	if(property->size() > 0) {
 		if(property->dataType() == PropertyStorage::Float) {
 			auto v_begin = property->constDataFloat() + vecComponent;
@@ -197,13 +195,13 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 			}
 			// Perform binning.
 			if(intervalEnd > intervalStart) {
-				FloatType binSize = (intervalEnd - intervalStart) / histogramData.size();
+				FloatType binSize = (intervalEnd - intervalStart) / histogram->size();
 				const int* sel = inputSelection ? inputSelection->constDataInt() : nullptr;
 				for(auto v = v_begin; v != v_end; v += vecComponentCount) {
 					if(sel && !*sel++) continue;
 					if(*v < intervalStart || *v > intervalEnd) continue;
 					int binIndex = (*v - intervalStart) / binSize;
-					histogramData[std::max(0, std::min(binIndex, histogramData.size() - 1))]++;
+					histogramData[std::max(0, std::min(binIndex, (int)histogram->size() - 1))]++;
 				}
 			}
 			else {
@@ -242,13 +240,13 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 			}
 			// Perform binning.
 			if(intervalEnd > intervalStart) {
-				FloatType binSize = (intervalEnd - intervalStart) / histogramData.size();
+				FloatType binSize = (intervalEnd - intervalStart) / histogram->size();
 				const int* sel = inputSelection ? inputSelection->constDataInt() : nullptr;
 				for(auto v = v_begin; v != v_end; v += vecComponentCount) {
 					if(sel && !*sel++) continue;
 					if(*v < intervalStart || *v > intervalEnd) continue;
 					int binIndex = ((FloatType)*v - intervalStart) / binSize;
-					histogramData[std::max(0, std::min(binIndex, histogramData.size() - 1))]++;
+					histogramData[std::max(0, std::min(binIndex, (int)histogram->size() - 1))]++;
 				}
 			}
 			else {
@@ -279,25 +277,19 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 		intervalStart = intervalEnd = 0;
 	}
 
-	// Output a plot object.
-	auto xcoords = std::make_shared<PropertyStorage>(histogramData.size(), PropertyStorage::Float, 1, 0, sourceProperty().nameWithComponent(), false);
-	auto ycoords = std::make_shared<PropertyStorage>(histogramData.size(), PropertyStorage::Int64, 1, 0, tr("Count"), false);
-	FloatType binSize = (intervalEnd - intervalStart) / histogramData.size();
-	for(size_t i = 0; i < histogramData.size(); i++) {
-		xcoords->setFloat(i, binSize * (i + FloatType(0.5)) + intervalStart);
-		ycoords->setInt64(i, histogramData[i]);
-	}
+	// Output a data series object with the histogram data.
 	OORef<DataSeriesObject> seriesObj = new DataSeriesObject(modApp->dataset());
 	seriesObj->setTitle(oh.generateUniqueSeriesName(QStringLiteral("Histogram [%1]").arg(sourceProperty().nameWithComponent())));
-	seriesObj->setx(xcoords);
-	seriesObj->sety(ycoords);
+	seriesObj->setAxisLabelX(sourceProperty().nameWithComponent());
+	seriesObj->setIntervalStart(intervalStart);
+	seriesObj->setIntervalEnd(intervalEnd);
+	seriesObj->setY(std::move(histogram));
 	output.addObject(seriesObj);
 
-	// Store results in the ModifierApplication.
-	static_object_cast<HistogramModifierApplication>(modApp)->setBinCounts(ycoords);
-	static_object_cast<HistogramModifierApplication>(modApp)->setHistogramInterval({intervalStart, intervalEnd});
-	notifyDependents(ReferenceEvent::ObjectStatusChanged);
-	
+	// Store the histogram in the ModifierApplication in order to display it in the modifier's UI panel.
+	static_object_cast<HistogramModifierApplication>(modApp)->setHistogram(std::move(seriesObj));
+	modApp->notifyDependents(ReferenceEvent::ObjectStatusChanged);
+
 	QString statusMessage;
 	if(outputSelection) {
 		statusMessage = tr("%1 %2 selected (%3%)")

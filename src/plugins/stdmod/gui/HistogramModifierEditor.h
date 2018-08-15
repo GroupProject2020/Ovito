@@ -25,10 +25,9 @@
 #include <plugins/stdmod/gui/StdModGui.h>
 #include <gui/properties/ModifierPropertiesEditor.h>
 #include <plugins/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
+#include <plugins/stdobj/gui/widgets/DataSeriesPlotWidget.h>
 #include <core/utilities/DeferredMethodInvocation.h>
 
-class QwtPlot;
-class QwtPlotCurve;
 class QwtPlotZoneItem;
 
 namespace Ovito { namespace StdMod {
@@ -64,13 +63,10 @@ protected Q_SLOTS:
 private:
 
 	/// The graph widget to display the histogram.
-	QwtPlot* _histogramPlot;
-
-	/// The plot item for the histogram.
-    QwtPlotCurve* _plotCurve = nullptr;
+	DataSeriesPlotWidget* _plotWidget;
 
 	/// The plot item for indicating the seletion range.
-	QwtPlotZoneItem* _selectionRange = nullptr;
+	QwtPlotZoneItem* _selectionRangeIndicator;
 
 	/// For deferred invocation of the plot repaint function.
 	DeferredMethodInvocation<HistogramModifierEditor, &HistogramModifierEditor::plotHistogram> plotHistogramLater;

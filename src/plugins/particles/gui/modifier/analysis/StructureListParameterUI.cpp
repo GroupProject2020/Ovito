@@ -48,7 +48,7 @@ QVariant StructureListParameterUI::getItemData(RefTarget* target, const QModelIn
 	ParticleType* stype = dynamic_object_cast<ParticleType>(target);
 	StructureIdentificationModifier* modifier = dynamic_object_cast<StructureIdentificationModifier>(editor()->editObject());
 	ModifierPropertiesEditor* modEditor = dynamic_object_cast<ModifierPropertiesEditor>(editor()); 
-	StructureIdentificationModifierApplication* modApp = modEditor ? dynamic_object_cast<StructureIdentificationModifierApplication>(modEditor->someModifierApplication()) : nullptr;
+	StructureIdentificationModifierApplication* modApp = modEditor ? dynamic_object_cast<StructureIdentificationModifierApplication>(modEditor->modifierApplication()) : nullptr;
 
 	if(stype && modifier && modApp) {
 		if(role == Qt::DisplayRole) {

@@ -30,10 +30,7 @@
 #include <plugins/stdmod/modifiers/HistogramModifier.h>
 #include "HistogramModifierEditor.h"
 
-#include <qwt/qwt_plot.h>
-#include <qwt/qwt_plot_curve.h>
 #include <qwt/qwt_plot_zoneitem.h>
-#include <qwt/qwt_plot_grid.h>
 
 namespace Ovito { namespace StdMod {
 
@@ -75,14 +72,17 @@ void HistogramModifierEditor::createUI(const RolloutInsertionParameters& rollout
 
 	layout->addLayout(gridlayout);
 
-	_histogramPlot = new QwtPlot();
-	_histogramPlot->setMinimumHeight(240);
-	_histogramPlot->setMaximumHeight(240);
-	_histogramPlot->setCanvasBackground(Qt::white);
-	_histogramPlot->setAxisTitle(QwtPlot::yLeft, tr("Count"));
+	_plotWidget = new DataSeriesPlotWidget();
+	_plotWidget->setMinimumHeight(240);
+	_plotWidget->setMaximumHeight(240);
+	_selectionRangeIndicator = new QwtPlotZoneItem();
+	_selectionRangeIndicator->setOrientation(Qt::Vertical);
+	_selectionRangeIndicator->setZ(1);
+	_selectionRangeIndicator->attach(_plotWidget);
+	_selectionRangeIndicator->hide();
 
 	layout->addWidget(new QLabel(tr("Histogram:")));
-	layout->addWidget(_histogramPlot);
+	layout->addWidget(_plotWidget);
 	connect(this, &HistogramModifierEditor::contentsReplaced, this, &HistogramModifierEditor::plotHistogram);
 
 	QPushButton* saveDataButton = new QPushButton(tr("Save histogram data"));
@@ -175,7 +175,7 @@ void HistogramModifierEditor::createUI(const RolloutInsertionParameters& rollout
 ******************************************************************************/
 bool HistogramModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(event.sender() == editObject() && (event.type() == ReferenceEvent::ObjectStatusChanged || event.type() == ReferenceEvent::TargetChanged)) {
+	if(source == modifierApplication() && event.type() == ReferenceEvent::ObjectStatusChanged) {
 		plotHistogramLater(this);
 	}
 	return ModifierPropertiesEditor::referenceEvent(source, event);
@@ -187,71 +187,27 @@ bool HistogramModifierEditor::referenceEvent(RefTarget* source, const ReferenceE
 void HistogramModifierEditor::plotHistogram()
 {
 	HistogramModifier* modifier = static_object_cast<HistogramModifier>(editObject());
-	HistogramModifierApplication* modApp = dynamic_object_cast<HistogramModifierApplication>(someModifierApplication());
-	if(!modifier || !modApp || !modifier->isEnabled() || !modApp->binCounts()) {
-		if(_plotCurve) _plotCurve->hide();
-		_histogramPlot->replot();
-		return;
+
+	if(modifier && modifier->fixYAxisRange()) {
+		_plotWidget->setAxisScale(QwtPlot::yLeft, modifier->yAxisRangeStart(), modifier->yAxisRangeEnd());
 	}
-
-	QString axisTitle = modifier->sourceProperty().nameWithComponent();
-	_histogramPlot->setAxisTitle(QwtPlot::xBottom, axisTitle);
-
-	if(modifier->fixXAxisRange() == false) {
-		modifier->setXAxisRange(modApp->histogramInterval().first, modApp->histogramInterval().second);
+	else {
+		_plotWidget->setAxisAutoScale(QwtPlot::yLeft);
 	}
 	
-	size_t binCount = modApp->binCounts()->size();
-	FloatType binSize = (modifier->xAxisRangeEnd() - modifier->xAxisRangeStart()) / binCount;
-	QVector<QPointF> plotData(binCount);
-	for(size_t i = 0; i < binCount; i++) {
-		plotData[i].rx() = binSize * (i + FloatType(0.5)) + modifier->xAxisRangeStart();
-		plotData[i].ry() = modApp->binCounts()->getInt64(i);
-	}
-
-	if(modifier->fixYAxisRange() == false) {
-		auto minmaxHistogramData = std::minmax_element(modApp->binCounts()->constDataInt64(), modApp->binCounts()->constDataInt64() + modApp->binCounts()->size());
-		modifier->setYAxisRange(*minmaxHistogramData.first, *minmaxHistogramData.second);
-	}
-
-	if(!_plotCurve) {
-		_plotCurve = new QwtPlotCurve();
-	    _plotCurve->setRenderHint(QwtPlotItem::RenderAntialiased, true);
-		_plotCurve->setBrush(QColor(255, 160, 100));
-		_plotCurve->attach(_histogramPlot);
-		QwtPlotGrid* plotGrid = new QwtPlotGrid();
-		plotGrid->setPen(Qt::gray, 0, Qt::DotLine);
-		plotGrid->attach(_histogramPlot);
-	}
-	_plotCurve->setSamples(plotData);
-	_plotCurve->show();
-
-	if(!modifier->fixXAxisRange())
-		_histogramPlot->setAxisAutoScale(QwtPlot::xBottom);
-	else
-		_histogramPlot->setAxisScale(QwtPlot::xBottom, modifier->xAxisRangeStart(), modifier->xAxisRangeEnd());
-
-	if(!modifier->fixYAxisRange())
-		_histogramPlot->setAxisAutoScale(QwtPlot::yLeft);
-	else
-		_histogramPlot->setAxisScale(QwtPlot::yLeft, modifier->yAxisRangeStart(), modifier->yAxisRangeEnd());
-
-	if(modifier->selectInRange()) {
-		if(!_selectionRange) {
-			_selectionRange = new QwtPlotZoneItem();
-			_selectionRange->setOrientation(Qt::Vertical);
-			_selectionRange->setZ(_plotCurve->z() + 1);
-			_selectionRange->attach(_histogramPlot);
-		}
-		_selectionRange->show();
+	if(modifier && modifier->selectInRange()) {
 		auto minmax = std::minmax(modifier->selectionRangeStart(), modifier->selectionRangeEnd());
-		_selectionRange->setInterval(minmax.first, minmax.second);
+		_selectionRangeIndicator->setInterval(minmax.first, minmax.second);
+		_selectionRangeIndicator->show();
 	}
-	else if(_selectionRange) {
-		_selectionRange->hide();
+	else {
+		_selectionRangeIndicator->hide();
 	}
 
-	_histogramPlot->replot();
+	DataSeriesObject* series = nullptr;
+	if(HistogramModifierApplication* modApp = dynamic_object_cast<HistogramModifierApplication>(modifierApplication()))
+		series = modApp->histogram();
+	_plotWidget->setSeries(series);
 }
 
 /******************************************************************************
@@ -260,8 +216,8 @@ void HistogramModifierEditor::plotHistogram()
 void HistogramModifierEditor::onSaveData()
 {
 	HistogramModifier* modifier = static_object_cast<HistogramModifier>(editObject());
-	HistogramModifierApplication* modApp = dynamic_object_cast<HistogramModifierApplication>(someModifierApplication());
-	if(!modifier || !modApp || !modApp->binCounts())
+	HistogramModifierApplication* modApp = dynamic_object_cast<HistogramModifierApplication>(modifierApplication());
+	if(!modifier || !modApp || !modApp->histogram())
 		return;
 
 	QString fileName = QFileDialog::getSaveFileName(mainWindow(),
@@ -269,6 +225,8 @@ void HistogramModifierEditor::onSaveData()
 	if(fileName.isEmpty())
 		return;
 
+	DataSeriesObject* histogram = modApp->histogram();
+	const auto& histogramY = histogram->y();
 	try {
 
 		QFile file(fileName);
@@ -279,11 +237,10 @@ void HistogramModifierEditor::onSaveData()
 
 		QString sourceTitle = modifier->sourceProperty().nameWithComponent();
 
-		FloatType binSize = (modifier->xAxisRangeEnd() - modifier->xAxisRangeStart()) / modApp->binCounts()->size();
+		FloatType binSize = (histogram->intervalEnd() - histogram->intervalStart()) / histogramY->size();
 		stream << "# " << sourceTitle << " histogram (bin size: " << binSize << ")" << endl;
-		for(size_t i = 0; i < modApp->binCounts()->size(); i++) {
-			stream << (binSize * (FloatType(i) + FloatType(0.5)) + modifier->xAxisRangeStart()) << " " <<
-						modApp->binCounts()->getInt64(i) << endl;
+		for(size_t i = 0; i < histogramY->size(); i++) {
+			stream << histogram->getXValue(i) << " " << histogramY->getInt64(i) << endl;
 		}
 	}
 	catch(const Exception& ex) {

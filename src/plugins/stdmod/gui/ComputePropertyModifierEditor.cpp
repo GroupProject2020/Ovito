@@ -142,7 +142,7 @@ void ComputePropertyModifierEditor::updateVariablesList()
 	ComputePropertyModifier* mod = static_object_cast<ComputePropertyModifier>(editObject());
 	if(!mod) return;
 
-	if(ComputePropertyModifierApplication* modApp = dynamic_object_cast<ComputePropertyModifierApplication>(someModifierApplication())) {
+	if(ComputePropertyModifierApplication* modApp = dynamic_object_cast<ComputePropertyModifierApplication>(modifierApplication())) {
 		const QStringList& inputVariableNames = modApp->inputVariableNames();
 		for(AutocompleteLineEdit* box : expressionLineEdits)
 			box->setWordList(inputVariableNames);

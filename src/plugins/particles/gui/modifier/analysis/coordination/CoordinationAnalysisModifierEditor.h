@@ -23,12 +23,9 @@
 
 
 #include <plugins/particles/gui/ParticlesGui.h>
+#include <plugins/stdobj/gui/widgets/DataSeriesPlotWidget.h>
 #include <gui/properties/ModifierPropertiesEditor.h>
 #include <core/utilities/DeferredMethodInvocation.h>
-
-class QwtPlot;
-class QwtPlotCurve;
-class QwtPlotLegendItem;
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
@@ -64,13 +61,7 @@ protected Q_SLOTS:
 private:
 
 	/// The plotting widget for displaying the computed RDFs.
-	QwtPlot* _rdfPlot;
-
-	/// The plot items for the RDFs.
-    std::vector<QwtPlotCurve*> _plotCurves;
-
-	/// The plot legend.
-	QwtPlotLegendItem* _legendItem = nullptr;
+	DataSeriesPlotWidget* _rdfPlot;
 
 	/// For deferred invocation of the plot repaint function.
 	DeferredMethodInvocation<CoordinationAnalysisModifierEditor, &CoordinationAnalysisModifierEditor::plotRDF> plotRDFLater;

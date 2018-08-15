@@ -29,12 +29,18 @@ IMPLEMENT_OVITO_CLASS(DataSeriesObject);
 DEFINE_PROPERTY_FIELD(DataSeriesObject, title);
 DEFINE_PROPERTY_FIELD(DataSeriesObject, x);
 DEFINE_PROPERTY_FIELD(DataSeriesObject, y);
+DEFINE_PROPERTY_FIELD(DataSeriesObject, intervalStart);
+DEFINE_PROPERTY_FIELD(DataSeriesObject, intervalEnd);
+DEFINE_PROPERTY_FIELD(DataSeriesObject, axisLabelX);
+DEFINE_PROPERTY_FIELD(DataSeriesObject, axisLabelY);
 SET_PROPERTY_FIELD_CHANGE_EVENT(DataSeriesObject, title, ReferenceEvent::TitleChanged);
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-DataSeriesObject::DataSeriesObject(DataSet* dataset) : DataObject(dataset)
+DataSeriesObject::DataSeriesObject(DataSet* dataset) : DataObject(dataset),
+	_intervalStart(0),
+	_intervalEnd(0)
 {
 }
 
@@ -84,16 +90,36 @@ void DataSeriesObject::loadFromStream(ObjectLoadStream& stream)
 	if(stream.expectChunkRange(0x0100, 2) == 1) {
 		PropertyPtr s = std::make_shared<PropertyStorage>();
 		s->loadFromStream(stream);
-		setx(s);
+		setX(s);
 	}
 	stream.closeChunk();
 
 	if(stream.expectChunkRange(0x0200, 2) == 1) {
 		PropertyPtr s = std::make_shared<PropertyStorage>();
 		s->loadFromStream(stream);
-		sety(s);
+		setY(s);
 	}
 	stream.closeChunk();
+}
+
+/******************************************************************************
+* Determines the X value for the given array index.
+******************************************************************************/
+FloatType DataSeriesObject::getXValue(size_t index) const
+{
+	if(x() && x()->size() > index && x()->componentCount() == 1) {
+		if(x()->dataType() == PropertyStorage::Float)
+			return x()->getFloat(index);
+		else if(x()->dataType() == PropertyStorage::Int)
+			return x()->getInt(index);
+		else if(x()->dataType() == PropertyStorage::Int64)
+			return x()->getInt64(index);
+	}
+	if(y() && y()->size() != 0) {
+		FloatType binSize = (intervalEnd() - intervalStart()) / y()->size();
+		return intervalStart() + binSize * (FloatType(0.5) + index);
+	}
+	return 0;
 }
 
 }	// End of namespace
