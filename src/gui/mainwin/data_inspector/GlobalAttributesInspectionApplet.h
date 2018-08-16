@@ -77,7 +77,12 @@ private:
 		virtual QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override {
 			if(role == Qt::DisplayRole) {
 				if(index.column() == 0) return _keys[index.row()];
-				else return _values[index.row()];
+				else {
+					const QVariant& v = _values[index.row()];
+					if(v.type() == QVariant::Double)
+						return QString::number(v.toDouble());
+					return v;
+				}
 			}
 			return {};
 		}
