@@ -22,13 +22,14 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <plugins/correlation/CorrelationFunctionModifier.h>
+#include <plugins/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
 #include <gui/mainwin/MainWindow.h>
 #include <gui/properties/BooleanParameterUI.h>
 #include <gui/properties/IntegerParameterUI.h>
 #include <gui/properties/IntegerRadioButtonParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
 #include <gui/properties/VariantComboBoxParameterUI.h>
-#include <plugins/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
+#include <core/oo/CloneHelper.h>
 #include "CorrelationFunctionModifierEditor.h"
 
 #include <qwt/qwt_plot.h>
@@ -129,12 +130,15 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 	typeOfRealSpacePlotLayout->addWidget(typeOfRealSpacePlotPUI->addRadioButton(1, tr("log-lin")), 0, 2);
 	typeOfRealSpacePlotLayout->addWidget(typeOfRealSpacePlotPUI->addRadioButton(3, tr("log-log")), 0, 3);
 
-	_realSpacePlot = new QwtPlot();
+	_realSpacePlot = new DataSeriesPlotWidget();
 	_realSpacePlot->setMinimumHeight(200);
 	_realSpacePlot->setMaximumHeight(200);
-	_realSpacePlot->setCanvasBackground(Qt::white);
-	_realSpacePlot->setAxisTitle(QwtPlot::xBottom, tr("Distance r"));
-	_realSpacePlot->setAxisTitle(QwtPlot::yLeft, tr("C(r)"));
+	_neighCurve = new QwtPlotCurve();
+	_neighCurve->setRenderHint(QwtPlotItem::RenderAntialiased, true);
+	_neighCurve->setPen(QPen(Qt::red, 1));
+	_neighCurve->setZ(1);
+	_neighCurve->attach(_realSpacePlot);
+	_neighCurve->hide();
 
 	// Axes.
 	QGroupBox* axesBox = new QGroupBox(tr("Plot axes"), rollout);
@@ -202,12 +206,9 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 	typeOfReciprocalSpacePlotLayout->addWidget(typeOfReciprocalSpacePlotPUI->addRadioButton(1, tr("log-lin")), 0, 2);
 	typeOfReciprocalSpacePlotLayout->addWidget(typeOfReciprocalSpacePlotPUI->addRadioButton(3, tr("log-log")), 0, 3);
 
-	_reciprocalSpacePlot = new QwtPlot();
+	_reciprocalSpacePlot = new DataSeriesPlotWidget();
 	_reciprocalSpacePlot->setMinimumHeight(200);
 	_reciprocalSpacePlot->setMaximumHeight(200);
-	_reciprocalSpacePlot->setCanvasBackground(Qt::white);
-	_reciprocalSpacePlot->setAxisTitle(QwtPlot::xBottom, tr("Wavevector q"));
-	_reciprocalSpacePlot->setAxisTitle(QwtPlot::yLeft, tr("C(q)"));
 
 	// Axes.
 	axesBox = new QGroupBox(tr("Plot axes"), rollout);
@@ -279,41 +280,48 @@ bool CorrelationFunctionModifierEditor::referenceEvent(RefTarget* source, const 
 	if(source == modifierApplication() && event.type() == ReferenceEvent::ObjectStatusChanged) {
 		plotAllDataLater(this);
 	}
+	else if(source == editObject() && event.type() == ReferenceEvent::TargetChanged) {
+		plotAllDataLater(this);
+	}
 	return ModifierPropertiesEditor::referenceEvent(source, event);
 }
 
 /******************************************************************************
-* Plot correlation function.
+* Replots one of the correlation function computed by the modifier.
 ******************************************************************************/
-void CorrelationFunctionModifierEditor::plotData(const QVector<FloatType> &xData,
-												 const QVector<FloatType> &yData,
-												 QwtPlot *plot,
-												 QwtPlotCurve *&curve,
-												 FloatType offset, FloatType fac)
+std::pair<FloatType,FloatType> CorrelationFunctionModifierEditor::plotData(DataSeriesObject* series,
+												 DataSeriesPlotWidget* plotWidget,
+												 FloatType offset, FloatType fac, 
+												 const PropertyPtr& normalization)
 {
-	OVITO_ASSERT(xData.size() == yData.size());
+	// Duplicate the data series, then modify the stored values.
+	UndoSuspender noUndo(series);
+	CloneHelper cloneHelper;
+	OORef<DataSeriesObject> clonedSeries = cloneHelper.cloneObject(series, true);
 
-	if(!curve) {
-		curve = new QwtPlotCurve();
-		curve->setRenderHint(QwtPlotItem::RenderAntialiased, true);
-		curve->setBrush(Qt::lightGray);
-		curve->attach(plot);
-		QwtPlotGrid* plotGrid = new QwtPlotGrid();
-		plotGrid->setPen(Qt::gray, 0, Qt::DotLine);
-		plotGrid->attach(plot);
+	// Normalize function values.
+	if(normalization) {
+		OVITO_ASSERT(normalization->size() == clonedSeries->y()->size());
+		auto pf = normalization->constDataFloat();
+		for(FloatType& v : clonedSeries->modifiableY()->floatRange()) {
+			FloatType factor = *pf++;
+			v = (factor > FloatType(1e-12)) ? (v / factor) : FloatType(0);
+		}
 	}
 
-	// Set data to plot.
-	size_t numberOfDataPoints = yData.size();
-	int startAt = 0;
-	QVector<QPointF> plotData(numberOfDataPoints-startAt);
-	for (int i = startAt; i < numberOfDataPoints; i++) {
-		FloatType xValue = xData[i];
-		FloatType yValue = fac*(yData[i]-offset);
-		plotData[i-startAt].rx() = xValue;
-		plotData[i-startAt].ry() = yValue;
+	// Scale and shift function values.
+	if(fac != 1 || offset != 0) {
+		for(FloatType& v : clonedSeries->modifiableY()->floatRange())
+			v = fac * (v - offset);
 	}
-	curve->setSamples(plotData);
+
+	// Determine value range.
+	auto minmax = std::minmax_element(clonedSeries->y()->constDataFloat(), clonedSeries->y()->constDataFloat() + clonedSeries->y()->size());
+
+	// Hand data series over to plot widget.
+	plotWidget->setSeries(std::move(clonedSeries));
+
+	return { *minmax.first, *minmax.second };
 }
 
 /******************************************************************************
@@ -323,114 +331,121 @@ void CorrelationFunctionModifierEditor::plotAllData()
 {
 	CorrelationFunctionModifier* modifier = static_object_cast<CorrelationFunctionModifier>(editObject());
 	CorrelationFunctionModifierApplication* modApp = dynamic_object_cast<CorrelationFunctionModifierApplication>(modifierApplication());
-	if(!modifier || !modApp)
-		return;
-
-	QVector<FloatType> y = modApp->realSpaceCorrelation();
-	// Plot real-space correlation function
-	if(!modApp->realSpaceCorrelationX().empty() && !y.empty()) {
-		if (modifier->normalizeRealSpaceByRDF())
-			std::transform(y.begin(), y.end(), modApp->realSpaceRDF().constBegin(), y.begin(),
-						   [](FloatType C, FloatType rdf) { return rdf > 1e-12 ? C/rdf : 0.0; });
-	}
-
-	FloatType offset = 0.0;
-	FloatType fac = 1.0;
-	if (modifier->normalizeRealSpace() == CorrelationFunctionModifier::DIFFERENCE_CORRELATION) {
-		offset = 0.5*(modApp->variance1() + modApp->variance2());
-		fac = -1.0;
-	}
-	if (modifier->normalizeRealSpaceByCovariance()) {
-		fac *= 1.0/modApp->covariance();
-	}
-	FloatType rfac = 1.0;
-	if (modifier->normalizeReciprocalSpace()) {
-		rfac = 1.0/modApp->covariance();
-	}
-
-	modifier->updateRanges(offset, fac, rfac, modApp);
-
-	// Plot real-space correlation function
-	if(!modApp->realSpaceCorrelationX().empty() && !y.empty()) {
-		plotData(modApp->realSpaceCorrelationX(), y,
-				 _realSpacePlot, _realSpaceCurve,
-				 offset, fac);
-	}
-
-	if(!modApp->neighCorrelationX().empty() &&
-	   !modApp->neighCorrelation().empty() &&
-	   modifier->doComputeNeighCorrelation()) {
-		if(!_neighCurve) {
-			_neighCurve = new QwtPlotCurve();
-			_neighCurve->setRenderHint(QwtPlotItem::RenderAntialiased, true);
-			_neighCurve->setPen(Qt::red);
-			_neighCurve->attach(_realSpacePlot);
-		}
-
-		// Set data to plot.
-		const auto &xData = modApp->neighCorrelationX();
-		const auto &yData = modApp->neighCorrelation();
-		const auto &rdfData = modApp->neighRDF();
-		size_t numberOfDataPoints = yData.size();
-		QVector<QPointF> plotData(numberOfDataPoints);
-		bool normByRDF = modifier->normalizeRealSpaceByRDF();
-		for (int i = 0; i < numberOfDataPoints; i++) {
-			FloatType xValue = xData[i];
-			FloatType yValue = yData[i];
-			if (normByRDF) {
-				yValue = rdfData[i] > 1e-12 ? yValue/rdfData[i] : 0.0;
-			}
-			yValue = fac*(yValue-offset);
-			plotData[i].rx() = xValue;
-			plotData[i].ry() = yValue;
-		}
-		_neighCurve->setSamples(plotData);
-	}
-	else {
-		// Remove curve from plot if it exists.
-		if (_neighCurve) {
-			_neighCurve->detach();
-			delete _neighCurve;
-			_neighCurve = nullptr;
-		}
-	}
-
-	// Plot reciprocal-space correlation function
-	if(!modApp->reciprocalSpaceCorrelationX().empty() &&
-	   !modApp->reciprocalSpaceCorrelation().empty()) {
-		plotData(modApp->reciprocalSpaceCorrelationX(),
-				 modApp->reciprocalSpaceCorrelation(),
-				 _reciprocalSpacePlot,
-				 _reciprocalSpaceCurve,
-				 0.0, rfac);
-	}
 
 	// Set type of plot.
-	if (modifier->typeOfRealSpacePlot() & 1)
+	if(modifier && modifier->typeOfRealSpacePlot() & 1)
 		_realSpacePlot->setAxisScaleEngine(QwtPlot::yLeft, new QwtLogScaleEngine());
 	else
 		_realSpacePlot->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine());
-	if (modifier->typeOfRealSpacePlot() & 2)
+	if(modifier && modifier->typeOfRealSpacePlot() & 2)
 		_realSpacePlot->setAxisScaleEngine(QwtPlot::xBottom, new QwtLogScaleEngine());
 	else
 		_realSpacePlot->setAxisScaleEngine(QwtPlot::xBottom, new QwtLinearScaleEngine());
 
-	if (modifier->typeOfReciprocalSpacePlot() & 1)
+	if(modifier && modifier->typeOfReciprocalSpacePlot() & 1)
 		_reciprocalSpacePlot->setAxisScaleEngine(QwtPlot::yLeft, new QwtLogScaleEngine());
 	else
 		_reciprocalSpacePlot->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine());
-	if (modifier->typeOfReciprocalSpacePlot() & 2)
+	if(modifier && modifier->typeOfReciprocalSpacePlot() & 2)
 		_reciprocalSpacePlot->setAxisScaleEngine(QwtPlot::xBottom, new QwtLogScaleEngine());
 	else
 		_reciprocalSpacePlot->setAxisScaleEngine(QwtPlot::xBottom, new QwtLinearScaleEngine());
 
-	_realSpacePlot->setAxisScale(QwtPlot::xBottom, modifier->realSpaceXAxisRangeStart(), modifier->realSpaceXAxisRangeEnd());
-	_realSpacePlot->setAxisScale(QwtPlot::yLeft, modifier->realSpaceYAxisRangeStart(), modifier->realSpaceYAxisRangeEnd());
-	_reciprocalSpacePlot->setAxisScale(QwtPlot::xBottom, modifier->reciprocalSpaceXAxisRangeStart(), modifier->reciprocalSpaceXAxisRangeEnd());
-	_reciprocalSpacePlot->setAxisScale(QwtPlot::yLeft, modifier->reciprocalSpaceYAxisRangeStart(), modifier->reciprocalSpaceYAxisRangeEnd());
+	// Set axis ranges.
+	if(modifier && modifier->fixRealSpaceXAxisRange())
+		_realSpacePlot->setAxisScale(QwtPlot::xBottom, modifier->realSpaceXAxisRangeStart(), modifier->realSpaceXAxisRangeEnd());
+	else
+		_realSpacePlot->setAxisAutoScale(QwtPlot::xBottom);
+	if(modifier && modifier->fixRealSpaceYAxisRange())
+		_realSpacePlot->setAxisScale(QwtPlot::yLeft, modifier->realSpaceYAxisRangeStart(), modifier->realSpaceYAxisRangeEnd());
+	else
+		_realSpacePlot->setAxisAutoScale(QwtPlot::yLeft);
+	if(modifier && modifier->fixReciprocalSpaceXAxisRange())
+		_reciprocalSpacePlot->setAxisScale(QwtPlot::xBottom, modifier->reciprocalSpaceXAxisRangeStart(), modifier->reciprocalSpaceXAxisRangeEnd());
+	else
+		_reciprocalSpacePlot->setAxisAutoScale(QwtPlot::xBottom);
+	if(modifier && modifier->fixReciprocalSpaceYAxisRange())
+		_reciprocalSpacePlot->setAxisScale(QwtPlot::yLeft, modifier->reciprocalSpaceYAxisRangeStart(), modifier->reciprocalSpaceYAxisRangeEnd());
+	else
+		_reciprocalSpacePlot->setAxisAutoScale(QwtPlot::yLeft);
 
-	_realSpacePlot->replot();
-	_reciprocalSpacePlot->replot();
+	// Determine scaling factor and offset.
+	FloatType offset = 0.0;
+	FloatType uniformFactor = 1;
+	if(modApp && modifier && modApp->realSpaceCorrelation()) {
+		FloatType offset = 0.0;
+		FloatType uniformFactor = 1;
+		if(modifier->normalizeRealSpace() == CorrelationFunctionModifier::DIFFERENCE_CORRELATION) {
+			offset = 0.5 * (modApp->variance1() + modApp->variance2());
+			uniformFactor = -1;
+		}
+		if(modifier->normalizeRealSpaceByCovariance() && modApp->covariance() != 0) {
+			uniformFactor /= modApp->covariance();
+		}
+	}
+
+	// Display direct neighbor correlation function. 
+	if(modifier && modifier->doComputeNeighCorrelation() && modApp && modApp->neighCorrelation() && modApp->neighRDF()) {
+		const auto& yData = modApp->neighCorrelation()->y();
+		const auto& rdfData = modApp->neighRDF()->y();
+		size_t numberOfDataPoints = yData->size();
+		QVector<QPointF> plotData(numberOfDataPoints);
+		bool normByRDF = modifier->normalizeRealSpaceByRDF();
+		for(size_t i = 0; i < numberOfDataPoints; i++) {
+			FloatType xValue = modApp->neighCorrelation()->getXValue(i);
+			FloatType yValue = yData->getFloat(i);
+			if(normByRDF)
+				yValue = rdfData->getFloat(i) > 1e-12 ? (yValue / rdfData->getFloat(i)) : 0.0;
+			yValue = uniformFactor * (yValue - offset);
+			plotData[i].rx() = xValue;
+			plotData[i].ry() = yValue;
+		}
+		_neighCurve->setSamples(plotData);
+		_neighCurve->show();
+	}
+	else {
+		_neighCurve->hide();
+	}
+
+	// Plot real-space correlation function.
+	if(modApp && modifier && modApp->realSpaceCorrelation()) {
+		auto realSpaceYRange = plotData(modApp->realSpaceCorrelation(), _realSpacePlot, offset, uniformFactor, 
+			modifier->normalizeRealSpaceByRDF() ? modApp->realSpaceRDF()->y() : nullptr);
+
+		UndoSuspender noUndo(modifier);
+		if(!modifier->fixRealSpaceXAxisRange()) {
+			modifier->setRealSpaceXAxisRangeStart(modApp->realSpaceCorrelation()->intervalStart());
+			modifier->setRealSpaceXAxisRangeEnd(modApp->realSpaceCorrelation()->intervalEnd());
+		}
+		if(!modifier->fixRealSpaceYAxisRange()) {
+			modifier->setRealSpaceYAxisRangeStart(realSpaceYRange.first);
+			modifier->setRealSpaceYAxisRangeEnd(realSpaceYRange.second);
+		}
+	}
+	else {
+		_realSpacePlot->setSeries(nullptr);
+	}
+
+	// Plot reciprocal-space correlation function.
+	if(modifier && modApp && modApp->reciprocalSpaceCorrelation()) {
+		FloatType rfac = 1;
+		if(modifier->normalizeReciprocalSpace() && modApp->covariance() != 0)
+			rfac = 1.0 / modApp->covariance();
+		auto reciprocalSpaceYRange = plotData(modApp->reciprocalSpaceCorrelation(), _reciprocalSpacePlot, 0.0, rfac, nullptr);
+
+		UndoSuspender noUndo(modifier);
+		if(!modifier->fixReciprocalSpaceXAxisRange()) {
+			modifier->setReciprocalSpaceXAxisRangeStart(modApp->reciprocalSpaceCorrelation()->intervalStart());
+			modifier->setReciprocalSpaceXAxisRangeEnd(modApp->reciprocalSpaceCorrelation()->intervalEnd());
+		}
+		if(!modifier->fixReciprocalSpaceYAxisRange()) {
+			modifier->setReciprocalSpaceYAxisRangeStart(reciprocalSpaceYRange.first);
+			modifier->setReciprocalSpaceYAxisRangeEnd(reciprocalSpaceYRange.second);
+		}
+	}
+	else {
+		_reciprocalSpacePlot->setSeries(nullptr);
+	}
 }
 
 /******************************************************************************
@@ -443,15 +458,15 @@ void CorrelationFunctionModifierEditor::onSaveData()
 	if(!modifier || !modApp)
 		return;
 
-	if(modApp->realSpaceCorrelation().empty() && modApp->neighCorrelation().empty() && modApp->reciprocalSpaceCorrelation().empty())
-		return;
-
 	QString fileName = QFileDialog::getSaveFileName(mainWindow(),
 		tr("Save Correlation Data"), QString(), tr("Text files (*.txt);;All files (*)"));
 	if(fileName.isEmpty())
 		return;
 
 	try {
+		if(!modApp->realSpaceCorrelation() || !modApp->reciprocalSpaceCorrelation() || !modApp->realSpaceRDF())
+			modifier->throwException(tr("Correlation function has not been computed yet."));
+
 		QFile file(fileName);
 		if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
 			modifier->throwException(tr("Could not open file for writing: %1").arg(file.errorString()));
@@ -463,43 +478,39 @@ void CorrelationFunctionModifierEditor::onSaveData()
 		stream << "# " << modifier->sourceProperty2().name() << " with mean value " << modApp->mean2() << " and variance " << modApp->variance2() << endl;
 		stream << "# Covariance is " << modApp->covariance() << endl << endl;
 
-		if (!modApp->realSpaceCorrelation().empty()) {
-			stream << "# Real-space correlation function from FFT follows." << endl;
-			stream << "# 1: Bin number" << endl;
-			stream << "# 2: Distance r" << endl;
-			stream << "# 3: Correlation function C(r)" << endl;
-			stream << "# 4: Radial distribution function g(r)" << endl;
-			for(int i = 0; i < modApp->realSpaceCorrelation().size(); i++) {
-				stream << i << "\t" << modApp->realSpaceCorrelationX()[i]
-				            << "\t" << modApp->realSpaceCorrelation()[i]
-										<< "\t" << modApp->realSpaceRDF()[i] << endl;
-			}
-			stream << endl;
+		stream << "# Real-space correlation function from FFT follows." << endl;
+		stream << "# 1: Bin number" << endl;
+		stream << "# 2: Distance r" << endl;
+		stream << "# 3: Correlation function C(r)" << endl;
+		stream << "# 4: Radial distribution function g(r)" << endl;
+		for(size_t i = 0; i < modApp->realSpaceCorrelation()->y()->size(); i++) {
+			stream << i << "\t" << modApp->realSpaceCorrelation()->getXValue(i)
+						<< "\t" << modApp->realSpaceCorrelation()->y()->getFloat(i)
+									<< "\t" << modApp->realSpaceRDF()->y()->getFloat(i) << endl;
 		}
+		stream << endl;
 
-		if (!modApp->neighCorrelation().empty()) {
+		if(modApp->neighCorrelation() && modApp->neighRDF()) {
 			stream << "# Real-space correlation function from direct sum over neighbors follows." << endl;
 			stream << "# 1: Bin number" << endl;
 			stream << "# 2: Distance r" << endl;
 			stream << "# 3: Correlation function C(r)" << endl;
 			stream << "# 4: Radial distribution function g(r)" << endl;
-			for(int i = 0; i < modApp->neighCorrelation().size(); i++) {
-				stream << i << "\t" << modApp->neighCorrelationX()[i]
-				            << "\t" << modApp->neighCorrelation()[i]
-										<< "\t" << modApp->neighRDF()[i] << endl;
+			for(size_t i = 0; i < modApp->neighCorrelation()->y()->size(); i++) {
+				stream << i << "\t" << modApp->neighCorrelation()->getXValue(i)
+				            << "\t" << modApp->neighCorrelation()->y()->getFloat(i)
+										<< "\t" << modApp->neighRDF()->y()->getFloat(i) << endl;
 			}
 			stream << endl;
 		}
 
-		if (!modApp->reciprocalSpaceCorrelation().empty()) {
-			stream << "# Reciprocal-space correlation function from FFT follows." << endl;
-			stream << "# 1: Bin number" << endl;
-			stream << "# 2: Wavevector q (includes a factor of 2*pi)" << endl;
-			stream << "# 3: Correlation function C(q)" << endl;
-			for(int i = 0; i < modApp->reciprocalSpaceCorrelation().size(); i++) {
-				stream << i << "\t" << modApp->reciprocalSpaceCorrelationX()[i]
-				            << "\t" << modApp->reciprocalSpaceCorrelation()[i] << endl;
-			}
+		stream << "# Reciprocal-space correlation function from FFT follows." << endl;
+		stream << "# 1: Bin number" << endl;
+		stream << "# 2: Wavevector q (includes a factor of 2*pi)" << endl;
+		stream << "# 3: Correlation function C(q)" << endl;
+		for(size_t i = 0; i < modApp->reciprocalSpaceCorrelation()->y()->size(); i++) {
+			stream << i << "\t" << modApp->reciprocalSpaceCorrelation()->getXValue(i)
+						<< "\t" << modApp->reciprocalSpaceCorrelation()->y()->getFloat(i) << endl;
 		}
 	}
 	catch(const Exception& ex) {

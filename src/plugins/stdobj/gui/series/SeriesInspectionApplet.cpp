@@ -63,21 +63,36 @@ void SeriesInspectionApplet::updateDisplay(const PipelineFlowState& state, Pipel
 	if(seriesSelectionWidget()->currentItem())
 		selectedSeriesTitle = seriesSelectionWidget()->currentItem()->text();
 
-	// Rebuild list of data series.
-	seriesSelectionWidget()->clear();
+	// Update list of data series objects.
+	// Overwrite existing list item, add new items when needed.
+	seriesSelectionWidget()->setUpdatesEnabled(false);
+	int numItems = 0;
 	for(DataObject* obj : state.objects()) {
 		if(DataSeriesObject* seriesObj = dynamic_object_cast<DataSeriesObject>(obj)) {
-			QListWidgetItem* item = new QListWidgetItem(seriesObj->title(), seriesSelectionWidget());
+			QListWidgetItem* item;
+			if(seriesSelectionWidget()->count() <= numItems) {
+				item = new QListWidgetItem(seriesObj->title(), seriesSelectionWidget());
+			}
+			else {
+				item = seriesSelectionWidget()->item(numItems);
+				item->setText(seriesObj->title());
+			}
 			item->setData(Qt::UserRole, QVariant::fromValue<OORef<OvitoObject>>(seriesObj));
 
 			// Select again the previously selected series.
 			if(item->text() == selectedSeriesTitle)
 				seriesSelectionWidget()->setCurrentItem(item);
+
+			numItems++;
 		}
 	}
+	// Remove excess items from list.
+	while(seriesSelectionWidget()->count() > numItems)
+		delete seriesSelectionWidget()->takeItem(seriesSelectionWidget()->count() - 1);
 
 	if(!seriesSelectionWidget()->currentItem() && seriesSelectionWidget()->count() != 0)
 		seriesSelectionWidget()->setCurrentRow(0);
+	seriesSelectionWidget()->setUpdatesEnabled(true);
 }
 
 /******************************************************************************

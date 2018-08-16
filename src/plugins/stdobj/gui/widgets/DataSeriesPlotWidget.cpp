@@ -40,6 +40,7 @@ DataSeriesPlotWidget::DataSeriesPlotWidget(QWidget* parent) : QwtPlot(parent)
 	QwtPlotGrid* plotGrid = new QwtPlotGrid();
 	plotGrid->setPen(Qt::gray, 0, Qt::DotLine);
 	plotGrid->attach(this);
+	plotGrid->setZ(0);
 
 	// Listen for events from the data series.
 	connect(&_series, &RefTargetListener<DataSeriesObject>::notificationEvent, this, &DataSeriesPlotWidget::onSeriesNotificationEvent);
@@ -78,6 +79,7 @@ void DataSeriesPlotWidget::updateDataPlot()
 			QwtPlotCurve* curve = new QwtPlotCurve();
 			curve->setRenderHint(QwtPlotItem::RenderAntialiased, true);
 			curve->setPen(QPen(curveColors[_curves.size() % (sizeof(curveColors)/sizeof(curveColors[0]))], 1));
+			curve->setZ(0);
 			curve->attach(this);
 			_curves.push_back(curve);
 		}

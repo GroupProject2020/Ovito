@@ -27,6 +27,7 @@
 #include <plugins/stdobj/util/InputHelper.h>
 #include <plugins/stdobj/util/OutputHelper.h>
 #include <core/app/PluginManager.h>
+#include <core/app/Application.h>
 #include <core/utilities/units/UnitsManager.h>
 #include "HistogramModifier.h"
 
@@ -93,7 +94,7 @@ void HistogramModifier::initializeModifier(ModifierApplication* modApp)
 	GenericPropertyModifier::initializeModifier(modApp);
 
 	// Use the first available property from the input state as data source when the modifier is newly created.
-	if(sourceProperty().isNull() && propertyClass()) {	
+	if(sourceProperty().isNull() && propertyClass() && Application::instance()->guiMode()) {	
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		PropertyReference bestProperty;
 		for(DataObject* o : input.objects()) {

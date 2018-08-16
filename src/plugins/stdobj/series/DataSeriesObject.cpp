@@ -53,6 +53,38 @@ QString DataSeriesObject::objectTitle()
 }
 
 /******************************************************************************
+* Returns the x-axis data array after making sure it is not 
+* shared with others and can be safely modified.
+******************************************************************************/
+const PropertyPtr& DataSeriesObject::modifiableX() 
+{
+	// Copy data storage on write if there is more than one reference to the storage.
+	if(x()) {
+		OVITO_ASSERT(x().use_count() >= 1);
+		if(x().use_count() > 1)
+			_x.mutableValue() = std::make_shared<PropertyStorage>(*x());
+		OVITO_ASSERT(x().use_count() == 1);
+	}
+	return x();
+}
+
+/******************************************************************************
+* Returns the y-axis data array after making sure it is not 
+* shared with others and can be safely modified.
+******************************************************************************/
+const PropertyPtr& DataSeriesObject::modifiableY() 
+{
+	// Copy data storage on write if there is more than one reference to the storage.
+	if(y()) {
+		OVITO_ASSERT(y().use_count() >= 1);
+		if(y().use_count() > 1)
+			_y.mutableValue() = std::make_shared<PropertyStorage>(*y());
+		OVITO_ASSERT(y().use_count() == 1);
+	}
+	return y();
+}
+
+/******************************************************************************
 * Saves the class' contents to the given stream.
 ******************************************************************************/
 void DataSeriesObject::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData)

@@ -31,8 +31,6 @@
 #include <core/utilities/concurrent/ParallelFor.h>
 #include "CoordinationAnalysisModifier.h"
 
-#include <QtConcurrent>
-
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
 IMPLEMENT_OVITO_CLASS(CoordinationAnalysisModifier);

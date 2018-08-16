@@ -26,6 +26,7 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
+#include <plugins/stdobj/series/DataSeriesObject.h>
 #include <plugins/particles/util/CutoffNeighborFinder.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
@@ -80,8 +81,31 @@ public:
 	/// This method is called by the system after the modifier has been inserted into a data pipeline.
 	virtual void initializeModifier(ModifierApplication* modApp) override;
 
-	/// Update plot ranges.
-	void updateRanges(FloatType offset, FloatType fac, FloatType reciprocalFac, ModifierApplication* modApp);
+	/// This method indicates whether cached computation results of the modifier should be discarded whenever
+	/// a parameter of the modifier changes.
+	virtual bool discardResultsOnModifierChange(const PropertyFieldEvent& event) const override { 
+		// Avoid a full recomputation if just the plot settings change.
+		if(event.field() == &PROPERTY_FIELD(fixRealSpaceXAxisRange) ||
+			event.field() == &PROPERTY_FIELD(fixRealSpaceYAxisRange) ||
+			event.field() == &PROPERTY_FIELD(realSpaceXAxisRangeStart) ||
+			event.field() == &PROPERTY_FIELD(realSpaceXAxisRangeEnd) ||
+			event.field() == &PROPERTY_FIELD(realSpaceYAxisRangeStart) ||
+			event.field() == &PROPERTY_FIELD(realSpaceYAxisRangeEnd) ||
+			event.field() == &PROPERTY_FIELD(fixReciprocalSpaceXAxisRange) ||
+			event.field() == &PROPERTY_FIELD(fixReciprocalSpaceYAxisRange) ||
+			event.field() == &PROPERTY_FIELD(reciprocalSpaceXAxisRangeStart) ||
+			event.field() == &PROPERTY_FIELD(reciprocalSpaceXAxisRangeEnd) ||
+			event.field() == &PROPERTY_FIELD(reciprocalSpaceYAxisRangeStart) ||
+			event.field() == &PROPERTY_FIELD(reciprocalSpaceYAxisRangeEnd) ||
+			event.field() == &PROPERTY_FIELD(normalizeRealSpace) ||
+			event.field() == &PROPERTY_FIELD(normalizeRealSpaceByRDF) ||
+			event.field() == &PROPERTY_FIELD(normalizeRealSpaceByCovariance) ||
+			event.field() == &PROPERTY_FIELD(normalizeReciprocalSpace) ||
+			event.field() == &PROPERTY_FIELD(typeOfRealSpacePlot) ||
+			event.field() == &PROPERTY_FIELD(typeOfReciprocalSpacePlot))
+			return false;
+		return AsynchronousModifier::discardResultsOnModifierChange(event);
+	}
 
 protected:
 	
@@ -114,8 +138,7 @@ private:
 			_simCell(simCell), _fftGridSpacing(fftGridSpacing),
 			_applyWindow(applyWindow), _neighCutoff(neighCutoff),
 			_averagingDirection(averagingDirection),
-			_neighCorrelation(doComputeNeighCorrelation ? numberOfNeighBins : 0, 0.0),
-			_neighCorrelationX(doComputeNeighCorrelation ? numberOfNeighBins : 0) {}
+			_neighCorrelation(doComputeNeighCorrelation ? std::make_shared<PropertyStorage>(numberOfNeighBins, PropertyStorage::Float, 1, 0, tr("Neighbor C(r)"), true) : nullptr) {}
 
 		/// This method is called by the system after the computation was successfully completed.
 		virtual void cleanup() override {
@@ -159,28 +182,19 @@ private:
 		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 		/// Returns the real-space correlation function.
-		QVector<FloatType>& realSpaceCorrelation() { return _realSpaceCorrelation; }
+		const PropertyPtr& realSpaceCorrelation() const { return _realSpaceCorrelation; }
 
 		/// Returns the RDF evaluated from an FFT correlation.
-		QVector<FloatType>& realSpaceRDF() { return _realSpaceRDF; }
-
-		/// Returns the distances for which the real-space correlation function is tabulAveated.
-		QVector<FloatType>& realSpaceCorrelationX() { return _realSpaceCorrelationX; }
+		const PropertyPtr& realSpaceRDF() const { return _realSpaceRDF; }
 
 		/// Returns the short-ranged real-space correlation function.
-		QVector<FloatType>& neighCorrelation() { return _neighCorrelation; }
+		const PropertyPtr& neighCorrelation() const { return _neighCorrelation; }
 
 		/// Returns the RDF evalauted from a direct sum over neighbor shells.
-		QVector<FloatType>& neighRDF() { return _neighRDF; }
-
-		/// Returns the distances for which the short-ranged real-space correlation function is tabulated.
-		QVector<FloatType>& neighCorrelationX() { return _neighCorrelationX; }
+		const PropertyPtr& neighRDF() const { return _neighRDF; }
 
 		/// Returns the reciprocal-space correlation function.
-		QVector<FloatType>& reciprocalSpaceCorrelation() { return _reciprocalSpaceCorrelation; }
-
-		/// Returns the wavevectors for which the reciprocal-space correlation function is tabulated.
-		QVector<FloatType>& reciprocalSpaceCorrelationX() { return _reciprocalSpaceCorrelationX; }
+		const PropertyPtr& reciprocalSpaceCorrelation() const { return _reciprocalSpaceCorrelation; }
 
 		/// Returns the mean of the first property.
 		FloatType mean1() const { return _mean1; }
@@ -209,17 +223,16 @@ private:
 	private:
 
 		/// Real-to-complex FFT.
-		void r2cFFT(int nX, int nY, int nZ, QVector<FloatType> &rData, QVector<std::complex<FloatType>> &cData);
+		std::vector<std::complex<FloatType>> r2cFFT(int nX, int nY, int nZ, std::vector<FloatType>& rData);
 
 		/// Complex-to-real inverse FFT
-		void c2rFFT(int nX, int nY, int nZ, QVector<std::complex<FloatType>> &cData, QVector<FloatType> &rData);
+		std::vector<FloatType> c2rFFT(int nX, int nY, int nZ, std::vector<std::complex<FloatType>>& cData);
 
 		/// Map property onto grid.
-		void mapToSpatialGrid(const PropertyStorage* property,
+		std::vector<FloatType>  mapToSpatialGrid(const PropertyStorage* property,
 							  size_t propertyVectorComponent,
-							  const AffineTransformation &reciprocalCell,
+							  const AffineTransformation& reciprocalCell,
 							  int nX, int nY, int nZ,
-							  QVector<FloatType> &gridData,
 							  bool applyWindow);
 
 		const size_t _vecComponent1;
@@ -233,14 +246,13 @@ private:
 		ConstPropertyPtr _sourceProperty1;
 		ConstPropertyPtr _sourceProperty2;
 
-		QVector<FloatType> _realSpaceCorrelation;
-		QVector<FloatType> _realSpaceRDF;
-		QVector<FloatType> _realSpaceCorrelationX;
-		QVector<FloatType> _neighCorrelation;
-		QVector<FloatType> _neighRDF;
-		QVector<FloatType> _neighCorrelationX;
-		QVector<FloatType> _reciprocalSpaceCorrelation;
-		QVector<FloatType> _reciprocalSpaceCorrelationX;
+		PropertyPtr _realSpaceCorrelation;
+		FloatType _realSpaceCorrelationRange;
+		PropertyPtr _realSpaceRDF;
+		PropertyPtr _neighCorrelation;
+		PropertyPtr _neighRDF;
+		PropertyPtr _reciprocalSpaceCorrelation;
+		FloatType _reciprocalSpaceCorrelationRange;
 		FloatType _mean1 = 0;
 		FloatType _mean2 = 0;
 		FloatType _variance1 = 0;
@@ -323,108 +335,37 @@ public:
 	/// Constructor.
 	Q_INVOKABLE CorrelationFunctionModifierApplication(DataSet* dataset) : AsynchronousModifierApplication(dataset) {}
  
-	/// Returns the Y coordinates of the real-space correlation function.
-	const QVector<FloatType>& realSpaceCorrelation() const { return _realSpaceCorrelation; }
-
-	/// Returns the RDF evaluated from an FFT correlation.
-	const QVector<FloatType>& realSpaceRDF() const { return _realSpaceRDF; }
-
-	/// Returns the X coordinates of the real-space correlation function.
-	const QVector<FloatType>& realSpaceCorrelationX() const { return _realSpaceCorrelationX; }
-
-	/// Returns the Y coordinates of the short-ranged part of the real-space correlation function.
-	const QVector<FloatType>& neighCorrelation() const { return _neighCorrelation; }
-
-	/// Returns the RDF evalauted from a direct sum over neighbor shells.
-	const QVector<FloatType>& neighRDF() const { return _neighRDF; }
-
-	/// Returns the X coordinates of the short-ranged part of the real-space correlation function.
-	const QVector<FloatType>& neighCorrelationX() const { return _neighCorrelationX; }
-
-	/// Returns the Y coordinates of the reciprocal-space correlation function.
-	const QVector<FloatType>& reciprocalSpaceCorrelation() const { return _reciprocalSpaceCorrelation; }
-
-	/// Returns the X coordinates of the reciprocal-space correlation function.
-	const QVector<FloatType>& reciprocalSpaceCorrelationX() const { return _reciprocalSpaceCorrelationX; }
-
-	/// Returns the mean of the first property.
-	FloatType mean1() const { return _mean1; }
-
-	/// Returns the mean of the second property.
-	FloatType mean2() const { return _mean2; }
-
-	/// Returns the variance of the first property.
-	FloatType variance1() const { return _variance1; }
-
-	/// Returns the variance of the second property.
-	FloatType variance2() const { return _variance2; }
-
-	/// Returns the (co)variance.
-	FloatType covariance() const { return _covariance; }
-	 
-	/// Replaces the stored data.
-	void setResults(QVector<FloatType> realSpaceCorrelation, QVector<FloatType> realSpaceRDF, QVector<FloatType> realSpaceCorrelationX,
-		QVector<FloatType> neighCorrelation, QVector<FloatType> neighRDF, QVector<FloatType> neighCorrelationX, 
-		QVector<FloatType> reciprocalSpaceCorrelation, QVector<FloatType> reciprocalSpaceCorrelationX,
-		FloatType mean1, FloatType mean2, FloatType variance1, FloatType variance2, FloatType covariance) 
-	{
-		_realSpaceCorrelation = std::move(realSpaceCorrelation);
-		_realSpaceRDF = std::move(realSpaceRDF);
-		_realSpaceCorrelationX = std::move(realSpaceCorrelationX);
-		_neighCorrelation = std::move(neighCorrelation);
-		_neighRDF = std::move(neighRDF);
-		_neighCorrelationX = std::move(neighCorrelationX);
-		_reciprocalSpaceCorrelation = std::move(reciprocalSpaceCorrelation);
-		_reciprocalSpaceCorrelationX = std::move(reciprocalSpaceCorrelationX);
-		_mean1 = mean1;
-		_mean2 = mean2;
-		_variance1 = variance1;
-		_variance2 = variance2;
-		_covariance = covariance;
-		notifyDependents(ReferenceEvent::ObjectStatusChanged);
-	}
- 
 private:
  
-
 	/// The real-space correlation function.
-	QVector<FloatType> _realSpaceCorrelation;
+	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(OORef<DataSeriesObject>, realSpaceCorrelation, setRealSpaceCorrelation, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
 	/// The radial distribution function computed from an FFT convolution.
-	QVector<FloatType> _realSpaceRDF;
-
-	/// The distances for which the real-space correlation function is tabulated.
-	QVector<FloatType> _realSpaceCorrelationX;
+	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(OORef<DataSeriesObject>, realSpaceRDF, setRealSpaceRDF, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
 	/// The short-ranged part of the real-space correlation function.
-	QVector<FloatType> _neighCorrelation;
+	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(OORef<DataSeriesObject>, neighCorrelation, setNeighCorrelation, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
 	/// The radial distribution function computed from a direct sum over neighbor shells.
-	QVector<FloatType> _neighRDF;
-
-	/// The distances for which short-ranged part of the real-space correlation function is tabulated.
-	QVector<FloatType> _neighCorrelationX;
+	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(OORef<DataSeriesObject>, neighRDF, setNeighRDF, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
 	/// The reciprocal-space correlation function.
-	QVector<FloatType> _reciprocalSpaceCorrelation;
-
-	/// The wavevevtors for which the reciprocal-space correlation function is tabulated.
-	QVector<FloatType> _reciprocalSpaceCorrelationX;
+	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(OORef<DataSeriesObject>, reciprocalSpaceCorrelation, setReciprocalSpaceCorrelation, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
 	/// Mean of the first property.
-	FloatType _mean1;
+	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(FloatType, mean1, setMean1, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
 	/// Mean of the second property.
-	FloatType _mean2;
+	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(FloatType, mean2, setMean2, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
 	/// Variance of the first property.
-	FloatType _variance1;
+	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(FloatType, variance1, setVariance1, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
 	/// Variance of the second property.
-	FloatType _variance2;
+	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(FloatType, variance2, setVariance2, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
 	/// (Co)variance.
-	FloatType _covariance;
+	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(FloatType, covariance, setCovariance, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 };
 
 OVITO_END_INLINE_NAMESPACE

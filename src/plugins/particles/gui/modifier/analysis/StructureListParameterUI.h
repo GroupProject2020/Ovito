@@ -23,6 +23,7 @@
 
 
 #include <plugins/particles/gui/ParticlesGui.h>
+#include <plugins/particles/modifier/analysis/StructureIdentificationModifier.h>
 #include <gui/properties/RefTargetListParameterUI.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
@@ -41,11 +42,7 @@ public:
 	StructureListParameterUI(PropertiesEditor* parentEditor, bool showCheckBoxes = false);
 
 	/// This method is called when a new editable object has been activated.
-	virtual void resetUI() override {
-		RefTargetListParameterUI::resetUI();
-		// Clear initial selection by default.
-		tableWidget()->selectionModel()->clear();
-	}
+	virtual void resetUI() override;
 
 protected:
 
@@ -93,11 +90,12 @@ private:
 
 	/// Controls whether a check box is shown next to each structure type.
 	bool _showCheckBoxes;
+
+	/// The modifier application whose data is being displayed in the list box.
+	DECLARE_REFERENCE_FIELD_FLAGS(StructureIdentificationModifierApplication, modifierApplication, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 };
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

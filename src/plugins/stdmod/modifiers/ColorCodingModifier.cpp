@@ -30,6 +30,7 @@
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/utilities/concurrent/TaskManager.h>
 #include <core/utilities/concurrent/Promise.h>
+#include <core/app/Application.h>
 #include <core/app/PluginManager.h>
 #include "ColorCodingModifier.h"
 
@@ -126,7 +127,7 @@ void ColorCodingModifier::initializeModifier(ModifierApplication* modApp)
 
 	// Select the first available property from the input by default.
 	ColorCodingModifierDelegate* colorDelegate = static_object_cast<ColorCodingModifierDelegate>(delegate());
-	if(sourceProperty().isNull() && colorDelegate) {
+	if(sourceProperty().isNull() && colorDelegate && Application::instance()->guiMode()) {
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		PropertyReference bestProperty;
 		for(DataObject* o : input.objects()) {

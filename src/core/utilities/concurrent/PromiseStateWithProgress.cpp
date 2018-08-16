@@ -135,12 +135,22 @@ void PromiseStateWithProgress::beginProgressSubStepsWithWeights(std::vector<int>
 
 void PromiseStateWithProgress::nextProgressSubStep()
 {
+    if(isCanceled() || isFinished())
+        return;
+
 	OVITO_ASSERT(!subStepsStack.empty());
 	OVITO_ASSERT(subStepsStack.back().first < subStepsStack.back().second.size() - 1);
 	subStepsStack.back().first++;
     _progressMaximum = 0;
     _progressValue = 0;
     computeTotalProgress();
+
+	for(PromiseWatcher* watcher = _watchers; watcher != nullptr; watcher = watcher->_nextInList)
+		QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(qlonglong, totalProgressValue()));
+	for(TrackingPromiseState* tracker = _trackers.get(); tracker != nullptr; tracker = tracker->_nextInList.get()) {
+		for(PromiseWatcher* watcher = tracker->_watchers; watcher != nullptr; watcher = watcher->_nextInList)
+			QMetaObject::invokeMethod(watcher, "promiseProgressValueChanged", Qt::QueuedConnection, Q_ARG(qlonglong, totalProgressValue()));
+	}
 }
 
 void PromiseStateWithProgress::endProgressSubSteps()

@@ -236,7 +236,7 @@ void SliceModifier::initializeModifier(ModifierApplication* modApp)
 	if(distanceController() && cell && distanceController()->getFloatValue(0, iv) == 0) {
 		Point3 centerPoint = cell->cellMatrix() * Point3(0.5, 0.5, 0.5);
 		FloatType centerDistance = normal().dot(centerPoint - Point3::Origin());
-		if(fabs(centerDistance) > FLOATTYPE_EPSILON && distanceController())
+		if(std::abs(centerDistance) > FLOATTYPE_EPSILON && distanceController())
 			distanceController()->setFloatValue(0, centerDistance);
 	}
 }

@@ -56,7 +56,7 @@ class OVITO_PARTICLES_EXPORT CoordinationAnalysisModifier : public AsynchronousM
 	Q_OBJECT
 	OVITO_CLASS_META(CoordinationAnalysisModifier, CoordinationAnalysisModifierClass)
 
-	Q_CLASSINFO("ClassNameAlias", "CoordinationAnalysisModifier");
+	Q_CLASSINFO("ClassNameAlias", "CoordinationNumberModifier");
 	Q_CLASSINFO("DisplayName", "Coordination analysis");
 	Q_CLASSINFO("ModifierCategory", "Analysis");
 
@@ -176,6 +176,7 @@ class OVITO_PARTICLES_EXPORT CoordinationAnalysisModifierApplication : public As
 {
 	Q_OBJECT
 	OVITO_CLASS(CoordinationAnalysisModifierApplication)
+	Q_CLASSINFO("ClassNameAlias", "CoordinationNumberModifierApplication");
 
 public:
 

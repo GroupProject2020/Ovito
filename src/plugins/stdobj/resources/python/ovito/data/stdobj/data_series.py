@@ -69,3 +69,13 @@ DataSeries.dtype = property(_DataSeries_dtype)
 def _DataSeries_T(self):
     return numpy.asanyarray(self).T
 DataSeries.T = property(_DataSeries_T)
+
+# Implement as_table() method.
+def _DataSeries_as_table(self):
+    x = self.x
+    y = self.y
+    if not x:
+        half_step_size = 0.5 * (self.interval_end - self.interval_start) / len(y)
+        x = numpy.linspace(half_step_size, self.interval_end - half_step_size, num = len(y))
+    return numpy.vstack(numpy.atleast_2d(x, y))
+DataSeries.as_table = _DataSeries_as_table

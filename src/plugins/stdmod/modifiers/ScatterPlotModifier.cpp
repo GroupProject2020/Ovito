@@ -26,6 +26,7 @@
 #include <plugins/stdobj/util/InputHelper.h>
 #include <plugins/stdobj/util/OutputHelper.h>
 #include <core/app/PluginManager.h>
+#include <core/app/Application.h>
 #include "ScatterPlotModifier.h"
 
 namespace Ovito { namespace StdMod {
@@ -93,7 +94,7 @@ void ScatterPlotModifier::initializeModifier(ModifierApplication* modApp)
 	GenericPropertyModifier::initializeModifier(modApp);
 
 	// Use the first available property from the input state as data source when the modifier is newly created.
-	if((xAxisProperty().isNull() || yAxisProperty().isNull()) && propertyClass()) {	
+	if((xAxisProperty().isNull() || yAxisProperty().isNull()) && propertyClass() && Application::instance()->guiMode()) {	
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		PropertyReference bestProperty;
 		for(DataObject* o : input.objects()) {

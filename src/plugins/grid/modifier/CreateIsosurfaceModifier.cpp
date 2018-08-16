@@ -22,6 +22,7 @@
 #include <plugins/grid/Grid.h>
 #include <plugins/grid/objects/VoxelGrid.h>
 #include <core/dataset/DataSet.h>
+#include <core/app/Application.h>
 #include <plugins/stdobj/util/InputHelper.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
@@ -78,7 +79,7 @@ void CreateIsosurfaceModifier::initializeModifier(ModifierApplication* modApp)
 	AsynchronousModifier::initializeModifier(modApp);
 
 	// Use the first available property from the input state as data source when the modifier is newly created.
-	if(sourceProperty().isNull()) {
+	if(sourceProperty().isNull() && Application::instance()->guiMode()) {
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		for(DataObject* o : input.objects()) {
 			VoxelProperty* property = dynamic_object_cast<VoxelProperty>(o);

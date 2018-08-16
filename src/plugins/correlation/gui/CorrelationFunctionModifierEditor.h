@@ -24,6 +24,7 @@
 
 
 #include <plugins/particles/gui/ParticlesGui.h>
+#include <plugins/stdobj/gui/widgets/DataSeriesPlotWidget.h>
 #include <gui/properties/ModifierPropertiesEditor.h>
 #include <core/utilities/DeferredMethodInvocation.h>
 
@@ -54,9 +55,7 @@ protected:
 	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
 
 	/// Replots one of the correlation function computed by the modifier.
-	void plotData(const QVector<FloatType> &xData, const QVector<FloatType> &yData,
-				  QwtPlot *plot, QwtPlotCurve *&curve,
-				  FloatType offset=0.0, FloatType fac=1.0);
+	std::pair<FloatType,FloatType> plotData(DataSeriesObject* series, DataSeriesPlotWidget* plotWidget, FloatType offset, FloatType fac, const PropertyPtr& normalization);
 
 protected Q_SLOTS:
 
@@ -69,19 +68,13 @@ protected Q_SLOTS:
 private:
 
 	/// The plotting widget for displaying the computed real-space correlation function.
-	QwtPlot* _realSpacePlot;
+	DataSeriesPlotWidget* _realSpacePlot;
 
 	/// The plotting widget for displaying the computed reciprocal-space correlation function.
-	QwtPlot* _reciprocalSpacePlot;
-
-	/// The plot item for the real-space correlation function.
-    QwtPlotCurve* _realSpaceCurve = nullptr;
+	DataSeriesPlotWidget* _reciprocalSpacePlot;
 
 	/// The plot item for the short-ranged part of the real-space correlation function.
     QwtPlotCurve* _neighCurve = nullptr;
-
-	/// The plot item for the reciprocal-space correlation function.
-    QwtPlotCurve* _reciprocalSpaceCurve = nullptr;
 
 	/// For deferred invocation of the plot repaint function.
 	DeferredMethodInvocation<CorrelationFunctionModifierEditor, &CorrelationFunctionModifierEditor::plotAllData> plotAllDataLater;

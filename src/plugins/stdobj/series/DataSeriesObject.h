@@ -39,7 +39,15 @@ class OVITO_STDOBJ_EXPORT DataSeriesObject : public DataObject
 public:
 
 	/// Constructor.
-	DataSeriesObject(DataSet* dataset);
+	Q_INVOKABLE DataSeriesObject(DataSet* dataset);
+
+	/// Returns the x-axis data array after making sure it is not 
+	/// shared with others and can be safely modified.
+	const PropertyPtr& modifiableX();
+
+	/// Returns the y-axis data array after making sure it is not 
+	/// shared with others and can be safely modified.
+	const PropertyPtr& modifiableY();
 
 	/// Returns the text label for the x-axis.
 	const QString& getAxisLabelXAny() const {

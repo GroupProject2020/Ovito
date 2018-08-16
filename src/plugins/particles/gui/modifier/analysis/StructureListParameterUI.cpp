@@ -27,6 +27,7 @@
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
 IMPLEMENT_OVITO_CLASS(StructureListParameterUI);
+DEFINE_REFERENCE_FIELD(StructureListParameterUI, modifierApplication);
 
 /******************************************************************************
 * Constructor.
@@ -41,31 +42,47 @@ StructureListParameterUI::StructureListParameterUI(PropertiesEditor* parentEdito
 }
 
 /******************************************************************************
+* This method is called when a new editable object has been activated.
+******************************************************************************/
+void StructureListParameterUI::resetUI()
+{
+	// Keep track of the modifier application that holds the structure identification results.
+	StructureIdentificationModifierApplication* modApp = nullptr;
+	if(ModifierPropertiesEditor* modEditor = dynamic_object_cast<ModifierPropertiesEditor>(editor()))
+		modApp = dynamic_object_cast<StructureIdentificationModifierApplication>(modEditor->modifierApplication());
+	_modifierApplication.set(this, PROPERTY_FIELD(modifierApplication), modApp);
+
+	// Call base implementation.
+	RefTargetListParameterUI::resetUI();
+
+	// Clear initial selection by default.
+	tableWidget()->selectionModel()->clear();
+}
+
+/******************************************************************************
 * Returns a data item from the list data model.
 ******************************************************************************/
 QVariant StructureListParameterUI::getItemData(RefTarget* target, const QModelIndex& index, int role)
 {
 	ParticleType* stype = dynamic_object_cast<ParticleType>(target);
-	StructureIdentificationModifier* modifier = dynamic_object_cast<StructureIdentificationModifier>(editor()->editObject());
-	ModifierPropertiesEditor* modEditor = dynamic_object_cast<ModifierPropertiesEditor>(editor()); 
-	StructureIdentificationModifierApplication* modApp = modEditor ? dynamic_object_cast<StructureIdentificationModifierApplication>(modEditor->modifierApplication()) : nullptr;
+	StructureIdentificationModifier* modifier = dynamic_object_cast<StructureIdentificationModifier>(editObject());
 
-	if(stype && modifier && modApp) {
+	if(stype && modifier && modifierApplication()) {
 		if(role == Qt::DisplayRole) {
 			if(index.column() == 1)
 				return stype->nameOrId();
 			else if(index.column() == 2) {
-				if(stype->id() >= 0 && stype->id() < modApp->structureCounts().size())
-					return (int)modApp->structureCounts()[stype->id()];
+				if(stype->id() >= 0 && stype->id() < modifierApplication()->structureCounts().size())
+					return (int)modifierApplication()->structureCounts()[stype->id()];
 				else
 					return QString();
 			}
 			else if(index.column() == 3) {
-				if(stype->id() >= 0 && stype->id() < modApp->structureCounts().size()) {
+				if(stype->id() >= 0 && stype->id() < modifierApplication()->structureCounts().size()) {
 					size_t totalCount = 0;
-					for(size_t c : modApp->structureCounts())
+					for(size_t c : modifierApplication()->structureCounts())
 						totalCount += c;
-					return QString("%1%").arg((double)modApp->structureCounts()[stype->id()] * 100.0 / std::max((size_t)1, totalCount), 0, 'f', 1);
+					return QString("%1%").arg((double)modifierApplication()->structureCounts()[stype->id()] * 100.0 / std::max((size_t)1, totalCount), 0, 'f', 1);
 				}
 				else
 					return QString();
@@ -119,11 +136,9 @@ bool StructureListParameterUI::setItemData(RefTarget* target, const QModelIndex&
 ******************************************************************************/
 bool StructureListParameterUI::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(source == editObject()) {
-		if(event.type() == ReferenceEvent::ObjectStatusChanged) {
-			// Update the structure count and fraction columns.
-			_model->updateColumns(2, 3);
-		}
+	if(source == modifierApplication() && event.type() == ReferenceEvent::ObjectStatusChanged) {
+		// Update the structure count and fraction columns.
+		_model->updateColumns(2, 3);
 	}
 	return RefTargetListParameterUI::referenceEvent(source, event);
 }

@@ -88,7 +88,7 @@ PYBIND11_MODULE(CorrelationFunctionPlugin, m)
 
 		.def_property_readonly("mean1", py::cpp_function([](CorrelationFunctionModifier& mod) {
 				CorrelationFunctionModifierApplication* modApp = dynamic_object_cast<CorrelationFunctionModifierApplication>(mod.someModifierApplication());
-				if(!modApp) mod.throwException(CorrelationFunctionModifier::tr("Modifier has not been evaluated yet. Correlation function data is not yet available."));				
+				if(!modApp || !modApp->realSpaceCorrelation()) mod.throwException(CorrelationFunctionModifier::tr("Modifier has not been evaluated yet. Correlation function data is not yet available."));				
 				return modApp->mean1();
 			}),
 			"Returns the computed mean value <P1> of the first input particle property. "    
@@ -97,7 +97,7 @@ PYBIND11_MODULE(CorrelationFunctionPlugin, m)
 			"Thus, you should typically call :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` first to ensure that the modifier has calculated its results. ")
 		.def_property_readonly("mean2", py::cpp_function([](CorrelationFunctionModifier& mod) {
 				CorrelationFunctionModifierApplication* modApp = dynamic_object_cast<CorrelationFunctionModifierApplication>(mod.someModifierApplication());
-				if(!modApp) mod.throwException(CorrelationFunctionModifier::tr("Modifier has not been evaluated yet. Correlation function data is not yet available."));				
+				if(!modApp || !modApp->realSpaceCorrelation()) mod.throwException(CorrelationFunctionModifier::tr("Modifier has not been evaluated yet. Correlation function data is not yet available."));				
 				return modApp->mean2();
 			}),
 			"Returns the computed mean value <P2> of the second input particle property. "    
@@ -106,60 +106,24 @@ PYBIND11_MODULE(CorrelationFunctionPlugin, m)
 			"Thus, you should typically call :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` first to ensure that the modifier has calculated its results. ")
 		.def_property_readonly("covariance", py::cpp_function([](CorrelationFunctionModifier& mod) {
 				CorrelationFunctionModifierApplication* modApp = dynamic_object_cast<CorrelationFunctionModifierApplication>(mod.someModifierApplication());
-				if(!modApp) mod.throwException(CorrelationFunctionModifier::tr("Modifier has not been evaluated yet. Correlation function data is not yet available."));				
+				if(!modApp || !modApp->realSpaceCorrelation()) mod.throwException(CorrelationFunctionModifier::tr("Modifier has not been evaluated yet. Correlation function data is not yet available."));				
 				return modApp->covariance();
 			}),
 			"Returns the computed co-variance value <P1P2> of the two input particle properties. "    
 			"\n\n"
 			"Accessing this read-only attribute is only permitted after the modifier has computed its results as part of a data pipeline evaluation. "
-			"Thus, you should typically call :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` first to ensure that the modifier has calculated its results. ")
-		.def_property_readonly("_realspace_correlation", py::cpp_function([](CorrelationFunctionModifier& mod) {
-				CorrelationFunctionModifierApplication* modApp = dynamic_object_cast<CorrelationFunctionModifierApplication>(mod.someModifierApplication());
-				if(!modApp) mod.throwException(CorrelationFunctionModifier::tr("Modifier has not been evaluated yet. Correlation function data is not yet available."));
-				py::array_t<FloatType> array(modApp->realSpaceCorrelation().size(), modApp->realSpaceCorrelation().data(), py::cast(modApp));
-				// Mark array as read-only.
-				reinterpret_cast<py::detail::PyArray_Proxy*>(array.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
-				return array;
-			}))				
-		.def_property_readonly("_realspace_rdf", py::cpp_function([](CorrelationFunctionModifier& mod) {
-				CorrelationFunctionModifierApplication* modApp = dynamic_object_cast<CorrelationFunctionModifierApplication>(mod.someModifierApplication());
-				if(!modApp) mod.throwException(CorrelationFunctionModifier::tr("Modifier has not been evaluated yet. Correlation function data is not yet available."));
-				py::array_t<FloatType> array(modApp->realSpaceRDF().size(), modApp->realSpaceRDF().data(), py::cast(modApp));
-				// Mark array as read-only.
-				reinterpret_cast<py::detail::PyArray_Proxy*>(array.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
-				return array;
-			}))				
-		.def_property_readonly("_realspace_x", py::cpp_function([](CorrelationFunctionModifier& mod) {
-				CorrelationFunctionModifierApplication* modApp = dynamic_object_cast<CorrelationFunctionModifierApplication>(mod.someModifierApplication());
-				if(!modApp) mod.throwException(CorrelationFunctionModifier::tr("Modifier has not been evaluated yet. Correlation function data is not yet available."));
-				py::array_t<FloatType> array(modApp->realSpaceCorrelationX().size(), modApp->realSpaceCorrelationX().data(), py::cast(modApp));
-				// Mark array as read-only.
-				reinterpret_cast<py::detail::PyArray_Proxy*>(array.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
-				return array;
-			}))				
-		.def_property_readonly("_reciprocspace_correlation", py::cpp_function([](CorrelationFunctionModifier& mod) {
-				CorrelationFunctionModifierApplication* modApp = dynamic_object_cast<CorrelationFunctionModifierApplication>(mod.someModifierApplication());
-				if(!modApp) mod.throwException(CorrelationFunctionModifier::tr("Modifier has not been evaluated yet. Correlation function data is not yet available."));
-				py::array_t<FloatType> array(modApp->reciprocalSpaceCorrelation().size(), modApp->reciprocalSpaceCorrelation().data(), py::cast(modApp));
-				// Mark array as read-only.
-				reinterpret_cast<py::detail::PyArray_Proxy*>(array.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
-				return array;
-			}))				
-		.def_property_readonly("_reciprocspace_x", py::cpp_function([](CorrelationFunctionModifier& mod) {
-				CorrelationFunctionModifierApplication* modApp = dynamic_object_cast<CorrelationFunctionModifierApplication>(mod.someModifierApplication());
-				if(!modApp) mod.throwException(CorrelationFunctionModifier::tr("Modifier has not been evaluated yet. Correlation function data is not yet available."));
-				py::array_t<FloatType> array(modApp->reciprocalSpaceCorrelationX().size(), modApp->reciprocalSpaceCorrelationX().data(), py::cast(modApp));
-				// Mark array as read-only.
-				reinterpret_cast<py::detail::PyArray_Proxy*>(array.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
-				return array;
-			}))				
+			"Thus, you should typically call :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` first to ensure that the modifier has calculated its results. ")			
 	;
 	py::enum_<CorrelationFunctionModifier::NormalizationType>(CorrelationFunctionModifier_py, "Normalization")
 		.value("ValueCorrelation", CorrelationFunctionModifier::VALUE_CORRELATION)
 		.value("DifferenceCorrelation", CorrelationFunctionModifier::DIFFERENCE_CORRELATION)
 	;
 
-	ovito_class<CorrelationFunctionModifierApplication, AsynchronousModifierApplication>{m};
+	ovito_class<CorrelationFunctionModifierApplication, AsynchronousModifierApplication>{m}
+		.def_property_readonly("realspace_correlation", &CorrelationFunctionModifierApplication::realSpaceCorrelation)
+		.def_property_readonly("realspace_rdf", &CorrelationFunctionModifierApplication::realSpaceRDF)
+		.def_property_readonly("reciprocspace_correlation", &CorrelationFunctionModifierApplication::reciprocalSpaceCorrelation)
+	;
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(CorrelationFunctionPlugin);

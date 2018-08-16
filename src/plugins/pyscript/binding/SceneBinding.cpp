@@ -286,6 +286,7 @@ void defineSceneSubmodule(py::module m)
 		// Internal method required by implementation of Pipeline.modifiers:
 		.def("create_modifier_application", &Modifier::createModifierApplication)
 		.def("initialize_modifier", &Modifier::initializeModifier)
+		.def_property_readonly("some_modifier_application", &Modifier::someModifierApplication)
 	;
 
 	ovito_abstract_class<AsynchronousModifier, Modifier>{m}

@@ -25,6 +25,7 @@
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/app/PluginManager.h>
+#include <core/app/Application.h>
 #include <core/utilities/units/UnitsManager.h>
 #include "FreezePropertyModifier.h"
 
@@ -65,7 +66,7 @@ void FreezePropertyModifier::initializeModifier(ModifierApplication* modApp)
 	GenericPropertyModifier::initializeModifier(modApp);
 
 	// Use the first available particle property from the input state as data source when the modifier is newly created.
-	if(sourceProperty().isNull() && propertyClass()) {	
+	if(sourceProperty().isNull() && propertyClass() && Application::instance()->guiMode()) {	
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		for(DataObject* o : input.objects()) {
 			if(PropertyObject* property = dynamic_object_cast<PropertyObject>(o)) {

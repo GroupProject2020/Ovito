@@ -24,6 +24,7 @@
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
+#include <core/app/Application.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/animation/AnimationSettings.h>
@@ -98,7 +99,7 @@ void BinAndReduceModifier::initializeModifier(ModifierApplication* modApp)
 	Modifier::initializeModifier(modApp);
 
 	// Use the first available particle property from the input state as data source when the modifier is newly created.
-	if(sourceProperty().isNull()) {
+	if(sourceProperty().isNull() && Application::instance()->guiMode()) {
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		ParticlePropertyReference bestProperty;
 		for(DataObject* o : input.objects()) {

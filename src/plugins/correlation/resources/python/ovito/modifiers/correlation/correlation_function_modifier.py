@@ -19,7 +19,8 @@ def _CorrelationFunctionModifier_get_real_space_function(self):
     Calling this getter function is only permitted after the modifier has computed its results as part of a data pipeline evaluation. 
     Thus, you should typically call :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` first to ensure that the modifier has calculated its results.
     """
-    return numpy.transpose((self._realspace_x, self._realspace_correlation))
+    data_series = self.some_modifier_application.realspace_correlation
+    return numpy.transpose(data_series.as_table())
 CorrelationFunctionModifier.get_real_space_function = _CorrelationFunctionModifier_get_real_space_function
 
 # Implementation of the CorrelationFunctionModifier.get_rdf() function.
@@ -31,7 +32,8 @@ def _CorrelationFunctionModifier_get_rdf(self):
     Calling this getter function is only permitted after the modifier has computed its results as part of a data pipeline evaluation. 
     Thus, you should typically call :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` first to ensure that the modifier has calculated its results.
     """
-    return numpy.transpose((self._realspace_x, self._realspace_rdf))
+    data_series = self.some_modifier_application.realspace_rdf
+    return numpy.transpose(data_series.as_table())
 CorrelationFunctionModifier.get_rdf = _CorrelationFunctionModifier_get_rdf
 
 # Implementation of the CorrelationFunctionModifier.get_reciprocal_space_function() function.
@@ -43,5 +45,6 @@ def _CorrelationFunctionModifier_get_reciprocal_space_function(self):
     Calling this getter function is only permitted after the modifier has computed its results as part of a data pipeline evaluation. 
     Thus, you should typically call :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` first to ensure that the modifier has calculated its results.
     """
-    return numpy.transpose((self._reciprocspace_x, self._reciprocspace_correlation))
+    data_series = self.some_modifier_application.reciprocspace_correlation
+    return numpy.transpose(data_series.as_table())
 CorrelationFunctionModifier.get_reciprocal_space_function = _CorrelationFunctionModifier_get_reciprocal_space_function
