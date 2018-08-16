@@ -286,7 +286,7 @@ FileSourceImporter::FrameDataPtr CFGImporter::FrameLoader::loadFile(QFile& file)
 		typeList->sortTypesByName(typeProperty);
 
 	AffineTransformation H((header.transform * header.H0).transposed());
-	H.translation() = H * Vector3(-0.5f, -0.5f, -0.5f);
+	H.translation() = H * Vector3(-0.5, -0.5, -0.5);
 	frameData->simulationCell().setMatrix(H);
 
 	// The CFG file stores particle positions in reduced coordinates.

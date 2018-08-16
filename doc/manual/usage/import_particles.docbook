@@ -199,6 +199,11 @@
               <entry>particles</entry>
             </row>
             <row>
+              <entry>DL_POLY</entry>
+              <entry><para>File format used by the molecular simulation package <link xlink:href="https://www.scd.stfc.ac.uk/Pages/DL_POLY.aspx">DL_POLY</link>.</para></entry>
+              <entry>particles</entry>
+            </row>
+            <row>
               <entry>PARCAS</entry>
               <entry><para>Binary file format written by the MD code <emphasis>Parcas</emphasis> developed in K. Nordlund's group at University of Helsinki.</para></entry>
               <entry>particles</entry>

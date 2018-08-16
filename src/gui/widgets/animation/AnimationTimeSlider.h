@@ -90,7 +90,7 @@ protected Q_SLOTS:
 private:
 
 	/// The dragging start position.
-	int _dragPos;
+	int _dragPos = -1;
 
 	/// The default palette used to the draw the time slide background.
 	QPalette _normalPalette;
@@ -105,7 +105,7 @@ private:
 	MainWindow* _mainWindow;
 
 	/// The current animation settings object.
-	AnimationSettings* _animSettings;
+	AnimationSettings* _animSettings = nullptr;
 
 	QMetaObject::Connection _autoKeyModeChangedConnection;
 	QMetaObject::Connection _animIntervalChangedConnection;

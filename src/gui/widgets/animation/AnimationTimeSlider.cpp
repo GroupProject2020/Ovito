@@ -34,7 +34,7 @@ using namespace std;
 * The constructor of the AnimationTimeSlider class.
 ******************************************************************************/
 AnimationTimeSlider::AnimationTimeSlider(MainWindow* mainWindow, QWidget* parent) :
-	QFrame(parent), _mainWindow(mainWindow), _dragPos(-1), _animSettings(nullptr)
+	QFrame(parent), _mainWindow(mainWindow)
 {
 	_normalPalette = palette();
 	_autoKeyModePalette = _normalPalette;
@@ -115,6 +115,7 @@ void AnimationTimeSlider::paintEvent(QPaintEvent* event)
 ******************************************************************************/
 int AnimationTimeSlider::maxTickLabelWidth()
 {
+	if(!_animSettings) return 0;
 	QString label = QString::number(_animSettings->timeToFrame(_animSettings->animationInterval().end()));
 	return fontMetrics().boundingRect(label).width() + 20;
 }
@@ -124,35 +125,35 @@ int AnimationTimeSlider::maxTickLabelWidth()
 ******************************************************************************/
 std::tuple<TimePoint,TimePoint,TimePoint> AnimationTimeSlider::tickRange(int tickWidth)
 {
-	QRect clientRect = frameRect();
-	clientRect.adjust(frameWidth(), frameWidth(), -frameWidth(), -frameWidth());
-	int thumbWidth = this->thumbWidth();
-	int clientWidth = clientRect.width() - thumbWidth;
-	int firstFrame = _animSettings->timeToFrame(_animSettings->animationInterval().start());
-	int lastFrame = _animSettings->timeToFrame(_animSettings->animationInterval().end());
-	int numFrames = lastFrame - firstFrame + 1;
-	int nticks = std::min(clientWidth / tickWidth, numFrames);
-	int ticksevery = numFrames / std::max(nticks, 1);
-	if(ticksevery <= 1) ticksevery = ticksevery;
-	else if(ticksevery <= 5) ticksevery = 5;
-	else if(ticksevery <= 10) ticksevery = 10;
-	else if(ticksevery <= 20) ticksevery = 20;
-	else if(ticksevery <= 50) ticksevery = 50;
-	else if(ticksevery <= 100) ticksevery = 100;
-	else if(ticksevery <= 500) ticksevery = 500;
-	else if(ticksevery <= 1000) ticksevery = 1000;
-	else if(ticksevery <= 2000) ticksevery = 2000;
-	else if(ticksevery <= 5000) ticksevery = 5000;
-	else if(ticksevery <= 10000) ticksevery = 10000;
-	if(ticksevery > 0) {
-		return std::make_tuple(
-				_animSettings->frameToTime(firstFrame),
-				_animSettings->ticksPerFrame() * ticksevery,
-				_animSettings->frameToTime(lastFrame));
+	if(_animSettings) {
+		QRect clientRect = frameRect();
+		clientRect.adjust(frameWidth(), frameWidth(), -frameWidth(), -frameWidth());
+		int thumbWidth = this->thumbWidth();
+		int clientWidth = clientRect.width() - thumbWidth;
+		int firstFrame = _animSettings->timeToFrame(_animSettings->animationInterval().start());
+		int lastFrame = _animSettings->timeToFrame(_animSettings->animationInterval().end());
+		int numFrames = lastFrame - firstFrame + 1;
+		int nticks = std::min(clientWidth / tickWidth, numFrames);
+		int ticksevery = numFrames / std::max(nticks, 1);
+		if(ticksevery <= 1) ticksevery = ticksevery;
+		else if(ticksevery <= 5) ticksevery = 5;
+		else if(ticksevery <= 10) ticksevery = 10;
+		else if(ticksevery <= 20) ticksevery = 20;
+		else if(ticksevery <= 50) ticksevery = 50;
+		else if(ticksevery <= 100) ticksevery = 100;
+		else if(ticksevery <= 500) ticksevery = 500;
+		else if(ticksevery <= 1000) ticksevery = 1000;
+		else if(ticksevery <= 2000) ticksevery = 2000;
+		else if(ticksevery <= 5000) ticksevery = 5000;
+		else if(ticksevery <= 10000) ticksevery = 10000;
+		if(ticksevery > 0) {
+			return std::make_tuple(
+					_animSettings->frameToTime(firstFrame),
+					_animSettings->ticksPerFrame() * ticksevery,
+					_animSettings->frameToTime(lastFrame));
+		}
 	}
-	else {
-		return std::tuple<TimePoint,TimePoint,TimePoint>(0, 1, 0);
-	}
+	return std::tuple<TimePoint,TimePoint,TimePoint>(0, 1, 0);
 }
 
 /******************************************************************************
@@ -160,6 +161,7 @@ std::tuple<TimePoint,TimePoint,TimePoint> AnimationTimeSlider::tickRange(int tic
 ******************************************************************************/
 int AnimationTimeSlider::timeToPos(TimePoint time)
 {
+	if(!_animSettings) return 0;
 	FloatType percentage = (FloatType)(time - _animSettings->animationInterval().start()) / (FloatType)(_animSettings->animationInterval().duration() + 1);
 	QRect clientRect = frameRect();
 	int tw = thumbWidth();
@@ -172,6 +174,7 @@ int AnimationTimeSlider::timeToPos(TimePoint time)
 ******************************************************************************/
 TimePoint AnimationTimeSlider::distanceToTimeDifference(int distance)
 {
+	if(!_animSettings) return 0;
 	QRect clientRect = frameRect();
 	int tw = thumbWidth();
 	int space = clientRect.width() - 2*frameWidth() - tw;
@@ -228,6 +231,7 @@ void AnimationTimeSlider::mouseReleaseEvent(QMouseEvent* event)
 void AnimationTimeSlider::mouseMoveEvent(QMouseEvent* event)
 {
 	event->accept();
+	if(!_animSettings) return;
 
 	int newPos;
 	int thumbSize = thumbWidth();

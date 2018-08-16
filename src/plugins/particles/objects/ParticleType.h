@@ -39,7 +39,7 @@ class OVITO_PARTICLES_EXPORT ParticleType : public ElementType
 public:
 
 	enum PredefinedParticleType {
-		H,He,Li,C,N,O,Na,Mg,Al,Si,K,Ca,Ti,Cr,Fe,Co,Ni,Cu,Zn,Ga,Ge,Kr,Sr,Y,Zr,Nb,Pd,Pt,W,Au,
+		H,He,Li,C,N,O,Na,Mg,Al,Si,K,Ca,Ti,Cr,Fe,Co,Ni,Cu,Zn,Ga,Ge,Kr,Sr,Y,Zr,Nb,Pd,Pt,W,Au,Pb,Bi,
 
 		NUMBER_OF_PREDEFINED_PARTICLE_TYPES
 	};
