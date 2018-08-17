@@ -807,7 +807,8 @@ PipelineFlowState CorrelationFunctionModifier::CorrelationAnalysisEngine::emitRe
 
 	// Output real-space correlation function to the pipeline as a data series. 
 	OORef<DataSeriesObject> realSpaceCorrelationObj = new DataSeriesObject(modApp->dataset());
-	realSpaceCorrelationObj->setTitle(oh.generateUniqueSeriesName(QStringLiteral("Real-space correlation function")));
+	realSpaceCorrelationObj->setIdentifier(oh.generateUniqueSeriesIdentifier(QStringLiteral("correlation/real-space")));
+	realSpaceCorrelationObj->setTitle(tr("Real-space correlation function"));
 	realSpaceCorrelationObj->setAxisLabelX(tr("Distance r"));
 	realSpaceCorrelationObj->setIntervalStart(0);
 	realSpaceCorrelationObj->setIntervalEnd(_realSpaceCorrelationRange);
@@ -816,7 +817,8 @@ PipelineFlowState CorrelationFunctionModifier::CorrelationAnalysisEngine::emitRe
 
 	// Output real-space RDF to the pipeline as a data series. 
 	OORef<DataSeriesObject> realSpaceRDFObj = new DataSeriesObject(modApp->dataset());
-	realSpaceRDFObj->setTitle(oh.generateUniqueSeriesName(QStringLiteral("Real-space RDF")));
+	realSpaceRDFObj->setIdentifier(oh.generateUniqueSeriesIdentifier(QStringLiteral("correlation/real-space/rdf")));
+	realSpaceRDFObj->setTitle(tr("Real-space RDF"));
 	realSpaceRDFObj->setAxisLabelX(tr("Distance r"));
 	realSpaceRDFObj->setIntervalStart(0);
 	realSpaceRDFObj->setIntervalEnd(_realSpaceCorrelationRange);
@@ -827,7 +829,8 @@ PipelineFlowState CorrelationFunctionModifier::CorrelationAnalysisEngine::emitRe
 	OORef<DataSeriesObject> neighCorrelationObj;
 	if(neighCorrelation()) {
 		neighCorrelationObj = new DataSeriesObject(modApp->dataset());
-		neighCorrelationObj->setTitle(oh.generateUniqueSeriesName(QStringLiteral("Neighbor correlation function")));
+		neighCorrelationObj->setIdentifier(oh.generateUniqueSeriesIdentifier(QStringLiteral("correlation/neighbor")));
+		neighCorrelationObj->setTitle(tr("Neighbor correlation function"));
 		neighCorrelationObj->setAxisLabelX(tr("Distance r"));
 		neighCorrelationObj->setIntervalStart(0);
 		neighCorrelationObj->setIntervalEnd(neighCutoff());
@@ -839,7 +842,8 @@ PipelineFlowState CorrelationFunctionModifier::CorrelationAnalysisEngine::emitRe
 	OORef<DataSeriesObject> neighRDFObj;
 	if(neighRDF()) {
 		neighRDFObj = new DataSeriesObject(modApp->dataset());
-		neighRDFObj->setTitle(oh.generateUniqueSeriesName(QStringLiteral("Neighbor RDF")));
+		neighRDFObj->setIdentifier(oh.generateUniqueSeriesIdentifier(QStringLiteral("correlation/neighbor/rdf")));
+		neighRDFObj->setTitle(tr("Neighbor RDF"));
 		neighRDFObj->setAxisLabelX(tr("Distance r"));
 		neighRDFObj->setIntervalStart(0);
 		neighRDFObj->setIntervalEnd(neighCutoff());
@@ -849,7 +853,8 @@ PipelineFlowState CorrelationFunctionModifier::CorrelationAnalysisEngine::emitRe
 
 	// Output reciprocal-space correlation function to the pipeline as a data series. 
 	OORef<DataSeriesObject> reciprocalSpaceCorrelationObj = new DataSeriesObject(modApp->dataset());
-	reciprocalSpaceCorrelationObj->setTitle(oh.generateUniqueSeriesName(QStringLiteral("Reciprocal-space correlation function")));
+	reciprocalSpaceCorrelationObj->setIdentifier(oh.generateUniqueSeriesIdentifier(QStringLiteral("correlation/reciprocal-space")));
+	reciprocalSpaceCorrelationObj->setTitle(tr("Reciprocal-space correlation function"));
 	reciprocalSpaceCorrelationObj->setAxisLabelX(tr("Wavevector q"));
 	reciprocalSpaceCorrelationObj->setIntervalStart(0);
 	reciprocalSpaceCorrelationObj->setIntervalEnd(_reciprocalSpaceCorrelationRange);

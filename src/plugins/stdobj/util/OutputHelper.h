@@ -95,9 +95,9 @@ public:
 	/// Emits a new global attribute to the pipeline.
 	void outputAttribute(const QString& key, QVariant value);
 
-	/// Returns a name for a new data series object that does not collide with the 
-	/// name of an existing data series in the same data collection.
-	QString generateUniqueSeriesName(const QString& baseName) const;
+	/// Returns a unique identifier for a new data series object that does not collide with the 
+	/// identifier of an existing data series in the same data collection.
+	QString generateUniqueSeriesIdentifier(const QString& baseName) const;
 
 	/// Enures that a DataObject from this flow state is not shared with others and is safe to modify.
 	template<class ObjectType>

@@ -37,3 +37,7 @@ print("Reciprocal-space correlation:")
 table = modifier.get_reciprocal_space_function()
 print(table) 
 assert(table.ndim == 2 and table.shape[1] == 2)
+
+print("Data series view:")
+print(data.series)
+print(data.series['Real-space correlation function'].as_table())

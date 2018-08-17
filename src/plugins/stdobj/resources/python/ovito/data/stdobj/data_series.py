@@ -48,7 +48,7 @@ DataSeries.__ior__ = lambda self, y: numpy.asanyarray(self).__ior__(y)
 DataSeries.__ixor__ = lambda self, y: numpy.asanyarray(self).__ixor__(y)
 
 # Printing / string representation
-DataSeries.__repr__ = lambda self: self.__class__.__name__ + "('" + self.title + "')"
+DataSeries.__repr__ = lambda self: self.__class__.__name__ + "('" + self.id + "')"
 
 # Implement 'ndim' attribute.
 def _DataSeries_ndim(self):

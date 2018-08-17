@@ -280,7 +280,8 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 
 	// Output a data series object with the histogram data.
 	OORef<DataSeriesObject> seriesObj = new DataSeriesObject(modApp->dataset());
-	seriesObj->setTitle(oh.generateUniqueSeriesName(QStringLiteral("Histogram [%1]").arg(sourceProperty().nameWithComponent())));
+	seriesObj->setIdentifier(oh.generateUniqueSeriesIdentifier(QStringLiteral("histogram/") + sourceProperty().nameWithComponent()));
+	seriesObj->setTitle(tr("Histogram [%1]").arg(sourceProperty().nameWithComponent()));
 	seriesObj->setAxisLabelX(sourceProperty().nameWithComponent());
 	seriesObj->setIntervalStart(intervalStart);
 	seriesObj->setIntervalEnd(intervalEnd);

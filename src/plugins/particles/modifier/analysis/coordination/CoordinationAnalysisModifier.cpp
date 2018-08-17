@@ -240,11 +240,12 @@ PipelineFlowState CoordinationAnalysisModifier::CoordinationAnalysisEngine::emit
 
 	// Output RDF histogram(s).
 	OORef<DataSeriesObject> seriesObj = new DataSeriesObject(modApp->dataset());
+	seriesObj->setIdentifier(poh.generateUniqueSeriesIdentifier(QStringLiteral("coordination/rdf")));
+	seriesObj->setTitle(tr("Radial distribution function"));
 	seriesObj->setY(rdfY());
 	seriesObj->setIntervalStart(0);
 	seriesObj->setIntervalEnd(cutoff());
 	seriesObj->setAxisLabelX(tr("Pair separation distance"));
-	seriesObj->setTitle(poh.generateUniqueSeriesName(QStringLiteral("RDF")));
 	output.addObject(seriesObj);
 
 	// Store the RDF data in the ModifierApplication in order to display the RDF in the modifier's UI panel.

@@ -71,11 +71,11 @@ void SeriesInspectionApplet::updateDisplay(const PipelineFlowState& state, Pipel
 		if(DataSeriesObject* seriesObj = dynamic_object_cast<DataSeriesObject>(obj)) {
 			QListWidgetItem* item;
 			if(seriesSelectionWidget()->count() <= numItems) {
-				item = new QListWidgetItem(seriesObj->title(), seriesSelectionWidget());
+				item = new QListWidgetItem(seriesObj->objectTitle(), seriesSelectionWidget());
 			}
 			else {
 				item = seriesSelectionWidget()->item(numItems);
-				item->setText(seriesObj->title());
+				item->setText(seriesObj->objectTitle());
 			}
 			item->setData(Qt::UserRole, QVariant::fromValue<OORef<OvitoObject>>(seriesObj));
 
@@ -93,6 +93,9 @@ void SeriesInspectionApplet::updateDisplay(const PipelineFlowState& state, Pipel
 	if(!seriesSelectionWidget()->currentItem() && seriesSelectionWidget()->count() != 0)
 		seriesSelectionWidget()->setCurrentRow(0);
 	seriesSelectionWidget()->setUpdatesEnabled(true);
+
+	// Update the currently selected plot.
+	currentPlotChanged(seriesSelectionWidget()->currentItem(), nullptr);
 }
 
 /******************************************************************************

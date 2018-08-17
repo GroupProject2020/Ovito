@@ -14,10 +14,10 @@ compute neighbor lists to iterate over the bonds of particles.
   * :py:class:`ParticleProperty`
   * :py:class:`BondProperty`
   * :py:class:`SimulationCell`
+  * :py:class:`DataSeries`
   * :py:class:`SurfaceMesh`
   * :py:class:`TrajectoryLines`
   * :py:class:`DislocationNetwork`
-  * :py:class:`PlotData`
 
 **Auxiliary data classes:**
 
@@ -25,6 +25,7 @@ compute neighbor lists to iterate over the bonds of particles.
   * :py:class:`ParticleType`
   * :py:class:`BondsView`
   * :py:class:`BondType`
+  * :py:class:`DataSeriesView`
   * :py:class:`DislocationSegment`
 
 **Utility classes:**

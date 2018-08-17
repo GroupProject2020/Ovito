@@ -184,28 +184,28 @@ void OutputHelper::outputAttribute(const QString& key, QVariant value)
 }
 
 /******************************************************************************
-* Returns a name for a new data series object that does not collide with the 
-* name of an existing data series in the same data collection.
+* Returns a unique identifier for a new data series object that does not collide with the 
+* identifier of an existing data series in the same data collection.
 ******************************************************************************/
-QString OutputHelper::generateUniqueSeriesName(const QString& baseName) const
+QString OutputHelper::generateUniqueSeriesIdentifier(const QString& baseName) const
 {
-	auto doesNameExist = [this](const QString& name) {
+	auto doesExist = [this](const QString& id) {
 		for(DataObject* obj : output().objects()) {
 			if(DataSeriesObject* seriesObj = dynamic_object_cast<DataSeriesObject>(obj)) {
-				if(seriesObj->title() == name)
+				if(seriesObj->identifier() == id)
 					return true;
 			}
 		}
 		return false;
 	};
-	if(!doesNameExist(baseName)) {
+	if(!doesExist(baseName)) {
 		return baseName;
 	}
 	else {
 		for(int i = 2; ; i++) {
-			QString uniqueName = baseName + QChar('.') + QString::number(i);
-			if(!doesNameExist(uniqueName)) {
-				return uniqueName;
+			QString uniqueId = baseName + QChar('-') + QString::number(i);
+			if(!doesExist(uniqueId)) {
+				return uniqueId;
 			}
 		}
 	}

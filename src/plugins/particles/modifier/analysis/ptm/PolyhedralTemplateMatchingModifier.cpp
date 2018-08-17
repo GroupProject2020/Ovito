@@ -351,11 +351,12 @@ PipelineFlowState PolyhedralTemplateMatchingModifier::PTMEngine::emitResults(Tim
 
 	// Output RMSD histogram.
 	OORef<DataSeriesObject> seriesObj = new DataSeriesObject(modApp->dataset());
+	seriesObj->setIdentifier(poh.generateUniqueSeriesIdentifier(QStringLiteral("ptm/rmsd")));
+	seriesObj->setTitle(tr("RMSD distribution"));
 	seriesObj->setY(rmsdHistogram());
 	seriesObj->setAxisLabelX(tr("RMSD"));
 	seriesObj->setIntervalStart(0);
 	seriesObj->setIntervalEnd(rmsdHistogramRange());
-	seriesObj->setTitle(poh.generateUniqueSeriesName(QStringLiteral("RMSD")));
 	output.addObject(seriesObj);
 
 	// Store the RMSD histogram in the ModifierApplication in order to display it in the modifier's UI panel.

@@ -26,6 +26,7 @@
 namespace Ovito { namespace StdObj {
 
 IMPLEMENT_OVITO_CLASS(DataSeriesObject);
+DEFINE_PROPERTY_FIELD(DataSeriesObject, identifier);
 DEFINE_PROPERTY_FIELD(DataSeriesObject, title);
 DEFINE_PROPERTY_FIELD(DataSeriesObject, x);
 DEFINE_PROPERTY_FIELD(DataSeriesObject, y);
@@ -49,7 +50,7 @@ DataSeriesObject::DataSeriesObject(DataSet* dataset) : DataObject(dataset),
 ******************************************************************************/
 QString DataSeriesObject::objectTitle() 
 {
-	return title();
+	return !title().isEmpty() ? title() : identifier();
 }
 
 /******************************************************************************

@@ -29,7 +29,7 @@
 namespace Ovito { namespace StdObj {
 	
 /**
- * \brief Holds a series of data values.
+ * \brief Data object that holds a series of data values for 2d plots.
  */
 class OVITO_STDOBJ_EXPORT DataSeriesObject : public DataObject
 {
@@ -79,7 +79,10 @@ protected:
 
 private:
 
-	/// The title of the data series.
+	/// The unique idenfitier of the data series by which it can be referred to from a Python script, for example.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, identifier, setIdentifier);
+
+	/// The title of the data series, which is shown in the user interface.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, title, setTitle);
 
 	/// The x-coordinates of the data points (optional).
