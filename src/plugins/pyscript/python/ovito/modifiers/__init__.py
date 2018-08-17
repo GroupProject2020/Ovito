@@ -20,7 +20,7 @@ Python class name                              User interface name
 :py:class:`AmbientOcclusionModifier`           :guilabel:`Ambient occlusion`
 :py:class:`AssignColorModifier`                :guilabel:`Assign color`
 :py:class:`AtomicStrainModifier`               :guilabel:`Atomic strain`
-:py:class:`BinAndReduceModifier`               :guilabel:`Bin and reduce`
+:py:class:`BinningModifier`                    :guilabel:`Binning`
 :py:class:`BondAngleAnalysisModifier`          :guilabel:`Bond-angle analysis`
 :py:class:`CalculateDisplacementsModifier`     :guilabel:`Displacement vectors`
 :py:class:`CentroSymmetryModifier`             :guilabel:`Centrosymmetry parameter`

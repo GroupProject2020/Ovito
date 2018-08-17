@@ -40,6 +40,7 @@
 #include <plugins/stdmod/modifiers/ManualSelectionModifier.h>
 #include <plugins/stdmod/modifiers/ComputePropertyModifier.h>
 #include <plugins/stdmod/modifiers/CombineDatasetsModifier.h>
+#include <plugins/stdmod/modifiers/BinningModifier.h>
 #include <core/app/PluginManager.h>
 
 namespace Ovito { namespace StdMod {
@@ -746,6 +747,126 @@ PYBIND11_MODULE(StdMod, m)
 				"You can call its :py:meth:`~ovito.pipeline.FileSource.load` function to load a data file "
 				"as shown in the code example above.")
 	;
+
+	ovito_abstract_class<BinningModifierDelegate, AsynchronousModifierDelegate>{m}
+	;
+	auto BinningModifier_py = ovito_class<BinningModifier, AsynchronousDelegatingModifier>(m,
+			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
+			"This modifier applies a reduction operation to a property of the particles within a spatial bin. "
+			"The output of the modifier is a one or two-dimensional grid of bin values. "
+			"See also the corresponding `user manual page <../../particles.modifiers.bin_and_reduce.html>`__ for this modifier. ")
+		.def_property("property", &BinningModifier::sourceProperty, &BinningModifier::setSourceProperty,
+				"The name of the input particle property to which the reduction operation should be applied. "
+				"This can be one of the :ref:`standard particle properties <particle-types-list>` or a custom particle property. "
+				"For vector properties the selected component must be appended to the name, e.g. ``\"Velocity.X\"``. ")
+		.def_property("reduction_operation", &BinningModifier::reductionOperation, &BinningModifier::setReductionOperation,
+				"Selects the reduction operation to be carried out. Possible values are:"
+				"\n\n"
+				"   * ``BinningModifier.Operation.Mean``\n"
+				"   * ``BinningModifier.Operation.Sum``\n"
+				"   * ``BinningModifier.Operation.SumVol``\n"
+				"   * ``BinningModifier.Operation.Min``\n"
+				"   * ``BinningModifier.Operation.Max``\n"
+				"\n"
+				"The operation ``SumVol`` first computes the sum and then divides the result by the volume of the respective bin. "
+				"It is intended to compute pressure (or stress) within each bin from the per-atom virial."
+				"\n\n"
+				":Default: ``BinningModifier.Operation.Mean``\n")
+		.def_property("first_derivative", &BinningModifier::firstDerivative, &BinningModifier::setFirstDerivative,
+				"If true, the modifier numerically computes the first derivative of the binned data using a finite differences approximation. "
+				"This works only for one-dimensional bin grids. "
+				"\n\n"
+				":Default: ``False``\n")
+		.def_property("direction", &BinningModifier::binDirection, &BinningModifier::setBinDirection,
+				"Selects the alignment of the bins. Possible values:"
+				"\n\n"
+				"   * ``BinningModifier.Direction.Vector_1``\n"
+				"   * ``BinningModifier.Direction.Vector_2``\n"
+				"   * ``BinningModifier.Direction.Vector_3``\n"
+				"   * ``BinningModifier.Direction.Vectors_1_2``\n"
+				"   * ``BinningModifier.Direction.Vectors_1_3``\n"
+				"   * ``BinningModifier.Direction.Vectors_2_3``\n"
+				"   * ``BinningModifier.Direction.Vectors_1_2_3``\n"
+				"\n"
+				"In the first three cases the modifier generates a one-dimensional grid with bins aligned perpendicular to the selected simulation cell vector. "
+				"In the last three cases the modifier generates a two-dimensional grid with bins aligned perpendicular to both selected simulation cell vectors (i.e. parallel to the third vector). "
+				"\n\n"
+				":Default: ``BinningModifier.Direction.Vector_3``\n")
+		.def_property("bin_count_x", &BinningModifier::numberOfBinsX, &BinningModifier::setNumberOfBinsX,
+				"This attribute sets the number of bins to generate along the first binning axis."
+				"\n\n"
+				":Default: 200\n")
+		.def_property("bin_count_y", &BinningModifier::numberOfBinsY, &BinningModifier::setNumberOfBinsY,
+				"This attribute sets the number of bins to generate along the second binning axis (only used when working with a two-dimensional grid)."
+				"\n\n"
+				":Default: 200\n")
+		.def_property("only_selected", &BinningModifier::onlySelectedElements, &BinningModifier::setOnlySelectedElements,
+				"If ``True``, the computation takes into account only the currently selected particles. "
+				"You can use this to restrict the calculation to a subset of particles. "
+				"\n\n"
+				":Default: ``False``\n")
+#if 0
+		.def_property_readonly("bin_data", py::cpp_function([](BinningModifier& mod) {
+					BinningModifierApplication* modApp = dynamic_object_cast<BinningModifierApplication>(mod.someModifierApplication());
+					if(!modApp || !modApp->binData()) mod.throwException(BinningModifier::tr("Modifier has not been evaluated yet. Bin data is not yet available."));
+					std::vector<size_t> shape;
+					if(mod.is1D() && modApp->binData()->size() == mod.numberOfBinsX()) {
+						shape.push_back(mod.numberOfBinsX());
+					}
+					else if(!mod.is1D() && modApp->binData()->size() == (size_t)mod.numberOfBinsX() * (size_t)mod.numberOfBinsY()) {
+						shape.push_back(mod.numberOfBinsY());
+						shape.push_back(mod.numberOfBinsX());
+					}
+					else mod.throwException(BinningModifier::tr("Modifier has not been evaluated yet. Bin data is not yet available."));
+					py::array_t<FloatType> array(shape, modApp->binData()->constDataFloat(), py::cast(modApp));
+					// Mark array as read-only.
+					reinterpret_cast<py::detail::PyArray_Proxy*>(array.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
+					return array;
+				}),
+				"Returns a NumPy array containing the reduced bin values computed by the modifier. "
+    			"Depending on the selected binning :py:attr:`.direction` the returned array is either "
+    			"one or two-dimensional. In the two-dimensional case the outer index of the returned array "
+    			"runs over the bins along the second binning axis. "
+				"\n\n"    
+    			"Note that accessing this array is only possible after the modifier has computed its results. " 
+    			"Thus, you have to call :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` first to ensure that the binning and reduction operation was performed.")
+		.def_property_readonly("axis_range_x", [](BinningModifier& mod) {
+					BinningModifierApplication* modApp = dynamic_object_cast<BinningModifierApplication>(mod.someModifierApplication());
+					if(!modApp || !modApp->binData()) mod.throwException(BinningModifier::tr("Modifier has not been evaluated yet. Bin data is not yet available."));
+					return py::make_tuple(modApp->range1().first, modApp->range1().second);
+				},
+				"A 2-tuple containing the range of the generated bin grid along the first binning axis. "
+				"Note that this is an output attribute which is only valid after the modifier has performed the bin and reduce operation. "
+				"That means you have to call :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` first to evaluate the data pipeline.")
+		.def_property_readonly("axis_range_y", [](BinningModifier& mod) {
+					BinningModifierApplication* modApp = dynamic_object_cast<BinningModifierApplication>(mod.someModifierApplication());
+					if(!modApp || !modApp->binData()) mod.throwException(BinningModifier::tr("Modifier has not been evaluated yet. Bin data is not yet available."));
+					return py::make_tuple(modApp->range2().first, modApp->range2().second);
+				},
+				"A 2-tuple containing the range of the generated bin grid along the second binning axis. "
+				"Note that this is an output attribute which is only valid after the modifier has performed the bin and reduce operation. "
+				"That means you have to call :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` first to evaluate the data pipeline.")
+#endif
+	;
+	ovito_class<BinningModifierApplication, AsynchronousModifierApplication>{m};
+
+	py::enum_<BinningModifier::ReductionOperationType>(BinningModifier_py, "Operation")
+		.value("Mean", BinningModifier::RED_MEAN)
+		.value("Sum", BinningModifier::RED_SUM)
+		.value("SumVol", BinningModifier::RED_SUM_VOL)
+		.value("Min", BinningModifier::RED_MIN)
+		.value("Max", BinningModifier::RED_MAX)
+	;
+
+	py::enum_<BinningModifier::BinDirectionType>(BinningModifier_py, "Direction")
+		.value("Vector_1", BinningModifier::CELL_VECTOR_1)
+		.value("Vector_2", BinningModifier::CELL_VECTOR_2)
+		.value("Vector_3", BinningModifier::CELL_VECTOR_3)
+		.value("Vectors_1_2", BinningModifier::CELL_VECTORS_1_2)
+		.value("Vectors_1_3", BinningModifier::CELL_VECTORS_1_3)
+		.value("Vectors_2_3", BinningModifier::CELL_VECTORS_2_3)
+		.value("Vectors_1_2_3", BinningModifier::CELL_VECTORS_1_2_3)
+	;	
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(StdMod);

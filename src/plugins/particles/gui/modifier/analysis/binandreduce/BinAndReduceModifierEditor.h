@@ -39,17 +39,17 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /**
- * A properties editor for the BinAndReduceModifier class.
+ * A properties editor for the BinningModifier class.
  */
-class BinAndReduceModifierEditor : public ModifierPropertiesEditor
+class BinningModifierEditor : public ModifierPropertiesEditor
 {
-	OVITO_CLASS(BinAndReduceModifierEditor)
+	OVITO_CLASS(BinningModifierEditor)
 	Q_OBJECT
 	
 public:
 
 	/// Default constructor.
-	Q_INVOKABLE BinAndReduceModifierEditor() {}
+	Q_INVOKABLE BinningModifierEditor() {}
 
 protected:
 
@@ -94,7 +94,7 @@ private:
 	QwtPlotGrid* _plotGrid = nullptr;
 
 	/// For deferred invocation of the plot repaint function.
-	DeferredMethodInvocation<BinAndReduceModifierEditor, &BinAndReduceModifierEditor::plotData> plotLater;
+	DeferredMethodInvocation<BinningModifierEditor, &BinningModifierEditor::plotData> plotLater;
 };
 
 OVITO_END_INLINE_NAMESPACE

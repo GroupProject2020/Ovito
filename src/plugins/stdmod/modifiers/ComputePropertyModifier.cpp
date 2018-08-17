@@ -152,20 +152,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ComputePropertyModifier::createEn
 	// Initialize output property with original values when computation is restricted to selected elements.
 	bool initializeOutputProperty = false;
 	if(onlySelectedElements()) {
-		PropertyObject* originalPropertyObj = nullptr;
-		InputHelper ih(dataset(), input);
-		if(outputProperty().type() != PropertyStorage::GenericUserProperty) {
-			originalPropertyObj = ih.inputStandardProperty(propertyClass, outputProperty().type());
-		}
-		else {
-			for(DataObject* o : input.objects()) {
-				PropertyObject* property = dynamic_object_cast<PropertyObject>(o);
-				if(property && propertyClass.isMember(property) && property->type() == PropertyStorage::GenericUserProperty && property->name() == outp->name()) {
-					originalPropertyObj = property;
-					break;
-				}
-			}
-		}
+		PropertyObject* originalPropertyObj = outputProperty().findInState(input);
 		if(originalPropertyObj && originalPropertyObj->dataType() == outp->dataType() &&
 				originalPropertyObj->componentCount() == outp->componentCount() && originalPropertyObj->stride() == outp->stride()) {
 			memcpy(outp->data(), originalPropertyObj->constData(), outp->stride() * outp->size());

@@ -34,10 +34,10 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 /**
  * \brief This modifier computes a spatial average (over splices) for a particle property.
  */
-class OVITO_PARTICLES_EXPORT BinAndReduceModifier : public Modifier
+class OVITO_PARTICLES_EXPORT BinningModifier : public Modifier
 {
 	/// Give this modifier class its own metaclass.
-	class BinAndReduceModifierClass : public ModifierClass 
+	class BinningModifierClass : public ModifierClass 
 	{
 	public:
 
@@ -50,7 +50,7 @@ class OVITO_PARTICLES_EXPORT BinAndReduceModifier : public Modifier
 
 
 	Q_OBJECT
-	OVITO_CLASS_META(BinAndReduceModifier, BinAndReduceModifierClass)
+	OVITO_CLASS_META(BinningModifier, BinningModifierClass)
 	Q_CLASSINFO("DisplayName", "Bin and reduce");
 	Q_CLASSINFO("ModifierCategory", "Analysis");
 
@@ -63,7 +63,7 @@ public:
     Q_ENUMS(BinDirectionType);
 
 	/// Constructor.
-	Q_INVOKABLE BinAndReduceModifier(DataSet* dataset);
+	Q_INVOKABLE BinningModifier(DataSet* dataset);
 
 	/// This method is called by the system after the modifier has been inserted into a data pipeline.
 	virtual void initializeModifier(ModifierApplication* modApp) override;
@@ -131,18 +131,18 @@ private:
 };
 
 /**
- * \brief The type of ModifierApplication create for a BinAndReduceModifier 
+ * \brief The type of ModifierApplication create for a BinningModifier 
  *        when it is inserted into in a data pipeline.
  */
-class OVITO_PARTICLES_EXPORT BinAndReduceModifierApplication : public ModifierApplication
+class OVITO_PARTICLES_EXPORT BinningModifierApplication : public ModifierApplication
 {
-	OVITO_CLASS(BinAndReduceModifierApplication)
+	OVITO_CLASS(BinningModifierApplication)
 	Q_OBJECT
 	
 public:
 
 	/// Constructor.
-	Q_INVOKABLE BinAndReduceModifierApplication(DataSet* dataset) : ModifierApplication(dataset) {}
+	Q_INVOKABLE BinningModifierApplication(DataSet* dataset) : ModifierApplication(dataset) {}
 
 	using Interval = std::pair<FloatType,FloatType>;
  
@@ -163,7 +163,7 @@ OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
 
-Q_DECLARE_METATYPE(Ovito::Particles::BinAndReduceModifier::ReductionOperationType);
-Q_DECLARE_METATYPE(Ovito::Particles::BinAndReduceModifier::BinDirectionType);
-Q_DECLARE_TYPEINFO(Ovito::Particles::BinAndReduceModifier::ReductionOperationType, Q_PRIMITIVE_TYPE);
-Q_DECLARE_TYPEINFO(Ovito::Particles::BinAndReduceModifier::BinDirectionType, Q_PRIMITIVE_TYPE);
+Q_DECLARE_METATYPE(Ovito::Particles::BinningModifier::ReductionOperationType);
+Q_DECLARE_METATYPE(Ovito::Particles::BinningModifier::BinDirectionType);
+Q_DECLARE_TYPEINFO(Ovito::Particles::BinningModifier::ReductionOperationType, Q_PRIMITIVE_TYPE);
+Q_DECLARE_TYPEINFO(Ovito::Particles::BinningModifier::BinDirectionType, Q_PRIMITIVE_TYPE);

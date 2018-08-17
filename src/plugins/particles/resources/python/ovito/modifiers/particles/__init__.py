@@ -13,7 +13,6 @@ from .compute_property_modifier import ComputePropertyModifier
 ovito.modifiers.AmbientOcclusionModifier = ovito.plugins.Particles.AmbientOcclusionModifier
 ovito.modifiers.WrapPeriodicImagesModifier = ovito.plugins.Particles.WrapPeriodicImagesModifier
 ovito.modifiers.ExpandSelectionModifier = ovito.plugins.Particles.ExpandSelectionModifier
-ovito.modifiers.BinAndReduceModifier = ovito.plugins.Particles.BinAndReduceModifier
 ovito.modifiers.StructureIdentificationModifier = ovito.plugins.Particles.StructureIdentificationModifier
 ovito.modifiers.CommonNeighborAnalysisModifier = ovito.plugins.Particles.CommonNeighborAnalysisModifier
 ovito.modifiers.BondAngleAnalysisModifier = ovito.plugins.Particles.BondAngleAnalysisModifier
@@ -34,7 +33,7 @@ ovito.modifiers.GenerateTrajectoryLinesModifier = ovito.plugins.Particles.Genera
 ovito.modifiers.__all__ += ['AmbientOcclusionModifier', 
             'WrapPeriodicImagesModifier',
             'ExpandSelectionModifier',
-            'BinAndReduceModifier',
+            'BinningModifier',
             'StructureIdentificationModifier', 'CommonNeighborAnalysisModifier', 'BondAngleAnalysisModifier',
             'CreateBondsModifier', 'CentroSymmetryModifier', 'ClusterAnalysisModifier', 'CoordinationAnalysisModifier',
             'CalculateDisplacementsModifier', 'AtomicStrainModifier',

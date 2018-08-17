@@ -1,7 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
 //  Copyright (2018) Alexander Stukowski
-//  Copyright (2014) Lars Pastewka
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,92 +19,89 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <plugins/particles/Particles.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <core/dataset/DataSet.h>
-#include <core/dataset/pipeline/ModifierApplication.h>
-#include <core/app/Application.h>
+#include <plugins/stdmod/StdMod.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
+#include <plugins/stdobj/properties/PropertyStorage.h>
+#include <plugins/stdobj/properties/PropertyClass.h>
+#include <plugins/stdobj/properties/PropertyObject.h>
+#include <core/dataset/DataSet.h>
+#include <core/app/Application.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/utilities/units/UnitsManager.h>
-#include "BinAndReduceModifier.h"
+#include "BinningModifier.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
+namespace Ovito { namespace StdMod {
 
-IMPLEMENT_OVITO_CLASS(BinAndReduceModifier);
-DEFINE_PROPERTY_FIELD(BinAndReduceModifier, reductionOperation);
-DEFINE_PROPERTY_FIELD(BinAndReduceModifier, firstDerivative);
-DEFINE_PROPERTY_FIELD(BinAndReduceModifier, binDirection);
-DEFINE_PROPERTY_FIELD(BinAndReduceModifier, numberOfBinsX);
-DEFINE_PROPERTY_FIELD(BinAndReduceModifier, numberOfBinsY);
-DEFINE_PROPERTY_FIELD(BinAndReduceModifier, fixPropertyAxisRange);
-DEFINE_PROPERTY_FIELD(BinAndReduceModifier, propertyAxisRangeStart);
-DEFINE_PROPERTY_FIELD(BinAndReduceModifier, propertyAxisRangeEnd);
-DEFINE_PROPERTY_FIELD(BinAndReduceModifier, sourceProperty);
-DEFINE_PROPERTY_FIELD(BinAndReduceModifier, onlySelected);
-SET_PROPERTY_FIELD_LABEL(BinAndReduceModifier, reductionOperation, "Reduction operation");
-SET_PROPERTY_FIELD_LABEL(BinAndReduceModifier, firstDerivative, "Compute first derivative");
-SET_PROPERTY_FIELD_LABEL(BinAndReduceModifier, binDirection, "Bin direction");
-SET_PROPERTY_FIELD_LABEL(BinAndReduceModifier, numberOfBinsX, "Number of spatial bins");
-SET_PROPERTY_FIELD_LABEL(BinAndReduceModifier, numberOfBinsY, "Number of spatial bins");
-SET_PROPERTY_FIELD_LABEL(BinAndReduceModifier, fixPropertyAxisRange, "Fix property axis range");
-SET_PROPERTY_FIELD_LABEL(BinAndReduceModifier, propertyAxisRangeStart, "Property axis range start");
-SET_PROPERTY_FIELD_LABEL(BinAndReduceModifier, propertyAxisRangeEnd, "Property axis range end");
-SET_PROPERTY_FIELD_LABEL(BinAndReduceModifier, sourceProperty, "Source property");
-SET_PROPERTY_FIELD_LABEL(BinAndReduceModifier, onlySelected, "Use only selected particles");
-SET_PROPERTY_FIELD_UNITS_AND_RANGE(BinAndReduceModifier, numberOfBinsX, IntegerParameterUnit, 1, 100000);
-SET_PROPERTY_FIELD_UNITS_AND_RANGE(BinAndReduceModifier, numberOfBinsY, IntegerParameterUnit, 1, 100000);
+IMPLEMENT_OVITO_CLASS(BinningModifierDelegate);
 
-IMPLEMENT_OVITO_CLASS(BinAndReduceModifierApplication);
-SET_MODIFIER_APPLICATION_TYPE(BinAndReduceModifier, BinAndReduceModifierApplication);
-DEFINE_PROPERTY_FIELD(BinAndReduceModifierApplication, binData);
-DEFINE_PROPERTY_FIELD(BinAndReduceModifierApplication, range1);
-DEFINE_PROPERTY_FIELD(BinAndReduceModifierApplication, range2);
-SET_PROPERTY_FIELD_CHANGE_EVENT(BinAndReduceModifierApplication, binData, ReferenceEvent::ObjectStatusChanged);
-SET_PROPERTY_FIELD_CHANGE_EVENT(BinAndReduceModifierApplication, range1, ReferenceEvent::ObjectStatusChanged);
-SET_PROPERTY_FIELD_CHANGE_EVENT(BinAndReduceModifierApplication, range2, ReferenceEvent::ObjectStatusChanged);
+IMPLEMENT_OVITO_CLASS(BinningModifier);
+DEFINE_PROPERTY_FIELD(BinningModifier, reductionOperation);
+DEFINE_PROPERTY_FIELD(BinningModifier, firstDerivative);
+DEFINE_PROPERTY_FIELD(BinningModifier, binDirection);
+DEFINE_PROPERTY_FIELD(BinningModifier, numberOfBinsX);
+DEFINE_PROPERTY_FIELD(BinningModifier, numberOfBinsY);
+DEFINE_PROPERTY_FIELD(BinningModifier, numberOfBinsZ);
+DEFINE_PROPERTY_FIELD(BinningModifier, fixPropertyAxisRange);
+DEFINE_PROPERTY_FIELD(BinningModifier, propertyAxisRangeStart);
+DEFINE_PROPERTY_FIELD(BinningModifier, propertyAxisRangeEnd);
+DEFINE_PROPERTY_FIELD(BinningModifier, sourceProperty);
+DEFINE_PROPERTY_FIELD(BinningModifier, onlySelectedElements);
+SET_PROPERTY_FIELD_LABEL(BinningModifier, reductionOperation, "Reduction operation");
+SET_PROPERTY_FIELD_LABEL(BinningModifier, firstDerivative, "Compute first derivative");
+SET_PROPERTY_FIELD_LABEL(BinningModifier, binDirection, "Bin direction");
+SET_PROPERTY_FIELD_LABEL(BinningModifier, numberOfBinsX, "Number of spatial bins");
+SET_PROPERTY_FIELD_LABEL(BinningModifier, numberOfBinsY, "Number of spatial bins");
+SET_PROPERTY_FIELD_LABEL(BinningModifier, numberOfBinsZ, "Number of spatial bins");
+SET_PROPERTY_FIELD_LABEL(BinningModifier, fixPropertyAxisRange, "Fix property axis range");
+SET_PROPERTY_FIELD_LABEL(BinningModifier, propertyAxisRangeStart, "Property axis range start");
+SET_PROPERTY_FIELD_LABEL(BinningModifier, propertyAxisRangeEnd, "Property axis range end");
+SET_PROPERTY_FIELD_LABEL(BinningModifier, sourceProperty, "Source property");
+SET_PROPERTY_FIELD_LABEL(BinningModifier, onlySelectedElements, "Use only selected elements");
+SET_PROPERTY_FIELD_UNITS_AND_RANGE(BinningModifier, numberOfBinsX, IntegerParameterUnit, 1, 100000);
+SET_PROPERTY_FIELD_UNITS_AND_RANGE(BinningModifier, numberOfBinsY, IntegerParameterUnit, 1, 100000);
+SET_PROPERTY_FIELD_UNITS_AND_RANGE(BinningModifier, numberOfBinsZ, IntegerParameterUnit, 1, 100000);
+
+IMPLEMENT_OVITO_CLASS(BinningModifierApplication);
+DEFINE_PROPERTY_FIELD(BinningModifierApplication, histogram);
+SET_MODIFIER_APPLICATION_TYPE(BinningModifier, BinningModifierApplication);
 
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
-BinAndReduceModifier::BinAndReduceModifier(DataSet* dataset) : Modifier(dataset), 
+BinningModifier::BinningModifier(DataSet* dataset) : AsynchronousDelegatingModifier(dataset), 
     _reductionOperation(RED_MEAN), 
     _firstDerivative(false),
     _binDirection(CELL_VECTOR_3), 
     _numberOfBinsX(200), 
     _numberOfBinsY(200),
+    _numberOfBinsZ(200),
     _fixPropertyAxisRange(false), 
     _propertyAxisRangeStart(0), 
     _propertyAxisRangeEnd(0),
-	_onlySelected(false)
+	_onlySelectedElements(false)
 {
-}
-
-/******************************************************************************
-* Asks the modifier whether it can be applied to the given input data.
-******************************************************************************/
-bool BinAndReduceModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
-{
-	return input.findObject<ParticleProperty>() != nullptr;
+	// Let this modifier act on particles by default.
+	createDefaultModifierDelegate(BinningModifierDelegate::OOClass(), QStringLiteral("ParticlesBinningModifierDelegate"));
 }
 
 /******************************************************************************
 * This method is called by the system when the modifier has been inserted
 * into a pipeline.
 ******************************************************************************/
-void BinAndReduceModifier::initializeModifier(ModifierApplication* modApp)
+void BinningModifier::initializeModifier(ModifierApplication* modApp)
 {
-	Modifier::initializeModifier(modApp);
+	AsynchronousDelegatingModifier::initializeModifier(modApp);
 
-	// Use the first available particle property from the input state as data source when the modifier is newly created.
-	if(sourceProperty().isNull() && Application::instance()->guiMode()) {
+	// Use the first available property from the input state as data source when the modifier is newly created.
+	if(sourceProperty().isNull() && delegate() && Application::instance()->guiMode()) {
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
-		ParticlePropertyReference bestProperty;
+		PropertyReference bestProperty;
 		for(DataObject* o : input.objects()) {
-			ParticleProperty* property = dynamic_object_cast<ParticleProperty>(o);
-			if(property && (property->dataType() == PropertyStorage::Int || property->dataType() == PropertyStorage::Float)) {
-				bestProperty = ParticlePropertyReference(property, (property->componentCount() > 1) ? 0 : -1);
+			if(PropertyObject* property = dynamic_object_cast<PropertyObject>(o)) {
+				if(delegate()->propertyClass().isMember(property)) {
+    				bestProperty = PropertyReference(property, (property->componentCount() > 1) ? 0 : -1);
+				}
 			}
 		}
 		if(!bestProperty.isNull()) {
@@ -115,9 +111,93 @@ void BinAndReduceModifier::initializeModifier(ModifierApplication* modApp)
 }
 
 /******************************************************************************
+* Is called when the value of a reference field of this RefMaker changes.
+******************************************************************************/
+void BinningModifier::referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget)
+{
+	if(field == PROPERTY_FIELD(AsynchronousDelegatingModifier::delegate)) {
+		if(!dataset()->undoStack().isUndoingOrRedoing() && !isBeingLoaded() && delegate()) {
+			setSourceProperty(sourceProperty().convertToPropertyClass(&delegate()->propertyClass()));
+		}
+	}
+
+	AsynchronousDelegatingModifier::referenceReplaced(field, oldTarget, newTarget);
+}
+
+/******************************************************************************
+* Creates and initializes a computation engine that will compute the 
+* modifier's results.
+******************************************************************************/
+Future<AsynchronousModifier::ComputeEnginePtr> BinningModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+{
+	// Get the delegate object that will take of the specific details.
+	if(!delegate())
+		throwException(tr("No delegate set for the binning modifier."));
+	if(sourceProperty().isNull())
+		throwException(tr("No property to be binned has been selected."));
+
+	// Do we have a valid pipeline input?
+	const PropertyClass& propertyClass = delegate()->propertyClass();
+	if(!propertyClass.isDataPresent(input))
+		throwException(tr("Cannot bin property '%1', because the input data contains no %2.").arg(sourceProperty().name()).arg(propertyClass.elementDescriptionName()));
+	if(sourceProperty().propertyClass() != &propertyClass)
+		throwException(tr("Property %1 to be binned is not a %2 property.").arg(sourceProperty().name()).arg(propertyClass.elementDescriptionName()));
+
+	// Get the number of input elements.
+	size_t nelements = propertyClass.elementCount(input);
+
+	// Get selection property.
+	ConstPropertyPtr selectionProperty;
+	if(onlySelectedElements()) {
+		if(PropertyObject* selPropertyObj = propertyClass.findInState(input, PropertyStorage::GenericSelectionProperty))
+			selectionProperty = selPropertyObj->storage();
+		else
+			throwException(tr("Binning modifier has been restricted to selected elements, but no selection was previously defined."));
+	}
+
+	// Get input property to be binned.
+    PropertyObject* sourcePropertyObj = sourceProperty().findInState(input);
+    if(!sourcePropertyObj)
+        throwException(tr("Source property '%1' not found in the input data.").arg(sourceProperty().nameWithComponent()));
+	ConstPropertyPtr sourceProperty = sourcePropertyObj->storage();
+
+	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
+	return delegate()->createEngine(time, input, std::move(sourceProperty), std::move(selectionProperty));
+}
+
+/******************************************************************************
+* Constructor.
+******************************************************************************/
+BinningModifierDelegate::BinningEngine::BinningEngine(
+		const TimeInterval& validityInterval, 
+        ConstPropertyPtr sourceProperty, 
+        ConstPropertyPtr selectionProperty) :
+	AsynchronousModifier::ComputeEngine(validityInterval), 
+	_sourceProperty(std::move(sourceProperty)),
+	_selectionProperty(std::move(selectionProperty))
+{
+}
+
+/******************************************************************************
+* Injects the computed results of the engine into the data pipeline.
+******************************************************************************/
+PipelineFlowState BinningModifierDelegate::BinningEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+{
+	BinningModifierApplication* myModApp = dynamic_object_cast<BinningModifierApplication>(modApp);
+	BinningModifier* modifier = static_object_cast<BinningModifier>(modApp->modifier());
+	if(!modifier->delegate())
+		modifier->throwException(tr("No delegate set for the binning modifier."));
+
+	PipelineFlowState output = input;
+//	OutputHelper poh(modifier->dataset(), output);
+	return output;
+}
+
+#if 0
+/******************************************************************************
 * Asks the object for the result of the data pipeline.
 ******************************************************************************/
-Future<PipelineFlowState> BinAndReduceModifier::evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<PipelineFlowState> BinningModifier::evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
     ParticleInputHelper pih(dataset(), input);
 
@@ -362,9 +442,9 @@ Future<PipelineFlowState> BinAndReduceModifier::evaluate(TimePoint time, Modifie
 		setPropertyAxisRangeEnd(*minmax.second);
 	}
 
-	static_object_cast<BinAndReduceModifierApplication>(modApp)->setBinData(binData);
-	static_object_cast<BinAndReduceModifierApplication>(modApp)->setRange1({xAxisRangeStart, xAxisRangeEnd});
-	static_object_cast<BinAndReduceModifierApplication>(modApp)->setRange2({yAxisRangeStart, yAxisRangeEnd});
+	static_object_cast<BinningModifierApplication>(modApp)->setBinData(binData);
+	static_object_cast<BinningModifierApplication>(modApp)->setRange1({xAxisRangeStart, xAxisRangeEnd});
+	static_object_cast<BinningModifierApplication>(modApp)->setRange2({yAxisRangeStart, yAxisRangeEnd});
 
 	// Inform the editor component that the stored data has changed
 	// and it should update the display.
@@ -372,8 +452,7 @@ Future<PipelineFlowState> BinAndReduceModifier::evaluate(TimePoint time, Modifie
 
 	return input;
 }
+#endif
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

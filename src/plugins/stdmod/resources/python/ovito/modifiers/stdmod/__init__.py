@@ -6,7 +6,7 @@ from ovito.plugins.StdMod import (SliceModifier, AffineTransformationModifier, C
                                 InvertSelectionModifier, ColorCodingModifier, AssignColorModifier, 
                                 DeleteSelectedModifier, ScatterPlotModifier, ReplicateModifier,
                                 ExpressionSelectionModifier, FreezePropertyModifier, ManualSelectionModifier,
-                                ComputePropertyModifier, CombineDatasetsModifier)
+                                ComputePropertyModifier, CombineDatasetsModifier, BinningModifier)
 
 # Load submodules.
 from .select_type_modifier import SelectTypeModifier
@@ -29,12 +29,13 @@ ovito.modifiers.FreezePropertyModifier = FreezePropertyModifier
 ovito.modifiers.ManualSelectionModifier = ManualSelectionModifier
 ovito.modifiers.ComputePropertyModifier = ComputePropertyModifier
 ovito.modifiers.CombineDatasetsModifier = CombineDatasetsModifier
+ovito.modifiers.BinningModifier = BinningModifier
 ovito.modifiers.__all__ += ['SliceModifier', 'AffineTransformationModifier', 
             'ClearSelectionModifier', 'InvertSelectionModifier', 'ColorCodingModifier',
             'AssignColorModifier', 'DeleteSelectedModifier', 'SelectTypeModifier', 'HistogramModifier', 
             'ScatterPlotModifier', 'ReplicateModifier', 'ExpressionSelectionModifier',
             'FreezePropertyModifier', 'ManualSelectionModifier', 'ComputePropertyModifier',
-            'CombineDatasetsModifier']
+            'CombineDatasetsModifier', 'BinningModifier']
 
 # For backward compatibility with OVITO 2.9.0:
 def _ColorCodingModifier_set_particle_property(self, v): self.property = v
@@ -67,4 +68,5 @@ ovito.modifiers.SelectParticleTypeModifier = SelectTypeModifier
 ovito.modifiers.ShowPeriodicImagesModifier = ReplicateModifier
 ovito.modifiers.SelectExpressionModifier = ExpressionSelectionModifier
 ovito.modifiers.CombineParticleSetsModifier = CombineDatasetsModifier
-ovito.modifiers.__all__ += ['DeleteSelectedParticlesModifier', 'SelectParticleTypeModifier', 'ShowPeriodicImagesModifier', 'SelectExpressionModifier', 'CombineParticleSetsModifier']
+ovito.modifiers.BinAndReduceModifier = BinningModifier
+ovito.modifiers.__all__ += ['DeleteSelectedParticlesModifier', 'SelectParticleTypeModifier', 'ShowPeriodicImagesModifier', 'SelectExpressionModifier', 'CombineParticleSetsModifier', 'BinAndReduceModifier']

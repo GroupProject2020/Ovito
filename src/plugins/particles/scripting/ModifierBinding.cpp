@@ -32,7 +32,6 @@
 #include <plugins/particles/modifier/properties/BondsComputePropertyModifierDelegate.h>
 #include <plugins/particles/modifier/selection/ExpandSelectionModifier.h>
 #include <plugins/particles/modifier/analysis/StructureIdentificationModifier.h>
-#include <plugins/particles/modifier/analysis/binandreduce/BinAndReduceModifier.h>
 #include <plugins/particles/modifier/analysis/bondangle/BondAngleAnalysisModifier.h>
 #include <plugins/particles/modifier/analysis/cna/CommonNeighborAnalysisModifier.h>
 #include <plugins/particles/modifier/analysis/centrosymmetry/CentroSymmetryModifier.h>
@@ -142,120 +141,6 @@ void defineModifiersSubmodule(py::module m)
 		.value("Cutoff", ExpandSelectionModifier::CutoffRange)
 		.value("Nearest", ExpandSelectionModifier::NearestNeighbors)
 		.value("Bonded", ExpandSelectionModifier::BondedNeighbors)
-	;
-
-	auto BinAndReduceModifier_py = ovito_class<BinAndReduceModifier, Modifier>(m,
-			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
-			"This modifier applies a reduction operation to a property of the particles within a spatial bin. "
-			"The output of the modifier is a one or two-dimensional grid of bin values. "
-			"See also the corresponding `user manual page <../../particles.modifiers.bin_and_reduce.html>`__ for this modifier. ")
-		.def_property("property", &BinAndReduceModifier::sourceProperty, &BinAndReduceModifier::setSourceProperty,
-				"The name of the input particle property to which the reduction operation should be applied. "
-				"This can be one of the :ref:`standard particle properties <particle-types-list>` or a custom particle property. "
-				"For vector properties the selected component must be appended to the name, e.g. ``\"Velocity.X\"``. ")
-		.def_property("reduction_operation", &BinAndReduceModifier::reductionOperation, &BinAndReduceModifier::setReductionOperation,
-				"Selects the reduction operation to be carried out. Possible values are:"
-				"\n\n"
-				"   * ``BinAndReduceModifier.Operation.Mean``\n"
-				"   * ``BinAndReduceModifier.Operation.Sum``\n"
-				"   * ``BinAndReduceModifier.Operation.SumVol``\n"
-				"   * ``BinAndReduceModifier.Operation.Min``\n"
-				"   * ``BinAndReduceModifier.Operation.Max``\n"
-				"\n"
-				"The operation ``SumVol`` first computes the sum and then divides the result by the volume of the respective bin. "
-				"It is intended to compute pressure (or stress) within each bin from the per-atom virial."
-				"\n\n"
-				":Default: ``BinAndReduceModifier.Operation.Mean``\n")
-		.def_property("first_derivative", &BinAndReduceModifier::firstDerivative, &BinAndReduceModifier::setFirstDerivative,
-				"If true, the modifier numerically computes the first derivative of the binned data using a finite differences approximation. "
-				"This works only for one-dimensional bin grids. "
-				"\n\n"
-				":Default: ``False``\n")
-		.def_property("direction", &BinAndReduceModifier::binDirection, &BinAndReduceModifier::setBinDirection,
-				"Selects the alignment of the bins. Possible values:"
-				"\n\n"
-				"   * ``BinAndReduceModifier.Direction.Vector_1``\n"
-				"   * ``BinAndReduceModifier.Direction.Vector_2``\n"
-				"   * ``BinAndReduceModifier.Direction.Vector_3``\n"
-				"   * ``BinAndReduceModifier.Direction.Vectors_1_2``\n"
-				"   * ``BinAndReduceModifier.Direction.Vectors_1_3``\n"
-				"   * ``BinAndReduceModifier.Direction.Vectors_2_3``\n"
-				"\n"
-				"In the first three cases the modifier generates a one-dimensional grid with bins aligned perpendicular to the selected simulation cell vector. "
-				"In the last three cases the modifier generates a two-dimensional grid with bins aligned perpendicular to both selected simulation cell vectors (i.e. parallel to the third vector). "
-				"\n\n"
-				":Default: ``BinAndReduceModifier.Direction.Vector_3``\n")
-		.def_property("bin_count_x", &BinAndReduceModifier::numberOfBinsX, &BinAndReduceModifier::setNumberOfBinsX,
-				"This attribute sets the number of bins to generate along the first binning axis."
-				"\n\n"
-				":Default: 200\n")
-		.def_property("bin_count_y", &BinAndReduceModifier::numberOfBinsY, &BinAndReduceModifier::setNumberOfBinsY,
-				"This attribute sets the number of bins to generate along the second binning axis (only used when working with a two-dimensional grid)."
-				"\n\n"
-				":Default: 200\n")
-		.def_property("only_selected", &BinAndReduceModifier::onlySelected, &BinAndReduceModifier::setOnlySelected,
-				"If ``True``, the computation takes into account only the currently selected particles. "
-				"You can use this to restrict the calculation to a subset of particles. "
-				"\n\n"
-				":Default: ``False``\n")
-		.def_property_readonly("bin_data", py::cpp_function([](BinAndReduceModifier& mod) {
-					BinAndReduceModifierApplication* modApp = dynamic_object_cast<BinAndReduceModifierApplication>(mod.someModifierApplication());
-					if(!modApp || !modApp->binData()) mod.throwException(BinAndReduceModifier::tr("Modifier has not been evaluated yet. Bin data is not yet available."));
-					std::vector<size_t> shape;
-					if(mod.is1D() && modApp->binData()->size() == mod.numberOfBinsX()) {
-						shape.push_back(mod.numberOfBinsX());
-					}
-					else if(!mod.is1D() && modApp->binData()->size() == (size_t)mod.numberOfBinsX() * (size_t)mod.numberOfBinsY()) {
-						shape.push_back(mod.numberOfBinsY());
-						shape.push_back(mod.numberOfBinsX());
-					}
-					else mod.throwException(BinAndReduceModifier::tr("Modifier has not been evaluated yet. Bin data is not yet available."));
-					py::array_t<FloatType> array(shape, modApp->binData()->constDataFloat(), py::cast(modApp));
-					// Mark array as read-only.
-					reinterpret_cast<py::detail::PyArray_Proxy*>(array.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
-					return array;
-				}),
-				"Returns a NumPy array containing the reduced bin values computed by the modifier. "
-    			"Depending on the selected binning :py:attr:`.direction` the returned array is either "
-    			"one or two-dimensional. In the two-dimensional case the outer index of the returned array "
-    			"runs over the bins along the second binning axis. "
-				"\n\n"    
-    			"Note that accessing this array is only possible after the modifier has computed its results. " 
-    			"Thus, you have to call :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` first to ensure that the binning and reduction operation was performed.")
-		.def_property_readonly("axis_range_x", [](BinAndReduceModifier& mod) {
-					BinAndReduceModifierApplication* modApp = dynamic_object_cast<BinAndReduceModifierApplication>(mod.someModifierApplication());
-					if(!modApp || !modApp->binData()) mod.throwException(BinAndReduceModifier::tr("Modifier has not been evaluated yet. Bin data is not yet available."));
-					return py::make_tuple(modApp->range1().first, modApp->range1().second);
-				},
-				"A 2-tuple containing the range of the generated bin grid along the first binning axis. "
-				"Note that this is an output attribute which is only valid after the modifier has performed the bin and reduce operation. "
-				"That means you have to call :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` first to evaluate the data pipeline.")
-		.def_property_readonly("axis_range_y", [](BinAndReduceModifier& mod) {
-					BinAndReduceModifierApplication* modApp = dynamic_object_cast<BinAndReduceModifierApplication>(mod.someModifierApplication());
-					if(!modApp || !modApp->binData()) mod.throwException(BinAndReduceModifier::tr("Modifier has not been evaluated yet. Bin data is not yet available."));
-					return py::make_tuple(modApp->range2().first, modApp->range2().second);
-				},
-				"A 2-tuple containing the range of the generated bin grid along the second binning axis. "
-				"Note that this is an output attribute which is only valid after the modifier has performed the bin and reduce operation. "
-				"That means you have to call :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` first to evaluate the data pipeline.")
-	;
-	ovito_class<BinAndReduceModifierApplication, ModifierApplication>{m};
-
-	py::enum_<BinAndReduceModifier::ReductionOperationType>(BinAndReduceModifier_py, "Operation")
-		.value("Mean", BinAndReduceModifier::RED_MEAN)
-		.value("Sum", BinAndReduceModifier::RED_SUM)
-		.value("SumVol", BinAndReduceModifier::RED_SUM_VOL)
-		.value("Min", BinAndReduceModifier::RED_MIN)
-		.value("Max", BinAndReduceModifier::RED_MAX)
-	;
-
-	py::enum_<BinAndReduceModifier::BinDirectionType>(BinAndReduceModifier_py, "Direction")
-		.value("Vector_1", BinAndReduceModifier::CELL_VECTOR_1)
-		.value("Vector_2", BinAndReduceModifier::CELL_VECTOR_2)
-		.value("Vector_3", BinAndReduceModifier::CELL_VECTOR_3)
-		.value("Vectors_1_2", BinAndReduceModifier::CELL_VECTORS_1_2)
-		.value("Vectors_1_3", BinAndReduceModifier::CELL_VECTORS_1_3)
-		.value("Vectors_2_3", BinAndReduceModifier::CELL_VECTORS_2_3)
 	;
 
 	ovito_abstract_class<StructureIdentificationModifier, AsynchronousModifier>{m};

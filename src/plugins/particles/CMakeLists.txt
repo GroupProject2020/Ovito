@@ -41,7 +41,6 @@ SET(SourceFiles
 	modifier/modify/CoordinationPolyhedraModifier.cpp
 	modifier/analysis/StructureIdentificationModifier.cpp
 	modifier/analysis/ReferenceConfigurationModifier.cpp
-	modifier/analysis/binandreduce/BinAndReduceModifier.cpp
 	modifier/analysis/bondangle/BondAngleAnalysisModifier.cpp
 	modifier/analysis/cna/CommonNeighborAnalysisModifier.cpp
 	modifier/analysis/coordination/CoordinationAnalysisModifier.cpp

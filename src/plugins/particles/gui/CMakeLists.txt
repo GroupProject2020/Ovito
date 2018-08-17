@@ -32,7 +32,6 @@ SET(SourceFiles
 	modifier/modify/CreateBondsModifierEditor.cpp
 	modifier/modify/LoadTrajectoryModifierEditor.cpp
 	modifier/analysis/StructureListParameterUI.cpp
-	modifier/analysis/binandreduce/BinAndReduceModifierEditor.cpp
 	modifier/analysis/bondangle/BondAngleAnalysisModifierEditor.cpp
 	modifier/analysis/cna/CommonNeighborAnalysisModifierEditor.cpp
 	modifier/analysis/coordination/CoordinationAnalysisModifierEditor.cpp
