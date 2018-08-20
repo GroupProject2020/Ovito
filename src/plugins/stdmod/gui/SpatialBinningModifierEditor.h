@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,7 +22,7 @@
 #pragma once
 
 
-#include <plugins/particles/gui/ParticlesGui.h>
+#include <plugins/stdmod/gui/StdModGui.h>
 #include <gui/properties/ModifierPropertiesEditor.h>
 #include <gui/properties/BooleanParameterUI.h>
 #include <gui/properties/IntegerParameterUI.h>
@@ -34,22 +34,20 @@ class QwtPlotSpectrogram;
 class QwtMatrixRasterData;
 class QwtPlotGrid;
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
-
-OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace StdMod {
 
 /**
- * A properties editor for the BinningModifier class.
+ * A properties editor for the SpatialBinningModifier class.
  */
-class BinningModifierEditor : public ModifierPropertiesEditor
+class SpatialBinningModifierEditor : public ModifierPropertiesEditor
 {
-	OVITO_CLASS(BinningModifierEditor)
+	OVITO_CLASS(SpatialBinningModifierEditor)
 	Q_OBJECT
 	
 public:
 
 	/// Default constructor.
-	Q_INVOKABLE BinningModifierEditor() {}
+	Q_INVOKABLE SpatialBinningModifierEditor() {}
 
 protected:
 
@@ -72,11 +70,14 @@ protected Q_SLOTS:
 
 private:
 
-    /// Widget controlling the number of y-bins.
+    /// Widget controlling computation of the first derivative.
     BooleanParameterUI* _firstDerivativePUI;
 
     /// Widget controlling the number of y-bins.
     IntegerParameterUI* _numBinsYPUI;
+
+    /// Widget controlling the number of z-bins.
+    IntegerParameterUI* _numBinsZPUI;
 
 	/// The graph widget to display the data.
 	QwtPlot* _plot;
@@ -94,14 +95,8 @@ private:
 	QwtPlotGrid* _plotGrid = nullptr;
 
 	/// For deferred invocation of the plot repaint function.
-	DeferredMethodInvocation<BinningModifierEditor, &BinningModifierEditor::plotData> plotLater;
+	DeferredMethodInvocation<SpatialBinningModifierEditor, &SpatialBinningModifierEditor::plotData> plotLater;
 };
 
-OVITO_END_INLINE_NAMESPACE
-
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

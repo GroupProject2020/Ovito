@@ -25,18 +25,19 @@
 #include <plugins/stdmod/StdMod.h>
 #include <plugins/stdobj/properties/PropertyReference.h>
 #include <plugins/stdobj/series/DataSeriesObject.h>
+#include <plugins/stdobj/simcell/SimulationCell.h>
 #include <core/dataset/pipeline/AsynchronousDelegatingModifier.h>
 #include <core/dataset/pipeline/AsynchronousModifierApplication.h>
 
 namespace Ovito { namespace StdMod {
 
 /**
- * \brief Base class for modifier delegates used by the BinningModifier class.
+ * \brief Base class for modifier delegates used by the SpatialBinningModifier class.
  */
-class OVITO_STDMOD_EXPORT BinningModifierDelegate : public AsynchronousModifierDelegate
+class OVITO_STDMOD_EXPORT SpatialBinningModifierDelegate : public AsynchronousModifierDelegate
 {
 	Q_OBJECT
-	OVITO_CLASS(BinningModifierDelegate)
+	OVITO_CLASS(SpatialBinningModifierDelegate)
 
 protected:
 
@@ -44,14 +45,32 @@ protected:
 	using AsynchronousModifierDelegate::AsynchronousModifierDelegate;
 
 	/// Asynchronous compute engine that does the actual work in a separate thread.
-	class BinningEngine : public AsynchronousModifier::ComputeEngine
+	class SpatialBinningEngine : public AsynchronousModifier::ComputeEngine
 	{
 	public:
 
 		/// Constructor.
-		BinningEngine(const TimeInterval& validityInterval, 
+		SpatialBinningEngine(
+				const TimeInterval& validityInterval, 
+				const SimulationCell& cell,
 				ConstPropertyPtr sourceProperty, 
-				ConstPropertyPtr selectionProperty);
+				size_t sourceComponent, 
+				ConstPropertyPtr selectionProperty,
+				PropertyPtr binData,
+				const Vector3I& binCount,
+				const Vector3I& binDir,
+				int reductionOperation,
+				bool computeFirstDerivative) :
+			AsynchronousModifier::ComputeEngine(validityInterval), 
+			_cell(cell),
+			_sourceProperty(std::move(sourceProperty)),
+			_sourceComponent(sourceComponent), 
+			_selectionProperty(std::move(selectionProperty)),
+			_binData(std::move(binData)),
+			_binCount(binCount),
+			_binDir(binDir),
+			_reductionOperation(reductionOperation),
+			_computeFirstDerivative(computeFirstDerivative) {}
 				
 		/// This method is called by the system after the computation was successfully completed.
 		virtual void cleanup() override {
@@ -60,19 +79,47 @@ protected:
 			ComputeEngine::cleanup();
 		}
 
+		/// Compute first derivative using finite differences.
+		void computeGradient();
+
 		/// Returns the property storage that contains the input values.
 		const ConstPropertyPtr& sourceProperty() const { return _sourceProperty; }
+
+		/// Returns the vector component of the source property.
+		size_t sourceComponent() const { return _sourceComponent; }
 
 		/// Returns the property storage that contains the input element selection.
 		const ConstPropertyPtr& selectionProperty() const { return _selectionProperty; }
 
+		/// Returns the property storage for the per-bin data.
+		const PropertyPtr& binData() const { return _binData; }
+
+		/// Returns the simulation cell information.
+		const SimulationCell& cell() const { return _cell; }
+
+		/// Returns the number of bins in the given binning direction.
+		int binCount(size_t dim) const { return _binCount[dim]; }
+
+		/// Returns a spatial binning direction.
+		int binDir(size_t dim) const { return _binDir[dim]; }
+
+		/// Returns the type of reduction operation to perform.
+		int reductionOperation() const { return _reductionOperation; }
+
 		/// Injects the computed results into the data pipeline.
 		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 		
-	protected:
+	private:
 
+		const SimulationCell _cell;
 		ConstPropertyPtr _sourceProperty;
+		size_t _sourceComponent;
 		ConstPropertyPtr _selectionProperty;
+		PropertyPtr _binData;
+		const Vector3I _binCount;
+		const Vector3I _binDir;
+		int _reductionOperation;
+		bool _computeFirstDerivative;
 	};
 
 public:
@@ -80,18 +127,26 @@ public:
 	/// \brief Returns the class of data elements this delegate operates on.
 	virtual const PropertyClass& propertyClass() const = 0;
 
-	/// Creates a computation engine that will perform the actual binning.
-	virtual std::shared_ptr<BinningEngine> createEngine(
+	/// Creates a computation engine that will perform the actual binning of elements.
+	virtual std::shared_ptr<SpatialBinningEngine> createEngine(
 				TimePoint time, 
 				const PipelineFlowState& input,
+				const SimulationCell& cell,
 				ConstPropertyPtr sourceProperty,
-				ConstPropertyPtr selectionProperty) = 0;
+				size_t sourceComponent, 
+				ConstPropertyPtr selectionProperty,
+				PropertyPtr binData,
+				const Vector3I& binCount,
+				const Vector3I& binDir,
+				int reductionOperation,
+				bool computeFirstDerivative) = 0;
 };
 
 /**
- * \brief This modifier places elements into equal-sized spatial bins and computes average properties.
+ * \brief This modifier places elements into equal-sized spatial bins and computes a reduction, e.g. the average 
+ *        of a selected input property within each bin cell.
  */
-class OVITO_STDMOD_EXPORT BinningModifier : public AsynchronousDelegatingModifier
+class OVITO_STDMOD_EXPORT SpatialBinningModifier : public AsynchronousDelegatingModifier
 {
 	/// Give this modifier class its own metaclass.
 	class BinningModifierClass : public AsynchronousDelegatingModifier::OOMetaClass  
@@ -102,13 +157,12 @@ class OVITO_STDMOD_EXPORT BinningModifier : public AsynchronousDelegatingModifie
 		using AsynchronousDelegatingModifier::OOMetaClass::OOMetaClass;
 
 		/// Return the metaclass of delegates for this modifier type. 
-		virtual const AsynchronousModifierDelegate::OOMetaClass& delegateMetaclass() const override { return BinningModifierDelegate::OOClass(); }
+		virtual const AsynchronousModifierDelegate::OOMetaClass& delegateMetaclass() const override { return SpatialBinningModifierDelegate::OOClass(); }
 	};
 
-
 	Q_OBJECT
-	OVITO_CLASS_META(BinningModifier, BinningModifierClass)
-	Q_CLASSINFO("DisplayName", "Binning");
+	OVITO_CLASS_META(SpatialBinningModifier, BinningModifierClass)
+	Q_CLASSINFO("DisplayName", "Spatial binning");
 	Q_CLASSINFO("ModifierCategory", "Analysis");
 
 public:
@@ -123,21 +177,21 @@ public:
     Q_ENUMS(ReductionOperationType);
 
     enum BinDirectionType { 
-		CELL_VECTOR_1 = 0, 						// 00 00 00 b
-		CELL_VECTOR_2 = 1, 						// 00 00 01 b
-		CELL_VECTOR_3 = 2, 						// 00 00 10 b
-        CELL_VECTORS_1_2 = 0+(1<<2), 			// 00 01 00 b
-		CELL_VECTORS_1_3 = 0+(2<<2), 			// 00 10 00 b
-		CELL_VECTORS_2_3 = 1+(2<<2), 			// 00 10 01 b
-		CELL_VECTORS_1_2_3 = 0+(1<<2)+(2<<4)	// 10 01 00 b 
+		CELL_VECTOR_1 = 	0b111100, 
+		CELL_VECTOR_2 = 	0b111101, 
+		CELL_VECTOR_3 = 	0b111110,
+        CELL_VECTORS_1_2 = 	0b110100,
+		CELL_VECTORS_1_3 = 	0b111000,
+		CELL_VECTORS_2_3 = 	0b111001,
+		CELL_VECTORS_1_2_3 =0b100100 
 	};
     Q_ENUMS(BinDirectionType);
 
 	/// Constructor.
-	Q_INVOKABLE BinningModifier(DataSet* dataset);
+	Q_INVOKABLE SpatialBinningModifier(DataSet* dataset);
 
-	/// \brief Returns the current delegate of this BinningModifier.
-	BinningModifierDelegate* delegate() const { return static_object_cast<BinningModifierDelegate>(AsynchronousDelegatingModifier::delegate()); }
+	/// \brief Returns the current delegate of this SpatialBinningModifier.
+	SpatialBinningModifierDelegate* delegate() const { return static_object_cast<SpatialBinningModifierDelegate>(AsynchronousDelegatingModifier::delegate()); }
 
 	/// This method is called by the system after the modifier has been inserted into a data pipeline.
 	virtual void initializeModifier(ModifierApplication* modApp) override;
@@ -148,14 +202,34 @@ public:
 		setPropertyAxisRangeEnd(end); 
 	}
 
-    /// Returns true if binning in a single direction only.
-    bool is1D() {
+    /// Returns true if binning is done in a single direction only.
+    bool is1D() const {
         return bin1D(binDirection());
     }
 
-    /// Returns true if binning in a single direction only.
+    /// Returns true if binning is done in two spatial directions.
+    bool is2D() const {
+        return bin2D(binDirection());
+    }	
+
+    /// Returns true if binning is done in two spatial directions.
+    bool is3D() const {
+        return bin3D(binDirection());
+    }	
+
+    /// Returns true if binning is performed in a single direction only.
     static bool bin1D(BinDirectionType d) {
         return d == CELL_VECTOR_1 || d == CELL_VECTOR_2 || d == CELL_VECTOR_3;
+    }
+
+    /// Returns true if binning is performed in a two spatial directions.
+    static bool bin2D(BinDirectionType d) {
+        return d == CELL_VECTORS_1_2 || d == CELL_VECTORS_1_3 || d == CELL_VECTORS_2_3;
+    }
+
+    /// Returns true if binning is performed in a two spatial directions.
+    static bool bin3D(BinDirectionType d) {
+        return d == CELL_VECTORS_1_2_3;
     }
 
     /// Return the cell vector index to be mapped to the X-axis of the output grid.
@@ -218,7 +292,7 @@ private:
 };
 
 /**
- * \brief The type of ModifierApplication created for a BinningModifier 
+ * \brief The type of ModifierApplication created for a SpatialBinningModifier 
  *        when it is inserted into in a data pipeline.
  */
 class OVITO_STDMOD_EXPORT BinningModifierApplication : public AsynchronousModifierApplication
@@ -240,7 +314,7 @@ private:
 }	// End of namespace
 }	// End of namespace
 
-Q_DECLARE_METATYPE(Ovito::StdMod::BinningModifier::ReductionOperationType);
-Q_DECLARE_METATYPE(Ovito::StdMod::BinningModifier::BinDirectionType);
-Q_DECLARE_TYPEINFO(Ovito::StdMod::BinningModifier::ReductionOperationType, Q_PRIMITIVE_TYPE);
-Q_DECLARE_TYPEINFO(Ovito::StdMod::BinningModifier::BinDirectionType, Q_PRIMITIVE_TYPE);
+Q_DECLARE_METATYPE(Ovito::StdMod::SpatialBinningModifier::ReductionOperationType);
+Q_DECLARE_METATYPE(Ovito::StdMod::SpatialBinningModifier::BinDirectionType);
+Q_DECLARE_TYPEINFO(Ovito::StdMod::SpatialBinningModifier::ReductionOperationType, Q_PRIMITIVE_TYPE);
+Q_DECLARE_TYPEINFO(Ovito::StdMod::SpatialBinningModifier::BinDirectionType, Q_PRIMITIVE_TYPE);

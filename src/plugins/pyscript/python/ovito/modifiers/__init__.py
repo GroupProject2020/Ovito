@@ -20,7 +20,6 @@ Python class name                              User interface name
 :py:class:`AmbientOcclusionModifier`           :guilabel:`Ambient occlusion`
 :py:class:`AssignColorModifier`                :guilabel:`Assign color`
 :py:class:`AtomicStrainModifier`               :guilabel:`Atomic strain`
-:py:class:`BinningModifier`                    :guilabel:`Binning`
 :py:class:`BondAngleAnalysisModifier`          :guilabel:`Bond-angle analysis`
 :py:class:`CalculateDisplacementsModifier`     :guilabel:`Displacement vectors`
 :py:class:`CentroSymmetryModifier`             :guilabel:`Centrosymmetry parameter`
@@ -55,6 +54,7 @@ Python class name                              User interface name
 :py:class:`ScatterPlotModifier`                :guilabel:`Scatter plot`
 :py:class:`SelectTypeModifier`                 :guilabel:`Select type`
 :py:class:`SliceModifier`                      :guilabel:`Slice`
+:py:class:`SpatialBinningModifier`             :guilabel:`Spatial binning`
 :py:class:`VoronoiAnalysisModifier`            :guilabel:`Voronoi analysis`
 :py:class:`VoroTopModifier`                    :guilabel:`VoroTop analysis`
 :py:class:`WignerSeitzAnalysisModifier`        :guilabel:`Wigner-Seitz defect analysis`

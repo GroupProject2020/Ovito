@@ -5,9 +5,9 @@ import numpy
 node = import_file("../../files/NetCDF/sheared_aSi.nc")
 
 import ovito.modifiers
-ovito.modifiers.BinningModifier(property = "Position.X")
+ovito.modifiers.SpatialBinningModifier(property = "Position.X")
 
-modifier = BinningModifier()
+modifier = SpatialBinningModifier()
 node.modifiers.append(modifier)
 
 print("Parameter defaults:")
@@ -19,13 +19,13 @@ print("  bin_count_y: {}".format(modifier.bin_count_y))
 modifier.bin_count_y = 80
 
 print("  reduction_operation: {}".format(modifier.reduction_operation))
-modifier.reduction_operation = BinningModifier.Operation.Mean
+modifier.reduction_operation = SpatialBinningModifier.Operation.Mean
 
 print("  first_derivative: {}".format(modifier.first_derivative))
 modifier.first_derivative = False
 
 print("  reduction_operation: {}".format(modifier.direction))
-modifier.direction = BinningModifier.Direction.Vectors_1_2
+modifier.direction = SpatialBinningModifier.Direction.Vectors_1_2
 
 print("  property: {}".format(modifier.property))
 modifier.property = "Position.X"

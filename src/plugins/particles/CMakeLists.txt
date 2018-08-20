@@ -37,7 +37,6 @@ SET(SourceFiles
 	modifier/modify/WrapPeriodicImagesModifier.cpp
 	modifier/modify/CreateBondsModifier.cpp
 	modifier/modify/LoadTrajectoryModifier.cpp
-	modifier/modify/ParticlesCombineDatasetsModifierDelegate.cpp
 	modifier/modify/CoordinationPolyhedraModifier.cpp
 	modifier/analysis/StructureIdentificationModifier.cpp
 	modifier/analysis/ReferenceConfigurationModifier.cpp
@@ -53,11 +52,8 @@ SET(SourceFiles
 	modifier/analysis/wignerseitz/WignerSeitzAnalysisModifier.cpp
 	modifier/analysis/ptm/PolyhedralTemplateMatchingModifier.cpp
 	modifier/selection/ExpandSelectionModifier.cpp
-	modifier/selection/ParticlesExpressionSelectionModifierDelegate.cpp
 	modifier/properties/InterpolateTrajectoryModifier.cpp
 	modifier/properties/GenerateTrajectoryLinesModifier.cpp
-	modifier/properties/ParticlesComputePropertyModifierDelegate.cpp
-	modifier/properties/BondsComputePropertyModifierDelegate.cpp
 	import/ParticleImporter.cpp
 	import/ParticleFrameData.cpp
 	import/InputColumnMapping.cpp
@@ -101,6 +97,11 @@ IF(OVITO_BUILD_PLUGIN_STDMOD)
 		modifier/modify/ParticlesAffineTransformationModifierDelegate.cpp
 		modifier/modify/ParticlesDeleteSelectedModifierDelegate.cpp
 		modifier/modify/ParticlesReplicateModifierDelegate.cpp
+		modifier/analysis/binning/ParticlesSpatialBinningModifierDelegate.cpp
+		modifier/properties/ParticlesComputePropertyModifierDelegate.cpp
+		modifier/properties/BondsComputePropertyModifierDelegate.cpp
+		modifier/selection/ParticlesExpressionSelectionModifierDelegate.cpp
+		modifier/modify/ParticlesCombineDatasetsModifierDelegate.cpp
 	)
 ENDIF()
 

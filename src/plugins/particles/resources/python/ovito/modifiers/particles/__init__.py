@@ -33,7 +33,6 @@ ovito.modifiers.GenerateTrajectoryLinesModifier = ovito.plugins.Particles.Genera
 ovito.modifiers.__all__ += ['AmbientOcclusionModifier', 
             'WrapPeriodicImagesModifier',
             'ExpandSelectionModifier',
-            'BinningModifier',
             'StructureIdentificationModifier', 'CommonNeighborAnalysisModifier', 'BondAngleAnalysisModifier',
             'CreateBondsModifier', 'CentroSymmetryModifier', 'ClusterAnalysisModifier', 'CoordinationAnalysisModifier',
             'CalculateDisplacementsModifier', 'AtomicStrainModifier',

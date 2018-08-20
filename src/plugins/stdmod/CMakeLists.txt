@@ -36,7 +36,7 @@ SET(SourceFiles
 	modifiers/ManualSelectionModifier.cpp
 	modifiers/ComputePropertyModifier.cpp
 	modifiers/CombineDatasetsModifier.cpp
-	modifiers/BinningModifier.cpp
+	modifiers/SpatialBinningModifier.cpp
 	viewport/ColorLegendOverlay.cpp	
 )
 
