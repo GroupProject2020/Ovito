@@ -29,8 +29,10 @@
 #include <plugins/stdobj/simcell/PeriodicDomainDataObject.h>
 #include <plugins/stdobj/simcell/SimulationCellVis.h>
 #include <plugins/stdobj/series/DataSeriesObject.h>
+#include <plugins/stdobj/series/DataSeriesProperty.h>
 #include <plugins/pyscript/binding/PythonBinding.h>
 #include <core/app/PluginManager.h>
+#include <core/dataset/DataSet.h>
 
 namespace Ovito { namespace StdObj {
 
@@ -324,6 +326,25 @@ PYBIND11_MODULE(StdObj, m)
 		.value("Float", PropertyStorage::Float)
 	;
 
+
+	auto DataSeriesProperty_py = ovito_abstract_class<DataSeriesProperty, PropertyObject>(m)
+		// Used by DataSeriesPropertyView.create(): 
+		.def_static("createStandardProperty", [](DataSet& dataset, size_t elementCount, DataSeriesProperty::Type type, bool initializeMemory) {
+			return DataSeriesProperty::createFromStorage(&dataset, DataSeriesProperty::createStandardStorage(elementCount, type, initializeMemory));
+		})
+		.def_static("createUserProperty", [](DataSet& dataset, size_t elementCount, int dataType, size_t componentCount, size_t stride, const QString& name, bool initializeMemory) {
+			return DataSeriesProperty::createFromStorage(&dataset, std::make_shared<PropertyStorage>(elementCount, dataType, componentCount, stride, name, initializeMemory));
+		})
+		.def_static("standard_property_type_id", [](const QString& name) { return (DataSeriesProperty::Type)DataSeriesProperty::OOClass().standardPropertyTypeId(name); })
+		.def_property_readonly("type", &DataSeriesProperty::type)
+	;
+
+	py::enum_<DataSeriesProperty::Type>(DataSeriesProperty_py, "Type")
+		.value("User", DataSeriesProperty::UserProperty)
+		.value("X", DataSeriesProperty::XProperty)
+		.value("Y", DataSeriesProperty::YProperty)
+	;	
+
 	auto DataSeries_py = ovito_abstract_class<DataSeriesObject, DataObject>(m,
 			":Base class: :py:class:`ovito.data.DataObject`\n\n"
 			"This object represents a series of 2d data points and is used for generating function and histogram plots. "
@@ -344,19 +365,9 @@ PYBIND11_MODULE(StdObj, m)
 			// Python class name:
 			"DataSeries")
 
-		.def_property("id", &DataSeriesObject::identifier, &DataSeriesObject::setIdentifier,
-				"The unique identifier of the data series, which is used as key to look up "
-				"data series in the :py:attr:`DataCollection.series <ovito.data.DataCollection.series>` dictionary. ")
-
 		.def_property("title", &DataSeriesObject::title, &DataSeriesObject::setTitle,
 				"The title of the data series, which is used in the user interface")
 		
-		.def_property_readonly("x", [](DataSeriesObject& p) {
-			return buildNumpyArray(p.x(), false, py::cast(p));
-		})
-		.def_property_readonly("y", [](DataSeriesObject& p) {
-			return buildNumpyArray(p.y(), false, py::cast(p));
-		})
 		.def_property("interval_start", &DataSeriesObject::intervalStart, &DataSeriesObject::setIntervalStart)
 		.def_property("interval_end", &DataSeriesObject::intervalEnd, &DataSeriesObject::setIntervalEnd)
 	;

@@ -89,19 +89,6 @@ SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, fixReciprocalSpaceYAxisRan
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeStart, "Y-range start");
 SET_PROPERTY_FIELD_LABEL(CorrelationFunctionModifier, reciprocalSpaceYAxisRangeEnd, "Y-range end");
 
-IMPLEMENT_OVITO_CLASS(CorrelationFunctionModifierApplication);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifierApplication, realSpaceCorrelation);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifierApplication, realSpaceRDF);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifierApplication, neighCorrelation);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifierApplication, neighRDF);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifierApplication, reciprocalSpaceCorrelation);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifierApplication, mean1);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifierApplication, mean2);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifierApplication, variance1);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifierApplication, variance2);
-DEFINE_PROPERTY_FIELD(CorrelationFunctionModifierApplication, covariance);
-SET_MODIFIER_APPLICATION_TYPE(CorrelationFunctionModifier, CorrelationFunctionModifierApplication);
-
 // This global mutex is used to serialize access to the FFTW3 planner 
 // routines, which are not thread-safe.
 QMutex CorrelationFunctionModifier::_fftwMutex;
@@ -806,74 +793,39 @@ PipelineFlowState CorrelationFunctionModifier::CorrelationAnalysisEngine::emitRe
 	OutputHelper oh(modApp->dataset(), output);
 
 	// Output real-space correlation function to the pipeline as a data series. 
-	OORef<DataSeriesObject> realSpaceCorrelationObj = new DataSeriesObject(modApp->dataset());
-	realSpaceCorrelationObj->setIdentifier(oh.generateUniqueSeriesIdentifier(QStringLiteral("correlation/real-space")));
-	realSpaceCorrelationObj->setTitle(tr("Real-space correlation function"));
+	DataSeriesObject* realSpaceCorrelationObj = oh.outputDataSeries(QStringLiteral("correlation/real-space"), tr("Real-space correlation function"), realSpaceCorrelation());
 	realSpaceCorrelationObj->setAxisLabelX(tr("Distance r"));
 	realSpaceCorrelationObj->setIntervalStart(0);
 	realSpaceCorrelationObj->setIntervalEnd(_realSpaceCorrelationRange);
-	realSpaceCorrelationObj->setY(realSpaceCorrelation());
-	output.addObject(realSpaceCorrelationObj);
 
 	// Output real-space RDF to the pipeline as a data series. 
-	OORef<DataSeriesObject> realSpaceRDFObj = new DataSeriesObject(modApp->dataset());
-	realSpaceRDFObj->setIdentifier(oh.generateUniqueSeriesIdentifier(QStringLiteral("correlation/real-space/rdf")));
-	realSpaceRDFObj->setTitle(tr("Real-space RDF"));
+	DataSeriesObject* realSpaceRDFObj = oh.outputDataSeries(QStringLiteral("correlation/real-space/rdf"), tr("Real-space RDF"), realSpaceRDF());
 	realSpaceRDFObj->setAxisLabelX(tr("Distance r"));
 	realSpaceRDFObj->setIntervalStart(0);
 	realSpaceRDFObj->setIntervalEnd(_realSpaceCorrelationRange);
-	realSpaceRDFObj->setY(realSpaceRDF());
-	output.addObject(realSpaceRDFObj);
 
 	// Output short-ranged part of the real-space correlation function to the pipeline as a data series. 
-	OORef<DataSeriesObject> neighCorrelationObj;
 	if(neighCorrelation()) {
-		neighCorrelationObj = new DataSeriesObject(modApp->dataset());
-		neighCorrelationObj->setIdentifier(oh.generateUniqueSeriesIdentifier(QStringLiteral("correlation/neighbor")));
-		neighCorrelationObj->setTitle(tr("Neighbor correlation function"));
+		DataSeriesObject* neighCorrelationObj = oh.outputDataSeries(QStringLiteral("correlation/neighbor"), tr("Neighbor correlation function"), neighCorrelation());
 		neighCorrelationObj->setAxisLabelX(tr("Distance r"));
 		neighCorrelationObj->setIntervalStart(0);
 		neighCorrelationObj->setIntervalEnd(neighCutoff());
-		neighCorrelationObj->setY(neighCorrelation());
-		output.addObject(neighCorrelationObj);
 	}
 
 	// Output short-ranged part of the RDF to the pipeline as a data series. 
-	OORef<DataSeriesObject> neighRDFObj;
 	if(neighRDF()) {
-		neighRDFObj = new DataSeriesObject(modApp->dataset());
-		neighRDFObj->setIdentifier(oh.generateUniqueSeriesIdentifier(QStringLiteral("correlation/neighbor/rdf")));
-		neighRDFObj->setTitle(tr("Neighbor RDF"));
+		DataSeriesObject* neighRDFObj = oh.outputDataSeries(QStringLiteral("correlation/neighbor/rdf"), tr("Neighbor RDF"), neighRDF());
 		neighRDFObj->setAxisLabelX(tr("Distance r"));
 		neighRDFObj->setIntervalStart(0);
 		neighRDFObj->setIntervalEnd(neighCutoff());
-		neighRDFObj->setY(neighRDF());
-		output.addObject(neighRDFObj);
 	}
 
 	// Output reciprocal-space correlation function to the pipeline as a data series. 
-	OORef<DataSeriesObject> reciprocalSpaceCorrelationObj = new DataSeriesObject(modApp->dataset());
-	reciprocalSpaceCorrelationObj->setIdentifier(oh.generateUniqueSeriesIdentifier(QStringLiteral("correlation/reciprocal-space")));
-	reciprocalSpaceCorrelationObj->setTitle(tr("Reciprocal-space correlation function"));
+	DataSeriesObject* reciprocalSpaceCorrelationObj = oh.outputDataSeries(QStringLiteral("correlation/reciprocal-space"), tr("Reciprocal-space correlation function"), reciprocalSpaceCorrelation());
 	reciprocalSpaceCorrelationObj->setAxisLabelX(tr("Wavevector q"));
 	reciprocalSpaceCorrelationObj->setIntervalStart(0);
 	reciprocalSpaceCorrelationObj->setIntervalEnd(_reciprocalSpaceCorrelationRange);
-	reciprocalSpaceCorrelationObj->setY(reciprocalSpaceCorrelation());
-	output.addObject(reciprocalSpaceCorrelationObj);
 
-	// Store the computed data in the ModifierApplication in order to display it in the modifier's UI panel.
-	CorrelationFunctionModifierApplication* myModApp = static_object_cast<CorrelationFunctionModifierApplication>(modApp);
-	myModApp->setRealSpaceCorrelation(std::move(realSpaceCorrelationObj));
-	myModApp->setRealSpaceRDF(std::move(realSpaceRDFObj));
-	myModApp->setNeighCorrelation(std::move(neighCorrelationObj));
-	myModApp->setNeighRDF(std::move(neighRDFObj));
-	myModApp->setReciprocalSpaceCorrelation(std::move(reciprocalSpaceCorrelationObj));
-	myModApp->setMean1(mean1());
-	myModApp->setMean2(mean2());
-	myModApp->setVariance1(variance1());
-	myModApp->setVariance2(variance2());
-	myModApp->setCovariance(covariance());
-		
 	// Output global attributes.
 	oh.outputAttribute(QStringLiteral("CorrelationFunction.mean1"), QVariant::fromValue(mean1()));
 	oh.outputAttribute(QStringLiteral("CorrelationFunction.mean2"), QVariant::fromValue(mean2()));

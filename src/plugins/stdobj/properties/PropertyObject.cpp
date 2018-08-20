@@ -28,6 +28,7 @@ namespace Ovito { namespace StdObj {
 
 IMPLEMENT_OVITO_CLASS(PropertyObject);	
 DEFINE_PROPERTY_FIELD(PropertyObject, storage);
+DEFINE_PROPERTY_FIELD(PropertyObject, bundle);
 DEFINE_REFERENCE_FIELD(PropertyObject, elementTypes);
 SET_PROPERTY_FIELD_LABEL(PropertyObject, elementTypes, "Element types");
 
@@ -41,6 +42,24 @@ static const PropertyPtr defaultStorage = std::make_shared<PropertyStorage>();
 ******************************************************************************/
 PropertyObject::PropertyObject(DataSet* dataset) : DataObject(dataset), _storage(defaultStorage)
 {
+}
+
+/******************************************************************************
+* Is called whenever the value of a property of this object has changed.
+******************************************************************************/
+void PropertyObject::propertyChanged(const PropertyFieldDescriptor& field)
+{
+	if(field == PROPERTY_FIELD(storage)) {
+		if(!dataset()->undoStack().isUndoingOrRedoing() && !isBeingLoaded()) {
+			setIdentifier(storage() ? storage()->name() : QString());
+		}
+	}
+	else if(field == PROPERTY_FIELD(identifier)) {
+		if(!dataset()->undoStack().isUndoingOrRedoing() && !isBeingLoaded()) {
+			setName(identifier());
+		}
+	}
+	DataObject::propertyChanged(field);
 }
 
 /******************************************************************************

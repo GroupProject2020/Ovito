@@ -99,6 +99,9 @@ public:
 	/// identifier of an existing data series in the same data collection.
 	QString generateUniqueSeriesIdentifier(const QString& baseName) const;
 
+	/// Outputs a new data series to the pipeline.
+	DataSeriesObject* outputDataSeries(const QString& id, const QString& title, const PropertyPtr& y, const PropertyPtr& x = nullptr);
+
 	/// Enures that a DataObject from this flow state is not shared with others and is safe to modify.
 	template<class ObjectType>
 	ObjectType* cloneIfNeeded(ObjectType* obj, bool deepCopy = false) {

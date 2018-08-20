@@ -23,7 +23,6 @@
 
 
 #include <plugins/stdobj/StdObj.h>
-#include <plugins/stdobj/properties/PropertyStorage.h>
 #include <core/dataset/data/DataObject.h>
 
 namespace Ovito { namespace StdObj {
@@ -41,55 +40,18 @@ public:
 	/// Constructor.
 	Q_INVOKABLE DataSeriesObject(DataSet* dataset);
 
-	/// Returns the x-axis data array after making sure it is not 
-	/// shared with others and can be safely modified.
-	const PropertyPtr& modifiableX();
-
-	/// Returns the y-axis data array after making sure it is not 
-	/// shared with others and can be safely modified.
-	const PropertyPtr& modifiableY();
-
-	/// Returns the text label for the x-axis.
-	const QString& getAxisLabelXAny() const {
-		if(x() && !x()->name().isEmpty()) return x()->name();
-		else return axisLabelX();
-	}
-
-	/// Returns the text label for the y-axis.
-	const QString& getAxisLabelYAny() const {
-		if(y() && !y()->name().isEmpty()) return y()->name();
-		else return axisLabelY();
-	}
-
 	/// Determines the X value for the given array index.
-	FloatType getXValue(size_t index) const;
+//	FloatType getXValue(size_t index) const;
 
 	//////////////////////////////// from RefTarget //////////////////////////////
 
 	/// Returns the display title of this object in the user interface.
 	virtual QString objectTitle() override;
 
-protected:
-
-	/// Saves the class' contents to the given stream.
-	virtual void saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData) override;
-
-	/// Loads the class' contents from the given stream.
-	virtual void loadFromStream(ObjectLoadStream& stream) override;
-
 private:
-
-	/// The unique idenfitier of the data series by which it can be referred to from a Python script, for example.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, identifier, setIdentifier);
 
 	/// The title of the data series, which is shown in the user interface.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, title, setTitle);
-
-	/// The x-coordinates of the data points (optional).
-	DECLARE_RUNTIME_PROPERTY_FIELD(PropertyPtr, x, setX);
-
-	/// The y-coordinates of the data points.
-	DECLARE_RUNTIME_PROPERTY_FIELD(PropertyPtr, y, setY);
 
 	/// The lower bound of the x-interval of the histogram if data points have no explicit x-coordinates.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, intervalStart, setIntervalStart);

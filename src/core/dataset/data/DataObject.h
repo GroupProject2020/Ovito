@@ -158,6 +158,9 @@ protected:
 
 private:
 
+	/// The unique identifier of the data object by which it can be referred to from Python, for example.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, identifier, setIdentifier);
+
 	/// The attached visual elements that are responsible for rendering this object's data.
 	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD_FLAGS(DataVis, visElements, setVisElements, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES);
 

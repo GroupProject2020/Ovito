@@ -24,6 +24,7 @@
 #include <plugins/stdobj/properties/PropertyObject.h>
 #include <plugins/stdobj/properties/PropertyClass.h>
 #include <plugins/stdobj/series/DataSeriesObject.h>
+#include <plugins/stdobj/series/DataSeriesProperty.h>
 #include "OutputHelper.h"
 
 namespace Ovito { namespace StdObj {
@@ -210,6 +211,31 @@ QString OutputHelper::generateUniqueSeriesIdentifier(const QString& baseName) co
 		}
 	}
 	OVITO_ASSERT(false);
+}
+
+/******************************************************************************
+* Outputs a new data series to the pipeline.
+******************************************************************************/
+DataSeriesObject* OutputHelper::outputDataSeries(const QString& id, const QString& title, const PropertyPtr& y, const PropertyPtr& x)
+{
+	OORef<DataSeriesObject> dataSeriesObj = new DataSeriesObject(dataset());
+	dataSeriesObj->setIdentifier(generateUniqueSeriesIdentifier(id));
+	dataSeriesObj->setTitle(title);
+	output().addObject(dataSeriesObj);
+
+	if(y) {
+		OORef<DataSeriesProperty> yProperty = DataSeriesProperty::createFromStorage(dataset(), y);
+		yProperty->setBundle(dataSeriesObj->identifier());
+		output().addObject(yProperty);
+	}
+
+	if(x) {
+		OORef<DataSeriesProperty> xProperty = DataSeriesProperty::createFromStorage(dataset(), x);
+		xProperty->setBundle(dataSeriesObj->identifier());
+		output().addObject(xProperty);
+	}
+
+	return dataSeriesObj;
 }
 
 }	// End of namespace

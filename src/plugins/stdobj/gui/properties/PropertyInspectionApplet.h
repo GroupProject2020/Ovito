@@ -49,6 +49,9 @@ public:
 	/// Returns the data display widget.
 	QTableView* tableView() const { return _tableView; }
 
+	/// Returns the list widget displaying the list of data bundles.
+	QListWidget* bundleSelectionWidget() const { return _bundleSelectionWidget; }
+
 	/// Returns the input widget for the filter expression.
 	AutocompleteLineEdit* filterExpressionEdit() const { return _filterExpressionEdit; }
 
@@ -59,7 +62,7 @@ public:
 	PipelineSceneNode* currentSceneNode() const { return _sceneNode.data(); }
 
 	/// Returns the current dataset.
-	const PipelineFlowState& currentData() const { return _filterModel->_data; }
+	const PipelineFlowState& currentData() const { return _data; }
 
 	/// Returns the number of currently displayed elements.
 	int visibleElementCount() const { return _filterModel->rowCount(); }
@@ -67,12 +70,18 @@ public:
 	/// Returns the index of the i-th element currently shown in the table.
 	size_t visibleElementAt(int index) const { return _filterModel->mapToSource(_filterModel->index(index, 0)).row(); }
 
+	/// Returns the identifier of the data bundle that is currently selected.
+	QString selectedBundleId() const;
+
+	/// Returns the data object representing the data bundle that is currently selected.
+//	DataObject selectedBundleObject() const;
+
 protected:
 
 	/// Constructor.
 	PropertyInspectionApplet(const PropertyClass& propertyClass) : _propertyClass(propertyClass) {}
 
-	/// Lets the applet create the UI widgets that are to be placed into the data  inspector panel. 
+	/// Lets the applet create the UI widgets that are to be placed into the data inspector panel. 
 	void createBaseWidgets();
 
 	/// Creates the evaluator object for filter expressions.
@@ -80,6 +89,12 @@ protected:
 
 	/// Determines whether the given property represents a color.
 	virtual bool isColorProperty(PropertyObject* property) const { return false; }
+
+	/// Returns the data object that represents the given data bundle.
+	virtual DataObject* lookupBundleObject(const PipelineFlowState& state, const QString& bundleId) const { return nullptr; }
+
+	/// Updates the list of data bundles displayed in the inspector.
+	void updateBundleList();
 
 Q_SIGNALS:
 
@@ -98,6 +113,9 @@ private Q_SLOTS:
 
 	/// Is called when an error during filter evaluation ocurred.
 	void onFilterStatusChanged(const QString& msgText);
+
+	/// Is called when the user selects a different bundle in the list.
+	void currentBundleChanged();
 
 private:
 
@@ -136,7 +154,7 @@ private:
 		}
 
 		/// Replaces the contents of this data model.
-		void setContents(const PipelineFlowState& state);
+		void setContents(const PipelineFlowState& state, const QString& bundleName);
 
 	private:
 
@@ -156,7 +174,7 @@ private:
 		PropertyFilterModel(PropertyInspectionApplet* applet, QObject* parent) : QSortFilterProxyModel(parent), _applet(applet) {}
 
 		/// Replaces the contents of this data model.
-		void setContentsBegin(const PipelineFlowState& state);
+		void setContentsBegin();
 
 		/// Replaces the contents of this data model.
 		void setContentsEnd() { 
@@ -186,9 +204,6 @@ private:
 
 		/// The owner of the model.
 		PropertyInspectionApplet* _applet;
-
-		/// The input data.
-		PipelineFlowState _data;
 
 		/// The filtering expression.
 		QString _filterExpression;
@@ -230,6 +245,12 @@ private:
 
 	/// The currently selected scene node.
 	QPointer<PipelineSceneNode> _sceneNode;
+
+	/// The widget for selecting the current data bundle.
+	QListWidget* _bundleSelectionWidget = nullptr;
+
+	/// The input data.
+	PipelineFlowState _data;
 };
 
 }	// End of namespace

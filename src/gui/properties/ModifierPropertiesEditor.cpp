@@ -123,6 +123,18 @@ PipelineFlowState ModifierPropertiesEditor::getModifierInput()
 	return {};
 }
 
+/******************************************************************************
+* Return the output data of the Modifier being edited (for the current 
+* ModifierApplication).
+******************************************************************************/
+PipelineFlowState ModifierPropertiesEditor::getModifierOutput()
+{
+	if(ModifierApplication* modApp = modifierApplication()) {
+		return modApp->evaluatePreliminary();
+	}
+	return {};
+}
+
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

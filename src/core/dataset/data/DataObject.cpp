@@ -27,6 +27,7 @@
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
 IMPLEMENT_OVITO_CLASS(DataObject);	
+DEFINE_PROPERTY_FIELD(DataObject, identifier);
 DEFINE_REFERENCE_FIELD(DataObject, visElements);
 SET_PROPERTY_FIELD_LABEL(DataObject, visElements, "Visual elements");
 

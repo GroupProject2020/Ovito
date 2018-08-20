@@ -45,6 +45,7 @@ namespace Ovito {
         class SimulationCellObject;
         class SimulationCellVis;
         class DataSeriesObject;
+        class DataSeriesProperty;
     }
 }
 

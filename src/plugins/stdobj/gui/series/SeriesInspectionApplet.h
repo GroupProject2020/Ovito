@@ -25,14 +25,14 @@
 #include <plugins/stdobj/gui/StdObjGui.h>
 #include <plugins/stdobj/series/DataSeriesObject.h>
 #include <plugins/stdobj/gui/widgets/DataSeriesPlotWidget.h>
-#include <gui/mainwin/data_inspector/DataInspectionApplet.h>
+#include <plugins/stdobj/gui/properties/PropertyInspectionApplet.h>
 
 namespace Ovito { namespace StdObj {
 
 /**
  * \brief Data inspector page for 2d plots.
  */
-class OVITO_STDOBJGUI_EXPORT SeriesInspectionApplet : public DataInspectionApplet
+class OVITO_STDOBJGUI_EXPORT SeriesInspectionApplet : public PropertyInspectionApplet
 {
 	Q_OBJECT
 	OVITO_CLASS(SeriesInspectionApplet)
@@ -41,13 +41,10 @@ class OVITO_STDOBJGUI_EXPORT SeriesInspectionApplet : public DataInspectionApple
 public:
 
 	/// Constructor.
-	Q_INVOKABLE SeriesInspectionApplet() {}
+	Q_INVOKABLE SeriesInspectionApplet() : PropertyInspectionApplet(DataSeriesProperty::OOClass()) {}
 
 	/// Returns the key value for this applet that is used for ordering the applet tabs.
 	virtual int orderingKey() const override { return 200; }
-
-	/// Determines whether the given pipeline flow state contains data that can be displayed by this applet.
-	virtual bool appliesTo(const PipelineFlowState& state) override;
 
 	/// Lets the applet create the UI widget that is to be placed into the data inspector panel. 
 	virtual QWidget* createWidget(MainWindow* mainWindow) override;
@@ -55,21 +52,27 @@ public:
 	/// Lets the applet update the contents displayed in the inspector.
 	virtual void updateDisplay(const PipelineFlowState& state, PipelineSceneNode* sceneNode) override;
 
-	/// Returns the widget for selecting the current data series.
-	QListWidget* seriesSelectionWidget() const { return _seriesSelectionWidget; }
-
 	/// Returns the plotting widget.
 	QwtPlot* plotWidget() const { return _plotWidget; }
 
-private Q_SLOTS:
+protected:
 
-	/// Is called when the user selects a different plot item in the list.
-	void currentPlotChanged(QListWidgetItem* current, QListWidgetItem* previous);
+	/// Creates the evaluator object for filter expressions.
+	virtual std::unique_ptr<PropertyExpressionEvaluator> createExpressionEvaluator() override {
+		return std::make_unique<PropertyExpressionEvaluator>();
+	}
+
+	/// Returns the data object that represents the given data bundle.
+	virtual DataObject* lookupBundleObject(const PipelineFlowState& state, const QString& bundleId) const override {
+		for(DataObject* obj : state.objects()) {
+			if(DataSeriesObject* series = dynamic_object_cast<DataSeriesObject>(obj)) {
+				if(series->identifier() == bundleId) return series;
+			}
+		}
+		return nullptr;
+	}
 
 private:
-
-	/// The widget for selecting the current data series.
-	QListWidget* _seriesSelectionWidget = nullptr;
 
 	/// The plotting widget.
 	DataSeriesPlotWidget* _plotWidget;

@@ -19,7 +19,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <plugins/stdmod/StdMod.h>
+#include <plugins/grid/Grid.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
 #include <plugins/stdobj/properties/PropertyClass.h>
@@ -31,7 +31,7 @@
 #include <core/utilities/units/UnitsManager.h>
 #include "SpatialBinningModifier.h"
 
-namespace Ovito { namespace StdMod {
+namespace Ovito { namespace Grid {
 
 IMPLEMENT_OVITO_CLASS(SpatialBinningModifierDelegate);
 

@@ -2,8 +2,13 @@
 import ovito.modifiers
 
 # Load the native code modules.
-from ovito.plugins.Grid import CreateIsosurfaceModifier
+from ovito.plugins.Grid import CreateIsosurfaceModifier, SpatialBinningModifier
 
 # Inject modifier classes into parent module.
 ovito.modifiers.CreateIsosurfaceModifier = CreateIsosurfaceModifier
-ovito.modifiers.__all__ += ['CreateIsosurfaceModifier']
+ovito.modifiers.SpatialBinningModifier = SpatialBinningModifier
+ovito.modifiers.__all__ += ['CreateIsosurfaceModifier', 'SpatialBinningModifier']
+
+# For backward compatibility with OVITO 2.9.0:
+ovito.modifiers.BinAndReduceModifier = SpatialBinningModifier
+ovito.modifiers.__all__ += ['BinAndReduceModifier']

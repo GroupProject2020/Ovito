@@ -319,55 +319,6 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, reciprocalSpaceYAxisRangeEnd, setReciprocalSpaceYAxisRangeEnd);
 };
 
-
-/**
- * \brief The type of ModifierApplication created for a CorrelationFunctionModifier 
- *        when it is inserted into in a data pipeline. Its stores results computed by the
- *        modifier's compute engine so that they can be displayed in the modifier's UI panel.
- */
-class OVITO_CORRELATIONFUNCTIONPLUGIN_EXPORT CorrelationFunctionModifierApplication : public AsynchronousModifierApplication
-{
-	Q_OBJECT
-	OVITO_CLASS(CorrelationFunctionModifierApplication)
-
-public:
-
-	/// Constructor.
-	Q_INVOKABLE CorrelationFunctionModifierApplication(DataSet* dataset) : AsynchronousModifierApplication(dataset) {}
- 
-private:
- 
-	/// The real-space correlation function.
-	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(OORef<DataSeriesObject>, realSpaceCorrelation, setRealSpaceCorrelation, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
-
-	/// The radial distribution function computed from an FFT convolution.
-	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(OORef<DataSeriesObject>, realSpaceRDF, setRealSpaceRDF, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
-
-	/// The short-ranged part of the real-space correlation function.
-	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(OORef<DataSeriesObject>, neighCorrelation, setNeighCorrelation, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
-
-	/// The radial distribution function computed from a direct sum over neighbor shells.
-	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(OORef<DataSeriesObject>, neighRDF, setNeighRDF, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
-
-	/// The reciprocal-space correlation function.
-	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(OORef<DataSeriesObject>, reciprocalSpaceCorrelation, setReciprocalSpaceCorrelation, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
-
-	/// Mean of the first property.
-	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(FloatType, mean1, setMean1, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
-
-	/// Mean of the second property.
-	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(FloatType, mean2, setMean2, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
-
-	/// Variance of the first property.
-	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(FloatType, variance1, setVariance1, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
-
-	/// Variance of the second property.
-	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(FloatType, variance2, setVariance2, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
-
-	/// (Co)variance.
-	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(FloatType, covariance, setCovariance, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
-};
-
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

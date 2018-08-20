@@ -49,7 +49,6 @@ public:
 	/// Return false because this object cannot be edited.
 	virtual bool isSubObjectEditable() const override { return false; }
 
-
 protected:
 
 	/// Saves the class' contents to the given stream.

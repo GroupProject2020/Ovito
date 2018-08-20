@@ -33,6 +33,7 @@ SET(SourceFiles
 	properties/GenericPropertyModifier.cpp
 	properties/PropertyExpressionEvaluator.cpp
 	series/DataSeriesObject.cpp
+	series/DataSeriesProperty.cpp
 	util/InputHelper.cpp
 	util/OutputHelper.cpp
 	util/ElementSelectionSet.cpp

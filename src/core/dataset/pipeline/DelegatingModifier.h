@@ -36,7 +36,7 @@ class OVITO_CORE_EXPORT ModifierDelegate : public RefTarget
 public:
 
 	/// Give modifier delegates their own metaclass.
-	class ModifierDelegateClass : public RefTarget::OOMetaClass 
+	class ModifierDelegateClass : public RefTarget::OOMetaClass
 	{
 	public:
 
@@ -78,6 +78,9 @@ private:
 
 	/// Indicates whether this delegate is active or not.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, isEnabled, setEnabled);
+
+	/// List of data object names this delegate should operate on.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(QStringList, dataObjects, setDataObjects);
 };
 
 /**

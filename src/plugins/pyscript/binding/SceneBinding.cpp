@@ -74,6 +74,9 @@ void defineSceneSubmodule(py::module m)
 			"configured as needed to change the visual appearance of the data. "
 			"The different visual element types of OVITO are all documented in the :py:mod:`ovito.vis` module. ")
 
+		.def_property("id", &DataObject::identifier, &DataObject::setIdentifier,
+				"The unique identifier string of the data object. May be empty. ")
+
 		.def_property("vis", &DataObject::visElement, &DataObject::setVisElement,
 			"The :py:class:`~ovito.vis.DataVis` element associated with this data object, which is responsible for "
         	"rendering the data visually. If this field contains ``None``, the data is non-visual and doesn't appear in "

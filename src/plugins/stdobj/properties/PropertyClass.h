@@ -39,10 +39,10 @@ public:
 	using DataObject::OOMetaClass::OOMetaClass;
 
 	/// This helper method returns a standard property (if present) from the given pipeline state.
-	PropertyObject* findInState(const PipelineFlowState& state, int typeId) const;
+	PropertyObject* findInState(const PipelineFlowState& state, int typeId, const QString& bundle = QString()) const;
 	
 	/// This helper method returns a specific user-defined property (if present) from the given pipeline state.
-	PropertyObject* findInState(const PipelineFlowState& state, const QString& name) const;		
+	PropertyObject* findInState(const PipelineFlowState& state, const QString& name, const QString& bundle = QString()) const;
 
 	/// Returns a human-readable name used for the property class in the user interface, e.g. 'Particles' or 'Bonds'.
 	const QString& propertyClassDisplayName() const { return _propertyClassDisplayName; }

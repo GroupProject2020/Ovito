@@ -262,11 +262,6 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 
 	connect(this, &CorrelationFunctionModifierEditor::contentsReplaced, this, &CorrelationFunctionModifierEditor::plotAllData);
 
-	layout->addSpacing(12);
-	QPushButton* saveDataButton = new QPushButton(tr("Export data to text file"));
-	layout->addWidget(saveDataButton);
-	connect(saveDataButton, &QPushButton::clicked, this, &CorrelationFunctionModifierEditor::onSaveData);
-
 	// Status label.
 	layout->addSpacing(6);
 	layout->addWidget(statusLabel());
@@ -330,7 +325,6 @@ std::pair<FloatType,FloatType> CorrelationFunctionModifierEditor::plotData(DataS
 void CorrelationFunctionModifierEditor::plotAllData()
 {
 	CorrelationFunctionModifier* modifier = static_object_cast<CorrelationFunctionModifier>(editObject());
-	CorrelationFunctionModifierApplication* modApp = dynamic_object_cast<CorrelationFunctionModifierApplication>(modifierApplication());
 
 	// Set type of plot.
 	if(modifier && modifier->typeOfRealSpacePlot() & 1)
@@ -369,12 +363,14 @@ void CorrelationFunctionModifierEditor::plotAllData()
 	else
 		_reciprocalSpacePlot->setAxisAutoScale(QwtPlot::yLeft);
 
+	// Obtain the pipeline data produced by the modifier.
+	const PipelineFlowState& state = getModifierOutput();
+
+#if 0
 	// Determine scaling factor and offset.
 	FloatType offset = 0.0;
 	FloatType uniformFactor = 1;
-	if(modApp && modifier && modApp->realSpaceCorrelation()) {
-		FloatType offset = 0.0;
-		FloatType uniformFactor = 1;
+	if(modifier && modApp->realSpaceCorrelation()) {
 		if(modifier->normalizeRealSpace() == CorrelationFunctionModifier::DIFFERENCE_CORRELATION) {
 			offset = 0.5 * (modApp->variance1() + modApp->variance2());
 			uniformFactor = -1;
@@ -446,8 +442,10 @@ void CorrelationFunctionModifierEditor::plotAllData()
 	else {
 		_reciprocalSpacePlot->setSeries(nullptr);
 	}
+#endif
 }
 
+#if 0
 /******************************************************************************
 * This is called when the user has clicked the "Save Data" button.
 ******************************************************************************/
@@ -517,6 +515,7 @@ void CorrelationFunctionModifierEditor::onSaveData()
 		ex.reportError();
 	}
 }
+#endif
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

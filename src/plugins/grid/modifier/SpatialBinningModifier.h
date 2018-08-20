@@ -22,19 +22,19 @@
 #pragma once
 
 
-#include <plugins/stdmod/StdMod.h>
+#include <plugins/grid/Grid.h>
 #include <plugins/stdobj/properties/PropertyReference.h>
 #include <plugins/stdobj/series/DataSeriesObject.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <core/dataset/pipeline/AsynchronousDelegatingModifier.h>
 #include <core/dataset/pipeline/AsynchronousModifierApplication.h>
 
-namespace Ovito { namespace StdMod {
+namespace Ovito { namespace Grid {
 
 /**
  * \brief Base class for modifier delegates used by the SpatialBinningModifier class.
  */
-class OVITO_STDMOD_EXPORT SpatialBinningModifierDelegate : public AsynchronousModifierDelegate
+class OVITO_GRID_EXPORT SpatialBinningModifierDelegate : public AsynchronousModifierDelegate
 {
 	Q_OBJECT
 	OVITO_CLASS(SpatialBinningModifierDelegate)
@@ -146,7 +146,7 @@ public:
  * \brief This modifier places elements into equal-sized spatial bins and computes a reduction, e.g. the average 
  *        of a selected input property within each bin cell.
  */
-class OVITO_STDMOD_EXPORT SpatialBinningModifier : public AsynchronousDelegatingModifier
+class OVITO_GRID_EXPORT SpatialBinningModifier : public AsynchronousDelegatingModifier
 {
 	/// Give this modifier class its own metaclass.
 	class BinningModifierClass : public AsynchronousDelegatingModifier::OOMetaClass  
@@ -295,7 +295,7 @@ private:
  * \brief The type of ModifierApplication created for a SpatialBinningModifier 
  *        when it is inserted into in a data pipeline.
  */
-class OVITO_STDMOD_EXPORT BinningModifierApplication : public AsynchronousModifierApplication
+class OVITO_GRID_EXPORT BinningModifierApplication : public AsynchronousModifierApplication
 {
 	OVITO_CLASS(BinningModifierApplication)
 	Q_OBJECT
@@ -314,7 +314,7 @@ private:
 }	// End of namespace
 }	// End of namespace
 
-Q_DECLARE_METATYPE(Ovito::StdMod::SpatialBinningModifier::ReductionOperationType);
-Q_DECLARE_METATYPE(Ovito::StdMod::SpatialBinningModifier::BinDirectionType);
-Q_DECLARE_TYPEINFO(Ovito::StdMod::SpatialBinningModifier::ReductionOperationType, Q_PRIMITIVE_TYPE);
-Q_DECLARE_TYPEINFO(Ovito::StdMod::SpatialBinningModifier::BinDirectionType, Q_PRIMITIVE_TYPE);
+Q_DECLARE_METATYPE(Ovito::Grid::SpatialBinningModifier::ReductionOperationType);
+Q_DECLARE_METATYPE(Ovito::Grid::SpatialBinningModifier::BinDirectionType);
+Q_DECLARE_TYPEINFO(Ovito::Grid::SpatialBinningModifier::ReductionOperationType, Q_PRIMITIVE_TYPE);
+Q_DECLARE_TYPEINFO(Ovito::Grid::SpatialBinningModifier::BinDirectionType, Q_PRIMITIVE_TYPE);

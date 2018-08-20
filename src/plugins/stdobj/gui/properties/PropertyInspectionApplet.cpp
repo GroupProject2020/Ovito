@@ -61,6 +61,10 @@ void PropertyInspectionApplet::createBaseWidgets()
 	_filterModel->setSourceModel(_tableModel);
 	_tableView->setModel(_filterModel);
 	_cleanupHandler.add(_tableView);
+
+	_bundleSelectionWidget = new QListWidget();
+	_cleanupHandler.add(_bundleSelectionWidget);
+	connect(_bundleSelectionWidget, &QListWidget::currentRowChanged, this, &PropertyInspectionApplet::currentBundleChanged);
 }
 
 /******************************************************************************
@@ -74,14 +78,94 @@ void PropertyInspectionApplet::updateDisplay(const PipelineFlowState& state, Pip
 	}
 	
 	_sceneNode = sceneNode;
-	_tableModel->setContents(state);
-	_filterModel->setContentsBegin(state);
+	_data = state;
+	updateBundleList();
+}
+
+/******************************************************************************
+* Updates the list of data bundles displayed in the inspector.
+******************************************************************************/
+void PropertyInspectionApplet::updateBundleList()
+{
+	// Remember which bundle was previously selected.
+	QString previousSelectedBundleId = selectedBundleId();
+
+	// Generate list of all bundle identifiers in the current data collection.
+	QStringList bundleIds;
+	for(DataObject* obj : currentData().objects()) {
+		if(PropertyObject* prop = dynamic_object_cast<PropertyObject>(obj)) {
+			if(_propertyClass.isMember(prop)) {
+				if(!prop->bundle().isEmpty() && !bundleIds.contains(prop->bundle()))
+					bundleIds.push_back(prop->bundle());
+			}
+		}
+	}
+
+	// Lookup the corresponding data objects.
+	std::vector<DataObject*> bundleObjects;
+	for(const QString& bundleId : bundleIds) {
+		if(DataObject* obj = lookupBundleObject(currentData(), bundleId)) {
+			OVITO_ASSERT(obj->identifier() == bundleId);
+			bundleObjects.push_back(obj);
+		}
+	}
+
+	// Update list of data bundles.
+	// Overwrite existing list items, add new items when needed.
+	bundleSelectionWidget()->setUpdatesEnabled(false);
+	int numItems = 0;
+	for(DataObject* obj : bundleObjects) {
+		QListWidgetItem* item;
+		if(bundleSelectionWidget()->count() <= numItems) {
+			item = new QListWidgetItem(obj->objectTitle(), bundleSelectionWidget());
+		}
+		else {
+			item = bundleSelectionWidget()->item(numItems);
+			item->setText(obj->objectTitle());
+		}
+		item->setData(Qt::UserRole, obj->identifier());
+
+		// Select again the previously selected series.
+		if(obj->identifier() == previousSelectedBundleId)
+			bundleSelectionWidget()->setCurrentItem(item);
+
+		numItems++;
+	}
+	// Remove excess items from list.
+	while(bundleSelectionWidget()->count() > numItems)
+		delete bundleSelectionWidget()->takeItem(bundleSelectionWidget()->count() - 1);
+
+	if(!bundleSelectionWidget()->currentItem() && bundleSelectionWidget()->count() != 0)
+		bundleSelectionWidget()->setCurrentRow(0);
+	bundleSelectionWidget()->setUpdatesEnabled(true);
+
+	// Update the currently selected plot.
+	currentBundleChanged();
+}
+
+/******************************************************************************
+* Returns the identifier of the data bundle that is currently selected.
+******************************************************************************/
+QString PropertyInspectionApplet::selectedBundleId() const
+{
+	QListWidgetItem* item = bundleSelectionWidget()->currentItem();
+	if(!item) return {};
+	return item->data(Qt::UserRole).toString();
+}
+
+/******************************************************************************
+* Is called when the user selects a different bundle from the list.
+******************************************************************************/
+void PropertyInspectionApplet::currentBundleChanged()
+{
+	_tableModel->setContents(currentData(), selectedBundleId());
+	_filterModel->setContentsBegin();
 	_filterModel->setContentsEnd();
 
 	// Update the list of variables that can be referenced in the filter expression.
 	try {
 		auto evaluator = createExpressionEvaluator();
-		evaluator->initialize(QStringList(), state, _propertyClass);
+		evaluator->initialize(QStringList(), currentData(), _propertyClass, selectedBundleId());
 		_filterExpressionEdit->setWordList(evaluator->inputVariableNames());
 	}
 	catch(const Exception&) {}
@@ -90,13 +174,13 @@ void PropertyInspectionApplet::updateDisplay(const PipelineFlowState& state, Pip
 /******************************************************************************
 * Replaces the contents of this data model.
 ******************************************************************************/
-void PropertyInspectionApplet::PropertyTableModel::setContents(const PipelineFlowState& state) 
+void PropertyInspectionApplet::PropertyTableModel::setContents(const PipelineFlowState& state, const QString& bundleName) 
 {
 	// Generate the new list of properties.
 	std::vector<OORef<PropertyObject>> newProperties;
 	for(DataObject* o : state.objects()) {
 		if(PropertyObject* prop = dynamic_object_cast<PropertyObject>(o))
-			if(_applet->_propertyClass.isMember(prop))
+			if(_applet->_propertyClass.isMember(prop) && prop->bundle() == bundleName)
 				newProperties.push_back(prop);
 	}
 	int oldRowCount = rowCount();
@@ -157,11 +241,10 @@ void PropertyInspectionApplet::PropertyTableModel::setContents(const PipelineFlo
 /******************************************************************************
 * Replaces the contents of this data model.
 ******************************************************************************/
-void PropertyInspectionApplet::PropertyFilterModel::setContentsBegin(const PipelineFlowState& state) 
+void PropertyInspectionApplet::PropertyFilterModel::setContentsBegin() 
 {
 	if(_filterExpression.isEmpty() == false)
 		beginResetModel();
-	_data = state;
 	setupEvaluator();
 }
 
@@ -180,7 +263,7 @@ void PropertyInspectionApplet::PropertyFilterModel::setupEvaluator()
 				throw Exception(tr("The entered expression contains the assignment operator '='. Please use the comparison operator '==' instead."));
 
 			_evaluator = _applet->createExpressionEvaluator();
-			_evaluator->initialize(QStringList(_filterExpression), _data, _applet->_propertyClass);
+			_evaluator->initialize(QStringList(_filterExpression), _applet->currentData(), _applet->_propertyClass, _applet->selectedBundleId());
 			_evaluatorWorker = std::make_unique<PropertyExpressionEvaluator::Worker>(*_evaluator);
 		}
 		catch(const Exception& ex) {

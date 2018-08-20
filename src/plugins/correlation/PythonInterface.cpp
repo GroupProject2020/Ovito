@@ -86,6 +86,7 @@ PYBIND11_MODULE(CorrelationFunctionPlugin, m)
 				"\n\n"
 				":Default: 50\n")
 
+#if 0
 		.def_property_readonly("mean1", py::cpp_function([](CorrelationFunctionModifier& mod) {
 				CorrelationFunctionModifierApplication* modApp = dynamic_object_cast<CorrelationFunctionModifierApplication>(mod.someModifierApplication());
 				if(!modApp || !modApp->realSpaceCorrelation()) mod.throwException(CorrelationFunctionModifier::tr("Modifier has not been evaluated yet. Correlation function data is not yet available."));				
@@ -113,16 +114,11 @@ PYBIND11_MODULE(CorrelationFunctionPlugin, m)
 			"\n\n"
 			"Accessing this read-only attribute is only permitted after the modifier has computed its results as part of a data pipeline evaluation. "
 			"Thus, you should typically call :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` first to ensure that the modifier has calculated its results. ")			
+#endif
 	;
 	py::enum_<CorrelationFunctionModifier::NormalizationType>(CorrelationFunctionModifier_py, "Normalization")
 		.value("ValueCorrelation", CorrelationFunctionModifier::VALUE_CORRELATION)
 		.value("DifferenceCorrelation", CorrelationFunctionModifier::DIFFERENCE_CORRELATION)
-	;
-
-	ovito_class<CorrelationFunctionModifierApplication, AsynchronousModifierApplication>{m}
-		.def_property_readonly("realspace_correlation", &CorrelationFunctionModifierApplication::realSpaceCorrelation)
-		.def_property_readonly("realspace_rdf", &CorrelationFunctionModifierApplication::realSpaceRDF)
-		.def_property_readonly("reciprocspace_correlation", &CorrelationFunctionModifierApplication::reciprocalSpaceCorrelation)
 	;
 }
 

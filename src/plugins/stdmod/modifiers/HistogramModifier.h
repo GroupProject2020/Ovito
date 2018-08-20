@@ -23,7 +23,6 @@
 
 
 #include <plugins/stdmod/StdMod.h>
-#include <core/dataset/pipeline/ModifierApplication.h>
 #include <plugins/stdobj/properties/GenericPropertyModifier.h>
 #include <plugins/stdobj/properties/PropertyReference.h>
 #include <plugins/stdobj/series/DataSeriesObject.h>
@@ -105,26 +104,6 @@ private:
 
 	/// Controls whether the modifier should take into account only selected elements.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, onlySelected, setOnlySelected);
-};
-
-/**
- * \brief The type of ModifierApplication create for a HistogramModifier 
- *        when it is inserted into in a data pipeline.
- */
-class OVITO_STDMOD_EXPORT HistogramModifierApplication : public ModifierApplication
-{
-	OVITO_CLASS(HistogramModifierApplication)
-	Q_OBJECT
-	
-public:
-
-	/// Constructor.
-	Q_INVOKABLE HistogramModifierApplication(DataSet* dataset) : ModifierApplication(dataset) {}
-
-private:
-
-	/// The computed histogram.
-	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(OORef<DataSeriesObject>, histogram, setHistogram, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 };
 
 }	// End of namespace

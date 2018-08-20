@@ -37,7 +37,6 @@ SET(SourceFiles
 	ManualSelectionModifierEditor.cpp
 	ComputePropertyModifierEditor.cpp
 	CombineDatasetsModifierEditor.cpp
-	SpatialBinningModifierEditor.cpp
 )
 
 OVITO_STANDARD_PLUGIN(StdModGui

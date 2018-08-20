@@ -564,11 +564,17 @@ protected:
 	/// Loads the class' contents from the given stream.
 	virtual void loadFromStream(ObjectLoadStream& stream) override;
 
+	/// Is called whenever the value of a property of this object has changed.
+	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
+
 private:
 
 	/// The internal per-element data.
 	DECLARE_RUNTIME_PROPERTY_FIELD(PropertyPtr, storage, setStorage);
 	
+	/// The unique identifier of the data object which this property belongs to.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, bundle, setBundle);
+
 	/// Contains the list of defined "types" if this is a typed property.
 	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD(ElementType, elementTypes, setElementTypes);
 

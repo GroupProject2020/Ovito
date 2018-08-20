@@ -24,6 +24,7 @@ SET(SourceFiles
 	objects/VoxelProperty.cpp
 	modifier/CreateIsosurfaceModifier.cpp
 	modifier/MarchingCubes.cpp
+	modifier/SpatialBinningModifier.cpp
 )
 
 IF(OVITO_BUILD_PLUGIN_STDMOD)

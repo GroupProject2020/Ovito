@@ -22,7 +22,7 @@
 #pragma once
 
 
-#include <plugins/stdmod/gui/StdModGui.h>
+#include <gui/GUI.h>
 #include <gui/properties/ModifierPropertiesEditor.h>
 #include <gui/properties/BooleanParameterUI.h>
 #include <gui/properties/IntegerParameterUI.h>
@@ -34,7 +34,7 @@ class QwtPlotSpectrogram;
 class QwtMatrixRasterData;
 class QwtPlotGrid;
 
-namespace Ovito { namespace StdMod {
+namespace Ovito { namespace Grid { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /**
  * A properties editor for the SpatialBinningModifier class.
@@ -98,5 +98,6 @@ private:
 	DeferredMethodInvocation<SpatialBinningModifierEditor, &SpatialBinningModifierEditor::plotData> plotLater;
 };
 
+OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

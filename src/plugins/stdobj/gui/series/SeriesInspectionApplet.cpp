@@ -28,74 +28,26 @@ namespace Ovito { namespace StdObj {
 IMPLEMENT_OVITO_CLASS(SeriesInspectionApplet);
 
 /******************************************************************************
-* Determines whether the given pipeline flow state contains data that can be 
-* displayed by this applet.
-******************************************************************************/
-bool SeriesInspectionApplet::appliesTo(const PipelineFlowState& state)
-{
-	return state.findObject<DataSeriesObject>() != nullptr;
-}
-
-/******************************************************************************
 * Lets the applet create the UI widget that is to be placed into the data 
 * inspector panel. 
 ******************************************************************************/
 QWidget* SeriesInspectionApplet::createWidget(MainWindow* mainWindow)
 {
+	createBaseWidgets();
+	
 	QSplitter* splitter = new QSplitter();
-	_seriesSelectionWidget = new QListWidget();
-	splitter->addWidget(_seriesSelectionWidget);
-	_plotWidget = new DataSeriesPlotWidget();
-	splitter->addWidget(_plotWidget);
+	splitter->addWidget(bundleSelectionWidget());
+
+	QTabWidget* tabWidget = new QTabWidget();
+	splitter->addWidget(tabWidget);
 	splitter->setStretchFactor(0, 1);
 	splitter->setStretchFactor(1, 4);
-	connect(_seriesSelectionWidget, &QListWidget::currentItemChanged, this, &SeriesInspectionApplet::currentPlotChanged);
+
+	_plotWidget = new DataSeriesPlotWidget();
+	tabWidget->addTab(_plotWidget, tr("Plot"));
+	tabWidget->addTab(tableView(), tr("Data"));
+
 	return splitter;
-}
-
-/******************************************************************************
-* Updates the contents displayed in the inspector.
-******************************************************************************/
-void SeriesInspectionApplet::updateDisplay(const PipelineFlowState& state, PipelineSceneNode* sceneNode)
-{
-	// Remember which series was previously selected.
-	QString selectedSeriesTitle;
-	if(seriesSelectionWidget()->currentItem())
-		selectedSeriesTitle = seriesSelectionWidget()->currentItem()->text();
-
-	// Update list of data series objects.
-	// Overwrite existing list item, add new items when needed.
-	seriesSelectionWidget()->setUpdatesEnabled(false);
-	int numItems = 0;
-	for(DataObject* obj : state.objects()) {
-		if(DataSeriesObject* seriesObj = dynamic_object_cast<DataSeriesObject>(obj)) {
-			QListWidgetItem* item;
-			if(seriesSelectionWidget()->count() <= numItems) {
-				item = new QListWidgetItem(seriesObj->objectTitle(), seriesSelectionWidget());
-			}
-			else {
-				item = seriesSelectionWidget()->item(numItems);
-				item->setText(seriesObj->objectTitle());
-			}
-			item->setData(Qt::UserRole, QVariant::fromValue<OORef<OvitoObject>>(seriesObj));
-
-			// Select again the previously selected series.
-			if(item->text() == selectedSeriesTitle)
-				seriesSelectionWidget()->setCurrentItem(item);
-
-			numItems++;
-		}
-	}
-	// Remove excess items from list.
-	while(seriesSelectionWidget()->count() > numItems)
-		delete seriesSelectionWidget()->takeItem(seriesSelectionWidget()->count() - 1);
-
-	if(!seriesSelectionWidget()->currentItem() && seriesSelectionWidget()->count() != 0)
-		seriesSelectionWidget()->setCurrentRow(0);
-	seriesSelectionWidget()->setUpdatesEnabled(true);
-
-	// Update the currently selected plot.
-	currentPlotChanged(seriesSelectionWidget()->currentItem(), nullptr);
 }
 
 /******************************************************************************

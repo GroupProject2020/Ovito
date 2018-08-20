@@ -69,7 +69,7 @@ public:
 	
 	/// Fairs the triangle mesh stored in this object.
 	bool smoothMesh(int numIterations, PromiseState& promise, FloatType k_PB = FloatType(0.1), FloatType lambda = FloatType(0.5)) {
-		if(!domain() || !storage()) 
+		if(!domain() || !storage())
 			return true;
 		if(!smoothMesh(*modifiableStorage(), domain()->data(), numIterations, promise, k_PB, lambda))
 			return false;
@@ -95,10 +95,7 @@ private:
 
 	/// Indicates that the entire simulation cell is part of the solid region.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, isCompletelySolid, setIsCompletelySolid);
-
 };
 
 }	// End of namespace
 }	// End of namespace
-
-

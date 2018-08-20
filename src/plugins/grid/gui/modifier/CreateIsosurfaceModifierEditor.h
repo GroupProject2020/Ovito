@@ -49,5 +49,3 @@ protected:
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

@@ -37,7 +37,7 @@ QT5_ADD_RESOURCES(ResourceFiles resources/stdobj_gui.qrc)
 OVITO_STANDARD_PLUGIN(StdObjGui
 	SOURCES StdObjGui.cpp ${SourceFiles} ${ResourceFiles}
 	PLUGIN_DEPENDENCIES StdObj
-	PRIVATE_LIB_DEPENDENCIES Qwt
+	LIB_DEPENDENCIES Qwt
 	GUI_PLUGIN
 )
 

@@ -19,8 +19,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <plugins/stdmod/gui/StdModGui.h>
-#include <plugins/stdmod/modifiers/SpatialBinningModifier.h>
+#include <gui/GUI.h>
+#include <plugins/grid/modifier/SpatialBinningModifier.h>
 #include <plugins/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
 #include <gui/properties/BooleanParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
@@ -40,7 +40,7 @@
 #include <qwt/qwt_scale_widget.h>
 #include <qwt/qwt_plot_layout.h>
 
-namespace Ovito { namespace StdMod {
+namespace Ovito { namespace Grid { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 IMPLEMENT_OVITO_CLASS(SpatialBinningModifierEditor);
 SET_OVITO_OBJECT_EDITOR(SpatialBinningModifier, SpatialBinningModifierEditor);
@@ -373,5 +373,6 @@ void SpatialBinningModifierEditor::onSaveData()
 #endif
 }
 
+OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

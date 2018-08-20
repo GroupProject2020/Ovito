@@ -41,39 +41,39 @@ public:
 
 	/// Returns a standard property from the input state.
 	/// The returned property may be NULL if it does not exist.
-	PropertyObject* inputStandardProperty(const PropertyClass& propertyClass, int typeId) const;
+	PropertyObject* inputStandardProperty(const PropertyClass& propertyClass, int typeId, const QString& bundle = QString()) const;
 
  	/// Returns a standard property from the input state.
 	/// The returned property may be NULL if it does not exist.
 	template<class PropertyObjectType>
-	PropertyObjectType* inputStandardProperty(int typeId) const {
-		return static_object_cast<PropertyObjectType>(inputStandardProperty(PropertyObjectType::OOClass(), typeId));
+	PropertyObjectType* inputStandardProperty(int typeId, const QString& bundle = QString()) const {
+		return static_object_cast<PropertyObjectType>(inputStandardProperty(PropertyObjectType::OOClass(), typeId, bundle));
 	}
 
 	/// Returns the given standard property from the input object.
 	/// The returned property may not be modified. If the input object does
 	/// not contain the standard property then an exception is thrown.
-	PropertyObject* expectStandardProperty(const PropertyClass& propertyClass, int typeId) const;
+	PropertyObject* expectStandardProperty(const PropertyClass& propertyClass, int typeId, const QString& bundle = QString()) const;
 
 	/// Returns the given standard property from the input object.
 	/// The returned property may not be modified. If the input object does
 	/// not contain the standard property then an exception is thrown.
 	template<class PropertyObjectType>
-	PropertyObjectType* expectStandardProperty(int typeId) const {
-		return static_object_cast<PropertyObjectType>(expectStandardProperty(PropertyObjectType::OOClass(), typeId));
+	PropertyObjectType* expectStandardProperty(int typeId, const QString& bundle = QString()) const {
+		return static_object_cast<PropertyObjectType>(expectStandardProperty(PropertyObjectType::OOClass(), typeId, bundle));
 	}
 	
 	/// Returns the property with the given name from the input state.
 	/// The returned property may not be modified. If the input object does
 	/// not contain a property with the given name and data type, then an exception is thrown.
-	PropertyObject* expectCustomProperty(const PropertyClass& propertyClass, const QString& propertyName, int dataType, size_t componentCount = 1) const;
+	PropertyObject* expectCustomProperty(const PropertyClass& propertyClass, const QString& propertyName, int dataType, size_t componentCount = 1, const QString& bundle = QString()) const;
 
 	/// Returns the property with the given name from the input state.
 	/// The returned property may not be modified. If the input object does
 	/// not contain a property with the given name and data type, then an exception is thrown.
 	template<class PropertyObjectType>
-	PropertyObjectType* expectCustomProperty(const QString& propertyName, int dataType, size_t componentCount = 1) const {
-		return static_object_cast<PropertyObjectType>(expectCustomProperty(PropertyObjectType::OOClass(), propertyName, dataType, componentCount));
+	PropertyObjectType* expectCustomProperty(const QString& propertyName, int dataType, size_t componentCount = 1, const QString& bundle = QString()) const {
+		return static_object_cast<PropertyObjectType>(expectCustomProperty(PropertyObjectType::OOClass(), propertyName, dataType, componentCount, bundle));
 	}
 	
 	/// Returns the input simulation cell.

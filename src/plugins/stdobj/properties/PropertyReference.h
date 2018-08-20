@@ -37,10 +37,10 @@ public:
 	PropertyReference() = default;
 	
 	/// \brief Constructs a reference to a standard property.
-	PropertyReference(PropertyClassPtr pclass, int typeId, int vectorComponent = -1);
+	PropertyReference(PropertyClassPtr pclass, int typeId, int vectorComponent = -1, const QString& bundle = QString());
 
 	/// \brief Constructs a reference to a user-defined property.
-	PropertyReference(PropertyClassPtr pclass, QString name, int vectorComponent = -1) : _propertyClass(pclass), _name(std::move(name)), _vectorComponent(vectorComponent) { 
+	PropertyReference(PropertyClassPtr pclass, const QString& name, int vectorComponent = -1, const QString& bundle = QString()) : _propertyClass(pclass), _bundle(bundle), _name(name), _vectorComponent(vectorComponent) { 
 		OVITO_ASSERT(pclass); 
 		OVITO_ASSERT(!_name.isEmpty()); 
 	}
@@ -55,6 +55,10 @@ public:
 	/// \return The property name.
 	const QString& name() const { return _name; }
 
+	/// \brief Gets the identifier of the bundle the property belongs to.
+	/// \return The identifier of the property bundle.
+	const QString& bundle() const { return _bundle; }
+
 	/// Return the class of the referenced property.
 	PropertyClassPtr propertyClass() const { return _propertyClass; }
 	
@@ -67,6 +71,7 @@ public:
 	/// \brief Compares two references for equality.
 	bool operator==(const PropertyReference& other) const {
 		if(propertyClass() != other.propertyClass()) return false;
+		if(bundle() != other.bundle()) return false;
 		if(type() != other.type()) return false;
 		if(vectorComponent() != other.vectorComponent()) return false;
 		if(type() != 0) return true;
@@ -93,6 +98,9 @@ private:
 
 	/// The class of property.
 	PropertyClassPtr _propertyClass = nullptr;
+
+	/// The identifier of the property bundle (optional).
+	QString _bundle;
 
 	/// The type of the property.
 	int _type = 0;
@@ -133,10 +141,10 @@ public:
 	TypedPropertyReference(PropertyReference&& other) : PropertyReference(std::move(other)) {}
 		
 	/// \brief Constructs a reference to a standard property.
-	TypedPropertyReference(int typeId, int vectorComponent = -1) : PropertyReference(&PropertyObjectType::OOClass(), typeId, vectorComponent) {}
+	TypedPropertyReference(int typeId, int vectorComponent = -1, const QString& bundle = QString()) : PropertyReference(&PropertyObjectType::OOClass(), typeId, vectorComponent, bundle) {}
 
 	/// \brief Constructs a reference to a user-defined property.
-	TypedPropertyReference(QString name, int vectorComponent = -1) : PropertyReference(&PropertyObjectType::OOClass(), std::move(name), vectorComponent) {}
+	TypedPropertyReference(const QString& name, int vectorComponent = -1, const QString& bundle = QString()) : PropertyReference(&PropertyObjectType::OOClass(), name, vectorComponent, bundle) {}
 	
 	/// \brief Constructs a reference based on an existing PropertyObject.
 	TypedPropertyReference(PropertyObjectType* property, int vectorComponent = -1) : PropertyReference(property, vectorComponent) {

@@ -61,11 +61,11 @@ OORef<PropertyObject> PropertyClass::createFromStorage(DataSet* dataset, const P
 * This helper method returns a standard property (if present) from the
 * given pipeline state.
 ******************************************************************************/
-PropertyObject* PropertyClass::findInState(const PipelineFlowState& state, int typeId) const
+PropertyObject* PropertyClass::findInState(const PipelineFlowState& state, int typeId, const QString& bundle) const
 {
 	for(DataObject* o : state.objects()) {
 		PropertyObject* property = dynamic_object_cast<PropertyObject>(o);
-		if(property && isMember(property) && property->type() == typeId)
+		if(property && isMember(property) && property->type() == typeId && property->bundle() == bundle)
 			return property;
 	}
 	return nullptr;
@@ -75,11 +75,11 @@ PropertyObject* PropertyClass::findInState(const PipelineFlowState& state, int t
 * This helper method returns a specific user-defined property (if present) from the
 * given pipeline state.
 ******************************************************************************/
-PropertyObject* PropertyClass::findInState(const PipelineFlowState& state, const QString& name) const
+PropertyObject* PropertyClass::findInState(const PipelineFlowState& state, const QString& name, const QString& bundle) const
 {
 	for(DataObject* o : state.objects()) {
 		PropertyObject* property = dynamic_object_cast<PropertyObject>(o);
-		if(property && isMember(property) && property->type() == 0 && property->name() == name)
+		if(property && isMember(property) && property->type() == 0 && property->name() == name && property->bundle() == bundle)
 			return property;
 	}
 	return nullptr;

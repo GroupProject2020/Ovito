@@ -36,13 +36,13 @@ QByteArray PropertyExpressionEvaluator::_validVariableNameChars("0123456789_abcd
 * Specifies the expressions to be evaluated for each data element and create the
 * list of input variables.
 ******************************************************************************/
-void PropertyExpressionEvaluator::initialize(const QStringList& expressions, const PipelineFlowState& inputState, const PropertyClass& propertyClass, int animationFrame)
+void PropertyExpressionEvaluator::initialize(const QStringList& expressions, const PipelineFlowState& inputState, const PropertyClass& propertyClass, const QString& bundle, int animationFrame)
 {
 	// Build list of properties that will be made available as expression variables.
 	std::vector<ConstPropertyPtr> inputProperties;
 	for(DataObject* obj : inputState.objects()) {
 		if(PropertyObject* prop = dynamic_object_cast<PropertyObject>(obj)) {
-			if(propertyClass.isMember(prop)) {
+			if(propertyClass.isMember(prop) && prop->bundle() == bundle) {
 				inputProperties.push_back(prop->storage());
 			}
 		}

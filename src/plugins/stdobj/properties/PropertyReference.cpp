@@ -29,8 +29,8 @@ namespace Ovito { namespace StdObj {
 /******************************************************************************
 * Constructs a reference to a standard property.
 ******************************************************************************/
-PropertyReference::PropertyReference(PropertyClassPtr pclass, int typeId, int vectorComponent) : 
-	_propertyClass(pclass), _type(typeId), 
+PropertyReference::PropertyReference(PropertyClassPtr pclass, int typeId, int vectorComponent, const QString& bundle) : 
+	_propertyClass(pclass), _bundle(bundle), _type(typeId), 
 	_name(pclass->standardPropertyName(typeId)), _vectorComponent(vectorComponent) 
 {
 }
@@ -39,7 +39,8 @@ PropertyReference::PropertyReference(PropertyClassPtr pclass, int typeId, int ve
 * Constructs a reference based on an existing PropertyObject.
 ******************************************************************************/
 PropertyReference::PropertyReference(PropertyObject* property, int vectorComponent) : 
-	_propertyClass(&property->getOOMetaClass()), _type(property->type()), _name(property->name()), _vectorComponent(vectorComponent) 
+	_propertyClass(&property->getOOMetaClass()), _bundle(property->bundle()), 
+	_type(property->type()), _name(property->name()), _vectorComponent(vectorComponent) 
 { 
 }
 
@@ -84,8 +85,9 @@ PropertyReference PropertyReference::convertToPropertyClass(PropertyClassPtr pcl
 /// \relates PropertyReference
 SaveStream& operator<<(SaveStream& stream, const PropertyReference& r)
 {
-	stream.beginChunk(0x01);	
+	stream.beginChunk(0x02);	
 	OvitoClass::serializeRTTI(stream, r.propertyClass());
+	stream << r.bundle();
 	stream << r.type();
 	stream << r.name();
 	stream << r.vectorComponent();
@@ -97,8 +99,9 @@ SaveStream& operator<<(SaveStream& stream, const PropertyReference& r)
 /// \relates PropertyReference
 LoadStream& operator>>(LoadStream& stream, PropertyReference& r)
 {
-	stream.expectChunk(0x01);
+	stream.expectChunk(0x02);
 	r._propertyClass = static_cast<PropertyClassPtr>(OvitoClass::deserializeRTTI(stream));
+	stream >> r._bundle;
 	stream >> r._type;
 	stream >> r._name;
 	stream >> r._vectorComponent;
@@ -116,17 +119,10 @@ PropertyObject* PropertyReference::findInState(const PipelineFlowState& state) c
 	if(isNull())
 		return nullptr;
 
-	for(DataObject* o : state.objects()) {
-		PropertyObject* prop = dynamic_object_cast<PropertyObject>(o);
-		if(prop && propertyClass()->isMember(prop)) {
-			if((this->type() == 0 && prop->name() == this->name()) ||
-					(this->type() != 0 && prop->type() == this->type())) {
-				return prop;
-			}
-		}
-	}
-	
-	return nullptr;
+	if(type() != 0)
+		return propertyClass()->findInState(state, type(), bundle());
+	else
+		return propertyClass()->findInState(state, name(), bundle());
 }
 
 }	// End of namespace

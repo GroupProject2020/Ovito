@@ -200,5 +200,3 @@ inline QDebug operator<<(QDebug debug, const StrongDataObjectRef& p)
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

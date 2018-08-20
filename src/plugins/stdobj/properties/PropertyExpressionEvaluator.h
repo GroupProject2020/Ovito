@@ -45,7 +45,7 @@ public:
 	PropertyExpressionEvaluator() = default;
 
 	/// Specifies the expressions to be evaluated for each particle and creates the input variables.
-	void initialize(const QStringList& expressions, const PipelineFlowState& inputState, const PropertyClass& propertyClass, int animationFrame = 0);
+	void initialize(const QStringList& expressions, const PipelineFlowState& inputState, const PropertyClass& propertyClass, const QString& bundle = QString(), int animationFrame = 0);
 
 	/// Specifies the expressions to be evaluated for each particle and creates the input variables.
 	void initialize(const QStringList& expressions, const std::vector<ConstPropertyPtr>& inputProperties, const SimulationCell* simCell, const QVariantMap& attributes, int animationFrame = 0);

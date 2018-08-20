@@ -60,10 +60,6 @@ SET_PROPERTY_FIELD_LABEL(HistogramModifier, sourceProperty, "Source property");
 SET_PROPERTY_FIELD_LABEL(HistogramModifier, onlySelected, "Use only selected elements");
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(HistogramModifier, numberOfBins, IntegerParameterUnit, 1, 100000);
 
-IMPLEMENT_OVITO_CLASS(HistogramModifierApplication);
-SET_MODIFIER_APPLICATION_TYPE(HistogramModifier, HistogramModifierApplication);
-DEFINE_PROPERTY_FIELD(HistogramModifierApplication, histogram);
-
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
@@ -127,9 +123,6 @@ void HistogramModifier::propertyChanged(const PropertyFieldDescriptor& field)
 ******************************************************************************/
 PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	// Reset the stored results in the ModifierApplication.
-	static_object_cast<HistogramModifierApplication>(modApp)->setHistogram(nullptr);
-	
 	if(!propertyClass())
 		throwException(tr("No input property class selected."));
 	if(sourceProperty().isNull())
@@ -279,18 +272,10 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 	}
 
 	// Output a data series object with the histogram data.
-	OORef<DataSeriesObject> seriesObj = new DataSeriesObject(modApp->dataset());
-	seriesObj->setIdentifier(oh.generateUniqueSeriesIdentifier(QStringLiteral("histogram/") + sourceProperty().nameWithComponent()));
-	seriesObj->setTitle(tr("Histogram [%1]").arg(sourceProperty().nameWithComponent()));
+	DataSeriesObject* seriesObj = oh.outputDataSeries(QStringLiteral("histogram/") + sourceProperty().nameWithComponent(), tr("Histogram [%1]").arg(sourceProperty().nameWithComponent()), std::move(histogram));
 	seriesObj->setAxisLabelX(sourceProperty().nameWithComponent());
 	seriesObj->setIntervalStart(intervalStart);
 	seriesObj->setIntervalEnd(intervalEnd);
-	seriesObj->setY(std::move(histogram));
-	output.addObject(seriesObj);
-
-	// Store the histogram in the ModifierApplication in order to display it in the modifier's UI panel.
-	static_object_cast<HistogramModifierApplication>(modApp)->setHistogram(std::move(seriesObj));
-	modApp->notifyDependents(ReferenceEvent::ObjectStatusChanged);
 
 	QString statusMessage;
 	if(outputSelection) {

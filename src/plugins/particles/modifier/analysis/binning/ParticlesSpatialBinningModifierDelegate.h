@@ -24,7 +24,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/ParticleProperty.h>
-#include <plugins/stdmod/modifiers/SpatialBinningModifier.h>
+#include <plugins/grid/modifier/SpatialBinningModifier.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 

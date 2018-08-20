@@ -27,8 +27,10 @@
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
 IMPLEMENT_OVITO_CLASS(ModifierDelegate);
-DEFINE_PROPERTY_FIELD(ModifierDelegate, isEnabled);	
+DEFINE_PROPERTY_FIELD(ModifierDelegate, isEnabled);
+DEFINE_PROPERTY_FIELD(ModifierDelegate, dataObjects);
 SET_PROPERTY_FIELD_LABEL(ModifierDelegate, isEnabled, "Enabled");
+SET_PROPERTY_FIELD_LABEL(ModifierDelegate, dataObjects, "Data objects");
 
 IMPLEMENT_OVITO_CLASS(DelegatingModifier);
 DEFINE_REFERENCE_FIELD(DelegatingModifier, delegate);	

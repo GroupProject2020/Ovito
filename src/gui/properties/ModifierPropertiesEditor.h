@@ -53,6 +53,9 @@ public:
 	/// Return the input data of the Modifier being edited (for the selected ModifierApplication).
 	PipelineFlowState getModifierInput();
 
+	/// Return the output data of the Modifier being edited (for the selected ModifierApplication).
+	PipelineFlowState getModifierOutput();
+
 protected:
 
 	/// This method is called when a reference target changes.

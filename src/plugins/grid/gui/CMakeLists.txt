@@ -21,6 +21,7 @@
 
 SET(SourceFiles 
 	modifier/CreateIsosurfaceModifierEditor.cpp
+	modifier/SpatialBinningModifierEditor.cpp
 )
 
 OVITO_STANDARD_PLUGIN(GridGui

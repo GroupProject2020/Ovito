@@ -31,7 +31,7 @@
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
 /**
- * \brief This object flows down the geometry pipeline of an PipelineSceneNode.
+ * \brief This data structure holds the list of data objects that flows down a data pipeline.
  */
 class OVITO_CORE_EXPORT PipelineFlowState
 {
@@ -109,7 +109,8 @@ public:
 	/// \brief Returns the list of data objects stored in this flow state.
 	const std::vector<DataObject*>& objects() const { 
 		OVITO_STATIC_ASSERT(sizeof(StrongDataObjectRef) == sizeof(DataObject*));
-		return reinterpret_cast<const std::vector<DataObject*>&>(_objects); 
+		OVITO_STATIC_ASSERT(sizeof(std::vector<StrongDataObjectRef>) == sizeof(std::vector<DataObject*>));
+		return reinterpret_cast<const std::vector<DataObject*>&>(_objects);
 	}
 
 	/// \brief Finds an object of the given type in the list of data objects stored in this flow state.
