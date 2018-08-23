@@ -75,7 +75,7 @@ GenerateTrajectoryLinesModifier::GenerateTrajectoryLinesModifier(DataSet* datase
 ******************************************************************************/
 bool GenerateTrajectoryLinesModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<ParticleProperty>() != nullptr;
+	return input.findObjectOfType<ParticleProperty>() != nullptr;
 }
 
 /******************************************************************************
@@ -217,7 +217,7 @@ bool GenerateTrajectoryLinesModifier::generateTrajectories(TaskManager& taskMana
 
 			// Unwrap trajectory points at periodic boundaries of the simulation cell.
 			if(unwrapTrajectories() && points.size() > particleCount) {
-				if(SimulationCellObject* simCellObj = state.findObject<SimulationCellObject>()) {
+				if(SimulationCellObject* simCellObj = state.findObjectOfType<SimulationCellObject>()) {
 					SimulationCell cell = simCellObj->data();
 					if(cell.pbcFlags() != std::array<bool,3>{false, false, false}) {
 						auto previousPos = points.cbegin() + (points.size() - 2 * particleCount);

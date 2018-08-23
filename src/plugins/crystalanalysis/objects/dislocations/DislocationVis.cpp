@@ -253,7 +253,7 @@ void DislocationVis::render(TimePoint time, DataObject* dataObject, const Pipeli
 	if(!cellObject) return;
 	
 	// Get the pattern catalog.
-	PatternCatalog* patternCatalog = flowState.findObject<PatternCatalog>();
+	PatternCatalog* patternCatalog = flowState.findObjectOfType<PatternCatalog>();
 
 	// Lookup the rendering primitives in the vis cache.
 	auto& primitives = dataset()->visCache().get<CacheValue>(CacheKey(

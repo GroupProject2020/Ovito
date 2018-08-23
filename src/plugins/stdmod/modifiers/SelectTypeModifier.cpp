@@ -112,7 +112,7 @@ PipelineFlowState SelectTypeModifier::evaluatePreliminary(TimePoint time, Modifi
 
 	// Create the selection property.
 	PipelineFlowState output = input;	
-	OutputHelper oh(dataset(), output);
+	OutputHelper oh(dataset(), output, modApp);
 	PropertyPtr selProperty = oh.outputStandardProperty(*propertyClass(), PropertyStorage::GenericSelectionProperty)->modifiableStorage();
 
 	// Counts the number of selected elements.

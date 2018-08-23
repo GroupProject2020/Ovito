@@ -91,9 +91,9 @@ DataInspectorPanel::DataInspectorPanel(MainWindow* mainWindow) :
 	connect(_appletContainer, &QStackedWidget::currentChanged, this, &DataInspectorPanel::onCurrentPageChanged);
 	connect(&datasetContainer(), &DataSetContainer::selectionChangeComplete, this, &DataInspectorPanel::onSceneSelectionChanged);	
 	connect(&datasetContainer(), &GuiDataSetContainer::scenePreparationBegin, this, &DataInspectorPanel::onScenePreparationBegin);	
-	connect(&datasetContainer(), &GuiDataSetContainer::scenePreparationEnd, this, &DataInspectorPanel::onScenePreparationEnd, Qt::QueuedConnection);
+	connect(&datasetContainer(), &GuiDataSetContainer::scenePreparationEnd, this, &DataInspectorPanel::onScenePreparationEnd);
 	connect(&datasetContainer(), &DataSetContainer::timeChanged, this, &DataInspectorPanel::onScenePreparationBegin);
-	connect(&datasetContainer(), &DataSetContainer::timeChangeComplete, this, &DataInspectorPanel::onScenePreparationEnd, Qt::QueuedConnection);	
+	connect(&datasetContainer(), &DataSetContainer::timeChangeComplete, this, &DataInspectorPanel::onScenePreparationEnd);	
 	connect(&_selectedNodeListener, &RefTargetListenerBase::notificationEvent, this, &DataInspectorPanel::onSceneNodeNotificationEvent);
 
 	updateTabs({});
@@ -191,7 +191,7 @@ void DataInspectorPanel::onScenePreparationEnd()
 {
 	_waitingForSceneIndicator->hide();
 	_waitingForSceneAnim.stop();
-	_updateInvocation(this);
+	updateInspector();
 }
 
 /******************************************************************************

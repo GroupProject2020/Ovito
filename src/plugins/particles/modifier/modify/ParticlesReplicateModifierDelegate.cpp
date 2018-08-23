@@ -26,6 +26,7 @@
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/DataSet.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include "ParticlesReplicateModifierDelegate.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
@@ -37,7 +38,7 @@ IMPLEMENT_OVITO_CLASS(ParticlesReplicateModifierDelegate);
 ******************************************************************************/
 bool ParticlesReplicateModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<ParticleProperty>() != nullptr;
+	return input.findObjectOfType<ParticleProperty>() != nullptr;
 }
 
 /******************************************************************************
@@ -47,7 +48,7 @@ PipelineStatus ParticlesReplicateModifierDelegate::apply(Modifier* modifier, con
 {
 	ReplicateModifier* mod = static_object_cast<ReplicateModifier>(modifier);
 	ParticleInputHelper pih(dataset(), input);
-	ParticleOutputHelper poh(dataset(), output);
+	ParticleOutputHelper poh(dataset(), output, modApp);
 	
 	std::array<int,3> nPBC;
 	nPBC[0] = std::max(mod->numImagesX(),1);

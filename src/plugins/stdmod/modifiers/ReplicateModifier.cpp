@@ -24,6 +24,7 @@
 #include <plugins/stdobj/util/InputHelper.h>
 #include <plugins/stdobj/util/OutputHelper.h>
 #include <core/dataset/DataSet.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/utilities/units/UnitsManager.h>
 #include "ReplicateModifier.h"
 
@@ -66,7 +67,7 @@ ReplicateModifier::ReplicateModifier(DataSet* dataset) : MultiDelegatingModifier
 bool ReplicateModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
 	return MultiDelegatingModifier::OOMetaClass::isApplicableTo(input)
-		&& input.findObject<SimulationCellObject>() != nullptr;
+		&& input.findObjectOfType<SimulationCellObject>() != nullptr;
 }
 
 /******************************************************************************
@@ -99,7 +100,7 @@ PipelineFlowState ReplicateModifier::evaluatePreliminary(TimePoint time, Modifie
 	// Resize the simulation cell if enabled.
 	if(adjustBoxSize()) {
 		InputHelper ih(dataset(), input);
-		OutputHelper oh(dataset(), output);	
+		OutputHelper oh(dataset(), output, modApp);	
 		AffineTransformation simCell = ih.expectSimulationCell()->cellMatrix();
 		Box3I newImages = replicaRange();
 		simCell.translation() += (FloatType)newImages.minc.x() * simCell.column(0);
@@ -108,7 +109,7 @@ PipelineFlowState ReplicateModifier::evaluatePreliminary(TimePoint time, Modifie
 		simCell.column(0) *= (newImages.sizeX() + 1);
 		simCell.column(1) *= (newImages.sizeY() + 1);
 		simCell.column(2) *= (newImages.sizeZ() + 1);
-		oh.outputObject<SimulationCellObject>()->setCellMatrix(simCell);
+		oh.outputSingletonObject<SimulationCellObject>()->setCellMatrix(simCell);
 	}
 
 	return output;

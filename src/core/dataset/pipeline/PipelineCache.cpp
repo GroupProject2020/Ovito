@@ -64,6 +64,7 @@ bool PipelineCache::insert(PipelineFlowState state, RefTarget* ownerObject)
 	if(state.stateValidity().contains(ownerObject->dataset()->animationSettings()->time()))
 		_currentAnimState = state;
 	_mostRecentState = std::move(state);
+	ownerObject->notifyDependents(ReferenceEvent::PipelineCacheUpdated);
 	return true;
 }
 

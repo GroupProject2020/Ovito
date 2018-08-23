@@ -36,7 +36,6 @@ IMPLEMENT_OVITO_CLASS(DislocationAnalysisModifierEditor);
 SET_OVITO_OBJECT_EDITOR(DislocationAnalysisModifier, DislocationAnalysisModifierEditor);
 
 IMPLEMENT_OVITO_CLASS(DislocationTypeListParameterUI);
-DEFINE_REFERENCE_FIELD(DislocationTypeListParameterUI, modApp);
 
 /******************************************************************************
 * Sets up the UI widgets of the editor.
@@ -113,7 +112,7 @@ void DislocationAnalysisModifierEditor::createUI(const RolloutInsertionParameter
 	layout->addWidget(new QLabel(tr("Dislocation analysis results:")));
 	layout->addWidget(_burgersFamilyListUI->tableWidget());
 	connect(this, &PropertiesEditor::contentsChanged, [this](RefTarget* editObject) {
-		_burgersFamilyListUI->setModApp(static_object_cast<DislocationAnalysisModifierApplication>(modifierApplication()));
+//		_burgersFamilyListUI->setModApp(static_object_cast<DislocationAnalysisModifierApplication>(modifierApplication()));
 	});
 
 	// Line postprocessing.
@@ -167,6 +166,7 @@ DislocationTypeListParameterUI::DislocationTypeListParameterUI(QObject* parent)
 	tableWidget()->setAutoScroll(false);
 }
 
+#if 0
 /******************************************************************************
 * Sets the modifier application whose results should be displayed.
 ******************************************************************************/
@@ -179,12 +179,14 @@ void DislocationTypeListParameterUI::setModApp(DislocationAnalysisModifierApplic
 	else setEditObject(nullptr);
 	_modApp.set(this, PROPERTY_FIELD(modApp), modApp);
 }
+#endif
 
 /******************************************************************************
 * Returns a data item from the list data model.
 ******************************************************************************/
 QVariant DislocationTypeListParameterUI::getItemData(RefTarget* target, const QModelIndex& index, int role)
 {
+#if 0
 	BurgersVectorFamily* family = dynamic_object_cast<BurgersVectorFamily>(target);
 	if(family && modApp()) {
 		if(role == Qt::DisplayRole) {
@@ -207,6 +209,7 @@ QVariant DislocationTypeListParameterUI::getItemData(RefTarget* target, const QM
 				return (QColor)family->color();
 		}
 	}
+#endif
 	return QVariant();
 }
 
@@ -215,10 +218,12 @@ QVariant DislocationTypeListParameterUI::getItemData(RefTarget* target, const QM
 ******************************************************************************/
 bool DislocationTypeListParameterUI::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
+#if 0
 	if(source == modApp() && event.type() == ReferenceEvent::ObjectStatusChanged) {
 		// Update the result columns.
 		_model->updateColumns(2, 3);
 	}
+#endif
 	return RefTargetListParameterUI::referenceEvent(source, event);
 }
 

@@ -43,10 +43,6 @@ SET_PROPERTY_FIELD_LABEL(CoordinationAnalysisModifier, computePartialRDF, "Compu
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(CoordinationAnalysisModifier, cutoff, WorldParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(CoordinationAnalysisModifier, numberOfBins, IntegerParameterUnit, 4, 100000);
 
-IMPLEMENT_OVITO_CLASS(CoordinationAnalysisModifierApplication);
-SET_MODIFIER_APPLICATION_TYPE(CoordinationAnalysisModifier, CoordinationAnalysisModifierApplication);
-DEFINE_PROPERTY_FIELD(CoordinationAnalysisModifierApplication, rdf);
-
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
@@ -62,7 +58,7 @@ CoordinationAnalysisModifier::CoordinationAnalysisModifier(DataSet* dataset) : A
 ******************************************************************************/
 bool CoordinationAnalysisModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<ParticleProperty>() != nullptr;
+	return input.findObjectOfType<ParticleProperty>() != nullptr;
 }
 
 /******************************************************************************
@@ -174,12 +170,7 @@ void CoordinationAnalysisModifier::CoordinationAnalysisEngine::perform()
 		return;
 
 	// Compute x values of histogram function. 
-	FloatType stepSize = cutoff() / rdfX()->size();
-	FloatType r = stepSize / 2;
-	for(auto& x : rdfX()->floatRange()) {
-		x = r;
-		r += stepSize;
-	}
+	FloatType stepSize = cutoff() / rdfY()->size();
 
 	// Helper function that normalizes a RDF histogram.
 	auto normalizeRDF = [this,stepSize](size_t type1Count, size_t type2Count, size_t component = 0, FloatType prefactor = 1) {
@@ -232,24 +223,17 @@ PipelineFlowState CoordinationAnalysisModifier::CoordinationAnalysisEngine::emit
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 
 	PipelineFlowState output = input;
-	ParticleOutputHelper poh(modApp->dataset(), output);
+	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
 
 	// Output coordination numbers as a new particle property.
 	OVITO_ASSERT(coordinationNumbers()->size() == poh.outputParticleCount());
 	poh.outputProperty<ParticleProperty>(coordinationNumbers());
 
 	// Output RDF histogram(s).
-	OORef<DataSeriesObject> seriesObj = new DataSeriesObject(modApp->dataset());
-	seriesObj->setIdentifier(poh.generateUniqueSeriesIdentifier(QStringLiteral("coordination/rdf")));
-	seriesObj->setTitle(tr("Radial distribution function"));
-	seriesObj->setY(rdfY());
+	DataSeriesObject* seriesObj = poh.outputDataSeries(QStringLiteral("coordination/rdf"), tr("Radial distribution function"), rdfY());
 	seriesObj->setIntervalStart(0);
 	seriesObj->setIntervalEnd(cutoff());
 	seriesObj->setAxisLabelX(tr("Pair separation distance"));
-	output.addObject(seriesObj);
-
-	// Store the RDF data in the ModifierApplication in order to display the RDF in the modifier's UI panel.
-	static_object_cast<CoordinationAnalysisModifierApplication>(modApp)->setRdf(std::move(seriesObj));
 
 	return output;
 }

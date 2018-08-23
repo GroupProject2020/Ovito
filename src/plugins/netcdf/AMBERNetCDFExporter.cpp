@@ -168,7 +168,7 @@ bool AMBERNetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, Ti
 	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
 
 	// Get simulation cell info.
-	SimulationCellObject* simulationCell = state.findObject<SimulationCellObject>();
+	SimulationCellObject* simulationCell = state.findObjectOfType<SimulationCellObject>();
 	const AffineTransformation simCell = simulationCell ? simulationCell->cellMatrix() : AffineTransformation::Zero();
 	size_t atomsCount = posProperty->size();
 	
@@ -182,7 +182,7 @@ bool AMBERNetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, Ti
 		NCERR(nc_def_dim(_ncid, NC_ATOM_STR, atomsCount, &_atom_dim));
 
 		// Define NetCDF variables for global attributes.
-		const QVariantMap& attributes = state.attributes();
+		const QVariantMap& attributes = state.buildAttributesMap();
 		for(auto entry = attributes.constBegin(); entry != attributes.constEnd(); ++entry) {
 			int var;
 			if(entry.key() == NC_TIME_STR || entry.key() == QStringLiteral("SourceFrame"))
@@ -266,7 +266,7 @@ bool AMBERNetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, Ti
 	}
 
 	// Write global attributes to the NetCDF file.
-	const QVariantMap& attributes = state.attributes();
+	const QVariantMap& attributes = state.buildAttributesMap();
 	for(auto entry = _attributes_vars.constBegin(); entry != _attributes_vars.constEnd(); ++entry) {		
 		QVariant val = attributes.value(entry.key());
 		if(val.type() == (int)QMetaType::Double || val.type() == (int)QMetaType::Float) {

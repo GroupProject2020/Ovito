@@ -40,8 +40,19 @@ public:
 	/// Constructor.
 	Q_INVOKABLE DataSeriesObject(DataSet* dataset);
 
-	/// Determines the X value for the given array index.
-//	FloatType getXValue(size_t index) const;
+	/// Returns the property object containing the y-coordinates of the data points.
+	DataSeriesProperty* getY(const PipelineFlowState& state) const;
+
+	/// Returns the property object containing the x-coordinates of the data points (may be NULL).
+	DataSeriesProperty* getX(const PipelineFlowState& state) const;
+
+	/// Returns the data array containing the y-coordinates of the data points.
+	ConstPropertyPtr getYStorage(const PipelineFlowState& state) const;
+
+	/// Returns the data array containing the x-coordinates of the data points.
+	/// If no explicit x-coordinate data is available, the array is dynamically generated 
+	/// from the x-axis interval set for this data series.
+	ConstPropertyPtr getXStorage(const PipelineFlowState& state) const;
 
 	//////////////////////////////// from RefTarget //////////////////////////////
 

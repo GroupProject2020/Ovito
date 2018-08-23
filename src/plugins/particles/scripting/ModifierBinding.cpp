@@ -144,7 +144,6 @@ void defineModifiersSubmodule(py::module m)
 	;
 
 	ovito_abstract_class<StructureIdentificationModifier, AsynchronousModifier>{m};
-	ovito_class<StructureIdentificationModifierApplication, AsynchronousModifierApplication>{m};
 
 	auto BondAngleAnalysisModifier_py = ovito_class<BondAngleAnalysisModifier, StructureIdentificationModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
@@ -506,6 +505,7 @@ void defineModifiersSubmodule(py::module m)
 				"Setting this flag to true requests calculation of element-specific (partial) RDFs. "
 				"\n\n"
 				":Default: ``False``\n")
+#if 0
 		// For backward compatibility with OVITO 2.9.0:
 		.def_property_readonly("rdf_x", py::cpp_function([](CoordinationAnalysisModifier& mod) {
 					CoordinationAnalysisModifierApplication* modApp = dynamic_object_cast<CoordinationAnalysisModifierApplication>(mod.someModifierApplication());
@@ -521,8 +521,8 @@ void defineModifiersSubmodule(py::module m)
 					reinterpret_cast<py::detail::PyArray_Proxy*>(array.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
 					return array;
 				}))
+#endif
 	;
-	ovito_class<CoordinationAnalysisModifierApplication, AsynchronousModifierApplication>{m};
 
 	auto ReferenceConfigurationModifier_py = ovito_abstract_class<ReferenceConfigurationModifier, AsynchronousModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
@@ -1009,8 +1009,6 @@ void defineModifiersSubmodule(py::module m)
 		".. literalinclude:: ../example_snippets/polyhedral_template_matching.py\n"
 		"   :lines: 5-\n");
 	
-	ovito_class<PolyhedralTemplateMatchingModifierApplication, StructureIdentificationModifierApplication>{m};
-
 	py::enum_<PolyhedralTemplateMatchingModifier::StructureType>(PolyhedralTemplateMatchingModifier_py, "Type")
 		.value("OTHER", PolyhedralTemplateMatchingModifier::OTHER)
 		.value("FCC", PolyhedralTemplateMatchingModifier::FCC)

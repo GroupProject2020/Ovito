@@ -123,7 +123,7 @@ size_t BondProperty::OOMetaClass::elementCount(const PipelineFlowState& state) c
 ******************************************************************************/
 bool BondProperty::OOMetaClass::isDataPresent(const PipelineFlowState& state) const
 {
-	return state.findObject<BondProperty>() != nullptr;
+	return state.findObjectOfType<BondProperty>() != nullptr;
 }
 
 /******************************************************************************

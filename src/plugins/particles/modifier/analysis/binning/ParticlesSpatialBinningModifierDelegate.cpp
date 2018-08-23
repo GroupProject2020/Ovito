@@ -45,6 +45,7 @@ std::shared_ptr<SpatialBinningModifierDelegate::SpatialBinningEngine> ParticlesS
 				TimePoint time, 
 				const PipelineFlowState& input,
                 const SimulationCell& cell,
+				int binningDirection,
 				ConstPropertyPtr sourceProperty,
                 size_t sourceComponent,
 				ConstPropertyPtr selectionProperty,
@@ -62,6 +63,7 @@ std::shared_ptr<SpatialBinningModifierDelegate::SpatialBinningEngine> ParticlesS
 	return std::make_shared<ComputeEngine>(
 			input.stateValidity(), 
             cell,
+            binningDirection,
 			std::move(sourceProperty), 
             sourceComponent,
 			std::move(selectionProperty), 

@@ -96,7 +96,7 @@ Future<PipelineFlowState> PartitionMeshVis::transformDataImpl(TimePoint time, Da
 		return std::move(flowState);
 
 	// Get the cluster graph.
-	ClusterGraphObject* clusterGraphObject = flowState.findObject<ClusterGraphObject>();
+	ClusterGraphObject* clusterGraphObject = flowState.findObjectOfType<ClusterGraphObject>();
 	
 	// Create compute engine.
 	auto engine = std::make_shared<PrepareMeshEngine>(partitionMeshObj->storage(), 
@@ -180,7 +180,7 @@ void PartitionMeshVis::render(TimePoint time, DataObject* dataObject, const Pipe
 	}
 
 	// Get the cluster graph.
-	ClusterGraphObject* clusterGraph = flowState.findObject<ClusterGraphObject>();
+	ClusterGraphObject* clusterGraph = flowState.findObjectOfType<ClusterGraphObject>();
 
 	// Get the rendering colors for the surface and cap meshes.
 	FloatType surface_alpha = 1;

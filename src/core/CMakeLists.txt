@@ -75,6 +75,7 @@ SET(SourceFiles
 	dataset/data/TransformingDataVis.cpp
 	dataset/data/TransformedDataObject.cpp
 	dataset/data/camera/AbstractCameraObject.cpp
+	dataset/data/AttributeDataObject.cpp
 	dataset/pipeline/PipelineFlowState.cpp
 	dataset/pipeline/PipelineCache.cpp
 	dataset/pipeline/PipelineObject.cpp
@@ -86,6 +87,7 @@ SET(SourceFiles
 	dataset/pipeline/AsynchronousModifierApplication.cpp
 	dataset/pipeline/AsynchronousDelegatingModifier.cpp
 	dataset/pipeline/StaticSource.cpp
+	dataset/pipeline/PipelineOutputHelper.cpp
 	dataset/pipeline/DelegatingModifier.cpp
 	utilities/units/UnitsManager.cpp
 	utilities/io/ObjectSaveStream.cpp

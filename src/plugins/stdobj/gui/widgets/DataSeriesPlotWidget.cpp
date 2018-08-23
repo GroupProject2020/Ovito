@@ -25,7 +25,10 @@
 #include <qwt/qwt_plot.h>
 #include <qwt/qwt_plot_curve.h>
 #include <qwt/qwt_plot_grid.h>
+#include <qwt/qwt_plot_barchart.h>
 #include <qwt/qwt_plot_legenditem.h>
+#include <qwt/qwt_plot_layout.h>
+#include <qwt/qwt_scale_widget.h>
 
 namespace Ovito { namespace StdObj {
 
@@ -52,12 +55,25 @@ DataSeriesPlotWidget::DataSeriesPlotWidget(QWidget* parent) : QwtPlot(parent)
 ******************************************************************************/
 void DataSeriesPlotWidget::setSeries(DataSeriesObject* series, const PipelineFlowState& input) 
 { 
+	QVector<DataSeriesProperty*> properties;
+	if(series) {
+		for(DataObject* o : input.objects()) {
+			if(DataSeriesProperty* prop = dynamic_object_cast<DataSeriesProperty>(o))
+				if(prop->belongsToBundle(series->identifier()))
+					properties.push_back(prop);
+		}
+	}
+	setSeries(series, properties);
+}
+
+/******************************************************************************
+* Sets the data series object to be plotted.
+******************************************************************************/
+void DataSeriesPlotWidget::setSeries(DataSeriesObject* series, const QVector<DataSeriesProperty*>& properties) 
+{ 
 	if(series != _series.target()) {
 		_series.setTarget(series);
-		if(series)
-			_properties.setTargets(DataSeriesProperty::getBundle(input, series->identifier()));
-		else
-			_properties.clear();
+		_properties.setTargets(properties);
 		updateDataPlot();
 	}
 }
@@ -83,6 +99,16 @@ void DataSeriesPlotWidget::onPropertyNotificationEvent(RefTarget* source, const 
 }
 
 /******************************************************************************
+* Returns the given data series property if it has been defined.
+******************************************************************************/
+DataSeriesProperty* DataSeriesPlotWidget::lookupProperty(DataSeriesProperty::Type type)
+{
+	for(DataSeriesProperty* property : _properties.targets())
+		if(property->type() == type) return property;
+	return nullptr;
+}
+
+/******************************************************************************
 * Regenerates the plot. 
 * This function is called whenever a new data series has been loaded into 
 * widget or if the current series data changes.
@@ -98,74 +124,137 @@ void DataSeriesPlotWidget::updateDataPlot()
 	
 	setAxisTitle(QwtPlot::xBottom, QString{});
 	setAxisTitle(QwtPlot::yLeft, QString{});
-	if(series() && series()->y()) {
-		const auto& x = series()->x();
-		const auto& y = series()->y();
-		while(_curves.size() < y->componentCount()) {
-			QwtPlotCurve* curve = new QwtPlotCurve();
-			curve->setRenderHint(QwtPlotItem::RenderAntialiased, true);
-			curve->setPen(QPen(curveColors[_curves.size() % (sizeof(curveColors)/sizeof(curveColors[0]))], 1));
-			curve->setZ(0);
-			curve->attach(this);
-			_curves.push_back(curve);
-		}
-		while(_curves.size() > y->componentCount()) {
-			delete _curves.back();
-			_curves.pop_back();
-		}
-		if(_curves.size() == 1 && y->componentNames().empty()) {
-			_curves[0]->setBrush(QColor(255, 160, 100));
-		}
-		else {
-			for(QwtPlotCurve* curve : _curves)
-				curve->setBrush({});
-		}
-		if(y->componentNames().empty()) {
-			if(_legend) {
-				delete _legend;
-				_legend = nullptr;
-			}
-		}
-		else {
-			if(!_legend) {
-				_legend = new QwtPlotLegendItem();
-				_legend->setAlignment(Qt::AlignRight | Qt::AlignTop);
-				_legend->attach(this);
-			}
-		}
+	setAxisMaxMinor(QwtPlot::xBottom, 5);
+	setAxisMaxMajor(QwtPlot::xBottom, 8);
+	plotLayout()->setCanvasMargin(4);
 
-		QVector<double> xcoords(y->size());
-		if(!x || x->size() != xcoords.size() || !x->copyTo(xcoords.begin())) {
-			if(series()->intervalStart() < series()->intervalEnd() && y->size() != 0) {
-				FloatType binSize = (series()->intervalEnd() - series()->intervalStart()) / y->size();
-				double xc = series()->intervalStart() + binSize / 2;
-				for(auto& v : xcoords) {
-					v = xc;
-					xc += binSize;
+	DataSeriesProperty* y = lookupProperty(DataSeriesProperty::YProperty);
+	if(series() && y) {
+		DataSeriesProperty* x = lookupProperty(DataSeriesProperty::XProperty);
+		if(x || y->elementTypes().empty() || y->componentCount() != 1) {
+			// Curve plot(s):
+			if(_barChart) {
+				delete _barChart;
+				_barChart = nullptr;
+			}
+			if(_barChartScaleDraw) {
+				setAxisScaleDraw(QwtPlot::xBottom, new QwtScaleDraw());
+				_barChartScaleDraw = nullptr;
+			}
+			while(_curves.size() < y->componentCount()) {
+				QwtPlotCurve* curve = new QwtPlotCurve();
+				curve->setRenderHint(QwtPlotItem::RenderAntialiased, true);
+				curve->setPen(QPen(curveColors[_curves.size() % (sizeof(curveColors)/sizeof(curveColors[0]))], 1));
+				curve->setZ(0);
+				curve->attach(this);
+				_curves.push_back(curve);
+			}
+			while(_curves.size() > y->componentCount()) {
+				delete _curves.back();
+				_curves.pop_back();
+			}
+			if(_curves.size() == 1 && y->componentNames().empty()) {
+				_curves[0]->setBrush(QColor(255, 160, 100));
+			}
+			else {
+				for(QwtPlotCurve* curve : _curves)
+					curve->setBrush({});
+			}
+			if(y->componentNames().empty()) {
+				if(_legend) {
+					delete _legend;
+					_legend = nullptr;
 				}
 			}
 			else {
-				std::iota(xcoords.begin(), xcoords.end(), 0);
+				if(!_legend) {
+					_legend = new QwtPlotLegendItem();
+					_legend->setAlignment(Qt::AlignRight | Qt::AlignTop);
+					_legend->attach(this);
+				}
+			}
+
+			QVector<double> xcoords(y->size());
+			if(!x || x->size() != xcoords.size() || !x->storage()->copyTo(xcoords.begin())) {
+				if(series()->intervalStart() < series()->intervalEnd() && y->size() != 0) {
+					FloatType binSize = (series()->intervalEnd() - series()->intervalStart()) / y->size();
+					double xc = series()->intervalStart() + binSize / 2;
+					for(auto& v : xcoords) {
+						v = xc;
+						xc += binSize;
+					}
+				}
+				else {
+					std::iota(xcoords.begin(), xcoords.end(), 0);
+				}
+			}
+
+			QVector<double> ycoords(y->size());
+			for(size_t cmpnt = 0; cmpnt < y->componentCount(); cmpnt++) {
+				if(!y->storage()->copyTo(ycoords.begin(), cmpnt)) {
+					std::fill(ycoords.begin(), ycoords.end(), 0.0);
+				}
+				_curves[cmpnt]->setSamples(xcoords, ycoords);
+				if(cmpnt < y->componentNames().size())
+					_curves[cmpnt]->setTitle(y->componentNames()[cmpnt]);
 			}
 		}
-
-		QVector<double> ycoords(y->size());
-		for(size_t cmpnt = 0; cmpnt < y->componentCount(); cmpnt++) {
-			if(!y->copyTo(ycoords.begin(), cmpnt)) {
-				std::fill(ycoords.begin(), ycoords.end(), 0.0);
+		else {
+			// Bar chart:
+			for(QwtPlotCurve* curve : _curves) delete curve;
+			_curves.clear();
+			if(!_barChart) {
+				_barChart = new QwtPlotBarChart();
+				_barChart->setRenderHint(QwtPlotItem::RenderAntialiased, true);
+				_barChart->setZ(0);
+				_barChart->attach(this);
 			}
-			_curves[cmpnt]->setSamples(xcoords, ycoords);
-			if(cmpnt < y->componentNames().size())
-				_curves[cmpnt]->setTitle(y->componentNames()[cmpnt]);
+			if(!_barChartScaleDraw) {
+				_barChartScaleDraw = new BarChartScaleDraw();
+				_barChartScaleDraw->enableComponent(QwtScaleDraw::Backbone, false);
+				_barChartScaleDraw->enableComponent(QwtScaleDraw::Ticks, false);
+				setAxisScaleDraw(QwtPlot::xBottom, _barChartScaleDraw);
+			}
+			QVector<double> ycoords;
+			QStringList labels;
+			for(int i = 0; i < y->size(); i++) {
+				if(ElementType* type = y->elementType(i)) {
+					if(y->dataType() == PropertyStorage::Int)
+						ycoords.push_back(y->getInt(i));
+					else if(y->dataType() == PropertyStorage::Int64)
+						ycoords.push_back(y->getInt64(i));
+					else if(y->dataType() == PropertyStorage::Float)
+						ycoords.push_back(y->getFloat(i));
+					else 
+						continue;
+					labels.push_back(type->name());
+				}
+			}
+			setAxisMaxMinor(QwtPlot::xBottom, 0);
+			setAxisMaxMajor(QwtPlot::xBottom, labels.size());
+			_barChart->setSamples(std::move(ycoords));
+			_barChartScaleDraw->setLabels(std::move(labels));
+
+			// Extra call to replot() needed here as a workaround for a layout bug in QwtPlot.
+			replot();
 		}
 
-		setAxisTitle(QwtPlot::xBottom, series()->getAxisLabelXAny());
-		setAxisTitle(QwtPlot::yLeft, series()->getAxisLabelYAny());
+		setAxisTitle(QwtPlot::xBottom, (!x || !series()->axisLabelX().isEmpty()) ? series()->axisLabelX() : x->name());
+		setAxisTitle(QwtPlot::yLeft, (!y || !series()->axisLabelY().isEmpty()) ? series()->axisLabelY() : y->name());
+
+		// Workaround for layout bug in QwtPlot:
+		axisWidget(QwtPlot::yLeft)->setBorderDist(1, 1);
+		axisWidget(QwtPlot::yLeft)->setBorderDist(0, 0);
 	}
 	else {
-		for(QwtPlotCurve* curve : _curves)
-			delete curve;
+		for(QwtPlotCurve* curve : _curves) delete curve;
 		_curves.clear();
+		delete _barChart;
+		_barChart = nullptr;
+		if(_barChartScaleDraw) {
+			setAxisScaleDraw(QwtPlot::xBottom, new QwtScaleDraw());
+			_barChartScaleDraw = nullptr;
+		}
 		delete _legend;
 		_legend = nullptr;
 	}

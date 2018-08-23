@@ -20,10 +20,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/mesh/Mesh.h>
-#include <core/dataset/DataSet.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <plugins/stdobj/util/InputHelper.h>
 #include <plugins/stdobj/util/OutputHelper.h>
+#include <core/dataset/DataSet.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include "SurfaceMeshAffineTransformationModifierDelegate.h"
 
 namespace Ovito { namespace Mesh {
@@ -40,7 +41,7 @@ PipelineStatus SurfaceMeshAffineTransformationModifierDelegate::apply(Modifier* 
 		return PipelineStatus::Success;
 
 	InputHelper ih(dataset(), input);
-	OutputHelper oh(dataset(), output);
+	OutputHelper oh(dataset(), output, modApp);
 	
 	AffineTransformation tm;
 	if(mod->relativeMode())

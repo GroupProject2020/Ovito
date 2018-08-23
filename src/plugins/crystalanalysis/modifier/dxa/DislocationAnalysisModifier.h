@@ -96,6 +96,7 @@ private:
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(DislocationVis, dislocationVis, setDislocationVis, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE);
 };
 
+#if 0
 /**
  * \brief The type of ModifierApplication created for a PolyhedralTemplateMatchingModifier 
  *        when it is inserted into in a data pipeline. It stores the last computation results
@@ -131,6 +132,7 @@ private:
 	/// The total length of segments found per dislocation type.
 	std::map<BurgersVectorFamily*,FloatType> _dislocationLengths;
 };
+#endif
 
 }	// End of namespace
 }	// End of namespace

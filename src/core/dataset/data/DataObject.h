@@ -141,6 +141,12 @@ public:
 	/// This counter is increment every time the object changes.
 	unsigned int revisionNumber() const Q_DECL_NOTHROW { return _revisionNumber; }
 
+	/// Returns the pipeline object that created this data object (may be NULL).
+	PipelineObject* dataSource() const;
+
+	/// Sets the internal pointer to the pipeline object that created this data object.
+	void setDataSource(PipelineObject* dataSource);
+
 protected:
 
 	/// \brief Sends an event to all dependents of this RefTarget.
@@ -171,6 +177,9 @@ private:
 
 	/// Counts the current number of PipelineFlowState containers that contain this data object.
 	int _referringFlowStates = 0;
+
+	/// Pointer to the pipeline object that created this data object (may be NULL).
+	QPointer<PipelineObject> _dataSource;
 
 	friend class StrongDataObjectRef;
 };

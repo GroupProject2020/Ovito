@@ -68,7 +68,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CalculateDisplacementsModifier::c
 
 	// Get the simulation cells.
 	SimulationCellObject* inputCell = pih.expectSimulationCell();
-	SimulationCellObject* refCell = referenceState.findObject<SimulationCellObject>();
+	SimulationCellObject* refCell = referenceState.findObjectOfType<SimulationCellObject>();
 	if(!refCell)
 		throwException(tr("Reference configuration does not contain simulation cell info."));
 
@@ -153,7 +153,7 @@ PipelineFlowState CalculateDisplacementsModifier::DisplacementEngine::emitResult
 
 	CalculateDisplacementsModifier* modifier = static_object_cast<CalculateDisplacementsModifier>(modApp->modifier());
 	PipelineFlowState output = input;
-	ParticleOutputHelper poh(modApp->dataset(), output);
+	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
 	poh.outputProperty<ParticleProperty>(displacements())->setVisElement(modifier->vectorVis());
 	poh.outputProperty<ParticleProperty>(displacementMagnitudes());
 	

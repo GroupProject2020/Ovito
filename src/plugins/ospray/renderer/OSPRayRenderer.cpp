@@ -30,6 +30,8 @@
 #include <core/utilities/units/UnitsManager.h>
 #include "OSPRayRenderer.h"
 
+#include <QtMath>
+
 #include <ospray/ospray_cpp.h>
 #include <ospray/version.h>
 #if QT_VERSION_CHECK(OSPRAY_VERSION_MAJOR, OSPRAY_VERSION_MINOR, OSPRAY_VERSION_PATCH) < QT_VERSION_CHECK(1,6,0)
@@ -206,7 +208,7 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 		camera.set("up",  cam_up.x(), cam_up.y(), cam_up.z());
 		camera.set("nearClip",  projParams().znear);
 		if(projParams().isPerspective)
-			camera.set("fovy", projParams().fieldOfView * FloatType(180) / FLOATTYPE_PI);
+			camera.set("fovy", qRadiansToDegrees(projParams().fieldOfView));
 		else
 			camera.set("height", projParams().fieldOfView * 2);	
 		if(projParams().isPerspective && depthOfFieldEnabled() && dofFocalLength() > 0 && dofAperture() > 0) {
@@ -241,7 +243,7 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 			light.set("direction", lightDir.x(), lightDir.y(), lightDir.z());
 			light.set("intensity", defaultLightSourceIntensity());
 			light.set("isVisible", false);
-			light.set("angularDiameter", defaultLightSourceAngularDiameter() * FloatType(180) / FLOATTYPE_PI);
+			light.set("angularDiameter", qRadiansToDegrees(defaultLightSourceAngularDiameter()));
 			lightSources.push_back(std::move(light));
 		}
 

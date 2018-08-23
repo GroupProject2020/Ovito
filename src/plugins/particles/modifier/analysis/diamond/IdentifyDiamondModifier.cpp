@@ -232,14 +232,13 @@ PipelineFlowState IdentifyDiamondModifier::DiamondIdentificationEngine::emitResu
 	PipelineFlowState outState = StructureIdentificationEngine::emitResults(time, modApp, input);
 
 	// Also output structure type counts, which have been computed by the base class.
-	StructureIdentificationModifierApplication* myModApp = static_object_cast<StructureIdentificationModifierApplication>(modApp);
-	ParticleOutputHelper poh(modApp->dataset(), outState);
-	poh.outputAttribute(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND"), QVariant::fromValue(myModApp->structureCounts()[CUBIC_DIAMOND]));
-	poh.outputAttribute(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND_FIRST_NEIGHBOR"), QVariant::fromValue(myModApp->structureCounts()[CUBIC_DIAMOND_FIRST_NEIGH]));
-	poh.outputAttribute(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND_SECOND_NEIGHBOR"), QVariant::fromValue(myModApp->structureCounts()[CUBIC_DIAMOND_SECOND_NEIGH]));
-	poh.outputAttribute(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND"), QVariant::fromValue(myModApp->structureCounts()[HEX_DIAMOND]));
-	poh.outputAttribute(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND_FIRST_NEIGHBOR"), QVariant::fromValue(myModApp->structureCounts()[HEX_DIAMOND_FIRST_NEIGH]));
-	poh.outputAttribute(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND_SECOND_NEIGHBOR"), QVariant::fromValue(myModApp->structureCounts()[HEX_DIAMOND_SECOND_NEIGH]));
+	ParticleOutputHelper poh(modApp->dataset(), outState, modApp);
+	poh.outputAttribute(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND"), QVariant::fromValue(getTypeCount(CUBIC_DIAMOND)));
+	poh.outputAttribute(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND_FIRST_NEIGHBOR"), QVariant::fromValue(getTypeCount(CUBIC_DIAMOND_FIRST_NEIGH)));
+	poh.outputAttribute(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND_SECOND_NEIGHBOR"), QVariant::fromValue(getTypeCount(CUBIC_DIAMOND_SECOND_NEIGH)));
+	poh.outputAttribute(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND"), QVariant::fromValue(getTypeCount(HEX_DIAMOND)));
+	poh.outputAttribute(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND_FIRST_NEIGHBOR"), QVariant::fromValue(getTypeCount(HEX_DIAMOND_FIRST_NEIGH)));
+	poh.outputAttribute(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND_SECOND_NEIGHBOR"), QVariant::fromValue(getTypeCount(HEX_DIAMOND_SECOND_NEIGH)));
 
 	return outState;
 }

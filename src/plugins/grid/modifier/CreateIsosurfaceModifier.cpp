@@ -67,7 +67,7 @@ TimeInterval CreateIsosurfaceModifier::modifierValidity(TimePoint time)
 ******************************************************************************/
 bool CreateIsosurfaceModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return (input.findObject<VoxelProperty>() != nullptr) && (input.findObject<VoxelGrid>() != nullptr);
+	return (input.findObjectOfType<VoxelProperty>() != nullptr) && (input.findObjectOfType<VoxelGrid>() != nullptr);
 }
 
 /******************************************************************************
@@ -99,7 +99,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CreateIsosurfaceModifier::createE
 	InputHelper ih(dataset(), input);
 
 	// Get modifier inputs.
-	VoxelGrid* voxelGrid = input.findObject<VoxelGrid>();
+	VoxelGrid* voxelGrid = input.findObjectOfType<VoxelGrid>();
 	if(!voxelGrid)
 		throwException(tr("Modifier input contains no voxel data grid."));
 	OVITO_ASSERT(voxelGrid->domain());
@@ -174,7 +174,7 @@ PipelineFlowState CreateIsosurfaceModifier::ComputeIsosurfaceEngine::emitResults
 	CreateIsosurfaceModifier* modifier = static_object_cast<CreateIsosurfaceModifier>(modApp->modifier());
 
 	// Find the input voxel grid.
-	VoxelGrid* voxelGrid = input.findObject<VoxelGrid>();
+	VoxelGrid* voxelGrid = input.findObjectOfType<VoxelGrid>();
 	if(!voxelGrid) return input;
 		
 	// Create the output data object.

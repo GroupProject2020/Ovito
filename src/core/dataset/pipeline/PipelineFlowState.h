@@ -50,24 +50,17 @@ public:
 	/// \param dataObject The object represents the current state of a geometry pipeline evaluation.
 	/// \param validityInterval Specifies the time interval during which the returned object is valid.
 	///                         For times outside this interval the geometry pipeline has to be re-evaluated.
-	PipelineFlowState(DataObject* dataObject, const TimeInterval& validityInterval) : _stateValidity(validityInterval) {
+	PipelineFlowState(DataObject* dataObject, const TimeInterval& validityInterval = TimeInterval::infinite()) : _stateValidity(validityInterval) {
 		addObject(dataObject);
 	}
 
 	/// \brief Constructor that creates a state object and initializes it with several DataObjects.
 	/// \param dataObjects The objects to be inserted.
 	/// \param validityInterval Specifies the time interval during which the state is valid.
-	PipelineFlowState(const QVector<DataObject*>& dataObjects, const TimeInterval& validityInterval) : _stateValidity(validityInterval) {
-		for(DataObject* obj : dataObjects)
-			addObject(obj);
-	}
-
-	/// \brief Constructor that creates a state object and initializes it with a list of data objects.
 	/// \param status A status object that describes the outcome of the pipeline evaluation.
-	/// \param dataObjects The objects that represents the current state of a geometry pipeline evaluation.
-	/// \param validityInterval Specifies the time interval during which the returned objects are valid.
-	PipelineFlowState(const PipelineStatus& status, const QVector<DataObject*>& dataObjects, const TimeInterval& validityInterval, QVariantMap attributes = QVariantMap()) :
-		_status(status), _stateValidity(validityInterval), _attributes(std::move(attributes))
+	PipelineFlowState(const QVector<DataObject*>& dataObjects, const TimeInterval& validityInterval = TimeInterval::infinite(), const PipelineStatus& status = PipelineStatus()) : 
+			_stateValidity(validityInterval),
+			_status(status) 
 	{
 		_objects.reserve(dataObjects.size());
 		for(DataObject* obj : dataObjects)
@@ -79,7 +72,6 @@ public:
 		clearObjects();
 		_stateValidity.setEmpty();
 		_status = PipelineStatus();
-		_attributes.clear();
 	}
 
 	/// \brief Discards the data objects in this state object.
@@ -115,13 +107,22 @@ public:
 
 	/// \brief Finds an object of the given type in the list of data objects stored in this flow state.
 	template<class ObjectType>
-	ObjectType* findObject() const {
+	ObjectType* findObjectOfType() const {
 		for(DataObject* o : objects()) {
 			if(ObjectType* obj = dynamic_object_cast<ObjectType>(o))
 				return obj;
 		}
 		return nullptr;
 	}
+
+	/// \brief Finds an object of the given type and with the given identifier in the list of data objects stored in this flow state.
+	template<class DataObjectClass>
+	DataObjectClass* findObject(const QString& identifier, PipelineObject* dataSource = nullptr) const {
+		return static_object_cast<DataObjectClass>(findObject(DataObjectClass::OOClass(), identifier, dataSource));
+	}
+
+	/// \brief Finds an object of the given type and with the given identifier in the list of data objects stored in this flow state.
+	DataObject* findObject(const DataObject::OOMetaClass& objectClass, const QString& identifier, PipelineObject* dataSource = nullptr) const;
 	
 	/// \brief Replaces the objects in this state with copies if there are multiple references to them.
 	///
@@ -168,28 +169,21 @@ public:
 	/// Sets the stored status.
 	void setStatus(PipelineStatus&& status) { _status = std::move(status); }
 
-	/// Returns the auxiliary attributes associated with the state.
-	const QVariantMap& attributes() const { return _attributes; }
+	/// Returns the source frame number associated with this pipeline state.
+	/// If the data does not originate from a pipeline with a FileSource, returns -1.
+	int sourceFrame() const;
 
-	/// Returns a modifiable reference to the auxiliary attributes associated with this state.
-	QVariantMap& attributes() { return _attributes; }
+	/// Builds a list of the global attributes stored in this pipeline state.
+	QVariantMap buildAttributesMap() const;
 
-	/// Returns the source frame number associated with this state.
-	/// If the data does not originate from a source sequence, returns -1.
-	int sourceFrame() const { 
-		return attributes().value(QStringLiteral("SourceFrame"), -1).toInt();
-	}
+	/// Looks up the value for the given global attribute. 
+	/// Returns a given default value if the attribute is not defined in this pipeline state. 
+	QVariant getAttributeValue(const QString& attrName, const QVariant& defaultValue = QVariant()) const;
 
-	/// Sets the source frame number associated with this state.
-	void setSourceFrame(int frameNumber) { 
-		attributes().insert(QStringLiteral("SourceFrame"), frameNumber);
-	}
+	/// Looks up the value for the global attribute with the given base name and creator. 
+	/// Returns a given default value if the attribute is not defined in this pipeline state. 
+	QVariant getAttributeValue(const QString& attrBaseName, PipelineObject* dataSource, const QVariant& defaultValue = QVariant()) const;
 
-	/// Sets the source data file associated with this state.
-	void setSourceFile(const QString& filepath) { 
-		attributes().insert(QStringLiteral("SourceFile"), filepath);
-	}
-	
 private:
 
 	/// The data that has been output by the modification pipeline.
@@ -200,9 +194,6 @@ private:
 
 	/// The status of the pipeline evaluation.
 	PipelineStatus _status;
-
-	/// Extra attributes associated with the pipeline flow state.
-	QVariantMap _attributes;
 };
 
 OVITO_END_INLINE_NAMESPACE

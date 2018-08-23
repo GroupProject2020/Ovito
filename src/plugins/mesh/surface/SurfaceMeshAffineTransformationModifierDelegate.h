@@ -43,7 +43,7 @@ class SurfaceMeshAffineTransformationModifierDelegate : public AffineTransformat
 
 		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
 		virtual bool isApplicableTo(const PipelineFlowState& input) const override {
-			return input.findObject<SurfaceMesh>() != nullptr;
+			return input.findObjectOfType<SurfaceMesh>() != nullptr;
 		}
 
 		/// The name by which Python scripts can refer to this modifier delegate.

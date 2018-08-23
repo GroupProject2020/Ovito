@@ -34,6 +34,7 @@
 #include <plugins/stdobj/properties/PropertyStorage.h>
 #include <core/app/Application.h>
 #include <core/dataset/io/FileSource.h>
+#include <core/dataset/pipeline/PipelineOutputHelper.h>
 #include "ParticleFrameData.h"
 #include "ParticleImporter.h"
 
@@ -121,14 +122,12 @@ void ParticleFrameData::generateBondPeriodicImageProperty()
 * This function is called by the system from the main thread after the
 * asynchronous loading task has finished.
 ******************************************************************************/
-PipelineFlowState ParticleFrameData::handOver(DataSet* dataset, const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource)
+void ParticleFrameData::handOver(PipelineOutputHelper& poh, const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource)
 {
-	PipelineFlowState output;
-
 	// Transfer simulation cell.
-	OORef<SimulationCellObject> cell = existing.findObject<SimulationCellObject>();
+	OORef<SimulationCellObject> cell = existing.findObjectOfType<SimulationCellObject>();
 	if(!cell) {
-		cell = new SimulationCellObject(dataset, simulationCell());
+		cell = new SimulationCellObject(poh.dataset(), simulationCell());
 
 		// Create the vis element for the simulation cell.
 		if(SimulationCellVis* cellVis = dynamic_object_cast<SimulationCellVis>(cell->visElement())) {
@@ -149,7 +148,7 @@ PipelineFlowState ParticleFrameData::handOver(DataSet* dataset, const PipelineFl
 		// being overwritten when a new frame from a simulation sequence is loaded.
 		cell->setData(simulationCell(), isNewFile);
 	}
-	output.addObject(cell);
+	poh.outputObject(cell);
 
 	// Transfer particle properties.
 	for(auto& property : _particleProperties) {
@@ -168,7 +167,7 @@ PipelineFlowState ParticleFrameData::handOver(DataSet* dataset, const PipelineFl
 			propertyObj->setStorage(std::move(property));
 		}
 		else {
-			propertyObj = ParticleProperty::createFromStorage(dataset, std::move(property));
+			propertyObj = ParticleProperty::createFromStorage(poh.dataset(), std::move(property));
 		}
 
 		// Auto-adjust particle display radius.
@@ -190,7 +189,7 @@ PipelineFlowState ParticleFrameData::handOver(DataSet* dataset, const PipelineFl
 		auto typeList = _typeLists.find(propertyObj->storage().get());
 		insertTypes(propertyObj, (typeList != _typeLists.end()) ? typeList->second.get() : nullptr, isNewFile, false);
 
-		output.addObject(propertyObj);
+		poh.outputObject(propertyObj);
 	}
 
 	// Transfer bond properties.
@@ -210,26 +209,26 @@ PipelineFlowState ParticleFrameData::handOver(DataSet* dataset, const PipelineFl
 			propertyObj->setStorage(std::move(property));
 		}
 		else {
-			propertyObj = BondProperty::createFromStorage(dataset, std::move(property));
+			propertyObj = BondProperty::createFromStorage(poh.dataset(), std::move(property));
 		}
 
 		// Transfer bond types.
 		auto typeList = _typeLists.find(propertyObj->storage().get());
 		insertTypes(propertyObj, (typeList != _typeLists.end()) ? typeList->second.get() : nullptr, isNewFile, true);
 
-		output.addObject(propertyObj);
+		poh.outputObject(propertyObj);
 	}
 
 	// Transfer voxel data.
 	if(voxelGridShape().empty() == false) {
 
-		OORef<VoxelGrid> voxelGrid = existing.findObject<VoxelGrid>();
+		OORef<VoxelGrid> voxelGrid = existing.findObjectOfType<VoxelGrid>();
 		if(!voxelGrid) {
-			voxelGrid = new VoxelGrid(dataset);
+			voxelGrid = new VoxelGrid(poh.dataset());
 		}
 		voxelGrid->setShape(voxelGridShape());
 		voxelGrid->setDomain(cell);
-		output.addObject(voxelGrid);
+		poh.outputObject(voxelGrid);
 		
 		for(auto& property : voxelProperties()) {
 
@@ -247,15 +246,17 @@ PipelineFlowState ParticleFrameData::handOver(DataSet* dataset, const PipelineFl
 				propertyObject->setStorage(std::move(property));
 			}
 			else {
-				propertyObject = static_object_cast<VoxelProperty>(VoxelProperty::OOClass().createFromStorage(dataset, std::move(property)));
+				propertyObject = static_object_cast<VoxelProperty>(VoxelProperty::OOClass().createFromStorage(poh.dataset(), std::move(property)));
 			}
 
-			output.addObject(propertyObject);
+			poh.outputObject(propertyObject);
 		}
 	}
 
-	// Pass timestep information and other metadata to modification pipeline.
-	output.attributes() = std::move(_attributes);
+	// Pass timestep information and other metadata to the modification pipeline.
+	for(auto a = _attributes.cbegin(); a != _attributes.cend(); ++a) {
+		poh.outputAttribute(a.key(), a.value());
+	}
 
 	// If the file parser has detected that the input file contains additional frame data following the
 	// current frame, active the 'contains multiple frames' option for the importer. This will trigger
@@ -265,8 +266,6 @@ PipelineFlowState ParticleFrameData::handOver(DataSet* dataset, const PipelineFl
 			importer->setMultiTimestepFile(true);
 		}
 	}
-
-	return output;
 }
 
 /******************************************************************************

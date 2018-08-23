@@ -31,20 +31,20 @@ namespace Ovito { namespace StdObj {
 /******************************************************************************
 * Returns a standard particle property from the input state.
 ******************************************************************************/
-PropertyObject* InputHelper::inputStandardProperty(const PropertyClass& propertyClass, int typeId, const QString& bundle) const
+PropertyObject* InputHelper::inputStandardProperty(const PropertyClass& propertyClass, int typeId, const QString& bundleName) const
 {
 	OVITO_ASSERT(typeId != 0);
-	return propertyClass.findInState(input(), typeId, bundle);
+	return propertyClass.findInState(input(), typeId, bundleName);
 }
 
 /******************************************************************************
 * Returns the property with the given identifier from the input object.
 ******************************************************************************/
-PropertyObject* InputHelper::expectCustomProperty(const PropertyClass& propertyClass, const QString& propertyName, int dataType, size_t componentCount, const QString& bundle) const
+PropertyObject* InputHelper::expectCustomProperty(const PropertyClass& propertyClass, const QString& propertyName, int dataType, size_t componentCount, const QString& bundleName) const
 {
 	for(DataObject* o : input().objects()) {
 		PropertyObject* property = dynamic_object_cast<PropertyObject>(o);
-		if(property && propertyClass.isMember(property) && property->name() == propertyName && property->bundle() == bundle) {
+		if(property && propertyClass.isMember(property) && property->name() == propertyName && property->belongsToBundle(bundleName)) {
 			if(property->dataType() != dataType)
 				dataset()->throwException(PropertyObject::tr("Property '%1' does not have the required data type.").arg(property->name()));
 			if(property->componentCount() != componentCount)
@@ -60,9 +60,9 @@ PropertyObject* InputHelper::expectCustomProperty(const PropertyClass& propertyC
 * The returned property may not be modified. If they input object does
 * not contain the standard property then an exception is thrown.
 ******************************************************************************/
-PropertyObject* InputHelper::expectStandardProperty(const PropertyClass& propertyClass, int typeId, const QString& bundle) const
+PropertyObject* InputHelper::expectStandardProperty(const PropertyClass& propertyClass, int typeId, const QString& bundleName) const
 {
-	PropertyObject* property = inputStandardProperty(propertyClass, typeId, bundle);
+	PropertyObject* property = inputStandardProperty(propertyClass, typeId, bundleName);
 	if(!property)
 		dataset()->throwException(PropertyObject::tr("Modifier requires input property '%1', which is not defined for '%2' data elements.").arg(propertyClass.standardPropertyName(typeId)).arg(propertyClass.pythonName()));
 	return property;
@@ -73,10 +73,10 @@ PropertyObject* InputHelper::expectStandardProperty(const PropertyClass& propert
 ******************************************************************************/
 SimulationCellObject* InputHelper::expectSimulationCell() const
 {
-	SimulationCellObject* cell = input().findObject<SimulationCellObject>();
-	if(!cell)
+	if(SimulationCellObject* cell = input().findObjectOfType<SimulationCellObject>())
+		return cell;
+	else
 		dataset()->throwException(SimulationCellObject::tr("Modifier requires an input simulation cell."));
-	return cell;
 }
 
 }	// End of namespace

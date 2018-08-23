@@ -24,6 +24,7 @@
 #include <plugins/mesh/tri/TriMeshVis.h>
 #include <core/app/Application.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
+#include <core/dataset/pipeline/PipelineOutputHelper.h>
 #include "TriMeshFrameData.h"
 
 namespace Ovito { namespace Mesh {
@@ -33,29 +34,26 @@ namespace Ovito { namespace Mesh {
 * This function is called by the system from the main thread after the
 * asynchronous loading task has finished.
 ******************************************************************************/
-PipelineFlowState TriMeshFrameData::handOver(DataSet* dataset, const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource)
+void TriMeshFrameData::handOver(PipelineOutputHelper& poh, const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource)
 {
-	PipelineFlowState output;
-
 	// Create a TriMeshObject.
-	OORef<TriMeshObject> triMeshObj = new TriMeshObject(dataset);
+	OORef<TriMeshObject> triMeshObj = new TriMeshObject(poh.dataset());
 	triMeshObj->mesh().swap(mesh());
 
 	// Assign a TriMeshVis to the TriMeshObject.
 	// Re-use existing vis element if possible.
 	OORef<DataVis> triMeshVis;
-	if(TriMeshObject* previousTriMeshObj = existing.findObject<TriMeshObject>())
+	if(TriMeshObject* previousTriMeshObj = existing.findObjectOfType<TriMeshObject>())
 		triMeshVis = previousTriMeshObj->visElement();
 	if(!triMeshVis) {
-		triMeshVis = new TriMeshVis(dataset);
+		triMeshVis = new TriMeshVis(poh.dataset());
 		if(Application::instance()->guiMode())
 			triMeshVis->loadUserDefaults();
 	}
 	triMeshObj->setVisElement(triMeshVis);
 
 	// Put object into output state.
-	output.addObject(triMeshObj);
-	return output;
+	poh.outputObject(triMeshObj);
 }
 
 }	// End of namespace

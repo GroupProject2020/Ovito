@@ -321,7 +321,7 @@ PipelineStatus ColorCodingModifierDelegate::apply(Modifier* modifier, const Pipe
 {
 	const ColorCodingModifier* mod = static_object_cast<ColorCodingModifier>(modifier);
 	InputHelper ih(dataset(), input);
-	OutputHelper oh(dataset(), output);
+	OutputHelper oh(dataset(), output, modApp);
 
 	if(!mod->colorGradient())
 		throwException(tr("No color gradient has been selected."));

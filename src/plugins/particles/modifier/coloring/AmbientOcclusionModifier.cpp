@@ -58,7 +58,7 @@ AmbientOcclusionModifier::AmbientOcclusionModifier(DataSet* dataset) : Asynchron
 ******************************************************************************/
 bool AmbientOcclusionModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<ParticleProperty>() != nullptr;
+	return input.findObjectOfType<ParticleProperty>() != nullptr;
 }
 
 /******************************************************************************
@@ -250,7 +250,7 @@ PipelineFlowState AmbientOcclusionModifier::AmbientOcclusionEngine::emitResults(
 
 	PipelineFlowState output = input;
 	ParticleInputHelper pih(modApp->dataset(), input);
-	ParticleOutputHelper poh(modApp->dataset(), output);
+	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
 	OVITO_ASSERT(brightness() && poh.outputParticleCount() == brightness()->size());
 	
 	// Get effective intensity.

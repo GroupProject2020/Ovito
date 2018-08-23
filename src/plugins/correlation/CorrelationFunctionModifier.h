@@ -27,10 +27,10 @@
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
 #include <plugins/stdobj/series/DataSeriesObject.h>
+#include <plugins/stdobj/series/DataSeriesProperty.h>
 #include <plugins/particles/util/CutoffNeighborFinder.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
-#include <core/dataset/pipeline/AsynchronousModifierApplication.h>
 
 #include <complex>
 
@@ -138,7 +138,7 @@ private:
 			_simCell(simCell), _fftGridSpacing(fftGridSpacing),
 			_applyWindow(applyWindow), _neighCutoff(neighCutoff),
 			_averagingDirection(averagingDirection),
-			_neighCorrelation(doComputeNeighCorrelation ? std::make_shared<PropertyStorage>(numberOfNeighBins, PropertyStorage::Float, 1, 0, tr("Neighbor C(r)"), true) : nullptr) {}
+			_neighCorrelation(doComputeNeighCorrelation ? std::make_shared<PropertyStorage>(numberOfNeighBins, PropertyStorage::Float, 1, 0, tr("Neighbor C(r)"), true, DataSeriesProperty::YProperty) : nullptr) {}
 
 		/// This method is called by the system after the computation was successfully completed.
 		virtual void cleanup() override {

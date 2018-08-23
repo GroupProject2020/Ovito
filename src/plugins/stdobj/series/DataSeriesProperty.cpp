@@ -22,6 +22,7 @@
 #include <plugins/stdobj/StdObj.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
 #include "DataSeriesProperty.h"
+#include "DataSeriesObject.h"
 
 namespace Ovito { namespace StdObj {
 
@@ -41,6 +42,7 @@ void DataSeriesProperty::OOMetaClass::initialize()
 	setPropertyClassDisplayName(tr("Data series"));
 	setElementDescriptionName(QStringLiteral("points"));
 	setPythonName(QStringLiteral("series"));
+	setBundleObjectClass(DataSeriesObject::OOClass());
 }
 
 /******************************************************************************
@@ -92,7 +94,7 @@ size_t DataSeriesProperty::OOMetaClass::elementCount(const PipelineFlowState& st
 ******************************************************************************/
 bool DataSeriesProperty::OOMetaClass::isDataPresent(const PipelineFlowState& state) const
 {
-	return state.findObject<DataSeriesProperty>() != nullptr;
+	return state.findObjectOfType<DataSeriesProperty>() != nullptr;
 }
 
 }	// End of namespace

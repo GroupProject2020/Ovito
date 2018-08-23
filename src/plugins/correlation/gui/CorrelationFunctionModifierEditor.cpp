@@ -272,7 +272,7 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 ******************************************************************************/
 bool CorrelationFunctionModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(source == modifierApplication() && event.type() == ReferenceEvent::ObjectStatusChanged) {
+	if(source == modifierApplication() && event.type() == ReferenceEvent::PipelineCacheUpdated) {
 		plotAllDataLater(this);
 	}
 	else if(source == editObject() && event.type() == ReferenceEvent::TargetChanged) {
@@ -284,16 +284,19 @@ bool CorrelationFunctionModifierEditor::referenceEvent(RefTarget* source, const 
 /******************************************************************************
 * Replots one of the correlation function computed by the modifier.
 ******************************************************************************/
-std::pair<FloatType,FloatType> CorrelationFunctionModifierEditor::plotData(DataSeriesObject* series,
-												 DataSeriesPlotWidget* plotWidget,
-												 FloatType offset, FloatType fac, 
-												 const PropertyPtr& normalization)
+std::pair<FloatType,FloatType> CorrelationFunctionModifierEditor::plotData(
+												DataSeriesObject* series,
+												DataSeriesPlotWidget* plotWidget,
+												FloatType offset, 
+												FloatType fac, 
+												const PropertyPtr& normalization)
 {
 	// Duplicate the data series, then modify the stored values.
 	UndoSuspender noUndo(series);
 	CloneHelper cloneHelper;
 	OORef<DataSeriesObject> clonedSeries = cloneHelper.cloneObject(series, true);
 
+#if 0
 	// Normalize function values.
 	if(normalization) {
 		OVITO_ASSERT(normalization->size() == clonedSeries->y()->size());
@@ -317,6 +320,7 @@ std::pair<FloatType,FloatType> CorrelationFunctionModifierEditor::plotData(DataS
 	plotWidget->setSeries(std::move(clonedSeries));
 
 	return { *minmax.first, *minmax.second };
+#endif
 }
 
 /******************************************************************************
@@ -366,29 +370,37 @@ void CorrelationFunctionModifierEditor::plotAllData()
 	// Obtain the pipeline data produced by the modifier.
 	const PipelineFlowState& state = getModifierOutput();
 
-#if 0
+	// Retreive computed values from pipeline.
+	const QVariant& mean1 = state.getAttributeValue(QStringLiteral("CorrelationFunction.mean1"), modifierApplication());
+	const QVariant& mean2 = state.getAttributeValue(QStringLiteral("CorrelationFunction.mean2"), modifierApplication());
+	const QVariant& variance1 = state.getAttributeValue(QStringLiteral("CorrelationFunction.variance1"), modifierApplication());
+	const QVariant& variance2 = state.getAttributeValue(QStringLiteral("CorrelationFunction.variance2"), modifierApplication());
+	const QVariant& covariance = state.getAttributeValue(QStringLiteral("CorrelationFunction.covariance"), modifierApplication());
+
 	// Determine scaling factor and offset.
 	FloatType offset = 0.0;
 	FloatType uniformFactor = 1;
-	if(modifier && modApp->realSpaceCorrelation()) {
+	if(modifier && variance1.isValid() && variance2.isValid() && covariance.isValid()) {
 		if(modifier->normalizeRealSpace() == CorrelationFunctionModifier::DIFFERENCE_CORRELATION) {
-			offset = 0.5 * (modApp->variance1() + modApp->variance2());
+			offset = 0.5 * (variance1.toDouble() + variance2.toDouble());
 			uniformFactor = -1;
 		}
-		if(modifier->normalizeRealSpaceByCovariance() && modApp->covariance() != 0) {
-			uniformFactor /= modApp->covariance();
+		if(modifier->normalizeRealSpaceByCovariance() && covariance.toDouble() != 0) {
+			uniformFactor /= covariance.toDouble();
 		}
 	}
 
 	// Display direct neighbor correlation function. 
-	if(modifier && modifier->doComputeNeighCorrelation() && modApp && modApp->neighCorrelation() && modApp->neighRDF()) {
-		const auto& yData = modApp->neighCorrelation()->y();
-		const auto& rdfData = modApp->neighRDF()->y();
+	DataSeriesObject* neighCorrelation = state.findObject<DataSeriesObject>(QStringLiteral("correlation/neighbor"), modifierApplication()); 
+	DataSeriesObject* neighRDF = state.findObject<DataSeriesObject>(QStringLiteral("correlation/neighbor/rdf"), modifierApplication()); 
+	if(modifier && modifierApplication() && modifier->doComputeNeighCorrelation() && modApp && neighCorrelation && neighRDF) {
+		const auto& yData = neighCorrelation->getYStorage(state);
+		const auto& rdfData = neighRDF->getYStorage(state);
 		size_t numberOfDataPoints = yData->size();
 		QVector<QPointF> plotData(numberOfDataPoints);
 		bool normByRDF = modifier->normalizeRealSpaceByRDF();
 		for(size_t i = 0; i < numberOfDataPoints; i++) {
-			FloatType xValue = modApp->neighCorrelation()->getXValue(i);
+			FloatType xValue = neighCorrelation()->getXValue(i);
 			FloatType yValue = yData->getFloat(i);
 			if(normByRDF)
 				yValue = rdfData->getFloat(i) > 1e-12 ? (yValue / rdfData->getFloat(i)) : 0.0;
@@ -442,80 +454,7 @@ void CorrelationFunctionModifierEditor::plotAllData()
 	else {
 		_reciprocalSpacePlot->setSeries(nullptr);
 	}
-#endif
 }
-
-#if 0
-/******************************************************************************
-* This is called when the user has clicked the "Save Data" button.
-******************************************************************************/
-void CorrelationFunctionModifierEditor::onSaveData()
-{
-	CorrelationFunctionModifier* modifier = static_object_cast<CorrelationFunctionModifier>(editObject());
-	CorrelationFunctionModifierApplication* modApp = dynamic_object_cast<CorrelationFunctionModifierApplication>(modifierApplication());
-	if(!modifier || !modApp)
-		return;
-
-	QString fileName = QFileDialog::getSaveFileName(mainWindow(),
-		tr("Save Correlation Data"), QString(), tr("Text files (*.txt);;All files (*)"));
-	if(fileName.isEmpty())
-		return;
-
-	try {
-		if(!modApp->realSpaceCorrelation() || !modApp->reciprocalSpaceCorrelation() || !modApp->realSpaceRDF())
-			modifier->throwException(tr("Correlation function has not been computed yet."));
-
-		QFile file(fileName);
-		if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
-			modifier->throwException(tr("Could not open file for writing: %1").arg(file.errorString()));
-
-		QTextStream stream(&file);
-
-		stream << "# This file contains the correlation between the following property:" << endl;
-		stream << "# " << modifier->sourceProperty1().name() << " with mean value " << modApp->mean1() << " and variance " << modApp->variance1() << endl;
-		stream << "# " << modifier->sourceProperty2().name() << " with mean value " << modApp->mean2() << " and variance " << modApp->variance2() << endl;
-		stream << "# Covariance is " << modApp->covariance() << endl << endl;
-
-		stream << "# Real-space correlation function from FFT follows." << endl;
-		stream << "# 1: Bin number" << endl;
-		stream << "# 2: Distance r" << endl;
-		stream << "# 3: Correlation function C(r)" << endl;
-		stream << "# 4: Radial distribution function g(r)" << endl;
-		for(size_t i = 0; i < modApp->realSpaceCorrelation()->y()->size(); i++) {
-			stream << i << "\t" << modApp->realSpaceCorrelation()->getXValue(i)
-						<< "\t" << modApp->realSpaceCorrelation()->y()->getFloat(i)
-									<< "\t" << modApp->realSpaceRDF()->y()->getFloat(i) << endl;
-		}
-		stream << endl;
-
-		if(modApp->neighCorrelation() && modApp->neighRDF()) {
-			stream << "# Real-space correlation function from direct sum over neighbors follows." << endl;
-			stream << "# 1: Bin number" << endl;
-			stream << "# 2: Distance r" << endl;
-			stream << "# 3: Correlation function C(r)" << endl;
-			stream << "# 4: Radial distribution function g(r)" << endl;
-			for(size_t i = 0; i < modApp->neighCorrelation()->y()->size(); i++) {
-				stream << i << "\t" << modApp->neighCorrelation()->getXValue(i)
-				            << "\t" << modApp->neighCorrelation()->y()->getFloat(i)
-										<< "\t" << modApp->neighRDF()->y()->getFloat(i) << endl;
-			}
-			stream << endl;
-		}
-
-		stream << "# Reciprocal-space correlation function from FFT follows." << endl;
-		stream << "# 1: Bin number" << endl;
-		stream << "# 2: Wavevector q (includes a factor of 2*pi)" << endl;
-		stream << "# 3: Correlation function C(q)" << endl;
-		for(size_t i = 0; i < modApp->reciprocalSpaceCorrelation()->y()->size(); i++) {
-			stream << i << "\t" << modApp->reciprocalSpaceCorrelation()->getXValue(i)
-						<< "\t" << modApp->reciprocalSpaceCorrelation()->y()->getFloat(i) << endl;
-		}
-	}
-	catch(const Exception& ex) {
-		ex.reportError();
-	}
-}
-#endif
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

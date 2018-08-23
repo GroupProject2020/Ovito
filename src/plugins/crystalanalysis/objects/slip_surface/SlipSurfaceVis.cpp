@@ -78,11 +78,11 @@ Future<PipelineFlowState> SlipSurfaceVis::transformDataImpl(TimePoint time, Data
 		return std::move(flowState);
 			
 	// Get the cluster graph.
-	ClusterGraphObject* clusterGraphObject = flowState.findObject<ClusterGraphObject>();
+	ClusterGraphObject* clusterGraphObject = flowState.findObjectOfType<ClusterGraphObject>();
 	
 	// Build lookup map of lattice structure names.
 	QStringList structureNames;
-	if(PatternCatalog* patternCatalog = flowState.findObject<PatternCatalog>()) {
+	if(PatternCatalog* patternCatalog = flowState.findObjectOfType<PatternCatalog>()) {
 		for(StructurePattern* pattern : patternCatalog->patterns()) {
 			if(pattern->id() < 0) continue;
 			while(pattern->id() >= structureNames.size()) structureNames.append(QString());

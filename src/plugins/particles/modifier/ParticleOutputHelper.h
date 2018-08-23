@@ -37,7 +37,7 @@ class OVITO_PARTICLES_EXPORT ParticleOutputHelper : public OutputHelper
 public:
 
 	/// Constructor.
-	ParticleOutputHelper(DataSet* dataset, PipelineFlowState& output);
+	ParticleOutputHelper(DataSet* dataset, PipelineFlowState& output, PipelineObject* dataSource);
 
 	/// Returns the number of particles in the output.
 	size_t outputParticleCount() const { return _outputParticleCount; }

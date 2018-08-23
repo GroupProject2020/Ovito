@@ -50,7 +50,7 @@ bool FHIAimsExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePo
 
 	// Output simulation cell.
 	Point3 origin = Point3::Origin();
-	SimulationCellObject* simulationCell = state.findObject<SimulationCellObject>();
+	SimulationCellObject* simulationCell = state.findObjectOfType<SimulationCellObject>();
 	if(simulationCell) {
 		origin = simulationCell->cellOrigin();
 		if(simulationCell->pbcX() || simulationCell->pbcY() || simulationCell->pbcZ()) {

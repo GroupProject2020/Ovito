@@ -39,7 +39,7 @@ PropertyReference::PropertyReference(PropertyClassPtr pclass, int typeId, int ve
 * Constructs a reference based on an existing PropertyObject.
 ******************************************************************************/
 PropertyReference::PropertyReference(PropertyObject* property, int vectorComponent) : 
-	_propertyClass(&property->getOOMetaClass()), _bundle(property->bundle()), 
+	_propertyClass(&property->getOOMetaClass()), 
 	_type(property->type()), _name(property->name()), _vectorComponent(vectorComponent) 
 { 
 }

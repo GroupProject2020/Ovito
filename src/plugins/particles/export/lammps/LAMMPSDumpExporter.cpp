@@ -46,7 +46,7 @@ bool LAMMPSDumpExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
 
 	// Get simulation cell info.
-	SimulationCellObject* simulationCell = state.findObject<SimulationCellObject>();
+	SimulationCellObject* simulationCell = state.findObjectOfType<SimulationCellObject>();
 	if(!simulationCell)
 		throwException(tr("No simulation cell available. Cannot write LAMMPS file."));
 
@@ -73,10 +73,7 @@ bool LAMMPSDumpExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 	yhi += std::max((FloatType)0, yz);
 
 	textStream() << "ITEM: TIMESTEP\n";
-	if(state.attributes().contains(QStringLiteral("Timestep")))
-		textStream() << state.attributes().value(QStringLiteral("Timestep")).toInt() << '\n';
-	else
-		textStream() << frameNumber << '\n';
+	textStream() << state.getAttributeValue(QStringLiteral("Timestep"), frameNumber).toInt() << '\n';
 	textStream() << "ITEM: NUMBER OF ATOMS\n";
 	textStream() << atomsCount << '\n';
 	if(xy != 0 || xz != 0 || yz != 0) {

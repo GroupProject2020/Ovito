@@ -22,8 +22,9 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
-#include <core/dataset/DataSet.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
+#include <core/dataset/DataSet.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include "WrapPeriodicImagesModifier.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
@@ -35,7 +36,7 @@ IMPLEMENT_OVITO_CLASS(WrapPeriodicImagesModifier);
 ******************************************************************************/
 bool WrapPeriodicImagesModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<ParticleProperty>() != nullptr;
+	return input.findObjectOfType<ParticleProperty>() != nullptr;
 }
 
 /******************************************************************************
@@ -45,7 +46,7 @@ PipelineFlowState WrapPeriodicImagesModifier::evaluatePreliminary(TimePoint time
 {
 	PipelineFlowState output = input;
 	ParticleInputHelper pih(dataset(), input);
-	ParticleOutputHelper poh(dataset(), output);
+	ParticleOutputHelper poh(dataset(), output, modApp);
 
 	SimulationCellObject* simCellObj = pih.expectSimulationCell();
 	std::array<bool, 3> pbc = simCellObj->pbcFlags();

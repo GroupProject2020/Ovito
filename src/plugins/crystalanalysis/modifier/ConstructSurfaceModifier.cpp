@@ -59,7 +59,7 @@ ConstructSurfaceModifier::ConstructSurfaceModifier(DataSet* dataset) : Asynchron
 ******************************************************************************/
 bool ConstructSurfaceModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<ParticleProperty>() != nullptr;
+	return input.findObjectOfType<ParticleProperty>() != nullptr;
 }
 
 /******************************************************************************
@@ -175,18 +175,17 @@ PipelineFlowState ConstructSurfaceModifier::ConstructSurfaceEngine::emitResults(
 {
 	ConstructSurfaceModifier* modifier = static_object_cast<ConstructSurfaceModifier>(modApp->modifier());
 
+	PipelineFlowState output = input;
+	OutputHelper oh(modApp->dataset(), output, modApp);
+
 	// Create the output data object.
 	OORef<SurfaceMesh> meshObj(new SurfaceMesh(modApp->dataset()));
 	meshObj->setStorage(mesh());
 	meshObj->setIsCompletelySolid(isCompletelySolid());
-	meshObj->setDomain(input.findObject<SimulationCellObject>());
+	meshObj->setDomain(input.findObjectOfType<SimulationCellObject>());
 	meshObj->addVisElement(modifier->surfaceMeshVis());
-
-	// Insert output object into the pipeline.
-	PipelineFlowState output = input;
-	output.addObject(meshObj);
+	oh.outputObject(meshObj);
 	
-	OutputHelper oh(modApp->dataset(), output);
 	oh.outputAttribute(QStringLiteral("ConstructSurfaceMesh.surface_area"), QVariant::fromValue(surfaceArea()));
 	oh.outputAttribute(QStringLiteral("ConstructSurfaceMesh.solid_volume"), QVariant::fromValue(solidVolume()));
 

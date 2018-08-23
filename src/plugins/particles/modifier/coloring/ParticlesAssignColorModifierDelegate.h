@@ -44,7 +44,7 @@ class ParticlesAssignColorModifierDelegate : public AssignColorModifierDelegate
 
 		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
 		virtual bool isApplicableTo(const PipelineFlowState& input) const override {
-			return input.findObject<ParticleProperty>() != nullptr;
+			return input.findObjectOfType<ParticleProperty>() != nullptr;
 		}
 
 		/// The name by which Python scripts can refer to this modifier delegate.
@@ -124,7 +124,7 @@ class BondsAssignColorModifierDelegate : public AssignColorModifierDelegate
 
 		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
 		virtual bool isApplicableTo(const PipelineFlowState& input) const override {
-			return input.findObject<BondProperty>() != nullptr;
+			return input.findObjectOfType<BondProperty>() != nullptr;
 		}
 
 		/// The name by which Python scripts can refer to this modifier delegate.

@@ -25,6 +25,7 @@
 #include <plugins/stdobj/util/InputHelper.h>
 #include <plugins/stdobj/util/OutputHelper.h>
 #include <core/dataset/DataSet.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include "DislocationReplicateModifierDelegate.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
@@ -36,7 +37,7 @@ IMPLEMENT_OVITO_CLASS(DislocationReplicateModifierDelegate);
 ******************************************************************************/
 bool DislocationReplicateModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<DislocationNetworkObject>() != nullptr;
+	return input.findObjectOfType<DislocationNetworkObject>() != nullptr;
 }
 
 /******************************************************************************
@@ -58,7 +59,7 @@ PipelineStatus DislocationReplicateModifierDelegate::apply(Modifier* modifier, c
 	Box3I newImages = mod->replicaRange();
 
 	InputHelper ih(dataset(), input);
-	OutputHelper oh(dataset(), output);
+	OutputHelper oh(dataset(), output, modApp);
 
 	for(DataObject* obj : output.objects()) {
 		if(DislocationNetworkObject* existingDislocations = dynamic_object_cast<DislocationNetworkObject>(obj)) {

@@ -62,7 +62,7 @@ ExpandSelectionModifier::ExpandSelectionModifier(DataSet* dataset) : Asynchronou
 ******************************************************************************/
 bool ExpandSelectionModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<ParticleProperty>() != nullptr;
+	return input.findObjectOfType<ParticleProperty>() != nullptr;
 }
 
 /******************************************************************************
@@ -196,7 +196,7 @@ PipelineFlowState ExpandSelectionModifier::ExpandSelectionEngine::emitResults(Ti
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 
 	PipelineFlowState output = input;
-	ParticleOutputHelper poh(modApp->dataset(), output);
+	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
 	poh.outputProperty<ParticleProperty>(outputSelection());
 
 	QString msg = tr("Added %1 particles to selection.\n"

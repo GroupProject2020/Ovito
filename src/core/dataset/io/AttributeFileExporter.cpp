@@ -22,6 +22,7 @@
 #include <core/Core.h>
 #include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/dataset/scene/SelectionSet.h>
+#include <core/dataset/data/AttributeDataObject.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/utilities/concurrent/TaskManager.h>
 #include "AttributeFileExporter.h"
@@ -30,13 +31,6 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
 
 IMPLEMENT_OVITO_CLASS(AttributeFileExporter);
 DEFINE_PROPERTY_FIELD(AttributeFileExporter, attributesToExport);
-
-/******************************************************************************
-* Constructs a new instance of the class.
-******************************************************************************/
-AttributeFileExporter::AttributeFileExporter(DataSet* dataset) : FileExporter(dataset)
-{
-}
 
 /******************************************************************************
 * Selects the nodes from the scene to be exported by this exporter if 
@@ -121,7 +115,8 @@ bool AttributeFileExporter::getAttributes(SceneNode* sceneNode, TimePoint time, 
 	if(state.isEmpty())
 		throwException(tr("The object to be exported does not contain any data."));
 
-	attributes = state.attributes();
+	// Build list of attributes.
+	attributes = state.buildAttributesMap();
 	attributes.insert(QStringLiteral("Frame"), sceneNode->dataset()->animationSettings()->timeToFrame(time));
 
 	return true;

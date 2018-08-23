@@ -55,7 +55,7 @@ bool XYZExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 		throwException(tr("No particle properties have been selected for export to the XYZ file. Cannot write file with zero columns."));
 	OutputColumnWriter columnWriter(mapping, state, true);
 
-	SimulationCellObject* simulationCell = state.findObject<SimulationCellObject>();
+	SimulationCellObject* simulationCell = state.findObjectOfType<SimulationCellObject>();
 
 	if(subFormat() == ParcasFormat) {
 		textStream() << QStringLiteral("Frame %1").arg(frameNumber);

@@ -79,7 +79,7 @@ VoronoiAnalysisModifier::VoronoiAnalysisModifier(DataSet* dataset) : Asynchronou
 ******************************************************************************/
 bool VoronoiAnalysisModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<ParticleProperty>() != nullptr;
+	return input.findObjectOfType<ParticleProperty>() != nullptr;
 }
 
 /******************************************************************************
@@ -485,7 +485,7 @@ PipelineFlowState VoronoiAnalysisModifier::VoronoiAnalysisEngine::emitResults(Ti
 	VoronoiAnalysisModifier* modifier = static_object_cast<VoronoiAnalysisModifier>(modApp->modifier());
 	
 	PipelineFlowState output = input;
-	ParticleOutputHelper poh(modApp->dataset(), output);
+	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
 
 	poh.outputProperty<ParticleProperty>(coordinationNumbers());
 	poh.outputProperty<ParticleProperty>(atomicVolumes());

@@ -23,6 +23,7 @@
 #include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <core/utilities/concurrent/ParallelFor.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include "ElasticStrainEngine.h"
 #include "ElasticStrainModifier.h"
 
@@ -184,15 +185,15 @@ PipelineFlowState ElasticStrainEngine::emitResults(TimePoint time, ModifierAppli
 	ElasticStrainModifier* modifier = static_object_cast<ElasticStrainModifier>(modApp->modifier());
 	
 	PipelineFlowState output = StructureIdentificationEngine::emitResults(time, modApp, input);
-	ParticleOutputHelper poh(modApp->dataset(), output);
+	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
 
 	// Output cluster graph.
 	OORef<ClusterGraphObject> clusterGraphObj(new ClusterGraphObject(modApp->dataset()));
 	clusterGraphObj->setStorage(clusterGraph());
-	output.addObject(clusterGraphObj);
+	poh.outputObject(clusterGraphObj);
 
 	// Output pattern catalog.
-	output.addObject(modifier->patternCatalog());
+	poh.outputObject(modifier->patternCatalog());
 
 	// Output particle properties.
 	poh.outputProperty<ParticleProperty>(atomClusters());

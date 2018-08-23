@@ -53,7 +53,7 @@ CoordinationPolyhedraModifier::CoordinationPolyhedraModifier(DataSet* dataset) :
 ******************************************************************************/
 bool CoordinationPolyhedraModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<ParticleProperty>() && input.findObject<BondProperty>();
+	return input.findObjectOfType<ParticleProperty>() && input.findObjectOfType<BondProperty>();
 }
 
 /******************************************************************************
@@ -312,7 +312,7 @@ PipelineFlowState CoordinationPolyhedraModifier::ComputePolyhedraEngine::emitRes
 	// Create the output data object.
 	OORef<SurfaceMesh> meshObj(new SurfaceMesh(modApp->dataset()));
 	meshObj->setStorage(mesh());
-	meshObj->setDomain(input.findObject<SimulationCellObject>());
+	meshObj->setDomain(input.findObjectOfType<SimulationCellObject>());
 	meshObj->setVisElement(modifier->surfaceMeshVis());
 
 	// Insert data object into the output data collection.

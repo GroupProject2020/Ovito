@@ -67,7 +67,7 @@ bool GenericPropertyModifier::OOMetaClass::isApplicableTo(const PipelineFlowStat
 
 	// Modifier is applicable if there is at least one property in the input data.
 	// Subclasses can override this behavior.
-	return input.findObject<PropertyObject>() != nullptr;
+	return input.findObjectOfType<PropertyObject>() != nullptr;
 }
 
 }	// End of namespace

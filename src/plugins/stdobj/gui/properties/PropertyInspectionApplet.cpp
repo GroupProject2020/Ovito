@@ -90,23 +90,12 @@ void PropertyInspectionApplet::updateBundleList()
 	// Remember which bundle was previously selected.
 	QString previousSelectedBundleId = selectedBundleId();
 
-	// Generate list of all bundle identifiers in the current data collection.
-	QStringList bundleIds;
-	for(DataObject* obj : currentData().objects()) {
-		if(PropertyObject* prop = dynamic_object_cast<PropertyObject>(obj)) {
-			if(_propertyClass.isMember(prop)) {
-				if(!prop->bundle().isEmpty() && !bundleIds.contains(prop->bundle()))
-					bundleIds.push_back(prop->bundle());
-			}
-		}
-	}
-
-	// Lookup the corresponding data objects.
+	// Generate list of all property bundles in the current data collection.
 	std::vector<DataObject*> bundleObjects;
-	for(const QString& bundleId : bundleIds) {
-		if(DataObject* obj = lookupBundleObject(currentData(), bundleId)) {
-			OVITO_ASSERT(obj->identifier() == bundleId);
-			bundleObjects.push_back(obj);
+	if(_propertyClass.bundleObjectClass()) {
+		for(DataObject* obj : currentData().objects()) {
+			if(_propertyClass.bundleObjectClass()->isMember(obj))
+				bundleObjects.push_back(obj);
 		}
 	}
 
@@ -116,12 +105,15 @@ void PropertyInspectionApplet::updateBundleList()
 	int numItems = 0;
 	for(DataObject* obj : bundleObjects) {
 		QListWidgetItem* item;
+		QString itemTitle = obj->objectTitle();
+		if(obj->dataSource())
+			itemTitle += QStringLiteral(" [%1]").arg(obj->dataSource()->objectTitle());
 		if(bundleSelectionWidget()->count() <= numItems) {
-			item = new QListWidgetItem(obj->objectTitle(), bundleSelectionWidget());
+			item = new QListWidgetItem(itemTitle, bundleSelectionWidget());
 		}
 		else {
 			item = bundleSelectionWidget()->item(numItems);
-			item->setText(obj->objectTitle());
+			item->setText(itemTitle);
 		}
 		item->setData(Qt::UserRole, obj->identifier());
 
@@ -154,6 +146,21 @@ QString PropertyInspectionApplet::selectedBundleId() const
 }
 
 /******************************************************************************
+* Returns the data object representing the data bundle that is currently selected.
+******************************************************************************/
+DataObject* PropertyInspectionApplet::selectedBundleObject() const
+{
+	QString bundleId = selectedBundleId();
+	if(!bundleId.isEmpty() && _propertyClass.bundleObjectClass()) {
+		for(DataObject* obj : currentData().objects()) {
+			if(_propertyClass.bundleObjectClass()->isMember(obj) && obj->identifier() == bundleId)
+				return obj;
+		}
+	}
+	return nullptr;
+}
+
+/******************************************************************************
 * Is called when the user selects a different bundle from the list.
 ******************************************************************************/
 void PropertyInspectionApplet::currentBundleChanged()
@@ -180,7 +187,7 @@ void PropertyInspectionApplet::PropertyTableModel::setContents(const PipelineFlo
 	std::vector<OORef<PropertyObject>> newProperties;
 	for(DataObject* o : state.objects()) {
 		if(PropertyObject* prop = dynamic_object_cast<PropertyObject>(o))
-			if(_applet->_propertyClass.isMember(prop) && prop->bundle() == bundleName)
+			if(_applet->_propertyClass.isMember(prop) && prop->belongsToBundle(bundleName))
 				newProperties.push_back(prop);
 	}
 	int oldRowCount = rowCount();

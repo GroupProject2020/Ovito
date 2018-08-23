@@ -47,7 +47,7 @@ public:
 
 	/// Specifies the expressions to be evaluated for each particle and creates the input variables.
 	void initialize(const QStringList& expressions, const PipelineFlowState& inputState, int animationFrame = 0) {
-		PropertyExpressionEvaluator::initialize(expressions, inputState, ParticleProperty::OOClass(), animationFrame);
+		PropertyExpressionEvaluator::initialize(expressions, inputState, ParticleProperty::OOClass(), QString(), animationFrame);
 	}
 	
 protected:
@@ -72,7 +72,7 @@ public:
 
 	/// Specifies the expressions to be evaluated for each bond and creates the input variables.
 	void initialize(const QStringList& expressions, const PipelineFlowState& inputState, int animationFrame = 0) {
-		PropertyExpressionEvaluator::initialize(expressions, inputState, BondProperty::OOClass(), animationFrame);
+		PropertyExpressionEvaluator::initialize(expressions, inputState, BondProperty::OOClass(), QString(), animationFrame);
 	}
 };
 

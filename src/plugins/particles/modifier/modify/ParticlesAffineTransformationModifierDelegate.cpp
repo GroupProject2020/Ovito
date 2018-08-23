@@ -22,8 +22,9 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
-#include <core/dataset/DataSet.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
+#include <core/dataset/DataSet.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include "ParticlesAffineTransformationModifierDelegate.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
@@ -36,7 +37,7 @@ IMPLEMENT_OVITO_CLASS(VectorParticlePropertiesAffineTransformationModifierDelega
 ******************************************************************************/
 bool ParticlesAffineTransformationModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<ParticleProperty>() != nullptr;
+	return input.findObjectOfType<ParticleProperty>() != nullptr;
 }
 
 /******************************************************************************
@@ -47,7 +48,7 @@ PipelineStatus ParticlesAffineTransformationModifierDelegate::apply(Modifier* mo
 	AffineTransformationModifier* mod = static_object_cast<AffineTransformationModifier>(modifier);
 
 	ParticleInputHelper pih(dataset(), input);
-	ParticleOutputHelper poh(dataset(), output);
+	ParticleOutputHelper poh(dataset(), output, modApp);
 	
 	if(!pih.inputStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty))
 		return PipelineStatus::Success;
@@ -119,7 +120,7 @@ PipelineStatus VectorParticlePropertiesAffineTransformationModifierDelegate::app
 	AffineTransformationModifier* mod = static_object_cast<AffineTransformationModifier>(modifier);
 
 	ParticleInputHelper pih(dataset(), input);
-	ParticleOutputHelper poh(dataset(), output);
+	ParticleOutputHelper poh(dataset(), output, modApp);
 	
 	AffineTransformation tm;
 	if(mod->relativeMode())

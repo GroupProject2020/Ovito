@@ -29,8 +29,8 @@
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
 #include <plugins/stdobj/series/DataSeriesObject.h>
+#include <plugins/stdobj/series/DataSeriesProperty.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
-#include <core/dataset/pipeline/AsynchronousModifierApplication.h>
 
 #include <boost/container/flat_map.hpp>
 
@@ -90,18 +90,16 @@ private:
 			_inputFingerprint(std::move(fingerprint))
 		{
 			size_t componentCount = _computePartialRdfs ? (this->uniqueTypeIds().size() * (this->uniqueTypeIds().size()+1) / 2) : 1;
-			_rdfX = std::make_shared<PropertyStorage>(rdfSampleCount, PropertyStorage::Float, 1, 0, tr("Pair separation distance"), false); 
-			_rdfY = std::make_shared<PropertyStorage>(rdfSampleCount, PropertyStorage::Float, componentCount, 0, tr("g(r)"), true);
+			QStringList componentNames;
 			if(_computePartialRdfs) {
-				QStringList names;
 				for(const auto& t1 : this->uniqueTypeIds()) {
 					for(const auto& t2 : this->uniqueTypeIds()) {
 						if(t1.first <= t2.first)
-							names.push_back(QStringLiteral("%1-%2").arg(t1.second, t2.second));
+							componentNames.push_back(QStringLiteral("%1-%2").arg(t1.second, t2.second));
 					}
 				}
-				_rdfY->setComponentNames(std::move(names));
 			}
+			_rdfY = std::make_shared<PropertyStorage>(rdfSampleCount, PropertyStorage::Float, componentCount, 0, tr("g(r)"), true, DataSeriesProperty::YProperty, std::move(componentNames));
 		}
 
 		/// This method is called by the system after the computation was successfully completed.
@@ -119,9 +117,6 @@ private:
 
 		/// Returns the property storage that contains the computed coordination numbers.
 		const PropertyPtr& coordinationNumbers() const { return _coordinationNumbers; }
-
-		/// Returns the property storage containing the x-coordinates of the data points of the RDF histograms.
-		const PropertyPtr& rdfX() const { return _rdfX; }
 
 		/// Returns the property storage array containing the y-coordinates of the data points of the RDF histograms.
 		const PropertyPtr& rdfY() const { return _rdfY; }
@@ -150,7 +145,6 @@ private:
 		ConstPropertyPtr _positions;
 		ConstPropertyPtr _particleTypes;
 		const PropertyPtr _coordinationNumbers;
-		PropertyPtr _rdfX;
 		PropertyPtr _rdfY;
 		ParticleOrderingFingerprint _inputFingerprint;
 	};
@@ -165,28 +159,6 @@ private:
 
 	/// Controls the computation of partials RDFs.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, computePartialRDF, setComputePartialRDF, PROPERTY_FIELD_MEMORIZE);
-};
-
-/**
- * \brief The type of ModifierApplication created for a CoordinationAnalysisModifier 
- *        when it is inserted into in a data pipeline. It stores results computed by the
- *        modifier's compute engine so that they can be displayed in the modifier's UI panel.
- */
-class OVITO_PARTICLES_EXPORT CoordinationAnalysisModifierApplication : public AsynchronousModifierApplication
-{
-	Q_OBJECT
-	OVITO_CLASS(CoordinationAnalysisModifierApplication)
-	Q_CLASSINFO("ClassNameAlias", "CoordinationNumberModifierApplication");
-
-public:
-
-	/// Constructor.
-	Q_INVOKABLE CoordinationAnalysisModifierApplication(DataSet* dataset) : AsynchronousModifierApplication(dataset) {}
- 
-private:
- 
-	/// The RDF histogram(s).
-	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(OORef<DataSeriesObject>, rdf, setRdf, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 };
 
 OVITO_END_INLINE_NAMESPACE

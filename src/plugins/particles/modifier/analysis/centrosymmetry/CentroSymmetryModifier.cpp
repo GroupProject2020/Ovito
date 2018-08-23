@@ -49,7 +49,7 @@ CentroSymmetryModifier::CentroSymmetryModifier(DataSet* dataset) : AsynchronousM
 ******************************************************************************/
 bool CentroSymmetryModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<ParticleProperty>() != nullptr;
+	return input.findObjectOfType<ParticleProperty>() != nullptr;
 }
 
 /******************************************************************************
@@ -130,7 +130,7 @@ PipelineFlowState CentroSymmetryModifier::CentroSymmetryEngine::emitResults(Time
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 
 	PipelineFlowState output = input;
-	ParticleOutputHelper poh(modApp->dataset(), output);
+	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
 	OVITO_ASSERT(csp()->size() == poh.outputParticleCount());
 	poh.outputProperty<ParticleProperty>(csp());
 	return output;

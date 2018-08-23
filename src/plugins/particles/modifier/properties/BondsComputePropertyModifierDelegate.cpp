@@ -110,7 +110,7 @@ BondsComputePropertyModifierDelegate::ComputeEngine::ComputeEngine(
 	// Define 'BondLength' computed variable which yields the length of the current bond. 
 	if(positions) {
 		SimulationCell simCell;
-		if(SimulationCellObject* simCellObj = input.findObject<SimulationCellObject>())
+		if(SimulationCellObject* simCellObj = input.findObjectOfType<SimulationCellObject>())
 			simCell = simCellObj->data();
 		else
 			periodicImages.reset();

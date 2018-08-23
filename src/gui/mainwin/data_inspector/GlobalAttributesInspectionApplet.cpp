@@ -21,6 +21,7 @@
 
 #include <gui/GUI.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
+#include <core/dataset/data/AttributeDataObject.h>
 #include "GlobalAttributesInspectionApplet.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
@@ -33,7 +34,7 @@ IMPLEMENT_OVITO_CLASS(GlobalAttributesInspectionApplet);
 ******************************************************************************/
 bool GlobalAttributesInspectionApplet::appliesTo(const PipelineFlowState& state)
 {
-	return state.attributes().empty() == false;
+	return state.findObjectOfType<AttributeDataObject>() != nullptr;
 }
 
 /******************************************************************************

@@ -23,6 +23,7 @@
 #include <plugins/stdobj/util/InputHelper.h>
 #include <plugins/stdobj/util/OutputHelper.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
+#include <core/dataset/data/AttributeDataObject.h>
 #include <core/dataset/io/FileSource.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include "CombineDatasetsModifier.h"
@@ -88,8 +89,12 @@ Future<PipelineFlowState> CombineDatasetsModifier::evaluate(TimePoint time, Modi
 		output.intersectStateValidity(secondaryState.stateValidity());
 
 		// Merge global attributes of primary and secondary datasets.
-		for(auto a = secondaryState.attributes().cbegin(); a != secondaryState.attributes().cend(); ++a)
-			output.attributes().insert(a.key(), a.value());
+		for(DataObject* obj : secondaryState.objects()) {
+			if(AttributeDataObject* attribute = dynamic_object_cast<AttributeDataObject>(obj)) {
+				if(!output.contains(attribute))
+					output.addObject(attribute);
+			}
+		}
 
 		// Let the delegates do their job.
 		applyDelegates(input, output, time, modApp, { std::reference_wrapper<const PipelineFlowState>(secondaryState) });
@@ -119,9 +124,13 @@ PipelineFlowState CombineDatasetsModifier::evaluatePreliminary(TimePoint time, M
 	output.intersectStateValidity(secondaryState.stateValidity());
 
 	// Merge global attributes of primary and secondary datasets.
-	for(auto a = secondaryState.attributes().cbegin(); a != secondaryState.attributes().cend(); ++a)
-		output.attributes().insert(a.key(), a.value());
-
+	for(DataObject* obj : secondaryState.objects()) {
+		if(AttributeDataObject* attribute = dynamic_object_cast<AttributeDataObject>(obj)) {
+			if(!output.contains(attribute))
+				output.addObject(attribute);
+		}
+	}
+	
 	// Let the delegates do their job and merge the data objects of the two datasets.
 	applyDelegates(input, output, time, modApp, { std::reference_wrapper<const PipelineFlowState>(secondaryState) });
 

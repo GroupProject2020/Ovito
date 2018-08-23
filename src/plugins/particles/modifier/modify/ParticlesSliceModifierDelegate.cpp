@@ -22,8 +22,9 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
-#include <core/dataset/DataSet.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
+#include <core/dataset/DataSet.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include "ParticlesSliceModifierDelegate.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
@@ -37,7 +38,7 @@ PipelineStatus ParticlesSliceModifierDelegate::apply(Modifier* modifier, const P
 {
 	SliceModifier* mod = static_object_cast<SliceModifier>(modifier);
 	ParticleInputHelper pih(dataset(), input);
-	ParticleOutputHelper poh(dataset(), output);
+	ParticleOutputHelper poh(dataset(), output, modApp);
 
 	QString statusMessage = tr("%n input particles", 0, pih.inputParticleCount());
 

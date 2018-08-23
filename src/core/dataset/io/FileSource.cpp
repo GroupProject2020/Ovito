@@ -28,6 +28,7 @@
 #include <core/viewport/Viewport.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/dataset/scene/PipelineSceneNode.h>
+#include <core/dataset/pipeline/PipelineOutputHelper.h>
 #include <core/dataset/io/FileImporter.h>
 #include <core/dataset/DataSetContainer.h>
 #include <core/dataset/UndoStack.h>
@@ -348,12 +349,10 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 				if(frame < 0) interval.setEnd(sourceFrameToAnimationTime(0) - 1);
 				else if(frame >= sourceFrames.size() && !sourceFrames.empty()) interval.setStart(sourceFrameToAnimationTime(sourceFrames.size()));
 
-				return PipelineFlowState(PipelineStatus(PipelineStatus::Error, tr("The file source path is empty or has not been set (no files found).")),
-						dataObjects(), interval);
+				return PipelineFlowState(dataObjects(), interval, PipelineStatus(PipelineStatus::Error, tr("The file source path is empty or has not been set (no files found).")));
 			}
 			else if(frame < 0) {
-				return PipelineFlowState(PipelineStatus(PipelineStatus::Error, tr("The requested source frame is out of range.")),
-						dataObjects(), TimeInterval::infinite());
+				return PipelineFlowState(dataObjects(), TimeInterval::infinite(), PipelineStatus(PipelineStatus::Error, tr("The requested source frame is out of range.")));
 			}
 
 			// Compute validity interval of the returned state.
@@ -374,8 +373,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 					// Without an importer object we have to give up immediately.
 					if(!importer()) {
 						// In case of an error, just return the stale data that we have cached.
-						return PipelineFlowState(PipelineStatus(PipelineStatus::Error, tr("The file source path has not been set.")),
-								dataObjects(), TimeInterval::infinite());
+						return PipelineFlowState(dataObjects(), TimeInterval::infinite(), PipelineStatus(PipelineStatus::Error, tr("The file source path has not been set.")));
 					}
 
 					// Create the frame loader for the requested frame.
@@ -388,13 +386,12 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 						.then(executor(), [this, frame, frameInfo, interval](FileSourceImporter::FrameDataPtr&& frameData) {
 
 							UndoSuspender noUndo(this);
-							PipelineFlowState existingState;
+							PipelineFlowState outputState;
 
 							// Re-use existing data objects if possible.
-							for(DataObject* o : dataObjects()) {
-								existingState.addObject(o);
-							}
-							// Do not modify the subobjects if we are not loading the current animation frame.
+							PipelineFlowState existingState(dataObjects());
+
+							// But do not modify the existing objects if we are not loading the current animation frame.
 							if(!interval.contains(dataset()->animationSettings()->time())) {
 								existingState.cloneObjectsIfNeeded(false);
 							}
@@ -402,20 +399,21 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 							// Let the data container insert its data into the pipeline state.
 							_handOverInProgress = true;
 							try {
-								PipelineFlowState output = frameData->handOver(dataset(), existingState, _isNewFile, this);
+								PipelineOutputHelper poh(dataset(), outputState, this);
+								frameData->handOver(poh, existingState, _isNewFile, this);
 								_isNewFile = false;
 								_handOverInProgress = false;
 								existingState.clear();
-								output.setStateValidity(interval);
-								output.setSourceFrame(frame);
-								output.setSourceFile(frameInfo.sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded));
-								output.setStatus(frameData->status());
+								outputState.setStateValidity(interval);
+								poh.outputAttribute(QStringLiteral("SourceFrame"), frame);
+								poh.outputAttribute(QStringLiteral("SourceFile"), frameInfo.sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded));
+								outputState.setStatus(frameData->status());
 								
 								// When loading the current frame, turn the data objects into sub-objects of this
 								// FileSource so that they appear in the pipeline viewer.
 								if(interval.contains(dataset()->animationSettings()->time())) {
 									QVector<DataObject*> dataObjects;
-									for(const auto& o : output.objects()) {
+									for(const auto& o : outputState.objects()) {
 										dataObjects.push_back(o);
 									}
 									_dataObjects.set(this, PROPERTY_FIELD(dataObjects), dataObjects);
@@ -424,9 +422,9 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 
 								// Never output the current sub-objects directly to the pipeline; 
 								// always clone them to avoid unwanted side effects.
-								output.cloneObjectsIfNeeded(false);
+								outputState.cloneObjectsIfNeeded(false);
 
-								return output;
+								return outputState;
 							}
 							catch(...) {
 								_handOverInProgress = false;

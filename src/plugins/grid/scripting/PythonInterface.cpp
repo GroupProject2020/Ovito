@@ -162,7 +162,6 @@ PYBIND11_MODULE(Grid, m)
 				"That means you have to call :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` first to evaluate the data pipeline.")
 #endif
 	;
-	ovito_class<BinningModifierApplication, AsynchronousModifierApplication>{m};
 
 	py::enum_<SpatialBinningModifier::ReductionOperationType>(BinningModifier_py, "Operation")
 		.value("Mean", SpatialBinningModifier::RED_MEAN)

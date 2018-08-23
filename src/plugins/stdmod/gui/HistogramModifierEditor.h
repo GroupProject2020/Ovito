@@ -57,9 +57,6 @@ protected Q_SLOTS:
 	/// Replots the histogram computed by the modifier.
 	void plotHistogram();
 
-	/// This is called when the user has clicked the "Save Data" button.
-	void onSaveData();
-
 private:
 
 	/// The graph widget to display the histogram.

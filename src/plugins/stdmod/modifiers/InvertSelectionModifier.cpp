@@ -21,6 +21,7 @@
 
 #include <plugins/stdmod/StdMod.h>
 #include <core/dataset/DataSet.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include <plugins/stdobj/util/OutputHelper.h>
 #include <plugins/stdobj/properties/PropertyObject.h>
 #include <core/app/PluginManager.h>
@@ -49,7 +50,7 @@ PipelineFlowState InvertSelectionModifier::evaluatePreliminary(TimePoint time, M
 		throwException(tr("No input property class selected."));
 	
 	PipelineFlowState output = input;	
-    OutputHelper oh(dataset(), output);
+    OutputHelper oh(dataset(), output, modApp);
     
 	PropertyObject* selProperty = oh.outputStandardProperty(*propertyClass(), PropertyStorage::GenericSelectionProperty, true);
 	for(int& s : selProperty->intRange())

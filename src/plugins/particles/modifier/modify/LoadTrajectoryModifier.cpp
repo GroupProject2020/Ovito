@@ -27,6 +27,7 @@
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/io/FileSource.h>
 #include <core/dataset/animation/AnimationSettings.h>
+#include <core/dataset/data/AttributeDataObject.h>
 #include "LoadTrajectoryModifier.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
@@ -55,7 +56,7 @@ LoadTrajectoryModifier::LoadTrajectoryModifier(DataSet* dataset) : Modifier(data
 ******************************************************************************/
 bool LoadTrajectoryModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<ParticleProperty>() != nullptr;
+	return input.findObjectOfType<ParticleProperty>() != nullptr;
 }
 
 /******************************************************************************
@@ -71,37 +72,46 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 	SharedFuture<PipelineFlowState> trajStateFuture = trajectorySource()->evaluate(time);
 	
 	// Wait for the data to become available.
-	return trajStateFuture.then(executor(), [this, input = input](const PipelineFlowState& trajState) {
-		UndoSuspender noUndo(this);
+	return trajStateFuture.then(modApp->executor(), [input = input, modApp](const PipelineFlowState& trajState) {
+		UndoSuspender noUndo(modApp);
 
 		PipelineFlowState output = input;
-		ParticleInputHelper pih(dataset(), input);
-		ParticleOutputHelper poh(dataset(), output);
+		ParticleInputHelper pih(modApp->dataset(), input);
+		ParticleOutputHelper poh(modApp->dataset(), output, modApp);
 		
 		// Make sure the obtained configuration is valid and ready to use.
 		if(trajState.status().type() == PipelineStatus::Error) {
-			if(FileSource* fileSource = dynamic_object_cast<FileSource>(trajectorySource())) {
-				if(fileSource->sourceUrls().empty())
-					throwException(tr("Please pick the input file containing the trajectories."));
+			if(LoadTrajectoryModifier* trajModifier = dynamic_object_cast<LoadTrajectoryModifier>(modApp->modifier())) {
+				if(FileSource* fileSource = dynamic_object_cast<FileSource>(trajModifier->trajectorySource())) {
+					if(fileSource->sourceUrls().empty())
+						modApp->throwException(tr("Please pick the input file containing the trajectories."));
+				}
 			}
 			output.setStatus(trajState.status());
 			return output;
 		}
 
 		if(trajState.isEmpty())
-			throwException(tr("Data source has not been specified yet or is empty. Please pick a trajectory file."));
+			modApp->throwException(tr("Data source has not been specified yet or is empty. Please pick a trajectory file."));
 
 		// Merge validity intervals of topology and trajectory datasets.
 		output.intersectStateValidity(trajState.stateValidity());
 
 		// Merge attributes of topology and trajectory datasets.
-		for(auto a = trajState.attributes().cbegin(); a != trajState.attributes().cend(); ++a)
-			output.attributes().insert(a.key(), a.value());
+		// If there is a name collision, attributes from the trajectory dataset override those from the topology dataset. 
+		for(DataObject* obj : trajState.objects()) {
+			if(AttributeDataObject* attribute = dynamic_object_cast<AttributeDataObject>(obj)) {
+				if(AttributeDataObject* existingAttribute = output.findObject<AttributeDataObject>(attribute->identifier()))
+					output.replaceObject(existingAttribute, attribute);
+				else
+					output.addObject(attribute);
+			}
+		}
 
 		// Get the current particle positions.
 		ParticleProperty* trajectoryPosProperty = ParticleProperty::findInState(trajState, ParticleProperty::PositionProperty);
 		if(!trajectoryPosProperty)
-			throwException(tr("Trajectory dataset does not contain any particle positions."));
+			modApp->throwException(tr("Trajectory dataset does not contain any particle positions."));
 
 		// Get the positions from the topology dataset.
 		ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
@@ -119,14 +129,14 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 			auto id_end = id + trajIdentifierProperty->size();
 			for(; id != id_end; ++id, ++index) {
 				if(refMap.insert(std::make_pair(*id, index)).second == false)
-					throwException(tr("Particles with duplicate identifiers detected in trajectory data."));
+					modApp->throwException(tr("Particles with duplicate identifiers detected in trajectory data."));
 			}
 
 			// Check for duplicate identifiers in topology dataset.
 			std::vector<size_t> idSet(identifierProperty->constDataInt64(), identifierProperty->constDataInt64() + identifierProperty->size());
 			std::sort(idSet.begin(), idSet.end());
 			if(std::adjacent_find(idSet.begin(), idSet.end()) != idSet.end())
-				throwException(tr("Particles with duplicate identifiers detected in topology dataset."));
+				modApp->throwException(tr("Particles with duplicate identifiers detected in topology dataset."));
 
 			// Build index map.
 			index = 0;
@@ -134,7 +144,7 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 			for(auto& mappedIndex : indexToIndexMap) {
 				auto iter = refMap.find(*id);
 				if(iter == refMap.end())
-					throwException(tr("Particle id %1 from topology dataset not found in trajectory dataset.").arg(*id));
+					modApp->throwException(tr("Particle id %1 from topology dataset not found in trajectory dataset.").arg(*id));
 				mappedIndex = iter->second;
 				index++;
 				++id;
@@ -143,7 +153,7 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 		else {
 			// Topology dataset and trajectory data must contain the same number of particles.
 			if(posProperty->size() != trajectoryPosProperty->size()) {
-				throwException(tr("Cannot apply trajectories to current particle dataset. Numbers of particles in the trajectory file and in the topology file do not match."));
+				modApp->throwException(tr("Cannot apply trajectories to current particle dataset. Numbers of particles in the trajectory file and in the topology file do not match."));
 			}
 
 			// When particle identifiers are not available, use trivial 1-to-1 mapping.
@@ -184,10 +194,10 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 		}
 
 		// Transfer box geometry.
-		SimulationCellObject* topologyCell = input.findObject<SimulationCellObject>();
-		SimulationCellObject* trajectoryCell = trajState.findObject<SimulationCellObject>();
+		SimulationCellObject* topologyCell = input.findObjectOfType<SimulationCellObject>();
+		SimulationCellObject* trajectoryCell = trajState.findObjectOfType<SimulationCellObject>();
 		if(topologyCell && trajectoryCell) {
-			SimulationCellObject* outputCell = poh.outputObject<SimulationCellObject>();
+			SimulationCellObject* outputCell = poh.outputSingletonObject<SimulationCellObject>();
 			outputCell->setCellMatrix(trajectoryCell->cellMatrix());
 			const AffineTransformation& simCell = trajectoryCell->cellMatrix();
 

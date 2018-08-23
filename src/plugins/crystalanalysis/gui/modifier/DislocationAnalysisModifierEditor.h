@@ -49,9 +49,6 @@ public:
 		tableWidget()->selectionModel()->clear();
 	}
 
-	/// Sets the modifier application whose results should be displayed.
-	void setModApp(DislocationAnalysisModifierApplication* modApp);
-
 protected:
 
 	/// Returns a data item from the list data model.
@@ -85,11 +82,6 @@ protected Q_SLOTS:
 
 	/// Is called when the user has double-clicked on one of the dislocation types in the list widget.
 	void onDoubleClickDislocationType(const QModelIndex& index);
-
-private:
-
-	/// The modifier application whose results are being displayed.
-	DECLARE_REFERENCE_FIELD_FLAGS(DislocationAnalysisModifierApplication, modApp, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 };
 
 /**

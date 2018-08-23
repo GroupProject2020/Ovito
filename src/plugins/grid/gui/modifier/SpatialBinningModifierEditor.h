@@ -23,18 +23,18 @@
 
 
 #include <gui/GUI.h>
+#include <plugins/stdobj/gui/widgets/DataSeriesPlotWidget.h>
 #include <gui/properties/ModifierPropertiesEditor.h>
 #include <gui/properties/BooleanParameterUI.h>
 #include <gui/properties/IntegerParameterUI.h>
 #include <core/utilities/DeferredMethodInvocation.h>
 
-class QwtPlot;
-class QwtPlotCurve;
 class QwtPlotSpectrogram;
 class QwtMatrixRasterData;
-class QwtPlotGrid;
 
 namespace Ovito { namespace Grid { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+
+using namespace Ovito::StdObj;
 
 /**
  * A properties editor for the SpatialBinningModifier class.
@@ -80,19 +80,13 @@ private:
     IntegerParameterUI* _numBinsZPUI;
 
 	/// The graph widget to display the data.
-	QwtPlot* _plot;
-
-	/// The plot item for the graph.
-    QwtPlotCurve* _plotCurve = nullptr;
+	DataSeriesPlotWidget* _plot;
 
 	/// The plot item for the 2D color plot.
 	QwtPlotSpectrogram* _plotRaster = nullptr;
 
 	/// The data storage for the 2D color plot.
 	QwtMatrixRasterData* _rasterData = nullptr;
-
-	/// The grid.
-	QwtPlotGrid* _plotGrid = nullptr;
 
 	/// For deferred invocation of the plot repaint function.
 	DeferredMethodInvocation<SpatialBinningModifierEditor, &SpatialBinningModifierEditor::plotData> plotLater;

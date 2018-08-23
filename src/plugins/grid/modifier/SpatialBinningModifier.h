@@ -27,7 +27,6 @@
 #include <plugins/stdobj/series/DataSeriesObject.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <core/dataset/pipeline/AsynchronousDelegatingModifier.h>
-#include <core/dataset/pipeline/AsynchronousModifierApplication.h>
 
 namespace Ovito { namespace Grid {
 
@@ -53,6 +52,7 @@ protected:
 		SpatialBinningEngine(
 				const TimeInterval& validityInterval, 
 				const SimulationCell& cell,
+				int binningDirection,
 				ConstPropertyPtr sourceProperty, 
 				size_t sourceComponent, 
 				ConstPropertyPtr selectionProperty,
@@ -63,6 +63,7 @@ protected:
 				bool computeFirstDerivative) :
 			AsynchronousModifier::ComputeEngine(validityInterval), 
 			_cell(cell),
+			_binningDirection(binningDirection),
 			_sourceProperty(std::move(sourceProperty)),
 			_sourceComponent(sourceComponent), 
 			_selectionProperty(std::move(selectionProperty)),
@@ -106,12 +107,16 @@ protected:
 		/// Returns the type of reduction operation to perform.
 		int reductionOperation() const { return _reductionOperation; }
 
+		/// Returns the direction of the binning grid.
+		int binningDirection() const { return _binningDirection; }
+
 		/// Injects the computed results into the data pipeline.
 		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 		
 	private:
 
 		const SimulationCell _cell;
+		int _binningDirection;
 		ConstPropertyPtr _sourceProperty;
 		size_t _sourceComponent;
 		ConstPropertyPtr _selectionProperty;
@@ -132,6 +137,7 @@ public:
 				TimePoint time, 
 				const PipelineFlowState& input,
 				const SimulationCell& cell,
+				int binningDirection,
 				ConstPropertyPtr sourceProperty,
 				size_t sourceComponent, 
 				ConstPropertyPtr selectionProperty,
@@ -290,27 +296,6 @@ private:
 	/// Controls whether the modifier should take into account only selected elements.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, onlySelectedElements, setOnlySelectedElements);
 };
-
-/**
- * \brief The type of ModifierApplication created for a SpatialBinningModifier 
- *        when it is inserted into in a data pipeline.
- */
-class OVITO_GRID_EXPORT BinningModifierApplication : public AsynchronousModifierApplication
-{
-	OVITO_CLASS(BinningModifierApplication)
-	Q_OBJECT
-	
-public:
-
-	/// Constructor.
-	Q_INVOKABLE BinningModifierApplication(DataSet* dataset) : AsynchronousModifierApplication(dataset) {}
- 
-private:
-
-	/// The computed 1d histogram.
-	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(OORef<DataSeriesObject>, histogram, setHistogram, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
-};
-
 }	// End of namespace
 }	// End of namespace
 

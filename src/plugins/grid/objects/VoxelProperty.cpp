@@ -62,7 +62,7 @@ size_t VoxelProperty::OOMetaClass::elementCount(const PipelineFlowState& state) 
 ******************************************************************************/
 bool VoxelProperty::OOMetaClass::isDataPresent(const PipelineFlowState& state) const
 {
-	return state.findObject<VoxelProperty>() != nullptr;
+	return state.findObjectOfType<VoxelProperty>() != nullptr;
 }
 
 }	// End of namespace

@@ -177,7 +177,7 @@ void ScatterPlotModifierEditor::createUI(const RolloutInsertionParameters& rollo
 ******************************************************************************/
 bool ScatterPlotModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(source == modifierApplication() && event.type() == ReferenceEvent::ObjectStatusChanged) {
+	if(source == modifierApplication() && event.type() == ReferenceEvent::PipelineCacheUpdated) {
 		plotLater(this);
 	}
 	return ModifierPropertiesEditor::referenceEvent(source, event);

@@ -126,19 +126,18 @@ void SpatialBinningModifierEditor::createUI(const RolloutInsertionParameters& ro
 	_firstDerivativePUI->setEnabled(false);
 	gridlayout->addWidget(_firstDerivativePUI->checkBox(), 1, 0, 1, 2);
 
-	_plot = new QwtPlot();
-	_plot->setMinimumHeight(240);
-	_plot->setMaximumHeight(240);
-	_plot->setCanvasBackground(Qt::white);
-    _plot->axisScaleEngine(QwtPlot::xBottom)->setAttribute(QwtScaleEngine::Floating);
+	_plot = new DataSeriesPlotWidget();
+    //_plot->axisScaleEngine(QwtPlot::xBottom)->setAttribute(QwtScaleEngine::Floating);
 
 	layout->addSpacing(8);
 	layout->addWidget(_plot);
 	connect(this, &SpatialBinningModifierEditor::contentsReplaced, this, &SpatialBinningModifierEditor::plotData);
 
+#if 0
 	QPushButton* saveDataButton = new QPushButton(tr("Save data"));
 	layout->addWidget(saveDataButton);
 	connect(saveDataButton, &QPushButton::clicked, this, &SpatialBinningModifierEditor::onSaveData);
+#endif
 
 	// Axes.
 	QGroupBox* axesBox = new QGroupBox(tr("Plot axes"), rollout);
@@ -174,7 +173,7 @@ void SpatialBinningModifierEditor::createUI(const RolloutInsertionParameters& ro
 ******************************************************************************/
 bool SpatialBinningModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(source == modifierApplication() && event.type() == ReferenceEvent::ObjectStatusChanged) {
+	if(source == modifierApplication() && event.type() == ReferenceEvent::PipelineCacheUpdated) {
 		plotLater(this);
 	}
 	return ModifierPropertiesEditor::referenceEvent(source, event);
@@ -185,6 +184,15 @@ bool SpatialBinningModifierEditor::referenceEvent(RefTarget* source, const Refer
 ******************************************************************************/
 void SpatialBinningModifierEditor::plotData()
 {
+	// Request the modifier's pipeline output.
+	const PipelineFlowState& state = getModifierOutput();
+
+	// Look up the data series in the modifier's pipeline output.
+	DataSeriesObject* series = state.findObject<DataSeriesObject>(QStringLiteral("binning"), modifierApplication());
+
+    // Hand data over to plotting widget.
+	_plot->setSeries(series, state);
+
 #if 0
 	SpatialBinningModifier* modifier = static_object_cast<SpatialBinningModifier>(editObject());
 	BinningModifierApplication* modApp = dynamic_object_cast<BinningModifierApplication>(modifierApplication());

@@ -66,7 +66,7 @@ CreateBondsModifier::CreateBondsModifier(DataSet* dataset) : AsynchronousModifie
 ******************************************************************************/
 bool CreateBondsModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<ParticleProperty>() != nullptr;
+	return input.findObjectOfType<ParticleProperty>() != nullptr;
 }
 
 /******************************************************************************
@@ -254,7 +254,7 @@ PipelineFlowState CreateBondsModifier::BondsEngine::emitResults(TimePoint time, 
 
 	// Add our bonds to the system.
 	PipelineFlowState output = input;
-	ParticleOutputHelper poh(modApp->dataset(), output);
+	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
 
 	poh.addBonds(bonds(), modifier->bondsVis());
 

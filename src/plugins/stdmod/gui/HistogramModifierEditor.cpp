@@ -26,7 +26,6 @@
 #include <gui/properties/IntegerRadioButtonParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
 #include <gui/properties/BooleanParameterUI.h>
-#include <gui/mainwin/MainWindow.h>
 #include <plugins/stdmod/modifiers/HistogramModifier.h>
 #include "HistogramModifierEditor.h"
 
@@ -84,10 +83,6 @@ void HistogramModifierEditor::createUI(const RolloutInsertionParameters& rollout
 	layout->addWidget(new QLabel(tr("Histogram:")));
 	layout->addWidget(_plotWidget);
 	connect(this, &HistogramModifierEditor::contentsReplaced, this, &HistogramModifierEditor::plotHistogram);
-
-	QPushButton* saveDataButton = new QPushButton(tr("Save histogram data"));
-	layout->addWidget(saveDataButton);
-	connect(saveDataButton, &QPushButton::clicked, this, &HistogramModifierEditor::onSaveData);
 
 	// Input.
 	QGroupBox* inputBox = new QGroupBox(tr("Input"), rollout);
@@ -175,7 +170,7 @@ void HistogramModifierEditor::createUI(const RolloutInsertionParameters& rollout
 ******************************************************************************/
 bool HistogramModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(source == modifierApplication() && event.type() == ReferenceEvent::ObjectStatusChanged) {
+	if(source == modifierApplication() && event.type() == ReferenceEvent::PipelineCacheUpdated) {
 		plotHistogramLater(this);
 	}
 	return ModifierPropertiesEditor::referenceEvent(source, event);
@@ -204,47 +199,17 @@ void HistogramModifierEditor::plotHistogram()
 		_selectionRangeIndicator->hide();
 	}
 
-	DataSeriesObject* series = nullptr;
-	if(HistogramModifierApplication* modApp = dynamic_object_cast<HistogramModifierApplication>(modifierApplication()))
-		series = modApp->histogram();
-	_plotWidget->setSeries(series);
-}
+	if(modifier) {
+		// Request the modifier's pipeline output.
+		const PipelineFlowState& state = getModifierOutput();
 
-/******************************************************************************
-* This is called when the user has clicked the "Save Data" button.
-******************************************************************************/
-void HistogramModifierEditor::onSaveData()
-{
-	HistogramModifier* modifier = static_object_cast<HistogramModifier>(editObject());
-	HistogramModifierApplication* modApp = dynamic_object_cast<HistogramModifierApplication>(modifierApplication());
-	if(!modifier || !modApp || !modApp->histogram())
-		return;
-
-	QString fileName = QFileDialog::getSaveFileName(mainWindow(),
-	    tr("Save Histogram"), QString(), tr("Text files (*.txt);;All files (*)"));
-	if(fileName.isEmpty())
-		return;
-
-	DataSeriesObject* histogram = modApp->histogram();
-	const auto& histogramY = histogram->y();
-	try {
-
-		QFile file(fileName);
-		if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
-			modifier->throwException(tr("Could not open file for writing: %1").arg(file.errorString()));
-
-		QTextStream stream(&file);
-
-		QString sourceTitle = modifier->sourceProperty().nameWithComponent();
-
-		FloatType binSize = (histogram->intervalEnd() - histogram->intervalStart()) / histogramY->size();
-		stream << "# " << sourceTitle << " histogram (bin size: " << binSize << ")" << endl;
-		for(size_t i = 0; i < histogramY->size(); i++) {
-			stream << histogram->getXValue(i) << " " << histogramY->getInt64(i) << endl;
-		}
+		// Look up the generated data series in the modifier's pipeline output.
+		QString seriesName = QStringLiteral("histogram/") + modifier->sourceProperty().nameWithComponent();
+		DataSeriesObject* series = state.findObject<DataSeriesObject>(seriesName, modifierApplication());
+		_plotWidget->setSeries(series, state);
 	}
-	catch(const Exception& ex) {
-		ex.reportError();
+	else {
+		_plotWidget->reset();
 	}
 }
 

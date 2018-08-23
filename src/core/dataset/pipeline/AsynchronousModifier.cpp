@@ -98,6 +98,7 @@ PipelineFlowState AsynchronousModifier::evaluatePreliminary(TimePoint time, Modi
 	// If results are still available from the last pipeline evaluation, apply them to the input data.
 	if(AsynchronousModifierApplication* asyncModApp = dynamic_object_cast<AsynchronousModifierApplication>(modApp)) {
 		if(const AsynchronousModifier::ComputeEnginePtr& lastResults = asyncModApp->lastComputeResults()) {
+			UndoSuspender noUndo(this);
 			PipelineFlowState resultState = lastResults->emitResults(time, modApp, input);
 			resultState.mutableStateValidity().intersect(lastResults->validityInterval());
 			return resultState;

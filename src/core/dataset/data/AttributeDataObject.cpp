@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//
+// 
 //  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -19,48 +19,37 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <plugins/stdobj/gui/StdObjGui.h>
-#include <gui/mainwin/MainWindow.h>
-#include "SeriesInspectionApplet.h"
+#include <core/Core.h>
+#include "AttributeDataObject.h"
 
-namespace Ovito { namespace StdObj {
+namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
-IMPLEMENT_OVITO_CLASS(SeriesInspectionApplet);
+IMPLEMENT_OVITO_CLASS(AttributeDataObject);	
+DEFINE_PROPERTY_FIELD(AttributeDataObject, value);
+SET_PROPERTY_FIELD_LABEL(AttributeDataObject, value, "Value");
 
 /******************************************************************************
-* Lets the applet create the UI widget that is to be placed into the data 
-* inspector panel. 
+* Saves the class' contents to the given stream.
 ******************************************************************************/
-QWidget* SeriesInspectionApplet::createWidget(MainWindow* mainWindow)
+void AttributeDataObject::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData)
 {
-	createBaseWidgets();
-	
-	QSplitter* splitter = new QSplitter();
-	splitter->addWidget(bundleSelectionWidget());
-
-	QStackedWidget* stackedWidget = new QStackedWidget();
-	splitter->addWidget(stackedWidget);
-	splitter->setStretchFactor(0, 1);
-	splitter->setStretchFactor(1, 4);
-
-	_plotWidget = new DataSeriesPlotWidget();
-	stackedWidget->addWidget(_plotWidget);
-	stackedWidget->addWidget(tableView());
-
-	return splitter;
+	DataObject::saveToStream(stream, excludeRecomputableData);
+	stream.beginChunk(0x01);
+	stream << value();
+	stream.endChunk();
 }
 
 /******************************************************************************
-* Is called when the user selects a different bundle from the list.
+* Loads the class' contents from the given stream.
 ******************************************************************************/
-void SeriesInspectionApplet::currentBundleChanged()
+void AttributeDataObject::loadFromStream(ObjectLoadStream& stream)
 {
-	PropertyInspectionApplet::currentBundleChanged();
-
-	// Update the displayed plot.
-	DataSeriesObject* seriesObj = static_object_cast<DataSeriesObject>(selectedBundleObject());
-	plotWidget()->setSeries(seriesObj, currentData());
+	DataObject::loadFromStream(stream);
+	stream.expectChunk(0x01);
+	stream >> _value.mutableValue();
+	stream.closeChunk();
 }
 
-}	// End of namespace
+OVITO_END_INLINE_NAMESPACE
+OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

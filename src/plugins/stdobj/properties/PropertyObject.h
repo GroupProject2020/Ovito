@@ -99,6 +99,12 @@ public:
 	/// Returns the data encapsulated by this object after making sure it is not shared with other owners.
 	const PropertyPtr& modifiableStorage();
 
+	/// Determines whether this property object belongs to the given property bundle.
+	bool belongsToBundle(const QString& bundleName) const;
+
+	/// Makes this property object part of the givenb property bundle.
+	void setBundle(const QString& bundleName);
+
 	/// Reduces the size of the storage array, removing elements for which 
 	/// the corresponding bits in the bit array are set.
 	void filterResize(const boost::dynamic_bitset<>& mask) {
@@ -564,16 +570,10 @@ protected:
 	/// Loads the class' contents from the given stream.
 	virtual void loadFromStream(ObjectLoadStream& stream) override;
 
-	/// Is called whenever the value of a property of this object has changed.
-	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
-
 private:
 
 	/// The internal per-element data.
 	DECLARE_RUNTIME_PROPERTY_FIELD(PropertyPtr, storage, setStorage);
-	
-	/// The unique identifier of the data object which this property belongs to.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, bundle, setBundle);
 
 	/// Contains the list of defined "types" if this is a typed property.
 	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD(ElementType, elementTypes, setElementTypes);

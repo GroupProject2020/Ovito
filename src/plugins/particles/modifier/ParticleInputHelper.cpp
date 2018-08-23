@@ -40,7 +40,6 @@ ParticleInputHelper::ParticleInputHelper(DataSet* dataset, const PipelineFlowSta
 	// Verify input, make sure array lengths of particle properties are consistent.
 	for(DataObject* obj : input.objects()) {
 		if(ParticleProperty* p = dynamic_object_cast<ParticleProperty>(obj)) {
-			OVITO_ASSERT(p->bundle().isEmpty());
 			if(p->size() != inputParticleCount())
 				dataset->throwException(PropertyObject::tr("Detected invalid modifier input. Data array size is not the same for all particle properties or property 'Position' is not present."));
 		}
@@ -53,7 +52,6 @@ ParticleInputHelper::ParticleInputHelper(DataSet* dataset, const PipelineFlowSta
 	// Verify input, make sure array lengths of bond properties are consistent.
 	for(DataObject* obj : input.objects()) {
 		if(BondProperty* p = dynamic_object_cast<BondProperty>(obj)) {
-			OVITO_ASSERT(p->bundle().isEmpty());
 			if(p->size() != inputBondCount())
 				dataset->throwException(PropertyObject::tr("Detected invalid modifier input. Data array size is not the same for all bond properties."));
 		}

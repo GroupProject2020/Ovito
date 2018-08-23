@@ -22,7 +22,8 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <plugins/particles/objects/ParticleType.h>
-#include <core/viewport/Viewport.h>
+#include <plugins/stdobj/series/DataSeriesObject.h>
+#include <plugins/stdobj/series/DataSeriesProperty.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include "StructureIdentificationModifier.h"
@@ -30,14 +31,12 @@
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
 IMPLEMENT_OVITO_CLASS(StructureIdentificationModifier);
-IMPLEMENT_OVITO_CLASS(StructureIdentificationModifierApplication);
 DEFINE_REFERENCE_FIELD(StructureIdentificationModifier, structureTypes);
 DEFINE_PROPERTY_FIELD(StructureIdentificationModifier, onlySelectedParticles);
 DEFINE_PROPERTY_FIELD(StructureIdentificationModifier, colorByType);
 SET_PROPERTY_FIELD_LABEL(StructureIdentificationModifier, structureTypes, "Structure types");
 SET_PROPERTY_FIELD_LABEL(StructureIdentificationModifier, onlySelectedParticles, "Use only selected particles");
 SET_PROPERTY_FIELD_LABEL(StructureIdentificationModifier, colorByType, "Color particles by type");
-SET_MODIFIER_APPLICATION_TYPE(StructureIdentificationModifier, StructureIdentificationModifierApplication);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -53,7 +52,7 @@ StructureIdentificationModifier::StructureIdentificationModifier(DataSet* datase
 ******************************************************************************/
 bool StructureIdentificationModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<ParticleProperty>() != nullptr;
+	return input.findObjectOfType<ParticleProperty>() != nullptr;
 }
 
 /******************************************************************************
@@ -116,7 +115,7 @@ PipelineFlowState StructureIdentificationModifier::StructureIdentificationEngine
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 
 	PipelineFlowState output = input;
-	ParticleOutputHelper poh(modApp->dataset(), output);
+	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
 
 	// Create output property object.
 	PropertyPtr outputStructures = postProcessStructureTypes(time, modApp, structures());
@@ -150,20 +149,25 @@ PipelineFlowState StructureIdentificationModifier::StructureIdentificationEngine
 		}
 	}
 
-	// Count the number of identified particles of each type.
-	std::vector<size_t> typeCounters(modifier->structureTypes().size(), 0);
+	// Count the number of particles of each identified type.
+	int maxTypeId = 0;
 	for(ElementType* stype : modifier->structureTypes()) {
 		OVITO_ASSERT(stype->id() >= 0);
-		if(stype->id() >= (int)typeCounters.size())
-			typeCounters.resize(stype->id() + 1, 0);
+		maxTypeId = std::max(maxTypeId, stype->id());
 	}
+	_typeCounts = std::make_shared<PropertyStorage>(maxTypeId + 1, PropertyStorage::Int64, 1, 0, tr("Count"), true, DataSeriesProperty::YProperty);
+	auto typeCountsData = _typeCounts->dataInt64();
 	for(int t : structureProperty->constIntRange()) {
-		if(t >= 0 && t < typeCounters.size())
-			typeCounters[t]++;
+		if(t >= 0 && t < maxTypeId)
+			typeCountsData[t]++;
 	}
 
-	// Store the per-type counts in the ModifierApplication.
-	static_object_cast<StructureIdentificationModifierApplication>(modApp)->setStructureCounts(std::move(typeCounters));
+	// Output a data series object with the type counts.
+	DataSeriesObject* seriesObj = poh.outputDataSeries(QStringLiteral("structures"), tr("Structure counts"), _typeCounts);
+	DataSeriesProperty* yProperty = seriesObj->getY(output);
+	for(ElementType* type : modifier->structureTypes())
+		if(type->enabled()) yProperty->addElementType(type);
+	seriesObj->setAxisLabelX(tr("Structure type"));
 
 	return output;
 }

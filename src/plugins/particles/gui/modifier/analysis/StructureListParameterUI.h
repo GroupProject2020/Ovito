@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -78,9 +78,6 @@ protected:
 	/// Do not open sub-editor for selected structure type.
 	virtual void openSubEditor() override {}
 
-	/// This method is called when a reference target changes.
-	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
-
 protected Q_SLOTS:
 
 	/// Is called when the user has double-clicked on one of the structure types in the list widget.
@@ -88,11 +85,14 @@ protected Q_SLOTS:
 
 private:
 
+	/// Obtains the current structure counts from the pipeline. 
+	void updateStructureCounts();
+
 	/// Controls whether a check box is shown next to each structure type.
 	bool _showCheckBoxes;
 
-	/// The modifier application whose data is being displayed in the list box.
-	DECLARE_REFERENCE_FIELD_FLAGS(StructureIdentificationModifierApplication, modifierApplication, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
+	/// The data array containing the number of identified particles of each structure type.
+	ConstPropertyPtr _structureCounts;
 };
 
 OVITO_END_INLINE_NAMESPACE

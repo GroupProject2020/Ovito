@@ -68,7 +68,7 @@ void AffineTransformationModifier::initializeModifier(ModifierApplication* modAp
 	// Take the simulation cell from the input object as the default destination cell geometry for absolute scaling.
 	if(targetCell() == AffineTransformation::Zero()) {
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
-		if(SimulationCellObject* cell = input.findObject<SimulationCellObject>())
+		if(SimulationCellObject* cell = input.findObjectOfType<SimulationCellObject>())
 			setTargetCell(cell->cellMatrix());
 	}
 }
@@ -80,7 +80,7 @@ PipelineFlowState AffineTransformationModifier::evaluatePreliminary(TimePoint ti
 {
 	// Validate parameters and input data.
 	if(!relativeMode()) {
-		SimulationCellObject* simCell = input.findObject<SimulationCellObject>();
+		SimulationCellObject* simCell = input.findObjectOfType<SimulationCellObject>();
 		if(!simCell || simCell->cellMatrix().determinant() == 0)
 			throwException(tr("Input simulation cell does not exist or is degenerate. Transformation to target cell would be singular."));
 	}
@@ -94,8 +94,8 @@ PipelineFlowState AffineTransformationModifier::evaluatePreliminary(TimePoint ti
 ******************************************************************************/
 bool SimulationCellAffineTransformationModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<SimulationCellObject>() != nullptr ||
-		input.findObject<PeriodicDomainDataObject>() != nullptr;
+	return input.findObjectOfType<SimulationCellObject>() != nullptr ||
+		input.findObjectOfType<PeriodicDomainDataObject>() != nullptr;
 }
 
 /******************************************************************************
@@ -108,7 +108,7 @@ PipelineStatus SimulationCellAffineTransformationModifierDelegate::apply(Modifie
 		return PipelineStatus::Success;
 
 	InputHelper ih(dataset(), input);
-	OutputHelper oh(dataset(), output);
+	OutputHelper oh(dataset(), output, modApp);
 	
 	AffineTransformation tm;
 	if(mod->relativeMode())
@@ -117,13 +117,9 @@ PipelineStatus SimulationCellAffineTransformationModifierDelegate::apply(Modifie
 		tm = mod->targetCell() * ih.expectSimulationCell()->cellMatrix().inverse();
 	
 	// Transform SimulationCellObject.
-	if(SimulationCellObject* inputCell = input.findObject<SimulationCellObject>()) {
-		if(mod->relativeMode()) {
-			oh.outputObject<SimulationCellObject>()->setCellMatrix(tm * inputCell->cellMatrix());
-		}
-		else {
-			oh.outputObject<SimulationCellObject>()->setCellMatrix(mod->targetCell());
-		}
+	if(SimulationCellObject* inputCell = input.findObjectOfType<SimulationCellObject>()) {
+		SimulationCellObject* outputCell = oh.outputSingletonObject<SimulationCellObject>();
+		outputCell->setCellMatrix(mod->relativeMode() ? (tm * inputCell->cellMatrix()) : mod->targetCell());
 	}
 
 	// Transform the domains of PeriodicDomainDataObjects.

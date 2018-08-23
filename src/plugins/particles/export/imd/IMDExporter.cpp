@@ -50,7 +50,7 @@ bool IMDExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 	ParticleProperty* massProperty = nullptr;
 
 	// Get simulation cell info.
-	SimulationCellObject* simulationCell = state.findObject<SimulationCellObject>();
+	SimulationCellObject* simulationCell = state.findObjectOfType<SimulationCellObject>();
 	if(!simulationCell)
 		throwException(tr("No simulation cell available. Cannot write IMD file."));
 

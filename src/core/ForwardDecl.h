@@ -112,6 +112,7 @@ namespace Ovito {
 		OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 			class SceneNode;
 			class DataObject;
+			class AttributeDataObject;
 			class RootSceneNode;
 			class SelectionSet;
 			class Modifier;
@@ -132,6 +133,7 @@ namespace Ovito {
 			class AsynchronousModifier;
 			class AsynchronousModifierDelegate;
 			class AsynchronousDelegatingModifier;
+			class PipelineOutputHelper;
 			OVITO_BEGIN_INLINE_NAMESPACE(StdObj)
 				class AbstractCameraObject;
 			OVITO_END_INLINE_NAMESPACE

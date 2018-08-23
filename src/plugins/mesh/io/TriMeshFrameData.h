@@ -37,7 +37,7 @@ public:
 
 	/// Inserts the loaded loaded into the provided pipeline state structure. This function is
 	/// called by the system from the main thread after the asynchronous loading task has finished.
-	virtual PipelineFlowState handOver(DataSet* dataset, const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource) override;
+	virtual void handOver(PipelineOutputHelper& poh, const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource) override;
 
 	/// Returns the triangle mesh data structure.
 	const TriMesh& mesh() const { return _mesh; }

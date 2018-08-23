@@ -24,6 +24,7 @@
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <plugins/particles/objects/BondProperty.h>
 #include <plugins/particles/objects/BondsVis.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include "ParticlesCombineDatasetsModifierDelegate.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
@@ -35,7 +36,7 @@ IMPLEMENT_OVITO_CLASS(ParticlesCombineDatasetsModifierDelegate);
 ******************************************************************************/
 bool ParticlesCombineDatasetsModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<ParticleProperty>() != nullptr;
+	return input.findObjectOfType<ParticleProperty>() != nullptr;
 }
 
 /******************************************************************************
@@ -49,7 +50,7 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 	const PipelineFlowState& secondaryState = additionalInputs.front();
 
 	ParticleInputHelper pih(dataset(), input);
-	ParticleOutputHelper poh(dataset(), output);
+	ParticleOutputHelper poh(dataset(), output, modApp);
 
 	// Get the particle positions of secondary set.
 	ParticleProperty* secondaryPosProperty = ParticleProperty::findInState(secondaryState, ParticleProperty::PositionProperty);
@@ -144,7 +145,7 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 			}
 
 			// Put the property into the output.
-			output.addObject(prop);
+			poh.outputObject(prop);
 			OORef<ParticleProperty> newProperty = poh.cloneIfNeeded(prop.get());
 			newProperty->resize(totalParticleCount, true);
 
@@ -246,7 +247,7 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 				}
 
 				// Put the property into the output.
-				output.addObject(prop);
+				poh.outputObject(prop);
 				OORef<BondProperty> newProperty = poh.cloneIfNeeded(prop.get());
 				newProperty->resize(totalBondCount, true);
 

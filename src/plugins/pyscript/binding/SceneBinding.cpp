@@ -25,6 +25,7 @@
 #include <core/dataset/scene/RootSceneNode.h>
 #include <core/dataset/scene/SelectionSet.h>
 #include <core/dataset/data/DataObject.h>
+#include <core/dataset/data/AttributeDataObject.h>
 #include <core/dataset/pipeline/Modifier.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
@@ -93,6 +94,8 @@ void defineSceneSubmodule(py::module m)
 								  std::mem_fn(&DataObject::visElements), 
 								  std::mem_fn(&DataObject::insertVisElement), 
 								  std::mem_fn(&DataObject::removeVisElement), "vis_list", "DataVisList");
+
+	ovito_class<AttributeDataObject, DataObject>{m};
 
 	ovito_abstract_class<PipelineObject, RefTarget>{m}
 		.def_property_readonly("status", &PipelineObject::status)
@@ -229,6 +232,7 @@ void defineSceneSubmodule(py::module m)
 		.def(py::init<>())
 		.def_property("status", &PipelineFlowState::status, py::overload_cast<const PipelineStatus&>(&PipelineFlowState::setStatus))
 
+#if 0
 		// The following methods are required for the DataCollection.attributes property.
 		.def_property_readonly("attribute_names", [](PipelineFlowState& obj) -> QStringList {
 				return obj.attributes().keys();
@@ -253,6 +257,7 @@ void defineSceneSubmodule(py::module m)
 						obj.attributes().insert(attrName, QVariant::fromValue(castToQString(value.cast<py::str>())));
 				}
 			})
+#endif
 	;
 	expose_mutable_subobject_list(DataCollection_py,
 								  std::mem_fn(&PipelineFlowState::objects), 
@@ -401,7 +406,6 @@ void defineSceneSubmodule(py::module m)
 		)
 
 		.def("assign", [](StaticSource& source, const PipelineFlowState& state) {
-			source.setAttributes(state.attributes());
 			source.setDataObjects({});
 			for(DataObject* obj : state.objects())
 				source.addDataObject(obj);

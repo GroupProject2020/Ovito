@@ -25,6 +25,7 @@
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
+#include <core/dataset/data/AttributeDataObject.h>
 #include <core/utilities/concurrent/ParallelFor.h>
 #include "WignerSeitzAnalysisModifier.h"
 
@@ -62,7 +63,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> WignerSeitzAnalysisModifier::crea
 
 	// Get simulation cells.
 	SimulationCellObject* inputCell = pih.expectSimulationCell();
-	SimulationCellObject* refCell = referenceState.findObject<SimulationCellObject>();
+	SimulationCellObject* refCell = referenceState.findObjectOfType<SimulationCellObject>();
 	if(!refCell)
 		throwException(tr("Reference configuration does not contain simulation cell info."));
 
@@ -254,16 +255,23 @@ PipelineFlowState WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::emitRe
 	PipelineFlowState output;
 	if(!siteTypes()) {
 		// Replace complete pipeline state with the reference configuration (except global attributes).
-		output = referenceState();
+		for(DataObject* obj : referenceState().objects()) {
+			if(!dynamic_object_cast<AttributeDataObject>(obj))
+				output.addObject(obj);
+		}
+		// Keep global attribute from the input pipeline state.
+		for(DataObject* obj : input.objects()) {
+			if(dynamic_object_cast<AttributeDataObject>(obj))
+				output.addObject(obj);
+		}
 		output.setStateValidity(input.stateValidity());
-		output.attributes() = input.attributes();
 	}
 	else {
 		// Keep current particle configuration.
 		output = input;
 	}
 
-	ParticleOutputHelper poh(modApp->dataset(), output);
+	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
 
 	if(occupancyNumbers()->size() != poh.outputParticleCount())
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));

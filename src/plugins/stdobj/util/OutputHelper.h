@@ -23,39 +23,19 @@
 
 
 #include <plugins/stdobj/StdObj.h>
-#include <core/dataset/DataSet.h>
-#include <core/dataset/data/DataObject.h>
-#include <core/dataset/pipeline/PipelineFlowState.h>
-#include <core/oo/CloneHelper.h>
-
-#include <boost/optional.hpp>
+#include <core/dataset/pipeline/PipelineOutputHelper.h>
 
 namespace Ovito { namespace StdObj {
 
 /**
  * \brief Helper class that allows easy manipulation of properties.
  */
-class OVITO_STDOBJ_EXPORT OutputHelper
+class OVITO_STDOBJ_EXPORT OutputHelper : public PipelineOutputHelper
 {
 public:
 
-	/// Constructor.
-	OutputHelper(DataSet* dataset, PipelineFlowState& output) : _dataset(dataset), _output(output) {}
-
-	/// Creates a new data object of the desired type in the output flow state.
-	/// If an object of the given type already exists, it is made sure that it is 
-	/// returned after making sure it is exclusively owned by the flow state and safe to modify.
-	template<class ObjectType>
-	ObjectType* outputObject() {
-		if(ObjectType* obj = output().findObject<ObjectType>()) {
-			return cloneIfNeeded(obj);
-		}
-		else {
-			OORef<ObjectType> newObj = new ObjectType(dataset());
-			output().addObject(newObj);
-			return newObj;
-		}
-	}
+	/// Inherit constructor.
+	using PipelineOutputHelper::PipelineOutputHelper;
 
 	/// Creates a standard property in the modifier's output.
 	/// If the property already exists in the input, its contents are copied to the
@@ -92,57 +72,8 @@ public:
 		return static_object_cast<PropertyObjectType>(outputProperty(PropertyObjectType::OOClass(), storage));
 	}
 
-	/// Emits a new global attribute to the pipeline.
-	void outputAttribute(const QString& key, QVariant value);
-
-	/// Returns a unique identifier for a new data series object that does not collide with the 
-	/// identifier of an existing data series in the same data collection.
-	QString generateUniqueSeriesIdentifier(const QString& baseName) const;
-
 	/// Outputs a new data series to the pipeline.
 	DataSeriesObject* outputDataSeries(const QString& id, const QString& title, const PropertyPtr& y, const PropertyPtr& x = nullptr);
-
-	/// Enures that a DataObject from this flow state is not shared with others and is safe to modify.
-	template<class ObjectType>
-	ObjectType* cloneIfNeeded(ObjectType* obj, bool deepCopy = false) {
-		OVITO_ASSERT(output().contains(obj));
-		OVITO_ASSERT(obj->numberOfStrongReferences() >= 1);
-		if(obj->numberOfStrongReferences() > 1) {
-			OORef<ObjectType> clone = cloneHelper().cloneObject(obj, deepCopy);
-			if(output().replaceObject(obj, clone)) {
-				OVITO_ASSERT(clone->numberOfStrongReferences() == 1);
-				return clone;
-			}
-		}
-		return obj;
-	}
-
-	/// Returns a reference to the output state.
-	PipelineFlowState& output() { return _output; }
-
-	/// Returns a const-reference to the output state.
-	const PipelineFlowState& output() const { return _output; }
-
-	/// Returns a clone helper for creating shallow and deep copies of data objects.
-	CloneHelper& cloneHelper() {
-		if(_cloneHelper == boost::none) _cloneHelper.emplace();
-		return *_cloneHelper;
-	}
-
-	/// Returns the DataSet that provides a context for all performed operations.
-	DataSet* dataset() const { return _dataset; }
-	
-private:
-
-	/// The context data set.
-	DataSet* _dataset;
-	
-	/// The clone helper object that is used to create shallow and deep copies
-	/// of the data objects.
-	boost::optional<CloneHelper> _cloneHelper;
-
-	/// The output state.
-	PipelineFlowState& _output;
 };
 
 }	// End of namespace

@@ -24,9 +24,13 @@
 #include <plugins/stdobj/properties/PropertyStorage.h>
 #include <plugins/stdobj/properties/PropertyClass.h>
 #include <plugins/stdobj/properties/PropertyObject.h>
+#include <plugins/stdobj/series/DataSeriesProperty.h>
+#include <plugins/stdobj/series/DataSeriesObject.h>
 #include <plugins/stdobj/util/InputHelper.h>
-#include <core/dataset/DataSet.h>
+#include <plugins/stdobj/util/OutputHelper.h>
 #include <core/app/Application.h>
+#include <core/dataset/DataSet.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/utilities/units/UnitsManager.h>
 #include "SpatialBinningModifier.h"
@@ -61,10 +65,6 @@ SET_PROPERTY_FIELD_LABEL(SpatialBinningModifier, onlySelectedElements, "Use only
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(SpatialBinningModifier, numberOfBinsX, IntegerParameterUnit, 1, 100000);
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(SpatialBinningModifier, numberOfBinsY, IntegerParameterUnit, 1, 100000);
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(SpatialBinningModifier, numberOfBinsZ, IntegerParameterUnit, 1, 100000);
-
-IMPLEMENT_OVITO_CLASS(BinningModifierApplication);
-DEFINE_PROPERTY_FIELD(BinningModifierApplication, histogram);
-SET_MODIFIER_APPLICATION_TYPE(SpatialBinningModifier, BinningModifierApplication);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -172,7 +172,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> SpatialBinningModifier::createEng
     if(is1D()) binCount.y() = binCount.z() = 1;
     else if(is2D()) binCount.z() = 1;
     size_t binDataSize = (size_t)binCount[0] * (size_t)binCount[1] * (size_t)binCount[2];
-	auto binData = std::make_shared<PropertyStorage>(binDataSize, PropertyStorage::Float, 1, 0, sourceProperty().nameWithComponent(), true);
+	auto binData = std::make_shared<PropertyStorage>(binDataSize, PropertyStorage::Float, 1, 0, sourceProperty().nameWithComponent(), true, DataSeriesProperty::YProperty);
 
     // Determine coordinate axes (0, 1, 2 -- or 3 if not used).
     Vector3I binDir;
@@ -186,6 +186,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> SpatialBinningModifier::createEng
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	return delegate()->createEngine(time, input, cell, 
+		binDirection(),
         std::move(sourcePropertyData), 
         vecComponent,
         std::move(selectionProperty), 
@@ -202,7 +203,7 @@ void SpatialBinningModifierDelegate::SpatialBinningEngine::computeGradient()
         FloatType binSpacing = cell().matrix().column(binDir(0)).length() / binCount(0);
         if(binCount(0) > 1 && binSpacing > 0) {
             OVITO_ASSERT(binData()->componentCount() == 1);
-        	auto derivativeData = std::make_shared<PropertyStorage>(binData()->size(), PropertyStorage::Float, 1, 0, binData()->name(), false);
+        	auto derivativeData = std::make_shared<PropertyStorage>(binData()->size(), PropertyStorage::Float, binData()->componentCount(), 0, binData()->name(), false, binData()->type());
 			for(int j = 0; j < binCount(1); j++) {
 				for(int i = 0; i < binCount(0); i++) {
 					int ndx = 2;
@@ -233,13 +234,20 @@ void SpatialBinningModifierDelegate::SpatialBinningEngine::computeGradient()
 ******************************************************************************/
 PipelineFlowState SpatialBinningModifierDelegate::SpatialBinningEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	BinningModifierApplication* myModApp = dynamic_object_cast<BinningModifierApplication>(modApp);
 	SpatialBinningModifier* modifier = static_object_cast<SpatialBinningModifier>(modApp->modifier());
 	if(!modifier->delegate())
 		modifier->throwException(tr("No delegate set for the binning modifier."));
 
 	PipelineFlowState output = input;
-//	OutputHelper poh(modifier->dataset(), output);
+	OutputHelper poh(modifier->dataset(), output, modApp);
+
+	if(SpatialBinningModifier::bin1D((SpatialBinningModifier::BinDirectionType)binningDirection())) {
+		DataSeriesObject* seriesObj = poh.outputDataSeries(QStringLiteral("binning"), binData()->name(), binData());
+		seriesObj->setIntervalStart(0);
+		seriesObj->setIntervalEnd(cell().matrix().column(binDir(0)).length());
+		seriesObj->setAxisLabelX(tr("Position"));
+	}
+
 	return output;
 }
 

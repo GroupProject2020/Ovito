@@ -21,6 +21,7 @@
 
 #include <plugins/stdmod/StdMod.h>
 #include <core/dataset/DataSet.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/dataset/animation/controller/Controller.h>
 #include <plugins/stdobj/util/InputHelper.h>
 #include <plugins/stdobj/util/OutputHelper.h>
@@ -80,7 +81,7 @@ PipelineStatus AssignColorModifierDelegate::apply(Modifier* modifier, const Pipe
 {
 	const AssignColorModifier* mod = static_object_cast<AssignColorModifier>(modifier);
 	InputHelper ih(dataset(), input);
-	OutputHelper oh(dataset(), output);
+	OutputHelper oh(dataset(), output, modApp);
 
 	if(!mod->colorController())
 		return PipelineStatus::Success;

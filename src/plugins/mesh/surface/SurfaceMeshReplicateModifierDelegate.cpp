@@ -25,6 +25,7 @@
 #include <plugins/stdobj/util/InputHelper.h>
 #include <plugins/stdobj/util/OutputHelper.h>
 #include <core/dataset/DataSet.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include "SurfaceMeshReplicateModifierDelegate.h"
 
 namespace Ovito { namespace Mesh {
@@ -36,7 +37,7 @@ IMPLEMENT_OVITO_CLASS(SurfaceMeshReplicateModifierDelegate);
 ******************************************************************************/
 bool SurfaceMeshReplicateModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<SurfaceMesh>() != nullptr;
+	return input.findObjectOfType<SurfaceMesh>() != nullptr;
 }
 
 /******************************************************************************
@@ -58,7 +59,7 @@ PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, c
 	Box3I newImages = mod->replicaRange();
 
 	InputHelper ih(dataset(), input);
-	OutputHelper oh(dataset(), output);
+	OutputHelper oh(dataset(), output, modApp);
 
 	for(DataObject* obj : output.objects()) {
 		if(SurfaceMesh* existingSurface = dynamic_object_cast<SurfaceMesh>(obj)) {

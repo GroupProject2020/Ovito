@@ -49,7 +49,7 @@ InterpolateTrajectoryModifier::InterpolateTrajectoryModifier(DataSet* dataset) :
 ******************************************************************************/
 bool InterpolateTrajectoryModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<ParticleProperty>() != nullptr;
+	return input.findObjectOfType<ParticleProperty>() != nullptr;
 }
 
 /******************************************************************************
@@ -119,7 +119,7 @@ PipelineFlowState InterpolateTrajectoryModifier::evaluatePreliminary(TimePoint t
 {
 	PipelineFlowState output = input;
 	ParticleInputHelper pih(dataset(), input);
-	ParticleOutputHelper poh(dataset(), output);
+	ParticleOutputHelper poh(dataset(), output, modApp);
 	
 	// Determine the current frame, preferably from the attribute stored with the pipeline flow state.
 	// If the source frame attribute is not present, fall back to inferring it from the current animation time.
@@ -146,8 +146,8 @@ PipelineFlowState InterpolateTrajectoryModifier::evaluatePreliminary(TimePoint t
 	if(t < 0) t = 0;
 	else if(t > 1) t = 1;
 	
-	SimulationCellObject* cell1 = input.findObject<SimulationCellObject>();
-	SimulationCellObject* cell2 = secondState.findObject<SimulationCellObject>();
+	SimulationCellObject* cell1 = input.findObjectOfType<SimulationCellObject>();
+	SimulationCellObject* cell2 = secondState.findObjectOfType<SimulationCellObject>();
 
 	// Interpolate particle positions.
 	ParticleProperty* posProperty1 = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
@@ -211,7 +211,7 @@ PipelineFlowState InterpolateTrajectoryModifier::evaluatePreliminary(TimePoint t
 
 	// Interpolate simulation cell vectors.
 	if(cell1 && cell2) {
-		SimulationCellObject* outputCell = poh.outputObject<SimulationCellObject>();
+		SimulationCellObject* outputCell = poh.outputSingletonObject<SimulationCellObject>();
 		const AffineTransformation& cellMat1 = cell1->cellMatrix();
 		const AffineTransformation delta = cell2->cellMatrix() - cellMat1;
 		outputCell->setCellMatrix(cellMat1 + delta * t);

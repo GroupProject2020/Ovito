@@ -31,8 +31,8 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers)
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-ParticleOutputHelper::ParticleOutputHelper(DataSet* dataset, PipelineFlowState& output) : 
-	OutputHelper(dataset, output)
+ParticleOutputHelper::ParticleOutputHelper(DataSet* dataset, PipelineFlowState& output, PipelineObject* dataSource) : 
+	OutputHelper(dataset, output, dataSource)
 {
 	// Find the 'Position' particle property and optionally a BondsObject in the input flow state.
 	ParticleProperty* posProperty = nullptr;
@@ -76,6 +76,9 @@ ParticleOutputHelper::ParticleOutputHelper(DataSet* dataset, PipelineFlowState& 
 size_t ParticleOutputHelper::deleteParticles(const boost::dynamic_bitset<>& mask)
 {
 	OVITO_ASSERT(mask.size() == outputParticleCount());
+
+	// Undo recording should never be active during pipeline evaluation.
+	OVITO_ASSERT(!dataset()->undoStack().isRecording());
 
 	size_t deleteCount = mask.count();
 	size_t oldParticleCount = outputParticleCount();
@@ -145,6 +148,9 @@ size_t ParticleOutputHelper::deleteParticles(const boost::dynamic_bitset<>& mask
 ******************************************************************************/
 void ParticleOutputHelper::addBonds(const std::vector<Bond>& newBonds, BondsVis* bondsVis, const std::vector<PropertyPtr>& bondProperties)
 {
+	// Undo recording should never be active during pipeline evaluation.
+	OVITO_ASSERT(!dataset()->undoStack().isRecording());
+
 	// Check if there are existing bonds.
 	OORef<BondProperty> existingBondsTopology = BondProperty::findInState(output(), BondProperty::TopologyProperty);
 	if(!existingBondsTopology) {
@@ -170,8 +176,8 @@ void ParticleOutputHelper::addBonds(const std::vector<Bond>& newBonds, BondsVis*
 		OORef<BondProperty> periodicImagePropertyObj = BondProperty::createFromStorage(dataset(), periodicImageProperty);
 		if(bondsVis)
 			topologyPropertyObj->setVisElement(bondsVis);
-		output().addObject(topologyPropertyObj);
-		output().addObject(periodicImagePropertyObj);
+		outputObject(topologyPropertyObj);
+		outputObject(periodicImagePropertyObj);
 		setOutputBondCount(newBonds.size());
 
 		// Insert other bond properties.
@@ -208,16 +214,16 @@ void ParticleOutputHelper::addBonds(const std::vector<Bond>& newBonds, BondsVis*
 
 		// Duplicate the existing property objects.
 		OORef<BondProperty> newBondsTopology = cloneHelper().cloneObject(existingBondsTopology, false);
-		output().replaceObject(existingBondsTopology, newBondsTopology);
+		replaceObject(existingBondsTopology, newBondsTopology);
 
 		OORef<BondProperty> newBondsPeriodicImages;
 		if(OORef<BondProperty> existingBondsPeriodicImages = BondProperty::findInState(output(), BondProperty::PeriodicImageProperty)) {
 			newBondsPeriodicImages = cloneHelper().cloneObject(existingBondsPeriodicImages, false);
-			output().replaceObject(existingBondsPeriodicImages, newBondsPeriodicImages);
+			replaceObject(existingBondsPeriodicImages, newBondsPeriodicImages);
 		}
 		else {
 			newBondsPeriodicImages = BondProperty::createFromStorage(dataset(), BondProperty::createStandardStorage(outputBondCount(), BondProperty::PeriodicImageProperty, true));
-			output().addObject(newBondsPeriodicImages);
+			outputObject(newBondsPeriodicImages);
 		}
 
 		// Copy bonds information into the extended arrays.
@@ -248,7 +254,7 @@ void ParticleOutputHelper::addBonds(const std::vector<Bond>& newBonds, BondsVis*
 				newBondPropertyObject->resize(outputBondCount(), true);
 
 				// Replace bond property in pipeline flow state.
-				output().replaceObject(originalBondPropertyObject, newBondPropertyObject);
+				replaceObject(originalBondPropertyObject, newBondPropertyObject);
 			}
 		}
 
@@ -281,6 +287,9 @@ void ParticleOutputHelper::addBonds(const std::vector<Bond>& newBonds, BondsVis*
 ******************************************************************************/
 size_t ParticleOutputHelper::deleteBonds(const boost::dynamic_bitset<>& mask)
 {
+	// Undo recording should never be active during pipeline evaluation.
+	OVITO_ASSERT(!dataset()->undoStack().isRecording());
+
 	OVITO_ASSERT(mask.size() == outputBondCount());
 
 	size_t deleteCount = mask.count();
@@ -306,4 +315,3 @@ size_t ParticleOutputHelper::deleteBonds(const boost::dynamic_bitset<>& mask)
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-

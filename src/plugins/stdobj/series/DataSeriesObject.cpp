@@ -22,6 +22,7 @@
 #include <plugins/stdobj/StdObj.h>
 #include <core/dataset/DataSet.h>
 #include "DataSeriesObject.h"
+#include "DataSeriesProperty.h"
 
 namespace Ovito { namespace StdObj {
 
@@ -50,27 +51,54 @@ QString DataSeriesObject::objectTitle()
 	return !title().isEmpty() ? title() : identifier();
 }
 
-#if 0
 /******************************************************************************
-* Determines the X value for the given array index.
+* Returns the property object containing the y-coordinates of the data points.
 ******************************************************************************/
-FloatType DataSeriesObject::getXValue(size_t index) const
+DataSeriesProperty* DataSeriesObject::getY(const PipelineFlowState& state) const
 {
-	if(x() && x()->size() > index && x()->componentCount() == 1) {
-		if(x()->dataType() == PropertyStorage::Float)
-			return x()->getFloat(index);
-		else if(x()->dataType() == PropertyStorage::Int)
-			return x()->getInt(index);
-		else if(x()->dataType() == PropertyStorage::Int64)
-			return x()->getInt64(index);
-	}
-	if(y() && y()->size() != 0) {
-		FloatType binSize = (intervalEnd() - intervalStart()) / y()->size();
-		return intervalStart() + binSize * (FloatType(0.5) + index);
-	}
-	return 0;
+	return DataSeriesProperty::findInState(state, DataSeriesProperty::YProperty, identifier());
 }
-#endif
+
+/******************************************************************************
+* Returns the property object containing the x-coordinates of the data points.
+******************************************************************************/
+DataSeriesProperty* DataSeriesObject::getX(const PipelineFlowState& state) const
+{
+	return DataSeriesProperty::findInState(state, DataSeriesProperty::XProperty, identifier());
+}
+
+/******************************************************************************
+* Returns the data array containing the y-coordinates of the data points.
+******************************************************************************/
+ConstPropertyPtr DataSeriesObject::getYStorage(const PipelineFlowState& state) const
+{
+	if(DataSeriesProperty* property = getY(state))
+		return property->storage();
+	return nullptr;
+}
+
+/******************************************************************************
+* Returns the data array containing the x-coordinates of the data points.
+* If no explicit x-coordinate data is available, the array is dynamically generated 
+* from the x-axis interval set for this data series.
+******************************************************************************/
+ConstPropertyPtr DataSeriesObject::getXStorage(const PipelineFlowState& state) const
+{
+	if(DataSeriesProperty* xProperty = getX(state)) {
+		return xProperty->storage();
+	}
+	else if(DataSeriesProperty* yProperty = getY(state)) {
+		auto xdata = std::make_shared<PropertyStorage>(yProperty->size(), PropertyStorage::Float, 1, 0, QString(), false, DataSeriesProperty::XProperty);
+		FloatType binSize = (intervalEnd() - intervalStart()) / xdata->size();
+		FloatType x = intervalStart() + binSize * FloatType(0.5);
+		for(FloatType& v : xdata->floatRange()) {
+			v = x;
+			x += binSize;
+		}
+		return std::move(xdata);
+	}
+	else return nullptr;
+}
 
 }	// End of namespace
 }	// End of namespace

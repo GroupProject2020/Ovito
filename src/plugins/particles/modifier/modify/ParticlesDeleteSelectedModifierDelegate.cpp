@@ -25,6 +25,7 @@
 #include <plugins/particles/objects/BondProperty.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <core/dataset/DataSet.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include "ParticlesDeleteSelectedModifierDelegate.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
@@ -37,7 +38,7 @@ IMPLEMENT_OVITO_CLASS(BondsDeleteSelectedModifierDelegate);
 ******************************************************************************/
 bool ParticlesDeleteSelectedModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<ParticleProperty>() != nullptr;
+	return input.findObjectOfType<ParticleProperty>() != nullptr;
 }
 
 /******************************************************************************
@@ -46,7 +47,7 @@ bool ParticlesDeleteSelectedModifierDelegate::OOMetaClass::isApplicableTo(const 
 PipelineStatus ParticlesDeleteSelectedModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	ParticleInputHelper pih(dataset(), output); // Note: We treat the current output as input here.
-	ParticleOutputHelper poh(dataset(), output);
+	ParticleOutputHelper poh(dataset(), output, modApp);
 
 	// Get the selection.
 	if(ParticleProperty* selProperty = pih.inputStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty)) {
@@ -79,7 +80,7 @@ PipelineStatus ParticlesDeleteSelectedModifierDelegate::apply(Modifier* modifier
 ******************************************************************************/
 bool BondsDeleteSelectedModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<BondProperty>() != nullptr;
+	return input.findObjectOfType<BondProperty>() != nullptr;
 }
 
 /******************************************************************************
@@ -88,7 +89,7 @@ bool BondsDeleteSelectedModifierDelegate::OOMetaClass::isApplicableTo(const Pipe
 PipelineStatus BondsDeleteSelectedModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	ParticleInputHelper pih(dataset(), output); // Note: We treat the current output as input here.
-	ParticleOutputHelper poh(dataset(), output);
+	ParticleOutputHelper poh(dataset(), output, modApp);
 
 	// Get the selection.
 	if(BondProperty* selProperty = pih.inputStandardProperty<BondProperty>(BondProperty::SelectionProperty)) {

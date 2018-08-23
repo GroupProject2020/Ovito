@@ -24,11 +24,12 @@
 #include <plugins/particles/util/NearestNeighborFinder.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/utilities/concurrent/ParallelFor.h>
 #include <core/utilities/concurrent/Task.h>
 #include <core/utilities/io/CompressedTextReader.h>
 #include <core/dataset/DataSetContainer.h>
-#include <plugins/stdobj/simcell/SimulationCellObject.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include "VoroTopModifier.h"
 #include "Filter.h"
 

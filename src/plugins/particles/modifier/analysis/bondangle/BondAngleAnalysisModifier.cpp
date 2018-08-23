@@ -25,6 +25,7 @@
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/animation/AnimationSettings.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/utilities/concurrent/ParallelFor.h>
 #include "BondAngleAnalysisModifier.h"
 
@@ -186,13 +187,12 @@ PipelineFlowState BondAngleAnalysisModifier::BondAngleAnalysisEngine::emitResult
 	PipelineFlowState outState = StructureIdentificationEngine::emitResults(time, modApp, input);
 
 	// Also output structure type counts, which have been computed by the base class.
-	StructureIdentificationModifierApplication* myModApp = static_object_cast<StructureIdentificationModifierApplication>(modApp);
-	ParticleOutputHelper poh(modApp->dataset(), outState);
-	poh.outputAttribute(QStringLiteral("BondAngleAnalysis.counts.OTHER"), QVariant::fromValue(myModApp->structureCounts()[OTHER]));
-	poh.outputAttribute(QStringLiteral("BondAngleAnalysis.counts.FCC"), QVariant::fromValue(myModApp->structureCounts()[FCC]));
-	poh.outputAttribute(QStringLiteral("BondAngleAnalysis.counts.HCP"), QVariant::fromValue(myModApp->structureCounts()[HCP]));
-	poh.outputAttribute(QStringLiteral("BondAngleAnalysis.counts.BCC"), QVariant::fromValue(myModApp->structureCounts()[BCC]));
-	poh.outputAttribute(QStringLiteral("BondAngleAnalysis.counts.ICO"), QVariant::fromValue(myModApp->structureCounts()[ICO]));
+	PipelineOutputHelper poh(modApp->dataset(), outState, modApp);
+	poh.outputAttribute(QStringLiteral("BondAngleAnalysis.counts.OTHER"), QVariant::fromValue(getTypeCount(OTHER)));
+	poh.outputAttribute(QStringLiteral("BondAngleAnalysis.counts.FCC"), QVariant::fromValue(getTypeCount(FCC)));
+	poh.outputAttribute(QStringLiteral("BondAngleAnalysis.counts.HCP"), QVariant::fromValue(getTypeCount(HCP)));
+	poh.outputAttribute(QStringLiteral("BondAngleAnalysis.counts.BCC"), QVariant::fromValue(getTypeCount(BCC)));
+	poh.outputAttribute(QStringLiteral("BondAngleAnalysis.counts.ICO"), QVariant::fromValue(getTypeCount(ICO)));
 
 	return outState;
 }

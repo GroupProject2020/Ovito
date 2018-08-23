@@ -395,7 +395,6 @@ PYBIND11_MODULE(CrystalAnalysis, m)
 				"The list of dislocation segments in this dislocation network. "
 				"This list-like object is read-only and contains :py:class:`~ovito.data.DislocationSegment` objects.")
 	;
-	ovito_class<DislocationAnalysisModifierApplication, StructureIdentificationModifierApplication>{m};
 
 	py::class_<DislocationSegment>(m, "DislocationSegment",
 			"A single dislocation line from a :py:class:`DislocationNetwork`. "

@@ -328,13 +328,6 @@ PYBIND11_MODULE(StdObj, m)
 
 
 	auto DataSeriesProperty_py = ovito_abstract_class<DataSeriesProperty, PropertyObject>(m)
-		// Used by DataSeriesPropertyView.create(): 
-		.def_static("createStandardProperty", [](DataSet& dataset, size_t elementCount, DataSeriesProperty::Type type, bool initializeMemory) {
-			return DataSeriesProperty::createFromStorage(&dataset, DataSeriesProperty::createStandardStorage(elementCount, type, initializeMemory));
-		})
-		.def_static("createUserProperty", [](DataSet& dataset, size_t elementCount, int dataType, size_t componentCount, size_t stride, const QString& name, bool initializeMemory) {
-			return DataSeriesProperty::createFromStorage(&dataset, std::make_shared<PropertyStorage>(elementCount, dataType, componentCount, stride, name, initializeMemory));
-		})
 		.def_static("standard_property_type_id", [](const QString& name) { return (DataSeriesProperty::Type)DataSeriesProperty::OOClass().standardPropertyTypeId(name); })
 		.def_property_readonly("type", &DataSeriesProperty::type)
 	;

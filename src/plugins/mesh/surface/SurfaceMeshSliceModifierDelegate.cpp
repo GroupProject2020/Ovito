@@ -22,6 +22,7 @@
 #include <plugins/mesh/Mesh.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
 #include <core/dataset/DataSet.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include <plugins/stdobj/util/OutputHelper.h>
 #include "SurfaceMeshSliceModifierDelegate.h"
 
@@ -43,7 +44,7 @@ PipelineStatus SurfaceMeshSliceModifierDelegate::apply(Modifier* modifier, const
 	FloatType sliceWidth;
 	std::tie(plane, sliceWidth) = mod->slicingPlane(time, output.mutableStateValidity());
 	
-	OutputHelper oh(dataset(), output);
+	OutputHelper oh(dataset(), output, modApp);
 	for(DataObject* obj : output.objects()) {
 		if(SurfaceMesh* inputMesh = dynamic_object_cast<SurfaceMesh>(obj)) {
 			SurfaceMesh* outputMesh = oh.cloneIfNeeded(inputMesh);

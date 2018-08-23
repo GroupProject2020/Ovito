@@ -204,7 +204,7 @@ size_t ParticleProperty::OOMetaClass::elementCount(const PipelineFlowState& stat
 ******************************************************************************/
 bool ParticleProperty::OOMetaClass::isDataPresent(const PipelineFlowState& state) const
 {
-	return state.findObject<ParticleProperty>() != nullptr;
+	return state.findObjectOfType<ParticleProperty>() != nullptr;
 }
 	
 /******************************************************************************

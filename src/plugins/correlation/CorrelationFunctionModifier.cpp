@@ -25,6 +25,7 @@
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <core/app/Application.h>
 #include <core/dataset/animation/AnimationSettings.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/utilities/units/UnitsManager.h>
 #include <core/utilities/concurrent/ParallelFor.h>
@@ -129,7 +130,7 @@ CorrelationFunctionModifier::CorrelationFunctionModifier(DataSet* dataset) : Asy
 ******************************************************************************/
 bool CorrelationFunctionModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<ParticleProperty>() != nullptr;
+	return input.findObjectOfType<ParticleProperty>() != nullptr;
 }
 
 /******************************************************************************
@@ -460,7 +461,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 	}
 
 	// Averaged reciprocal space correlation function.
-	_reciprocalSpaceCorrelation = std::make_shared<PropertyStorage>(numberOfWavevectorBins, PropertyStorage::Float, 1, 0, tr("C(q)"), true);
+	_reciprocalSpaceCorrelation = std::make_shared<PropertyStorage>(numberOfWavevectorBins, PropertyStorage::Float, 1, 0, tr("C(q)"), true, DataSeriesProperty::YProperty);
 	_reciprocalSpaceCorrelationRange = 2 * FLOATTYPE_PI * minReciprocalSpaceVector * numberOfWavevectorBins;
 
 	std::vector<int> numberOfValues(numberOfWavevectorBins, 0);
@@ -541,9 +542,9 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 	FloatType gridSpacing = minCellFaceDistance / (2 * numberOfDistanceBins);
 
 	// Radially averaged real space correlation function.
-	_realSpaceCorrelation = std::make_shared<PropertyStorage>(numberOfDistanceBins, PropertyStorage::Float, 1, 0, tr("C(r)"), true);
+	_realSpaceCorrelation = std::make_shared<PropertyStorage>(numberOfDistanceBins, PropertyStorage::Float, 1, 0, tr("C(r)"), true, DataSeriesProperty::YProperty);
 	_realSpaceCorrelationRange = minCellFaceDistance / 2;
-	_realSpaceRDF = std::make_shared<PropertyStorage>(numberOfDistanceBins, PropertyStorage::Float, 1, 0, tr("g(r)"), true);
+	_realSpaceRDF = std::make_shared<PropertyStorage>(numberOfDistanceBins, PropertyStorage::Float, 1, 0, tr("g(r)"), true, DataSeriesProperty::YProperty);
 
 	numberOfValues = std::vector<int>(numberOfDistanceBins, 0);
 	FloatType* realSpaceCorrelationData = realSpaceCorrelation()->dataFloat();
@@ -628,7 +629,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeighCorrela
 	}
 
 	// Allocate neighbor RDF.
-	_neighRDF = std::make_shared<PropertyStorage>(neighCorrelation()->size(), PropertyStorage::Float, 1, 0, tr("Neighbor g(r)"), true);
+	_neighRDF = std::make_shared<PropertyStorage>(neighCorrelation()->size(), PropertyStorage::Float, 1, 0, tr("Neighbor g(r)"), true, DataSeriesProperty::YProperty);
 
 	// Prepare the neighbor list.
 	CutoffNeighborFinder neighborListBuilder;
@@ -790,10 +791,10 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::perform()
 PipelineFlowState CorrelationFunctionModifier::CorrelationAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	PipelineFlowState output = input;
-	OutputHelper oh(modApp->dataset(), output);
+	OutputHelper oh(modApp->dataset(), output, modApp);
 
 	// Output real-space correlation function to the pipeline as a data series. 
-	DataSeriesObject* realSpaceCorrelationObj = oh.outputDataSeries(QStringLiteral("correlation/real-space"), tr("Real-space correlation function"), realSpaceCorrelation());
+	DataSeriesObject* realSpaceCorrelationObj = oh.outputDataSeries(QStringLiteral("correlation/real-space"), tr("Real-space correlation"), realSpaceCorrelation());
 	realSpaceCorrelationObj->setAxisLabelX(tr("Distance r"));
 	realSpaceCorrelationObj->setIntervalStart(0);
 	realSpaceCorrelationObj->setIntervalEnd(_realSpaceCorrelationRange);
@@ -806,7 +807,7 @@ PipelineFlowState CorrelationFunctionModifier::CorrelationAnalysisEngine::emitRe
 
 	// Output short-ranged part of the real-space correlation function to the pipeline as a data series. 
 	if(neighCorrelation()) {
-		DataSeriesObject* neighCorrelationObj = oh.outputDataSeries(QStringLiteral("correlation/neighbor"), tr("Neighbor correlation function"), neighCorrelation());
+		DataSeriesObject* neighCorrelationObj = oh.outputDataSeries(QStringLiteral("correlation/neighbor"), tr("Neighbor correlation"), neighCorrelation());
 		neighCorrelationObj->setAxisLabelX(tr("Distance r"));
 		neighCorrelationObj->setIntervalStart(0);
 		neighCorrelationObj->setIntervalEnd(neighCutoff());
@@ -821,7 +822,7 @@ PipelineFlowState CorrelationFunctionModifier::CorrelationAnalysisEngine::emitRe
 	}
 
 	// Output reciprocal-space correlation function to the pipeline as a data series. 
-	DataSeriesObject* reciprocalSpaceCorrelationObj = oh.outputDataSeries(QStringLiteral("correlation/reciprocal-space"), tr("Reciprocal-space correlation function"), reciprocalSpaceCorrelation());
+	DataSeriesObject* reciprocalSpaceCorrelationObj = oh.outputDataSeries(QStringLiteral("correlation/reciprocal-space"), tr("Reciprocal-space correlation"), reciprocalSpaceCorrelation());
 	reciprocalSpaceCorrelationObj->setAxisLabelX(tr("Wavevector q"));
 	reciprocalSpaceCorrelationObj->setIntervalStart(0);
 	reciprocalSpaceCorrelationObj->setIntervalEnd(_reciprocalSpaceCorrelationRange);

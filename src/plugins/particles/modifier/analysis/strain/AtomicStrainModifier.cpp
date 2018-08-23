@@ -80,7 +80,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> AtomicStrainModifier::createEngin
 
 	// Get the simulation cells.
 	SimulationCellObject* inputCell = pih.expectSimulationCell();
-	SimulationCellObject* refCell = referenceState.findObject<SimulationCellObject>();
+	SimulationCellObject* refCell = referenceState.findObjectOfType<SimulationCellObject>();
 	if(!refCell)
 		throwException(tr("Reference configuration does not contain simulation cell info."));
 
@@ -323,7 +323,7 @@ PipelineFlowState AtomicStrainModifier::AtomicStrainEngine::emitResults(TimePoin
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 
 	PipelineFlowState output = input;
-	ParticleOutputHelper poh(modApp->dataset(), output);
+	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
 	OVITO_ASSERT(shearStrains());
 	OVITO_ASSERT(shearStrains()->size() == poh.outputParticleCount());
 

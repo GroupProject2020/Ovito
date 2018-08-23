@@ -47,7 +47,7 @@ bool POSCARExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 	ParticleProperty* velocityProperty = ParticleProperty::findInState(state, ParticleProperty::VelocityProperty);
 
 	// Get simulation cell info.
-	SimulationCellObject* simulationCell = state.findObject<SimulationCellObject>();
+	SimulationCellObject* simulationCell = state.findObjectOfType<SimulationCellObject>();
 	if(!simulationCell)
 		throwException(tr("No simulation cell available. Cannot write POSCAR file."));
 

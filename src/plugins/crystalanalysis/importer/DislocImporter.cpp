@@ -28,6 +28,7 @@
 #include <plugins/crystalanalysis/modifier/microstructure/SimplifyMicrostructureModifier.h>
 #include <plugins/crystalanalysis/data/Microstructure.h>
 #include <core/app/Application.h>
+#include <core/dataset/pipeline/PipelineOutputHelper.h>
 #include <core/utilities/io/CompressedTextReader.h>
 #include "DislocImporter.h"
 
@@ -558,15 +559,15 @@ void DislocImporter::FrameLoader::connectSlipFaces(Microstructure& microstructur
 * This function is called by the system from the main thread after the
 * asynchronous loading task has finished.
 ******************************************************************************/
-PipelineFlowState DislocImporter::DislocFrameData::handOver(DataSet* dataset, const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource)
+void DislocImporter::DislocFrameData::handOver(PipelineOutputHelper& poh, const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource)
 {
 	// Insert simulation cell.
-	PipelineFlowState output = ParticleFrameData::handOver(dataset, existing, isNewFile, fileSource);
+	ParticleFrameData::handOver(poh, existing, isNewFile, fileSource);
 
 	// Insert pattern catalog.
-	OORef<PatternCatalog> patternCatalog = existing.findObject<PatternCatalog>();
+	OORef<PatternCatalog> patternCatalog = existing.findObjectOfType<PatternCatalog>();
 	if(!patternCatalog) {
-		patternCatalog = new PatternCatalog(dataset);
+		patternCatalog = new PatternCatalog(poh.dataset());
 
 		// Create the structure types.
 		ParticleType::PredefinedStructureType predefTypes[] = {
@@ -581,7 +582,7 @@ PipelineFlowState DislocImporter::DislocFrameData::handOver(DataSet* dataset, co
 		for(int id = 0; id < StructureAnalysis::NUM_LATTICE_TYPES; id++) {
 			OORef<StructurePattern> stype = patternCatalog->structureById(id);
 			if(!stype) {
-				stype = new StructurePattern(dataset);
+				stype = new StructurePattern(poh.dataset());
 				stype->setId(id);
 				stype->setStructureType(StructurePattern::Lattice);
 				patternCatalog->addPattern(stype);
@@ -595,79 +596,77 @@ PipelineFlowState DislocImporter::DislocFrameData::handOver(DataSet* dataset, co
 		StructurePattern* fccPattern = patternCatalog->structureById(StructureAnalysis::LATTICE_FCC);
 		fccPattern->setSymmetryType(StructurePattern::CubicSymmetry);
 		fccPattern->setShortName(QStringLiteral("fcc"));
-		fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/2<110> (Perfect)"), Vector3(1.0f/2.0f, 1.0f/2.0f, 0.0f), Color(0.2f,0.2f,1)));
-		fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/6<112> (Shockley)"), Vector3(1.0f/6.0f, 1.0f/6.0f, 2.0f/6.0f), Color(0,1,0)));
-		fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/6<110> (Stair-rod)"), Vector3(1.0f/6.0f, 1.0f/6.0f, 0.0f/6.0f), Color(1,0,1)));
-		fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/3<001> (Hirth)"), Vector3(1.0f/3.0f, 0.0f, 0.0f), Color(1,1,0)));
-		fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/3<111> (Frank)"), Vector3(1.0f/3.0f, 1.0f/3.0f, 1.0f/3.0f), Color(0,1,1)));
+		fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(poh.dataset(), tr("1/2<110> (Perfect)"), Vector3(1.0f/2.0f, 1.0f/2.0f, 0.0f), Color(0.2f,0.2f,1)));
+		fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(poh.dataset(), tr("1/6<112> (Shockley)"), Vector3(1.0f/6.0f, 1.0f/6.0f, 2.0f/6.0f), Color(0,1,0)));
+		fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(poh.dataset(), tr("1/6<110> (Stair-rod)"), Vector3(1.0f/6.0f, 1.0f/6.0f, 0.0f/6.0f), Color(1,0,1)));
+		fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(poh.dataset(), tr("1/3<001> (Hirth)"), Vector3(1.0f/3.0f, 0.0f, 0.0f), Color(1,1,0)));
+		fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(poh.dataset(), tr("1/3<111> (Frank)"), Vector3(1.0f/3.0f, 1.0f/3.0f, 1.0f/3.0f), Color(0,1,1)));
 
 		StructurePattern* bccPattern = patternCatalog->structureById(StructureAnalysis::LATTICE_BCC);
 		bccPattern->setSymmetryType(StructurePattern::CubicSymmetry);
 		bccPattern->setShortName(QStringLiteral("bcc"));
-		bccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/2<111>"), Vector3(1.0f/2.0f, 1.0f/2.0f, 1.0f/2.0f), Color(0,1,0)));
-		bccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("<100>"), Vector3(1.0f, 0.0f, 0.0f), Color(1, 0.3f, 0.8f)));
-		bccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("<110>"), Vector3(1.0f, 1.0f, 0.0f), Color(0.2f, 0.5f, 1.0f)));
+		bccPattern->addBurgersVectorFamily(new BurgersVectorFamily(poh.dataset(), tr("1/2<111>"), Vector3(1.0f/2.0f, 1.0f/2.0f, 1.0f/2.0f), Color(0,1,0)));
+		bccPattern->addBurgersVectorFamily(new BurgersVectorFamily(poh.dataset(), tr("<100>"), Vector3(1.0f, 0.0f, 0.0f), Color(1, 0.3f, 0.8f)));
+		bccPattern->addBurgersVectorFamily(new BurgersVectorFamily(poh.dataset(), tr("<110>"), Vector3(1.0f, 1.0f, 0.0f), Color(0.2f, 0.5f, 1.0f)));
 
 		StructurePattern* hcpPattern = patternCatalog->structureById(StructureAnalysis::LATTICE_HCP);
 		hcpPattern->setShortName(QStringLiteral("hcp"));
 		hcpPattern->setSymmetryType(StructurePattern::HexagonalSymmetry);
-		hcpPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/3<1-210>"), Vector3(sqrt(0.5f), 0.0f, 0.0f), Color(0,1,0)));
-		hcpPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("<0001>"), Vector3(0.0f, 0.0f, sqrt(4.0f/3.0f)), Color(0.2f,0.2f,1)));
-		hcpPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f), 0.0f), Color(1,0,1)));
-		hcpPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/3<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f)/3.0f, 0.0f), Color(1,0.5f,0)));
-		hcpPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/3<1-213>"), Vector3(sqrt(0.5f), 0.0f, sqrt(4.0f/3.0f)), Color(1,1,0)));
+		hcpPattern->addBurgersVectorFamily(new BurgersVectorFamily(poh.dataset(), tr("1/3<1-210>"), Vector3(sqrt(0.5f), 0.0f, 0.0f), Color(0,1,0)));
+		hcpPattern->addBurgersVectorFamily(new BurgersVectorFamily(poh.dataset(), tr("<0001>"), Vector3(0.0f, 0.0f, sqrt(4.0f/3.0f)), Color(0.2f,0.2f,1)));
+		hcpPattern->addBurgersVectorFamily(new BurgersVectorFamily(poh.dataset(), tr("<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f), 0.0f), Color(1,0,1)));
+		hcpPattern->addBurgersVectorFamily(new BurgersVectorFamily(poh.dataset(), tr("1/3<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f)/3.0f, 0.0f), Color(1,0.5f,0)));
+		hcpPattern->addBurgersVectorFamily(new BurgersVectorFamily(poh.dataset(), tr("1/3<1-213>"), Vector3(sqrt(0.5f), 0.0f, sqrt(4.0f/3.0f)), Color(1,1,0)));
 
 		StructurePattern* cubicDiaPattern = patternCatalog->structureById(StructureAnalysis::LATTICE_CUBIC_DIAMOND);
 		cubicDiaPattern->setShortName(QStringLiteral("diamond"));
 		cubicDiaPattern->setSymmetryType(StructurePattern::CubicSymmetry);
-		cubicDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/2<110>"), Vector3(1.0f/2.0f, 1.0f/2.0f, 0.0f), Color(0.2f,0.2f,1)));
-		cubicDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/6<112>"), Vector3(1.0f/6.0f, 1.0f/6.0f, 2.0f/6.0f), Color(0,1,0)));
-		cubicDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/6<110>"), Vector3(1.0f/6.0f, 1.0f/6.0f, 0.0f), Color(1,0,1)));
-		cubicDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/3<111>"), Vector3(1.0f/3.0f, 1.0f/3.0f, 1.0f/3.0f), Color(0,1,1)));
+		cubicDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(poh.dataset(), tr("1/2<110>"), Vector3(1.0f/2.0f, 1.0f/2.0f, 0.0f), Color(0.2f,0.2f,1)));
+		cubicDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(poh.dataset(), tr("1/6<112>"), Vector3(1.0f/6.0f, 1.0f/6.0f, 2.0f/6.0f), Color(0,1,0)));
+		cubicDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(poh.dataset(), tr("1/6<110>"), Vector3(1.0f/6.0f, 1.0f/6.0f, 0.0f), Color(1,0,1)));
+		cubicDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(poh.dataset(), tr("1/3<111>"), Vector3(1.0f/3.0f, 1.0f/3.0f, 1.0f/3.0f), Color(0,1,1)));
 
 		StructurePattern* hexDiaPattern = patternCatalog->structureById(StructureAnalysis::LATTICE_HEX_DIAMOND);
 		hexDiaPattern->setShortName(QStringLiteral("hex_diamond"));
 		hexDiaPattern->setSymmetryType(StructurePattern::HexagonalSymmetry);
-		hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/3<1-210>"), Vector3(sqrt(0.5f), 0.0f, 0.0f), Color(0,1,0)));
-		hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("<0001>"), Vector3(0.0f, 0.0f, sqrt(4.0f/3.0f)), Color(0.2f,0.2f,1)));
-		hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f), 0.0f), Color(1,0,1)));
-		hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/3<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f)/3.0f, 0.0f), Color(1,0.5f,0)));		
+		hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(poh.dataset(), tr("1/3<1-210>"), Vector3(sqrt(0.5f), 0.0f, 0.0f), Color(0,1,0)));
+		hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(poh.dataset(), tr("<0001>"), Vector3(0.0f, 0.0f, sqrt(4.0f/3.0f)), Color(0.2f,0.2f,1)));
+		hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(poh.dataset(), tr("<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f), 0.0f), Color(1,0,1)));
+		hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(poh.dataset(), tr("1/3<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f)/3.0f, 0.0f), Color(1,0.5f,0)));		
 	}
-	output.addObject(patternCatalog);
+	poh.outputObject(patternCatalog);
 		
 	if(microstructure()) {
 
 		// Insert microstructure.
 		OORef<MicrostructureObject> microstructureObj;
-		microstructureObj = existing.findObject<MicrostructureObject>();
+		microstructureObj = existing.findObjectOfType<MicrostructureObject>();
 		if(!microstructureObj) {
-			microstructureObj = new MicrostructureObject(dataset);
+			microstructureObj = new MicrostructureObject(poh.dataset());
 			// Create a display object for the dislocation lines.
-			OORef<DislocationVis> dislocationVis = new DislocationVis(dataset);
+			OORef<DislocationVis> dislocationVis = new DislocationVis(poh.dataset());
 			if(Application::instance()->guiMode())
 				dislocationVis->loadUserDefaults();
 			microstructureObj->addVisElement(dislocationVis);
 			// Create a display object for the slip surfaces.
-			OORef<SlipSurfaceVis> slipSurfaceVis = new SlipSurfaceVis(dataset);
+			OORef<SlipSurfaceVis> slipSurfaceVis = new SlipSurfaceVis(poh.dataset());
 			if(Application::instance()->guiMode())
 				slipSurfaceVis->loadUserDefaults();
 			microstructureObj->addVisElement(slipSurfaceVis);
 		}
-		microstructureObj->setDomain(output.findObject<SimulationCellObject>());
+		microstructureObj->setDomain(poh.output().findObjectOfType<SimulationCellObject>());
 		microstructureObj->setStorage(microstructure());
-		output.addObject(microstructureObj);
+		poh.outputObject(microstructureObj);
 
 		// Insert cluster graph as a separate data object.
 		OORef<ClusterGraphObject> clusterGraphObj;
-		clusterGraphObj = existing.findObject<ClusterGraphObject>();
+		clusterGraphObj = existing.findObjectOfType<ClusterGraphObject>();
 		if(!clusterGraphObj) {
-			clusterGraphObj = new ClusterGraphObject(dataset);
+			clusterGraphObj = new ClusterGraphObject(poh.dataset());
 		}
 		clusterGraphObj->setStorage(microstructure()->clusterGraph());
-		output.addObject(clusterGraphObj);		
+		poh.outputObject(clusterGraphObj);		
 	}
-
-	return output;
 }
 
 }	// End of namespace

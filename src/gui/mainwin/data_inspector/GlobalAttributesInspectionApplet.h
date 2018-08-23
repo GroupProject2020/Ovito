@@ -34,7 +34,7 @@ class GlobalAttributesInspectionApplet : public DataInspectionApplet
 {
 	Q_OBJECT
 	OVITO_CLASS(GlobalAttributesInspectionApplet)
-	Q_CLASSINFO("DisplayName", "Global attributes");
+	Q_CLASSINFO("DisplayName", "Global Attributes");
 
 public:
 
@@ -60,8 +60,8 @@ private:
 	{
 	public:
 
-		/// Constructor.
-		AttributeTableModel(QObject* parent) : QAbstractTableModel(parent) {}
+		/// Inherit constructor.
+		using QAbstractTableModel::QAbstractTableModel;
 
 		/// Returns the number of rows.
 		virtual int rowCount(const QModelIndex& parent = QModelIndex()) const override {
@@ -99,8 +99,9 @@ private:
 		/// Replaces the contents of this data model.
 		void setContents(const PipelineFlowState& state) {
 			beginResetModel();
-			_keys = state.attributes().keys();
-			_values = state.attributes().values();
+			const QVariantMap& attributes = state.buildAttributesMap();
+			_keys = attributes.keys();
+			_values = attributes.values();
 			endResetModel();
 		}
 

@@ -26,7 +26,6 @@
 #include <plugins/particles/modifier/analysis/StructureIdentificationModifier.h>
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/stdobj/series/DataSeriesObject.h>
-#include <core/dataset/pipeline/ModifierApplication.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
@@ -185,27 +184,6 @@ private:
 	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD(ElementType, orderingTypes, setOrderingTypes);	
 };
 
-
-/**
- * \brief The type of ModifierApplication created for a PolyhedralTemplateMatchingModifier 
- *        when it is inserted into in a data pipeline. It stores the last computation results
- *        so that they can be displayed in the modifier's user interface.
- */
-class OVITO_PARTICLES_EXPORT PolyhedralTemplateMatchingModifierApplication : public StructureIdentificationModifierApplication
-{
-	Q_OBJECT
-	OVITO_CLASS(PolyhedralTemplateMatchingModifierApplication)
-
-public:
- 
-	/// Constructor.
-	Q_INVOKABLE PolyhedralTemplateMatchingModifierApplication(DataSet* dataset) : StructureIdentificationModifierApplication(dataset) {}
- 
-private:
- 
-	/// The RMSD histogram.
-	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(OORef<DataSeriesObject>, rmsdHistogram, setRmsdHistogram, PROPERTY_FIELD_NO_CHANGE_MESSAGE);
-};
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

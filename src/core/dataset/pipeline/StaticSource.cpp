@@ -27,9 +27,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_
 
 IMPLEMENT_OVITO_CLASS(StaticSource);
 DEFINE_REFERENCE_FIELD(StaticSource, dataObjects);
-DEFINE_PROPERTY_FIELD(StaticSource, attributes);
 SET_PROPERTY_FIELD_LABEL(StaticSource, dataObjects, "Objects");
-SET_PROPERTY_FIELD_LABEL(StaticSource, attributes, "Attributes");
 
 /******************************************************************************
 * Constructor.
@@ -46,7 +44,7 @@ SharedFuture<PipelineFlowState> StaticSource::evaluate(TimePoint time)
     TimeInterval iv = TimeInterval::infinite();
     for(DataObject* obj : dataObjects())
         iv.intersect(obj->objectValidity(time));
-    return Future<PipelineFlowState>::createImmediateEmplace(PipelineStatus::Success, dataObjects(), iv, attributes());
+    return Future<PipelineFlowState>::createImmediateEmplace(dataObjects(), iv, PipelineStatus::Success);
 }
 
 /******************************************************************************
@@ -54,7 +52,7 @@ SharedFuture<PipelineFlowState> StaticSource::evaluate(TimePoint time)
 ******************************************************************************/
 PipelineFlowState StaticSource::evaluatePreliminary()
 {
-    return PipelineFlowState(PipelineStatus::Success, dataObjects(), TimeInterval::infinite(), attributes());
+    return PipelineFlowState(dataObjects(), TimeInterval::infinite(), PipelineStatus::Success);
 }
 
 /******************************************************************************
@@ -92,7 +90,7 @@ void StaticSource::referenceRemoved(const PropertyFieldDescriptor& field, RefTar
 	if(field == PROPERTY_FIELD(dataObjects))
 		notifyDependents(ReferenceEvent::SubobjectListChanged);
 
-        PipelineObject::referenceRemoved(field, oldTarget, listIndex);
+    PipelineObject::referenceRemoved(field, oldTarget, listIndex);
 }
 
 OVITO_END_INLINE_NAMESPACE

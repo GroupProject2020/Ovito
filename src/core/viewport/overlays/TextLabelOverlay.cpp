@@ -86,7 +86,7 @@ void TextLabelOverlay::render(Viewport* viewport, TimePoint time, QPainter& pain
 
 	QString textString = labelText();
 
-	// Resolve attributes referenced in text string.
+	// Resolve global attributes referenced by placeholders in the text string.
 	if(sourceNode()) {
 		SharedFuture<PipelineFlowState> stateFuture;
 		if(!interactiveViewport) {
@@ -95,7 +95,8 @@ void TextLabelOverlay::render(Viewport* viewport, TimePoint time, QPainter& pain
 				return;
 		}
 		const PipelineFlowState& flowState = interactiveViewport ? sourceNode()->evaluatePipelinePreliminary(true) : stateFuture.result();
-		for(auto a = flowState.attributes().cbegin(); a != flowState.attributes().cend(); ++a) {
+		const QVariantMap attributes = flowState.buildAttributesMap();
+		for(auto a = attributes.cbegin(); a != attributes.cend(); ++a) {
 			textString.replace(QStringLiteral("[") + a.key() + QStringLiteral("]"), a.value().toString());
 		}
 	}

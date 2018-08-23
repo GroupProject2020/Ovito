@@ -36,6 +36,9 @@ namespace Ovito { namespace StdObj {
 ******************************************************************************/
 PropertyObject* OutputHelper::outputStandardProperty(const PropertyClass& propertyClass, int typeId, bool initializeMemory)
 {
+	// Undo recording should never be active during pipeline evaluation.
+	OVITO_ASSERT(!dataset()->undoStack().isRecording());
+
 	if(propertyClass.isValidStandardPropertyId(typeId) == false) {
 		if(typeId == PropertyStorage::GenericSelectionProperty)
 			dataset()->throwException(PropertyObject::tr("Selection is not supported by the '%2' property class.").arg(propertyClass.propertyClassDisplayName()));
@@ -61,7 +64,7 @@ PropertyObject* OutputHelper::outputStandardProperty(const PropertyClass& proper
 	else {
 		// Create a new particle property in the output.
 		OORef<PropertyObject> property = propertyClass.createFromStorage(dataset(), propertyClass.createStandardStorage(propertyClass.elementCount(output()), typeId, initializeMemory));
-		output().addObject(property);
+		outputObject(property);
 
 		OVITO_ASSERT(property->size() == propertyClass.elementCount(output()));
 		return property;
@@ -74,6 +77,9 @@ PropertyObject* OutputHelper::outputStandardProperty(const PropertyClass& proper
 PropertyObject* OutputHelper::outputProperty(const PropertyClass& propertyClass, const PropertyPtr& storage)
 {
 	OVITO_CHECK_POINTER(storage);
+
+	// Undo recording should never be active during pipeline evaluation.
+	OVITO_ASSERT(!dataset()->undoStack().isRecording());
 
 	// Length of new property array must match the existing number of elements.
 	if(storage->size() != propertyClass.elementCount(output()))
@@ -112,7 +118,7 @@ PropertyObject* OutputHelper::outputProperty(const PropertyClass& propertyClass,
 	else {
 		// Create a new property in the output.
 		OORef<PropertyObject> property = propertyClass.createFromStorage(dataset(), storage);
-		output().addObject(property);
+		outputObject(property);
 
 		OVITO_ASSERT(property->size() == propertyClass.elementCount(output()));
 		return property;
@@ -124,6 +130,9 @@ PropertyObject* OutputHelper::outputProperty(const PropertyClass& propertyClass,
 ******************************************************************************/
 PropertyObject* OutputHelper::outputCustomProperty(const PropertyClass& propertyClass, const QString& name, int dataType, size_t componentCount, size_t stride, bool initializeMemory)
 {
+	// Undo recording should never be active during pipeline evaluation.
+	OVITO_ASSERT(!dataset()->undoStack().isRecording());
+
 	// Check if property already exists in the output.
 	PropertyObject* existingProperty = nullptr;
 	for(DataObject* o : output().objects()) {
@@ -156,61 +165,11 @@ PropertyObject* OutputHelper::outputCustomProperty(const PropertyClass& property
 	else {
 		// Create a new property in the output.
 		OORef<PropertyObject> property = propertyClass.createFromStorage(dataset(), std::make_shared<PropertyStorage>(propertyClass.elementCount(output()), dataType, componentCount, stride, name, initializeMemory));
-		output().addObject(property);
+		outputObject(property);
 
 		OVITO_ASSERT(property->size() == propertyClass.elementCount(output()));
 		return property;
 	}
-}
-
-
-/******************************************************************************
-* Emits a new global attribute to the pipeline.
-******************************************************************************/
-void OutputHelper::outputAttribute(const QString& key, QVariant value)
-{
-	if(!output().attributes().contains(key)) {
-		output().attributes().insert(key, std::move(value));
-	}
-	else {
-		for(int i = 2; ; i++) {
-			QString uniqueKey = key + QChar('.') + QString::number(i);
-			if(!output().attributes().contains(uniqueKey)) {
-				output().attributes().insert(uniqueKey, std::move(value));
-				return;
-			}
-		}
-		OVITO_ASSERT(false);
-	}
-}
-
-/******************************************************************************
-* Returns a unique identifier for a new data series object that does not collide with the 
-* identifier of an existing data series in the same data collection.
-******************************************************************************/
-QString OutputHelper::generateUniqueSeriesIdentifier(const QString& baseName) const
-{
-	auto doesExist = [this](const QString& id) {
-		for(DataObject* obj : output().objects()) {
-			if(DataSeriesObject* seriesObj = dynamic_object_cast<DataSeriesObject>(obj)) {
-				if(seriesObj->identifier() == id)
-					return true;
-			}
-		}
-		return false;
-	};
-	if(!doesExist(baseName)) {
-		return baseName;
-	}
-	else {
-		for(int i = 2; ; i++) {
-			QString uniqueId = baseName + QChar('-') + QString::number(i);
-			if(!doesExist(uniqueId)) {
-				return uniqueId;
-			}
-		}
-	}
-	OVITO_ASSERT(false);
 }
 
 /******************************************************************************
@@ -218,21 +177,26 @@ QString OutputHelper::generateUniqueSeriesIdentifier(const QString& baseName) co
 ******************************************************************************/
 DataSeriesObject* OutputHelper::outputDataSeries(const QString& id, const QString& title, const PropertyPtr& y, const PropertyPtr& x)
 {
+	// Undo recording should never be active during pipeline evaluation.
+	OVITO_ASSERT(!dataset()->undoStack().isRecording());
+
 	OORef<DataSeriesObject> dataSeriesObj = new DataSeriesObject(dataset());
-	dataSeriesObj->setIdentifier(generateUniqueSeriesIdentifier(id));
+	dataSeriesObj->setIdentifier(generateUniqueIdentifier<DataSeriesObject>(id));
 	dataSeriesObj->setTitle(title);
-	output().addObject(dataSeriesObj);
+	outputObject(dataSeriesObj);
 
 	if(y) {
+		OVITO_ASSERT(y->type() == DataSeriesProperty::YProperty);
 		OORef<DataSeriesProperty> yProperty = DataSeriesProperty::createFromStorage(dataset(), y);
 		yProperty->setBundle(dataSeriesObj->identifier());
-		output().addObject(yProperty);
+		outputObject(yProperty);
 	}
 
 	if(x) {
+		OVITO_ASSERT(y->type() == DataSeriesProperty::XProperty);
 		OORef<DataSeriesProperty> xProperty = DataSeriesProperty::createFromStorage(dataset(), x);
 		xProperty->setBundle(dataSeriesObj->identifier());
-		output().addObject(xProperty);
+		outputObject(xProperty);
 	}
 
 	return dataSeriesObj;

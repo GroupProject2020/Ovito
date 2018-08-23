@@ -65,9 +65,6 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(DislocationAnalysisModifier, defectMeshSmoo
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(DislocationAnalysisModifier, lineSmoothingLevel, IntegerParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(DislocationAnalysisModifier, linePointInterval, FloatParameterUnit, 0);
 
-IMPLEMENT_OVITO_CLASS(DislocationAnalysisModifierApplication);
-SET_MODIFIER_APPLICATION_TYPE(DislocationAnalysisModifier, DislocationAnalysisModifierApplication);
-
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/

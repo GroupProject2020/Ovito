@@ -44,7 +44,7 @@ class OVITO_CORE_EXPORT AttributeFileExporter : public FileExporter
 		virtual QString fileFilter() const override { return QStringLiteral("*"); }
 	
 		/// Returns the filter description that is displayed in the drop-down box of the file dialog.
-		virtual QString fileFilterDescription() const override { return tr("Table of Values"); }
+		virtual QString fileFilterDescription() const override { return tr("Table of values"); }
 	};
 
 	Q_OBJECT
@@ -53,7 +53,7 @@ class OVITO_CORE_EXPORT AttributeFileExporter : public FileExporter
 public:
 
 	/// \brief Constructs a new instance of this class.
-	Q_INVOKABLE AttributeFileExporter(DataSet* dataset);
+	Q_INVOKABLE AttributeFileExporter(DataSet* dataset) : FileExporter(dataset) {}
 
 	/// \brief Loads the user-defined default values of this object's parameter fields from the
 	///        application's settings store.
@@ -96,5 +96,3 @@ private:
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

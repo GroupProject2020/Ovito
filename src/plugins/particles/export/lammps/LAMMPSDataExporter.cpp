@@ -58,7 +58,7 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 	BondProperty* bondTypeProperty = BondProperty::findInState(state, BondProperty::TypeProperty);
 
 	// Get simulation cell info.
-	SimulationCellObject* simulationCell = state.findObject<SimulationCellObject>();
+	SimulationCellObject* simulationCell = state.findObjectOfType<SimulationCellObject>();
 	if(!simulationCell)
 		throwException(tr("No simulation cell defined. Cannot write LAMMPS file."));
 

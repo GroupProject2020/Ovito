@@ -28,7 +28,6 @@
 #include <plugins/particles/util/ParticleOrderingFingerprint.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
-#include <core/dataset/pipeline/AsynchronousModifierApplication.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
@@ -38,12 +37,12 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 class OVITO_PARTICLES_EXPORT StructureIdentificationModifier : public AsynchronousModifier
 {
 	/// Give this modifier class its own metaclass.
-	class StructureIdentificationModifierClass : public ModifierClass 
+	class StructureIdentificationModifierClass : public AsynchronousModifier::OOMetaClass 
 	{
 	public:
 
 		/// Inherit constructor from base metaclass.
-		using ModifierClass::ModifierClass;
+		using AsynchronousModifier::OOMetaClass::OOMetaClass;
 
 		/// Asks the metaclass whether the modifier can be applied to the given input data.
 		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
@@ -95,6 +94,12 @@ public:
 		/// Returns the list of structure types to search for.
 		const QVector<bool>& typesToIdentify() const { return _typesToIdentify; }
 
+		/// Returns the number of identified particles of the given structure type.
+		qlonglong getTypeCount(int typeIndex) const {
+			if(_typeCounts && _typeCounts->size() > typeIndex) return _typeCounts->getInt64(typeIndex);
+			return 0;
+		}
+
 	protected:
 
 		/// Gives subclasses the possibility to post-process per-particle structure types
@@ -111,6 +116,7 @@ public:
 		QVector<bool> _typesToIdentify;
 		const PropertyPtr _structures;
 		ParticleOrderingFingerprint _inputFingerprint;
+		PropertyPtr _typeCounts;
 	};
 
 public:
@@ -153,35 +159,6 @@ private:
 
 	/// Controls whether the modifier colors particles based on their type.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, colorByType, setColorByType);
-};
-
-
-/**
- * \brief The type of ModifierApplication create for a StructureIdentificationModifier 
- *        when it is inserted into in a data pipeline.
- */
-class OVITO_PARTICLES_EXPORT StructureIdentificationModifierApplication : public AsynchronousModifierApplication
-{
-	Q_OBJECT
-	OVITO_CLASS(StructureIdentificationModifierApplication)
-
-public:
-
-	/// Constructor.
-	Q_INVOKABLE StructureIdentificationModifierApplication(DataSet* dataset) : AsynchronousModifierApplication(dataset) {}
-
-	/// Returns an array that contains the number of matching particles for each structure type.
-	const std::vector<size_t>& structureCounts() const { return _structureCounts; }
-
-	/// Sets the array containing the number of matching particles for each structure type.
-	void setStructureCounts(std::vector<size_t> counts) {
-		_structureCounts = std::move(counts);
-		notifyDependents(ReferenceEvent::ObjectStatusChanged);
-	}
-
-private:
-
-	std::vector<size_t> _structureCounts;
 };
 
 OVITO_END_INLINE_NAMESPACE

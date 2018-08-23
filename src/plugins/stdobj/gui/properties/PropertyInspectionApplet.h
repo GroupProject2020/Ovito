@@ -74,7 +74,7 @@ public:
 	QString selectedBundleId() const;
 
 	/// Returns the data object representing the data bundle that is currently selected.
-//	DataObject selectedBundleObject() const;
+	DataObject* selectedBundleObject() const;
 
 protected:
 
@@ -90,9 +90,6 @@ protected:
 	/// Determines whether the given property represents a color.
 	virtual bool isColorProperty(PropertyObject* property) const { return false; }
 
-	/// Returns the data object that represents the given data bundle.
-	virtual DataObject* lookupBundleObject(const PipelineFlowState& state, const QString& bundleId) const { return nullptr; }
-
 	/// Updates the list of data bundles displayed in the inspector.
 	void updateBundleList();
 
@@ -106,6 +103,11 @@ public Q_SLOTS:
 	/// Sets the filter expression.
 	void setFilterExpression(const QString& expression);
 
+protected Q_SLOTS:
+
+	/// Is called when the user selects a different bundle in the list.
+	virtual void currentBundleChanged();
+
 private Q_SLOTS:
 
 	/// Is called when the uer has changed the filter expression.
@@ -113,9 +115,6 @@ private Q_SLOTS:
 
 	/// Is called when an error during filter evaluation ocurred.
 	void onFilterStatusChanged(const QString& msgText);
-
-	/// Is called when the user selects a different bundle in the list.
-	void currentBundleChanged();
 
 private:
 

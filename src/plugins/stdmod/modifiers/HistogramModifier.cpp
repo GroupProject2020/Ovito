@@ -24,6 +24,7 @@
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <plugins/stdobj/properties/PropertyObject.h>
 #include <plugins/stdobj/series/DataSeriesObject.h>
+#include <plugins/stdobj/series/DataSeriesProperty.h>
 #include <plugins/stdobj/util/InputHelper.h>
 #include <plugins/stdobj/util/OutputHelper.h>
 #include <core/app/PluginManager.h>
@@ -151,7 +152,7 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 	}
 
 	PipelineFlowState output = input;	
-	OutputHelper oh(dataset(), output);
+	OutputHelper oh(dataset(), output, modApp);
 	
 	// Create storage for output selection.
 	PropertyPtr outputSelection;
@@ -169,7 +170,7 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 	FloatType intervalEnd = xAxisRangeEnd();
 
 	// Allocate output data array.
-	auto histogram = std::make_shared<PropertyStorage>(std::max(1, numberOfBins()), PropertyStorage::Int64, 1, 0, tr("Count"), true);
+	auto histogram = std::make_shared<PropertyStorage>(std::max(1, numberOfBins()), PropertyStorage::Int64, 1, 0, tr("Count"), true, DataSeriesProperty::YProperty);
 	auto histogramData = histogram->dataInt64();
 
 	if(property->size() > 0) {
@@ -272,7 +273,7 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 	}
 
 	// Output a data series object with the histogram data.
-	DataSeriesObject* seriesObj = oh.outputDataSeries(QStringLiteral("histogram/") + sourceProperty().nameWithComponent(), tr("Histogram [%1]").arg(sourceProperty().nameWithComponent()), std::move(histogram));
+	DataSeriesObject* seriesObj = oh.outputDataSeries(QStringLiteral("histogram/") + sourceProperty().nameWithComponent(), sourceProperty().nameWithComponent(), std::move(histogram));
 	seriesObj->setAxisLabelX(sourceProperty().nameWithComponent());
 	seriesObj->setIntervalStart(intervalStart);
 	seriesObj->setIntervalEnd(intervalEnd);

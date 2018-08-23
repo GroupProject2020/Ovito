@@ -49,11 +49,8 @@ public:
 	/// Lets the applet create the UI widget that is to be placed into the data inspector panel. 
 	virtual QWidget* createWidget(MainWindow* mainWindow) override;
 
-	/// Lets the applet update the contents displayed in the inspector.
-	virtual void updateDisplay(const PipelineFlowState& state, PipelineSceneNode* sceneNode) override;
-
 	/// Returns the plotting widget.
-	QwtPlot* plotWidget() const { return _plotWidget; }
+	DataSeriesPlotWidget* plotWidget() const { return _plotWidget; }
 
 protected:
 
@@ -62,15 +59,8 @@ protected:
 		return std::make_unique<PropertyExpressionEvaluator>();
 	}
 
-	/// Returns the data object that represents the given data bundle.
-	virtual DataObject* lookupBundleObject(const PipelineFlowState& state, const QString& bundleId) const override {
-		for(DataObject* obj : state.objects()) {
-			if(DataSeriesObject* series = dynamic_object_cast<DataSeriesObject>(obj)) {
-				if(series->identifier() == bundleId) return series;
-			}
-		}
-		return nullptr;
-	}
+	/// Is called when the user selects a different bundle in the list.
+	virtual void currentBundleChanged() override;
 
 private:
 

@@ -39,10 +39,10 @@ public:
 	using DataObject::OOMetaClass::OOMetaClass;
 
 	/// This helper method returns a standard property (if present) from the given pipeline state.
-	PropertyObject* findInState(const PipelineFlowState& state, int typeId, const QString& bundle = QString()) const;
+	PropertyObject* findInState(const PipelineFlowState& state, int typeId, const QString& bundleName = QString()) const;
 	
 	/// This helper method returns a specific user-defined property (if present) from the given pipeline state.
-	PropertyObject* findInState(const PipelineFlowState& state, const QString& name, const QString& bundle = QString()) const;
+	PropertyObject* findInState(const PipelineFlowState& state, const QString& name, const QString& bundleName = QString()) const;
 
 	/// Returns a human-readable name used for the property class in the user interface, e.g. 'Particles' or 'Bonds'.
 	const QString& propertyClassDisplayName() const { return _propertyClassDisplayName; }
@@ -133,6 +133,9 @@ public:
 		return _standardPropertyIds;
 	}
 
+	/// The data object type that bundles a set of properties.
+	OvitoClassPtr bundleObjectClass() const { return _bundleObjectClass; }
+
 protected:
 	
 	/// Registers a new standard property with this property meta class.
@@ -147,6 +150,12 @@ protected:
 	/// Sets the name by which this property class is referred to from Python scripts.
 	void setPythonName(const QString& name) { _pythonName = name; }
 	
+	/// Sets the data object type that bundles a set of properties of this class.
+	void setBundleObjectClass(const DataObject::OOMetaClass& dataObjectClass) { 
+		OVITO_ASSERT(dataObjectClass.isDerivedFrom(DataObject::OOClass()));
+		_bundleObjectClass = &dataObjectClass; 
+	}
+
 	/// Gives the property class the opportunity to set up a newly created property object.
 	virtual void prepareNewProperty(PropertyObject* property) const {}
 	
@@ -178,7 +187,10 @@ private:
 	QMap<int, QStringList> _standardPropertyComponents;
 
 	/// Mapping from standard property type ID to property data type.
-	QMap<int, int> _standardPropertyDataTypes;		
+	QMap<int, int> _standardPropertyDataTypes;
+
+	/// The data object type that bundles a set of properties.
+	OvitoClassPtr _bundleObjectClass = nullptr;
 };
 
 }	// End of namespace

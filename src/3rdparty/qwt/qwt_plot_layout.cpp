@@ -1077,6 +1077,7 @@ void QwtPlotLayout::alignScales( Options options,
             const int rightOffset =
                 backboneOffset[QwtPlot::yRight] - endDist + 1;
 
+
             if ( rightScaleRect.isValid() )
             {
                 const double dx = rightOffset + rightScaleRect.width();

@@ -570,13 +570,12 @@ PipelineFlowState CommonNeighborAnalysisModifier::CNAEngine::emitResults(TimePoi
 	PipelineFlowState outState = StructureIdentificationEngine::emitResults(time, modApp, input);
 
 	// Also output structure type counts, which have been computed by the base class.
-	StructureIdentificationModifierApplication* myModApp = static_object_cast<StructureIdentificationModifierApplication>(modApp);
-	ParticleOutputHelper poh(modApp->dataset(), outState);
-	poh.outputAttribute(QStringLiteral("CommonNeighborAnalysis.counts.OTHER"), QVariant::fromValue(myModApp->structureCounts()[OTHER]));
-	poh.outputAttribute(QStringLiteral("CommonNeighborAnalysis.counts.FCC"), QVariant::fromValue(myModApp->structureCounts()[FCC]));
-	poh.outputAttribute(QStringLiteral("CommonNeighborAnalysis.counts.HCP"), QVariant::fromValue(myModApp->structureCounts()[HCP]));
-	poh.outputAttribute(QStringLiteral("CommonNeighborAnalysis.counts.BCC"), QVariant::fromValue(myModApp->structureCounts()[BCC]));
-	poh.outputAttribute(QStringLiteral("CommonNeighborAnalysis.counts.ICO"), QVariant::fromValue(myModApp->structureCounts()[ICO]));
+	PipelineOutputHelper poh(modApp->dataset(), outState, modApp);
+	poh.outputAttribute(QStringLiteral("CommonNeighborAnalysis.counts.OTHER"), QVariant::fromValue(getTypeCount(OTHER)));
+	poh.outputAttribute(QStringLiteral("CommonNeighborAnalysis.counts.FCC"), QVariant::fromValue(getTypeCount(FCC)));
+	poh.outputAttribute(QStringLiteral("CommonNeighborAnalysis.counts.HCP"), QVariant::fromValue(getTypeCount(HCP)));
+	poh.outputAttribute(QStringLiteral("CommonNeighborAnalysis.counts.BCC"), QVariant::fromValue(getTypeCount(BCC)));
+	poh.outputAttribute(QStringLiteral("CommonNeighborAnalysis.counts.ICO"), QVariant::fromValue(getTypeCount(ICO)));
 
 	return outState;
 }
@@ -587,7 +586,7 @@ PipelineFlowState CommonNeighborAnalysisModifier::CNAEngine::emitResults(TimePoi
 PipelineFlowState CommonNeighborAnalysisModifier::BondCNAEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	PipelineFlowState output = CNAEngine::emitResults(time, modApp, input);
-	ParticleOutputHelper poh(modApp->dataset(), output);
+	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
 	poh.outputProperty<BondProperty>(cnaIndices());
 	return output;
 }

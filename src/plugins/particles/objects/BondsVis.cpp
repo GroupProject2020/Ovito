@@ -66,7 +66,7 @@ Box3 BondsVis::boundingBox(TimePoint time, DataObject* dataObject, PipelineScene
 	if(bondTopologyProperty->type() != BondProperty::TopologyProperty) bondTopologyProperty = nullptr;
 	BondProperty* bondPeriodicImageProperty = BondProperty::findInState(flowState, BondProperty::PeriodicImageProperty);
 	ParticleProperty* positionProperty = ParticleProperty::findInState(flowState, ParticleProperty::PositionProperty);
-	SimulationCellObject* simulationCell = flowState.findObject<SimulationCellObject>();
+	SimulationCellObject* simulationCell = flowState.findObjectOfType<SimulationCellObject>();
 
 	// The key type used for caching the computed bounding box:
 	using CacheKey = std::tuple<
@@ -135,7 +135,7 @@ void BondsVis::render(TimePoint time, DataObject* dataObject, const PipelineFlow
 	if(bondTopologyProperty->type() != BondProperty::TopologyProperty) bondTopologyProperty = nullptr;
 	BondProperty* bondPeriodicImageProperty = BondProperty::findInState(flowState, BondProperty::PeriodicImageProperty);
 	ParticleProperty* positionProperty = ParticleProperty::findInState(flowState, ParticleProperty::PositionProperty);
-	SimulationCellObject* simulationCell = flowState.findObject<SimulationCellObject>();
+	SimulationCellObject* simulationCell = flowState.findObjectOfType<SimulationCellObject>();
 	ParticleProperty* particleColorProperty = ParticleProperty::findInState(flowState, ParticleProperty::ColorProperty);
 	ParticleProperty* particleTypeProperty = ParticleProperty::findInState(flowState, ParticleProperty::TypeProperty);
 	BondProperty* bondTypeProperty = BondProperty::findInState(flowState, BondProperty::TypeProperty);
@@ -397,7 +397,7 @@ QString BondPickInfo::infoString(PipelineSceneNode* objectNode, quint32 subobjec
 			const Point3& p2 = posProperty->getPoint3(index2);
 			Vector3 delta = p2 - p1;
 			if(BondProperty* periodicImageProperty = BondProperty::findInState(pipelineState(), BondProperty::PeriodicImageProperty)) {
-				if(SimulationCellObject* simCell = pipelineState().findObject<SimulationCellObject>()) {
+				if(SimulationCellObject* simCell = pipelineState().findObjectOfType<SimulationCellObject>()) {
 					delta += simCell->cellMatrix() * Vector3(periodicImageProperty->getVector3I(bondIndex));
 				}
 			}

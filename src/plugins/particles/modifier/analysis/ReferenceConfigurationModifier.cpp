@@ -63,7 +63,7 @@ ReferenceConfigurationModifier::ReferenceConfigurationModifier(DataSet* dataset)
 ******************************************************************************/
 bool ReferenceConfigurationModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<ParticleProperty>() != nullptr;
+	return input.findObjectOfType<ParticleProperty>() != nullptr;
 }
 	
 /******************************************************************************

@@ -56,6 +56,12 @@ public:
 	/// Return the output data of the Modifier being edited (for the selected ModifierApplication).
 	PipelineFlowState getModifierOutput();
 
+Q_SIGNALS:
+
+	/// \brief This signal is emitted whenever the current modifier has generated new results as part of a 
+	///        pipeline re-evaluation.
+    void modifierEvaluated();
+
 protected:
 
 	/// This method is called when a reference target changes.

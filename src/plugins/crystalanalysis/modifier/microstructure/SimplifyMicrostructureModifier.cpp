@@ -56,7 +56,7 @@ SimplifyMicrostructureModifier::SimplifyMicrostructureModifier(DataSet* dataset)
 ******************************************************************************/
 bool SimplifyMicrostructureModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<MicrostructureObject>() != nullptr;
+	return input.findObjectOfType<MicrostructureObject>() != nullptr;
 }
 
 /******************************************************************************
@@ -66,7 +66,7 @@ bool SimplifyMicrostructureModifier::OOMetaClass::isApplicableTo(const PipelineF
 Future<AsynchronousModifier::ComputeEnginePtr> SimplifyMicrostructureModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get modifier input.
-	MicrostructureObject* microstructure = input.findObject<MicrostructureObject>();
+	MicrostructureObject* microstructure = input.findObjectOfType<MicrostructureObject>();
 	if(!microstructure)
 		throwException(tr("No microstructure found in the modifier's input."));
 
@@ -148,10 +148,10 @@ void SimplifyMicrostructureModifier::SimplifyMicrostructureEngine::smoothMeshIte
 PipelineFlowState SimplifyMicrostructureModifier::SimplifyMicrostructureEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	PipelineFlowState output = input;
-	OutputHelper oh(modApp->dataset(), output);
+	OutputHelper oh(modApp->dataset(), output, modApp);
 
     // Replace input microstructure with computed output microstructure.
-	if(MicrostructureObject* inputMicrostructure = input.findObject<MicrostructureObject>()) {
+	if(MicrostructureObject* inputMicrostructure = input.findObjectOfType<MicrostructureObject>()) {
 		MicrostructureObject* outputMicrostructure = oh.cloneIfNeeded(inputMicrostructure);
         outputMicrostructure->setStorage(microstructure());
     }

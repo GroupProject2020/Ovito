@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -26,7 +26,7 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
-IMPLEMENT_OVITO_CLASS(DataObject);	
+IMPLEMENT_OVITO_CLASS(DataObject);
 DEFINE_PROPERTY_FIELD(DataObject, identifier);
 DEFINE_REFERENCE_FIELD(DataObject, visElements);
 SET_PROPERTY_FIELD_LABEL(DataObject, visElements, "Visual elements");
@@ -81,6 +81,22 @@ void DataObject::loadFromStream(ObjectLoadStream& stream)
 	RefTarget::loadFromStream(stream);
 	stream.expectChunk(0x02);
 	stream.closeChunk();
+}
+
+/******************************************************************************
+* Returns the pipeline object that created this data object (may be NULL).
+******************************************************************************/
+PipelineObject* DataObject::dataSource() const
+{
+	return _dataSource;
+}
+
+/******************************************************************************
+* Returns the pipeline object that created this data object (may be NULL).
+******************************************************************************/
+void DataObject::setDataSource(PipelineObject* dataSource)
+{
+	_dataSource = dataSource;
 }
 
 OVITO_END_INLINE_NAMESPACE

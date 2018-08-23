@@ -117,7 +117,7 @@ void PolyhedralTemplateMatchingModifierEditor::createUI(const RolloutInsertionPa
 ******************************************************************************/
 bool PolyhedralTemplateMatchingModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(source == modifierApplication() && event.type() == ReferenceEvent::ObjectStatusChanged) {
+	if(source == modifierApplication() && event.type() == ReferenceEvent::PipelineCacheUpdated) {
 		plotHistogramLater(this);
 	}
 	return ModifierPropertiesEditor::referenceEvent(source, event);
@@ -137,10 +137,17 @@ void PolyhedralTemplateMatchingModifierEditor::plotHistogram()
 		_rmsdRangeIndicator->hide();
 	}
 
-	DataSeriesObject* series = nullptr;
-	if(PolyhedralTemplateMatchingModifierApplication* modApp = dynamic_object_cast<PolyhedralTemplateMatchingModifierApplication>(modifierApplication()))
-		series = modApp->rmsdHistogram();
-	_rmsdPlotWidget->setSeries(series);
+	if(modifier) {
+		// Request the modifier's pipeline output.
+		const PipelineFlowState& state = getModifierOutput();
+
+		// Look up the data series in the modifier's pipeline output.
+		DataSeriesObject* series = state.findObject<DataSeriesObject>(QStringLiteral("ptm/rmsd"), modifierApplication());
+		_rmsdPlotWidget->setSeries(series, state);
+	}
+	else {
+		_rmsdPlotWidget->reset();
+	}
 }
 
 OVITO_END_INLINE_NAMESPACE

@@ -200,7 +200,7 @@ PipelineFlowState ScatterPlotModifier::evaluatePreliminary(TimePoint time, Modif
 	PropertyPtr outputSelection;
 	size_t numSelected = 0;
 	if(selectXAxisInRange() || selectYAxisInRange()) {
-		outputSelection = OutputHelper(dataset(), output).outputStandardProperty(*propertyClass(), PropertyStorage::GenericSelectionProperty, false)->modifiableStorage();
+		outputSelection = OutputHelper(dataset(), output, modApp).outputStandardProperty(*propertyClass(), PropertyStorage::GenericSelectionProperty, false)->modifiableStorage();
 		std::fill(outputSelection->dataInt(), outputSelection->dataInt() + outputSelection->size(), 1);
 		numSelected = outputSelection->size();
 	}

@@ -80,29 +80,8 @@ public:
 	Type type() const { return static_cast<Type>(PropertyObject::type()); }
 
 	/// This helper method returns a standard data series property (if present) from the given pipeline state.
-	static DataSeriesProperty* findInState(const PipelineFlowState& state, DataSeriesProperty::Type type) {
-		return static_object_cast<DataSeriesProperty>(OOClass().findInState(state, type));
-	}
-
-	/// This helper method returns a specific user-defined data series property (if present) from the given pipeline state.
-	static DataSeriesProperty* findInState(const PipelineFlowState& state, const QString& name) {
-		return static_object_cast<DataSeriesProperty>(OOClass().findInState(state, name));
-	}
-
-	/// Returns all property objects that belong to the given property bundle.
-	static QVector<DataSeriesProperty*> getBundle(const PipelineFlowState& state, const QString& bundleName) {
-		QVector<DataSeriesProperty*> props;
-		for(DataObject* obj : state.objects()) {
-			if(DataSeriesProperty* property = dynamic_object_cast<DataSeriesProperty>(obj)) {
-				if(property->bundle() == bundleName) props.push_back(property);
-			}
-		}
-		return props;
-	}
-
-	/// Create a storage object for standard data series properties.
-	static PropertyPtr createStandardStorage(size_t elementCount, DataSeriesProperty::Type type, bool initializeMemory) {
-		return OOClass().createStandardStorage(elementCount, type, initializeMemory);
+	static DataSeriesProperty* findInState(const PipelineFlowState& state, DataSeriesProperty::Type type, const QString& bundleName) {
+		return static_object_cast<DataSeriesProperty>(OOClass().findInState(state, type, bundleName));
 	}
 
 	/// Creates a new instace of the property object type.

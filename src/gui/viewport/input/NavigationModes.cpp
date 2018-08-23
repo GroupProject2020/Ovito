@@ -282,8 +282,8 @@ void FOVMode::modifyView(ViewportWindow* vpwin, Viewport* vp, QPointF delta)
 	FloatType newFOV;
 	if(vp->isPerspectiveProjection()) {
 		newFOV = oldFOV + (FloatType)delta.y() * FloatType(2e-3);
-		newFOV = std::max(newFOV, (FloatType)(5.0f * FLOATTYPE_PI / 180.0f));
-		newFOV = std::min(newFOV, (FloatType)(170.0f * FLOATTYPE_PI / 180.0f));
+		newFOV = std::max(newFOV, qDegreesToRadians(FloatType(5.0)));
+		newFOV = std::min(newFOV, qDegreesToRadians(FloatType(170.0)));
 	}
 	else {
 		newFOV = oldFOV * (FloatType)exp(FloatType(6e-3) * delta.y());

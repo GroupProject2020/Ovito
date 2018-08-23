@@ -141,7 +141,7 @@ PipelineFlowState FreezePropertyModifier::evaluatePreliminary(TimePoint time, Mo
 {
 	PipelineFlowState output = input;
 	InputHelper ih(dataset(), input);
-	OutputHelper oh(dataset(), output);
+	OutputHelper oh(dataset(), output, modApp);
 	
 	if(!propertyClass())
 		throwException(tr("No property class selected."));

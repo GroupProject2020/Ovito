@@ -77,7 +77,7 @@ PipelineStatus ExpressionSelectionModifierDelegate::apply(Modifier* modifier, co
 	std::atomic_size_t nselected(0);
 
 	// Generate the output selection property.
-	OutputHelper oh(dataset(), output);
+	OutputHelper oh(dataset(), output, modApp);
 	const PropertyPtr& selProperty = createOutputSelectionProperty(oh)->modifiableStorage();
 
 	// Evaluate Boolean expression for every input data element.

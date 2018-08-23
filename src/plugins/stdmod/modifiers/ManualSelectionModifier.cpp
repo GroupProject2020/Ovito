@@ -81,7 +81,7 @@ PipelineFlowState ManualSelectionModifier::evaluatePreliminary(TimePoint time, M
 {
 	PipelineFlowState output = input;
 	InputHelper pih(dataset(), input);
-	OutputHelper poh(dataset(), output);
+	OutputHelper poh(dataset(), output, modApp);
 
 	// Retrieve the selection stored in the modifier application.
 	ElementSelectionSet* selectionSet = getSelectionSet(modApp, false);

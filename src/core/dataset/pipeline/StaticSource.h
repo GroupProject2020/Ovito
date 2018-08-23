@@ -52,7 +52,6 @@ public:
 	StaticSource(DataSet* dataset, const PipelineFlowState& state) : StaticSource(dataset) {
 		for(DataObject* obj : state.objects())
 			_dataObjects.push_back(this, PROPERTY_FIELD(dataObjects), obj);
-		setAttributes(state.attributes());
 	}
 	
 	/// \brief Asks the object for the result of the data pipeline.
@@ -79,26 +78,6 @@ public:
 		}
 		return nullptr;
 	}
-
-	/// Removes all attributes that will be passed along with the data objects.
-	void clearAttributes() {
-		if(attributes().empty()) return;
-		setAttributes({});
-	}
-
-	/// Removes the attribute with the given name if it exists.
-	void removeAttribute(const QString& name) {
-		QVariantMap newAttr = attributes();
-		if(newAttr.remove(name))
-			setAttributes(std::move(newAttr));
-	}
-
-	/// Adds or replaces an attribute with the given name.
-	void setAttribute(const QString& name, const QVariant& value) {
-		QVariantMap newAttr = attributes();
-		newAttr.insert(name, value);
-		setAttributes(std::move(newAttr));
-	}
 	
 	/// Returns the number of sub-objects that should be displayed in the modifier stack.
 	virtual int editableSubObjectCount() override;
@@ -118,9 +97,6 @@ private:
 
 	/// The list of data objects owned by this source.
 	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD_FLAGS(DataObject, dataObjects, setDataObjects, PROPERTY_FIELD_ALWAYS_DEEP_COPY);
-
-	/// Global attributes that are passed along with the data objects.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(QVariantMap, attributes, setAttributes);
 };
 
 OVITO_END_INLINE_NAMESPACE

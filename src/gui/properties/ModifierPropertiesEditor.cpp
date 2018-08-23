@@ -45,6 +45,9 @@ bool ModifierPropertiesEditor::referenceEvent(RefTarget* source, const Reference
 	if(source == modifierApplication() && event.type() == ReferenceEvent::ObjectStatusChanged) {
 		updateStatusLabel();
 	}
+	else if(source == modifierApplication() && event.type() == ReferenceEvent::PipelineCacheUpdated) {
+		Q_EMIT modifierEvaluated();
+	}
 	return PropertiesEditor::referenceEvent(source, event);
 }
 

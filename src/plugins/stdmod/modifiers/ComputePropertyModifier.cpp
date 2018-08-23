@@ -212,7 +212,7 @@ ComputePropertyModifierDelegate::PropertyComputeEngine::PropertyComputeEngine(
 	OVITO_ASSERT(_expressions.size() == this->outputProperty()->componentCount());
 	
 	// Initialize expression evaluator.
-	_evaluator->initialize(_expressions, input, propertyClass, _frameNumber);
+	_evaluator->initialize(_expressions, input, propertyClass, QString(), _frameNumber);
 }
 
 /******************************************************************************
@@ -240,7 +240,7 @@ PipelineFlowState ComputePropertyModifierDelegate::PropertyComputeEngine::emitRe
 		modifier->throwException(tr("No delegate set for the Compute Property modifier."));
 
 	PipelineFlowState output = input;
-	OutputHelper poh(modifier->dataset(), output);
+	OutputHelper poh(modifier->dataset(), output, modApp);
 	PropertyObject* outputPropertyObj = poh.outputProperty(modifier->delegate()->propertyClass(), outputProperty());
 
 	if(myModApp) {

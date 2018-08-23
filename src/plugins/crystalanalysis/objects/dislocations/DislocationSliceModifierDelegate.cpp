@@ -22,6 +22,7 @@
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <plugins/stdobj/util/OutputHelper.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include "DislocationSliceModifierDelegate.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
@@ -42,7 +43,7 @@ PipelineStatus DislocationSliceModifierDelegate::apply(Modifier* modifier, const
 	FloatType sliceWidth;
 	std::tie(plane, sliceWidth) = mod->slicingPlane(time, output.mutableStateValidity());
 	
-	OutputHelper oh(dataset(), output);
+	OutputHelper oh(dataset(), output, modApp);
 	for(DataObject* obj : output.objects()) {
 		if(DislocationNetworkObject* inputDislocations = dynamic_object_cast<DislocationNetworkObject>(obj)) {
 			DislocationNetworkObject* outputDislocations = oh.cloneIfNeeded(inputDislocations);

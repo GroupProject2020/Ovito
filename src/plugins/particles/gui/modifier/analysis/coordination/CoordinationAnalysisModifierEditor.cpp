@@ -21,7 +21,6 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <plugins/particles/modifier/analysis/coordination/CoordinationAnalysisModifier.h>
-#include <gui/mainwin/MainWindow.h>
 #include <gui/properties/IntegerParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
 #include <gui/properties/BooleanParameterUI.h>
@@ -73,11 +72,6 @@ void CoordinationAnalysisModifierEditor::createUI(const RolloutInsertionParamete
 	layout->addWidget(_rdfPlot);
 	connect(this, &CoordinationAnalysisModifierEditor::contentsReplaced, this, &CoordinationAnalysisModifierEditor::plotRDF);
 
-	layout->addSpacing(12);
-	QPushButton* saveDataButton = new QPushButton(tr("Export data to text file"));
-	layout->addWidget(saveDataButton);
-	connect(saveDataButton, &QPushButton::clicked, this, &CoordinationAnalysisModifierEditor::onSaveData);
-
 	// Status label.
 	layout->addSpacing(6);
 	layout->addWidget(statusLabel());
@@ -88,7 +82,7 @@ void CoordinationAnalysisModifierEditor::createUI(const RolloutInsertionParamete
 ******************************************************************************/
 bool CoordinationAnalysisModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(source == modifierApplication() && event.type() == ReferenceEvent::ObjectStatusChanged) {
+	if(source == modifierApplication() && event.type() == ReferenceEvent::PipelineCacheUpdated) {
 		plotRDFLater(this);
 	}
 	return ModifierPropertiesEditor::referenceEvent(source, event);
@@ -99,18 +93,20 @@ bool CoordinationAnalysisModifierEditor::referenceEvent(RefTarget* source, const
 ******************************************************************************/
 void CoordinationAnalysisModifierEditor::plotRDF()
 {
-	DataSeriesObject* series = nullptr;
-	if(CoordinationAnalysisModifierApplication* modApp = dynamic_object_cast<CoordinationAnalysisModifierApplication>(modifierApplication()))
-		series = modApp->rdf();
+	// Request the modifier's pipeline output.
+	const PipelineFlowState& state = getModifierOutput();
+
+	// Look up the data series in the modifier's pipeline output.
+	DataSeriesObject* series = state.findObject<DataSeriesObject>(QStringLiteral("coordination/rdf"), modifierApplication());
 
 	// Determine X plotting range.
 	if(series) {
-		const auto& rdfY = series->y();
+		const auto& rdfY = series->getYStorage(state);
 		double minX = 0;
 		for(size_t i = 0; i < rdfY->size(); i++) {
 			for(size_t cmpnt = 0; cmpnt < rdfY->componentCount(); cmpnt++) {
 				if(rdfY->getFloatComponent(i, cmpnt) != 0) {
-					minX = series->getXValue(i);
+					minX = series->getXStorage(state)->getFloat(i);
 					break;
 				}
 			}
@@ -118,52 +114,7 @@ void CoordinationAnalysisModifierEditor::plotRDF()
 		}
 		_rdfPlot->setAxisScale(QwtPlot::xBottom, std::floor(minX * 9.0 / series->intervalEnd()) / 10.0 * series->intervalEnd(), series->intervalEnd());
 	}
-	_rdfPlot->setSeries(series);
-}
-
-/******************************************************************************
-* This is called when the user has clicked the "Save Data" button.
-******************************************************************************/
-void CoordinationAnalysisModifierEditor::onSaveData()
-{
-	OORef<CoordinationAnalysisModifierApplication> modApp = dynamic_object_cast<CoordinationAnalysisModifierApplication>(modifierApplication());
-	if(!modApp)
-		return;
-
-	QString fileName = QFileDialog::getSaveFileName(mainWindow(),
-	    tr("Save RDF Data"), QString(), tr("Text files (*.txt);;All files (*)"));
-	if(fileName.isEmpty())
-		return;
-
-	try {
-		if(!modApp->rdf())
-			modApp->throwException(tr("RDF has not been computed yet"));
-		const auto& rdfY = modApp->rdf()->y();
-
-		QFile file(fileName);
-		if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
-			modApp->throwException(tr("Could not open file for writing: %1").arg(file.errorString()));
-
-		QTextStream stream(&file);
-
-		stream << "# bin r";
-		if(rdfY->componentNames().empty())
-			stream << " g(r)";
-		else {
-			for(const QString& name : rdfY->componentNames())
-				stream << " g[" << name << "](r)";
-		}
-		stream << endl;
-		for(size_t i = 0; i < rdfY->size(); i++) {
-			stream << i << "\t" << modApp->rdf()->getXValue(i);
-			for(size_t j = 0; j < rdfY->componentCount(); j++)
-				stream << "\t" << rdfY->getFloatComponent(i, j);
-			stream << endl;
-		}
-	}
-	catch(const Exception& ex) {
-		ex.reportError();
-	}
+	_rdfPlot->setSeries(series, state);
 }
 
 OVITO_END_INLINE_NAMESPACE

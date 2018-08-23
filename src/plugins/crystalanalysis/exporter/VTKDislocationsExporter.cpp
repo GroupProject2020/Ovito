@@ -102,7 +102,7 @@ bool VTKDislocationsExporter::exportFrame(int frameNumber, TimePoint time, const
 
 	// Look up the RenderableDislocationLines object in the pipeline state.
 	const PipelineFlowState& state = evalFuture.result();
-	RenderableDislocationLines* renderableLines = state.findObject<RenderableDislocationLines>();
+	RenderableDislocationLines* renderableLines = state.findObjectOfType<RenderableDislocationLines>();
 	if(!renderableLines)
 		throwException(tr("The object to be exported does not contain any exportable dislocation line data."));
 

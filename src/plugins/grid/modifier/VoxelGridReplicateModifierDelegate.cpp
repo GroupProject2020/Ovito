@@ -26,6 +26,7 @@
 #include <plugins/stdobj/util/InputHelper.h>
 #include <plugins/stdobj/util/OutputHelper.h>
 #include <core/dataset/DataSet.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
 #include "VoxelGridReplicateModifierDelegate.h"
 
 namespace Ovito { namespace Grid {
@@ -37,7 +38,7 @@ IMPLEMENT_OVITO_CLASS(VoxelGridReplicateModifierDelegate);
 ******************************************************************************/
 bool VoxelGridReplicateModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<VoxelGrid>() != nullptr;
+	return input.findObjectOfType<VoxelGrid>() != nullptr;
 }
 
 /******************************************************************************
@@ -47,7 +48,7 @@ PipelineStatus VoxelGridReplicateModifierDelegate::apply(Modifier* modifier, con
 {
 	ReplicateModifier* mod = static_object_cast<ReplicateModifier>(modifier);
 
-	OORef<VoxelGrid> existingVoxelGrid = input.findObject<VoxelGrid>();
+	OORef<VoxelGrid> existingVoxelGrid = input.findObjectOfType<VoxelGrid>();
 	if(!existingVoxelGrid || !existingVoxelGrid->domain())
 		return PipelineStatus::Success;
 	
@@ -63,7 +64,7 @@ PipelineStatus VoxelGridReplicateModifierDelegate::apply(Modifier* modifier, con
 	Box3I newImages = mod->replicaRange();
 
 	InputHelper ih(dataset(), input);
-	OutputHelper oh(dataset(), output);
+	OutputHelper oh(dataset(), output, modApp);
 
 	// Create the output copy of the input grid.
 	VoxelGrid* newVoxelGrid = oh.cloneIfNeeded(existingVoxelGrid.get());

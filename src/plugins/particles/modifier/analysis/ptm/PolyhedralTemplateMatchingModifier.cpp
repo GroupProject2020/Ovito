@@ -22,12 +22,14 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/util/NearestNeighborFinder.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
+#include <plugins/stdobj/series/DataSeriesObject.h>
+#include <plugins/stdobj/series/DataSeriesProperty.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <core/utilities/concurrent/ParallelFor.h>
 #include <core/utilities/concurrent/PromiseState.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
-#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include "PolyhedralTemplateMatchingModifier.h"
 
 #include <ptm/ptm_functions.h>
@@ -50,10 +52,6 @@ SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputDeformationGr
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputOrderingTypes, "Output ordering types");
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, orderingTypes, "Ordering types");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(PolyhedralTemplateMatchingModifier, rmsdCutoff, FloatParameterUnit, 0);
-
-IMPLEMENT_OVITO_CLASS(PolyhedralTemplateMatchingModifierApplication);
-DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifierApplication, rmsdHistogram);
-SET_MODIFIER_APPLICATION_TYPE(PolyhedralTemplateMatchingModifier, PolyhedralTemplateMatchingModifierApplication);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -264,7 +262,7 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 
 	// Determine histogram bin size based on maximum RMSD value.
 	const size_t numHistogramBins = 100;
-	_rmsdHistogram = std::make_shared<PropertyStorage>(numHistogramBins, PropertyStorage::Int64, 1, 0, tr("Count"), true); 
+	_rmsdHistogram = std::make_shared<PropertyStorage>(numHistogramBins, PropertyStorage::Int64, 1, 0, tr("Count"), true, DataSeriesProperty::YProperty); 
 	FloatType rmsdHistogramBinSize = FloatType(1.01) * *std::max_element(rmsd()->constDataFloat(), rmsd()->constDataFloat() + rmsd()->size()) / numHistogramBins;
 	if(rmsdHistogramBinSize <= 0) rmsdHistogramBinSize = 1;
 	_rmsdHistogramRange = rmsdHistogramBinSize * numHistogramBins;
@@ -314,19 +312,18 @@ PropertyPtr PolyhedralTemplateMatchingModifier::PTMEngine::postProcessStructureT
 PipelineFlowState PolyhedralTemplateMatchingModifier::PTMEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	PipelineFlowState output = StructureIdentificationEngine::emitResults(time, modApp, input);
+	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
 	
 	// Also output structure type counts, which have been computed by the base class.
-	StructureIdentificationModifierApplication* myModApp = static_object_cast<StructureIdentificationModifierApplication>(modApp);
-	ParticleOutputHelper poh(modApp->dataset(), output);
-	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.OTHER"), QVariant::fromValue(myModApp->structureCounts()[OTHER]));
-	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.FCC"), QVariant::fromValue(myModApp->structureCounts()[FCC]));
-	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.HCP"), QVariant::fromValue(myModApp->structureCounts()[HCP]));
-	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.BCC"), QVariant::fromValue(myModApp->structureCounts()[BCC]));
-	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.ICO"), QVariant::fromValue(myModApp->structureCounts()[ICO]));
-	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.SC"), QVariant::fromValue(myModApp->structureCounts()[SC]));
-	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.CUBIC_DIAMOND"), QVariant::fromValue(myModApp->structureCounts()[CUBIC_DIAMOND]));
-	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.HEX_DIAMOND"), QVariant::fromValue(myModApp->structureCounts()[HEX_DIAMOND]));
-	
+	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.OTHER"), QVariant::fromValue(getTypeCount(OTHER)));
+	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.FCC"), QVariant::fromValue(getTypeCount(FCC)));
+	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.HCP"), QVariant::fromValue(getTypeCount(HCP)));
+	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.BCC"), QVariant::fromValue(getTypeCount(BCC)));
+	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.ICO"), QVariant::fromValue(getTypeCount(ICO)));
+	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.SC"), QVariant::fromValue(getTypeCount(SC)));
+	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.CUBIC_DIAMOND"), QVariant::fromValue(getTypeCount(CUBIC_DIAMOND)));
+	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.HEX_DIAMOND"), QVariant::fromValue(getTypeCount(HEX_DIAMOND)));
+
 	PolyhedralTemplateMatchingModifier* modifier = static_object_cast<PolyhedralTemplateMatchingModifier>(modApp->modifier());
 	OVITO_ASSERT(modifier);
 
@@ -350,18 +347,11 @@ PipelineFlowState PolyhedralTemplateMatchingModifier::PTMEngine::emitResults(Tim
 	}
 
 	// Output RMSD histogram.
-	OORef<DataSeriesObject> seriesObj = new DataSeriesObject(modApp->dataset());
-	seriesObj->setIdentifier(poh.generateUniqueSeriesIdentifier(QStringLiteral("ptm/rmsd")));
-	seriesObj->setTitle(tr("RMSD distribution"));
-	seriesObj->setY(rmsdHistogram());
+	DataSeriesObject* seriesObj = poh.outputDataSeries(QStringLiteral("ptm/rmsd"), tr("RMSD distribution"), rmsdHistogram());
 	seriesObj->setAxisLabelX(tr("RMSD"));
 	seriesObj->setIntervalStart(0);
 	seriesObj->setIntervalEnd(rmsdHistogramRange());
-	output.addObject(seriesObj);
 
-	// Store the RMSD histogram in the ModifierApplication in order to display it in the modifier's UI panel.
-	static_object_cast<PolyhedralTemplateMatchingModifierApplication>(modApp)->setRmsdHistogram(std::move(seriesObj));
-	
 	return output;
 }
 

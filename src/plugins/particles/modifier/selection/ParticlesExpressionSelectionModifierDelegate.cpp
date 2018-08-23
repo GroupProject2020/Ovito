@@ -36,7 +36,7 @@ IMPLEMENT_OVITO_CLASS(BondsExpressionSelectionModifierDelegate);
 ******************************************************************************/
 bool ParticlesExpressionSelectionModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<ParticleProperty>() != nullptr;
+	return input.findObjectOfType<ParticleProperty>() != nullptr;
 }
 
 /******************************************************************************
@@ -62,7 +62,7 @@ PropertyObject* ParticlesExpressionSelectionModifierDelegate::createOutputSelect
 ******************************************************************************/
 bool BondsExpressionSelectionModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObject<BondProperty>() != nullptr;
+	return input.findObjectOfType<BondProperty>() != nullptr;
 }
 
 /******************************************************************************

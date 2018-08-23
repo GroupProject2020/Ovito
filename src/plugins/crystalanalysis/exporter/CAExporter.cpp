@@ -58,29 +58,29 @@ bool CAExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint t
 		throwException(tr("The object to be exported does not contain any data."));
 
 	// Get simulation cell info.
-	SimulationCellObject* simulationCell = state.findObject<SimulationCellObject>();
+	SimulationCellObject* simulationCell = state.findObjectOfType<SimulationCellObject>();
 	if(!simulationCell)
 		throwException(tr("Dataset to be exported contains no simulation cell. Cannot write CA file."));
 
 	// Get dislocation lines.
-	DislocationNetworkObject* dislocationObj = state.findObject<DislocationNetworkObject>();
+	DislocationNetworkObject* dislocationObj = state.findObjectOfType<DislocationNetworkObject>();
 
 	// Get defect/surface mesh.
-	SurfaceMesh* defectMesh = meshExportEnabled() ? state.findObject<SurfaceMesh>() : nullptr;
+	SurfaceMesh* defectMesh = meshExportEnabled() ? state.findObjectOfType<SurfaceMesh>() : nullptr;
 
 	// Get partition mesh.
-	PartitionMesh* partitionMesh = meshExportEnabled() ? state.findObject<PartitionMesh>() : nullptr;
+	PartitionMesh* partitionMesh = meshExportEnabled() ? state.findObjectOfType<PartitionMesh>() : nullptr;
 
 	if(!dislocationObj && !defectMesh && !partitionMesh)
 		throwException(tr("Dataset to be exported contains no dislocation lines nor a surface mesh. Cannot write CA file."));
 
 	// Get cluster graph.
-	ClusterGraphObject* clusterGraph = state.findObject<ClusterGraphObject>();
+	ClusterGraphObject* clusterGraph = state.findObjectOfType<ClusterGraphObject>();
 	if(dislocationObj && !clusterGraph)
 		throwException(tr("Dataset to be exported contains no cluster graph. Cannot write CA file."));
 
 	// Get pattern catalog.
-	PatternCatalog* patternCatalog = state.findObject<PatternCatalog>();
+	PatternCatalog* patternCatalog = state.findObjectOfType<PatternCatalog>();
 	if(dislocationObj && !patternCatalog)
 		throwException(tr("Dataset to be exported contains no structure pattern catalog. Cannot write CA file."));
 

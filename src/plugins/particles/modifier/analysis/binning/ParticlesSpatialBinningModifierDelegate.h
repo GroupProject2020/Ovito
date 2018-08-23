@@ -43,7 +43,7 @@ class ParticlesSpatialBinningModifierDelegate : public SpatialBinningModifierDel
 
 		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
 		virtual bool isApplicableTo(const PipelineFlowState& input) const override {
-			return input.findObject<ParticleProperty>() != nullptr;
+			return input.findObjectOfType<ParticleProperty>() != nullptr;
 		}
 
 		/// The name by which Python scripts can refer to this modifier delegate.
@@ -68,6 +68,7 @@ public:
 				TimePoint time, 
 				const PipelineFlowState& input,
 				const SimulationCell& cell,
+				int binDirection,
 				ConstPropertyPtr sourceProperty,
 				size_t sourceComponent, 
 				ConstPropertyPtr selectionProperty,
@@ -88,6 +89,7 @@ private:
 		ComputeEngine(
 				const TimeInterval& validityInterval, 
 				const SimulationCell& cell,
+				int binningDirection,
 				ConstPropertyPtr sourceProperty,
 				size_t sourceComponent, 
 				ConstPropertyPtr selection, 
@@ -97,7 +99,7 @@ private:
 				const Vector3I& binDir,
 				int reductionOperation,
 				bool computeFirstDerivative) :
-			SpatialBinningEngine(validityInterval, cell, std::move(sourceProperty), sourceComponent, std::move(selection), std::move(binData), binCount, binDir, reductionOperation, computeFirstDerivative), 
+			SpatialBinningEngine(validityInterval, cell, binningDirection, std::move(sourceProperty), sourceComponent, std::move(selection), std::move(binData), binCount, binDir, reductionOperation, computeFirstDerivative), 
 			_positions(std::move(positions)) {}
 				
 		/// This method is called by the system after the computation was successfully completed.
