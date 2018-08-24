@@ -21,6 +21,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/ParticlesVis.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/particles/objects/BondsVis.h>
 #include <plugins/particles/objects/BondProperty.h>
 #include <core/dataset/DataSet.h>
@@ -59,6 +60,17 @@ ParticleInputHelper::ParticleInputHelper(DataSet* dataset, const PipelineFlowSta
 }
 
 /******************************************************************************
+* Throws an exception if the input does not contain any particle data.
+******************************************************************************/
+ParticlesObject* ParticleInputHelper::expectParticles() const
+{
+	ParticlesObject* particles = input().findObjectOfType<ParticlesObject>();
+	if(!particles)
+		dataset()->throwException(ParticlesObject::tr("The input does not contain any particles."));
+	return particles;
+}
+
+/******************************************************************************
 * Returns the bond topology property.
 * Throws an exception if the input does not contain any bonds.
 ******************************************************************************/
@@ -66,7 +78,7 @@ BondProperty* ParticleInputHelper::expectBonds() const
 {
 	BondProperty* prop = inputStandardProperty<BondProperty>(BondProperty::TopologyProperty);
 	if(!prop)
-		dataset()->throwException(PropertyObject::tr("The modifier cannot be evaluated because the input does not contain any bonds."));
+		dataset()->throwException(PropertyObject::tr("The input does not contain any bonds."));
 	return prop;
 }
 

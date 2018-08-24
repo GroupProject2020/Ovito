@@ -20,8 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
@@ -36,17 +35,15 @@ IMPLEMENT_OVITO_CLASS(ParticlesSliceModifierDelegate);
 ******************************************************************************/
 PipelineStatus ParticlesSliceModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
+	ParticlesObject* inputParticles = input.expectObjectOfType<ParticlesObject>();
+	QString statusMessage = tr("%n input particles", 0, inputParticles->elementCount());
+
 	SliceModifier* mod = static_object_cast<SliceModifier>(modifier);
-	ParticleInputHelper pih(dataset(), input);
-	ParticleOutputHelper poh(dataset(), output, modApp);
-
-	QString statusMessage = tr("%n input particles", 0, pih.inputParticleCount());
-
-	boost::dynamic_bitset<> mask(pih.inputParticleCount());
+	boost::dynamic_bitset<> mask(inputParticles->elementCount());
 
 	// Get the required input properties.
-	ParticleProperty* const posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
-	ParticleProperty* const selProperty = mod->applyToSelection() ? pih.inputStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty) : nullptr;
+	PropertyObject* posProperty = inputParticles->expectProperty(ParticleProperty::PositionProperty);
+	PropertyObject* selProperty = mod->applyToSelection() ? inputParticles->getProperty(ParticleProperty::SelectionProperty) : nullptr;
 	OVITO_ASSERT(posProperty->size() == mask.size());
 	OVITO_ASSERT(!selProperty || selProperty->size() == mask.size());
 
@@ -54,7 +51,7 @@ PipelineStatus ParticlesSliceModifierDelegate::apply(Modifier* modifier, const P
 	Plane3 plane;
 	FloatType sliceWidth;
 	std::tie(plane, sliceWidth) = mod->slicingPlane(time, output.mutableStateValidity());
-	sliceWidth *= FloatType(0.5);
+	sliceWidth /= 2;
 
 	boost::dynamic_bitset<>::size_type i = 0;
 	const Point3* p = posProperty->constDataPoint3();
@@ -96,16 +93,18 @@ PipelineStatus ParticlesSliceModifierDelegate::apply(Modifier* modifier, const P
 		}
 	}
 
+	// Make sure we can safely modifiy the particles object.
+	ParticlesObject* outputParticles = output.cloneIfNeeded(inputParticles);
 	if(mod->createSelection() == false) {
 
 		// Delete the selected particles.
-		size_t numDeleted = poh.deleteParticles(mask);		
+		size_t numDeleted = outputParticles->deleteParticles(mask);
 		statusMessage += tr("\n%n particles deleted", 0, numDeleted);
-		statusMessage += tr("\n%n particles remaining", 0, pih.inputParticleCount() - numDeleted);
+		statusMessage += tr("\n%n particles remaining", 0, outputParticles->elementCount());
 	}
 	else {
 		size_t numSelected = 0;
-		ParticleProperty* selProperty = poh.outputStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty);
+		ParticleProperty* selProperty = outputParticles->createStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty);
 		OVITO_ASSERT(mask.size() == selProperty->size());
 		boost::dynamic_bitset<>::size_type i = 0;
 		for(int& s : selProperty->intRange()) {
@@ -117,7 +116,7 @@ PipelineStatus ParticlesSliceModifierDelegate::apply(Modifier* modifier, const P
 		}
 
 		statusMessage += tr("\n%n particles selected", 0, numSelected);
-		statusMessage += tr("\n%n particles unselected", 0, pih.inputParticleCount() - numSelected);
+		statusMessage += tr("\n%n particles unselected", 0, outputParticles->elementCount() - numSelected);
 	}
 
 	return PipelineStatus(PipelineStatus::Success, statusMessage);

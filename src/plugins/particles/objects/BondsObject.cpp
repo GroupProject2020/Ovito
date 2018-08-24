@@ -33,5 +33,33 @@ BondsObject::BondsObject(DataSet* dataset) : PropertyContainer(dataset)
 {
 }
 
+/******************************************************************************
+* Deletes the bonds for which bits are set in the given bit-mask.
+* Returns the number of deleted bonds.
+******************************************************************************/
+size_t BondsObject::deleteBonds(const boost::dynamic_bitset<>& mask)
+{
+	OVITO_ASSERT(mask.size() == elementCount());
+
+	size_t deleteCount = mask.count();
+	size_t oldBondCount = elementCount();
+	size_t newBondCount = oldBondCount - deleteCount;
+	if(deleteCount == 0)
+		return 0;	// Nothing to delete.
+
+    // Make sure the properties can be safely modified.
+    makePropertiesUnique();
+
+	// Modify bond properties.
+	for(PropertyObject* property : properties()) {
+        OVITO_ASSERT(property->size() == oldBondCount);
+        property->filterResize(mask);
+        OVITO_ASSERT(property->size() == newBondCount);
+	}
+    OVITO_ASSERT(elementCount() == newBondCount);
+
+	return deleteCount;
+}
+
 }	// End of namespace
 }	// End of namespace

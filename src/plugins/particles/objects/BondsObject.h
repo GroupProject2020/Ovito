@@ -46,6 +46,13 @@ public:
 
 	/// Returns the class of properties that this container can store.
 	virtual const PropertyClass& propertyClass() const override { return BondProperty::OOClass(); }
+
+	/// Convinience method that returns the bond topology property.
+	BondProperty* getTopology() const { return getProperty<BondProperty>(BondProperty::TopologyProperty); }
+
+	/// Deletes the bonds for which bits are set in the given bit-mask.
+	/// Returns the number of deleted bonds.
+	size_t deleteBonds(const boost::dynamic_bitset<>& mask);
 };
 
 }	// End of namespace

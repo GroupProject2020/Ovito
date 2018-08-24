@@ -39,6 +39,10 @@ public:
 	/// Constructor.
 	ParticleInputHelper(DataSet* dataset, const PipelineFlowState& input);
 
+	/// Throws an exception if the input does not contain any particle data.
+	/// Returns the ParticlesObject.
+	ParticlesObject* expectParticles() const;
+
 	/// Throws an exception if the input does not contain any bonds.
 	/// Returns the bond topology property.
 	BondProperty* expectBonds() const;

@@ -20,10 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
-#include <plugins/particles/objects/BondProperty.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
+#include <plugins/particles/objects/BondsObject.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include "ParticlesDeleteSelectedModifierDelegate.h"
@@ -38,7 +36,7 @@ IMPLEMENT_OVITO_CLASS(BondsDeleteSelectedModifierDelegate);
 ******************************************************************************/
 bool ParticlesDeleteSelectedModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<ParticleProperty>() != nullptr;
+	return input.findObjectOfType<ParticlesObject>() != nullptr;
 }
 
 /******************************************************************************
@@ -46,31 +44,42 @@ bool ParticlesDeleteSelectedModifierDelegate::OOMetaClass::isApplicableTo(const 
 ******************************************************************************/
 PipelineStatus ParticlesDeleteSelectedModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
-	ParticleInputHelper pih(dataset(), output); // Note: We treat the current output as input here.
-	ParticleOutputHelper poh(dataset(), output, modApp);
+	size_t numParticles = 0;
+	size_t numSelected = 0;
 
-	// Get the selection.
-	if(ParticleProperty* selProperty = pih.inputStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty)) {
+	// Get the particle selection.
+	if(ParticlesObject* inputParticles = output.findObjectOfType<ParticlesObject>()) {
+		if(PropertyObject* selProperty = inputParticles->getProperty(ParticleProperty::SelectionProperty)) {
 
-		// Generate filter mask.
-		boost::dynamic_bitset<> mask(pih.inputParticleCount());
-		boost::dynamic_bitset<>::size_type i = 0;
-		for(int s : selProperty->constIntRange()) {
-			mask.set(i++, s != 0);
+			// Generate filter mask.
+			boost::dynamic_bitset<> mask(selProperty->size());
+			boost::dynamic_bitset<>::size_type i = 0;
+			for(int s : selProperty->constIntRange()) {
+				if(s != 0) {
+					mask.set(i++);
+					numSelected++;
+				}
+				else {
+					mask.reset(i++);
+				}
+			}
+
+			if(numSelected) {
+				// Make sure we can safely modify the particles object.
+				ParticlesObject* outputParticles = output.cloneIfNeeded(inputParticles);
+
+				// Remove selection property.
+				outputParticles->removeProperty(selProperty);
+
+				// Delete the particles.
+				outputParticles->deleteParticles(mask);
+			}
 		}
-
-		// Remove selection property.
-		output.removeObject(selProperty);
-
-		// Delete the particles.
-		poh.deleteParticles(mask);
 	}
 
 	// Do some statistics:
-	size_t inputCount = ParticleInputHelper(dataset(), input).inputParticleCount();
-	size_t numDeleted = inputCount - poh.outputParticleCount();
-	QString statusMessage = tr("%n input particles", 0, inputCount);
-	statusMessage += tr("\n%n particles deleted (%1%)", 0, numDeleted).arg(numDeleted * 100 / std::max((int)inputCount, 1));
+	QString statusMessage = tr("%n input particles", 0, numParticles);
+	statusMessage += tr("\n%n particles deleted (%1%)", 0, numSelected).arg(numSelected * 100 / std::max(numParticles, (size_t)1));
 	
 	return PipelineStatus(PipelineStatus::Success, std::move(statusMessage));
 }
@@ -80,7 +89,9 @@ PipelineStatus ParticlesDeleteSelectedModifierDelegate::apply(Modifier* modifier
 ******************************************************************************/
 bool BondsDeleteSelectedModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<BondProperty>() != nullptr;
+	if(ParticlesObject* particles = input.findObjectOfType<ParticlesObject>())
+		return particles->bonds() != nullptr;
+	return false;
 }
 
 /******************************************************************************
@@ -88,31 +99,44 @@ bool BondsDeleteSelectedModifierDelegate::OOMetaClass::isApplicableTo(const Pipe
 ******************************************************************************/
 PipelineStatus BondsDeleteSelectedModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
-	ParticleInputHelper pih(dataset(), output); // Note: We treat the current output as input here.
-	ParticleOutputHelper poh(dataset(), output, modApp);
+	size_t numBonds = 0;
+	size_t numSelected = 0;
 
-	// Get the selection.
-	if(BondProperty* selProperty = pih.inputStandardProperty<BondProperty>(BondProperty::SelectionProperty)) {
+	// Get the bond selection.
+	if(ParticlesObject* inputParticles = output.findObjectOfType<ParticlesObject>()) {
+		if(BondsObject* inputBonds = inputParticles->bonds()) {
+			if(PropertyObject* selProperty = inputBonds->getProperty(BondProperty::SelectionProperty)) {
+				// Generate filter mask.
+				boost::dynamic_bitset<> mask(selProperty->size());
+				boost::dynamic_bitset<>::size_type i = 0;
+				for(int s : selProperty->constIntRange()) {
+					if(s != 0) {
+						mask.set(i++);
+						numSelected++;
+					}
+					else {
+						mask.reset(i++);
+					}
+				}
 
-		// Generate filter mask.
-		boost::dynamic_bitset<> mask(pih.inputBondCount());
-		boost::dynamic_bitset<>::size_type i = 0;
-		for(int s : selProperty->constIntRange()) {
-			mask.set(i++, s != 0);
+				if(numSelected) {
+					// Make sure we can safely modify the particles and the bonds object.
+					ParticlesObject* outputParticles = output.cloneIfNeeded(outputParticles);
+					BondsObject* outputBonds = outputParticles->makeBondsUnique();
+
+					// Remove selection property.
+					outputBonds->removeProperty(selProperty);
+
+					// Delete the bonds.
+					outputBonds->deleteBonds(mask);
+				}
+			}
 		}
-
-		// Remove selection property.
-		output.removeObject(selProperty);
-
-		// Delete the bonds.
-		poh.deleteBonds(mask);
 	}
 
 	// Do some statistics:
-	size_t inputCount = ParticleInputHelper(dataset(), input).inputBondCount();
-	size_t numDeleted = inputCount - poh.outputBondCount();
-	QString statusMessage = tr("%n input bonds", 0, inputCount);
-	statusMessage += tr("\n%n bonds deleted (%1%)", 0, numDeleted).arg(numDeleted * 100 / std::max((int)inputCount, 1));
+	QString statusMessage = tr("%n input bonds", 0, numBonds);
+	statusMessage += tr("\n%n bonds deleted (%1%)", 0, numSelected).arg(numSelected * 100 / std::max(numBonds, (size_t)1));
 	
 	return PipelineStatus(PipelineStatus::Success, std::move(statusMessage));
 }

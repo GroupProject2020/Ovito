@@ -27,6 +27,7 @@
 #include <core/oo/RefMaker.h>
 #include <core/dataset/pipeline/PipelineStatus.h>
 #include <core/dataset/data/DataObject.h>
+#include <core/oo/CloneHelper.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
@@ -124,12 +125,36 @@ public:
 	/// \brief Finds an object of the given type and with the given identifier in the list of data objects stored in this flow state.
 	DataObject* findObject(const DataObject::OOMetaClass& objectClass, const QString& identifier, PipelineObject* dataSource = nullptr) const;
 	
+	/// Throws an exception if the input does not contain any particle data.
+	template<class DataObjectClass>
+	DataObjectClass* expectObjectOfType() const {
+		if(DataObjectClass* obj = findObjectOfType<DataObjectClass>())
+			return obj;
+		else
+			throw Exception(DataObject::tr("The data collection does not contain any %1 object.").arg(DataObjectClass::OOClass().displayName()));
+	}
+
 	/// \brief Replaces the objects in this state with copies if there are multiple references to them.
 	///
 	/// After calling this method, none of the objects in the flow state is referenced by anybody else.
 	/// Thus, it becomes safe to modify the data objects.
 	void cloneObjectsIfNeeded(bool deepCopy);
 
+	/// Ensures that a DataObject from this flow state is not shared with others and is safe to modify.
+	template<class DataObjectClass>
+	DataObjectClass* cloneIfNeeded(DataObjectClass* obj, bool deepCopy = false) {
+		OVITO_ASSERT(contains(obj));
+		OVITO_ASSERT(obj->numberOfStrongReferences() >= 1);
+		if(obj->numberOfStrongReferences() > 1) {
+			OORef<DataObjectClass> clone = CloneHelper().cloneObject(obj, deepCopy);
+			if(replaceObject(obj, clone)) {
+				OVITO_ASSERT(clone->numberOfStrongReferences() == 1);
+				return clone;
+			}
+		}
+		return obj;
+	}
+	
 	/// \brief Tries to convert one of the to data objects stored in this flow state to the given object type.
 	OORef<DataObject> convertObject(const OvitoClass& objectClass, TimePoint time) const;
 

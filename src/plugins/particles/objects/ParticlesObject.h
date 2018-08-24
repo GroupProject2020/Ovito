@@ -48,6 +48,15 @@ public:
 	/// Returns the class of properties that this container can store.
 	virtual const PropertyClass& propertyClass() const override { return ParticleProperty::OOClass(); }
 
+	/// Deletes the particles for which bits are set in the given bit-mask.
+	/// Returns the number of deleted particles.
+	size_t deleteParticles(const boost::dynamic_bitset<>& mask);
+
+	/// Duplicates the BondsObject if it is shared with other particle objects.
+	/// After this method returns, all BondsObject are exclusively owned by the container and 
+	/// can be safely modified without unwanted side effects.
+	BondsObject* makeBondsUnique();
+
 private:
 
 	/// The bonds object.
