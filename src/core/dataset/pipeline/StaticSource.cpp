@@ -55,44 +55,6 @@ PipelineFlowState StaticSource::evaluatePreliminary()
     return PipelineFlowState(dataObjects(), TimeInterval::infinite(), PipelineStatus::Success);
 }
 
-/******************************************************************************
-* Returns the number of sub-objects that should be displayed in the modifier stack.
-******************************************************************************/
-int StaticSource::editableSubObjectCount()
-{
-	return dataObjects().size();
-}
-
-/******************************************************************************
-* Returns a sub-object that should be listed in the modifier stack.
-******************************************************************************/
-RefTarget* StaticSource::editableSubObject(int index)
-{
-	return dataObjects()[index];
-}
-
-/******************************************************************************
-* Is called when a RefTarget has been added to a VectorReferenceField of this RefMaker.
-******************************************************************************/
-void StaticSource::referenceInserted(const PropertyFieldDescriptor& field, RefTarget* newTarget, int listIndex)
-{
-	if(field == PROPERTY_FIELD(dataObjects))
-		notifyDependents(ReferenceEvent::SubobjectListChanged);
-
-    PipelineObject::referenceInserted(field, newTarget, listIndex);
-}
-
-/******************************************************************************
-* Is called when a RefTarget has been added to a VectorReferenceField of this RefMaker.
-******************************************************************************/
-void StaticSource::referenceRemoved(const PropertyFieldDescriptor& field, RefTarget* oldTarget, int listIndex)
-{
-	if(field == PROPERTY_FIELD(dataObjects))
-		notifyDependents(ReferenceEvent::SubobjectListChanged);
-
-    PipelineObject::referenceRemoved(field, oldTarget, listIndex);
-}
-
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

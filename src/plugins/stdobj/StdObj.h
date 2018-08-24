@@ -35,6 +35,7 @@ namespace Ovito {
         class OutputHelper;
         class PropertyObject;
         class PropertyStorage;
+        class PropertyContainer;
         using PropertyPtr = std::shared_ptr<PropertyStorage>;
         using ConstPropertyPtr = std::shared_ptr<const PropertyStorage>;
         class PropertyClass;

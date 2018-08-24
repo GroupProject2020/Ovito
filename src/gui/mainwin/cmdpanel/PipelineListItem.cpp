@@ -45,8 +45,8 @@ PipelineListItem::PipelineListItem(RefTarget* object, PipelineItemType itemType,
 ******************************************************************************/
 bool PipelineListItem::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	// The modifier stack list must be updated if a modifier has been added or removed
-	// from a PipelineObject.
+	// The list must be updated if a modifier has been added or removed
+	// from a PipelineObject, or if a data object has been added/removed from the data source.
 	if((event.type() == ReferenceEvent::ReferenceAdded || event.type() == ReferenceEvent::ReferenceRemoved || event.type() == ReferenceEvent::ReferenceChanged) && dynamic_object_cast<PipelineObject>(object()))
 	{
 		Q_EMIT subitemsChanged(this);
@@ -54,11 +54,6 @@ bool PipelineListItem::referenceEvent(RefTarget* source, const ReferenceEvent& e
 	/// Update item if it has been enabled/disabled, its status has changed, or its title has changed.
 	else if(event.type() == ReferenceEvent::TargetEnabledOrDisabled || event.type() == ReferenceEvent::ObjectStatusChanged || event.type() == ReferenceEvent::TitleChanged) {
 		Q_EMIT itemChanged(this);
-	}
-	/// If the list of sub-objects changes for one of the entries, we need
-	/// to update everything.
-	else if(event.type() == ReferenceEvent::SubobjectListChanged) {
-		Q_EMIT subitemsChanged(this);
 	}
 
 	return RefMaker::referenceEvent(source, event);

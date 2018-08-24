@@ -48,23 +48,23 @@ public:
 	/// \brief Lets the vis element render a data object.
 	///
 	/// \param time The animation time at which to render the object
-	/// \param dataObject The data object that should be rendered.
+	/// \param objectStack The data object to be rendered and its parent objects.
 	/// \param flowState The pipeline evaluation results of the object node.
 	/// \param renderer The renderer that should be used to produce the visualization.
 	/// \param contextNode The pipeline node that is being rendered.
 	///
 	/// The world transformation matrix is already set up when this method is called by the
 	/// system. The data has to be rendered in the local object coordinate system.
-	virtual void render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode) = 0;
+	virtual void render(TimePoint time, const std::vector<DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode) = 0;
 
 	/// \brief Computes the view-independent bounding box of the given data object.
 	/// \param time The animation time for which the bounding box should be computed.
-	/// \param dataObject The data object for which to compute the bounding box.
+	/// \param objectStack The data object for which to compute the bounding box and all its parent objects.
 	/// \param contextNode The pipeline node which this vis element belongs to.
 	/// \param flowState The pipeline evaluation result of the object node.
 	/// \param validityInterval The time interval to be reduced by the method to report the duration of validity of the computed box.
 	/// \return The bounding box of the visual element in local object coordinates.
-	virtual Box3 boundingBox(TimePoint time, DataObject* dataObject, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval) = 0;
+	virtual Box3 boundingBox(TimePoint time, const std::vector<DataObject*>& objectStack, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval) = 0;
 
 	/// \brief Indicates whether this visual element should be surrounded by a selection marker in the viewports when it is selected.
 	/// \return \c true to let the system render a selection marker around the object when it is selected.

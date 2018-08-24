@@ -20,6 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
+#include <plugins/particles/objects/BondsObject.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <core/utilities/units/UnitsManager.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/data/VersionedDataObjectRef.h>
@@ -60,12 +62,16 @@ BondsVis::BondsVis(DataSet* dataset) : DataVis(dataset),
 /******************************************************************************
 * Computes the bounding box of the visual element.
 ******************************************************************************/
-Box3 BondsVis::boundingBox(TimePoint time, DataObject* dataObject, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
+Box3 BondsVis::boundingBox(TimePoint time, const std::vector<DataObject*>& objectStack, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
-	BondProperty* bondTopologyProperty = dynamic_object_cast<BondProperty>(dataObject);
+	if(objectStack.size() < 3) return {};
+	BondsObject* bonds = dynamic_object_cast<BondsObject>(objectStack[objectStack.size()-2]);
+	ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(objectStack[objectStack.size()-3]);
+	if(!bonds || !particles) return {};
+	BondProperty* bondTopologyProperty = dynamic_object_cast<BondProperty>(objectStack.back());
 	if(bondTopologyProperty->type() != BondProperty::TopologyProperty) bondTopologyProperty = nullptr;
-	BondProperty* bondPeriodicImageProperty = BondProperty::findInState(flowState, BondProperty::PeriodicImageProperty);
-	ParticleProperty* positionProperty = ParticleProperty::findInState(flowState, ParticleProperty::PositionProperty);
+	BondProperty* bondPeriodicImageProperty = static_object_cast<BondProperty>(bonds->getProperty(BondProperty::PeriodicImageProperty));
+	ParticleProperty* positionProperty = static_object_cast<ParticleProperty>(particles->getProperty(ParticleProperty::PositionProperty));
 	SimulationCellObject* simulationCell = flowState.findObjectOfType<SimulationCellObject>();
 
 	// The key type used for caching the computed bounding box:
@@ -123,25 +129,29 @@ Box3 BondsVis::boundingBox(TimePoint time, DataObject* dataObject, PipelineScene
 /******************************************************************************
 * Lets the visualization element render the data object.
 ******************************************************************************/
-void BondsVis::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
+void BondsVis::render(TimePoint time, const std::vector<DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
 {
 	if(renderer->isBoundingBoxPass()) {
 		TimeInterval validityInterval;
-		renderer->addToLocalBoundingBox(boundingBox(time, dataObject, contextNode, flowState, validityInterval));
+		renderer->addToLocalBoundingBox(boundingBox(time, objectStack, contextNode, flowState, validityInterval));
 		return;
 	}
 	
-	BondProperty* bondTopologyProperty = dynamic_object_cast<BondProperty>(dataObject);
+	if(objectStack.size() < 3) return;
+	BondsObject* bonds = dynamic_object_cast<BondsObject>(objectStack[objectStack.size()-2]);
+	ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(objectStack[objectStack.size()-3]);
+	if(!bonds || !particles) return;
+	BondProperty* bondTopologyProperty = dynamic_object_cast<BondProperty>(objectStack.back());
 	if(bondTopologyProperty->type() != BondProperty::TopologyProperty) bondTopologyProperty = nullptr;
-	BondProperty* bondPeriodicImageProperty = BondProperty::findInState(flowState, BondProperty::PeriodicImageProperty);
-	ParticleProperty* positionProperty = ParticleProperty::findInState(flowState, ParticleProperty::PositionProperty);
+	BondProperty* bondPeriodicImageProperty = static_object_cast<BondProperty>(bonds->getProperty(BondProperty::PeriodicImageProperty));
+	ParticleProperty* positionProperty = static_object_cast<ParticleProperty>(particles->getProperty(ParticleProperty::PositionProperty));
 	SimulationCellObject* simulationCell = flowState.findObjectOfType<SimulationCellObject>();
-	ParticleProperty* particleColorProperty = ParticleProperty::findInState(flowState, ParticleProperty::ColorProperty);
-	ParticleProperty* particleTypeProperty = ParticleProperty::findInState(flowState, ParticleProperty::TypeProperty);
-	BondProperty* bondTypeProperty = BondProperty::findInState(flowState, BondProperty::TypeProperty);
-	BondProperty* bondColorProperty = BondProperty::findInState(flowState, BondProperty::ColorProperty);
-	BondProperty* bondSelectionProperty = BondProperty::findInState(flowState, BondProperty::SelectionProperty);
-	BondProperty* transparencyProperty = BondProperty::findInState(flowState, BondProperty::TransparencyProperty);
+	ParticleProperty* particleColorProperty = static_object_cast<ParticleProperty>(particles->getProperty(ParticleProperty::ColorProperty));
+	ParticleProperty* particleTypeProperty = static_object_cast<ParticleProperty>(particles->getProperty(ParticleProperty::TypeProperty));
+	BondProperty* bondTypeProperty = static_object_cast<BondProperty>(bonds->getProperty(BondProperty::TypeProperty));
+	BondProperty* bondColorProperty = static_object_cast<BondProperty>(bonds->getProperty(BondProperty::ColorProperty));
+	BondProperty* bondSelectionProperty = static_object_cast<BondProperty>(bonds->getProperty(BondProperty::SelectionProperty));
+	BondProperty* transparencyProperty = static_object_cast<BondProperty>(bonds->getProperty(BondProperty::TransparencyProperty));
 	if(!useParticleColors()) {
 		particleColorProperty = nullptr;
 		particleTypeProperty = nullptr;

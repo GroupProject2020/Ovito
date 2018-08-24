@@ -29,6 +29,7 @@ SET(SourceFiles
 	properties/PropertyObject.cpp
 	properties/PropertyClass.cpp
 	properties/PropertyReference.cpp
+	properties/PropertyContainer.cpp
 	properties/ElementType.cpp
 	properties/GenericPropertyModifier.cpp
 	properties/PropertyExpressionEvaluator.cpp

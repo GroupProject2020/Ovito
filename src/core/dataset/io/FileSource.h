@@ -84,12 +84,6 @@ public:
 	/// Returns the title of this object.
 	virtual QString objectTitle() override;
 
-	/// Returns the number of sub-objects that should be displayed in the modifier stack.
-	virtual int editableSubObjectCount() override;
-
-	/// Returns a sub-object that should be listed in the modifier stack.
-	virtual RefTarget* editableSubObject(int index) override;
-
 	/// Returns the current status of the pipeline object.
 	virtual PipelineStatus status() const override;
 
@@ -109,12 +103,6 @@ protected:
 
 	/// Handles reference events sent by reference targets of this object.
 	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
-
-	/// Is called when a RefTarget has been added to a VectorReferenceField of this RefMaker.
-	virtual void referenceInserted(const PropertyFieldDescriptor& field, RefTarget* newTarget, int listIndex) override;
-
-	/// Is called when a RefTarget has been added to a VectorReferenceField of this RefMaker.
-	virtual void referenceRemoved(const PropertyFieldDescriptor& field, RefTarget* oldTarget, int listIndex) override;
 
 	/// Creates a copy of this object.
 	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) override;

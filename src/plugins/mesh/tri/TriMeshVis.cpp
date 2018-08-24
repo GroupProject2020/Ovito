@@ -49,10 +49,10 @@ TriMeshVis::TriMeshVis(DataSet* dataset) : DataVis(dataset),
 /******************************************************************************
 * Computes the bounding box of the object.
 ******************************************************************************/
-Box3 TriMeshVis::boundingBox(TimePoint time, DataObject* dataObject, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
+Box3 TriMeshVis::boundingBox(TimePoint time, const std::vector<DataObject*>& objectStack, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
 	// Compute bounding box.
-	if(OORef<TriMeshObject> triMeshObj = dataObject->convertTo<TriMeshObject>(time))
+	if(OORef<TriMeshObject> triMeshObj = objectStack.back()->convertTo<TriMeshObject>(time))
 		return triMeshObj->mesh().boundingBox();
 	else
 		return Box3();
@@ -61,7 +61,7 @@ Box3 TriMeshVis::boundingBox(TimePoint time, DataObject* dataObject, PipelineSce
 /******************************************************************************
 * Lets the vis element render a data object.
 ******************************************************************************/
-void TriMeshVis::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
+void TriMeshVis::render(TimePoint time, const std::vector<DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
 {
 	if(!renderer->isBoundingBoxPass()) {
 
@@ -78,13 +78,12 @@ void TriMeshVis::render(TimePoint time, DataObject* dataObject, const PipelineFl
 		ColorA color_mesh(color(), FloatType(1) - transp);
 
 		// Lookup the rendering primitive in the vis cache.
-		auto& meshPrimitive = dataset()->visCache().get<std::shared_ptr<MeshPrimitive>>(CacheKey(renderer, dataObject, color_mesh));
+		auto& meshPrimitive = dataset()->visCache().get<std::shared_ptr<MeshPrimitive>>(CacheKey(renderer, objectStack.back(), color_mesh));
 
 		// Check if we already have a valid rendering primitive that is up to date.
 		if(!meshPrimitive || !meshPrimitive->isValid(renderer)) {
 			meshPrimitive = renderer->createMeshPrimitive();
-			OORef<TriMeshObject> triMeshObj = dataObject->convertTo<TriMeshObject>(time);
-			if(triMeshObj)
+			if(OORef<TriMeshObject> triMeshObj = objectStack.back()->convertTo<TriMeshObject>(time))
 				meshPrimitive->setMesh(triMeshObj->mesh(), color_mesh);
 			else
 				meshPrimitive->setMesh(TriMesh(), ColorA(1,1,1,1));
@@ -97,7 +96,7 @@ void TriMeshVis::render(TimePoint time, DataObject* dataObject, const PipelineFl
 	else {
 		// Add mesh to bounding box.
 		TimeInterval validityInterval;
-		renderer->addToLocalBoundingBox(boundingBox(time, dataObject, contextNode, flowState, validityInterval));
+		renderer->addToLocalBoundingBox(boundingBox(time, objectStack, contextNode, flowState, validityInterval));
 	}
 }
 

@@ -79,20 +79,6 @@ public:
 		return nullptr;
 	}
 	
-	/// Returns the number of sub-objects that should be displayed in the modifier stack.
-	virtual int editableSubObjectCount() override;
-	
-	/// Returns a sub-object that should be listed in the modifier stack.
-	virtual RefTarget* editableSubObject(int index) override;
-
-protected:
-	
-	/// Is called when a RefTarget has been added to a VectorReferenceField of this RefMaker.
-	virtual void referenceInserted(const PropertyFieldDescriptor& field, RefTarget* newTarget, int listIndex) override;
-
-	/// Is called when a RefTarget has been added to a VectorReferenceField of this RefMaker.
-	virtual void referenceRemoved(const PropertyFieldDescriptor& field, RefTarget* oldTarget, int listIndex) override;
-		
 private:
 
 	/// The list of data objects owned by this source.

@@ -145,6 +145,10 @@ public:
 	/// \brief Returns the origin point of the cell.
 	const Point3& cellOrigin() const { return Point3::Origin() + cellMatrix().column(3); }
 
+	/// Returns whether this data object wants to be shown in the pipeline editor 
+	/// under the data source section.
+	virtual bool showInPipelineEditor() const override { return true; }
+
 	/// \brief Returns the title of this object.
 	virtual QString objectTitle() override { return tr("Simulation cell"); }
 

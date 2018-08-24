@@ -229,7 +229,7 @@ FloatType CameraObject::targetDistance() const
 /******************************************************************************
 * Lets the vis element render a camera object.
 ******************************************************************************/
-void CameraVis::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
+void CameraVis::render(TimePoint time, const std::vector<DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
 {
 	// Camera objects are only visible in the interactive viewports.
 	if(renderer->isInteractive() == false || renderer->viewport() == nullptr)
@@ -258,7 +258,7 @@ void CameraVis::render(TimePoint time, DataObject* dataObject, const PipelineFlo
 		Color color = ViewportSettings::getSettings().viewportColor(contextNode->isSelected() ? ViewportSettings::COLOR_SELECTION : ViewportSettings::COLOR_CAMERAS);
 
 		// Lookup the rendering primitive in the vis cache.
-		auto& cameraPrimitives = dataset()->visCache().get<CacheValue>(CacheKey(renderer, dataObject, color));
+		auto& cameraPrimitives = dataset()->visCache().get<CacheValue>(CacheKey(renderer, objectStack.back(), color));
 
 		// Check if we already have a valid rendering primitive that is up to date.
 		if(!cameraPrimitives.icon || !cameraPrimitives.pickIcon 
@@ -329,7 +329,7 @@ void CameraVis::render(TimePoint time, DataObject* dataObject, const PipelineFlo
 	if(contextNode->isSelected()) {
 		if(RenderSettings* renderSettings = dataset()->renderSettings())
 			aspectRatio = renderSettings->outputImageAspectRatio();
-		if(CameraObject* camera = dynamic_object_cast<CameraObject>(dataObject)) {
+		if(CameraObject* camera = dynamic_object_cast<CameraObject>(objectStack.back())) {
 			if(camera->isPerspective()) {
 				coneAngle = camera->fieldOfView(time, iv);
 				if(targetDistance == 0)
@@ -437,7 +437,7 @@ void CameraVis::render(TimePoint time, DataObject* dataObject, const PipelineFlo
 /******************************************************************************
 * Computes the bounding box of the object.
 ******************************************************************************/
-Box3 CameraVis::boundingBox(TimePoint time, DataObject* dataObject, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
+Box3 CameraVis::boundingBox(TimePoint time, const std::vector<DataObject*>& objectStack, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
 	// This is not a physical object. It doesn't have a size.
 	return Box3(Point3::Origin(), Point3::Origin());

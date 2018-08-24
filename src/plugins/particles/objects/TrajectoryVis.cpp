@@ -53,9 +53,9 @@ TrajectoryVis::TrajectoryVis(DataSet* dataset) : DataVis(dataset),
 /******************************************************************************
 * Computes the bounding box of the object.
 ******************************************************************************/
-Box3 TrajectoryVis::boundingBox(TimePoint time, DataObject* dataObject, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
+Box3 TrajectoryVis::boundingBox(TimePoint time, const std::vector<DataObject*>& objectStack, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
-	TrajectoryObject* trajObj = dynamic_object_cast<TrajectoryObject>(dataObject);
+	TrajectoryObject* trajObj = dynamic_object_cast<TrajectoryObject>(objectStack.back());
 
 	// The key type used for caching the computed bounding box:
 	using CacheKey = std::tuple<
@@ -78,15 +78,15 @@ Box3 TrajectoryVis::boundingBox(TimePoint time, DataObject* dataObject, Pipeline
 /******************************************************************************
 * Lets the visualization element render the data object.
 ******************************************************************************/
-void TrajectoryVis::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
+void TrajectoryVis::render(TimePoint time, const std::vector<DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
 {
 	if(renderer->isBoundingBoxPass()) {
 		TimeInterval validityInterval;
-		renderer->addToLocalBoundingBox(boundingBox(time, dataObject, contextNode, flowState, validityInterval));
+		renderer->addToLocalBoundingBox(boundingBox(time, objectStack, contextNode, flowState, validityInterval));
 		return;
 	}
 	
-	TrajectoryObject* trajObj = dynamic_object_cast<TrajectoryObject>(dataObject);
+	TrajectoryObject* trajObj = dynamic_object_cast<TrajectoryObject>(objectStack.back());
 
 	// The key type used for caching the rendering primitive:
 	using CacheKey = std::tuple<

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -19,36 +19,19 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#pragma once
+#include <plugins/particles/Particles.h>
+#include "BondsObject.h"
 
+namespace Ovito { namespace Particles {
 
-#include <plugins/stdobj/StdObj.h>
-#include <core/dataset/data/DataObject.h>
-#include <plugins/stdobj/simcell/SimulationCellObject.h>
+IMPLEMENT_OVITO_CLASS(BondsObject);
 
-namespace Ovito { namespace StdObj {
-	
-/**
- * \brief A closed triangle mesh representing a surface.
- */
-class OVITO_STDOBJ_EXPORT PeriodicDomainDataObject : public DataObject
+/******************************************************************************
+* Constructor.
+******************************************************************************/
+BondsObject::BondsObject(DataSet* dataset) : PropertyContainer(dataset)
 {
-	Q_OBJECT
-	OVITO_CLASS(PeriodicDomainDataObject)
-	
-protected:
-
-	/// \brief Constructor.
-	PeriodicDomainDataObject(DataSet* dataset);
-
-private:
-
-	/// The domain the object is embedded in.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SimulationCellObject, domain, setDomain, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_NO_SUB_ANIM);
-
-	/// The planar cuts applied to object.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(QVector<Plane3>, cuttingPlanes, setCuttingPlanes);
-};
+}
 
 }	// End of namespace
 }	// End of namespace

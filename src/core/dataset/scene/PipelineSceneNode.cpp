@@ -94,9 +94,6 @@ const PipelineFlowState& PipelineSceneNode::evaluatePipelinePreliminary(bool inc
 	// If not, update the preliminary state cache from the pipeline.
 	if(dataProvider()) {
 		_pipelinePreliminaryCache = dataProvider()->evaluatePreliminary();
-
-		// Inject our unique copies of visual elements into the pipeline output.
-		replaceVisualElements(_pipelinePreliminaryCache);
 	}
 	else {
 		_pipelinePreliminaryCache.clear();
@@ -128,9 +125,6 @@ SharedFuture<PipelineFlowState> PipelineSceneNode::evaluatePipeline(TimePoint ti
 
 			// The pipeline should never return a state without proper validity interval.
 			OVITO_ASSERT(state.stateValidity().contains(time));
-
-			// Inject our unique copies of visual elements into the pipeline output.
-			replaceVisualElements(state);
 
 			// We maintain a data cache for the current animation time.
 			if(_pipelineCache.insert(state, this)) {
@@ -197,6 +191,38 @@ SharedFuture<PipelineFlowState> PipelineSceneNode::evaluateRenderingPipeline(Tim
 		});
 }
 
+
+/******************************************************************************
+* Helper function that recursively collects all visual elements of a 
+* data object and stores them in a vector.
+******************************************************************************/
+void PipelineSceneNode::collectVisElements(DataObject* dataObj, std::vector<DataVis*>& visElements) 
+{
+	for(DataVis* vis : dataObj->visElements()) {
+		if(std::find(visElements.begin(), visElements.end(), vis) == visElements.end())
+			visElements.push_back(vis);
+	}
+
+	for(const PropertyFieldDescriptor* field : dataObj->getOOMetaClass().propertyFields()) {
+		if(field->isReferenceField() && !field->isWeakReference() && field->targetClass()->isDerivedFrom(DataObject::OOClass()) && !field->flags().testFlag(PROPERTY_FIELD_NO_SUB_ANIM)) {
+			if(!field->isVector()) {
+				RefTarget* target = dataObj->getReferenceField(*field);
+				if(DataObject* subObject = static_object_cast<DataObject>(target)) {
+					collectVisElements(subObject, visElements);
+				}
+			}
+			else {
+				const QVector<RefTarget*>& list = dataObj->getVectorReferenceField(*field);
+				for(RefTarget* target : list) {
+					if(DataObject* subObject = static_object_cast<DataObject>(target)) {
+						collectVisElements(subObject, visElements);
+					}
+				}
+			}
+		}
+	}			
+}
+
 /******************************************************************************
 * Rebuilds the list of visual elements maintained by the scene node.
 ******************************************************************************/
@@ -204,24 +230,31 @@ void PipelineSceneNode::updateVisElementList(TimePoint time)
 {
 	const PipelineFlowState& state = _pipelineCache.getAt(time);
 
-	// First, discard those elements which are no longer needed.
+	// Collect all visual elements from the current pipeline state.
+	std::vector<DataVis*> newVisElements;
+	for(DataObject* dataObj : state.objects()) {
+		collectVisElements(dataObj, newVisElements);
+	}
+
+	// Perform the replacement of vis elements.
+	if(!replacedVisElements().empty()) {
+		for(DataVis*& vis : newVisElements)
+			vis = getReplacementVisElement(vis);
+	}
+
+	// To maintain a stable ordering, first discard those elements from the old list which are not in the new list.
 	for(int i = visElements().size() - 1; i >= 0; i--) {
 		DataVis* vis = visElements()[i];
-		// Check if the element is still being referenced by any of the data objects
-		// that came out of the pipeline.
-		if(std::none_of(state.objects().begin(), state.objects().end(),
-				[vis](DataObject* obj) { return obj->visElements().contains(vis); })) {
+		if(std::find(newVisElements.begin(), newVisElements.end(), vis) == newVisElements.end()) {
 			_visElements.remove(this, PROPERTY_FIELD(visElements), i);
 		}
 	}
 
-	// Now add any new visual elements.
-	for(const auto& dataObj : state.objects()) {
-		for(DataVis* vis : dataObj->visElements()) {
-			OVITO_CHECK_OBJECT_POINTER(vis);
-			if(!visElements().contains(vis))
-				_visElements.push_back(this, PROPERTY_FIELD(visElements), vis);
-		}
+	// Now add any new visual elements to the end of the list.
+	for(DataVis* vis : newVisElements) {
+		OVITO_CHECK_OBJECT_POINTER(vis);
+		if(!visElements().contains(vis))
+			_visElements.push_back(this, PROPERTY_FIELD(visElements), vis);
 	}
 }
 
@@ -383,16 +416,73 @@ Box3 PipelineSceneNode::localBoundingBox(TimePoint time, TimeInterval& validity)
 {
 	const PipelineFlowState& state = evaluatePipelinePreliminary(true);
 
-	// Let display objects compute bounding boxes of data objects.
+	// Let visual elements compute the bounding boxes of the data objects.
 	Box3 bb;
+	std::vector<DataObject*> objectStack;
 	for(DataObject* dataObj : state.objects()) {
-		for(DataVis* vis : dataObj->visElements()) {
-			if(vis && vis->isEnabled())
-				bb.addBox(vis->boundingBox(time, dataObj, this, state, validity));
-		}
+		getDataObjectBoundingBox(time, dataObj, state, validity, bb, objectStack);
 	}
+	OVITO_ASSERT(objectStack.empty());
 	validity.intersect(state.stateValidity());
 	return bb;
+}
+
+/******************************************************************************
+* Computes the bounding box of a data object and all its sub-objects.
+******************************************************************************/
+void PipelineSceneNode::getDataObjectBoundingBox(TimePoint time, DataObject* dataObj, const PipelineFlowState& state, TimeInterval& validity, Box3& bb, std::vector<DataObject*>& objectStack)
+{
+	bool isOnStack = false;
+
+	// Call all vis elements of the data object.
+	for(DataVis* vis : dataObj->visElements()) {
+		// Let the PipelineSceneNode substitude the vis element with another one.
+		vis = getReplacementVisElement(vis);
+		if(vis->isEnabled()) {
+			// Push the data object onto the stack.
+			if(!isOnStack) {
+				objectStack.push_back(dataObj);
+				isOnStack = true;
+			}
+			// Let the vis element do the rendering.
+			bb.addBox(vis->boundingBox(time, objectStack, this, state, validity));
+		}
+	}
+
+	// Recursively visit the sub-objects of the data object and render them as well.
+	for(const PropertyFieldDescriptor* field : dataObj->getOOMetaClass().propertyFields()) {
+		if(field->isReferenceField() && !field->isWeakReference() && field->targetClass()->isDerivedFrom(DataObject::OOClass()) && !field->flags().testFlag(PROPERTY_FIELD_NO_SUB_ANIM)) {
+			if(!field->isVector()) {
+				RefTarget* target = dataObj->getReferenceField(*field);
+				if(DataObject* subObject = static_object_cast<DataObject>(target)) {
+					// Push the data object onto the stack.
+					if(!isOnStack) {
+						objectStack.push_back(dataObj);
+						isOnStack = true;
+					}
+					getDataObjectBoundingBox(time, subObject, state, validity, bb, objectStack);
+				}
+			}
+			else {
+				const QVector<RefTarget*>& list = dataObj->getVectorReferenceField(*field);
+				for(RefTarget* target : list) {
+					if(DataObject* subObject = static_object_cast<DataObject>(target)) {
+						// Push the data object onto the stack.
+						if(!isOnStack) {
+							objectStack.push_back(dataObj);
+							isOnStack = true;
+						}
+						getDataObjectBoundingBox(time, subObject, state, validity, bb, objectStack);
+					}
+				}
+			}
+		}
+	}	
+
+	// Pop the data object from the stack.
+	if(isOnStack) {
+		objectStack.pop_back();
+	}
 }
 
 /******************************************************************************
@@ -495,50 +585,6 @@ DataVis* PipelineSceneNode::makeVisElementIndependent(DataVis* visElement)
 	notifyTargetChanged();
 
 	return clonedVisElement;
-}
-
-/******************************************************************************
-* Replaces upstream visual elements with our own unique copies.
-******************************************************************************/
-void PipelineSceneNode::replaceVisualElements(PipelineFlowState& state)
-{
-	OVITO_ASSERT(replacedVisElements().size() == replacementVisElements().size());
-	OVITO_ASSERT(std::find(replacedVisElements().begin(), replacedVisElements().end(), nullptr) == replacedVisElements().end());
-
-	if(replacedVisElements().empty())
-		return;	// Nothing to do.
-
-	CloneHelper cloneHelper;
-	for(DataObject* dataObj : state.objects()) {
-
-		// Skip data objects having no visual elements.
-		if(dataObj->visElements().empty()) continue;
-
-		// In the data object's list of visual elements, replace those
-		// for which the pipeline node manages its own copy.
-		QVector<DataVis*> visualElements = dataObj->visElements();
-		bool didReplace = false;
-		for(auto& vis : visualElements) {
-			OVITO_ASSERT(vis != nullptr);
-			int index = replacedVisElements().indexOf(vis);
-			if(index >= 0) {
-				vis = replacementVisElements()[index];
-				didReplace = true;
-			}
-		}
-
-		if(didReplace) {
-			// Clone the data object so that we can replace its visual elements.
-			if(dataObj->numberOfStrongReferences() > 1) {
-				OORef<DataObject> clone = cloneHelper.cloneObject(dataObj, false);
-				if(!state.replaceObject(dataObj, clone)) 
-					continue;
-				dataObj = clone;
-			}
-			// Assign the new visual element list to the data object.
-			dataObj->setVisElements(visualElements);
-		}
-	}	
 }
 
 OVITO_END_INLINE_NAMESPACE

@@ -21,6 +21,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/ParticleType.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <core/utilities/units/UnitsManager.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/data/VersionedDataObjectRef.h>
@@ -54,12 +55,15 @@ ParticlesVis::ParticlesVis(DataSet* dataset) : DataVis(dataset),
 /******************************************************************************
 * Computes the bounding box of the visual element.
 ******************************************************************************/
-Box3 ParticlesVis::boundingBox(TimePoint time, DataObject* dataObject, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
+Box3 ParticlesVis::boundingBox(TimePoint time, const std::vector<DataObject*>& objectStack, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
-	ParticleProperty* positionProperty = dynamic_object_cast<ParticleProperty>(dataObject);
-	ParticleProperty* radiusProperty = ParticleProperty::findInState(flowState, ParticleProperty::RadiusProperty);
-	ParticleProperty* typeProperty = ParticleProperty::findInState(flowState, ParticleProperty::TypeProperty);
-	ParticleProperty* shapeProperty = ParticleProperty::findInState(flowState, ParticleProperty::AsphericalShapeProperty);
+	if(objectStack.size() < 2) return {};
+	ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(objectStack[objectStack.size()-2]);
+	if(!particles) return {};
+	ParticleProperty* positionProperty = dynamic_object_cast<ParticleProperty>(objectStack.back());
+	ParticleProperty* radiusProperty = static_object_cast<ParticleProperty>(particles->getProperty(ParticleProperty::RadiusProperty));
+	ParticleProperty* typeProperty = static_object_cast<ParticleProperty>(particles->getProperty(ParticleProperty::TypeProperty));
+	ParticleProperty* shapeProperty = static_object_cast<ParticleProperty>(particles->getProperty(ParticleProperty::AsphericalShapeProperty));
 
 	// The key type used for caching the computed bounding box:
 	using CacheKey = std::tuple<
@@ -343,23 +347,26 @@ ParticlePrimitive::ParticleShape ParticlesVis::effectiveParticleShape(ParticlePr
 /******************************************************************************
 * Lets the visualization element render the data object.
 ******************************************************************************/
-void ParticlesVis::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
+void ParticlesVis::render(TimePoint time, const std::vector<DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
 {
 	if(renderer->isBoundingBoxPass()) {
 		TimeInterval validityInterval;
-		renderer->addToLocalBoundingBox(boundingBox(time, dataObject, contextNode, flowState, validityInterval));
+		renderer->addToLocalBoundingBox(boundingBox(time, objectStack, contextNode, flowState, validityInterval));
 		return;
 	}
 
 	// Get input data.
-	ParticleProperty* positionProperty = dynamic_object_cast<ParticleProperty>(dataObject);
-	ParticleProperty* radiusProperty = ParticleProperty::findInState(flowState, ParticleProperty::RadiusProperty);
-	ParticleProperty* colorProperty = ParticleProperty::findInState(flowState, ParticleProperty::ColorProperty);
-	ParticleProperty* typeProperty = ParticleProperty::findInState(flowState, ParticleProperty::TypeProperty);
-	ParticleProperty* selectionProperty = renderer->isInteractive() ? ParticleProperty::findInState(flowState, ParticleProperty::SelectionProperty) : nullptr;
-	ParticleProperty* transparencyProperty = ParticleProperty::findInState(flowState, ParticleProperty::TransparencyProperty);
-	ParticleProperty* shapeProperty = ParticleProperty::findInState(flowState, ParticleProperty::AsphericalShapeProperty);
-	ParticleProperty* orientationProperty = ParticleProperty::findInState(flowState, ParticleProperty::OrientationProperty);
+	if(objectStack.size() < 2) return;
+	ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(objectStack[objectStack.size()-2]);
+	if(!particles) return;
+	ParticleProperty* positionProperty = dynamic_object_cast<ParticleProperty>(objectStack.back());
+	ParticleProperty* radiusProperty = static_object_cast<ParticleProperty>(particles->getProperty(ParticleProperty::RadiusProperty));
+	ParticleProperty* colorProperty = static_object_cast<ParticleProperty>(particles->getProperty(ParticleProperty::ColorProperty));
+	ParticleProperty* typeProperty = static_object_cast<ParticleProperty>(particles->getProperty(ParticleProperty::TypeProperty));
+	ParticleProperty* selectionProperty = renderer->isInteractive() ? static_object_cast<ParticleProperty>(particles->getProperty(ParticleProperty::SelectionProperty)) : nullptr;
+	ParticleProperty* transparencyProperty = static_object_cast<ParticleProperty>(particles->getProperty(ParticleProperty::TransparencyProperty));
+	ParticleProperty* shapeProperty = static_object_cast<ParticleProperty>(particles->getProperty(ParticleProperty::AsphericalShapeProperty));
+	ParticleProperty* orientationProperty = static_object_cast<ParticleProperty>(particles->getProperty(ParticleProperty::OrientationProperty));
 	if(particleShape() != Sphere && particleShape() != Box && particleShape() != Cylinder && particleShape() != Spherocylinder) {
 		shapeProperty = nullptr;
 		orientationProperty = nullptr;

@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/stdmod/modifiers/SliceModifier.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
@@ -43,7 +43,7 @@ class ParticlesSliceModifierDelegate : public SliceModifierDelegate
 		
 		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
 		virtual bool isApplicableTo(const PipelineFlowState& input) const override {
-			return input.findObjectOfType<ParticleProperty>() != nullptr;
+			return input.findObjectOfType<ParticlesObject>() != nullptr;
 		}
 
 		/// The name by which Python scripts can refer to this modifier delegate.

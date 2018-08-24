@@ -53,9 +53,6 @@ public:
 			setVisElement(creator);
 		}
 
-	/// Indicate that this transient data object cannot be edited.
-	virtual bool isSubObjectEditable() const override { return false; }
-
 private:
 
 	/// Stores a weak reference to + revision version number of the original DataObject 

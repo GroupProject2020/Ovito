@@ -147,6 +147,10 @@ public:
 	/// Sets the internal pointer to the pipeline object that created this data object.
 	void setDataSource(PipelineObject* dataSource);
 
+	/// Returns whether this data object wants to be shown in the pipeline editor 
+	/// under the data source section. The default implementation returns false.
+	virtual bool showInPipelineEditor() const { return false; }
+
 protected:
 
 	/// \brief Sends an event to all dependents of this RefTarget.

@@ -22,6 +22,7 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/particles/modifier/ParticleOutputHelper.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
@@ -36,7 +37,7 @@ IMPLEMENT_OVITO_CLASS(WrapPeriodicImagesModifier);
 ******************************************************************************/
 bool WrapPeriodicImagesModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<ParticleProperty>() != nullptr;
+	return input.findObjectOfType<ParticlesObject>() != nullptr;
 }
 
 /******************************************************************************

@@ -26,7 +26,9 @@ namespace Ovito { namespace Grid {
 
 IMPLEMENT_OVITO_CLASS(VoxelGrid);
 DEFINE_PROPERTY_FIELD(VoxelGrid, shape);
+DEFINE_REFERENCE_FIELD(VoxelGrid, properties);
 SET_PROPERTY_FIELD_LABEL(VoxelGrid, shape, "Shape");
+SET_PROPERTY_FIELD_LABEL(VoxelGrid, properties, "Properties");
 
 /******************************************************************************
 * Constructor.

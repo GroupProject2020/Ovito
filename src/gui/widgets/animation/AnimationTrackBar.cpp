@@ -215,7 +215,7 @@ void AnimationTrackBar::findControllers(RefTarget* target)
 
 	// Iterate over all reference fields of the current target.
 	for(const PropertyFieldDescriptor* field : target->getOOMetaClass().propertyFields()) {
-		if(field->isReferenceField() && field->flags().testFlag(PROPERTY_FIELD_NO_SUB_ANIM) == false) {
+		if(field->isReferenceField() && !field->flags().testFlag(PROPERTY_FIELD_NO_SUB_ANIM)) {
 			hasSubAnimatables = true;
 			if(field->isVector() == false) {
 				if(RefTarget* subTarget = target->getReferenceField(*field)) {

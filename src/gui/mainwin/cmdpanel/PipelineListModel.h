@@ -150,6 +150,9 @@ private Q_SLOTS:
 
 private:
 
+	/// Create the pipeline editor entries for the subjects of the given object (and their subobjects).
+	void createListItemsForSubobjects(RefTarget* object, QList<OORef<PipelineListItem>>& items, PipelineListItem* parentItem);
+
 	/// List of visible items in the model.
 	QList<OORef<PipelineListItem>> _items;
 

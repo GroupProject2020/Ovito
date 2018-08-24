@@ -603,22 +603,6 @@ void FileSource::propertyChanged(const PropertyFieldDescriptor& field)
 }
 
 /******************************************************************************
-* Returns the number of sub-objects that should be displayed in the modifier stack.
-******************************************************************************/
-int FileSource::editableSubObjectCount()
-{
-	return dataObjects().size();
-}
-
-/******************************************************************************
-* Returns a sub-object that should be listed in the modifier stack.
-******************************************************************************/
-RefTarget* FileSource::editableSubObject(int index)
-{
-	return dataObjects()[index];
-}
-
-/******************************************************************************
 * Handles reference events sent by reference targets of this object.
 ******************************************************************************/
 bool FileSource::referenceEvent(RefTarget* source, const ReferenceEvent& event)
@@ -642,28 +626,6 @@ bool FileSource::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 	}
 
 	return CachingPipelineObject::referenceEvent(source, event);
-}
-
-/******************************************************************************
-* Is called when a RefTarget has been added to a VectorReferenceField of this RefMaker.
-******************************************************************************/
-void FileSource::referenceInserted(const PropertyFieldDescriptor& field, RefTarget* newTarget, int listIndex)
-{
-	if(field == PROPERTY_FIELD(dataObjects))
-		notifyDependents(ReferenceEvent::SubobjectListChanged);
-
-	CachingPipelineObject::referenceInserted(field, newTarget, listIndex);
-}
-
-/******************************************************************************
-* Is called when a RefTarget has been added to a VectorReferenceField of this RefMaker.
-******************************************************************************/
-void FileSource::referenceRemoved(const PropertyFieldDescriptor& field, RefTarget* oldTarget, int listIndex)
-{
-	if(field == PROPERTY_FIELD(dataObjects))
-		notifyDependents(ReferenceEvent::SubobjectListChanged);
-
-	CachingPipelineObject::referenceRemoved(field, oldTarget, listIndex);
 }
 
 /******************************************************************************

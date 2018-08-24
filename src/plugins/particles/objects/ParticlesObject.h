@@ -22,39 +22,37 @@
 #pragma once
 
 
-#include <core/Core.h>
-#include <core/dataset/data/DataObject.h>
+#include <plugins/particles/Particles.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
+#include "ParticleProperty.h"
+#include "BondsObject.h"
 
-namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+namespace Ovito { namespace Particles {
 
 /**
- * \brief A data object holding a primitive value (e.g. a number or a string).
+ * \brief This data object type is a container for particle properties.
  */
-class OVITO_CORE_EXPORT AttributeDataObject : public DataObject
+class OVITO_PARTICLES_EXPORT ParticlesObject : public PropertyContainer
 {
 	Q_OBJECT
-	OVITO_CLASS(AttributeDataObject)
-
+	OVITO_CLASS(ParticlesObject)
+	
 public:
 
-	/// Constructor.
-	Q_INVOKABLE AttributeDataObject(DataSet* dataset, QVariant value = {}) 
-		: DataObject(dataset), _value(std::move(value)) {}
+	/// \brief Constructor.
+	Q_INVOKABLE ParticlesObject(DataSet* dataset);
 
-protected:
+	/// Returns the title of this object.
+	virtual QString objectTitle() override { return tr("Particles"); }
 
-	/// Saves the class' contents to the given stream.
-	virtual void saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData) override;
-
-	/// Loads the class' contents from the given stream.
-	virtual void loadFromStream(ObjectLoadStream& stream) override;
+	/// Returns the class of properties that this container can store.
+	virtual const PropertyClass& propertyClass() const override { return ParticleProperty::OOClass(); }
 
 private:
 
-	/// The stored attribute value.
-	DECLARE_RUNTIME_PROPERTY_FIELD(QVariant, value, setValue);
+	/// The bonds object.
+	DECLARE_MODIFIABLE_REFERENCE_FIELD(BondsObject, bonds, setBonds);
 };
 
-OVITO_END_INLINE_NAMESPACE
-OVITO_END_INLINE_NAMESPACE
+}	// End of namespace
 }	// End of namespace

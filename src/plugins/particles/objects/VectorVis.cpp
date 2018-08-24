@@ -20,6 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <core/utilities/units/UnitsManager.h>
 #include <core/utilities/concurrent/ParallelFor.h>
 #include <core/dataset/DataSet.h>
@@ -54,7 +55,11 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(VectorVis, scalingFactor, FloatParameterUni
 * Constructor.
 ******************************************************************************/
 VectorVis::VectorVis(DataSet* dataset) : DataVis(dataset),
-	_reverseArrowDirection(false), _arrowPosition(Base), _arrowColor(1, 1, 0), _arrowWidth(0.5), _scalingFactor(1),
+	_reverseArrowDirection(false), 
+	_arrowPosition(Base), 
+	_arrowColor(1, 1, 0), 
+	_arrowWidth(0.5), 
+	_scalingFactor(1),
 	_shadingMode(ArrowPrimitive::FlatShading),
 	_renderingQuality(ArrowPrimitive::LowQuality)
 {
@@ -63,10 +68,13 @@ VectorVis::VectorVis(DataSet* dataset) : DataVis(dataset),
 /******************************************************************************
 * Computes the bounding box of the object.
 ******************************************************************************/
-Box3 VectorVis::boundingBox(TimePoint time, DataObject* dataObject, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
+Box3 VectorVis::boundingBox(TimePoint time, const std::vector<DataObject*>& objectStack, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
-	ParticleProperty* vectorProperty = dynamic_object_cast<ParticleProperty>(dataObject);
-	ParticleProperty* positionProperty = ParticleProperty::findInState(flowState, ParticleProperty::PositionProperty);
+	if(objectStack.size() < 2) return {};
+	ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(objectStack[objectStack.size()-2]);
+	if(!particles) return {};
+	ParticleProperty* vectorProperty = dynamic_object_cast<ParticleProperty>(objectStack.back());
+	ParticleProperty* positionProperty = static_object_cast<ParticleProperty>(particles->getProperty(ParticleProperty::PositionProperty));
 	if(vectorProperty && (vectorProperty->dataType() != PropertyStorage::Float || vectorProperty->componentCount() != 3))
 		vectorProperty = nullptr;
 
@@ -130,24 +138,27 @@ Box3 VectorVis::arrowBoundingBox(ParticleProperty* vectorProperty, ParticlePrope
 /******************************************************************************
 * Lets the visualization element render the data object.
 ******************************************************************************/
-void VectorVis::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
+void VectorVis::render(TimePoint time, const std::vector<DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
 {
 	if(renderer->isBoundingBoxPass()) {
 		TimeInterval validityInterval;
-		renderer->addToLocalBoundingBox(boundingBox(time, dataObject, contextNode, flowState, validityInterval));
+		renderer->addToLocalBoundingBox(boundingBox(time, objectStack, contextNode, flowState, validityInterval));
 		return;
 	}
 	
 	// Get input data.
-	ParticleProperty* vectorProperty = dynamic_object_cast<ParticleProperty>(dataObject);
-	ParticleProperty* positionProperty = ParticleProperty::findInState(flowState, ParticleProperty::PositionProperty);
+	if(objectStack.size() < 2) return;
+	ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(objectStack[objectStack.size()-2]);
+	if(!particles) return;
+	ParticleProperty* vectorProperty = dynamic_object_cast<ParticleProperty>(objectStack.back());
+	ParticleProperty* positionProperty = static_object_cast<ParticleProperty>(particles->getProperty(ParticleProperty::PositionProperty));
 	if(vectorProperty && (vectorProperty->dataType() != PropertyStorage::Float || vectorProperty->componentCount() != 3))
 		vectorProperty = nullptr;
-	ParticleProperty* vectorColorProperty = ParticleProperty::findInState(flowState, ParticleProperty::VectorColorProperty);
+	ParticleProperty* vectorColorProperty = static_object_cast<ParticleProperty>(particles->getProperty(ParticleProperty::VectorColorProperty));
 
 	// Make sure we don't exceed our internal limits.
 	if(vectorProperty && vectorProperty->size() > (size_t)std::numeric_limits<int>::max()) {
-		qWarning() << "WARNING: Cannot render more than" << std::numeric_limits<int>::max() << "vectors.";
+		qWarning() << "WARNING: Cannot render more than" << std::numeric_limits<int>::max() << "vector arrows.";
 		return;
 	}
 	

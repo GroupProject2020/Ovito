@@ -41,7 +41,7 @@ TargetObject::TargetObject(DataSet* dataset) : DataObject(dataset)
 /******************************************************************************
 * Lets the vis element render a data object.
 ******************************************************************************/
-void TargetVis::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
+void TargetVis::render(TimePoint time, const std::vector<DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
 {
 	// Target objects are only visible in the viewports.
 	if(renderer->isInteractive() == false || renderer->viewport() == nullptr)
@@ -57,7 +57,6 @@ void TargetVis::render(TimePoint time, DataObject* dataObject, const PipelineFlo
 		// The key type used for caching the geometry primitive:
 		using CacheKey = std::tuple<
 			CompatibleRendererGroup,	// The scene renderer
-			VersionedDataObjectRef,		// Scene object + revision number
 			Color						// Display color
 		>;
 
@@ -71,7 +70,7 @@ void TargetVis::render(TimePoint time, DataObject* dataObject, const PipelineFlo
 		Color color = ViewportSettings::getSettings().viewportColor(contextNode->isSelected() ? ViewportSettings::COLOR_SELECTION : ViewportSettings::COLOR_CAMERAS);
 
 		// Lookup the rendering primitive in the vis cache.
-		auto& targetPrimitives = dataset()->visCache().get<CacheValue>(CacheKey(renderer, dataObject, color));
+		auto& targetPrimitives = dataset()->visCache().get<CacheValue>(CacheKey(renderer, color));
 
 		// Check if we already have a valid rendering primitive that is up to date.
 		if(!targetPrimitives.icon || !targetPrimitives.pickIcon 
@@ -122,7 +121,7 @@ void TargetVis::render(TimePoint time, DataObject* dataObject, const PipelineFlo
 /******************************************************************************
 * Computes the bounding box of the object.
 ******************************************************************************/
-Box3 TargetVis::boundingBox(TimePoint time, DataObject* dataObject, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
+Box3 TargetVis::boundingBox(TimePoint time, const std::vector<DataObject*>& objectStack, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
 	// This is not a physical object. It doesn't have a size.
 	return Box3(Point3::Origin(), Point3::Origin());

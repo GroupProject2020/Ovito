@@ -367,6 +367,7 @@ void CorrelationFunctionModifierEditor::plotAllData()
 	else
 		_reciprocalSpacePlot->setAxisAutoScale(QwtPlot::yLeft);
 
+#if 0
 	// Obtain the pipeline data produced by the modifier.
 	const PipelineFlowState& state = getModifierOutput();
 
@@ -454,6 +455,7 @@ void CorrelationFunctionModifierEditor::plotAllData()
 	else {
 		_reciprocalSpacePlot->setSeries(nullptr);
 	}
+#endif
 }
 
 OVITO_END_INLINE_NAMESPACE

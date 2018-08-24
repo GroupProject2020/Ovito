@@ -54,9 +54,9 @@ SimulationCellVis::SimulationCellVis(DataSet* dataset) : DataVis(dataset),
 /******************************************************************************
 * Computes the bounding box of the object.
 ******************************************************************************/
-Box3 SimulationCellVis::boundingBox(TimePoint time, DataObject* dataObject, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
+Box3 SimulationCellVis::boundingBox(TimePoint time, const std::vector<DataObject*>& objectStack, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
-	SimulationCellObject* cellObject = dynamic_object_cast<SimulationCellObject>(dataObject);
+	SimulationCellObject* cellObject = dynamic_object_cast<SimulationCellObject>(objectStack.back());
 	OVITO_CHECK_OBJECT_POINTER(cellObject);
 
 	AffineTransformation matrix = cellObject->cellMatrix();
@@ -71,19 +71,33 @@ Box3 SimulationCellVis::boundingBox(TimePoint time, DataObject* dataObject, Pipe
 /******************************************************************************
 * Lets the visualization element render the data object.
 ******************************************************************************/
-void SimulationCellVis::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
+void SimulationCellVis::render(TimePoint time, const std::vector<DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
 {
-	SimulationCellObject* cell = dynamic_object_cast<SimulationCellObject>(dataObject);
+	SimulationCellObject* cell = dynamic_object_cast<SimulationCellObject>(objectStack.back());
 	OVITO_CHECK_OBJECT_POINTER(cell);
+	if(!cell) return;
 
 	if(renderer->isInteractive() && !renderer->viewport()->renderPreviewMode()) {
-		renderWireframe(time, cell, flowState, renderer, contextNode);
+		if(!renderer->isBoundingBoxPass()) {
+			renderWireframe(time, cell, flowState, renderer, contextNode);
+		}
+		else {
+			TimeInterval validityInterval;
+			renderer->addToLocalBoundingBox(boundingBox(time, objectStack, contextNode, flowState, validityInterval));
+		}
 	}
 	else {
 		if(!renderCellEnabled())
 			return;		// Do nothing if rendering has been disabled by the user.
 
-		renderSolid(time, cell, flowState, renderer, contextNode);
+		if(!renderer->isBoundingBoxPass()) {
+			renderSolid(time, cell, flowState, renderer, contextNode);
+		}
+		else {
+			TimeInterval validityInterval;
+			Box3 bb = boundingBox(time, objectStack, contextNode, flowState, validityInterval);
+			renderer->addToLocalBoundingBox(bb.padBox(cellLineWidth()));
+		}
 	}
 }
 
@@ -92,75 +106,70 @@ void SimulationCellVis::render(TimePoint time, DataObject* dataObject, const Pip
 ******************************************************************************/
 void SimulationCellVis::renderWireframe(TimePoint time, SimulationCellObject* cell, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
 {
-	if(!renderer->isBoundingBoxPass()) {
+	OVITO_ASSERT(!renderer->isBoundingBoxPass());
 
-		// The key type used for caching the geometry primitive:
-		using CacheKey = std::tuple<
-			CompatibleRendererGroup,	// The scene renderer
-			VersionedDataObjectRef,		// The SimulationCellObject
-			ColorA						// The wireframe color.
-		>;
+	// The key type used for caching the geometry primitive:
+	using CacheKey = std::tuple<
+		CompatibleRendererGroup,	// The scene renderer
+		VersionedDataObjectRef,		// The SimulationCellObject
+		ColorA						// The wireframe color.
+	>;
 
-		// The values stored in the vis cache.
-		struct CacheValue {
-			std::shared_ptr<LinePrimitive> lines;
-			std::shared_ptr<LinePrimitive> pickLines;
-		};
+	// The values stored in the vis cache.
+	struct CacheValue {
+		std::shared_ptr<LinePrimitive> lines;
+		std::shared_ptr<LinePrimitive> pickLines;
+	};
 
-		ColorA color = ViewportSettings::getSettings().viewportColor(contextNode->isSelected() ? ViewportSettings::COLOR_SELECTION : ViewportSettings::COLOR_UNSELECTED);
+	ColorA color = ViewportSettings::getSettings().viewportColor(contextNode->isSelected() ? ViewportSettings::COLOR_SELECTION : ViewportSettings::COLOR_UNSELECTED);
 
-		// Lookup the rendering primitive in the vis cache.
-		auto& wireframePrimitives = dataset()->visCache().get<CacheValue>(CacheKey(renderer, cell, color));
+	// Lookup the rendering primitive in the vis cache.
+	auto& wireframePrimitives = dataset()->visCache().get<CacheValue>(CacheKey(renderer, cell, color));
 
-		// Check if we already have a valid rendering primitive that is up to date.
-		if(!wireframePrimitives.lines || !wireframePrimitives.pickLines 
-				|| !wireframePrimitives.lines->isValid(renderer)
-				|| !wireframePrimitives.pickLines->isValid(renderer)) {
+	// Check if we already have a valid rendering primitive that is up to date.
+	if(!wireframePrimitives.lines || !wireframePrimitives.pickLines 
+			|| !wireframePrimitives.lines->isValid(renderer)
+			|| !wireframePrimitives.pickLines->isValid(renderer)) {
 
-			wireframePrimitives.lines = renderer->createLinePrimitive();
-			wireframePrimitives.pickLines = renderer->createLinePrimitive();
-			wireframePrimitives.lines->setVertexCount(cell->is2D() ? 8 : 24);
-			wireframePrimitives.pickLines->setVertexCount(wireframePrimitives.lines->vertexCount(), renderer->defaultLinePickingWidth());
-			Point3 corners[8];
-			corners[0] = cell->cellOrigin();
-			if(cell->is2D()) corners[0].z() = 0;
-			corners[1] = corners[0] + cell->cellVector1();
-			corners[2] = corners[1] + cell->cellVector2();
-			corners[3] = corners[0] + cell->cellVector2();
-			corners[4] = corners[0] + cell->cellVector3();
-			corners[5] = corners[1] + cell->cellVector3();
-			corners[6] = corners[2] + cell->cellVector3();
-			corners[7] = corners[3] + cell->cellVector3();
-			Point3 vertices[24] = {
-				corners[0], corners[1],
-				corners[1], corners[2],
-				corners[2], corners[3],
-				corners[3], corners[0],
-				corners[4], corners[5],
-				corners[5], corners[6],
-				corners[6], corners[7],
-				corners[7], corners[4],
-				corners[0], corners[4],
-				corners[1], corners[5],
-				corners[2], corners[6],
-				corners[3], corners[7]};
-			wireframePrimitives.lines->setVertexPositions(vertices);
-			wireframePrimitives.lines->setLineColor(color);
-			wireframePrimitives.pickLines->setVertexPositions(vertices);
-			wireframePrimitives.pickLines->setLineColor(color);
-		}
-
-		renderer->beginPickObject(contextNode);
-		if(!renderer->isPicking())
-			wireframePrimitives.lines->render(renderer);
-		else
-			wireframePrimitives.pickLines->render(renderer);
-		renderer->endPickObject();
+		wireframePrimitives.lines = renderer->createLinePrimitive();
+		wireframePrimitives.pickLines = renderer->createLinePrimitive();
+		wireframePrimitives.lines->setVertexCount(cell->is2D() ? 8 : 24);
+		wireframePrimitives.pickLines->setVertexCount(wireframePrimitives.lines->vertexCount(), renderer->defaultLinePickingWidth());
+		Point3 corners[8];
+		corners[0] = cell->cellOrigin();
+		if(cell->is2D()) corners[0].z() = 0;
+		corners[1] = corners[0] + cell->cellVector1();
+		corners[2] = corners[1] + cell->cellVector2();
+		corners[3] = corners[0] + cell->cellVector2();
+		corners[4] = corners[0] + cell->cellVector3();
+		corners[5] = corners[1] + cell->cellVector3();
+		corners[6] = corners[2] + cell->cellVector3();
+		corners[7] = corners[3] + cell->cellVector3();
+		Point3 vertices[24] = {
+			corners[0], corners[1],
+			corners[1], corners[2],
+			corners[2], corners[3],
+			corners[3], corners[0],
+			corners[4], corners[5],
+			corners[5], corners[6],
+			corners[6], corners[7],
+			corners[7], corners[4],
+			corners[0], corners[4],
+			corners[1], corners[5],
+			corners[2], corners[6],
+			corners[3], corners[7]};
+		wireframePrimitives.lines->setVertexPositions(vertices);
+		wireframePrimitives.lines->setLineColor(color);
+		wireframePrimitives.pickLines->setVertexPositions(vertices);
+		wireframePrimitives.pickLines->setLineColor(color);
 	}
-	else {
-		TimeInterval validityInterval;
-		renderer->addToLocalBoundingBox(boundingBox(time, cell, contextNode, flowState, validityInterval));
-	}
+
+	renderer->beginPickObject(contextNode);
+	if(!renderer->isPicking())
+		wireframePrimitives.lines->render(renderer);
+	else
+		wireframePrimitives.pickLines->render(renderer);
+	renderer->endPickObject();
 }
 
 /******************************************************************************
@@ -168,73 +177,67 @@ void SimulationCellVis::renderWireframe(TimePoint time, SimulationCellObject* ce
 ******************************************************************************/
 void SimulationCellVis::renderSolid(TimePoint time, SimulationCellObject* cell, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
 {
-	if(!renderer->isBoundingBoxPass()) {
+	OVITO_ASSERT(!renderer->isBoundingBoxPass());
 
-		// The key type used for caching the geometry primitive:
-		using CacheKey = std::tuple<
-			CompatibleRendererGroup,	// The scene renderer
-			VersionedDataObjectRef,		// The simulation cell + revision number
-			FloatType, Color			// Line width + color
-		>;
+	// The key type used for caching the geometry primitive:
+	using CacheKey = std::tuple<
+		CompatibleRendererGroup,	// The scene renderer
+		VersionedDataObjectRef,		// The simulation cell + revision number
+		FloatType, Color			// Line width + color
+	>;
 
-		// The values stored in the vis cache.
-		struct CacheValue {
-			std::shared_ptr<ArrowPrimitive> lines;
-			std::shared_ptr<ParticlePrimitive> corners;
-		};
-		
-		// Lookup the rendering primitive in the vis cache.
-		auto& solidPrimitives = dataset()->visCache().get<CacheValue>(CacheKey(renderer, cell, cellLineWidth(), cellColor()));
+	// The values stored in the vis cache.
+	struct CacheValue {
+		std::shared_ptr<ArrowPrimitive> lines;
+		std::shared_ptr<ParticlePrimitive> corners;
+	};
+	
+	// Lookup the rendering primitive in the vis cache.
+	auto& solidPrimitives = dataset()->visCache().get<CacheValue>(CacheKey(renderer, cell, cellLineWidth(), cellColor()));
 
-		// Check if we already have a valid rendering primitive that is up to date.
-		if(!solidPrimitives.lines || !solidPrimitives.corners 
-				|| !solidPrimitives.lines->isValid(renderer)
-				|| !solidPrimitives.corners->isValid(renderer)) {
-		
-			solidPrimitives.lines = renderer->createArrowPrimitive(ArrowPrimitive::CylinderShape, ArrowPrimitive::NormalShading, ArrowPrimitive::HighQuality);
-			solidPrimitives.corners  = renderer->createParticlePrimitive(ParticlePrimitive::NormalShading, ParticlePrimitive::HighQuality);
-			solidPrimitives.lines->startSetElements(cell->is2D() ? 4 : 12);
-			ColorA color = (ColorA)cellColor();
-			Point3 corners[8];
-			corners[0] = cell->cellOrigin();
-			if(cell->is2D()) corners[0].z() = 0;
-			corners[1] = corners[0] + cell->cellVector1();
-			corners[2] = corners[1] + cell->cellVector2();
-			corners[3] = corners[0] + cell->cellVector2();
-			corners[4] = corners[0] + cell->cellVector3();
-			corners[5] = corners[1] + cell->cellVector3();
-			corners[6] = corners[2] + cell->cellVector3();
-			corners[7] = corners[3] + cell->cellVector3();
-			solidPrimitives.lines->setElement(0, corners[0], corners[1] - corners[0], color, cellLineWidth());
-			solidPrimitives.lines->setElement(1, corners[1], corners[2] - corners[1], color, cellLineWidth());
-			solidPrimitives.lines->setElement(2, corners[2], corners[3] - corners[2], color, cellLineWidth());
-			solidPrimitives.lines->setElement(3, corners[3], corners[0] - corners[3], color, cellLineWidth());
-			if(cell->is2D() == false) {
-				solidPrimitives.lines->setElement(4, corners[4], corners[5] - corners[4], color, cellLineWidth());
-				solidPrimitives.lines->setElement(5, corners[5], corners[6] - corners[5], color, cellLineWidth());
-				solidPrimitives.lines->setElement(6, corners[6], corners[7] - corners[6], color, cellLineWidth());
-				solidPrimitives.lines->setElement(7, corners[7], corners[4] - corners[7], color, cellLineWidth());
-				solidPrimitives.lines->setElement(8, corners[0], corners[4] - corners[0], color, cellLineWidth());
-				solidPrimitives.lines->setElement(9, corners[1], corners[5] - corners[1], color, cellLineWidth());
-				solidPrimitives.lines->setElement(10, corners[2], corners[6] - corners[2], color, cellLineWidth());
-				solidPrimitives.lines->setElement(11, corners[3], corners[7] - corners[3], color, cellLineWidth());
-			}
-			solidPrimitives.lines->endSetElements();
-			solidPrimitives.corners ->setSize(cell->is2D() ? 4 : 8);
-			solidPrimitives.corners ->setParticlePositions(corners);
-			solidPrimitives.corners ->setParticleRadius(cellLineWidth());
-			solidPrimitives.corners ->setParticleColor(cellColor());
+	// Check if we already have a valid rendering primitive that is up to date.
+	if(!solidPrimitives.lines || !solidPrimitives.corners 
+			|| !solidPrimitives.lines->isValid(renderer)
+			|| !solidPrimitives.corners->isValid(renderer)) {
+	
+		solidPrimitives.lines = renderer->createArrowPrimitive(ArrowPrimitive::CylinderShape, ArrowPrimitive::NormalShading, ArrowPrimitive::HighQuality);
+		solidPrimitives.corners  = renderer->createParticlePrimitive(ParticlePrimitive::NormalShading, ParticlePrimitive::HighQuality);
+		solidPrimitives.lines->startSetElements(cell->is2D() ? 4 : 12);
+		ColorA color = (ColorA)cellColor();
+		Point3 corners[8];
+		corners[0] = cell->cellOrigin();
+		if(cell->is2D()) corners[0].z() = 0;
+		corners[1] = corners[0] + cell->cellVector1();
+		corners[2] = corners[1] + cell->cellVector2();
+		corners[3] = corners[0] + cell->cellVector2();
+		corners[4] = corners[0] + cell->cellVector3();
+		corners[5] = corners[1] + cell->cellVector3();
+		corners[6] = corners[2] + cell->cellVector3();
+		corners[7] = corners[3] + cell->cellVector3();
+		solidPrimitives.lines->setElement(0, corners[0], corners[1] - corners[0], color, cellLineWidth());
+		solidPrimitives.lines->setElement(1, corners[1], corners[2] - corners[1], color, cellLineWidth());
+		solidPrimitives.lines->setElement(2, corners[2], corners[3] - corners[2], color, cellLineWidth());
+		solidPrimitives.lines->setElement(3, corners[3], corners[0] - corners[3], color, cellLineWidth());
+		if(cell->is2D() == false) {
+			solidPrimitives.lines->setElement(4, corners[4], corners[5] - corners[4], color, cellLineWidth());
+			solidPrimitives.lines->setElement(5, corners[5], corners[6] - corners[5], color, cellLineWidth());
+			solidPrimitives.lines->setElement(6, corners[6], corners[7] - corners[6], color, cellLineWidth());
+			solidPrimitives.lines->setElement(7, corners[7], corners[4] - corners[7], color, cellLineWidth());
+			solidPrimitives.lines->setElement(8, corners[0], corners[4] - corners[0], color, cellLineWidth());
+			solidPrimitives.lines->setElement(9, corners[1], corners[5] - corners[1], color, cellLineWidth());
+			solidPrimitives.lines->setElement(10, corners[2], corners[6] - corners[2], color, cellLineWidth());
+			solidPrimitives.lines->setElement(11, corners[3], corners[7] - corners[3], color, cellLineWidth());
 		}
-		renderer->beginPickObject(contextNode);
-		solidPrimitives.lines->render(renderer);
-		solidPrimitives.corners ->render(renderer);
-		renderer->endPickObject();
+		solidPrimitives.lines->endSetElements();
+		solidPrimitives.corners ->setSize(cell->is2D() ? 4 : 8);
+		solidPrimitives.corners ->setParticlePositions(corners);
+		solidPrimitives.corners ->setParticleRadius(cellLineWidth());
+		solidPrimitives.corners ->setParticleColor(cellColor());
 	}
-	else {
-		TimeInterval validityInterval;
-		Box3 bb = boundingBox(time, cell, contextNode, flowState, validityInterval);
-		renderer->addToLocalBoundingBox(bb.padBox(cellLineWidth()));
-	}
+	renderer->beginPickObject(contextNode);
+	solidPrimitives.lines->render(renderer);
+	solidPrimitives.corners ->render(renderer);
+	renderer->endPickObject();
 }
 
 }	// End of namespace

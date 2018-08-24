@@ -547,16 +547,13 @@ public:
 		_isWritableFromPython--;
 	}
 	
-	//////////////////////////////// from RefTarget //////////////////////////////
-
-	/// Returns whether this object, when returned as an editable sub-object by another object,
-	/// should be displayed in the modification stack.
-	///
+	/// Returns whether this data object wants to be shown in the pipeline editor 
+	/// under the data source section.
 	/// This implementation returns true only it this is a typed property, i.e. if the 'elementTypes' list contains
 	/// some elements. In this case we want the property to appear in the pipeline editor so that the user can
 	/// edit the individual types.
-	virtual bool isSubObjectEditable() const override { 
-		return !elementTypes().empty();
+	virtual bool showInPipelineEditor() const override { 
+		return !elementTypes().empty(); 
 	}
 
 	/// Returns the display title of this property object in the user interface.

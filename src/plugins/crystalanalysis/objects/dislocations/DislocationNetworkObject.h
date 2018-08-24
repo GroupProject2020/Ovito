@@ -45,12 +45,6 @@ public:
 	/// Returns the title of this object.
 	virtual QString objectTitle() override { return tr("Dislocations"); }
 
-	/// \brief Returns whether this object, when returned as an editable sub-object by another object,
-	///        should be displayed in the modification stack.
-	///
-	/// Return false because this object cannot be edited.
-	virtual bool isSubObjectEditable() const override { return false; }
-
 	/// Returns the data encapsulated by this object after making sure it is not shared with other owners.
 	const std::shared_ptr<DislocationNetwork>& modifiableStorage();
 

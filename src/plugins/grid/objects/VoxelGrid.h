@@ -24,6 +24,7 @@
 
 #include <plugins/grid/Grid.h>
 #include <plugins/stdobj/simcell/PeriodicDomainDataObject.h>
+#include <plugins/stdobj/properties/PropertyObject.h>
 
 namespace Ovito { namespace Grid {
 
@@ -43,11 +44,11 @@ public:
 	/// Returns the title of this object.
 	virtual QString objectTitle() override { return tr("Voxel grid"); }
 
-	/// \brief Returns whether this object, when returned as an editable sub-object by another object,
-	///        should be displayed in the modification stack.
-	///
-	/// Return false because this object cannot be edited.
-	virtual bool isSubObjectEditable() const override { return false; }
+	/// Appends a property to the list of properties.
+	void addProperty(PropertyObject* property) {
+		OVITO_ASSERT(properties().contains(property) == false);
+		_properties.push_back(this, PROPERTY_FIELD(properties), property);
+	}
 
 protected:
 
@@ -61,6 +62,9 @@ private:
 
 	/// The shape of the grid (i.e. number of voxels in each dimension).
 	DECLARE_RUNTIME_PROPERTY_FIELD(std::vector<size_t>, shape, setShape);
+
+	/// Holds the list of voxel properties.
+	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD(PropertyObject, properties, setProperties);
 };
 
 }	// End of namespace

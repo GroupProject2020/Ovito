@@ -25,6 +25,7 @@
 #include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/particles/objects/ParticlesVis.h>
 #include <plugins/particles/objects/ParticleType.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/particles/objects/BondProperty.h>
 #include <plugins/particles/objects/BondType.h>
 #include <plugins/grid/objects/VoxelProperty.h>
@@ -124,7 +125,7 @@ void ParticleFrameData::generateBondPeriodicImageProperty()
 ******************************************************************************/
 void ParticleFrameData::handOver(PipelineOutputHelper& poh, const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource)
 {
-	// Transfer simulation cell.
+	// Hand over simulation cell.
 	OORef<SimulationCellObject> cell = existing.findObjectOfType<SimulationCellObject>();
 	if(!cell) {
 		cell = new SimulationCellObject(poh.dataset(), simulationCell());
@@ -150,82 +151,96 @@ void ParticleFrameData::handOver(PipelineOutputHelper& poh, const PipelineFlowSt
 	}
 	poh.outputObject(cell);
 
-	// Transfer particle properties.
-	for(auto& property : _particleProperties) {
+	if(!_particleProperties.empty()) {
+	
+		// Hand over particles.
+		ParticlesObject* existingParticles = existing.findObjectOfType<ParticlesObject>();
+		OORef<ParticlesObject> particles = new ParticlesObject(poh.dataset());
+		poh.outputObject(particles);
 
-		// Look for existing property object.
-		OORef<ParticleProperty> propertyObj;
-		for(DataObject* dataObj : existing.objects()) {
-			ParticleProperty* po = dynamic_object_cast<ParticleProperty>(dataObj);
-			if(po && po->type() == property->type() && po->name() == property->name()) {
-				propertyObj = po;
-				break;
+		// Transfer particle properties.
+		for(auto& property : _particleProperties) {
+
+			// Look for existing property object.
+			OORef<PropertyObject> propertyObj;
+			if(existingParticles) {
+				for(PropertyObject* po : existingParticles->properties()) {
+					if(po->type() == property->type() && po->name() == property->name()) {
+						propertyObj = po;
+						break;
+					}
+				}
+			}
+
+			if(propertyObj) {
+				propertyObj->setStorage(std::move(property));
+			}
+			else {
+				propertyObj = ParticleProperty::createFromStorage(poh.dataset(), std::move(property));
+			}
+			particles->addProperty(propertyObj);
+
+			// Auto-adjust particle display radius.
+			if(isNewFile && propertyObj->type() == ParticleProperty::PositionProperty) {
+				if(ParticlesVis* particleVis = dynamic_object_cast<ParticlesVis>(propertyObj->visElement())) {
+					FloatType cellDiameter = (
+							simulationCell().matrix().column(0) +
+							simulationCell().matrix().column(1) +
+							simulationCell().matrix().column(2)).length();
+					// Limit particle radius to a fraction of the cell diameter. 
+					// This is to avoid extremely large particles when the length scale of the simulation is <<1.
+					cellDiameter /= 2;
+					if(particleVis->defaultParticleRadius() > cellDiameter && cellDiameter != 0)
+						particleVis->setDefaultParticleRadius(cellDiameter);
+				}
+			}
+
+			// Transfer particle types.
+			auto typeList = _typeLists.find(propertyObj->storage().get());
+			insertTypes(propertyObj, (typeList != _typeLists.end()) ? typeList->second.get() : nullptr, isNewFile, false);
+		}
+
+		// Hand over bonds.
+		if(!_bondProperties.empty()) {
+
+			BondsObject* existingBonds = (existingParticles != nullptr) ? existingParticles->bonds() : nullptr;
+			OORef<BondsObject> bonds = new BondsObject(poh.dataset());
+			particles->setBonds(bonds);
+
+			// Transfer bonds.
+			for(auto& property : _bondProperties) {
+
+				// Look for existing property object.
+				OORef<PropertyObject> propertyObj;
+				if(existingBonds) {
+					for(PropertyObject* po : existingBonds->properties()) {
+						if(po->type() == property->type() && po->name() == property->name()) {
+							propertyObj = po;
+							break;
+						}
+					}
+				}
+
+				if(propertyObj) {
+					propertyObj->setStorage(std::move(property));
+				}
+				else {
+					propertyObj = BondProperty::createFromStorage(poh.dataset(), std::move(property));
+				}
+				bonds->addProperty(propertyObj);
+
+				// Transfer bond types.
+				auto typeList = _typeLists.find(propertyObj->storage().get());
+				insertTypes(propertyObj, (typeList != _typeLists.end()) ? typeList->second.get() : nullptr, isNewFile, true);
 			}
 		}
-
-		if(propertyObj) {
-			propertyObj->setStorage(std::move(property));
-		}
-		else {
-			propertyObj = ParticleProperty::createFromStorage(poh.dataset(), std::move(property));
-		}
-
-		// Auto-adjust particle display radius.
-		if(isNewFile && propertyObj->type() == ParticleProperty::PositionProperty) {
-			if(ParticlesVis* particleVis = dynamic_object_cast<ParticlesVis>(propertyObj->visElement())) {
-				FloatType cellDiameter = (
-						simulationCell().matrix().column(0) +
-						simulationCell().matrix().column(1) +
-						simulationCell().matrix().column(2)).length();
-				// Limit particle radius to a fraction of the cell diameter. 
-				// This is to avoid extremely large particles when the length scale of the simulation is <<1.
-				cellDiameter /= 2;
-				if(particleVis->defaultParticleRadius() > cellDiameter && cellDiameter != 0)
-					particleVis->setDefaultParticleRadius(cellDiameter);
-			}
-		}
-
-		// Transfer particle types.
-		auto typeList = _typeLists.find(propertyObj->storage().get());
-		insertTypes(propertyObj, (typeList != _typeLists.end()) ? typeList->second.get() : nullptr, isNewFile, false);
-
-		poh.outputObject(propertyObj);
-	}
-
-	// Transfer bond properties.
-	for(auto& property : _bondProperties) {
-
-		// Look for existing property object.
-		OORef<BondProperty> propertyObj;
-		for(DataObject* dataObj : existing.objects()) {
-			BondProperty* po = dynamic_object_cast<BondProperty>(dataObj);
-			if(po && po->type() == property->type() && po->name() == property->name()) {
-				propertyObj = po;
-				break;
-			}
-		}
-
-		if(propertyObj) {
-			propertyObj->setStorage(std::move(property));
-		}
-		else {
-			propertyObj = BondProperty::createFromStorage(poh.dataset(), std::move(property));
-		}
-
-		// Transfer bond types.
-		auto typeList = _typeLists.find(propertyObj->storage().get());
-		insertTypes(propertyObj, (typeList != _typeLists.end()) ? typeList->second.get() : nullptr, isNewFile, true);
-
-		poh.outputObject(propertyObj);
 	}
 
 	// Transfer voxel data.
 	if(voxelGridShape().empty() == false) {
 
-		OORef<VoxelGrid> voxelGrid = existing.findObjectOfType<VoxelGrid>();
-		if(!voxelGrid) {
-			voxelGrid = new VoxelGrid(poh.dataset());
-		}
+		VoxelGrid* existingVoxelGrid = existing.findObjectOfType<VoxelGrid>();
+		OORef<VoxelGrid> voxelGrid = new VoxelGrid(poh.dataset());
 		voxelGrid->setShape(voxelGridShape());
 		voxelGrid->setDomain(cell);
 		poh.outputObject(voxelGrid);
@@ -233,12 +248,13 @@ void ParticleFrameData::handOver(PipelineOutputHelper& poh, const PipelineFlowSt
 		for(auto& property : voxelProperties()) {
 
 			// Look for existing field quantity object.
-			OORef<VoxelProperty> propertyObject;
-			for(DataObject* dataObj : existing.objects()) {
-				VoxelProperty* po = dynamic_object_cast<VoxelProperty>(dataObj);
-				if(po && po->name() == property->name()) {
-					propertyObject = po;
-					break;
+			OORef<PropertyObject> propertyObject;
+			if(existingVoxelGrid) {
+				for(PropertyObject* po : existingVoxelGrid->properties()) {
+					if(po->name() == property->name()) {
+						propertyObject = po;
+						break;
+					}
 				}
 			}
 
@@ -248,12 +264,11 @@ void ParticleFrameData::handOver(PipelineOutputHelper& poh, const PipelineFlowSt
 			else {
 				propertyObject = static_object_cast<VoxelProperty>(VoxelProperty::OOClass().createFromStorage(poh.dataset(), std::move(property)));
 			}
-
-			poh.outputObject(propertyObject);
+			voxelGrid->addProperty(propertyObject);
 		}
 	}
 
-	// Pass timestep information and other metadata to the modification pipeline.
+	// Hand over timestep information and other metadata as global attributes.
 	for(auto a = _attributes.cbegin(); a != _attributes.cend(); ++a) {
 		poh.outputAttribute(a.key(), a.value());
 	}

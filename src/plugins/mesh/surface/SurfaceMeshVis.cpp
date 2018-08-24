@@ -141,13 +141,13 @@ void SurfaceMeshVis::PrepareSurfaceEngine::perform()
 /******************************************************************************
 * Computes the bounding box of the displayed data.
 ******************************************************************************/
-Box3 SurfaceMeshVis::boundingBox(TimePoint time, DataObject* dataObject, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
+Box3 SurfaceMeshVis::boundingBox(TimePoint time, const std::vector<DataObject*>& objectStack, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
 	Box3 bb;
 
 	// Compute mesh bounding box.
 	// Requires that we have already transformed the periodic SurfaceMesh into a non-periodic RenderableSurfaceMesh.
-	if(OORef<RenderableSurfaceMesh> meshObj = dataObject->convertTo<RenderableSurfaceMesh>(time)) {
+	if(OORef<RenderableSurfaceMesh> meshObj = objectStack.back()->convertTo<RenderableSurfaceMesh>(time)) {
 		bb.addBox(meshObj->surfaceMesh().boundingBox());
 		bb.addBox(meshObj->capPolygonsMesh().boundingBox());
 	}
@@ -157,16 +157,16 @@ Box3 SurfaceMeshVis::boundingBox(TimePoint time, DataObject* dataObject, Pipelin
 /******************************************************************************
 * Lets the visualization element render the data object.
 ******************************************************************************/
-void SurfaceMeshVis::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
+void SurfaceMeshVis::render(TimePoint time, const std::vector<DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
 {
 	// Ignore render calls for the original SurfaceMesh.
 	// We are only interested in the RenderableSurfaceMesh.
-	if(dynamic_object_cast<SurfaceMesh>(dataObject) != nullptr)
+	if(dynamic_object_cast<SurfaceMesh>(objectStack.back()) != nullptr)
 		return;
 
 	if(renderer->isBoundingBoxPass()) {
 		TimeInterval validityInterval;
-		renderer->addToLocalBoundingBox(boundingBox(time, dataObject, contextNode, flowState, validityInterval));
+		renderer->addToLocalBoundingBox(boundingBox(time, objectStack, contextNode, flowState, validityInterval));
 		return;
 	}
 
@@ -194,11 +194,11 @@ void SurfaceMeshVis::render(TimePoint time, DataObject* dataObject, const Pipeli
 	>;
 
 	// Lookup the rendering primitive in the vis cache.
-	auto& surfacePrimitive = dataset()->visCache().get<std::shared_ptr<MeshPrimitive>>(SurfaceCacheKey(renderer, dataObject, color_surface));
+	auto& surfacePrimitive = dataset()->visCache().get<std::shared_ptr<MeshPrimitive>>(SurfaceCacheKey(renderer, objectStack.back(), color_surface));
 
 	// Check if we already have a valid rendering primitive that is up to date.
 	if(!surfacePrimitive || !surfacePrimitive->isValid(renderer)) {
-		if(OORef<RenderableSurfaceMesh> meshObj = dataObject->convertTo<RenderableSurfaceMesh>(time)) {
+		if(OORef<RenderableSurfaceMesh> meshObj = objectStack.back()->convertTo<RenderableSurfaceMesh>(time)) {
 			surfacePrimitive = renderer->createMeshPrimitive();
 			surfacePrimitive->setMesh(meshObj->surfaceMesh(), color_surface);
 		}
@@ -208,12 +208,12 @@ void SurfaceMeshVis::render(TimePoint time, DataObject* dataObject, const Pipeli
 	}
 
 	// Lookup the rendering primitive in the vis cache.
-	auto& capPrimitive = dataset()->visCache().get<std::shared_ptr<MeshPrimitive>>(CapCacheKey(renderer, dataObject, color_cap));
+	auto& capPrimitive = dataset()->visCache().get<std::shared_ptr<MeshPrimitive>>(CapCacheKey(renderer, objectStack.back(), color_cap));
 
 	// Check if we already have a valid rendering primitive that is up to date.
 	if(!capPrimitive || !capPrimitive->isValid(renderer)) {
 		capPrimitive.reset();
-		if(OORef<RenderableSurfaceMesh> meshObj = dataObject->convertTo<RenderableSurfaceMesh>(time)) {
+		if(OORef<RenderableSurfaceMesh> meshObj = objectStack.back()->convertTo<RenderableSurfaceMesh>(time)) {
 			if(showCap()) {
 				capPrimitive = renderer->createMeshPrimitive();
 				capPrimitive->setMesh(meshObj->capPolygonsMesh(), color_cap);

@@ -147,11 +147,11 @@ void SlipSurfaceVis::PrepareMeshEngine::perform()
 /******************************************************************************
 * Computes the bounding box of the displayed data.
 ******************************************************************************/
-Box3 SlipSurfaceVis::boundingBox(TimePoint time, DataObject* dataObject, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
+Box3 SlipSurfaceVis::boundingBox(TimePoint time, const std::vector<DataObject*>& objectStack, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
 	// Compute mesh bounding box.
 	Box3 bb;
-	if(OORef<RenderableSurfaceMesh> meshObj = dataObject->convertTo<RenderableSurfaceMesh>(time)) {
+	if(OORef<RenderableSurfaceMesh> meshObj = objectStack.back()->convertTo<RenderableSurfaceMesh>(time)) {
 		bb.addBox(meshObj->surfaceMesh().boundingBox());
 	}
 	return bb;
@@ -160,7 +160,7 @@ Box3 SlipSurfaceVis::boundingBox(TimePoint time, DataObject* dataObject, Pipelin
 /******************************************************************************
 * Lets the visualization element render the data object.
 ******************************************************************************/
-void SlipSurfaceVis::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
+void SlipSurfaceVis::render(TimePoint time, const std::vector<DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
 {
 #if 0	
 	// Ignore render calls for the original MicrostructureObject.

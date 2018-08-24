@@ -86,6 +86,19 @@ public:
 	/// \brief Replaces the given visual element in this pipeline's output with an independent copy.
 	DataVis* makeVisElementIndependent(DataVis* visElement);
 
+	/// Returns the internal replacement for the given data vis element.
+	/// If there is no replacement, the original vis element is returned.
+	DataVis* getReplacementVisElement(DataVis* vis) const {
+		OVITO_ASSERT(replacementVisElements().size() == replacedVisElements().size());
+		OVITO_ASSERT(std::find(replacedVisElements().begin(), replacedVisElements().end(), nullptr) == replacedVisElements().end());
+		OVITO_ASSERT(vis);
+		int index = replacedVisElements().indexOf(vis);
+		if(index >= 0)
+			return replacementVisElements()[index];
+		else
+			return vis;
+	}
+
 protected:
 
 	/// This method is called when a referenced object has changed.
@@ -115,10 +128,14 @@ protected:
 	/// Rebuilds the list of visual elements maintained by the scene node.
 	void updateVisElementList(TimePoint time);
 
-	/// Replaces upstream visual elements with the independent versions managed by this node.
-	void replaceVisualElements(PipelineFlowState& state);
-
 private:
+
+	/// Helper function that recursively collects all visual elements of a 
+	/// data object and stores them in a vector.
+	static void collectVisElements(DataObject* dataObj, std::vector<DataVis*>& visElements);
+
+	/// Computes the bounding box of a data object and all its sub-objects. 
+	void getDataObjectBoundingBox(TimePoint time, DataObject* dataObj, const PipelineFlowState& state, TimeInterval& validity, Box3& bb, std::vector<DataObject*>& objectStack);
 
 	/// The terminal object of the pipeline that outputs the data to be rendered by this PipelineSceneNode.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD(PipelineObject, dataProvider, setDataProvider);

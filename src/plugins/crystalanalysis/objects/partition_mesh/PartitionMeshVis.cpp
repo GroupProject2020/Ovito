@@ -70,11 +70,11 @@ void PartitionMeshVis::propertyChanged(const PropertyFieldDescriptor& field)
 /******************************************************************************
 * Computes the bounding box of the displayed data.
 ******************************************************************************/
-Box3 PartitionMeshVis::boundingBox(TimePoint time, DataObject* dataObject, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
+Box3 PartitionMeshVis::boundingBox(TimePoint time, const std::vector<DataObject*>& objectStack, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
 	// Compute mesh bounding box.
 	Box3 bb;
-	if(OORef<RenderableSurfaceMesh> meshObj = dataObject->convertTo<RenderableSurfaceMesh>(time)) {
+	if(OORef<RenderableSurfaceMesh> meshObj = objectStack.back()->convertTo<RenderableSurfaceMesh>(time)) {
 		bb.addBox(meshObj->surfaceMesh().boundingBox());
 	}
 	return bb;
@@ -165,7 +165,7 @@ void PartitionMeshVis::PrepareMeshEngine::perform()
 /******************************************************************************
 * Lets the visualization element render the data object.
 ******************************************************************************/
-void PartitionMeshVis::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
+void PartitionMeshVis::render(TimePoint time, const std::vector<DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
 {
 #if 0	
 	// Ignore render calls for the original PartitionMesh.

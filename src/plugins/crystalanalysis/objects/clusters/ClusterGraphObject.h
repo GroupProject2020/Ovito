@@ -44,12 +44,6 @@ public:
 	/// Returns the title of this object.
 	virtual QString objectTitle() override { return tr("Clusters"); }
 
-	/// \brief Returns whether this object, when returned as an editable sub-object by another object,
-	///        should be displayed in the modification stack.
-	///
-	/// Return false because this object cannot be edited.
-	virtual bool isSubObjectEditable() const override { return false; }
-
 	/// Returns the list of nodes in the cluster graph.
 	const std::vector<Cluster*>& clusters() const { return storage()->clusters(); }
 

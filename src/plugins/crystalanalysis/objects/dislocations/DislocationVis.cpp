@@ -138,9 +138,9 @@ Future<PipelineFlowState> DislocationVis::transformDataImpl(TimePoint time, Data
 /******************************************************************************
 * Computes the bounding box of the object.
 ******************************************************************************/
-Box3 DislocationVis::boundingBox(TimePoint time, DataObject* dataObject, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
+Box3 DislocationVis::boundingBox(TimePoint time, const std::vector<DataObject*>& objectStack, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
-	RenderableDislocationLines* renderableObj = dynamic_object_cast<RenderableDislocationLines>(dataObject);
+	RenderableDislocationLines* renderableObj = dynamic_object_cast<RenderableDislocationLines>(objectStack.back());
 	if(!renderableObj) return {};
 	PeriodicDomainDataObject* domainObj = dynamic_object_cast<PeriodicDomainDataObject>(renderableObj->sourceDataObject().get());
 	if(!domainObj) return {};
@@ -160,7 +160,7 @@ Box3 DislocationVis::boundingBox(TimePoint time, DataObject* dataObject, Pipelin
 
 	// Look up the bounding box in the vis cache.
 	auto& bbox = dataset()->visCache().get<Box3>(CacheKey(
-			dataObject, 
+			renderableObj, 
 			cell,
 			lineWidth(), 
 			showBurgersVectors(), 
@@ -192,17 +192,17 @@ Box3 DislocationVis::boundingBox(TimePoint time, DataObject* dataObject, Pipelin
 /******************************************************************************
 * Lets the vis element render a data object.
 ******************************************************************************/
-void DislocationVis::render(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
+void DislocationVis::render(TimePoint time, const std::vector<DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
 {
 	// Ignore render calls for the original DislocationNetworkObject or MicrostrucureObject.
 	// We are only interested in the RenderableDIslocationLines.
-	if(dynamic_object_cast<DislocationNetworkObject>(dataObject)) return;
-	if(dynamic_object_cast<MicrostructureObject>(dataObject)) return;
+	if(dynamic_object_cast<DislocationNetworkObject>(objectStack.back())) return;
+	if(dynamic_object_cast<MicrostructureObject>(objectStack.back())) return;
 
 	// Just compute the bounding box of the rendered objects if requested.
 	if(renderer->isBoundingBoxPass()) {
 		TimeInterval validityInterval;
-		renderer->addToLocalBoundingBox(boundingBox(time, dataObject, contextNode, flowState, validityInterval));
+		renderer->addToLocalBoundingBox(boundingBox(time, objectStack, contextNode, flowState, validityInterval));
 		return;
 	}
 
@@ -233,7 +233,7 @@ void DislocationVis::render(TimePoint time, DataObject* dataObject, const Pipeli
 			? ParticlePrimitive::NormalShading : ParticlePrimitive::FlatShading;
 
 	// Get the renderable dislocation lines.
-	RenderableDislocationLines* renderableLines = dynamic_object_cast<RenderableDislocationLines>(dataObject);
+	RenderableDislocationLines* renderableLines = dynamic_object_cast<RenderableDislocationLines>(objectStack.back());
 	if(!renderableLines) return;
 
 	// Make sure we don't exceed our internal limits.
