@@ -22,8 +22,6 @@
 #include <plugins/mesh/Mesh.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
-#include <plugins/stdobj/util/InputHelper.h>
-#include <plugins/stdobj/util/OutputHelper.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include "SurfaceMeshReplicateModifierDelegate.h"
@@ -37,7 +35,7 @@ IMPLEMENT_OVITO_CLASS(SurfaceMeshReplicateModifierDelegate);
 ******************************************************************************/
 bool SurfaceMeshReplicateModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<SurfaceMesh>() != nullptr;
+	return input.containsObject<SurfaceMesh>();
 }
 
 /******************************************************************************
@@ -58,11 +56,8 @@ PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, c
 
 	Box3I newImages = mod->replicaRange();
 
-	InputHelper ih(dataset(), input);
-	OutputHelper oh(dataset(), output, modApp);
-
-	for(DataObject* obj : output.objects()) {
-		if(SurfaceMesh* existingSurface = dynamic_object_cast<SurfaceMesh>(obj)) {
+	for(const DataObject* obj : output.objects()) {
+		if(const SurfaceMesh* existingSurface = dynamic_object_cast<SurfaceMesh>(obj)) {
 			// For replication, a domain is required.
 			if(!existingSurface->domain()) continue;
 			AffineTransformation simCell = existingSurface->domain()->cellMatrix();
@@ -72,7 +67,7 @@ PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, c
 				continue;
 			
 			// Create the output copy of the input surface.
-			SurfaceMesh* newSurface = oh.cloneIfNeeded(existingSurface);
+			SurfaceMesh* newSurface = output.makeMutable(existingSurface);
 			SurfaceMeshPtr mesh = newSurface->modifiableStorage();
 			OVITO_ASSERT(mesh->isClosed());
 

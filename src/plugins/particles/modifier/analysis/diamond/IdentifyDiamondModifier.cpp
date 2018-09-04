@@ -22,8 +22,6 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/util/NearestNeighborFinder.h>
 #include <plugins/particles/modifier/analysis/cna/CommonNeighborAnalysisModifier.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <core/utilities/concurrent/ParallelFor.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
@@ -58,19 +56,19 @@ Future<AsynchronousModifier::ComputeEnginePtr> IdentifyDiamondModifier::createEn
 		throwException(tr("The number of structure types has changed. Please remove this modifier from the modification pipeline and insert it again."));
 
 	// Get modifier input.
-	ParticleInputHelper pih(dataset(), input);
-	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
-	SimulationCellObject* simCell = pih.expectSimulationCell();
+	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
+	const SimulationCellObject* simCell = input.expectObject<SimulationCellObject>();
 	if(simCell->is2D())
 		throwException(tr("The modifier does not support 2d simulation cells."));
 
 	// Get particle selection.
 	ConstPropertyPtr selectionProperty;
 	if(onlySelectedParticles())
-		selectionProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty)->storage();
+		selectionProperty = particles->expectProperty(ParticlesObject::SelectionProperty)->storage();
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<DiamondIdentificationEngine>(input, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty));
+	return std::make_shared<DiamondIdentificationEngine>(particles, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty));
 }
 
 /******************************************************************************
@@ -232,13 +230,12 @@ PipelineFlowState IdentifyDiamondModifier::DiamondIdentificationEngine::emitResu
 	PipelineFlowState outState = StructureIdentificationEngine::emitResults(time, modApp, input);
 
 	// Also output structure type counts, which have been computed by the base class.
-	ParticleOutputHelper poh(modApp->dataset(), outState, modApp);
-	poh.outputAttribute(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND"), QVariant::fromValue(getTypeCount(CUBIC_DIAMOND)));
-	poh.outputAttribute(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND_FIRST_NEIGHBOR"), QVariant::fromValue(getTypeCount(CUBIC_DIAMOND_FIRST_NEIGH)));
-	poh.outputAttribute(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND_SECOND_NEIGHBOR"), QVariant::fromValue(getTypeCount(CUBIC_DIAMOND_SECOND_NEIGH)));
-	poh.outputAttribute(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND"), QVariant::fromValue(getTypeCount(HEX_DIAMOND)));
-	poh.outputAttribute(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND_FIRST_NEIGHBOR"), QVariant::fromValue(getTypeCount(HEX_DIAMOND_FIRST_NEIGH)));
-	poh.outputAttribute(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND_SECOND_NEIGHBOR"), QVariant::fromValue(getTypeCount(HEX_DIAMOND_SECOND_NEIGH)));
+	outState.addAttribute(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND"), QVariant::fromValue(getTypeCount(CUBIC_DIAMOND)), modApp);
+	outState.addAttribute(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND_FIRST_NEIGHBOR"), QVariant::fromValue(getTypeCount(CUBIC_DIAMOND_FIRST_NEIGH)), modApp);
+	outState.addAttribute(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND_SECOND_NEIGHBOR"), QVariant::fromValue(getTypeCount(CUBIC_DIAMOND_SECOND_NEIGH)), modApp);
+	outState.addAttribute(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND"), QVariant::fromValue(getTypeCount(HEX_DIAMOND)), modApp);
+	outState.addAttribute(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND_FIRST_NEIGHBOR"), QVariant::fromValue(getTypeCount(HEX_DIAMOND_FIRST_NEIGH)), modApp);
+	outState.addAttribute(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND_SECOND_NEIGHBOR"), QVariant::fromValue(getTypeCount(HEX_DIAMOND_SECOND_NEIGH)), modApp);
 
 	return outState;
 }

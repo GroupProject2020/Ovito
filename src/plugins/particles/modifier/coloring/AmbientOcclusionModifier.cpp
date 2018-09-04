@@ -21,9 +21,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/ParticlesVis.h>
-#include <plugins/particles/objects/ParticleProperty.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <core/app/Application.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
@@ -58,7 +56,7 @@ AmbientOcclusionModifier::AmbientOcclusionModifier(DataSet* dataset) : Asynchron
 ******************************************************************************/
 bool AmbientOcclusionModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<ParticleProperty>() != nullptr;
+	return input.containsObject<ParticlesObject>();
 }
 
 /******************************************************************************
@@ -72,18 +70,16 @@ Future<AsynchronousModifier::ComputeEnginePtr> AmbientOcclusionModifier::createE
 						  "Please run program on a machine where access to graphics hardware is available."));
 
 	// Get modifier input.
-	ParticleInputHelper ph(dataset(), input);
-	ParticleProperty* posProperty = ph.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
-	ParticleProperty* typeProperty = ph.inputStandardProperty<ParticleProperty>(ParticleProperty::TypeProperty);
-	ParticleProperty* radiusProperty = ph.inputStandardProperty<ParticleProperty>(ParticleProperty::RadiusProperty);
-	ParticleProperty* shapeProperty = ph.inputStandardProperty<ParticleProperty>(ParticleProperty::AsphericalShapeProperty);
+	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
+	const PropertyObject* typeProperty = particles->getProperty(ParticlesObject::TypeProperty);
+	const PropertyObject* radiusProperty = particles->getProperty(ParticlesObject::RadiusProperty);
+	const PropertyObject* shapeProperty = particles->getProperty(ParticlesObject::AsphericalShapeProperty);
 
 	// Compute bounding box of input particles.
 	Box3 boundingBox;
-	for(DataVis* vis : posProperty->visElements()) {
-		if(ParticlesVis* particleVis = dynamic_object_cast<ParticlesVis>(vis)) {
-			boundingBox.addBox(particleVis->particleBoundingBox(posProperty, typeProperty, radiusProperty, shapeProperty, true));
-		}
+	if(ParticlesVis* particleVis = particles->visElement<ParticlesVis>()) {
+		boundingBox.addBox(particleVis->particleBoundingBox(posProperty, typeProperty, radiusProperty, shapeProperty, true));
 	}
 
 	// The render buffer resolution.
@@ -91,7 +87,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> AmbientOcclusionModifier::createE
 	int resolution = (128 << res);
 
 	TimeInterval validityInterval = input.stateValidity();
-	std::vector<FloatType> radii = ph.inputParticleRadii(time, validityInterval);
+	std::vector<FloatType> radii = particles->inputParticleRadii();
 
 	// Create the offscreen surface for rendering.
 	auto offscreenSurface = std::make_unique<QOffscreenSurface>();
@@ -102,7 +98,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> AmbientOcclusionModifier::createE
 	OORef<AmbientOcclusionRenderer> renderer(new AmbientOcclusionRenderer(dataset(), QSize(resolution, resolution), *offscreenSurface));
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	auto engine = std::make_shared<AmbientOcclusionEngine>(validityInterval, input, resolution, samplingCount(), posProperty->storage(), boundingBox, std::move(radii), renderer);
+	auto engine = std::make_shared<AmbientOcclusionEngine>(validityInterval, particles, resolution, samplingCount(), posProperty->storage(), boundingBox, std::move(radii), renderer);
 
 	// Make sure the renderer and the offscreen surface stay alive until the compute engine finished.
 	engine->task()->finally(dataset()->executor(), [offscreenSurface = std::move(offscreenSurface), renderer = std::move(renderer)]() {});
@@ -242,36 +238,28 @@ void AmbientOcclusionModifier::AmbientOcclusionEngine::perform()
 ******************************************************************************/
 PipelineFlowState AmbientOcclusionModifier::AmbientOcclusionEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	if(_inputFingerprint.hasChanged(input))
-		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
-
 	AmbientOcclusionModifier* modifier = static_object_cast<AmbientOcclusionModifier>(modApp->modifier());
 	OVITO_ASSERT(modifier);
 
 	PipelineFlowState output = input;
-	ParticleInputHelper pih(modApp->dataset(), input);
-	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
-	OVITO_ASSERT(brightness() && poh.outputParticleCount() == brightness()->size());
+
+	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+	if(_inputFingerprint.hasChanged(particles))
+		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
+	OVITO_ASSERT(brightness() && particles->elementCount() == brightness()->size());
 	
 	// Get effective intensity.
 	FloatType intens = qBound(FloatType(0), modifier->intensity(), FloatType(1));
 
 	// Get output property object.
-	ParticleProperty* colorProperty = poh.outputStandardProperty<ParticleProperty>(ParticleProperty::ColorProperty);
-	OVITO_ASSERT(colorProperty->size() == brightness()->size());
-
-	std::vector<Color> existingColors = pih.inputParticleColors(time, output.mutableStateValidity());
-	OVITO_ASSERT(colorProperty->size() == existingColors.size());
+	PropertyObject* colorProperty = particles->createProperty(ParticlesObject::ColorProperty, true, {particles});
 	const FloatType* b = brightness()->constDataFloat();
 	Color* c = colorProperty->dataColor();
 	Color* c_end = c + colorProperty->size();
-	auto c_in = existingColors.cbegin();
-	for(; c != c_end; ++b, ++c, ++c_in) {
+	for(; c != c_end; ++b, ++c) {
 		FloatType factor = FloatType(1) - intens + (*b);
 		if(factor < FloatType(1))
-			*c = factor * (*c_in);
-		else
-			*c = *c_in;
+			*c = (*c) * factor;
 	}
 
 	return output;

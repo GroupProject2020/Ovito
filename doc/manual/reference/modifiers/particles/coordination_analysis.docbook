@@ -46,7 +46,7 @@
         of particles. As explained in <link xlink:href="http://forum.ovito.org/index.php?topic=131.0">this forum post</link>, you can also compute the <emphasis>partial</emphasis> RDFs for a system
         containing more than one particle species using a different, more elaborate approach.
     </para>
-  <simplesect>
+  </simplesect>
 
   <simplesect>
     <title>Time-averaged RDF</title>
@@ -58,7 +58,7 @@
       See the <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.CoordinationAnalysisModifier">corresponding section</link> 
       of the scripting manual for an example.
     </para>
-  <simplesect>
+  </simplesect>
 
   <simplesect>
     <title>See also</title>

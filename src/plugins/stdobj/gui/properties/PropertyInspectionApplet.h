@@ -25,6 +25,7 @@
 #include <plugins/stdobj/gui/StdObjGui.h>
 #include <plugins/stdobj/properties/PropertyExpressionEvaluator.h>
 #include <plugins/stdobj/properties/PropertyObject.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
 #include <gui/mainwin/data_inspector/DataInspectionApplet.h>
 #include <core/dataset/scene/PipelineSceneNode.h>
 
@@ -49,8 +50,8 @@ public:
 	/// Returns the data display widget.
 	QTableView* tableView() const { return _tableView; }
 
-	/// Returns the list widget displaying the list of data bundles.
-	QListWidget* bundleSelectionWidget() const { return _bundleSelectionWidget; }
+	/// Returns the list widget displaying the list of constainer objects.
+	QListWidget* containerSelectionWidget() const { return _containerSelectionWidget; }
 
 	/// Returns the input widget for the filter expression.
 	AutocompleteLineEdit* filterExpressionEdit() const { return _filterExpressionEdit; }
@@ -70,16 +71,13 @@ public:
 	/// Returns the index of the i-th element currently shown in the table.
 	size_t visibleElementAt(int index) const { return _filterModel->mapToSource(_filterModel->index(index, 0)).row(); }
 
-	/// Returns the identifier of the data bundle that is currently selected.
-	QString selectedBundleId() const;
-
-	/// Returns the data object representing the data bundle that is currently selected.
-	DataObject* selectedBundleObject() const;
+	/// Returns the property container object that is currently selected.
+	const PropertyContainer* selectedContainerObject() const { return _selectedContainerObject; }
 
 protected:
 
 	/// Constructor.
-	PropertyInspectionApplet(const PropertyClass& propertyClass) : _propertyClass(propertyClass) {}
+	PropertyInspectionApplet(const PropertyContainerClass& containerClass) : _containerClass(containerClass) {}
 
 	/// Lets the applet create the UI widgets that are to be placed into the data inspector panel. 
 	void createBaseWidgets();
@@ -90,8 +88,8 @@ protected:
 	/// Determines whether the given property represents a color.
 	virtual bool isColorProperty(PropertyObject* property) const { return false; }
 
-	/// Updates the list of data bundles displayed in the inspector.
-	void updateBundleList();
+	/// Updates the list of container objects displayed in the inspector.
+	void updateContainerList();
 
 Q_SIGNALS:
 
@@ -105,8 +103,8 @@ public Q_SLOTS:
 
 protected Q_SLOTS:
 
-	/// Is called when the user selects a different bundle in the list.
-	virtual void currentBundleChanged();
+	/// Is called when the user selects a different container object in the list.
+	virtual void currentContainerChanged();
 
 private Q_SLOTS:
 
@@ -153,7 +151,7 @@ private:
 		}
 
 		/// Replaces the contents of this data model.
-		void setContents(const PipelineFlowState& state, const QString& bundleName);
+		void setContents(const PropertyContainer* container);
 
 	private:
 
@@ -218,8 +216,8 @@ private:
 
 private:
 
-	/// The type of properties displayed in this applet.
-	const PropertyClass& _propertyClass;
+	/// The type of container objects displayed by this applet.
+	const PropertyContainerClass& _containerClass;
 
 	/// The data display widget.
 	QTableView* _tableView = nullptr;
@@ -245,11 +243,17 @@ private:
 	/// The currently selected scene node.
 	QPointer<PipelineSceneNode> _sceneNode;
 
-	/// The widget for selecting the current data bundle.
-	QListWidget* _bundleSelectionWidget = nullptr;
+	/// The widget for selecting the current property container object.
+	QListWidget* _containerSelectionWidget = nullptr;
 
 	/// The input data.
 	PipelineFlowState _data;
+
+	/// The identifier path of the currently selected property container.
+	QString _selectedDataObjectPath;
+
+	/// Pointer to the currently selected property container.
+	const PropertyContainer* _selectedContainerObject = nullptr;
 };
 
 }	// End of namespace

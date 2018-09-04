@@ -97,11 +97,11 @@ public:
 
 	/// Constructor	for a property field that stores a single reference to a RefTarget.
 	PropertyFieldDescriptor(RefMakerClass* definingClass, OvitoClassPtr targetClass, const char* identifier, PropertyFieldFlags flags, 
-		SingleReferenceFieldBase& (*_storageAccessFunc)(RefMaker*));
+		SingleReferenceFieldBase& (*_storageAccessFunc)(const RefMaker*));
 
 	/// Constructor	for a property field that stores a vector of references to RefTarget objects.
 	PropertyFieldDescriptor(RefMakerClass* definingClass, OvitoClassPtr targetClass, const char* identifier, PropertyFieldFlags flags, 
-		VectorReferenceFieldBase& (*_storageAccessFunc)(RefMaker*));
+		VectorReferenceFieldBase& (*_storageAccessFunc)(const RefMaker*));
 		
 	/// Returns the unique identifier of the reference field.
 	const char* identifier() const { return _identifier; }
@@ -194,10 +194,10 @@ protected:
 	void (*propertyStorageLoadFunc)(RefMaker*, LoadStream&) = nullptr;
 
 	/// Stores a pointer to the function that returns the single reference field for a RefMaker instance.
-	SingleReferenceFieldBase& (*singleStorageAccessFunc)(RefMaker*) = nullptr;
+	SingleReferenceFieldBase& (*singleStorageAccessFunc)(const RefMaker*) = nullptr;
 
 	/// Stores a pointer to the function that return the vector reference field for a RefMaker instance.
-	VectorReferenceFieldBase& (*vectorStorageAccessFunc)(RefMaker*) = nullptr;
+	VectorReferenceFieldBase& (*vectorStorageAccessFunc)(const RefMaker*) = nullptr;
 
 	/// The human-readable name of this property field. It will be used
 	/// as label text in the user interface.

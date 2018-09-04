@@ -23,14 +23,14 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <core/oo/RefTarget.h>
+#include <plugins/stdobj/properties/ElementType.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
 /**
- * \brief Stores properties of an atom type.
+ * \brief represents a dislocation type.
  */
-class OVITO_CRYSTALANALYSIS_EXPORT BurgersVectorFamily : public RefTarget
+class OVITO_CRYSTALANALYSIS_EXPORT BurgersVectorFamily : public ElementType
 {
 	Q_OBJECT
 	OVITO_CLASS(BurgersVectorFamily)
@@ -38,26 +38,12 @@ class OVITO_CRYSTALANALYSIS_EXPORT BurgersVectorFamily : public RefTarget
 public:
 
 	/// \brief Constructs a new BurgersVectorFamily.
-	Q_INVOKABLE BurgersVectorFamily(DataSet* dataset, const QString& name = QString(), const Vector3& burgersVector = Vector3::Zero(), const Color& color = Color(0,0,0));
+	Q_INVOKABLE BurgersVectorFamily(DataSet* dataset, int id = 0, const QString& name = QString(), const Vector3& burgersVector = Vector3::Zero(), const Color& color = Color(0,0,0));
 
 	/// Checks if the given Burgers vector is a member of this family.
-	bool isMember(const Vector3& v, StructurePattern* latticeStructure) const;
-
-	/// Returns the title of this object.
-	virtual QString objectTitle() override { return name(); }
-
-public:
-
-	Q_PROPERTY(QString name READ name WRITE setName);
-	Q_PROPERTY(Color color READ color WRITE setColor);
+	bool isMember(const Vector3& v, const StructurePattern* latticeStructure) const;
 
 private:
-
-	/// The name of this atom type.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, name, setName);
-
-	/// This visualization color of this family.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(Color, color, setColor);
 
 	/// This prototype Burgers vector of this family.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(Vector3, burgersVector, setBurgersVector);

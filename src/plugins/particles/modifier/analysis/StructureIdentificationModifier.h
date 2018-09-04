@@ -24,7 +24,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/ParticleType.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/particles/util/ParticleOrderingFingerprint.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
@@ -65,7 +65,7 @@ public:
 			_simCell(simCell),
 			_typesToIdentify(std::move(typesToIdentify)),
 			_selection(std::move(selection)),
-			_structures(ParticleProperty::createStandardStorage(fingerprint.particleCount(), ParticleProperty::StructureTypeProperty, false)),
+			_structures(ParticlesObject::OOClass().createStandardStorage(fingerprint.particleCount(), ParticlesObject::StructureTypeProperty, false)),
 			_inputFingerprint(std::move(fingerprint)) {}
 
 		/// This method is called by the system after the computation was successfully completed.

@@ -89,7 +89,7 @@ public:
 	PipelineObject* pipelineSource() const;
 		
 	/// \brief Returns the title of this modifier application.
-	virtual QString objectTitle() override {
+	virtual QString objectTitle() const override {
 		// Inherit title from modifier.
 		if(modifier()) return modifier()->objectTitle();
 		else return CachingPipelineObject::objectTitle();

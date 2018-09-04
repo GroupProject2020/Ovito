@@ -64,7 +64,7 @@ public:
 	Q_INVOKABLE CAImporter(DataSet* dataset) : ParticleImporter(dataset) {}
 
 	/// Returns the title of this object.
-	virtual QString objectTitle() override { return tr("CA File"); }
+	virtual QString objectTitle() const override { return tr("CA File"); }
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
 	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
@@ -108,7 +108,7 @@ protected:
 		
 		/// Inserts the loaded data into the provided pipeline state structure. This function is
 		/// called by the system from the main thread after the asynchronous loading task has finished.
-		virtual void handOver(PipelineOutputHelper& poh, const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource) override;
+		virtual PipelineFlowState handOver(const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource) override;
 
 		void addPattern(PatternInfo pattern) {
 			_patterns.push_back(std::move(pattern));

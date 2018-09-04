@@ -25,13 +25,12 @@
 #include <gui/GUI.h>
 #include <gui/properties/PropertiesEditor.h>
 #include <gui/widgets/display/StatusWidget.h>
-#include <core/utilities/concurrent/PromiseWatcher.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Params)
 
 /**
- * \brief Base class for properties editors for ParticleModifier derived classes.
+ * \brief Base class for property editors for Modifier subclasses.
  */
 class OVITO_GUI_EXPORT ModifierPropertiesEditor : public PropertiesEditor
 {
@@ -42,6 +41,9 @@ public:
 
 	/// Constructor.
 	ModifierPropertiesEditor();
+
+	/// \brief The virtual destructor.
+	virtual ~ModifierPropertiesEditor() { clearAllReferences(); }
 
 	/// Returns a widget that displays status messages of the modifier. 
 	/// Editor class implementation can add this widget to their user interface.

@@ -41,7 +41,7 @@ class OVITO_STDOBJGUI_EXPORT SeriesInspectionApplet : public PropertyInspectionA
 public:
 
 	/// Constructor.
-	Q_INVOKABLE SeriesInspectionApplet() : PropertyInspectionApplet(DataSeriesProperty::OOClass()) {}
+	Q_INVOKABLE SeriesInspectionApplet() : PropertyInspectionApplet(DataSeriesObject::OOClass()) {}
 
 	/// Returns the key value for this applet that is used for ordering the applet tabs.
 	virtual int orderingKey() const override { return 200; }
@@ -59,8 +59,8 @@ protected:
 		return std::make_unique<PropertyExpressionEvaluator>();
 	}
 
-	/// Is called when the user selects a different bundle in the list.
-	virtual void currentBundleChanged() override;
+	/// Is called when the user selects a different property container object in the list.
+	virtual void currentContainerChanged() override;
 
 private:
 

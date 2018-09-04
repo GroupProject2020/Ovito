@@ -20,8 +20,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/stdmod/StdMod.h>
-#include <plugins/stdobj/util/InputHelper.h>
-#include <plugins/stdobj/util/OutputHelper.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/dataset/data/AttributeDataObject.h>
 #include <core/dataset/io/FileSource.h>
@@ -89,8 +87,8 @@ Future<PipelineFlowState> CombineDatasetsModifier::evaluate(TimePoint time, Modi
 		output.intersectStateValidity(secondaryState.stateValidity());
 
 		// Merge global attributes of primary and secondary datasets.
-		for(DataObject* obj : secondaryState.objects()) {
-			if(AttributeDataObject* attribute = dynamic_object_cast<AttributeDataObject>(obj)) {
+		for(const DataObject* obj : secondaryState.objects()) {
+			if(const AttributeDataObject* attribute = dynamic_object_cast<AttributeDataObject>(obj)) {
 				if(!output.contains(attribute))
 					output.addObject(attribute);
 			}
@@ -124,8 +122,8 @@ PipelineFlowState CombineDatasetsModifier::evaluatePreliminary(TimePoint time, M
 	output.intersectStateValidity(secondaryState.stateValidity());
 
 	// Merge global attributes of primary and secondary datasets.
-	for(DataObject* obj : secondaryState.objects()) {
-		if(AttributeDataObject* attribute = dynamic_object_cast<AttributeDataObject>(obj)) {
+	for(const DataObject* obj : secondaryState.objects()) {
+		if(const AttributeDataObject* attribute = dynamic_object_cast<AttributeDataObject>(obj)) {
 			if(!output.contains(attribute))
 				output.addObject(attribute);
 		}

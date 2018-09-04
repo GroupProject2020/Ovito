@@ -21,7 +21,6 @@
 
 SET(SourceFiles 
 	objects/VoxelGrid.cpp
-	objects/VoxelProperty.cpp
 	modifier/CreateIsosurfaceModifier.cpp
 	modifier/MarchingCubes.cpp
 	modifier/SpatialBinningModifier.cpp

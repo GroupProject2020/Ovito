@@ -20,10 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <plugins/particles/util/NearestNeighborFinder.h>
-#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/BondsObject.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/utilities/concurrent/ParallelFor.h>
 #include <core/utilities/units/UnitsManager.h>
@@ -79,7 +77,7 @@ VoronoiAnalysisModifier::VoronoiAnalysisModifier(DataSet* dataset) : Asynchronou
 ******************************************************************************/
 bool VoronoiAnalysisModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<ParticleProperty>() != nullptr;
+	return input.containsObject<ParticlesObject>();
 }
 
 /******************************************************************************
@@ -88,24 +86,23 @@ bool VoronoiAnalysisModifier::OOMetaClass::isApplicableTo(const PipelineFlowStat
 Future<AsynchronousModifier::ComputeEnginePtr> VoronoiAnalysisModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get the current positions.
-	ParticleInputHelper pih(dataset(), input);
-	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
+	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 
 	// Get simulation cell.
-	SimulationCellObject* inputCell = pih.expectSimulationCell();
+	const SimulationCellObject* inputCell = input.expectObject<SimulationCellObject>();
 	if(inputCell->is2D())
 		throwException(tr("The Voronoi modifier does not support 2d simulation cells."));
 
 	// Get selection particle property.
-	ParticleProperty* selectionProperty = nullptr;
+	ConstPropertyPtr selectionProperty;
 	if(onlySelected())
-		selectionProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty);
+		selectionProperty = particles->expectProperty(ParticlesObject::SelectionProperty)->storage();
 
 	// Get particle radii.
-	TimeInterval validityInterval = input.stateValidity();
 	std::vector<FloatType> radii;
 	if(useRadii())
-		radii = pih.inputParticleRadii(time, validityInterval);
+		radii = particles->inputParticleRadii();
 
 	// The Voro++ library uses 32-bit integers. It cannot handle more than 2^31 input points.
 	if(posProperty->size() > std::numeric_limits<int>::max())
@@ -113,10 +110,10 @@ Future<AsynchronousModifier::ComputeEnginePtr> VoronoiAnalysisModifier::createEn
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	return std::make_shared<VoronoiAnalysisEngine>(
-			validityInterval,
-			input,
+			input.stateValidity(),
+			particles,
 			posProperty->storage(),
-			selectionProperty ? selectionProperty->storage() : nullptr,
+			selectionProperty,
 			std::move(radii),
 			inputCell->data(),
 			qMax(1, edgeCount()),
@@ -479,25 +476,24 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 ******************************************************************************/
 PipelineFlowState VoronoiAnalysisModifier::VoronoiAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	if(_inputFingerprint.hasChanged(input))
+	VoronoiAnalysisModifier* modifier = static_object_cast<VoronoiAnalysisModifier>(modApp->modifier());
+	PipelineFlowState output = input;
+	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+
+	if(_inputFingerprint.hasChanged(particles))
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 
-	VoronoiAnalysisModifier* modifier = static_object_cast<VoronoiAnalysisModifier>(modApp->modifier());
-	
-	PipelineFlowState output = input;
-	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
-
-	poh.outputProperty<ParticleProperty>(coordinationNumbers());
-	poh.outputProperty<ParticleProperty>(atomicVolumes());
+	particles->createProperty(coordinationNumbers());
+	particles->createProperty(atomicVolumes());
 	if(voronoiIndices() && modifier->computeIndices())
-		poh.outputProperty<ParticleProperty>(voronoiIndices());
+		particles->createProperty(voronoiIndices());
 
 	// Check computed Voronoi cell volume sum.
-	if(std::abs(voronoiVolumeSum() - simulationBoxVolume()) > 1e-8 * poh.outputParticleCount() * simulationBoxVolume()) {
+	if(std::abs(voronoiVolumeSum() - simulationBoxVolume()) > 1e-8 * particles->elementCount() * simulationBoxVolume()) {
 		//qDebug() << _voronoiVolumeSum;
 		//qDebug() << _simulationBoxVolume;
 		//qDebug() << std::abs(_voronoiVolumeSum - _simulationBoxVolume);
-		//qDebug() << (1e-8 * inputParticleCount() * _simulationBoxVolume);
+		//qDebug() << (1e-8 * particles->elementCount() * _simulationBoxVolume);
 		output.setStatus(PipelineStatus(PipelineStatus::Warning,
 				tr("The volume sum of all Voronoi cells does not match the simulation box volume. "
 						"This may be a result of particles being located outside of the simulation box boundaries. "
@@ -508,10 +504,10 @@ PipelineFlowState VoronoiAnalysisModifier::VoronoiAnalysisEngine::emitResults(Ti
 
 	if(modifier->computeBonds()) {
 		// Insert output object into the pipeline.
-		poh.addBonds(bonds(), modifier->bondsVis());
+		particles->addBonds(bonds(), modifier->bondsVis());
 	}
 
-	poh.outputAttribute(QStringLiteral("Voronoi.max_face_order"), QVariant::fromValue(maxFaceOrder().load()));
+	output.addAttribute(QStringLiteral("Voronoi.max_face_order"), QVariant::fromValue(maxFaceOrder().load()), modApp);
 
 	if(voronoiIndices() && maxFaceOrder() > voronoiIndices()->componentCount()) {
 		output.setStatus(PipelineStatus(PipelineStatus::Warning,

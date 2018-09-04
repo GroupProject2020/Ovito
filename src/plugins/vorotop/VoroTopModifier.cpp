@@ -22,8 +22,6 @@
 
 #include <plugins/vorotop/VoroTopPlugin.h>
 #include <plugins/particles/util/NearestNeighborFinder.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/utilities/concurrent/ParallelFor.h>
 #include <core/utilities/concurrent/Task.h>
@@ -72,7 +70,7 @@ void VoroTopModifier::loadFilterDefinition(const QString& filepath)
         OORef<ParticleType> stype(new ParticleType(dataset()));
         stype->setId(i);
         stype->setName(filter->structureTypeLabel(i));
-        stype->setColor(ParticleType::getDefaultParticleColor(ParticleProperty::StructureTypeProperty, stype->name(), i));
+        stype->setColor(ParticleType::getDefaultParticleColor(ParticlesObject::StructureTypeProperty, stype->name(), i));
         addStructureType(stype);
     }
     
@@ -87,32 +85,31 @@ void VoroTopModifier::loadFilterDefinition(const QString& filepath)
 Future<AsynchronousModifier::ComputeEnginePtr> VoroTopModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
     // Get the current positions.
-    ParticleInputHelper pih(dataset(), input);
-    ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
-    
-    // Get simulation cell.
-    SimulationCellObject* inputCell = pih.expectSimulationCell();
-    
-    // Get selection particle property.
-    ParticleProperty* selectionProperty = nullptr;
-    if(onlySelectedParticles())
-        selectionProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty);
-    
-    // Get particle radii.
-    TimeInterval validityInterval = input.stateValidity();
-    std::vector<FloatType> radii;
-    if(useRadii())
-        radii = pih.inputParticleRadii(time, validityInterval);
-    
+    const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+    const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
+
 	// The Voro++ library uses 32-bit integers. It cannot handle more than 2^31 input points.
-	if(posProperty->size() > std::numeric_limits<int>::max())
+	if(particles->elementCount() > std::numeric_limits<int>::max())
         throwException(tr("VoroTop analysis modifier is limited to a maximum of %1 particles in the current program version.").arg(std::numeric_limits<int>::max()));
     
+    // Get simulation cell.
+    const SimulationCellObject* inputCell = input.expectObject<SimulationCellObject>();
+    
+    // Get selection particle property.
+    ConstPropertyPtr selectionProperty;
+    if(onlySelectedParticles())
+        selectionProperty = particles->expectProperty(ParticlesObject::SelectionProperty)->storage();
+    
+    // Get particle radii.
+    std::vector<FloatType> radii;
+    if(useRadii())
+        radii = particles->inputParticleRadii();
+    
     // Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-    return std::make_shared<VoroTopAnalysisEngine>(input,
-                                                   validityInterval,
+    return std::make_shared<VoroTopAnalysisEngine>(particles,
+                                                   input.stateValidity(),
                                                    posProperty->storage(),
-                                                   selectionProperty ? selectionProperty->storage() : nullptr,
+                                                   std::move(selectionProperty),
                                                    std::move(radii),
                                                    inputCell->data(),
                                                    filterFile(),

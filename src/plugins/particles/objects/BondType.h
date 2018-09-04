@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/BondsObject.h>
 #include <plugins/stdobj/properties/ElementType.h>
 
 namespace Ovito { namespace Particles {
@@ -44,7 +44,7 @@ public:
 	//////////////////////////////////// Utility methods ////////////////////////////////
 	
 	/// Builds a map from type identifiers to bond radii.
-	static std::map<int,FloatType> typeRadiusMap(BondProperty* typeProperty) {
+	static std::map<int,FloatType> typeRadiusMap(const PropertyObject* typeProperty) {
 		std::map<int,FloatType> m;
 		for(const ElementType* type : typeProperty->elementTypes())
 			m.insert({ type->id(), static_object_cast<BondType>(type)->radius() });
@@ -54,13 +54,13 @@ public:
 	//////////////////////////////////// Default settings ////////////////////////////////
 	
 	/// Returns the default color for the bond type with the given ID.
-	static Color getDefaultBondColorFromId(BondProperty::Type typeClass, int bondTypeId);
+	static Color getDefaultBondColorFromId(BondsObject::Type typeClass, int bondTypeId);
 
 	/// Returns the default color for a named bond type.
-	static Color getDefaultBondColor(BondProperty::Type typeClass, const QString& bondTypeName, int bondTypeId, bool userDefaults = true);
+	static Color getDefaultBondColor(BondsObject::Type typeClass, const QString& bondTypeName, int bondTypeId, bool userDefaults = true);
 
 	/// Returns the default radius for a named bond type.
-	static FloatType getDefaultBondRadius(BondProperty::Type typeClass, const QString& bondTypeName, int bondTypeId, bool userDefaults = true);
+	static FloatType getDefaultBondRadius(BondsObject::Type typeClass, const QString& bondTypeName, int bondTypeId, bool userDefaults = true);
 	
 private:
 

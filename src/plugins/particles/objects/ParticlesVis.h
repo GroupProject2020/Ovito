@@ -23,10 +23,10 @@
 
 
 #include <plugins/particles/Particles.h>
+#include <plugins/stdobj/properties/PropertyObject.h>
 #include <core/rendering/SceneRenderer.h>
 #include <core/rendering/ParticlePrimitive.h>
 #include <core/dataset/data/DataVis.h>
-#include "ParticleProperty.h"
 
 namespace Ovito { namespace Particles {
 
@@ -58,10 +58,10 @@ public:
 	Q_INVOKABLE ParticlesVis(DataSet* dataset);
 
 	/// Renders the visual element.
-	virtual void render(TimePoint time, const std::vector<DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode) override;
+	virtual void render(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, const PipelineSceneNode* contextNode) override;
 
 	/// Computes the bounding box of the visual element.
-	virtual Box3 boundingBox(TimePoint time, const std::vector<DataObject*>& objectStack, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval) override;
+	virtual Box3 boundingBox(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval) override;
 
 	/// Returns the default display color for particles.
 	Color defaultParticleColor() const { return Color(1,1,1); }
@@ -70,31 +70,28 @@ public:
 	Color selectionParticleColor() const { return Color(1,0,0); }
 
 	/// Returns the actual particle shape used to render the particles.
-	ParticlePrimitive::ParticleShape effectiveParticleShape(ParticleProperty* shapeProperty, ParticleProperty* orientationProperty) const;
+	ParticlePrimitive::ParticleShape effectiveParticleShape(const PropertyObject* shapeProperty, const PropertyObject* orientationProperty) const;
 
 	/// Returns the actual rendering quality used to render the particles.
-	ParticlePrimitive::RenderingQuality effectiveRenderingQuality(SceneRenderer* renderer, ParticleProperty* positionProperty) const;
+	ParticlePrimitive::RenderingQuality effectiveRenderingQuality(SceneRenderer* renderer, const ParticlesObject* particles) const;
 
 	/// Determines the display particle colors.
-	void particleColors(std::vector<Color>& output, ParticleProperty* colorProperty, ParticleProperty* typeProperty, ParticleProperty* selectionProperty = nullptr);
+	void particleColors(std::vector<Color>& output, const PropertyObject* colorProperty, const PropertyObject* typeProperty, const PropertyObject* selectionProperty = nullptr) const;
 
 	/// Determines the display particle radii.
-	void particleRadii(std::vector<FloatType>& output, ParticleProperty* radiusProperty, ParticleProperty* typeProperty);
+	void particleRadii(std::vector<FloatType>& output, const PropertyObject* radiusProperty, const PropertyObject* typeProperty) const;
 
 	/// Determines the display radius of a single particle.
-	FloatType particleRadius(size_t particleIndex, ParticleProperty* radiusProperty, ParticleProperty* typeProperty);
+	FloatType particleRadius(size_t particleIndex, const PropertyObject* radiusProperty, const PropertyObject* typeProperty) const;
 
 	/// s the display color of a single particle.
-	ColorA particleColor(size_t particleIndex, ParticleProperty* colorProperty, ParticleProperty* typeProperty, ParticleProperty* selectionProperty, ParticleProperty* transparencyProperty);
+	ColorA particleColor(size_t particleIndex, const PropertyObject* colorProperty, const PropertyObject* typeProperty, const PropertyObject* selectionProperty, const PropertyObject* transparencyProperty) const;
 
 	/// Computes the bounding box of the particles.
-	Box3 particleBoundingBox(ParticleProperty* positionProperty, ParticleProperty* typeProperty, ParticleProperty* radiusProperty, ParticleProperty* shapeProperty, bool includeParticleRadius);
+	Box3 particleBoundingBox(const PropertyObject* positionProperty, const PropertyObject* typeProperty, const PropertyObject* radiusProperty, const PropertyObject* shapeProperty, bool includeParticleRadius) const;
 
 	/// Render a marker around a particle to highlight it in the viewports.
-	void highlightParticle(size_t particleIndex, const PipelineFlowState& flowState, SceneRenderer* renderer);
-
-	/// Compute the (local) bounding box of the marker around a particle used to highlight it in the viewports.
-	Box3 highlightParticleBoundingBox(size_t particleIndex, const PipelineFlowState& flowState, const AffineTransformation& tm, Viewport* viewport);
+	void highlightParticle(size_t particleIndex, const ParticlesObject* particles, SceneRenderer* renderer) const;
 
 public:
 

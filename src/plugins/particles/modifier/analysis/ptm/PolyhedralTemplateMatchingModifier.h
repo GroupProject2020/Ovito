@@ -24,7 +24,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/modifier/analysis/StructureIdentificationModifier.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/stdobj/series/DataSeriesObject.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
@@ -115,8 +115,8 @@ private:
 			_particleTypes(std::move(particleTypes)),
 			_rmsd(std::make_shared<PropertyStorage>(positions->size(), PropertyStorage::Float, 1, 0, tr("RMSD"), false)),
 			_interatomicDistances(outputInteratomicDistance ? std::make_shared<PropertyStorage>(positions->size(), PropertyStorage::Float, 1, 0, tr("Interatomic Distance"), true) : nullptr),
-			_orientations(outputOrientation ? ParticleProperty::createStandardStorage(positions->size(), ParticleProperty::OrientationProperty, true) : nullptr),
-			_deformationGradients(outputDeformationGradient ? ParticleProperty::createStandardStorage(positions->size(), ParticleProperty::ElasticDeformationGradientProperty, true) : nullptr),
+			_orientations(outputOrientation ? ParticlesObject::OOClass().createStandardStorage(positions->size(), ParticlesObject::OrientationProperty, true) : nullptr),
+			_deformationGradients(outputDeformationGradient ? ParticlesObject::OOClass().createStandardStorage(positions->size(), ParticlesObject::ElasticDeformationGradientProperty, true) : nullptr),
 			_orderingTypes(outputOrderingTypes ? std::make_shared<PropertyStorage>(positions->size(), PropertyStorage::Int, 1, 0, tr("Ordering Type"), true) : nullptr) {}
 
 		/// This method is called by the system after the computation was successfully completed.

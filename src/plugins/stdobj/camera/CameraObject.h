@@ -61,7 +61,7 @@ public:
 	///   - ViewProjectionParameters::aspectRatio (The aspect ratio (height/width) of the viewport)
 	///   - ViewProjectionParameters::viewMatrix (The world to view space transformation)
 	///   - ViewProjectionParameters::boundingBox (The bounding box of the scene in world space coordinates)
-	virtual void projectionParameters(TimePoint time, ViewProjectionParameters& projParams) override;
+	virtual void projectionParameters(TimePoint time, ViewProjectionParameters& projParams) const override;
 
 	/// \brief Returns whether this camera uses a perspective projection.
 	virtual bool isPerspectiveCamera() const override { return isPerspective(); }
@@ -70,7 +70,7 @@ public:
 	virtual void setPerspectiveCamera(bool perspective) override { setIsPerspective(perspective); }
 	
 	/// \brief Returns the field of view of the camera.
-	virtual FloatType fieldOfView(TimePoint time, TimeInterval& validityInterval) override;
+	virtual FloatType fieldOfView(TimePoint time, TimeInterval& validityInterval) const override;
 
 	/// \brief Changes the field of view of the camera.
 	virtual void setFieldOfView(TimePoint time, FloatType newFOV) override;
@@ -110,10 +110,10 @@ public:
 	Q_INVOKABLE CameraVis(DataSet* dataset) : DataVis(dataset) {}
 
 	/// \brief Lets the vis element render a camera object.
-	virtual void render(TimePoint time, const std::vector<DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode) override;
+	virtual void render(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, const PipelineSceneNode* contextNode) override;
 
 	/// \brief Computes the bounding box of the object.
-	virtual Box3 boundingBox(TimePoint time, const std::vector<DataObject*>& objectStack, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval) override;
+	virtual Box3 boundingBox(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval) override;
 };
 
 }	// End of namespace

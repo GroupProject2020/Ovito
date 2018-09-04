@@ -23,9 +23,9 @@
 #include <core/dataset/DataSet.h>
 #include <core/dataset/UndoStack.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
-#include <plugins/stdobj/util/OutputHelper.h>
 #include <plugins/stdobj/properties/PropertyObject.h>
-#include <core/app/PluginManager.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
+#include <core/app/Application.h>
 #include "SelectTypeModifier.h"
 
 namespace Ovito { namespace StdMod {
@@ -43,9 +43,8 @@ SET_PROPERTY_FIELD_LABEL(SelectTypeModifier, selectedTypeNames, "Selected type n
 ******************************************************************************/
 SelectTypeModifier::SelectTypeModifier(DataSet* dataset) : GenericPropertyModifier(dataset)
 {
-	// Operate on particle properties by default.
-	setPropertyClass(static_cast<const PropertyClass*>(
-		PluginManager::instance().findClass(QStringLiteral("Particles"), QStringLiteral("ParticleProperty"))));	
+	// Operate on particles by default.
+	setDefaultSubject(QStringLiteral("Particles"), QStringLiteral("ParticlesObject"));
 }
 
 /******************************************************************************
@@ -56,21 +55,20 @@ void SelectTypeModifier::initializeModifier(ModifierApplication* modApp)
 {
 	GenericPropertyModifier::initializeModifier(modApp);
 
-	if(sourceProperty().isNull() && propertyClass()) {
+	if(sourceProperty().isNull() && subject() && !Application::instance()->scriptMode()) {
 
-		// Select the first type property from the input with more than one type.
+		// When the modifier is first inserted, automatically select the most recently added typed property.
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
-		PropertyReference bestProperty;
-		for(DataObject* o : input.objects()) {
-			if(PropertyObject* property = dynamic_object_cast<PropertyObject>(o)) {
-				if(propertyClass()->isMember(property) && property->elementTypes().empty() == false && 
-					property->componentCount() == 1 && property->dataType() == PropertyStorage::Int) {
-						bestProperty = PropertyReference(property);
+		if(const PropertyContainer* container = input.getLeafObject(subject())) {
+			PropertyReference bestProperty;
+			for(PropertyObject* property : container->properties()) {
+				if(property->elementTypes().empty() == false && property->componentCount() == 1 && property->dataType() == PropertyStorage::Int) {
+					bestProperty = PropertyReference(subject().dataClass(), property);
 				}
 			}
+			if(!bestProperty.isNull())
+				setSourceProperty(bestProperty);
 		}
-		if(!bestProperty.isNull())
-			setSourceProperty(bestProperty);
 	}
 }
 
@@ -80,8 +78,8 @@ void SelectTypeModifier::initializeModifier(ModifierApplication* modApp)
 void SelectTypeModifier::propertyChanged(const PropertyFieldDescriptor& field)
 {
 	// Whenever the selected property class of this modifier is changed, update the source property reference accordingly.
-	if(field == PROPERTY_FIELD(GenericPropertyModifier::propertyClass) && !isBeingLoaded() && !dataset()->undoStack().isUndoingOrRedoing()) {
-		setSourceProperty(sourceProperty().convertToPropertyClass(propertyClass()));
+	if(field == PROPERTY_FIELD(GenericPropertyModifier::subject) && !isBeingLoaded() && !dataset()->undoStack().isUndoingOrRedoing()) {
+		setSourceProperty(sourceProperty().convertToContainerClass(subject().dataClass()));
 	}
 	GenericPropertyModifier::propertyChanged(field);
 }
@@ -91,18 +89,21 @@ void SelectTypeModifier::propertyChanged(const PropertyFieldDescriptor& field)
 ******************************************************************************/
 PipelineFlowState SelectTypeModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	if(!propertyClass())
-		throwException(tr("No input property class selected."));
+	if(!subject())
+		throwException(tr("No input element type selected."));
 	if(sourceProperty().isNull())
 		throwException(tr("No input property selected."));
 
 	// Check if the source property is the right kind of property.
-	if(sourceProperty().propertyClass() != propertyClass())
+	if(sourceProperty().containerClass() != subject().dataClass())
 		throwException(tr("Modifier was set to operate on '%1', but the selected input is a '%2' property.")
-			.arg(propertyClass()->pythonName()).arg(sourceProperty().propertyClass()->propertyClassDisplayName()));
+			.arg(subject().dataClass()->pythonName()).arg(sourceProperty().containerClass()->propertyClassDisplayName()));
+
+	PipelineFlowState output = input;
+	PropertyContainer* container = output.expectMutableLeafObject(subject());
 
 	// Get the input property.
-	PropertyObject* typeProperty = sourceProperty().findInState(input);
+	const PropertyObject* typeProperty = sourceProperty().findInContainer(container);
 	if(!typeProperty)
 		throwException(tr("The selected input property '%1' is not present.").arg(sourceProperty().name()));
 	if(typeProperty->componentCount() != 1)
@@ -111,9 +112,7 @@ PipelineFlowState SelectTypeModifier::evaluatePreliminary(TimePoint time, Modifi
 		throwException(tr("The input property '%1' has the wrong data type.").arg(typeProperty->name()));
 
 	// Create the selection property.
-	PipelineFlowState output = input;	
-	OutputHelper oh(dataset(), output, modApp);
-	PropertyPtr selProperty = oh.outputStandardProperty(*propertyClass(), PropertyStorage::GenericSelectionProperty)->modifiableStorage();
+	PropertyPtr selProperty = container->createProperty(PropertyStorage::GenericSelectionProperty)->modifiableStorage();
 
 	// Counts the number of selected elements.
 	size_t nSelected = 0;
@@ -138,17 +137,13 @@ PipelineFlowState SelectTypeModifier::evaluatePreliminary(TimePoint time, Modifi
 		else s = 0;
 	}
 
-	oh.outputAttribute(QStringLiteral("SelectType.num_selected"), QVariant::fromValue(nSelected));
+	output.addAttribute(QStringLiteral("SelectType.num_selected"), QVariant::fromValue(nSelected), modApp);
 	
-	// For backward compatibility with OVITO 2.9.0:
-	if(propertyClass()->pythonName() == QStringLiteral("particles"))
-		oh.outputAttribute(QStringLiteral("SelectParticleType.num_selected"), QVariant::fromValue(nSelected));
-
 	QString statusMessage = tr("%1 out of %2 %3 selected (%4%)")
 		.arg(nSelected)
 		.arg(typeProperty->size())
-		.arg(propertyClass()->elementDescriptionName())
-		.arg((FloatType)nSelected * 100 / std::max(1,(int)typeProperty->size()), 0, 'f', 1);
+		.arg(container->getOOMetaClass().elementDescriptionName())
+		.arg((FloatType)nSelected * 100 / std::max((size_t)1,typeProperty->size()), 0, 'f', 1);
 
 	output.setStatus(PipelineStatus(PipelineStatus::Success, std::move(statusMessage)));
 	return output;

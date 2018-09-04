@@ -71,12 +71,15 @@ void ComputePropertyModifierEditor::createUI(const RolloutInsertionParameters& r
 	propertiesLayout->addWidget(outputPropertyUI->comboBox());
 	connect(this, &PropertiesEditor::contentsChanged, this, [outputPropertyUI](RefTarget* editObject) {
 		ComputePropertyModifier* modifier = static_object_cast<ComputePropertyModifier>(editObject);
-		outputPropertyUI->setPropertyClass((modifier && modifier->delegate()) ? &modifier->delegate()->propertyClass() : nullptr);
+		if(modifier && modifier->delegate())
+			outputPropertyUI->setContainerRef(modifier->delegate()->subject());
+		else
+			outputPropertyUI->setContainerRef({});
 	});
 	connect(outputPropertyUI, &PropertyReferenceParameterUI::valueEntered, this, [this]() {
 		if(ComputePropertyModifier* modifier = static_object_cast<ComputePropertyModifier>(editObject())) {
 			if(modifier->delegate() && modifier->outputProperty().type() != PropertyStorage::GenericUserProperty)
-				modifier->setPropertyComponentCount(modifier->delegate()->propertyClass().standardPropertyComponentCount(modifier->outputProperty().type()));
+				modifier->setPropertyComponentCount(modifier->delegate()->containerClass().standardPropertyComponentCount(modifier->outputProperty().type()));
 			else
 				modifier->setPropertyComponentCount(1);
 		}
@@ -123,13 +126,11 @@ void ComputePropertyModifierEditor::createUI(const RolloutInsertionParameters& r
 ******************************************************************************/
 bool ComputePropertyModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(source == editObject()) {
-		if(event.type() == ReferenceEvent::TargetChanged) {
-			updateExpressionFieldsLater(this);
-		}
-		else if(event.type() == ReferenceEvent::ObjectStatusChanged) {
-			updateVariablesListLater(this);
-		}
+	if(source == editObject() && event.type() == ReferenceEvent::TargetChanged) {
+		updateExpressionFieldsLater(this);
+	}
+	else if(source == modifierApplication() && event.type() == ReferenceEvent::ObjectStatusChanged) {
+		updateVariablesListLater(this);
 	}
 	return ModifierPropertiesEditor::referenceEvent(source, event);
 }
@@ -196,7 +197,7 @@ void ComputePropertyModifierEditor::updateExpressionFields()
 
 	QStringList standardPropertyComponentNames;
 	if(!mod->outputProperty().isNull() && mod->outputProperty().type() != PropertyStorage::GenericUserProperty) {
-		standardPropertyComponentNames = mod->outputProperty().propertyClass()->standardPropertyComponentNames(mod->outputProperty().type());
+		standardPropertyComponentNames = mod->outputProperty().containerClass()->standardPropertyComponentNames(mod->outputProperty().type());
 	}
 
 	for(int i = 0; i < expr.size(); i++) {

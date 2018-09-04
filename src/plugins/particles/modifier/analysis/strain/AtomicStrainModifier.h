@@ -24,7 +24,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/modifier/analysis/ReferenceConfigurationModifier.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/particles/util/ParticleOrderingFingerprint.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 
@@ -69,15 +69,15 @@ private:
 			RefConfigEngineBase(validityInterval, positions, simCell, refPositions, simCellRef,
 				std::move(identifiers), std::move(refIdentifiers), affineMapping, useMinimumImageConvention),
 			_cutoff(cutoff), 
-			_displacements(ParticleProperty::createStandardStorage(refPositions->size(), ParticleProperty::DisplacementProperty, false)),
+			_displacements(ParticlesObject::OOClass().createStandardStorage(refPositions->size(), ParticlesObject::DisplacementProperty, false)),
 			_shearStrains(std::make_shared<PropertyStorage>(fingerprint.particleCount(), PropertyStorage::Float, 1, 0, tr("Shear Strain"), false)),
 			_volumetricStrains(std::make_shared<PropertyStorage>(fingerprint.particleCount(), PropertyStorage::Float, 1, 0, tr("Volumetric Strain"), false)),
-			_strainTensors(calculateStrainTensors ? ParticleProperty::createStandardStorage(fingerprint.particleCount(), ParticleProperty::StrainTensorProperty, false) : nullptr),
-			_deformationGradients(calculateDeformationGradients ? ParticleProperty::createStandardStorage(fingerprint.particleCount(), ParticleProperty::DeformationGradientProperty, false) : nullptr),
+			_strainTensors(calculateStrainTensors ? ParticlesObject::OOClass().createStandardStorage(fingerprint.particleCount(), ParticlesObject::StrainTensorProperty, false) : nullptr),
+			_deformationGradients(calculateDeformationGradients ? ParticlesObject::OOClass().createStandardStorage(fingerprint.particleCount(), ParticlesObject::DeformationGradientProperty, false) : nullptr),
 			_nonaffineSquaredDisplacements(calculateNonaffineSquaredDisplacements ? std::make_shared<PropertyStorage>(fingerprint.particleCount(), PropertyStorage::Float, 1, 0, tr("Nonaffine Squared Displacement"), false) : nullptr),
-			_invalidParticles(selectInvalidParticles ? ParticleProperty::createStandardStorage(fingerprint.particleCount(), ParticleProperty::SelectionProperty, false) : nullptr),
-			_rotations(calculateRotations ? ParticleProperty::createStandardStorage(fingerprint.particleCount(), ParticleProperty::RotationProperty, false) : nullptr),
-			_stretchTensors(calculateStretchTensors ? ParticleProperty::createStandardStorage(fingerprint.particleCount(), ParticleProperty::StretchTensorProperty, false) : nullptr),
+			_invalidParticles(selectInvalidParticles ? ParticlesObject::OOClass().createStandardStorage(fingerprint.particleCount(), ParticlesObject::SelectionProperty, false) : nullptr),
+			_rotations(calculateRotations ? ParticlesObject::OOClass().createStandardStorage(fingerprint.particleCount(), ParticlesObject::RotationProperty, false) : nullptr),
+			_stretchTensors(calculateStretchTensors ? ParticlesObject::OOClass().createStandardStorage(fingerprint.particleCount(), ParticlesObject::StretchTensorProperty, false) : nullptr),
 			_inputFingerprint(std::move(fingerprint)) {}
 
 		/// This method is called by the system after the computation was successfully completed.

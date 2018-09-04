@@ -20,13 +20,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
-#include <plugins/particles/objects/BondProperty.h>
-#include <plugins/particles/objects/ParticleProperty.h>
-#include <plugins/stdobj/util/OutputHelper.h>
+#include <plugins/particles/objects/BondsObject.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/utilities/concurrent/ParallelFor.h>
+#include <core/dataset/DataSet.h>
 #include "BondsComputePropertyModifierDelegate.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
@@ -47,28 +45,17 @@ BondsComputePropertyModifierDelegate::BondsComputePropertyModifierDelegate(DataS
 std::shared_ptr<ComputePropertyModifierDelegate::PropertyComputeEngine> BondsComputePropertyModifierDelegate::createEngine(
 				TimePoint time, 
 				const PipelineFlowState& input, 
+				const PropertyContainer* container,
 				PropertyPtr outputProperty, 
 				ConstPropertyPtr selectionProperty, 
-				QStringList expressions, 
-				bool initializeOutputProperty)
+				QStringList expressions)
 {
-	TimeInterval validityInterval = input.stateValidity();
-
-	// Initialize output property with original values when computation is restricted to selected elements.
-	if(initializeOutputProperty) {
-		if(outputProperty->type() == BondProperty::ColorProperty) {
-			ParticleInputHelper pih(dataset(), input);
-			std::vector<Color> colors = pih.inputBondColors(time, validityInterval);
-			OVITO_ASSERT(outputProperty->stride() == sizeof(Color) && outputProperty->size() == colors.size());
-			memcpy(outputProperty->data(), colors.data(), outputProperty->stride() * outputProperty->size());
-		}
-	}
-
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	return std::make_shared<ComputeEngine>(
-			validityInterval, 
+			input.stateValidity(), 
 			time, 
 			std::move(outputProperty), 
+			container,
 			std::move(selectionProperty), 
 			std::move(expressions), 
 			dataset()->animationSettings()->timeToFrame(time), 
@@ -82,6 +69,7 @@ BondsComputePropertyModifierDelegate::ComputeEngine::ComputeEngine(
 		const TimeInterval& validityInterval, 
 		TimePoint time,
 		PropertyPtr outputProperty, 
+		const PropertyContainer* container,
 		ConstPropertyPtr selectionProperty,
 		QStringList expressions, 
 		int frameNumber, 
@@ -90,27 +78,24 @@ BondsComputePropertyModifierDelegate::ComputeEngine::ComputeEngine(
 			validityInterval, 
 			time, 
 			input, 
-			BondProperty::OOClass(),
+			container,
 			std::move(outputProperty), 
 			std::move(selectionProperty), 
 			std::move(expressions), 
 			frameNumber, 
 			std::make_unique<BondExpressionEvaluator>()),
-	_inputFingerprint(input)
+	_inputFingerprint(input.expectObject<ParticlesObject>())
 {
-	ConstPropertyPtr positions;
-	ConstPropertyPtr periodicImages;
-	if(ParticleProperty* prop = ParticleProperty::findInState(input, ParticleProperty::PositionProperty))
-		positions = prop->storage();
-	if(BondProperty* prop = BondProperty::findInState(input, BondProperty::TopologyProperty))
-		_topology = prop->storage();
-	if(BondProperty* prop = BondProperty::findInState(input, BondProperty::PeriodicImageProperty))
-		periodicImages = prop->storage();
+	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	ConstPropertyPtr positions = particles->getPropertyStorage(ParticlesObject::PositionProperty);
+	const BondsObject* bonds = particles->expectBonds();
+	_topology = bonds->getPropertyStorage(BondsObject::TopologyProperty);
+	ConstPropertyPtr periodicImages = bonds->getPropertyStorage(BondsObject::PeriodicImageProperty);
 
 	// Define 'BondLength' computed variable which yields the length of the current bond. 
 	if(positions) {
 		SimulationCell simCell;
-		if(SimulationCellObject* simCellObj = input.findObjectOfType<SimulationCellObject>())
+		if(const SimulationCellObject* simCellObj = input.getObject<SimulationCellObject>())
 			simCell = simCellObj->data();
 		else
 			periodicImages.reset();
@@ -135,10 +120,8 @@ BondsComputePropertyModifierDelegate::ComputeEngine::ComputeEngine(
 
 	// Build list of particle properties that will be made available as expression variables.
 	std::vector<ConstPropertyPtr> inputParticleProperties;
-	for(DataObject* obj : input.objects()) {
-		if(ParticleProperty* prop = dynamic_object_cast<ParticleProperty>(obj)) {
-			inputParticleProperties.push_back(prop->storage());
-		}
+	for(const PropertyObject* prop : particles->properties()) {
+		inputParticleProperties.push_back(prop->storage());
 	}
 	_evaluator->registerPropertyVariables(inputParticleProperties, 1, "@1.");
 	_evaluator->registerPropertyVariables(inputParticleProperties, 2, "@2.");
@@ -220,7 +203,7 @@ void BondsComputePropertyModifierDelegate::ComputeEngine::perform()
 ******************************************************************************/
 PipelineFlowState BondsComputePropertyModifierDelegate::ComputeEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	if(_inputFingerprint.hasChanged(input))
+	if(_inputFingerprint.hasChanged(input.expectObject<ParticlesObject>()))
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 
 	return PropertyComputeEngine::emitResults(time, modApp, input);

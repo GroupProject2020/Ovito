@@ -43,7 +43,7 @@ public:
 	Q_INVOKABLE RenderableSurfaceMesh(DataSet* dataset) : TransformedDataObject(dataset) {}
 
 	/// \brief Initialization constructor.
-	RenderableSurfaceMesh(TransformingDataVis* creator, DataObject* sourceData, TriMesh surfaceMesh, TriMesh capPolygonsMesh);
+	RenderableSurfaceMesh(TransformingDataVis* creator, const DataObject* sourceData, TriMesh surfaceMesh, TriMesh capPolygonsMesh);
 
 private:
 	

@@ -23,14 +23,15 @@
 #include <core/dataset/pipeline/PipelineFlowState.h>
 #include "PropertyObject.h"
 #include "PropertyReference.h"
+#include "PropertyContainer.h"
 
 namespace Ovito { namespace StdObj {
 
 /******************************************************************************
 * Constructs a reference to a standard property.
 ******************************************************************************/
-PropertyReference::PropertyReference(PropertyClassPtr pclass, int typeId, int vectorComponent, const QString& bundle) : 
-	_propertyClass(pclass), _bundle(bundle), _type(typeId), 
+PropertyReference::PropertyReference(PropertyContainerClassPtr pclass, int typeId, int vectorComponent) : 
+	_containerClass(pclass), _type(typeId), 
 	_name(pclass->standardPropertyName(typeId)), _vectorComponent(vectorComponent) 
 {
 }
@@ -38,8 +39,8 @@ PropertyReference::PropertyReference(PropertyClassPtr pclass, int typeId, int ve
 /******************************************************************************
 * Constructs a reference based on an existing PropertyObject.
 ******************************************************************************/
-PropertyReference::PropertyReference(PropertyObject* property, int vectorComponent) : 
-	_propertyClass(&property->getOOMetaClass()), 
+PropertyReference::PropertyReference(PropertyContainerClassPtr pclass, const PropertyObject* property, int vectorComponent) : 
+	_containerClass(pclass), 
 	_type(property->type()), _name(property->name()), _vectorComponent(vectorComponent) 
 { 
 }
@@ -51,11 +52,11 @@ PropertyReference::PropertyReference(PropertyObject* property, int vectorCompone
 QString PropertyReference::nameWithComponent() const 
 {
 	if(type() != 0) {
-		if(vectorComponent() < 0 || propertyClass()->standardPropertyComponentCount(type()) <= 1) {
+		if(vectorComponent() < 0 || containerClass()->standardPropertyComponentCount(type()) <= 1) {
 			return name();
 		}
 		else {
-			const QStringList& names = propertyClass()->standardPropertyComponentNames(type());
+			const QStringList& names = containerClass()->standardPropertyComponentNames(type());
 			if(vectorComponent() < names.size())
 				return QString("%1.%2").arg(name()).arg(names[vectorComponent()]);
 		}
@@ -68,17 +69,21 @@ QString PropertyReference::nameWithComponent() const
 
 /******************************************************************************
 * Returns a new property reference that uses the same name as the current one, 
-* but with a different property class.
+* but with a different property container class.
 ******************************************************************************/
-PropertyReference PropertyReference::convertToPropertyClass(PropertyClassPtr pclass) const
+PropertyReference PropertyReference::convertToContainerClass(PropertyContainerClassPtr containerClass) const
 {
-	OVITO_ASSERT(pclass != nullptr);
-	PropertyReference newref = *this;
-	if(pclass != propertyClass()) {
-		newref._propertyClass = pclass;
-		newref._type = pclass->standardPropertyTypeId(name());
+	if(containerClass) {
+		PropertyReference newref = *this;
+		if(containerClass != this->containerClass()) {
+			newref._containerClass = containerClass;
+			newref._type = containerClass->standardPropertyTypeId(name());
+		}
+		return newref; 
 	}
-	return newref; 
+	else {
+		return {};
+	}
 }
 
 /// Writes a PropertyReference to an output stream.
@@ -86,8 +91,7 @@ PropertyReference PropertyReference::convertToPropertyClass(PropertyClassPtr pcl
 SaveStream& operator<<(SaveStream& stream, const PropertyReference& r)
 {
 	stream.beginChunk(0x02);	
-	OvitoClass::serializeRTTI(stream, r.propertyClass());
-	stream << r.bundle();
+	stream << r.containerClass();
 	stream << r.type();
 	stream << r.name();
 	stream << r.vectorComponent();
@@ -100,29 +104,31 @@ SaveStream& operator<<(SaveStream& stream, const PropertyReference& r)
 LoadStream& operator>>(LoadStream& stream, PropertyReference& r)
 {
 	stream.expectChunk(0x02);
-	r._propertyClass = static_cast<PropertyClassPtr>(OvitoClass::deserializeRTTI(stream));
-	stream >> r._bundle;
+	stream >> r._containerClass;
 	stream >> r._type;
 	stream >> r._name;
 	stream >> r._vectorComponent;
-	if(!r._propertyClass)
+	if(!r._containerClass)
 		r = PropertyReference();
 	stream.closeChunk();
 	return stream;
 }
-	
+
 /******************************************************************************
-* Finds the referenced property in the given pipeline state.
+* Finds the referenced property in the given property container object.
 ******************************************************************************/
-PropertyObject* PropertyReference::findInState(const PipelineFlowState& state) const
+const PropertyObject* PropertyReference::findInContainer(const PropertyContainer* container) const
 {
 	if(isNull())
 		return nullptr;
 
+	OVITO_ASSERT(container != nullptr);
+	OVITO_ASSERT(containerClass()->isMember(container));
+
 	if(type() != 0)
-		return propertyClass()->findInState(state, type(), bundle());
+		return container->getProperty(type());
 	else
-		return propertyClass()->findInState(state, name(), bundle());
+		return container->getProperty(name());
 }
 
 }	// End of namespace

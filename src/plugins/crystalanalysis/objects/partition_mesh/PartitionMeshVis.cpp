@@ -70,11 +70,11 @@ void PartitionMeshVis::propertyChanged(const PropertyFieldDescriptor& field)
 /******************************************************************************
 * Computes the bounding box of the displayed data.
 ******************************************************************************/
-Box3 PartitionMeshVis::boundingBox(TimePoint time, const std::vector<DataObject*>& objectStack, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
+Box3 PartitionMeshVis::boundingBox(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
 	// Compute mesh bounding box.
 	Box3 bb;
-	if(OORef<RenderableSurfaceMesh> meshObj = objectStack.back()->convertTo<RenderableSurfaceMesh>(time)) {
+	if(const RenderableSurfaceMesh* meshObj = dynamic_object_cast<RenderableSurfaceMesh>(objectStack.back())) {
 		bb.addBox(meshObj->surfaceMesh().boundingBox());
 	}
 	return bb;
@@ -83,20 +83,20 @@ Box3 PartitionMeshVis::boundingBox(TimePoint time, const std::vector<DataObject*
 /******************************************************************************
 * Lets the display object transform a data object in preparation for rendering.
 ******************************************************************************/
-Future<PipelineFlowState> PartitionMeshVis::transformDataImpl(TimePoint time, DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState, PipelineSceneNode* contextNode)
+Future<PipelineFlowState> PartitionMeshVis::transformDataImpl(TimePoint time, const DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState, const PipelineSceneNode* contextNode)
 {
 	// Get the partition mesh.
-	PartitionMesh* partitionMeshObj = dynamic_object_cast<PartitionMesh>(dataObject);
+	const PartitionMesh* partitionMeshObj = dynamic_object_cast<PartitionMesh>(dataObject);
 	if(!partitionMeshObj)
 		return std::move(flowState);
 
 	// Get the simulation cell.
-	SimulationCellObject* cellObject = partitionMeshObj->domain();
+	const SimulationCellObject* cellObject = partitionMeshObj->domain();
 	if(!cellObject)
 		return std::move(flowState);
 
 	// Get the cluster graph.
-	ClusterGraphObject* clusterGraphObject = flowState.findObjectOfType<ClusterGraphObject>();
+	const ClusterGraphObject* clusterGraphObject = flowState.getObject<ClusterGraphObject>();
 	
 	// Create compute engine.
 	auto engine = std::make_shared<PrepareMeshEngine>(partitionMeshObj->storage(), 
@@ -165,7 +165,7 @@ void PartitionMeshVis::PrepareMeshEngine::perform()
 /******************************************************************************
 * Lets the visualization element render the data object.
 ******************************************************************************/
-void PartitionMeshVis::render(TimePoint time, const std::vector<DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
+void PartitionMeshVis::render(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, const PipelineSceneNode* contextNode)
 {
 #if 0	
 	// Ignore render calls for the original PartitionMesh.
@@ -202,7 +202,7 @@ void PartitionMeshVis::render(TimePoint time, const std::vector<DataObject*>& ob
 	// Update render primitives.
 	if(updateContents) {
 
-		OORef<RenderableSurfaceMesh> meshObj = dataObject->convertTo<RenderableSurfaceMesh>(time);
+		RenderableSurfaceMesh* meshObj = dynamic_object_cast<RenderableSurfaceMesh>(dataObject))
 
 		auto materialColors = meshObj->materialColors();
 		materialColors[0] = color_surface;

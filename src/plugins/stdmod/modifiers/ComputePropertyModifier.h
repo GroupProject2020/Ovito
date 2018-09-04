@@ -24,6 +24,7 @@
 
 #include <plugins/stdmod/StdMod.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
 #include <plugins/stdobj/properties/PropertyReference.h>
 #include <plugins/stdobj/properties/PropertyExpressionEvaluator.h>
 #include <core/dataset/pipeline/AsynchronousDelegatingModifier.h>
@@ -53,7 +54,7 @@ protected:
 		PropertyComputeEngine(const TimeInterval& validityInterval, 
 				TimePoint time, 
 				const PipelineFlowState& input,
-				const PropertyClass& propertyClass,
+				const PropertyContainer* container,
 				PropertyPtr outputProperty, 
 				ConstPropertyPtr selectionProperty, 
 				QStringList expressions, 
@@ -103,8 +104,13 @@ protected:
 
 public:
 
-	/// \brief Returns the class of properties this delegate computes.
-	virtual const PropertyClass& propertyClass() const = 0;
+	/// \brief Returns the class of property containers this delegate operates on.
+	virtual const PropertyContainerClass& containerClass() const = 0;
+
+	/// \brief Returns a reference to the property container being operated on by this delegate.
+	PropertyContainerReference subject() const {
+		return PropertyContainerReference(&containerClass(), containerPath());
+	}
 
 	/// \brief Sets the number of vector components of the property to compute.
 	/// \param componentCount The number of vector components.
@@ -115,10 +121,15 @@ public:
 	virtual std::shared_ptr<PropertyComputeEngine> createEngine(
 				TimePoint time, 
 				const PipelineFlowState& input, 
+				const PropertyContainer* container,
 				PropertyPtr outputProperty, 
 				ConstPropertyPtr selectionProperty,
-				QStringList expressions, 
-				bool initializeOutputProperty) = 0;
+				QStringList expressions) = 0;
+
+private:
+
+	/// Specifies the ID container object the modifier should operate on.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, containerPath, setContainerPath);
 };
 
 /**

@@ -65,6 +65,15 @@ public:
 	///         \c false if the application should use a graphical user interface.
 	bool consoleMode() const { return _consoleMode; }
 
+	/// \brief Returns whether the application is currently executing a Python script.
+	/// \return \c true if the actions are performed by a Python script.
+	///         \c false if the user is performing the actions manually.
+	/// \note It is only safe to call this method from the main thread.
+	bool scriptMode() const { 
+		OVITO_ASSERT(QThread::currentThread() == QCoreApplication::instance()->thread());
+		return _scriptExecutionCounter != 0; 
+	}
+
 	/// \brief Returns whether the application runs in headless mode (without an X server on Linux and no OpenGL support).
 	bool headlessMode() const { return _headlessMode; }
 
@@ -100,6 +109,21 @@ public:
 	/// Handler function for exceptions.
 	virtual void reportError(const Exception& exception, bool blocking);
 
+	/// Notifies the application that script execution has started.
+	/// This is an internal method that should only be called by script engines.
+	void scriptExecutionStarted() {
+		OVITO_ASSERT(QThread::currentThread() == QCoreApplication::instance()->thread());
+		_scriptExecutionCounter++;
+	}
+
+	/// Notifies the application that script execution has stopped.
+	/// This is an internal method that should only be called by script engines.
+	void scriptExecutionStopped() { 
+		OVITO_ASSERT(QThread::currentThread() == QCoreApplication::instance()->thread());
+		OVITO_ASSERT(_scriptExecutionCounter > 0); 
+		_scriptExecutionCounter--; 
+	}
+
 protected:
 
 	/// Creates the global FileManager class instance.
@@ -110,6 +134,10 @@ protected:
 
 	/// Indicates that the application is running in headless mode (without OpenGL support).
 	bool _headlessMode;
+
+	/// Indicates how many script engines are executing code right now.
+	/// If zero, the program is running in interactive mode and all actions are manually performed by the user.
+	int _scriptExecutionCounter = 0;
 
 	/// In console mode, this is the exit code returned by the application on shutdown.
 	int _exitCode;

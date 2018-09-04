@@ -262,7 +262,7 @@ protected:
 	virtual void loadFromStream(ObjectLoadStream& stream) override;
 
 	/// \brief Creates a copy of this object.
-	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) override;
+	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) const override;
 
 	/// Jumps to the given animation time, then schedules the next frame as soon as the scene was completely shown.
 	void continuePlaybackAtTime(TimePoint time);

@@ -22,14 +22,13 @@
 #include <plugins/stdobj/StdObj.h>
 #include <plugins/stdobj/scripting/PythonBinding.h>
 #include <plugins/stdobj/properties/PropertyReference.h>
-#include <plugins/stdobj/properties/PropertyClass.h>
 #include <plugins/stdobj/properties/PropertyObject.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
 #include <plugins/stdobj/properties/GenericPropertyModifier.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <plugins/stdobj/simcell/PeriodicDomainDataObject.h>
 #include <plugins/stdobj/simcell/SimulationCellVis.h>
 #include <plugins/stdobj/series/DataSeriesObject.h>
-#include <plugins/stdobj/series/DataSeriesProperty.h>
 #include <plugins/pyscript/binding/PythonBinding.h>
 #include <core/app/PluginManager.h>
 #include <core/dataset/DataSet.h>
@@ -324,18 +323,6 @@ PYBIND11_MODULE(StdObj, m)
 		.value("Int", PropertyStorage::Int)
 		.value("Int64", PropertyStorage::Int64)
 		.value("Float", PropertyStorage::Float)
-	;
-
-
-	auto DataSeriesProperty_py = ovito_abstract_class<DataSeriesProperty, PropertyObject>(m)
-		.def_static("standard_property_type_id", [](const QString& name) { return (DataSeriesProperty::Type)DataSeriesProperty::OOClass().standardPropertyTypeId(name); })
-		.def_property_readonly("type", &DataSeriesProperty::type)
-	;
-
-	py::enum_<DataSeriesProperty::Type>(DataSeriesProperty_py, "Type")
-		.value("User", DataSeriesProperty::UserProperty)
-		.value("X", DataSeriesProperty::XProperty)
-		.value("Y", DataSeriesProperty::YProperty)
 	;	
 
 	auto DataSeries_py = ovito_abstract_class<DataSeriesObject, DataObject>(m,
@@ -364,18 +351,24 @@ PYBIND11_MODULE(StdObj, m)
 		.def_property("interval_start", &DataSeriesObject::intervalStart, &DataSeriesObject::setIntervalStart)
 		.def_property("interval_end", &DataSeriesObject::intervalEnd, &DataSeriesObject::setIntervalEnd)
 	;
+
+	py::enum_<DataSeriesObject::Type>(DataSeries_py, "Type")
+		.value("User", DataSeriesObject::UserProperty)
+		.value("X", DataSeriesObject::XProperty)
+		.value("Y", DataSeriesObject::YProperty)
+	;
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(StdObj);
 
 /// Helper function that converts a Python string to a C++ PropertyReference instance.
 /// The function requires a property class to look up the property name string.
-PropertyReference convertPythonPropertyReference(py::object src, const PropertyClass* propertyClass)
+PropertyReference convertPythonPropertyReference(py::object src, PropertyContainerClassPtr propertyClass)
 {
 	if(src.is_none())
 		return {};
 	if(!propertyClass)
-		throw Exception(QStringLiteral("Cannot set property field without an active property class."));
+		throw Exception(QStringLiteral("Cannot set property field without an active property container class."));
 
 	try {
 		int ptype = src.cast<int>();
@@ -437,7 +430,7 @@ PropertyReference convertPythonPropertyReference(py::object src, const PropertyC
 py::cpp_function modifierPropertyClassGetter()
 {
 	return [](const GenericPropertyModifier& mod) { 
-			return mod.propertyClass() ? mod.propertyClass()->pythonName() : QString();
+			return mod.containerClass() ? mod.containerClass()->pythonName() : QString();
 	};
 }
 
@@ -445,18 +438,18 @@ py::cpp_function modifierPropertyClassGetter()
 py::cpp_function modifierPropertyClassSetter()
 {
 	return [](GenericPropertyModifier& mod, const QString& typeName) { 
-		if(mod.propertyClass() && mod.propertyClass()->pythonName() == typeName)
+		if(mod.containerClass() && mod.containerClass()->pythonName() == typeName)
 			return;
-		for(PropertyClassPtr propertyClass : PluginManager::instance().metaclassMembers<PropertyObject>()) {
+		for(PropertyContainerClassPtr propertyClass : PluginManager::instance().metaclassMembers<PropertyContainer>()) {
 			if(propertyClass->pythonName() == typeName) {
-				mod.setPropertyClass(propertyClass);
+				mod.setContainerClass(propertyClass);
 				return;
 			}
 		}
 		// Error: User did not specify a valid type name.
 		// Now build the list of valid names to generate a helpful error message.
 		QStringList propertyClassNames; 
-		for(PropertyClassPtr propertyClass : PluginManager::instance().metaclassMembers<PropertyObject>()) {
+		for(PropertyContainerClassPtr propertyClass : PluginManager::instance().metaclassMembers<PropertyContainer>()) {
 			propertyClassNames.push_back(QString("'%1'").arg(propertyClass->pythonName()));
 		}
 		mod.throwException(GenericPropertyModifier::tr("'%1' is not a valid type of data element this modifier can operate on. Supported types are: (%2)")

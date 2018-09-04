@@ -21,7 +21,7 @@
 
 #include <plugins/stdmod/gui/StdModGui.h>
 #include <plugins/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
-#include <plugins/stdobj/gui/widgets/PropertyClassParameterUI.h>
+#include <plugins/stdobj/gui/widgets/PropertyContainerParameterUI.h>
 #include <gui/properties/IntegerParameterUI.h>
 #include <gui/properties/IntegerRadioButtonParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
@@ -49,7 +49,7 @@ void HistogramModifierEditor::createUI(const RolloutInsertionParameters& rollout
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(4);
 
-	PropertyClassParameterUI* pclassUI = new PropertyClassParameterUI(this, PROPERTY_FIELD(GenericPropertyModifier::propertyClass));
+	PropertyContainerParameterUI* pclassUI = new PropertyContainerParameterUI(this, PROPERTY_FIELD(GenericPropertyModifier::subject));
 	layout->addWidget(new QLabel(tr("Operate on:")));
 	layout->addWidget(pclassUI->comboBox());
 
@@ -57,7 +57,11 @@ void HistogramModifierEditor::createUI(const RolloutInsertionParameters& rollout
 	layout->addWidget(new QLabel(tr("Property:")));
 	layout->addWidget(sourcePropertyUI->comboBox());
 	connect(this, &PropertiesEditor::contentsChanged, this, [sourcePropertyUI](RefTarget* editObject) {
-		sourcePropertyUI->setPropertyClass(editObject ? static_object_cast<GenericPropertyModifier>(editObject)->propertyClass() : nullptr);
+		GenericPropertyModifier* modifier = static_object_cast<GenericPropertyModifier>(editObject);
+		if(modifier)
+			sourcePropertyUI->setContainerRef(modifier->subject());
+		else
+			sourcePropertyUI->setContainerRef(nullptr);
 	});
 
 	QGridLayout* gridlayout = new QGridLayout();
@@ -82,7 +86,6 @@ void HistogramModifierEditor::createUI(const RolloutInsertionParameters& rollout
 
 	layout->addWidget(new QLabel(tr("Histogram:")));
 	layout->addWidget(_plotWidget);
-	connect(this, &HistogramModifierEditor::contentsReplaced, this, &HistogramModifierEditor::plotHistogram);
 
 	// Input.
 	QGroupBox* inputBox = new QGroupBox(tr("Input"), rollout);
@@ -90,7 +93,7 @@ void HistogramModifierEditor::createUI(const RolloutInsertionParameters& rollout
 	sublayout->setContentsMargins(4,4,4,4);
 	layout->addWidget(inputBox);
 
-	BooleanParameterUI* onlySelectedUI = new BooleanParameterUI(this, PROPERTY_FIELD(HistogramModifier::onlySelected));
+	BooleanParameterUI* onlySelectedUI = new BooleanParameterUI(this, PROPERTY_FIELD(HistogramModifier::onlySelectedElements));
 	sublayout->addWidget(onlySelectedUI->checkBox());
 
 	// Create selection.
@@ -163,17 +166,12 @@ void HistogramModifierEditor::createUI(const RolloutInsertionParameters& rollout
 	// Status label.
 	layout->addSpacing(6);
 	layout->addWidget(statusLabel());
-}
 
-/******************************************************************************
-* This method is called when a reference target changes.
-******************************************************************************/
-bool HistogramModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
-{
-	if(source == modifierApplication() && event.type() == ReferenceEvent::PipelineCacheUpdated) {
+	// Update data plot whenever the modifier has calculated new results.
+	connect(this, &ModifierPropertiesEditor::contentsReplaced, this, &HistogramModifierEditor::plotHistogram);
+	connect(this, &ModifierPropertiesEditor::modifierEvaluated, this, [this]() {
 		plotHistogramLater(this);
-	}
-	return ModifierPropertiesEditor::referenceEvent(source, event);
+	});
 }
 
 /******************************************************************************
@@ -199,14 +197,14 @@ void HistogramModifierEditor::plotHistogram()
 		_selectionRangeIndicator->hide();
 	}
 
-	if(modifier) {
+	if(modifier && modifierApplication()) {
 		// Request the modifier's pipeline output.
 		const PipelineFlowState& state = getModifierOutput();
 
 		// Look up the generated data series in the modifier's pipeline output.
 		QString seriesName = QStringLiteral("histogram/") + modifier->sourceProperty().nameWithComponent();
-		DataSeriesObject* series = state.findObject<DataSeriesObject>(seriesName, modifierApplication());
-		_plotWidget->setSeries(series, state);
+		const DataSeriesObject* series = state.getObjectBy<DataSeriesObject>(modifierApplication(), seriesName);
+		_plotWidget->setSeries(series);
 	}
 	else {
 		_plotWidget->reset();

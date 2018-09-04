@@ -27,26 +27,24 @@
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
 IMPLEMENT_OVITO_CLASS(BurgersVectorFamily);
-DEFINE_PROPERTY_FIELD(BurgersVectorFamily, name);
-DEFINE_PROPERTY_FIELD(BurgersVectorFamily, color);
 DEFINE_PROPERTY_FIELD(BurgersVectorFamily, burgersVector);
-SET_PROPERTY_FIELD_LABEL(BurgersVectorFamily, name, "Name");
-SET_PROPERTY_FIELD_LABEL(BurgersVectorFamily, color, "Color");
 SET_PROPERTY_FIELD_LABEL(BurgersVectorFamily, burgersVector, "Burgers vector");
-SET_PROPERTY_FIELD_CHANGE_EVENT(BurgersVectorFamily, name, ReferenceEvent::TitleChanged);
 
 /******************************************************************************
 * Constructs a new BurgersVectorFamily.
 ******************************************************************************/
-BurgersVectorFamily::BurgersVectorFamily(DataSet* dataset, const QString& name, const Vector3& burgersVector, const Color& color)
-	: RefTarget(dataset), _name(name), _burgersVector(burgersVector), _color(color)
+BurgersVectorFamily::BurgersVectorFamily(DataSet* dataset, int id, const QString& name, const Vector3& burgersVector, const Color& color)
+	: ElementType(dataset), _burgersVector(burgersVector)
 {
+	setId(id);
+	setName(name);
+	setColor(color);
 }
 
 /******************************************************************************
 * Checks if the given Burgers vector is a member of this family.
 ******************************************************************************/
-bool BurgersVectorFamily::isMember(const Vector3& v, StructurePattern* latticeStructure) const
+bool BurgersVectorFamily::isMember(const Vector3& v, const StructurePattern* latticeStructure) const
 {
 	if(burgersVector() == Vector3::Zero())
 		return false;

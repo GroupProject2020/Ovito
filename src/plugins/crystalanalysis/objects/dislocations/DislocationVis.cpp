@@ -71,15 +71,15 @@ DislocationVis::DislocationVis(DataSet* dataset) : TransformingDataVis(dataset),
 /******************************************************************************
 * Lets the vis element transform a data object in preparation for rendering.
 ******************************************************************************/
-Future<PipelineFlowState> DislocationVis::transformDataImpl(TimePoint time, DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState, PipelineSceneNode* contextNode)
+Future<PipelineFlowState> DislocationVis::transformDataImpl(TimePoint time, const DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState, const PipelineSceneNode* contextNode)
 {
 	// Get the input object.
-	PeriodicDomainDataObject* periodicDomainObj = dynamic_object_cast<PeriodicDomainDataObject>(dataObject);
+	const PeriodicDomainDataObject* periodicDomainObj = dynamic_object_cast<PeriodicDomainDataObject>(dataObject);
 	if(!periodicDomainObj)
 		return std::move(flowState);
 
 	// Get the simulation cell.
-	SimulationCellObject* cellObject = periodicDomainObj->domain();
+	const SimulationCellObject* cellObject = periodicDomainObj->domain();
 	if(!cellObject)
 		return std::move(flowState);
 
@@ -87,10 +87,10 @@ Future<PipelineFlowState> DislocationVis::transformDataImpl(TimePoint time, Data
 	const SimulationCell cellData = cellObject->data();
 	std::vector<RenderableDislocationLines::Segment> outputSegments;
 
-	if(DislocationNetworkObject* dislocationsObj = dynamic_object_cast<DislocationNetworkObject>(periodicDomainObj)) {
+	if(const DislocationNetworkObject* dislocationsObj = dynamic_object_cast<DislocationNetworkObject>(periodicDomainObj)) {
 		// Convert the dislocations object.
 		size_t segmentIndex = 0;
-		for(DislocationSegment* segment : dislocationsObj->segments()) {
+		for(const DislocationSegment* segment : dislocationsObj->segments()) {
 			const ClusterVector& b = segment->burgersVector;
 			clipDislocationLine(segment->line, cellData, periodicDomainObj->cuttingPlanes(), [segmentIndex, &outputSegments, &b](const Point3& p1, const Point3& p2, bool isInitialSegment) {
 				outputSegments.push_back({ { p1, p2 }, segmentIndex, b });
@@ -98,17 +98,17 @@ Future<PipelineFlowState> DislocationVis::transformDataImpl(TimePoint time, Data
 			segmentIndex++;
 		}
 	}
-	else if(MicrostructureObject* microstructureObj = dynamic_object_cast<MicrostructureObject>(periodicDomainObj)) {
+	else if(const MicrostructureObject* microstructureObj = dynamic_object_cast<MicrostructureObject>(periodicDomainObj)) {
 		// Extract the dislocation segments from the microstructure object.
 		size_t segmentIndex = 0;
 		std::deque<Point3> line(2);
-		for(Microstructure::Face* face : microstructureObj->storage()->faces()) {
+		for(const Microstructure::Face* face : microstructureObj->storage()->faces()) {
 			// Since every dislocation line is represented by a pair two directed lines in the data structure,
 			// make sure we render only every other dislocation line (the "even" ones).
 			if(face->isDislocationFace() && face->isEvenFace()) {
 				const ClusterVector b(face->burgersVector(), face->cluster());
 				// Walk along the sequence of segments that make up the continous dislocation line.
-				Microstructure::Edge* edge = face->edges();
+				const Microstructure::Edge* edge = face->edges();
 				Point3 p = edge->vertex1()->pos();
 				do {
 					line[0] = p;
@@ -138,13 +138,13 @@ Future<PipelineFlowState> DislocationVis::transformDataImpl(TimePoint time, Data
 /******************************************************************************
 * Computes the bounding box of the object.
 ******************************************************************************/
-Box3 DislocationVis::boundingBox(TimePoint time, const std::vector<DataObject*>& objectStack, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
+Box3 DislocationVis::boundingBox(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
-	RenderableDislocationLines* renderableObj = dynamic_object_cast<RenderableDislocationLines>(objectStack.back());
+	const RenderableDislocationLines* renderableObj = dynamic_object_cast<RenderableDislocationLines>(objectStack.back());
 	if(!renderableObj) return {};
-	PeriodicDomainDataObject* domainObj = dynamic_object_cast<PeriodicDomainDataObject>(renderableObj->sourceDataObject().get());
+	const PeriodicDomainDataObject* domainObj = dynamic_object_cast<PeriodicDomainDataObject>(renderableObj->sourceDataObject().get());
 	if(!domainObj) return {};
-	SimulationCellObject* cellObject = domainObj->domain();
+	const SimulationCellObject* cellObject = domainObj->domain();
 	if(!cellObject) return {};
 	SimulationCell cell = cellObject->data();
 
@@ -176,8 +176,8 @@ Box3 DislocationVis::boundingBox(TimePoint time, const std::vector<DataObject*>&
 
 		if(showBurgersVectors()) {
 			padding = std::max(padding, burgersVectorWidth() * FloatType(2));
-			if(DislocationNetworkObject* dislocationObj = dynamic_object_cast<DislocationNetworkObject>(domainObj)) {
-				for(DislocationSegment* segment : dislocationObj->segments()) {
+			if(const DislocationNetworkObject* dislocationObj = dynamic_object_cast<DislocationNetworkObject>(domainObj)) {
+				for(const DislocationSegment* segment : dislocationObj->segments()) {
 					Point3 center = cell.wrapPoint(segment->getPointOnLine(FloatType(0.5)));
 					Vector3 dir = burgersVectorScaling() * segment->burgersVector.toSpatialVector();
 					bb.addPoint(center + dir);
@@ -192,7 +192,7 @@ Box3 DislocationVis::boundingBox(TimePoint time, const std::vector<DataObject*>&
 /******************************************************************************
 * Lets the vis element render a data object.
 ******************************************************************************/
-void DislocationVis::render(TimePoint time, const std::vector<DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
+void DislocationVis::render(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, const PipelineSceneNode* contextNode)
 {
 	// Ignore render calls for the original DislocationNetworkObject or MicrostrucureObject.
 	// We are only interested in the RenderableDIslocationLines.
@@ -233,7 +233,7 @@ void DislocationVis::render(TimePoint time, const std::vector<DataObject*>& obje
 			? ParticlePrimitive::NormalShading : ParticlePrimitive::FlatShading;
 
 	// Get the renderable dislocation lines.
-	RenderableDislocationLines* renderableLines = dynamic_object_cast<RenderableDislocationLines>(objectStack.back());
+	const RenderableDislocationLines* renderableLines = dynamic_object_cast<RenderableDislocationLines>(objectStack.back());
 	if(!renderableLines) return;
 
 	// Make sure we don't exceed our internal limits.
@@ -243,17 +243,17 @@ void DislocationVis::render(TimePoint time, const std::vector<DataObject*>& obje
 	}
 
 	// Get the original dislocation lines.
-	PeriodicDomainDataObject* domainObj = dynamic_object_cast<PeriodicDomainDataObject>(renderableLines->sourceDataObject().get());	
-	DislocationNetworkObject* dislocationsObj = dynamic_object_cast<DislocationNetworkObject>(domainObj);	
-	MicrostructureObject* microstructureObj = dynamic_object_cast<MicrostructureObject>(domainObj);	
+	const PeriodicDomainDataObject* domainObj = dynamic_object_cast<PeriodicDomainDataObject>(renderableLines->sourceDataObject().get());	
+	const DislocationNetworkObject* dislocationsObj = dynamic_object_cast<DislocationNetworkObject>(domainObj);	
+	const MicrostructureObject* microstructureObj = dynamic_object_cast<MicrostructureObject>(domainObj);	
 	if(!dislocationsObj && !microstructureObj) return;
 
 	// Get the simulation cell.
-	SimulationCellObject* cellObject = domainObj->domain();
+	const SimulationCellObject* cellObject = domainObj->domain();
 	if(!cellObject) return;
 	
 	// Get the pattern catalog.
-	PatternCatalog* patternCatalog = flowState.findObjectOfType<PatternCatalog>();
+	const PatternCatalog* patternCatalog = flowState.getObject<PatternCatalog>();
 
 	// Lookup the rendering primitives in the vis cache.
 	auto& primitives = dataset()->visCache().get<CacheValue>(CacheKey(
@@ -309,12 +309,12 @@ void DislocationVis::render(TimePoint time, const std::vector<DataObject*>& obje
 				lastBurgersVector = lineSegment.burgersVector;
 				lineColor = Color(0.8f,0.8f,0.8f);
 				if(patternCatalog) {
-					Cluster* cluster = lineSegment.burgersVector.cluster();
+					const Cluster* cluster = lineSegment.burgersVector.cluster();
 					OVITO_ASSERT(cluster != nullptr);
-					StructurePattern* pattern = patternCatalog->structureById(cluster->structure);
+					const StructurePattern* pattern = patternCatalog->structureById(cluster->structure);
 					if(lineColoringMode() == ColorByDislocationType) {
-						BurgersVectorFamily* family = pattern->defaultBurgersVectorFamily();
-						for(BurgersVectorFamily* f : pattern->burgersVectorFamilies()) {
+						const BurgersVectorFamily* family = pattern->defaultBurgersVectorFamily();
+						for(const BurgersVectorFamily* f : pattern->burgersVectorFamilies()) {
 							if(f->isMember(lineSegment.burgersVector.localVec(), pattern)) {
 								family = f;
 								break;
@@ -363,7 +363,7 @@ void DislocationVis::render(TimePoint time, const std::vector<DataObject*>& obje
 				int arrowIndex = 0;
 				ColorA arrowColor = burgersVectorColor();
 				FloatType arrowRadius = std::max(burgersVectorWidth() / 2, FloatType(0));
-				for(DislocationSegment* segment : dislocationsObj->segments()) {
+				for(const DislocationSegment* segment : dislocationsObj->segments()) {
 					subobjToSegmentMap.push_back(arrowIndex);
 					Point3 center = cellData.wrapPoint(segment->getPointOnLine(FloatType(0.5)));
 					Vector3 dir = burgersVectorScaling() * segment->burgersVector.toSpatialVector();
@@ -404,18 +404,18 @@ void DislocationVis::render(TimePoint time, const std::vector<DataObject*>& obje
 /******************************************************************************
 * Renders an overlay marker for a single dislocation segment.
 ******************************************************************************/
-void DislocationVis::renderOverlayMarker(TimePoint time, DataObject* dataObject, const PipelineFlowState& flowState, int segmentIndex, SceneRenderer* renderer, PipelineSceneNode* contextNode)
+void DislocationVis::renderOverlayMarker(TimePoint time, const DataObject* dataObject, const PipelineFlowState& flowState, int segmentIndex, SceneRenderer* renderer, const PipelineSceneNode* contextNode)
 {
 	if(renderer->isPicking())
 		return;
 
 	// Get the dislocations.
-	OORef<DislocationNetworkObject> dislocationsObj = dataObject->convertTo<DislocationNetworkObject>(time);
+	const DislocationNetworkObject* dislocationsObj = dynamic_object_cast<DislocationNetworkObject>(dataObject);
 	if(!dislocationsObj)
 		return;
 
 	// Get the simulation cell.
-	SimulationCellObject* cellObject = dislocationsObj->domain();
+	const SimulationCellObject* cellObject = dislocationsObj->domain();
 	if(!cellObject)
 		return;
 	SimulationCell cellData = cellObject->data();
@@ -423,7 +423,7 @@ void DislocationVis::renderOverlayMarker(TimePoint time, DataObject* dataObject,
 	if(segmentIndex < 0 || segmentIndex >= dislocationsObj->segments().size())
 		return;
 
-	DislocationSegment* segment = dislocationsObj->segments()[segmentIndex];
+	const DislocationSegment* segment = dislocationsObj->segments()[segmentIndex];
 
 	// Generate the polyline segments to render.
 	std::vector<std::pair<Point3,Point3>> lineSegments;

@@ -96,8 +96,8 @@ public:
 /// The second parameter determines the name of the reference field. It must be unique within the current class.
 #define DECLARE_REFERENCE_FIELD_FLAGS(type, name, flags) \
 	private: \
-		static Ovito::SingleReferenceFieldBase& name##__access_field(RefMaker* obj) { \
-			return static_cast<ovito_class*>(obj)->_##name; \
+		static Ovito::SingleReferenceFieldBase& name##__access_field(const RefMaker* obj) { \
+			return static_cast<ovito_class*>(const_cast<RefMaker*>(obj))->_##name; \
 		} \
 		enum { __##name##_flags = flags }; \
 		static Ovito::NativePropertyFieldDescriptor name##__propdescr_instance; \
@@ -121,7 +121,7 @@ public:
 /// The third parameter is the name of the setter method to be created for this reference field.
 #define DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(type, name, setterName, flags) \
 	public: \
-		void setterName(type* obj) { _##name.set(this, PROPERTY_FIELD(name), obj); } \
+		void setterName(const type* obj) { _##name.set(this, PROPERTY_FIELD(name), obj); } \
 		DECLARE_REFERENCE_FIELD_FLAGS(type, name, flags)
 		
 /// Adds a settable reference field to a class definition.
@@ -136,8 +136,8 @@ public:
 /// The second parameter determines the name of the vector reference field. It must be unique within the current class.
 #define DECLARE_VECTOR_REFERENCE_FIELD_FLAGS(type, name, flags) \
 	private: \
-		static Ovito::VectorReferenceFieldBase& name##__access_field(RefMaker* obj) { \
-			return static_cast<ovito_class*>(obj)->_##name; \
+		static Ovito::VectorReferenceFieldBase& name##__access_field(const RefMaker* obj) { \
+			return static_cast<ovito_class*>(const_cast<RefMaker*>(obj))->_##name; \
 		} \
 		enum { __##name##_flags = flags | PROPERTY_FIELD_VECTOR }; \
 		static Ovito::NativePropertyFieldDescriptor name##__propdescr_instance; \

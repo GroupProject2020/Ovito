@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <gui/mainwin/MainWindow.h>
 #include <gui/actions/ViewportModeAction.h>
 #include <gui/widgets/general/AutocompleteLineEdit.h>
@@ -122,7 +122,8 @@ void ParticleInspectionApplet::updateDistanceTable()
 	// Limit distance computation to the first 4 particles:
 	int n = std::min(4, visibleElementCount());
 
-	ParticleProperty* posProperty = ParticleProperty::findInState(currentData(), ParticleProperty::PositionProperty);
+	const ParticlesObject* particles = currentData().getObject<ParticlesObject>();
+	const PropertyObject* posProperty = particles ? particles->getProperty(ParticlesObject::PositionProperty) : nullptr;
 	_distanceTable->setRowCount(n * (n-1) / 2);
 	int row = 0;
 	for(int i = 0; i < n; i++) {

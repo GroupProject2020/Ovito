@@ -43,7 +43,7 @@ public:
 	Q_INVOKABLE DislocationNetworkObject(DataSet* dataset);
 
 	/// Returns the title of this object.
-	virtual QString objectTitle() override { return tr("Dislocations"); }
+	virtual QString objectTitle() const override { return tr("Dislocations"); }
 
 	/// Returns the data encapsulated by this object after making sure it is not shared with other owners.
 	const std::shared_ptr<DislocationNetwork>& modifiableStorage();

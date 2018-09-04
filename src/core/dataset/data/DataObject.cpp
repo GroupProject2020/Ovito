@@ -99,6 +99,26 @@ void DataObject::setDataSource(PipelineObject* dataSource)
 	_dataSource = dataSource;
 }
 
+/******************************************************************************
+* Duplicates the given sub-object from this container object if it is shared 
+* with others. After this method returns, the returned sub-object will be 
+* exclusively owned by this container can be safely modified without unwanted 
+* side effects.
+******************************************************************************/
+DataObject* DataObject::makeMutable(const DataObject* subObject)
+{
+	OVITO_ASSERT(subObject);
+	OVITO_ASSERT(hasReferenceTo(subObject));
+	OVITO_ASSERT(subObject->numberOfStrongReferences() >= 1);
+	if(subObject->numberOfStrongReferences() > 1) {
+		OORef<DataObject> clone = CloneHelper().cloneObject(subObject, false);
+		replaceReferencesTo(subObject, clone);
+		subObject = clone;
+	}
+	OVITO_ASSERT(subObject->numberOfStrongReferences() == 1);
+	return const_cast<DataObject*>(subObject);
+}
+
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

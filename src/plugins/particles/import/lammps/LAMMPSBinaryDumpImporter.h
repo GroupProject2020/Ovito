@@ -61,7 +61,7 @@ public:
 	Q_INVOKABLE LAMMPSBinaryDumpImporter(DataSet* dataset) : ParticleImporter(dataset) {}
 
 	/// Returns the title of this object.
-	virtual QString objectTitle() override { return tr("LAMMPS Dump File"); }
+	virtual QString objectTitle() const override { return tr("LAMMPS Dump File"); }
 
 	/// \brief Returns the user-defined mapping between data columns in the input file and
 	///        the internal particle properties.
@@ -155,7 +155,7 @@ protected:
 	virtual void loadFromStream(ObjectLoadStream& stream) override;
 
 	/// \brief Creates a copy of this object.
-	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) override;
+	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) const override;
 
 private:
 

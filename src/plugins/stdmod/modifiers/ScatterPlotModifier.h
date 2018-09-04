@@ -106,48 +106,5 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, yAxisRangeEnd, setYAxisRangeEnd, PROPERTY_FIELD_MEMORIZE);
 };
 
-/**
- * \brief The type of ModifierApplication create for a ScatterPlotModifier 
- *        when it is inserted into in a data pipeline.
- */
- class OVITO_STDMOD_EXPORT ScatterPlotModifierApplication : public ModifierApplication
- {		
-	OVITO_CLASS(ScatterPlotModifierApplication)
-	Q_OBJECT
-	
- public:
- 
-	 /// Constructor.
-	 Q_INVOKABLE ScatterPlotModifierApplication(DataSet* dataset) : ModifierApplication(dataset) {}
- 
-	/// Returns the stored scatter plot data.
-	const std::vector<QPointF>& xyData() const { return _xyData; }
-
-	/// Returns the stored point type data.
-	const std::vector<int>& typeData() const { return _typeData; }
-
-	/// Returns the map from particle types to colors.
-	const std::map<int, Color>& colorMap() const { return _colorMap; }
-
-	/// Replaces the stored data.
-	void setScatterData(std::vector<QPointF> xyData, std::vector<int> typeData, std::map<int, Color> colorMap) {
-		_xyData = std::move(xyData);
-		_typeData = std::move(typeData);
-		_colorMap = std::move(colorMap);
-		notifyDependents(ReferenceEvent::ObjectStatusChanged);
-	}
- 
-private:
- 
-	/// Stores the scatter plot data.
-	std::vector<QPointF> _xyData;
-	
-	/// Stores the point type data.
-	std::vector<int> _typeData;
-
-	/// Maps particle types to colors.
-	std::map<int, Color> _colorMap;
-};
-
 }	// End of namespace
 }	// End of namespace

@@ -155,12 +155,6 @@ protected:
 	/// \undoable
 	void clearReferencesTo(RefTarget* target);
 
-	/// \brief Replaces all references of this RefMaker to some RefTarget with new ones.
-	/// \param oldTarget Specifies which references should be replaced.
-	/// \param newTarget Specifies the new target that should replace the old one.
-	/// \undoable
-	void replaceReferencesTo(RefTarget* oldTarget, RefTarget* newTarget);
-
 	/// \brief Clears a reference field.
 	/// \param field Specifies the reference field of this RefMaker to be cleared.
 	///
@@ -285,7 +279,7 @@ public:
 	///         RefTarget \a target; \c false otherwise.
 	///
 	/// \sa isReferencedBy()
-	bool hasReferenceTo(RefTarget* target) const;
+	bool hasReferenceTo(const RefTarget* target) const;
 
 	/// \brief Checks whether this object is directly or indirectly referenced by the given RefMaker.
 	/// \param obj The RefMaker that might hold a reference to \c this object.
@@ -298,6 +292,12 @@ public:
 	/// \return A list of all RefTargets that are directly or indirectly referenced by this RefMaker.
 	/// \note The returned list is gathered recursively.
 	QSet<RefTarget*> getAllDependencies() const;
+
+	/// \brief Replaces all references of this RefMaker to some RefTarget with new ones.
+	/// \param oldTarget Specifies which references should be replaced.
+	/// \param newTarget Specifies the new target that should replace the old one.
+	/// \undoable
+	void replaceReferencesTo(const RefTarget* oldTarget, const RefTarget* newTarget);
 
 	///////////////////////////// DataSet access ///////////////////////////////
 

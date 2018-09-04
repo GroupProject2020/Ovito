@@ -22,9 +22,7 @@
 SET(SourceFiles 
 	objects/ParticlesVisEditor.cpp
 	objects/ParticleTypeEditor.cpp
-	objects/ParticlePropertyEditor.cpp
 	objects/BondTypeEditor.cpp
-	objects/BondPropertyEditor.cpp
 	objects/VectorVisEditor.cpp
 	objects/BondsVisEditor.cpp
 	objects/TrajectoryVisEditor.cpp

@@ -87,7 +87,7 @@ public:
 	/// Makes a copy of the given source property and, optionally, of the provided
 	/// element identifier list, which will allow to restore the saved property
 	/// values even if the order of particles changes.
-	void updateStoredData(PropertyObject* property, PropertyObject* identifiers, TimeInterval validityInterval);
+	void updateStoredData(const PropertyObject* property, const PropertyObject* identifiers, TimeInterval validityInterval);
 
 	/// Returns true if the frozen state for given animation time is already stored.
 	bool hasFrozenState(TimePoint time) const { return _validityInterval.contains(time); }

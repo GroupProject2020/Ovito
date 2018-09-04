@@ -147,7 +147,7 @@ void ParticlesComputePropertyModifierDelegateEditor::updateExpressionFields()
 	QStringList standardPropertyComponentNames;
 	if(ComputePropertyModifier* modifier = dynamic_object_cast<ComputePropertyModifier>(delegate->modifier())) {
 		if(!modifier->outputProperty().isNull() && modifier->outputProperty().type() != PropertyStorage::GenericUserProperty) {
-			standardPropertyComponentNames = modifier->outputProperty().propertyClass()->standardPropertyComponentNames(modifier->outputProperty().type());
+			standardPropertyComponentNames = modifier->outputProperty().containerClass()->standardPropertyComponentNames(modifier->outputProperty().type());
 		}
 	}
 

@@ -24,33 +24,33 @@
 #include <core/app/PluginManager.h>
 #include <core/dataset/pipeline/Modifier.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
-#include <plugins/stdobj/properties/PropertyClass.h>
-#include <plugins/stdobj/properties/PropertyObject.h>
-#include "PropertyClassParameterUI.h"
+#include <plugins/stdobj/properties/PropertyContainerClass.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
+#include "PropertyContainerParameterUI.h"
 
 namespace Ovito { namespace StdObj {
 
-IMPLEMENT_OVITO_CLASS(PropertyClassParameterUI);
+IMPLEMENT_OVITO_CLASS(PropertyContainerParameterUI);
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-PropertyClassParameterUI::PropertyClassParameterUI(QObject* parentEditor, const PropertyFieldDescriptor& propField) : 
+PropertyContainerParameterUI::PropertyContainerParameterUI(QObject* parentEditor, const PropertyFieldDescriptor& propField) : 
 	PropertyParameterUI(parentEditor, propField),
 	_comboBox(new QComboBox())
 {
-	connect(comboBox(), static_cast<void (QComboBox::*)(const QString&)>(&QComboBox::activated), this, &PropertyClassParameterUI::updatePropertyValue);
+	connect(comboBox(), static_cast<void (QComboBox::*)(const QString&)>(&QComboBox::activated), this, &PropertyContainerParameterUI::updatePropertyValue);
 
-	// Populate combo box with the list of available property classes.
-	for(PropertyClassPtr propertyClass : PluginManager::instance().metaclassMembers<PropertyObject>()) {
-		comboBox()->addItem(propertyClass->propertyClassDisplayName(), QVariant::fromValue(propertyClass));
+	// Populate combo box with the list of available property container types.
+	for(PropertyContainerClassPtr clazz : PluginManager::instance().metaclassMembers<PropertyContainer>()) {
+		comboBox()->addItem(clazz->propertyClassDisplayName(), QVariant::fromValue(PropertyContainerReference(clazz)));
 	}
 }
 
 /******************************************************************************
 * Destructor.
 ******************************************************************************/
-PropertyClassParameterUI::~PropertyClassParameterUI()
+PropertyContainerParameterUI::~PropertyContainerParameterUI()
 {
 	delete comboBox(); 
 }
@@ -59,7 +59,7 @@ PropertyClassParameterUI::~PropertyClassParameterUI()
 * This method is called when a new editable object has been assigned to the properties owner this
 * parameter UI belongs to. 
 ******************************************************************************/
-void PropertyClassParameterUI::resetUI()
+void PropertyContainerParameterUI::resetUI()
 {
 	PropertyParameterUI::resetUI();	
 	
@@ -70,7 +70,7 @@ void PropertyClassParameterUI::resetUI()
 /******************************************************************************
 * This method is called when a reference target changes.
 ******************************************************************************/
-bool PropertyClassParameterUI::referenceEvent(RefTarget* source, const ReferenceEvent& event)
+bool PropertyContainerParameterUI::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	if(source == editObject() && event.type() == ReferenceEvent::ModifierInputChanged) {
 		// The modifier's input from the pipeline has changed -> update list of available delegates
@@ -83,7 +83,7 @@ bool PropertyClassParameterUI::referenceEvent(RefTarget* source, const Reference
 * This method is called when a new editable object has been assigned to the 
 * properties owner this parameter UI belongs to. 
 ******************************************************************************/
-void PropertyClassParameterUI::updateUI()
+void PropertyContainerParameterUI::updateUI()
 {
 	PropertyParameterUI::updateUI();
 	
@@ -91,8 +91,8 @@ void PropertyClassParameterUI::updateUI()
 
 		// Get the current property class.
 		QVariant val = editObject()->getPropertyFieldValue(*propertyField());
-		OVITO_ASSERT_MSG(val.isValid() && val.canConvert<const PropertyClass*>(), "PropertyClassParameterUI::updateUI()", QString("The property field of object class %1 is not of type <PropertyClassPtr>.").arg(editObject()->metaObject()->className()).toLocal8Bit().constData());
-		const PropertyClass* selectedPropertyClass = val.value<const PropertyClass*>();	
+		OVITO_ASSERT_MSG(val.isValid() && val.canConvert<PropertyContainerReference>(), "PropertyContainerParameterUI::updateUI()", QString("The property field of object class %1 is not of type <PropertyContainerClassPtr> or <PropertyContainerReference>.").arg(editObject()->metaObject()->className()).toLocal8Bit().constData());
+		PropertyContainerReference selectedPropertyContainer = val.value<PropertyContainerReference>();	
 		
 		// Obtain modifier input data.
 		std::vector<PipelineFlowState> modifierInputs;
@@ -102,18 +102,18 @@ void PropertyClassParameterUI::updateUI()
 			}
 		}
 
-		// Update enabled state of the property classes in the list.
+		// Update state of the property containers depending on their presence in the input pipeline data.
 		const QStandardItemModel* model = qobject_cast<const QStandardItemModel*>(comboBox()->model());
 		int enabledCount = 0;
 		int selectedIndex = -1;
 		for(int i = 0; i < comboBox()->count(); i++) {
 			QStandardItem* item = model->item(i);
-			const PropertyClass* pclass = item->data(Qt::UserRole).value<const PropertyClass*>();
-			if(pclass == selectedPropertyClass) 
+			PropertyContainerReference containerRef = item->data(Qt::UserRole).value<PropertyContainerReference>();
+			if(containerRef == selectedPropertyContainer) 
 				selectedIndex = i;
 
-			item->setEnabled(std::any_of(modifierInputs.begin(), modifierInputs.end(), [pclass](const PipelineFlowState& state) {
-				return pclass->isDataPresent(state);
+			item->setEnabled(std::any_of(modifierInputs.begin(), modifierInputs.end(), [&containerRef](const PipelineFlowState& state) {
+				return state.getLeafObject(containerRef) != nullptr;
 			}));
 		}
 
@@ -125,19 +125,19 @@ void PropertyClassParameterUI::updateUI()
 * Takes the value entered by the user and stores it in the property field 
 * this property UI is bound to.
 ******************************************************************************/
-void PropertyClassParameterUI::updatePropertyValue()
+void PropertyContainerParameterUI::updatePropertyValue()
 {
 	if(comboBox() && editObject()) {
-		undoableTransaction(tr("Change modifier target property class"), [this]() {
+		undoableTransaction(tr("Change modifier subject"), [this]() {
 
-			const PropertyClass* pclass = comboBox()->currentData().value<const PropertyClass*>();
+			PropertyContainerReference containerRef = comboBox()->currentData().value<PropertyContainerReference>();
 
 			// Check if new value differs from old value.
 			QVariant oldval = editObject()->getPropertyFieldValue(*propertyField());
-			if(pclass == oldval.value<const PropertyClass*>())
+			if(containerRef == oldval.value<PropertyContainerReference>())
 				return;
 
-			editObject()->setPropertyFieldValue(*propertyField(), QVariant::fromValue(pclass));
+			editObject()->setPropertyFieldValue(*propertyField(), QVariant::fromValue(containerRef));
 			
 			Q_EMIT valueEntered();
 		});
@@ -147,11 +147,11 @@ void PropertyClassParameterUI::updatePropertyValue()
 /******************************************************************************
 * Sets the enabled state of the UI.
 ******************************************************************************/
-void PropertyClassParameterUI::setEnabled(bool enabled)
+void PropertyContainerParameterUI::setEnabled(bool enabled)
 {
 	if(enabled == isEnabled()) return;
 	PropertyParameterUI::setEnabled(enabled);
-	if(comboBox()) comboBox()->setEnabled(editObject() != NULL && isEnabled());
+	if(comboBox()) comboBox()->setEnabled(editObject() && isEnabled());
 }
 
 }	// End of namespace

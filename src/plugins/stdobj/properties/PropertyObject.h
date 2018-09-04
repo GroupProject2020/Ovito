@@ -26,7 +26,6 @@
 #include <core/dataset/data/DataObject.h>
 #include <plugins/stdobj/properties/ElementType.h>
 #include "PropertyStorage.h"
-#include "PropertyClass.h"
 
 namespace Ovito { namespace StdObj {
 	
@@ -36,12 +35,12 @@ namespace Ovito { namespace StdObj {
 class OVITO_STDOBJ_EXPORT PropertyObject : public DataObject
 {
 	Q_OBJECT
-	OVITO_CLASS_META(PropertyObject, PropertyClass)
+	OVITO_CLASS(PropertyObject)
 	
 public:
 
 	/// \brief Creates a property object.
-	PropertyObject(DataSet* dataset);
+	Q_INVOKABLE PropertyObject(DataSet* dataset, const PropertyPtr& storage = nullptr);
 
 	/// \brief Gets the property's name.
 	/// \return The name of property, which is shown to the user.
@@ -98,12 +97,6 @@ public:
 
 	/// Returns the data encapsulated by this object after making sure it is not shared with other owners.
 	const PropertyPtr& modifiableStorage();
-
-	/// Determines whether this property object belongs to the given property bundle.
-	bool belongsToBundle(const QString& bundleName) const;
-
-	/// Makes this property object part of the givenb property bundle.
-	void setBundle(const QString& bundleName);
 
 	/// Reduces the size of the storage array, removing elements for which 
 	/// the corresponding bits in the bit array are set.
@@ -475,14 +468,14 @@ public:
 	//////////////////////////////// Element types //////////////////////////////
 	
 	/// Appends an element type to the list of types.
-	void addElementType(ElementType* type) {
-		OVITO_ASSERT(elementTypes().contains(type) == false);
+	void addElementType(const ElementType* type) {
+		OVITO_ASSERT(elementTypes().contains(const_cast<ElementType*>(type)) == false);
 		_elementTypes.push_back(this, PROPERTY_FIELD(elementTypes), type);
 	}
 
 	/// Inserts an element type into the list of types.
-	void insertElementType(int index, ElementType* type) {
-		OVITO_ASSERT(elementTypes().contains(type) == false);
+	void insertElementType(int index, const ElementType* type) {
+		OVITO_ASSERT(elementTypes().contains(const_cast<ElementType*>(type)) == false);
 		_elementTypes.insert(this, PROPERTY_FIELD(elementTypes), index, type);
 	}
 
@@ -557,7 +550,7 @@ public:
 	}
 
 	/// Returns the display title of this property object in the user interface.
-	virtual QString objectTitle() override;
+	virtual QString objectTitle() const override;
 
 protected:
 
@@ -574,6 +567,9 @@ private:
 
 	/// Contains the list of defined "types" if this is a typed property.
 	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD(ElementType, elementTypes, setElementTypes);
+
+	/// The user-interface title of this property.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, title, setTitle);
 
 	/// This is a special flag used by the Python bindings to indicate that
 	/// this property object has been temporarily put into a writable state.

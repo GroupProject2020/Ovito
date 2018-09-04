@@ -20,10 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/particles/objects/VectorVis.h>
-#include <plugins/stdobj/util/OutputHelper.h>
 #include "ParticlesAssignColorModifierDelegate.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
@@ -33,59 +31,18 @@ IMPLEMENT_OVITO_CLASS(ParticleVectorsAssignColorModifierDelegate);
 IMPLEMENT_OVITO_CLASS(BondsAssignColorModifierDelegate);
 
 /******************************************************************************
-* Creates the property object that will receive the computed colors.
-******************************************************************************/
-PropertyObject* ParticlesAssignColorModifierDelegate::createOutputColorProperty(TimePoint time, InputHelper& ih, OutputHelper& oh, bool initializeWithExistingColors)
-{
-    PropertyObject* colorProperty = oh.outputStandardProperty<ParticleProperty>(ParticleProperty::ColorProperty, false);
-    if(initializeWithExistingColors) {
-        ParticleInputHelper pih(dataset(), ih.input());
-        const std::vector<Color> colors = pih.inputParticleColors(time, oh.output().mutableStateValidity());
-        OVITO_ASSERT(colors.size() == colorProperty->size());
-        std::copy(colors.cbegin(), colors.cend(), colorProperty->dataColor());
-    }
-    return colorProperty;
-}
-
-/******************************************************************************
 * Returns whether this function can be applied to the given input data.
 ******************************************************************************/
 bool ParticleVectorsAssignColorModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	for(DataObject* obj : input.objects()) {
-        if(dynamic_object_cast<VectorVis>(obj->visElement()))
-            return true;
-    }
-    return false;
-}
-    
-/******************************************************************************
-* Creates the property object that will receive the computed colors.
-******************************************************************************/
-PropertyObject* ParticleVectorsAssignColorModifierDelegate::createOutputColorProperty(TimePoint time, InputHelper& ih, OutputHelper& oh, bool initializeWithExistingColors)
-{
-    PropertyObject* colorProperty = oh.outputStandardProperty<ParticleProperty>(ParticleProperty::VectorColorProperty, false);
-    if(initializeWithExistingColors) {
-        if(VectorVis* vectorVis = dynamic_object_cast<VectorVis>(colorProperty->visElement())) {
-            std::fill(colorProperty->dataColor(), colorProperty->dataColor() + colorProperty->size(), vectorVis->arrowColor());
+    if(const ParticlesObject* particles = input.getObject<ParticlesObject>()) {
+        for(const PropertyObject* property : particles->properties()) {
+            if(property->visElement<VectorVis>() != nullptr)
+                return true;
         }
     }
-    return colorProperty;
-}
+	return false;
 
-/******************************************************************************
-* Creates the property object that will receive the computed colors.
-******************************************************************************/
-PropertyObject* BondsAssignColorModifierDelegate::createOutputColorProperty(TimePoint time, InputHelper& ih, OutputHelper& oh, bool initializeWithExistingColors)
-{
-    PropertyObject* colorProperty = oh.outputStandardProperty<BondProperty>(BondProperty::ColorProperty, false);
-    if(initializeWithExistingColors) {
-        ParticleInputHelper pih(dataset(), ih.input());
-        const std::vector<Color> colors = pih.inputBondColors(time, oh.output().mutableStateValidity());
-        OVITO_ASSERT(colors.size() == colorProperty->size());
-        std::copy(colors.cbegin(), colors.cend(), colorProperty->dataColor());
-    }
-    return colorProperty;
 }
 
 OVITO_END_INLINE_NAMESPACE

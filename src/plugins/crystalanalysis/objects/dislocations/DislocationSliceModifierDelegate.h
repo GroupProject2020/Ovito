@@ -43,7 +43,7 @@ class OVITO_CRYSTALANALYSIS_EXPORT DislocationSliceModifierDelegate : public Sli
 
 		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
 		virtual bool isApplicableTo(const PipelineFlowState& input) const override {
-			return input.findObjectOfType<DislocationNetworkObject>() != nullptr;
+			return input.containsObject<DislocationNetworkObject>();
 		}
 
 		/// The name by which Python scripts can refer to this modifier delegate.

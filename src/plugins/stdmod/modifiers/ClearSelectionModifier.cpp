@@ -20,10 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/stdmod/StdMod.h>
-#include <core/dataset/DataSet.h>
-#include <plugins/stdobj/util/InputHelper.h>
 #include <plugins/stdobj/properties/PropertyObject.h>
-#include <core/app/PluginManager.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
 #include "ClearSelectionModifier.h"
 
 namespace Ovito { namespace StdMod {
@@ -36,8 +34,7 @@ IMPLEMENT_OVITO_CLASS(ClearSelectionModifier);
 ClearSelectionModifier::ClearSelectionModifier(DataSet* dataset) : GenericPropertyModifier(dataset)
 {
 	// Operate on particles by default.
-	setPropertyClass(static_cast<const PropertyClass*>(
-		PluginManager::instance().findClass(QStringLiteral("Particles"), QStringLiteral("ParticleProperty"))));	
+	setDefaultSubject(QStringLiteral("Particles"), QStringLiteral("ParticlesObject"));	
 }
 
 /******************************************************************************
@@ -45,14 +42,14 @@ ClearSelectionModifier::ClearSelectionModifier(DataSet* dataset) : GenericProper
 ******************************************************************************/
 PipelineFlowState ClearSelectionModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	if(!propertyClass())
-		throwException(tr("No input property class selected."));
+	if(!subject())
+		throwException(tr("No input element type selected."));
 	
-	PipelineFlowState output = input;	
-    InputHelper ih(dataset(), input);
+	PipelineFlowState output = input;
 
-	PropertyObject* selProperty = ih.inputStandardProperty(*propertyClass(), PropertyStorage::GenericSelectionProperty);
-	if(selProperty) output.removeObject(selProperty);
+   	PropertyContainer* container = output.expectMutableLeafObject(subject());
+	if(const PropertyObject* selProperty = container->getProperty(PropertyStorage::GenericSelectionProperty))
+		container->removeProperty(selProperty);
     
 	return output;
 }

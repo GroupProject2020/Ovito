@@ -23,8 +23,9 @@
 
 
 #include <plugins/stdobj/gui/StdObjGui.h>
-#include <gui/properties/ParameterUI.h>
 #include <plugins/stdobj/gui/widgets/PropertySelectionComboBox.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
+#include <gui/properties/ParameterUI.h>
 
 namespace Ovito { namespace StdObj {
 	
@@ -39,10 +40,10 @@ class OVITO_STDOBJGUI_EXPORT PropertyReferenceParameterUI : public PropertyParam
 public:
 
 	/// Constructor.
-	PropertyReferenceParameterUI(QObject* parentEditor, const char* propertyName, const PropertyClass* propertyClass, bool showComponents = true, bool inputProperty = true);
+	PropertyReferenceParameterUI(QObject* parentEditor, const char* propertyName, PropertyContainerClassPtr containerClass, bool showComponents = true, bool inputProperty = true);
 
 	/// Constructor.
-	PropertyReferenceParameterUI(QObject* parentEditor, const PropertyFieldDescriptor& propField, const PropertyClass* propertyClass, bool showComponents = true, bool inputProperty = true);
+	PropertyReferenceParameterUI(QObject* parentEditor, const PropertyFieldDescriptor& propField, PropertyContainerClassPtr containerClass, bool showComponents = true, bool inputProperty = true);
 	
 	/// Destructor.
 	virtual ~PropertyReferenceParameterUI();
@@ -70,20 +71,20 @@ public:
 		if(comboBox()) comboBox()->setWhatsThis(text); 
 	}
 	
-	/// Returns the class of properties that can be selected by the user.
-	const PropertyClass* propertyClass() const { return _propertyClass; }
+	/// Returns the property container from which the user can select a property.
+	const PropertyContainerReference& containerRef() const { return _containerRef; }
 
-	/// Sets the class of properties that can be selected by the user.
-	void setPropertyClass(const PropertyClass* propertyClass) {
-		if(_propertyClass != propertyClass) {
-			_propertyClass = propertyClass;
-			_comboBox->setPropertyClass(propertyClass);
+	/// Sets the property container from which the user can select a property.
+	void setContainerRef(const PropertyContainerReference& containerRef) {
+		if(_containerRef != containerRef) {
+			_containerRef = containerRef;
+			_comboBox->setContainerClass(_containerRef.dataClass());
 			updateUI();
 		}
 	}
 
 	/// Installs optional callback function that allows clients to filter the displayed property list.
-	void setPropertyFilter(std::function<bool(PropertyObject*)> filter) {
+	void setPropertyFilter(std::function<bool(const PropertyObject*)> filter) {
 		_propertyFilter = std::move(filter);
 	}
 		
@@ -119,11 +120,11 @@ protected:
 	/// Controls whether the combo box should list input or output properties.
 	bool _inputProperty;
 
-	/// The class of properties that can be selected.
-	const PropertyClass* _propertyClass;
+	/// The container from which properties that can be selected.
+	PropertyContainerReference _containerRef;
 
 	/// An optional callback function that allows clients to filter the displayed property list.
-	std::function<bool(PropertyObject*)> _propertyFilter;
+	std::function<bool(const PropertyObject*)> _propertyFilter;
 };
 
 }	// End of namespace

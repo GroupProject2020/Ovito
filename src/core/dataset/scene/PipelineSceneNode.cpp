@@ -72,7 +72,7 @@ void PipelineSceneNode::invalidatePipelineCache()
 /******************************************************************************
 * Asks the object for the preliminary results of the data pipeline.
 ******************************************************************************/
-const PipelineFlowState& PipelineSceneNode::evaluatePipelinePreliminary(bool includeVisElements) 
+const PipelineFlowState& PipelineSceneNode::evaluatePipelinePreliminary(bool includeVisElements) const
 {
 	TimePoint time = dataset()->animationSettings()->time();
 
@@ -108,7 +108,7 @@ const PipelineFlowState& PipelineSceneNode::evaluatePipelinePreliminary(bool inc
 /******************************************************************************
 * Asks the node for the results of its data pipeline.
 ******************************************************************************/
-SharedFuture<PipelineFlowState> PipelineSceneNode::evaluatePipeline(TimePoint time)
+SharedFuture<PipelineFlowState> PipelineSceneNode::evaluatePipeline(TimePoint time) const
 {
 	// Check if we can immediately serve the request from the internal cache.
 	if(_pipelineCache.contains(time))
@@ -128,7 +128,7 @@ SharedFuture<PipelineFlowState> PipelineSceneNode::evaluatePipeline(TimePoint ti
 
 			// We maintain a data cache for the current animation time.
 			if(_pipelineCache.insert(state, this)) {
-				updateVisElementList(dataset()->animationSettings()->time());
+				const_cast<PipelineSceneNode*>(this)->updateVisElementList(dataset()->animationSettings()->time());
 			}
 
 			// Simply forward the pipeline results to the caller by default.
@@ -140,7 +140,7 @@ SharedFuture<PipelineFlowState> PipelineSceneNode::evaluatePipeline(TimePoint ti
 * Asks the node for the results of its data pipeline including the output of 
 * asynchronous visualization elements.
 ******************************************************************************/
-SharedFuture<PipelineFlowState> PipelineSceneNode::evaluateRenderingPipeline(TimePoint time)
+SharedFuture<PipelineFlowState> PipelineSceneNode::evaluateRenderingPipeline(TimePoint time) const
 {
 	// Check if we can immediately serve the request from the internal cache.
 	if(_pipelineRenderingCache.contains(time))
@@ -196,31 +196,17 @@ SharedFuture<PipelineFlowState> PipelineSceneNode::evaluateRenderingPipeline(Tim
 * Helper function that recursively collects all visual elements of a 
 * data object and stores them in a vector.
 ******************************************************************************/
-void PipelineSceneNode::collectVisElements(DataObject* dataObj, std::vector<DataVis*>& visElements) 
+void PipelineSceneNode::collectVisElements(const DataObject* dataObj, std::vector<DataVis*>& visElements) 
 {
 	for(DataVis* vis : dataObj->visElements()) {
 		if(std::find(visElements.begin(), visElements.end(), vis) == visElements.end())
 			visElements.push_back(vis);
 	}
 
-	for(const PropertyFieldDescriptor* field : dataObj->getOOMetaClass().propertyFields()) {
-		if(field->isReferenceField() && !field->isWeakReference() && field->targetClass()->isDerivedFrom(DataObject::OOClass()) && !field->flags().testFlag(PROPERTY_FIELD_NO_SUB_ANIM)) {
-			if(!field->isVector()) {
-				RefTarget* target = dataObj->getReferenceField(*field);
-				if(DataObject* subObject = static_object_cast<DataObject>(target)) {
-					collectVisElements(subObject, visElements);
-				}
-			}
-			else {
-				const QVector<RefTarget*>& list = dataObj->getVectorReferenceField(*field);
-				for(RefTarget* target : list) {
-					if(DataObject* subObject = static_object_cast<DataObject>(target)) {
-						collectVisElements(subObject, visElements);
-					}
-				}
-			}
-		}
-	}			
+	dataObj->visitSubObjects([&visElements](const DataObject* subObject) {
+		collectVisElements(subObject, visElements);
+		return false;
+	});	
 }
 
 /******************************************************************************
@@ -232,7 +218,7 @@ void PipelineSceneNode::updateVisElementList(TimePoint time)
 
 	// Collect all visual elements from the current pipeline state.
 	std::vector<DataVis*> newVisElements;
-	for(DataObject* dataObj : state.objects()) {
+	for(const DataObject* dataObj : state.objects()) {
 		collectVisElements(dataObj, newVisElements);
 	}
 
@@ -345,7 +331,7 @@ void PipelineSceneNode::loadFromStream(ObjectLoadStream& stream)
 /******************************************************************************
 * Returns the title of this object.
 ******************************************************************************/
-QString PipelineSceneNode::objectTitle()
+QString PipelineSceneNode::objectTitle() const
 {
 	// If a name has been assigned to this node, return it as the node's display title.
 	if(!nodeName().isEmpty())
@@ -412,14 +398,14 @@ void PipelineSceneNode::setPipelineSource(PipelineObject* sourceObject)
 /******************************************************************************
 * Computes the bounding box of the scene node in local coordinates.
 ******************************************************************************/
-Box3 PipelineSceneNode::localBoundingBox(TimePoint time, TimeInterval& validity)
+Box3 PipelineSceneNode::localBoundingBox(TimePoint time, TimeInterval& validity) const
 {
 	const PipelineFlowState& state = evaluatePipelinePreliminary(true);
 
 	// Let visual elements compute the bounding boxes of the data objects.
 	Box3 bb;
-	std::vector<DataObject*> objectStack;
-	for(DataObject* dataObj : state.objects()) {
+	std::vector<const DataObject*> objectStack;
+	for(const DataObject* dataObj : state.objects()) {
 		getDataObjectBoundingBox(time, dataObj, state, validity, bb, objectStack);
 	}
 	OVITO_ASSERT(objectStack.empty());
@@ -430,7 +416,7 @@ Box3 PipelineSceneNode::localBoundingBox(TimePoint time, TimeInterval& validity)
 /******************************************************************************
 * Computes the bounding box of a data object and all its sub-objects.
 ******************************************************************************/
-void PipelineSceneNode::getDataObjectBoundingBox(TimePoint time, DataObject* dataObj, const PipelineFlowState& state, TimeInterval& validity, Box3& bb, std::vector<DataObject*>& objectStack)
+void PipelineSceneNode::getDataObjectBoundingBox(TimePoint time, const DataObject* dataObj, const PipelineFlowState& state, TimeInterval& validity, Box3& bb, std::vector<const DataObject*>& objectStack) const
 {
 	bool isOnStack = false;
 
@@ -450,34 +436,15 @@ void PipelineSceneNode::getDataObjectBoundingBox(TimePoint time, DataObject* dat
 	}
 
 	// Recursively visit the sub-objects of the data object and render them as well.
-	for(const PropertyFieldDescriptor* field : dataObj->getOOMetaClass().propertyFields()) {
-		if(field->isReferenceField() && !field->isWeakReference() && field->targetClass()->isDerivedFrom(DataObject::OOClass()) && !field->flags().testFlag(PROPERTY_FIELD_NO_SUB_ANIM)) {
-			if(!field->isVector()) {
-				RefTarget* target = dataObj->getReferenceField(*field);
-				if(DataObject* subObject = static_object_cast<DataObject>(target)) {
-					// Push the data object onto the stack.
-					if(!isOnStack) {
-						objectStack.push_back(dataObj);
-						isOnStack = true;
-					}
-					getDataObjectBoundingBox(time, subObject, state, validity, bb, objectStack);
-				}
-			}
-			else {
-				const QVector<RefTarget*>& list = dataObj->getVectorReferenceField(*field);
-				for(RefTarget* target : list) {
-					if(DataObject* subObject = static_object_cast<DataObject>(target)) {
-						// Push the data object onto the stack.
-						if(!isOnStack) {
-							objectStack.push_back(dataObj);
-							isOnStack = true;
-						}
-						getDataObjectBoundingBox(time, subObject, state, validity, bb, objectStack);
-					}
-				}
-			}
+	dataObj->visitSubObjects([&](const DataObject* subObject) {
+		// Push the data object onto the stack.
+		if(!isOnStack) {
+			objectStack.push_back(dataObj);
+			isOnStack = true;
 		}
-	}	
+		getDataObjectBoundingBox(time, subObject, state, validity, bb, objectStack);
+		return false;
+	});
 
 	// Pop the data object from the stack.
 	if(isOnStack) {

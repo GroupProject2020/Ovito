@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/particles/util/ParticleExpressionEvaluator.h>
 #include <plugins/particles/util/ParticleOrderingFingerprint.h>
 #include <plugins/stdmod/modifiers/ComputePropertyModifier.h>
@@ -45,7 +45,7 @@ class OVITO_PARTICLES_EXPORT ParticlesComputePropertyModifierDelegate : public C
 
 		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
 		virtual bool isApplicableTo(const PipelineFlowState& input) const override {
-			return input.findObjectOfType<ParticleProperty>() != nullptr;
+			return input.containsObject<ParticlesObject>();
 		}
 
 		/// The name by which Python scripts can refer to this modifier delegate.
@@ -62,8 +62,8 @@ public:
 	/// Constructor.
 	Q_INVOKABLE ParticlesComputePropertyModifierDelegate(DataSet* dataset);
 
-	/// \brief Returns the class of properties this delegate computes.
-	virtual const PropertyClass& propertyClass() const override { return ParticleProperty::OOClass(); }
+	/// \brief Returns the class of property containers this delegate operates on.
+	virtual const PropertyContainerClass& containerClass() const override { return ParticlesObject::OOClass(); }
 
 	/// \brief Sets the math expression that is used to compute the neighbor-terms of the property function.
 	/// \param index The property component for which the expression should be set.
@@ -96,10 +96,10 @@ public:
 	virtual std::shared_ptr<ComputePropertyModifierDelegate::PropertyComputeEngine> createEngine(
 				TimePoint time, 
 				const PipelineFlowState& input,
+				const PropertyContainer* container,
 				PropertyPtr outputProperty, 
 				ConstPropertyPtr selectionProperty,
-				QStringList expressions, 
-				bool initializeOutputProperty) override;
+				QStringList expressions) override;
 
 private:
 
@@ -113,6 +113,7 @@ private:
 				const TimeInterval& validityInterval, 
 				TimePoint time,
 				PropertyPtr outputProperty, 
+				const PropertyContainer* container,
 				ConstPropertyPtr selectionProperty,
 				QStringList expressions, 
 				int frameNumber, 

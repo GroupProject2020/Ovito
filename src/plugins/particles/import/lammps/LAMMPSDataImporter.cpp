@@ -225,14 +225,14 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 		foundAtomsSection = true;
 
 	// Create standard particle properties.
-	PropertyPtr posProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::PositionProperty, true);
+	PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::PositionProperty, true);
 	frameData->addParticleProperty(posProperty);
 	Point3* pos = posProperty->dataPoint3();
-	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::TypeProperty, true);
+	PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::TypeProperty, true);
 	frameData->addParticleProperty(typeProperty);
 	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
 	auto atomType = typeProperty->dataInt();
-	PropertyPtr identifierProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::IdentifierProperty, true);
+	PropertyPtr identifierProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::IdentifierProperty, true);
 	frameData->addParticleProperty(identifierProperty);
 	auto atomId = identifierProperty->dataInt64();
 
@@ -265,7 +265,7 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 
 				Point3I* pbcImage = nullptr;
 				if(withPBCImageFlags) {
-					PropertyPtr pbcProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::PeriodicImageProperty, true);
+					PropertyPtr pbcProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::PeriodicImageProperty, true);
 					frameData->addParticleProperty(pbcProperty);
 					pbcImage = pbcProperty->dataPoint3I();
 				}
@@ -289,7 +289,7 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 					}
 				}
 				else if(_atomStyle == AtomStyle_Charge || _atomStyle == AtomStyle_Dipole) {
-					PropertyPtr chargeProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::ChargeProperty, true);
+					PropertyPtr chargeProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::ChargeProperty, true);
 					frameData->addParticleProperty(chargeProperty);
 					FloatType* charge = chargeProperty->dataFloat();
 					for(size_t i = 0; i < (size_t)natoms; i++, ++pos, ++atomType, ++atomId, ++charge) {
@@ -310,7 +310,7 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 					}
 				}
 				else if(_atomStyle == AtomStyle_Angle || _atomStyle == AtomStyle_Bond || _atomStyle == AtomStyle_Molecular) {
-					PropertyPtr moleculeProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::MoleculeProperty, true);
+					PropertyPtr moleculeProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::MoleculeProperty, true);
 					frameData->addParticleProperty(moleculeProperty);
 					auto molecule = moleculeProperty->dataInt64();
 					for(size_t i = 0; i < (size_t)natoms; i++, ++pos, ++atomType, ++atomId, ++molecule) {
@@ -331,10 +331,10 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 					}
 				}
 				else if(_atomStyle == AtomStyle_Full) {
-					PropertyPtr chargeProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::ChargeProperty, true);
+					PropertyPtr chargeProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::ChargeProperty, true);
 					frameData->addParticleProperty(chargeProperty);
 					FloatType* charge = chargeProperty->dataFloat();
-					PropertyPtr moleculeProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::MoleculeProperty, true);
+					PropertyPtr moleculeProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::MoleculeProperty, true);
 					frameData->addParticleProperty(moleculeProperty);
 					auto molecule = moleculeProperty->dataInt64();
 					for(size_t i = 0; i < (size_t)natoms; i++, ++pos, ++atomType, ++atomId, ++charge, ++molecule) {
@@ -355,10 +355,10 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 					}
 				}
 				else if(_atomStyle == AtomStyle_Sphere) {
-					PropertyPtr radiusProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::RadiusProperty, true);
+					PropertyPtr radiusProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::RadiusProperty, true);
 					frameData->addParticleProperty(radiusProperty);
 					FloatType* radius = radiusProperty->dataFloat();
-					PropertyPtr massProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::MassProperty, true);
+					PropertyPtr massProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::MassProperty, true);
 					frameData->addParticleProperty(massProperty);
 					FloatType* mass = massProperty->dataFloat();
 					for(size_t i = 0; i < (size_t)natoms; i++, ++pos, ++atomType, ++atomId, ++radius, ++mass) {
@@ -393,12 +393,12 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 		else if(keyword.startsWith("Velocities")) {
 
 			// Get the atomic IDs.
-			PropertyPtr identifierProperty = frameData->findStandardParticleProperty(ParticleProperty::IdentifierProperty);
+			PropertyPtr identifierProperty = frameData->findStandardParticleProperty(ParticlesObject::IdentifierProperty);
 			if(!identifierProperty)
 				throw Exception(tr("Atoms section must precede Velocities section in data file (error in line %1).").arg(stream.lineNumber()));
 
 			// Create the velocity property.
-			PropertyPtr velocityProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::VelocityProperty, true);
+			PropertyPtr velocityProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::VelocityProperty, true);
 			frameData->addParticleProperty(velocityProperty);
 
 			for(size_t i = 0; i < (size_t)natoms; i++) {
@@ -464,18 +464,18 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 		else if(keyword.startsWith("Bonds")) {
 
 			// Get the atomic IDs and positions.
-			PropertyPtr identifierProperty = frameData->findStandardParticleProperty(ParticleProperty::IdentifierProperty);
-			PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticleProperty::PositionProperty);
+			PropertyPtr identifierProperty = frameData->findStandardParticleProperty(ParticlesObject::IdentifierProperty);
+			PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticlesObject::PositionProperty);
 			if(!identifierProperty || !posProperty)
 				throw Exception(tr("Atoms section must precede Bonds section in data file (error in line %1).").arg(stream.lineNumber()));
 
 			// Create bonds storage.
-			PropertyPtr bondTopologyProperty = BondProperty::createStandardStorage(nbonds, BondProperty::TopologyProperty, false);
+			PropertyPtr bondTopologyProperty = BondsObject::OOClass().createStandardStorage(nbonds, BondsObject::TopologyProperty, false);
 			frameData->addBondProperty(bondTopologyProperty);
 			qlonglong* atomIndex = bondTopologyProperty->dataInt64();
 
 			// Create bond type property.
-			PropertyPtr typeProperty = BondProperty::createStandardStorage(nbonds, BondProperty::TypeProperty, true);
+			PropertyPtr typeProperty = BondsObject::OOClass().createStandardStorage(nbonds, BondsObject::TypeProperty, true);
 			frameData->addBondProperty(typeProperty);
 			ParticleFrameData::TypeList* bondTypeList = frameData->propertyTypesList(typeProperty);
 			int* bondType = typeProperty->dataInt();

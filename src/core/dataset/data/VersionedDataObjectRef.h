@@ -52,13 +52,13 @@ public:
 	VersionedDataObjectRef() Q_DECL_NOTHROW : _revision(std::numeric_limits<unsigned int>::max()) {}
 
 	/// Initialization constructor.
-	VersionedDataObjectRef(DataObject* p) : _ref(p), _revision(p ? p->revisionNumber() : std::numeric_limits<unsigned int>::max()) {}
+	VersionedDataObjectRef(const DataObject* p) : _ref(const_cast<DataObject*>(p)), _revision(p ? p->revisionNumber() : std::numeric_limits<unsigned int>::max()) {}
 
 	/// Initialization constructor with explicit revision number.
-	VersionedDataObjectRef(DataObject* p, unsigned int revision) : _ref(p), _revision(revision) {}
+	VersionedDataObjectRef(const DataObject* p, unsigned int revision) : _ref(const_cast<DataObject*>(p)), _revision(revision) {}
 
-	VersionedDataObjectRef& operator=(DataObject* rhs) {
-		_ref = rhs;
+	VersionedDataObjectRef& operator=(const DataObject* rhs) {
+		_ref = const_cast<DataObject*>(rhs);
 		_revision = rhs ? rhs->revisionNumber() : std::numeric_limits<unsigned int>::max();
 		return *this;
 	}
@@ -68,24 +68,24 @@ public:
 		_revision = std::numeric_limits<unsigned int>::max();
 	}
 
-	void reset(DataObject* rhs) {
-		_ref = rhs;
+	void reset(const DataObject* rhs) {
+		_ref = const_cast<DataObject*>(rhs);
 		_revision = rhs ? rhs->revisionNumber() : std::numeric_limits<unsigned int>::max();
 	}
 
-	inline DataObject* get() const Q_DECL_NOTHROW {
+	inline const DataObject* get() const Q_DECL_NOTHROW {
 		return _ref.data();
 	}
 
-	inline operator DataObject*() const Q_DECL_NOTHROW {
+	inline operator const DataObject*() const Q_DECL_NOTHROW {
 		return _ref.data();
 	}
 
-	inline DataObject& operator*() const {
+	inline const DataObject& operator*() const {
 		return *_ref;
 	}
 
-	inline DataObject* operator->() const {
+	inline const DataObject* operator->() const {
 		return _ref.data();
 	}
 
@@ -117,19 +117,19 @@ inline bool operator!=(const VersionedDataObjectRef& a, const VersionedDataObjec
 	return a.get() != b.get() || a.revisionNumber() != b.revisionNumber();
 }
 
-inline bool operator==(const VersionedDataObjectRef& a, DataObject* b) Q_DECL_NOTHROW {
+inline bool operator==(const VersionedDataObjectRef& a, const DataObject* b) Q_DECL_NOTHROW {
 	return a.get() == b && (b == nullptr || a.revisionNumber() == b->revisionNumber());
 }
 
-inline bool operator!=(const VersionedDataObjectRef& a, DataObject* b) Q_DECL_NOTHROW {
+inline bool operator!=(const VersionedDataObjectRef& a, const DataObject* b) Q_DECL_NOTHROW {
 	return a.get() != b || (b != nullptr && a.revisionNumber() != b->revisionNumber());
 }
 
-inline bool operator==(DataObject* a, const VersionedDataObjectRef& b) Q_DECL_NOTHROW {
+inline bool operator==(const DataObject* a, const VersionedDataObjectRef& b) Q_DECL_NOTHROW {
 	return a == b.get() && (a == nullptr || a->revisionNumber() == b.revisionNumber());
 }
 
-inline bool operator!=(DataObject* a, const VersionedDataObjectRef& b) Q_DECL_NOTHROW {
+inline bool operator!=(const DataObject* a, const VersionedDataObjectRef& b) Q_DECL_NOTHROW {
 	return a != b.get() || (a != nullptr && a->revisionNumber() != b.revisionNumber());
 }
 
@@ -153,7 +153,7 @@ inline void swap(VersionedDataObjectRef& lhs, VersionedDataObjectRef& rhs) Q_DEC
 	lhs.swap(rhs);
 }
 
-inline DataObject* get_pointer(const VersionedDataObjectRef& p) Q_DECL_NOTHROW {
+inline const DataObject* get_pointer(const VersionedDataObjectRef& p) Q_DECL_NOTHROW {
 	return p.get();
 }
 

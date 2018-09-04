@@ -58,29 +58,29 @@ bool CAExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint t
 		throwException(tr("The object to be exported does not contain any data."));
 
 	// Get simulation cell info.
-	SimulationCellObject* simulationCell = state.findObjectOfType<SimulationCellObject>();
+	const SimulationCellObject* simulationCell = state.getObject<SimulationCellObject>();
 	if(!simulationCell)
 		throwException(tr("Dataset to be exported contains no simulation cell. Cannot write CA file."));
 
 	// Get dislocation lines.
-	DislocationNetworkObject* dislocationObj = state.findObjectOfType<DislocationNetworkObject>();
+	const DislocationNetworkObject* dislocationObj = state.getObject<DislocationNetworkObject>();
 
 	// Get defect/surface mesh.
-	SurfaceMesh* defectMesh = meshExportEnabled() ? state.findObjectOfType<SurfaceMesh>() : nullptr;
+	const SurfaceMesh* defectMesh = meshExportEnabled() ? state.getObject<SurfaceMesh>() : nullptr;
 
 	// Get partition mesh.
-	PartitionMesh* partitionMesh = meshExportEnabled() ? state.findObjectOfType<PartitionMesh>() : nullptr;
+	const PartitionMesh* partitionMesh = meshExportEnabled() ? state.getObject<PartitionMesh>() : nullptr;
 
 	if(!dislocationObj && !defectMesh && !partitionMesh)
 		throwException(tr("Dataset to be exported contains no dislocation lines nor a surface mesh. Cannot write CA file."));
 
 	// Get cluster graph.
-	ClusterGraphObject* clusterGraph = state.findObjectOfType<ClusterGraphObject>();
+	const ClusterGraphObject* clusterGraph = state.getObject<ClusterGraphObject>();
 	if(dislocationObj && !clusterGraph)
 		throwException(tr("Dataset to be exported contains no cluster graph. Cannot write CA file."));
 
 	// Get pattern catalog.
-	PatternCatalog* patternCatalog = state.findObjectOfType<PatternCatalog>();
+	const PatternCatalog* patternCatalog = state.getObject<PatternCatalog>();
 	if(dislocationObj && !patternCatalog)
 		throwException(tr("Dataset to be exported contains no structure pattern catalog. Cannot write CA file."));
 
@@ -91,7 +91,7 @@ bool CAExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint t
 	if(patternCatalog) {
 		// Write list of structure types.
 		textStream() << "STRUCTURE_TYPES " << (patternCatalog->patterns().size() - 1) << "\n";
-		for(StructurePattern* s : patternCatalog->patterns()) {
+		for(const StructurePattern* s : patternCatalog->patterns()) {
 			if(s->id() == 0) continue;
 			textStream() << "STRUCTURE_TYPE " << s->id() << "\n";
 			textStream() << "NAME " << s->shortName() << "\n";
@@ -127,7 +127,7 @@ bool CAExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint t
 	// Write list of clusters.
 	if(clusterGraph) {
 		textStream() << "CLUSTERS " << (clusterGraph->storage()->clusters().size() - 1) << "\n";
-		for(Cluster* cluster : clusterGraph->storage()->clusters()) {
+		for(const Cluster* cluster : clusterGraph->storage()->clusters()) {
 			if(cluster->id == 0) continue;
 			OVITO_ASSERT(clusterGraph->storage()->clusters()[cluster->id] == cluster);
 			textStream() << "CLUSTER " << cluster->id << "\n";
@@ -142,14 +142,14 @@ bool CAExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint t
 
 		// Count cluster transitions.
 		size_t numClusterTransitions = 0;
-		for(ClusterTransition* t : clusterGraph->storage()->clusterTransitions()) {
+		for(const ClusterTransition* t : clusterGraph->storage()->clusterTransitions()) {
 			if(!t->isSelfTransition())
 				numClusterTransitions++;
 		}
 
 		// Serialize cluster transitions.
 		textStream() << "CLUSTER_TRANSITIONS " << numClusterTransitions << "\n";
-		for(ClusterTransition* t : clusterGraph->storage()->clusterTransitions()) {
+		for(const ClusterTransition* t : clusterGraph->storage()->clusterTransitions()) {
 			if(t->isSelfTransition()) continue;
 			textStream() << "TRANSITION " << (t->cluster1->id - 1) << " " << (t->cluster2->id - 1) << "\n";
 			textStream() << t->tm.column(0).x() << " " << t->tm.column(1).x() << " " << t->tm.column(2).x() << " "
@@ -161,7 +161,7 @@ bool CAExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint t
 	if(dislocationObj) {
 		// Write list of dislocation segments.
 		textStream() << "DISLOCATIONS " << dislocationObj->segments().size() << "\n";
-		for(DislocationSegment* segment : dislocationObj->segments()) {
+		for(const DislocationSegment* segment : dislocationObj->segments()) {
 
 			// Make sure consecutive identifiers have been assigned to segments.
 			OVITO_ASSERT(segment->id >= 0 && segment->id < dislocationObj->segments().size());
@@ -190,12 +190,12 @@ bool CAExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint t
 		// Write dislocation connectivity information.
 		textStream() << "DISLOCATION_JUNCTIONS\n";
 		int index = 0;
-		for(DislocationSegment* segment : dislocationObj->segments()) {
+		for(const DislocationSegment* segment : dislocationObj->segments()) {
 			OVITO_ASSERT(segment->forwardNode().junctionRing->segment->id < dislocationObj->segments().size());
 			OVITO_ASSERT(segment->backwardNode().junctionRing->segment->id < dislocationObj->segments().size());
 
 			for(int nodeIndex = 0; nodeIndex < 2; nodeIndex++) {
-				DislocationNode* otherNode = segment->nodes[nodeIndex]->junctionRing;
+				const DislocationNode* otherNode = segment->nodes[nodeIndex]->junctionRing;
 				textStream() << (int)otherNode->isForwardNode() << " " << otherNode->segment->id << "\n";
 			}
 			index++;
@@ -205,7 +205,7 @@ bool CAExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint t
 	if(defectMesh) {
 		// Serialize list of vertices.
 		textStream() << "DEFECT_MESH_VERTICES " << defectMesh->storage()->vertices().size() << "\n";
-		for(HalfEdgeMesh<>::Vertex* vertex : defectMesh->storage()->vertices()) {
+		for(const HalfEdgeMesh<>::Vertex* vertex : defectMesh->storage()->vertices()) {
 
 			// Make sure indices have been assigned to vertices.
 			OVITO_ASSERT(vertex->index() >= 0 && vertex->index() < defectMesh->storage()->vertices().size());
@@ -215,8 +215,8 @@ bool CAExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint t
 
 		// Serialize list of facets.
 		textStream() << "DEFECT_MESH_FACETS " << defectMesh->storage()->faces().size() << "\n";
-		for(HalfEdgeMesh<>::Face* facet : defectMesh->storage()->faces()) {
-			HalfEdgeMesh<>::Edge* e = facet->edges();
+		for(const HalfEdgeMesh<>::Face* facet : defectMesh->storage()->faces()) {
+			const HalfEdgeMesh<>::Edge* e = facet->edges();
 			do {
 				textStream() << e->vertex1()->index() << " ";
 				e = e->nextFaceEdge();
@@ -226,8 +226,8 @@ bool CAExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint t
 		}
 
 		// Serialize facet adjacency information.
-		for(HalfEdgeMesh<>::Face* facet : defectMesh->storage()->faces()) {
-			HalfEdgeMesh<>::Edge* e = facet->edges();
+		for(const HalfEdgeMesh<>::Face* facet : defectMesh->storage()->faces()) {
+			const HalfEdgeMesh<>::Edge* e = facet->edges();
 			do {
 				textStream() << e->oppositeEdge()->face()->index() << " ";
 				e = e->nextFaceEdge();
@@ -240,7 +240,7 @@ bool CAExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint t
 	if(partitionMesh) {
 		// Serialize list of vertices.
 		textStream() << "PARTITION_MESH_VERTICES " << partitionMesh->storage()->vertices().size() << "\n";
-		for(PartitionMeshData::Vertex* vertex : partitionMesh->storage()->vertices()) {
+		for(const PartitionMeshData::Vertex* vertex : partitionMesh->storage()->vertices()) {
 
 			// Make sure indices have been assigned to vertices.
 			OVITO_ASSERT(vertex->index() >= 0 && vertex->index() < partitionMesh->storage()->vertices().size());
@@ -250,9 +250,9 @@ bool CAExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint t
 
 		// Serialize list of facets.
 		textStream() << "PARTITION_MESH_FACETS " << partitionMesh->storage()->faces().size() << "\n";
-		for(PartitionMeshData::Face* facet : partitionMesh->storage()->faces()) {
+		for(const PartitionMeshData::Face* facet : partitionMesh->storage()->faces()) {
 			textStream() << facet->region << " ";
-			PartitionMeshData::Edge* e = facet->edges();
+			const PartitionMeshData::Edge* e = facet->edges();
 			do {
 				textStream() << e->vertex1()->index() << " ";
 				e = e->nextFaceEdge();
@@ -262,10 +262,10 @@ bool CAExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint t
 		}
 
 		// Serialize facet adjacency information.
-		for(PartitionMeshData::Face* facet : partitionMesh->storage()->faces()) {
+		for(const PartitionMeshData::Face* facet : partitionMesh->storage()->faces()) {
 			OVITO_ASSERT(facet->oppositeFace != nullptr);
 			textStream() << facet->oppositeFace->index() << " ";
-			PartitionMeshData::Edge* e = facet->edges();
+			const PartitionMeshData::Edge* e = facet->edges();
 			do {
 				OVITO_ASSERT(facet->oppositeFace->findEdge(e->nextManifoldEdge->vertex1(), e->nextManifoldEdge->vertex2()) != nullptr);
 				textStream() << e->oppositeEdge()->face()->index() << " " << e->nextManifoldEdge->vertex1()->index() << " " << e->nextManifoldEdge->vertex2()->index() << " ";

@@ -54,49 +54,6 @@ public:
 	/// The default implementation returns TimeInterval::infinite().
 	virtual TimeInterval objectValidity(TimePoint time) { return TimeInterval::infinite(); }
 
-	/// \brief This asks the object whether it supports the conversion to another object type.
-	/// \param objectClass The destination type. This must be a DataObject derived class.
-	/// \return \c true if this object can be converted to the requested type given by \a objectClass or any sub-class thereof.
-	///         \c false if the conversion is not possible.
-	///
-	/// The default implementation returns \c true if the class \a objectClass is the source object type or any derived type.
-	/// This is the trivial case: It requires no real conversion at all.
-	///
-	/// Sub-classes should override this method to allow the conversion to a MeshObject, for example.
-	/// When overriding, the base implementation of this method should always be called.
-	virtual bool canConvertTo(const OvitoClass& objectClass) {
-		// Can always convert to itself.
-		return this->getOOClass().isDerivedFrom(objectClass);
-	}
-
-	/// \brief Lets the object convert itself to another object type.
-	/// \param objectClass The destination type. This must be a DataObject derived class.
-	/// \param time The time at which to convert the object.
-	/// \return The newly created object or \c NULL if no conversion is possible.
-	///
-	/// Whether the object can be converted to the desired destination type can be checked in advance using
-	/// the canConvertTo() method.
-	///
-	/// Sub-classes should override this method to allow the conversion to a MeshObject for example.
-	/// When overriding, the base implementation of this method should always be called.
-	virtual OORef<DataObject> convertTo(const OvitoClass& objectClass, TimePoint time) {
-		// Trivial conversion.
-		if(this->getOOClass().isDerivedFrom(objectClass))
-			return this;
-		else
-			return {};
-	}
-
-	/// \brief Lets the object convert itself to another object type.
-	/// \param time The time at which to convert the object.
-	///
-	/// This is a wrapper of the function above using C++ templates.
-	/// It just casts the conversion result to the given class.
-	template<class T>
-	OORef<T> convertTo(TimePoint time) {
-		return static_object_cast<T>(convertTo(T::OOClass(), time));
-	}
-
 	/// \brief Attaches a visualization elements to this data object that will be responsible for rendering the
 	///        data.
 	void addVisElement(DataVis* vis) {
@@ -130,6 +87,17 @@ public:
 		return !visElements().empty() ? visElements().front() : nullptr;
 	}
 
+	/// \brief Returns the first visualization element of the given type attached to this data object or NULL if there is 
+	///        no such vis element attached.
+	template<class DataVisType>
+	DataVisType* visElement() const {
+		for(DataVis* vis : visElements()) {
+			if(DataVisType* typedVis = dynamic_object_cast<DataVisType>(vis))
+				return typedVis;
+		}
+		return nullptr;
+	}	
+
 	/// \brief Returns the number of strong references to this data object.
 	///        Strong references are either RefMaker derived classes that hold a reference to this data object
 	///        or PipelineFlowState instances that contain this data object.
@@ -150,6 +118,48 @@ public:
 	/// Returns whether this data object wants to be shown in the pipeline editor 
 	/// under the data source section. The default implementation returns false.
 	virtual bool showInPipelineEditor() const { return false; }
+
+	/// \brief Visits the direct sub-objects of this data object
+	///        and invokes the given visitor function for every sub-objects.
+	///
+	/// \param fn A functor that takes a DataObject pointer as argument and returns a bool to 
+	///           indicate whether visiting of further sub-objects should be stopped.
+	template<class Function>
+	bool visitSubObjects(Function fn) const {
+		for(const PropertyFieldDescriptor* field : getOOMetaClass().propertyFields()) {
+			if(field->isReferenceField() && !field->isWeakReference() && field->targetClass()->isDerivedFrom(DataObject::OOClass()) && !field->flags().testFlag(PROPERTY_FIELD_NO_SUB_ANIM)) {
+				if(!field->isVector()) {
+					if(const DataObject* subObject = static_object_cast<DataObject>(getReferenceField(*field).getInternal())) {
+						if(fn(subObject))
+							return true;
+					}
+				}
+				else {
+					const QVector<RefTarget*>& list = getVectorReferenceField(*field);
+					for(const RefTarget* target : list) {
+						if(const DataObject* subObject = static_object_cast<DataObject>(target)) {
+							if(fn(subObject))
+								return true;
+						}
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	/// Duplicates the given sub-object from this container object if it is shared with others.
+	/// After this method returns, the returned sub-object will be exclusively owned by this container and 
+	/// can be safely modified without unwanted side effects.
+	DataObject* makeMutable(const DataObject* subObject);
+
+	/// Duplicates the given sub-object from this container object if it is shared with others.
+	/// After this method returns, the returned sub-object will be exclusively owned by this container and 
+	/// can be safely modified without unwanted side effects.
+	template<class DataObjectClass>
+	DataObjectClass* makeMutable(const DataObjectClass* subObject) {
+		return static_object_cast<DataObjectClass>(makeMutable(static_cast<const DataObject*>(subObject)));
+	}
 
 protected:
 

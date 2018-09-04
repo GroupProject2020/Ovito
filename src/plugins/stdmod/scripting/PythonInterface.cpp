@@ -278,7 +278,7 @@ PYBIND11_MODULE(StdMod, m)
 		
 		.def_property("property", &ColorCodingModifier::sourceProperty, [](ColorCodingModifier& mod, py::object val) {
 					auto* delegate = static_object_cast<ColorCodingModifierDelegate>(mod.delegate());
-					mod.setSourceProperty(convertPythonPropertyReference(val, delegate ? &delegate->propertyClass() : nullptr));
+					mod.setSourceProperty(convertPythonPropertyReference(val, delegate ? &delegate->containerClass() : nullptr));
 				},
 				"The name of the input property that should be used to color elements. "
 				"\n\n"
@@ -369,7 +369,7 @@ PYBIND11_MODULE(StdMod, m)
 			"   The number of elements that were selected by the modifier.\n"
 			"\n")
 		.def_property("property", &SelectTypeModifier::sourceProperty, [](SelectTypeModifier& mod, py::object val) {
-					mod.setSourceProperty(convertPythonPropertyReference(val, mod.propertyClass()));
+					mod.setSourceProperty(convertPythonPropertyReference(val, mod.containerClass()));
 				},
 				"The name of the property to use as input; must be an integer property. "
 				"\n\n"
@@ -414,7 +414,7 @@ PYBIND11_MODULE(StdMod, m)
 				"\n\n"
 				":Default: ``'particles'``\n")		
 		.def_property("property", &HistogramModifier::sourceProperty, [](HistogramModifier& mod, py::object val) {					
-					mod.setSourceProperty(convertPythonPropertyReference(val, mod.propertyClass()));
+					mod.setSourceProperty(convertPythonPropertyReference(val, mod.containerClass()));
 				},
 				"The name of the input property for which to compute the histogram. "
 				"For vector properties a component name must be appended in the string, e.g. ``\"Velocity.X\"``. "
@@ -437,7 +437,7 @@ PYBIND11_MODULE(StdMod, m)
 				"If :py:attr:`.fix_xrange` is true, then this specifies the upper end of the value range covered by the histogram."
 				"\n\n"
 				":Default: 0.0\n")
-		.def_property("only_selected", &HistogramModifier::onlySelected, &HistogramModifier::setOnlySelected,
+		.def_property("only_selected", &HistogramModifier::onlySelectedElements, &HistogramModifier::setOnlySelectedElements,
 				"If ``True``, the histogram is computed only on the basis of currently selected particles or bonds. "
 				"You can use this to restrict histogram calculation to a subset of particles/bonds. "
 				"\n\n"
@@ -463,7 +463,6 @@ PYBIND11_MODULE(StdMod, m)
 	;
 	
 	ovito_class<ScatterPlotModifier, GenericPropertyModifier>{m};
-	ovito_class<ScatterPlotModifierApplication, ModifierApplication>{m};
 	
 	ovito_class<AssignColorModifier, DelegatingModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`"
@@ -645,11 +644,11 @@ PYBIND11_MODULE(StdMod, m)
 			"   :emphasize-lines: 12-14\n"
 			"\n")
 		.def_property("source_property", &FreezePropertyModifier::sourceProperty, [](FreezePropertyModifier& mod, py::object val) {					
-					mod.setSourceProperty(convertPythonPropertyReference(val, mod.propertyClass()));
+					mod.setSourceProperty(convertPythonPropertyReference(val, mod.containerClass()));
 				},
 				"The name of the input property that should be evaluated by the modifier on the animation frame specified by :py:attr:`.freeze_at`. ")
 		.def_property("destination_property", &FreezePropertyModifier::destinationProperty, [](FreezePropertyModifier& mod, py::object val) {					
-					mod.setDestinationProperty(convertPythonPropertyReference(val, mod.propertyClass()));
+					mod.setDestinationProperty(convertPythonPropertyReference(val, mod.containerClass()));
 				},
 				"The name of the output property that should be created by the modifier. "
 				"It may be the same as :py:attr:`.source_property`. If the destination property already exists in the modifier's input, the values are overwritten. ")
@@ -712,10 +711,10 @@ PYBIND11_MODULE(StdMod, m)
 				"\n\n"
 				"See the corresponding `user manual page <../../particles.modifiers.compute_property.html>`__ for a description of the expression syntax. "
 				"\n\n"
-				":Default: ``[\"0\"]``\n")		
+				":Default: ``[\"0\"]``\n")
 		.def_property("output_property", &ComputePropertyModifier::outputProperty, [](ComputePropertyModifier& mod, py::object val) {					
 					auto* delegate = static_object_cast<ComputePropertyModifierDelegate>(mod.delegate());
-					mod.setOutputProperty(convertPythonPropertyReference(val, delegate ? &delegate->propertyClass() : nullptr));
+					mod.setOutputProperty(convertPythonPropertyReference(val, delegate ? &delegate->containerClass() : nullptr));
 				},
 				"The output property that will receive the computed values. "
 				"This can be one of the :ref:`standard property names <particle-types-list>` defined by OVITO or a user-defined property name. "

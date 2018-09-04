@@ -20,6 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/stdobj/gui/StdObjGui.h>
+#include <plugins/stdobj/properties/PropertyContainerClass.h>
 #include "PropertySelectionComboBox.h"
 
 namespace Ovito { namespace StdObj {
@@ -38,10 +39,10 @@ PropertyReference PropertySelectionComboBox::currentProperty() const
 	else {
 		QString name = currentText().simplified();
 		if(!name.isEmpty()) {
-			if(int standardTypeId = propertyClass()->standardPropertyTypeId(name))
-				return PropertyReference(propertyClass(), standardTypeId);
+			if(int standardTypeId = containerClass()->standardPropertyTypeId(name))
+				return PropertyReference(containerClass(), standardTypeId);
 			else
-				return PropertyReference(propertyClass(), name);
+				return PropertyReference(containerClass(), name);
 		}
 		else {
 			return PropertyReference();
@@ -76,7 +77,7 @@ void PropertySelectionComboBox::focusOutEvent(QFocusEvent* event)
 	if(isEditable()) {
 		int index = findText(currentText());
 		if(index == -1 && currentText().isEmpty() == false) {
-			addItem(PropertyReference(propertyClass(), currentText()));
+			addItem(PropertyReference(containerClass(), currentText()));
 			index = count() - 1;
 		}
 		setCurrentIndex(index);

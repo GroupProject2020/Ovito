@@ -59,7 +59,7 @@ public:
 	Q_INVOKABLE VTKFileImporter(DataSet* dataset) : FileSourceImporter(dataset) {}
 
 	/// Returns the title of this object.
-	virtual QString objectTitle() override { return tr("VTK"); }
+	virtual QString objectTitle() const override { return tr("VTK"); }
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
 	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {

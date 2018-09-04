@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/stdobj/properties/PropertyStorage.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include "ParticleExpressionEvaluator.h"
 
@@ -36,7 +36,7 @@ void ParticleExpressionEvaluator::createInputVariables(const std::vector<ConstPr
 	// Create computed variables for reduced particle coordinates.
 	if(simCell) {
 		auto iter = std::find_if(inputProperties.begin(), inputProperties.end(), [](const ConstPropertyPtr& property) {
-			return property->type() == ParticleProperty::PositionProperty;
+			return property->type() == ParticlesObject::PositionProperty;
 		});
 		if(iter != inputProperties.end()) {
 			ConstPropertyPtr posProperty = *iter;

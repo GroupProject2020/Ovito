@@ -21,8 +21,6 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/util/NearestNeighborFinder.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
@@ -56,19 +54,19 @@ Future<AsynchronousModifier::ComputeEnginePtr> BondAngleAnalysisModifier::create
 		throwException(tr("The number of structure types has changed. Please remove this modifier from the pipeline and insert it again."));
 
 	// Get modifier input.
-	ParticleInputHelper pih(dataset(), input);
-	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
-	SimulationCellObject* simCell = pih.expectSimulationCell();
+	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
+	const SimulationCellObject* simCell = input.expectObject<SimulationCellObject>();
 	if(simCell->is2D())
 		throwException(tr("The bond-angle ananlysis modifier does not support 2d simulation cells."));
 
 	// Get particle selection.
 	ConstPropertyPtr selectionProperty;
 	if(onlySelectedParticles())
-		selectionProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty)->storage();
+		selectionProperty = particles->expectProperty(ParticlesObject::SelectionProperty)->storage();
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<BondAngleAnalysisEngine>(input, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty));
+	return std::make_shared<BondAngleAnalysisEngine>(particles, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty));
 }
 
 /******************************************************************************
@@ -187,12 +185,11 @@ PipelineFlowState BondAngleAnalysisModifier::BondAngleAnalysisEngine::emitResult
 	PipelineFlowState outState = StructureIdentificationEngine::emitResults(time, modApp, input);
 
 	// Also output structure type counts, which have been computed by the base class.
-	PipelineOutputHelper poh(modApp->dataset(), outState, modApp);
-	poh.outputAttribute(QStringLiteral("BondAngleAnalysis.counts.OTHER"), QVariant::fromValue(getTypeCount(OTHER)));
-	poh.outputAttribute(QStringLiteral("BondAngleAnalysis.counts.FCC"), QVariant::fromValue(getTypeCount(FCC)));
-	poh.outputAttribute(QStringLiteral("BondAngleAnalysis.counts.HCP"), QVariant::fromValue(getTypeCount(HCP)));
-	poh.outputAttribute(QStringLiteral("BondAngleAnalysis.counts.BCC"), QVariant::fromValue(getTypeCount(BCC)));
-	poh.outputAttribute(QStringLiteral("BondAngleAnalysis.counts.ICO"), QVariant::fromValue(getTypeCount(ICO)));
+	outState.addAttribute(QStringLiteral("BondAngleAnalysis.counts.OTHER"), QVariant::fromValue(getTypeCount(OTHER)), modApp);
+	outState.addAttribute(QStringLiteral("BondAngleAnalysis.counts.FCC"), QVariant::fromValue(getTypeCount(FCC)), modApp);
+	outState.addAttribute(QStringLiteral("BondAngleAnalysis.counts.HCP"), QVariant::fromValue(getTypeCount(HCP)), modApp);
+	outState.addAttribute(QStringLiteral("BondAngleAnalysis.counts.BCC"), QVariant::fromValue(getTypeCount(BCC)), modApp);
+	outState.addAttribute(QStringLiteral("BondAngleAnalysis.counts.ICO"), QVariant::fromValue(getTypeCount(ICO)), modApp);
 
 	return outState;
 }

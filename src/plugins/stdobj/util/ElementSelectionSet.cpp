@@ -21,6 +21,7 @@
 
 #include <plugins/stdobj/StdObj.h>
 #include <plugins/stdobj/properties/PropertyObject.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/UndoStack.h>
 #include "ElementSelectionSet.h"
@@ -106,7 +107,7 @@ void ElementSelectionSet::loadFromStream(ObjectLoadStream& stream)
 /******************************************************************************
 * Creates a copy of this object.
 ******************************************************************************/
-OORef<RefTarget> ElementSelectionSet::clone(bool deepCopy, CloneHelper& cloneHelper)
+OORef<RefTarget> ElementSelectionSet::clone(bool deepCopy, CloneHelper& cloneHelper) const
 {
 	// Let the base class create an instance of this class.
 	OORef<ElementSelectionSet> clone = static_object_cast<ElementSelectionSet>(RefTarget::clone(deepCopy, cloneHelper));
@@ -116,17 +117,19 @@ OORef<RefTarget> ElementSelectionSet::clone(bool deepCopy, CloneHelper& cloneHel
 }
 
 /******************************************************************************
-* Adopts the selection state from the modifier's input.
+* Adopts the selection set from the given input property container.
 ******************************************************************************/
-void ElementSelectionSet::resetSelection(const PipelineFlowState& state, const PropertyClass& propertyClass)
+void ElementSelectionSet::resetSelection(const PropertyContainer* container)
 {
+	OVITO_ASSERT(container != nullptr);
+
 	// Take a snapshot of the current selection state.
-	if(PropertyObject* selProperty = propertyClass.findInState(state, PropertyStorage::GenericSelectionProperty)) {
+	if(const PropertyObject* selProperty = container->getProperty(PropertyStorage::GenericSelectionProperty)) {
 
 		// Make a backup of the old snapshot so it may be restored.
 		dataset()->undoStack().pushIfRecording<ReplaceSelectionOperation>(this);
 
-		PropertyObject* identifierProperty = propertyClass.findInState(state, PropertyStorage::GenericIdentifierProperty);
+		const PropertyObject* identifierProperty = container->getProperty(PropertyStorage::GenericIdentifierProperty);
 		OVITO_ASSERT(!identifierProperty || selProperty->size() == identifierProperty->size());
 
 		if(identifierProperty && selProperty->size() == identifierProperty->size() && useIdentifiers()) {
@@ -153,25 +156,27 @@ void ElementSelectionSet::resetSelection(const PipelineFlowState& state, const P
 	}
 	else {
 		// Reset selection snapshot if input doesn't contain a selection state.
-		clearSelection(state, propertyClass);
+		clearSelection(container);
 	}
 }
 
 /******************************************************************************
 * Clears the selection set.
 ******************************************************************************/
-void ElementSelectionSet::clearSelection(const PipelineFlowState& state, const PropertyClass& propertyClass)
+void ElementSelectionSet::clearSelection(const PropertyContainer* container)
 {
+	OVITO_ASSERT(container != nullptr);
+
 	// Make a backup of the old selection state so it may be restored.
 	dataset()->undoStack().pushIfRecording<ReplaceSelectionOperation>(this);
 
-	if(useIdentifiers() && propertyClass.findInState(state, PropertyStorage::GenericIdentifierProperty)) {
+	if(useIdentifiers() && container->getProperty(PropertyStorage::GenericIdentifierProperty)) {
 		_selection.clear();
 		_selectedIdentifiers.clear();
 	}
 	else {
 		_selection.reset();
-		_selection.resize(propertyClass.elementCount(state), false);
+		_selection.resize(container->elementCount(), false);
 		_selectedIdentifiers.clear();
 	}
 	notifyTargetChanged();
@@ -180,12 +185,12 @@ void ElementSelectionSet::clearSelection(const PipelineFlowState& state, const P
 /******************************************************************************
 * Replaces the selection set.
 ******************************************************************************/
-void ElementSelectionSet::setSelection(const PipelineFlowState& state, const PropertyClass& propertyClass, const boost::dynamic_bitset<>& selection, SelectionMode mode)
+void ElementSelectionSet::setSelection(const PropertyContainer* container, const boost::dynamic_bitset<>& selection, SelectionMode mode)
 {
 	// Make a backup of the old snapshot so it may be restored.
 	dataset()->undoStack().pushIfRecording<ReplaceSelectionOperation>(this);
 
-	PropertyObject* identifierProperty = propertyClass.findInState(state, PropertyStorage::GenericIdentifierProperty);
+	const PropertyObject* identifierProperty = container->getProperty(PropertyStorage::GenericIdentifierProperty);
 	OVITO_ASSERT(!identifierProperty || selection.size() == identifierProperty->size());
 	
 	if(identifierProperty && useIdentifiers()) {
@@ -231,12 +236,12 @@ void ElementSelectionSet::setSelection(const PipelineFlowState& state, const Pro
 /******************************************************************************
 * Toggles the selection state of a single element.
 ******************************************************************************/
-void ElementSelectionSet::toggleElement(const PipelineFlowState& state, const PropertyClass& propertyClass, size_t elementIndex)
+void ElementSelectionSet::toggleElement(const PropertyContainer* container, size_t elementIndex)
 {
-	if(elementIndex >= propertyClass.elementCount(state))
+	if(elementIndex >= container->elementCount())
 		return;
 
-	PropertyObject* identifiers = propertyClass.findInState(state, PropertyStorage::GenericIdentifierProperty);
+	const PropertyObject* identifiers = container->getProperty(PropertyStorage::GenericIdentifierProperty);
 	if(useIdentifiers() && identifiers) {
 		_selection.clear();
 		toggleElementById(identifiers->getInt64(elementIndex));
@@ -280,12 +285,12 @@ void ElementSelectionSet::toggleElementByIndex(size_t elementIndex)
 /******************************************************************************
 * Selects all elements.
 ******************************************************************************/
-void ElementSelectionSet::selectAll(const PipelineFlowState& state, const PropertyClass& propertyClass)
+void ElementSelectionSet::selectAll(const PropertyContainer* container)
 {
 	// Make a backup of the old selection state so it may be restored.
 	dataset()->undoStack().pushIfRecording<ReplaceSelectionOperation>(this);
 
-	PropertyObject* identifiers = propertyClass.findInState(state, PropertyStorage::GenericIdentifierProperty);
+	const PropertyObject* identifiers = container->getProperty(PropertyStorage::GenericIdentifierProperty);
 	if(useIdentifiers() && identifiers != nullptr) {
 		_selection.clear();
 		_selectedIdentifiers.clear();
@@ -294,7 +299,7 @@ void ElementSelectionSet::selectAll(const PipelineFlowState& state, const Proper
 	}
 	else {
 		_selection.set();
-		_selection.resize(propertyClass.elementCount(state), true);
+		_selection.resize(container->elementCount(), true);
 		_selectedIdentifiers.clear();
 	}
 	notifyTargetChanged();
@@ -303,7 +308,7 @@ void ElementSelectionSet::selectAll(const PipelineFlowState& state, const Proper
 /******************************************************************************
 * Copies the stored selection set into the given output selection property.
 ******************************************************************************/
-PipelineStatus ElementSelectionSet::applySelection(PropertyObject* outputSelectionProperty, PropertyObject* identifierProperty)
+PipelineStatus ElementSelectionSet::applySelection(PropertyObject* outputSelectionProperty, const PropertyObject* identifierProperty)
 {
 	size_t nselected = 0;
 	if(!identifierProperty || !useIdentifiers()) {

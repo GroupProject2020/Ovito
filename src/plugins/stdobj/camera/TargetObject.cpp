@@ -41,7 +41,7 @@ TargetObject::TargetObject(DataSet* dataset) : DataObject(dataset)
 /******************************************************************************
 * Lets the vis element render a data object.
 ******************************************************************************/
-void TargetVis::render(TimePoint time, const std::vector<DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
+void TargetVis::render(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, const PipelineSceneNode* contextNode)
 {
 	// Target objects are only visible in the viewports.
 	if(renderer->isInteractive() == false || renderer->viewport() == nullptr)
@@ -121,7 +121,7 @@ void TargetVis::render(TimePoint time, const std::vector<DataObject*>& objectSta
 /******************************************************************************
 * Computes the bounding box of the object.
 ******************************************************************************/
-Box3 TargetVis::boundingBox(TimePoint time, const std::vector<DataObject*>& objectStack, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
+Box3 TargetVis::boundingBox(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
 	// This is not a physical object. It doesn't have a size.
 	return Box3(Point3::Origin(), Point3::Origin());

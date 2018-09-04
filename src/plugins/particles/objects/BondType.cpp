@@ -40,7 +40,7 @@ BondType::BondType(DataSet* dataset) : ElementType(dataset), _radius(0)
 /******************************************************************************
 * Returns the default color for a bond type ID.
 ******************************************************************************/
-Color BondType::getDefaultBondColorFromId(BondProperty::Type typeClass, int bondTypeId)
+Color BondType::getDefaultBondColorFromId(BondsObject::Type typeClass, int bondTypeId)
 {
 	// Assign initial standard color to new bond types.
 	static const Color defaultTypeColors[] = {
@@ -60,7 +60,7 @@ Color BondType::getDefaultBondColorFromId(BondProperty::Type typeClass, int bond
 /******************************************************************************
 * Returns the default color for a bond type name.
 ******************************************************************************/
-Color BondType::getDefaultBondColor(BondProperty::Type typeClass, const QString& bondTypeName, int bondTypeId, bool userDefaults)
+Color BondType::getDefaultBondColor(BondsObject::Type typeClass, const QString& bondTypeName, int bondTypeId, bool userDefaults)
 {
 	if(userDefaults) {
 		QSettings settings;
@@ -77,7 +77,7 @@ Color BondType::getDefaultBondColor(BondProperty::Type typeClass, const QString&
 /******************************************************************************
 * Returns the default radius for a bond type name.
 ******************************************************************************/
-FloatType BondType::getDefaultBondRadius(BondProperty::Type typeClass, const QString& bondTypeName, int bondTypeId, bool userDefaults)
+FloatType BondType::getDefaultBondRadius(BondsObject::Type typeClass, const QString& bondTypeName, int bondTypeId, bool userDefaults)
 {
 	if(userDefaults) {
 		QSettings settings;

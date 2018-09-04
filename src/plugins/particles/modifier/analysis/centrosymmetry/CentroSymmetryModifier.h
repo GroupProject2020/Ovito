@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/particles/util/ParticleOrderingFingerprint.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
@@ -83,7 +83,7 @@ private:
 			_nneighbors(nneighbors),
 			_positions(std::move(positions)),
 			_simCell(simCell),
-			_csp(ParticleProperty::createStandardStorage(fingerprint.particleCount(), ParticleProperty::CentroSymmetryProperty, false)),
+			_csp(ParticlesObject::OOClass().createStandardStorage(fingerprint.particleCount(), ParticlesObject::CentroSymmetryProperty, false)),
 			_inputFingerprint(std::move(fingerprint)) {}
 
 		/// This method is called by the system after the computation was successfully completed.

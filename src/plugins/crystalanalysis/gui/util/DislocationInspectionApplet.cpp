@@ -38,7 +38,7 @@ IMPLEMENT_OVITO_CLASS(DislocationInspectionApplet);
 ******************************************************************************/
 bool DislocationInspectionApplet::appliesTo(const PipelineFlowState& state)
 {
-	return state.findObjectOfType<DislocationNetworkObject>() != nullptr;
+	return state.containsObject<DislocationNetworkObject>();
 }
 
 /******************************************************************************
@@ -182,7 +182,7 @@ void DislocationInspectionApplet::PickingMode::renderOverlay3D(Viewport* vp, Vie
 	if(!_applet->_sceneNode) return;
 
 	const PipelineFlowState& flowState = _applet->_sceneNode->evaluatePipelinePreliminary(true);
-	DislocationNetworkObject* dislocationObj = flowState.findObjectOfType<DislocationNetworkObject>();
+	const DislocationNetworkObject* dislocationObj = flowState.getObject<DislocationNetworkObject>();
 	if(!dislocationObj) return;
 	DislocationVis* vis = dynamic_object_cast<DislocationVis>(dislocationObj->visElement());
 	if(!vis) return;

@@ -78,7 +78,7 @@ void defineSceneSubmodule(py::module m)
 		.def_property("id", &DataObject::identifier, &DataObject::setIdentifier,
 				"The unique identifier string of the data object. May be empty. ")
 
-		.def_property("vis", &DataObject::visElement, &DataObject::setVisElement,
+		.def_property("vis", static_cast<DataVis* (DataObject::*)() const>(&DataObject::visElement), &DataObject::setVisElement,
 			"The :py:class:`~ovito.vis.DataVis` element associated with this data object, which is responsible for "
         	"rendering the data visually. If this field contains ``None``, the data is non-visual and doesn't appear in "
 			"rendered images or the viewports.")
@@ -87,7 +87,7 @@ void defineSceneSubmodule(py::module m)
 		.def_property_readonly("num_strong_references", &DataObject::numberOfStrongReferences)
 
 		// For backward compatibility with OVITO 2.9.0:
-		.def_property("display", &DataObject::visElement, &DataObject::setVisElement)
+		.def_property("display", static_cast<DataVis* (DataObject::*)() const>(&DataObject::visElement), &DataObject::setVisElement)
 
 	;
 	expose_mutable_subobject_list(DataObject_py,

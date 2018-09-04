@@ -52,14 +52,14 @@ public:
 	
 	/// Set start and end value of the x-axis.
 	void setXAxisRange(FloatType start, FloatType end) { 
-		setXAxisRangeStart(start); 
-		setXAxisRangeEnd(end); 
+		setXAxisRangeStart(start);
+		setXAxisRangeEnd(end);
 	}
 
 	/// Set start and end value of the y-axis.
 	void setYAxisRange(FloatType start, FloatType end) { 
-		setYAxisRangeStart(start); 
-		setYAxisRangeEnd(end); 
+		setYAxisRangeStart(start);
+		setYAxisRangeEnd(end);
 	}
 
 protected:
@@ -103,7 +103,7 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, yAxisRangeEnd, setYAxisRangeEnd, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls whether the modifier should take into account only selected elements.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, onlySelected, setOnlySelected);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, onlySelectedElements, setOnlySelectedElements);
 };
 
 }	// End of namespace

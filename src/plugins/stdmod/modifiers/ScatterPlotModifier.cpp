@@ -23,16 +23,14 @@
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <plugins/stdobj/properties/PropertyObject.h>
-#include <plugins/stdobj/util/InputHelper.h>
-#include <plugins/stdobj/util/OutputHelper.h>
-#include <core/app/PluginManager.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
+#include <plugins/stdobj/series/DataSeriesObject.h>
 #include <core/app/Application.h>
 #include "ScatterPlotModifier.h"
 
 namespace Ovito { namespace StdMod {
 
 IMPLEMENT_OVITO_CLASS(ScatterPlotModifier);
-IMPLEMENT_OVITO_CLASS(ScatterPlotModifierApplication);
 DEFINE_PROPERTY_FIELD(ScatterPlotModifier, selectXAxisInRange);
 DEFINE_PROPERTY_FIELD(ScatterPlotModifier, selectionXAxisRangeStart);
 DEFINE_PROPERTY_FIELD(ScatterPlotModifier, selectionXAxisRangeEnd);
@@ -61,7 +59,6 @@ SET_PROPERTY_FIELD_LABEL(ScatterPlotModifier, yAxisRangeStart, "Y-range start");
 SET_PROPERTY_FIELD_LABEL(ScatterPlotModifier, yAxisRangeEnd, "Y-range end");
 SET_PROPERTY_FIELD_LABEL(ScatterPlotModifier, xAxisProperty, "X-axis property");
 SET_PROPERTY_FIELD_LABEL(ScatterPlotModifier, yAxisProperty, "Y-axis property");
-SET_MODIFIER_APPLICATION_TYPE(ScatterPlotModifier, ScatterPlotModifierApplication);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -81,8 +78,7 @@ ScatterPlotModifier::ScatterPlotModifier(DataSet* dataset) : GenericPropertyModi
 	_yAxisRangeEnd(0)
 {
 	// Operate on particle properties by default.
-	setPropertyClass(static_cast<const PropertyClass*>(
-		PluginManager::instance().findClass(QStringLiteral("Particles"), QStringLiteral("ParticleProperty"))));	
+	setDefaultSubject(QStringLiteral("Particles"), QStringLiteral("ParticlesObject"));
 }
 
 /******************************************************************************
@@ -94,22 +90,20 @@ void ScatterPlotModifier::initializeModifier(ModifierApplication* modApp)
 	GenericPropertyModifier::initializeModifier(modApp);
 
 	// Use the first available property from the input state as data source when the modifier is newly created.
-	if((xAxisProperty().isNull() || yAxisProperty().isNull()) && propertyClass() && Application::instance()->guiMode()) {	
+	if((xAxisProperty().isNull() || yAxisProperty().isNull()) && subject() && !Application::instance()->scriptMode()) {	
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
-		PropertyReference bestProperty;
-		for(DataObject* o : input.objects()) {
-			if(PropertyObject* property = dynamic_object_cast<PropertyObject>(o)) {
-				if(propertyClass()->isMember(property) && (property->dataType() == PropertyStorage::Int || property->dataType() == PropertyStorage::Float)) {
-					bestProperty = PropertyReference(property, (property->componentCount() > 1) ? 0 : -1);
-				}
+		if(const PropertyContainer* container = input.getLeafObject(subject())) {
+			PropertyReference bestProperty;
+			for(PropertyObject* property : container->properties()) {
+				bestProperty = PropertyReference(subject().dataClass(), property, (property->componentCount() > 1) ? 0 : -1);
+			}
+			if(xAxisProperty().isNull() && !bestProperty.isNull()) {
+				setXAxisProperty(bestProperty);
+			}
+			if(yAxisProperty().isNull() && !bestProperty.isNull()) {
+				setYAxisProperty(bestProperty);
 			}
 		}
-		if(xAxisProperty().isNull() && !bestProperty.isNull()) {
-			setXAxisProperty(bestProperty);
-		}
-		if(yAxisProperty().isNull() && !bestProperty.isNull()) {
-			setYAxisProperty(bestProperty);
-		}	
 	}
 }
 
@@ -119,9 +113,9 @@ void ScatterPlotModifier::initializeModifier(ModifierApplication* modApp)
 void ScatterPlotModifier::propertyChanged(const PropertyFieldDescriptor& field)
 {
 	// Whenever the selected property class of this modifier is changed, update the source property references.
-	if(field == PROPERTY_FIELD(GenericPropertyModifier::propertyClass) && !isBeingLoaded() && !dataset()->undoStack().isUndoingOrRedoing()) {
-		setXAxisProperty(xAxisProperty().convertToPropertyClass(propertyClass()));
-		setYAxisProperty(yAxisProperty().convertToPropertyClass(propertyClass()));
+	if(field == PROPERTY_FIELD(GenericPropertyModifier::subject) && !isBeingLoaded() && !dataset()->undoStack().isUndoingOrRedoing()) {
+		setXAxisProperty(xAxisProperty().convertToContainerClass(subject().dataClass()));
+		setYAxisProperty(yAxisProperty().convertToContainerClass(subject().dataClass()));
 	}
 	GenericPropertyModifier::propertyChanged(field);
 }
@@ -131,31 +125,31 @@ void ScatterPlotModifier::propertyChanged(const PropertyFieldDescriptor& field)
 ******************************************************************************/
 PipelineFlowState ScatterPlotModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	// Reset the stored results in the ModifierApplication.
-	static_object_cast<ScatterPlotModifierApplication>(modApp)->setScatterData({}, {}, {});
-
-	if(!propertyClass())
-		throwException(tr("No input property class selected."));
+	if(!subject())
+		throwException(tr("No data element type set."));
 	if(xAxisProperty().isNull())
 		throwException(tr("No input property for x-axis selected."));
 	if(yAxisProperty().isNull())
 		throwException(tr("No input property for y-axis selected."));
 
 	// Check if the source property is the right kind of property.
-	if(xAxisProperty().propertyClass() != propertyClass())
+	if(xAxisProperty().containerClass() != subject().dataClass())
 		throwException(tr("Modifier was set to operate on '%1', but the selected input is a '%2' property.")
-			.arg(propertyClass()->pythonName()).arg(xAxisProperty().propertyClass()->propertyClassDisplayName()));
+			.arg(subject().dataClass()->pythonName()).arg(xAxisProperty().containerClass()->propertyClassDisplayName()));
 
 	// Check if the source property is the right kind of property.
-	if(yAxisProperty().propertyClass() != propertyClass())
+	if(yAxisProperty().containerClass() != subject().dataClass())
 		throwException(tr("Modifier was set to operate on '%1', but the selected input is a '%2' property.")
-			.arg(propertyClass()->pythonName()).arg(yAxisProperty().propertyClass()->propertyClassDisplayName()));
+			.arg(subject().dataClass()->pythonName()).arg(yAxisProperty().containerClass()->propertyClassDisplayName()));
+
+	// Look up the property container object.
+	const PropertyContainer* container = input.expectLeafObject(subject());
 
 	// Get the input properties.
-	PropertyObject* xPropertyObj = xAxisProperty().findInState(input);
+	const PropertyObject* xPropertyObj = xAxisProperty().findInContainer(container);
 	if(!xPropertyObj)
 		throwException(tr("The selected input property '%1' is not present.").arg(xAxisProperty().name()));
-	PropertyObject* yPropertyObj = yAxisProperty().findInState(input);
+	const PropertyObject* yPropertyObj = yAxisProperty().findInContainer(container);
 	if(!yPropertyObj)
 		throwException(tr("The selected input property '%1' is not present.").arg(yAxisProperty().name()));
 
@@ -172,18 +166,6 @@ PipelineFlowState ScatterPlotModifier::evaluatePreliminary(TimePoint time, Modif
 	if(yVecComponent >= yProperty->componentCount())
 		throwException(tr("The selected vector component is out of range. The property '%1' has only %2 components per element.").arg(yProperty->name()).arg(yProperty->componentCount()));
 
-	// Allocate output array.
-	std::vector<QPointF> xyData(xProperty->size());
-	std::map<int, Color> colorMap;
-	std::vector<int> typeData;
-	
-	// Use the types of the input elements to color the scatter points.
-	InputHelper ih(dataset(), input);
-	if(PropertyObject* typeProperty = ih.inputStandardProperty(*propertyClass(), PropertyStorage::GenericTypeProperty)) {
-		colorMap = typeProperty->typeColorMap();
-		typeData = std::vector<int>(typeProperty->constDataInt(), typeProperty->constDataInt() + typeProperty->size());
-	}
-
 	// Get selection ranges.
 	FloatType selectionXAxisRangeStart = this->selectionXAxisRangeStart();
 	FloatType selectionXAxisRangeEnd = this->selectionXAxisRangeEnd();
@@ -196,56 +178,38 @@ PipelineFlowState ScatterPlotModifier::evaluatePreliminary(TimePoint time, Modif
 	
 	PipelineFlowState output = input;		
 
-	// Create storage for output selection.
+	// Create output selection property.
 	PropertyPtr outputSelection;
 	size_t numSelected = 0;
 	if(selectXAxisInRange() || selectYAxisInRange()) {
-		outputSelection = OutputHelper(dataset(), output, modApp).outputStandardProperty(*propertyClass(), PropertyStorage::GenericSelectionProperty, false)->modifiableStorage();
+		// First make sure we can safely modify the property container.
+		PropertyContainer* mutableContainer = output.expectMutableLeafObject(subject());
+		// Add the selection property to the output container.
+		outputSelection = mutableContainer->createProperty(PropertyStorage::GenericSelectionProperty)->modifiableStorage();
 		std::fill(outputSelection->dataInt(), outputSelection->dataInt() + outputSelection->size(), 1);
 		numSelected = outputSelection->size();
 	}
 
+#if 0
 	FloatType xIntervalStart = xAxisRangeStart();
 	FloatType xIntervalEnd = xAxisRangeEnd();
 	FloatType yIntervalStart = yAxisRangeStart();
 	FloatType yIntervalEnd = yAxisRangeEnd();
+#endif
+
+	// Create output arrays.
+	auto out_x = DataSeriesObject::OOClass().createStandardStorage(container->elementCount(), DataSeriesObject::XProperty, false);
+	auto out_y = DataSeriesObject::OOClass().createStandardStorage(container->elementCount(), DataSeriesObject::YProperty, false);
 
 	// Collect X coordinates.
-	if(xProperty->dataType() == PropertyStorage::Float) {
-		for(size_t i = 0; i < xProperty->size(); i++) {
-			xyData[i].rx() = xProperty->getFloatComponent(i, xVecComponent);
-		}
-	}
-	else if(xProperty->dataType() == PropertyStorage::Int) {
-		for(size_t i = 0; i < xProperty->size(); i++) {
-			xyData[i].rx() = xProperty->getIntComponent(i, xVecComponent);
-		}
-	}
-	else if(xProperty->dataType() == PropertyStorage::Int64) {
-		for(size_t i = 0; i < xProperty->size(); i++) {
-			xyData[i].rx() = xProperty->getInt64Component(i, xVecComponent);
-		}
-	}
-	else throwException(tr("Property '%1' has a data type that is not supported by the scatter plot modifier.").arg(xProperty->name()));
+	if(!xProperty->copyTo(out_x->dataFloat(), xVecComponent))
+		throwException(tr("Failed to extract coordinate values from input property for x-axis."));
 
 	// Collect Y coordinates.
-	if(yProperty->dataType() == PropertyStorage::Float) {
-		for(size_t i = 0; i < yProperty->size(); i++) {
-			xyData[i].ry() = yProperty->getFloatComponent(i, yVecComponent);
-		}
-	}
-	else if(yProperty->dataType() == PropertyStorage::Int) {
-		for(size_t i = 0; i < yProperty->size(); i++) {
-			xyData[i].ry() = yProperty->getIntComponent(i, yVecComponent);
-		}
-	}
-	else if(yProperty->dataType() == PropertyStorage::Int64) {
-		for(size_t i = 0; i < yProperty->size(); i++) {
-			xyData[i].ry() = yProperty->getInt64Component(i, yVecComponent);
-		}
-	}
-	else throwException(tr("Property '%1' has a data type that is not supported by the scatter plot modifier.").arg(yProperty->name()));
+	if(!yProperty->copyTo(out_y->dataFloat(), yVecComponent))
+		throwException(tr("Failed to extract coordinate values from input property for y-axis."));
 
+#if 0
 	// Determine value ranges.
 	if(fixXAxisRange() == false || fixYAxisRange() == false) {
 		Box2 bbox;
@@ -261,13 +225,14 @@ PipelineFlowState ScatterPlotModifier::evaluatePreliminary(TimePoint time, Modif
 			yIntervalEnd = bbox.maxc.y();
 		}
 	}
+#endif
 
 	if(outputSelection && selectXAxisInRange()) {
-		OVITO_ASSERT(outputSelection->size() == xyData.size());
+		OVITO_ASSERT(outputSelection->size() == out_x->size());
 		int* s = outputSelection->dataInt();
 		int* s_end = s + outputSelection->size();
-		for(const QPointF& p : xyData) {
-			if(p.x() < selectionXAxisRangeStart || p.x() > selectionXAxisRangeEnd) {
+		for(FloatType x : out_x->constFloatRange()) {
+			if(x < selectionXAxisRangeStart || x > selectionXAxisRangeEnd) {
 				*s = 0;
 				numSelected--;
 			}
@@ -276,11 +241,11 @@ PipelineFlowState ScatterPlotModifier::evaluatePreliminary(TimePoint time, Modif
 	}
 
 	if(outputSelection && selectYAxisInRange()) {
-		OVITO_ASSERT(outputSelection->size() == xyData.size());
+		OVITO_ASSERT(outputSelection->size() == out_y->size());
 		int* s = outputSelection->dataInt();
 		int* s_end = s + outputSelection->size();
-		for(const QPointF& p : xyData) {
-			if(p.y() < selectionYAxisRangeStart || p.y() > selectionYAxisRangeEnd) {
+		for(FloatType y : out_y->constFloatRange()) {
+			if(y < selectionYAxisRangeStart || y > selectionYAxisRangeEnd) {
 				if(*s) {
 					*s = 0;
 					numSelected--;
@@ -290,14 +255,16 @@ PipelineFlowState ScatterPlotModifier::evaluatePreliminary(TimePoint time, Modif
 		}
 	}
 
-	// Store results in the ModifierApplication.
-	static_object_cast<ScatterPlotModifierApplication>(modApp)->setScatterData(std::move(xyData), std::move(typeData), std::move(colorMap));
+	// Output a data series object with the scatter points.
+	DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("scatter"), modApp, tr("Scatter plot"));
+	seriesObj->createProperty(std::move(out_x))->setName(xAxisProperty().nameWithComponent());
+	seriesObj->createProperty(std::move(out_y))->setName(yAxisProperty().nameWithComponent());
 
 	QString statusMessage;
 	if(outputSelection) {
 		statusMessage = tr("%1 %2 selected (%3%)").arg(numSelected)
-				.arg(propertyClass()->elementDescriptionName())
-				.arg((FloatType)numSelected * 100 / std::max(1,(int)outputSelection->size()), 0, 'f', 1);
+				.arg(container->getOOMetaClass().elementDescriptionName())
+				.arg((FloatType)numSelected * 100 / std::max((size_t)1,outputSelection->size()), 0, 'f', 1);
 	}
 
 	output.setStatus(PipelineStatus(PipelineStatus::Success, std::move(statusMessage)));

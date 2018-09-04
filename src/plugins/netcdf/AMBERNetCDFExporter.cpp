@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/utilities/concurrent/Promise.h>
 #include "AMBERNetCDFExporter.h"
@@ -164,13 +164,14 @@ bool AMBERNetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, Ti
 	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
 	exportTask.setProgressText(tr("Writing file %1").arg(filePath));
 	
-	// Get particle positions.
-	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
+	// Get particles and their positions.
+	const ParticlesObject* particles = state.expectObject<ParticlesObject>();
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 
 	// Get simulation cell info.
-	SimulationCellObject* simulationCell = state.findObjectOfType<SimulationCellObject>();
+	const SimulationCellObject* simulationCell = state.getObject<SimulationCellObject>();
 	const AffineTransformation simCell = simulationCell ? simulationCell->cellMatrix() : AffineTransformation::Zero();
-	size_t atomsCount = posProperty->size();
+	size_t atomsCount = particles->elementCount();
 	
 	// Only serial access to NetCDF functions is allowed, because they are not thread-safe.
 	NetCDFExclusiveAccess locker(exportTask.sharedState().get());
@@ -204,7 +205,7 @@ bool AMBERNetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, Ti
 		for(auto c = columnMapping().begin(); c != columnMapping().end(); ++c) {
 
 			// Skip the particle position property. It has already been emitted above.
-			if(c->type() == ParticleProperty::PositionProperty)
+			if(c->type() == ParticlesObject::PositionProperty)
 				continue;
 				
 			// We can export a particle property only as a whole to a NetCDF file, not individual components.
@@ -212,7 +213,7 @@ bool AMBERNetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, Ti
 			if(std::find_if(columnMapping().begin(), c, [c](const ParticlePropertyReference& pr) { return pr.name() == c->name(); }) != c)
 				continue;
 
-			ParticleProperty* prop = c->findInState(state);
+			const PropertyObject* prop = c->findInContainer(particles);
 			if(!prop)
 				throwException(tr("Invalid list of particle properties to be exported. The property '%1' does not exist.").arg(c->name()));
 			if((int)prop->componentCount() <= std::max(0, c->vectorComponent()))
@@ -222,16 +223,16 @@ bool AMBERNetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, Ti
 			// All other properties are output as NetCDF variables under their normal name.
 			const char* mangledName = nullptr;
 			dims[2] = 0;
-			if(prop->type() != ParticleProperty::UserProperty) {
-				if(prop->type() == ParticleProperty::ForceProperty) {
+			if(prop->type() != ParticlesObject::UserProperty) {
+				if(prop->type() == ParticlesObject::ForceProperty) {
 					mangledName = "forces";
 					dims[2] = _spatial_dim;
 				}
-				else if(prop->type() == ParticleProperty::VelocityProperty) {
+				else if(prop->type() == ParticlesObject::VelocityProperty) {
 					mangledName = "velocities";
 					dims[2] = _spatial_dim;
 				}
-				else if(prop->type() == ParticleProperty::TypeProperty) {
+				else if(prop->type() == ParticlesObject::TypeProperty) {
 					mangledName = "atom_types";
 				}
 			}
@@ -333,7 +334,7 @@ bool AMBERNetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, Ti
 	for(const NCOutputColumn& outColumn : _columns) {
 		
 		// Look up the property to be exported.
-		ParticleProperty* prop = outColumn.property.findInState(state);
+		const PropertyObject* prop = outColumn.property.findInContainer(particles);
 		if(!prop)
 			throwException(tr("The property '%1' cannot be exported, because it does not exist at frame %2.").arg(outColumn.property.name()).arg(frameNumber));
 		if((int)prop->componentCount() != outColumn.componentCount)

@@ -23,8 +23,8 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
-#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
+#include <plugins/particles/objects/BondsObject.h>
 #include <plugins/stdobj/properties/PropertyExpressionEvaluator.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -47,7 +47,7 @@ public:
 
 	/// Specifies the expressions to be evaluated for each particle and creates the input variables.
 	void initialize(const QStringList& expressions, const PipelineFlowState& inputState, int animationFrame = 0) {
-		PropertyExpressionEvaluator::initialize(expressions, inputState, ParticleProperty::OOClass(), QString(), animationFrame);
+		PropertyExpressionEvaluator::initialize(expressions, inputState, inputState.expectObject<ParticlesObject>(), animationFrame);
 	}
 	
 protected:
@@ -72,7 +72,7 @@ public:
 
 	/// Specifies the expressions to be evaluated for each bond and creates the input variables.
 	void initialize(const QStringList& expressions, const PipelineFlowState& inputState, int animationFrame = 0) {
-		PropertyExpressionEvaluator::initialize(expressions, inputState, BondProperty::OOClass(), QString(), animationFrame);
+		PropertyExpressionEvaluator::initialize(expressions, inputState, inputState.expectObject<ParticlesObject>()->expectBonds(), animationFrame);
 	}
 };
 

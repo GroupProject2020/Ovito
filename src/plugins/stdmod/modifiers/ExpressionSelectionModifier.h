@@ -46,11 +46,11 @@ protected:
 	/// Abstract class constructor.
 	using ModifierDelegate::ModifierDelegate;
 
+	/// Looks up the container for the properties in the output pipeline state.
+	virtual PropertyContainer* getOutputPropertyContainer(PipelineFlowState& outputState) const = 0;
+
 	/// Creates and initializes the expression evaluator object.
 	virtual std::unique_ptr<PropertyExpressionEvaluator> initializeExpressionEvaluator(const QStringList& expressions, const PipelineFlowState& inputState, int animationFrame) = 0;
-
-	/// Creates the output selection property object.
-	virtual PropertyObject* createOutputSelectionProperty(OutputHelper& oh) = 0;
 };
 
 /**

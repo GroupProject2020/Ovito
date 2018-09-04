@@ -21,7 +21,6 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/objects/microstructure/MicrostructureObject.h>
-#include <plugins/stdobj/util/OutputHelper.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/utilities/concurrent/ParallelFor.h>
@@ -56,7 +55,7 @@ SimplifyMicrostructureModifier::SimplifyMicrostructureModifier(DataSet* dataset)
 ******************************************************************************/
 bool SimplifyMicrostructureModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<MicrostructureObject>() != nullptr;
+	return input.containsObject<MicrostructureObject>();
 }
 
 /******************************************************************************
@@ -66,7 +65,7 @@ bool SimplifyMicrostructureModifier::OOMetaClass::isApplicableTo(const PipelineF
 Future<AsynchronousModifier::ComputeEnginePtr> SimplifyMicrostructureModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get modifier input.
-	MicrostructureObject* microstructure = input.findObjectOfType<MicrostructureObject>();
+	const MicrostructureObject* microstructure = input.getObject<MicrostructureObject>();
 	if(!microstructure)
 		throwException(tr("No microstructure found in the modifier's input."));
 
@@ -148,12 +147,11 @@ void SimplifyMicrostructureModifier::SimplifyMicrostructureEngine::smoothMeshIte
 PipelineFlowState SimplifyMicrostructureModifier::SimplifyMicrostructureEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	PipelineFlowState output = input;
-	OutputHelper oh(modApp->dataset(), output, modApp);
 
     // Replace input microstructure with computed output microstructure.
-	if(MicrostructureObject* inputMicrostructure = input.findObjectOfType<MicrostructureObject>()) {
-		MicrostructureObject* outputMicrostructure = oh.cloneIfNeeded(inputMicrostructure);
-        outputMicrostructure->setStorage(microstructure());
+	if(const MicrostructureObject* microstructureObj = output.getObject<MicrostructureObject>()) {
+		MicrostructureObject* mutableMicrostructureObj = output.makeMutable(microstructureObj);
+        mutableMicrostructureObj->setStorage(microstructure());
     }
 	
 	return output;

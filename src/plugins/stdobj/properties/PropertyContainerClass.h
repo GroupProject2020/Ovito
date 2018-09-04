@@ -29,20 +29,14 @@
 namespace Ovito { namespace StdObj {
 
 /**
- * \brief A meta-class for properties (i.e. classes derived from PropertyObject).
+ * \brief A meta-class for property containers (i.e. classes derived from the PropertyContainer base class).
  */
- class OVITO_STDOBJ_EXPORT PropertyClass : public DataObject::OOMetaClass 
+ class OVITO_STDOBJ_EXPORT PropertyContainerClass : public DataObject::OOMetaClass 
 {
 public:
 
 	/// Inherit standard constructor from base meta class.
 	using DataObject::OOMetaClass::OOMetaClass;
-
-	/// This helper method returns a standard property (if present) from the given pipeline state.
-	PropertyObject* findInState(const PipelineFlowState& state, int typeId, const QString& bundleName = QString()) const;
-	
-	/// This helper method returns a specific user-defined property (if present) from the given pipeline state.
-	PropertyObject* findInState(const PipelineFlowState& state, const QString& name, const QString& bundleName = QString()) const;
 
 	/// Returns a human-readable name used for the property class in the user interface, e.g. 'Particles' or 'Bonds'.
 	const QString& propertyClassDisplayName() const { return _propertyClassDisplayName; }
@@ -53,28 +47,22 @@ public:
 	/// Returns the name by which this property class is referred to from Python scripts.
 	const QString& pythonName() const { return _pythonName; }
 
-	/// Returns the number of elements in a property for the given data state.
-	virtual size_t elementCount(const PipelineFlowState& state) const { OVITO_ASSERT(false); return 0; }
-
-	/// Determines if the data elements which this property class applies to are present for the given data state.
-	virtual bool isDataPresent(const PipelineFlowState& state) const { OVITO_ASSERT(false); return false; }
-	
 	/// Creates a new property storage for one of the registered standard properties.
-	virtual PropertyPtr createStandardStorage(size_t elementCount, int typeId, bool initializeMemory) const { return {}; }
+	virtual PropertyPtr createStandardStorage(size_t elementCount, int typeId, bool initializeMemory, const ConstDataObjectPath& containerPath = {}) const { return {}; }
 
 	/// Returns the index of the data element that was picked in a viewport.
-	virtual std::pair<size_t, PipelineFlowState> elementFromPickResult(const ViewportPickResult& pickResult) const { 
-		return std::pair<size_t, PipelineFlowState>(std::numeric_limits<size_t>::max(), PipelineFlowState{});
+	virtual std::pair<size_t, ConstDataObjectPath> elementFromPickResult(const ViewportPickResult& pickResult) const { 
+		return std::pair<size_t, ConstDataObjectPath>(std::numeric_limits<size_t>::max(), ConstDataObjectPath{});
 	}
 
-	/// Tries to remap an index from one data collection to another, considering the possibility that
-	/// elements may have been added or removed. 
-	virtual size_t remapElementIndex(const PipelineFlowState& sourceState, size_t elementIndex, const PipelineFlowState& destState) const {
+	/// Tries to remap an index from one property container to another, considering the possibility that
+	/// data elements may have been added or removed. 
+	virtual size_t remapElementIndex(const ConstDataObjectPath& source, size_t elementIndex, const ConstDataObjectPath& dest) const {
 		return std::numeric_limits<size_t>::max();
 	}
 
 	/// Determines which elements are located within the given viewport fence region (=2D polygon).
-	virtual boost::dynamic_bitset<> viewportFenceSelection(const QVector<Point2>& fence, const PipelineFlowState& state, PipelineSceneNode* node, const Matrix4& projectionTM) const {
+	virtual boost::dynamic_bitset<> viewportFenceSelection(const QVector<Point2>& fence, const ConstDataObjectPath& objectPath, PipelineSceneNode* node, const Matrix4& projectionTM) const {
 		return boost::dynamic_bitset<>{}; // Return empty set to indicate missing fence selection support.
 	}
 	
@@ -133,9 +121,6 @@ public:
 		return _standardPropertyIds;
 	}
 
-	/// The data object type that bundles a set of properties.
-	OvitoClassPtr bundleObjectClass() const { return _bundleObjectClass; }
-
 protected:
 	
 	/// Registers a new standard property with this property meta class.
@@ -149,12 +134,6 @@ protected:
 	
 	/// Sets the name by which this property class is referred to from Python scripts.
 	void setPythonName(const QString& name) { _pythonName = name; }
-	
-	/// Sets the data object type that bundles a set of properties of this class.
-	void setBundleObjectClass(const DataObject::OOMetaClass& dataObjectClass) { 
-		OVITO_ASSERT(dataObjectClass.isDerivedFrom(DataObject::OOClass()));
-		_bundleObjectClass = &dataObjectClass; 
-	}
 
 	/// Gives the property class the opportunity to set up a newly created property object.
 	virtual void prepareNewProperty(PropertyObject* property) const {}
@@ -188,13 +167,10 @@ private:
 
 	/// Mapping from standard property type ID to property data type.
 	QMap<int, int> _standardPropertyDataTypes;
-
-	/// The data object type that bundles a set of properties.
-	OvitoClassPtr _bundleObjectClass = nullptr;
 };
 
 }	// End of namespace
 }	// End of namespace
 
-Q_DECLARE_METATYPE(Ovito::StdObj::PropertyClassPtr);
-Q_DECLARE_TYPEINFO(Ovito::StdObj::PropertyClassPtr, Q_PRIMITIVE_TYPE);
+Q_DECLARE_METATYPE(Ovito::StdObj::PropertyContainerClassPtr);
+Q_DECLARE_TYPEINFO(Ovito::StdObj::PropertyContainerClassPtr, Q_PRIMITIVE_TYPE);

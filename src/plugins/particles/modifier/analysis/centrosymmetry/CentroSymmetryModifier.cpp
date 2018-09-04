@@ -20,9 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <plugins/particles/util/NearestNeighborFinder.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <core/utilities/concurrent/ParallelFor.h>
 #include <core/utilities/units/UnitsManager.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
@@ -49,7 +48,7 @@ CentroSymmetryModifier::CentroSymmetryModifier(DataSet* dataset) : AsynchronousM
 ******************************************************************************/
 bool CentroSymmetryModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<ParticleProperty>() != nullptr;
+	return input.containsObject<ParticlesObject>();
 }
 
 /******************************************************************************
@@ -58,9 +57,9 @@ bool CentroSymmetryModifier::OOMetaClass::isApplicableTo(const PipelineFlowState
 Future<AsynchronousModifier::ComputeEnginePtr> CentroSymmetryModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get modifier input.
-	ParticleInputHelper pih(dataset(), input);
-	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
-	SimulationCellObject* simCell = pih.expectSimulationCell();
+	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
+	const SimulationCellObject* simCell = input.expectObject<SimulationCellObject>();
 
 	if(numNeighbors() < 2)
 		throwException(tr("The selected number of neighbors to take into account for the centrosymmetry calculation is invalid."));
@@ -69,7 +68,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CentroSymmetryModifier::createEng
 		throwException(tr("The number of neighbors to take into account for the centrosymmetry calculation must be a positive, even integer."));
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<CentroSymmetryEngine>(input, posProperty->storage(), simCell->data(), numNeighbors());
+	return std::make_shared<CentroSymmetryEngine>(particles, posProperty->storage(), simCell->data(), numNeighbors());
 }
 
 /******************************************************************************
@@ -126,13 +125,15 @@ FloatType CentroSymmetryModifier::computeCSP(NearestNeighborFinder& neighFinder,
 ******************************************************************************/
 PipelineFlowState CentroSymmetryModifier::CentroSymmetryEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	if(_inputFingerprint.hasChanged(input))
+	PipelineFlowState output = input;
+	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+
+	if(_inputFingerprint.hasChanged(particles))
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 
-	PipelineFlowState output = input;
-	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
-	OVITO_ASSERT(csp()->size() == poh.outputParticleCount());
-	poh.outputProperty<ParticleProperty>(csp());
+	OVITO_ASSERT(csp()->size() == particles->elementCount());
+	particles->createProperty(csp());
+
 	return output;
 }
 

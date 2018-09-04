@@ -43,7 +43,7 @@ public:
 	Q_INVOKABLE ManualSelectionModifierEditor() {}
 
 	/// This is called when the user has selected an element in the viewports.
-	void onElementPicked(const ViewportPickResult& pickResult, size_t elementIndex, const PipelineFlowState& state);
+	void onElementPicked(const ViewportPickResult& pickResult, size_t elementIndex, const ConstDataObjectPath& pickedObjectPath);
 
 	/// This is called when the user has drawn a selection fence around elements.
 	void onFence(const QVector<Point2>& fence, Viewport* viewport, ElementSelectionSet::SelectionMode mode);

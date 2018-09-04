@@ -23,8 +23,8 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
-#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
+#include <plugins/particles/objects/BondsObject.h>
 #include <plugins/stdmod/modifiers/AssignColorModifier.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Modify)
@@ -44,7 +44,7 @@ class ParticlesAssignColorModifierDelegate : public AssignColorModifierDelegate
 
 		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
 		virtual bool isApplicableTo(const PipelineFlowState& input) const override {
-			return input.findObjectOfType<ParticleProperty>() != nullptr;
+			return input.containsObject<ParticlesObject>();
 		}
 
 		/// The name by which Python scripts can refer to this modifier delegate.
@@ -62,12 +62,12 @@ public:
 	Q_INVOKABLE ParticlesAssignColorModifierDelegate(DataSet* dataset) : AssignColorModifierDelegate(dataset) {}
 
 	/// \brief Returns the class of properties that can serve as input for the color coding.
-	virtual const PropertyClass& propertyClass() const override { return ParticleProperty::OOClass(); }
+	virtual const PropertyContainerClass& containerClass() const override { return ParticlesObject::OOClass(); }
 
 protected:
 	
-	/// \brief Creates the property object that will receive the computed colors.
-	virtual PropertyObject* createOutputColorProperty(TimePoint time, InputHelper& ih, OutputHelper& oh, bool initializeWithExistingColors) override;	
+	/// \brief returns the ID of the standard property that will receive the assigned colors.
+	virtual int outputColorPropertyId() const override { return ParticlesObject::ColorProperty; }
 };
 
 /**
@@ -101,12 +101,12 @@ public:
 	Q_INVOKABLE ParticleVectorsAssignColorModifierDelegate(DataSet* dataset) : AssignColorModifierDelegate(dataset) {}
 
 	/// \brief Returns the class of properties that can serve as input for the color coding.
-	virtual const PropertyClass& propertyClass() const override { return ParticleProperty::OOClass(); }
+	virtual const PropertyContainerClass& containerClass() const override { return ParticlesObject::OOClass(); }
 
 protected:
 	
-	/// \brief Creates the property object that will receive the computed colors.
-	virtual PropertyObject* createOutputColorProperty(TimePoint time, InputHelper& ih, OutputHelper& oh, bool initializeWithExistingColors) override;	
+	/// \brief returns the ID of the standard property that will receive the assigned colors.
+	virtual int outputColorPropertyId() const override { return ParticlesObject::VectorColorProperty; }
 };
 
 /**
@@ -124,7 +124,9 @@ class BondsAssignColorModifierDelegate : public AssignColorModifierDelegate
 
 		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
 		virtual bool isApplicableTo(const PipelineFlowState& input) const override {
-			return input.findObjectOfType<BondProperty>() != nullptr;
+			if(const ParticlesObject* particles = input.getObject<ParticlesObject>())
+				return particles->bonds() != nullptr;
+			return false;
 		}
 
 		/// The name by which Python scripts can refer to this modifier delegate.
@@ -142,12 +144,12 @@ public:
 	Q_INVOKABLE BondsAssignColorModifierDelegate(DataSet* dataset) : AssignColorModifierDelegate(dataset) {}
 	
 	/// \brief Returns the class of properties that can serve as input for the color coding.
-	virtual const PropertyClass& propertyClass() const override { return BondProperty::OOClass(); }
+	virtual const PropertyContainerClass& containerClass() const override { return BondsObject::OOClass(); }
 
 protected:
 	
-	/// \brief Creates the property object that will receive the computed colors.
-	virtual PropertyObject* createOutputColorProperty(TimePoint time, InputHelper& ih, OutputHelper& oh, bool initializeWithExistingColors) override;	
+	/// \brief returns the ID of the standard property that will receive the computed colors.
+	virtual int outputColorPropertyId() const override { return BondsObject::ColorProperty; }
 };
 
 OVITO_END_INLINE_NAMESPACE

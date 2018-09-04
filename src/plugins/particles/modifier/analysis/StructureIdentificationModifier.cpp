@@ -20,10 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <plugins/particles/objects/ParticleType.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/stdobj/series/DataSeriesObject.h>
-#include <plugins/stdobj/series/DataSeriesProperty.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include "StructureIdentificationModifier.h"
@@ -52,7 +51,7 @@ StructureIdentificationModifier::StructureIdentificationModifier(DataSet* datase
 ******************************************************************************/
 bool StructureIdentificationModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<ParticleProperty>() != nullptr;
+	return input.containsObject<ParticlesObject>();
 }
 
 /******************************************************************************
@@ -63,7 +62,7 @@ ParticleType* StructureIdentificationModifier::createStructureType(int id, Parti
 	OORef<ParticleType> stype(new ParticleType(dataset()));
 	stype->setId(id);
 	stype->setName(ParticleType::getPredefinedStructureTypeName(predefType));
-	stype->setColor(ParticleType::getDefaultParticleColor(ParticleProperty::StructureTypeProperty, stype->name(), id));
+	stype->setColor(ParticleType::getDefaultParticleColor(ParticlesObject::StructureTypeProperty, stype->name(), id));
 	addStructureType(stype);
 	return stype;
 }
@@ -111,16 +110,16 @@ PipelineFlowState StructureIdentificationModifier::StructureIdentificationEngine
 	StructureIdentificationModifier* modifier = static_object_cast<StructureIdentificationModifier>(modApp->modifier());
 	OVITO_ASSERT(modifier);
 
-	if(_inputFingerprint.hasChanged(input))
-		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
-
 	PipelineFlowState output = input;
-	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
+	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+
+	if(_inputFingerprint.hasChanged(particles))
+		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 
 	// Create output property object.
 	PropertyPtr outputStructures = postProcessStructureTypes(time, modApp, structures());
-	OVITO_ASSERT(outputStructures->size() == poh.outputParticleCount());
-	ParticleProperty* structureProperty = poh.outputProperty<ParticleProperty>(outputStructures);
+	OVITO_ASSERT(outputStructures->size() == particles->elementCount());
+	PropertyObject* structureProperty = particles->createProperty(outputStructures);
 
 	// Attach structure types to output particle property.
 	structureProperty->setElementTypes(modifier->structureTypes());
@@ -138,7 +137,7 @@ PipelineFlowState StructureIdentificationModifier::StructureIdentificationEngine
 		}
 
 		// Assign colors to particles based on their structure type.
-		ParticleProperty* colorProperty = poh.outputStandardProperty<ParticleProperty>(ParticleProperty::ColorProperty);
+		PropertyObject* colorProperty = particles->createProperty(ParticlesObject::ColorProperty, false);
 		const int* s = structureProperty->constDataInt();
 		for(Color& c : colorProperty->colorRange()) {
 			if(*s >= 0 && *s < structureTypeColors.size()) {
@@ -155,7 +154,7 @@ PipelineFlowState StructureIdentificationModifier::StructureIdentificationEngine
 		OVITO_ASSERT(stype->id() >= 0);
 		maxTypeId = std::max(maxTypeId, stype->id());
 	}
-	_typeCounts = std::make_shared<PropertyStorage>(maxTypeId + 1, PropertyStorage::Int64, 1, 0, tr("Count"), true, DataSeriesProperty::YProperty);
+	_typeCounts = std::make_shared<PropertyStorage>(maxTypeId + 1, PropertyStorage::Int64, 1, 0, tr("Count"), true, DataSeriesObject::YProperty);
 	auto typeCountsData = _typeCounts->dataInt64();
 	for(int t : structureProperty->constIntRange()) {
 		if(t >= 0 && t < maxTypeId)
@@ -163,9 +162,9 @@ PipelineFlowState StructureIdentificationModifier::StructureIdentificationEngine
 	}
 
 	// Output a data series object with the type counts.
-	DataSeriesObject* seriesObj = poh.outputDataSeries(QStringLiteral("structures"), tr("Structure counts"), _typeCounts);
-	DataSeriesProperty* yProperty = seriesObj->getY(output);
-	for(ElementType* type : modifier->structureTypes())
+	DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("structures"), modApp, tr("Structure counts"), _typeCounts);
+	PropertyObject* yProperty = seriesObj->expectMutableProperty(DataSeriesObject::YProperty);
+	for(const ElementType* type : modifier->structureTypes())
 		if(type->enabled()) yProperty->addElementType(type);
 	seriesObj->setAxisLabelX(tr("Structure type"));
 

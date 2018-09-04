@@ -176,7 +176,7 @@ protected:
 	/// method and copy or transfer the members to the new clone.
 	///
 	/// \sa CloneHelper::cloneObject()
-	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper);
+	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) const;
 
 public:
 
@@ -187,17 +187,17 @@ public:
 
 	/// \brief Sends an event to all dependents of this RefTarget.
 	/// \param eventType The event type passed to the ReferenceEvent constructor.
-	inline void notifyDependents(ReferenceEvent::Type eventType) {
+	inline void notifyDependents(ReferenceEvent::Type eventType) const {
 		OVITO_ASSERT(eventType != ReferenceEvent::TargetChanged);
 		OVITO_ASSERT(eventType != ReferenceEvent::ReferenceChanged);
 		OVITO_ASSERT(eventType != ReferenceEvent::ReferenceAdded);
 		OVITO_ASSERT(eventType != ReferenceEvent::ReferenceRemoved);
-		notifyDependentsImpl(ReferenceEvent(eventType, this));
+		const_cast<RefTarget*>(this)->notifyDependentsImpl(ReferenceEvent(eventType, const_cast<RefTarget*>(this)));
 	}
 
 	/// \brief Sends a ReferenceEvent::TargetChanged event to all dependents of this RefTarget.
-	inline void notifyTargetChanged(const PropertyFieldDescriptor* field = nullptr) {
-		notifyDependentsImpl(PropertyFieldEvent(ReferenceEvent::TargetChanged, this, field));
+	inline void notifyTargetChanged(const PropertyFieldDescriptor* field = nullptr) const {
+		const_cast<RefTarget*>(this)->notifyDependentsImpl(PropertyFieldEvent(ReferenceEvent::TargetChanged, const_cast<RefTarget*>(this), field));
 	}
 
 	////////////////////////////////// Dependency graph ///////////////////////////////////////
@@ -251,7 +251,7 @@ public:
 	///
 	/// The default implementation returns OvitoClass::objectTitle().
 	/// Sub-classes can override this method to return a title that depends on the internal state of the object.
-	virtual QString objectTitle();
+	virtual QString objectTitle() const;
 
 	/// \brief Flags this object when it is opened in an editor.
 	void setObjectEditingFlag();

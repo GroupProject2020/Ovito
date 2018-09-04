@@ -28,7 +28,6 @@
 #include <core/viewport/Viewport.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/dataset/scene/PipelineSceneNode.h>
-#include <core/dataset/pipeline/PipelineOutputHelper.h>
 #include <core/dataset/io/FileImporter.h>
 #include <core/dataset/DataSetContainer.h>
 #include <core/dataset/UndoStack.h>
@@ -386,43 +385,42 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 						.then(executor(), [this, frame, frameInfo, interval](FileSourceImporter::FrameDataPtr&& frameData) {
 
 							UndoSuspender noUndo(this);
-							PipelineFlowState outputState;
 
 							// Re-use existing data objects if possible.
 							PipelineFlowState existingState(dataObjects());
 
 							// But do not modify the existing objects if we are not loading the current animation frame.
-							if(!interval.contains(dataset()->animationSettings()->time())) {
-								existingState.cloneObjectsIfNeeded(false);
+							bool reuseObjects = interval.contains(dataset()->animationSettings()->time());
+							if(!reuseObjects) {
+								existingState.makeAllMutableRecursive();
 							}
 
 							// Let the data container insert its data into the pipeline state.
 							_handOverInProgress = true;
 							try {
-								PipelineOutputHelper poh(dataset(), outputState, this);
-								frameData->handOver(poh, existingState, _isNewFile, this);
+								PipelineFlowState outputState = frameData->handOver(existingState, _isNewFile, this);
 								_isNewFile = false;
 								_handOverInProgress = false;
 								existingState.clear();
 								outputState.setStateValidity(interval);
-								poh.outputAttribute(QStringLiteral("SourceFrame"), frame);
-								poh.outputAttribute(QStringLiteral("SourceFile"), frameInfo.sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded));
+								outputState.addAttribute(QStringLiteral("SourceFrame"), frame, this);
+								outputState.addAttribute(QStringLiteral("SourceFile"), frameInfo.sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded), this);
 								outputState.setStatus(frameData->status());
 								
 								// When loading the current frame, turn the data objects into sub-objects of this
-								// FileSource so that they appear in the pipeline viewer.
-								if(interval.contains(dataset()->animationSettings()->time())) {
-									QVector<DataObject*> dataObjects;
-									for(const auto& o : outputState.objects()) {
-										dataObjects.push_back(o);
+								// FileSource so that they appear in the pipeline editor.
+								if(reuseObjects) {
+									QVector<const DataObject*> newDataObjects;
+									for(const DataObject* o : outputState.objects()) {
+										newDataObjects.push_back(o);
 									}
-									_dataObjects.set(this, PROPERTY_FIELD(dataObjects), dataObjects);
+									_dataObjects.set(this, PROPERTY_FIELD(dataObjects), std::move(newDataObjects));
 									setStoredFrameIndex(frame);
 								}
 
 								// Never output the current sub-objects directly to the pipeline; 
-								// always clone them to avoid unwanted side effects.
-								outputState.cloneObjectsIfNeeded(false);
+								// always clone them to avoid unexpected side effects.
+								outputState.makeAllMutableRecursive();
 
 								return outputState;
 							}
@@ -573,7 +571,7 @@ void FileSource::loadFromStream(ObjectLoadStream& stream)
 /******************************************************************************
 * Returns the title of this object.
 ******************************************************************************/
-QString FileSource::objectTitle()
+QString FileSource::objectTitle() const
 {
 	QString filename;
 	int frameIndex = storedFrameIndex();
@@ -618,7 +616,8 @@ bool FileSource::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 			state.clearObjects();
 			for(DataObject* o : dataObjects())
 				state.addObject(o);
-			state.cloneObjectsIfNeeded(false);
+			// Never pass the original data objects to the pipeline. 
+			state.makeAllMutableRecursive();
 			pipelineCache().insert(std::move(state), this);
 			// Also inform the pipeline that we have a new preliminary input state.
 			notifyDependents(ReferenceEvent::PreliminaryStateAvailable);
@@ -631,7 +630,7 @@ bool FileSource::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 /******************************************************************************
 * Creates a copy of this object.
 ******************************************************************************/
-OORef<RefTarget> FileSource::clone(bool deepCopy, CloneHelper& cloneHelper)
+OORef<RefTarget> FileSource::clone(bool deepCopy, CloneHelper& cloneHelper) const
 {
 	// Let the base class create an instance of this class.
 	OORef<FileSource> clone = static_object_cast<FileSource>(CachingPipelineObject::clone(deepCopy, cloneHelper));

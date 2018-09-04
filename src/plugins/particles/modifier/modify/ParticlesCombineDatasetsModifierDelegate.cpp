@@ -20,10 +20,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
-#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
+#include <plugins/particles/objects/BondsObject.h>
 #include <plugins/particles/objects/BondsVis.h>
+#include <core/oo/CloneHelper.h>
+#include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include "ParticlesCombineDatasetsModifierDelegate.h"
 
@@ -36,7 +37,7 @@ IMPLEMENT_OVITO_CLASS(ParticlesCombineDatasetsModifierDelegate);
 ******************************************************************************/
 bool ParticlesCombineDatasetsModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<ParticleProperty>() != nullptr;
+	return input.containsObject<ParticlesObject>();
 }
 
 /******************************************************************************
@@ -49,212 +50,207 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 		throwException(tr("No second dataset has been provided."));
 	const PipelineFlowState& secondaryState = additionalInputs.front();
 
-	ParticleInputHelper pih(dataset(), input);
-	ParticleOutputHelper poh(dataset(), output, modApp);
-
-	// Get the particle positions of secondary set.
-	ParticleProperty* secondaryPosProperty = ParticleProperty::findInState(secondaryState, ParticleProperty::PositionProperty);
-	if(!secondaryPosProperty)
+	// Get the particles from secondary dataset.
+	const ParticlesObject* secondaryParticles = secondaryState.getObject<ParticlesObject>();
+	if(!secondaryParticles)
 		throwException(tr("Second dataset does not contain any particles."));
+	const PropertyObject* secondaryPosProperty = secondaryParticles->expectProperty(ParticlesObject::PositionProperty);
 
 	// Get the positions from the primary dataset.
-	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
+	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
 
-	size_t primaryParticleCount = posProperty->size();
-	size_t secondaryParticleCount = secondaryPosProperty->size();
+	size_t primaryParticleCount = particles->elementCount();
+	size_t secondaryParticleCount = secondaryParticles->elementCount();
 	size_t totalParticleCount = primaryParticleCount + secondaryParticleCount;
+
+	CloneHelper cloneHelper;
 
 	// Extend all property arrays of primary dataset and copy data from secondary set if it contains a matching property.
 	if(secondaryParticleCount != 0) {
-		for(DataObject* obj : output.objects()) {
-			if(OORef<ParticleProperty> prop = dynamic_object_cast<ParticleProperty>(obj)) {
-				if(prop->size() != primaryParticleCount) continue;
+		particles->makePropertiesMutable();
+		for(PropertyObject* prop : particles->properties()) {
+			if(prop->size() != primaryParticleCount) continue;
+			prop->resize(totalParticleCount, true);
 
-				OORef<ParticleProperty> newProperty = poh.cloneIfNeeded(prop.get());
-				newProperty->resize(totalParticleCount, true);
+			// Find corresponding property in second dataset.
+			const PropertyObject* secondProp;
+			if(prop->type() != ParticlesObject::UserProperty)
+				secondProp = secondaryParticles->getProperty(prop->type());
+			else
+				secondProp = secondaryParticles->getProperty(prop->name());
+			if(secondProp && secondProp->size() == secondaryParticleCount && secondProp->componentCount() == prop->componentCount() && secondProp->dataType() == prop->dataType()) {
+				OVITO_ASSERT(prop->stride() == secondProp->stride());
+				memcpy(static_cast<char*>(prop->data()) + prop->stride() * primaryParticleCount, secondProp->constData(), prop->stride() * secondaryParticleCount);
+			}
+
+			// Combine particle types based on their names.
+			if(secondProp && secondProp->elementTypes().empty() == false && prop->componentCount() == 1 && prop->dataType() == PropertyStorage::Int) {
+				std::map<int,int> typeMap;
+				for(const ElementType* type2 : secondProp->elementTypes()) {
+					if(!type2->name().isEmpty()) {
+						const ElementType* type1 = prop->elementType(type2->name());
+						if(type1 == nullptr) {
+							OORef<ElementType> type2clone = cloneHelper.cloneObject(type2, false);
+							type2clone->setId(prop->generateUniqueElementTypeId());
+							prop->addElementType(type2clone);
+							typeMap.insert(std::make_pair(type2->id(), type2clone->id()));
+						}
+						else if(type1->id() != type2->id()) {
+							typeMap.insert(std::make_pair(type2->id(), type1->id()));
+						}
+					}
+					else if(!prop->elementType(type2->id())) {
+						OORef<ElementType> type2clone = cloneHelper.cloneObject(type2, false);
+						prop->addElementType(type2clone);
+						OVITO_ASSERT(type2clone->id() == type2->id());
+					}
+				}
+				// Remap particle property values.
+				if(typeMap.empty() == false) {
+					for(int* p = prop->dataInt() + primaryParticleCount; p != prop->dataInt() + totalParticleCount; ++p) {
+						auto iter = typeMap.find(*p);
+						if(iter != typeMap.end()) *p = iter->second;
+					}
+				}
+			}
+
+			// Assign unique particle and molecule IDs.
+			if(prop->type() == ParticlesObject::IdentifierProperty && primaryParticleCount != 0) {
+				qlonglong maxId = *std::max_element(prop->constDataInt64(), prop->constDataInt64() + primaryParticleCount);
+				std::iota(prop->dataInt64() + primaryParticleCount, prop->dataInt64() + totalParticleCount, maxId+1);
+			}
+			else if(prop->type() == ParticlesObject::MoleculeProperty && primaryParticleCount != 0) {
+				qlonglong maxId = *std::max_element(prop->constDataInt64(), prop->constDataInt64() + primaryParticleCount);
+				for(qlonglong* mol_id = prop->dataInt64() + primaryParticleCount; mol_id != prop->dataInt64() + totalParticleCount; ++mol_id)
+					*mol_id += maxId;
+			}
+		}
+	}
+
+	// Copy particle properties from second dataset which do not exist in the primary dataset yet.
+	for(const PropertyObject* prop : secondaryParticles->properties()) {
+		if(prop->size() != secondaryParticleCount) continue;
+
+		// Check if the property already exists in the output.
+		if(prop->type() != ParticlesObject::UserProperty) {
+			if(particles->getProperty(prop->type()))
+				continue;
+		}
+		else {
+			if(particles->getProperty(prop->name()))
+				continue;
+		}
+
+		// Put the property into the output.
+		OORef<PropertyObject> clonedProperty = cloneHelper.cloneObject(prop, false);
+		clonedProperty->resize(totalParticleCount, true);
+		particles->addProperty(clonedProperty);
+
+		// Shift values of second dataset and reset values of first dataset to zero:
+		if(primaryParticleCount != 0) {
+			memmove(static_cast<char*>(clonedProperty->data()) + clonedProperty->stride() * primaryParticleCount, clonedProperty->constData(), clonedProperty->stride() * secondaryParticleCount);
+			memset(clonedProperty->data(), 0, clonedProperty->stride() * primaryParticleCount);
+		}
+	}
+
+	// Merge bonds.
+	const BondsObject* primaryBonds = particles->bonds();
+	const BondsObject* secondaryBonds = secondaryParticles->bonds();
+	const PropertyObject* primaryBondTopology = primaryBonds ? primaryBonds->getTopology() : nullptr;
+	const PropertyObject* secondaryBondTopology = secondaryBonds ? secondaryBonds->getTopology() : nullptr;
+
+	// Merge bonds if present.
+	if(primaryBondTopology || secondaryBondTopology) {
+		
+		size_t primaryBondCount = primaryBonds ? primaryBonds->elementCount() : 0;
+		size_t secondaryBondCount = secondaryBonds ? secondaryBonds->elementCount() : 0;
+		size_t totalBondCount = primaryBondCount + secondaryBondCount;
+		
+		// Extend all property arrays of primary dataset and copy data from secondary set if it contains a matching property.
+		if(secondaryBondCount != 0) {
+			BondsObject* primaryMutableBonds = particles->makeBondsMutable();
+			primaryMutableBonds->makePropertiesMutable();
+			for(PropertyObject* prop : primaryMutableBonds->properties()) {
+				if(prop->size() != primaryBondCount) continue;
+				prop->resize(totalBondCount, true);
 
 				// Find corresponding property in second dataset.
-				ParticleProperty* secondProp;
-				if(prop->type() != ParticleProperty::UserProperty)
-					secondProp = ParticleProperty::findInState(secondaryState, prop->type());
+				const PropertyObject* secondProp;
+				if(prop->type() != BondsObject::UserProperty)
+					secondProp = secondaryBonds->getProperty(prop->type());
 				else
-					secondProp = ParticleProperty::findInState(secondaryState, prop->name());
-				if(secondProp && secondProp->size() == secondaryParticleCount && secondProp->componentCount() == newProperty->componentCount() && secondProp->dataType() == newProperty->dataType()) {
-					OVITO_ASSERT(newProperty->stride() == secondProp->stride());
-					memcpy(static_cast<char*>(newProperty->data()) + newProperty->stride() * primaryParticleCount, secondProp->constData(), newProperty->stride() * secondaryParticleCount);
+					secondProp = secondaryBonds->getProperty(prop->name());
+				if(secondProp && secondProp->size() == secondaryBondCount && secondProp->componentCount() == prop->componentCount() && secondProp->dataType() == prop->dataType()) {
+					OVITO_ASSERT(prop->stride() == secondProp->stride());
+					memcpy(static_cast<char*>(prop->data()) + prop->stride() * primaryBondCount, secondProp->constData(), prop->stride() * secondaryBondCount);
 				}
 
-				// Combine particle types based on their names.
-				if(secondProp && secondProp->elementTypes().empty() == false && newProperty->componentCount() == 1 && newProperty->dataType() == PropertyStorage::Int) {
+				// Combine bond types based on their names.
+				if(secondProp && secondProp->elementTypes().empty() == false && prop->componentCount() == 1 && prop->dataType() == PropertyStorage::Int) {
 					std::map<int,int> typeMap;
-					for(ElementType* type2 : secondProp->elementTypes()) {
+					for(const ElementType* type2 : secondProp->elementTypes()) {
 						if(!type2->name().isEmpty()) {
-							ElementType* type1 = newProperty->elementType(type2->name());
+							const ElementType* type1 = prop->elementType(type2->name());
 							if(type1 == nullptr) {
-								OORef<ElementType> type2clone = poh.cloneHelper().cloneObject(type2, false);
-								type2clone->setId(newProperty->generateUniqueElementTypeId());
-								newProperty->addElementType(type2clone);															
+								OORef<ElementType> type2clone = cloneHelper.cloneObject(type2, false);
+								type2clone->setId(prop->generateUniqueElementTypeId());
+								prop->addElementType(type2clone);															
 								typeMap.insert(std::make_pair(type2->id(), type2clone->id()));
 							}
 							else if(type1->id() != type2->id()) {
 								typeMap.insert(std::make_pair(type2->id(), type1->id()));
 							}
 						}
-						else if(!newProperty->elementType(type2->id())) {
-							OORef<ElementType> type2clone = poh.cloneHelper().cloneObject(type2, false);
-							newProperty->addElementType(type2clone);
+						else if(!prop->elementType(type2->id())) {
+							OORef<ElementType> type2clone = cloneHelper.cloneObject(type2, false);
+							prop->addElementType(type2clone);
 							OVITO_ASSERT(type2clone->id() == type2->id());
 						}
 					}
-					// Remap particle property values.
+					// Remap bond property values.
 					if(typeMap.empty() == false) {
-						for(int* p = newProperty->dataInt() + primaryParticleCount; p != newProperty->dataInt() + totalParticleCount; ++p) {
+						for(int* p = prop->dataInt() + primaryBondCount; p != prop->dataInt() + totalBondCount; ++p) {
 							auto iter = typeMap.find(*p);
 							if(iter != typeMap.end()) *p = iter->second;
 						}
 					}
 				}
 
-				// Assign unique particle and molecule IDs.
-				if(newProperty->type() == ParticleProperty::IdentifierProperty && primaryParticleCount != 0) {
-					qlonglong maxId = *std::max_element(newProperty->constDataInt64(), newProperty->constDataInt64() + primaryParticleCount);
-					std::iota(newProperty->dataInt64() + primaryParticleCount, newProperty->dataInt64() + totalParticleCount, maxId+1);
-				}
-				else if(newProperty->type() == ParticleProperty::MoleculeProperty && primaryParticleCount != 0) {
-					qlonglong maxId = *std::max_element(newProperty->constDataInt64(), newProperty->constDataInt64() + primaryParticleCount);
-					for(qlonglong* mol_id = newProperty->dataInt64() + primaryParticleCount; mol_id != newProperty->dataInt64() + totalParticleCount; ++mol_id)
-						*mol_id += maxId;
-				}
-			}
-		}
-	}
-
-	// Copy particle properties from second dataset which do not exist in the primary dataset yet.
-	for(DataObject* obj : secondaryState.objects()) {
-		if(OORef<ParticleProperty> prop = dynamic_object_cast<ParticleProperty>(obj)) {
-			if(prop->size() != secondaryParticleCount) continue;
-
-			// Check if the property already exists in the output.
-			if(prop->type() != ParticleProperty::UserProperty) {
-				if(ParticleProperty::findInState(output, prop->type()))
-					continue;
-			}
-			else {
-				if(ParticleProperty::findInState(output, prop->name()))
-					continue;
-			}
-
-			// Put the property into the output.
-			poh.outputObject(prop);
-			OORef<ParticleProperty> newProperty = poh.cloneIfNeeded(prop.get());
-			newProperty->resize(totalParticleCount, true);
-
-			// Shift values of second dataset and reset values of first dataset to zero:
-			if(primaryParticleCount != 0) {
-				memmove(static_cast<char*>(newProperty->data()) + newProperty->stride() * primaryParticleCount, newProperty->constData(), newProperty->stride() * secondaryParticleCount);
-				memset(newProperty->data(), 0, newProperty->stride() * primaryParticleCount);
-			}
-		}
-	}
-
-	// Merge bonds.
-	BondProperty* primaryBondTopology = BondProperty::findInState(output, BondProperty::TopologyProperty);
-	BondProperty* secondaryBondTopology = BondProperty::findInState(secondaryState, BondProperty::TopologyProperty);			
-
-	// Merge bonds if present.
-	if(primaryBondTopology || secondaryBondTopology) {
-		
-		size_t primaryBondCount = primaryBondTopology ? primaryBondTopology->size() : 0;
-		size_t secondaryBondCount = secondaryBondTopology ? secondaryBondTopology->size() : 0;
-		size_t totalBondCount = primaryBondCount + secondaryBondCount;
-		poh.setOutputBondCount(totalBondCount);
-		
-		// Extend all property arrays of primary dataset and copy data from secondary set if it contains a matching property.
-		if(secondaryBondCount != 0) {
-			for(DataObject* obj : output.objects()) {
-				if(OORef<BondProperty> prop = dynamic_object_cast<BondProperty>(obj)) {
-					if(prop->size() != primaryBondCount) continue;
-
-					OORef<BondProperty> newProperty = poh.cloneIfNeeded(prop.get());
-					newProperty->resize(totalBondCount, true);
-
-					// Find corresponding property in second dataset.
-					BondProperty* secondProp;
-					if(prop->type() != BondProperty::UserProperty)
-						secondProp = BondProperty::findInState(secondaryState, prop->type());
-					else
-						secondProp = BondProperty::findInState(secondaryState, prop->name());
-					if(secondProp && secondProp->size() == secondaryBondCount && secondProp->componentCount() == newProperty->componentCount() && secondProp->dataType() == newProperty->dataType()) {
-						OVITO_ASSERT(newProperty->stride() == secondProp->stride());
-						memcpy(static_cast<char*>(newProperty->data()) + newProperty->stride() * primaryBondCount, secondProp->constData(), newProperty->stride() * secondaryBondCount);
-					}
-
-					// Combine bond types based on their names.
-					if(secondProp && secondProp->elementTypes().empty() == false && newProperty->componentCount() == 1 && newProperty->dataType() == PropertyStorage::Int) {
-						std::map<int,int> typeMap;
-						for(ElementType* type2 : secondProp->elementTypes()) {
-							if(!type2->name().isEmpty()) {
-								ElementType* type1 = newProperty->elementType(type2->name());
-								if(type1 == nullptr) {
-									OORef<ElementType> type2clone = poh.cloneHelper().cloneObject(type2, false);
-									type2clone->setId(newProperty->generateUniqueElementTypeId());
-									newProperty->addElementType(type2clone);															
-									typeMap.insert(std::make_pair(type2->id(), type2clone->id()));
-								}
-								else if(type1->id() != type2->id()) {
-									typeMap.insert(std::make_pair(type2->id(), type1->id()));
-								}
-							}
-							else if(!newProperty->elementType(type2->id())) {
-								OORef<ElementType> type2clone = poh.cloneHelper().cloneObject(type2, false);
-								newProperty->addElementType(type2clone);
-								OVITO_ASSERT(type2clone->id() == type2->id());
-							}
-						}
-						// Remap bond property values.
-						if(typeMap.empty() == false) {
-							for(int* p = newProperty->dataInt() + primaryBondCount; p != newProperty->dataInt() + totalBondCount; ++p) {
-								auto iter = typeMap.find(*p);
-								if(iter != typeMap.end()) *p = iter->second;
-							}
-						}
-					}
-
-					// Shift particle indices.
-					if(newProperty->type() == BondProperty::TopologyProperty && primaryParticleCount != 0) {
-						for(size_t i = primaryBondCount; i < totalBondCount; i++) {
-							newProperty->setInt64Component(i, 0, newProperty->getInt64Component(i, 0) + primaryParticleCount);
-							newProperty->setInt64Component(i, 1, newProperty->getInt64Component(i, 1) + primaryParticleCount);
-						}
+				// Shift particle indices.
+				if(prop->type() == BondsObject::TopologyProperty && primaryParticleCount != 0) {
+					for(size_t i = primaryBondCount; i < totalBondCount; i++) {
+						prop->setInt64Component(i, 0, prop->getInt64Component(i, 0) + primaryParticleCount);
+						prop->setInt64Component(i, 1, prop->getInt64Component(i, 1) + primaryParticleCount);
 					}
 				}
 			}
 		}
 
 		// Copy bond properties from second dataset which do not exist in the primary dataset yet.
-		for(DataObject* obj : secondaryState.objects()) {
-			if(OORef<BondProperty> prop = dynamic_object_cast<BondProperty>(obj)) {
+		if(secondaryBonds) {
+			BondsObject* primaryMutableBonds = particles->makeBondsMutable();
+			for(const PropertyObject* prop : secondaryBonds->properties()) {
 				if(prop->size() != secondaryBondCount) continue;
 
 				// Check if the property already exists in the output.
-				if(prop->type() != BondProperty::UserProperty) {
-					if(BondProperty::findInState(output, prop->type()))
+				if(prop->type() != BondsObject::UserProperty) {
+					if(primaryMutableBonds->getProperty(prop->type()))
 						continue;
 				}
 				else {
-					if(BondProperty::findInState(output, prop->name()))
+					if(primaryMutableBonds->getProperty(prop->name()))
 						continue;
 				}
 
 				// Put the property into the output.
-				poh.outputObject(prop);
-				OORef<BondProperty> newProperty = poh.cloneIfNeeded(prop.get());
-				newProperty->resize(totalBondCount, true);
+				OORef<PropertyObject> clonedProperty = cloneHelper.cloneObject(prop, false);
+				clonedProperty->resize(totalBondCount, true);
+				primaryMutableBonds->addProperty(clonedProperty);
 
 				// Shift values of second dataset and reset values of first dataset to zero:
 				if(primaryBondCount != 0) {
-					memmove(static_cast<char*>(newProperty->data()) + newProperty->stride() * primaryBondCount, newProperty->constData(), newProperty->stride() * secondaryBondCount);
-					memset(newProperty->data(), 0, newProperty->stride() * primaryBondCount);
+					memmove(static_cast<char*>(clonedProperty->data()) + clonedProperty->stride() * primaryBondCount, clonedProperty->constData(), clonedProperty->stride() * secondaryBondCount);
+					memset(clonedProperty->data(), 0, clonedProperty->stride() * primaryBondCount);
 				}
 			}
 		}

@@ -151,8 +151,10 @@ private:
 	struct ActiveScriptEngineSetter {
 		ActiveScriptEngineSetter(ScriptEngine* engine) : _previousEngine(std::move(ScriptEngine::_activeEngine)) {
 			ScriptEngine::_activeEngine = engine->shared_from_this();
+			Application::instance()->scriptExecutionStarted();
 		}
 		~ActiveScriptEngineSetter() {
+			Application::instance()->scriptExecutionStopped();
 			ScriptEngine::_activeEngine = std::move(_previousEngine);
 		}
 	private:

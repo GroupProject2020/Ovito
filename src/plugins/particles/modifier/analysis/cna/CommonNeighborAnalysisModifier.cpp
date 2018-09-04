@@ -22,12 +22,12 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/util/NearestNeighborFinder.h>
 #include <plugins/particles/util/CutoffNeighborFinder.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
-#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/BondsObject.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/particles/objects/ParticleBondMap.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/utilities/concurrent/ParallelFor.h>
+#include <core/utilities/units/UnitsManager.h>
 #include <core/dataset/DataSetContainer.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include "CommonNeighborAnalysisModifier.h"
@@ -65,28 +65,29 @@ Future<AsynchronousModifier::ComputeEnginePtr> CommonNeighborAnalysisModifier::c
 		throwException(tr("The number of structure types has changed. Please remove this modifier from the pipeline and insert it again."));
 
 	// Get modifier input.
-	ParticleInputHelper pih(dataset(), input);
-	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
-	SimulationCellObject* simCell = pih.expectSimulationCell();
+	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
+	const SimulationCellObject* simCell = input.expectObject<SimulationCellObject>();
 	if(simCell->is2D())
 		throwException(tr("The CNA modifier does not support 2d simulation cells."));
 
 	// Get particle selection.
 	ConstPropertyPtr selectionProperty;
 	if(onlySelectedParticles())
-		selectionProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty)->storage();
+		selectionProperty = particles->expectProperty(ParticlesObject::SelectionProperty)->storage();
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	if(mode() == AdaptiveCutoffMode) {
-		return std::make_shared<AdaptiveCNAEngine>(input, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty));
+		return std::make_shared<AdaptiveCNAEngine>(particles, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty));
 	}
 	else if(mode() == BondMode) {
-		BondProperty* periodicImagesProperty = BondProperty::findInState(input, BondProperty::PeriodicImageProperty);
-		return std::make_shared<BondCNAEngine>(input, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty), 
-			pih.expectBonds()->storage(), periodicImagesProperty ? periodicImagesProperty->storage() : nullptr);
+		const PropertyObject* topologyProperty = particles->expectBonds()->expectProperty(BondsObject::PeriodicImageProperty);
+		const PropertyObject* periodicImagesProperty = particles->expectBonds()->getProperty(BondsObject::PeriodicImageProperty);
+		return std::make_shared<BondCNAEngine>(particles, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty), 
+			topologyProperty->storage(), periodicImagesProperty ? periodicImagesProperty->storage() : nullptr);
 	}
 	else {
-		return std::make_shared<FixedCNAEngine>(input, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty), cutoff());
+		return std::make_shared<FixedCNAEngine>(particles, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty), cutoff());
 	}
 }
 
@@ -570,12 +571,11 @@ PipelineFlowState CommonNeighborAnalysisModifier::CNAEngine::emitResults(TimePoi
 	PipelineFlowState outState = StructureIdentificationEngine::emitResults(time, modApp, input);
 
 	// Also output structure type counts, which have been computed by the base class.
-	PipelineOutputHelper poh(modApp->dataset(), outState, modApp);
-	poh.outputAttribute(QStringLiteral("CommonNeighborAnalysis.counts.OTHER"), QVariant::fromValue(getTypeCount(OTHER)));
-	poh.outputAttribute(QStringLiteral("CommonNeighborAnalysis.counts.FCC"), QVariant::fromValue(getTypeCount(FCC)));
-	poh.outputAttribute(QStringLiteral("CommonNeighborAnalysis.counts.HCP"), QVariant::fromValue(getTypeCount(HCP)));
-	poh.outputAttribute(QStringLiteral("CommonNeighborAnalysis.counts.BCC"), QVariant::fromValue(getTypeCount(BCC)));
-	poh.outputAttribute(QStringLiteral("CommonNeighborAnalysis.counts.ICO"), QVariant::fromValue(getTypeCount(ICO)));
+	outState.addAttribute(QStringLiteral("CommonNeighborAnalysis.counts.OTHER"), QVariant::fromValue(getTypeCount(OTHER)), modApp);
+	outState.addAttribute(QStringLiteral("CommonNeighborAnalysis.counts.FCC"), QVariant::fromValue(getTypeCount(FCC)), modApp);
+	outState.addAttribute(QStringLiteral("CommonNeighborAnalysis.counts.HCP"), QVariant::fromValue(getTypeCount(HCP)), modApp);
+	outState.addAttribute(QStringLiteral("CommonNeighborAnalysis.counts.BCC"), QVariant::fromValue(getTypeCount(BCC)), modApp);
+	outState.addAttribute(QStringLiteral("CommonNeighborAnalysis.counts.ICO"), QVariant::fromValue(getTypeCount(ICO)), modApp);
 
 	return outState;
 }
@@ -586,8 +586,8 @@ PipelineFlowState CommonNeighborAnalysisModifier::CNAEngine::emitResults(TimePoi
 PipelineFlowState CommonNeighborAnalysisModifier::BondCNAEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	PipelineFlowState output = CNAEngine::emitResults(time, modApp, input);
-	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
-	poh.outputProperty<BondProperty>(cnaIndices());
+	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+	particles->makeMutable(particles->expectBonds())->createProperty(cnaIndices());
 	return output;
 }
 

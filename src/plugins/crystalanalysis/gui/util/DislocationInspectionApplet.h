@@ -149,8 +149,8 @@ private:
 		/// Replaces the contents of this data model.
 		void setContents(const PipelineFlowState& state) {
 			beginResetModel();
-			_dislocationObj = state.findObjectOfType<DislocationNetworkObject>();
-			_patternCatalog = state.findObjectOfType<PatternCatalog>();
+			_dislocationObj = state.getObject<DislocationNetworkObject>();
+			_patternCatalog = state.getObject<PatternCatalog>();
 			endResetModel();
 		}
 

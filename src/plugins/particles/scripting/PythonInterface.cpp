@@ -131,13 +131,13 @@ PYBIND11_MODULE(Particles, m)
 			"(e.g. FCC, BCC, ...) maintaining its own list of known structure types in the :py:attr:`.types` array. "
 		)
 		// Used by ParticlePropertiesView.create(): 
-		.def_static("createStandardProperty", [](DataSet& dataset, size_t particleCount, ParticleProperty::Type type, bool initializeMemory) {
-			return ParticleProperty::createFromStorage(&dataset, ParticleProperty::createStandardStorage(particleCount, type, initializeMemory));
+		.def_static("createStandardProperty", [](DataSet& dataset, size_t particleCount, ParticlesObject::Type type, bool initializeMemory) {
+			return ParticleProperty::createFromStorage(&dataset, ParticlesObject::OOClass().createStandardStorage(particleCount, type, initializeMemory));
 		})
 		.def_static("createUserProperty", [](DataSet& dataset, size_t particleCount, int dataType, size_t componentCount, size_t stride, const QString& name, bool initializeMemory) {
 			return ParticleProperty::createFromStorage(&dataset, std::make_shared<PropertyStorage>(particleCount, dataType, componentCount, stride, name, initializeMemory));
 		})
-		.def_static("standard_property_type_id", [](const QString& name) { return (ParticleProperty::Type)ParticleProperty::OOClass().standardPropertyTypeId(name); })
+		.def_static("standard_property_type_id", [](const QString& name) { return (ParticlesObject::Type)ParticlesObject::OOClass().standardPropertyTypeId(name); })
 		.def_property_readonly("type", &ParticleProperty::type,
 				".. _particle-types-list:"
 				"\n\n"
@@ -199,48 +199,48 @@ PYBIND11_MODULE(Particles, m)
 			  "\n\n"
 			  "Note that the particle types may be stored in arbitrary order in this list. Thus, it is not valid to use a numeric type ID as an index into this list. ");
 
-	py::enum_<ParticleProperty::Type>(ParticleProperty_py, "Type")
-		.value("User", ParticleProperty::UserProperty)
-		.value("ParticleType", ParticleProperty::TypeProperty)
-		.value("Position", ParticleProperty::PositionProperty)
-		.value("Selection", ParticleProperty::SelectionProperty)
-		.value("Color", ParticleProperty::ColorProperty)
-		.value("Displacement", ParticleProperty::DisplacementProperty)
-		.value("DisplacementMagnitude", ParticleProperty::DisplacementMagnitudeProperty)
-		.value("PotentialEnergy", ParticleProperty::PotentialEnergyProperty)
-		.value("KineticEnergy", ParticleProperty::KineticEnergyProperty)
-		.value("TotalEnergy", ParticleProperty::TotalEnergyProperty)
-		.value("Velocity", ParticleProperty::VelocityProperty)
-		.value("Radius", ParticleProperty::RadiusProperty)
-		.value("Cluster", ParticleProperty::ClusterProperty)
-		.value("Coordination", ParticleProperty::CoordinationProperty)
-		.value("StructureType", ParticleProperty::StructureTypeProperty)
-		.value("Identifier", ParticleProperty::IdentifierProperty)
-		.value("StressTensor", ParticleProperty::StressTensorProperty)
-		.value("StrainTensor", ParticleProperty::StrainTensorProperty)
-		.value("DeformationGradient", ParticleProperty::DeformationGradientProperty)
-		.value("Orientation", ParticleProperty::OrientationProperty)
-		.value("Force", ParticleProperty::ForceProperty)
-		.value("Mass", ParticleProperty::MassProperty)
-		.value("Charge", ParticleProperty::ChargeProperty)
-		.value("PeriodicImage", ParticleProperty::PeriodicImageProperty)
-		.value("Transparency", ParticleProperty::TransparencyProperty)
-		.value("DipoleOrientation", ParticleProperty::DipoleOrientationProperty)
-		.value("DipoleMagnitude", ParticleProperty::DipoleMagnitudeProperty)
-		.value("AngularVelocity", ParticleProperty::AngularVelocityProperty)
-		.value("AngularMomentum", ParticleProperty::AngularMomentumProperty)
-		.value("Torque", ParticleProperty::TorqueProperty)
-		.value("Spin", ParticleProperty::SpinProperty)
-		.value("CentroSymmetry", ParticleProperty::CentroSymmetryProperty)
-		.value("VelocityMagnitude", ParticleProperty::VelocityMagnitudeProperty)
-		.value("Molecule", ParticleProperty::MoleculeProperty)
-		.value("AsphericalShape", ParticleProperty::AsphericalShapeProperty)
-		.value("VectorColor", ParticleProperty::VectorColorProperty)
-		.value("ElasticStrainTensor", ParticleProperty::ElasticStrainTensorProperty)
-		.value("ElasticDeformationGradient", ParticleProperty::ElasticDeformationGradientProperty)
+	py::enum_<ParticlesObject::Type>(ParticleProperty_py, "Type")
+		.value("User", ParticlesObject::UserProperty)
+		.value("ParticleType", ParticlesObject::TypeProperty)
+		.value("Position", ParticlesObject::PositionProperty)
+		.value("Selection", ParticlesObject::SelectionProperty)
+		.value("Color", ParticlesObject::ColorProperty)
+		.value("Displacement", ParticlesObject::DisplacementProperty)
+		.value("DisplacementMagnitude", ParticlesObject::DisplacementMagnitudeProperty)
+		.value("PotentialEnergy", ParticlesObject::PotentialEnergyProperty)
+		.value("KineticEnergy", ParticlesObject::KineticEnergyProperty)
+		.value("TotalEnergy", ParticlesObject::TotalEnergyProperty)
+		.value("Velocity", ParticlesObject::VelocityProperty)
+		.value("Radius", ParticlesObject::RadiusProperty)
+		.value("Cluster", ParticlesObject::ClusterProperty)
+		.value("Coordination", ParticlesObject::CoordinationProperty)
+		.value("StructureType", ParticlesObject::StructureTypeProperty)
+		.value("Identifier", ParticlesObject::IdentifierProperty)
+		.value("StressTensor", ParticlesObject::StressTensorProperty)
+		.value("StrainTensor", ParticlesObject::StrainTensorProperty)
+		.value("DeformationGradient", ParticlesObject::DeformationGradientProperty)
+		.value("Orientation", ParticlesObject::OrientationProperty)
+		.value("Force", ParticlesObject::ForceProperty)
+		.value("Mass", ParticlesObject::MassProperty)
+		.value("Charge", ParticlesObject::ChargeProperty)
+		.value("PeriodicImage", ParticlesObject::PeriodicImageProperty)
+		.value("Transparency", ParticlesObject::TransparencyProperty)
+		.value("DipoleOrientation", ParticlesObject::DipoleOrientationProperty)
+		.value("DipoleMagnitude", ParticlesObject::DipoleMagnitudeProperty)
+		.value("AngularVelocity", ParticlesObject::AngularVelocityProperty)
+		.value("AngularMomentum", ParticlesObject::AngularMomentumProperty)
+		.value("Torque", ParticlesObject::TorqueProperty)
+		.value("Spin", ParticlesObject::SpinProperty)
+		.value("CentroSymmetry", ParticlesObject::CentroSymmetryProperty)
+		.value("VelocityMagnitude", ParticlesObject::VelocityMagnitudeProperty)
+		.value("Molecule", ParticlesObject::MoleculeProperty)
+		.value("AsphericalShape", ParticlesObject::AsphericalShapeProperty)
+		.value("VectorColor", ParticlesObject::VectorColorProperty)
+		.value("ElasticStrainTensor", ParticlesObject::ElasticStrainTensorProperty)
+		.value("ElasticDeformationGradient", ParticlesObject::ElasticDeformationGradientProperty)
 		.value("Rotation", ParticleProperty::RotationProperty)
 		.value("StretchTensor", ParticleProperty::StretchTensorProperty)
-		.value("MoleculeType", ParticleProperty::MoleculeTypeProperty)
+		.value("MoleculeType", ParticlesObject::MoleculeTypeProperty)
 	;								
 
 	py::class_<ParticleBondMap>(m, "BondsEnumerator",
@@ -261,8 +261,8 @@ PYBIND11_MODULE(Particles, m)
 		// Factory function:
 		.def(py::init([](py::object data_collection) {
 				// Get the 'Topology' and the 'Periodic image' bond propertie from the data collection:
-				py::object topologyPropertyName = py::cast(BondProperty::OOClass().standardPropertyName(BondProperty::TopologyProperty));
-				py::object pbcShiftPropertyName = py::cast(BondProperty::OOClass().standardPropertyName(BondProperty::PeriodicImageProperty));
+				py::object topologyPropertyName = py::cast(BondProperty::OOClass().standardPropertyName(BondsObject::TopologyProperty));
+				py::object pbcShiftPropertyName = py::cast(BondProperty::OOClass().standardPropertyName(BondsObject::PeriodicImageProperty));
 
 				py::object DataCollection = py::module::import("ovito.data").attr("DataCollection");
 				py::object BondsView = py::module::import("ovito.data").attr("BondsView");
@@ -519,13 +519,13 @@ PYBIND11_MODULE(Particles, m)
 			"Note that the topological definition of bonds, i.e. the connectivity between particles, is stored "
 			"in the :py:class:`!BondProperty` named ``Topology``. ")
 		// Used by BondPropertiesView.create():
-		.def_static("createStandardProperty", [](DataSet& dataset, size_t bondCount, BondProperty::Type type, bool initializeMemory) {
-			return BondProperty::createFromStorage(&dataset, BondProperty::createStandardStorage(bondCount, type, initializeMemory));
+		.def_static("createStandardProperty", [](DataSet& dataset, size_t bondCount, BondsObject::Type type, bool initializeMemory) {
+			return BondProperty::createFromStorage(&dataset, BondsObject::OOClass().createStandardStorage(bondCount, type, initializeMemory));
 		})
 		.def_static("createUserProperty", [](DataSet& dataset, size_t bondCount, int dataType, size_t componentCount, size_t stride, const QString& name, bool initializeMemory) {
 			return BondProperty::createFromStorage(&dataset, std::make_shared<PropertyStorage>(bondCount, dataType, componentCount, stride, name, initializeMemory));
 		})
-		.def_static("standard_property_type_id", [](const QString& name) { return (BondProperty::Type)BondProperty::OOClass().standardPropertyTypeId(name); })
+		.def_static("standard_property_type_id", [](const QString& name) { return (BondsObject::Type)BondProperty::OOClass().standardPropertyTypeId(name); })
 		.def_property_readonly("type", &BondProperty::type, 
 				".. _bond-types-list:"
 				"\n\n"
@@ -554,15 +554,15 @@ PYBIND11_MODULE(Particles, m)
 			  "\n\n"
 			  "Note that the bond types may be stored in arbitrary order in this type list.");
 
-	py::enum_<BondProperty::Type>(BondProperty_py, "Type")
+	py::enum_<BondsObject::Type>(BondProperty_py, "Type")
 		.value("User", BondProperty::UserProperty)
-		.value("BondType", BondProperty::TypeProperty)
-		.value("Selection", BondProperty::SelectionProperty)
-		.value("Color", BondProperty::ColorProperty)
+		.value("BondType", BondsObject::TypeProperty)
+		.value("Selection", BondsObject::SelectionProperty)
+		.value("Color", BondsObject::ColorProperty)
 		.value("Length", BondProperty::LengthProperty)
-		.value("Topology", BondProperty::TopologyProperty)
-		.value("PeriodicImage", BondProperty::PeriodicImageProperty)
-		.value("Transparency", BondProperty::TransparencyProperty)
+		.value("Topology", BondsObject::TopologyProperty)
+		.value("PeriodicImage", BondsObject::PeriodicImageProperty)
+		.value("Transparency", BondsObject::TransparencyProperty)
 	;
 
 	ovito_class<BondType, ElementType>(m,

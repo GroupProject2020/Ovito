@@ -59,7 +59,7 @@ const PipelineFlowState& PipelineCache::getAt(TimePoint time) const
 * The cache may decide not to cache the state, in which case the method returns 
 * false.
 ******************************************************************************/
-bool PipelineCache::insert(PipelineFlowState state, RefTarget* ownerObject)
+bool PipelineCache::insert(PipelineFlowState state, const RefTarget* ownerObject)
 {
 	if(state.stateValidity().contains(ownerObject->dataset()->animationSettings()->time()))
 		_currentAnimState = state;
@@ -73,7 +73,7 @@ bool PipelineCache::insert(PipelineFlowState state, RefTarget* ownerObject)
 * Depending on the given state validity interval, the cache may decide not to 
 * cache the state, in which case the method returns false.
 ******************************************************************************/
-bool PipelineCache::insert(Future<PipelineFlowState>& stateFuture, const TimeInterval& validityInterval, RefTarget* ownerObject)
+bool PipelineCache::insert(Future<PipelineFlowState>& stateFuture, const TimeInterval& validityInterval, const RefTarget* ownerObject)
 {
 	// Wait for computation to complete, then cache the results.
 	stateFuture = stateFuture.then(ownerObject->executor(), [this, ownerObject](PipelineFlowState&& state) {

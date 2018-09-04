@@ -68,13 +68,13 @@ VectorVis::VectorVis(DataSet* dataset) : DataVis(dataset),
 /******************************************************************************
 * Computes the bounding box of the object.
 ******************************************************************************/
-Box3 VectorVis::boundingBox(TimePoint time, const std::vector<DataObject*>& objectStack, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
+Box3 VectorVis::boundingBox(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
 	if(objectStack.size() < 2) return {};
-	ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(objectStack[objectStack.size()-2]);
+	const ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(objectStack[objectStack.size()-2]);
 	if(!particles) return {};
-	ParticleProperty* vectorProperty = dynamic_object_cast<ParticleProperty>(objectStack.back());
-	ParticleProperty* positionProperty = static_object_cast<ParticleProperty>(particles->getProperty(ParticleProperty::PositionProperty));
+	const PropertyObject* vectorProperty = dynamic_object_cast<PropertyObject>(objectStack.back());
+	const PropertyObject* positionProperty = particles->getProperty(ParticlesObject::PositionProperty);
 	if(vectorProperty && (vectorProperty->dataType() != PropertyStorage::Float || vectorProperty->componentCount() != 3))
 		vectorProperty = nullptr;
 
@@ -104,12 +104,12 @@ Box3 VectorVis::boundingBox(TimePoint time, const std::vector<DataObject*>& obje
 /******************************************************************************
 * Computes the bounding box of the arrows.
 ******************************************************************************/
-Box3 VectorVis::arrowBoundingBox(ParticleProperty* vectorProperty, ParticleProperty* positionProperty)
+Box3 VectorVis::arrowBoundingBox(const PropertyObject* vectorProperty, const PropertyObject* positionProperty) const
 {
 	if(!positionProperty || !vectorProperty)
 		return Box3();
 
-	OVITO_ASSERT(positionProperty->type() == ParticleProperty::PositionProperty);
+	OVITO_ASSERT(positionProperty->type() == ParticlesObject::PositionProperty);
 	OVITO_ASSERT(vectorProperty->dataType() == PropertyStorage::Float);
 	OVITO_ASSERT(vectorProperty->componentCount() == 3);
 
@@ -138,7 +138,7 @@ Box3 VectorVis::arrowBoundingBox(ParticleProperty* vectorProperty, ParticlePrope
 /******************************************************************************
 * Lets the visualization element render the data object.
 ******************************************************************************/
-void VectorVis::render(TimePoint time, const std::vector<DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
+void VectorVis::render(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, const PipelineSceneNode* contextNode)
 {
 	if(renderer->isBoundingBoxPass()) {
 		TimeInterval validityInterval;
@@ -148,13 +148,13 @@ void VectorVis::render(TimePoint time, const std::vector<DataObject*>& objectSta
 	
 	// Get input data.
 	if(objectStack.size() < 2) return;
-	ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(objectStack[objectStack.size()-2]);
+	const ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(objectStack[objectStack.size()-2]);
 	if(!particles) return;
-	ParticleProperty* vectorProperty = dynamic_object_cast<ParticleProperty>(objectStack.back());
-	ParticleProperty* positionProperty = static_object_cast<ParticleProperty>(particles->getProperty(ParticleProperty::PositionProperty));
+	const PropertyObject* vectorProperty = dynamic_object_cast<PropertyObject>(objectStack.back());
+	const PropertyObject* positionProperty = particles->getProperty(ParticlesObject::PositionProperty);
 	if(vectorProperty && (vectorProperty->dataType() != PropertyStorage::Float || vectorProperty->componentCount() != 3))
 		vectorProperty = nullptr;
-	ParticleProperty* vectorColorProperty = static_object_cast<ParticleProperty>(particles->getProperty(ParticleProperty::VectorColorProperty));
+	const PropertyObject* vectorColorProperty = particles->getProperty(ParticlesObject::VectorColorProperty);
 
 	// Make sure we don't exceed our internal limits.
 	if(vectorProperty && vectorProperty->size() > (size_t)std::numeric_limits<int>::max()) {

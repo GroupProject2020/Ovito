@@ -96,44 +96,6 @@ private:
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(DislocationVis, dislocationVis, setDislocationVis, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE);
 };
 
-#if 0
-/**
- * \brief The type of ModifierApplication created for a PolyhedralTemplateMatchingModifier 
- *        when it is inserted into in a data pipeline. It stores the last computation results
- *        so that they can be displayed in the modifier's user interface.
- */
-class OVITO_PARTICLES_EXPORT DislocationAnalysisModifierApplication : public StructureIdentificationModifierApplication
-{
-	Q_OBJECT
-	OVITO_CLASS(DislocationAnalysisModifierApplication)
-
-public:
-
-	/// Constructor.
-	Q_INVOKABLE DislocationAnalysisModifierApplication(DataSet* dataset) : StructureIdentificationModifierApplication(dataset) {}
-
-	/// Returns the number of segments found per dislocation type.
-	const std::map<BurgersVectorFamily*,int>& segmentCounts() const { return _segmentCounts; }
-	
-	/// Returns the total length of segments found per dislocation type.
-	const std::map<BurgersVectorFamily*,FloatType>& dislocationLengths() const { return _dislocationLengths; }
-
-	void setResults(std::map<BurgersVectorFamily*,int> segmentCounts, std::map<BurgersVectorFamily*,FloatType> dislocationLengths) {
-		_segmentCounts = std::move(segmentCounts);
-		_dislocationLengths = std::move(dislocationLengths);
-		notifyDependents(ReferenceEvent::ObjectStatusChanged);
-	}
-	 
-private:
- 
-	/// The number of segments found per dislocation type.
-	std::map<BurgersVectorFamily*,int> _segmentCounts;
-	
-	/// The total length of segments found per dislocation type.
-	std::map<BurgersVectorFamily*,FloatType> _dislocationLengths;
-};
-#endif
-
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace

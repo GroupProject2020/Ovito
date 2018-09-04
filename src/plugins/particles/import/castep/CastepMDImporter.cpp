@@ -167,11 +167,11 @@ FileSourceImporter::FrameDataPtr CastepMDImporter::FrameLoader::loadFile(QFile& 
 	frameData->simulationCell().setMatrix(cell);
 
 	// Create the particle properties.
-	PropertyPtr posProperty = ParticleProperty::createStandardStorage(coords.size(), ParticleProperty::PositionProperty, false);
+	PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(coords.size(), ParticlesObject::PositionProperty, false);
 	frameData->addParticleProperty(posProperty);
 	std::copy(coords.begin(), coords.end(), posProperty->dataPoint3());
 	
-	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(types.size(), ParticleProperty::TypeProperty, false);
+	PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(types.size(), ParticlesObject::TypeProperty, false);
 	frameData->addParticleProperty(typeProperty);
 	std::copy(types.begin(), types.end(), typeProperty->dataInt());
 
@@ -182,12 +182,12 @@ FileSourceImporter::FrameDataPtr CastepMDImporter::FrameLoader::loadFile(QFile& 
 	frameData->setPropertyTypesList(typeProperty, std::move(typeList));
 
 	if(velocities.size() == coords.size()) {
-		PropertyPtr velocityProperty = ParticleProperty::createStandardStorage(velocities.size(), ParticleProperty::VelocityProperty, false);
+		PropertyPtr velocityProperty = ParticlesObject::OOClass().createStandardStorage(velocities.size(), ParticlesObject::VelocityProperty, false);
 		frameData->addParticleProperty(velocityProperty);
 		std::copy(velocities.begin(), velocities.end(), velocityProperty->dataVector3());
 	}
 	if(forces.size() == coords.size()) {
-		PropertyPtr forceProperty = ParticleProperty::createStandardStorage(forces.size(), ParticleProperty::ForceProperty, false);
+		PropertyPtr forceProperty = ParticlesObject::OOClass().createStandardStorage(forces.size(), ParticlesObject::ForceProperty, false);
 		frameData->addParticleProperty(forceProperty);
 		std::copy(forces.begin(), forces.end(), forceProperty->dataVector3());
 	}

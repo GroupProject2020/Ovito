@@ -68,7 +68,10 @@ void SpatialBinningModifierEditor::createUI(const RolloutInsertionParameters& ro
 	sublayout->addWidget(sourcePropertyUI->comboBox());
 	connect(this, &PropertiesEditor::contentsChanged, this, [sourcePropertyUI](RefTarget* editObject) {
 		SpatialBinningModifier* modifier = static_object_cast<SpatialBinningModifier>(editObject);
-		sourcePropertyUI->setPropertyClass((modifier && modifier->delegate()) ? &modifier->delegate()->propertyClass() : nullptr);
+        if(modifier && modifier->delegate())
+    		sourcePropertyUI->setContainerRef(modifier->delegate()->subject());
+        else
+    		sourcePropertyUI->setContainerRef({});
 	});
 	BooleanParameterUI* onlySelectedUI = new BooleanParameterUI(this, PROPERTY_FIELD(SpatialBinningModifier::onlySelectedElements));
 	sublayout->addWidget(onlySelectedUI->checkBox());
@@ -166,17 +169,11 @@ void SpatialBinningModifierEditor::createUI(const RolloutInsertionParameters& ro
 	layout->addWidget(statusLabel());
 
 	connect(this, &SpatialBinningModifierEditor::contentsChanged, this, &SpatialBinningModifierEditor::updateWidgets);
-}
 
-/******************************************************************************
-* This method is called when a reference target changes.
-******************************************************************************/
-bool SpatialBinningModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
-{
-	if(source == modifierApplication() && event.type() == ReferenceEvent::PipelineCacheUpdated) {
+	// Update data plot whenever the modifier has calculated new results.
+	connect(this, &ModifierPropertiesEditor::modifierEvaluated, this, [this]() {
 		plotLater(this);
-	}
-	return ModifierPropertiesEditor::referenceEvent(source, event);
+	});    
 }
 
 /******************************************************************************
@@ -184,14 +181,20 @@ bool SpatialBinningModifierEditor::referenceEvent(RefTarget* source, const Refer
 ******************************************************************************/
 void SpatialBinningModifierEditor::plotData()
 {
-	// Request the modifier's pipeline output.
-	const PipelineFlowState& state = getModifierOutput();
+    if(modifierApplication()) {
+        // Request the modifier's pipeline output.
+        const PipelineFlowState& state = getModifierOutput();
 
-	// Look up the data series in the modifier's pipeline output.
-	DataSeriesObject* series = state.findObject<DataSeriesObject>(QStringLiteral("binning"), modifierApplication());
+        // Look up the data series in the modifier's pipeline output.
+        const DataSeriesObject* series = state.getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("binning"));
 
-    // Hand data over to plotting widget.
-	_plot->setSeries(series, state);
+        // Hand data over to plotting widget.
+        _plot->setSeries(series);
+    }
+    else {
+        // Reset plot widget.
+        _plot->reset();
+    }
 
 #if 0
 	SpatialBinningModifier* modifier = static_object_cast<SpatialBinningModifier>(editObject());

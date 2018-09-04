@@ -240,9 +240,9 @@ FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile(QFile& fi
 		isCartesian = true;
 
 	// Create the particle properties.
-	PropertyPtr posProperty = ParticleProperty::createStandardStorage(totalAtomCount, ParticleProperty::PositionProperty, false);
+	PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(totalAtomCount, ParticlesObject::PositionProperty, false);
 	frameData->addParticleProperty(posProperty);
-	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(totalAtomCount, ParticleProperty::TypeProperty, false);
+	PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(totalAtomCount, ParticlesObject::TypeProperty, false);
 	frameData->addParticleProperty(typeProperty);
 	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
 	
@@ -280,7 +280,7 @@ FileSourceImporter::FrameDataPtr POSCARImporter::FrameLoader::loadFile(QFile& fi
 				isCartesian = true;
 
 			// Read atomic velocities.
-			PropertyPtr velocityProperty = ParticleProperty::createStandardStorage(totalAtomCount, ParticleProperty::VelocityProperty, false);
+			PropertyPtr velocityProperty = ParticlesObject::OOClass().createStandardStorage(totalAtomCount, ParticlesObject::VelocityProperty, false);
 			frameData->addParticleProperty(velocityProperty);
 			Vector3* v = velocityProperty->dataVector3();
 			for(int atype = 1; atype <= atomCounts.size(); atype++) {

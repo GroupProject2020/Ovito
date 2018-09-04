@@ -43,7 +43,7 @@ class ParticlesSliceModifierDelegate : public SliceModifierDelegate
 		
 		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
 		virtual bool isApplicableTo(const PipelineFlowState& input) const override {
-			return input.findObjectOfType<ParticlesObject>() != nullptr;
+			return input.containsObject<ParticlesObject>();
 		}
 
 		/// The name by which Python scripts can refer to this modifier delegate.

@@ -22,9 +22,8 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
 #include <plugins/mesh/surface/SurfaceMeshVis.h>
-#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/particles/objects/ParticleBondMap.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <core/dataset/DataSet.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
@@ -53,7 +52,10 @@ CoordinationPolyhedraModifier::CoordinationPolyhedraModifier(DataSet* dataset) :
 ******************************************************************************/
 bool CoordinationPolyhedraModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<ParticleProperty>() && input.findObjectOfType<BondProperty>();
+	if(const ParticlesObject* particles = input.getObject<ParticlesObject>()) {
+		return particles->bonds() != nullptr;
+	}
+	return false;
 }
 
 /******************************************************************************
@@ -63,13 +65,13 @@ bool CoordinationPolyhedraModifier::OOMetaClass::isApplicableTo(const PipelineFl
 Future<AsynchronousModifier::ComputeEnginePtr> CoordinationPolyhedraModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get modifier input.
-	ParticleInputHelper ph(dataset(), input);
-	ParticleProperty* posProperty = ph.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
-	ParticleProperty* typeProperty = ph.inputStandardProperty<ParticleProperty>(ParticleProperty::TypeProperty);
-	ParticleProperty* selectionProperty = ph.inputStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty);
-	BondProperty* topologyProperty = ph.expectBonds();
-	BondProperty* bondPeriodicImagesProperty = ph.inputStandardProperty<BondProperty>(BondProperty::PeriodicImageProperty);
-	SimulationCellObject* simCell = ph.expectSimulationCell();
+	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
+	const PropertyObject* typeProperty = particles->getProperty(ParticlesObject::TypeProperty);
+	const PropertyObject* selectionProperty = particles->getProperty(ParticlesObject::SelectionProperty);
+	const PropertyObject* topologyProperty = particles->expectBondsTopology();
+	const PropertyObject* bondPeriodicImagesProperty = particles->bonds()->getProperty(BondsObject::PeriodicImageProperty);
+	const SimulationCellObject* simCell = input.expectObject<SimulationCellObject>();
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	return std::make_shared<ComputePolyhedraEngine>(
@@ -310,13 +312,10 @@ PipelineFlowState CoordinationPolyhedraModifier::ComputePolyhedraEngine::emitRes
 	PipelineFlowState output = input;
 
 	// Create the output data object.
-	OORef<SurfaceMesh> meshObj(new SurfaceMesh(modApp->dataset()));
+	SurfaceMesh* meshObj = output.createObject<SurfaceMesh>(QStringLiteral("coordination_polyhedra"), modApp);
 	meshObj->setStorage(mesh());
-	meshObj->setDomain(input.findObjectOfType<SimulationCellObject>());
+	meshObj->setDomain(input.getObject<SimulationCellObject>());
 	meshObj->setVisElement(modifier->surfaceMeshVis());
-
-	// Insert data object into the output data collection.
-	output.addObject(meshObj);
 
 	return output;
 }

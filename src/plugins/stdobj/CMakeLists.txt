@@ -27,16 +27,13 @@ SET(SourceFiles
 	simcell/PeriodicDomainDataObject.cpp
 	properties/PropertyStorage.cpp
 	properties/PropertyObject.cpp
-	properties/PropertyClass.cpp
 	properties/PropertyReference.cpp
+	properties/PropertyContainerClass.cpp
 	properties/PropertyContainer.cpp
 	properties/ElementType.cpp
 	properties/GenericPropertyModifier.cpp
 	properties/PropertyExpressionEvaluator.cpp
 	series/DataSeriesObject.cpp
-	series/DataSeriesProperty.cpp
-	util/InputHelper.cpp
-	util/OutputHelper.cpp
 	util/ElementSelectionSet.cpp
 )
 

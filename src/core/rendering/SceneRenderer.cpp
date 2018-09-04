@@ -131,8 +131,8 @@ bool SceneRenderer::renderNode(SceneNode* node, const PromiseBase& promise)
 												pipeline->evaluatePipelinePreliminary(true);
 
 			// Invoke all vis elements of all data objects in the pipeline state.
-			std::vector<DataObject*> objectStack;
-			for(DataObject* dataObj : state.objects()) {
+			std::vector<const DataObject*> objectStack;
+			for(const DataObject* dataObj : state.objects()) {
 				renderDataObject(dataObj, pipeline, state, objectStack);
 			}
 			OVITO_ASSERT(objectStack.empty());
@@ -156,7 +156,7 @@ bool SceneRenderer::renderNode(SceneNode* node, const PromiseBase& promise)
 /******************************************************************************
 * Renders a data object and all its sub-objects.
 ******************************************************************************/
-void SceneRenderer::renderDataObject(DataObject* dataObj, PipelineSceneNode* pipeline, const PipelineFlowState& state, std::vector<DataObject*>& objectStack)
+void SceneRenderer::renderDataObject(const DataObject* dataObj, const PipelineSceneNode* pipeline, const PipelineFlowState& state, std::vector<const DataObject*>& objectStack)
 {
 	bool isOnStack = false;
 
@@ -176,34 +176,15 @@ void SceneRenderer::renderDataObject(DataObject* dataObj, PipelineSceneNode* pip
 	}
 
 	// Recursively visit the sub-objects of the data object and render them as well.
-	for(const PropertyFieldDescriptor* field : dataObj->getOOMetaClass().propertyFields()) {
-		if(field->isReferenceField() && !field->isWeakReference() && field->targetClass()->isDerivedFrom(DataObject::OOClass()) && !field->flags().testFlag(PROPERTY_FIELD_NO_SUB_ANIM)) {
-			if(!field->isVector()) {
-				RefTarget* target = dataObj->getReferenceField(*field);
-				if(DataObject* subObject = static_object_cast<DataObject>(target)) {
-					// Push the data object onto the stack.
-					if(!isOnStack) {
-						objectStack.push_back(dataObj);
-						isOnStack = true;
-					}
-					renderDataObject(subObject, pipeline, state, objectStack);
-				}
-			}
-			else {
-				const QVector<RefTarget*>& list = dataObj->getVectorReferenceField(*field);
-				for(RefTarget* target : list) {
-					if(DataObject* subObject = static_object_cast<DataObject>(target)) {
-						// Push the data object onto the stack.
-						if(!isOnStack) {
-							objectStack.push_back(dataObj);
-							isOnStack = true;
-						}
-						renderDataObject(subObject, pipeline, state, objectStack);
-					}
-				}
-			}
+	dataObj->visitSubObjects([&](const DataObject* subObject) {
+		// Push the data object onto the stack.
+		if(!isOnStack) {
+			objectStack.push_back(dataObj);
+			isOnStack = true;
 		}
-	}	
+		renderDataObject(subObject, pipeline, state, objectStack);
+		return false;
+	});
 
 	// Pop the data object from the stack.
 	if(isOnStack) {

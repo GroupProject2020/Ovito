@@ -20,8 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
-#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
+#include <plugins/particles/objects/BondsObject.h>
 #include <core/utilities/concurrent/TaskManager.h>
 #include <core/dataset/scene/PipelineSceneNode.h>
 #include <core/dataset/scene/SelectionSet.h>
@@ -68,25 +68,21 @@ bool ParticleExporter::getParticleData(SceneNode* sceneNode, TimePoint time, Pip
 	if(state.isEmpty())
 		throwException(tr("The data collection to be exported is empty."));
 
-	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
-	if(!posProperty)
+	const ParticlesObject* particles = state.getObject<ParticlesObject>();
+	if(!particles || !particles->getProperty(ParticlesObject::PositionProperty))
 		throwException(tr("The selected data collection does not contain any particles that can be exported."));
-
+	
 	// Verify data, make sure array length is consistent for all particle properties.
-	for(DataObject* obj : state.objects()) {
-		if(ParticleProperty* p = dynamic_object_cast<ParticleProperty>(obj)) {
-			if(p->size() != posProperty->size())
-				throwException(tr("Data produced by pipeline is invalid. The array size is not the same for all particle properties."));
-		}
+	for(const PropertyObject* p : particles->properties()) {
+		if(p->size() != particles->elementCount())
+			throwException(tr("Data produced by pipeline is invalid. The array size is not the same for all particle properties."));
 	}
 
 	// Verify data, make sure array length is consistent for all bond properties.
-	if(BondProperty* bondTopologyProperty = BondProperty::findInState(state, BondProperty::TopologyProperty)) {
-		for(DataObject* obj : state.objects()) {
-			if(BondProperty* p = dynamic_object_cast<BondProperty>(obj)) {
-				if(p->size() != bondTopologyProperty->size())
-					throwException(tr("Data produced by pipeline is invalid. The array size of some bond properties is not consistent with the number of bonds."));
-			}
+	if(particles->bonds()) {
+		for(const PropertyObject* p : particles->bonds()->properties()) {
+			if(p->size() != particles->bonds()->elementCount())
+				throwException(tr("Data produced by pipeline is invalid. The array size of some bond properties is not consistent with the number of bonds."));
 		}
 	}
 

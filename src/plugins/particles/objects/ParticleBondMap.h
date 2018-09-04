@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/BondsObject.h>
 
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/range/iterator_range.hpp>
@@ -101,7 +101,10 @@ public:
 public:
 
 	/// Initializes the helper class.
-	ParticleBondMap(ConstPropertyPtr bondTopology, ConstPropertyPtr bondPeriodicImages = {});
+	ParticleBondMap(ParticlesObject* particles);
+
+	/// Initializes the helper class.
+	ParticleBondMap(ConstPropertyPtr bondTopology, ConstPropertyPtr bondPeriodicImages = nullptr);
 
 	/// Returns an iterator range over the indices of the bonds adjacent to the given particle.
 	/// Returns real indices into the bonds list. Note that bonds can point away from and to the given particle.

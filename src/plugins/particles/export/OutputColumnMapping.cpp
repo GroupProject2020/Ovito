@@ -82,12 +82,14 @@ void OutputColumnMapping::fromByteArray(const QByteArray& array)
 OutputColumnWriter::OutputColumnWriter(const OutputColumnMapping& mapping, const PipelineFlowState& source, bool writeTypeNames)
 	: _mapping(mapping), _source(source), _writeTypeNames(writeTypeNames)
 {
+	const ParticlesObject* particles = source.expectObject<ParticlesObject>();
+
 	// Gather the source properties.
 	for(int i = 0; i < (int)mapping.size(); i++) {
 		const ParticlePropertyReference& pref = mapping[i];
 
-		ParticleProperty* property = pref.findInState(source);
-		if(property == nullptr && pref.type() != ParticleProperty::IdentifierProperty) {
+		const PropertyObject* property = pref.findInContainer(particles);
+		if(property == nullptr && pref.type() != ParticlesObject::IdentifierProperty) {
 			throw Exception(tr("The set of output data columns is invalid (column %1). "
 			                   "The property '%2' does not exist.").arg(i+1).arg(pref.name()));
 		}
@@ -109,20 +111,20 @@ OutputColumnWriter::OutputColumnWriter(const OutputColumnMapping& mapping, const
  *****************************************************************************/
 void OutputColumnWriter::writeParticle(size_t particleIndex, CompressedTextWriter& stream)
 {
-	QVector<ParticleProperty*>::const_iterator property = _properties.constBegin();
+	QVector<const PropertyObject*>::const_iterator property = _properties.constBegin();
 	QVector<int>::const_iterator vcomp = _vectorComponents.constBegin();
 	for(; property != _properties.constEnd(); ++property, ++vcomp) {
 		if(property != _properties.constBegin()) stream << ' ';
 		if(*property) {
 			if((*property)->dataType() == PropertyStorage::Int) {
-				if(!_writeTypeNames || (*property)->type() != ParticleProperty::TypeProperty) {
+				if(!_writeTypeNames || (*property)->type() != ParticlesObject::TypeProperty) {
 					stream << (*property)->getIntComponent(particleIndex, *vcomp);
 				}
 				else {
 					// Write type name instead of type number.
 					// Replace spaces in the name with underscores.
 					int particleTypeId = (*property)->getIntComponent(particleIndex, *vcomp);
-					ElementType* type = (*property)->elementType(particleTypeId);
+					const ElementType* type = (*property)->elementType(particleTypeId);
 					if(type && !type->name().isEmpty()) {
 						QString s = type->name();
 						stream << s.replace(QChar(' '), QChar('_'));

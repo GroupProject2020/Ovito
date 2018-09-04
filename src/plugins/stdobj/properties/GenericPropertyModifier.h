@@ -24,7 +24,7 @@
 
 #include <plugins/stdobj/StdObj.h>
 #include <core/dataset/pipeline/Modifier.h>
-#include <plugins/stdobj/properties/PropertyClass.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
 
 namespace Ovito { namespace StdObj {
 
@@ -54,16 +54,13 @@ protected:
 	/// Constructor.
 	GenericPropertyModifier(DataSet* dataset);
 
-	/// Saves the class' contents to an output stream.
-	virtual void saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData) override;
-	
-	/// Loads the class' contents from an input stream.
-	virtual void loadFromStream(ObjectLoadStream& stream) override;
-		
+	/// Sets the subject property container.
+	void setDefaultSubject(const QString& pluginId, const QString& containerClassName);
+
 private:
 
-	/// The type of property the modifier will operate on.
-	DECLARE_RUNTIME_PROPERTY_FIELD(PropertyClassPtr, propertyClass, setPropertyClass);
+	/// The property container the modifier will operate on.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(PropertyContainerReference, subject, setSubject);
 };
 
 }	// End of namespace

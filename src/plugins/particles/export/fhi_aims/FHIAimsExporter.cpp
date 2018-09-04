@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/utilities/concurrent/Promise.h>
 #include "FHIAimsExporter.h"
@@ -43,14 +43,15 @@ bool FHIAimsExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePo
 	exportTask.setProgressText(tr("Writing file %1").arg(filePath));
 	
 	// Get particle positions and types.
-	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
-	ParticleProperty* particleTypeProperty = ParticleProperty::findInState(state, ParticleProperty::TypeProperty);
+	const ParticlesObject* particles = state.expectObject<ParticlesObject>();
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
+	const PropertyObject* particleTypeProperty = particles->getProperty(ParticlesObject::TypeProperty);
 
 	textStream() << "# FHI-aims file written by OVITO\n";
 
 	// Output simulation cell.
 	Point3 origin = Point3::Origin();
-	SimulationCellObject* simulationCell = state.findObjectOfType<SimulationCellObject>();
+	const SimulationCellObject* simulationCell = state.getObject<SimulationCellObject>();
 	if(simulationCell) {
 		origin = simulationCell->cellOrigin();
 		if(simulationCell->pbcX() || simulationCell->pbcY() || simulationCell->pbcZ()) {
@@ -64,15 +65,18 @@ bool FHIAimsExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePo
 	exportTask.setProgressMaximum(posProperty->size());
 	for(size_t i = 0; i < posProperty->size(); i++) {
 		const Point3& p = posProperty->getPoint3(i);
-		const ElementType* type = particleTypeProperty->elementType(particleTypeProperty->getInt(i));
+		const ElementType* type = particleTypeProperty ? particleTypeProperty->elementType(particleTypeProperty->getInt(i)) : nullptr;
 
 		textStream() << "atom " << (p.x() - origin.x()) << ' ' << (p.y() - origin.y()) << ' ' << (p.z() - origin.z());
 		if(type && !type->name().isEmpty()) {
 			QString s = type->name();
 			textStream() << ' ' << s.replace(QChar(' '), QChar('_')) << '\n';
 		}
-		else {
+		else if(particleTypeProperty) {
 			textStream() << ' ' << particleTypeProperty->getInt(i) << '\n';
+		}
+		else {
+			textStream() << " 1\n";
 		}
 
 		if(!exportTask.setProgressValueIntermittent(i))

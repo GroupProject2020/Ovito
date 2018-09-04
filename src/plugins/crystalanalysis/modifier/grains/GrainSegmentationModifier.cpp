@@ -103,7 +103,7 @@ GrainSegmentationModifier::GrainSegmentationModifier(DataSet* dataset) : Structu
 			_patternCatalog->addPattern(stype);
 		}
 		stype->setName(ParticleType::getPredefinedStructureTypeName(predefTypes[id]));
-		stype->setColor(ParticleType::getDefaultParticleColor(ParticleProperty::StructureTypeProperty, stype->name(), id));
+		stype->setColor(ParticleType::getDefaultParticleColor(ParticlesObject::StructureTypeProperty, stype->name(), id));
 		addStructureType(stype);
 	}
 }
@@ -142,13 +142,13 @@ void GrainSegmentationModifier::invalidateCachedResults()
 std::shared_ptr<AsynchronousParticleModifier::ComputeEngine> GrainSegmentationModifier::createEngine(TimePoint time, TimeInterval validityInterval)
 {
 	// Get modifier inputs.
-	ParticleProperty* posProperty = expectStandardProperty(ParticleProperty::PositionProperty);
+	ParticleProperty* posProperty = expectStandardProperty(ParticlesObject::PositionProperty);
 	SimulationCellObject* simCell = expectSimulationCell();
 
 	// Get particle selection.
 	PropertyStorage* selectionProperty = nullptr;
 	if(onlySelectedParticles())
-		selectionProperty = expectStandardProperty(ParticleProperty::SelectionProperty)->storage();
+		selectionProperty = expectStandardProperty(ParticlesObject::SelectionProperty)->storage();
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	return std::make_shared<GrainSegmentationEngine>(posProperty->storage(),

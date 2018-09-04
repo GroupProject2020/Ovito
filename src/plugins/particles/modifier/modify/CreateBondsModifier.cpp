@@ -22,8 +22,6 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/util/CutoffNeighborFinder.h>
 #include <plugins/particles/objects/BondsVis.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
@@ -66,7 +64,7 @@ CreateBondsModifier::CreateBondsModifier(DataSet* dataset) : AsynchronousModifie
 ******************************************************************************/
 bool CreateBondsModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<ParticleProperty>() != nullptr;
+	return input.containsObject<ParticlesObject>();
 }
 
 /******************************************************************************
@@ -108,11 +106,10 @@ void CreateBondsModifier::initializeModifier(ModifierApplication* modApp)
 
 	// Adopt the upstream BondsVis object if there already is one.
 	const PipelineFlowState& input = modApp->evaluateInputPreliminary();
-	if(BondProperty* topologyProperty = BondProperty::findInState(input, BondProperty::TopologyProperty)) {
-		for(DataVis* vis : topologyProperty->visElements()) {
-			if(BondsVis* bondsVis = dynamic_object_cast<BondsVis>(vis)) {
+	if(const ParticlesObject* particles = input.getObject<ParticlesObject>()) {
+		if(particles->bonds()) {
+			if(BondsVis* bondsVis = particles->bonds()->visElement<BondsVis>()) {
 				setBondsVis(bondsVis);
-				break;
 			}
 		}
 	}
@@ -121,7 +118,7 @@ void CreateBondsModifier::initializeModifier(ModifierApplication* modApp)
 /******************************************************************************
 * Looks up a particle type in the type list based on the name or the numeric ID.
 ******************************************************************************/
-ElementType* CreateBondsModifier::lookupParticleType(ParticleProperty* typeProperty, const QVariant& typeSpecification)
+const ElementType* CreateBondsModifier::lookupParticleType(const PropertyObject* typeProperty, const QVariant& typeSpecification)
 {
 	if(typeSpecification.type() == QVariant::Int)
 		return typeProperty->elementType(typeSpecification.toInt());
@@ -136,25 +133,25 @@ ElementType* CreateBondsModifier::lookupParticleType(ParticleProperty* typePrope
 Future<AsynchronousModifier::ComputeEnginePtr> CreateBondsModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get modifier input.
-	ParticleInputHelper ph(dataset(), input);
-	ParticleProperty* posProperty = ph.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
-	SimulationCellObject* simCell = ph.expectSimulationCell();
+	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	const SimulationCellObject* simCell = input.expectObject<SimulationCellObject>();
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 
 	// The neighbor list cutoff.
 	FloatType maxCutoff = uniformCutoff();
 
 	// Build table of pair-wise cutoff radii.
-	ParticleProperty* typeProperty = nullptr;
+	const PropertyObject* typeProperty = nullptr;
 	std::vector<std::vector<FloatType>> pairCutoffSquaredTable;
 	if(cutoffMode() == PairCutoff) {
-		typeProperty = ph.expectStandardProperty<ParticleProperty>(ParticleProperty::TypeProperty);
+		typeProperty = particles->expectProperty(ParticlesObject::TypeProperty);
 		if(typeProperty) {
 			maxCutoff = 0;
 			for(auto entry = pairwiseCutoffs().begin(); entry != pairwiseCutoffs().end(); ++entry) {
 				FloatType cutoff = entry.value();
 				if(cutoff > 0) {
-					ElementType* ptype1 = lookupParticleType(typeProperty, entry.key().first);
-					ElementType* ptype2 = lookupParticleType(typeProperty, entry.key().second);
+					const ElementType* ptype1 = lookupParticleType(typeProperty, entry.key().first);
+					const ElementType* ptype2 = lookupParticleType(typeProperty, entry.key().second);
 					if(ptype1 && ptype2 && ptype1->id() >= 0 && ptype2->id() >= 0) {
 						if((int)pairCutoffSquaredTable.size() <= std::max(ptype1->id(), ptype2->id())) pairCutoffSquaredTable.resize(std::max(ptype1->id(), ptype2->id()) + 1);
 						if((int)pairCutoffSquaredTable[ptype1->id()].size() <= ptype2->id()) pairCutoffSquaredTable[ptype1->id()].resize(ptype2->id() + 1, FloatType(0));
@@ -171,12 +168,12 @@ Future<AsynchronousModifier::ComputeEnginePtr> CreateBondsModifier::createEngine
 	}
 
 	// Get molecule IDs.
-	ParticleProperty* moleculeProperty = onlyIntraMoleculeBonds() ? ph.inputStandardProperty<ParticleProperty>(ParticleProperty::MoleculeProperty) : nullptr;
+	ConstPropertyPtr moleculeProperty = onlyIntraMoleculeBonds() ? particles->getPropertyStorage(ParticlesObject::MoleculeProperty) : nullptr;
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<BondsEngine>(input, posProperty->storage(),
+	return std::make_shared<BondsEngine>(particles, posProperty->storage(),
 			typeProperty ? typeProperty->storage() : nullptr, simCell->data(), cutoffMode(),
-			maxCutoff, minimumCutoff(), std::move(pairCutoffSquaredTable), moleculeProperty ? moleculeProperty->storage() : nullptr);
+			maxCutoff, minimumCutoff(), std::move(pairCutoffSquaredTable), std::move(moleculeProperty));
 }
 
 /******************************************************************************
@@ -246,20 +243,21 @@ void CreateBondsModifier::BondsEngine::perform()
 ******************************************************************************/
 PipelineFlowState CreateBondsModifier::BondsEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	if(_inputFingerprint.hasChanged(input))
-		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 
 	CreateBondsModifier* modifier = static_object_cast<CreateBondsModifier>(modApp->modifier());
 	OVITO_ASSERT(modifier);	
 
 	// Add our bonds to the system.
 	PipelineFlowState output = input;
-	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
+	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
 
-	poh.addBonds(bonds(), modifier->bondsVis());
+	if(_inputFingerprint.hasChanged(particles))
+		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
+
+	particles->addBonds(bonds(), modifier->bondsVis());
 
 	size_t bondsCount = bonds().size();
-	poh.outputAttribute(QStringLiteral("CreateBonds.num_bonds"), QVariant::fromValue(bondsCount));
+	output.addAttribute(QStringLiteral("CreateBonds.num_bonds"), QVariant::fromValue(bondsCount), modApp);
 
 	// If the number of bonds is unusually high, we better turn off bonds display to prevent the program from freezing.
 	if(bondsCount > 1000000 && modifier->bondsVis()) {

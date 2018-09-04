@@ -24,7 +24,6 @@
 #include <plugins/stdobj/gui/StdObjGui.h>
 #include <plugins/stdobj/properties/PropertyReference.h>
 #include <plugins/stdobj/properties/PropertyObject.h>
-#include <plugins/stdobj/properties/PropertyClass.h>
 
 namespace Ovito { namespace StdObj {
 	
@@ -38,23 +37,23 @@ class OVITO_STDOBJGUI_EXPORT PropertySelectionComboBox : public QComboBox
 public:
 
 	/// \brief Constructor.
-	PropertySelectionComboBox(const PropertyClass* propertyClass = nullptr, QWidget* parent = nullptr) : QComboBox(parent), _propertyClass(propertyClass) {}
+	PropertySelectionComboBox(PropertyContainerClassPtr containerClass = nullptr, QWidget* parent = nullptr) : QComboBox(parent), _containerClass(containerClass) {}
 
 	/// \brief Adds a property to the end of the list.
 	/// \param property The property to add.
 	void addItem(const PropertyReference& property, const QString& label = QString()) {
-		OVITO_ASSERT(property.isNull() || propertyClass() == property.propertyClass());
+		OVITO_ASSERT(property.isNull() || containerClass() == property.containerClass());
 		QComboBox::addItem(label.isEmpty() ? property.name() : label, QVariant::fromValue(property));
 	}
 
 	/// \brief Adds a property to the end of the list.
 	/// \param property The property to add.
-	void addItem(PropertyObject* property, int vectorComponent = -1) {
+	void addItem(const PropertyObject* property, int vectorComponent = -1) {
 		OVITO_ASSERT(property != nullptr);
-		OVITO_ASSERT(propertyClass()->isMember(property));
+		OVITO_ASSERT(containerClass() != nullptr);
 		QString label = property->nameWithComponent(vectorComponent);
 		if(QComboBox::findText(label) == -1) {
-			QComboBox::addItem(label, QVariant::fromValue(PropertyReference(property, vectorComponent)));
+			QComboBox::addItem(label, QVariant::fromValue(PropertyReference(containerClass(), property, vectorComponent)));
 		}
 	}
 
@@ -90,12 +89,12 @@ public:
 	}
 
 	/// Returns the class of properties that can be selected with this combo box.
-	const PropertyClass* propertyClass() const { return _propertyClass; }
+	PropertyContainerClassPtr containerClass() const { return _containerClass; }
 		
 	/// Sets the class of properties that can be selected with this combo box.
-	void setPropertyClass(const PropertyClass* propertyClass) {
-		if(_propertyClass != propertyClass) {
-			_propertyClass = propertyClass;
+	void setContainerClass(PropertyContainerClassPtr containerClass) {
+		if(_containerClass != containerClass) {
+			_containerClass = containerClass;
 			clear();
 		}
 	}
@@ -107,8 +106,8 @@ protected:
 
 private:
 
-	/// The class of properties that can be selected with this combo box.
-	const PropertyClass* _propertyClass;
+	/// Specifies the class of properties that can be selected in this combo box.
+	PropertyContainerClassPtr _containerClass;
 };
 
 }	// End of namespace

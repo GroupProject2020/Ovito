@@ -125,12 +125,12 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 		particleTypeNames.push_back(QStringLiteral("A"));
 
 	// Read particle positions.
-	PropertyPtr posProperty = ParticleProperty::createStandardStorage(numParticles, ParticleProperty::PositionProperty, false);
+	PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(numParticles, ParticlesObject::PositionProperty, false);
 	frameData->addParticleProperty(posProperty);
 	gsd.readFloatArray("particles/position", frameNumber, posProperty->dataPoint3(), numParticles, posProperty->componentCount());
 
 	// Create particle types.
-	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(numParticles, ParticleProperty::TypeProperty, false);
+	PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(numParticles, ParticlesObject::TypeProperty, false);
 	frameData->addParticleProperty(typeProperty);
 	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
 	for(int i = 0; i < particleTypeNames.size(); i++)
@@ -142,15 +142,15 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 	else
 		std::fill(typeProperty->dataInt(), typeProperty->dataInt() + typeProperty->size(), 0);
 
-	PropertyStorage* massProperty = readOptionalParticleProperty(gsd, "particles/mass", frameNumber, numParticles, ParticleProperty::MassProperty, frameData);
-	readOptionalParticleProperty(gsd, "particles/charge", frameNumber, numParticles, ParticleProperty::ChargeProperty, frameData);
-	PropertyStorage* velocityProperty = readOptionalParticleProperty(gsd, "particles/velocity", frameNumber, numParticles, ParticleProperty::VelocityProperty, frameData);
-	PropertyStorage* radiusProperty = readOptionalParticleProperty(gsd, "particles/diameter", frameNumber, numParticles, ParticleProperty::RadiusProperty, frameData);
+	PropertyStorage* massProperty = readOptionalParticleProperty(gsd, "particles/mass", frameNumber, numParticles, ParticlesObject::MassProperty, frameData);
+	readOptionalParticleProperty(gsd, "particles/charge", frameNumber, numParticles, ParticlesObject::ChargeProperty, frameData);
+	PropertyStorage* velocityProperty = readOptionalParticleProperty(gsd, "particles/velocity", frameNumber, numParticles, ParticlesObject::VelocityProperty, frameData);
+	PropertyStorage* radiusProperty = readOptionalParticleProperty(gsd, "particles/diameter", frameNumber, numParticles, ParticlesObject::RadiusProperty, frameData);
 	if(radiusProperty) {
 		// Convert particle diameter to radius by dividing by 2.
 		std::for_each(radiusProperty->dataFloat(), radiusProperty->dataFloat() + radiusProperty->size(), [](FloatType& r) { r /= 2; });
 	}
-	PropertyStorage* orientationProperty = readOptionalParticleProperty(gsd, "particles/orientation", frameNumber, numParticles, ParticleProperty::OrientationProperty, frameData);
+	PropertyStorage* orientationProperty = readOptionalParticleProperty(gsd, "particles/orientation", frameNumber, numParticles, ParticlesObject::OrientationProperty, frameData);
 	if(orientationProperty) {
 		// Convert quaternion representation from GSD format to internal format.
 		// Left-shift all quaternion components by one: (W,X,Y,Z) -> (X,Y,Z,W).
@@ -165,7 +165,7 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 		gsd.readIntArray("bonds/group", frameNumber, bondList.data(), numBonds, 2);
 
 		// Convert to OVITO format.
-		PropertyPtr bondTopologyProperty = BondProperty::createStandardStorage(numBonds, BondProperty::TopologyProperty, false);
+		PropertyPtr bondTopologyProperty = BondsObject::OOClass().createStandardStorage(numBonds, BondsObject::TopologyProperty, false);
 		frameData->addBondProperty(bondTopologyProperty);
 		auto bondTopoPtr = bondTopologyProperty->dataInt64();
 		for(auto b = bondList.cbegin(); b != bondList.cend(); ++b, ++bondTopoPtr) {
@@ -184,7 +184,7 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 				bondTypeNames.push_back(QStringLiteral("A"));
 
 			// Create bond types.
-			PropertyPtr bondTypeProperty = BondProperty::createStandardStorage(numBonds, BondProperty::TypeProperty, false);
+			PropertyPtr bondTypeProperty = BondsObject::OOClass().createStandardStorage(numBonds, BondsObject::TypeProperty, false);
 			frameData->addBondProperty(bondTypeProperty);
 			ParticleFrameData::TypeList* bondTypeList = frameData->propertyTypesList(bondTypeProperty);
 			for(int i = 0; i < bondTypeNames.size(); i++)
@@ -210,10 +210,10 @@ FileSourceImporter::FrameDataPtr GSDImporter::FrameLoader::loadFile(QFile& file)
 /******************************************************************************
 * Reads the values of a particle property from the GSD file.
 ******************************************************************************/
-PropertyStorage* GSDImporter::FrameLoader::readOptionalParticleProperty(GSDFile& gsd, const char* chunkName, uint64_t frameNumber, uint32_t numParticles, ParticleProperty::Type propertyType, const std::shared_ptr<ParticleFrameData>& frameData)
+PropertyStorage* GSDImporter::FrameLoader::readOptionalParticleProperty(GSDFile& gsd, const char* chunkName, uint64_t frameNumber, uint32_t numParticles, ParticlesObject::Type propertyType, const std::shared_ptr<ParticleFrameData>& frameData)
 {
 	if(gsd.hasChunk(chunkName, frameNumber)) {
-		PropertyPtr prop = ParticleProperty::createStandardStorage(numParticles, propertyType, false);
+		PropertyPtr prop = ParticlesObject::OOClass().createStandardStorage(numParticles, propertyType, false);
 		frameData->addParticleProperty(prop);
 		gsd.readFloatArray(chunkName, frameNumber, prop->dataFloat(), numParticles, prop->componentCount());
 		return prop.get();

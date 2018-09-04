@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Util)
@@ -39,21 +39,19 @@ class OVITO_PARTICLES_EXPORT ParticleOrderingFingerprint
 public:
 
 	/// Constructor.
-	ParticleOrderingFingerprint(const PipelineFlowState& state) {
-		_particleCount = ParticleProperty::OOClass().elementCount(state);
-		if(ParticleProperty* prop = ParticleProperty::findInState(state, ParticleProperty::IdentifierProperty))
-			_particleIdentifiers = prop->storage();
-	}
+	ParticleOrderingFingerprint(const ParticlesObject* particles) : 
+		_particleCount(particles->elementCount()),
+		_particleIdentifiers(particles->getPropertyStorage(ParticlesObject::IdentifierProperty)) {}
 
 	/// Returns the number of particles for which this object was constructed.
 	size_t particleCount() const { return _particleCount; }
 
 	/// Returns true if the particle number and the storage order have changed 
 	/// with respect to the state from which this object was constructed.
-	bool hasChanged(const PipelineFlowState& state) const {
-		if(_particleCount != ParticleProperty::OOClass().elementCount(state)) 
+	bool hasChanged(const ParticlesObject* particles) const {
+		if(_particleCount != particles->elementCount()) 
 			return true;
-		if(ParticleProperty* prop = ParticleProperty::findInState(state, ParticleProperty::IdentifierProperty)) {
+		if(const PropertyObject* prop = particles->getProperty(ParticlesObject::IdentifierProperty)) {
 			if(!_particleIdentifiers) 
 				return true;
 			if(prop->storage() != _particleIdentifiers) { 

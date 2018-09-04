@@ -23,7 +23,6 @@
 #include <plugins/mesh/surface/SurfaceMesh.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
-#include <plugins/stdobj/util/OutputHelper.h>
 #include "SurfaceMeshSliceModifierDelegate.h"
 
 namespace Ovito { namespace Mesh {
@@ -44,16 +43,15 @@ PipelineStatus SurfaceMeshSliceModifierDelegate::apply(Modifier* modifier, const
 	FloatType sliceWidth;
 	std::tie(plane, sliceWidth) = mod->slicingPlane(time, output.mutableStateValidity());
 	
-	OutputHelper oh(dataset(), output, modApp);
-	for(DataObject* obj : output.objects()) {
-		if(SurfaceMesh* inputMesh = dynamic_object_cast<SurfaceMesh>(obj)) {
-			SurfaceMesh* outputMesh = oh.cloneIfNeeded(inputMesh);
+	for(const DataObject* obj : output.objects()) {
+		if(const SurfaceMesh* inputMesh = dynamic_object_cast<SurfaceMesh>(obj)) {
+			SurfaceMesh* outputMesh = output.makeMutable(inputMesh);
 			QVector<Plane3> planes = outputMesh->cuttingPlanes();
 			if(sliceWidth <= 0) {
 				planes.push_back(plane);
 			}
 			else {
-				planes.push_back(Plane3(plane.normal, plane.dist + sliceWidth/2));
+				planes.push_back(Plane3( plane.normal,  plane.dist + sliceWidth/2));
 				planes.push_back(Plane3(-plane.normal, -plane.dist + sliceWidth/2));
 			}
 			outputMesh->setCuttingPlanes(std::move(planes));

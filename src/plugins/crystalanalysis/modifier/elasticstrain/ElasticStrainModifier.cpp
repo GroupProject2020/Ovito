@@ -21,8 +21,8 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/crystalanalysis/objects/patterns/StructurePattern.h>
+#include <core/utilities/units/UnitsManager.h>
 #include "ElasticStrainModifier.h"
 #include "ElasticStrainEngine.h"
 
@@ -78,7 +78,7 @@ ElasticStrainModifier::ElasticStrainModifier(DataSet* dataset) : StructureIdenti
 			_patternCatalog->addPattern(stype);
 		}
 		stype->setName(ParticleType::getPredefinedStructureTypeName(predefTypes[id]));
-		stype->setColor(ParticleType::getDefaultParticleColor(ParticleProperty::StructureTypeProperty, stype->name(), id));
+		stype->setColor(ParticleType::getDefaultParticleColor(ParticlesObject::StructureTypeProperty, stype->name(), id));
 		addStructureType(stype);
 	}
 }
@@ -89,9 +89,9 @@ ElasticStrainModifier::ElasticStrainModifier(DataSet* dataset) : StructureIdenti
 Future<AsynchronousModifier::ComputeEnginePtr> ElasticStrainModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get modifier inputs.
-	ParticleInputHelper pih(dataset(), input);
-	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
-	SimulationCellObject* simCell = pih.expectSimulationCell();
+	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
+	const SimulationCellObject* simCell = input.expectObject<SimulationCellObject>();
 	if(simCell->is2D())
 		throwException(tr("The elastic strain calculation modifier does not support 2d simulation cells."));
 
@@ -102,7 +102,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ElasticStrainModifier::createEngi
 	}
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<ElasticStrainEngine>(input, posProperty->storage(),
+	return std::make_shared<ElasticStrainEngine>(particles, posProperty->storage(),
 			simCell->data(), inputCrystalStructure(), std::move(preferredCrystalOrientations),
 			calculateDeformationGradients(), calculateStrainTensors(),
 			latticeConstant(), axialRatio(), pushStrainTensorsForward());

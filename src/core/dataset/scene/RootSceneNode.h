@@ -54,7 +54,7 @@ public:
 	/// \brief Returns the bounding box of the scene.
 	/// \param time The time at which the bounding box should be computed.
 	/// \return An world axis-aligned box that contains the bounding boxes of all child nodes.
-	virtual Box3 localBoundingBox(TimePoint time, TimeInterval& validity) override { return Box3(); }
+	virtual Box3 localBoundingBox(TimePoint time, TimeInterval& validity) const override { return Box3(); }
 
 	/// \brief Returns whether this is the root scene node.
 	virtual bool isRootNode() const override { return true; }

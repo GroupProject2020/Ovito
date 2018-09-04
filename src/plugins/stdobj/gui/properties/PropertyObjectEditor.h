@@ -22,23 +22,23 @@
 #pragma once
 
 
-#include <plugins/particles/gui/ParticlesGui.h>
+#include <plugins/stdobj/gui/StdObjGui.h>
 #include <gui/properties/PropertiesEditor.h>
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace StdObj {
 
 /**
- * \brief A properties editor for the ParticleProperty class.
+ * \brief A properties editor for the PropertyObject class.
  */
-class ParticlePropertyEditor : public PropertiesEditor
+class PropertyObjectEditor : public PropertiesEditor
 {
 	Q_OBJECT
-	OVITO_CLASS(ParticlePropertyEditor)
+	OVITO_CLASS(PropertyObjectEditor)
 
 public:
 
 	/// Default constructor.
-	Q_INVOKABLE ParticlePropertyEditor() {}
+	Q_INVOKABLE PropertyObjectEditor() {}
 
 protected:
 
@@ -46,6 +46,5 @@ protected:
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
 };
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

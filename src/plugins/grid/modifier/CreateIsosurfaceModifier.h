@@ -23,7 +23,7 @@
 
 
 #include <plugins/grid/Grid.h>
-#include <plugins/grid/objects/VoxelProperty.h>
+#include <plugins/grid/objects/VoxelGrid.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
 #include <plugins/mesh/surface/SurfaceMeshVis.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
@@ -75,6 +75,9 @@ public:
 
 	/// Sets the level at which to create the isosurface.
 	void setIsolevel(FloatType value) { if(isolevelController()) isolevelController()->setCurrentFloatValue(value); }
+
+	/// \brief Returns a reference to the property container being operated on by this modifier.
+	TypedDataObjectReference<VoxelGrid> subject() const { return TypedDataObjectReference<VoxelGrid>(&VoxelGrid::OOClass(), containerPath()); }
 
 protected:
 
@@ -154,6 +157,9 @@ private:
 		/// The maximum field value that was encountered.
 		FloatType _maxValue = -FLOATTYPE_MAX;
 	};
+
+	/// Specifies the grid the modifier should operate on.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, containerPath, setContainerPath);
 
 	/// The voxel property that serves input.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(VoxelPropertyReference, sourceProperty, setSourceProperty);

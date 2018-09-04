@@ -21,9 +21,8 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/util/ParticleExpressionEvaluator.h>
-#include <plugins/particles/objects/ParticleProperty.h>
-#include <plugins/particles/objects/BondProperty.h>
-#include <plugins/stdobj/util/OutputHelper.h>
+#include <plugins/particles/objects/ParticlesObject.h>
+#include <plugins/particles/objects/BondsObject.h>
 #include "ParticlesExpressionSelectionModifierDelegate.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Selection)
@@ -36,7 +35,15 @@ IMPLEMENT_OVITO_CLASS(BondsExpressionSelectionModifierDelegate);
 ******************************************************************************/
 bool ParticlesExpressionSelectionModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<ParticleProperty>() != nullptr;
+	return input.containsObject<ParticlesObject>();
+}
+
+/******************************************************************************
+* Looks up the container for the properties in the input pipeline state.
+******************************************************************************/
+PropertyContainer* ParticlesExpressionSelectionModifierDelegate::getOutputPropertyContainer(PipelineFlowState& outputState) const
+{
+	return outputState.expectMutableObject<ParticlesObject>();
 }
 
 /******************************************************************************
@@ -50,19 +57,23 @@ std::unique_ptr<PropertyExpressionEvaluator> ParticlesExpressionSelectionModifie
 }
 
 /******************************************************************************
-* Creates the output selection property object.
-******************************************************************************/
-PropertyObject* ParticlesExpressionSelectionModifierDelegate::createOutputSelectionProperty(OutputHelper& oh)
-{
-	return oh.outputStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty);
-}
-
-/******************************************************************************
 * Determines whether this delegate can handle the given input data.
 ******************************************************************************/
 bool BondsExpressionSelectionModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<BondProperty>() != nullptr;
+	if(const ParticlesObject* particles = input.getObject<ParticlesObject>())
+		return particles->bonds() != nullptr;
+	return false;
+}
+
+/******************************************************************************
+* Looks up the container for the properties in the output pipeline state.
+******************************************************************************/
+PropertyContainer* BondsExpressionSelectionModifierDelegate::getOutputPropertyContainer(PipelineFlowState& outputState) const
+{
+	ParticlesObject* particles = outputState.expectMutableObject<ParticlesObject>();
+	particles->expectBonds();
+	return particles->makeBondsMutable();
 }
 
 /******************************************************************************
@@ -73,14 +84,6 @@ std::unique_ptr<PropertyExpressionEvaluator> BondsExpressionSelectionModifierDel
 	std::unique_ptr<BondExpressionEvaluator> evaluator = std::make_unique<BondExpressionEvaluator>();
 	evaluator->initialize(expressions, inputState, animationFrame);
 	return evaluator;
-}
-
-/******************************************************************************
-* Creates the output selection property object.
-******************************************************************************/
-PropertyObject* BondsExpressionSelectionModifierDelegate::createOutputSelectionProperty(OutputHelper& oh)
-{
-	return oh.outputStandardProperty<BondProperty>(BondProperty::SelectionProperty);
 }
 
 OVITO_END_INLINE_NAMESPACE

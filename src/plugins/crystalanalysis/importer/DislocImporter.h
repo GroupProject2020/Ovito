@@ -62,7 +62,7 @@ public:
 	Q_INVOKABLE DislocImporter(DataSet* dataset) : ParticleImporter(dataset) {}
 
 	/// Returns the title of this object.
-	virtual QString objectTitle() override { return tr("Disloc"); }
+	virtual QString objectTitle() const override { return tr("Disloc"); }
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
 	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
@@ -84,7 +84,7 @@ protected:
 		
 		/// Inserts the loaded data into the provided pipeline state structure. This function is
 		/// called by the system from the main thread after the asynchronous loading task has finished.
-		virtual void handOver(PipelineOutputHelper& poh, const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource) override;
+		virtual PipelineFlowState handOver(const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource) override;
 
 		/// Returns the loaded microstructure.
 		const MicrostructurePtr& microstructure() { return _microstructure; }

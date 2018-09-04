@@ -19,21 +19,21 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/particles/objects/ParticleType.h>
+#include <plugins/stdobj/gui/StdObjGui.h>
+#include <plugins/stdobj/properties/ElementType.h>
+#include <plugins/stdobj/properties/PropertyObject.h>
 #include <gui/properties/RefTargetListParameterUI.h>
-#include "ParticlePropertyEditor.h"
-#include "ParticleTypeEditor.h"
+#include "PropertyObjectEditor.h"
 
-namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+namespace Ovito { namespace StdObj {
 
-IMPLEMENT_OVITO_CLASS(ParticlePropertyEditor);
-SET_OVITO_OBJECT_EDITOR(ParticleProperty, ParticlePropertyEditor);
+IMPLEMENT_OVITO_CLASS(PropertyObjectEditor);
+SET_OVITO_OBJECT_EDITOR(PropertyObject, PropertyObjectEditor);
 
 /******************************************************************************
 * Sets up the UI widgets of the editor.
 ******************************************************************************/
-void ParticlePropertyEditor::createUI(const RolloutInsertionParameters& rolloutParams)
+void PropertyObjectEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create a rollout.
 	QWidget* rollout = createRollout(QString(), rolloutParams, "scene_objects.particle_types.html");
@@ -43,19 +43,21 @@ void ParticlePropertyEditor::createUI(const RolloutInsertionParameters& rolloutP
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(0);
 
-	// Particle types
-
 	// Derive a custom class from the list parameter UI to display the particle type colors.
 	class CustomRefTargetListParameterUI : public RefTargetListParameterUI {
 	public:
-		CustomRefTargetListParameterUI(PropertiesEditor* parentEditor, const PropertyFieldDescriptor& refField, const RolloutInsertionParameters& rolloutParams)
-			: RefTargetListParameterUI(parentEditor, refField, rolloutParams, &ParticleTypeEditor::OOClass()) {}
+		using RefTargetListParameterUI::RefTargetListParameterUI;
 	protected:
 		virtual QVariant getItemData(RefTarget* target, const QModelIndex& index, int role) override {
 			if(role == Qt::DecorationRole && target != NULL) {
-				return (QColor)static_object_cast<ParticleType>(target)->color();
+				return (QColor)static_object_cast<ElementType>(target)->color();
 			}
 			else return RefTargetListParameterUI::getItemData(target, index, role);
+		}
+		/// Opens a sub-editor for the object that is selected in the list view.
+		virtual void openSubEditor() override {
+			RefTargetListParameterUI::openSubEditor();
+			editor()->container()->updateRollouts();
 		}
 	};
 
@@ -64,10 +66,9 @@ void ParticlePropertyEditor::createUI(const RolloutInsertionParameters& rolloutP
 	sublayout->setContentsMargins(0,0,0,0);
 	layout->addWidget(subEditorContainer);
 
-	RefTargetListParameterUI* particleTypesListUI = new CustomRefTargetListParameterUI(this, PROPERTY_FIELD(ParticleProperty::elementTypes), RolloutInsertionParameters().insertInto(subEditorContainer));
-	layout->insertWidget(0, particleTypesListUI->listWidget());
+	RefTargetListParameterUI* elementTypesListUI = new CustomRefTargetListParameterUI(this, PROPERTY_FIELD(PropertyObject::elementTypes), RolloutInsertionParameters().insertInto(subEditorContainer));
+	layout->insertWidget(0, elementTypesListUI->listWidget());
 }
 
-OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace

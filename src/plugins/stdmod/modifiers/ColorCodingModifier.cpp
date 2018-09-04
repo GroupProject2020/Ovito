@@ -22,10 +22,9 @@
 #include <plugins/stdmod/StdMod.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
-#include <plugins/stdobj/util/InputHelper.h>
-#include <plugins/stdobj/util/OutputHelper.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
 #include <plugins/stdobj/properties/PropertyObject.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
 #include <core/dataset/animation/controller/Controller.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/utilities/concurrent/TaskManager.h>
@@ -36,6 +35,9 @@
 
 namespace Ovito { namespace StdMod {
 
+IMPLEMENT_OVITO_CLASS(ColorCodingModifierDelegate);
+DEFINE_PROPERTY_FIELD(ColorCodingModifierDelegate, containerPath);
+
 IMPLEMENT_OVITO_CLASS(ColorCodingGradient);
 IMPLEMENT_OVITO_CLASS(ColorCodingHSVGradient);
 IMPLEMENT_OVITO_CLASS(ColorCodingGrayscaleGradient);
@@ -45,7 +47,6 @@ IMPLEMENT_OVITO_CLASS(ColorCodingBlueWhiteRedGradient);
 IMPLEMENT_OVITO_CLASS(ColorCodingViridisGradient);
 IMPLEMENT_OVITO_CLASS(ColorCodingMagmaGradient);
 IMPLEMENT_OVITO_CLASS(ColorCodingImageGradient);
-IMPLEMENT_OVITO_CLASS(ColorCodingModifierDelegate);
 IMPLEMENT_OVITO_CLASS(ColorCodingModifier);
 DEFINE_REFERENCE_FIELD(ColorCodingModifier, startValueController);
 DEFINE_REFERENCE_FIELD(ColorCodingModifier, endValueController);
@@ -125,21 +126,17 @@ void ColorCodingModifier::initializeModifier(ModifierApplication* modApp)
 {
 	DelegatingModifier::initializeModifier(modApp);
 
-	// Select the first available property from the input by default.
-	ColorCodingModifierDelegate* colorDelegate = static_object_cast<ColorCodingModifierDelegate>(delegate());
-	if(sourceProperty().isNull() && colorDelegate && Application::instance()->guiMode()) {
+	// When the modifier is inserted, automatically select the most recently added property from the input.
+	if(sourceProperty().isNull() && delegate() && !Application::instance()->scriptMode()) {
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
-		PropertyReference bestProperty;
-		for(DataObject* o : input.objects()) {
-			PropertyObject* property = dynamic_object_cast<PropertyObject>(o);
-			if(property && colorDelegate->propertyClass().isMember(property)) {
-				if(property->dataType() == PropertyStorage::Int || property->dataType() == PropertyStorage::Float) {
-					bestProperty = PropertyReference(property, (property->componentCount() > 1) ? 0 : -1);
-				}
+		if(const PropertyContainer* container = input.getLeafObject(delegate()->subject())) {
+			PropertyReference bestProperty;
+			for(PropertyObject* property : container->properties()) {
+				bestProperty = PropertyReference(&delegate()->containerClass(), property, (property->componentCount() > 1) ? 0 : -1);
 			}
+			if(!bestProperty.isNull())
+				setSourceProperty(bestProperty);
 		}
-		if(!bestProperty.isNull())
-			setSourceProperty(bestProperty);
 	}
 
 	// Automatically adjust value range.
@@ -153,11 +150,8 @@ void ColorCodingModifier::initializeModifier(ModifierApplication* modApp)
 void ColorCodingModifier::referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget)
 {
 	// Whenever the delegate of this modifier is being replaced, update the source property reference.
-	if(field == PROPERTY_FIELD(DelegatingModifier::delegate) && !isBeingLoaded()) {
-		ColorCodingModifierDelegate* colorDelegate = static_object_cast<ColorCodingModifierDelegate>(delegate());
-		if(!dataset()->undoStack().isUndoingOrRedoing() && !isBeingLoaded() && colorDelegate) {
-			setSourceProperty(sourceProperty().convertToPropertyClass(&colorDelegate->propertyClass()));
-		}
+	if(field == PROPERTY_FIELD(DelegatingModifier::delegate) && !isBeingLoaded() && !dataset()->undoStack().isUndoingOrRedoing() && !isBeingLoaded()) {
+		setSourceProperty(sourceProperty().convertToContainerClass(delegate() ? &delegate()->containerClass() : nullptr));
 	}
 	DelegatingModifier::referenceReplaced(field, oldTarget, newTarget);
 }
@@ -167,15 +161,18 @@ void ColorCodingModifier::referenceReplaced(const PropertyFieldDescriptor& field
 ******************************************************************************/
 bool ColorCodingModifier::determinePropertyValueRange(const PipelineFlowState& state, FloatType& min, FloatType& max)
 {
-	PropertyStorage* property;
-	int vecComponent;
-	PropertyObject* propertyObj = sourceProperty().findInState(state);
+	if(!delegate()) 
+		return false;
+	const PropertyContainer* container = state.getLeafObject(delegate()->subject());
+	if(!container)
+		return false;
+	const PropertyObject* propertyObj = sourceProperty().findInContainer(container);
 	if(!propertyObj)
 		return false;
-	property = propertyObj->storage().get();
+	const PropertyStorage* property = propertyObj->storage().get();
 	if(sourceProperty().vectorComponent() >= (int)property->componentCount())
 		return false;
-	vecComponent = std::max(0, sourceProperty().vectorComponent());
+	int vecComponent = std::max(0, sourceProperty().vectorComponent());
 
 	int stride = property->stride() / property->dataTypeSize();
 
@@ -295,33 +292,11 @@ bool ColorCodingModifier::adjustRangeGlobal(TaskManager& taskManager)
 }
 
 /******************************************************************************
-* Saves the class' contents to the given stream.
-******************************************************************************/
-void ColorCodingModifier::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData)
-{
-	Modifier::saveToStream(stream, excludeRecomputableData);
-	stream.beginChunk(0x02);
-	stream.endChunk();
-}
-
-/******************************************************************************
-* Loads the class' contents from the given stream.
-******************************************************************************/
-void ColorCodingModifier::loadFromStream(ObjectLoadStream& stream)
-{
-	Modifier::loadFromStream(stream);
-	stream.expectChunk(0x02);
-	stream.closeChunk();
-}
-
-/******************************************************************************
 * Applies the modifier operation to the data in a pipeline flow state.
 ******************************************************************************/
 PipelineStatus ColorCodingModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	const ColorCodingModifier* mod = static_object_cast<ColorCodingModifier>(modifier);
-	InputHelper ih(dataset(), input);
-	OutputHelper oh(dataset(), output, modApp);
 
 	if(!mod->colorGradient())
 		throwException(tr("No color gradient has been selected."));
@@ -333,33 +308,37 @@ PipelineStatus ColorCodingModifierDelegate::apply(Modifier* modifier, const Pipe
 		throwException(tr("No source property was set as input for color coding."));
 
 	// Check if the source property is the right kind of property.
-	if(sourceProperty.propertyClass() != &propertyClass())
+	if(sourceProperty.containerClass() != &containerClass())
 		throwException(tr("Color coding modifier was set to operate on '%1', but the selected input is a '%2' property.")
-			.arg(getOOMetaClass().pythonDataName()).arg(sourceProperty.propertyClass()->propertyClassDisplayName()));
+			.arg(getOOMetaClass().pythonDataName()).arg(sourceProperty.containerClass()->propertyClassDisplayName()));
 
-	PropertyObject* propertyObj = sourceProperty.findInState(input);
+	// Look up the selected property container. Make sure we can safely modify it.
+	DataObjectPath objectPath = output.expectMutableObject(containerClass(), containerPath());
+	PropertyContainer* container = static_object_cast<PropertyContainer>(objectPath.back());
+
+	const PropertyObject* propertyObj = sourceProperty.findInContainer(container);
 	if(!propertyObj)
 		throwException(tr("The property with the name '%1' does not exist.").arg(sourceProperty.name()));
 	ConstPropertyPtr property = propertyObj->storage();
 	if(sourceProperty.vectorComponent() >= (int)property->componentCount())
 		throwException(tr("The vector component is out of range. The property '%1' has only %2 values per data element.").arg(sourceProperty.name()).arg(property->componentCount()));
 	vecComponent = std::max(0, sourceProperty.vectorComponent());
-	
+
 	// Get the selection property if enabled by the user.
 	ConstPropertyPtr selProperty;
 	if(mod->colorOnlySelected()) {
-		if(PropertyObject* selPropertyObj = ih.inputStandardProperty(propertyClass(), PropertyStorage::GenericSelectionProperty)) {
+		if(const PropertyObject* selPropertyObj = container->getProperty(PropertyStorage::GenericSelectionProperty)) {
 			selProperty = selPropertyObj->storage();
 
 			// Clear selection if requested.
 			if(!mod->keepSelection()) {
-				output.removeObject(selPropertyObj);
+				container->removeProperty(selPropertyObj);
 			}
 		}
 	}
-	
+
 	// Create the color output property.
-	PropertyPtr colorProperty = createOutputColorProperty(time, ih, oh, (bool)selProperty)->modifiableStorage();
+    PropertyPtr colorProperty = container->createProperty(outputColorPropertyId(), (bool)selProperty, objectPath)->modifiableStorage();
 
 	// Get modifier's parameter values.
 	FloatType startValue = 0, endValue = 0;

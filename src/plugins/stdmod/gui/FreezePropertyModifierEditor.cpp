@@ -22,7 +22,7 @@
 #include <plugins/stdmod/gui/StdModGui.h>
 #include <plugins/stdmod/modifiers/FreezePropertyModifier.h>
 #include <plugins/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
-#include <plugins/stdobj/gui/widgets/PropertyClassParameterUI.h>
+#include <plugins/stdobj/gui/widgets/PropertyContainerParameterUI.h>
 #include <gui/properties/IntegerParameterUI.h>
 #include "FreezePropertyModifierEditor.h"
 
@@ -43,7 +43,7 @@ void FreezePropertyModifierEditor::createUI(const RolloutInsertionParameters& ro
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(2);
 
-	PropertyClassParameterUI* pclassUI = new PropertyClassParameterUI(this, PROPERTY_FIELD(GenericPropertyModifier::propertyClass));
+	PropertyContainerParameterUI* pclassUI = new PropertyContainerParameterUI(this, PROPERTY_FIELD(GenericPropertyModifier::subject));
 	layout->addWidget(new QLabel(tr("Operate on:")));
 	layout->addWidget(pclassUI->comboBox());
 	layout->addSpacing(8);
@@ -59,8 +59,8 @@ void FreezePropertyModifierEditor::createUI(const RolloutInsertionParameters& ro
 	layout->addWidget(destPropertyUI->comboBox());
 	layout->addSpacing(8);
 	connect(this, &PropertiesEditor::contentsChanged, this, [sourcePropertyUI,destPropertyUI](RefTarget* editObject) {
-		sourcePropertyUI->setPropertyClass(editObject ? static_object_cast<GenericPropertyModifier>(editObject)->propertyClass() : nullptr);
-		destPropertyUI->setPropertyClass(editObject ? static_object_cast<GenericPropertyModifier>(editObject)->propertyClass() : nullptr);
+//		sourcePropertyUI->setPropertyClass(editObject ? static_object_cast<GenericPropertyModifier>(editObject)->propertyClass() : nullptr);
+//		destPropertyUI->setPropertyClass(editObject ? static_object_cast<GenericPropertyModifier>(editObject)->propertyClass() : nullptr);
 	});
 	
 	QGridLayout* gridlayout = new QGridLayout();

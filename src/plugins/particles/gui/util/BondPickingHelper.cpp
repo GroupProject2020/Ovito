@@ -21,6 +21,8 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <plugins/particles/objects/BondsVis.h>
+#include <plugins/particles/objects/BondsObject.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <core/viewport/Viewport.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/scene/PipelineSceneNode.h>
@@ -41,13 +43,17 @@ bool BondPickingHelper::pickBond(ViewportWindow* vpwin, const QPoint& clickPoint
 
 		// Check if that was a bond.
 		if(BondPickInfo* pickInfo = dynamic_object_cast<BondPickInfo>(vpPickResult.pickInfo())) {
-			size_t bondIndex = vpPickResult.subobjectId() / 2;
-			BondProperty* topologyProperty = BondProperty::findInState(pickInfo->pipelineState(), BondProperty::TopologyProperty);
-			if(topologyProperty && topologyProperty->size() > bondIndex) {
-				// Save reference to the selected bond.
-				result.sceneNode = vpPickResult.pipelineNode();
-				result.bondIndex = bondIndex;
-				return true;
+			if(const ParticlesObject* particles = pickInfo->pipelineState().getObject<ParticlesObject>()) {
+				if(particles->bonds()) {
+					size_t bondIndex = vpPickResult.subobjectId() / 2;
+					const PropertyObject* topologyProperty = particles->bonds()->getTopology();
+					if(topologyProperty && topologyProperty->size() > bondIndex) {
+						// Save reference to the selected bond.
+						result.sceneNode = vpPickResult.pipelineNode();
+						result.bondIndex = bondIndex;
+						return true;
+					}
+				}
 			}
 		}
 	}

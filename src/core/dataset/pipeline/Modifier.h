@@ -95,7 +95,7 @@ public:
 	OORef<ModifierApplication> createModifierApplication();
 
 	/// \brief Returns the title of this modifier object.
-	virtual QString objectTitle() override {
+	virtual QString objectTitle() const override {
 		if(title().isEmpty()) return RefTarget::objectTitle();
 		else return title();
 	}

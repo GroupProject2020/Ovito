@@ -59,7 +59,7 @@ public:
 	Q_INVOKABLE IMDImporter(DataSet* dataset) : ParticleImporter(dataset) {}
 
 	/// Returns the title of this object.
-	virtual QString objectTitle() override { return tr("IMD"); }
+	virtual QString objectTitle() const override { return tr("IMD"); }
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
 	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {

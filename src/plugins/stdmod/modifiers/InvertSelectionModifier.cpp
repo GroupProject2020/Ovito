@@ -20,11 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/stdmod/StdMod.h>
-#include <core/dataset/DataSet.h>
-#include <core/dataset/pipeline/ModifierApplication.h>
-#include <plugins/stdobj/util/OutputHelper.h>
 #include <plugins/stdobj/properties/PropertyObject.h>
-#include <core/app/PluginManager.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
 #include "InvertSelectionModifier.h"
 
 namespace Ovito { namespace StdMod {
@@ -37,8 +34,7 @@ IMPLEMENT_OVITO_CLASS(InvertSelectionModifier);
 InvertSelectionModifier::InvertSelectionModifier(DataSet* dataset) : GenericPropertyModifier(dataset)
 {
 	// Operate on particles by default.
-	setPropertyClass(static_cast<const PropertyClass*>(
-		PluginManager::instance().findClass(QStringLiteral("Particles"), QStringLiteral("ParticleProperty"))));	
+	setDefaultSubject(QStringLiteral("Particles"), QStringLiteral("ParticlesObject"));	
 }
 
 /******************************************************************************
@@ -46,13 +42,13 @@ InvertSelectionModifier::InvertSelectionModifier(DataSet* dataset) : GenericProp
 ******************************************************************************/
 PipelineFlowState InvertSelectionModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	if(!propertyClass())
-		throwException(tr("No input property class selected."));
+	if(!subject())
+		throwException(tr("No data element type set."));
 	
-	PipelineFlowState output = input;	
-    OutputHelper oh(dataset(), output, modApp);
-    
-	PropertyObject* selProperty = oh.outputStandardProperty(*propertyClass(), PropertyStorage::GenericSelectionProperty, true);
+	PipelineFlowState output = input;
+
+   	PropertyContainer* container = output.expectMutableLeafObject(subject());
+	PropertyObject* selProperty = container->createProperty(PropertyStorage::GenericSelectionProperty, true);
 	for(int& s : selProperty->intRange())
 		s = !s;
     

@@ -207,14 +207,14 @@ FileSourceImporter::FrameDataPtr ParcasFileImporter::FrameLoader::loadFile(QFile
     	qDebug() << "Field-" << (i+1) << " name: " << field_name << " unit: " << field_unit;
 #endif
 
-    	ParticleProperty::Type propertyType = ParticleProperty::UserProperty;
+    	ParticlesObject::Type propertyType = ParticlesObject::UserProperty;
     	QString propertyName = QString(field_name).trimmed();
-    	if(propertyName == "Epot") propertyType = ParticleProperty::PotentialEnergyProperty;
-    	else if(propertyName == "Ekin") propertyType = ParticleProperty::KineticEnergyProperty;
+    	if(propertyName == "Epot") propertyType = ParticlesObject::PotentialEnergyProperty;
+    	else if(propertyName == "Ekin") propertyType = ParticlesObject::KineticEnergyProperty;
 
     	PropertyPtr property;
-		if(propertyType != ParticleProperty::UserProperty)
-			property = ParticleProperty::createStandardStorage(natoms, propertyType, true);
+		if(propertyType != ParticlesObject::UserProperty)
+			property = ParticlesObject::OOClass().createStandardStorage(natoms, propertyType, true);
 		else
 			property = std::make_shared<PropertyStorage>(natoms, PropertyStorage::Float, 1, 0, propertyName, true);
 		frameData->addParticleProperty(property);
@@ -234,12 +234,12 @@ FileSourceImporter::FrameDataPtr ParcasFileImporter::FrameLoader::loadFile(QFile
 
 	// Create the required standard properties.
     size_t numAtoms = (size_t)natoms;
-	PropertyPtr posProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::PositionProperty, true);
+	PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::PositionProperty, true);
 	frameData->addParticleProperty(posProperty);
-	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::TypeProperty, true);
+	PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::TypeProperty, true);
 	frameData->addParticleProperty(typeProperty);
 	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
-	PropertyPtr identifierProperty = ParticleProperty::createStandardStorage(natoms, ParticleProperty::IdentifierProperty, true);
+	PropertyPtr identifierProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::IdentifierProperty, true);
 	frameData->addParticleProperty(identifierProperty);
 
 	// Create atom types in OVITO.

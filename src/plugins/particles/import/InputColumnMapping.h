@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/particles/import/ParticleImporter.h>
 #include <plugins/particles/import/ParticleFrameData.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
@@ -56,10 +56,10 @@ public:
 	/// \brief Maps this column to a standard particle property.
 	/// \param type Specifies the standard property.
 	/// \param vectorComponent The component in the per-particle vector.
-	void mapStandardColumn(ParticleProperty::Type type, int vectorComponent = 0) {
-		OVITO_ASSERT(type != ParticleProperty::UserProperty);
+	void mapStandardColumn(ParticlesObject::Type type, int vectorComponent = 0) {
+		OVITO_ASSERT(type != ParticlesObject::UserProperty);
 		this->property = ParticlePropertyReference(type, vectorComponent);
-		this->dataType = ParticleProperty::OOClass().standardPropertyDataType(type);
+		this->dataType = ParticlesObject::OOClass().standardPropertyDataType(type);
 	}
 
 	/// \brief Returns true if the file column is mapped to a particle property; false otherwise (file column will be ignored during import).
@@ -67,8 +67,8 @@ public:
 
 	/// \brief Indicates whether this column is mapped to a particle type property.
 	bool isTypeProperty() const {
-		return (property.type() == ParticleProperty::TypeProperty)
-				|| (property.type() == ParticleProperty::StructureTypeProperty);
+		return (property.type() == ParticlesObject::TypeProperty)
+				|| (property.type() == ParticlesObject::StructureTypeProperty);
 	}
 
 	/// The target particle property this column is mapped to.
@@ -119,7 +119,7 @@ public:
 	/// This method can be used to detect 2D datasets.
 	bool hasZCoordinates() const {
 		return std::any_of(begin(), end(), [](const InputColumnInfo& column) {
-			return column.property.type() == ParticleProperty::PositionProperty && column.property.vectorComponent() == 2;
+			return column.property.type() == ParticlesObject::PositionProperty && column.property.vectorComponent() == 2;
 		});
 	}
 
@@ -209,5 +209,3 @@ OVITO_END_INLINE_NAMESPACE
 
 Q_DECLARE_METATYPE(Ovito::Particles::InputColumnInfo);
 Q_DECLARE_METATYPE(Ovito::Particles::InputColumnMapping);
-
-

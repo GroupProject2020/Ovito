@@ -21,9 +21,9 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <core/utilities/concurrent/ParallelFor.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
+#include <core/dataset/DataSet.h>
 #include "ElasticStrainEngine.h"
 #include "ElasticStrainModifier.h"
 
@@ -44,8 +44,8 @@ ElasticStrainEngine::ElasticStrainEngine(
 	_latticeConstant(latticeConstant),
 	_pushStrainTensorsForward(pushStrainTensorsForward),
 	_volumetricStrains(std::make_shared<PropertyStorage>(positions->size(), PropertyStorage::Float, 1, 0, QStringLiteral("Volumetric Strain"), false)),
-	_strainTensors(calculateStrainTensors ? ParticleProperty::createStandardStorage(positions->size(), ParticleProperty::ElasticStrainTensorProperty, false) : nullptr),
-	_deformationGradients(calculateDeformationGradients ? ParticleProperty::createStandardStorage(positions->size(), ParticleProperty::ElasticDeformationGradientProperty, false) : nullptr)
+	_strainTensors(calculateStrainTensors ? ParticlesObject::OOClass().createStandardStorage(positions->size(), ParticlesObject::ElasticStrainTensorProperty, false) : nullptr),
+	_deformationGradients(calculateDeformationGradients ? ParticlesObject::OOClass().createStandardStorage(positions->size(), ParticlesObject::ElasticDeformationGradientProperty, false) : nullptr)
 {
 	setAtomClusters(_structureAnalysis->atomClusters());
 	if(inputCrystalStructure == StructureAnalysis::LATTICE_FCC || inputCrystalStructure == StructureAnalysis::LATTICE_BCC || inputCrystalStructure == StructureAnalysis::LATTICE_CUBIC_DIAMOND) {
@@ -185,26 +185,25 @@ PipelineFlowState ElasticStrainEngine::emitResults(TimePoint time, ModifierAppli
 	ElasticStrainModifier* modifier = static_object_cast<ElasticStrainModifier>(modApp->modifier());
 	
 	PipelineFlowState output = StructureIdentificationEngine::emitResults(time, modApp, input);
-	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
 
 	// Output cluster graph.
-	OORef<ClusterGraphObject> clusterGraphObj(new ClusterGraphObject(modApp->dataset()));
+	ClusterGraphObject* clusterGraphObj = output.createObject<ClusterGraphObject>(modApp);
 	clusterGraphObj->setStorage(clusterGraph());
-	poh.outputObject(clusterGraphObj);
 
 	// Output pattern catalog.
-	poh.outputObject(modifier->patternCatalog());
+	output.addObject(modifier->patternCatalog());
 
 	// Output particle properties.
-	poh.outputProperty<ParticleProperty>(atomClusters());
+	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+	particles->createProperty(atomClusters());
 	if(modifier->calculateStrainTensors() && strainTensors())
-		poh.outputProperty<ParticleProperty>(strainTensors());
+		particles->createProperty(strainTensors());
 
 	if(modifier->calculateDeformationGradients() && deformationGradients())
-	poh.outputProperty<ParticleProperty>(deformationGradients());
+		particles->createProperty(deformationGradients());
 
 	if(volumetricStrains())
-		poh.outputProperty<ParticleProperty>(volumetricStrains());
+		particles->createProperty(volumetricStrains());
 
 	return output;
 }

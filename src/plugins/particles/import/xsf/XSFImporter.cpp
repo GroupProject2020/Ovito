@@ -175,17 +175,17 @@ FileSourceImporter::FrameDataPtr XSFImporter::FrameLoader::loadFile(QFile& file)
 			if(coords.empty())
 				throw Exception(tr("Invalid ATOMS section in line %1 of XSF file.").arg(stream.lineNumber()));
 
-			PropertyPtr posProperty = ParticleProperty::createStandardStorage(coords.size(), ParticleProperty::PositionProperty, false);
+			PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(coords.size(), ParticlesObject::PositionProperty, false);
 			frameData->addParticleProperty(posProperty);
 			std::copy(coords.begin(), coords.end(), posProperty->dataPoint3());
 			
-			PropertyPtr typeProperty = ParticleProperty::createStandardStorage(types.size(), ParticleProperty::TypeProperty, false);
+			PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(types.size(), ParticlesObject::TypeProperty, false);
 			frameData->addParticleProperty(typeProperty);
 			std::copy(types.begin(), types.end(), typeProperty->dataInt());
 			frameData->setPropertyTypesList(typeProperty, std::move(typeList));
 
 			if(forces.size() != 0) {
-				PropertyPtr forceProperty = ParticleProperty::createStandardStorage(coords.size(), ParticleProperty::ForceProperty, false);
+				PropertyPtr forceProperty = ParticlesObject::OOClass().createStandardStorage(coords.size(), ParticlesObject::ForceProperty, false);
 				frameData->addParticleProperty(forceProperty);
 				std::copy(forces.begin(), forces.end(), forceProperty->dataVector3());
 			}
@@ -254,14 +254,14 @@ FileSourceImporter::FrameDataPtr XSFImporter::FrameLoader::loadFile(QFile& file)
 			// Prepare the file column to particle property mapping.
 			InputColumnMapping columnMapping;
 			columnMapping.resize(nfields + 1);
-			columnMapping[0].mapStandardColumn(ParticleProperty::TypeProperty);
-			columnMapping[1].mapStandardColumn(ParticleProperty::PositionProperty, 0);
-			columnMapping[2].mapStandardColumn(ParticleProperty::PositionProperty, 1);
-			columnMapping[3].mapStandardColumn(ParticleProperty::PositionProperty, 2);
+			columnMapping[0].mapStandardColumn(ParticlesObject::TypeProperty);
+			columnMapping[1].mapStandardColumn(ParticlesObject::PositionProperty, 0);
+			columnMapping[2].mapStandardColumn(ParticlesObject::PositionProperty, 1);
+			columnMapping[3].mapStandardColumn(ParticlesObject::PositionProperty, 2);
 			if(nfields == 6) {
-				columnMapping[4].mapStandardColumn(ParticleProperty::ForceProperty, 0);
-				columnMapping[5].mapStandardColumn(ParticleProperty::ForceProperty, 1);
-				columnMapping[6].mapStandardColumn(ParticleProperty::ForceProperty, 2);
+				columnMapping[4].mapStandardColumn(ParticlesObject::ForceProperty, 0);
+				columnMapping[5].mapStandardColumn(ParticlesObject::ForceProperty, 1);
+				columnMapping[6].mapStandardColumn(ParticlesObject::ForceProperty, 2);
 			}
 
 			// Jump back to start of atoms list.
@@ -331,7 +331,7 @@ FileSourceImporter::FrameDataPtr XSFImporter::FrameLoader::loadFile(QFile& file)
 	}
 
 	// Translate atomic numbers into element names.
-	if(PropertyPtr typeProperty = frameData->findStandardParticleProperty(ParticleProperty::TypeProperty)) {
+	if(PropertyPtr typeProperty = frameData->findStandardParticleProperty(ParticlesObject::TypeProperty)) {
 		if(ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty)) {
 			for(const auto& t : typeList->types()) {
 				if(t.name.isEmpty() && t.id >= 1 && t.id < sizeof(chemical_symbols)/sizeof(chemical_symbols[0])) {

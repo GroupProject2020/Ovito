@@ -43,7 +43,7 @@ AffineDecomposition::AffineDecomposition(const AffineTransformation& tm)
 	if(std::abs(scaling.Q.w()) >= FloatType(1) || scaling.S.equals(Vector3(1,1,1)))
 		scaling.Q.setIdentity();
 
-	// The following code checks whether the decomposed parts really give the original matrix.
+	// The following code checks whether the decomposed parts really yield the original matrix.
 #if 0
 #ifdef OVITO_DEBUG
 

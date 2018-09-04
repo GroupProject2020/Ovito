@@ -25,11 +25,10 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/util/CutoffNeighborFinder.h>
 #include <plugins/particles/util/ParticleOrderingFingerprint.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
 #include <plugins/stdobj/series/DataSeriesObject.h>
-#include <plugins/stdobj/series/DataSeriesProperty.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
 
 #include <boost/container/flat_map.hpp>
@@ -86,7 +85,7 @@ private:
 			_computePartialRdfs(particleTypes),
 			_particleTypes(std::move(particleTypes)),
 			_uniqueTypeIds(std::move(uniqueTypeIds)),
-			_coordinationNumbers(ParticleProperty::createStandardStorage(fingerprint.particleCount(), ParticleProperty::CoordinationProperty, true)),
+			_coordinationNumbers(ParticlesObject::OOClass().createStandardStorage(fingerprint.particleCount(), ParticlesObject::CoordinationProperty, true)),
 			_inputFingerprint(std::move(fingerprint))
 		{
 			size_t componentCount = _computePartialRdfs ? (this->uniqueTypeIds().size() * (this->uniqueTypeIds().size()+1) / 2) : 1;
@@ -99,7 +98,7 @@ private:
 					}
 				}
 			}
-			_rdfY = std::make_shared<PropertyStorage>(rdfSampleCount, PropertyStorage::Float, componentCount, 0, tr("g(r)"), true, DataSeriesProperty::YProperty, std::move(componentNames));
+			_rdfY = std::make_shared<PropertyStorage>(rdfSampleCount, PropertyStorage::Float, componentCount, 0, tr("g(r)"), true, DataSeriesObject::YProperty, std::move(componentNames));
 		}
 
 		/// This method is called by the system after the computation was successfully completed.

@@ -80,8 +80,8 @@ void ParticleTypeEditor::createUI(const RolloutInsertionParameters& rolloutParam
 		ParticleType* ptype = static_object_cast<ParticleType>(editObject());
 		if(!ptype) return;
 
-		ParticleType::setDefaultParticleColor(ParticleProperty::TypeProperty, ptype->name(), ptype->color());
-		ParticleType::setDefaultParticleRadius(ParticleProperty::TypeProperty, ptype->name(), ptype->radius());
+		ParticleType::setDefaultParticleColor(ParticlesObject::TypeProperty, ptype->name(), ptype->color());
+		ParticleType::setDefaultParticleRadius(ParticlesObject::TypeProperty, ptype->name(), ptype->radius());
 
 		mainWindow()->statusBar()->showMessage(tr("Stored current color and radius as defaults for particle type '%1'.").arg(ptype->name()), 4000);
 	});

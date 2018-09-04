@@ -54,7 +54,7 @@ PropertyFieldDescriptor::PropertyFieldDescriptor(RefMakerClass* definingClass, c
 }
 
 /// Constructor	for a property field that stores a single reference to a RefTarget.
-PropertyFieldDescriptor::PropertyFieldDescriptor(RefMakerClass* definingClass, OvitoClassPtr targetClass, const char* identifier, PropertyFieldFlags flags, SingleReferenceFieldBase& (*_storageAccessFunc)(RefMaker*))
+PropertyFieldDescriptor::PropertyFieldDescriptor(RefMakerClass* definingClass, OvitoClassPtr targetClass, const char* identifier, PropertyFieldFlags flags, SingleReferenceFieldBase& (*_storageAccessFunc)(const RefMaker*))
 	: _definingClassDescriptor(definingClass), _targetClassDescriptor(targetClass), _identifier(identifier), _flags(flags), singleStorageAccessFunc(_storageAccessFunc) 
 {
 	OVITO_ASSERT(_identifier != nullptr);
@@ -71,7 +71,7 @@ PropertyFieldDescriptor::PropertyFieldDescriptor(RefMakerClass* definingClass, O
 }
 
 /// Constructor	for a property field that stores a vector of references to RefTarget objects.
-PropertyFieldDescriptor::PropertyFieldDescriptor(RefMakerClass* definingClass, OvitoClassPtr targetClass, const char* identifier, PropertyFieldFlags flags, VectorReferenceFieldBase& (*_storageAccessFunc)(RefMaker*))
+PropertyFieldDescriptor::PropertyFieldDescriptor(RefMakerClass* definingClass, OvitoClassPtr targetClass, const char* identifier, PropertyFieldFlags flags, VectorReferenceFieldBase& (*_storageAccessFunc)(const RefMaker*))
 	: _definingClassDescriptor(definingClass), _targetClassDescriptor(targetClass), _identifier(identifier), _flags(flags), vectorStorageAccessFunc(_storageAccessFunc) 
 {
 	OVITO_ASSERT(_identifier != nullptr);

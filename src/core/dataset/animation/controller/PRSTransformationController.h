@@ -137,7 +137,7 @@ public:
 	}
 
 	/// \brief Returns the title of this object.
-	virtual QString objectTitle() override { return tr("Transformation"); }
+	virtual QString objectTitle() const override { return tr("Transformation"); }
 
 	/// \brief Returns whether the value of this controller is changing over time.
 	virtual bool isAnimated() const override {

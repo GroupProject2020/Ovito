@@ -511,13 +511,13 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 				continue;
 
 			// Create property to load this information into.
-			ParticleProperty::Type propertyType = (ParticleProperty::Type)column.property.type();
-			if(propertyType != ParticleProperty::UserProperty) {
+			ParticlesObject::Type propertyType = (ParticlesObject::Type)column.property.type();
+			if(propertyType != ParticlesObject::UserProperty) {
 				// Look for existing standard property.
 				property = frameData->findStandardParticleProperty(propertyType);
 				if(!property) {
 					// Create standard property.
-					property = ParticleProperty::createStandardStorage(particleCount, propertyType, true);
+					property = ParticlesObject::OOClass().createStandardStorage(particleCount, propertyType, true);
 					frameData->addParticleProperty(property);
 				}
 			}
@@ -572,7 +572,7 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 				OVITO_ASSERT(remaining == 0);
 
 				// Create particles types if this is the particle type property.
-				if(propertyType == ParticleProperty::TypeProperty || propertyType == ParticleProperty::StructureTypeProperty) {
+				if(propertyType == ParticlesObject::TypeProperty || propertyType == ParticlesObject::StructureTypeProperty) {
 					
 					ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(property);
 					
@@ -651,7 +651,7 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
 		// If the input file does not contain simulation cell size, use bounding box of particles as simulation cell.
 		if(!pbc[0] || !pbc[1] || !pbc[2]) {
 
-			PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticleProperty::PositionProperty);
+			PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticlesObject::PositionProperty);
 			if(posProperty && posProperty->size() != 0) {
 				Box3 boundingBox;
 				boundingBox.addPoints(posProperty->constDataPoint3(), posProperty->size());
@@ -688,33 +688,33 @@ FileSourceImporter::FrameDataPtr AMBERNetCDFImporter::FrameLoader::loadFile(QFil
  *****************************************************************************/
 InputColumnInfo AMBERNetCDFImporter::mapVariableToColumn(const QString& name, int dataType, size_t componentCount)
 {
-	ParticleProperty::Type standardType = ParticleProperty::UserProperty;
+	ParticlesObject::Type standardType = ParticlesObject::UserProperty;
 
 	// Map variables of the AMBER convention and some more to OVITO's standard properties.
 	QString loweredName = name.toLower();
-	if(loweredName == "coordinates" || loweredName == "unwrapped_coordinates") standardType = ParticleProperty::PositionProperty;
-	else if(loweredName == "velocities") standardType = ParticleProperty::VelocityProperty;
-	else if(loweredName == "id" || loweredName == "identifier") standardType = ParticleProperty::IdentifierProperty;
-	else if(loweredName == "type" || loweredName == "element" || loweredName == "atom_types" || loweredName == "species") standardType = ParticleProperty::TypeProperty;
-	else if(loweredName == "mass") standardType = ParticleProperty::MassProperty;
-	else if(loweredName == "radius") standardType = ParticleProperty::RadiusProperty;
-	else if(loweredName == "color") standardType = ParticleProperty::ColorProperty;
-	else if(loweredName == "c_cna" || loweredName == "pattern") standardType = ParticleProperty::StructureTypeProperty;
-	else if(loweredName == "c_epot") standardType = ParticleProperty::PotentialEnergyProperty;
-	else if(loweredName == "c_kpot") standardType = ParticleProperty::KineticEnergyProperty;
-	else if(loweredName == "selection") standardType = ParticleProperty::SelectionProperty;
-	else if(loweredName == "forces" || loweredName == "force") standardType = ParticleProperty::ForceProperty;
+	if(loweredName == "coordinates" || loweredName == "unwrapped_coordinates") standardType = ParticlesObject::PositionProperty;
+	else if(loweredName == "velocities") standardType = ParticlesObject::VelocityProperty;
+	else if(loweredName == "id" || loweredName == "identifier") standardType = ParticlesObject::IdentifierProperty;
+	else if(loweredName == "type" || loweredName == "element" || loweredName == "atom_types" || loweredName == "species") standardType = ParticlesObject::TypeProperty;
+	else if(loweredName == "mass") standardType = ParticlesObject::MassProperty;
+	else if(loweredName == "radius") standardType = ParticlesObject::RadiusProperty;
+	else if(loweredName == "color") standardType = ParticlesObject::ColorProperty;
+	else if(loweredName == "c_cna" || loweredName == "pattern") standardType = ParticlesObject::StructureTypeProperty;
+	else if(loweredName == "c_epot") standardType = ParticlesObject::PotentialEnergyProperty;
+	else if(loweredName == "c_kpot") standardType = ParticlesObject::KineticEnergyProperty;
+	else if(loweredName == "selection") standardType = ParticlesObject::SelectionProperty;
+	else if(loweredName == "forces" || loweredName == "force") standardType = ParticlesObject::ForceProperty;
 
 	// Try to directly map variable name to a standard property name.
-	if(standardType == ParticleProperty::UserProperty)
-		standardType = (ParticleProperty::Type)ParticleProperty::OOClass().standardPropertyTypeId(name);
+	if(standardType == ParticlesObject::UserProperty)
+		standardType = (ParticlesObject::Type)ParticlesObject::OOClass().standardPropertyTypeId(name);
 
 	InputColumnInfo column;
 	column.columnName = name;
 			
 	// Only map to standard property if data layout matches.
-	if(standardType != ParticleProperty::UserProperty) {
-		if(componentCount == ParticleProperty::OOClass().standardPropertyComponentCount(standardType)) {
+	if(standardType != ParticlesObject::UserProperty) {
+		if(componentCount == ParticlesObject::OOClass().standardPropertyComponentCount(standardType)) {
 			column.mapStandardColumn(standardType);
 			return column;
 		}
@@ -751,7 +751,7 @@ void AMBERNetCDFImporter::loadFromStream(ObjectLoadStream& stream)
 /******************************************************************************
  * Creates a copy of this object.
  *****************************************************************************/
-OORef<RefTarget> AMBERNetCDFImporter::clone(bool deepCopy, CloneHelper& cloneHelper)
+OORef<RefTarget> AMBERNetCDFImporter::clone(bool deepCopy, CloneHelper& cloneHelper) const
 {
 	// Let the base class create an instance of this class.
 	OORef<AMBERNetCDFImporter> clone = static_object_cast<AMBERNetCDFImporter>(ParticleImporter::clone(deepCopy, cloneHelper));

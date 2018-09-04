@@ -20,42 +20,31 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/stdobj/StdObj.h>
-#include <plugins/stdobj/properties/PropertyObject.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
+#include <core/app/PluginManager.h>
 #include "GenericPropertyModifier.h"
 
 namespace Ovito { namespace StdObj {
 
 IMPLEMENT_OVITO_CLASS(GenericPropertyModifier);
-DEFINE_PROPERTY_FIELD(GenericPropertyModifier, propertyClass);
+DEFINE_PROPERTY_FIELD(GenericPropertyModifier, subject);
 
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
-GenericPropertyModifier::GenericPropertyModifier(DataSet* dataset) : Modifier(dataset),
-	_propertyClass(nullptr)
+GenericPropertyModifier::GenericPropertyModifier(DataSet* dataset) : Modifier(dataset)
 {
 }
 
 /******************************************************************************
-* Saves the class' contents to an output stream.
+* Sets the subject property container.
 ******************************************************************************/
-void GenericPropertyModifier::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData)
+void GenericPropertyModifier::setDefaultSubject(const QString& pluginId, const QString& containerClassName)
 {
-	Modifier::saveToStream(stream, excludeRecomputableData);
-	stream.beginChunk(0x01);
-	OvitoClass::serializeRTTI(stream, propertyClass());
-	stream.endChunk();
-}
-
-/******************************************************************************
-* Loads the class' contents from an input stream.
-******************************************************************************/
-void GenericPropertyModifier::loadFromStream(ObjectLoadStream& stream)
-{
-	Modifier::loadFromStream(stream);
-	stream.expectChunk(0x01);
-	setPropertyClass(static_cast<PropertyClassPtr>(OvitoClass::deserializeRTTI(stream)));
-	stream.closeChunk();
+	if(OvitoClassPtr containerClass = PluginManager::instance().findClass(pluginId, containerClassName)) {
+		OVITO_ASSERT(containerClass->isDerivedFrom(PropertyContainer::OOClass()));
+		setSubject(static_cast<PropertyContainerClassPtr>(containerClass));
+	}
 }
 
 /******************************************************************************
@@ -65,9 +54,9 @@ bool GenericPropertyModifier::OOMetaClass::isApplicableTo(const PipelineFlowStat
 {
 	if(!ModifierClass::isApplicableTo(input)) return false;
 
-	// Modifier is applicable if there is at least one property in the input data.
+	// Modifier is applicable if there is at least one property container in the input data.
 	// Subclasses can override this behavior.
-	return input.findObjectOfType<PropertyObject>() != nullptr;
+	return input.containsObjectRecursive(PropertyContainer::OOClass());
 }
 
 }	// End of namespace

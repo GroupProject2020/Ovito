@@ -23,13 +23,12 @@
 #include <plugins/particles/util/NearestNeighborFinder.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
 #include <plugins/stdobj/series/DataSeriesObject.h>
-#include <plugins/stdobj/series/DataSeriesProperty.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <core/utilities/concurrent/ParallelFor.h>
 #include <core/utilities/concurrent/PromiseState.h>
+#include <core/utilities/units/UnitsManager.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
+#include <core/dataset/DataSet.h>
 #include "PolyhedralTemplateMatchingModifier.h"
 
 #include <ptm/ptm_functions.h>
@@ -112,26 +111,26 @@ Future<AsynchronousModifier::ComputeEnginePtr> PolyhedralTemplateMatchingModifie
 		throwException(tr("The number of structure types has changed. Please remove this modifier from the data pipeline and insert it again."));
 
 	// Get modifier input.
-	ParticleInputHelper pih(dataset(), input);
-	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
-	SimulationCellObject* simCell = pih.expectSimulationCell();
+	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
+	const SimulationCellObject* simCell = input.expectObject<SimulationCellObject>();
 	if(simCell->is2D())
 		throwException(tr("The PTM modifier does not support 2D simulation cells."));
 
 	// Get particle selection.
 	ConstPropertyPtr selectionProperty;
 	if(onlySelectedParticles())
-		selectionProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty)->storage();
+		selectionProperty = particles->expectProperty(ParticlesObject::SelectionProperty)->storage();
 
 	// Get particle types if needed.
 	ConstPropertyPtr typeProperty;
 	if(outputOrderingTypes())
-		typeProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::TypeProperty)->storage();
+		typeProperty = particles->expectProperty(ParticlesObject::TypeProperty)->storage();
 
 	// Initialize PTM library.
 	ptm_initialize_global();
 
-	return std::make_shared<PTMEngine>(posProperty->storage(), input, std::move(typeProperty), simCell->data(),
+	return std::make_shared<PTMEngine>(posProperty->storage(), particles, std::move(typeProperty), simCell->data(),
 			getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty),
 			outputInteratomicDistance(), outputOrientation(), outputDeformationGradient(), outputOrderingTypes());
 }
@@ -262,7 +261,7 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 
 	// Determine histogram bin size based on maximum RMSD value.
 	const size_t numHistogramBins = 100;
-	_rmsdHistogram = std::make_shared<PropertyStorage>(numHistogramBins, PropertyStorage::Int64, 1, 0, tr("Count"), true, DataSeriesProperty::YProperty); 
+	_rmsdHistogram = std::make_shared<PropertyStorage>(numHistogramBins, PropertyStorage::Int64, 1, 0, tr("Count"), true, DataSeriesObject::YProperty); 
 	FloatType rmsdHistogramBinSize = FloatType(1.01) * *std::max_element(rmsd()->constDataFloat(), rmsd()->constDataFloat() + rmsd()->size()) / numHistogramBins;
 	if(rmsdHistogramBinSize <= 0) rmsdHistogramBinSize = 1;
 	_rmsdHistogramRange = rmsdHistogramBinSize * numHistogramBins;
@@ -312,42 +311,42 @@ PropertyPtr PolyhedralTemplateMatchingModifier::PTMEngine::postProcessStructureT
 PipelineFlowState PolyhedralTemplateMatchingModifier::PTMEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	PipelineFlowState output = StructureIdentificationEngine::emitResults(time, modApp, input);
-	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
 	
 	// Also output structure type counts, which have been computed by the base class.
-	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.OTHER"), QVariant::fromValue(getTypeCount(OTHER)));
-	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.FCC"), QVariant::fromValue(getTypeCount(FCC)));
-	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.HCP"), QVariant::fromValue(getTypeCount(HCP)));
-	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.BCC"), QVariant::fromValue(getTypeCount(BCC)));
-	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.ICO"), QVariant::fromValue(getTypeCount(ICO)));
-	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.SC"), QVariant::fromValue(getTypeCount(SC)));
-	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.CUBIC_DIAMOND"), QVariant::fromValue(getTypeCount(CUBIC_DIAMOND)));
-	poh.outputAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.HEX_DIAMOND"), QVariant::fromValue(getTypeCount(HEX_DIAMOND)));
+	output.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.OTHER"), QVariant::fromValue(getTypeCount(OTHER)), modApp);
+	output.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.FCC"), QVariant::fromValue(getTypeCount(FCC)), modApp);
+	output.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.HCP"), QVariant::fromValue(getTypeCount(HCP)), modApp);
+	output.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.BCC"), QVariant::fromValue(getTypeCount(BCC)), modApp);
+	output.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.ICO"), QVariant::fromValue(getTypeCount(ICO)), modApp);
+	output.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.SC"), QVariant::fromValue(getTypeCount(SC)), modApp);
+	output.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.CUBIC_DIAMOND"), QVariant::fromValue(getTypeCount(CUBIC_DIAMOND)), modApp);
+	output.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.HEX_DIAMOND"), QVariant::fromValue(getTypeCount(HEX_DIAMOND)), modApp);
 
 	PolyhedralTemplateMatchingModifier* modifier = static_object_cast<PolyhedralTemplateMatchingModifier>(modApp->modifier());
 	OVITO_ASSERT(modifier);
+	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
 
 	// Output per-particle properties.
 	if(rmsd() && modifier->outputRmsd()) {
-		poh.outputProperty<ParticleProperty>(rmsd());
+		particles->createProperty(rmsd());
 	}
 	if(interatomicDistances() && modifier->outputInteratomicDistance()) {
-		poh.outputProperty<ParticleProperty>(interatomicDistances());
+		particles->createProperty(interatomicDistances());
 	}
 	if(orientations() && modifier->outputOrientation()) {
-		poh.outputProperty<ParticleProperty>(orientations());
+		particles->createProperty(orientations());
 	}
 	if(deformationGradients() && modifier->outputDeformationGradient()) {
-		poh.outputProperty<ParticleProperty>(deformationGradients());
+		particles->createProperty(deformationGradients());
 	}
 	if(orderingTypes() && modifier->outputOrderingTypes()) {
-		ParticleProperty* orderingProperty = poh.outputProperty<ParticleProperty>(orderingTypes());
+		PropertyObject* orderingProperty = particles->createProperty(orderingTypes());
 		// Attach ordering types to output particle property.
 		orderingProperty->setElementTypes(modifier->orderingTypes());		
 	}
 
 	// Output RMSD histogram.
-	DataSeriesObject* seriesObj = poh.outputDataSeries(QStringLiteral("ptm/rmsd"), tr("RMSD distribution"), rmsdHistogram());
+	DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("ptm/rmsd"), modApp, tr("RMSD distribution"), rmsdHistogram());
 	seriesObj->setAxisLabelX(tr("RMSD"));
 	seriesObj->setIntervalStart(0);
 	seriesObj->setIntervalEnd(rmsdHistogramRange());

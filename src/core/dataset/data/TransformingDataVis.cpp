@@ -40,12 +40,12 @@ TransformingDataVis::TransformingDataVis(DataSet* dataset) : DataVis(dataset)
 /******************************************************************************
 * Lets the vis element transform a data object in preparation for rendering.
 ******************************************************************************/
-Future<PipelineFlowState> TransformingDataVis::transformData(TimePoint time, DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState, PipelineSceneNode* contextNode) 
+Future<PipelineFlowState> TransformingDataVis::transformData(TimePoint time, const DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState, const PipelineSceneNode* contextNode) 
 {
 	// Check if the cache state already contains a transformed data object that we have
 	// created earlier for the same input object. If yes, we can immediately return it.
-	for(DataObject* o : cachedState.objects()) {
-		if(TransformedDataObject* transformedDataObject = dynamic_object_cast<TransformedDataObject>(o)) {
+	for(const DataObject* o : cachedState.objects()) {
+		if(const TransformedDataObject* transformedDataObject = dynamic_object_cast<TransformedDataObject>(o)) {
 			if(transformedDataObject->sourceDataObject() == dataObject && transformedDataObject->visElement() == this && transformedDataObject->visElementRevision() == revisionNumber()) {
 				flowState.addObject(transformedDataObject);
 				return std::move(flowState);

@@ -84,7 +84,7 @@ ColorLegendOverlay::ColorLegendOverlay(DataSet* dataset) : ViewportOverlay(datas
 	_outlineColor(1,1,1),
 	_outlineEnabled(false)
 {
-	if(Application::instance()->guiMode()) {
+	if(!Application::instance()->scriptMode()) {
 		// Find a ColorCodingModifiers in the scene that we can connect to.
 		dataset->sceneRoot()->visitObjectNodes([this](PipelineSceneNode* node) {
 			PipelineObject* obj = node->dataProvider();

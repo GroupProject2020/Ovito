@@ -20,8 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
-#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
+#include <plugins/particles/objects/BondsObject.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/utilities/concurrent/Promise.h>
 #include "LAMMPSDataExporter.h"
@@ -45,20 +45,22 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
 	exportTask.setProgressText(tr("Writing file %1").arg(filePath));
 	
-	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
-	ParticleProperty* velocityProperty = ParticleProperty::findInState(state, ParticleProperty::VelocityProperty);
-	ParticleProperty* identifierProperty = ParticleProperty::findInState(state, ParticleProperty::IdentifierProperty);
-	ParticleProperty* periodicImageProperty = ParticleProperty::findInState(state, ParticleProperty::PeriodicImageProperty);
-	ParticleProperty* particleTypeProperty = ParticleProperty::findInState(state, ParticleProperty::TypeProperty);
-	ParticleProperty* chargeProperty = ParticleProperty::findInState(state, ParticleProperty::ChargeProperty);
-	ParticleProperty* radiusProperty = ParticleProperty::findInState(state, ParticleProperty::RadiusProperty);	
-	ParticleProperty* massProperty = ParticleProperty::findInState(state, ParticleProperty::MassProperty);
-	ParticleProperty* moleculeProperty = ParticleProperty::findInState(state, ParticleProperty::MoleculeProperty);
-	BondProperty* bondTopologyProperty = BondProperty::findInState(state, BondProperty::TopologyProperty);
-	BondProperty* bondTypeProperty = BondProperty::findInState(state, BondProperty::TypeProperty);
+	const ParticlesObject* particles = state.expectObject<ParticlesObject>();
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
+	const PropertyObject* velocityProperty = particles->getProperty(ParticlesObject::VelocityProperty);
+	const PropertyObject* identifierProperty = particles->getProperty(ParticlesObject::IdentifierProperty);
+	const PropertyObject* periodicImageProperty = particles->getProperty(ParticlesObject::PeriodicImageProperty);
+	const PropertyObject* particleTypeProperty = particles->getProperty(ParticlesObject::TypeProperty);
+	const PropertyObject* chargeProperty = particles->getProperty(ParticlesObject::ChargeProperty);
+	const PropertyObject* radiusProperty = particles->getProperty(ParticlesObject::RadiusProperty);	
+	const PropertyObject* massProperty = particles->getProperty(ParticlesObject::MassProperty);
+	const PropertyObject* moleculeProperty = particles->getProperty(ParticlesObject::MoleculeProperty);
+	const BondsObject* bonds = particles->bonds();
+	const PropertyObject* bondTopologyProperty = bonds ? bonds->getProperty(BondsObject::TopologyProperty) : nullptr;
+	const PropertyObject* bondTypeProperty = bonds ? bonds->getProperty(BondsObject::TypeProperty) : nullptr;
 
 	// Get simulation cell info.
-	SimulationCellObject* simulationCell = state.findObjectOfType<SimulationCellObject>();
+	const SimulationCellObject* simulationCell = state.getObject<SimulationCellObject>();
 	if(!simulationCell)
 		throwException(tr("No simulation cell defined. Cannot write LAMMPS file."));
 

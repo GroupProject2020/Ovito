@@ -20,7 +20,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/animation/AnimationSettings.h>
@@ -56,8 +55,8 @@ std::shared_ptr<SpatialBinningModifierDelegate::SpatialBinningEngine> ParticlesS
                 bool computeFirstDerivative)
 {
 	// Get the particle positions.
-	ParticleInputHelper pih(dataset(), input);
-	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
+    const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	return std::make_shared<ComputeEngine>(

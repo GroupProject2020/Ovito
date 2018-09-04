@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/grid/Grid.h>
-#include <plugins/grid/objects/VoxelProperty.h>
+#include <plugins/grid/objects/VoxelGrid.h>
 #include <plugins/grid/modifier/CreateIsosurfaceModifier.h>
 #include <plugins/grid/modifier/SpatialBinningModifier.h>
 #include <plugins/stdobj/scripting/PythonBinding.h>
@@ -39,8 +39,7 @@ PYBIND11_MODULE(Grid, m)
 	py::options options;
 	options.disable_function_signatures();
 
-	auto VoxelProperty_py = ovito_abstract_class<VoxelProperty, PropertyObject>{m}
-	;
+	ovito_class<VoxelGrid, PropertyContainer>{m};
 
 	ovito_class<CreateIsosurfaceModifier, AsynchronousModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"

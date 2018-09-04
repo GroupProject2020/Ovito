@@ -28,20 +28,20 @@
 namespace Ovito { namespace StdObj {
 
 /**
- * \brief UI component that allows the user to select the PropertyClass a Modifier should operate on.
+ * \brief UI component for selecting the PropertyContainer a Modifier should operate on.
  */
-class OVITO_STDOBJGUI_EXPORT PropertyClassParameterUI : public PropertyParameterUI
+class OVITO_STDOBJGUI_EXPORT PropertyContainerParameterUI : public PropertyParameterUI
 {
 	Q_OBJECT
-	OVITO_CLASS(PropertyClassParameterUI)
+	OVITO_CLASS(PropertyContainerParameterUI)
 	
 public:
 
 	/// Constructor.
-	PropertyClassParameterUI(QObject* parentEditor, const PropertyFieldDescriptor& propField);
+	PropertyContainerParameterUI(QObject* parentEditor, const PropertyFieldDescriptor& propField);
 
 	/// Destructor.
-	virtual ~PropertyClassParameterUI();
+	virtual ~PropertyContainerParameterUI();
 	
 	/// This returns the combo box managed by this ParameterUI.
 	QComboBox* comboBox() const { return _comboBox; }

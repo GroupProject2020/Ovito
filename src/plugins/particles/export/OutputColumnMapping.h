@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
 #include <core/utilities/io/CompressedTextWriter.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
@@ -97,7 +97,7 @@ private:
 
 	/// Stores the source particle properties for each column in the output file.
 	/// If an entry is NULL then the particle index will be written to the corresponding column.
-	QVector<ParticleProperty*> _properties;
+	QVector<const PropertyObject*> _properties;
 
 	/// Stores the source vector component for each output column.
 	QVector<int> _vectorComponents;

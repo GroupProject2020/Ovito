@@ -44,7 +44,7 @@ public:
 	Q_INVOKABLE MicrostructureObject(DataSet* dataset);
 
 	/// Returns the title of this object.
-	virtual QString objectTitle() override { return tr("Microstructure"); }
+	virtual QString objectTitle() const override { return tr("Microstructure"); }
 
 	/// Returns the data encapsulated by this object after making sure it is not shared with other owners.
 	const MicrostructurePtr& modifiableStorage();

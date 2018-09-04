@@ -20,11 +20,10 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/stdmod/StdMod.h>
-#include <plugins/stdobj/util/InputHelper.h>
-#include <plugins/stdobj/util/OutputHelper.h>
 #include <plugins/stdobj/properties/PropertyObject.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
-#include <core/app/PluginManager.h>
+#include <core/dataset/DataSet.h>
 #include "ManualSelectionModifier.h"
 
 namespace Ovito { namespace StdMod {
@@ -42,8 +41,7 @@ SET_PROPERTY_FIELD_LABEL(ManualSelectionModifierApplication, selectionSet, "Elem
 ManualSelectionModifier::ManualSelectionModifier(DataSet* dataset) : GenericPropertyModifier(dataset)
 {
 	// Operate on particles by default.
-	setPropertyClass(static_cast<const PropertyClass*>(
-		PluginManager::instance().findClass(QStringLiteral("Particles"), QStringLiteral("ParticleProperty"))));	
+	setDefaultSubject(QStringLiteral("Particles"), QStringLiteral("ParticlesObject"));
 }
 
 /******************************************************************************
@@ -65,8 +63,8 @@ void ManualSelectionModifier::initializeModifier(ModifierApplication* modApp)
 ******************************************************************************/
 void ManualSelectionModifier::propertyChanged(const PropertyFieldDescriptor& field)
 {
-	// Whenever the selected property class of this modifier is changed, reset the selection.
-	if(field == PROPERTY_FIELD(GenericPropertyModifier::propertyClass) && !isBeingLoaded()) {
+	// Whenever the subject of this modifier is changed, reset the selection.
+	if(field == PROPERTY_FIELD(GenericPropertyModifier::subject) && !isBeingLoaded()) {
 		for(ModifierApplication* modApp : modifierApplications()) {
 			resetSelection(modApp, modApp->evaluateInputPreliminary());
 		}
@@ -80,18 +78,19 @@ void ManualSelectionModifier::propertyChanged(const PropertyFieldDescriptor& fie
 PipelineFlowState ManualSelectionModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	PipelineFlowState output = input;
-	InputHelper pih(dataset(), input);
-	OutputHelper poh(dataset(), output, modApp);
 
 	// Retrieve the selection stored in the modifier application.
 	ElementSelectionSet* selectionSet = getSelectionSet(modApp, false);
 	if(!selectionSet)
 		throwException(tr("No stored selection set available. Please reset the selection state."));
 
-	if(propertyClass()) {
+	if(subject()) {
+
+		PropertyContainer* container = output.expectMutableLeafObject(subject());
+		
 		PipelineStatus status = selectionSet->applySelection(
-				poh.outputStandardProperty(*propertyClass(), PropertyStorage::GenericSelectionProperty),
-				pih.inputStandardProperty(*propertyClass(), PropertyStorage::GenericIdentifierProperty));
+				container->createProperty(PropertyStorage::GenericSelectionProperty),
+				container->getProperty(PropertyStorage::GenericIdentifierProperty));
 		
 		output.setStatus(std::move(status));
 	}
@@ -121,8 +120,10 @@ ElementSelectionSet* ManualSelectionModifier::getSelectionSet(ModifierApplicatio
 ******************************************************************************/
 void ManualSelectionModifier::resetSelection(ModifierApplication* modApp, const PipelineFlowState& state)
 {
-	if(propertyClass())
-		getSelectionSet(modApp, true)->resetSelection(state, *propertyClass());
+	if(subject()) {
+		const PropertyContainer* container = state.expectLeafObject(subject());
+		getSelectionSet(modApp, true)->resetSelection(container);
+	}
 }
 
 /******************************************************************************
@@ -130,8 +131,10 @@ void ManualSelectionModifier::resetSelection(ModifierApplication* modApp, const 
 ******************************************************************************/
 void ManualSelectionModifier::selectAll(ModifierApplication* modApp, const PipelineFlowState& state)
 {
-	if(propertyClass())
-		getSelectionSet(modApp, true)->selectAll(state, *propertyClass());
+	if(subject()) {
+		const PropertyContainer* container = state.expectLeafObject(subject());
+		getSelectionSet(modApp, true)->selectAll(container);
+	}
 }
 
 /******************************************************************************
@@ -139,8 +142,10 @@ void ManualSelectionModifier::selectAll(ModifierApplication* modApp, const Pipel
 ******************************************************************************/
 void ManualSelectionModifier::clearSelection(ModifierApplication* modApp, const PipelineFlowState& state)
 {
-	if(propertyClass())
-		getSelectionSet(modApp, true)->clearSelection(state, *propertyClass());
+	if(subject()) {
+		const PropertyContainer* container = state.expectLeafObject(subject());
+		getSelectionSet(modApp, true)->clearSelection(container);
+	}
 }
 
 /******************************************************************************
@@ -151,8 +156,10 @@ void ManualSelectionModifier::toggleElementSelection(ModifierApplication* modApp
 	ElementSelectionSet* selectionSet = getSelectionSet(modApp, false);
 	if(!selectionSet)
 		throwException(tr("No stored selection set available. Please reset the selection state."));
-	if(propertyClass())
-		selectionSet->toggleElement(state, *propertyClass(), elementIndex);
+	if(subject()) {
+		const PropertyContainer* container = state.expectLeafObject(subject());
+		selectionSet->toggleElement(container, elementIndex);
+	}
 }
 
 /******************************************************************************
@@ -160,8 +167,10 @@ void ManualSelectionModifier::toggleElementSelection(ModifierApplication* modApp
 ******************************************************************************/
 void ManualSelectionModifier::setSelection(ModifierApplication* modApp, const PipelineFlowState& state, const boost::dynamic_bitset<>& selection, ElementSelectionSet::SelectionMode mode)
 {
-	if(propertyClass())
-		getSelectionSet(modApp, true)->setSelection(state, *propertyClass(), selection, mode);
+	if(subject()) {
+		const PropertyContainer* container = state.expectLeafObject(subject());
+		getSelectionSet(modApp, true)->setSelection(container, selection, mode);
+	}
 }
 
 }	// End of namespace

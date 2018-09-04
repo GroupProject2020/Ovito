@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/utilities/concurrent/Promise.h>
 #include "POSCARExporter.h"
@@ -43,11 +43,12 @@ bool POSCARExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 	exportTask.setProgressText(tr("Writing file %1").arg(filePath));
 	
 	// Get particle positions and velocities.
-	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
-	ParticleProperty* velocityProperty = ParticleProperty::findInState(state, ParticleProperty::VelocityProperty);
+	const ParticlesObject* particles = state.expectObject<ParticlesObject>();
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
+	const PropertyObject* velocityProperty = particles->getProperty(ParticlesObject::VelocityProperty);
 
 	// Get simulation cell info.
-	SimulationCellObject* simulationCell = state.findObjectOfType<SimulationCellObject>();
+	const SimulationCellObject* simulationCell = state.getObject<SimulationCellObject>();
 	if(!simulationCell)
 		throwException(tr("No simulation cell available. Cannot write POSCAR file."));
 
@@ -61,7 +62,7 @@ bool POSCARExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 
 	// Count number of particles per particle type.
 	QMap<int,int> particleCounts;
-	ParticleProperty* particleTypeProperty = ParticleProperty::findInState(state, ParticleProperty::TypeProperty);
+	const PropertyObject* particleTypeProperty = particles->getProperty(ParticlesObject::TypeProperty);
 	if(particleTypeProperty) {
 		const int* ptype = particleTypeProperty->constDataInt();
 		const int* ptype_end = ptype + particleTypeProperty->size();
@@ -71,7 +72,7 @@ bool POSCARExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 
 		// Write line with particle type names.
 		for(auto c = particleCounts.begin(); c != particleCounts.end(); ++c) {
-			ElementType* particleType = particleTypeProperty->elementType(c.key());
+			const ElementType* particleType = particleTypeProperty->elementType(c.key());
 			if(particleType) {
 				QString typeName = particleType->nameOrId();
 				typeName.replace(' ', '_');

@@ -31,22 +31,19 @@
 namespace Ovito {
 	namespace StdObj {
 
-        class InputHelper;
-        class OutputHelper;
         class PropertyObject;
         class PropertyStorage;
         class PropertyContainer;
+        class PropertyContainerClass;
+        using PropertyContainerClassPtr = const PropertyContainerClass*;
         using PropertyPtr = std::shared_ptr<PropertyStorage>;
         using ConstPropertyPtr = std::shared_ptr<const PropertyStorage>;
-        class PropertyClass;
-        using PropertyClassPtr = const PropertyClass*;
         class PropertyReference;
-        template<class PropertyObjectType> class TypedPropertyReference;
+        template<class PropertyContainerType> class TypedPropertyReference;
         class SimulationCell;
         class SimulationCellObject;
         class SimulationCellVis;
         class DataSeriesObject;
-        class DataSeriesProperty;
     }
 }
 

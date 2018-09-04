@@ -20,19 +20,21 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/stdmod/StdMod.h>
+#include <plugins/stdobj/properties/PropertyStorage.h>
+#include <plugins/stdobj/properties/PropertyObject.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/dataset/animation/controller/Controller.h>
-#include <plugins/stdobj/util/InputHelper.h>
-#include <plugins/stdobj/util/OutputHelper.h>
-#include <plugins/stdobj/properties/PropertyStorage.h>
-#include <plugins/stdobj/properties/PropertyObject.h>
+#include <core/app/PluginManager.h>
 #include "AssignColorModifier.h"
 
 namespace Ovito { namespace StdMod {
 
-IMPLEMENT_OVITO_CLASS(AssignColorModifier);
 IMPLEMENT_OVITO_CLASS(AssignColorModifierDelegate);
+DEFINE_PROPERTY_FIELD(AssignColorModifierDelegate, containerPath);
+
+IMPLEMENT_OVITO_CLASS(AssignColorModifier);
 DEFINE_REFERENCE_FIELD(AssignColorModifier, colorController);
 DEFINE_PROPERTY_FIELD(AssignColorModifier, keepSelection);
 SET_PROPERTY_FIELD_LABEL(AssignColorModifier, colorController, "Color");
@@ -47,8 +49,8 @@ AssignColorModifier::AssignColorModifier(DataSet* dataset) : DelegatingModifier(
 	setColorController(ControllerManager::createColorController(dataset));
 	colorController()->setColorValue(0, Color(0.3f, 0.3f, 1.0f));
 
-	// Let this modifier act on particles by default.
-	createDefaultModifierDelegate(AssignColorModifierDelegate::OOClass(), QStringLiteral("ParticlesAssignColorModifierDelegate"));	
+	// Let this modifier operate on particles by default.
+	createDefaultModifierDelegate(AssignColorModifierDelegate::OOClass(), QStringLiteral("ParticlesAssignColorModifierDelegate"));
 }
 
 /******************************************************************************
@@ -80,30 +82,30 @@ TimeInterval AssignColorModifier::modifierValidity(TimePoint time)
 PipelineStatus AssignColorModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	const AssignColorModifier* mod = static_object_cast<AssignColorModifier>(modifier);
-	InputHelper ih(dataset(), input);
-	OutputHelper oh(dataset(), output, modApp);
-
 	if(!mod->colorController())
 		return PipelineStatus::Success;
 
-	// Get the selection property.
+	// Look up the property container object and make sure we can safely modify it.
+   	DataObjectPath objectPath = output.expectMutableObject(containerClass(), containerPath());
+	PropertyContainer* container = static_object_cast<PropertyContainer>(objectPath.back());
+ 
+	// Get the input selection property.
 	ConstPropertyPtr selProperty;
-	if(PropertyObject* selPropertyObj = ih.inputStandardProperty(propertyClass(), PropertyStorage::GenericSelectionProperty)) {
+	if(const PropertyObject* selPropertyObj = container->getProperty(PropertyStorage::GenericSelectionProperty)) {
 		selProperty = selPropertyObj->storage();
 
 		// Clear selection if requested.
 		if(!mod->keepSelection()) {
-			output.removeObject(selPropertyObj);
+			container->removeProperty(selPropertyObj);
 		}
 	}
-	
-	// Create the color output property.
-	PropertyPtr colorProperty = createOutputColorProperty(time, ih, oh, (bool)selProperty)->modifiableStorage();
 
-	// Get modifier's parameter value.
+	// Get modifier's color parameter value.
 	Color color;
 	mod->colorController()->getColorValue(time, color, output.mutableStateValidity());
 
+	// Create the color output property.
+    PropertyObject* colorProperty = container->createProperty(outputColorPropertyId(), (bool)selProperty, objectPath);
 	if(!selProperty) {
 		// Assign color to all elements.
 		std::fill(colorProperty->dataColor(), colorProperty->dataColor() + colorProperty->size(), color);
@@ -115,7 +117,7 @@ PipelineStatus AssignColorModifierDelegate::apply(Modifier* modifier, const Pipe
 			if(*sel++) c = color;
 		}
 	}
-
+	
 	return PipelineStatus::Success;
 }
 

@@ -24,8 +24,6 @@
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <plugins/stdobj/simcell/PeriodicDomainDataObject.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
-#include <plugins/stdobj/util/InputHelper.h>
-#include <plugins/stdobj/util/OutputHelper.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include "AffineTransformationModifier.h"
 
@@ -68,7 +66,7 @@ void AffineTransformationModifier::initializeModifier(ModifierApplication* modAp
 	// Take the simulation cell from the input object as the default destination cell geometry for absolute scaling.
 	if(targetCell() == AffineTransformation::Zero()) {
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
-		if(SimulationCellObject* cell = input.findObjectOfType<SimulationCellObject>())
+		if(const SimulationCellObject* cell = input.getObject<SimulationCellObject>())
 			setTargetCell(cell->cellMatrix());
 	}
 }
@@ -80,7 +78,7 @@ PipelineFlowState AffineTransformationModifier::evaluatePreliminary(TimePoint ti
 {
 	// Validate parameters and input data.
 	if(!relativeMode()) {
-		SimulationCellObject* simCell = input.findObjectOfType<SimulationCellObject>();
+		const SimulationCellObject* simCell = input.getObject<SimulationCellObject>();
 		if(!simCell || simCell->cellMatrix().determinant() == 0)
 			throwException(tr("Input simulation cell does not exist or is degenerate. Transformation to target cell would be singular."));
 	}
@@ -94,8 +92,7 @@ PipelineFlowState AffineTransformationModifier::evaluatePreliminary(TimePoint ti
 ******************************************************************************/
 bool SimulationCellAffineTransformationModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<SimulationCellObject>() != nullptr ||
-		input.findObjectOfType<PeriodicDomainDataObject>() != nullptr;
+	return input.containsObject<SimulationCellObject>() || input.containsObject<PeriodicDomainDataObject>();
 }
 
 /******************************************************************************
@@ -104,29 +101,26 @@ bool SimulationCellAffineTransformationModifierDelegate::OOMetaClass::isApplicab
 PipelineStatus SimulationCellAffineTransformationModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	AffineTransformationModifier* mod = static_object_cast<AffineTransformationModifier>(modifier);
-	if(mod->selectionOnly()) 
+	if(mod->selectionOnly())
 		return PipelineStatus::Success;
-
-	InputHelper ih(dataset(), input);
-	OutputHelper oh(dataset(), output, modApp);
 	
 	AffineTransformation tm;
 	if(mod->relativeMode())
 		tm = mod->transformationTM();
 	else
-		tm = mod->targetCell() * ih.expectSimulationCell()->cellMatrix().inverse();
+		tm = mod->targetCell() * input.expectObject<SimulationCellObject>()->cellMatrix().inverse();
 	
 	// Transform SimulationCellObject.
-	if(SimulationCellObject* inputCell = input.findObjectOfType<SimulationCellObject>()) {
-		SimulationCellObject* outputCell = oh.outputSingletonObject<SimulationCellObject>();
+	if(const SimulationCellObject* inputCell = output.getObject<SimulationCellObject>()) {
+		SimulationCellObject* outputCell = output.makeMutable(inputCell);
 		outputCell->setCellMatrix(mod->relativeMode() ? (tm * inputCell->cellMatrix()) : mod->targetCell());
 	}
 
 	// Transform the domains of PeriodicDomainDataObjects.
-	for(DataObject* obj : output.objects()) {
-		if(PeriodicDomainDataObject* existingObject = dynamic_object_cast<PeriodicDomainDataObject>(obj)) {
+	for(const DataObject* obj : output.objects()) {
+		if(const PeriodicDomainDataObject* existingObject = dynamic_object_cast<PeriodicDomainDataObject>(obj)) {
 			if(existingObject->domain()) {
-				PeriodicDomainDataObject* newObject = oh.cloneIfNeeded(existingObject);
+				PeriodicDomainDataObject* newObject = output.makeMutable(existingObject);
 				newObject->domain()->setCellMatrix(tm * existingObject->domain()->cellMatrix());
 			}
 		}

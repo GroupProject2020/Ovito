@@ -43,8 +43,8 @@ namespace pybind11 { namespace detail {
 				for(size_t i = 0; i < value.size(); i++) {
 					Ovito::Particles::ParticlePropertyReference pref = seq[i].cast<Ovito::Particles::ParticlePropertyReference>();
 					if(!pref.isNull()) {
-						if(pref.type() != Ovito::Particles::ParticleProperty::UserProperty)
-							value[i].mapStandardColumn((Ovito::Particles::ParticleProperty::Type)pref.type(), pref.vectorComponent());
+						if(pref.type() != Ovito::Particles::ParticlesObject::UserProperty)
+							value[i].mapStandardColumn((Ovito::Particles::ParticlesObject::Type)pref.type(), pref.vectorComponent());
 						else
 							value[i].mapCustomColumn(pref.name(), qMetaTypeId<Ovito::FloatType>(), pref.vectorComponent());
 					}

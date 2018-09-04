@@ -48,10 +48,18 @@ public:
     /// Default constructor.
     OORef() noexcept : px(nullptr) {}
 
+    /// Null constructor.
+    OORef(std::nullptr_t) noexcept : px(nullptr) {}
+
     /// Initialization constructor.
     OORef(T* p) noexcept : px(p) {
     	if(px) px->incrementReferenceCount();
     }
+
+    /// Initialization constructor.
+    OORef(const T* p) noexcept : px(const_cast<T*>(p)) {
+    	if(px) px->incrementReferenceCount();
+    }    
 
     /// Copy constructor.
     OORef(const OORef& rhs) noexcept : px(rhs.get()) {
@@ -90,16 +98,16 @@ public:
     	return *this;
     }
 
-    OORef& operator=(T* rhs) {
+    OORef& operator=(const T* rhs) {
     	this_type(rhs).swap(*this);
     	return *this;
-    }
+    }    
 
     void reset() {
     	this_type().swap(*this);
     }
 
-    void reset(T* rhs) {
+    void reset(const T* rhs) {
     	this_type(rhs).swap(*this);
     }
 

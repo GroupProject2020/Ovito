@@ -65,7 +65,7 @@ StructureAnalysis::StructureAnalysis(ConstPropertyPtr positions, const Simulatio
 	_inputCrystalType(inputCrystalType),
 	_structureTypes(std::move(outputStructures)),
 	_particleSelection(std::move(particleSelection)),
-	_atomClusters(ParticleProperty::createStandardStorage(positions->size(), ParticleProperty::ClusterProperty, true)),
+	_atomClusters(ParticlesObject::OOClass().createStandardStorage(positions->size(), ParticlesObject::ClusterProperty, true)),
 	_atomSymmetryPermutations(std::make_shared<PropertyStorage>(positions->size(), PropertyStorage::Int, 1, 0, QStringLiteral("SymmetryPermutations"), false)),
 	_clusterGraph(std::make_shared<ClusterGraph>()),
 	_preferredCrystalOrientations(std::move(preferredCrystalOrientations)),

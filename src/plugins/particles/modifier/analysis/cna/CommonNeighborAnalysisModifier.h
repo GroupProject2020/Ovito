@@ -24,8 +24,8 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/modifier/analysis/StructureIdentificationModifier.h>
-#include <plugins/particles/objects/BondProperty.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/BondsObject.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 

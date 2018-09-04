@@ -173,7 +173,7 @@ bool RefMaker::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 /******************************************************************************
 * Checks if this RefMaker has any reference to the given RefTarget.
 ******************************************************************************/
-bool RefMaker::hasReferenceTo(RefTarget* target) const
+bool RefMaker::hasReferenceTo(const RefTarget* target) const
 {
 	if(!target) return false;
 	OVITO_CHECK_OBJECT_POINTER(target);
@@ -196,7 +196,7 @@ bool RefMaker::hasReferenceTo(RefTarget* target) const
 * Replaces all references of this RefMaker to the old RefTarget with 
 * the new RefTarget.
 ******************************************************************************/
-void RefMaker::replaceReferencesTo(RefTarget* oldTarget, RefTarget* newTarget)
+void RefMaker::replaceReferencesTo(const RefTarget* oldTarget, const RefTarget* newTarget)
 {
 	if(!oldTarget) return;
 	OVITO_CHECK_OBJECT_POINTER(oldTarget);
@@ -206,23 +206,30 @@ void RefMaker::replaceReferencesTo(RefTarget* oldTarget, RefTarget* newTarget)
 		throw CyclicReferenceError();
 
 	// Iterate over all reference fields in the class hierarchy.
+	bool hasBeenReplaced = false;
+	const OvitoClass& oldTargetClass = oldTarget->getOOClass();
 	for(const PropertyFieldDescriptor* field : getOOMetaClass().propertyFields()) {
 		if(!field->isReferenceField()) continue;
+		if(!oldTargetClass.isDerivedFrom(*field->targetClass())) continue;
 		if(!field->isVector()) {
 			SingleReferenceFieldBase& singleField = field->singleStorageAccessFunc(this);
-			if(singleField == oldTarget)
-				singleField.set(this, *field, newTarget);
+			if(singleField == oldTarget) {
+				singleField.setInternal(this, *field, newTarget);
+				hasBeenReplaced = true;
+			}
 		}
 		else {
 			VectorReferenceFieldBase& vectorField = field->vectorStorageAccessFunc(this);
-			for(int i=vectorField.size(); i--;) {
+			for(int i = vectorField.size(); i--;) {
 				if(vectorField[i] == oldTarget) {
 					vectorField.remove(this, *field, i);
 					vectorField.insertInternal(this, *field, newTarget, i);
+					hasBeenReplaced = true;
 				}
 			}
 		}
 	}
+	OVITO_ASSERT_MSG(hasBeenReplaced, "RefMaker::replaceReferencesTo", "The target to be replaced was not referenced by this RefMaker."); 
 }
 
 /******************************************************************************
@@ -242,7 +249,7 @@ void RefMaker::clearReferencesTo(RefTarget* target)
 		if(!field->isVector()) {
 			SingleReferenceFieldBase& singleField = field->singleStorageAccessFunc(this);
 			if(singleField == target)
-				singleField.set(this, *field, nullptr);
+				singleField.setInternal(this, *field, nullptr);
 		}
 		else {
 			VectorReferenceFieldBase& vectorField = field->vectorStorageAccessFunc(this);
@@ -280,7 +287,7 @@ void RefMaker::clearReferenceField(const PropertyFieldDescriptor& field)
 	OVITO_ASSERT_MSG(getOOClass().isDerivedFrom(*field.definingClass()), "RefMaker::clearReferenceField()", "The reference field has not been defined in this class or its base classes.");
 
 	if(!field.isVector())
-		field.singleStorageAccessFunc(this).set(this, field, nullptr);
+		field.singleStorageAccessFunc(this).setInternal(this, field, nullptr);
 	else
 		field.vectorStorageAccessFunc(this).clear(this, field);
 }
@@ -378,7 +385,7 @@ void RefMaker::loadFromStream(ObjectLoadStream& stream)
 #if 0
 						qDebug() << "  Reference field" << fieldEntry.identifier << " contains" << target;
 #endif
-						fieldEntry.field->singleStorageAccessFunc(this).set(this, *fieldEntry.field, target);
+						fieldEntry.field->singleStorageAccessFunc(this).setInternal(this, *fieldEntry.field, target);
 					}
 					else {
 						// Get storage address of member variable.
@@ -506,7 +513,7 @@ void RefMaker::walkNode(QSet<RefTarget*>& nodes, const RefMaker* node)
 void RefMaker::loadUserDefaults()
 {
 #ifdef OVITO_DEBUG
-	if(!Application::instance()->guiMode())
+	if(Application::instance()->scriptMode())
 		qWarning() << "Warning: loadUserDefaults() called in scripting mode for" << this;
 #endif
 

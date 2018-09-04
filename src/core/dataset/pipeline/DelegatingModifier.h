@@ -165,7 +165,7 @@ public:
 			return ModifierDelegate::OOClass(); 
 		}
 	};
-		
+
 	OVITO_CLASS_META(MultiDelegatingModifier, MultiDelegatingModifierClass)
 	Q_OBJECT
 	

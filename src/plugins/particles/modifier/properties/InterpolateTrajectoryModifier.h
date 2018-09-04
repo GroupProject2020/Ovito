@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <core/dataset/pipeline/Modifier.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 

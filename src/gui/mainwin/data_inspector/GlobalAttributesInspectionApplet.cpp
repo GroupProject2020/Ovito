@@ -34,7 +34,7 @@ IMPLEMENT_OVITO_CLASS(GlobalAttributesInspectionApplet);
 ******************************************************************************/
 bool GlobalAttributesInspectionApplet::appliesTo(const PipelineFlowState& state)
 {
-	return state.findObjectOfType<AttributeDataObject>() != nullptr;
+	return state.containsObject<AttributeDataObject>();
 }
 
 /******************************************************************************

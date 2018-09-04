@@ -21,12 +21,7 @@
 
 #include <plugins/grid/Grid.h>
 #include <plugins/grid/objects/VoxelGrid.h>
-#include <plugins/grid/objects/VoxelProperty.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
-#include <plugins/stdobj/util/InputHelper.h>
-#include <plugins/stdobj/util/OutputHelper.h>
-#include <core/dataset/DataSet.h>
-#include <core/dataset/pipeline/ModifierApplication.h>
 #include "VoxelGridReplicateModifierDelegate.h"
 
 namespace Ovito { namespace Grid {
@@ -38,7 +33,7 @@ IMPLEMENT_OVITO_CLASS(VoxelGridReplicateModifierDelegate);
 ******************************************************************************/
 bool VoxelGridReplicateModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<VoxelGrid>() != nullptr;
+	return input.containsObject<VoxelGrid>();
 }
 
 /******************************************************************************
@@ -48,7 +43,7 @@ PipelineStatus VoxelGridReplicateModifierDelegate::apply(Modifier* modifier, con
 {
 	ReplicateModifier* mod = static_object_cast<ReplicateModifier>(modifier);
 
-	OORef<VoxelGrid> existingVoxelGrid = input.findObjectOfType<VoxelGrid>();
+	const VoxelGrid* existingVoxelGrid = input.getObject<VoxelGrid>();
 	if(!existingVoxelGrid || !existingVoxelGrid->domain())
 		return PipelineStatus::Success;
 	
@@ -63,12 +58,10 @@ PipelineStatus VoxelGridReplicateModifierDelegate::apply(Modifier* modifier, con
 
 	Box3I newImages = mod->replicaRange();
 
-	InputHelper ih(dataset(), input);
-	OutputHelper oh(dataset(), output, modApp);
-
 	// Create the output copy of the input grid.
-	VoxelGrid* newVoxelGrid = oh.cloneIfNeeded(existingVoxelGrid.get());
-	std::vector<size_t> shape = existingVoxelGrid->shape();
+	VoxelGrid* newVoxelGrid = output.makeMutable(existingVoxelGrid);
+	const std::vector<size_t> oldShape = existingVoxelGrid->shape();
+	std::vector<size_t> shape = oldShape;
 	if(shape.size() != 3)
 		throwException(tr("Can replicate only 3-dimensional data grids."));
 	shape[0] *= nPBC[0];
@@ -87,22 +80,21 @@ PipelineStatus VoxelGridReplicateModifierDelegate::apply(Modifier* modifier, con
 	newVoxelGrid->domain()->setCellMatrix(simCell);
 
 	// Replicate voxel property data.
-	for(DataObject* obj : output.objects()) {
-		if(OORef<VoxelProperty> existingProperty = dynamic_object_cast<VoxelProperty>(obj)) {
-			VoxelProperty* newProperty = oh.cloneIfNeeded(existingProperty.get());
-			newProperty->resize(newProperty->size() * numCopies, false);
+	newVoxelGrid->makePropertiesMutable();
+	for(PropertyObject* property : newVoxelGrid->properties()) {
+		ConstPropertyPtr oldData = property->storage();
+		property->resize(oldData->size() * numCopies, false);
 
-			char* dst = (char*)newProperty->data();
-			for(size_t z = 0; z < shape[2]; z++) {
-				size_t zs = z % existingVoxelGrid->shape()[2];
-				for(size_t y = 0; y < shape[1]; y++) {
-					size_t ys = y % existingVoxelGrid->shape()[1];
-					for(size_t x = 0; x < shape[0]; x++) {
-						size_t xs = x % existingVoxelGrid->shape()[0];
-						size_t index = xs + ys * existingVoxelGrid->shape()[1] + zs * existingVoxelGrid->shape()[0] * existingVoxelGrid->shape()[1];
-						memcpy(dst, (char*)existingProperty->constData() + index * existingProperty->stride(), newProperty->stride());
-						dst += newProperty->stride();
-					}
+		char* dst = (char*)property->data();
+		for(size_t z = 0; z < shape[2]; z++) {
+			size_t zs = z % oldShape[2];
+			for(size_t y = 0; y < shape[1]; y++) {
+				size_t ys = y % oldShape[1];
+				for(size_t x = 0; x < shape[0]; x++) {
+					size_t xs = x % oldShape[0];
+					size_t index = xs + ys * oldShape[1] + zs * oldShape[0] * oldShape[1];
+					memcpy(dst, (char*)oldData->constData() + index * oldData->stride(), property->stride());
+					dst += property->stride();
 				}
 			}
 		}

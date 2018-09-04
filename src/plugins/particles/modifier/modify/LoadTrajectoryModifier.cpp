@@ -20,9 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
-#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
+#include <plugins/particles/objects/BondsObject.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/io/FileSource.h>
@@ -56,7 +55,7 @@ LoadTrajectoryModifier::LoadTrajectoryModifier(DataSet* dataset) : Modifier(data
 ******************************************************************************/
 bool LoadTrajectoryModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<ParticleProperty>() != nullptr;
+	return input.containsObject<ParticlesObject>();
 }
 
 /******************************************************************************
@@ -76,8 +75,6 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 		UndoSuspender noUndo(modApp);
 
 		PipelineFlowState output = input;
-		ParticleInputHelper pih(modApp->dataset(), input);
-		ParticleOutputHelper poh(modApp->dataset(), output, modApp);
 		
 		// Make sure the obtained configuration is valid and ready to use.
 		if(trajState.status().type() == PipelineStatus::Error) {
@@ -98,10 +95,19 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 		output.intersectStateValidity(trajState.stateValidity());
 
 		// Merge attributes of topology and trajectory datasets.
-		// If there is a name collision, attributes from the trajectory dataset override those from the topology dataset. 
-		for(DataObject* obj : trajState.objects()) {
-			if(AttributeDataObject* attribute = dynamic_object_cast<AttributeDataObject>(obj)) {
-				if(AttributeDataObject* existingAttribute = output.findObject<AttributeDataObject>(attribute->identifier()))
+		// If there is a naming collision, attributes from the trajectory dataset override those from the topology dataset. 
+		for(const DataObject* obj : trajState.objects()) {
+			if(const AttributeDataObject* attribute = dynamic_object_cast<AttributeDataObject>(obj)) {
+				const AttributeDataObject* existingAttribute = nullptr; 
+				for(const DataObject* obj2 : output.objects()) {
+					if(const AttributeDataObject* attribute2 = dynamic_object_cast<AttributeDataObject>(obj2)) {
+						if(attribute2->identifier() == attribute->identifier()) {
+							existingAttribute = attribute2;
+							break;
+						}
+					}
+				}
+				if(existingAttribute)
 					output.replaceObject(existingAttribute, attribute);
 				else
 					output.addObject(attribute);
@@ -109,17 +115,19 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 		}
 
 		// Get the current particle positions.
-		ParticleProperty* trajectoryPosProperty = ParticleProperty::findInState(trajState, ParticleProperty::PositionProperty);
-		if(!trajectoryPosProperty)
+		const ParticlesObject* trajectoryParticles = trajState.getObject<ParticlesObject>();
+		if(!trajectoryParticles)
 			modApp->throwException(tr("Trajectory dataset does not contain any particle positions."));
+		const PropertyObject* trajectoryPosProperty = trajectoryParticles->expectProperty(ParticlesObject::PositionProperty);
 
 		// Get the positions from the topology dataset.
-		ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
+		ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+		const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 
 		// Build particle-to-particle index map.
-		std::vector<size_t> indexToIndexMap(pih.inputParticleCount());
-		ParticleProperty* identifierProperty = pih.inputStandardProperty<ParticleProperty>(ParticleProperty::IdentifierProperty);
-		ParticleProperty* trajIdentifierProperty = ParticleProperty::findInState(trajState, ParticleProperty::IdentifierProperty);
+		std::vector<size_t> indexToIndexMap(particles->elementCount());
+		const PropertyObject* identifierProperty = particles->getProperty(ParticlesObject::IdentifierProperty);
+		const PropertyObject* trajIdentifierProperty = trajectoryParticles->getProperty(ParticlesObject::IdentifierProperty);
 		if(identifierProperty && trajIdentifierProperty) {
 
 			// Build map of particle identifiers in trajectory dataset.
@@ -161,23 +169,20 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 		}
 
 		// Transfer particle properties from the trajectory file.
-		for(DataObject* obj : trajState.objects()) {
-			ParticleProperty* property = dynamic_object_cast<ParticleProperty>(obj);
-			if(!property)
-				continue;
-			if(property->type() == ParticleProperty::IdentifierProperty)
+		for(const PropertyObject* property : trajectoryParticles->properties()) {
+			if(property->type() == ParticlesObject::IdentifierProperty)
 				continue;
 
 			// Get or create the output particle property.
-			ParticleProperty* outputProperty;
-			if(property->type() != ParticleProperty::UserProperty) {
-				outputProperty = poh.outputStandardProperty<ParticleProperty>(property->type(), true);
+			PropertyObject* outputProperty;
+			if(property->type() != ParticlesObject::UserProperty) {
+				outputProperty = particles->createProperty(property->type(), true);
 				if(outputProperty->dataType() != property->dataType()
 					|| outputProperty->componentCount() != property->componentCount())
 					continue; // Types of source property and output property are not compatible.
 			}
 			else {
-				outputProperty = poh.outputCustomProperty<ParticleProperty>(property->name(), 
+				outputProperty = particles->createProperty(property->name(), 
 					property->dataType(), property->componentCount(),
 					0, true);
 			}
@@ -194,22 +199,23 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 		}
 
 		// Transfer box geometry.
-		SimulationCellObject* topologyCell = input.findObjectOfType<SimulationCellObject>();
-		SimulationCellObject* trajectoryCell = trajState.findObjectOfType<SimulationCellObject>();
+		const SimulationCellObject* topologyCell = input.getObject<SimulationCellObject>();
+		const SimulationCellObject* trajectoryCell = trajState.getObject<SimulationCellObject>();
 		if(topologyCell && trajectoryCell) {
-			SimulationCellObject* outputCell = poh.outputSingletonObject<SimulationCellObject>();
+			SimulationCellObject* outputCell = output.makeMutable(topologyCell);
 			outputCell->setCellMatrix(trajectoryCell->cellMatrix());
 			const AffineTransformation& simCell = trajectoryCell->cellMatrix();
 
 			// Trajectories of atoms may cross periodic boundaries and if atomic positions are
 			// stored in wrapped coordinates, then it becomes necessary to fix bonds using the minimum image convention.
 			std::array<bool, 3> pbc = topologyCell->pbcFlags();
-			if((pbc[0] || pbc[1] || pbc[2]) && std::abs(simCell.determinant()) > FLOATTYPE_EPSILON) {
-				ParticleProperty* outputPosProperty = poh.outputStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
+			if((pbc[0] || pbc[1] || pbc[2]) && particles->bonds() && std::abs(simCell.determinant()) > FLOATTYPE_EPSILON) {
+				const PropertyObject* outputPosProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 				AffineTransformation inverseSimCell = simCell.inverse();
 
-				if(BondProperty* topologyProperty = BondProperty::findInState(poh.output(), BondProperty::TopologyProperty)) {
-					BondProperty* periodicImageProperty = poh.outputStandardProperty<BondProperty>(BondProperty::PeriodicImageProperty, true);
+				if(ConstPropertyPtr topologyProperty = particles->bonds()->getPropertyStorage(BondsObject::TopologyProperty)) {
+					BondsObject* bonds = particles->makeBondsMutable();
+					PropertyObject* periodicImageProperty = bonds->createProperty(BondsObject::PeriodicImageProperty, true);
 
 					// Wrap bonds crossing a periodic boundary by resetting their PBC shift vectors.
 					SimulationCell cell = trajectoryCell->data();

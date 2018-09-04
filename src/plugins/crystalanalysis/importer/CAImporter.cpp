@@ -29,7 +29,7 @@
 #include <plugins/mesh/surface/SurfaceMesh.h>
 #include <plugins/mesh/surface/SurfaceMeshVis.h>
 #include <core/app/Application.h>
-#include <core/dataset/pipeline/PipelineOutputHelper.h>
+#include <core/dataset/io/FileSource.h>
 #include <core/utilities/io/CompressedTextReader.h>
 #include "CAImporter.h"
 
@@ -596,47 +596,53 @@ FileSourceImporter::FrameDataPtr CAImporter::FrameLoader::loadFile(QFile& file)
 * This function is called by the system from the main thread after the
 * asynchronous loading task has finished.
 ******************************************************************************/
-void CAImporter::CrystalAnalysisFrameData::handOver(PipelineOutputHelper& poh, const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource)
+PipelineFlowState CAImporter::CrystalAnalysisFrameData::handOver(const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource)
 {
 	// Insert simulation cell.
-	ParticleFrameData::handOver(poh, existing, isNewFile, fileSource);
+	PipelineFlowState output = ParticleFrameData::handOver(existing, isNewFile, fileSource);
 
 	// Insert defect surface.
 	if(_defectSurface) {
-		OORef<SurfaceMesh> defectSurfaceObj = existing.findObjectOfType<SurfaceMesh>();
+		SurfaceMesh* defectSurfaceObj = const_cast<SurfaceMesh*>(existing.getObject<SurfaceMesh>());
 		if(!defectSurfaceObj) {
-			defectSurfaceObj = new SurfaceMesh(poh.dataset());
-			OORef<SurfaceMeshVis> vis = new SurfaceMeshVis(poh.dataset());
-			if(Application::instance()->guiMode())
+			defectSurfaceObj = output.createObject<SurfaceMesh>(fileSource);
+			OORef<SurfaceMeshVis> vis = new SurfaceMeshVis(fileSource->dataset());
+			if(!Application::instance()->scriptMode())
 				vis->loadUserDefaults();
 			defectSurfaceObj->setVisElement(vis);
 		}
-		defectSurfaceObj->setDomain(poh.output().findObjectOfType<SimulationCellObject>());
+		else {
+			output.addObject(defectSurfaceObj);
+		}
+		defectSurfaceObj->setDomain(output.getObject<SimulationCellObject>());
 		defectSurfaceObj->setStorage(defectSurface());
-		poh.outputObject(defectSurfaceObj);
 	}
 
 	// Insert partition mesh.
 	if(_partitionMesh) {
-		OORef<PartitionMesh> partitionMeshObj = existing.findObjectOfType<PartitionMesh>();
+		PartitionMesh* partitionMeshObj = const_cast<PartitionMesh*>(existing.getObject<PartitionMesh>());
 		if(!partitionMeshObj) {
-			partitionMeshObj = new PartitionMesh(poh.dataset());
-			OORef<PartitionMeshVis> vis = new PartitionMeshVis(poh.dataset());
-			if(Application::instance()->guiMode())
+			partitionMeshObj = output.createObject<PartitionMesh>(fileSource);
+			OORef<PartitionMeshVis> vis = new PartitionMeshVis(fileSource->dataset());
+			if(!Application::instance()->scriptMode())
 				vis->loadUserDefaults();
 			partitionMeshObj->setVisElement(vis);
 		}
-		partitionMeshObj->setDomain(poh.output().findObjectOfType<SimulationCellObject>());
+		else {
+			output.addObject(partitionMeshObj);
+		}
+		partitionMeshObj->setDomain(output.getObject<SimulationCellObject>());
 		partitionMeshObj->setStorage(partitionMesh());
-		poh.outputObject(partitionMeshObj);
 	}
 
 	// Insert pattern catalog.
-	OORef<PatternCatalog> patternCatalog = existing.findObjectOfType<PatternCatalog>();
+	PatternCatalog* patternCatalog = const_cast<PatternCatalog*>(existing.getObject<PatternCatalog>());
 	if(!patternCatalog) {
-		patternCatalog = new PatternCatalog(poh.dataset());
+		patternCatalog = output.createObject<PatternCatalog>(fileSource);
 	}
-	poh.outputObject(patternCatalog);
+	else {
+		output.addObject(patternCatalog);
+	}
 
 	// Update pattern catalog.
 	for(int i = 0; i < _patterns.size(); i++) {
@@ -681,30 +687,34 @@ void CAImporter::CrystalAnalysisFrameData::handOver(PipelineOutputHelper& poh, c
 
 	// Insert cluster graph.
 	if(_clusterGraph) {
-		OORef<ClusterGraphObject> clusterGraphObj;
-		clusterGraphObj = existing.findObjectOfType<ClusterGraphObject>();
+		ClusterGraphObject* clusterGraphObj = const_cast<ClusterGraphObject*>(existing.getObject<ClusterGraphObject>());
 		if(!clusterGraphObj) {
-			clusterGraphObj = new ClusterGraphObject(poh.dataset());
+			clusterGraphObj = output.createObject<ClusterGraphObject>(fileSource);
+		}
+		else {
+			output.addObject(clusterGraphObj);
 		}
 		clusterGraphObj->setStorage(clusterGraph());
-		poh.outputObject(clusterGraphObj);
 	}
 
 	// Insert dislocations.
 	if(_dislocations) {
-		OORef<DislocationNetworkObject> dislocationNetwork;
-		dislocationNetwork = existing.findObjectOfType<DislocationNetworkObject>();
+		DislocationNetworkObject* dislocationNetwork = const_cast<DislocationNetworkObject*>(existing.getObject<DislocationNetworkObject>());
 		if(!dislocationNetwork) {
-			dislocationNetwork = new DislocationNetworkObject(poh.dataset());
-			OORef<DislocationVis> vis = new DislocationVis(poh.dataset());
-			if(Application::instance()->guiMode())
+			dislocationNetwork = output.createObject<DislocationNetworkObject>(fileSource);
+			OORef<DislocationVis> vis = new DislocationVis(fileSource->dataset());
+			if(!Application::instance()->scriptMode())
 				vis->loadUserDefaults();
 			dislocationNetwork->setVisElement(vis);
 		}
-		dislocationNetwork->setDomain(poh.output().findObjectOfType<SimulationCellObject>());
+		else {
+			output.addObject(dislocationNetwork);
+		}
+		dislocationNetwork->setDomain(output.getObject<SimulationCellObject>());
 		dislocationNetwork->setStorage(dislocations());
-		poh.outputObject(dislocationNetwork);
 	}
+
+	return output;
 }
 
 }	// End of namespace

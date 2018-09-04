@@ -56,11 +56,11 @@ public:
 	/// Constructor.
 	Q_INVOKABLE ParticlesExpressionSelectionModifierDelegate(DataSet* dataset) : ExpressionSelectionModifierDelegate(dataset) {}
 
+	/// Looks up the container for the properties in the output pipeline state.
+	virtual PropertyContainer* getOutputPropertyContainer(PipelineFlowState& outputState) const override;
+
 	/// Creates and initializes the expression evaluator object.
 	virtual std::unique_ptr<PropertyExpressionEvaluator> initializeExpressionEvaluator(const QStringList& expressions, const PipelineFlowState& inputState, int animationFrame) override;
-
-	/// Creates the output selection property object.
-	virtual PropertyObject* createOutputSelectionProperty(OutputHelper& oh) override;
 };
 
 /**
@@ -92,11 +92,11 @@ public:
 	/// Constructor.
 	Q_INVOKABLE BondsExpressionSelectionModifierDelegate(DataSet* dataset) : ExpressionSelectionModifierDelegate(dataset) {}
 
+	/// Looks up the container for the properties in the output pipeline state.
+	virtual PropertyContainer* getOutputPropertyContainer(PipelineFlowState& outputState) const override;
+
 	/// Creates and initializes the expression evaluator object.
 	virtual std::unique_ptr<PropertyExpressionEvaluator> initializeExpressionEvaluator(const QStringList& expressions, const PipelineFlowState& inputState, int animationFrame) override;
-
-	/// Creates the output selection property object.
-	virtual PropertyObject* createOutputSelectionProperty(OutputHelper& oh) override;
 };
 
 OVITO_END_INLINE_NAMESPACE

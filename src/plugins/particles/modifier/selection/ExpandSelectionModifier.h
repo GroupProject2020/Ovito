@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/BondsObject.h>
 #include <plugins/particles/util/ParticleOrderingFingerprint.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>

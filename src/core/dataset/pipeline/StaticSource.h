@@ -50,7 +50,7 @@ public:
 
 	/// \brief Constructor that inserts the content of a PipelineFlowState into the new source.
 	StaticSource(DataSet* dataset, const PipelineFlowState& state) : StaticSource(dataset) {
-		for(DataObject* obj : state.objects())
+		for(const DataObject* obj : state.objects())
 			_dataObjects.push_back(this, PROPERTY_FIELD(dataObjects), obj);
 	}
 	
@@ -59,6 +59,10 @@ public:
 
 	/// \brief Returns the results of an immediate and preliminary evaluation of the data pipeline.
 	virtual PipelineFlowState evaluatePreliminary() override;
+
+	/// Returns the list of data objects that are managed by this data source.
+	/// The returned data objects will be displayed as sub-objects of the data source in the pipeline editor.
+	virtual QVector<DataObject*> getSourceDataObjects() const override { return dataObjects(); }
 
 	/// \brief Adds an additional data object to this source.
 	void addDataObject(DataObject* obj) { OVITO_ASSERT(!dataObjects().contains(obj)); _dataObjects.push_back(this, PROPERTY_FIELD(dataObjects), obj); }

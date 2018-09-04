@@ -247,7 +247,7 @@ FileSourceImporter::FrameDataPtr DLPOLYImporter::FrameLoader::loadFile(QFile& fi
 	std::vector<FloatType> displacementMagnitudes;
 
 	// Create particle type property now, because we need to populate the type list while parsing.
-	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(0, ParticleProperty::TypeProperty, false);
+	PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(0, ParticlesObject::TypeProperty, false);
 	frameData->addParticleProperty(typeProperty);
 	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
 
@@ -318,38 +318,38 @@ FileSourceImporter::FrameDataPtr DLPOLYImporter::FrameLoader::loadFile(QFile& fi
 		throw Exception(tr("Unexpected end of DL_POLY file. Expected %1 atom records but found only %2.").arg(expectedAtomCount).arg(positions.size()));
 
 	// Create particle properties.
-	PropertyPtr posProperty = ParticleProperty::createStandardStorage(positions.size(), ParticleProperty::PositionProperty, false);
+	PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(positions.size(), ParticlesObject::PositionProperty, false);
 	frameData->addParticleProperty(posProperty);
 	std::copy(positions.cbegin(), positions.cend(), posProperty->dataPoint3());
 	typeProperty->resize(atom_types.size(), false);
 	std::copy(atom_types.cbegin(), atom_types.cend(), typeProperty->dataInt());
 	if(identifiers.size() == positions.size()) {
-		PropertyPtr identifierProperty = ParticleProperty::createStandardStorage(identifiers.size(), ParticleProperty::IdentifierProperty, false);
+		PropertyPtr identifierProperty = ParticlesObject::OOClass().createStandardStorage(identifiers.size(), ParticlesObject::IdentifierProperty, false);
 		frameData->addParticleProperty(identifierProperty);
 		std::copy(identifiers.cbegin(), identifiers.cend(), identifierProperty->dataInt64());
 	}
 	if(levcfg > 0) {
-		PropertyPtr velocityProperty = ParticleProperty::createStandardStorage(velocities.size(), ParticleProperty::VelocityProperty, false);
+		PropertyPtr velocityProperty = ParticlesObject::OOClass().createStandardStorage(velocities.size(), ParticlesObject::VelocityProperty, false);
 		frameData->addParticleProperty(velocityProperty);
 		std::copy(velocities.cbegin(), velocities.cend(), velocityProperty->dataVector3());
 	}
 	if(levcfg > 1) {
-		PropertyPtr forceProperty = ParticleProperty::createStandardStorage(forces.size(), ParticleProperty::ForceProperty, false);
+		PropertyPtr forceProperty = ParticlesObject::OOClass().createStandardStorage(forces.size(), ParticlesObject::ForceProperty, false);
 		frameData->addParticleProperty(forceProperty);
 		std::copy(forces.cbegin(), forces.cend(), forceProperty->dataVector3());
 	}
 	if(masses.size() == positions.size()) {
-		PropertyPtr massProperty = ParticleProperty::createStandardStorage(masses.size(), ParticleProperty::MassProperty, false);
+		PropertyPtr massProperty = ParticlesObject::OOClass().createStandardStorage(masses.size(), ParticlesObject::MassProperty, false);
 		frameData->addParticleProperty(massProperty);
 		std::copy(masses.cbegin(), masses.cend(), massProperty->dataFloat());
 	}
 	if(charges.size() == positions.size()) {
-		PropertyPtr chargeProperty = ParticleProperty::createStandardStorage(charges.size(), ParticleProperty::ChargeProperty, false);
+		PropertyPtr chargeProperty = ParticlesObject::OOClass().createStandardStorage(charges.size(), ParticlesObject::ChargeProperty, false);
 		frameData->addParticleProperty(chargeProperty);
 		std::copy(charges.cbegin(), charges.cend(), chargeProperty->dataFloat());
 	}
 	if(displacementMagnitudes.size() == positions.size()) {
-		PropertyPtr displProperty = ParticleProperty::createStandardStorage(displacementMagnitudes.size(), ParticleProperty::DisplacementMagnitudeProperty, false);
+		PropertyPtr displProperty = ParticlesObject::OOClass().createStandardStorage(displacementMagnitudes.size(), ParticlesObject::DisplacementMagnitudeProperty, false);
 		frameData->addParticleProperty(displProperty);
 		std::copy(displacementMagnitudes.cbegin(), displacementMagnitudes.cend(), displProperty->dataFloat());
 	}

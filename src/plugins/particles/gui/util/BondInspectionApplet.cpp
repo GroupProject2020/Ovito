@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/BondsObject.h>
 #include <gui/actions/ViewportModeAction.h>
 #include <gui/mainwin/MainWindow.h>
 #include <gui/widgets/general/AutocompleteLineEdit.h>

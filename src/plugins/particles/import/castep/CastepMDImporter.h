@@ -60,7 +60,7 @@ public:
 	}
 
 	/// Returns the title of this object.
-	virtual QString objectTitle() override { return tr("CASTEP"); }
+	virtual QString objectTitle() const override { return tr("CASTEP"); }
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
 	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {

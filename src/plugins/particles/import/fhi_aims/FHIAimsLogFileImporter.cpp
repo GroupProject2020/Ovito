@@ -124,9 +124,9 @@ FileSourceImporter::FrameDataPtr FHIAimsLogFileImporter::FrameLoader::loadFile(Q
 		throw Exception(tr("Invalid FHI-aims log file: No atoms found."));
 
 	// Create the particle properties.
-	PropertyPtr posProperty = ParticleProperty::createStandardStorage(totalAtomCount, ParticleProperty::PositionProperty, false);
+	PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(totalAtomCount, ParticlesObject::PositionProperty, false);
 	frameData->addParticleProperty(posProperty);
-	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(totalAtomCount, ParticleProperty::TypeProperty, false);
+	PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(totalAtomCount, ParticlesObject::TypeProperty, false);
 	frameData->addParticleProperty(typeProperty);
 	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
 

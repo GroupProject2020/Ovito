@@ -22,10 +22,8 @@
 #include <plugins/stdmod/StdMod.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
-#include <plugins/stdobj/properties/PropertyClass.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
 #include <plugins/stdobj/properties/PropertyObject.h>
-#include <plugins/stdobj/util/InputHelper.h>
-#include <plugins/stdobj/util/OutputHelper.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include "ComputePropertyModifier.h"
@@ -33,6 +31,7 @@
 namespace Ovito { namespace StdMod {
 
 IMPLEMENT_OVITO_CLASS(ComputePropertyModifierDelegate);
+DEFINE_PROPERTY_FIELD(ComputePropertyModifierDelegate, containerPath);
 
 IMPLEMENT_OVITO_CLASS(ComputePropertyModifier);
 DEFINE_PROPERTY_FIELD(ComputePropertyModifier, expressions);
@@ -65,7 +64,7 @@ ComputePropertyModifier::ComputePropertyModifier(DataSet* dataset) : Asynchronou
 	createDefaultModifierDelegate(ComputePropertyModifierDelegate::OOClass(), QStringLiteral("ParticlesComputePropertyModifierDelegate"));
 	// Set default output property.
 	if(delegate())
-		setOutputProperty(PropertyReference(&delegate()->propertyClass(), QStringLiteral("My property")));
+		setOutputProperty(PropertyReference(&delegate()->containerClass(), QStringLiteral("My property")));
 }
 
 /******************************************************************************
@@ -91,13 +90,10 @@ void ComputePropertyModifier::setPropertyComponentCount(int newComponentCount)
 ******************************************************************************/
 void ComputePropertyModifier::referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget)
 {
-	if(field == PROPERTY_FIELD(AsynchronousDelegatingModifier::delegate)) {
-		if(!dataset()->undoStack().isUndoingOrRedoing() && !isBeingLoaded() && delegate()) {
-			setOutputProperty(outputProperty().convertToPropertyClass(&delegate()->propertyClass()));
-			delegate()->setComponentCount(expressions().size());
-		}
+	if(field == PROPERTY_FIELD(AsynchronousDelegatingModifier::delegate) && !dataset()->undoStack().isUndoingOrRedoing() && !isBeingLoaded()) {
+		setOutputProperty(outputProperty().convertToContainerClass(delegate() ? &delegate()->containerClass() : nullptr));
+		if(delegate()) delegate()->setComponentCount(expressions().size());
 	}
-
 	AsynchronousDelegatingModifier::referenceReplaced(field, oldTarget, newTarget);
 }
 
@@ -111,61 +107,59 @@ Future<AsynchronousModifier::ComputeEnginePtr> ComputePropertyModifier::createEn
 	if(!delegate())
 		throwException(tr("No delegate set for the compute property modifier."));
 
-	// Do we have a valid pipeline input?
-	const PropertyClass& propertyClass = delegate()->propertyClass();
-	if(!propertyClass.isDataPresent(input))
-		throwException(tr("Cannot compute property '%1', because the input data contains no %2.").arg(outputProperty().name()).arg(propertyClass.elementDescriptionName()));
-	if(outputProperty().propertyClass() != &propertyClass)
-		throwException(tr("Property %1 to be computed is not a %2 property.").arg(outputProperty().name()).arg(propertyClass.elementDescriptionName()));
+	// Look up the property container which we will operate on.
+   	ConstDataObjectPath objectPath = input.expectObject(delegate()->containerClass(), delegate()->containerPath());
+	const PropertyContainer* container = static_object_cast<PropertyContainer>(objectPath.back());
+	if(outputProperty().containerClass() != &delegate()->containerClass())
+		throwException(tr("Property %1 to be computed is not a %2 property.").arg(outputProperty().name()).arg(delegate()->containerClass().elementDescriptionName()));
 
 	// Get the number of input elements.
-	size_t nelements = propertyClass.elementCount(input);
+	size_t nelements = container->elementCount();
 
 	// The current animation frame number.
 	int currentFrame = dataset()->animationSettings()->timeToFrame(time);
 
-	// Get selection property.
-	ConstPropertyPtr selProperty;
+	// Get input selection property and existing property data.
+	ConstPropertyPtr selectionProperty;
+	ConstPropertyPtr existingProperty;
 	if(onlySelectedElements()) {
-		if(PropertyObject* selPropertyObj = propertyClass.findInState(input, PropertyStorage::GenericSelectionProperty))
-			selProperty = selPropertyObj->storage();
-		else
+		selectionProperty = container->getPropertyStorage(PropertyStorage::GenericSelectionProperty);
+		if(!selectionProperty)
 			throwException(tr("Compute property modifier has been restricted to selected elements, but no selection was previously defined."));
+
+		const PropertyObject* existingPropertyObj = outputProperty().findInContainer(container);
+		if(existingPropertyObj && existingPropertyObj->componentCount() == propertyComponentCount())
+			existingProperty = existingPropertyObj->storage();
 	}
 
 	// Prepare output property.
 	PropertyPtr outp;
-	if(outputProperty().type() != PropertyStorage::GenericUserProperty) {
-		outp = propertyClass.createStandardStorage(nelements, outputProperty().type(), onlySelectedElements());
-	}
-	else if(!outputProperty().name().isEmpty() && propertyComponentCount() > 0) {
-		outp = std::make_shared<PropertyStorage>(nelements, PropertyStorage::Float, propertyComponentCount(), 0, outputProperty().name(), onlySelectedElements());
+	if(existingProperty) {
+		// Copy existing data.
+		outp = std::make_shared<PropertyStorage>(*existingProperty);
 	}
 	else {
-		throwException(tr("Output property of compute property modifier has not been specified."));
+		// Allocate new data array.
+		if(outputProperty().type() != PropertyStorage::GenericUserProperty) {
+			outp = container->getOOMetaClass().createStandardStorage(nelements, outputProperty().type(), onlySelectedElements(), objectPath);
+		}
+		else if(!outputProperty().name().isEmpty() && propertyComponentCount() > 0) {
+			outp = std::make_shared<PropertyStorage>(nelements, PropertyStorage::Float, propertyComponentCount(), 0, outputProperty().name(), onlySelectedElements());
+		}
+		else {
+			throwException(tr("Output property of compute property modifier has not been specified."));
+		}
 	}
-	if(expressions().size() != outp->componentCount())
+	if(propertyComponentCount() != outp->componentCount())
 		throwException(tr("Number of expressions does not match component count of output property."));
 
 	TimeInterval validityInterval = input.stateValidity();
 
-	// Initialize output property with original values when computation is restricted to selected elements.
-	bool initializeOutputProperty = false;
-	if(onlySelectedElements()) {
-		PropertyObject* originalPropertyObj = outputProperty().findInState(input);
-		if(originalPropertyObj && originalPropertyObj->dataType() == outp->dataType() &&
-				originalPropertyObj->componentCount() == outp->componentCount() && originalPropertyObj->stride() == outp->stride()) {
-			memcpy(outp->data(), originalPropertyObj->constData(), outp->stride() * outp->size());
-		}
-		else {
-			initializeOutputProperty = true;
-		}
-	}
-
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	auto engine = delegate()->createEngine(time, input, std::move(outp), 
-			std::move(selProperty),
-			expressions(), initializeOutputProperty);
+	auto engine = delegate()->createEngine(time, input, 
+			container, std::move(outp), 
+			std::move(selectionProperty),
+			expressions());
 
 	// Determine if math expressions are time-dependent, i.e. if they reference the animation
 	// frame number. If yes, then we have to restrict the validity interval of the computation
@@ -196,7 +190,7 @@ ComputePropertyModifierDelegate::PropertyComputeEngine::PropertyComputeEngine(
 		const TimeInterval& validityInterval, 
 		TimePoint time,
 		const PipelineFlowState& input,
-		const PropertyClass& propertyClass,
+		const PropertyContainer* container,
 		PropertyPtr outputProperty, 
 		ConstPropertyPtr selectionProperty,
 		QStringList expressions, 
@@ -212,7 +206,7 @@ ComputePropertyModifierDelegate::PropertyComputeEngine::PropertyComputeEngine(
 	OVITO_ASSERT(_expressions.size() == this->outputProperty()->componentCount());
 	
 	// Initialize expression evaluator.
-	_evaluator->initialize(_expressions, input, propertyClass, QString(), _frameNumber);
+	_evaluator->initialize(_expressions, input, container, _frameNumber);
 }
 
 /******************************************************************************
@@ -240,8 +234,13 @@ PipelineFlowState ComputePropertyModifierDelegate::PropertyComputeEngine::emitRe
 		modifier->throwException(tr("No delegate set for the Compute Property modifier."));
 
 	PipelineFlowState output = input;
-	OutputHelper poh(modifier->dataset(), output, modApp);
-	PropertyObject* outputPropertyObj = poh.outputProperty(modifier->delegate()->propertyClass(), outputProperty());
+
+	// Look up the container we are operating on.
+   	DataObjectPath objectPath = output.expectMutableObject(modifier->delegate()->containerClass(), modifier->delegate()->containerPath());
+	PropertyContainer* container = static_object_cast<PropertyContainer>(objectPath.back());
+
+	// Create the output property object in the container.
+	PropertyObject* outputPropertyObj = container->createProperty(outputProperty());
 
 	if(myModApp) {
 		// Replace vis elements of output property with cached ones and cache any new vis elements.

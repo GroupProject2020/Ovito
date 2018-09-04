@@ -173,42 +173,42 @@ bool XYZImporter::mapVariableToProperty(InputColumnMapping& columnMapping, int c
 	columnMapping[column].columnName = name;
 	QString loweredName = name.toLower();
 	if(loweredName == "type" || loweredName == "element" || loweredName == "atom_types" ||loweredName == "species") 
-		columnMapping[column].mapStandardColumn(ParticleProperty::TypeProperty);
-	else if(loweredName == "pos") columnMapping[column].mapStandardColumn(ParticleProperty::PositionProperty, vec);
-	else if(loweredName == "selection") columnMapping[column].mapStandardColumn(ParticleProperty::SelectionProperty, vec);
-	else if(loweredName == "color") columnMapping[column].mapStandardColumn(ParticleProperty::ColorProperty, vec);
-	else if(loweredName == "disp") columnMapping[column].mapStandardColumn(ParticleProperty::DisplacementProperty, vec);
-	else if(loweredName == "disp_mag") columnMapping[column].mapStandardColumn(ParticleProperty::DisplacementMagnitudeProperty);
-	else if(loweredName == "local_energy") columnMapping[column].mapStandardColumn(ParticleProperty::PotentialEnergyProperty);
-	else if(loweredName == "kinetic_energy") columnMapping[column].mapStandardColumn(ParticleProperty::KineticEnergyProperty);
-	else if(loweredName == "total_energy") columnMapping[column].mapStandardColumn(ParticleProperty::TotalEnergyProperty);
-	else if(loweredName == "velo") columnMapping[column].mapStandardColumn(ParticleProperty::VelocityProperty, vec);
-	else if(loweredName == "velo_mag") columnMapping[column].mapStandardColumn(ParticleProperty::VelocityMagnitudeProperty);
-	else if(loweredName == "radius") columnMapping[column].mapStandardColumn(ParticleProperty::RadiusProperty);
-	else if(loweredName == "cluster") columnMapping[column].mapStandardColumn(ParticleProperty::ClusterProperty);
-	else if(loweredName == "n_neighb") columnMapping[column].mapStandardColumn(ParticleProperty::CoordinationProperty);
- 	else if(loweredName == "structure_type") columnMapping[column].mapStandardColumn(ParticleProperty::StructureTypeProperty);
-	else if(loweredName == "id") columnMapping[column].mapStandardColumn(ParticleProperty::IdentifierProperty);
-	else if(loweredName == "stress") columnMapping[column].mapStandardColumn(ParticleProperty::StressTensorProperty, vec);
-	else if(loweredName == "strain") columnMapping[column].mapStandardColumn(ParticleProperty::StrainTensorProperty, vec);
-	else if(loweredName == "deform") columnMapping[column].mapStandardColumn(ParticleProperty::DeformationGradientProperty, vec);
-	else if(loweredName == "orientation") columnMapping[column].mapStandardColumn(ParticleProperty::OrientationProperty, vec);
-	else if(loweredName == "force" || loweredName == "forces") columnMapping[column].mapStandardColumn(ParticleProperty::ForceProperty, vec);
-	else if(loweredName == "mass") columnMapping[column].mapStandardColumn(ParticleProperty::MassProperty);
-	else if(loweredName == "charge") columnMapping[column].mapStandardColumn(ParticleProperty::ChargeProperty);
-	else if(loweredName == "map_shift") columnMapping[column].mapStandardColumn(ParticleProperty::PeriodicImageProperty, vec);
-	else if(loweredName == "transparency") columnMapping[column].mapStandardColumn(ParticleProperty::TransparencyProperty);
-	else if(loweredName == "dipoles") columnMapping[column].mapStandardColumn(ParticleProperty::DipoleOrientationProperty, vec);
-	else if(loweredName == "dipoles_mag") columnMapping[column].mapStandardColumn(ParticleProperty::DipoleMagnitudeProperty);
-	else if(loweredName == "omega") columnMapping[column].mapStandardColumn(ParticleProperty::AngularVelocityProperty, vec);
-	else if(loweredName == "angular_momentum") columnMapping[column].mapStandardColumn(ParticleProperty::AngularMomentumProperty, vec);
-	else if(loweredName == "torque") columnMapping[column].mapStandardColumn(ParticleProperty::TorqueProperty, vec);
-	else if(loweredName == "spin") columnMapping[column].mapStandardColumn(ParticleProperty::SpinProperty, vec);
-	else if(loweredName == "centro_symmetry") columnMapping[column].mapStandardColumn(ParticleProperty::CentroSymmetryProperty);
-	else if(loweredName == "aspherical_shape") columnMapping[column].mapStandardColumn(ParticleProperty::AsphericalShapeProperty, vec);
-	else if(loweredName == "vector_color") columnMapping[column].mapStandardColumn(ParticleProperty::VectorColorProperty, vec);
-	else if(loweredName == "molecule") columnMapping[column].mapStandardColumn(ParticleProperty::MoleculeProperty);
-	else if(loweredName == "molecule_type") columnMapping[column].mapStandardColumn(ParticleProperty::MoleculeTypeProperty);
+		columnMapping[column].mapStandardColumn(ParticlesObject::TypeProperty);
+	else if(loweredName == "pos") columnMapping[column].mapStandardColumn(ParticlesObject::PositionProperty, vec);
+	else if(loweredName == "selection") columnMapping[column].mapStandardColumn(ParticlesObject::SelectionProperty, vec);
+	else if(loweredName == "color") columnMapping[column].mapStandardColumn(ParticlesObject::ColorProperty, vec);
+	else if(loweredName == "disp") columnMapping[column].mapStandardColumn(ParticlesObject::DisplacementProperty, vec);
+	else if(loweredName == "disp_mag") columnMapping[column].mapStandardColumn(ParticlesObject::DisplacementMagnitudeProperty);
+	else if(loweredName == "local_energy") columnMapping[column].mapStandardColumn(ParticlesObject::PotentialEnergyProperty);
+	else if(loweredName == "kinetic_energy") columnMapping[column].mapStandardColumn(ParticlesObject::KineticEnergyProperty);
+	else if(loweredName == "total_energy") columnMapping[column].mapStandardColumn(ParticlesObject::TotalEnergyProperty);
+	else if(loweredName == "velo") columnMapping[column].mapStandardColumn(ParticlesObject::VelocityProperty, vec);
+	else if(loweredName == "velo_mag") columnMapping[column].mapStandardColumn(ParticlesObject::VelocityMagnitudeProperty);
+	else if(loweredName == "radius") columnMapping[column].mapStandardColumn(ParticlesObject::RadiusProperty);
+	else if(loweredName == "cluster") columnMapping[column].mapStandardColumn(ParticlesObject::ClusterProperty);
+	else if(loweredName == "n_neighb") columnMapping[column].mapStandardColumn(ParticlesObject::CoordinationProperty);
+ 	else if(loweredName == "structure_type") columnMapping[column].mapStandardColumn(ParticlesObject::StructureTypeProperty);
+	else if(loweredName == "id") columnMapping[column].mapStandardColumn(ParticlesObject::IdentifierProperty);
+	else if(loweredName == "stress") columnMapping[column].mapStandardColumn(ParticlesObject::StressTensorProperty, vec);
+	else if(loweredName == "strain") columnMapping[column].mapStandardColumn(ParticlesObject::StrainTensorProperty, vec);
+	else if(loweredName == "deform") columnMapping[column].mapStandardColumn(ParticlesObject::DeformationGradientProperty, vec);
+	else if(loweredName == "orientation") columnMapping[column].mapStandardColumn(ParticlesObject::OrientationProperty, vec);
+	else if(loweredName == "force" || loweredName == "forces") columnMapping[column].mapStandardColumn(ParticlesObject::ForceProperty, vec);
+	else if(loweredName == "mass") columnMapping[column].mapStandardColumn(ParticlesObject::MassProperty);
+	else if(loweredName == "charge") columnMapping[column].mapStandardColumn(ParticlesObject::ChargeProperty);
+	else if(loweredName == "map_shift") columnMapping[column].mapStandardColumn(ParticlesObject::PeriodicImageProperty, vec);
+	else if(loweredName == "transparency") columnMapping[column].mapStandardColumn(ParticlesObject::TransparencyProperty);
+	else if(loweredName == "dipoles") columnMapping[column].mapStandardColumn(ParticlesObject::DipoleOrientationProperty, vec);
+	else if(loweredName == "dipoles_mag") columnMapping[column].mapStandardColumn(ParticlesObject::DipoleMagnitudeProperty);
+	else if(loweredName == "omega") columnMapping[column].mapStandardColumn(ParticlesObject::AngularVelocityProperty, vec);
+	else if(loweredName == "angular_momentum") columnMapping[column].mapStandardColumn(ParticlesObject::AngularMomentumProperty, vec);
+	else if(loweredName == "torque") columnMapping[column].mapStandardColumn(ParticlesObject::TorqueProperty, vec);
+	else if(loweredName == "spin") columnMapping[column].mapStandardColumn(ParticlesObject::SpinProperty, vec);
+	else if(loweredName == "centro_symmetry") columnMapping[column].mapStandardColumn(ParticlesObject::CentroSymmetryProperty);
+	else if(loweredName == "aspherical_shape") columnMapping[column].mapStandardColumn(ParticlesObject::AsphericalShapeProperty, vec);
+	else if(loweredName == "vector_color") columnMapping[column].mapStandardColumn(ParticlesObject::VectorColorProperty, vec);
+	else if(loweredName == "molecule") columnMapping[column].mapStandardColumn(ParticlesObject::MoleculeProperty);
+	else if(loweredName == "molecule_type") columnMapping[column].mapStandardColumn(ParticlesObject::MoleculeTypeProperty);
 	else {
 		// Only int or float custom properties are supported
 		if(dataType == PropertyStorage::Float || dataType == PropertyStorage::Int || dataType == PropertyStorage::Int64)
@@ -512,7 +512,7 @@ FileSourceImporter::FrameDataPtr XYZImporter::FrameLoader::loadFile(QFile& file)
 	// why we sort them now according to their names.
 	columnParser.sortParticleTypes();
 
-	PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticleProperty::PositionProperty);
+	PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticlesObject::PositionProperty);
 	if(posProperty && numParticlesLong != 0) {
 		Box3 boundingBox;
 		boundingBox.addPoints(posProperty->constDataPoint3(), posProperty->size());
@@ -587,7 +587,7 @@ void XYZImporter::loadFromStream(ObjectLoadStream& stream)
 /******************************************************************************
  * Creates a copy of this object.
  *****************************************************************************/
-OORef<RefTarget> XYZImporter::clone(bool deepCopy, CloneHelper& cloneHelper)
+OORef<RefTarget> XYZImporter::clone(bool deepCopy, CloneHelper& cloneHelper) const
 {
 	// Let the base class create an instance of this class.
 	OORef<XYZImporter> clone = static_object_cast<XYZImporter>(ParticleImporter::clone(deepCopy, cloneHelper));

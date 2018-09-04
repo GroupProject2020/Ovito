@@ -31,10 +31,15 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
 void OvitoObjectExecutor::Work::operator()() 
 {
     OVITO_ASSERT(_event);
-    if(!QCoreApplication::closingDown() && QThread::currentThread() != QCoreApplication::instance()->thread())
+    
+    if(!QCoreApplication::closingDown() && QThread::currentThread() != QCoreApplication::instance()->thread()) {
+        // Schedule work for later execution in main thread.
         std::move(*this).post();
-    else
+    }
+    else {
+        // Execute work immediately by calling the event destructor. 
         _event.reset();
+    }
 }
 
 /******************************************************************************

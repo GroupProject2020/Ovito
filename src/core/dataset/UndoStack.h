@@ -505,7 +505,7 @@ private:
 class OVITO_CORE_EXPORT UndoSuspender {
 public:
 	UndoSuspender(UndoStack& undoStack) : _suspendCount(&undoStack._suspendCount) { ++(*_suspendCount); }
-	UndoSuspender(RefMaker* object);
+	UndoSuspender(const RefMaker* object);
 	~UndoSuspender() { reset(); }
 	void reset() {
 		if(_suspendCount) {

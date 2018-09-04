@@ -49,7 +49,7 @@ public:
 	///   - ViewProjectionParameters::aspectRatio (The aspect ratio (height/width) of the viewport)
 	///   - ViewProjectionParameters::viewMatrix (The world to view space transformation)
 	///   - ViewProjectionParameters::boundingBox (The bounding box of the scene in world space coordinates)
-	virtual void projectionParameters(TimePoint time, ViewProjectionParameters& projParams) = 0;
+	virtual void projectionParameters(TimePoint time, ViewProjectionParameters& projParams) const = 0;
 
 	/// \brief Returns whether this camera uses a perspective projection.
 	virtual bool isPerspectiveCamera() const = 0;
@@ -58,7 +58,7 @@ public:
 	virtual void setPerspectiveCamera(bool perspective) = 0;
 	
 	/// \brief Returns the field of view of the camera.
-	virtual FloatType fieldOfView(TimePoint time, TimeInterval& validityInterval) = 0;
+	virtual FloatType fieldOfView(TimePoint time, TimeInterval& validityInterval) const = 0;
 
 	/// \brief Changes the field of view of the camera.
 	virtual void setFieldOfView(TimePoint time, FloatType newFOV) = 0;

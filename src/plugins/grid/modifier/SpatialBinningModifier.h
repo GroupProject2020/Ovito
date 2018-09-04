@@ -24,6 +24,7 @@
 
 #include <plugins/grid/Grid.h>
 #include <plugins/stdobj/properties/PropertyReference.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
 #include <plugins/stdobj/series/DataSeriesObject.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <core/dataset/pipeline/AsynchronousDelegatingModifier.h>
@@ -129,8 +130,13 @@ protected:
 
 public:
 
-	/// \brief Returns the class of data elements this delegate operates on.
-	virtual const PropertyClass& propertyClass() const = 0;
+	/// \brief Returns the class of property containers this delegate operates on.
+	virtual const PropertyContainerClass& containerClass() const = 0;
+
+	/// \brief Returns a reference to the property container being operated on by this delegate.
+	PropertyContainerReference subject() const {
+		return PropertyContainerReference(&containerClass(), containerPath());
+	}
 
 	/// Creates a computation engine that will perform the actual binning of elements.
 	virtual std::shared_ptr<SpatialBinningEngine> createEngine(
@@ -146,6 +152,11 @@ public:
 				const Vector3I& binDir,
 				int reductionOperation,
 				bool computeFirstDerivative) = 0;
+
+private:
+
+	/// Specifies the input object the modifier should operate on.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, containerPath, setContainerPath);
 };
 
 /**

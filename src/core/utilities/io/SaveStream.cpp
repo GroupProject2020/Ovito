@@ -22,6 +22,7 @@
 #include <core/Core.h>
 #include <core/utilities/Exception.h>
 #include <core/app/Application.h>
+#include <core/oo/OvitoClass.h>
 #include "SaveStream.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
@@ -159,6 +160,14 @@ void SaveStream::checkErrorCondition()
 	}
 }
 
+/******************************************************************************
+* Writes a reference to an OvitoObject derived class type to the stream.
+******************************************************************************/
+SaveStream& operator<<(SaveStream& stream, const OvitoClassPtr& clazz)
+{	
+	OvitoClass::serializeRTTI(stream, clazz);
+	return stream;
+}
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

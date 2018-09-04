@@ -24,6 +24,7 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <plugins/particles/util/ParticleExpressionEvaluator.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/particles/gui/util/ParticlePickingHelper.h>
 #include <plugins/stdobj/gui/properties/PropertyInspectionApplet.h>
 #include <gui/viewport/input/ViewportInputMode.h>
@@ -44,7 +45,7 @@ class ParticleInspectionApplet : public PropertyInspectionApplet
 public:
 
 	/// Constructor.
-	Q_INVOKABLE ParticleInspectionApplet() : PropertyInspectionApplet(ParticleProperty::OOClass()) {}
+	Q_INVOKABLE ParticleInspectionApplet() : PropertyInspectionApplet(ParticlesObject::OOClass()) {}
 
 	/// Returns the key value for this applet that is used for ordering the applet tabs.
 	virtual int orderingKey() const override { return 0; }
@@ -67,8 +68,8 @@ protected:
 
 	/// Determines whether the given property represents a color.
 	virtual bool isColorProperty(PropertyObject* property) const override {
-		return property->type() == ParticleProperty::ColorProperty 
-				|| property->type() == ParticleProperty::VectorColorProperty;
+		return property->type() == ParticlesObject::ColorProperty 
+				|| property->type() == ParticlesObject::VectorColorProperty;
 	}
 
 private Q_SLOTS:

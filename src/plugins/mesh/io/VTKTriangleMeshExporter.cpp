@@ -101,7 +101,7 @@ bool VTKTriangleMeshExporter::exportFrame(int frameNumber, TimePoint time, const
 
 	// Look up the RenderableSurfaceMesh in the pipeline state.
 	const PipelineFlowState& state = evalFuture.result();
-	RenderableSurfaceMesh* meshObj = state.findObjectOfType<RenderableSurfaceMesh>();
+	const RenderableSurfaceMesh* meshObj = state.getObject<RenderableSurfaceMesh>();
 	if(!meshObj)
 		throwException(tr("The object to be exported does not contain any exportable surface mesh data."));
 

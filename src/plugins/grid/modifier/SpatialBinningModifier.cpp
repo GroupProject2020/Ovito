@@ -22,12 +22,9 @@
 #include <plugins/grid/Grid.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
-#include <plugins/stdobj/properties/PropertyClass.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
 #include <plugins/stdobj/properties/PropertyObject.h>
-#include <plugins/stdobj/series/DataSeriesProperty.h>
 #include <plugins/stdobj/series/DataSeriesObject.h>
-#include <plugins/stdobj/util/InputHelper.h>
-#include <plugins/stdobj/util/OutputHelper.h>
 #include <core/app/Application.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
@@ -38,6 +35,7 @@
 namespace Ovito { namespace Grid {
 
 IMPLEMENT_OVITO_CLASS(SpatialBinningModifierDelegate);
+DEFINE_PROPERTY_FIELD(SpatialBinningModifierDelegate, containerPath);
 
 IMPLEMENT_OVITO_CLASS(SpatialBinningModifier);
 DEFINE_PROPERTY_FIELD(SpatialBinningModifier, reductionOperation);
@@ -94,18 +92,16 @@ void SpatialBinningModifier::initializeModifier(ModifierApplication* modApp)
 	AsynchronousDelegatingModifier::initializeModifier(modApp);
 
 	// Use the first available property from the input state as data source when the modifier is newly created.
-	if(sourceProperty().isNull() && delegate() && Application::instance()->guiMode()) {
+	if(sourceProperty().isNull() && delegate() && !Application::instance()->scriptMode()) {
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
-		PropertyReference bestProperty;
-		for(DataObject* o : input.objects()) {
-			if(PropertyObject* property = dynamic_object_cast<PropertyObject>(o)) {
-				if(delegate()->propertyClass().isMember(property)) {
-    				bestProperty = PropertyReference(property, (property->componentCount() > 1) ? 0 : -1);
-				}
+		if(const PropertyContainer* container = input.getLeafObject(delegate()->subject())) {
+			PropertyReference bestProperty;
+			for(const PropertyObject* property : container->properties()) {
+				bestProperty = PropertyReference(&delegate()->containerClass(), property, (property->componentCount() > 1) ? 0 : -1);
 			}
-		}
-		if(!bestProperty.isNull()) {
-			setSourceProperty(bestProperty);
+			if(!bestProperty.isNull()) {
+				setSourceProperty(bestProperty);
+			}
 		}
 	}
 }
@@ -115,12 +111,9 @@ void SpatialBinningModifier::initializeModifier(ModifierApplication* modApp)
 ******************************************************************************/
 void SpatialBinningModifier::referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget)
 {
-	if(field == PROPERTY_FIELD(AsynchronousDelegatingModifier::delegate)) {
-		if(!dataset()->undoStack().isUndoingOrRedoing() && !isBeingLoaded() && delegate()) {
-			setSourceProperty(sourceProperty().convertToPropertyClass(&delegate()->propertyClass()));
-		}
+	if(field == PROPERTY_FIELD(AsynchronousDelegatingModifier::delegate) && !dataset()->undoStack().isUndoingOrRedoing() && !isBeingLoaded()) {
+		setSourceProperty(sourceProperty().convertToContainerClass(delegate() ? &delegate()->containerClass() : nullptr));
 	}
-
 	AsynchronousDelegatingModifier::referenceReplaced(field, oldTarget, newTarget);
 }
 
@@ -134,29 +127,26 @@ Future<AsynchronousModifier::ComputeEnginePtr> SpatialBinningModifier::createEng
 	if(!delegate())
 		throwException(tr("No delegate set for the binning modifier."));
 	if(sourceProperty().isNull())
-		throwException(tr("No property to be binned has been selected."));
+		throwException(tr("No input property for binning has been selected."));
 
-	// Do we have a valid pipeline input?
-	const PropertyClass& propertyClass = delegate()->propertyClass();
-	if(!propertyClass.isDataPresent(input))
-		throwException(tr("Cannot bin property '%1', because the input data contains no %2.").arg(sourceProperty().name()).arg(propertyClass.elementDescriptionName()));
-	if(sourceProperty().propertyClass() != &propertyClass)
-		throwException(tr("Property %1 to be binned is not a %2 property.").arg(sourceProperty().name()).arg(propertyClass.elementDescriptionName()));
+	// Look up the property container which we will operate on.
+	const PropertyContainer* container = input.expectLeafObject(delegate()->subject());
+	if(sourceProperty().containerClass() != &container->getOOMetaClass())
+		throwException(tr("Property %1 to be binned is not a %2 property.").arg(sourceProperty().name()).arg(container->getOOMetaClass().elementDescriptionName()));
 
 	// Get the number of input elements.
-	size_t nelements = propertyClass.elementCount(input);
+	size_t nelements = container->elementCount();
 
 	// Get selection property.
 	ConstPropertyPtr selectionProperty;
 	if(onlySelectedElements()) {
-		if(PropertyObject* selPropertyObj = propertyClass.findInState(input, PropertyStorage::GenericSelectionProperty))
-			selectionProperty = selPropertyObj->storage();
-		else
+		selectionProperty = container->getPropertyStorage(PropertyStorage::GenericSelectionProperty);
+		if(!selectionProperty)
 			throwException(tr("Binning modifier has been restricted to selected elements, but no selection was previously defined."));
 	}
 
 	// Get input property to be binned.
-    PropertyObject* sourcePropertyObj = sourceProperty().findInState(input);
+    const PropertyObject* sourcePropertyObj = sourceProperty().findInContainer(container);
     if(!sourcePropertyObj)
         throwException(tr("Source property '%1' not found in the input data.").arg(sourceProperty().nameWithComponent()));
 	ConstPropertyPtr sourcePropertyData = sourcePropertyObj->storage();
@@ -172,7 +162,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> SpatialBinningModifier::createEng
     if(is1D()) binCount.y() = binCount.z() = 1;
     else if(is2D()) binCount.z() = 1;
     size_t binDataSize = (size_t)binCount[0] * (size_t)binCount[1] * (size_t)binCount[2];
-	auto binData = std::make_shared<PropertyStorage>(binDataSize, PropertyStorage::Float, 1, 0, sourceProperty().nameWithComponent(), true, DataSeriesProperty::YProperty);
+	auto binData = std::make_shared<PropertyStorage>(binDataSize, PropertyStorage::Float, 1, 0, sourceProperty().nameWithComponent(), true, DataSeriesObject::YProperty);
 
     // Determine coordinate axes (0, 1, 2 -- or 3 if not used).
     Vector3I binDir;
@@ -181,8 +171,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> SpatialBinningModifier::createEng
     binDir.z() = binDirectionZ(binDirection());
 
     // Get the simulation cell information.
-    InputHelper ih(dataset(), input);
-	const SimulationCell& cell = ih.expectSimulationCell()->data();
+	const SimulationCell& cell = input.expectObject<SimulationCellObject>()->data();
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	return delegate()->createEngine(time, input, cell, 
@@ -239,14 +228,15 @@ PipelineFlowState SpatialBinningModifierDelegate::SpatialBinningEngine::emitResu
 		modifier->throwException(tr("No delegate set for the binning modifier."));
 
 	PipelineFlowState output = input;
-	OutputHelper poh(modifier->dataset(), output, modApp);
 
+#if 0
 	if(SpatialBinningModifier::bin1D((SpatialBinningModifier::BinDirectionType)binningDirection())) {
 		DataSeriesObject* seriesObj = poh.outputDataSeries(QStringLiteral("binning"), binData()->name(), binData());
 		seriesObj->setIntervalStart(0);
 		seriesObj->setIntervalEnd(cell().matrix().column(binDir(0)).length());
 		seriesObj->setAxisLabelX(tr("Position"));
 	}
+#endif
 
 	return output;
 }

@@ -21,12 +21,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <core/app/Application.h>
+#include <core/dataset/DataSet.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
-#include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/utilities/units/UnitsManager.h>
 #include <core/utilities/concurrent/ParallelFor.h>
 #include "CorrelationFunctionModifier.h"
@@ -130,7 +130,7 @@ CorrelationFunctionModifier::CorrelationFunctionModifier(DataSet* dataset) : Asy
 ******************************************************************************/
 bool CorrelationFunctionModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<ParticleProperty>() != nullptr;
+	return input.containsObject<ParticlesObject>();
 }
 
 /******************************************************************************
@@ -142,20 +142,19 @@ void CorrelationFunctionModifier::initializeModifier(ModifierApplication* modApp
 	AsynchronousModifier::initializeModifier(modApp);
 
 	// Use the first available particle property from the input state as data source when the modifier is newly created.
-	if((sourceProperty1().isNull() || sourceProperty2().isNull()) && Application::instance()->guiMode()) {
+	if((sourceProperty1().isNull() || sourceProperty2().isNull()) && !Application::instance()->scriptMode()) {
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
-		ParticlePropertyReference bestProperty;
-		for(DataObject* o : input.objects()) {
-			ParticleProperty* property = dynamic_object_cast<ParticleProperty>(o);
-			if(property && (property->dataType() == PropertyStorage::Int || property->dataType() == PropertyStorage::Float)) {
+		if(const ParticlesObject* container = input.getObject<ParticlesObject>()) {
+			ParticlePropertyReference bestProperty;
+			for(const PropertyObject* property : container->properties()) {
 				bestProperty = ParticlePropertyReference(property, (property->componentCount() > 1) ? 0 : -1);
 			}
-		}
-		if(!bestProperty.isNull()) {
-			if(sourceProperty1().isNull())
-				setSourceProperty1(bestProperty);
-			if(sourceProperty2().isNull())
-				setSourceProperty2(bestProperty);
+			if(!bestProperty.isNull()) {
+				if(sourceProperty1().isNull())
+					setSourceProperty1(bestProperty);
+				if(sourceProperty2().isNull())
+					setSourceProperty2(bestProperty);
+			}
 		}
 	}
 }
@@ -172,19 +171,19 @@ Future<AsynchronousModifier::ComputeEnginePtr> CorrelationFunctionModifier::crea
 		throwException(tr("please select a second input particle property."));
 
 	// Get the current positions.
-	ParticleInputHelper pih(dataset(), input);
-	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
+	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 
 	// Get the current selected properties.
-	ParticleProperty* property1 = sourceProperty1().findInState(input);
-	ParticleProperty* property2 = sourceProperty2().findInState(input);
+	const PropertyObject* property1 = sourceProperty1().findInContainer(particles);
+	const PropertyObject* property2 = sourceProperty2().findInContainer(particles);
 	if(!property1)
 		throwException(tr("The selected input particle property with the name '%1' does not exist.").arg(sourceProperty1().name()));
 	if(!property2)
 		throwException(tr("The selected input particle property with the name '%1' does not exist.").arg(sourceProperty2().name()));
 
 	// Get simulation cell.
-	SimulationCellObject* inputCell = pih.expectSimulationCell();
+	const SimulationCellObject* inputCell = input.expectObject<SimulationCellObject>();
 	if(inputCell->is2D())
 		throwException(tr("Correlation function modifier does not support two-dimensional systems."));
 	if(inputCell->volume3D() < FLOATTYPE_EPSILON)
@@ -461,7 +460,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 	}
 
 	// Averaged reciprocal space correlation function.
-	_reciprocalSpaceCorrelation = std::make_shared<PropertyStorage>(numberOfWavevectorBins, PropertyStorage::Float, 1, 0, tr("C(q)"), true, DataSeriesProperty::YProperty);
+	_reciprocalSpaceCorrelation = std::make_shared<PropertyStorage>(numberOfWavevectorBins, PropertyStorage::Float, 1, 0, tr("C(q)"), true, DataSeriesObject::YProperty);
 	_reciprocalSpaceCorrelationRange = 2 * FLOATTYPE_PI * minReciprocalSpaceVector * numberOfWavevectorBins;
 
 	std::vector<int> numberOfValues(numberOfWavevectorBins, 0);
@@ -542,9 +541,9 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeFftCorrelati
 	FloatType gridSpacing = minCellFaceDistance / (2 * numberOfDistanceBins);
 
 	// Radially averaged real space correlation function.
-	_realSpaceCorrelation = std::make_shared<PropertyStorage>(numberOfDistanceBins, PropertyStorage::Float, 1, 0, tr("C(r)"), true, DataSeriesProperty::YProperty);
+	_realSpaceCorrelation = std::make_shared<PropertyStorage>(numberOfDistanceBins, PropertyStorage::Float, 1, 0, tr("C(r)"), true, DataSeriesObject::YProperty);
 	_realSpaceCorrelationRange = minCellFaceDistance / 2;
-	_realSpaceRDF = std::make_shared<PropertyStorage>(numberOfDistanceBins, PropertyStorage::Float, 1, 0, tr("g(r)"), true, DataSeriesProperty::YProperty);
+	_realSpaceRDF = std::make_shared<PropertyStorage>(numberOfDistanceBins, PropertyStorage::Float, 1, 0, tr("g(r)"), true, DataSeriesObject::YProperty);
 
 	numberOfValues = std::vector<int>(numberOfDistanceBins, 0);
 	FloatType* realSpaceCorrelationData = realSpaceCorrelation()->dataFloat();
@@ -629,7 +628,7 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::computeNeighCorrela
 	}
 
 	// Allocate neighbor RDF.
-	_neighRDF = std::make_shared<PropertyStorage>(neighCorrelation()->size(), PropertyStorage::Float, 1, 0, tr("Neighbor g(r)"), true, DataSeriesProperty::YProperty);
+	_neighRDF = std::make_shared<PropertyStorage>(neighCorrelation()->size(), PropertyStorage::Float, 1, 0, tr("Neighbor g(r)"), true, DataSeriesObject::YProperty);
 
 	// Prepare the neighbor list.
 	CutoffNeighborFinder neighborListBuilder;
@@ -791,23 +790,22 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::perform()
 PipelineFlowState CorrelationFunctionModifier::CorrelationAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	PipelineFlowState output = input;
-	OutputHelper oh(modApp->dataset(), output, modApp);
 
 	// Output real-space correlation function to the pipeline as a data series. 
-	DataSeriesObject* realSpaceCorrelationObj = oh.outputDataSeries(QStringLiteral("correlation/real-space"), tr("Real-space correlation"), realSpaceCorrelation());
+	DataSeriesObject* realSpaceCorrelationObj = output.createObject<DataSeriesObject>(QStringLiteral("correlation/real-space"), modApp, tr("Real-space correlation"), realSpaceCorrelation());
 	realSpaceCorrelationObj->setAxisLabelX(tr("Distance r"));
 	realSpaceCorrelationObj->setIntervalStart(0);
 	realSpaceCorrelationObj->setIntervalEnd(_realSpaceCorrelationRange);
 
 	// Output real-space RDF to the pipeline as a data series. 
-	DataSeriesObject* realSpaceRDFObj = oh.outputDataSeries(QStringLiteral("correlation/real-space/rdf"), tr("Real-space RDF"), realSpaceRDF());
+	DataSeriesObject* realSpaceRDFObj = output.createObject<DataSeriesObject>(QStringLiteral("correlation/real-space/rdf"), modApp, tr("Real-space RDF"), realSpaceRDF());
 	realSpaceRDFObj->setAxisLabelX(tr("Distance r"));
 	realSpaceRDFObj->setIntervalStart(0);
 	realSpaceRDFObj->setIntervalEnd(_realSpaceCorrelationRange);
 
 	// Output short-ranged part of the real-space correlation function to the pipeline as a data series. 
 	if(neighCorrelation()) {
-		DataSeriesObject* neighCorrelationObj = oh.outputDataSeries(QStringLiteral("correlation/neighbor"), tr("Neighbor correlation"), neighCorrelation());
+		DataSeriesObject* neighCorrelationObj = output.createObject<DataSeriesObject>(QStringLiteral("correlation/neighbor"), modApp, tr("Neighbor correlation"), neighCorrelation());
 		neighCorrelationObj->setAxisLabelX(tr("Distance r"));
 		neighCorrelationObj->setIntervalStart(0);
 		neighCorrelationObj->setIntervalEnd(neighCutoff());
@@ -815,24 +813,24 @@ PipelineFlowState CorrelationFunctionModifier::CorrelationAnalysisEngine::emitRe
 
 	// Output short-ranged part of the RDF to the pipeline as a data series. 
 	if(neighRDF()) {
-		DataSeriesObject* neighRDFObj = oh.outputDataSeries(QStringLiteral("correlation/neighbor/rdf"), tr("Neighbor RDF"), neighRDF());
+		DataSeriesObject* neighRDFObj = output.createObject<DataSeriesObject>(QStringLiteral("correlation/neighbor/rdf"), modApp, tr("Neighbor RDF"), neighRDF());
 		neighRDFObj->setAxisLabelX(tr("Distance r"));
 		neighRDFObj->setIntervalStart(0);
 		neighRDFObj->setIntervalEnd(neighCutoff());
 	}
 
 	// Output reciprocal-space correlation function to the pipeline as a data series. 
-	DataSeriesObject* reciprocalSpaceCorrelationObj = oh.outputDataSeries(QStringLiteral("correlation/reciprocal-space"), tr("Reciprocal-space correlation"), reciprocalSpaceCorrelation());
+	DataSeriesObject* reciprocalSpaceCorrelationObj = output.createObject<DataSeriesObject>(QStringLiteral("correlation/reciprocal-space"), modApp, tr("Reciprocal-space correlation"), reciprocalSpaceCorrelation());
 	reciprocalSpaceCorrelationObj->setAxisLabelX(tr("Wavevector q"));
 	reciprocalSpaceCorrelationObj->setIntervalStart(0);
 	reciprocalSpaceCorrelationObj->setIntervalEnd(_reciprocalSpaceCorrelationRange);
 
 	// Output global attributes.
-	oh.outputAttribute(QStringLiteral("CorrelationFunction.mean1"), QVariant::fromValue(mean1()));
-	oh.outputAttribute(QStringLiteral("CorrelationFunction.mean2"), QVariant::fromValue(mean2()));
-	oh.outputAttribute(QStringLiteral("CorrelationFunction.variance1"), QVariant::fromValue(variance1()));
-	oh.outputAttribute(QStringLiteral("CorrelationFunction.variance2"), QVariant::fromValue(variance2()));
-	oh.outputAttribute(QStringLiteral("CorrelationFunction.covariance"), QVariant::fromValue(covariance()));
+	output.addAttribute(QStringLiteral("CorrelationFunction.mean1"), QVariant::fromValue(mean1()), modApp);
+	output.addAttribute(QStringLiteral("CorrelationFunction.mean2"), QVariant::fromValue(mean2()), modApp);
+	output.addAttribute(QStringLiteral("CorrelationFunction.variance1"), QVariant::fromValue(variance1()), modApp);
+	output.addAttribute(QStringLiteral("CorrelationFunction.variance2"), QVariant::fromValue(variance2()), modApp);
+	output.addAttribute(QStringLiteral("CorrelationFunction.covariance"), QVariant::fromValue(covariance()), modApp);
 
 	return output;
 }

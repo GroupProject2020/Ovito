@@ -82,15 +82,15 @@ void SurfaceMeshVis::propertyChanged(const PropertyFieldDescriptor& field)
 /******************************************************************************
 * Lets the vis element transform a data object in preparation for rendering.
 ******************************************************************************/
-Future<PipelineFlowState> SurfaceMeshVis::transformDataImpl(TimePoint time, DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState, PipelineSceneNode* contextNode)
+Future<PipelineFlowState> SurfaceMeshVis::transformDataImpl(TimePoint time, const DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState, const PipelineSceneNode* contextNode)
 {
 	// Get the input surface mesh.
-	SurfaceMesh* surfaceMeshObj = dynamic_object_cast<SurfaceMesh>(dataObject);
+	const SurfaceMesh* surfaceMeshObj = dynamic_object_cast<SurfaceMesh>(dataObject);
 	if(!surfaceMeshObj)
 		return std::move(flowState);
 
 	// Get the simulation cell.
-	SimulationCellObject* cellObject = surfaceMeshObj->domain();
+	const SimulationCellObject* cellObject = surfaceMeshObj->domain();
 	if(!cellObject)
 		return std::move(flowState);
 
@@ -141,13 +141,13 @@ void SurfaceMeshVis::PrepareSurfaceEngine::perform()
 /******************************************************************************
 * Computes the bounding box of the displayed data.
 ******************************************************************************/
-Box3 SurfaceMeshVis::boundingBox(TimePoint time, const std::vector<DataObject*>& objectStack, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
+Box3 SurfaceMeshVis::boundingBox(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
 	Box3 bb;
 
 	// Compute mesh bounding box.
 	// Requires that we have already transformed the periodic SurfaceMesh into a non-periodic RenderableSurfaceMesh.
-	if(OORef<RenderableSurfaceMesh> meshObj = objectStack.back()->convertTo<RenderableSurfaceMesh>(time)) {
+	if(const RenderableSurfaceMesh* meshObj = dynamic_object_cast<RenderableSurfaceMesh>(objectStack.back())) {
 		bb.addBox(meshObj->surfaceMesh().boundingBox());
 		bb.addBox(meshObj->capPolygonsMesh().boundingBox());
 	}
@@ -157,7 +157,7 @@ Box3 SurfaceMeshVis::boundingBox(TimePoint time, const std::vector<DataObject*>&
 /******************************************************************************
 * Lets the visualization element render the data object.
 ******************************************************************************/
-void SurfaceMeshVis::render(TimePoint time, const std::vector<DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
+void SurfaceMeshVis::render(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, const PipelineSceneNode* contextNode)
 {
 	// Ignore render calls for the original SurfaceMesh.
 	// We are only interested in the RenderableSurfaceMesh.
@@ -198,7 +198,7 @@ void SurfaceMeshVis::render(TimePoint time, const std::vector<DataObject*>& obje
 
 	// Check if we already have a valid rendering primitive that is up to date.
 	if(!surfacePrimitive || !surfacePrimitive->isValid(renderer)) {
-		if(OORef<RenderableSurfaceMesh> meshObj = objectStack.back()->convertTo<RenderableSurfaceMesh>(time)) {
+		if(const RenderableSurfaceMesh* meshObj = dynamic_object_cast<RenderableSurfaceMesh>(objectStack.back())) {
 			surfacePrimitive = renderer->createMeshPrimitive();
 			surfacePrimitive->setMesh(meshObj->surfaceMesh(), color_surface);
 		}
@@ -213,7 +213,7 @@ void SurfaceMeshVis::render(TimePoint time, const std::vector<DataObject*>& obje
 	// Check if we already have a valid rendering primitive that is up to date.
 	if(!capPrimitive || !capPrimitive->isValid(renderer)) {
 		capPrimitive.reset();
-		if(OORef<RenderableSurfaceMesh> meshObj = objectStack.back()->convertTo<RenderableSurfaceMesh>(time)) {
+		if(const RenderableSurfaceMesh* meshObj = dynamic_object_cast<RenderableSurfaceMesh>(objectStack.back())) {
 			if(showCap()) {
 				capPrimitive = renderer->createMeshPrimitive();
 				capPrimitive->setMesh(meshObj->capPolygonsMesh(), color_cap);

@@ -21,9 +21,7 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/objects/patterns/StructurePattern.h>
-#include <plugins/particles/objects/BondProperty.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
+#include <plugins/particles/objects/BondsObject.h>
 #include <plugins/mesh/tri/TriMeshObject.h>
 #include <plugins/mesh/tri/TriMeshVis.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
@@ -119,7 +117,7 @@ DislocationAnalysisModifier::DislocationAnalysisModifier(DataSet* dataset) : Str
 			patternCatalog()->addPattern(stype);
 		}
 		stype->setName(ParticleType::getPredefinedStructureTypeName(predefTypes[id]));
-		stype->setColor(ParticleType::getDefaultParticleColor(ParticleProperty::StructureTypeProperty, stype->name(), id));
+		stype->setColor(ParticleType::getDefaultParticleColor(ParticlesObject::StructureTypeProperty, stype->name(), id));
 		addStructureType(stype);
 	}
 
@@ -128,43 +126,43 @@ DislocationAnalysisModifier::DislocationAnalysisModifier(DataSet* dataset) : Str
 	StructurePattern* fccPattern = patternCatalog()->structureById(StructureAnalysis::LATTICE_FCC);
 	fccPattern->setSymmetryType(StructurePattern::CubicSymmetry);
 	fccPattern->setShortName(QStringLiteral("fcc"));
-	fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/2<110> (Perfect)"), Vector3(1.0f/2.0f, 1.0f/2.0f, 0.0f), Color(0.2f,0.2f,1)));
-	fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/6<112> (Shockley)"), Vector3(1.0f/6.0f, 1.0f/6.0f, 2.0f/6.0f), Color(0,1,0)));
-	fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/6<110> (Stair-rod)"), Vector3(1.0f/6.0f, 1.0f/6.0f, 0.0f/6.0f), Color(1,0,1)));
-	fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/3<001> (Hirth)"), Vector3(1.0f/3.0f, 0.0f, 0.0f), Color(1,1,0)));
-	fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/3<111> (Frank)"), Vector3(1.0f/3.0f, 1.0f/3.0f, 1.0f/3.0f), Color(0,1,1)));
+	fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 1, tr("1/2<110> (Perfect)"), Vector3(1.0f/2.0f, 1.0f/2.0f, 0.0f), Color(0.2f,0.2f,1)));
+	fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 2, tr("1/6<112> (Shockley)"), Vector3(1.0f/6.0f, 1.0f/6.0f, 2.0f/6.0f), Color(0,1,0)));
+	fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 3, tr("1/6<110> (Stair-rod)"), Vector3(1.0f/6.0f, 1.0f/6.0f, 0.0f/6.0f), Color(1,0,1)));
+	fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 4, tr("1/3<001> (Hirth)"), Vector3(1.0f/3.0f, 0.0f, 0.0f), Color(1,1,0)));
+	fccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 5, tr("1/3<111> (Frank)"), Vector3(1.0f/3.0f, 1.0f/3.0f, 1.0f/3.0f), Color(0,1,1)));
 
 	StructurePattern* bccPattern = patternCatalog()->structureById(StructureAnalysis::LATTICE_BCC);
 	bccPattern->setSymmetryType(StructurePattern::CubicSymmetry);
 	bccPattern->setShortName(QStringLiteral("bcc"));
-	bccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/2<111>"), Vector3(1.0f/2.0f, 1.0f/2.0f, 1.0f/2.0f), Color(0,1,0)));
-	bccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("<100>"), Vector3(1.0f, 0.0f, 0.0f), Color(1, 0.3f, 0.8f)));
-	bccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("<110>"), Vector3(1.0f, 1.0f, 0.0f), Color(0.2f, 0.5f, 1.0f)));
+	bccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 11, tr("1/2<111>"), Vector3(1.0f/2.0f, 1.0f/2.0f, 1.0f/2.0f), Color(0,1,0)));
+	bccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 12, tr("<100>"), Vector3(1.0f, 0.0f, 0.0f), Color(1, 0.3f, 0.8f)));
+	bccPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 13, tr("<110>"), Vector3(1.0f, 1.0f, 0.0f), Color(0.2f, 0.5f, 1.0f)));
 
 	StructurePattern* hcpPattern = patternCatalog()->structureById(StructureAnalysis::LATTICE_HCP);
 	hcpPattern->setShortName(QStringLiteral("hcp"));
 	hcpPattern->setSymmetryType(StructurePattern::HexagonalSymmetry);
-	hcpPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/3<1-210>"), Vector3(sqrt(0.5f), 0.0f, 0.0f), Color(0,1,0)));
-	hcpPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("<0001>"), Vector3(0.0f, 0.0f, sqrt(4.0f/3.0f)), Color(0.2f,0.2f,1)));
-	hcpPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f), 0.0f), Color(1,0,1)));
-	hcpPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/3<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f)/3.0f, 0.0f), Color(1,0.5f,0)));
-	hcpPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/3<1-213>"), Vector3(sqrt(0.5f), 0.0f, sqrt(4.0f/3.0f)), Color(1,1,0)));
+	hcpPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 21, tr("1/3<1-210>"), Vector3(sqrt(0.5f), 0.0f, 0.0f), Color(0,1,0)));
+	hcpPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 22, tr("<0001>"), Vector3(0.0f, 0.0f, sqrt(4.0f/3.0f)), Color(0.2f,0.2f,1)));
+	hcpPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 23, tr("<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f), 0.0f), Color(1,0,1)));
+	hcpPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 24, tr("1/3<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f)/3.0f, 0.0f), Color(1,0.5f,0)));
+	hcpPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 25, tr("1/3<1-213>"), Vector3(sqrt(0.5f), 0.0f, sqrt(4.0f/3.0f)), Color(1,1,0)));
 
 	StructurePattern* cubicDiaPattern = patternCatalog()->structureById(StructureAnalysis::LATTICE_CUBIC_DIAMOND);
 	cubicDiaPattern->setShortName(QStringLiteral("diamond"));
 	cubicDiaPattern->setSymmetryType(StructurePattern::CubicSymmetry);
-	cubicDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/2<110>"), Vector3(1.0f/2.0f, 1.0f/2.0f, 0.0f), Color(0.2f,0.2f,1)));
-	cubicDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/6<112>"), Vector3(1.0f/6.0f, 1.0f/6.0f, 2.0f/6.0f), Color(0,1,0)));
-	cubicDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/6<110>"), Vector3(1.0f/6.0f, 1.0f/6.0f, 0.0f), Color(1,0,1)));
-	cubicDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/3<111>"), Vector3(1.0f/3.0f, 1.0f/3.0f, 1.0f/3.0f), Color(0,1,1)));
+	cubicDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 31, tr("1/2<110>"), Vector3(1.0f/2.0f, 1.0f/2.0f, 0.0f), Color(0.2f,0.2f,1)));
+	cubicDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 32, tr("1/6<112>"), Vector3(1.0f/6.0f, 1.0f/6.0f, 2.0f/6.0f), Color(0,1,0)));
+	cubicDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 33, tr("1/6<110>"), Vector3(1.0f/6.0f, 1.0f/6.0f, 0.0f), Color(1,0,1)));
+	cubicDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 34, tr("1/3<111>"), Vector3(1.0f/3.0f, 1.0f/3.0f, 1.0f/3.0f), Color(0,1,1)));
 
 	StructurePattern* hexDiaPattern = patternCatalog()->structureById(StructureAnalysis::LATTICE_HEX_DIAMOND);
 	hexDiaPattern->setShortName(QStringLiteral("hex_diamond"));
 	hexDiaPattern->setSymmetryType(StructurePattern::HexagonalSymmetry);
-	hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/3<1-210>"), Vector3(sqrt(0.5f), 0.0f, 0.0f), Color(0,1,0)));
-	hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("<0001>"), Vector3(0.0f, 0.0f, sqrt(4.0f/3.0f)), Color(0.2f,0.2f,1)));
-	hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f), 0.0f), Color(1,0,1)));
-	hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, tr("1/3<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f)/3.0f, 0.0f), Color(1,0.5f,0)));
+	hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 41, tr("1/3<1-210>"), Vector3(sqrt(0.5f), 0.0f, 0.0f), Color(0,1,0)));
+	hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 42, tr("<0001>"), Vector3(0.0f, 0.0f, sqrt(4.0f/3.0f)), Color(0.2f,0.2f,1)));
+	hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 43, tr("<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f), 0.0f), Color(1,0,1)));
+	hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(dataset, 44, tr("1/3<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f)/3.0f, 0.0f), Color(1,0.5f,0)));
 }
 
 /******************************************************************************
@@ -173,16 +171,16 @@ DislocationAnalysisModifier::DislocationAnalysisModifier(DataSet* dataset) : Str
 Future<AsynchronousModifier::ComputeEnginePtr> DislocationAnalysisModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get modifier inputs.
-	ParticleInputHelper pih(dataset(), input);
-	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
-	SimulationCellObject* simCell = pih.expectSimulationCell();
+	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
+	const SimulationCellObject* simCell = input.expectObject<SimulationCellObject>();
 	if(simCell->is2D())
 		throwException(tr("The DXA modifier does not support 2d simulation cells."));
 
 	// Get particle selection.
 	ConstPropertyPtr selectionProperty;
 	if(onlySelectedParticles())
-		selectionProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty)->storage();
+		selectionProperty = particles->expectProperty(ParticlesObject::SelectionProperty)->storage();
 
 	// Build list of preferred crystal orientations.
 	std::vector<Matrix3> preferredCrystalOrientations;
@@ -191,15 +189,15 @@ Future<AsynchronousModifier::ComputeEnginePtr> DislocationAnalysisModifier::crea
 	}
 
 	// Get cluster property.
-	ParticleProperty* clusterProperty = pih.inputStandardProperty<ParticleProperty>(ParticleProperty::ClusterProperty);
+	ConstPropertyPtr clusterProperty = particles->getPropertyStorage(ParticlesObject::ClusterProperty);
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	return std::make_shared<DislocationAnalysisEngine>(
-			input,
+			particles,
 			posProperty->storage(),
 			simCell->data(), inputCrystalStructure(), maxTrialCircuitSize(), circuitStretchability(),
 			std::move(selectionProperty),
-			clusterProperty ? clusterProperty->storage() : nullptr, std::move(preferredCrystalOrientations),
+			std::move(clusterProperty), std::move(preferredCrystalOrientations),
 			onlyPerfectDislocations(), defectMeshSmoothingLevel(),
 			lineSmoothingEnabled() ? lineSmoothingLevel() : 0, lineCoarseningEnabled() ? linePointInterval() : 0,
 			outputInterfaceMesh());

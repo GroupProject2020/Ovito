@@ -148,7 +148,7 @@ bool RefTarget::isReferencedBy(const RefMaker* obj) const
 * to create an instance. The base implementation of RefTarget::clone() will create an
 * instance of the derived class which can safely be cast.
 ******************************************************************************/
-OORef<RefTarget> RefTarget::clone(bool deepCopy, CloneHelper& cloneHelper)
+OORef<RefTarget> RefTarget::clone(bool deepCopy, CloneHelper& cloneHelper) const
 {
 	// Create a new instance of the object's class.
 	OORef<RefTarget> clone = static_object_cast<RefTarget>(getOOClass().createInstance(dataset()));
@@ -174,7 +174,7 @@ OORef<RefTarget> RefTarget::clone(bool deepCopy, CloneHelper& cloneHelper)
 				else
 					clonedReference = cloneHelper.copyReference(static_cast<RefTarget*>(sourceField), deepCopy);
 				// Store in reference field of destination object.
-				field->singleStorageAccessFunc(clone).set(clone, *field, clonedReference);
+				field->singleStorageAccessFunc(clone).setInternal(clone, *field, clonedReference);
 			}
 			else {
 				OVITO_ASSERT(field->vectorStorageAccessFunc != nullptr);
@@ -210,7 +210,7 @@ OORef<RefTarget> RefTarget::clone(bool deepCopy, CloneHelper& cloneHelper)
 /******************************************************************************
 * Returns the title of this object.
 ******************************************************************************/
-QString RefTarget::objectTitle()
+QString RefTarget::objectTitle() const
 {
 	return getOOClass().displayName();
 }

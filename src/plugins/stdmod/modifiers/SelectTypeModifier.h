@@ -49,7 +49,7 @@ public:
 
 	/// Modifies the input data in an immediate, preliminary way.
 	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
-	
+
 protected:
 	
 	/// Is called when the value of a property of this object has changed.

@@ -20,8 +20,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
@@ -49,7 +47,7 @@ InterpolateTrajectoryModifier::InterpolateTrajectoryModifier(DataSet* dataset) :
 ******************************************************************************/
 bool InterpolateTrajectoryModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<ParticleProperty>() != nullptr;
+	return input.containsObject<ParticlesObject>();
 }
 
 /******************************************************************************
@@ -118,8 +116,6 @@ Future<PipelineFlowState> InterpolateTrajectoryModifier::evaluate(TimePoint time
 PipelineFlowState InterpolateTrajectoryModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	PipelineFlowState output = input;
-	ParticleInputHelper pih(dataset(), input);
-	ParticleOutputHelper poh(dataset(), output, modApp);
 	
 	// Determine the current frame, preferably from the attribute stored with the pipeline flow state.
 	// If the source frame attribute is not present, fall back to inferring it from the current animation time.
@@ -146,18 +142,21 @@ PipelineFlowState InterpolateTrajectoryModifier::evaluatePreliminary(TimePoint t
 	if(t < 0) t = 0;
 	else if(t > 1) t = 1;
 	
-	SimulationCellObject* cell1 = input.findObjectOfType<SimulationCellObject>();
-	SimulationCellObject* cell2 = secondState.findObjectOfType<SimulationCellObject>();
+	const SimulationCellObject* cell1 = input.getObject<SimulationCellObject>();
+	const SimulationCellObject* cell2 = secondState.getObject<SimulationCellObject>();
 
 	// Interpolate particle positions.
-	ParticleProperty* posProperty1 = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
-	ParticleProperty* posProperty2 = ParticleProperty::findInState(secondState, ParticleProperty::PositionProperty);
-	if(!posProperty2 || posProperty1->size() != posProperty2->size())
+	const ParticlesObject* particles1 = input.expectObject<ParticlesObject>();
+	const ParticlesObject* particles2 = secondState.getObject<ParticlesObject>();
+	if(!particles2 || particles1->elementCount() != particles2->elementCount())
 		throwException(tr("Cannot interpolate between consecutive simulation frames, because they contain different numbers of particles."));
+	const PropertyObject* posProperty1 = particles1->expectProperty(ParticlesObject::PositionProperty);
+	const PropertyObject* posProperty2 = particles2->expectProperty(ParticlesObject::PositionProperty);
 
-	ParticleProperty* idProperty1 = ParticleProperty::findInState(input, ParticleProperty::IdentifierProperty);
-	ParticleProperty* idProperty2 = ParticleProperty::findInState(secondState, ParticleProperty::IdentifierProperty);
-	ParticleProperty* outputPositions = poh.outputStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty, true);
+	const PropertyObject* idProperty1 = particles1->getProperty(ParticlesObject::IdentifierProperty);
+	const PropertyObject* idProperty2 = particles2->getProperty(ParticlesObject::IdentifierProperty);
+	ParticlesObject* outputParticles = output.makeMutable(particles1);
+	PropertyObject* outputPositions = outputParticles->createProperty(ParticlesObject::PositionProperty, true);
 	if(idProperty1 && idProperty2 && idProperty1->size() == idProperty2->size() &&  
 			!std::equal(idProperty1->constDataInt64(), idProperty1->constDataInt64() + idProperty1->size(), idProperty2->constDataInt64())) {
 
@@ -211,7 +210,7 @@ PipelineFlowState InterpolateTrajectoryModifier::evaluatePreliminary(TimePoint t
 
 	// Interpolate simulation cell vectors.
 	if(cell1 && cell2) {
-		SimulationCellObject* outputCell = poh.outputSingletonObject<SimulationCellObject>();
+		SimulationCellObject* outputCell = output.expectMutableObject<SimulationCellObject>();
 		const AffineTransformation& cellMat1 = cell1->cellMatrix();
 		const AffineTransformation delta = cell2->cellMatrix() - cellMat1;
 		outputCell->setCellMatrix(cellMat1 + delta * t);

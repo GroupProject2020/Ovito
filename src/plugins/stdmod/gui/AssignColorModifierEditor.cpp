@@ -42,7 +42,7 @@ void AssignColorModifierEditor::createUI(const RolloutInsertionParameters& rollo
     // Create the rollout contents.
 	QGridLayout* layout = new QGridLayout(rollout);
 	layout->setContentsMargins(4,4,4,4);
-	layout->setSpacing(0);
+	layout->setSpacing(2);
 	layout->setColumnStretch(1, 1);
 
 	// Operate on.

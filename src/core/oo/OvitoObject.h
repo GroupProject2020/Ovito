@@ -105,7 +105,7 @@ public:
 
 	/// Returns an executor object to be used with Future<>::then(), which executes work
 	/// in the context (and the thread) of this OvitoObject.
-	OvitoObjectExecutor executor() { return OvitoObjectExecutor(this); }
+	OvitoObjectExecutor executor() const { return OvitoObjectExecutor(this); }
 
 	/// \brief Internal method that calls this object's aboutToBeDeleted() routine.
 	/// It is automatically called when the object's reference counter reaches zero.

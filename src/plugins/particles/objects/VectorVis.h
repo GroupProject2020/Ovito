@@ -23,10 +23,10 @@
 
 
 #include <plugins/particles/Particles.h>
+#include <plugins/stdobj/properties/PropertyObject.h>
 #include <core/dataset/data/DataVis.h>
 #include <core/rendering/ArrowPrimitive.h>
 #include <core/rendering/SceneRenderer.h>
-#include "ParticleProperty.h"
 
 namespace Ovito { namespace Particles {
 
@@ -55,10 +55,10 @@ public:
 	Q_INVOKABLE VectorVis(DataSet* dataset);
 
 	/// \brief Lets the visualization element render the data object.
-	virtual void render(TimePoint time, const std::vector<DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode) override;
+	virtual void render(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, const PipelineSceneNode* contextNode) override;
 
 	/// \brief Computes the bounding box of the object.
-	virtual Box3 boundingBox(TimePoint time, const std::vector<DataObject*>& objectStack, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval) override;
+	virtual Box3 boundingBox(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval) override;
 
 public:
 
@@ -68,7 +68,7 @@ public:
 protected:
 
 	/// Computes the bounding box of the arrows.
-	Box3 arrowBoundingBox(ParticleProperty* vectorProperty, ParticleProperty* positionProperty);
+	Box3 arrowBoundingBox(const PropertyObject* vectorProperty, const PropertyObject* positionProperty) const;
 
 protected:
 
@@ -106,7 +106,7 @@ class OVITO_PARTICLES_EXPORT VectorPickInfo : public ObjectPickInfo
 public:
 
 	/// Constructor.
-	VectorPickInfo(VectorVis* visElement, const PipelineFlowState& pipelineState, ParticleProperty* vectorProperty) :
+	VectorPickInfo(VectorVis* visElement, const PipelineFlowState& pipelineState, const PropertyObject* vectorProperty) :
 		_visElement(visElement), _pipelineState(pipelineState), _vectorProperty(vectorProperty) {}
 
 	/// The pipeline flow state containing the particle properties.
@@ -128,7 +128,7 @@ private:
 	OORef<VectorVis> _visElement;
 
 	/// The vector property.
-	OORef<ParticleProperty> _vectorProperty;
+	OORef<PropertyObject> _vectorProperty;
 };
 
 

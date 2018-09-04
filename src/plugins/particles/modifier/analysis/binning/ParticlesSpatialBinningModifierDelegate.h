@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/grid/modifier/SpatialBinningModifier.h>
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
@@ -43,7 +43,7 @@ class ParticlesSpatialBinningModifierDelegate : public SpatialBinningModifierDel
 
 		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
 		virtual bool isApplicableTo(const PipelineFlowState& input) const override {
-			return input.findObjectOfType<ParticleProperty>() != nullptr;
+			return input.containsObject<ParticlesObject>();
 		}
 
 		/// The name by which Python scripts can refer to this modifier delegate.
@@ -60,8 +60,8 @@ public:
 	/// Constructor.
 	Q_INVOKABLE ParticlesSpatialBinningModifierDelegate(DataSet* dataset);
 
-	/// \brief Returns the class of data elements this delegate operates on.
-	virtual const PropertyClass& propertyClass() const override { return ParticleProperty::OOClass(); }
+	/// \brief Returns the class of property containers this delegate operates on.
+	virtual const PropertyContainerClass& containerClass() const override { return ParticlesObject::OOClass(); }
 
 	/// Creates a computation engine that will perform the actual binning of elements.
 	virtual std::shared_ptr<SpatialBinningModifierDelegate::SpatialBinningEngine> createEngine(

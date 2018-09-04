@@ -56,7 +56,7 @@ public:
 	}	
 
 	/// \brief Returns the title of this object. Same as nameOrId().
-	virtual QString objectTitle() override { return nameOrId(); }
+	virtual QString objectTitle() const override { return nameOrId(); }
 
 protected:
 

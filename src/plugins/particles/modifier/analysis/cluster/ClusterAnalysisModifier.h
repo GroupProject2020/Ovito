@@ -23,10 +23,10 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/particles/util/CutoffNeighborFinder.h>
 #include <plugins/particles/util/ParticleOrderingFingerprint.h>
-#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/BondsObject.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
 
@@ -84,7 +84,7 @@ private:
 			_simCell(simCell), 
 			_sortBySize(sortBySize),
 			_selection(std::move(selection)),
-			_particleClusters(ParticleProperty::createStandardStorage(fingerprint.particleCount(), ParticleProperty::ClusterProperty, false)),
+			_particleClusters(ParticlesObject::OOClass().createStandardStorage(fingerprint.particleCount(), ParticlesObject::ClusterProperty, false)),
 			_inputFingerprint(std::move(fingerprint)) {}
 
 		/// This method is called by the system after the computation was successfully completed.

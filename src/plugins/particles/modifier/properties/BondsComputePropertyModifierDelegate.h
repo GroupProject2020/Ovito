@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/BondsObject.h>
 #include <plugins/particles/util/ParticleExpressionEvaluator.h>
 #include <plugins/particles/util/ParticleOrderingFingerprint.h>
 #include <plugins/stdmod/modifiers/ComputePropertyModifier.h>
@@ -45,7 +45,9 @@ class OVITO_PARTICLES_EXPORT BondsComputePropertyModifierDelegate : public Compu
 
 		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
 		virtual bool isApplicableTo(const PipelineFlowState& input) const override {
-			return input.findObjectOfType<BondProperty>() != nullptr;
+			if(const ParticlesObject* particles = input.getObject<ParticlesObject>())
+				return particles->bonds() != nullptr;
+			return false;
 		}
 
 		/// The name by which Python scripts can refer to this modifier delegate.
@@ -62,17 +64,17 @@ public:
 	/// Constructor.
 	Q_INVOKABLE BondsComputePropertyModifierDelegate(DataSet* dataset);
 
-	/// \brief Returns the class of properties this delegate computes.
-	virtual const PropertyClass& propertyClass() const override { return BondProperty::OOClass(); }
+	/// \brief Returns the class of property containers this delegate operates on.
+	virtual const PropertyContainerClass& containerClass() const override { return BondsObject::OOClass(); }
 
 	/// Creates a computation engine that will compute the property values.
 	virtual std::shared_ptr<ComputePropertyModifierDelegate::PropertyComputeEngine> createEngine(
 				TimePoint time, 
 				const PipelineFlowState& input,
+				const PropertyContainer* container,
 				PropertyPtr outputProperty, 
 				ConstPropertyPtr selectionProperty,
-				QStringList expressions, 
-				bool initializeOutputProperty) override;
+				QStringList expressions) override;
 
 private:
 
@@ -86,6 +88,7 @@ private:
 				const TimeInterval& validityInterval, 
 				TimePoint time,
 				PropertyPtr outputProperty, 
+				const PropertyContainer* container,
 				ConstPropertyPtr selectionProperty,
 				QStringList expressions, 
 				int frameNumber, 

@@ -24,7 +24,7 @@
 #include <plugins/mesh/tri/TriMeshVis.h>
 #include <core/app/Application.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
-#include <core/dataset/pipeline/PipelineOutputHelper.h>
+#include <core/dataset/io/FileSource.h>
 #include "TriMeshFrameData.h"
 
 namespace Ovito { namespace Mesh {
@@ -34,26 +34,29 @@ namespace Ovito { namespace Mesh {
 * This function is called by the system from the main thread after the
 * asynchronous loading task has finished.
 ******************************************************************************/
-void TriMeshFrameData::handOver(PipelineOutputHelper& poh, const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource)
+PipelineFlowState TriMeshFrameData::handOver(const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource)
 {
-	// Create a TriMeshObject.
-	OORef<TriMeshObject> triMeshObj = new TriMeshObject(poh.dataset());
+	PipelineFlowState output;
+
+	// Create a TriMeshObject or reuse existing.
+	TriMeshObject* triMeshObj = const_cast<TriMeshObject*>(existing.getObject<TriMeshObject>());
+	if(triMeshObj) {
+		output.addObject(triMeshObj);
+	}
+	else {
+		triMeshObj = output.createObject<TriMeshObject>(fileSource);
+
+		// Assign a TriMeshVis to the TriMeshObject.
+		OORef<TriMeshVis> triMeshVis = new TriMeshVis(fileSource->dataset());
+		if(!Application::instance()->scriptMode())
+			triMeshVis->loadUserDefaults();
+		triMeshObj->setVisElement(triMeshVis);
+	}
+
+	// Hand over the loaded mesh data.
 	triMeshObj->mesh().swap(mesh());
 
-	// Assign a TriMeshVis to the TriMeshObject.
-	// Re-use existing vis element if possible.
-	OORef<DataVis> triMeshVis;
-	if(TriMeshObject* previousTriMeshObj = existing.findObjectOfType<TriMeshObject>())
-		triMeshVis = previousTriMeshObj->visElement();
-	if(!triMeshVis) {
-		triMeshVis = new TriMeshVis(poh.dataset());
-		if(Application::instance()->guiMode())
-			triMeshVis->loadUserDefaults();
-	}
-	triMeshObj->setVisElement(triMeshVis);
-
-	// Put object into output state.
-	poh.outputObject(triMeshObj);
+	return output;
 }
 
 }	// End of namespace

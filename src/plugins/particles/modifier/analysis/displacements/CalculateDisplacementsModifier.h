@@ -24,7 +24,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/VectorVis.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/particles/modifier/analysis/ReferenceConfigurationModifier.h>
 #include <plugins/particles/util/ParticleOrderingFingerprint.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
@@ -67,8 +67,8 @@ private:
 				AffineMappingType affineMapping, bool useMinimumImageConvention) :
 			RefConfigEngineBase(validityInterval, positions, simCell, std::move(refPositions), simCellRef,
 				std::move(identifiers), std::move(refIdentifiers), affineMapping, useMinimumImageConvention),
-			_displacements(ParticleProperty::createStandardStorage(fingerprint.particleCount(), ParticleProperty::DisplacementProperty, false)),
-			_displacementMagnitudes(ParticleProperty::createStandardStorage(fingerprint.particleCount(), ParticleProperty::DisplacementMagnitudeProperty, false)),
+			_displacements(ParticlesObject::OOClass().createStandardStorage(fingerprint.particleCount(), ParticlesObject::DisplacementProperty, false)),
+			_displacementMagnitudes(ParticlesObject::OOClass().createStandardStorage(fingerprint.particleCount(), ParticlesObject::DisplacementMagnitudeProperty, false)),
 			_inputFingerprint(std::move(fingerprint)) {}
 
 		/// Computes the modifier's results.

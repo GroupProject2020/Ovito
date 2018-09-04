@@ -97,7 +97,7 @@ public:
 private:
 
 	/// Decides if the given particle property is one that should be transformed.
-	static bool isTransformableProperty(ParticleProperty* property);
+	static bool isTransformableProperty(const PropertyObject* property);
 };
 
 OVITO_END_INLINE_NAMESPACE

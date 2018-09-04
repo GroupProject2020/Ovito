@@ -153,7 +153,7 @@ void SingleReferenceFieldBase::swapReference(RefMaker* owner, const PropertyFiel
 * Replaces the reference target stored in a reference field.
 * Creates an undo record so the old value can be restored at a later time.
 ******************************************************************************/
-void SingleReferenceFieldBase::set(RefMaker* owner, const PropertyFieldDescriptor& descriptor, RefTarget* newTarget)
+void SingleReferenceFieldBase::setInternal(RefMaker* owner, const PropertyFieldDescriptor& descriptor, const RefTarget* newTarget)
 {
 	if(_pointer == newTarget) return;	// Nothing has changed.
 
@@ -169,13 +169,13 @@ void SingleReferenceFieldBase::set(RefMaker* owner, const PropertyFieldDescripto
 				.arg(descriptor.identifier()).arg(descriptor.definingClass()->name())));
 
 	if(isUndoRecordingActive(owner, descriptor)) {
-		std::unique_ptr<SetReferenceOperation> op(new SetReferenceOperation(owner, newTarget, *this, descriptor));
+		std::unique_ptr<SetReferenceOperation> op(new SetReferenceOperation(owner, const_cast<RefTarget*>(newTarget), *this, descriptor));
 		op->redo();
 		pushUndoRecord(owner, std::move(op));
 		OVITO_ASSERT(_pointer == newTarget);
 	}
 	else {
-		OORef<RefTarget> newTargetRef(newTarget);
+		OORef<RefTarget> newTargetRef = const_cast<RefTarget*>(newTarget);
 		swapReference(owner, descriptor, newTargetRef);
 		OVITO_ASSERT(_pointer == newTarget);
 	}
@@ -309,7 +309,7 @@ int VectorReferenceFieldBase::addReference(RefMaker* owner, const PropertyFieldD
 * Adds a reference target to the internal list.
 * Creates an undo record so the insertion can be undone at a later time.
 ******************************************************************************/
-int VectorReferenceFieldBase::insertInternal(RefMaker* owner, const PropertyFieldDescriptor& descriptor, RefTarget* newTarget, int index)
+int VectorReferenceFieldBase::insertInternal(RefMaker* owner, const PropertyFieldDescriptor& descriptor, const RefTarget* newTarget, int index)
 {
     // Check object type
 	if(newTarget && !newTarget->getOOClass().isDerivedFrom(*descriptor.targetClass())) {
@@ -323,14 +323,14 @@ int VectorReferenceFieldBase::insertInternal(RefMaker* owner, const PropertyFiel
 					.arg(descriptor.identifier()).arg(descriptor.definingClass()->name())));
 
 	if(isUndoRecordingActive(owner, descriptor)) {
-		auto op = std::make_unique<InsertReferenceOperation>(owner, newTarget, *this, index, descriptor);
+		auto op = std::make_unique<InsertReferenceOperation>(owner, const_cast<RefTarget*>(newTarget), *this, index, descriptor);
 		op->redo();
 		int index = op->insertionIndex();
 		pushUndoRecord(owner, std::move(op));
 		return index;
 	}
 	else {
-		return addReference(owner, descriptor, newTarget, index);
+		return addReference(owner, descriptor, const_cast<RefTarget*>(newTarget), index);
 	}
 }
 

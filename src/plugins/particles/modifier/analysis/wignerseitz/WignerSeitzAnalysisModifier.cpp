@@ -21,8 +21,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/util/NearestNeighborFinder.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/dataset/data/AttributeDataObject.h>
@@ -51,21 +50,21 @@ WignerSeitzAnalysisModifier::WignerSeitzAnalysisModifier(DataSet* dataset) : Ref
 ******************************************************************************/
 Future<AsynchronousModifier::ComputeEnginePtr> WignerSeitzAnalysisModifier::createEngineWithReference(TimePoint time, ModifierApplication* modApp, PipelineFlowState input, const PipelineFlowState& referenceState, TimeInterval validityInterval)
 {
-	ParticleInputHelper pih(dataset(), input);
-
 	// Get the current particle positions.
-	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
+	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 
 	// Get the reference particle position.
-	ParticleProperty* refPosProperty = ParticleProperty::findInState(referenceState, ParticleProperty::PositionProperty);
-	if(!refPosProperty)
-		throwException(tr("Reference configuration does not contain particle positions."));
+	const ParticlesObject* refParticles = referenceState.getObject<ParticlesObject>();
+	if(!refParticles)
+		throwException(tr("Reference configuration does not contain any particles."));
+	const PropertyObject* refPosProperty = refParticles->expectProperty(ParticlesObject::PositionProperty);
 
 	// Get simulation cells.
-	SimulationCellObject* inputCell = pih.expectSimulationCell();
-	SimulationCellObject* refCell = referenceState.findObjectOfType<SimulationCellObject>();
+	const SimulationCellObject* inputCell = input.expectObject<SimulationCellObject>();
+	const SimulationCellObject* refCell = referenceState.getObject<SimulationCellObject>();
 	if(!refCell)
-		throwException(tr("Reference configuration does not contain simulation cell info."));
+		throwException(tr("Reference configuration has no simulation cell."));
 
 	// Validate simulation cells.
 	if(inputCell->is2D())
@@ -80,9 +79,9 @@ Future<AsynchronousModifier::ComputeEnginePtr> WignerSeitzAnalysisModifier::crea
 	int ptypeMinId = std::numeric_limits<int>::max();
 	int ptypeMaxId = std::numeric_limits<int>::lowest();
 	if(perTypeOccupancy()) {
-		ParticleProperty* ptypeProp = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::TypeProperty);
+		const PropertyObject* ptypeProp = particles->expectProperty(ParticlesObject::TypeProperty);
 		// Determine value range of particle type IDs.
-		for(ElementType* pt : ptypeProp->elementTypes()) {
+		for(const ElementType* pt : ptypeProp->elementTypes()) {
 			if(pt->id() < ptypeMinId) ptypeMinId = pt->id();
 			if(pt->id() > ptypeMaxId) ptypeMaxId = pt->id();
 		}
@@ -93,12 +92,8 @@ Future<AsynchronousModifier::ComputeEnginePtr> WignerSeitzAnalysisModifier::crea
 	ConstPropertyPtr referenceTypeProperty;
 	ConstPropertyPtr referenceIdentifierProperty;
 	if(outputCurrentConfig()) {
-		if(ParticleProperty* prop =  ParticleProperty::findInState(referenceState, ParticleProperty::TypeProperty))
-			referenceTypeProperty = prop->storage();
-		
-		if(ParticleProperty* idProp = ParticleProperty::findInState(referenceState, ParticleProperty::IdentifierProperty)) {
-			referenceIdentifierProperty = idProp->storage();
-		}
+		referenceTypeProperty = refParticles->getPropertyStorage(ParticlesObject::TypeProperty);
+		referenceIdentifierProperty = refParticles->getPropertyStorage(ParticlesObject::IdentifierProperty);
 	}
 
 	// Create compute engine instance. Pass all relevant modifier parameters and the input data to the engine.
@@ -252,50 +247,39 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 ******************************************************************************/
 PipelineFlowState WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	PipelineFlowState output;
-	if(!siteTypes()) {
-		// Replace complete pipeline state with the reference configuration (except global attributes).
-		for(DataObject* obj : referenceState().objects()) {
-			if(!dynamic_object_cast<AttributeDataObject>(obj))
-				output.addObject(obj);
-		}
-		// Keep global attribute from the input pipeline state.
-		for(DataObject* obj : input.objects()) {
-			if(dynamic_object_cast<AttributeDataObject>(obj))
-				output.addObject(obj);
-		}
-		output.setStateValidity(input.stateValidity());
-	}
-	else {
-		// Keep current particle configuration.
-		output = input;
-	}
-
-	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
-
-	if(occupancyNumbers()->size() != poh.outputParticleCount())
-		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
-
-	ParticleProperty* posProperty = ParticleProperty::findInState(output, ParticleProperty::PositionProperty);
-	if(!posProperty)
+	const ParticlesObject* refParticles = referenceState().getObject<ParticlesObject>();
+	if(!refParticles)
 		modApp->throwException(tr("This modifier cannot be evaluated, because the reference configuration does not contain any particles."));
-	OVITO_ASSERT(poh.outputParticleCount() == posProperty->size());
 
-	poh.outputProperty<ParticleProperty>(occupancyNumbers());
+	PipelineFlowState output = input;
+	if(!siteTypes()) {
+		// Replace complete particles set with the reference configuration.
+		output.replaceObject(output.expectObject<ParticlesObject>(), refParticles);
+		// Also replace simulation cell with reference cell.
+		if(const SimulationCellObject* cell = output.getObject<SimulationCellObject>())
+			output.replaceObject(cell, referenceState().getObject<SimulationCellObject>());
+	}
+
+	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+	if(occupancyNumbers()->size() != particles->elementCount())
+		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
+
+	particles->createProperty(occupancyNumbers());
 	if(siteTypes()) {
-		PropertyObject* outProp = poh.outputProperty<ParticleProperty>(siteTypes());
+		PropertyObject* outProp = particles->createProperty(siteTypes());
 		// Transfer particle type list from reference type property to output site type property.
-		if(ParticleProperty* inProp =  ParticleProperty::findInState(referenceState(), ParticleProperty::TypeProperty)) {
+		if(const PropertyObject* inProp = refParticles->getProperty(ParticlesObject::TypeProperty)) {
 			outProp->setElementTypes(inProp->elementTypes());
 		}
 	}
 	if(siteIndices())
-		poh.outputProperty<ParticleProperty>(siteIndices());
+		particles->createProperty(siteIndices());
 	if(siteIdentifiers())
-		poh.outputProperty<ParticleProperty>(siteIdentifiers());
+		particles->createProperty(siteIdentifiers());
 
-	poh.outputAttribute(QStringLiteral("WignerSeitz.vacancy_count"), QVariant::fromValue(vacancyCount()));
-	poh.outputAttribute(QStringLiteral("WignerSeitz.interstitial_count"), QVariant::fromValue(interstitialCount()));
+	output.addAttribute(QStringLiteral("WignerSeitz.vacancy_count"), QVariant::fromValue(vacancyCount()), modApp);
+	output.addAttribute(QStringLiteral("WignerSeitz.interstitial_count"), QVariant::fromValue(interstitialCount()), modApp);
 
 	output.setStatus(PipelineStatus(PipelineStatus::Success, tr("Found %1 vacancies and %2 interstitials").arg(vacancyCount()).arg(interstitialCount())));
 	return output;

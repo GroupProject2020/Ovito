@@ -20,7 +20,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleType.h>
 #include <core/utilities/units/UnitsManager.h>
 #include "ParticleType.h"
 
@@ -93,7 +92,7 @@ std::array<ParticleType::PredefinedTypeInfo, ParticleType::NUMBER_OF_PREDEFINED_
 /******************************************************************************
 * Returns the default color for a particle type ID.
 ******************************************************************************/
-Color ParticleType::getDefaultParticleColorFromId(ParticleProperty::Type typeClass, int particleTypeId)
+Color ParticleType::getDefaultParticleColorFromId(ParticlesObject::Type typeClass, int particleTypeId)
 {
 	// Assign initial standard color to new particle types.
 	static const Color defaultTypeColors[] = {
@@ -113,7 +112,7 @@ Color ParticleType::getDefaultParticleColorFromId(ParticleProperty::Type typeCla
 /******************************************************************************
 * Returns the default color for a particle type name.
 ******************************************************************************/
-Color ParticleType::getDefaultParticleColor(ParticleProperty::Type typeClass, const QString& particleTypeName, int particleTypeId, bool userDefaults)
+Color ParticleType::getDefaultParticleColor(ParticlesObject::Type typeClass, const QString& particleTypeName, int particleTypeId, bool userDefaults)
 {
 	if(userDefaults) {
 		QSettings settings;
@@ -124,14 +123,14 @@ Color ParticleType::getDefaultParticleColor(ParticleProperty::Type typeClass, co
 			return v.value<Color>();
 	}
 
-	if(typeClass == ParticleProperty::StructureTypeProperty) {
+	if(typeClass == ParticlesObject::StructureTypeProperty) {
 		for(const PredefinedTypeInfo& predefType : _predefinedStructureTypes) {
 			if(std::get<0>(predefType) == particleTypeName)
 				return std::get<1>(predefType);
 		}
 		return Color(1,1,1);
 	}
-	else if(typeClass == ParticleProperty::TypeProperty) {
+	else if(typeClass == ParticlesObject::TypeProperty) {
 		for(const PredefinedTypeInfo& predefType : _predefinedParticleTypes) {
 			if(std::get<0>(predefType) == particleTypeName)
 				return std::get<1>(predefType);
@@ -148,7 +147,7 @@ Color ParticleType::getDefaultParticleColor(ParticleProperty::Type typeClass, co
 /******************************************************************************
 * Changes the default color for a particle type name.
 ******************************************************************************/
-void ParticleType::setDefaultParticleColor(ParticleProperty::Type typeClass, const QString& particleTypeName, const Color& color)
+void ParticleType::setDefaultParticleColor(ParticlesObject::Type typeClass, const QString& particleTypeName, const Color& color)
 {
 	QSettings settings;
 	settings.beginGroup("particles/defaults/color");
@@ -163,7 +162,7 @@ void ParticleType::setDefaultParticleColor(ParticleProperty::Type typeClass, con
 /******************************************************************************
 * Returns the default radius for a particle type name.
 ******************************************************************************/
-FloatType ParticleType::getDefaultParticleRadius(ParticleProperty::Type typeClass, const QString& particleTypeName, int particleTypeId, bool userDefaults)
+FloatType ParticleType::getDefaultParticleRadius(ParticlesObject::Type typeClass, const QString& particleTypeName, int particleTypeId, bool userDefaults)
 {
 	if(userDefaults) {
 		QSettings settings;
@@ -174,7 +173,7 @@ FloatType ParticleType::getDefaultParticleRadius(ParticleProperty::Type typeClas
 			return v.value<FloatType>();
 	}
 
-	if(typeClass == ParticleProperty::TypeProperty) {
+	if(typeClass == ParticlesObject::TypeProperty) {
 		for(const PredefinedTypeInfo& predefType : _predefinedParticleTypes) {
 			if(std::get<0>(predefType) == particleTypeName)
 				return std::get<2>(predefType);
@@ -192,7 +191,7 @@ FloatType ParticleType::getDefaultParticleRadius(ParticleProperty::Type typeClas
 /******************************************************************************
 * Changes the default radius for a particle type name.
 ******************************************************************************/
-void ParticleType::setDefaultParticleRadius(ParticleProperty::Type typeClass, const QString& particleTypeName, FloatType radius)
+void ParticleType::setDefaultParticleRadius(ParticlesObject::Type typeClass, const QString& particleTypeName, FloatType radius)
 {
 	QSettings settings;
 	settings.beginGroup("particles/defaults/radius");

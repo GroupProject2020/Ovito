@@ -23,12 +23,12 @@
 
 
 #include <plugins/stdmod/StdMod.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
 #include <core/dataset/pipeline/DelegatingModifier.h>
 #include <core/dataset/animation/controller/Controller.h>
 #include <core/dataset/animation/AnimationSettings.h>
 
 namespace Ovito { namespace StdMod {
-
 
 /**
  * \brief Base class for AssignColorModifier delegates that operate on different kinds of data.
@@ -44,16 +44,27 @@ public:
 	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs) override;
 
 	/// \brief Returns the class of properties that can serve as input for the modifier.
-	virtual const PropertyClass& propertyClass() const = 0;
+	virtual const PropertyContainerClass& containerClass() const = 0;
 	
+	/// \brief Returns a reference to the property container being modified by this delegate.
+	PropertyContainerReference subject() const {
+		return PropertyContainerReference(&containerClass(), containerPath());
+	}
+
 protected:
 
 	/// Abstract class constructor.
 	using ModifierDelegate::ModifierDelegate;
 	
-	/// \brief Creates the property object that will receive the assigned color.
-	virtual PropertyObject* createOutputColorProperty(TimePoint time, InputHelper& ih, OutputHelper& oh, bool initializeWithExistingColors) = 0;
+	/// \brief returns the ID of the standard property that will receive the assigned colors.
+	virtual int outputColorPropertyId() const = 0;
+
+private:
+
+	/// Specifies the property container object the modifier should operate on.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, containerPath, setContainerPath);
 };
+
 
 /**
  * \brief This modifier assigns a uniform color to all selected elements.
@@ -73,7 +84,7 @@ public:
 		/// Return the metaclass of delegates for this modifier type. 
 		virtual const ModifierDelegate::OOMetaClass& delegateMetaclass() const override { return AssignColorModifierDelegate::OOClass(); }
 	};
-	
+
 	OVITO_CLASS_META(AssignColorModifier, AssignColorModifierClass)
 	Q_CLASSINFO("DisplayName", "Assign color");
 	Q_CLASSINFO("ModifierCategory", "Coloring");

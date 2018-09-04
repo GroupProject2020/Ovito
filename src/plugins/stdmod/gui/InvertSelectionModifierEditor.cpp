@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/stdmod/gui/StdModGui.h>
-#include <plugins/stdobj/gui/widgets/PropertyClassParameterUI.h>
+#include <plugins/stdobj/gui/widgets/PropertyContainerParameterUI.h>
 #include "InvertSelectionModifierEditor.h"
 
 namespace Ovito { namespace StdMod {
@@ -33,13 +33,13 @@ SET_OVITO_OBJECT_EDITOR(InvertSelectionModifier, InvertSelectionModifierEditor);
 ******************************************************************************/
 void InvertSelectionModifierEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
-	QWidget* rollout = createRollout(tr("Operate on"), rolloutParams);
+	QWidget* rollout = createRollout(tr("Invert selection"), rolloutParams, "particles.modifiers.invert_selection.html");
 
 	QVBoxLayout* layout = new QVBoxLayout(rollout);
 	layout->setContentsMargins(8,8,8,8);
 	layout->setSpacing(4);
 
-	PropertyClassParameterUI* pclassUI = new PropertyClassParameterUI(this, PROPERTY_FIELD(GenericPropertyModifier::propertyClass));
+	PropertyContainerParameterUI* pclassUI = new PropertyContainerParameterUI(this, PROPERTY_FIELD(GenericPropertyModifier::subject));
 	layout->addWidget(new QLabel(tr("Operate on:")));
 	layout->addWidget(pclassUI->comboBox());
 }

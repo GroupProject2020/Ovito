@@ -241,10 +241,15 @@ public:
 		return _pointer;
 	}
 
-protected:
+	/// Returns the RefTarget pointer.
+	inline RefTarget* getInternal() const {
+		return _pointer;
+	}
 
 	/// Replaces the reference target.
-	void set(RefMaker* owner, const PropertyFieldDescriptor& descriptor, RefTarget* newTarget);
+	void setInternal(RefMaker* owner, const PropertyFieldDescriptor& descriptor, const RefTarget* newTarget);
+
+protected:
 
 	/// Replaces the target stored in the reference field.
 	void swapReference(RefMaker* owner, const PropertyFieldDescriptor& descriptor, OORef<RefTarget>& inactiveTarget, bool generateNotificationEvents = true);
@@ -297,8 +302,8 @@ public:
 	/// The old reference target will be released and the new reference target
 	/// will be bound to this reference field.
 	/// This operator automatically handles undo so the value change can be undone.
-	void set(RefMaker* owner, const PropertyFieldDescriptor& descriptor, RefTargetType* newPointer) {
-		SingleReferenceFieldBase::set(owner, descriptor, newPointer);
+	void set(RefMaker* owner, const PropertyFieldDescriptor& descriptor, const RefTargetType* newPointer) {
+		SingleReferenceFieldBase::setInternal(owner, descriptor, newPointer);
 	}
 
 	/// Overloaded arrow operator; implements pointer semantics.
@@ -364,14 +369,24 @@ public:
 
 	/// Removes the element at index position i.
 	void remove(RefMaker* owner, const PropertyFieldDescriptor& descriptor, int i);	
-	
+
+	/// Replaces a reference in the vector.
+	/// This method removes the reference at index i and inserts the new reference at the same index.
+	void setInternal(RefMaker* owner, const PropertyFieldDescriptor& descriptor, int i, const RefTarget* object) {
+		OVITO_ASSERT(i >= 0 && i < size());
+		if(targets()[i] != object) {
+			remove(owner, descriptor, i);
+			insertInternal(owner, descriptor, object, i);
+		}
+	}
+
 protected:
 
 	/// The actual pointer list to the reference targets.
 	QVector<RefTarget*> pointers;
 
 	/// Adds a reference target to the internal list.
-	int insertInternal(RefMaker* owner, const PropertyFieldDescriptor& descriptor, RefTarget* newTarget, int index = -1);
+	int insertInternal(RefMaker* owner, const PropertyFieldDescriptor& descriptor, const RefTarget* newTarget, int index = -1);
 
 	/// Removes a target from the list reference field.
 	OORef<RefTarget> removeReference(RefMaker* owner, const PropertyFieldDescriptor& descriptor, int index, bool generateNotificationEvents = true);
@@ -449,6 +464,7 @@ public:
 	using target_type = RefTargetType;
 	
 	typedef QVector<RefTargetType*> RefTargetVector;
+	typedef QVector<const RefTargetType*> ConstRefTargetVector;
 	typedef typename RefTargetVector::ConstIterator ConstIterator;
 	typedef typename RefTargetVector::const_iterator const_iterator;
 	typedef typename RefTargetVector::const_pointer const_pointer;
@@ -471,20 +487,17 @@ public:
 	RefTargetType* operator[](int i) const { return static_object_cast<RefTargetType>(pointers[i]); }
 
 	/// Inserts a reference at the end of the vector.
-	void push_back(RefMaker* owner, const PropertyFieldDescriptor& descriptor, RefTargetType* object) { insertInternal(owner, descriptor, object); }
+	void push_back(RefMaker* owner, const PropertyFieldDescriptor& descriptor, const RefTargetType* object) { insertInternal(owner, descriptor, object); }
 
 	/// Inserts a reference at index position i in the vector.
 	/// If i is 0, the value is prepended to the vector.
 	/// If i is size() or negative, the value is appended to the vector.
-	void insert(RefMaker* owner, const PropertyFieldDescriptor& descriptor, int i, RefTargetType* object) { insertInternal(owner, descriptor, object, i); }
+	void insert(RefMaker* owner, const PropertyFieldDescriptor& descriptor, int i, const RefTargetType* object) { insertInternal(owner, descriptor, object, i); }
 
 	/// Replaces a reference in the vector.
 	/// This method removes the reference at index i and inserts the new reference at the same index.
-	void set(RefMaker* owner, const PropertyFieldDescriptor& descriptor, int i, RefTargetType* object) {
-		if(targets()[i] != object) {
-			remove(owner, descriptor, i);
-			insert(owner, descriptor, i, object);
-		}
+	void set(RefMaker* owner, const PropertyFieldDescriptor& descriptor, int i, const RefTargetType* object) {
+		setInternal(owner, descriptor, i, object);
 	}
 	
 	/// Returns an STL-style iterator pointing to the first item in the vector.
@@ -534,6 +547,11 @@ public:
 			push_back(owner, descriptor, other[i]);
 		for(int i = this->size() - 1; i >= other.size(); i--)
 			remove(owner, descriptor, i);
+	}
+
+	/// Assigns the given list of targets to this vector reference field.
+	void set(RefMaker* owner, const PropertyFieldDescriptor& descriptor, const ConstRefTargetVector& other) {
+		set(owner, descriptor, reinterpret_cast<const RefTargetVector&>(other));
 	}
 
 	/// Returns the stored references as a QVector.

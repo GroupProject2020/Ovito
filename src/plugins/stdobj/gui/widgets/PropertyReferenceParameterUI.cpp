@@ -33,12 +33,12 @@ IMPLEMENT_OVITO_CLASS(PropertyReferenceParameterUI);
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-PropertyReferenceParameterUI::PropertyReferenceParameterUI(QObject* parentEditor, const char* propertyName, const PropertyClass* propertyClass, bool showComponents, bool inputProperty) :
+PropertyReferenceParameterUI::PropertyReferenceParameterUI(QObject* parentEditor, const char* propertyName, PropertyContainerClassPtr containerClass, bool showComponents, bool inputProperty) :
 	PropertyParameterUI(parentEditor, propertyName), 
-	_comboBox(new PropertySelectionComboBox(propertyClass)), 
+	_comboBox(new PropertySelectionComboBox(containerClass)), 
 	_showComponents(showComponents), 
 	_inputProperty(inputProperty),
-	_propertyClass(propertyClass)
+	_containerRef(containerClass)
 {
 	connect(comboBox(), static_cast<void (QComboBox::*)(const QString&)>(&QComboBox::activated), this, &PropertyReferenceParameterUI::updatePropertyValue);
 
@@ -49,12 +49,12 @@ PropertyReferenceParameterUI::PropertyReferenceParameterUI(QObject* parentEditor
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-PropertyReferenceParameterUI::PropertyReferenceParameterUI(QObject* parentEditor, const PropertyFieldDescriptor& propField, const PropertyClass* propertyClass, bool showComponents, bool inputProperty) :
+PropertyReferenceParameterUI::PropertyReferenceParameterUI(QObject* parentEditor, const PropertyFieldDescriptor& propField, PropertyContainerClassPtr containerClass, bool showComponents, bool inputProperty) :
 	PropertyParameterUI(parentEditor, propField), 
-	_comboBox(new PropertySelectionComboBox(propertyClass)), 
+	_comboBox(new PropertySelectionComboBox(containerClass)), 
 	_showComponents(showComponents), 
 	_inputProperty(inputProperty),
-	_propertyClass(propertyClass)
+	_containerRef(containerClass)
 {
 	connect(comboBox(), static_cast<void (QComboBox::*)(const QString&)>(&QComboBox::activated), this, &PropertyReferenceParameterUI::updatePropertyValue);
 
@@ -125,7 +125,7 @@ void PropertyReferenceParameterUI::updateUI()
 {
 	PropertyParameterUI::updateUI();	
 	
-	if(comboBox() && editObject() && propertyClass()) {
+	if(comboBox() && editObject() && containerRef()) {
 
 		PropertyReference pref = getPropertyReference();
 
@@ -140,28 +140,29 @@ void PropertyReferenceParameterUI::updateUI()
 				}
 			}
 
-			if(_comboBox->count() == 0)
-				_comboBox->addItem(PropertyReference(), tr("<No properties available>"));
-
 			// Select the right item in the list box.
 			int selIndex = _comboBox->propertyIndex(pref);
 			if(selIndex < 0) {
-				if(!pref.isNull() && pref.propertyClass() == propertyClass()) {
+				if(!pref.isNull() && pref.containerClass() == containerRef().dataClass()) {
 					// Add a place-holder item if the selected property does not exist anymore.
 					_comboBox->addItem(pref, tr("%1 (no longer available)").arg(pref.name()));
 				}
-				else {
+				else if(_comboBox->count() != 0) {
 					// Add a place-holder item if the selected property does not exist anymore.
 					_comboBox->addItem({}, tr("<Please select a property>"));
 				}
 				selIndex = _comboBox->count() - 1;
 			}
+			if(_comboBox->count() == 0) {
+				_comboBox->addItem(PropertyReference(), tr("<No available properties>"));
+				selIndex = 0;
+			}
 			_comboBox->setCurrentIndex(selIndex);
 		}
 		else {
 			if(_comboBox->count() == 0) {
-				for(int typeId : propertyClass()->standardPropertyIds())
-					_comboBox->addItem(PropertyReference(propertyClass(), typeId));
+				for(int typeId : containerRef().dataClass()->standardPropertyIds())
+					_comboBox->addItem(PropertyReference(containerRef().dataClass(), typeId));
 			}
 			_comboBox->setCurrentProperty(pref);
 		}
@@ -175,26 +176,24 @@ void PropertyReferenceParameterUI::updateUI()
 ******************************************************************************/
 void PropertyReferenceParameterUI::addItemsToComboBox(const PipelineFlowState& state)
 {
-	OVITO_ASSERT(propertyClass() != nullptr);
-	
-	for(DataObject* o : state.objects()) {
-		PropertyObject* property = dynamic_object_cast<PropertyObject>(o);
-		if(!property) continue;
-		if(!propertyClass()->isMember(property)) continue;
-		if(_propertyFilter && !_propertyFilter(property)) continue;
-		
-		// Properties with a non-numeric data type cannot be used as source properties.
-		if(property->dataType() != PropertyStorage::Int && property->dataType() != PropertyStorage::Int64 && property->dataType() != PropertyStorage::Float)
-			continue;
+	OVITO_ASSERT(containerRef());
+	if(const PropertyContainer* container = state.getLeafObject(containerRef())) {
+		for(const PropertyObject* property : container->properties()) {
+			if(_propertyFilter && !_propertyFilter(property)) continue;
+			
+			// Properties with a non-numeric data type cannot be used as source properties.
+			if(property->dataType() != PropertyStorage::Int && property->dataType() != PropertyStorage::Int64 && property->dataType() != PropertyStorage::Float)
+				continue;
 
-		if(property->componentNames().empty() || !_showComponents) {
-			// Scalar property:
-			_comboBox->addItem(property);
-		}
-		else {
-			// Vector property:
-			for(int vectorComponent = 0; vectorComponent < (int)property->componentCount(); vectorComponent++) {
-				_comboBox->addItem(property, vectorComponent);
+			if(property->componentNames().empty() || !_showComponents) {
+				// Scalar property:
+				_comboBox->addItem(property);
+			}
+			else {
+				// Vector property:
+				for(int vectorComponent = 0; vectorComponent < (int)property->componentCount(); vectorComponent++) {
+					_comboBox->addItem(property, vectorComponent);
+				}
 			}
 		}
 	}

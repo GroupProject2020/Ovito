@@ -23,8 +23,9 @@
 
 
 #include <plugins/stdmod/StdMod.h>
-#include <core/dataset/pipeline/DelegatingModifier.h>
 #include <plugins/stdobj/properties/PropertyReference.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
+#include <core/dataset/pipeline/DelegatingModifier.h>
 #include <core/dataset/animation/controller/Controller.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include "ColormapsData.h"
@@ -256,16 +257,26 @@ public:
 	/// \brief Applies the modifier operation to the data in a pipeline flow state.
 	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs) override;
 
-	/// \brief Returns the class of properties that can serve as input for the color coding.
-	virtual const PropertyClass& propertyClass() const = 0;
+	/// \brief Returns the class of property containers that can serve as input for the color coding.
+	virtual const PropertyContainerClass& containerClass() const = 0;
+
+	/// \brief Returns a reference to the property container being modified by this delegate.
+	PropertyContainerReference subject() const {
+		return PropertyContainerReference(&containerClass(), containerPath());
+	}
 	
 protected:
 
 	/// Abstract class constructor.
 	using ModifierDelegate::ModifierDelegate;
 	
-	/// \brief Creates the property object that will receive the computed colors.
-	virtual PropertyObject* createOutputColorProperty(TimePoint time, InputHelper& ih, OutputHelper& oh, bool initializeWithExistingColors) = 0;
+	/// \brief returns the ID of the standard property that will receive the computed colors.
+	virtual int outputColorPropertyId() const = 0;
+
+private:
+
+	/// Specifies the property container object the modifier should operate on.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, containerPath, setContainerPath);
 };
 
 /**
@@ -320,6 +331,11 @@ public:
 	/// determined over the entire animation sequence.
 	bool adjustRangeGlobal(TaskManager& taskManager);
 
+	/// Returns the current delegate of this modifier.
+	ColorCodingModifierDelegate* delegate() const { 
+		return static_object_cast<ColorCodingModifierDelegate>(DelegatingModifier::delegate());
+	}
+
 public Q_SLOTS:
 
 	/// Sets the start and end value to the minimum and maximum value of the selected input property.
@@ -330,12 +346,6 @@ protected:
 
 	/// This method is called by the system after the modifier has been inserted into a data pipeline.
 	virtual void initializeModifier(ModifierApplication* modApp) override;
-
-	/// Saves the class' contents to the given stream.
-	virtual void saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData) override;
-
-	/// Loads the class' contents from the given stream.
-	virtual void loadFromStream(ObjectLoadStream& stream) override;
 
 	/// Determines the range of values in the input data for the selected property.
 	bool determinePropertyValueRange(const PipelineFlowState& state, FloatType& min, FloatType& max);

@@ -120,8 +120,7 @@ void ViewportMenu::onShowViewTypeMenu()
 	// Find all camera nodes in the scene.
 	_viewport->dataset()->sceneRoot()->visitObjectNodes([this, viewNodeGroup](PipelineSceneNode* node) -> bool {
 		const PipelineFlowState& state = node->evaluatePipelinePreliminary(false);
-		OORef<AbstractCameraObject> camera = state.convertObject<AbstractCameraObject>(_viewport->dataset()->animationSettings()->time());
-		if(camera) {
+		if(state.containsObject<AbstractCameraObject>()) {
 			// Add a menu entry for this camera node.
 			QAction* action = viewNodeGroup->addAction(node->nodeName());
 			action->setCheckable(true);

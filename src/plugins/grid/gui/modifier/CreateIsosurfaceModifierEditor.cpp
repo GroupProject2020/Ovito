@@ -21,6 +21,7 @@
 
 #include <gui/GUI.h>
 #include <plugins/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
+#include <plugins/grid/objects/VoxelGrid.h>
 #include <gui/properties/BooleanParameterUI.h>
 #include <gui/properties/IntegerParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
@@ -52,7 +53,7 @@ void CreateIsosurfaceModifierEditor::createUI(const RolloutInsertionParameters& 
 	layout2->setColumnStretch(1, 1);
 	layout1->addLayout(layout2);
 
-	PropertyReferenceParameterUI* fieldQuantityUI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(CreateIsosurfaceModifier::sourceProperty), &VoxelProperty::OOClass());
+	PropertyReferenceParameterUI* fieldQuantityUI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(CreateIsosurfaceModifier::sourceProperty), &VoxelGrid::OOClass());
 	layout2->addWidget(new QLabel(tr("Field quantity:")), 0, 0);
 	layout2->addWidget(fieldQuantityUI->comboBox(), 0, 1);
 

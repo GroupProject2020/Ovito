@@ -62,7 +62,7 @@ protected:
 	virtual void loadFromStream(ObjectLoadStream& stream) override;
 
 	/// Creates a copy of this object.
-	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) override;
+	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) const override;
 
 private:
 

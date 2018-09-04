@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,11 +24,9 @@
 
 #include <plugins/stdmod/gui/StdModGui.h>
 #include <gui/properties/ModifierPropertiesEditor.h>
-#include <plugins/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
+#include <plugins/stdobj/gui/widgets/DataSeriesPlotWidget.h>
 #include <core/utilities/DeferredMethodInvocation.h>
 
-class QwtPlot;
-class QwtPlotSpectroCurve;
 class QwtPlotZoneItem;
 
 namespace Ovito { namespace StdMod {
@@ -51,30 +49,21 @@ protected:
 	/// Creates the user interface controls for the editor.
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
 
-	/// This method is called when a reference target changes.
-	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
-
 protected Q_SLOTS:
 
-	/// Replots the scatter plot computed by the modifier.
+	/// Replots the scatter plot.
 	void plotScatterPlot();
-
-	/// This is called when the user has clicked the "Save Data" button.
-	void onSaveData();
 
 private:
 
 	/// The graph widget to display the plot.
-	QwtPlot* _plot;
-
-	/// The plot item for the points.
-    QwtPlotSpectroCurve* _plotCurve = nullptr;
+	DataSeriesPlotWidget* _plotWidget;
 
 	/// Marks the range of selected points in the X direction.
-	QwtPlotZoneItem* _selectionRangeX = nullptr;
+	QwtPlotZoneItem* _selectionRangeIndicatorX;
 
 	/// Marks the range of selected points in the Y direction.
-	QwtPlotZoneItem* _selectionRangeY = nullptr;
+	QwtPlotZoneItem* _selectionRangeIndicatorY;
 
 	/// For deferred invocation of the plot repaint function.
 	DeferredMethodInvocation<ScatterPlotModifierEditor, &ScatterPlotModifierEditor::plotScatterPlot> plotLater;

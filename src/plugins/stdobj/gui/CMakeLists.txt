@@ -22,10 +22,11 @@
 SET(SourceFiles 
 	camera/CameraObjectEditor.cpp
 	properties/PropertyInspectionApplet.cpp
+	properties/PropertyObjectEditor.cpp
 	simcell/SimulationCellObjectEditor.cpp
 	simcell/SimulationCellVisEditor.cpp
 	series/SeriesInspectionApplet.cpp
-	widgets/PropertyClassParameterUI.cpp
+	widgets/PropertyContainerParameterUI.cpp
 	widgets/PropertyReferenceParameterUI.cpp
 	widgets/PropertySelectionComboBox.cpp
 	widgets/DataSeriesPlotWidget.cpp

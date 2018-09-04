@@ -20,13 +20,14 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <plugins/crystalanalysis/util/DelaunayTessellation.h>
 #include <plugins/crystalanalysis/util/ManifoldConstructionHelper.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
+#include <core/dataset/DataSet.h>
+#include <core/utilities/units/UnitsManager.h>
 #include "ConstructSurfaceModifier.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
@@ -59,7 +60,7 @@ ConstructSurfaceModifier::ConstructSurfaceModifier(DataSet* dataset) : Asynchron
 ******************************************************************************/
 bool ConstructSurfaceModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<ParticleProperty>() != nullptr;
+	return input.containsObject<ParticlesObject>();
 }
 
 /******************************************************************************
@@ -69,18 +70,18 @@ bool ConstructSurfaceModifier::OOMetaClass::isApplicableTo(const PipelineFlowSta
 Future<AsynchronousModifier::ComputeEnginePtr> ConstructSurfaceModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get modifier inputs.
-	ParticleInputHelper ph(dataset(), input);
-	ParticleProperty* posProperty = ph.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
-	ParticleProperty* selProperty = nullptr;
+	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
+	ConstPropertyPtr selProperty;
 	if(onlySelectedParticles())
-		selProperty = ph.expectStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty);
-	SimulationCellObject* simCell = ph.expectSimulationCell();
+		selProperty = particles->expectProperty(ParticlesObject::SelectionProperty)->storage();
+	const SimulationCellObject* simCell = input.expectObject<SimulationCellObject>();
 	if(simCell->is2D())
 		throwException(tr("The construct surface mesh modifier does not support 2d simulation cells."));
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	return std::make_shared<ConstructSurfaceEngine>(posProperty->storage(),
-			selProperty ? selProperty->storage() : nullptr,
+			std::move(selProperty),
 			simCell->data(), probeSphereRadius(), smoothingLevel());
 }
 
@@ -176,18 +177,16 @@ PipelineFlowState ConstructSurfaceModifier::ConstructSurfaceEngine::emitResults(
 	ConstructSurfaceModifier* modifier = static_object_cast<ConstructSurfaceModifier>(modApp->modifier());
 
 	PipelineFlowState output = input;
-	OutputHelper oh(modApp->dataset(), output, modApp);
 
 	// Create the output data object.
-	OORef<SurfaceMesh> meshObj(new SurfaceMesh(modApp->dataset()));
+	SurfaceMesh* meshObj = output.createObject<SurfaceMesh>(modApp);
 	meshObj->setStorage(mesh());
 	meshObj->setIsCompletelySolid(isCompletelySolid());
-	meshObj->setDomain(input.findObjectOfType<SimulationCellObject>());
+	meshObj->setDomain(input.getObject<SimulationCellObject>());
 	meshObj->addVisElement(modifier->surfaceMeshVis());
-	oh.outputObject(meshObj);
 	
-	oh.outputAttribute(QStringLiteral("ConstructSurfaceMesh.surface_area"), QVariant::fromValue(surfaceArea()));
-	oh.outputAttribute(QStringLiteral("ConstructSurfaceMesh.solid_volume"), QVariant::fromValue(solidVolume()));
+	output.addAttribute(QStringLiteral("ConstructSurfaceMesh.surface_area"), QVariant::fromValue(surfaceArea()), modApp);
+	output.addAttribute(QStringLiteral("ConstructSurfaceMesh.solid_volume"), QVariant::fromValue(solidVolume()), modApp);
 
 	output.setStatus(PipelineStatus(PipelineStatus::Success, tr("Surface area: %1\nSolid volume: %2\nTotal cell volume: %3\nSolid volume fraction: %4\nSurface area per solid volume: %5\nSurface area per total volume: %6")
 			.arg(surfaceArea()).arg(solidVolume()).arg(totalVolume())

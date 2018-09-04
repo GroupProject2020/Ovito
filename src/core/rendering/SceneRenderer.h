@@ -198,7 +198,7 @@ public:
 	}
 
 	/// When picking mode is active, this registers an object being rendered.
-	virtual quint32 beginPickObject(PipelineSceneNode* objNode, ObjectPickInfo* pickInfo = nullptr) { return 0; }
+	virtual quint32 beginPickObject(const PipelineSceneNode* objNode, ObjectPickInfo* pickInfo = nullptr) { return 0; }
 
 	/// Call this when rendering of a pickable object is finished.
 	virtual void endPickObject() {}
@@ -255,7 +255,7 @@ protected:
 private:
 
 	/// Renders a data object and all its sub-objects.
-	void renderDataObject(DataObject* dataObj, PipelineSceneNode* pipeline, const PipelineFlowState& state, std::vector<DataObject*>& objectStack);
+	void renderDataObject(const DataObject* dataObj, const PipelineSceneNode* pipeline, const PipelineFlowState& state, std::vector<const DataObject*>& objectStack);
 
 	/// The data set being rendered.
 	DataSet* _renderDataset = nullptr;

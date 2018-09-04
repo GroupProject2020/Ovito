@@ -48,12 +48,12 @@ public:
 
 	/// Puts the given pipeline state into the cache for later retrieval. 
 	/// The cache may decide not to cache the state, in which case the method returns false.
-	bool insert(PipelineFlowState state, RefTarget* ownerObject);
+	bool insert(PipelineFlowState state, const RefTarget* ownerObject);
 
 	/// Puts the given pipeline state into the cache when it comes available. 
 	/// Depending on the given state validity interval, the cache may decide not to cache the state, 
 	/// in which case the method returns false.
-	bool insert(Future<PipelineFlowState>& stateFuture, const TimeInterval& validityInterval, RefTarget* ownerObject);
+	bool insert(Future<PipelineFlowState>& stateFuture, const TimeInterval& validityInterval, const RefTarget* ownerObject);
 
 	/// Marks the contents of the cache as outdated and throws away the stored data.
 	///

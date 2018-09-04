@@ -67,7 +67,7 @@ public:
 	/// \note If this CloneHelper instance has already been used to create a copy of the
 	///       input object \a obj, then the existing clone of this object is returned.
 	template<class T>
-	OORef<T> cloneObject(T* obj, bool deepCopy) {
+	OORef<T> cloneObject(const T* obj, bool deepCopy) {
 		OORef<RefTarget> p(cloneObjectImpl(obj, deepCopy));
 		OVITO_ASSERT_MSG(!p || p->getOOClass().isDerivedFrom(T::OOClass()), "CloneHelper::cloneObject", qPrintable("The clone method of class " + obj->getOOClass().name() + " did not return an assignable instance of the class " + T::OOClass().name() + "."));
 		return static_object_cast<T>(p);
@@ -100,18 +100,18 @@ public:
 	/// This method can be used in implementations of the RefTarget::clone() method
 	/// to copy/transfer references to sub-objects for deep copies as well as shallow copies.
 	template<class T>
-	OORef<T> copyReference(T* obj, bool deepCopy) {
-		if(!deepCopy) return obj;
+	OORef<T> copyReference(const T* obj, bool deepCopy) {
+		if(!deepCopy) return const_cast<T*>(obj);
 		return cloneObject(obj, true);
 	}
 
 private:
 
 	/// Untyped version of the clone function.
-	OORef<RefTarget> cloneObjectImpl(RefTarget* obj, bool deepCopy);
+	OORef<RefTarget> cloneObjectImpl(const RefTarget* obj, bool deepCopy);
 
 	/// The table of clones created by this helper object.
-	std::map<RefMaker*, OORef<RefTarget>> _cloneTable;
+	std::map<const RefMaker*, OORef<RefTarget>> _cloneTable;
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -145,14 +145,15 @@ void PipelineListModel::refreshList()
 				
 				items.push_back(new PipelineListItem(nullptr, PipelineListItem::DataSourceHeader));
 
-				// Create a list item for the data object.
+				// Create a list item for the data source.
 				PipelineListItem* item = new PipelineListItem(pipelineObject, PipelineListItem::Object);
 				items.push_back(item);
 				if(defaultObjectToSelect == nullptr)
 					defaultObjectToSelect = pipelineObject;
 
-				// Create list items for the object's editable sub-objects.
-				createListItemsForSubobjects(pipelineObject, items, item);
+				// Create list items for the source's editable data objects.
+				for(DataObject* dataObj : pipelineObject->getSourceDataObjects())
+					createListItemsForSubobjects(dataObj, items, item);
 
 				// Done.
 				break;
@@ -195,33 +196,16 @@ void PipelineListModel::refreshList()
 * Create the pipeline editor entries for the subjects of the given 
 * object (and their subobjects).
 ******************************************************************************/
-void PipelineListModel::createListItemsForSubobjects(RefTarget* object, QList<OORef<PipelineListItem>>& items, PipelineListItem* parentItem)
+void PipelineListModel::createListItemsForSubobjects(const DataObject* dataObj, QList<OORef<PipelineListItem>>& items, PipelineListItem* parentItem)
 {
+	if(dataObj->showInPipelineEditor())
+		items.push_back(parentItem = new PipelineListItem(const_cast<DataObject*>(dataObj), PipelineListItem::SubObject, parentItem));
+
 	// Recursively visit the sub-objects of the object.
-	for(const PropertyFieldDescriptor* field : object->getOOMetaClass().propertyFields()) {
-		if(field->isReferenceField() && !field->isWeakReference() && field->targetClass()->isDerivedFrom(DataObject::OOClass()) && !field->flags().testFlag(PROPERTY_FIELD_NO_SUB_ANIM)) {
-			if(!field->isVector()) {
-				RefTarget* target = object->getReferenceField(*field);
-				if(DataObject* subObject = static_object_cast<DataObject>(target)) {
-					PipelineListItem* newParentItem = parentItem;
-					if(subObject->showInPipelineEditor())
-						items.push_back(newParentItem = new PipelineListItem(subObject, PipelineListItem::SubObject, parentItem));
-					createListItemsForSubobjects(subObject, items, newParentItem);
-				}
-			}
-			else {
-				const QVector<RefTarget*>& list = object->getVectorReferenceField(*field);
-				for(RefTarget* target : list) {
-					if(DataObject* subObject = static_object_cast<DataObject>(target)) {
-						PipelineListItem* newParentItem = parentItem;
-						if(subObject->showInPipelineEditor())
-							items.push_back(newParentItem = new PipelineListItem(subObject, PipelineListItem::SubObject, parentItem));
-						createListItemsForSubobjects(subObject, items, newParentItem);
-					}
-				}
-			}
-		}
-	}
+	dataObj->visitSubObjects([&](const DataObject* subObject) {
+		createListItemsForSubobjects(subObject, items, parentItem);
+		return false;
+	});
 }
 
 /******************************************************************************

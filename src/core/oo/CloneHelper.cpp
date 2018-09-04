@@ -34,7 +34,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
 *    deepCopy - Controls whether sub-objects referenced by this RefTarget are copied too.
 * Returns the copy of the source object.
 ******************************************************************************/
-OORef<RefTarget> CloneHelper::cloneObjectImpl(RefTarget* obj, bool deepCopy)
+OORef<RefTarget> CloneHelper::cloneObjectImpl(const RefTarget* obj, bool deepCopy)
 {
 	if(obj == nullptr) return nullptr;
 	OVITO_CHECK_OBJECT_POINTER(obj);

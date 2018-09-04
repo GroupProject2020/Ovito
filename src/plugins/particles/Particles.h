@@ -73,10 +73,8 @@ namespace Ovito {
 		using namespace Ovito::Mesh;
 		using namespace Ovito::Grid;
 
-		class ParticleProperty;
 		class ParticleType;
 		class ParticlesObject;
-		class BondProperty;
 		class BondType;
 		class BondsObject;
 		class ParticlesVis;

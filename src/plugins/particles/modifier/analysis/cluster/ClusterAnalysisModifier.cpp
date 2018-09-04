@@ -20,12 +20,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/BondsObject.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/particles/objects/ParticleBondMap.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
-#include <core/dataset/pipeline/ModifierApplication.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
+#include <core/dataset/pipeline/ModifierApplication.h>
+#include <core/utilities/units/UnitsManager.h>
 #include "ClusterAnalysisModifier.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
@@ -57,7 +57,7 @@ ClusterAnalysisModifier::ClusterAnalysisModifier(DataSet* dataset) : Asynchronou
 ******************************************************************************/
 bool ClusterAnalysisModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<ParticleProperty>() != nullptr;
+	return input.containsObject<ParticlesObject>();
 }
 
 /******************************************************************************
@@ -66,23 +66,23 @@ bool ClusterAnalysisModifier::OOMetaClass::isApplicableTo(const PipelineFlowStat
 Future<AsynchronousModifier::ComputeEnginePtr> ClusterAnalysisModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get the current particle positions.
-	ParticleInputHelper pih(dataset(), input);
-	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
+	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 
 	// Get simulation cell.
-	SimulationCellObject* inputCell = pih.expectSimulationCell();
+	const SimulationCellObject* inputCell = input.expectObject<SimulationCellObject>();
 
 	// Get particle selection.
 	ConstPropertyPtr selectionProperty;
 	if(onlySelectedParticles())
-		selectionProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty)->storage();
+		selectionProperty = particles->expectProperty(ParticlesObject::SelectionProperty)->storage();
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	if(neighborMode() == CutoffRange) {
-		return std::make_shared<CutoffClusterAnalysisEngine>(input, posProperty->storage(), inputCell->data(), sortBySize(), std::move(selectionProperty), cutoff());
+		return std::make_shared<CutoffClusterAnalysisEngine>(particles, posProperty->storage(), inputCell->data(), sortBySize(), std::move(selectionProperty), cutoff());
 	}
 	else if(neighborMode() == Bonding) {
-		return std::make_shared<BondClusterAnalysisEngine>(input, posProperty->storage(), inputCell->data(), sortBySize(), std::move(selectionProperty), pih.expectBonds()->storage());
+		return std::make_shared<BondClusterAnalysisEngine>(particles, posProperty->storage(), inputCell->data(), sortBySize(), std::move(selectionProperty), particles->expectBondsTopology()->storage());
 	}
 	else {
 		throwException(tr("Invalid cluster neighbor mode"));
@@ -259,18 +259,18 @@ void ClusterAnalysisModifier::BondClusterAnalysisEngine::doClustering()
 ******************************************************************************/
 PipelineFlowState ClusterAnalysisModifier::ClusterAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	if(_inputFingerprint.hasChanged(input))
+	ClusterAnalysisModifier* modifier = static_object_cast<ClusterAnalysisModifier>(modApp->modifier());
+	PipelineFlowState output = input;
+	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+
+	if(_inputFingerprint.hasChanged(particles))
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 
-	ClusterAnalysisModifier* modifier = static_object_cast<ClusterAnalysisModifier>(modApp->modifier());
-	
-	PipelineFlowState output = input;
-	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
-	poh.outputProperty<ParticleProperty>(particleClusters());
+	particles->createProperty(particleClusters());
 
-	poh.outputAttribute(QStringLiteral("ClusterAnalysis.cluster_count"), QVariant::fromValue(numClusters()));
+	output.addAttribute(QStringLiteral("ClusterAnalysis.cluster_count"), QVariant::fromValue(numClusters()), modApp);
 	if(modifier->sortBySize())
-		poh.outputAttribute(QStringLiteral("ClusterAnalysis.largest_size"), QVariant::fromValue(largestClusterSize()));
+		output.addAttribute(QStringLiteral("ClusterAnalysis.largest_size"), QVariant::fromValue(largestClusterSize()), modApp);
 
 	output.setStatus(PipelineStatus(PipelineStatus::Success, tr("Found %n cluster(s)", "", numClusters())));
 	return output;

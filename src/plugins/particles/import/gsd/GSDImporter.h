@@ -63,7 +63,7 @@ public:
 	}
 
 	/// Returns the title of this object.
-	virtual QString objectTitle() override { return tr("GSD"); }
+	virtual QString objectTitle() const override { return tr("GSD"); }
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
 	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {
@@ -91,7 +91,7 @@ private:
 		virtual FrameDataPtr loadFile(QFile& file) override;
 
 		/// Reads the values of a particle property from the GSD file.
-		PropertyStorage* readOptionalParticleProperty(GSDFile& gsd, const char* chunkName, uint64_t frameNumber, uint32_t numParticles, ParticleProperty::Type propertyType, const std::shared_ptr<ParticleFrameData>& frameData);
+		PropertyStorage* readOptionalParticleProperty(GSDFile& gsd, const char* chunkName, uint64_t frameNumber, uint32_t numParticles, ParticlesObject::Type propertyType, const std::shared_ptr<ParticleFrameData>& frameData);
 	};
 
 	/// The format-specific task object that is responsible for scanning the input file for animation frames. 

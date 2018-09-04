@@ -20,22 +20,18 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/BondsObject.h>
 #include <plugins/particles/objects/BondsVis.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/BondType.h>
 #include <plugins/particles/objects/ParticlesVis.h>
 #include <plugins/particles/objects/ParticleType.h>
 #include <plugins/particles/objects/ParticlesObject.h>
-#include <plugins/particles/objects/BondProperty.h>
-#include <plugins/particles/objects/BondType.h>
-#include <plugins/grid/objects/VoxelProperty.h>
 #include <plugins/grid/objects/VoxelGrid.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <plugins/stdobj/simcell/SimulationCellVis.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
 #include <core/app/Application.h>
 #include <core/dataset/io/FileSource.h>
-#include <core/dataset/pipeline/PipelineOutputHelper.h>
 #include "ParticleFrameData.h"
 #include "ParticleImporter.h"
 
@@ -94,13 +90,13 @@ void ParticleFrameData::TypeList::sortTypesById()
 ******************************************************************************/
 void ParticleFrameData::generateBondPeriodicImageProperty()
 {
-	PropertyPtr posProperty = findStandardParticleProperty(ParticleProperty::PositionProperty);
+	PropertyPtr posProperty = findStandardParticleProperty(ParticlesObject::PositionProperty);
 	if(!posProperty) return;
 	
-	PropertyPtr bondTopologyProperty = findStandardBondProperty(BondProperty::TopologyProperty);
+	PropertyPtr bondTopologyProperty = findStandardBondProperty(BondsObject::TopologyProperty);
 	if(!bondTopologyProperty) return;
 		
-	PropertyPtr bondPeriodicImageProperty = BondProperty::createStandardStorage(bondTopologyProperty->size(), BondProperty::PeriodicImageProperty, true);
+	PropertyPtr bondPeriodicImageProperty = BondsObject::OOClass().createStandardStorage(bondTopologyProperty->size(), BondsObject::PeriodicImageProperty, true);
 	addBondProperty(bondPeriodicImageProperty);
 	
 	if(!simulationCell().pbcFlags()[0] && !simulationCell().pbcFlags()[1] && !simulationCell().pbcFlags()[2])
@@ -123,16 +119,18 @@ void ParticleFrameData::generateBondPeriodicImageProperty()
 * This function is called by the system from the main thread after the
 * asynchronous loading task has finished.
 ******************************************************************************/
-void ParticleFrameData::handOver(PipelineOutputHelper& poh, const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource)
+PipelineFlowState ParticleFrameData::handOver(const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource)
 {
+	PipelineFlowState output;
+
 	// Hand over simulation cell.
-	OORef<SimulationCellObject> cell = existing.findObjectOfType<SimulationCellObject>();
+	SimulationCellObject* cell = const_cast<SimulationCellObject*>(existing.getObject<SimulationCellObject>());
 	if(!cell) {
-		cell = new SimulationCellObject(poh.dataset(), simulationCell());
+		cell = output.createObject<SimulationCellObject>(fileSource, simulationCell());
 
 		// Create the vis element for the simulation cell.
 		if(SimulationCellVis* cellVis = dynamic_object_cast<SimulationCellVis>(cell->visElement())) {
-			if(Application::instance()->guiMode())
+			if(!Application::instance()->scriptMode())
 				cellVis->loadUserDefaults();
 
 			// Choose an appropriate line width depending on the cell's size.
@@ -148,15 +146,37 @@ void ParticleFrameData::handOver(PipelineOutputHelper& poh, const PipelineFlowSt
 		// This gives the user the option to change the pbc flags without them
 		// being overwritten when a new frame from a simulation sequence is loaded.
 		cell->setData(simulationCell(), isNewFile);
+		output.addObject(cell);
 	}
-	poh.outputObject(cell);
 
 	if(!_particleProperties.empty()) {
 	
 		// Hand over particles.
-		ParticlesObject* existingParticles = existing.findObjectOfType<ParticlesObject>();
-		OORef<ParticlesObject> particles = new ParticlesObject(poh.dataset());
-		poh.outputObject(particles);
+		const ParticlesObject* existingParticles = existing.getObject<ParticlesObject>();
+		ParticlesObject* particles = output.createObject<ParticlesObject>(fileSource);
+		if(!existingParticles) {
+			particles->setVisElement(new ParticlesVis(fileSource->dataset()));
+			if(!Application::instance()->scriptMode())
+				particles->visElement()->loadUserDefaults();
+		}
+		else {
+			particles->setVisElements(existingParticles->visElements());
+		}
+
+		// Auto-adjust particle display radius.
+		if(isNewFile) {
+			if(ParticlesVis* particleVis = particles->visElement<ParticlesVis>()) {
+				FloatType cellDiameter = (
+						simulationCell().matrix().column(0) +
+						simulationCell().matrix().column(1) +
+						simulationCell().matrix().column(2)).length();
+				// Limit particle radius to a fraction of the cell diameter. 
+				// This is to avoid extremely large particles when the length scale of the simulation is <<1.
+				cellDiameter /= 2;
+				if(particleVis->defaultParticleRadius() > cellDiameter && cellDiameter != 0)
+					particleVis->setDefaultParticleRadius(cellDiameter);
+			}
+		}
 
 		// Transfer particle properties.
 		for(auto& property : _particleProperties) {
@@ -164,7 +184,7 @@ void ParticleFrameData::handOver(PipelineOutputHelper& poh, const PipelineFlowSt
 			// Look for existing property object.
 			OORef<PropertyObject> propertyObj;
 			if(existingParticles) {
-				for(PropertyObject* po : existingParticles->properties()) {
+				for(const PropertyObject* po : existingParticles->properties()) {
 					if(po->type() == property->type() && po->name() == property->name()) {
 						propertyObj = po;
 						break;
@@ -174,25 +194,10 @@ void ParticleFrameData::handOver(PipelineOutputHelper& poh, const PipelineFlowSt
 
 			if(propertyObj) {
 				propertyObj->setStorage(std::move(property));
+				particles->addProperty(propertyObj);
 			}
 			else {
-				propertyObj = ParticleProperty::createFromStorage(poh.dataset(), std::move(property));
-			}
-			particles->addProperty(propertyObj);
-
-			// Auto-adjust particle display radius.
-			if(isNewFile && propertyObj->type() == ParticleProperty::PositionProperty) {
-				if(ParticlesVis* particleVis = dynamic_object_cast<ParticlesVis>(propertyObj->visElement())) {
-					FloatType cellDiameter = (
-							simulationCell().matrix().column(0) +
-							simulationCell().matrix().column(1) +
-							simulationCell().matrix().column(2)).length();
-					// Limit particle radius to a fraction of the cell diameter. 
-					// This is to avoid extremely large particles when the length scale of the simulation is <<1.
-					cellDiameter /= 2;
-					if(particleVis->defaultParticleRadius() > cellDiameter && cellDiameter != 0)
-						particleVis->setDefaultParticleRadius(cellDiameter);
-				}
+				propertyObj = particles->createProperty(std::move(property));
 			}
 
 			// Transfer particle types.
@@ -200,12 +205,21 @@ void ParticleFrameData::handOver(PipelineOutputHelper& poh, const PipelineFlowSt
 			insertTypes(propertyObj, (typeList != _typeLists.end()) ? typeList->second.get() : nullptr, isNewFile, false);
 		}
 
-		// Hand over bonds.
+		// Hand over the bonds.
 		if(!_bondProperties.empty()) {
 
-			BondsObject* existingBonds = (existingParticles != nullptr) ? existingParticles->bonds() : nullptr;
-			OORef<BondsObject> bonds = new BondsObject(poh.dataset());
+			OORef<BondsObject> existingBonds = particles->bonds();
+			BondsObject* bonds = new BondsObject(fileSource->dataset());
 			particles->setBonds(bonds);
+			bonds->setDataSource(fileSource);
+			if(!existingBonds) {
+				bonds->setVisElement(new BondsVis(fileSource->dataset()));
+				if(!Application::instance()->scriptMode())
+					bonds->visElement()->loadUserDefaults();
+			}
+			else {
+				bonds->setVisElements(existingBonds->visElements());
+			}
 
 			// Transfer bonds.
 			for(auto& property : _bondProperties) {
@@ -213,7 +227,7 @@ void ParticleFrameData::handOver(PipelineOutputHelper& poh, const PipelineFlowSt
 				// Look for existing property object.
 				OORef<PropertyObject> propertyObj;
 				if(existingBonds) {
-					for(PropertyObject* po : existingBonds->properties()) {
+					for(const PropertyObject* po : existingBonds->properties()) {
 						if(po->type() == property->type() && po->name() == property->name()) {
 							propertyObj = po;
 							break;
@@ -223,11 +237,11 @@ void ParticleFrameData::handOver(PipelineOutputHelper& poh, const PipelineFlowSt
 
 				if(propertyObj) {
 					propertyObj->setStorage(std::move(property));
+					bonds->addProperty(propertyObj);
 				}
 				else {
-					propertyObj = BondProperty::createFromStorage(poh.dataset(), std::move(property));
+					propertyObj = bonds->createProperty(std::move(property));
 				}
-				bonds->addProperty(propertyObj);
 
 				// Transfer bond types.
 				auto typeList = _typeLists.find(propertyObj->storage().get());
@@ -239,18 +253,17 @@ void ParticleFrameData::handOver(PipelineOutputHelper& poh, const PipelineFlowSt
 	// Transfer voxel data.
 	if(voxelGridShape().empty() == false) {
 
-		VoxelGrid* existingVoxelGrid = existing.findObjectOfType<VoxelGrid>();
-		OORef<VoxelGrid> voxelGrid = new VoxelGrid(poh.dataset());
+		const VoxelGrid* existingVoxelGrid = existing.getObject<VoxelGrid>();
+		VoxelGrid* voxelGrid = output.createObject<VoxelGrid>(fileSource);
 		voxelGrid->setShape(voxelGridShape());
 		voxelGrid->setDomain(cell);
-		poh.outputObject(voxelGrid);
 		
 		for(auto& property : voxelProperties()) {
 
 			// Look for existing field quantity object.
 			OORef<PropertyObject> propertyObject;
 			if(existingVoxelGrid) {
-				for(PropertyObject* po : existingVoxelGrid->properties()) {
+				for(const PropertyObject* po : existingVoxelGrid->properties()) {
 					if(po->name() == property->name()) {
 						propertyObject = po;
 						break;
@@ -260,17 +273,17 @@ void ParticleFrameData::handOver(PipelineOutputHelper& poh, const PipelineFlowSt
 
 			if(propertyObject) {
 				propertyObject->setStorage(std::move(property));
+				voxelGrid->addProperty(propertyObject);
 			}
 			else {
-				propertyObject = static_object_cast<VoxelProperty>(VoxelProperty::OOClass().createFromStorage(poh.dataset(), std::move(property)));
+				propertyObject = voxelGrid->createProperty(std::move(property));
 			}
-			voxelGrid->addProperty(propertyObject);
 		}
 	}
 
 	// Hand over timestep information and other metadata as global attributes.
 	for(auto a = _attributes.cbegin(); a != _attributes.cend(); ++a) {
-		poh.outputAttribute(a.key(), a.value());
+		output.addAttribute(a.key(), a.value(), fileSource);
 	}
 
 	// If the file parser has detected that the input file contains additional frame data following the
@@ -281,6 +294,8 @@ void ParticleFrameData::handOver(PipelineOutputHelper& poh, const PipelineFlowSt
 			importer->setMultiTimestepFile(true);
 		}
 	}
+
+	return output;
 }
 
 /******************************************************************************
@@ -311,22 +326,22 @@ void ParticleFrameData::insertTypes(PropertyObject* typeProperty, TypeList* type
 					ptype->setId(item.id);
 					ptype->setName(item.name);
 					if(item.radius == 0)
-						static_object_cast<ParticleType>(ptype)->setRadius(ParticleType::getDefaultParticleRadius((ParticleProperty::Type)typeProperty->type(), ptype->nameOrId(), ptype->id()));
+						static_object_cast<ParticleType>(ptype)->setRadius(ParticleType::getDefaultParticleRadius((ParticlesObject::Type)typeProperty->type(), ptype->nameOrId(), ptype->id()));
 				}
 				else {
 					ptype = new BondType(typeProperty->dataset());
 					ptype->setId(item.id);
 					ptype->setName(item.name);
 					if(item.radius == 0)
-						static_object_cast<BondType>(ptype)->setRadius(BondType::getDefaultBondRadius((BondProperty::Type)typeProperty->type(), ptype->nameOrId(), ptype->id()));
+						static_object_cast<BondType>(ptype)->setRadius(BondType::getDefaultBondRadius((BondsObject::Type)typeProperty->type(), ptype->nameOrId(), ptype->id()));
 				}
 
 				if(item.color != Color(0,0,0))
 					ptype->setColor(item.color);
 				else if(!isBondProperty)
-					ptype->setColor(ParticleType::getDefaultParticleColor((ParticleProperty::Type)typeProperty->type(), ptype->nameOrId(), ptype->id()));
+					ptype->setColor(ParticleType::getDefaultParticleColor((ParticlesObject::Type)typeProperty->type(), ptype->nameOrId(), ptype->id()));
 				else
-					ptype->setColor(BondType::getDefaultBondColor((BondProperty::Type)typeProperty->type(), ptype->nameOrId(), ptype->id()));
+					ptype->setColor(BondType::getDefaultBondColor((BondsObject::Type)typeProperty->type(), ptype->nameOrId(), ptype->id()));
 
 				typeProperty->addElementType(ptype);
 			}
@@ -359,7 +374,7 @@ void ParticleFrameData::insertTypes(PropertyObject* typeProperty, TypeList* type
 ******************************************************************************/
 void ParticleFrameData::sortParticlesById()
 {
-	PropertyPtr ids = findStandardParticleProperty(ParticleProperty::IdentifierProperty);
+	PropertyPtr ids = findStandardParticleProperty(ParticlesObject::IdentifierProperty);
 	if(!ids) return;
 
 	// Determine new permutation of particles where they are sorted by ascending ID.
@@ -381,7 +396,7 @@ void ParticleFrameData::sortParticlesById()
 	}
 
 	// Update bond topology data to match new particle ordering.
-	if(PropertyPtr bondTopology = findStandardBondProperty(BondProperty::TopologyProperty)) {
+	if(PropertyPtr bondTopology = findStandardBondProperty(BondsObject::TopologyProperty)) {
 		auto particleIndex = bondTopology->dataInt64();
 		auto particleIndexEnd = particleIndex + bondTopology->size() * 2;
 		for(; particleIndex != particleIndexEnd; ++particleIndex) {

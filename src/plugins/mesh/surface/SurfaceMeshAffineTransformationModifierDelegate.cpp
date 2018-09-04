@@ -21,8 +21,6 @@
 
 #include <plugins/mesh/Mesh.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
-#include <plugins/stdobj/util/InputHelper.h>
-#include <plugins/stdobj/util/OutputHelper.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include "SurfaceMeshAffineTransformationModifierDelegate.h"
@@ -40,18 +38,15 @@ PipelineStatus SurfaceMeshAffineTransformationModifierDelegate::apply(Modifier* 
 	if(mod->selectionOnly())
 		return PipelineStatus::Success;
 
-	InputHelper ih(dataset(), input);
-	OutputHelper oh(dataset(), output, modApp);
-	
 	AffineTransformation tm;
 	if(mod->relativeMode())
 		tm = mod->transformationTM();
 	else
-		tm = mod->targetCell() * ih.expectSimulationCell()->cellMatrix().inverse();
+		tm = mod->targetCell() * input.expectObject<SimulationCellObject>()->cellMatrix().inverse();
 	
-	for(DataObject* obj : output.objects()) {
-		if(SurfaceMesh* existingSurface = dynamic_object_cast<SurfaceMesh>(obj)) {
-			SurfaceMesh* newSurface = oh.cloneIfNeeded(existingSurface);
+	for(const DataObject* obj : output.objects()) {
+		if(const SurfaceMesh* existingSurface = dynamic_object_cast<SurfaceMesh>(obj)) {
+			SurfaceMesh* newSurface = output.makeMutable(existingSurface);
 			// Apply transformation to the vertices of the surface mesh.
 			for(HalfEdgeMesh<>::Vertex* vertex : newSurface->modifiableStorage()->vertices())
 				vertex->pos() = tm * vertex->pos();

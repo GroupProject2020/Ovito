@@ -22,6 +22,7 @@
 #include <core/Core.h>
 #include <core/utilities/Exception.h>
 #include <core/app/Application.h>
+#include <core/oo/OvitoClass.h>
 #include "LoadStream.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(IO)
@@ -236,6 +237,15 @@ void LoadStream::checkErrorCondition()
 		else if(dataStream().status() == QDataStream::ReadCorruptData)
 			throw Exception(tr("File contains corrupted data."));
 	}
+}
+
+/******************************************************************************
+* Reads a reference to an OvitoObject derived class type from the input stream.
+******************************************************************************/
+LoadStream& operator>>(LoadStream& stream, OvitoClassPtr& clazz)
+{	
+	clazz = OvitoClass::deserializeRTTI(stream);
+	return stream;
 }
 
 OVITO_END_INLINE_NAMESPACE

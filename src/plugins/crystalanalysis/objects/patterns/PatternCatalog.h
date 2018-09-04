@@ -48,7 +48,7 @@ public:
 	void removePattern(int index) { _patterns.remove(this, PROPERTY_FIELD(patterns), index); }
 
 	/// Returns the title of this object.
-	virtual QString objectTitle() override { return tr("Pattern catalog"); }
+	virtual QString objectTitle() const override { return tr("Pattern catalog"); }
 
 	/// Returns the structure pattern with the given ID, or NULL if no such structure exists.
 	StructurePattern* structureById(int id) const {

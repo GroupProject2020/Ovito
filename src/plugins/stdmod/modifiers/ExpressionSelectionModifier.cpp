@@ -22,7 +22,7 @@
 #include <plugins/stdmod/StdMod.h>
 #include <plugins/stdobj/properties/PropertyExpressionEvaluator.h>
 #include <plugins/stdobj/properties/PropertyObject.h>
-#include <plugins/stdobj/util/OutputHelper.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/viewport/Viewport.h>
@@ -77,8 +77,8 @@ PipelineStatus ExpressionSelectionModifierDelegate::apply(Modifier* modifier, co
 	std::atomic_size_t nselected(0);
 
 	// Generate the output selection property.
-	OutputHelper oh(dataset(), output, modApp);
-	const PropertyPtr& selProperty = createOutputSelectionProperty(oh)->modifiableStorage();
+	PropertyContainer* propertyContainer = getOutputPropertyContainer(output);
+	const PropertyPtr& selProperty = propertyContainer->createProperty(PropertyStorage::GenericSelectionProperty)->modifiableStorage();
 
 	// Evaluate Boolean expression for every input data element.
 	evaluator->evaluate([&selProperty, &nselected](size_t elementIndex, size_t componentIndex, double value) {
@@ -97,7 +97,7 @@ PipelineStatus ExpressionSelectionModifierDelegate::apply(Modifier* modifier, co
 		output.intersectStateValidity(time);
 
 	// Report the total number of selected elements as a pipeline attribute.
-	oh.outputAttribute(QStringLiteral("SelectExpression.num_selected"), QVariant::fromValue(nselected.load()));
+	output.addAttribute(QStringLiteral("SelectExpression.num_selected"), QVariant::fromValue(nselected.load()), modApp);
 
 	// Update status display in the UI.
 	QString statusMessage = tr("%1 out of %2 elements selected (%3%)").arg(nselected.load()).arg(selProperty->size()).arg((FloatType)nselected.load() * 100 / std::max((size_t)1,selProperty->size()), 0, 'f', 1);

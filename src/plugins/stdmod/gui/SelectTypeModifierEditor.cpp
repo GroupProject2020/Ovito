@@ -21,7 +21,7 @@
 
 #include <plugins/stdmod/gui/StdModGui.h>
 #include <plugins/stdobj/gui/widgets/PropertySelectionComboBox.h>
-#include <plugins/stdobj/gui/widgets/PropertyClassParameterUI.h>
+#include <plugins/stdobj/gui/widgets/PropertyContainerParameterUI.h>
 #include <plugins/stdmod/modifiers/SelectTypeModifier.h>
 #include "SelectTypeModifierEditor.h"
 
@@ -42,7 +42,7 @@ void SelectTypeModifierEditor::createUI(const RolloutInsertionParameters& rollou
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(4);
 
-	PropertyClassParameterUI* pclassUI = new PropertyClassParameterUI(this, PROPERTY_FIELD(GenericPropertyModifier::propertyClass));
+	PropertyContainerParameterUI* pclassUI = new PropertyContainerParameterUI(this, PROPERTY_FIELD(GenericPropertyModifier::subject));
 	layout->addWidget(new QLabel(tr("Operate on:")));
 	layout->addWidget(pclassUI->comboBox());
 	
@@ -50,11 +50,15 @@ void SelectTypeModifierEditor::createUI(const RolloutInsertionParameters& rollou
 	layout->addWidget(new QLabel(tr("Property:")));
 	layout->addWidget(_sourcePropertyUI->comboBox());
 	connect(this, &PropertiesEditor::contentsChanged, this, [this](RefTarget* editObject) {
-		_sourcePropertyUI->setPropertyClass(editObject ? static_object_cast<GenericPropertyModifier>(editObject)->propertyClass() : nullptr);
+		SelectTypeModifier* modifier = static_object_cast<SelectTypeModifier>(editObject);
+		if(modifier)
+			_sourcePropertyUI->setContainerRef(modifier->subject());
+		else
+			_sourcePropertyUI->setContainerRef({});
 		updateElementTypeList();
 	});
-	// Show only type properties in the list that have some element types attached to them.
-	_sourcePropertyUI->setPropertyFilter([](PropertyObject* property) {
+	// Show only typed properties that have some element types attached to them.
+	_sourcePropertyUI->setPropertyFilter([](const PropertyObject* property) {
 		return property->elementTypes().empty() == false && property->componentCount() == 1 && property->dataType() == PropertyStorage::Int;
 	});
 
@@ -85,7 +89,7 @@ void SelectTypeModifierEditor::updateElementTypeList()
 	_elementTypesBox->clear();
 
 	SelectTypeModifier* mod = static_object_cast<SelectTypeModifier>(editObject());
-	if(!mod || !mod->propertyClass() || mod->sourceProperty().isNull()) {
+	if(!mod || !mod->subject() || mod->sourceProperty().isNull() || mod->sourceProperty().containerClass() != mod->subject().dataClass()) {
 		_elementTypesBox->setEnabled(false);
 	}
 	else {
@@ -94,30 +98,31 @@ void SelectTypeModifierEditor::updateElementTypeList()
 		// Populate types list based on the selected input property.
 		for(ModifierApplication* modApp : modifierApplications()) {
 			const PipelineFlowState& inputState = modApp->evaluateInputPreliminary();
-			PropertyObject* inputProperty = mod->sourceProperty().findInState(inputState);
-			if(inputProperty) {
-				for(ElementType* type : inputProperty->elementTypes()) {
-					if(!type) continue;					
-					
-					// Make sure we don't add two items with the same type ID.
-					bool duplicate = false;
-					for(int i = 0; i < _elementTypesBox->count(); i++) {
-						if(_elementTypesBox->item(i)->data(Qt::UserRole).toInt() == type->id()) {
-							duplicate = true;
-							break;
+			if(const PropertyContainer* container = inputState.getLeafObject(mod->subject())) {
+				if(const PropertyObject* inputProperty = mod->sourceProperty().findInContainer(container)) {
+					for(const ElementType* type : inputProperty->elementTypes()) {
+						if(!type) continue;					
+						
+						// Make sure we don't add two items with the same type ID.
+						bool duplicate = false;
+						for(int i = 0; i < _elementTypesBox->count(); i++) {
+							if(_elementTypesBox->item(i)->data(Qt::UserRole).toInt() == type->id()) {
+								duplicate = true;
+								break;
+							}
 						}
-					}
-					if(duplicate) continue;
+						if(duplicate) continue;
 
-					// Add a new list item for the element type.
-					QListWidgetItem* item = new QListWidgetItem(type->nameOrId(), _elementTypesBox);
-					item->setData(Qt::UserRole, type->id());
-					item->setData(Qt::DecorationRole, (QColor)type->color());
-					if(mod->selectedTypeIDs().contains(type->id()))
-						item->setCheckState(Qt::Checked);
-					else
-						item->setCheckState(Qt::Unchecked);
-					item->setFlags(Qt::ItemFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsUserCheckable | Qt::ItemNeverHasChildren));
+						// Add a new list item for the element type.
+						QListWidgetItem* item = new QListWidgetItem(type->nameOrId(), _elementTypesBox);
+						item->setData(Qt::UserRole, type->id());
+						item->setData(Qt::DecorationRole, (QColor)type->color());
+						if(mod->selectedTypeIDs().contains(type->id()))
+							item->setCheckState(Qt::Checked);
+						else
+							item->setCheckState(Qt::Unchecked);
+						item->setFlags(Qt::ItemFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsUserCheckable | Qt::ItemNeverHasChildren));
+					}
 				}
 			}
 		}

@@ -46,9 +46,12 @@ public:
 #else
     StrongDataObjectRef() noexcept {}
 #endif
+
+    /// Null constructor.
+    StrongDataObjectRef(std::nullptr_t) noexcept {}
     
     /// Initialization constructor.
-    StrongDataObjectRef(DataObject* p) noexcept : _ref(p) {
+    StrongDataObjectRef(const DataObject* p) noexcept : _ref(p) {
         if(_ref) _ref->_referringFlowStates++;
     }
 
@@ -61,7 +64,12 @@ public:
     StrongDataObjectRef(StrongDataObjectRef&& rhs) noexcept : _ref(std::move(rhs._ref)) {
         OVITO_ASSERT(!rhs._ref);
     }
-    
+
+    /// Move constructor from standard OORef.
+    StrongDataObjectRef(OORef<DataObject>&& rhs) noexcept : _ref(std::move(rhs)) {
+        if(_ref) _ref->_referringFlowStates++;
+    }
+
     /// Destructor.
     ~StrongDataObjectRef() {
         if(_ref) {
@@ -71,7 +79,7 @@ public:
     }
 
     /// Copy assignment operator.
-    StrongDataObjectRef& operator=(DataObject* rhs) {
+    StrongDataObjectRef& operator=(const DataObject* rhs) {
     	StrongDataObjectRef(rhs).swap(*this);
     	return *this;
     }
@@ -88,6 +96,12 @@ public:
     	return *this;
     }
     
+    /// Move assignment operator with standard OORef.
+    StrongDataObjectRef& operator=(OORef<DataObject>&& rhs) noexcept {
+    	StrongDataObjectRef(std::move(rhs)).swap(*this);
+    	return *this;
+    }
+
     void reset() {
     	StrongDataObjectRef().swap(*this);
     }

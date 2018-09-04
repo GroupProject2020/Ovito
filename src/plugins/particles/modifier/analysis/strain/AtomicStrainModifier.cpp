@@ -21,8 +21,6 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/util/CutoffNeighborFinder.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/DataSetContainer.h>
@@ -68,19 +66,19 @@ AtomicStrainModifier::AtomicStrainModifier(DataSet* dataset) : ReferenceConfigur
 ******************************************************************************/
 Future<AsynchronousModifier::ComputeEnginePtr> AtomicStrainModifier::createEngineWithReference(TimePoint time, ModifierApplication* modApp, PipelineFlowState input, const PipelineFlowState& referenceState, TimeInterval validityInterval)
 {
-	ParticleInputHelper pih(dataset(), input);
-
 	// Get the current particle positions.
-	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
+	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 
 	// Get the reference particle position.
-	ParticleProperty* refPosProperty = ParticleProperty::findInState(referenceState, ParticleProperty::PositionProperty);
-	if(!refPosProperty)
+	const ParticlesObject* refParticles = referenceState.getObject<ParticlesObject>();
+	if(!refParticles)
 		throwException(tr("Reference configuration does not contain particle positions."));
+	const PropertyObject* refPosProperty = refParticles->expectProperty(ParticlesObject::PositionProperty);
 
 	// Get the simulation cells.
-	SimulationCellObject* inputCell = pih.expectSimulationCell();
-	SimulationCellObject* refCell = referenceState.findObjectOfType<SimulationCellObject>();
+	const SimulationCellObject* inputCell = input.expectObject<SimulationCellObject>();
+	const SimulationCellObject* refCell = referenceState.getObject<SimulationCellObject>();
 	if(!refCell)
 		throwException(tr("Reference configuration does not contain simulation cell info."));
 
@@ -91,12 +89,12 @@ Future<AsynchronousModifier::ComputeEnginePtr> AtomicStrainModifier::createEngin
 		throwException(tr("Simulation cell is degenerate in the reference configuration."));
 
 	// Get particle identifiers.
-	ParticleProperty* identifierProperty = pih.inputStandardProperty<ParticleProperty>(ParticleProperty::IdentifierProperty);
-	ParticleProperty* refIdentifierProperty = ParticleProperty::findInState(referenceState, ParticleProperty::IdentifierProperty);
+	ConstPropertyPtr identifierProperty = particles->getPropertyStorage(ParticlesObject::IdentifierProperty);
+	ConstPropertyPtr refIdentifierProperty = refParticles->getPropertyStorage(ParticlesObject::IdentifierProperty);
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<AtomicStrainEngine>(validityInterval, input, posProperty->storage(), inputCell->data(), refPosProperty->storage(), refCell->data(),
-			identifierProperty ? identifierProperty->storage() : nullptr, refIdentifierProperty ? refIdentifierProperty->storage() : nullptr,
+	return std::make_shared<AtomicStrainEngine>(validityInterval, particles, posProperty->storage(), inputCell->data(), refPosProperty->storage(), refCell->data(),
+			std::move(identifierProperty), std::move(refIdentifierProperty),
 			cutoff(), affineMapping(), useMinimumImageConvention(), calculateDeformationGradients(), calculateStrainTensors(),
 			calculateNonaffineSquaredDisplacements(), calculateRotations(), calculateStretchTensors(), selectInvalidParticles());
 }
@@ -319,39 +317,40 @@ void AtomicStrainModifier::AtomicStrainEngine::computeStrain(size_t particleInde
 ******************************************************************************/
 PipelineFlowState AtomicStrainModifier::AtomicStrainEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	if(_inputFingerprint.hasChanged(input))
+	PipelineFlowState output = input;
+	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+
+	if(_inputFingerprint.hasChanged(particles))
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 
-	PipelineFlowState output = input;
-	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
 	OVITO_ASSERT(shearStrains());
-	OVITO_ASSERT(shearStrains()->size() == poh.outputParticleCount());
+	OVITO_ASSERT(shearStrains()->size() == particles->elementCount());
 
 	if(invalidParticles())
-		poh.outputProperty<ParticleProperty>(invalidParticles());
+		particles->createProperty(invalidParticles());
 
 	if(strainTensors())
-		poh.outputProperty<ParticleProperty>(strainTensors());
+		particles->createProperty(strainTensors());
 
 	if(deformationGradients())
-		poh.outputProperty<ParticleProperty>(deformationGradients());
+		particles->createProperty(deformationGradients());
 
 	if(nonaffineSquaredDisplacements())
-		poh.outputProperty<ParticleProperty>(nonaffineSquaredDisplacements());
+		particles->createProperty(nonaffineSquaredDisplacements());
 
 	if(volumetricStrains())
-		poh.outputProperty<ParticleProperty>(volumetricStrains());
+		particles->createProperty(volumetricStrains());
 
 	if(shearStrains())
-		poh.outputProperty<ParticleProperty>(shearStrains());
+		particles->createProperty(shearStrains());
 
 	if(rotations())
-		poh.outputProperty<ParticleProperty>(rotations());
+		particles->createProperty(rotations());
 
 	if(stretchTensors())
-		poh.outputProperty<ParticleProperty>(stretchTensors());
+		particles->createProperty(stretchTensors());
 
-	poh.outputAttribute(QStringLiteral("AtomicStrain.invalid_particle_count"), QVariant::fromValue(numInvalidParticles()));
+	output.addAttribute(QStringLiteral("AtomicStrain.invalid_particle_count"), QVariant::fromValue(numInvalidParticles()), modApp);
 
 	if(numInvalidParticles() != 0)
 		output.setStatus(PipelineStatus(PipelineStatus::Warning, tr("Could not compute local deformation for %1 particles because of too few neighbors. Increase cutoff radius to include more neighbors.").arg(numInvalidParticles())));

@@ -49,7 +49,7 @@ public:
 	Q_INVOKABLE SurfaceMesh(DataSet* dataset);
 
 	/// Returns the title of this object.
-	virtual QString objectTitle() override { return tr("Surface mesh"); }
+	virtual QString objectTitle() const override { return tr("Surface mesh"); }
 
 	/// Returns the data encapsulated by this object after making sure it is not shared with any other owners.
 	const SurfaceMeshPtr& modifiableStorage();

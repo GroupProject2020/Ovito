@@ -44,8 +44,6 @@ AnimationSettings::AnimationSettings(DataSet* dataset) : RefTarget(dataset),
 		_time(0),
 		_loopPlayback(true)
 {
-	// Call our own listener when the current animation time changes.
-	connect(this, &AnimationSettings::timeChanged, this, &AnimationSettings::onTimeChanged);
 }
 
 /******************************************************************************
@@ -54,7 +52,7 @@ AnimationSettings::AnimationSettings(DataSet* dataset) : RefTarget(dataset),
 void AnimationSettings::propertyChanged(const PropertyFieldDescriptor& field)
 {
 	if(field == PROPERTY_FIELD(time))
-		Q_EMIT timeChanged(time());
+		onTimeChanged();
 	else if(field == PROPERTY_FIELD(animationInterval))
 		Q_EMIT intervalChanged(animationInterval());
 	else if(field == PROPERTY_FIELD(ticksPerFrame))
@@ -86,7 +84,7 @@ void AnimationSettings::loadFromStream(ObjectLoadStream& stream)
 /******************************************************************************
 * Creates a copy of this object.
 ******************************************************************************/
-OORef<RefTarget> AnimationSettings::clone(bool deepCopy, CloneHelper& cloneHelper)
+OORef<RefTarget> AnimationSettings::clone(bool deepCopy, CloneHelper& cloneHelper) const
 {
 	// Let the base class create an instance of this class.
 	OORef<AnimationSettings> clone = static_object_cast<AnimationSettings>(RefTarget::clone(deepCopy, cloneHelper));
@@ -105,6 +103,7 @@ void AnimationSettings::onTimeChanged()
 	if(_isTimeChanging)
 		return;
 	_isTimeChanging = true;
+	Q_EMIT timeChanged(time());
 
 	// Wait until scene is complete, then generate a timeChangeComplete event.
 	dataset()->whenSceneReady().finally(executor(), [this]() {
@@ -196,7 +195,7 @@ void AnimationSettings::setAnimationPlayback(bool on)
 {
 	if(on) {
 		bool reverse = false;
-		if(Application::instance()->guiMode()) {
+		if(!Application::instance()->scriptMode()) {
 			reverse |= (QGuiApplication::keyboardModifiers() & Qt::ShiftModifier);
 		}
 		startAnimationPlayback(reverse ? -1 : 1);

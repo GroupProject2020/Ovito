@@ -20,8 +20,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <core/app/Application.h>
 #include <core/dataset/DataSet.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
@@ -58,7 +56,7 @@ CoordinationAnalysisModifier::CoordinationAnalysisModifier(DataSet* dataset) : A
 ******************************************************************************/
 bool CoordinationAnalysisModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<ParticleProperty>() != nullptr;
+	return input.containsObject<ParticlesObject>();
 }
 
 /******************************************************************************
@@ -67,11 +65,11 @@ bool CoordinationAnalysisModifier::OOMetaClass::isApplicableTo(const PipelineFlo
 Future<AsynchronousModifier::ComputeEnginePtr> CoordinationAnalysisModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	// Get the current positions.
-	ParticleInputHelper pih(dataset(), input);
-	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
+	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 
 	// Get simulation cell.
-	SimulationCellObject* inputCell = pih.expectSimulationCell();
+	const SimulationCellObject* inputCell = input.expectObject<SimulationCellObject>();
 
 	// The number of sampling intervals for the radial distribution function.
 	int rdfSampleCount = std::max(numberOfBins(), 4);
@@ -82,15 +80,15 @@ Future<AsynchronousModifier::ComputeEnginePtr> CoordinationAnalysisModifier::cre
 		throwException(tr("Invalid cutoff range value. Cutoff must be positive."));
 
 	// Get particle types if partial RDF calculation has been requested.
-	ParticleProperty* typeProperty = nullptr;
+	const PropertyObject* typeProperty = nullptr;
 	boost::container::flat_map<int,QString> uniqueTypeIds;
 	if(computePartialRDF()) {
-		typeProperty = ParticleProperty::findInState(input, ParticleProperty::TypeProperty);
+		typeProperty = particles->getProperty(ParticlesObject::TypeProperty);
 		if(!typeProperty)
-			throwException(tr("Partial RDF calculation requires the '%1' property.").arg(ParticleProperty::OOClass().standardPropertyName(ParticleProperty::TypeProperty)));
+			throwException(tr("Partial RDF calculation requires the '%1' property.").arg(ParticlesObject::OOClass().standardPropertyName(ParticlesObject::TypeProperty)));
 
 		// Build the set of unique particle type IDs.
-		for(ElementType* pt : typeProperty->elementTypes()) {
+		for(const ElementType* pt : typeProperty->elementTypes()) {
 			uniqueTypeIds.insert_or_assign(pt->id(), pt->name().isEmpty() ? QString::number(pt->id()) : pt->name());
 		}
 		if(uniqueTypeIds.empty())
@@ -98,7 +96,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CoordinationAnalysisModifier::cre
 	}
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<CoordinationAnalysisEngine>(input, posProperty->storage(), inputCell->data(), 
+	return std::make_shared<CoordinationAnalysisEngine>(particles, posProperty->storage(), inputCell->data(), 
 		cutoff(), rdfSampleCount, typeProperty ? typeProperty->storage() : nullptr, std::move(uniqueTypeIds));
 }
 
@@ -219,18 +217,18 @@ void CoordinationAnalysisModifier::CoordinationAnalysisEngine::perform()
 ******************************************************************************/
 PipelineFlowState CoordinationAnalysisModifier::CoordinationAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	if(_inputFingerprint.hasChanged(input))
+	PipelineFlowState output = input;
+	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+
+	if(_inputFingerprint.hasChanged(particles))
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 
-	PipelineFlowState output = input;
-	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
-
 	// Output coordination numbers as a new particle property.
-	OVITO_ASSERT(coordinationNumbers()->size() == poh.outputParticleCount());
-	poh.outputProperty<ParticleProperty>(coordinationNumbers());
+	OVITO_ASSERT(coordinationNumbers()->size() == particles->elementCount());
+	particles->createProperty(coordinationNumbers());
 
 	// Output RDF histogram(s).
-	DataSeriesObject* seriesObj = poh.outputDataSeries(QStringLiteral("coordination/rdf"), tr("Radial distribution function"), rdfY());
+	DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("coordination/rdf"), modApp, tr("Radial distribution function"), rdfY());
 	seriesObj->setIntervalStart(0);
 	seriesObj->setIntervalEnd(cutoff());
 	seriesObj->setAxisLabelX(tr("Pair separation distance"));

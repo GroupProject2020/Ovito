@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/BondsObject.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
 #include <plugins/mesh/surface/SurfaceMeshVis.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>

@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/gui/ParticlesGui.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/particles/export/OutputColumnMapping.h>
 #include <plugins/particles/export/FileColumnParticleExporter.h>
 #include <gui/properties/PropertiesEditor.h>

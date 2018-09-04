@@ -150,7 +150,7 @@ public:
 	virtual bool showInPipelineEditor() const override { return true; }
 
 	/// \brief Returns the title of this object.
-	virtual QString objectTitle() override { return tr("Simulation cell"); }
+	virtual QString objectTitle() const override { return tr("Simulation cell"); }
 
 	////////////////////////////// Support functions for the Python bindings //////////////////////////////
 

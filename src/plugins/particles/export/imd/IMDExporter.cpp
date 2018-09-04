@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/utilities/concurrent/Promise.h>
 #include "IMDExporter.h"
@@ -43,16 +43,15 @@ bool IMDExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
 	exportTask.setProgressText(tr("Writing file %1").arg(filePath));
 	
-	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
-	ParticleProperty* typeProperty = nullptr;
-	ParticleProperty* identifierProperty = nullptr;
-	ParticleProperty* velocityProperty = nullptr;
-	ParticleProperty* massProperty = nullptr;
+	const ParticlesObject* particles = state.expectObject<ParticlesObject>();
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
+	const PropertyObject* typeProperty = nullptr;
+	const PropertyObject* identifierProperty = nullptr;
+	const PropertyObject* velocityProperty = nullptr;
+	const PropertyObject* massProperty = nullptr;
 
 	// Get simulation cell info.
-	SimulationCellObject* simulationCell = state.findObjectOfType<SimulationCellObject>();
-	if(!simulationCell)
-		throwException(tr("No simulation cell available. Cannot write IMD file."));
+	const SimulationCellObject* simulationCell = state.expectObject<SimulationCellObject>();
 
 	const AffineTransformation& simCell = simulationCell->cellMatrix();
 	size_t atomsCount = posProperty->size();
@@ -62,25 +61,21 @@ bool IMDExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 	posProperty = nullptr;
 	bool exportIdentifiers = false;
 	for(const ParticlePropertyReference& pref : columnMapping()) {
-		if(pref.type() == ParticleProperty::PositionProperty) {
-			posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
-			if(!posProperty) throwException(tr("Cannot export particle positions, because they are not present in the dataset to be exported."));
+		if(pref.type() == ParticlesObject::PositionProperty) {
+			posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 		}
-		else if(pref.type() == ParticleProperty::TypeProperty) {
-			typeProperty = ParticleProperty::findInState(state, ParticleProperty::TypeProperty);
-			if(!typeProperty) throwException(tr("Cannot export particle types, because they are not present in the dataset to be exported."));
+		else if(pref.type() == ParticlesObject::TypeProperty) {
+			typeProperty = particles->expectProperty(ParticlesObject::TypeProperty);
 		}
-		else if(pref.type() == ParticleProperty::IdentifierProperty) {
-			identifierProperty = ParticleProperty::findInState(state, ParticleProperty::IdentifierProperty);
+		else if(pref.type() == ParticlesObject::IdentifierProperty) {
+			identifierProperty = particles->getProperty(ParticlesObject::IdentifierProperty);
 			exportIdentifiers = true;
 		}
-		else if(pref.type() == ParticleProperty::VelocityProperty) {
-			velocityProperty = ParticleProperty::findInState(state, ParticleProperty::VelocityProperty);
-			if(!velocityProperty) throwException(tr("Cannot export particle velocities, because they are not present in the dataset to be exported."));
+		else if(pref.type() == ParticlesObject::VelocityProperty) {
+			velocityProperty = particles->expectProperty(ParticlesObject::VelocityProperty);
 		}
-		else if(pref.type() == ParticleProperty::MassProperty) {
-			massProperty = ParticleProperty::findInState(state, ParticleProperty::MassProperty);
-			if(!massProperty) throwException(tr("Cannot export particle masses, because they are not present in the dataset to be exported."));
+		else if(pref.type() == ParticlesObject::MassProperty) {
+			massProperty = particles->expectProperty(ParticlesObject::MassProperty);
 		}
 		else filteredMapping.push_back(pref);
 	}
@@ -95,7 +90,7 @@ bool IMDExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 		}
 		else {
 			textStream() << "1 ";
-			colMapping.emplace_back(ParticleProperty::IdentifierProperty);
+			colMapping.emplace_back(ParticlesObject::IdentifierProperty);
 			columnNames.push_back("number");
 		}
 	}

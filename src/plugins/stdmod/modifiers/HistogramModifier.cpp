@@ -23,11 +23,8 @@
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <plugins/stdobj/properties/PropertyObject.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
 #include <plugins/stdobj/series/DataSeriesObject.h>
-#include <plugins/stdobj/series/DataSeriesProperty.h>
-#include <plugins/stdobj/util/InputHelper.h>
-#include <plugins/stdobj/util/OutputHelper.h>
-#include <core/app/PluginManager.h>
 #include <core/app/Application.h>
 #include <core/utilities/units/UnitsManager.h>
 #include "HistogramModifier.h"
@@ -46,7 +43,7 @@ DEFINE_PROPERTY_FIELD(HistogramModifier, fixYAxisRange);
 DEFINE_PROPERTY_FIELD(HistogramModifier, yAxisRangeStart);
 DEFINE_PROPERTY_FIELD(HistogramModifier, yAxisRangeEnd);
 DEFINE_PROPERTY_FIELD(HistogramModifier, sourceProperty);
-DEFINE_PROPERTY_FIELD(HistogramModifier, onlySelected);
+DEFINE_PROPERTY_FIELD(HistogramModifier, onlySelectedElements);
 SET_PROPERTY_FIELD_LABEL(HistogramModifier, numberOfBins, "Number of histogram bins");
 SET_PROPERTY_FIELD_LABEL(HistogramModifier, selectInRange, "Select value range");
 SET_PROPERTY_FIELD_LABEL(HistogramModifier, selectionRangeStart, "Selection range start");
@@ -58,7 +55,7 @@ SET_PROPERTY_FIELD_LABEL(HistogramModifier, fixYAxisRange, "Fix y-range");
 SET_PROPERTY_FIELD_LABEL(HistogramModifier, yAxisRangeStart, "Y-range start");
 SET_PROPERTY_FIELD_LABEL(HistogramModifier, yAxisRangeEnd, "Y-range end");
 SET_PROPERTY_FIELD_LABEL(HistogramModifier, sourceProperty, "Source property");
-SET_PROPERTY_FIELD_LABEL(HistogramModifier, onlySelected, "Use only selected elements");
+SET_PROPERTY_FIELD_LABEL(HistogramModifier, onlySelectedElements, "Use only selected elements");
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(HistogramModifier, numberOfBins, IntegerParameterUnit, 1, 100000);
 
 /******************************************************************************
@@ -75,11 +72,10 @@ HistogramModifier::HistogramModifier(DataSet* dataset) : GenericPropertyModifier
 	_fixYAxisRange(false), 
 	_yAxisRangeStart(0), 
 	_yAxisRangeEnd(0),
-	_onlySelected(false)
+	_onlySelectedElements(false)
 {
 	// Operate on particle properties by default.
-	setPropertyClass(static_cast<const PropertyClass*>(
-		PluginManager::instance().findClass(QStringLiteral("Particles"), QStringLiteral("ParticleProperty"))));	
+	setDefaultSubject(QStringLiteral("Particles"), QStringLiteral("ParticlesObject"));
 }
 
 /******************************************************************************
@@ -91,18 +87,16 @@ void HistogramModifier::initializeModifier(ModifierApplication* modApp)
 	GenericPropertyModifier::initializeModifier(modApp);
 
 	// Use the first available property from the input state as data source when the modifier is newly created.
-	if(sourceProperty().isNull() && propertyClass() && Application::instance()->guiMode()) {	
+	if(sourceProperty().isNull() && subject() && !Application::instance()->scriptMode()) {	
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
-		PropertyReference bestProperty;
-		for(DataObject* o : input.objects()) {
-			if(PropertyObject* property = dynamic_object_cast<PropertyObject>(o)) {
-				if(propertyClass()->isMember(property) && (property->dataType() == PropertyStorage::Int || property->dataType() == PropertyStorage::Float)) {
-					bestProperty = PropertyReference(property, (property->componentCount() > 1) ? 0 : -1);
-				}
+		if(const PropertyContainer* container = input.getLeafObject(subject())) {
+			PropertyReference bestProperty;
+			for(PropertyObject* property : container->properties()) {
+				bestProperty = PropertyReference(subject().dataClass(), property, (property->componentCount() > 1) ? 0 : -1);
 			}
-		}
-		if(!bestProperty.isNull()) {
-			setSourceProperty(bestProperty);
+			if(!bestProperty.isNull()) {
+				setSourceProperty(bestProperty);
+			}
 		}
 	}
 }
@@ -113,8 +107,8 @@ void HistogramModifier::initializeModifier(ModifierApplication* modApp)
 void HistogramModifier::propertyChanged(const PropertyFieldDescriptor& field)
 {
 	// Whenever the selected property class of this modifier changes, update the source property reference accordingly.
-	if(field == PROPERTY_FIELD(GenericPropertyModifier::propertyClass) && !isBeingLoaded() && !dataset()->undoStack().isUndoingOrRedoing()) {
-		setSourceProperty(sourceProperty().convertToPropertyClass(propertyClass()));
+	if(field == PROPERTY_FIELD(GenericPropertyModifier::subject) && !isBeingLoaded() && !dataset()->undoStack().isUndoingOrRedoing()) {
+		setSourceProperty(sourceProperty().convertToContainerClass(subject().dataClass()));
 	}
 	GenericPropertyModifier::propertyChanged(field);
 }
@@ -124,18 +118,21 @@ void HistogramModifier::propertyChanged(const PropertyFieldDescriptor& field)
 ******************************************************************************/
 PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	if(!propertyClass())
-		throwException(tr("No input property class selected."));
+	if(!subject())
+		throwException(tr("No data element type set."));
 	if(sourceProperty().isNull())
 		throwException(tr("No input property selected."));
 
 	// Check if the source property is the right kind of property.
-	if(sourceProperty().propertyClass() != propertyClass())
+	if(sourceProperty().containerClass() != subject().dataClass())
 		throwException(tr("Modifier was set to operate on '%1', but the selected input is a '%2' property.")
-			.arg(propertyClass()->pythonName()).arg(sourceProperty().propertyClass()->propertyClassDisplayName()));
+			.arg(subject().dataClass()->pythonName()).arg(sourceProperty().containerClass()->propertyClassDisplayName()));
 		
+	// Look up the property container object.
+	const PropertyContainer* container = input.expectLeafObject(subject());
+
 	// Get the input property.
-	PropertyObject* property = sourceProperty().findInState(input);
+	const PropertyObject* property = sourceProperty().findInContainer(container);
 	if(!property)
 		throwException(tr("The selected input property '%1' is not present.").arg(sourceProperty().name()));
 
@@ -146,18 +143,20 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 
 	// Get the input selection if filtering was enabled by the user.
 	ConstPropertyPtr inputSelection;
-	if(onlySelected()) {
-		inputSelection = InputHelper(dataset(), input).expectStandardProperty(*propertyClass(), PropertyStorage::GenericSelectionProperty)->storage();
+	if(onlySelectedElements()) {
+		inputSelection = container->expectProperty(PropertyStorage::GenericSelectionProperty)->storage();
 		OVITO_ASSERT(inputSelection->size() == property->size());
 	}
 
-	PipelineFlowState output = input;	
-	OutputHelper oh(dataset(), output, modApp);
+	PipelineFlowState output = input;
 	
 	// Create storage for output selection.
 	PropertyPtr outputSelection;
 	if(selectInRange()) {
-		outputSelection = oh.outputStandardProperty(*propertyClass(), PropertyStorage::GenericSelectionProperty, true)->modifiableStorage();
+		// First make sure we can safely modify the property container.
+		PropertyContainer* mutableContainer = output.expectMutableLeafObject(subject());
+		// Add the selection property to the output container.
+		outputSelection = mutableContainer->createProperty(PropertyStorage::GenericSelectionProperty)->modifiableStorage();
 	}
 
 	// Create selection property for output.
@@ -170,7 +169,7 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 	FloatType intervalEnd = xAxisRangeEnd();
 
 	// Allocate output data array.
-	auto histogram = std::make_shared<PropertyStorage>(std::max(1, numberOfBins()), PropertyStorage::Int64, 1, 0, tr("Count"), true, DataSeriesProperty::YProperty);
+	auto histogram = std::make_shared<PropertyStorage>(std::max(1, numberOfBins()), PropertyStorage::Int64, 1, 0, tr("Count"), true, DataSeriesObject::YProperty);
 	auto histogramData = histogram->dataInt64();
 
 	if(property->size() > 0) {
@@ -273,7 +272,7 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 	}
 
 	// Output a data series object with the histogram data.
-	DataSeriesObject* seriesObj = oh.outputDataSeries(QStringLiteral("histogram/") + sourceProperty().nameWithComponent(), sourceProperty().nameWithComponent(), std::move(histogram));
+	DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("histogram/") + sourceProperty().nameWithComponent(), modApp, sourceProperty().nameWithComponent(), std::move(histogram));
 	seriesObj->setAxisLabelX(sourceProperty().nameWithComponent());
 	seriesObj->setIntervalStart(intervalStart);
 	seriesObj->setIntervalEnd(intervalEnd);
@@ -282,8 +281,8 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 	if(outputSelection) {
 		statusMessage = tr("%1 %2 selected (%3%)")
 				.arg(numSelected)
-				.arg(propertyClass()->elementDescriptionName())
-				.arg((FloatType)numSelected * 100 / std::max(1,(int)outputSelection->size()), 0, 'f', 1);
+				.arg(container->getOOMetaClass().elementDescriptionName())
+				.arg((FloatType)numSelected * 100 / std::max((size_t)1,outputSelection->size()), 0, 'f', 1);
 	}
 	output.setStatus(PipelineStatus(PipelineStatus::Success, std::move(statusMessage)));
 	return output;

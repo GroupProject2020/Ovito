@@ -44,13 +44,13 @@ public:
 	/// \brief Constructor.
 	PropertyExpressionEvaluator() = default;
 
-	/// Specifies the expressions to be evaluated for each particle and creates the input variables.
-	void initialize(const QStringList& expressions, const PipelineFlowState& inputState, const PropertyClass& propertyClass, const QString& bundleName = QString(), int animationFrame = 0);
+	/// Specifies the expressions to be evaluated for each element and creates the input variables.
+	void initialize(const QStringList& expressions, const PipelineFlowState& inputState, const PropertyContainer* container, int animationFrame = 0);
 
-	/// Specifies the expressions to be evaluated for each particle and creates the input variables.
+	/// Specifies the expressions to be evaluated for each element and creates the input variables.
 	void initialize(const QStringList& expressions, const std::vector<ConstPropertyPtr>& inputProperties, const SimulationCell* simCell, const QVariantMap& attributes, int animationFrame = 0);
 
-	/// Initializes the parser object and evaluates the expressions for every particle.
+	/// Initializes the parser object and evaluates the expressions for every element.
 	void evaluate(const std::function<void(size_t,size_t,double)>& callback, const std::function<bool(size_t)>& filter = std::function<bool(size_t)>());
 
 	/// Returns the maximum number of threads used to evaluate the expression (or 0 if all processor cores are used).

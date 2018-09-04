@@ -20,20 +20,16 @@
 ###############################################################################
 
 SET(SourceFiles 
-	objects/ParticleProperty.cpp
 	objects/ParticlesVis.cpp
 	objects/ParticleType.cpp
 	objects/ParticlesObject.cpp
 	objects/BondType.cpp
-	objects/BondProperty.cpp
 	objects/ParticleBondMap.cpp
 	objects/BondsObject.cpp
 	objects/BondsVis.cpp
 	objects/TrajectoryObject.cpp
 	objects/TrajectoryVis.cpp
 	objects/VectorVis.cpp
-	modifier/ParticleInputHelper.cpp
-	modifier/ParticleOutputHelper.cpp
 	modifier/coloring/AmbientOcclusionModifier.cpp
 	modifier/coloring/AmbientOcclusionRenderer.cpp
 	modifier/modify/WrapPeriodicImagesModifier.cpp

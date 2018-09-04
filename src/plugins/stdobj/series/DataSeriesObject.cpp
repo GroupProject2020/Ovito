@@ -22,7 +22,6 @@
 #include <plugins/stdobj/StdObj.h>
 #include <core/dataset/DataSet.h>
 #include "DataSeriesObject.h"
-#include "DataSeriesProperty.h"
 
 namespace Ovito { namespace StdObj {
 
@@ -35,46 +34,75 @@ DEFINE_PROPERTY_FIELD(DataSeriesObject, axisLabelY);
 SET_PROPERTY_FIELD_CHANGE_EVENT(DataSeriesObject, title, ReferenceEvent::TitleChanged);
 
 /******************************************************************************
+* Registers all standard properties with the property traits class.
+******************************************************************************/
+void DataSeriesObject::OOMetaClass::initialize()
+{
+	PropertyContainerClass::initialize();
+
+	// Enable automatic conversion of a DataSeriesPropertyReference to a generic PropertyReference and vice versa.
+	QMetaType::registerConverter<DataSeriesPropertyReference, PropertyReference>();
+	QMetaType::registerConverter<PropertyReference, DataSeriesPropertyReference>();		
+
+	setPropertyClassDisplayName(tr("Data series"));
+	setElementDescriptionName(QStringLiteral("points"));
+	setPythonName(QStringLiteral("series"));
+
+	const QStringList emptyList;
+	registerStandardProperty(XProperty, tr("X"), PropertyStorage::Float, emptyList);
+	registerStandardProperty(YProperty, tr("Y"), PropertyStorage::Float, emptyList);
+}
+
+/******************************************************************************
+* Creates a storage object for standard data series properties.
+******************************************************************************/
+PropertyPtr DataSeriesObject::OOMetaClass::createStandardStorage(size_t elementCount, int type, bool initializeMemory, const ConstDataObjectPath& containerPath) const
+{
+	int dataType;
+	size_t componentCount;
+	size_t stride;
+
+	switch(type) {
+	case XProperty:
+	case YProperty:
+		dataType = PropertyStorage::Float;
+		componentCount = 1;
+		stride = sizeof(FloatType);
+		break;
+	default:
+		OVITO_ASSERT_MSG(false, "DataSeriesObject::createStandardStorage()", "Invalid standard property type");
+		throw Exception(tr("This is not a valid standard property type: %1").arg(type));
+	}
+
+	const QStringList& componentNames = standardPropertyComponentNames(type);
+	const QString& propertyName = standardPropertyName(type);
+
+	OVITO_ASSERT(componentCount == standardPropertyComponentCount(type));
+	
+	return std::make_shared<PropertyStorage>(elementCount, dataType, componentCount, stride, 
+								propertyName, initializeMemory, type, componentNames);
+}
+
+/******************************************************************************
 * Constructor.
 ******************************************************************************/
-DataSeriesObject::DataSeriesObject(DataSet* dataset) : DataObject(dataset),
+DataSeriesObject::DataSeriesObject(DataSet* dataset, const QString& title, const PropertyPtr& y) : PropertyContainer(dataset),
+	_title(title),
 	_intervalStart(0),
 	_intervalEnd(0)
 {
+	if(y) {
+		OVITO_ASSERT(y->type() == YProperty);
+		createProperty(y);
+	}
 }
 
 /******************************************************************************
 * Returns the display title of this object in the user interface.
 ******************************************************************************/
-QString DataSeriesObject::objectTitle() 
+QString DataSeriesObject::objectTitle() const
 {
 	return !title().isEmpty() ? title() : identifier();
-}
-
-/******************************************************************************
-* Returns the property object containing the y-coordinates of the data points.
-******************************************************************************/
-DataSeriesProperty* DataSeriesObject::getY(const PipelineFlowState& state) const
-{
-	return DataSeriesProperty::findInState(state, DataSeriesProperty::YProperty, identifier());
-}
-
-/******************************************************************************
-* Returns the property object containing the x-coordinates of the data points.
-******************************************************************************/
-DataSeriesProperty* DataSeriesObject::getX(const PipelineFlowState& state) const
-{
-	return DataSeriesProperty::findInState(state, DataSeriesProperty::XProperty, identifier());
-}
-
-/******************************************************************************
-* Returns the data array containing the y-coordinates of the data points.
-******************************************************************************/
-ConstPropertyPtr DataSeriesObject::getYStorage(const PipelineFlowState& state) const
-{
-	if(DataSeriesProperty* property = getY(state))
-		return property->storage();
-	return nullptr;
 }
 
 /******************************************************************************
@@ -82,13 +110,13 @@ ConstPropertyPtr DataSeriesObject::getYStorage(const PipelineFlowState& state) c
 * If no explicit x-coordinate data is available, the array is dynamically generated 
 * from the x-axis interval set for this data series.
 ******************************************************************************/
-ConstPropertyPtr DataSeriesObject::getXStorage(const PipelineFlowState& state) const
+ConstPropertyPtr DataSeriesObject::getXStorage() const
 {
-	if(DataSeriesProperty* xProperty = getX(state)) {
-		return xProperty->storage();
+	if(ConstPropertyPtr xStorage = getPropertyStorage(XProperty)) {
+		return xStorage;
 	}
-	else if(DataSeriesProperty* yProperty = getY(state)) {
-		auto xdata = std::make_shared<PropertyStorage>(yProperty->size(), PropertyStorage::Float, 1, 0, QString(), false, DataSeriesProperty::XProperty);
+	else if(const PropertyObject* yProperty = getY()) {
+		auto xdata = OOClass().createStandardStorage(elementCount(), XProperty, false);
 		FloatType binSize = (intervalEnd() - intervalStart()) / xdata->size();
 		FloatType x = intervalStart() + binSize * FloatType(0.5);
 		for(FloatType& v : xdata->floatRange()) {
@@ -97,7 +125,9 @@ ConstPropertyPtr DataSeriesObject::getXStorage(const PipelineFlowState& state) c
 		}
 		return std::move(xdata);
 	}
-	else return nullptr;
+	else {
+		return {};
+	}
 }
 
 }	// End of namespace

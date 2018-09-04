@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <core/utilities/io/NumberParsing.h>
 #include "InputColumnMapping.h"
 #include "ParticleFrameData.h"
@@ -55,7 +55,7 @@ void InputColumnMapping::loadFromStream(LoadStream& stream)
 	resize(numColumns);
 	for(InputColumnInfo& col : *this) {
 		stream >> col.columnName;
-		ParticleProperty::Type propertyType;
+		ParticlesObject::Type propertyType;
 		stream >> propertyType;
 		QString propertyName;
 		stream >> propertyName;
@@ -64,7 +64,7 @@ void InputColumnMapping::loadFromStream(LoadStream& stream)
 			col.dataType = PropertyStorage::Float;
 		int vectorComponent;
 		stream >> vectorComponent;
-		if(propertyType == ParticleProperty::UserProperty)
+		if(propertyType == ParticlesObject::UserProperty)
 			col.property = ParticlePropertyReference(propertyName, vectorComponent);
 		else
 			col.property = ParticlePropertyReference(propertyType, vectorComponent);
@@ -102,7 +102,7 @@ void InputColumnMapping::fromByteArray(const QByteArray& array)
 void InputColumnMapping::validate() const
 {
 	// Make sure that at least the particle positions are read from the input file.
-	if(std::none_of(begin(), end(), [](const InputColumnInfo& column) { return column.property.type() == ParticleProperty::PositionProperty; }))
+	if(std::none_of(begin(), end(), [](const InputColumnInfo& column) { return column.property.type() == ParticlesObject::PositionProperty; }))
 		throw Exception(InputColumnReader::tr("No file column has been mapped to the particle position property."));
 }
 
@@ -129,7 +129,7 @@ InputColumnReader::InputColumnReader(const InputColumnMapping& mapping, Particle
 			if(dataType != PropertyStorage::Int && dataType != PropertyStorage::Int64 && dataType != PropertyStorage::Float)
 				throw Exception(tr("Invalid custom particle property (data type %1) for input file column %2").arg(dataType).arg(i+1));
 
-			if(pref.type() != ParticleProperty::UserProperty) {
+			if(pref.type() != ParticlesObject::UserProperty) {
 				// Look for existing standard property.
 				for(const auto& p : destination.particleProperties()) {
 					if(p->type() == pref.type()) {
@@ -139,11 +139,11 @@ InputColumnReader::InputColumnReader(const InputColumnMapping& mapping, Particle
 				}
 				if(!property) {
 					// Create standard property.
-					property = ParticleProperty::OOClass().createStandardStorage(particleCount, pref.type(), true);
+					property = ParticlesObject::OOClass().createStandardStorage(particleCount, pref.type(), true);
 					destination.addParticleProperty(property);
 					
 					// Also create a particle type list if it is a typed property.
-					if(pref.type() == ParticleProperty::TypeProperty || pref.type() == ParticleProperty::StructureTypeProperty)
+					if(pref.type() == ParticlesObject::TypeProperty || pref.type() == ParticlesObject::StructureTypeProperty)
 						rec.typeList = destination.propertyTypesList(property);
 				}
 			}

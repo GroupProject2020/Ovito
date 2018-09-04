@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/stdmod/gui/StdModGui.h>
-#include <plugins/stdobj/gui/widgets/PropertyClassParameterUI.h>
+#include <plugins/stdobj/gui/widgets/PropertyContainerParameterUI.h>
 #include "ClearSelectionModifierEditor.h"
 
 namespace Ovito { namespace StdMod {
@@ -33,13 +33,13 @@ SET_OVITO_OBJECT_EDITOR(ClearSelectionModifier, ClearSelectionModifierEditor);
 ******************************************************************************/
 void ClearSelectionModifierEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
-	QWidget* rollout = createRollout(tr("Operate on"), rolloutParams);
+	QWidget* rollout = createRollout(tr("Clear selection"), rolloutParams, "particles.modifiers.clear_selection.html");
 
 	QVBoxLayout* layout = new QVBoxLayout(rollout);
 	layout->setContentsMargins(8,8,8,8);
 	layout->setSpacing(4);
 
-	PropertyClassParameterUI* pclassUI = new PropertyClassParameterUI(this, PROPERTY_FIELD(GenericPropertyModifier::propertyClass));
+	PropertyContainerParameterUI* pclassUI = new PropertyContainerParameterUI(this, PROPERTY_FIELD(GenericPropertyModifier::subject));
 	layout->addWidget(new QLabel(tr("Operate on:")));
 	layout->addWidget(pclassUI->comboBox());
 }

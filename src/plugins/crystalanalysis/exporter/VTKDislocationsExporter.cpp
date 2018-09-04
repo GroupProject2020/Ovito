@@ -102,12 +102,12 @@ bool VTKDislocationsExporter::exportFrame(int frameNumber, TimePoint time, const
 
 	// Look up the RenderableDislocationLines object in the pipeline state.
 	const PipelineFlowState& state = evalFuture.result();
-	RenderableDislocationLines* renderableLines = state.findObjectOfType<RenderableDislocationLines>();
+	const RenderableDislocationLines* renderableLines = state.getObject<RenderableDislocationLines>();
 	if(!renderableLines)
 		throwException(tr("The object to be exported does not contain any exportable dislocation line data."));
 
 	// Get the original dislocation lines.
-	DislocationNetworkObject* dislocationsObj = dynamic_object_cast<DislocationNetworkObject>(renderableLines->sourceDataObject().get());	
+	const DislocationNetworkObject* dislocationsObj = dynamic_object_cast<DislocationNetworkObject>(renderableLines->sourceDataObject().get());	
 	if(!dislocationsObj) 
 		throwException(tr("The object to be exported does not contain any exportable dislocation line data."));
 		
@@ -173,7 +173,7 @@ bool VTKDislocationsExporter::exportFrame(int frameNumber, TimePoint time, const
 	textStream() << "\nVECTORS burgers_vector_local double\n";
 	segment = renderableLines->lineSegments().begin();
 	for(auto c : polyVertexCounts) {
-		DislocationSegment* dislocation = dislocationsObj->segments()[segment->dislocationIndex];
+		const DislocationSegment* dislocation = dislocationsObj->segments()[segment->dislocationIndex];
 		textStream() << dislocation->burgersVector.localVec().x() << " " << dislocation->burgersVector.localVec().y() << " " << dislocation->burgersVector.localVec().z() << "\n";
 		segment += c - 1;
 	}
@@ -182,7 +182,7 @@ bool VTKDislocationsExporter::exportFrame(int frameNumber, TimePoint time, const
 	textStream() << "\nVECTORS burgers_vector_world double\n";
 	segment = renderableLines->lineSegments().begin();
 	for(auto c : polyVertexCounts) {
-		DislocationSegment* dislocation = dislocationsObj->segments()[segment->dislocationIndex];
+		const DislocationSegment* dislocation = dislocationsObj->segments()[segment->dislocationIndex];
 		Vector3 transformedVector = dislocation->burgersVector.toSpatialVector();
 		textStream() << transformedVector.x() << " " << transformedVector.y() << " " << transformedVector.z() << "\n";
 		segment += c - 1;

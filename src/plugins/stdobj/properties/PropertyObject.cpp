@@ -21,7 +21,6 @@
 
 #include <plugins/stdobj/StdObj.h>
 #include <core/dataset/DataSet.h>
-#include <core/dataset/pipeline/PipelineFlowState.h>
 #include "PropertyObject.h"
 
 namespace Ovito { namespace StdObj {
@@ -29,7 +28,10 @@ namespace Ovito { namespace StdObj {
 IMPLEMENT_OVITO_CLASS(PropertyObject);	
 DEFINE_PROPERTY_FIELD(PropertyObject, storage);
 DEFINE_REFERENCE_FIELD(PropertyObject, elementTypes);
+DEFINE_PROPERTY_FIELD(PropertyObject, title);
 SET_PROPERTY_FIELD_LABEL(PropertyObject, elementTypes, "Element types");
+SET_PROPERTY_FIELD_LABEL(PropertyObject, title, "Title");
+SET_PROPERTY_FIELD_CHANGE_EVENT(PropertyObject, title, ReferenceEvent::TitleChanged);
 
 /// Holds a shared, empty instance of the PropertyStorage class, 
 /// which is used in places where a default storage is needed.
@@ -39,7 +41,7 @@ static const PropertyPtr defaultStorage = std::make_shared<PropertyStorage>();
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-PropertyObject::PropertyObject(DataSet* dataset) : DataObject(dataset), _storage(defaultStorage)
+PropertyObject::PropertyObject(DataSet* dataset, const PropertyPtr& storage) : DataObject(dataset), _storage(storage ? storage : defaultStorage)
 {
 }
 
@@ -82,13 +84,9 @@ void PropertyObject::setName(const QString& newName)
 /******************************************************************************
 * Returns the display title of this property object in the user interface.
 ******************************************************************************/
-QString PropertyObject::objectTitle() 
+QString PropertyObject::objectTitle() const
 {
-	// User-defined properties always have a user-defined name.
-	if(type() == 0)
-		return name();
-
-	return getOOMetaClass().standardPropertyTitle(type());
+	return title().isEmpty() ? name() : title();
 }
 
 /******************************************************************************
@@ -114,26 +112,9 @@ void PropertyObject::loadFromStream(ObjectLoadStream& stream)
 	stream.expectChunk(0x01);
 	PropertyPtr s = std::make_shared<PropertyStorage>();
 	s->loadFromStream(stream);
-	setStorage(s);
+	setStorage(std::move(s));
 	stream.closeChunk();
 }
-
-/******************************************************************************
-* Determines whether this property object belongs to the given property bundle.
-******************************************************************************/
-bool PropertyObject::belongsToBundle(const QString& bundleName) const
-{
-	return identifier() == bundleName;
-}
-
-/******************************************************************************
-* Makes this property object part of the givenb property bundle.
-******************************************************************************/
-void PropertyObject::setBundle(const QString& bundleName)
-{
-	setIdentifier(bundleName);
-}
-
 
 }	// End of namespace
 }	// End of namespace

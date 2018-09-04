@@ -108,12 +108,11 @@ void FileColumnParticleExporterEditor::onContentsReplaced(Ovito::RefTarget* newE
 			if(!particleExporter->getParticleData(node, node->dataset()->animationSettings()->time(), state, progressDialog.taskManager()))
 				continue;
 			bool hasParticleIdentifiers = false;
-			for(DataObject* o : state.objects()) {
-				ParticleProperty* property = dynamic_object_cast<ParticleProperty>(o);
-				if(!property) continue;
+			const ParticlesObject* particles = state.expectObject<ParticlesObject>();
+			for(const PropertyObject* property : particles->properties()) {
 				if(property->componentCount() == 1) {
 					insertPropertyItem(ParticlePropertyReference(property), property->name(), particleExporter->columnMapping());
-					if(property->type() == ParticleProperty::IdentifierProperty)
+					if(property->type() == ParticlesObject::IdentifierProperty)
 						hasParticleIdentifiers = true;
 				}
 				else {
@@ -125,7 +124,7 @@ void FileColumnParticleExporterEditor::onContentsReplaced(Ovito::RefTarget* newE
 				}
 			}
 			if(!hasParticleIdentifiers)
-				insertPropertyItem(ParticleProperty::IdentifierProperty, tr("Particle index"), particleExporter->columnMapping());
+				insertPropertyItem(ParticlesObject::IdentifierProperty, tr("Particle index"), particleExporter->columnMapping());
 			break;
 		}
 		catch(const Exception& ex) {

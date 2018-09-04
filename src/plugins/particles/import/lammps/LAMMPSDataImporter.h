@@ -86,7 +86,7 @@ public:
 	Q_INVOKABLE LAMMPSDataImporter(DataSet* dataset) : ParticleImporter(dataset), _atomStyle(AtomStyle_Unknown) {}
 
 	/// Returns the title of this object.
-	virtual QString objectTitle() override { return tr("LAMMPS Data"); }
+	virtual QString objectTitle() const override { return tr("LAMMPS Data"); }
 
 	/// Creates an asynchronous loader object that loads the data for the given frame from the external file.
 	virtual std::shared_ptr<FileSourceImporter::FrameLoader> createFrameLoader(const Frame& frame, const QString& localFilename) override {

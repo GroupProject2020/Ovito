@@ -47,9 +47,6 @@ protected:
 	/// Creates the user interface controls for the editor.
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
 
-	/// This method is called when a reference target changes.
-	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
-
 protected Q_SLOTS:
 
 	/// Replots the RDF computed by the modifier.

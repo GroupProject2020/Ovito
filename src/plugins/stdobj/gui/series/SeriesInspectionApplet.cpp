@@ -36,7 +36,7 @@ QWidget* SeriesInspectionApplet::createWidget(MainWindow* mainWindow)
 	createBaseWidgets();
 	
 	QSplitter* splitter = new QSplitter();
-	splitter->addWidget(bundleSelectionWidget());
+	splitter->addWidget(containerSelectionWidget());
 
 	QStackedWidget* stackedWidget = new QStackedWidget();
 	splitter->addWidget(stackedWidget);
@@ -51,15 +51,14 @@ QWidget* SeriesInspectionApplet::createWidget(MainWindow* mainWindow)
 }
 
 /******************************************************************************
-* Is called when the user selects a different bundle from the list.
+* Is called when the user selects a different container object from the list.
 ******************************************************************************/
-void SeriesInspectionApplet::currentBundleChanged()
+void SeriesInspectionApplet::currentContainerChanged()
 {
-	PropertyInspectionApplet::currentBundleChanged();
+	PropertyInspectionApplet::currentContainerChanged();
 
 	// Update the displayed plot.
-	DataSeriesObject* seriesObj = static_object_cast<DataSeriesObject>(selectedBundleObject());
-	plotWidget()->setSeries(seriesObj, currentData());
+	plotWidget()->setSeries(static_object_cast<DataSeriesObject>(selectedContainerObject()));
 }
 
 }	// End of namespace

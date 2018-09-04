@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/utilities/concurrent/Promise.h>
 #include "XYZExporter.h"
@@ -45,9 +45,9 @@ bool XYZExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 	exportTask.setProgressText(tr("Writing file %1").arg(filePath));
 
 	// Get particle positions.
-	ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
+	const ParticlesObject* particles = state.expectObject<ParticlesObject>();
 
-	size_t atomsCount = posProperty->size();
+	size_t atomsCount = particles->elementCount();
 	textStream() << atomsCount << '\n';
 
 	const OutputColumnMapping& mapping = columnMapping();
@@ -55,7 +55,7 @@ bool XYZExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 		throwException(tr("No particle properties have been selected for export to the XYZ file. Cannot write file with zero columns."));
 	OutputColumnWriter columnWriter(mapping, state, true);
 
-	SimulationCellObject* simulationCell = state.findObjectOfType<SimulationCellObject>();
+	const SimulationCellObject* simulationCell = state.getObject<SimulationCellObject>();
 
 	if(subFormat() == ParcasFormat) {
 		textStream() << QStringLiteral("Frame %1").arg(frameNumber);
@@ -90,50 +90,50 @@ bool XYZExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 			// Naming conventions followed are those of the QUIP code
 			QString columnName;
 			switch(pref.type()) {
-			case ParticleProperty::TypeProperty: columnName = QStringLiteral("species"); break;
-			case ParticleProperty::PositionProperty: columnName = QStringLiteral("pos"); break;
-			case ParticleProperty::SelectionProperty: columnName = QStringLiteral("selection"); break;
-			case ParticleProperty::ColorProperty: columnName = QStringLiteral("color"); break;
-			case ParticleProperty::DisplacementProperty: columnName = QStringLiteral("disp"); break;
-			case ParticleProperty::DisplacementMagnitudeProperty: columnName = QStringLiteral("disp_mag"); break;
-			case ParticleProperty::PotentialEnergyProperty: columnName = QStringLiteral("local_energy"); break;
-			case ParticleProperty::KineticEnergyProperty: columnName = QStringLiteral("kinetic_energy"); break;
-			case ParticleProperty::TotalEnergyProperty: columnName = QStringLiteral("total_energy"); break;
-			case ParticleProperty::VelocityProperty: columnName = QStringLiteral("velo"); break;
-			case ParticleProperty::VelocityMagnitudeProperty: columnName = QStringLiteral("velo_mag"); break;
-			case ParticleProperty::RadiusProperty: columnName = QStringLiteral("radius"); break;
-			case ParticleProperty::ClusterProperty: columnName = QStringLiteral("cluster"); break;
-			case ParticleProperty::CoordinationProperty: columnName = QStringLiteral("n_neighb"); break;
-			case ParticleProperty::StructureTypeProperty: columnName = QStringLiteral("structure_type"); break;
-			case ParticleProperty::IdentifierProperty: columnName = QStringLiteral("id"); break;
-			case ParticleProperty::StressTensorProperty: columnName = QStringLiteral("stress"); break;
-			case ParticleProperty::StrainTensorProperty: columnName = QStringLiteral("strain"); break;
-			case ParticleProperty::DeformationGradientProperty: columnName = QStringLiteral("deform"); break;
-			case ParticleProperty::OrientationProperty: columnName = QStringLiteral("orientation"); break;
-			case ParticleProperty::ForceProperty: columnName = QStringLiteral("force"); break;
-			case ParticleProperty::MassProperty: columnName = QStringLiteral("mass"); break;
-			case ParticleProperty::ChargeProperty: columnName = QStringLiteral("charge"); break;
-			case ParticleProperty::PeriodicImageProperty: columnName = QStringLiteral("map_shift"); break;
-			case ParticleProperty::TransparencyProperty: columnName = QStringLiteral("transparency"); break;
-			case ParticleProperty::DipoleOrientationProperty: columnName = QStringLiteral("dipoles"); break;
-			case ParticleProperty::DipoleMagnitudeProperty: columnName = QStringLiteral("dipoles_mag"); break;
-			case ParticleProperty::AngularVelocityProperty: columnName = QStringLiteral("omega"); break;
-			case ParticleProperty::AngularMomentumProperty: columnName = QStringLiteral("angular_momentum"); break;
-			case ParticleProperty::TorqueProperty: columnName = QStringLiteral("torque"); break;
-			case ParticleProperty::SpinProperty: columnName = QStringLiteral("spin"); break;
-			case ParticleProperty::CentroSymmetryProperty: columnName = QStringLiteral("centro_symmetry"); break;
-			case ParticleProperty::AsphericalShapeProperty: columnName = QStringLiteral("aspherical_shape"); break;
-			case ParticleProperty::VectorColorProperty: columnName = QStringLiteral("vector_color"); break;
-			case ParticleProperty::MoleculeProperty: columnName = QStringLiteral("molecule"); break;
-			case ParticleProperty::MoleculeTypeProperty: columnName = QStringLiteral("molecule_type"); break;
+			case ParticlesObject::TypeProperty: columnName = QStringLiteral("species"); break;
+			case ParticlesObject::PositionProperty: columnName = QStringLiteral("pos"); break;
+			case ParticlesObject::SelectionProperty: columnName = QStringLiteral("selection"); break;
+			case ParticlesObject::ColorProperty: columnName = QStringLiteral("color"); break;
+			case ParticlesObject::DisplacementProperty: columnName = QStringLiteral("disp"); break;
+			case ParticlesObject::DisplacementMagnitudeProperty: columnName = QStringLiteral("disp_mag"); break;
+			case ParticlesObject::PotentialEnergyProperty: columnName = QStringLiteral("local_energy"); break;
+			case ParticlesObject::KineticEnergyProperty: columnName = QStringLiteral("kinetic_energy"); break;
+			case ParticlesObject::TotalEnergyProperty: columnName = QStringLiteral("total_energy"); break;
+			case ParticlesObject::VelocityProperty: columnName = QStringLiteral("velo"); break;
+			case ParticlesObject::VelocityMagnitudeProperty: columnName = QStringLiteral("velo_mag"); break;
+			case ParticlesObject::RadiusProperty: columnName = QStringLiteral("radius"); break;
+			case ParticlesObject::ClusterProperty: columnName = QStringLiteral("cluster"); break;
+			case ParticlesObject::CoordinationProperty: columnName = QStringLiteral("n_neighb"); break;
+			case ParticlesObject::StructureTypeProperty: columnName = QStringLiteral("structure_type"); break;
+			case ParticlesObject::IdentifierProperty: columnName = QStringLiteral("id"); break;
+			case ParticlesObject::StressTensorProperty: columnName = QStringLiteral("stress"); break;
+			case ParticlesObject::StrainTensorProperty: columnName = QStringLiteral("strain"); break;
+			case ParticlesObject::DeformationGradientProperty: columnName = QStringLiteral("deform"); break;
+			case ParticlesObject::OrientationProperty: columnName = QStringLiteral("orientation"); break;
+			case ParticlesObject::ForceProperty: columnName = QStringLiteral("force"); break;
+			case ParticlesObject::MassProperty: columnName = QStringLiteral("mass"); break;
+			case ParticlesObject::ChargeProperty: columnName = QStringLiteral("charge"); break;
+			case ParticlesObject::PeriodicImageProperty: columnName = QStringLiteral("map_shift"); break;
+			case ParticlesObject::TransparencyProperty: columnName = QStringLiteral("transparency"); break;
+			case ParticlesObject::DipoleOrientationProperty: columnName = QStringLiteral("dipoles"); break;
+			case ParticlesObject::DipoleMagnitudeProperty: columnName = QStringLiteral("dipoles_mag"); break;
+			case ParticlesObject::AngularVelocityProperty: columnName = QStringLiteral("omega"); break;
+			case ParticlesObject::AngularMomentumProperty: columnName = QStringLiteral("angular_momentum"); break;
+			case ParticlesObject::TorqueProperty: columnName = QStringLiteral("torque"); break;
+			case ParticlesObject::SpinProperty: columnName = QStringLiteral("spin"); break;
+			case ParticlesObject::CentroSymmetryProperty: columnName = QStringLiteral("centro_symmetry"); break;
+			case ParticlesObject::AsphericalShapeProperty: columnName = QStringLiteral("aspherical_shape"); break;
+			case ParticlesObject::VectorColorProperty: columnName = QStringLiteral("vector_color"); break;
+			case ParticlesObject::MoleculeProperty: columnName = QStringLiteral("molecule"); break;
+			case ParticlesObject::MoleculeTypeProperty: columnName = QStringLiteral("molecule_type"); break;
 			default:
 				columnName = pref.name();
 				columnName.remove(QRegExp("[^A-Za-z\\d_]"));
 			}
 
 			// Find matching property
-			ParticleProperty* property = pref.findInState(state);
-			if(property == nullptr && pref.type() != ParticleProperty::IdentifierProperty)
+			const PropertyObject* property = pref.findInContainer(particles);
+			if(property == nullptr && pref.type() != ParticlesObject::IdentifierProperty)
 				throwException(tr("Particle property '%1' cannot be exported because it does not exist.").arg(pref.name()));
 
 			// Count the number of consecutive columns with the same property.
@@ -146,7 +146,7 @@ bool XYZExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 			QString dataTypeStr;
 			if(dataType == PropertyStorage::Float)
 				dataTypeStr = QStringLiteral("R");
-			else if(dataType == qMetaTypeId<char>() || pref.type() == ParticleProperty::TypeProperty)
+			else if(dataType == qMetaTypeId<char>() || pref.type() == ParticlesObject::TypeProperty)
 				dataTypeStr = QStringLiteral("S");
 			else if(dataType == PropertyStorage::Int || dataType == PropertyStorage::Int64)
 				dataTypeStr = QStringLiteral("I");

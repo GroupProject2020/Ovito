@@ -62,17 +62,16 @@ BondsVis::BondsVis(DataSet* dataset) : DataVis(dataset),
 /******************************************************************************
 * Computes the bounding box of the visual element.
 ******************************************************************************/
-Box3 BondsVis::boundingBox(TimePoint time, const std::vector<DataObject*>& objectStack, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
+Box3 BondsVis::boundingBox(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
-	if(objectStack.size() < 3) return {};
-	BondsObject* bonds = dynamic_object_cast<BondsObject>(objectStack[objectStack.size()-2]);
-	ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(objectStack[objectStack.size()-3]);
+	if(objectStack.size() < 2) return {};
+	const BondsObject* bonds = dynamic_object_cast<BondsObject>(objectStack.back());
+	const ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(objectStack[objectStack.size()-2]);
 	if(!bonds || !particles) return {};
-	BondProperty* bondTopologyProperty = dynamic_object_cast<BondProperty>(objectStack.back());
-	if(bondTopologyProperty->type() != BondProperty::TopologyProperty) bondTopologyProperty = nullptr;
-	BondProperty* bondPeriodicImageProperty = static_object_cast<BondProperty>(bonds->getProperty(BondProperty::PeriodicImageProperty));
-	ParticleProperty* positionProperty = static_object_cast<ParticleProperty>(particles->getProperty(ParticleProperty::PositionProperty));
-	SimulationCellObject* simulationCell = flowState.findObjectOfType<SimulationCellObject>();
+	const PropertyObject* bondTopologyProperty = bonds->getProperty(BondsObject::TopologyProperty);
+	const PropertyObject* bondPeriodicImageProperty = bonds->getProperty(BondsObject::PeriodicImageProperty);
+	const PropertyObject* positionProperty = particles->getProperty(ParticlesObject::PositionProperty);
+	const SimulationCellObject* simulationCell = flowState.getObject<SimulationCellObject>();
 
 	// The key type used for caching the computed bounding box:
 	using CacheKey = std::tuple<
@@ -129,7 +128,7 @@ Box3 BondsVis::boundingBox(TimePoint time, const std::vector<DataObject*>& objec
 /******************************************************************************
 * Lets the visualization element render the data object.
 ******************************************************************************/
-void BondsVis::render(TimePoint time, const std::vector<DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
+void BondsVis::render(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, const PipelineSceneNode* contextNode)
 {
 	if(renderer->isBoundingBoxPass()) {
 		TimeInterval validityInterval;
@@ -137,21 +136,20 @@ void BondsVis::render(TimePoint time, const std::vector<DataObject*>& objectStac
 		return;
 	}
 	
-	if(objectStack.size() < 3) return;
-	BondsObject* bonds = dynamic_object_cast<BondsObject>(objectStack[objectStack.size()-2]);
-	ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(objectStack[objectStack.size()-3]);
+	if(objectStack.size() < 2) return;
+	const BondsObject* bonds = dynamic_object_cast<BondsObject>(objectStack.back());
+	const ParticlesObject* particles = dynamic_object_cast<ParticlesObject>(objectStack[objectStack.size()-2]);
 	if(!bonds || !particles) return;
-	BondProperty* bondTopologyProperty = dynamic_object_cast<BondProperty>(objectStack.back());
-	if(bondTopologyProperty->type() != BondProperty::TopologyProperty) bondTopologyProperty = nullptr;
-	BondProperty* bondPeriodicImageProperty = static_object_cast<BondProperty>(bonds->getProperty(BondProperty::PeriodicImageProperty));
-	ParticleProperty* positionProperty = static_object_cast<ParticleProperty>(particles->getProperty(ParticleProperty::PositionProperty));
-	SimulationCellObject* simulationCell = flowState.findObjectOfType<SimulationCellObject>();
-	ParticleProperty* particleColorProperty = static_object_cast<ParticleProperty>(particles->getProperty(ParticleProperty::ColorProperty));
-	ParticleProperty* particleTypeProperty = static_object_cast<ParticleProperty>(particles->getProperty(ParticleProperty::TypeProperty));
-	BondProperty* bondTypeProperty = static_object_cast<BondProperty>(bonds->getProperty(BondProperty::TypeProperty));
-	BondProperty* bondColorProperty = static_object_cast<BondProperty>(bonds->getProperty(BondProperty::ColorProperty));
-	BondProperty* bondSelectionProperty = static_object_cast<BondProperty>(bonds->getProperty(BondProperty::SelectionProperty));
-	BondProperty* transparencyProperty = static_object_cast<BondProperty>(bonds->getProperty(BondProperty::TransparencyProperty));
+	const PropertyObject* bondTopologyProperty = bonds->getProperty(BondsObject::TopologyProperty);
+	const PropertyObject* bondPeriodicImageProperty = bonds->getProperty(BondsObject::PeriodicImageProperty);
+	const PropertyObject* positionProperty = particles->getProperty(ParticlesObject::PositionProperty);
+	const SimulationCellObject* simulationCell = flowState.getObject<SimulationCellObject>();
+	const PropertyObject* particleColorProperty = particles->getProperty(ParticlesObject::ColorProperty);
+	const PropertyObject* particleTypeProperty = particles->getProperty(ParticlesObject::TypeProperty);
+	const PropertyObject* bondTypeProperty = bonds->getProperty(BondsObject::TypeProperty);
+	const PropertyObject* bondColorProperty = bonds->getProperty(BondsObject::ColorProperty);
+	const PropertyObject* bondSelectionProperty = bonds->getProperty(BondsObject::SelectionProperty);
+	const PropertyObject* transparencyProperty = bonds->getProperty(BondsObject::TransparencyProperty);
 	if(!useParticleColors()) {
 		particleColorProperty = nullptr;
 		particleTypeProperty = nullptr;
@@ -211,14 +209,8 @@ void BondsVis::render(TimePoint time, const std::vector<DataObject*>& objectStac
 			arrowPrimitive = renderer->createArrowPrimitive(ArrowPrimitive::CylinderShape, shadingMode(), renderingQuality(), transparencyProperty != nullptr);
 			arrowPrimitive->startSetElements((int)bondTopologyProperty->size() * 2);
 
-			// Obtain particle vis element.
-			ParticlesVis* particleVis = nullptr;
-			if(useParticleColors()) {
-				for(DataVis* vis : positionProperty->visElements()) {
-					if((particleVis = dynamic_object_cast<ParticlesVis>(vis)))
-						break;
-				}
-			}
+			// Obtain particles vis element.
+			ParticlesVis* particleVis = useParticleColors() ? particles->visElement<ParticlesVis>() : nullptr;
 
 			// Determine half-bond colors.
 			std::vector<ColorA> colors = halfBondColors(positionProperty->size(), bondTopologyProperty,
@@ -276,15 +268,15 @@ void BondsVis::render(TimePoint time, const std::vector<DataObject*>& objectStac
 * Returns an array with two colors per full bond, because the two half-bonds 
 * may have different colors.
 ******************************************************************************/
-std::vector<ColorA> BondsVis::halfBondColors(size_t particleCount, BondProperty* topologyProperty,
-		BondProperty* bondColorProperty, BondProperty* bondTypeProperty, BondProperty* bondSelectionProperty, BondProperty* transparencyProperty,
-		ParticlesVis* particleDisplay, ParticleProperty* particleColorProperty, ParticleProperty* particleTypeProperty)
+std::vector<ColorA> BondsVis::halfBondColors(size_t particleCount, const PropertyObject* topologyProperty,
+		const PropertyObject* bondColorProperty, const PropertyObject* bondTypeProperty, const PropertyObject* bondSelectionProperty, const PropertyObject* transparencyProperty,
+		const ParticlesVis* particleVis, const PropertyObject* particleColorProperty, const PropertyObject* particleTypeProperty) const
 {
-	OVITO_ASSERT(topologyProperty != nullptr && topologyProperty->type() == BondProperty::TopologyProperty);
-	OVITO_ASSERT(bondColorProperty == nullptr || bondColorProperty->type() == BondProperty::ColorProperty);
-	OVITO_ASSERT(bondTypeProperty == nullptr || bondTypeProperty->type() == BondProperty::TypeProperty);
-	OVITO_ASSERT(bondSelectionProperty == nullptr || bondSelectionProperty->type() == BondProperty::SelectionProperty);
-	OVITO_ASSERT(transparencyProperty == nullptr || transparencyProperty->type() == BondProperty::TransparencyProperty);
+	OVITO_ASSERT(topologyProperty != nullptr && topologyProperty->type() == BondsObject::TopologyProperty);
+	OVITO_ASSERT(bondColorProperty == nullptr || bondColorProperty->type() == BondsObject::ColorProperty);
+	OVITO_ASSERT(bondTypeProperty == nullptr || bondTypeProperty->type() == BondsObject::TypeProperty);
+	OVITO_ASSERT(bondSelectionProperty == nullptr || bondSelectionProperty->type() == BondsObject::SelectionProperty);
+	OVITO_ASSERT(transparencyProperty == nullptr || transparencyProperty->type() == BondsObject::TransparencyProperty);
 	
 	std::vector<ColorA> output(topologyProperty->size() * 2);
 	ColorA defaultColor = (ColorA)bondColor();
@@ -296,10 +288,10 @@ std::vector<ColorA> BondsVis::halfBondColors(size_t particleCount, BondProperty*
 			*bc++ = (ColorA)c;
 		}
 	}
-	else if(useParticleColors() && particleDisplay != nullptr) {
+	else if(useParticleColors() && particleVis != nullptr) {
 		// Derive bond colors from particle colors.
 		std::vector<Color> particleColors(particleCount);
-		particleDisplay->particleColors(particleColors, particleColorProperty, particleTypeProperty, nullptr);
+		particleVis->particleColors(particleColors, particleColorProperty, particleTypeProperty, nullptr);
 		auto bond = topologyProperty->constDataInt64();
 		for(auto bc = output.begin(); bc != output.end(); bond += 2) {
 			if(bond[0] < particleCount && bond[1] < particleCount) {
@@ -394,62 +386,65 @@ QString BondPickInfo::infoString(PipelineSceneNode* objectNode, quint32 subobjec
 {
 	QString str;
 	size_t bondIndex = subobjectId / 2;
-	BondProperty* topologyProperty = BondProperty::findInState(pipelineState(), BondProperty::TopologyProperty);
-	if(topologyProperty && topologyProperty->size() > bondIndex) {
-		size_t index1 = topologyProperty->getInt64Component(bondIndex, 0);
-		size_t index2 = topologyProperty->getInt64Component(bondIndex, 1);
-		str = tr("Bond");
+	if(const ParticlesObject* particles = pipelineState().getObject<ParticlesObject>()) {
+		if(particles->bonds()) {
+			const PropertyObject* topologyProperty = particles->bonds()->getTopology();
+			if(topologyProperty && topologyProperty->size() > bondIndex) {
+				size_t index1 = topologyProperty->getInt64Component(bondIndex, 0);
+				size_t index2 = topologyProperty->getInt64Component(bondIndex, 1);
+				str = tr("Bond");
 
-		// Bond length
-		ParticleProperty* posProperty = ParticleProperty::findInState(pipelineState(), ParticleProperty::PositionProperty);
-		if(posProperty && posProperty->size() > index1 && posProperty->size() > index2) {
-			const Point3& p1 = posProperty->getPoint3(index1);
-			const Point3& p2 = posProperty->getPoint3(index2);
-			Vector3 delta = p2 - p1;
-			if(BondProperty* periodicImageProperty = BondProperty::findInState(pipelineState(), BondProperty::PeriodicImageProperty)) {
-				if(SimulationCellObject* simCell = pipelineState().findObjectOfType<SimulationCellObject>()) {
-					delta += simCell->cellMatrix() * Vector3(periodicImageProperty->getVector3I(bondIndex));
-				}
-			}
-			str += QString(" | Length: %1 | Delta: (%2 %3 %4)").arg(delta.length()).arg(delta.x()).arg(delta.y()).arg(delta.z());
-		}
-
-		// Bond properties
-		for(DataObject* dataObj : pipelineState().objects()) {
-			BondProperty* property = dynamic_object_cast<BondProperty>(dataObj);
-			if(!property || property->size() <= bondIndex) continue;
-			if(property->type() == BondProperty::SelectionProperty) continue;
-			if(property->type() == BondProperty::ColorProperty) continue;
-			if(property->dataType() != PropertyStorage::Int && property->dataType() != PropertyStorage::Int64 && property->dataType() != PropertyStorage::Float) continue;
-			if(!str.isEmpty()) str += QStringLiteral(" | ");
-			str += property->name();
-			str += QStringLiteral(" ");
-			for(size_t component = 0; component < property->componentCount(); component++) {
-				if(component != 0) str += QStringLiteral(", ");
-				QString valueString;
-				if(property->dataType() == PropertyStorage::Int) {
-					str += QString::number(property->getIntComponent(bondIndex, component));
-					if(property->elementTypes().empty() == false) {
-						if(ElementType* btype = property->elementType(property->getIntComponent(bondIndex, component))) {
-							if(!btype->name().isEmpty())
-								str += QString(" (%1)").arg(btype->name());
+				// Bond length
+				const PropertyObject* posProperty = particles->getProperty(ParticlesObject::PositionProperty);
+				if(posProperty && posProperty->size() > index1 && posProperty->size() > index2) {
+					const Point3& p1 = posProperty->getPoint3(index1);
+					const Point3& p2 = posProperty->getPoint3(index2);
+					Vector3 delta = p2 - p1;
+					if(const PropertyObject* periodicImageProperty = particles->bonds()->getProperty(BondsObject::PeriodicImageProperty)) {
+						if(const SimulationCellObject* simCell = pipelineState().getObject<SimulationCellObject>()) {
+							delta += simCell->cellMatrix() * Vector3(periodicImageProperty->getVector3I(bondIndex));
 						}
 					}
+					str += QString(" | Length: %1 | Delta: (%2 %3 %4)").arg(delta.length()).arg(delta.x()).arg(delta.y()).arg(delta.z());
 				}
-				else if(property->dataType() == PropertyStorage::Int64)
-					str += QString::number(property->getInt64Component(bondIndex, component));
-				else if(property->dataType() == PropertyStorage::Float)
-					str += QString::number(property->getFloatComponent(bondIndex, component));
-			}
-		}
 
-		// Pair type info.
-		ParticleProperty* typeProperty = ParticleProperty::findInState(pipelineState(), ParticleProperty::TypeProperty);
-		if(typeProperty && typeProperty->size() > index1 && typeProperty->size() > index2) {
-			ElementType* type1 = typeProperty->elementType(typeProperty->getInt(index1));
-			ElementType* type2 = typeProperty->elementType(typeProperty->getInt(index2));
-			if(type1 && type2) {
-				str += QString(" | Particles: %1 - %2").arg(type1->nameOrId(), type2->nameOrId());
+				// Bond properties
+				for(const PropertyObject* property : particles->bonds()->properties()) {
+					if(property->size() <= bondIndex) continue;
+					if(property->type() == BondsObject::SelectionProperty) continue;
+					if(property->type() == BondsObject::ColorProperty) continue;
+					if(property->dataType() != PropertyStorage::Int && property->dataType() != PropertyStorage::Int64 && property->dataType() != PropertyStorage::Float) continue;
+					if(!str.isEmpty()) str += QStringLiteral(" | ");
+					str += property->name();
+					str += QStringLiteral(" ");
+					for(size_t component = 0; component < property->componentCount(); component++) {
+						if(component != 0) str += QStringLiteral(", ");
+						QString valueString;
+						if(property->dataType() == PropertyStorage::Int) {
+							str += QString::number(property->getIntComponent(bondIndex, component));
+							if(property->elementTypes().empty() == false) {
+								if(const ElementType* btype = property->elementType(property->getIntComponent(bondIndex, component))) {
+									if(!btype->name().isEmpty())
+										str += QString(" (%1)").arg(btype->name());
+								}
+							}
+						}
+						else if(property->dataType() == PropertyStorage::Int64)
+							str += QString::number(property->getInt64Component(bondIndex, component));
+						else if(property->dataType() == PropertyStorage::Float)
+							str += QString::number(property->getFloatComponent(bondIndex, component));
+					}
+				}
+
+				// Pair type info.
+				const PropertyObject* typeProperty = particles->getProperty(ParticlesObject::TypeProperty);
+				if(typeProperty && typeProperty->size() > index1 && typeProperty->size() > index2) {
+					const ElementType* type1 = typeProperty->elementType(typeProperty->getInt(index1));
+					const ElementType* type2 = typeProperty->elementType(typeProperty->getInt(index2));
+					if(type1 && type2) {
+						str += QString(" | Particles: %1 - %2").arg(type1->nameOrId(), type2->nameOrId());
+					}
+				}
 			}
 		}
 	}

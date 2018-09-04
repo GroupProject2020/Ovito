@@ -20,11 +20,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/stdmod/StdMod.h>
-#include <plugins/stdobj/util/InputHelper.h>
-#include <plugins/stdobj/util/OutputHelper.h>
+#include <plugins/stdobj/properties/PropertyObject.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
+#include <core/dataset/DataSet.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
-#include <core/app/PluginManager.h>
 #include <core/app/Application.h>
 #include <core/utilities/units/UnitsManager.h>
 #include "FreezePropertyModifier.h"
@@ -52,9 +52,8 @@ SET_MODIFIER_APPLICATION_TYPE(FreezePropertyModifier, FreezePropertyModifierAppl
 FreezePropertyModifier::FreezePropertyModifier(DataSet* dataset) : GenericPropertyModifier(dataset), 
 	_freezeTime(0)
 {
-	// Operate on particle properties by default.
-	setPropertyClass(static_cast<const PropertyClass*>(
-		PluginManager::instance().findClass(QStringLiteral("Particles"), QStringLiteral("ParticleProperty"))));	
+	// Operate on particles by default.
+	setDefaultSubject(QStringLiteral("Particles"), QStringLiteral("ParticlesObject"));
 }
 
 /******************************************************************************
@@ -66,15 +65,13 @@ void FreezePropertyModifier::initializeModifier(ModifierApplication* modApp)
 	GenericPropertyModifier::initializeModifier(modApp);
 
 	// Use the first available particle property from the input state as data source when the modifier is newly created.
-	if(sourceProperty().isNull() && propertyClass() && Application::instance()->guiMode()) {	
+	if(sourceProperty().isNull() && subject() && !Application::instance()->scriptMode()) {	
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
-		for(DataObject* o : input.objects()) {
-			if(PropertyObject* property = dynamic_object_cast<PropertyObject>(o)) {
-				if(propertyClass()->isMember(property)) {
-					setSourceProperty(PropertyReference(property));
-					setDestinationProperty(sourceProperty());
-					break;
-				}
+		if(const PropertyContainer* container = input.getLeafObject(subject())) {
+			for(PropertyObject* property : container->properties()) {
+				setSourceProperty(PropertyReference(subject().dataClass(), property));
+				setDestinationProperty(sourceProperty());
+				break;
 			}
 		}
 	}
@@ -86,9 +83,9 @@ void FreezePropertyModifier::initializeModifier(ModifierApplication* modApp)
 void FreezePropertyModifier::propertyChanged(const PropertyFieldDescriptor& field)
 {
 	// Whenever the selected property class of this modifier changes, update the property references accordingly.
-	if(field == PROPERTY_FIELD(GenericPropertyModifier::propertyClass) && !isBeingLoaded() && !dataset()->undoStack().isUndoingOrRedoing()) {
-		setSourceProperty(sourceProperty().convertToPropertyClass(propertyClass()));
-		setDestinationProperty(destinationProperty().convertToPropertyClass(propertyClass()));
+	if(field == PROPERTY_FIELD(GenericPropertyModifier::subject) && !isBeingLoaded() && !dataset()->undoStack().isUndoingOrRedoing()) {
+		setSourceProperty(sourceProperty().convertToContainerClass(subject().dataClass()));
+		setDestinationProperty(destinationProperty().convertToContainerClass(subject().dataClass()));
 	}
 	GenericPropertyModifier::propertyChanged(field);
 }
@@ -113,12 +110,14 @@ Future<PipelineFlowState> FreezePropertyModifier::evaluate(TimePoint time, Modif
 			
 			// Extract the input property.
 			if(FreezePropertyModifierApplication* myModApp = dynamic_object_cast<FreezePropertyModifierApplication>(modApp.data())) {
-				if(myModApp->modifier() == this && !sourceProperty().isNull()) {
-					if(PropertyObject* property = sourceProperty().findInState(frozenState)) {
+				if(myModApp->modifier() == this && !sourceProperty().isNull() && subject()) {
+
+					const PropertyContainer* container = frozenState.expectLeafObject(subject());
+					if(const PropertyObject* property = sourceProperty().findInContainer(container)) {
 
 						// Cache the property to be frozen in the ModifierApplication.
 						myModApp->updateStoredData(property, 
-							propertyClass() ? propertyClass()->findInState(frozenState, PropertyStorage::GenericIdentifierProperty) : nullptr, frozenState.stateValidity());
+							container->getProperty(PropertyStorage::GenericIdentifierProperty), frozenState.stateValidity());
 
 						// Perform the actual replacement of the property in the input pipeline state.
 						return evaluatePreliminary(time, modApp, std::move(input));
@@ -140,11 +139,9 @@ Future<PipelineFlowState> FreezePropertyModifier::evaluate(TimePoint time, Modif
 PipelineFlowState FreezePropertyModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	PipelineFlowState output = input;
-	InputHelper ih(dataset(), input);
-	OutputHelper oh(dataset(), output, modApp);
 	
-	if(!propertyClass())
-		throwException(tr("No property class selected."));
+	if(!subject())
+		throwException(tr("No property type selected."));
 	
 	if(sourceProperty().isNull()) {
 		output.setStatus(PipelineStatus(PipelineStatus::Warning, tr("No source property selected.")));
@@ -158,16 +155,19 @@ PipelineFlowState FreezePropertyModifier::evaluatePreliminary(TimePoint time, Mo
 	if(!myModApp || !myModApp->property())
 		throwException(tr("No stored property values available."));
 
+	// Look up the property container object.
+   	PropertyContainer* container = output.expectMutableLeafObject(subject());
+	
 	// Get the property that will be overwritten by the stored one.
 	PropertyObject* outputProperty;
 	if(destinationProperty().type() != PropertyStorage::GenericUserProperty) {
-		outputProperty = oh.outputStandardProperty(*propertyClass(), destinationProperty().type(), true);
+		outputProperty = container->createProperty(destinationProperty().type(), true);
 		if(outputProperty->dataType() != myModApp->property()->dataType()
 			|| outputProperty->componentCount() != myModApp->property()->componentCount())
 			throwException(tr("Types of source property and output property are not compatible. Cannot restore saved property values."));
 	}
 	else {
-		outputProperty = oh.outputCustomProperty(*propertyClass(), destinationProperty().name(), 
+		outputProperty = container->createProperty(destinationProperty().name(), 
 			myModApp->property()->dataType(), myModApp->property()->componentCount(),
 			0, true);
 	}
@@ -175,7 +175,7 @@ PipelineFlowState FreezePropertyModifier::evaluatePreliminary(TimePoint time, Mo
 	
 	// Check if particle IDs are present and if the order of particles has changed
 	// since we took the snapshot of the property values.
-	PropertyObject* idProperty = ih.inputStandardProperty(*propertyClass(), PropertyStorage::GenericIdentifierProperty);
+	const PropertyObject* idProperty = container->getProperty(PropertyStorage::GenericIdentifierProperty);
 	if(myModApp->identifiers() && idProperty && 
 			(idProperty->size() != myModApp->identifiers()->size() || 
 			!std::equal(idProperty->constDataInt64(), idProperty->constDataInt64() + idProperty->size(), myModApp->identifiers()->constDataInt64()))) {
@@ -243,7 +243,7 @@ PipelineFlowState FreezePropertyModifier::evaluatePreliminary(TimePoint time, Mo
 * particle identifier list, which will allow to restore the saved property
 * values even if the order of particles changes.
 ******************************************************************************/
-void FreezePropertyModifierApplication::updateStoredData(PropertyObject* property, PropertyObject* identifiers, TimeInterval validityInterval)
+void FreezePropertyModifierApplication::updateStoredData(const PropertyObject* property, const PropertyObject* identifiers, TimeInterval validityInterval)
 {
 	CloneHelper cloneHelper;
 	setProperty(cloneHelper.cloneObject(property, false));

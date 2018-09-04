@@ -58,7 +58,7 @@ void TriMeshObject::loadFromStream(ObjectLoadStream& stream)
 /******************************************************************************
 * Creates a copy of this object.
 ******************************************************************************/
-OORef<RefTarget> TriMeshObject::clone(bool deepCopy, CloneHelper& cloneHelper)
+OORef<RefTarget> TriMeshObject::clone(bool deepCopy, CloneHelper& cloneHelper) const
 {
 	// Let the base class create an instance of this class.
 	OORef<TriMeshObject> clone = static_object_cast<TriMeshObject>(DataObject::clone(deepCopy, cloneHelper));

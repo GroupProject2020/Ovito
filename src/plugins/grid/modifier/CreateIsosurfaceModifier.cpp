@@ -23,7 +23,6 @@
 #include <plugins/grid/objects/VoxelGrid.h>
 #include <core/dataset/DataSet.h>
 #include <core/app/Application.h>
-#include <plugins/stdobj/util/InputHelper.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include "CreateIsosurfaceModifier.h"
@@ -32,6 +31,7 @@
 namespace Ovito { namespace Grid {
 
 IMPLEMENT_OVITO_CLASS(CreateIsosurfaceModifier);
+DEFINE_PROPERTY_FIELD(CreateIsosurfaceModifier, containerPath);
 DEFINE_PROPERTY_FIELD(CreateIsosurfaceModifier, sourceProperty);
 DEFINE_REFERENCE_FIELD(CreateIsosurfaceModifier, isolevelController);
 DEFINE_REFERENCE_FIELD(CreateIsosurfaceModifier, surfaceMeshVis);
@@ -67,7 +67,7 @@ TimeInterval CreateIsosurfaceModifier::modifierValidity(TimePoint time)
 ******************************************************************************/
 bool CreateIsosurfaceModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return (input.findObjectOfType<VoxelProperty>() != nullptr) && (input.findObjectOfType<VoxelGrid>() != nullptr);
+	return input.containsObject<VoxelGrid>();
 }
 
 /******************************************************************************
@@ -79,12 +79,14 @@ void CreateIsosurfaceModifier::initializeModifier(ModifierApplication* modApp)
 	AsynchronousModifier::initializeModifier(modApp);
 
 	// Use the first available property from the input state as data source when the modifier is newly created.
-	if(sourceProperty().isNull() && Application::instance()->guiMode()) {
+	if(sourceProperty().isNull() && !Application::instance()->scriptMode()) {
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
-		for(DataObject* o : input.objects()) {
-			VoxelProperty* property = dynamic_object_cast<VoxelProperty>(o);
-			if(property && property->componentCount() <= 1) {
-				setSourceProperty(VoxelPropertyReference(property, (property->componentCount() > 1) ? 0 : -1));
+		if(const VoxelGrid* container = static_object_cast<VoxelGrid>(input.getLeafObject(VoxelGrid::OOClass(), containerPath()))) {
+			for(const PropertyObject* property : container->properties()) {
+				if(property->componentCount() <= 1) {
+					setSourceProperty(VoxelPropertyReference(property, (property->componentCount() > 1) ? 0 : -1));
+					break;
+				}
 			}
 		}
 	}
@@ -96,16 +98,13 @@ void CreateIsosurfaceModifier::initializeModifier(ModifierApplication* modApp)
 ******************************************************************************/
 Future<AsynchronousModifier::ComputeEnginePtr> CreateIsosurfaceModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	InputHelper ih(dataset(), input);
+	if(sourceProperty().isNull())
+		throwException(tr("Select an input field quantity first."));
 
 	// Get modifier inputs.
-	VoxelGrid* voxelGrid = input.findObjectOfType<VoxelGrid>();
-	if(!voxelGrid)
-		throwException(tr("Modifier input contains no voxel data grid."));
+	const VoxelGrid* voxelGrid = static_object_cast<VoxelGrid>(input.expectObject<VoxelGrid>(containerPath()).back());
 	OVITO_ASSERT(voxelGrid->domain());
-	if(sourceProperty().isNull())
-		throwException(tr("Select a field quantity first."));
-	VoxelProperty* property = sourceProperty().findInState(input);
+	const PropertyObject* property = sourceProperty().findInContainer(voxelGrid);
 	if(!property)
 		throwException(tr("The selected voxel property with the name '%1' does not exist.").arg(sourceProperty().name()));
 	if(sourceProperty().vectorComponent() >= (int)property->componentCount())
@@ -173,22 +172,18 @@ PipelineFlowState CreateIsosurfaceModifier::ComputeIsosurfaceEngine::emitResults
 {
 	CreateIsosurfaceModifier* modifier = static_object_cast<CreateIsosurfaceModifier>(modApp->modifier());
 
-	// Find the input voxel grid.
-	VoxelGrid* voxelGrid = input.findObjectOfType<VoxelGrid>();
-	if(!voxelGrid) return input;
+	// Look up the input grid.
+	const VoxelGrid* voxelGrid = input.expectLeafObject(modifier->subject());
 		
 	// Create the output data object.
-	OORef<SurfaceMesh> meshObj(new SurfaceMesh(modApp->dataset()));
+	PipelineFlowState output = input;
+	SurfaceMesh* meshObj = output.createObject<SurfaceMesh>(modApp);
 	meshObj->setStorage(mesh());
 	meshObj->setIsCompletelySolid(isCompletelySolid());
 	meshObj->setDomain(voxelGrid->domain());
 	meshObj->setVisElement(modifier->surfaceMeshVis());
 
-	// Insert data object into the output data collection.
-	PipelineFlowState output = input;
-	output.addObject(meshObj);
 	output.setStatus(PipelineStatus(PipelineStatus::Success, tr("Minimum value: %1\nMaximum value: %2").arg(minValue()).arg(maxValue())));
-
 	return output;
 }
 

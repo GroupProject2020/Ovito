@@ -23,41 +23,69 @@
 
 
 #include <plugins/stdobj/StdObj.h>
-#include <core/dataset/data/DataObject.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
+#include <plugins/stdobj/properties/PropertyReference.h>
 
 namespace Ovito { namespace StdObj {
 	
 /**
  * \brief Data object that holds a series of data values for 2d plots.
  */
-class OVITO_STDOBJ_EXPORT DataSeriesObject : public DataObject
+class OVITO_STDOBJ_EXPORT DataSeriesObject : public PropertyContainer
 {
+	/// Define a new property metaclass for data series property containers.
+	class DataSeriesObjectClass : public PropertyContainerClass 
+	{
+	public:
+
+		/// Inherit constructor from base class.
+		using PropertyContainerClass::PropertyContainerClass;
+
+		/// Creates a storage object for standard data series properties.
+		virtual PropertyPtr createStandardStorage(size_t elementCount, int type, bool initializeMemory, const ConstDataObjectPath& containerPath = {}) const override;
+
+	protected:
+
+		/// Is called by the system after construction of the meta-class instance.
+		virtual void initialize() override;
+	};
+
 	Q_OBJECT
-	OVITO_CLASS(DataSeriesObject)
+	OVITO_CLASS_META(DataSeriesObject, DataSeriesObjectClass);
+	Q_CLASSINFO("DisplayName", "Data series");
 	
 public:
 
+	/// \brief The list of standard data series properties.
+	enum Type {
+		UserProperty = PropertyStorage::GenericUserProperty,	//< This is reserved for user-defined properties.
+//		SelectionProperty = PropertyStorage::GenericSelectionProperty,
+//		ColorProperty = PropertyStorage::GenericColorProperty,
+		XProperty = PropertyStorage::FirstSpecificProperty,
+		YProperty
+	};
+
 	/// Constructor.
-	Q_INVOKABLE DataSeriesObject(DataSet* dataset);
+	Q_INVOKABLE DataSeriesObject(DataSet* dataset, const QString& title = QString(), const PropertyPtr& y = nullptr);
 
 	/// Returns the property object containing the y-coordinates of the data points.
-	DataSeriesProperty* getY(const PipelineFlowState& state) const;
+	const PropertyObject* getY() const { return getProperty(Type::YProperty); }
 
 	/// Returns the property object containing the x-coordinates of the data points (may be NULL).
-	DataSeriesProperty* getX(const PipelineFlowState& state) const;
+	const PropertyObject* getX() const { return getProperty(Type::XProperty); }
 
 	/// Returns the data array containing the y-coordinates of the data points.
-	ConstPropertyPtr getYStorage(const PipelineFlowState& state) const;
+	ConstPropertyPtr getYStorage() const { return getPropertyStorage(Type::YProperty); }
 
 	/// Returns the data array containing the x-coordinates of the data points.
 	/// If no explicit x-coordinate data is available, the array is dynamically generated 
 	/// from the x-axis interval set for this data series.
-	ConstPropertyPtr getXStorage(const PipelineFlowState& state) const;
+	ConstPropertyPtr getXStorage() const;
 
 	//////////////////////////////// from RefTarget //////////////////////////////
 
 	/// Returns the display title of this object in the user interface.
-	virtual QString objectTitle() override;
+	virtual QString objectTitle() const override;
 
 private:
 
@@ -77,5 +105,12 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, axisLabelY, setAxisLabelY);
 };
 
+/**
+ * Encapsulates a reference to a data series property. 
+ */
+using DataSeriesPropertyReference = TypedPropertyReference<DataSeriesObject>;
+
 }	// End of namespace
 }	// End of namespace
+
+Q_DECLARE_METATYPE(Ovito::StdObj::DataSeriesPropertyReference);

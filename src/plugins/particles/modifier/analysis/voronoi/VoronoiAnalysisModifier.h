@@ -23,9 +23,9 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/BondsObject.h>
 #include <plugins/particles/objects/BondsVis.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/particles/util/ParticleOrderingFingerprint.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
@@ -86,7 +86,7 @@ private:
 			_faceThreshold(faceThreshold),
 			_relativeFaceThreshold(relativeFaceThreshold),
 			_computeBonds(computeBonds),
-			_coordinationNumbers(ParticleProperty::createStandardStorage(fingerprint.particleCount(), ParticleProperty::CoordinationProperty, true)),
+			_coordinationNumbers(ParticlesObject::OOClass().createStandardStorage(fingerprint.particleCount(), ParticlesObject::CoordinationProperty, true)),
 			_atomicVolumes(std::make_shared<PropertyStorage>(fingerprint.particleCount(), PropertyStorage::Float, 1, 0, QStringLiteral("Atomic Volume"), true)),
 			_voronoiIndices(computeIndices ? std::make_shared<PropertyStorage>(fingerprint.particleCount(), PropertyStorage::Int, edgeCount, 0, QStringLiteral("Voronoi Index"), true) : nullptr),
 			_inputFingerprint(std::move(fingerprint)) {}

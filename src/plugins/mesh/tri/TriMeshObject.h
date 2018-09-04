@@ -42,7 +42,7 @@ public:
 	Q_INVOKABLE TriMeshObject(DataSet* dataset);
 
 	/// \brief Returns the title of this object.
-	virtual QString objectTitle() override { return tr("Triangle mesh"); }
+	virtual QString objectTitle() const override { return tr("Triangle mesh"); }
 
 	/// Returns a const-reference to the triangle mesh encapsulated by this data object.
 	const TriMesh& mesh() const { return _mesh; }
@@ -62,7 +62,7 @@ protected:
 	virtual void loadFromStream(ObjectLoadStream& stream) override;
 
 	/// Creates a copy of this object.
-	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) override;
+	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) const override;
 
 private:
 

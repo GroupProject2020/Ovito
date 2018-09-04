@@ -22,9 +22,8 @@
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/util/CutoffNeighborFinder.h>
 #include <plugins/particles/util/NearestNeighborFinder.h>
-#include <plugins/particles/objects/BondProperty.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
+#include <plugins/particles/objects/BondsObject.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <core/utilities/concurrent/ParallelFor.h>
 #include <core/utilities/units/UnitsManager.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
@@ -62,7 +61,7 @@ ExpandSelectionModifier::ExpandSelectionModifier(DataSet* dataset) : Asynchronou
 ******************************************************************************/
 bool ExpandSelectionModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<ParticleProperty>() != nullptr;
+	return input.containsObject<ParticlesObject>();
 }
 
 /******************************************************************************
@@ -71,26 +70,27 @@ bool ExpandSelectionModifier::OOMetaClass::isApplicableTo(const PipelineFlowStat
 ******************************************************************************/
 Future<AsynchronousModifier::ComputeEnginePtr> ExpandSelectionModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	ParticleInputHelper pih(dataset(), input);
+	// Get the input particles.
+	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
 
-	// Get the current positions.
-	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
+	// Get the particle positions.
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 
-	// Get the current selection.
-	ParticleProperty* inputSelection = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty);
+	// Get the current particle selection.
+	const PropertyObject* inputSelection = particles->expectProperty(ParticlesObject::SelectionProperty);
 
 	// Get simulation cell.
-	SimulationCellObject* inputCell = pih.expectSimulationCell();
+	const SimulationCellObject* inputCell = input.expectObject<SimulationCellObject>();
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	if(mode() == CutoffRange) {
-		return std::make_shared<ExpandSelectionCutoffEngine>(input, posProperty->storage(), inputCell->data(), inputSelection->storage(), numberOfIterations(), cutoffRange());
+		return std::make_shared<ExpandSelectionCutoffEngine>(particles, posProperty->storage(), inputCell->data(), inputSelection->storage(), numberOfIterations(), cutoffRange());
 	}
 	else if(mode() == NearestNeighbors) {
-		return std::make_shared<ExpandSelectionNearestEngine>(input, posProperty->storage(), inputCell->data(), inputSelection->storage(), numberOfIterations(), numNearestNeighbors());
+		return std::make_shared<ExpandSelectionNearestEngine>(particles, posProperty->storage(), inputCell->data(), inputSelection->storage(), numberOfIterations(), numNearestNeighbors());
 	}
 	else if(mode() == BondedNeighbors) {
-		return std::make_shared<ExpandSelectionBondedEngine>(input, posProperty->storage(), inputCell->data(), inputSelection->storage(), numberOfIterations(), pih.expectBonds()->storage());
+		return std::make_shared<ExpandSelectionBondedEngine>(particles, posProperty->storage(), inputCell->data(), inputSelection->storage(), numberOfIterations(), particles->expectBondsTopology()->storage());
 	}
 	else {
 		throwException(tr("Invalid selection expansion mode."));
@@ -192,12 +192,15 @@ void ExpandSelectionModifier::ExpandSelectionCutoffEngine::expandSelection()
 ******************************************************************************/
 PipelineFlowState ExpandSelectionModifier::ExpandSelectionEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	if(_inputFingerprint.hasChanged(input))
+	PipelineFlowState output = input;
+
+	// Get the output particles.
+	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+	if(_inputFingerprint.hasChanged(particles))
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 
-	PipelineFlowState output = input;
-	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
-	poh.outputProperty<ParticleProperty>(outputSelection());
+	// Output the selection property.
+	particles->createProperty(outputSelection());
 
 	QString msg = tr("Added %1 particles to selection.\n"
 			"Old selection count was: %2\n"

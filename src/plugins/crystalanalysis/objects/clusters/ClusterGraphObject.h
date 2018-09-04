@@ -42,7 +42,7 @@ public:
 	Q_INVOKABLE ClusterGraphObject(DataSet* dataset);
 
 	/// Returns the title of this object.
-	virtual QString objectTitle() override { return tr("Clusters"); }
+	virtual QString objectTitle() const override { return tr("Clusters"); }
 
 	/// Returns the list of nodes in the cluster graph.
 	const std::vector<Cluster*>& clusters() const { return storage()->clusters(); }

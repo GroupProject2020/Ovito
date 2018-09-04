@@ -77,6 +77,7 @@ DataInspectorPanel::DataInspectorPanel(MainWindow* mainWindow) :
 
 	_appletContainer = new QStackedWidget();
 	_appletContainer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Ignored);
+	_appletContainer->setMinimumWidth(10);
 	_appletContainer->resize(0,0);
 	QLabel* label = new QLabel(tr("There is no data to be displayed"));
 	label->setAlignment(Qt::AlignCenter);
@@ -211,6 +212,7 @@ void DataInspectorPanel::resizeEvent(QResizeEvent* event)
 				PipelineFlowState();
 			_applets[_activeAppletIndex]->updateDisplay(pipelineState, _selectedNodeListener.target());
 		}
+		_appletContainer->setEnabled(true);
 	}
 	else if(_inspectorActive && !isActive) {
 		_inspectorActive = false;
@@ -219,6 +221,7 @@ void DataInspectorPanel::resizeEvent(QResizeEvent* event)
 		if(_activeAppletIndex >= 0 && _activeAppletIndex < _applets.size()) {
 			_applets[_activeAppletIndex]->deactivate(_mainWindow);
 		}
+		_appletContainer->setEnabled(false);
 	}
 }
 
@@ -321,7 +324,7 @@ void DataInspectorPanel::onCurrentPageChanged(int index)
 	
 	_activeAppletIndex = index;
 
-	if(_activeAppletIndex >= 0 && _activeAppletIndex < _applets.size()) {
+	if(_inspectorActive && _activeAppletIndex >= 0 && _activeAppletIndex < _applets.size()) {
 		// Obtain the pipeline output of the currently selected scene node.
 		const PipelineFlowState& pipelineState = _selectedNodeListener.target() ? 
 			_selectedNodeListener.target()->evaluatePipelinePreliminary(true) :

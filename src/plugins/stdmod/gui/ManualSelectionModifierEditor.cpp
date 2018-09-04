@@ -21,7 +21,7 @@
 
 #include <plugins/stdmod/gui/StdModGui.h>
 #include <plugins/stdmod/modifiers/ManualSelectionModifier.h>
-#include <plugins/stdobj/gui/widgets/PropertyClassParameterUI.h>
+#include <plugins/stdobj/gui/widgets/PropertyContainerParameterUI.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/dataset/animation/AnimationSettings.h>
@@ -53,18 +53,18 @@ public:
 	virtual void mouseReleaseEvent(ViewportWindow* vpwin, QMouseEvent* event) override {
 		if(event->button() == Qt::LeftButton) {
 			ManualSelectionModifier* mod = static_object_cast<ManualSelectionModifier>(_editor->editObject());
-			if(mod && mod->propertyClass()) {
+			if(mod && mod->subject()) {
 				// Find out what's under the mouse cursor.
 				ViewportPickResult pickResult = vpwin->pick(event->pos());
 				if(pickResult.isValid()) {
 					// Look up the index of the element that was picked.
-					std::pair<size_t, PipelineFlowState> indexAndState = mod->propertyClass()->elementFromPickResult(pickResult);
-					if(indexAndState.first != std::numeric_limits<size_t>::max()) {
+					std::pair<size_t, ConstDataObjectPath> indexAndContainer = mod->subject().dataClass()->elementFromPickResult(pickResult);
+					if(indexAndContainer.first != std::numeric_limits<size_t>::max()) {
 						// Let the editor class handle it from here.
-						_editor->onElementPicked(pickResult, indexAndState.first, indexAndState.second);
+						_editor->onElementPicked(pickResult, indexAndContainer.first, indexAndContainer.second);
 					}
 					else {
-						inputManager()->mainWindow()->statusBar()->showMessage(tr("You did not click on an element of type '%1'.").arg(mod->propertyClass()->elementDescriptionName()), 1000);
+						inputManager()->mainWindow()->statusBar()->showMessage(tr("You did not click on an element of type '%1'.").arg(mod->subject().dataClass()->elementDescriptionName()), 1000);
 					}
 				}
 			}
@@ -79,13 +79,13 @@ public:
 		// Check if a selectable element is beneath the mouse cursor position.
 		// If yes, indicate that by changing the mouse cursor shape.
 		ManualSelectionModifier* mod = static_object_cast<ManualSelectionModifier>(_editor->editObject());
-		if(mod && mod->propertyClass()) {
+		if(mod && mod->subject()) {
 			// Find out what's under the mouse cursor.
 			ViewportPickResult pickResult = vpwin->pick(event->pos());
 			if(pickResult.isValid()) {
 				// Look up the index of the element.
-				std::pair<size_t, PipelineFlowState> indexAndState = mod->propertyClass()->elementFromPickResult(pickResult);
-				if(indexAndState.first != std::numeric_limits<size_t>::max()) {
+				std::pair<size_t, ConstDataObjectPath> indexAndContainer = mod->subject().dataClass()->elementFromPickResult(pickResult);
+				if(indexAndContainer.first != std::numeric_limits<size_t>::max()) {
 					setCursor(SelectionMode::selectionCursor());
 					return;
 				}
@@ -166,15 +166,15 @@ protected:
 	virtual void activated(bool temporary) override {
 		ViewportInputMode::activated(temporary);
 		ManualSelectionModifier* mod = static_object_cast<ManualSelectionModifier>(_editor->editObject());
-		if(mod && mod->propertyClass()) {
+		if(mod && mod->subject()) {
 #ifndef Q_OS_MACX
 			inputManager()->mainWindow()->statusBar()->showMessage(
 					tr("Draw a fence around a group of %1 to select. Use CONTROL or ALT keys to extend or reduce existing selection set.")
-					.arg(mod->propertyClass()->elementDescriptionName()));
+					.arg(mod->subject().dataClass()->elementDescriptionName()));
 #else
 			inputManager()->mainWindow()->statusBar()->showMessage(
 					tr("Draw a fence around a group of %1 to select. Use COMMAND or ALT keys to extend or reduce existing selection set.")
-					.arg(mod->propertyClass()->elementDescriptionName()));
+					.arg(mod->subject().dataClass()->elementDescriptionName()));
 #endif
 		}
 		inputManager()->addViewportGizmo(this);
@@ -212,7 +212,7 @@ void ManualSelectionModifierEditor::createUI(const RolloutInsertionParameters& r
 	sublayout->setSpacing(6);
 	layout->addWidget(operateOnGroup);
 
-	PropertyClassParameterUI* pclassUI = new PropertyClassParameterUI(this, PROPERTY_FIELD(GenericPropertyModifier::propertyClass));
+	PropertyContainerParameterUI* pclassUI = new PropertyContainerParameterUI(this, PROPERTY_FIELD(GenericPropertyModifier::subject));
 	sublayout->addWidget(pclassUI->comboBox());
 
 	QGroupBox* mouseSelectionGroup = new QGroupBox(tr("Viewport modes"));
@@ -304,12 +304,12 @@ void ManualSelectionModifierEditor::clearSelection()
 /******************************************************************************
 * This is called when the user has selected an element.
 ******************************************************************************/
-void ManualSelectionModifierEditor::onElementPicked(const ViewportPickResult& pickResult, size_t elementIndex, const PipelineFlowState& state)
+void ManualSelectionModifierEditor::onElementPicked(const ViewportPickResult& pickResult, size_t elementIndex, const ConstDataObjectPath& pickedObjectPath)
 {
 	ManualSelectionModifier* mod = static_object_cast<ManualSelectionModifier>(editObject());
-	if(!mod || !mod->propertyClass()) return;
+	if(!mod || !mod->subject()) return;
 
-	undoableTransaction(tr("Toggle selection"), [this, mod, elementIndex, &state, &pickResult]() {
+	undoableTransaction(tr("Toggle selection"), [this, mod, elementIndex, &pickedObjectPath, &pickResult]() {
 		for(ModifierApplication* modApp : modifierApplications()) {
 
 			// Make sure we are in the right data pipeline.
@@ -318,12 +318,13 @@ void ManualSelectionModifierEditor::onElementPicked(const ViewportPickResult& pi
 
 			// Get the modifier's input data.
 			const PipelineFlowState& modInput = modApp->evaluateInputPreliminary();
+			const ConstDataObjectPath& inputObjectPath = modInput.expectObject(mod->subject());
 
 			// Look up the right element in the modifier's input.
 			// Note that elements may have been added or removed further down the pipeline.
 			// Thus, we need to translate the element index into the pipeline output data collection
 			// into an index into the modifier's input data collection.
-			size_t translatedIndex = mod->propertyClass()->remapElementIndex(state, elementIndex, modInput);
+			size_t translatedIndex = mod->subject().dataClass()->remapElementIndex(pickedObjectPath, elementIndex, inputObjectPath);
 			if(translatedIndex != std::numeric_limits<size_t>::max()) {
 				mod->toggleElementSelection(modApp, modInput, translatedIndex);
 				break;
@@ -341,13 +342,14 @@ void ManualSelectionModifierEditor::onElementPicked(const ViewportPickResult& pi
 void ManualSelectionModifierEditor::onFence(const QVector<Point2>& fence, Viewport* viewport, ElementSelectionSet::SelectionMode mode)
 {
 	ManualSelectionModifier* mod = static_object_cast<ManualSelectionModifier>(editObject());
-	if(!mod || !mod->propertyClass()) return;
+	if(!mod || !mod->subject()) return;
 
 	undoableTransaction(tr("Select"), [this, mod, &fence, viewport, mode]() {
 		for(ModifierApplication* modApp : modifierApplications()) {
 
 			// Get the modifier's input data.
 			const PipelineFlowState& modInput = modApp->evaluateInputPreliminary();
+			const ConstDataObjectPath& inputObjectPath = modInput.expectObject(mod->subject());
 
 			// Iterate of the nodes that use this pipeline.
 			// We'll need their object-to-world transformation.
@@ -365,12 +367,12 @@ void ManualSelectionModifierEditor::onFence(const QVector<Point2>& fence, Viewpo
 				Matrix4 projectionTM = ndcToScreen * viewport->projectionParams().projectionMatrix * (viewport->projectionParams().viewMatrix * nodeTM);
 
 				// Determine which particles are within the closed fence polygon.
-				boost::dynamic_bitset<> selection = mod->propertyClass()->viewportFenceSelection(fence, modInput, node, projectionTM);
-				if(selection.size() == mod->propertyClass()->elementCount(modInput)) {
+				boost::dynamic_bitset<> selection = mod->subject().dataClass()->viewportFenceSelection(fence, inputObjectPath, node, projectionTM);
+				if(selection.size() != 0) {
 					mod->setSelection(modApp, modInput, selection, mode);
 				}
 				else {
-					mod->throwException(tr("Sorry, making a fence-based selection is not supported for %1.").arg(mod->propertyClass()->elementDescriptionName()));
+					mod->throwException(tr("Sorry, making a fence-based selection is not supported for %1.").arg(mod->subject().dataClass()->elementDescriptionName()));
 				}
 				break;
 			}

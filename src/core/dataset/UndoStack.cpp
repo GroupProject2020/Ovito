@@ -30,7 +30,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_
 * Increments the suspend count of the undo stack associated with the given
 * object.
 ******************************************************************************/
-UndoSuspender::UndoSuspender(RefMaker* object)
+UndoSuspender::UndoSuspender(const RefMaker* object)
 {
 	OVITO_CHECK_OBJECT_POINTER(object);
 	if(object->dataset()) {

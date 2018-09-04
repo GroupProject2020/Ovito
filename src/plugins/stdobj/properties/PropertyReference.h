@@ -37,16 +37,16 @@ public:
 	PropertyReference() = default;
 	
 	/// \brief Constructs a reference to a standard property.
-	PropertyReference(PropertyClassPtr pclass, int typeId, int vectorComponent = -1, const QString& bundle = QString());
+	PropertyReference(PropertyContainerClassPtr pclass, int typeId, int vectorComponent = -1);
 
 	/// \brief Constructs a reference to a user-defined property.
-	PropertyReference(PropertyClassPtr pclass, const QString& name, int vectorComponent = -1, const QString& bundle = QString()) : _propertyClass(pclass), _bundle(bundle), _name(name), _vectorComponent(vectorComponent) { 
+	PropertyReference(PropertyContainerClassPtr pclass, const QString& name, int vectorComponent = -1) : _containerClass(pclass), _name(name), _vectorComponent(vectorComponent) { 
 		OVITO_ASSERT(pclass); 
 		OVITO_ASSERT(!_name.isEmpty()); 
 	}
 	
 	/// \brief Constructs a reference based on an existing PropertyObject.
-	PropertyReference(PropertyObject* property, int vectorComponent = -1);
+	PropertyReference(PropertyContainerClassPtr pclass, const PropertyObject* property, int vectorComponent = -1);
 
 	/// \brief Returns the type of property being referenced.
 	int type() const { return _type; }
@@ -55,12 +55,8 @@ public:
 	/// \return The property name.
 	const QString& name() const { return _name; }
 
-	/// \brief Gets the identifier of the bundle the property belongs to.
-	/// \return The identifier of the property bundle.
-	const QString& bundle() const { return _bundle; }
-
 	/// Return the class of the referenced property.
-	PropertyClassPtr propertyClass() const { return _propertyClass; }
+	PropertyContainerClassPtr containerClass() const { return _containerClass; }
 	
 	/// Returns the selected component index.
 	int vectorComponent() const { return _vectorComponent; }
@@ -70,8 +66,7 @@ public:
 
 	/// \brief Compares two references for equality.
 	bool operator==(const PropertyReference& other) const {
-		if(propertyClass() != other.propertyClass()) return false;
-		if(bundle() != other.bundle()) return false;
+		if(containerClass() != other.containerClass()) return false;
 		if(type() != other.type()) return false;
 		if(vectorComponent() != other.vectorComponent()) return false;
 		if(type() != 0) return true;
@@ -81,26 +76,23 @@ public:
 	/// \brief Compares two references for inequality.
 	bool operator!=(const PropertyReference& other) const { return !(*this == other); }
 
-	/// \brief Returns true if this reference does not point to any particle property.
-	/// \return true if this is a default constructed ParticlePropertyReference.
+	/// \brief Returns true if this reference does not point to any property.
+	/// \return true if this is a default-constructed PropertyReference.
 	bool isNull() const { return type() == 0 && name().isEmpty(); }
 
 	/// \brief Returns the display name of the referenced property including the optional vector component.
 	QString nameWithComponent() const;
 
-	/// Finds the referenced property in the given pipeline state.
-	PropertyObject* findInState(const PipelineFlowState& state) const;
+	/// Finds the referenced property in the given property container object.
+	const PropertyObject* findInContainer(const PropertyContainer* container) const;
 
-	/// Returns a new property reference that uses the same name as the current one, but with a different property class.
-	PropertyReference convertToPropertyClass(PropertyClassPtr pclass) const;
+	/// Returns a new property reference that uses the same name as the current one, but with a different property container class.
+	PropertyReference convertToContainerClass(PropertyContainerClassPtr containerClass) const;
 	
 private:
 
-	/// The class of property.
-	PropertyClassPtr _propertyClass = nullptr;
-
-	/// The identifier of the property bundle (optional).
-	QString _bundle;
+	/// The class of property container.
+	PropertyContainerClassPtr _containerClass = nullptr;
 
 	/// The type of the property.
 	int _type = 0;
@@ -124,9 +116,9 @@ extern OVITO_STDOBJ_EXPORT SaveStream& operator<<(SaveStream& stream, const Prop
 extern OVITO_STDOBJ_EXPORT LoadStream& operator>>(LoadStream& stream, PropertyReference& r);
 
 /**
- * Encapsulates a reference to a property from a specific class. 
+ * Encapsulates a reference to a property from a specific container class. 
  */
-template<class PropertyObjectType>
+template<class PropertyContainerType>
 class TypedPropertyReference : public PropertyReference
 {
 public:
@@ -134,27 +126,20 @@ public:
 	/// \brief Default constructor. Creates a null reference.
 	TypedPropertyReference() = default;
 
-	/// \brief Conversion copy  constructor. 
+	/// \brief Conversion copy constructor. 
 	TypedPropertyReference(const PropertyReference& other) : PropertyReference(other) {}
 
 	/// \brief Conversion move constructor. 
 	TypedPropertyReference(PropertyReference&& other) : PropertyReference(std::move(other)) {}
 		
 	/// \brief Constructs a reference to a standard property.
-	TypedPropertyReference(int typeId, int vectorComponent = -1, const QString& bundle = QString()) : PropertyReference(&PropertyObjectType::OOClass(), typeId, vectorComponent, bundle) {}
+	TypedPropertyReference(int typeId, int vectorComponent = -1) : PropertyReference(&PropertyContainerType::OOClass(), typeId, vectorComponent) {}
 
 	/// \brief Constructs a reference to a user-defined property.
-	TypedPropertyReference(const QString& name, int vectorComponent = -1, const QString& bundle = QString()) : PropertyReference(&PropertyObjectType::OOClass(), name, vectorComponent, bundle) {}
+	TypedPropertyReference(const QString& name, int vectorComponent = -1) : PropertyReference(&PropertyContainerType::OOClass(), name, vectorComponent) {}
 	
 	/// \brief Constructs a reference based on an existing PropertyObject.
-	TypedPropertyReference(PropertyObjectType* property, int vectorComponent = -1) : PropertyReference(property, vectorComponent) {
-		OVITO_ASSERT(property->getOOClass().isDerivedFrom(PropertyObjectType::OOClass()));
-	}
-
-	/// Finds the referenced property in the given pipeline state.
-	PropertyObjectType* findInState(const PipelineFlowState& state) const {
-		return static_object_cast<PropertyObjectType>(PropertyReference::findInState(state));
-	}
+	TypedPropertyReference(const PropertyObject* property, int vectorComponent = -1) : PropertyReference(&PropertyContainerType::OOClass(), property, vectorComponent) {}
 
 	friend SaveStream& operator<<(SaveStream& stream, const TypedPropertyReference& r) {
 		return stream << static_cast<const PropertyReference&>(r);

@@ -26,14 +26,30 @@ namespace Ovito { namespace Grid {
 
 IMPLEMENT_OVITO_CLASS(VoxelGrid);
 DEFINE_PROPERTY_FIELD(VoxelGrid, shape);
-DEFINE_REFERENCE_FIELD(VoxelGrid, properties);
+DEFINE_REFERENCE_FIELD(VoxelGrid, domain);
 SET_PROPERTY_FIELD_LABEL(VoxelGrid, shape, "Shape");
-SET_PROPERTY_FIELD_LABEL(VoxelGrid, properties, "Properties");
+SET_PROPERTY_FIELD_LABEL(VoxelGrid, domain, "Domain");
+
+/******************************************************************************
+* Registers all standard properties with the property traits class.
+******************************************************************************/
+void VoxelGrid::OOMetaClass::initialize()
+{
+	PropertyContainerClass::initialize();
+
+	// Enable automatic conversion of a VoxelPropertyReference to a generic PropertyReference and vice versa.
+	QMetaType::registerConverter<VoxelPropertyReference, PropertyReference>();
+	QMetaType::registerConverter<PropertyReference, VoxelPropertyReference>();		
+
+	setPropertyClassDisplayName(tr("Voxel data"));
+	setElementDescriptionName(QStringLiteral("voxels"));
+	setPythonName(QStringLiteral("voxels"));
+}
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-VoxelGrid::VoxelGrid(DataSet* dataset) : PeriodicDomainDataObject(dataset)
+VoxelGrid::VoxelGrid(DataSet* dataset) : PropertyContainer(dataset)
 {
 }
 
@@ -42,7 +58,7 @@ VoxelGrid::VoxelGrid(DataSet* dataset) : PeriodicDomainDataObject(dataset)
 ******************************************************************************/
 void VoxelGrid::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData)
 {
-	PeriodicDomainDataObject::saveToStream(stream, excludeRecomputableData);
+	PropertyContainer::saveToStream(stream, excludeRecomputableData);
 
 	stream.beginChunk(0x01);
 	stream.writeSizeT(shape().size());
@@ -56,7 +72,7 @@ void VoxelGrid::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableD
 ******************************************************************************/
 void VoxelGrid::loadFromStream(ObjectLoadStream& stream)
 {
-	PeriodicDomainDataObject::loadFromStream(stream);
+	PropertyContainer::loadFromStream(stream);
 
 	stream.expectChunk(0x01);
 	size_t ndim;

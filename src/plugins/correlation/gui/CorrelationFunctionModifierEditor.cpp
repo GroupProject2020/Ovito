@@ -23,6 +23,7 @@
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <plugins/correlation/CorrelationFunctionModifier.h>
 #include <plugins/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <gui/mainwin/MainWindow.h>
 #include <gui/properties/BooleanParameterUI.h>
 #include <gui/properties/IntegerParameterUI.h>
@@ -55,11 +56,11 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(4);
 
-	PropertyReferenceParameterUI* sourceProperty1UI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::sourceProperty1), &ParticleProperty::OOClass());
+	PropertyReferenceParameterUI* sourceProperty1UI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::sourceProperty1), &ParticlesObject::OOClass());
 	layout->addWidget(new QLabel(tr("First property:"), rollout));
 	layout->addWidget(sourceProperty1UI->comboBox());
 
-	PropertyReferenceParameterUI* sourceProperty2UI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::sourceProperty2), &ParticleProperty::OOClass());
+	PropertyReferenceParameterUI* sourceProperty2UI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(CorrelationFunctionModifier::sourceProperty2), &ParticlesObject::OOClass());
 	layout->addWidget(new QLabel(tr("Second property:"), rollout));
 	layout->addWidget(sourceProperty2UI->comboBox());
 

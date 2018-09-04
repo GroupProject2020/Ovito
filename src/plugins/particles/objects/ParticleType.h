@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/stdobj/properties/ElementType.h>
 
 namespace Ovito { namespace Particles {
@@ -69,7 +69,7 @@ public:
 	//////////////////////////////////// Utility methods ////////////////////////////////
 	
 	/// Builds a map from type identifiers to particle radii.
-	static std::map<int,FloatType> typeRadiusMap(ParticleProperty* typeProperty) {
+	static std::map<int,FloatType> typeRadiusMap(const PropertyObject* typeProperty) {
 		std::map<int,FloatType> m;
 		for(const ElementType* type : typeProperty->elementTypes())
 			m.insert({ type->id(), static_object_cast<ParticleType>(type)->radius() });
@@ -91,19 +91,19 @@ public:
 	}
 
 	/// Returns the default color for the particle type with the given ID.
-	static Color getDefaultParticleColorFromId(ParticleProperty::Type typeClass, int particleTypeId);
+	static Color getDefaultParticleColorFromId(ParticlesObject::Type typeClass, int particleTypeId);
 
 	/// Returns the default color for a named particle type.
-	static Color getDefaultParticleColor(ParticleProperty::Type typeClass, const QString& particleTypeName, int particleTypeId, bool userDefaults = true);
+	static Color getDefaultParticleColor(ParticlesObject::Type typeClass, const QString& particleTypeName, int particleTypeId, bool userDefaults = true);
 
 	/// Changes the default color for a named particle type.
-	static void setDefaultParticleColor(ParticleProperty::Type typeClass, const QString& particleTypeName, const Color& color);
+	static void setDefaultParticleColor(ParticlesObject::Type typeClass, const QString& particleTypeName, const Color& color);
 
 	/// Returns the default radius for a named particle type.
-	static FloatType getDefaultParticleRadius(ParticleProperty::Type typeClass, const QString& particleTypeName, int particleTypeId, bool userDefaults = true);
+	static FloatType getDefaultParticleRadius(ParticlesObject::Type typeClass, const QString& particleTypeName, int particleTypeId, bool userDefaults = true);
 
 	/// Changes the default radius for a named particle type.
-	static void setDefaultParticleRadius(ParticleProperty::Type typeClass, const QString& particleTypeName, FloatType radius);	
+	static void setDefaultParticleRadius(ParticlesObject::Type typeClass, const QString& particleTypeName, FloatType radius);	
 
 private:
 

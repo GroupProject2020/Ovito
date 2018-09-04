@@ -54,7 +54,7 @@ public:
 	///                                 The interval passed to the method is reduced to the time interval during which the transformation stays constant.
 	/// \return The matrix that transforms from this node's local space to absolute world space.
 	///         This matrix contains also the transformation of the parent node.
-	const AffineTransformation& getWorldTransform(TimePoint time, TimeInterval& validityInterval);
+	const AffineTransformation& getWorldTransform(TimePoint time, TimeInterval& validityInterval) const;
 
 	/// \brief Returns this node's local transformation matrix.
 	/// \param[in] time The animation for which the transformation matrix should be computed.
@@ -65,7 +65,7 @@ public:
 	///
 	/// The local transformation does not contain the object transform of this node and
 	/// does not contain the transformation of the parent node.
-	AffineTransformation getLocalTransform(TimePoint time, TimeInterval& validityInterval);
+	AffineTransformation getLocalTransform(TimePoint time, TimeInterval& validityInterval) const;
 
 	/// \brief Returns the parent node of this node in the scene tree graph.
 	/// \return This node's parent node or \c NULL if this is the root node.
@@ -180,14 +180,14 @@ public:
 	///         the whole node geometry.
 	/// \note The returned box does not contains the bounding boxes of the child nodes.
 	/// \sa worldBoundingBox()
-	virtual Box3 localBoundingBox(TimePoint time, TimeInterval& validity) = 0;
+	virtual Box3 localBoundingBox(TimePoint time, TimeInterval& validity) const = 0;
 
 	/// \brief Returns the bounding box of the scene node in world coordinates.
 	/// \param time The time at which the bounding box should be computed.
 	/// \return An axis-aligned box in the world local coordinate system that contains
 	///         the whole node geometry including the bounding boxes of all child nodes.
 	/// \note The returned box does also contain the bounding boxes of the child nodes.
-	const Box3& worldBoundingBox(TimePoint time);
+	const Box3& worldBoundingBox(TimePoint time) const;
 
 	/// \brief Returns whether this scene node is currently selected.
 	/// \return \c true if this node is part of the current SelectionSet;
@@ -217,7 +217,7 @@ public:
 	}
 
 	/// \brief Returns the title of this object.
-	virtual QString objectTitle() override { return _nodeName; }
+	virtual QString objectTitle() const override { return _nodeName; }
 
 protected:
 
@@ -240,7 +240,7 @@ protected:
 	virtual void loadFromStream(ObjectLoadStream& stream) override;
 
 	/// Creates a copy of this object.
-	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) override;
+	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) const override;
 
 	/// This method marks the world transformation cache as invalid,
 	/// so it will be rebuilt during the next call to getWorldTransform().
@@ -273,17 +273,17 @@ private:
 	
 	/// This node's cached world transformation matrix.
 	/// It contains the transformation of the parent node.
-	AffineTransformation _worldTransform;
+	mutable AffineTransformation _worldTransform;
 
 	/// This time interval indicates for which times the cached world transformation matrix
 	/// has been computed.
-	TimeInterval _worldTransformValidity;
+	mutable TimeInterval _worldTransformValidity;
 
 	/// The cached world bounding box of this node.
-	Box3 _worldBoundingBox;
+	mutable Box3 _worldBoundingBox;
 
 	/// Validity time interval of the cached bounding box.
-	TimeInterval _boundingBoxValidity;
+	mutable TimeInterval _boundingBoxValidity;
 
 	friend class RootSceneNode;
 };

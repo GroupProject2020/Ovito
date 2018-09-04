@@ -23,32 +23,41 @@
 
 
 #include <plugins/grid/Grid.h>
-#include <plugins/stdobj/simcell/PeriodicDomainDataObject.h>
-#include <plugins/stdobj/properties/PropertyObject.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
+#include <plugins/stdobj/properties/PropertyReference.h>
+#include <plugins/stdobj/simcell/SimulationCellObject.h>
 
 namespace Ovito { namespace Grid {
 
 /**
- * \brief This object stores the spatial dimensions of a data grid made of voxels.
+ * \brief This object stores a data grid made of voxels.
  */
-class OVITO_MESH_EXPORT VoxelGrid : public PeriodicDomainDataObject
+class OVITO_GRID_EXPORT VoxelGrid : public PropertyContainer
 {
-	Q_OBJECT
-	OVITO_CLASS(VoxelGrid)
+	/// Define a new property metaclass for voxel property containers.
+	class VoxelGridClass : public PropertyContainerClass 
+	{
+	public:
 	
+		/// Inherit constructor from base class.
+		using PropertyContainerClass::PropertyContainerClass;
+
+	protected:
+
+		/// Is called by the system after construction of the meta-class instance.
+		virtual void initialize() override;
+	};
+
+	Q_OBJECT
+	OVITO_CLASS_META(VoxelGrid, VoxelGridClass);
+
 public:
 
 	/// \brief Constructor.
 	Q_INVOKABLE VoxelGrid(DataSet* dataset);
 
 	/// Returns the title of this object.
-	virtual QString objectTitle() override { return tr("Voxel grid"); }
-
-	/// Appends a property to the list of properties.
-	void addProperty(PropertyObject* property) {
-		OVITO_ASSERT(properties().contains(property) == false);
-		_properties.push_back(this, PROPERTY_FIELD(properties), property);
-	}
+	virtual QString objectTitle() const override { return tr("Voxel grid"); }
 
 protected:
 
@@ -63,9 +72,17 @@ private:
 	/// The shape of the grid (i.e. number of voxels in each dimension).
 	DECLARE_RUNTIME_PROPERTY_FIELD(std::vector<size_t>, shape, setShape);
 
-	/// Holds the list of voxel properties.
-	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD(PropertyObject, properties, setProperties);
+	/// The domain the object is embedded in.
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SimulationCellObject, domain, setDomain, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_NO_SUB_ANIM);
 };
+
+/**
+ * Encapsulates a reference to a voxel grid property. 
+ */
+using VoxelPropertyReference = TypedPropertyReference<VoxelGrid>;
+
 
 }	// End of namespace
 }	// End of namespace
+
+Q_DECLARE_METATYPE(Ovito::Grid::VoxelPropertyReference);

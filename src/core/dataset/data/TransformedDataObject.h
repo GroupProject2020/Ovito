@@ -42,16 +42,16 @@ class OVITO_CORE_EXPORT TransformedDataObject : public DataObject
 public:
 
 	/// \brief Standard constructor.
-	TransformedDataObject(DataSet* dataset) : DataObject(dataset) {}
+	using DataObject::DataObject;
 
 	/// \brief Initialization constructor.
-	TransformedDataObject(TransformingDataVis* creator, DataObject* sourceData) :
+	TransformedDataObject(TransformingDataVis* creator, const DataObject* sourceData) :
 		DataObject(creator->dataset()),
 		_sourceDataObject(sourceData),
 		_visElementRevision(creator->revisionNumber()) 
-		{
-			setVisElement(creator);
-		}
+	{
+		setVisElement(creator);
+	}
 
 private:
 

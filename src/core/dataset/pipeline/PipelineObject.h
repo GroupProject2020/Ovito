@@ -71,6 +71,10 @@ public:
 	
 	/// \brief Given a source frame index, returns the animation time at which it is shown.
 	virtual TimePoint sourceFrameToAnimationTime(int frame) const;
+
+	/// Returns the list of data objects that are managed by this data source (if it is a data source).
+	/// The returned data objects will be displayed as sub-objects of the data source in the pipeline editor.
+	virtual QVector<DataObject*> getSourceDataObjects() const { return {}; }
 		
 private:
 

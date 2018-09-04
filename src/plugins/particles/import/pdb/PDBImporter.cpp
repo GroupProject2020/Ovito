@@ -124,9 +124,9 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 	stream.seek(0);
 
 	// Create the particle properties.
-	PropertyPtr posProperty = ParticleProperty::createStandardStorage(numAtoms, ParticleProperty::PositionProperty, true);
+	PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::PositionProperty, true);
 	frameData->addParticleProperty(posProperty);
-	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(numAtoms, ParticleProperty::TypeProperty, true);
+	PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::TypeProperty, true);
 	frameData->addParticleProperty(typeProperty);
 	ParticleFrameData::TypeList* typeList = frameData->propertyTypesList(typeProperty);
 
@@ -168,7 +168,7 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 			qlonglong atomSerialNumber;
 			if(sscanf(stream.line() + 6, "%5llu", &atomSerialNumber) == 1) {
 				if(!particleIdentifierProperty) {
-					particleIdentifierProperty = ParticleProperty::createStandardStorage(numAtoms, ParticleProperty::IdentifierProperty, true);
+					particleIdentifierProperty = ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::IdentifierProperty, true);
 					frameData->addParticleProperty(particleIdentifierProperty);
 				}
 				particleIdentifierProperty->setInt64(atomIndex, atomSerialNumber);
@@ -184,7 +184,7 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 			qlonglong residueSequenceNumber;
 			if(sscanf(stream.line() + 22, "%4llu", &residueSequenceNumber) == 1) {
 				if(!moleculeIdentifierProperty) {
-					moleculeIdentifierProperty = ParticleProperty::createStandardStorage(numAtoms, ParticleProperty::MoleculeProperty, true);
+					moleculeIdentifierProperty = ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::MoleculeProperty, true);
 					frameData->addParticleProperty(moleculeIdentifierProperty);
 				}
 				moleculeIdentifierProperty->setInt64(atomIndex, residueSequenceNumber);
@@ -197,7 +197,7 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 				if(*c != ' ') moleculeType[moleculeTypeLength++] = *c;
 			if(moleculeTypeLength != 0) {
 				if(!moleculeTypeProperty) {
-					moleculeTypeProperty = ParticleProperty::createStandardStorage(numAtoms, ParticleProperty::MoleculeTypeProperty, true);
+					moleculeTypeProperty = ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::MoleculeTypeProperty, true);
 					frameData->addParticleProperty(moleculeTypeProperty);
 					moleculeTypeList = frameData->propertyTypesList(moleculeTypeProperty);
 				}
@@ -232,7 +232,7 @@ FileSourceImporter::FrameDataPtr PDBImporter::FrameLoader::loadFile(QFile& file)
 					if(atomIndex1 >= particleIdentifierProperty->size() || atomIndex2 >= particleIdentifierProperty->size())
 						throw Exception(tr("Nonexistent atom ID encountered in line %1 of PDB file.").arg(stream.lineNumber()));
 					if(!bondTopologyProperty) {
-						bondTopologyProperty = BondProperty::createStandardStorage(1, BondProperty::TopologyProperty, false);
+						bondTopologyProperty = BondsObject::OOClass().createStandardStorage(1, BondsObject::TopologyProperty, false);
 						frameData->addBondProperty(bondTopologyProperty);
 					}
 					else {

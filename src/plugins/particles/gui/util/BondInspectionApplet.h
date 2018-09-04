@@ -24,6 +24,7 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <plugins/particles/gui/util/BondPickingHelper.h>
+#include <plugins/particles/objects/BondsObject.h>
 #include <plugins/particles/util/ParticleExpressionEvaluator.h>
 #include <plugins/stdobj/gui/properties/PropertyInspectionApplet.h>
 #include <gui/viewport/input/ViewportInputMode.h>
@@ -45,7 +46,7 @@ class BondInspectionApplet : public PropertyInspectionApplet
 public:
 
 	/// Constructor.
-	Q_INVOKABLE BondInspectionApplet() : PropertyInspectionApplet(BondProperty::OOClass()) {}
+	Q_INVOKABLE BondInspectionApplet() : PropertyInspectionApplet(BondsObject::OOClass()) {}
 
 	/// Returns the key value for this applet that is used for ordering the applet tabs.
 	virtual int orderingKey() const override { return 10; }
@@ -68,7 +69,7 @@ protected:
 
 	/// Determines whether the given property represents a color.
 	virtual bool isColorProperty(PropertyObject* property) const override {
-		return property->type() == BondProperty::ColorProperty;
+		return property->type() == BondsObject::ColorProperty;
 	}
 
 private:

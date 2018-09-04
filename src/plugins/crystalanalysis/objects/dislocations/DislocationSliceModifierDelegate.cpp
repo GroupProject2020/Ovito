@@ -21,8 +21,8 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
-#include <plugins/stdobj/util/OutputHelper.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
+#include <core/dataset/DataSet.h>
 #include "DislocationSliceModifierDelegate.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
@@ -43,10 +43,8 @@ PipelineStatus DislocationSliceModifierDelegate::apply(Modifier* modifier, const
 	FloatType sliceWidth;
 	std::tie(plane, sliceWidth) = mod->slicingPlane(time, output.mutableStateValidity());
 	
-	OutputHelper oh(dataset(), output, modApp);
-	for(DataObject* obj : output.objects()) {
-		if(DislocationNetworkObject* inputDislocations = dynamic_object_cast<DislocationNetworkObject>(obj)) {
-			DislocationNetworkObject* outputDislocations = oh.cloneIfNeeded(inputDislocations);
+	for(const DataObject* obj : output.objects()) {
+		if(const DislocationNetworkObject* inputDislocations = dynamic_object_cast<DislocationNetworkObject>(obj)) {
 			QVector<Plane3> planes = inputDislocations->cuttingPlanes();
 			if(sliceWidth <= 0) {
 				planes.push_back(plane);
@@ -55,6 +53,7 @@ PipelineStatus DislocationSliceModifierDelegate::apply(Modifier* modifier, const
 				planes.push_back(Plane3(plane.normal, plane.dist + sliceWidth/2));
 				planes.push_back(Plane3(-plane.normal, -plane.dist + sliceWidth/2));
 			}
+			DislocationNetworkObject* outputDislocations = output.makeMutable(inputDislocations);
 			outputDislocations->setCuttingPlanes(std::move(planes));
 		}
 	}

@@ -61,7 +61,7 @@ public:
 	Q_INVOKABLE XYZImporter(DataSet* dataset) : ParticleImporter(dataset), _autoRescaleCoordinates(true) {}
 
 	/// Returns the title of this object.
-	virtual QString objectTitle() override { return tr("XYZ File"); }
+	virtual QString objectTitle() const override { return tr("XYZ File"); }
 
 	/// \brief Returns the user-defined mapping between data columns in the input file and
 	///        the internal particle properties.
@@ -162,7 +162,7 @@ protected:
 	virtual void loadFromStream(ObjectLoadStream& stream) override;
 
 	/// \brief Creates a copy of this object.
-	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) override;
+	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) const override;
 
 private:
 

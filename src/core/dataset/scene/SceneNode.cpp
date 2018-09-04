@@ -66,7 +66,7 @@ SceneNode::SceneNode(DataSet* dataset) : RefTarget(dataset),
 * Returns this node's world transformation matrix.
 * This matrix contains the transformation of the parent node.
 ******************************************************************************/
-const AffineTransformation& SceneNode::getWorldTransform(TimePoint time, TimeInterval& validityInterval)
+const AffineTransformation& SceneNode::getWorldTransform(TimePoint time, TimeInterval& validityInterval) const
 {
 	if(!_worldTransformValidity.contains(time)) {
 		_worldTransformValidity.setInfinite();
@@ -88,7 +88,7 @@ const AffineTransformation& SceneNode::getWorldTransform(TimePoint time, TimeInt
 * This matrix  does not contain the ObjectTransform of this node and
 * does not contain the transformation of the parent node.
 ******************************************************************************/
-AffineTransformation SceneNode::getLocalTransform(TimePoint time, TimeInterval& validityInterval)
+AffineTransformation SceneNode::getLocalTransform(TimePoint time, TimeInterval& validityInterval) const
 {
 	AffineTransformation result = AffineTransformation::Identity();
 	if(transformationController())
@@ -352,7 +352,7 @@ void SceneNode::loadFromStream(ObjectLoadStream& stream)
 /******************************************************************************
 * Creates a copy of this object.
 ******************************************************************************/
-OORef<RefTarget> SceneNode::clone(bool deepCopy, CloneHelper& cloneHelper)
+OORef<RefTarget> SceneNode::clone(bool deepCopy, CloneHelper& cloneHelper) const
 {
 	// Let the base class create an instance of this class.
 	OORef<SceneNode> clone = static_object_cast<SceneNode>(RefTarget::clone(deepCopy, cloneHelper));
@@ -377,7 +377,7 @@ OORef<RefTarget> SceneNode::clone(bool deepCopy, CloneHelper& cloneHelper)
 * Returns the bounding box of the scene node in world coordinates.
 *    time - The time at which the bounding box should be returned.
 ******************************************************************************/
-const Box3& SceneNode::worldBoundingBox(TimePoint time)
+const Box3& SceneNode::worldBoundingBox(TimePoint time) const
 {
     if(_boundingBoxValidity.contains(time))
 		return _worldBoundingBox;

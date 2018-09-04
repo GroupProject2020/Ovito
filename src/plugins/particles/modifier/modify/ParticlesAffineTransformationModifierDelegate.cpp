@@ -20,8 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
@@ -37,7 +36,7 @@ IMPLEMENT_OVITO_CLASS(VectorParticlePropertiesAffineTransformationModifierDelega
 ******************************************************************************/
 bool ParticlesAffineTransformationModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<ParticleProperty>() != nullptr;
+	return input.containsObject<ParticlesObject>();
 }
 
 /******************************************************************************
@@ -45,43 +44,43 @@ bool ParticlesAffineTransformationModifierDelegate::OOMetaClass::isApplicableTo(
 ******************************************************************************/
 PipelineStatus ParticlesAffineTransformationModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
-	AffineTransformationModifier* mod = static_object_cast<AffineTransformationModifier>(modifier);
+	if(const ParticlesObject* inputParticles = output.getObject<ParticlesObject>()) {
+		
+		// Make sure we can safely modify the particles object.
+		ParticlesObject* outputParticles = output.makeMutable(inputParticles);
+		
+		// Create a modifiable copy of the particle position.
+		PropertyObject* posProperty = outputParticles->createProperty(ParticlesObject::PositionProperty, true);
 
-	ParticleInputHelper pih(dataset(), input);
-	ParticleOutputHelper poh(dataset(), output, modApp);
-	
-	if(!pih.inputStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty))
-		return PipelineStatus::Success;
-
-	ParticleProperty* posProperty = poh.outputStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty, true);
-
-	AffineTransformation tm;
-	if(mod->relativeMode())
-		tm = mod->transformationTM();
-	else
-		tm = mod->targetCell() * pih.expectSimulationCell()->cellMatrix().inverse();
-	
-	if(mod->selectionOnly()) {
-		ParticleProperty* selProperty = pih.inputStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty);
-		if(selProperty) {
-			const int* s = selProperty->constDataInt();
-			for(Point3& p : posProperty->point3Range()) {
-				if(*s++)
-					p = tm * p;
+		// Determine transformation matrix.
+		AffineTransformationModifier* mod = static_object_cast<AffineTransformationModifier>(modifier);
+		AffineTransformation tm;
+		if(mod->relativeMode())
+			tm = mod->transformationTM();
+		else
+			tm = mod->targetCell() * input.expectObject<SimulationCellObject>()->cellMatrix().inverse();
+		
+		if(mod->selectionOnly()) {
+			if(const PropertyObject* selProperty = inputParticles->getProperty(ParticlesObject::SelectionProperty)) {
+				const int* s = selProperty->constDataInt();
+				for(Point3& p : posProperty->point3Range()) {
+					if(*s++)
+						p = tm * p;
+				}
 			}
 		}
-	}
-	else {
-		// Check if the matrix describes a pure translation. If yes, we can
-		// simply add vectors instead of computing full matrix products.
-		Vector3 translation = tm.translation();
-		if(tm == AffineTransformation::translation(translation)) {
-			for(Point3& p : posProperty->point3Range())
-				p += translation;
-		}
 		else {
-			for(Point3& p : posProperty->point3Range())
-				p = tm * p;
+			// Check if the matrix describes a pure translation. If yes, we can
+			// simply add vectors instead of computing full matrix products.
+			Vector3 translation = tm.translation();
+			if(tm == AffineTransformation::translation(translation)) {
+				for(Point3& p : posProperty->point3Range())
+					p += translation;
+			}
+			else {
+				for(Point3& p : posProperty->point3Range())
+					p = tm * p;
+			}
 		}
 	}
 	
@@ -93,8 +92,8 @@ PipelineStatus ParticlesAffineTransformationModifierDelegate::apply(Modifier* mo
 ******************************************************************************/
 bool VectorParticlePropertiesAffineTransformationModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	for(DataObject* obj : input.objects()) {
-		if(ParticleProperty* property = dynamic_object_cast<ParticleProperty>(obj)) {
+	if(const ParticlesObject* particles = input.getObject<ParticlesObject>()) {
+		for(const PropertyObject* property : particles->properties()) {
 			if(isTransformableProperty(property))
 				return true;
 		}
@@ -105,11 +104,11 @@ bool VectorParticlePropertiesAffineTransformationModifierDelegate::OOMetaClass::
 /******************************************************************************
 * Decides if the given particle property is one that should be transformed.
 ******************************************************************************/
-bool VectorParticlePropertiesAffineTransformationModifierDelegate::isTransformableProperty(ParticleProperty* property)
+bool VectorParticlePropertiesAffineTransformationModifierDelegate::isTransformableProperty(const PropertyObject* property)
 {
-	return property->type() == ParticleProperty::VelocityProperty ||
-		property->type() == ParticleProperty::ForceProperty ||
-		property->type() == ParticleProperty::DisplacementProperty;
+	return property->type() == ParticlesObject::VelocityProperty ||
+		property->type() == ParticlesObject::ForceProperty ||
+		property->type() == ParticlesObject::DisplacementProperty;
 }
 
 /******************************************************************************
@@ -117,22 +116,23 @@ bool VectorParticlePropertiesAffineTransformationModifierDelegate::isTransformab
 ******************************************************************************/
 PipelineStatus VectorParticlePropertiesAffineTransformationModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
+	// Determine transformation matrix.
 	AffineTransformationModifier* mod = static_object_cast<AffineTransformationModifier>(modifier);
-
-	ParticleInputHelper pih(dataset(), input);
-	ParticleOutputHelper poh(dataset(), output, modApp);
-	
 	AffineTransformation tm;
 	if(mod->relativeMode())
 		tm = mod->transformationTM();
 	else
-		tm = mod->targetCell() * pih.expectSimulationCell()->cellMatrix().inverse();
+		tm = mod->targetCell() * input.expectObject<SimulationCellObject>()->cellMatrix().inverse();
 	
-	for(DataObject* obj : output.objects()) {
-		if(ParticleProperty* inputProperty = dynamic_object_cast<ParticleProperty>(obj)) {
+	if(OORef<ParticlesObject> inputParticles = output.getObject<ParticlesObject>()) {
+			
+		for(const PropertyObject* inputProperty : inputParticles->properties()) {
 			if(isTransformableProperty(inputProperty)) {
 
-				PropertyStorage* property = poh.cloneIfNeeded(inputProperty)->modifiableStorage().get();
+				// Make sure we can safely modify the particles object.
+				ParticlesObject* outputParticles = output.makeMutable(inputParticles.get());
+
+				PropertyStorage* property = outputParticles->makeMutable(inputProperty)->modifiableStorage().get();
 				OVITO_ASSERT(property->dataType() == PropertyStorage::Float);
 				OVITO_ASSERT(property->componentCount() == 3);
 				if(!mod->selectionOnly()) {
@@ -140,8 +140,7 @@ PipelineStatus VectorParticlePropertiesAffineTransformationModifierDelegate::app
 						v = tm * v;
 				}
 				else {
-					ParticleProperty* selProperty = pih.inputStandardProperty<ParticleProperty>(ParticleProperty::SelectionProperty);
-					if(selProperty) {
+					if(const PropertyObject* selProperty = inputParticles->getProperty(ParticlesObject::SelectionProperty)) {
 						const int* s = selProperty->constDataInt();
 						for(Vector3& v : property->vector3Range()) {
 							if(*s++)

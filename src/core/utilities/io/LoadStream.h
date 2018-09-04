@@ -381,6 +381,32 @@ inline LoadStream& operator>>(LoadStream& stream, QUrl& url)
 	return stream;
 }
 
+/// \brief Reads a reference to an OvitoObject derived class type from the input stream.
+/// \relates LoadStream
+///
+/// \param stream The source stream.
+/// \param clazz Reference to the class pointer that the will receive the loaded data.
+/// \return The source stream.
+/// \throw Exception if an I/O error has occurred.
+extern OVITO_CORE_EXPORT LoadStream& operator>>(LoadStream& stream, OvitoClassPtr& clazz);
+
+/// \brief Reads a reference to an OvitoObject derived class type from the input stream.
+/// \relates LoadStream
+///
+/// \param stream The source stream.
+/// \param clazz Reference to the class pointer that the will receive the loaded data.
+/// \return The source stream.
+/// \throw Exception if an I/O error has occurred.
+template<class OvitoSubclass>
+auto operator>>(LoadStream& stream, OvitoSubclass const*& clazz)
+	-> std::enable_if_t<std::is_base_of<OvitoClass, OvitoSubclass>::value, LoadStream&>
+{
+	OvitoClassPtr ptr;
+	stream >> ptr;
+	clazz = static_cast<OvitoSubclass const*>(ptr);
+	return stream;
+}
+
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

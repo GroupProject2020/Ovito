@@ -21,6 +21,7 @@
 
 #include <plugins/stdobj/StdObj.h>
 #include <plugins/stdobj/properties/PropertyObject.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/app/Application.h>
 #include "PropertyExpressionEvaluator.h"
@@ -36,22 +37,17 @@ QByteArray PropertyExpressionEvaluator::_validVariableNameChars("0123456789_abcd
 * Specifies the expressions to be evaluated for each data element and create the
 * list of input variables.
 ******************************************************************************/
-void PropertyExpressionEvaluator::initialize(const QStringList& expressions, const PipelineFlowState& inputState, const PropertyClass& propertyClass, const QString& bundleName, int animationFrame)
+void PropertyExpressionEvaluator::initialize(const QStringList& expressions, const PipelineFlowState& inputState, const PropertyContainer* container, int animationFrame)
 {
 	// Build list of properties that will be made available as expression variables.
 	std::vector<ConstPropertyPtr> inputProperties;
-	for(DataObject* obj : inputState.objects()) {
-		if(PropertyObject* property = dynamic_object_cast<PropertyObject>(obj)) {
-			if(propertyClass.isMember(property) && property->belongsToBundle(bundleName)) {
-				inputProperties.push_back(property->storage());
-			}
-		}
-	}
-	_elementDescriptionName = propertyClass.elementDescriptionName();
+	for(const PropertyObject* property : container->properties())
+		inputProperties.push_back(property->storage());
+	_elementDescriptionName = container->getOOMetaClass().elementDescriptionName();
 
 	// Get simulation cell information.
 	SimulationCell simCell;
-	SimulationCellObject* simCellObj = inputState.findObjectOfType<SimulationCellObject>();
+	const SimulationCellObject* simCellObj = inputState.getObject<SimulationCellObject>();
 	if(simCellObj) simCell = simCellObj->data();
 
 	// Call overloaded function.

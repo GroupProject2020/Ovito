@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/particles/objects/TrajectoryObject.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
@@ -75,7 +75,7 @@ GenerateTrajectoryLinesModifier::GenerateTrajectoryLinesModifier(DataSet* datase
 ******************************************************************************/
 bool GenerateTrajectoryLinesModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<ParticleProperty>() != nullptr;
+	return input.containsObject<ParticlesObject>();
 }
 
 /******************************************************************************
@@ -112,11 +112,12 @@ bool GenerateTrajectoryLinesModifier::generateTrajectories(TaskManager& taskMana
 			return false;
 
 		const PipelineFlowState& state = stateFuture.result();
-		ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
-		ParticleProperty* selectionProperty = ParticleProperty::findInState(state, ParticleProperty::SelectionProperty);
-		ParticleProperty* identifierProperty = ParticleProperty::findInState(state, ParticleProperty::IdentifierProperty);
-		if(!posProperty)
+		const ParticlesObject* particles = state.getObject<ParticlesObject>();
+		if(!particles)
 			throwException(tr("Cannot generate trajectory lines. The pipeline input contains no particles."));
+		const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
+		const PropertyObject* selectionProperty = particles->getProperty(ParticlesObject::SelectionProperty);
+		const PropertyObject* identifierProperty = particles->getProperty(ParticlesObject::IdentifierProperty);
 
 		// Determine set of input particles.
 		std::vector<size_t> selectedIndices;
@@ -182,15 +183,16 @@ bool GenerateTrajectoryLinesModifier::generateTrajectories(TaskManager& taskMana
 				return false;
 		
 			const PipelineFlowState& state = stateFuture.result();
-			ParticleProperty* posProperty = ParticleProperty::findInState(state, ParticleProperty::PositionProperty);
-			if(!posProperty)
+			const ParticlesObject* particles = state.getObject<ParticlesObject>();
+			if(!particles)
 				throwException(tr("Input particle set is empty at frame %1.").arg(dataset()->animationSettings()->timeToFrame(time)));
+			const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 
 			if(!onlySelectedParticles() && posProperty->size() != particleCount)
 				throwException(tr("The current program version cannot create trajectory lines when the number of particles changes over time."));
 
 			if(!selectedIdentifiers.empty()) {
-				ParticleProperty* identifierProperty = ParticleProperty::findInState(state, ParticleProperty::IdentifierProperty);
+				const PropertyObject* identifierProperty = particles->getProperty(ParticlesObject::IdentifierProperty);
 				if(!identifierProperty || identifierProperty->size() != posProperty->size())
 					throwException(tr("Input particles do not possess identifiers at frame %1.").arg(dataset()->animationSettings()->timeToFrame(time)));
 
@@ -217,8 +219,8 @@ bool GenerateTrajectoryLinesModifier::generateTrajectories(TaskManager& taskMana
 
 			// Unwrap trajectory points at periodic boundaries of the simulation cell.
 			if(unwrapTrajectories() && points.size() > particleCount) {
-				if(SimulationCellObject* simCellObj = state.findObjectOfType<SimulationCellObject>()) {
-					SimulationCell cell = simCellObj->data();
+				if(const SimulationCellObject* simCellObj = state.getObject<SimulationCellObject>()) {
+					const SimulationCell& cell = simCellObj->data();
 					if(cell.pbcFlags() != std::array<bool,3>{false, false, false}) {
 						auto previousPos = points.cbegin() + (points.size() - 2 * particleCount);
 						auto currentPos = points.begin() + (points.size() - particleCount);

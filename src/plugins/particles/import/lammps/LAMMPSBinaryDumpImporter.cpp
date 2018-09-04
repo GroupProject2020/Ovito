@@ -424,7 +424,7 @@ FileSourceImporter::FrameDataPtr LAMMPSBinaryDumpImporter::FrameLoader::loadFile
 	// Sort the particle type list since we created particles on the go and their order depends on the occurrence of types in the file.
 	columnParser.sortParticleTypes();
 
-	PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticleProperty::PositionProperty);
+	PropertyPtr posProperty = frameData->findStandardParticleProperty(ParticlesObject::PositionProperty);
 	if(posProperty && posProperty->size() > 0) {
 		Box3 boundingBox;
 		boundingBox.addPoints(posProperty->constDataPoint3(), posProperty->size());
@@ -480,7 +480,7 @@ void LAMMPSBinaryDumpImporter::loadFromStream(ObjectLoadStream& stream)
 /******************************************************************************
  * Creates a copy of this object.
  *****************************************************************************/
-OORef<RefTarget> LAMMPSBinaryDumpImporter::clone(bool deepCopy, CloneHelper& cloneHelper)
+OORef<RefTarget> LAMMPSBinaryDumpImporter::clone(bool deepCopy, CloneHelper& cloneHelper) const
 {
 	// Let the base class create an instance of this class.
 	OORef<LAMMPSBinaryDumpImporter> clone = static_object_cast<LAMMPSBinaryDumpImporter>(ParticleImporter::clone(deepCopy, cloneHelper));

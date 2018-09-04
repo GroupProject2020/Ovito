@@ -24,6 +24,7 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/modifier/dxa/DislocationAnalysisModifier.h>
+#include <plugins/stdobj/series/DataSeriesObject.h>
 #include <gui/properties/ModifierPropertiesEditor.h>
 #include <gui/properties/RefTargetListParameterUI.h>
 
@@ -48,6 +49,9 @@ public:
 		// Clear initial selection by default.
 		tableWidget()->selectionModel()->clear();
 	}
+
+	/// Obtains the current statistics from the pipeline. 
+	void updateDislocationCounts(const PipelineFlowState& state, ModifierApplication* modApp);
 
 protected:
 
@@ -75,13 +79,15 @@ protected:
 	/// Do not open sub-editor for selected structure type.
 	virtual void openSubEditor() override {}
 
-	/// This method is called when a reference target changes.
-	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
-
 protected Q_SLOTS:
 
 	/// Is called when the user has double-clicked on one of the dislocation types in the list widget.
 	void onDoubleClickDislocationType(const QModelIndex& index);
+
+private:
+
+	OORef<DataSeriesObject> _dislocationLengths;
+	OORef<DataSeriesObject> _dislocationCounts;
 };
 
 /**

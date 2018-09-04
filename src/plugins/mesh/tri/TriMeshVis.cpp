@@ -49,10 +49,10 @@ TriMeshVis::TriMeshVis(DataSet* dataset) : DataVis(dataset),
 /******************************************************************************
 * Computes the bounding box of the object.
 ******************************************************************************/
-Box3 TriMeshVis::boundingBox(TimePoint time, const std::vector<DataObject*>& objectStack, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
+Box3 TriMeshVis::boundingBox(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
 	// Compute bounding box.
-	if(OORef<TriMeshObject> triMeshObj = objectStack.back()->convertTo<TriMeshObject>(time))
+	if(const TriMeshObject* triMeshObj = dynamic_object_cast<TriMeshObject>(objectStack.back()))
 		return triMeshObj->mesh().boundingBox();
 	else
 		return Box3();
@@ -61,7 +61,7 @@ Box3 TriMeshVis::boundingBox(TimePoint time, const std::vector<DataObject*>& obj
 /******************************************************************************
 * Lets the vis element render a data object.
 ******************************************************************************/
-void TriMeshVis::render(TimePoint time, const std::vector<DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
+void TriMeshVis::render(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, const PipelineSceneNode* contextNode)
 {
 	if(!renderer->isBoundingBoxPass()) {
 
@@ -83,7 +83,7 @@ void TriMeshVis::render(TimePoint time, const std::vector<DataObject*>& objectSt
 		// Check if we already have a valid rendering primitive that is up to date.
 		if(!meshPrimitive || !meshPrimitive->isValid(renderer)) {
 			meshPrimitive = renderer->createMeshPrimitive();
-			if(OORef<TriMeshObject> triMeshObj = objectStack.back()->convertTo<TriMeshObject>(time))
+			if(const TriMeshObject* triMeshObj = dynamic_object_cast<TriMeshObject>(objectStack.back()))
 				meshPrimitive->setMesh(triMeshObj->mesh(), color_mesh);
 			else
 				meshPrimitive->setMesh(TriMesh(), ColorA(1,1,1,1));

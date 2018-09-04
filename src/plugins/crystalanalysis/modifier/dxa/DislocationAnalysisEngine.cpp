@@ -21,11 +21,12 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/util/DelaunayTessellation.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
 #include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
+#include <plugins/stdobj/series/DataSeriesObject.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
+#include <core/dataset/DataSet.h>
 #include "DislocationAnalysisEngine.h"
 #include "DislocationAnalysisModifier.h"
 
@@ -264,41 +265,35 @@ PipelineFlowState DislocationAnalysisEngine::emitResults(TimePoint time, Modifie
 	DislocationAnalysisModifier* modifier = static_object_cast<DislocationAnalysisModifier>(modApp->modifier());
 	
 	PipelineFlowState output = StructureIdentificationEngine::emitResults(time, modApp, input);
-	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
 
 	// Output defect mesh.
-	OORef<SurfaceMesh> defectMeshObj(new SurfaceMesh(modApp->dataset()));
+	SurfaceMesh* defectMeshObj = output.createObject<SurfaceMesh>(modApp);
 	defectMeshObj->setStorage(defectMesh());
 	defectMeshObj->setIsCompletelySolid(isBadEverywhere());	
-	defectMeshObj->setDomain(input.findObjectOfType<SimulationCellObject>());
+	defectMeshObj->setDomain(input.getObject<SimulationCellObject>());
 	defectMeshObj->setVisElement(modifier->defectMeshVis());
-	poh.outputObject(defectMeshObj);
 
 	// Output interface mesh.
 	if(outputInterfaceMesh()) {
-		OORef<SurfaceMesh> interfaceMeshObj(new SurfaceMesh(modApp->dataset()));
+		SurfaceMesh* interfaceMeshObj = output.createObject<SurfaceMesh>(modApp);
 		interfaceMeshObj->setStorage(outputInterfaceMesh());
 		interfaceMeshObj->setIsCompletelySolid(isBadEverywhere());
-		interfaceMeshObj->setDomain(input.findObjectOfType<SimulationCellObject>());
+		interfaceMeshObj->setDomain(input.getObject<SimulationCellObject>());
 		interfaceMeshObj->setVisElement(modifier->interfaceMeshVis());
-		poh.outputObject(interfaceMeshObj);
 	}
 
 	// Output cluster graph.
-	OORef<ClusterGraphObject> clusterGraphObj(new ClusterGraphObject(modApp->dataset()));
-	clusterGraphObj->setStorage(clusterGraph());
-	if(ClusterGraphObject* oldClusterGraph = output.findObjectOfType<ClusterGraphObject>())
+	if(const ClusterGraphObject* oldClusterGraph = output.getObject<ClusterGraphObject>())
 		output.removeObject(oldClusterGraph);
-	poh.outputObject(clusterGraphObj);
+	ClusterGraphObject* clusterGraphObj = output.createObject<ClusterGraphObject>(modApp);
+	clusterGraphObj->setStorage(clusterGraph());
 
 	// Output dislocations.
-	OORef<DislocationNetworkObject> dislocationsObj(new DislocationNetworkObject(modApp->dataset()));
+	DislocationNetworkObject* dislocationsObj = output.createObject<DislocationNetworkObject>(modApp);
 	dislocationsObj->setStorage(dislocationNetwork());
-	dislocationsObj->setDomain(input.findObjectOfType<SimulationCellObject>());
+	dislocationsObj->setDomain(input.getObject<SimulationCellObject>());
 	dislocationsObj->setVisElement(modifier->dislocationVis());
-	poh.outputObject(dislocationsObj);
 
-#if 0
 	std::map<BurgersVectorFamily*,FloatType> dislocationLengths;
 	std::map<BurgersVectorFamily*,int> segmentCounts;
 	std::map<BurgersVectorFamily*,StructurePattern*> dislocationStructurePatterns;
@@ -306,16 +301,15 @@ PipelineFlowState DislocationAnalysisEngine::emitResults(TimePoint time, Modifie
 	if(defaultPattern) {
 		for(BurgersVectorFamily* family : defaultPattern->burgersVectorFamilies()) {
 			dislocationLengths[family] = 0;
+			segmentCounts[family] = 0;
 			dislocationStructurePatterns[family] = defaultPattern;
 		}
 	}
-#endif
 	
 	// Classify, count and measure length of dislocation segments.
 	FloatType totalLineLength = 0;
 	int totalSegmentCount = 0;
-#if 0
-	for(DislocationSegment* segment : dislocationsObj->storage()->segments()) {
+	for(const DislocationSegment* segment : dislocationsObj->storage()->segments()) {
 		FloatType len = segment->calculateLength();
 		totalLineLength += len;
 		totalSegmentCount++;
@@ -335,27 +329,50 @@ PipelineFlowState DislocationAnalysisEngine::emitResults(TimePoint time, Modifie
 		dislocationLengths[family] += len;
 		dislocationStructurePatterns[family] = pattern;
 	}
-#endif
+
+	// Output a data series object with the dislocation line lengths.
+	int maxId = 0;
+	for(const auto& entry : dislocationLengths)
+		maxId = std::max(maxId, entry.first->id());
+	PropertyPtr dislocationLengthsProperty = std::make_shared<PropertyStorage>(maxId+1, PropertyStorage::Float, 1, 0, DislocationAnalysisModifier::tr("Total line length"), true, DataSeriesObject::YProperty);
+	for(const auto& entry : dislocationLengths)
+		dislocationLengthsProperty->setFloat(entry.first->id(), entry.second);
+	DataSeriesObject* lengthSeriesObj = output.createObject<DataSeriesObject>(QStringLiteral("disloc_lengths"), modApp, DislocationAnalysisModifier::tr("Dislocation lengths"));
+	PropertyObject* yProperty = lengthSeriesObj->createProperty(dislocationLengthsProperty);
+	for(const auto& entry : dislocationLengths)
+		yProperty->addElementType(entry.first);
+	lengthSeriesObj->setAxisLabelX(DislocationAnalysisModifier::tr("Dislocation type"));	
+
+	// Output a data series object with the dislocation segment counts.
+	PropertyPtr dislocationCountsProperty = std::make_shared<PropertyStorage>(maxId+1, PropertyStorage::Int, 1, 0, DislocationAnalysisModifier::tr("Segment count"), true, DataSeriesObject::YProperty);
+	for(const auto& entry : segmentCounts)
+		dislocationCountsProperty->setInt(entry.first->id(), entry.second);
+	DataSeriesObject* countSeriesObj = output.createObject<DataSeriesObject>(QStringLiteral("disloc_counts"), modApp, DislocationAnalysisModifier::tr("Dislocation counts"));
+	yProperty = countSeriesObj->createProperty(dislocationCountsProperty);
+	for(const auto& entry : segmentCounts)
+		yProperty->addElementType(entry.first);
+	countSeriesObj->setAxisLabelX(DislocationAnalysisModifier::tr("Dislocation type"));	
 
 	// Output pattern catalog.
 	if(modifier->patternCatalog()) {
-		if(PatternCatalog* oldCatalog = output.findObjectOfType<PatternCatalog>())
+		if(const PatternCatalog* oldCatalog = output.getObject<PatternCatalog>())
 			output.removeObject(oldCatalog);
-		poh.outputObject(modifier->patternCatalog());
+		output.addObject(modifier->patternCatalog());
 	}
 
 	// Output particle properties.
-	if(atomClusters())
-		poh.outputProperty<ParticleProperty>(atomClusters());
+	if(atomClusters()) {
+		ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+		particles->createProperty(atomClusters());
+	}
 
-	poh.outputAttribute(QStringLiteral("DislocationAnalysis.total_line_length"), QVariant::fromValue(totalLineLength));
-	poh.outputAttribute(QStringLiteral("DislocationAnalysis.counts.OTHER"), QVariant::fromValue(getTypeCount(StructureAnalysis::LATTICE_OTHER)));
-	poh.outputAttribute(QStringLiteral("DislocationAnalysis.counts.FCC"), QVariant::fromValue(getTypeCount(StructureAnalysis::LATTICE_FCC)));
-	poh.outputAttribute(QStringLiteral("DislocationAnalysis.counts.HCP"), QVariant::fromValue(getTypeCount(StructureAnalysis::LATTICE_HCP)));
-	poh.outputAttribute(QStringLiteral("DislocationAnalysis.counts.BCC"), QVariant::fromValue(getTypeCount(StructureAnalysis::LATTICE_BCC)));
-	poh.outputAttribute(QStringLiteral("DislocationAnalysis.counts.CubicDiamond"), QVariant::fromValue(getTypeCount(StructureAnalysis::LATTICE_CUBIC_DIAMOND)));
-	poh.outputAttribute(QStringLiteral("DislocationAnalysis.counts.HexagonalDiamond"), QVariant::fromValue(getTypeCount(StructureAnalysis::LATTICE_HEX_DIAMOND)));
-#if 0
+	output.addAttribute(QStringLiteral("DislocationAnalysis.total_line_length"), QVariant::fromValue(totalLineLength), modApp);
+	output.addAttribute(QStringLiteral("DislocationAnalysis.counts.OTHER"), QVariant::fromValue(getTypeCount(StructureAnalysis::LATTICE_OTHER)), modApp);
+	output.addAttribute(QStringLiteral("DislocationAnalysis.counts.FCC"), QVariant::fromValue(getTypeCount(StructureAnalysis::LATTICE_FCC)), modApp);
+	output.addAttribute(QStringLiteral("DislocationAnalysis.counts.HCP"), QVariant::fromValue(getTypeCount(StructureAnalysis::LATTICE_HCP)), modApp);
+	output.addAttribute(QStringLiteral("DislocationAnalysis.counts.BCC"), QVariant::fromValue(getTypeCount(StructureAnalysis::LATTICE_BCC)), modApp);
+	output.addAttribute(QStringLiteral("DislocationAnalysis.counts.CubicDiamond"), QVariant::fromValue(getTypeCount(StructureAnalysis::LATTICE_CUBIC_DIAMOND)), modApp);
+	output.addAttribute(QStringLiteral("DislocationAnalysis.counts.HexagonalDiamond"), QVariant::fromValue(getTypeCount(StructureAnalysis::LATTICE_HEX_DIAMOND)), modApp);
 
 	for(const auto& dlen : dislocationLengths) {
 		StructurePattern* pattern = dislocationStructurePatterns[dlen.first];
@@ -367,10 +384,9 @@ PipelineFlowState DislocationAnalysisEngine::emitResults(TimePoint time, Modifie
 			bstr.replace(QChar(']'), QChar('>'));
 		}
 		else bstr = "other";
-		poh.outputAttribute(QStringLiteral("DislocationAnalysis.length.%1").arg(bstr), QVariant::fromValue(dlen.second));
+		output.addAttribute(QStringLiteral("DislocationAnalysis.length.%1").arg(bstr), QVariant::fromValue(dlen.second), modApp);
 	}
-#endif
-	poh.outputAttribute(QStringLiteral("DislocationAnalysis.cell_volume"), QVariant::fromValue(simCellVolume()));
+	output.addAttribute(QStringLiteral("DislocationAnalysis.cell_volume"), QVariant::fromValue(simCellVolume()), modApp);
 
 	if(totalSegmentCount == 0)
 		output.setStatus(PipelineStatus(PipelineStatus::Success, DislocationAnalysisModifier::tr("No dislocations found")));

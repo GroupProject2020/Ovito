@@ -20,8 +20,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/modifier/ParticleInputHelper.h>
-#include <plugins/particles/modifier/ParticleOutputHelper.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/utilities/concurrent/ParallelFor.h>
@@ -56,30 +54,30 @@ CalculateDisplacementsModifier::CalculateDisplacementsModifier(DataSet* dataset)
 ******************************************************************************/
 Future<AsynchronousModifier::ComputeEnginePtr> CalculateDisplacementsModifier::createEngineWithReference(TimePoint time, ModifierApplication* modApp, PipelineFlowState input, const PipelineFlowState& referenceState, TimeInterval validityInterval)
 {
-	ParticleInputHelper pih(dataset(), input);
-
 	// Get the current particle positions.
-	ParticleProperty* posProperty = pih.expectStandardProperty<ParticleProperty>(ParticleProperty::PositionProperty);
+	const ParticlesObject* particles = input.expectObject<ParticlesObject>();
+	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 
 	// Get the reference particle position.
-	ParticleProperty* refPosProperty = ParticleProperty::findInState(referenceState, ParticleProperty::PositionProperty);
-	if(!refPosProperty)
-		throwException(tr("Reference configuration does not contain particle positions."));
+	const ParticlesObject* refParticles = referenceState.getObject<ParticlesObject>();
+	if(!refParticles)
+		throwException(tr("Reference configuration does not contain particles."));
+	const PropertyObject* refPosProperty = refParticles->expectProperty(ParticlesObject::PositionProperty);
 
 	// Get the simulation cells.
-	SimulationCellObject* inputCell = pih.expectSimulationCell();
-	SimulationCellObject* refCell = referenceState.findObjectOfType<SimulationCellObject>();
+	const SimulationCellObject* inputCell = input.expectObject<SimulationCellObject>();
+	const SimulationCellObject* refCell = referenceState.getObject<SimulationCellObject>();
 	if(!refCell)
 		throwException(tr("Reference configuration does not contain simulation cell info."));
 
 	// Get particle identifiers.
-	ParticleProperty* identifierProperty = pih.inputStandardProperty<ParticleProperty>(ParticleProperty::IdentifierProperty);
-	ParticleProperty* refIdentifierProperty = ParticleProperty::findInState(referenceState, ParticleProperty::IdentifierProperty);
+	ConstPropertyPtr identifierProperty = particles->getPropertyStorage(ParticlesObject::IdentifierProperty);
+	ConstPropertyPtr refIdentifierProperty = refParticles->getPropertyStorage(ParticlesObject::IdentifierProperty);
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	return std::make_shared<DisplacementEngine>(validityInterval, posProperty->storage(), inputCell->data(), 
-			input, refPosProperty->storage(), refCell->data(),
-			identifierProperty ? identifierProperty->storage() : nullptr, refIdentifierProperty ? refIdentifierProperty->storage() : nullptr,
+			particles, refPosProperty->storage(), refCell->data(),
+			std::move(identifierProperty), std::move(refIdentifierProperty),
 			affineMapping(), useMinimumImageConvention());
 }
 
@@ -148,14 +146,16 @@ void CalculateDisplacementsModifier::DisplacementEngine::perform()
 ******************************************************************************/
 PipelineFlowState CalculateDisplacementsModifier::DisplacementEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
-	if(_inputFingerprint.hasChanged(input))
+	CalculateDisplacementsModifier* modifier = static_object_cast<CalculateDisplacementsModifier>(modApp->modifier());
+
+	PipelineFlowState output = input;
+	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+
+	if(_inputFingerprint.hasChanged(particles))
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 
-	CalculateDisplacementsModifier* modifier = static_object_cast<CalculateDisplacementsModifier>(modApp->modifier());
-	PipelineFlowState output = input;
-	ParticleOutputHelper poh(modApp->dataset(), output, modApp);
-	poh.outputProperty<ParticleProperty>(displacements())->setVisElement(modifier->vectorVis());
-	poh.outputProperty<ParticleProperty>(displacementMagnitudes());
+	particles->createProperty(displacements())->setVisElement(modifier->vectorVis());
+	particles->createProperty(displacementMagnitudes());
 	
 	return output;
 }

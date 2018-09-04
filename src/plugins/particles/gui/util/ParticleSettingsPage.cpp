@@ -115,12 +115,12 @@ void ParticleSettingsPage::insertSettingsDialogPage(ApplicationSettingsDialog* s
 		typeNames << ParticleType::getPredefinedParticleTypeName((ParticleType::PredefinedParticleType)i);
 	QSettings settings;
 	settings.beginGroup("particles/defaults/color");
-	settings.beginGroup(QString::number((int)ParticleProperty::TypeProperty));
+	settings.beginGroup(QString::number((int)ParticlesObject::TypeProperty));
 	typeNames.append(settings.childKeys());
 	settings.endGroup();
 	settings.endGroup();
 	settings.beginGroup("particles/defaults/radius");
-	settings.beginGroup(QString::number((int)ParticleProperty::TypeProperty));
+	settings.beginGroup(QString::number((int)ParticlesObject::TypeProperty));
 	typeNames.append(settings.childKeys());
 	settings.endGroup();
 	settings.endGroup();
@@ -129,8 +129,8 @@ void ParticleSettingsPage::insertSettingsDialogPage(ApplicationSettingsDialog* s
 	for(const QString& tname : typeNames) {
 		QTreeWidgetItem* childItem = new QTreeWidgetItem();
 		childItem->setText(0, tname);
-		Color color = ParticleType::getDefaultParticleColor(ParticleProperty::TypeProperty, tname, 0);
-		FloatType radius = ParticleType::getDefaultParticleRadius(ParticleProperty::TypeProperty, tname, 0);
+		Color color = ParticleType::getDefaultParticleColor(ParticlesObject::TypeProperty, tname, 0);
+		FloatType radius = ParticleType::getDefaultParticleRadius(ParticlesObject::TypeProperty, tname, 0);
 		childItem->setData(1, Qt::DisplayRole, QVariant::fromValue((QColor)color));
 		childItem->setData(2, Qt::DisplayRole, QVariant::fromValue(radius));
 		childItem->setFlags(Qt::ItemFlags(Qt::ItemIsSelectable | Qt::ItemIsEditable | Qt::ItemIsEnabled | Qt::ItemNeverHasChildren));
@@ -141,14 +141,14 @@ void ParticleSettingsPage::insertSettingsDialogPage(ApplicationSettingsDialog* s
 	for(int i = 0; i < ParticleType::PredefinedStructureType::NUMBER_OF_PREDEFINED_STRUCTURE_TYPES; i++)
 		structureNames << ParticleType::getPredefinedStructureTypeName((ParticleType::PredefinedStructureType)i);
 	settings.beginGroup("particles/defaults/color");
-	settings.beginGroup(QString::number((int)ParticleProperty::StructureTypeProperty));
+	settings.beginGroup(QString::number((int)ParticlesObject::StructureTypeProperty));
 	structureNames.append(settings.childKeys());
 	structureNames.removeDuplicates();
 
 	for(const QString& tname : structureNames) {
 		QTreeWidgetItem* childItem = new QTreeWidgetItem();
 		childItem->setText(0, tname);
-		Color color = ParticleType::getDefaultParticleColor(ParticleProperty::StructureTypeProperty, tname, 0);
+		Color color = ParticleType::getDefaultParticleColor(ParticlesObject::StructureTypeProperty, tname, 0);
 		childItem->setData(1, Qt::DisplayRole, QVariant::fromValue((QColor)color));
 		childItem->setFlags(Qt::ItemFlags(Qt::ItemIsSelectable | Qt::ItemIsEditable | Qt::ItemIsEnabled | Qt::ItemNeverHasChildren));
 		_structureTypesItem->addChild(childItem);
@@ -193,26 +193,26 @@ bool ParticleSettingsPage::saveValues(ApplicationSettingsDialog* settingsDialog,
 	// Clear all existing user-defined settings first.
 	QSettings settings;
 	settings.beginGroup("particles/defaults/color");
-	settings.beginGroup(QString::number((int)ParticleProperty::TypeProperty));
+	settings.beginGroup(QString::number((int)ParticlesObject::TypeProperty));
 	settings.remove(QString());
 	settings.endGroup();
 	settings.endGroup();
 	settings.beginGroup("particles/defaults/radius");
-	settings.beginGroup(QString::number((int)ParticleProperty::TypeProperty));
+	settings.beginGroup(QString::number((int)ParticlesObject::TypeProperty));
 	settings.remove(QString());
 
 	for(int i = 0; i < _particleTypesItem->childCount(); i++) {
 		QTreeWidgetItem* item = _particleTypesItem->child(i);
 		QColor color = item->data(1, Qt::DisplayRole).value<QColor>();
 		FloatType radius = item->data(2, Qt::DisplayRole).value<FloatType>();
-		ParticleType::setDefaultParticleColor(ParticleProperty::TypeProperty, item->text(0), color);
-		ParticleType::setDefaultParticleRadius(ParticleProperty::TypeProperty, item->text(0), radius);
+		ParticleType::setDefaultParticleColor(ParticlesObject::TypeProperty, item->text(0), color);
+		ParticleType::setDefaultParticleRadius(ParticlesObject::TypeProperty, item->text(0), radius);
 	}
 
 	for(int i = 0; i < _structureTypesItem->childCount(); i++) {
 		QTreeWidgetItem* item = _structureTypesItem->child(i);
 		QColor color = item->data(1, Qt::DisplayRole).value<QColor>();
-		ParticleType::setDefaultParticleColor(ParticleProperty::StructureTypeProperty, item->text(0), color);
+		ParticleType::setDefaultParticleColor(ParticlesObject::StructureTypeProperty, item->text(0), color);
 	}
 
 	return true;
@@ -225,8 +225,8 @@ void ParticleSettingsPage::restoreBuiltinParticlePresets()
 {
 	for(int i = 0; i < ParticleType::PredefinedParticleType::NUMBER_OF_PREDEFINED_PARTICLE_TYPES; i++) {
 		QTreeWidgetItem* item = _particleTypesItem->child(i);
-		Color color = ParticleType::getDefaultParticleColor(ParticleProperty::TypeProperty, item->text(0), 0, false);
-		FloatType radius = ParticleType::getDefaultParticleRadius(ParticleProperty::TypeProperty, item->text(0), 0, false);
+		Color color = ParticleType::getDefaultParticleColor(ParticlesObject::TypeProperty, item->text(0), 0, false);
+		FloatType radius = ParticleType::getDefaultParticleRadius(ParticlesObject::TypeProperty, item->text(0), 0, false);
 		item->setData(1, Qt::DisplayRole, QVariant::fromValue((QColor)color));
 		item->setData(2, Qt::DisplayRole, QVariant::fromValue(radius));
 	}
@@ -236,7 +236,7 @@ void ParticleSettingsPage::restoreBuiltinParticlePresets()
 
 	for(int i = 0; i < ParticleType::PredefinedStructureType::NUMBER_OF_PREDEFINED_STRUCTURE_TYPES; i++) {
 		QTreeWidgetItem* item = _structureTypesItem->child(i);
-		Color color = ParticleType::getDefaultParticleColor(ParticleProperty::StructureTypeProperty, item->text(0), 0, false);
+		Color color = ParticleType::getDefaultParticleColor(ParticlesObject::StructureTypeProperty, item->text(0), 0, false);
 		item->setData(1, Qt::DisplayRole, QVariant::fromValue((QColor)color));
 	}
 }

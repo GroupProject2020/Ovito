@@ -61,7 +61,7 @@ public:
 	Q_INVOKABLE LAMMPSTextDumpImporter(DataSet* dataset) : ParticleImporter(dataset), _useCustomColumnMapping(false) {}
 
 	/// Returns the title of this object.
-	virtual QString objectTitle() override { return tr("LAMMPS Dump"); }
+	virtual QString objectTitle() const override { return tr("LAMMPS Dump"); }
 
 	/// \brief Returns the user-defined mapping between data columns in the input file and
 	///        the internal particle properties.
@@ -174,7 +174,7 @@ protected:
 	virtual void loadFromStream(ObjectLoadStream& stream) override;
 
 	/// \brief Creates a copy of this object.
-	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) override;
+	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) const override;
 
 	/// \brief Guesses the mapping of input file columns to internal particle properties.
 	static InputColumnMapping generateAutomaticColumnMapping(const QStringList& columnNames);

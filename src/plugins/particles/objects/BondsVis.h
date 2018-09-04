@@ -23,11 +23,10 @@
 
 
 #include <plugins/particles/Particles.h>
+#include <plugins/stdobj/properties/PropertyObject.h>
 #include <core/dataset/data/DataVis.h>
 #include <core/rendering/ArrowPrimitive.h>
 #include <core/rendering/SceneRenderer.h>
-#include "ParticleProperty.h"
-#include "BondProperty.h"
 
 namespace Ovito { namespace Particles {
 
@@ -46,19 +45,19 @@ public:
 	Q_INVOKABLE BondsVis(DataSet* dataset);
 
 	/// Renders the visual element.
-	virtual void render(TimePoint time, const std::vector<DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode) override;
+	virtual void render(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, const PipelineSceneNode* contextNode) override;
 
 	/// Computes the bounding box of the visual element.
-	virtual Box3 boundingBox(TimePoint time, const std::vector<DataObject*>& objectStack, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval) override;
+	virtual Box3 boundingBox(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval) override;
 
 	/// Returns the display color used for selected bonds.
 	Color selectionBondColor() const { return Color(1,0,0); }
 
 	/// Determines the display colors of half-bonds.
 	/// Returns an array with two colors per full bond, because the two half-bonds may have different colors.
-	std::vector<ColorA> halfBondColors(size_t particleCount, BondProperty* topologyProperty,
-			BondProperty* bondColorProperty, BondProperty* bondTypeProperty, BondProperty* bondSelectionProperty, BondProperty* transparencyProperty,
-			ParticlesVis* particleDisplay, ParticleProperty* particleColorProperty, ParticleProperty* particleTypeProperty);
+	std::vector<ColorA> halfBondColors(size_t particleCount, const PropertyObject* topologyProperty,
+			const PropertyObject* bondColorProperty, const PropertyObject* bondTypeProperty, const PropertyObject* bondSelectionProperty, const PropertyObject* transparencyProperty,
+			const ParticlesVis* particleVis, const PropertyObject* particleColorProperty, const PropertyObject* particleTypeProperty) const;
 
 public:
 

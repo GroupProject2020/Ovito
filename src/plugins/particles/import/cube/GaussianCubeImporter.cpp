@@ -133,9 +133,9 @@ FileSourceImporter::FrameDataPtr GaussianCubeImporter::FrameLoader::loadFile(QFi
 	frameData->simulationCell().setMatrix(AffineTransformation(cellVectors[0], cellVectors[1], cellVectors[2], cellOrigin));
 
 	// Create the particle properties.
-	PropertyPtr posProperty = ParticleProperty::createStandardStorage(numAtoms, ParticleProperty::PositionProperty, false);
+	PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::PositionProperty, false);
 	frameData->addParticleProperty(posProperty);
-	PropertyPtr typeProperty = ParticleProperty::createStandardStorage(numAtoms, ParticleProperty::TypeProperty, false);
+	PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(numAtoms, ParticlesObject::TypeProperty, false);
 	frameData->addParticleProperty(typeProperty);
 
 	// Read atom coordinates.

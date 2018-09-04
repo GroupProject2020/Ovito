@@ -71,7 +71,7 @@ TimeInterval CameraObject::objectValidity(TimePoint time)
 /******************************************************************************
 * Fills in the missing fields of the camera view descriptor structure.
 ******************************************************************************/
-void CameraObject::projectionParameters(TimePoint time, ViewProjectionParameters& params)
+void CameraObject::projectionParameters(TimePoint time, ViewProjectionParameters& params) const
 {
 	// Transform scene bounding box to camera space.
 	Box3 bb = params.boundingBox.transformed(params.viewMatrix).centerScale(FloatType(1.01));
@@ -119,7 +119,7 @@ void CameraObject::projectionParameters(TimePoint time, ViewProjectionParameters
 /******************************************************************************
 * Returns the field of view of the camera.
 ******************************************************************************/
-FloatType CameraObject::fieldOfView(TimePoint time, TimeInterval& validityInterval)
+FloatType CameraObject::fieldOfView(TimePoint time, TimeInterval& validityInterval) const
 {
 	if(isPerspective())
 		return fovController() ? fovController()->getFloatValue(time, validityInterval) : 0;
@@ -229,7 +229,7 @@ FloatType CameraObject::targetDistance() const
 /******************************************************************************
 * Lets the vis element render a camera object.
 ******************************************************************************/
-void CameraVis::render(TimePoint time, const std::vector<DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, PipelineSceneNode* contextNode)
+void CameraVis::render(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, const PipelineSceneNode* contextNode)
 {
 	// Camera objects are only visible in the interactive viewports.
 	if(renderer->isInteractive() == false || renderer->viewport() == nullptr)
@@ -329,7 +329,7 @@ void CameraVis::render(TimePoint time, const std::vector<DataObject*>& objectSta
 	if(contextNode->isSelected()) {
 		if(RenderSettings* renderSettings = dataset()->renderSettings())
 			aspectRatio = renderSettings->outputImageAspectRatio();
-		if(CameraObject* camera = dynamic_object_cast<CameraObject>(objectStack.back())) {
+		if(const CameraObject* camera = dynamic_object_cast<CameraObject>(objectStack.back())) {
 			if(camera->isPerspective()) {
 				coneAngle = camera->fieldOfView(time, iv);
 				if(targetDistance == 0)
@@ -437,7 +437,7 @@ void CameraVis::render(TimePoint time, const std::vector<DataObject*>& objectSta
 /******************************************************************************
 * Computes the bounding box of the object.
 ******************************************************************************/
-Box3 CameraVis::boundingBox(TimePoint time, const std::vector<DataObject*>& objectStack, PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
+Box3 CameraVis::boundingBox(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineSceneNode* contextNode, const PipelineFlowState& flowState, TimeInterval& validityInterval)
 {
 	// This is not a physical object. It doesn't have a size.
 	return Box3(Point3::Origin(), Point3::Origin());

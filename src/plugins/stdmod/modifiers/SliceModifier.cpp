@@ -231,13 +231,14 @@ void SliceModifier::initializeModifier(ModifierApplication* modApp)
 	// Get the input simulation cell to initially place the cutting plane in
 	// the center of the cell.
 	const PipelineFlowState& input = modApp->evaluateInputPreliminary();
-	SimulationCellObject* cell = input.findObjectOfType<SimulationCellObject>();
-	TimeInterval iv;
-	if(distanceController() && cell && distanceController()->getFloatValue(0, iv) == 0) {
-		Point3 centerPoint = cell->cellMatrix() * Point3(0.5, 0.5, 0.5);
-		FloatType centerDistance = normal().dot(centerPoint - Point3::Origin());
-		if(std::abs(centerDistance) > FLOATTYPE_EPSILON && distanceController())
-			distanceController()->setFloatValue(0, centerDistance);
+	if(const SimulationCellObject* cell = input.getObject<SimulationCellObject>()) {
+		TimeInterval iv;
+		if(distanceController() && distanceController()->getFloatValue(0, iv) == 0) {
+			Point3 centerPoint = cell->cellMatrix() * Point3(0.5, 0.5, 0.5);
+			FloatType centerDistance = normal().dot(centerPoint - Point3::Origin());
+			if(std::abs(centerDistance) > FLOATTYPE_EPSILON && distanceController())
+				distanceController()->setFloatValue(0, centerDistance);
+		}
 	}
 }
 

@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
 #include <core/dataset/io/FileSource.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
@@ -63,7 +63,7 @@ ReferenceConfigurationModifier::ReferenceConfigurationModifier(DataSet* dataset)
 ******************************************************************************/
 bool ReferenceConfigurationModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<ParticleProperty>() != nullptr;
+	return input.containsObject<ParticlesObject>();
 }
 	
 /******************************************************************************

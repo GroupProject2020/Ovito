@@ -143,7 +143,7 @@ protected:
 	virtual Future<ComputeEnginePtr> createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 	/// Looks up a particle type in the type list based on the name or the numeric ID.
-	static ElementType* lookupParticleType(ParticleProperty* typeProperty, const QVariant& typeSpecification);
+	static const ElementType* lookupParticleType(const PropertyObject* typeProperty, const QVariant& typeSpecification);
 		
 private:
 

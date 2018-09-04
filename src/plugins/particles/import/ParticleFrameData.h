@@ -23,9 +23,9 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
-#include <plugins/particles/objects/BondProperty.h>
-#include <plugins/grid/objects/VoxelProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
+#include <plugins/particles/objects/BondsObject.h>
+#include <plugins/grid/objects/VoxelGrid.h>
 #include <core/dataset/io/FileSourceImporter.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
 #include <plugins/stdobj/simcell/SimulationCell.h>
@@ -144,7 +144,7 @@ public:
 
 	/// Inserts the loaded data into the provided pipeline state structure. This function is
 	/// called by the system from the main thread after the asynchronous loading task has finished.
-	virtual void handOver(PipelineOutputHelper& oh, const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource) override;
+	virtual PipelineFlowState handOver(const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource) override;
 
 	/// Returns the current simulation cell matrix.
 	const SimulationCell& simulationCell() const { return _simulationCell; }
@@ -156,8 +156,8 @@ public:
 	const std::vector<PropertyPtr>& particleProperties() const { return _particleProperties; }
 
 	/// Returns a standard particle property if already defined.
-	PropertyPtr findStandardParticleProperty(ParticleProperty::Type which) const {
-		OVITO_ASSERT(which != ParticleProperty::UserProperty);
+	PropertyPtr findStandardParticleProperty(ParticlesObject::Type which) const {
+		OVITO_ASSERT(which != ParticlesObject::UserProperty);
 		for(const auto& prop : _particleProperties)
 			if(prop->type() == which)
 				return prop;
@@ -210,8 +210,8 @@ public:
 	const std::vector<PropertyPtr>& bondProperties() const { return _bondProperties; }
 
 	/// Returns a standard bond property if already defined.
-	PropertyPtr findStandardBondProperty(BondProperty::Type which) const {
-		OVITO_ASSERT(which != BondProperty::UserProperty);
+	PropertyPtr findStandardBondProperty(BondsObject::Type which) const {
+		OVITO_ASSERT(which != BondsObject::UserProperty);
 		for(const auto& prop : _bondProperties)
 			if(prop->type() == which)
 				return prop;

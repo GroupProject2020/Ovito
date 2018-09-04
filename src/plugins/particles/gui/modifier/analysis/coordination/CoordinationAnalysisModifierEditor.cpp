@@ -70,22 +70,16 @@ void CoordinationAnalysisModifierEditor::createUI(const RolloutInsertionParamete
 	layout->addSpacing(12);
 	layout->addWidget(new QLabel(tr("Radial distribution function:")));
 	layout->addWidget(_rdfPlot);
-	connect(this, &CoordinationAnalysisModifierEditor::contentsReplaced, this, &CoordinationAnalysisModifierEditor::plotRDF);
 
 	// Status label.
 	layout->addSpacing(6);
 	layout->addWidget(statusLabel());
-}
 
-/******************************************************************************
-* This method is called when a reference target changes.
-******************************************************************************/
-bool CoordinationAnalysisModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
-{
-	if(source == modifierApplication() && event.type() == ReferenceEvent::PipelineCacheUpdated) {
+	// Update data plot whenever the modifier has calculated new results.
+	connect(this, &ModifierPropertiesEditor::contentsReplaced, this, &CoordinationAnalysisModifierEditor::plotRDF);
+	connect(this, &ModifierPropertiesEditor::modifierEvaluated, this, [this]() {
 		plotRDFLater(this);
-	}
-	return ModifierPropertiesEditor::referenceEvent(source, event);
+	});
 }
 
 /******************************************************************************
@@ -93,28 +87,29 @@ bool CoordinationAnalysisModifierEditor::referenceEvent(RefTarget* source, const
 ******************************************************************************/
 void CoordinationAnalysisModifierEditor::plotRDF()
 {
-	// Request the modifier's pipeline output.
-	const PipelineFlowState& state = getModifierOutput();
+	OORef<DataSeriesObject> series;
 
-	// Look up the data series in the modifier's pipeline output.
-	DataSeriesObject* series = state.findObject<DataSeriesObject>(QStringLiteral("coordination/rdf"), modifierApplication());
+	if(modifierApplication()) {
+		// Look up the data series in the modifier's pipeline output.
+		series = getModifierOutput().getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("coordination/rdf"));
 
-	// Determine X plotting range.
-	if(series) {
-		const auto& rdfY = series->getYStorage(state);
-		double minX = 0;
-		for(size_t i = 0; i < rdfY->size(); i++) {
-			for(size_t cmpnt = 0; cmpnt < rdfY->componentCount(); cmpnt++) {
-				if(rdfY->getFloatComponent(i, cmpnt) != 0) {
-					minX = series->getXStorage(state)->getFloat(i);
-					break;
+		// Determine X plotting range.
+		if(series) {
+			const auto& rdfY = series->getYStorage();
+			double minX = 0;
+			for(size_t i = 0; i < rdfY->size(); i++) {
+				for(size_t cmpnt = 0; cmpnt < rdfY->componentCount(); cmpnt++) {
+					if(rdfY->getFloatComponent(i, cmpnt) != 0) {
+						minX = series->getXStorage()->getFloat(i);
+						break;
+					}
 				}
+				if(minX) break;
 			}
-			if(minX) break;
+			_rdfPlot->setAxisScale(QwtPlot::xBottom, std::floor(minX * 9.0 / series->intervalEnd()) / 10.0 * series->intervalEnd(), series->intervalEnd());
 		}
-		_rdfPlot->setAxisScale(QwtPlot::xBottom, std::floor(minX * 9.0 / series->intervalEnd()) / 10.0 * series->intervalEnd(), series->intervalEnd());
 	}
-	_rdfPlot->setSeries(series, state);
+	_rdfPlot->setSeries(series);
 }
 
 OVITO_END_INLINE_NAMESPACE

@@ -136,7 +136,7 @@ OVITO_STDOBJ_EXPORT py::cpp_function modifierPropertyClassSetter();
 
 /// Helper function that converts a Python string to a C++ PropertyReference instance.
 /// The function requires a property class to look up the property name string.
-OVITO_STDOBJ_EXPORT PropertyReference convertPythonPropertyReference(py::object src, const PropertyClass* propertyClass);
+OVITO_STDOBJ_EXPORT PropertyReference convertPythonPropertyReference(py::object src, PropertyContainerClassPtr propertyClass);
 
 }	// End of namespace
 }	// End of namespace

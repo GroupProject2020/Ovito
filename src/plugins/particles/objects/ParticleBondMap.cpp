@@ -21,31 +21,9 @@
 
 #include <plugins/particles/Particles.h>
 #include "ParticleBondMap.h"
+#include "ParticlesObject.h"
 
 namespace Ovito { namespace Particles {
-
-#if 0
-/******************************************************************************
-* Reduces the size of the storage array, removing elements for which 
-* the corresponding bits in the bit array are set.
-******************************************************************************/
-void BondsStorage::filterResize(const boost::dynamic_bitset<>& mask)
-{
-	OVITO_ASSERT(size() == mask.size());
-	// Find the first bond to delete:
-	size_t i;
-	for(i = 0; i != mask.size(); i++)
-		if(mask.test(i)) break;
-	if(i == mask.size()) return;
-	// Continue from here:
-	auto b = begin() + i;
-	for(; i != mask.size(); ++i) {
-		if(!mask.test(i))
-			*b++ = std::move((*this)[i]);
-	}
-	erase(b, end());
-}
-#endif
 
 /******************************************************************************
 * Initializes the helper class.
@@ -72,6 +50,13 @@ ParticleBondMap::ParticleBondMap(ConstPropertyPtr bondTopology, ConstPropertyPtr
 	}
 }
 
+/******************************************************************************
+* Initializes the helper class.
+******************************************************************************/
+ParticleBondMap::ParticleBondMap(ParticlesObject* particles) :
+	ParticleBondMap(particles->expectBondsTopology()->storage(), particles->expectBonds()->getPropertyStorage(BondsObject::PeriodicImageProperty))
+{
+}
 
 }	// End of namespace
 }	// End of namespace

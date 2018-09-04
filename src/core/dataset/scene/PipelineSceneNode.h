@@ -58,14 +58,14 @@ public:
 
 	/// \brief Asks the node for the results of its data pipeline.
 	/// \param time Specifies at which animation time the pipeline should be evaluated.
-	SharedFuture<PipelineFlowState> evaluatePipeline(TimePoint time);
+	SharedFuture<PipelineFlowState> evaluatePipeline(TimePoint time) const;
 
 	/// \brief Asks the node for the results of its data pipeline including the output of asynchronous visualization elements.
 	/// \param time Specifies at which animation time the pipeline should be evaluated.
-	SharedFuture<PipelineFlowState> evaluateRenderingPipeline(TimePoint time);
+	SharedFuture<PipelineFlowState> evaluateRenderingPipeline(TimePoint time) const;
 
 	/// \brief Requests preliminary results from the data pipeline.
-	const PipelineFlowState& evaluatePipelinePreliminary(bool includeVisElements);
+	const PipelineFlowState& evaluatePipelinePreliminary(bool includeVisElements) const;
 
 	/// \brief Applies a modifier by appending it to the end of the node's data pipeline.
 	/// \param modifier The modifier to be inserted into the data flow pipeline.
@@ -73,12 +73,12 @@ public:
 	ModifierApplication* applyModifier(Modifier* modifier);
 
 	/// \brief Returns the title of this object.
-	virtual QString objectTitle() override;
+	virtual QString objectTitle() const override;
 
 	/// \brief Returns the bounding box of the scene node.
 	/// \param time The time at which the bounding box should be computed.
 	/// \return An world axis-aligned box.
-	virtual Box3 localBoundingBox(TimePoint time, TimeInterval& validity) override;
+	virtual Box3 localBoundingBox(TimePoint time, TimeInterval& validity) const override;
 	
 	/// \brief Deletes this node from the scene.
 	virtual void deleteNode() override;
@@ -132,10 +132,10 @@ private:
 
 	/// Helper function that recursively collects all visual elements of a 
 	/// data object and stores them in a vector.
-	static void collectVisElements(DataObject* dataObj, std::vector<DataVis*>& visElements);
+	static void collectVisElements(const DataObject* dataObj, std::vector<DataVis*>& visElements);
 
 	/// Computes the bounding box of a data object and all its sub-objects. 
-	void getDataObjectBoundingBox(TimePoint time, DataObject* dataObj, const PipelineFlowState& state, TimeInterval& validity, Box3& bb, std::vector<DataObject*>& objectStack);
+	void getDataObjectBoundingBox(TimePoint time, const DataObject* dataObj, const PipelineFlowState& state, TimeInterval& validity, Box3& bb, std::vector<const DataObject*>& objectStack) const;
 
 	/// The terminal object of the pipeline that outputs the data to be rendered by this PipelineSceneNode.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD(PipelineObject, dataProvider, setDataProvider);
@@ -153,13 +153,13 @@ private:
 	DECLARE_VECTOR_REFERENCE_FIELD_FLAGS(DataVis, replacementVisElements, PROPERTY_FIELD_NEVER_CLONE_TARGET | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
 	/// The cached results from the data pipeline.
-	PipelineCache _pipelineCache;
+	mutable PipelineCache _pipelineCache;
 
 	/// The cached results from the data pipeline including the output of asynchronous visualization elements.
-	PipelineCache _pipelineRenderingCache;
+	mutable PipelineCache _pipelineRenderingCache;
 
 	/// The cached results from a preliminary pipeline evaluation.
-	PipelineFlowState _pipelinePreliminaryCache;
+	mutable PipelineFlowState _pipelinePreliminaryCache;
 };
 
 OVITO_END_INLINE_NAMESPACE

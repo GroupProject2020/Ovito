@@ -82,10 +82,14 @@ public:
 	SharedFuture<PipelineFlowState> requestFrame(int frame);
 
 	/// Returns the title of this object.
-	virtual QString objectTitle() override;
+	virtual QString objectTitle() const override;
 
 	/// Returns the current status of the pipeline object.
 	virtual PipelineStatus status() const override;
+
+	/// Returns the list of data objects that are managed by this data source.
+	/// The returned data objects will be displayed as sub-objects of the data source in the pipeline editor.
+	virtual QVector<DataObject*> getSourceDataObjects() const override { return dataObjects(); }
 
 protected:
 
@@ -105,7 +109,7 @@ protected:
 	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
 
 	/// Creates a copy of this object.
-	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) override;
+	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) const override;
 
 private:
 

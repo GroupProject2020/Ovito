@@ -65,7 +65,7 @@ public:
 	Q_INVOKABLE PartitionMesh(DataSet* dataset);
 
 	/// Returns the title of this object.
-	virtual QString objectTitle() override { return tr("Microstructure mesh"); }
+	virtual QString objectTitle() const override { return tr("Microstructure mesh"); }
 
 	/// Returns the data encapsulated by this object after making sure it is not shared with other owners.
 	const std::shared_ptr<PartitionMeshData>& modifiableStorage();

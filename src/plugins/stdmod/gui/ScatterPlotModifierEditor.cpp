@@ -21,7 +21,7 @@
 
 #include <plugins/stdmod/gui/StdModGui.h>
 #include <plugins/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
-#include <plugins/stdobj/gui/widgets/PropertyClassParameterUI.h>
+#include <plugins/stdobj/gui/widgets/PropertyContainerParameterUI.h>
 #include <gui/properties/IntegerParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
 #include <gui/properties/BooleanParameterUI.h>
@@ -53,7 +53,7 @@ void ScatterPlotModifierEditor::createUI(const RolloutInsertionParameters& rollo
 	layout->setContentsMargins(4,4,4,4);
 	layout->setSpacing(4);
 
-	PropertyClassParameterUI* pclassUI = new PropertyClassParameterUI(this, PROPERTY_FIELD(GenericPropertyModifier::propertyClass));
+	PropertyContainerParameterUI* pclassUI = new PropertyContainerParameterUI(this, PROPERTY_FIELD(GenericPropertyModifier::subject));
 	layout->addWidget(new QLabel(tr("Operate on:")));
 	layout->addWidget(pclassUI->comboBox());
 	layout->addSpacing(6);
@@ -65,23 +65,34 @@ void ScatterPlotModifierEditor::createUI(const RolloutInsertionParameters& rollo
 	layout->addWidget(new QLabel(tr("Y-axis property:"), rollout));
 	layout->addWidget(yPropertyUI->comboBox());
 	connect(this, &PropertiesEditor::contentsChanged, this, [xPropertyUI,yPropertyUI](RefTarget* editObject) {
-		xPropertyUI->setPropertyClass(editObject ? static_object_cast<GenericPropertyModifier>(editObject)->propertyClass() : nullptr);
-		yPropertyUI->setPropertyClass(editObject ? static_object_cast<GenericPropertyModifier>(editObject)->propertyClass() : nullptr);
+		GenericPropertyModifier* modifier = static_object_cast<GenericPropertyModifier>(editObject);
+		if(modifier) {
+			xPropertyUI->setContainerRef(modifier->subject());
+			yPropertyUI->setContainerRef(modifier->subject());
+		}
+		else {
+			xPropertyUI->setContainerRef({});
+			yPropertyUI->setContainerRef({});
+		}
 	});
 	layout->addSpacing(6);
 	
-	_plot = new QwtPlot();
-	_plot->setMinimumHeight(240);
-	_plot->setMaximumHeight(240);
-	_plot->setCanvasBackground(Qt::white);
+	_plotWidget = new DataSeriesPlotWidget();
+	_plotWidget->setMinimumHeight(240);
+	_plotWidget->setMaximumHeight(240);
+	_selectionRangeIndicatorX = new QwtPlotZoneItem();
+	_selectionRangeIndicatorX->setOrientation(Qt::Vertical);
+	_selectionRangeIndicatorX->setZ(1);
+	_selectionRangeIndicatorX->attach(_plotWidget);
+	_selectionRangeIndicatorX->hide();
+	_selectionRangeIndicatorY = new QwtPlotZoneItem();
+	_selectionRangeIndicatorY->setOrientation(Qt::Horizontal);
+	_selectionRangeIndicatorY->setZ(1);
+	_selectionRangeIndicatorY->attach(_plotWidget);
+	_selectionRangeIndicatorY->hide();
 
 	layout->addWidget(new QLabel(tr("Scatter plot:")));
-	layout->addWidget(_plot);
-	connect(this, &ScatterPlotModifierEditor::contentsReplaced, this, &ScatterPlotModifierEditor::plotScatterPlot);
-
-	QPushButton* saveDataButton = new QPushButton(tr("Save scatter plot data"));
-	layout->addWidget(saveDataButton);
-	connect(saveDataButton, &QPushButton::clicked, this, &ScatterPlotModifierEditor::onSaveData);
+	layout->addWidget(_plotWidget);
 
 	// Selection.
 	QGroupBox* selectionBox = new QGroupBox(tr("Selection"), rollout);
@@ -170,17 +181,12 @@ void ScatterPlotModifierEditor::createUI(const RolloutInsertionParameters& rollo
 	// Status label.
 	layout->addSpacing(6);
 	layout->addWidget(statusLabel());
-}
 
-/******************************************************************************
-* This method is called when a reference target changes.
-******************************************************************************/
-bool ScatterPlotModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
-{
-	if(source == modifierApplication() && event.type() == ReferenceEvent::PipelineCacheUpdated) {
+	// Update data plot whenever the modifier has calculated new results.
+	connect(this, &ModifierPropertiesEditor::contentsReplaced, this, &ScatterPlotModifierEditor::plotScatterPlot);
+	connect(this, &ModifierPropertiesEditor::modifierEvaluated, this, [this]() {
 		plotLater(this);
-	}
-	return ModifierPropertiesEditor::referenceEvent(source, event);
+	});	
 }
 
 /******************************************************************************
@@ -189,17 +195,52 @@ bool ScatterPlotModifierEditor::referenceEvent(RefTarget* source, const Referenc
 void ScatterPlotModifierEditor::plotScatterPlot()
 {
 	ScatterPlotModifier* modifier = static_object_cast<ScatterPlotModifier>(editObject());
-	ScatterPlotModifierApplication* modApp = dynamic_object_cast<ScatterPlotModifierApplication>(modifierApplication());
-	
-	if(!modifier || !modApp || !modifier->isEnabled()) {
-		if(_plotCurve) _plotCurve->hide();
-		_plot->replot();
-		return;
+
+	if(modifier && modifier->fixXAxisRange()) {
+		_plotWidget->setAxisScale(QwtPlot::yLeft, modifier->xAxisRangeStart(), modifier->xAxisRangeEnd());
+	}
+	else {
+		_plotWidget->setAxisAutoScale(QwtPlot::yLeft);
 	}
 
-	_plot->setAxisTitle(QwtPlot::xBottom, modifier->xAxisProperty().nameWithComponent());
-	_plot->setAxisTitle(QwtPlot::yLeft, modifier->yAxisProperty().nameWithComponent());
+	if(modifier && modifier->fixYAxisRange()) {
+		_plotWidget->setAxisScale(QwtPlot::yLeft, modifier->yAxisRangeStart(), modifier->yAxisRangeEnd());
+	}
+	else {
+		_plotWidget->setAxisAutoScale(QwtPlot::yLeft);
+	}
 
+	if(modifier && modifier->selectXAxisInRange()) {
+		auto minmax = std::minmax(modifier->selectionXAxisRangeStart(), modifier->selectionXAxisRangeEnd());
+		_selectionRangeIndicatorX->setInterval(minmax.first, minmax.second);
+		_selectionRangeIndicatorX->show();
+	}
+	else {
+		_selectionRangeIndicatorX->hide();
+	}
+
+	if(modifier && modifier->selectYAxisInRange()) {
+		auto minmax = std::minmax(modifier->selectionYAxisRangeStart(), modifier->selectionYAxisRangeEnd());
+		_selectionRangeIndicatorY->setInterval(minmax.first, minmax.second);
+		_selectionRangeIndicatorY->show();
+	}
+	else {
+		_selectionRangeIndicatorY->hide();
+	}
+
+	if(modifier && modifierApplication()) {
+		// Request the modifier's pipeline output.
+		const PipelineFlowState& state = getModifierOutput();
+
+		// Look up the generated data series in the modifier's pipeline output.
+		const DataSeriesObject* series = state.getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("scatter"));
+		_plotWidget->setSeries(series);
+	}
+	else {
+		_plotWidget->reset();
+	}
+
+#if 0
 	if(!_plotCurve) {
 		_plotCurve = new QwtPlotSpectroCurve();
 	    _plotCurve->setRenderHint(QwtPlotItem::RenderAntialiased, true);
@@ -292,47 +333,7 @@ void ScatterPlotModifierEditor::plotScatterPlot()
 		_plot->setAxisScale(QwtPlot::yLeft, modifier->yAxisRangeStart(), modifier->yAxisRangeEnd());
 
 	_plot->replot();
-}
-
-/******************************************************************************
-* This is called when the user has clicked the "Save Data" button.
-******************************************************************************/
-void ScatterPlotModifierEditor::onSaveData()
-{
-	ScatterPlotModifier* modifier = static_object_cast<ScatterPlotModifier>(editObject());
-	ScatterPlotModifierApplication* modApp = dynamic_object_cast<ScatterPlotModifierApplication>(modifierApplication());
-	if(!modifier || !modApp)
-		return;
-
-	QString fileName = QFileDialog::getSaveFileName(mainWindow(),
-	    tr("Save Scatter Plot"), QString(), tr("Text files (*.txt);;All files (*)"));
-	if(fileName.isEmpty())
-		return;
-
-	try {
-
-		QFile file(fileName);
-		if(!file.open(QIODevice::WriteOnly | QIODevice::Text))
-			modifier->throwException(tr("Could not open file for writing: %1").arg(file.errorString()));
-
-		QTextStream stream(&file);
-
-		if(modApp->typeData().empty()) {
-			stream << "# " << modifier->xAxisProperty().nameWithComponent() << " " << modifier->yAxisProperty().nameWithComponent() << "\n";
-			for(const QPointF& p : modApp->xyData())
-				stream << p.x() << " " << p.y() << "\n";
-		}
-		else {
-			stream << "# " << modifier->xAxisProperty().nameWithComponent() << " " << modifier->yAxisProperty().nameWithComponent() << " type\n";
-			OVITO_ASSERT(modApp->typeData().size() == modApp->xyData().size());
-			auto t = modApp->typeData().cbegin();
-			for(const QPointF& p : modApp->xyData())
-				stream << p.x() << " " << p.y() << " " << *t++ << "\n";
-		}
-	}
-	catch(const Exception& ex) {
-		ex.reportError();
-	}
+#endif
 }
 
 }	// End of namespace

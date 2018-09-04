@@ -36,7 +36,7 @@ IMPLEMENT_OVITO_CLASS(BondsDeleteSelectedModifierDelegate);
 ******************************************************************************/
 bool ParticlesDeleteSelectedModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<ParticlesObject>() != nullptr;
+	return input.containsObject<ParticlesObject>();
 }
 
 /******************************************************************************
@@ -48,8 +48,9 @@ PipelineStatus ParticlesDeleteSelectedModifierDelegate::apply(Modifier* modifier
 	size_t numSelected = 0;
 
 	// Get the particle selection.
-	if(ParticlesObject* inputParticles = output.findObjectOfType<ParticlesObject>()) {
-		if(PropertyObject* selProperty = inputParticles->getProperty(ParticleProperty::SelectionProperty)) {
+	if(const ParticlesObject* inputParticles = output.getObject<ParticlesObject>()) {
+		numParticles = inputParticles->elementCount();
+		if(const PropertyObject* selProperty = inputParticles->getProperty(ParticlesObject::SelectionProperty)) {
 
 			// Generate filter mask.
 			boost::dynamic_bitset<> mask(selProperty->size());
@@ -66,7 +67,7 @@ PipelineStatus ParticlesDeleteSelectedModifierDelegate::apply(Modifier* modifier
 
 			if(numSelected) {
 				// Make sure we can safely modify the particles object.
-				ParticlesObject* outputParticles = output.cloneIfNeeded(inputParticles);
+				ParticlesObject* outputParticles = output.makeMutable(inputParticles);
 
 				// Remove selection property.
 				outputParticles->removeProperty(selProperty);
@@ -89,7 +90,7 @@ PipelineStatus ParticlesDeleteSelectedModifierDelegate::apply(Modifier* modifier
 ******************************************************************************/
 bool BondsDeleteSelectedModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	if(ParticlesObject* particles = input.findObjectOfType<ParticlesObject>())
+	if(const ParticlesObject* particles = input.getObject<ParticlesObject>())
 		return particles->bonds() != nullptr;
 	return false;
 }
@@ -103,9 +104,10 @@ PipelineStatus BondsDeleteSelectedModifierDelegate::apply(Modifier* modifier, co
 	size_t numSelected = 0;
 
 	// Get the bond selection.
-	if(ParticlesObject* inputParticles = output.findObjectOfType<ParticlesObject>()) {
-		if(BondsObject* inputBonds = inputParticles->bonds()) {
-			if(PropertyObject* selProperty = inputBonds->getProperty(BondProperty::SelectionProperty)) {
+	if(const ParticlesObject* inputParticles = output.getObject<ParticlesObject>()) {
+		if(const BondsObject* inputBonds = inputParticles->bonds()) {
+			numBonds = inputBonds->elementCount();
+			if(const PropertyObject* selProperty = inputBonds->getProperty(BondsObject::SelectionProperty)) {
 				// Generate filter mask.
 				boost::dynamic_bitset<> mask(selProperty->size());
 				boost::dynamic_bitset<>::size_type i = 0;
@@ -121,8 +123,8 @@ PipelineStatus BondsDeleteSelectedModifierDelegate::apply(Modifier* modifier, co
 
 				if(numSelected) {
 					// Make sure we can safely modify the particles and the bonds object.
-					ParticlesObject* outputParticles = output.cloneIfNeeded(outputParticles);
-					BondsObject* outputBonds = outputParticles->makeBondsUnique();
+					ParticlesObject* outputParticles = output.makeMutable(outputParticles);
+					BondsObject* outputBonds = outputParticles->makeBondsMutable();
 
 					// Remove selection property.
 					outputBonds->removeProperty(selProperty);

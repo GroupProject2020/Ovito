@@ -22,8 +22,6 @@
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
-#include <plugins/stdobj/util/InputHelper.h>
-#include <plugins/stdobj/util/OutputHelper.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include "DislocationReplicateModifierDelegate.h"
@@ -37,7 +35,7 @@ IMPLEMENT_OVITO_CLASS(DislocationReplicateModifierDelegate);
 ******************************************************************************/
 bool DislocationReplicateModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
 {
-	return input.findObjectOfType<DislocationNetworkObject>() != nullptr;
+	return input.containsObject<DislocationNetworkObject>();
 }
 
 /******************************************************************************
@@ -58,11 +56,8 @@ PipelineStatus DislocationReplicateModifierDelegate::apply(Modifier* modifier, c
 
 	Box3I newImages = mod->replicaRange();
 
-	InputHelper ih(dataset(), input);
-	OutputHelper oh(dataset(), output, modApp);
-
-	for(DataObject* obj : output.objects()) {
-		if(DislocationNetworkObject* existingDislocations = dynamic_object_cast<DislocationNetworkObject>(obj)) {
+	for(const DataObject* obj : output.objects()) {
+		if(const DislocationNetworkObject* existingDislocations = dynamic_object_cast<DislocationNetworkObject>(obj)) {
 			// For replication, a domain is required.
 			if(!existingDislocations->domain()) continue;
 			AffineTransformation simCell = existingDislocations->domain()->cellMatrix();
@@ -71,7 +66,7 @@ PipelineStatus DislocationReplicateModifierDelegate::apply(Modifier* modifier, c
 				continue;
 
 			// Create the output copy of the input dislocation object.
-			DislocationNetworkObject* newDislocations = oh.cloneIfNeeded(existingDislocations);
+			DislocationNetworkObject* newDislocations = output.makeMutable(existingDislocations);
 			std::shared_ptr<DislocationNetwork> dislocations = newDislocations->modifiableStorage();
 			
 			// Shift existing vertices so that they form the first image at grid position (0,0,0).
