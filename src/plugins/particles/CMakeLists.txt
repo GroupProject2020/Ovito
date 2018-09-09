@@ -38,7 +38,7 @@ SET(SourceFiles
 	modifier/modify/CoordinationPolyhedraModifier.cpp
 	modifier/analysis/StructureIdentificationModifier.cpp
 	modifier/analysis/ReferenceConfigurationModifier.cpp
-	modifier/analysis/bondangle/BondAngleAnalysisModifier.cpp
+	modifier/analysis/ackland_jones/AcklandJonesModifier.cpp
 	modifier/analysis/cna/CommonNeighborAnalysisModifier.cpp
 	modifier/analysis/coordination/CoordinationAnalysisModifier.cpp
 	modifier/analysis/displacements/CalculateDisplacementsModifier.cpp

@@ -41,7 +41,7 @@ void VoxelGrid::OOMetaClass::initialize()
 	QMetaType::registerConverter<VoxelPropertyReference, PropertyReference>();
 	QMetaType::registerConverter<PropertyReference, VoxelPropertyReference>();		
 
-	setPropertyClassDisplayName(tr("Voxel data"));
+	setPropertyClassDisplayName(tr("Voxel grid"));
 	setElementDescriptionName(QStringLiteral("voxels"));
 	setPythonName(QStringLiteral("voxels"));
 }
@@ -49,7 +49,8 @@ void VoxelGrid::OOMetaClass::initialize()
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-VoxelGrid::VoxelGrid(DataSet* dataset) : PropertyContainer(dataset)
+VoxelGrid::VoxelGrid(DataSet* dataset, const QString& title) : PropertyContainer(dataset),
+	_title(title)
 {
 }
 
@@ -75,12 +76,14 @@ void VoxelGrid::loadFromStream(ObjectLoadStream& stream)
 	PropertyContainer::loadFromStream(stream);
 
 	stream.expectChunk(0x01);
+
 	size_t ndim;
 	stream.readSizeT(ndim);
-	std::vector<size_t> s(ndim);
-	for(size_t& d : s)
+	if(ndim != _shape.get().size()) throwException(tr("Invalid voxel grid dimensionality."));
+
+	for(size_t& d : _shape.mutableValue())
 		stream.readSizeT(d);
-	setShape(std::move(s));
+
 	stream.closeChunk();
 }
 

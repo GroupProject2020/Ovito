@@ -48,27 +48,28 @@ PipelineStatus VoxelGridReplicateModifierDelegate::apply(Modifier* modifier, con
 		return PipelineStatus::Success;
 	
 	std::array<int,3> nPBC;
+	Box3I newImages = mod->replicaRange();
 	nPBC[0] = std::max(mod->numImagesX(),1);
 	nPBC[1] = std::max(mod->numImagesY(),1);
 	nPBC[2] = std::max(mod->numImagesZ(),1);
+	if(existingVoxelGrid->domain()->is2D()) {
+		nPBC[2] = 1;
+		newImages.minc.z() = newImages.maxc.z() = 0;
+	}
 
-	size_t numCopies = nPBC[0] * nPBC[1] * nPBC[2];
+	size_t numCopies = (size_t)nPBC[0] * (size_t)nPBC[1] * (size_t)nPBC[2];
 	if(numCopies <= 1)
 		return PipelineStatus::Success;
 
-	Box3I newImages = mod->replicaRange();
-
 	// Create the output copy of the input grid.
 	VoxelGrid* newVoxelGrid = output.makeMutable(existingVoxelGrid);
-	const std::vector<size_t> oldShape = existingVoxelGrid->shape();
-	std::vector<size_t> shape = oldShape;
-	if(shape.size() != 3)
-		throwException(tr("Can replicate only 3-dimensional data grids."));
+	const VoxelGrid::GridDimensions oldShape = existingVoxelGrid->shape();
+	VoxelGrid::GridDimensions shape = oldShape;
 	shape[0] *= nPBC[0];
 	shape[1] *= nPBC[1];
 	shape[2] *= nPBC[2];
 	newVoxelGrid->setShape(shape);
-			
+
 	// Extend the periodic domain the grid is embedded in.
 	AffineTransformation simCell = existingVoxelGrid->domain()->cellMatrix();
 	simCell.translation() += (FloatType)newImages.minc.x() * simCell.column(0);
@@ -86,18 +87,22 @@ PipelineStatus VoxelGridReplicateModifierDelegate::apply(Modifier* modifier, con
 		property->resize(oldData->size() * numCopies, false);
 
 		char* dst = (char*)property->data();
+		const char* src = (const char*)oldData->constData();
+		size_t stride = oldData->stride();
 		for(size_t z = 0; z < shape[2]; z++) {
 			size_t zs = z % oldShape[2];
 			for(size_t y = 0; y < shape[1]; y++) {
 				size_t ys = y % oldShape[1];
 				for(size_t x = 0; x < shape[0]; x++) {
 					size_t xs = x % oldShape[0];
-					size_t index = xs + ys * oldShape[1] + zs * oldShape[0] * oldShape[1];
-					memcpy(dst, (char*)oldData->constData() + index * oldData->stride(), property->stride());
-					dst += property->stride();
+					size_t index = xs + ys * oldShape[0] + zs * oldShape[0] * oldShape[1];
+					OVITO_ASSERT(index < oldData->size());
+					memcpy(dst, src + index * stride, stride);
+					dst += stride;
 				}
 			}
 		}
+		OVITO_ASSERT(dst == (char*)property->data() + property->size()*property->stride());
 	}
 
 	return PipelineStatus::Success;

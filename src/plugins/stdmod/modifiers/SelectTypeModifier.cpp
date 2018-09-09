@@ -107,9 +107,9 @@ PipelineFlowState SelectTypeModifier::evaluatePreliminary(TimePoint time, Modifi
 	if(!typeProperty)
 		throwException(tr("The selected input property '%1' is not present.").arg(sourceProperty().name()));
 	if(typeProperty->componentCount() != 1)
-		throwException(tr("The input property '%1' has the wrong number of components.").arg(typeProperty->name()));
+		throwException(tr("The input property '%1' has the wrong number of components. Must be a scalar property.").arg(typeProperty->name()));
 	if(typeProperty->dataType() != PropertyStorage::Int)
-		throwException(tr("The input property '%1' has the wrong data type.").arg(typeProperty->name()));
+		throwException(tr("The input property '%1' has the wrong data type. Must be an integer property.").arg(typeProperty->name()));
 
 	// Create the selection property.
 	PropertyPtr selProperty = container->createProperty(PropertyStorage::GenericSelectionProperty)->modifiableStorage();

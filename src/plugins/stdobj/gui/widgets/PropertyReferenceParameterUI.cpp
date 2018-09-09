@@ -142,19 +142,23 @@ void PropertyReferenceParameterUI::updateUI()
 
 			// Select the right item in the list box.
 			int selIndex = _comboBox->propertyIndex(pref);
+			static QIcon warningIcon(QStringLiteral(":/gui/mainwin/status/status_warning.png"));
 			if(selIndex < 0) {
 				if(!pref.isNull() && pref.containerClass() == containerRef().dataClass()) {
 					// Add a place-holder item if the selected property does not exist anymore.
 					_comboBox->addItem(pref, tr("%1 (no longer available)").arg(pref.name()));
+					QStandardItem* item = static_cast<QStandardItemModel*>(_comboBox->model())->item(_comboBox->count()-1);
+					item->setIcon(warningIcon);
 				}
 				else if(_comboBox->count() != 0) {
-					// Add a place-holder item if the selected property does not exist anymore.
 					_comboBox->addItem({}, tr("<Please select a property>"));
 				}
 				selIndex = _comboBox->count() - 1;
 			}
 			if(_comboBox->count() == 0) {
 				_comboBox->addItem(PropertyReference(), tr("<No available properties>"));
+				QStandardItem* item = static_cast<QStandardItemModel*>(_comboBox->model())->item(0);
+				item->setIcon(warningIcon);
 				selIndex = 0;
 			}
 			_comboBox->setCurrentIndex(selIndex);

@@ -196,8 +196,8 @@ DataObject* PipelineFlowState::makeMutable(const DataObject* obj, bool deepCopy)
 ******************************************************************************/
 const DataObject* PipelineFlowState::getObjectBy(const DataObject::OOMetaClass& objectClass, const PipelineObject* dataSource, const QString& identifier) const
 {
-	OVITO_ASSERT(dataSource != nullptr);
 	OVITO_ASSERT(!identifier.isEmpty());
+	if(!dataSource) return nullptr;
 
 	// Look for the data object with the given ID, or with the given ID followed 
 	// an enumeration index that was appended by generateUniqueIdentifier().

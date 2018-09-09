@@ -30,7 +30,7 @@ SET(SourceFiles
 	modifier/modify/CreateBondsModifierEditor.cpp
 	modifier/modify/LoadTrajectoryModifierEditor.cpp
 	modifier/analysis/StructureListParameterUI.cpp
-	modifier/analysis/bondangle/BondAngleAnalysisModifierEditor.cpp
+	modifier/analysis/ackland_jones/AcklandJonesModifierEditor.cpp
 	modifier/analysis/cna/CommonNeighborAnalysisModifierEditor.cpp
 	modifier/analysis/coordination/CoordinationAnalysisModifierEditor.cpp
 	modifier/analysis/displacements/CalculateDisplacementsModifierEditor.cpp

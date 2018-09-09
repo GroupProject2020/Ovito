@@ -39,13 +39,9 @@
               <entry>Calculates local strain tensors based on the relative motion of neighboring particles. </entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.bin_and_reduce">Bin&#xA0;and&#xA0;reduce</link></entry>
-              <entry>Aggregates a particle property over a one- or two-dimensional bin grid.</entry>
-            </row>          
-            <row>
-              <entry><link linkend="particles.modifiers.bond_angle_analysis">Bond-angle&#xA0;analysis</link></entry>
-              <entry>Identification of common crystal structures based on the bond-angle analysis method of Ackland and Jones.</entry>
-            </row>          
+              <entry><link linkend="particles.modifiers.bin_and_reduce">Spatial&#xA0;binning</link></entry>
+              <entry>Aggregates a particle property over a one-, two- or three-dimensional bin grid.</entry>
+            </row>
             <row>
               <entry><link linkend="particles.modifiers.correlation_function">Correlation&#xA0;function</link></entry>
               <entry>Calculates the spatial cross-correlation function between two particle properties.</entry>
@@ -59,16 +55,8 @@
               <entry>Calculates the displacements of particles based on an initial and a deformed configuration.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.centrosymmetry">Centrosymmetry&#xA0;parameter</link></entry>
-              <entry>Calculates the centrosymmetry parameter for every particle.</entry>
-            </row>
-            <row>
               <entry><link linkend="particles.modifiers.cluster_analysis">Cluster&#xA0;analysis</link></entry>
               <entry>Decomposes a particle system into clusters of particles.</entry>
-            </row>
-            <row>
-              <entry><link linkend="particles.modifiers.common_neighbor_analysis">Common&#xA0;neighbor&#xA0;analysis</link></entry>
-              <entry>Performs the common neighbor analysis (CNA) to determine local crystal structures.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.coordination_analysis">Coordination&#xA0;analysis</link></entry>
@@ -83,24 +71,12 @@
               <entry>Computes the histogram of a property.</entry>
             </row>
             <row>
-              <entry><link linkend="particles.modifiers.identify_diamond_structure">Identify&#xA0;diamond&#xA0;structure</link></entry>
-              <entry>Identifies atoms that are arranged in a cubic or hexagonal diamond lattice.</entry>
-            </row>
-            <row>
-              <entry><link linkend="particles.modifiers.polyhedral_template_matching">Polyhedral&#xA0;template&#xA0;matching</link></entry>
-              <entry>Identifies common crystal structures using the PTM method and computes local crystal orientations.</entry>
-            </row>
-            <row>
               <entry><link linkend="particles.modifiers.scatter_plot">Scatter&#xA0;plot</link></entry>
               <entry>Generates a scatter plot of two properties.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.voronoi_analysis">Voronoi&#xA0;analysis</link></entry>
               <entry>Computes the coordination number, atomic volume, and Voronoi index of particles from their Voronoi polyhedra.</entry>
-            </row>
-            <row>
-              <entry><link linkend="particles.modifiers.vorotop_analysis">VoroTop&#xA0;analysis</link></entry>
-              <entry>Identifies local structure of particles using the topology of their Voronoi polyhedra.</entry>
             </row>
             <row>
               <entry><link linkend="particles.modifiers.wigner_seitz_analysis">Wigner-Seitz&#xA0;defect&#xA0;analysis</link></entry>
@@ -200,6 +176,35 @@
             <row>
               <entry><link linkend="particles.modifiers.select_particle_type">Select&#xA0;type</link></entry>
               <entry>Selects all elements of a given type.</entry>
+            </row>
+
+		<!-- STRUCTURE IDENTIFICATION -->          
+            <row>
+              <entry namest="name" nameend="descr" align="center" role="subth">Analysis</entry>
+            </row>
+            <row>
+              <entry><link linkend="particles.modifiers.bond_angle_analysis">Ackland-Jones&#xA0;analysis</link></entry>
+              <entry>Identification of common crystal structures based on the bond-angle analysis method of Ackland and Jones.</entry>
+            </row>          
+            <row>
+              <entry><link linkend="particles.modifiers.centrosymmetry">Centrosymmetry&#xA0;parameter</link></entry>
+              <entry>Calculates the centrosymmetry parameter for every particle.</entry>
+            </row>
+            <row>
+              <entry><link linkend="particles.modifiers.common_neighbor_analysis">Common&#xA0;neighbor&#xA0;analysis</link></entry>
+              <entry>Performs the common neighbor analysis (CNA) to determine local crystal structures.</entry>
+            </row>
+            <row>
+              <entry><link linkend="particles.modifiers.identify_diamond_structure">Identify&#xA0;diamond&#xA0;structure</link></entry>
+              <entry>Identifies atoms that are arranged in a cubic or hexagonal diamond lattice.</entry>
+            </row>
+            <row>
+              <entry><link linkend="particles.modifiers.polyhedral_template_matching">Polyhedral&#xA0;template&#xA0;matching</link></entry>
+              <entry>Identifies common crystal structures using the PTM method and computes local crystal orientations.</entry>
+            </row>
+            <row>
+              <entry><link linkend="particles.modifiers.vorotop_analysis">VoroTop&#xA0;analysis</link></entry>
+              <entry>Identifies local structure of particles using the topology of their Voronoi polyhedra.</entry>
             </row>
 
 		<!-- VISUALIZATION -->

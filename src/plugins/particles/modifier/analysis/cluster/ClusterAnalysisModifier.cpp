@@ -272,7 +272,7 @@ PipelineFlowState ClusterAnalysisModifier::ClusterAnalysisEngine::emitResults(Ti
 	if(modifier->sortBySize())
 		output.addAttribute(QStringLiteral("ClusterAnalysis.largest_size"), QVariant::fromValue(largestClusterSize()), modApp);
 
-	output.setStatus(PipelineStatus(PipelineStatus::Success, tr("Found %n cluster(s)", "", numClusters())));
+	output.setStatus(PipelineStatus(PipelineStatus::Success, tr("Found %n cluster(s).", "", numClusters())));
 	return output;
 }
 

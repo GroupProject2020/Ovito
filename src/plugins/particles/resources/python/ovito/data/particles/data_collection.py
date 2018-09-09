@@ -1,30 +1,21 @@
 # Load dependencies
 import ovito
 from ovito.data import DataCollection
-from .particles_view import ParticlesView
-from .bonds_view import BondsView
 
 # Load the native code module
-from ovito.plugins.Particles import ParticleProperty, BondProperty
+from ovito.plugins.Particles import Particles
 
 # Implementation of the DataCollection.particles attribute.
 def _DataCollection_particles(self):
     """
-    Returns a :py:class:`ParticlesView` object representing the particles, which provides name-based access to the :py:class:`ParticleProperty` 
-    instances stored in this :py:class:`!DataCollection`. Furthermore, the view object provides convenience functions for creating new particle properties.
+    Returns the :py:class:`Particles` object, which stores the particles information. 
     """
-    return ParticlesView(self)
+    return self.find(Particles)
 DataCollection.particles = property(_DataCollection_particles)
 
 # Implementation of the DataCollection.bonds attribute.
-def _DataCollection_bonds(self):
-    """
-    Returns a :py:class:`BondsView`, which allows to access all :py:class:`BondProperty` 
-    objects stored in this data collection by name. Furthermore, it provides convenience functions
-    for adding new bond properties to the collection.
-    """
-    return BondsView(self)
-DataCollection.bonds = property(_DataCollection_bonds)
+# Here only for backward compatibility with OVITO 2.9.0.
+DataCollection.bonds = property(lambda self: self.particles.bonds)
 
 # Implementation of the DataCollection.number_of_particles property.
 # Here only for backward compatibility with OVITO 2.9.0.
@@ -90,4 +81,4 @@ DataCollection.particle_properties = property(lambda self: self.particles)
 
 # Implementation of the DataCollection.bond_properties attribute.
 # Here only for backward compatibility with OVITO 2.9.0.
-DataCollection.bond_properties = property(lambda self: self.bonds)
+DataCollection.bond_properties = property(lambda self: self.particles.bonds)

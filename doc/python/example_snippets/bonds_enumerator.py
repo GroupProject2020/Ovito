@@ -15,7 +15,7 @@ bond_topology = data.bonds['Topology']  # array with bond topology
 bond_lengths = data.bonds['Length']     # array with bond lengths
 
 # Create bonds enumerator object.
-bonds_enum = BondsEnumerator(data)
+bonds_enum = BondsEnumerator(data.bonds)
 
 # Loop over atoms.
 for particle_index in range(data.particles.count):

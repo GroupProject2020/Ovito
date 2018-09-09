@@ -215,6 +215,11 @@ void ManualSelectionModifierEditor::createUI(const RolloutInsertionParameters& r
 	PropertyContainerParameterUI* pclassUI = new PropertyContainerParameterUI(this, PROPERTY_FIELD(GenericPropertyModifier::subject));
 	sublayout->addWidget(pclassUI->comboBox());
 
+	// List only property containers that support element selection.
+	pclassUI->setContainerFilter([](const PropertyContainer* container) {
+		return container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericSelectionProperty);
+	});
+
 	QGroupBox* mouseSelectionGroup = new QGroupBox(tr("Viewport modes"));
 	sublayout = new QVBoxLayout(mouseSelectionGroup);
 	sublayout->setContentsMargins(4,4,4,4);

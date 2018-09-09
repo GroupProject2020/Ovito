@@ -26,7 +26,7 @@ def export_file(data, file, format, **params):
              sequences can be written.
 
            * :py:class:`~ovito.data.DataObject`:
-             Exports the data object as if it were the only part of a :py:class:`~ovito.data.DataCollection`.
+             Exports just the data object as if it were the only part of a :py:class:`~ovito.data.DataCollection`.
 
            * ``None``:
              All pipelines that are part of the current scene (see :py:attr:`ovito.Scene.pipelines`) are

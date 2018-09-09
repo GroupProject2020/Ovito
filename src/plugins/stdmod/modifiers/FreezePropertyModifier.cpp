@@ -117,7 +117,10 @@ Future<PipelineFlowState> FreezePropertyModifier::evaluate(TimePoint time, Modif
 
 						// Cache the property to be frozen in the ModifierApplication.
 						myModApp->updateStoredData(property, 
-							container->getProperty(PropertyStorage::GenericIdentifierProperty), frozenState.stateValidity());
+							container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericIdentifierProperty)
+								? container->getProperty(PropertyStorage::GenericIdentifierProperty)
+								: nullptr, 
+							frozenState.stateValidity());
 
 						// Perform the actual replacement of the property in the input pipeline state.
 						return evaluatePreliminary(time, modApp, std::move(input));
@@ -175,7 +178,9 @@ PipelineFlowState FreezePropertyModifier::evaluatePreliminary(TimePoint time, Mo
 	
 	// Check if particle IDs are present and if the order of particles has changed
 	// since we took the snapshot of the property values.
-	const PropertyObject* idProperty = container->getProperty(PropertyStorage::GenericIdentifierProperty);
+	const PropertyObject* idProperty = container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericIdentifierProperty)
+		? container->getProperty(PropertyStorage::GenericIdentifierProperty)
+		: nullptr;
 	if(myModApp->identifiers() && idProperty && 
 			(idProperty->size() != myModApp->identifiers()->size() || 
 			!std::equal(idProperty->constDataInt64(), idProperty->constDataInt64() + idProperty->size(), myModApp->identifiers()->constDataInt64()))) {

@@ -85,11 +85,11 @@ PropertyObject* PropertyContainer::createProperty(int typeId, bool initializeMem
 
 	if(getOOMetaClass().isValidStandardPropertyId(typeId) == false) {
 		if(typeId == PropertyStorage::GenericSelectionProperty)
-			throwException(tr("Selection is not supported by the '%2' property class.").arg(getOOMetaClass().propertyClassDisplayName()));
+			throwException(tr("Selection is not supported by the '%2' object class.").arg(getOOMetaClass().propertyClassDisplayName()));
 		else if(typeId == PropertyStorage::GenericColorProperty)
-			throwException(tr("Coloring is not supported by the '%2' property class.").arg(getOOMetaClass().propertyClassDisplayName()));
+			throwException(tr("Coloring is not supported by the '%2' object class.").arg(getOOMetaClass().propertyClassDisplayName()));
 		else
-			throwException(tr("%1 is not a standard property ID supported by the '%2' property class.").arg(typeId).arg(getOOMetaClass().propertyClassDisplayName()));
+			throwException(tr("%1 is not a standard property ID supported by the '%2' object class.").arg(typeId).arg(getOOMetaClass().propertyClassDisplayName()));
 	}
 
 	// Check if property already exists in the output.

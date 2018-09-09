@@ -28,17 +28,17 @@
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /**
- * \brief A properties editor for the BondAngleAnalysisModifier class.
+ * \brief A properties editor for the AcklandJonesModifier class.
  */
-class BondAngleAnalysisModifierEditor : public ModifierPropertiesEditor
+class AcklandJonesModifierEditor : public ModifierPropertiesEditor
 {
-	OVITO_CLASS(BondAngleAnalysisModifierEditor)
+	OVITO_CLASS(AcklandJonesModifierEditor)
 	Q_OBJECT
 	
 public:
 
 	/// Default constructor.
-	Q_INVOKABLE BondAngleAnalysisModifierEditor() {}
+	Q_INVOKABLE AcklandJonesModifierEditor() {}
 
 protected:
 

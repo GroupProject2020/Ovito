@@ -59,8 +59,15 @@ void FreezePropertyModifierEditor::createUI(const RolloutInsertionParameters& ro
 	layout->addWidget(destPropertyUI->comboBox());
 	layout->addSpacing(8);
 	connect(this, &PropertiesEditor::contentsChanged, this, [sourcePropertyUI,destPropertyUI](RefTarget* editObject) {
-//		sourcePropertyUI->setPropertyClass(editObject ? static_object_cast<GenericPropertyModifier>(editObject)->propertyClass() : nullptr);
-//		destPropertyUI->setPropertyClass(editObject ? static_object_cast<GenericPropertyModifier>(editObject)->propertyClass() : nullptr);
+		FreezePropertyModifier* modifier = static_object_cast<FreezePropertyModifier>(editObject);
+		if(modifier) {
+			sourcePropertyUI->setContainerRef(modifier->subject());
+			destPropertyUI->setContainerRef(modifier->subject());
+		}
+		else {
+			sourcePropertyUI->setContainerRef({});
+			destPropertyUI->setContainerRef({});
+		}
 	});
 	
 	QGridLayout* gridlayout = new QGridLayout();

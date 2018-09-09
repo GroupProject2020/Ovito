@@ -67,57 +67,58 @@ def verify_operation(input_file1, input_file2):
             for i in range(N_input2):
                 assert(prop_out.type_by_id(prop_out[i+N_input1]).name == prop_in.type_by_id(prop_in[i]).name)
 
-    # Make sure the bond properties of both input datasets are in the output:
-    print("Bond properties in input dataset 1:")
-    input_prop_names_1 = set(source_data1.bonds.keys())
-    print(input_prop_names_1)
-    print("Bond properties in input dataset 2:")
-    input_prop_names_2 = set(source_data2.bonds.keys())
-    print(input_prop_names_2)
-    print("Bond properties in output dataset:")
-    output_prop_names = set(data.bonds.keys())
-    print(output_prop_names)
-    assert(output_prop_names == input_prop_names_1 | input_prop_names_2)
+    if source_data1.bonds or source_data2.bonds:
+        # Make sure the bond properties of both input datasets are in the output:
+        print("Bond properties in input dataset 1:")
+        input_prop_names_1 = set(source_data1.bonds.keys())
+        print(input_prop_names_1)
+        print("Bond properties in input dataset 2:")
+        input_prop_names_2 = set(source_data2.bonds.keys())
+        print(input_prop_names_2)
+        print("Bond properties in output dataset:")
+        output_prop_names = set(data.bonds.keys())
+        print(output_prop_names)
+        assert(output_prop_names == input_prop_names_1 | input_prop_names_2)
 
-    # Make sure all bond from both input datasets are in the output:
-    if source_data1.bonds.count != 0 and source_data2.bonds.count != 0:
-        N_bonds_input1 = source_data1.bonds.count
-        N_bonds_input2 = source_data2.bonds.count
-        N_bonds_output = data.bonds.count
-        print("Number of input bonds in dataset 1: ", N_bonds_input1)
-        print("Number of input bonds in dataset 2: ", N_bonds_input2)
-        print("Number of output bonds: ", N_bonds_output)
-        assert(N_bonds_output == N_bonds_input1 + N_bonds_input2)
+        # Make sure all bond from both input datasets are in the output:
+        if source_data1.bonds.count != 0 and source_data2.bonds.count != 0:
+            N_bonds_input1 = source_data1.bonds.count
+            N_bonds_input2 = source_data2.bonds.count
+            N_bonds_output = data.bonds.count
+            print("Number of input bonds in dataset 1: ", N_bonds_input1)
+            print("Number of input bonds in dataset 2: ", N_bonds_input2)
+            print("Number of output bonds: ", N_bonds_output)
+            assert(N_bonds_output == N_bonds_input1 + N_bonds_input2)
 
-        # Check if the bnd types have been combined correctly.
-        input_types_1 = source_data1.bonds['Bond Type'].types
-        input_types_2 = source_data2.bonds['Bond Type'].types
-        output_types = data.bonds['Bond Type'].types
-        print("Bond types from input dataset 1:")
-        for t in input_types_1: print("  {} = {}".format(t.id, t.name))
-        print("Bond types from input dataset 2:")
-        for t in input_types_2: print("  {} = {}".format(t.id, t.name))
-        print("Bond types from output dataset:")
-        for t in output_types: print("  {} = {}".format(t.id, t.name))
-        assert(set([t.name for t in output_types]) == set([t.name for t in input_types_1]) | set([t.name for t in input_types_2]))
+            # Check if the bnd types have been combined correctly.
+            input_types_1 = source_data1.bonds['Bond Type'].types
+            input_types_2 = source_data2.bonds['Bond Type'].types
+            output_types = data.bonds['Bond Type'].types
+            print("Bond types from input dataset 1:")
+            for t in input_types_1: print("  {} = {}".format(t.id, t.name))
+            print("Bond types from input dataset 2:")
+            for t in input_types_2: print("  {} = {}".format(t.id, t.name))
+            print("Bond types from output dataset:")
+            for t in output_types: print("  {} = {}".format(t.id, t.name))
+            assert(set([t.name for t in output_types]) == set([t.name for t in input_types_1]) | set([t.name for t in input_types_2]))
 
-        # Check property contents:
-        for name in input_prop_names_1:
-            print("Checking values of property '{}'".format(name))
-            prop_in = source_data1.bonds[name]
-            prop_out = data.bonds[name]
-            assert(numpy.all(prop_out[0:N_bonds_input1] == prop_in[...]))
-        for name in input_prop_names_2:
-            print("Checking values of property '{}'".format(name))
-            prop_in = source_data2.bonds[name]
-            prop_out = data.bonds[name]
-            if name == 'Topology':
-                assert(numpy.all(prop_out[N_bonds_input1:] == prop_in[...] + N_input1))
-            elif not prop_out.types:
-                assert(numpy.all(prop_out[N_bonds_input1:] == prop_in[...]))
-            else:
-                for i in range(N_bonds_input2):
-                    assert(prop_out.type_by_id(prop_out[i+N_bonds_input1]).name == prop_in.type_by_id(prop_in[i]).name)
+            # Check property contents:
+            for name in input_prop_names_1:
+                print("Checking values of property '{}'".format(name))
+                prop_in = source_data1.bonds[name]
+                prop_out = data.bonds[name]
+                assert(numpy.all(prop_out[0:N_bonds_input1] == prop_in[...]))
+            for name in input_prop_names_2:
+                print("Checking values of property '{}'".format(name))
+                prop_in = source_data2.bonds[name]
+                prop_out = data.bonds[name]
+                if name == 'Topology':
+                    assert(numpy.all(prop_out[N_bonds_input1:] == prop_in[...] + N_input1))
+                elif not prop_out.types:
+                    assert(numpy.all(prop_out[N_bonds_input1:] == prop_in[...]))
+                else:
+                    for i in range(N_bonds_input2):
+                        assert(prop_out.type_by_id(prop_out[i+N_bonds_input1]).name == prop_in.type_by_id(prop_in[i]).name)
         
 
 verify_operation("../../files/XYZ/SiH.extended.xyz", "../../files/XYZ/LiH.xyz")

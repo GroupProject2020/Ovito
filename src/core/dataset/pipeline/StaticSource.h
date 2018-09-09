@@ -43,7 +43,7 @@ public:
 	Q_INVOKABLE StaticSource(DataSet* dataset);
 
 	/// \brief Constructor that inserts a single data object into the new source.
-	StaticSource(DataSet* dataset, DataObject* dataObject) : StaticSource(dataset) {
+	StaticSource(DataSet* dataset, const DataObject* dataObject) : StaticSource(dataset) {
 		OVITO_ASSERT(dataObject);
 		_dataObjects.push_back(this, PROPERTY_FIELD(dataObjects), dataObject);
 	}
@@ -65,22 +65,20 @@ public:
 	virtual QVector<DataObject*> getSourceDataObjects() const override { return dataObjects(); }
 
 	/// \brief Adds an additional data object to this source.
-	void addDataObject(DataObject* obj) { OVITO_ASSERT(!dataObjects().contains(obj)); _dataObjects.push_back(this, PROPERTY_FIELD(dataObjects), obj); }
+	void addDataObject(const DataObject* obj) { 
+		OVITO_ASSERT(!dataObjects().contains(const_cast<DataObject*>(obj))); 
+		_dataObjects.push_back(this, PROPERTY_FIELD(dataObjects), obj); 
+	}
 
 	/// \brief Inserts an additional data object into this source.
-	void insertDataObject(int index, DataObject* obj) { OVITO_ASSERT(!dataObjects().contains(obj)); _dataObjects.insert(this, PROPERTY_FIELD(dataObjects), index, obj); }
+	void insertDataObject(int index, const DataObject* obj) { 
+		OVITO_ASSERT(!dataObjects().contains(const_cast<DataObject*>(obj))); 
+		_dataObjects.insert(this, PROPERTY_FIELD(dataObjects), index, obj); 
+	}
 	
 	/// \brief Removes a data object from this source.
-	void removeDataObject(int index) { _dataObjects.remove(this, PROPERTY_FIELD(dataObjects), index); }
-	
-	/// \brief Finds an object of the given type in the list of data objects stored in this source.
-	template<class ObjectType>
-	ObjectType* findObject() const {
-		for(DataObject* o : dataObjects()) {
-			if(ObjectType* obj = dynamic_object_cast<ObjectType>(o))
-				return obj;
-		}
-		return nullptr;
+	void removeDataObject(int index) { 
+		_dataObjects.remove(this, PROPERTY_FIELD(dataObjects), index); 
 	}
 	
 private:

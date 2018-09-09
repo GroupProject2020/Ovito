@@ -113,7 +113,7 @@
           </listitem>
 
           <listitem>
-            <para><link linkend="particles.modifiers.bond_angle_analysis">Bond-angle analysis</link></para>
+            <para><link linkend="particles.modifiers.bond_angle_analysis">Ackland-Jones analysis</link></para>
           </listitem>
 
           <listitem>

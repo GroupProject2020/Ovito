@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //  Copyright (2017) Lars Pastewka
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -51,11 +51,8 @@ protected:
 	/// Creates the user interface controls for the editor.
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
 
-	/// This method is called when a reference target changes.
-	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
-
 	/// Replots one of the correlation function computed by the modifier.
-	std::pair<FloatType,FloatType> plotData(DataSeriesObject* series, DataSeriesPlotWidget* plotWidget, FloatType offset, FloatType fac, const PropertyPtr& normalization);
+	std::pair<FloatType,FloatType> plotData(const DataSeriesObject* series, DataSeriesPlotWidget* plotWidget, FloatType offset, FloatType fac, const ConstPropertyPtr& normalization);
 
 protected Q_SLOTS:
 

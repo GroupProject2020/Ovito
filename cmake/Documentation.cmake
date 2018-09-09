@@ -28,51 +28,54 @@
 # Controls the generation of the user manual.
 OPTION(OVITO_BUILD_DOCUMENTATION "Build the user manual" "OFF")
 
-IF(OVITO_BUILD_DOCUMENTATION)
-
-	# Find the XSLT processor program.
-	FIND_PROGRAM(XSLT_PROCESSOR "xsltproc" DOC "Path to the XSLT processor program used to build the documentation.")
-	IF(NOT XSLT_PROCESSOR)
+# Find the XSLT processor program.
+FIND_PROGRAM(XSLT_PROCESSOR "xsltproc" DOC "Path to the XSLT processor program used to build the documentation.")
+IF(NOT XSLT_PROCESSOR)
+	IF(OVITO_BUILD_DOCUMENTATION)
 		MESSAGE(FATAL_ERROR "The XSLT processor program (xsltproc) was not found. Please install it and/or specify its location manually.")
 	ENDIF()
-	SET(XSLT_PROCESSOR_OPTIONS "--xinclude" CACHE STRING "Additional to pass to the XSLT processor program when building the documentation")
-	MARK_AS_ADVANCED(XSLT_PROCESSOR_OPTIONS)
-	
-	# Create destination directories.
-	FILE(MAKE_DIRECTORY "${OVITO_SHARE_DIRECTORY}/doc/manual")
-	FILE(MAKE_DIRECTORY "${OVITO_SHARE_DIRECTORY}/doc/manual/html")
-	
-	# XSL transform documentation files.
+ENDIF()
+SET(XSLT_PROCESSOR_OPTIONS "--xinclude" CACHE STRING "Additional to pass to the XSLT processor program when building the documentation")
+MARK_AS_ADVANCED(XSLT_PROCESSOR_OPTIONS)
+
+# Create destination directories.
+FILE(MAKE_DIRECTORY "${OVITO_SHARE_DIRECTORY}/doc/manual")
+FILE(MAKE_DIRECTORY "${OVITO_SHARE_DIRECTORY}/doc/manual/html")
+
+# XSL transform documentation files.
+IF(XSLT_PROCESSOR)
 	ADD_CUSTOM_TARGET(documentation
 					COMMAND ${CMAKE_COMMAND} "-E" copy_directory "images/" "${OVITO_SHARE_DIRECTORY}/doc/manual/html/images/"
 					COMMAND ${CMAKE_COMMAND} "-E" copy "manual.css" "${OVITO_SHARE_DIRECTORY}/doc/manual/html/"
 					COMMAND ${XSLT_PROCESSOR} "${XSLT_PROCESSOR_OPTIONS}" --nonet --stringparam base.dir "${OVITO_SHARE_DIRECTORY}/doc/manual/html/" html-customization-layer.xsl Manual.docbook
 					WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/doc/manual/"
 					COMMENT "Generating user documentation")
-	
+
 	INSTALL(DIRECTORY "${OVITO_SHARE_DIRECTORY}/doc/manual/html/" DESTINATION "${OVITO_RELATIVE_SHARE_DIRECTORY}/doc/manual/html/" COMPONENT "runtime")
-	ADD_DEPENDENCIES(Ovito documentation)
-	
-	# Generate documentation for OVITO's scripting interface.
-	IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
-
-		# Use OVITO's built in Python interpreter to run the Sphinx doc program.
-		ADD_CUSTOM_TARGET(scripting_documentation ALL 
-					COMMAND "$<TARGET_FILE:ovitos>" "${CMAKE_SOURCE_DIR}/cmake/sphinx-build.py" "-b" "html" "-a" "-E" 
-					"-D" "version=${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}" 
-					"-D" "release=${OVITO_VERSION_STRING}"
-					"." "${OVITO_SHARE_DIRECTORY}/doc/manual/html/python/" 
-					WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/doc/python/"
-					COMMENT "Generating scripting documentation")
-		
-		# Run Sphinx only after OVITO and all of its plugins have been built.
-		ADD_DEPENDENCIES(scripting_documentation ovitos)
-		
-		# Build the scripting documentation together with the main documentation.
-		ADD_DEPENDENCIES(scripting_documentation documentation)
+	IF(OVITO_BUILD_DOCUMENTATION)
+		ADD_DEPENDENCIES(Ovito documentation)
 	ENDIF()
+ENDIf()
 
-ENDIF(OVITO_BUILD_DOCUMENTATION)
+# Generate documentation for OVITO's scripting interface.
+IF(OVITO_BUILD_PLUGIN_PYSCRIPT)
+
+	# Use OVITO's built in Python interpreter to run the Sphinx doc program.
+	ADD_CUSTOM_TARGET(scripting_documentation
+				COMMAND "$<TARGET_FILE:ovitos>" "${CMAKE_SOURCE_DIR}/cmake/sphinx-build.py" "-b" "html" "-a" "-E" 
+				"-D" "version=${OVITO_VERSION_MAJOR}.${OVITO_VERSION_MINOR}" 
+				"-D" "release=${OVITO_VERSION_STRING}"
+				"." "${OVITO_SHARE_DIRECTORY}/doc/manual/html/python/" 
+				WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/doc/python/"
+				COMMENT "Generating scripting documentation")
+	
+	# Run Sphinx only after OVITO and all of its plugins have been built.
+	ADD_DEPENDENCIES(scripting_documentation ovitos)
+
+	IF(OVITO_BUILD_DOCUMENTATION)
+		ADD_DEPENDENCIES(Ovito scripting_documentation)
+	ENDIF()
+ENDIF()
 
 # Find the Doxygen program.
 FIND_PACKAGE(Doxygen QUIET)

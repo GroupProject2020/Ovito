@@ -142,7 +142,7 @@ void PolyhedralTemplateMatchingModifierEditor::plotHistogram()
 		const PipelineFlowState& state = getModifierOutput();
 
 		// Look up the data series in the modifier's pipeline output.
-		_rmsdPlotWidget->setSeries(state.getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("ptm/rmsd")));
+		_rmsdPlotWidget->setSeries(state.getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("ptm-rmsd")));
 	}
 	else {
 		_rmsdPlotWidget->reset();

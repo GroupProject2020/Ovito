@@ -46,5 +46,5 @@ export_file(node1.compute(1), "_export_file_test.dump", "lammps/dump", columns =
 os.remove("_export_file_test.dump")
 
 # Export a data object:
-export_file(node1.compute(1).particles['Position'], "_export_file_test.dump", "xyz", columns = ["Position.X", "Position.Y", "Position.Z"])
+export_file(node1.compute(1).particles, "_export_file_test.dump", "xyz", columns = ["Position.X", "Position.Y", "Position.Z"])
 os.remove("_export_file_test.dump")

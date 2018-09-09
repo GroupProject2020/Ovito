@@ -37,19 +37,21 @@ public:
 	DataObjectReference() = default;
 	
 	/// \brief Constructs a reference to a data object.
-	DataObjectReference(const DataObject::OOMetaClass* dataClass, const QString& dataPath = QString()) :
-		_dataClass(dataClass), _dataPath(dataPath) {}
+	DataObjectReference(const DataObject::OOMetaClass* dataClass, const QString& dataPath = QString(), const QString& dataTitle = QString()) :
+		_dataClass(dataClass), _dataPath(dataPath), _dataTitle(dataTitle) {}
 
 	/// Returns the DataObject subclass being referenced.
 	const DataObject::OOMetaClass* dataClass() const { return _dataClass; }
 
-	/// Return the identifier and path of the data object being referenced.
+	/// Returns the identifier and path of the data object being referenced.
 	const QString& dataPath() const { return _dataPath; }
+
+	/// Returns the title of the data object used in the user interface.
+	const QString& dataTitle() const { return _dataTitle; }
 
 	/// \brief Compares two references for equality.
 	bool operator==(const DataObjectReference& other) const {
-		if(dataClass() != other.dataClass()) return false;
-		return dataPath() == other.dataPath();
+		return dataClass() == other.dataClass() && dataPath() == other.dataPath();
 	}
 
 	/// \brief Compares two references for inequality.
@@ -68,6 +70,9 @@ private:
 	/// The identifier and path of the data object being referenced.
 	QString _dataPath;
 
+	/// The title of the data object used in the user interface (optional).
+	QString _dataTitle;
+
 	friend OVITO_CORE_EXPORT SaveStream& operator<<(SaveStream& stream, const DataObjectReference& r);
 	friend OVITO_CORE_EXPORT LoadStream& operator>>(LoadStream& stream, DataObjectReference& r);
 };
@@ -76,9 +81,10 @@ private:
 /// \relates DataObjectReference
 inline OVITO_CORE_EXPORT SaveStream& operator<<(SaveStream& stream, const DataObjectReference& r) 
 {
-	stream.beginChunk(0x01);	
+	stream.beginChunk(0x02);	
 	stream << r.dataClass();
 	stream << r.dataPath();
+	stream << r.dataTitle();
 	stream.endChunk();
 	return stream;
 }
@@ -87,9 +93,10 @@ inline OVITO_CORE_EXPORT SaveStream& operator<<(SaveStream& stream, const DataOb
 /// \relates DataObjectReference
 inline OVITO_CORE_EXPORT LoadStream& operator>>(LoadStream& stream, DataObjectReference& r)
 {
-	stream.expectChunk(0x01);
+	stream.expectChunk(0x02);
 	stream >> r._dataClass;
 	stream >> r._dataPath;
+	stream >> r._dataTitle;
 	if(!r._dataClass)
 		r._dataPath.clear();
 	stream.closeChunk();
@@ -118,7 +125,7 @@ public:
 	}
 
 	/// \brief Constructs a reference to a data object.
-	TypedDataObjectReference(const typename DataObjectType::OOMetaClass* dataClass, const QString& dataPath = QString()) : DataObjectReference(dataClass, dataPath) {}
+	TypedDataObjectReference(const typename DataObjectType::OOMetaClass* dataClass, const QString& dataPath = QString(), const QString& dataTitle = QString()) : DataObjectReference(dataClass, dataPath, dataTitle) {}
 	
 	/// Returns the DataObject subclass being referenced.
 	const typename DataObjectType::OOMetaClass* dataClass() const { 

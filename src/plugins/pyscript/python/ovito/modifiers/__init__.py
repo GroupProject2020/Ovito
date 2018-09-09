@@ -16,11 +16,11 @@ more in-depth description of what these modifiers do.
 ============================================== =========================================
 Python class name                              User interface name
 ============================================== =========================================
+:py:class:`AcklandJonesModifier`               :guilabel:`Ackland-Jones analysis`
 :py:class:`AffineTransformationModifier`       :guilabel:`Affine transformation`
 :py:class:`AmbientOcclusionModifier`           :guilabel:`Ambient occlusion`
 :py:class:`AssignColorModifier`                :guilabel:`Assign color`
 :py:class:`AtomicStrainModifier`               :guilabel:`Atomic strain`
-:py:class:`BondAngleAnalysisModifier`          :guilabel:`Bond-angle analysis`
 :py:class:`CalculateDisplacementsModifier`     :guilabel:`Displacement vectors`
 :py:class:`CentroSymmetryModifier`             :guilabel:`Centrosymmetry parameter`
 :py:class:`ClearSelectionModifier`             :guilabel:`Clear selection`

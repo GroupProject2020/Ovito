@@ -39,7 +39,7 @@ class OVITO_PARTICLES_EXPORT PolyhedralTemplateMatchingModifier : public Structu
 	OVITO_CLASS(PolyhedralTemplateMatchingModifier)
 
 	Q_CLASSINFO("DisplayName", "Polyhedral template matching");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
+	Q_CLASSINFO("ModifierCategory", "Structure identification");
 
 public:
 

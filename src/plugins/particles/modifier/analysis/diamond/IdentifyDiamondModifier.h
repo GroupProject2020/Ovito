@@ -36,7 +36,7 @@ class OVITO_PARTICLES_EXPORT IdentifyDiamondModifier : public StructureIdentific
 	OVITO_CLASS(IdentifyDiamondModifier)
 
 	Q_CLASSINFO("DisplayName", "Identify diamond structure");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
+	Q_CLASSINFO("ModifierCategory", "Structure identification");
 
 public:
 

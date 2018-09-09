@@ -32,6 +32,7 @@
 class QwtPlotCurve;
 class QwtPlotLegendItem;
 class QwtPlotBarChart;
+class QwtPlotSpectroCurve;
 
 namespace Ovito { namespace StdObj {
 
@@ -102,8 +103,11 @@ private:
 	/// Reference to the current data series shown in the plot widget.
 	OORef<DataSeriesObject> _series;
 
-	/// The plot item(s) for standard curve charts.
-    std::vector<QwtPlotCurve*> _curves;	
+	/// The plot item(s) for standard line charts.
+    std::vector<QwtPlotCurve*> _curves;
+
+	/// The plot item(s) for scatter plots.
+    std::vector<QwtPlotSpectroCurve*> _spectroCurves;
 
 	/// The plot item for bar charts.
 	QwtPlotBarChart* _barChart = nullptr;

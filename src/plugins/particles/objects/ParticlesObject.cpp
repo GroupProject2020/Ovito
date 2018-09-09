@@ -196,7 +196,7 @@ void ParticlesObject::addBonds(const std::vector<Bond>& newBonds, BondsVis* bond
 	else {
 
 		// This is needed to determine which bonds already exist.
-		ParticleBondMap bondMap(this);
+		ParticleBondMap bondMap(*expectBonds());
 
 		// Check which bonds are new and need to be merged.
 		size_t originalBondCount = bonds()->elementCount();

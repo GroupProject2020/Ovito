@@ -369,7 +369,7 @@ PYBIND11_MODULE(StdMod, m)
 			"   The number of elements that were selected by the modifier.\n"
 			"\n")
 		.def_property("property", &SelectTypeModifier::sourceProperty, [](SelectTypeModifier& mod, py::object val) {
-					mod.setSourceProperty(convertPythonPropertyReference(val, mod.containerClass()));
+					mod.setSourceProperty(convertPythonPropertyReference(val, mod.subject().dataClass()));
 				},
 				"The name of the property to use as input; must be an integer property. "
 				"\n\n"
@@ -414,7 +414,7 @@ PYBIND11_MODULE(StdMod, m)
 				"\n\n"
 				":Default: ``'particles'``\n")		
 		.def_property("property", &HistogramModifier::sourceProperty, [](HistogramModifier& mod, py::object val) {					
-					mod.setSourceProperty(convertPythonPropertyReference(val, mod.containerClass()));
+					mod.setSourceProperty(convertPythonPropertyReference(val, mod.subject().dataClass()));
 				},
 				"The name of the input property for which to compute the histogram. "
 				"For vector properties a component name must be appended in the string, e.g. ``\"Velocity.X\"``. "
@@ -644,11 +644,11 @@ PYBIND11_MODULE(StdMod, m)
 			"   :emphasize-lines: 12-14\n"
 			"\n")
 		.def_property("source_property", &FreezePropertyModifier::sourceProperty, [](FreezePropertyModifier& mod, py::object val) {					
-					mod.setSourceProperty(convertPythonPropertyReference(val, mod.containerClass()));
+					mod.setSourceProperty(convertPythonPropertyReference(val, mod.subject().dataClass()));
 				},
 				"The name of the input property that should be evaluated by the modifier on the animation frame specified by :py:attr:`.freeze_at`. ")
 		.def_property("destination_property", &FreezePropertyModifier::destinationProperty, [](FreezePropertyModifier& mod, py::object val) {					
-					mod.setDestinationProperty(convertPythonPropertyReference(val, mod.containerClass()));
+					mod.setDestinationProperty(convertPythonPropertyReference(val, mod.subject().dataClass()));
 				},
 				"The name of the output property that should be created by the modifier. "
 				"It may be the same as :py:attr:`.source_property`. If the destination property already exists in the modifier's input, the values are overwritten. ")

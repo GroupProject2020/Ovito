@@ -26,6 +26,7 @@
 #include <plugins/grid/objects/VoxelGrid.h>
 #include <plugins/mesh/surface/SurfaceMesh.h>
 #include <plugins/mesh/surface/SurfaceMeshVis.h>
+#include <plugins/stdobj/series/DataSeriesObject.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
 
 namespace Ovito { namespace Grid {
@@ -76,9 +77,6 @@ public:
 	/// Sets the level at which to create the isosurface.
 	void setIsolevel(FloatType value) { if(isolevelController()) isolevelController()->setCurrentFloatValue(value); }
 
-	/// \brief Returns a reference to the property container being operated on by this modifier.
-	TypedDataObjectReference<VoxelGrid> subject() const { return TypedDataObjectReference<VoxelGrid>(&VoxelGrid::OOClass(), containerPath()); }
-
 protected:
 
 	/// Creates a computation engine that will compute the modifier's results.
@@ -92,7 +90,7 @@ private:
 	public:
 
 		/// Constructor.
-		ComputeIsosurfaceEngine(const TimeInterval& validityInterval, const std::vector<size_t>& gridShape, ConstPropertyPtr property, int vectorComponent, const SimulationCell& simCell, FloatType isolevel) :
+		ComputeIsosurfaceEngine(const TimeInterval& validityInterval, const VoxelGrid::GridDimensions& gridShape, ConstPropertyPtr property, int vectorComponent, const SimulationCell& simCell, FloatType isolevel) :
 			ComputeEngine(validityInterval),
 			_gridShape(gridShape),
 			_property(std::move(property)), 
@@ -103,7 +101,6 @@ private:
 		/// This method is called by the system after the computation was successfully completed.
 		virtual void cleanup() override {
 			_property.reset();
-			decltype(_gridShape){}.swap(_gridShape);
 			ComputeEngine::cleanup();
 		}
 
@@ -137,9 +134,12 @@ private:
 		/// Returns the input voxel property.
 		const ConstPropertyPtr& property() const { return _property; }
 
+		/// Returns the computed histogram of the input field values.
+		const PropertyPtr& histogram() const { return _histogram; }
+
 	private:
 
-		std::vector<size_t> _gridShape;
+		const VoxelGrid::GridDimensions _gridShape;
 		const FloatType _isolevel;
 		const int _vectorComponent;
 		ConstPropertyPtr _property;
@@ -156,10 +156,13 @@ private:
 
 		/// The maximum field value that was encountered.
 		FloatType _maxValue = -FLOATTYPE_MAX;
+
+		/// The computed histogram of the input field values.
+		PropertyPtr _histogram = std::make_shared<PropertyStorage>(64, PropertyStorage::Int64, 1, 0, tr("Count"), true, DataSeriesObject::YProperty);
 	};
 
 	/// Specifies the grid the modifier should operate on.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, containerPath, setContainerPath);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(PropertyContainerReference, subject, setSubject);
 
 	/// The voxel property that serves input.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(VoxelPropertyReference, sourceProperty, setSourceProperty);

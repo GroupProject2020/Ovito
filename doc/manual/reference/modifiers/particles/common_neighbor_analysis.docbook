@@ -135,7 +135,7 @@
     <title>Alternatives</title>  
     <para>
       OVITO provides implementations of other structure identification methods, for instance the
-      <link linkend="particles.modifiers.bond_angle_analysis">Bond-angle Analysis</link> modifier,
+      <link linkend="particles.modifiers.bond_angle_analysis">Ackland-Jones Analysis</link> modifier,
       the <link linkend="particles.modifiers.identify_diamond_structure">Identify Diamond Structure</link> modifier or
       the <link linkend="particles.modifiers.polyhedral_template_matching">Polyhedral Template Matching</link> modifier.
       Furthermore, the <link linkend="particles.modifiers.centrosymmetry">Centrosymmetry</link> modifier can be used to 

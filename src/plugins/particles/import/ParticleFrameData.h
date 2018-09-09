@@ -234,10 +234,10 @@ public:
 	void generateBondPeriodicImageProperty();
 
 	/// Returns the shape of the voxel grid.
-	const std::vector<size_t>& voxelGridShape() const { return _voxelGridShape; }
+	const VoxelGrid::GridDimensions& voxelGridShape() const { return _voxelGridShape; }
 
 	/// Sets the shape of the voxel grid.
-	void setVoxelGridShape(std::vector<size_t> shape) { _voxelGridShape = std::move(shape); }
+	void setVoxelGridShape(const VoxelGrid::GridDimensions& shape) { _voxelGridShape = shape; }
 	
 	/// Returns the list of voxel properties.
 	const std::vector<PropertyPtr>& voxelProperties() const { return _voxelProperties; }
@@ -284,7 +284,7 @@ private:
 	std::vector<PropertyPtr> _voxelProperties;
 
 	/// The shape of the voxel grid.
-	std::vector<size_t> _voxelGridShape;
+	VoxelGrid::GridDimensions _voxelGridShape{0,0,0};
 
 	/// Stores the lists of types for typed properties (both particle and bond properties).
 	std::map<const PropertyStorage*, std::unique_ptr<TypeList>> _typeLists;

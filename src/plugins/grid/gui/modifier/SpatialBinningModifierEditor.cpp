@@ -22,6 +22,7 @@
 #include <gui/GUI.h>
 #include <plugins/grid/modifier/SpatialBinningModifier.h>
 #include <plugins/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
+#include <plugins/grid/objects/VoxelGrid.h>
 #include <gui/properties/BooleanParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
 #include <gui/properties/IntegerParameterUI.h>
@@ -39,6 +40,7 @@
 #include <qwt/qwt_color_map.h>
 #include <qwt/qwt_scale_widget.h>
 #include <qwt/qwt_plot_layout.h>
+#include <qwt/qwt_plot_textlabel.h>
 
 namespace Ovito { namespace Grid { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
@@ -51,7 +53,7 @@ SET_OVITO_OBJECT_EDITOR(SpatialBinningModifier, SpatialBinningModifierEditor);
 void SpatialBinningModifierEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create a rollout.
-	QWidget* rollout = createRollout(tr("Bin and reduce"), rolloutParams, "particles.modifiers.bin_and_reduce.html");
+	QWidget* rollout = createRollout(tr("Spatial binning"), rolloutParams, "particles.modifiers.bin_and_reduce.html");
 
     // Create the rollout contents.
 	QVBoxLayout* layout = new QVBoxLayout(rollout);
@@ -129,11 +131,34 @@ void SpatialBinningModifierEditor::createUI(const RolloutInsertionParameters& ro
 	_firstDerivativePUI->setEnabled(false);
 	gridlayout->addWidget(_firstDerivativePUI->checkBox(), 1, 0, 1, 2);
 
-	_plot = new DataSeriesPlotWidget();
-    //_plot->axisScaleEngine(QwtPlot::xBottom)->setAttribute(QwtScaleEngine::Floating);
+	_plotWidget1d = new DataSeriesPlotWidget();
+	_plotWidget1d->setMinimumHeight(240);
+	_plotWidget1d->setMaximumHeight(240);
+    _mode3dLabel = new QwtPlotTextLabel();
+    QwtText labelText(tr("Three-dimensional binning grids\nare not displayed in this plot area."));
+    labelText.setRenderFlags(Qt::AlignHCenter | Qt::AlignVCenter);
+    _mode3dLabel->setText(labelText);
+    _mode3dLabel->attach(_plotWidget1d);
+    _mode3dLabel->hide();
+
+    _plotWidget2d = new QwtPlot();
+    _plotWidget2d->hide();
+	_plotWidget2d->setCanvasBackground(Qt::white);
+	_plotWidget2d->setMinimumHeight(240);
+	_plotWidget2d->setMaximumHeight(240);
+    _plotRaster = new QwtPlotSpectrogram();
+    _plotRaster->attach(_plotWidget2d);
+    _rasterData = new QwtMatrixRasterData();
+    _plotRaster->setData(_rasterData);
+    _plotWidget2d->enableAxis(QwtPlot::yRight);
+    _plotWidget2d->axisWidget(QwtPlot::yRight)->setColorBarEnabled(true);
+    _plotWidget2d->axisWidget(QwtPlot::yRight)->setColorBarWidth(20);
+    _plotWidget2d->plotLayout()->setAlignCanvasToScales(true);
+    _plotWidget2d->axisScaleEngine(QwtPlot::xBottom)->setAttribute(QwtScaleEngine::Floating);
 
 	layout->addSpacing(8);
-	layout->addWidget(_plot);
+	layout->addWidget(_plotWidget1d);
+    layout->addWidget(_plotWidget2d);
 	connect(this, &SpatialBinningModifierEditor::contentsReplaced, this, &SpatialBinningModifierEditor::plotData);
 
 #if 0
@@ -181,139 +206,81 @@ void SpatialBinningModifierEditor::createUI(const RolloutInsertionParameters& ro
 ******************************************************************************/
 void SpatialBinningModifierEditor::plotData()
 {
+    SpatialBinningModifier* modifier = static_object_cast<SpatialBinningModifier>(editObject());
     if(modifierApplication()) {
         // Request the modifier's pipeline output.
         const PipelineFlowState& state = getModifierOutput();
 
         // Look up the data series in the modifier's pipeline output.
-        const DataSeriesObject* series = state.getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("binning"));
+        QString seriesName = QStringLiteral("binning[%1]").arg(modifier->sourceProperty().nameWithComponent());
+        const DataSeriesObject* series = state.getObjectBy<DataSeriesObject>(modifierApplication(), seriesName);
 
-        // Hand data over to plotting widget.
-        _plot->setSeries(series);
-    }
-    else {
-        // Reset plot widget.
-        _plot->reset();
-    }
-
-#if 0
-	SpatialBinningModifier* modifier = static_object_cast<SpatialBinningModifier>(editObject());
-	BinningModifierApplication* modApp = dynamic_object_cast<BinningModifierApplication>(modifierApplication());
-	if(!modifier || !modApp || !modifier->isEnabled())
-		return;
-
-	int binDataSizeX = std::max(1, modifier->numberOfBinsX());
-	int binDataSizeY = std::max(1, modifier->numberOfBinsY());
-    if(modifier->is1D()) binDataSizeY = 1;
-    size_t binDataSize = (size_t)binDataSizeX * (size_t)binDataSizeY;
-
-    if(modifier->is1D()) {
-    	_plot->setAxisTitle(QwtPlot::yRight, QString());
-        _plot->enableAxis(QwtPlot::yRight, false);
-    	_plot->setAxisTitle(QwtPlot::xBottom, tr("Position"));
-        if(modifier->firstDerivative()) {
-        	_plot->setAxisTitle(QwtPlot::yLeft, QStringLiteral("d(%1)/d(Position)").arg(modifier->sourceProperty().nameWithComponent()));
-        }
-        else {
-        	_plot->setAxisTitle(QwtPlot::yLeft, modifier->sourceProperty().nameWithComponent());
-        }
-
-        if(!_plotCurve) {
-            _plotCurve = new QwtPlotCurve();
-            _plotCurve->setRenderHint(QwtPlotItem::RenderAntialiased, true);
-            _plotCurve->setStyle(QwtPlotCurve::Steps);
-            _plotCurve->attach(_plot);
-            _plotGrid = new QwtPlotGrid();
-            _plotGrid->setPen(Qt::gray, 0, Qt::DotLine);
-            _plotGrid->attach(_plot);
-        }
-        _plotGrid->show();
-
-        if(_plotRaster) _plotRaster->hide();
-
-        if(!modApp->binData() || modApp->binData()->size() != binDataSize) {
-            _plotCurve->hide();
+        // Hand plot data over to plotting widget.
+        if(series) {
+            _mode3dLabel->hide();
+            _plotWidget2d->hide();
+            _plotWidget1d->setSeries(series);
+            _plotWidget1d->show();
             return;
         }
-        _plotCurve->show();
+        else {
 
-        QVector<QPointF> plotData(binDataSize + 1);
-        double binSize = (modApp->range1().second - modApp->range1().first) / binDataSize;
-        for(int i = 1; i <= binDataSize; i++) {
-            plotData[i].rx() = binSize * i + modApp->range1().first;
-            plotData[i].ry() = modApp->binData()->getFloat(i-1);
-        }
-        plotData.front().rx() = modApp->range1().first;
-        plotData.front().ry() = modApp->binData()->getFloat(0);
-        _plotCurve->setSamples(plotData);
-
-		_plot->setAxisAutoScale(QwtPlot::xBottom);
-        if(!modifier->fixPropertyAxisRange())
-            _plot->setAxisAutoScale(QwtPlot::yLeft);
-        else
-            _plot->setAxisScale(QwtPlot::yLeft, modifier->propertyAxisRangeStart(), modifier->propertyAxisRangeEnd());
-    }
-    else {
-        if(_plotCurve) _plotCurve->hide();
-        if(_plotGrid) _plotGrid->hide();
-
-        class ColorMap: public QwtLinearColorMap
-        {
-        public:
-            ColorMap() : QwtLinearColorMap(Qt::darkBlue, Qt::darkRed) {
-                addColorStop(0.2, Qt::blue);
-                addColorStop(0.4, Qt::cyan);
-                addColorStop(0.6, Qt::yellow);
-                addColorStop(0.8, Qt::red);
+            // It's not a 1d plot. Check if the modifier has generated a two-dimensional voxel grid.
+            const VoxelGrid* grid = state.getObjectBy<VoxelGrid>(modifierApplication(), seriesName);
+            if(grid && grid->domain()->is2D() && grid->properties().size() == 1) {
+                _plotWidget1d->hide();
+                _plotWidget2d->show();
+                const PropertyObject* property = grid->properties().front();
+                QVector<double> values(property->size());
+                if(property->storage()->copyTo(values.begin())) {
+                    QwtInterval zInterval;
+                    if(!modifier->fixPropertyAxisRange()) {
+                        auto minmax = std::minmax_element(values.cbegin(), values.cend());
+                        if(*minmax.first != *minmax.second)
+                            zInterval = QwtInterval(*minmax.first, *minmax.second);
+                        else
+                            zInterval = QwtInterval(*minmax.first, *minmax.second + 1.0);
+                    }
+                    else {
+                        zInterval = QwtInterval(modifier->propertyAxisRangeStart(), modifier->propertyAxisRangeEnd());
+                    }
+                    _rasterData->setValueMatrix(values, grid->shape()[0]);
+                    _rasterData->setInterval(Qt::XAxis, QwtInterval(0, grid->domain()->cellVector1().length()));
+                    _rasterData->setInterval(Qt::YAxis, QwtInterval(0, grid->domain()->cellVector2().length()));
+                    _rasterData->setInterval(Qt::ZAxis, zInterval.normalized());
+                    class ColorMap: public QwtLinearColorMap
+                    {
+                    public:
+                        ColorMap() : QwtLinearColorMap(Qt::darkBlue, Qt::darkRed) {
+                            addColorStop(0.2, Qt::blue);
+                            addColorStop(0.4, Qt::cyan);
+                            addColorStop(0.6, Qt::yellow);
+                            addColorStop(0.8, Qt::red);
+                        }
+                    };
+                    _plotRaster->show();
+                    _plotWidget2d->axisScaleEngine(QwtPlot::yRight)->setAttribute(QwtScaleEngine::Inverted, zInterval.minValue() > zInterval.maxValue());
+                    _plotWidget2d->setAxisScale(QwtPlot::xBottom, 0, grid->domain()->cellVector1().length());
+                    _plotWidget2d->setAxisScale(QwtPlot::yLeft, 0, grid->domain()->cellVector2().length());
+                    _plotWidget2d->axisWidget(QwtPlot::yRight)->setColorMap(zInterval.normalized(), new ColorMap());
+                    _plotWidget2d->setAxisScale(QwtPlot::yRight, zInterval.minValue(), zInterval.maxValue());
+                    _plotWidget2d->setAxisTitle(QwtPlot::yRight, property->name());
+                    _plotWidget2d->setAxisTitle(QwtPlot::xBottom, tr("Position along axis 1"));
+                    _plotWidget2d->setAxisTitle(QwtPlot::yLeft, tr("Position along axis 2"));
+                    _plotWidget2d->replot();
+                    return;
+                }
             }
-        };
-    	_plot->setAxisTitle(QwtPlot::xBottom, tr("Position"));
-    	_plot->setAxisTitle(QwtPlot::yLeft, tr("Position"));
-
-        if(!_plotRaster) {
-            _plotRaster = new QwtPlotSpectrogram();
-            _plotRaster->attach(_plot);
-            _plotRaster->setColorMap(new ColorMap());
-            _rasterData = new QwtMatrixRasterData();
-            _plotRaster->setData(_rasterData);
-
-            QwtScaleWidget* rightAxis = _plot->axisWidget(QwtPlot::yRight);
-            rightAxis->setColorBarEnabled(true);
-            rightAxis->setColorBarWidth(20);
-            _plot->plotLayout()->setAlignCanvasToScales(true);
+            else {
+                _mode3dLabel->show();
+            }
         }
-
-        if(!modApp->binData() || modApp->binData()->size() != binDataSize) {
-            _plotRaster->hide();
-            return;
-        }
-        _plotRaster->show();
-
-        _plot->enableAxis(QwtPlot::yRight);
-        QVector<double> values(modApp->binData()->size());
-        std::copy(modApp->binData()->constDataFloat(), modApp->binData()->constDataFloat() + modApp->binData()->size(), values.begin());
-        _rasterData->setValueMatrix(values, binDataSizeX);
-        _rasterData->setInterval(Qt::XAxis, QwtInterval(modApp->range1().first, modApp->range1().second, QwtInterval::ExcludeMaximum));
-        _rasterData->setInterval(Qt::YAxis, QwtInterval(modApp->range2().first, modApp->range2().second, QwtInterval::ExcludeMaximum));
-        QwtInterval zInterval;
-        if(!modifier->fixPropertyAxisRange()) {
-            auto minmax = std::minmax_element(modApp->binData()->constDataFloat(), modApp->binData()->constDataFloat() + modApp->binData()->size());
-            zInterval = QwtInterval(*minmax.first, *minmax.second, QwtInterval::ExcludeMaximum);
-        }
-        else {
-            zInterval = QwtInterval(modifier->propertyAxisRangeStart(), modifier->propertyAxisRangeEnd(), QwtInterval::ExcludeMaximum);
-        }
-        _plot->axisScaleEngine(QwtPlot::yRight)->setAttribute(QwtScaleEngine::Inverted, zInterval.minValue() > zInterval.maxValue());
-        _rasterData->setInterval(Qt::ZAxis, zInterval.normalized());
-		_plot->setAxisScale(QwtPlot::xBottom, modApp->range1().first, modApp->range1().second);
-		_plot->setAxisScale(QwtPlot::yLeft, modApp->range2().first, modApp->range2().second);
-        _plot->axisWidget(QwtPlot::yRight)->setColorMap(zInterval.normalized(), new ColorMap());
-        _plot->setAxisScale(QwtPlot::yRight, zInterval.minValue(), zInterval.maxValue());
-        _plot->setAxisTitle(QwtPlot::yRight, modifier->sourceProperty().name());
     }
- 
-    _plot->replot();
-#endif
+
+    // Reset plot widgets.
+    _plotWidget2d->hide();
+    _plotWidget1d->reset();
+    _plotWidget1d->show();
 }
 
 /******************************************************************************

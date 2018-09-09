@@ -162,7 +162,7 @@ PipelineFlowState StructureIdentificationModifier::StructureIdentificationEngine
 	}
 
 	// Output a data series object with the type counts.
-	DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("structures"), modApp, tr("Structure counts"), _typeCounts);
+	DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("structures"), modApp, DataSeriesObject::BarChart, tr("Structure counts"), _typeCounts);
 	PropertyObject* yProperty = seriesObj->expectMutableProperty(DataSeriesObject::YProperty);
 	for(const ElementType* type : modifier->structureTypes())
 		if(type->enabled()) yProperty->addElementType(type);

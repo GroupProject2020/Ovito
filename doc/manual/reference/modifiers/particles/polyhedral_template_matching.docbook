@@ -698,7 +698,7 @@ doi:10.1088/0965-0393/24/5/055007
   <title>Notes</title>  
   <para>
     In addition to the PTM, OVITO provides alternative structure identification tools 
-    like the <link linkend="particles.modifiers.common_neighbor_analysis">Common Neighbor Analysis</link> modifier, the <link linkend="particles.modifiers.identify_diamond_structure">Identify Diamond Structure</link> modifier, or the <link linkend="particles.modifiers.bond_angle_analysis">Bond-Angle Analysis</link> modifier.
+    like the <link linkend="particles.modifiers.common_neighbor_analysis">Common Neighbor Analysis</link> modifier, the <link linkend="particles.modifiers.identify_diamond_structure">Identify Diamond Structure</link> modifier, or the <link linkend="particles.modifiers.bond_angle_analysis">Ackland-Jones Analysis</link> modifier.
   </para>
 
   <para>

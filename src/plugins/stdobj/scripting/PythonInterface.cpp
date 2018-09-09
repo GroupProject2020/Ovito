@@ -195,6 +195,15 @@ PYBIND11_MODULE(StdObj, m)
 
 	ovito_abstract_class<PeriodicDomainDataObject, DataObject>{m};		
 	
+	auto PropertyContainer_py = ovito_abstract_class<PropertyContainer, DataObject>(m,
+		":Base class: :py:class:`ovito.data.DataObject`\n\n")
+
+		.def_property_readonly("count", &PropertyContainer::elementCount,
+			"The number of data elements, for example the number of particles, which is equal to the length of the property arrays in this container. ")
+	;
+	expose_subobject_list(PropertyContainer_py, std::mem_fn(&PropertyContainer::properties), "properties", "PropertyList",
+		"The list of :py:class:`Property` objects stored in this container. ");
+
 	ovito_class<ElementType, RefTarget>{m}
 	;
 
@@ -318,6 +327,13 @@ PYBIND11_MODULE(StdObj, m)
 			return ai;			
 		})
 	;
+	expose_mutable_subobject_list(Property_py,
+		std::mem_fn(&PropertyObject::elementTypes), 
+		std::mem_fn(&PropertyObject::insertElementType), 
+		std::mem_fn(&PropertyObject::removeElementType), "types", "ElementTypeList",
+			  "A (mutable) list of :py:class:`ElementType` instances. "
+			  "\n\n"
+			  "Note that the element types may be stored in arbitrary order in this list. Thus, it is not valid to use a numeric type ID as an index into this list. ");
 	
 	py::enum_<PropertyStorage::StandardDataType>(Property_py, "DataType")
 		.value("Int", PropertyStorage::Int)
@@ -325,8 +341,8 @@ PYBIND11_MODULE(StdObj, m)
 		.value("Float", PropertyStorage::Float)
 	;	
 
-	auto DataSeries_py = ovito_abstract_class<DataSeriesObject, DataObject>(m,
-			":Base class: :py:class:`ovito.data.DataObject`\n\n"
+	auto DataSeries_py = ovito_abstract_class<DataSeriesObject, PropertyContainer>(m,
+			":Base class: :py:class:`ovito.data.PropertyContainer`\n\n"
 			"This object represents a series of 2d data points and is used for generating function and histogram plots. "
 			"A data series mainly consists of an array of y-values and, optionally, an array of corresponding x-values, one for each data point. "
 			"\n\n"
@@ -426,34 +442,53 @@ PropertyReference convertPythonPropertyReference(py::object src, PropertyContain
 		return PropertyReference(propertyClass, type, component);
 }
 
-/// Helper function that generates a getter function for the 'operate_on' attribute of a GenericPropertyModifier subclass
+/// Helper function that generates a getter function for the 'operate_on' field of a GenericPropertyModifier subclass
 py::cpp_function modifierPropertyClassGetter()
 {
-	return [](const GenericPropertyModifier& mod) { 
-			return mod.containerClass() ? mod.containerClass()->pythonName() : QString();
+	return [](const GenericPropertyModifier& mod) {
+		QString refStr;
+		if(mod.subject()) {
+			refStr = mod.subject().dataClass()->pythonName();
+			if(mod.subject().dataPath().isEmpty() == false)
+				refStr += QChar(':') + mod.subject().dataPath();
+		}
+		return refStr;
 	};
 }
 
-/// Helper function that generates a setter function for the 'operate_on' attribute of a GenericPropertyModifier subclass.
+/// Helper function that generates a setter function for the 'operate_on' field of a GenericPropertyModifier subclass.
 py::cpp_function modifierPropertyClassSetter()
 {
-	return [](GenericPropertyModifier& mod, const QString& typeName) { 
-		if(mod.containerClass() && mod.containerClass()->pythonName() == typeName)
+	return [](GenericPropertyModifier& mod, const QString& refStr) {
+		// First, parse the input string into a property container class
+		// and a data object path.
+		QStringRef dataClassStr, dataPathStr;
+		int separatorPos = refStr.indexOf(QChar(':'));
+		if(separatorPos == -1) {
+			dataClassStr = &refStr;
+		}
+		else {
+			dataClassStr = QStringRef(&refStr, 0, separatorPos);
+			dataPathStr = QStringRef(&refStr, separatorPos+1, refStr.length() - separatorPos - 1);
+		}
+		// Check if values are the same as the current subject.
+		if(mod.subject() && mod.subject().dataClass()->pythonName() == dataClassStr && mod.subject().dataPath() == dataPathStr)
 			return;
-		for(PropertyContainerClassPtr propertyClass : PluginManager::instance().metaclassMembers<PropertyContainer>()) {
-			if(propertyClass->pythonName() == typeName) {
-				mod.setContainerClass(propertyClass);
+		// Look up the property container class.
+		for(PropertyContainerClassPtr containerClass : PluginManager::instance().metaclassMembers<PropertyContainer>()) {
+			if(containerClass->pythonName() == dataClassStr) {
+				mod.setSubject(PropertyContainerReference(containerClass, dataPathStr.toString()));
 				return;
 			}
 		}
-		// Error: User did not specify a valid type name.
+		// Error: User did not specify a valid string.
 		// Now build the list of valid names to generate a helpful error message.
-		QStringList propertyClassNames; 
-		for(PropertyContainerClassPtr propertyClass : PluginManager::instance().metaclassMembers<PropertyContainer>()) {
-			propertyClassNames.push_back(QString("'%1'").arg(propertyClass->pythonName()));
+		QStringList containerClassNames;
+		for(PropertyContainerClassPtr containerClass : PluginManager::instance().metaclassMembers<PropertyContainer>()) {
+			containerClassNames.push_back(QString("'%1'").arg(containerClass->pythonName()));
 		}
-		mod.throwException(GenericPropertyModifier::tr("'%1' is not a valid type of data element this modifier can operate on. Supported types are: (%2)")
-				.arg(typeName).arg(propertyClassNames.join(QStringLiteral(", "))));
+		mod.throwException(GenericPropertyModifier::tr("'%1' is not a valid element type this modifier can operate on. Supported types are: (%2)")
+				.arg(dataClassStr.toString()).arg(containerClassNames.join(QStringLiteral(", "))));
 	};
 }
 

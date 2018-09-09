@@ -15,7 +15,7 @@ ovito.modifiers.WrapPeriodicImagesModifier = ovito.plugins.Particles.WrapPeriodi
 ovito.modifiers.ExpandSelectionModifier = ovito.plugins.Particles.ExpandSelectionModifier
 ovito.modifiers.StructureIdentificationModifier = ovito.plugins.Particles.StructureIdentificationModifier
 ovito.modifiers.CommonNeighborAnalysisModifier = ovito.plugins.Particles.CommonNeighborAnalysisModifier
-ovito.modifiers.BondAngleAnalysisModifier = ovito.plugins.Particles.BondAngleAnalysisModifier
+ovito.modifiers.AcklandJonesModifier = ovito.plugins.Particles.AcklandJonesModifier
 ovito.modifiers.CreateBondsModifier = ovito.plugins.Particles.CreateBondsModifier
 ovito.modifiers.CentroSymmetryModifier = ovito.plugins.Particles.CentroSymmetryModifier
 ovito.modifiers.ClusterAnalysisModifier = ovito.plugins.Particles.ClusterAnalysisModifier
@@ -33,7 +33,7 @@ ovito.modifiers.GenerateTrajectoryLinesModifier = ovito.plugins.Particles.Genera
 ovito.modifiers.__all__ += ['AmbientOcclusionModifier', 
             'WrapPeriodicImagesModifier',
             'ExpandSelectionModifier',
-            'StructureIdentificationModifier', 'CommonNeighborAnalysisModifier', 'BondAngleAnalysisModifier',
+            'StructureIdentificationModifier', 'CommonNeighborAnalysisModifier', 'AcklandJonesModifier',
             'CreateBondsModifier', 'CentroSymmetryModifier', 'ClusterAnalysisModifier', 'CoordinationAnalysisModifier',
             'CalculateDisplacementsModifier', 'AtomicStrainModifier',
             'WignerSeitzAnalysisModifier', 'VoronoiAnalysisModifier', 'IdentifyDiamondModifier', 'LoadTrajectoryModifier',

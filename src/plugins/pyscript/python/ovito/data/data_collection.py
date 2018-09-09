@@ -6,7 +6,7 @@ except ImportError:
     # Python 2.x
     import collections
 
-from ..plugins.PyScript import DataObject, CloneHelper, DataCollection
+from ..plugins.PyScript import DataObject, CloneHelper, DataCollection, AttributeDataObject
 
 # Implementation of the DataCollection.attributes field.
 def _DataCollection_attributes(self):
@@ -75,29 +75,46 @@ def _DataCollection_attributes(self):
         
         def __init__(self, data_collection):
             """ Constructor that stores away a back-pointer to the owning DataCollection instance. """
-            self._owner = data_collection
+            self._collection = data_collection
             
         def __len__(self):
-            return len(self._owner.attribute_names)
+            count = 0
+            for obj in self._collection.objects:
+                if isinstance(obj, AttributeDataObject):
+                    count += 1
+            return count
         
         def __getitem__(self, key):
-            v = self._owner.get_attribute(key)
-            if v is not None:
-                return v
-            raise KeyError("Attribute with the name '%s' not present in data collection." % key)
+            for obj in self._collection.objects:
+                if isinstance(obj, AttributeDataObject) and obj.id == key:
+                    return obj.value
+            raise KeyError("Attribute '%s' does not exist in data collection." % key)
 
         def __setitem__(self, key, value):
-            self._owner.set_attribute(key, value)
+            for obj in self._collection.objects:
+                if isinstance(obj, AttributeDataObject) and obj.id == key:
+                    if not value is None:
+                        obj.value = value
+                    else:
+                        del self._collection.objects[obj]
+                    return
+            if not value is None:
+                attr =  AttributeDataObject(id = key, value = value)
+                self._collection.objects.append(attr)
 
         def __delitem__(self, key):
-            v = self._owner.get_attribute(key)
-            if v is None:
-                raise KeyError("Attribute with the name '%s' not present in data collection." % key)
-            self._owner.set_attribute(key, None)
+            """ Removes a global attribute from the data collection. """
+            for obj in self._collection.objects:
+                if isinstance(obj, AttributeDataObject) and obj.id == key:
+                    del self._collection.objects[obj]
+                    return
+            raise KeyError("Attribute '%s' does not exist in data collection." % key)
 
         def __iter__(self):
-            for aname in self._owner.attribute_names:
-                yield aname
+            """ Returns an iterator over the names of all global attributes. """
+            for obj in self._collection.objects:
+                if isinstance(obj, AttributeDataObject):
+                    yield obj.id
 
         def __repr__(self):
             return repr(dict(self))

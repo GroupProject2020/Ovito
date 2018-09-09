@@ -101,7 +101,7 @@ public:
 public:
 
 	/// Initializes the helper class.
-	ParticleBondMap(ParticlesObject* particles);
+	ParticleBondMap(const BondsObject& bonds);
 
 	/// Initializes the helper class.
 	ParticleBondMap(ConstPropertyPtr bondTopology, ConstPropertyPtr bondPeriodicImages = nullptr);

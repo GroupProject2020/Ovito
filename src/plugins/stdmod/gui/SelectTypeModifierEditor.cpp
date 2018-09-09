@@ -45,7 +45,10 @@ void SelectTypeModifierEditor::createUI(const RolloutInsertionParameters& rollou
 	PropertyContainerParameterUI* pclassUI = new PropertyContainerParameterUI(this, PROPERTY_FIELD(GenericPropertyModifier::subject));
 	layout->addWidget(new QLabel(tr("Operate on:")));
 	layout->addWidget(pclassUI->comboBox());
-	
+	pclassUI->setContainerFilter([](const PropertyContainer* container) {
+		return std::any_of(container->properties().begin(), container->properties().end(), &isValidInputProperty);
+	});
+
 	_sourcePropertyUI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(SelectTypeModifier::sourceProperty), nullptr);
 	layout->addWidget(new QLabel(tr("Property:")));
 	layout->addWidget(_sourcePropertyUI->comboBox());
@@ -58,9 +61,7 @@ void SelectTypeModifierEditor::createUI(const RolloutInsertionParameters& rollou
 		updateElementTypeList();
 	});
 	// Show only typed properties that have some element types attached to them.
-	_sourcePropertyUI->setPropertyFilter([](const PropertyObject* property) {
-		return property->elementTypes().empty() == false && property->componentCount() == 1 && property->dataType() == PropertyStorage::Int;
-	});
+	_sourcePropertyUI->setPropertyFilter(&isValidInputProperty);
 
 	class MyListWidget : public QListWidget {
 	public:

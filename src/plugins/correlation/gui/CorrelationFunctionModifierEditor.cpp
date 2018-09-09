@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //  Copyright (2017) Lars Pastewka
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -266,43 +266,37 @@ void CorrelationFunctionModifierEditor::createUI(const RolloutInsertionParameter
 	// Status label.
 	layout->addSpacing(6);
 	layout->addWidget(statusLabel());
-}
 
-/******************************************************************************
-* This method is called when a reference target changes.
-******************************************************************************/
-bool CorrelationFunctionModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
-{
-	if(source == modifierApplication() && event.type() == ReferenceEvent::PipelineCacheUpdated) {
+	// Update data plot whenever the modifier has calculated new results.
+	connect(this, &ModifierPropertiesEditor::contentsChanged, this, [this]() {
 		plotAllDataLater(this);
-	}
-	else if(source == editObject() && event.type() == ReferenceEvent::TargetChanged) {
+	});	
+	connect(this, &ModifierPropertiesEditor::modifierEvaluated, this, [this]() {
 		plotAllDataLater(this);
-	}
-	return ModifierPropertiesEditor::referenceEvent(source, event);
+	});	
 }
 
 /******************************************************************************
 * Replots one of the correlation function computed by the modifier.
 ******************************************************************************/
 std::pair<FloatType,FloatType> CorrelationFunctionModifierEditor::plotData(
-												DataSeriesObject* series,
+												const DataSeriesObject* series,
 												DataSeriesPlotWidget* plotWidget,
 												FloatType offset, 
 												FloatType fac, 
-												const PropertyPtr& normalization)
+												const ConstPropertyPtr& normalization)
 {
 	// Duplicate the data series, then modify the stored values.
 	UndoSuspender noUndo(series);
 	CloneHelper cloneHelper;
-	OORef<DataSeriesObject> clonedSeries = cloneHelper.cloneObject(series, true);
+	OORef<DataSeriesObject> clonedSeries = cloneHelper.cloneObject(series, false);
+	clonedSeries->makePropertiesMutable();
 
-#if 0
 	// Normalize function values.
 	if(normalization) {
-		OVITO_ASSERT(normalization->size() == clonedSeries->y()->size());
+		OVITO_ASSERT(normalization->size() == clonedSeries->elementCount());
 		auto pf = normalization->constDataFloat();
-		for(FloatType& v : clonedSeries->modifiableY()->floatRange()) {
+		for(FloatType& v : clonedSeries->expectMutableProperty(DataSeriesObject::YProperty)->floatRange()) {
 			FloatType factor = *pf++;
 			v = (factor > FloatType(1e-12)) ? (v / factor) : FloatType(0);
 		}
@@ -310,18 +304,17 @@ std::pair<FloatType,FloatType> CorrelationFunctionModifierEditor::plotData(
 
 	// Scale and shift function values.
 	if(fac != 1 || offset != 0) {
-		for(FloatType& v : clonedSeries->modifiableY()->floatRange())
+		for(FloatType& v : clonedSeries->expectMutableProperty(DataSeriesObject::YProperty)->floatRange())
 			v = fac * (v - offset);
 	}
 
 	// Determine value range.
-	auto minmax = std::minmax_element(clonedSeries->y()->constDataFloat(), clonedSeries->y()->constDataFloat() + clonedSeries->y()->size());
+	auto minmax = std::minmax_element(clonedSeries->getY()->constDataFloat(), clonedSeries->getY()->constDataFloat() + clonedSeries->getY()->size());
 
 	// Hand data series over to plot widget.
 	plotWidget->setSeries(std::move(clonedSeries));
 
 	return { *minmax.first, *minmax.second };
-#endif
 }
 
 /******************************************************************************
@@ -368,16 +361,15 @@ void CorrelationFunctionModifierEditor::plotAllData()
 	else
 		_reciprocalSpacePlot->setAxisAutoScale(QwtPlot::yLeft);
 
-#if 0
 	// Obtain the pipeline data produced by the modifier.
 	const PipelineFlowState& state = getModifierOutput();
 
 	// Retreive computed values from pipeline.
-	const QVariant& mean1 = state.getAttributeValue(QStringLiteral("CorrelationFunction.mean1"), modifierApplication());
-	const QVariant& mean2 = state.getAttributeValue(QStringLiteral("CorrelationFunction.mean2"), modifierApplication());
-	const QVariant& variance1 = state.getAttributeValue(QStringLiteral("CorrelationFunction.variance1"), modifierApplication());
-	const QVariant& variance2 = state.getAttributeValue(QStringLiteral("CorrelationFunction.variance2"), modifierApplication());
-	const QVariant& covariance = state.getAttributeValue(QStringLiteral("CorrelationFunction.covariance"), modifierApplication());
+	const QVariant& mean1 = state.getAttributeValue(modifierApplication(), QStringLiteral("CorrelationFunction.mean1"));
+	const QVariant& mean2 = state.getAttributeValue(modifierApplication(), QStringLiteral("CorrelationFunction.mean2"));
+	const QVariant& variance1 = state.getAttributeValue(modifierApplication(), QStringLiteral("CorrelationFunction.variance1"));
+	const QVariant& variance2 = state.getAttributeValue(modifierApplication(), QStringLiteral("CorrelationFunction.variance2"));
+	const QVariant& covariance = state.getAttributeValue(modifierApplication(), QStringLiteral("CorrelationFunction.covariance"));
 
 	// Determine scaling factor and offset.
 	FloatType offset = 0.0;
@@ -393,16 +385,17 @@ void CorrelationFunctionModifierEditor::plotAllData()
 	}
 
 	// Display direct neighbor correlation function. 
-	DataSeriesObject* neighCorrelation = state.findObject<DataSeriesObject>(QStringLiteral("correlation/neighbor"), modifierApplication()); 
-	DataSeriesObject* neighRDF = state.findObject<DataSeriesObject>(QStringLiteral("correlation/neighbor/rdf"), modifierApplication()); 
-	if(modifier && modifierApplication() && modifier->doComputeNeighCorrelation() && modApp && neighCorrelation && neighRDF) {
-		const auto& yData = neighCorrelation->getYStorage(state);
-		const auto& rdfData = neighRDF->getYStorage(state);
+	const DataSeriesObject* neighCorrelation = state.getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("correlation-neighbor")); 
+	const DataSeriesObject* neighRDF = state.getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("correlation-neighbor-rdf")); 
+	if(modifier && modifierApplication() && modifier->doComputeNeighCorrelation() && neighCorrelation && neighRDF) {
+		ConstPropertyPtr xData = neighCorrelation->getXStorage();
+		const auto& yData = neighCorrelation->getYStorage();
+		const auto& rdfData = neighRDF->getYStorage();
 		size_t numberOfDataPoints = yData->size();
 		QVector<QPointF> plotData(numberOfDataPoints);
 		bool normByRDF = modifier->normalizeRealSpaceByRDF();
 		for(size_t i = 0; i < numberOfDataPoints; i++) {
-			FloatType xValue = neighCorrelation()->getXValue(i);
+			FloatType xValue = xData->getFloat(i);
 			FloatType yValue = yData->getFloat(i);
 			if(normByRDF)
 				yValue = rdfData->getFloat(i) > 1e-12 ? (yValue / rdfData->getFloat(i)) : 0.0;
@@ -418,14 +411,16 @@ void CorrelationFunctionModifierEditor::plotAllData()
 	}
 
 	// Plot real-space correlation function.
-	if(modApp && modifier && modApp->realSpaceCorrelation()) {
-		auto realSpaceYRange = plotData(modApp->realSpaceCorrelation(), _realSpacePlot, offset, uniformFactor, 
-			modifier->normalizeRealSpaceByRDF() ? modApp->realSpaceRDF()->y() : nullptr);
+	const DataSeriesObject* realSpaceCorrelation = state.getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("correlation-real-space")); 
+	const DataSeriesObject* realSpaceRDF = state.getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("correlation-real-space-rdf")); 
+	if(modifier && modifierApplication() && realSpaceCorrelation) {
+		auto realSpaceYRange = plotData(realSpaceCorrelation, _realSpacePlot, offset, uniformFactor, 
+			(realSpaceRDF && modifier->normalizeRealSpaceByRDF()) ? realSpaceRDF->getYStorage() : nullptr);
 
 		UndoSuspender noUndo(modifier);
 		if(!modifier->fixRealSpaceXAxisRange()) {
-			modifier->setRealSpaceXAxisRangeStart(modApp->realSpaceCorrelation()->intervalStart());
-			modifier->setRealSpaceXAxisRangeEnd(modApp->realSpaceCorrelation()->intervalEnd());
+			modifier->setRealSpaceXAxisRangeStart(realSpaceCorrelation->intervalStart());
+			modifier->setRealSpaceXAxisRangeEnd(realSpaceCorrelation->intervalEnd());
 		}
 		if(!modifier->fixRealSpaceYAxisRange()) {
 			modifier->setRealSpaceYAxisRangeStart(realSpaceYRange.first);
@@ -433,20 +428,21 @@ void CorrelationFunctionModifierEditor::plotAllData()
 		}
 	}
 	else {
-		_realSpacePlot->setSeries(nullptr);
+		_realSpacePlot->reset();
 	}
 
 	// Plot reciprocal-space correlation function.
-	if(modifier && modApp && modApp->reciprocalSpaceCorrelation()) {
+	const DataSeriesObject* reciprocalSpaceCorrelation = state.getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("correlation-reciprocal-space")); 
+	if(modifier && modifierApplication() && reciprocalSpaceCorrelation) {
 		FloatType rfac = 1;
-		if(modifier->normalizeReciprocalSpace() && modApp->covariance() != 0)
-			rfac = 1.0 / modApp->covariance();
-		auto reciprocalSpaceYRange = plotData(modApp->reciprocalSpaceCorrelation(), _reciprocalSpacePlot, 0.0, rfac, nullptr);
+		if(modifier->normalizeReciprocalSpace() && covariance.toDouble() != 0)
+			rfac = 1.0 / covariance.toDouble();
+		auto reciprocalSpaceYRange = plotData(reciprocalSpaceCorrelation, _reciprocalSpacePlot, 0.0, rfac, nullptr);
 
 		UndoSuspender noUndo(modifier);
 		if(!modifier->fixReciprocalSpaceXAxisRange()) {
-			modifier->setReciprocalSpaceXAxisRangeStart(modApp->reciprocalSpaceCorrelation()->intervalStart());
-			modifier->setReciprocalSpaceXAxisRangeEnd(modApp->reciprocalSpaceCorrelation()->intervalEnd());
+			modifier->setReciprocalSpaceXAxisRangeStart(reciprocalSpaceCorrelation->intervalStart());
+			modifier->setReciprocalSpaceXAxisRangeEnd(reciprocalSpaceCorrelation->intervalEnd());
 		}
 		if(!modifier->fixReciprocalSpaceYAxisRange()) {
 			modifier->setReciprocalSpaceYAxisRangeStart(reciprocalSpaceYRange.first);
@@ -454,9 +450,8 @@ void CorrelationFunctionModifierEditor::plotAllData()
 		}
 	}
 	else {
-		_reciprocalSpacePlot->setSeries(nullptr);
+		_reciprocalSpacePlot->reset();
 	}
-#endif
 }
 
 OVITO_END_INLINE_NAMESPACE

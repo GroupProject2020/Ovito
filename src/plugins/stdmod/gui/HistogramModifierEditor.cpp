@@ -202,7 +202,7 @@ void HistogramModifierEditor::plotHistogram()
 		const PipelineFlowState& state = getModifierOutput();
 
 		// Look up the generated data series in the modifier's pipeline output.
-		QString seriesName = QStringLiteral("histogram/") + modifier->sourceProperty().nameWithComponent();
+		QString seriesName = QStringLiteral("histogram[%1]").arg(modifier->sourceProperty().nameWithComponent());
 		const DataSeriesObject* series = state.getObjectBy<DataSeriesObject>(modifierApplication(), seriesName);
 		_plotWidget->setSeries(series);
 	}

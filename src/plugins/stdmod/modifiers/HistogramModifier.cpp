@@ -171,6 +171,7 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 	// Allocate output data array.
 	auto histogram = std::make_shared<PropertyStorage>(std::max(1, numberOfBins()), PropertyStorage::Int64, 1, 0, tr("Count"), true, DataSeriesObject::YProperty);
 	auto histogramData = histogram->dataInt64();
+	int histogramSizeMin1 = histogram->size() - 1;
 
 	if(property->size() > 0) {
 		if(property->dataType() == PropertyStorage::Float) {
@@ -195,7 +196,7 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 					if(sel && !*sel++) continue;
 					if(*v < intervalStart || *v > intervalEnd) continue;
 					int binIndex = (*v - intervalStart) / binSize;
-					histogramData[std::max(0, std::min(binIndex, (int)histogram->size() - 1))]++;
+					histogramData[std::max(0, std::min(binIndex, histogramSizeMin1))]++;
 				}
 			}
 			else {
@@ -240,7 +241,7 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 					if(sel && !*sel++) continue;
 					if(*v < intervalStart || *v > intervalEnd) continue;
 					int binIndex = ((FloatType)*v - intervalStart) / binSize;
-					histogramData[std::max(0, std::min(binIndex, (int)histogram->size() - 1))]++;
+					histogramData[std::max(0, std::min(binIndex, histogramSizeMin1))]++;
 				}
 			}
 			else {
@@ -263,6 +264,51 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 				}
 			}
 		}
+		else if(property->dataType() == PropertyStorage::Int64) {
+			auto v_begin = property->constDataInt64() + vecComponent;
+			auto v_end = v_begin + (property->size() * vecComponentCount);
+			// Determine value range.
+			if(!fixXAxisRange()) {
+				intervalStart = std::numeric_limits<FloatType>::max();
+				intervalEnd = std::numeric_limits<FloatType>::lowest();
+				const int* sel = inputSelection ? inputSelection->constDataInt() : nullptr;
+				for(auto v = v_begin; v != v_end; v += vecComponentCount) {
+					if(sel && !*sel++) continue;
+					if(*v < intervalStart) intervalStart = *v;
+					if(*v > intervalEnd) intervalEnd = *v;
+				}
+			}
+			// Perform binning.
+			if(intervalEnd > intervalStart) {
+				FloatType binSize = (intervalEnd - intervalStart) / histogram->size();
+				const int* sel = inputSelection ? inputSelection->constDataInt() : nullptr;
+				for(auto v = v_begin; v != v_end; v += vecComponentCount) {
+					if(sel && !*sel++) continue;
+					if(*v < intervalStart || *v > intervalEnd) continue;
+					int binIndex = ((FloatType)*v - intervalStart) / binSize;
+					histogramData[std::max(0, std::min(binIndex, histogramSizeMin1))]++;
+				}
+			}
+			else {
+				if(!inputSelection)
+					histogramData[0] = property->size();
+				else
+					histogramData[0] = property->size() - std::count(inputSelection->constDataInt(), inputSelection->constDataInt() + inputSelection->size(), 0);
+			}
+			if(outputSelection) {
+				OVITO_ASSERT(outputSelection->size() == property->size());
+				int* s = outputSelection->dataInt();
+				int* s_end = s + outputSelection->size();
+				const int* sel = inputSelection ? inputSelection->constDataInt() : nullptr;
+				for(auto v = v_begin; v != v_end; v += vecComponentCount, ++s) {
+					if((!sel || *sel++) && *v >= selectionRangeStart && *v <= selectionRangeEnd) {
+						*s = 1;
+						numSelected++;
+					}
+					else *s = 0;
+				}
+			}
+		}		
 		else {
 			throwException(tr("The property '%1' has a data type that is not supported by the histogram modifier.").arg(property->name()));
 		}
@@ -272,7 +318,7 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 	}
 
 	// Output a data series object with the histogram data.
-	DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("histogram/") + sourceProperty().nameWithComponent(), modApp, sourceProperty().nameWithComponent(), std::move(histogram));
+	DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("histogram[%1]").arg(sourceProperty().nameWithComponent()), modApp, DataSeriesObject::Histogram, sourceProperty().nameWithComponent(), std::move(histogram));
 	seriesObj->setAxisLabelX(sourceProperty().nameWithComponent());
 	seriesObj->setIntervalStart(intervalStart);
 	seriesObj->setIntervalEnd(intervalEnd);

@@ -125,12 +125,12 @@ PipelineStatus VectorParticlePropertiesAffineTransformationModifierDelegate::app
 		tm = mod->targetCell() * input.expectObject<SimulationCellObject>()->cellMatrix().inverse();
 	
 	if(OORef<ParticlesObject> inputParticles = output.getObject<ParticlesObject>()) {
-			
+
 		for(const PropertyObject* inputProperty : inputParticles->properties()) {
 			if(isTransformableProperty(inputProperty)) {
 
 				// Make sure we can safely modify the particles object.
-				ParticlesObject* outputParticles = output.makeMutable(inputParticles.get());
+				ParticlesObject* outputParticles = output.expectMutableObject<ParticlesObject>();
 
 				PropertyStorage* property = outputParticles->makeMutable(inputProperty)->modifiableStorage().get();
 				OVITO_ASSERT(property->dataType() == PropertyStorage::Float);

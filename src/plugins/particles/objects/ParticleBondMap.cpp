@@ -53,8 +53,8 @@ ParticleBondMap::ParticleBondMap(ConstPropertyPtr bondTopology, ConstPropertyPtr
 /******************************************************************************
 * Initializes the helper class.
 ******************************************************************************/
-ParticleBondMap::ParticleBondMap(ParticlesObject* particles) :
-	ParticleBondMap(particles->expectBondsTopology()->storage(), particles->expectBonds()->getPropertyStorage(BondsObject::PeriodicImageProperty))
+ParticleBondMap::ParticleBondMap(const BondsObject& bonds) :
+	ParticleBondMap(bonds.expectProperty(BondsObject::TopologyProperty)->storage(), bonds.getPropertyStorage(BondsObject::PeriodicImageProperty))
 {
 }
 

@@ -65,8 +65,17 @@ public:
 		YProperty
 	};
 
+	enum PlotMode {
+		None,
+		Line,
+		Histogram,
+		BarChart,
+		Scatter
+	};
+	Q_ENUMS(PlotMode);
+
 	/// Constructor.
-	Q_INVOKABLE DataSeriesObject(DataSet* dataset, const QString& title = QString(), const PropertyPtr& y = nullptr);
+	Q_INVOKABLE DataSeriesObject(DataSet* dataset, PlotMode plotMode = Line, const QString& title = QString(), const PropertyPtr& y = nullptr);
 
 	/// Returns the property object containing the y-coordinates of the data points.
 	const PropertyObject* getY() const { return getProperty(Type::YProperty); }
@@ -103,6 +112,9 @@ private:
 
 	/// The label of the y-axis (optional).
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, axisLabelY, setAxisLabelY);
+
+	/// The data plotting mode for this data series.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(PlotMode, plotMode, setPlotMode);
 };
 
 /**
@@ -114,3 +126,5 @@ using DataSeriesPropertyReference = TypedPropertyReference<DataSeriesObject>;
 }	// End of namespace
 
 Q_DECLARE_METATYPE(Ovito::StdObj::DataSeriesPropertyReference);
+Q_DECLARE_METATYPE(Ovito::StdObj::DataSeriesObject::PlotMode);
+Q_DECLARE_TYPEINFO(Ovito::StdObj::DataSeriesObject::PlotMode, Q_PRIMITIVE_TYPE);

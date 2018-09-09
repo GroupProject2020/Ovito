@@ -31,7 +31,7 @@
 namespace Ovito { namespace Grid {
 
 IMPLEMENT_OVITO_CLASS(CreateIsosurfaceModifier);
-DEFINE_PROPERTY_FIELD(CreateIsosurfaceModifier, containerPath);
+DEFINE_PROPERTY_FIELD(CreateIsosurfaceModifier, subject);
 DEFINE_PROPERTY_FIELD(CreateIsosurfaceModifier, sourceProperty);
 DEFINE_REFERENCE_FIELD(CreateIsosurfaceModifier, isolevelController);
 DEFINE_REFERENCE_FIELD(CreateIsosurfaceModifier, surfaceMeshVis);
@@ -78,12 +78,20 @@ void CreateIsosurfaceModifier::initializeModifier(ModifierApplication* modApp)
 {
 	AsynchronousModifier::initializeModifier(modApp);
 
-	// Use the first available property from the input state as data source when the modifier is newly created.
-	if(sourceProperty().isNull() && !Application::instance()->scriptMode()) {
+	// Use the first available voxel grid from the input state as data source when the modifier is newly created.
+	if(sourceProperty().isNull() && !subject() && !Application::instance()->scriptMode()) {
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
-		if(const VoxelGrid* container = static_object_cast<VoxelGrid>(input.getLeafObject(VoxelGrid::OOClass(), containerPath()))) {
-			for(const PropertyObject* property : container->properties()) {
-				if(property->componentCount() <= 1) {
+		if(const VoxelGrid* grid = input.getObject<VoxelGrid>()) {
+			setSubject(PropertyContainerReference(&grid->getOOMetaClass(), grid->identifier()));
+		}
+	}
+	
+	// Use the first available property from the input grid as data source when the modifier is newly created.
+	if(sourceProperty().isNull() && subject() && !Application::instance()->scriptMode()) {
+		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
+		if(const VoxelGrid* grid = dynamic_object_cast<VoxelGrid>(input.getLeafObject(subject()))) {
+			for(const PropertyObject* property : grid->properties()) {
+				if(property->componentCount() == 1) {
 					setSourceProperty(VoxelPropertyReference(property, (property->componentCount() > 1) ? 0 : -1));
 					break;
 				}
@@ -98,17 +106,33 @@ void CreateIsosurfaceModifier::initializeModifier(ModifierApplication* modApp)
 ******************************************************************************/
 Future<AsynchronousModifier::ComputeEnginePtr> CreateIsosurfaceModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
+	if(!subject())
+		throwException(tr("No input voxel grid set."));
+	if(subject().dataClass() != &VoxelGrid::OOClass())
+		throwException(tr("Selected modifier input is not a voxel grid."));
 	if(sourceProperty().isNull())
 		throwException(tr("Select an input field quantity first."));
 
+	// Check if the source property is the right kind of property.
+	if(sourceProperty().containerClass() != subject().dataClass())
+		throwException(tr("Modifier was set to operate on '%1', but the selected input is a '%2' property.")
+			.arg(subject().dataClass()->pythonName()).arg(sourceProperty().containerClass()->propertyClassDisplayName()));
+
 	// Get modifier inputs.
-	const VoxelGrid* voxelGrid = static_object_cast<VoxelGrid>(input.expectObject<VoxelGrid>(containerPath()).back());
+	const VoxelGrid* voxelGrid = static_object_cast<VoxelGrid>(input.expectLeafObject(subject()));
 	OVITO_ASSERT(voxelGrid->domain());
+	if(voxelGrid->domain()->is2D())
+		throwException(tr("Cannot generate isosurface for a two-dimensional voxel grid. Input must be a 3d grid."));
 	const PropertyObject* property = sourceProperty().findInContainer(voxelGrid);
 	if(!property)
 		throwException(tr("The selected voxel property with the name '%1' does not exist.").arg(sourceProperty().name()));
 	if(sourceProperty().vectorComponent() >= (int)property->componentCount())
 		throwException(tr("The selected vector component is out of range. The property '%1' contains only %2 values per voxel.").arg(sourceProperty().name()).arg(property->componentCount()));
+
+	for(size_t dim = 0; dim < 3; dim++)
+		if(voxelGrid->shape()[dim] <= 1)
+			throwException(tr("Cannot generate isosurface for this voxel grid with dimensions %1 x %2 x %3. Must be at least 2 voxels wide in each spatial direction.")
+				.arg(voxelGrid->shape()[0]).arg(voxelGrid->shape()[1]).arg(voxelGrid->shape()[2]));
 
 	TimeInterval validityInterval = input.stateValidity();
 	FloatType isolevel = isolevelController() ? isolevelController()->getFloatValue(time, validityInterval) : 0;
@@ -125,12 +149,12 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 {
 	task()->setProgressText(tr("Constructing isosurface"));
 
-	if(_gridShape.size() != 3)
-		throw Exception(tr("Can construct isosurface only for three-dimensional voxel grids"));
+	if(_simCell.is2D())
+		throw Exception(tr("Cannot construct isosurfaces for two-dimensional voxel grids."));
 	if(property()->dataType() != PropertyStorage::Float)
-		throw Exception(tr("Can construct isosurface only for floating-point data"));
-	if(property()->size() != _gridShape[0] * _gridShape[1] *_gridShape[2])
-		throw Exception(tr("Input voxel property has wrong dimensions."));
+		throw Exception(tr("Wrong data type. Can construct isosurface only for floating-point values."));
+	if(property()->size() != _gridShape[0] * _gridShape[1] * _gridShape[2])
+		throw Exception(tr("Input voxel property has wrong array size, which is incompatible with grid dimensions."));
 
 	const FloatType* fieldData = property()->constDataFloat() + std::max(_vectorComponent, 0);
 
@@ -138,12 +162,6 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 	if(!mc.generateIsosurface(_isolevel, *task()))
 		return;
 	setIsCompletelySolid(mc.isCompletelySolid());
-
-	// Determin min/max field values.
-	const FloatType* fieldDataEnd = fieldData + _gridShape[0]*_gridShape[1]*_gridShape[2]*property()->componentCount();
-	for(; fieldData != fieldDataEnd; fieldData += property()->componentCount()) {
-		updateMinMax(*fieldData);
-	}
 
 	// Transform mesh vertices from orthogonal grid space to world space.
 	const AffineTransformation tm = _simCell.matrix() * Matrix3(
@@ -157,12 +175,30 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 	if(tm.determinant() < 0) {
 		mesh()->flipFaces();
 	}
-
 	if(task()->isCanceled())
 		return;
 
 	if(!mesh()->connectOppositeHalfedges())
-		throw Exception(tr("Isosurface mesh is not closed."));
+		throw Exception(tr("Something went wrong. Isosurface mesh is not closed."));
+	if(task()->isCanceled())
+		return;
+
+	// Determine range of input field values.
+	// Only used for informational purposes for the user.
+	const FloatType* fieldDataEnd = fieldData + property()->size() * property()->componentCount();
+	size_t componentCount = property()->componentCount();
+	for(auto v = fieldData; v != fieldDataEnd; v += componentCount) {
+		updateMinMax(*v);
+	}
+
+	// Compute a histogram of the input field values.
+	auto histogramData = histogram()->dataInt64();
+	FloatType binSize = (maxValue() - minValue()) / histogram()->size();
+	int histogramSizeMin1 = histogram()->size() - 1;
+	for(auto v = fieldData; v != fieldDataEnd; v += componentCount) {
+		int binIndex = (*v - minValue()) / binSize;
+		histogramData[std::max(0, std::min(binIndex, histogramSizeMin1))]++;
+	}	
 }
 
 /******************************************************************************
@@ -171,19 +207,25 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 PipelineFlowState CreateIsosurfaceModifier::ComputeIsosurfaceEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	CreateIsosurfaceModifier* modifier = static_object_cast<CreateIsosurfaceModifier>(modApp->modifier());
+	PipelineFlowState output = input;
 
 	// Look up the input grid.
-	const VoxelGrid* voxelGrid = input.expectLeafObject(modifier->subject());
-		
-	// Create the output data object.
-	PipelineFlowState output = input;
-	SurfaceMesh* meshObj = output.createObject<SurfaceMesh>(modApp);
-	meshObj->setStorage(mesh());
-	meshObj->setIsCompletelySolid(isCompletelySolid());
-	meshObj->setDomain(voxelGrid->domain());
-	meshObj->setVisElement(modifier->surfaceMeshVis());
+	if(const VoxelGrid* voxelGrid = dynamic_object_cast<VoxelGrid>(input.expectLeafObject(modifier->subject()))) {		
+		// Create the output data object.
+		SurfaceMesh* meshObj = output.createObject<SurfaceMesh>(modApp);
+		meshObj->setStorage(mesh());
+		meshObj->setIsCompletelySolid(isCompletelySolid());
+		meshObj->setDomain(voxelGrid->domain());
+		meshObj->setVisElement(modifier->surfaceMeshVis());
+	}
 
-	output.setStatus(PipelineStatus(PipelineStatus::Success, tr("Minimum value: %1\nMaximum value: %2").arg(minValue()).arg(maxValue())));
+	// Output a data series object with the field value histogram.
+	DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("iso_histogram"), modApp, DataSeriesObject::Histogram, modifier->sourceProperty().nameWithComponent(), histogram());
+	seriesObj->setAxisLabelX(modifier->sourceProperty().nameWithComponent());
+	seriesObj->setIntervalStart(minValue());
+	seriesObj->setIntervalEnd(maxValue());	
+
+	output.setStatus(PipelineStatus(PipelineStatus::Success, tr("Field value range: [%1, %2]").arg(minValue()).arg(maxValue())));
 	return output;
 }
 

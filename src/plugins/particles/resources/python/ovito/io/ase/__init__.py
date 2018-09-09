@@ -10,22 +10,23 @@ OVITO and ASE:
 
     Using the functions of this module will raise an ``ImportError`` if the ASE package 
     is not installed in the current Python interpreter. Note that the built-in
-    Python interpreter of OVITO does *not* contain the ASE package by default.
-    It is therefore recommended to build OVITO from source (as explained in the user manual),
-    allowing you to import all packages available to the system Python interpreter.
+    Python interpreter of OVITO does *not* include the ASE package by default.
+    You can install the ASE module by running ``ovitos -m pip install ase``.
+    Alternatively, you can build OVITO from source (as explained in the scripting manual),
+    to use the OVITO modules with the system Python interpreter.
 
 """
 
 import numpy as np
 
-from ...data import DataCollection, SimulationCell, ParticleProperty, ParticleType
+from ...data import DataCollection, SimulationCell, ParticleType
 
 __all__ = ['ovito_to_ase', 'ase_to_ovito']
 
 def ovito_to_ase(data_collection):
     """
     Constructs an `ASE Atoms object <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`__ from the 
-    particle data in an existing OVITO :py:class:`~ovito.data.DataCollection`.
+    particle data in an OVITO :py:class:`~ovito.data.DataCollection`.
 
     :param: data_collection: The OVITO :py:class:`~ovito.data.DataCollection` to convert.
     :return: An `ASE Atoms object <https://wiki.fysik.dtu.dk/ase/ase/atoms.html>`__ containing the
@@ -43,10 +44,10 @@ def ovito_to_ase(data_collection):
     assert(isinstance(data_collection, DataCollection))
 
     # Extract basic data: pbc, cell, positions, particle types
-    cell_obj = data_collection.find(SimulationCell)
+    cell_obj = data_collection.cell
     pbc = cell_obj.pbc if cell_obj is not None else None
     cell = cell_obj[:, :3].T if cell_obj is not None else None    
-    info = {'cell_origin': cell_obj[:, 3] }if cell_obj is not None else None
+    info = {'cell_origin': cell_obj[:, 3] } if cell_obj is not None else None
     positions = np.array(data_collection.particles['Position'])
     if 'Particle Type' in data_collection.particles:
         # ASE only accepts chemical symbols as atom type names.
@@ -72,8 +73,6 @@ def ovito_to_ase(data_collection):
     for name, prop in data_collection.particles.items():
         if name in ['Position',
                     'Particle Type']:
-            continue
-        if not isinstance(prop, ParticleProperty):
             continue
         prop_name = prop.name
         i = 1
@@ -107,11 +106,11 @@ def ase_to_ovito(atoms):
         cell[:, 3]  = atoms.info.get('cell_origin', [0., 0., 0.])
     data_collection.objects.append(cell)
 
-    # Add ParticleProperty from atomic positions
-    data_collection.particles.create_property(ParticleProperty.Type.Position, data=atoms.get_positions())
+    # Create particle property from atomic positions
+    data_collection.particles.create_property('Position', data=atoms.get_positions())
 
     # Set particle types from chemical symbols
-    types = data_collection.particles.create_property(ParticleProperty.Type.ParticleType)
+    types = data_collection.particles.create_property('Particle Type')
     symbols = atoms.get_chemical_symbols()
     type_list = list(set(symbols))
     for i, sym in enumerate(type_list):
@@ -123,10 +122,10 @@ def ase_to_ovito(atoms):
     # Check for computed properties - forces, energies, stresses
     calc = atoms.get_calculator()
     if calc is not None:
-        for name, ptype in [('forces', ParticleProperty.Type.Force),
-                            ('energies', ParticleProperty.Type.PotentialEnergy),
-                            ('stresses', ParticleProperty.Type.StressTensor),
-                            ('charges', ParticleProperty.Type.Charge)]:
+        for name, ptype in [('forces', 'Force'),
+                            ('energies', 'Potential Energy'),
+                            ('stresses', 'Stress Tensor'),
+                            ('charges', 'Charge')]:
             try:
                 array = calc.get_property(name,
                                           atoms,
@@ -139,7 +138,7 @@ def ase_to_ovito(atoms):
             # Create a corresponding OVITO standard property.
             data_collection.particles.create_property(ptype, data=array)
 
-    # Create extra properties in DataCollection
+    # Create user-defined properties
     for name, array in atoms.arrays.items():
         if name in ['positions', 'numbers']:
             continue

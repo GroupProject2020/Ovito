@@ -42,7 +42,7 @@ class OVITO_VOROTOP_EXPORT VoroTopModifier : public StructureIdentificationModif
 	OVITO_CLASS(VoroTopModifier)
 
 	Q_CLASSINFO("DisplayName", "VoroTop analysis");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
+	Q_CLASSINFO("ModifierCategory", "Structure identification");
 
 public:
 

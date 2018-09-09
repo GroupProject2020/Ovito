@@ -24,6 +24,7 @@
 
 #include <plugins/pyscript/PyScript.h>
 #include <core/dataset/DataSet.h>
+#include <core/app/Application.h>
 
 namespace PyScript {
 

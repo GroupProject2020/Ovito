@@ -47,14 +47,11 @@ protected:
 	/// Creates the user interface controls for the editor.
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
 
-	/// This method is called when a reference target changes.
-	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
-
 protected Q_SLOTS:
 
 	/// Is called when the current edit object has generated a change
 	/// event or if a new object has been loaded into editor.
-	void onContentsChanged(RefTarget* editObject);
+	void updateUserInterface();
 
 	/// Is called when the user presses the 'Edit script' button.
 	void onOpenEditor();

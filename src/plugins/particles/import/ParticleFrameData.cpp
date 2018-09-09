@@ -198,6 +198,11 @@ PipelineFlowState ParticleFrameData::handOver(const PipelineFlowState& existing,
 			}
 			else {
 				propertyObj = particles->createProperty(std::move(property));
+
+				// For backward compatibility with OVITO 2.9.0, attach the particles vis element
+				// to the 'Position' particle property object as well.
+				if(propertyObj->type() == ParticlesObject::PositionProperty)
+					propertyObj->setVisElement(particles->visElement<ParticlesVis>());
 			}
 
 			// Transfer particle types.
@@ -241,6 +246,11 @@ PipelineFlowState ParticleFrameData::handOver(const PipelineFlowState& existing,
 				}
 				else {
 					propertyObj = bonds->createProperty(std::move(property));
+
+					// For backward compatibility with OVITO 2.9.0, attach the bonds vis element
+					// also to the 'Topology' bond property object.
+					if(propertyObj->type() == BondsObject::TopologyProperty)
+						propertyObj->setVisElement(bonds->visElement<BondsVis>());
 				}
 
 				// Transfer bond types.
@@ -251,7 +261,7 @@ PipelineFlowState ParticleFrameData::handOver(const PipelineFlowState& existing,
 	}
 
 	// Transfer voxel data.
-	if(voxelGridShape().empty() == false) {
+	if(voxelGridShape() != VoxelGrid::GridDimensions{0,0,0}) {
 
 		const VoxelGrid* existingVoxelGrid = existing.getObject<VoxelGrid>();
 		VoxelGrid* voxelGrid = output.createObject<VoxelGrid>(fileSource);

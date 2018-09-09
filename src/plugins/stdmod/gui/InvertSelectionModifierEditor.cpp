@@ -42,6 +42,11 @@ void InvertSelectionModifierEditor::createUI(const RolloutInsertionParameters& r
 	PropertyContainerParameterUI* pclassUI = new PropertyContainerParameterUI(this, PROPERTY_FIELD(GenericPropertyModifier::subject));
 	layout->addWidget(new QLabel(tr("Operate on:")));
 	layout->addWidget(pclassUI->comboBox());
+
+	// List only property container that support element selection.
+	pclassUI->setContainerFilter([](const PropertyContainer* container) {
+		return container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericSelectionProperty);
+	});
 }
 
 }	// End of namespace

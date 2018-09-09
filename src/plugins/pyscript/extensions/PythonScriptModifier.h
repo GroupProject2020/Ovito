@@ -135,7 +135,7 @@ public:
 private:
 
 	/// The captured log output of the script execution, which is displayed in the graphical user interface.
-	QString _scriptLogOutput;	
+	QString _scriptLogOutput;
 };
 
 }	// End of namespace

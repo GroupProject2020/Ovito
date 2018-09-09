@@ -24,6 +24,10 @@
 
 #include <gui/GUI.h>
 #include <gui/properties/ModifierPropertiesEditor.h>
+#include <plugins/stdobj/gui/widgets/DataSeriesPlotWidget.h>
+#include <core/utilities/DeferredMethodInvocation.h>
+
+class QwtPlotMarker;
 
 namespace Ovito { namespace Grid { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
@@ -44,6 +48,22 @@ protected:
 
 	/// Creates the user interface controls for the editor.
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
+
+protected Q_SLOTS:
+
+	/// Replots the value histogram computed by the modifier.
+	void plotHistogram();
+
+private:
+
+	/// The graph widget to display the histogram.
+	StdObj::DataSeriesPlotWidget* _plotWidget;
+
+	/// The plot item for indicating the current iso level value.
+	QwtPlotMarker* _isoLevelIndicator;
+
+	/// For deferred invocation of the plot repaint function.
+	DeferredMethodInvocation<CreateIsosurfaceModifierEditor, &CreateIsosurfaceModifierEditor::plotHistogram> plotHistogramLater;
 };
 
 OVITO_END_INLINE_NAMESPACE

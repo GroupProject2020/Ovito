@@ -64,6 +64,9 @@ Q_SIGNALS:
 	///        pipeline re-evaluation.
     void modifierEvaluated();
 
+	/// \brief This signal is emitted whenever the status of the current modifier or its modifier application has changed.
+    void modifierStatusChanged();
+
 protected:
 
 	/// This method is called when a reference target changes.

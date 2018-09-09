@@ -346,7 +346,7 @@ PipelineFlowState PolyhedralTemplateMatchingModifier::PTMEngine::emitResults(Tim
 	}
 
 	// Output RMSD histogram.
-	DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("ptm/rmsd"), modApp, tr("RMSD distribution"), rmsdHistogram());
+	DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("ptm-rmsd"), modApp, DataSeriesObject::Line, tr("RMSD distribution"), rmsdHistogram());
 	seriesObj->setAxisLabelX(tr("RMSD"));
 	seriesObj->setIntervalStart(0);
 	seriesObj->setIntervalEnd(rmsdHistogramRange());

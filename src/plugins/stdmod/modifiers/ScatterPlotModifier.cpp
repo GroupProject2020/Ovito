@@ -256,7 +256,7 @@ PipelineFlowState ScatterPlotModifier::evaluatePreliminary(TimePoint time, Modif
 	}
 
 	// Output a data series object with the scatter points.
-	DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("scatter"), modApp, tr("Scatter plot"));
+	DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("scatter"), modApp, DataSeriesObject::Scatter, tr("%1 vs. %2").arg(yAxisProperty().nameWithComponent()).arg(xAxisProperty().nameWithComponent()));
 	seriesObj->createProperty(std::move(out_x))->setName(xAxisProperty().nameWithComponent());
 	seriesObj->createProperty(std::move(out_y))->setName(yAxisProperty().nameWithComponent());
 

@@ -46,6 +46,11 @@ protected:
 	/// Creates the user interface controls for the editor.
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
 
+	/// Determines if the given property is a valid input property for the Select Type modifier.
+	static bool isValidInputProperty(const PropertyObject* property) {
+		return property->elementTypes().empty() == false && property->componentCount() == 1 && property->dataType() == PropertyStorage::Int;
+	}
+
 protected Q_SLOTS:
 
 	/// Updates the contents of the element type list box.

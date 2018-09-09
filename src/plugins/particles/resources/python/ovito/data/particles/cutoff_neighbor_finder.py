@@ -27,11 +27,11 @@ class CutoffNeighborFinder(ovito.plugins.Particles.CutoffNeighborFinder):
     def __init__(self, cutoff, data_collection):
         """ This is the constructor. """
         super(self.__class__, self).__init__()
-        if 'Position' not in data_collection.particles:
+        if not data_collection.particles or 'Position' not in data_collection.particles:
             raise KeyError("DataCollection does not contain any particles.")
         pos_property = data_collection.particles['Position']
         self.particle_count = len(pos_property)
-        if not self.prepare(cutoff, pos_property, data_collection.expect(SimulationCell)):
+        if not self.prepare(cutoff, pos_property, data_collection.cell):
             raise RuntimeError("Operation has been canceled by the user.")
         
     def find(self, index):

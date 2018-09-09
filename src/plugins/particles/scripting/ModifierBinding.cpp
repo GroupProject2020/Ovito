@@ -20,7 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/particles/modifier/coloring/AmbientOcclusionModifier.h>
 #include <plugins/particles/modifier/modify/WrapPeriodicImagesModifier.h>
 #include <plugins/particles/modifier/modify/CreateBondsModifier.h>
@@ -32,7 +32,7 @@
 #include <plugins/particles/modifier/properties/BondsComputePropertyModifierDelegate.h>
 #include <plugins/particles/modifier/selection/ExpandSelectionModifier.h>
 #include <plugins/particles/modifier/analysis/StructureIdentificationModifier.h>
-#include <plugins/particles/modifier/analysis/bondangle/BondAngleAnalysisModifier.h>
+#include <plugins/particles/modifier/analysis/ackland_jones/AcklandJonesModifier.h>
 #include <plugins/particles/modifier/analysis/cna/CommonNeighborAnalysisModifier.h>
 #include <plugins/particles/modifier/analysis/centrosymmetry/CentroSymmetryModifier.h>
 #include <plugins/particles/modifier/analysis/cluster/ClusterAnalysisModifier.h>
@@ -145,58 +145,58 @@ void defineModifiersSubmodule(py::module m)
 
 	ovito_abstract_class<StructureIdentificationModifier, AsynchronousModifier>{m};
 
-	auto BondAngleAnalysisModifier_py = ovito_class<BondAngleAnalysisModifier, StructureIdentificationModifier>(m,
+	auto AcklandJonesModifier_py = ovito_class<AcklandJonesModifier, StructureIdentificationModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
-			"Performs the bond-angle analysis described by Ackland & Jones to classify the local "
+			"Performs the bond-angle analysis described by Ackland & Jones to identify the local "
 			"crystal structure around each particle. "
 			"See also the corresponding `user manual page <../../particles.modifiers.bond_angle_analysis.html>`__ for this modifier. "
 			"\n\n"
 			"The modifier stores the results as integer values in the ``\"Structure Type\"`` particle property. "
 			"The following structure type constants are defined: "
 			"\n\n"
-			"   * ``BondAngleAnalysisModifier.Type.OTHER`` (0)\n"
-			"   * ``BondAngleAnalysisModifier.Type.FCC`` (1)\n"
-			"   * ``BondAngleAnalysisModifier.Type.HCP`` (2)\n"
-			"   * ``BondAngleAnalysisModifier.Type.BCC`` (3)\n"
-			"   * ``BondAngleAnalysisModifier.Type.ICO`` (4)\n"
+			"   * ``AcklandJonesModifier.Type.OTHER`` (0)\n"
+			"   * ``AcklandJonesModifier.Type.FCC`` (1)\n"
+			"   * ``AcklandJonesModifier.Type.HCP`` (2)\n"
+			"   * ``AcklandJonesModifier.Type.BCC`` (3)\n"
+			"   * ``AcklandJonesModifier.Type.ICO`` (4)\n"
 			"\n\n"
 			"**Modifier outputs:**"
 			"\n\n"
-			" * ``BondAngleAnalysis.counts.OTHER`` (:py:attr:`attribute <ovito.data.DataCollection.attributes>`):\n"
+			" * ``AcklandJones.counts.OTHER`` (:py:attr:`attribute <ovito.data.DataCollection.attributes>`):\n"
 			"   The number of particles not matching any of the known structure types.\n"
-			" * ``BondAngleAnalysis.counts.FCC`` (:py:attr:`attribute <ovito.data.DataCollection.attributes>`):\n"
+			" * ``AcklandJones.counts.FCC`` (:py:attr:`attribute <ovito.data.DataCollection.attributes>`):\n"
 			"   The number of FCC particles found.\n"
-			" * ``BondAngleAnalysis.counts.HCP`` (:py:attr:`attribute <ovito.data.DataCollection.attributes>`):\n"
+			" * ``AcklandJones.counts.HCP`` (:py:attr:`attribute <ovito.data.DataCollection.attributes>`):\n"
 			"   The number of HCP particles found.\n"
-			" * ``BondAngleAnalysis.counts.BCC`` (:py:attr:`attribute <ovito.data.DataCollection.attributes>`):\n"
+			" * ``AcklandJones.counts.BCC`` (:py:attr:`attribute <ovito.data.DataCollection.attributes>`):\n"
 			"   The number of BCC particles found.\n"
-			" * ``BondAngleAnalysis.counts.ICO`` (:py:attr:`attribute <ovito.data.DataCollection.attributes>`):\n"
+			" * ``AcklandJones.counts.ICO`` (:py:attr:`attribute <ovito.data.DataCollection.attributes>`):\n"
 			"   The number of icosahedral found.\n"
 			" * ``Structure Type`` (:py:class:`~ovito.data.ParticleProperty`):\n"
 			"   This particle property will contain the per-particle structure type assigned by the modifier.\n"
 			" * ``Color`` (:py:class:`~ovito.data.ParticleProperty`):\n"
 			"   The modifier assigns a color to each particle according to its identified structure type. "
 			"\n")
-		.def_property("color_by_type", &BondAngleAnalysisModifier::colorByType, &BondAngleAnalysisModifier::setColorByType,
+		.def_property("color_by_type", &AcklandJonesModifier::colorByType, &AcklandJonesModifier::setColorByType,
 				"Controls whether the modifier assigns a color to each particle based on the identified structure type. "
 				"\n\n"
 				":Default: ``True``\n")
 	;
-	expose_subobject_list(BondAngleAnalysisModifier_py, std::mem_fn(&StructureIdentificationModifier::structureTypes), "structures", "BondAngleAnalysisStructureTypeList",
+	expose_subobject_list(AcklandJonesModifier_py, std::mem_fn(&StructureIdentificationModifier::structureTypes), "structures", "AcklandJonesStructureTypeList",
 		"A list of :py:class:`~ovito.data.ParticleType` instances managed by this modifier, one for each supported structure type. "
 		"The display color of a structure type can be changed as follows:: "
 		"\n\n"
-		"   modifier = BondAngleAnalysisModifier()\n"
+		"   modifier = AcklandJonesModifier()\n"
 		"   # Give all FCC atoms a blue color:\n"
-		"   modifier.structures[BondAngleAnalysisModifier.Type.FCC].color = (0, 0, 1)\n"
+		"   modifier.structures[AcklandJonesModifier.Type.FCC].color = (0, 0, 1)\n"
 		"\n\n.\n");
 
-	py::enum_<BondAngleAnalysisModifier::StructureType>(BondAngleAnalysisModifier_py, "Type")
-		.value("OTHER", BondAngleAnalysisModifier::OTHER)
-		.value("FCC", BondAngleAnalysisModifier::FCC)
-		.value("HCP", BondAngleAnalysisModifier::HCP)
-		.value("BCC", BondAngleAnalysisModifier::BCC)
-		.value("ICO", BondAngleAnalysisModifier::ICO)
+	py::enum_<AcklandJonesModifier::StructureType>(AcklandJonesModifier_py, "Type")
+		.value("OTHER", AcklandJonesModifier::OTHER)
+		.value("FCC", AcklandJonesModifier::FCC)
+		.value("HCP", AcklandJonesModifier::HCP)
+		.value("BCC", AcklandJonesModifier::BCC)
+		.value("ICO", AcklandJonesModifier::ICO)
 	;
 
 	auto CommonNeighborAnalysisModifier_py = ovito_class<CommonNeighborAnalysisModifier, StructureIdentificationModifier>(m,
@@ -327,7 +327,7 @@ void defineModifiersSubmodule(py::module m)
 		"A list of :py:class:`~ovito.data.ParticleType` instances managed by this modifier, one for each supported structure type. "
 		"The display color of a structure type can be changed as follows:: "
 		"\n\n"
-		"      modifier = BondAngleAnalysisModifier()\n"
+		"      modifier = AcklandJonesModifier()\n"
 		"      # Give all hexagonal diamond atoms a blue color:\n"
 		"      modifier.structures[IdentifyDiamondModifier.Type.HEX_DIAMOND].color = (0, 0, 1)\n"
 		"\n\n.\n");

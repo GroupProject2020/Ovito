@@ -20,6 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/grid/Grid.h>
+#include <plugins/grid/objects/VoxelGrid.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
 #include <plugins/stdobj/properties/PropertyContainer.h>
@@ -76,7 +77,7 @@ SpatialBinningModifier::SpatialBinningModifier(DataSet* dataset) : AsynchronousD
     _numberOfBinsZ(200),
     _fixPropertyAxisRange(false), 
     _propertyAxisRangeStart(0), 
-    _propertyAxisRangeEnd(0),
+    _propertyAxisRangeEnd(1),
 	_onlySelectedElements(false)
 {
 	// Let this modifier act on particles by default.
@@ -162,7 +163,11 @@ Future<AsynchronousModifier::ComputeEnginePtr> SpatialBinningModifier::createEng
     if(is1D()) binCount.y() = binCount.z() = 1;
     else if(is2D()) binCount.z() = 1;
     size_t binDataSize = (size_t)binCount[0] * (size_t)binCount[1] * (size_t)binCount[2];
-	auto binData = std::make_shared<PropertyStorage>(binDataSize, PropertyStorage::Float, 1, 0, sourceProperty().nameWithComponent(), true, DataSeriesObject::YProperty);
+	auto binData = std::make_shared<PropertyStorage>(binDataSize, PropertyStorage::Float, 1, 0, sourceProperty().nameWithComponent(), 
+		true, is1D() ? DataSeriesObject::YProperty : 0);
+
+	if(is1D() && firstDerivative())
+		binData->setName(QStringLiteral("d(%1)/d(Position)").arg(binData->name()));
 
     // Determine coordinate axes (0, 1, 2 -- or 3 if not used).
     Vector3I binDir;
@@ -188,7 +193,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> SpatialBinningModifier::createEng
 ******************************************************************************/
 void SpatialBinningModifierDelegate::SpatialBinningEngine::computeGradient()
 {
-   if(_computeFirstDerivative) {
+   if(_computeFirstDerivative && binCount(1) == 1 && binCount(2) == 1) {
         FloatType binSpacing = cell().matrix().column(binDir(0)).length() / binCount(0);
         if(binCount(0) > 1 && binSpacing > 0) {
             OVITO_ASSERT(binData()->componentCount() == 1);
@@ -229,14 +234,35 @@ PipelineFlowState SpatialBinningModifierDelegate::SpatialBinningEngine::emitResu
 
 	PipelineFlowState output = input;
 
-#if 0
+	QString title = modifier->sourceProperty().nameWithComponent();
 	if(SpatialBinningModifier::bin1D((SpatialBinningModifier::BinDirectionType)binningDirection())) {
-		DataSeriesObject* seriesObj = poh.outputDataSeries(QStringLiteral("binning"), binData()->name(), binData());
+		// In 1D binning mode, output a data series.
+		DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("binning[%1]").arg(title), modApp, DataSeriesObject::Histogram, title, binData());
 		seriesObj->setIntervalStart(0);
 		seriesObj->setIntervalEnd(cell().matrix().column(binDir(0)).length());
 		seriesObj->setAxisLabelX(tr("Position"));
 	}
-#endif
+	else {
+		// In 2D and 3D binning mode, output a voxel grid.
+		VoxelGrid* gridObj = output.createObject<VoxelGrid>(QStringLiteral("binning[%1]").arg(title), modApp, tr("Binning (%1)").arg(title));
+		gridObj->createProperty(binData());
+		gridObj->setShape({(size_t)binCount(0), (size_t)binCount(1), (size_t)binCount(2)});
+		// Set up the cell for the grid with the right dimensionality, orientation and boundary conditions.
+		OORef<SimulationCellObject> domain = new SimulationCellObject(gridObj->dataset());
+		domain->setIs2D(SpatialBinningModifier::bin2D((SpatialBinningModifier::BinDirectionType)binningDirection()));
+		domain->setPbcX(cell().pbcFlags()[binDir(0)]);
+		domain->setPbcY(cell().pbcFlags()[binDir(1)]);
+		if(binDir(2) <= 2)
+			domain->setPbcZ(cell().pbcFlags()[binDir(2)]);
+		AffineTransformation m = AffineTransformation::Zero();
+		m.translation() = cell().matrix().translation();
+		m.column(0) = cell().matrix().column(binDir(0));
+		m.column(1) = cell().matrix().column(binDir(1));
+		if(binDir(2) <= 2)
+			m.column(2) = cell().matrix().column(binDir(2));
+		domain->setCellMatrix(m);
+		gridObj->setDomain(std::move(domain));
+	}
 
 	return output;
 }

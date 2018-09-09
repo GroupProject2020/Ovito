@@ -28,16 +28,16 @@
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
 /**
- * \brief A modifier that performs the structure analysis developed by Ackland and Jones.
+ * \brief A modifier that performs the structure identification method developed by Ackland and Jones.
  *
  * See G. Ackland, PRB(2006)73:054104.
  */
-class OVITO_PARTICLES_EXPORT BondAngleAnalysisModifier : public StructureIdentificationModifier
+class OVITO_PARTICLES_EXPORT AcklandJonesModifier : public StructureIdentificationModifier
 {
 	Q_OBJECT
-	OVITO_CLASS(BondAngleAnalysisModifier)
-	Q_CLASSINFO("DisplayName", "Bond-angle analysis");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
+	OVITO_CLASS(AcklandJonesModifier)
+	Q_CLASSINFO("DisplayName", "Ackland-Jones analysis");
+	Q_CLASSINFO("ModifierCategory", "Structure identification");
 
 public:
 
@@ -56,7 +56,7 @@ public:
 public:
 
 	/// Constructor.
-	Q_INVOKABLE BondAngleAnalysisModifier(DataSet* dataset);
+	Q_INVOKABLE AcklandJonesModifier(DataSet* dataset);
 
 protected:
 
@@ -66,7 +66,7 @@ protected:
 private:
 
 	/// Computes the modifier's results.
-	class BondAngleAnalysisEngine : public StructureIdentificationEngine
+	class AcklandJonesAnalysisEngine : public StructureIdentificationEngine
 	{
 	public:
 
@@ -88,5 +88,3 @@ OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
 }	// End of namespace
-
-

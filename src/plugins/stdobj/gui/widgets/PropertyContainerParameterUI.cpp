@@ -21,7 +21,6 @@
 
 #include <plugins/stdobj/gui/StdObjGui.h>
 #include <gui/properties/PropertiesEditor.h>
-#include <core/app/PluginManager.h>
 #include <core/dataset/pipeline/Modifier.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <plugins/stdobj/properties/PropertyContainerClass.h>
@@ -40,11 +39,6 @@ PropertyContainerParameterUI::PropertyContainerParameterUI(QObject* parentEditor
 	_comboBox(new QComboBox())
 {
 	connect(comboBox(), static_cast<void (QComboBox::*)(const QString&)>(&QComboBox::activated), this, &PropertyContainerParameterUI::updatePropertyValue);
-
-	// Populate combo box with the list of available property container types.
-	for(PropertyContainerClassPtr clazz : PluginManager::instance().metaclassMembers<PropertyContainer>()) {
-		comboBox()->addItem(clazz->propertyClassDisplayName(), QVariant::fromValue(PropertyContainerReference(clazz)));
-	}
 }
 
 /******************************************************************************
@@ -94,30 +88,78 @@ void PropertyContainerParameterUI::updateUI()
 		OVITO_ASSERT_MSG(val.isValid() && val.canConvert<PropertyContainerReference>(), "PropertyContainerParameterUI::updateUI()", QString("The property field of object class %1 is not of type <PropertyContainerClassPtr> or <PropertyContainerReference>.").arg(editObject()->metaObject()->className()).toLocal8Bit().constData());
 		PropertyContainerReference selectedPropertyContainer = val.value<PropertyContainerReference>();	
 		
-		// Obtain modifier input data.
-		std::vector<PipelineFlowState> modifierInputs;
+		// Update list of property containers available in the pipeline.
+		comboBox()->clear();
+		int selectedIndex = -1;
 		if(Modifier* mod = dynamic_object_cast<Modifier>(editObject())) {
 			for(ModifierApplication* modApp : mod->modifierApplications()) {
-				modifierInputs.push_back(modApp->evaluateInputPreliminary());
+				const PipelineFlowState& state = modApp->evaluateInputPreliminary();
+				std::vector<ConstDataObjectPath> containers = state.getObjectsRecursive(PropertyContainer::OOClass());
+				for(const ConstDataObjectPath& path : containers) {
+					const PropertyContainer* container = static_object_cast<PropertyContainer>(path.back());
+
+					if(_containerFilter && !_containerFilter(container))
+						continue;
+
+					QString title = container->getOOMetaClass().propertyClassDisplayName();
+					bool first = true;
+					for(const DataObject* obj : path) {
+						if(!obj->identifier().isEmpty()) {
+							if(first) {
+								first = false;
+								title += QStringLiteral(": ");
+							}
+							else title += QStringLiteral(" / ");
+							title += obj->objectTitle();
+						}
+					}
+
+					PropertyContainerReference propRef(&container->getOOMetaClass(), path.toString(), title);
+
+					// Make the same container is not added to the list twice.
+					bool existsAlready = false;
+					for(int i = 0; i < comboBox()->count(); i++) {
+						PropertyContainerReference containerRef = comboBox()->itemData(i).value<PropertyContainerReference>();
+						if(containerRef == propRef) {
+							existsAlready = true;
+							break;
+						}
+					}
+					if(existsAlready)
+						continue;
+
+					if(propRef == selectedPropertyContainer)
+						selectedIndex = comboBox()->count();
+
+					comboBox()->addItem(title, QVariant::fromValue(propRef));
+				}
 			}
 		}
 
-		// Update state of the property containers depending on their presence in the input pipeline data.
-		const QStandardItemModel* model = qobject_cast<const QStandardItemModel*>(comboBox()->model());
-		int enabledCount = 0;
-		int selectedIndex = -1;
-		for(int i = 0; i < comboBox()->count(); i++) {
-			QStandardItem* item = model->item(i);
-			PropertyContainerReference containerRef = item->data(Qt::UserRole).value<PropertyContainerReference>();
-			if(containerRef == selectedPropertyContainer) 
-				selectedIndex = i;
-
-			item->setEnabled(std::any_of(modifierInputs.begin(), modifierInputs.end(), [&containerRef](const PipelineFlowState& state) {
-				return state.getLeafObject(containerRef) != nullptr;
-			}));
+		static QIcon warningIcon(QStringLiteral(":/gui/mainwin/status/status_warning.png"));
+		if(selectedIndex < 0) {
+			if(selectedPropertyContainer) {
+				// Add a place-holder item if the selected container does not exist anymore.
+				comboBox()->addItem(selectedPropertyContainer.dataTitle() + tr(" (no longer available)"), QVariant::fromValue(selectedPropertyContainer));
+				QStandardItem* item = static_cast<QStandardItemModel*>(comboBox()->model())->item(comboBox()->count()-1);
+				item->setIcon(warningIcon);
+			}
+			else if(comboBox()->count() != 0) {
+				comboBox()->addItem(tr("<Please select a data object>"));
+			}
+			selectedIndex = comboBox()->count() - 1;
 		}
-
+		if(comboBox()->count() == 0) {
+			comboBox()->addItem(tr("<No available data objects>"));
+			QStandardItem* item = static_cast<QStandardItemModel*>(comboBox()->model())->item(0);
+			item->setIcon(warningIcon);
+			selectedIndex = 0;
+		}
+		
 		comboBox()->setCurrentIndex(selectedIndex);
+
+		// Sort list entries alphabetically.
+		static_cast<QStandardItemModel*>(comboBox()->model())->sort(0);
 	}
 }
 
@@ -128,7 +170,7 @@ void PropertyContainerParameterUI::updateUI()
 void PropertyContainerParameterUI::updatePropertyValue()
 {
 	if(comboBox() && editObject()) {
-		undoableTransaction(tr("Change modifier subject"), [this]() {
+		undoableTransaction(tr("Select input data object"), [this]() {
 
 			PropertyContainerReference containerRef = comboBox()->currentData().value<PropertyContainerReference>();
 

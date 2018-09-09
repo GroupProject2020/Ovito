@@ -25,16 +25,16 @@
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/dataset/pipeline/ModifierApplication.h>
 #include <core/utilities/concurrent/ParallelFor.h>
-#include "BondAngleAnalysisModifier.h"
+#include "AcklandJonesModifier.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
-IMPLEMENT_OVITO_CLASS(BondAngleAnalysisModifier);
+IMPLEMENT_OVITO_CLASS(AcklandJonesModifier);
 
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
-BondAngleAnalysisModifier::BondAngleAnalysisModifier(DataSet* dataset) : StructureIdentificationModifier(dataset)
+AcklandJonesModifier::AcklandJonesModifier(DataSet* dataset) : StructureIdentificationModifier(dataset)
 {
 	// Create the structure types.
 	createStructureType(OTHER, ParticleType::PredefinedStructureType::OTHER);
@@ -48,7 +48,7 @@ BondAngleAnalysisModifier::BondAngleAnalysisModifier(DataSet* dataset) : Structu
 * Creates and initializes a computation engine that will compute the 
 * modifier's results.
 ******************************************************************************/
-Future<AsynchronousModifier::ComputeEnginePtr> BondAngleAnalysisModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+Future<AsynchronousModifier::ComputeEnginePtr> AcklandJonesModifier::createEngine(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	if(structureTypes().size() != NUM_STRUCTURE_TYPES)
 		throwException(tr("The number of structure types has changed. Please remove this modifier from the pipeline and insert it again."));
@@ -66,15 +66,15 @@ Future<AsynchronousModifier::ComputeEnginePtr> BondAngleAnalysisModifier::create
 		selectionProperty = particles->expectProperty(ParticlesObject::SelectionProperty)->storage();
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
-	return std::make_shared<BondAngleAnalysisEngine>(particles, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty));
+	return std::make_shared<AcklandJonesAnalysisEngine>(particles, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty));
 }
 
 /******************************************************************************
 * Performs the actual analysis. This method is executed in a worker thread.
 ******************************************************************************/
-void BondAngleAnalysisModifier::BondAngleAnalysisEngine::perform()
+void AcklandJonesModifier::AcklandJonesAnalysisEngine::perform()
 {
-	task()->setProgressText(tr("Performing bond-angle analysis"));
+	task()->setProgressText(tr("Performing Ackland-Jones analysis"));
 
 	// Prepare the neighbor list.
 	NearestNeighborFinder neighborFinder(14);
@@ -98,7 +98,7 @@ void BondAngleAnalysisModifier::BondAngleAnalysisEngine::perform()
 * Determines the coordination structure of a single particle using the
 * bond-angle analysis method.
 ******************************************************************************/
-BondAngleAnalysisModifier::StructureType BondAngleAnalysisModifier::determineStructure(NearestNeighborFinder& neighFinder, size_t particleIndex, const QVector<bool>& typesToIdentify)
+AcklandJonesModifier::StructureType AcklandJonesModifier::determineStructure(NearestNeighborFinder& neighFinder, size_t particleIndex, const QVector<bool>& typesToIdentify)
 {
 	// Find 14 nearest neighbors of current particle.
 	NearestNeighborFinder::Query<14> neighborQuery(neighFinder);
@@ -180,16 +180,16 @@ BondAngleAnalysisModifier::StructureType BondAngleAnalysisModifier::determineStr
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState BondAngleAnalysisModifier::BondAngleAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+PipelineFlowState AcklandJonesModifier::AcklandJonesAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
 {
 	PipelineFlowState outState = StructureIdentificationEngine::emitResults(time, modApp, input);
 
 	// Also output structure type counts, which have been computed by the base class.
-	outState.addAttribute(QStringLiteral("BondAngleAnalysis.counts.OTHER"), QVariant::fromValue(getTypeCount(OTHER)), modApp);
-	outState.addAttribute(QStringLiteral("BondAngleAnalysis.counts.FCC"), QVariant::fromValue(getTypeCount(FCC)), modApp);
-	outState.addAttribute(QStringLiteral("BondAngleAnalysis.counts.HCP"), QVariant::fromValue(getTypeCount(HCP)), modApp);
-	outState.addAttribute(QStringLiteral("BondAngleAnalysis.counts.BCC"), QVariant::fromValue(getTypeCount(BCC)), modApp);
-	outState.addAttribute(QStringLiteral("BondAngleAnalysis.counts.ICO"), QVariant::fromValue(getTypeCount(ICO)), modApp);
+	outState.addAttribute(QStringLiteral("AcklandJones.counts.OTHER"), QVariant::fromValue(getTypeCount(OTHER)), modApp);
+	outState.addAttribute(QStringLiteral("AcklandJones.counts.FCC"), QVariant::fromValue(getTypeCount(FCC)), modApp);
+	outState.addAttribute(QStringLiteral("AcklandJones.counts.HCP"), QVariant::fromValue(getTypeCount(HCP)), modApp);
+	outState.addAttribute(QStringLiteral("AcklandJones.counts.BCC"), QVariant::fromValue(getTypeCount(BCC)), modApp);
+	outState.addAttribute(QStringLiteral("AcklandJones.counts.ICO"), QVariant::fromValue(getTypeCount(ICO)), modApp);
 
 	return outState;
 }

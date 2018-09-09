@@ -53,9 +53,13 @@ void PythonScriptModifier::loadUserDefaults()
 	// Load example script.
 	setScript("from ovito.data import *\n\n"
 			"def modify(frame, input, output):\n"
-			"\tprint(\"Input particle properties:\")\n"
-			"\tfor name in input.particles.keys():\n"
-			"\t\tprint(name)\n");
+			"    # This is an example Python modifier function that does nothing except printing the \n" 
+			"    # list of particle properties to the log window. Use it as a starting point for \n" 
+			"    # developing your own data modification or analysis function. \n" 
+			"    \n"
+			"    print(\"List of all input particle properties:\")\n"
+			"    for name in input.particles.keys():\n"
+			"        print(name)\n");
 }
 
 /******************************************************************************
@@ -197,6 +201,7 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 			
 			// Exit the modifier evaluation phase.
 			_activeModApp = nullptr;
+			notifyDependents(ReferenceEvent::ObjectStatusChanged);
 			modApp->notifyDependents(ReferenceEvent::ObjectStatusChanged);				
 			 
 			// Check if the function is a generator function.
@@ -220,7 +225,7 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 						if(wasCanceled || promise.isCanceled()) return;
 						
 						// Get access to the modifier and its modifier application.
-						PythonScriptModifierApplication* modApp = static_object_cast<PythonScriptModifierApplication>(executor.object());
+						PythonScriptModifierApplication* modApp = static_object_cast<PythonScriptModifierApplication>(const_cast<OvitoObject*>(executor.object()));
 						PythonScriptModifier* modifier = dynamic_object_cast<PythonScriptModifier>(modApp->modifier());
 						if(!modifier) return;
 
@@ -284,8 +289,9 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 
 						// Exit the modifier evaluation phase.
 						modifier->_activeModApp = nullptr;
+						modifier->notifyDependents(ReferenceEvent::ObjectStatusChanged);
 						modApp->notifyDependents(ReferenceEvent::ObjectStatusChanged);
-						
+
 						// Continue execution at a later time.
 						if(!promise.isFinished())
 							reschedule_execution();
@@ -321,6 +327,7 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 	catch(...) {
 		// Exit the modifier evaluation phase.
 		_activeModApp = nullptr;
+		notifyDependents(ReferenceEvent::ObjectStatusChanged);
 		modApp->notifyDependents(ReferenceEvent::ObjectStatusChanged);
 		throw;
 	}

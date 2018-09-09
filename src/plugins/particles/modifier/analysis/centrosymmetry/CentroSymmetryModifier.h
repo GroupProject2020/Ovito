@@ -51,7 +51,7 @@ class OVITO_PARTICLES_EXPORT CentroSymmetryModifier : public AsynchronousModifie
 	OVITO_CLASS_META(CentroSymmetryModifier, CentroSymmetryModifierClass)
 
 	Q_CLASSINFO("DisplayName", "Centrosymmetry parameter");
-	Q_CLASSINFO("ModifierCategory", "Analysis");
+	Q_CLASSINFO("ModifierCategory", "Structure identification");
 
 public:
 

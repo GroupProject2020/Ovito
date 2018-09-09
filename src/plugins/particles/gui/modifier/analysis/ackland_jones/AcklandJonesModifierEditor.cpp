@@ -21,22 +21,22 @@
 
 #include <plugins/particles/gui/ParticlesGui.h>
 #include <plugins/particles/gui/modifier/analysis/StructureListParameterUI.h>
-#include <plugins/particles/modifier/analysis/bondangle/BondAngleAnalysisModifier.h>
+#include <plugins/particles/modifier/analysis/ackland_jones/AcklandJonesModifier.h>
 #include <gui/properties/BooleanParameterUI.h>
-#include "BondAngleAnalysisModifierEditor.h"
+#include "AcklandJonesModifierEditor.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
-IMPLEMENT_OVITO_CLASS(BondAngleAnalysisModifierEditor);
-SET_OVITO_OBJECT_EDITOR(BondAngleAnalysisModifier, BondAngleAnalysisModifierEditor);
+IMPLEMENT_OVITO_CLASS(AcklandJonesModifierEditor);
+SET_OVITO_OBJECT_EDITOR(AcklandJonesModifier, AcklandJonesModifierEditor);
 
 /******************************************************************************
 * Sets up the UI widgets of the editor.
 ******************************************************************************/
-void BondAngleAnalysisModifierEditor::createUI(const RolloutInsertionParameters& rolloutParams)
+void AcklandJonesModifierEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create a rollout.
-	QWidget* rollout = createRollout(tr("Bond-angle analysis"), rolloutParams, "particles.modifiers.bond_angle_analysis.html");
+	QWidget* rollout = createRollout(tr("Ackland-Jones analysis"), rolloutParams, "particles.modifiers.bond_angle_analysis.html");
 
     // Create the rollout contents.
 	QVBoxLayout* layout1 = new QVBoxLayout(rollout);

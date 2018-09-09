@@ -653,6 +653,33 @@ public:
 		return false;
 	}
 
+	/// Calls a functor provided by the caller for every value of the given vector component. 
+	template<typename F>
+	bool forEach(F f, size_t component) const {
+		size_t cmpntCount = componentCount();
+		size_t s = size();
+		if(component >= cmpntCount) return false;
+		if(dataType() == PropertyStorage::Int) {
+			auto v = constDataInt() + component;
+			for(size_t i = 0; i < s; i++, v += cmpntCount)
+				f(i, *v);
+			return true;
+		}
+		else if(dataType() == PropertyStorage::Int64) {
+			auto v = constDataInt64() + component;
+			for(size_t i = 0; i < s; i++, v += cmpntCount)
+				f(i, *v);
+			return true;
+		}
+		else if(dataType() == PropertyStorage::Float) {
+			auto v = constDataFloat() + component;
+			for(size_t i = 0; i < s; i++, v += cmpntCount)
+				f(i, *v);
+			return true;
+		}
+		return false;
+	}
+
 protected:
 
 	/// The type of this property.

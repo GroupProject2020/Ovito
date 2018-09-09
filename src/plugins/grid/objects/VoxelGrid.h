@@ -53,11 +53,18 @@ class OVITO_GRID_EXPORT VoxelGrid : public PropertyContainer
 
 public:
 
+	/// Data type used to store the number of cells of the voxel grid in each dimension.
+	using GridDimensions = std::array<size_t,3>;
+
 	/// \brief Constructor.
-	Q_INVOKABLE VoxelGrid(DataSet* dataset);
+	Q_INVOKABLE VoxelGrid(DataSet* dataset, const QString& title = QString());
 
 	/// Returns the title of this object.
-	virtual QString objectTitle() const override { return tr("Voxel grid"); }
+	virtual QString objectTitle() const override { 
+		if(!title().isEmpty()) return title();
+		else if(!identifier().isEmpty()) return identifier();
+		else return PropertyContainer::objectTitle();
+	}
 
 protected:
 
@@ -69,8 +76,11 @@ protected:
 		
 private:
 
+	/// The title of the grid, which is shown in the user interface.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, title, setTitle);
+
 	/// The shape of the grid (i.e. number of voxels in each dimension).
-	DECLARE_RUNTIME_PROPERTY_FIELD(std::vector<size_t>, shape, setShape);
+	DECLARE_RUNTIME_PROPERTY_FIELD(GridDimensions, shape, setShape);
 
 	/// The domain the object is embedded in.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SimulationCellObject, domain, setDomain, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_NO_SUB_ANIM);

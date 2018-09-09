@@ -31,6 +31,7 @@ DEFINE_PROPERTY_FIELD(DataSeriesObject, intervalStart);
 DEFINE_PROPERTY_FIELD(DataSeriesObject, intervalEnd);
 DEFINE_PROPERTY_FIELD(DataSeriesObject, axisLabelX);
 DEFINE_PROPERTY_FIELD(DataSeriesObject, axisLabelY);
+DEFINE_PROPERTY_FIELD(DataSeriesObject, plotMode);
 SET_PROPERTY_FIELD_CHANGE_EVENT(DataSeriesObject, title, ReferenceEvent::TitleChanged);
 
 /******************************************************************************
@@ -86,10 +87,11 @@ PropertyPtr DataSeriesObject::OOMetaClass::createStandardStorage(size_t elementC
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-DataSeriesObject::DataSeriesObject(DataSet* dataset, const QString& title, const PropertyPtr& y) : PropertyContainer(dataset),
+DataSeriesObject::DataSeriesObject(DataSet* dataset, PlotMode plotMode, const QString& title, const PropertyPtr& y) : PropertyContainer(dataset),
 	_title(title),
 	_intervalStart(0),
-	_intervalEnd(0)
+	_intervalEnd(0),
+	_plotMode(plotMode)
 {
 	if(y) {
 		OVITO_ASSERT(y->type() == YProperty);

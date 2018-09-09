@@ -20,12 +20,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <plugins/particles/objects/ParticleProperty.h>
 #include <plugins/particles/objects/ParticleType.h>
 #include <plugins/particles/objects/ParticlesVis.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/particles/objects/VectorVis.h>
 #include <plugins/particles/objects/BondsVis.h>
-#include <plugins/particles/objects/BondProperty.h>
+#include <plugins/particles/objects/BondsObject.h>
 #include <plugins/particles/objects/ParticleBondMap.h>
 #include <plugins/particles/objects/BondType.h>
 #include <plugins/particles/objects/TrajectoryObject.h>
@@ -57,6 +57,36 @@ PYBIND11_MODULE(Particles, m)
 	py::options options;
 	options.disable_function_signatures();
 
+	auto Particles_py = ovito_class<ParticlesObject, PropertyContainer>(m,
+		":Base class: :py:class:`ovito.data.PropertyContainer`\n\n",
+		// Python class name:
+		"Particles")
+
+		.def_property("bonds", &ParticlesObject::bonds, &ParticlesObject::setBonds,
+			"The :py:class:`Bonds` data object, which stores the bond information associated with this particle dataset. ")
+
+		// For backward compatibility with OVITO 2.9.0:
+		.def_property_readonly("position", [](const ParticlesObject& particles) { return particles.getProperty(ParticlesObject::PositionProperty); })
+		.def_property_readonly("color", [](const ParticlesObject& particles) { return particles.getProperty(ParticlesObject::ColorProperty); })
+		.def_property_readonly("particle_type", [](const ParticlesObject& particles) { return particles.getProperty(ParticlesObject::TypeProperty); })
+		.def_property_readonly("displacement", [](const ParticlesObject& particles) { return particles.getProperty(ParticlesObject::DisplacementProperty); })
+		.def_property_readonly("structure_type", [](const ParticlesObject& particles) { return particles.getProperty(ParticlesObject::StructureTypeProperty); })
+		.def_property_readonly("centrosymmetry", [](const ParticlesObject& particles) { return particles.getProperty(ParticlesObject::CentroSymmetryProperty); })
+		.def_property_readonly("cluster", [](const ParticlesObject& particles) { return particles.getProperty(ParticlesObject::ClusterProperty); })
+		.def_property_readonly("selection", [](const ParticlesObject& particles) { return particles.getProperty(ParticlesObject::SelectionProperty); })
+		.def_property_readonly("coordination", [](const ParticlesObject& particles) { return particles.getProperty(ParticlesObject::CoordinationProperty); })
+	;
+
+	auto Bonds_py = ovito_class<BondsObject, PropertyContainer>(m,
+		":Base class: :py:class:`ovito.data.PropertyContainer`\n\n",
+		// Python class name:
+		"Bonds")
+
+		// For backward compatibility with OVITO 2.9.0:
+		.def_property_readonly("pbc_vectors", [](const BondsObject& bonds) { return bonds.getProperty(BondsObject::PeriodicImageProperty); })
+	;
+
+#if 0
 	auto ParticleProperty_py = ovito_abstract_class<ParticleProperty, PropertyObject>(m,
 			":Base class: :py:class:`ovito.data.Property`\n\n"
 			"Stores an array of per-particle values. This class derives from :py:class:`Property`, which provides the "
@@ -242,56 +272,31 @@ PYBIND11_MODULE(Particles, m)
 		.value("StretchTensor", ParticleProperty::StretchTensorProperty)
 		.value("MoleculeType", ParticlesObject::MoleculeTypeProperty)
 	;								
+#endif
 
 	py::class_<ParticleBondMap>(m, "BondsEnumerator",
 		"Utility class that permits efficient iteration over the bonds connected to specific particles. "
 		"\n\n"
-    	"The constructor takes a :py:class:`DataCollection` object as input. "
-		"From the unordered list of bonds in the data collection, the :py:class:`!BondsEnumerator` will build a lookup table for quick enumeration  "
+    	"The constructor takes a :py:class:`Bonds` object as input. "
+		"From the generally unordered list of bonds, the :py:class:`!BondsEnumerator` will build a lookup table for quick enumeration  "
 		"of bonds of particular particles. "
 		"\n\n"
-		"All bonds connected to a given particle can be subsequently visited using the :py:meth:`.bonds_of_particle` method. "
+		"All bonds connected to a specific particle can be subsequently visited using the :py:meth:`.bonds_of_particle` method. "
 		"\n\n"
-		"Warning: Do not modify the underlying bonds list in the data collection while the :py:class:`!BondsEnumerator` is in use. "
+		"Warning: Do not modify the underlying :py:class:`Bonds` object while the :py:class:`!BondsEnumerator` is in use. "
 		"Adding or deleting bonds would render the internal lookup table of the :py:class:`!BondsEnumerator` invalid. "
 		"\n\n"
 		"**Usage example**"
 		"\n\n"
 		".. literalinclude:: ../example_snippets/bonds_enumerator.py\n")
-		// Factory function:
-		.def(py::init([](py::object data_collection) {
-				// Get the 'Topology' and the 'Periodic image' bond propertie from the data collection:
-				py::object topologyPropertyName = py::cast(BondProperty::OOClass().standardPropertyName(BondsObject::TopologyProperty));
-				py::object pbcShiftPropertyName = py::cast(BondProperty::OOClass().standardPropertyName(BondsObject::PeriodicImageProperty));
-
-				py::object DataCollection = py::module::import("ovito.data").attr("DataCollection");
-				py::object BondsView = py::module::import("ovito.data").attr("BondsView");
-				py::object bonds_view;
-				if(py::isinstance(data_collection, DataCollection))
-					bonds_view = data_collection.attr("bonds");
-				else if(py::isinstance(data_collection, BondsView))
-					bonds_view = data_collection;
-				else
-					throw Exception("BondsEnumerator construction failed. Data collection expected as argument.");
-				if(!bonds_view.contains(topologyPropertyName))
-					throw Exception("BondsEnumerator construction failed. Data collection doesn't contain any bonds.");
-				py::object topology_prop = bonds_view[topologyPropertyName];
-				py::object pbd_shift_prop;
-				if(bonds_view.contains(pbcShiftPropertyName))
-					pbd_shift_prop = bonds_view[pbcShiftPropertyName];
-				// Create BondsEnumerator instance.
-				return new ParticleBondMap(
-						topology_prop.cast<BondProperty*>()->storage(),
-						pbd_shift_prop ? pbd_shift_prop.cast<BondProperty*>()->storage() : nullptr);
-			}), 
-			py::arg("data_collection"))
+		.def(py::init<const BondsObject&>(), py::arg("bonds"))
 		.def("bonds_of_particle", [](const ParticleBondMap& bondMap, size_t particleIndex) {
 			auto range = bondMap.bondIndicesOfParticle(particleIndex);
 			return py::make_iterator<py::return_value_policy::automatic>(range.begin(), range.end());
 		},
 		py::keep_alive<0, 1>(),
 		"Returns an iterator that yields the indices of the bonds connected to the given particle. "
-        "The indices can be used to index into the :py:class:`BondProperty` arrays. ");
+        "The indices can be used to index into the :py:class:`~ovito.data.Property` arrays of the :py:class:`Bonds` object. ");
 	;
 
 	ovito_class<ParticleType, ElementType>(m,
@@ -460,7 +465,7 @@ PYBIND11_MODULE(Particles, m)
 
 	auto CutoffNeighborFinder_py = py::class_<CutoffNeighborFinder>(m, "CutoffNeighborFinder")
 		.def(py::init<>())
-		.def("prepare", [](CutoffNeighborFinder& finder, FloatType cutoff, ParticleProperty& positions, SimulationCellObject& cell) {
+		.def("prepare", [](CutoffNeighborFinder& finder, FloatType cutoff, const PropertyObject& positions, const SimulationCellObject& cell) {
 				return finder.prepare(cutoff, *positions.storage(), cell.data(), nullptr, nullptr);
 			})
 	;
@@ -478,7 +483,7 @@ PYBIND11_MODULE(Particles, m)
 
 	auto NearestNeighborFinder_py = py::class_<NearestNeighborFinder>(m, "NearestNeighborFinder")
 		.def(py::init<int>())
-		.def("prepare", [](NearestNeighborFinder& finder, ParticleProperty& positions, SimulationCellObject& cell) {
+		.def("prepare", [](NearestNeighborFinder& finder, const PropertyObject& positions, const SimulationCellObject& cell) {
 			return finder.prepare(*positions.storage(), cell.data(), nullptr, nullptr);
 		})
 	;
@@ -501,6 +506,7 @@ PYBIND11_MODULE(Particles, m)
 			py::return_value_policy::reference_internal)
 	;
 
+#if 0
 	auto BondProperty_py = ovito_abstract_class<BondProperty, PropertyObject>(m,
 			":Base class: :py:class:`ovito.data.Property`\n\n"
 			"Stores an array of per-bond values. This class derives from :py:class:`Property`, which provides the "
@@ -564,6 +570,7 @@ PYBIND11_MODULE(Particles, m)
 		.value("PeriodicImage", BondsObject::PeriodicImageProperty)
 		.value("Transparency", BondsObject::TransparencyProperty)
 	;
+#endif
 
 	ovito_class<BondType, ElementType>(m,
 			"Describes a bond type.")

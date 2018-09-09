@@ -121,7 +121,7 @@ void SurfaceMeshVis::PrepareSurfaceEngine::perform()
 	TriMesh surfaceMesh;
 	TriMesh capPolygonsMesh;
 
-	if(!buildSurfaceMesh(*_inputMesh, _simCell, _reverseOrientation, _cuttingPlanes, surfaceMesh, this))
+	if(!buildSurfaceMesh(*_inputMesh, _simCell, _reverseOrientation, _cuttingPlanes, surfaceMesh, this) && !isCanceled())
 		throw Exception(tr("Failed to generate non-periodic mesh. Periodic domain might be too small."));
 
 	if(isCanceled())
@@ -278,8 +278,9 @@ bool SurfaceMeshVis::buildSurfaceMesh(const HalfEdgeMesh<>& input, const Simulat
 		std::vector<Point3> newVertices;
 		std::map<std::pair<int,int>,std::pair<int,int>> newVertexLookupMap;
 		for(int findex = 0; findex < oldFaceCount; findex++) {
-			if(!splitFace(output, output.face(findex), oldVertexCount, newVertices, newVertexLookupMap, cell, dim))
+			if(!splitFace(output, output.face(findex), oldVertexCount, newVertices, newVertexLookupMap, cell, dim)) {
 				return false;
+			}
 		}
 
 		// Insert newly created vertices into mesh.

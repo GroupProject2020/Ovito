@@ -66,6 +66,12 @@ public:
 		if(comboBox()) comboBox()->setWhatsThis(text); 
 	}
 
+	/// Installs optional callback function that allows clients to filter the displayed container list.
+	void setContainerFilter(std::function<bool(const PropertyContainer*)> filter) {
+		_containerFilter = std::move(filter);
+		updateUI();
+	}
+
 public:
 	
 	Q_PROPERTY(QComboBox comboBox READ comboBox);
@@ -83,6 +89,9 @@ protected:
 	
 	/// The combo box of the UI component.
 	QPointer<QComboBox> _comboBox;
+
+	/// An optional callback function that allows clients to filter the displayed container list.
+	std::function<bool(const PropertyContainer*)> _containerFilter;
 };
 
 }	// End of namespace

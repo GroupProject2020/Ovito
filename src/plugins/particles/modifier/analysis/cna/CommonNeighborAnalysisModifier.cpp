@@ -81,7 +81,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> CommonNeighborAnalysisModifier::c
 		return std::make_shared<AdaptiveCNAEngine>(particles, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty));
 	}
 	else if(mode() == BondMode) {
-		const PropertyObject* topologyProperty = particles->expectBonds()->expectProperty(BondsObject::PeriodicImageProperty);
+		const PropertyObject* topologyProperty = particles->expectBonds()->expectProperty(BondsObject::TopologyProperty);
 		const PropertyObject* periodicImagesProperty = particles->expectBonds()->getProperty(BondsObject::PeriodicImageProperty);
 		return std::make_shared<BondCNAEngine>(particles, posProperty->storage(), simCell->data(), getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty), 
 			topologyProperty->storage(), periodicImagesProperty ? periodicImagesProperty->storage() : nullptr);

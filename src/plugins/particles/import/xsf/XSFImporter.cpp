@@ -290,9 +290,9 @@ FileSourceImporter::FrameDataPtr XSFImporter::FrameLoader::loadFile(QFile& file)
 			size_t nx, ny, nz;
 			if(sscanf(stream.readLine(), "%zu %zu %zu", &nx, &ny, &nz) != 3)
 				throw Exception(tr("XSF file parsing error. Invalid data grid specification in line %1: %2").arg(stream.lineNumber()).arg(stream.lineString()));
-			if(frameData->voxelGridShape().empty())
+			if(frameData->voxelGridShape() == VoxelGrid::GridDimensions{0,0,0})
 				frameData->setVoxelGridShape({nx, ny, nz});
-			else if(frameData->voxelGridShape() != std::vector<size_t>({nx, ny, nz}))
+			else if(frameData->voxelGridShape() != VoxelGrid::GridDimensions{nx, ny, nz})
 				throw Exception(tr("XSF file parsing error. Data grid specification in line %1 is incompatible with preceding grid dimensions found in the same file.").arg(stream.lineNumber()));			
 
 			AffineTransformation cell = AffineTransformation::Identity();

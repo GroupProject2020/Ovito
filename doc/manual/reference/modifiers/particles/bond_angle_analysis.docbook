@@ -8,7 +8,7 @@
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Bond-angle analysis</title>
+  <title>Ackland-Jones analysis</title>
 
   <para>
     <informalfigure><screenshot><mediaobject><imageobject>
@@ -60,7 +60,7 @@
     </para>
     <para>
       Furthermore, the modifier emits global attributes to the data pipeline reporting the total number of particles matching 
-      each of the supported structural types. These attributes are named <literal>BondAngleAnalysis.counts.XXX</literal>, where "<literal>XXX</literal>"
+      each of the supported structural types. These attributes are named <literal>AcklandJones.counts.XXX</literal>, where "<literal>XXX</literal>"
       stands for the name of a structure. These analysis statistics may be exported using OVITO's <link linkend="usage.export">data export function</link>
       or displayed as live information in the viewports using a <link linkend="viewport_overlays.text_label">text label</link>.
     </para>
@@ -96,7 +96,7 @@
   <simplesect>
   <title>See also</title>
     <para>
-      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.BondAngleAnalysisModifier"><classname>BondAngleAnalysisModifier</classname> (Python API)</link>
+      <link xlink:href="python/modules/ovito_modifiers.html#ovito.modifiers.AcklandJonesModifier"><classname>AcklandJonesModifier</classname> (Python API)</link>
     </para>
   </simplesect>
   

@@ -95,7 +95,16 @@ void defineSceneSubmodule(py::module m)
 								  std::mem_fn(&DataObject::insertVisElement), 
 								  std::mem_fn(&DataObject::removeVisElement), "vis_list", "DataVisList");
 
-	ovito_class<AttributeDataObject, DataObject>{m};
+	ovito_class<AttributeDataObject, DataObject>{m}
+		.def_property("value", &AttributeDataObject::value, [](AttributeDataObject& obj, py::object value) {
+			if(PyLong_Check(value.ptr()))
+				obj.setValue(QVariant::fromValue(PyLong_AsLong(value.ptr())));
+			else if(PyFloat_Check(value.ptr()))
+				obj.setValue(QVariant::fromValue(PyFloat_AsDouble(value.ptr())));
+			else
+				obj.setValue(QVariant::fromValue(castToQString(value.cast<py::str>())));
+		})
+	;
 
 	ovito_abstract_class<PipelineObject, RefTarget>{m}
 		.def_property_readonly("status", &PipelineObject::status)
@@ -404,10 +413,9 @@ void defineSceneSubmodule(py::module m)
 		"\n\n"
 		".. literalinclude:: ../example_snippets/static_source.py\n"
 		)
-
 		.def("assign", [](StaticSource& source, const PipelineFlowState& state) {
 			source.setDataObjects({});
-			for(DataObject* obj : state.objects())
+			for(const DataObject* obj : state.objects())
 				source.addDataObject(obj);
 		},
 		"assign(data)"

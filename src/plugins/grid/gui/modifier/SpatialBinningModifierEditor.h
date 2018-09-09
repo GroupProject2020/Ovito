@@ -31,6 +31,7 @@
 
 class QwtPlotSpectrogram;
 class QwtMatrixRasterData;
+class QwtPlotTextLabel;
 
 namespace Ovito { namespace Grid { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
@@ -76,14 +77,20 @@ private:
     /// Widget controlling the number of z-bins.
     IntegerParameterUI* _numBinsZPUI;
 
-	/// The graph widget to display the data.
-	DataSeriesPlotWidget* _plot;
+	/// The graph widget to display the 1d data.
+	DataSeriesPlotWidget* _plotWidget1d;
+
+	/// The graph widget to display the 2d data.
+	QwtPlot* _plotWidget2d;
 
 	/// The plot item for the 2D color plot.
-	QwtPlotSpectrogram* _plotRaster = nullptr;
+	QwtPlotSpectrogram* _plotRaster;
 
 	/// The data storage for the 2D color plot.
-	QwtMatrixRasterData* _rasterData = nullptr;
+	QwtMatrixRasterData* _rasterData;
+
+	/// Text label indicating that no plot is available, because a 3d grid has been computed.
+	QwtPlotTextLabel* _mode3dLabel;
 
 	/// For deferred invocation of the plot repaint function.
 	DeferredMethodInvocation<SpatialBinningModifierEditor, &SpatialBinningModifierEditor::plotData> plotLater;

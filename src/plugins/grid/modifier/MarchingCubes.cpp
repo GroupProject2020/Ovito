@@ -36,7 +36,9 @@ MarchingCubes::MarchingCubes(int size_x, int size_y, int size_z, std::array<bool
     _size_y(size_y + (pbcFlags[1]?0:1)), 
     _size_z(size_z + (pbcFlags[2]?0:1)),
     _pbcFlags(pbcFlags),
-    _data(data), _dataStride(stride), _outputMesh(outputMesh),
+    _data(data), 
+    _dataStride(stride), 
+    _outputMesh(outputMesh),
     _cubeVerts(_size_x * _size_y * _size_z * 3, nullptr),
     _isCompletelySolid(false),
     _lowerIsSolid(lowerIsSolid)
@@ -614,9 +616,9 @@ void MarchingCubes::processCube(int i, int j, int k)
 ******************************************************************************/
 void MarchingCubes::addTriangle(int i, int j, int k, const char* trig, char n, HalfEdgeMesh<>::Vertex* v12)
 {
-    HalfEdgeMesh<>::Vertex*    tv[3];
+    HalfEdgeMesh<>::Vertex* tv[3];
 
-    for(int t = 0; t < 3*n; t++) {
+    for(int t = 0; t < 3 * n; t++) {
         switch(trig[t]) {
             case  0: tv[t % 3] = getEdgeVert(i  , j  , k,  0); break;
             case  1: tv[t % 3] = getEdgeVert(i+1, j  , k,  1); break;
@@ -653,30 +655,33 @@ HalfEdgeMesh<>::Vertex* MarchingCubes::createCenterVertex(int i, int j, int k)
     Point3 p = Point3::Origin();
 
     // Computes the average of the intersection points of the cube
-    auto addPosition = [&p, &u](const HalfEdgeMesh<>::Vertex* v) {
-        if(v) {
-            ++u;
+    auto addPosition = [this, &p, &u](int i, int j, int k, int axis) {
+        if(const HalfEdgeMesh<>::Vertex* v = getEdgeVert(i, j, k, axis)) {
             p.x() += v->pos().x();
             p.y() += v->pos().y();
             p.z() += v->pos().z();
+            if(i == _size_x) p.x() += _size_x;
+            if(j == _size_y) p.y() += _size_y;
+            if(k == _size_z) p.z() += _size_z;
+            ++u;
         }
     };
-    addPosition(getEdgeVert(i  , j  , k,  0));
-    addPosition(getEdgeVert(i+1, j  , k,  1));
-    addPosition(getEdgeVert(i  , j+1, k,  0));
-    addPosition(getEdgeVert(i  , j  , k,  1));
-    addPosition(getEdgeVert(i  , j  , k+1,0));
-    addPosition(getEdgeVert(i+1, j  , k+1,1));
-    addPosition(getEdgeVert(i  , j+1, k+1,0));
-    addPosition(getEdgeVert(i  , j  , k+1,1));
-    addPosition(getEdgeVert(i  , j  , k,  2));
-    addPosition(getEdgeVert(i+1, j  , k,  2));
-    addPosition(getEdgeVert(i+1, j+1, k,  2));
-    addPosition(getEdgeVert(i  , j+1, k,  2));
+    addPosition(i  , j  , k,  0);
+    addPosition(i+1, j  , k,  1);
+    addPosition(i  , j+1, k,  0);
+    addPosition(i  , j  , k,  1);
+    addPosition(i  , j  , k+1,0);
+    addPosition(i+1, j  , k+1,1);
+    addPosition(i  , j+1, k+1,0);
+    addPosition(i  , j  , k+1,1);
+    addPosition(i  , j  , k,  2);
+    addPosition(i+1, j  , k,  2);
+    addPosition(i+1, j+1, k,  2);
+    addPosition(i  , j+1, k,  2);
 
-    p.x()  /= u;
-    p.y()  /= u;
-    p.z()  /= u;
+    p.x() /= u;
+    p.y() /= u;
+    p.z() /= u;
 
     return _outputMesh.createVertex(p);
 }

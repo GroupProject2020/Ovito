@@ -71,16 +71,17 @@ void PythonScriptModifierEditor::createUI(const RolloutInsertionParameters& roll
 	_outputDisplay->setLineWrapMode(QTextEdit::NoWrap);
 	layout->addWidget(_outputDisplay, row++, 0);
 
-	connect(this, &PropertiesEditor::contentsChanged, this, &PythonScriptModifierEditor::onContentsChanged);
+	connect(this, &ModifierPropertiesEditor::modifierStatusChanged, this, &PythonScriptModifierEditor::updateUserInterface);
+	connect(this, &ModifierPropertiesEditor::contentsReplaced, this, &PythonScriptModifierEditor::updateUserInterface);
 }
 
 /******************************************************************************
 * Is called when the current edit object has generated a change
 * event or if a new object has been loaded into editor.
 ******************************************************************************/
-void PythonScriptModifierEditor::onContentsChanged(RefTarget* editObject)
+void PythonScriptModifierEditor::updateUserInterface()
 {
-	PythonScriptModifier* modifier = static_object_cast<PythonScriptModifier>(editObject);
+	PythonScriptModifier* modifier = static_object_cast<PythonScriptModifier>(editObject());
 	if(modifier) {
 		_editScriptButton->setEnabled(true);
 		QString text = modifier->scriptCompilationOutput();
@@ -130,7 +131,8 @@ void PythonScriptModifierEditor::onOpenEditor()
 			QString text = modifier->scriptCompilationOutput();
 			if(PythonScriptModifierApplication* modApp = dynamic_object_cast<PythonScriptModifierApplication>(modifier->someModifierApplication()))
 				text += modApp->logOutput();
-			return text;		}
+			return text;
+		}
 
 		/// Sets the current script of the owner object.
 		virtual void setObjectScript(RefTarget* obj, const QString& script) const override {
@@ -149,17 +151,6 @@ void PythonScriptModifierEditor::onOpenEditor()
 
 	ScriptEditor* editor = new ScriptEditor(mainWindow(), modifier);
 	editor->show();
-}
-
-/******************************************************************************
-* This method is called when a reference target changes.
-******************************************************************************/
-bool PythonScriptModifierEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
-{
-	if(source == editObject() && event.type() == ReferenceEvent::ObjectStatusChanged) {
-		onContentsChanged(editObject());
-	}
-	return ModifierPropertiesEditor::referenceEvent(source, event);
 }
 
 OVITO_END_INLINE_NAMESPACE

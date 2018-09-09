@@ -48,6 +48,7 @@ void ClusterAnalysisModifierEditor::createUI(const RolloutInsertionParameters& r
 	gridlayout->setContentsMargins(4,4,4,4);
 	gridlayout->setColumnStretch(2, 1);
 	gridlayout->setColumnMinimumWidth(0, 10);
+	gridlayout->setRowMinimumHeight(3, 6);
 
 	gridlayout->addWidget(new QLabel(tr("Neighbor mode:")), 0, 0, 1, 3);
 
@@ -65,11 +66,11 @@ void ClusterAnalysisModifierEditor::createUI(const RolloutInsertionParameters& r
 
 	// Sort by size
 	BooleanParameterUI* sortBySizeUI = new BooleanParameterUI(this, PROPERTY_FIELD(ClusterAnalysisModifier::sortBySize));
-	gridlayout->addWidget(sortBySizeUI->checkBox(), 3, 0, 1, 3);
+	gridlayout->addWidget(sortBySizeUI->checkBox(), 4, 0, 1, 3);
 
 	// Use only selected particles.
 	BooleanParameterUI* onlySelectedParticlesUI = new BooleanParameterUI(this, PROPERTY_FIELD(ClusterAnalysisModifier::onlySelectedParticles));
-	gridlayout->addWidget(onlySelectedParticlesUI->checkBox(), 4, 0, 1, 3);
+	gridlayout->addWidget(onlySelectedParticlesUI->checkBox(), 5, 0, 1, 3);
 
 	layout->addLayout(gridlayout);
 

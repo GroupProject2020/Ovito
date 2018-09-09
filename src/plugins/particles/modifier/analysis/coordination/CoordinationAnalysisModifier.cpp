@@ -228,7 +228,7 @@ PipelineFlowState CoordinationAnalysisModifier::CoordinationAnalysisEngine::emit
 	particles->createProperty(coordinationNumbers());
 
 	// Output RDF histogram(s).
-	DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("coordination/rdf"), modApp, tr("Radial distribution function"), rdfY());
+	DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("coordination/rdf"), modApp, DataSeriesObject::Line, tr("Radial distribution function"), rdfY());
 	seriesObj->setIntervalStart(0);
 	seriesObj->setIntervalEnd(cutoff());
 	seriesObj->setAxisLabelX(tr("Pair separation distance"));
