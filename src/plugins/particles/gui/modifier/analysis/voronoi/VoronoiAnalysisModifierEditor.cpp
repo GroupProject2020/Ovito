@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -70,15 +70,10 @@ void VoronoiAnalysisModifierEditor::createUI(const RolloutInsertionParameters& r
 	sublayout->setSpacing(4);
 	sublayout->setColumnStretch(1, 1);
 
-	// Edge count parameter.
-	IntegerParameterUI* edgeCountPUI = new IntegerParameterUI(this, PROPERTY_FIELD(VoronoiAnalysisModifier::edgeCount));
-	sublayout->addWidget(edgeCountPUI->label(), 0, 0);
-	sublayout->addLayout(edgeCountPUI->createFieldLayout(), 0, 1);
-
 	// Edge threshold.
 	FloatParameterUI* edgeThresholdPUI = new FloatParameterUI(this, PROPERTY_FIELD(VoronoiAnalysisModifier::edgeThreshold));
-	sublayout->addWidget(edgeThresholdPUI->label(), 1, 0);
-	sublayout->addLayout(edgeThresholdPUI->createFieldLayout(), 1, 1);
+	sublayout->addWidget(edgeThresholdPUI->label(), 0, 0);
+	sublayout->addLayout(edgeThresholdPUI->createFieldLayout(), 0, 1);
 
 	// Generate bonds.
 	BooleanParameterUI* computeBondsPUI = new BooleanParameterUI(this, PROPERTY_FIELD(VoronoiAnalysisModifier::computeBonds));

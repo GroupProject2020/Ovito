@@ -804,15 +804,13 @@ void defineModifiersSubmodule(py::module m)
 			"   Stores the number of faces of each particle's Voronoi cell.\n"
 			" * ``Voronoi Index`` (:py:class:`~ovito.data.ParticleProperty`):\n"
 			"   Stores the Voronoi indices computed from each particle's Voronoi cell. This property is only generated when :py:attr:`.compute_indices` is set.\n"
+			" * ``Max Face Order`` (:py:class:`~ovito.data.ParticleProperty`):\n"
+			"   Particle property with the maximum number of edges in any face of a particle's Voronoi cell. Only when :py:attr:`.compute_indices` is set.\n"
 			" * ``Topology`` (:py:class:`~ovito.data.BondProperty`):\n"
 			"   Contains the connectivity information of bonds. The modifier creates one bond for each Voronoi face (only if :py:attr:`.generate_bonds` is set)\n"
 			" * ``Voronoi.max_face_order`` (:py:attr:`attribute <ovito.data.DataCollection.attributes>`):\n"
 			"   This output attribute reports the maximum number of edges of any face in the computed Voronoi tessellation "
 			"   (ignoring edges and faces that are below the area and length thresholds)."
-			"   Note that, if calculation of Voronoi indices is enabled (:py:attr:`.compute_indices` == true), and :py:attr:`.edge_count` < ``max_face_order``, then "
-			"   the computed Voronoi index vectors will be truncated because there exists at least one Voronoi face having more edges than "
-			"   the maximum Voronoi vector length specified by :py:attr:`.edge_count`. In such a case you should consider increasing "
-			"   :py:attr:`.edge_count` (to at least ``max_face_order``) to not lose information because of truncated index vectors."
 			"\n")
 		.def_property("only_selected", &VoronoiAnalysisModifier::onlySelected, &VoronoiAnalysisModifier::setOnlySelected,
 				"Lets the modifier perform the analysis only for selected particles. Particles that are currently not selected will be treated as if they did not exist."
@@ -861,16 +859,6 @@ void defineModifiersSubmodule(py::module m)
 				"the face has less than three edges that are longer than the :py:attr:`.edge_threshold`."
 				"\n\n"
 				":Default: ``False``\n")
-		.def_property("edge_count", &VoronoiAnalysisModifier::edgeCount, &VoronoiAnalysisModifier::setEdgeCount,
-				"Integer parameter controlling the order up to which Voronoi indices are computed by the modifier. "
-				"Any Voronoi face with more edges than this maximum value will not be counted! Computed Voronoi index vectors are truncated at the index specified by :py:attr:`.edge_count`. "
-				"\n\n"
-				"See the ``Voronoi.max_face_order`` output attributes described above on how to avoid truncated Voronoi index vectors."
-				"\n\n"
-				"This parameter is ignored if :py:attr:`.compute_indices` is false."
-				"\n\n"
-				":Minimum: 3\n"
-				":Default: 6\n")
 	;
 
 	ovito_class<LoadTrajectoryModifier, Modifier>(m,

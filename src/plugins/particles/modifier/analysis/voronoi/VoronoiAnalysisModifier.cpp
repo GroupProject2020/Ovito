@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -32,12 +32,13 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
 
+constexpr int VoronoiAnalysisModifier::VoronoiAnalysisEngine::FaceOrderStorageLimit;
+
 IMPLEMENT_OVITO_CLASS(VoronoiAnalysisModifier);
 DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, onlySelected);
 DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, useRadii);
 DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, computeIndices);
 DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, computeBonds);
-DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, edgeCount);
 DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, edgeThreshold);
 DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, faceThreshold);
 DEFINE_PROPERTY_FIELD(VoronoiAnalysisModifier, relativeFaceThreshold);
@@ -46,14 +47,12 @@ SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, onlySelected, "Use only select
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, useRadii, "Use particle radii");
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, computeIndices, "Compute Voronoi indices");
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, computeBonds, "Generate neighbor bonds");
-SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, edgeCount, "Maximum edge count");
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, edgeThreshold, "Edge length threshold");
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, faceThreshold, "Absolute face area threshold");
 SET_PROPERTY_FIELD_LABEL(VoronoiAnalysisModifier, relativeFaceThreshold, "Relative face area threshold");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(VoronoiAnalysisModifier, edgeThreshold, WorldParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(VoronoiAnalysisModifier, faceThreshold, FloatParameterUnit, 0);
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(VoronoiAnalysisModifier, relativeFaceThreshold, PercentParameterUnit, 0, 1);
-SET_PROPERTY_FIELD_UNITS_AND_RANGE(VoronoiAnalysisModifier, edgeCount, IntegerParameterUnit, 3, 18);
 
 /******************************************************************************
 * Constructs the modifier object.
@@ -61,7 +60,6 @@ SET_PROPERTY_FIELD_UNITS_AND_RANGE(VoronoiAnalysisModifier, edgeCount, IntegerPa
 VoronoiAnalysisModifier::VoronoiAnalysisModifier(DataSet* dataset) : AsynchronousModifier(dataset),
 	_onlySelected(false), 
 	_computeIndices(false), 
-	_edgeCount(6),
 	_useRadii(false), 
 	_edgeThreshold(0), 
 	_faceThreshold(0),
@@ -105,7 +103,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> VoronoiAnalysisModifier::createEn
 		radii = particles->inputParticleRadii();
 
 	// The Voro++ library uses 32-bit integers. It cannot handle more than 2^31 input points.
-	if(posProperty->size() > std::numeric_limits<int>::max())
+	if(posProperty->size() > (size_t)std::numeric_limits<int>::max())
 		throwException(tr("Voronoi analysis modifier is limited to a maximum of %1 particles in the current program version.").arg(std::numeric_limits<int>::max()));
 
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
@@ -116,7 +114,6 @@ Future<AsynchronousModifier::ComputeEnginePtr> VoronoiAnalysisModifier::createEn
 			selectionProperty,
 			std::move(radii),
 			inputCell->data(),
-			qMax(1, edgeCount()),
 			computeIndices(),
 			computeBonds(),
 			edgeThreshold(),
@@ -129,19 +126,22 @@ Future<AsynchronousModifier::ComputeEnginePtr> VoronoiAnalysisModifier::createEn
 ******************************************************************************/
 void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 {
-	task()->setProgressText(tr("Computing Voronoi cells"));
+	task()->setProgressText(tr("Performing Voronoi analysis"));
 
-	// Compute the total simulation cell volume.
-	setSimulationBoxVolume(_simCell.volume3D());
-
-	if(_positions->size() == 0 || simulationBoxVolume() == 0)
-		return;	// Nothing to do
+	if(_positions->size() == 0 || _simCell.volume3D() == 0) {
+		if(maxFaceOrders()) {
+			_voronoiIndices = std::make_shared<PropertyStorage>(_positions->size(), PropertyStorage::Int, 3, 0, QStringLiteral("Voronoi Index"), true);
+		}
+		// Nothing else to do if there no particles.
+		return;	
+	}
 
 	// The squared edge length threshold.
 	// Add additional factor of 4 because Voronoi cell vertex coordinates are all scaled by factor of 2.
 	FloatType sqEdgeThreshold = _edgeThreshold * _edgeThreshold * 4;
 
-	auto processCell = [this, sqEdgeThreshold](voro::voronoicell_neighbor& v, size_t index, QMutex* mutex) 
+	auto processCell = [this, sqEdgeThreshold](voro::voronoicell_neighbor& v, size_t index, 
+		std::vector<int>& voronoiBuffer, std::vector<size_t>& voronoiBufferIndex, QMutex* bondMutex) 
 	{
 		// Compute cell volume.
 		double vol = v.volume();
@@ -159,8 +159,10 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 			faceAreaThreshold = std::max(v.surface_area() * _relativeFaceThreshold, faceAreaThreshold);
 
 		int localMaxFaceOrder = 0;
-		// Iterate over the Voronoi faces and their edges.
+		int localVoronoiIndex[FaceOrderStorageLimit] = {0};
 		int coordNumber = 0;
+
+		// Iterate over the Voronoi faces and their edges.
 		for(int i = 1; i < v.p; i++) {
 			for(int j = 0; j < v.nu[i]; j++) {
 				int k = v.ed[i][j];
@@ -197,6 +199,9 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 						coordNumber++;
 						if(faceOrder > localMaxFaceOrder)
 							localMaxFaceOrder = faceOrder;
+						faceOrder--;
+						if(maxFaceOrders() && faceOrder < FaceOrderStorageLimit)
+							localVoronoiIndex[faceOrder]++;
 						if(_computeBonds && neighbor_id >= 0 && neighbor_id != index) {
 							OVITO_ASSERT(neighbor_id < _positions->size());
 							Vector3 delta = _positions->getPoint3(index) - _positions->getPoint3(neighbor_id);
@@ -207,13 +212,10 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 							}
 							Bond bond = { index, (size_t)neighbor_id, pbcShift };
 							if(!bond.isOdd()) {
-								QMutexLocker locker(mutex);
+								QMutexLocker locker(bondMutex);
 								bonds().push_back(bond);
 							}
 						}
-						faceOrder--;
-						if(voronoiIndices() && faceOrder < (int)voronoiIndices()->componentCount())
-							voronoiIndices()->setIntComponent(index, faceOrder, voronoiIndices()->getIntComponent(index, faceOrder) + 1);
 					}
 				}
 			}
@@ -221,12 +223,20 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 
 		// Store computed result.
 		coordinationNumbers()->setInt(index, coordNumber);
+		if(maxFaceOrders()) {
+			maxFaceOrders()->setInt(index, localMaxFaceOrder);
+			voronoiBufferIndex.push_back(index);
+			voronoiBuffer.insert(voronoiBuffer.end(), localVoronoiIndex, localVoronoiIndex + std::min(localMaxFaceOrder, FaceOrderStorageLimit));
+		}
 
 		// Keep track of the maximum number of edges per face.
 		// Loop is for lock-free write access to shared max counter.
 		int prevMaxFaceOrder = maxFaceOrder();
 		while(localMaxFaceOrder > prevMaxFaceOrder && !maxFaceOrder().compare_exchange_weak(prevMaxFaceOrder, localMaxFaceOrder));
 	};
+
+	std::vector<int> voronoiBuffer;
+	std::vector<size_t> voronoiBufferIndex; 
 
 	// Decide whether to use Voro++ container class or our own implementation.
 	if(_simCell.isAxisAligned()) {
@@ -273,7 +283,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 						return;
 					if(!voroContainer.compute_cell(v,cl))
 						continue;
-					processCell(v, cl.pid(), nullptr);
+					processCell(v, cl.pid(), voronoiBuffer, voronoiBufferIndex, nullptr);
 					count--;
 				}
 				while(cl.inc());
@@ -313,7 +323,8 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 		else {
 #if 1
 			voro::container_poly voroContainer(ax, bx, ay, by, az, bz, nx, ny, nz,
-					_simCell.pbcFlags()[0], _simCell.pbcFlags()[1], _simCell.pbcFlags()[2], (int)std::ceil(voro::optimal_particles));
+					_simCell.pbcFlags()[0], _simCell.pbcFlags()[1], _simCell.pbcFlags()[2], 
+					(int)std::ceil(voro::optimal_particles));
 
 			// Insert particles into Voro++ container.
 			size_t count = 0;
@@ -338,7 +349,7 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 						return;
 					if(!voroContainer.compute_cell(v,cl))
 						continue;
-					processCell(v, cl.pid(), nullptr);
+					processCell(v, cl.pid(), voronoiBuffer, voronoiBufferIndex, nullptr);
 					count--;
 				}
 				while(cl.inc());
@@ -413,61 +424,85 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 		Point3 corner1 = Point3::Origin() + _simCell.matrix().column(3);
 		Point3 corner2 = corner1 + _simCell.matrix().column(0) + _simCell.matrix().column(1) + _simCell.matrix().column(2);
 
-		QMutex mutex;
+		QMutex bondMutex;
+		QMutex indexMutex;
 
 		// Perform analysis, particle-wise parallel.
-		parallelFor(_positions->size(), *task(),
-				[&nearestNeighborFinder, this, sqEdgeThreshold, boxDiameter,
-				 planeNormals, corner1, corner2, &processCell, &mutex](size_t index) {
+		task()->setProgressMaximum(_positions->size());
+		parallelForChunks(_positions->size(), *task(), [&](size_t startIndex, size_t chunkSize, PromiseState& promise) {
+			std::vector<int> localVoronoiBuffer;
+			std::vector<size_t> localVoronoiBufferIndex; 
+			for(size_t index = startIndex; chunkSize--; index++) {
+				if(promise.isCanceled()) return;
+				if((index % 256) == 0) promise.incrementProgressValue(256);
 
-			// Skip unselected particles (if requested).
-			if(_selection && _selection->getInt(index) == 0)
-				return;
-
-			// Build Voronoi cell.
-			voro::voronoicell_neighbor v;
-
-			// Initialize the Voronoi cell to be a cube larger than the simulation cell, centered at the origin.
-			v.init(-boxDiameter, boxDiameter, -boxDiameter, boxDiameter, -boxDiameter, boxDiameter);
-
-			// Cut Voronoi cell at simulation cell boundaries in non-periodic directions.
-			bool skipParticle = false;
-			for(size_t dim = 0; dim < 3; dim++) {
-				if(!_simCell.pbcFlags()[dim]) {
-					double r;
-					r = 2 * planeNormals[dim].dot(corner2 - _positions->getPoint3(index));
-					if(r <= 0) skipParticle = true;
-					v.nplane(planeNormals[dim].x() * r, planeNormals[dim].y() * r, planeNormals[dim].z() * r, r*r, -1);
-					r = 2 * planeNormals[dim].dot(_positions->getPoint3(index) - corner1);
-					if(r <= 0) skipParticle = true;
-					v.nplane(-planeNormals[dim].x() * r, -planeNormals[dim].y() * r, -planeNormals[dim].z() * r, r*r, -1);
-				}
-			}
-			// Skip particles that are located outside of non-periodic box boundaries.
-			if(skipParticle)
-				return;
-
-			// This function will be called for every neighbor particle.
-			int nvisits = 0;
-			auto visitFunc = [this, &v, &nvisits, index](const NearestNeighborFinder::Neighbor& n, FloatType& mrs) {
 				// Skip unselected particles (if requested).
-				OVITO_ASSERT(!_selection || _selection->getInt(n.index));
-				FloatType rs = n.distanceSq;
-				if(!_radii.empty())
-					 rs += _radii[index] - _radii[n.index];
-				v.nplane(n.delta.x(), n.delta.y(), n.delta.z(), rs, n.index);
-				if(nvisits == 0) {
-					mrs = v.max_radius_squared();
-					nvisits = 100;
+				if(_selection && _selection->getInt(index) == 0)
+					continue;
+
+				// Build Voronoi cell.
+				voro::voronoicell_neighbor v;
+
+				// Initialize the Voronoi cell to be a cube larger than the simulation cell, centered at the origin.
+				v.init(-boxDiameter, boxDiameter, -boxDiameter, boxDiameter, -boxDiameter, boxDiameter);
+
+				// Cut Voronoi cell at simulation cell boundaries in non-periodic directions.
+				bool skipParticle = false;
+				for(size_t dim = 0; dim < 3; dim++) {
+					if(!_simCell.pbcFlags()[dim]) {
+						double r;
+						r = 2 * planeNormals[dim].dot(corner2 - _positions->getPoint3(index));
+						if(r <= 0) skipParticle = true;
+						v.nplane(planeNormals[dim].x() * r, planeNormals[dim].y() * r, planeNormals[dim].z() * r, r*r, -1);
+						r = 2 * planeNormals[dim].dot(_positions->getPoint3(index) - corner1);
+						if(r <= 0) skipParticle = true;
+						v.nplane(-planeNormals[dim].x() * r, -planeNormals[dim].y() * r, -planeNormals[dim].z() * r, r*r, -1);
+					}
 				}
-				nvisits--;
-			};
+				// Skip particles that are located outside of non-periodic box boundaries.
+				if(skipParticle)
+					continue;
 
-			// Visit all neighbors of the current particles.
-			nearestNeighborFinder.visitNeighbors(nearestNeighborFinder.particlePos(index), visitFunc);
+				// This function will be called for every neighbor particle.
+				int nvisits = 0;
+				auto visitFunc = [this, &v, &nvisits, index](const NearestNeighborFinder::Neighbor& n, FloatType& mrs) {
+					// Skip unselected particles (if requested).
+					OVITO_ASSERT(!_selection || _selection->getInt(n.index));
+					FloatType rs = n.distanceSq;
+					if(!_radii.empty())
+						rs += _radii[index] - _radii[n.index];
+					v.nplane(n.delta.x(), n.delta.y(), n.delta.z(), rs, n.index);
+					if(nvisits == 0) {
+						mrs = v.max_radius_squared();
+						nvisits = 100;
+					}
+					nvisits--;
+				};
 
-			processCell(v, index, &mutex);
+				// Visit all neighbors of the current particles.
+				nearestNeighborFinder.visitNeighbors(nearestNeighborFinder.particlePos(index), visitFunc);
+
+				processCell(v, index, localVoronoiBuffer, localVoronoiBufferIndex, &bondMutex);
+			}
+			if(!localVoronoiBufferIndex.empty()) {
+				QMutexLocker locker(&indexMutex);
+				voronoiBufferIndex.insert(voronoiBufferIndex.end(), localVoronoiBufferIndex.cbegin(), localVoronoiBufferIndex.cend());
+				voronoiBuffer.insert(voronoiBuffer.end(), localVoronoiBuffer.cbegin(), localVoronoiBuffer.cend());
+			}
 		});
+	}
+
+	if(maxFaceOrders()) {
+		size_t componentCount = std::min(_maxFaceOrder.load(), FaceOrderStorageLimit);
+		_voronoiIndices = std::make_shared<PropertyStorage>(_positions->size(), PropertyStorage::Int, componentCount, 0, QStringLiteral("Voronoi Index"), true);
+		auto indexData = voronoiBuffer.cbegin();
+		for(size_t particleIndex : voronoiBufferIndex) {
+			int c = std::min(maxFaceOrders()->getInt(particleIndex), FaceOrderStorageLimit);
+			for(int i = 0; i < c; i++) {
+				_voronoiIndices->setIntComponent(particleIndex, i, *indexData++);
+			}
+		}
+		OVITO_ASSERT(indexData == voronoiBuffer.cend());
 	}
 }
 
@@ -485,21 +520,26 @@ PipelineFlowState VoronoiAnalysisModifier::VoronoiAnalysisEngine::emitResults(Ti
 
 	particles->createProperty(coordinationNumbers());
 	particles->createProperty(atomicVolumes());
-	if(voronoiIndices() && modifier->computeIndices())
-		particles->createProperty(voronoiIndices());
+
+	if(modifier->computeIndices()) {
+		if(voronoiIndices())
+			particles->createProperty(voronoiIndices());
+		if(maxFaceOrders())
+			particles->createProperty(maxFaceOrders());
+
+		output.setStatus(PipelineStatus(PipelineStatus::Success,
+			tr("Maximum face order: %1").arg(maxFaceOrder().load())));
+	}
 
 	// Check computed Voronoi cell volume sum.
-	if(std::abs(voronoiVolumeSum() - simulationBoxVolume()) > 1e-8 * particles->elementCount() * simulationBoxVolume()) {
-		//qDebug() << _voronoiVolumeSum;
-		//qDebug() << _simulationBoxVolume;
-		//qDebug() << std::abs(_voronoiVolumeSum - _simulationBoxVolume);
-		//qDebug() << (1e-8 * particles->elementCount() * _simulationBoxVolume);
+	FloatType simulationBoxVolume = _simCell.volume3D();
+	if(std::abs(voronoiVolumeSum() - simulationBoxVolume) > 1e-8 * particles->elementCount() * simulationBoxVolume) {
 		output.setStatus(PipelineStatus(PipelineStatus::Warning,
 				tr("The volume sum of all Voronoi cells does not match the simulation box volume. "
 						"This may be a result of particles being located outside of the simulation box boundaries. "
 						"See user manual for more information.\n"
 						"Simulation box volume: %1\n"
-						"Voronoi cell volume sum: %2").arg(simulationBoxVolume()).arg(voronoiVolumeSum())));
+						"Voronoi cell volume sum: %2").arg(simulationBoxVolume).arg(voronoiVolumeSum())));
 	}
 
 	if(modifier->computeBonds()) {
@@ -508,17 +548,6 @@ PipelineFlowState VoronoiAnalysisModifier::VoronoiAnalysisEngine::emitResults(Ti
 	}
 
 	output.addAttribute(QStringLiteral("Voronoi.max_face_order"), QVariant::fromValue(maxFaceOrder().load()), modApp);
-
-	if(voronoiIndices() && maxFaceOrder() > voronoiIndices()->componentCount()) {
-		output.setStatus(PipelineStatus(PipelineStatus::Warning,
-				tr("The Voronoi tessellation contains faces with up to %1 edges "
-						"(ignoring edges below the length threshold). "
-						"This number exceeds the current maximum edge count, "
-						"and the computed Voronoi index vectors are therefore truncated. "
-						"You should consider increasing the maximum edge count parameter to %1 edges "
-						"to not truncate the Voronoi index vectors and avoid this message."
-						).arg(maxFaceOrder().load())));
-	}
 
 	return output;
 }

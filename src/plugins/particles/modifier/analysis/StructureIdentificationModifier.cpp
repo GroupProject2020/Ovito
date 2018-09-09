@@ -157,15 +157,17 @@ PipelineFlowState StructureIdentificationModifier::StructureIdentificationEngine
 	_typeCounts = std::make_shared<PropertyStorage>(maxTypeId + 1, PropertyStorage::Int64, 1, 0, tr("Count"), true, DataSeriesObject::YProperty);
 	auto typeCountsData = _typeCounts->dataInt64();
 	for(int t : structureProperty->constIntRange()) {
-		if(t >= 0 && t < maxTypeId)
+		if(t >= 0 && t <= maxTypeId)
 			typeCountsData[t]++;
 	}
 
 	// Output a data series object with the type counts.
 	DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("structures"), modApp, DataSeriesObject::BarChart, tr("Structure counts"), _typeCounts);
 	PropertyObject* yProperty = seriesObj->expectMutableProperty(DataSeriesObject::YProperty);
-	for(const ElementType* type : modifier->structureTypes())
-		if(type->enabled()) yProperty->addElementType(type);
+	for(const ElementType* type : modifier->structureTypes()) {
+		if(type->enabled())
+			yProperty->addElementType(type);
+	}
 	seriesObj->setAxisLabelX(tr("Structure type"));
 
 	return output;

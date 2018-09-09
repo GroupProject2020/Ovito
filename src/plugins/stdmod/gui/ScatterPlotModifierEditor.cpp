@@ -22,6 +22,7 @@
 #include <plugins/stdmod/gui/StdModGui.h>
 #include <plugins/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
 #include <plugins/stdobj/gui/widgets/PropertyContainerParameterUI.h>
+#include <plugins/stdobj/series/DataSeriesObject.h>
 #include <gui/properties/IntegerParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
 #include <gui/properties/BooleanParameterUI.h>
@@ -57,6 +58,12 @@ void ScatterPlotModifierEditor::createUI(const RolloutInsertionParameters& rollo
 	layout->addWidget(new QLabel(tr("Operate on:")));
 	layout->addWidget(pclassUI->comboBox());
 	layout->addSpacing(6);
+
+	// Do not list data series as available inputs.
+	pclassUI->setContainerFilter([](const PropertyContainer* container) {
+		return DataSeriesObject::OOClass().isMember(container) == false;
+	});
+
 	
 	PropertyReferenceParameterUI* xPropertyUI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(ScatterPlotModifier::xAxisProperty), nullptr);
 	layout->addWidget(new QLabel(tr("X-axis property:"), rollout));

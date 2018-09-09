@@ -220,7 +220,7 @@ PipelineFlowState CreateIsosurfaceModifier::ComputeIsosurfaceEngine::emitResults
 	}
 
 	// Output a data series object with the field value histogram.
-	DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("iso_histogram"), modApp, DataSeriesObject::Histogram, modifier->sourceProperty().nameWithComponent(), histogram());
+	DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("isosurface-histogram"), modApp, DataSeriesObject::Histogram, modifier->sourceProperty().nameWithComponent(), histogram());
 	seriesObj->setAxisLabelX(modifier->sourceProperty().nameWithComponent());
 	seriesObj->setIntervalStart(minValue());
 	seriesObj->setIntervalEnd(maxValue());	

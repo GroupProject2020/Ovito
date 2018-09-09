@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -76,7 +76,7 @@ private:
 		/// Constructor.
 		VoronoiAnalysisEngine(const TimeInterval& validityInterval, ParticleOrderingFingerprint fingerprint, ConstPropertyPtr positions, ConstPropertyPtr selection, std::vector<FloatType> radii,
 							const SimulationCell& simCell,
-							int edgeCount, bool computeIndices, bool computeBonds, FloatType edgeThreshold, FloatType faceThreshold, FloatType relativeFaceThreshold) :
+							bool computeIndices, bool computeBonds, FloatType edgeThreshold, FloatType faceThreshold, FloatType relativeFaceThreshold) :
 			ComputeEngine(validityInterval),
 			_positions(positions),
 			_selection(std::move(selection)),
@@ -88,7 +88,7 @@ private:
 			_computeBonds(computeBonds),
 			_coordinationNumbers(ParticlesObject::OOClass().createStandardStorage(fingerprint.particleCount(), ParticlesObject::CoordinationProperty, true)),
 			_atomicVolumes(std::make_shared<PropertyStorage>(fingerprint.particleCount(), PropertyStorage::Float, 1, 0, QStringLiteral("Atomic Volume"), true)),
-			_voronoiIndices(computeIndices ? std::make_shared<PropertyStorage>(fingerprint.particleCount(), PropertyStorage::Int, edgeCount, 0, QStringLiteral("Voronoi Index"), true) : nullptr),
+			_maxFaceOrders(computeIndices ? std::make_shared<PropertyStorage>(fingerprint.particleCount(), PropertyStorage::Int, 1, 0, QStringLiteral("Max Face Order"), true) : nullptr),
 			_inputFingerprint(std::move(fingerprint)) {}
 			
 		/// This method is called by the system after the computation was successfully completed.
@@ -113,13 +113,10 @@ private:
 
 		/// Returns the property storage that contains the computed Voronoi indices.
 		const PropertyPtr& voronoiIndices() const { return _voronoiIndices; }
-		
-		/// Returns the total volume of the simulation cell computed by the modifier.
-		double simulationBoxVolume() const { return _simulationBoxVolume; }
 
-		/// Sets the total volume of the simulation cell computed by the modifier.
-		void setSimulationBoxVolume(double vol) { _simulationBoxVolume = vol; }
-				
+		/// Returns the property storage that contains the maximum face order for each particle.
+		const PropertyPtr& maxFaceOrders() const { return _maxFaceOrders; }
+
 		/// Returns the volume sum of all Voronoi cells computed by the modifier.
 		std::atomic<double>& voronoiVolumeSum() { return _voronoiVolumeSum; }
 	
@@ -146,18 +143,19 @@ private:
 
 		const PropertyPtr _coordinationNumbers;
 		const PropertyPtr _atomicVolumes;
-		const PropertyPtr _voronoiIndices;
+		PropertyPtr _voronoiIndices;
+		const PropertyPtr _maxFaceOrders;
 		std::vector<Bond> _bonds;
 		ParticleOrderingFingerprint _inputFingerprint;
 
-		/// The total volume of the simulation cell computed by the modifier.
-		double _simulationBoxVolume = 0;
-	
 		/// The volume sum of all Voronoi cells.
 		std::atomic<double> _voronoiVolumeSum{0.0};
 		
 		/// The maximum number of edges of a Voronoi face.
-		std::atomic<int> _maxFaceOrder{0};	
+		std::atomic<int> _maxFaceOrder{0};
+
+		/// Maximum length of Voronoi index vectors produced by this modifier.
+		constexpr static int FaceOrderStorageLimit = 32;
 	};
 
 	/// Controls whether the modifier takes into account only selected particles.
@@ -168,9 +166,6 @@ private:
 
 	/// Controls whether the modifier computes Voronoi indices.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, computeIndices, setComputeIndices);
-
-	/// Controls up to which edge count Voronoi indices are being computed.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, edgeCount, setEdgeCount);
 
 	/// The minimum length for an edge to be counted.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(FloatType, edgeThreshold, setEdgeThreshold);

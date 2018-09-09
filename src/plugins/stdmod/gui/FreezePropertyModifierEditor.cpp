@@ -23,6 +23,7 @@
 #include <plugins/stdmod/modifiers/FreezePropertyModifier.h>
 #include <plugins/stdobj/gui/widgets/PropertyReferenceParameterUI.h>
 #include <plugins/stdobj/gui/widgets/PropertyContainerParameterUI.h>
+#include <plugins/stdobj/series/DataSeriesObject.h>
 #include <gui/properties/IntegerParameterUI.h>
 #include "FreezePropertyModifierEditor.h"
 
@@ -47,6 +48,11 @@ void FreezePropertyModifierEditor::createUI(const RolloutInsertionParameters& ro
 	layout->addWidget(new QLabel(tr("Operate on:")));
 	layout->addWidget(pclassUI->comboBox());
 	layout->addSpacing(8);
+
+	// Do not list data series as available inputs.
+	pclassUI->setContainerFilter([](const PropertyContainer* container) {
+		return DataSeriesObject::OOClass().isMember(container) == false;
+	});
 
 	PropertyReferenceParameterUI* sourcePropertyUI = new PropertyReferenceParameterUI(this, PROPERTY_FIELD(FreezePropertyModifier::sourceProperty), nullptr, false, true);
 	layout->addWidget(new QLabel(tr("Property to freeze:"), rollout));

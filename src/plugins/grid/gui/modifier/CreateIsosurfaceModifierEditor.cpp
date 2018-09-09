@@ -121,7 +121,7 @@ void CreateIsosurfaceModifierEditor::plotHistogram()
 		const PipelineFlowState& state = getModifierOutput();
 
 		// Look up the generated data series in the modifier's pipeline output.
-		const DataSeriesObject* series = state.getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("iso_histogram"));
+		const DataSeriesObject* series = state.getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("isosurface-histogram"));
 		_plotWidget->setSeries(series);
 	}
 	else {

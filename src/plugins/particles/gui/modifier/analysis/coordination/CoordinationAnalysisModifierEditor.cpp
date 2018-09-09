@@ -91,7 +91,7 @@ void CoordinationAnalysisModifierEditor::plotRDF()
 
 	if(modifierApplication()) {
 		// Look up the data series in the modifier's pipeline output.
-		series = getModifierOutput().getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("coordination/rdf"));
+		series = getModifierOutput().getObjectBy<DataSeriesObject>(modifierApplication(), QStringLiteral("coordination-rdf"));
 
 		// Determine X plotting range.
 		if(series) {
