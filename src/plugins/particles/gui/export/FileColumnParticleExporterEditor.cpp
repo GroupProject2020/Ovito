@@ -37,7 +37,7 @@ SET_OVITO_OBJECT_EDITOR(FileColumnParticleExporter, FileColumnParticleExporterEd
 void FileColumnParticleExporterEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create a rollout.
-	QWidget* rollout = createRollout(tr("Particle properties"), rolloutParams);
+	QWidget* rollout = createRollout(tr("Particle properties to export"), rolloutParams);
 	QGridLayout* columnsGroupBoxLayout = new QGridLayout(rollout);
 
 	_columnMappingWidget = new QListWidget();

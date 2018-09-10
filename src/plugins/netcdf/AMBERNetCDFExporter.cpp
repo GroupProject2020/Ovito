@@ -214,8 +214,12 @@ bool AMBERNetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, Ti
 				continue;
 
 			const PropertyObject* prop = c->findInContainer(particles);
-			if(!prop)
+			if(!prop) {
+				// Skip the identifier property if it doesn't exist.
+				if(c->type() == ParticlesObject::IdentifierProperty)
+					continue;
 				throwException(tr("Invalid list of particle properties to be exported. The property '%1' does not exist.").arg(c->name()));
+			}
 			if((int)prop->componentCount() <= std::max(0, c->vectorComponent()))
 				throwException(tr("The output vector component selected for column %1 is out of range. The particle property '%2' has only %3 component(s).").arg(c - columnMapping().begin() + 1).arg(c->name()).arg(prop->componentCount()));
 
@@ -234,6 +238,9 @@ bool AMBERNetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, Ti
 				}
 				else if(prop->type() == ParticlesObject::TypeProperty) {
 					mangledName = "atom_types";
+				}
+				else if(prop->type() == ParticlesObject::IdentifierProperty) {
+					mangledName = "identifier";
 				}
 			}
 

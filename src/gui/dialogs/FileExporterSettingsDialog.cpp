@@ -39,37 +39,47 @@ FileExporterSettingsDialog::FileExporterSettingsDialog(MainWindow* mainWindow, F
 	setWindowTitle(tr("Export Settings"));
 
 	_mainLayout = new QVBoxLayout(this);
-	QRadioButton* radioBtn;
 
-	QGroupBox* rangeGroupBox = new QGroupBox(tr("Export time series"), this);
-	_mainLayout->addWidget(rangeGroupBox);
+	QGroupBox* groupBox = new QGroupBox(tr("Export frame series"), this);
+	_mainLayout->addWidget(groupBox);
 
-	QGridLayout* rangeGroupLayout = new QGridLayout(rangeGroupBox);
-	rangeGroupLayout->setColumnStretch(0, 5);
-	rangeGroupLayout->setColumnStretch(1, 95);
+	QGridLayout* groupLayout = new QGridLayout(groupBox);
+	groupLayout->setColumnStretch(0, 5);
+	groupLayout->setColumnStretch(1, 95);
 	_rangeButtonGroup = new QButtonGroup(this);
 
 	bool exportAnim = _exporter->exportAnimation();
-	radioBtn = new QRadioButton(tr("Single frame"));
-	_rangeButtonGroup->addButton(radioBtn, 0);
-	rangeGroupLayout->addWidget(radioBtn, 0, 0, 1, 2);
-	radioBtn->setChecked(!exportAnim);
-
-	radioBtn = new QRadioButton(tr("Sequence:"));
-	_rangeButtonGroup->addButton(radioBtn, 1);
-	rangeGroupLayout->addWidget(radioBtn, 1, 0, 1, 2);
-	radioBtn->setChecked(exportAnim);
-	radioBtn->setEnabled(exporter->dataset()->animationSettings()->animationInterval().duration() != 0);
+	if(!exportAnim && exporter->dataset()->animationSettings()->animationInterval().duration() == 0)
+		groupBox->setEnabled(false);
+	QRadioButton* singleFrameBtn = new QRadioButton(tr("Current frame only"));
+	_rangeButtonGroup->addButton(singleFrameBtn, 0);
+	groupLayout->addWidget(singleFrameBtn, 0, 0, 1, 2);
+	singleFrameBtn->setChecked(!exportAnim);
 
 	QHBoxLayout* frameRangeLayout = new QHBoxLayout();
-	rangeGroupLayout->addLayout(frameRangeLayout, 2, 1, 1, 1);
-
 	frameRangeLayout->setSpacing(0);
+	groupLayout->addLayout(frameRangeLayout, 1, 0, 1, 2);
+
+	QRadioButton* frameSequenceBtn = new QRadioButton(tr("Range:"));
+	_rangeButtonGroup->addButton(frameSequenceBtn, 1);
+	frameRangeLayout->addWidget(frameSequenceBtn);
+	frameRangeLayout->addSpacing(10);
+	frameSequenceBtn->setChecked(exportAnim);
+	frameSequenceBtn->setEnabled(exporter->dataset()->animationSettings()->animationInterval().duration() != 0);
+
+	class ShortLineEdit : public QLineEdit {
+	public:
+		virtual QSize sizeHint() const override { 
+			QSize s = QLineEdit::sizeHint();
+			return QSize(s.width() / 2, s.height());
+		}
+	};
+
 	frameRangeLayout->addWidget(new QLabel(tr("From frame:")));
 	_startTimeSpinner = new SpinnerWidget();
 	_startTimeSpinner->setUnit(exporter->dataset()->unitsManager().timeUnit());
 	_startTimeSpinner->setIntValue(exporter->dataset()->animationSettings()->frameToTime(_exporter->startFrame()));
-	_startTimeSpinner->setTextBox(new QLineEdit());
+	_startTimeSpinner->setTextBox(new ShortLineEdit());
 	_startTimeSpinner->setMinValue(exporter->dataset()->animationSettings()->animationInterval().start());
 	_startTimeSpinner->setMaxValue(exporter->dataset()->animationSettings()->animationInterval().end());
 	frameRangeLayout->addWidget(_startTimeSpinner->textBox());
@@ -79,7 +89,7 @@ FileExporterSettingsDialog::FileExporterSettingsDialog(MainWindow* mainWindow, F
 	_endTimeSpinner = new SpinnerWidget();
 	_endTimeSpinner->setUnit(exporter->dataset()->unitsManager().timeUnit());
 	_endTimeSpinner->setIntValue(exporter->dataset()->animationSettings()->frameToTime(_exporter->endFrame()));
-	_endTimeSpinner->setTextBox(new QLineEdit());
+	_endTimeSpinner->setTextBox(new ShortLineEdit());
 	_endTimeSpinner->setMinValue(exporter->dataset()->animationSettings()->animationInterval().start());
 	_endTimeSpinner->setMaxValue(exporter->dataset()->animationSettings()->animationInterval().end());
 	frameRangeLayout->addWidget(_endTimeSpinner->textBox());
@@ -89,42 +99,53 @@ FileExporterSettingsDialog::FileExporterSettingsDialog(MainWindow* mainWindow, F
 	_nthFrameSpinner = new SpinnerWidget();
 	_nthFrameSpinner->setUnit(exporter->dataset()->unitsManager().integerIdentityUnit());
 	_nthFrameSpinner->setIntValue(_exporter->everyNthFrame());
-	_nthFrameSpinner->setTextBox(new QLineEdit());
+	_nthFrameSpinner->setTextBox(new ShortLineEdit());
 	_nthFrameSpinner->setMinValue(1);
 	frameRangeLayout->addWidget(_nthFrameSpinner->textBox());
 	frameRangeLayout->addWidget(_nthFrameSpinner);
 
-	_startTimeSpinner->setEnabled(radioBtn->isChecked());
-	_endTimeSpinner->setEnabled(radioBtn->isChecked());
-	_nthFrameSpinner->setEnabled(radioBtn->isChecked());
-	connect(radioBtn, &QRadioButton::toggled, _startTimeSpinner, &SpinnerWidget::setEnabled);
-	connect(radioBtn, &QRadioButton::toggled, _endTimeSpinner, &SpinnerWidget::setEnabled);
-	connect(radioBtn, &QRadioButton::toggled, _nthFrameSpinner, &SpinnerWidget::setEnabled);
+	_startTimeSpinner->setEnabled(frameSequenceBtn->isChecked());
+	_endTimeSpinner->setEnabled(frameSequenceBtn->isChecked());
+	_nthFrameSpinner->setEnabled(frameSequenceBtn->isChecked());
+	connect(frameSequenceBtn, &QRadioButton::toggled, _startTimeSpinner, &SpinnerWidget::setEnabled);
+	connect(frameSequenceBtn, &QRadioButton::toggled, _endTimeSpinner, &SpinnerWidget::setEnabled);
+	connect(frameSequenceBtn, &QRadioButton::toggled, _nthFrameSpinner, &SpinnerWidget::setEnabled);
 
-	QGroupBox* fileGroupBox = new QGroupBox(tr("Destination"), this);
-	_mainLayout->addWidget(fileGroupBox);
+	QGridLayout* fileGroupLayout = new QGridLayout();
+	fileGroupLayout->setColumnStretch(1, 1);
+	groupLayout->addLayout(fileGroupLayout, 2, 1, 1, 1);
 
-	QGridLayout* fileGroupLayout = new QGridLayout(fileGroupBox);
-	fileGroupLayout->setColumnStretch(0, 5);
-	fileGroupLayout->setColumnStretch(1, 95);
-	_fileGroupButtonGroup = new QButtonGroup(this);
+	if(_exporter->supportsMultiFrameFiles()) {
+		_fileGroupButtonGroup = new QButtonGroup(this);
+		QRadioButton* singleOutputFileBtn = new QRadioButton(tr("Single output file:   %1").arg(QFileInfo(_exporter->outputFilename()).fileName()));
+		_fileGroupButtonGroup->addButton(singleOutputFileBtn, 0);
+		fileGroupLayout->addWidget(singleOutputFileBtn, 0, 0, 1, 2);
+		singleOutputFileBtn->setChecked(!_exporter->useWildcardFilename());
 
-	radioBtn = new QRadioButton(tr("Single file: %1").arg(QFileInfo(_exporter->outputFilename()).fileName()));
-	_fileGroupButtonGroup->addButton(radioBtn, 0);
-	fileGroupLayout->addWidget(radioBtn, 0, 0, 1, 2);
-	radioBtn->setChecked(!_exporter->useWildcardFilename());
+		QRadioButton* multipleFilesBtn = new QRadioButton(tr("File sequence:"));
+		_fileGroupButtonGroup->addButton(multipleFilesBtn, 1);
+		fileGroupLayout->addWidget(multipleFilesBtn, 1, 0, 1, 1);
+		multipleFilesBtn->setChecked(_exporter->useWildcardFilename());
 
-	radioBtn = new QRadioButton(tr("File series (wild-card pattern):"));
-	_fileGroupButtonGroup->addButton(radioBtn, 1);
-	fileGroupLayout->addWidget(radioBtn, 1, 0, 1, 2);
-	radioBtn->setChecked(_exporter->useWildcardFilename());
+		_wildcardTextbox = new QLineEdit(_exporter->wildcardFilename());
+		fileGroupLayout->addWidget(_wildcardTextbox, 1, 1, 1, 1);
+		_wildcardTextbox->setEnabled(multipleFilesBtn->isChecked());
+		connect(multipleFilesBtn, &QRadioButton::toggled, _wildcardTextbox, &QLineEdit::setEnabled);
 
-	_wildcardTextbox = new QLineEdit(_exporter->wildcardFilename(), fileGroupBox);
-	fileGroupLayout->addWidget(_wildcardTextbox, 2, 1, 1, 1);
-	_wildcardTextbox->setEnabled(radioBtn->isChecked());
-	connect(radioBtn, &QRadioButton::toggled, _wildcardTextbox, &QLineEdit::setEnabled);
+		singleOutputFileBtn->setEnabled(frameSequenceBtn->isChecked());
+		multipleFilesBtn->setEnabled(frameSequenceBtn->isChecked());
+		connect(frameSequenceBtn, &QRadioButton::toggled, singleOutputFileBtn, &QWidget::setEnabled);
+		connect(frameSequenceBtn, &QRadioButton::toggled, multipleFilesBtn, &QWidget::setEnabled);
+	}
+	else {
+		_wildcardTextbox = new QLineEdit(_exporter->wildcardFilename());
+		fileGroupLayout->addWidget(new QLabel(tr("Filename pattern:")), 0, 0, 1, 1);
+		fileGroupLayout->addWidget(_wildcardTextbox, 0, 1, 1, 1);
+	}
+	_wildcardTextbox->setEnabled(frameSequenceBtn->isChecked());
+	connect(frameSequenceBtn, &QRadioButton::toggled, _wildcardTextbox, &QWidget::setEnabled);
 
-	// Show the optional UI for the exporter.
+	// Show the optional UI of the exporter.
 	if(PropertiesEditor::create(exporter)) {
 		PropertiesPanel* propPanel = new PropertiesPanel(this, mainWindow);
 		_mainLayout->addWidget(propPanel);
@@ -144,7 +165,7 @@ void FileExporterSettingsDialog::onOk()
 {
 	try {
 		_exporter->setExportAnimation(_rangeButtonGroup->checkedId() == 1);
-		_exporter->setUseWildcardFilename(_fileGroupButtonGroup->checkedId() == 1);
+		_exporter->setUseWildcardFilename(_fileGroupButtonGroup ? (_fileGroupButtonGroup->checkedId() == 1) : _exporter->exportAnimation());
 		_exporter->setWildcardFilename(_wildcardTextbox->text());
 		_exporter->setStartFrame(_exporter->dataset()->animationSettings()->timeToFrame(_startTimeSpinner->intValue()));
 		_exporter->setEndFrame(_exporter->dataset()->animationSettings()->timeToFrame(std::max(_endTimeSpinner->intValue(), _startTimeSpinner->intValue())));

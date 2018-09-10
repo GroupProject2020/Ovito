@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -85,6 +85,9 @@ public:
 	/// Helper function that is called by sub-classes prior to file output in order to
 	/// activate the default "C" locale.
 	static void activateCLocale();
+
+	/// \brief Indicates whether this file exporter can write more than one animation frame into a single output file.
+	virtual bool supportsMultiFrameFiles() const { return false; }
 
 protected:
 

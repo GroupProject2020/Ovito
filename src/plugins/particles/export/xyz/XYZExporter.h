@@ -63,6 +63,9 @@ public:
 	/// \brief Constructs a new instance of this class.
 	Q_INVOKABLE XYZExporter(DataSet* dataset) : FileColumnParticleExporter(dataset), _subFormat(ExtendedFormat) {}
 
+	/// \brief Indicates whether this file exporter can write more than one animation frame into a single output file.
+	virtual bool supportsMultiFrameFiles() const override { return true; }
+
 protected:
 
 	/// \brief Writes the particles of one animation frame to the current output file.

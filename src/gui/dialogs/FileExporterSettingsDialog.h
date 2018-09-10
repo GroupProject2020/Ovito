@@ -52,7 +52,7 @@ protected:
 	SpinnerWidget* _endTimeSpinner;
 	SpinnerWidget* _nthFrameSpinner;
 	QLineEdit* _wildcardTextbox;
-	QButtonGroup* _fileGroupButtonGroup;
+	QButtonGroup* _fileGroupButtonGroup = nullptr;
 	QButtonGroup* _rangeButtonGroup;
 };
 
