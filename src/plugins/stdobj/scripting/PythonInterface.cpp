@@ -71,7 +71,7 @@ static py::object buildNumpyArray(const PropertyPtr& p, bool makeWritable, py::h
 	if(!makeWritable)
 		reinterpret_cast<py::detail::PyArray_Proxy*>(arr.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
 	return std::move(arr);
-}	
+}
 
 PYBIND11_MODULE(StdObj, m)
 {
@@ -84,7 +84,7 @@ PYBIND11_MODULE(StdObj, m)
 	ovito_abstract_class<GenericPropertyModifier, Modifier>{m}
 	;
 
-	ovito_class<SimulationCellObject, DataObject>(m,
+	auto SimulationCell_py = ovito_class<SimulationCellObject, DataObject>(m,
 			":Base class: :py:class:`ovito.data.DataObject`\n\n"
 			"Stores the geometric shape and the boundary conditions of the simulation cell. "
 			"A :py:class:`!SimulationCell` data object is typically part of a :py:class:`DataCollection` and can be retrieved through its :py:meth:`~DataCollection.expect` method: "
@@ -114,18 +114,6 @@ PYBIND11_MODULE(StdObj, m)
 			"\n\n",
 			// Python class name:
 			"SimulationCell")
-		// Used by implementation of SimulationCell.pbc:
-		.def_property("pbc_x", &SimulationCellObject::pbcX, &SimulationCellObject::setPbcX)
-		.def_property("pbc_y", &SimulationCellObject::pbcY, &SimulationCellObject::setPbcY)
-		.def_property("pbc_z", &SimulationCellObject::pbcZ, &SimulationCellObject::setPbcZ)
-		// For backward compatibility with OVITO 2.9.0:
-		.def_property("matrix", MatrixGetter<SimulationCellObject, AffineTransformation, &SimulationCellObject::cellMatrix>(),
-								MatrixSetter<SimulationCellObject, AffineTransformation, &SimulationCellObject::setCellMatrix>())
-		.def_property("is2D", &SimulationCellObject::is2D, &SimulationCellObject::setIs2D,
-				"Specifies whether the system is two-dimensional (true) or three-dimensional (false). "
-				"For two-dimensional systems the PBC flag in the third direction (z) and the third cell vector are ignored. "
-				"\n\n"
-				":Default: ``false``\n")
 		.def_property_readonly("volume", &SimulationCellObject::volume3D,
 				"Computes the volume of the three-dimensional simulation cell.\n"
 				"The volume is the absolute value of the determinant of the 3x3 submatrix formed by the three cell vectors.")
@@ -135,6 +123,10 @@ PYBIND11_MODULE(StdObj, m)
 		// Used by context manager interface:
 		.def("make_writable", &SimulationCellObject::makeWritableFromPython)
 		.def("make_readonly", &SimulationCellObject::makeReadOnlyFromPython)
+
+		// For backward compatibility with OVITO 2.9.0:
+		.def_property("matrix", MatrixGetter<SimulationCellObject, AffineTransformation, &SimulationCellObject::cellMatrix>(),
+								MatrixSetter<SimulationCellObject, AffineTransformation, &SimulationCellObject::setCellMatrix>())
 
 		// Used for Numpy array interface:
 		.def_property_readonly("__array_interface__", [](SimulationCellObject& cell) {
@@ -166,6 +158,16 @@ PYBIND11_MODULE(StdObj, m)
 			return ai;
 		})
 	;
+	// Property fields:
+	createDataPropertyAccessors(SimulationCell_py, "is2D", &SimulationCellObject::is2D, &SimulationCellObject::setIs2D,
+			"Specifies whether the system is two-dimensional (instead of three-dimensional). "
+			"For two-dimensional systems, the PBC flag in the third direction (Z) and the third cell vector will typically be ignored. "
+			"\n\n"
+			":Default: ``False``\n");
+	// Used by implementation of SimulationCell.pbc:
+	createDataPropertyAccessors(SimulationCell_py, "pbc_x", &SimulationCellObject::pbcX, &SimulationCellObject::setPbcX);
+	createDataPropertyAccessors(SimulationCell_py, "pbc_y", &SimulationCellObject::pbcY, &SimulationCellObject::setPbcY);
+	createDataPropertyAccessors(SimulationCell_py, "pbc_z", &SimulationCellObject::pbcZ, &SimulationCellObject::setPbcZ);
 
 	ovito_class<SimulationCellVis, DataVis>(m,
 			":Base class: :py:class:`ovito.vis.DataVis`"
@@ -193,22 +195,51 @@ PYBIND11_MODULE(StdObj, m)
 				":Default: ``(0, 0, 0)``\n")
 	;
 
-	ovito_abstract_class<PeriodicDomainDataObject, DataObject>{m};		
+	auto PeriodicDomainDataObject_py = ovito_abstract_class<PeriodicDomainDataObject, DataObject>(m,
+		":Base class: :py:class:`ovito.data.DataObject`\n\n",
+		// Python class name:
+		"PeriodicDomainObject")
+	;
+	createDataSubobjectAccessors(PeriodicDomainDataObject_py, "domain", &PeriodicDomainDataObject::domain, &PeriodicDomainDataObject::setDomain, 
+		"The :py:class:`~ovito.data.SimulationCell` describing the (possibly periodic) domain which this "
+		"object is embedded in.");
 	
 	auto PropertyContainer_py = ovito_abstract_class<PropertyContainer, DataObject>(m,
-		":Base class: :py:class:`ovito.data.DataObject`\n\n")
+		":Base class: :py:class:`ovito.data.DataObject`"
+		"\n\n"
+		"A dictionary-like object storing a set of :py:class:`Property` objects."
+		"\n\n"
+		"It implements the ``collections.abc.Mapping`` interface. That means it can be used "
+		"like a standard read-only Python ``dict`` object to access the properties by name, e.g.: "
+		"\n\n"
+		".. literalinclude:: ../example_snippets/particles_view.py\n"
+		"	:lines: 7-11\n"
+		"\n\n"
+		"New properties can be added with the :py:meth:`.create_property` method. ")
 
 		.def_property_readonly("count", &PropertyContainer::elementCount,
-			"The number of data elements, for example the number of particles, which is equal to the length of the property arrays in this container. ")
+			"The number of data elements in this container, for example the number of particles, which is equal to the length of the :py:class:`Property` arrays in this container. ")
 	;
-	expose_subobject_list(PropertyContainer_py, std::mem_fn(&PropertyContainer::properties), "properties", "PropertyList",
-		"The list of :py:class:`Property` objects stored in this container. ");
+	// Needed for implementation of Python dictionary interface of PropertyContainer class:
+	expose_subobject_list(PropertyContainer_py, std::mem_fn(&PropertyContainer::properties), "properties", "PropertyList");
 
-	ovito_class<ElementType, RefTarget>{m}
+	auto ElementType_py = ovito_class<ElementType, DataObject>{m}
 	;
+	createDataPropertyAccessors(ElementType_py, "id", &ElementType::numericId, &ElementType::setNumericId,
+			"The unique numeric identifier of the type. ");
+	createDataPropertyAccessors(ElementType_py, "color", &ElementType::color, &ElementType::setColor,
+			"The display color used to render elements of this type. ");
+	createDataPropertyAccessors(ElementType_py, "name", &ElementType::name, &ElementType::setName,
+			"The display name of this type. If this string is empty, the numeric :py:attr:`.id` will be used when referring to this type. ");
+	createDataPropertyAccessors(ElementType_py, "enabled", &ElementType::enabled, &ElementType::setEnabled,
+			"This flag only has a meaning in the context of structure analysis and identification. "
+			"Modifiers such as the :py:class:`~ovito.modifiers.PolyhedralTemplateMatchingModifier` or the :py:class:`~ovito.modifiers.CommonNeighborAnalysisModifier` "
+			"manage a list of structural types that they can identify (e.g. FCC, BCC, etc.). The identification of individual structure types "
+			"can be turned on or off by setting their :py:attr:`!enabled` flag.");
 
 	auto Property_py = ovito_abstract_class<PropertyObject, DataObject>(m,
-			":Base class: :py:class:`ovito.data.DataObject`\n\n"
+			":Base class: :py:class:`ovito.data.DataObject`"
+			"\n\n"
 			"Stores the values for an array of elements (e.g. particle or bonds). "
 			"\n\n"
 			"In OVITO's data model, an arbitrary number of properties can be associated with data elements such as particle or bonds, "
@@ -261,8 +292,7 @@ PYBIND11_MODULE(StdObj, m)
 		.def("make_writable", &PropertyObject::makeWritableFromPython)
 		.def("make_readonly", &PropertyObject::makeReadOnlyFromPython)
 
-		.def_property("name", &PropertyObject::name, &PropertyObject::setName,
-				"The name of the property.")
+		.def_property_readonly("name", &PropertyObject::name, "The name of the property.")
 		.def_property_readonly("components", &PropertyObject::componentCount,
 				"The number of vector components if this is a vector property; or 1 if this is a scalar property.")
 		
@@ -316,7 +346,7 @@ PYBIND11_MODULE(StdObj, m)
 #endif
 #endif
 			}
-			else throw Exception("Cannot access property of this data type from Python.");
+			else throw Exception("Cannot access property with this data type from Python.");
 			if(p.isWritableFromPython()) {
 				ai["data"] = py::make_tuple(reinterpret_cast<std::intptr_t>(p.data()), false);
 			}
@@ -324,7 +354,7 @@ PYBIND11_MODULE(StdObj, m)
 				ai["data"] = py::make_tuple(reinterpret_cast<std::intptr_t>(p.constData()), true);
 			}
 			ai["version"] = py::cast(3);
-			return ai;			
+			return ai;
 		})
 	;
 	expose_mutable_subobject_list(Property_py,
@@ -339,7 +369,7 @@ PYBIND11_MODULE(StdObj, m)
 		.value("Int", PropertyStorage::Int)
 		.value("Int64", PropertyStorage::Int64)
 		.value("Float", PropertyStorage::Float)
-	;	
+	;
 
 	auto DataSeries_py = ovito_abstract_class<DataSeriesObject, PropertyContainer>(m,
 			":Base class: :py:class:`ovito.data.PropertyContainer`\n\n"
@@ -360,13 +390,11 @@ PYBIND11_MODULE(StdObj, m)
 			"\n\n",
 			// Python class name:
 			"DataSeries")
-
-		.def_property("title", &DataSeriesObject::title, &DataSeriesObject::setTitle,
-				"The title of the data series, which is used in the user interface")
-		
-		.def_property("interval_start", &DataSeriesObject::intervalStart, &DataSeriesObject::setIntervalStart)
-		.def_property("interval_end", &DataSeriesObject::intervalEnd, &DataSeriesObject::setIntervalEnd)
 	;
+	createDataPropertyAccessors(DataSeries_py, "title", &DataSeriesObject::title, &DataSeriesObject::setTitle,
+		"The title of the data series, which is used in the user interface");
+	createDataPropertyAccessors(DataSeries_py, "interval_start", &DataSeriesObject::intervalStart, &DataSeriesObject::setIntervalStart);
+	createDataPropertyAccessors(DataSeries_py, "interval_end", &DataSeriesObject::intervalEnd, &DataSeriesObject::setIntervalEnd);
 
 	py::enum_<DataSeriesObject::Type>(DataSeries_py, "Type")
 		.value("User", DataSeriesObject::UserProperty)

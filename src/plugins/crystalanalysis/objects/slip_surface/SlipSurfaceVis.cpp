@@ -84,9 +84,9 @@ Future<PipelineFlowState> SlipSurfaceVis::transformDataImpl(TimePoint time, cons
 	QStringList structureNames;
 	if(const PatternCatalog* patternCatalog = flowState.getObject<PatternCatalog>()) {
 		for(const StructurePattern* pattern : patternCatalog->patterns()) {
-			if(pattern->id() < 0) continue;
-			while(pattern->id() >= structureNames.size()) structureNames.append(QString());
-			structureNames[pattern->id()] = pattern->shortName();
+			if(pattern->numericId() < 0) continue;
+			while(pattern->numericId() >= structureNames.size()) structureNames.append(QString());
+			structureNames[pattern->numericId()] = pattern->shortName();
 		}
 	}
 

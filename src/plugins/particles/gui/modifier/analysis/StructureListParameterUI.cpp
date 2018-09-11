@@ -98,22 +98,22 @@ QVariant StructureListParameterUI::getItemData(RefTarget* target, const QModelIn
 	if(stype && modifier) {
 		if(role == Qt::DisplayRole) {
 			if(index.column() == 1) {
-				return stype->nameOrId();
+				return stype->nameOrNumericId();
 			}
 			else if(index.column() == 2) {
-				if(_structureCounts && stype->id() >= 0 && stype->id() < _structureCounts->size())
-					return _structureCounts->getInt64(stype->id());
+				if(_structureCounts && stype->numericId() >= 0 && stype->numericId() < _structureCounts->size())
+					return _structureCounts->getInt64(stype->numericId());
 			}
 			else if(index.column() == 3) {
-				if(_structureCounts && stype->id() >= 0 && stype->id() < _structureCounts->size()) {
+				if(_structureCounts && stype->numericId() >= 0 && stype->numericId() < _structureCounts->size()) {
 					size_t totalCount = 0;
 					for(auto c : _structureCounts->constInt64Range())
 						totalCount += c;
-					return QString("%1%").arg((double)_structureCounts->getInt64(stype->id()) * 100.0 / std::max((size_t)1, totalCount), 0, 'f', 1);
+					return QString("%1%").arg((double)_structureCounts->getInt64(stype->numericId()) * 100.0 / std::max((size_t)1, totalCount), 0, 'f', 1);
 				}
 			}
 			else if(index.column() == 4) {
-				return stype->id();
+				return stype->numericId();
 			}
 		}
 		else if(role == Qt::DecorationRole) {

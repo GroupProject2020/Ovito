@@ -583,7 +583,7 @@ PipelineFlowState DislocImporter::DislocFrameData::handOver(const PipelineFlowSt
 			OORef<StructurePattern> stype = patternCatalog->structureById(id);
 			if(!stype) {
 				stype = new StructurePattern(patternCatalog->dataset());
-				stype->setId(id);
+				stype->setNumericId(id);
 				stype->setStructureType(StructurePattern::Lattice);
 				patternCatalog->addPattern(stype);
 			}

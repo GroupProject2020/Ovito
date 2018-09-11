@@ -659,7 +659,7 @@ PipelineFlowState CAImporter::CrystalAnalysisFrameData::handOver(const PipelineF
 		pattern->setShortName(_patterns[i].shortName);
 		pattern->setLongName(_patterns[i].longName);
 		pattern->setStructureType(_patterns[i].type);
-		pattern->setId(_patterns[i].id);
+		pattern->setNumericId(_patterns[i].id);
 		pattern->setSymmetryType(_patterns[i].symmetryType);
 
 		// Update Burgers vector families.

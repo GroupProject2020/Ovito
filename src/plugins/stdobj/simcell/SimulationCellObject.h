@@ -158,11 +158,9 @@ public:
 	/// writable state. In this state, the binding layer will allow write access to the cell's internal data.
 	bool isWritableFromPython() const { return _isWritableFromPython != 0; }
 
-	/// Puts the simulayion cell into a writable state.
+	/// Puts the simulation cell into a writable state.
 	/// In the writable state, the Python binding layer will allow write access to the cell's internal data.
-	void makeWritableFromPython() { 
-		_isWritableFromPython++; 
-	}
+	void makeWritableFromPython();
 
 	/// Puts the simulation cell array back into the default read-only state. 
 	/// In the read-only state, the Python binding layer will not permit write access to the cell's internal data.

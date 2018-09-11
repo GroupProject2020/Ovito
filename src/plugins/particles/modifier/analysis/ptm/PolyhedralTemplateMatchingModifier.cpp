@@ -76,7 +76,7 @@ PolyhedralTemplateMatchingModifier::PolyhedralTemplateMatchingModifier(DataSet* 
 	// Define the ordering types.
 	for(int id = 0; id < NUM_ORDERING_TYPES; id++) {
 		OORef<ParticleType> otype = new ParticleType(dataset);
-		otype->setId(id);
+		otype->setNumericId(id);
 		otype->setColor({0.75f, 0.75f, 0.75f});
 		_orderingTypes.push_back(this, PROPERTY_FIELD(orderingTypes), std::move(otype));	
 	}

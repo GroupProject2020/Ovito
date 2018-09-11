@@ -10,7 +10,7 @@ from ovito.plugins.StdObj import Property
 Property.__getitem__ = lambda self, idx: numpy.asanyarray(self)[idx]
 
 def _Property__setitem__(self, idx, value): 
-    numpy.asanyarray(self)[idx] = value
+    numpy.asanyarray(self)[idx] = value  # Note to users: Write access to a property requires a 'with' Python statement.
 Property.__setitem__ = _Property__setitem__
 
 # Implement iteration.

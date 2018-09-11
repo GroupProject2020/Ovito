@@ -91,18 +91,18 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 						const ElementType* type1 = prop->elementType(type2->name());
 						if(type1 == nullptr) {
 							OORef<ElementType> type2clone = cloneHelper.cloneObject(type2, false);
-							type2clone->setId(prop->generateUniqueElementTypeId());
+							type2clone->setNumericId(prop->generateUniqueElementTypeId());
 							prop->addElementType(type2clone);
-							typeMap.insert(std::make_pair(type2->id(), type2clone->id()));
+							typeMap.insert(std::make_pair(type2->numericId(), type2clone->numericId()));
 						}
-						else if(type1->id() != type2->id()) {
-							typeMap.insert(std::make_pair(type2->id(), type1->id()));
+						else if(type1->numericId() != type2->numericId()) {
+							typeMap.insert(std::make_pair(type2->numericId(), type1->numericId()));
 						}
 					}
-					else if(!prop->elementType(type2->id())) {
+					else if(!prop->elementType(type2->numericId())) {
 						OORef<ElementType> type2clone = cloneHelper.cloneObject(type2, false);
 						prop->addElementType(type2clone);
-						OVITO_ASSERT(type2clone->id() == type2->id());
+						OVITO_ASSERT(type2clone->numericId() == type2->numericId());
 					}
 				}
 				// Remap particle property values.
@@ -193,18 +193,18 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 							const ElementType* type1 = prop->elementType(type2->name());
 							if(type1 == nullptr) {
 								OORef<ElementType> type2clone = cloneHelper.cloneObject(type2, false);
-								type2clone->setId(prop->generateUniqueElementTypeId());
+								type2clone->setNumericId(prop->generateUniqueElementTypeId());
 								prop->addElementType(type2clone);															
-								typeMap.insert(std::make_pair(type2->id(), type2clone->id()));
+								typeMap.insert(std::make_pair(type2->numericId(), type2clone->numericId()));
 							}
-							else if(type1->id() != type2->id()) {
-								typeMap.insert(std::make_pair(type2->id(), type1->id()));
+							else if(type1->numericId() != type2->numericId()) {
+								typeMap.insert(std::make_pair(type2->numericId(), type1->numericId()));
 							}
 						}
-						else if(!prop->elementType(type2->id())) {
+						else if(!prop->elementType(type2->numericId())) {
 							OORef<ElementType> type2clone = cloneHelper.cloneObject(type2, false);
 							prop->addElementType(type2clone);
-							OVITO_ASSERT(type2clone->id() == type2->id());
+							OVITO_ASSERT(type2clone->numericId() == type2->numericId());
 						}
 					}
 					// Remap bond property values.

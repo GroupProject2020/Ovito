@@ -333,10 +333,10 @@ PipelineFlowState DislocationAnalysisEngine::emitResults(TimePoint time, Modifie
 	// Output a data series object with the dislocation line lengths.
 	int maxId = 0;
 	for(const auto& entry : dislocationLengths)
-		maxId = std::max(maxId, entry.first->id());
+		maxId = std::max(maxId, entry.first->numericId());
 	PropertyPtr dislocationLengthsProperty = std::make_shared<PropertyStorage>(maxId+1, PropertyStorage::Float, 1, 0, DislocationAnalysisModifier::tr("Total line length"), true, DataSeriesObject::YProperty);
 	for(const auto& entry : dislocationLengths)
-		dislocationLengthsProperty->setFloat(entry.first->id(), entry.second);
+		dislocationLengthsProperty->setFloat(entry.first->numericId(), entry.second);
 	DataSeriesObject* lengthSeriesObj = output.createObject<DataSeriesObject>(QStringLiteral("disloc-lengths"), modApp, DataSeriesObject::BarChart, DislocationAnalysisModifier::tr("Dislocation lengths"));
 	PropertyObject* yProperty = lengthSeriesObj->createProperty(dislocationLengthsProperty);
 	for(const auto& entry : dislocationLengths)
@@ -346,7 +346,7 @@ PipelineFlowState DislocationAnalysisEngine::emitResults(TimePoint time, Modifie
 	// Output a data series object with the dislocation segment counts.
 	PropertyPtr dislocationCountsProperty = std::make_shared<PropertyStorage>(maxId+1, PropertyStorage::Int, 1, 0, DislocationAnalysisModifier::tr("Segment count"), true, DataSeriesObject::YProperty);
 	for(const auto& entry : segmentCounts)
-		dislocationCountsProperty->setInt(entry.first->id(), entry.second);
+		dislocationCountsProperty->setInt(entry.first->numericId(), entry.second);
 	DataSeriesObject* countSeriesObj = output.createObject<DataSeriesObject>(QStringLiteral("disloc-counts"), modApp, DataSeriesObject::BarChart, DislocationAnalysisModifier::tr("Dislocation counts"));
 	yProperty = countSeriesObj->createProperty(dislocationCountsProperty);
 	for(const auto& entry : segmentCounts)

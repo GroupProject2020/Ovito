@@ -13,9 +13,15 @@ def _DataCollection_particles(self):
     return self.find(Particles)
 DataCollection.particles = property(_DataCollection_particles)
 
+# Implementation of the DataCollection.particles_ attribute.
+DataCollection.particles_ = property(lambda self: self.make_mutable(self.particles))
+
 # Implementation of the DataCollection.bonds attribute.
 # Here only for backward compatibility with OVITO 2.9.0.
 DataCollection.bonds = property(lambda self: self.particles.bonds)
+
+# Implementation of the DataCollection.bonds_ attribute.
+DataCollection.bonds_ = property(lambda self: self.particles_.bonds_)
 
 # Implementation of the DataCollection.number_of_particles property.
 # Here only for backward compatibility with OVITO 2.9.0.
@@ -81,4 +87,4 @@ DataCollection.particle_properties = property(lambda self: self.particles)
 
 # Implementation of the DataCollection.bond_properties attribute.
 # Here only for backward compatibility with OVITO 2.9.0.
-DataCollection.bond_properties = property(lambda self: self.particles.bonds)
+DataCollection.bond_properties = property(lambda self: self.bonds)

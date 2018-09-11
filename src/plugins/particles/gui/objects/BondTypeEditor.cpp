@@ -59,7 +59,7 @@ void BondTypeEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 	layout1->addWidget(colorPUI->colorPicker(), 1, 1);
 
 	// Numeric ID.
-	IntegerParameterUI* idPUI = new IntegerParameterUI(this, PROPERTY_FIELD(BondType::id));
+	IntegerParameterUI* idPUI = new IntegerParameterUI(this, PROPERTY_FIELD(BondType::numericId));
 	idPUI->setEnabled(false);
 	layout1->addWidget(new QLabel(tr("Numeric ID:")), 2, 0);
 	layout1->addWidget(idPUI->textBox(), 2, 1);
@@ -68,7 +68,7 @@ void BondTypeEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 		// Update the placeholder text of the name input field to reflect the numeric ID of the current bond type.
 		if(QLineEdit* lineEdit = qobject_cast<QLineEdit*>(namePUI->textBox())) {
 			if(ElementType* ptype = dynamic_object_cast<ElementType>(newEditObject))
-				lineEdit->setPlaceholderText(QStringLiteral("[%1]").arg(ElementType::generateDefaultTypeName(ptype->id())));
+				lineEdit->setPlaceholderText(QStringLiteral("[%1]").arg(ElementType::generateDefaultTypeName(ptype->numericId())));
 			else
 				lineEdit->setPlaceholderText({});
 		}

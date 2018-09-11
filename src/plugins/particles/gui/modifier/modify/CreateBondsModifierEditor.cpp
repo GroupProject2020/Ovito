@@ -133,14 +133,14 @@ void CreateBondsModifierEditor::updatePairCutoffListValues()
 QVariant CreateBondsModifierEditor::PairCutoffTableModel::data(const QModelIndex& index, int role) const
 {
 	if(role == Qt::DisplayRole || role == Qt::EditRole) {
-		if(index.column() == 0) return _data[index.row()].first->nameOrId();
-		else if(index.column() == 1) return _data[index.row()].second->nameOrId();
+		if(index.column() == 0) return _data[index.row()].first->nameOrNumericId();
+		else if(index.column() == 1) return _data[index.row()].second->nameOrNumericId();
 		else if(index.column() == 2) {
 			const auto& type1 = _data[index.row()].first;
 			const auto& type2 = _data[index.row()].second;
 			FloatType cutoffRadius = _modifier->getPairwiseCutoff(
-				type1->name().isEmpty() ? QVariant::fromValue(type1->id()) : QVariant::fromValue(type1->name()),
-				type2->name().isEmpty() ? QVariant::fromValue(type2->id()) : QVariant::fromValue(type2->name()));
+				type1->name().isEmpty() ? QVariant::fromValue(type1->numericId()) : QVariant::fromValue(type1->name()),
+				type2->name().isEmpty() ? QVariant::fromValue(type2->numericId()) : QVariant::fromValue(type2->name()));
 			if(cutoffRadius > 0)
 				return QString("%1").arg(cutoffRadius);
 		}
@@ -165,8 +165,8 @@ bool CreateBondsModifierEditor::PairCutoffTableModel::setData(const QModelIndex&
 			const auto& type1 = _data[index.row()].first;
 			const auto& type2 = _data[index.row()].second;
 			_modifier->setPairwiseCutoff(
-				type1->name().isEmpty() ? QVariant::fromValue(type1->id()) : QVariant::fromValue(type1->name()),
-				type2->name().isEmpty() ? QVariant::fromValue(type2->id()) : QVariant::fromValue(type2->name()),
+				type1->name().isEmpty() ? QVariant::fromValue(type1->numericId()) : QVariant::fromValue(type1->name()),
+				type2->name().isEmpty() ? QVariant::fromValue(type2->numericId()) : QVariant::fromValue(type2->name()),
 				cutoff);
 		});
 		return true;

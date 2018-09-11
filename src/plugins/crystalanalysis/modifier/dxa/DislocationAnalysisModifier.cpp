@@ -112,7 +112,7 @@ DislocationAnalysisModifier::DislocationAnalysisModifier(DataSet* dataset) : Str
 		OORef<StructurePattern> stype = patternCatalog()->structureById(id);
 		if(!stype) {
 			stype = new StructurePattern(dataset);
-			stype->setId(id);
+			stype->setNumericId(id);
 			stype->setStructureType(StructurePattern::Lattice);
 			patternCatalog()->addPattern(stype);
 		}

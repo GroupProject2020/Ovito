@@ -180,6 +180,10 @@ void defineRenderingSubmodule(py::module m)
 				"data will not be visible in the viewports or in rendered images."
 				"\n\n"
 				":Default: ``True``\n")
+		.def_property("title", &DataVis::title, &DataVis::setTitle,
+				"A custom title string assigned to the visual element, which will show in the pipeline editor of OVITO. "
+				"\n\n"
+				":Default: ``''``\n")
 	;
 
 	py::enum_<ParticlePrimitive::ShadingMode>(m, "ParticleShadingMode")

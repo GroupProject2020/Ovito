@@ -110,7 +110,7 @@ PipelineStatus SimulationCellAffineTransformationModifierDelegate::apply(Modifie
 	else
 		tm = mod->targetCell() * input.expectObject<SimulationCellObject>()->cellMatrix().inverse();
 	
-	// Transform SimulationCellObject.
+	// Transform the SimulationCellObject.
 	if(const SimulationCellObject* inputCell = output.getObject<SimulationCellObject>()) {
 		SimulationCellObject* outputCell = output.makeMutable(inputCell);
 		outputCell->setCellMatrix(mod->relativeMode() ? (tm * inputCell->cellMatrix()) : mod->targetCell());
@@ -121,7 +121,7 @@ PipelineStatus SimulationCellAffineTransformationModifierDelegate::apply(Modifie
 		if(const PeriodicDomainDataObject* existingObject = dynamic_object_cast<PeriodicDomainDataObject>(obj)) {
 			if(existingObject->domain()) {
 				PeriodicDomainDataObject* newObject = output.makeMutable(existingObject);
-				newObject->domain()->setCellMatrix(tm * existingObject->domain()->cellMatrix());
+				newObject->mutableDomain()->setCellMatrix(tm * existingObject->domain()->cellMatrix());
 			}
 		}
 	}	

@@ -66,6 +66,12 @@ public:
 		else return PropertyContainer::objectTitle();
 	}
 
+	/// Returns the spatial domain this voxel grid is embedded in after making sure it 
+	/// can safely be modified.
+	SimulationCellObject* mutableDomain() {
+		return makeMutable(domain());
+	}	
+
 protected:
 
 	/// Saves the class' contents to the given stream.

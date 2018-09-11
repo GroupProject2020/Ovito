@@ -482,7 +482,7 @@ public:
 	/// Returns the element type with the given ID, or NULL if no such type exists.
 	ElementType* elementType(int id) const {
 		for(ElementType* type : elementTypes())
-			if(type->id() == id)
+			if(type->numericId() == id)
 				return type;
 		return nullptr;
 	}
@@ -505,19 +505,19 @@ public:
 		_elementTypes.clear(this, PROPERTY_FIELD(elementTypes));
 	}
 	
-	/// Builds a mapping from element type identifier to type colors.
+	/// Builds a mapping from numeric IDs to type colors.
 	std::map<int,Color> typeColorMap() const {
 		std::map<int,Color> m;
 		for(ElementType* type : elementTypes())
-			m.insert({type->id(), type->color()});
+			m.insert({type->numericId(), type->color()});
 		return m;
 	}
 
-	/// Returns an element type ID that is not yet used by any of the existing element types.
+	/// Returns an numeric type ID that is not yet used by any of the existing element types.
 	int generateUniqueElementTypeId() const {
 		int maxId = 1;
 		for(ElementType* type : elementTypes())
-			maxId = std::max(maxId, type->id() + 1);
+			maxId = std::max(maxId, type->numericId() + 1);
 		return maxId;
 	}
 
@@ -529,9 +529,7 @@ public:
 
 	/// Puts the property array into a writable state.
 	/// In the writable state, the Python binding layer will allow write access to the property's internal data.
-	void makeWritableFromPython() { 
-		_isWritableFromPython++; 
-	}
+	void makeWritableFromPython();
 
 	/// Puts the property array back into the default read-only state. 
 	/// In the read-only state, the Python binding layer will not permit write access to the property's internal data.

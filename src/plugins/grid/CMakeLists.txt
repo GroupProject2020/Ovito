@@ -29,6 +29,7 @@ SET(SourceFiles
 IF(OVITO_BUILD_PLUGIN_STDMOD)
 	LIST(APPEND SourceFiles 
 		modifier/VoxelGridReplicateModifierDelegate.cpp
+		modifier/VoxelGridAffineTransformationModifierDelegate.cpp
 	)
 ENDIF()
 

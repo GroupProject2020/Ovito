@@ -39,7 +39,13 @@ PYBIND11_MODULE(Grid, m)
 	py::options options;
 	options.disable_function_signatures();
 
-	ovito_class<VoxelGrid, PropertyContainer>{m};
+	auto VoxelGrid_py = ovito_class<VoxelGrid, PropertyContainer>{m}
+	;
+	createDataPropertyAccessors(VoxelGrid_py, "title", &VoxelGrid::title, &VoxelGrid::setTitle,
+		"The name of the voxel grid as shown in the user interface. ");
+	createDataSubobjectAccessors(VoxelGrid_py, "domain", &VoxelGrid::domain, &VoxelGrid::setDomain, 
+		"The :py:class:`~ovito.data.SimulationCell` describing the (possibly periodic) domain which this "
+		"object is embedded in.");
 
 	ovito_class<CreateIsosurfaceModifier, AsynchronousModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
@@ -64,11 +70,14 @@ PYBIND11_MODULE(Grid, m)
 	ovito_abstract_class<SpatialBinningModifierDelegate, AsynchronousModifierDelegate>{m}
 	;
 	auto BinningModifier_py = ovito_class<SpatialBinningModifier, AsynchronousDelegatingModifier>(m,
-			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"
-			"This modifier applies a reduction operation to a property of the particles within a spatial bin. "
-			"The output of the modifier is a one or two-dimensional grid of bin values. "
+			":Base class: :py:class:`ovito.pipeline.Modifier`"
+			"\n\n"
+			"This modifier applies a reduction operation to a property of all the particles located within a spatial bin. "
+			"The output of the modifier is a one-, two- or three-dimensional grid of bin values. "
 			"See also the corresponding `user manual page <../../particles.modifiers.bin_and_reduce.html>`__ for this modifier. ")
-		.def_property("property", &SpatialBinningModifier::sourceProperty, &SpatialBinningModifier::setSourceProperty,
+		.def_property("property", &SpatialBinningModifier::sourceProperty, [](SpatialBinningModifier& mod, py::object val) {					
+					mod.setSourceProperty(convertPythonPropertyReference(val, mod.delegate() ? &mod.delegate()->containerClass() : nullptr));
+				},
 				"The name of the input particle property to which the reduction operation should be applied. "
 				"This can be one of the :ref:`standard particle properties <particle-types-list>` or a custom particle property. "
 				"For vector properties the selected component must be appended to the name, e.g. ``\"Velocity.X\"``. ")
@@ -118,48 +127,6 @@ PYBIND11_MODULE(Grid, m)
 				"You can use this to restrict the calculation to a subset of particles. "
 				"\n\n"
 				":Default: ``False``\n")
-#if 0
-		.def_property_readonly("bin_data", py::cpp_function([](SpatialBinningModifier& mod) {
-					BinningModifierApplication* modApp = dynamic_object_cast<BinningModifierApplication>(mod.someModifierApplication());
-					if(!modApp || !modApp->binData()) mod.throwException(SpatialBinningModifier::tr("Modifier has not been evaluated yet. Bin data is not yet available."));
-					std::vector<size_t> shape;
-					if(mod.is1D() && modApp->binData()->size() == mod.numberOfBinsX()) {
-						shape.push_back(mod.numberOfBinsX());
-					}
-					else if(!mod.is1D() && modApp->binData()->size() == (size_t)mod.numberOfBinsX() * (size_t)mod.numberOfBinsY()) {
-						shape.push_back(mod.numberOfBinsY());
-						shape.push_back(mod.numberOfBinsX());
-					}
-					else mod.throwException(SpatialBinningModifier::tr("Modifier has not been evaluated yet. Bin data is not yet available."));
-					py::array_t<FloatType> array(shape, modApp->binData()->constDataFloat(), py::cast(modApp));
-					// Mark array as read-only.
-					reinterpret_cast<py::detail::PyArray_Proxy*>(array.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
-					return array;
-				}),
-				"Returns a NumPy array containing the reduced bin values computed by the modifier. "
-    			"Depending on the selected binning :py:attr:`.direction` the returned array is either "
-    			"one or two-dimensional. In the two-dimensional case the outer index of the returned array "
-    			"runs over the bins along the second binning axis. "
-				"\n\n"    
-    			"Note that accessing this array is only possible after the modifier has computed its results. " 
-    			"Thus, you have to call :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` first to ensure that the binning and reduction operation was performed.")
-		.def_property_readonly("axis_range_x", [](SpatialBinningModifier& mod) {
-					BinningModifierApplication* modApp = dynamic_object_cast<BinningModifierApplication>(mod.someModifierApplication());
-					if(!modApp || !modApp->binData()) mod.throwException(SpatialBinningModifier::tr("Modifier has not been evaluated yet. Bin data is not yet available."));
-					return py::make_tuple(modApp->range1().first, modApp->range1().second);
-				},
-				"A 2-tuple containing the range of the generated bin grid along the first binning axis. "
-				"Note that this is an output attribute which is only valid after the modifier has performed the bin and reduce operation. "
-				"That means you have to call :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` first to evaluate the data pipeline.")
-		.def_property_readonly("axis_range_y", [](SpatialBinningModifier& mod) {
-					BinningModifierApplication* modApp = dynamic_object_cast<BinningModifierApplication>(mod.someModifierApplication());
-					if(!modApp || !modApp->binData()) mod.throwException(SpatialBinningModifier::tr("Modifier has not been evaluated yet. Bin data is not yet available."));
-					return py::make_tuple(modApp->range2().first, modApp->range2().second);
-				},
-				"A 2-tuple containing the range of the generated bin grid along the second binning axis. "
-				"Note that this is an output attribute which is only valid after the modifier has performed the bin and reduce operation. "
-				"That means you have to call :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` first to evaluate the data pipeline.")
-#endif
 	;
 
 	py::enum_<SpatialBinningModifier::ReductionOperationType>(BinningModifier_py, "Operation")

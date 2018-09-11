@@ -82,8 +82,8 @@ Future<AsynchronousModifier::ComputeEnginePtr> WignerSeitzAnalysisModifier::crea
 		const PropertyObject* ptypeProp = particles->expectProperty(ParticlesObject::TypeProperty);
 		// Determine value range of particle type IDs.
 		for(const ElementType* pt : ptypeProp->elementTypes()) {
-			if(pt->id() < ptypeMinId) ptypeMinId = pt->id();
-			if(pt->id() > ptypeMaxId) ptypeMaxId = pt->id();
+			if(pt->numericId() < ptypeMinId) ptypeMinId = pt->numericId();
+			if(pt->numericId() > ptypeMaxId) ptypeMaxId = pt->numericId();
 		}
 		typeProperty = ptypeProp->storage();
 	}

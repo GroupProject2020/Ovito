@@ -116,5 +116,17 @@ void PropertyObject::loadFromStream(ObjectLoadStream& stream)
 	stream.closeChunk();
 }
 
+/******************************************************************************
+* Puts the property array into a writable state.
+* In the writable state, the Python binding layer will allow write access 
+* to the property's internal data.
+******************************************************************************/
+void PropertyObject::makeWritableFromPython()
+{
+	if(!isSafeToModify())
+		throwException(tr("Modifying the values of this property is not allowed, because it is currently shared by more than one property container or data collection. Please explicitly request a mutable version of the property by using the '_' notation."));
+	_isWritableFromPython++; 
+}
+
 }	// End of namespace
 }	// End of namespace

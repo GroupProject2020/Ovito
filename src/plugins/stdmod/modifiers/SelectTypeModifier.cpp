@@ -122,7 +122,7 @@ PipelineFlowState SelectTypeModifier::evaluatePreliminary(TimePoint time, Modifi
 	// Convert type names to to IDs.
 	for(const QString& typeName : selectedTypeNames()) {
 		if(ElementType* t = typeProperty->elementType(typeName))
-			idsToSelect.insert(t->id());
+			idsToSelect.insert(t->numericId());
 		else
 			throwException(tr("There is no type named '%1' in the type list of input property '%2'.").arg(typeName).arg(typeProperty->name()));
 	}

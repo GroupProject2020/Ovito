@@ -69,7 +69,7 @@ void DataObject::saveToStream(ObjectSaveStream& stream, bool excludeRecomputable
 {
 	RefTarget::saveToStream(stream, excludeRecomputableData);
 	stream.beginChunk(0x02);
-	// For future use...
+	// Chunk is for future use...
 	stream.endChunk();
 }
 
@@ -80,6 +80,7 @@ void DataObject::loadFromStream(ObjectLoadStream& stream)
 {
 	RefTarget::loadFromStream(stream);
 	stream.expectChunk(0x02);
+	// For future use...
 	stream.closeChunk();
 }
 
@@ -100,6 +101,30 @@ void DataObject::setDataSource(PipelineObject* dataSource)
 }
 
 /******************************************************************************
+* Determines if it is safe to modify this data object without unwanted side effects.
+* Returns true if there is only one exclusive owner of this data object (if any).
+* Returns false if there are multiple references to this data object from several
+* data collections or other container data objects.
+******************************************************************************/
+bool DataObject::isSafeToModify() const
+{
+	OVITO_CHECK_OBJECT_POINTER(this);
+	if(dependents().empty()) {
+		return _referringFlowStates <= 1;
+	}
+	else if(dependents().size() == 1) {
+		// Recursively determine if the container of this data object is safe to modify as well. 
+		// Only if the entire hierarchy of objects is safe to modify, we can safely modify
+		// the leaf object.
+		if(DataObject* owner = dynamic_object_cast<DataObject>(dependents().front())) {
+			return owner->isSafeToModify();
+		}
+		else return true;
+	}
+	else return false;
+}
+
+/******************************************************************************
 * Duplicates the given sub-object from this container object if it is shared 
 * with others. After this method returns, the returned sub-object will be 
 * exclusively owned by this container can be safely modified without unwanted 
@@ -107,6 +132,7 @@ void DataObject::setDataSource(PipelineObject* dataSource)
 ******************************************************************************/
 DataObject* DataObject::makeMutable(const DataObject* subObject)
 {
+	OVITO_CHECK_OBJECT_POINTER(this);
 	OVITO_ASSERT(subObject);
 	OVITO_ASSERT(hasReferenceTo(subObject));
 	OVITO_ASSERT(subObject->numberOfStrongReferences() >= 1);

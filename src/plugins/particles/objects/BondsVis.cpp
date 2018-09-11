@@ -442,7 +442,7 @@ QString BondPickInfo::infoString(PipelineSceneNode* objectNode, quint32 subobjec
 					const ElementType* type1 = typeProperty->elementType(typeProperty->getInt(index1));
 					const ElementType* type2 = typeProperty->elementType(typeProperty->getInt(index2));
 					if(type1 && type2) {
-						str += QString(" | Particles: %1 - %2").arg(type1->nameOrId(), type2->nameOrId());
+						str += QString(" | Particles: %1 - %2").arg(type1->nameOrNumericId(), type2->nameOrNumericId());
 					}
 				}
 			}

@@ -322,7 +322,7 @@ void ParticleFrameData::insertTypes(PropertyObject* typeProperty, TypeList* type
 			else {
 				ptype = typeProperty->elementType(item.name);
 				if(ptype) {
-					ptype->setId(item.id);
+					ptype->setNumericId(item.id);
 				}
 				else {
 					ptype = typeProperty->elementType(item.id);
@@ -333,25 +333,25 @@ void ParticleFrameData::insertTypes(PropertyObject* typeProperty, TypeList* type
 			if(!ptype) {
 				if(!isBondProperty) {
 					ptype = new ParticleType(typeProperty->dataset());
-					ptype->setId(item.id);
+					ptype->setNumericId(item.id);
 					ptype->setName(item.name);
 					if(item.radius == 0)
-						static_object_cast<ParticleType>(ptype)->setRadius(ParticleType::getDefaultParticleRadius((ParticlesObject::Type)typeProperty->type(), ptype->nameOrId(), ptype->id()));
+						static_object_cast<ParticleType>(ptype)->setRadius(ParticleType::getDefaultParticleRadius((ParticlesObject::Type)typeProperty->type(), ptype->nameOrNumericId(), ptype->numericId()));
 				}
 				else {
 					ptype = new BondType(typeProperty->dataset());
-					ptype->setId(item.id);
+					ptype->setNumericId(item.id);
 					ptype->setName(item.name);
 					if(item.radius == 0)
-						static_object_cast<BondType>(ptype)->setRadius(BondType::getDefaultBondRadius((BondsObject::Type)typeProperty->type(), ptype->nameOrId(), ptype->id()));
+						static_object_cast<BondType>(ptype)->setRadius(BondType::getDefaultBondRadius((BondsObject::Type)typeProperty->type(), ptype->nameOrNumericId(), ptype->numericId()));
 				}
 
 				if(item.color != Color(0,0,0))
 					ptype->setColor(item.color);
 				else if(!isBondProperty)
-					ptype->setColor(ParticleType::getDefaultParticleColor((ParticlesObject::Type)typeProperty->type(), ptype->nameOrId(), ptype->id()));
+					ptype->setColor(ParticleType::getDefaultParticleColor((ParticlesObject::Type)typeProperty->type(), ptype->nameOrNumericId(), ptype->numericId()));
 				else
-					ptype->setColor(BondType::getDefaultBondColor((BondsObject::Type)typeProperty->type(), ptype->nameOrId(), ptype->id()));
+					ptype->setColor(BondType::getDefaultBondColor((BondsObject::Type)typeProperty->type(), ptype->nameOrNumericId(), ptype->numericId()));
 
 				typeProperty->addElementType(ptype);
 			}

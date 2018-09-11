@@ -53,8 +53,8 @@ PYBIND11_MODULE(Mesh, m)
 		.def_property("transparency", &TriMeshVis::transparency, &TriMeshVis::setTransparency)
 	;
 	
-	ovito_class<SurfaceMesh, PeriodicDomainDataObject>(m,
-			":Base class: :py:class:`ovito.data.DataObject`"
+	auto SurfaceMesh_py = ovito_class<SurfaceMesh, PeriodicDomainDataObject>(m,
+			":Base class: :py:class:`ovito.data.PeriodicDomainObject`"
 			"\n\n"
 			"This data object type stores a triangle mesh describing a surface or, more precisely, a two-dimensional manifold that is closed and orientable. "
 			"Typically, surface meshes are produced by modifiers such as the :py:class:`~ovito.modifiers.ConstructSurfaceModifier`, "
@@ -113,11 +113,6 @@ PYBIND11_MODULE(Mesh, m)
 			"The methods :py:meth:`.get_vertices`, :py:meth:`.get_faces` and :py:meth:`.get_face_adjacency` methods provide access to the internal data of the "
 			"surface mesh. "
 		)
-		.def_property("all_interior", &SurfaceMesh::isCompletelySolid, &SurfaceMesh::setIsCompletelySolid,
-			"Boolean flag indicating that the :py:class:`!SurfaceMesh` is degenerate and the *interior* region extends over the entire domain.")
-		.def_property("domain", &SurfaceMesh::domain, &SurfaceMesh::setDomain,
-			"The :py:class:`~ovito.data.SimulationCell` describing the (possibly periodic) domain in which this "
-			"surface mesh is embedded in.")
 
 		.def("locate_point", &SurfaceMesh::locatePoint,
 			"locate_point(pos, eps=1e-6)"
@@ -200,6 +195,7 @@ PYBIND11_MODULE(Mesh, m)
 			"Note that the returned Numpy array is a copy of the internal data stored by the :py:class:`!SurfaceMesh`. ")
 
 		.def("set_cutting_planes", [](SurfaceMesh& meshObj, py::array_t<FloatType> array) {
+				ensureDataObjectIsMutable(meshObj);
 				if(array.ndim() != 2) throw py::value_error("Array must be two-dimensional.");
 				if(array.shape()[1] != 4) throw py::value_error("Second array dimension must have length 4.");
 				QVector<Plane3> planes(array.shape()[0]);
@@ -237,7 +233,9 @@ PYBIND11_MODULE(Mesh, m)
 				CompressedTextWriter writer(file, mesh.dataset());
 				output.saveToVTK(writer);
 			})
-	;	
+	;
+	createDataPropertyAccessors(SurfaceMesh_py, "all_interior", &SurfaceMesh::isCompletelySolid, &SurfaceMesh::setIsCompletelySolid,
+		"Boolean flag indicating that the :py:class:`!SurfaceMesh` is degenerate and the *interior* region extends over the entire domain.");
 
 	ovito_class<SurfaceMeshVis, DataVis>(m,
 			":Base class: :py:class:`ovito.vis.DataVis`"

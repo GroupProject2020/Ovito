@@ -59,9 +59,6 @@ SimulationCell.shape = property(lambda self: (3, 4))
 # Implement 'dtype' attribute.
 SimulationCell.dtype = property(lambda self: numpy.asanyarray(self).dtype)
 
-# String representation.
-SimulationCell.__str__ = lambda self: str(numpy.asanyarray(self))
-
 # Implementation of the SimulationCell.pbc property.
 def _get_SimulationCell_pbc(self):
     """ A tuple of three boolean values, which specify periodic boundary flags of the simulation cell along each cell vector. """

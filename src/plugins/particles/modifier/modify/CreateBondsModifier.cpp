@@ -152,12 +152,14 @@ Future<AsynchronousModifier::ComputeEnginePtr> CreateBondsModifier::createEngine
 				if(cutoff > 0) {
 					const ElementType* ptype1 = lookupParticleType(typeProperty, entry.key().first);
 					const ElementType* ptype2 = lookupParticleType(typeProperty, entry.key().second);
-					if(ptype1 && ptype2 && ptype1->id() >= 0 && ptype2->id() >= 0) {
-						if((int)pairCutoffSquaredTable.size() <= std::max(ptype1->id(), ptype2->id())) pairCutoffSquaredTable.resize(std::max(ptype1->id(), ptype2->id()) + 1);
-						if((int)pairCutoffSquaredTable[ptype1->id()].size() <= ptype2->id()) pairCutoffSquaredTable[ptype1->id()].resize(ptype2->id() + 1, FloatType(0));
-						if((int)pairCutoffSquaredTable[ptype2->id()].size() <= ptype1->id()) pairCutoffSquaredTable[ptype2->id()].resize(ptype1->id() + 1, FloatType(0));
-						pairCutoffSquaredTable[ptype1->id()][ptype2->id()] = cutoff * cutoff;
-						pairCutoffSquaredTable[ptype2->id()][ptype1->id()] = cutoff * cutoff;
+					if(ptype1 && ptype2 && ptype1->numericId() >= 0 && ptype2->numericId() >= 0) {
+						int id1 = ptype1->numericId();
+						int id2 = ptype2->numericId();
+						if((int)pairCutoffSquaredTable.size() <= std::max(id1, id2)) pairCutoffSquaredTable.resize(std::max(id1, id2) + 1);
+						if((int)pairCutoffSquaredTable[id1].size() <= id2) pairCutoffSquaredTable[id1].resize(id2 + 1, FloatType(0));
+						if((int)pairCutoffSquaredTable[id2].size() <= id1) pairCutoffSquaredTable[id2].resize(id1 + 1, FloatType(0));
+						pairCutoffSquaredTable[id1][id2] = cutoff * cutoff;
+						pairCutoffSquaredTable[id2][id1] = cutoff * cutoff;
 						if(cutoff > maxCutoff) maxCutoff = cutoff;
 					}
 				}

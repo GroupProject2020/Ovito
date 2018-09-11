@@ -60,7 +60,7 @@ bool StructureIdentificationModifier::OOMetaClass::isApplicableTo(const Pipeline
 ParticleType* StructureIdentificationModifier::createStructureType(int id, ParticleType::PredefinedStructureType predefType)
 {
 	OORef<ParticleType> stype(new ParticleType(dataset()));
-	stype->setId(id);
+	stype->setNumericId(id);
 	stype->setName(ParticleType::getPredefinedStructureTypeName(predefType));
 	stype->setColor(ParticleType::getDefaultParticleColor(ParticlesObject::StructureTypeProperty, stype->name(), id));
 	addStructureType(stype);
@@ -96,8 +96,8 @@ QVector<bool> StructureIdentificationModifier::getTypesToIdentify(int numTypes) 
 {
 	QVector<bool> typesToIdentify(numTypes, true);
 	for(ElementType* type : structureTypes()) {
-		if(type->id() >= 0 && type->id() < numTypes)
-			typesToIdentify[type->id()] = type->enabled();
+		if(type->numericId() >= 0 && type->numericId() < numTypes)
+			typesToIdentify[type->numericId()] = type->enabled();
 	}
 	return typesToIdentify;
 }
@@ -129,11 +129,11 @@ PipelineFlowState StructureIdentificationModifier::StructureIdentificationEngine
 		// Build structure type-to-color map.
 		std::vector<Color> structureTypeColors(modifier->structureTypes().size());
 		for(ElementType* stype : modifier->structureTypes()) {
-			OVITO_ASSERT(stype->id() >= 0);
-			if(stype->id() >= (int)structureTypeColors.size()) {
-				structureTypeColors.resize(stype->id() + 1);
+			OVITO_ASSERT(stype->numericId() >= 0);
+			if(stype->numericId() >= (int)structureTypeColors.size()) {
+				structureTypeColors.resize(stype->numericId() + 1);
 			}
-			structureTypeColors[stype->id()] = stype->color();
+			structureTypeColors[stype->numericId()] = stype->color();
 		}
 
 		// Assign colors to particles based on their structure type.
@@ -151,8 +151,8 @@ PipelineFlowState StructureIdentificationModifier::StructureIdentificationEngine
 	// Count the number of particles of each identified type.
 	int maxTypeId = 0;
 	for(ElementType* stype : modifier->structureTypes()) {
-		OVITO_ASSERT(stype->id() >= 0);
-		maxTypeId = std::max(maxTypeId, stype->id());
+		OVITO_ASSERT(stype->numericId() >= 0);
+		maxTypeId = std::max(maxTypeId, stype->numericId());
 	}
 	_typeCounts = std::make_shared<PropertyStorage>(maxTypeId + 1, PropertyStorage::Int64, 1, 0, tr("Count"), true, DataSeriesObject::YProperty);
 	auto typeCountsData = _typeCounts->dataInt64();

@@ -103,4 +103,16 @@ PYBIND11_MODULE(PyScript, m)
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(PyScript);
 
-};
+/// Helper method that checks if the given data object is safe to modify without unwanted side effects.
+/// If it is not, an exception is raised to inform the user that a mutable version of the data object
+/// should be explicitly requested.
+void ensureDataObjectIsMutable(DataObject& obj)
+{
+	if(!obj.isSafeToModify()) {
+		QString className = py::cast<QString>(py::str(py::cast(obj).attr("__class__").attr("__name__")));
+		obj.throwException(QStringLiteral("You tried to modify a %1 object that is currently shared by multiple owners. "
+			"Please explicitly request a mutable version of the data object by using the '_' notation.").arg(className));
+	}
+}
+
+} // End of namespace

@@ -23,7 +23,7 @@
 
 
 #include <plugins/stdobj/StdObj.h>
-#include <core/oo/RefTarget.h>
+#include <core/dataset/data/DataObject.h>
 
 namespace Ovito { namespace StdObj {
 
@@ -31,7 +31,7 @@ namespace Ovito { namespace StdObj {
  * \brief Describes the basic properties (unique ID, name & color) of a "type" of elements stored in a PropertyObject.
  *        This serves as generic base class for particle types, bond types, structural types, etc.
  */
-class OVITO_STDOBJ_EXPORT ElementType : public RefTarget
+class OVITO_STDOBJ_EXPORT ElementType : public DataObject
 {
 	Q_OBJECT
 	OVITO_CLASS(ElementType)
@@ -43,25 +43,25 @@ public:
 
 	/// \brief Returns the name of this type, or a dynamically generated string representing the 
 	///        numeric ID if the type has no assigned name.
-	QString nameOrId() const {
+	QString nameOrNumericId() const {
 		if(!name().isEmpty())
 			return name();
 		else
-			return generateDefaultTypeName(id());
+			return generateDefaultTypeName(numericId());
 	}
 
-	/// \brief Returns an automatically generated name for a type based on its ID.
+	/// \brief Returns an automatically generated name for a type based on its numeric ID.
 	static QString generateDefaultTypeName(int id) {
 		return tr("Type %1").arg(id);
 	}	
 
-	/// \brief Returns the title of this object. Same as nameOrId().
-	virtual QString objectTitle() const override { return nameOrId(); }
+	/// \brief Returns the title of this object. Same as nameOrNumericId().
+	virtual QString objectTitle() const override { return nameOrNumericId(); }
 
 protected:
 
-	/// Stores the unique identifier of the type.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, id, setId);
+	/// Stores the unique numeric identifier of the type.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, numericId, setNumericId);
 
 	/// The human-readable name assigned to this type.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, name, setName);

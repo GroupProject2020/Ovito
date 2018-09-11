@@ -62,9 +62,6 @@ PYBIND11_MODULE(Particles, m)
 		// Python class name:
 		"Particles")
 
-		.def_property("bonds", &ParticlesObject::bonds, &ParticlesObject::setBonds,
-			"The :py:class:`Bonds` data object, which stores the bond information associated with this particle dataset. ")
-
 		// For backward compatibility with OVITO 2.9.0:
 		.def_property_readonly("position", [](const ParticlesObject& particles) { return particles.getProperty(ParticlesObject::PositionProperty); })
 		.def_property_readonly("color", [](const ParticlesObject& particles) { return particles.getProperty(ParticlesObject::ColorProperty); })
@@ -76,6 +73,8 @@ PYBIND11_MODULE(Particles, m)
 		.def_property_readonly("selection", [](const ParticlesObject& particles) { return particles.getProperty(ParticlesObject::SelectionProperty); })
 		.def_property_readonly("coordination", [](const ParticlesObject& particles) { return particles.getProperty(ParticlesObject::CoordinationProperty); })
 	;
+	createDataSubobjectAccessors(Particles_py, "bonds", &ParticlesObject::bonds, &ParticlesObject::setBonds, 
+		"The :py:class:`Bonds` data object, which stores the bond information associated with this particle dataset. ");
 
 	auto Bonds_py = ovito_class<BondsObject, PropertyContainer>(m,
 		":Base class: :py:class:`ovito.data.PropertyContainer`\n\n",
@@ -299,23 +298,14 @@ PYBIND11_MODULE(Particles, m)
         "The indices can be used to index into the :py:class:`~ovito.data.Property` arrays of the :py:class:`Bonds` object. ");
 	;
 
-	ovito_class<ParticleType, ElementType>(m,
+	auto ParticleType_py = ovito_class<ParticleType, ElementType>(m,
+			":Base class: :py:class:`ovito.data.ElementType`"
+			"\n\n"
 			"Represents a particle type or atom type. :py:class:`!ParticleType` instances are typically part of a typed :py:class:`ParticleProperty`, "
 			"but this class is also used in other contexts, for example to define the list of structural types identified by the :py:class:`~ovito.modifiers.PolyhedralTemplateMatchingModifier`. ")
-		.def_property("id", &ParticleType::id, &ParticleType::setId,
-				"The unique numeric identifier of the particle type.")
-		.def_property("color", &ParticleType::color, &ParticleType::setColor,
-				"The display color to use for particles of this type.")
-		.def_property("radius", &ParticleType::radius, &ParticleType::setRadius,
-				"The display radius to use for particles of this type.")
-		.def_property("name", &ParticleType::name, &ParticleType::setName,
-				"The display name of this particle type. This may be an empty string if the type was loaded from an input file that doesn't contain named particle types.")
-		.def_property("enabled", &ParticleType::enabled, &ParticleType::setEnabled,
-				"This flag only has a meaning in the context of structure analysis and identification. "
-				"Modifiers such as the :py:class:`~ovito.modifiers.PolyhedralTemplateMatchingModifier` or the :py:class:`~ovito.modifiers.CommonNeighborAnalysisModifier` "
-				"manage a list of structural types that they can identify (e.g. FCC, BCC, etc.). The identification of individual structure types "
-				"can be turned on or off by setting their :py:attr:`!enabled` flag.")
 	;
+	createDataPropertyAccessors(ParticleType_py, "radius", &ParticleType::radius, &ParticleType::setRadius,
+			"The display radius to use for particles of this type.");
 
 	auto ParticlesVis_py = ovito_class<ParticlesVis, DataVis>(m,
 			":Base class: :py:class:`ovito.vis.DataVis`\n\n"
@@ -572,14 +562,10 @@ PYBIND11_MODULE(Particles, m)
 	;
 #endif
 
-	ovito_class<BondType, ElementType>(m,
-			"Describes a bond type.")
-		.def_property("id", &BondType::id, &BondType::setId,
-				"The unique numeric identifier of the bond type.")
-		.def_property("color", &BondType::color, &BondType::setColor,
-				"The display color to use for bonds of this type.")
-		.def_property("name", &BondType::name, &BondType::setName,
-				"The display name of this bond type. This may be an empty string if the type was loaded from an input file that doesn't contain named bond types.")
+	ovito_class<BondType, ElementType>{m,
+			":Base class: :py:class:`ovito.data.ElementType`"
+			"\n\n"
+			"Describes a bond type."}
 	;
 
 	ovito_class<TrajectoryObject, DataObject>(m,

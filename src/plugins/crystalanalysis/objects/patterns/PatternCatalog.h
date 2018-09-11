@@ -53,7 +53,7 @@ public:
 	/// Returns the structure pattern with the given ID, or NULL if no such structure exists.
 	StructurePattern* structureById(int id) const {
 		for(StructurePattern* stype : patterns())
-			if(stype->id() == id)
+			if(stype->numericId() == id)
 				return stype;
 		return nullptr;
 	}

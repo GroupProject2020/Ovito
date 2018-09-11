@@ -29,13 +29,21 @@
 namespace Ovito { namespace StdObj {
 	
 /**
- * \brief A closed triangle mesh representing a surface.
+ * \brief Base class for geometry objects that are embedded in a spatial domain that may be periodic. 
  */
 class OVITO_STDOBJ_EXPORT PeriodicDomainDataObject : public DataObject
 {
 	Q_OBJECT
 	OVITO_CLASS(PeriodicDomainDataObject)
 	
+public:
+
+	/// Returns the spatial domain this geometry is embedded in after making sure it 
+	/// can safely be modified.
+	SimulationCellObject* mutableDomain() {
+		return makeMutable(domain());
+	}
+
 protected:
 
 	/// \brief Constructor.
@@ -43,10 +51,10 @@ protected:
 
 private:
 
-	/// The domain the object is embedded in.
+	/// The spatial domain (possibly periodic) this geometry object is embedded in.
 	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SimulationCellObject, domain, setDomain, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_NO_SUB_ANIM);
 
-	/// The planar cuts applied to object.
+	/// The planar cuts to be applied to geometry after its has been transformed into a non-periodic representation.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(QVector<Plane3>, cuttingPlanes, setCuttingPlanes);
 };
 

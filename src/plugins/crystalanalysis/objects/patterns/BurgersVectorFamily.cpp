@@ -36,7 +36,7 @@ SET_PROPERTY_FIELD_LABEL(BurgersVectorFamily, burgersVector, "Burgers vector");
 BurgersVectorFamily::BurgersVectorFamily(DataSet* dataset, int id, const QString& name, const Vector3& burgersVector, const Color& color)
 	: ElementType(dataset), _burgersVector(burgersVector)
 {
-	setId(id);
+	setNumericId(id);
 	setName(name);
 	setColor(color);
 }

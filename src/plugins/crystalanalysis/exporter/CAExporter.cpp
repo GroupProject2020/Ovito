@@ -92,8 +92,8 @@ bool CAExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint t
 		// Write list of structure types.
 		textStream() << "STRUCTURE_TYPES " << (patternCatalog->patterns().size() - 1) << "\n";
 		for(const StructurePattern* s : patternCatalog->patterns()) {
-			if(s->id() == 0) continue;
-			textStream() << "STRUCTURE_TYPE " << s->id() << "\n";
+			if(s->numericId() == 0) continue;
+			textStream() << "STRUCTURE_TYPE " << s->numericId() << "\n";
 			textStream() << "NAME " << s->shortName() << "\n";
 			textStream() << "FULL_NAME " << s->longName() << "\n";
 			textStream() << "COLOR " << s->color().r() << " " << s->color().g() << " " << s->color().b() << "\n";

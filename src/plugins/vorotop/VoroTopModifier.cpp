@@ -68,7 +68,7 @@ void VoroTopModifier::loadFilterDefinition(const QString& filepath)
     setStructureTypes({});
     for(int i = 0; i < filter->structureTypeCount(); i++) {
         OORef<ParticleType> stype(new ParticleType(dataset()));
-        stype->setId(i);
+        stype->setNumericId(i);
         stype->setName(filter->structureTypeLabel(i));
         stype->setColor(ParticleType::getDefaultParticleColor(ParticlesObject::StructureTypeProperty, stype->name(), i));
         addStructureType(stype);

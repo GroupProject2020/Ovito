@@ -66,7 +66,7 @@ void ParticleTypeEditor::createUI(const RolloutInsertionParameters& rolloutParam
 	layout1->addLayout(radiusPUI->createFieldLayout(), 2, 1);
 
 	// Numeric ID.
-	IntegerParameterUI* idPUI = new IntegerParameterUI(this, PROPERTY_FIELD(ParticleType::id));
+	IntegerParameterUI* idPUI = new IntegerParameterUI(this, PROPERTY_FIELD(ParticleType::numericId));
 	idPUI->setEnabled(false);
 	layout1->addWidget(new QLabel(tr("Numeric ID:")), 3, 0);
 	layout1->addWidget(idPUI->textBox(), 3, 1);
@@ -91,7 +91,7 @@ void ParticleTypeEditor::createUI(const RolloutInsertionParameters& rolloutParam
 		// Update the placeholder text of the name input field to reflect the numeric ID of the current particle type.
 		if(QLineEdit* lineEdit = qobject_cast<QLineEdit*>(namePUI->textBox())) {
 			if(ElementType* ptype = dynamic_object_cast<ElementType>(newEditObject))
-				lineEdit->setPlaceholderText(QStringLiteral("[%1]").arg(ElementType::generateDefaultTypeName(ptype->id())));
+				lineEdit->setPlaceholderText(QStringLiteral("[%1]").arg(ElementType::generateDefaultTypeName(ptype->numericId())));
 			else
 				lineEdit->setPlaceholderText({});
 		}

@@ -105,6 +105,12 @@ public:
 		return _referringFlowStates + dependents().size();
 	}
 
+	/// Determines if it is safe to modify this data object without unwanted side effects.
+	/// Returns true if there is only one exclusive owner of this data object (if any).
+	/// Returns false if there are multiple references to this data object from several
+	/// data collections or other container data objects.
+	bool isSafeToModify() const;
+
 	/// \brief Returns the current value of the revision counter of this scene object.
 	/// This counter is increment every time the object changes.
 	unsigned int revisionNumber() const Q_DECL_NOTHROW { return _revisionNumber; }

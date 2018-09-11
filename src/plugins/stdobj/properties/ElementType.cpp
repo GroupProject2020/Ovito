@@ -25,11 +25,11 @@
 namespace Ovito { namespace StdObj {
 
 IMPLEMENT_OVITO_CLASS(ElementType);
-DEFINE_PROPERTY_FIELD(ElementType, id);	
+DEFINE_PROPERTY_FIELD(ElementType, numericId);	
 DEFINE_PROPERTY_FIELD(ElementType, color);	
 DEFINE_PROPERTY_FIELD(ElementType, name);	
 DEFINE_PROPERTY_FIELD(ElementType, enabled);	
-SET_PROPERTY_FIELD_LABEL(ElementType, id, "Id");
+SET_PROPERTY_FIELD_LABEL(ElementType, numericId, "Id");
 SET_PROPERTY_FIELD_LABEL(ElementType, color, "Color");
 SET_PROPERTY_FIELD_LABEL(ElementType, name, "Name");
 SET_PROPERTY_FIELD_LABEL(ElementType, enabled, "Enabled");
@@ -39,8 +39,8 @@ SET_PROPERTY_FIELD_CHANGE_EVENT(ElementType, enabled, ReferenceEvent::TargetEnab
 /******************************************************************************
 * Constructs a new ElementType.
 ******************************************************************************/
-ElementType::ElementType(DataSet* dataset) : RefTarget(dataset), 
-	_id(0),
+ElementType::ElementType(DataSet* dataset) : DataObject(dataset), 
+	_numericId(0),
 	_color(1,1,1),
 	_enabled(true)
 {

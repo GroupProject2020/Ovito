@@ -52,14 +52,23 @@ void PythonScriptModifier::loadUserDefaults()
 
 	// Load example script.
 	setScript("from ovito.data import *\n\n"
-			"def modify(frame, input, output):\n"
-			"    # This is an example Python modifier function that does nothing except printing the \n" 
-			"    # list of particle properties to the log window. Use it as a starting point for \n" 
-			"    # developing your own data modification or analysis function. \n" 
+			"def modify(frame, data):\n"
 			"    \n"
-			"    print(\"List of all input particle properties:\")\n"
-			"    for name in input.particles.keys():\n"
-			"        print(name)\n");
+			"    # This user-defined modifier function gets automatically called by OVITO whenever the data pipeline is newly computed.\n"
+			"    # It receives two arguments from the pipeline system:\n"
+			"    # \n"
+			"    #    frame - The current animation frame number at which the pipeline is being evaluated.\n"
+			"    #    data   - The DataCollection passed in from the pipeline system. \n"
+			"    #                The function may modify the data stored in this DataCollection as needed.\n"
+			"    # \n"	
+			"    # What follows is an example code snippet doing nothing except printing the current \n" 
+			"    # list of particle properties to the log window. Use it as a starting point for developing \n" 
+			"    # your own data modification or analysis functions. \n"
+			"    \n"
+			"    if data.particles != None:\n"
+			"        print(\"There are %i particles with the following properties:\" % data.particles.count)\n"
+			"        for property_name in data.particles.keys():\n"
+			"            print(\"  '%s'\" % property_name)\n");
 }
 
 /******************************************************************************
@@ -181,23 +190,41 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 			throwException(tr("Modifier function of PythonScriptModifier instance has not been set."));
 		
 		try {
-			// Get animation frame at which the modifier is evaluated.
+			// Get animation frame at which the modifier is being evaluated.
 			int animationFrame = dataset()->animationSettings()->timeToFrame(time);
 
 			// Make sure the actions of the script function are not recorded on the undo stack.
 			UndoSuspender noUndo(dataset());
 
 			// Prepare arguments to be passed to the script function.
-			py::object input_py = py::cast(input, py::return_value_policy::copy);
 			py::object output_py = py::cast(input, py::return_value_policy::copy);
-			py::tuple arguments = py::make_tuple(animationFrame, std::move(input_py), output_py);
+			py::tuple arguments = py::make_tuple(animationFrame, output_py);
 
 			// Limit validity interval of the output to the current frame,
-			// because we don't know if the user script produces time-dependent results.
+			// because we don't know if the user script produces time-dependent results or not.
 			py::cast<PipelineFlowState&>(output_py).intersectStateValidity(time);				
 
-			// Call the user-defined Python function.
-			py::object functionResult = engine->callObject(_modifyScriptFunction, arguments);
+			// Call the user-defined modifier function.
+			py::object functionResult;
+			try {
+				functionResult = engine->callObject(_modifyScriptFunction, arguments);
+			}
+			catch(const Exception& ex) {
+
+				// The following code is for backward compatibility with OVITO 2.9.0:
+				//
+				// Retry to call the user-defined modifier function with a separate input and an output data collection. 
+				// but first check if the function has the expected signature.
+				py::object inspect_module = py::module::import("inspect");
+				py::object argsSpec = inspect_module.attr("getfullargspec")(_modifyScriptFunction);
+				if(py::len(argsSpec.attr("args")) != 3)
+					throw;
+
+				// Invoke the user-defined modifier function, this time with an input and an output data collection.
+				py::object input_py = py::cast(input, py::return_value_policy::copy);
+				arguments = py::make_tuple(animationFrame, std::move(input_py), output_py);
+				functionResult = engine->callObject(_modifyScriptFunction, arguments);
+			}
 			
 			// Exit the modifier evaluation phase.
 			_activeModApp = nullptr;

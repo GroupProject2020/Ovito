@@ -27,8 +27,10 @@ namespace Ovito { namespace Grid {
 IMPLEMENT_OVITO_CLASS(VoxelGrid);
 DEFINE_PROPERTY_FIELD(VoxelGrid, shape);
 DEFINE_REFERENCE_FIELD(VoxelGrid, domain);
+DEFINE_PROPERTY_FIELD(VoxelGrid, title);
 SET_PROPERTY_FIELD_LABEL(VoxelGrid, shape, "Shape");
 SET_PROPERTY_FIELD_LABEL(VoxelGrid, domain, "Domain");
+SET_PROPERTY_FIELD_LABEL(VoxelGrid, title, "Title");
 
 /******************************************************************************
 * Registers all standard properties with the property traits class.

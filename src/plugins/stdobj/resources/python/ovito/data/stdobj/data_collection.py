@@ -16,7 +16,13 @@ def _DataCollection_series(self):
 DataCollection.series = property(_DataCollection_series)
 
 # Implementation of the DataCollection.cell attribute.
-# Here for backward compatibility with OVITO 2.9.0.
 def _DataCollection_cell(self):
+    """ 
+    Returns the :py:class:`SimulationCell` stored in this :py:class:`!DataCollection` or ``None`` if there is
+    no simulation cell object. 
+    """
     return self.find(SimulationCell)
 DataCollection.cell = property(_DataCollection_cell)
+
+# Implementation of the DataCollection.cell_ attribute.
+DataCollection.cell_ = property(lambda self: self.make_mutable(self.cell))

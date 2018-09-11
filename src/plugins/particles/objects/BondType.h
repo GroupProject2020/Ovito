@@ -47,7 +47,7 @@ public:
 	static std::map<int,FloatType> typeRadiusMap(const PropertyObject* typeProperty) {
 		std::map<int,FloatType> m;
 		for(const ElementType* type : typeProperty->elementTypes())
-			m.insert({ type->id(), static_object_cast<BondType>(type)->radius() });
+			m.insert({ type->numericId(), static_object_cast<BondType>(type)->radius() });
 		return m;
 	}	
 	

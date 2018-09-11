@@ -75,21 +75,30 @@ void defineSceneSubmodule(py::module m)
 			"configured as needed to change the visual appearance of the data. "
 			"The different visual element types of OVITO are all documented in the :py:mod:`ovito.vis` module. ")
 
-		.def_property("id", &DataObject::identifier, &DataObject::setIdentifier,
-				"The unique identifier string of the data object. May be empty. ")
-
-		.def_property("vis", static_cast<DataVis* (DataObject::*)() const>(&DataObject::visElement), &DataObject::setVisElement,
+		.def_property("vis", static_cast<DataVis* (DataObject::*)() const>(&DataObject::visElement), [](DataObject& obj, DataVis* vis) {
+				ensureDataObjectIsMutable(obj);
+				obj.setVisElement(vis);
+			},
 			"The :py:class:`~ovito.vis.DataVis` element associated with this data object, which is responsible for "
         	"rendering the data visually. If this field contains ``None``, the data is non-visual and doesn't appear in "
 			"rendered images or the viewports.")
 
-		// Used by DataCollection.copy_if_needed():
+		// Used internally by the Python layer:
 		.def_property_readonly("num_strong_references", &DataObject::numberOfStrongReferences)
+		.def_property_readonly("is_safe_to_modify", &DataObject::isSafeToModify)
+
+		.def("make_mutable", [](DataObject& parent, const DataObject* subobj) -> DataObject* {
+				if(!subobj) return nullptr;
+				if(!parent.hasReferenceTo(subobj)) throw Exception("Object to be made mutable is not a sub-object of this parent object.");
+				return parent.makeMutable(subobj);
+			})
 
 		// For backward compatibility with OVITO 2.9.0:
 		.def_property("display", static_cast<DataVis* (DataObject::*)() const>(&DataObject::visElement), &DataObject::setVisElement)
 
 	;
+	createDataPropertyAccessors(DataObject_py, "identifier", &DataObject::identifier, &DataObject::setIdentifier,
+				"The unique identifier string of the data object. May be empty. ");
 	expose_mutable_subobject_list(DataObject_py,
 								  std::mem_fn(&DataObject::visElements), 
 								  std::mem_fn(&DataObject::insertVisElement), 
@@ -97,6 +106,8 @@ void defineSceneSubmodule(py::module m)
 
 	ovito_class<AttributeDataObject, DataObject>{m}
 		.def_property("value", &AttributeDataObject::value, [](AttributeDataObject& obj, py::object value) {
+			if(!obj.isSafeToModify())
+				throw Exception(QStringLiteral("You tried to set the value of a global attribute that is not exclusively owned."));
 			if(PyLong_Check(value.ptr()))
 				obj.setValue(QVariant::fromValue(PyLong_AsLong(value.ptr())));
 			else if(PyFloat_Check(value.ptr()))
@@ -241,6 +252,36 @@ void defineSceneSubmodule(py::module m)
 		.def(py::init<>())
 		.def_property("status", &PipelineFlowState::status, py::overload_cast<const PipelineStatus&>(&PipelineFlowState::setStatus))
 
+		.def("make_mutable", [](PipelineFlowState& state, const DataObject* obj) -> DataObject* {
+				if(!obj) return nullptr;
+				if(!state.contains(obj)) throw Exception("Data object is not part of this DataCollection. make_mutable() only works for objects that are currently in the DataCollection.");
+				return state.makeMutable(obj);
+			}, 
+			"make_mutabel(obj)"
+			"\n\n"
+			"Makes a copy of a data object from this data collection if the object is not exclusively "
+    		"owned by the data collection but shared with other collections. After the method returns, "
+    		"the data object is exclusively owned by the collection and it becomes safe to modify the object without "
+    		"causing unwanted side effects. "
+			"\n\n"
+			"Typically, this method is used within user-defined modifier functions (see :py:class:`~ovito.modifiers.PythonScriptModifier`) that "
+    		"participate in OVITO's data pipeline system. A modifier function receives an input collection of "
+    		"data objects from the system. However, modifying these input "
+    		"objects in place is not allowed, because they are owned by the pipeline and modifying them would "
+    		"lead do unexpected side effects. "
+    		"This is where this method comes into play: It makes a copy of a given data object and replaces "
+    		"the original in the data collection with the copy. The caller can now safely modify this copy in place, "
+    		"because no other data collection can possibly be referring to it. "
+			"\n\n"
+   			"The :py:meth:`!make_mutable` method first checks if *obj*, which must be a data object from this data collection, is "
+    		"shared with some other data collection. If yes, it creates an exact copy of *obj* and replaces the original "
+    		"in this data collection with the copy. Otherwise it leaves the object as is, because it is already exclusively owned "
+    		"by this data collection. "
+			"\n\n"
+			":param DataObject obj: The object from this data collection to be copied if needed.\n"
+    		":return: An exact copy of *obj* if it was shared with some other data collection. Otherwise the original object is returned.\n",
+			py::arg("obj"))
+
 #if 0
 		// The following methods are required for the DataCollection.attributes property.
 		.def_property_readonly("attribute_names", [](PipelineFlowState& obj) -> QStringList {
@@ -273,13 +314,9 @@ void defineSceneSubmodule(py::module m)
 								  std::mem_fn(&PipelineFlowState::insertObject), 
 								  std::mem_fn(&PipelineFlowState::removeObjectByIndex), "objects", "DataCollectionObjectsList",
 			"The list of data objects that make up the data collection. Data objects are instances of :py:class:`DataObject`-derived "
-			"classes, for example :py:class:`ParticleProperty`, :py:class:`Bonds` or :py:class:`SimulationCell`. "
+			"classes, for example :py:class:`Particles`, :py:class:`Bonds` or :py:class:`SimulationCell`. "
 			"\n\n"
 			"You can add or remove objects from the :py:attr:`!objects` list to insert them or remove them from the :py:class:`!DataCollection`.  "
-			"However, it is your responsibility to ensure that the data objects are all in a consistent state. For example, "
-			"all :py:class:`ParticleProperty` objects in a data collection must have the same lengths at all times, because "
-			"the length implicitly specifies the number of particles. The order in which data objects are stored in the data collection "
-			"does not matter. "
 			"\n\n"
 			"Note that the :py:class:`!DataCollection` class also provides convenience views of the data objects contained in the :py:attr:`!objects` "
 			"list: For example, the :py:attr:`.particles` dictionary lists all :py:class:`ParticleProperty` instances in the " 

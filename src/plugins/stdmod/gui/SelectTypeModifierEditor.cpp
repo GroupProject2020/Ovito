@@ -107,7 +107,7 @@ void SelectTypeModifierEditor::updateElementTypeList()
 						// Make sure we don't add two items with the same type ID.
 						bool duplicate = false;
 						for(int i = 0; i < _elementTypesBox->count(); i++) {
-							if(_elementTypesBox->item(i)->data(Qt::UserRole).toInt() == type->id()) {
+							if(_elementTypesBox->item(i)->data(Qt::UserRole).toInt() == type->numericId()) {
 								duplicate = true;
 								break;
 							}
@@ -115,10 +115,10 @@ void SelectTypeModifierEditor::updateElementTypeList()
 						if(duplicate) continue;
 
 						// Add a new list item for the element type.
-						QListWidgetItem* item = new QListWidgetItem(type->nameOrId(), _elementTypesBox);
-						item->setData(Qt::UserRole, type->id());
+						QListWidgetItem* item = new QListWidgetItem(type->nameOrNumericId(), _elementTypesBox);
+						item->setData(Qt::UserRole, type->numericId());
 						item->setData(Qt::DecorationRole, (QColor)type->color());
-						if(mod->selectedTypeIDs().contains(type->id()))
+						if(mod->selectedTypeIDs().contains(type->numericId()))
 							item->setCheckState(Qt::Checked);
 						else
 							item->setCheckState(Qt::Unchecked);

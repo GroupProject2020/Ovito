@@ -86,79 +86,41 @@ def _DataCollection_attributes(self):
         
         def __getitem__(self, key):
             for obj in self._collection.objects:
-                if isinstance(obj, AttributeDataObject) and obj.id == key:
+                if isinstance(obj, AttributeDataObject) and obj.identifier == key:
                     return obj.value
-            raise KeyError("Attribute '%s' does not exist in data collection." % key)
+            raise KeyError("Attribute '%s' does not exist in data collection." % str(key))
 
         def __setitem__(self, key, value):
             for obj in self._collection.objects:
-                if isinstance(obj, AttributeDataObject) and obj.id == key:
+                if isinstance(obj, AttributeDataObject) and obj.identifier == key:
                     if not value is None:
-                        obj.value = value
+                        self._collection.make_mutable(obj).value = value
                     else:
                         del self._collection.objects[obj]
                     return
             if not value is None:
-                attr =  AttributeDataObject(id = key, value = value)
+                attr =  AttributeDataObject(identifier = key, value = value)
                 self._collection.objects.append(attr)
 
         def __delitem__(self, key):
             """ Removes a global attribute from the data collection. """
             for obj in self._collection.objects:
-                if isinstance(obj, AttributeDataObject) and obj.id == key:
+                if isinstance(obj, AttributeDataObject) and obj.identifier == key:
                     del self._collection.objects[obj]
                     return
-            raise KeyError("Attribute '%s' does not exist in data collection." % key)
+            raise KeyError("Attribute '%s' does not exist in data collection." % str(key))
 
         def __iter__(self):
             """ Returns an iterator over the names of all global attributes. """
             for obj in self._collection.objects:
                 if isinstance(obj, AttributeDataObject):
-                    yield obj.id
+                    yield obj.identifier
 
         def __repr__(self):
             return repr(dict(self))
     
     return _AttributesView(self)
 DataCollection.attributes = property(_DataCollection_attributes)
-
-# Implementation of the DataCollection.copy_if_needed() method.
-def _DataCollection_copy_if_needed(self, obj, deepcopy=False):
-    """
-    Makes a copy of a data object from this data collection if the object is not exclusively 
-    owned by the data collection but shared with other collections. After the method returns,
-    the data object is exclusively owned by the collection and it becomes safe to modify the object without
-    causing unwanted side effects.
-
-    Typically, this method is used in custom modifier functions (see :py:class:`~ovito.modifiers.PythonScriptModifier`) that
-    participate in OVITO's data pipeline system. A modifier function receives an input collection of
-    data objects from the system. However, modifying these input
-    objects in place is not allowed, because they are owned by the pipeline and modifying them would 
-    lead do unexpected side effects.
-    This is where this method comes into play: It makes a copy of a given data object and replaces
-    the original in the data collection with the copy. The caller can now safely modify this copy in place,
-    because no other data collection can possibly be referring to it.
-
-    The :py:meth:`!copy_if_needed` method first checks if *obj*, which must be a data object from this data collection, is
-    shared with some other data collection. If yes, it creates an exact copy of *obj* and replaces the original
-    in this data collection with the copy. Otherwise it leaves the object as is, because it is already exclusively owned
-    by this data collection. 
-
-    :param DataObject obj: The object from this data collection to be copied if needed.
-    :return: An exact copy of *obj* if it was shared with some other data collection. Otherwise the original object is returned.
-    """
-    assert(isinstance(obj, DataObject))
-    # The object to be modified must be in this data collection.
-    if obj not in self.objects:
-        raise ValueError("DataCollection.copy_if_needed() must be called with an object that is part of the data collection.")
-    if obj.num_strong_references <= 1:
-        return obj
-    idx = self.objects.index(obj)
-    clone = CloneHelper().clone(obj, deepcopy)
-    self.objects[idx] = clone
-    assert(clone.num_strong_references == 1)
-    return clone
-DataCollection.copy_if_needed = _DataCollection_copy_if_needed
 
 # Implementation of the DataCollection.find() method.
 def _DataCollection_find(self, object_type):
