@@ -1,18 +1,18 @@
 # Load dependencies
 import ovito
 from ovito.data import DataCollection
-from .data_series_view import DataSeriesView
+from ovito.data.data_objects_dict import DataObjectsDict
 
 # Load the native code module
-from ovito.plugins.StdObj import SimulationCell
+from ovito.plugins.StdObj import SimulationCell, DataSeries
 
 # Implementation of the DataCollection.series attribute.
 def _DataCollection_series(self):
     """
-    Returns a :py:class:`DataSeriesView` providing name-based access to all :py:class:`DataSeries` objects stored 
+    Returns a :py:class:`DataObjectsDict` providing key-based access to all :py:class:`DataSeries` objects stored 
     in this :py:class:`!DataCollection`.
     """
-    return DataSeriesView(self)
+    return DataObjectsDict(self, DataSeries)
 DataCollection.series = property(_DataCollection_series)
 
 # Implementation of the DataCollection.cell attribute.

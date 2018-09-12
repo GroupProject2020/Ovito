@@ -612,9 +612,9 @@ bool FileSource::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 		}
 		else if(!event.sender()->isBeingLoaded()) {
 			// Whenever the user changes the sub-objects, update the pipeline state stored in the cache.
-			PipelineFlowState state = evaluatePreliminary();
-			state.clearObjects();
-			for(DataObject* o : dataObjects())
+	//		PipelineFlowState state = evaluatePreliminary();
+	//		state.clearObjects();
+	//		for(DataObject* o : dataObjects())
 				state.addObject(o);
 			// Never pass the original data objects to the pipeline. 
 			state.makeAllMutableRecursive();

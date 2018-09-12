@@ -219,6 +219,32 @@ PYBIND11_MODULE(StdObj, m)
 
 		.def_property_readonly("count", &PropertyContainer::elementCount,
 			"The number of data elements in this container, for example the number of particles, which is equal to the length of the :py:class:`Property` arrays in this container. ")
+
+		// Required by implementation of create_property() method:
+		.def("standard_property_type_id", [](const PropertyContainer& container, const QString& name) { 
+			return container.getOOMetaClass().standardPropertyTypeId(name);
+		})
+		.def("create_standard_property", [](PropertyContainer& container, int type, bool initializeMemory) {
+			// Make sure it is safe to modify the property container.
+			ensureDataObjectIsMutable(container);
+			// Build a data object path from the property container up to the data collection.
+			ConstDataObjectPath containerPath;
+			const DataObject* obj = &container;
+			do {
+				containerPath.push_back(obj);
+				obj = (obj->dependents().size() == 1) ? dynamic_object_cast<DataObject>(obj->dependents().front()) : nullptr;
+			}
+			while(obj);
+			std::reverse(containerPath.begin(), containerPath.end());
+			// Create the new property.
+			return container.createProperty(type, initializeMemory, containerPath);
+		})
+		.def("create_user_property", [](PropertyContainer& container, const QString& name, int dataType, size_t componentCount, size_t stride, bool initializeMemory) {
+			// Make sure it is safe to modify the property container.
+			ensureDataObjectIsMutable(container);
+			// Create the new property.
+			return container.createProperty(name, dataType, componentCount, stride, initializeMemory);
+		})		
 	;
 	// Needed for implementation of Python dictionary interface of PropertyContainer class:
 	expose_subobject_list(PropertyContainer_py, std::mem_fn(&PropertyContainer::properties), "properties", "PropertyList");
@@ -287,6 +313,7 @@ PYBIND11_MODULE(StdObj, m)
 		.def("__len__", &PropertyObject::size)
 		.def_property_readonly("size", &PropertyObject::size)
 		.def_property_readonly("data_type", &PropertyObject::dataType)
+		.def_property_readonly("type", &PropertyObject::type)
 
 		// Used by context manager interface:
 		.def("make_writable", &PropertyObject::makeWritableFromPython)

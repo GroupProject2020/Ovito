@@ -39,7 +39,10 @@ PYBIND11_MODULE(Grid, m)
 	py::options options;
 	options.disable_function_signatures();
 
-	auto VoxelGrid_py = ovito_class<VoxelGrid, PropertyContainer>{m}
+	auto VoxelGrid_py = ovito_class<VoxelGrid, PropertyContainer>(m)
+		.def_property_readonly("shape", [](const VoxelGrid& grid) {
+			return py::make_tuple(grid.shape()[0], grid.shape()[1], grid.shape()[2]);
+		})
 	;
 	createDataPropertyAccessors(VoxelGrid_py, "title", &VoxelGrid::title, &VoxelGrid::setTitle,
 		"The name of the voxel grid as shown in the user interface. ");
@@ -102,24 +105,28 @@ PYBIND11_MODULE(Grid, m)
 		.def_property("direction", &SpatialBinningModifier::binDirection, &SpatialBinningModifier::setBinDirection,
 				"Selects the alignment of the bins. Possible values:"
 				"\n\n"
-				"   * ``SpatialBinningModifier.Direction.Vector_1``\n"
-				"   * ``SpatialBinningModifier.Direction.Vector_2``\n"
-				"   * ``SpatialBinningModifier.Direction.Vector_3``\n"
-				"   * ``SpatialBinningModifier.Direction.Vectors_1_2``\n"
-				"   * ``SpatialBinningModifier.Direction.Vectors_1_3``\n"
-				"   * ``SpatialBinningModifier.Direction.Vectors_2_3``\n"
-				"   * ``SpatialBinningModifier.Direction.Vectors_1_2_3``\n"
+				"   * ``SpatialBinningModifier.Direction.X``\n"
+				"   * ``SpatialBinningModifier.Direction.Y``\n"
+				"   * ``SpatialBinningModifier.Direction.Z``\n"
+				"   * ``SpatialBinningModifier.Direction.XY``\n"
+				"   * ``SpatialBinningModifier.Direction.XZ``\n"
+				"   * ``SpatialBinningModifier.Direction.YZ``\n"
+				"   * ``SpatialBinningModifier.Direction.XYZ``\n"
 				"\n"
 				"In the first three cases the modifier generates a one-dimensional grid with bins aligned perpendicular to the selected simulation cell vector. "
 				"In the last three cases the modifier generates a two-dimensional grid with bins aligned perpendicular to both selected simulation cell vectors (i.e. parallel to the third vector). "
 				"\n\n"
-				":Default: ``SpatialBinningModifier.Direction.Vector_3``\n")
+				":Default: ``SpatialBinningModifier.Direction.X``\n")
 		.def_property("bin_count_x", &SpatialBinningModifier::numberOfBinsX, &SpatialBinningModifier::setNumberOfBinsX,
 				"This attribute sets the number of bins to generate along the first binning axis."
 				"\n\n"
 				":Default: 200\n")
 		.def_property("bin_count_y", &SpatialBinningModifier::numberOfBinsY, &SpatialBinningModifier::setNumberOfBinsY,
-				"This attribute sets the number of bins to generate along the second binning axis (only used when working with a two-dimensional grid)."
+				"This attribute sets the number of bins to generate along the second binning axis (only used when generating a two- or three-dimensional grid)."
+				"\n\n"
+				":Default: 200\n")
+		.def_property("bin_count_z", &SpatialBinningModifier::numberOfBinsZ, &SpatialBinningModifier::setNumberOfBinsZ,
+				"This attribute sets the number of bins to generate along the third binning axis (only used when generting a three-dimensional grid)."
 				"\n\n"
 				":Default: 200\n")
 		.def_property("only_selected", &SpatialBinningModifier::onlySelectedElements, &SpatialBinningModifier::setOnlySelectedElements,
@@ -138,13 +145,13 @@ PYBIND11_MODULE(Grid, m)
 	;
 
 	py::enum_<SpatialBinningModifier::BinDirectionType>(BinningModifier_py, "Direction")
-		.value("Vector_1", SpatialBinningModifier::CELL_VECTOR_1)
-		.value("Vector_2", SpatialBinningModifier::CELL_VECTOR_2)
-		.value("Vector_3", SpatialBinningModifier::CELL_VECTOR_3)
-		.value("Vectors_1_2", SpatialBinningModifier::CELL_VECTORS_1_2)
-		.value("Vectors_1_3", SpatialBinningModifier::CELL_VECTORS_1_3)
-		.value("Vectors_2_3", SpatialBinningModifier::CELL_VECTORS_2_3)
-		.value("Vectors_1_2_3", SpatialBinningModifier::CELL_VECTORS_1_2_3)
+		.value("X", SpatialBinningModifier::CELL_VECTOR_1)
+		.value("Y", SpatialBinningModifier::CELL_VECTOR_2)
+		.value("Z", SpatialBinningModifier::CELL_VECTOR_3)
+		.value("XY", SpatialBinningModifier::CELL_VECTORS_1_2)
+		.value("XZ", SpatialBinningModifier::CELL_VECTORS_1_3)
+		.value("YZ", SpatialBinningModifier::CELL_VECTORS_2_3)
+		.value("XYZ", SpatialBinningModifier::CELL_VECTORS_1_2_3)
 	;
 }
 

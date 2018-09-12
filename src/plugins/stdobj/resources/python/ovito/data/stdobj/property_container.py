@@ -125,7 +125,7 @@ def _PropertyContainer_create_property(self, name, dtype=None, components=None, 
         property_type = name
     else:
         property_name = name
-        property_type = ParticleProperty.standard_property_type_id(property_name)
+        property_type = self.standard_property_type_id(property_name)
 
     if property_type != 0:
         if components is not None:
@@ -177,22 +177,19 @@ def _PropertyContainer_create_property(self, name, dtype=None, components=None, 
     # Check data array dimensions.
     if data is not None:
         if len(data) != num_elements:
-            raise ValueError("Array size mismatch. Length of data array must match the number of elements in the container.")
+            raise ValueError("Property array size mismatch. Length of data array is {}, but number of elements in container is {}.".format(len(data), num_elements))
                 
     if existing_prop is None:
-        # If property does not exists yet, create a new Property instance.
+        # If property does not exist yet in the container, create and add a new Property instance.
         if property_type != 0:
-            prop = ParticleProperty.createStandardProperty(ovito.dataset, num_particles, property_type, data is None)
+            prop = self.create_standard_property(property_type, data is None)
         else:
-            prop = ParticleProperty.createUserProperty(ovito.dataset, num_particles, dtype, components, 0, property_name, data is None)
+            prop = self.create_user_property(property_name, dtype, components, 0, data is None)
 
-        # Initialize property with per-particle data if provided.
+        # Initialize property with per-element data if provided.
         if data is not None:
             with prop:
                 prop[...] = data
-        
-        # Insert new property into data collection.
-        self._data.objects.append(prop)
     else:
         # Make sure the data layout of the existing property is compatible with the requested layout.
         if components is not None and existing_prop.components != components:
@@ -208,7 +205,6 @@ def _PropertyContainer_create_property(self, name, dtype=None, components=None, 
         if data is not None:
             with prop:
                 prop[...] = data
-
     return prop
 PropertyContainer.create_property = _PropertyContainer_create_property
 
