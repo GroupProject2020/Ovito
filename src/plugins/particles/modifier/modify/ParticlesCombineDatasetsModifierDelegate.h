@@ -41,7 +41,7 @@ class OVITO_PARTICLES_EXPORT ParticlesCombineDatasetsModifierDelegate : public C
 		using CombineDatasetsModifierDelegate::OOMetaClass::OOMetaClass;
 
 		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+		virtual bool isApplicableTo(const DataCollection& input) const override;
 
 		/// The name by which Python scripts can refer to this modifier delegate.
 		virtual QString pythonDataName() const override { return QStringLiteral("particles"); }
@@ -58,7 +58,7 @@ public:
 	Q_INVOKABLE ParticlesCombineDatasetsModifierDelegate(DataSet* dataset) : CombineDatasetsModifierDelegate(dataset) {}
 
 	/// Applies the modifier operation to the data in a pipeline flow state.
-	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs) override;
+	virtual PipelineStatus apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs) override;
 };
 
 OVITO_END_INLINE_NAMESPACE

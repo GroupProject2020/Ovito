@@ -41,8 +41,8 @@ class OVITO_STDOBJGUI_EXPORT PropertyInspectionApplet : public DataInspectionApp
 
 public:
 
-	/// Determines whether the given pipeline flow state contains data that can be displayed by this applet.
-	virtual bool appliesTo(const PipelineFlowState& state) override;
+	/// Determines whether the given pipeline data contains data that can be displayed by this applet.
+	virtual bool appliesTo(const DataCollection& data) override;
 
 	/// Lets the applet update the contents displayed in the inspector.
 	virtual void updateDisplay(const PipelineFlowState& state, PipelineSceneNode* sceneNode) override;
@@ -62,8 +62,8 @@ public:
 	/// Returns the currently selected scene node.
 	PipelineSceneNode* currentSceneNode() const { return _sceneNode.data(); }
 
-	/// Returns the current dataset.
-	const PipelineFlowState& currentData() const { return _data; }
+	/// Returns the current pipeline state being displayed in the applet.
+	const PipelineFlowState& currentState() const { return _pipelineState; }
 
 	/// Returns the number of currently displayed elements.
 	int visibleElementCount() const { return _filterModel->rowCount(); }
@@ -246,8 +246,8 @@ private:
 	/// The widget for selecting the current property container object.
 	QListWidget* _containerSelectionWidget = nullptr;
 
-	/// The input data.
-	PipelineFlowState _data;
+	/// The pipeline data being displayed.
+	PipelineFlowState _pipelineState;
 
 	/// The identifier path of the currently selected property container.
 	QString _selectedDataObjectPath;

@@ -53,7 +53,7 @@ SimplifyMicrostructureModifier::SimplifyMicrostructureModifier(DataSet* dataset)
 /******************************************************************************
 * Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-bool SimplifyMicrostructureModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool SimplifyMicrostructureModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<MicrostructureObject>();
 }
@@ -144,17 +144,13 @@ void SimplifyMicrostructureModifier::SimplifyMicrostructureEngine::smoothMeshIte
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState SimplifyMicrostructureModifier::SimplifyMicrostructureEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void SimplifyMicrostructureModifier::SimplifyMicrostructureEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
-	PipelineFlowState output = input;
-
-    // Replace input microstructure with computed output microstructure.
-	if(const MicrostructureObject* microstructureObj = output.getObject<MicrostructureObject>()) {
-		MicrostructureObject* mutableMicrostructureObj = output.makeMutable(microstructureObj);
+	 // Replace input microstructure with computed output microstructure.
+	if(const MicrostructureObject* microstructureObj = state.getObject<MicrostructureObject>()) {
+		MicrostructureObject* mutableMicrostructureObj = state.makeMutable(microstructureObj);
         mutableMicrostructureObj->setStorage(microstructure());
     }
-	
-	return output;
 }
 
 }	// End of namespace

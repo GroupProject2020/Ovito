@@ -33,7 +33,7 @@ IMPLEMENT_OVITO_CLASS(BondsAssignColorModifierDelegate);
 /******************************************************************************
 * Returns whether this function can be applied to the given input data.
 ******************************************************************************/
-bool ParticleVectorsAssignColorModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool ParticleVectorsAssignColorModifierDelegate::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
     if(const ParticlesObject* particles = input.getObject<ParticlesObject>()) {
         for(const PropertyObject* property : particles->properties()) {

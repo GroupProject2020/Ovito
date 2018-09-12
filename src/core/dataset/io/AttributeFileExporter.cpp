@@ -116,7 +116,7 @@ bool AttributeFileExporter::getAttributes(SceneNode* sceneNode, TimePoint time, 
 		throwException(tr("The object to be exported does not contain any data."));
 
 	// Build list of attributes.
-	attributes = state.buildAttributesMap();
+	attributes = state.data()->buildAttributesMap();
 	attributes.insert(QStringLiteral("Frame"), sceneNode->dataset()->animationSettings()->timeToFrame(time));
 
 	return true;

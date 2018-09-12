@@ -51,9 +51,10 @@ Future<PipelineFlowState> AsynchronousModifier::evaluate(TimePoint time, Modifie
 		if(lastResults && lastResults->validityInterval().contains(time)) {
 			// Re-use the computation results and apply them to the input data.
 			UndoSuspender noUndo(this);
-			PipelineFlowState resultState = lastResults->emitResults(time, modApp, input);
-			resultState.mutableStateValidity().intersect(lastResults->validityInterval());
-			return resultState;
+			PipelineFlowState output = input;
+			lastResults->emitResults(time, modApp, output);
+			output.intersectStateValidity(lastResults->validityInterval());
+			return output;
 		}
 	}
 
@@ -67,13 +68,13 @@ Future<PipelineFlowState> AsynchronousModifier::evaluate(TimePoint time, Modifie
 			// Execute the engine in a worker thread.
 			// Collect results from the engine in the UI thread once it has finished running.
 			return dataset()->container()->taskManager().runTaskAsync(task)
-				.then(executor(), [this, time, modApp, input = std::move(input), engine = std::move(engine)]() mutable {
+				.then(executor(), [this, time, modApp, state = std::move(input), engine = std::move(engine)]() mutable {
 					if(modApp && modApp->modifier() == this) {
 						
 						// Keep a copy of the results in the ModifierApplication for later.
 						if(AsynchronousModifierApplication* asyncModApp = dynamic_object_cast<AsynchronousModifierApplication>(modApp.data())) {
 							TimeInterval iv = engine->validityInterval();
-							iv.intersect(input.stateValidity());
+							iv.intersect(state.stateValidity());
 							engine->setValidityInterval(iv);
 							asyncModApp->setLastComputeResults(engine);
 						}
@@ -81,11 +82,11 @@ Future<PipelineFlowState> AsynchronousModifier::evaluate(TimePoint time, Modifie
 						UndoSuspender noUndo(this);
 
 						// Apply the computed results to the input data.
-						PipelineFlowState resultState = engine->emitResults(time, modApp, input);
-						resultState.mutableStateValidity().intersect(engine->validityInterval());
-						return resultState;
+						engine->emitResults(time, modApp, state);
+						state.intersectStateValidity(engine->validityInterval());
+						return std::move(state);
 					}
-					else return std::move(input);
+					else return std::move(state);
 				});
 		});
 }
@@ -93,18 +94,17 @@ Future<PipelineFlowState> AsynchronousModifier::evaluate(TimePoint time, Modifie
 /******************************************************************************
 * Modifies the input data in an immediate, preliminary way.
 ******************************************************************************/
-PipelineFlowState AsynchronousModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void AsynchronousModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	// If results are still available from the last pipeline evaluation, apply them to the input data.
 	if(AsynchronousModifierApplication* asyncModApp = dynamic_object_cast<AsynchronousModifierApplication>(modApp)) {
 		if(const AsynchronousModifier::ComputeEnginePtr& lastResults = asyncModApp->lastComputeResults()) {
 			UndoSuspender noUndo(this);
-			PipelineFlowState resultState = lastResults->emitResults(time, modApp, input);
-			resultState.mutableStateValidity().intersect(lastResults->validityInterval());
-			return resultState;
+			lastResults->emitResults(time, modApp, state);
+			state.intersectStateValidity(lastResults->validityInterval());
 		}
 	}
-	return Modifier::evaluatePreliminary(time, modApp, input);
+	Modifier::evaluatePreliminary(time, modApp, state);
 }
 
 /******************************************************************************

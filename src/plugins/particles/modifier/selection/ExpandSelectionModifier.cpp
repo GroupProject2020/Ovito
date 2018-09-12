@@ -59,7 +59,7 @@ ExpandSelectionModifier::ExpandSelectionModifier(DataSet* dataset) : Asynchronou
 /******************************************************************************
 * Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-bool ExpandSelectionModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool ExpandSelectionModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<ParticlesObject>();
 }
@@ -190,12 +190,10 @@ void ExpandSelectionModifier::ExpandSelectionCutoffEngine::expandSelection()
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState ExpandSelectionModifier::ExpandSelectionEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void ExpandSelectionModifier::ExpandSelectionEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
-	PipelineFlowState output = input;
-
 	// Get the output particles.
-	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+	ParticlesObject* particles = state.expectMutableObject<ParticlesObject>();
 	if(_inputFingerprint.hasChanged(particles))
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 
@@ -208,9 +206,7 @@ PipelineFlowState ExpandSelectionModifier::ExpandSelectionEngine::emitResults(Ti
 					.arg(numSelectedParticlesOutput() - numSelectedParticlesInput())
 					.arg(numSelectedParticlesInput())
 					.arg(numSelectedParticlesOutput());
-	output.setStatus(PipelineStatus(PipelineStatus::Success, std::move(msg)));
-
-	return output;
+	state.setStatus(PipelineStatus(PipelineStatus::Success, std::move(msg)));
 }
 
 OVITO_END_INLINE_NAMESPACE

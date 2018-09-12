@@ -54,11 +54,13 @@ public:
 	///               modifier in the data pipeline.
 	/// \param input The upstream data flowing down the pipeline.
 	virtual Future<PipelineFlowState> evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) {
-		return evaluatePreliminary(time, modApp, input);
+		PipelineFlowState output = input;
+		evaluatePreliminary(time, modApp, output);
+		return Future<PipelineFlowState>::createImmediate(std::move(output));
 	}
 
 	/// \brief Modifies the input data in an immediate, preliminary way.
-	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) { return input; }
+	virtual void evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) {}
 
 	/// \brief Asks the modifier for its validity interval at the given time.
 	/// \param time The animation at which the validity interval should be computed.

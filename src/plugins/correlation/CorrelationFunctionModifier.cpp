@@ -128,7 +128,7 @@ CorrelationFunctionModifier::CorrelationFunctionModifier(DataSet* dataset) : Asy
 /******************************************************************************
 * Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-bool CorrelationFunctionModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool CorrelationFunctionModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<ParticlesObject>();
 }
@@ -787,25 +787,23 @@ void CorrelationFunctionModifier::CorrelationAnalysisEngine::perform()
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState CorrelationFunctionModifier::CorrelationAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void CorrelationFunctionModifier::CorrelationAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
-	PipelineFlowState output = input;
-
 	// Output real-space correlation function to the pipeline as a data series. 
-	DataSeriesObject* realSpaceCorrelationObj = output.createObject<DataSeriesObject>(QStringLiteral("correlation-real-space"), modApp, DataSeriesObject::Line, tr("Real-space correlation"), realSpaceCorrelation());
+	DataSeriesObject* realSpaceCorrelationObj = state.createObject<DataSeriesObject>(QStringLiteral("correlation-real-space"), modApp, DataSeriesObject::Line, tr("Real-space correlation"), realSpaceCorrelation());
 	realSpaceCorrelationObj->setAxisLabelX(tr("Distance r"));
 	realSpaceCorrelationObj->setIntervalStart(0);
 	realSpaceCorrelationObj->setIntervalEnd(_realSpaceCorrelationRange);
 
 	// Output real-space RDF to the pipeline as a data series. 
-	DataSeriesObject* realSpaceRDFObj = output.createObject<DataSeriesObject>(QStringLiteral("correlation-real-space-rdf"), modApp, DataSeriesObject::Line, tr("Real-space RDF"), realSpaceRDF());
+	DataSeriesObject* realSpaceRDFObj = state.createObject<DataSeriesObject>(QStringLiteral("correlation-real-space-rdf"), modApp, DataSeriesObject::Line, tr("Real-space RDF"), realSpaceRDF());
 	realSpaceRDFObj->setAxisLabelX(tr("Distance r"));
 	realSpaceRDFObj->setIntervalStart(0);
 	realSpaceRDFObj->setIntervalEnd(_realSpaceCorrelationRange);
 
 	// Output short-ranged part of the real-space correlation function to the pipeline as a data series. 
 	if(neighCorrelation()) {
-		DataSeriesObject* neighCorrelationObj = output.createObject<DataSeriesObject>(QStringLiteral("correlation-neighbor"), modApp, DataSeriesObject::Line, tr("Neighbor correlation"), neighCorrelation());
+		DataSeriesObject* neighCorrelationObj = state.createObject<DataSeriesObject>(QStringLiteral("correlation-neighbor"), modApp, DataSeriesObject::Line, tr("Neighbor correlation"), neighCorrelation());
 		neighCorrelationObj->setAxisLabelX(tr("Distance r"));
 		neighCorrelationObj->setIntervalStart(0);
 		neighCorrelationObj->setIntervalEnd(neighCutoff());
@@ -813,26 +811,24 @@ PipelineFlowState CorrelationFunctionModifier::CorrelationAnalysisEngine::emitRe
 
 	// Output short-ranged part of the RDF to the pipeline as a data series. 
 	if(neighRDF()) {
-		DataSeriesObject* neighRDFObj = output.createObject<DataSeriesObject>(QStringLiteral("correlation-neighbor-rdf"), modApp, DataSeriesObject::Line, tr("Neighbor RDF"), neighRDF());
+		DataSeriesObject* neighRDFObj = state.createObject<DataSeriesObject>(QStringLiteral("correlation-neighbor-rdf"), modApp, DataSeriesObject::Line, tr("Neighbor RDF"), neighRDF());
 		neighRDFObj->setAxisLabelX(tr("Distance r"));
 		neighRDFObj->setIntervalStart(0);
 		neighRDFObj->setIntervalEnd(neighCutoff());
 	}
 
 	// Output reciprocal-space correlation function to the pipeline as a data series. 
-	DataSeriesObject* reciprocalSpaceCorrelationObj = output.createObject<DataSeriesObject>(QStringLiteral("correlation-reciprocal-space"), modApp, DataSeriesObject::Line, tr("Reciprocal-space correlation"), reciprocalSpaceCorrelation());
+	DataSeriesObject* reciprocalSpaceCorrelationObj = state.createObject<DataSeriesObject>(QStringLiteral("correlation-reciprocal-space"), modApp, DataSeriesObject::Line, tr("Reciprocal-space correlation"), reciprocalSpaceCorrelation());
 	reciprocalSpaceCorrelationObj->setAxisLabelX(tr("Wavevector q"));
 	reciprocalSpaceCorrelationObj->setIntervalStart(0);
 	reciprocalSpaceCorrelationObj->setIntervalEnd(_reciprocalSpaceCorrelationRange);
 
 	// Output global attributes.
-	output.addAttribute(QStringLiteral("CorrelationFunction.mean1"), QVariant::fromValue(mean1()), modApp);
-	output.addAttribute(QStringLiteral("CorrelationFunction.mean2"), QVariant::fromValue(mean2()), modApp);
-	output.addAttribute(QStringLiteral("CorrelationFunction.variance1"), QVariant::fromValue(variance1()), modApp);
-	output.addAttribute(QStringLiteral("CorrelationFunction.variance2"), QVariant::fromValue(variance2()), modApp);
-	output.addAttribute(QStringLiteral("CorrelationFunction.covariance"), QVariant::fromValue(covariance()), modApp);
-
-	return output;
+	state.addAttribute(QStringLiteral("CorrelationFunction.mean1"), QVariant::fromValue(mean1()), modApp);
+	state.addAttribute(QStringLiteral("CorrelationFunction.mean2"), QVariant::fromValue(mean2()), modApp);
+	state.addAttribute(QStringLiteral("CorrelationFunction.variance1"), QVariant::fromValue(variance1()), modApp);
+	state.addAttribute(QStringLiteral("CorrelationFunction.variance2"), QVariant::fromValue(variance2()), modApp);
+	state.addAttribute(QStringLiteral("CorrelationFunction.covariance"), QVariant::fromValue(covariance()), modApp);
 }
 
 OVITO_END_INLINE_NAMESPACE

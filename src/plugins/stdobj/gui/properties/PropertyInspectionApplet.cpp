@@ -31,12 +31,12 @@ namespace Ovito { namespace StdObj {
 IMPLEMENT_OVITO_CLASS(PropertyInspectionApplet);
 
 /******************************************************************************
-* Determines whether the given pipeline flow state contains data that can be 
+* Determines whether the given pipeline dataset contains data that can be 
 * displayed by this applet.
 ******************************************************************************/
-bool PropertyInspectionApplet::appliesTo(const PipelineFlowState& state)
+bool PropertyInspectionApplet::appliesTo(const DataCollection& data)
 {
-	return state.containsObjectRecursive(_containerClass);
+	return data.containsObjectRecursive(_containerClass);
 }
 
 /******************************************************************************
@@ -78,7 +78,7 @@ void PropertyInspectionApplet::updateDisplay(const PipelineFlowState& state, Pip
 	}
 	
 	_sceneNode = sceneNode;
-	_data = state;
+	_pipelineState = state;
 	updateContainerList();
 }
 
@@ -88,7 +88,9 @@ void PropertyInspectionApplet::updateDisplay(const PipelineFlowState& state, Pip
 void PropertyInspectionApplet::updateContainerList()
 {
 	// Build list of all property container objects in the current data collection.
-	const std::vector<ConstDataObjectPath>& objectPaths = currentData().getObjectsRecursive(_containerClass);
+	std::vector<ConstDataObjectPath> objectPaths;
+	if(!currentState().isEmpty()) 
+		objectPaths = currentState().getObjectsRecursive(_containerClass);
 
 	containerSelectionWidget()->setUpdatesEnabled(false);
 	disconnect(containerSelectionWidget(), &QListWidget::currentRowChanged, this, &PropertyInspectionApplet::currentContainerChanged);
@@ -152,10 +154,10 @@ void PropertyInspectionApplet::currentContainerChanged()
 	_filterModel->setContentsEnd();
 
 	// Update the list of variables that can be referenced in the filter expression.
-	if(selectedContainerObject()) {
+	if(selectedContainerObject() && !currentState().isEmpty()) {
 		try {
 			auto evaluator = createExpressionEvaluator();
-			evaluator->initialize(QStringList(), currentData(), selectedContainerObject());
+			evaluator->initialize(QStringList(), currentState(), selectedContainerObject());
 			_filterExpressionEdit->setWordList(evaluator->inputVariableNames());
 		}
 		catch(const Exception&) {}
@@ -248,7 +250,7 @@ void PropertyInspectionApplet::PropertyFilterModel::setupEvaluator()
 {
 	_evaluatorWorker.reset();
 	_evaluator.reset();
-	if(_filterExpression.isEmpty() == false) {
+	if(_filterExpression.isEmpty() == false && !_applet->currentState().isEmpty()) {
 		if(const PropertyContainer* container = _applet->selectedContainerObject()) {
 			try {
 				// Check if expression contain an assignment ('=' operator).
@@ -257,7 +259,7 @@ void PropertyInspectionApplet::PropertyFilterModel::setupEvaluator()
 					throw Exception(tr("The entered expression contains the assignment operator '='. Please use the comparison operator '==' instead."));
 
 				_evaluator = _applet->createExpressionEvaluator();
-				_evaluator->initialize(QStringList(_filterExpression), _applet->currentData(), container);
+				_evaluator->initialize(QStringList(_filterExpression), _applet->currentState(), container);
 				_evaluatorWorker = std::make_unique<PropertyExpressionEvaluator::Worker>(*_evaluator);
 			}
 			catch(const Exception& ex) {

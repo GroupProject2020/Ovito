@@ -44,11 +44,14 @@ Future<PipelineFlowState> TransformingDataVis::transformData(TimePoint time, con
 {
 	// Check if the cache state already contains a transformed data object that we have
 	// created earlier for the same input object. If yes, we can immediately return it.
-	for(const DataObject* o : cachedState.objects()) {
-		if(const TransformedDataObject* transformedDataObject = dynamic_object_cast<TransformedDataObject>(o)) {
-			if(transformedDataObject->sourceDataObject() == dataObject && transformedDataObject->visElement() == this && transformedDataObject->visElementRevision() == revisionNumber()) {
-				flowState.addObject(transformedDataObject);
-				return std::move(flowState);
+	if(cachedState.data()) {
+		for(const DataObject* o : cachedState.data()->objects()) {
+			if(const TransformedDataObject* transformedDataObject = dynamic_object_cast<TransformedDataObject>(o)) {
+				if(transformedDataObject->sourceDataObject() == dataObject && transformedDataObject->visElement() == this && transformedDataObject->visElementRevision() == revisionNumber()) {
+					PipelineFlowState outputState = flowState;
+					outputState.mutableData()->addObject(transformedDataObject);
+					return std::move(outputState);
+				}
 			}
 		}
 	}

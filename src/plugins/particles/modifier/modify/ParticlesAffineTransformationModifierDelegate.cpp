@@ -34,7 +34,7 @@ IMPLEMENT_OVITO_CLASS(VectorParticlePropertiesAffineTransformationModifierDelega
 /******************************************************************************
 * Determines whether this delegate can handle the given input data.
 ******************************************************************************/
-bool ParticlesAffineTransformationModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool ParticlesAffineTransformationModifierDelegate::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<ParticlesObject>();
 }
@@ -42,12 +42,12 @@ bool ParticlesAffineTransformationModifierDelegate::OOMetaClass::isApplicableTo(
 /******************************************************************************
 * Applies the modifier operation to the data in a pipeline flow state.
 ******************************************************************************/
-PipelineStatus ParticlesAffineTransformationModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
+PipelineStatus ParticlesAffineTransformationModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
-	if(const ParticlesObject* inputParticles = output.getObject<ParticlesObject>()) {
+	if(const ParticlesObject* inputParticles = state.getObject<ParticlesObject>()) {
 		
 		// Make sure we can safely modify the particles object.
-		ParticlesObject* outputParticles = output.makeMutable(inputParticles);
+		ParticlesObject* outputParticles = state.makeMutable(inputParticles);
 		
 		// Create a modifiable copy of the particle position.
 		PropertyObject* posProperty = outputParticles->createProperty(ParticlesObject::PositionProperty, true);
@@ -58,7 +58,7 @@ PipelineStatus ParticlesAffineTransformationModifierDelegate::apply(Modifier* mo
 		if(mod->relativeMode())
 			tm = mod->transformationTM();
 		else
-			tm = mod->targetCell() * input.expectObject<SimulationCellObject>()->cellMatrix().inverse();
+			tm = mod->targetCell() * state.expectObject<SimulationCellObject>()->cellMatrix().inverse();
 		
 		if(mod->selectionOnly()) {
 			if(const PropertyObject* selProperty = inputParticles->getProperty(ParticlesObject::SelectionProperty)) {
@@ -90,7 +90,7 @@ PipelineStatus ParticlesAffineTransformationModifierDelegate::apply(Modifier* mo
 /******************************************************************************
 * Determines whether this delegate can handle the given input data.
 ******************************************************************************/
-bool VectorParticlePropertiesAffineTransformationModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool VectorParticlePropertiesAffineTransformationModifierDelegate::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	if(const ParticlesObject* particles = input.getObject<ParticlesObject>()) {
 		for(const PropertyObject* property : particles->properties()) {
@@ -114,7 +114,7 @@ bool VectorParticlePropertiesAffineTransformationModifierDelegate::isTransformab
 /******************************************************************************
 * Applies the modifier operation to the data in a pipeline flow state.
 ******************************************************************************/
-PipelineStatus VectorParticlePropertiesAffineTransformationModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
+PipelineStatus VectorParticlePropertiesAffineTransformationModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	// Determine transformation matrix.
 	AffineTransformationModifier* mod = static_object_cast<AffineTransformationModifier>(modifier);
@@ -122,15 +122,15 @@ PipelineStatus VectorParticlePropertiesAffineTransformationModifierDelegate::app
 	if(mod->relativeMode())
 		tm = mod->transformationTM();
 	else
-		tm = mod->targetCell() * input.expectObject<SimulationCellObject>()->cellMatrix().inverse();
+		tm = mod->targetCell() * state.expectObject<SimulationCellObject>()->cellMatrix().inverse();
 	
-	if(OORef<ParticlesObject> inputParticles = output.getObject<ParticlesObject>()) {
+	if(const ParticlesObject* inputParticles = state.getObject<ParticlesObject>()) {
 
 		for(const PropertyObject* inputProperty : inputParticles->properties()) {
 			if(isTransformableProperty(inputProperty)) {
 
 				// Make sure we can safely modify the particles object.
-				ParticlesObject* outputParticles = output.expectMutableObject<ParticlesObject>();
+				ParticlesObject* outputParticles = state.expectMutableObject<ParticlesObject>();
 
 				PropertyStorage* property = outputParticles->makeMutable(inputProperty)->modifiableStorage().get();
 				OVITO_ASSERT(property->dataType() == PropertyStorage::Float);

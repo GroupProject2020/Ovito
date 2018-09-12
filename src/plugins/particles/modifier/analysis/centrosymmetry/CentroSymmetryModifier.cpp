@@ -46,7 +46,7 @@ CentroSymmetryModifier::CentroSymmetryModifier(DataSet* dataset) : AsynchronousM
 /******************************************************************************
 * Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-bool CentroSymmetryModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool CentroSymmetryModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<ParticlesObject>();
 }
@@ -123,18 +123,15 @@ FloatType CentroSymmetryModifier::computeCSP(NearestNeighborFinder& neighFinder,
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState CentroSymmetryModifier::CentroSymmetryEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void CentroSymmetryModifier::CentroSymmetryEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
-	PipelineFlowState output = input;
-	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+	ParticlesObject* particles = state.expectMutableObject<ParticlesObject>();
 
 	if(_inputFingerprint.hasChanged(particles))
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 
 	OVITO_ASSERT(csp()->size() == particles->elementCount());
 	particles->createProperty(csp());
-
-	return output;
 }
 
 OVITO_END_INLINE_NAMESPACE

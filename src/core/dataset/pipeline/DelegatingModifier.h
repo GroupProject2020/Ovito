@@ -44,11 +44,14 @@ public:
 		using RefTarget::OOMetaClass::OOMetaClass;
 
 		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const { 
+		virtual bool isApplicableTo(const DataCollection& input) const { 
 			OVITO_ASSERT_MSG(false, "ModifierDelegate::OOMetaClass::isApplicableTo()",
 				qPrintable(QStringLiteral("Metaclass of modifier delegate class %1 does not override the isApplicableTo() method.").arg(name()))); 
 			return false;
 		}
+
+		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
+		bool isApplicableToState(const PipelineFlowState& input) const { return input.data() && isApplicableTo(*input.data()); }
 
 		/// \brief The name by which Python scripts can refer to this modifier delegate.
 		virtual QString pythonDataName() const {
@@ -69,7 +72,7 @@ protected:
 public:
 
 	/// \brief Applies the modifier operation to the data in a pipeline flow state.
-	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs) = 0;
+	virtual PipelineStatus apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs) = 0;
 
 	/// \brief Returns the modifier to which this delegate belongs.
 	Modifier* modifier() const;
@@ -102,7 +105,7 @@ public:
 		using ModifierClass::ModifierClass;
 
 		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+		virtual bool isApplicableTo(const DataCollection& input) const override;
 
 		/// Return the metaclass of delegates for this modifier type. 
 		virtual const ModifierDelegate::OOMetaClass& delegateMetaclass() const { 
@@ -122,7 +125,7 @@ public:
 	DelegatingModifier(DataSet* dataset);
 
 	/// Modifies the input data in an immediate, preliminary way.
-	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	virtual void evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
 protected:
 
@@ -131,7 +134,7 @@ protected:
 	void createDefaultModifierDelegate(const OvitoClass& delegateType, const QString& defaultDelegateTypeName);
 
 	/// Lets the modifier's delegate operate on a pipeline flow state.
-	void applyDelegate(const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs = {});
+	void applyDelegate(PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs = {});
 
 protected:
 
@@ -155,7 +158,7 @@ public:
 		using ModifierClass::ModifierClass;
 
 		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+		virtual bool isApplicableTo(const DataCollection& input) const override;
 
 		/// Return the metaclass of delegates for this modifier type. 
 		virtual const ModifierDelegate::OOMetaClass& delegateMetaclass() const { 
@@ -175,7 +178,7 @@ public:
 	MultiDelegatingModifier(DataSet* dataset);
 
 	/// Modifies the input data in an immediate, preliminary way.
-	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	virtual void evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
 protected:
 
@@ -184,7 +187,7 @@ protected:
 	void createModifierDelegates(const OvitoClass& delegateType);
 
 	/// Lets the registered modifier delegates operate on a pipeline flow state.
-	void applyDelegates(const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs = {});
+	void applyDelegates(PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs = {});
 
 protected:
 

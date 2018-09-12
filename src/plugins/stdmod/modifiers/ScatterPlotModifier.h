@@ -48,7 +48,7 @@ public:
 	virtual void initializeModifier(ModifierApplication* modApp) override;
 
 	/// Modifies the input data in an immediate, preliminary way.
-	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	virtual void evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 	
 	/// Set start and end value of the x-axis.
 	void setXAxisRange(FloatType start, FloatType end) { setXAxisRangeStart(start); setXAxisRangeEnd(end); }

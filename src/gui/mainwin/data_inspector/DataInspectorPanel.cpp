@@ -97,7 +97,7 @@ DataInspectorPanel::DataInspectorPanel(MainWindow* mainWindow) :
 	connect(&datasetContainer(), &DataSetContainer::timeChangeComplete, this, &DataInspectorPanel::onScenePreparationEnd);	
 	connect(&_selectedNodeListener, &RefTargetListenerBase::notificationEvent, this, &DataInspectorPanel::onSceneNodeNotificationEvent);
 
-	updateTabs({});
+	updateTabs(nullptr);
 }
 
 /******************************************************************************
@@ -236,7 +236,7 @@ void DataInspectorPanel::updateInspector()
 		PipelineFlowState();
 
 	// Update the list of displayed tabs.
-	updateTabs(pipelineState);
+	updateTabs(pipelineState.data());
 
 	// Update displayed content.
 	if(_inspectorActive) {
@@ -249,7 +249,7 @@ void DataInspectorPanel::updateInspector()
 /******************************************************************************
 * Updates the list of visible tabs.
 ******************************************************************************/
-void DataInspectorPanel::updateTabs(const PipelineFlowState& pipelineState)
+void DataInspectorPanel::updateTabs(const DataCollection* dataCollection)
 {
 	OVITO_ASSERT(_appletsToTabs.size() == _applets.size());
 	size_t numActiveApplets = 0;
@@ -258,7 +258,7 @@ void DataInspectorPanel::updateTabs(const PipelineFlowState& pipelineState)
 	for(int appletIndex = _applets.size()-1; appletIndex >= 0; appletIndex--) {
 		if(_appletsToTabs[appletIndex] != -1) {
 			DataInspectionApplet* applet = _applets[appletIndex];
-			if(!applet->appliesTo(pipelineState)) {
+			if(!dataCollection || !applet->appliesTo(*dataCollection)) {
 				int tabIndex = _appletsToTabs[appletIndex];
 				_appletsToTabs[appletIndex] = -1;
 				// Shift tab indices.
@@ -276,7 +276,7 @@ void DataInspectorPanel::updateTabs(const PipelineFlowState& pipelineState)
 	for(int appletIndex = 0; appletIndex < _applets.size(); appletIndex++) {
 		if(_appletsToTabs[appletIndex] == -1) {
 			DataInspectionApplet* applet = _applets[appletIndex];
-			if(applet->appliesTo(pipelineState)) {
+			if(dataCollection && applet->appliesTo(*dataCollection)) {
 				_appletsToTabs[appletIndex] = tabIndex;
 				// Shift tab indices.
 				for(int i = appletIndex + 1; i < _applets.size(); i++)

@@ -82,7 +82,7 @@ void DelegatingModifier::createDefaultModifierDelegate(const OvitoClass& delegat
 /******************************************************************************
 * Asks the metaclass whether the modifier can be applied to the given input data.
 ******************************************************************************/
-bool DelegatingModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool DelegatingModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	if(!ModifierClass::isApplicableTo(input)) return false;
 
@@ -97,20 +97,16 @@ bool DelegatingModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& in
 /******************************************************************************
 * Modifies the input data in an immediate, preliminary way.
 ******************************************************************************/
-PipelineFlowState DelegatingModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void DelegatingModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
-	PipelineFlowState output = input;
-
 	// Apply the modifier delegate to the input data.
-	applyDelegate(input, output, time, modApp);
-	
-	return output;
+	applyDelegate(state, time, modApp);
 }
 
 /******************************************************************************
 * Lets the modifier's delegate operate on a pipeline flow state.
 ******************************************************************************/
-void DelegatingModifier::applyDelegate(const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
+void DelegatingModifier::applyDelegate(PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	OVITO_ASSERT(!dataset()->undoStack().isRecording());
 
@@ -118,14 +114,14 @@ void DelegatingModifier::applyDelegate(const PipelineFlowState& input, PipelineF
 		return;
 
 	// Skip function if not applicable.
-	if(!delegate()->getOOMetaClass().isApplicableTo(input))
+	if(!state.data() || !delegate()->getOOMetaClass().isApplicableTo(*state.data()))
 		throwException(tr("The modifier input does not contain the expected kind of data."));
 
 	// Call the delegate function.
-	PipelineStatus delegateStatus = delegate()->apply(this, input, output, time, modApp, additionalInputs);
+	PipelineStatus delegateStatus = delegate()->apply(this, state, time, modApp, additionalInputs);
 
 	// Append status text and code returned by the delegate function to the status returned to our caller.
-	PipelineStatus status = output.status();
+	PipelineStatus status = state.status();
 	if(status.type() == PipelineStatus::Success || delegateStatus.type() == PipelineStatus::Error)
 		status.setType(delegateStatus.type());
 	if(!delegateStatus.text().isEmpty()) {
@@ -134,7 +130,7 @@ void DelegatingModifier::applyDelegate(const PipelineFlowState& input, PipelineF
 		else
 			status.setText(delegateStatus.text());
 	}
-	output.setStatus(std::move(status));
+	state.setStatus(std::move(status));
 }
 
 /******************************************************************************
@@ -160,7 +156,7 @@ void MultiDelegatingModifier::createModifierDelegates(const OvitoClass& delegate
 /******************************************************************************
 * Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-bool MultiDelegatingModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool MultiDelegatingModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	if(!ModifierClass::isApplicableTo(input)) return false;
 
@@ -175,34 +171,30 @@ bool MultiDelegatingModifier::OOMetaClass::isApplicableTo(const PipelineFlowStat
 /******************************************************************************
 * Modifies the input data in an immediate, preliminary way.
 ******************************************************************************/
-PipelineFlowState MultiDelegatingModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void MultiDelegatingModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
-	PipelineFlowState output = input;
-
 	// Apply all enabled modifier delegates to the input data.
-	applyDelegates(input, output, time, modApp);
-	
-	return output;
+	applyDelegates(state, time, modApp);
 }
 
 /******************************************************************************
 * Lets the registered modifier delegates operate on a pipeline flow state.
 ******************************************************************************/
-void MultiDelegatingModifier::applyDelegates(const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
+void MultiDelegatingModifier::applyDelegates(PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	OVITO_ASSERT(!dataset()->undoStack().isRecording());
 
 	for(ModifierDelegate* delegate : delegates()) {
 
 		// Skip function if not applicable.
-		if(!delegate->isEnabled() || !delegate->getOOMetaClass().isApplicableTo(input))
+		if(!state.data() || !delegate->isEnabled() || !delegate->getOOMetaClass().isApplicableTo(*state.data()))
 			continue;
 
 		// Call the delegate function.
-		PipelineStatus delegateStatus = delegate->apply(this, input, output, time, modApp, additionalInputs);
+		PipelineStatus delegateStatus = delegate->apply(this, state, time, modApp, additionalInputs);
 
 		// Append status text and code returned by the delegate function to the status returned to our caller.
-		PipelineStatus status = output.status();
+		PipelineStatus status = state.status();
 		if(status.type() == PipelineStatus::Success || delegateStatus.type() == PipelineStatus::Error)
 			status.setType(delegateStatus.type());
 		if(!delegateStatus.text().isEmpty()) {
@@ -211,7 +203,7 @@ void MultiDelegatingModifier::applyDelegates(const PipelineFlowState& input, Pip
 			else
 				status.setText(delegateStatus.text());
 		}
-		output.setStatus(std::move(status));
+		state.setStatus(std::move(status));
 	}
 }
 

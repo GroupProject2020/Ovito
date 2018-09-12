@@ -87,7 +87,7 @@ void SelectTypeModifier::propertyChanged(const PropertyFieldDescriptor& field)
 /******************************************************************************
 * Modifies the input data in an immediate, preliminary way.
 ******************************************************************************/
-PipelineFlowState SelectTypeModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void SelectTypeModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	if(!subject())
 		throwException(tr("No input element type selected."));
@@ -99,8 +99,7 @@ PipelineFlowState SelectTypeModifier::evaluatePreliminary(TimePoint time, Modifi
 		throwException(tr("Modifier was set to operate on '%1', but the selected input is a '%2' property.")
 			.arg(subject().dataClass()->pythonName()).arg(sourceProperty().containerClass()->propertyClassDisplayName()));
 
-	PipelineFlowState output = input;
-	PropertyContainer* container = output.expectMutableLeafObject(subject());
+	PropertyContainer* container = state.expectMutableLeafObject(subject());
 
 	// Get the input property.
 	const PropertyObject* typeProperty = sourceProperty().findInContainer(container);
@@ -137,7 +136,7 @@ PipelineFlowState SelectTypeModifier::evaluatePreliminary(TimePoint time, Modifi
 		else s = 0;
 	}
 
-	output.addAttribute(QStringLiteral("SelectType.num_selected"), QVariant::fromValue(nSelected), modApp);
+	state.addAttribute(QStringLiteral("SelectType.num_selected"), QVariant::fromValue(nSelected), modApp);
 	
 	QString statusMessage = tr("%1 out of %2 %3 selected (%4%)")
 		.arg(nSelected)
@@ -145,8 +144,7 @@ PipelineFlowState SelectTypeModifier::evaluatePreliminary(TimePoint time, Modifi
 		.arg(container->getOOMetaClass().elementDescriptionName())
 		.arg((FloatType)nSelected * 100 / std::max((size_t)1,typeProperty->size()), 0, 'f', 1);
 
-	output.setStatus(PipelineStatus(PipelineStatus::Success, std::move(statusMessage)));
-	return output;
+	state.setStatus(PipelineStatus(PipelineStatus::Success, std::move(statusMessage)));
 }
 
 }	// End of namespace

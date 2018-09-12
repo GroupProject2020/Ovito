@@ -132,9 +132,8 @@ bool SceneRenderer::renderNode(SceneNode* node, const PromiseBase& promise)
 
 			// Invoke all vis elements of all data objects in the pipeline state.
 			std::vector<const DataObject*> objectStack;
-			for(const DataObject* dataObj : state.objects()) {
-				renderDataObject(dataObj, pipeline, state, objectStack);
-			}
+			if(state.data())
+				renderDataObject(state.data(), pipeline, state, objectStack);
 			OVITO_ASSERT(objectStack.empty());
 		}
 	}

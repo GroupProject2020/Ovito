@@ -42,7 +42,7 @@ class OVITO_PARTICLES_EXPORT WrapPeriodicImagesModifier : public Modifier
 		using ModifierClass::ModifierClass;
 
 		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+		virtual bool isApplicableTo(const DataCollection& input) const override;
 	};
 
 	Q_OBJECT
@@ -57,7 +57,7 @@ public:
 	Q_INVOKABLE WrapPeriodicImagesModifier(DataSet* dataset) : Modifier(dataset) {}
 
 	/// Modifies the input data in an immediate, preliminary way.
-	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	virtual void evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 };
 
 OVITO_END_INLINE_NAMESPACE

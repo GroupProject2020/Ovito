@@ -42,14 +42,14 @@ DEFINE_PROPERTY_FIELD(FileSource, sourceUrls);
 DEFINE_PROPERTY_FIELD(FileSource, playbackSpeedNumerator);
 DEFINE_PROPERTY_FIELD(FileSource, playbackSpeedDenominator);
 DEFINE_PROPERTY_FIELD(FileSource, playbackStartTime);
-DEFINE_REFERENCE_FIELD(FileSource, dataObjects);
+DEFINE_REFERENCE_FIELD(FileSource, dataCollection);
 SET_PROPERTY_FIELD_LABEL(FileSource, importer, "File Importer");
 SET_PROPERTY_FIELD_LABEL(FileSource, adjustAnimationIntervalEnabled, "Adjust animation length to time series");
 SET_PROPERTY_FIELD_LABEL(FileSource, sourceUrls, "Source location");
 SET_PROPERTY_FIELD_LABEL(FileSource, playbackSpeedNumerator, "Playback rate numerator");
 SET_PROPERTY_FIELD_LABEL(FileSource, playbackSpeedDenominator, "Playback rate denominator");
 SET_PROPERTY_FIELD_LABEL(FileSource, playbackStartTime, "Playback start time");
-SET_PROPERTY_FIELD_LABEL(FileSource, dataObjects, "Objects");
+SET_PROPERTY_FIELD_LABEL(FileSource, dataCollection, "Data");
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(FileSource, playbackSpeedNumerator, IntegerParameterUnit, 1);
 SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(FileSource, playbackSpeedDenominator, IntegerParameterUnit, 1);
 SET_PROPERTY_FIELD_CHANGE_EVENT(FileSource, sourceUrls, ReferenceEvent::TitleChanged);
@@ -348,10 +348,10 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 				if(frame < 0) interval.setEnd(sourceFrameToAnimationTime(0) - 1);
 				else if(frame >= sourceFrames.size() && !sourceFrames.empty()) interval.setStart(sourceFrameToAnimationTime(sourceFrames.size()));
 
-				return PipelineFlowState(dataObjects(), interval, PipelineStatus(PipelineStatus::Error, tr("The file source path is empty or has not been set (no files found).")));
+				return PipelineFlowState(dataCollection(), PipelineStatus(PipelineStatus::Error, tr("The file source path is empty or has not been set (no files found).")), interval);
 			}
 			else if(frame < 0) {
-				return PipelineFlowState(dataObjects(), TimeInterval::infinite(), PipelineStatus(PipelineStatus::Error, tr("The requested source frame is out of range.")));
+				return PipelineFlowState(dataCollection(), PipelineStatus(PipelineStatus::Error, tr("The requested source frame is out of range.")));
 			}
 
 			// Compute validity interval of the returned state.
@@ -372,7 +372,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 					// Without an importer object we have to give up immediately.
 					if(!importer()) {
 						// In case of an error, just return the stale data that we have cached.
-						return PipelineFlowState(dataObjects(), TimeInterval::infinite(), PipelineStatus(PipelineStatus::Error, tr("The file source path has not been set.")));
+						return PipelineFlowState(dataCollection(), PipelineStatus(PipelineStatus::Error, tr("The file source path has not been set.")));
 					}
 
 					// Create the frame loader for the requested frame.
@@ -386,43 +386,35 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 
 							UndoSuspender noUndo(this);
 
-							// Re-use existing data objects if possible.
-							PipelineFlowState existingState(dataObjects());
+							// Let the file importer work with the data collection of this FileSource if there is one from a previous load operation.
+							OORef<DataCollection> oldData = dataCollection();
 
-							// But do not modify the existing objects if we are not loading the current animation frame.
-							bool reuseObjects = interval.contains(dataset()->animationSettings()->time());
-							if(!reuseObjects) {
-								existingState.makeAllMutableRecursive();
+							// Make a copy of the existing data collection when not loading the current timestep.
+							// That's because we want the data collection of the FileSource to always reflect the current time only,
+							// so the importer should not touch the original data collection.
+							if(!interval.contains(dataset()->animationSettings()->time())) {
+								oldData = CloneHelper().cloneObject(oldData, true);
 							}
 
 							// Let the data container insert its data into the pipeline state.
 							_handOverInProgress = true;
 							try {
-								PipelineFlowState outputState = frameData->handOver(existingState, _isNewFile, this);
+								OORef<DataCollection> loadedData = frameData->handOver(oldData, _isNewFile, this);
+								oldData.reset();
 								_isNewFile = false;
 								_handOverInProgress = false;
-								existingState.clear();
-								outputState.setStateValidity(interval);
-								outputState.addAttribute(QStringLiteral("SourceFrame"), frame, this);
-								outputState.addAttribute(QStringLiteral("SourceFile"), frameInfo.sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded), this);
-								outputState.setStatus(frameData->status());
+								loadedData->addAttribute(QStringLiteral("SourceFrame"), frame, this);
+								loadedData->addAttribute(QStringLiteral("SourceFile"), frameInfo.sourceFile.toString(QUrl::RemovePassword | QUrl::PreferLocalFile | QUrl::PrettyDecoded), this);
 								
-								// When loading the current frame, turn the data objects into sub-objects of this
-								// FileSource so that they appear in the pipeline editor.
-								if(reuseObjects) {
-									QVector<const DataObject*> newDataObjects;
-									for(const DataObject* o : outputState.objects()) {
-										newDataObjects.push_back(o);
-									}
-									_dataObjects.set(this, PROPERTY_FIELD(dataObjects), std::move(newDataObjects));
+								// When loading the current frame, make the new data collection the data collection of this 
+								// FileSource so that it appears in the pipeline editor.
+								if(interval.contains(dataset()->animationSettings()->time())) {
+									setDataCollection(loadedData);
 									setStoredFrameIndex(frame);
 								}
 
-								// Never output the current sub-objects directly to the pipeline; 
-								// always clone them to avoid unexpected side effects.
-								outputState.makeAllMutableRecursive();
-
-								return outputState;
+								// Build and return the result pipeline state.
+								return PipelineFlowState(std::move(loadedData), frameData->status(), interval);
 							}
 							catch(...) {
 								_handOverInProgress = false;
@@ -464,7 +456,7 @@ Future<PipelineFlowState> FileSource::requestFrameInternal(int frame)
 					setStatus(PipelineStatus(PipelineStatus::Error, ex.messages().join(QChar('\n'))));
 					ex.reportError();
 					ex.prependGeneralMessage(tr("File source reported:"));
-					return PipelineFlowState(PipelineStatus(PipelineStatus::Error, ex.messages().join(QChar(' '))), sourceFrameToAnimationTime(frame));
+					return PipelineFlowState(dataCollection(), PipelineStatus(PipelineStatus::Error, ex.messages().join(QChar(' '))), sourceFrameToAnimationTime(frame));
 				}
 			});
 }
@@ -605,26 +597,53 @@ void FileSource::propertyChanged(const PropertyFieldDescriptor& field)
 ******************************************************************************/
 bool FileSource::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
-	if(event.type() == ReferenceEvent::TargetChanged && dataObjects().contains(static_cast<DataObject*>(source))) {
+	if(event.type() == ReferenceEvent::TargetChanged && source == dataCollection()) {
 		if(_handOverInProgress) {
-			// Block TargetChanged messages from sub-objects while a data hand-over is in progress.
+			// Block TargetChanged messages from the data collection while a data hand-over is in progress.
 			return false;
 		}
 		else if(!event.sender()->isBeingLoaded()) {
-			// Whenever the user changes the sub-objects, update the pipeline state stored in the cache.
-	//		PipelineFlowState state = evaluatePreliminary();
-	//		state.clearObjects();
-	//		for(DataObject* o : dataObjects())
-				state.addObject(o);
-			// Never pass the original data objects to the pipeline. 
-			state.makeAllMutableRecursive();
-			pipelineCache().insert(std::move(state), this);
-			// Also inform the pipeline that we have a new preliminary input state.
+			// Whenever the user actively edits the data collection of this FileSource, 
+			// cached pipeline states become (mostly) invalid.
+			invalidatePipelineCache(TimeInterval(dataset()->animationSettings()->time()));
+
+			// Next time the cached state is accessed, make sure we update it with the contents of the current data collection.
+			_updateCacheWithDataCollection = true;
+
+			// Inform the pipeline that we have a new preliminary input state.
 			notifyDependents(ReferenceEvent::PreliminaryStateAvailable);
 		}
 	}
 
 	return CachingPipelineObject::referenceEvent(source, event);
+}
+
+/******************************************************************************
+* Asks the object for the result of the data pipeline.
+******************************************************************************/
+SharedFuture<PipelineFlowState> FileSource::evaluate(TimePoint time)
+{
+	if(_updateCacheWithDataCollection) {
+		_updateCacheWithDataCollection = false;
+		if(pipelineCache().contains(time)) {
+			const PipelineFlowState& oldCachedState = pipelineCache().getAt(time);
+			pipelineCache().insert(PipelineFlowState(dataCollection(), oldCachedState.status(), oldCachedState.stateValidity()), this);
+		}
+	}
+	return CachingPipelineObject::evaluate(time);
+}
+
+/******************************************************************************
+* Returns the results of an immediate and preliminary evaluation of the data pipeline.
+******************************************************************************/
+PipelineFlowState FileSource::evaluatePreliminary()
+{
+	if(_updateCacheWithDataCollection) {
+		_updateCacheWithDataCollection = false;
+		const PipelineFlowState& oldCachedState = pipelineCache().getStaleContents();
+		pipelineCache().insert(PipelineFlowState(dataCollection(), oldCachedState.status(), oldCachedState.stateValidity()), this);
+	}
+	return CachingPipelineObject::evaluatePreliminary();
 }
 
 /******************************************************************************

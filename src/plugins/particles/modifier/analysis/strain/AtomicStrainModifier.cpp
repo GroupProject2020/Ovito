@@ -315,10 +315,9 @@ void AtomicStrainModifier::AtomicStrainEngine::computeStrain(size_t particleInde
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState AtomicStrainModifier::AtomicStrainEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void AtomicStrainModifier::AtomicStrainEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
-	PipelineFlowState output = input;
-	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+	ParticlesObject* particles = state.expectMutableObject<ParticlesObject>();
 
 	if(_inputFingerprint.hasChanged(particles))
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
@@ -350,12 +349,10 @@ PipelineFlowState AtomicStrainModifier::AtomicStrainEngine::emitResults(TimePoin
 	if(stretchTensors())
 		particles->createProperty(stretchTensors());
 
-	output.addAttribute(QStringLiteral("AtomicStrain.invalid_particle_count"), QVariant::fromValue(numInvalidParticles()), modApp);
+	state.addAttribute(QStringLiteral("AtomicStrain.invalid_particle_count"), QVariant::fromValue(numInvalidParticles()), modApp);
 
 	if(numInvalidParticles() != 0)
-		output.setStatus(PipelineStatus(PipelineStatus::Warning, tr("Could not compute local deformation for %1 particles because of too few neighbors. Increase cutoff radius to include more neighbors.").arg(numInvalidParticles())));
-
-	return output;
+		state.setStatus(PipelineStatus(PipelineStatus::Warning, tr("Could not compute local deformation for %1 particles because of too few neighbors. Increase cutoff radius to include more neighbors.").arg(numInvalidParticles())));
 }
 
 OVITO_END_INLINE_NAMESPACE

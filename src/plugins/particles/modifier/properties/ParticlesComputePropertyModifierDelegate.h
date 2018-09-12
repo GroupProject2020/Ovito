@@ -44,7 +44,7 @@ class OVITO_PARTICLES_EXPORT ParticlesComputePropertyModifierDelegate : public C
 		using ComputePropertyModifierDelegate::OOMetaClass::OOMetaClass;
 
 		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override {
+		virtual bool isApplicableTo(const DataCollection& input) const override {
 			return input.containsObject<ParticlesObject>();
 		}
 
@@ -149,7 +149,7 @@ private:
 		bool neighborMode() const { return _neighborMode; }
 
 		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		virtual void emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
 	private:
 

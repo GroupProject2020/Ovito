@@ -32,7 +32,7 @@ IMPLEMENT_OVITO_CLASS(DislocationSliceModifierDelegate);
 /******************************************************************************
 * Performs the actual rejection of particles.
 ******************************************************************************/
-PipelineStatus DislocationSliceModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
+PipelineStatus DislocationSliceModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	SliceModifier* mod = static_object_cast<SliceModifier>(modifier);
 	if(mod->createSelection()) 
@@ -41,19 +41,19 @@ PipelineStatus DislocationSliceModifierDelegate::apply(Modifier* modifier, const
 	// Obtain modifier parameter values. 
 	Plane3 plane;
 	FloatType sliceWidth;
-	std::tie(plane, sliceWidth) = mod->slicingPlane(time, output.mutableStateValidity());
+	std::tie(plane, sliceWidth) = mod->slicingPlane(time, state.mutableStateValidity());
 	
-	for(const DataObject* obj : output.objects()) {
+	for(const DataObject* obj : state.data()->objects()) {
 		if(const DislocationNetworkObject* inputDislocations = dynamic_object_cast<DislocationNetworkObject>(obj)) {
 			QVector<Plane3> planes = inputDislocations->cuttingPlanes();
 			if(sliceWidth <= 0) {
 				planes.push_back(plane);
 			}
 			else {
-				planes.push_back(Plane3(plane.normal, plane.dist + sliceWidth/2));
+				planes.push_back(Plane3( plane.normal,  plane.dist + sliceWidth/2));
 				planes.push_back(Plane3(-plane.normal, -plane.dist + sliceWidth/2));
 			}
-			DislocationNetworkObject* outputDislocations = output.makeMutable(inputDislocations);
+			DislocationNetworkObject* outputDislocations = state.makeMutable(inputDislocations);
 			outputDislocations->setCuttingPlanes(std::move(planes));
 		}
 	}

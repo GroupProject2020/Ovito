@@ -54,7 +54,7 @@ AmbientOcclusionModifier::AmbientOcclusionModifier(DataSet* dataset) : Asynchron
 /******************************************************************************
 * Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-bool AmbientOcclusionModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool AmbientOcclusionModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<ParticlesObject>();
 }
@@ -236,14 +236,12 @@ void AmbientOcclusionModifier::AmbientOcclusionEngine::perform()
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState AmbientOcclusionModifier::AmbientOcclusionEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void AmbientOcclusionModifier::AmbientOcclusionEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	AmbientOcclusionModifier* modifier = static_object_cast<AmbientOcclusionModifier>(modApp->modifier());
 	OVITO_ASSERT(modifier);
 
-	PipelineFlowState output = input;
-
-	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+	ParticlesObject* particles = state.expectMutableObject<ParticlesObject>();
 	if(_inputFingerprint.hasChanged(particles))
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 	OVITO_ASSERT(brightness() && particles->elementCount() == brightness()->size());
@@ -261,8 +259,6 @@ PipelineFlowState AmbientOcclusionModifier::AmbientOcclusionEngine::emitResults(
 		if(factor < FloatType(1))
 			*c = (*c) * factor;
 	}
-
-	return output;
 }
 
 OVITO_END_INLINE_NAMESPACE

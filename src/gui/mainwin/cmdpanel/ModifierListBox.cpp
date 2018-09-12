@@ -320,7 +320,7 @@ void ModifierListBox::updateApplicableModifiersList()
 	for(QStandardItem* item : _modifierItems) {
 		ModifierClassPtr modifierClass = item->data(Qt::UserRole).value<ModifierClassPtr>();
 		OVITO_ASSERT(modifierClass);
-		item->setEnabled(modifierClass->isApplicableTo(inputState));
+		item->setEnabled(inputState.data() && modifierClass->isApplicableTo(*inputState.data()));
 	}
 
 	// Load custom modifier templates.

@@ -93,7 +93,7 @@ protected:
 private:
 
 	/// Updates the list of visible tabs.
-	void updateTabs(const PipelineFlowState& pipelineState);
+	void updateTabs(const DataCollection* dataCollection);
 
 	/// Returns the dataset container this panel is associated with.
 	GuiDataSetContainer& datasetContainer() const { return _mainWindow->datasetContainer(); }

@@ -34,7 +34,7 @@ IMPLEMENT_OVITO_CLASS(ParticlesReplicateModifierDelegate);
 /******************************************************************************
 * Determines whether this delegate can handle the given input data.
 ******************************************************************************/
-bool ParticlesReplicateModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool ParticlesReplicateModifierDelegate::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<ParticlesObject>();
 }
@@ -42,10 +42,10 @@ bool ParticlesReplicateModifierDelegate::OOMetaClass::isApplicableTo(const Pipel
 /******************************************************************************
 * Applies the modifier operation to the data in a pipeline flow state.
 ******************************************************************************/
-PipelineStatus ParticlesReplicateModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
+PipelineStatus ParticlesReplicateModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	ReplicateModifier* mod = static_object_cast<ReplicateModifier>(modifier);
-	const ParticlesObject* inputParticles = input.getObject<ParticlesObject>();
+	const ParticlesObject* inputParticles = state.getObject<ParticlesObject>();
 	
 	std::array<int,3> nPBC;
 	nPBC[0] = std::max(mod->numImagesX(),1);
@@ -61,10 +61,10 @@ PipelineStatus ParticlesReplicateModifierDelegate::apply(Modifier* modifier, con
 	size_t oldParticleCount = inputParticles->elementCount();
 	size_t newParticleCount = oldParticleCount * numCopies;
 
-	const AffineTransformation& simCell = input.expectObject<SimulationCellObject>()->cellMatrix();
+	const AffineTransformation& simCell = state.expectObject<SimulationCellObject>()->cellMatrix();
 
 	// Ensure that the particles can be modified. 
-	ParticlesObject* outputParticles = output.makeMutable(inputParticles);
+	ParticlesObject* outputParticles = state.makeMutable(inputParticles);
 	OVITO_ASSERT(outputParticles != inputParticles);
 	outputParticles->makePropertiesMutable();
 

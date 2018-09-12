@@ -43,7 +43,7 @@ public:
 	Q_INVOKABLE InvertSelectionModifier(DataSet* dataset);
 
 	/// Modifies the input data in an immediate, preliminary way.
-	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	virtual void evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 };
 
 }	// End of namespace

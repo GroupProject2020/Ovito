@@ -42,7 +42,7 @@ class OVITO_PARTICLES_EXPORT LoadTrajectoryModifier : public Modifier
 		using ModifierClass::ModifierClass;
 
 		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+		virtual bool isApplicableTo(const DataCollection& input) const override;
 	};
 
 	Q_OBJECT

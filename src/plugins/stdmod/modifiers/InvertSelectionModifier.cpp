@@ -40,19 +40,15 @@ InvertSelectionModifier::InvertSelectionModifier(DataSet* dataset) : GenericProp
 /******************************************************************************
 * Modifies the input data in an immediate, preliminary way.
 ******************************************************************************/
-PipelineFlowState InvertSelectionModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void InvertSelectionModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	if(!subject())
 		throwException(tr("No data element type set."));
-	
-	PipelineFlowState output = input;
 
-   	PropertyContainer* container = output.expectMutableLeafObject(subject());
+   	PropertyContainer* container = state.expectMutableLeafObject(subject());
 	PropertyObject* selProperty = container->createProperty(PropertyStorage::GenericSelectionProperty, true);
 	for(int& s : selProperty->intRange())
 		s = !s;
-    
-	return output;
 }
 
 }	// End of namespace

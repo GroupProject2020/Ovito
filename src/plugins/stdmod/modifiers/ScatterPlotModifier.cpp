@@ -123,7 +123,7 @@ void ScatterPlotModifier::propertyChanged(const PropertyFieldDescriptor& field)
 /******************************************************************************
 * Modifies the input data in an immediate, preliminary way.
 ******************************************************************************/
-PipelineFlowState ScatterPlotModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void ScatterPlotModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	if(!subject())
 		throwException(tr("No data element type set."));
@@ -143,7 +143,7 @@ PipelineFlowState ScatterPlotModifier::evaluatePreliminary(TimePoint time, Modif
 			.arg(subject().dataClass()->pythonName()).arg(yAxisProperty().containerClass()->propertyClassDisplayName()));
 
 	// Look up the property container object.
-	const PropertyContainer* container = input.expectLeafObject(subject());
+	const PropertyContainer* container = state.expectLeafObject(subject());
 
 	// Get the input properties.
 	const PropertyObject* xPropertyObj = xAxisProperty().findInContainer(container);
@@ -174,16 +174,14 @@ PipelineFlowState ScatterPlotModifier::evaluatePreliminary(TimePoint time, Modif
 	if(selectionXAxisRangeStart > selectionXAxisRangeEnd)
 		std::swap(selectionXAxisRangeStart, selectionXAxisRangeEnd);
 	if(selectionYAxisRangeStart > selectionYAxisRangeEnd)
-		std::swap(selectionYAxisRangeStart, selectionYAxisRangeEnd);
-	
-	PipelineFlowState output = input;		
+		std::swap(selectionYAxisRangeStart, selectionYAxisRangeEnd);	
 
 	// Create output selection property.
 	PropertyPtr outputSelection;
 	size_t numSelected = 0;
 	if(selectXAxisInRange() || selectYAxisInRange()) {
 		// First make sure we can safely modify the property container.
-		PropertyContainer* mutableContainer = output.expectMutableLeafObject(subject());
+		PropertyContainer* mutableContainer = state.expectMutableLeafObject(subject());
 		// Add the selection property to the output container.
 		outputSelection = mutableContainer->createProperty(PropertyStorage::GenericSelectionProperty)->modifiableStorage();
 		std::fill(outputSelection->dataInt(), outputSelection->dataInt() + outputSelection->size(), 1);
@@ -256,7 +254,7 @@ PipelineFlowState ScatterPlotModifier::evaluatePreliminary(TimePoint time, Modif
 	}
 
 	// Output a data series object with the scatter points.
-	DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("scatter"), modApp, DataSeriesObject::Scatter, tr("%1 vs. %2").arg(yAxisProperty().nameWithComponent()).arg(xAxisProperty().nameWithComponent()));
+	DataSeriesObject* seriesObj = state.createObject<DataSeriesObject>(QStringLiteral("scatter"), modApp, DataSeriesObject::Scatter, tr("%1 vs. %2").arg(yAxisProperty().nameWithComponent()).arg(xAxisProperty().nameWithComponent()));
 	seriesObj->createProperty(std::move(out_x))->setName(xAxisProperty().nameWithComponent());
 	seriesObj->createProperty(std::move(out_y))->setName(yAxisProperty().nameWithComponent());
 
@@ -267,8 +265,7 @@ PipelineFlowState ScatterPlotModifier::evaluatePreliminary(TimePoint time, Modif
 				.arg((FloatType)numSelected * 100 / std::max((size_t)1,outputSelection->size()), 0, 'f', 1);
 	}
 
-	output.setStatus(PipelineStatus(PipelineStatus::Success, std::move(statusMessage)));
-	return output;
+	state.setStatus(PipelineStatus(PipelineStatus::Success, std::move(statusMessage)));
 }
 
 }	// End of namespace

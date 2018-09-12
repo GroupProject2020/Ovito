@@ -75,27 +75,22 @@ void ManualSelectionModifier::propertyChanged(const PropertyFieldDescriptor& fie
 /******************************************************************************
 * Modifies the input data in an immediate, preliminary way.
 ******************************************************************************/
-PipelineFlowState ManualSelectionModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void ManualSelectionModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
-	PipelineFlowState output = input;
-
 	// Retrieve the selection stored in the modifier application.
 	ElementSelectionSet* selectionSet = getSelectionSet(modApp, false);
 	if(!selectionSet)
 		throwException(tr("No stored selection set available. Please reset the selection state."));
 
 	if(subject()) {
-
-		PropertyContainer* container = output.expectMutableLeafObject(subject());
+		PropertyContainer* container = state.expectMutableLeafObject(subject());
 		
 		PipelineStatus status = selectionSet->applySelection(
 				container->createProperty(PropertyStorage::GenericSelectionProperty),
 				container->getProperty(PropertyStorage::GenericIdentifierProperty));
 		
-		output.setStatus(std::move(status));
+		state.setStatus(std::move(status));
 	}
-
-	return output;
 }
 
 /******************************************************************************

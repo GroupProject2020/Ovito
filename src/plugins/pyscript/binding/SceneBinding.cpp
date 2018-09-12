@@ -144,16 +144,19 @@ void defineSceneSubmodule(py::module m)
 				}
 				return future.result();
 			}
-		})		
+		})
 	;
 
 	ovito_abstract_class<CachingPipelineObject, PipelineObject>{m}
 	;
 
-	auto DataCollection_py = py::class_<PipelineFlowState>(m,
-			// Python class name:
-			"DataCollection",
-			// Doc string:
+	auto PipelineFlowState_py = py::class_<PipelineFlowState>(m, "PipelineFlowState")
+		.def_property_readonly("status", &PipelineFlowState::status)
+		.def_property_readonly("data", &PipelineFlowState::data)
+		.def_property_readonly("mutable_data", &PipelineFlowState::mutableData)
+	;
+
+	auto DataCollection_py = ovito_class<DataCollection, DataObject>(m,
 			"A :py:class:`!DataCollection` is a container that holds together multiple *data objects*, each representing "
 			"a different facet of a dataset. Data collections are the main entities that are generated and processed in OVITO's "
 			"data pipeline system. :py:class:`!DataCollection` instances are typically returned by the :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` and the "
@@ -249,13 +252,11 @@ void defineSceneSubmodule(py::module m)
 			":py:meth:`.copy_if_needed` first checks whether the given object is currently shared by more than one data collection. If yes, "
 			"a deep copy of the object is made and the original object in the data collection is replaced with the copy. "
 			"Now we can be confident that the copied data object is exclusively owned by the data collection and it's safe to modify it without risking side effects. ")
-		.def(py::init<>())
-		.def_property("status", &PipelineFlowState::status, py::overload_cast<const PipelineStatus&>(&PipelineFlowState::setStatus))
 
-		.def("make_mutable", [](PipelineFlowState& state, const DataObject* obj) -> DataObject* {
+		.def("make_mutable", [](DataCollection& dc, const DataObject* obj) -> DataObject* {
 				if(!obj) return nullptr;
-				if(!state.contains(obj)) throw Exception("Data object is not part of this DataCollection. make_mutable() only works for objects that are currently in the DataCollection.");
-				return state.makeMutable(obj);
+				if(!dc.contains(obj)) throw Exception("Data object is not part of this DataCollection. make_mutable() only works for objects that are currently in the DataCollection.");
+				return dc.makeMutable(obj);
 			}, 
 			"make_mutabel(obj)"
 			"\n\n"
@@ -310,9 +311,9 @@ void defineSceneSubmodule(py::module m)
 #endif
 	;
 	expose_mutable_subobject_list(DataCollection_py,
-								  std::mem_fn(&PipelineFlowState::objects), 
-								  std::mem_fn(&PipelineFlowState::insertObject), 
-								  std::mem_fn(&PipelineFlowState::removeObjectByIndex), "objects", "DataCollectionObjectsList",
+								  std::mem_fn(&DataCollection::objects), 
+								  std::mem_fn(&DataCollection::insertObject), 
+								  std::mem_fn(&DataCollection::removeObjectByIndex), "objects", "DataCollectionObjectsList",
 			"The list of data objects that make up the data collection. Data objects are instances of :py:class:`DataObject`-derived "
 			"classes, for example :py:class:`Particles`, :py:class:`Bonds` or :py:class:`SimulationCell`. "
 			"\n\n"
@@ -444,34 +445,30 @@ void defineSceneSubmodule(py::module m)
 	;
 
 	auto StaticSource_py = ovito_class<StaticSource, PipelineObject>(m,
-		"Serves as a data :py:attr:`~Pipeline.source` for a :py:class:`Pipeline`. "
-		"A :py:class:`!StaticSource` stores a :py:class:`~ovito.data.DataCollection`, which will be passed to the :py:class:`Pipeline` as input data. "
-		"One typically fills a :py:class:`!StaticSource` with some data objects and wires it to a :py:class:`Pipeline` as follows: "
-		"\n\n"
-		".. literalinclude:: ../example_snippets/static_source.py\n"
+			"Serves as a data :py:attr:`~Pipeline.source` for a :py:class:`Pipeline`. "
+			"A :py:class:`!StaticSource` stores a :py:class:`~ovito.data.DataCollection`, which will be passed to the :py:class:`Pipeline` as input data. "
+			"One typically fills a :py:class:`!StaticSource` with some data objects and wires it to a :py:class:`Pipeline` as follows: "
+			"\n\n"
+			".. literalinclude:: ../example_snippets/static_source.py\n"
 		)
-		.def("assign", [](StaticSource& source, const PipelineFlowState& state) {
-			source.setDataObjects({});
-			for(const DataObject* obj : state.objects())
-				source.addDataObject(obj);
-		},
-		"assign(data)"
-		"\n\n"
-		"Sets the contents of this :py:class:`!StaticSource`. "
-		"\n\n"
-		":param data: The :py:class:`~ovito.data.DataCollection` to be copied into this static source object.\n",
-		py::arg("data"))
+		.def("assign", &StaticSource::setDataCollection,
+			"assign(data)"
+			"\n\n"
+			"Sets the contents of this :py:class:`!StaticSource`. "
+			"\n\n"
+			":param data: The :py:class:`~ovito.data.DataCollection` to be copied into this static source object.\n",
+			py::arg("data"))
 
 		.def("compute", [](StaticSource& source, py::object /*frame*/) {
-			return source.evaluatePreliminary();
-		},
-		"compute(frame=None)"
-		"\n\n"
-		"Retrieves the data of this data source, which was previously stored by a call to :py:meth:`.assign`. "
-		"\n\n"
-		":param frame: This parameter is ignored, because the data of a :py:class:`!StaticSource` is not time-dependent.\n"
-		":return: A new :py:class:`~ovito.data.DataCollection` containing the data stored in this :py:class:`!StaticSource`.\n",
-		py::arg("frame") = py::none())
+				return source.evaluatePreliminary();
+			},
+			"compute(frame=None)"
+			"\n\n"
+			"Retrieves the data of this data source, which was previously stored by a call to :py:meth:`.assign`. "
+			"\n\n"
+			":param frame: This parameter is ignored, because the data of a :py:class:`!StaticSource` is not time-dependent.\n"
+			":return: A new :py:class:`~ovito.data.DataCollection` containing the data stored in this :py:class:`!StaticSource`.\n",
+			py::arg("frame") = py::none())
 	;
 
 	auto SceneNode_py = ovito_abstract_class<SceneNode, RefTarget>(m)

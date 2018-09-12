@@ -85,7 +85,7 @@ protected:
 		}
 
 		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		virtual void emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 		
 		/// Returns the property storage that will receive the computed values.
 		const PropertyPtr& outputProperty() const { return _outputProperty; }

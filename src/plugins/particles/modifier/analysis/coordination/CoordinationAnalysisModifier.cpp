@@ -54,7 +54,7 @@ CoordinationAnalysisModifier::CoordinationAnalysisModifier(DataSet* dataset) : A
 /******************************************************************************
 * Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-bool CoordinationAnalysisModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool CoordinationAnalysisModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<ParticlesObject>();
 }
@@ -215,10 +215,9 @@ void CoordinationAnalysisModifier::CoordinationAnalysisEngine::perform()
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState CoordinationAnalysisModifier::CoordinationAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void CoordinationAnalysisModifier::CoordinationAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
-	PipelineFlowState output = input;
-	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+	ParticlesObject* particles = state.expectMutableObject<ParticlesObject>();
 
 	if(_inputFingerprint.hasChanged(particles))
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
@@ -228,12 +227,10 @@ PipelineFlowState CoordinationAnalysisModifier::CoordinationAnalysisEngine::emit
 	particles->createProperty(coordinationNumbers());
 
 	// Output RDF histogram(s).
-	DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("coordination-rdf"), modApp, DataSeriesObject::Line, tr("Radial distribution function"), rdfY());
+	DataSeriesObject* seriesObj = state.createObject<DataSeriesObject>(QStringLiteral("coordination-rdf"), modApp, DataSeriesObject::Line, tr("Radial distribution function"), rdfY());
 	seriesObj->setIntervalStart(0);
 	seriesObj->setIntervalEnd(cutoff());
 	seriesObj->setAxisLabelX(tr("Pair separation distance"));
-
-	return output;
 }
 
 OVITO_END_INLINE_NAMESPACE

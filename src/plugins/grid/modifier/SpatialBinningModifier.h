@@ -112,7 +112,7 @@ protected:
 		int binningDirection() const { return _binningDirection; }
 
 		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		virtual void emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 		
 	private:
 

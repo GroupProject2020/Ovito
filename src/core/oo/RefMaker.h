@@ -153,7 +153,7 @@ protected:
 	/// removed from the vector field.
 	///
 	/// \undoable
-	void clearReferencesTo(RefTarget* target);
+	void clearReferencesTo(const RefTarget* target);
 
 	/// \brief Clears a reference field.
 	/// \param field Specifies the reference field of this RefMaker to be cleared.

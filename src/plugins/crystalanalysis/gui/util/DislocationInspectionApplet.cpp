@@ -33,12 +33,12 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 IMPLEMENT_OVITO_CLASS(DislocationInspectionApplet);
 
 /******************************************************************************
-* Determines whether the given pipeline flow state contains data that can be 
+* Determines whether the given pipeline dataset contains data that can be 
 * displayed by this applet.
 ******************************************************************************/
-bool DislocationInspectionApplet::appliesTo(const PipelineFlowState& state)
+bool DislocationInspectionApplet::appliesTo(const DataCollection& data)
 {
-	return state.containsObject<DislocationNetworkObject>();
+	return data.containsObject<DislocationNetworkObject>();
 }
 
 /******************************************************************************

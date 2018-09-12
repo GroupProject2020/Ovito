@@ -90,7 +90,7 @@ void ComputePropertyModifier::setPropertyComponentCount(int newComponentCount)
 ******************************************************************************/
 void ComputePropertyModifier::referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget)
 {
-	if(field == PROPERTY_FIELD(AsynchronousDelegatingModifier::delegate) && !dataset()->undoStack().isUndoingOrRedoing() && !isBeingLoaded()) {
+	if(field == PROPERTY_FIELD(AsynchronousDelegatingModifier::delegate) && !isAboutToBeDeleted() && !isBeingLoaded() && !dataset()->undoStack().isUndoingOrRedoing()) {
 		setOutputProperty(outputProperty().convertToContainerClass(delegate() ? &delegate()->containerClass() : nullptr));
 		if(delegate()) delegate()->setComponentCount(expressions().size());
 	}
@@ -225,7 +225,7 @@ QStringList ComputePropertyModifierDelegate::PropertyComputeEngine::inputVariabl
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState ComputePropertyModifierDelegate::PropertyComputeEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void ComputePropertyModifierDelegate::PropertyComputeEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	ComputePropertyModifierApplication* myModApp = dynamic_object_cast<ComputePropertyModifierApplication>(modApp);
 	ComputePropertyModifier* modifier = static_object_cast<ComputePropertyModifier>(modApp->modifier());
@@ -233,10 +233,8 @@ PipelineFlowState ComputePropertyModifierDelegate::PropertyComputeEngine::emitRe
 	if(!modifier->delegate())
 		modifier->throwException(tr("No delegate set for the Compute Property modifier."));
 
-	PipelineFlowState output = input;
-
 	// Look up the container we are operating on.
-   	DataObjectPath objectPath = output.expectMutableObject(modifier->delegate()->containerClass(), modifier->delegate()->containerPath());
+   	DataObjectPath objectPath = state.expectMutableObject(modifier->delegate()->containerClass(), modifier->delegate()->containerPath());
 	PropertyContainer* container = static_object_cast<PropertyContainer>(objectPath.back());
 
 	// Create the output property object in the container.
@@ -256,8 +254,6 @@ PipelineFlowState ComputePropertyModifierDelegate::PropertyComputeEngine::emitRe
 		outputPropertyObj->setVisElements(currentVisElements);
 		myModApp->setCachedVisElements(std::move(currentVisElements));
 	}
-
-	return output;
 }
 
 }	// End of namespace

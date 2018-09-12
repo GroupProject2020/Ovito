@@ -50,7 +50,7 @@ void GenericPropertyModifier::setDefaultSubject(const QString& pluginId, const Q
 /******************************************************************************
 * Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-bool GenericPropertyModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool GenericPropertyModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	if(!ModifierClass::isApplicableTo(input)) return false;
 

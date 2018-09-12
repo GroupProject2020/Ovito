@@ -53,7 +53,7 @@ LoadTrajectoryModifier::LoadTrajectoryModifier(DataSet* dataset) : Modifier(data
 /******************************************************************************
 * Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-bool LoadTrajectoryModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool LoadTrajectoryModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<ParticlesObject>();
 }
@@ -71,10 +71,8 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 	SharedFuture<PipelineFlowState> trajStateFuture = trajectorySource()->evaluate(time);
 	
 	// Wait for the data to become available.
-	return trajStateFuture.then(modApp->executor(), [input = input, modApp](const PipelineFlowState& trajState) {
+	return trajStateFuture.then(modApp->executor(), [state = input, modApp](const PipelineFlowState& trajState) mutable {
 		UndoSuspender noUndo(modApp);
-
-		PipelineFlowState output = input;
 		
 		// Make sure the obtained configuration is valid and ready to use.
 		if(trajState.status().type() == PipelineStatus::Error) {
@@ -84,35 +82,15 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 						modApp->throwException(tr("Please pick the input file containing the trajectories."));
 				}
 			}
-			output.setStatus(trajState.status());
-			return output;
+			state.setStatus(trajState.status());
+			return std::move(state);
 		}
 
 		if(trajState.isEmpty())
 			modApp->throwException(tr("Data source has not been specified yet or is empty. Please pick a trajectory file."));
 
 		// Merge validity intervals of topology and trajectory datasets.
-		output.intersectStateValidity(trajState.stateValidity());
-
-		// Merge attributes of topology and trajectory datasets.
-		// If there is a naming collision, attributes from the trajectory dataset override those from the topology dataset. 
-		for(const DataObject* obj : trajState.objects()) {
-			if(const AttributeDataObject* attribute = dynamic_object_cast<AttributeDataObject>(obj)) {
-				const AttributeDataObject* existingAttribute = nullptr; 
-				for(const DataObject* obj2 : output.objects()) {
-					if(const AttributeDataObject* attribute2 = dynamic_object_cast<AttributeDataObject>(obj2)) {
-						if(attribute2->identifier() == attribute->identifier()) {
-							existingAttribute = attribute2;
-							break;
-						}
-					}
-				}
-				if(existingAttribute)
-					output.replaceObject(existingAttribute, attribute);
-				else
-					output.addObject(attribute);
-			}
-		}
+		state.intersectStateValidity(trajState.stateValidity());
 
 		// Get the current particle positions.
 		const ParticlesObject* trajectoryParticles = trajState.getObject<ParticlesObject>();
@@ -121,7 +99,7 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 		const PropertyObject* trajectoryPosProperty = trajectoryParticles->expectProperty(ParticlesObject::PositionProperty);
 
 		// Get the positions from the topology dataset.
-		ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+		ParticlesObject* particles = state.expectMutableObject<ParticlesObject>();
 		const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 
 		// Build particle-to-particle index map.
@@ -199,10 +177,10 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 		}
 
 		// Transfer box geometry.
-		const SimulationCellObject* topologyCell = input.getObject<SimulationCellObject>();
+		const SimulationCellObject* topologyCell = state.getObject<SimulationCellObject>();
 		const SimulationCellObject* trajectoryCell = trajState.getObject<SimulationCellObject>();
 		if(topologyCell && trajectoryCell) {
-			SimulationCellObject* outputCell = output.makeMutable(topologyCell);
+			SimulationCellObject* outputCell = state.makeMutable(topologyCell);
 			outputCell->setCellMatrix(trajectoryCell->cellMatrix());
 			const AffineTransformation& simCell = trajectoryCell->cellMatrix();
 
@@ -237,7 +215,27 @@ Future<PipelineFlowState> LoadTrajectoryModifier::evaluate(TimePoint time, Modif
 			}
 		}
 
-		return output;
+		// Merge attributes of topology and trajectory datasets.
+		// If there is a naming collision, attributes from the trajectory dataset override those from the topology dataset. 
+		for(const DataObject* obj : trajState.data()->objects()) {
+			if(const AttributeDataObject* attribute = dynamic_object_cast<AttributeDataObject>(obj)) {
+				const AttributeDataObject* existingAttribute = nullptr; 
+				for(const DataObject* obj2 : state.data()->objects()) {
+					if(const AttributeDataObject* attribute2 = dynamic_object_cast<AttributeDataObject>(obj2)) {
+						if(attribute2->identifier() == attribute->identifier()) {
+							existingAttribute = attribute2;
+							break;
+						}
+					}
+				}
+				if(existingAttribute)
+					state.mutableData()->replaceObject(existingAttribute, attribute);
+				else
+					state.addObject(attribute);
+			}
+		}
+
+		return std::move(state);
 	});
 }
 

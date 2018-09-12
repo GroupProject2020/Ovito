@@ -45,7 +45,7 @@ InterpolateTrajectoryModifier::InterpolateTrajectoryModifier(DataSet* dataset) :
 /******************************************************************************
 * Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-bool InterpolateTrajectoryModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool InterpolateTrajectoryModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<ParticlesObject>();
 }
@@ -60,7 +60,7 @@ Future<PipelineFlowState> InterpolateTrajectoryModifier::evaluate(TimePoint time
 
 	// Determine the current frame, preferably from the attribute stored with the pipeline flow state.
 	// If the source frame attribute is not present, fall back to inferring it from the current animation time.
-	int currentFrame = input.sourceFrame();
+	int currentFrame = input.data() ? input.data()->sourceFrame() : -1;
 	if(currentFrame < 0)
 		currentFrame = modApp->animationTimeToSourceFrame(time);
 
@@ -75,7 +75,7 @@ Future<PipelineFlowState> InterpolateTrajectoryModifier::evaluate(TimePoint time
 		// Obtain the subsequent input frame. 
 		// Check if we already have the state in our cache available.
 		if(InterpolateTrajectoryModifierApplication* myModApp = dynamic_object_cast<InterpolateTrajectoryModifierApplication>(modApp)) {
-			if(myModApp->frameCache().sourceFrame() == nextFrame) {
+			if(!myModApp->frameCache().isEmpty() && myModApp->frameCache().data()->sourceFrame() == nextFrame) {
 				nextStateFuture = myModApp->frameCache();
 			}
 		}
@@ -87,7 +87,7 @@ Future<PipelineFlowState> InterpolateTrajectoryModifier::evaluate(TimePoint time
 	}
 
 	// Wait for the reference configuration to become available.
-	return nextStateFuture.then(executor(), [this, time, modApp, input = input, nextFrame](const PipelineFlowState& nextState) mutable {
+	return nextStateFuture.then(executor(), [this, time, modApp, state = input, nextFrame](const PipelineFlowState& nextState) mutable {
 		if(InterpolateTrajectoryModifierApplication* myModApp = dynamic_object_cast<InterpolateTrajectoryModifierApplication>(modApp)) {
 			UndoSuspender noUndo(this);
 			
@@ -95,44 +95,43 @@ Future<PipelineFlowState> InterpolateTrajectoryModifier::evaluate(TimePoint time
 			if(nextState.status().type() == PipelineStatus::Error)
 				throwException(tr("Input state is not available: %1").arg(nextState.status().text()));
 		
-			if(nextState.sourceFrame() == nextFrame) {
+			if(!nextState.isEmpty() && nextState.data()->sourceFrame() == nextFrame) {
 				// Cache the next source frame in the ModifierApplication.
 				myModApp->updateFrameCache(nextState);
 
 				// Perform the actual interpolation.
-				return evaluatePreliminary(time, modApp, input);
+				evaluatePreliminary(time, modApp, state);
+				return std::move(state);
 			}
 
 			myModApp->invalidateFrameCache();
 		}
-		input.intersectStateValidity(time);
-		return std::move(input);
+		state.intersectStateValidity(time);
+		return std::move(state);
 	});
 }
 
 /******************************************************************************
 * Modifies the input data in an immediate, preliminary way.
 ******************************************************************************/
-PipelineFlowState InterpolateTrajectoryModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void InterpolateTrajectoryModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
-	PipelineFlowState output = input;
-	
 	// Determine the current frame, preferably from the attribute stored with the pipeline flow state.
 	// If the source frame attribute is not present, fall back to inferring it from the current animation time.
-	int currentFrame = input.sourceFrame();
+	int currentFrame = state.data() ? state.data()->sourceFrame() : -1;
 	if(currentFrame < 0)
 		currentFrame = modApp->animationTimeToSourceFrame(time);
 	
 	// If we are exactly on a source frame, there is no need to interpolate between two frames.
 	if(modApp->sourceFrameToAnimationTime(currentFrame) == time) {
-		output.intersectStateValidity(time);
-		return output;
+		state.intersectStateValidity(time);
+		return;
 	}
 
 	// Retrieve the state of the second frame stored in the ModifierApplication.
 	int nextFrame = currentFrame + 1;
 	InterpolateTrajectoryModifierApplication* myModApp = dynamic_object_cast<InterpolateTrajectoryModifierApplication>(modApp);
-	if(!myModApp || myModApp->frameCache().sourceFrame() != nextFrame)
+	if(!myModApp || myModApp->frameCache().isEmpty() || myModApp->frameCache().data()->sourceFrame() != nextFrame)
 		throwException(tr("No frame state stored."));
 
 	const PipelineFlowState& secondState = myModApp->frameCache();
@@ -142,11 +141,11 @@ PipelineFlowState InterpolateTrajectoryModifier::evaluatePreliminary(TimePoint t
 	if(t < 0) t = 0;
 	else if(t > 1) t = 1;
 	
-	const SimulationCellObject* cell1 = input.getObject<SimulationCellObject>();
+	const SimulationCellObject* cell1 = state.getObject<SimulationCellObject>();
 	const SimulationCellObject* cell2 = secondState.getObject<SimulationCellObject>();
 
 	// Interpolate particle positions.
-	const ParticlesObject* particles1 = input.expectObject<ParticlesObject>();
+	const ParticlesObject* particles1 = state.expectObject<ParticlesObject>();
 	const ParticlesObject* particles2 = secondState.getObject<ParticlesObject>();
 	if(!particles2 || particles1->elementCount() != particles2->elementCount())
 		throwException(tr("Cannot interpolate between consecutive simulation frames, because they contain different numbers of particles."));
@@ -155,7 +154,7 @@ PipelineFlowState InterpolateTrajectoryModifier::evaluatePreliminary(TimePoint t
 
 	const PropertyObject* idProperty1 = particles1->getProperty(ParticlesObject::IdentifierProperty);
 	const PropertyObject* idProperty2 = particles2->getProperty(ParticlesObject::IdentifierProperty);
-	ParticlesObject* outputParticles = output.makeMutable(particles1);
+	ParticlesObject* outputParticles = state.makeMutable(particles1);
 	PropertyObject* outputPositions = outputParticles->createProperty(ParticlesObject::PositionProperty, true);
 	if(idProperty1 && idProperty2 && idProperty1->size() == idProperty2->size() &&  
 			!std::equal(idProperty1->constDataInt64(), idProperty1->constDataInt64() + idProperty1->size(), idProperty2->constDataInt64())) {
@@ -210,14 +209,13 @@ PipelineFlowState InterpolateTrajectoryModifier::evaluatePreliminary(TimePoint t
 
 	// Interpolate simulation cell vectors.
 	if(cell1 && cell2) {
-		SimulationCellObject* outputCell = output.expectMutableObject<SimulationCellObject>();
+		SimulationCellObject* outputCell = state.expectMutableObject<SimulationCellObject>();
 		const AffineTransformation& cellMat1 = cell1->cellMatrix();
 		const AffineTransformation delta = cell2->cellMatrix() - cellMat1;
 		outputCell->setCellMatrix(cellMat1 + delta * t);
 	}
 	
-	output.intersectStateValidity(time);
-	return output;
+	state.intersectStateValidity(time);
 }
 
 /******************************************************************************

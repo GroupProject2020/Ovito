@@ -72,6 +72,7 @@ SET(SourceFiles
 	dataset/scene/SelectionSet.cpp
 	dataset/data/DataVis.cpp
 	dataset/data/DataObject.cpp
+	dataset/data/DataCollection.cpp
 	dataset/data/TransformingDataVis.cpp
 	dataset/data/TransformedDataObject.cpp
 	dataset/data/camera/AbstractCameraObject.cpp

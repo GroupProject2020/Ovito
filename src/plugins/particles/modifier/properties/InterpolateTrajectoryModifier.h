@@ -43,7 +43,7 @@ class OVITO_PARTICLES_EXPORT InterpolateTrajectoryModifier : public Modifier
 		using Modifier::OOMetaClass::OOMetaClass;
 
 		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+		virtual bool isApplicableTo(const DataCollection& input) const override;
 	};
 		
 	Q_OBJECT
@@ -61,7 +61,7 @@ public:
 	virtual Future<PipelineFlowState> evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 		
 	/// Modifies the input data in an immediate, preliminary way.
-	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	virtual void evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
 private:
 
@@ -83,10 +83,10 @@ public:
 	Q_INVOKABLE InterpolateTrajectoryModifierApplication(DataSet* dataset) : ModifierApplication(dataset) {}
 
 	/// Clears the stored source frame.
-	void invalidateFrameCache() { _frameCache.clear(); }
+	void invalidateFrameCache() { _frameCache.reset(); }
 
 	/// Replaces the cached source frame.
-	void updateFrameCache(PipelineFlowState state) { _frameCache = std::move(state); }
+	void updateFrameCache(const PipelineFlowState& state) { _frameCache = state; }
 
 	/// Returns the stored source frame.
 	const PipelineFlowState& frameCache() const { return _frameCache; }

@@ -120,7 +120,7 @@ void ViewportMenu::onShowViewTypeMenu()
 	// Find all camera nodes in the scene.
 	_viewport->dataset()->sceneRoot()->visitObjectNodes([this, viewNodeGroup](PipelineSceneNode* node) -> bool {
 		const PipelineFlowState& state = node->evaluatePipelinePreliminary(false);
-		if(state.containsObject<AbstractCameraObject>()) {
+		if(state.data() && state.data()->containsObject<AbstractCameraObject>()) {
 			// Add a menu entry for this camera node.
 			QAction* action = viewNodeGroup->addAction(node->nodeName());
 			action->setCheckable(true);
@@ -223,8 +223,11 @@ void ViewportMenu::onCreateCamera()
 				cameraObj->setFieldOfView(0, _viewport->fieldOfView());
 
 			// Create an object node with a data source for the camera.
+			OORef<DataCollection> cameraDataCollection = new DataCollection(_viewport->dataset());
+			cameraDataCollection->addObject(cameraObj);
+			OORef<StaticSource> cameraSource = new StaticSource(_viewport->dataset());
+			cameraSource->setDataCollection(cameraDataCollection);
 			cameraNode = new PipelineSceneNode(_viewport->dataset());
-			OORef<StaticSource> cameraSource = new StaticSource(_viewport->dataset(), cameraObj);
 			cameraNode->setDataProvider(cameraSource);
 
 			// Give the new node a name.

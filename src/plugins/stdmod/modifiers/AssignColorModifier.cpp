@@ -79,14 +79,14 @@ TimeInterval AssignColorModifier::modifierValidity(TimePoint time)
 /******************************************************************************
 * Applies the modifier operation to the data in a pipeline flow state.
 ******************************************************************************/
-PipelineStatus AssignColorModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
+PipelineStatus AssignColorModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	const AssignColorModifier* mod = static_object_cast<AssignColorModifier>(modifier);
 	if(!mod->colorController())
 		return PipelineStatus::Success;
 
 	// Look up the property container object and make sure we can safely modify it.
-   	DataObjectPath objectPath = output.expectMutableObject(containerClass(), containerPath());
+   	DataObjectPath objectPath = state.expectMutableObject(containerClass(), containerPath());
 	PropertyContainer* container = static_object_cast<PropertyContainer>(objectPath.back());
  
 	// Get the input selection property.
@@ -102,7 +102,7 @@ PipelineStatus AssignColorModifierDelegate::apply(Modifier* modifier, const Pipe
 
 	// Get modifier's color parameter value.
 	Color color;
-	mod->colorController()->getColorValue(time, color, output.mutableStateValidity());
+	mod->colorController()->getColorValue(time, color, state.mutableStateValidity());
 
 	// Create the color output property.
     PropertyObject* colorProperty = container->createProperty(outputColorPropertyId(), (bool)selProperty, objectPath);

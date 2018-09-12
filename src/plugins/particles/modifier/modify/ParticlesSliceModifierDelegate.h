@@ -42,7 +42,7 @@ class ParticlesSliceModifierDelegate : public SliceModifierDelegate
 		using SliceModifierDelegate::OOMetaClass::OOMetaClass;
 		
 		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override {
+		virtual bool isApplicableTo(const DataCollection& input) const override {
 			return input.containsObject<ParticlesObject>();
 		}
 
@@ -61,7 +61,7 @@ public:
 	Q_INVOKABLE ParticlesSliceModifierDelegate(DataSet* dataset) : SliceModifierDelegate(dataset) {}
 
 	/// Applies a slice operation to a data object.
-	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs) override;
+	virtual PipelineStatus apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs) override;
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -49,7 +49,7 @@ class OVITO_CORRELATIONFUNCTIONPLUGIN_EXPORT CorrelationFunctionModifier : publi
 		using AsynchronousModifier::OOMetaClass::OOMetaClass;
 
 		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+		virtual bool isApplicableTo(const DataCollection& input) const override;
 	};
 		
 	Q_OBJECT
@@ -178,7 +178,7 @@ private:
 		FloatType neighCutoff() const { return _neighCutoff; }
 
 		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		virtual void emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
 		/// Returns the real-space correlation function.
 		const PropertyPtr& realSpaceCorrelation() const { return _realSpaceCorrelation; }

@@ -308,23 +308,23 @@ PropertyPtr PolyhedralTemplateMatchingModifier::PTMEngine::postProcessStructureT
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState PolyhedralTemplateMatchingModifier::PTMEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void PolyhedralTemplateMatchingModifier::PTMEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
-	PipelineFlowState output = StructureIdentificationEngine::emitResults(time, modApp, input);
+	StructureIdentificationEngine::emitResults(time, modApp, state);
 	
 	// Also output structure type counts, which have been computed by the base class.
-	output.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.OTHER"), QVariant::fromValue(getTypeCount(OTHER)), modApp);
-	output.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.FCC"), QVariant::fromValue(getTypeCount(FCC)), modApp);
-	output.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.HCP"), QVariant::fromValue(getTypeCount(HCP)), modApp);
-	output.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.BCC"), QVariant::fromValue(getTypeCount(BCC)), modApp);
-	output.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.ICO"), QVariant::fromValue(getTypeCount(ICO)), modApp);
-	output.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.SC"), QVariant::fromValue(getTypeCount(SC)), modApp);
-	output.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.CUBIC_DIAMOND"), QVariant::fromValue(getTypeCount(CUBIC_DIAMOND)), modApp);
-	output.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.HEX_DIAMOND"), QVariant::fromValue(getTypeCount(HEX_DIAMOND)), modApp);
+	state.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.OTHER"), QVariant::fromValue(getTypeCount(OTHER)), modApp);
+	state.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.FCC"), QVariant::fromValue(getTypeCount(FCC)), modApp);
+	state.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.HCP"), QVariant::fromValue(getTypeCount(HCP)), modApp);
+	state.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.BCC"), QVariant::fromValue(getTypeCount(BCC)), modApp);
+	state.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.ICO"), QVariant::fromValue(getTypeCount(ICO)), modApp);
+	state.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.SC"), QVariant::fromValue(getTypeCount(SC)), modApp);
+	state.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.CUBIC_DIAMOND"), QVariant::fromValue(getTypeCount(CUBIC_DIAMOND)), modApp);
+	state.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.HEX_DIAMOND"), QVariant::fromValue(getTypeCount(HEX_DIAMOND)), modApp);
 
 	PolyhedralTemplateMatchingModifier* modifier = static_object_cast<PolyhedralTemplateMatchingModifier>(modApp->modifier());
 	OVITO_ASSERT(modifier);
-	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+	ParticlesObject* particles = state.expectMutableObject<ParticlesObject>();
 
 	// Output per-particle properties.
 	if(rmsd() && modifier->outputRmsd()) {
@@ -346,12 +346,10 @@ PipelineFlowState PolyhedralTemplateMatchingModifier::PTMEngine::emitResults(Tim
 	}
 
 	// Output RMSD histogram.
-	DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("ptm-rmsd"), modApp, DataSeriesObject::Line, tr("RMSD distribution"), rmsdHistogram());
+	DataSeriesObject* seriesObj = state.createObject<DataSeriesObject>(QStringLiteral("ptm-rmsd"), modApp, DataSeriesObject::Line, tr("RMSD distribution"), rmsdHistogram());
 	seriesObj->setAxisLabelX(tr("RMSD"));
 	seriesObj->setIntervalStart(0);
 	seriesObj->setIntervalEnd(rmsdHistogramRange());
-
-	return output;
 }
 
 OVITO_END_INLINE_NAMESPACE

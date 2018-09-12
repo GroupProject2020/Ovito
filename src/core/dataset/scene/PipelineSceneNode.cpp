@@ -63,7 +63,7 @@ void PipelineSceneNode::invalidatePipelineCache()
 	_pipelineCache.invalidate(false);
 	_pipelineRenderingCache.invalidate(true);	// Do not completely discard these cached objects, 
 												// because we might be able to re-use the transformed data objects. 
-	_pipelinePreliminaryCache.clear();
+	_pipelinePreliminaryCache.reset();
 
 	// Also mark the cached bounding box of this node as invalid.
 	invalidateBoundingBox();
@@ -96,7 +96,7 @@ const PipelineFlowState& PipelineSceneNode::evaluatePipelinePreliminary(bool inc
 		_pipelinePreliminaryCache = dataProvider()->evaluatePreliminary();
 	}
 	else {
-		_pipelinePreliminaryCache.clear();
+		_pipelinePreliminaryCache.reset();
 	}
 
 	// The preliminary state cache is time-independent.
@@ -154,34 +154,35 @@ SharedFuture<PipelineFlowState> PipelineSceneNode::evaluateRenderingPipeline(Tim
 			// Holds the results to be returned to the caller.
 			Future<PipelineFlowState> results;
 
-			// Give every visualization element the chance to apply an asynchronous data transformation.
-			for(const auto& dataObj : state.objects()) {
-				for(DataVis* vis : dataObj->visElements()) {
-					OVITO_ASSERT(vis);
-					if(!vis->isEnabled()) continue;
-					if(TransformingDataVis* transformingVis = dynamic_object_cast<TransformingDataVis>(vis)) {
-						if(!results.isValid()) {
-							results = transformingVis->transformData(time, dataObj, PipelineFlowState(state), _pipelineRenderingCache.getStaleContents(), this);
+			// Give every visualization element the opportunity to apply an asynchronous data transformation.
+			if(!state.isEmpty()) {
+				for(const auto& dataObj : state.data()->objects()) {
+					for(DataVis* vis : dataObj->visElements()) {
+						if(!vis || !vis->isEnabled()) continue;
+						if(TransformingDataVis* transformingVis = dynamic_object_cast<TransformingDataVis>(vis)) {
+							if(!results.isValid()) {
+								results = transformingVis->transformData(time, dataObj, PipelineFlowState(state), _pipelineRenderingCache.getStaleContents(), this);
+							}
+							else {
+								results = results.then(transformingVis->executor(), [node = OORef<PipelineSceneNode>(this), time, transformingVis, dataObj](PipelineFlowState&& state) {
+									UndoSuspender noUndo(transformingVis);
+									return transformingVis->transformData(time, dataObj, std::move(state), node->_pipelineRenderingCache.getStaleContents(), node);
+								});
+							}
+							OVITO_ASSERT(results.isValid());
 						}
-						else {
-							results = results.then(transformingVis->executor(), [this, time, transformingVis, dataObj](PipelineFlowState&& state) {
-								UndoSuspender noUndo(this);
-								return transformingVis->transformData(time, dataObj, std::move(state), _pipelineRenderingCache.getStaleContents(), this);
-							});
-						}
-						OVITO_ASSERT(results.isValid());
 					}
 				}
 			}
 
-			// Maintain a data cache for pipeline states.
+			// Maintain the cache with rendering pipeline outputs.
 			if(!results.isValid()) {
 				// Immediate storage in the cache:
 				_pipelineRenderingCache.insert(state, this);
 				results = Future<PipelineFlowState>::createImmediate(state);
 			}
 			else {
-				// Asynchronous storage in the cache:
+				// Deferred storage in the cache as soon as the transforming vis elements have done their job:
 				_pipelineRenderingCache.insert(results, state.stateValidity(), this);
 				OVITO_ASSERT(results.isValid());
 			}
@@ -193,8 +194,8 @@ SharedFuture<PipelineFlowState> PipelineSceneNode::evaluateRenderingPipeline(Tim
 
 
 /******************************************************************************
-* Helper function that recursively collects all visual elements of a 
-* data object and stores them in a vector.
+* Helper function that recursively collects all visual elements attached to a 
+* data object and its children and stores them in an output vector.
 ******************************************************************************/
 void PipelineSceneNode::collectVisElements(const DataObject* dataObj, std::vector<DataVis*>& visElements) 
 {
@@ -218,9 +219,8 @@ void PipelineSceneNode::updateVisElementList(TimePoint time)
 
 	// Collect all visual elements from the current pipeline state.
 	std::vector<DataVis*> newVisElements;
-	for(const DataObject* dataObj : state.objects()) {
-		collectVisElements(dataObj, newVisElements);
-	}
+	if(state.data())
+		collectVisElements(state.data(), newVisElements);
 
 	// Perform the replacement of vis elements.
 	if(!replacedVisElements().empty()) {
@@ -269,7 +269,7 @@ bool PipelineSceneNode::referenceEvent(RefTarget* source, const ReferenceEvent& 
 		}
 		else if(event.type() == ReferenceEvent::PreliminaryStateAvailable) {
 			// Invalidate our preliminary state cache.
-			_pipelinePreliminaryCache.clear();
+			_pipelinePreliminaryCache.reset();
 		}
 	}
 	else if(_visElements.contains(source)) {
@@ -405,9 +405,8 @@ Box3 PipelineSceneNode::localBoundingBox(TimePoint time, TimeInterval& validity)
 	// Let visual elements compute the bounding boxes of the data objects.
 	Box3 bb;
 	std::vector<const DataObject*> objectStack;
-	for(const DataObject* dataObj : state.objects()) {
-		getDataObjectBoundingBox(time, dataObj, state, validity, bb, objectStack);
-	}
+	if(state.data())
+		getDataObjectBoundingBox(time, state.data(), state, validity, bb, objectStack);
 	OVITO_ASSERT(objectStack.empty());
 	validity.intersect(state.stateValidity());
 	return bb;

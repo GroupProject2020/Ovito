@@ -201,7 +201,7 @@ private:
 	/// Pointer to the pipeline object that created this data object (may be NULL).
 	QPointer<PipelineObject> _dataSource;
 
-	friend class StrongDataObjectRef;
+	template<typename DataObjectClass> friend class StrongDataObjectRef;
 };
 
 OVITO_END_INLINE_NAMESPACE

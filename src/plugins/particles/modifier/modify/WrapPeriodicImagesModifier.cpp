@@ -32,7 +32,7 @@ IMPLEMENT_OVITO_CLASS(WrapPeriodicImagesModifier);
 /******************************************************************************
 * Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-bool WrapPeriodicImagesModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool WrapPeriodicImagesModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<ParticlesObject>();
 }
@@ -40,14 +40,14 @@ bool WrapPeriodicImagesModifier::OOMetaClass::isApplicableTo(const PipelineFlowS
 /******************************************************************************
 * Modifies the input data in an immediate, preliminary way.
 ******************************************************************************/
-PipelineFlowState WrapPeriodicImagesModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void WrapPeriodicImagesModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
-	PipelineFlowState output = input;
-
-	const SimulationCellObject* simCellObj = input.expectObject<SimulationCellObject>();
+	const SimulationCellObject* simCellObj = state.expectObject<SimulationCellObject>();
 	std::array<bool, 3> pbc = simCellObj->pbcFlags();
-	if(!pbc[0] && !pbc[1] && !pbc[2])
-		return PipelineStatus(PipelineStatus::Warning, tr("No periodic boundary conditions are enabled for the simulation cell."));
+	if(!pbc[0] && !pbc[1] && !pbc[2]) {
+		state.setStatus(PipelineStatus(PipelineStatus::Warning, tr("No periodic boundary conditions are enabled for the simulation cell.")));
+		return;
+	}
 
 	if(simCellObj->is2D())
 		 throwException(tr("In the current program version, this modifier only supports three-dimensional simulation cells."));
@@ -58,7 +58,7 @@ PipelineFlowState WrapPeriodicImagesModifier::evaluatePreliminary(TimePoint time
 	AffineTransformation inverseSimCell = simCell.inverse();
 
 	// Make a modifiable copy of the particles object.
-	ParticlesObject* outputParticles = output.expectMutableObject<ParticlesObject>();
+	ParticlesObject* outputParticles = state.expectMutableObject<ParticlesObject>();
 
 	// Make a modifiable copy of the particle position property.
 	PropertyPtr posProperty = outputParticles->makeMutable(outputParticles->expectProperty(ParticlesObject::PositionProperty))->modifiableStorage();
@@ -95,8 +95,6 @@ PipelineFlowState WrapPeriodicImagesModifier::evaluatePreliminary(TimePoint time
 			}
 		}
 	}
-
-	return output;
 }
 
 OVITO_END_INLINE_NAMESPACE

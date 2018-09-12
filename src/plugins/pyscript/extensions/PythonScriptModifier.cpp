@@ -172,6 +172,9 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 	if(!_activeModApp)
 		throwException(tr("PythonScriptModifier instance is not associated with a PythonScriptModifierApplication instance."));
 
+	if(input.isEmpty())
+		throwException(tr("Modifier input is empty."));
+
 	try {
 
 		// Reset script log output.
@@ -197,12 +200,13 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 			UndoSuspender noUndo(dataset());
 
 			// Prepare arguments to be passed to the script function.
-			py::object output_py = py::cast(input, py::return_value_policy::copy);
-			py::tuple arguments = py::make_tuple(animationFrame, output_py);
+			PipelineFlowState output = input;
+//			py::object output_data_collection = py::cast();
+			py::tuple arguments = py::make_tuple(animationFrame, output.mutableData());
 
 			// Limit validity interval of the output to the current frame,
 			// because we don't know if the user script produces time-dependent results or not.
-			py::cast<PipelineFlowState&>(output_py).intersectStateValidity(time);				
+			output.intersectStateValidity(time);				
 
 			// Call the user-defined modifier function.
 			py::object functionResult;
@@ -221,8 +225,7 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 					throw;
 
 				// Invoke the user-defined modifier function, this time with an input and an output data collection.
-				py::object input_py = py::cast(input, py::return_value_policy::copy);
-				arguments = py::make_tuple(animationFrame, std::move(input_py), output_py);
+				arguments = py::make_tuple(animationFrame, input.data(), output.mutableData());
 				functionResult = engine->callObject(_modifyScriptFunction, arguments);
 			}
 			
@@ -239,7 +242,7 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 				struct {
 					OvitoObjectExecutor executor;
 					py::iterator generator;
-					py::object output_py;
+					PipelineFlowState output;
 					Promise<PipelineFlowState> promise;
 					
 					// This is to submit this structure as a work item to the executor:
@@ -294,7 +297,7 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 										// Check if the generator is exhausted.
 										if(generator == py::iterator::sentinel()) {
 											// We are done. Return pipeline results.
-											promise.setResults(py::cast<PipelineFlowState>(std::move(output_py)));
+											promise.setResults(std::move(output));
 											promise.setFinished();
 											break;
 										}
@@ -325,13 +328,13 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 					}
 				} func_continuation{ modApp->executor() };
 
-				func_continuation.output_py = std::move(output_py);
+				func_continuation.output = std::move(output);
 				func_continuation.generator = py::reinterpret_borrow<py::iterator>(functionResult);
 				OVITO_ASSERT(func_continuation.generator);
 				
 				// Python has returned a generator. We have to return a Future on the 
 				// the final pipeline state that is till to be computed.
-				func_continuation.promise = Promise<PipelineFlowState>::createSynchronous(nullptr, true, false);\
+				func_continuation.promise = Promise<PipelineFlowState>::createSynchronous(nullptr, true, false);
 				dataset()->container()->taskManager().registerTask(func_continuation.promise.sharedState());
 				Future<PipelineFlowState> future = func_continuation.promise.future();
 				func_continuation.promise.setProgressText(tr("Executing user-defined modifier function"));				
@@ -342,9 +345,13 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 				return future;
 			}
 			else {
-				// Extract final output pipeline state.
-				return py::cast<PipelineFlowState>(std::move(output_py));
+				// Return final output pipeline state.
+				return std::move(output);
 			}
+		}
+		catch(const std::runtime_error& ex) {
+			qWarning() << ex.what();
+			throwException(tr("Internal Python interface error: %1").arg(ex.what()));
 		}
 		catch(const Exception& ex) {
 			_activeModApp->appendLogOutput(ex.messages().join(QChar('\n')));

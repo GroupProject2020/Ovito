@@ -99,13 +99,15 @@ Future<PipelineFlowState> FreezePropertyModifier::evaluate(TimePoint time, Modif
 	if(FreezePropertyModifierApplication* myModApp = dynamic_object_cast<FreezePropertyModifierApplication>(modApp)) {
 		if(myModApp->hasFrozenState(freezeTime())) {
 			// Perform replacement of the property in the input pipeline state.
-			return evaluatePreliminary(time, modApp, std::move(input));
+			PipelineFlowState output = input;
+			evaluatePreliminary(time, modApp, output);
+			return std::move(output);
 		}
 	}
 		
 	// Request the frozen state from the pipeline.
 	return modApp->evaluateInput(freezeTime())
-		.then(executor(), [this, time, modApp = QPointer<ModifierApplication>(modApp), input = input](const PipelineFlowState& frozenState) mutable {
+		.then(executor(), [this, time, modApp = QPointer<ModifierApplication>(modApp), state = input](const PipelineFlowState& frozenState) mutable {
 			UndoSuspender noUndo(this);
 			
 			// Extract the input property.
@@ -123,7 +125,8 @@ Future<PipelineFlowState> FreezePropertyModifier::evaluate(TimePoint time, Modif
 							frozenState.stateValidity());
 
 						// Perform the actual replacement of the property in the input pipeline state.
-						return evaluatePreliminary(time, modApp, std::move(input));
+						evaluatePreliminary(time, modApp, state);
+						return std::move(state);
 					}
 					else {
 						throwException(tr("The property '%1' is not present in the input state").arg(sourceProperty().name()));
@@ -132,23 +135,21 @@ Future<PipelineFlowState> FreezePropertyModifier::evaluate(TimePoint time, Modif
 				myModApp->invalidateFrozenState();
 			}
 
-			return std::move(input);
+			return std::move(state);
 		});
 }
 
 /******************************************************************************
 * Modifies the input data in an immediate, preliminary way.
 ******************************************************************************/
-PipelineFlowState FreezePropertyModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void FreezePropertyModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
-	PipelineFlowState output = input;
-	
 	if(!subject())
 		throwException(tr("No property type selected."));
 	
 	if(sourceProperty().isNull()) {
-		output.setStatus(PipelineStatus(PipelineStatus::Warning, tr("No source property selected.")));
-		return output;
+		state.setStatus(PipelineStatus(PipelineStatus::Warning, tr("No source property selected.")));
+		return;
 	}
 	if(destinationProperty().isNull())
 		throwException(tr("No output property selected."));
@@ -159,7 +160,7 @@ PipelineFlowState FreezePropertyModifier::evaluatePreliminary(TimePoint time, Mo
 		throwException(tr("No stored property values available."));
 
 	// Look up the property container object.
-   	PropertyContainer* container = output.expectMutableLeafObject(subject());
+   	PropertyContainer* container = state.expectMutableLeafObject(subject());
 	
 	// Get the property that will be overwritten by the stored one.
 	PropertyObject* outputProperty;
@@ -239,8 +240,6 @@ PipelineFlowState FreezePropertyModifier::evaluatePreliminary(TimePoint time, Mo
 	}
 	outputProperty->setVisElements(currentVisElements);
 	myModApp->setCachedVisElements(std::move(currentVisElements));
-
-	return output;
 }
 
 /******************************************************************************

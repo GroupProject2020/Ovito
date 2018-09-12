@@ -34,17 +34,17 @@ namespace Ovito { namespace Mesh {
 * This function is called by the system from the main thread after the
 * asynchronous loading task has finished.
 ******************************************************************************/
-PipelineFlowState TriMeshFrameData::handOver(const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource)
+OORef<DataCollection> TriMeshFrameData::handOver(const DataCollection* existing, bool isNewFile, FileSource* fileSource)
 {
-	PipelineFlowState output;
+	OORef<DataCollection> output = new DataCollection(fileSource->dataset());
 
 	// Create a TriMeshObject or reuse existing.
-	TriMeshObject* triMeshObj = const_cast<TriMeshObject*>(existing.getObject<TriMeshObject>());
+	TriMeshObject* triMeshObj = const_cast<TriMeshObject*>(existing ? existing->getObject<TriMeshObject>() : nullptr);
 	if(triMeshObj) {
-		output.addObject(triMeshObj);
+		output->addObject(triMeshObj);
 	}
 	else {
-		triMeshObj = output.createObject<TriMeshObject>(fileSource);
+		triMeshObj = output->createObject<TriMeshObject>(fileSource);
 
 		// Assign a TriMeshVis to the TriMeshObject.
 		OORef<TriMeshVis> triMeshVis = new TriMeshVis(fileSource->dataset());

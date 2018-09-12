@@ -35,7 +35,7 @@ IMPLEMENT_OVITO_CLASS(ParticlesCombineDatasetsModifierDelegate);
 /******************************************************************************
 * Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-bool ParticlesCombineDatasetsModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool ParticlesCombineDatasetsModifierDelegate::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<ParticlesObject>();
 }
@@ -43,7 +43,7 @@ bool ParticlesCombineDatasetsModifierDelegate::OOMetaClass::isApplicableTo(const
 /******************************************************************************
 * Modifies the input data.
 ******************************************************************************/
-PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
+PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	// Get the secondary dataset.
 	if(additionalInputs.empty())
@@ -57,7 +57,7 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 	const PropertyObject* secondaryPosProperty = secondaryParticles->expectProperty(ParticlesObject::PositionProperty);
 
 	// Get the positions from the primary dataset.
-	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+	ParticlesObject* particles = state.expectMutableObject<ParticlesObject>();
 
 	size_t primaryParticleCount = particles->elementCount();
 	size_t secondaryParticleCount = secondaryParticles->elementCount();
@@ -81,6 +81,12 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 			if(secondProp && secondProp->size() == secondaryParticleCount && secondProp->componentCount() == prop->componentCount() && secondProp->dataType() == prop->dataType()) {
 				OVITO_ASSERT(prop->stride() == secondProp->stride());
 				memcpy(static_cast<char*>(prop->data()) + prop->stride() * primaryParticleCount, secondProp->constData(), prop->stride() * secondaryParticleCount);
+			}
+			else if(prop->type() != ParticlesObject::UserProperty) {
+				ConstDataObjectPath containerPath = { secondaryParticles };
+				PropertyPtr temporaryProp = ParticlesObject::OOClass().createStandardStorage(secondaryParticles->elementCount(), prop->type(), true, containerPath);
+				OVITO_ASSERT(temporaryProp->stride() == prop->stride());
+				memcpy(static_cast<char*>(prop->data()) + prop->stride() * primaryParticleCount, temporaryProp->constData(), prop->stride() * secondaryParticleCount);
 			}
 
 			// Combine particle types based on their names.
@@ -256,7 +262,7 @@ PipelineStatus ParticlesCombineDatasetsModifierDelegate::apply(Modifier* modifie
 		}
 	}
 
-	int secondaryFrame = secondaryState.sourceFrame();
+	int secondaryFrame = secondaryState.data() ? secondaryState.data()->sourceFrame() : 1;
 	if(secondaryFrame < 0)
 		secondaryFrame = dataset()->animationSettings()->timeToFrame(time);
 

@@ -566,29 +566,26 @@ CommonNeighborAnalysisModifier::StructureType CommonNeighborAnalysisModifier::de
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState CommonNeighborAnalysisModifier::CNAEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void CommonNeighborAnalysisModifier::CNAEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
-	PipelineFlowState outState = StructureIdentificationEngine::emitResults(time, modApp, input);
+	StructureIdentificationEngine::emitResults(time, modApp, state);
 
 	// Also output structure type counts, which have been computed by the base class.
-	outState.addAttribute(QStringLiteral("CommonNeighborAnalysis.counts.OTHER"), QVariant::fromValue(getTypeCount(OTHER)), modApp);
-	outState.addAttribute(QStringLiteral("CommonNeighborAnalysis.counts.FCC"), QVariant::fromValue(getTypeCount(FCC)), modApp);
-	outState.addAttribute(QStringLiteral("CommonNeighborAnalysis.counts.HCP"), QVariant::fromValue(getTypeCount(HCP)), modApp);
-	outState.addAttribute(QStringLiteral("CommonNeighborAnalysis.counts.BCC"), QVariant::fromValue(getTypeCount(BCC)), modApp);
-	outState.addAttribute(QStringLiteral("CommonNeighborAnalysis.counts.ICO"), QVariant::fromValue(getTypeCount(ICO)), modApp);
-
-	return outState;
+	state.addAttribute(QStringLiteral("CommonNeighborAnalysis.counts.OTHER"), QVariant::fromValue(getTypeCount(OTHER)), modApp);
+	state.addAttribute(QStringLiteral("CommonNeighborAnalysis.counts.FCC"), QVariant::fromValue(getTypeCount(FCC)), modApp);
+	state.addAttribute(QStringLiteral("CommonNeighborAnalysis.counts.HCP"), QVariant::fromValue(getTypeCount(HCP)), modApp);
+	state.addAttribute(QStringLiteral("CommonNeighborAnalysis.counts.BCC"), QVariant::fromValue(getTypeCount(BCC)), modApp);
+	state.addAttribute(QStringLiteral("CommonNeighborAnalysis.counts.ICO"), QVariant::fromValue(getTypeCount(ICO)), modApp);
 }
 
 /******************************************************************************
 * Lets the modifier insert the cached computation results into the modification pipeline.
 ******************************************************************************/
-PipelineFlowState CommonNeighborAnalysisModifier::BondCNAEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void CommonNeighborAnalysisModifier::BondCNAEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
-	PipelineFlowState output = CNAEngine::emitResults(time, modApp, input);
-	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+	CNAEngine::emitResults(time, modApp, state);
+	ParticlesObject* particles = state.expectMutableObject<ParticlesObject>();
 	particles->makeMutable(particles->expectBonds())->createProperty(cnaIndices());
-	return output;
 }
 
 OVITO_END_INLINE_NAMESPACE

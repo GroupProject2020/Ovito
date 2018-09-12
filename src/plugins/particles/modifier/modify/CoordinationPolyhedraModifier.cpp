@@ -50,7 +50,7 @@ CoordinationPolyhedraModifier::CoordinationPolyhedraModifier(DataSet* dataset) :
 /******************************************************************************
 * Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-bool CoordinationPolyhedraModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool CoordinationPolyhedraModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	if(const ParticlesObject* particles = input.getObject<ParticlesObject>()) {
 		return particles->bonds() != nullptr;
@@ -306,18 +306,15 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::constructConvexHull(
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState CoordinationPolyhedraModifier::ComputePolyhedraEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void CoordinationPolyhedraModifier::ComputePolyhedraEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	CoordinationPolyhedraModifier* modifier = static_object_cast<CoordinationPolyhedraModifier>(modApp->modifier());
-	PipelineFlowState output = input;
 
 	// Create the output data object.
-	SurfaceMesh* meshObj = output.createObject<SurfaceMesh>(QStringLiteral("coordination_polyhedra"), modApp);
+	SurfaceMesh* meshObj = state.createObject<SurfaceMesh>(QStringLiteral("coordination_polyhedra"), modApp);
 	meshObj->setStorage(mesh());
-	meshObj->setDomain(input.getObject<SimulationCellObject>());
+	meshObj->setDomain(state.getObject<SimulationCellObject>());
 	meshObj->setVisElement(modifier->surfaceMeshVis());
-
-	return output;
 }
 
 OVITO_END_INLINE_NAMESPACE

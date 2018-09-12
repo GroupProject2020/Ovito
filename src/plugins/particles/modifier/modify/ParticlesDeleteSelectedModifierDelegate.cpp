@@ -34,7 +34,7 @@ IMPLEMENT_OVITO_CLASS(BondsDeleteSelectedModifierDelegate);
 /******************************************************************************
 * Determines whether this delegate can handle the given input data.
 ******************************************************************************/
-bool ParticlesDeleteSelectedModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool ParticlesDeleteSelectedModifierDelegate::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<ParticlesObject>();
 }
@@ -42,13 +42,13 @@ bool ParticlesDeleteSelectedModifierDelegate::OOMetaClass::isApplicableTo(const 
 /******************************************************************************
 * Applies the modifier operation to the data in a pipeline flow state.
 ******************************************************************************/
-PipelineStatus ParticlesDeleteSelectedModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
+PipelineStatus ParticlesDeleteSelectedModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	size_t numParticles = 0;
 	size_t numSelected = 0;
 
 	// Get the particle selection.
-	if(const ParticlesObject* inputParticles = output.getObject<ParticlesObject>()) {
+	if(const ParticlesObject* inputParticles = state.getObject<ParticlesObject>()) {
 		numParticles = inputParticles->elementCount();
 		if(const PropertyObject* selProperty = inputParticles->getProperty(ParticlesObject::SelectionProperty)) {
 
@@ -67,7 +67,7 @@ PipelineStatus ParticlesDeleteSelectedModifierDelegate::apply(Modifier* modifier
 
 			if(numSelected) {
 				// Make sure we can safely modify the particles object.
-				ParticlesObject* outputParticles = output.makeMutable(inputParticles);
+				ParticlesObject* outputParticles = state.makeMutable(inputParticles);
 
 				// Remove selection property.
 				outputParticles->removeProperty(selProperty);
@@ -88,7 +88,7 @@ PipelineStatus ParticlesDeleteSelectedModifierDelegate::apply(Modifier* modifier
 /******************************************************************************
 * Determines whether this delegate can handle the given input data.
 ******************************************************************************/
-bool BondsDeleteSelectedModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool BondsDeleteSelectedModifierDelegate::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	if(const ParticlesObject* particles = input.getObject<ParticlesObject>())
 		return particles->bonds() != nullptr;
@@ -98,13 +98,13 @@ bool BondsDeleteSelectedModifierDelegate::OOMetaClass::isApplicableTo(const Pipe
 /******************************************************************************
 * Applies the modifier operation to the data in a pipeline flow state.
 ******************************************************************************/
-PipelineStatus BondsDeleteSelectedModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
+PipelineStatus BondsDeleteSelectedModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	size_t numBonds = 0;
 	size_t numSelected = 0;
 
 	// Get the bond selection.
-	if(const ParticlesObject* inputParticles = output.getObject<ParticlesObject>()) {
+	if(const ParticlesObject* inputParticles = state.getObject<ParticlesObject>()) {
 		if(const BondsObject* inputBonds = inputParticles->bonds()) {
 			numBonds = inputBonds->elementCount();
 			if(const PropertyObject* selProperty = inputBonds->getProperty(BondsObject::SelectionProperty)) {
@@ -123,7 +123,7 @@ PipelineStatus BondsDeleteSelectedModifierDelegate::apply(Modifier* modifier, co
 
 				if(numSelected) {
 					// Make sure we can safely modify the particles and the bonds object.
-					ParticlesObject* outputParticles = output.makeMutable(outputParticles);
+					ParticlesObject* outputParticles = state.makeMutable(outputParticles);
 					BondsObject* outputBonds = outputParticles->makeBondsMutable();
 
 					// Remove selection property.

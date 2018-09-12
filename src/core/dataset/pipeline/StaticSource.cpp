@@ -26,8 +26,8 @@
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
 IMPLEMENT_OVITO_CLASS(StaticSource);
-DEFINE_REFERENCE_FIELD(StaticSource, dataObjects);
-SET_PROPERTY_FIELD_LABEL(StaticSource, dataObjects, "Objects");
+DEFINE_REFERENCE_FIELD(StaticSource, dataCollection);
+SET_PROPERTY_FIELD_LABEL(StaticSource, dataCollection, "Data");
 
 /******************************************************************************
 * Constructor.
@@ -41,10 +41,7 @@ StaticSource::StaticSource(DataSet* dataset) : PipelineObject(dataset)
 ******************************************************************************/
 SharedFuture<PipelineFlowState> StaticSource::evaluate(TimePoint time)
 {
-    TimeInterval iv = TimeInterval::infinite();
-    for(DataObject* obj : dataObjects())
-        iv.intersect(obj->objectValidity(time));
-    return Future<PipelineFlowState>::createImmediateEmplace(dataObjects(), iv, PipelineStatus::Success);
+    return Future<PipelineFlowState>::createImmediateEmplace(dataCollection(), PipelineStatus::Success);
 }
 
 /******************************************************************************
@@ -52,7 +49,7 @@ SharedFuture<PipelineFlowState> StaticSource::evaluate(TimePoint time)
 ******************************************************************************/
 PipelineFlowState StaticSource::evaluatePreliminary()
 {
-    return PipelineFlowState(dataObjects(), TimeInterval::infinite(), PipelineStatus::Success);
+    return PipelineFlowState(dataCollection(), PipelineStatus::Success);
 }
 
 OVITO_END_INLINE_NAMESPACE

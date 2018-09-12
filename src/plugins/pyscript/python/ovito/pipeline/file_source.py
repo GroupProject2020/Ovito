@@ -112,6 +112,6 @@ def _FileSource_compute(self, frame = None):
         import PyQt5.QtCore
         PyQt5.QtCore.QThreadPool.globalInstance().waitForDone(0)
 
-    return state
+    return state.mutable_data
 
 FileSource.compute = _FileSource_compute

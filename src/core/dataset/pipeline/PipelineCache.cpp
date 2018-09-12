@@ -61,6 +61,7 @@ const PipelineFlowState& PipelineCache::getAt(TimePoint time) const
 ******************************************************************************/
 bool PipelineCache::insert(PipelineFlowState state, const RefTarget* ownerObject)
 {
+	OVITO_ASSERT(ownerObject);
 	if(state.stateValidity().contains(ownerObject->dataset()->animationSettings()->time()))
 		_currentAnimState = state;
 	_mostRecentState = std::move(state);
@@ -94,19 +95,9 @@ void PipelineCache::invalidate(bool keepStaleContents, TimeInterval keepInterval
 	
 	// If the remaining validity interval is empty, we can clear the caches.
 	if(_mostRecentState.stateValidity().isEmpty())
-		_mostRecentState.clear();
+		_mostRecentState.reset();
 	if(_currentAnimState.stateValidity().isEmpty() && !keepStaleContents)
-		_currentAnimState.clear();
-}
-
-/******************************************************************************
-* Returns a state from this cache that is valid at the given animation time.
-* If the cache contains no state for the given animation time, then an empty 
-* pipeline state is returned. 
-******************************************************************************/
-const PipelineFlowState& PipelineCache::getStaleContents() const
-{
-	return _currentAnimState;
+		_currentAnimState.reset();
 }
 
 OVITO_END_INLINE_NAMESPACE

@@ -24,6 +24,7 @@
 
 #include <core/Core.h>
 #include <core/dataset/pipeline/CachingPipelineObject.h>
+#include <core/dataset/data/DataCollection.h>
 #include <core/utilities/concurrent/Future.h>
 #include "FileSourceImporter.h"
 
@@ -44,6 +45,13 @@ public:
 	/// Constructor.
 	Q_INVOKABLE FileSource(DataSet* dataset);
 	
+	/// \brief Asks the object for the result of the data pipeline.
+	/// \param time Specifies at which animation time the pipeline should be evaluated.
+	virtual SharedFuture<PipelineFlowState> evaluate(TimePoint time) override;
+	
+	/// \brief Returns the results of an immediate and preliminary evaluation of the data pipeline.
+	virtual PipelineFlowState evaluatePreliminary() override;
+
 	/// \brief Sets the source location(s) for importing data.
 	/// \param sourceUrls The new source location(s).
 	/// \param importer The importer object that will parse the input file.
@@ -89,7 +97,7 @@ public:
 
 	/// Returns the list of data objects that are managed by this data source.
 	/// The returned data objects will be displayed as sub-objects of the data source in the pipeline editor.
-	virtual QVector<DataObject*> getSourceDataObjects() const override { return dataObjects(); }
+	virtual DataCollection* getSourceDataCollection() const override { return dataCollection(); }
 
 protected:
 
@@ -150,7 +158,7 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, playbackStartTime, setPlaybackStartTime);
 
 	/// Stores the prototypes of the loaded data objects.
-	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD_FLAGS(DataObject, dataObjects, setDataObjects, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_NO_CHANGE_MESSAGE | PROPERTY_FIELD_DONT_SAVE_RECOMPUTABLE_DATA);
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(DataCollection, dataCollection, setDataCollection, PROPERTY_FIELD_ALWAYS_DEEP_COPY | PROPERTY_FIELD_NO_CHANGE_MESSAGE | PROPERTY_FIELD_DONT_SAVE_RECOMPUTABLE_DATA);
 
 	/// The list of frames of the data source.
 	QVector<FileSourceImporter::Frame> _frames;
@@ -173,6 +181,10 @@ private:
 
 	/// Indicates whether the data from a frame loader is currently being handed over to the FileSource.
 	bool _handOverInProgress = false;
+
+	/// Indicates that the cached pipeline state should be updated with the current contents of the data collection 
+	/// of this FileSource.
+	bool _updateCacheWithDataCollection = false;
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -58,7 +58,7 @@ ConstructSurfaceModifier::ConstructSurfaceModifier(DataSet* dataset) : Asynchron
 /******************************************************************************
 * Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-bool ConstructSurfaceModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool ConstructSurfaceModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<ParticlesObject>();
 }
@@ -172,27 +172,23 @@ void ConstructSurfaceModifier::ConstructSurfaceEngine::perform()
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState ConstructSurfaceModifier::ConstructSurfaceEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void ConstructSurfaceModifier::ConstructSurfaceEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	ConstructSurfaceModifier* modifier = static_object_cast<ConstructSurfaceModifier>(modApp->modifier());
 
-	PipelineFlowState output = input;
-
 	// Create the output data object.
-	SurfaceMesh* meshObj = output.createObject<SurfaceMesh>(modApp);
+	SurfaceMesh* meshObj = state.createObject<SurfaceMesh>(modApp);
 	meshObj->setStorage(mesh());
 	meshObj->setIsCompletelySolid(isCompletelySolid());
-	meshObj->setDomain(input.getObject<SimulationCellObject>());
+	meshObj->setDomain(state.getObject<SimulationCellObject>());
 	meshObj->addVisElement(modifier->surfaceMeshVis());
 	
-	output.addAttribute(QStringLiteral("ConstructSurfaceMesh.surface_area"), QVariant::fromValue(surfaceArea()), modApp);
-	output.addAttribute(QStringLiteral("ConstructSurfaceMesh.solid_volume"), QVariant::fromValue(solidVolume()), modApp);
+	state.addAttribute(QStringLiteral("ConstructSurfaceMesh.surface_area"), QVariant::fromValue(surfaceArea()), modApp);
+	state.addAttribute(QStringLiteral("ConstructSurfaceMesh.solid_volume"), QVariant::fromValue(solidVolume()), modApp);
 
-	output.setStatus(PipelineStatus(PipelineStatus::Success, tr("Surface area: %1\nSolid volume: %2\nTotal cell volume: %3\nSolid volume fraction: %4\nSurface area per solid volume: %5\nSurface area per total volume: %6")
+	state.setStatus(PipelineStatus(PipelineStatus::Success, tr("Surface area: %1\nSolid volume: %2\nTotal cell volume: %3\nSolid volume fraction: %4\nSurface area per solid volume: %5\nSurface area per total volume: %6")
 			.arg(surfaceArea()).arg(solidVolume()).arg(totalVolume())
 			.arg(solidVolume() / totalVolume()).arg(surfaceArea() / solidVolume()).arg(surfaceArea() / totalVolume())));
-
-	return output;
 }
 
 }	// End of namespace

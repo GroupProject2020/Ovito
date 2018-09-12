@@ -65,7 +65,7 @@ TimeInterval CreateIsosurfaceModifier::modifierValidity(TimePoint time)
 /******************************************************************************
 * Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-bool CreateIsosurfaceModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool CreateIsosurfaceModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<VoxelGrid>();
 }
@@ -204,15 +204,14 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::perform()
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState CreateIsosurfaceModifier::ComputeIsosurfaceEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	CreateIsosurfaceModifier* modifier = static_object_cast<CreateIsosurfaceModifier>(modApp->modifier());
-	PipelineFlowState output = input;
 
 	// Look up the input grid.
-	if(const VoxelGrid* voxelGrid = dynamic_object_cast<VoxelGrid>(input.expectLeafObject(modifier->subject()))) {		
+	if(const VoxelGrid* voxelGrid = dynamic_object_cast<VoxelGrid>(state.expectLeafObject(modifier->subject()))) {		
 		// Create the output data object.
-		SurfaceMesh* meshObj = output.createObject<SurfaceMesh>(modApp);
+		SurfaceMesh* meshObj = state.createObject<SurfaceMesh>(modApp);
 		meshObj->setStorage(mesh());
 		meshObj->setIsCompletelySolid(isCompletelySolid());
 		meshObj->setDomain(voxelGrid->domain());
@@ -220,13 +219,12 @@ PipelineFlowState CreateIsosurfaceModifier::ComputeIsosurfaceEngine::emitResults
 	}
 
 	// Output a data series object with the field value histogram.
-	DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("isosurface-histogram"), modApp, DataSeriesObject::Histogram, modifier->sourceProperty().nameWithComponent(), histogram());
+	DataSeriesObject* seriesObj = state.createObject<DataSeriesObject>(QStringLiteral("isosurface-histogram"), modApp, DataSeriesObject::Histogram, modifier->sourceProperty().nameWithComponent(), histogram());
 	seriesObj->setAxisLabelX(modifier->sourceProperty().nameWithComponent());
 	seriesObj->setIntervalStart(minValue());
 	seriesObj->setIntervalEnd(maxValue());	
 
-	output.setStatus(PipelineStatus(PipelineStatus::Success, tr("Field value range: [%1, %2]").arg(minValue()).arg(maxValue())));
-	return output;
+	state.setStatus(PipelineStatus(PipelineStatus::Success, tr("Field value range: [%1, %2]").arg(minValue()).arg(maxValue())));
 }
 
 }	// End of namespace

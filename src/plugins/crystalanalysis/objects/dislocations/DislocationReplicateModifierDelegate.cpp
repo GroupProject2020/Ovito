@@ -33,7 +33,7 @@ IMPLEMENT_OVITO_CLASS(DislocationReplicateModifierDelegate);
 /******************************************************************************
 * Determines whether this delegate can handle the given input data.
 ******************************************************************************/
-bool DislocationReplicateModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool DislocationReplicateModifierDelegate::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<DislocationNetworkObject>();
 }
@@ -41,7 +41,7 @@ bool DislocationReplicateModifierDelegate::OOMetaClass::isApplicableTo(const Pip
 /******************************************************************************
 * Applies the modifier operation to the data in a pipeline flow state.
 ******************************************************************************/
-PipelineStatus DislocationReplicateModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
+PipelineStatus DislocationReplicateModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	ReplicateModifier* mod = static_object_cast<ReplicateModifier>(modifier);
 	
@@ -56,7 +56,7 @@ PipelineStatus DislocationReplicateModifierDelegate::apply(Modifier* modifier, c
 
 	Box3I newImages = mod->replicaRange();
 
-	for(const DataObject* obj : output.objects()) {
+	for(const DataObject* obj : state.data()->objects()) {
 		if(const DislocationNetworkObject* existingDislocations = dynamic_object_cast<DislocationNetworkObject>(obj)) {
 			// For replication, a domain is required.
 			if(!existingDislocations->domain()) continue;
@@ -66,7 +66,7 @@ PipelineStatus DislocationReplicateModifierDelegate::apply(Modifier* modifier, c
 				continue;
 
 			// Create the output copy of the input dislocation object.
-			DislocationNetworkObject* newDislocations = output.makeMutable(existingDislocations);
+			DislocationNetworkObject* newDislocations = state.makeMutable(existingDislocations);
 			std::shared_ptr<DislocationNetwork> dislocations = newDislocations->modifiableStorage();
 			
 			// Shift existing vertices so that they form the first image at grid position (0,0,0).

@@ -119,10 +119,12 @@ void ParticleInspectionApplet::updateDisplay(const PipelineFlowState& state, Pip
 ******************************************************************************/
 void ParticleInspectionApplet::updateDistanceTable()
 {
+	if(currentState().isEmpty()) return;
+
 	// Limit distance computation to the first 4 particles:
 	int n = std::min(4, visibleElementCount());
 
-	const ParticlesObject* particles = currentData().getObject<ParticlesObject>();
+	const ParticlesObject* particles = currentState().getObject<ParticlesObject>();
 	const PropertyObject* posProperty = particles ? particles->getProperty(ParticlesObject::PositionProperty) : nullptr;
 	_distanceTable->setRowCount(n * (n-1) / 2);
 	int row = 0;

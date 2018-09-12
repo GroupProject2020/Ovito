@@ -73,7 +73,7 @@ GenerateTrajectoryLinesModifier::GenerateTrajectoryLinesModifier(DataSet* datase
 /******************************************************************************
 * Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-bool GenerateTrajectoryLinesModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool GenerateTrajectoryLinesModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<ParticlesObject>();
 }
@@ -81,17 +81,14 @@ bool GenerateTrajectoryLinesModifier::OOMetaClass::isApplicableTo(const Pipeline
 /******************************************************************************
 * Modifies the input data in an immediate, preliminary way.
 ******************************************************************************/
-PipelineFlowState GenerateTrajectoryLinesModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void GenerateTrajectoryLinesModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	// Inject the precomputed trajectory lines, which are stored in the modifier application, into the pipeline.
 	if(GenerateTrajectoryLinesModifierApplication* myModApp = dynamic_object_cast<GenerateTrajectoryLinesModifierApplication>(modApp)) {
 		if(myModApp->trajectoryData()) {
-			PipelineFlowState output = input;
-			output.addObject(myModApp->trajectoryData());	
-			return output;
+			state.addObject(myModApp->trajectoryData());	
 		}
 	}
-	return input;
 }
 
 /******************************************************************************

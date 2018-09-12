@@ -41,7 +41,7 @@ class OVITO_STDMOD_EXPORT AssignColorModifierDelegate : public ModifierDelegate
 public:
 	
 	/// \brief Applies the modifier operation to the data in a pipeline flow state.
-	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs) override;
+	virtual PipelineStatus apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs) override;
 
 	/// \brief Returns the class of properties that can serve as input for the modifier.
 	virtual const PropertyContainerClass& containerClass() const = 0;

@@ -120,15 +120,14 @@ Future<AsynchronousModifier::ComputeEnginePtr> VoroTopModifier::createEngine(Tim
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState VoroTopModifier::VoroTopAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void VoroTopModifier::VoroTopAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {    
-	PipelineFlowState output = StructureIdentificationEngine::emitResults(time, modApp, input);
+	StructureIdentificationEngine::emitResults(time, modApp, state);
 
     // Cache loaded filter definition for future use.
     static_object_cast<VoroTopModifier>(modApp->modifier())->_filter = this->filter();
     
-    output.setStatus(PipelineStatus(PipelineStatus::Success, tr("%1 Weinberg vectors loaded").arg(filter() ? filter()->size() : 0)));
-    return output;
+    state.setStatus(PipelineStatus(PipelineStatus::Success, tr("%1 Weinberg vectors loaded").arg(filter() ? filter()->size() : 0)));
 }
 
 /******************************************************************************

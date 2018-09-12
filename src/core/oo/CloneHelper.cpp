@@ -34,22 +34,24 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
 *    deepCopy - Controls whether sub-objects referenced by this RefTarget are copied too.
 * Returns the copy of the source object.
 ******************************************************************************/
-OORef<RefTarget> CloneHelper::cloneObjectImpl(const RefTarget* obj, bool deepCopy)
+RefTarget* CloneHelper::cloneObjectImpl(const RefTarget* obj, bool deepCopy)
 {
 	if(obj == nullptr) return nullptr;
 	OVITO_CHECK_OBJECT_POINTER(obj);
 	
-	OORef<RefTarget> copy(_cloneTable[obj]);
-	if(copy) return copy;
-	
-	copy = obj->clone(deepCopy, *this);
+	for(const auto& entry : _cloneTable) {
+		if(entry.first == obj) 
+			return entry.second;
+	}
+
+	OORef<RefTarget> copy = obj->clone(deepCopy, *this);
 	if(!copy)
 		obj->throwException(QString("Object of class %1 cannot be cloned. It does not implement the clone() method.").arg(obj->getOOClass().name()));
 		
 	OVITO_ASSERT_MSG(copy->getOOClass().isDerivedFrom(obj->getOOClass()), "CloneHelper::cloneObject", qPrintable(QString("The clone method of class %1 did not return a compatible class instance.").arg(obj->getOOClass().name())));
 	
-	_cloneTable[obj] = copy;
-	return copy;	
+	_cloneTable.push_back(std::make_pair(obj, copy));
+	return copy;
 }
 
 OVITO_END_INLINE_NAMESPACE

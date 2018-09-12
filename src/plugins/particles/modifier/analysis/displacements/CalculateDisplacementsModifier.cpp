@@ -144,20 +144,17 @@ void CalculateDisplacementsModifier::DisplacementEngine::perform()
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState CalculateDisplacementsModifier::DisplacementEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void CalculateDisplacementsModifier::DisplacementEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	CalculateDisplacementsModifier* modifier = static_object_cast<CalculateDisplacementsModifier>(modApp->modifier());
 
-	PipelineFlowState output = input;
-	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+	ParticlesObject* particles = state.expectMutableObject<ParticlesObject>();
 
 	if(_inputFingerprint.hasChanged(particles))
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 
 	particles->createProperty(displacements())->setVisElement(modifier->vectorVis());
 	particles->createProperty(displacementMagnitudes());
-	
-	return output;
 }
 
 

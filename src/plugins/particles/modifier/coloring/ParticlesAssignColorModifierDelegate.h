@@ -43,7 +43,7 @@ class ParticlesAssignColorModifierDelegate : public AssignColorModifierDelegate
 		using AssignColorModifierDelegate::OOMetaClass::OOMetaClass;
 
 		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override {
+		virtual bool isApplicableTo(const DataCollection& input) const override {
 			return input.containsObject<ParticlesObject>();
 		}
 
@@ -84,7 +84,7 @@ class ParticleVectorsAssignColorModifierDelegate : public AssignColorModifierDel
 		using AssignColorModifierDelegate::OOMetaClass::OOMetaClass;
 
 		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+		virtual bool isApplicableTo(const DataCollection& input) const override;
 
 		/// The name by which Python scripts can refer to this modifier delegate.
 		virtual QString pythonDataName() const override { return QStringLiteral("vectors"); }
@@ -123,7 +123,7 @@ class BondsAssignColorModifierDelegate : public AssignColorModifierDelegate
 		using AssignColorModifierDelegate::OOMetaClass::OOMetaClass;
 
 		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override {
+		virtual bool isApplicableTo(const DataCollection& input) const override {
 			if(const ParticlesObject* particles = input.getObject<ParticlesObject>())
 				return particles->bonds() != nullptr;
 			return false;

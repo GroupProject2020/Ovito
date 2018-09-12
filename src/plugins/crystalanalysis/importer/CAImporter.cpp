@@ -596,52 +596,52 @@ FileSourceImporter::FrameDataPtr CAImporter::FrameLoader::loadFile(QFile& file)
 * This function is called by the system from the main thread after the
 * asynchronous loading task has finished.
 ******************************************************************************/
-PipelineFlowState CAImporter::CrystalAnalysisFrameData::handOver(const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource)
+OORef<DataCollection> CAImporter::CrystalAnalysisFrameData::handOver(const DataCollection* existing, bool isNewFile, FileSource* fileSource)
 {
 	// Insert simulation cell.
-	PipelineFlowState output = ParticleFrameData::handOver(existing, isNewFile, fileSource);
+	OORef<DataCollection> output = ParticleFrameData::handOver(existing, isNewFile, fileSource);
 
 	// Insert defect surface.
 	if(_defectSurface) {
-		SurfaceMesh* defectSurfaceObj = const_cast<SurfaceMesh*>(existing.getObject<SurfaceMesh>());
+		SurfaceMesh* defectSurfaceObj = const_cast<SurfaceMesh*>(existing ? existing->getObject<SurfaceMesh>() : nullptr);
 		if(!defectSurfaceObj) {
-			defectSurfaceObj = output.createObject<SurfaceMesh>(fileSource);
+			defectSurfaceObj = output->createObject<SurfaceMesh>(fileSource);
 			OORef<SurfaceMeshVis> vis = new SurfaceMeshVis(fileSource->dataset());
 			if(!Application::instance()->scriptMode())
 				vis->loadUserDefaults();
 			defectSurfaceObj->setVisElement(vis);
 		}
 		else {
-			output.addObject(defectSurfaceObj);
+			output->addObject(defectSurfaceObj);
 		}
-		defectSurfaceObj->setDomain(output.getObject<SimulationCellObject>());
+		defectSurfaceObj->setDomain(output->getObject<SimulationCellObject>());
 		defectSurfaceObj->setStorage(defectSurface());
 	}
 
 	// Insert partition mesh.
 	if(_partitionMesh) {
-		PartitionMesh* partitionMeshObj = const_cast<PartitionMesh*>(existing.getObject<PartitionMesh>());
+		PartitionMesh* partitionMeshObj = const_cast<PartitionMesh*>(existing ? existing->getObject<PartitionMesh>() : nullptr);
 		if(!partitionMeshObj) {
-			partitionMeshObj = output.createObject<PartitionMesh>(fileSource);
+			partitionMeshObj = output->createObject<PartitionMesh>(fileSource);
 			OORef<PartitionMeshVis> vis = new PartitionMeshVis(fileSource->dataset());
 			if(!Application::instance()->scriptMode())
 				vis->loadUserDefaults();
 			partitionMeshObj->setVisElement(vis);
 		}
 		else {
-			output.addObject(partitionMeshObj);
+			output->addObject(partitionMeshObj);
 		}
-		partitionMeshObj->setDomain(output.getObject<SimulationCellObject>());
+		partitionMeshObj->setDomain(output->getObject<SimulationCellObject>());
 		partitionMeshObj->setStorage(partitionMesh());
 	}
 
 	// Insert pattern catalog.
-	PatternCatalog* patternCatalog = const_cast<PatternCatalog*>(existing.getObject<PatternCatalog>());
+	PatternCatalog* patternCatalog = const_cast<PatternCatalog*>(existing ? existing->getObject<PatternCatalog>() : nullptr);
 	if(!patternCatalog) {
-		patternCatalog = output.createObject<PatternCatalog>(fileSource);
+		patternCatalog = output->createObject<PatternCatalog>(fileSource);
 	}
 	else {
-		output.addObject(patternCatalog);
+		output->addObject(patternCatalog);
 	}
 
 	// Update pattern catalog.
@@ -687,30 +687,30 @@ PipelineFlowState CAImporter::CrystalAnalysisFrameData::handOver(const PipelineF
 
 	// Insert cluster graph.
 	if(_clusterGraph) {
-		ClusterGraphObject* clusterGraphObj = const_cast<ClusterGraphObject*>(existing.getObject<ClusterGraphObject>());
+		ClusterGraphObject* clusterGraphObj = const_cast<ClusterGraphObject*>(existing ? existing->getObject<ClusterGraphObject>() : nullptr);
 		if(!clusterGraphObj) {
-			clusterGraphObj = output.createObject<ClusterGraphObject>(fileSource);
+			clusterGraphObj = output->createObject<ClusterGraphObject>(fileSource);
 		}
 		else {
-			output.addObject(clusterGraphObj);
+			output->addObject(clusterGraphObj);
 		}
 		clusterGraphObj->setStorage(clusterGraph());
 	}
 
 	// Insert dislocations.
 	if(_dislocations) {
-		DislocationNetworkObject* dislocationNetwork = const_cast<DislocationNetworkObject*>(existing.getObject<DislocationNetworkObject>());
+		DislocationNetworkObject* dislocationNetwork = const_cast<DislocationNetworkObject*>(existing ? existing->getObject<DislocationNetworkObject>() : nullptr);
 		if(!dislocationNetwork) {
-			dislocationNetwork = output.createObject<DislocationNetworkObject>(fileSource);
+			dislocationNetwork = output->createObject<DislocationNetworkObject>(fileSource);
 			OORef<DislocationVis> vis = new DislocationVis(fileSource->dataset());
 			if(!Application::instance()->scriptMode())
 				vis->loadUserDefaults();
 			dislocationNetwork->setVisElement(vis);
 		}
 		else {
-			output.addObject(dislocationNetwork);
+			output->addObject(dislocationNetwork);
 		}
-		dislocationNetwork->setDomain(output.getObject<SimulationCellObject>());
+		dislocationNetwork->setDomain(output->getObject<SimulationCellObject>());
 		dislocationNetwork->setStorage(dislocations());
 	}
 

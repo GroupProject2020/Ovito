@@ -290,7 +290,7 @@ bool AMBERNetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, Ti
 	// Write "time" variable.
 	double t = _frameCounter;
 	if(attributes.contains(NC_TIME_STR)) t = attributes.value(NC_TIME_STR).toDouble();
-	else if(state.sourceFrame() >= 0) t = state.sourceFrame();
+	else if(state.data() && state.data()->sourceFrame() >= 0) t = state.data()->sourceFrame();
     NCERR(nc_put_var1_double(_ncid, _time_var, &_frameCounter, &t));
 
 	// Write simulation cell.

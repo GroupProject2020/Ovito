@@ -53,9 +53,6 @@ class OVITO_CORE_EXPORT CloneHelper
 {
 public:
 
-	/// \brief Default constructor.
-	CloneHelper() {}
-
 	/// \brief This creates a copy of a RefTarget derived object.
 	/// \param obj The input object to be cloned. Can be a \c NULL pointer.
 	/// \param deepCopy Specifies whether a deep or a shallow copy of the object should be created.
@@ -68,7 +65,7 @@ public:
 	///       input object \a obj, then the existing clone of this object is returned.
 	template<class T>
 	OORef<T> cloneObject(const T* obj, bool deepCopy) {
-		OORef<RefTarget> p(cloneObjectImpl(obj, deepCopy));
+		RefTarget* p = cloneObjectImpl(obj, deepCopy);
 		OVITO_ASSERT_MSG(!p || p->getOOClass().isDerivedFrom(T::OOClass()), "CloneHelper::cloneObject", qPrintable("The clone method of class " + obj->getOOClass().name() + " did not return an assignable instance of the class " + T::OOClass().name() + "."));
 		return static_object_cast<T>(p);
 	}
@@ -108,10 +105,10 @@ public:
 private:
 
 	/// Untyped version of the clone function.
-	OORef<RefTarget> cloneObjectImpl(const RefTarget* obj, bool deepCopy);
+	RefTarget* cloneObjectImpl(const RefTarget* obj, bool deepCopy);
 
 	/// The table of clones created by this helper object.
-	std::map<const RefMaker*, OORef<RefTarget>> _cloneTable;
+	QVarLengthArray<std::pair<const RefMaker*, OORef<RefTarget>>, 2> _cloneTable;
 };
 
 OVITO_END_INLINE_NAMESPACE

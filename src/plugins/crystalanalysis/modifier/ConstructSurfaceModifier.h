@@ -45,7 +45,7 @@ class OVITO_CRYSTALANALYSIS_EXPORT ConstructSurfaceModifier : public Asynchronou
 		using AsynchronousModifier::OOMetaClass::OOMetaClass;
 
 		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+		virtual bool isApplicableTo(const DataCollection& input) const override;
 	};
 
 	Q_OBJECT
@@ -97,7 +97,7 @@ private:
 		virtual void perform() override;
 
 		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		virtual void emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 		
 		/// Indicates whether the entire simulation cell is part of the solid region.
 		bool isCompletelySolid() const { return _isCompletelySolid; }

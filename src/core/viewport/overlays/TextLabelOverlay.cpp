@@ -95,9 +95,11 @@ void TextLabelOverlay::render(Viewport* viewport, TimePoint time, QPainter& pain
 				return;
 		}
 		const PipelineFlowState& flowState = interactiveViewport ? sourceNode()->evaluatePipelinePreliminary(true) : stateFuture.result();
-		const QVariantMap attributes = flowState.buildAttributesMap();
-		for(auto a = attributes.cbegin(); a != attributes.cend(); ++a) {
-			textString.replace(QStringLiteral("[") + a.key() + QStringLiteral("]"), a.value().toString());
+		if(flowState.data()) {
+			const QVariantMap attributes = flowState.data()->buildAttributesMap();
+			for(auto a = attributes.cbegin(); a != attributes.cend(); ++a) {
+				textString.replace(QStringLiteral("[") + a.key() + QStringLiteral("]"), a.value().toString());
+			}
 		}
 	}
 

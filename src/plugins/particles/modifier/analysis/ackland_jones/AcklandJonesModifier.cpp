@@ -180,18 +180,16 @@ AcklandJonesModifier::StructureType AcklandJonesModifier::determineStructure(Nea
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState AcklandJonesModifier::AcklandJonesAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void AcklandJonesModifier::AcklandJonesAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
-	PipelineFlowState outState = StructureIdentificationEngine::emitResults(time, modApp, input);
+	StructureIdentificationEngine::emitResults(time, modApp, state);
 
 	// Also output structure type counts, which have been computed by the base class.
-	outState.addAttribute(QStringLiteral("AcklandJones.counts.OTHER"), QVariant::fromValue(getTypeCount(OTHER)), modApp);
-	outState.addAttribute(QStringLiteral("AcklandJones.counts.FCC"), QVariant::fromValue(getTypeCount(FCC)), modApp);
-	outState.addAttribute(QStringLiteral("AcklandJones.counts.HCP"), QVariant::fromValue(getTypeCount(HCP)), modApp);
-	outState.addAttribute(QStringLiteral("AcklandJones.counts.BCC"), QVariant::fromValue(getTypeCount(BCC)), modApp);
-	outState.addAttribute(QStringLiteral("AcklandJones.counts.ICO"), QVariant::fromValue(getTypeCount(ICO)), modApp);
-
-	return outState;
+	state.addAttribute(QStringLiteral("AcklandJones.counts.OTHER"), QVariant::fromValue(getTypeCount(OTHER)), modApp);
+	state.addAttribute(QStringLiteral("AcklandJones.counts.FCC"), QVariant::fromValue(getTypeCount(FCC)), modApp);
+	state.addAttribute(QStringLiteral("AcklandJones.counts.HCP"), QVariant::fromValue(getTypeCount(HCP)), modApp);
+	state.addAttribute(QStringLiteral("AcklandJones.counts.BCC"), QVariant::fromValue(getTypeCount(BCC)), modApp);
+	state.addAttribute(QStringLiteral("AcklandJones.counts.ICO"), QVariant::fromValue(getTypeCount(ICO)), modApp);
 }
 
 OVITO_END_INLINE_NAMESPACE

@@ -61,7 +61,7 @@ public:
 		virtual void perform() = 0;
 
 		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) = 0;
+		virtual void emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) = 0;
 
 		/// Returns the validity period of the stored results.
 		const TimeInterval& validityInterval() const { return _validityInterval; }
@@ -110,7 +110,7 @@ public:
 	virtual Future<PipelineFlowState> evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
 
 	/// Modifies the input data in an immediate, preliminary way.
-	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	virtual void evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
 	/// Suppress preliminary viewport updates when a parameter of the asynchronous modifier changes.
 	virtual bool performPreliminaryUpdateAfterChange() override { return false; }

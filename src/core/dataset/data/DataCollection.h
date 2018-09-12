@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,349 +24,338 @@
 
 #include <core/Core.h>
 #include <core/dataset/animation/TimeInterval.h>
+#include <core/oo/RefMaker.h>
 #include <core/dataset/pipeline/PipelineStatus.h>
 #include <core/dataset/data/DataObject.h>
-#include <core/dataset/data/DataCollection.h>
+#include <core/dataset/data/DataObjectReference.h>
+#include <core/oo/CloneHelper.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
+
+/// Utility class that is used to reference a particular data object in a DataCollection
+/// as a path through the hierarchy of nested data objects.
+class ConstDataObjectPath : public QVarLengthArray<const DataObject*, 3>
+{
+public:
+
+	/// Inherit constructors from base class.
+	using QVarLengthArray::QVarLengthArray;
+
+	/// Converts the path to a string representation.
+	QString toString() const {
+		QString s;
+		for(const DataObject* o : *this) {
+			if(!s.isEmpty()) s += QChar('/');
+			s += o->identifier();
+		}
+		return s;
+	}
+};
+
+/// Utility class that is used to reference a particular data object in a DataCollection
+/// as a path through the hierarchy of nested data objects.
+class DataObjectPath : public QVarLengthArray<DataObject*, 3>
+{
+public:
+
+	/// Inherit constructors from base class.
+	using QVarLengthArray::QVarLengthArray;
+
+	/// Converts the path to a string representation.
+	QString toString() const {
+		QString s;
+		for(DataObject* o : *this) {
+			if(!s.isEmpty()) s += QChar('/');
+			s += o->identifier();
+		}
+		return s;
+	}
+
+	/// A path to a mutable object can be implicitly converted to a path to a constant object. 
+	operator const ConstDataObjectPath&() const {
+		return *reinterpret_cast<const ConstDataObjectPath*>(this);
+	}
+};
 
 /**
  * \brief This data structure holds the list of data objects that flows down a data pipeline.
  */
-class OVITO_CORE_EXPORT PipelineFlowState
+class OVITO_CORE_EXPORT DataCollection : public DataObject
 {
+	Q_OBJECT
+	OVITO_CLASS(DataCollection)
+
 public:
 
-	/// \brief Default constructor that creates an empty state.
-	PipelineFlowState() = default;
+	/// \brief Constructor.
+	Q_INVOKABLE DataCollection(DataSet* dataset) : DataObject(dataset) {}
 
-	/// \brief Constructor that initializes the state with the data from a DataCollection.
-	/// \param dataCollection The data which is used to fill the state. A copy of the data is made if necessary.
-	/// \param status A status object describing the outcome of the pipeline evaluation.
-	/// \param validityInterval The time interval during which the state is valid.
-	PipelineFlowState(const DataCollection* dataCollection, const PipelineStatus& status, const TimeInterval& validityInterval = TimeInterval::infinite()) : 
-		_data(dataCollection), _status(status), _stateValidity(validityInterval) 
-	{
-		// By default, make sure the payload data is exclusively owned by this pipeline state.
-		if(data())
-			mutableData()->makeAllMutableRecursive();
+	/// \brief Discards all contents of this data collection.
+	void clear() {
+		_objects.clear(this, PROPERTY_FIELD(objects));
 	}
 
-	/// \brief Discards all contents of this state object and resets it to an empty state.
-	void reset() {
-		_data.reset();
-		_stateValidity.setEmpty();
-		_status = PipelineStatus();
-	}
+	/// \brief Returns true if the given object is part of this pipeline flow state.
+	/// \note The method ignores the revision number of the object.
+	bool contains(const DataObject* obj) const;
 
 	/// \brief Adds an additional data object to this state.
-	void addObject(const DataObject* obj) {
-		OVITO_ASSERT(data());
-		mutableData()->addObject(obj);
-	}
+	void addObject(const DataObject* obj);
+
+	/// \brief Inserts an additional data object into this state.
+	void insertObject(int index, const DataObject* obj);
+		
+	/// \brief Replaces a data object with a new one.
+	bool replaceObject(const DataObject* oldObj, const DataObject* newObj);
 
 	/// \brief Removes a data object from this state.
-	void removeObject(const DataObject* obj) { 
-		OVITO_ASSERT(data());
-		mutableData()->removeObject(obj);
-	}
+	void removeObject(const DataObject* obj) { replaceObject(obj, nullptr); }
 
-	/// \brief Gets the validity interval for this pipeline state.
-	/// \return The time interval during which the returned object is valid.
-	///         For times outside this interval the geometry pipeline has to be re-evaluated.
-	const TimeInterval& stateValidity() const { return _stateValidity; }
-
-	/// \brief Gets a non-const reference to the validity interval of this pipeline state.
-	TimeInterval& mutableStateValidity() { return _stateValidity; }
-	
-	/// \brief Specifies the validity interval for this pipeline state.
-	/// \param newInterval The time interval during which the object set by setResult() is valid.
-	/// \sa intersectStateValidity()
-	void setStateValidity(const TimeInterval& newInterval) { _stateValidity = newInterval; }
-
-	/// \brief Reduces the validity interval of this pipeline state to include only the given time interval.
-	/// \param intersectionInterval The current validity interval is reduced to include only this time interval.
-	/// \sa setStateValidity()
-	void intersectStateValidity(const TimeInterval& intersectionInterval) { _stateValidity.intersect(intersectionInterval); }
-
-	/// \brief Returns true if this state object has no valid contents.
-	bool isEmpty() const { return !_data; }
-
-	/// Returns the status of the pipeline evaluation.
-	const PipelineStatus& status() const { return _status; }
-
-	/// Sets the stored status.
-	void setStatus(const PipelineStatus& status) { _status = status; }
-
-	/// Sets the stored status.
-	void setStatus(PipelineStatus&& status) { _status = std::move(status); }
-
-	/// Returns the data collection of this pipeline state after making sure it is safe to modify it.
-	DataCollection* mutableData();
-
-	const DataCollection* data() const { return _data.get(); }
+	/// \brief Removes a data object from this state.
+	void removeObjectByIndex(int index);
 
 	/// \brief Finds an object of the given type in the list of data objects stored in this flow state.
-	const DataObject* getObject(const DataObject::OOMetaClass& objectClass) const {
-		OVITO_ASSERT(data());
-		return data()->getObject(objectClass);
-	}
+	const DataObject* getObject(const DataObject::OOMetaClass& objectClass) const;
 
 	/// \brief Finds an object of the given type in the list of data objects stored in this flow state.
 	template<class DataObjectClass>
 	const DataObjectClass* getObject() const {
-		OVITO_ASSERT(data());
-		return data()->getObject<DataObjectClass>();
+		return static_object_cast<DataObjectClass>(getObject(DataObjectClass::OOClass()));
 	}
 
 	/// \brief Determines if an object of the given type is in this flow state.
 	template<class DataObjectClass>
 	bool containsObject() const {
-		OVITO_ASSERT(data());
-		return data()->containsObject<DataObjectClass>();
+		return getObject(DataObjectClass::OOClass()) != nullptr;
 	}
 
 	/// Throws an exception if the input does not contain a data object of the given type.
-	const DataObject* expectObject(const DataObject::OOMetaClass& objectClass) const {
-		OVITO_ASSERT(data());
-		return data()->expectObject(objectClass);
-	}
+	const DataObject* expectObject(const DataObject::OOMetaClass& objectClass) const;
 
 	/// Throws an exception if the input does not contain a data object of the given type.
 	template<class DataObjectClass>
 	const DataObjectClass* expectObject() const {
-		OVITO_ASSERT(data());
-		return data()->expectObject<DataObjectClass>();
+		return static_object_cast<DataObjectClass>(expectObject(DataObjectClass::OOClass()));
 	}
 	
 	/// Throws an exception if the input does not contain a data object of the given type.
 	DataObject* expectMutableObject(const DataObject::OOMetaClass& objectClass) {
-		OVITO_ASSERT(data());
-		return mutableData()->expectMutableObject(objectClass);
+		return makeMutable(expectObject(objectClass));
 	}
 
 	/// Throws an exception if the input does not contain a data object of the given type.
 	template<class DataObjectClass>
 	DataObjectClass* expectMutableObject() {
-		OVITO_ASSERT(data());
-		return mutableData()->expectMutableObject<DataObjectClass>();
+		return static_object_cast<DataObjectClass>(expectMutableObject(DataObjectClass::OOClass()));
 	}
 
 	/// Finds an object of the given type in the list of data objects stored in this flow state
 	/// or among any of their sub-objects.
 	bool containsObjectRecursive(const DataObject::OOMetaClass& objectClass) const {
-		OVITO_ASSERT(data());
-		return data()->containsObjectRecursive(objectClass);
+		for(const DataObject* obj : objects()) {
+			if(containsObjectRecursiveImpl(obj, objectClass))
+				return true;
+		}
+		return false;
 	}
 
 	/// Finds all objects of the given type in this flow state (also searching among sub-objects).
 	/// Returns them as a list of object paths.
 	std::vector<ConstDataObjectPath> getObjectsRecursive(const DataObject::OOMetaClass& objectClass) const {
-		OVITO_ASSERT(data());
-		return data()->getObjectsRecursive(objectClass);
+		std::vector<ConstDataObjectPath> result;
+		ConstDataObjectPath path(1);
+		for(const DataObject* obj : objects()) {
+			OVITO_ASSERT(path.size() == 1);
+			path[0] = obj;
+			getObjectsRecursiveImpl(path, objectClass, result);
+		}
+		return result;
 	}	
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
-	ConstDataObjectPath getObject(const DataObject::OOMetaClass& objectClass, const QString& pathString) const {
-		OVITO_ASSERT(data());
-		return data()->getObject(objectClass, pathString);
-	}
+	ConstDataObjectPath getObject(const DataObject::OOMetaClass& objectClass, const QString& pathString) const;
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
 	ConstDataObjectPath getObject(const DataObjectReference& dataRef) const {
-		OVITO_ASSERT(data());
-		return data()->getObject(dataRef);
+		OVITO_ASSERT(dataRef);
+		return getObject(*dataRef.dataClass(), dataRef.dataPath());
 	}
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
 	template<class DataObjectClass>
-	ConstDataObjectPath getObject(const QString& pathString) const { 
-		OVITO_ASSERT(data());
-		return data()->getObject<DataObjectClass>(pathString);
-	}
+	ConstDataObjectPath getObject(const QString& pathString) const { return getObject(DataObjectClass::OOClass(), pathString); }
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
 	template<class DataObjectClass>
 	ConstDataObjectPath getObject(const TypedDataObjectReference<DataObjectClass>& dataRef) const { 
-		OVITO_ASSERT(data());
-		return data()->getObject<DataObjectClass>(dataRef);
+		OVITO_ASSERT(dataRef);
+		OVITO_ASSERT(dataRef.dataClass()->isDerivedFrom(DataObjectClass::OOClass()));
+		return getObject(*dataRef.dataClass(), dataRef.dataPath());
 	}
 
 	/// Throws an exception if the input does not contain any a data object of the given type and under the given hierarchy path.
-	ConstDataObjectPath expectObject(const DataObject::OOMetaClass& objectClass, const QString& pathString) const {
-		OVITO_ASSERT(data());
-		return data()->expectObject(objectClass, pathString);
-	}
+	ConstDataObjectPath expectObject(const DataObject::OOMetaClass& objectClass, const QString& pathString) const;
 
 	/// Throws an exception if the input does not contain any a data object of the given type and under the given hierarchy path.
 	ConstDataObjectPath expectObject(const DataObjectReference& dataRef) const {
-		OVITO_ASSERT(data());
-		return data()->expectObject(dataRef);
+		OVITO_ASSERT(dataRef);
+		return expectObject(*dataRef.dataClass(), dataRef.dataPath());
 	}
 
 	/// Throws an exception if the input does not contain any a data object of the given type and under the given hierarchy path.
 	template<class DataObjectClass>
-	ConstDataObjectPath expectObject(const QString& pathString) const { 
-		OVITO_ASSERT(data());
-		return data()->expectObject<DataObjectClass>(pathString);
-	}
+	ConstDataObjectPath expectObject(const QString& pathString) const { return expectObject(DataObjectClass::OOClass(), pathString); }
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
 	template<class DataObjectClass>
 	ConstDataObjectPath expectObject(const TypedDataObjectReference<DataObjectClass>& dataRef) const { 
-		OVITO_ASSERT(data());
-		return data()->expectObject<DataObjectClass>(dataRef);
+		OVITO_ASSERT(dataRef);
+		OVITO_ASSERT(dataRef.dataClass()->isDerivedFrom(DataObjectClass::OOClass()));
+		return expectObject(*dataRef.dataClass(), dataRef.dataPath());
 	}
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
-	const DataObject* getLeafObject(const DataObject::OOMetaClass& objectClass, const QString& pathString) const {
-		OVITO_ASSERT(data());
-		return data()->getLeafObject(objectClass, pathString);
-	}
+	const DataObject* getLeafObject(const DataObject::OOMetaClass& objectClass, const QString& pathString) const;
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
 	const DataObject* getLeafObject(const DataObjectReference& dataRef) const {
-		OVITO_ASSERT(data());
-		return data()->getLeafObject(dataRef);
+		OVITO_ASSERT(dataRef);
+		return getLeafObject(*dataRef.dataClass(), dataRef.dataPath());
 	}
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
 	template<class DataObjectClass>
 	const DataObjectClass* getLeafObject(const TypedDataObjectReference<DataObjectClass>& dataRef) const { 
-		OVITO_ASSERT(data());
-		return data()->getLeafObject(dataRef);
+		OVITO_ASSERT(dataRef);
+		OVITO_ASSERT(dataRef.dataClass()->isDerivedFrom(DataObjectClass::OOClass()));
+		return static_object_cast<DataObjectClass>(getLeafObject(*dataRef.dataClass(), dataRef.dataPath()));
 	}
 
 	/// Throws an exception if the input does not contain a data object of the given type.
-	const DataObject* expectLeafObject(const DataObject::OOMetaClass& objectClass, const QString& pathString) const {
-		OVITO_ASSERT(data());
-		return data()->expectLeafObject(objectClass, pathString);
-	}
+	const DataObject* expectLeafObject(const DataObject::OOMetaClass& objectClass, const QString& pathString) const;
 
 	/// Throws an exception if the input does not contain a data object of the given type.
 	const DataObject* expectLeafObject(const DataObjectReference& dataRef) const {
-		OVITO_ASSERT(data());
-		return data()->expectLeafObject(dataRef);
+		OVITO_ASSERT(dataRef);
+		return expectLeafObject(*dataRef.dataClass(), dataRef.dataPath());
 	}
 
 	/// Throws an exception if the input does not contain a data object of the given type.
 	template<class DataObjectClass>
 	const DataObjectClass* expectLeafObject(const TypedDataObjectReference<DataObjectClass>& dataRef) const { 
-		OVITO_ASSERT(data());
-		return data()->expectLeafObject<DataObjectClass>(dataRef);
+		OVITO_ASSERT(dataRef);
+		OVITO_ASSERT(dataRef.dataClass()->isDerivedFrom(DataObjectClass::OOClass()));
+		return static_object_cast<DataObjectClass>(expectLeafObject(*dataRef.dataClass(), dataRef.dataPath()));
 	}
 
 	/// Finds an object of the given type and with the given identifier in the list of data objects stored in this flow state.
-	const DataObject* getObjectBy(const DataObject::OOMetaClass& objectClass, const PipelineObject* dataSource, const QString& identifier) const {
-		OVITO_ASSERT(data());
-		return data()->getObjectBy(objectClass, dataSource, identifier);
-	}
+	const DataObject* getObjectBy(const DataObject::OOMetaClass& objectClass, const PipelineObject* dataSource, const QString& identifier) const;
 
 	/// Finds an object of the given type and with the given identifier in the list of data objects stored in this flow state.
 	template<class DataObjectClass>
 	const DataObjectClass* getObjectBy(const PipelineObject* dataSource, const QString& identifier) const {
-		OVITO_ASSERT(data());
-		return data()->getObjectBy<DataObjectClass>(dataSource, identifier);
+		return static_object_cast<DataObjectClass>(getObjectBy(DataObjectClass::OOClass(), dataSource, identifier));
 	}
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state. 
 	/// Duplicates it, and all its parent objects, if needed so that it can be safely modified without unwanted side effects.
-	DataObjectPath getMutableObject(const DataObject::OOMetaClass& objectClass, const QString& pathString) {
-		OVITO_ASSERT(data());
-		return mutableData()->getMutableObject(objectClass, pathString);
-	}
+	DataObjectPath getMutableObject(const DataObject::OOMetaClass& objectClass, const QString& pathString);
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state. 
 	/// Duplicates it, and all its parent objects, if needed so that it can be safely modified without unwanted side effects.
 	template<class DataObjectClass>
 	DataObjectPath getMutableObject(const TypedDataObjectReference<DataObjectClass>& dataRef) { 
-		OVITO_ASSERT(data());
-		return mutableData()->getMutableObject<DataObjectClass>(dataRef);
+		OVITO_ASSERT(dataRef);
+		OVITO_ASSERT(dataRef.dataClass()->isDerivedFrom(DataObjectClass::OOClass()));
+		return getMutableObject(*dataRef.dataClass(), dataRef.dataPath());
 	}
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
-	DataObject* getMutableLeafObject(const DataObject::OOMetaClass& objectClass, const QString& pathString) {
-		OVITO_ASSERT(data());
-		return mutableData()->getMutableLeafObject(objectClass, pathString);
-	}
+	DataObject* getMutableLeafObject(const DataObject::OOMetaClass& objectClass, const QString& pathString);
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
 	DataObject* getMutableLeafObject(const DataObjectReference& dataRef) {
-		OVITO_ASSERT(data());
-		return mutableData()->getMutableLeafObject(dataRef);
+		OVITO_ASSERT(dataRef);
+		return getMutableLeafObject(*dataRef.dataClass(), dataRef.dataPath());
 	}
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
 	template<class DataObjectClass>
 	DataObjectClass* getMutableLeafObject(const DataObject::OOMetaClass& objectClass, const QString& pathString) {
-		OVITO_ASSERT(data());
-		return mutableData()->getMutableLeafObject<DataObjectClass>(objectClass, pathString);
+		OVITO_ASSERT(objectClass.isDerivedFrom(DataObjectClass::OOClass()));
+		return static_object_cast<DataObjectClass>(getMutableLeafObject(objectClass, pathString));
 	}
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
 	template<class DataObjectClass>
 	DataObjectClass* getMutableLeafObject(const TypedDataObjectReference<DataObjectClass>& dataRef) {
-		OVITO_ASSERT(data());
-		return mutableData()->getMutableLeafObject<DataObjectClass>(dataRef);
+		OVITO_ASSERT(dataRef);
+		return getMutableLeafObject<DataObjectClass>(*dataRef.dataClass(), dataRef.dataPath());
 	}
 
 	/// Throws an exception if the input does not contain a data object of the given type and under the given hierarchy path.
-	DataObjectPath expectMutableObject(const DataObject::OOMetaClass& objectClass, const QString& pathString) {
-		OVITO_ASSERT(data());
-		return mutableData()->expectMutableObject(objectClass, pathString);
-	}
+	DataObjectPath expectMutableObject(const DataObject::OOMetaClass& objectClass, const QString& pathString);
 
 	/// Throws an exception if the input does not contain a data object of the given type and under the given hierarchy path.
 	DataObjectPath expectMutableObject(const DataObjectReference& dataRef) {
-		OVITO_ASSERT(data());
-		return mutableData()->expectMutableObject(dataRef);
+		OVITO_ASSERT(dataRef);
+		return expectMutableObject(*dataRef.dataClass(), dataRef.dataPath());
 	}
 
 	/// Throws an exception if the input does not contain a data object of the given type and under the given hierarchy path.
-	DataObject* expectMutableLeafObject(const DataObject::OOMetaClass& objectClass, const QString& pathString) {
-		OVITO_ASSERT(data());
-		return mutableData()->expectMutableLeafObject(objectClass, pathString);
-	}
+	DataObject* expectMutableLeafObject(const DataObject::OOMetaClass& objectClass, const QString& pathString);
 
 	/// Throws an exception if the input does not contain a data object of the given type and under the given hierarchy path.
 	DataObject* expectMutableLeafObject(const DataObjectReference& dataRef) {
-		OVITO_ASSERT(data());
-		return mutableData()->expectMutableLeafObject(dataRef);
+		OVITO_ASSERT(dataRef);
+		return expectMutableLeafObject(*dataRef.dataClass(), dataRef.dataPath());
 	}
 
 	/// Throws an exception if the input does not contain a data object of the given type and under the given hierarchy path.
 	template<class DataObjectClass>
 	DataObjectClass* expectMutableLeafObject(const DataObject::OOMetaClass& objectClass, const QString& pathString) {
-		OVITO_ASSERT(data());
-		return mutableData()->expectMutableLeafObject<DataObjectClass>(objectClass, pathString);
+		OVITO_ASSERT(objectClass.isDerivedFrom(DataObjectClass::OOClass()));
+		return static_object_cast<DataObjectClass>(expectMutableLeafObject(objectClass, pathString));
 	}
 
 	/// Throws an exception if the input does not contain a data object of the given type and under the given hierarchy path.
 	template<class DataObjectClass>
 	DataObjectClass* expectMutableLeafObject(const TypedDataObjectReference<DataObjectClass>& dataRef) {
-		OVITO_ASSERT(data());
-		return mutableData()->expectMutableLeafObject<DataObjectClass>(dataRef);
+		OVITO_ASSERT(dataRef);
+		return expectMutableLeafObject<DataObjectClass>(*dataRef.dataClass(), dataRef.dataPath());
 	}
 
+	/// \brief Replaces the objects in this state with copies if they are shared between multiple pipeline flow states.
+	///
+	/// After calling this method, none of the objects in the flow state is referenced by anybody else.
+	/// Thus, it becomes safe to modify the data objects including their subobjects.
+	void makeAllMutableRecursive();
+
 	/// Ensures that a DataObject from this flow state is not shared with others and is safe to modify.
-	DataObject* makeMutable(const DataObject* obj, bool deepCopy = false) {
-		OVITO_ASSERT(data());
-		return mutableData()->makeMutable(obj, deepCopy);
-	}
+	DataObject* makeMutable(const DataObject* obj, bool deepCopy = false);
 
 	/// Ensures that a DataObject from this flow state is not shared with others and is safe to modify.
 	template<class DataObjectClass>
 	DataObjectClass* makeMutable(const DataObjectClass* obj, bool deepCopy = false) {
-		OVITO_ASSERT(data());
-		return mutableData()->makeMutable<DataObjectClass>(obj, deepCopy);
+		return static_object_cast<DataObjectClass>(makeMutable(static_cast<const DataObject*>(obj), deepCopy));
 	}
+
+	/// \brief Returns true if this state object has no valid contents.
+	bool isEmpty() const { return objects().empty(); }
+
+	/// Returns the source frame number associated with this pipeline state.
+	/// If the data does not originate from a pipeline with a FileSource, returns -1.
+	int sourceFrame() const;
 
 	/// Instantiates a new data object, passes the given parameters to its class constructor,
 	/// assigns the given data source object, and finally inserts the data object into this pipeline flow state.
 	template<class DataObjectType, class PipelineObjectClass, typename... Args>
 	DataObjectType* createObject(const PipelineObjectClass* dataSource, Args&&... args) {
-		OVITO_ASSERT(data());
-		return mutableData()->createObject<DataObjectType, PipelineObjectClass, Args...>(dataSource, std::forward<Args>(args)...);
+		OVITO_ASSERT(dataSource != nullptr);
+		OORef<DataObjectType> obj = new DataObjectType(dataSource->dataset(), std::forward<Args>(args)...);
+		obj->setDataSource(const_cast<PipelineObjectClass*>(dataSource));
+		addObject(obj);
+		return obj;
 	}
 
 	/// Instantiates a new data object, passes the given parameters to its class constructor,
@@ -374,65 +363,65 @@ public:
 	/// finally inserts the data object into this pipeline flow state.
 	template<class DataObjectType, class PipelineObjectClass, typename... Args>
 	DataObjectType* createObject(const QString& baseName, const PipelineObjectClass* dataSource, Args&&... args) {
-		OVITO_ASSERT(data());
-		return mutableData()->createObject<DataObjectType, PipelineObjectClass, Args...>(baseName, dataSource, std::forward<Args>(args)...);
+		DataObjectType* obj = createObject<DataObjectType, PipelineObjectClass, Args...>(dataSource, std::forward<Args>(args)...);
+		OVITO_ASSERT(!baseName.isEmpty());
+		obj->setIdentifier(generateUniqueIdentifier<DataObjectType>(baseName));
+		return obj;
 	}
 
 	/// Builds a list of the global attributes stored in this pipeline state.
-	QVariantMap buildAttributesMap() const {
-		OVITO_ASSERT(data());
-		return data()->buildAttributesMap();
-	}
+	QVariantMap buildAttributesMap() const;
 
 	/// Looks up the value for the given global attribute. 
 	/// Returns a given default value if the attribute is not defined in this pipeline state. 
-	QVariant getAttributeValue(const QString& attrName, const QVariant& defaultValue = QVariant()) const {
-		OVITO_ASSERT(data());
-		return data()->getAttributeValue(attrName, defaultValue);
-	}
+	QVariant getAttributeValue(const QString& attrName, const QVariant& defaultValue = QVariant()) const;
 
 	/// Looks up the value for the global attribute with the given base name and creator. 
 	/// Returns a given default value if the attribute is not defined in this pipeline state. 
-	QVariant getAttributeValue(const PipelineObject* dataSource, const QString& attrBaseName, const QVariant& defaultValue = QVariant()) const {
-		OVITO_ASSERT(data());
-		return data()->getAttributeValue(dataSource, attrBaseName, defaultValue);
-	}
+	QVariant getAttributeValue(const PipelineObject* dataSource, const QString& attrBaseName, const QVariant& defaultValue = QVariant()) const;
 
 	/// Inserts a new global attribute into the pipeline state.
-	AttributeDataObject* addAttribute(const QString& key, QVariant value, const PipelineObject* dataSource) {
-		OVITO_ASSERT(data());
-		return mutableData()->addAttribute(key, std::move(value), dataSource);
-	}
+	AttributeDataObject* addAttribute(const QString& key, QVariant value, const PipelineObject* dataSource);
 
 	/// Returns a new unique data object identifier that does not collide with the 
 	/// identifiers of any existing data object of the given type in the same data 
 	/// collection.
-	QString generateUniqueIdentifier(const QString& baseName, const OvitoClass& dataObjectClass) const {
-		OVITO_ASSERT(data());
-		return data()->generateUniqueIdentifier(baseName, dataObjectClass);
-	}
+	QString generateUniqueIdentifier(const QString& baseName, const OvitoClass& dataObjectClass) const;
 
 	/// Returns a new unique data object identifier that does not collide with the 
 	/// identifiers of any existing data object of the given type in the same data 
 	/// collection.
 	template<class DataObjectClass>
 	QString generateUniqueIdentifier(const QString& baseName) const {
-		OVITO_ASSERT(data());
-		return data()->generateUniqueIdentifier<DataObjectClass>(baseName);
+		return generateUniqueIdentifier(baseName, DataObjectClass::OOClass());
 	}
 
 private:
 
-	/// The payload data.
-	StrongDataObjectRef<DataCollection> _data;
+	/// Part of the implementation of containsObjectRecursive().
+	static bool containsObjectRecursiveImpl(const DataObject* dataObj, const DataObject::OOMetaClass& objectClass);
 
-	/// Contains the validity interval for this pipeline flow state.
-	TimeInterval _stateValidity = TimeInterval::empty();
+	/// Part of the implementation of getObjectsRecursive().
+	static void getObjectsRecursiveImpl(ConstDataObjectPath& path, const DataObject::OOMetaClass& objectClass, std::vector<ConstDataObjectPath>& results);
 
-	/// The status of the pipeline evaluation.
-	PipelineStatus _status;
+	/// Implementation detail of getObject().
+	static bool getObjectImpl(const DataObject::OOMetaClass& objectClass, QStringRef pathString, ConstDataObjectPath& path);
+
+	/// Implementation detail of getLeafObject().
+	static const DataObject* getLeafObjectImpl(const DataObject::OOMetaClass& objectClass, QStringRef pathString, const DataObject* parent);
+
+	/// Implementation detail of makeAllMutableRecursive().
+	static void makeAllMutableImpl(DataObject* parent, CloneHelper& cloneHelper);
+
+private:
+
+	/// Stores the list of data objects.
+	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD(DataObject, objects, setObjects);
 };
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
+
+Q_DECLARE_METATYPE(Ovito::ConstDataObjectPath);
+Q_DECLARE_METATYPE(Ovito::DataObjectPath);

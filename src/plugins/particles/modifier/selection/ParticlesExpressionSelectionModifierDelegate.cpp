@@ -33,7 +33,7 @@ IMPLEMENT_OVITO_CLASS(BondsExpressionSelectionModifierDelegate);
 /******************************************************************************
 * Determines whether this delegate can handle the given input data.
 ******************************************************************************/
-bool ParticlesExpressionSelectionModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool ParticlesExpressionSelectionModifierDelegate::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<ParticlesObject>();
 }
@@ -59,7 +59,7 @@ std::unique_ptr<PropertyExpressionEvaluator> ParticlesExpressionSelectionModifie
 /******************************************************************************
 * Determines whether this delegate can handle the given input data.
 ******************************************************************************/
-bool BondsExpressionSelectionModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool BondsExpressionSelectionModifierDelegate::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	if(const ParticlesObject* particles = input.getObject<ParticlesObject>())
 		return particles->bonds() != nullptr;

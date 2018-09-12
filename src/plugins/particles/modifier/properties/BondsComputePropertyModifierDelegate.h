@@ -44,7 +44,7 @@ class OVITO_PARTICLES_EXPORT BondsComputePropertyModifierDelegate : public Compu
 		using ComputePropertyModifierDelegate::OOMetaClass::OOMetaClass;
 
 		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override {
+		virtual bool isApplicableTo(const DataCollection& input) const override {
 			if(const ParticlesObject* particles = input.getObject<ParticlesObject>())
 				return particles->bonds() != nullptr;
 			return false;
@@ -101,7 +101,7 @@ private:
 		virtual QString inputVariableTable() const override;
 
 		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		virtual void emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
 	private:
 

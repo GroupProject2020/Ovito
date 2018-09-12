@@ -7,10 +7,10 @@ import os
 
 if "ovito.plugins.CrystalAnalysis" not in sys.modules: sys.exit()
 
-node = import_file("../../files/CFG/lammps_dumpi-42-1100-510000.cfg")
+pipeline = import_file("../../files/CFG/lammps_dumpi-42-1100-510000.cfg")
 
 modifier = ConstructSurfaceModifier()
-node.modifiers.append(modifier)
+pipeline.modifiers.append(modifier)
 
 print("Parameter defaults:")
 
@@ -30,14 +30,13 @@ print("  smooth_shading: {}".format(modifier.vis.smooth_shading))
 print("  surface_color: {}".format(modifier.vis.surface_color))
 print("  surface_transparency: {}".format(modifier.vis.surface_transparency))
 
-node.compute()
+data = pipeline.compute()
 
 print("Output:")
-print("  solid_volume= {}".format(node.output.attributes['ConstructSurfaceMesh.solid_volume']))
-print("  surface_area= {}".format(node.output.attributes['ConstructSurfaceMesh.surface_area']))
-print(node.output)
+print("  solid_volume= {}".format(data.attributes['ConstructSurfaceMesh.solid_volume']))
+print("  surface_area= {}".format(data.attributes['ConstructSurfaceMesh.surface_area']))
 
-surface_mesh = node.output.surface
+surface_mesh = data.make_mutable(data.surface)
 
 assert(surface_mesh.locate_point((0,0,0)) == 1)
 assert(surface_mesh.locate_point((82.9433, -43.5068, 26.4005), eps=1e-1) == 0)
@@ -51,8 +50,8 @@ surface_mesh.set_cutting_planes([[0,1,3,0.4]])
 assert(len(surface_mesh.get_cutting_planes()) == 1)
 
 # Backward compatibility with Ovito 2.8.2:
-surface_mesh.export_vtk("_surface_mesh.vtk", node.output.cell)
-surface_mesh.export_cap_vtk("_surfacecap_mesh.vtk", node.output.cell)
+surface_mesh.export_vtk("_surface_mesh.vtk", data.cell)
+surface_mesh.export_cap_vtk("_surfacecap_mesh.vtk", data.cell)
 os.remove("_surface_mesh.vtk")
 os.remove("_surfacecap_mesh.vtk")
 

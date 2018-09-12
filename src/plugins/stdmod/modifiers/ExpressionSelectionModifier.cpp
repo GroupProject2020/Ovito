@@ -50,7 +50,7 @@ ExpressionSelectionModifier::ExpressionSelectionModifier(DataSet* dataset) : Del
 /******************************************************************************
 * Applies the modifier operation to the data in a pipeline flow state.
 ******************************************************************************/
-PipelineStatus ExpressionSelectionModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
+PipelineStatus ExpressionSelectionModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	ExpressionSelectionModifier* expressionMod = static_object_cast<ExpressionSelectionModifier>(modifier);
 
@@ -58,7 +58,7 @@ PipelineStatus ExpressionSelectionModifierDelegate::apply(Modifier* modifier, co
 	int currentFrame = dataset()->animationSettings()->timeToFrame(time);
 
 	// Initialize the evaluator class.
-	std::unique_ptr<PropertyExpressionEvaluator> evaluator = initializeExpressionEvaluator(QStringList(expressionMod->expression()), input, currentFrame);
+	std::unique_ptr<PropertyExpressionEvaluator> evaluator = initializeExpressionEvaluator(QStringList(expressionMod->expression()), state, currentFrame);
 
 	// Save list of available input variables, which will be displayed in the modifier's UI.
 	expressionMod->setVariablesInfo(evaluator->inputVariableNames(), evaluator->inputVariableTable());
@@ -77,7 +77,7 @@ PipelineStatus ExpressionSelectionModifierDelegate::apply(Modifier* modifier, co
 	std::atomic_size_t nselected(0);
 
 	// Generate the output selection property.
-	PropertyContainer* propertyContainer = getOutputPropertyContainer(output);
+	PropertyContainer* propertyContainer = getOutputPropertyContainer(state);
 	const PropertyPtr& selProperty = propertyContainer->createProperty(PropertyStorage::GenericSelectionProperty)->modifiableStorage();
 
 	// Evaluate Boolean expression for every input data element.
@@ -94,10 +94,10 @@ PipelineStatus ExpressionSelectionModifierDelegate::apply(Modifier* modifier, co
 	// If the expression contains a time-dependent term, then we have to restrict the validity interval
 	// of the generated selection to the current animation time.
 	if(evaluator->isTimeDependent())
-		output.intersectStateValidity(time);
+		state.intersectStateValidity(time);
 
 	// Report the total number of selected elements as a pipeline attribute.
-	output.addAttribute(QStringLiteral("SelectExpression.num_selected"), QVariant::fromValue(nselected.load()), modApp);
+	state.addAttribute(QStringLiteral("SelectExpression.num_selected"), QVariant::fromValue(nselected.load()), modApp);
 
 	// Update status display in the UI.
 	QString statusMessage = tr("%1 out of %2 elements selected (%3%)").arg(nselected.load()).arg(selProperty->size()).arg((FloatType)nselected.load() * 100 / std::max((size_t)1,selProperty->size()), 0, 'f', 1);

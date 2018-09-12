@@ -116,6 +116,10 @@ void defineIOSubmodule(py::module m)
 		.def_property("playback_speed_numerator", &FileSource::playbackSpeedNumerator, &FileSource::setPlaybackSpeedNumerator)
 		.def_property("playback_speed_denominator", &FileSource::playbackSpeedDenominator, &FileSource::setPlaybackSpeedDenominator)
 		.def_property("playback_start_time", &FileSource::playbackStartTime, &FileSource::setPlaybackStartTime)
+
+		.def_property_readonly("data", &FileSource::dataCollection,
+			"This field exposes the internal :py:class:`~ovito.data.DataCollection` of the source object holding "
+			"the master data copy currently loaded from the input file. ")
 		
 		// For backward compatibility with OVITO 2.9:
 		// Returns the zero-based frame index that is currently loaded and kept in memory by the FileSource.

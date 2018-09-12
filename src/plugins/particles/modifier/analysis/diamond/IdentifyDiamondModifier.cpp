@@ -225,19 +225,17 @@ void IdentifyDiamondModifier::DiamondIdentificationEngine::perform()
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState IdentifyDiamondModifier::DiamondIdentificationEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void IdentifyDiamondModifier::DiamondIdentificationEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
-	PipelineFlowState outState = StructureIdentificationEngine::emitResults(time, modApp, input);
+	StructureIdentificationEngine::emitResults(time, modApp, state);
 
 	// Also output structure type counts, which have been computed by the base class.
-	outState.addAttribute(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND"), QVariant::fromValue(getTypeCount(CUBIC_DIAMOND)), modApp);
-	outState.addAttribute(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND_FIRST_NEIGHBOR"), QVariant::fromValue(getTypeCount(CUBIC_DIAMOND_FIRST_NEIGH)), modApp);
-	outState.addAttribute(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND_SECOND_NEIGHBOR"), QVariant::fromValue(getTypeCount(CUBIC_DIAMOND_SECOND_NEIGH)), modApp);
-	outState.addAttribute(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND"), QVariant::fromValue(getTypeCount(HEX_DIAMOND)), modApp);
-	outState.addAttribute(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND_FIRST_NEIGHBOR"), QVariant::fromValue(getTypeCount(HEX_DIAMOND_FIRST_NEIGH)), modApp);
-	outState.addAttribute(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND_SECOND_NEIGHBOR"), QVariant::fromValue(getTypeCount(HEX_DIAMOND_SECOND_NEIGH)), modApp);
-
-	return outState;
+	state.addAttribute(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND"), QVariant::fromValue(getTypeCount(CUBIC_DIAMOND)), modApp);
+	state.addAttribute(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND_FIRST_NEIGHBOR"), QVariant::fromValue(getTypeCount(CUBIC_DIAMOND_FIRST_NEIGH)), modApp);
+	state.addAttribute(QStringLiteral("IdentifyDiamond.counts.CUBIC_DIAMOND_SECOND_NEIGHBOR"), QVariant::fromValue(getTypeCount(CUBIC_DIAMOND_SECOND_NEIGH)), modApp);
+	state.addAttribute(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND"), QVariant::fromValue(getTypeCount(HEX_DIAMOND)), modApp);
+	state.addAttribute(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND_FIRST_NEIGHBOR"), QVariant::fromValue(getTypeCount(HEX_DIAMOND_FIRST_NEIGH)), modApp);
+	state.addAttribute(QStringLiteral("IdentifyDiamond.counts.HEX_DIAMOND_SECOND_NEIGHBOR"), QVariant::fromValue(getTypeCount(HEX_DIAMOND_SECOND_NEIGH)), modApp);
 }
 
 OVITO_END_INLINE_NAMESPACE

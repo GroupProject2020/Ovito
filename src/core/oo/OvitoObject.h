@@ -87,7 +87,7 @@ public:
 	/// \brief Returns the current value of the object's reference counter.
 	/// \return The reference count for this object, i.e. the number of references
 	///         pointing to this object.
-	size_t objectReferenceCount() const noexcept { return _referenceCount; }
+	int objectReferenceCount() const noexcept { return _referenceCount; }
 
 #ifdef OVITO_DEBUG
 	/// \brief Returns whether this object has not been deleted yet.
@@ -174,7 +174,7 @@ protected:
 private:
 
 	/// The current number of references to this object.
-	size_t _referenceCount = 0;
+	int _referenceCount = 0;
 
 	/// This is the special value the reference count of the object is set to while it is being deleted:
 	constexpr static auto INVALID_REFERENCE_COUNT = std::numeric_limits<decltype(_referenceCount)>::max() / 2;

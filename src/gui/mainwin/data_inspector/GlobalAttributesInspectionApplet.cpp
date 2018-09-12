@@ -29,12 +29,12 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui)
 IMPLEMENT_OVITO_CLASS(GlobalAttributesInspectionApplet);
 
 /******************************************************************************
-* Determines whether the given pipeline flow state contains data that can be 
+* Determines whether the given pipeline dataset contains data that can be 
 * displayed by this applet.
 ******************************************************************************/
-bool GlobalAttributesInspectionApplet::appliesTo(const PipelineFlowState& state)
+bool GlobalAttributesInspectionApplet::appliesTo(const DataCollection& data)
 {
-	return state.containsObject<AttributeDataObject>();
+	return data.containsObject<AttributeDataObject>();
 }
 
 /******************************************************************************
@@ -58,7 +58,7 @@ QWidget* GlobalAttributesInspectionApplet::createWidget(MainWindow* mainWindow)
 ******************************************************************************/
 void GlobalAttributesInspectionApplet::updateDisplay(const PipelineFlowState& state, PipelineSceneNode* sceneNode)
 {
-	_tableModel->setContents(state);
+	_tableModel->setContents(state.data());
 }
 
 OVITO_END_INLINE_NAMESPACE

@@ -40,18 +40,14 @@ ClearSelectionModifier::ClearSelectionModifier(DataSet* dataset) : GenericProper
 /******************************************************************************
 * Modifies the input data in an immediate, preliminary way.
 ******************************************************************************/
-PipelineFlowState ClearSelectionModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void ClearSelectionModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	if(!subject())
 		throwException(tr("No input element type selected."));
-	
-	PipelineFlowState output = input;
 
-   	PropertyContainer* container = output.expectMutableLeafObject(subject());
+   	PropertyContainer* container = state.expectMutableLeafObject(subject());
 	if(const PropertyObject* selProperty = container->getProperty(PropertyStorage::GenericSelectionProperty))
 		container->removeProperty(selProperty);
-    
-	return output;
 }
 
 }	// End of namespace

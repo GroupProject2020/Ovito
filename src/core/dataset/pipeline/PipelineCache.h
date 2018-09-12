@@ -44,7 +44,7 @@ public:
 
 	/// This is a special function that can be used after a call to invalidate() to access the
 	/// stale cache contents.
-	const PipelineFlowState& getStaleContents() const;
+	const PipelineFlowState& getStaleContents() const { return _currentAnimState; }
 
 	/// Puts the given pipeline state into the cache for later retrieval. 
 	/// The cache may decide not to cache the state, in which case the method returns false.

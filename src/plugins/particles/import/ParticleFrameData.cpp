@@ -119,14 +119,14 @@ void ParticleFrameData::generateBondPeriodicImageProperty()
 * This function is called by the system from the main thread after the
 * asynchronous loading task has finished.
 ******************************************************************************/
-PipelineFlowState ParticleFrameData::handOver(const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource)
+OORef<DataCollection> ParticleFrameData::handOver(const DataCollection* existing, bool isNewFile, FileSource* fileSource)
 {
-	PipelineFlowState output;
+	OORef<DataCollection> output = new DataCollection(fileSource->dataset());
 
 	// Hand over simulation cell.
-	SimulationCellObject* cell = const_cast<SimulationCellObject*>(existing.getObject<SimulationCellObject>());
+	SimulationCellObject* cell = const_cast<SimulationCellObject*>(existing ? existing->getObject<SimulationCellObject>() : nullptr);
 	if(!cell) {
-		cell = output.createObject<SimulationCellObject>(fileSource, simulationCell());
+		cell = output->createObject<SimulationCellObject>(fileSource, simulationCell());
 
 		// Create the vis element for the simulation cell.
 		if(SimulationCellVis* cellVis = dynamic_object_cast<SimulationCellVis>(cell->visElement())) {
@@ -146,14 +146,14 @@ PipelineFlowState ParticleFrameData::handOver(const PipelineFlowState& existing,
 		// This gives the user the option to change the pbc flags without them
 		// being overwritten when a new frame from a simulation sequence is loaded.
 		cell->setData(simulationCell(), isNewFile);
-		output.addObject(cell);
+		output->addObject(cell);
 	}
 
 	if(!_particleProperties.empty()) {
 	
 		// Hand over particles.
-		const ParticlesObject* existingParticles = existing.getObject<ParticlesObject>();
-		ParticlesObject* particles = output.createObject<ParticlesObject>(fileSource);
+		const ParticlesObject* existingParticles = existing ? existing->getObject<ParticlesObject>() : nullptr;
+		ParticlesObject* particles = output->createObject<ParticlesObject>(fileSource);
 		if(!existingParticles) {
 			particles->setVisElement(new ParticlesVis(fileSource->dataset()));
 			if(!Application::instance()->scriptMode())
@@ -263,8 +263,8 @@ PipelineFlowState ParticleFrameData::handOver(const PipelineFlowState& existing,
 	// Transfer voxel data.
 	if(voxelGridShape() != VoxelGrid::GridDimensions{0,0,0}) {
 
-		const VoxelGrid* existingVoxelGrid = existing.getObject<VoxelGrid>();
-		VoxelGrid* voxelGrid = output.createObject<VoxelGrid>(fileSource);
+		const VoxelGrid* existingVoxelGrid = existing ? existing->getObject<VoxelGrid>() : nullptr;
+		VoxelGrid* voxelGrid = output->createObject<VoxelGrid>(fileSource);
 		voxelGrid->setShape(voxelGridShape());
 		voxelGrid->setDomain(cell);
 		
@@ -293,7 +293,7 @@ PipelineFlowState ParticleFrameData::handOver(const PipelineFlowState& existing,
 
 	// Hand over timestep information and other metadata as global attributes.
 	for(auto a = _attributes.cbegin(); a != _attributes.cend(); ++a) {
-		output.addAttribute(a.key(), a.value(), fileSource);
+		output->addAttribute(a.key(), a.value(), fileSource);
 	}
 
 	// If the file parser has detected that the input file contains additional frame data following the

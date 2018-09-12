@@ -238,7 +238,7 @@ void RefMaker::replaceReferencesTo(const RefTarget* oldTarget, const RefTarget* 
 * If the target is referenced in a vector reference field then the item is
 * removed from the vector.
 ******************************************************************************/
-void RefMaker::clearReferencesTo(RefTarget* target) 
+void RefMaker::clearReferencesTo(const RefTarget* target) 
 { 
 	if(!target) return;
 	OVITO_CHECK_OBJECT_POINTER(target);
@@ -313,13 +313,13 @@ void RefMaker::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableDa
 			stream.beginChunk(0x02);
 			try {
 				if(!field->isVector()) {
-					stream.saveObject(getReferenceField(*field), field->dontSaveRecomputableData());
+					stream.saveObject(getReferenceField(*field), excludeRecomputableData || field->dontSaveRecomputableData());
 				}
 				else {
 					const QVector<RefTarget*>& list = getVectorReferenceField(*field);
 					stream << (qint32)list.size();
 					for(RefTarget* target : list)
-						stream.saveObject(target, field->dontSaveRecomputableData());
+						stream.saveObject(target, excludeRecomputableData || field->dontSaveRecomputableData());
 				}
 			}
 			catch(Exception& ex) {

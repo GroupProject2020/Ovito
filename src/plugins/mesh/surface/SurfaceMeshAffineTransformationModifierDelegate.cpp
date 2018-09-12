@@ -32,7 +32,7 @@ IMPLEMENT_OVITO_CLASS(SurfaceMeshAffineTransformationModifierDelegate);
 /******************************************************************************
 * Applies the modifier operation to the data in a pipeline flow state.
 ******************************************************************************/
-PipelineStatus SurfaceMeshAffineTransformationModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
+PipelineStatus SurfaceMeshAffineTransformationModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	AffineTransformationModifier* mod = static_object_cast<AffineTransformationModifier>(modifier);
 	if(mod->selectionOnly())
@@ -42,11 +42,11 @@ PipelineStatus SurfaceMeshAffineTransformationModifierDelegate::apply(Modifier* 
 	if(mod->relativeMode())
 		tm = mod->transformationTM();
 	else
-		tm = mod->targetCell() * input.expectObject<SimulationCellObject>()->cellMatrix().inverse();
+		tm = mod->targetCell() * state.expectObject<SimulationCellObject>()->cellMatrix().inverse();
 	
-	for(const DataObject* obj : output.objects()) {
+	for(const DataObject* obj : state.data()->objects()) {
 		if(const SurfaceMesh* existingSurface = dynamic_object_cast<SurfaceMesh>(obj)) {
-			SurfaceMesh* newSurface = output.makeMutable(existingSurface);
+			SurfaceMesh* newSurface = state.makeMutable(existingSurface);
 			// Apply transformation to the vertices of the surface mesh.
 			for(HalfEdgeMesh<>::Vertex* vertex : newSurface->modifiableStorage()->vertices())
 				vertex->pos() = tm * vertex->pos();

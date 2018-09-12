@@ -33,7 +33,7 @@ IMPLEMENT_OVITO_CLASS(SurfaceMeshReplicateModifierDelegate);
 /******************************************************************************
 * Determines whether this delegate can handle the given input data.
 ******************************************************************************/
-bool SurfaceMeshReplicateModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool SurfaceMeshReplicateModifierDelegate::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<SurfaceMesh>();
 }
@@ -41,7 +41,7 @@ bool SurfaceMeshReplicateModifierDelegate::OOMetaClass::isApplicableTo(const Pip
 /******************************************************************************
 * Applies the modifier operation to the data in a pipeline flow state.
 ******************************************************************************/
-PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
+PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	ReplicateModifier* mod = static_object_cast<ReplicateModifier>(modifier);
 	
@@ -56,7 +56,7 @@ PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, c
 
 	Box3I newImages = mod->replicaRange();
 
-	for(const DataObject* obj : output.objects()) {
+	for(const DataObject* obj : state.data()->objects()) {
 		if(const SurfaceMesh* existingSurface = dynamic_object_cast<SurfaceMesh>(obj)) {
 			// For replication, a domain is required.
 			if(!existingSurface->domain()) continue;
@@ -67,7 +67,7 @@ PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, c
 				continue;
 			
 			// Create the output copy of the input surface.
-			SurfaceMesh* newSurface = output.makeMutable(existingSurface);
+			SurfaceMesh* newSurface = state.makeMutable(existingSurface);
 			SurfaceMeshPtr mesh = newSurface->modifiableStorage();
 			OVITO_ASSERT(mesh->isClosed());
 

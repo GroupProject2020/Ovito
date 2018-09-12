@@ -166,7 +166,7 @@ def _Pipeline_compute(self, frame = None):
         for more information.
 
         :param int frame: The animation frame number at which the pipeline should be evaluated. 
-        :returns: A :py:class:`~ovito.data.DataCollection` containing the output of the data pipeline.
+        :returns: The :py:class:`~ovito.data.DataCollection` produced by the data pipeline.
     """
     if frame is not None:
         time = self.dataset.anim.frame_to_time(frame)
@@ -185,7 +185,7 @@ def _Pipeline_compute(self, frame = None):
         import PyQt5.QtCore
         PyQt5.QtCore.QThreadPool.globalInstance().waitForDone(0)
 
-    return state
+    return state.mutable_data
 Pipeline.compute = _Pipeline_compute
 
 # Provides access to the last results computed by the pipeline.

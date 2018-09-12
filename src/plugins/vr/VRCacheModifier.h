@@ -49,7 +49,7 @@ public:
 	virtual PipelineStatus modifyObject(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
 	/// Asks the modifier whether it can be applied to the given input data.
-	virtual bool isApplicableTo(const PipelineFlowState& input) override { return true; }
+	virtual bool isApplicableTo(const DataCollection& input) override { return true; }
 
 private:
 

@@ -86,10 +86,10 @@ public:
 	{
 	public:
 
-		/// Transfers the loaded data into a pipeline state structure.
+		/// Transfers the loaded data into a data collection.
 		/// This function is called by the system from the main thread after the asynchronous loading task
-		/// has finished. An implementation of this method should try to re-use any existing data objects.
-		virtual PipelineFlowState handOver(const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource) = 0;
+		/// has finished. An implementation of this method should try to re-use any existing data objects from the provided data collection.
+		virtual OORef<DataCollection> handOver(const DataCollection* existing, bool isNewFile, FileSource* fileSource) = 0;
 
 		/// Returns the status of the load operation.
 		const PipelineStatus& status() const { return _status; }

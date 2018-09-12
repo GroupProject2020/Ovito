@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -116,7 +116,7 @@ void HistogramModifier::propertyChanged(const PropertyFieldDescriptor& field)
 /******************************************************************************
 * Modifies the input data in an immediate, preliminary way.
 ******************************************************************************/
-PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void HistogramModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	if(!subject())
 		throwException(tr("No data element type set."));
@@ -129,7 +129,7 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 			.arg(subject().dataClass()->pythonName()).arg(sourceProperty().containerClass()->propertyClassDisplayName()));
 		
 	// Look up the property container object.
-	const PropertyContainer* container = input.expectLeafObject(subject());
+	const PropertyContainer* container = state.expectLeafObject(subject());
 
 	// Get the input property.
 	const PropertyObject* property = sourceProperty().findInContainer(container);
@@ -148,13 +148,11 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 		OVITO_ASSERT(inputSelection->size() == property->size());
 	}
 
-	PipelineFlowState output = input;
-	
 	// Create storage for output selection.
 	PropertyPtr outputSelection;
 	if(selectInRange()) {
 		// First make sure we can safely modify the property container.
-		PropertyContainer* mutableContainer = output.expectMutableLeafObject(subject());
+		PropertyContainer* mutableContainer = state.expectMutableLeafObject(subject());
 		// Add the selection property to the output container.
 		outputSelection = mutableContainer->createProperty(PropertyStorage::GenericSelectionProperty)->modifiableStorage();
 	}
@@ -318,7 +316,7 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 	}
 
 	// Output a data series object with the histogram data.
-	DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("histogram[%1]").arg(sourceProperty().nameWithComponent()), modApp, DataSeriesObject::Histogram, sourceProperty().nameWithComponent(), std::move(histogram));
+	DataSeriesObject* seriesObj = state.createObject<DataSeriesObject>(QStringLiteral("histogram[%1]").arg(sourceProperty().nameWithComponent()), modApp, DataSeriesObject::Histogram, sourceProperty().nameWithComponent(), std::move(histogram));
 	seriesObj->setAxisLabelX(sourceProperty().nameWithComponent());
 	seriesObj->setIntervalStart(intervalStart);
 	seriesObj->setIntervalEnd(intervalEnd);
@@ -330,8 +328,7 @@ PipelineFlowState HistogramModifier::evaluatePreliminary(TimePoint time, Modifie
 				.arg(container->getOOMetaClass().elementDescriptionName())
 				.arg((FloatType)numSelected * 100 / std::max((size_t)1,outputSelection->size()), 0, 'f', 1);
 	}
-	output.setStatus(PipelineStatus(PipelineStatus::Success, std::move(statusMessage)));
-	return output;
+	state.setStatus(PipelineStatus(PipelineStatus::Success, std::move(statusMessage)));
 }
 
 }	// End of namespace

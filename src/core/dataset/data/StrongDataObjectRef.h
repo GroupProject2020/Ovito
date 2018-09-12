@@ -32,11 +32,12 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem)
  * \brief Internal class used by PipelineFlowState to keep track of how many flow states
  *        refer to a particular DataObject instance.
  */
+template<typename DataObjectClass>
 class StrongDataObjectRef
 {
 private:
 
-    OORef<DataObject> _ref;
+    OORef<DataObjectClass> _ref;
 
 public:
 
@@ -51,7 +52,7 @@ public:
     StrongDataObjectRef(std::nullptr_t) noexcept {}
     
     /// Initialization constructor.
-    StrongDataObjectRef(const DataObject* p) noexcept : _ref(p) {
+    StrongDataObjectRef(const DataObjectClass* p) noexcept : _ref(p) {
         if(_ref) _ref->_referringFlowStates++;
     }
 
@@ -66,7 +67,7 @@ public:
     }
 
     /// Move constructor from standard OORef.
-    StrongDataObjectRef(OORef<DataObject>&& rhs) noexcept : _ref(std::move(rhs)) {
+    StrongDataObjectRef(OORef<DataObjectClass>&& rhs) noexcept : _ref(std::move(rhs)) {
         if(_ref) _ref->_referringFlowStates++;
     }
 
@@ -79,7 +80,7 @@ public:
     }
 
     /// Copy assignment operator.
-    StrongDataObjectRef& operator=(const DataObject* rhs) {
+    StrongDataObjectRef& operator=(const DataObjectClass* rhs) {
     	StrongDataObjectRef(rhs).swap(*this);
     	return *this;
     }
@@ -97,7 +98,7 @@ public:
     }
     
     /// Move assignment operator with standard OORef.
-    StrongDataObjectRef& operator=(OORef<DataObject>&& rhs) noexcept {
+    StrongDataObjectRef& operator=(OORef<DataObjectClass>&& rhs) noexcept {
     	StrongDataObjectRef(std::move(rhs)).swap(*this);
     	return *this;
     }
@@ -106,23 +107,23 @@ public:
     	StrongDataObjectRef().swap(*this);
     }
 
-    void reset(DataObject* rhs) {
+    void reset(DataObjectClass* rhs) {
     	StrongDataObjectRef(rhs).swap(*this);
     }
     
-    inline DataObject* get() const noexcept {
+    inline DataObjectClass* get() const noexcept {
     	return _ref.get();
     }
 
-    inline operator DataObject*() const noexcept {
+    inline operator DataObjectClass*() const noexcept {
     	return _ref.get();
     }
 
-    inline DataObject& operator*() const noexcept {
+    inline DataObjectClass& operator*() const noexcept {
     	return *_ref;
     }
 
-    inline DataObject* operator->() const noexcept {
+    inline DataObjectClass* operator->() const noexcept {
     	OVITO_ASSERT(_ref);
     	return _ref.get();
     }
@@ -132,6 +133,7 @@ public:
     }    
 };
 
+#if 0
 template<class U> inline bool operator==(const StrongDataObjectRef& a, const OORef<U>& b) noexcept
 {
     return a.get() == b.get();
@@ -211,6 +213,7 @@ inline QDebug operator<<(QDebug debug, const StrongDataObjectRef& p)
 {
 	return debug << p.get();
 }
+#endif
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

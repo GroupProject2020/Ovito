@@ -73,7 +73,7 @@ VoronoiAnalysisModifier::VoronoiAnalysisModifier(DataSet* dataset) : Asynchronou
 /******************************************************************************
 * Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-bool VoronoiAnalysisModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool VoronoiAnalysisModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<ParticlesObject>();
 }
@@ -509,11 +509,10 @@ void VoronoiAnalysisModifier::VoronoiAnalysisEngine::perform()
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState VoronoiAnalysisModifier::VoronoiAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void VoronoiAnalysisModifier::VoronoiAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	VoronoiAnalysisModifier* modifier = static_object_cast<VoronoiAnalysisModifier>(modApp->modifier());
-	PipelineFlowState output = input;
-	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+	ParticlesObject* particles = state.expectMutableObject<ParticlesObject>();
 
 	if(_inputFingerprint.hasChanged(particles))
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
@@ -527,14 +526,14 @@ PipelineFlowState VoronoiAnalysisModifier::VoronoiAnalysisEngine::emitResults(Ti
 		if(maxFaceOrders())
 			particles->createProperty(maxFaceOrders());
 
-		output.setStatus(PipelineStatus(PipelineStatus::Success,
+		state.setStatus(PipelineStatus(PipelineStatus::Success,
 			tr("Maximum face order: %1").arg(maxFaceOrder().load())));
 	}
 
 	// Check computed Voronoi cell volume sum.
 	FloatType simulationBoxVolume = _simCell.volume3D();
 	if(std::abs(voronoiVolumeSum() - simulationBoxVolume) > 1e-8 * particles->elementCount() * simulationBoxVolume) {
-		output.setStatus(PipelineStatus(PipelineStatus::Warning,
+		state.setStatus(PipelineStatus(PipelineStatus::Warning,
 				tr("The volume sum of all Voronoi cells does not match the simulation box volume. "
 						"This may be a result of particles being located outside of the simulation box boundaries. "
 						"See user manual for more information.\n"
@@ -547,9 +546,7 @@ PipelineFlowState VoronoiAnalysisModifier::VoronoiAnalysisEngine::emitResults(Ti
 		particles->addBonds(bonds(), modifier->bondsVis());
 	}
 
-	output.addAttribute(QStringLiteral("Voronoi.max_face_order"), QVariant::fromValue(maxFaceOrder().load()), modApp);
-
-	return output;
+	state.addAttribute(QStringLiteral("Voronoi.max_face_order"), QVariant::fromValue(maxFaceOrder().load()), modApp);
 }
 
 OVITO_END_INLINE_NAMESPACE

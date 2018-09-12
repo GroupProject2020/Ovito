@@ -104,9 +104,9 @@ void ModifierDelegateParameterUI::updateUI()
 		comboBox()->clear();
 
 		// Obtain modifier inputs.
-		std::vector<PipelineFlowState> modifierInputs;
+		std::vector<OORef<DataCollection>> modifierInputs;
 		for(ModifierApplication* modApp : mod->modifierApplications()) {
-			modifierInputs.push_back(modApp->evaluateInputPreliminary());
+			modifierInputs.push_back(modApp->evaluateInputPreliminary().data());
 		}
 	
 		// Add list items for the registered delegate classes.
@@ -117,11 +117,11 @@ void ModifierDelegateParameterUI::updateUI()
 			// Check if this delegate can handle the current modifier input data.
 			// If not, disable the list entry for this delegate.
 			if(clazz->isDerivedFrom(ModifierDelegate::OOClass())) {
-				if(std::any_of(modifierInputs.begin(), modifierInputs.end(), std::bind(&ModifierDelegate::OOMetaClass::isApplicableTo, static_cast<const ModifierDelegate::OOMetaClass*>(clazz), std::placeholders::_1)))
+				if(std::any_of(modifierInputs.begin(), modifierInputs.end(), [clazz = static_cast<const ModifierDelegate::OOMetaClass*>(clazz)](const DataCollection* data) { return data && clazz->isApplicableTo(*data); }))
 					continue;
 			}
 			else if(clazz->isDerivedFrom(AsynchronousModifierDelegate::OOClass())) {
-				if(std::any_of(modifierInputs.begin(), modifierInputs.end(), std::bind(&AsynchronousModifierDelegate::OOMetaClass::isApplicableTo, static_cast<const AsynchronousModifierDelegate::OOMetaClass*>(clazz), std::placeholders::_1)))
+				if(std::any_of(modifierInputs.begin(), modifierInputs.end(), [clazz = static_cast<const AsynchronousModifierDelegate::OOMetaClass*>(clazz)](const DataCollection* data) { return data && clazz->isApplicableTo(*data); }))
 					continue;
 			}
 

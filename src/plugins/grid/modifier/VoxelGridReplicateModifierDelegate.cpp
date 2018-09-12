@@ -31,7 +31,7 @@ IMPLEMENT_OVITO_CLASS(VoxelGridReplicateModifierDelegate);
 /******************************************************************************
 * Determines whether this delegate can handle the given input data.
 ******************************************************************************/
-bool VoxelGridReplicateModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool VoxelGridReplicateModifierDelegate::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<VoxelGrid>();
 }
@@ -39,11 +39,11 @@ bool VoxelGridReplicateModifierDelegate::OOMetaClass::isApplicableTo(const Pipel
 /******************************************************************************
 * Applies the modifier operation to the data in a pipeline flow state.
 ******************************************************************************/
-PipelineStatus VoxelGridReplicateModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
+PipelineStatus VoxelGridReplicateModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	ReplicateModifier* mod = static_object_cast<ReplicateModifier>(modifier);
 
-	const VoxelGrid* existingVoxelGrid = input.getObject<VoxelGrid>();
+	const VoxelGrid* existingVoxelGrid = state.getObject<VoxelGrid>();
 	if(!existingVoxelGrid || !existingVoxelGrid->domain())
 		return PipelineStatus::Success;
 	
@@ -62,7 +62,7 @@ PipelineStatus VoxelGridReplicateModifierDelegate::apply(Modifier* modifier, con
 		return PipelineStatus::Success;
 
 	// Create the output copy of the input grid.
-	VoxelGrid* newVoxelGrid = output.makeMutable(existingVoxelGrid);
+	VoxelGrid* newVoxelGrid = state.makeMutable(existingVoxelGrid);
 	const VoxelGrid::GridDimensions oldShape = existingVoxelGrid->shape();
 	VoxelGrid::GridDimensions shape = oldShape;
 	shape[0] *= nPBC[0];

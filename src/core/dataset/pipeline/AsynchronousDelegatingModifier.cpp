@@ -73,7 +73,7 @@ void AsynchronousDelegatingModifier::createDefaultModifierDelegate(const OvitoCl
 /******************************************************************************
 * Asks the metaclass whether the modifier can be applied to the given input data.
 ******************************************************************************/
-bool AsynchronousDelegatingModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool AsynchronousDelegatingModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	if(!AsynchronousModifier::OOMetaClass::isApplicableTo(input)) return false;
 

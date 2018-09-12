@@ -201,12 +201,12 @@ void BondsComputePropertyModifierDelegate::ComputeEngine::perform()
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState BondsComputePropertyModifierDelegate::ComputeEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void BondsComputePropertyModifierDelegate::ComputeEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
-	if(_inputFingerprint.hasChanged(input.expectObject<ParticlesObject>()))
+	if(_inputFingerprint.hasChanged(state.expectObject<ParticlesObject>()))
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 
-	return PropertyComputeEngine::emitResults(time, modApp, input);
+	PropertyComputeEngine::emitResults(time, modApp, state);
 }
 
 OVITO_END_INLINE_NAMESPACE

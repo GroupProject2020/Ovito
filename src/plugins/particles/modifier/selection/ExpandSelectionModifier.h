@@ -46,7 +46,7 @@ class OVITO_PARTICLES_EXPORT ExpandSelectionModifier : public AsynchronousModifi
 		using AsynchronousModifier::OOMetaClass::OOMetaClass;
 
 		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+		virtual bool isApplicableTo(const DataCollection& input) const override;
 	};
 
 	Q_OBJECT
@@ -107,7 +107,7 @@ private:
 		virtual void expandSelection() = 0;
 
 		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		virtual void emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 		
 		const PropertyPtr& outputSelection() { return _outputSelection; }
 		void setOutputSelection(PropertyPtr ptr) { _outputSelection = std::move(ptr); }

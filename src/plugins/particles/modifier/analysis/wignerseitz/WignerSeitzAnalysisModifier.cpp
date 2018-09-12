@@ -245,22 +245,21 @@ void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::perform()
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	const ParticlesObject* refParticles = referenceState().getObject<ParticlesObject>();
 	if(!refParticles)
 		modApp->throwException(tr("This modifier cannot be evaluated, because the reference configuration does not contain any particles."));
 
-	PipelineFlowState output = input;
 	if(!siteTypes()) {
 		// Replace complete particles set with the reference configuration.
-		output.replaceObject(output.expectObject<ParticlesObject>(), refParticles);
+		state.mutableData()->replaceObject(state.expectObject<ParticlesObject>(), refParticles);
 		// Also replace simulation cell with reference cell.
-		if(const SimulationCellObject* cell = output.getObject<SimulationCellObject>())
-			output.replaceObject(cell, referenceState().getObject<SimulationCellObject>());
+		if(const SimulationCellObject* cell = state.getObject<SimulationCellObject>())
+			state.mutableData()->replaceObject(cell, referenceState().getObject<SimulationCellObject>());
 	}
 
-	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+	ParticlesObject* particles = state.expectMutableObject<ParticlesObject>();
 	if(occupancyNumbers()->size() != particles->elementCount())
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number of input particles has changed."));
 	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
@@ -278,11 +277,10 @@ PipelineFlowState WignerSeitzAnalysisModifier::WignerSeitzAnalysisEngine::emitRe
 	if(siteIdentifiers())
 		particles->createProperty(siteIdentifiers());
 
-	output.addAttribute(QStringLiteral("WignerSeitz.vacancy_count"), QVariant::fromValue(vacancyCount()), modApp);
-	output.addAttribute(QStringLiteral("WignerSeitz.interstitial_count"), QVariant::fromValue(interstitialCount()), modApp);
+	state.addAttribute(QStringLiteral("WignerSeitz.vacancy_count"), QVariant::fromValue(vacancyCount()), modApp);
+	state.addAttribute(QStringLiteral("WignerSeitz.interstitial_count"), QVariant::fromValue(interstitialCount()), modApp);
 
-	output.setStatus(PipelineStatus(PipelineStatus::Success, tr("Found %1 vacancies and %2 interstitials").arg(vacancyCount()).arg(interstitialCount())));
-	return output;
+	state.setStatus(PipelineStatus(PipelineStatus::Success, tr("Found %1 vacancies and %2 interstitials").arg(vacancyCount()).arg(interstitialCount())));
 }
 
 OVITO_END_INLINE_NAMESPACE

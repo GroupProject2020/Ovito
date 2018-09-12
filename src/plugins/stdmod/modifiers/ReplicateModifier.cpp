@@ -62,7 +62,7 @@ ReplicateModifier::ReplicateModifier(DataSet* dataset) : MultiDelegatingModifier
 /******************************************************************************
 * Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-bool ReplicateModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool ReplicateModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return MultiDelegatingModifier::OOMetaClass::isApplicableTo(input)
 		&& input.containsObject<SimulationCellObject>();
@@ -90,14 +90,14 @@ Box3I ReplicateModifier::replicaRange() const
 /******************************************************************************
 * Modifies the input data in an immediate, preliminary way.
 ******************************************************************************/
-PipelineFlowState ReplicateModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void ReplicateModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	// Apply all enabled modifier delegates to the input data.
-	PipelineFlowState output = MultiDelegatingModifier::evaluatePreliminary(time, modApp, input);
+	MultiDelegatingModifier::evaluatePreliminary(time, modApp, state);
 
 	// Resize the simulation cell if enabled.
 	if(adjustBoxSize()) {
-		SimulationCellObject* cellObj = output.expectMutableObject<SimulationCellObject>();
+		SimulationCellObject* cellObj = state.expectMutableObject<SimulationCellObject>();
 		AffineTransformation simCell = cellObj->cellMatrix();
 		Box3I newImages = replicaRange();
 		simCell.translation() += (FloatType)newImages.minc.x() * simCell.column(0);
@@ -108,8 +108,6 @@ PipelineFlowState ReplicateModifier::evaluatePreliminary(TimePoint time, Modifie
 		simCell.column(2) *= (newImages.sizeZ() + 1);
 		cellObj->setCellMatrix(simCell);
 	}
-
-	return output;
 }
 
 }	// End of namespace

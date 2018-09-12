@@ -150,7 +150,7 @@ void ColorCodingModifier::initializeModifier(ModifierApplication* modApp)
 void ColorCodingModifier::referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget)
 {
 	// Whenever the delegate of this modifier is being replaced, update the source property reference.
-	if(field == PROPERTY_FIELD(DelegatingModifier::delegate) && !isBeingLoaded() && !dataset()->undoStack().isUndoingOrRedoing() && !isBeingLoaded()) {
+	if(field == PROPERTY_FIELD(DelegatingModifier::delegate) && !isBeingLoaded() && !isAboutToBeDeleted() && !dataset()->undoStack().isUndoingOrRedoing()) {
 		setSourceProperty(sourceProperty().convertToContainerClass(delegate() ? &delegate()->containerClass() : nullptr));
 	}
 	DelegatingModifier::referenceReplaced(field, oldTarget, newTarget);
@@ -161,7 +161,7 @@ void ColorCodingModifier::referenceReplaced(const PropertyFieldDescriptor& field
 ******************************************************************************/
 bool ColorCodingModifier::determinePropertyValueRange(const PipelineFlowState& state, FloatType& min, FloatType& max)
 {
-	if(!delegate()) 
+	if(!delegate() || state.isEmpty())
 		return false;
 	const PropertyContainer* container = state.getLeafObject(delegate()->subject());
 	if(!container)
@@ -294,7 +294,7 @@ bool ColorCodingModifier::adjustRangeGlobal(TaskManager& taskManager)
 /******************************************************************************
 * Applies the modifier operation to the data in a pipeline flow state.
 ******************************************************************************/
-PipelineStatus ColorCodingModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
+PipelineStatus ColorCodingModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	const ColorCodingModifier* mod = static_object_cast<ColorCodingModifier>(modifier);
 
@@ -313,7 +313,7 @@ PipelineStatus ColorCodingModifierDelegate::apply(Modifier* modifier, const Pipe
 			.arg(getOOMetaClass().pythonDataName()).arg(sourceProperty.containerClass()->propertyClassDisplayName()));
 
 	// Look up the selected property container. Make sure we can safely modify it.
-	DataObjectPath objectPath = output.expectMutableObject(containerClass(), containerPath());
+	DataObjectPath objectPath = state.expectMutableObject(containerClass(), containerPath());
 	PropertyContainer* container = static_object_cast<PropertyContainer>(objectPath.back());
 
 	const PropertyObject* propertyObj = sourceProperty.findInContainer(container);
@@ -342,8 +342,8 @@ PipelineStatus ColorCodingModifierDelegate::apply(Modifier* modifier, const Pipe
 
 	// Get modifier's parameter values.
 	FloatType startValue = 0, endValue = 0;
-	if(mod->startValueController()) startValue = mod->startValueController()->getFloatValue(time, output.mutableStateValidity());
-	if(mod->endValueController()) endValue = mod->endValueController()->getFloatValue(time, output.mutableStateValidity());
+	if(mod->startValueController()) startValue = mod->startValueController()->getFloatValue(time, state.mutableStateValidity());
+	if(mod->endValueController()) endValue = mod->endValueController()->getFloatValue(time, state.mutableStateValidity());
 
 	// Clamp to finite range.
 	if(!std::isfinite(startValue)) startValue = std::numeric_limits<FloatType>::lowest();

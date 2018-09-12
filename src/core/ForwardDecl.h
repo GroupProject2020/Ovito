@@ -122,6 +122,7 @@ namespace Ovito {
 			class ModifierApplication;
 			class PipelineSceneNode;
 			class PipelineFlowState;
+			class DataCollection;
 			class PipelineObject;
 			class PipelineCache;
 			class CachingPipelineObject;

@@ -37,7 +37,7 @@ QByteArray PropertyExpressionEvaluator::_validVariableNameChars("0123456789_abcd
 * Specifies the expressions to be evaluated for each data element and create the
 * list of input variables.
 ******************************************************************************/
-void PropertyExpressionEvaluator::initialize(const QStringList& expressions, const PipelineFlowState& inputState, const PropertyContainer* container, int animationFrame)
+void PropertyExpressionEvaluator::initialize(const QStringList& expressions, const PipelineFlowState& state, const PropertyContainer* container, int animationFrame)
 {
 	// Build list of properties that will be made available as expression variables.
 	std::vector<ConstPropertyPtr> inputProperties;
@@ -47,11 +47,11 @@ void PropertyExpressionEvaluator::initialize(const QStringList& expressions, con
 
 	// Get simulation cell information.
 	SimulationCell simCell;
-	const SimulationCellObject* simCellObj = inputState.getObject<SimulationCellObject>();
+	const SimulationCellObject* simCellObj = state.getObject<SimulationCellObject>();
 	if(simCellObj) simCell = simCellObj->data();
 
 	// Call overloaded function.
-	initialize(expressions, inputProperties, simCellObj ? &simCell : nullptr, inputState.buildAttributesMap(), animationFrame);
+	initialize(expressions, inputProperties, simCellObj ? &simCell : nullptr, state.buildAttributesMap(), animationFrame);
 }
 
 /******************************************************************************

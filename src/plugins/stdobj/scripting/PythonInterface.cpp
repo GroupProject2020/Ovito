@@ -386,9 +386,16 @@ PYBIND11_MODULE(StdObj, m)
 	;
 	expose_mutable_subobject_list(Property_py,
 		std::mem_fn(&PropertyObject::elementTypes), 
-		std::mem_fn(&PropertyObject::insertElementType), 
-		std::mem_fn(&PropertyObject::removeElementType), "types", "ElementTypeList",
-			  "A (mutable) list of :py:class:`ElementType` instances. "
+		[](PropertyObject& prop, int index, const ElementType* type) {
+			ensureDataObjectIsMutable(prop);
+			prop.insertElementType(index, type);
+		}, 
+		[](PropertyObject& prop, int index) {
+			ensureDataObjectIsMutable(prop);
+			prop.removeElementType(index);
+		}, 
+		"types", "ElementTypeList",
+			  "The list of :py:class:`ElementType` instances attached to this property. "
 			  "\n\n"
 			  "Note that the element types may be stored in arbitrary order in this list. Thus, it is not valid to use a numeric type ID as an index into this list. ");
 	

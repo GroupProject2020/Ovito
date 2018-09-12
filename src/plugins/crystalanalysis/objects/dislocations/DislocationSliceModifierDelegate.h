@@ -42,7 +42,7 @@ class OVITO_CRYSTALANALYSIS_EXPORT DislocationSliceModifierDelegate : public Sli
 		using SliceModifierDelegate::OOMetaClass::OOMetaClass;
 
 		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override {
+		virtual bool isApplicableTo(const DataCollection& input) const override {
 			return input.containsObject<DislocationNetworkObject>();
 		}
 
@@ -61,7 +61,7 @@ public:
 	Q_INVOKABLE DislocationSliceModifierDelegate(DataSet* dataset) : SliceModifierDelegate(dataset) {}
 
 	/// \brief Applies a slice operation to a data object.
-	virtual PipelineStatus apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs) override;
+	virtual PipelineStatus apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs) override;
 };
 
 }	// End of namespace

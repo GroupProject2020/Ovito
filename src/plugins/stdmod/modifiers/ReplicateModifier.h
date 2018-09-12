@@ -58,7 +58,7 @@ public:
 		using MultiDelegatingModifier::OOMetaClass::OOMetaClass;
 
 		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;		
+		virtual bool isApplicableTo(const DataCollection& input) const override;		
 
 		/// Return the metaclass of delegates for this modifier type. 
 		virtual const ModifierDelegate::OOMetaClass& delegateMetaclass() const override { return ReplicateModifierDelegate::OOClass(); }
@@ -75,7 +75,7 @@ public:
 	Q_INVOKABLE ReplicateModifier(DataSet* dataset);
 
 	/// Modifies the input data in an immediate, preliminary way.
-	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	virtual void evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
 	/// Helper function that returns the range of replicated boxes.
 	Box3I replicaRange() const;

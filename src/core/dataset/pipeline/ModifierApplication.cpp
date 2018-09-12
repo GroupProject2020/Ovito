@@ -259,9 +259,12 @@ PipelineFlowState ModifierApplication::evaluatePreliminary()
 		// First get the preliminary results from the upstream pipeline.
 		state = input()->evaluatePreliminary();
 		try {
+			if(!state.data())
+				throwException(tr("Modifier input is empty."));
+
 			// Apply modifier:
 			if(modifier()->isEnabled())
-				state = modifier()->evaluatePreliminary(dataset()->animationSettings()->time(), this, state);
+				modifier()->evaluatePreliminary(dataset()->animationSettings()->time(), this, state);
 		}
 		catch(const Exception& ex) {
 			// Turn exceptions thrown during modifier evaluation into an error pipeline state.

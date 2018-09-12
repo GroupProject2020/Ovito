@@ -33,9 +33,9 @@ IMPLEMENT_OVITO_CLASS(ParticlesSliceModifierDelegate);
 /******************************************************************************
 * Performs the actual rejection of particles.
 ******************************************************************************/
-PipelineStatus ParticlesSliceModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
+PipelineStatus ParticlesSliceModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
-	const ParticlesObject* inputParticles = input.expectObject<ParticlesObject>();
+	const ParticlesObject* inputParticles = state.expectObject<ParticlesObject>();
 	QString statusMessage = tr("%n input particles", 0, inputParticles->elementCount());
 
 	SliceModifier* mod = static_object_cast<SliceModifier>(modifier);
@@ -50,7 +50,7 @@ PipelineStatus ParticlesSliceModifierDelegate::apply(Modifier* modifier, const P
 	// Obtain modifier parameter values. 
 	Plane3 plane;
 	FloatType sliceWidth;
-	std::tie(plane, sliceWidth) = mod->slicingPlane(time, output.mutableStateValidity());
+	std::tie(plane, sliceWidth) = mod->slicingPlane(time, state.mutableStateValidity());
 	sliceWidth /= 2;
 
 	boost::dynamic_bitset<>::size_type i = 0;
@@ -94,7 +94,7 @@ PipelineStatus ParticlesSliceModifierDelegate::apply(Modifier* modifier, const P
 	}
 
 	// Make sure we can safely modify the particles object.
-	ParticlesObject* outputParticles = output.makeMutable(inputParticles);
+	ParticlesObject* outputParticles = state.makeMutable(inputParticles);
 	if(mod->createSelection() == false) {
 
 		// Delete the selected particles.

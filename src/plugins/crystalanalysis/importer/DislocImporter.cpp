@@ -559,15 +559,15 @@ void DislocImporter::FrameLoader::connectSlipFaces(Microstructure& microstructur
 * This function is called by the system from the main thread after the
 * asynchronous loading task has finished.
 ******************************************************************************/
-PipelineFlowState DislocImporter::DislocFrameData::handOver(const PipelineFlowState& existing, bool isNewFile, FileSource* fileSource)
+OORef<DataCollection> DislocImporter::DislocFrameData::handOver(const DataCollection* existing, bool isNewFile, FileSource* fileSource)
 {
 	// Insert simulation cell.
-	PipelineFlowState output = ParticleFrameData::handOver(existing, isNewFile, fileSource);
+	OORef<DataCollection> output = ParticleFrameData::handOver(existing, isNewFile, fileSource);
 
 	// Insert pattern catalog.
-	OORef<PatternCatalog> patternCatalog = existing.getObject<PatternCatalog>();
+	OORef<PatternCatalog> patternCatalog = existing ? existing->getObject<PatternCatalog>() : nullptr;
 	if(!patternCatalog) {
-		patternCatalog = output.createObject<PatternCatalog>(fileSource);
+		patternCatalog = output->createObject<PatternCatalog>(fileSource);
 
 		// Create the structure types.
 		ParticleType::PredefinedStructureType predefTypes[] = {
@@ -635,15 +635,15 @@ PipelineFlowState DislocImporter::DislocFrameData::handOver(const PipelineFlowSt
 		hexDiaPattern->addBurgersVectorFamily(new BurgersVectorFamily(patternCatalog->dataset(), 44, tr("1/3<1-100>"), Vector3(0.0f, sqrt(3.0f/2.0f)/3.0f, 0.0f), Color(1,0.5f,0)));		
 	}
 	else {
-		output.addObject(patternCatalog);
+		output->addObject(patternCatalog);
 	}
 		
 	if(microstructure()) {
 
 		// Insert microstructure.
-		MicrostructureObject* microstructureObj = const_cast<MicrostructureObject*>(existing.getObject<MicrostructureObject>());
+		MicrostructureObject* microstructureObj = const_cast<MicrostructureObject*>(existing ? existing->getObject<MicrostructureObject>() : nullptr);
 		if(!microstructureObj) {
-			microstructureObj = output.createObject<MicrostructureObject>(fileSource);
+			microstructureObj = output->createObject<MicrostructureObject>(fileSource);
 			// Create a display object for the dislocation lines.
 			OORef<DislocationVis> dislocationVis = new DislocationVis(fileSource->dataset());
 			if(!Application::instance()->scriptMode())
@@ -656,18 +656,18 @@ PipelineFlowState DislocImporter::DislocFrameData::handOver(const PipelineFlowSt
 			microstructureObj->addVisElement(slipSurfaceVis);
 		}
 		else {
-			output.addObject(microstructureObj);
+			output->addObject(microstructureObj);
 		}
-		microstructureObj->setDomain(output.getObject<SimulationCellObject>());
+		microstructureObj->setDomain(output->getObject<SimulationCellObject>());
 		microstructureObj->setStorage(microstructure());
 
 		// Insert cluster graph as a separate data object.
-		OORef<ClusterGraphObject> clusterGraphObj = existing.getObject<ClusterGraphObject>();
+		OORef<ClusterGraphObject> clusterGraphObj = existing ? existing->getObject<ClusterGraphObject>() : nullptr;
 		if(!clusterGraphObj) {
-			clusterGraphObj = output.createObject<ClusterGraphObject>(fileSource);
+			clusterGraphObj = output->createObject<ClusterGraphObject>(fileSource);
 		}
 		else {
-			output.addObject(clusterGraphObj);		
+			output->addObject(clusterGraphObj);		
 		}
 		clusterGraphObj->setStorage(microstructure()->clusterGraph());
 	}

@@ -44,7 +44,7 @@ class OVITO_PARTICLES_EXPORT GenerateTrajectoryLinesModifier : public Modifier
 		using ModifierClass::ModifierClass;
 
 		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+		virtual bool isApplicableTo(const DataCollection& input) const override;
 	};
 	
 	Q_OBJECT
@@ -58,7 +58,7 @@ public:
 	Q_INVOKABLE GenerateTrajectoryLinesModifier(DataSet* dataset);
 
 	/// Modifies the input data in an immediate, preliminary way.
-	virtual PipelineFlowState evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+	virtual void evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
 	/// Returns the the custom time interval.
 	TimeInterval customInterval() const { return TimeInterval(_customIntervalStart, _customIntervalEnd); }

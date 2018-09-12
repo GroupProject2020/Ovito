@@ -49,7 +49,7 @@ StructureIdentificationModifier::StructureIdentificationModifier(DataSet* datase
 /******************************************************************************
 * Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-bool StructureIdentificationModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool StructureIdentificationModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<ParticlesObject>();
 }
@@ -105,13 +105,12 @@ QVector<bool> StructureIdentificationModifier::getTypesToIdentify(int numTypes) 
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState StructureIdentificationModifier::StructureIdentificationEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void StructureIdentificationModifier::StructureIdentificationEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	StructureIdentificationModifier* modifier = static_object_cast<StructureIdentificationModifier>(modApp->modifier());
 	OVITO_ASSERT(modifier);
 
-	PipelineFlowState output = input;
-	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+	ParticlesObject* particles = state.expectMutableObject<ParticlesObject>();
 
 	if(_inputFingerprint.hasChanged(particles))
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
@@ -162,15 +161,13 @@ PipelineFlowState StructureIdentificationModifier::StructureIdentificationEngine
 	}
 
 	// Output a data series object with the type counts.
-	DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("structures"), modApp, DataSeriesObject::BarChart, tr("Structure counts"), _typeCounts);
+	DataSeriesObject* seriesObj = state.createObject<DataSeriesObject>(QStringLiteral("structures"), modApp, DataSeriesObject::BarChart, tr("Structure counts"), _typeCounts);
 	PropertyObject* yProperty = seriesObj->expectMutableProperty(DataSeriesObject::YProperty);
 	for(const ElementType* type : modifier->structureTypes()) {
 		if(type->enabled())
 			yProperty->addElementType(type);
 	}
 	seriesObj->setAxisLabelX(tr("Structure type"));
-
-	return output;
 }
 
 OVITO_END_INLINE_NAMESPACE

@@ -32,7 +32,7 @@ IMPLEMENT_OVITO_CLASS(SurfaceMeshSliceModifierDelegate);
 /******************************************************************************
 * Performs the actual rejection of particles.
 ******************************************************************************/
-PipelineStatus SurfaceMeshSliceModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
+PipelineStatus SurfaceMeshSliceModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	SliceModifier* mod = static_object_cast<SliceModifier>(modifier);
 	if(mod->createSelection()) 
@@ -41,11 +41,11 @@ PipelineStatus SurfaceMeshSliceModifierDelegate::apply(Modifier* modifier, const
 	// Obtain modifier parameter values. 
 	Plane3 plane;
 	FloatType sliceWidth;
-	std::tie(plane, sliceWidth) = mod->slicingPlane(time, output.mutableStateValidity());
+	std::tie(plane, sliceWidth) = mod->slicingPlane(time, state.mutableStateValidity());
 	
-	for(const DataObject* obj : output.objects()) {
+	for(const DataObject* obj : state.data()->objects()) {
 		if(const SurfaceMesh* inputMesh = dynamic_object_cast<SurfaceMesh>(obj)) {
-			SurfaceMesh* outputMesh = output.makeMutable(inputMesh);
+			SurfaceMesh* outputMesh = state.makeMutable(inputMesh);
 			QVector<Plane3> planes = outputMesh->cuttingPlanes();
 			if(sliceWidth <= 0) {
 				planes.push_back(plane);

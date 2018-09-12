@@ -44,11 +44,14 @@ public:
 		using RefTarget::OOMetaClass::OOMetaClass;
 
 		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const { 
+		virtual bool isApplicableTo(const DataCollection& input) const { 
 			OVITO_ASSERT_MSG(false, "AsynchronousModifierDelegate::OOMetaClass::isApplicableTo()",
 				qPrintable(QStringLiteral("Metaclass of modifier delegate class %1 does not override the isApplicableTo() method.").arg(name()))); 
 			return false;
 		}
+
+		/// Asks the metaclass whether the modifier delegate can operate on the given input data.
+		bool isApplicableToState(const PipelineFlowState& input) const { return input.data() && isApplicableTo(*input.data()); }
 
 		/// \brief The name by which Python scripts can refer to this modifier delegate.
 		virtual QString pythonDataName() const {
@@ -91,7 +94,7 @@ public:
 		using ModifierClass::ModifierClass;
 
 		/// Asks the metaclass whether the modifier can be applied to the given input data.
-		virtual bool isApplicableTo(const PipelineFlowState& input) const override;
+		virtual bool isApplicableTo(const DataCollection& input) const override;
 
 		/// Return the metaclass of delegates for this modifier type. 
 		virtual const AsynchronousModifierDelegate::OOMetaClass& delegateMetaclass() const { 

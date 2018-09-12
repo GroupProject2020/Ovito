@@ -139,7 +139,7 @@ private:
 		using StructureIdentificationEngine::StructureIdentificationEngine;
 
 		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		virtual void emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 	};
 
 	/// Analysis engine that performs the conventional common neighbor analysis.
@@ -196,7 +196,7 @@ private:
 		virtual void perform() override;
 
 		/// Injects the computed results into the data pipeline.
-		virtual PipelineFlowState emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) override;
+		virtual void emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) override;
 
 		/// Returns the output bonds property that stores the computed CNA indices.
 		const PropertyPtr& cnaIndices() const { return _cnaIndices; }

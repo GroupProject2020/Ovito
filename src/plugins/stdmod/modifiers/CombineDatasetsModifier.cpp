@@ -65,10 +65,9 @@ Future<PipelineFlowState> CombineDatasetsModifier::evaluate(TimePoint time, Modi
 	SharedFuture<PipelineFlowState> secondaryStateFuture = secondaryDataSource()->evaluate(time);
 	
 	// Wait for the data to become available.
-	return secondaryStateFuture.then(executor(), [this, input = input, time, modApp = OORef<ModifierApplication>(modApp)](const PipelineFlowState& secondaryState) {
+	return secondaryStateFuture.then(executor(), [this, state = input, time, modApp = OORef<ModifierApplication>(modApp)](const PipelineFlowState& secondaryState) mutable {
 
 		UndoSuspender noUndo(this);
-		PipelineFlowState output = input;
 		
 		// Make sure the obtained dataset is valid and ready to use.
 		if(secondaryState.status().type() == PipelineStatus::Error) {
@@ -76,63 +75,62 @@ Future<PipelineFlowState> CombineDatasetsModifier::evaluate(TimePoint time, Modi
 				if(fileSource->sourceUrls().empty())
 					throwException(tr("Please pick an input file to be merged."));
 			}
-			output.setStatus(secondaryState.status());
-			return output;
+			state.setStatus(secondaryState.status());
+			return std::move(state);
 		}
 
 		if(secondaryState.isEmpty())
 			throwException(tr("Secondary data source has not been specified yet or is empty. Please pick an input file to be merged."));
 
 		// Merge validity intervals of primary and secondary datasets.
-		output.intersectStateValidity(secondaryState.stateValidity());
+		state.intersectStateValidity(secondaryState.stateValidity());
 
 		// Merge global attributes of primary and secondary datasets.
-		for(const DataObject* obj : secondaryState.objects()) {
-			if(const AttributeDataObject* attribute = dynamic_object_cast<AttributeDataObject>(obj)) {
-				if(!output.contains(attribute))
-					output.addObject(attribute);
+		if(!state.isEmpty() && !secondaryState.isEmpty()) {
+			for(const DataObject* obj : secondaryState.data()->objects()) {
+				if(const AttributeDataObject* attribute = dynamic_object_cast<AttributeDataObject>(obj)) {
+					if(state.getAttributeValue(attribute->identifier()).isNull())
+						state.mutableData()->addObject(attribute);
+				}
 			}
 		}
 
 		// Let the delegates do their job.
-		applyDelegates(input, output, time, modApp, { std::reference_wrapper<const PipelineFlowState>(secondaryState) });
+		applyDelegates(state, time, modApp, { std::reference_wrapper<const PipelineFlowState>(secondaryState) });
 
-		return output;
+		return std::move(state);
 	});
 }
 
 /******************************************************************************
 * Modifies the input data in an immediate, preliminary way.
 ******************************************************************************/
-PipelineFlowState CombineDatasetsModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void CombineDatasetsModifier::evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
-	PipelineFlowState output = input;
-
 	// Get the secondary data source.
 	if(!secondaryDataSource())
-		return output;
+		return;
 
 	// Acquire the state to be merged.
 	const PipelineFlowState& secondaryState = secondaryDataSource()->evaluatePreliminary();
-	if(secondaryState.isEmpty()) {
-		return output;
-	}
+	if(secondaryState.isEmpty())
+		return;
 
 	// Merge validity intervals of primary and secondary datasets.
-	output.intersectStateValidity(secondaryState.stateValidity());
+	state.intersectStateValidity(secondaryState.stateValidity());
 
 	// Merge global attributes of primary and secondary datasets.
-	for(const DataObject* obj : secondaryState.objects()) {
-		if(const AttributeDataObject* attribute = dynamic_object_cast<AttributeDataObject>(obj)) {
-			if(!output.contains(attribute))
-				output.addObject(attribute);
+	if(!secondaryState.isEmpty()) {
+		for(const DataObject* obj : secondaryState.data()->objects()) {
+			if(const AttributeDataObject* attribute = dynamic_object_cast<AttributeDataObject>(obj)) {
+				if(state.getAttributeValue(attribute->identifier()).isNull())
+					state.addObject(attribute);
+			}
 		}
 	}
 	
 	// Let the delegates do their job and merge the data objects of the two datasets.
-	applyDelegates(input, output, time, modApp, { std::reference_wrapper<const PipelineFlowState>(secondaryState) });
-
-	return output;
+	applyDelegates(state, time, modApp, { std::reference_wrapper<const PipelineFlowState>(secondaryState) });
 }
 
 }	// End of namespace

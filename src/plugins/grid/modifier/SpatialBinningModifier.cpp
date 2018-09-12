@@ -112,7 +112,7 @@ void SpatialBinningModifier::initializeModifier(ModifierApplication* modApp)
 ******************************************************************************/
 void SpatialBinningModifier::referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget)
 {
-	if(field == PROPERTY_FIELD(AsynchronousDelegatingModifier::delegate) && !dataset()->undoStack().isUndoingOrRedoing() && !isBeingLoaded()) {
+	if(field == PROPERTY_FIELD(AsynchronousDelegatingModifier::delegate) && !isAboutToBeDeleted() && !dataset()->undoStack().isUndoingOrRedoing() && !isBeingLoaded()) {
 		setSourceProperty(sourceProperty().convertToContainerClass(delegate() ? &delegate()->containerClass() : nullptr));
 	}
 	AsynchronousDelegatingModifier::referenceReplaced(field, oldTarget, newTarget);
@@ -226,25 +226,23 @@ void SpatialBinningModifierDelegate::SpatialBinningEngine::computeGradient()
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState SpatialBinningModifierDelegate::SpatialBinningEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void SpatialBinningModifierDelegate::SpatialBinningEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	SpatialBinningModifier* modifier = static_object_cast<SpatialBinningModifier>(modApp->modifier());
 	if(!modifier->delegate())
 		modifier->throwException(tr("No delegate set for the binning modifier."));
 
-	PipelineFlowState output = input;
-
 	QString title = modifier->sourceProperty().nameWithComponent();
 	if(SpatialBinningModifier::bin1D((SpatialBinningModifier::BinDirectionType)binningDirection())) {
 		// In 1D binning mode, output a data series.
-		DataSeriesObject* seriesObj = output.createObject<DataSeriesObject>(QStringLiteral("binning[%1]").arg(title), modApp, DataSeriesObject::Histogram, title, binData());
+		DataSeriesObject* seriesObj = state.createObject<DataSeriesObject>(QStringLiteral("binning[%1]").arg(title), modApp, DataSeriesObject::Histogram, title, binData());
 		seriesObj->setIntervalStart(0);
 		seriesObj->setIntervalEnd(cell().matrix().column(binDir(0)).length());
 		seriesObj->setAxisLabelX(tr("Position"));
 	}
 	else {
 		// In 2D and 3D binning mode, output a voxel grid.
-		VoxelGrid* gridObj = output.createObject<VoxelGrid>(QStringLiteral("binning[%1]").arg(title), modApp, tr("Binning (%1)").arg(title));
+		VoxelGrid* gridObj = state.createObject<VoxelGrid>(QStringLiteral("binning[%1]").arg(title), modApp, tr("Binning (%1)").arg(title));
 		gridObj->createProperty(binData());
 		gridObj->setShape({(size_t)binCount(0), (size_t)binCount(1), (size_t)binCount(2)});
 		// Set up the cell for the grid with the right dimensionality, orientation and boundary conditions.
@@ -263,8 +261,6 @@ PipelineFlowState SpatialBinningModifierDelegate::SpatialBinningEngine::emitResu
 		domain->setCellMatrix(m);
 		gridObj->setDomain(std::move(domain));
 	}
-
-	return output;
 }
 
 }	// End of namespace

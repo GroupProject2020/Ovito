@@ -45,7 +45,7 @@ public:
 	virtual int orderingKey() const override { return 100; }
 
 	/// Determines whether the given pipeline flow state contains data that can be displayed by this applet.
-	virtual bool appliesTo(const PipelineFlowState& state) override;
+	virtual bool appliesTo(const DataCollection& data) override;
 
 	/// Lets the applet create the UI widget that is to be placed into the data inspector panel. 
 	virtual QWidget* createWidget(MainWindow* mainWindow) override;
@@ -97,9 +97,9 @@ private:
 		}
 
 		/// Replaces the contents of this data model.
-		void setContents(const PipelineFlowState& state) {
+		void setContents(const DataCollection* dataCollection) {
 			beginResetModel();
-			const QVariantMap& attributes = state.buildAttributesMap();
+			const QVariantMap& attributes = dataCollection ? dataCollection->buildAttributesMap() : QVariantMap();
 			_keys = attributes.keys();
 			_values = attributes.values();
 			endResetModel();

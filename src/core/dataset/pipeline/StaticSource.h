@@ -23,13 +23,13 @@
 
 
 #include <core/Core.h>
-#include <core/dataset/data/DataObject.h>
+#include <core/dataset/data/DataCollection.h>
 #include "PipelineObject.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
 /**
- * \brief This is a PipelineObject that returns a static DataObject.
+ * \brief This is a PipelineObject that returns a static data collection.
  */
 class OVITO_CORE_EXPORT StaticSource : public PipelineObject
 {
@@ -42,18 +42,6 @@ public:
 	/// \brief Standard constructor.
 	Q_INVOKABLE StaticSource(DataSet* dataset);
 
-	/// \brief Constructor that inserts a single data object into the new source.
-	StaticSource(DataSet* dataset, const DataObject* dataObject) : StaticSource(dataset) {
-		OVITO_ASSERT(dataObject);
-		_dataObjects.push_back(this, PROPERTY_FIELD(dataObjects), dataObject);
-	}
-
-	/// \brief Constructor that inserts the content of a PipelineFlowState into the new source.
-	StaticSource(DataSet* dataset, const PipelineFlowState& state) : StaticSource(dataset) {
-		for(const DataObject* obj : state.objects())
-			_dataObjects.push_back(this, PROPERTY_FIELD(dataObjects), obj);
-	}
-	
 	/// \brief Asks the object for the result of the data pipeline.
 	virtual SharedFuture<PipelineFlowState> evaluate(TimePoint time) override;
 
@@ -62,29 +50,12 @@ public:
 
 	/// Returns the list of data objects that are managed by this data source.
 	/// The returned data objects will be displayed as sub-objects of the data source in the pipeline editor.
-	virtual QVector<DataObject*> getSourceDataObjects() const override { return dataObjects(); }
-
-	/// \brief Adds an additional data object to this source.
-	void addDataObject(const DataObject* obj) { 
-		OVITO_ASSERT(!dataObjects().contains(const_cast<DataObject*>(obj))); 
-		_dataObjects.push_back(this, PROPERTY_FIELD(dataObjects), obj); 
-	}
-
-	/// \brief Inserts an additional data object into this source.
-	void insertDataObject(int index, const DataObject* obj) { 
-		OVITO_ASSERT(!dataObjects().contains(const_cast<DataObject*>(obj))); 
-		_dataObjects.insert(this, PROPERTY_FIELD(dataObjects), index, obj); 
-	}
-	
-	/// \brief Removes a data object from this source.
-	void removeDataObject(int index) { 
-		_dataObjects.remove(this, PROPERTY_FIELD(dataObjects), index); 
-	}
+	virtual DataCollection* getSourceDataCollection() const override { return dataCollection(); }
 	
 private:
 
-	/// The list of data objects owned by this source.
-	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD_FLAGS(DataObject, dataObjects, setDataObjects, PROPERTY_FIELD_ALWAYS_DEEP_COPY);
+	/// The data collection owned by this source.
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(DataCollection, dataCollection, setDataCollection, PROPERTY_FIELD_ALWAYS_DEEP_COPY);
 };
 
 OVITO_END_INLINE_NAMESPACE

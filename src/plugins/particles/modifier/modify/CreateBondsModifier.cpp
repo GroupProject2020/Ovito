@@ -62,7 +62,7 @@ CreateBondsModifier::CreateBondsModifier(DataSet* dataset) : AsynchronousModifie
 /******************************************************************************
 * Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-bool CreateBondsModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool CreateBondsModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<ParticlesObject>();
 }
@@ -243,34 +243,31 @@ void CreateBondsModifier::BondsEngine::perform()
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState CreateBondsModifier::BondsEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void CreateBondsModifier::BondsEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
-
 	CreateBondsModifier* modifier = static_object_cast<CreateBondsModifier>(modApp->modifier());
 	OVITO_ASSERT(modifier);	
 
 	// Add our bonds to the system.
-	PipelineFlowState output = input;
-	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+	ParticlesObject* particles = state.expectMutableObject<ParticlesObject>();
 
+	// Bonds have been created for a specific particles ordering. Make sure it's still the same.
 	if(_inputFingerprint.hasChanged(particles))
 		modApp->throwException(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
 
 	particles->addBonds(bonds(), modifier->bondsVis());
 
 	size_t bondsCount = bonds().size();
-	output.addAttribute(QStringLiteral("CreateBonds.num_bonds"), QVariant::fromValue(bondsCount), modApp);
+	state.addAttribute(QStringLiteral("CreateBonds.num_bonds"), QVariant::fromValue(bondsCount), modApp);
 
 	// If the number of bonds is unusually high, we better turn off bonds display to prevent the program from freezing.
 	if(bondsCount > 1000000 && modifier->bondsVis()) {
 		modifier->bondsVis()->setEnabled(false);		
-		output.setStatus(PipelineStatus(PipelineStatus::Warning, tr("Created %1 bonds, which is a lot. As a precaution, the display of bonds has been disabled. You can manually enable it again if needed.").arg(bondsCount)));
+		state.setStatus(PipelineStatus(PipelineStatus::Warning, tr("Created %1 bonds, which is a lot. As a precaution, the display of bonds has been disabled. You can manually enable it again if needed.").arg(bondsCount)));
 	}
 	else {
-		output.setStatus(PipelineStatus(PipelineStatus::Success, tr("Created %1 bonds.").arg(bondsCount)));
+		state.setStatus(PipelineStatus(PipelineStatus::Success, tr("Created %1 bonds.").arg(bondsCount)));
 	}
-
-	return output;	
 }
 
 OVITO_END_INLINE_NAMESPACE

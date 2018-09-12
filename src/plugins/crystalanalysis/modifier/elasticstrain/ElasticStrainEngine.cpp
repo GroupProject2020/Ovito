@@ -180,21 +180,21 @@ void ElasticStrainEngine::perform()
 /******************************************************************************
 * Injects the computed results of the engine into the data pipeline.
 ******************************************************************************/
-PipelineFlowState ElasticStrainEngine::emitResults(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input)
+void ElasticStrainEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	ElasticStrainModifier* modifier = static_object_cast<ElasticStrainModifier>(modApp->modifier());
 	
-	PipelineFlowState output = StructureIdentificationEngine::emitResults(time, modApp, input);
+	StructureIdentificationEngine::emitResults(time, modApp, state);
 
 	// Output cluster graph.
-	ClusterGraphObject* clusterGraphObj = output.createObject<ClusterGraphObject>(modApp);
+	ClusterGraphObject* clusterGraphObj = state.createObject<ClusterGraphObject>(modApp);
 	clusterGraphObj->setStorage(clusterGraph());
 
 	// Output pattern catalog.
-	output.addObject(modifier->patternCatalog());
+	state.addObject(modifier->patternCatalog());
 
 	// Output particle properties.
-	ParticlesObject* particles = output.expectMutableObject<ParticlesObject>();
+	ParticlesObject* particles = state.expectMutableObject<ParticlesObject>();
 	particles->createProperty(atomClusters());
 	if(modifier->calculateStrainTensors() && strainTensors())
 		particles->createProperty(strainTensors());
@@ -204,8 +204,6 @@ PipelineFlowState ElasticStrainEngine::emitResults(TimePoint time, ModifierAppli
 
 	if(volumetricStrains())
 		particles->createProperty(volumetricStrains());
-
-	return output;
 }
 
 }	// End of namespace

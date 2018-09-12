@@ -50,8 +50,8 @@ public:
 	/// Returns the key value for this applet that is used for ordering the applet tabs.
 	virtual int orderingKey() const override { return 50; }
 
-	/// Determines whether the given pipeline flow state contains data that can be displayed by this applet.
-	virtual bool appliesTo(const PipelineFlowState& state) override;
+	/// Determines whether the given pipeline data contains data that can be displayed by this applet.
+	virtual bool appliesTo(const DataCollection& data) override;
 
 	/// Lets the applet create the UI widget that is to be placed into the data inspector panel. 
 	virtual QWidget* createWidget(MainWindow* mainWindow) override;

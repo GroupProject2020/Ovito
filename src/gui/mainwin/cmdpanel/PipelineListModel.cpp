@@ -152,8 +152,8 @@ void PipelineListModel::refreshList()
 					defaultObjectToSelect = pipelineObject;
 
 				// Create list items for the source's editable data objects.
-				for(DataObject* dataObj : pipelineObject->getSourceDataObjects())
-					createListItemsForSubobjects(dataObj, items, item);
+				if(const DataCollection* collection = pipelineObject->getSourceDataCollection())
+					createListItemsForSubobjects(collection, items, item);
 
 				// Done.
 				break;

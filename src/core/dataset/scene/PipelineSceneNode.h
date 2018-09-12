@@ -130,8 +130,8 @@ protected:
 
 private:
 
-	/// Helper function that recursively collects all visual elements of a 
-	/// data object and stores them in a vector.
+	/// Helper function that recursively collects all visual elements attached to a 
+	/// data object and its children and stores them in an output vector.
 	static void collectVisElements(const DataObject* dataObj, std::vector<DataVis*>& visElements);
 
 	/// Computes the bounding box of a data object and all its sub-objects. 

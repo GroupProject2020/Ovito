@@ -31,7 +31,7 @@ IMPLEMENT_OVITO_CLASS(VoxelGridAffineTransformationModifierDelegate);
 /******************************************************************************
 * Determines whether this delegate can handle the given input data.
 ******************************************************************************/
-bool VoxelGridAffineTransformationModifierDelegate::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool VoxelGridAffineTransformationModifierDelegate::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<VoxelGrid>();
 }
@@ -39,10 +39,10 @@ bool VoxelGridAffineTransformationModifierDelegate::OOMetaClass::isApplicableTo(
 /******************************************************************************
 * Applies the modifier operation to the data in a pipeline flow state.
 ******************************************************************************/
-PipelineStatus VoxelGridAffineTransformationModifierDelegate::apply(Modifier* modifier, const PipelineFlowState& input, PipelineFlowState& output, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
+PipelineStatus VoxelGridAffineTransformationModifierDelegate::apply(Modifier* modifier, PipelineFlowState& state, TimePoint time, ModifierApplication* modApp, const std::vector<std::reference_wrapper<const PipelineFlowState>>& additionalInputs)
 {
 	// Transform the domains of PeriodicDomainDataObjects.
-	for(const DataObject* obj : output.objects()) {
+	for(const DataObject* obj : state.data()->objects()) {
 		if(const VoxelGrid* existingObject = dynamic_object_cast<VoxelGrid>(obj)) {
 			if(existingObject->domain()) {
 
@@ -52,9 +52,9 @@ PipelineStatus VoxelGridAffineTransformationModifierDelegate::apply(Modifier* mo
 				if(mod->relativeMode())
 					tm = mod->transformationTM();
 				else
-					tm = mod->targetCell() * input.expectObject<SimulationCellObject>()->cellMatrix().inverse();
+					tm = mod->targetCell() * state.expectObject<SimulationCellObject>()->cellMatrix().inverse();
 
-				VoxelGrid* newObject = output.makeMutable(existingObject);
+				VoxelGrid* newObject = state.makeMutable(existingObject);
 				newObject->mutableDomain()->setCellMatrix(tm * existingObject->domain()->cellMatrix());
 			}
 		}

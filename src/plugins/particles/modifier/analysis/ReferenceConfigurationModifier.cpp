@@ -61,7 +61,7 @@ ReferenceConfigurationModifier::ReferenceConfigurationModifier(DataSet* dataset)
 /******************************************************************************
 * Asks the modifier whether it can be applied to the given input data.
 ******************************************************************************/
-bool ReferenceConfigurationModifier::OOMetaClass::isApplicableTo(const PipelineFlowState& input) const
+bool ReferenceConfigurationModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
 {
 	return input.containsObject<ParticlesObject>();
 }
@@ -77,7 +77,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ReferenceConfigurationModifier::c
 	if(useReferenceFrameOffset()) {
 		// Determine the current frame, preferably from the attribute stored with the pipeline flow state.
 		// If the source frame attribute is not present, fall back to inferring it from the current animation time.
-		int currentFrame = input.sourceFrame();
+		int currentFrame = input.data() ? input.data()->sourceFrame() : -1;
 		if(currentFrame < 0)
 			currentFrame = modApp->animationTimeToSourceFrame(time);
 
@@ -148,7 +148,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> ReferenceConfigurationModifier::c
 			throwException(tr("Reference configuration has not been specified yet or is empty. Please pick a reference simulation file."));
 
 		// Make sure we really got back the requested reference frame.
-		if(referenceInput.sourceFrame() != referenceFrame) {
+		if(referenceInput.data()->sourceFrame() != referenceFrame) {
 			if(referenceFrame > 0)
 				throwException(tr("Requested reference frame %1 is out of range. Make sure the loaded reference configuration file contains a sufficent number of frames.").arg(referenceFrame));
 			else
@@ -294,7 +294,7 @@ bool ReferenceConfigurationModifierApplication::referenceEvent(RefTarget* source
 {
 	if(event.type() == ReferenceEvent::TargetChanged) {
 		// Invalidate cached state.
-		_referenceCache.clear();
+		_referenceCache.reset();
 		_cacheValidity.setEmpty();
 	}
 	return AsynchronousModifierApplication::referenceEvent(source, event);
