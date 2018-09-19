@@ -39,10 +39,18 @@ PYBIND11_MODULE(Grid, m)
 	py::options options;
 	options.disable_function_signatures();
 
-	auto VoxelGrid_py = ovito_class<VoxelGrid, PropertyContainer>(m)
+	auto VoxelGrid_py = ovito_class<VoxelGrid, PropertyContainer>(m,
+		":Base class: :py:class:`ovito.data.PropertyContainer`"
+		"\n\n"
+		"A structured grid of values. ")
 		.def_property_readonly("shape", [](const VoxelGrid& grid) {
 			return py::make_tuple(grid.shape()[0], grid.shape()[1], grid.shape()[2]);
-		})
+		},
+		"A tuple containing the number of grid cells in each of the three spatial directions. "
+		"The sptial dimensions of the grid are defined by the three cell vectors of the attached :py:attr:`.domain` object. "
+		"\n\n"
+		"For two-dimensional grids, for which the :py:attr:`~ovito.data.SimulationCell.is2D` property of the :py:attr:`.domain` "
+		"is set to true, the third entry of the :py:attr:`!shape` tuple will always be equal to 1. ")
 	;
 	createDataPropertyAccessors(VoxelGrid_py, "title", &VoxelGrid::title, &VoxelGrid::setTitle,
 		"The name of the voxel grid as shown in the user interface. ");
@@ -60,6 +68,10 @@ PYBIND11_MODULE(Grid, m)
 			" * :py:class:`~ovito.data.SurfaceMesh`:\n"
 			"   The isosurface mesh generted by the modifier.\n"
 			)
+		.def_property("operate_on", modifierPropertyContainerGetter(PROPERTY_FIELD(CreateIsosurfaceModifier::subject)), modifierPropertyContainerSetter(PROPERTY_FIELD(CreateIsosurfaceModifier::subject)),
+				"Specifies the voxel grid this modifier should operate on. "
+				"\n\n"
+				":Default: ``'voxels:'``\n")	
 		.def_property("isolevel", &CreateIsosurfaceModifier::isolevel, &CreateIsosurfaceModifier::setIsolevel,
 				"The value at which to create the isosurface."
 				"\n\n"

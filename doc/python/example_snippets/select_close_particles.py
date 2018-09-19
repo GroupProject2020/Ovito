@@ -11,25 +11,25 @@ from ovito.data import CutoffNeighborFinder
 overlap_distance = 2.5
 
 # The user-defined modifier function:
-def modify(frame, input, output):
+def modify(frame, data):
 
     # Show this text in the status bar while the modifier function executes:
     yield "Selecting overlapping particles"
 
     # Create 'Selection' output particle property
-    selection = output.particles.create_property('Selection')
+    selection = data.particles_.create_property('Selection')
     
     # Prepare neighbor finder
-    finder = CutoffNeighborFinder(overlap_distance, input)
+    finder = CutoffNeighborFinder(overlap_distance, data)
     
     # Request write access to the output property array
     with selection:
     
         # Iterate over all particles
-        for index in range(len(selection)):
+        for index in range(data.particles.count):
         
-            # Progress bar update
-            yield (index / len(selection))
+            # Update progress display in the status bar.
+            yield (index / data.particles.count)
             
             # Iterate over all closeby particles around the current center particle
             for neigh in finder.find(index):
@@ -42,6 +42,6 @@ def modify(frame, input, output):
                     break
 # <<<<<<<<<<<<< snippet ends here <<<<<<<<<<<<<
 
-pipeline.modifiers.append(PythonScriptModifier(function = modify))
+pipeline.modifiers.append(modify)
 data = pipeline.compute()
-assert('Selection' in data.particles.keys())
+assert('Selection' in data.particles)

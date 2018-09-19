@@ -162,8 +162,8 @@ void FileSource::updateListOfFrames()
 	// Update the list of frames.
 	SharedFuture<QVector<FileSourceImporter::Frame>> framesFuture = requestFrameList(true, true);
 
-	// Show progress in the main window.
-	dataset()->container()->taskManager().registerTask(framesFuture);
+	// Show progress in the main window status bar.
+	dataset()->taskManager().registerTask(framesFuture);
 
 	// Catch exceptions and display error messages.
 	framesFuture.finally_future(executor(), [](SharedFuture<QVector<FileSourceImporter::Frame>> future) {
@@ -259,7 +259,7 @@ PipelineStatus FileSource::status() const
 /******************************************************************************
 * Asks the object for the result of the data pipeline at the given time.
 ******************************************************************************/
-Future<PipelineFlowState> FileSource::evaluateInternal(TimePoint time)
+Future<PipelineFlowState> FileSource::evaluateInternal(TimePoint time, bool breakOnError)
 {
 	// Convert the animation time to a frame number.
 	int frame = animationTimeToSourceFrame(time);
@@ -621,7 +621,7 @@ bool FileSource::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 /******************************************************************************
 * Asks the object for the result of the data pipeline.
 ******************************************************************************/
-SharedFuture<PipelineFlowState> FileSource::evaluate(TimePoint time)
+SharedFuture<PipelineFlowState> FileSource::evaluate(TimePoint time, bool breakOnError)
 {
 	if(_updateCacheWithDataCollection) {
 		_updateCacheWithDataCollection = false;
@@ -630,7 +630,7 @@ SharedFuture<PipelineFlowState> FileSource::evaluate(TimePoint time)
 			pipelineCache().insert(PipelineFlowState(dataCollection(), oldCachedState.status(), oldCachedState.stateValidity()), this);
 		}
 	}
-	return CachingPipelineObject::evaluate(time);
+	return CachingPipelineObject::evaluate(time, breakOnError);
 }
 
 /******************************************************************************

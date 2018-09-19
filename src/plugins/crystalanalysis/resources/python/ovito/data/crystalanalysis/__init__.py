@@ -1,9 +1,6 @@
 # Load dependencies
-import ovito
-import ovito.data
 import ovito.data.mesh
-import ovito.modifiers
-import ovito.modifiers.particles
+import ovito.data.particles
 import numpy
 
 # Load the native code modules

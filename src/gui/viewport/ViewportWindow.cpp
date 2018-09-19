@@ -435,6 +435,7 @@ void ViewportWindow::leaveEvent(QEvent* event)
 		_cursorInContextMenuArea = false;
 		viewport()->updateViewport();
 	}
+	_mainWindow->statusBar()->clearMessage();
 }
 
 /******************************************************************************

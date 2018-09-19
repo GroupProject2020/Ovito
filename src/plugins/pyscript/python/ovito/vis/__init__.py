@@ -57,8 +57,7 @@ def _Viewport_render_image(self, size=(640,480), frame=0, filename=None, backgro
                       When using this option, make sure to save the image in the PNG format in order to preserve the transparency information.
         :param renderer: The rendering engine to use. If set to ``None``, either OpenGL or Tachyon are used, 
                          depending on the availablity of OpenGL in the current execution context.
-        :returns: A `QImage <http://pyqt.sourceforge.net/Docs/PyQt5/api/qimage.html>`__ object containing the rendered picture; 
-                  or ``None`` if the rendering operation was canceled by the user.
+        :returns: A `QImage <http://pyqt.sourceforge.net/Docs/PyQt5/api/qimage.html>`__ object containing the rendered picture.
 
         **Populating the scene**
 
@@ -108,7 +107,7 @@ def _Viewport_render_image(self, size=(640,480), frame=0, filename=None, backgro
 
     # Rendering is a long-running operation, which is not permitted during viewport rendering or pipeline evaluation.
     # In these situations, the following function call will raise an exception.
-    ovito.dataset.request_long_operation()
+    ovito.scene.request_long_operation()
 
     # Configure a RenderSettings object:
     settings = RenderSettings()
@@ -119,11 +118,8 @@ def _Viewport_render_image(self, size=(640,480), frame=0, filename=None, backgro
         settings.save_to_file = True
     if renderer:
         settings.renderer = renderer
-    settings.range = RenderSettings.Range.CurrentFrame
-
-    # Temporarily modify the global animation settings:
-    old_frame = self.dataset.anim.current_frame
-    self.dataset.anim.current_frame = int(frame)
+    settings.range = RenderSettings.Range.CustomFrame
+    settings.custom_frame = int(frame)
 
     if len(self.dataset.pipelines) == 0:
         print("Warning: The scene to be rendered is empty. Did you forget to add a pipeline to the scene using Pipeline.add_to_scene()?")
@@ -137,14 +133,8 @@ def _Viewport_render_image(self, size=(640,480), frame=0, filename=None, backgro
         # Create a temporary off-screen frame buffer.
         fb = FrameBuffer(settings.output_image_width, settings.output_image_height)
     
-    try:
-        if not self.dataset.render_scene(settings, self, fb, ovito.task_manager):
-            return None
-        else:
-            return fb.image
-    finally:
-        # Restore animation settings to previous state:
-        self.dataset.anim.current_frame = old_frame
+    self.dataset.render_scene(settings, self, fb)
+    return fb.image
 Viewport.render_image = _Viewport_render_image
 
 def _Viewport_render_anim(self, filename, size=(640,480), fps=10, background=(1.0,1.0,1.0), renderer=None, range=None, every_nth=1):
@@ -164,7 +154,6 @@ def _Viewport_render_anim(self, filename, size=(640,480), fps=10, background=(1.
                       Frame numbering starts at 0. If no interval is specified, the entire animation is rendered, i.e.
                       frame 0 through (:py:attr:`FileSource.num_frames <ovito.pipeline.FileSource.num_frames>`-1).
         :param every_nth: Frame skipping interval in case you don't want to render every frame of a very long animation. 
-        :returns: ``True`` if successful; ``False`` if operation was canceled by the user.
 
         See also the :py:meth:`.render_image` method for a more detailed discussion of some of these parameters.
     """
@@ -179,7 +168,7 @@ def _Viewport_render_anim(self, filename, size=(640,480), fps=10, background=(1.
     
     # Rendering is a long-running operation, which is not permitted during viewport rendering or pipeline evaluation.
     # In these situations, the following function call will raise an exception.
-    ovito.dataset.request_long_operation()
+    ovito.scene.request_long_operation()
     
     # Configure a RenderSettings object:
     settings = RenderSettings()
@@ -209,7 +198,7 @@ def _Viewport_render_anim(self, filename, size=(640,480), fps=10, background=(1.
         # Create a temporary off-screen frame buffer.
         fb = FrameBuffer(settings.output_image_width, settings.output_image_height)
     
-    return self.dataset.render_scene(settings, self, fb, ovito.task_manager)
+    self.dataset.render_scene(settings, self, fb)
 Viewport.render_anim = _Viewport_render_anim
 
 # Here only for backward compatibility with OVITO 2.9.0:
@@ -285,8 +274,7 @@ def _Viewport_render(self, settings = None):
     else:
         # Create a temporary off-screen frame buffer.
         fb = FrameBuffer(settings.size[0], settings.size[1])
-    if not self.dataset.render_scene(settings, self, fb, ovito.task_manager):
-        return None
+    self.dataset.render_scene(settings, self, fb)
     return fb.image
 Viewport.render = _Viewport_render
 

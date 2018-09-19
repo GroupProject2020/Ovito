@@ -58,9 +58,60 @@ PYBIND11_MODULE(Particles, m)
 	options.disable_function_signatures();
 
 	auto Particles_py = ovito_class<ParticlesObject, PropertyContainer>(m,
-		":Base class: :py:class:`ovito.data.PropertyContainer`\n\n",
+		":Base class: :py:class:`ovito.data.PropertyContainer`"
+		"\n\n"
+		".. _particle-types-list:"
+		"\n\n"
+		"The following standard properties are defined for particles:"
+		"\n\n"
+		"======================================================= =================================================== ========== ==================================\n"
+		"Type constant                                           Property name                                       Data type  Component names\n"
+		"======================================================= =================================================== ========== ==================================\n"
+		"``Particles.Type.ParticleType``                         :guilabel:`Particle Type`                           int        \n"
+		"``Particles.Type.Position``                             :guilabel:`Position`                                float      X, Y, Z\n"
+		"``Particles.Type.Selection``                            :guilabel:`Selection`                               int        \n"
+		"``Particles.Type.Color``                                :guilabel:`Color`                                   float      R, G, B\n"
+		"``Particles.Type.Displacement``                         :guilabel:`Displacement`                            float      X, Y, Z\n"
+		"``Particles.Type.DisplacementMagnitude``                :guilabel:`Displacement Magnitude`                  float      \n"
+		"``Particles.Type.PotentialEnergy``                      :guilabel:`Potential Energy`                        float      \n"
+		"``Particles.Type.KineticEnergy``                        :guilabel:`Kinetic Energy`                          float      \n"
+		"``Particles.Type.TotalEnergy``                          :guilabel:`Total Energy`                            float      \n"
+		"``Particles.Type.Velocity``                             :guilabel:`Velocity`                                float      X, Y, Z\n"
+		"``Particles.Type.Radius``                               :guilabel:`Radius`                                  float      \n"
+		"``Particles.Type.Cluster``                              :guilabel:`Cluster`                                 int64      \n"
+		"``Particles.Type.Coordination``                         :guilabel:`Coordination`                            int        \n"
+		"``Particles.Type.StructureType``                        :guilabel:`Structure Type`                          int        \n"
+		"``Particles.Type.Identifier``                           :guilabel:`Particle Identifier`                     int64      \n"
+		"``Particles.Type.StressTensor``                         :guilabel:`Stress Tensor`                           float      XX, YY, ZZ, XY, XZ, YZ\n"
+		"``Particles.Type.StrainTensor``                         :guilabel:`Strain Tensor`                           float      XX, YY, ZZ, XY, XZ, YZ\n"
+		"``Particles.Type.DeformationGradient``                  :guilabel:`Deformation Gradient`                    float      XX, YX, ZX, XY, YY, ZY, XZ, YZ, ZZ\n"
+		"``Particles.Type.Orientation``                          :guilabel:`Orientation`                             float      X, Y, Z, W\n"
+		"``Particles.Type.Force``                                :guilabel:`Force`                                   float      X, Y, Z\n"
+		"``Particles.Type.Mass``                                 :guilabel:`Mass`                                    float      \n"
+		"``Particles.Type.Charge``                               :guilabel:`Charge`                                  float      \n"
+		"``Particles.Type.PeriodicImage``                        :guilabel:`Periodic Image`                          int        X, Y, Z\n"
+		"``Particles.Type.Transparency``                         :guilabel:`Transparency`                            float      \n"
+		"``Particles.Type.DipoleOrientation``                    :guilabel:`Dipole Orientation`                      float      X, Y, Z\n"
+		"``Particles.Type.DipoleMagnitude``                      :guilabel:`Dipole Magnitude`                        float      \n"
+		"``Particles.Type.AngularVelocity``                      :guilabel:`Angular Velocity`                        float      X, Y, Z\n"
+		"``Particles.Type.AngularMomentum``                      :guilabel:`Angular Momentum`                        float      X, Y, Z\n"
+		"``Particles.Type.Torque``                               :guilabel:`Torque`                                  float      X, Y, Z\n"
+		"``Particles.Type.Spin``                                 :guilabel:`Spin`                                    float      \n"
+		"``Particles.Type.CentroSymmetry``                       :guilabel:`Centrosymmetry`                          float      \n"
+		"``Particles.Type.VelocityMagnitude``                    :guilabel:`Velocity Magnitude`                      float      \n"
+		"``Particles.Type.Molecule``                             :guilabel:`Molecule Identifier`                     int64      \n"
+		"``Particles.Type.AsphericalShape``                      :guilabel:`Aspherical Shape`                        float      X, Y, Z\n"
+		"``Particles.Type.VectorColor``                          :guilabel:`Vector Color`                            float      R, G, B\n"
+		"``Particles.Type.ElasticStrainTensor``                  :guilabel:`Elastic Strain`                          float      XX, YY, ZZ, XY, XZ, YZ\n"
+		"``Particles.Type.ElasticDeformationGradient``           :guilabel:`Elastic Deformation Gradient`            float      XX, YX, ZX, XY, YY, ZY, XZ, YZ, ZZ\n"
+		"``Particles.Type.Rotation``                             :guilabel:`Rotation`                                float      X, Y, Z, W\n"
+		"``Particles.Type.StretchTensor``                        :guilabel:`Stretch Tensor`                          float      XX, YY, ZZ, XY, XZ, YZ\n"
+		"``Particles.Type.MoleculeType``                         :guilabel:`Molecule Type`                           int        \n"
+		"``Particles.Type.User``                                 user-defined properties with non-standard names     int/float  \n"
+		"======================================================= =================================================== ========== ==================================\n"
+		
 		// Python class name:
-		"Particles")
+		,"Particles")
 
 		// For backward compatibility with OVITO 2.9.0:
 		.def_property_readonly("position", [](const ParticlesObject& particles) { return particles.getProperty(ParticlesObject::PositionProperty); })
@@ -76,13 +127,85 @@ PYBIND11_MODULE(Particles, m)
 	createDataSubobjectAccessors(Particles_py, "bonds", &ParticlesObject::bonds, &ParticlesObject::setBonds, 
 		"The :py:class:`Bonds` data object, which stores the bond information associated with this particle dataset. ");
 
+	py::enum_<ParticlesObject::Type>(Particles_py, "Type")
+		.value("User", ParticlesObject::UserProperty)
+		.value("ParticleType", ParticlesObject::TypeProperty)
+		.value("Position", ParticlesObject::PositionProperty)
+		.value("Selection", ParticlesObject::SelectionProperty)
+		.value("Color", ParticlesObject::ColorProperty)
+		.value("Displacement", ParticlesObject::DisplacementProperty)
+		.value("DisplacementMagnitude", ParticlesObject::DisplacementMagnitudeProperty)
+		.value("PotentialEnergy", ParticlesObject::PotentialEnergyProperty)
+		.value("KineticEnergy", ParticlesObject::KineticEnergyProperty)
+		.value("TotalEnergy", ParticlesObject::TotalEnergyProperty)
+		.value("Velocity", ParticlesObject::VelocityProperty)
+		.value("Radius", ParticlesObject::RadiusProperty)
+		.value("Cluster", ParticlesObject::ClusterProperty)
+		.value("Coordination", ParticlesObject::CoordinationProperty)
+		.value("StructureType", ParticlesObject::StructureTypeProperty)
+		.value("Identifier", ParticlesObject::IdentifierProperty)
+		.value("StressTensor", ParticlesObject::StressTensorProperty)
+		.value("StrainTensor", ParticlesObject::StrainTensorProperty)
+		.value("DeformationGradient", ParticlesObject::DeformationGradientProperty)
+		.value("Orientation", ParticlesObject::OrientationProperty)
+		.value("Force", ParticlesObject::ForceProperty)
+		.value("Mass", ParticlesObject::MassProperty)
+		.value("Charge", ParticlesObject::ChargeProperty)
+		.value("PeriodicImage", ParticlesObject::PeriodicImageProperty)
+		.value("Transparency", ParticlesObject::TransparencyProperty)
+		.value("DipoleOrientation", ParticlesObject::DipoleOrientationProperty)
+		.value("DipoleMagnitude", ParticlesObject::DipoleMagnitudeProperty)
+		.value("AngularVelocity", ParticlesObject::AngularVelocityProperty)
+		.value("AngularMomentum", ParticlesObject::AngularMomentumProperty)
+		.value("Torque", ParticlesObject::TorqueProperty)
+		.value("Spin", ParticlesObject::SpinProperty)
+		.value("CentroSymmetry", ParticlesObject::CentroSymmetryProperty)
+		.value("VelocityMagnitude", ParticlesObject::VelocityMagnitudeProperty)
+		.value("Molecule", ParticlesObject::MoleculeProperty)
+		.value("AsphericalShape", ParticlesObject::AsphericalShapeProperty)
+		.value("VectorColor", ParticlesObject::VectorColorProperty)
+		.value("ElasticStrainTensor", ParticlesObject::ElasticStrainTensorProperty)
+		.value("ElasticDeformationGradient", ParticlesObject::ElasticDeformationGradientProperty)
+		.value("Rotation", ParticlesObject::RotationProperty)
+		.value("StretchTensor", ParticlesObject::StretchTensorProperty)
+		.value("MoleculeType", ParticlesObject::MoleculeTypeProperty)
+	;		
+
 	auto Bonds_py = ovito_class<BondsObject, PropertyContainer>(m,
-		":Base class: :py:class:`ovito.data.PropertyContainer`\n\n",
+		":Base class: :py:class:`ovito.data.PropertyContainer`"
+		"\n\n"
+		".. _bond-types-list:"
+		"\n\n"
+		"The following standard properties are defined for bonds:"
+		"\n\n"
+		"======================================================= =================================================== ========== ==================================\n"
+		"Type constant                                           Property name                                       Data type  Component names\n"
+		"======================================================= =================================================== ========== ==================================\n"
+		"``Bonds.Type.BondType``                                 :guilabel:`Bond Type`                               int         \n"
+		"``Bonds.Type.Selection``                                :guilabel:`Selection`                               int         \n"
+		"``Bonds.Type.Color``                                    :guilabel:`Color`                                   float      R, G, B\n"
+		"``Bonds.Type.Length``                                   :guilabel:`Length`                                  float       \n"
+		"``Bonds.Type.Topology``                                 :guilabel:`Topology`                                int64      A, B\n"
+		"``Bonds.Type.PeriodicImage``                            :guilabel:`Periodic Image`                          int        X, Y, Z \n"
+		"``Bonds.Type.Transparency``                             :guilabel:`Transparency`                            float       \n"
+		"``Bonds.Type.User``                                     user-defined properties with non-standard names     int/float   \n"
+		"======================================================= =================================================== ========== ==================================\n"
 		// Python class name:
-		"Bonds")
+		,"Bonds")
 
 		// For backward compatibility with OVITO 2.9.0:
 		.def_property_readonly("pbc_vectors", [](const BondsObject& bonds) { return bonds.getProperty(BondsObject::PeriodicImageProperty); })
+	;
+
+	py::enum_<BondsObject::Type>(Bonds_py, "Type")
+		.value("User", BondsObject::UserProperty)
+		.value("BondType", BondsObject::TypeProperty)
+		.value("Selection", BondsObject::SelectionProperty)
+		.value("Color", BondsObject::ColorProperty)
+		.value("Length", BondsObject::LengthProperty)
+		.value("Topology", BondsObject::TopologyProperty)
+		.value("PeriodicImage", BondsObject::PeriodicImageProperty)
+		.value("Transparency", BondsObject::TransparencyProperty)
 	;
 
 #if 0
@@ -159,118 +282,8 @@ PYBIND11_MODULE(Particles, m)
 			"which stores the chemical types of atoms (e.g. C, H, Fe, ...), the ``'Structure Type'`` property may hold the structural types computed for atoms "
 			"(e.g. FCC, BCC, ...) maintaining its own list of known structure types in the :py:attr:`.types` array. "
 		)
-		// Used by ParticlePropertiesView.create(): 
-		.def_static("createStandardProperty", [](DataSet& dataset, size_t particleCount, ParticlesObject::Type type, bool initializeMemory) {
-			return ParticleProperty::createFromStorage(&dataset, ParticlesObject::OOClass().createStandardStorage(particleCount, type, initializeMemory));
-		})
-		.def_static("createUserProperty", [](DataSet& dataset, size_t particleCount, int dataType, size_t componentCount, size_t stride, const QString& name, bool initializeMemory) {
-			return ParticleProperty::createFromStorage(&dataset, std::make_shared<PropertyStorage>(particleCount, dataType, componentCount, stride, name, initializeMemory));
-		})
-		.def_static("standard_property_type_id", [](const QString& name) { return (ParticlesObject::Type)ParticlesObject::OOClass().standardPropertyTypeId(name); })
-		.def_property_readonly("type", &ParticleProperty::type,
-				".. _particle-types-list:"
-				"\n\n"
-				"The type of the particle property.\n"
-				"One of the following constants:"
-				"\n\n"
-				"======================================================= =================================================== ========== ==================================\n"
-				"Type constant                                           Property name                                       Data type  Component names\n"
-				"======================================================= =================================================== ========== ==================================\n"
-				"``ParticleProperty.Type.User``                          (a user-defined property with a non-standard name)  int/float  \n"
-				"``ParticleProperty.Type.ParticleType``                  :guilabel:`Particle Type`                           int        \n"
-				"``ParticleProperty.Type.Position``                      :guilabel:`Position`                                float      X, Y, Z\n"
-				"``ParticleProperty.Type.Selection``                     :guilabel:`Selection`                               int        \n"
-				"``ParticleProperty.Type.Color``                         :guilabel:`Color`                                   float      R, G, B\n"
-				"``ParticleProperty.Type.Displacement``                  :guilabel:`Displacement`                            float      X, Y, Z\n"
-				"``ParticleProperty.Type.DisplacementMagnitude``         :guilabel:`Displacement Magnitude`                  float      \n"
-				"``ParticleProperty.Type.PotentialEnergy``               :guilabel:`Potential Energy`                        float      \n"
-				"``ParticleProperty.Type.KineticEnergy``                 :guilabel:`Kinetic Energy`                          float      \n"
-				"``ParticleProperty.Type.TotalEnergy``                   :guilabel:`Total Energy`                            float      \n"
-				"``ParticleProperty.Type.Velocity``                      :guilabel:`Velocity`                                float      X, Y, Z\n"
-				"``ParticleProperty.Type.Radius``                        :guilabel:`Radius`                                  float      \n"
-				"``ParticleProperty.Type.Cluster``                       :guilabel:`Cluster`                                 int        \n"
-				"``ParticleProperty.Type.Coordination``                  :guilabel:`Coordination`                            int        \n"
-				"``ParticleProperty.Type.StructureType``                 :guilabel:`Structure Type`                          int        \n"
-				"``ParticleProperty.Type.Identifier``                    :guilabel:`Particle Identifier`                     int        \n"
-				"``ParticleProperty.Type.StressTensor``                  :guilabel:`Stress Tensor`                           float      XX, YY, ZZ, XY, XZ, YZ\n"
-				"``ParticleProperty.Type.StrainTensor``                  :guilabel:`Strain Tensor`                           float      XX, YY, ZZ, XY, XZ, YZ\n"
-				"``ParticleProperty.Type.DeformationGradient``           :guilabel:`Deformation Gradient`                    float      XX, YX, ZX, XY, YY, ZY, XZ, YZ, ZZ\n"
-				"``ParticleProperty.Type.Orientation``                   :guilabel:`Orientation`                             float      X, Y, Z, W\n"
-				"``ParticleProperty.Type.Force``                         :guilabel:`Force`                                   float      X, Y, Z\n"
-				"``ParticleProperty.Type.Mass``                          :guilabel:`Mass`                                    float      \n"
-				"``ParticleProperty.Type.Charge``                        :guilabel:`Charge`                                  float      \n"
-				"``ParticleProperty.Type.PeriodicImage``                 :guilabel:`Periodic Image`                          int        X, Y, Z\n"
-				"``ParticleProperty.Type.Transparency``                  :guilabel:`Transparency`                            float      \n"
-				"``ParticleProperty.Type.DipoleOrientation``             :guilabel:`Dipole Orientation`                      float      X, Y, Z\n"
-				"``ParticleProperty.Type.DipoleMagnitude``               :guilabel:`Dipole Magnitude`                        float      \n"
-				"``ParticleProperty.Type.AngularVelocity``               :guilabel:`Angular Velocity`                        float      X, Y, Z\n"
-				"``ParticleProperty.Type.AngularMomentum``               :guilabel:`Angular Momentum`                        float      X, Y, Z\n"
-				"``ParticleProperty.Type.Torque``                        :guilabel:`Torque`                                  float      X, Y, Z\n"
-				"``ParticleProperty.Type.Spin``                          :guilabel:`Spin`                                    float      \n"
-				"``ParticleProperty.Type.CentroSymmetry``                :guilabel:`Centrosymmetry`                          float      \n"
-				"``ParticleProperty.Type.VelocityMagnitude``             :guilabel:`Velocity Magnitude`                      float      \n"
-				"``ParticleProperty.Type.Molecule``                      :guilabel:`Molecule Identifier`                     int        \n"
-				"``ParticleProperty.Type.AsphericalShape``               :guilabel:`Aspherical Shape`                        float      X, Y, Z\n"
-				"``ParticleProperty.Type.VectorColor``                   :guilabel:`Vector Color`                            float      R, G, B\n"
-				"``ParticleProperty.Type.ElasticStrainTensor``           :guilabel:`Elastic Strain`                          float      XX, YY, ZZ, XY, XZ, YZ\n"
-				"``ParticleProperty.Type.ElasticDeformationGradient``    :guilabel:`Elastic Deformation Gradient`            float      XX, YX, ZX, XY, YY, ZY, XZ, YZ, ZZ\n"
-				"``ParticleProperty.Type.Rotation``                      :guilabel:`Rotation`                                float      X, Y, Z, W\n"
-				"``ParticleProperty.Type.StretchTensor``                 :guilabel:`Stretch Tensor`                          float      XX, YY, ZZ, XY, XZ, YZ\n"
-				"``ParticleProperty.Type.MoleculeType``                  :guilabel:`Molecule Type`                           int        \n"
-				"======================================================= =================================================== ========== ==================================\n"
-				)
 	;
-	expose_mutable_subobject_list(ParticleProperty_py,
-		std::mem_fn(&ParticleProperty::elementTypes), 
-		std::mem_fn(&ParticleProperty::insertElementType), 
-		std::mem_fn(&ParticleProperty::removeElementType), "types", "ParticleTypeList",
-			  "A (mutable) list of :py:class:`ParticleType` instances. "
-			  "\n\n"
-			  "Note that the particle types may be stored in arbitrary order in this list. Thus, it is not valid to use a numeric type ID as an index into this list. ");
-
-	py::enum_<ParticlesObject::Type>(ParticleProperty_py, "Type")
-		.value("User", ParticlesObject::UserProperty)
-		.value("ParticleType", ParticlesObject::TypeProperty)
-		.value("Position", ParticlesObject::PositionProperty)
-		.value("Selection", ParticlesObject::SelectionProperty)
-		.value("Color", ParticlesObject::ColorProperty)
-		.value("Displacement", ParticlesObject::DisplacementProperty)
-		.value("DisplacementMagnitude", ParticlesObject::DisplacementMagnitudeProperty)
-		.value("PotentialEnergy", ParticlesObject::PotentialEnergyProperty)
-		.value("KineticEnergy", ParticlesObject::KineticEnergyProperty)
-		.value("TotalEnergy", ParticlesObject::TotalEnergyProperty)
-		.value("Velocity", ParticlesObject::VelocityProperty)
-		.value("Radius", ParticlesObject::RadiusProperty)
-		.value("Cluster", ParticlesObject::ClusterProperty)
-		.value("Coordination", ParticlesObject::CoordinationProperty)
-		.value("StructureType", ParticlesObject::StructureTypeProperty)
-		.value("Identifier", ParticlesObject::IdentifierProperty)
-		.value("StressTensor", ParticlesObject::StressTensorProperty)
-		.value("StrainTensor", ParticlesObject::StrainTensorProperty)
-		.value("DeformationGradient", ParticlesObject::DeformationGradientProperty)
-		.value("Orientation", ParticlesObject::OrientationProperty)
-		.value("Force", ParticlesObject::ForceProperty)
-		.value("Mass", ParticlesObject::MassProperty)
-		.value("Charge", ParticlesObject::ChargeProperty)
-		.value("PeriodicImage", ParticlesObject::PeriodicImageProperty)
-		.value("Transparency", ParticlesObject::TransparencyProperty)
-		.value("DipoleOrientation", ParticlesObject::DipoleOrientationProperty)
-		.value("DipoleMagnitude", ParticlesObject::DipoleMagnitudeProperty)
-		.value("AngularVelocity", ParticlesObject::AngularVelocityProperty)
-		.value("AngularMomentum", ParticlesObject::AngularMomentumProperty)
-		.value("Torque", ParticlesObject::TorqueProperty)
-		.value("Spin", ParticlesObject::SpinProperty)
-		.value("CentroSymmetry", ParticlesObject::CentroSymmetryProperty)
-		.value("VelocityMagnitude", ParticlesObject::VelocityMagnitudeProperty)
-		.value("Molecule", ParticlesObject::MoleculeProperty)
-		.value("AsphericalShape", ParticlesObject::AsphericalShapeProperty)
-		.value("VectorColor", ParticlesObject::VectorColorProperty)
-		.value("ElasticStrainTensor", ParticlesObject::ElasticStrainTensorProperty)
-		.value("ElasticDeformationGradient", ParticlesObject::ElasticDeformationGradientProperty)
-		.value("Rotation", ParticleProperty::RotationProperty)
-		.value("StretchTensor", ParticleProperty::StretchTensorProperty)
-		.value("MoleculeType", ParticlesObject::MoleculeTypeProperty)
-	;								
+						
 #endif
 
 	py::class_<ParticleBondMap>(m, "BondsEnumerator",
@@ -514,51 +527,7 @@ PYBIND11_MODULE(Particles, m)
 			"\n\n"
 			"Note that the topological definition of bonds, i.e. the connectivity between particles, is stored "
 			"in the :py:class:`!BondProperty` named ``Topology``. ")
-		// Used by BondPropertiesView.create():
-		.def_static("createStandardProperty", [](DataSet& dataset, size_t bondCount, BondsObject::Type type, bool initializeMemory) {
-			return BondProperty::createFromStorage(&dataset, BondsObject::OOClass().createStandardStorage(bondCount, type, initializeMemory));
-		})
-		.def_static("createUserProperty", [](DataSet& dataset, size_t bondCount, int dataType, size_t componentCount, size_t stride, const QString& name, bool initializeMemory) {
-			return BondProperty::createFromStorage(&dataset, std::make_shared<PropertyStorage>(bondCount, dataType, componentCount, stride, name, initializeMemory));
-		})
-		.def_static("standard_property_type_id", [](const QString& name) { return (BondsObject::Type)BondProperty::OOClass().standardPropertyTypeId(name); })
-		.def_property_readonly("type", &BondProperty::type, 
-				".. _bond-types-list:"
-				"\n\n"
-				"The type of the bond property (user-defined or one of the standard types).\n"
-				"One of the following constants:"
-				"\n\n"
-				"======================================================= =================================================== ==========\n"
-				"Type constant                                           Property name                                       Data type \n"
-				"======================================================= =================================================== ==========\n"
-				"``BondProperty.Type.User``                              (a user-defined property with a non-standard name)  int/float \n"
-				"``BondProperty.Type.BondType``                          :guilabel:`Bond Type`                               int       \n"
-				"``BondProperty.Type.Selection``                         :guilabel:`Selection`                               int       \n"
-				"``BondProperty.Type.Color``                             :guilabel:`Color`                                   float (3x)\n"
-				"``BondProperty.Type.Length``                            :guilabel:`Length`                                  float     \n"
-				"``BondProperty.Type.Topology``                          :guilabel:`Topology`                                int (2x)  \n"
-				"``BondProperty.Type.PeriodicImage``                     :guilabel:`Periodic Image`                          int (3x)  \n"
-				"``BondProperty.Type.Transparency``                      :guilabel:`Transparency`                            float     \n"
-				"======================================================= =================================================== ==========\n"
-				)
-	;
-	expose_mutable_subobject_list(BondProperty_py,
-		std::mem_fn(&BondProperty::elementTypes), 
-		std::mem_fn(&BondProperty::insertElementType), 
-		std::mem_fn(&BondProperty::removeElementType), "types", "BondTypeList",
-				"A (mutable) list of :py:class:`BondType` instances. "
-			  "\n\n"
-			  "Note that the bond types may be stored in arbitrary order in this type list.");
-
-	py::enum_<BondsObject::Type>(BondProperty_py, "Type")
-		.value("User", BondProperty::UserProperty)
-		.value("BondType", BondsObject::TypeProperty)
-		.value("Selection", BondsObject::SelectionProperty)
-		.value("Color", BondsObject::ColorProperty)
-		.value("Length", BondProperty::LengthProperty)
-		.value("Topology", BondsObject::TopologyProperty)
-		.value("PeriodicImage", BondsObject::PeriodicImageProperty)
-		.value("Transparency", BondsObject::TransparencyProperty)
+		
 	;
 #endif
 

@@ -207,8 +207,8 @@ public:
 	/// Sets attributes of the given object as specified in the dictionary.
 	static void applyParameters(py::object& pyobj, const py::dict& params, const OvitoClass& clazz);
 
-	/// Returns the current DataSet.
-	static DataSet* currentDataset();
+	/// Returns the current DataSet from the context the Python script is executed in.
+	static DataSet* getCurrentDataset();
 };
 
 /// Defines a Python class for an abstract OvitoObject-derived C++ class.
@@ -233,7 +233,7 @@ public:
 		// Define a constructor that takes a variable number of keyword arguments, which are used to initialize
 		// properties of the newly created object.
 		this->def(py::init([](py::args args, py::kwargs kwargs) {
-			OORef<OvitoObjectClass> instance = new OvitoObjectClass(currentDataset());
+			OORef<OvitoObjectClass> instance = new OvitoObjectClass(getCurrentDataset());
 			initializeParameters(py::cast(instance), std::move(args), std::move(kwargs), OvitoObjectClass::OOClass());
 			return instance;
 		}));
@@ -245,7 +245,7 @@ public:
 		// Define a constructor that takes a variable number of keyword arguments, which are used to initialize
 		// properties of the newly created object.
 		this->def(py::init([](py::args args, py::kwargs kwargs) {
-			OORef<OvitoObjectClass> instance = new OvitoObjectClass(currentDataset());
+			OORef<OvitoObjectClass> instance = new OvitoObjectClass(getCurrentDataset());
 			initializeParameters(py::cast(instance), std::move(args), std::move(kwargs), OvitoObjectClass::OOClass());
 			return instance;
 		}));

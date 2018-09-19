@@ -25,11 +25,9 @@
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
-void PromiseBase::registerWithTaskManager(TaskManager& taskManager)
+AsyncOperation::AsyncOperation(TaskManager& taskManager) : Promise(taskManager.createSynchronousPromise<>(true))
 {
-	taskManager.registerTask(sharedState());
 }
-
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

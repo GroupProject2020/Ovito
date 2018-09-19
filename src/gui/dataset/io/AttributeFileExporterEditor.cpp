@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -65,7 +65,7 @@ void AttributeFileExporterEditor::createUI(const RolloutInsertionParameters& rol
 		QListWidgetItem* currentItem = _columnMappingWidget->takeItem(currentIndex);
 		_columnMappingWidget->insertItem(currentIndex - 1, currentItem);
 		_columnMappingWidget->setCurrentRow(currentIndex - 1);
-		onListChanged();
+		onAttributeChanged();
 	});
 
 	connect(moveDownButton, &QPushButton::clicked, [this]() {
@@ -73,7 +73,7 @@ void AttributeFileExporterEditor::createUI(const RolloutInsertionParameters& rol
 		QListWidgetItem* currentItem = _columnMappingWidget->takeItem(currentIndex);
 		_columnMappingWidget->insertItem(currentIndex + 1, currentItem);
 		_columnMappingWidget->setCurrentRow(currentIndex + 1);
-		onListChanged();
+		onAttributeChanged();
 	});
 
 	connect(selectAllButton, &QPushButton::clicked, [this]() {
@@ -86,36 +86,49 @@ void AttributeFileExporterEditor::createUI(const RolloutInsertionParameters& rol
 			_columnMappingWidget->item(index)->setCheckState(Qt::Unchecked);
 	});
 
-	connect(this, &PropertiesEditor::contentsReplaced, this, &AttributeFileExporterEditor::onContentsReplaced);
-	connect(_columnMappingWidget, &QListWidget::itemChanged, this, &AttributeFileExporterEditor::onListChanged);
+	connect(this, &PropertiesEditor::contentsReplaced, this, &AttributeFileExporterEditor::updateAttributesList);
+	connect(_columnMappingWidget, &QListWidget::itemChanged, this, &AttributeFileExporterEditor::onAttributeChanged);
 }
 
 /******************************************************************************
-* Is called when the exporter is associated with the editor.
+* This method is called when a reference target changes.
 ******************************************************************************/
-void AttributeFileExporterEditor::onContentsReplaced(Ovito::RefTarget* newEditObject)
+bool AttributeFileExporterEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
+{
+	if(source == editObject() && event.type() == ReferenceEvent::ReferenceChanged) {
+		if(static_cast<const ReferenceFieldEvent&>(event).field() == &PROPERTY_FIELD(FileExporter::nodeToExport)) {
+			updateAttributesList();
+		}
+	}
+	return PropertiesEditor::referenceEvent(source, event);
+}
+
+/******************************************************************************
+* Rebuilds the displayed list of exportable attributes.
+******************************************************************************/
+void AttributeFileExporterEditor::updateAttributesList()
 {
 	_columnMappingWidget->clear();
 
 	// Retrieve the data to be exported.
-	AttributeFileExporter* exporter = dynamic_object_cast<AttributeFileExporter>(newEditObject);
-	if(!exporter || exporter->outputData().empty()) return;
+	AttributeFileExporter* exporter = static_object_cast<AttributeFileExporter>(editObject());
+	if(!exporter || !exporter->nodeToExport()) return;
 
-	for(SceneNode* node : exporter->outputData()) {
-		try {
-			QVariantMap attrMap;
-			ProgressDialog progressDialog(container(), exporter->dataset()->container()->taskManager());
-			if(!exporter->getAttributes(node, node->dataset()->animationSettings()->time(), attrMap, progressDialog.taskManager()))
-				continue;
-			for(const QString& attrName : attrMap.keys())
-				insertAttributeItem(attrName, exporter->attributesToExport());
-			break;
-		}
-		catch(const Exception& ex) {
-			// Ignore errors.
-			_columnMappingWidget->addItems(ex.messages());
-		}
+	try {
+		QVariantMap attrMap;
+		ProgressDialog progressDialog(container(), exporter->dataset()->taskManager());
+		AsyncOperation asyncOperation(progressDialog.taskManager());
+		if(!exporter->getAttributesMap(exporter->dataset()->animationSettings()->time(), attrMap, asyncOperation))
+			throw Exception(tr("Operation has been canceled by the user."));
+		for(const QString& attrName : attrMap.keys())
+			insertAttributeItem(attrName, exporter->attributesToExport());
 	}
+	catch(const Exception& ex) {
+		// Ignore errors, but display a message in the UI widget to inform user.
+		_columnMappingWidget->addItems(ex.messages());
+	}
+
+	onAttributeChanged();
 }
 
 /******************************************************************************
@@ -152,9 +165,9 @@ void AttributeFileExporterEditor::insertAttributeItem(const QString& displayName
 }
 
 /******************************************************************************
-* Is called when the user checked/unchecked an item.
+* Is called when the user checked/unchecked an item in the attributes list.
 ******************************************************************************/
-void AttributeFileExporterEditor::onListChanged()
+void AttributeFileExporterEditor::onAttributeChanged()
 {
 	AttributeFileExporter* exporter = dynamic_object_cast<AttributeFileExporter>(editObject());
 	if(!exporter) return;

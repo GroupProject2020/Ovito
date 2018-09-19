@@ -5,7 +5,7 @@ import numpy as np
 test_data_dir = "../../files/"
 
 node1 = import_file(test_data_dir + "LAMMPS/animation.dump.gz")
-assert(len(ovito.dataset.scene_nodes) == 0)
+assert(len(ovito.scene.pipelines) == 0)
 import_file(test_data_dir + "CFG/fcc_coherent_twin.0.cfg")
 import_file(test_data_dir + "CFG/shear.void.120.cfg")
 import_file(test_data_dir + "LAMMPS/very_small_fp_number.dump")
@@ -52,15 +52,15 @@ import_file(test_data_dir + "VTK/mesh_test.vtk")
 import_file(test_data_dir + "VTK/ThomsonTet_Gr1_rotmatNonRand_unstructGrid.vtk")
 import_file(test_data_dir + "VTK/box_a.vtk")
 node = import_file(test_data_dir + "LAMMPS/multi_sequence_*.dump")
-assert(ovito.dataset.anim.last_frame == 10)
+assert(ovito.scene.anim.last_frame == 10)
 node = import_file([test_data_dir + "LAMMPS/multi_sequence_1.dump", test_data_dir + "LAMMPS/multi_sequence_2.dump", test_data_dir + "LAMMPS/multi_sequence_3.dump"])
-assert(ovito.dataset.anim.last_frame == 10)
+assert(ovito.scene.anim.last_frame == 10)
 node = import_file([test_data_dir + "LAMMPS/multi_sequence_*.dump", test_data_dir + "LAMMPS/animation1.dump"])
-assert(ovito.dataset.anim.last_frame == 21)
+assert(ovito.scene.anim.last_frame == 21)
 node = import_file([test_data_dir + "LAMMPS/very_small_fp_number.dump", test_data_dir + "LAMMPS/multi_sequence_*.dump"])
-assert(ovito.dataset.anim.last_frame == 3)
+assert(ovito.scene.anim.last_frame == 3)
 node = import_file([test_data_dir + "LAMMPS/very_small_fp_number.dump", test_data_dir + "LAMMPS/multi_sequence_*.dump"], multiple_frames = True)
-assert(ovito.dataset.anim.last_frame == 11)
+assert(ovito.scene.anim.last_frame == 11)
 node = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin", 
                             columns = ["Particle Identifier", "Particle Type", "Position.X", "Position.Y", "Position.Z"])
 ids = node.compute().particles['Particle Identifier']
@@ -80,9 +80,9 @@ except RuntimeError:
     pass
 
 node = import_file(test_data_dir + "LAMMPS/animation1.dump")
-assert(ovito.dataset.anim.last_frame == 10)
+assert(ovito.scene.anim.last_frame == 10)
 node = import_file(test_data_dir + "LAMMPS/animation1.dump", multiple_frames = True)
-assert(ovito.dataset.anim.last_frame == 10)
+assert(ovito.scene.anim.last_frame == 10)
 
 node = import_file(test_data_dir + "LAMMPS/shear.void.dump.bin", 
                             columns = ["Particle Identifier", None, "Position.X", "Position.Y", "Position.Z"])

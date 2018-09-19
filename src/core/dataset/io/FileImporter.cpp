@@ -36,35 +36,23 @@ IMPLEMENT_OVITO_CLASS(FileImporter);
 /******************************************************************************
 * Tries to detect the format of the given file.
 ******************************************************************************/
-OORef<FileImporter> FileImporter::autodetectFileFormat(DataSet* dataset, const QUrl& url)
+Future<OORef<FileImporter>> FileImporter::autodetectFileFormat(DataSet* dataset, const QUrl& url)
 {
 	if(!url.isValid())
 		dataset->throwException(tr("Invalid path or URL."));
 
-	try {
-		TaskManager& taskManager = dataset->container()->taskManager();
-
-		// Resolve filename if it contains a wildcard.
-		Future<std::vector<QUrl>> framesFuture = FileSourceImporter::findWildcardMatches(url, taskManager);
-		if(!taskManager.waitForTask(framesFuture))
-			dataset->throwException(tr("Operation has been canceled by the user."));
-		const std::vector<QUrl>& urls = framesFuture.result();
+	// Resolve filename if it contains a wildcard.
+	return FileSourceImporter::findWildcardMatches(url, dataset).then(dataset->executor(), [dataset](std::vector<QUrl>&& urls) {
 		if(urls.empty())
-			dataset->throwException(tr("There are no files in the directory matching the filename pattern."));
+			dataset->throwException(tr("There are no files in the directory matching the filename pattern."));				
 
 		// Download file so we can determine its format.
-		SharedFuture<QString> fetchFileFuture = Application::instance()->fileManager()->fetchUrl(taskManager, urls.front());
-		if(!taskManager.waitForTask(fetchFileFuture))
-			dataset->throwException(tr("Operation has been canceled by the user."));
-
-		// Detect file format.
-		return autodetectFileFormat(dataset, fetchFileFuture.result(), urls.front());
-	}
-	catch(Exception& ex) {
-		// Provide a context object for any errors that occur during file inspection.
-		ex.setContext(dataset);
-		throw;
-	}
+		return Application::instance()->fileManager()->fetchUrl(dataset->taskManager(), urls.front())
+			.then(dataset->executor(), [dataset, url = urls.front()](const QString& filename) {
+				// Detect file format.
+				return autodetectFileFormat(dataset, filename, url);
+			});
+	});
 }
 
 /******************************************************************************

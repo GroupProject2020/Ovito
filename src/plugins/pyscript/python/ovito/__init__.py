@@ -13,7 +13,7 @@ _package_source_path = __path__ # Make a copy of the original path, which will b
 __path__ = pkgutil.extend_path(__path__, __name__)
 
 # Load the native module with the core bindings.
-from .plugins.PyScript import (version, version_string, gui_mode, headless_mode, Scene, scene, dataset, task_manager)
+from .plugins.PyScript import (version, version_string, gui_mode, headless_mode, Scene, scene, dataset)
 from .plugins.PyScript import (Pipeline, RootSceneNode, PipelineObject, PipelineStatus)
 
 # Load sub-modules (in the right order because there are dependencies between them)

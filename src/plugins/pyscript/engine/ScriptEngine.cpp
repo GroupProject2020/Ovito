@@ -35,68 +35,14 @@ std::shared_ptr<ScriptEngine> ScriptEngine::_activeEngine;
 PythonPluginRegistration* PythonPluginRegistration::linkedlist = nullptr;
 
 /******************************************************************************
-* Sets the dataset that is currently active in the Python interpreter.
-******************************************************************************/
-void ScriptEngine::setActiveDataset(DataSet* dataset)
-{
-	OVITO_ASSERT(dataset);
-	OVITO_ASSERT(dataset->container());
-
-	// Add an attribute to the ovito module that provides access to the active dataset.
-	py::module ovito_module = py::module::import("ovito");
-	py::setattr(ovito_module, "scene", py::cast(dataset, py::return_value_policy::reference));
-	// This is for backward compatibility with OVITO 2.9.0:
-	py::setattr(ovito_module, "dataset", py::cast(dataset, py::return_value_policy::reference));
-
-	// Add an attribute to the ovito module that provides access to the global task manager.
-	py::setattr(ovito_module, "task_manager", py::cast(&dataset->container()->taskManager(), py::return_value_policy::reference));
-}
-
-/******************************************************************************
-* Returns the dataset that is currently active in the Python interpreter.
-******************************************************************************/
-DataSet* ScriptEngine::activeDataset()
-{
-	// Read the ovito module's attribute that provides access to the active dataset.
-	py::module ovito_module = py::module::import("ovito");
-	return py::cast<DataSet*>(py::getattr(ovito_module, "dataset", py::none()));
-}
-
-/******************************************************************************
-* Returns the task manager that is currently active in the Python interpreter.
-******************************************************************************/
-TaskManager& ScriptEngine::activeTaskManager()
-{
-	// Read the ovito module's attribute that provides access to the active dataset.
-	py::module ovito_module = py::module::import("ovito");
-	TaskManager* taskManager = py::cast<TaskManager*>(py::getattr(ovito_module, "task_manager", py::none()));
-	if(!taskManager) throw Exception(tr("Invalid OVITO context state: There is no active task manager. This should not happen. Please contact the developer."));
-	return *taskManager;
-}
-
-/******************************************************************************
 * Initializes the scripting engine and sets up the environment.
 ******************************************************************************/
-ScriptEngine::ScriptEngine(DataSet* dataset, TaskManager& taskManager, bool privateContext)
-	: _dataset(dataset), _taskManager(&taskManager)
+ScriptEngine::ScriptEngine(DataSet* dataset) : _dataset(dataset)
 {
 	try {
 		// Initialize our embedded Python interpreter if it isn't running already.
 		if(!Py_IsInitialized())
 			initializeEmbeddedInterpreter();
-		
-		// Import the main module and get a reference to the main namespace.
-		// Make a local copy of the global main namespace for this execution context.
-		// The original namespace dictionary is not touched.
-		py::object main_module = py::module::import("__main__");
-		if(privateContext) {
-			_mainNamespace = py::getattr(main_module, "__dict__").attr("copy")();
-		}
-		else {
-			_mainNamespace = py::getattr(main_module, "__dict__");
-		}
-		
-		setActiveDataset(dataset);
 	}
 	catch(py::error_already_set& ex) {
 		ex.restore();
@@ -118,16 +64,6 @@ ScriptEngine::ScriptEngine(DataSet* dataset, TaskManager& taskManager, bool priv
 ******************************************************************************/
 ScriptEngine::~ScriptEngine()
 {
-	OVITO_ASSERT(_activeEngine.get() != this);
-
-	try {
-		// Explicitly release all objects created by Python scripts.
-		if(_mainNamespace) _mainNamespace.clear();
-	}
-	catch(py::error_already_set& ex) {
-		ex.restore();
-		PyErr_PrintEx(0);
-	}
 }
 
 /******************************************************************************
@@ -163,7 +99,7 @@ void ScriptEngine::initializeEmbeddedInterpreter()
 		}
 
 		// Initialize the Python interpreter.
-		Py_Initialize();
+		py::initialize_interpreter();
 
 		py::module sys_module = py::module::import("sys");
 
@@ -224,126 +160,128 @@ void ScriptEngine::initializeEmbeddedInterpreter()
 }
 
 /******************************************************************************
-* Executes one or more Python statements.
+* Determine the DataSet from the context the current script is running in.
 ******************************************************************************/
-int ScriptEngine::executeCommands(const QString& commands, const QStringList& scriptArguments)
+DataSet* ScriptEngine::getCurrentDataset()
 {
-	if(QCoreApplication::instance() && QThread::currentThread() != QCoreApplication::instance()->thread())
-		throw Exception(tr("Can run Python scripts only from the main thread."), dataset());
+	if(!activeEngine())
+		throw Exception("Invalid interpreter state. There is no active dataset.");
+	return activeEngine()->dataset();
+}
 
-	// Activate this engine.
-	ActiveScriptEngineSetter engineSetter(this);
+/******************************************************************************
+* Creates a global script engine instance. This is used when loading the 
+* OVITO Python modules from an external interpreter.
+******************************************************************************/
+void ScriptEngine::createAdhocEngine(DataSet* dataset)
+{
+	OVITO_ASSERT(Py_IsInitialized());
+	OVITO_ASSERT(!_activeEngine);
 
-	try {
-		// Pass command line parameters to the script.
-		py::list argList;
-		argList.append(py::cast("-c"));
-		for(const QString& a : scriptArguments)
-			argList.append(py::cast(a));
-		py::module::import("sys").attr("argv") = argList;
+	// Create the global engine instance.
+	_activeEngine = createEngine(dataset);
 
-		_mainNamespace["__file__"] = py::none();
-		PyObject* result = PyRun_String(commands.toUtf8().constData(), Py_file_input, _mainNamespace.ptr(), _mainNamespace.ptr());
-		if(!result) throw py::error_already_set();
-		Py_XDECREF(result);
-
-		return 0;
-	}
-	catch(py::error_already_set& ex) {
-		return handlePythonException(ex);
-	}
-	catch(Exception& ex) {
-	    ex.setContext(dataset());
-		throw;
-	}
-	catch(const std::exception& ex) {
-		throw Exception(tr("Script execution error: %1").arg(ex.what()), dataset());
-	}
-	catch(...) {
-		throw Exception(tr("Unhandled exception thrown by Python interpreter."), dataset());
-	}
+	// Inform the application that script execution is in progress.
+	// Any OVITO objects created by a script will get initialized to their hard-coded default values.
+	Application::instance()->scriptExecutionStarted();
 }
 
 /******************************************************************************
 * Executes the given C++ function, which in turn may invoke Python functions in the
 * context of this engine, and catches possible exceptions.
 ******************************************************************************/
-void ScriptEngine::execute(const std::function<void()>& func)
+int ScriptEngine::execute(const std::function<void()>& func)
 {
+	OVITO_ASSERT(dataset());
+	OVITO_ASSERT(dataset()->container());
+
 	if(QCoreApplication::instance() && QThread::currentThread() != QCoreApplication::instance()->thread())
 		throw Exception(tr("Python scripts can only be run from the main thread."), dataset());
 
-	// Activate this engine.
-	ActiveScriptEngineSetter engineSetter(this);
+	// Inform the application that a script execution has started.
+	// Any OVITO objects created by a script will get initialized to their hard-coded default values.
+	Application::instance()->scriptExecutionStarted();
 
+	// Keep track which script engine was active before this function was called. 
+	std::shared_ptr<ScriptEngine> previousEngine = std::move(_activeEngine);
+	// And mark this engine as the active one.
+	_activeEngine = shared_from_this();
+
+	int returnValue = 0;
 	try {
-		func();
-	}
-	catch(py::error_already_set& ex) {
-		handlePythonException(ex);
-	}
-	catch(Exception& ex) {
-	    ex.setContext(dataset());
-		throw;
-	}
-	catch(const std::exception& ex) {
-		throw Exception(tr("Script execution error: %1").arg(ex.what()), dataset());
+		// Get reference to the main ovito Python module.
+		py::module ovito_module = py::module::import("ovito");
+
+		// Add an attribute to the ovito module that provides access to the active dataset.
+		py::setattr(ovito_module, "scene", py::cast(dataset(), py::return_value_policy::reference));
+
+		// This is for backward compatibility with OVITO 2.9.0:
+		py::setattr(ovito_module, "dataset", py::cast(dataset(), py::return_value_policy::reference));
+		
+		try {
+			func();
+		}
+		catch(py::error_already_set& ex) {
+			returnValue = handlePythonException(ex);
+		}
+		catch(Exception& ex) {
+			ex.setContext(dataset());
+			throw;
+		}
+		catch(const std::exception& ex) {
+			throw Exception(tr("Script execution error: %1").arg(ex.what()), dataset());
+		}
+		catch(...) {
+			throw Exception(tr("Unhandled exception thrown by Python interpreter."), dataset());
+		}
 	}
 	catch(...) {
-		throw Exception(tr("Unhandled exception thrown by Python interpreter."), dataset());
+		_activeEngine = std::move(previousEngine);
+		Application::instance()->scriptExecutionStopped();
+		throw;
 	}
+	_activeEngine = std::move(previousEngine);
+	Application::instance()->scriptExecutionStopped();
+	return 0;
 }
 
 /******************************************************************************
-* Calls a callable Python object (typically a function).
+* Executes one or more Python statements.
 ******************************************************************************/
-py::object ScriptEngine::callObject(const py::object& callable, const py::tuple& arguments, const py::dict& kwargs)
+int ScriptEngine::executeCommands(const QString& commands, const py::object& global, const QStringList& cmdLineArguments)
 {
-	py::object result;
-	execute([&result, &callable, &arguments, &kwargs]() {
-		result = callable(*arguments, **kwargs);
+	return execute([&]() {
+		// Pass command line parameters to the script.
+		py::list argList;
+		argList.append(py::cast("-c"));
+		for(const QString& a : cmdLineArguments)
+			argList.append(py::cast(a));
+		py::module::import("sys").attr("argv") = argList;
+
+		global["__file__"] = py::none();
+		PyObject* result = PyRun_String(commands.toUtf8().constData(), Py_file_input, global.ptr(), global.ptr());
+		if(!result) throw py::error_already_set();
+		Py_XDECREF(result);
 	});
-	return result;
 }
 
 /******************************************************************************
 * Executes a Python program.
 ******************************************************************************/
-int ScriptEngine::executeFile(const QString& filename, const QStringList& scriptArguments)
+int ScriptEngine::executeFile(const QString& filename, const py::object& global, const QStringList& cmdLineArguments)
 {
-	if(QThread::currentThread() != QCoreApplication::instance()->thread())
-		throw Exception(tr("Can run Python scripts only from the main thread."), dataset());
-
-	// Activate this engine.
-	ActiveScriptEngineSetter engineSetter(this);
-
-	try {
+	return execute([&]() {
 		// Pass command line parameters to the script.
 		py::list argList;
 		argList.append(py::cast(filename));
-		for(const QString& a : scriptArguments)
+		for(const QString& a : cmdLineArguments)
 			argList.append(py::cast(a));
 		py::module::import("sys").attr("argv") = argList;
 
 		py::str nativeFilename(py::cast(QDir::toNativeSeparators(filename)));
-		_mainNamespace["__file__"] = nativeFilename;
-		py::eval_file(nativeFilename, _mainNamespace, _mainNamespace);
-
-	    return 0;
-	}
-	catch(py::error_already_set& ex) {
-		return handlePythonException(ex, filename);
-	}
-	catch(Exception& ex) {
-	    ex.setContext(dataset());
-		throw;
-	}
-	catch(const std::exception& ex) {
-		throw Exception(tr("Script execution error: %1").arg(ex.what()), dataset());
-	}
-	catch(...) {
-		throw Exception(tr("Unhandled exception thrown by Python interpreter."), dataset());
-	}
+		global["__file__"] = nativeFilename;
+		py::eval_file(nativeFilename, global);
+	});
 }
 
 /******************************************************************************

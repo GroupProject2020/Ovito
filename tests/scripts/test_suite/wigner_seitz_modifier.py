@@ -10,7 +10,7 @@ modifier = WignerSeitzAnalysisModifier()
 pipeline.modifiers.append(modifier)
 modifier.reference.load("../../files/NetCDF/sheared_aSi.nc")
 
-ovito.dataset.anim.current_frame = 4
+ovito.scene.anim.current_frame = 4
 
 print("Parameter defaults:")
 

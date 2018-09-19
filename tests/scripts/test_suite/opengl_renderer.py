@@ -14,4 +14,4 @@ if not ovito.headless_mode:
     print("  antialiasing_level: {}".format(renderer.antialiasing_level))
     renderer.antialiasing_level = 2
 
-    ovito.dataset.viewports.active_vp.render_image(size = (100,100), renderer = renderer)
+    ovito.scene.viewports.active_vp.render_image(size = (100,100), renderer = renderer)

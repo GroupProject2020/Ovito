@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -20,6 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/pyscript/PyScript.h>
+#include <plugins/pyscript/engine/ScriptEngine.h>
 #include <core/oo/CloneHelper.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/DataSetContainer.h>
@@ -101,8 +102,13 @@ void defineAppSubmodule(py::module m)
 			py::arg("filename"))
 		// This is needed for the Scene.selected_pipeline attribute:
 		.def_property_readonly("selection", &DataSet::selection)
-		// This is needed by Viewport.render_image():
-		.def("render_scene", &DataSet::renderScene)
+		// This is needed by Viewport.render_image() and Viewport.render_anim():
+		.def("render_scene", [](DataSet& dataset, RenderSettings& settings, Viewport& viewport, FrameBuffer& frameBuffer) {
+				if(!dataset.renderScene(&settings, &viewport, &frameBuffer, ScriptEngine::getCurrentDataset()->taskManager())) {
+					PyErr_SetString(PyExc_KeyboardInterrupt, "Operation has been canceled by the user.");
+					throw py::error_already_set();
+				}
+			})
 		.def_property_readonly("container", &DataSet::container, py::return_value_policy::reference)
 
 		// This is called by various Python functions that perform long-running operations.
@@ -121,9 +127,6 @@ void defineAppSubmodule(py::module m)
 	py::class_<CloneHelper>(m, "CloneHelper")
 		.def(py::init<>())
 		.def("clone", py::overload_cast<const RefTarget*, bool>(&CloneHelper::cloneObject<RefTarget>))
-	;
-
-	py::class_<TaskManager>(m, "TaskManager")
 	;
 }
 

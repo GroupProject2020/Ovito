@@ -44,6 +44,13 @@ void PromiseWatcher::watch(const PromiseStatePtr& promiseState, bool pendingAssi
 		_sharedState->registerWatcher(this);
 }
 
+/// Cancels the operation being watched by this watcher.
+void PromiseWatcher::cancel() 
+{
+	if(isWatching())
+		sharedState()->cancel();
+}
+
 void PromiseWatcher::promiseCanceled()
 {
 	if(isWatching())

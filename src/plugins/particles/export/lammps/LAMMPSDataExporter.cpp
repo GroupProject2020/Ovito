@@ -35,16 +35,8 @@ SET_PROPERTY_FIELD_LABEL(LAMMPSDataExporter, atomStyle, "Atom style");
 /******************************************************************************
 * Writes the particles of one animation frame to the current output file.
 ******************************************************************************/
-bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager)
-{
-	// Get particle data to be exported.
-	PipelineFlowState state;
-	if(!getParticleData(sceneNode, time, state, taskManager))
-		return false;
-
-	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
-	exportTask.setProgressText(tr("Writing file %1").arg(filePath));
-	
+bool LAMMPSDataExporter::exportData(const PipelineFlowState& state, int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
+{	
 	const ParticlesObject* particles = state.expectObject<ParticlesObject>();
 	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 	const PropertyObject* velocityProperty = particles->getProperty(ParticlesObject::VelocityProperty);
@@ -151,7 +143,7 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 	}
 	textStream() << "\n\n";
 
-	exportTask.setProgressMaximum(totalProgressCount);
+	operation.setProgressMaximum(totalProgressCount);
 	qlonglong currentProgress = 0;
 	for(size_t i = 0; i < posProperty->size(); i++) {
 		// atom-ID
@@ -197,7 +189,7 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 		}
 		textStream() << '\n';
 
-		if(!exportTask.setProgressValueIntermittent(currentProgress++))
+		if(!operation.setProgressValueIntermittent(currentProgress++))
 			return false;
 	}
 
@@ -217,7 +209,7 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 			}
 			textStream() << '\n';
 
-			if(!exportTask.setProgressValueIntermittent(currentProgress++))
+			if(!operation.setProgressValueIntermittent(currentProgress++))
 				return false;
 		}
 	}
@@ -239,13 +231,13 @@ bool LAMMPSDataExporter::exportObject(SceneNode* sceneNode, int frameNumber, Tim
 			textStream() << (identifierProperty ? identifierProperty->getInt64(atomIndex2) : (atomIndex2+1));
 			textStream() << '\n';
 
-			if(!exportTask.setProgressValueIntermittent(currentProgress++))
+			if(!operation.setProgressValueIntermittent(currentProgress++))
 				return false;
 		}
 		OVITO_ASSERT(bondIndex == bondTopologyProperty->size() + 1);
 	}
 
-	return !exportTask.isCanceled();
+	return !operation.isCanceled();
 }
 
 OVITO_END_INLINE_NAMESPACE

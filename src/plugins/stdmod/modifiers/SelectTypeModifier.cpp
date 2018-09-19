@@ -55,15 +55,18 @@ void SelectTypeModifier::initializeModifier(ModifierApplication* modApp)
 {
 	GenericPropertyModifier::initializeModifier(modApp);
 
-	if(sourceProperty().isNull() && subject() && !Application::instance()->scriptMode()) {
+	if(sourceProperty().isNull() && subject()) {
 
-		// When the modifier is first inserted, automatically select the most recently added typed property.
+		// When the modifier is first inserted, automatically select the most recently added 
+		// typed property (in GUI mode) or the canonical type property (in script mode).
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		if(const PropertyContainer* container = input.getLeafObject(subject())) {
 			PropertyReference bestProperty;
 			for(PropertyObject* property : container->properties()) {
 				if(property->elementTypes().empty() == false && property->componentCount() == 1 && property->dataType() == PropertyStorage::Int) {
-					bestProperty = PropertyReference(subject().dataClass(), property);
+					if(!Application::instance()->scriptMode() || property->type() == PropertyStorage::GenericTypeProperty) {
+						bestProperty = PropertyReference(subject().dataClass(), property);
+					}
 				}
 			}
 			if(!bestProperty.isNull())
@@ -118,12 +121,12 @@ void SelectTypeModifier::evaluatePreliminary(TimePoint time, ModifierApplication
 
 	// Generate set of numeric type IDs to select.
 	QSet<int> idsToSelect = selectedTypeIDs();
-	// Convert type names to to IDs.
+	// Convert type names to IDs.
 	for(const QString& typeName : selectedTypeNames()) {
 		if(ElementType* t = typeProperty->elementType(typeName))
 			idsToSelect.insert(t->numericId());
 		else
-			throwException(tr("There is no type named '%1' in the type list of input property '%2'.").arg(typeName).arg(typeProperty->name()));
+			throwException(tr("Type '%1' does not exist in the type list of property '%2'.").arg(typeName).arg(typeProperty->name()));
 	}
 	
 	OVITO_ASSERT(selProperty->size() == typeProperty->size());

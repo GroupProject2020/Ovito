@@ -120,9 +120,9 @@ bool TachyonRenderer::startRender(DataSet* dataset, RenderSettings* settings)
 /******************************************************************************
 * Renders a single animation frame into the given frame buffer.
 ******************************************************************************/
-bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, const PromiseBase& promise)
+bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, AsyncOperation& operation)
 {
-	promise.setProgressText(tr("Handing scene data to Tachyon renderer"));
+	operation.setProgressText(tr("Handing scene data to Tachyon renderer"));
 
 	// Create new scene and set up parameters.
 	std::unique_ptr<void, void (*)(void*)> rtscene(rt_newscene(), &rt_deletescene);
@@ -220,12 +220,12 @@ bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask 
 	rt_camera_raydepth(_rtscene, 50);
 
 	// Export Ovito data objects to Tachyon scene.
-	if(!renderScene(promise))
+	if(!renderScene(operation))
 		return false;
 
 	// Render scene.
-	promise.setProgressMaximum(renderSettings()->outputImageWidth() * renderSettings()->outputImageHeight());
-	promise.setProgressText(tr("Rendering image"));
+	operation.setProgressMaximum(renderSettings()->outputImageWidth() * renderSettings()->outputImageHeight());
+	operation.setProgressText(tr("Rendering image"));
 
 	scenedef* scene = (scenedef*)_rtscene;
 
@@ -292,8 +292,8 @@ bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask 
 			}
 			frameBuffer->update(QRect(xstart, frameBuffer->image().height() - ystop, xstop - xstart, ystop - ystart));
 
-			promise.setProgressValue(promise.progressValue() + (xstop - xstart) * (ystop - ystart));
-			if(promise.isCanceled())
+			operation.incrementProgressValue((xstop - xstart) * (ystop - ystart));
+			if(operation.isCanceled())
 				break;
 			
 			xstart += tileWidth;
@@ -304,8 +304,8 @@ bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask 
 			tileWidth = std::max(1, std::min(100, (tileWidth + tileWidth * 50 / std::max(1, elapsedTime)) / 2));
 		}
 
-		if(promise.isCanceled())
-			break;
+		if(operation.isCanceled())
+			return false;
 	}
 
 	// Execute recorded overlay draw calls.
@@ -324,7 +324,7 @@ bool TachyonRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask 
 		frameBuffer->update(boundingRect.toAlignedRect());
 	}
 
-	return !promise.isCanceled();
+	return !operation.isCanceled();
 }
 
 /******************************************************************************

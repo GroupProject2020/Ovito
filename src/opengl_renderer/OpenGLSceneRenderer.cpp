@@ -350,8 +350,8 @@ void OpenGLSceneRenderer::endFrame(bool renderSuccessful)
 
 /******************************************************************************
 * Renders the current animation frame.
-*******************************11***********************************************/
-bool OpenGLSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, const PromiseBase& promise)
+******************************************************************************/
+bool OpenGLSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, AsyncOperation& operation)
 {
 	OVITO_ASSERT(_glcontext == QOpenGLContext::currentContext());
 
@@ -362,7 +362,7 @@ bool OpenGLSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingT
 		glColorMask(GL_FALSE, GL_TRUE, GL_TRUE, GL_TRUE);
 
 	// Render the 3D scene objects.
-	if(renderScene(promise)) {
+	if(renderScene(operation)) {
 		OVITO_REPORT_OPENGL_ERRORS();
 
 		// Call subclass to render additional content that is only visible in the interactive viewports.
@@ -382,7 +382,7 @@ bool OpenGLSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingT
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	OVITO_REPORT_OPENGL_ERRORS();
 
-	return !promise.isCanceled();
+	return !operation.isCanceled();
 }
 
 /******************************************************************************

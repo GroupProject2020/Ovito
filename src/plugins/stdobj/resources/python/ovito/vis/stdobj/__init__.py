@@ -1,7 +1,7 @@
 # Load dependencies
 import ovito.vis
 
-# Load the module's classes
+# Load the native module.
 from ovito.plugins.StdObj import SimulationCellVis
 
 # Inject selected classes into parent module.

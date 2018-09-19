@@ -178,8 +178,7 @@ void CameraObject::setIsTargetCamera(bool enable)
 								OORef<TargetObject> targetObj = new TargetObject(dataset());
 								OORef<DataCollection> dataCollection = new DataCollection(dataset());
 								dataCollection->addObject(targetObj);
-								OORef<StaticSource> targetSource = new StaticSource(dataset());
-								targetSource->setDataCollection(dataCollection);
+								OORef<StaticSource> targetSource = new StaticSource(dataset(), dataCollection);
 								OORef<PipelineSceneNode> targetNode = new PipelineSceneNode(dataset());
 								targetNode->setDataProvider(targetSource);
 								targetNode->setNodeName(tr("%1.target").arg(node->nodeName()));

@@ -128,11 +128,11 @@ namespace Ovito { namespace StdObj {
 
 namespace py = pybind11;
 
-/// Helper function that generates a getter function for the 'operate_on' attribute of a GenericPropertyModifier subclass
-OVITO_STDOBJ_EXPORT py::cpp_function modifierPropertyClassGetter();
+/// Helper function that generates a getter function for the 'operate_on' attribute of a modifier.
+OVITO_STDOBJ_EXPORT py::cpp_function modifierPropertyContainerGetter(const PropertyFieldDescriptor& propertyField);
 
-/// Helper function that generates a setter function for the 'operate_on' attribute of a GenericPropertyModifier subclass.
-OVITO_STDOBJ_EXPORT py::cpp_function modifierPropertyClassSetter();
+/// Helper function that generates a setter function for the 'operate_on' attribute of a modifier.
+OVITO_STDOBJ_EXPORT py::cpp_function modifierPropertyContainerSetter(const PropertyFieldDescriptor& propertyField);
 
 /// Helper function that converts a Python string to a C++ PropertyReference instance.
 /// The function requires a property class to look up the property name string.

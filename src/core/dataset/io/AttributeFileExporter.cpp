@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,7 +24,6 @@
 #include <core/dataset/scene/SelectionSet.h>
 #include <core/dataset/data/AttributeDataObject.h>
 #include <core/dataset/animation/AnimationSettings.h>
-#include <core/utilities/concurrent/TaskManager.h>
 #include "AttributeFileExporter.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
@@ -33,22 +32,10 @@ IMPLEMENT_OVITO_CLASS(AttributeFileExporter);
 DEFINE_PROPERTY_FIELD(AttributeFileExporter, attributesToExport);
 
 /******************************************************************************
-* Selects the nodes from the scene to be exported by this exporter if 
-* no specific set of nodes was provided.
-******************************************************************************/
-void AttributeFileExporter::selectStandardOutputData()
-{
-	QVector<SceneNode*> nodes = dataset()->selection()->nodes();
-	if(nodes.empty())
-		throwException(tr("Please select an object to be exported first."));
-	setOutputData(nodes);
-}
-
-/******************************************************************************
  * This is called once for every output file to be written and before
  * exportData() is called.
  *****************************************************************************/
-bool AttributeFileExporter::openOutputFile(const QString& filePath, int numberOfFrames)
+bool AttributeFileExporter::openOutputFile(const QString& filePath, int numberOfFrames, AsyncOperation& operation)
 {
 	OVITO_ASSERT(!_outputFile.isOpen());
 	OVITO_ASSERT(!_outputStream);
@@ -86,7 +73,8 @@ void AttributeFileExporter::closeOutputFile(bool exportCompleted)
 void AttributeFileExporter::loadUserDefaults()
 {
 	// This exporter is typically used to export attributes as functions of time.
-	setExportAnimation(true);
+	if(dataset()->animationSettings()->animationInterval().duration() != 0)
+		setExportAnimation(true);
 
 	FileExporter::loadUserDefaults();
 
@@ -98,26 +86,18 @@ void AttributeFileExporter::loadUserDefaults()
 }
 
 /******************************************************************************
-* Evaluates the pipeline of an PipelineSceneNode and returns the computed attributes.
+* Evaluates the pipeline of the PipelineSceneNode to be exported and returns 
+* the attributes list.
 ******************************************************************************/
-bool AttributeFileExporter::getAttributes(SceneNode* sceneNode, TimePoint time, QVariantMap& attributes, TaskManager& taskManager)
+bool AttributeFileExporter::getAttributesMap(TimePoint time, QVariantMap& attributes, AsyncOperation& operation)
 {
-	PipelineSceneNode* objectNode = dynamic_object_cast<PipelineSceneNode>(sceneNode);
-	if(!objectNode)
-		throwException(tr("The scene node to be exported is not an object node."));
-
-	// Evaluate pipeline of object node.
-	auto evalFuture = objectNode->evaluatePipeline(time);
-	if(!taskManager.waitForTask(evalFuture))
-		return false;
-
-	const PipelineFlowState& state = evalFuture.result();
-	if(state.isEmpty())
-		throwException(tr("The object to be exported does not contain any data."));
+	const PipelineFlowState& state = getPipelineDataToBeExported(time, operation);
 
 	// Build list of attributes.
 	attributes = state.data()->buildAttributesMap();
-	attributes.insert(QStringLiteral("Frame"), sceneNode->dataset()->animationSettings()->timeToFrame(time));
+
+	// Add the implicit animation frame attribute.
+	attributes.insert(QStringLiteral("Frame"), dataset()->animationSettings()->timeToFrame(time));
 
 	return true;
 }
@@ -125,28 +105,27 @@ bool AttributeFileExporter::getAttributes(SceneNode* sceneNode, TimePoint time, 
 /******************************************************************************
  * Exports a single animation frame to the current output file.
  *****************************************************************************/
-bool AttributeFileExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager)
+bool AttributeFileExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
 {
-	if(!FileExporter::exportFrame(frameNumber, time, filePath, taskManager))
-		return false;
-
-	// Export the first scene node from the selection set.
-	if(outputData().empty())
-		throwException(tr("The selection set to be exported is empty."));
-
 	QVariantMap attrMap;
-	if(!getAttributes(outputData().front(), time, attrMap, taskManager))
+	if(!getAttributesMap(time, attrMap, operation))
 		return false;
 
+	// Write the values of all attributes marked for export to the output file. 
 	for(const QString& attrName : attributesToExport()) {
 		if(!attrMap.contains(attrName))
 			throwException(tr("The global attribute '%1' to be exported is not available at animation frame %2.").arg(attrName).arg(frameNumber));
+		QString str = attrMap.value(attrName).toString();
 
-		textStream() << attrMap.value(attrName).toString() << " ";
+		// Put string in quotes if it contains whitespace.
+		if(!str.contains(QChar(' ')))
+			textStream() << str << " ";
+		else
+			textStream() << "\"" << str << "\" ";
 	}
 	textStream() << "\n";
 
-	return true;
+	return !operation.isCanceled();
 }
 
 OVITO_END_INLINE_NAMESPACE

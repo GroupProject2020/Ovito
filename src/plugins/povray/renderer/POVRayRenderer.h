@@ -54,7 +54,7 @@ public:
 
 	/// Renders a single animation frame into the given frame buffer.
 	/// Throws an exception on error. Returns false when the operation has been aborted by the user.
-	virtual bool renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, const PromiseBase& promise) override;
+	virtual bool renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, AsyncOperation& operation) override;
 
 	/// This method is called after renderFrame() has been called.
 	virtual void endFrame(bool renderSuccessful) override;
@@ -136,7 +136,7 @@ private:
 	std::unique_ptr<QTemporaryFile> _imageFile;
 
 	/// This is used by the POVRayExporter class to make the export process interruptable.
-	PromiseStatePtr _exportTask;
+	PromiseStatePtr _exportOperation;
 
 	/// The POV-Ray quality level to use for rendering (0 <= level <= 11).
 	/// See POV-Ray documentation for details.

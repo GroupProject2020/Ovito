@@ -44,9 +44,10 @@ public:
 
 	/// This enumeration specifies the animation range that should be rendered.
 	enum RenderingRangeType {
-		CURRENT_FRAME,		///< Render only the current animation.
-		ANIMATION_INTERVAL,	///< Render the complete animation interval.
-		CUSTOM_INTERVAL,	///< Render time interval defined by the user.
+		CURRENT_FRAME,		///< Renders the current animation frame.
+		ANIMATION_INTERVAL,	///< Renders the complete animation interval.
+		CUSTOM_INTERVAL,	///< Renders a user-defined time interval.
+		CUSTOM_FRAME,		///< Renders a specific animation frame.
 	};
 	Q_ENUMS(RenderingRangeType);
 	
@@ -107,6 +108,9 @@ private:
 
 	/// The last frame to render when rendering range is set to CUSTOM_INTERVAL.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, customRangeEnd, setCustomRangeEnd);
+
+	/// The frame to render when rendering range is set to CUSTOM_FRAME.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, customFrame, setCustomFrame);
 
 	/// Specifies the number of frames to skip when rendering an animation.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, everyNthFrame, setEveryNthFrame);

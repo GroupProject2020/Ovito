@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -79,11 +79,9 @@ CoordinateTripodOverlay::CoordinateTripodOverlay(DataSet* dataset) : ViewportOve
 }
 
 /******************************************************************************
-* This method asks the overlay to paint its contents over the given viewport.
+* This method paints the overlay contents onto the given canvas.
 ******************************************************************************/
-void CoordinateTripodOverlay::render(Viewport* viewport, TimePoint time, QPainter& painter, 
-									 const ViewProjectionParameters& projParams, RenderSettings* renderSettings, 
-									 bool interactiveViewport, TaskManager& taskManager)
+void CoordinateTripodOverlay::renderImplementation(QPainter& painter, const ViewProjectionParameters& projParams, const RenderSettings* renderSettings)
 {
 	FloatType tripodSize = this->tripodSize() * renderSettings->outputImageHeight();
 	if(tripodSize <= 0) return;

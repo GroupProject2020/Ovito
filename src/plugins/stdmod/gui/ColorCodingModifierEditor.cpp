@@ -271,7 +271,7 @@ void ColorCodingModifierEditor::onAdjustRangeGlobal()
 
 	undoableTransaction(tr("Adjust range"), [this, mod]() {
 		ProgressDialog progressDialog(container(), mod->dataset()->container()->taskManager(), tr("Determining property value range"));
-		mod->adjustRangeGlobal(progressDialog.taskManager());
+		mod->adjustRangeGlobal(*progressDialog.taskManager().createSynchronousPromise<>(true).sharedState());
 	});
 }
 

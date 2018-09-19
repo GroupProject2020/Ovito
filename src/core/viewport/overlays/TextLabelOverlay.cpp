@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -72,11 +72,9 @@ TextLabelOverlay::TextLabelOverlay(DataSet* dataset) : ViewportOverlay(dataset),
 }
 
 /******************************************************************************
-* This method asks the overlay to paint its contents over the given viewport.
+* This method paints the overlay contents onto the given canvas.
 ******************************************************************************/
-void TextLabelOverlay::render(Viewport* viewport, TimePoint time, QPainter& painter, 
-									 const ViewProjectionParameters& projParams, RenderSettings* renderSettings, 
-									 bool interactiveViewport, TaskManager& taskManager)
+void TextLabelOverlay::renderImplementation(QPainter& painter, const RenderSettings* renderSettings, const PipelineFlowState& flowState)
 {
 	FloatType fontSize = this->fontSize() * renderSettings->outputImageHeight();
 	if(fontSize <= 0) return;
@@ -87,19 +85,10 @@ void TextLabelOverlay::render(Viewport* viewport, TimePoint time, QPainter& pain
 	QString textString = labelText();
 
 	// Resolve global attributes referenced by placeholders in the text string.
-	if(sourceNode()) {
-		SharedFuture<PipelineFlowState> stateFuture;
-		if(!interactiveViewport) {
-			stateFuture = sourceNode()->evaluatePipeline(time);
-			if(!taskManager.waitForTask(stateFuture))
-				return;
-		}
-		const PipelineFlowState& flowState = interactiveViewport ? sourceNode()->evaluatePipelinePreliminary(true) : stateFuture.result();
-		if(flowState.data()) {
-			const QVariantMap attributes = flowState.data()->buildAttributesMap();
-			for(auto a = attributes.cbegin(); a != attributes.cend(); ++a) {
-				textString.replace(QStringLiteral("[") + a.key() + QStringLiteral("]"), a.value().toString());
-			}
+	if(!flowState.isEmpty()) {
+		const QVariantMap attributes = flowState.data()->buildAttributesMap();
+		for(auto a = attributes.cbegin(); a != attributes.cend(); ++a) {
+			textString.replace(QStringLiteral("[") + a.key() + QStringLiteral("]"), a.value().toString());
 		}
 	}
 

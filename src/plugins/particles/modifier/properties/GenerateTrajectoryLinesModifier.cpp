@@ -94,18 +94,17 @@ void GenerateTrajectoryLinesModifier::evaluatePreliminary(TimePoint time, Modifi
 /******************************************************************************
 * Updates the stored trajectories from the source particle object.
 ******************************************************************************/
-bool GenerateTrajectoryLinesModifier::generateTrajectories(TaskManager& taskManager)
+bool GenerateTrajectoryLinesModifier::generateTrajectories(AsyncOperation&& operation)
 {
 	for(ModifierApplication* modApp : modifierApplications()) {
 		GenerateTrajectoryLinesModifierApplication* myModApp = dynamic_object_cast<GenerateTrajectoryLinesModifierApplication>(modApp);
 		if(!myModApp) continue;
 
-		Promise<> trajectoryTask = Promise<>::createSynchronous(&taskManager, true, true);
 		TimePoint currentTime = dataset()->animationSettings()->time();
 
 		// Get input particles.
 		SharedFuture<PipelineFlowState> stateFuture = myModApp->evaluateInput(currentTime);
-		if(!taskManager.waitForTask(stateFuture))
+		if(!operation.waitForFuture(stateFuture))
 			return false;
 
 		const PipelineFlowState& state = stateFuture.result();
@@ -166,17 +165,16 @@ bool GenerateTrajectoryLinesModifier::generateTrajectories(TaskManager& taskMana
 		for(TimePoint time = interval.start(); time <= interval.end(); time += everyNthFrame() * dataset()->animationSettings()->ticksPerFrame()) {
 			sampleTimes.push_back(time);
 		}
-		trajectoryTask.setProgressMaximum(sampleTimes.size());
-		trajectoryTask.setProgressValue(0);
+		operation.setProgressMaximum(sampleTimes.size());
 
 		// Sample particle positions to generate trajectory points.
 		QVector<Point3> points;
 		points.reserve(particleCount * sampleTimes.size());
 		for(TimePoint time : sampleTimes) {
-			trajectoryTask.setProgressText(tr("Generating trajectory (frame %1 of %2)").arg(trajectoryTask.progressValue()+1).arg(trajectoryTask.progressMaximum()));
+			operation.setProgressText(tr("Generating trajectory (frame %1 of %2)").arg(operation.progressValue()+1).arg(operation.progressMaximum()));
 
 			SharedFuture<PipelineFlowState> stateFuture = myModApp->evaluateInput(time);
-			if(!taskManager.waitForTask(stateFuture))
+			if(!operation.waitForFuture(stateFuture))
 				return false;
 		
 			const PipelineFlowState& state = stateFuture.result();
@@ -230,8 +228,8 @@ bool GenerateTrajectoryLinesModifier::generateTrajectories(TaskManager& taskMana
 				}
 			}
 
-			trajectoryTask.setProgressValue(trajectoryTask.progressValue() + 1);
-			if(trajectoryTask.isCanceled()) 
+			operation.incrementProgressValue(1);
+			if(operation.isCanceled()) 
 				return false;
 		}
 

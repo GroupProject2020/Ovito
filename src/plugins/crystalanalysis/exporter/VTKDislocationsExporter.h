@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,6 +23,7 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
+#include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
 #include <core/dataset/io/FileExporter.h>
 #include <core/utilities/io/CompressedTextWriter.h>
 
@@ -55,19 +56,21 @@ public:
 	/// \brief Constructs a new instance of this class.
 	Q_INVOKABLE VTKDislocationsExporter(DataSet* dataset) : FileExporter(dataset) {}
 
-	/// \brief Selects the nodes from the scene to be exported by this exporter if no specific set of nodes was provided.
-	virtual void selectStandardOutputData() override; 
+	/// \brief Returns the type of data objects that this exporter service can export.
+	virtual const DataObject::OOMetaClass* exportableDataObjectClass() const override {
+		return &DislocationNetworkObject::OOClass();
+	}
 
 protected:
 
 	/// \brief This is called once for every output file to be written and before exportData() is called.
-	virtual bool openOutputFile(const QString& filePath, int numberOfFrames) override;
+	virtual bool openOutputFile(const QString& filePath, int numberOfFrames, AsyncOperation& operation) override;
 
 	/// \brief This is called once for every output file written after exportData() has been called.
 	virtual void closeOutputFile(bool exportCompleted) override;
 
 	/// \brief Exports a single animation frame to the current output file.
-	virtual bool exportFrame(int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager) override;
+	virtual bool exportFrame(int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation) override;
 
 	/// Returns the current file this exporter is writing to.
 	QFile& outputFile() { return _outputFile; }

@@ -39,6 +39,7 @@ DEFINE_PROPERTY_FIELD(RenderSettings, skipExistingImages);
 DEFINE_PROPERTY_FIELD(RenderSettings, renderingRangeType);
 DEFINE_PROPERTY_FIELD(RenderSettings, customRangeStart);
 DEFINE_PROPERTY_FIELD(RenderSettings, customRangeEnd);
+DEFINE_PROPERTY_FIELD(RenderSettings, customFrame);
 DEFINE_PROPERTY_FIELD(RenderSettings, everyNthFrame);
 DEFINE_PROPERTY_FIELD(RenderSettings, fileNumberBase);
 DEFINE_PROPERTY_FIELD(RenderSettings, framesPerSecond);
@@ -53,6 +54,7 @@ SET_PROPERTY_FIELD_LABEL(RenderSettings, skipExistingImages, "Skip existing anim
 SET_PROPERTY_FIELD_LABEL(RenderSettings, renderingRangeType, "Rendering range");
 SET_PROPERTY_FIELD_LABEL(RenderSettings, customRangeStart, "Range start");
 SET_PROPERTY_FIELD_LABEL(RenderSettings, customRangeEnd, "Range end");
+SET_PROPERTY_FIELD_LABEL(RenderSettings, customFrame, "Frame");
 SET_PROPERTY_FIELD_LABEL(RenderSettings, everyNthFrame, "Every Nth frame");
 SET_PROPERTY_FIELD_LABEL(RenderSettings, fileNumberBase, "File number base");
 SET_PROPERTY_FIELD_LABEL(RenderSettings, framesPerSecond, "Frames per second");
@@ -73,6 +75,7 @@ RenderSettings::RenderSettings(DataSet* dataset) : RefTarget(dataset),
 	_renderingRangeType(CURRENT_FRAME),
 	_customRangeStart(0), 
 	_customRangeEnd(100), 
+	_customFrame(0),
 	_everyNthFrame(1), 
 	_fileNumberBase(0),
 	_framesPerSecond(0)

@@ -39,34 +39,12 @@ ParticleExporter::ParticleExporter(DataSet* dataset) : FileExporter(dataset)
 }
 
 /******************************************************************************
-* Selects the nodes from the scene to be exported by this exporter if 
-* no specific set of nodes was provided.
-******************************************************************************/
-void ParticleExporter::selectStandardOutputData()
-{
-	QVector<SceneNode*> nodes = dataset()->selection()->nodes();
-	if(nodes.empty())
-		throwException(tr("Please select an object to be exported first."));
-	setOutputData(nodes);
-}
-
-/******************************************************************************
 * Evaluates the pipeline of an PipelineSceneNode and makes sure that the data to be
 * exported contains particles and throws an exception if not.
 ******************************************************************************/
-bool ParticleExporter::getParticleData(SceneNode* sceneNode, TimePoint time, PipelineFlowState& state, TaskManager& taskManager)
+PipelineFlowState ParticleExporter::getParticleData(TimePoint time, AsyncOperation& operation) const
 {
-	PipelineSceneNode* objectNode = dynamic_object_cast<PipelineSceneNode>(sceneNode);
-	if(!objectNode)
-		throwException(tr("The scene node to be exported is not an object node."));
-
-	// Evaluate pipeline of object node.
-	auto evalFuture = objectNode->evaluatePipeline(time);
-	if(!taskManager.waitForTask(evalFuture))
-		return false;
-	state = evalFuture.result();
-	if(state.isEmpty())
-		throwException(tr("The data collection to be exported is empty."));
+	PipelineFlowState state = getPipelineDataToBeExported(time, operation);
 
 	const ParticlesObject* particles = state.getObject<ParticlesObject>();
 	if(!particles || !particles->getProperty(ParticlesObject::PositionProperty))
@@ -86,14 +64,14 @@ bool ParticleExporter::getParticleData(SceneNode* sceneNode, TimePoint time, Pip
 		}
 	}
 
-	return true;
+	return state;
 }
 
 /******************************************************************************
  * This is called once for every output file to be written and before
  * exportFrame() is called.
  *****************************************************************************/
-bool ParticleExporter::openOutputFile(const QString& filePath, int numberOfFrames)
+bool ParticleExporter::openOutputFile(const QString& filePath, int numberOfFrames, AsyncOperation& operation)
 {
 	OVITO_ASSERT(!_outputFile.isOpen());
 	OVITO_ASSERT(!_outputStream);
@@ -122,18 +100,16 @@ void ParticleExporter::closeOutputFile(bool exportCompleted)
 /******************************************************************************
  * Exports a single animation frame to the current output file.
  *****************************************************************************/
-bool ParticleExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager)
+bool ParticleExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
 {
-	if(!FileExporter::exportFrame(frameNumber, time, filePath, taskManager))
-		return false;
+	// Retreive the particle data to be exported.
+	const PipelineFlowState& state = getParticleData(time, operation);
 
-	// Export the first scene node from the selection set.
-	if(!outputData().empty())
-		return exportObject(outputData().front(), frameNumber, time, filePath, taskManager);
-	else
-		throwException(tr("The selection set to be exported is empty."));
+	// Set progress display.
+	operation.setProgressText(tr("Writing file %1").arg(filePath));
 
-	return true;
+	// Let the subclass do the work.
+	return exportData(state, frameNumber, time, filePath, std::move(operation));
 }
 
 OVITO_END_INLINE_NAMESPACE

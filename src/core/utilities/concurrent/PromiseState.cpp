@@ -210,6 +210,18 @@ void PromiseState::addContinuationImpl(std::function<void()>&& cont)
 	}
 }
 
+Promise<> PromiseState::createSubOperation()
+{
+	OVITO_ASSERT(false);
+	return Promise<>::createFailed(Exception(QStringLiteral("Internal error: Calling createSubOperation() on this type of PromiseState is not allowed.")));
+}
+
+bool PromiseState::waitForFuture(const FutureBase& future)
+{
+	OVITO_ASSERT(false);
+	throw Exception(QStringLiteral("Internal error: Calling waitForFuture() on this type of PromiseState is not allowed."));
+}
+
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace

@@ -80,7 +80,7 @@ SharedFuture<QString> FileManager::fetchUrl(TaskManager& taskManager, const QUrl
 		}
 
 		// Start the background download job.
-		Promise<QString> promise = Promise<QString>::createSynchronous(&taskManager, false, true);
+		Promise<QString> promise = taskManager.createSynchronousPromise<QString>(false);
 		SharedFuture<QString> future(promise.future());
 		_pendingFiles.emplace(normalizedUrl, future);
 		new DownloadRemoteFileJob(url, std::move(promise));
@@ -97,7 +97,7 @@ SharedFuture<QString> FileManager::fetchUrl(TaskManager& taskManager, const QUrl
 Future<QStringList> FileManager::listDirectoryContents(TaskManager& taskManager, const QUrl& url)
 {
 	if(url.scheme() == QStringLiteral("sftp")) {
-		Promise<QStringList> promise = Promise<QStringList>::createSynchronous(&taskManager, false, false);
+		Promise<QStringList> promise = taskManager.createSynchronousPromise<QStringList>(false);
 		Future<QStringList> future = promise.future();
 		new ListRemoteDirectoryJob(url, std::move(promise));
 		return future;

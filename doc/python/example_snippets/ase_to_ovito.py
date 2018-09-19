@@ -15,5 +15,4 @@ data = ase_to_ovito(ase_atoms)
 
 # We may now create a Pipeline object with a StaticSource and use the 
 # converted dataset as input for a data pipeline:
-pipeline = Pipeline(source = StaticSource())
-pipeline.source.assign(data)
+pipeline = Pipeline(source = StaticSource(data = data))

@@ -53,6 +53,11 @@ public:
 	/// Updates the contents displayed in the inspector.
 	virtual void updateDisplay(const PipelineFlowState& state, PipelineSceneNode* sceneNode) override;
 
+private Q_SLOTS:
+
+	/// Action handler.
+	void exportToFile();
+
 private:
 
 	/// A table model for displaying global attributes.
@@ -118,6 +123,12 @@ private:
 
 	/// The table model.
 	AttributeTableModel* _tableModel = nullptr;
+
+	/// The parent window.
+	MainWindow* _mainWindow;
+
+	/// The currently selected scene node.
+	QPointer<PipelineSceneNode> _sceneNode;	
 };
 
 OVITO_END_INLINE_NAMESPACE

@@ -4,6 +4,8 @@ from ovito.modifiers import PythonScriptModifier
 # Load input data and create a data pipeline.
 pipeline = import_file("input/simulation.dump")
 
+
+################## Code snippet begins here #####################
 from ovito.data import NearestNeighborFinder
 import numpy as np
 
@@ -30,27 +32,30 @@ reference_vectors *= lattice_parameter
 
 # The number of neighbors to take into account per atom:
 num_neighbors = len(reference_vectors)
+################## Code snippet ends here #####################
 
-def modify(frame, input, output):
+
+################## Code snippet begins here ###################
+def modify(frame, data):
 
     # Show a status text in the status bar:
     yield 'Calculating order parameters'
 
     # Create output particle property.
-    order_params = output.particles.create_property(
+    order_params = data.particles_.create_property(
         'Order Parameter', dtype=float, components=1)
     
     # Prepare neighbor lists.
-    neigh_finder = NearestNeighborFinder(num_neighbors, input)
+    neigh_finder = NearestNeighborFinder(num_neighbors, data)
     
     # Request write access to the output property array.
     with order_params:
 
         # Loop over all particles.
-        for i in range(len(order_params)):
+        for i in range(data.particles.count):
             
             # Update progress indicator in the status bar
-            yield (i/len(order_params))
+            yield (i/data.particles.count)
             
             # Stores the order parameter of the current atom
             oparam = 0.0	
@@ -68,6 +73,7 @@ def modify(frame, input, output):
 
             # Store result in output array.
             order_params[i] = oparam / num_neighbors		
+################## Code snippet ends here #####################
 
-pipeline.modifiers.append(PythonScriptModifier(function = modify))
+pipeline.modifiers.append(modify)
 pipeline.compute()

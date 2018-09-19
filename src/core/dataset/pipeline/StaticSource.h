@@ -40,10 +40,10 @@ class OVITO_CORE_EXPORT StaticSource : public PipelineObject
 public:
 
 	/// \brief Standard constructor.
-	Q_INVOKABLE StaticSource(DataSet* dataset);
+	Q_INVOKABLE StaticSource(DataSet* dataset, DataCollection* data = nullptr);
 
 	/// \brief Asks the object for the result of the data pipeline.
-	virtual SharedFuture<PipelineFlowState> evaluate(TimePoint time) override;
+	virtual SharedFuture<PipelineFlowState> evaluate(TimePoint time, bool breakOnError = false) override;
 
 	/// \brief Returns the results of an immediate and preliminary evaluation of the data pipeline.
 	virtual PipelineFlowState evaluatePreliminary() override;

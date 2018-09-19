@@ -11,7 +11,7 @@ settings = RenderSettings(size = (100,100))
 if ovito.headless_mode:
     settings.renderer = TachyonRenderer(ambient_occlusion = False, antialiasing = False)
 print(settings.renderer)
-img = ovito.dataset.viewports.active_vp.render(settings)
+img = ovito.scene.viewports.active_vp.render(settings)
 assert(img.width() == 100)
 painter = QPainter(img)
 painter.eraseRect(20, 10, 40, 50)

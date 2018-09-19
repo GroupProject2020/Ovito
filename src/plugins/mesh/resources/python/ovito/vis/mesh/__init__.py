@@ -1,6 +1,7 @@
 # Load dependencies
 import ovito.vis
 import ovito.vis.stdobj
+import ovito.vis.stdmod
 
 # Load the native code module
 from ovito.plugins.Mesh import SurfaceMeshVis

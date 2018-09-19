@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -34,6 +34,7 @@
 #include <core/dataset/pipeline/StaticSource.h>
 #include <core/dataset/pipeline/DelegatingModifier.h>
 #include <core/dataset/pipeline/AsynchronousDelegatingModifier.h>
+#include <core/dataset/DataSetContainer.h>
 #include <core/viewport/ViewportConfiguration.h>
 #include <core/app/PluginManager.h>
 #include <core/utilities/concurrent/TaskManager.h>
@@ -138,7 +139,7 @@ void defineSceneSubmodule(py::module m)
 				// Start an asynchronous pipeline evaluation.
 				SharedFuture<PipelineFlowState> future = obj.evaluate(time);
 				// Block until evaluation is complete and result is available.
-				if(!ScriptEngine::activeTaskManager().waitForTask(future)) {
+				if(!ScriptEngine::getCurrentDataset()->taskManager().waitForTask(future)) {
 					PyErr_SetString(PyExc_KeyboardInterrupt, "Operation has been canceled by the user.");
 					throw py::error_already_set();
 				}
@@ -446,25 +447,22 @@ void defineSceneSubmodule(py::module m)
 
 	auto StaticSource_py = ovito_class<StaticSource, PipelineObject>(m,
 			"Serves as a data :py:attr:`~Pipeline.source` for a :py:class:`Pipeline`. "
-			"A :py:class:`!StaticSource` stores a :py:class:`~ovito.data.DataCollection`, which will be passed to the :py:class:`Pipeline` as input data. "
-			"One typically fills a :py:class:`!StaticSource` with some data objects and wires it to a :py:class:`Pipeline` as follows: "
+			"A :py:class:`!StaticSource` manages a :py:class:`~ovito.data.DataCollection`, which it will pass to the :py:class:`Pipeline` as input data. "
+			"One typically initializes a :py:class:`!StaticSource` with a collection of data objects, then wiring it to a :py:class:`Pipeline` as follows: "
 			"\n\n"
 			".. literalinclude:: ../example_snippets/static_source.py\n"
 		)
-		.def("assign", &StaticSource::setDataCollection,
-			"assign(data)"
+		.def_property("data", &StaticSource::dataCollection, &StaticSource::setDataCollection,
+			"The :py:class:`~ovito.data.DataCollection` to be fed to the pipeline. "
 			"\n\n"
-			"Sets the contents of this :py:class:`!StaticSource`. "
-			"\n\n"
-			":param data: The :py:class:`~ovito.data.DataCollection` to be copied into this static source object.\n",
-			py::arg("data"))
+			":Default: ``None``\n")
 
 		.def("compute", [](StaticSource& source, py::object /*frame*/) {
-				return source.evaluatePreliminary();
+				return source.evaluatePreliminary().data();
 			},
 			"compute(frame=None)"
 			"\n\n"
-			"Retrieves the data of this data source, which was previously stored by a call to :py:meth:`.assign`. "
+			"Returns a copy of the :py:class:`~ovito.data.DataCollection` stored in this source's :py:attr:`.data` field. "
 			"\n\n"
 			":param frame: This parameter is ignored, because the data of a :py:class:`!StaticSource` is not time-dependent.\n"
 			":return: A new :py:class:`~ovito.data.DataCollection` containing the data stored in this :py:class:`!StaticSource`.\n",
@@ -559,9 +557,9 @@ void defineSceneSubmodule(py::module m)
 			}
 			else {
 				// Start an asynchronous pipeline evaluation.
-				SharedFuture<PipelineFlowState> future = node.evaluatePipeline(time);
+				SharedFuture<PipelineFlowState> future = node.evaluatePipeline(time, true);
 				// Block until evaluation is complete and result is available.
-				if(!ScriptEngine::activeTaskManager().waitForTask(future)) {
+				if(!ScriptEngine::getCurrentDataset()->taskManager().waitForTask(future)) {
 					PyErr_SetString(PyExc_KeyboardInterrupt, "Operation has been canceled by the user.");
 					throw py::error_already_set();
 				}

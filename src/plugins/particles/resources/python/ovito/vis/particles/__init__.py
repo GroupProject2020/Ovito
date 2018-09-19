@@ -1,8 +1,11 @@
 # Load dependencies
 import ovito.vis
+import ovito.vis.stdobj
+import ovito.vis.stdmod
+import ovito.vis.mesh
+import ovito.vis.grid
 
 # Load the native code module
-import ovito.plugins.PyScript
 from ovito.plugins.Particles import ParticlesVis, VectorVis, BondsVis, TrajectoryVis
 
 # Inject selected classes into parent module.

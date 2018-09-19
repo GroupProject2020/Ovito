@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,10 +23,7 @@
 #include <plugins/crystalanalysis/objects/dislocations/RenderableDislocationLines.h>
 #include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
 #include <core/dataset/scene/PipelineSceneNode.h>
-#include <core/dataset/scene/SelectionSet.h>
 #include <core/dataset/animation/AnimationSettings.h>
-#include <core/utilities/concurrent/TaskManager.h>
-#include <core/utilities/concurrent/Promise.h>
 #include "VTKDislocationsExporter.h"
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
@@ -34,22 +31,10 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 IMPLEMENT_OVITO_CLASS(VTKDislocationsExporter);
 
 /******************************************************************************
-* Selects the nodes from the scene to be exported by this exporter if 
-* no specific set of nodes was provided.
-******************************************************************************/
-void VTKDislocationsExporter::selectStandardOutputData()
-{
-	QVector<SceneNode*> nodes = dataset()->selection()->nodes();
-	if(nodes.empty())
-		throwException(tr("Please select an object to be exported first."));
-	setOutputData(nodes);
-}
-
-/******************************************************************************
  * This is called once for every output file to be written and before
  * exportData() is called.
  *****************************************************************************/
-bool VTKDislocationsExporter::openOutputFile(const QString& filePath, int numberOfFrames)
+bool VTKDislocationsExporter::openOutputFile(const QString& filePath, int numberOfFrames, AsyncOperation& operation)
 {
 	OVITO_ASSERT(!_outputFile.isOpen());
 	OVITO_ASSERT(!_outputStream);
@@ -77,31 +62,14 @@ void VTKDislocationsExporter::closeOutputFile(bool exportCompleted)
 /******************************************************************************
  * Exports a single animation frame to the current output file.
  *****************************************************************************/
-bool VTKDislocationsExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager)
-{
-	if(!FileExporter::exportFrame(frameNumber, time, filePath, taskManager))
-		return false;
- 
-	// Export the first scene node from the selection set.
-	if(outputData().empty())
-		throwException(tr("The selection set to be exported is empty."));
- 
-	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
-	exportTask.setProgressText(tr("Writing file %1").arg(filePath));
-	
-	PipelineSceneNode* objectNode = dynamic_object_cast<PipelineSceneNode>(outputData().front());
-	if(!objectNode)
-		throwException(tr("The scene node to be exported is not an object node."));
-
+bool VTKDislocationsExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
+{	
 	// Evaluate data pipeline.
 	// Note: We are requesting the renderable flow state from the pipeline,
 	// because we are interested in clipped (post-processed) dislocation lines.
-	auto evalFuture = objectNode->evaluateRenderingPipeline(time);
-	if(!taskManager.waitForTask(evalFuture))
-		return false;
+	const PipelineFlowState& state = getPipelineDataToBeExported(time, operation, true);
 
 	// Look up the RenderableDislocationLines object in the pipeline state.
-	const PipelineFlowState& state = evalFuture.result();
 	const RenderableDislocationLines* renderableLines = state.getObject<RenderableDislocationLines>();
 	if(!renderableLines)
 		throwException(tr("The object to be exported does not contain any exportable dislocation line data."));
@@ -111,6 +79,8 @@ bool VTKDislocationsExporter::exportFrame(int frameNumber, TimePoint time, const
 	if(!dislocationsObj) 
 		throwException(tr("The object to be exported does not contain any exportable dislocation line data."));
 		
+	operation.setProgressText(tr("Writing file %1").arg(filePath));
+
 	// Count disloction polylines and output vertices.
 	std::vector<size_t> polyVertexCounts;
 	for(size_t i = 0; i < renderableLines->lineSegments().size(); i++) {
@@ -189,7 +159,7 @@ bool VTKDislocationsExporter::exportFrame(int frameNumber, TimePoint time, const
 	}
 	OVITO_ASSERT(segment == renderableLines->lineSegments().end());
 	
-	return !exportTask.isCanceled();
+	return !operation.isCanceled();
 }
 
 }	// End of namespace

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -32,15 +32,19 @@ SET_PROPERTY_FIELD_LABEL(StaticSource, dataCollection, "Data");
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
-StaticSource::StaticSource(DataSet* dataset) : PipelineObject(dataset)
+StaticSource::StaticSource(DataSet* dataset, DataCollection* data) : PipelineObject(dataset)
 {
+    setDataCollection(data);
 }
 
 /******************************************************************************
 * Asks the object for the result of the data pipeline.
 ******************************************************************************/
-SharedFuture<PipelineFlowState> StaticSource::evaluate(TimePoint time)
+SharedFuture<PipelineFlowState> StaticSource::evaluate(TimePoint time, bool breakOnError)
 {
+    // Note that the PipelineFlowState constructor creates deep copy of the data collection.
+    // We always pass a copy of the data to the pipeline to avoid unexpected side effects when 
+    // modifying the objects in this source's data collection.
     return Future<PipelineFlowState>::createImmediateEmplace(dataCollection(), PipelineStatus::Success);
 }
 
@@ -49,6 +53,9 @@ SharedFuture<PipelineFlowState> StaticSource::evaluate(TimePoint time)
 ******************************************************************************/
 PipelineFlowState StaticSource::evaluatePreliminary()
 {
+    // Note that the PipelineFlowState constructor creates deep copy of the data collection.
+    // We always pass a copy of the data to the pipeline to avoid unexpected side effects when 
+    // modifying the objects in this source's data collection.
     return PipelineFlowState(dataCollection(), PipelineStatus::Success);
 }
 

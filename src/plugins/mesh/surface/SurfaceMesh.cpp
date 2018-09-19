@@ -29,11 +29,14 @@ namespace Ovito { namespace Mesh {
 IMPLEMENT_OVITO_CLASS(SurfaceMesh);
 DEFINE_PROPERTY_FIELD(SurfaceMesh, storage);
 DEFINE_PROPERTY_FIELD(SurfaceMesh, isCompletelySolid);
+DEFINE_PROPERTY_FIELD(SurfaceMesh, title);
+SET_PROPERTY_FIELD_LABEL(SurfaceMesh, title, "Title");
 
 /******************************************************************************
 * Constructs an empty surface mesh object.
 ******************************************************************************/
-SurfaceMesh::SurfaceMesh(DataSet* dataset) : PeriodicDomainDataObject(dataset),
+SurfaceMesh::SurfaceMesh(DataSet* dataset, const QString& title) : PeriodicDomainDataObject(dataset),
+		_title(title),
 		_isCompletelySolid(false)
 {
 }

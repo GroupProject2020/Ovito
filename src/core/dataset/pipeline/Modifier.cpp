@@ -69,6 +69,17 @@ OORef<ModifierApplication> Modifier::createModifierApplication()
 }
 
 /******************************************************************************
+* Modifies the input data.
+******************************************************************************/
+Future<PipelineFlowState> Modifier::evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) 
+{
+	PipelineFlowState output = input;
+	if(!output.isEmpty())
+		evaluatePreliminary(time, modApp, output);
+	return Future<PipelineFlowState>::createImmediate(std::move(output));
+}
+
+/******************************************************************************
 * Returns the list of applications associated with this modifier. 
 ******************************************************************************/
 QVector<ModifierApplication*> Modifier::modifierApplications() const

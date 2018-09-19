@@ -58,11 +58,13 @@ public:
 
 	/// \brief Asks the node for the results of its data pipeline.
 	/// \param time Specifies at which animation time the pipeline should be evaluated.
-	SharedFuture<PipelineFlowState> evaluatePipeline(TimePoint time) const;
+	/// \param breakOnError Tells the pipeline system to stop the evaluation as soon as a first error occurs.
+	SharedFuture<PipelineFlowState> evaluatePipeline(TimePoint time, bool breakOnError = false) const;
 
 	/// \brief Asks the node for the results of its data pipeline including the output of asynchronous visualization elements.
 	/// \param time Specifies at which animation time the pipeline should be evaluated.
-	SharedFuture<PipelineFlowState> evaluateRenderingPipeline(TimePoint time) const;
+	/// \param breakOnError Tells the pipeline system to stop the evaluation as soon as a first error occurs.
+	SharedFuture<PipelineFlowState> evaluateRenderingPipeline(TimePoint time, bool breakOnError = false) const;
 
 	/// \brief Requests preliminary results from the data pipeline.
 	const PipelineFlowState& evaluatePipelinePreliminary(bool includeVisElements) const;

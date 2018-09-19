@@ -1,5 +1,9 @@
 # Load dependencies
 import ovito.io
+import ovito.io.mesh
+import ovito.io.grid
+import ovito.io.stdobj
+import ovito.io.stdmod
 
 # Load the native code modules
 from ovito.plugins.Particles import LAMMPSDataImporter

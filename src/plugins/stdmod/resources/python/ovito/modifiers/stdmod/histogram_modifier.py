@@ -8,20 +8,6 @@ import ovito.modifiers
 # Load the native code module
 from ovito.plugins.StdMod import HistogramModifier
 
-# Implementation of the HistogramModifier.histogram attribute.
-def _HistogramModifier_histogram(self):
-    """
-    Returns a NumPy array containing the histogram computed by the modifier.    
-    The returned array is two-dimensional and consists of [*x*, *count(x)*] value pairs, where
-    *x* denotes the bin center and *count(x)* the number of particles whose property value falls into the bin.
-    
-    Note that accessing this array is only possible after the modifier has computed its results. 
-    Thus, you have to call :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` first to ensure that the histogram was generated.
-    """
-    return numpy.transpose((self._histogram_data_x, self._histogram_data_y))
-HistogramModifier.histogram = property(_HistogramModifier_histogram)
-
-
 # For backward compatibility with OVITO 2.9.0:
 def _HistogramModifier_set_particle_property(self, v): self.property = v
 HistogramModifier.particle_property = property(lambda self: self.property, _HistogramModifier_set_particle_property)

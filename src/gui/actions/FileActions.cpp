@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -306,15 +306,15 @@ void ActionManager::on_FileExport_triggered()
 	QStringList filterStrings;
 	QVector<const FileExporterClass*> exporterTypes = PluginManager::instance().metaclassMembers<FileExporter>();
 	if(exporterTypes.empty()) {
-		Exception(tr("This function is disabled, because there are no export services available."), _dataset).reportError();
+		Exception(tr("This function is disabled, because no file exporter plugins have been installed."), _dataset).reportError();
 		return;
 	}
 	for(const FileExporterClass* exporterClass : exporterTypes) {
 #ifndef Q_OS_WIN
-		filterStrings << QString("%1 (%2)").arg(exporterClass->fileFilterDescription(), exporterClass->fileFilter());
+		filterStrings << QStringLiteral("%1 (%2)").arg(exporterClass->fileFilterDescription(), exporterClass->fileFilter());
 #else 
 		// Workaround for bug in Windows file selection dialog (https://bugreports.qt.io/browse/QTBUG-45759)
-		filterStrings << QString("%1 (*)").arg(exporterClass->fileFilterDescription());
+		filterStrings << QStringLiteral("%1 (*)").arg(exporterClass->fileFilterDescription());
 #endif
 	}
 
@@ -373,7 +373,7 @@ void ActionManager::on_FileExport_triggered()
 		}
 
 		// Choose the scene nodes to be exported.
-		exporter->selectStandardOutputData();
+		exporter->selectDefaultExportableData();
 
 		// Let the user adjust the settings of the exporter.
 		FileExporterSettingsDialog settingsDialog(mainWindow(), exporter);
@@ -384,7 +384,7 @@ void ActionManager::on_FileExport_triggered()
 		ProgressDialog progressDialog(mainWindow(), tr("File export"));
 
 		// Let the exporter do its work.
-		exporter->exportNodes(progressDialog.taskManager());
+		exporter->doExport(progressDialog.taskManager().createSynchronousPromise<>(true));
 	}
 	catch(const Exception& ex) {
 		ex.reportError();

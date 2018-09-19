@@ -1,31 +1,35 @@
-from ovito.io import *
+from ovito.io import import_file
 
 pipeline = import_file("../../files/CFG/shear.void.120.cfg")
 data = pipeline.compute()
 
-print(data)
-print("Number of data objects: ", len(data.objects))
-
+# For backward compatibility with OVITO 2.9.0:
 print(data.particle_properties)
-print(data.particles)
+print(data.particle_properties.position)
+print(data.particles.position)
 
+# Test property list access.
+print(data.particles)
 print(list(data.particles.keys()))
 print(list(data.particles.values()))
 
-print(data.particles["Position"])
-print(data.particles.position)
-
+# Test property access:
 pos = data.particles['Position']
 print("pos=", pos)
-print("pos.array=", pos.array)
-print("pos.array[0]=", pos.array[0])
 print("pos[0]=", pos[0])
 print("pos[0:3]=", pos[0:3])
 print("len(pos)={}".format(len(pos)))
-print("pos.marray=", pos.marray)
 assert(len(pos) == data.particles.count)
 
-with pos:
-    pos[0][0] = 1.0
+# Test property write access:
+mutable_pos = data.particles_['Position_']
+with mutable_pos:
+    mutable_pos[0][0] = 1.234
+assert(mutable_pos[0,0] == 1.234)
+assert(mutable_pos is not pos)
 
-assert(pos[0][0] == 1.0)
+# Backward compatibility with OVITO 2.9.0:
+print("pos.array=", pos.array)
+print("pos.array[0]=", pos.array[0])
+print("pos.marray=", mutable_pos.marray)
+

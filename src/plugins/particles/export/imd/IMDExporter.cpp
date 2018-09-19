@@ -33,16 +33,8 @@ IMPLEMENT_OVITO_CLASS(IMDExporter);
 /******************************************************************************
 * Writes the particles of one animation frame to the current output file.
 ******************************************************************************/
-bool IMDExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager)
+bool IMDExporter::exportData(const PipelineFlowState& state, int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
 {
-	// Get particle data to be exported.
-	PipelineFlowState state;
-	if(!getParticleData(sceneNode, time, state, taskManager))
-		return false;
-
-	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
-	exportTask.setProgressText(tr("Writing file %1").arg(filePath));
-	
 	const ParticlesObject* particles = state.expectObject<ParticlesObject>();
 	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
 	const PropertyObject* typeProperty = nullptr;
@@ -150,16 +142,16 @@ bool IMDExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint 
 	textStream() << "## IMD file written by " << QCoreApplication::applicationName() << "\n";
 	textStream() << "#E\n";
 
-	exportTask.setProgressMaximum(atomsCount);
+	operation.setProgressMaximum(atomsCount);
 	OutputColumnWriter columnWriter(colMapping, state);
 	for(size_t i = 0; i < atomsCount; i++) {
 		columnWriter.writeParticle(i, textStream());
 
-		if(!exportTask.setProgressValueIntermittent(i))
+		if(!operation.setProgressValueIntermittent(i))
 			return false;
 	}
 
-	return !exportTask.isCanceled();
+	return !operation.isCanceled();
 }
 
 OVITO_END_INLINE_NAMESPACE

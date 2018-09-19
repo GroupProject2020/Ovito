@@ -1,6 +1,5 @@
 # Load dependencies
-import ovito
-import ovito.data
+import ovito.data.stdobj
 import ovito.data.mesh
 
 # Load the native code module

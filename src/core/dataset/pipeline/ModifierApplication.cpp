@@ -139,29 +139,33 @@ PipelineStatus ModifierApplication::status() const
 /******************************************************************************
 * Asks the object for the result of the upstream data pipeline.
 ******************************************************************************/
-SharedFuture<PipelineFlowState> ModifierApplication::evaluateInput(TimePoint time)
+SharedFuture<PipelineFlowState> ModifierApplication::evaluateInput(TimePoint time, bool breakOnError)
 {
 	// Without a data source, this ModifierApplication doesn't produce any data.
 	if(!input())
 		return PipelineFlowState();
 
 	// Request the input data.
-	return input()->evaluate(time);
+	return input()->evaluate(time, breakOnError);
 }
 
 /******************************************************************************
 * Asks the object for the result of the data pipeline.
 ******************************************************************************/
-Future<PipelineFlowState> ModifierApplication::evaluateInternal(TimePoint time)
+Future<PipelineFlowState> ModifierApplication::evaluateInternal(TimePoint time, bool breakOnError)
 {
 	// Obtain input data and pass it on to the modifier.
-	return evaluateInput(time)
-		.then(executor(), [this, time](PipelineFlowState inputData) -> Future<PipelineFlowState> {
+	return evaluateInput(time, breakOnError)
+		.then(executor(), [this, time, breakOnError](PipelineFlowState inputData) -> Future<PipelineFlowState> {
 
 			// Clear the status of the input unless it is an error.
 			if(inputData.status().type() != PipelineStatus::Error) {
 				OVITO_ASSERT(inputData.status().type() != PipelineStatus::Pending);
 				inputData.setStatus(PipelineStatus());
+			}
+			else if(breakOnError) {
+				// Skip all following modifiers once an error has occured along the pipeline.
+				return inputData;
 			}
 
 			// Without a modifier, this ModifierApplication becomes a no-op.

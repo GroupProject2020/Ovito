@@ -53,7 +53,7 @@ QSize SceneRenderer::outputSize() const
 /******************************************************************************
 * Computes the bounding box of the entire scene to be rendered.
 ******************************************************************************/
-Box3 SceneRenderer::computeSceneBoundingBox(TimePoint time, const ViewProjectionParameters& params, Viewport* vp, const PromiseBase& promise)
+Box3 SceneRenderer::computeSceneBoundingBox(TimePoint time, const ViewProjectionParameters& params, Viewport* vp, AsyncOperation& operation)
 {
 	OVITO_CHECK_OBJECT_POINTER(renderDataset()); // startRender() must be called first.
 
@@ -65,7 +65,7 @@ Box3 SceneRenderer::computeSceneBoundingBox(TimePoint time, const ViewProjection
 		setProjParams(params);
 
 		// Perform bounding box rendering pass.
-		if(renderScene(promise)) {
+		if(renderScene(operation)) {
 
 			// Take into acocunt additional visual content that is only visible in the interactive viewports.
 			if(isInteractive())
@@ -85,13 +85,13 @@ Box3 SceneRenderer::computeSceneBoundingBox(TimePoint time, const ViewProjection
 /******************************************************************************
 * Renders all nodes in the scene
 ******************************************************************************/
-bool SceneRenderer::renderScene(const PromiseBase& promise)
+bool SceneRenderer::renderScene(AsyncOperation& operation)
 {
 	OVITO_CHECK_OBJECT_POINTER(renderDataset());
 
 	if(RootSceneNode* rootNode = renderDataset()->sceneRoot()) {
 		// Recursively render all scene nodes.
-		return renderNode(rootNode, promise);
+		return renderNode(rootNode, operation);
 	}
 
 	return true;
@@ -100,7 +100,7 @@ bool SceneRenderer::renderScene(const PromiseBase& promise)
 /******************************************************************************
 * Render a scene node (and all its children).
 ******************************************************************************/
-bool SceneRenderer::renderNode(SceneNode* node, const PromiseBase& promise)
+bool SceneRenderer::renderNode(SceneNode* node, AsyncOperation& operation)
 {
     OVITO_CHECK_OBJECT_POINTER(node);
 
@@ -119,7 +119,7 @@ bool SceneRenderer::renderNode(SceneNode* node, const PromiseBase& promise)
 			SharedFuture<PipelineFlowState> pipelineStateFuture;
 			if(!isInteractive()) {
 				pipelineStateFuture = pipeline->evaluateRenderingPipeline(time());
-				if(!dataset()->container()->taskManager().waitForTask(pipelineStateFuture))
+				if(!operation.waitForFuture(pipelineStateFuture))
 					return false;
 
 				// After the rendering process has been temporarily interrupted above, rendering is resumed now. 
@@ -132,7 +132,7 @@ bool SceneRenderer::renderNode(SceneNode* node, const PromiseBase& promise)
 
 			// Invoke all vis elements of all data objects in the pipeline state.
 			std::vector<const DataObject*> objectStack;
-			if(state.data())
+			if(!state.isEmpty())
 				renderDataObject(state.data(), pipeline, state, objectStack);
 			OVITO_ASSERT(objectStack.empty());
 		}
@@ -145,11 +145,11 @@ bool SceneRenderer::renderNode(SceneNode* node, const PromiseBase& promise)
 
 	// Render child nodes.
 	for(SceneNode* child : node->children()) {
-		if(!renderNode(child, promise))
+		if(!renderNode(child, operation))
 			return false;
 	}
 
-	return !promise.isCanceled();
+	return !operation.isCanceled();
 }
 
 /******************************************************************************

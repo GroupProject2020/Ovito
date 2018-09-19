@@ -1,19 +1,16 @@
-from ovito.io import *
-from ovito.modifiers import *
+from ovito.io import import_file
+from ovito.modifiers import VoronoiAnalysisModifier
 import numpy as np
 
-node = import_file("../../files/NetCDF/sheared_aSi.nc")
+pipeline = import_file("../../files/NetCDF/sheared_aSi.nc")
 
 modifier = VoronoiAnalysisModifier()
-node.modifiers.append(modifier)
+pipeline.modifiers.append(modifier)
 
 print("Parameter defaults:")
 
 print("  compute_indices: {}".format(modifier.compute_indices))
 modifier.compute_indices = True
-
-print("  edge_count: {}".format(modifier.edge_count))
-modifier.edge_count = 5
 
 print("  edge_threshold: {}".format(modifier.edge_threshold))
 modifier.edge_threshold = 0.1
@@ -30,11 +27,17 @@ modifier.only_selected = False
 print("  use_radii: {}".format(modifier.use_radii))
 modifier.use_radii = True
 
-node.compute()
+data = pipeline.compute()
 
 print("Output:")
-print(node.output.particle_properties["Atomic Volume"].array)
-print(node.output.particle_properties["Voronoi Index"].array)
-print(node.output.particle_properties["Coordination"].array)
-print(node.output.particle_properties.coordination.array)
-print(node.output.attributes['Voronoi.max_face_order'])
+print(data.particles["Atomic Volume"][...])
+print(data.particles["Max Face Order"][...])
+print(data.particles["Voronoi Index"][...])
+print(data.particles["Coordination"][...])
+print(data.attributes['Voronoi.max_face_order'])
+
+# Consistency checks:
+assert(data.attributes['Voronoi.max_face_order'] > 3)
+assert(data.particles["Voronoi Index"].shape[1] == data.attributes['Voronoi.max_face_order'])
+assert(np.max(data.particles["Max Face Order"]) == data.attributes['Voronoi.max_face_order'])
+assert(np.sum(data.particles["Atomic Volume"]) == data.cell.volume)

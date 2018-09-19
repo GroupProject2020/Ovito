@@ -429,13 +429,11 @@ void ovito_class_initialization_helper::applyParameters(py::object& pyobj, const
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
-// Returns the current DataSet.
+// Determine the DataSet from the context the current script is running in.
 ///////////////////////////////////////////////////////////////////////////////////////
-DataSet* ovito_class_initialization_helper::currentDataset() 
+DataSet* ovito_class_initialization_helper::getCurrentDataset()
 {
-	DataSet* dataset = ScriptEngine::activeDataset();
-	if(!dataset) throw Exception("Invalid interpreter state. There is no active dataset.");			
-	return dataset;
+	return ScriptEngine::getCurrentDataset();
 }
 
 }

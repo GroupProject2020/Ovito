@@ -1,9 +1,19 @@
 # Load dependencies
 import ovito
 from ovito.data import DataCollection
+from ovito.data.data_objects_dict import DataObjectsDict
 
-# Load the native code module
+# Load the native code module.
 from ovito.plugins.Mesh import SurfaceMesh
+
+# Implementation of the DataCollection.surfaces attribute.
+def _DataCollection_surfaces(self):
+    """
+    Returns a :py:class:`DataObjectsDict` providing key-based access to all :py:class:`SurfaceMesh` objects stored 
+    in this :py:class:`!DataCollection`.
+    """
+    return DataObjectsDict(self, SurfaceMesh)
+DataCollection.surfaces = property(_DataCollection_surfaces)
 
 # Implementation of the DataCollection.surface attribute.
 # This attribute has been deprecated and is here only for backward compatibility with OVITO 2.9.0.

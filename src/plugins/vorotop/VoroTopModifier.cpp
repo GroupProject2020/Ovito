@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //  Copyright (2017) Emanuel A. Lazar
 //
 //  This file is part of OVITO (Open Visualization Tool).
@@ -52,17 +52,18 @@ VoroTopModifier::VoroTopModifier(DataSet* dataset) : StructureIdentificationModi
 /******************************************************************************
  * Loads a new filter definition into the modifier.
  ******************************************************************************/
-void VoroTopModifier::loadFilterDefinition(const QString& filepath)
+bool VoroTopModifier::loadFilterDefinition(const QString& filepath, AsyncOperation&& operation)
 {
+    operation.setProgressText(tr("Loading VoroTop filter %1").arg(filepath));
+
     // Open filter file for reading.
     QFile file(filepath);
     CompressedTextReader stream(file, filepath);
     
     // Load filter file header (i.e. list of structure types).
     std::shared_ptr<Filter> filter = std::make_shared<Filter>();
-    Promise<> loadTask = Promise<>::createSynchronous(&dataset()->container()->taskManager(), true, true);
-    if(!filter->load(stream, true, *loadTask.sharedState()))
-        return;
+    if(!filter->load(stream, true, *operation.sharedState()))
+        return false;
     
     // Rebuild structure types list.
     setStructureTypes({});
@@ -76,6 +77,8 @@ void VoroTopModifier::loadFilterDefinition(const QString& filepath)
     
     // Filter file was successfully loaded. Accept it as the new filter.
     setFilterFile(filepath);
+
+    return !operation.isCanceled();
 }
 
 /******************************************************************************
@@ -363,9 +366,9 @@ void VoroTopModifier::VoroTopAnalysisEngine::processCell(voro::voronoicell_neigh
 void VoroTopModifier::VoroTopAnalysisEngine::perform()
 {
     if(!filter()) {
-        task()->setProgressText(tr("Loading VoroTop filter file"));
         if(_filterFile.isEmpty())
             throw Exception(tr("No filter file selected"));
+        task()->setProgressText(tr("Loading VoroTop filter file: %1").arg(_filterFile));
         
         // Open filter file for reading.
         QFile file(_filterFile);

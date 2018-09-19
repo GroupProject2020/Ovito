@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -59,25 +59,22 @@ public:
 	///        application's settings store.
 	virtual void loadUserDefaults() override;
 
- 	/// \brief Selects the nodes from the scene to be exported by this exporter if no specific set of nodes was provided.
-	virtual void selectStandardOutputData() override; 	
-
 	/// \brief Indicates whether this file exporter can write more than one animation frame into a single output file.
 	virtual bool supportsMultiFrameFiles() const override { return true; }
 
-	/// \brief Evaluates the pipeline of an PipelineSceneNode and returns the computed attributes.
-	bool getAttributes(SceneNode* sceneNode, TimePoint time, QVariantMap& attributes, TaskManager& taskManager);
+	/// \brief Evaluates the pipeline of the PipelineSceneNode to be exported and returns the attributes list.
+	bool getAttributesMap(TimePoint time, QVariantMap& attributes, AsyncOperation& operation);
 
 protected:
 
 	/// \brief This is called once for every output file to be written and before exportData() is called.
-	virtual bool openOutputFile(const QString& filePath, int numberOfFrames) override;
+	virtual bool openOutputFile(const QString& filePath, int numberOfFrames, AsyncOperation& operation) override;
 
 	/// \brief This is called once for every output file written after exportData() has been called.
 	virtual void closeOutputFile(bool exportCompleted) override;
 
 	/// \brief Exports a single animation frame to the current output file.
-	virtual bool exportFrame(int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager) override;
+	virtual bool exportFrame(int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation) override;
 
 	/// Returns the current file this exporter is writing to.
 	QFile& outputFile() { return _outputFile; }

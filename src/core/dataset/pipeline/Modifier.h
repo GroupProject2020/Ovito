@@ -53,11 +53,7 @@ public:
 	/// \param modApp The application object for this modifier. It describes this particular usage of the
 	///               modifier in the data pipeline.
 	/// \param input The upstream data flowing down the pipeline.
-	virtual Future<PipelineFlowState> evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input) {
-		PipelineFlowState output = input;
-		evaluatePreliminary(time, modApp, output);
-		return Future<PipelineFlowState>::createImmediate(std::move(output));
-	}
+	virtual Future<PipelineFlowState> evaluate(TimePoint time, ModifierApplication* modApp, const PipelineFlowState& input);
 
 	/// \brief Modifies the input data in an immediate, preliminary way.
 	virtual void evaluatePreliminary(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state) {}

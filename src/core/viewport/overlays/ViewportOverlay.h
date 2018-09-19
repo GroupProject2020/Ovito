@@ -44,10 +44,13 @@ protected:
 
 public:
 
-	/// \brief This method asks the overlay to paint its contents over the given viewport.
-	virtual void render(Viewport* viewport, TimePoint time, QPainter& painter, 
-						const ViewProjectionParameters& projParams, RenderSettings* renderSettings,
-						bool interactiveViewport, TaskManager& taskManager) = 0;
+	/// \brief This method asks the overlay to paint its contents over the rendered image.
+	virtual void render(const Viewport* viewport, TimePoint time, FrameBuffer* frameBuffer, 
+						const ViewProjectionParameters& projParams, const RenderSettings* renderSettings, AsyncOperation& operation) = 0;
+
+	/// \brief This method asks the overlay to paint its contents over the given interactive viewport.
+	virtual void renderInteractive(const Viewport* viewport, TimePoint time, QPainter& painter, 
+						const ViewProjectionParameters& projParams, const RenderSettings* renderSettings) = 0;
 
 	/// \brief Returns the status of the object, which may indicate an error condition.
 	///
@@ -60,7 +63,7 @@ public:
 	///
 	/// Overlay implementations should override this method if they support positioning.
 	/// The default method implementation does nothing.
-	virtual void moveOverlayInViewport(const Vector2& delta) {};
+	virtual void moveOverlayInViewport(const Vector2& delta) {}
 
 private:
 

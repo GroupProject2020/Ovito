@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -95,6 +95,9 @@ public:
 	/// \brief Returns the container this dataset belongs to.
 	DataSetContainer* container() const;
 
+	/// Returns the TaskManager responsible for this DataSet.
+	TaskManager& taskManager() const;
+
 	/// \brief Deletes all nodes from the scene.
 	/// \undoable
 	Q_INVOKABLE void clearScene();
@@ -121,7 +124,7 @@ public:
 	///        sequence, the buffer will contain only the last rendered frame when the function returns.
 	/// \return true on success; false if operation has been canceled by the user.
 	/// \throw Exception on error.
-	bool renderScene(RenderSettings* settings, Viewport* viewport, FrameBuffer* frameBuffer, TaskManager& taskManager);
+	bool renderScene(RenderSettings* settings, Viewport* viewport, FrameBuffer* frameBuffer, AsyncOperation&& operation);
 
 	/// \brief Returns a future that is triggered once all data pipelines in the scene 
 	///        have been completely evaluated at the current animation time.
@@ -134,7 +137,7 @@ public:
 	void saveToFile(const QString& filePath);
 
 	/// \brief Appends an object to this dataset's list of global objects.
-	void addGlobalObject(RefTarget* target) {
+	void addGlobalObject(const RefTarget* target) {
 		if(!_globalObjects.contains(target))
 			_globalObjects.push_back(this, PROPERTY_FIELD(globalObjects), target);
 	}
@@ -152,7 +155,7 @@ public:
 			if(castObj) return castObj;
 		}
 		return nullptr;
-	}	
+	}
 
 	/// Provides access to the global data cache used by visualzation elements.
 	MixedKeyCache& visCache() { return _visCache; }
@@ -194,12 +197,12 @@ private:
 
 	/// Renders a single frame and saves the output file. This is part of the implementation of the renderScene() method.
 	bool renderFrame(TimePoint renderTime, int frameNumber, RenderSettings* settings, SceneRenderer* renderer,
-			Viewport* viewport, FrameBuffer* frameBuffer, VideoEncoder* videoEncoder, TaskManager& taskManager);
+			Viewport* viewport, FrameBuffer* frameBuffer, VideoEncoder* videoEncoder, AsyncOperation&& operation);
 
 	/// Returns a viewport configuration that is used as template for new scenes.
 	OORef<ViewportConfiguration> createDefaultViewportConfiguration();
 
-	/// Makes sure all data pipeline have been evaluated.
+	/// Requests the (re-)evaluation of all data pipelines in the current scene.
 	void makeSceneReady(bool forceReevaluation);
 			
 private Q_SLOTS:
@@ -243,7 +246,7 @@ private:
 	QMetaObject::Connection _updateViewportOnTimeChangeConnection;
 
 	/// The promise of the scene becoming ready.
-	Promise<> _sceneReadyPromise;
+	SignalPromise _sceneReadyPromise;
 
 	/// The future of the scene becoming ready.
 	SharedFuture<> _sceneReadyFuture;

@@ -26,6 +26,7 @@
 #include <core/oo/RefTarget.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/scene/SceneNode.h>
+#include <core/dataset/data/DataObjectReference.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(DataIO)
 
@@ -55,7 +56,7 @@ public:
 };	
 
 /**
- * \brief Abstract base class for file exporters that export data from OVITO to an external file.
+ * \brief Abstract base class for file writers that export data from OVITO to an external file in a specific format.
  */
 class OVITO_CORE_EXPORT FileExporter : public RefTarget
 {
@@ -64,23 +65,34 @@ class OVITO_CORE_EXPORT FileExporter : public RefTarget
 
 public:
 
-	/// \brief Selects the nodes from the scene to be exported by this exporter if no specific set of nodes was provided.
-	virtual void selectStandardOutputData() = 0; 
+	/// \brief Selects the default scene node to be exported by this exporter.
+	virtual void selectDefaultExportableData();
 
-	/// \brief Sets the scene objects to be exported.
-	void setOutputData(const QVector<SceneNode*>& nodes);
+	/// \brief Determines whether the given scene node is suitable for exporting with this exporter service.
+	/// By default, all pipeline scene nodes are considered suitable that produce suitable data objects
+	/// of the type specified by the FileExporter::exportableDataObjectClass() method. 
+	/// Subclasses can refine this behavior as needed.
+	virtual bool isSuitableNode(SceneNode* node) const;
 
-	/// \brief Returns the list of the scene objects to be exported.
-	const QVector<OORef<SceneNode>>& outputData() const { return _nodesToExport; }
+	/// \brief Determines whether the given pipeline output is suitable for exporting with this exporter service.
+	/// By default, all data collections are considered suitable that contain suitable data objects
+	/// of the type specified by the FileExporter::exportableDataObjectClass() method. 
+	/// Subclasses can refine this behavior as needed.
+	virtual bool isSuitablePipelineOutput(const PipelineFlowState& state) const;
+
+	/// \brief Returns the specific type of data objects that this exporter service can export.
+	/// The default implementation returns a nullptr to indicate that the exporter is not restricted to
+	/// a specfic class of data objects. Subclasses should override this behavior.
+	virtual const DataObject::OOMetaClass* exportableDataObjectClass() const { return nullptr; }
 
 	/// \brief Sets the name of the output file that should be written by this exporter.
 	virtual void setOutputFilename(const QString& filename);
 	
-	/// \brief Exports the scene objects to the output file(s).
+	/// \brief Exports the scene data to the output file(s).
 	/// \return \c true if the output file has been successfully written;
 	///         \c false if the export operation has been canceled by the user.
 	/// \throws Util::Exception if the export operation has failed due to an error.
-	virtual bool exportNodes(TaskManager& taskManager);
+	virtual bool doExport(AsyncOperation&& operation);
 
 	/// Helper function that is called by sub-classes prior to file output in order to
 	/// activate the default "C" locale.
@@ -89,19 +101,25 @@ public:
 	/// \brief Indicates whether this file exporter can write more than one animation frame into a single output file.
 	virtual bool supportsMultiFrameFiles() const { return false; }
 
+	/// \brief Evaluates the pipeline whose data is to be exported.
+	PipelineFlowState getPipelineDataToBeExported(TimePoint time, AsyncOperation& operation, bool requestRenderState = false) const;
+
+	/// \brief Returns a string with the list of available data objects of the given type.
+	QString getAvailableDataObjectList(const PipelineFlowState& state, const DataObject::OOMetaClass& objectType) const;
+
 protected:
 
 	/// Initializes the object.
 	FileExporter(DataSet* dataset);
 
 	/// \brief This is called once for every output file to be written and before exportFrame() is called.
-	virtual bool openOutputFile(const QString& filePath, int numberOfFrames) = 0;
+	virtual bool openOutputFile(const QString& filePath, int numberOfFrames, AsyncOperation& operation) = 0;
 
 	/// \brief This is called once for every output file written after exportFrame() has been called.
 	virtual void closeOutputFile(bool exportCompleted) = 0;
 
 	/// \brief Exports a single animation frame to the current output file.
-	virtual bool exportFrame(int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager);
+	virtual bool exportFrame(int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation);
 
 private:
 
@@ -129,8 +147,11 @@ private:
 	/// Controls the desired precision with which floating-point numbers are written if the format is text-based.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(int, floatOutputPrecision, setFloatOutputPrecision);
 
-	/// Holds the scene objects to be exported.
-	QVector<OORef<SceneNode>> _nodesToExport;
+	/// The scene node to be exported.
+	DECLARE_MODIFIABLE_REFERENCE_FIELD_FLAGS(SceneNode, nodeToExport, setNodeToExport, PROPERTY_FIELD_NO_SUB_ANIM);
+
+	/// The specific data object from the pipeline output to be exported.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(DataObjectReference, dataObjectToExport, setDataObjectToExport);
 };
 
 OVITO_END_INLINE_NAMESPACE

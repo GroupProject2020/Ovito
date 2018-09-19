@@ -1,5 +1,6 @@
 from ovito.modifiers import CalculateDisplacementsModifier
 
-mod = CalculateDisplacementsModifier()
-mod.vis.enabled = True
-mod.vis.color = (0,0,0)
+############## Snippet code starts here ###################
+modifier = CalculateDisplacementsModifier()
+modifier.vis.enabled = True
+modifier.vis.color = (0.8, 0.0, 0.5)

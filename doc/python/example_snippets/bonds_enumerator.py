@@ -11,11 +11,11 @@ pipeline.modifiers.append(ComputePropertyModifier(operate_on='bonds', output_pro
 # Obtain pipeline results.
 data = pipeline.compute()
 positions = data.particles['Position']  # array with atomic positions
-bond_topology = data.bonds['Topology']  # array with bond topology
-bond_lengths = data.bonds['Length']     # array with bond lengths
+bond_topology = data.particles.bonds['Topology']  # array with bond topology
+bond_lengths = data.particles.bonds['Length']     # array with bond lengths
 
 # Create bonds enumerator object.
-bonds_enum = BondsEnumerator(data.bonds)
+bonds_enum = BondsEnumerator(data.particles.bonds)
 
 # Loop over atoms.
 for particle_index in range(data.particles.count):
@@ -25,7 +25,7 @@ for particle_index in range(data.particles.count):
         a = bond_topology[bond_index, 0]
         b = bond_topology[bond_index, 1]
         
-        # Bond orientations can be arbitrary (a->b or b->a):
+        # Bond directions can be arbitrary (a->b or b->a):
         assert(a == particle_index or b == particle_index)
         
         # Obtain the length of the bond from the 'Length' bond property:

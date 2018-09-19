@@ -23,7 +23,7 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <plugins/stdobj/properties/PropertyStorage.h>
+#include <plugins/particles/objects/ParticlesObject.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
 #include <core/dataset/io/FileExporter.h>
 #include <core/utilities/io/CompressedTextWriter.h>
@@ -31,7 +31,7 @@
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Export)
 
 /**
- * \brief Abstract base class for export services that write the particles to a file.
+ * \brief Abstract base class for export services that write particle datasets to an output file.
  */
 class OVITO_PARTICLES_EXPORT ParticleExporter : public FileExporter
 {
@@ -42,10 +42,12 @@ public:
 
 	/// \brief Evaluates the pipeline of an PipelineSceneNode and makes sure that the data to be
 	///        exported contains particles and throws an exception if not.
-	bool getParticleData(SceneNode* sceneNode, TimePoint time, PipelineFlowState& state, TaskManager& taskManager);
+	PipelineFlowState getParticleData(TimePoint time, AsyncOperation& operation) const;
 
-	/// \brief Selects the nodes from the scene to be exported by this exporter if no specific set of nodes was provided.
-	virtual void selectStandardOutputData() override; 
+	/// \brief Returns the type of data objects that this exporter service can export.
+	virtual const DataObject::OOMetaClass* exportableDataObjectClass() const override {
+		return &ParticlesObject::OOClass();
+	}
 
 protected:
 
@@ -53,7 +55,7 @@ protected:
 	ParticleExporter(DataSet* dataset);
 
 	/// \brief This is called once for every output file to be written and before exportFrame() is called.
-	virtual bool openOutputFile(const QString& filePath, int numberOfFrames) override;
+	virtual bool openOutputFile(const QString& filePath, int numberOfFrames, AsyncOperation& operation) override;
 
 	/// \brief This is called once for every output file written after exportFrame() has been called.
 	virtual void closeOutputFile(bool exportCompleted) override;
@@ -65,16 +67,16 @@ protected:
 	CompressedTextWriter& textStream() { return *_outputStream; }
 
 	/// \brief Exports a single animation frame to the current output file.
-	virtual bool exportFrame(int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager) override;
+	virtual bool exportFrame(int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation) override;
 
-	/// \brief Writes the data of one object at one animation frame to the current output file.
-	/// \param sceneNode The object to be exported.
+	/// \brief Writes the particle data of one animation frame to the current output file.
+	/// \param state The data to be exported.
 	/// \param frameNumber The animation frame to be written to the output file.
 	/// \param time The animation time to be written to the output file.
 	/// \param filePath The path of the output file.
 	/// \throws Exception on error.
 	/// \return \a false when the operation has been canceled by the user; \a true on success.
-	virtual bool exportObject(SceneNode* sceneNode, int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager) = 0;
+	virtual bool exportData(const PipelineFlowState& state, int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation) = 0;
 
 private:
 

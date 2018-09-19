@@ -29,6 +29,7 @@
 #include <plugins/stdobj/simcell/PeriodicDomainDataObject.h>
 #include <plugins/stdobj/simcell/SimulationCellVis.h>
 #include <plugins/stdobj/series/DataSeriesObject.h>
+#include <plugins/stdobj/io/DataSeriesExporter.h>
 #include <plugins/pyscript/binding/PythonBinding.h>
 #include <core/app/PluginManager.h>
 #include <core/dataset/DataSet.h>
@@ -87,14 +88,14 @@ PYBIND11_MODULE(StdObj, m)
 	auto SimulationCell_py = ovito_class<SimulationCellObject, DataObject>(m,
 			":Base class: :py:class:`ovito.data.DataObject`\n\n"
 			"Stores the geometric shape and the boundary conditions of the simulation cell. "
-			"A :py:class:`!SimulationCell` data object is typically part of a :py:class:`DataCollection` and can be retrieved through its :py:meth:`~DataCollection.expect` method: "
+			"A :py:class:`!SimulationCell` data object is typically part of a :py:class:`DataCollection` and can be retrieved through its :py:attr:`~DataCollection.cell` property: "
 			"\n\n"
 			".. literalinclude:: ../example_snippets/simulation_cell.py\n"
 			"   :lines: 1-8\n"
 			"\n\n"
 			"The simulation cell geometry is stored as a 3x4 matrix (with column-major ordering). The first three columns of the matrix represent the three cell vectors "
 			"and the last column is the position of the cell's origin. For two-dimensional datasets, the :py:attr:`is2D` flag ist set. "
-			"In this case the third cell vector and the z-coordinate of the cell origin are ignored by OVITO. "
+			"In this case the third cell vector and the z-coordinate of the cell origin are ignored by OVITO in many computations. "
 			"\n\n"
 			".. literalinclude:: ../example_snippets/simulation_cell.py\n"
 			"   :lines: 10-17\n"
@@ -105,9 +106,9 @@ PYBIND11_MODULE(StdObj, m)
 			".. literalinclude:: ../example_snippets/simulation_cell.py\n"
 			"   :lines: 19-21\n"
 			"\n\n"
-			"A :py:class:`!SimulationCell` instance are always associated with a corresponding :py:class:`~ovito.vis.SimulationCellVis`, "
-			"which controls the visual appearance of the simulation box. It can be accessed through "
-			"the :py:attr:`~DataObject.vis` attribute inherited from :py:class:`~ovito.data.DataObject`. "
+			"A :py:class:`!SimulationCell` instance are always associated with a corresponding :py:class:`~ovito.vis.SimulationCellVis` "
+			"controlling the visual appearance of the simulation box. It can be accessed through "
+			"the :py:attr:`~DataObject.vis` attribute inherited from the :py:class:`~ovito.data.DataObject` base class. "
 			"\n\n"
 			".. literalinclude:: ../example_snippets/simulation_cell.py\n"
 			"   :lines: 23-\n"
@@ -424,6 +425,9 @@ PYBIND11_MODULE(StdObj, m)
 			"\n\n",
 			// Python class name:
 			"DataSeries")
+
+		.def_property_readonly("x", [](const DataSeriesObject& series) { return series.getProperty(DataSeriesObject::XProperty); })
+		.def_property_readonly("y", [](const DataSeriesObject& series) { return series.getProperty(DataSeriesObject::YProperty); })
 	;
 	createDataPropertyAccessors(DataSeries_py, "title", &DataSeriesObject::title, &DataSeriesObject::setTitle,
 		"The title of the data series, which is used in the user interface");
@@ -434,6 +438,9 @@ PYBIND11_MODULE(StdObj, m)
 		.value("User", DataSeriesObject::UserProperty)
 		.value("X", DataSeriesObject::XProperty)
 		.value("Y", DataSeriesObject::YProperty)
+	;
+
+	ovito_class<DataSeriesExporter, FileExporter>{m}
 	;
 }
 
@@ -504,24 +511,30 @@ PropertyReference convertPythonPropertyReference(py::object src, PropertyContain
 		return PropertyReference(propertyClass, type, component);
 }
 
-/// Helper function that generates a getter function for the 'operate_on' field of a GenericPropertyModifier subclass
-py::cpp_function modifierPropertyClassGetter()
+/// Helper function that generates a getter function for the 'operate_on' field of a modifier.
+py::cpp_function modifierPropertyContainerGetter(const PropertyFieldDescriptor& propertyField)
 {
-	return [](const GenericPropertyModifier& mod) {
+	OVITO_ASSERT(!propertyField.isReferenceField());
+	OVITO_ASSERT(propertyField.definingClass()->isDerivedFrom(Modifier::OOClass()));
+	return [&](const Modifier& mod) {
 		QString refStr;
-		if(mod.subject()) {
-			refStr = mod.subject().dataClass()->pythonName();
-			if(mod.subject().dataPath().isEmpty() == false)
-				refStr += QChar(':') + mod.subject().dataPath();
+		QVariant val = mod.getPropertyFieldValue(propertyField);
+		OVITO_ASSERT_MSG(val.isValid() && val.canConvert<PropertyContainerReference>(), "modifierPropertyContainerGetter()", QString("The property field of object class %1 is not of type <PropertyContainerReference>.").arg(mod.metaObject()->className()).toLocal8Bit().constData());
+		if(PropertyContainerReference propertyContainerRef = val.value<PropertyContainerReference>()) {
+			refStr = propertyContainerRef.dataClass()->pythonName();
+			if(propertyContainerRef.dataPath().isEmpty() == false)
+				refStr += QChar(':') + propertyContainerRef.dataPath();
 		}
 		return refStr;
 	};
 }
 
-/// Helper function that generates a setter function for the 'operate_on' field of a GenericPropertyModifier subclass.
-py::cpp_function modifierPropertyClassSetter()
+/// Helper function that generates a setter function for the 'operate_on' field of a modifier.
+py::cpp_function modifierPropertyContainerSetter(const PropertyFieldDescriptor& propertyField)
 {
-	return [](GenericPropertyModifier& mod, const QString& refStr) {
+	OVITO_ASSERT(!propertyField.isReferenceField());
+	OVITO_ASSERT(propertyField.definingClass()->isDerivedFrom(Modifier::OOClass()));
+	return [&](Modifier& mod, const QString& refStr) {
 		// First, parse the input string into a property container class
 		// and a data object path.
 		QStringRef dataClassStr, dataPathStr;
@@ -533,13 +546,19 @@ py::cpp_function modifierPropertyClassSetter()
 			dataClassStr = QStringRef(&refStr, 0, separatorPos);
 			dataPathStr = QStringRef(&refStr, separatorPos+1, refStr.length() - separatorPos - 1);
 		}
+		// Get the currently selected property container from the modifier.
+		QVariant val = mod.getPropertyFieldValue(propertyField);
+		OVITO_ASSERT_MSG(val.isValid() && val.canConvert<PropertyContainerReference>(), "modifierPropertyContainerSetter()", QString("The property field of object class %1 is not of type <PropertyContainerReference>.").arg(mod.metaObject()->className()).toLocal8Bit().constData());
+		PropertyContainerReference propertyContainerRef = val.value<PropertyContainerReference>();
+
 		// Check if values are the same as the current subject.
-		if(mod.subject() && mod.subject().dataClass()->pythonName() == dataClassStr && mod.subject().dataPath() == dataPathStr)
+		if(propertyContainerRef && propertyContainerRef.dataClass()->pythonName() == dataClassStr && propertyContainerRef.dataPath() == dataPathStr)
 			return;
+
 		// Look up the property container class.
 		for(PropertyContainerClassPtr containerClass : PluginManager::instance().metaclassMembers<PropertyContainer>()) {
 			if(containerClass->pythonName() == dataClassStr) {
-				mod.setSubject(PropertyContainerReference(containerClass, dataPathStr.toString()));
+				mod.setPropertyFieldValue(propertyField, QVariant::fromValue(PropertyContainerReference(containerClass, dataPathStr.toString())));
 				return;
 			}
 		}
@@ -549,7 +568,7 @@ py::cpp_function modifierPropertyClassSetter()
 		for(PropertyContainerClassPtr containerClass : PluginManager::instance().metaclassMembers<PropertyContainer>()) {
 			containerClassNames.push_back(QString("'%1'").arg(containerClass->pythonName()));
 		}
-		mod.throwException(GenericPropertyModifier::tr("'%1' is not a valid element type this modifier can operate on. Supported types are: (%2)")
+		mod.throwException(Modifier::tr("'%1' is not a valid element type this modifier can operate on. Supported types are: (%2)")
 				.arg(dataClassStr.toString()).arg(containerClassNames.join(QStringLiteral(", "))));
 	};
 }

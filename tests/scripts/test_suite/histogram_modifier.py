@@ -1,11 +1,11 @@
-from ovito.io import *
-from ovito.modifiers import *
+from ovito.io import import_file
+from ovito.modifiers import HistogramModifier
 import numpy
 
-node = import_file("../../files/NetCDF/sheared_aSi.nc")
+pipeline = import_file("../../files/NetCDF/sheared_aSi.nc")
 
 modifier = HistogramModifier()
-node.modifiers.append(modifier)
+pipeline.modifiers.append(modifier)
 
 print("Parameter defaults:")
 
@@ -33,14 +33,14 @@ modifier.source_mode = HistogramModifier.SourceMode.Particles
 print("  property: {}".format(modifier.property))
 modifier.property = "Position.X"
 
-node.compute()
+data = pipeline.compute()
 
 print("Output:")
 
-histogram = modifier.histogram
-print(histogram)
-assert(len(histogram) == modifier.bin_count)
-assert(histogram[1,0] - histogram[0,0] == (modifier.xrange_end - modifier.xrange_start) / modifier.bin_count)
+histogram = data.series["histogram[Position.X]"]
+assert(histogram.count == modifier.bin_count)
+assert(histogram.interval_start == modifier.xrange_start)
+assert(histogram.interval_end == modifier.xrange_end)
 
 print("  xrange_start: {}".format(modifier.xrange_start))
 print("  xrange_end: {}".format(modifier.xrange_end))

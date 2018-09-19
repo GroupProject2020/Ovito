@@ -177,7 +177,7 @@ void ConstructSurfaceModifier::ConstructSurfaceEngine::emitResults(TimePoint tim
 	ConstructSurfaceModifier* modifier = static_object_cast<ConstructSurfaceModifier>(modApp->modifier());
 
 	// Create the output data object.
-	SurfaceMesh* meshObj = state.createObject<SurfaceMesh>(modApp);
+	SurfaceMesh* meshObj = state.createObject<SurfaceMesh>(QStringLiteral("surface"), modApp, tr("Surface"));
 	meshObj->setStorage(mesh());
 	meshObj->setIsCompletelySolid(isCompletelySolid());
 	meshObj->setDomain(state.getObject<SimulationCellObject>());

@@ -73,10 +73,13 @@ Future<AsynchronousModifier::ComputeEnginePtr> CoordinationPolyhedraModifier::cr
 	const PropertyObject* bondPeriodicImagesProperty = particles->bonds()->getProperty(BondsObject::PeriodicImageProperty);
 	const SimulationCellObject* simCell = input.expectObject<SimulationCellObject>();
 
+	if(!selectionProperty)
+		throwException(tr("Please select particles first for which coordination polyhedra should be generated."));
+
 	// Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
 	return std::make_shared<ComputePolyhedraEngine>(
 			posProperty->storage(),
-			selectionProperty ? selectionProperty->storage() : nullptr,
+			selectionProperty->storage(),
 			typeProperty ? typeProperty->storage() : nullptr, 
 			topologyProperty->storage(), 
 			bondPeriodicImagesProperty ? bondPeriodicImagesProperty->storage() : nullptr, 
@@ -88,9 +91,6 @@ Future<AsynchronousModifier::ComputeEnginePtr> CoordinationPolyhedraModifier::cr
 ******************************************************************************/
 void CoordinationPolyhedraModifier::ComputePolyhedraEngine::perform()
 {
-	if(!_selection)
-		throw Exception(tr("Please select particles first for which coordination polyhedra should be generated."));
-
 	task()->setProgressText(tr("Generating coordination polyhedra"));
 
 	// Determine number of selected particles. 
@@ -311,7 +311,7 @@ void CoordinationPolyhedraModifier::ComputePolyhedraEngine::emitResults(TimePoin
 	CoordinationPolyhedraModifier* modifier = static_object_cast<CoordinationPolyhedraModifier>(modApp->modifier());
 
 	// Create the output data object.
-	SurfaceMesh* meshObj = state.createObject<SurfaceMesh>(QStringLiteral("coordination_polyhedra"), modApp);
+	SurfaceMesh* meshObj = state.createObject<SurfaceMesh>(QStringLiteral("coord-polyhedra"), modApp, tr("Coordination polyhedra"));
 	meshObj->setStorage(mesh());
 	meshObj->setDomain(state.getObject<SimulationCellObject>());
 	meshObj->setVisElement(modifier->surfaceMeshVis());

@@ -48,7 +48,7 @@ def _DataCollection_attributes(self):
     The :py:func:`ovito.io.export_file` function supports writing attribute values to a text
     file, possibly as functions of time::
     
-        export_file(pipeline, "data.txt", "txt", 
+        export_file(pipeline, "data.txt", "txt/attr", 
             columns = ["Timestep", "ClusterAnalysis.cluster_count"], 
             multiple_frames = True)
             
@@ -199,3 +199,6 @@ def _DataCollection_replace(self, oldobj, newobj):
     if index >= 0:
         self.objects[index] = newobj
 DataCollection.replace = _DataCollection_replace
+
+# Only here for backward compatibility with OVITO 2.9.0:
+DataCollection.copy_if_needed = lambda self, obj: self.make_mutable(obj)

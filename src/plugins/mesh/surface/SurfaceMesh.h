@@ -46,10 +46,14 @@ class OVITO_MESH_EXPORT SurfaceMesh : public PeriodicDomainDataObject
 public:
 
 	/// \brief Constructor that creates an empty SurfaceMesh object.
-	Q_INVOKABLE SurfaceMesh(DataSet* dataset);
+	Q_INVOKABLE SurfaceMesh(DataSet* dataset, const QString& title = QString());
 
 	/// Returns the title of this object.
-	virtual QString objectTitle() const override { return tr("Surface mesh"); }
+	virtual QString objectTitle() const override { 
+		if(!title().isEmpty()) return title();
+		else if(!identifier().isEmpty()) return identifier();
+		else return tr("Surface mesh");
+	}
 
 	/// Returns the data encapsulated by this object after making sure it is not shared with any other owners.
 	const SurfaceMeshPtr& modifiableStorage();
@@ -83,6 +87,9 @@ protected:
 	static void smoothMeshIteration(HalfEdgeMesh<>& mesh, FloatType prefactor, const SimulationCell& cell);
 
 private:
+
+	/// The title of the mesh, which is shown in the user interface.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, title, setTitle);
 
 	/// Indicates that the entire simulation cell is part of the solid region.
 	DECLARE_RUNTIME_PROPERTY_FIELD(SurfaceMeshPtr, storage, setStorage);

@@ -126,7 +126,7 @@ supports the ``txt`` output format::
    modifier = ExpressionSelectionModifier(expression = "PotentialEnergy < -3.9")
    pipeline.modifiers.append(modifier)
 
-   export_file(pipeline, "potenergy.txt", "txt", multiple_frames = True,
+   export_file(pipeline, "potenergy.txt", "txt/attr", multiple_frames = True,
             columns = ["Frame", "SelectExpression.num_selected"])
 
 The ``multiple_frames`` keyword arguments tells the :py:func:`~ovito.io.export_file` function to evaluate the pipeline for all

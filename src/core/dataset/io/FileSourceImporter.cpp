@@ -271,18 +271,18 @@ Future<QVector<FileSourceImporter::Frame>> FileSourceImporter::discoverFrames(co
 		// Check if filename is a wildcard pattern.
 		// If yes, find all matching files and scan each one of them.
 		if(isWildcardPattern(sourceUrl)) {
-			return findWildcardMatches(sourceUrl, dataset()->container()->taskManager())
+			return findWildcardMatches(sourceUrl, dataset())
 				.then(executor(), [this](const std::vector<QUrl>& fileList) {
 					return discoverFrames(fileList);
 				});
 		}
 
 		// Fetch file.
-		return Application::instance()->fileManager()->fetchUrl(dataset()->container()->taskManager(), sourceUrl)
+		return Application::instance()->fileManager()->fetchUrl(dataset()->taskManager(), sourceUrl)
 			.then(executor(), [this, sourceUrl](const QString& filename) {
 				// Scan file.
 				if(FrameFinderPtr frameFinder = createFrameFinder(sourceUrl, filename))
-					return dataset()->container()->taskManager().runTaskAsync(frameFinder);
+					return dataset()->taskManager().runTaskAsync(frameFinder);
 				else
 					return Future<QVector<Frame>>::createImmediateEmplace();
 			});
@@ -290,7 +290,7 @@ Future<QVector<FileSourceImporter::Frame>> FileSourceImporter::discoverFrames(co
 	else {
 		if(isWildcardPattern(sourceUrl)) {
 			// Find all files matching the file pattern.
-			return findWildcardMatches(sourceUrl, dataset()->container()->taskManager())
+			return findWildcardMatches(sourceUrl, dataset())
 				.then(executor(), [](const std::vector<QUrl>& fileList) {
 					// Turn the file list into a frame list.
 					QVector<Frame> frames;
@@ -349,15 +349,13 @@ void FileSourceImporter::FrameFinder::discoverFramesInFile(QFile& file, const QU
 /******************************************************************************
 * Returns the list of files that match the given wildcard pattern.
 ******************************************************************************/
-Future<std::vector<QUrl>> FileSourceImporter::findWildcardMatches(const QUrl& sourceUrl, TaskManager& taskManager)
+Future<std::vector<QUrl>> FileSourceImporter::findWildcardMatches(const QUrl& sourceUrl, DataSet* dataset)
 {
-	std::vector<QUrl> urls;
-
 	// Determine whether the filename contains a wildcard character.
 	if(!isWildcardPattern(sourceUrl)) {
 
 		// It's not a wildcard pattern. Register just a single frame.
-		urls.push_back(sourceUrl);
+		return std::vector<QUrl>{ sourceUrl };
 	}
 	else {
 		QFileInfo fileInfo(sourceUrl.path());
@@ -365,18 +363,19 @@ Future<std::vector<QUrl>> FileSourceImporter::findWildcardMatches(const QUrl& so
 
 		QDir directory;
 		bool isLocalPath = false;
+		Future<QStringList> entriesFuture;
 
 		// Scan the directory for files matching the wildcard pattern.
-		QStringList entries;
 		if(sourceUrl.isLocalFile()) {
 
+			QStringList entries;
 			isLocalPath = true;
 			directory = QFileInfo(sourceUrl.toLocalFile()).dir();
 			for(const QString& filename : directory.entryList(QDir::Files|QDir::NoDotAndDotDot|QDir::Hidden, QDir::Name)) {
 				if(matchesWildcardPattern(pattern, filename))
 					entries << filename;
 			}
-
+			entriesFuture = Future<QStringList>::createImmediate(std::move(entries));
 		}
 		else {
 
@@ -384,60 +383,60 @@ Future<std::vector<QUrl>> FileSourceImporter::findWildcardMatches(const QUrl& so
 			QUrl directoryUrl = sourceUrl;
 			directoryUrl.setPath(fileInfo.path());
 
-			try {
-				// Retrieve list of files in remote directory.
-				Future<QStringList> fileListFuture = Application::instance()->fileManager()->listDirectoryContents(taskManager, directoryUrl);
-				if(!taskManager.waitForTask(fileListFuture))
-					return Future<std::vector<QUrl>>::createCanceled();
+			// Retrieve list of files in remote directory.
+			Future<QStringList> remoteFileListFuture = Application::instance()->fileManager()->listDirectoryContents(dataset->taskManager(), directoryUrl);
 
-				// Filter file names.
-				for(const QString& filename : fileListFuture.result()) {
+			// Filter file names.
+			entriesFuture = remoteFileListFuture.then([pattern](QStringList&& remoteFileList) {
+				QStringList entries;
+				for(const QString& filename : remoteFileList) {
 					if(matchesWildcardPattern(pattern, filename))
 						entries << filename;
 				}
-			}
-			catch(Exception& ex) {
-				if(ex.context() == nullptr) ex.setContext(&taskManager.datasetContainer());
-				throw;
-			}
+				return entries;
+			});
 		}
 
-		// Sorted the files.
-		// A file called "abc9.xyz" must come before a file named "abc10.xyz", which is not
-		// the default lexicographic ordering.
-		QMap<QString, QString> sortedFilenames;
-		for(const QString& oldName : entries) {
-			// Generate a new name from the original filename that yields the correct ordering.
-			QString newName;
-			QString number;
-			for(QChar c : oldName) {
-				if(!c.isDigit()) {
-					if(!number.isEmpty()) {
-						newName.append(number.rightJustified(10, '0'));
-						number.clear();
+		// Sort the file list.
+		return entriesFuture.then([isLocalPath, sourceUrl, directory](QStringList&& entries) {
+
+			// A file called "abc9.xyz" must come before a file named "abc10.xyz", which is not
+			// the default lexicographic ordering.
+			QMap<QString, QString> sortedFilenames;
+			for(const QString& oldName : entries) {
+				// Generate a new name from the original filename that yields the correct ordering.
+				QString newName;
+				QString number;
+				for(QChar c : oldName) {
+					if(!c.isDigit()) {
+						if(!number.isEmpty()) {
+							newName.append(number.rightJustified(10, '0'));
+							number.clear();
+						}
+						newName.append(c);
 					}
-					newName.append(c);
+					else number.append(c);
 				}
-				else number.append(c);
+				if(!number.isEmpty()) newName.append(number.rightJustified(10, '0'));
+				sortedFilenames[newName] = oldName;
 			}
-			if(!number.isEmpty()) newName.append(number.rightJustified(10, '0'));
-			sortedFilenames[newName] = oldName;
-		}
 
-		// Generate final list of frames.
-		urls.reserve(sortedFilenames.size());
-		for(const auto& iter : sortedFilenames) {
-			QFileInfo fileInfo(directory, iter);
-			QUrl url = sourceUrl;
-			if(isLocalPath)
-				url = QUrl::fromLocalFile(fileInfo.filePath());
-			else
-				url.setPath(fileInfo.filePath());
-			urls.push_back(url);
-		}
+			// Generate final list of frames.
+			std::vector<QUrl> urls;
+			urls.reserve(sortedFilenames.size());
+			for(const auto& iter : sortedFilenames) {
+				QFileInfo fileInfo(directory, iter);
+				QUrl url = sourceUrl;
+				if(isLocalPath)
+					url = QUrl::fromLocalFile(fileInfo.filePath());
+				else
+					url.setPath(fileInfo.filePath());
+				urls.push_back(url);
+			}
+
+			return urls;
+		});
 	}
-
-	return urls;
 }
 
 /******************************************************************************

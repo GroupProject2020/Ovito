@@ -123,7 +123,7 @@ public:
 	/// \param time The time at which the bounding box should be computed.
 	/// \return An axis-aligned box in the world coordinate system that contains
 	///         everything to be rendered.
-	Box3 computeSceneBoundingBox(TimePoint time, const ViewProjectionParameters& params, Viewport* vp, const PromiseBase& promise);
+	Box3 computeSceneBoundingBox(TimePoint time, const ViewProjectionParameters& params, Viewport* vp, AsyncOperation& operation);
 
 	/// This method is called just before renderFrame() is called.
 	/// Sets the view projection parameters, the animation frame to render,
@@ -136,7 +136,7 @@ public:
 
 	/// Renders the current animation frame.
 	/// Returns false if the operation has been canceled by the user.
-	virtual bool renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, const PromiseBase& promise) = 0;
+	virtual bool renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, AsyncOperation& operation) = 0;
 
 	/// This method is called after renderFrame() has been called.
 	virtual void endFrame(bool renderSuccessful) {}
@@ -223,10 +223,10 @@ protected:
 	SceneRenderer(DataSet* dataset);
 
 	/// \brief Renders all nodes in the scene.
-	virtual bool renderScene(const PromiseBase& promise);
+	virtual bool renderScene(AsyncOperation& operation);
 
 	/// \brief Render a scene node (and all its children).
-	virtual bool renderNode(SceneNode* node, const PromiseBase& promise);
+	virtual bool renderNode(SceneNode* node, AsyncOperation& operation);
 
 	/// \brief This virtual method is responsible for rendering additional content that is only
 	///       visible in the interactive viewports.

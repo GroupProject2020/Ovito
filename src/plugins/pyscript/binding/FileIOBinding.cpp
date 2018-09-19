@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -26,6 +26,7 @@
 #include <core/dataset/io/FileSourceImporter.h>
 #include <core/dataset/io/FileSource.h>
 #include <core/dataset/io/AttributeFileExporter.h>
+#include <core/dataset/DataSetContainer.h>
 #include <core/utilities/io/FileManager.h>
 #include <core/utilities/concurrent/TaskManager.h>
 #include "PythonBinding.h"
@@ -39,7 +40,15 @@ void defineIOSubmodule(py::module m)
 	ovito_abstract_class<FileImporter, RefTarget>{m}
 		// These are needed by implementation of import_file():
 		.def("import_file", &FileImporter::importFile)
-		.def_static("autodetect_format", static_cast<OORef<FileImporter> (*)(DataSet*, const QUrl&)>(&FileImporter::autodetectFileFormat))
+		.def_static("autodetect_format", [](DataSet& dataset, const QUrl& url) {
+			auto future = FileImporter::autodetectFileFormat(&dataset, url);
+			// Block until detection is complete and result is available.
+			if(!ScriptEngine::getCurrentDataset()->taskManager().waitForTask(future)) {
+				PyErr_SetString(PyExc_KeyboardInterrupt, "Operation has been canceled by the user.");
+				throw py::error_already_set();
+			}
+			return future.result();
+		})
 	;
 
 	// This is needed by implementation of import_file():
@@ -63,9 +72,21 @@ void defineIOSubmodule(py::module m)
 		.def_property("precision", &FileExporter::floatOutputPrecision, &FileExporter::setFloatOutputPrecision)
 		
 		// These are required by implementation of export_file():
-		.def("set_pipeline", [](FileExporter& exporter, SceneNode* node) { exporter.setOutputData({ node }); })
-		.def("export_nodes", &FileExporter::exportNodes)
-		.def("select_standard_output_data", &FileExporter::selectStandardOutputData)		
+		.def_property("pipeline", &FileExporter::nodeToExport, &FileExporter::setNodeToExport)
+		.def_property("key",
+			[](const FileExporter& exporter) {
+				return exporter.dataObjectToExport().dataPath();
+			},
+			[](FileExporter& exporter, const QString& path) {
+				exporter.setDataObjectToExport(DataObjectReference(&DataObject::OOClass(), path));
+			})
+		.def("do_export", [](FileExporter& exporter) {
+				if(!exporter.doExport(ScriptEngine::getCurrentDataset()->taskManager())) {
+					PyErr_SetString(PyExc_KeyboardInterrupt, "Operation has been canceled by the user.");
+					throw py::error_already_set();
+				}
+			})
+		.def("select_default_exportable_data", &FileExporter::selectDefaultExportableData)		
 	;
 
 	ovito_class<AttributeFileExporter, FileExporter>(m)
@@ -102,12 +123,12 @@ void defineIOSubmodule(py::module m)
 		// Required by the implementation of FileSource.load():
 		.def("wait_until_ready", [](FileSource& fs, TimePoint time) {
 			SharedFuture<PipelineFlowState> future = fs.evaluate(time);
-			return ScriptEngine::activeTaskManager().waitForTask(future);
+			return ScriptEngine::getCurrentDataset()->taskManager().waitForTask(future);
 		})
 		// Required by the implementations of import_file() and FileSource.load():
 		.def("wait_for_frames_list", [](FileSource& fs) {
 			auto future = fs.requestFrameList(false, false);
-			return ScriptEngine::activeTaskManager().waitForTask(future);
+			return ScriptEngine::getCurrentDataset()->taskManager().waitForTask(future);
 		})
 		.def_property_readonly("num_frames", &FileSource::numberOfFrames,
 				"This read-only attribute reports the number of frames found in the input file or sequence of input files. "
@@ -121,10 +142,10 @@ void defineIOSubmodule(py::module m)
 			"This field exposes the internal :py:class:`~ovito.data.DataCollection` of the source object holding "
 			"the master data copy currently loaded from the input file. ")
 		
-		// For backward compatibility with OVITO 2.9:
+		// For backward compatibility with OVITO 2.9.0:
 		// Returns the zero-based frame index that is currently loaded and kept in memory by the FileSource.
 		.def_property_readonly("loaded_frame", &FileSource::storedFrameIndex)
-		// For backward compatibility with OVITO 2.9:
+		// For backward compatibility with OVITO 2.9.0:
 		.def_property_readonly("loaded_file", [](FileSource& fs) -> QUrl {
 					// Return the path or URL of the data file that is currently loaded and kept in memory by the FileSource. 
 					if(fs.storedFrameIndex() < 0 || fs.storedFrameIndex() >= fs.frames().size()) return QUrl();

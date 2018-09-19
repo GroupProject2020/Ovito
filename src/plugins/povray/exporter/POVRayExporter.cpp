@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -41,22 +41,10 @@ POVRayExporter::POVRayExporter(DataSet* dataset) : FileExporter(dataset)
 }
 
 /******************************************************************************
-* Selects the nodes from the scene to be exported by this exporter if 
-* no specific set of nodes was provided.
-******************************************************************************/
-void POVRayExporter::selectStandardOutputData()
-{
-	// Export the whole scene (i.e. its root node) by default.
-	QVector<SceneNode*> nodes;
-	nodes.push_back(dataset()->sceneRoot());
-	setOutputData(nodes);
-}
-
-/******************************************************************************
  * This is called once for every output file to be written and before
  * exportData() is called.
  *****************************************************************************/
-bool POVRayExporter::openOutputFile(const QString& filePath, int numberOfFrames)
+bool POVRayExporter::openOutputFile(const QString& filePath, int numberOfFrames, AsyncOperation& operation)
 {
 	OVITO_ASSERT(!_outputFile.isOpen());
 	OVITO_ASSERT(!_renderer);
@@ -100,36 +88,29 @@ void POVRayExporter::closeOutputFile(bool exportCompleted)
 /******************************************************************************
  * Exports a single animation frame to the current output file.
  *****************************************************************************/
-bool POVRayExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager)
+bool POVRayExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
 {
-	if(!FileExporter::exportFrame(frameNumber, time, filePath, taskManager))
-		return false;
-
 	Viewport* vp = dataset()->viewportConfig()->activeViewport();
 	if(!vp) throwException(tr("POV-Ray exporter requires an active viewport."));
 
-	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
-	exportTask.setProgressText(tr("Writing data to POV-Ray file"));
+	operation.setProgressText(tr("Writing data to POV-Ray file"));
 
 	OVITO_ASSERT(_renderer);
 	// Use a dummy bounding box to set up view projection.
 	Box3 boundingBox(Point3::Origin(), 1);
 	ViewProjectionParameters projParams = vp->computeProjectionParameters(time, _renderer->renderSettings()->outputImageAspectRatio(), boundingBox);
 	try {
-		_renderer->_exportTask = exportTask.sharedState();
+		_renderer->_exportOperation = operation.sharedState();
 		_renderer->beginFrame(time, projParams, vp);
-		for(SceneNode* node : outputData()) {
-			if(!_renderer->renderNode(node, exportTask))
-				break;
-		}
-		_renderer->endFrame(!exportTask.isCanceled());
+		if(nodeToExport())
+			_renderer->renderNode(nodeToExport(), operation);
 	}
 	catch(...) {
 		_renderer->endFrame(false);
 		throw;
 	}
-
-	return !exportTask.isCanceled();
+	_renderer->endFrame(!operation.isCanceled());
+	return !operation.isCanceled();
 }
 
 OVITO_END_INLINE_NAMESPACE

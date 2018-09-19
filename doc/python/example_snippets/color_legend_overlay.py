@@ -5,7 +5,7 @@ from PyQt5.QtCore import Qt
 
 # Prepare a data pipeline containing a ColorCodingModifier:
 pipeline = import_file("input/simulation.dump")
-color_mod = ColorCodingModifier(particle_property = 'peatom')
+color_mod = ColorCodingModifier(property = 'peatom')
 pipeline.modifiers.append(color_mod)
 pipeline.add_to_scene()
 
@@ -19,6 +19,6 @@ overlay = ColorLegendOverlay(
     font_size = 0.12,
     format_string = '%.2f eV')
 
-# Attach the overlay to a Viewport that is going to be used for rendering:
+# Attach the overlay to a Viewport, which is going to be used for image rendering:
 viewport = Viewport(type = Viewport.Type.Top)
 viewport.overlays.append(overlay)

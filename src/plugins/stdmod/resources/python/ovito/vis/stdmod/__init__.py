@@ -1,5 +1,4 @@
 # Load dependencies
-import ovito.vis
 import ovito.vis.stdobj
 
 # Load the native code module

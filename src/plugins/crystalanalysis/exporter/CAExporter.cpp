@@ -39,33 +39,15 @@ IMPLEMENT_OVITO_CLASS(CAExporter);
 /******************************************************************************
 * Writes the particles of one animation frame to the current output file.
 ******************************************************************************/
-bool CAExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager)
+bool CAExporter::exportData(const PipelineFlowState& state, int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
 {
-	// Get particle data to be exported.
-	PipelineSceneNode* objectNode = dynamic_object_cast<PipelineSceneNode>(sceneNode);
-	if(!objectNode)
-		throwException(tr("The scene node to be exported is not an object node."));
-
-	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
-	exportTask.setProgressText(tr("Writing file %1").arg(filePath));
-	
-	// Evaluate pipeline of object node.
-	auto evalFuture = objectNode->evaluatePipeline(time);
-	if(!taskManager.waitForTask(evalFuture))
-		return false;
-	const PipelineFlowState& state = evalFuture.result();
-	if(state.isEmpty())
-		throwException(tr("The object to be exported does not contain any data."));
-
 	// Get simulation cell info.
-	const SimulationCellObject* simulationCell = state.getObject<SimulationCellObject>();
-	if(!simulationCell)
-		throwException(tr("Dataset to be exported contains no simulation cell. Cannot write CA file."));
+	const SimulationCellObject* simulationCell = state.expectObject<SimulationCellObject>();
 
 	// Get dislocation lines.
 	const DislocationNetworkObject* dislocationObj = state.getObject<DislocationNetworkObject>();
 
-	// Get defect/surface mesh.
+	// Get defect surface mesh.
 	const SurfaceMesh* defectMesh = meshExportEnabled() ? state.getObject<SurfaceMesh>() : nullptr;
 
 	// Get partition mesh.

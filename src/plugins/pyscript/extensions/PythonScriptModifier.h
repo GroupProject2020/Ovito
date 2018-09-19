@@ -104,9 +104,6 @@ private:
 
 	/// The modifier application in whose context the current script execution happens.
 	PythonScriptModifierApplication* _activeModApp = nullptr;
-
-	/// The namespace (scope) the script will be executed in.
-	py::object _mainNamespacePrototype;
 };
 
 /**

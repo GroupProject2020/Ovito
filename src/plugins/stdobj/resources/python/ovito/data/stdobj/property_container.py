@@ -4,12 +4,13 @@ try:
 except ImportError:
     # Python 2.x
     import collections
+import numpy
 
 # Load dependencies.
 import ovito
 
 # Load the native code module.
-from ovito.plugins.StdObj import PropertyContainer
+from ovito.plugins.StdObj import PropertyContainer, Property
 
 # Give the PropertyContainer class a dict-like interface for accessing properties by name:
 collections.Mapping.register(PropertyContainer)
@@ -27,7 +28,8 @@ PropertyContainer.__iter__ = _PropertyContainer__iter__
 def _PropertyContainer__getitem__(self, key):
     if key.endswith('_'):
         if not self.is_safe_to_modify:
-            raise ValueError("Requesting a mutable property from a property container that itself is not safe to modify is not allowed. Make sure you are working with a mutable version of the PropertyContainer.")
+            raise ValueError("Requesting a mutable version of a property is not possible for a container that itself is not mutable. "
+                            "Make sure you are working with a mutable version of the {} object.".format(self.__class__.__name__))
         request_mutable = True
         key = key[:-1]
     else:
@@ -38,7 +40,7 @@ def _PropertyContainer__getitem__(self, key):
                 return self.make_mutable(p)
             else:
                 return p
-    raise KeyError("Property container does not contain a property named '%s'." % str(key))
+    raise KeyError("{} data object does not contain the property '{}'.".format(self.__class__.__name__, str(key)))
 PropertyContainer.__getitem__ = _PropertyContainer__getitem__
 
 # Returns the property with the given name or the given default value if no such property exists in the container.

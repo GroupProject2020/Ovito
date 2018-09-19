@@ -44,7 +44,8 @@ public:
 
 	/// \brief Asks the object for the result of the data pipeline.
 	/// \param time Specifies at which animation time the pipeline should be evaluated.
-	virtual SharedFuture<PipelineFlowState> evaluate(TimePoint time) override;
+	/// \param breakOnError Tells the pipeline system to stop the evaluation as soon as a first error occurs.
+	virtual SharedFuture<PipelineFlowState> evaluate(TimePoint time, bool breakOnError = false) override;
 
 	/// \brief Returns the results of an immediate and preliminary evaluation of the data pipeline.
 	virtual PipelineFlowState evaluatePreliminary() override { return _pipelineCache.getStaleContents(); }
@@ -63,7 +64,8 @@ protected:
 
 	/// \brief Asks the object for the result of the data pipeline.
 	/// \param time Specifies at which animation time the pipeline should be evaluated.
-	virtual Future<PipelineFlowState> evaluateInternal(TimePoint time) = 0;
+	/// \param breakOnError Tells the pipeline system to stop the evaluation as soon as a first error occurs and throw an exception.
+	virtual Future<PipelineFlowState> evaluateInternal(TimePoint time, bool breakOnError) = 0;
 
 	/// \brief Decides whether a preliminary viewport update is performed after this pipeline object has been 
 	///        evaluated but before the rest of the pipeline is complete.

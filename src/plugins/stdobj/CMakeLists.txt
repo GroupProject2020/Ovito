@@ -34,6 +34,7 @@ SET(SourceFiles
 	properties/GenericPropertyModifier.cpp
 	properties/PropertyExpressionEvaluator.cpp
 	series/DataSeriesObject.cpp
+	io/DataSeriesExporter.cpp
 	util/ElementSelectionSet.cpp
 )
 
@@ -44,7 +45,7 @@ ENDIF()
 OVITO_STANDARD_PLUGIN(StdObj
 	SOURCES StdObj.cpp ${SourceFiles}
 	LIB_DEPENDENCIES muParser
-	OPTIONAL_PLUGIN_DEPENDENCIES PyScript	
+	OPTIONAL_PLUGIN_DEPENDENCIES PyScript
 	PYTHON_WRAPPERS "${CMAKE_CURRENT_SOURCE_DIR}/resources/python/"
 )
 

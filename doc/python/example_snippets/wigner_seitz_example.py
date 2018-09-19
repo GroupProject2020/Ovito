@@ -43,7 +43,7 @@ pipeline.modifiers.append(PythonScriptModifier(function = modify))
 
 # Let OVITO do the computation and export the number of identified 
 # antisites as a function of simulation time to a text file:
-export_file(pipeline, "output/antisites.txt", "txt", 
+export_file(pipeline, "output/antisites.txt", "txt/attr", 
     columns = ['Timestep', 'Antisite_count'],
     multiple_frames = True)
 

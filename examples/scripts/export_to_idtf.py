@@ -117,8 +117,8 @@ def export_node(node):
         export_simulation_cell(group_name, data.cell)
 
 # Loop over scene nodes.
-for i in range(len(ovito.dataset.scene_nodes)):
-    export_node(ovito.dataset.scene_nodes[i])
+for i in range(len(ovito.scene.scene_nodes)):
+    export_node(ovito.scene.scene_nodes[i])
     
 # Write node resources.
 

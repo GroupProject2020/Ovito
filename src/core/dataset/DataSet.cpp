@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -76,6 +76,14 @@ DataSet::~DataSet()
 	if(_pipelineEvaluationFuture.isValid()) {
 		_pipelineEvaluationFuture.cancelRequest();
 	}
+}
+
+/******************************************************************************
+* Returns the TaskManager responsible for this DataSet.
+******************************************************************************/
+TaskManager& DataSet::taskManager() const
+{
+	return container()->taskManager();
 }
 
 /******************************************************************************
@@ -242,7 +250,7 @@ SharedFuture<> DataSet::whenSceneReady()
 	}
 	
 	if(!_sceneReadyFuture.isValid()) {
-		_sceneReadyPromise = Promise<>::createSynchronous(nullptr, true, false);
+		_sceneReadyPromise = SignalPromise::create(true);
 		_sceneReadyFuture = _sceneReadyPromise.future();
 		_sceneReadyTime = animationSettings()->time();
 		makeSceneReady(false);
@@ -253,7 +261,7 @@ SharedFuture<> DataSet::whenSceneReady()
 }
 
 /******************************************************************************
-* Makes sure all data pipeline have been evaluated.
+* Requests the (re-)evaluation of all data pipelines in the current scene.
 ******************************************************************************/
 void DataSet::makeSceneReady(bool forceReevaluation)
 {
@@ -371,7 +379,7 @@ void DataSet::pipelineEvaluationFinished()
 * This is the high-level rendering function, which invokes the renderer to generate one or more
 * output images of the scene. All rendering parameters are specified in the RenderSettings object.
 ******************************************************************************/
-bool DataSet::renderScene(RenderSettings* settings, Viewport* viewport, FrameBuffer* frameBuffer, TaskManager& taskManager)
+bool DataSet::renderScene(RenderSettings* settings, Viewport* viewport, FrameBuffer* frameBuffer, AsyncOperation&& operation)
 {
 	OVITO_CHECK_OBJECT_POINTER(settings);
 	OVITO_CHECK_OBJECT_POINTER(viewport);
@@ -381,8 +389,7 @@ bool DataSet::renderScene(RenderSettings* settings, Viewport* viewport, FrameBuf
 	SceneRenderer* renderer = settings->renderer();
 	if(!renderer) throwException(tr("No rendering engine has been selected."));
 
-	Promise<> renderTask = Promise<>::createSynchronous(&taskManager, true, true);
-	renderTask.setProgressText(tr("Initializing renderer"));
+	operation.setProgressText(tr("Initializing renderer"));
 	try {
 
 		// Resize output frame buffer.
@@ -417,9 +424,14 @@ bool DataSet::renderScene(RenderSettings* settings, Viewport* viewport, FrameBuf
 				// Render a single frame.
 				TimePoint renderTime = animationSettings()->time();
 				int frameNumber = animationSettings()->timeToFrame(renderTime);
-				renderTask.setProgressText(QString());
-				if(!renderFrame(renderTime, frameNumber, settings, renderer, viewport, frameBuffer, videoEncoder, taskManager))
-					renderTask.cancel();
+				operation.setProgressText(tr("Rendering frame %1").arg(frameNumber));
+				renderFrame(renderTime, frameNumber, settings, renderer, viewport, frameBuffer, videoEncoder, std::move(operation));
+			}
+			else if(settings->renderingRangeType() == RenderSettings::CUSTOM_FRAME) {
+				// Render a specific frame.
+				TimePoint renderTime = animationSettings()->frameToTime(settings->customFrame());
+				operation.setProgressText(tr("Rendering frame %1").arg(settings->customFrame()));
+				renderFrame(renderTime, settings->customFrame(), settings, renderer, viewport, frameBuffer, videoEncoder, std::move(operation));
 			}
 			else if(settings->renderingRangeType() == RenderSettings::ANIMATION_INTERVAL || settings->renderingRangeType() == RenderSettings::CUSTOM_INTERVAL) {
 				// Render an animation interval.
@@ -438,18 +450,17 @@ bool DataSet::renderScene(RenderSettings* settings, Viewport* viewport, FrameBuf
 				numberOfFrames = (numberOfFrames + settings->everyNthFrame() - 1) / settings->everyNthFrame();
 				if(numberOfFrames < 1)
 					throwException(tr("Invalid rendering range: Frame %1 to %2").arg(settings->customRangeStart()).arg(settings->customRangeEnd()));
-				renderTask.setProgressMaximum(numberOfFrames);
+				operation.setProgressMaximum(numberOfFrames);
 
 				// Render frames, one by one.
 				for(int frameIndex = 0; frameIndex < numberOfFrames; frameIndex++) {
 					int frameNumber = firstFrameNumber + frameIndex * settings->everyNthFrame() + settings->fileNumberBase();
 
-					renderTask.setProgressValue(frameIndex);
-					renderTask.setProgressText(tr("Rendering animation (frame %1 of %2)").arg(frameIndex+1).arg(numberOfFrames));
+					operation.setProgressValue(frameIndex);
+					operation.setProgressText(tr("Rendering animation (frame %1 of %2)").arg(frameIndex+1).arg(numberOfFrames));
 
-					if(!renderFrame(renderTime, frameNumber, settings, renderer, viewport, frameBuffer, videoEncoder, taskManager))
-						renderTask.cancel();
-					if(renderTask.isCanceled())
+					renderFrame(renderTime, frameNumber, settings, renderer, viewport, frameBuffer, videoEncoder, operation.createSubOperation());
+					if(operation.isCanceled())
 						break;
 
 					// Go to next animation frame.
@@ -475,14 +486,14 @@ bool DataSet::renderScene(RenderSettings* settings, Viewport* viewport, FrameBuf
 		throw;
 	}
 
-	return !renderTask.isCanceled();
+	return !operation.isCanceled();
 }
 
 /******************************************************************************
 * Renders a single frame and saves the output file.
 ******************************************************************************/
 bool DataSet::renderFrame(TimePoint renderTime, int frameNumber, RenderSettings* settings, SceneRenderer* renderer, Viewport* viewport,
-		FrameBuffer* frameBuffer, VideoEncoder* videoEncoder, TaskManager& taskManager)
+		FrameBuffer* frameBuffer, VideoEncoder* videoEncoder, AsyncOperation&& operation)
 {
 	// Determine output filename for this frame.
 	QString imageFilename;
@@ -502,8 +513,6 @@ bool DataSet::renderFrame(TimePoint renderTime, int frameNumber, RenderSettings*
 		}
 	}
 
-	Promise<> renderTask = Promise<>::createSynchronous(&taskManager, true, true);
-
 	// Set up preliminary projection.
 	ViewProjectionParameters projParams = viewport->computeProjectionParameters(renderTime, settings->outputImageAspectRatio());
 		
@@ -516,8 +525,8 @@ bool DataSet::renderFrame(TimePoint renderTime, int frameNumber, RenderSettings*
 	}
 	
 	// Request scene bounding box.
-	Box3 boundingBox = renderer->computeSceneBoundingBox(renderTime, projParams, nullptr, renderTask);
-	if(renderTask.isCanceled()) {
+	Box3 boundingBox = renderer->computeSceneBoundingBox(renderTime, projParams, nullptr, operation);
+	if(operation.isCanceled()) {
 		renderer->endFrame(false);
 		return false;
 	}
@@ -525,24 +534,25 @@ bool DataSet::renderFrame(TimePoint renderTime, int frameNumber, RenderSettings*
 	// Determine final view projection.
 	projParams = viewport->computeProjectionParameters(renderTime, settings->outputImageAspectRatio(), boundingBox);
 
-	// Render viewport "underlays".
-	for(ViewportOverlay* overlay : viewport->overlays()) {
-		if(overlay->renderBehindScene()) {
-			{
-				QPainter painter(&frameBuffer->image());
-				overlay->render(viewport, renderTime, painter, projParams, settings, false, taskManager);
-				if(renderTask.isCanceled())
-					return false;
-			}
-			frameBuffer->update();
-		}
-	}
-
 	// Render one frame.
 	try {
+		// Render viewport "underlays".
+		for(ViewportOverlay* overlay : viewport->overlays()) {
+			if(overlay->renderBehindScene()) {
+				{
+					overlay->render(viewport, renderTime, frameBuffer, projParams, settings, operation);
+					if(operation.isCanceled()) {
+						renderer->endFrame(false);
+						return false;
+					}
+				}
+				frameBuffer->update();
+			}
+		}
+
 		// Let the scene renderer do its work.
 		renderer->beginFrame(renderTime, projParams, viewport);
-		if(!renderer->renderFrame(frameBuffer, SceneRenderer::NonStereoscopic, renderTask)) {
+		if(!renderer->renderFrame(frameBuffer, SceneRenderer::NonStereoscopic, operation)) {
 			renderer->endFrame(false);
 			return false;
 		}
@@ -557,9 +567,8 @@ bool DataSet::renderFrame(TimePoint renderTime, int frameNumber, RenderSettings*
 	for(ViewportOverlay* overlay : viewport->overlays()) {
 		if(!overlay->renderBehindScene()) {
 			{
-				QPainter painter(&frameBuffer->image());
-				overlay->render(viewport, renderTime, painter, projParams, settings, false, taskManager);
-				if(renderTask.isCanceled())
+				overlay->render(viewport, renderTime, frameBuffer, projParams, settings, operation);
+				if(operation.isCanceled())
 					return false;
 			}
 			frameBuffer->update();
@@ -580,7 +589,7 @@ bool DataSet::renderFrame(TimePoint renderTime, int frameNumber, RenderSettings*
 		}
 	}
 
-	return !renderTask.isCanceled();
+	return !operation.isCanceled();
 }
 
 /******************************************************************************

@@ -177,9 +177,9 @@ DislocationTypeListParameterUI::DislocationTypeListParameterUI(QObject* parent)
 void DislocationTypeListParameterUI::updateDislocationCounts(const PipelineFlowState& state, ModifierApplication* modApp)
 {
 	// Access the data series in the pipeline state containing the dislocation counts and lengths.
-	_dislocationCounts = modApp ? state.getObjectBy<DataSeriesObject>(modApp, QStringLiteral("disloc-counts")) : nullptr;
-	_dislocationLengths = modApp ? state.getObjectBy<DataSeriesObject>(modApp, QStringLiteral("disloc-lengths")) : nullptr;
-	const PatternCatalog* patternCatalog = state.getObject<PatternCatalog>();
+	_dislocationCounts = (modApp && !state.isEmpty()) ? state.getObjectBy<DataSeriesObject>(modApp, QStringLiteral("disloc-counts")) : nullptr;
+	_dislocationLengths = (modApp && !state.isEmpty()) ? state.getObjectBy<DataSeriesObject>(modApp, QStringLiteral("disloc-lengths")) : nullptr;
+	const PatternCatalog* patternCatalog = !state.isEmpty() ? state.getObject<PatternCatalog>() : nullptr;
 	int crystalStructure = 0;
 	if(modApp) {
 		if(DislocationAnalysisModifier* modifier = dynamic_object_cast<DislocationAnalysisModifier>(modApp->modifier()))

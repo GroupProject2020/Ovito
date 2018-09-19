@@ -225,8 +225,7 @@ void ViewportMenu::onCreateCamera()
 			// Create an object node with a data source for the camera.
 			OORef<DataCollection> cameraDataCollection = new DataCollection(_viewport->dataset());
 			cameraDataCollection->addObject(cameraObj);
-			OORef<StaticSource> cameraSource = new StaticSource(_viewport->dataset());
-			cameraSource->setDataCollection(cameraDataCollection);
+			OORef<StaticSource> cameraSource = new StaticSource(_viewport->dataset(), cameraDataCollection);
 			cameraNode = new PipelineSceneNode(_viewport->dataset());
 			cameraNode->setDataProvider(cameraSource);
 

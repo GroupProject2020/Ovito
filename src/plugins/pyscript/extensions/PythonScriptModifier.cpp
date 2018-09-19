@@ -89,10 +89,6 @@ void PythonScriptModifier::propertyChanged(const PropertyFieldDescriptor& field)
 ******************************************************************************/
 void PythonScriptModifier::compileScript(ScriptEngine& engine)
 {
-	// Reset Python environment when using a private script engine.
-	if(_mainNamespacePrototype)
-		engine.mainNamespace() = _mainNamespacePrototype.attr("copy")();
-
 	_modifyScriptFunction = py::function();
 	_scriptCompilationOutput.clear();
 	try {
@@ -100,12 +96,14 @@ void PythonScriptModifier::compileScript(ScriptEngine& engine)
 			// Make sure the actions of the script function are not recorded on the undo stack.
 			UndoSuspender noUndo(dataset());
 			
-			// Run script once.
-			engine.executeCommands(script());
+			// Run script code within a fresh and private namespace.
+			py::dict localNamespace = py::globals().attr("copy")();
+			engine.executeCommands(script(), localNamespace);
+
 			// Extract the modify() function defined by the script.
-			engine.execute([this,&engine]() {
+			engine.execute([&]() {
 				try {
-					_modifyScriptFunction = py::function(engine.mainNamespace()["modify"]);
+					_modifyScriptFunction = py::function(localNamespace["modify"]);
 					if(!py::isinstance<py::function>(_modifyScriptFunction)) {
 						_modifyScriptFunction = py::function();
 						throwException(tr("Invalid Python script. It does not define a callable function named modify()."));
@@ -140,10 +138,9 @@ ScriptEngine* PythonScriptModifier::getScriptEngine()
 	const std::shared_ptr<ScriptEngine>& engine = ScriptEngine::activeEngine();
 	if(!engine) {
 		if(!_scriptEngine) {
-			_scriptEngine = ScriptEngine::createEngine(dataset(), dataset()->container()->taskManager(), true);
+			_scriptEngine = ScriptEngine::createEngine(dataset());
 			connect(_scriptEngine.get(), &ScriptEngine::scriptOutput, this, &PythonScriptModifier::onScriptOutput);
 			connect(_scriptEngine.get(), &ScriptEngine::scriptError, this, &PythonScriptModifier::onScriptOutput);
-			_mainNamespacePrototype = _scriptEngine->mainNamespace();
 		}
 		return _scriptEngine.get();
 	}
@@ -190,19 +187,14 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 
 		// Check if script function has been set.
 		if(!_modifyScriptFunction)
-			throwException(tr("Modifier function of PythonScriptModifier instance has not been set."));
+			throwException(tr("PythonScriptModifier has not been assigned a Python function."));
 		
 		try {
-			// Get animation frame at which the modifier is being evaluated.
-			int animationFrame = dataset()->animationSettings()->timeToFrame(time);
-
 			// Make sure the actions of the script function are not recorded on the undo stack.
 			UndoSuspender noUndo(dataset());
 
 			// Prepare arguments to be passed to the script function.
 			PipelineFlowState output = input;
-//			py::object output_data_collection = py::cast();
-			py::tuple arguments = py::make_tuple(animationFrame, output.mutableData());
 
 			// Limit validity interval of the output to the current frame,
 			// because we don't know if the user script produces time-dependent results or not.
@@ -211,7 +203,11 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 			// Call the user-defined modifier function.
 			py::object functionResult;
 			try {
-				functionResult = engine->callObject(_modifyScriptFunction, arguments);
+				engine->execute([&]() {
+					int animationFrame = dataset()->animationSettings()->timeToFrame(time);
+					py::tuple arguments = py::make_tuple(animationFrame, output.mutableData());
+					functionResult = _modifyScriptFunction(*arguments);
+				});
 			}
 			catch(const Exception& ex) {
 
@@ -225,8 +221,11 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 					throw;
 
 				// Invoke the user-defined modifier function, this time with an input and an output data collection.
-				arguments = py::make_tuple(animationFrame, input.data(), output.mutableData());
-				functionResult = engine->callObject(_modifyScriptFunction, arguments);
+				engine->execute([&]() {
+					int animationFrame = dataset()->animationSettings()->timeToFrame(time);
+					py::tuple arguments = py::make_tuple(animationFrame, input.data(), output.mutableData());
+					functionResult = _modifyScriptFunction(*arguments);
+				});
 			}
 			
 			// Exit the modifier evaluation phase.
@@ -334,8 +333,7 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 				
 				// Python has returned a generator. We have to return a Future on the 
 				// the final pipeline state that is till to be computed.
-				func_continuation.promise = Promise<PipelineFlowState>::createSynchronous(nullptr, true, false);
-				dataset()->container()->taskManager().registerTask(func_continuation.promise.sharedState());
+				func_continuation.promise = dataset()->taskManager().createSynchronousPromise<PipelineFlowState>(true);
 				Future<PipelineFlowState> future = func_continuation.promise.future();
 				func_continuation.promise.setProgressText(tr("Executing user-defined modifier function"));				
 

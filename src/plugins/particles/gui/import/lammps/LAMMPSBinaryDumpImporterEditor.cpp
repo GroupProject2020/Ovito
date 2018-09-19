@@ -41,7 +41,7 @@ bool LAMMPSBinaryDumpImporterEditor::inspectNewFile(FileImporter* importer, cons
 	// Retrieve column information of input file.
 	LAMMPSBinaryDumpImporter* lammpsImporter = static_object_cast<LAMMPSBinaryDumpImporter>(importer);
 	Future<InputColumnMapping> inspectFuture = lammpsImporter->inspectFileHeader(FileSourceImporter::Frame(sourceFile));
-	if(!importer->dataset()->container()->taskManager().waitForTask(inspectFuture))
+	if(!importer->dataset()->taskManager().waitForTask(inspectFuture))
 		return false;
 	InputColumnMapping mapping = inspectFuture.result();
 

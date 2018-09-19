@@ -1,7 +1,7 @@
 # Load dependencies
-import ovito.modifiers
+import ovito.modifiers.stdobj
 
-# Load the native code modules.
+# Load the native code module.
 from ovito.plugins.StdMod import (SliceModifier, AffineTransformationModifier, ClearSelectionModifier, 
                                 InvertSelectionModifier, ColorCodingModifier, AssignColorModifier, 
                                 DeleteSelectedModifier, ScatterPlotModifier, ReplicateModifier,

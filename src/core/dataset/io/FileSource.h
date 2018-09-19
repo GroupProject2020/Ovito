@@ -47,7 +47,8 @@ public:
 	
 	/// \brief Asks the object for the result of the data pipeline.
 	/// \param time Specifies at which animation time the pipeline should be evaluated.
-	virtual SharedFuture<PipelineFlowState> evaluate(TimePoint time) override;
+	/// \param breakOnError Tells the pipeline system to stop the evaluation as soon as a first error occurs.
+	virtual SharedFuture<PipelineFlowState> evaluate(TimePoint time, bool breakOnError = false) override;
 	
 	/// \brief Returns the results of an immediate and preliminary evaluation of the data pipeline.
 	virtual PipelineFlowState evaluatePreliminary() override;
@@ -102,7 +103,7 @@ public:
 protected:
 
 	/// Asks the object for the results of the data pipeline.
-	virtual Future<PipelineFlowState> evaluateInternal(TimePoint time) override;
+	virtual Future<PipelineFlowState> evaluateInternal(TimePoint time, bool breakOnError) override;
 
 	/// Is called when the value of a property of this object has changed.
 	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;

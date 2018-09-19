@@ -250,36 +250,35 @@ bool ColorCodingModifier::adjustRange()
 * Sets the start and end value to the minimum and maximum value of the selected 
 * particle or bond property determined over the entire animation sequence.
 ******************************************************************************/
-bool ColorCodingModifier::adjustRangeGlobal(TaskManager& taskManager)
+bool ColorCodingModifier::adjustRangeGlobal(PromiseState& operation)
 {
 	ViewportSuspender noVPUpdates(this);
-	Promise<> task = Promise<>::createSynchronous(&taskManager, true, true);
-
+	
 	TimeInterval interval = dataset()->animationSettings()->animationInterval();
-	task.setProgressMaximum(interval.duration() / dataset()->animationSettings()->ticksPerFrame() + 1);
+	operation.setProgressMaximum(interval.duration() / dataset()->animationSettings()->ticksPerFrame() + 1);
 
 	FloatType minValue = std::numeric_limits<FloatType>::max();
 	FloatType maxValue = std::numeric_limits<FloatType>::lowest();
 
 	// Loop over all animation frames, evaluate data pipeline, and determine
 	// minimum and maximum values.
-	for(TimePoint time = interval.start(); time <= interval.end() && !task.isCanceled(); time += dataset()->animationSettings()->ticksPerFrame()) {
-		task.setProgressText(tr("Analyzing frame %1").arg(dataset()->animationSettings()->timeToFrame(time)));
+	for(TimePoint time = interval.start(); time <= interval.end() && !operation.isCanceled(); time += dataset()->animationSettings()->ticksPerFrame()) {
+		operation.setProgressText(tr("Analyzing frame %1").arg(dataset()->animationSettings()->timeToFrame(time)));
 		
 		for(ModifierApplication* modApp : modifierApplications()) {
 			
 			// Evaluate data pipeline up to this color coding modifier.
 			SharedFuture<PipelineFlowState> stateFuture = modApp->evaluateInput(time);
-			if(!taskManager.waitForTask(stateFuture))
+			if(!operation.waitForFuture(stateFuture))
 				break;
 
 			// Determine min/max value of the selected property.
 			determinePropertyValueRange(stateFuture.result(), minValue, maxValue);
 		}
-		task.setProgressValue(task.progressValue() + 1);
+		operation.incrementProgressValue(1);
 	}
 
-	if(!task.isCanceled()) {
+	if(!operation.isCanceled()) {
 		// Adjust range of color coding to the min/max values.
 		if(startValueController() && minValue != std::numeric_limits<FloatType>::max())
 			startValueController()->setCurrentFloatValue(minValue);

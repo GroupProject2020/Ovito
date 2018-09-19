@@ -115,10 +115,10 @@ def import_file(location, **params):
 
     # Importing a file is a long-running operation, which is not permitted during viewport rendering or pipeline evaluation.
     # In these situations, the following function call will raise an exception.
-    ovito.dataset.request_long_operation()
+    ovito.scene.request_long_operation()
     
     # Determine the file's format.
-    importer = FileImporter.autodetect_format(ovito.dataset, first_location)
+    importer = FileImporter.autodetect_format(ovito.scene, first_location)
     if not importer:
         raise RuntimeError("Could not detect the file format. The format might not be supported.")
     

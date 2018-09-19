@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -30,7 +30,7 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 /**
  * \brief This dialog box lets the user adjust the settings of a FileExporter.
  */
-class FileExporterSettingsDialog : public QDialog
+class OVITO_GUI_EXPORT FileExporterSettingsDialog : public QDialog
 {
 	Q_OBJECT
 	
@@ -39,10 +39,20 @@ public:
 	/// Constructor.
 	FileExporterSettingsDialog(MainWindow* parent, FileExporter* exporter);
 
+	virtual int exec() override {
+		// If there is no animation sequence (just a single frame), and if the exporter does not expose any other settings,
+		// then it is possible to skip showing the settings dialog altogether.
+		if(_skipDialog) return QDialog::Accepted;
+		return QDialog::exec();
+	}
+
 protected Q_SLOTS:
 
 	/// This is called when the user has pressed the OK button.
 	virtual void onOk();
+
+	/// Updates the displayed list of data object available for export.
+	void updateDataObjectList();
 
 protected:
 
@@ -54,10 +64,11 @@ protected:
 	QLineEdit* _wildcardTextbox;
 	QButtonGroup* _fileGroupButtonGroup = nullptr;
 	QButtonGroup* _rangeButtonGroup;
+	QComboBox* _sceneNodeBox;
+	QComboBox* _dataObjectBox;
+	bool _skipDialog = true;
 };
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

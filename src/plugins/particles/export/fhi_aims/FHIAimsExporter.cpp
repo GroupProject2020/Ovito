@@ -32,16 +32,8 @@ IMPLEMENT_OVITO_CLASS(FHIAimsExporter);
 /******************************************************************************
 * Writes the particles of one animation frame to the current output file.
 ******************************************************************************/
-bool FHIAimsExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager)
+bool FHIAimsExporter::exportData(const PipelineFlowState& state, int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
 {
-	// Get particle data to be exported.
-	PipelineFlowState state;
-	if(!getParticleData(sceneNode, time, state, taskManager))
-		return false;
-
-	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
-	exportTask.setProgressText(tr("Writing file %1").arg(filePath));
-	
 	// Get particle positions and types.
 	const ParticlesObject* particles = state.expectObject<ParticlesObject>();
 	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
@@ -62,7 +54,7 @@ bool FHIAimsExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePo
 	}
 
 	// Output atoms.
-	exportTask.setProgressMaximum(posProperty->size());
+	operation.setProgressMaximum(posProperty->size());
 	for(size_t i = 0; i < posProperty->size(); i++) {
 		const Point3& p = posProperty->getPoint3(i);
 		const ElementType* type = particleTypeProperty ? particleTypeProperty->elementType(particleTypeProperty->getInt(i)) : nullptr;
@@ -79,11 +71,11 @@ bool FHIAimsExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePo
 			textStream() << " 1\n";
 		}
 
-		if(!exportTask.setProgressValueIntermittent(i))
+		if(!operation.setProgressValueIntermittent(i))
 			return false;
 	}
 
-	return !exportTask.isCanceled();
+	return !operation.isCanceled();
 }
 
 OVITO_END_INLINE_NAMESPACE

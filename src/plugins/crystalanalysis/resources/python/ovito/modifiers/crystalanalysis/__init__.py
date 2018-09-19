@@ -1,9 +1,7 @@
 # Load dependencies
-import ovito.modifiers
 import ovito.modifiers.particles
 
 # Load the native code modules.
-import ovito.plugins.Particles
 import ovito.plugins.CrystalAnalysis
 
 # Inject modifier classes into parent module.

@@ -45,13 +45,16 @@ protected:
 	/// Creates the user interface controls for the editor.
 	virtual void createUI(const RolloutInsertionParameters& rolloutParams) override;
 
+	/// This method is called when a reference target changes.
+	virtual bool referenceEvent(RefTarget* source, const ReferenceEvent& event) override;
+
 private Q_SLOTS:
 
-	/// Is called when the exporter is associated with the editor.
-	void onContentsReplaced(Ovito::RefTarget* newEditObject);
+	/// Rebuilds the displayed list of exportable attributes.
+	void updateAttributesList();
 
-	/// Is called when the user checked/unchecked an item.
-	void onListChanged();
+	/// Is called when the user checked/unchecked an item in the attributes list.
+	void onAttributeChanged();
 
 private:
 

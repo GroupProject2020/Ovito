@@ -59,7 +59,7 @@ IMPLEMENT_OVITO_CLASS(AMBERNetCDFExporter);
  * This is called once for every output file to be written and before
  * exportFrame() is called.
  *****************************************************************************/
-bool AMBERNetCDFExporter::openOutputFile(const QString& filePath, int numberOfFrames)
+bool AMBERNetCDFExporter::openOutputFile(const QString& filePath, int numberOfFrames, AsyncOperation& operation)
 {
 	// Only serial access to NetCDF functions is allowed, because they are not thread-safe.
 	NetCDFExclusiveAccess locker;
@@ -154,16 +154,8 @@ void AMBERNetCDFExporter::closeOutputFile(bool exportCompleted)
 /******************************************************************************
 * Writes the particles of one animation frame to the current output file.
 ******************************************************************************/
-bool AMBERNetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager)
+bool AMBERNetCDFExporter::exportData(const PipelineFlowState& state, int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
 {
-	// Get particle data to be exported.
-	PipelineFlowState state;
-	if(!getParticleData(sceneNode, time, state, taskManager))
-		return false;
-
-	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
-	exportTask.setProgressText(tr("Writing file %1").arg(filePath));
-	
 	// Get particles and their positions.
 	const ParticlesObject* particles = state.expectObject<ParticlesObject>();
 	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
@@ -174,7 +166,7 @@ bool AMBERNetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, Ti
 	size_t atomsCount = particles->elementCount();
 	
 	// Only serial access to NetCDF functions is allowed, because they are not thread-safe.
-	NetCDFExclusiveAccess locker(exportTask.sharedState().get());
+	NetCDFExclusiveAccess locker(operation.sharedState().get());
 	if(!locker.isLocked()) return false;
 	
 	// Define the "atom" dimension when writing first frame and the number of atoms is known.
@@ -337,7 +329,7 @@ bool AMBERNetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, Ti
 #endif
 
 	// Write out other particle properties.
-	exportTask.setProgressMaximum(_columns.size());
+	operation.setProgressMaximum(_columns.size());
 	for(const NCOutputColumn& outColumn : _columns) {
 		
 		// Look up the property to be exported.
@@ -365,12 +357,12 @@ bool AMBERNetCDFExporter::exportObject(SceneNode* sceneNode, int frameNumber, Ti
 #endif
 		}
 
-		if(!exportTask.incrementProgressValue())
+		if(!operation.incrementProgressValue())
 			return false;
 	}
 
 	_frameCounter++;
-	return !exportTask.isCanceled();
+	return !operation.isCanceled();
 }
 
 OVITO_END_INLINE_NAMESPACE

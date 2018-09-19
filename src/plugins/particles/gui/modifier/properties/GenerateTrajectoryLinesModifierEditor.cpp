@@ -145,7 +145,7 @@ void GenerateTrajectoryLinesModifierEditor::onRegenerateTrajectory()
 	if(!modifier) return;
 
 	undoableTransaction(tr("Generate trajectory"), [this,modifier]() {
-		ProgressDialog progressDialog(container(), modifier->dataset()->container()->taskManager(), tr("Generating trajectory lines"));
+		ProgressDialog progressDialog(container(), modifier->dataset()->taskManager(), tr("Generating trajectory lines"));
 		modifier->generateTrajectories(progressDialog.taskManager());
 	});
 }

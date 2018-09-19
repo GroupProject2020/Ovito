@@ -40,19 +40,18 @@ private:
 
 	/// \brief Initializes the scripting engine and sets up the environment.
 	/// \param dataset The engine will execute scripts in the context of this dataset.
-	/// \param taskManager The engine will execute scripts in the context of this task manager.
-	/// \param privateContext If true, then changes made by the script will not be visible on the global scope.
-	ScriptEngine(DataSet* dataset, TaskManager& taskManager, bool privateContext);
+	ScriptEngine(DataSet* dataset);
 	
 public:
 
-	/// \brief Create a scripting engine and sets up the scripting environment.
+	/// \brief Creates a scripting engine and sets up the scripting environment.
 	/// \param dataset The new engine will execute scripts in the context of this dataset.
-	/// \param taskManager The new engine will execute scripts in the context of this task manager.
-	/// \param privateContext If true, then changes made by the script will not be visible on the global scope.
-	static std::shared_ptr<ScriptEngine> createEngine(DataSet* dataset, TaskManager& taskManager, bool privateContext) {
-		return std::shared_ptr<ScriptEngine>(new ScriptEngine(dataset, taskManager, privateContext));
+	static std::shared_ptr<ScriptEngine> createEngine(DataSet* dataset) {
+		return std::shared_ptr<ScriptEngine>(new ScriptEngine(dataset));
 	}
+
+	/// \brief Creates a global script engine instance. This is used when loading the OVITO Python modules from an external interpreter.
+	static void createAdhocEngine(DataSet* dataset);
 
 	/// \brief Destructor
 	virtual ~ScriptEngine();
@@ -60,50 +59,31 @@ public:
 	/// \brief Returns the dataset that provides the context for the script execution.
 	DataSet* dataset() const { return _dataset; }
 
-	/// \brief Returns the task manager that provides the context for the script execution.
-	TaskManager& taskManager() const { OVITO_ASSERT(_taskManager); return *_taskManager; }
-
 	/// \brief Returns the script engine that is currently active (i.e. which is executing a script).
 	/// \return The active script engine or NULL if no script is currently being executed.
 	static const std::shared_ptr<ScriptEngine>& activeEngine() { return _activeEngine; }
 
-	/// \brief Returns the task manager providing the context for the currently running script.
-	static TaskManager& activeTaskManager();
+	/// Returns the context DataSet the current Python script is executed in.
+	static DataSet* getCurrentDataset();
 
 	/// \brief Executes a Python script consisting of one or more statements.
 	/// \param script The script commands.
+	/// \param global The Python globals dictionary to use.
 	/// \param scriptArguments An optional list of command line arguments that will be passed to the script via sys.argv.
-	/// \param progressDisplay An optional progress display, which will be used to show the script execution status.
 	/// \return The exit code returned by the Python script.
 	/// \throw Exception on error.
-	int executeCommands(const QString& commands, const QStringList& scriptArguments = QStringList());
+	int executeCommands(const QString& commands, const py::object& global, const QStringList& cmdLineArguments = QStringList());
 
 	/// \brief Executes a Python script file.
 	/// \param file The script file path.
-	/// \param scriptArguments An optional list of command line arguments that will be passed to the script via sys.argv.
+	/// \param global The Python globals dictionary to use.
+	/// \param cmdLineArguments An optional list of command line arguments that will be passed to the script via sys.argv.
 	/// \return The exit code returned by the Python script.
 	/// \throw Exception on error.
-	int executeFile(const QString& file, const QStringList& scriptArguments = QStringList());
+	int executeFile(const QString& file, const py::object& global, const QStringList& cmdLineArguments = QStringList());
 
-	/// \brief Calls a callable Python object (typically a function).
-	/// \param callable The callable object.
-	/// \param arguments The list of function arguments.
-	/// \param kwargs The keyword arguments to be passed to the function.
-	/// \return The value returned by the Python function.
-	/// \throw Exception on error.
-	py::object callObject(const py::object& callable, const py::tuple& arguments = py::tuple(), const py::dict& kwargs = py::dict());
-
-	/// \brief Executes the given C++ function, which in turn may invoke Python functions in the context of this engine.
-	void execute(const std::function<void()>& func);
-
-	/// \brief Provides access to the global namespace the script will be executed in by this script engine.
-	py::dict& mainNamespace() { return _mainNamespace; }
-
-	/// \brief Returns the dataset that is currently active in the Python interpreter.
-	static DataSet* activeDataset();
-
-	/// \brief Sets the dataset that is currently active in the Python interpreter.
-	static void setActiveDataset(DataSet* dataset);
+	/// \brief Executes the given C++ function, which in turn may invoke Python functions, in the context of this engine.
+	int execute(const std::function<void()>& func);
 
 Q_SIGNALS:
 
@@ -128,48 +108,27 @@ private:
 	/// This helper class redirects Python script write calls to the sys.stdout stream to this script engine.
 	struct InterpreterStdOutputRedirector {
 		void write(const QString& str) {
-			if(_activeEngine) _activeEngine->scriptOutput(str);
+			if(activeEngine()) activeEngine()->scriptOutput(str);
 			else std::cout << str.toStdString();
 		}
 		void flush() {
-			if(!_activeEngine) std::cout << std::flush;
+			if(!activeEngine()) std::cout << std::flush;
 		}
 	};
 
 	/// This helper class redirects Python script write calls to the sys.stderr stream to this script engine.
 	struct InterpreterStdErrorRedirector {
 		void write(const QString& str) {
-			if(_activeEngine) _activeEngine->scriptError(str);
+			if(activeEngine()) activeEngine()->scriptError(str);
 			else std::cerr << str.toStdString();
 		}
 		void flush() {
-			if(!_activeEngine) std::cerr << std::flush;
+			if(!activeEngine()) std::cerr << std::flush;
 		}
-	};
-
-	/// This helper class is used to make a script engine the active one as long as a script execution
-	/// is in progress. Uses RAII pattern to ensure that the old state is restored when the helper object goes out of scope.
-	struct ActiveScriptEngineSetter {
-		ActiveScriptEngineSetter(ScriptEngine* engine) : _previousEngine(std::move(ScriptEngine::_activeEngine)) {
-			ScriptEngine::_activeEngine = engine->shared_from_this();
-			Application::instance()->scriptExecutionStarted();
-		}
-		~ActiveScriptEngineSetter() {
-			Application::instance()->scriptExecutionStopped();
-			ScriptEngine::_activeEngine = std::move(_previousEngine);
-		}
-	private:
-		std::shared_ptr<ScriptEngine> _previousEngine;
 	};
 
 	/// The dataset that provides the context for the script execution.
 	QPointer<DataSet> _dataset;
-
-	/// The task manager that provides the context for the script execution.
-	TaskManager* _taskManager;
-
-	/// The namespace (scope) the script will be executed in by this script engine.
-	py::dict _mainNamespace;
 
 	/// The script engine that is currently active (i.e. which is executing a script).
 	static std::shared_ptr<ScriptEngine> _activeEngine;

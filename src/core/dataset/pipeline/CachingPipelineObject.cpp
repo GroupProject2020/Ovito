@@ -54,7 +54,7 @@ void CachingPipelineObject::invalidatePipelineCache(TimeInterval keepInterval)
 /******************************************************************************
 * Asks the object for the result of the data pipeline.
 ******************************************************************************/
-SharedFuture<PipelineFlowState> CachingPipelineObject::evaluate(TimePoint time)
+SharedFuture<PipelineFlowState> CachingPipelineObject::evaluate(TimePoint time, bool breakOnError)
 {
 	// Check if we can immediately serve the request from the internal cache.
 	if(_pipelineCache.contains(time))
@@ -69,7 +69,7 @@ SharedFuture<PipelineFlowState> CachingPipelineObject::evaluate(TimePoint time)
 	}
 
 	// Let the subclass perform the actual pipeline evaluation.
-	Future<PipelineFlowState> stateFuture = evaluateInternal(time);
+	Future<PipelineFlowState> stateFuture = evaluateInternal(time, breakOnError);
 
 	// Cache the results in our local pipeline cache.
 	if(_pipelineCache.insert(stateFuture, time, this)) {

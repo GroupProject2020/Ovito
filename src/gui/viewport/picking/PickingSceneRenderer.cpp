@@ -89,13 +89,13 @@ void PickingSceneRenderer::initializeGLState()
 /******************************************************************************
 * Renders the current animation frame.
 ******************************************************************************/
-bool PickingSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, const PromiseBase& promise)
+bool PickingSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, AsyncOperation& operation)
 {
 	// Clear previous object records.
 	reset();
 
 	// Let the base class do the main rendering work.
-	if(!ViewportSceneRenderer::renderFrame(frameBuffer, stereoTask, promise))
+	if(!ViewportSceneRenderer::renderFrame(frameBuffer, stereoTask, operation))
 		return false;
 
 	// Clear OpenGL error state, so we start fresh for the glReadPixels() call below.
@@ -115,11 +115,11 @@ bool PickingSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRendering
 	// The depth information is used to compute the XYZ coordinate of the point under the mouse cursor.
 	_depthBufferBits = glformat().depthBufferSize();
 	if(_depthBufferBits == 16) {
-		_depthBuffer.reset(new quint8[size.width() * size.height() * sizeof(GLushort)]);
+		_depthBuffer = std::make_unique<quint8[]>(size.width() * size.height() * sizeof(GLushort));
 		glReadPixels(0, 0, size.width(), size.height(), GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT, _depthBuffer.get());
 	}
 	else if(_depthBufferBits == 24) {
-		_depthBuffer.reset(new quint8[size.width() * size.height() * sizeof(GLuint)]);
+		_depthBuffer = std::make_unique<quint8[]>(size.width() * size.height() * sizeof(GLuint));
 		while(glGetError() != GL_NO_ERROR);
 		glReadPixels(0, 0, size.width(), size.height(), GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, _depthBuffer.get());
 		if(glGetError() != GL_NO_ERROR) {
@@ -128,16 +128,16 @@ bool PickingSceneRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRendering
 		}
 	}
 	else if(_depthBufferBits == 32) {
-		_depthBuffer.reset(new quint8[size.width() * size.height() * sizeof(GLuint)]);
+		_depthBuffer = std::make_unique<quint8[]>(size.width() * size.height() * sizeof(GLuint));
 		glReadPixels(0, 0, size.width(), size.height(), GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, _depthBuffer.get());
 	}
 	else {
-		_depthBuffer.reset(new quint8[size.width() * size.height() * sizeof(GLfloat)]);
+		_depthBuffer = std::make_unique<quint8[]>(size.width() * size.height() * sizeof(GLfloat));
 		glReadPixels(0, 0, size.width(), size.height(), GL_DEPTH_COMPONENT, GL_FLOAT, _depthBuffer.get());
 		_depthBufferBits = 0;
 	}
 
-	return !promise.isCanceled();
+	return !operation.isCanceled();
 }
 
 /******************************************************************************

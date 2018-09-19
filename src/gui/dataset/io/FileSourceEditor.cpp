@@ -250,8 +250,9 @@ bool FileSourceEditor::importNewFile(FileSource* fileSource, const QUrl& url, Ov
 	if(!importerType) {
 
 		// Download file so we can determine its format.
-		SharedFuture<QString> fetchFileFuture = Application::instance()->fileManager()->fetchUrl(fileSource->dataset()->container()->taskManager(), url);
-		if(!fileSource->dataset()->container()->taskManager().waitForTask(fetchFileFuture))
+		TaskManager& taskManager = fileSource->dataset()->taskManager();
+		SharedFuture<QString> fetchFileFuture = Application::instance()->fileManager()->fetchUrl(taskManager, url);
+		if(!fileSource->dataset()->taskManager().waitForTask(fetchFileFuture))
 			return false;
 
 		// Inspect file to detect its format.

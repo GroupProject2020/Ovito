@@ -27,6 +27,6 @@ pipeline.modifiers.append(PythonScriptModifier(function = modify))
 
 # Export calculated MSD value to a text file and let OVITO's data pipeline do the rest:
 export_file(pipeline, "output/msd_data.txt", 
-    format = "txt",
+    format = "txt/attr",
     columns = ["Timestep", "MSD"],
     multiple_frames = True)

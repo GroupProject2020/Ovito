@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -50,17 +50,19 @@ class OVITO_POVRAY_EXPORT POVRayExporter : public FileExporter
 
 	Q_OBJECT
 	OVITO_CLASS_META(POVRayExporter, OOMetaClass)
-	
+
 public:
 
 	/// \brief Constructs a new instance of this class.
 	Q_INVOKABLE POVRayExporter(DataSet* dataset);
 
-	/// \brief Selects the nodes from the scene to be exported by this exporter if no specific set of nodes was provided.
-	virtual void selectStandardOutputData() override; 
+	/// \brief Determines whether the given scene node is suitable for exporting with this exporter service.
+	virtual bool isSuitableNode(SceneNode* node) const override { 
+		return node->isRootNode(); 
+	}
 
 	/// \brief This is called once for every output file to be written and before exportData() is called.
-	virtual bool openOutputFile(const QString& filePath, int numberOfFrames) override;
+	virtual bool openOutputFile(const QString& filePath, int numberOfFrames, AsyncOperation& operation) override;
 
 	/// \brief This is called once for every output file written after exportData() has been called.
 	virtual void closeOutputFile(bool exportCompleted) override;
@@ -71,7 +73,7 @@ public:
 protected:
 
 	/// \brief Exports a single animation frame to the current output file.
-	virtual bool exportFrame(int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager) override;
+	virtual bool exportFrame(int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation) override;
 
 private:
 
@@ -84,5 +86,3 @@ private:
 
 }	// End of namespace
 }	// End of namespace
-
-

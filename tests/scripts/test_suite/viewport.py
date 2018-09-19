@@ -30,5 +30,5 @@ vp.overlays.append(overlay)
 vp.render(settings)
 vp.render_image(renderer=settings.renderer, size=settings.size)
 
-for vp in ovito.dataset.viewports:
+for vp in ovito.scene.viewports:
     print(vp)

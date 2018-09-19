@@ -132,6 +132,13 @@ public:
     /// while trying to fulfill it. 
     virtual void setException(std::exception_ptr&& ex);
 
+	/// Creates a child operation.
+	/// If the child operation is canceled, this parent operation gets canceled too -and vice versa. 
+	virtual Promise<> createSubOperation();
+
+	/// Blocks execution until the given future enters the completed state.
+	virtual bool waitForFuture(const FutureBase& future);
+
 #ifdef OVITO_DEBUG
     /// Returns the global number of PromiseState instances that currently exist. Used to detect memory leaks.
     static size_t instanceCount() { return _instanceCounter.load(); }
@@ -350,5 +357,3 @@ private:
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

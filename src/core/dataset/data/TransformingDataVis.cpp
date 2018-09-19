@@ -40,7 +40,7 @@ TransformingDataVis::TransformingDataVis(DataSet* dataset) : DataVis(dataset)
 /******************************************************************************
 * Lets the vis element transform a data object in preparation for rendering.
 ******************************************************************************/
-Future<PipelineFlowState> TransformingDataVis::transformData(TimePoint time, const DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState, const PipelineSceneNode* contextNode) 
+Future<PipelineFlowState> TransformingDataVis::transformData(TimePoint time, const DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState, const PipelineSceneNode* contextNode, bool breakOnError) 
 {
 	// Check if the cache state already contains a transformed data object that we have
 	// created earlier for the same input object. If yes, we can immediately return it.
@@ -63,6 +63,10 @@ Future<PipelineFlowState> TransformingDataVis::transformData(TimePoint time, con
 	if(flowState.status().type() != PipelineStatus::Error) {
 		OVITO_ASSERT(flowState.status().type() != PipelineStatus::Pending);
 		flowState.setStatus(PipelineStatus());
+	}
+	else if(breakOnError) {
+		// Skip all following vis transformations once an error has occured along the pipeline.
+		return std::move(flowState);
 	}
 
 	// Make a copy of the input state. We might need it later when an error occurs.

@@ -1,5 +1,7 @@
 # Load dependencies
 import ovito.io
+import ovito.io.stdobj
+import ovito.io.stdmod
 
 # Load the native code module
 from ovito.plugins.Mesh import VTKFileImporter, VTKTriangleMeshExporter

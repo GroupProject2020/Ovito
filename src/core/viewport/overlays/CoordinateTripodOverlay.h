@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,6 +23,7 @@
 
 
 #include <core/Core.h>
+#include <core/rendering/FrameBuffer.h>
 #include "ViewportOverlay.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -41,10 +42,16 @@ public:
 	/// \brief Constructor.
 	Q_INVOKABLE CoordinateTripodOverlay(DataSet* dataset);
 
-	/// \brief This method asks the overlay to paint its contents over the given viewport.
-	virtual void render(Viewport* viewport, TimePoint time, QPainter& painter, 
-						const ViewProjectionParameters& projParams, RenderSettings* renderSettings,
-						bool interactiveViewport, TaskManager& taskManager) override;
+	/// This method asks the overlay to paint its contents over the rendered image.
+	virtual void render(const Viewport* viewport, TimePoint time, FrameBuffer* frameBuffer, const ViewProjectionParameters& projParams, const RenderSettings* renderSettings, AsyncOperation& operation) override {
+		QPainter painter(&frameBuffer->image());
+		renderImplementation(painter, projParams, renderSettings);
+	}
+
+	/// This method asks the overlay to paint its contents over the given interactive viewport.
+	virtual void renderInteractive(const Viewport* viewport, TimePoint time, QPainter& painter, const ViewProjectionParameters& projParams, const RenderSettings* renderSettings) override {
+		renderImplementation(painter, projParams, renderSettings);
+	}
 
 	/// Moves the position of the overlay in the viewport by the given amount,
 	/// which is specified as a fraction of the viewport render size.
@@ -54,6 +61,9 @@ public:
 	}
 
 private:
+
+	/// This method paints the overlay contents onto the given canvas.
+	void renderImplementation(QPainter& painter, const ViewProjectionParameters& projParams, const RenderSettings* renderSettings);
 
 	/// The corner of the viewport where the tripod is shown in.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, alignment, setAlignment, PROPERTY_FIELD_MEMORIZE);

@@ -21,6 +21,7 @@
 
 #include <plugins/pyscript/PyScript.h>
 #include <plugins/pyscript/engine/AdhocApplication.h>
+#include <plugins/pyscript/engine/ScriptEngine.h>
 #include <core/dataset/DataSetContainer.h>
 #include "PythonBinding.h"
 
@@ -66,6 +67,9 @@ PYBIND11_MODULE(PyScript, m)
 				static char* argv[] = { const_cast<char*>("") };
 				app->createQtApplication(argc, argv);
 			}
+
+			// Create the global ScriptEngine instance.
+			ScriptEngine::createAdhocEngine(app->datasetContainer()->currentSet());
 		}
 		catch(const Exception& ex) {
 			ex.logError();
@@ -90,15 +94,15 @@ PYBIND11_MODULE(PyScript, m)
 	m.attr("gui_mode") = py::cast(Application::instance()->guiMode());
 	m.attr("headless_mode") = py::cast(Application::instance()->headlessMode());
 
+	// Set up the ad-hoc environment, which consist of the global DataSet and a TaskManager.
+	// The enviroment may get updated later on by the ScriptEngine::execute() method.
+
 	// Add an attribute to the ovito module that provides access to the active dataset.
 	DataSet* activeDataset = Application::instance()->datasetContainer()->currentSet();
 	m.attr("scene") = py::cast(activeDataset, py::return_value_policy::reference);
+
 	// This is for backward compatibility with OVITO 2.9.0:
 	m.attr("dataset") = py::cast(activeDataset, py::return_value_policy::reference);
-
-	// Add an attribute to the ovito module that provides access to the global task manager.
-	TaskManager* activeTaskManager = &Application::instance()->datasetContainer()->taskManager();
-	m.attr("task_manager") = py::cast(activeTaskManager, py::return_value_policy::reference);
 }
 
 OVITO_REGISTER_PLUGIN_PYTHON_INTERFACE(PyScript);

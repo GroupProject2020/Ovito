@@ -44,7 +44,7 @@ protected:
 public:
 
 	/// Lets the vis element transform a data object in preparation for rendering.
-	Future<PipelineFlowState> transformData(TimePoint time, const DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState, const PipelineSceneNode* contextNode);
+	Future<PipelineFlowState> transformData(TimePoint time, const DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState, const PipelineSceneNode* contextNode, bool breakOnError);
 
 	/// Returns a structure that describes the current status of the vis element.
 	virtual PipelineStatus status() const override {

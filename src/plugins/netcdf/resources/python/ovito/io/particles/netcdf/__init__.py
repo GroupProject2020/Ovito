@@ -1,8 +1,7 @@
 # Load dependencies
-import ovito.io
 import ovito.io.particles
 
-# Load the native code module
+# Load the native code module.
 import ovito.plugins.NetCDFPlugin
 
 # Register export formats.

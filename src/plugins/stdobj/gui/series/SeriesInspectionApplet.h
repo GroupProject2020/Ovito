@@ -62,10 +62,18 @@ protected:
 	/// Is called when the user selects a different property container object in the list.
 	virtual void currentContainerChanged() override;
 
+private Q_SLOTS:
+
+	/// Action handler.
+	void exportDataToFile();
+
 private:
 
 	/// The plotting widget.
 	DataSeriesPlotWidget* _plotWidget;
+
+	MainWindow* _mainWindow;
+	QAction* _exportSeriesToFileAction;
 };
 
 }	// End of namespace

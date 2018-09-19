@@ -65,7 +65,7 @@ void FileColumnParticleExporterEditor::createUI(const RolloutInsertionParameters
 		QListWidgetItem* currentItem = _columnMappingWidget->takeItem(currentIndex);
 		_columnMappingWidget->insertItem(currentIndex - 1, currentItem);
 		_columnMappingWidget->setCurrentRow(currentIndex - 1);
-		onListChanged();
+		onParticlePropertyItemChanged();
 	});
 
 	connect(moveDownButton, &QPushButton::clicked, [this]() {
@@ -73,7 +73,7 @@ void FileColumnParticleExporterEditor::createUI(const RolloutInsertionParameters
 		QListWidgetItem* currentItem = _columnMappingWidget->takeItem(currentIndex);
 		_columnMappingWidget->insertItem(currentIndex + 1, currentItem);
 		_columnMappingWidget->setCurrentRow(currentIndex + 1);
-		onListChanged();
+		onParticlePropertyItemChanged();
 	});
 
 	connect(selectAllButton, &QPushButton::clicked, [this]() {
@@ -86,55 +86,67 @@ void FileColumnParticleExporterEditor::createUI(const RolloutInsertionParameters
 			_columnMappingWidget->item(index)->setCheckState(Qt::Unchecked);
 	});
 
-	connect(this, &PropertiesEditor::contentsReplaced, this, &FileColumnParticleExporterEditor::onContentsReplaced);
-	connect(_columnMappingWidget, &QListWidget::itemChanged, this, &FileColumnParticleExporterEditor::onListChanged);
+	connect(this, &PropertiesEditor::contentsReplaced, this, &FileColumnParticleExporterEditor::updateParticlePropertiesList);
+	connect(_columnMappingWidget, &QListWidget::itemChanged, this, &FileColumnParticleExporterEditor::onParticlePropertyItemChanged);
 }
 
 /******************************************************************************
-* Is called when the exporter is associated with the editor.
+* This method is called when a reference target changes.
 ******************************************************************************/
-void FileColumnParticleExporterEditor::onContentsReplaced(Ovito::RefTarget* newEditObject)
+bool FileColumnParticleExporterEditor::referenceEvent(RefTarget* source, const ReferenceEvent& event)
+{
+	if(source == editObject() && event.type() == ReferenceEvent::ReferenceChanged) {
+		if(static_cast<const ReferenceFieldEvent&>(event).field() == &PROPERTY_FIELD(FileExporter::nodeToExport)) {
+			updateParticlePropertiesList();
+		}
+	}
+	return PropertiesEditor::referenceEvent(source, event);
+}
+
+/******************************************************************************
+* Updates the displayed list of particle properties that are available for export.
+******************************************************************************/
+void FileColumnParticleExporterEditor::updateParticlePropertiesList()
 {
 	_columnMappingWidget->clear();
 
-	// Retrieve the data to be exported.
-	FileColumnParticleExporter* particleExporter = dynamic_object_cast<FileColumnParticleExporter>(newEditObject);
-	if(!particleExporter || particleExporter->outputData().empty()) return;
+	FileColumnParticleExporter* exporter = dynamic_object_cast<FileColumnParticleExporter>(editObject());
+	if(!exporter) return;
 
-	for(SceneNode* node : particleExporter->outputData()) {
-		try {
-			ProgressDialog progressDialog(container(), particleExporter->dataset()->container()->taskManager());
-			PipelineFlowState state;
-			if(!particleExporter->getParticleData(node, node->dataset()->animationSettings()->time(), state, progressDialog.taskManager()))
-				continue;
-			bool hasParticleIdentifiers = false;
-			const ParticlesObject* particles = state.expectObject<ParticlesObject>();
-			for(const PropertyObject* property : particles->properties()) {
-				if(property->componentCount() == 1) {
-					insertPropertyItem(ParticlePropertyReference(property), property->name(), particleExporter->columnMapping());
-					if(property->type() == ParticlesObject::IdentifierProperty)
-						hasParticleIdentifiers = true;
-				}
-				else {
-					for(int vectorComponent = 0; vectorComponent < (int)property->componentCount(); vectorComponent++) {
-						QString propertyName = property->nameWithComponent(vectorComponent);
-						ParticlePropertyReference propRef(property, vectorComponent);
-						insertPropertyItem(propRef, propertyName, particleExporter->columnMapping());
-					}
+	try {
+		// Determine the data that is available for export.
+		ProgressDialog progressDialog(container(), exporter->dataset()->container()->taskManager());
+		AsyncOperation asyncOperation(progressDialog.taskManager());
+		PipelineFlowState state = exporter->getParticleData(exporter->dataset()->animationSettings()->time(), asyncOperation);
+		if(state.isEmpty())
+			throw Exception(tr("Operation has been canceled by the user."));
+
+		bool hasParticleIdentifiers = false;
+		const ParticlesObject* particles = state.expectObject<ParticlesObject>();
+		for(const PropertyObject* property : particles->properties()) {
+			if(property->componentCount() == 1) {
+				insertPropertyItem(ParticlePropertyReference(property), property->name(), exporter->columnMapping());
+				if(property->type() == ParticlesObject::IdentifierProperty)
+					hasParticleIdentifiers = true;
+			}
+			else {
+				for(int vectorComponent = 0; vectorComponent < (int)property->componentCount(); vectorComponent++) {
+					QString propertyName = property->nameWithComponent(vectorComponent);
+					ParticlePropertyReference propRef(property, vectorComponent);
+					insertPropertyItem(propRef, propertyName, exporter->columnMapping());
 				}
 			}
-			if(!hasParticleIdentifiers)
-				insertPropertyItem(ParticlesObject::IdentifierProperty, tr("Particle index"), particleExporter->columnMapping());
-			break;
 		}
-		catch(const Exception& ex) {
-			// Ignore errors.
-			_columnMappingWidget->addItems(ex.messages());
-		}
+		if(!hasParticleIdentifiers)
+			insertPropertyItem(ParticlesObject::IdentifierProperty, tr("Particle index"), exporter->columnMapping());
+	}
+	catch(const Exception& ex) {
+		// Ignore errors, but display a message in the UI widget to inform user.
+		_columnMappingWidget->addItems(ex.messages());
 	}
 
 	// Update the settings stored in the exporter to match the current settings in the UI.
-	saveChanges(particleExporter);	
+	saveChanges(exporter);	
 }
 
 /******************************************************************************
@@ -174,7 +186,7 @@ void FileColumnParticleExporterEditor::insertPropertyItem(ParticlePropertyRefere
 /******************************************************************************
 * This writes the settings made in the UI back to the exporter.
 ******************************************************************************/
-void FileColumnParticleExporterEditor::saveChanges(FileColumnParticleExporter* particleExporter)
+void FileColumnParticleExporterEditor::saveChanges(FileColumnParticleExporter* exporter)
 {
 	OutputColumnMapping newMapping;
 	for(int index = 0; index < _columnMappingWidget->count(); index++) {
@@ -182,13 +194,13 @@ void FileColumnParticleExporterEditor::saveChanges(FileColumnParticleExporter* p
 			newMapping.push_back(_columnMappingWidget->item(index)->data(Qt::UserRole).value<PropertyReference>());
 		}
 	}
-	particleExporter->setColumnMapping(newMapping);
+	exporter->setColumnMapping(newMapping);
 }
 
 /******************************************************************************
-* Is called when the user checked/unchecked an item.
+* Is called when the user checked/unchecked an item in the particle property list.
 ******************************************************************************/
-void FileColumnParticleExporterEditor::onListChanged()
+void FileColumnParticleExporterEditor::onParticlePropertyItemChanged()
 {
 	FileColumnParticleExporter* particleExporter = dynamic_object_cast<FileColumnParticleExporter>(editObject());
 	if(!particleExporter) return;

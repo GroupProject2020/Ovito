@@ -23,6 +23,7 @@
 
 
 #include <core/Core.h>
+#include "PromiseState.h"
 
 #include <QThreadPool>
 #include <QMetaObject>
@@ -36,14 +37,19 @@ class OVITO_CORE_EXPORT TaskManager : public QObject
 {
 	Q_OBJECT
 
-public:
+private:
 
 	/// Constructor.
 	TaskManager(DataSetContainer& owner);
 
 	/// Destructor.
 	~TaskManager();
-		
+
+	/// Only DataSetContainer can create a TaskManager.
+	friend class DataSetContainer;
+
+public:
+
 	/// Returns the dataset container owning this task manager.
 	DataSetContainer& datasetContainer() { return _owner; }
 
@@ -80,6 +86,17 @@ public:
 	///
 	/// This function is thread-safe.
 	void registerTask(const PromiseStatePtr& sharedState);
+
+	/// Create a new promise for operations that run in the main thread and registers it with this task manager.
+	template<typename... R>
+	Promise<R...> createSynchronousPromise(bool startedState) {
+		using tuple_type = std::tuple<R...>;
+		Promise<R...> promise(std::make_shared<PromiseStateWithResultStorage<SynchronousPromiseState, tuple_type>>(
+			PromiseState::no_result_init_t(), 
+			startedState ? PromiseState::State(PromiseState::Started) : PromiseState::NoState, *this));
+		addTaskInternal(promise.sharedState());
+		return promise;
+	}
 
 	/// \brief Waits for the given task to finish and displays a modal progress dialog
 	///        to show the task's progress.
@@ -136,7 +153,7 @@ private Q_SLOTS:
 	void taskFinishedInternal();
 
 private:
-	
+
 	/// The list of watchers for the active tasks.
 	std::vector<PromiseWatcher*> _runningTaskStack;
 
@@ -145,6 +162,9 @@ private:
 
 	/// The dataset container owning this task manager.
 	DataSetContainer& _owner;
+
+	// Needed by SynchronousPromiseState::createSubOperation():
+	friend class SynchronousPromiseState;
 };
 
 OVITO_END_INLINE_NAMESPACE

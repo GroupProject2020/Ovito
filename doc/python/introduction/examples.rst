@@ -168,13 +168,13 @@ It directly provides the vectors from the central atom to its nearest neighbors.
 Let us start by defining some inputs for the order parameter calculation at the global scope:
 
 .. literalinclude:: ../example_snippets/order_parameter_calculation.py
-  :lines: 7-32
+  :lines: 9-34
 
 The actual modifier function needs to create an output particle property, which will store the calculated
 order parameter of each atom. Two nested loops run over all input atoms and their 12 nearest neighbors respectively.
 
 .. literalinclude:: ../example_snippets/order_parameter_calculation.py
-  :lines: 34-70
+  :lines: 39-75
 
 Note that the ``yield`` statements in the modifier function above are only needed to support progress feedback in the
 graphical version of OVITO and to give the pipeline system the possibility to interrupt the long-running calculation when needed. 
@@ -245,14 +245,14 @@ You can copy/paste the source code into the script input field and adjust the pa
 Example O2: Including data plots in rendered images
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The following script demonstrates how to use the `Matplotlib <http://matplotlib.org>`_ Python module to render a histogram
-on top the three-dimensional visualization. The histogram data is dynamically computed by a :py:class:`~ovito.modifiers.HistogramModifier` 
-in the data pipeline in this example.
+Ths user-defined viewport overlay function demonstrates how to use the `Matplotlib <http://matplotlib.org>`_ Python module to render the radial
+distribution function, which is dynamically computed by a :py:class:`~ovito.modifiers.CoordinationAnalysisModifier`
+in the data pipeline, on top the three-dimensional visualization.
 
 .. image:: /../manual/images/viewport_overlays/python_script_plot_example.png
 
 .. literalinclude:: ../example_snippets/overlay_data_plot.py
-  :lines: 4-42
+  :lines: 4-40
 
 .. _example_highlight_particle_overlay:
 

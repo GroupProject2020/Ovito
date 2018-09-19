@@ -36,7 +36,7 @@ class OVITO_CORE_EXPORT SynchronousPromiseState : public PromiseStateWithProgres
 public:
 
 	/// Constructor.
-	SynchronousPromiseState(State initialState, TaskManager* taskManager) :
+	SynchronousPromiseState(State initialState, TaskManager& taskManager) :
 		PromiseStateWithProgress(initialState), _taskManager(taskManager) {}
 
 	/// Sets the current progress value (must be in the range 0 to progressMaximum()).
@@ -50,9 +50,16 @@ public:
 	/// Changes the status text of this promise.
 	virtual void setProgressText(const QString& progressText) override;
 
+	/// Creates a child operation.
+	/// If the child operation is canceled, this parent operation gets canceled too -and vice versa. 
+	virtual Promise<> createSubOperation() override;
+
+	/// Blocks execution until the given future enters the completed state.
+	virtual bool waitForFuture(const FutureBase& future) override;
+
 protected:
 
-	TaskManager* _taskManager;
+	TaskManager& _taskManager;
 };
 
 OVITO_END_INLINE_NAMESPACE

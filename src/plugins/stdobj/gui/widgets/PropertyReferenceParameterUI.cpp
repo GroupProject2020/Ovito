@@ -181,9 +181,12 @@ void PropertyReferenceParameterUI::updateUI()
 void PropertyReferenceParameterUI::addItemsToComboBox(const PipelineFlowState& state)
 {
 	OVITO_ASSERT(containerRef());
-	if(const PropertyContainer* container = state.getLeafObject(containerRef())) {
+	if(const PropertyContainer* container = !state.isEmpty() ? state.getLeafObject(containerRef()) : nullptr) {
 		for(const PropertyObject* property : container->properties()) {
-			if(_propertyFilter && !_propertyFilter(property)) continue;
+
+			// The client can apply a filter to the displayed property list.
+			if(_propertyFilter && !_propertyFilter(property)) 
+				continue;
 			
 			// Properties with a non-numeric data type cannot be used as source properties.
 			if(property->dataType() != PropertyStorage::Int && property->dataType() != PropertyStorage::Int64 && property->dataType() != PropertyStorage::Float)

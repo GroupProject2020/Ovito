@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,6 +24,9 @@
 
 #include <core/Core.h>
 #include <core/dataset/scene/PipelineSceneNode.h>
+#include <core/dataset/pipeline/PipelineFlowState.h>
+#include <core/utilities/concurrent/SharedFuture.h>
+#include <core/rendering/FrameBuffer.h>
 #include "ViewportOverlay.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(View) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -42,10 +45,26 @@ public:
 	/// Constructor.
 	Q_INVOKABLE TextLabelOverlay(DataSet* dataset);
 
-	/// This method asks the overlay to paint its contents over the given viewport.
-	virtual void render(Viewport* viewport, TimePoint time, QPainter& painter, 
-						const ViewProjectionParameters& projParams, RenderSettings* renderSettings,
-						bool interactiveViewport, TaskManager& taskManager) override;
+	/// This method asks the overlay to paint its contents over the rendered image.
+	virtual void render(const Viewport* viewport, TimePoint time, FrameBuffer* frameBuffer, const ViewProjectionParameters& projParams, const RenderSettings* renderSettings, AsyncOperation& operation) override {
+		if(sourceNode()) {
+			SharedFuture<PipelineFlowState> stateFuture =  sourceNode()->evaluatePipeline(time);
+			if(!operation.waitForFuture(stateFuture))
+				return;
+			QPainter painter(&frameBuffer->image());
+			renderImplementation(painter, renderSettings, stateFuture.result());
+		}
+		else {
+			QPainter painter(&frameBuffer->image());
+			renderImplementation(painter, renderSettings, {});
+		}
+	}
+
+	/// This method asks the overlay to paint its contents over the given interactive viewport.
+	virtual void renderInteractive(const Viewport* viewport, TimePoint time, QPainter& painter, const ViewProjectionParameters& projParams, const RenderSettings* renderSettings) override {
+		const PipelineFlowState& flowState = sourceNode() ? sourceNode()->evaluatePipelinePreliminary(true) : PipelineFlowState();		
+		renderImplementation(painter, renderSettings, flowState);
+	}
 
 	/// Moves the position of the overlay in the viewport by the given amount,
 	/// which is specified as a fraction of the viewport render size.
@@ -59,6 +78,9 @@ public:
 	Q_PROPERTY(Ovito::PipelineSceneNode* sourceNode READ sourceNode WRITE setSourceNode);
 
 private:
+
+	/// This method paints the overlay contents onto the given canvas.
+	void renderImplementation(QPainter& painter, const RenderSettings* renderSettings, const PipelineFlowState& flowState);
 
 	/// The corner of the viewport where the label is shown in.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(int, alignment, setAlignment, PROPERTY_FIELD_MEMORIZE);

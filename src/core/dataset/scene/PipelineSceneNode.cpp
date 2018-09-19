@@ -108,7 +108,7 @@ const PipelineFlowState& PipelineSceneNode::evaluatePipelinePreliminary(bool inc
 /******************************************************************************
 * Asks the node for the results of its data pipeline.
 ******************************************************************************/
-SharedFuture<PipelineFlowState> PipelineSceneNode::evaluatePipeline(TimePoint time) const
+SharedFuture<PipelineFlowState> PipelineSceneNode::evaluatePipeline(TimePoint time, bool breakOnError) const
 {
 	// Check if we can immediately serve the request from the internal cache.
 	if(_pipelineCache.contains(time))
@@ -119,7 +119,7 @@ SharedFuture<PipelineFlowState> PipelineSceneNode::evaluatePipeline(TimePoint ti
 		return Future<PipelineFlowState>::createImmediateEmplace();
 
 	// Evaluate the pipeline and store the obtained results in the cache before returning them to the caller.
-	return dataProvider()->evaluate(time)
+	return dataProvider()->evaluate(time, breakOnError)
 		.then(executor(), [this, time](PipelineFlowState state) {
 			UndoSuspender noUndo(this);
 
@@ -140,15 +140,15 @@ SharedFuture<PipelineFlowState> PipelineSceneNode::evaluatePipeline(TimePoint ti
 * Asks the node for the results of its data pipeline including the output of 
 * asynchronous visualization elements.
 ******************************************************************************/
-SharedFuture<PipelineFlowState> PipelineSceneNode::evaluateRenderingPipeline(TimePoint time) const
+SharedFuture<PipelineFlowState> PipelineSceneNode::evaluateRenderingPipeline(TimePoint time, bool breakOnError) const
 {
 	// Check if we can immediately serve the request from the internal cache.
 	if(_pipelineRenderingCache.contains(time))
 		return _pipelineRenderingCache.getAt(time);
 
 	// Evaluate the pipeline and store the obtained results in the cache before returning them to the caller.
-	return evaluatePipeline(time)
-		.then(executor(), [this, time](const PipelineFlowState& state) {
+	return evaluatePipeline(time, breakOnError)
+		.then(executor(), [this, time, breakOnError](const PipelineFlowState& state) {
 			UndoSuspender noUndo(this);
 
 			// Holds the results to be returned to the caller.
@@ -161,12 +161,12 @@ SharedFuture<PipelineFlowState> PipelineSceneNode::evaluateRenderingPipeline(Tim
 						if(!vis || !vis->isEnabled()) continue;
 						if(TransformingDataVis* transformingVis = dynamic_object_cast<TransformingDataVis>(vis)) {
 							if(!results.isValid()) {
-								results = transformingVis->transformData(time, dataObj, PipelineFlowState(state), _pipelineRenderingCache.getStaleContents(), this);
+								results = transformingVis->transformData(time, dataObj, PipelineFlowState(state), _pipelineRenderingCache.getStaleContents(), this, breakOnError);
 							}
 							else {
-								results = results.then(transformingVis->executor(), [node = OORef<PipelineSceneNode>(this), time, transformingVis, dataObj](PipelineFlowState&& state) {
+								results = results.then(transformingVis->executor(), [node = OORef<PipelineSceneNode>(this), time, transformingVis, dataObj, breakOnError](PipelineFlowState&& state) {
 									UndoSuspender noUndo(transformingVis);
-									return transformingVis->transformData(time, dataObj, std::move(state), node->_pipelineRenderingCache.getStaleContents(), node);
+									return transformingVis->transformData(time, dataObj, std::move(state), node->_pipelineRenderingCache.getStaleContents(), node, breakOnError);
 								});
 							}
 							OVITO_ASSERT(results.isValid());

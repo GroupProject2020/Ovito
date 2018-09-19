@@ -1,19 +1,20 @@
 from ovito.io import import_file
-from ovito.modifiers import PythonScriptModifier
 
 # Load some input data:
 pipeline = import_file("input/simulation.dump")
 
 # Define our custom modifier function, which assigns a uniform color 
 # to all particles, similar to the built-in AssignColorModifier. 
-def assign_color(frame, input, output):
-    color_property = output.particles.create_property('Color')
+def assign_color(frame, data):
+    color_property = data.particles_.create_property('Color')
     with color_property:
         color_property[:] = (0.2, 0.5, 1.0)
 
-# Insert custom modifier into the data pipeline.
-pipeline.modifiers.append(PythonScriptModifier(function = assign_color))
+# Insert user-defined modifier function into the data pipeline.
+# This implicitly creates an instance of the PythonScriptModifier class
+# wrapping the Python function.
+pipeline.modifiers.append(assign_color)
 
-# Evaluate data pipeline. This will result in a call to assign_color() from above.
+# Evaluate data pipeline. This will make the system invoke assign_color() defined above.
 data = pipeline.compute()
 print(data.particles['Color'][...])

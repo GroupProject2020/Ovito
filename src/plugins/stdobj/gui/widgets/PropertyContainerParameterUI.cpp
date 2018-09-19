@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -91,6 +91,7 @@ void PropertyContainerParameterUI::updateUI()
 		// Update list of property containers available in the pipeline.
 		comboBox()->clear();
 		int selectedIndex = -1;
+		bool currentContainerFilteredOut = false;
 		if(Modifier* mod = dynamic_object_cast<Modifier>(editObject())) {
 			for(ModifierApplication* modApp : mod->modifierApplications()) {
 				const PipelineFlowState& state = modApp->evaluateInputPreliminary();
@@ -98,8 +99,12 @@ void PropertyContainerParameterUI::updateUI()
 				for(const ConstDataObjectPath& path : containers) {
 					const PropertyContainer* container = static_object_cast<PropertyContainer>(path.back());
 
-					if(_containerFilter && !_containerFilter(container))
+					// The client can apply a filter to the container list.
+					if(_containerFilter && !_containerFilter(container)) {
+						if(selectedPropertyContainer == PropertyContainerReference(&container->getOOMetaClass(), path.toString()))
+							currentContainerFilteredOut = true;
 						continue;
+					}
 
 					QString title = container->getOOMetaClass().propertyClassDisplayName();
 					bool first = true;
@@ -116,7 +121,7 @@ void PropertyContainerParameterUI::updateUI()
 
 					PropertyContainerReference propRef(&container->getOOMetaClass(), path.toString(), title);
 
-					// Make the same container is not added to the list twice.
+					// Do not add the same container to the list more than once.
 					bool existsAlready = false;
 					for(int i = 0; i < comboBox()->count(); i++) {
 						PropertyContainerReference containerRef = comboBox()->itemData(i).value<PropertyContainerReference>();
@@ -140,7 +145,12 @@ void PropertyContainerParameterUI::updateUI()
 		if(selectedIndex < 0) {
 			if(selectedPropertyContainer) {
 				// Add a place-holder item if the selected container does not exist anymore.
-				comboBox()->addItem(selectedPropertyContainer.dataTitle() + tr(" (no longer available)"), QVariant::fromValue(selectedPropertyContainer));
+				QString title = selectedPropertyContainer.dataTitle();
+				if(title.isEmpty() && selectedPropertyContainer.dataClass()) 
+					title = selectedPropertyContainer.dataClass()->propertyClassDisplayName();
+				if(!currentContainerFilteredOut)
+					title += tr(" (no longer available)");
+				comboBox()->addItem(title, QVariant::fromValue(selectedPropertyContainer));
 				QStandardItem* item = static_cast<QStandardItemModel*>(comboBox()->model())->item(comboBox()->count()-1);
 				item->setIcon(warningIcon);
 			}

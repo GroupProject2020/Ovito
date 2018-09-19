@@ -161,7 +161,7 @@ private:
 		PropertyPtr _histogram = std::make_shared<PropertyStorage>(64, PropertyStorage::Int64, 1, 0, tr("Count"), true, DataSeriesObject::YProperty);
 	};
 
-	/// Specifies the grid the modifier should operate on.
+	/// Specifies the voxel grid this modifier should operate on.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(PropertyContainerReference, subject, setSubject);
 
 	/// The voxel property that serves input.

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,6 +21,7 @@
 
 #include <plugins/vorotop/VoroTopPlugin.h>
 #include <plugins/vorotop/VoroTopModifier.h>
+#include <plugins/pyscript/engine/ScriptEngine.h>
 #include <plugins/pyscript/binding/PythonBinding.h>
 #include <plugins/particles/scripting/PythonBinding.h>
 #include <core/app/PluginManager.h>
@@ -81,7 +82,12 @@ PYBIND11_MODULE(VoroTop, m)
 				"Otherwise a mono-disperse Voronoi tessellation is computed, which is independent of the particle sizes. "
 				"\n\n"
 				":Default: ``False``\n")
-		.def_property("filter_file", &VoroTopModifier::filterFile, &VoroTopModifier::loadFilterDefinition,
+		.def_property("filter_file", &VoroTopModifier::filterFile, [](VoroTopModifier& mod, const QString& filename) {
+					if(!mod.loadFilterDefinition(filename, ScriptEngine::getCurrentDataset()->taskManager())) {
+						PyErr_SetString(PyExc_KeyboardInterrupt, "Operation has been canceled by the user.");
+						throw py::error_already_set();
+					}
+				},
 				"Path to the filter definition file used by the modifier. "
 				"Filters files are available from the `VoroTop <https://www.seas.upenn.edu/~mlazar/VoroTop/filters.html>`__ website. "
 				"\n\n"

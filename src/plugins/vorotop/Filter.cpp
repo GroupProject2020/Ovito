@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -22,7 +22,7 @@
 #include <plugins/vorotop/VoroTopPlugin.h>
 #include <core/utilities/io/CompressedTextReader.h>
 #include <core/utilities/io/NumberParsing.h>
-#include <core/utilities/concurrent/PromiseState.h>
+#include <core/utilities/concurrent/Promise.h>
 #include "Filter.h"
 
 namespace Ovito { namespace VoroTop {
@@ -30,7 +30,7 @@ namespace Ovito { namespace VoroTop {
 /******************************************************************************
 * Loads the filter definition from the given input stream.
 ******************************************************************************/
-bool Filter::load(CompressedTextReader& stream, bool readHeaderOnly, PromiseState& promise)
+bool Filter::load(CompressedTextReader& stream, bool readHeaderOnly, PromiseState& operation)
 {
 	// Parse comment lines starting with '#':
 	_filterDescription.clear();
@@ -39,7 +39,7 @@ bool Filter::load(CompressedTextReader& stream, bool readHeaderOnly, PromiseStat
 		line = stream.readLineTrimLeft();
 		if(line[0] != '#') break;
 		_filterDescription += QString::fromUtf8(line + 1).trimmed() + QChar('\n');
-		if(promise.isCanceled()) return false;
+		if(operation.isCanceled()) return false;
 	}
 
 	// Create the default "Other" structure type.
@@ -64,15 +64,15 @@ bool Filter::load(CompressedTextReader& stream, bool readHeaderOnly, PromiseStat
 		_structureTypeDescriptions.push_back(columns.size() >= 2 ? columns[1] : QString());
 		
 		line = stream.readLineTrimLeft();
-		if(promise.isCanceled()) return false;
+		if(operation.isCanceled()) return false;
 	}
 	if(_structureTypeLabels.size() <= 1)
 		throw Exception(QString("Invalid filter definition file"));
 	
 	if(readHeaderOnly)
-		return !promise.isCanceled();
+		return !operation.isCanceled();
 
-	promise.setProgressMaximum(stream.underlyingSize());
+	operation.setProgressMaximum(stream.underlyingSize());
 
 	// Parse Weinberg vector list.
 	for(;;) {
@@ -108,11 +108,11 @@ bool Filter::load(CompressedTextReader& stream, bool readHeaderOnly, PromiseStat
 		line = stream.readNonEmptyLine();
 
 		// Update progress indicator.
-		if(!promise.setProgressValueIntermittent(stream.underlyingByteOffset()))
+		if(!operation.setProgressValueIntermittent(stream.underlyingByteOffset()))
 			return false;
 	}
 
-	return !promise.isCanceled();
+	return !operation.isCanceled();
 }
 
 }	// End of namespace

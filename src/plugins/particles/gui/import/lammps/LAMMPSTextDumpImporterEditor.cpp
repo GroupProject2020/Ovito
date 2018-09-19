@@ -40,7 +40,7 @@ SET_OVITO_OBJECT_EDITOR(LAMMPSTextDumpImporter, LAMMPSTextDumpImporterEditor);
 bool LAMMPSTextDumpImporterEditor::showEditColumnMappingDialog(LAMMPSTextDumpImporter* importer, const QUrl& sourceFile, QWidget* parent)
 {
 	Future<InputColumnMapping> inspectFuture = importer->inspectFileHeader(FileSourceImporter::Frame(sourceFile));
-	if(!importer->dataset()->container()->taskManager().waitForTask(inspectFuture))
+	if(!importer->dataset()->taskManager().waitForTask(inspectFuture))
 		return false;
 	InputColumnMapping mapping = inspectFuture.result();
 

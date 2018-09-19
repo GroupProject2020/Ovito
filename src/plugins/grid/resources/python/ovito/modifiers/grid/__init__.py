@@ -1,5 +1,6 @@
 # Load dependencies
-import ovito.modifiers
+import ovito.modifiers.stdobj
+import ovito.modifiers.mesh
 
 # Load the native code modules.
 from ovito.plugins.Grid import CreateIsosurfaceModifier, SpatialBinningModifier

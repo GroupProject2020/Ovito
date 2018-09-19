@@ -37,7 +37,9 @@ ScriptAutostarter::~ScriptAutostarter()
 {
 	// Shut down Python interpreter.
 	// This will run the Python functions registered with the 'atexit' module.
-	Py_Finalize();
+	if(Py_IsInitialized()) {
+		py::finalize_interpreter();
+	}
 }
 
 /******************************************************************************
@@ -72,8 +74,8 @@ void ScriptAutostarter::applicationStarted()
 		// Suppress undo recording. Actions performed by startup scripts cannot be undone.
 		UndoSuspender noUndo(dataset);
 
-		// Set up script engine.
-		auto engine = ScriptEngine::createEngine(dataset, Application::instance()->datasetContainer()->taskManager(), false);
+		// Set up a script engine.
+		auto engine = ScriptEngine::createEngine(dataset);
 
 		// Pass command line parameters to the script.
 		QStringList scriptArguments = StandaloneApplication::instance()->cmdLineParser().values("scriptarg");
@@ -88,7 +90,7 @@ void ScriptAutostarter::applicationStarted()
 		for(int index = scriptCommands.size() - 1; index >= 0; index--) {
 			const QString& command = scriptCommands[index];
 			try {
-				engine->executeCommands(command, scriptArguments);
+				engine->executeCommands(command, py::globals(), scriptArguments);
 			}
 			catch(Exception& ex) {
 				ex.prependGeneralMessage(tr("Error during Python script execution."));
@@ -98,7 +100,7 @@ void ScriptAutostarter::applicationStarted()
 
 		// Execute script files.
 		for(int index = scriptFiles.size() - 1; index >= 0; index--) {
-			engine->executeFile(scriptFiles[index], scriptArguments);
+			engine->executeFile(scriptFiles[index], py::globals(), scriptArguments);
 		}
 	}
 }

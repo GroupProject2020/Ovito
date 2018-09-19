@@ -32,7 +32,7 @@ def _FileSource_load(self, location, **params):
 
     # Importing a file is a long-running operation, which is not permitted during viewport rendering or pipeline evaluation.
     # In these situations, the following function call will raise an exception.
-    ovito.dataset.request_long_operation()
+    ovito.scene.request_long_operation()
 
     # Determine the file's format.
     importer = FileImporter.autodetect_format(self.dataset, first_location)

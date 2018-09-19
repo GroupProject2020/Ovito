@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,6 +23,7 @@
 #include <gui/widgets/general/SpinnerWidget.h>
 #include <gui/properties/PropertiesEditor.h>
 #include <gui/properties/PropertiesPanel.h>
+#include <gui/properties/DefaultPropertiesEditor.h>
 #include <gui/mainwin/MainWindow.h>
 #include <core/dataset/animation/AnimationSettings.h>
 #include <core/dataset/io/FileExporter.h>
@@ -36,14 +37,17 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE
 FileExporterSettingsDialog::FileExporterSettingsDialog(MainWindow* mainWindow, FileExporter* exporter)
 	: QDialog(mainWindow), _exporter(exporter)
 {
-	setWindowTitle(tr("Export Settings"));
+	setWindowTitle(tr("Data Export Settings"));
 
 	_mainLayout = new QVBoxLayout(this);
+	QGroupBox* groupBox;
+	QGridLayout* groupLayout;
 
-	QGroupBox* groupBox = new QGroupBox(tr("Export frame series"), this);
+	// Create "Export sequence" group box for selecting the animation interval to be exported.
+	groupBox = new QGroupBox(tr("Export frame sequence"), this);
 	_mainLayout->addWidget(groupBox);
 
-	QGridLayout* groupLayout = new QGridLayout(groupBox);
+	groupLayout = new QGridLayout(groupBox);
 	groupLayout->setColumnStretch(0, 5);
 	groupLayout->setColumnStretch(1, 95);
 	_rangeButtonGroup = new QButtonGroup(this);
@@ -51,6 +55,8 @@ FileExporterSettingsDialog::FileExporterSettingsDialog(MainWindow* mainWindow, F
 	bool exportAnim = _exporter->exportAnimation();
 	if(!exportAnim && exporter->dataset()->animationSettings()->animationInterval().duration() == 0)
 		groupBox->setEnabled(false);
+	else
+		_skipDialog = false;
 	QRadioButton* singleFrameBtn = new QRadioButton(tr("Current frame only"));
 	_rangeButtonGroup->addButton(singleFrameBtn, 0);
 	groupLayout->addWidget(singleFrameBtn, 0, 0, 1, 2);
@@ -145,17 +151,105 @@ FileExporterSettingsDialog::FileExporterSettingsDialog(MainWindow* mainWindow, F
 	_wildcardTextbox->setEnabled(frameSequenceBtn->isChecked());
 	connect(frameSequenceBtn, &QRadioButton::toggled, _wildcardTextbox, &QWidget::setEnabled);
 
+	// Create "Data" group box for selection of the source data pipeline and source data object.
+	groupBox = new QGroupBox(tr("Data to export"), this);
+	_mainLayout->addWidget(groupBox);
+
+	groupLayout = new QGridLayout(groupBox);
+	_sceneNodeBox = new QComboBox();
+	_dataObjectBox = new QComboBox();
+	groupLayout->addWidget(new QLabel(tr("Pipeline:")), 0, 0);
+	groupLayout->setColumnStretch(1, 1);
+	groupLayout->addWidget(_sceneNodeBox, 0, 1);
+	groupLayout->setColumnMinimumWidth(2, 10);
+	groupLayout->addWidget(new QLabel(tr("Data object:")), 0, 3);
+	groupLayout->setColumnStretch(4, 1);
+	groupLayout->addWidget(_dataObjectBox, 0, 4);
+
+	exporter->dataset()->sceneRoot()->visitChildren([this, exporter](SceneNode* node) {
+		if(exporter->isSuitableNode(node)) {
+			_sceneNodeBox->addItem(node->objectTitle(), QVariant::fromValue(OORef<OvitoObject>(node)));
+			if(node == exporter->nodeToExport())
+				_sceneNodeBox->setCurrentIndex(_sceneNodeBox->count() - 1);
+		}
+		return true;
+	});
+	updateDataObjectList();
+	if(_sceneNodeBox->count() <= 1)
+		_sceneNodeBox->setEnabled(false);
+	if(_dataObjectBox->count() <= 1)
+		_dataObjectBox->setEnabled(false);
+	if(_sceneNodeBox->isEnabled() == false && _dataObjectBox->isEnabled() == false)
+		groupBox->setEnabled(false);
+	else
+		_skipDialog = false;
+
+	// Update exporter whenever a new source pipeline has been selected by the user.
+	connect(_sceneNodeBox, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, [this]() {
+		_exporter->setNodeToExport(static_object_cast<SceneNode>(_sceneNodeBox->currentData().value<OORef<OvitoObject>>()));
+	});
+
+	// Update the list of available data objects whenever the user selects a different source pipeline.
+	connect(_sceneNodeBox, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &FileExporterSettingsDialog::updateDataObjectList);
+
+	// Update the exporter whenever the user selects a new data object.
+	connect(_dataObjectBox, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, [this]() {
+		_exporter->setDataObjectToExport(_dataObjectBox->currentData().value<DataObjectReference>());
+	});
+
 	// Show the optional UI of the exporter.
-	if(PropertiesEditor::create(exporter)) {
-		PropertiesPanel* propPanel = new PropertiesPanel(this, mainWindow);
-		_mainLayout->addWidget(propPanel);
-		propPanel->setEditObject(exporter);
+	if(OORef<PropertiesEditor> editor = PropertiesEditor::create(exporter)) {
+		if(editor->getOOMetaClass() != DefaultPropertiesEditor::OOClass()) {
+			PropertiesPanel* propPanel = new PropertiesPanel(this, mainWindow);
+			_mainLayout->addWidget(propPanel);
+			propPanel->setEditObject(exporter);
+			_skipDialog = false;
+		}
 	}
 
 	QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, Qt::Horizontal, this);
 	connect(buttonBox, &QDialogButtonBox::accepted, this, &FileExporterSettingsDialog::onOk);
 	connect(buttonBox, &QDialogButtonBox::rejected, this, &FileExporterSettingsDialog::reject);
 	_mainLayout->addWidget(buttonBox);
+}
+
+/******************************************************************************
+* Updates the displayed list of data object available for export.
+******************************************************************************/
+void FileExporterSettingsDialog::updateDataObjectList()
+{
+	// Update the data objects list.
+	_dataObjectBox->clear();
+
+	if(const DataObject::OOMetaClass* objClass = _exporter->exportableDataObjectClass()) {
+		if(PipelineSceneNode* pipeline = dynamic_object_cast<PipelineSceneNode>(_exporter->nodeToExport())) {
+			const PipelineFlowState& state = pipeline->evaluatePipelinePreliminary(true);
+			if(!state.isEmpty()) {
+				for(const ConstDataObjectPath& dataPath : state.data()->getObjectsRecursive(*objClass)) {
+					QString title = dataPath.back()->objectTitle();
+					DataObjectReference dataRef(objClass, dataPath.toString(), title);
+					_dataObjectBox->addItem(title, QVariant::fromValue(dataRef));
+					if(dataRef == _exporter->dataObjectToExport())
+						_dataObjectBox->setCurrentIndex(_dataObjectBox->count() - 1);
+				}
+			}
+		}
+		if(_dataObjectBox->count() > 1) {
+			_dataObjectBox->setEnabled(true);
+			_exporter->setDataObjectToExport(_dataObjectBox->currentData().value<DataObjectReference>());
+		}
+		else if(_dataObjectBox->count() == 1) {
+			_dataObjectBox->setEnabled(false);
+			_exporter->setDataObjectToExport(_dataObjectBox->currentData().value<DataObjectReference>());
+		}
+		else {
+			_dataObjectBox->setEnabled(false);
+			_dataObjectBox->addItem(tr("<no exportable data>"));
+		}
+	}
+	else {
+		_dataObjectBox->setEnabled(false);
+	}
 }
 
 /******************************************************************************

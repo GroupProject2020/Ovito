@@ -43,5 +43,6 @@
 #include <3rdparty/pybind11/stl_bind.h>
 #include <3rdparty/pybind11/stl.h>
 #include <3rdparty/pybind11/numpy.h>
+#include <3rdparty/pybind11/embed.h>
 
 #endif

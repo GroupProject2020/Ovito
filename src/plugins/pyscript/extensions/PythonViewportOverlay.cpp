@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -88,10 +88,9 @@ ScriptEngine* PythonViewportOverlay::getScriptEngine()
 	const std::shared_ptr<ScriptEngine>& engine = ScriptEngine::activeEngine();
 	if(!engine) {
 		if(!_scriptEngine) {
-			_scriptEngine = ScriptEngine::createEngine(dataset(), dataset()->container()->taskManager(), true);
+			_scriptEngine = ScriptEngine::createEngine(dataset());
 			connect(_scriptEngine.get(), &ScriptEngine::scriptOutput, this, &PythonViewportOverlay::onScriptOutput);
 			connect(_scriptEngine.get(), &ScriptEngine::scriptError, this, &PythonViewportOverlay::onScriptOutput);
-			_mainNamespacePrototype = _scriptEngine->mainNamespace();
 		}
 		return _scriptEngine.get();
 	}
@@ -119,13 +118,14 @@ void PythonViewportOverlay::compileScript()
 		// Initialize a local script engine.
 		ScriptEngine* engine = getScriptEngine();
 
-		// Run script once.
-		engine->executeCommands(script());
+		// Run script code within a private namespace.
+		py::dict localNamespace = py::globals().attr("copy")();
+		engine->executeCommands(script(), localNamespace);
 
 		// Extract the render() function defined by the script.
-		engine->execute([this, engine]() {
+		engine->execute([&]() {
 			try {
-				_overlayScriptFunction = py::function(engine->mainNamespace()["render"]);
+				_overlayScriptFunction = py::function(localNamespace["render"]);
 				if(!py::isinstance<py::function>(_overlayScriptFunction)) {
 					_overlayScriptFunction = py::function();
 					throwException(tr("Invalid Python script. It does not define a callable function named render()."));
@@ -156,11 +156,10 @@ void PythonViewportOverlay::onScriptOutput(const QString& text)
 }
 
 /******************************************************************************
-* This method asks the overlay to paint its contents over the given viewport.
+* This method paints the overlay contents on the given canvas.
 ******************************************************************************/
-void PythonViewportOverlay::render(Viewport* viewport, TimePoint time, QPainter& painter, 
-									const ViewProjectionParameters& projParams, RenderSettings* renderSettings, 
-									bool interactiveViewport, TaskManager& taskManager)
+void PythonViewportOverlay::renderImplementation(const Viewport* viewport, TimePoint time, QPainter& painter, 
+							const ViewProjectionParameters& projParams, const RenderSettings* renderSettings)
 {
 	// Compile script source if needed.
 	if(!_overlayScriptFunction) {
@@ -202,7 +201,9 @@ void PythonViewportOverlay::render(Viewport* viewport, TimePoint time, QPainter&
 				py::return_value_policy::move));
 
 			// Execute render() script function.
-			engine->callObject(_overlayScriptFunction, std::move(arguments));
+			engine->execute([&]() {
+				_overlayScriptFunction(*std::move(arguments));
+			});
 		});
 	}
 	catch(const Exception& ex) {

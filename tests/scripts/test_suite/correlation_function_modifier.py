@@ -24,20 +24,16 @@ modifier.property2 = 'Position.X'
 data = pipeline.compute()
 
 print("Real-space correlation:")
-table = modifier.get_real_space_function()
+table = data.series['correlation-real-space'].as_table()
 print(table) 
 assert(table.ndim == 2 and table.shape[1] == 2)
 
 print("Real-space RDF:")
-table = modifier.get_rdf()
+table = data.series['correlation-real-space-rdf'].as_table()
 print(table) 
 assert(table.ndim == 2 and table.shape[1] == 2)
 
 print("Reciprocal-space correlation:")
-table = modifier.get_reciprocal_space_function()
+table = data.series['correlation-reciprocal-space'].as_table()
 print(table) 
 assert(table.ndim == 2 and table.shape[1] == 2)
-
-print("Data series view:")
-print(data.series)
-print(data.series['Real-space correlation function'].as_table())

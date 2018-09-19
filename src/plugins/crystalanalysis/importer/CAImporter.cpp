@@ -605,7 +605,7 @@ OORef<DataCollection> CAImporter::CrystalAnalysisFrameData::handOver(const DataC
 	if(_defectSurface) {
 		SurfaceMesh* defectSurfaceObj = const_cast<SurfaceMesh*>(existing ? existing->getObject<SurfaceMesh>() : nullptr);
 		if(!defectSurfaceObj) {
-			defectSurfaceObj = output->createObject<SurfaceMesh>(fileSource);
+			defectSurfaceObj = output->createObject<SurfaceMesh>(fileSource, tr("Defect mesh"));
 			OORef<SurfaceMeshVis> vis = new SurfaceMeshVis(fileSource->dataset());
 			if(!Application::instance()->scriptMode())
 				vis->loadUserDefaults();

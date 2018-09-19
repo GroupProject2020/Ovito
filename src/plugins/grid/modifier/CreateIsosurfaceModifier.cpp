@@ -41,7 +41,8 @@ SET_PROPERTY_FIELD_LABEL(CreateIsosurfaceModifier, isolevelController, "Isolevel
 /******************************************************************************
 * Constructs the modifier object.
 ******************************************************************************/
-CreateIsosurfaceModifier::CreateIsosurfaceModifier(DataSet* dataset) : AsynchronousModifier(dataset)
+CreateIsosurfaceModifier::CreateIsosurfaceModifier(DataSet* dataset) : AsynchronousModifier(dataset),
+	_subject(&VoxelGrid::OOClass())
 {
 	setIsolevelController(ControllerManager::createFloatController(dataset));
 
@@ -79,7 +80,7 @@ void CreateIsosurfaceModifier::initializeModifier(ModifierApplication* modApp)
 	AsynchronousModifier::initializeModifier(modApp);
 
 	// Use the first available voxel grid from the input state as data source when the modifier is newly created.
-	if(sourceProperty().isNull() && !subject() && !Application::instance()->scriptMode()) {
+	if(sourceProperty().isNull() && subject().dataPath().isEmpty() && !Application::instance()->scriptMode()) {
 		const PipelineFlowState& input = modApp->evaluateInputPreliminary();
 		if(const VoxelGrid* grid = input.getObject<VoxelGrid>()) {
 			setSubject(PropertyContainerReference(&grid->getOOMetaClass(), grid->identifier()));
@@ -109,9 +110,9 @@ Future<AsynchronousModifier::ComputeEnginePtr> CreateIsosurfaceModifier::createE
 	if(!subject())
 		throwException(tr("No input voxel grid set."));
 	if(subject().dataClass() != &VoxelGrid::OOClass())
-		throwException(tr("Selected modifier input is not a voxel grid."));
+		throwException(tr("Selected modifier input is not a voxel data grid."));
 	if(sourceProperty().isNull())
-		throwException(tr("Select an input field quantity first."));
+		throwException(tr("Please select an input field quantity for the isosurface calculation."));
 
 	// Check if the source property is the right kind of property.
 	if(sourceProperty().containerClass() != subject().dataClass())
@@ -211,7 +212,7 @@ void CreateIsosurfaceModifier::ComputeIsosurfaceEngine::emitResults(TimePoint ti
 	// Look up the input grid.
 	if(const VoxelGrid* voxelGrid = dynamic_object_cast<VoxelGrid>(state.expectLeafObject(modifier->subject()))) {		
 		// Create the output data object.
-		SurfaceMesh* meshObj = state.createObject<SurfaceMesh>(modApp);
+		SurfaceMesh* meshObj = state.createObject<SurfaceMesh>(QStringLiteral("isosurface"), modApp, tr("Isosurface"));
 		meshObj->setStorage(mesh());
 		meshObj->setIsCompletelySolid(isCompletelySolid());
 		meshObj->setDomain(voxelGrid->domain());

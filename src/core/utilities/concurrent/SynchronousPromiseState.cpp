@@ -23,6 +23,7 @@
 #include "SynchronousPromiseState.h"
 #include "Future.h"
 #include "TaskManager.h"
+#include "PromiseWatcher.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPACE(Concurrency)
 
@@ -30,7 +31,7 @@ bool SynchronousPromiseState::setProgressValue(qlonglong value)
 {
 	// Yield control to the event loop to process user interface events.
 	// This is necessary so that the user can interrupt the running opertion.
-	if(_taskManager) _taskManager->processEvents();
+	_taskManager.processEvents();
 
     return PromiseStateWithProgress::setProgressValue(value);
 }
@@ -39,7 +40,7 @@ bool SynchronousPromiseState::incrementProgressValue(qlonglong increment)
 {
 	// Yield control to the event loop to process user interface events.
 	// This is necessary so that the user can interrupt the running opertion.
-	if(_taskManager) _taskManager->processEvents();
+	_taskManager.processEvents();
 
 	return PromiseStateWithProgress::incrementProgressValue(increment);
 }
@@ -50,8 +51,36 @@ void SynchronousPromiseState::setProgressText(const QString& progressText)
 
 	// Yield control to the event loop to process user interface events.
 	// This is necessary so that the user can interrupt the running opertion.
-	if(_taskManager) _taskManager->processEvents();
+	_taskManager.processEvents();
 }
+
+Promise<> SynchronousPromiseState::createSubOperation()
+{
+	OVITO_ASSERT(isStarted());
+	OVITO_ASSERT(!isFinished());
+
+	// Create a new promise for the sub-operation.
+	Promise<> subOperation = _taskManager.createSynchronousPromise<>(true);
+
+	// Ensure that the sub-operation gets canceled together with the parent operation.
+	PromiseWatcher* parentOperationWatcher = _taskManager.addTaskInternal(shared_from_this());
+	PromiseWatcher* subOperationWatcher = _taskManager.addTaskInternal(subOperation.sharedState());
+	QObject::connect(parentOperationWatcher, &PromiseWatcher::canceled, subOperationWatcher, &PromiseWatcher::cancel);
+	QObject::connect(subOperationWatcher, &PromiseWatcher::canceled, parentOperationWatcher, &PromiseWatcher::cancel);
+
+	return subOperation;
+}
+
+/// Blocks execution until the given future is in the completed state.
+bool SynchronousPromiseState::waitForFuture(const FutureBase& future)
+{
+	if(!_taskManager.waitForTask(future)) {
+		cancel();
+		return false;
+	}
+	return true;
+}
+
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE

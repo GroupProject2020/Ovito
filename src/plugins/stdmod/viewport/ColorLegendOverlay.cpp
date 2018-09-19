@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -105,11 +105,9 @@ ColorLegendOverlay::ColorLegendOverlay(DataSet* dataset) : ViewportOverlay(datas
 }
 
 /******************************************************************************
-* This method asks the overlay to paint its contents over the given viewport.
+* This method paints the overlay contents onto the given canvas.
 ******************************************************************************/
-void ColorLegendOverlay::render(Viewport* viewport, TimePoint time, QPainter& painter, 
-						const ViewProjectionParameters& projParams, RenderSettings* renderSettings,
-						bool interactiveViewport, TaskManager& taskManager)
+void ColorLegendOverlay::renderImplementation(QPainter& painter, const ViewProjectionParameters& projParams, const RenderSettings* renderSettings)
 {
 	// Check whether a Color Coding modifier has been wired to this color legend:
 	if(!modifier()) {

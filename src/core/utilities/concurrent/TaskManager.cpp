@@ -80,10 +80,14 @@ void TaskManager::registerTask(const PromiseStatePtr& sharedState)
 ******************************************************************************/
 PromiseWatcher* TaskManager::addTaskInternal(const PromiseStatePtr& sharedState)
 {
+	OVITO_ASSERT(!QCoreApplication::instance() || QThread::currentThread() == QCoreApplication::instance()->thread());
+	
 	// Check if task is already registered.
-	for(PromiseWatcher* watcher : runningTasks()) {
-		if(watcher->sharedState() == sharedState)
-			return watcher;
+	for(QObject* childObject : children()) {
+		if(PromiseWatcher* watcher = qobject_cast<PromiseWatcher*>(childObject)) {
+			if(watcher->sharedState() == sharedState)
+				return watcher;
+		}
 	}
 
 	// Create a task watcher, which will generate start/stop notification signals.

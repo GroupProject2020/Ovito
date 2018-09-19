@@ -159,12 +159,12 @@ bool OSPRayRenderer::startRender(DataSet* dataset, RenderSettings* settings)
 /******************************************************************************
 * Renders a single animation frame into the given frame buffer.
 ******************************************************************************/
-bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, const PromiseBase& promise)
+bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask stereoTask, AsyncOperation& operation)
 {
 	if(!backend())
 		throwException(tr("No OSPRay rendering backend has been set."));
 
-	promise.setProgressText(tr("Handing scene data to OSPRay renderer"));
+	operation.setProgressText(tr("Handing scene data to OSPRay renderer"));
 	try {
 
 		// Output image size:
@@ -231,7 +231,7 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 		// Transfer renderable geometry from OVITO to OSPRay renderer.
 		OSPReferenceWrapper<ospray::cpp::Model> world;
 		_ospWorld = &world;
-		if(!renderScene(promise))
+		if(!renderScene(operation))
 			return false;
 		world.commit();	
 			
@@ -322,7 +322,7 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 			std::function<bool(int,int,int,int)> _progressCallback;			
 		};
 		auto loadBalancer = std::make_unique<OVITOTiledLoadBalancer>();
-		loadBalancer->setProgressCallback([&osp_fb,frameBuffer,&frameBufferContents,imgSize,&promise,this](int x1, int y1, int x2, int y2) {
+		loadBalancer->setProgressCallback([&osp_fb,frameBuffer,&frameBufferContents,imgSize,&operation,this](int x1, int y1, int x2, int y2) {
 			// Access framebuffer data and copy it to our own framebuffer.
 			uchar* fb = (uchar*)osp_fb.map(OSP_FB_COLOR);
 			OVITO_ASSERT(frameBufferContents.format() == QImage::Format_ARGB32);
@@ -346,18 +346,18 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 			}
 			frameBuffer->update(QRect(x1, frameBuffer->image().height() - y2, x2 - x1, y2 - y1));
 			osp_fb.unmap(fb);
-			return promise.incrementProgressValue((x2-x1) * (y2-y1));
+			return operation.incrementProgressValue((x2-x1) * (y2-y1));
 		});
 		ospray::TiledLoadBalancer::instance = std::move(loadBalancer);
 			
-		promise.beginProgressSubSteps(refinementIterations());
-		for(int iteration = 0; iteration < refinementIterations() && !promise.isCanceled(); iteration++) {
-			if(iteration != 0) promise.nextProgressSubStep();
-			promise.setProgressText(tr("Rendering image (pass %1 of %2)").arg(iteration+1).arg(refinementIterations()));
-			promise.setProgressMaximum(imgSize.x * imgSize.y);
+		operation.beginProgressSubSteps(refinementIterations());
+		for(int iteration = 0; iteration < refinementIterations() && !operation.isCanceled(); iteration++) {
+			if(iteration != 0) operation.nextProgressSubStep();
+			operation.setProgressText(tr("Rendering image (pass %1 of %2)").arg(iteration+1).arg(refinementIterations()));
+			operation.setProgressMaximum(imgSize.x * imgSize.y);
 			renderer.renderFrame(osp_fb, OSP_FB_COLOR | OSP_FB_ACCUM);
 		}
-		promise.endProgressSubSteps();
+		operation.endProgressSubSteps();
 
 		// Execute recorded overlay draw calls.
 		QPainter painter(&frameBuffer->image());
@@ -379,7 +379,7 @@ bool OSPRayRenderer::renderFrame(FrameBuffer* frameBuffer, StereoRenderingTask s
 		throwException(tr("OSPRay error: %1").arg(ex.what()));
 	}
 	
-	return !promise.isCanceled();
+	return !operation.isCanceled();
 }
 
 /******************************************************************************

@@ -124,6 +124,13 @@ public:
 	/// while trying to fulfill it. 
     void setException(std::exception_ptr&& ex) const { sharedState()->setException(std::move(ex)); }
 
+	/// Creates a child operation.
+	/// If the child operation is canceled, this parent operation gets canceled too -and vice versa. 
+	Promise<> createSubOperation() const;
+
+	/// Blocks execution until the given future enters the completed state.
+	bool waitForFuture(const FutureBase& future) const { return sharedState()->waitForFuture(future); }
+
 	/// Move assignment operator.
 	PromiseBase& operator=(PromiseBase&& p) = default;
 
@@ -135,10 +142,7 @@ public:
 		OVITO_ASSERT(isValid());
 		return _sharedState;
 	}
-
-	/// Calls TaskManager::registerTask().
-	void registerWithTaskManager(TaskManager& taskManager);
-
+	
 protected:
 
 	/// Default constructor.
@@ -175,15 +179,6 @@ public:
 #else
 	Promise() noexcept {}
 #endif
-
-	/// Creates a promise that is used to report progress in the main thread.
-	static Promise createSynchronous(TaskManager* taskManager, bool startedState, bool registerWithManager) {
-		Promise promise(std::make_shared<PromiseStateWithResultStorage<SynchronousPromiseState, tuple_type>>(
-			PromiseState::no_result_init_t(), 
-			startedState ? PromiseState::State(PromiseState::Started) : PromiseState::NoState, taskManager));
-		if(registerWithManager && taskManager) promise.registerWithTaskManager(*taskManager);
-		return promise;
-	}
 
 	/// Create a promise that is ready and provides an immediate result.
 	template<typename... R2>
@@ -236,13 +231,71 @@ public:
 		sharedState()->template setResults<tuple_type>(std::forward_as_tuple(std::forward<R2>(result)...));
 	}
 
-private:
+protected:
 
 	Promise(PromiseStatePtr p) noexcept : PromiseBase(std::move(p)) {}
 
 #ifdef OVITO_DEBUG
 	bool _futureCreated = false;
 #endif
+
+	friend class TaskManager;
+};
+
+/// Creates a child operation.
+/// If the child operation is canceled, this parent operation gets canceled too -and vice versa. 
+inline Promise<> PromiseBase::createSubOperation() const 
+{ 
+	return sharedState()->createSubOperation(); 
+}
+
+/**
+ * Object passed to asynchronous functions.
+ */ 
+class OVITO_CORE_EXPORT AsyncOperation : public Promise<>
+{
+public:
+
+	/// Constructor.
+	AsyncOperation(Promise<>&& promise) : Promise(std::move(promise)) {}
+
+	/// Constructor.
+	AsyncOperation(TaskManager& taskManager);
+
+	/// Destructor.
+	~AsyncOperation() {
+		// Automatically put the promise into the finished state.
+		if(isValid() && !isFinished()) {
+			setStarted();
+			setFinished();
+		}		
+	}
+};
+
+/**
+ * A promise that is used for signaling the completion of an operation, but which 
+ * doesn't provide access to the results of the operation nor does it report the progress.
+ */
+class SignalPromise : public Promise<>
+{
+public:
+
+	/// Default constructor.
+#ifndef Q_CC_MSVC
+	SignalPromise() noexcept = default;
+#else
+	SignalPromise() noexcept {}
+#endif
+
+	/// Creates a signal promise.
+	static SignalPromise create(bool startedState) {
+		return std::make_shared<PromiseState>(startedState ? PromiseState::State(PromiseState::Started) : PromiseState::NoState);
+	}
+
+private:
+
+	/// Initialization constructor.
+	SignalPromise(PromiseStatePtr p) noexcept : Promise(std::move(p)) {}
 };
 
 OVITO_END_INLINE_NAMESPACE

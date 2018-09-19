@@ -55,9 +55,13 @@ namespace Ovito {
 			class PromiseWatcher;
 			class AsynchronousTaskBase;
 			class TrackingPromiseState;
+			class SynchronousPromiseState;
+			class AsyncOperation;
 			template<typename tuple_type> class DirectContinuationPromiseState;
 			template<typename... R> class Future;
 			template<typename... R> class SharedFuture;
+			template<typename... R> class Promise;
+			template<class BaseState, class tuple_type> class PromiseStateWithResultStorage;
 			using PromiseStatePtr = std::shared_ptr<PromiseState>;
 		OVITO_END_INLINE_NAMESPACE
 		OVITO_BEGIN_INLINE_NAMESPACE(Mesh)

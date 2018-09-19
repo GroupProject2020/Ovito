@@ -1,12 +1,14 @@
 # Load dependencies
 import ovito.modifiers
 import ovito.modifiers.stdmod
+import ovito.modifiers.stdobj
+import ovito.modifiers.mesh
+import ovito.modifiers.grid
 
 # Load the native code modules.
 import ovito.plugins.Particles
 
 # Load submodules.
-from .coordination_analysis_modifier import CoordinationAnalysisModifier
 from .compute_property_modifier import ComputePropertyModifier
 
 # Inject classes into parent module.
@@ -30,16 +32,28 @@ ovito.modifiers.PolyhedralTemplateMatchingModifier = ovito.plugins.Particles.Pol
 ovito.modifiers.CoordinationPolyhedraModifier = ovito.plugins.Particles.CoordinationPolyhedraModifier
 ovito.modifiers.InterpolateTrajectoryModifier = ovito.plugins.Particles.InterpolateTrajectoryModifier
 ovito.modifiers.GenerateTrajectoryLinesModifier = ovito.plugins.Particles.GenerateTrajectoryLinesModifier
-ovito.modifiers.__all__ += ['AmbientOcclusionModifier', 
+ovito.modifiers.__all__ += [
+            'AmbientOcclusionModifier', 
             'WrapPeriodicImagesModifier',
             'ExpandSelectionModifier',
-            'StructureIdentificationModifier', 'CommonNeighborAnalysisModifier', 'AcklandJonesModifier',
-            'CreateBondsModifier', 'CentroSymmetryModifier', 'ClusterAnalysisModifier', 'CoordinationAnalysisModifier',
-            'CalculateDisplacementsModifier', 'AtomicStrainModifier',
-            'WignerSeitzAnalysisModifier', 'VoronoiAnalysisModifier', 'IdentifyDiamondModifier', 'LoadTrajectoryModifier',
+            'StructureIdentificationModifier', 
+            'CommonNeighborAnalysisModifier', 
+            'AcklandJonesModifier',
+            'CreateBondsModifier', 
+            'CentroSymmetryModifier', 
+            'ClusterAnalysisModifier', 
+            'CoordinationAnalysisModifier',
+            'CalculateDisplacementsModifier', 
+            'AtomicStrainModifier',
+            'WignerSeitzAnalysisModifier', 
+            'VoronoiAnalysisModifier', 
+            'IdentifyDiamondModifier', 
+            'LoadTrajectoryModifier',
             'PolyhedralTemplateMatchingModifier',
-            'CoordinationPolyhedraModifier', 'InterpolateTrajectoryModifier', 'GenerateTrajectoryLinesModifier']
+            'CoordinationPolyhedraModifier', 
+            'InterpolateTrajectoryModifier', 
+            'GenerateTrajectoryLinesModifier']
 
 # For backward compatibility with OVITO 2.9.0:
-ovito.modifiers.CoordinationNumberModifier = CoordinationAnalysisModifier
+ovito.modifiers.CoordinationNumberModifier = ovito.modifiers.CoordinationAnalysisModifier
 ovito.modifiers.__all__ += ['CoordinationNumberModifier']

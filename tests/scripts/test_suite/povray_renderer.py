@@ -23,4 +23,4 @@ print("focal_length:", renderer.focal_length)
 print("aperture:", renderer.aperture)
 print("blur_samples:", renderer.blur_samples)
 
-ovito.dataset.viewports.active_vp.render_image(size = (100,100), renderer = renderer)
+ovito.scene.viewports.active_vp.render_image(size = (100,100), renderer = renderer)

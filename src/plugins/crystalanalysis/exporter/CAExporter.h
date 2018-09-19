@@ -24,6 +24,7 @@
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
 #include <plugins/particles/export/ParticleExporter.h>
+#include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
@@ -49,7 +50,7 @@ class OVITO_CRYSTALANALYSIS_EXPORT CAExporter : public ParticleExporter
 
 	Q_OBJECT
 	OVITO_CLASS_META(CAExporter, OOMetaClass)
-	
+
 public:
 
 	/// \brief Constructs a new instance of this class.
@@ -61,10 +62,15 @@ public:
 	/// Sets whether the DXA defect mesh is exported (in addition to the dislocation lines).
 	void setMeshExportEnabled(bool enable) { _meshExportEnabled = enable; }
 
+	/// \brief Returns the type of data objects that this exporter service can export.
+	virtual const DataObject::OOMetaClass* exportableDataObjectClass() const override {
+		return &DislocationNetworkObject::OOClass();
+	}
+
 protected:
 
 	/// \brief Writes the particles of one animation frame to the current output file.
-	virtual bool exportObject(SceneNode* sceneNode, int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager) override;
+	virtual bool exportData(const PipelineFlowState& state, int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation) override;
 	
 private:
 

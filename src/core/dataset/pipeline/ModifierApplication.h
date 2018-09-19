@@ -67,7 +67,7 @@ public:
 	Q_INVOKABLE ModifierApplication(DataSet* dataset);
 
 	/// \brief Asks the object for the result of the upstream data pipeline.
-	SharedFuture<PipelineFlowState> evaluateInput(TimePoint time);
+	SharedFuture<PipelineFlowState> evaluateInput(TimePoint time, bool breakOnError = false);
 
 	/// \brief Returns the results of an immediate evaluation of the upstream data pipeline.
 	PipelineFlowState evaluateInputPreliminary() const { return input() ? input()->evaluatePreliminary() : PipelineFlowState(); }
@@ -98,7 +98,7 @@ public:
 protected:
 
 	/// \brief Asks the object for the result of the data pipeline.
-	virtual Future<PipelineFlowState> evaluateInternal(TimePoint time) override;	
+	virtual Future<PipelineFlowState> evaluateInternal(TimePoint time, bool breakOnError) override;	
 
 	/// \brief Decides whether a preliminary viewport update is performed after this pipeline object has been 
 	///        evaluated but before the rest of the pipeline is complete.

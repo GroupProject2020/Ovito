@@ -252,9 +252,9 @@ class BondsView(collections.Mapping):
         if existing_prop is None:
             # If property does not exists yet, create a new BondProperty instance.
             if property_type != BondProperty.Type.User:
-                prop = BondProperty.createStandardProperty(ovito.dataset, num_bonds, property_type, data is None)
+                prop = BondProperty.createStandardProperty(ovito.scene, num_bonds, property_type, data is None)
             else:
-                prop = BondProperty.createUserProperty(ovito.dataset, num_bonds, dtype, components, 0, property_name, data is None)
+                prop = BondProperty.createUserProperty(ovito.scene, num_bonds, dtype, components, 0, property_name, data is None)
 
             # Initialize property with per-bond data if provided.
             if data is not None:

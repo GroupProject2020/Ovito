@@ -2,8 +2,8 @@
     This OVITO script exports the dislocation lines extracted by the
     DXA analysis modifier to a file.
     
-    You should run this script from within the graphical user interface
-    using the Scripting->Run Script File menu option.
+    You should run this macro script from within the graphical user interface
+    using the "Run Script File" menu function.
 """
 import ovito
 from ovito.data import *

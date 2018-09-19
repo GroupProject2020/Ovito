@@ -1,10 +1,8 @@
 # Load dependencies
-import ovito.vis
 import ovito.vis.mesh
+import ovito.vis.particles
 
 # Load the native code modules.
-import ovito.plugins.PyScript
-import ovito.plugins.Particles
 import ovito.plugins.CrystalAnalysis
 
 # Inject selected classes into parent module.

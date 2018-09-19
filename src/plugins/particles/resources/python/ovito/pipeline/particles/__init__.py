@@ -1,4 +1,9 @@
-import ovito.data
+# Load dependencies
+import ovito.pipeline
+import ovito.pipeline.stdobj
+import ovito.pipeline.stdmod
+import ovito.pipeline.mesh
+import ovito.pipeline.grid
 
 # Load the native code module
 from ovito.plugins.Particles import ReferenceConfigurationModifier

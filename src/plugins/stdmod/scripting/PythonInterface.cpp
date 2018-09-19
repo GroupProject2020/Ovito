@@ -216,7 +216,7 @@ PYBIND11_MODULE(StdMod, m)
 			"The modifier will act on particles only by default. This can be changed by setting the :py:attr:`.operate_on` field. "
 			"See also the corresponding `user manual page <../../particles.modifiers.clear_selection.html>`__ for this modifier. "
 			)
-		.def_property("operate_on", modifierPropertyClassGetter(), modifierPropertyClassSetter(),
+		.def_property("operate_on", modifierPropertyContainerGetter(PROPERTY_FIELD(GenericPropertyModifier::subject)), modifierPropertyContainerSetter(PROPERTY_FIELD(GenericPropertyModifier::subject)),
 				"Selects the kind of data elements this modifier should operate on. "
 				"Supported values are: ``'particles'``, ``'bonds'``, ``'voxels'``. "
 				"\n\n"
@@ -234,7 +234,7 @@ PYBIND11_MODULE(StdMod, m)
 			"The modifier will act on particles only by default. This can be changed by setting the :py:attr:`.operate_on` field. "
 			"See also the corresponding `user manual page <../../particles.modifiers.invert_selection.html>`__ for this modifier. "
 			)
-		.def_property("operate_on", modifierPropertyClassGetter(), modifierPropertyClassSetter(),
+		.def_property("operate_on", modifierPropertyContainerGetter(PROPERTY_FIELD(GenericPropertyModifier::subject)), modifierPropertyContainerSetter(PROPERTY_FIELD(GenericPropertyModifier::subject)),
 				"Selects the kind of data elements this modifier should operate on. "
 				"Supported values are: ``'particles'``, ``'bonds'``, ``'voxels'``. "
 				"\n\n"
@@ -257,7 +257,7 @@ PYBIND11_MODULE(StdMod, m)
 			"Usage example:"
 			"\n\n"
 			".. literalinclude:: ../example_snippets/color_coding.py\n"
-			"   :lines: 6-\n"
+			"   :lines: 7-\n"
 			"\n"
 			"If the :py:attr:`.start_value` and :py:attr:`.end_value` parameters are not explicitly specified during modifier construction, "
 			"then the modifier will automatically adjust them to the minimum and maximum values of the input property at the time it "
@@ -339,7 +339,7 @@ PYBIND11_MODULE(StdMod, m)
 		.def("load_image", &ColorCodingImageGradient::loadImage)
 	;
 	ColorCodingModifier_py.def_static("Custom", [](const QString& filename) {
-	    OORef<ColorCodingImageGradient> gradient(new ColorCodingImageGradient(ScriptEngine::activeDataset()));
+	    OORef<ColorCodingImageGradient> gradient(new ColorCodingImageGradient(ovito_class_initialization_helper::getCurrentDataset()));
     	gradient->loadImage(filename);
     	return gradient;
 	});
@@ -372,11 +372,11 @@ PYBIND11_MODULE(StdMod, m)
 				},
 				"The name of the property to use as input; must be an integer property. "
 				"\n\n"
-				"When selecting particles, possible input properties are ``\'Particle Type\'`` and ``\'Structure Type\'``, for example. "
-				"When selecting bonds, ``'Bond Type'`` is a typical input property for this modifier. "
+				"For selecting particles, possible input properties are ``\'Particle Type\'`` and ``\'Structure Type\'``, for example. "
+				"For selecting bonds, ``'Bond Type'`` is a typical input property. "
 				"\n\n"
-				":Default: ``''``\n")
-		.def_property("operate_on", modifierPropertyClassGetter(), modifierPropertyClassSetter(),
+				":Default: ``'Particle Type'``\n")
+		.def_property("operate_on", modifierPropertyContainerGetter(PROPERTY_FIELD(GenericPropertyModifier::subject)), modifierPropertyContainerSetter(PROPERTY_FIELD(GenericPropertyModifier::subject)),
 				"Selects the kind of data elements this modifier should select. "
 				"Supported values are: ``'particles'``, ``'bonds'``. "
 				"\n\n"
@@ -407,7 +407,7 @@ PYBIND11_MODULE(StdMod, m)
 			"\n\n"
 			".. literalinclude:: ../example_snippets/histogram_modifier.py\n"
 			"\n\n")
-		.def_property("operate_on", modifierPropertyClassGetter(), modifierPropertyClassSetter(),
+		.def_property("operate_on", modifierPropertyContainerGetter(PROPERTY_FIELD(GenericPropertyModifier::subject)), modifierPropertyContainerSetter(PROPERTY_FIELD(GenericPropertyModifier::subject)),
 				"Selects the kind of data elements this modifier should operate on. "
 				"Supported values are: ``'particles'``, ``'bonds'``, ``'voxels'``. "
 				"\n\n"
@@ -441,24 +441,6 @@ PYBIND11_MODULE(StdMod, m)
 				"You can use this to restrict histogram calculation to a subset of particles/bonds. "
 				"\n\n"
 				":Default: ``False``\n")
-#if 0				
-		.def_property_readonly("_histogram_data_x", py::cpp_function([](HistogramModifier& mod) {
-				HistogramModifierApplication* modApp = dynamic_object_cast<HistogramModifierApplication>(mod.someModifierApplication());
-				if(!modApp || !modApp->histogram()) mod.throwException(HistogramModifier::tr("Modifier has not been evaluated yet. Histogram data is not yet available."));
-				py::array_t<FloatType> array(modApp->histogram()->x()->size(), modApp->histogram()->x()->constDataFloat(), py::cast(modApp->histogram()));
-				// Mark array as read-only.
-				reinterpret_cast<py::detail::PyArray_Proxy*>(array.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
-				return array;
-			}))
-		.def_property_readonly("_histogram_data_y", py::cpp_function([](HistogramModifier& mod) {
-				HistogramModifierApplication* modApp = dynamic_object_cast<HistogramModifierApplication>(mod.someModifierApplication());
-				if(!modApp || !modApp->histogram()) mod.throwException(HistogramModifier::tr("Modifier has not been evaluated yet. Histogram data is not yet available."));
-				py::array_t<qlonglong> array(modApp->histogram()->y()->size(), modApp->histogram()->y()->constDataInt64(), py::cast(modApp->histogram()));
-				// Mark array as read-only.
-				reinterpret_cast<py::detail::PyArray_Proxy*>(array.ptr())->flags &= ~py::detail::npy_api::NPY_ARRAY_WRITEABLE_;
-				return array;
-			}))
-#endif
 	;
 	
 	ovito_class<ScatterPlotModifier, GenericPropertyModifier>{m};
@@ -661,7 +643,7 @@ PYBIND11_MODULE(StdMod, m)
 				"The animation frame number at which to freeze the input property's values. "
 				"\n\n"
 				":Default: 0\n")
-		.def_property("operate_on", modifierPropertyClassGetter(), modifierPropertyClassSetter(),
+		.def_property("operate_on", modifierPropertyContainerGetter(PROPERTY_FIELD(GenericPropertyModifier::subject)), modifierPropertyContainerSetter(PROPERTY_FIELD(GenericPropertyModifier::subject)),
 				"Selects the kind of properties this modifier should operate on. "
 				"Supported values are: ``'particles'``, ``'bonds'``, ``'voxels'``. "
 				"\n\n"

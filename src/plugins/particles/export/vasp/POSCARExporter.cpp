@@ -32,16 +32,8 @@ IMPLEMENT_OVITO_CLASS(POSCARExporter);
 /******************************************************************************
 * Writes the particles of one animation frame to the current output file.
 ******************************************************************************/
-bool POSCARExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager)
-{
-	// Get particle data to be exported.
-	PipelineFlowState state;
-	if(!getParticleData(sceneNode, time, state, taskManager))
-		return false;
-
-	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
-	exportTask.setProgressText(tr("Writing file %1").arg(filePath));
-	
+bool POSCARExporter::exportData(const PipelineFlowState& state, int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
+{	
 	// Get particle positions and velocities.
 	const ParticlesObject* particles = state.expectObject<ParticlesObject>();
 	const PropertyObject* posProperty = particles->expectProperty(ParticlesObject::PositionProperty);
@@ -99,7 +91,7 @@ bool POSCARExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 	qlonglong totalProgressCount = posProperty->size();
 	if(velocityProperty) totalProgressCount += posProperty->size();
 	qlonglong currentProgress = 0;
-	exportTask.setProgressMaximum(totalProgressCount);
+	operation.setProgressMaximum(totalProgressCount);
 
 	// Write atomic positions.
 	textStream() << "Cartesian\n";
@@ -111,7 +103,7 @@ bool POSCARExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 				continue;
 			textStream() << (p->x() - origin.x()) << ' ' << (p->y() - origin.y()) << ' ' << (p->z() - origin.z()) << '\n';
 
-			if(!exportTask.setProgressValueIntermittent(currentProgress++))
+			if(!operation.setProgressValueIntermittent(currentProgress++))
 				return false;
 		}
 	}
@@ -127,13 +119,13 @@ bool POSCARExporter::exportObject(SceneNode* sceneNode, int frameNumber, TimePoi
 					continue;
 				textStream() << v->x() << ' ' << v->y() << ' ' << v->z() << '\n';
 
-				if(!exportTask.setProgressValueIntermittent(currentProgress++))
+				if(!operation.setProgressValueIntermittent(currentProgress++))
 					return false;
 			}
 		}
 	}
 
-	return !exportTask.isCanceled();
+	return !operation.isCanceled();
 }
 
 OVITO_END_INLINE_NAMESPACE

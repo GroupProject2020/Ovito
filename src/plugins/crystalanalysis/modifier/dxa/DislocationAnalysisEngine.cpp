@@ -263,11 +263,10 @@ void DislocationAnalysisEngine::perform()
 void DislocationAnalysisEngine::emitResults(TimePoint time, ModifierApplication* modApp, PipelineFlowState& state)
 {
 	DislocationAnalysisModifier* modifier = static_object_cast<DislocationAnalysisModifier>(modApp->modifier());
-	
 	StructureIdentificationEngine::emitResults(time, modApp, state);
 
 	// Output defect mesh.
-	SurfaceMesh* defectMeshObj = state.createObject<SurfaceMesh>(modApp);
+	SurfaceMesh* defectMeshObj = state.createObject<SurfaceMesh>(QStringLiteral("dxa-defect-mesh"), modApp, DislocationAnalysisModifier::tr("Defect mesh"));
 	defectMeshObj->setStorage(defectMesh());
 	defectMeshObj->setIsCompletelySolid(isBadEverywhere());	
 	defectMeshObj->setDomain(state.getObject<SimulationCellObject>());
@@ -275,7 +274,7 @@ void DislocationAnalysisEngine::emitResults(TimePoint time, ModifierApplication*
 
 	// Output interface mesh.
 	if(outputInterfaceMesh()) {
-		SurfaceMesh* interfaceMeshObj = state.createObject<SurfaceMesh>(modApp);
+		SurfaceMesh* interfaceMeshObj = state.createObject<SurfaceMesh>(QStringLiteral("dxa-interface-mesh"), modApp, DislocationAnalysisModifier::tr("Interface mesh"));
 		interfaceMeshObj->setStorage(outputInterfaceMesh());
 		interfaceMeshObj->setIsCompletelySolid(isBadEverywhere());
 		interfaceMeshObj->setDomain(state.getObject<SimulationCellObject>());

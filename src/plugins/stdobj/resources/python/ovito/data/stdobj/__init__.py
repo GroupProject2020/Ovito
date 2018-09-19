@@ -1,7 +1,9 @@
 # Load dependencies
 import ovito.data
 
-# Load the module's classes
+# Load the native module.
+import ovito.plugins.StdObj
+
 from .simulation_cell import SimulationCell
 from .property import Property
 from .property_container import PropertyContainer

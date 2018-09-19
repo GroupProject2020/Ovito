@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -507,9 +507,11 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 		if(renderPreviewMode())
 			adjustProjectionForRenderFrame(_projParams);
 
-		// Request scene bounding box.
-		Promise<> renderPromise = Promise<>::createSynchronous(nullptr, true, false);
-		Box3 boundingBox = renderer->computeSceneBoundingBox(time, _projParams, this, renderPromise);
+		// This is the async operation object used when calling rendering functions in the following.
+		AsyncOperation renderOperation(SignalPromise::create(true));
+
+		// Determine scene bounding box.
+		Box3 boundingBox = renderer->computeSceneBoundingBox(time, _projParams, this, renderOperation);
 
 		// Set up final projection with the now known bounding box.
 		_projParams = computeProjectionParameters(time, aspectRatio, boundingBox);
@@ -536,7 +538,7 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 			renderer->setProjParams(_projParams);
 
 			// Call the viewport renderer to render the scene objects.
-			renderer->renderFrame(nullptr, SceneRenderer::NonStereoscopic, renderPromise);
+			renderer->renderFrame(nullptr, SceneRenderer::NonStereoscopic, renderOperation);
 		}
 		else {
 
@@ -561,7 +563,7 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 			renderer->setProjParams(params);
 
 			// Render image of left eye.
-			renderer->renderFrame(nullptr, SceneRenderer::StereoscopicLeft, renderPromise);
+			renderer->renderFrame(nullptr, SceneRenderer::StereoscopicLeft, renderOperation);
 
 			// Setup projection of right eye.
 			left = -c * params.znear / convergence;
@@ -573,7 +575,7 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 			renderer->setProjParams(params);
 
 			// Render image of right eye.
-			renderer->renderFrame(nullptr, SceneRenderer::StereoscopicRight, renderPromise);
+			renderer->renderFrame(nullptr, SceneRenderer::StereoscopicRight, renderOperation);
 		}
 
 		// Render viewport overlays.
@@ -627,7 +629,7 @@ void Viewport::renderOverlays(SceneRenderer* renderer, TimePoint time, RenderSet
 			painter.setWindow(QRect(0, 0, renderSettings->outputImageWidth(), renderSettings->outputImageHeight()));
 			painter.setViewport(renderFrameRect);
 			painter.setRenderHint(QPainter::Antialiasing);
-			overlay->render(this, time, painter, renderProjParams, renderSettings, true, dataset()->container()->taskManager());
+			overlay->renderInteractive(this, time, painter, renderProjParams, renderSettings);
 		}
 	}
 	std::shared_ptr<ImagePrimitive> overlayBufferPrim = renderer->createImagePrimitive();

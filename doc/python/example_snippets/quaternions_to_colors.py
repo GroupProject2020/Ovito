@@ -42,19 +42,19 @@ def quaternions_to_colors(qs):
     
     return rs
     
-def modify(frame, input, output):
+def modify(frame, data):
     """ The user-defined modifier function """
     
     # Input:
-    orientations = input.particles['Orientation']
+    orientations = data.particles['Orientation']
     
     # Output:
-    output.particles.create_property('Color', data=quaternions_to_colors(orientations))
-
+    data.particles_.create_property('Color', data=quaternions_to_colors(orientations))
+################# Code snippet ends here ##################
 # The following is for automated testing only and not shown in the documentation:
 from ovito.io import import_file
-from ovito.modifiers import PythonScriptModifier, PolyhedralTemplateMatchingModifier
+from ovito.modifiers import PolyhedralTemplateMatchingModifier
 pipeline = import_file("input/simulation.dump")
 pipeline.modifiers.append(PolyhedralTemplateMatchingModifier(output_orientation = True))
-pipeline.modifiers.append(PythonScriptModifier(function = modify))
+pipeline.modifiers.append(modify)
 pipeline.compute()

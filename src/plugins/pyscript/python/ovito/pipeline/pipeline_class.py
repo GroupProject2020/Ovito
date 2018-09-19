@@ -7,7 +7,7 @@ except ImportError:
 import sys
     
 # Load the native modules.
-from ..plugins.PyScript import Pipeline, PipelineStatus, ModifierApplication, Modifier, DataVis
+from ..plugins.PyScript import Pipeline, PipelineStatus, ModifierApplication, Modifier, DataVis, PythonScriptModifier
 
 # Implementation of the Pipeline.modifiers collection. 
 def _Pipeline_modifiers(self):
@@ -70,7 +70,10 @@ def _Pipeline_modifiers(self):
         def __setitem__(self, index, newMod):
             """ Replaces an existing modifier in the pipeline with a new one. """
             if not isinstance(newMod, Modifier):
-                raise TypeError("Expected a modifier")
+                if callable(newMod): 
+                    newMod = PythonScriptModifier(function = newMod)
+                else:
+                    raise TypeError("Expected a modifier instance")
             if isinstance(index, slice):
                 raise TypeError("This sequence type does not support slicing.")
             if not isinstance(index, int):
@@ -110,7 +113,10 @@ def _Pipeline_modifiers(self):
         def insert(self, index, mod):
             """ Inserts a new modifier into the pipeline at a given position. """ 
             if not isinstance(mod, Modifier):
-                raise TypeError("Expected a modifier")
+                if callable(mod): 
+                    mod = PythonScriptModifier(function = mod)
+                else:
+                    raise TypeError("Expected a modifier instance")
             if not isinstance(index, int):
                 raise TypeError("Expected integer index")
             if index < 0: index += len(self)
@@ -132,7 +138,10 @@ def _Pipeline_modifiers(self):
         def append(self, mod):
             """ Inserts a new modifier at the end of the pipeline. """ 
             if not isinstance(mod, Modifier):
-                raise TypeError("Expected a modifier")
+                if callable(mod): 
+                    mod = PythonScriptModifier(function = mod)
+                else:
+                    raise TypeError("Expected a modifier instance")
             modapp = mod.create_modifier_application()
             assert(isinstance(modapp, ModifierApplication))
             modapp.modifier = mod
@@ -213,7 +222,10 @@ def _Pipeline_get_vis(self, vis_type):
     """
     if not issubclass(vis_type, DataVis):
         raise ValueError("Not a subclass of ovito.vis.DataVis: {}".format(vis_type))
+    # We need to evaluate the currently pipeline at least once to
+    # update the list of visual elements it produces:
     self.compute()
+    # Visit the list of visual elements that left the pipeline until we find the one the caller is looing for:
     for vis in self.vis_elements:
         if isinstance(vis, vis_type):
             return vis
@@ -235,8 +247,8 @@ Pipeline.remove_from_scene = _Pipeline_remove_from_scene
 
 def _Pipeline_add_to_scene(self):
     """ Inserts the pipeline into the three-dimensional scene by appending it to the :py:attr:`ovito.Scene.pipelines` list.
-        The visual representation of the computed data will appear in rendered images and in the interactive viewports of the 
-        graphical OVITO version.
+        The visual representation of the pipeline's output data will appear in rendered images and in the interactive viewports of the 
+        graphical OVITO program.
         
         You can remove the pipeline from the scene again using :py:meth:`.remove_from_scene`.
     """

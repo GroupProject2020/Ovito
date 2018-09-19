@@ -216,7 +216,7 @@ public:
 	virtual Future<QVector<Frame>> discoverFrames(const QUrl& sourceUrl);
 
 	/// \brief Returns the list of files that match the given wildcard pattern.
-	static Future<std::vector<QUrl>> findWildcardMatches(const QUrl& sourceUrl, TaskManager& taskManager);
+	static Future<std::vector<QUrl>> findWildcardMatches(const QUrl& sourceUrl, DataSet* dataset);
 
 	/// \brief Sends a request to the FileSource owning this importer to reload the input file.
 	void requestReload(int frame = -1);

@@ -1,9 +1,7 @@
 # Load dependencies
-import ovito.io
 import ovito.io.particles
 
 # Load the native code modules
-import ovito.plugins.Particles
 import ovito.plugins.CrystalAnalysis
 
 # Register export formats.

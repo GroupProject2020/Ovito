@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,11 +21,6 @@
 
 #include <plugins/mesh/Mesh.h>
 #include <plugins/mesh/surface/RenderableSurfaceMesh.h>
-#include <core/dataset/scene/PipelineSceneNode.h>
-#include <core/dataset/scene/SelectionSet.h>
-#include <core/dataset/animation/AnimationSettings.h>
-#include <core/utilities/concurrent/TaskManager.h>
-#include <core/utilities/concurrent/Promise.h>
 #include "VTKTriangleMeshExporter.h"
 
 namespace Ovito { namespace Mesh {
@@ -33,22 +28,10 @@ namespace Ovito { namespace Mesh {
 IMPLEMENT_OVITO_CLASS(VTKTriangleMeshExporter);
 
 /******************************************************************************
-* Selects the nodes from the scene to be exported by this exporter if 
-* no specific set of nodes was provided.
-******************************************************************************/
-void VTKTriangleMeshExporter::selectStandardOutputData()
-{
-	QVector<SceneNode*> nodes = dataset()->selection()->nodes();
-	if(nodes.empty())
-		throwException(tr("Please select an object to be exported first."));
-	setOutputData(nodes);
-}
-
-/******************************************************************************
  * This is called once for every output file to be written and before
  * exportData() is called.
  *****************************************************************************/
-bool VTKTriangleMeshExporter::openOutputFile(const QString& filePath, int numberOfFrames)
+bool VTKTriangleMeshExporter::openOutputFile(const QString& filePath, int numberOfFrames, AsyncOperation& operation)
 {
 	OVITO_ASSERT(!_outputFile.isOpen());
 	OVITO_ASSERT(!_outputStream);
@@ -76,34 +59,22 @@ void VTKTriangleMeshExporter::closeOutputFile(bool exportCompleted)
 /******************************************************************************
  * Exports a single animation frame to the current output file.
  *****************************************************************************/
-bool VTKTriangleMeshExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, TaskManager& taskManager)
+bool VTKTriangleMeshExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
 {
-	if(!FileExporter::exportFrame(frameNumber, time, filePath, taskManager))
-		return false;
- 
-	// Export the first scene node from the selection set.
-	if(outputData().empty())
-		throwException(tr("The selection set to be exported is empty."));
- 
-	Promise<> exportTask = Promise<>::createSynchronous(&taskManager, true, true);
-	exportTask.setProgressText(tr("Writing file %1").arg(filePath));
-	
-	PipelineSceneNode* objectNode = dynamic_object_cast<PipelineSceneNode>(outputData().front());
-	if(!objectNode)
-		throwException(tr("The scene node to be exported is not an object node."));
+	// Evaluate pipeline.
+	// Note: We are requesting the rendering state from the pipeline,
+	// because we are interested in renderable triangle meshes.
+	const PipelineFlowState& state = getPipelineDataToBeExported(time, operation, true);
 
-	// Evaluate pipeline of object node.
-	// Note: We are requesting the rendering flow state from the node,
-	// because we are interested in renderable triangle meshes.	
-	auto evalFuture = objectNode->evaluateRenderingPipeline(time);
-	if(!taskManager.waitForTask(evalFuture))
-		return false;
+	// Look up the RenderableSurfaceMesh to be exported in the pipeline state.
+	DataObjectReference objectRef(&RenderableSurfaceMesh::OOClass(), dataObjectToExport().dataPath());
+	const RenderableSurfaceMesh* meshObj = static_object_cast<RenderableSurfaceMesh>(state.getLeafObject(objectRef));
+	if(!meshObj) {
+		throwException(tr("The pipeline output does not contain the surface mesh to be exported (animation frame: %1; object key: %2). Available surface mesh keys: (%3)")
+			.arg(frameNumber).arg(objectRef.dataPath()).arg(getAvailableDataObjectList(state, RenderableSurfaceMesh::OOClass())));
+	}
 
-	// Look up the RenderableSurfaceMesh in the pipeline state.
-	const PipelineFlowState& state = evalFuture.result();
-	const RenderableSurfaceMesh* meshObj = state.getObject<RenderableSurfaceMesh>();
-	if(!meshObj)
-		throwException(tr("The object to be exported does not contain any exportable surface mesh data."));
+	operation.setProgressText(tr("Writing file %1").arg(filePath));	
 
 	const TriMesh& surfaceMesh = meshObj->surfaceMesh();
 	const TriMesh& capPolygonsMesh = meshObj->capPolygonsMesh();
@@ -167,7 +138,7 @@ bool VTKTriangleMeshExporter::exportFrame(int frameNumber, TimePoint time, const
 	for(size_t i = 0; i < capPolygonsMesh.vertexCount(); i++)
 		textStream() << "1\n";
 		
-	return !exportTask.isCanceled();
+	return !operation.isCanceled();
 }
 
 }	// End of namespace

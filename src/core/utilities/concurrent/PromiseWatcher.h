@@ -71,6 +71,11 @@ public:
 	/// Returns the status text of the shared state monitored by this object.
 	QString progressText() const;
 
+public Q_SLOTS:
+
+	/// Cancels the operation being watched by this watcher.
+	void cancel();
+
 Q_SIGNALS:
 
 	void canceled();
