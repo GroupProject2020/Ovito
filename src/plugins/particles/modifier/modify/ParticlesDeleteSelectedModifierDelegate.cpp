@@ -123,7 +123,7 @@ PipelineStatus BondsDeleteSelectedModifierDelegate::apply(Modifier* modifier, Pi
 
 				if(numSelected) {
 					// Make sure we can safely modify the particles and the bonds object.
-					ParticlesObject* outputParticles = state.makeMutable(outputParticles);
+					ParticlesObject* outputParticles = state.makeMutable(inputParticles);
 					BondsObject* outputBonds = outputParticles->makeBondsMutable();
 
 					// Remove selection property.
