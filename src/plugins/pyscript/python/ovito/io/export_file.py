@@ -99,7 +99,7 @@ def export_file(data, file, format, **params):
         When writing files in the *lammps/data* format, the LAMMPS atom style "atomic" is used by default. If you want to create 
         a data file that uses a different atom style, specify it with the ``atom_style`` keyword parameter::
         
-            export_file(pipeline, "output.data", "lammps/data", atom_tyle="bond")
+            export_file(pipeline, "output.data", "lammps/data", atom_style="bond")
         
         The following `LAMMPS atom styles <http://lammps.sandia.gov/doc/atom_style.html>`_ are currently supported by OVITO:
         ``angle``, ``atomic``, ``bond``, ``charge``, ``dipole``, ``full``, ``molecular``, ``sphere``.

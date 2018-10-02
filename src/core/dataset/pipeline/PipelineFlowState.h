@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -108,22 +108,19 @@ public:
 
 	/// \brief Finds an object of the given type in the list of data objects stored in this flow state.
 	const DataObject* getObject(const DataObject::OOMetaClass& objectClass) const {
-		OVITO_ASSERT(data());
-		return data()->getObject(objectClass);
+		return !isEmpty() ? data()->getObject(objectClass) : nullptr;
 	}
 
 	/// \brief Finds an object of the given type in the list of data objects stored in this flow state.
 	template<class DataObjectClass>
 	const DataObjectClass* getObject() const {
-		OVITO_ASSERT(data());
-		return data()->getObject<DataObjectClass>();
+		return !isEmpty() ? data()->getObject<DataObjectClass>() : nullptr;
 	}
 
 	/// \brief Determines if an object of the given type is in this flow state.
 	template<class DataObjectClass>
 	bool containsObject() const {
-		OVITO_ASSERT(data());
-		return data()->containsObject<DataObjectClass>();
+		return !isEmpty() ? data()->containsObject<DataObjectClass>() : nullptr;
 	}
 
 	/// Throws an exception if the input does not contain a data object of the given type.
@@ -155,41 +152,35 @@ public:
 	/// Finds an object of the given type in the list of data objects stored in this flow state
 	/// or among any of their sub-objects.
 	bool containsObjectRecursive(const DataObject::OOMetaClass& objectClass) const {
-		OVITO_ASSERT(data());
-		return data()->containsObjectRecursive(objectClass);
+		return !isEmpty() ? data()->containsObjectRecursive(objectClass) : false;
 	}
 
 	/// Finds all objects of the given type in this flow state (also searching among sub-objects).
 	/// Returns them as a list of object paths.
 	std::vector<ConstDataObjectPath> getObjectsRecursive(const DataObject::OOMetaClass& objectClass) const {
-		OVITO_ASSERT(data());
-		return data()->getObjectsRecursive(objectClass);
+		return !isEmpty() ? data()->getObjectsRecursive(objectClass) : std::vector<ConstDataObjectPath>{};
 	}	
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
 	ConstDataObjectPath getObject(const DataObject::OOMetaClass& objectClass, const QString& pathString) const {
-		OVITO_ASSERT(data());
-		return data()->getObject(objectClass, pathString);
+		return !isEmpty() ? data()->getObject(objectClass, pathString) : ConstDataObjectPath{};
 	}
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
 	ConstDataObjectPath getObject(const DataObjectReference& dataRef) const {
-		OVITO_ASSERT(data());
-		return data()->getObject(dataRef);
+		return !isEmpty() ? data()->getObject(dataRef) : ConstDataObjectPath{};
 	}
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
 	template<class DataObjectClass>
 	ConstDataObjectPath getObject(const QString& pathString) const { 
-		OVITO_ASSERT(data());
-		return data()->getObject<DataObjectClass>(pathString);
+		return !isEmpty() ? data()->getObject<DataObjectClass>(pathString) : ConstDataObjectPath{};
 	}
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
 	template<class DataObjectClass>
 	ConstDataObjectPath getObject(const TypedDataObjectReference<DataObjectClass>& dataRef) const { 
-		OVITO_ASSERT(data());
-		return data()->getObject<DataObjectClass>(dataRef);
+		return !isEmpty() ? data()->getObject<DataObjectClass>(dataRef) : ConstDataObjectPath{};
 	}
 
 	/// Throws an exception if the input does not contain any a data object of the given type and under the given hierarchy path.
@@ -220,21 +211,18 @@ public:
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
 	const DataObject* getLeafObject(const DataObject::OOMetaClass& objectClass, const QString& pathString) const {
-		OVITO_ASSERT(data());
-		return data()->getLeafObject(objectClass, pathString);
+		return !isEmpty() ? data()->getLeafObject(objectClass, pathString) : nullptr;
 	}
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
 	const DataObject* getLeafObject(const DataObjectReference& dataRef) const {
-		OVITO_ASSERT(data());
-		return data()->getLeafObject(dataRef);
+		return !isEmpty() ? data()->getLeafObject(dataRef) : nullptr;
 	}
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state.
 	template<class DataObjectClass>
 	const DataObjectClass* getLeafObject(const TypedDataObjectReference<DataObjectClass>& dataRef) const { 
-		OVITO_ASSERT(data());
-		return data()->getLeafObject(dataRef);
+		return !isEmpty() ? data()->getLeafObject(dataRef) : nullptr;
 	}
 
 	/// Throws an exception if the input does not contain a data object of the given type.
@@ -258,15 +246,13 @@ public:
 
 	/// Finds an object of the given type and with the given identifier in the list of data objects stored in this flow state.
 	const DataObject* getObjectBy(const DataObject::OOMetaClass& objectClass, const PipelineObject* dataSource, const QString& identifier) const {
-		OVITO_ASSERT(data());
-		return data()->getObjectBy(objectClass, dataSource, identifier);
+		return !isEmpty() ? data()->getObjectBy(objectClass, dataSource, identifier) : nullptr;
 	}
 
 	/// Finds an object of the given type and with the given identifier in the list of data objects stored in this flow state.
 	template<class DataObjectClass>
 	const DataObjectClass* getObjectBy(const PipelineObject* dataSource, const QString& identifier) const {
-		OVITO_ASSERT(data());
-		return data()->getObjectBy<DataObjectClass>(dataSource, identifier);
+		return !isEmpty() ? data()->getObjectBy<DataObjectClass>(dataSource, identifier) : nullptr;
 	}
 
 	/// Finds an object of the given type and under the hierarchy path in this flow state. 
