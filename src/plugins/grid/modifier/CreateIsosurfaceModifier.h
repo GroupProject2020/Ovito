@@ -164,7 +164,7 @@ private:
 	/// Specifies the voxel grid this modifier should operate on.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(PropertyContainerReference, subject, setSubject);
 
-	/// The voxel property that serves input.
+	/// The voxel property that serves as input.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(VoxelPropertyReference, sourceProperty, setSourceProperty);
 
 	/// This controller stores the level at which to create the isosurface.

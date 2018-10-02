@@ -64,15 +64,15 @@ data = pipeline.compute()
 
 print("Output:")
 print("  invalid_particle_count={}".format(data.attributes["AtomicStrain.invalid_particle_count"]))
-print(data.particle_properties['Shear Strain'][...])
-print(data.particle_properties['Deformation Gradient'][...])
-print(data.particle_properties['Strain Tensor'][...])
-print(data.particle_properties['Selection'][...])
+print(data.particles['Shear Strain'][...])
+print(data.particles['Deformation Gradient'][...])
+print(data.particles['Strain Tensor'][...])
+print(data.particles['Selection'][...])
 
-assert(np.allclose(data.particle_properties["Shear Strain"], 0.05008306))
+assert(np.allclose(data.particles["Shear Strain"], 0.05008306))
 
 pipeline.add_to_scene()
 
 deform.transformation = [[1,2.4,0,0],[0,1,0,0],[0,0,1,0]]
 data = pipeline.compute()
-assert(np.allclose(data.particle_properties["Shear Strain"], 2.05056))
+assert(np.allclose(data.particles["Shear Strain"], 2.05056))

@@ -4,7 +4,7 @@ import numpy
 
 pipeline = import_file("../../files/LAMMPS/animation.dump.gz")
 data = pipeline.compute()
-cell = data.expect(SimulationCell)
+cell = data.cell
 
 print("  input pbc flags: {}".format(cell.pbc))
 mutable_cell = data.cell_

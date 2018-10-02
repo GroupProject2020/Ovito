@@ -5,13 +5,14 @@ from ovito.modifiers import ComputePropertyModifier
 # Load a dataset containing atoms and bonds.
 pipeline = import_file('input/bonds.data.gz', atom_style='bond')
 
-# For demonstration purposes, let a modifier calculate the length of each bond.
+# For demonstration purposes, lets here define a compute modifier that calculates the length 
+# of each bond, storing the results in a new bond property named 'Length'.
 pipeline.modifiers.append(ComputePropertyModifier(operate_on='bonds', output_property='Length', expressions=['BondLength']))
 
 # Obtain pipeline results.
 data = pipeline.compute()
-positions = data.particles['Position']  # array with atomic positions
-bond_topology = data.particles.bonds['Topology']  # array with bond topology
+positions = data.particles.positions  # array with atomic positions
+bond_topology = data.particles.bonds.topology  # array with bond topology
 bond_lengths = data.particles.bonds['Length']     # array with bond lengths
 
 # Create bonds enumerator object.

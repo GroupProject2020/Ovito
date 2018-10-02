@@ -9,8 +9,19 @@ from ovito.plugins.Mesh import SurfaceMesh
 # Implementation of the DataCollection.surfaces attribute.
 def _DataCollection_surfaces(self):
     """
-    Returns a :py:class:`DataObjectsDict` providing key-based access to all :py:class:`SurfaceMesh` objects stored 
-    in this :py:class:`!DataCollection`.
+    Returns a dictionary view providing key-based access to all :py:class:`SurfaceMesh` objects in 
+    this data collection. Each :py:class:`SurfaceMesh` has a unique :py:attr:`~ovito.data.DataObject.identifier` key, 
+    which can be used to look it up in the dictionary. 
+    See the documentation of the modifier producing the surface mesh to find out what the right key is, or use
+
+    .. literalinclude:: ../example_snippets/data_collection_surfaces.py
+        :lines: 9-9
+
+    to see which identifier keys exist. Then retrieve the desired :py:class:`SurfaceMesh` object from the collection using its identifier 
+    key, e.g.
+
+    .. literalinclude:: ../example_snippets/data_collection_surfaces.py
+        :lines: 14-15
     """
     return DataObjectsDict(self, SurfaceMesh)
 DataCollection.surfaces = property(_DataCollection_surfaces)

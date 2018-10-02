@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -54,7 +54,7 @@ PYBIND11_MODULE(Mesh, m)
 	;
 	
 	auto SurfaceMesh_py = ovito_class<SurfaceMesh, PeriodicDomainDataObject>(m,
-			":Base class: :py:class:`ovito.data.PeriodicDomainObject`"
+			":Base class: :py:class:`ovito.data.DataObject`"
 			"\n\n"
 			"This data object type stores a triangle mesh describing a surface or, more precisely, a two-dimensional manifold that is closed and orientable. "
 			"Typically, surface meshes are produced by modifiers such as the :py:class:`~ovito.modifiers.ConstructSurfaceModifier`, "
@@ -236,6 +236,10 @@ PYBIND11_MODULE(Mesh, m)
 	;
 	createDataPropertyAccessors(SurfaceMesh_py, "all_interior", &SurfaceMesh::isCompletelySolid, &SurfaceMesh::setIsCompletelySolid,
 		"Boolean flag indicating that the :py:class:`!SurfaceMesh` is degenerate and the *interior* region extends over the entire domain.");
+	createDataSubobjectAccessors(SurfaceMesh_py, "domain", &PeriodicDomainDataObject::domain, &PeriodicDomainDataObject::setDomain, 
+		"The :py:class:`~ovito.data.SimulationCell` describing the (possibly periodic) domain which this "
+		"surface mesh is embedded in. Note that this cell generally is indepenent of and may be different from the :py:attr:`~ovito.data.DataCollection.cell` "
+		"found in the :py:class:`~ovito.data.DataCollection`. ");
 
 	ovito_class<SurfaceMeshVis, DataVis>(m,
 			":Base class: :py:class:`ovito.vis.DataVis`"

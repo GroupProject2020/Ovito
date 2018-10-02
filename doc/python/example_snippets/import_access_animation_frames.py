@@ -17,4 +17,4 @@ for frame_index in range(pipeline.source.num_frames):
     print("Frame index:", data.attributes['SourceFrame'])
     
     # Accessing the loaded frame data, e.g the particle positions:
-    print(data.particles['Position'][...])
+    print(data.particles.positions[...])

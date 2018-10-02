@@ -86,14 +86,8 @@ def _FileSource_compute(self, frame = None):
         The :py:class:`!FileSource` uses a caching mechanism to keep the data for one or more frames in memory. Thus, invoking :py:meth:`!compute`
         repeatedly to retrieve the same frame will typically be very fast.
 
-        Note: The returned :py:class:`~ovito.data.DataCollection` contains data objects that are owned by the :py:class:`!FileSource`.
-        That means it is not safe to modify these objects as this would lead to unexpected side effects. 
-        You should always use the :py:meth:`DataCollection.copy_if_needed() <ovito.data.DataCollection.copy_if_needed>` method
-        to make a copy of the data objects that you want to modify. See the :py:class:`~ovito.data.DataCollection` class
-        for more information.
-
-        :param int frame: The animation frame number at which the source should be evaluated. 
-        :return: A :py:class:`~ovito.data.DataCollection` containing the loaded data.
+        :param int frame: The source frame to retrieve.
+        :return: A new :py:class:`~ovito.data.DataCollection` containing the loaded data.
     """
     if frame is not None:
         time = self.source_frame_to_anim_time(frame)

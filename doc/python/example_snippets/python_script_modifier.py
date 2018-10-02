@@ -10,11 +10,13 @@ def assign_color(frame, data):
     with color_property:
         color_property[:] = (0.2, 0.5, 1.0)
 
-# Insert user-defined modifier function into the data pipeline.
-# This implicitly creates an instance of the PythonScriptModifier class
-# wrapping the Python function.
+# Insert the user-defined modifier function into the data pipeline.
 pipeline.modifiers.append(assign_color)
+# Note that appending the Python function to the pipeline is equivalent to 
+# creating a PythonScriptModifier instance and appending it:
+#
+#   pipeline.modifiers.append(PythonScriptModifier(function = assign_color)) 
 
-# Evaluate data pipeline. This will make the system invoke assign_color() defined above.
+# Evaluate data pipeline. This will make the system invoke assign_color().
 data = pipeline.compute()
-print(data.particles['Color'][...])
+print(data.particles.colors[...])

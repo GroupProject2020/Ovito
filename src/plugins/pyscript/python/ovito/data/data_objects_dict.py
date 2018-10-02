@@ -27,10 +27,21 @@ class DataObjectsDict(collections.Mapping):
         return sum(isinstance(obj, self._data_object_class) for obj in self._data.objects)
 
     def __getitem__(self, key):
+        # Returns the data object with the given identifier key.
+        if key.endswith('_'):
+            if not self._data.is_safe_to_modify:
+                raise ValueError("Requesting a mutable version of a {} object is not possible for a data collection that itself is not mutable.".format(self._data_object_class.__name__))
+            request_mutable = True
+            key = key[:-1]
+        else:
+            request_mutable = False
         for obj in self._data.objects:
             if isinstance(obj, self._data_object_class): 
                 if obj.identifier == key:
-                    return obj
+                    if request_mutable:
+                        return self._data.make_mutable(obj)
+                    else:
+                        return obj
         raise KeyError("No data object of type <{}> with key '{}'".format(self._data_object_class.__name__, str(key)))
     
     def __iter__(self):

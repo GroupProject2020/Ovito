@@ -284,7 +284,7 @@ private:
 	std::vector<PropertyPtr> _voxelProperties;
 
 	/// The shape of the voxel grid.
-	VoxelGrid::GridDimensions _voxelGridShape{0,0,0};
+	VoxelGrid::GridDimensions _voxelGridShape{{0,0,0}};
 
 	/// Stores the lists of types for typed properties (both particle and bond properties).
 	std::map<const PropertyStorage*, std::unique_ptr<TypeList>> _typeLists;

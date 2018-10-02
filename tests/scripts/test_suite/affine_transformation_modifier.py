@@ -2,10 +2,10 @@ from ovito.io import *
 from ovito.modifiers import *
 import numpy as np
 
-node = import_file("../../files/CFG/shear.void.120.cfg")
+pipeline = import_file("../../files/CFG/shear.void.120.cfg")
 
 modifier = AffineTransformationModifier()
-node.modifiers.append(modifier)
+pipeline.modifiers.append(modifier)
 
 print(modifier.relative_mode)
 modifier.relative_mode = True
@@ -29,4 +29,4 @@ print(modifier.target_cell)
 modifier.target_cell = [[2,0,0,0],[0,1,0,0],[0,0,1,0]]
 modifier.target_cell = np.array([[1,2,0,0],[0,1,0,0],[0,0,1,0.5]])
  
-node.compute()
+data = pipeline.compute()

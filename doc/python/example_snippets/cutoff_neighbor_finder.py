@@ -10,7 +10,7 @@ cutoff = 3.5
 finder = CutoffNeighborFinder(cutoff, data)
 
 # Prefetch the property array containing the particle type information:
-ptypes = data.particles['Particle Type']
+ptypes = data.particles.particle_types
 
 # Loop over all particles:
 for index in range(data.particles.count):

@@ -94,28 +94,41 @@ void defineIOSubmodule(py::module m)
 	;
 
 	ovito_class<FileSource, CachingPipelineObject>(m, 
-			"This object type can serve as a :py:attr:`Pipeline.source` and takes care of reading the input for the :py:class:`Pipeline` from an external data file. "
+			"This object type serves as a :py:attr:`Pipeline.source` and takes care of reading the input data for a :py:class:`Pipeline` from an external file. "
 			"\n\n"
-			"You normally do not need to create an instance of this class yourself; the :py:func:`~ovito.io.import_file` function does it for you and wires the configured :py:class:`!FileSource` "
-			"to a :py:attr:`~ovito.pipeline.Pipeline`. If desired, the :py:meth:`FileSource.load` method allows you to load a different input file later on and replace the inputs of the pipeline:"
+			"You normally do not need to create an instance of this class yourself; the :py:func:`~ovito.io.import_file` function does it for you and wires the fully configured :py:class:`!FileSource` "
+			"to the new :py:attr:`~ovito.pipeline.Pipeline`. However, if needed, the :py:meth:`FileSource.load` method allows you to load a different input file later on and replace the "
+			"input of the existing pipeline with a new dataset: "
 			"\n\n"
 			".. literalinclude:: ../example_snippets/file_source_load_method.py\n"
 			"\n"
-			"Furthermore, additional :py:class:`!FileSource` instances are typically employed in conjunction with certain modifiers. "
-			"The :py:class:`~ovito.modifiers.CalculateDisplacementsModifier` can make use of a :py:class:`!FileSource` to load reference particle positions from a separate input file. "
+			"Furthermore, you will encounter other :py:class:`!FileSource` objects in conjunction with certain modifiers that need secondary input data from a separate file. "
+			"The :py:class:`~ovito.modifiers.CalculateDisplacementsModifier`, for example, manages its own :py:class:`!FileSource` for loading reference particle positions from a separate input file. "
 			"Another example is the :py:class:`~ovito.modifiers.LoadTrajectoryModifier`, "
 			"which employs its own separate :py:class:`!FileSource` instance to load the particle trajectories from disk and combine them "
 			"with the topology data previously loaded by the main :py:class:`!FileSource` of the data pipeline. "
 			"\n\n"
 			"**Data access**"
 			"\n\n"
-		    "Calling a file source's :py:meth:`.compute` method returns a new :py:class:`~ovito.data.DataCollection` containing the data that was read "
-			"from the input file. Thus, this method provides access to a :py:class:`~ovito.pipeline.Pipeline`'s "
-			"unmodified input data: "
+			"The :py:class:`!FileSource` class provides two ways of accessing the data that is loaded from the external input file(s). "
+			"For read-only access to the data, the :py:meth:`FileSource.compute` method should be called. It loads the data of a specific frame "
+			"from the input simulation trajectory and returns it as a new :py:class:`~ovito.data.DataCollection` object: "
 			"\n\n"
 			".. literalinclude:: ../example_snippets/file_source_data_access.py\n"
-			"   :lines: 3-8\n"
-			"\n\n")
+			"   :lines: 4-9\n"
+			"\n\n"
+			"Alternatively, you can directly manipulate the data objects that are stored in the internal cache of the "
+			":py:class:`!FileSource`, which is accessible through its :py:attr:`.data` field. The objects in this :py:class:`~ovito.data.DataCollection` "
+			"may be manipulated, which sometimes is needed to amend the data entering the pipeline with additional information. "
+			"A typical use case is setting the radii and names of the particle types that have been loaded from a simulation file that doesn't contain named atom types: "
+			"\n\n"
+			".. literalinclude:: ../example_snippets/file_source_data_access.py\n"
+			"   :lines: 14-22\n"
+			"\n\n"
+			"Any changes you make to the data objects in the cache data collection will be seen by modifiers in the pipeline that "
+			"is supplied by the :py:class:`!FileSource`. However, those changes may be overwritten again if the same information is already present in the "
+			"input file(s). That means, for example, modifying the cached particle positions will have no permanent effect, because they will "
+			"likely be replaced with the data parsed from the input file. ")
 		.def_property_readonly("importer", &FileSource::importer)
 		// Required by the implementation of FileSource.source_path:
 		.def("get_source_paths", &FileSource::sourceUrls)
@@ -140,7 +153,7 @@ void defineIOSubmodule(py::module m)
 
 		.def_property_readonly("data", &FileSource::dataCollection,
 			"This field exposes the internal :py:class:`~ovito.data.DataCollection` of the source object holding "
-			"the master data copy currently loaded from the input file. ")
+			"the master copy of the data loaded from the input file (at frame 0). ")
 		
 		// For backward compatibility with OVITO 2.9.0:
 		// Returns the zero-based frame index that is currently loaded and kept in memory by the FileSource.

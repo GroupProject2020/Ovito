@@ -3,11 +3,11 @@ from ovito.modifiers import *
 
 import numpy
 
-node = import_file("../../files/LAMMPS/animation.dump.gz")
-node.modifiers.append(SelectExpressionModifier(expression = "ParticleIndex<5"))
+pipeline = import_file("../../files/LAMMPS/animation.dump.gz")
+pipeline.modifiers.append(SelectExpressionModifier(expression = "ParticleIndex<5"))
 
 modifier = ColorCodingModifier(particle_property = "Position.X", only_selected = True)
-node.modifiers.append(modifier)
+pipeline.modifiers.append(modifier)
 
 print("Parameter defaults:")
 
@@ -35,13 +35,13 @@ modifier.gradient = ColorCodingModifier.Viridis()
 modifier.gradient = ColorCodingModifier.Magma()
 modifier.gradient = ColorCodingModifier.Custom("../../../doc/manual/images/modifiers/color_coding_custom_map.png")
 
-print(node.compute().particle_properties.color.array)
+print(pipeline.compute().particles.color is not None)
 
 modifier.particle_property = "Position.X"
-data = node.compute()
+data = pipeline.compute()
 
-print("Particle properties:", data.particle_properties)
-assert('Selection' in data.particle_properties)
+print("Particle properties:", data.particles)
+assert('Selection' in data.particles)
 
 modifier = ColorCodingModifier(
     assign_to = ColorCodingModifier.AssignmentMode.Bonds,

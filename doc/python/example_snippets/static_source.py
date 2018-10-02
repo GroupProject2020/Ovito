@@ -1,5 +1,5 @@
 from ovito.pipeline import StaticSource, Pipeline
-from ovito.data import DataCollection, SimulationCell
+from ovito.data import DataCollection, SimulationCell, Particles
 from ovito.modifiers import CreateBondsModifier
 from ovito.io import export_file
 
@@ -12,13 +12,13 @@ with cell:
     cell[:,2] = (0,0,2)
 data.objects.append(cell)
 
-# Create two particles:
-xyz = [[0,0,0],[2,0,0]]
-data.particles.create_property('Position', data = xyz)
+# Create a Particles object containing two particles:
+particles = Particles()
+particles.create_property('Position', data=[[0,0,0],[2,0,0]])
+data.objects.append(particles)
 
 # Create a new Pipeline with a StaticSource as data source:
-pipeline = Pipeline(source = StaticSource())
-pipeline.source.assign(data)
+pipeline = Pipeline(source = StaticSource(data = data))
 
 # Apply a modifier:
 pipeline.modifiers.append(CreateBondsModifier(cutoff = 3.0))

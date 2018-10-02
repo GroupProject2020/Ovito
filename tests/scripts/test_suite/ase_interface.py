@@ -11,8 +11,8 @@ except ImportError:
     print("Note: Skipping tests of ASE interface, because the ASE module is not installed.")
     sys.exit()
 
-node = import_file("../../files/LAMMPS/bonds.data.gz", atom_style = 'bond')
-data = node.source.compute()
+pipeline = import_file("../../files/LAMMPS/bonds.data.gz", atom_style = 'bond')
+data = pipeline.source.compute()
 
 atoms = ovito_to_ase(data)
 print(atoms)

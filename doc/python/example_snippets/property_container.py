@@ -1,5 +1,5 @@
 from ovito.io import import_file
-from ovito.data import ParticleProperty, DataCollection
+from ovito.data import Property, Particles
 import ovito.pipeline
 import numpy
 pipeline = import_file("input/simulation.dump")
@@ -14,33 +14,33 @@ name_list = data.particles.keys()
 
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 colors = numpy.random.random_sample(size = (data.particles.count, 3))
-data.particles.create_property('Color', data=colors)
+data.particles_.create_property('Color', data=colors)
 # snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 
 
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-prop = data.particles.create_property('Color')
+prop = data.particles_.create_property('Color')
 with prop:
     prop[...] = numpy.random.random_sample(size = prop.shape)
 # snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 values = numpy.arange(0, data.particles.count, dtype=int)
-data.particles.create_property('myint', data=values)
+data.particles_.create_property('myint', data=values)
 # snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-prop = data.particles.create_property('myvector', dtype=float, components=3)
+prop = data.particles_.create_property('myvector', dtype=float, components=3)
 with prop:
     prop[...] = numpy.random.random_sample(size = prop.shape)
 # snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 # snippet begin >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-# An empty data collection to begin with:
-data = DataCollection()
+# An empty Particles container to begin with:
+particles = Particles()
 
 # Create 10 particles with random xyz coordinates:
-positions = numpy.random.random_sample(size = (10,3))
-data.particles.create_property('Position', data=positions)
+xyz = numpy.random.random_sample(size = (10,3))
+particles.create_property('Position', data=xyz)
 # snippet end <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

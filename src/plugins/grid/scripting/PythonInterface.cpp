@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -42,21 +42,40 @@ PYBIND11_MODULE(Grid, m)
 	auto VoxelGrid_py = ovito_class<VoxelGrid, PropertyContainer>(m,
 		":Base class: :py:class:`ovito.data.PropertyContainer`"
 		"\n\n"
-		"A structured grid of values. ")
-		.def_property_readonly("shape", [](const VoxelGrid& grid) {
-			return py::make_tuple(grid.shape()[0], grid.shape()[1], grid.shape()[2]);
-		},
-		"A tuple containing the number of grid cells in each of the three spatial directions. "
-		"The sptial dimensions of the grid are defined by the three cell vectors of the attached :py:attr:`.domain` object. "
+		"A two- or three-dimensional structured grid. Each cell or voxel of the grid is of the same size and shape. "
+		"The geometry of the entire grid, its :py:attr:`.domain`, is defined by an attached "
+		":py:class:`SimulationCell` object, which specific a three-dimensional parallelpiped "
+		"or a two-dimensional parallelogram. "
 		"\n\n"
-		"For two-dimensional grids, for which the :py:attr:`~ovito.data.SimulationCell.is2D` property of the :py:attr:`.domain` "
-		"is set to true, the third entry of the :py:attr:`!shape` tuple will always be equal to 1. ")
+		"The :py:attr:`.shape` property of the grid specifies the number of voxels along each "
+		"domain cell vector. The size of an individual voxel is given by domain cell size "
+		"divided by the number of voxels in each spatial direction. "
+		"\n\n"
+		"Every voxel of the grid may be associated with one or more field values. The data for these *voxel properties* "
+		"is stored in standard :py:class:`Property` objects, similar to particle or bond properties. Voxel properties can be accessed by name through "
+		"the dictionary interface that the :py:class:`!VoxelGrid` class inherits from its :py:class:`PropertyContainer` "
+		"base class. "
+		"\n\n"
+		"Voxel grids can be loaded from input data files, e.g. a CHGCAR file containing the electron density computed by the VASP code, "
+		"or they can be dynamically generated within OVITO. The :py:class:`~ovito.modifiers.SpatialBinningModifier` lets you "
+		"project the information associated with the unstructured particle set to a structured voxel grid. "
+		"\n\n"
+		"Given a voxel grid, the :py:class:`~ovito.modifiers.CreateIsosurfaceModifier` can then generate a :py:class:`~ovito.data.SurfaceMesh` "
+		"representing an isosurface for a field quantity defined on the voxel grid. ")
+			.def_property_readonly("shape", [](const VoxelGrid& grid) {
+				return py::make_tuple(grid.shape()[0], grid.shape()[1], grid.shape()[2]);
+			},
+			"A tuple with the numbers of grid cells along each of the three cell vectors of the :py:attr:`.domain`. "
+			"\n\n"
+			"For two-dimensional grids, for which the :py:attr:`~ovito.data.SimulationCell.is2D` property of the :py:attr:`.domain` "
+			"is set to true, the third entry of the :py:attr:`!shape` tuple is always equal to 1. ")
 	;
 	createDataPropertyAccessors(VoxelGrid_py, "title", &VoxelGrid::title, &VoxelGrid::setTitle,
 		"The name of the voxel grid as shown in the user interface. ");
 	createDataSubobjectAccessors(VoxelGrid_py, "domain", &VoxelGrid::domain, &VoxelGrid::setDomain, 
 		"The :py:class:`~ovito.data.SimulationCell` describing the (possibly periodic) domain which this "
-		"object is embedded in.");
+		"grid is embedded in. Note that this cell generally is indepenent of and may be different from the :py:attr:`~ovito.data.DataCollection.cell` "
+		"found in the :py:class:`~ovito.data.DataCollection`. ");
 
 	ovito_class<CreateIsosurfaceModifier, AsynchronousModifier>(m,
 			":Base class: :py:class:`ovito.pipeline.Modifier`\n\n"

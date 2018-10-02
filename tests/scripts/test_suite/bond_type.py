@@ -4,7 +4,7 @@ from ovito.data import *
 # Tests access to BondType objects.
 
 pipeline = import_file("../../files/LAMMPS/class2.data", atom_style = 'full')
-tprop = pipeline.source.data.bonds['Bond Type']
+tprop = pipeline.source.data.bonds.bond_types
 
 for t in tprop.types:
     t.name = "MyName" + str(t.id)

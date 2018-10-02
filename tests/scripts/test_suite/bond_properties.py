@@ -7,7 +7,7 @@ pipeline = import_file("../../files/LAMMPS/bonds.data.gz", atom_style = 'bond')
 # Assign a special color to bond type 1.
 my_bond_color = (0.3, 0.1, 0.8)
 pipeline.source.data.bonds.vis.use_particle_colors = False
-pipeline.source.data.bonds['Bond Type'].types[0].color = my_bond_color
+pipeline.source.data.bonds.bond_types.types[0].color = my_bond_color
 
 # Evaluate pipeline
 data = pipeline.compute()

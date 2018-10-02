@@ -4,8 +4,8 @@ from ovito.vis import *
 import os
 import os.path
 
-node = import_file("../../files/LAMMPS/animation.dump.gz")
-node.add_to_scene()
+pipeline = import_file("../../files/LAMMPS/animation.dump.gz")
+pipeline.add_to_scene()
 
 vp = Viewport()
 vp.zoom_all()

@@ -6,7 +6,7 @@ import numpy
 pipeline = import_file("input/simulation.dump")
 modifier = CoordinationAnalysisModifier(cutoff = 5.0, number_of_bins = 200)
 pipeline.modifiers.append(modifier)
-pipeline.compute()
+data = pipeline.compute()
 
 # Export the computed RDF data to a text file.
-numpy.savetxt("output/rdf.txt", modifier.rdf)
+numpy.savetxt("output/rdf.txt", data.series['coordination-rdf'].as_table())

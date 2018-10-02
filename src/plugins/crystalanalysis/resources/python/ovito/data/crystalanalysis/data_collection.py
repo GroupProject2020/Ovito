@@ -6,8 +6,9 @@ from ovito.data import DataCollection
 from ovito.plugins.CrystalAnalysis import DislocationNetwork
 
 # Implementation of the DataCollection.dislocations attribute.
-# Here only for backward compatibility with OVITO 2.9.0.
 def _DataCollection_dislocations(self):
-    # Returns the :py:class:`DislocationNetwork` object in this :py:class:`!DataCollection`.
+    """
+    Returns the :py:class:`DislocationNetwork` data object from this data collection or ``None`` if there isn't one.
+    """
     return self.find(DislocationNetwork)
 DataCollection.dislocations = property(_DataCollection_dislocations)

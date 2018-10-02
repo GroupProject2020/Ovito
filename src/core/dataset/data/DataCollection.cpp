@@ -25,7 +25,7 @@
 #include <core/dataset/data/AttributeDataObject.h>
 #include <core/dataset/DataSet.h>
 #include <core/oo/CloneHelper.h>
-#include <boost/optional.hpp>
+#include <core/app/Application.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_NAMESPACE(Scene)
 
@@ -141,8 +141,14 @@ const DataObject* DataCollection::expectObject(const DataObject::OOMetaClass& ob
 {
 	if(const DataObject* obj = getObject(objectClass))
 		return obj;
-	else
-		throw Exception(DataObject::tr("The dataset does not contain an object of type: %1").arg(objectClass.displayName()));
+	else {
+		if(!Application::instance()->scriptMode()) {
+			throwException(tr("The dataset does not contain an object of type: %1").arg(objectClass.displayName()));
+		}
+		else {
+			throwException(tr("The input data collection contains no %1 data object.").arg(objectClass.displayName()));
+		}
+	}
 }
 
 /******************************************************************************
@@ -153,10 +159,18 @@ const DataObject* DataCollection::expectLeafObject(const DataObject::OOMetaClass
 {
 	const DataObject* obj = getLeafObject(objectClass, pathString);
 	if(!obj) {
-		if(pathString.isEmpty())
-			throw Exception(DataObject::tr("The dataset does not contain an object of type: %1").arg(objectClass.displayName()));
-		else
-			throw Exception(DataObject::tr("The dataset does not contain an object named '%2' of type '%1'.").arg(objectClass.displayName()).arg(pathString));
+		if(!Application::instance()->scriptMode()) {
+			if(pathString.isEmpty()) 
+				throwException(tr("The dataset does not contain an object of type: %1").arg(objectClass.displayName()));
+			else
+				throwException(tr("The dataset does not contain an object named '%2' of type '%1'.").arg(objectClass.displayName()).arg(pathString));
+		}
+		else {
+			if(pathString.isEmpty()) 
+				throwException(tr("The data collection contains no %1 data object.").arg(objectClass.displayName()));
+			else
+				throwException(tr("The data collection contains no %1 data object with the key '%2'.").arg(objectClass.displayName()).arg(pathString));
+		}
 	}
 	return obj;
 }
@@ -236,6 +250,7 @@ void DataCollection::getObjectsRecursiveImpl(ConstDataObjectPath& path, const Da
 ConstDataObjectPath DataCollection::getObject(const DataObject::OOMetaClass& objectClass, const QString& pathString) const
 {
 	ConstDataObjectPath result;
+
 	// Perform a recursive search for the requested object.
 	for(const DataObject* obj : objects()) {
 		result.push_back(obj);
@@ -243,6 +258,7 @@ ConstDataObjectPath DataCollection::getObject(const DataObject::OOMetaClass& obj
 			break;
 		result.pop_back();
 	}
+
 	return result;
 }
 
@@ -254,10 +270,18 @@ ConstDataObjectPath DataCollection::expectObject(const DataObject::OOMetaClass& 
 {
 	ConstDataObjectPath path = getObject(objectClass, pathString);
 	if(path.empty()) {
-		if(pathString.isEmpty())
-			throw Exception(DataObject::tr("The dataset does not contain an object of type: %1").arg(objectClass.displayName()));
-		else
-			throw Exception(DataObject::tr("The dataset does not contain an object named '%2' of type '%1'.").arg(objectClass.displayName()).arg(pathString));
+		if(!Application::instance()->scriptMode()) {
+			if(pathString.isEmpty())
+				throwException(tr("The dataset does not contain an object of type: %1").arg(objectClass.displayName()));
+			else
+				throwException(tr("The dataset does not contain an object named '%2' of type '%1'.").arg(objectClass.displayName()).arg(pathString));
+		}
+		else {
+			if(pathString.isEmpty()) 
+				throwException(tr("The data collection contains no %1 data object.").arg(objectClass.displayName()));
+			else
+				throwException(tr("The data collection contains no %1 data object with the key '%2'.").arg(objectClass.displayName()).arg(pathString));
+		}
 	}
 	return path;
 }
@@ -270,10 +294,18 @@ DataObjectPath DataCollection::expectMutableObject(const DataObject::OOMetaClass
 {
 	DataObjectPath path = getMutableObject(objectClass, pathString);
 	if(path.empty()) {
-		if(pathString.isEmpty())
-			throw Exception(DataObject::tr("The dataset does not contain an object of type: %1").arg(objectClass.displayName()));
-		else
-			throw Exception(DataObject::tr("The dataset does not contain an object named '%2' of type '%1'.").arg(objectClass.displayName()).arg(pathString));
+		if(!Application::instance()->scriptMode()) {
+			if(pathString.isEmpty())
+				throwException(tr("The dataset does not contain an object of type: %1").arg(objectClass.displayName()));
+			else
+				throwException(tr("The dataset does not contain an object named '%2' of type '%1'.").arg(objectClass.displayName()).arg(pathString));
+		}
+		else {
+			if(pathString.isEmpty()) 
+				throwException(tr("The data collection contains no %1 data object.").arg(objectClass.displayName()));
+			else
+				throwException(tr("The data collection contains no %1 data object with the key '%2'.").arg(objectClass.displayName()).arg(pathString));
+		}
 	}
 	return path;
 }
@@ -296,8 +328,8 @@ bool DataCollection::getObjectImpl(const DataObject::OOMetaClass& objectClass, Q
 {
 	const DataObject* object = path.back();
 	if(pathString.isEmpty()) {
-		if(!object->identifier().isEmpty()) return false;
 		if(objectClass.isMember(object)) return true;
+		if(!object->identifier().isEmpty()) return false;
 		return object->visitSubObjects([&](const DataObject* subObject) {
 			path.push_back(subObject);
 			if(getObjectImpl(objectClass, pathString, path))
@@ -343,8 +375,8 @@ const DataObject* DataCollection::getLeafObject(const DataObject::OOMetaClass& o
 const DataObject* DataCollection::getLeafObjectImpl(const DataObject::OOMetaClass& objectClass, QStringRef pathString, const DataObject* parent)
 {
 	if(pathString.isEmpty()) {
-		if(!parent->identifier().isEmpty()) return nullptr;
 		if(objectClass.isMember(parent)) return parent;
+		if(!parent->identifier().isEmpty()) return nullptr;
 		const DataObject* result = nullptr;
 		parent->visitSubObjects([&](const DataObject* subObject) {
 			result = getLeafObjectImpl(objectClass, pathString, subObject);

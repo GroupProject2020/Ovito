@@ -2,23 +2,23 @@ from ovito.io import *
 from ovito.modifiers import *
 import numpy as np
 
-node = import_file("../../files/CFG/shear.void.120.cfg")
-node.add_to_scene()
+pipeline = import_file("../../files/CFG/shear.void.120.cfg")
+pipeline.add_to_scene()
 
-node.modifiers.append(SliceModifier(
+pipeline.modifiers.append(SliceModifier(
     distance = -12,
     inverse = True,
     slab_width = 18.0
 ))
 
-node.modifiers.append(SliceModifier(
+pipeline.modifiers.append(SliceModifier(
     distance = 12,
     inverse = True,
     slab_width = 18.0
 ))
 
 modifier = ClusterAnalysisModifier()
-node.modifiers.append(modifier)
+pipeline.modifiers.append(modifier)
 
 print("Parameter defaults:")
 
@@ -29,20 +29,19 @@ modifier.neighbor_mode = ClusterAnalysisModifier.NeighborMode.CutoffRange
 print("  sort_by_size: {}".format(modifier.sort_by_size))
 modifier.sort_by_size = False
 
-node.compute()
+data = pipeline.compute()
 
 print("Output:")
-print("Number of clusters: {}".format(node.output.attributes['ClusterAnalysis.cluster_count']))
-assert(node.output.attributes['ClusterAnalysis.cluster_count'] == 2)
-print(node.output.particle_properties.cluster)
-print(node.output.particle_properties.cluster.array)
+print("Number of clusters: {}".format(data.attributes['ClusterAnalysis.cluster_count']))
+assert(data.attributes['ClusterAnalysis.cluster_count'] == 2)
+print(data.particles['Cluster'][...])
 
 modifier.sort_by_size = True
-node.compute()
-print(node.output.attributes['ClusterAnalysis.largest_size'])
-assert(node.output.attributes['ClusterAnalysis.largest_size'] >= 1)
+data = pipeline.compute()
+print(data.attributes['ClusterAnalysis.largest_size'])
+assert(data.attributes['ClusterAnalysis.largest_size'] >= 1)
 
-node.modifiers.insert(2, VoronoiAnalysisModifier(generate_bonds=True))
+pipeline.modifiers.insert(2, VoronoiAnalysisModifier(generate_bonds=True))
 modifier.neighbor_mode = ClusterAnalysisModifier.NeighborMode.Bonding
-node.compute()
-assert(node.output.attributes['ClusterAnalysis.largest_size'] == node.output.number_of_particles)
+data = pipeline.compute()
+assert(data.attributes['ClusterAnalysis.largest_size'] == data.particles.count)

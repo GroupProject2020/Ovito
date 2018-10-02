@@ -188,7 +188,7 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, identifier, setIdentifier);
 
 	/// The attached visual elements that are responsible for rendering this object's data.
-	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD_FLAGS(DataVis, visElements, setVisElements, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES);
+	DECLARE_MODIFIABLE_VECTOR_REFERENCE_FIELD_FLAGS(DataVis, visElements, setVisElements, PROPERTY_FIELD_DONT_PROPAGATE_MESSAGES | PROPERTY_FIELD_MEMORIZE);
 
 	/// The revision counter of this object.
 	/// The counter is increment every time the object changes.

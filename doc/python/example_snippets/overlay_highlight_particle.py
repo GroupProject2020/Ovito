@@ -9,7 +9,7 @@ def render(args):
     
     # Get output data collection of first scene pipeline.
     data = args.scene.pipelines[0].compute()
-    positions = data.particles['Position']
+    positions = data.particles.positions
     pindex = 0 # The index of the particle to be highlighted
     
     # Project center point of particle.
@@ -20,9 +20,9 @@ def render(args):
     radius = 0.0
     if 'Radius' in data.particles:
         radius = data.particles['Radius'][pindex]
-    if radius <= 0 and 'Particle Type' in data.particles:
-        particle_type = data.particles['Particle Type'][pindex]
-        radius = data.particles['Particle Type'].type_by_id(particle_type).radius
+    if radius <= 0 and data.particles.particle_types:
+        particle_type = data.particles.particle_types[pindex]
+        radius = data.particles.particle_types.type_by_id(particle_type).radius
     if radius <= 0:
         radius = positions.vis.radius
 

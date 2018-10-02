@@ -9,3 +9,5 @@ import ovito.plugins.Grid
 from .data_collection import DataCollection
 
 # Inject selected classes into parent module.
+ovito.data.VoxelGrid = ovito.plugins.Grid.VoxelGrid
+ovito.data.__all__ += ['VoxelGrid']

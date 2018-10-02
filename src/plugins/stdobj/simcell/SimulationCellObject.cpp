@@ -44,7 +44,7 @@ SET_PROPERTY_FIELD_UNITS(SimulationCellObject, cellMatrix, WorldParameterUnit);
 ******************************************************************************/
 void SimulationCellObject::init(DataSet* dataset)
 {
-	// Attach a visualization element.
+	// Attach a visualization element for rendering the simulation box.
 	addVisElement(new SimulationCellVis(dataset));
 }
 

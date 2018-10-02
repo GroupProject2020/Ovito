@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -126,12 +126,15 @@ OORef<DataCollection> ParticleFrameData::handOver(const DataCollection* existing
 	// Hand over simulation cell.
 	SimulationCellObject* cell = const_cast<SimulationCellObject*>(existing ? existing->getObject<SimulationCellObject>() : nullptr);
 	if(!cell) {
+		// Create a new SimulationCellObject.
 		cell = output->createObject<SimulationCellObject>(fileSource, simulationCell());
 
-		// Create the vis element for the simulation cell.
+		// Initialize the simulation cell and its vis element with default values.
+		if(!Application::instance()->scriptMode())
+			cell->loadUserDefaults();
+
+		// Set up the vis element for the simulation cell.
 		if(SimulationCellVis* cellVis = dynamic_object_cast<SimulationCellVis>(cell->visElement())) {
-			if(!Application::instance()->scriptMode())
-				cellVis->loadUserDefaults();
 
 			// Choose an appropriate line width depending on the cell's size.
 			FloatType cellDiameter = (
@@ -155,11 +158,12 @@ OORef<DataCollection> ParticleFrameData::handOver(const DataCollection* existing
 		const ParticlesObject* existingParticles = existing ? existing->getObject<ParticlesObject>() : nullptr;
 		ParticlesObject* particles = output->createObject<ParticlesObject>(fileSource);
 		if(!existingParticles) {
-			particles->setVisElement(new ParticlesVis(fileSource->dataset()));
+			// Initialize the particles object and its vis element to default values.
 			if(!Application::instance()->scriptMode())
-				particles->visElement()->loadUserDefaults();
+				particles->loadUserDefaults();
 		}
 		else {
+			// Adopt the existing particles vis element.
 			particles->setVisElements(existingParticles->visElements());
 		}
 
@@ -218,11 +222,12 @@ OORef<DataCollection> ParticleFrameData::handOver(const DataCollection* existing
 			particles->setBonds(bonds);
 			bonds->setDataSource(fileSource);
 			if(!existingBonds) {
-				bonds->setVisElement(new BondsVis(fileSource->dataset()));
+				// Initialize the bonds object and its vis element to default values.
 				if(!Application::instance()->scriptMode())
-					bonds->visElement()->loadUserDefaults();
+					bonds->loadUserDefaults();
 			}
 			else {
+				// Adopt the existing vis element.
 				bonds->setVisElements(existingBonds->visElements());
 			}
 
@@ -264,7 +269,7 @@ OORef<DataCollection> ParticleFrameData::handOver(const DataCollection* existing
 	if(voxelGridShape() != VoxelGrid::GridDimensions{0,0,0}) {
 
 		const VoxelGrid* existingVoxelGrid = existing ? existing->getObject<VoxelGrid>() : nullptr;
-		VoxelGrid* voxelGrid = output->createObject<VoxelGrid>(fileSource);
+		VoxelGrid* voxelGrid = output->createObject<VoxelGrid>(QStringLiteral("imported"), fileSource);
 		voxelGrid->setShape(voxelGridShape());
 		voxelGrid->setDomain(cell);
 		

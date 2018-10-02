@@ -20,8 +20,11 @@ print("pos[0]=", pos[0])
 print("pos[0:3]=", pos[0:3])
 print("len(pos)={}".format(len(pos)))
 assert(len(pos) == data.particles.count)
+assert(data.particles.positions is pos)
 
 # Test property write access:
+with data.particles_.positions_:
+    data.particles_.positions[3] = (1,2,3)
 mutable_pos = data.particles_['Position_']
 with mutable_pos:
     mutable_pos[0][0] = 1.234

@@ -64,6 +64,15 @@ def _PropertyContainer_values(self):
     return self.properties
 PropertyContainer.values = _PropertyContainer_values
 
+# Helper function for registering standard property accessor fields for a PropertyContainer subclass.
+def create_property_accessor(property_name, doc = None):
+    def getter(self):
+        return self[property_name]
+    def setter(self, val):
+        self.create_property(property_name, data=val)
+    return property(getter, setter, doc=doc)
+PropertyContainer._create_property_accessor = staticmethod(create_property_accessor)
+
 # Implementation of the PropertyContainer.create_property() method.
 def _PropertyContainer_create_property(self, name, dtype=None, components=None, data=None):
     """
@@ -74,47 +83,47 @@ def _PropertyContainer_create_property(self, name, dtype=None, components=None, 
     The method allows to create *standard* as well as *user-defined* properties. 
     To create a *standard* property, one of the :ref:`standard property names <particle-types-list>` must be provided as *name* argument:
     
-    .. literalinclude:: ../example_snippets/particles_view.py
+    .. literalinclude:: ../example_snippets/property_container.py
         :lines: 16-17
     
-    The length of the provided *data* array must match the number of elements in the container, which is given by the :py:attr:`.count` attribute.
-    You can also set the per-element values of the property after its construction: 
+    The length of the provided *data* array must match the number of existing elements in the container, which is given by the :py:attr:`.count` attribute.
+    You can alternatively assign the per-element values to the property after its construction: 
 
-    .. literalinclude:: ../example_snippets/particles_view.py
+    .. literalinclude:: ../example_snippets/property_container.py
         :lines: 23-25
 
     To create a *user-defined* property, use a non-standard property name:
     
-    .. literalinclude:: ../example_snippets/particles_view.py
+    .. literalinclude:: ../example_snippets/property_container.py
         :lines: 29-30
     
     In this case the data type and the number of vector components of the new property are inferred from
     the provided *data* Numpy array. Providing a one-dimensional array creates a scalar property while
     a two-dimensional array creates a vectorial property.
     Alternatively, the *dtype* and *components* parameters can be specified explicitly
-    if initialization of the property values should happen after property creation:
+    if you are going to assign the property values after property creation:
 
-    .. literalinclude:: ../example_snippets/particles_view.py
+    .. literalinclude:: ../example_snippets/property_container.py
         :lines: 34-36
 
     If the property to be created already exists in the container, it is replaced with a new one.
     The existing per-element data from the old property is however retained if *data* is ``None``.
 
-    Note: If the data collection contains no elements yet, that is, even the ``Position`` property
-    is not present in the data collection yet, then the ``Position`` standard property can still be created from scratch as a first particle property by the 
-    :py:meth:`!create_property` method. The *data* array has to be provided in this case to specify the number of particles
-    to create:
+    Note: If the container contains no properties yet, then the number of elements (e.g. particles or bonds) is still undefined.
+    In this case the :py:meth:`!create_property` method lets you *define* the number of elements when inserting the very first property
+    by specifying a *data* array of the desired length. For example, to create a new :py:class:`Particles` container from scratch
+    with 10 particles, a Numpy array of length 10 is used to initialize the ``Position`` particle property:
 
-    .. literalinclude:: ../example_snippets/particles_view.py
+    .. literalinclude:: ../example_snippets/property_container.py
         :lines: 40-45
     
-    After the initial ``Positions`` property has been created, the number of particles is now specified and any subsequently added properties 
-    must have the exact same length.
+    After the initial ``Positions`` property has been created, the number of particles in the container is now determined and any 
+    subsequently added properties must have the exact same length.
 
     :param name: Either a :ref:`standard property type constant <particle-types-list>` or a name string.
     :param data: An optional data array with per-element values for initializing the new property.
                     The size of the array must match the element :py:attr:`.count` of the container
-                    and the shape must be consistent with the number of components of the property.
+                    and the shape must be consistent with the number of components of the property to be created.
     :param dtype: The element data type when creating a user-defined property. Must be either ``int`` or ``float``.
     :param int components: The number of vector components when creating a user-defined property.
     :returns: The newly created :py:class:`Property` object.
@@ -131,7 +140,7 @@ def _PropertyContainer_create_property(self, name, dtype=None, components=None, 
 
     if property_type != 0:
         if components is not None:
-            raise ValueError("Specifying vector components for a standard property is not allowed.")
+            raise ValueError("Specifying a vector component count for a standard property is not allowed.")
         if dtype is not None:
             raise ValueError("Specifying a data type for a standard property is not allowed.")
     else:
@@ -140,13 +149,13 @@ def _PropertyContainer_create_property(self, name, dtype=None, components=None, 
         if data is not None:
             data = numpy.asanyarray(data)
             if data.ndim < 1 or data.ndim > 2:
-                raise ValueError("Provided data array must be either 1 or 2-dimensional")
+                raise ValueError("Provided data array must be either 1 or 2-dimensional.")
         if components is None:
             components = data.shape[1] if data.ndim==2 else 1
         if dtype is None:
             dtype = data.dtype
         if components < 1:
-            raise ValueError("Invalid number of vector components for a user-defined property.")
+            raise ValueError("Invalid number of vector components specified for a user-defined property: {}".format(components))
         if not property_name or '.' in property_name:
             raise ValueError("Invalid name for a property: '{}'. The name contains illegal characters.".format(property_name))
 
@@ -184,14 +193,9 @@ def _PropertyContainer_create_property(self, name, dtype=None, components=None, 
     if existing_prop is None:
         # If property does not exist yet in the container, create and add a new Property instance.
         if property_type != 0:
-            prop = self.create_standard_property(property_type, data is None)
+            prop = self.create_standard_property(property_type, data is None, len(data) if not data is None else 0)
         else:
-            prop = self.create_user_property(property_name, dtype, components, 0, data is None)
-
-        # Initialize property with per-element data if provided.
-        if data is not None:
-            with prop:
-                prop[...] = data
+            prop = self.create_user_property(property_name, dtype, components, 0, data is None, len(data) if not data is None else 0)
     else:
         # Make sure the data layout of the existing property is compatible with the requested layout.
         if components is not None and existing_prop.components != components:
@@ -203,10 +207,10 @@ def _PropertyContainer_create_property(self, name, dtype=None, components=None, 
         # Make a copy of the existing property so that we can safely modify it.
         prop = self.make_mutable(existing_prop)
 
-        # Initialize property with per-element data if provided.
-        if data is not None:
-            with prop:
-                prop[...] = data
+    # Initialize property with per-element data if provided.
+    if data is not None:
+        with prop:
+            prop[...] = data
     return prop
 PropertyContainer.create_property = _PropertyContainer_create_property
 

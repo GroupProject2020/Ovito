@@ -15,4 +15,5 @@ ovito.data.SimulationCell = SimulationCell
 ovito.data.Property = Property
 ovito.data.PropertyContainer = PropertyContainer
 ovito.data.DataSeries = DataSeries
-ovito.data.__all__ += ['SimulationCell', 'Property', 'PropertyContainer', 'DataSeries']
+ovito.data.ElementType = ovito.plugins.StdObj.ElementType
+ovito.data.__all__ += ['SimulationCell', 'Property', 'PropertyContainer', 'DataSeries', 'ElementType']

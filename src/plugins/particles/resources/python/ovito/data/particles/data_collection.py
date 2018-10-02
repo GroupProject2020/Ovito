@@ -8,7 +8,12 @@ from ovito.plugins.Particles import Particles
 # Implementation of the DataCollection.particles attribute.
 def _DataCollection_particles(self):
     """
-    Returns the :py:class:`Particles` object, which stores the particles information. 
+    Returns the :py:class:`Particles` object from this data collection, which stores the particle properties and -as a sub-object- the 
+    :py:attr:`~Particles.bonds` between particles. ``None`` is returned if the data collection does not contain any particle data.
+
+    Note that the :py:class:`Particles` object may be marked as read-only if it is currently shared by several data collections.
+    If you intend to modify the particles container or its sub-objects in any way, e.g. add, remove or modify particle properties, 
+    you must request a mutable version of the particles object using the :py:attr:`!particles_` accessor instead.
     """
     return self.find(Particles)
 DataCollection.particles = property(_DataCollection_particles)

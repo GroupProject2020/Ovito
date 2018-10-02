@@ -20,6 +20,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
+#include <plugins/particles/objects/ParticlesVis.h>
 #include <core/app/Application.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
@@ -41,6 +42,8 @@ SET_PROPERTY_FIELD_LABEL(ParticlesObject, bonds, "Bonds");
 ******************************************************************************/
 ParticlesObject::ParticlesObject(DataSet* dataset) : PropertyContainer(dataset)
 {
+	// Attach a visualization element for rendering the particles.
+	addVisElement(new ParticlesVis(dataset));
 }
 
 /******************************************************************************

@@ -22,80 +22,62 @@ Data pipelines and data sources
 ------------------------------------
 
 The :py:class:`!ovito.ObjectNode` class has been renamed to :py:class:`~ovito.pipeline.Pipeline` and
-moved to the new :py:mod:`ovito.pipeline` module. The old class name reflected the fact that instances
-are part of the scene graph in OVITO. However, this aspect is less important from 
-the Python script perspective and therefore :py:class:`~ovito.pipeline.Pipeline` is the more natural naming choice.
+moved to the new :py:mod:`ovito.pipeline` module. 
 
-The :py:class:`~ovito.pipeline.StaticSource` is a type of data source for a :py:class:`~ovito.pipeline.Pipeline` 
+The :py:class:`~ovito.pipeline.StaticSource` is a special type of data source for a :py:class:`~ovito.pipeline.Pipeline` 
 and can hold a set of data objects that should be processed by the pipeline. The :py:class:`~ovito.pipeline.FileSource`
 class maintains its role as the main data source type for pipelines, reading the input data from an external file.
 
 The :py:attr:`!ObjectNode.output` field has been removed. It used to provide access to the cached results of the data pipeline 
-after a call to :py:meth:`!ObjectNode.compute`. Now the computation results should be stored in a local variable instead::
+after a call to :py:meth:`!ObjectNode.compute`. Now the computation results should be requested using :py:meth:`~ovito.pipeline.Pipeline.compute` and stored in a local variable instead::
 
    pipeline = import_file('simulation.dump')
    ...
    data = pipeline.compute()
 
 :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` returns a new :py:class:`~ovito.data.DataCollection` containing
-the output data of the pipeline.
+the output data of the pipeline after evaluating any modifiers that are currently part of the pipeline.
 
 The ``DataCollection`` class
 ----------------------------------------
 
-The :py:class:`~ovito.data.DataCollection` class no longer implements a dictionary interface to provide access to the contained data objects.
-Instead, the new :py:attr:`~ovito.data.DataCollection.objects` field exposes all objects as an unordered list. 
-The :py:meth:`!add`, :py:meth:`!remove` and :py:meth:`!replace` methods have been deprecated. 
-Instead, you can insert/remove data objects as follows::
+The new :py:attr:`~ovito.data.DataCollection.objects` field exposes all objects in a data collection as an unordered list. 
+You can insert/remove data objects using standard Python list manipulation statements, e.g.::
 
     cell = SimulationCell()
     data.objects.append(cell)
     data.objects.remove(cell)
 
-The :py:class:`~ovito.data.DataCollection` properties :py:attr:`!.cell`, :py:attr:`!.surface` and :py:attr:`!.dislocations` have been deprecated.
-Instead, the new general methods :py:meth:`~ovito.data.DataCollection.find` and :py:meth:`~ovito.data.DataCollection.expect`
-should be used instead to retrieve data objects based on their type, e.g.::
-
-    cell = data.expect(SimulationCell)
-
 The properties :py:attr:`!.number_of_particles`, :py:attr:`!.number_of_half_bonds` and :py:attr:`!.number_of_full_bonds` have 
-been deprecated. Instead, these numbers are now reported by the following properties::
+been deprecated. Instead, these numbers are now reported by the :py:attr:`~ovito.data.PropertyContainer.count` attribute 
+of the :py:class:`~ovito.data.Particles` and the :py:class:`~ovito.data.Bonds` container objects::
 
     num_particles = data.particles.count
-    num_bonds = data.bonds.count
+    num_bonds = data.particles.bonds.count
 
-The :py:meth:`!create_particle_property` and :py:meth:`!create_user_particle_property` methods for creating new particle and bond properties have 
-been replaced by the :py:meth:`~ovito.data.ParticlesView.create_property` method in the new :py:class:`~ovito.data.ParticlesView` helper class, which 
-is returned by the :py:attr:`DataCollection.particles <ovito.data.DataCollection.particles>` attribute.
-Similarly, the :py:meth:`!create_bond_property` and :py:meth:`!create_user_bond_property` methods have 
-been replaced by the :py:meth:`~ovito.data.BondsView.create_property` method in the new :py:class:`~ovito.data.BondsView` helper class, which 
-is returned by the :py:attr:`DataCollection.bonds <ovito.data.DataCollection.bonds>` attribute.
 
 Particle and bond properties
 ----------------------------------------
 
-The :py:class:`~ovito.data.ParticleProperty` and :py:class:`~ovito.data.BondProperty` classes now inherit from a common base class,
-:py:class:`~ovito.data.Property`, which provides the functionality common to all property types in OVITO.
+The :py:class:`!ParticleProperty` and :py:class:`!BondProperty` classes have been replaced with the generic
+:py:class:`~ovito.data.Property` class, which provides the functionality common to all property types in OVITO.
+The :py:class:`~ovito.data.PropertyContainer` class has been introduced as a generic container type for 
+:py:class:`~ovito.data.Property` objects. OVITO knows several specializations of this generic container type, 
+e.g. :py:class:`~ovito.data.Particles`, :py:class:`~ovito.data.Bonds`, :py:class:`~ovito.data.VoxelGrid` and
+:py:class:`~ovito.data.DataSeries`, that each represent different collections of elements. 
 
-Access to *standard* particle and bond properties via Python named attributes has been deprecated. Instead, they 
-should be looked up by name, similar to *user-defined* properties::
+The :py:class:`ovito.data.Particles` container behaves like a (read-only) dictionary of particle properties, 
+providing key-based access to the :py:attr:`~ovito.data.Property` objects it manages.
 
-    data = pipeline.compute()
-    pos_property = data.particles.position     # <-- Deprecated
-    pos_property = data.particles['Position']  # <-- Correct
-
-Note that the :py:attr:`DataCollection.particles <ovito.data.DataCollection.particles>` object
-behaves like a (read-only) dictionary of particle properties, providing a filtered view of the data :py:attr:`~ovito.data.DataCollection.objects` list of the :py:class:`~ovito.data.DataCollection`.
-
-The :py:attr:`!array` and :py:attr:`!marray` accessor attributes of the :py:class:`~ovito.data.ParticleProperty` and :py:class:`~ovito.data.BondProperty`
-classes have been deprecated. Instead, these classes themselves now behave like Numpy arrays::
+The :py:attr:`!ParticleProperty.array` and :py:attr:`!ParticleProperty.marray` attributes
+for accessing property values have been deprecated. Instead, the :py:class:`~ovito.data.Property` object itself now behaves like a Numpy array::
 
     pos_property = data.particles['Position']
-    print('Number of particles:', len(pos_property))
-    print('Position of first particle:', pos_property[0])
+    assert(len(pos_property) == data.particles.count)
+    print('XYZ position of first particle:', pos_property[0])
 
-However, note that :py:class:`~ovito.data.ParticleProperty` and :py:class:`~ovito.data.BondProperty` are not true Numpy array subclasses; they just mimic the Numpy array
-interface to some extent. You can turn them into true Numpy arrays if needed in two ways::
+Note, however, that :py:class:`~ovito.data.Property` is not a true Numpy array subclass; it just mimics the Numpy array
+interface to some extent. You can turn it into true Numpy array if needed in two ways::
 
     pos_array = numpy.asarray(pos_property)
     pos_array = pos_property[...]
@@ -107,17 +89,17 @@ statement::
     with pos_property:
         pos_property[0] = (0,0,0)
 
-The old :py:attr:`!.marray` accessor attribute and a 
-call to the deprecated :py:meth:`!ParticleProperty.changed` method to finalize the write transaction are no longer needed.
+The old :py:attr:`!ParticleProperty.marray` accessor attribute and a 
+call to the removed :py:meth:`!ParticleProperty.changed` method to finalize the write transaction are no longer needed.
 
 Simulation cells
 ------------------------------------------
 
 The :py:class:`~ovito.data.SimulationCell` class now behaves like a read-only Numpy array of shape (3,4), providing direct
-access to the cell vectors and the cell origin. The old :py:attr:`!.array` and :py:attr:`!.marray` accessor attributes have been deprecated.
+access to the cell vectors and the cell origin. The old :py:attr:`!array` and :py:attr:`!marray` accessor attributes have been deprecated.
 Write access to the cell matrix now requires a ``with`` statement::
 
-    cell = pipeline.source.cell
+    cell = data.cell_
     with cell:
         cell[:,1] *= 1.1   # Expand cell along y-direction by scaling second cell vector
 
@@ -125,29 +107,30 @@ Bonds
 ------------------------------------------
 
 OVITO 3.x no longer works with a half-bond representation. Older program versions represented each full bond A<-->B
-as two separate half-bonds A-->B and B-->A. Now, only a single record per bond is maintained by OVITO.
+as two individual half-bonds A-->B and B-->A. Now, only a single record per bond is maintained by OVITO.
 
-The :py:class:`!ovito.data.Bonds` class has been removed. Instead, bond topology is now stored as a standard 
-:py:class:`~ovito.data.BondProperty` named ``Topology``, which is accessible through the :py:class:`~ovito.data.BondsView` 
-object. 
+The :py:class:`!ovito.data.Bonds` container class stores the bond topology as a standard 
+:py:class:`~ovito.data.Property` named ``Topology``, which is a *N* x 2 array of integer indices into the particles list::
 
-The :py:class:`!Bonds.Enumerator` helper class has been renamed to :py:class:`~ovito.data.BondsEnumerator`
-and its constructor now expects a :py:class:`~ovito.data.DataCollection` instead of a :py:class:`!Bonds` object.
+    topology = data.particles.bonds['Topology']
+    assert(topology.shape == (data.particles.bonds.count, 2))
+
+The :py:class:`!Bonds.Enumerator` helper class has been renamed to :py:class:`~ovito.data.BondsEnumerator`.
 
 File I/O
 ------------------------------------
 
 The :py:func:`ovito.io.import_file` function no longer requires the ``multiple_frames`` flag to load simulation files
-containing more than one frame. This happens automatically now. Furthermore, :py:func:`~ovito.io.import_file` now 
+containing more than one frame. Detection of multi-timestep files happens automatically now. Furthermore, :py:func:`~ovito.io.import_file` now 
 supports loading file sequences that are specified as an explicit list of file paths. This makes it possible to 
-load sets of files that are distributed over more than directory as one animation sequence.
+load sets of files that are distributed over everal directories as single animation sequence.
 
 The :py:func:`ovito.io.export_file` function now accepts not only a :py:class:`~ovito.pipeline.Pipeline` object which 
 generates the data to be exported, but alternatively also any :py:class:`~ovito.data.DataCollection` or individual 
 data objects.
 
 Some of the file format names accepted by :py:func:`~ovito.io.export_file` have been renamed and the new ``vtk/trimesh`` 
-has been added, which allows to export a :py:class:`~ovito.data.SurfaceMesh` to a VTK geometry file.
+has been added, which allows you to export a :py:class:`~ovito.data.SurfaceMesh` to a VTK geometry file.
 
 The :py:attr:`!FileSource.loaded_file` attribute has been removed. The path of the input data file is now accessible as an attribute
 of the :py:class:`~ovito.data.DataCollection` interface, e.g.::
@@ -155,7 +138,6 @@ of the :py:class:`~ovito.data.DataCollection` interface, e.g.::
     pipeline = import_file('input.dump')
     data = pipeline.compute()
     print(data.attributes['SourceFile'])
-    print(pipeline.source.attributes['SourceFile'])
 
 The old :py:meth:`!DataCollection.to_ase_atoms` and :py:meth:`!DataCollection.create_from_ase_atoms` methods
 have been refactored into the new :py:mod:`ovito.io.ase` module and are now standalone functions named :py:func:`~ovito.io.ase.ovito_to_ase` 
@@ -178,19 +160,20 @@ loaded animation frames, use the :py:attr:`FileSource.num_frames <ovito.pipeline
 Changes to modifiers
 ------------------------------------------
 
-The :py:class:`!SelectExpressionModifier` has been renamed to :py:class:`~ovito.modifiers.ExpressionSelectionModifier`.
+Several modifier classes have been renamed in OVITO 3.0:
 
-The :py:class:`!DeleteSelectedParticlesModifier` has been renamed to :py:class:`~ovito.modifiers.DeleteSelectedModifier` and can now operate on
-bonds too.
-
-The :py:class:`!SelectParticleTypeModifier` has been renamed to :py:class:`~ovito.modifiers.SelectTypeModifier` and can now operate on
-bonds too. Furthermore, it is now possible to specify the set of particle :py:attr:`~ovito.modifiers.SelectTypeModifier.types` to select
-in terms of type *names*. Before, it was only possible to select particles based on *numeric* type IDs.
-
-The :py:class:`!CombineParticleSetsModifier` has been renamed to :py:class:`~ovito.modifiers.CombineDatasetsModifier`.
+=========================================================== ===========================================================
+Old modifier name:                                          New modifier name: 
+=========================================================== ===========================================================
+:py:class:`!SelectExpressionModifier`                       :py:class:`~ovito.modifiers.ExpressionSelectionModifier`
+:py:class:`!DeleteSelectedParticlesModifier`                :py:class:`~ovito.modifiers.DeleteSelectedModifier`
+:py:class:`!SelectParticleTypeModifier`                     :py:class:`~ovito.modifiers.SelectTypeModifier`
+:py:class:`!CombineParticleSetsModifier`                    :py:class:`~ovito.modifiers.CombineDatasetsModifier`
+:py:class:`!BinAndReduceModifier`                           :py:class:`~ovito.modifiers.SpatialBinningModifier`
+=========================================================== ===========================================================
 
 The following modifier classes have been generalized and gained a new :py:attr:`!operate_on` field that controls what kind(s) of data elements (e.g. particles,
-bonds, surfaces, etc.) the modifier should act on:
+bonds, voxel data, etc.) the modifier should act on:
 
    * :py:class:`~ovito.modifiers.AffineTransformationModifier`
    * :py:class:`~ovito.modifiers.AssignColorModifier` 
@@ -223,13 +206,8 @@ Changes to display objects
 ------------------------------------------
 
 The :py:class:`!Display` base class has been renamed to :py:class:`~ovito.vis.DataVis`. Instead of *display objects*, the documentation now uses the term
-*visual elements* when referring to the objects attached to some data objects, which are responsible for rendering 
-the data. The :py:mod:`ovito.vis` module provides various visual element types, each derived from the common :py:class:`~ovito.vis.DataVis`
+*visual elements*. The :py:mod:`ovito.vis` module provides various visual element types, each derived from the common :py:class:`~ovito.vis.DataVis`
 base class.
-
-The :py:class:`~ovito.pipeline.Pipeline` class now provides the new :py:meth:`~ovito.pipeline.Pipeline.get_vis` method, which 
-provides easier access to the visual elements leaving the data pipeline. Instead of accessing a visual element via the :py:attr:`~ovito.data.DataObject.vis` 
-attribute of the data object it is attached to, the visual element can now directly be looked up based on its class type.
 
 SurfaceMesh data object
 ------------------------------------------

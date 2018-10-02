@@ -22,7 +22,7 @@ data = pipeline.compute()
 
 # The 'CNA Indices' bond property is a a two-dimensional array 
 # containing the three CNA indices computed for each bond in the system.
-cna_indices = data.bonds['CNA Indices']
+cna_indices = data.particles.bonds['CNA Indices']
 
 # This helper function takes a two-dimensional array and computes the frequency 
 # histogram of the data rows using some NumPy magic. 
@@ -36,7 +36,7 @@ def row_histogram(a):
     return (a[indices], counts)
 
 # Used below for enumerating the bonds of each particle:
-bond_enumerator = BondsEnumerator(data)
+bond_enumerator = BondsEnumerator(data.particles.bonds)
 
 # Loop over particles and print their CNA indices.
 for particle_index in range(data.particles.count):

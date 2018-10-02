@@ -78,7 +78,7 @@ void PropertyContainer::makePropertiesMutable()
 * Creates a property and adds it to the container. 
 * In case the property already exists, it is made sure that it's safe to modify it.
 ******************************************************************************/
-PropertyObject* PropertyContainer::createProperty(int typeId, bool initializeMemory, const ConstDataObjectPath& containerPath)
+PropertyObject* PropertyContainer::createProperty(int typeId, bool initializeMemory, const ConstDataObjectPath& containerPath, size_t elementCountHint)
 {
 	// Undo recording should never be active during pipeline evaluation.
 	OVITO_ASSERT(!dataset()->undoStack().isRecording());
@@ -106,7 +106,8 @@ PropertyObject* PropertyContainer::createProperty(int typeId, bool initializeMem
 	}
 	else {
 		// Create a new property object.
-		OORef<PropertyObject> newProperty = getOOMetaClass().createFromStorage(dataset(), getOOMetaClass().createStandardStorage(elementCount(), typeId, initializeMemory, containerPath));
+		size_t count = !properties().empty() ? elementCount() : elementCountHint;
+		OORef<PropertyObject> newProperty = getOOMetaClass().createFromStorage(dataset(), getOOMetaClass().createStandardStorage(count, typeId, initializeMemory, containerPath));
 		addProperty(newProperty);
 		return newProperty;
 	}
@@ -116,7 +117,7 @@ PropertyObject* PropertyContainer::createProperty(int typeId, bool initializeMem
 * Creates a user-defined property and adds it to the container. 
 * In case the property already exists, it is made sure that it's safe to modify it.
 ******************************************************************************/
-PropertyObject* PropertyContainer::createProperty(const QString& name, int dataType, size_t componentCount, size_t stride, bool initializeMemory)
+PropertyObject* PropertyContainer::createProperty(const QString& name, int dataType, size_t componentCount, size_t stride, bool initializeMemory, size_t elementCountHint)
 {
 	// Undo recording should never be active during pipeline evaluation.
 	OVITO_ASSERT(!dataset()->undoStack().isRecording());
@@ -145,7 +146,8 @@ PropertyObject* PropertyContainer::createProperty(const QString& name, int dataT
 	}
 	else {
 		// Create a new property object.
-		OORef<PropertyObject> newProperty = getOOMetaClass().createFromStorage(dataset(), std::make_shared<PropertyStorage>(elementCount(), dataType, componentCount, stride, name, initializeMemory));
+		size_t count = !properties().empty() ? elementCount() : elementCountHint;
+		OORef<PropertyObject> newProperty = getOOMetaClass().createFromStorage(dataset(), std::make_shared<PropertyStorage>(count, dataType, componentCount, stride, name, initializeMemory));
 		addProperty(newProperty);
 		return newProperty;
 	}

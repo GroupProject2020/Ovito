@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -86,7 +86,8 @@ PYBIND11_MODULE(StdObj, m)
 	;
 
 	auto SimulationCell_py = ovito_class<SimulationCellObject, DataObject>(m,
-			":Base class: :py:class:`ovito.data.DataObject`\n\n"
+			":Base class: :py:class:`ovito.data.DataObject`"
+			"\n\n"
 			"Stores the geometric shape and the boundary conditions of the simulation cell. "
 			"A :py:class:`!SimulationCell` data object is typically part of a :py:class:`DataCollection` and can be retrieved through its :py:attr:`~DataCollection.cell` property: "
 			"\n\n"
@@ -178,7 +179,8 @@ PYBIND11_MODULE(StdObj, m)
 			"and can be accessed through its :py:attr:`~ovito.data.DataObject.vis` field. "
 			"See also the corresponding `user manual page <../../display_objects.simulation_cell.html>`__ for this visual element. "
 			"\n\n"
-			"The following example script demonstrates how to change the line width of the simulation cell:"
+			"The following example script demonstrates how to change the display line width and rendering color of the simulation cell "
+			"loaded from an input simulation file:"
 			"\n\n"
 			".. literalinclude:: ../example_snippets/simulation_cell_vis.py\n")
 		.def_property("line_width", &SimulationCellVis::cellLineWidth, &SimulationCellVis::setCellLineWidth,
@@ -213,19 +215,26 @@ PYBIND11_MODULE(StdObj, m)
 		"It implements the ``collections.abc.Mapping`` interface. That means it can be used "
 		"like a standard read-only Python ``dict`` object to access the properties by name, e.g.: "
 		"\n\n"
-		".. literalinclude:: ../example_snippets/particles_view.py\n"
+		".. literalinclude:: ../example_snippets/property_container.py\n"
 		"	:lines: 7-11\n"
 		"\n\n"
-		"New properties can be added with the :py:meth:`.create_property` method. ")
+		"New properties can be added with the :py:meth:`.create_property` method. "
+		"\n\n"
+		"OVITO provides several concrete implementations of the abstract :py:class:`!PropertyContainer` base class: "
+		"\n\n"
+		"    * :py:class:`Particles`\n"
+		"    * :py:class:`Bonds`\n"
+		"    * :py:class:`VoxelGrid`\n"
+		"    * :py:class:`DataSeries`\n")
 
 		.def_property_readonly("count", &PropertyContainer::elementCount,
-			"The number of data elements in this container, for example the number of particles, which is equal to the length of the :py:class:`Property` arrays in this container. ")
+			"The number of data elements in this container, e.g. the number of particles. This value is always equal to the lengths of the :py:class:`Property` arrays managed by this container. ")
 
 		// Required by implementation of create_property() method:
 		.def("standard_property_type_id", [](const PropertyContainer& container, const QString& name) { 
 			return container.getOOMetaClass().standardPropertyTypeId(name);
 		})
-		.def("create_standard_property", [](PropertyContainer& container, int type, bool initializeMemory) {
+		.def("create_standard_property", [](PropertyContainer& container, int type, bool initializeMemory, size_t elementCountHint) {
 			// Make sure it is safe to modify the property container.
 			ensureDataObjectIsMutable(container);
 			// Build a data object path from the property container up to the data collection.
@@ -238,24 +247,33 @@ PYBIND11_MODULE(StdObj, m)
 			while(obj);
 			std::reverse(containerPath.begin(), containerPath.end());
 			// Create the new property.
-			return container.createProperty(type, initializeMemory, containerPath);
+			return container.createProperty(type, initializeMemory, containerPath, elementCountHint);
 		})
-		.def("create_user_property", [](PropertyContainer& container, const QString& name, int dataType, size_t componentCount, size_t stride, bool initializeMemory) {
+		.def("create_user_property", [](PropertyContainer& container, const QString& name, int dataType, size_t componentCount, size_t stride, bool initializeMemory, size_t elementCountHint) {
 			// Make sure it is safe to modify the property container.
 			ensureDataObjectIsMutable(container);
 			// Create the new property.
-			return container.createProperty(name, dataType, componentCount, stride, initializeMemory);
+			return container.createProperty(name, dataType, componentCount, stride, initializeMemory, elementCountHint);
 		})		
 	;
 	// Needed for implementation of Python dictionary interface of PropertyContainer class:
 	expose_subobject_list(PropertyContainer_py, std::mem_fn(&PropertyContainer::properties), "properties", "PropertyList");
 
-	auto ElementType_py = ovito_class<ElementType, DataObject>{m}
+	auto ElementType_py = ovito_class<ElementType, DataObject>(m,
+		":Base class: :py:class:`ovito.data.DataObject`"
+		"\n\n"
+		"Describes a single type of elements, for example a particular atom or bond type. "
+		"A :py:class:`Property` object can store a set of element types in its :py:attr:`~Property.types` list. "
+		"\n\n"
+		":py:class:`!ElementType` is the base class for some specialized element types in OVITO: "
+		"\n\n"
+		"   * :py:class:`ParticleType` (used with typed properties in a :py:class:`Particles` container)\n"
+		"   * :py:class:`BondType` (used with typed properties in a :py:class:`Bonds` container)\n")
 	;
 	createDataPropertyAccessors(ElementType_py, "id", &ElementType::numericId, &ElementType::setNumericId,
-			"The unique numeric identifier of the type. ");
+			"The unique numeric identifier of the type (typically a positive ``int``). ");
 	createDataPropertyAccessors(ElementType_py, "color", &ElementType::color, &ElementType::setColor,
-			"The display color used to render elements of this type. ");
+			"The display color used to render elements of this type. This is a tuple with RGB values in the range 0 to 1.");
 	createDataPropertyAccessors(ElementType_py, "name", &ElementType::name, &ElementType::setName,
 			"The display name of this type. If this string is empty, the numeric :py:attr:`.id` will be used when referring to this type. ");
 	createDataPropertyAccessors(ElementType_py, "enabled", &ElementType::enabled, &ElementType::setEnabled,
@@ -267,47 +285,93 @@ PYBIND11_MODULE(StdObj, m)
 	auto Property_py = ovito_abstract_class<PropertyObject, DataObject>(m,
 			":Base class: :py:class:`ovito.data.DataObject`"
 			"\n\n"
-			"Stores the values for an array of elements (e.g. particle or bonds). "
+			"Stores the property values for an array of data elements (e.g. particles, bonds or voxels). "
 			"\n\n"
-			"In OVITO's data model, an arbitrary number of properties can be associated with data elements such as particle or bonds, "
-			"each property being represented by a :py:class:`!Property` object. A :py:class:`!Property` "
-			"is basically an array of values whose length matches the number of data elements. "
+			"Each particle property, for example, is represented by one :py:class:`!Property` object storing the property values for all particles. "
+			"Thus, a :py:class:`!Property` object is basically an array of values whose length matches the number of data elements. "
 			"\n\n"
-			":py:class:`!Property` is the common base class for the :py:class:`ParticleProperty` and :py:class:`BondProperty` "
-			"specializations. "
+			"All :py:class:`!Property` objects belonging to the same class of data elements, for example all particle properties, are managed by "
+			"a :py:class:`PropertyContainer`. In the case of particle properties, the corresponding container class is the "
+			":py:class:`Particles` class, which is a specialization of the generic :py:class:`PropertyContainer` base class. "
 			"\n\n"
 			"**Data access**"
 			"\n\n"
 			"A :py:class:`!Property` object behaves almost like a Numpy array. For example, you can access the property value for the *i*-th data element using indexing:: "
 			"\n\n"
-			"     property = data.particles['Velocity']\n"
-			"     print('Velocity vector of first particle:', property[0])\n"
-			"     print('Z-velocity of second particle:', property[1,2])\n"
-			"     for v in property: print(v)\n"
+			"     positions = data.particles['Position']\n"
+			"     print('Position of first particle:', positions[0])\n"
+			"     print('Z-coordinate of second particle:', positions[1,2])\n"
+			"     for xyz in positions: \n"
+			"         print(xyz)\n"
 			"\n\n"
 			"Element indices start at zero. Properties can be either vectorial (e.g. velocity vectors are stored as an *N* x 3 array) "
-			"or scalar (1-d array of length *N*). Length of the first array dimension is in both cases equal to "
+			"or scalar (1-d array of length *N*). The length of the first array dimension is in both cases equal to "
 			"the number of data elements (number of particles in the example above). Array elements can either be of data type ``float`` or ``int``. "
 			"\n\n"
 			"If necessary, you can cast a :py:class:`!Property` to a standard Numpy array:: "
 			"\n\n"
-			"     velocities = numpy.asarray(property)\n"
+			"     numpy_array = numpy.asarray(positions)\n"
 			"\n\n"
-			"No data is copied during the conversion; the Numpy array will refer to the same memory as the :py:class:`!Property`. "
-			"By default, the memory of a :py:class:`!Property` is write-protected. Thus, trying to modify property values will raise an error:: "
+			"No data is copied during this conversion; the Numpy array will reference the same memory as the :py:class:`!Property`. "
+			"The internal memory array of a :py:class:`!Property` is write-protected by default to prevent unattended data modifications. "
+			"Thus, trying to modify property values will raise an error:: "
 			"\n\n"
-			"    property[0] = (0, 0, -4) # \"ValueError: assignment destination is read-only\"\n"
+			"    positions[0] = (0,2,4) # Raises \"ValueError: assignment destination is read-only\"\n"
 			"\n\n"
 			"A direct modification is prevented by the system, because OVITO's data pipeline uses shallow data copies and needs to know when data objects are being modified. "
-			"Only then results that depend on the changing data can be automatically recalculated. "
 			"We need to explicitly announce a modification by using Python's ``with`` statement:: "
 			"\n\n"
-			"    with property:\n"
-			"        property[0] = (0, 0, -4)\n"
+			"    with positions:\n"
+			"        positions[0] = (0,2,4)\n"
 			"\n\n"
-			"Within the ``with`` compound statement, the array is temporarily made writable, allowing us to alter "
-			"the per-particle data stored in the :py:class:`!Property` object. "
-			"\n\n",
+			"Within the ``with`` compound statement, the array is temporarily made writable, allowing you to alter "
+			"the per-element data stored in the :py:class:`!Property` object. "
+			"\n\n"
+			"**Typed properties**"
+			"\n\n"
+			"The standard particle property ``'Particle Type'`` stores the types of particles encoded as integer values, e.g.: "
+			"\n\n"
+			"    >>> data = node.compute()\n"
+			"    >>> tprop = data.particles['Particle Type']\n"
+			"    >>> print(tprop[...])\n"
+			"    [2 1 3 ..., 2 1 2]\n"
+			"\n\n"
+			"Here, each number in the property array refers to one of the particle types (e.g. 1=Cu, 2=Ni, 3=Fe, etc.). The defined particle types, each one represented by "
+			"an instance of the :py:class:`ParticleType` auxiliary class, are stored in the :py:attr:`.types` array "
+			"of the :py:class:`!Property`. Each type has a unique :py:attr:`~ElementType.id`, a human-readable :py:attr:`~ElementType.name` "
+			"and other attributes like :py:attr:`~ElementType.color` and :py:attr:`~ParticleType.radius` that control the "
+			"visual appearance of particles belonging to the type:"
+			"\n\n"
+			"    >>> for type in tprop.types:\n"
+			"    ...     print(type.id, type.name, type.color, type.radius)\n"
+			"    ... \n"
+			"    1 Cu (0.188 0.313 0.972) 0.74\n"
+			"    2 Ni (0.564 0.564 0.564) 0.77\n"
+			"    3 Fe (1 0.050 0.050) 0.74\n"
+			"\n\n"
+			"IDs of types typically start at 1 and form a consecutive sequence as in the example above. "
+			"Note, however, that the :py:attr:`.types` list may store the :py:class:`ParticleType` objects in an arbitrary order. "
+			"Thus, in general, it is not valid to directly use a type ID as an index into the :py:attr:`.types` array. "
+			"Instead, the :py:meth:`.type_by_id` method should be used to look up the :py:class:`ParticleType`:: "
+			"\n\n"
+			"    >>> for i,t in enumerate(tprop): # (loop over the type ID of each particle)\n"
+			"    ...     print('Atom', i, 'is of type', tprop.type_by_id(t).name)\n"
+			"    ...\n"
+			"    Atom 0 is of type Ni\n"
+			"    Atom 1 is of type Cu\n"
+			"    Atom 2 is of type Fe\n"
+			"    Atom 3 is of type Cu\n"
+			"\n\n"
+			"Similarly, a :py:meth:`.type_by_name` method exists that looks up a :py:attr:`ParticleType` by name. "
+			"For example, to count the number of Fe atoms in a system:"
+			"\n\n"
+			"    >>> Fe_type_id = tprop.type_by_name('Fe').id   # Determine ID of the 'Fe' type\n"
+			"    >>> numpy.count_nonzero(tprop == Fe_type_id)   # Count particles having that type ID\n"
+			"    957\n"
+			"\n\n"
+			"Note that OVITO supports multiple type classifications. For example, in addition to the ``'Particle Type'`` standard particle property, "
+			"which stores the chemical types of atoms (e.g. C, H, Fe, ...), the ``'Structure Type'`` property may hold the structural types computed for atoms "
+			"(e.g. FCC, BCC, ...) maintaining its own list of known structure types in the :py:attr:`.types` array. ",
 			// Python class name:
 			"Property")
 		// To mimic the numpy ndarray class:
@@ -411,7 +475,7 @@ PYBIND11_MODULE(StdObj, m)
 			"This object represents a series of 2d data points and is used for generating function and histogram plots. "
 			"A data series mainly consists of an array of y-values and, optionally, an array of corresponding x-values, one for each data point. "
 			"\n\n"
-			"If the :py:attr:`.`x` data array is not present, the x-coordinates of the data points are implicitly determined by the "
+			"If the :py:attr:`.x` data array is not present, the x-coordinates of the data points are implicitly determined by the "
 			":py:attr:`.interval` property, which specifies a range along the x-axis over which the data points are evenly distributed. "
 			"This is used, for example, for histograms with equally sized bins that span a certain value range. "
 			"Implicit x-coordinates of data points are obtained by evenly dividing the specified :py:attr:`.interval` into *N* equally sized bins, "
@@ -420,17 +484,25 @@ PYBIND11_MODULE(StdObj, m)
 			"\n\n"
 			"Data series are typically generated by certain modifiers in a data pipeline which compute histograms and other 2d charts, e.g. "
 			":py:class:`~ovito.modifiers.CoordinationAnalysisModifier` and :py:class:`~ovito.modifiers.HistogramModifier`. "
-			"You can access all :py:class:`!DataSeries` objects through the :py:attr:`DataCollection.series <ovito.data.DataCollection.series>` "
-			"property, which returns a dictionary containing all data series. "
+			"You can access the :py:class:`!DataSeries` objects via the :py:attr:`DataCollection.series <ovito.data.DataCollection.series>` "
+			"field. "
 			"\n\n",
 			// Python class name:
 			"DataSeries")
 
-		.def_property_readonly("x", [](const DataSeriesObject& series) { return series.getProperty(DataSeriesObject::XProperty); })
-		.def_property_readonly("y", [](const DataSeriesObject& series) { return series.getProperty(DataSeriesObject::YProperty); })
+		.def_property_readonly("x", [](const DataSeriesObject& series) { return series.getProperty(DataSeriesObject::XProperty); },
+			"Returns the :py:class:`~ovito.data.Property` storing the x-coordinates of this data series. "
+			"Not every data series has explicit x-coordinates, so this may be ``None``. In this case, the x-coordinates of the "
+			"data points are implicitly given by the :py:attr:`.interval` property of the data series and the number of "
+			"data points distributed evenly along that x-interval. ")
+		.def_property_readonly("y", [](const DataSeriesObject& series) { return series.getProperty(DataSeriesObject::YProperty); },
+			"Returns the :py:class:`~ovito.data.Property` storing the x-coordinates of this data series. "
+			"This may be a property with more than one component per data points, in which case this data series "
+			"consists of a family of curves. ")
 	;
 	createDataPropertyAccessors(DataSeries_py, "title", &DataSeriesObject::title, &DataSeriesObject::setTitle,
-		"The title of the data series, which is used in the user interface");
+		"The title of the data series, as it appears in the user interface.");
+	// Used internally by the DataSeries.interval property implementation:
 	createDataPropertyAccessors(DataSeries_py, "interval_start", &DataSeriesObject::intervalStart, &DataSeriesObject::setIntervalStart);
 	createDataPropertyAccessors(DataSeries_py, "interval_end", &DataSeriesObject::intervalEnd, &DataSeriesObject::setIntervalEnd);
 

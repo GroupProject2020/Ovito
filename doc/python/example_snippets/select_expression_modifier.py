@@ -8,4 +8,4 @@ pipeline.modifiers.append(ExpressionSelectionModifier(expression = 'PotentialEne
 data = pipeline.compute()
 # Demonstrating two ways to get the number of selected atoms:
 print(data.attributes['SelectExpression.num_selected'])
-print(numpy.count_nonzero(data.particles['Selection']))
+print(numpy.count_nonzero(data.particles.selection))

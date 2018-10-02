@@ -11,7 +11,7 @@ N = 12
 finder = NearestNeighborFinder(N, data)
 
 # Prefetch the property array containing the particle type information:
-ptypes = data.particles['Particle Type']
+ptypes = data.particles.particle_types
 
 # Loop over all input particles:
 for index in range(data.particles.count):

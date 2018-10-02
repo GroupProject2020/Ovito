@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -372,11 +372,13 @@ PYBIND11_MODULE(CrystalAnalysis, m)
 	;
 
 	ovito_class<DislocationNetworkObject, PeriodicDomainDataObject>(m,
-			":Base class: :py:class:`ovito.data.DataObject`\n\n"
-			"This data object types stores the network of dislocation lines extracted by a :py:class:`~ovito.modifiers.DislocationAnalysisModifier`."
+			":Base class: :py:class:`ovito.data.DataObject`"
 			"\n\n"
-			"Instances of this class are associated with a :py:class:`~ovito.vis.DislocationVis` "
-			"that controls the visual appearance of the dislocation lines. It can be accessed through "
+			"This data object stores the network of dislocation lines extracted by a :py:class:`~ovito.modifiers.DislocationAnalysisModifier`. "
+			"You can access it through the :py:attr:`DataCollection.dislocations` field. "
+			"\n\n"
+			"The dislocation network is associated with a :py:class:`~ovito.vis.DislocationVis` element "
+			"controlling the visual appearance of the dislocation lines. It can be accessed through "
 			"the :py:attr:`~DataObject.vis` attribute of the :py:class:`~DataObject` base class."
 			"\n\n"
 			"Example:\n\n"
@@ -445,7 +447,7 @@ PYBIND11_MODULE(CrystalAnalysis, m)
 	;
 
 	ovito_class<ClusterGraphObject, DataObject>(m, "ClusterGraph")
-		//.def_property("clusters", make_function(&ClusterGraphObject::clusters, return_internal_reference<>()))
+		.def_property_readonly("clusters", py::cpp_function(&ClusterGraphObject::clusters, py::return_value_policy::reference_internal))
 		//.def("find_cluster", make_function(&ClusterGraphObject::findCluster, return_internal_reference<>()))
 	;
 

@@ -105,13 +105,13 @@ Python script:
 Example B3: Creating particles and bonds programmatically
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The following script demonstrates how to create particles, a simulation cell, and bonds on the fly
-without loading an external simulation file. This approach can be used to implement custom data importers
-or dynamically generate atomic structures, which can then be further processed with OVITO or exported to a file.
+The following script demonstrates the creation of particles, a simulation cell, and bonds on the fly
+without loading them from an external simulation file. This approach can be used to implement custom data importers
+or dynamically generate atomic structures within OVITO, which can then be further processed or exported to a file.
 
-The script creates different data objects and adds them to a new :py:class:`~ovito.pipeline.StaticSource` instance.
-Finally, a :py:class:`~ovito.pipeline.Pipeline` is created and the :py:class:`~ovito.pipeline.StaticSource` is set as
-its data source.
+The script creates different data objects and adds them to a new :py:class:`~ovito.data.DataCollection`.
+Finally, a :py:class:`~ovito.pipeline.Pipeline` is created and a :py:class:`~ovito.pipeline.StaticSource` object is used
+to make the :py:class:`~ovito.data.DataCollection` its data source.
 
 .. literalinclude:: ../example_snippets/create_new_particle_property.py
 
@@ -131,10 +131,10 @@ and can output information and results as new properties or global attributes.
 Example M1: Calculating mean square displacement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-As a first simple example, we look at the calculation of the mean square displacement (MSD) in a system of moving particles.
-OVITO already provides the built-in `Displacement Vectors <../../particles.modifiers.displacement_vectors.html>`__ modifier, which 
-calculates the displacement of every particle. It stores its results in the ``"Displacement Magnitude"``
-particle property. So all our custom analysis modifier needs to do is to sum up the squared displacement magnitudes and divide by the number of particles:
+This example presents a user-defined modifier function for calculating the mean square displacement (MSD) for a system of moving particles.
+OVITO provides the built-in `Displacement Vectors <../../particles.modifiers.displacement_vectors.html>`__ modifier, which 
+calculates the individual displacement of each particle. It stores its results in the ``"Displacement Magnitude"``
+particle property. So all our user-defined modifier function needs to do is to sum up the squared displacement magnitudes and divide by the number of particles:
 
 .. literalinclude:: ../example_snippets/msd_calculation.py
   :lines: 12-23
@@ -142,8 +142,8 @@ particle property. So all our custom analysis modifier needs to do is to sum up 
 When used within the graphical program, the MSD value computed by this custom modifier may be exported to a text file as a function of simulation time using
 OVITO's standard file export feature (Select ``Table of Values`` as output format).
 
-Alternatively, we can make use of the custom modifier from within a non-interactive batch script, which is executed
-by the ``ovitos`` interpreter. Then we have to insert the :py:class:`~ovito.modifiers.CalculateDisplacementsModifier` programmatically:
+Alternatively, we can make use of the custom modifier function from within a non-interactive batch script, which is run
+with the ``ovitos`` interpreter. Then we have to insert the :py:class:`~ovito.modifiers.CalculateDisplacementsModifier` programmatically:
 
 .. literalinclude:: ../example_snippets/msd_calculation.py
 

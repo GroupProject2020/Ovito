@@ -14,7 +14,6 @@ print("  isolevel: {}".format(modifier.isolevel))
 modifier.isolevel = 0.02
 
 print("  operate_on: {}".format(modifier.operate_on))
-modifier.operate_on = "voxels:"
 
 print("  property: {}".format(modifier.property))
 modifier.property = "Charge density"
@@ -27,7 +26,7 @@ surface_mesh = data.surfaces['isosurface']
 assert(surface_mesh.vis is modifier.vis)
 
 # Add a second isosurface modifer:
-modifier2 = CreateIsosurfaceModifier(property = "Charge density")
+modifier2 = CreateIsosurfaceModifier(property = "Charge density", operate_on = "voxels:imported")
 pipeline.modifiers.append(modifier2)
 data = pipeline.compute()
 

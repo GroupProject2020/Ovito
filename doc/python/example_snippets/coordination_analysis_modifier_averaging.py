@@ -15,9 +15,9 @@ total_rdf = numpy.zeros((modifier.number_of_bins, 2))
 # Iterate over all frames of the sequence.
 for frame in range(pipeline.source.num_frames):
     # Evaluate pipeline to let the modifier compute the RDF of the current frame:
-    pipeline.compute(frame)
+    data = pipeline.compute(frame)
     # Accumulate RDF histograms:
-    total_rdf += modifier.rdf
+    total_rdf += data.series['coordination-rdf'].as_table()
 
 # Averaging:
 total_rdf /= pipeline.source.num_frames

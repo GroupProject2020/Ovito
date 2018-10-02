@@ -18,14 +18,13 @@ cell_volume = data.attributes['DislocationAnalysis.cell_volume']
 print("Dislocation density: %f" % (total_line_length / cell_volume))
 
 # Print list of dislocation lines:
-network = data.expect(DislocationNetwork)
-print("Found %i dislocation segments" % len(network.segments))
-for segment in network.segments:
+print("Found %i dislocation segments" % len(data.dislocations.segments))
+for segment in data.dislocations.segments:
     print("Segment %i: length=%f, Burgers vector=%s" % (segment.id, segment.length, segment.true_burgers_vector))
     print(segment.points)
 
 # Export dislocation lines to a CA file:
 export_file(pipeline, "output/dislocations.ca", "ca")
 
-# Or export dislocations to a ParaView file:
+# Or export dislocations to a ParaView VTK file:
 export_file(pipeline, "output/dislocations.vtk", "vtk/disloc")

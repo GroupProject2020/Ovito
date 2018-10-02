@@ -4,8 +4,8 @@ import ovito
 from PyQt5 import QtCore
 
 # Import a data file.
-node = import_file("../../files/CFG/shear.void.120.cfg")
-node.add_to_scene()
+pipeline = import_file("../../files/CFG/shear.void.120.cfg")
+pipeline.add_to_scene()
 
 settings = RenderSettings(size = (20,20))
 settings.renderer = TachyonRenderer(ambient_occlusion = False, antialiasing = False)

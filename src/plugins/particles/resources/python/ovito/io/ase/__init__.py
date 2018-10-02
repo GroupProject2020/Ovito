@@ -48,17 +48,17 @@ def ovito_to_ase(data_collection):
     pbc = cell_obj.pbc if cell_obj is not None else None
     cell = cell_obj[:, :3].T if cell_obj is not None else None    
     info = {'cell_origin': cell_obj[:, 3] } if cell_obj is not None else None
-    positions = np.array(data_collection.particles['Position'])
-    if 'Particle Type' in data_collection.particles:
+    positions = np.array(data_collection.particles.positions)
+    if data_collection.particles.particle_types:
         # ASE only accepts chemical symbols as atom type names.
         # If our atom type names are not chemical symbols, pass the numerical atom type to ASE instead.
         type_names = {}
-        for t in data_collection.particles['Particle Type'].types:
+        for t in data_collection.particles.particle_types.types:
             if t.name in chemical_symbols:
                 type_names[t.id] = t.name
             else:
                 type_names[t.id] = t.id
-        symbols = [type_names[id] for id in data_collection.particles['Particle Type']]
+        symbols = [type_names[id] for id in data_collection.particles.particle_types]
     else:
         symbols = None
     

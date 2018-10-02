@@ -571,6 +571,12 @@ FileSourceImporter::FrameDataPtr CAImporter::FrameLoader::loadFile(QFile& file)
 				stream.readLine();
 			}
 		}
+		else if(stream.lineStartsWith("METADATA SIMULATION_TIMESTEP ")) {
+			int timestep;
+			if(sscanf(stream.line(), "METADATA SIMULATION_TIMESTEP %i", &timestep) != 1)
+				throw Exception(tr("CA file parsing error. Invalid timestep number (line %1):\n%2").arg(stream.lineNumber()).arg(stream.lineString()));
+			frameData->attributes().insert(QStringLiteral("Timestep"), QVariant::fromValue(timestep));
+		}
 		else if(stream.lineStartsWith("METADATA ")) {
 			// Ignore. This is for future use.
 		}
