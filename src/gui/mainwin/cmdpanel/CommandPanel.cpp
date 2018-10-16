@@ -24,7 +24,6 @@
 #include "RenderCommandPage.h"
 #include "ModifyCommandPage.h"
 #include "OverlayCommandPage.h"
-#include "UtilityCommandPage.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
@@ -45,11 +44,9 @@ CommandPanel::CommandPanel(MainWindow* mainWindow, QWidget* parent) : QWidget(pa
 	_tabWidget->addTab(_modifyPage = new ModifyCommandPage(mainWindow, _tabWidget), QIcon(":/gui/mainwin/command_panel/tab_modify.bw.svg"), QString());
 	_tabWidget->addTab(_renderPage = new RenderCommandPage(mainWindow, _tabWidget), QIcon(":/gui/mainwin/command_panel/tab_render.bw.svg"), QString());
 	_tabWidget->addTab(_overlayPage = new OverlayCommandPage(mainWindow, _tabWidget), QIcon(":/gui/mainwin/command_panel/tab_overlays.bw.svg"), QString());
-//	_tabWidget->addTab(_utilityPage = new UtilityCommandPage(mainWindow, _tabWidget), QIcon(":/gui/mainwin/command_panel/tab_utilities.bw.svg"), QString());
 	_tabWidget->setTabToolTip(0, tr("Modify"));
 	_tabWidget->setTabToolTip(1, tr("Render"));
 	_tabWidget->setTabToolTip(2, tr("Overlays"));
-//	_tabWidget->setTabToolTip(3, tr("Utilities"));
 	setCurrentPage(MainWindow::MODIFY_PAGE);
 }
 

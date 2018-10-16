@@ -59,9 +59,6 @@ public:
 	/// \brief Returns the viewport overlay page contained in the command panel.
 	OverlayCommandPage* overlayPage() const { return _overlayPage; }
 
-	/// \brief Returns the utility page contained in the command panel.
-	UtilityCommandPage* utilityPage() const { return _utilityPage; }
-
 	/// \brief Returns the default size for the command panel.
 	virtual QSize sizeHint() const { return QSize(336, 300); }
 
@@ -71,7 +68,6 @@ private:
 	ModifyCommandPage* _modifyPage;
 	RenderCommandPage* _renderPage;
 	OverlayCommandPage* _overlayPage;
-	UtilityCommandPage* _utilityPage;
 };
 
 OVITO_END_INLINE_NAMESPACE

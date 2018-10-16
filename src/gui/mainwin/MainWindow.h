@@ -43,8 +43,7 @@ public:
 	enum CommandPanelPage {
 		MODIFY_PAGE		= 0,
 		RENDER_PAGE		= 1,
-		OVERLAY_PAGE	= 2,
-		UTILITIES_PAGE	= 3
+		OVERLAY_PAGE	= 2
 	};
 
 public:
