@@ -99,9 +99,31 @@ void ColorCodingModifierEditor::createUI(const RolloutInsertionParameters& rollo
 	layout2->addWidget(endValuePUI->label(), 0, 0);
 	layout2->addLayout(endValuePUI->createFieldLayout(), 0, 1);
 
-	// Insert color legend display.
-	colorLegendLabel = new QLabel(rollout);
+	// Insert color map display.
+	class ColorMapWidget : public QLabel
+	{
+	public:
+		/// Constructor.
+		ColorMapWidget(QWidget* parent, ColorCodingModifierEditor* editor) : QLabel(parent), _editor(editor) {}
+	protected:
+		/// Handle mouse move events.
+		virtual void mouseMoveEvent(QMouseEvent* event) override {
+			// Display a tooltip indicating the property value that corresponds to the color under the mouse cursor.
+			if(ColorCodingModifier* modifier = static_object_cast<ColorCodingModifier>(_editor->editObject())) {
+				QRect cr = contentsRect();
+				FloatType t = FloatType(cr.bottom() - event->y()) / std::max(1, cr.height() - 1);
+				FloatType mappedValue = modifier->startValue() + t * (modifier->endValue() - modifier->startValue());
+				QString text = tr("Value: %1").arg(mappedValue);
+				QToolTip::showText(event->globalPos(), text, this, rect());
+			}
+			QLabel::mouseMoveEvent(event);
+		}
+	private:
+		ColorCodingModifierEditor* _editor;
+	};
+	colorLegendLabel = new ColorMapWidget(rollout, this);
 	colorLegendLabel->setScaledContents(true);
+	colorLegendLabel->setMouseTracking(true);
 	layout2->addWidget(colorLegendLabel, 1, 1);
 
 	// Start value parameter.
