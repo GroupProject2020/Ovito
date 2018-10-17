@@ -19,7 +19,7 @@ OVITO and ASE:
 
 import numpy as np
 
-from ...data import DataCollection, SimulationCell, ParticleType
+from ...data import DataCollection, SimulationCell, ParticleType, Particles
 
 __all__ = ['ovito_to_ase', 'ase_to_ovito']
 
@@ -107,6 +107,7 @@ def ase_to_ovito(atoms):
     data_collection.objects.append(cell)
 
     # Create particle property from atomic positions
+    data_collection.objects.append(Particles())
     data_collection.particles.create_property('Position', data=atoms.get_positions())
 
     # Set particle types from chemical symbols
