@@ -89,7 +89,12 @@ Future<AsynchronousModifier::ComputeEnginePtr> CoordinationAnalysisModifier::cre
 
 		// Build the set of unique particle type IDs.
 		for(const ElementType* pt : typeProperty->elementTypes()) {
+#if BOOST_VERSION >= 106200
 			uniqueTypeIds.insert_or_assign(pt->numericId(), pt->name().isEmpty() ? QString::number(pt->numericId()) : pt->name());
+#else
+			// For backward compatibility with older Boost versions, which do not know insert_or_assign():
+			uniqueTypeIds[pt->numericId()] = pt->name().isEmpty() ? QString::number(pt->numericId()) : pt->name();
+#endif
 		}
 		if(uniqueTypeIds.empty())
 			throwException(tr("No particle types have been defined."));
