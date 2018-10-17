@@ -238,8 +238,8 @@ IF(OVITO_BUILD_GUI)
 	FOREACH(component IN ITEMS Widgets PrintSupport Svg)
 		FIND_PACKAGE(Qt5${component} REQUIRED)
 	ENDFOREACH()
-	IF(UNIX AND NOT APPLE AND CMAKE_COMPILER_IS_GNUCXX)
-		# This is an indirect dependency:
+	IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
+		# This is an indirect dependency required by the Xcb platform plugin of Qt:
 		FIND_PACKAGE(Qt5DBus REQUIRED)
 	ENDIF()
 ENDIF()

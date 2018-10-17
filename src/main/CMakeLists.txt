@@ -47,6 +47,13 @@ SET_TARGET_PROPERTIES(Ovito PROPERTIES OUTPUT_NAME "ovito")
 # Link Qt5.
 TARGET_LINK_LIBRARIES(Ovito Qt5::Core Qt5::Gui)
 
+# Under Linux, the Xcb platform plugin will dynamically load the DBus Qt module.
+# To avoid the dynamic linker pulling the wrong version of the DBus module from the 
+# system path, we make the main executable preload the Qt DBus module on application startup.
+IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
+	TARGET_LINK_LIBRARIES(Ovito Qt5::DBus)
+ENDIF()
+
 IF(APPLE)
     # Enable the use of @rpath on OSX.
     SET_TARGET_PROPERTIES(Ovito PROPERTIES MACOSX_RPATH TRUE)
@@ -81,7 +88,7 @@ ENDIF()
 
 IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
 	# Install copies of the Qt libraries.
-	FOREACH(component IN ITEMS Core Gui Widgets Concurrent Network PrintSupport)
+	FOREACH(component IN ITEMS Core Gui Widgets Concurrent Network PrintSupport Svg DBus)
 		GET_TARGET_PROPERTY(lib Qt5::${component} LOCATION)
 		GET_TARGET_PROPERTY(lib_soname Qt5::${component} IMPORTED_SONAME_RELEASE)
 		CONFIGURE_FILE("${lib}" "${OVITO_LIBRARY_DIRECTORY}" COPYONLY)		
@@ -105,10 +112,8 @@ IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
 	INSTALL(DIRECTORY "${QtBinaryPath}/../plugins/iconengines" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins_qt/" COMPONENT "runtime")
 	IF(NOT Qt5Core_VERSION VERSION_LESS "5.6")
 		INSTALL(DIRECTORY "${QtBinaryPath}/../plugins/xcbglintegrations" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins_qt/" COMPONENT "runtime")
-		OVITO_INSTALL_SHARED_LIB("${QtBinaryPath}/libQt5DBus.so" "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/lib")
 		OVITO_INSTALL_SHARED_LIB("${QtBinaryPath}/libQt5XcbQpa.so" "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/lib")
 	ENDIF()
-	OVITO_INSTALL_SHARED_LIB("${QtBinaryPath}/libQt5Svg.so" "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/lib")
 
 	# Make the executable look in lib/ovito/ directory for shared libraries.
 	SET_TARGET_PROPERTIES(Ovito PROPERTIES INSTALL_RPATH "\$ORIGIN/../lib/ovito")

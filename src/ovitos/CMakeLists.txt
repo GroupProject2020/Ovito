@@ -22,6 +22,14 @@
 ADD_EXECUTABLE(ovitos Main.cpp)
 TARGET_LINK_LIBRARIES(ovitos Core Gui)
 TARGET_LINK_LIBRARIES(ovitos Qt5::Core Qt5::Gui)
+
+# Under Linux, the Xcb platform plugin will dynamically load the DBus Qt module.
+# To avoid the dynamic linker pulling the wrong version of the DBus module from the 
+# system path, we make the main executable preload the Qt DBus module on application startup.
+IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
+	TARGET_LINK_LIBRARIES(ovitos Qt5::DBus)
+ENDIF()
+
 IF(APPLE)
 	SET_TARGET_PROPERTIES(ovitos PROPERTIES OUTPUT_NAME "ovitos.exe")
 	SET_TARGET_PROPERTIES(ovitos PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OVITO_LIBRARY_DIRECTORY}")
