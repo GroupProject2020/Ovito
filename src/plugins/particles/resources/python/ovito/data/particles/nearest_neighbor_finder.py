@@ -34,7 +34,7 @@ class NearestNeighborFinder(ovito.plugins.Particles.NearestNeighborFinder):
         super(self.__class__, self).__init__(N)
         if N<=0 or N>30:
             raise ValueError("The requested number of nearest neighbors is out of range.")
-        if data_collection.particles is not None or data_collection.particles.positions is not None:
+        if data_collection.particles is None or data_collection.particles.positions is None:
             raise KeyError("DataCollection does not contain any particles.")
         pos_property = data_collection.particles.positions
         self.particle_count = len(pos_property)
