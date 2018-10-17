@@ -196,7 +196,7 @@ Q_DECL_CONSTEXPR inline SymmetricTensor2T<T> operator-(const SymmetricTensor2T<T
 template<typename T>
 Q_DECL_CONSTEXPR inline SymmetricTensor2T<T> operator-(typename SymmetricTensor2T<T>::Identity, const SymmetricTensor2T<T>& B)
 {
-	return { T(1)-B[0], T(1)-B[1], T(1)-B[2], B[3], B[4], B[5] };
+	return { T(1)-B[0], T(1)-B[1], T(1)-B[2], -B[3], -B[4], -B[5] };
 }
 
 // Product with scalar
