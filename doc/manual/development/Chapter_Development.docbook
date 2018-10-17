@@ -82,7 +82,7 @@
     <tbody>
 		<row><entry><link xlink:href="https://github.com/pybind/pybind11">pybind11</link></entry>
 		<entry>Required by OVITO's Python script engine (<literal>PyScript</literal> plugin).</entry></row>
-		<row><entry><link xlink:href="http://muparser.beltoforion.de/">muparser</link></entry>
+		<row><entry><link xlink:href="http://beltoforion.de/article.php?a=muparser">muparser</link></entry>
 		<entry>A math expression parser library.</entry></row>
 		<row><entry><link xlink:href="http://sourceforge.net/projects/qwt/">Qwt</link></entry>
 		<entry>For plotting and data visualization.</entry></row>

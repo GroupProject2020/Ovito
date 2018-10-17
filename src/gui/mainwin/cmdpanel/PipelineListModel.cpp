@@ -259,7 +259,12 @@ void PipelineListModel::applyModifiers(const QVector<OORef<Modifier>>& modifiers
 		if(OORef<PipelineObject> pobj = dynamic_object_cast<PipelineObject>(currentItem->object())) {
 			for(int i = modifiers.size() - 1; i >= 0; i--) {
 				Modifier* modifier = modifiers[i];
-				auto dependentsList = pobj->dependents();
+				std::vector<OORef<RefMaker>> dependentsList;
+				for(RefMaker* dependent : pobj->dependents()) {
+					if(dynamic_object_cast<ModifierApplication>(dependent) || dynamic_object_cast<PipelineSceneNode>(dependent)) {
+						dependentsList.push_back(dependent);
+					}
+				}
 				OORef<ModifierApplication> modApp = modifier->createModifierApplication();
 				modApp->setModifier(modifier);
 				modApp->setInput(pobj);

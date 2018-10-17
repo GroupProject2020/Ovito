@@ -11,7 +11,7 @@ source = StaticSource(data = data)
 # Create a pipeline and wire the static source to it.
 pipeline = Pipeline(source = source)
 output_data = pipeline.compute()
-assert(output_data.cell)
+assert(output_data.cell is not None)
 
 # The static source doesn't pass the original data to the pipeline: 
 assert(output_data is not data)

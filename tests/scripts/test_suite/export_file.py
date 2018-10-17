@@ -38,7 +38,7 @@ for i in range(ovito.scene.anim.last_frame + 1):
 node1.modifiers.append(SelectTypeModifier(types = {1}))
 node1.modifiers.append(CoordinationPolyhedraModifier())
 export_file(node1, "_export_file_test.vtk", "vtk/trimesh", key = "coord-polyhedra")
-node1.modifiers.clear()
+del node1.modifiers[:]
 os.remove("_export_file_test.vtk")
 
 # Export a FileSource:

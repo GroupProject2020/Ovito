@@ -20,7 +20,7 @@ def render(args):
     radius = 0.0
     if 'Radius' in data.particles:
         radius = data.particles['Radius'][pindex]
-    if radius <= 0 and data.particles.particle_types:
+    if radius <= 0 and data.particles.particle_types is not None:
         particle_type = data.particles.particle_types[pindex]
         radius = data.particles.particle_types.type_by_id(particle_type).radius
     if radius <= 0:
