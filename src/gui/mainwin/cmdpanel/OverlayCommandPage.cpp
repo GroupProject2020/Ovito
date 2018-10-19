@@ -190,15 +190,9 @@ void OverlayCommandPage::viewportEvent(const ReferenceEvent& event)
 ******************************************************************************/
 void OverlayCommandPage::onItemSelectionChanged()
 {
-	if(isVisible()) {
-		ViewportOverlay* overlay = selectedOverlay();
-		_propertiesPanel->setEditObject(overlay);
-		_deleteOverlayAction->setEnabled(overlay != nullptr);
-	}
-	else {
-		_propertiesPanel->setEditObject(nullptr);
-		_deleteOverlayAction->setEnabled(false);
-	}
+	ViewportOverlay* overlay = selectedOverlay();
+	_propertiesPanel->setEditObject(overlay);
+	_deleteOverlayAction->setEnabled(overlay != nullptr);
 }
 
 /******************************************************************************
