@@ -60,6 +60,23 @@ bool GuiFileManager::askUserForKeyPassphrase(const QString& hostname, const QStr
 }
 
 /******************************************************************************
+* Asks the user for the answer to a keyboard-interactive question sent by the SSH server.
+******************************************************************************/
+bool GuiFileManager::askUserForKbiResponse(const QString& hostname, const QString& username, const QString& instruction, const QString& question, bool showAnswer, QString& answer)
+{
+	if(Application::instance()->guiMode()) {
+		bool ok;
+		answer = QInputDialog::getText(nullptr, tr("SSH Keyboard-Interactive Authentication"), 
+			tr("<p>OVITO is connecting to remote host <b>%1</b> via SSH.</p></p>Please enter your response to the following question sent by the SSH server:</p><p>%2 <b>%3</b></p>").arg(hostname.toHtmlEscaped()).arg(instruction.toHtmlEscaped()).arg(question.toHtmlEscaped()),
+			showAnswer ? QLineEdit::Normal : QLineEdit::Password, QString(), &ok);
+		return ok;
+	}
+	else {
+		return FileManager::askUserForKbiResponse(hostname, username, instruction, question, showAnswer, answer);
+	}
+}
+
+/******************************************************************************
 * Informs the user about an unknown SSH host.
 ******************************************************************************/
 bool GuiFileManager::detectedUnknownSshServer(const QString& hostname, const QString& unknownHostMessage, const QString& hostPublicKeyHash)

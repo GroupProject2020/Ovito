@@ -89,6 +89,14 @@ public:
     };
     Q_DECLARE_FLAGS(UseAuths, UseAuthFlag)    
 
+    class KbiQuestion
+    {
+    public:
+        QString instruction;
+        QString question;
+        bool showAnswer;
+    };
+
 public:
 
     /// Constructor.
@@ -114,6 +122,12 @@ public:
 
     /// Sets the private key passphrase entered by the user.
     void setPassphrase(const QString& keyPassphrase) { _keyPassphrase = keyPassphrase; }
+
+    /// Gets list of Keyboard Interactive questions sent by the server.
+    QList<KbiQuestion> kbiQuestions();
+
+    /// Sets the answers to Keyboard Interactive questions.
+    void setKbiAnswers(QStringList answers);
 
     /// Returns the username used to log in to the server.
     QString username() const;
@@ -277,7 +291,7 @@ private:
     /// The host known/unknown status.
     HostState _unknownHostType = HostUnknown;
 
-    UseAuths _useAuths = UseAuths(UseAuthNone | UseAuthAutoPubKey | UseAuthPassword);
+    UseAuths _useAuths = UseAuths(UseAuthNone | UseAuthAutoPubKey | UseAuthPassword | UseAuthKbi);
     UseAuths _failedAuths = UseAuthEmpty;
     UseAuthFlag _succeededAuth = UseAuthEmpty;
 

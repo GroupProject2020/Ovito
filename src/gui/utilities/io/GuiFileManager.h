@@ -40,6 +40,10 @@ public:
 	/// \return True on success, false if user has canceled the operation.
 	virtual bool askUserForPassword(const QString& hostname, const QString& username, QString& password) override;
 
+	/// \brief Asks the user for the answer to a keyboard-interactive question sent by the SSH server.
+	/// \return True on success, false if user has canceled the operation.
+	virtual bool askUserForKbiResponse(const QString& hostname, const QString& username, const QString& instruction, const QString& question, bool showAnswer, QString& answer) override;
+
 	/// \brief Asks the user for the passphrase for a private SSH key.
 	/// \return True on success, false if user has canceled the operation.
 	virtual bool askUserForKeyPassphrase(const QString& hostname, const QString& prompt, QString& passphrase) override;

@@ -441,6 +441,15 @@ void SshConnection::tryNextAuth()
 
     case StateAuthNone:
         failedAuth = UseAuthNone;
+
+        // Disable authentication methods that are not supported by the server.
+        {
+            AuthMethods supportedMethods = supportedAuthMethods();
+            if(!supportedMethods.testFlag(AuthMethodPassword)) useAuth(UseAuthPassword, false);
+            if(!supportedMethods.testFlag(AuthMethodKbi)) useAuth(UseAuthKbi, false);
+            if(!supportedMethods.testFlag(AuthMethodPublicKey)) useAuth(UseAuthAutoPubKey, false);
+        }
+
         break;
 
     case StateAuthAutoPubkey:
@@ -470,24 +479,22 @@ void SshConnection::tryNextAuth()
     // Choose next state for connection:
     if(_useAuths == UseAuthEmpty && _failedAuths == UseAuthEmpty) {
         setState(StateAuthChoose, false);
-    } 
+    }
     else if(_useAuths == UseAuthEmpty) {
         setState(StateAuthAllFailed, false);
-    } 
+    }
     else if(_useAuths & UseAuthNone) {
         _useAuths &= ~UseAuthNone;
         setState(StateAuthNone, true);
-
-    } 
+    }
     else if(_useAuths & UseAuthAutoPubKey) {
         _useAuths &= ~UseAuthAutoPubKey;
         setState(StateAuthAutoPubkey, true);
-
-    } 
+    }
     else if(_useAuths & UseAuthPassword) {
         _useAuths &= ~UseAuthPassword;
         setState(StateAuthPassword, true);
-    } 
+    }
     else if(_useAuths & UseAuthKbi) {
         _useAuths &= ~UseAuthKbi;
         setState(StateAuthKbi, true);
@@ -682,6 +689,64 @@ int SshConnection::authenticationCallback(const char* prompt, char* buf, size_t 
     }
 
     return -1;
+}
+
+/******************************************************************************
+* Gets list of Keyboard Interactive questions sent by the server.
+******************************************************************************/
+QList<SshConnection::KbiQuestion> SshConnection::kbiQuestions()
+{
+    OVITO_ASSERT(_state== StateAuthKbiQuestions);
+    if(_state == StateAuthKbiQuestions) {
+
+        QList<KbiQuestion> questions;
+        QString instruction = ::ssh_userauth_kbdint_getinstruction(_session);
+
+        int len = ::ssh_userauth_kbdint_getnprompts(_session);
+
+        for(int i = 0; i < len; i++) {
+
+            char echo = 0;
+            const char *prompt = 0;
+
+            prompt = ::ssh_userauth_kbdint_getprompt(_session, i, &echo);
+            OVITO_ASSERT(prompt);
+
+            KbiQuestion kbi_question;
+            kbi_question.instruction = instruction;
+            kbi_question.question    = QString(prompt);
+            kbi_question.showAnswer  = echo != 0;
+            questions << kbi_question;
+        }
+
+        OVITO_ASSERT(questions.count() != 0);
+        return questions;
+
+    } 
+    else {
+        qWarning() << "Cannot get KBI questions because state is" << _state;
+        return {};
+    }
+}
+
+/******************************************************************************
+* Sets the answers to Keyboard Interactive questions.
+******************************************************************************/
+void SshConnection::setKbiAnswers(QStringList answers)
+{
+    OVITO_ASSERT(_state == StateAuthKbiQuestions);
+    if(_state == StateAuthKbiQuestions) {
+        int i = 0;
+        for(const QString& answer : answers) {
+            QByteArray utf8 = answer.toUtf8();
+            ::ssh_userauth_kbdint_setanswer(_session, i, utf8.constData());
+        }
+
+        setState(StateAuthKbi, true);
+    } 
+    else {
+        qWarning() << "Cannot set KBI answers because state is" << _state;
+    }
 }
 
 } // End of namespace

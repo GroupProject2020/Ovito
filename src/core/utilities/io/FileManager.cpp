@@ -180,6 +180,7 @@ SshConnection* FileManager::acquireSshConnection(const SshConnectionParameters& 
     connect(connection, &SshConnection::disconnected, this, &FileManager::cleanupSshConnection);
     connect(connection, &SshConnection::unknownHost, this, &FileManager::unknownSshServer);
 	connect(connection, &SshConnection::needPassword, this, &FileManager::needSshPassword);
+	connect(connection, &SshConnection::needKbiAnswers, this, &FileManager::needKbiAnswers);
 	connect(connection, &SshConnection::authFailed, this, &FileManager::sshAuthenticationFailed);
 	connect(connection, &SshConnection::needPassphrase, this, &FileManager::needSshPassphrase);
     _acquiredConnections.append(connection);
@@ -291,6 +292,29 @@ void FileManager::needSshPassword()
 }
 
 /******************************************************************************
+* Is called whenever a SSH connection to a server requires keyboard interactive authentication.
+******************************************************************************/
+void FileManager::needKbiAnswers()
+{
+    SshConnection* connection = qobject_cast<SshConnection*>(sender());
+    if(!connection)
+        return;
+
+	QStringList answers;
+	for(const SshConnection::KbiQuestion& question : connection->kbiQuestions()) {
+		QString answer;
+		if(askUserForKbiResponse(connection->hostname(), connection->username(), question.instruction, question.question, question.showAnswer, answer)) {
+			answers << answer;
+		}
+		else {
+			connection->cancel();
+			return;
+		}
+	}
+	connection->setKbiAnswers(std::move(answers));
+}
+
+/******************************************************************************
 * Asks the user for the login password for a SSH server.
 ******************************************************************************/
 bool FileManager::askUserForPassword(const QString& hostname, const QString& username, QString& password)
@@ -300,6 +324,21 @@ bool FileManager::askUserForPassword(const QString& hostname, const QString& use
 	std::cout << "on SSH remote host '" << qPrintable(hostname) << "' (set echo off beforehand!): " << std::flush;	
 	std::cin >> pw;
 	password = QString::fromStdString(pw);
+	return true;
+}
+
+/******************************************************************************
+* Asks the user for the answer to a keyboard-interactive question sent by the SSH server.
+******************************************************************************/
+bool FileManager::askUserForKbiResponse(const QString& hostname, const QString& username, const QString& instruction, const QString& question, bool showAnswer, QString& answer)
+{
+	std::cout << "SSH keyboard interactive authentication";
+	if(!showAnswer)
+		std::cout << " (set echo off beforehand!)";
+	std::cout << " - " << qPrintable(question) << std::flush;
+	std::string pw;
+	std::cin >> pw;
+	answer = QString::fromStdString(pw);
 	return true;
 }
 

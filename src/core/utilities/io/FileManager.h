@@ -79,6 +79,10 @@ protected:
 	/// \return True on success, false if user has canceled the operation.
 	virtual bool askUserForKeyPassphrase(const QString& hostname, const QString& prompt, QString& passphrase);
 
+	/// \brief Asks the user for the answer to a keyboard-interactive question sent by the SSH server.
+	/// \return True on success, false if user has canceled the operation.
+	virtual bool askUserForKbiResponse(const QString& hostname, const QString& username, const QString& instruction, const QString& question, bool showAnswer, QString& answer);
+
 	/// \brief Informs the user about an unknown SSH host.
 	virtual bool detectedUnknownSshServer(const QString& hostname, const QString& unknownHostMessage, const QString& hostPublicKeyHash);
 
@@ -92,6 +96,9 @@ private Q_SLOTS:
 
 	/// Is called whenever a SSH connection to a server requires password authentication.
 	void needSshPassword();
+
+	/// Is called whenever a SSH connection to a server requires keyboard interactive authentication.
+	void needKbiAnswers();
 
 	/// Is called when an authentication attempt for a SSH connection failed.
 	void sshAuthenticationFailed(int auth);
