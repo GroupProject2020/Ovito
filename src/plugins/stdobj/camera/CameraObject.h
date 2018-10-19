@@ -78,6 +78,10 @@ public:
 	/// Asks the object for its validity interval at the given time.
 	virtual TimeInterval objectValidity(TimePoint time) override;
 
+	/// Returns whether this data object wants to be shown in the pipeline editor 
+	/// under the data source section.
+	virtual bool showInPipelineEditor() const override { return true; }
+	
 public:
 
 	Q_PROPERTY(bool isTargetCamera READ isTargetCamera WRITE setIsTargetCamera);

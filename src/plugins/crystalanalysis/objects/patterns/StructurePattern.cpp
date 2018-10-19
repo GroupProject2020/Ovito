@@ -75,24 +75,24 @@ Color StructurePattern::getBurgersVectorColor(const QString& latticeName, const 
 		};
 		OVITO_STATIC_ASSERT(sizeof(burgersVectors)/sizeof(burgersVectors[0]) == sizeof(predefinedLineColors)/sizeof(predefinedLineColors[0]));
 		for(size_t i = 0; i < sizeof(burgersVectors)/sizeof(burgersVectors[0]); i++) {
-			if(b.equals(burgersVectors[i]) || b.equals(-burgersVectors[i]))
+			if(b.equals(burgersVectors[i], FloatType(1e-6)) || b.equals(-burgersVectors[i], FloatType(1e-6)))
 				return predefinedLineColors[i];
 		}
 	}
 	else if(latticeName == "fcc") {
 		static const Color predefinedLineColors[] = {
-				Color(0.4f,1.0f,0.4f),
-				Color(1.0f,0.2f,0.2f),
-				Color(0.4f,0.4f,1.0f),
-				Color(0.9f,0.5f,0.0f),
-				Color(1.0f,1.0f,0.0f),
-				Color(1.0f,0.4f,1.0f),
-				Color(0.7f,0.0f,1.0f),
-				Color(0.2f,1.0f,1.0f),
-				Color(0.2f,1.0f,0.2f),
-				Color(0.2f,0.0f,1.0f),
-				Color(0.0f,0.8f,0.2f),
-				Color(0.2f,0.0f,0.8f),
+				Color(230.0/255.0, 25.0/255.0, 75.0/255.0), 
+				Color(245.0/255.0, 130.0/255.0, 48.0/255.0),
+				Color(255.0/255.0, 225.0/255.0, 25.0/255.0),
+				Color(210.0/255.0, 245.0/255.0, 60.0/255.0),
+				Color(60.0/255.0, 180.0/255.0, 75.0/255.0),
+				Color(70.0/255.0, 240.0/255.0, 240.0/255.0),
+				Color(0.0/255.0, 130.0/255.0, 200.0/255.0),
+				Color(145.0/255.0, 30.0/255.0, 180.0/255.0),
+				Color(240.0/255.0, 50.0/255.0, 230.0/255.0),
+				Color(0.0/255.0, 128.0/255.0, 128.0/255.0),
+				Color(170.0/255.0, 110.0/255.0, 40.0/255.0),
+				Color(128.0/255.0, 128.0/255.0, 0.0/255.0),
 
 				Color(0.5f,0.5f,0.5f),
 				Color(0.5f,0.5f,0.5f),
@@ -124,7 +124,7 @@ Color StructurePattern::getBurgersVectorColor(const QString& latticeName, const 
 		};
 		OVITO_STATIC_ASSERT(sizeof(burgersVectors)/sizeof(burgersVectors[0]) == sizeof(predefinedLineColors)/sizeof(predefinedLineColors[0]));
 		for(size_t i = 0; i < sizeof(burgersVectors)/sizeof(burgersVectors[0]); i++) {
-			if(b.equals(burgersVectors[i]) || b.equals(-burgersVectors[i]))
+			if(b.equals(burgersVectors[i], FloatType(1e-6)) || b.equals(-burgersVectors[i], FloatType(1e-6)))
 				return predefinedLineColors[i];
 		}
 	}

@@ -58,6 +58,10 @@ public:
 		return nullptr;
 	}
 
+	/// Returns whether this data object wants to be shown in the pipeline editor 
+	/// under the data source section.
+	virtual bool showInPipelineEditor() const override { return true; }
+
 private:
 
 	/// List of structure patterns.

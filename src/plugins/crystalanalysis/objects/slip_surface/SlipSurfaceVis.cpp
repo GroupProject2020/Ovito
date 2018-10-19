@@ -162,15 +162,14 @@ Box3 SlipSurfaceVis::boundingBox(TimePoint time, const std::vector<const DataObj
 ******************************************************************************/
 void SlipSurfaceVis::render(TimePoint time, const std::vector<const DataObject*>& objectStack, const PipelineFlowState& flowState, SceneRenderer* renderer, const PipelineSceneNode* contextNode)
 {
-#if 0	
 	// Ignore render calls for the original MicrostructureObject.
 	// We are only interested in the RenderableSurfaceMesh.
-	if(dynamic_object_cast<MicrostructureObject>(dataObject) != nullptr)
+	if(dynamic_object_cast<MicrostructureObject>(objectStack.back()) != nullptr)
 		return;
 
 	if(renderer->isBoundingBoxPass()) {
 		TimeInterval validityInterval;
-		renderer->addToLocalBoundingBox(boundingBox(time, dataObject, contextNode, flowState, validityInterval));
+		renderer->addToLocalBoundingBox(boundingBox(time, objectStack, contextNode, flowState, validityInterval));
 		return;
 	}
 
@@ -180,37 +179,34 @@ void SlipSurfaceVis::render(TimePoint time, const std::vector<const DataObject*>
 	if(surfaceTransparencyController()) surface_alpha = FloatType(1) - surfaceTransparencyController()->getFloatValue(time, iv);
 	ColorA color_surface(1, 1, 1, surface_alpha);
 
-	// Do we have to re-create the render primitives from scratch?
-	bool recreateSurfaceBuffer = !_surfaceBuffer || !_surfaceBuffer->isValid(renderer);
+	// The key type used for caching the rendering primitive:
+	using SurfaceCacheKey = std::tuple<
+		CompatibleRendererGroup,	// The scene renderer
+		VersionedDataObjectRef,		// Data object
+		FloatType					// Alpha
+	>;
 
 	// Get the renderable mesh.
-	RenderableSurfaceMesh* renderableMesh = dynamic_object_cast<RenderableSurfaceMesh>(dataObject);
+	const RenderableSurfaceMesh* renderableMesh = dynamic_object_cast<RenderableSurfaceMesh>(objectStack.back());
 	if(!renderableMesh) return;
 
-	// Do we have to update the render primitives?
-	bool updateContents = _geometryCacheHelper.updateState(renderableMesh, surface_alpha)
-					|| recreateSurfaceBuffer;
+	// Lookup the rendering primitive in the vis cache.
+	auto& surfacePrimitive = dataset()->visCache().get<std::shared_ptr<MeshPrimitive>>(SurfaceCacheKey(renderer, objectStack.back(), surface_alpha));
 
-	// Re-create the render primitives if necessary.
-	if(recreateSurfaceBuffer)
-		_surfaceBuffer = renderer->createMeshPrimitive();
-
-	// Update render primitives.
-	if(updateContents) {
-		
+	// Check if we already have a valid rendering primitive that is up to date.
+	if(!surfacePrimitive || !surfacePrimitive->isValid(renderer)) {
+		surfacePrimitive = renderer->createMeshPrimitive();
 		auto materialColors = renderableMesh->materialColors();
 		for(ColorA& c : materialColors)
 			c.a() = surface_alpha;
-		_surfaceBuffer->setMaterialColors(materialColors);
-
-		_surfaceBuffer->setMesh(renderableMesh->surfaceMesh(), color_surface);
+		surfacePrimitive->setMaterialColors(materialColors);
+		surfacePrimitive->setMesh(renderableMesh->surfaceMesh(), color_surface);
 	}
 
 	// Handle picking of triangles.
 	renderer->beginPickObject(contextNode);
-	_surfaceBuffer->render(renderer);
+	surfacePrimitive->render(renderer);
 	renderer->endPickObject();
-#endif	
 }
 
 /******************************************************************************
@@ -231,6 +227,10 @@ bool SlipSurfaceVis::buildMesh(const Microstructure& input, const SimulationCell
 	auto fout = output.faces().begin();
 	for(Microstructure::Face* face : input.faces()) {
 		if(!facePredicate(face)) continue;
+
+		// Check for early abortion.
+		if(promise.isCanceled())
+			return false;
 
 		int materialIndex = 0;
 		if(Cluster* cluster = face->cluster()) {

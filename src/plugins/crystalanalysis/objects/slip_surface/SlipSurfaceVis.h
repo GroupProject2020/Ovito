@@ -105,19 +105,7 @@ protected:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, smoothShading, setSmoothShading);
 
 	/// Controls the transparency of the surface mesh.
-	DECLARE_MODIFIABLE_REFERENCE_FIELD(Controller, surfaceTransparencyController, setSurfaceTransparencyController);
-
-#if 0
-	/// The buffered geometry used to render the surface mesh.
-	std::shared_ptr<MeshPrimitive> _surfaceBuffer;
-
-	/// This helper structure is used to detect any changes in the input data
-	/// that require updating the geometry buffer.
-	CacheStateHelper<
-		VersionedDataObjectRef,		// Renderable object + revision number
-		FloatType					// Surface transparency
-		> _geometryCacheHelper;
-#endif		
+	DECLARE_MODIFIABLE_REFERENCE_FIELD(Controller, surfaceTransparencyController, setSurfaceTransparencyController);	
 };
 
 }	// End of namespace
