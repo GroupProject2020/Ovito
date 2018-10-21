@@ -47,4 +47,8 @@ for i in range(ntypes):
         if i != j: factor *= 2
         my_total_rdf += factor * partial_rdfs[:,idx]
         idx += 1
+print("my_total_rdf:")
+print(my_total_rdf)
+print("total_rdf.y:")
+print(total_rdf.y)
 assert(np.allclose(my_total_rdf, total_rdf.y))

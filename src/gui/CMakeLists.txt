@@ -1,6 +1,6 @@
 ###############################################################################
 # 
-#  Copyright (2016) Alexander Stukowski
+#  Copyright (2018) Alexander Stukowski
 #
 #  This file is part of OVITO (Open Visualization Tool).
 #
@@ -48,6 +48,7 @@ SET(SourceFiles
 	dialogs/RemoteAuthenticationDialog.cpp
 	dialogs/FileExporterSettingsDialog.cpp
 	dialogs/ClonePipelineDialog.cpp
+	dialogs/FontSelectionDialog.cpp
 	actions/ActionManager.cpp
 	actions/FileActions.cpp
 	actions/ViewportActions.cpp
