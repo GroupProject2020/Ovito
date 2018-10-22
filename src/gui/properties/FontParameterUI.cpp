@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // 
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -21,6 +21,7 @@
 
 #include <gui/GUI.h>
 #include <gui/properties/FontParameterUI.h>
+#include <gui/dialogs/FontSelectionDialog.h>
 #include <core/dataset/UndoStack.h>
 #include <core/dataset/DataSetContainer.h>
 
@@ -112,7 +113,7 @@ void FontParameterUI::onButtonClicked()
 		if(currentValue.canConvert<QFont>())
 			currentFont = currentValue.value<QFont>();
 		bool ok;
-		QFont font = QFontDialog::getFont(&ok, currentFont, fontPicker()->window());
+		QFont font = FontSelectionDialog::getFont(&ok, currentFont, fontPicker()->window());
 		if(ok && font != currentFont) {
 			undoableTransaction(tr("Change font"), [this, &font]() {
 				editObject()->setPropertyFieldValue(*propertyField(), QVariant::fromValue(font));

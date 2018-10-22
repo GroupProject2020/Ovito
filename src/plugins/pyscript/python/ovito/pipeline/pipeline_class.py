@@ -149,6 +149,11 @@ def _Pipeline_modifiers(self):
             self.pipeline.data_provider = modapp
             mod.initialize_modifier(modapp)
 
+        def clear(self):
+            """ Removes all modifiers from the pipeline. """
+            self.pipeline.data_provider = self.pipeline.source
+            assert(len(self) == 0)
+
         def __str__(self):
             return str(self._modifierList())
 

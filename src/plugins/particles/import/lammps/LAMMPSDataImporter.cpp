@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2013) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -240,6 +240,9 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 	for(int i = 1; i <= natomtypes; i++)
 		typeList->addTypeId(i);
 
+	// Atom type mass table.
+	std::vector<FloatType> massTable;
+
 	/// Maps atom IDs to indices.
 	std::unordered_map<qlonglong,size_t> atomIdMap;
 	atomIdMap.reserve(natoms);
@@ -423,9 +426,18 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 			}
 		}
 		else if(keyword.startsWith("Masses")) {
+			massTable.resize(natomtypes+1, 0);
 			for(int i = 1; i <= natomtypes; i++) {
 				// Try to parse atom types names, which some data files list as comments in the Masses section.
 				const char* start = stream.readLine();
+
+				// Parse mass information.
+				int atomType;
+				FloatType mass;
+    			if(sscanf(start, "%i " FLOATTYPE_SCANF_STRING, &atomType, &mass) != 2 || atomType < 1 || atomType > natomtypes)
+					throw Exception(tr("Invalid mass specification (line %1): %2").arg(stream.lineNumber()).arg(stream.lineString()));
+				massTable[atomType] = mass;
+
 				while(*start && *start != '#') start++;
 				if(*start) {
 					QStringList words = QString::fromLocal8Bit(start).split(QRegularExpression("\\s+"), QString::SkipEmptyParts);
@@ -531,6 +543,16 @@ FileSourceImporter::FrameDataPtr LAMMPSDataImporter::FrameLoader::loadFile(QFile
 
 	if(!foundAtomsSection)
 		throw Exception("LAMMPS data file does not contain atomic coordinates.");
+
+	// Assign masses to particles.
+	if(!massTable.empty()) {
+		PropertyPtr massProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::MassProperty, false);
+		frameData->addParticleProperty(massProperty);
+		const int* atomType = typeProperty->constDataInt();
+		for(FloatType& mass : massProperty->floatRange()) {
+			mass = massTable[*atomType++];
+		}
+	}
 
 	// Sort particles by ID.
 	if(_sortParticles)
