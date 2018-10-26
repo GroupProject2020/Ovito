@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -384,8 +384,14 @@ private:
 	}
 
 	static void reorderFaceVertices(std::array<int,3>& vertexIndices) {
+#if !defined(Q_OS_MACOS)
 		// Shift the order of vertices so that the smallest index is at the front.
 		std::rotate(std::begin(vertexIndices), std::min_element(std::begin(vertexIndices), std::end(vertexIndices)), std::end(vertexIndices));
+#else
+		// Workaround for compiler bug in Xcode 10.0. Clang hangs when compiling the code above with -O2/-O3 flag.
+		auto min_index = std::min_element(vertexIndices.begin(), vertexIndices.end()) - vertexIndices.begin();
+		std::rotate(vertexIndices.begin(), vertexIndices.begin() + min_index, vertexIndices.end());
+#endif
 	}
 
 private:
@@ -418,5 +424,3 @@ private:
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-
-
