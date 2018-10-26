@@ -50,5 +50,5 @@ for i in range(ntypes):
 print("my_total_rdf:")
 print(my_total_rdf)
 print("total_rdf.y:")
-print(total_rdf.y)
+print(total_rdf.y[...])
 assert(np.allclose(my_total_rdf, total_rdf.y))

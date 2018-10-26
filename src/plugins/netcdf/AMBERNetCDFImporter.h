@@ -35,11 +35,11 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVI
 class OVITO_NETCDFPLUGIN_EXPORT AMBERNetCDFImporter : public ParticleImporter
 {
 	/// Defines a metaclass specialization for this importer type.
-	class OOMetaClass : public FileSourceImporter::OOMetaClass
+	class OOMetaClass : public ParticleImporter::OOMetaClass
 	{
 	public:
 		/// Inherit standard constructor from base meta class.
-		using FileSourceImporter::OOMetaClass ::OOMetaClass;
+		using ParticleImporter::OOMetaClass ::OOMetaClass;
 
 		/// Returns the file filter that specifies the files that can be imported by this service.
 		virtual QString fileFilter() const override { return QStringLiteral("*"); }
@@ -102,7 +102,7 @@ private:
 		InputColumnMapping _detectedColumnMapping;
 	};
 
-	/// The format-specific task object that is responsible for reading an input file in the background.
+	/// The format-specific task object that is responsible for reading an input file in a separate thread.
 	class FrameLoader : public FileSourceImporter::FrameLoader
 	{
 	public:

@@ -88,7 +88,7 @@ ENDIF()
 
 IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
 	# Install copies of the Qt libraries.
-	FOREACH(component IN ITEMS Core Gui Widgets Concurrent Network PrintSupport Svg DBus)
+	FOREACH(component IN LISTS OVITO_REQUIRED_QT_COMPONENTS)
 		GET_TARGET_PROPERTY(lib Qt5::${component} LOCATION)
 		GET_TARGET_PROPERTY(lib_soname Qt5::${component} IMPORTED_SONAME_RELEASE)
 		CONFIGURE_FILE("${lib}" "${OVITO_LIBRARY_DIRECTORY}" COPYONLY)		
@@ -133,7 +133,7 @@ ENDIF()
 # On Windows, the third-party library DLLs need to be installed in the OVITO directory.
 IF(WIN32)
 	# Gather Qt dynamic link libraries.
-	FOREACH(component IN ITEMS Core Gui Widgets Concurrent Network PrintSupport Svg)
+	FOREACH(component IN LISTS OVITO_REQUIRED_QT_COMPONENTS)
 		GET_TARGET_PROPERTY(dll Qt5::${component} LOCATION_${CMAKE_BUILD_TYPE})
 		OVITO_INSTALL_DLL("${dll}")
 		IF(${component} MATCHES "Core")

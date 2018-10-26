@@ -218,11 +218,10 @@ Future<PipelineFlowState> PythonScriptModifier::evaluate(TimePoint time, Modifie
 				py::object inspect_module = py::module::import("inspect");
 #if PY_MAJOR_VERSION >= 3
 				py::object argsSpec = inspect_module.attr("getfullargspec")(_modifyScriptFunction);
-				if(py::len(argsSpec.attr("args")) != 3)
 #else
 				py::object argsSpec = inspect_module.attr("getargspec")(_modifyScriptFunction);
-				if(py::len(argsSpec[0]) != 3)
 #endif
+				if(py::len(argsSpec.attr("args")) != 3)
 					throw;
 
 				// Invoke the user-defined modifier function, this time with an input and an output data collection.

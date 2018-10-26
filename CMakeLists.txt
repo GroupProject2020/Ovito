@@ -73,9 +73,10 @@ OPTION(OVITO_BUILD_PLUGIN_PYSCRIPT "Build the Python scripting plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_NETCDFPLUGIN "Build the NetCDF plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_POVRAY "Build the POV-Ray renderer plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_OSPRAY "Build the OSPRay renderer plugin (experimental)." "OFF")
-OPTION(OVITO_BUILD_PLUGIN_CORRELATION "Build the correlation function plugin." "ON")
+OPTION(OVITO_BUILD_PLUGIN_CORRELATION "Build the correlation function modifier plugin." "ON")
 OPTION(OVITO_BUILD_PLUGIN_VR "Build the virtual reality plugin (experimental)." "OFF")
-OPTION(OVITO_BUILD_PLUGIN_VOROTOP "Build the VoroTop plugin." "ON")
+OPTION(OVITO_BUILD_PLUGIN_VOROTOP "Build the VoroTop modifier plugin." "ON")
+OPTION(OVITO_BUILD_PLUGIN_GALAMOST "Build the GALAMOST I/O plugin." "ON")
 
 # This is a global list of plugin targets that will be built.
 # It will get populated by the OVITO_PLUGIN macro.
@@ -230,19 +231,23 @@ SET(CMAKE_AUTOMOC ON)
 # As moc files are generated in the binary dir, tell CMake to always look for includes there.
 SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-# Find and set up Qt5 libraries.
-FOREACH(component IN ITEMS Core Concurrent Network Gui)
-	FIND_PACKAGE(Qt5${component} REQUIRED)
-ENDFOREACH()
+# Determine the set of required Qt5 libraries.
+LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Core Concurrent Network Gui)
 IF(OVITO_BUILD_GUI) 
-	FOREACH(component IN ITEMS Widgets PrintSupport Svg)
-		FIND_PACKAGE(Qt5${component} REQUIRED)
-	ENDFOREACH()
+	LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Widgets PrintSupport Svg)
 	IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
 		# This is an indirect dependency required by the Xcb platform plugin of Qt:
-		FIND_PACKAGE(Qt5DBus REQUIRED)
+		LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS DBus)
 	ENDIF()
 ENDIF()
+IF(OVITO_BUILD_PLUGIN_GALAMOST)
+	LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Xml)
+ENDIF()
+
+# Search for the required Qt5 modules.
+FOREACH(component IN LISTS OVITO_REQUIRED_QT_COMPONENTS)
+	FIND_PACKAGE(Qt5${component} REQUIRED)
+ENDFOREACH()
 
 # Find the Boost library.
 FIND_PACKAGE(Boost REQUIRED)
@@ -259,7 +264,7 @@ ENDIF()
 # Generate build targets.
 ADD_SUBDIRECTORY(src)
 
-# Gnerate user documentation.
+# Generate user documentation.
 INCLUDE(cmake/Documentation.cmake)
 
 # Set up CPack for generating distributable program packages.
