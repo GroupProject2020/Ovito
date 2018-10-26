@@ -502,7 +502,7 @@ void ModifyCommandPage::createAboutPanel()
 		QByteArray id;
 		if(settings.value("updates/transmit_id", true).toBool()) {
 			if(settings.contains("installation/id")) {
-				id = settings.value("id").toByteArray();
+				id = QByteArray::fromHex(settings.value("installation/id").toString().toLatin1());
 				if(id == QByteArray(16, '\0') || id.size() != 16)
 					id.clear();
 			}
@@ -513,7 +513,7 @@ void ModifyCommandPage::createAboutPanel()
 				std::uniform_int_distribution<> rdist(0, 0xFF);
 				for(auto& c : id)
 					c = (char)rdist(rdev);
-				settings.setValue("installation/id", id);
+				settings.setValue("installation/id", QVariant::fromValue(QString::fromLatin1(id.toHex())));
 			}
 		}
 		else {
