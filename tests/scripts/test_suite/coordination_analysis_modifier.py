@@ -1,3 +1,4 @@
+from __future__ import division
 from ovito.io import *
 from ovito.modifiers import *
 import numpy as np
@@ -34,6 +35,8 @@ print("Number of particle types:", ntypes)
 print("Number of particles of each type:", counts)
 partial_rdfs = data.series["coordination-rdf"].y
 print("partial_rdfs.shape:", partial_rdfs.shape)
+print("partial_rdfs:")
+print(partial_rdfs[...])
 
 assert(partial_rdfs.shape == (modifier.number_of_bins, ntypes*(ntypes+1)//2))
 assert(data.series["coordination-rdf"].as_table().shape == (modifier.number_of_bins, 1+ntypes*(ntypes+1)//2))

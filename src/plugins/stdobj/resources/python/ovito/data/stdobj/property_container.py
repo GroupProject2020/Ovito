@@ -4,6 +4,7 @@ try:
 except ImportError:
     # Python 2.x
     import collections
+import numbers
 import numpy
 
 # Load dependencies.
@@ -130,7 +131,7 @@ def _PropertyContainer_create_property(self, name, dtype=None, components=None, 
     """
 
     # Input parameter validation and inferrence:
-    if isinstance(name, int):
+    if isinstance(name, numbers.Integral):
         if name <= 0:
             raise TypeError("Invalid standard property type.")
         property_type = name
