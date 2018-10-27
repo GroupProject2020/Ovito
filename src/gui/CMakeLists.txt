@@ -30,6 +30,8 @@ SET(SourceFiles
 	mainwin/cmdpanel/PipelineListItem.cpp
 	mainwin/cmdpanel/ModifierListBox.cpp
 	mainwin/cmdpanel/OverlayCommandPage.cpp
+	mainwin/cmdpanel/OverlayListModel.cpp
+	mainwin/cmdpanel/OverlayListItem.cpp
 	mainwin/data_inspector/DataInspectorPanel.cpp
 	mainwin/data_inspector/DataInspectionApplet.cpp
 	mainwin/data_inspector/GlobalAttributesInspectionApplet.cpp

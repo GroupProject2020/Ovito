@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -24,11 +24,13 @@
 
 #include <gui/GUI.h>
 #include <gui/properties/PropertiesPanel.h>
-#include <core/oo/RefTargetListener.h>
 #include <core/viewport/Viewport.h>
 #include <core/viewport/overlays/ViewportOverlay.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
+
+class OverlayListModel;	// defined in OverlayListModel.h
+class OverlayListItem;	// defined in OverlayListItem.h
 
 /**
  * The command panel tab lets the user edit the viewport overlays.
@@ -42,6 +44,9 @@ public:
 	/// Initializes the modify page.
     OverlayCommandPage(MainWindow* mainWindow, QWidget* parent);
 
+	/// Returns the list model that encapsulates the list of overlays of the active viewport.
+	OverlayListModel* overlayListModel() const { return _overlayListModel; }
+
 protected Q_SLOTS:
 
 	/// This is called whenever the current viewport configuration of current dataset has been replaced by a new one.
@@ -49,9 +54,6 @@ protected Q_SLOTS:
 
 	/// This is called when another viewport became active.
 	void onActiveViewportChanged(Viewport* activeViewport);
-
-	/// This is called when the viewport generates a reference event.
-	void viewportEvent(const ReferenceEvent& event);
 
 	/// Is called when a new overlay has been selected in the list box.
 	void onItemSelectionChanged();
@@ -62,10 +64,10 @@ protected Q_SLOTS:
 	/// This deletes the selected overlay.
 	void onDeleteOverlay();
 
-private:
+	/// This called when the user double clicks on an item in the overlay list.
+	void onOverlayDoubleClicked(const QModelIndex& index);
 
-	/// Returns the active viewport.
-	Viewport* activeViewport() const { return _viewportListener.target(); }
+private:
 
 	/// Returns the selected overlay.
 	ViewportOverlay* selectedOverlay() const;
@@ -73,34 +75,25 @@ private:
 	/// The container of the current dataset being edited.
 	DataSetContainer& _datasetContainer;
 
-	/// Receives reference events from the current viewport.
-	RefTargetListener<Viewport> _viewportListener;
-
 	/// Contains the list of available overlay types.
 	QComboBox* _newOverlayBox;
 
+	/// The Qt model for the list of overlays of the active viewport.
+	OverlayListModel* _overlayListModel;
+
 	/// This list box shows the overlays of the active viewport.
-	QListWidget* _overlayListWidget;
+	QListView* _overlayListWidget;
 
 	/// This panel shows the properties of the selected overlay.
 	PropertiesPanel* _propertiesPanel;
 
-	/// This label displays the selected viewport.
-	QLabel* _activeViewportLabel;
-
+	/// Signal connection for detecting active viewport changes.
 	QMetaObject::Connection _activeViewportChangedConnection;
-	QAction* _deleteOverlayAction;
 
-	class OverlayListItem : public RefTargetListener<ViewportOverlay>, public QListWidgetItem
-	{
-	public:
-		/// Constructor.
-		OverlayListItem(ViewportOverlay* overlay);
-	};
+	/// The GUI action that deletes the currently selected viewport overlay.
+	QAction* _deleteOverlayAction;
 };
 
 OVITO_END_INLINE_NAMESPACE
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-
-

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -26,6 +26,8 @@
 #include <core/app/PluginManager.h>
 #include <gui/mainwin/MainWindow.h>
 #include "OverlayCommandPage.h"
+#include "OverlayListModel.h"
+#include "OverlayListItem.h"
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
@@ -38,9 +40,6 @@ OverlayCommandPage::OverlayCommandPage(MainWindow* mainWindow, QWidget* parent) 
 	QVBoxLayout* layout = new QVBoxLayout(this);
 	layout->setContentsMargins(2,2,2,2);
 	layout->setSpacing(4);
-
-	_activeViewportLabel = new QLabel(tr("Selected viewport:"));
-	layout->addWidget(_activeViewportLabel);
 
 	_newOverlayBox = new QComboBox(this);
     layout->addWidget(_newOverlayBox);
@@ -55,9 +54,9 @@ OverlayCommandPage::OverlayCommandPage(MainWindow* mainWindow, QWidget* parent) 
 	QSplitter* splitter = new QSplitter(Qt::Vertical);
 	splitter->setChildrenCollapsible(false);
 
-	class OverlayListWidget : public QListWidget {
+	class OverlayListWidget : public QListView {
 	public:
-		OverlayListWidget(QWidget* parent) : QListWidget(parent) {}
+		OverlayListWidget(QWidget* parent) : QListView(parent) {}
 		virtual QSize sizeHint() const override { return QSize(256, 120); }
 	};
 
@@ -68,7 +67,12 @@ OverlayCommandPage::OverlayCommandPage(MainWindow* mainWindow, QWidget* parent) 
 	subLayout->setSpacing(2);
 
 	_overlayListWidget = new OverlayListWidget(upperContainer);
+	_overlayListModel = new OverlayListModel(this);
+	_overlayListWidget->setModel(_overlayListModel);
+	_overlayListWidget->setSelectionModel(_overlayListModel->selectionModel());
 	subLayout->addWidget(_overlayListWidget);
+	connect(_overlayListModel, &OverlayListModel::selectedItemChanged, this, &OverlayCommandPage::onItemSelectionChanged);
+	connect(_overlayListWidget, &OverlayListWidget::doubleClicked, this, &OverlayCommandPage::onOverlayDoubleClicked);
 
 	QToolBar* editToolbar = new QToolBar(this);
 	editToolbar->setOrientation(Qt::Vertical);
@@ -91,8 +95,6 @@ OverlayCommandPage::OverlayCommandPage(MainWindow* mainWindow, QWidget* parent) 
 	splitter->setStretchFactor(1,1);
 
 	connect(&_datasetContainer, &DataSetContainer::viewportConfigReplaced, this, &OverlayCommandPage::onViewportConfigReplaced);
-	connect(&_viewportListener, &RefTargetListener<Viewport>::notificationEvent, this, &OverlayCommandPage::viewportEvent);
-	connect(_overlayListWidget, &QListWidget::itemSelectionChanged, this, &OverlayCommandPage::onItemSelectionChanged);
 }
 
 /******************************************************************************
@@ -100,24 +102,8 @@ OverlayCommandPage::OverlayCommandPage(MainWindow* mainWindow, QWidget* parent) 
 ******************************************************************************/
 ViewportOverlay* OverlayCommandPage::selectedOverlay() const
 {
-	Viewport* vp = activeViewport();
-	if(!vp) return nullptr;
-
-	QList<QListWidgetItem*> selItems = _overlayListWidget->selectedItems();
-	if(selItems.empty()) return nullptr;
-
-	OverlayListItem* item = static_cast<OverlayListItem*>(selItems.front());
-	return item->target();
-}
-
-/******************************************************************************
-* Constructs an item for the list widget.
-******************************************************************************/
-OverlayCommandPage::OverlayListItem::OverlayListItem(ViewportOverlay* overlay)
-	: RefTargetListener<ViewportOverlay>(),
-	  QListWidgetItem(overlay->objectTitle(), nullptr, QListWidgetItem::UserType)
-{
-	setTarget(overlay);
+	OverlayListItem* currentItem = overlayListModel()->selectedItem();
+	return currentItem ? currentItem->overlay() : nullptr;
 }
 
 /******************************************************************************
@@ -127,6 +113,7 @@ OverlayCommandPage::OverlayListItem::OverlayListItem(ViewportOverlay* overlay)
 void OverlayCommandPage::onViewportConfigReplaced(ViewportConfiguration* newViewportConfiguration)
 {
 	disconnect(_activeViewportChangedConnection);
+	_propertiesPanel->setEditObject(nullptr);
 	if(newViewportConfiguration) {
 		_activeViewportChangedConnection = connect(newViewportConfiguration, &ViewportConfiguration::activeViewportChanged, this, &OverlayCommandPage::onActiveViewportChanged);
 		onActiveViewportChanged(newViewportConfiguration->activeViewport());
@@ -139,50 +126,8 @@ void OverlayCommandPage::onViewportConfigReplaced(ViewportConfiguration* newView
 ******************************************************************************/
 void OverlayCommandPage::onActiveViewportChanged(Viewport* activeViewport)
 {
-	if(activeViewport)
-		_activeViewportLabel->setText(tr("Selected viewport: %1").arg(activeViewport->viewportTitle()));
-	else
-		_activeViewportLabel->setText(tr("Selected viewport: <none>"));
-
-	_viewportListener.setTarget(activeViewport);
-	_overlayListWidget->clear();
-
-	// Populate overlay list.
-	if(activeViewport) {
-		for(ViewportOverlay* overlay : activeViewport->overlays()) {
-			QListWidgetItem* item = new OverlayListItem(overlay);
-			_overlayListWidget->addItem(item);
-		}
-		if(_overlayListWidget->count() != 0)
-			_overlayListWidget->setCurrentRow(0, QItemSelectionModel::ClearAndSelect);
-	}
-
+	overlayListModel()->setSelectedViewport(activeViewport);
 	_newOverlayBox->setEnabled(activeViewport != nullptr && _newOverlayBox->count() > 1);
-}
-
-/******************************************************************************
-* This is called when the viewport generates a reference event.
-******************************************************************************/
-void OverlayCommandPage::viewportEvent(const ReferenceEvent& event)
-{
-	if(event.type() == ReferenceEvent::ReferenceAdded) {
-		const ReferenceFieldEvent& refEvent = static_cast<const ReferenceFieldEvent&>(event);
-		if(refEvent.field() == &PROPERTY_FIELD(Viewport::overlays)) {
-			ViewportOverlay* overlay = static_object_cast<ViewportOverlay>(refEvent.newTarget());
-			QListWidgetItem* item = new OverlayListItem(overlay);
-			_overlayListWidget->insertItem(refEvent.index(), item);
-			_overlayListWidget->setCurrentRow(refEvent.index(), QItemSelectionModel::ClearAndSelect);
-		}
-	}
-	else if(event.type() == ReferenceEvent::ReferenceRemoved) {
-		const ReferenceFieldEvent& refEvent = static_cast<const ReferenceFieldEvent&>(event);
-		if(refEvent.field() == &PROPERTY_FIELD(Viewport::overlays)) {
-			delete _overlayListWidget->item(refEvent.index());
-		}
-	}
-	else if(event.type() == ReferenceEvent::TitleChanged) {
-		_activeViewportLabel->setText(tr("Selected viewport: %1").arg(activeViewport()->viewportTitle()));
-	}
 }
 
 /******************************************************************************
@@ -202,36 +147,53 @@ void OverlayCommandPage::onNewOverlay(int index)
 {
 	if(index > 0) {
 		OvitoClassPtr descriptor = _newOverlayBox->itemData(index).value<OvitoClassPtr>();
-		Viewport* vp = activeViewport();
+		Viewport* vp = overlayListModel()->selectedViewport();
 		if(descriptor && vp) {
-			int index = _overlayListWidget->currentRow();
+			int index = overlayListModel()->selectedIndex();
 			if(index < 0) index = 0;
-			UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(), tr("Add overlay"), [descriptor, vp, index]() {
+			UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(), tr("Add overlay"), [this, descriptor, vp, index]() {
 				// Create an instance of the overlay class.
 				OORef<ViewportOverlay> overlay = static_object_cast<ViewportOverlay>(descriptor->createInstance(vp->dataset()));
 				// Load user-defined default parameters.
 				overlay->loadUserDefaults();
+				// Make sure the new overlay gets selected in the UI.
+				overlayListModel()->setNextToSelectObject(overlay);
 				// Insert it.
 				vp->insertOverlay(index, overlay);
 				// Automatically activate preview mode to make the overlay visible.
 				vp->setRenderPreviewMode(true);
 			});
+			_overlayListWidget->setFocus();
 		}
 		_newOverlayBox->setCurrentIndex(0);
 	}
 }
 
 /******************************************************************************
-* This deletes the selected overlay.
+* This deletes the currently selected overlay.
 ******************************************************************************/
-void OverlayCommandPage::onDeleteOverlay()
+void OverlayCommandPage::onDeleteOverlay() 
 {
-	ViewportOverlay* overlay = selectedOverlay();
-	if(!overlay) return;
+	if(ViewportOverlay* overlay = selectedOverlay()) {
+		UndoableTransaction::handleExceptions(overlay->dataset()->undoStack(), tr("Delete overlay"), [overlay]() {
+			overlay->deleteReferenceObject();
+		});
+	}
+}
 
-	UndoableTransaction::handleExceptions(_datasetContainer.currentSet()->undoStack(), tr("Delete overlay"), [overlay]() {
-		overlay->deleteReferenceObject();
-	});
+/******************************************************************************
+* This called when the user double clicks on an item in the overlay list.
+******************************************************************************/
+void OverlayCommandPage::onOverlayDoubleClicked(const QModelIndex& index)
+{
+	if(OverlayListItem* item = overlayListModel()->item(index.row())) {
+		if(ViewportOverlay* overlay = item->overlay()) {
+			// Toggle enabled state of overlay.
+			UndoableTransaction::handleExceptions(overlay->dataset()->undoStack(), tr("Toggle overlay state"), [overlay]() {
+				overlay->setEnabled(!overlay->isEnabled());
+			});
+		}
+	}
 }
 
 OVITO_END_INLINE_NAMESPACE

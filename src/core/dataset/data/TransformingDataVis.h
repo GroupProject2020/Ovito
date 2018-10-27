@@ -46,13 +46,6 @@ public:
 	/// Lets the vis element transform a data object in preparation for rendering.
 	Future<PipelineFlowState> transformData(TimePoint time, const DataObject* dataObject, PipelineFlowState&& flowState, const PipelineFlowState& cachedState, const PipelineSceneNode* contextNode, bool breakOnError);
 
-	/// Returns a structure that describes the current status of the vis element.
-	virtual PipelineStatus status() const override {
-		// During an ongoing transformation process, the status of the DataVis is 'in progress'.
-		// Otherwise the status indicates the outcome of the transformation operation.
-		return _activeTransformationsCount > 0 ? PipelineStatus(PipelineStatus::Pending) : DataVis::status(); 
-	}
-
 	/// Returns the revision counter of this vis element, which is incremented each time one of its parameters changes.
 	unsigned int revisionNumber() const { return _revisionNumber; }	
 

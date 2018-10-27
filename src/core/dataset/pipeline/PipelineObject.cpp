@@ -81,7 +81,7 @@ bool PipelineObject::isPipelineBranch(bool onlyScenePipelines) const
 }
 
 /******************************************************************************
-* Sets the current status of the modifier.
+* Sets the current status of the pipeline object.
 ******************************************************************************/
 void PipelineObject::setStatus(const PipelineStatus& status) 
 {

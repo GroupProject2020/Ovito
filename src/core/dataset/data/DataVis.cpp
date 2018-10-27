@@ -30,27 +30,19 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(ObjectSystem) OVITO_BEGIN_INLINE_
 IMPLEMENT_OVITO_CLASS(DataVis);
 DEFINE_PROPERTY_FIELD(DataVis, isEnabled);
 DEFINE_PROPERTY_FIELD(DataVis, title);
+DEFINE_PROPERTY_FIELD(DataVis, status);
 SET_PROPERTY_FIELD_LABEL(DataVis, isEnabled, "Enabled");
-SET_PROPERTY_FIELD_CHANGE_EVENT(DataVis, isEnabled, ReferenceEvent::TargetEnabledOrDisabled);
 SET_PROPERTY_FIELD_LABEL(DataVis, title, "Name");
+SET_PROPERTY_FIELD_LABEL(DataVis, status, "Status");
+SET_PROPERTY_FIELD_CHANGE_EVENT(DataVis, isEnabled, ReferenceEvent::TargetEnabledOrDisabled);
 SET_PROPERTY_FIELD_CHANGE_EVENT(DataVis, title, ReferenceEvent::TitleChanged);
+SET_PROPERTY_FIELD_CHANGE_EVENT(DataVis, status, ReferenceEvent::ObjectStatusChanged);
 
 /******************************************************************************
 * Constructor.
 ******************************************************************************/
 DataVis::DataVis(DataSet* dataset) : RefTarget(dataset), _isEnabled(true)
 {
-}
-
-/******************************************************************************
-* Sets the current status of the vis element.
-******************************************************************************/
-void DataVis::setStatus(const PipelineStatus& status) 
-{
-	if(status != _status) {
-		_status = status; 
-		notifyDependents(ReferenceEvent::ObjectStatusChanged);
-	}
 }
 
 /******************************************************************************

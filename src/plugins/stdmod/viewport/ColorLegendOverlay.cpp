@@ -111,6 +111,10 @@ void ColorLegendOverlay::renderImplementation(QPainter& painter, const ViewProje
 {
 	// Check whether a Color Coding modifier has been wired to this color legend:
 	if(!modifier()) {
+		// Set warning status to be displayed in the GUI.
+		setStatus(PipelineStatus(PipelineStatus::Warning, tr("No source Color Coding modifier has been selected for this color legend.")));
+
+		// Escalate to an error state if in batch mode.
 		if(Application::instance()->consoleMode()) {
 			throwException(tr("You are trying to render a Viewport with a ColorLegendOverlay whose 'modifier' property has "
 							  "not been linked to a ColorCodingModifier. Did you forget to assign it?"));
@@ -119,6 +123,10 @@ void ColorLegendOverlay::renderImplementation(QPainter& painter, const ViewProje
 			// Ignore invalid configuration in GUI mode by not rendering the legend.
 			return;
 		}
+	}
+	else {
+		// Reset status of overlay.
+		setStatus(PipelineStatus::Success);
 	}
 
 	FloatType legendSize = this->legendSize() * renderSettings->outputImageHeight();

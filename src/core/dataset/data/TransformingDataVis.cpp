@@ -81,21 +81,9 @@ Future<PipelineFlowState> TransformingDataVis::transformData(TimePoint time, con
 		future = Future<PipelineFlowState>::createFailed(std::current_exception());
 	}
 
-	// Change status to 'in progress' during long-running operations.
-	if(!future.isFinished()) {
-		if(_activeTransformationsCount++ == 0)
-			notifyDependents(ReferenceEvent::ObjectStatusChanged);
-		// Reset the pending status after the Future is fulfilled.
-		future.finally(executor(), [this]() {
-			OVITO_ASSERT(_activeTransformationsCount > 0);
-			if(--_activeTransformationsCount == 0)
-				notifyDependents(ReferenceEvent::ObjectStatusChanged);
-		});
-	}
-	
 	// Post-process the results before returning them to the caller. 
 	// Turn any exception that was thrown during modifier evaluation into a valid pipeline state with an error code.
-	return future.then_future(executor(), [this, inputData = std::move(inputData)](Future<PipelineFlowState> future) mutable {
+	future = future.then_future(executor(), [this, inputData = std::move(inputData)](Future<PipelineFlowState> future) mutable {
 		try {
 			try {
 				PipelineFlowState state = future.result();
@@ -131,6 +119,20 @@ Future<PipelineFlowState> TransformingDataVis::transformData(TimePoint time, con
 			return std::move(inputData);
 		}
 	});
+
+	// Change status to 'in progress' during long-running operations.
+	if(!future.isFinished()) {
+		_activeTransformationsCount++;
+		setStatus(PipelineStatus::Pending);
+		// Reset the pending status after the Future is fulfilled.
+		future.finally(executor(), [this]() {
+			OVITO_ASSERT(_activeTransformationsCount > 0);
+			if(--_activeTransformationsCount == 0 && status().type() == PipelineStatus::Pending)
+				setStatus(PipelineStatus::Success);
+		});
+	}
+
+	return future;
 }
 
 OVITO_END_INLINE_NAMESPACE

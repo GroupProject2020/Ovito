@@ -85,7 +85,7 @@ void defineViewportSubmodule(py::module m)
 								  std::mem_fn(&Viewport::overlays), 
 								  std::mem_fn(&Viewport::insertOverlay), 
 								  std::mem_fn(&Viewport::removeOverlay), "overlays", "ViewportOverlayList",
-								"A list of viewport overlay objects that are attached to this viewport. "
+								"A list of viewport :py:class:`Overlay` objects that are attached to this viewport. "
 								"Overlays render graphical content on top of the three-dimensional scene. "
 								"See the following classes for more information:"
 								"\n\n"
@@ -144,20 +144,31 @@ void defineViewportSubmodule(py::module m)
 	;
 	expose_subobject_list(ViewportConfiguration_py, std::mem_fn(&ViewportConfiguration::viewports), "viewports", "ViewportList");
 
-	ovito_abstract_class<ViewportOverlay, RefTarget>{m};
+	ovito_abstract_class<ViewportOverlay, RefTarget>(m,
+			"Abstract base class for viewport overlays, which render two-dimensional graphics on top of (or behind) the three-dimensional scene. "
+			"Examples are :py:class:`CoordinateTripodOverlay`, :py:class:`TextLabelOverlay` and :py:class:`ColorLegendOverlay`. ",
+			// Python class name:
+			"Overlay")
+		.def_property("enabled", &ViewportOverlay::isEnabled, &ViewportOverlay::setEnabled,
+				"Controls whether the overlay gets rendered. An overlay "
+				"can be hidden by setting its :py:attr:`!enabled` property to ``False``. "
+				"\n\n"
+				":Default: ``True``\n")
+		.def_property("behind_scene", &ViewportOverlay::renderBehindScene, &ViewportOverlay::setRenderBehindScene,
+				"This option allows to put the overlay behind the three-dimensional scene, i.e. it becomes an \"underlay\" instead of an \"overlay\". "
+				"If set to ``True``, objects of the three-dimensional scene will occclude the graphics of the overlay. "
+				"\n\n"
+				":Default: ``False``")
+	;
 
 	ovito_class<CoordinateTripodOverlay, ViewportOverlay>(m,
+			":Base class: :py:class:`ovito.vis.Overlay`\n\n"
 			"Displays a coordinate tripod in the rendered image of a viewport. "
 			"You can attach an instance of this class to a viewport by adding it to the viewport's "
 			":py:attr:`~ovito.vis.Viewport.overlays` collection:"
 			"\n\n"
 			".. literalinclude:: ../example_snippets/coordinate_tripod_overlay.py"
 			"\n\n")
-		.def_property("behind_scene", &ViewportOverlay::renderBehindScene, &ViewportOverlay::setRenderBehindScene,
-				"This option puts the overlay behind the three-dimensional scene, i.e. as an \"underlay\" instead of an \"overlay\". "
-				"If set to to true, objects in the scene will occclude the overlay content. "
-				"\n\n"
-				":Default: ``False``")
 		.def_property("alignment", &CoordinateTripodOverlay::alignment, &CoordinateTripodOverlay::setAlignment,
 				"Selects the corner of the viewport where the tripod is displayed. This must be a valid `Qt.Alignment value <http://doc.qt.io/qt-5/qt.html#AlignmentFlag-enum>`__ value as shown in the example above."
 				"\n\n"
@@ -250,6 +261,7 @@ void defineViewportSubmodule(py::module m)
 	;
 
 	ovito_class<TextLabelOverlay, ViewportOverlay>(m,
+			":Base class: :py:class:`ovito.vis.Overlay`\n\n"
 			"Displays a text label in a viewport and in rendered images. "
 			"You can attach an instance of this class to a viewport by adding it to the viewport's "
 			":py:attr:`~ovito.vis.Viewport.overlays` collection:"
@@ -257,11 +269,6 @@ void defineViewportSubmodule(py::module m)
 			".. literalinclude:: ../example_snippets/text_label_overlay.py"
 			"\n\n"
 			"Text labels can display dynamically computed values. See the :py:attr:`.text` property for an example.")
-		.def_property("behind_scene", &ViewportOverlay::renderBehindScene, &ViewportOverlay::setRenderBehindScene,
-				"This option puts the overlay behind the three-dimensional scene, i.e. as an \"underlay\" instead of an \"overlay\". "
-				"If set to to true, objects in the scene will occclude the overlay content. "
-				"\n\n"
-				":Default: ``False``")
 		.def_property("alignment", &TextLabelOverlay::alignment, &TextLabelOverlay::setAlignment,
 				"Selects the corner of the viewport where the text is displayed (anchor position). This must be a valid `Qt.Alignment value <http://doc.qt.io/qt-5/qt.html#AlignmentFlag-enum>`__ as shown in the example above. "
 				"\n\n"
@@ -308,8 +315,9 @@ void defineViewportSubmodule(py::module m)
 	;
 
 	auto PythonViewportOverlay_py = ovito_class<PythonViewportOverlay, ViewportOverlay>(m,
+			":Base class: :py:class:`ovito.vis.Overlay`\n\n"
 			"This type of viewport overlay runs a custom Python script function every time an "
-			"image of the viewport is being rendered. The user-defined script function can paint arbitrary graphics on top of the "
+			"image of the viewport is rendered. The user-defined script function can paint arbitrary graphics on top of the "
 			"three-dimensional scene. "
 			"\n\n"
 			"Note that instead of using a :py:class:`!PythonViewportOverlay` it is also possible to directly manipulate the "
@@ -336,11 +344,6 @@ void defineViewportSubmodule(py::module m)
 				"Implementation note: Exceptions raised within the custom rendering function are *not* propagated to the calling context. "
 				"\n\n"
 				":Default: ``None``\n")
-		.def_property("behind_scene", &ViewportOverlay::renderBehindScene, &ViewportOverlay::setRenderBehindScene,
-				"This option puts the overlay behind the three-dimensional scene, i.e. making it an \"underlay\" instead of an \"overlay\". "
-				"If set to to true, three-dimensional objects in the scene will occclude the graphics rendered by the overlay. "
-				"\n\n"
-				":Default: ``False``")
 	;
 
 	py::class_<ViewportOverlayArguments>(PythonViewportOverlay_py, "Arguments",

@@ -176,7 +176,6 @@ Future<AsynchronousModifier::ComputeEnginePtr> ComputePropertyModifier::createEn
 		myModApp->setInputVariableNames(engine->inputVariableNames());
 		myModApp->setDelegateInputVariableNames(engine->delegateInputVariableNames());
 		myModApp->setInputVariableTable(engine->inputVariableTable());
-		myModApp->notifyDependents(ReferenceEvent::ObjectStatusChanged);
 		delegate()->notifyDependents(ReferenceEvent::ObjectStatusChanged);
 	}
 

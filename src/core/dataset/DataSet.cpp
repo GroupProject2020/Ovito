@@ -538,7 +538,7 @@ bool DataSet::renderFrame(TimePoint renderTime, int frameNumber, RenderSettings*
 	try {
 		// Render viewport "underlays".
 		for(ViewportOverlay* overlay : viewport->overlays()) {
-			if(overlay->renderBehindScene()) {
+			if(overlay->isEnabled() && overlay->renderBehindScene()) {
 				{
 					overlay->render(viewport, renderTime, frameBuffer, projParams, settings, operation);
 					if(operation.isCanceled()) {
@@ -565,7 +565,7 @@ bool DataSet::renderFrame(TimePoint renderTime, int frameNumber, RenderSettings*
 
 	// Render viewport overlays on top.
 	for(ViewportOverlay* overlay : viewport->overlays()) {
-		if(!overlay->renderBehindScene()) {
+		if(overlay->isEnabled() && !overlay->renderBehindScene()) {
 			{
 				overlay->render(viewport, renderTime, frameBuffer, projParams, settings, operation);
 				if(operation.isCanceled())

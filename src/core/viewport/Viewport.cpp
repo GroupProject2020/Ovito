@@ -525,7 +525,7 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 
 		// Render viewport "underlays".
 		if(renderPreviewMode() && !renderer->isPicking()) {
-			if(std::any_of(overlays().begin(), overlays().end(), [](ViewportOverlay* ov) { return ov->renderBehindScene(); })) {
+			if(std::any_of(overlays().begin(), overlays().end(), [](ViewportOverlay* ov) { return ov->renderBehindScene() && ov->isEnabled(); })) {
 				// Let overlays paint into QImage buffer, which will then
 				// be painted into the OpenGL frame buffer.
 				renderOverlays(renderer, time, renderSettings, vpSize, boundingBox, true);
@@ -580,7 +580,7 @@ void Viewport::renderInteractive(SceneRenderer* renderer)
 
 		// Render viewport overlays.
 		if(renderPreviewMode() && !renderer->isPicking()) {
-			if(std::any_of(overlays().begin(), overlays().end(), [](ViewportOverlay* ov) { return !ov->renderBehindScene(); })) {
+			if(std::any_of(overlays().begin(), overlays().end(), [](ViewportOverlay* ov) { return !ov->renderBehindScene() && ov->isEnabled(); })) {
 				// Let overlays paint into QImage buffer, which will then
 				// be painted over the OpenGL frame buffer.
 				renderOverlays(renderer, time, renderSettings, vpSize, boundingBox, false);
@@ -624,7 +624,7 @@ void Viewport::renderOverlays(SceneRenderer* renderer, TimePoint time, RenderSet
 			renderFrameBox.height() * overlayBuffer.height() / 2);
 	ViewProjectionParameters renderProjParams = computeProjectionParameters(time, renderSettings->outputImageAspectRatio(), boundingBox);
 	for(ViewportOverlay* overlay : overlays()) {
-		if(overlay->renderBehindScene() == lowerLayer) {
+		if(overlay->isEnabled() && overlay->renderBehindScene() == lowerLayer) {
 			QPainter painter(&overlayBuffer);
 			painter.setWindow(QRect(0, 0, renderSettings->outputImageWidth(), renderSettings->outputImageHeight()));
 			painter.setViewport(renderFrameRect);

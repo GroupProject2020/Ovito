@@ -40,16 +40,16 @@ void PropertyFieldBase::generateTargetChangedEvent(RefMaker* owner, const Proper
 			"PropertyFieldBase::generateTargetChangedEvent()",
 			qPrintable(QString("Flag PROPERTY_FIELD_NO_CHANGE_MESSAGE has not been set for property field '%1' of class '%2' even though '%2' is not derived from RefTarget.")
 					.arg(descriptor.identifier()).arg(descriptor.definingClass()->name())));
-
-	if(!descriptor.shouldGenerateChangeEvent())
-		return;
-
-	// Send change message.
-	OVITO_ASSERT(owner->isRefTarget());
-	if(eventType != ReferenceEvent::TargetChanged)
+	
+	// Send notification message to dependents of owner object.
+	if(eventType != ReferenceEvent::TargetChanged) {
+		OVITO_ASSERT(owner->isRefTarget());
 		static_object_cast<RefTarget>(owner)->notifyDependents(eventType);
-	else
+	}
+	else if(descriptor.shouldGenerateChangeEvent()) {
+		OVITO_ASSERT(owner->isRefTarget());
 		static_object_cast<RefTarget>(owner)->notifyTargetChanged(&descriptor);
+	}
 }
 
 /******************************************************************************

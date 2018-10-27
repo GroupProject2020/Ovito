@@ -42,3 +42,8 @@ try:
 except:
     pass
     
+# Try again with a disabled overlay:
+overlay2.enabled = False
+vp.render_image(renderer=renderer, size=(10,10))
+
+print("OK")

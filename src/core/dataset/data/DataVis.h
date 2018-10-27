@@ -72,12 +72,6 @@ public:
 	/// The default implementation returns \c true.
 	virtual bool showSelectionMarker() { return true; }
 
-	/// \brief Returns a structure that describes the current status of the vis element.
-	virtual PipelineStatus status() const { return _status; }
-
-	/// \brief Sets the current status of the vis element.
-	void setStatus(const PipelineStatus& status);
-
 	/// \brief Returns the title of this object.
 	virtual QString objectTitle() const override {
 		if(title().isEmpty()) return RefTarget::objectTitle();
@@ -101,7 +95,7 @@ private:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, title, setTitle);
 
 	/// The current status of this visualization element.
-	PipelineStatus _status;
+	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(PipelineStatus, status, setStatus, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 };
 
 OVITO_END_INLINE_NAMESPACE

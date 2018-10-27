@@ -498,17 +498,13 @@ PYBIND11_MODULE(StdMod, m)
 			":Default: ``{'particles', 'bonds'}``\n");	
 	
 	ovito_class<ColorLegendOverlay, ViewportOverlay>(m,
+			":Base class: :py:class:`ovito.vis.Overlay`\n\n"
 			"Renders a color legend for a :py:class:`~ovito.modifiers.ColorCodingModifier` on top of the three-dimensional "
 			"scene. You can attach an instance of this class to a :py:class:`~ovito.vis.Viewport` by adding it to the viewport's "
 			":py:attr:`~ovito.vis.Viewport.overlays` collection:"
 			"\n\n"
 			".. literalinclude:: ../example_snippets/color_legend_overlay.py"
 			"\n")
-		.def_property("behind_scene", &ViewportOverlay::renderBehindScene, &ViewportOverlay::setRenderBehindScene,
-				"This option puts the overlay behind the three-dimensional scene, i.e. as an \"underlay\" instead of an \"overlay\". "
-				"If set to to true, objects in the scene will occclude the overlay content. "
-				"\n\n"
-				":Default: ``False``")
 		.def_property("alignment", &ColorLegendOverlay::alignment, &ColorLegendOverlay::setAlignment,
 				"Selects the corner of the viewport where the color bar is displayed (anchor position). This must be a valid `Qt.Alignment value <http://doc.qt.io/qt-5/qt.html#AlignmentFlag-enum>`__ as shown in the code example above. "
 				"\n\n"

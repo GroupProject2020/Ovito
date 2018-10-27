@@ -52,12 +52,6 @@ public:
 	virtual void renderInteractive(const Viewport* viewport, TimePoint time, QPainter& painter, 
 						const ViewProjectionParameters& projParams, const RenderSettings* renderSettings) = 0;
 
-	/// \brief Returns the status of the object, which may indicate an error condition.
-	///
-	/// The default implementation of this method returns an empty status object.
-	/// The object should generate a ReferenceEvent::ObjectStatusChanged event when its status changes.
-	virtual PipelineStatus status() const { return PipelineStatus(); }
-
 	/// \brief Moves the position of the overlay in the viewport by the given amount,
 	///        which is specified as a fraction of the viewport render size.
 	///
@@ -65,10 +59,21 @@ public:
 	/// The default method implementation does nothing.
 	virtual void moveOverlayInViewport(const Vector2& delta) {}
 
+protected:
+
+	/// \brief Is called when the value of a non-animatable property field of this RefMaker has changed.
+	virtual void propertyChanged(const PropertyFieldDescriptor& field) override;
+
 private:
+
+	/// The current status of this overlay object.
+	DECLARE_RUNTIME_PROPERTY_FIELD_FLAGS(PipelineStatus, status, setStatus, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 
 	/// Option for rendering the overlay contents behind the three-dimensional content.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, renderBehindScene, setRenderBehindScene);
+
+	/// Flag controlling the visibility of the overlay.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, isEnabled, setEnabled);
 };
 
 OVITO_END_INLINE_NAMESPACE

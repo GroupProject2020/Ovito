@@ -138,6 +138,7 @@ void PythonViewportOverlay::compileScript()
 	}
 	catch(const Exception& ex) {
 		_scriptCompilationOutput += ex.messages().join(QChar('\n'));
+		setStatus(PipelineStatus(PipelineStatus::Error, ex.message()));
 	}
 
 	// Update status, because log output has changed.
@@ -175,6 +176,7 @@ void PythonViewportOverlay::renderImplementation(const Viewport* viewport, TimeP
 	QPointer<PythonViewportOverlay> thisPointer(this);
 	
 	_scriptRenderingOutput.clear();
+	PipelineStatus status = PipelineStatus::Success;
 	try {
 		// Make sure the actions of the script function are not recorded on the undo stack.
 		UndoSuspender noUndo(dataset());
@@ -207,11 +209,15 @@ void PythonViewportOverlay::renderImplementation(const Viewport* viewport, TimeP
 		});
 	}
 	catch(const Exception& ex) {
-		_scriptRenderingOutput +=  ex.messages().join(QChar('\n'));
+		_scriptRenderingOutput += ex.messages().join(QChar('\n'));
+		status = PipelineStatus(PipelineStatus::Error, ex.message());
 		// Interrupt rendering process in console mode.
-		if(Application::instance()->consoleMode())
+		if(Application::instance()->consoleMode()) {
+			setStatus(status);
 			throw;
+		}
 	}
+	setStatus(status);
 
 	if(thisPointer)
 		thisPointer->notifyDependents(ReferenceEvent::ObjectStatusChanged);

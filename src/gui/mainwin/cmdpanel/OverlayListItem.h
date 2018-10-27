@@ -25,39 +25,22 @@
 #include <gui/GUI.h>
 #include <core/oo/RefMaker.h>
 #include <core/oo/RefTarget.h>
-#include <core/dataset/pipeline/ModifierApplication.h>
+#include <core/viewport/overlays/ViewportOverlay.h>
 
 namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Gui) OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /**
- * An item managed by the PipelineListModel representing a data source, data object, modifier application or vis element.
+ * An item of the OverlayListModel representing a ViewportOverlay attached to a Viewport.
  */
-class PipelineListItem : public RefMaker
+class OverlayListItem : public RefMaker
 {
 	Q_OBJECT
-	OVITO_CLASS(PipelineListItem)
-
-public:
-
-	enum PipelineItemType {
-		Object,
-		SubObject,
-		VisualElementsHeader,
-		ModificationsHeader,
-		DataSourceHeader,
-		PipelineBranch
-	};
+	OVITO_CLASS(OverlayListItem)
 
 public:
 
 	/// Constructor.
-	PipelineListItem(RefTarget* object, PipelineItemType itemType, PipelineListItem* parent = nullptr);
-
-	/// Returns true if this is a sub-object entry.
-	bool isSubObject() const { return _parent != nullptr; }
-
-	/// Returns the parent entry if this item represents a sub-object.
-	PipelineListItem* parent() const { return _parent; }
+	OverlayListItem(ViewportOverlay* overlay);
 
 	/// Returns the status of the object represented by the list item.
 	PipelineStatus status() const;
@@ -65,16 +48,10 @@ public:
 	/// Returns the title text for this list item.
 	QString title() const;
 
-	/// Returns the type of this list item.
-	PipelineItemType itemType() const { return _itemType; }
-
 Q_SIGNALS:
 
 	/// This signal is emitted when this item has changed.
-	void itemChanged(PipelineListItem* item);
-
-	/// This signal is emitted when the list of sub-items of this item has changed.
-	void subitemsChanged(PipelineListItem* parent);
+	void itemChanged(OverlayListItem* item);
 
 protected:
 
@@ -83,14 +60,8 @@ protected:
 
 private:
 
-	/// The object represented by this item in the list box.
-	DECLARE_REFERENCE_FIELD_FLAGS(RefTarget, object, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
-
-	/// The type of this list item.
-	PipelineItemType _itemType;
-
-	/// If this is a sub-object entry then this points to the parent.
-	PipelineListItem* _parent;
+	/// The overlay represented by this item in the list box.
+	DECLARE_REFERENCE_FIELD_FLAGS(ViewportOverlay, overlay, PROPERTY_FIELD_NO_UNDO | PROPERTY_FIELD_WEAK_REF | PROPERTY_FIELD_NO_CHANGE_MESSAGE);
 };
 
 OVITO_END_INLINE_NAMESPACE
