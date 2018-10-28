@@ -85,7 +85,7 @@ void defineViewportSubmodule(py::module m)
 								  std::mem_fn(&Viewport::overlays), 
 								  std::mem_fn(&Viewport::insertOverlay), 
 								  std::mem_fn(&Viewport::removeOverlay), "overlays", "ViewportOverlayList",
-								"A list of viewport :py:class:`Overlay` objects that are attached to this viewport. "
+								"A list of :py:class:`ViewportOverlay` objects that are attached to this viewport. "
 								"Overlays render graphical content on top of the three-dimensional scene. "
 								"See the following classes for more information:"
 								"\n\n"
@@ -146,9 +146,7 @@ void defineViewportSubmodule(py::module m)
 
 	ovito_abstract_class<ViewportOverlay, RefTarget>(m,
 			"Abstract base class for viewport overlays, which render two-dimensional graphics on top of (or behind) the three-dimensional scene. "
-			"Examples are :py:class:`CoordinateTripodOverlay`, :py:class:`TextLabelOverlay` and :py:class:`ColorLegendOverlay`. ",
-			// Python class name:
-			"Overlay")
+			"Examples are :py:class:`CoordinateTripodOverlay`, :py:class:`TextLabelOverlay` and :py:class:`ColorLegendOverlay`. ")
 		.def_property("enabled", &ViewportOverlay::isEnabled, &ViewportOverlay::setEnabled,
 				"Controls whether the overlay gets rendered. An overlay "
 				"can be hidden by setting its :py:attr:`!enabled` property to ``False``. "
@@ -162,7 +160,7 @@ void defineViewportSubmodule(py::module m)
 	;
 
 	ovito_class<CoordinateTripodOverlay, ViewportOverlay>(m,
-			":Base class: :py:class:`ovito.vis.Overlay`\n\n"
+			":Base class: :py:class:`ovito.vis.ViewportOverlay`\n\n"
 			"Displays a coordinate tripod in the rendered image of a viewport. "
 			"You can attach an instance of this class to a viewport by adding it to the viewport's "
 			":py:attr:`~ovito.vis.Viewport.overlays` collection:"
@@ -261,7 +259,7 @@ void defineViewportSubmodule(py::module m)
 	;
 
 	ovito_class<TextLabelOverlay, ViewportOverlay>(m,
-			":Base class: :py:class:`ovito.vis.Overlay`\n\n"
+			":Base class: :py:class:`ovito.vis.ViewportOverlay`\n\n"
 			"Displays a text label in a viewport and in rendered images. "
 			"You can attach an instance of this class to a viewport by adding it to the viewport's "
 			":py:attr:`~ovito.vis.Viewport.overlays` collection:"
@@ -315,7 +313,7 @@ void defineViewportSubmodule(py::module m)
 	;
 
 	auto PythonViewportOverlay_py = ovito_class<PythonViewportOverlay, ViewportOverlay>(m,
-			":Base class: :py:class:`ovito.vis.Overlay`\n\n"
+			":Base class: :py:class:`ovito.vis.ViewportOverlay`\n\n"
 			"This type of viewport overlay runs a custom Python script function every time an "
 			"image of the viewport is rendered. The user-defined script function can paint arbitrary graphics on top of the "
 			"three-dimensional scene. "

@@ -25,7 +25,7 @@ This module contains classes related to :ref:`data visualization and rendering <
 
 **Viewport overlays:**
 
-  * :py:class:`Overlay` (base class for all overlay types)
+  * :py:class:`ViewportOverlay` (base class for all overlay types)
   * :py:class:`ColorLegendOverlay`
   * :py:class:`CoordinateTripodOverlay`
   * :py:class:`PythonViewportOverlay`
@@ -39,12 +39,12 @@ import PyQt5.QtGui
 # Load the native modules.
 from ..plugins.PyScript import (RenderSettings, Viewport, ViewportConfiguration, OpenGLRenderer, 
                                 DataVis, CoordinateTripodOverlay, PythonViewportOverlay, TextLabelOverlay,
-                                FrameBuffer)
+                                FrameBuffer, ViewportOverlay)
 
 import ovito
 
 __all__ = ['RenderSettings', 'Viewport', 'ViewportConfiguration', 'OpenGLRenderer', 'DataVis',
-        'CoordinateTripodOverlay', 'PythonViewportOverlay', 'TextLabelOverlay', 'Overlay']
+        'CoordinateTripodOverlay', 'PythonViewportOverlay', 'TextLabelOverlay', 'ViewportOverlay']
 
 def _Viewport_render_image(self, size=(640,480), frame=0, filename=None, background=(1.0,1.0,1.0), alpha=False, renderer=None):
     """ Renders an image of the viewport's view.

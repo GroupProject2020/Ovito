@@ -498,7 +498,7 @@ PYBIND11_MODULE(StdMod, m)
 			":Default: ``{'particles', 'bonds'}``\n");	
 	
 	ovito_class<ColorLegendOverlay, ViewportOverlay>(m,
-			":Base class: :py:class:`ovito.vis.Overlay`\n\n"
+			":Base class: :py:class:`ovito.vis.ViewportOverlay`\n\n"
 			"Renders a color legend for a :py:class:`~ovito.modifiers.ColorCodingModifier` on top of the three-dimensional "
 			"scene. You can attach an instance of this class to a :py:class:`~ovito.vis.Viewport` by adding it to the viewport's "
 			":py:attr:`~ovito.vis.Viewport.overlays` collection:"
