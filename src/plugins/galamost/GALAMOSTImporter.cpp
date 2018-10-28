@@ -199,9 +199,6 @@ bool GALAMOSTImporter::FrameLoader::startElement(const QString& namespaceURI, co
 		else if(localName == "charge") {
 			_currentProperty = ParticlesObject::OOClass().createStandardStorage(_natoms, ParticlesObject::ChargeProperty, false);
 		}
-		else if(localName == "charge") {
-			_currentProperty = ParticlesObject::OOClass().createStandardStorage(_natoms, ParticlesObject::ChargeProperty, false);
-		}
 		else if(localName == "quaternion") {
 			_currentProperty = ParticlesObject::OOClass().createStandardStorage(_natoms, ParticlesObject::OrientationProperty, false);
 		}
@@ -213,6 +210,15 @@ bool GALAMOSTImporter::FrameLoader::startElement(const QString& namespaceURI, co
 		}
 		else if(localName == "body") {
 			_currentProperty = std::make_shared<PropertyStorage>(_natoms, PropertyStorage::Int64, 1, 0, QStringLiteral("Body"), false);
+		}
+		else if(localName == "Aspheres") {
+			_currentProperty = ParticlesObject::OOClass().createStandardStorage(_natoms, ParticlesObject::AsphericalShapeProperty, false);
+		}
+		else if(localName == "rotation") {
+			_currentProperty = ParticlesObject::OOClass().createStandardStorage(_natoms, ParticlesObject::AngularVelocityProperty, false);
+		}
+		else if(localName == "inert") {
+			_currentProperty = ParticlesObject::OOClass().createStandardStorage(_natoms, ParticlesObject::AngularMomentumProperty, false);
 		}
 		else if(localName == "bond") {
 			_currentProperty = BondsObject::OOClass().createStandardStorage(0, BondsObject::TopologyProperty, false);
@@ -292,7 +298,7 @@ bool GALAMOSTImporter::FrameLoader::endElement(const QString& namespaceURI, cons
 			OVITO_ASSERT(_currentProperty->type() == ParticlesObject::OrientationProperty);
 			for(size_t i = 0; i < _natoms; i++) {
 				Quaternion q;
-				stream >> q.x() >> q.y() >> q.z() >> q.w();
+				stream >> q.w() >> q.x() >> q.y() >> q.z();
 				_currentProperty->setQuaternion(i, q);
 			}
 		}
@@ -312,6 +318,22 @@ bool GALAMOSTImporter::FrameLoader::endElement(const QString& namespaceURI, cons
 				_currentProperty->setInt64(i, body);
 			}
 		}
+		else if(localName == "rotation") {
+			OVITO_ASSERT(_currentProperty->type() == ParticlesObject::AngularVelocityProperty);
+			for(size_t i = 0; i < _natoms; i++) {
+				Vector3 rot_vel;
+				stream >> rot_vel.x() >> rot_vel.y() >> rot_vel.z();
+				_currentProperty->setVector3(i, rot_vel);
+			}
+		}
+		else if(localName == "inert") {
+			OVITO_ASSERT(_currentProperty->type() == ParticlesObject::AngularMomentumProperty);
+			for(size_t i = 0; i < _natoms; i++) {
+				Vector3 ang_moment;
+				stream >> ang_moment.x() >> ang_moment.y() >> ang_moment.z();
+				_currentProperty->setVector3(i, ang_moment);
+			}
+		}		
 		else if(localName == "type") {
 			OVITO_ASSERT(_currentProperty->type() == ParticlesObject::TypeProperty);
 			QString typeName;
@@ -322,6 +344,34 @@ bool GALAMOSTImporter::FrameLoader::endElement(const QString& namespaceURI, cons
 			}
 			typeList->sortTypesByName(_currentProperty);
 			_frameData->setPropertyTypesList(_currentProperty, std::move(typeList));
+		}
+		else if(localName == "Aspheres") {
+			OVITO_ASSERT(_currentProperty->type() == ParticlesObject::AsphericalShapeProperty);
+			PropertyPtr typeProperty = _frameData->findStandardParticleProperty(ParticlesObject::TypeProperty);
+			if(!typeProperty)
+				throw Exception(tr("GALAMOST file parsing error. <%1> element must appear after <type> element.").arg(qName));
+			ParticleFrameData::TypeList* typeList = _frameData->propertyTypesList(typeProperty);
+			OVITO_ASSERT(typeList != nullptr);
+			std::vector<Vector3> typesAsphericalShape;
+			while(!stream.atEnd()) {
+				QString typeName;
+				FloatType a,b,c;
+				FloatType eps_a, eps_b, eps_c;
+				stream >> typeName >> a >> b >> c >> eps_a >> eps_b >> eps_c;
+				stream.skipWhiteSpace();
+				for(const ParticleFrameData::TypeDefinition& type : typeList->types()) {
+					if(type.name == typeName) {
+						if(typesAsphericalShape.size() <= type.id) typesAsphericalShape.resize(type.id+1, Vector3::Zero());
+						typesAsphericalShape[type.id] = Vector3(a/2,b/2,c/2);
+						break;
+					}
+				}
+				for(size_t i = 0; i < _natoms; i++) {
+					int typeIndex = typeProperty->getInt(i);
+					if(typeIndex < typesAsphericalShape.size())
+						_currentProperty->setVector3(i, typesAsphericalShape[typeIndex]);
+				}
+			}
 		}
 		else if(localName == "bond") {
 			OVITO_ASSERT(_currentProperty->type() == BondsObject::TopologyProperty);
