@@ -106,10 +106,11 @@ FileSourceImporter::FrameDataPtr GALAMOSTImporter::FrameLoader::loadFile(QFile& 
 ******************************************************************************/
 bool GALAMOSTImporter::FrameLoader::fatalError(const QXmlParseException& exception)
 {
-	setException(std::make_exception_ptr(
-		Exception(tr("GALAMOST file parsing error on line %1, column %2: %3")
-		.arg(exception.lineNumber()).arg(exception.columnNumber()).arg(exception.message()))));
-
+	if(!isCanceled()) {
+		setException(std::make_exception_ptr(
+			Exception(tr("GALAMOST file parsing error on line %1, column %2: %3")
+			.arg(exception.lineNumber()).arg(exception.columnNumber()).arg(exception.message()))));
+	}
 	return false;
 }
 
@@ -200,6 +201,9 @@ bool GALAMOSTImporter::FrameLoader::startElement(const QString& namespaceURI, co
 			_currentProperty = ParticlesObject::OOClass().createStandardStorage(_natoms, ParticlesObject::ChargeProperty, false);
 		}
 		else if(localName == "quaternion") {
+			_currentProperty = ParticlesObject::OOClass().createStandardStorage(_natoms, ParticlesObject::OrientationProperty, false);
+		}
+		else if(localName == "orientation") {
 			_currentProperty = ParticlesObject::OOClass().createStandardStorage(_natoms, ParticlesObject::OrientationProperty, false);
 		}
 		else if(localName == "type") {
@@ -300,6 +304,15 @@ bool GALAMOSTImporter::FrameLoader::endElement(const QString& namespaceURI, cons
 				Quaternion q;
 				stream >> q.w() >> q.x() >> q.y() >> q.z();
 				_currentProperty->setQuaternion(i, q);
+			}
+		}
+		else if(localName == "orientation") {
+			OVITO_ASSERT(_currentProperty->type() == ParticlesObject::OrientationProperty);
+			for(size_t i = 0; i < _natoms; i++) {
+				Vector3 dir;
+				stream >> dir.x() >> dir.y() >> dir.z();
+				Rotation r(Vector3(0,0,1), dir);
+				_currentProperty->setQuaternion(i, Quaternion(r));
 			}
 		}
 		else if(localName == "molecule") {
