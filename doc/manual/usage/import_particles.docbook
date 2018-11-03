@@ -249,6 +249,11 @@
               <entry>particles, bonds</entry>
             </row>
             <row>
+              <entry>Quantum Espresso</entry>
+              <entry><para>Input data format used by the <link xlink:href="https://www.quantum-espresso.org/">Quantum Espresso</link> electronic-structure calculation code.</para></entry>
+              <entry>particles</entry>
+            </row>
+            <row>
               <entry>VTK</entry>
               <entry><para>Format used by the <emphasis>Visualization Toolkit</emphasis> (VTK). This text-based format is documented <link xlink:href="http://www.vtk.org/VTK/img/file-formats.pdf">here</link>. Note that OVITO supports only triangular cells.</para></entry>
               <entry>triangle&#xA0;mesh</entry>

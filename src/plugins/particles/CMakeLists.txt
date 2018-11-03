@@ -73,6 +73,7 @@ SET(SourceFiles
 	import/cube/GaussianCubeImporter.cpp
 	import/xsf/XSFImporter.cpp
 	import/dl_poly/DLPOLYImporter.cpp
+	import/quantumespresso/QuantumEspressoImporter.cpp
 	export/ParticleExporter.cpp
 	export/FileColumnParticleExporter.cpp
 	export/OutputColumnMapping.cpp

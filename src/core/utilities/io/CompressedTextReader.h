@@ -66,7 +66,7 @@ public:
 	/// \throw Exception if an I/O error has occurred of if there is no more line to read.
 	const char* readLineTrimLeft(int maxSize = 0) {
 		const char* s = readLine(maxSize);
-		while(*s != '\0' && (*s == ' ' || *s == '\t')) ++s;
+		while(*s > '\0' && *s <= ' ') ++s;
 		return s;
 	}
 
@@ -88,8 +88,12 @@ public:
 	const char* line() const { return _line.data(); }
 
 	/// Tests \c true if the last line read via readLine() begins with the given substring.
-	bool lineStartsWith(const char* s) const {
-		for(const char* l = line(); *s; ++s, ++l) {
+	bool lineStartsWith(const char* s, bool ignoreLeadingWhitespace = false) const {
+		const char* l = line();
+		if(ignoreLeadingWhitespace) {
+			while(*l > '\0' && *l <= ' ') ++l;
+		}
+		for(; *s; ++s, ++l) {
 			if(*l != *s) return false;
 		}
 		return true;

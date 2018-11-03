@@ -42,6 +42,7 @@
 #include <plugins/particles/import/castep/CastepCellImporter.h>
 #include <plugins/particles/import/castep/CastepMDImporter.h>
 #include <plugins/particles/import/dl_poly/DLPOLYImporter.h>
+#include <plugins/particles/import/quantumespresso/QuantumEspressoImporter.h>
 #include "PythonBinding.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
@@ -124,6 +125,9 @@ void defineImportersSubmodule(py::module m)
 	;
 
 	ovito_class<DLPOLYImporter, ParticleImporter>{m}
+	;
+
+	ovito_class<QuantumEspressoImporter, ParticleImporter>{m}
 	;
 }
 
