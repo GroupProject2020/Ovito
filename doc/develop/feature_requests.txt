@@ -94,7 +94,6 @@ Unresolved bugs:
 
 - NearestNeighborFinder doesn't work properly for triclinic cells with small angles.
 - Construct surface mesh doesn't work for very small length scales (reported by xin.liu@insa-lyon.fr)
-- Particle trajectory creation doesn't work if new particles are created over time.
 - WebM video export not working on Windows & Linux (stefan.parviainen@iki.fi). 
 
 - On Windows: Program crash at File->Load File when previous accessed path does not exist anymore.
@@ -108,7 +107,6 @@ Unresolved bugs:
 New analysis features:
 
 - Plotting the value of a certain property of a certain particle versus simulation time. To make this work, all simulation frames need to be kept in memory (requested by Taojun & Mathieu Marciante).
-- Calculation of type-specific (partial) RDF (requested by Jordan R Keith <jordan.keith@utexas.edu>, lindeye0716@163.com). Also demonstrate how to average RDF over time using a script.
 - Glass ring analysis (see ISAACS, RINGS, Sudheer @ FAU) 
 - Crystal orientation map
 - Extend Create Bonds modifier to make it possible to create different bond types depending on atom pair types (Yan CHEN <1358179191@qq.com>).

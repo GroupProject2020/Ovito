@@ -69,7 +69,7 @@ JOM: Vol. 66, Issue 3 (2014), 399-407</link></literallayout>
   </para>
   
   <simplesect>
-    <title>How it works</title>
+    <title>How the surface generation works</title>
  	<para>
  	  In classical atomistic simulations the atoms that constitute a solid are modeled as point-like objects. 
  	  Consequently, the simulated solid has no volume and no surface if it is described as such a set of zero-dimensional 

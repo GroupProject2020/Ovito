@@ -40,11 +40,27 @@
   </para>
 
   <simplesect>
-    <title>Element-specific RDF</title>
+    <title>Element-wise RDFs</title>
       <para>
-        The current version of the modifier can only calculate the global RDF ignoring the types
-        of particles. As explained in <link xlink:href="http://forum.ovito.org/index.php?topic=131.0">this forum post</link>, you can also compute the <emphasis>partial</emphasis> RDFs for a system
-        containing more than one particle species using a different, more elaborate approach.
+        <informalfigure><screenshot><mediaobject><imageobject>
+          <imagedata fileref="images/modifiers/coordination_analysis_partial_rdf.png" format="PNG" scale="50" />
+        </imageobject></mediaobject></screenshot></informalfigure>
+        The <emphasis>Compute partial RDFs</emphasis> option lets the modifier compute separate radial distribution functions
+        for all pair-wise combinations of particle types or elements. The computed partial RDFs will be normalized such that the
+        summation of the partial RDFs, weighted by the product of the two corresponding elemental concentrations, yields the total
+        RDF. For example, for a binary system with two particle species <mathphrase>&#x0251;</mathphrase> and <mathphrase>&#x03B2;</mathphrase>,
+        the modifier computes a set of three partials functions g<subscript>&#x0251;&#x0251;</subscript>, g<subscript>&#x0251;&#x03B2;</subscript>
+        and g<subscript>&#x03B2;&#x03B2;</subscript>, which add up to the total distribution as follows:
+    </para>
+    <para>
+      g(r) = c<subscript>&#x0251;</subscript><superscript>2</superscript> g<subscript>&#x0251;&#x0251;</subscript>(r) + 
+        2 c<subscript>&#x0251;</subscript>c<subscript>&#x03B2;</subscript> g<subscript>&#x0251;&#x03B2;</subscript>(r) + 
+        c<subscript>&#x03B2;</subscript><superscript>2</superscript> g<subscript>&#x03B2;&#x03B2;</subscript>(r)
+    </para>
+    <para>
+       Here, the c<subscript>&#x0251;</subscript> and c<subscript>&#x03B2;</subscript> denote the concentrations of the two
+       species in the system and the factor 2 in the mixed term appears due to g<subscript>&#x0251;&#x03B2;</subscript>(r) and
+       g<subscript>&#x03B2;&#x0251;</subscript>(r) being always identical.
     </para>
   </simplesect>
 

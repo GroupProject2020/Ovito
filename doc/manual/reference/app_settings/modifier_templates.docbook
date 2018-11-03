@@ -40,17 +40,21 @@
   </para>
 
   <para>
-    Another typical use case of modifier templates are user-defined script modifiers. The <link linkend="particles.modifiers.python_script">
-    Python script modifier</link> allows you to enter a script function that performs user-defined operations. 
-    You can save a Python scipt modifier as a 
-    modifier template to make it usable like the built-in modifiers. Since the script code is part of the template,
-    this relieves you from keeping the script in an external source file, which needs to be searched and loaded
-    each time you use the script modifier.
+    Another typical use case for modifier templates are user-defined script modifiers. The <link linkend="particles.modifiers.python_script">
+    Python script modifier</link> allows you to write a script function that performs user-defined data operations. 
+    After having developed a new script function, you can save it as a modifier template to make it available 
+    in future program sessions just like the standard modifiers of OVITO. Since the script code will be part of the 
+    stored template, it relieves you from saving the script code to an external source file and again loading it into OVITO by hand.
   </para>
 
-  <para>
-    Modifier templates are stored in the application settings file. If needed, they can exported to a separate file
-    in order to transfer them to another computer or for backup purposes.
-  </para>
+  <simplesect>
+    <title>Transferring templates to a different computer</title>
+
+    <para>
+      Note that OVITO stores the definition of all modifier templates in the application's settings file in a proprietary format. 
+      If needed, they can be exported to a special modifier template file in order to transfer them to another computer
+      and import them into another OVITO installation.
+    </para>
+  </simplesect>
 
 </section>

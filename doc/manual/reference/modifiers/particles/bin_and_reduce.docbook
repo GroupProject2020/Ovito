@@ -8,29 +8,31 @@
          xmlns:xlink="http://www.w3.org/1999/xlink"
          xmlns:xi="http://www.w3.org/2001/XInclude"
          xmlns:ns="http://docbook.org/ns/docbook">
-  <title>Bin and reduce</title>
+  <title>Spatial binning</title>
 
   <para>
-  
     <informalfigure><screenshot><mediaobject><imageobject>
        <imagedata fileref="images/modifiers/bin_and_reduce_panel.png" format="PNG" scale="50" />
     </imageobject></mediaobject></screenshot></informalfigure>
   
-    This modifier applies a <emphasis>reduction</emphasis> operation to a certain property
-    of all particles within a spatial bin.
-  </para>
-  
-  <para>
-    The reduction operation can be the sum, the average (mean), or the minimum or maximum value of
-    the property inside the bin.
-  </para>
-
-  <para>
-    The spatial bins are aligned parallel to the simulation cell axes.
+    This modifier generates a 1-, 2- or 3-dimensional grid covering the simulation domain and assigns each particle
+    into one of the uniformly sized bins. It then performs a reduction operation for a selected particle property,
+    mapping the values of all particles contained in a cell to a single output value.
+    This modifier can thus be used to project the per-particle data to a structured grid, for example to coarse-grain
+    the atomistic data and generate a continuous field representation of a particle property.
+    You can choose between different reduction operations, e.g. sum, average (mean), minimum or maximum.
   </para>
 
   <para>
-    The bin grid can be one- or two-dimensional.
+    The bin grid can be one-, two- or three-dimensional, i.e. the simulation domain can be subdivided into equally
+    sized bins along one, two or all three of its axes. The spatial bins are always aligned parallel to the simulation 
+    cell edges.
+  </para>
+
+  <para>
+    When mapping the particle values to a three-dimensional grid using this modifier, you can subsequently
+    employ the <link linkend="particles.modifiers.create_isosurface">Create isosurface</link> modifier to
+    render iso-level surfaces for the computed grid field. 
   </para>
 
   <simplesect>
@@ -38,59 +40,54 @@
 
     <variablelist>
       <varlistentry>
-        <term>Property</term>
+        <term>Input property</term>
         <listitem>
-          <para>The particle property the reduction operation should be applied to.</para>
+          <para>The source particle property the reduction operation should be applied to.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term>Reduction operation</term>
-        <listitem>
-          <para>The type of reduction operation to be carried out. Possibilities are sum, mean, min or max.
-          There is an additional option "sum divided by bin volume", which sums first and then divides the result
-          by the volume of the respective bin. This option is intended to compute pressure (or stress) within
-          each bin from the per-atom virial.
-          </para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>Binning direction</term>
-        <listitem>
-          <para>The alignment of the bins. Note that selecting a single cell vector gives a
-          one-dimensional bin grid. Bins are aligned perpendicular to the selected cell vector.
-          Selecting two cell vectors gives a two-dimensional bin grid. Bins are aligned perpendicular
-          to both cell vectors (i.e. parallel to the third vector).</para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>Compute first derivative</term>
-        <listitem>
-          <para>Numerically compute the first derivative of the binned data using a finite differences
-          approximation. This works only for one-dimensional bin grids. (It is useful to e.g. compute the derivative
-          of a velocity profile to get the shear rate.)</para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>Number of spatial bins</term>
-        <listitem>
-          <para>Number of bins in both binning directions.</para>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term>Use only selected particles</term>
+        <term>Use only selected elements</term>
         <listitem>
           <para>Restricts the calculation to the subset of particles that are currently selected.</para>
         </listitem>
       </varlistentry>
       <varlistentry>
+        <term>Binning direction(s)</term>
+        <listitem>
+          <para>This selects along which axes of the simulation cell the bins are created and determines the dimensionality of 
+          the generated grid.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Number of bins</term>
+        <listitem>
+          <para>Number of bins in each active binning direction.</para>
+        </listitem>
+      </varlistentry>      <varlistentry>
+        <term>Reduction operation</term>
+        <listitem>
+          <para>The type of reduction operation to be carried out. Available are sum, mean, min or max.
+          There is an additional option "sum divided by bin volume", which sums over all particles of a bin and then divides the result
+          by the volume of the bin. This option is intended to compute pressure (or stress) within
+          bins from the per-atom virial.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Compute first derivative</term>
+        <listitem>
+          <para>Numerically computes the first derivative of the binned data using a finite differences
+          approximation. This works only for one-dimensional bin grids. (It is useful to e.g. compute the derivative
+          of a velocity profile to obtain the local shear rate.)</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
         <term>Fix property axis range</term>
         <listitem>
-          <para>If selected, the plotted property range (or color scale for 2D plots) will be set to the values given
+          <para>If selected, the plotted property range (or color scale for 2D grids) will be set to the values given
           in the "From:" and "To:" fields. Otherwise, the minimum and maximum data values will be used to automatically adjust the plotting range.</para>
         </listitem>
       </varlistentry>
-
-
     </variablelist>
   </simplesect>
 

@@ -63,9 +63,6 @@ protected Q_SLOTS:
     /// Enable/disable the editor for number of y-bins and the first derivative button.
     void updateWidgets();
 
-	/// This is called when the user has clicked the "Save Data" button.
-	void onSaveData();
-
 private:
 
     /// Widget controlling computation of the first derivative.

@@ -87,7 +87,7 @@ void ColorLegendOverlayEditor::createUI(const RolloutInsertionParameters& rollou
 				});
 				setCurrentIndex(findData(QVariant::fromValue(_overlay->modifier())));
 			}
-			if(count() == 0) addItem(tr("<none>"));
+			if(count() == 0) addItem(QIcon(":/gui/mainwin/status/status_warning.png"), tr("<none>"));
 			QComboBox::showPopup();
 		}
 
@@ -104,7 +104,7 @@ void ColorLegendOverlayEditor::createUI(const RolloutInsertionParameters& rollou
 					modifierComboBox->addItem(mod->sourceProperty().nameWithComponent(), QVariant::fromValue(mod));
 				}
 				else {
-					modifierComboBox->addItem(tr("<none>"));
+					modifierComboBox->addItem(QIcon(":/gui/mainwin/status/status_warning.png"), tr("<none>"));
 				}
 				modifierComboBox->setCurrentIndex(0);
 			},

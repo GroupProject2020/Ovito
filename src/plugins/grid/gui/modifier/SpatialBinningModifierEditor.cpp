@@ -28,7 +28,6 @@
 #include <gui/properties/IntegerParameterUI.h>
 #include <gui/properties/IntegerRadioButtonParameterUI.h>
 #include <gui/properties/VariantComboBoxParameterUI.h>
-#include <gui/mainwin/MainWindow.h>
 #include "SpatialBinningModifierEditor.h"
 
 #include <qwt/qwt_plot.h>
@@ -161,12 +160,6 @@ void SpatialBinningModifierEditor::createUI(const RolloutInsertionParameters& ro
     layout->addWidget(_plotWidget2d);
 	connect(this, &SpatialBinningModifierEditor::contentsReplaced, this, &SpatialBinningModifierEditor::plotData);
 
-#if 0
-	QPushButton* saveDataButton = new QPushButton(tr("Save data"));
-	layout->addWidget(saveDataButton);
-	connect(saveDataButton, &QPushButton::clicked, this, &SpatialBinningModifierEditor::onSaveData);
-#endif
-
 	// Axes.
 	QGroupBox* axesBox = new QGroupBox(tr("Plot axes"), rollout);
 	QVBoxLayout* axesSublayout = new QVBoxLayout(axesBox);
@@ -217,6 +210,14 @@ void SpatialBinningModifierEditor::plotData()
 
         // Hand plot data over to plotting widget.
         if(series) {
+
+            if(modifier->fixPropertyAxisRange()) {
+                _plotWidget1d->setAxisScale(QwtPlot::yLeft, modifier->propertyAxisRangeStart(), modifier->propertyAxisRangeEnd());
+            }
+            else {
+                _plotWidget1d->setAxisAutoScale(QwtPlot::yLeft);
+            }
+
             _mode3dLabel->hide();
             _plotWidget2d->hide();
             _plotWidget1d->setSeries(series);
@@ -295,12 +296,12 @@ void SpatialBinningModifierEditor::updateWidgets()
     _firstDerivativePUI->setEnabled(modifier && modifier->is1D());
 }
 
+#if 0
 /******************************************************************************
 * This is called when the user has clicked the "Save Data" button.
 ******************************************************************************/
 void SpatialBinningModifierEditor::onSaveData()
 {
-#if 0
 	SpatialBinningModifier* modifier = static_object_cast<SpatialBinningModifier>(editObject());
 	BinningModifierApplication* modApp = dynamic_object_cast<BinningModifierApplication>(modifierApplication());
 	if(!modifier || !modApp)
@@ -348,8 +349,8 @@ void SpatialBinningModifierEditor::onSaveData()
 	catch(const Exception& ex) {
 		ex.reportError();
 	}
-#endif
 }
+#endif
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
