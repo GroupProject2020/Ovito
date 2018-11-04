@@ -47,11 +47,11 @@ SET_TARGET_PROPERTIES(Ovito PROPERTIES OUTPUT_NAME "ovito")
 # Link Qt5.
 TARGET_LINK_LIBRARIES(Ovito Qt5::Core Qt5::Gui)
 
-# Under Linux, Qt's Xcb platform plugin will dynamically load the DBus and XcbQpa Qt modules.
-# To avoid the dynamic linker pulling the wrong versions of the Qt modules from the 
-# system path, we make the main executable preload the modules on application startup.
+# Under Linux, Qt's Xcb platform plugin will dynamically load the DBus Qt module.
+# To avoid the dynamic linker pulling the wrong versions of the Qt module from the 
+# system path, we make the executable preload the module on application startup.
 IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
-	TARGET_LINK_LIBRARIES(Ovito Qt5::DBus Qt5::XcbQpa)
+	TARGET_LINK_LIBRARIES(Ovito Qt5::DBus)
 ENDIF()
 
 IF(APPLE)
@@ -113,6 +113,8 @@ IF(UNIX AND NOT APPLE AND OVITO_REDISTRIBUTABLE_PACKAGE)
 	INSTALL(DIRECTORY "${QtBinaryPath}/../plugins/imageformats" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins_qt/" COMPONENT "runtime" PATTERN "libqsvg.so" EXCLUDE)
 	INSTALL(DIRECTORY "${QtBinaryPath}/../plugins/iconengines" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins_qt/" COMPONENT "runtime")
 	INSTALL(DIRECTORY "${QtBinaryPath}/../plugins/xcbglintegrations" DESTINATION "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/plugins_qt/" COMPONENT "runtime")
+	# The XcbQpa library is required by the Qt5 Gui module.
+	OVITO_INSTALL_SHARED_LIB("${QtBinaryPath}/libQt5XcbQpa.so" "${OVITO_RELATIVE_LIBRARY_DIRECTORY}/lib")
 
 	# Make the executable look in lib/ovito/ directory for shared libraries.
 	SET_TARGET_PROPERTIES(Ovito PROPERTIES INSTALL_RPATH "\$ORIGIN/../lib/ovito")
