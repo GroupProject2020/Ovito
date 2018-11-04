@@ -28,7 +28,15 @@
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Import) OVITO_BEGIN_INLINE_NAMESPACE(Formats)
 
-IMPLEMENT_OVITO_CLASS(QuantumEspressoImporter);	
+IMPLEMENT_OVITO_CLASS(QuantumEspressoImporter);
+
+/******************************************************************************
+* Determines if a character is a normal letter.
+******************************************************************************/
+static bool isalpha_ascii(char c)
+{
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+}
 
 /******************************************************************************
 * Checks if the given file has format that can be read by this importer.
@@ -45,7 +53,7 @@ bool QuantumEspressoImporter::OOMetaClass::checkFileFormat(QFileDevice& input, c
 		numLinesToRead--;
 		const char* line = stream.readLineTrimLeft(256);
 		// Skip parameter blocks.
-		if(line[0] == '&' && std::isalpha(line[1])) {
+		if(line[0] == '&' && isalpha_ascii(line[1])) {
 			while(!stream.eof()) {
 				const char* line = stream.readLineTrimLeft();
 				if(line[0] == '/') {
@@ -99,7 +107,7 @@ FileSourceImporter::FrameDataPtr QuantumEspressoImporter::FrameLoader::loadFile(
 		}
 
 		// Read parameter blocks, which start with a '&'.
-		if(line[0] == '&' && std::isalpha(line[1])) {
+		if(line[0] == '&' && isalpha_ascii(line[1])) {
 			while(!stream.eof() && !isCanceled()) {
 				line = stream.readLineTrimLeft();
 				if(line[0] == '/') {
