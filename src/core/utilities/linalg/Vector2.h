@@ -57,8 +57,8 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPAC
  * Vector_2 derives from std::array<T,2>. Thus, the vector's components can be accessed via indices, but also via names:
  *
  * \code
- *      v[1]  = 10.0f;
- *      v.y() = 10.0f;
+ *      v[1]  = 10.0;
+ *      v.y() = 10.0;
  * \endcode
  *
  * \sa Point_2, Vector_3, Vector_4
@@ -80,7 +80,7 @@ public:
 	/////////////////////////////// Constructors /////////////////////////////////
 
 	/// Constructs a vector without initializing its components. The components will have an undefined value!
-	Vector_2() {}
+	Vector_2() = default;
 
 	/// Constructs a vector with the two components initialized to the given value.
 #if !defined(Q_CC_MSVC) && !defined(ONLY_FOR_DOXYGEN) // The MSVC compiler and the Doxygen parser do not like C++11 array aggregate initializers.

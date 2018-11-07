@@ -83,7 +83,7 @@ public:
 
 	/// \brief Empty default constructor that does not initialize the matrix elements (for performance reasons).
 	///        The matrix elements will have an undefined value and need to be initialized later.
-	AffineTransformationT() {}
+	AffineTransformationT() = default;
 
 	/// \brief Constructor that initializes 9 elements of the left 3x3 submatrix to the given values.
 	///        The translation (4th column) is set to zero.

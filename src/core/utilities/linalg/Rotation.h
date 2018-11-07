@@ -92,7 +92,7 @@ public:
 
 	/// Empty default constructor that does not initialize the fields of the object for performance reasons!
 	/// Both the axis and the angle are left undefined and need to be initialized later.
-	RotationT() {}
+	RotationT() = default;
 
 	/// \brief Constructs a rotation from an axis and an angle.
 	/// \param axis The axis of rotation. It is automatically normalized to a unit vector unless \a normalize is \c false.

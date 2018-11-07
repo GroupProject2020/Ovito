@@ -65,7 +65,7 @@ public:
 
 	/// Empty default constructor that does not initialize the fields of the object for performance reasons!
 	/// Both the base point and the direction vector are undefined.
-	Ray_3() {}
+	Ray_3() = default;
 
 	/// \brief Initializes the ray with a base point and a direction vector.
 	/// \param b A point through which the ray passes.

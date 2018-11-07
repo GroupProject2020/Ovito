@@ -89,7 +89,7 @@ public:
 
 	/// \brief Constructs a quaternion without initializing its components.
 	/// \note All components are left uninitialized by this constructor and will therefore have an undefined value!
-	QuaternionT() {}
+	QuaternionT() = default;
 
 	/// \brief Initializes the quaternion with the given values.
 	/// \param x The first quaternion component.
@@ -105,9 +105,9 @@ public:
 	/// \brief Constructs an identity quaternion.
 	/// The new quaternion represents the null transformation, i.e. no rotation at all.
 #if !defined(Q_CC_MSVC) && !defined(ONLY_FOR_DOXYGEN) // The MSVC compiler and the Doxygen parser do not like C++11 array aggregate initializers.
-	Q_DECL_CONSTEXPR explicit QuaternionT(Identity) : std::array<T, 4>{{ T(0), T(0), T(0), T(1) }} {}
+	Q_DECL_CONSTEXPR QuaternionT(Identity) : std::array<T, 4>{{ T(0), T(0), T(0), T(1) }} {}
 #else
-	explicit QuaternionT(Identity) { this->x() = this->y() = this->z() = T(0); this->w() = T(1); }
+	QuaternionT(Identity) { this->x() = this->y() = this->z() = T(0); this->w() = T(1); }
 #endif
 
 	/// \brief Initializes the quaternion from a rotation matrix.

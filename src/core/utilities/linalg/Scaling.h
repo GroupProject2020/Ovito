@@ -60,7 +60,7 @@ public:
 
 	/// \brief Constructs a Scaling object without initializing its components.
 	/// \note The components are left uninitialized by this constructor and will therefore have a random value!
-	ScalingT() {}
+	ScalingT() = default;
 
 	/// \brief Initializes a Scaling with the scaling factors and the coordinate system.
 	/// \param scaling The scaling factors in x, y and z directions of the axis system specified by \a orientation.

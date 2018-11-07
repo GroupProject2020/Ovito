@@ -8,24 +8,24 @@ File I/O
 Data import
 ------------------------------------
 
-The standard way of loading external data from disk is calling the global :py:func:`~ovito.io.import_file` function::
+The most common way of loading simulation data from a file on disk is calling the global :py:func:`~ovito.io.import_file` function::
 
    from ovito.io import import_file
 
    pipeline = import_file("simulation.dump")
 
-This high-level function works similar to the `Load File` function in OVITO's graphical user interface and automatically detects the format of the input file. 
+This high-level function works similar to the `Load File` function in OVITO's graphical user interface and automatically detects the format of the specified file. 
 See the `OVITO user manual <../../usage.import.html#usage.import.formats>`__ for a list of supported file formats.
-The function returns a new :py:class:`~ovito.pipeline.Pipeline` object, whose associated :py:class:`~ovito.pipeline.FileSource` is set up to point
-to the specified data file. 
+The function returns a new :py:class:`~ovito.pipeline.Pipeline` object, with an associated :py:class:`~ovito.pipeline.FileSource` set up to 
+load the specified data file. 
 
-In case you already have an existing :py:class:`~ovito.pipeline.Pipeline` object, e.g. from a first call to :py:func:`~ovito.io.import_file`, 
-it is possible to later switch the input file of the pipeline with a call to the :py:meth:`FileSource.load() <ovito.pipeline.FileSource.load>` method::
+In case you would like to re-use an existing :py:class:`~ovito.pipeline.Pipeline`, returned by an earlier call to :py:func:`~ovito.io.import_file`, 
+it is possible to subsequently switch the input file with a call to the :py:meth:`FileSource.load() <ovito.pipeline.FileSource.load>` method::
 
    pipeline.source.load("other_simulation.dump")
 
-The :py:meth:`~ovito.pipeline.FileSource.load` method accepts the same parameters as the global :py:func:`~ovito.io.import_file` function, but it doesn't create a new
-pipeline. Any modifiers in the existing pipeline are preserved, only its input data gets replaced with a different input file in this case.
+The :py:meth:`~ovito.pipeline.FileSource.load` method accepts the exact same parameters as the global :py:func:`~ovito.io.import_file` function but won't create a whole new
+pipeline. Any modifiers of the existing pipeline will be preserved, only its input gets replaced with the data from a different file.
 
 .. note::
 
@@ -35,18 +35,26 @@ pipeline. Any modifiers in the existing pipeline are preserved, only its input d
    invoke :py:meth:`Pipeline.add_to_scene() <ovito.pipeline.Pipeline.add_to_scene>` to make the pipeline part of the current scene.
    More on this can be found in the :py:ref:`rendering_intro` section.
 
-**Simulation trajectories**
+**Loading simulation trajectories**
 
-The :py:class:`~ovito.pipeline.FileSource` class and the :py:func:`~ovito.io.import_file` function support loading sequences of simulation 
-frames (*trajectories*) and make them available as time-dependent pipeline input. To load a series of individual simulation files that follow 
-a naming pattern such as :file:`frame.0.dump`, :file:`frame.1000.dump`, :file:`frame.2000.dump`, etc., pass a wildcard pattern to 
+The :py:class:`~ovito.pipeline.FileSource` class and the :py:func:`~ovito.io.import_file` function support loading a sequence of snapshots 
+(i.e. a simulation trajectory). This happens automatically if the frames are all stored in one input file. Many simulation codes, however, 
+produce a series of data files containing one frame each. To load such a file series, which follows a naming pattern such as :file:`frame.0.dump`, :file:`frame.1000.dump`, :file:`frame.2000.dump`, etc., pass a wildcard pattern to 
 the :py:func:`~ovito.io.import_file` function::
 
     pipeline = import_file("/path/frame.*.dump")
 
-OVITO will automatically find all files in the directory matching the pattern and load them as one trajectory. File formats that
-can store multiple frames are automatically loaded as trajectories by OVITO. You can check how many frames were found by querying the 
-:py:attr:`FileSource.num_frames <ovito.pipeline.FileSource.num_frames>` property::
+OVITO automatically finds all files matching the pattern (must all be in one directory) and loads them as one trajectory. The third option
+is to specify the list of files explicitly::
+
+    file_list = [
+        "dir_a/simulation.dump", 
+        "dir_b/simulation.dump",
+        "dir_c/simulation.dump"
+    ]
+    pipeline = import_file(file_list)
+
+The :py:attr:`FileSource.num_frames <ovito.pipeline.FileSource.num_frames>` property tells you how many frames are in the loaded simulation trajectory::
 
    print(pipeline.source.num_frames)
 
@@ -75,15 +83,17 @@ Once a simulation trajectory was loaded using :py:func:`~ovito.io.import_file`, 
        data = pipeline.compute(frame)
        ...
 
-The :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` method takes the frame number as argument at which the pipeline should
-be evaluated. This call triggers a load operation and lets the pipeline's :py:class:`~ovito.pipeline.FileSource` fetch the requested input data from
-the external simulation file. Note that frame numbering starts at 0 in OVITO.
+In the loop, the :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` method is called with the frame number as argument at which the pipeline should
+be evaluated. As part of this :py:meth:`~ovito.pipeline.Pipeline.compute` call, the pipeline's :py:class:`~ovito.pipeline.FileSource` will fetch the input data 
+of the requested frame from the external simulation file(s). Note that frame numbering starts at 0 in OVITO.
 
-**Column-to-property mapping**
+**File column to property mapping**
 
-When loading a MD simulation file, OVITO needs to map the stored information to corresponding particle properties in memory. Typically, this happens 
-automatically. Certain file formats, however, do not contain sufficient information to perform this mapping automatically. For instance, when loading a 
-plain XYZ file, the mapping of input file columns to OVITO's particle properties needs to be explicitly specified using the ``columns`` keyword::
+When loading a simulation file containing atoms or other types of particles, OVITO needs to map the stored per-particle information to corresponding 
+`particle properties  <../../usage.particle_properties.html>`__ within OVITO's internal data model. Typically, this mapping happens automatically. 
+Certain file formats, however, do not contain sufficient information to perform it automatically. For instance, when loading a legacy
+XYZ file, which can contain any number of file columns with user-defined meanings, the mapping of these file columns to OVITO's particle properties needs 
+to be explicitly specified using the ``columns`` keyword::
 
    pipeline = import_file("simulation.xyz", columns = 
             ["Particle Type", "Position.X", "Position.Y", "Position.Z", "My Property"])
@@ -97,9 +107,9 @@ See the documentation of the :py:func:`~ovito.io.import_file` function for more 
 Data export
 ------------------------------------
 
-Exporting data to a file is typically done using the global :py:func:`ovito.io.export_file` function.
-For example, to export the particle information that is output by a :py:class:`~ovito.pipeline.Pipeline` to a LAMMPS dump file, one would
-write::
+Exporting data to an output file is typically done using the global :py:func:`ovito.io.export_file` function.
+For example, to export the particles and their properties, some of which may have been computed by a :py:class:`~ovito.pipeline.Pipeline`, 
+one would write::
 
     from ovito.io import export_file
 
@@ -108,18 +118,18 @@ write::
 
 The second and third function parameters specify the output filename and the
 file format. For a list of supported file formats, see the :py:func:`~ovito.io.export_file` documentation.
-Depending on the selected format, additional keyword arguments may need to be specified. For instance
+Depending on the selected format, additional keyword arguments may need to be specified. For instance,
 in the example above, the ``columns`` parameter specifies the list of particle properties to be exported to the output file.
 
-In addition to particle data, :py:func:`~ovito.io.export_file` can also export other types of data computed by OVITO.
-One example are *attributes*, which are global values output by modifiers during the pipeline evaluation.
-In other words, unlike particle properties, attributes are computation results that are associated with the particle dataset as a whole.
-For example, the :py:class:`~ovito.modifiers.ExpressionSelectionModifier` outputs an attribute with the name ``SelectExpression.num_selected``
+In addition to particles, :py:func:`~ovito.io.export_file` can also export other types of data computed by OVITO.
+One example are *attributes*, which are global quantities computed by modifiers in a pipeline.
+In other words, attributes are global information that is associated with the dataset as a whole.
+For example, the :py:class:`~ovito.modifiers.ExpressionSelectionModifier` outputs the ``SelectExpression.num_selected`` attribute
 to report the number of particles that matched the given selection criterion.
 
-We can export the value of this computed attribute to a text file, typically for all frames of a simulation as a table, 
-to graphically plot the time evolution using an external program. For this purpose the :py:func:`~ovito.io.export_file` function
-supports the ``txt`` output format::
+We can export the value of this dynamically computed attribute to a text file, typically for all frames of a trajectory as a table.
+Such a table could then be used to produce a chart of the time evolution of the quantity using an external plotting program. 
+For this purpose the :py:func:`~ovito.io.export_file` function supports the ``txt/attr`` output format::
 
    pipeline = import_file("simulation*.dump")
 
@@ -129,10 +139,11 @@ supports the ``txt`` output format::
    export_file(pipeline, "potenergy.txt", "txt/attr", multiple_frames = True,
             columns = ["Frame", "SelectExpression.num_selected"])
 
-The ``multiple_frames`` keyword arguments tells the :py:func:`~ovito.io.export_file` function to evaluate the pipeline for all
-animation frames. Without it, only the current frame (frame 0) would have been exported to the output file.
-The program above produces a text file :file:`potenergy.txt` containing one line per simulation frame::
+The ``multiple_frames`` option tells :py:func:`~ovito.io.export_file` to evaluate the pipeline for all
+frames of the loaded trajectory. Without it, only the first frame (frame 0) would have been exported to the output file.
+The program above produces a text file containing one line per animation frame::
 
+   # "Frame" "SelectExpression.num_selected"
    0 531
    1 540
    2 522
@@ -140,11 +151,11 @@ The program above produces a text file :file:`potenergy.txt` containing one line
    ...
 
 The first column contains the animation frame number (starting at 0) and the second
-column contains the value of the ``SelectExpression.num_selected`` attribute generated by the :py:class:`~ovito.modifiers.ExpressionSelectionModifier`
-in the pipeline.
+column contains the value of the ``SelectExpression.num_selected`` attribute calculated by the 
+:py:class:`~ovito.modifiers.ExpressionSelectionModifier` as part of the data pipeline.
 
-Typically, global attributes are dynamically generated by modifiers in the pipeline, but some may also be loaded from the 
-data file that serves as input for the data pipeline. For example, an attributed named ``Timestep`` is automatically generated by OVITO when importing a LAMMPS dump file,
-denoting the simulation timestep number of the loaded snapshots. This makes it possible, for example,
-to replace the animation frame number in the first column above (corresponding to the predefined attribute ``Frame``)
-with the actual timestep number from the simulation. See :py:attr:`ovito.data.DataCollection.attributes` for more information.
+Typically, global attributes are dynamically computed by modifiers in the pipeline, but some may also be directly read from the  
+input data file. For example, an attributed named ``Timestep`` is automatically generated by OVITO when importing a LAMMPS dump file,
+reporting the simulation timestep number at the current animation frame. This makes it possible, for example,
+to replace the animation frame number in the first file column above
+with the actual timestep of the MD simulation. See :py:attr:`ovito.data.DataCollection.attributes` for more information on global attributes.

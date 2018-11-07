@@ -51,8 +51,8 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPAC
  * Point_3 derives from std::array<T,3>. Thus, the point coordinates can be accessed via indices, but also via names:
  *
  * \code
- *      p[1]  = 10.0f;
- *      p.y() = 10.0f;
+ *      p[1]  = 10.0;
+ *      p.y() = 10.0;
  * \endcode
  *
  * Note that the default constructor does not initialize the components of the point for performance reasons.
@@ -100,7 +100,7 @@ public:
 	/////////////////////////////// Constructors /////////////////////////////////
 
 	/// Constructs a point without initializing its components. The components will have an undefined value!
-	Point_3() {}
+	Point_3() = default;
 
 	/// Constructs a point with all three components initialized to the given value.
 #if !defined(Q_CC_MSVC) && !defined(ONLY_FOR_DOXYGEN) // The MSVC compiler and the Doxygen parser do not like C++11 array aggregate initializers.

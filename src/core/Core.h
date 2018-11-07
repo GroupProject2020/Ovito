@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2014) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -82,8 +82,8 @@
 #include <QTemporaryFile>
 #include <QElapsedTimer>
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 6, 0)
-#  error "OVITO requires Qt 5.6 or newer."
+#if QT_VERSION < QT_VERSION_CHECK(5, 4, 0)
+#  error "OVITO requires Qt 5.4 or newer."
 #endif
 
 /******************************************************************************

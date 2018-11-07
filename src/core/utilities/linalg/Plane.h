@@ -65,7 +65,7 @@ public:
 
 	/// Empty default constructor that does not initialize the fields of the object for performance reasons!
 	/// Both the normal vector and the distance parameter are undefined.
-	Plane_3() {}
+	Plane_3() = default;
 
 	/// \brief Initializes the plane from a normal vector and a distance parameter.
 	/// \param n The normal vector. This should be a unit vector.

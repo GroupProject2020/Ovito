@@ -55,8 +55,8 @@ namespace Ovito { OVITO_BEGIN_INLINE_NAMESPACE(Util) OVITO_BEGIN_INLINE_NAMESPAC
  * Vector_4 derives from std::array<T,4>. Thus, the vector's components can be accessed via indices, but also via names:
  *
  * \code
- *      v[3]  = 10.0f;
- *      v.w() = 10.0f;
+ *      v[3]  = 10.0;
+ *      v.w() = 10.0;
  * \endcode
  *
  * \sa Vector_2, Vector_3, Matrix_4
@@ -78,7 +78,7 @@ public:
 	/////////////////////////////// Constructors /////////////////////////////////
 
 	/// Constructs a vector without initializing its components. The components will have an undefined value!
-	Vector_4() {}
+	Vector_4() = default;
 
 	/// Constructs a vector with all four components initialized to the given value.
 #if !defined(Q_CC_MSVC) && !defined(ONLY_FOR_DOXYGEN) // The MSVC compiler and the Doxygen parser do not like C++11 array aggregate initializers.

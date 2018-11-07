@@ -1,27 +1,36 @@
 .. _scripting_running:
 
 ==================================
-Running scripts
+Using scripting features
 ==================================
 
-OVITO's scripting interface enables you to automate visualization and analysis tasks and add new modifier and analysis 
-functions to the program. The following sections provide a brief overview of the ways by which OVITO's scripting framework may used:
+OVITO's scripting interface enables you to automate visualization and analysis tasks and to implement your own data manipulation and analysis 
+algorithms. The scripting interface consists of a set of Python classes and functions that provide access to the program's
+internal data model, data processing framework and visualization functions. For a new user, it can be somewhat confusing at first that 
+the scripting capabilities can be used in multiple ways: On one hand, the graphical OVITO application contains an embedded Python interpreter,
+which lets you execute Python scripts in the context of the running application. Such scripts can operate on the currently 
+loaded dataset and allow you to extend the capabilities of the interactive OVITO application. 
+On the other hand, it is possible to execute automation scripts from the system terminal without opening the 
+interactive OVITO application. This allows you to leverage the analysis and visualization features of the program package
+and integrate them into fully automated post-processing and visualization workflows. 
+The following paragraphs provide a brief overview of the different ways to use OVITO's scripting interface:
 
 **Batch scripts** 
 
 Batch scripts are a way to integrate OVITO's powerful data processing and visualization capabilities into custom
-workflows for post-processing of simulations. Such script are typically run from the terminal using the :program:`ovitos` 
+workflows for post-processing of simulations. Such script are typically run from the system terminal using the :program:`ovitos` 
 script interpreter (not :program:`ovito`!), which works similar to a standard Python interpreter and which will be introduced below. 
-Batch scripts run non-interactively and outside the graphical user interface, but they can leverage most program features
-you already know from the graphical OVITO version, e.g. loading simulation data, setting up data pipelines, rendering pictures and animations,
+Batch scripts run non-interactively and outside the graphical user interface, but they can leverage most program features that
+you already know from the interactive OVITO application, e.g. loading simulation data, setting up data pipelines, rendering pictures and animations,
 accessing computation results and exporting data to output files.
  
 **Macro scripts** 
 
-The *Run Script File* function from the *File* menu of the graphical OVITO program lets you run a Python script file at any time
+The *Run Script File* function from the *File* menu of the graphical OVITO program lets you execute a Python script file at any time
 within the graphical user interface. The script will be executed in the context of the active program session and 
-from there it can invoke program functions, just like to a human using the graphical user interface. 
-For example, your script may insert certain modifiers into the current data pipeline or export data to an output file. 
+may invoke program functions just like a human user of the graphical interface can. 
+For example, your script may insert certain modifiers into the current data pipeline or export the data of the current pipeline to an 
+output file. 
 
 This type of script is typically used to perform sequences of program actions that you need frequently. 
 Instead of carrying them out by hand, you let the script invoke the actions for you, similar to an *application macro*. 

@@ -87,7 +87,7 @@ public:
 
 	/// \brief Empty default constructor that does not initialize the matrix elements (for performance reasons).
 	///        The matrix elements will have an undefined value and need to be initialized later.
-	Matrix_3() {}
+	Matrix_3() = default;
 
 	/// \brief Constructor that initializes all 9 elements of the matrix to the given values.
 	/// \note Values are given in row-major order, i.e. row by row.

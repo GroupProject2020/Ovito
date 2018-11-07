@@ -1,7 +1,7 @@
 """
-This module contains various types of data objects, which are produced and processed within OVITO's data pipeline system.
-It also provides the :py:class:`DataCollection` class as a container for such data objects as well as several utility classes to
-compute neighbor lists or iterate over the bonds of particles.
+This Python module defines various data object types, which are produced and processed within OVITO's data pipeline system.
+It also provides the :py:class:`DataCollection` class as a container for such data objects as well as several utility classes for
+computing neighbor lists or iterating over the bonds of particles.
 
 **Data containers:**
 

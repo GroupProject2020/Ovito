@@ -12,70 +12,56 @@ Rendering & visualization
 .. _rendering_display_objects:
 
 -----------------------------------
-Display objects
+Visual elements
 -----------------------------------
 
-In OVITO, *data objects* are separated from *display objects*, which are responsible for
-producing a visual representation of the data. For example, a :py:class:`~ovito.data.SimulationCell` 
-is a pure data object, which stores the simulation cell vectors and the periodic boundary flags. 
-The corresponding display object (a :py:class:`~ovito.vis.SimulationCellVis`)
-takes this information to generate the actual box geometry to visualize the dimensions of the simulation
-cell in the viewports. The display object also stores parameters such as the simulation cell display color
-and line width, which control the visual appearance.
+In OVITO, *data objects* are separated from *visual elements*, which are responsible for
+producing a visual representation of the data object. For example, a :py:class:`~ovito.data.SimulationCell` 
+is a data object storing the simulation cell vectors and the periodic boundary flags. 
+The corresponding visual element,  a :py:class:`~ovito.vis.SimulationCellVis`,
+takes this information to generate the actual geometry primitives to visualize the simulation
+cell in the viewports and in rendered pictures. A visual element typically has a set of parameters that 
+control the visual appearance, for example the line color of the simulation box.
 
-The display object is attached to the data object and can be accessed through the :py:attr:`~ovito.data.DataObject.display`
+A visual element is attached to the data object that is should visualize, and you access it through the :py:attr:`~ovito.data.DataObject.vis`
 attribute of the :py:class:`~ovito.data.DataObject` base class::
 
-    >>> cell = node.source.cell           
-    >>> cell                                     # This is the data object
+    >>> data.cell                                # This is the data object
     <SimulationCell at 0x7f9a414c8060>
     
-    >>> cell.display                             # This is the attached display object
+    >>> data.cell.vis                            # This is the attached visual element
     <SimulationCellVis at 0x7fc3650a1c20>
 
-    >>> cell.display.rendering_color = (1,0,0)   # Giving the simulation box a red color
+    >>> data.cell.vis.rendering_color = (1,0,0)  # Giving the simulation box a red color
     
-All display objects are derived from the :py:class:`~ovito.vis.Display` base class, which provides
-the :py:attr:`~ovito.vis.Display.enabled` attribute to turn the display on or off::
+All display objects are derived from the :py:class:`~ovito.vis.DataVis` base class, which defines
+the :py:attr:`~ovito.vis.DataVis.enabled` attribute that turns the display on or off::
 
-    >>> cell.display.enabled = False         # This hides the simulation cell
+    >>> data.cell.vis.enabled = False         # This hides the simulation cell
     
 The visual display of particles is controlled by a :py:class:`~ovito.vis.ParticlesVis` object, which
-is attached to the position :py:class:`~ovito.data.ParticleProperty`. For example, to display 
-cubic particles, we would write::
+is attached to the :py:class:`~ovito.data.Particles` data object. For example, to display 
+cubic particles::
 
-    >>> pos = node.source.particle_properties.position      # ParticleProperty storing the positions
-    >>> pos.display.shape = ParticlesVis.Shape.Square
+    >>> data.particles.vis.shape = ParticlesVis.Shape.Square
 
-.. note::
-
-    Note that display objects flow down the modification pipeline together with the data objects they are
-    attached to. Normally they are not modified by modifiers in the pipeline, only the data objects are.
-    That means it doesn't matter whether you change display parameters in the input of the modification pipeline
-    or in the output. In the examples above we have accessed the input data collection (``node.source``),
-    but changing the display parameters in the output data collection (``node.output``) would have worked
-    equally well.
-    
-Some modifiers produce new data objects when the modification pipeline is evaluated.
-For example, the :py:class:`~ovito.modifiers.CalculateDisplacementsModifier` generates a new :py:class:`~ovito.data.ParticleProperty` 
-that stores the computed displacement vectors. To enable the display of displacement vectors
-as arrows, the :py:class:`~ovito.modifiers.CalculateDisplacementsModifier` attaches a
-:py:class:`~ovito.vis.VectorVis` to the new particle property. We can access this display object
-in two equivalent ways: either directly though the :py:attr:`~ovito.modifiers.CalculateDisplacementsModifier.vector_display` attribute of the modifier::
+Some modifiers in a data pipeline may produce new data objects, for example as a result of a computation.
+The :py:class:`~ovito.modifiers.CalculateDisplacementsModifier` generates a new particle :py:class:`~ovito.data.Property` 
+that stores the computed displacement vectors. To support the visualization of displacement vectors
+as arrows, the :py:class:`~ovito.modifiers.CalculateDisplacementsModifier` automatically attaches a
+:py:class:`~ovito.vis.VectorVis` element to the new particle property. We can access this visual element
+in two ways: either directly through the :py:attr:`~ovito.modifiers.CalculateDisplacementsModifier.vector_vis` field of the modifier::
 
     >>> modifier = CalculateDisplacementsModifier()
-    >>> node.modifiers.append(modifier)
-    >>> modifier.vector_display.enabled = True       # Enable the display of arrows
-    >>> modifier.vector_display.color = (0,0,1)      # Give arrows a blue color
+    >>> pipeline.modifiers.append(modifier)
+    >>> modifier.vector_vis.enabled = True       # Enable the display of arrows
+    >>> modifier.vector_vis.color = (0,0,1)      # Give arrows a blue color
 
-or via the :py:attr:`~ovito.data.DataObject.display` attribute of the resulting particle property::
+or via the :py:attr:`~ovito.data.DataObject.vis` field of the particle :py:class:`~ovito.data.Property` ::
 
-    >>> node.compute()                                      # Ensure pipeline output exists
-    >>> node.output.particle_properties.displacement.display.enabled = True     # Enable the display of arrows
-    >>> node.output.particle_properties.displacement.display.color = (0,0,1)    # Give arrows a blue color
-    
-Similarly, the :py:class:`~ovito.modifiers.CreateBondsModifier` attached a :py:class:`~ovito.vis.BondsVis`
-to the :py:class:`~ovito.data.Bonds` data object it computes.
+    >>> data = pipeline.compute()                                  
+    >>> data.particles.displacements.vis.enabled = True     # Enable the display of arrows
+    >>> data.particles.displacements.vis.color = (0,0,1)    # Give arrows a blue color
     
 .. _rendering_viewports:
 
@@ -83,10 +69,9 @@ to the :py:class:`~ovito.data.Bonds` data object it computes.
 Viewports
 -----------------------------------
 
-A :py:class:`~ovito.vis.Viewport` defines the view of the three-dimensional scene, in which the display
-objects generate a visual representation of the data. To render a picture of the scene from a script, you
-typically create a new *ad hoc* :py:class:`~ovito.vis.Viewport` instance and configure it by setting 
-the camera position and orientation::
+A :py:class:`~ovito.vis.Viewport` defines a view of the three-dimensional scene, in which the visual representation of the data
+of a pipeline is generated. To render a picture of the scene, you typically create a new *ad hoc* :py:class:`~ovito.vis.Viewport` 
+object and configure it by setting the camera position and orientation::
 
     >>> from ovito.vis import Viewport
     >>> vp = Viewport()
@@ -95,19 +80,16 @@ the camera position and orientation::
     >>> vp.camera_dir = (2, 3, -3)
     >>> vp.fov = math.radians(60.0)
 
-As known from the graphical OVITO program, there exist various viewport types such as ``TOP``, ``FRONT``, ``PERSPECTIVE``, etc. 
+As known from the interactive OVITO program, there exist various standard viewport types such as ``TOP``, ``FRONT``, etc. 
 The ``PERSPECTIVE`` and ``ORTHO`` viewport types allow you to freely orient the camera in space and
-are usually what you want. Don't forget to set the viewport type first before setting up the camera as demonstrated
-in the example above. That's because changing the viewport type will reset the camera to a default orientation.
+are usually what you need in a Python script. Don't forget to set the viewport type first before configuring any other camera-related parameters. 
+That's because changing the viewport type will reset the camera orientation to a default value.
 
-The ``PERSPECTIVE`` viewport type uses a perspective projection, and you specify the field of view 
-(:py:attr:`~ovito.vis.Viewport.fov`) as an angle (measured vertically). The ``ORTHO`` viewport type
-uses a parallel projection; then the :py:attr:`~ovito.vis.Viewport.fov` parameter specifies the size of the visible
-area in the vertical direction in length units. You can call the :py:meth:`Viewport.zoom_all() <ovito.vis.Viewport.zoom_all>`
-method to let OVITO choose a reasonable camera zoom and position such that all objects are completely visible.
-
-OVITO's graphical user interface defines four standard viewports. You can access and manipulate them from a script via 
-the :py:attr:`dataset.viewports <ovito.DataSet.viewports>` list.
+The ``PERSPECTIVE`` viewport type selects a perspective projection, and you can control the vertical field of view 
+by setting the :py:attr:`~ovito.vis.Viewport.fov` parameter to the desired angle. The ``ORTHO`` viewport type
+uses a parallel projection; In this case, the :py:attr:`~ovito.vis.Viewport.fov` parameter specifies the vertical size of the visible
+area in units of length. Optionally, you can call the :py:meth:`Viewport.zoom_all() <ovito.vis.Viewport.zoom_all>`
+method to let OVITO automatically choose a reasonable camera zoom and position such that all objects become completely visible.
 
 -----------------------------------
 Rendering

@@ -57,7 +57,7 @@ public:
 
 	/// \brief Constructs a tensor without initializing its components.
 	/// \note All components are left uninitialized by this constructor and will therefore have an undefined value!
-	SymmetricTensor2T() {}
+	SymmetricTensor2T() = default;
 
 	/// \brief Constructor that initializes all tensor components to the same value.
 	explicit SymmetricTensor2T(T val)
