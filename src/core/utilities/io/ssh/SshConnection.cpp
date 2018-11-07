@@ -491,13 +491,13 @@ void SshConnection::tryNextAuth()
         _useAuths &= ~UseAuthAutoPubKey;
         setState(StateAuthAutoPubkey, true);
     }
-    else if(_useAuths & UseAuthPassword) {
-        _useAuths &= ~UseAuthPassword;
-        setState(StateAuthPassword, true);
-    }
     else if(_useAuths & UseAuthKbi) {
         _useAuths &= ~UseAuthKbi;
         setState(StateAuthKbi, true);
+    }
+    else if(_useAuths & UseAuthPassword) {
+        _useAuths &= ~UseAuthPassword;
+        setState(StateAuthPassword, true);
     }
 }
 
