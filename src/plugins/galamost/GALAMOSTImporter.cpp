@@ -311,8 +311,13 @@ bool GALAMOSTImporter::FrameLoader::endElement(const QString& namespaceURI, cons
 			for(size_t i = 0; i < _natoms; i++) {
 				Vector3 dir;
 				stream >> dir.x() >> dir.y() >> dir.z();
-				Rotation r(Vector3(0,0,1), dir);
-				_currentProperty->setQuaternion(i, Quaternion(r));
+				if(!dir.isZero()) {
+					Rotation r(Vector3(0,0,1), dir);
+					_currentProperty->setQuaternion(i, Quaternion(r));
+				}
+				else {
+					_currentProperty->setQuaternion(i, Quaternion::Identity());
+				}
 			}
 		}
 		else if(localName == "molecule") {
