@@ -38,17 +38,17 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 IMPLEMENT_OVITO_CLASS(PolyhedralTemplateMatchingModifier);
 DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, rmsdCutoff);
 DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputRmsd);
-DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputStandardOrientations);
 DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputInteratomicDistance);
 DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputOrientation);
+DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, useStandardOrientations);
 DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputDeformationGradient);
 DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputOrderingTypes);
 DEFINE_REFERENCE_FIELD(PolyhedralTemplateMatchingModifier, orderingTypes);
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, rmsdCutoff, "RMSD cutoff");
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputRmsd, "Output RMSD values");
-SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputStandardOrientations, "Output Conventional Orientations");
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputInteratomicDistance, "Output interatomic distance");
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputOrientation, "Output lattice orientations");
+SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, useStandardOrientations, "Use standard orientations");
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputDeformationGradient, "Output deformation gradients");
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputOrderingTypes, "Output ordering types");
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, orderingTypes, "Ordering types");
@@ -60,9 +60,9 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(PolyhedralTemplateMatchingModifier, rmsdCut
 PolyhedralTemplateMatchingModifier::PolyhedralTemplateMatchingModifier(DataSet* dataset) : StructureIdentificationModifier(dataset),
 		_rmsdCutoff(0.1), 
 		_outputRmsd(false), 
-		_outputStandardOrientations(false), 
 		_outputInteratomicDistance(false),
 		_outputOrientation(false), 
+		_useStandardOrientations(true), 
 		_outputDeformationGradient(false), 
 		_outputOrderingTypes(false)
 {
@@ -136,7 +136,7 @@ Future<AsynchronousModifier::ComputeEnginePtr> PolyhedralTemplateMatchingModifie
 
 	return std::make_shared<PTMEngine>(posProperty->storage(), particles, std::move(typeProperty), simCell->data(),
 			getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty),
-			outputInteratomicDistance(), outputOrientation(), outputStandardOrientations(), outputDeformationGradient(), outputOrderingTypes());
+			outputInteratomicDistance(), outputOrientation(), useStandardOrientations(), outputDeformationGradient(), outputOrderingTypes());
 }
 
 typedef struct
@@ -239,7 +239,7 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 			double q[4];
 			double F[9], F_res[3];
 
-			ptm_index(ptm_local_handle, index, get_neighbours, (void*)&nbrdata, flags, _outputStandardOrientations,
+			ptm_index(ptm_local_handle, index, get_neighbours, (void*)&nbrdata, flags, _useStandardOrientations,
 					&type, &alloy_type, &scale, &rmsd, q,
 					deformationGradients() ? F : nullptr,
 					deformationGradients() ? F_res : nullptr,

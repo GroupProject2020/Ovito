@@ -62,43 +62,45 @@ void PolyhedralTemplateMatchingModifierEditor::createUI(const RolloutInsertionPa
 	BooleanParameterUI* onlySelectedParticlesUI = new BooleanParameterUI(this, PROPERTY_FIELD(StructureIdentificationModifier::onlySelectedParticles));
 	gridlayout->addWidget(onlySelectedParticlesUI->checkBox(), 1, 0, 1, 2);
 
-	QGroupBox* outputBox = new QGroupBox(tr("Outputs"), rollout);
-	QVBoxLayout* sublayout = new QVBoxLayout(outputBox);
+	QGroupBox* outputBox = new QGroupBox(tr("Output"), rollout);
+	QGridLayout* sublayout = new QGridLayout(outputBox);
 	sublayout->setContentsMargins(4,4,4,4);
+	sublayout->setColumnStretch(1, 1);
+	sublayout->setColumnMinimumWidth(0, 12);
 	layout1->addWidget(outputBox);
 
 	// Output controls.
 	BooleanParameterUI* outputRmsdUI = new BooleanParameterUI(this, PROPERTY_FIELD(PolyhedralTemplateMatchingModifier::outputRmsd));
-	sublayout->addWidget(outputRmsdUI->checkBox());
+	sublayout->addWidget(outputRmsdUI->checkBox(), 0, 0, 1, 2);
 	outputRmsdUI->checkBox()->setText(tr("RMSD values"));
 	BooleanParameterUI* outputInteratomicDistanceUI = new BooleanParameterUI(this, PROPERTY_FIELD(PolyhedralTemplateMatchingModifier::outputInteratomicDistance));
-	sublayout->addWidget(outputInteratomicDistanceUI->checkBox());
+	sublayout->addWidget(outputInteratomicDistanceUI->checkBox(), 1, 0, 1, 2);
 	outputInteratomicDistanceUI->checkBox()->setText(tr("Interatomic distances"));
 
-	// Color by type
-	BooleanParameterUI* colorByTypeUI = new BooleanParameterUI(this, PROPERTY_FIELD(StructureIdentificationModifier::colorByType));
-	sublayout->addWidget(colorByTypeUI->checkBox());
-
 	BooleanParameterUI* outputDeformationGradientUI = new BooleanParameterUI(this, PROPERTY_FIELD(PolyhedralTemplateMatchingModifier::outputDeformationGradient));
-	sublayout->addWidget(outputDeformationGradientUI->checkBox());
+	sublayout->addWidget(outputDeformationGradientUI->checkBox(), 2, 0, 1, 2);
 	outputDeformationGradientUI->checkBox()->setText(tr("Elastic deformation gradients"));
 	BooleanParameterUI* outputOrderingTypesUI = new BooleanParameterUI(this, PROPERTY_FIELD(PolyhedralTemplateMatchingModifier::outputOrderingTypes));
-	sublayout->addWidget(outputOrderingTypesUI->checkBox());
+	sublayout->addWidget(outputOrderingTypesUI->checkBox(), 3, 0, 1, 2);
 	outputOrderingTypesUI->checkBox()->setText(tr("Ordering types"));
-
 
 	// Lattice orientations
 	BooleanParameterUI* outputOrientationUI = new BooleanParameterUI(this, PROPERTY_FIELD(PolyhedralTemplateMatchingModifier::outputOrientation));
-	sublayout->addWidget(outputOrientationUI->checkBox());
+	sublayout->addWidget(outputOrientationUI->checkBox(), 4, 0, 1, 2);
 	outputOrientationUI->checkBox()->setText(tr("Lattice orientations"));
 
-	//todo: make this inaccessible (greyed out) if lattice orientations box is not ticked
-	IntegerRadioButtonParameterUI* conventionalOrientationUI = new IntegerRadioButtonParameterUI(this, PROPERTY_FIELD(PolyhedralTemplateMatchingModifier::outputStandardOrientations));
-	QRadioButton* standardModeBtn = conventionalOrientationUI->addRadioButton(true, tr("Standard reference orientations"));
-	QRadioButton* templateModeBtn = conventionalOrientationUI->addRadioButton(false, tr("PTM template orientations"));
-	sublayout->addWidget(standardModeBtn);
-	sublayout->addWidget(templateModeBtn);
+	// Selection of reference configuration for lattice orientation calculation:
+	IntegerRadioButtonParameterUI* referenceOrientationUI = new IntegerRadioButtonParameterUI(this, PROPERTY_FIELD(PolyhedralTemplateMatchingModifier::useStandardOrientations));
+	referenceOrientationUI->setEnabled(false);
+	QRadioButton* standardModeBtn = referenceOrientationUI->addRadioButton(true, tr("Use standard reference orientations"));
+	QRadioButton* templateModeBtn = referenceOrientationUI->addRadioButton(false, tr("Use PTM template orientations"));
+	sublayout->addWidget(standardModeBtn, 5, 1);
+	sublayout->addWidget(templateModeBtn, 6, 1);
+	connect(outputOrientationUI->checkBox(), &QCheckBox::toggled, referenceOrientationUI, &IntegerRadioButtonParameterUI::setEnabled);
 
+	// Color by type
+	BooleanParameterUI* colorByTypeUI = new BooleanParameterUI(this, PROPERTY_FIELD(StructureIdentificationModifier::colorByType));
+	sublayout->addWidget(colorByTypeUI->checkBox(), 7, 0, 1, 2);
 
 	StructureListParameterUI* structureTypesPUI = new StructureListParameterUI(this, true);
 	layout1->addSpacing(10);

@@ -963,9 +963,9 @@ void defineModifiersSubmodule(py::module m)
 				"See the OVITO user manual for details. "
 				"\n\n"
 				":Default: ``False``\n")
-		.def_property("output_conventional_orientations", &PolyhedralTemplateMatchingModifier::outputStandardOrientations, &PolyhedralTemplateMatchingModifier::setOutputStandardOrientations,
-				"Boolean flag that controls whether the modifier outputs standard reference orientations or the PTM template orientations."
-				"This only affects HCP, diamond cubic, and diamond hexagonal structure types."
+		.def_property("use_standard_orientations", &PolyhedralTemplateMatchingModifier::useStandardOrientations, &PolyhedralTemplateMatchingModifier::setUseStandardOrientations,
+				"Boolean flag that controls whether the modifier should use the standard reference lattice orientations or the PTM template orientations when calculating "
+				"local lattice orientations. This only affects HCP, diamond cubic, and diamond hexagonal structure types. "
 				"See the OVITO user manual for details. "
 				"\n\n"
 				":Default: ``True``\n")

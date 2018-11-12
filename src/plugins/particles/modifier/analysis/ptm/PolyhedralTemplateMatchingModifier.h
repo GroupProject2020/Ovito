@@ -112,7 +112,7 @@ private:
 		/// Constructor.
 		PTMEngine(ConstPropertyPtr positions, ParticleOrderingFingerprint fingerprint, ConstPropertyPtr particleTypes, const SimulationCell& simCell,
 				QVector<bool> typesToIdentify, ConstPropertyPtr selection,
-				bool outputInteratomicDistance, bool outputOrientation, bool outputStandardOrientations, bool outputDeformationGradient, bool outputOrderingTypes) :
+				bool outputInteratomicDistance, bool outputOrientation, bool useStandardOrientations, bool outputDeformationGradient, bool outputOrderingTypes) :
 			StructureIdentificationEngine(std::move(fingerprint), positions, simCell, std::move(typesToIdentify), std::move(selection)),
 			_particleTypes(std::move(particleTypes)),
 			_rmsd(std::make_shared<PropertyStorage>(positions->size(), PropertyStorage::Float, 1, 0, tr("RMSD"), false)),
@@ -120,7 +120,7 @@ private:
 			_orientations(outputOrientation ? ParticlesObject::OOClass().createStandardStorage(positions->size(), ParticlesObject::OrientationProperty, true) : nullptr),
 			_deformationGradients(outputDeformationGradient ? ParticlesObject::OOClass().createStandardStorage(positions->size(), ParticlesObject::ElasticDeformationGradientProperty, true) : nullptr),
 			_orderingTypes(outputOrderingTypes ? std::make_shared<PropertyStorage>(positions->size(), PropertyStorage::Int, 1, 0, tr("Ordering Type"), true) : nullptr),
-			_outputStandardOrientations(outputStandardOrientations) {}
+			_useStandardOrientations(useStandardOrientations) {}
 
 		/// This method is called by the system after the computation was successfully completed.
 		virtual void cleanup() override {
@@ -161,16 +161,13 @@ private:
 		const PropertyPtr _orderingTypes;
 		PropertyPtr _rmsdHistogram;
 		FloatType _rmsdHistogramRange;
-		bool _outputStandardOrientations;
+		bool _useStandardOrientations;
 	};
 
 private:
 
 	/// The RMSD cutoff.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, rmsdCutoff, setRmsdCutoff, PROPERTY_FIELD_MEMORIZE);
-
-	/// Controls the output of the orientation type.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, outputStandardOrientations, setOutputStandardOrientations, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the output of the per-particle RMSD values.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, outputRmsd, setOutputRmsd);
@@ -180,6 +177,9 @@ private:
 
 	/// Controls the output of local orientations.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, outputOrientation, setOutputOrientation, PROPERTY_FIELD_MEMORIZE);
+
+	/// Controls the type of reference configuration to use for lattice orientation calculation.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, useStandardOrientations, setUseStandardOrientations, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the output of elastic deformation gradients.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, outputDeformationGradient, setOutputDeformationGradient);
