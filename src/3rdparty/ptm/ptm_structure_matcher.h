@@ -1,8 +1,11 @@
-#ifndef STRUCTURE_MATCHER_HPP
-#define STRUCTURE_MATCHER_HPP
+#ifndef PTM_STRUCTURE_MATCHER_H
+#define PTM_STRUCTURE_MATCHER_H
 
-#include <cstdint>
+#include "ptm_initialize_data.h"
 #include "ptm_constants.h"
+
+
+namespace ptm {
 
 typedef struct
 {
@@ -16,6 +19,9 @@ typedef struct
 int match_general(const refdata_t* s, double (*ch_points)[3], double (*points)[3], convexhull_t* ch, result_t* res);
 int match_fcc_hcp_ico(double (*ch_points)[3], double (*points)[3], int32_t flags, convexhull_t* ch, result_t* res);
 int match_dcub_dhex(double (*ch_points)[3], double (*points)[3], int32_t flags, convexhull_t* ch, result_t* res);
+int match_graphene(double (*points)[3], result_t* res);
+
+}
 
 #endif
 

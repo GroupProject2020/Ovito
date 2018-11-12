@@ -1,4 +1,3 @@
-#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <string.h>
@@ -6,19 +5,17 @@
 #include <cfloat>
 #include <cassert>
 #include <algorithm>
-#include "convex_hull_incremental.hpp"
-#include "canonical_coloured.hpp"
-#include "graph_data.hpp"
-#include "graph_tools.hpp"
-#include "normalize_vertices.hpp"
-#include "qcprot/polar.hpp"
-#include "initialize_data.hpp"
-#include "structure_matcher.hpp"
+#include "ptm_convex_hull_incremental.h"
+#include "ptm_canonical_coloured.h"
+#include "ptm_graph_data.h"
+#include "ptm_graph_tools.h"
+#include "ptm_normalize_vertices.h"
+#include "ptm_polar.h"
+#include "ptm_structure_matcher.h"
 #include "ptm_constants.h"
 
-#include <array>
-using namespace std;
 
+namespace ptm {
 
 static double calc_rmsd(int num_points, const double (*ideal_points)[3], double (*normalized)[3], int8_t* mapping,
 			double G1, double G2, double E0, double* q, double* p_scale)
@@ -127,7 +124,7 @@ int match_general(const refdata_t* s, double (*ch_points)[3], double (*points)[3
 	double normalized[PTM_MAX_POINTS][3];
 	subtract_barycentre(s->num_nbrs + 1, points, normalized);
 
-	std::array<int8_t, 2 * PTM_MAX_EDGES> code;
+	int8_t code[2 * PTM_MAX_EDGES];
 	int8_t colours[PTM_MAX_POINTS] = {0};
 	int8_t canonical_labelling[PTM_MAX_POINTS];
 	uint64_t hash = 0;
@@ -163,7 +160,7 @@ int match_fcc_hcp_ico(double (*ch_points)[3], double (*points)[3], int32_t flags
 	double normalized[PTM_MAX_POINTS][3];
 	subtract_barycentre(num_nbrs + 1, points, normalized);
 
-	std::array<int8_t, 2 * PTM_MAX_EDGES> code;
+	int8_t code[2 * PTM_MAX_EDGES];
 	int8_t colours[PTM_MAX_POINTS] = {0};
 	int8_t canonical_labelling[PTM_MAX_POINTS];
 	uint64_t hash = 0;
@@ -283,7 +280,7 @@ int match_dcub_dhex(double (*ch_points)[3], double (*points)[3], int32_t flags, 
 	double normalized[PTM_MAX_POINTS][3];
 	subtract_barycentre(num_nbrs + 1, points, normalized);
 
-	std::array<int8_t, 2 * PTM_MAX_EDGES> code;
+	int8_t code[2 * PTM_MAX_EDGES];
 	int8_t colours[PTM_MAX_POINTS] = {1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	int8_t canonical_labelling[PTM_MAX_POINTS];
 	uint64_t hash = 0;
@@ -295,5 +292,76 @@ int match_dcub_dhex(double (*ch_points)[3], double (*points)[3], int32_t flags, 
 	if (flags & PTM_CHECK_DHEX)	check_graphs(&structure_dhex, hash, canonical_labelling, normalized, res);
 
 	return PTM_NO_ERROR;
+}
+
+
+static void check_graphs_graphene(	const refdata_t* s,
+					int num_points,
+					const double (*ideal_points)[3],
+					double (*normalized)[3],
+					int8_t* mapping, 
+					result_t* res)
+{
+	double G1 = 0, G2 = 0;
+	for (int i=0;i<num_points;i++)
+	{
+		double x1 = ideal_points[i][0];
+		double y1 = ideal_points[i][1];
+		double z1 = ideal_points[i][2];
+
+		double x2 = normalized[i][0];
+		double y2 = normalized[i][1];
+		double z2 = normalized[i][2];
+
+		G1 += x1 * x1 + y1 * y1 + z1 * z1;
+		G2 += x2 * x2 + y2 * y2 + z2 * z2;
+	}
+	double E0 = (G1 + G2) / 2;
+
+	double q[4], scale = 0;
+	double rmsd = calc_rmsd(num_points, ideal_points, normalized, mapping, G1, G2, E0, q, &scale);
+	if (rmsd < res->rmsd)
+	{
+		res->rmsd = rmsd;
+		res->scale = scale;
+		res->ref_struct = s;
+		memcpy(res->q, q, 4 * sizeof(double));
+		memcpy(res->mapping, mapping, sizeof(int8_t) * num_points);
+	}
+}
+
+int match_graphene(double (*points)[3], result_t* res)
+{
+	int num_nbrs = structure_graphene.num_nbrs;
+	int num_points = num_nbrs + 1;
+	const double (*ideal_points)[3] = structure_graphene.points;
+
+	double normalized[PTM_MAX_POINTS][3];
+	subtract_barycentre(num_points, points, normalized);
+
+	int8_t mapping[PTM_MAX_POINTS];
+	for (int i=0;i<num_points;i++)
+		mapping[i] = i;
+
+	for (int i=0;i<2;i++)
+	{
+		std::swap(mapping[4], mapping[5]);
+
+		for (int j=0;j<2;j++)
+		{
+			std::swap(mapping[6], mapping[7]);
+
+			for (int k=0;k<2;k++)
+			{
+				std::swap(mapping[8], mapping[9]);
+
+				check_graphs_graphene(&structure_graphene, num_points, ideal_points, normalized, mapping, res);
+			}
+		}
+	}
+
+	return PTM_NO_ERROR;
+}
+
 }
 

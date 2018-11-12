@@ -57,6 +57,7 @@ public:
 		HEX_DIAMOND_FIRST_NEIGH,	//< First neighbor of a hexagonal diamond atom
 		HEX_DIAMOND_SECOND_NEIGH,	//< Second neighbor of a hexagonal diamond atom
 		SC,							//< Simple cubic structure
+		GRAPHENE,						//< Graphene structure
 
 		NUMBER_OF_PREDEFINED_STRUCTURE_TYPES
 	};

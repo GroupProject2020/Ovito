@@ -1,11 +1,12 @@
-#ifndef CONVEX_HULL_INCREMENTAL_HPP
-#define CONVEX_HULL_INCREMENTAL_HPP
+#ifndef PTM_CONVEX_HULL_INCREMENTAL_H
+#define PTM_CONVEX_HULL_INCREMENTAL_H
 
 
-#include <cstdint>
-#include <cstdbool>
+#include <stdint.h>
+#include <stdbool.h>
 #include "ptm_constants.h"
 
+namespace ptm {
 
 typedef struct
 {
@@ -22,6 +23,8 @@ typedef struct
 
 void add_facet(const double (*points)[3], int a, int b, int c, int8_t* facet, double* plane_normal, double* barycentre);
 int get_convex_hull(int num_points, const double (*points)[3], convexhull_t* ch, int8_t simplex[][3]);
+
+}
 
 #endif
 

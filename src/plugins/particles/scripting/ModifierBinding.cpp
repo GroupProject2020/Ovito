@@ -963,6 +963,12 @@ void defineModifiersSubmodule(py::module m)
 				"See the OVITO user manual for details. "
 				"\n\n"
 				":Default: ``False``\n")
+		.def_property("output_conventional_orientations", &PolyhedralTemplateMatchingModifier::outputStandardOrientations, &PolyhedralTemplateMatchingModifier::setOutputStandardOrientations,
+				"Boolean flag that controls whether the modifier outputs standard reference orientations or the PTM template orientations."
+				"This only affects HCP, diamond cubic, and diamond hexagonal structure types."
+				"See the OVITO user manual for details. "
+				"\n\n"
+				":Default: ``True``\n")
 		.def_property("output_deformation_gradient", &PolyhedralTemplateMatchingModifier::outputDeformationGradient, &PolyhedralTemplateMatchingModifier::setOutputDeformationGradient,
 				"Boolean flag that controls whether the modifier outputs the computed per-particle elastic deformation gradients as a new particle property named ``Elastic Deformation Gradient``."
 				"The elastic deformation gradient describes the local deformation and rigid-body rotation of the crystal with repect to an ideal reference lattice configuration. "
@@ -991,6 +997,7 @@ void defineModifiersSubmodule(py::module m)
 		.value("SC", PolyhedralTemplateMatchingModifier::SC)
 		.value("CUBIC_DIAMOND", PolyhedralTemplateMatchingModifier::CUBIC_DIAMOND)
 		.value("HEX_DIAMOND", PolyhedralTemplateMatchingModifier::HEX_DIAMOND)
+		.value("GRAPHENE", PolyhedralTemplateMatchingModifier::GRAPHENE)
 	;
 
 	py::enum_<PolyhedralTemplateMatchingModifier::OrderingType>(PolyhedralTemplateMatchingModifier_py, "OrderingType")
@@ -1001,6 +1008,7 @@ void defineModifiersSubmodule(py::module m)
 		.value("L12_B", PolyhedralTemplateMatchingModifier::ORDERING_L12_B)
 		.value("B2", PolyhedralTemplateMatchingModifier::ORDERING_B2)
 		.value("ZINCBLENDE_WURTZITE", PolyhedralTemplateMatchingModifier::ORDERING_ZINCBLENDE_WURTZITE)
+		.value("BORON_NITRIDE", PolyhedralTemplateMatchingModifier::ORDERING_BORON_NITRIDE)
 	;
 
 	ovito_class<CoordinationPolyhedraModifier, AsynchronousModifier>(m,
