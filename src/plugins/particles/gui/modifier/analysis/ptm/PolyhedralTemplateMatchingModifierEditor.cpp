@@ -23,6 +23,7 @@
 #include <plugins/particles/modifier/analysis/ptm/PolyhedralTemplateMatchingModifier.h>
 #include <plugins/particles/gui/modifier/analysis/StructureListParameterUI.h>
 #include <gui/properties/BooleanParameterUI.h>
+#include <gui/properties/IntegerRadioButtonParameterUI.h>
 #include <gui/properties/FloatParameterUI.h>
 #include "PolyhedralTemplateMatchingModifierEditor.h"
 
@@ -41,7 +42,7 @@ void PolyhedralTemplateMatchingModifierEditor::createUI(const RolloutInsertionPa
 	// Create a rollout.
 	QWidget* rollout = createRollout(tr("Polyhedral template matching"), rolloutParams, "particles.modifiers.polyhedral_template_matching.html");
 
-    // Create the rollout contents.
+	// Create the rollout contents.
 	QVBoxLayout* layout1 = new QVBoxLayout(rollout);
 	layout1->setContentsMargins(4,4,4,4);
 	layout1->setSpacing(6);
@@ -73,9 +74,11 @@ void PolyhedralTemplateMatchingModifierEditor::createUI(const RolloutInsertionPa
 	BooleanParameterUI* outputInteratomicDistanceUI = new BooleanParameterUI(this, PROPERTY_FIELD(PolyhedralTemplateMatchingModifier::outputInteratomicDistance));
 	sublayout->addWidget(outputInteratomicDistanceUI->checkBox());
 	outputInteratomicDistanceUI->checkBox()->setText(tr("Interatomic distances"));
-	BooleanParameterUI* outputOrientationUI = new BooleanParameterUI(this, PROPERTY_FIELD(PolyhedralTemplateMatchingModifier::outputOrientation));
-	sublayout->addWidget(outputOrientationUI->checkBox());
-	outputOrientationUI->checkBox()->setText(tr("Lattice orientations"));
+
+	// Color by type
+	BooleanParameterUI* colorByTypeUI = new BooleanParameterUI(this, PROPERTY_FIELD(StructureIdentificationModifier::colorByType));
+	sublayout->addWidget(colorByTypeUI->checkBox());
+
 	BooleanParameterUI* outputDeformationGradientUI = new BooleanParameterUI(this, PROPERTY_FIELD(PolyhedralTemplateMatchingModifier::outputDeformationGradient));
 	sublayout->addWidget(outputDeformationGradientUI->checkBox());
 	outputDeformationGradientUI->checkBox()->setText(tr("Elastic deformation gradients"));
@@ -83,9 +86,19 @@ void PolyhedralTemplateMatchingModifierEditor::createUI(const RolloutInsertionPa
 	sublayout->addWidget(outputOrderingTypesUI->checkBox());
 	outputOrderingTypesUI->checkBox()->setText(tr("Ordering types"));
 
-	// Color by type
-	BooleanParameterUI* colorByTypeUI = new BooleanParameterUI(this, PROPERTY_FIELD(StructureIdentificationModifier::colorByType));
-	sublayout->addWidget(colorByTypeUI->checkBox());
+
+	// Lattice orientations
+	BooleanParameterUI* outputOrientationUI = new BooleanParameterUI(this, PROPERTY_FIELD(PolyhedralTemplateMatchingModifier::outputOrientation));
+	sublayout->addWidget(outputOrientationUI->checkBox());
+	outputOrientationUI->checkBox()->setText(tr("Lattice orientations"));
+
+	//todo: make this inaccessible (greyed out) if lattice orientations box is not ticked
+	IntegerRadioButtonParameterUI* conventionalOrientationUI = new IntegerRadioButtonParameterUI(this, PROPERTY_FIELD(PolyhedralTemplateMatchingModifier::outputStandardOrientations));
+	QRadioButton* standardModeBtn = conventionalOrientationUI->addRadioButton(true, tr("Standard reference orientations"));
+	QRadioButton* templateModeBtn = conventionalOrientationUI->addRadioButton(false, tr("PTM template orientations"));
+	sublayout->addWidget(standardModeBtn);
+	sublayout->addWidget(templateModeBtn);
+
 
 	StructureListParameterUI* structureTypesPUI = new StructureListParameterUI(this, true);
 	layout1->addSpacing(10);

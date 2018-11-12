@@ -25,7 +25,7 @@
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <core/dataset/DataSetContainer.h>
 #include <core/utilities/concurrent/ParallelFor.h>
-#include <ptm/qcprot/polar.hpp>
+#include <ptm/ptm_polar.h>
 #include "AtomicStrainModifier.h"
 
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) OVITO_BEGIN_INLINE_NAMESPACE(Analysis)
@@ -240,7 +240,7 @@ void AtomicStrainModifier::AtomicStrainEngine::computeStrain(size_t particleInde
 	// Polar decomposition F=RU.
 	if(rotations() || stretchTensors()) {
 		Matrix_3<double> R, U;
-		polar_decomposition_3x3(F.elements(), false, R.elements(), U.elements());
+		ptm::polar_decomposition_3x3(F.elements(), false, R.elements(), U.elements());
 		if(rotations()) {
 			rotations()->setQuaternion(particleIndex, (Quaternion)QuaternionT<double>(R));
 		}

@@ -1,13 +1,13 @@
-#include <cstdint>
 #include <algorithm>
 #include "ptm_constants.h"
-#include "initialize_data.hpp"
+#include "ptm_initialize_data.h"
 
+namespace ptm {
 
 #define NUM_ALLOY_TYPES 3
 static uint32_t typedata[NUM_ALLOY_TYPES][3] = {
-	{PTM_MATCH_FCC, PTM_ALLOY_L10,    0x000001fe},
-	{PTM_MATCH_FCC, PTM_ALLOY_L12_CU, 0x0000001e},
+	{PTM_MATCH_FCC, PTM_ALLOY_L10,    0x00000db6},
+	{PTM_MATCH_FCC, PTM_ALLOY_L12_CU, 0x00000492},
 	{PTM_MATCH_FCC, PTM_ALLOY_L12_AU, 0x00001ffe},
 };
 
@@ -78,6 +78,10 @@ static int32_t canonical_alloy_representation(const refdata_t* ref, int8_t* mapp
 
 int32_t find_alloy_type(const refdata_t* ref, int8_t* mapping, int32_t* numbers)
 {
+	for (int i=0;i<ref->num_nbrs+1;i++)
+		if (numbers[i] == -1)
+			return PTM_ALLOY_NONE;
+
 	if (test_pure(ref->num_nbrs, numbers))
 		return PTM_ALLOY_PURE;
 
@@ -97,6 +101,13 @@ int32_t find_alloy_type(const refdata_t* ref, int8_t* mapping, int32_t* numbers)
 		if (test_shell_structure(ref, mapping, numbers, 4))
 			return PTM_ALLOY_SIC;
 
+
+	if (ref->type == PTM_MATCH_GRAPHENE)
+		if (test_shell_structure(ref, mapping, numbers, 3))
+			return PTM_ALLOY_BN;
+
 	return PTM_ALLOY_NONE;
+}
+
 }
 

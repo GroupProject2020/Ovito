@@ -20,19 +20,20 @@
 ###############################################################################
 
 SET(PTM_SOURCE_FILES
-	alloy_types.cpp
-	canonical_coloured.cpp
-	convex_hull_incremental.cpp
-	deformation_gradient.cpp
-	graph_data.cpp
-	graph_tools.cpp
-	index_ptm.cpp
-	initialize_data.cpp
-	neighbour_ordering.cpp
-	normalize_vertices.cpp
-	structure_matcher.cpp
-	qcprot/polar.cpp
-	qcprot/quat.cpp
+	ptm_alloy_types.cpp
+	ptm_canonical_coloured.cpp
+	ptm_convex_hull_incremental.cpp
+	ptm_deformation_gradient.cpp
+	ptm_graph_data.cpp
+	ptm_graph_tools.cpp
+	ptm_index.cpp
+	ptm_initialize_data.cpp
+	ptm_neighbour_ordering.cpp
+	ptm_normalize_vertices.cpp
+	ptm_polar.cpp
+	ptm_quat.cpp
+	ptm_structure_matcher.cpp
+	ptm_voronoi_cell.cpp
 )
 
 # Build library.

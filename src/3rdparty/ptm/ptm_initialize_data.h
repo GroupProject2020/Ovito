@@ -1,16 +1,17 @@
-#ifndef INITIALIZE_DATA_HPP
-#define INITIALIZE_DATA_HPP
+#ifndef PTM_INITIALIZE_DATA_H
+#define PTM_INITIALIZE_DATA_H
 
 
-#include <cstdint>
-#include "graph_data.hpp"
-#include "graph_tools.hpp"
-#include "deformation_gradient.hpp"
-#include "fundamental_mappings.hpp"
-#include "neighbour_ordering.hpp"
-#include "canonical_coloured.hpp"
-#include "convex_hull_incremental.hpp"
+#include "ptm_graph_data.h"
+#include "ptm_graph_tools.h"
+#include "ptm_deformation_gradient.h"
+#include "ptm_fundamental_mappings.h"
+#include "ptm_neighbour_ordering.h"
+#include "ptm_canonical_coloured.h"
+#include "ptm_convex_hull_incremental.h"
 
+
+namespace ptm {
 
 typedef struct
 {
@@ -36,6 +37,9 @@ const refdata_t structure_bcc =  { PTM_MATCH_BCC,  14, 24, 8, NUM_BCC_GRAPHS,  N
 const refdata_t structure_dcub = { PTM_MATCH_DCUB, 16, 28, 8, NUM_DCUB_GRAPHS, NUM_DCUB_MAPPINGS,  graphs_dcub, ptm_template_dcub, penrose_dcub, mapping_dcub };
 const refdata_t structure_dhex = { PTM_MATCH_DHEX, 16, 28, 8, NUM_DHEX_GRAPHS, NUM_DHEX_MAPPINGS,  graphs_dhex, ptm_template_dhex, penrose_dhex, mapping_dhex };
 
+const refdata_t structure_graphene = { PTM_MATCH_GRAPHENE, 9, -1, -1, -1, -1,  NULL, ptm_template_graphene, penrose_graphene, mapping_graphene };
+
+}
 
 #ifdef __cplusplus
 extern "C" {

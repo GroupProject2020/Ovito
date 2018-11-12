@@ -38,6 +38,7 @@ namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Modifiers) 
 IMPLEMENT_OVITO_CLASS(PolyhedralTemplateMatchingModifier);
 DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, rmsdCutoff);
 DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputRmsd);
+DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputStandardOrientations);
 DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputInteratomicDistance);
 DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputOrientation);
 DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputDeformationGradient);
@@ -45,6 +46,7 @@ DEFINE_PROPERTY_FIELD(PolyhedralTemplateMatchingModifier, outputOrderingTypes);
 DEFINE_REFERENCE_FIELD(PolyhedralTemplateMatchingModifier, orderingTypes);
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, rmsdCutoff, "RMSD cutoff");
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputRmsd, "Output RMSD values");
+SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputStandardOrientations, "Output Conventional Orientations");
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputInteratomicDistance, "Output interatomic distance");
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputOrientation, "Output lattice orientations");
 SET_PROPERTY_FIELD_LABEL(PolyhedralTemplateMatchingModifier, outputDeformationGradient, "Output deformation gradients");
@@ -58,6 +60,7 @@ SET_PROPERTY_FIELD_UNITS_AND_MINIMUM(PolyhedralTemplateMatchingModifier, rmsdCut
 PolyhedralTemplateMatchingModifier::PolyhedralTemplateMatchingModifier(DataSet* dataset) : StructureIdentificationModifier(dataset),
 		_rmsdCutoff(0.1), 
 		_outputRmsd(false), 
+		_outputStandardOrientations(false), 
 		_outputInteratomicDistance(false),
 		_outputOrientation(false), 
 		_outputDeformationGradient(false), 
@@ -72,6 +75,7 @@ PolyhedralTemplateMatchingModifier::PolyhedralTemplateMatchingModifier(DataSet* 
 	createStructureType(SC, ParticleType::PredefinedStructureType::SC)->setEnabled(false);
 	createStructureType(CUBIC_DIAMOND, ParticleType::PredefinedStructureType::CUBIC_DIAMOND)->setEnabled(false);
 	createStructureType(HEX_DIAMOND, ParticleType::PredefinedStructureType::HEX_DIAMOND)->setEnabled(false);
+	createStructureType(GRAPHENE, ParticleType::PredefinedStructureType::GRAPHENE)->setEnabled(false);
 
 	// Define the ordering types.
 	for(int id = 0; id < NUM_ORDERING_TYPES; id++) {
@@ -132,7 +136,46 @@ Future<AsynchronousModifier::ComputeEnginePtr> PolyhedralTemplateMatchingModifie
 
 	return std::make_shared<PTMEngine>(posProperty->storage(), particles, std::move(typeProperty), simCell->data(),
 			getTypesToIdentify(NUM_STRUCTURE_TYPES), std::move(selectionProperty),
-			outputInteratomicDistance(), outputOrientation(), outputDeformationGradient(), outputOrderingTypes());
+			outputInteratomicDistance(), outputOrientation(), outputStandardOrientations(), outputDeformationGradient(), outputOrderingTypes());
+}
+
+typedef struct
+{
+	NearestNeighborFinder* neighFinder;
+	ConstPropertyPtr particleTypes;
+} ptmnbrdata_t;
+
+static int get_neighbours(void* vdata, size_t index, int num_requested, size_t* nbr_indices, int32_t* numbers, double (*nbr_pos)[3])
+{
+	ptmnbrdata_t* nbrdata = (ptmnbrdata_t*)vdata;
+	NearestNeighborFinder* neighFinder = nbrdata->neighFinder;
+	ConstPropertyPtr particleTypes = nbrdata->particleTypes;
+
+	// Find nearest neighbors.
+	NearestNeighborFinder::Query<PolyhedralTemplateMatchingModifier::MAX_NEIGHBORS> neighQuery(*neighFinder);
+	neighQuery.findNeighbors(index);
+	int numNeighbors = std::min(num_requested - 1, neighQuery.results().size());
+	OVITO_ASSERT(numNeighbors <= PolyhedralTemplateMatchingModifier::MAX_NEIGHBORS);
+
+	// Bring neighbor coordinates into a form suitable for the PTM library.
+	nbr_indices[0] = index;
+	nbr_pos[0][0] = nbr_pos[0][1] = nbr_pos[0][2] = 0;
+	for(int i = 0; i < numNeighbors; i++) {
+		nbr_indices[i+1] = neighQuery.results()[i].index;
+		nbr_pos[i+1][0] = neighQuery.results()[i].delta.x();
+		nbr_pos[i+1][1] = neighQuery.results()[i].delta.y();
+		nbr_pos[i+1][2] = neighQuery.results()[i].delta.z();
+	}
+
+	// Build list of particle types for ordering identification.
+	if(particleTypes != nullptr) {
+		numbers[0] = particleTypes->getInt(index);
+		for(int i = 0; i < numNeighbors; i++) {
+			numbers[i + 1] = particleTypes->getInt(neighQuery.results()[i].index);
+		}
+	}
+
+	return numNeighbors + 1;
 }
 
 /******************************************************************************
@@ -147,11 +190,26 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 	if(!neighFinder.prepare(*positions(), cell(), selection().get(), task().get()))
 		return;
 
+	ptmnbrdata_t nbrdata;
+	nbrdata.neighFinder = &neighFinder;
+	nbrdata.particleTypes = orderingTypes() ? _particleTypes : nullptr;
+
 	task()->setProgressValue(0);
 	task()->setProgressMaximum(positions()->size());
 
+
+	int32_t flags = 0;
+	if(typesToIdentify()[SC]) flags |= PTM_CHECK_SC;
+	if(typesToIdentify()[GRAPHENE]) flags |= PTM_CHECK_GRAPHENE;
+	if(typesToIdentify()[FCC]) flags |= PTM_CHECK_FCC;
+	if(typesToIdentify()[HCP]) flags |= PTM_CHECK_HCP;
+	if(typesToIdentify()[ICO]) flags |= PTM_CHECK_ICO;
+	if(typesToIdentify()[BCC]) flags |= PTM_CHECK_BCC;
+	if(typesToIdentify()[CUBIC_DIAMOND]) flags |= PTM_CHECK_DCUB;
+	if(typesToIdentify()[HEX_DIAMOND]) flags |= PTM_CHECK_DHEX;
+
 	// Perform analysis on each particle.
-	parallelForChunks(positions()->size(), *task(), [this, &neighFinder](size_t startIndex, size_t count, PromiseState& promise) {
+	parallelForChunks(positions()->size(), *task(), [this, &nbrdata, &flags](size_t startIndex, size_t count, PromiseState& promise) {
 
 		// Initialize thread-local storage for PTM routine.
 		ptm_local_handle_t ptm_local_handle = ptm_initialize_local();
@@ -174,58 +232,18 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 				continue;
 			}
 
-			// Find nearest neighbors.
-			NearestNeighborFinder::Query<MAX_NEIGHBORS> neighQuery(neighFinder);
-			neighQuery.findNeighbors(index);
-			int numNeighbors = neighQuery.results().size();
-			OVITO_ASSERT(numNeighbors <= MAX_NEIGHBORS);
-
-			// Bring neighbor coordinates into a form suitable for the PTM library.
-			double points[MAX_NEIGHBORS+1][3];
-			int32_t atomTypes[MAX_NEIGHBORS+1];
-			points[0][0] = points[0][1] = points[0][2] = 0;
-			for(int i = 0; i < numNeighbors; i++) {
-				points[i+1][0] = neighQuery.results()[i].delta.x();
-				points[i+1][1] = neighQuery.results()[i].delta.y();
-				points[i+1][2] = neighQuery.results()[i].delta.z();
-			}
-
-			// Build list of particle types for ordering identification.
-			if(orderingTypes()) {
-				atomTypes[0] = _particleTypes->getInt(index);
-				for(int i = 0; i < numNeighbors; i++) {
-					atomTypes[i + 1] = _particleTypes->getInt(neighQuery.results()[i].index);
-				}
-			}
-
-			// Determine which structures to look for. This depends on how
-			// much neighbors are present.
-			int32_t flags = 0;
-			if(numNeighbors >= 6 && typesToIdentify()[SC]) flags |= PTM_CHECK_SC;
-			if(numNeighbors >= 12) {
-				if(typesToIdentify()[FCC]) flags |= PTM_CHECK_FCC;
-				if(typesToIdentify()[HCP]) flags |= PTM_CHECK_HCP;
-				if(typesToIdentify()[ICO]) flags |= PTM_CHECK_ICO;
-			}
-			if(numNeighbors >= 14 && typesToIdentify()[BCC]) flags |= PTM_CHECK_BCC;
-
-			if(numNeighbors >= 16) {
-				if(typesToIdentify()[CUBIC_DIAMOND]) flags |= PTM_CHECK_DCUB;
-				if(typesToIdentify()[HEX_DIAMOND]) flags |= PTM_CHECK_DHEX;
-			}
-
 			// Call PTM library to identify local structure.
 			int32_t type, alloy_type = PTM_ALLOY_NONE;
 			double scale, interatomic_distance;
 			double rmsd;
 			double q[4];
 			double F[9], F_res[3];
-			ptm_index(ptm_local_handle, flags, numNeighbors + 1, points, orderingTypes() ? atomTypes : nullptr, true,
+
+			ptm_index(ptm_local_handle, index, get_neighbours, (void*)&nbrdata, flags, _outputStandardOrientations,
 					&type, &alloy_type, &scale, &rmsd, q,
 					deformationGradients() ? F : nullptr,
 					deformationGradients() ? F_res : nullptr,
-					nullptr, nullptr, nullptr, &interatomic_distance, nullptr);
-
+					nullptr, nullptr, &interatomic_distance, nullptr, nullptr);
 
 			// Convert PTM classification to our own scheme and store computed quantities.
 			if(type == PTM_MATCH_NONE) {
@@ -240,6 +258,7 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::perform()
 				else if(type == PTM_MATCH_BCC) structures()->setInt(index, BCC);
 				else if(type == PTM_MATCH_DCUB) structures()->setInt(index, CUBIC_DIAMOND);
 				else if(type == PTM_MATCH_DHEX) structures()->setInt(index, HEX_DIAMOND);
+				else if(type == PTM_MATCH_GRAPHENE) structures()->setInt(index, GRAPHENE);
 				else OVITO_ASSERT(false);
 				this->rmsd()->setFloat(index, rmsd);
 				if(interatomicDistances()) interatomicDistances()->setFloat(index, interatomic_distance);
@@ -321,6 +340,7 @@ void PolyhedralTemplateMatchingModifier::PTMEngine::emitResults(TimePoint time, 
 	state.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.SC"), QVariant::fromValue(getTypeCount(SC)), modApp);
 	state.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.CUBIC_DIAMOND"), QVariant::fromValue(getTypeCount(CUBIC_DIAMOND)), modApp);
 	state.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.HEX_DIAMOND"), QVariant::fromValue(getTypeCount(HEX_DIAMOND)), modApp);
+	state.addAttribute(QStringLiteral("PolyhedralTemplateMatching.counts.GRAPHENE"), QVariant::fromValue(getTypeCount(GRAPHENE)), modApp);
 
 	PolyhedralTemplateMatchingModifier* modifier = static_object_cast<PolyhedralTemplateMatchingModifier>(modApp->modifier());
 	OVITO_ASSERT(modifier);

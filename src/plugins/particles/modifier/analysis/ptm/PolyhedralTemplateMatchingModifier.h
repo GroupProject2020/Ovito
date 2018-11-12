@@ -45,21 +45,22 @@ public:
 
 #ifndef Q_CC_MSVC
 	/// The maximum number of neighbor atoms taken into account for the PTM analysis.
-	static constexpr int MAX_NEIGHBORS = 30;
+	static constexpr int MAX_NEIGHBORS = 19;
 #else
-	enum { MAX_NEIGHBORS = 30 };
+	enum { MAX_NEIGHBORS = 19 };
 #endif
 
 	/// The structure types recognized by the PTM library.
 	enum StructureType {
-		OTHER = 0,				//< Unidentified structure
-		FCC,					//< Face-centered cubic
-		HCP,					//< Hexagonal close-packed
-		BCC,					//< Body-centered cubic
-		ICO,					//< Icosahedral structure
-		SC,						//< Simple cubic structure
+		OTHER = 0,			//< Unidentified structure
+		FCC,				//< Face-centered cubic
+		HCP,				//< Hexagonal close-packed
+		BCC,				//< Body-centered cubic
+		ICO,				//< Icosahedral structure
+		SC,				//< Simple cubic structure
 		CUBIC_DIAMOND,			//< Cubic diamond structure
 		HEX_DIAMOND,			//< Hexagonal diamond structure
+		GRAPHENE,			//< Hexagonal diamond structure
 
 		NUM_STRUCTURE_TYPES 	//< This just counts the number of defined structure types.
 	};
@@ -74,6 +75,7 @@ public:
 		ORDERING_L12_B = 4,
 		ORDERING_B2 = 5,
 		ORDERING_ZINCBLENDE_WURTZITE = 6,
+		ORDERING_BORON_NITRIDE = 7,
 
 		NUM_ORDERING_TYPES 	//< This just counts the number of defined ordering types.
 	};
@@ -110,14 +112,15 @@ private:
 		/// Constructor.
 		PTMEngine(ConstPropertyPtr positions, ParticleOrderingFingerprint fingerprint, ConstPropertyPtr particleTypes, const SimulationCell& simCell,
 				QVector<bool> typesToIdentify, ConstPropertyPtr selection,
-				bool outputInteratomicDistance, bool outputOrientation, bool outputDeformationGradient, bool outputOrderingTypes) :
+				bool outputInteratomicDistance, bool outputOrientation, bool outputStandardOrientations, bool outputDeformationGradient, bool outputOrderingTypes) :
 			StructureIdentificationEngine(std::move(fingerprint), positions, simCell, std::move(typesToIdentify), std::move(selection)),
 			_particleTypes(std::move(particleTypes)),
 			_rmsd(std::make_shared<PropertyStorage>(positions->size(), PropertyStorage::Float, 1, 0, tr("RMSD"), false)),
 			_interatomicDistances(outputInteratomicDistance ? std::make_shared<PropertyStorage>(positions->size(), PropertyStorage::Float, 1, 0, tr("Interatomic Distance"), true) : nullptr),
 			_orientations(outputOrientation ? ParticlesObject::OOClass().createStandardStorage(positions->size(), ParticlesObject::OrientationProperty, true) : nullptr),
 			_deformationGradients(outputDeformationGradient ? ParticlesObject::OOClass().createStandardStorage(positions->size(), ParticlesObject::ElasticDeformationGradientProperty, true) : nullptr),
-			_orderingTypes(outputOrderingTypes ? std::make_shared<PropertyStorage>(positions->size(), PropertyStorage::Int, 1, 0, tr("Ordering Type"), true) : nullptr) {}
+			_orderingTypes(outputOrderingTypes ? std::make_shared<PropertyStorage>(positions->size(), PropertyStorage::Int, 1, 0, tr("Ordering Type"), true) : nullptr),
+			_outputStandardOrientations(outputStandardOrientations) {}
 
 		/// This method is called by the system after the computation was successfully completed.
 		virtual void cleanup() override {
@@ -158,12 +161,16 @@ private:
 		const PropertyPtr _orderingTypes;
 		PropertyPtr _rmsdHistogram;
 		FloatType _rmsdHistogramRange;
+		bool _outputStandardOrientations;
 	};
 
 private:
 
 	/// The RMSD cutoff.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, rmsdCutoff, setRmsdCutoff, PROPERTY_FIELD_MEMORIZE);
+
+	/// Controls the output of the orientation type.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(bool, outputStandardOrientations, setOutputStandardOrientations, PROPERTY_FIELD_MEMORIZE);
 
 	/// Controls the output of the per-particle RMSD values.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, outputRmsd, setOutputRmsd);

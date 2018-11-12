@@ -85,12 +85,13 @@
  *  
  ******************************************************************************/
 
-#include <cstdbool>
 #include <cmath>
 #include <algorithm>
-#include <cstring>
-#include "quat.hpp"
+#include <string.h>
+#include "ptm_quat.h"
 
+
+namespace ptm {
 
 static void matmul_3x3(double* A, double* x, double* b)
 {
@@ -334,5 +335,7 @@ int FastCalcRMSDAndRotation(double *A, double E0, double *p_nrmsdsq, double *q, 
 	optimal_quaternion(A, false, E0, p_nrmsdsq, q);
 	quaternion_to_rotation_matrix(q, U);
 	return 0;
+}
+
 }
 
