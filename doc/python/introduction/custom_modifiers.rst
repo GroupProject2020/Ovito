@@ -4,58 +4,58 @@
 User-defined modifiers
 ===================================
 
-.. warning::
-   This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
-   development version of OVITO.
-
-OVITO provides a collection of built-in data manipulation and analysis modifiers, which can be found in the :py:mod:`ovito.modifiers` module.
-These modifier types are all implemented in C++, and the Python interface allows you to instantiate them, 
-insert them into the modification pipeline of an :py:class:`~ovito.PipelineSceneNode`, and configure their parameters.
-However, sometimes the capabilities provided by these built-in modifiers are not sufficent and you may want to
-write your own, completely new type of modifier that can participate in the data pipeline system of OVITO.
-The following sections describe how this is done.
+The Python programming interface allows you to write your own data modifiers that participate in the
+`data pipeline system <../../usage.modification_pipeline.html>`__ of OVITO. Writing your own modifier functions
+is useful in cases where the built-in modifier types (listed in the :py:mod:`ovito.modifiers` module) are not sufficient
+to solve your specific problem at hand. 
 
 ----------------------------------------------
-Inserting a custom modifier into the pipeline
+Custom modifier functions
 ----------------------------------------------
 
-Creating a user-defined modifier requires writing a Python function with the following signature, 
-which will be responsible for computing the effect of the custom modifier::
+You can develop a new user-defined modifier simply by writing a Python function, which will automatically be called by OVITO's
+pipeline system whenever the pipeline results need to be recomputed. This function must have the following function signature::
 
-  def modify(frame, input, output):
+  def modify(frame, data):
       ...
 
-The meaning of the parameters and the implementation of this function will be described 
-in later sections. You can insert the custom modifier into the modification pipeline either by using 
-OVITO's graphical user interface or programmatically from Python:
+When the pipeline system calls your user-defined modifier function, it will pass in two parameters: The current animation 
+frame number (``frame``) at which the pipeline is being evaluated and a :py:class:`~ovito.data.DataCollection` (``data``)
+holding the information that is flowing down the pipeline and which the modifier function should operate on.
+Your modifier function should not return any value. If you want you function to modify or extend the data in some way, it should do so
+by editing the :py:class:`~ovito.data.DataCollection` in-place.
 
-  1. Within the graphical user interface, select *Python script* from the modifier drop-down list to insert
-     a Python script modifier into the modification pipeline. OVITO provides a text input field
-     which allows you to enter the definition of the ``modify()`` function. The 
-     `corresponding page <../../particles.modifiers.python_script.html>`__ in the OVITO
-     user manual provides more information on this procedure and on how you can save a custom script modifier 
-     for future use within the graphical program.
-     
-  2. Via the scripting interface, a custom modifier is inserted into the data pipeline
-     of an :py:class:`~ovito.PipelineSceneNode` by creating an instance of the :py:class:`~ovito.modifiers.PythonScriptModifier`
-     class as follows::
-     
-        from ovito.modifiers import PythonScriptModifier
-     
-        # Our custom modifier function:
-        def my_modifier(frame, input, output):
-            ...
-            
-        # Inserting it into the modification pipeline of the node:
-        node.modifiers.append(PythonScriptModifier(function = my_modifier))
+Depending on the context, you need to perform one of the following steps to insert your modifier function into the pipeline. 
 
-     Note that the custom modifier function can have any name in this case. It 
-     is assigned to the :py:attr:`~ovito.modifiers.PythonScriptModifier.function` attribute of the
-     :py:class:`~ovito.modifiers.PythonScriptModifier` instance, which in turn must be inserted into the node's modification pipeline.
-     
------------------------------------
-The modifier function
------------------------------------
+    -  If you are working in the graphical version of OVITO, you can insert the function into the current pipeline by 
+       choosing the `Python script modifier <../../particles.modifiers.python_script.html>`__ entry from the list of available modifiers.
+       The panel of this modifier lets you open an editor window for entering the source code of the Python function. 
+
+    -  If you are using the modifier function in a :py:ref:`batch script <scripting_running>` context, your script should 
+       include a statement as part of the main program to insert the modifier function into the pipeline:: 
+
+            def my_mod_function(frame, data):
+                ...
+                ...
+        
+            pipeline.modifiers.append(my_mod_function)
+
+       The user-defined function, which can have an arbitrary name in this case, is inserted into a :py:class:`~ovito.pipeline.Pipeline`
+       by appending it to the :py:attr:`~ovito.pipeline.Pipeline.modifiers` list. Behind the scenes, OVITO will automatically create a 
+       :py:class:`~ovito.modifiers.PythonScriptModifier` instance to wrap the Python function object.
+
+Keep in mind that OVITO is going to invoke your Python function whenever it needs to (and as many times as it needs to). Typically this will happen 
+when the pipeline is being evaluated. In the graphical version of OVITO a pipeline evaluation routinely occurs as part of updating the interactive 
+viewports or when you render an image or an animation. In a batch script you typically request the pipeline evaluation explicitly
+by calling :py:meth:`Pipeline.compute() <ovito.pipeline.Pipeline.compute>` or indirectly by invoking a function such as :py:func:`~ovito.io.export_file`.
+
+---------------------------------------
+Implementing a modifier function
+---------------------------------------
+
+.. warning::
+   The following sections on this page are out of date! They have not been updated yet to reflect the changes made in the current
+   development version of OVITO.
 
 The custom modifier function defined above is called by OVITO every time the modification pipeline
 is evaluated. The function receives the data produced by the upstream part of the pipeline (e.g. the particles
@@ -123,6 +123,8 @@ This modifier function generates a new attribute named ``dislocation_density``, 
 line length in a crystal (which, as we assume in this example, is computed by a :py:class:`~ovito.modifiers.DislocationAnalysisModifier` preceding
 our custom modifier in the pipeline) and the simulation box :py:attr:`~ovito.data.SimulationCell.volume`.
          
+
+.. _creating_new_properties:
 
 Creating new data objects (e.g. particle properties)
 -----------------------------------------------------

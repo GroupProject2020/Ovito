@@ -43,15 +43,17 @@ void defineViewportSubmodule(py::module m)
 			"Additionally, the :py:attr:`.type` field allows you to switch between perspective and parallel projection modes "
 			"or reset the camera to one of the standard axis-aligned orientations that are also found in the graphical version of OVITO. "
 			"The :py:meth:`.zoom_all` method repositions the camera automatically such that the entire scene becomes fully visible within the view. "
+			"See also the documentation of the `Adjust View <../../viewports.adjust_view_dialog.html>`__ dialog of OVITO to learn more about "
+			"the role of these settings. "
 			"\n\n"
-			"After the viewport camera has been set up, you can render an image or movie using the "
+			"After the viewport's virtual camera has been set up, you can render an image or movie using the "
 			":py:meth:`.render_image` and :py:meth:`.render_anim` methods. For example: "
 			"\n\n"
 			".. literalinclude:: ../example_snippets/viewport.py"
 			"\n\n"
 			"Furthermore, so-called *overlays* may be assigned to a viewport. "
-			"Overlays are function objects that paint additional two-dimensional content on top of the rendered scene, e.g. "
-			"a coordinate axis tripod or a color legend. See the documentation of the :py:attr:`.overlays` property for more information. ")
+			"Overlays are function objects that draw additional two-dimensional content on top of the rendered scene, e.g. "
+			"a coordinate axis tripod or a color legend. See the the :py:attr:`.overlays` property for more information. ")
 		.def_property("type", &Viewport::viewType, [](Viewport& vp, Viewport::ViewType vt) { vp.setViewType(vt); },
 				"Specifies the projection type of the viewport. The following standard modes are available:"
 				"\n\n"

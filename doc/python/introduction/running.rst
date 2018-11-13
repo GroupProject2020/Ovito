@@ -1,7 +1,7 @@
 .. _scripting_running:
 
 ==================================
-Using scripting features
+Scripting usage
 ==================================
 
 OVITO's scripting interface enables you to automate visualization and analysis tasks and to implement your own data manipulation and analysis 
@@ -53,6 +53,7 @@ as well as from non-interactive batch scripts. In the first case, the user activ
 data pipeline and enters the code for the user-defined modifier function into the integrated code editor. In the latter case,
 the code of the custom modifier or overlay function is part of the batch script itself (see :py:class:`~ovito.modifiers.PythonScriptModifier` class for an example).
 
+.. _ovitos_interpreter:
 
 OVITO's Python interpreter
 ----------------------------------

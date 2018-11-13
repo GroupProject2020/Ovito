@@ -1,11 +1,10 @@
 .. OVITO scripting documentation master file
 
 **********************************
-OVITO Scripting Reference
+OVITO Scripting Manual
 **********************************
 
-This manual describes OVITO's scripting interface. You can access this manual from the *Help* menu in
-OVITO's graphical user interface.
+This manual describes OVITO's scripting interface. You can access this documentation from the *Help* menu of OVITO.
 
 Introduction:
 -----------------
@@ -20,11 +19,12 @@ Introduction:
    introduction/particle_properties
    introduction/rendering
    introduction/custom_modifiers
+   introduction/advanced_topics
    introduction/examples
    introduction/version_changes
 
-Module Reference:
------------------
+Python Module Reference:
+-------------------------
 
 .. toctree::
    

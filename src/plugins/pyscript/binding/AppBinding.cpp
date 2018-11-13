@@ -97,7 +97,7 @@ void defineAppSubmodule(py::module m)
 			"The saved program state can be loaded again using the :command:`-o` :ref:`command line option <preloading_program_state>` of :program:`ovitos` "
 			"or in the `graphical version of OVITO <../../usage.import.html#usage.import.command_line>`__. "
 			"After loading the state file, the :py:attr:`.pipelines` list will contain again all :py:class:`~ovito.pipeline.Pipeline` objects "
-			"that were part of the scene when it was saved. "
+			"that were part of the scene when it was saved. See also :py:ref:`here <saving_loading_pipelines>`."
 			,
 			py::arg("filename"))
 		// This is needed for the Scene.selected_pipeline attribute:

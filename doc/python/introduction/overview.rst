@@ -1,10 +1,10 @@
 .. _scripting_api_overview:
 
 ==================================
-Overview
+Introduction
 ==================================
 
-The scripting interface gives you programmatic access to most of OVITO's program features. Using Python scripts, you can
+The Python programming interface gives you programmatic access to most of OVITO's program features. Using Python scripts, you can
 perform many of the things you know from the interactive user interface (and even more):
 
   * Import from and export data to simulation files
@@ -26,21 +26,21 @@ is dynamically computed and displayed in the interactive viewports of OVITO.
 The Python interface of OVITO let's you build data pipelines in the same way by setting up a sequence of
 modifiers and configuring their parameters. The data pipeline is represented by an instance of the :py:class:`~ovito.pipeline.Pipeline` Python class, which manages 
 the list of applied modifiers. Furthermore, a data pipeline is always associated with some kind of *data source*, which is a separate object providing or producing
-the input data that is being passed to the pipeline's first modifier. Typically, the data source is an instance of the
-:py:class:`~ovito.pipeline.FileSource` class, which is responsible for loading the data from an external input file.
+the input data that will be passed to the pipeline's first modifier. Typically, the data source is an instance of the
+:py:class:`~ovito.pipeline.FileSource` class, which is responsible for loading the data from an external file on disk.
 
 .. image:: graphics/Pipeline_overview.*
    :width: 75 %
    :align: center
 
-If you would like to visualize the data that is produced by a :py:class:`~ovito.pipeline.Pipeline`, you may place the pipeline into 
+If you would like to visualize the output of a :py:class:`~ovito.pipeline.Pipeline`, you may place the pipeline into 
 the *scene*, i.e. the three-dimensional space that is visible in rendered images. 
 Only pipelines that have explicitly been inserted into the current scene by calling their :py:meth:`~ovito.pipeline.Pipeline.add_to_scene` method 
 will show up in rendered images or in OVITO's interactive viewports. 
 While this happens automatically in the graphical user interface of OVITO, you need to do it explicitly when using the 
 Python scripting interface, because visualization of data is an optional feature and may not always be desired. 
 
-The current scene, including all pipelines and other state information that would get saved along in a :file:`.ovito` file, is represented 
+The scene, including all pipelines and other state information that would get saved along in a :file:`.ovito` file, is represented 
 by the :py:class:`~ovito.Scene` Python class. A script always runs in the context of a current :py:class:`~ovito.Scene` instance, 
 which is accessible through the :py:data:`ovito.scene` global variable. 
 
@@ -57,7 +57,7 @@ using the :py:func:`ovito.io.import_file` function::
 This high-level function will create a new :py:class:`~ovito.pipeline.Pipeline` instance 
 and wire it to a :py:class:`~ovito.pipeline.FileSource`, which will take care of loading the data 
 from the given input file. This data source object is accessible through the pipeline's :py:attr:`~ovito.pipeline.Pipeline.source`
-property:: 
+field:: 
 
    >>> print(pipeline.source)
    <FileSource at 0x7f9ea70aefb0>

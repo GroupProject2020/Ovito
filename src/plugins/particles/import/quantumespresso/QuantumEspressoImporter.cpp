@@ -97,6 +97,8 @@ FileSourceImporter::FrameDataPtr QuantumEspressoImporter::FrameLoader::loadFile(
 	std::vector<FloatType> type_masses;
 	auto typeList = std::make_unique<ParticleFrameData::TypeList>();
 	bool hasCellVectors = false;
+	bool convertToAbsoluteCoordinates = false;
+	PropertyPtr posProperty;
 
 	while(!stream.eof() && !isCanceled()) {
 		const char* line = stream.readLineTrimLeft();
@@ -176,18 +178,22 @@ FileSourceImporter::FrameDataPtr QuantumEspressoImporter::FrameLoader::loadFile(
 		else if(stream.lineStartsWith("ATOMIC_POSITIONS")) {
 			// Parse the unit specification.
 			const char* units_start = stream.line() + 16;
-			while(*units_start > 0 && *units_start <= ' ') ++units_start;
+			while(*units_start > 0 && (*units_start <= ' ' || *units_start == '(' || *units_start == '{')) ++units_start;
 			const char* units_end = units_start;
-			while(*units_end > ' ') ++units_end;
+			while(*units_end > ' ' && *units_end != ')' && *units_end != '}') ++units_end;
 			std::string units(units_start, units_end);
 			FloatType scaling = 1;
-			if(units == "(alat)" || units.empty()) {
+			if(units == "alat" || units.empty()) {
 				scaling = alat;
 			}
-			else if(units == "(angstrom)") {
+			else if(units == "angstrom") {
 				// No scaling.
 			}
-			else if(units == "(bohr)") {
+			else if(units == "crystal") {
+				// Conversion from reduced to absolute coordinates will be done later.
+				convertToAbsoluteCoordinates = true;
+			}
+			else if(units == "bohr") {
 				// Convert from Bohr radii to Angstroms:
 				scaling = bohr2angstrom;
 			}
@@ -196,7 +202,7 @@ FileSourceImporter::FrameDataPtr QuantumEspressoImporter::FrameLoader::loadFile(
 			}
 
 			// Create particle properties.
-			PropertyPtr posProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::PositionProperty, false);
+			posProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::PositionProperty, false);
 			frameData->addParticleProperty(posProperty);
 			PropertyPtr typeProperty = ParticlesObject::OOClass().createStandardStorage(natoms, ParticlesObject::TypeProperty, false);
 			frameData->addParticleProperty(typeProperty);
@@ -218,7 +224,7 @@ FileSourceImporter::FrameDataPtr QuantumEspressoImporter::FrameLoader::loadFile(
 				// Parse atomic coordinates.
 				Point3 pos;
 				if(sscanf(token_end, FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING " " FLOATTYPE_SCANF_STRING, &pos.x(), &pos.y(), &pos.z()) != 3)
-					throw Exception(tr("Invalid atom coordinates in line %1 of QE file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
+					throw Exception(tr("Invalid atomic coordinates in line %1 of QE file: %2").arg(stream.lineNumber()).arg(stream.lineString()));
 				posProperty->setPoint3(i, pos * scaling);
 			}
 			frameData->setPropertyTypesList(typeProperty, std::move(typeList));
@@ -226,18 +232,18 @@ FileSourceImporter::FrameDataPtr QuantumEspressoImporter::FrameLoader::loadFile(
 		else if(stream.lineStartsWith("CELL_PARAMETERS")) {
 			// Parse the unit specification.
 			const char* units_start = stream.line() + 16;
-			while(*units_start > 0 && *units_start <= ' ') ++units_start;
+			while(*units_start > 0 && (*units_start <= ' ' || *units_start == '(' || *units_start == '{')) ++units_start;
 			const char* units_end = units_start;
-			while(*units_end > ' ') ++units_end;
+			while(*units_end > ' ' && *units_end != ')' && *units_end != '}') ++units_end;
 			std::string units(units_start, units_end);
 			FloatType scaling = 1;
-			if(units == "{alat}" || units.empty()) {
+			if(units == "alat" || units.empty()) {
 				scaling = alat;
 			}
-			else if(units == "{angstrom}") {
+			else if(units == "angstrom") {
 				// No scaling.
 			}
-			else if(units == "{bohr}") {
+			else if(units == "bohr") {
 				// Convert from Bohr radii to Angstroms:
 				scaling = bohr2angstrom;
 			}
@@ -260,6 +266,8 @@ FileSourceImporter::FrameDataPtr QuantumEspressoImporter::FrameLoader::loadFile(
 			hasCellVectors = true;
 		}
 	}
+	if(isCanceled())
+		return {};
 
 	// Make sure some atoms have been defined in the file.
 	if(natoms <= 0 || ntypes <= 0)
@@ -284,6 +292,13 @@ FileSourceImporter::FrameDataPtr QuantumEspressoImporter::FrameLoader::loadFile(
 			default: throw Exception(tr("Unsupported 'ibrav' value in QE file: %1").arg(ibrav));
 		}
 		frameData->simulationCell().setMatrix(AffineTransformation(cell));
+	}
+
+	if(convertToAbsoluteCoordinates) {
+		// Convert all atom coordinates from reduced to absolute (Cartesian) format.
+		const AffineTransformation simCell = frameData->simulationCell().matrix();
+		for(Point3& p : posProperty->point3Range())
+			p = simCell * p;
 	}
 
 	frameData->setStatus(tr("Number of particles: %1").arg(natoms));

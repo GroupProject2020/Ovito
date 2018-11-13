@@ -4,7 +4,7 @@
 Data pipelines
 ===================================
 
-Modifiers are composable function objects that together form a `data processing pipeline <https://en.wikipedia.org/wiki/Pipeline_(software)>`__.
+Modifiers are composable function objects that are arranged in a sequence to form a `data processing pipeline <../../usage.modification_pipeline.html>`__.
 They dynamically modify, filter, analyze or extend the data that flows down the pipeline. Here, with *data* we mean
 any form of information that OVITO can process, e.g. particles and their properties, bonds, the simulation cell,
 triangles meshes, voxel data, etc. The main purpose of the pipeline concept is to enable non-destructive and repeatable workflows, i.e.,
@@ -22,7 +22,7 @@ adding it to the pipeline's :py:attr:`~ovito.pipeline.Pipeline.modifiers` list::
 
    from ovito.modifiers import AssignColorModifier
 
-   modifier = AssignColorModifier( color=(0.5, 1.0, 0.0) )
+   modifier = AssignColorModifier(color = (0.5, 1.0, 0.0))
    pipeline.modifiers.append(modifier)
 
 The modifiers in the :py:attr:`Pipeline.modifiers <ovito.pipeline.Pipeline.modifiers>` list are executed in sequential order: 
@@ -44,9 +44,11 @@ For example, evaluation of the pipeline may be triggered implicitly when
   
 You can explicitly request an evaluation of a pipeline by calling its :py:meth:`~ovito.pipeline.Pipeline.compute` method.
 This method returns a new :py:class:`~ovito.data.DataCollection` object holding the data that has left the pipeline
-after all modifiers currently in the pipeline have processed the input data in sequence::
+after all modifiers currently in the pipeline have processed the input data::
 
     >>> data = pipeline.compute()
+
+The :py:ref:`data_model_intro` section will take a closer look at the data structure returned by this function.
 
 Note that it is possible to change an existing pipeline and the parameters of its modifiers at any time. Such changes do not 
 immediately trigger a recomputation of the pipeline results (unlike in the graphical user interface, where changing a modifier's parameters 
@@ -72,8 +74,8 @@ in the pipeline after making a change to the pipeline::
 Processing simulation trajectories 
 --------------------------------------------------------------
 
-As mentioned in the :ref:`file_io_overview` section, it is possible to load a simulation trajectory consisting of a sequence of frames. 
-A pipeline typically processes one frame at a time of this sequence. You can request the processing of a specific simulation frame by 
+As mentioned in the :ref:`file_io_overview` section, it is possible to import a simulation trajectory consisting of a sequence of frames. 
+A pipeline typically processes one frame at a time of the sequence. You can request the pipeline results for a specific simulation frame by 
 passing the frame number to the pipeline's :py:meth:`~ovito.pipeline.Pipeline.compute` method, e.g.::
 
     pipeline = import_file("trajectory_*.dump")

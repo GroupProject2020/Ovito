@@ -4,11 +4,6 @@
 Rendering & visualization
 ===================================
 
-.. warning::
-   This section of the manual is out of date! It has not been updated yet to reflect the changes made in the current
-   development version of OVITO.
-
-
 .. _rendering_display_objects:
 
 -----------------------------------
@@ -23,8 +18,8 @@ takes this information to generate the actual geometry primitives to visualize t
 cell in the viewports and in rendered pictures. A visual element typically has a set of parameters that 
 control the visual appearance, for example the line color of the simulation box.
 
-A visual element is attached to the data object that is should visualize, and you access it through the :py:attr:`~ovito.data.DataObject.vis`
-attribute of the :py:class:`~ovito.data.DataObject` base class::
+A visual element is attached to the :py:class:`~ovito.data.DataObject` that it should visualize, and you access it through the :py:attr:`~ovito.data.DataObject.vis`
+attribute::
 
     >>> data.cell                                # This is the data object
     <SimulationCell at 0x7f9a414c8060>
@@ -35,7 +30,7 @@ attribute of the :py:class:`~ovito.data.DataObject` base class::
     >>> data.cell.vis.rendering_color = (1,0,0)  # Giving the simulation box a red color
     
 All display objects are derived from the :py:class:`~ovito.vis.DataVis` base class, which defines
-the :py:attr:`~ovito.vis.DataVis.enabled` attribute that turns the display on or off::
+the :py:attr:`~ovito.vis.DataVis.enabled` attribute turning the rendering of the data object on or off::
 
     >>> data.cell.vis.enabled = False         # This hides the simulation cell
     
@@ -70,15 +65,17 @@ Viewports
 -----------------------------------
 
 A :py:class:`~ovito.vis.Viewport` defines a view of the three-dimensional scene, in which the visual representation of the data
-of a pipeline is generated. To render a picture of the scene, you typically create a new *ad hoc* :py:class:`~ovito.vis.Viewport` 
+of a pipeline is generated. To render a picture of the scene, you typically create a new :py:class:`~ovito.vis.Viewport` 
 object and configure it by setting the camera position and orientation::
 
-    >>> from ovito.vis import Viewport
-    >>> vp = Viewport()
-    >>> vp.type = Viewport.Type.Perspective
-    >>> vp.camera_pos = (-100, -150, 150)
-    >>> vp.camera_dir = (2, 3, -3)
-    >>> vp.fov = math.radians(60.0)
+    import math
+    from ovito.vis import Viewport
+
+    vp = Viewport()
+    vp.type = Viewport.Type.Perspective
+    vp.camera_pos = (-100, -150, 150)
+    vp.camera_dir = (2, 3, -3)
+    vp.fov = math.radians(60.0)
 
 As known from the interactive OVITO program, there exist various standard viewport types such as ``TOP``, ``FRONT``, etc. 
 The ``PERSPECTIVE`` and ``ORTHO`` viewport types allow you to freely orient the camera in space and
@@ -95,32 +92,18 @@ method to let OVITO automatically choose a reasonable camera zoom and position s
 Rendering
 -----------------------------------
 
-Parameters that control the rendering process, e.g. the desired image resolution, output filename, background color, are managed by a 
-:py:class:`~ovito.vis.RenderSettings` objects. You can create a new instance of this class and specify 
-the parameters::
+Rendering of images and movies is done using the :py:meth:`Viewport.render_image() <ovito.vis.Viewport.render_image>` and 
+:py:meth:`Viewport.render_anim() <ovito.vis.Viewport.render_anim>` methods::
 
-    from ovito.vis import *
-    settings = RenderSettings(
-        filename = "myimage.png",
-        size = (800, 600)
-    )
+    vp.render_image(size=(800,600), filename="figure.png", background=(0,0,0), frame=8)
+    vp.render_movie(size=(800,600), filename="animation.avi", fps=20)
 
-You can choose between three different rendering engines, which can produce the final image
-of the scene. The default renderer is the :py:class:`~ovito.vis.OpenGLRenderer`, which implements a fast, hardware-accelerated
-OpenGL rendering method. The second option is the :py:class:`~ovito.vis.TachyonRenderer`, which is
-a software-only raytracing engine and which is able to produce better looking results in many cases.
-Finally, the :py:class:`~ovito.vis.POVRayRenderer` offloads the rendering to the external `POV-Ray <http://www.povray.org/>`__
-program, which must be installed on the local computer. 
-Each of these rendering backends has specific parameters, and you can access the current renderer 
-through the :py:attr:`RenderSettings.renderer <ovito.vis.RenderSettings.renderer>` attribute::
+OVITO provides several different `rendering engines <../../rendering.html>`__, which differ in terms of speed and visual quality.
+The default rendering engine is the :py:class:`~ovito.vis.OpenGLRenderer`, which implements a fast, hardware-accelerated
+OpenGL rendering method. See the :py:mod:`ovito.vis` module for the list of other available engines. To use one of them,
+you have to create a renderer object and configure its specific parameters, and finally pass the renderer object to the 
+viewport rendering function::
 
-    settings.renderer = TachyonRenderer() # Activate the TachyonRenderer backend
-    settings.renderer.shadows = False     # Turn off cast shadows
-    
-After the render settings have been specified, we can let OVITO render the image by calling 
-:py:meth:`Viewport.render() <ovito.vis.Viewport.render>`::
+    tachyon = TachyonRenderer(shadows=False, direct_light_intensity=1.1)  
+    vp.render_image(filename="figure.png", background=(1,1,1), renderer=tachyon)
 
-    vp.render(settings)
-
-Note that :py:meth:`~ovito.vis.Viewport.render` returns a `QImage <http://pyqt.sourceforge.net/Docs/PyQt5/api/qimage.html>`__,
-giving you the possibility to manipulate the rendered picture before saving it to disk.
