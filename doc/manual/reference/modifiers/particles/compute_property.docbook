@@ -150,12 +150,15 @@ G(j) := ParticleType != @ParticleType</programlisting>
 
   <simplesect>
     <title>Expression syntax</title>
-    <para>          
-   The expression syntax supported by the modifier is very
-   similar to the one of the C programming language. Variable names and function names are case-sensitive.   
-   Arithmetic expressions can be composed from
-   constant values, input variables and math functions using the following operators
-   in the given order of precedence: 
+    <para>
+      The expression syntax supported by the modifier is very
+      similar to the one of the C programming language. Variable names and function names are case-sensitive.   
+      Variable names are restricted to alphanumeric characters and
+      underscores. OVITO automatically replaces invalid characters in input property names with an underscore to generate valid variable names
+      that can be referenced in expressions.
+      Arithmetic expressions can be composed from
+      constant values, input variables and math functions using the following operators
+      in the given order of precedence: 
    <informaltable>
    <tgroup cols="2">
    <thead>

@@ -15,7 +15,7 @@
     </imageobject></mediaobject></screenshot></informalfigure>
   
     OVITO is a scientific data visualization and analysis software for
-    atomistic simulation models in materials science and related physics and chemistry disciplines.
+    atomistic and molecular simulations and general particle-based models used in materials science, physics and chemistry.
     OVITO is freely available for
     Windows, Linux, and macOS under an open-source license. It is being developed by <link xlink:href="http://scholar.google.com/citations?user=f8Tw3eEAAAAJ">Dr. Alexander
     Stukowski</link> at the <link xlink:href="http://www.mawi.tu-darmstadt.de/mm/mm_mm_sw/index.en.jsp">
@@ -25,14 +25,13 @@
   <para>
     The first version of OVITO was released in 2009 and has been described in 
     a <link xlink:href="http://stacks.iop.org/0965-0393/18/015012">journal article</link>. 
-    Today, OVITO has over 200,000 regular users from the computational physics, materials science and chemistry fields.
   </para>
   
   <simplesect>
   <title>Program features</title>
 
   <para>OVITO is a software for visualizing and analyzing output data from particle-based simulation models, notably molecular dynamics (MD) simulations of 
-  solid-state materials. Its main focus is on large simulation models based on classical potentials 
+  materials. Its main focus is on large simulation models based on classical potentials and force fields
   (10<superscript>3</superscript> - 10<superscript>8</superscript> atoms).
   Some noteworthy program features are: <itemizedlist>
 
@@ -42,7 +41,7 @@
       </listitem>
 
       <listitem>
-        <para>Interactive visualization of a large numbers of particles and bonds using hardware-accelerated OpenGL rendering.</para>
+        <para>Interactive visualization of a large numbers of particles and bonds using GPU-accelerated OpenGL rendering.</para>
       </listitem>
 
       <listitem>

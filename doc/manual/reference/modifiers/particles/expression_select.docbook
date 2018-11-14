@@ -32,7 +32,9 @@
     and several conditions can be combined using logical AND and OR operators (<literal>&amp;&amp;</literal> and <literal>||</literal>).
   </para>
   <para> 
-    Note that variable names and function names are case-sensitive.
+    Note that variable names and function names are case-sensitive. Variable names are restricted to alphanumeric characters and
+    underscores. OVITO automatically replaces invalid characters in property names with an underscore to generate valid variable names
+    that can be referenced in the expression.
   </para>
 
   <simplesect>
