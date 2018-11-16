@@ -60,16 +60,16 @@ void PropertyExpressionEvaluator::initialize(const QStringList& expressions, con
 ******************************************************************************/
 void PropertyExpressionEvaluator::initialize(const QStringList& expressions, const std::vector<ConstPropertyPtr>& inputProperties, const SimulationCell* simCell, const QVariantMap& attributes, int animationFrame)
 {
+	// Determine number of input elements.
+	_elementCount = inputProperties.empty() ? 0 : inputProperties.front()->size();
+	_referencedVariablesKnown = false;
+
 	// Create list of input variables.
 	createInputVariables(inputProperties, simCell, attributes, animationFrame);
 
 	// Copy expression strings into internal array.
 	_expressions.resize(expressions.size());
 	std::transform(expressions.begin(), expressions.end(), _expressions.begin(), [](const QString& s) -> std::string { return s.toStdString(); });
-
-	// Determine number of input elements.
-	_elementCount = inputProperties.empty() ? 0 : inputProperties.front()->size();
-	_referencedVariablesKnown = false;
 }
 
 /******************************************************************************
@@ -88,7 +88,7 @@ void PropertyExpressionEvaluator::createInputVariables(const std::vector<ConstPr
 	ExpressionVariable constVar;
 
 	// Number of elements
-	registerGlobalParameter("N", elementCount(), tr("total number of %1").arg(_elementDescriptionName.isEmpty() ? QString("elements") : _elementDescriptionName));
+	registerGlobalParameter("N", elementCount(), tr("total number of %1").arg(_elementDescriptionName.isEmpty() ? tr("elements") : _elementDescriptionName));
 
 	// Animation frame
 	registerGlobalParameter("Frame", animationFrame, tr("animation frame number"));
