@@ -98,8 +98,8 @@ PipelineStatus ParticlesReplicateModifierDelegate::apply(Modifier* modifier, Pip
 			}
 		}
 
-		// Assign unique IDs to duplicated particle.
-		if(mod->uniqueIdentifiers() && property->type() == ParticlesObject::IdentifierProperty) {
+		// Assign unique IDs to duplicated particles.
+		if(mod->uniqueIdentifiers() && (property->type() == ParticlesObject::IdentifierProperty || property->type() == ParticlesObject::MoleculeProperty)) {
 			auto minmax = std::minmax_element(property->constDataInt64(), property->constDataInt64() + oldParticleCount);
 			auto minID = *minmax.first;
 			auto maxID = *minmax.second;
