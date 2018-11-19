@@ -73,8 +73,8 @@
               <entry>Renders a triangle mesh, loaded from a VTK file, for example</entry>
             </row>
             <row>
-              <entry>Trajectory&#xA0;lines</entry>
-              <entry>Renders continuous lines to visualize the particle trajectories created with the
+              <entry><link linkend="display_objects.trajectory_lines">Trajectory&#xA0;lines</link></entry>
+              <entry>Renders a set of continuous lines to visualize the particle trajectories created with the
               <link linkend="particles.modifiers.generate_trajectory_lines">Generate trajectory lines</link> modifier</entry>
             </row>
             <row>
@@ -98,6 +98,7 @@
   <xi:include href="particles.docbook"/>
   <xi:include href="simulation_cell.docbook"/>
   <xi:include href="surface_mesh.docbook"/>
+  <xi:include href="trajectory_lines.docbook"/>
   <xi:include href="vectors.docbook"/>
   
 </section>
