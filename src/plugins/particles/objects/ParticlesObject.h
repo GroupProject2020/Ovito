@@ -135,7 +135,7 @@ public:
 	const PropertyObject* expectBondsTopology() const;
 
 	/// Adds a set of new bonds to the particle system.
-	void addBonds(const std::vector<Bond>& newBonds, BondsVis* bondsVis, const std::vector<PropertyPtr>& bondProperties = {});
+	void addBonds(const std::vector<Bond>& newBonds, BondsVis* bondsVis, const std::vector<PropertyPtr>& bondProperties = {}, const BondType* bondType = nullptr);
 
 	/// Returns a vector with the input particle colors.
 	std::vector<Color> inputParticleColors() const;
@@ -144,7 +144,7 @@ public:
 	std::vector<FloatType> inputParticleRadii() const;
 
 	/// Returns a vector with the input bond colors.
-	std::vector<Color> inputBondColors() const;
+	std::vector<Color> inputBondColors(bool ignoreExistingColorProperty = false) const;
 
 private:
 

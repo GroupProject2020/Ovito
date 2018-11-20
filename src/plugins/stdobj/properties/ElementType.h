@@ -67,7 +67,7 @@ protected:
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(QString, name, setName);
 
 	/// Stores the visualization color of the type.
-	DECLARE_MODIFIABLE_PROPERTY_FIELD(Color, color, setColor);
+	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(Color, color, setColor, PROPERTY_FIELD_MEMORIZE);
 
 	/// Stores whether this type is "enabled" or "disabled".
 	/// This makes only sense in some sorts of types. For example, structure identification modifiers

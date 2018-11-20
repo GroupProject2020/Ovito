@@ -529,8 +529,8 @@ void RefMaker::loadUserDefaults()
 						// If it's a controller type, load default controller value.
 						if(Controller* ctrl = dynamic_object_cast<Controller>(target)) {
 							QSettings settings;
-							settings.beginGroup(field->definingClass()->plugin()->pluginId());
-							settings.beginGroup(field->definingClass()->name());
+							settings.beginGroup(getOOClass().plugin()->pluginId());
+							settings.beginGroup(getOOClass().name());
 							QVariant v = settings.value(field->identifier());
 							if(!v.isNull()) {
 								if(ctrl->controllerType() == Controller::ControllerTypeFloat) {
@@ -563,4 +563,3 @@ void RefMaker::loadUserDefaults()
 
 OVITO_END_INLINE_NAMESPACE
 }	// End of namespace
-

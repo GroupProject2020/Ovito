@@ -87,7 +87,8 @@ void ManualSelectionModifier::evaluatePreliminary(TimePoint time, ModifierApplic
 		
 		PipelineStatus status = selectionSet->applySelection(
 				container->createProperty(PropertyStorage::GenericSelectionProperty),
-				container->getProperty(PropertyStorage::GenericIdentifierProperty));
+				container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericIdentifierProperty) ?
+					container->getProperty(PropertyStorage::GenericIdentifierProperty) : nullptr);
 		
 		state.setStatus(std::move(status));
 	}

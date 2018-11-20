@@ -141,8 +141,8 @@ void PropertyParameterUI::memorizeDefaultParameterValue()
 		Controller* ctrl = dynamic_object_cast<Controller>(parameterObject());
 		if(ctrl) {
 			QSettings settings;
-			settings.beginGroup(propertyField()->definingClass()->plugin()->pluginId());
-			settings.beginGroup(propertyField()->definingClass()->name());
+			settings.beginGroup(editObject()->getOOClass().plugin()->pluginId());
+			settings.beginGroup(editObject()->getOOClass().name());
 			if(ctrl->controllerType() == Controller::ControllerTypeFloat) {
 				settings.setValue(propertyField()->identifier(), QVariant::fromValue(ctrl->currentFloatValue()));
 			}

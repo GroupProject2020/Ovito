@@ -91,6 +91,9 @@ void CreateBondsModifierEditor::createUI(const RolloutInsertionParameters& rollo
 	// Open a sub-editor for the bonds vis element.
 	new SubObjectParameterUI(this, PROPERTY_FIELD(CreateBondsModifier::bondsVis), rolloutParams.after(rollout));
 
+	// Open a sub-editor for the bond type.
+	new SubObjectParameterUI(this, PROPERTY_FIELD(CreateBondsModifier::bondType), rolloutParams.after(rollout).setTitle(tr("New")));
+
 	// Update pair-wise cutoff table whenever a modifier has been loaded into the editor.
 	connect(this, &CreateBondsModifierEditor::contentsReplaced, this, &CreateBondsModifierEditor::updatePairCutoffList);
 	connect(this, &CreateBondsModifierEditor::contentsChanged, this, &CreateBondsModifierEditor::updatePairCutoffListValues);
