@@ -95,7 +95,8 @@ private:
 
 		/// This is called by the system after the input handler is no longer the active handler.
 		virtual void deactivated(bool temporary) override {
-			inputManager()->removeViewportGizmo(this);
+			if(!temporary)
+				inputManager()->removeViewportGizmo(this);
 			ViewportInputMode::deactivated(temporary);
 		}		
 

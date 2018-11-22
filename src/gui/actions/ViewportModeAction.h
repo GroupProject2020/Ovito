@@ -55,8 +55,11 @@ public Q_SLOTS:
 
 protected Q_SLOTS:
 
-	/// Is called when the user has triggered the action's state.
+	/// Is called when the user or the program have triggered the action's state.
 	void onActionToggled(bool checked);
+
+	/// Is called when the user has triggered the action's state.
+	void onActionTriggered(bool checked);
 
 private:
 
