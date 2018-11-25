@@ -90,11 +90,13 @@ void ParticlePickingHelper::renderSelectionMarker(Viewport* vp, ViewportSceneRen
 	size_t particleIndex = pickRecord.particleIndex;
 	if(pickRecord.particleId >= 0) {
 		if(const PropertyObject* identifierProperty = particles->getProperty(ParticlesObject::IdentifierProperty)) {
-			auto begin = identifierProperty->constDataInt64();
-			auto end = begin + identifierProperty->size();
-			auto iter = std::find(begin, end, pickRecord.particleId);
-			if(iter == end) return;
-			particleIndex = (iter - begin);
+			if(particleIndex >= identifierProperty->size() || identifierProperty->getInt64(particleIndex) != pickRecord.particleId) {
+				auto begin = identifierProperty->constDataInt64();
+				auto end = begin + identifierProperty->size();
+				auto iter = std::find(begin, end, pickRecord.particleId);
+				if(iter == end) return;
+				particleIndex = (iter - begin);
+			}
 		}
 	}
 

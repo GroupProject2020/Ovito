@@ -48,7 +48,7 @@ QWidget* ParticleInspectionApplet::createWidget(MainWindow* mainWindow)
 	ViewportModeAction* pickModeAction = new ViewportModeAction(mainWindow, tr("Select in viewports"), this, _pickingMode);	
 	pickModeAction->setIcon(QIcon(":/particles/icons/select_mode.svg"));
 
-	_measuringModeAction = new QAction(QIcon(":/particles/icons/measure_distances.svg"), tr("Show distances"), this);
+	_measuringModeAction = new QAction(QIcon(":/particles/icons/measure_distances.svg"), tr("Show distances and angles"), this);
 	_measuringModeAction->setCheckable(true);
 
 	QToolBar* toolbar = new QToolBar();
@@ -75,26 +75,37 @@ QWidget* ParticleInspectionApplet::createWidget(MainWindow* mainWindow)
 	});
 
 	layout->addWidget(filterExpressionEdit(), 0, 1);
-	QHBoxLayout* sublayout = new QHBoxLayout();
-	sublayout->setContentsMargins(0,0,0,0);
-	sublayout->setSpacing(4);
-	sublayout->addWidget(tableView(), 2);
-	layout->addLayout(sublayout, 1, 0, 1, 2);
+	QSplitter* splitter = new QSplitter();
+	splitter->setChildrenCollapsible(false);
+	splitter->addWidget(tableView());
+	layout->addWidget(splitter, 1, 0, 1, 2);
 	layout->setRowStretch(1, 1);
 
 	_distanceTable = new QTableWidget(0, 3);
 	_distanceTable->hide();
-	_distanceTable->setHorizontalHeaderLabels(QStringList() << tr("Particle 1") << tr("Particle 2") << tr("Distance")); 
+	_distanceTable->setHorizontalHeaderLabels(QStringList() << tr("Pair A-B") << tr("Distance") << tr("Vector")); 
 	_distanceTable->horizontalHeader()->setStretchLastSection(true);
 	_distanceTable->verticalHeader()->hide();
-	sublayout->addWidget(_distanceTable, 1);
+	_distanceTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+	splitter->addWidget(_distanceTable);
+
+	_angleTable = new QTableWidget(0, 2);
+	_angleTable->hide();
+	_angleTable->setHorizontalHeaderLabels(QStringList() << tr("Triplet A-B-C") << tr("Angle")); 
+	_angleTable->horizontalHeader()->setStretchLastSection(true);
+	_angleTable->verticalHeader()->hide();
+	_angleTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+	splitter->addWidget(_angleTable);
 
 	connect(filterExpressionEdit(), &AutocompleteLineEdit::editingFinished, this, [this]() {
 		_pickingMode->resetSelection();
 	});
 	connect(_measuringModeAction, &QAction::toggled, _distanceTable, &QWidget::setVisible);
+	connect(_measuringModeAction, &QAction::toggled, _angleTable, &QWidget::setVisible);
 	connect(_measuringModeAction, &QAction::toggled, this, &ParticleInspectionApplet::updateDistanceTable);
+	connect(_measuringModeAction, &QAction::toggled, this, &ParticleInspectionApplet::updateAngleTable);
 	connect(this, &PropertyInspectionApplet::filterChanged, this, &ParticleInspectionApplet::updateDistanceTable);
+	connect(this, &PropertyInspectionApplet::filterChanged, this, &ParticleInspectionApplet::updateAngleTable);
 
 	return panel;
 }
@@ -110,8 +121,10 @@ void ParticleInspectionApplet::updateDisplay(const PipelineFlowState& state, Pip
 		
 	PropertyInspectionApplet::updateDisplay(state, sceneNode);
 
-	if(_measuringModeAction->isChecked())
+	if(_measuringModeAction->isChecked()) {
 		updateDistanceTable();
+		updateAngleTable();
+	}
 }
 
 /******************************************************************************
@@ -126,19 +139,70 @@ void ParticleInspectionApplet::updateDistanceTable()
 
 	const ParticlesObject* particles = currentState().getObject<ParticlesObject>();
 	const PropertyObject* posProperty = particles ? particles->getProperty(ParticlesObject::PositionProperty) : nullptr;
-	_distanceTable->setRowCount(n * (n-1) / 2);
+	_distanceTable->setRowCount(std::max(1, n * (n-1) / 2));
 	int row = 0;
 	for(int i = 0; i < n; i++) {
 		size_t i_index = visibleElementAt(i);
 		for(int j = i+1; j < n; j++, row++) {
 			size_t j_index = visibleElementAt(j);
-			_distanceTable->setItem(row, 0, new QTableWidgetItem(QString::number(i_index)));
-			_distanceTable->setItem(row, 1, new QTableWidgetItem(QString::number(j_index)));
+			_distanceTable->setItem(row, 0, new QTableWidgetItem(QStringLiteral("%1 - %2").arg(i_index).arg(j_index)));
 			if(posProperty && i_index < posProperty->size() && j_index < posProperty->size()) {
 				Vector3 delta = posProperty->getPoint3(j_index) - posProperty->getPoint3(i_index);
-				_distanceTable->setItem(row, 2, new QTableWidgetItem(QString::number(delta.length())));
+				_distanceTable->setItem(row, 1, new QTableWidgetItem(QString::number(delta.length())));
+				_distanceTable->setItem(row, 2, new QTableWidgetItem(QString::number(delta.x()) + QChar(' ') + QString::number(delta.y()) + QChar(' ') + QString::number(delta.z())));
 			}
 		}
+	}
+	if(row == 0) {
+		_distanceTable->setItem(0, 0, new QTableWidgetItem(tr("Please pick two particles")));
+		_distanceTable->setSpan(0, 0, 1, 3);
+	}
+	else {
+		_distanceTable->clearSpans();
+	}
+}
+
+/******************************************************************************
+* Computes the angles formed by selected particles.
+******************************************************************************/
+void ParticleInspectionApplet::updateAngleTable()
+{
+	if(currentState().isEmpty()) return;
+
+	// Limit angle computation to the first 3 particles:
+	int n = std::min(3, visibleElementCount());
+
+	const ParticlesObject* particles = currentState().getObject<ParticlesObject>();
+	const PropertyObject* posProperty = particles ? particles->getProperty(ParticlesObject::PositionProperty) : nullptr;
+	_angleTable->setRowCount(n == 3 ? 3 : 1);
+	int row = 0;
+	for(int i = 0; i < n; i++) {
+		size_t i_index = visibleElementAt(i);
+		for(int j = 0; j < n; j++) {
+			if(j == i) continue;
+			size_t j_index = visibleElementAt(j);
+			for(int k = j+1; k < n; k++) {
+				if(k == i) continue;
+				size_t k_index = visibleElementAt(k);
+				_angleTable->setItem(row, 0, new QTableWidgetItem(QStringLiteral("%1 - %2 - %3").arg(j_index).arg(i_index).arg(k_index)));
+				if(posProperty && i_index < posProperty->size() && j_index < posProperty->size() && k_index < posProperty->size()) {
+					Vector3 delta1 = posProperty->getPoint3(j_index) - posProperty->getPoint3(i_index);
+					Vector3 delta2 = posProperty->getPoint3(k_index) - posProperty->getPoint3(i_index);
+					if(!delta1.isZero() && !delta2.isZero()) {
+						FloatType angle = std::acos(delta1.dot(delta2) / delta1.length() / delta2.length());
+						_angleTable->setItem(row, 1, new QTableWidgetItem(QString::number(qRadiansToDegrees(angle))));
+					}
+				}
+				row++;
+			}
+		}
+	}
+	if(row == 0) {
+		_angleTable->setItem(0, 0, new QTableWidgetItem(tr("Please pick three particles")));
+		_angleTable->setSpan(0, 0, 1, 2);
+	}
+	else {
+		_angleTable->clearSpans();
 	}
 }
 
@@ -207,8 +271,63 @@ void ParticleInspectionApplet::PickingMode::mouseMoveEvent(ViewportWindow* vpwin
 ******************************************************************************/
 void ParticleInspectionApplet::PickingMode::renderOverlay3D(Viewport* vp, ViewportSceneRenderer* renderer)
 {
-	for(const auto& element : _pickedElements)
+	if(!renderer->isInteractive() || renderer->isPicking())
+		return;
+
+	// Render the highlight markers for the selected particles.
+	for(const auto& element : _pickedElements) {
 		renderSelectionMarker(vp, renderer, element);
+	}
+
+	// Render pair-wise connection lines between selected particles.
+	if(_applet->_measuringModeAction->isChecked() && !renderer->isBoundingBoxPass()) {
+		renderer->setWorldTransform(AffineTransformation::Identity());
+
+		// Collect world space coordinates of selected particles.
+		std::array<Point3,4> vertices;
+		auto outVertex = vertices.begin();
+		for(auto& element : _pickedElements) {
+			const PipelineFlowState& flowState = element.objNode->evaluatePipelinePreliminary(true);
+			if(const ParticlesObject* particles = flowState.getObject<ParticlesObject>()) {
+				// If particle selection is based on ID, find particle with the given ID.
+				size_t particleIndex = element.particleIndex;
+				if(element.particleId >= 0) {
+					if(const PropertyObject* identifierProperty = particles->getProperty(ParticlesObject::IdentifierProperty)) {
+						if(particleIndex >= identifierProperty->size() || identifierProperty->getInt64(particleIndex) != element.particleId) {
+							auto begin = identifierProperty->constDataInt64();
+							auto end = begin + identifierProperty->size();
+							auto iter = std::find(begin, end, element.particleId);
+							if(iter == end) continue;
+							element.particleIndex = particleIndex = (iter - begin);
+						}
+					}
+				}
+				if(const PropertyObject* posProperty = particles->getProperty(ParticlesObject::PositionProperty)) {
+					if(particleIndex < posProperty->size())
+						*outVertex++ = posProperty->getPoint3(particleIndex);
+				}
+			}
+			if(outVertex == vertices.end()) 
+				break;
+		}
+
+		// Generate pair-wise line elements.
+		std::vector<Point3> lines;
+		lines.reserve(vertices.size() * (vertices.size() - 1));
+		for(auto v1 = vertices.begin(); v1 != outVertex; ++v1) {
+			for(auto v2 = v1 + 1; v2 != outVertex; ++v2) {
+				lines.push_back(*v1);
+				lines.push_back(*v2);
+			}
+		}
+
+		// Render line elements.
+		std::shared_ptr<LinePrimitive> linesPrimitive = renderer->createLinePrimitive();
+		linesPrimitive->setVertexCount(lines.size());
+		linesPrimitive->setVertexPositions(lines.data());
+		linesPrimitive->setLineColor(ViewportSettings::getSettings().viewportColor(ViewportSettings::COLOR_UNSELECTED));
+		linesPrimitive->render(renderer);
+	}
 }
 
 OVITO_END_INLINE_NAMESPACE

@@ -77,6 +77,9 @@ private Q_SLOTS:
 	/// Computes the inter-particle distances for the selected particles.
 	void updateDistanceTable();
 
+	/// Computes the angles formed by selected particles.
+	void updateAngleTable();
+
 private:
 
 	/// Viewport input mode that lets the user pick particles.
@@ -136,6 +139,9 @@ private:
 
 	/// The table displaying the inter-particle distances.
 	QTableWidget* _distanceTable;
+
+	/// The table displaying the angles formed by selected particles.
+	QTableWidget* _angleTable;
 };
 
 OVITO_END_INLINE_NAMESPACE
