@@ -21,6 +21,7 @@
 
 #include <plugins/particles/Particles.h>
 #include <plugins/particles/objects/ParticlesVis.h>
+#include <plugins/particles/objects/BondType.h>
 #include <core/app/Application.h>
 #include <core/dataset/DataSet.h>
 #include <core/dataset/pipeline/PipelineFlowState.h>
@@ -153,7 +154,7 @@ size_t ParticlesObject::deleteParticles(const boost::dynamic_bitset<>& mask)
 /******************************************************************************
 * Adds a set of new bonds to the particle system.
 ******************************************************************************/
-void ParticlesObject::addBonds(const std::vector<Bond>& newBonds, BondsVis* bondsVis, const std::vector<PropertyPtr>& bondProperties)
+void ParticlesObject::addBonds(const std::vector<Bond>& newBonds, BondsVis* bondsVis, const std::vector<PropertyPtr>& bondProperties, const BondType* bondType)
 {
 	// Create the bonds object.
 	if(!bonds())
@@ -172,6 +173,7 @@ void ParticlesObject::addBonds(const std::vector<Bond>& newBonds, BondsVis* bond
 		// Create essential bond properties.
 		PropertyPtr topologyProperty = BondsObject::OOClass().createStandardStorage(newBonds.size(), BondsObject::TopologyProperty, false);
 		PropertyPtr periodicImageProperty = BondsObject::OOClass().createStandardStorage(newBonds.size(), BondsObject::PeriodicImageProperty, false);
+		PropertyPtr bondTypeProperty = bondType ? BondsObject::OOClass().createStandardStorage(newBonds.size(), BondsObject::TypeProperty, false) : nullptr;
 
 		// Copy data into property arrays.
 		auto t = topologyProperty->dataInt64();
@@ -187,12 +189,18 @@ void ParticlesObject::addBonds(const std::vector<Bond>& newBonds, BondsVis* bond
 		// Insert property objects into the output pipeline state.
 		PropertyObject* topologyPropertyObj = bonds()->createProperty(topologyProperty);
 		PropertyObject* periodicImagePropertyObj = bonds()->createProperty(periodicImageProperty);
+		if(bondTypeProperty) {
+			std::fill(bondTypeProperty->dataInt(), bondTypeProperty->dataInt() + bondTypeProperty->size(), bondType->numericId());
+			PropertyObject* bondTypePropertyObj = bonds()->createProperty(bondTypeProperty);
+			bondTypePropertyObj->addElementType(bondType);
+		}
 
 		// Insert other bond properties.
 		for(const auto& bprop : bondProperties) {
 			OVITO_ASSERT(bprop->size() == newBonds.size());
 			OVITO_ASSERT(bprop->type() != BondsObject::TopologyProperty);
 			OVITO_ASSERT(bprop->type() != BondsObject::PeriodicImageProperty);
+			OVITO_ASSERT(!bondTypeProperty || bprop->type() != BondsObject::TypeProperty);
 			bonds()->createProperty(bprop);
 		}
 	}
@@ -223,10 +231,15 @@ void ParticlesObject::addBonds(const std::vector<Bond>& newBonds, BondsVis* bond
 		// Duplicate the existing property objects.
 		PropertyObject* newBondsTopology = bonds()->makeMutable(existingBondsTopology.get());
 		PropertyObject* newBondsPeriodicImages = bonds()->createProperty(BondsObject::PeriodicImageProperty, true);
+		PropertyObject* newBondTypeProperty = bondType ? bonds()->createProperty(BondsObject::TypeProperty, true) : nullptr;
 
 		// Copy bonds information into the extended arrays.
 		newBondsTopology->resize(outputBondCount, true);
 		newBondsPeriodicImages->resize(outputBondCount, true);
+		if(newBondTypeProperty) {
+			newBondTypeProperty->resize(outputBondCount, true);
+			newBondTypeProperty->addElementType(bondType);
+		}
 		for(size_t bondIndex = 0; bondIndex < newBonds.size(); bondIndex++) {
 			if(mapping[bondIndex] >= originalBondCount) {
 				const Bond& bond = newBonds[bondIndex];
@@ -235,6 +248,7 @@ void ParticlesObject::addBonds(const std::vector<Bond>& newBonds, BondsVis* bond
 				newBondsTopology->setInt64Component(mapping[bondIndex], 0, bond.index1);
 				newBondsTopology->setInt64Component(mapping[bondIndex], 1, bond.index2);
 				newBondsPeriodicImages->setVector3I(mapping[bondIndex], bond.pbcShift);
+				if(newBondTypeProperty) newBondTypeProperty->setInt(mapping[bondIndex], bondType->numericId());
 			}
 		}
 
@@ -243,10 +257,20 @@ void ParticlesObject::addBonds(const std::vector<Bond>& newBonds, BondsVis* bond
 		for(PropertyObject* bondPropertyObject : bonds()->properties()) {
 			if(bondPropertyObject == newBondsTopology) continue;
 			if(bondPropertyObject == newBondsPeriodicImages) continue;
+			if(bondPropertyObject == newBondTypeProperty) continue;
 			if(bondPropertyObject->size() != originalBondCount) continue;
 
 			// Extend array.
 			bondPropertyObject->resize(outputBondCount, true);
+		}
+
+		// Initialize property values of new bonds.
+		for(PropertyObject* bondPropertyObject : bonds()->properties()) {
+			if(bondPropertyObject->type() == BondsObject::ColorProperty) {
+				const std::vector<Color>& colors = inputBondColors(true);
+				OVITO_ASSERT(colors.size() == bondPropertyObject->size());
+				std::copy(colors.cbegin() + originalBondCount, colors.cend(), bondPropertyObject->dataColor() + originalBondCount);
+			} 
 		}
 
 		// Merge new bond properties.
@@ -254,6 +278,7 @@ void ParticlesObject::addBonds(const std::vector<Bond>& newBonds, BondsVis* bond
 			OVITO_ASSERT(bprop->size() == newBonds.size());
 			OVITO_ASSERT(bprop->type() != BondsObject::TopologyProperty);
 			OVITO_ASSERT(bprop->type() != BondsObject::PeriodicImageProperty);
+			OVITO_ASSERT(!bondType || bprop->type() != BondsObject::TypeProperty);
 
 			OORef<PropertyObject> propertyObject;
 
@@ -295,7 +320,7 @@ std::vector<Color> ParticlesObject::inputParticleColors() const
 /******************************************************************************
 * Returns a vector with the input bond colors.
 ******************************************************************************/
-std::vector<Color> ParticlesObject::inputBondColors() const
+std::vector<Color> ParticlesObject::inputBondColors(bool ignoreExistingColorProperty) const
 {
 	// Obtain the bonds vis element.
     if(bonds()) {
@@ -308,9 +333,9 @@ std::vector<Color> ParticlesObject::inputBondColors() const
 			std::vector<ColorA> halfBondColors = bondsVis->halfBondColors(
 					elementCount(), 
 					bonds()->getProperty(BondsObject::TopologyProperty),
-					bonds()->getProperty(BondsObject::ColorProperty),
+					!ignoreExistingColorProperty ? bonds()->getProperty(BondsObject::ColorProperty) : nullptr,
 					bonds()->getProperty(BondsObject::TypeProperty),
-					bonds()->getProperty(BondsObject::SelectionProperty),
+					nullptr, // No selection highlighting needed here
 					nullptr, // No transparency needed here
 					particleVis, 
 					getProperty(ParticlesObject::ColorProperty),
@@ -657,7 +682,7 @@ boost::dynamic_bitset<> ParticlesObject::OOMetaClass::viewportFenceSelection(con
 	const ParticlesObject* particles = static_object_cast<ParticlesObject>(objectPath.back());
 	if(const PropertyObject* posProperty = particles->getProperty(ParticlesObject::PositionProperty)) {
 
-		if(!posProperty->visElement() || posProperty->visElement()->isEnabled() == false)
+		if(!particles->visElement() || particles->visElement()->isEnabled() == false)
 			node->throwException(tr("Cannot select particles while the corresponding visual element is disabled. Please enable the display of particles first."));
 
 		boost::dynamic_bitset<> fullSelection(posProperty->size());

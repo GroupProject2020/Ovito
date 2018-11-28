@@ -58,7 +58,7 @@
       <title>Building from source</title>
 
       <para>You can also download the source code of OVITO and build the program yourself.
-      See the <link linkend="development">developer section</link> for instructions.</para>
+      See the <link linkend="development">developers section</link> for instructions.</para>
     </simplesect>
 
 </chapter>

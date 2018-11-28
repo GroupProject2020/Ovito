@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2015) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -53,7 +53,10 @@ public:
 
     Q_PROPERTY(Ovito::ArrowPrimitive::ShadingMode shadingMode READ shadingMode WRITE setShadingMode);
 
-protected:
+private:
+
+	/// Clips a trajectory line at the periodic box boundaries.
+	static void clipTrajectoryLine(const Point3& v1, const Point3& v2, const SimulationCell& simulationCell, const std::function<void(const Point3&, const Point3&)>& segmentCallback);
 
 	/// Controls the display width of trajectory lines.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(FloatType, lineWidth, setLineWidth, PROPERTY_FIELD_MEMORIZE);
@@ -64,11 +67,12 @@ protected:
 	/// Controls the whether the trajectory lines are rendered only up to the current animation time.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, showUpToCurrentTime, setShowUpToCurrentTime);
 
+	/// Controls the whether the displayed trajectory lines are wrapped at periodic boundaries of the simulation cell.
+	DECLARE_MODIFIABLE_PROPERTY_FIELD(bool, wrappedLines, setWrappedLines);
+
 	/// Controls the shading mode for lines.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD_FLAGS(ArrowPrimitive::ShadingMode, shadingMode, setShadingMode, PROPERTY_FIELD_MEMORIZE);
 };
 
 }	// End of namespace
 }	// End of namespace
-
-

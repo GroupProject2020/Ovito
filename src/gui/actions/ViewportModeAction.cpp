@@ -39,10 +39,11 @@ ViewportModeAction::ViewportModeAction(MainWindow* mainWindow, const QString& te
 
 	connect(inputMode, &ViewportInputMode::statusChanged, this, &ViewportModeAction::setChecked);
 	connect(this, &ViewportModeAction::toggled, this, &ViewportModeAction::onActionToggled);
+	connect(this, &ViewportModeAction::triggered, this, &ViewportModeAction::onActionTriggered);
 }
 
 /******************************************************************************
-* Is called when the user has triggered the action's state.
+* Is called when the user or the program have triggered the action's state.
 ******************************************************************************/
 void ViewportModeAction::onActionToggled(bool checked)
 {
@@ -51,12 +52,21 @@ void ViewportModeAction::onActionToggled(bool checked)
 		_viewportInputManager.pushInputMode(_inputMode);
 	}
 	else if(!checked) {
-		if(_inputMode->modeType() != ViewportInputMode::ExclusiveMode) {
-			_viewportInputManager.removeInputMode(_inputMode);
-		}
-		else if(_viewportInputManager.activeMode() == _inputMode) {
+		if(_viewportInputManager.activeMode() == _inputMode && _inputMode->modeType() == ViewportInputMode::ExclusiveMode) {
 			// Make sure that an exclusive input mode cannot be deactivated by the user.
 			setChecked(true);
+		}
+	}
+}
+
+/******************************************************************************
+* Is called when the user has triggered the action's state.
+******************************************************************************/
+void ViewportModeAction::onActionTriggered(bool checked)
+{
+	if(!checked) {
+		if(_inputMode->modeType() != ViewportInputMode::ExclusiveMode) {
+			_viewportInputManager.removeInputMode(_inputMode);
 		}
 	}
 }

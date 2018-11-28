@@ -410,15 +410,19 @@ Future<std::vector<QUrl>> FileSourceImporter::findWildcardMatches(const QUrl& so
 				for(QChar c : oldName) {
 					if(!c.isDigit()) {
 						if(!number.isEmpty()) {
-							newName.append(number.rightJustified(10, '0'));
+							newName.append(number.rightJustified(12, '0'));
 							number.clear();
 						}
 						newName.append(c);
 					}
 					else number.append(c);
 				}
-				if(!number.isEmpty()) newName.append(number.rightJustified(10, '0'));
-				sortedFilenames[newName] = oldName;
+				if(!number.isEmpty()) 
+					newName.append(number.rightJustified(12, '0'));
+				if(!sortedFilenames.contains(newName))
+					sortedFilenames[newName] = oldName;
+				else
+					sortedFilenames[oldName] = oldName;
 			}
 
 			// Generate final list of frames.

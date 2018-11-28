@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2015) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,57 +23,47 @@
 
 
 #include <plugins/particles/Particles.h>
-#include <core/dataset/data/DataObject.h>
+#include <plugins/stdobj/properties/PropertyContainer.h>
 
 namespace Ovito { namespace Particles {
 
 /**
- * \brief Stores the trajectories of a set of particles.
+ * \brief Stores trajectory lines of a particles dataset.
  */
-class OVITO_PARTICLES_EXPORT TrajectoryObject : public DataObject
+class OVITO_PARTICLES_EXPORT TrajectoryObject : public PropertyContainer
 {
+	/// Define a new property metaclass for this property container type.
+	class TrajectoryObjectClass : public PropertyContainerClass 
+	{
+	public:
+
+		/// Inherit constructor from base class.
+		using PropertyContainerClass::PropertyContainerClass;
+
+		/// Creates a storage object for standard properties.
+		virtual PropertyPtr createStandardStorage(size_t elementCount, int type, bool initializeMemory, const ConstDataObjectPath& containerPath = {}) const override;
+
+	protected:
+
+		/// Is called by the system after construction of the meta-class instance.
+		virtual void initialize() override;
+	};
+
 	Q_OBJECT
-	OVITO_CLASS(TrajectoryObject)
+	OVITO_CLASS_META(TrajectoryObject, TrajectoryObjectClass);
 	Q_CLASSINFO("DisplayName", "Particle trajectories");
 
 public:
 
+	/// \brief The list of standard properties.
+	enum Type {
+		PositionProperty = PropertyStorage::FirstSpecificProperty,
+		SampleTimeProperty,
+		ParticleIdentifierProperty
+	};
+
 	/// \brief Constructor.
 	Q_INVOKABLE TrajectoryObject(DataSet* dataset);
-
-	/// Returns the trajectory points.
-	const QVector<Point3>& points() const { return _points; }
-
-	/// Returns the number of independent trajectories stored in this data object.
-	int trajectoryCount() const { return _trajectoryCount; }
-
-	/// Returns the points in time where the trajectories have been sampled.
-	const QVector<TimePoint>& sampleTimes() const { return _sampleTimes; }
-
-	/// Replaces the stored trajectories with new data.
-	void setTrajectories(int trajectoryCount, const QVector<Point3>& points, const QVector<TimePoint>& sampleTimes);
-
-protected:
-
-	/// Saves the class' contents to the given stream.
-	virtual void saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData) override;
-
-	/// Loads the class' contents from the given stream.
-	virtual void loadFromStream(ObjectLoadStream& stream) override;
-
-	/// Creates a copy of this object.
-	virtual OORef<RefTarget> clone(bool deepCopy, CloneHelper& cloneHelper) const override;
-
-private:
-
-	/// Stores the trajectory points of all particles.
-	QVector<Point3> _points;
-
-	/// The number of independent trajectories stored.
-	int _trajectoryCount;
-
-	/// The points in time where the trajectories have been sampled.
-	QVector<TimePoint> _sampleTimes;
 };
 
 }	// End of namespace

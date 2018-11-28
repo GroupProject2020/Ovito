@@ -304,7 +304,7 @@ boost::dynamic_bitset<> BondsObject::OOMetaClass::viewportFenceSelection(const Q
 		if(const PropertyObject* topologyProperty = bonds->getProperty(BondsObject::TopologyProperty)) {
 			if(const PropertyObject* posProperty = particles->getProperty(ParticlesObject::PositionProperty)) {
 
-				if(!topologyProperty->visElement() || topologyProperty->visElement()->isEnabled() == false)
+				if(!bonds->visElement() || bonds->visElement()->isEnabled() == false)
 					node->throwException(tr("Cannot select bonds while the corresponding visual element is disabled. Please enable the display of bonds first."));
 
 				boost::dynamic_bitset<> fullSelection(topologyProperty->size());

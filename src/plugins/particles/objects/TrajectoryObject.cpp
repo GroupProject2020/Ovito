@@ -20,7 +20,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <plugins/particles/Particles.h>
-#include <core/dataset/DataSet.h>
 #include "TrajectoryObject.h"
 #include "TrajectoryVis.h"
 
@@ -29,96 +28,68 @@ namespace Ovito { namespace Particles {
 IMPLEMENT_OVITO_CLASS(TrajectoryObject);
 
 /******************************************************************************
+* Registers all standard properties with the property traits class.
+******************************************************************************/
+void TrajectoryObject::OOMetaClass::initialize()
+{
+	PropertyContainerClass::initialize();
+
+	setPropertyClassDisplayName(tr("Trajectories"));
+	setElementDescriptionName(QStringLiteral("vertex"));
+	setPythonName(QStringLiteral("trajectories"));
+
+	const QStringList emptyList;
+	const QStringList xyzList = QStringList() << "X" << "Y" << "Z";
+	registerStandardProperty(PositionProperty, tr("Position"), PropertyStorage::Float, xyzList);
+	registerStandardProperty(SampleTimeProperty, tr("Time"), PropertyStorage::Int, emptyList);
+	registerStandardProperty(ParticleIdentifierProperty, tr("Particle Identifier"), PropertyStorage::Int64, emptyList);
+}
+
+/******************************************************************************
+* Creates a storage object for standard properties.
+******************************************************************************/
+PropertyPtr TrajectoryObject::OOMetaClass::createStandardStorage(size_t elementCount, int type, bool initializeMemory, const ConstDataObjectPath& containerPath) const
+{
+	int dataType;
+	size_t componentCount;
+	size_t stride;
+
+	switch(type) {
+	case PositionProperty:
+		dataType = PropertyStorage::Float;
+		componentCount = 3;
+		stride = sizeof(Point3);
+		break;
+	case SampleTimeProperty:
+		dataType = PropertyStorage::Int;
+		componentCount = 1;
+		stride = sizeof(int);
+		break;
+	case ParticleIdentifierProperty:
+		dataType = PropertyStorage::Int64;
+		componentCount = 1;
+		stride = sizeof(qlonglong);
+		break;
+	default:
+		OVITO_ASSERT_MSG(false, "TrajectoryObject::createStandardStorage()", "Invalid standard property type");
+		throw Exception(tr("This is not a valid standard property type: %1").arg(type));
+	}
+
+	const QStringList& componentNames = standardPropertyComponentNames(type);
+	const QString& propertyName = standardPropertyName(type);
+
+	OVITO_ASSERT(componentCount == standardPropertyComponentCount(type));
+	
+	return std::make_shared<PropertyStorage>(elementCount, dataType, componentCount, stride, 
+								propertyName, initializeMemory, type, componentNames);
+}
+
+/******************************************************************************
 * Default constructor.
 ******************************************************************************/
-TrajectoryObject::TrajectoryObject(DataSet* dataset) : DataObject(dataset), _trajectoryCount(0)
+TrajectoryObject::TrajectoryObject(DataSet* dataset) : PropertyContainer(dataset)
 {
 	addVisElement(new TrajectoryVis(dataset));
-}
-
-/******************************************************************************
-* Saves the class' contents to the given stream.
-******************************************************************************/
-void TrajectoryObject::saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData)
-{
-	DataObject::saveToStream(stream, excludeRecomputableData);
-
-	stream.beginChunk(0x01);
-	stream << _trajectoryCount;
-	stream << _sampleTimes;
-	stream << _points;
-	stream.endChunk();
-}
-
-/******************************************************************************
-* Loads the class' contents from the given stream.
-******************************************************************************/
-void TrajectoryObject::loadFromStream(ObjectLoadStream& stream)
-{
-	DataObject::loadFromStream(stream);
-
-	stream.expectChunk(0x01);
-	stream >> _trajectoryCount;
-	stream >> _sampleTimes;
-	stream >> _points;
-	stream.closeChunk();
-}
-
-/******************************************************************************
-* Creates a copy of this object.
-******************************************************************************/
-OORef<RefTarget> TrajectoryObject::clone(bool deepCopy, CloneHelper& cloneHelper) const
-{
-	// Let the base class create an instance of this class.
-	OORef<TrajectoryObject> clone = static_object_cast<TrajectoryObject>(DataObject::clone(deepCopy, cloneHelper));
-
-	// Shallow copy the internal data.
-	clone->_points = this->_points;
-	clone->_trajectoryCount = this->_trajectoryCount;
-	clone->_sampleTimes = this->_sampleTimes;
-
-	return clone;
-}
-
-/******************************************************************************
-* Replaces the stored trajectories with new data.
-******************************************************************************/
-void TrajectoryObject::setTrajectories(int trajectoryCount, const QVector<Point3>& points, const QVector<TimePoint>& sampleTimes)
-{
-	OVITO_ASSERT(trajectoryCount >= 0);
-	OVITO_ASSERT(points.size() == trajectoryCount * sampleTimes.size());
-
-	class ReplaceTrajectoryOperation : public UndoableOperation {
-	public:
-		ReplaceTrajectoryOperation(TrajectoryObject* obj) :
-			_obj(obj), _points(obj->points()), _trajectoryCount(obj->trajectoryCount()), _sampleTimes(obj->sampleTimes()) {}
-		virtual void undo() override {
-			auto points = _obj->points();
-			auto trajectoryCount = _obj->trajectoryCount();
-			auto sampleTimes = _obj->sampleTimes();
-			_obj->setTrajectories(_trajectoryCount, _points, _sampleTimes);
-			_points = std::move(points);
-			_trajectoryCount = trajectoryCount;
-			_sampleTimes = std::move(sampleTimes);
-		}
-		virtual QString displayName() const override { 
-			return QStringLiteral("Replace trajectory"); 
-		}
-	private:
-		OORef<TrajectoryObject> _obj;
-		QVector<Point3> _points;
-		int _trajectoryCount;
-		QVector<TimePoint> _sampleTimes;
-	};
-
-	// Make a backup of the old trajectories so they may be restored.
-	dataset()->undoStack().pushIfRecording<ReplaceTrajectoryOperation>(this);
-
-	_trajectoryCount = trajectoryCount;
-	_points = points;
-	_sampleTimes = sampleTimes;
-
-	notifyTargetChanged();
 }
 
 }	// End of namespace

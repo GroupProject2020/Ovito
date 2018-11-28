@@ -14,6 +14,7 @@ from .nearest_neighbor_finder import NearestNeighborFinder
 from .data_collection import DataCollection
 from .particles_object import Particles
 from .bonds_object import Bonds
+from .trajectory_lines import TrajectoryLines
 
 # Inject selected classes into parent module.
 ovito.data.BondsEnumerator = ovito.plugins.Particles.BondsEnumerator
@@ -23,7 +24,7 @@ ovito.data.CutoffNeighborFinder = CutoffNeighborFinder
 ovito.data.NearestNeighborFinder = NearestNeighborFinder
 ovito.data.Particles = Particles
 ovito.data.Bonds = Bonds
-ovito.data.TrajectoryLines = ovito.plugins.Particles.TrajectoryLines
+ovito.data.TrajectoryLines = TrajectoryLines
 ovito.data.__all__ += ['ParticleType',
             'BondType', 'BondsEnumerator', 
             'CutoffNeighborFinder', 'NearestNeighborFinder',

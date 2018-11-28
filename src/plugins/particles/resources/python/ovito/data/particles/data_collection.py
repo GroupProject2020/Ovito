@@ -3,7 +3,7 @@ import ovito
 from ovito.data import DataCollection
 
 # Load the native code module
-from ovito.plugins.Particles import Particles
+from ovito.plugins.Particles import Particles, TrajectoryLines
 
 # Implementation of the DataCollection.particles attribute.
 def _DataCollection_particles(self):
@@ -20,6 +20,19 @@ DataCollection.particles = property(_DataCollection_particles)
 
 # Implementation of the DataCollection.particles_ attribute.
 DataCollection.particles_ = property(lambda self: self.make_mutable(self.particles))
+
+# Implementation of the DataCollection.trajectories attribute.
+def _DataCollection_trajectories(self):
+    """
+    Returns the :py:class:`TrajectoryLines` object, which holds the continuous particle trajectories traced 
+    by the :py:class:`~ovito.modifiers.GenerateTrajectoryLinesModifier`. 
+    ``None`` is returned if the data collection does not contain a :py:class:`TrajectoryLines` object.
+    """
+    return self.find(TrajectoryLines)
+DataCollection.trajectories = property(_DataCollection_trajectories)
+
+# Implementation of the DataCollection.trajectories_ attribute.
+DataCollection.trajectories_ = property(lambda self: self.make_mutable(self.trajectories))
 
 # Implementation of the DataCollection.bonds attribute.
 # Here only for backward compatibility with OVITO 2.9.0.

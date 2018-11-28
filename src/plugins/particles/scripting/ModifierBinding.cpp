@@ -368,8 +368,10 @@ void defineModifiersSubmodule(py::module m)
 				":Default: ``CreateBondsModifier.Mode.Uniform``\n")
 		.def_property("vis", &CreateBondsModifier::bondsVis, &CreateBondsModifier::setBondsVis,
 				"The :py:class:`~ovito.vis.BondsVis` object controlling the visual appearance of the bonds created by this modifier.")
+		.def_property("bond_type", &CreateBondsModifier::bondType, &CreateBondsModifier::setBondType,
+				"The :py:class:`~ovito.data.BondType` that will be assigned to the newly created bonds. This lets you control the display color of the new bonds. ")
 		.def_property("cutoff", &CreateBondsModifier::uniformCutoff, &CreateBondsModifier::setUniformCutoff,
-				"The maximum cutoff distance for the creation of bonds between particles. This parameter is only used if :py:attr:`.mode` is ``Uniform``. "
+				"The upper cutoff distance for the creation of bonds between particles. This parameter is only used if :py:attr:`.mode` is set to ``Uniform``. "
 				"\n\n"
 				":Default: 3.2\n")
 		.def_property("intra_molecule_only", &CreateBondsModifier::onlyIntraMoleculeBonds, &CreateBondsModifier::setOnlyIntraMoleculeBonds,
@@ -377,7 +379,7 @@ void defineModifiersSubmodule(py::module m)
 				"\n\n"
 				":Default: ``False``\n")
 		.def_property("lower_cutoff", &CreateBondsModifier::minimumCutoff, &CreateBondsModifier::setMinimumCutoff,
-				"The minimum bond length. No bonds will be created between particles whose distance is below this threshold."
+				"The minimum bond length. No bonds will be created between particles whose distance is below this threshold. "
 				"\n\n"
 				":Default: 0.0\n")
 		.def("set_pairwise_cutoff", &CreateBondsModifier::setPairwiseCutoff,
@@ -385,8 +387,8 @@ void defineModifiersSubmodule(py::module m)
 				"\n\n"
 				"Sets the cutoff range for creating bonds between a specific pair of particle types. This information is only used if :py:attr:`.mode` is set to ``Pairwise``."
 				"\n\n"
-				":param str,int type_a: The :py:attr:`~ovito.data.ParticleType.name` or numeric :py:attr:`~ovito.data.ParticleType.id` of the first particle type\n"
-				":param str,int type_b: The :py:attr:`~ovito.data.ParticleType.name` or numeric :py:attr:`~ovito.data.ParticleType.id` of the second particle type\n"
+				":param str,int type_a: The :py:attr:`~ovito.data.ElementType.name` or numeric :py:attr:`~ovito.data.ElementType.id` of the first particle type\n"
+				":param str,int type_b: The :py:attr:`~ovito.data.ElementType.name` or numeric :py:attr:`~ovito.data.ElementType.id` of the second particle type\n"
 				":param float cutoff: The cutoff distance to be used by the modifier for the type pair\n"
 				"\n\n"
 				"If you want no bonds to be created between a pair of types, set the corresponding cutoff radius to zero (which is the default).",
@@ -394,10 +396,10 @@ void defineModifiersSubmodule(py::module m)
 		.def("get_pairwise_cutoff", &CreateBondsModifier::getPairwiseCutoff,
 				"get_pairwise_cutoff(type_a, type_b) -> float"
 				"\n\n"
-				"Returns the pair-wise cutoff distance that was previously set for a specific pair of particle types."
+				"Returns the pair-wise cutoff distance that was previously set for a specific pair of particle types using the :py:meth:`set_pairwise_cutoff` method. "
 				"\n\n"
-				":param str,int type_a: The :py:attr:`~ovito.data.ParticleType.name` or numeric :py:attr:`~ovito.data.ParticleType.id` of the first particle type\n"
-				":param str,int type_b: The :py:attr:`~ovito.data.ParticleType.name` or numeric :py:attr:`~ovito.data.ParticleType.id` of the second particle type\n"
+				":param str,int type_a: The :py:attr:`~ovito.data.ElementType.name` or numeric :py:attr:`~ovito.data.ElementType.id` of the first particle type\n"
+				":param str,int type_b: The :py:attr:`~ovito.data.ElementType.name` or numeric :py:attr:`~ovito.data.ElementType.id` of the second particle type\n"
 				":return: The cutoff distance set for the type pair. Returns zero if no cutoff has been set for the pair.\n",
 				py::arg("type_a"), py::arg("type_b"))
 	;

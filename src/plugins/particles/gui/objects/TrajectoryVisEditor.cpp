@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2018) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -38,7 +38,7 @@ SET_OVITO_OBJECT_EDITOR(TrajectoryVis, TrajectoryVisEditor);
 void TrajectoryVisEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create a rollout.
-	QWidget* rollout = createRollout(tr("Trajectory display"), rolloutParams);
+	QWidget* rollout = createRollout(tr("Trajectory display"), rolloutParams, "display_objects.trajectory_lines.html");
 
     // Create the rollout contents.
 	QGridLayout* layout = new QGridLayout(rollout);
@@ -63,9 +63,13 @@ void TrajectoryVisEditor::createUI(const RolloutInsertionParameters& rolloutPara
 	layout->addWidget(lineColorUI->label(), 2, 0);
 	layout->addWidget(lineColorUI->colorPicker(), 2, 1);
 
+	// Wrapped line display.
+	BooleanParameterUI* wrappedLinesUI = new BooleanParameterUI(this, PROPERTY_FIELD(TrajectoryVis::wrappedLines));
+	layout->addWidget(wrappedLinesUI->checkBox(), 3, 0, 1, 2);
+
 	// Up to current time.
 	BooleanParameterUI* showUpToCurrentTimeUI = new BooleanParameterUI(this, PROPERTY_FIELD(TrajectoryVis::showUpToCurrentTime));
-	layout->addWidget(showUpToCurrentTimeUI->checkBox(), 3, 0, 1, 2);
+	layout->addWidget(showUpToCurrentTimeUI->checkBox(), 4, 0, 1, 2);
 }
 
 OVITO_END_INLINE_NAMESPACE

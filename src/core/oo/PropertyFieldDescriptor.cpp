@@ -105,8 +105,8 @@ void PropertyFieldDescriptor::memorizeDefaultValue(RefMaker* object) const
 {
 	OVITO_CHECK_OBJECT_POINTER(object);
 	QSettings settings;
-	settings.beginGroup(definingClass()->plugin()->pluginId());
-	settings.beginGroup(definingClass()->name());
+	settings.beginGroup(object->getOOClass().plugin()->pluginId());
+	settings.beginGroup(object->getOOClass().name());
 	QVariant v = object->getPropertyFieldValue(*this);
 	// Workaround for bug in Qt 5.7.0: QVariants of type float do not get correctly stored
 	// by QSettings (at least on macOS), because QVariant::Float is not an official type.
@@ -122,8 +122,8 @@ bool PropertyFieldDescriptor::loadDefaultValue(RefMaker* object) const
 {
 	OVITO_CHECK_OBJECT_POINTER(object);
 	QSettings settings;
-	settings.beginGroup(definingClass()->plugin()->pluginId());
-	settings.beginGroup(definingClass()->name());
+	settings.beginGroup(object->getOOClass().plugin()->pluginId());
+	settings.beginGroup(object->getOOClass().name());
 	QVariant v = settings.value(identifier());
 	if(!v.isNull()) {
 		//qDebug() << "Loading default value for parameter" << identifier() << "of class" << definingClass()->name() << ":" << v;

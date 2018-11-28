@@ -121,7 +121,7 @@ public:
 		Point3 pout = p;
 		for(size_t dim = 0; dim < 3; dim++) {
 			if(_pbcFlags[dim]) {
-				if(FloatType s = floor(_reciprocalSimulationCell.prodrow(p, dim)))
+				if(FloatType s = std::floor(_reciprocalSimulationCell.prodrow(p, dim)))
 					pout -= s * _simulationCell.column(dim);
 			}
 		}
@@ -133,7 +133,7 @@ public:
 		Vector3 vout = v;
 		for(size_t dim = 0; dim < 3; dim++) {
 			if(_pbcFlags[dim]) {
-				if(FloatType s = floor(_reciprocalSimulationCell.prodrow(v, dim) + FloatType(0.5)))
+				if(FloatType s = std::floor(_reciprocalSimulationCell.prodrow(v, dim) + FloatType(0.5)))
 					vout -= s * _simulationCell.column(dim);
 			}
 		}
@@ -154,7 +154,7 @@ public:
 	bool isWrappedVector(const Vector3& v) const {
 		for(size_t dim = 0; dim < 3; dim++) {
 			if(_pbcFlags[dim]) {
-				if(std::abs(_reciprocalSimulationCell.prodrow(v, dim)) >= 0.5f)
+				if(std::abs(_reciprocalSimulationCell.prodrow(v, dim)) >= FloatType(0.5))
 					return true;
 			}
 		}
@@ -174,7 +174,7 @@ public:
 	/// This function can handle negative numbers k. This allows mapping any number k that is
 	/// outside the interval [0,n) back into the interval. Use this to implement periodic boundary conditions.
 	static inline FloatType modulo(FloatType k, FloatType n) {
-		k = fmod(k, n);
+		k = std::fmod(k, n);
 		return (k < 0) ? k+n : k;
 	}
 

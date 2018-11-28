@@ -129,7 +129,8 @@ void ElementSelectionSet::resetSelection(const PropertyContainer* container)
 		// Make a backup of the old snapshot so it may be restored.
 		dataset()->undoStack().pushIfRecording<ReplaceSelectionOperation>(this);
 
-		const PropertyObject* identifierProperty = container->getProperty(PropertyStorage::GenericIdentifierProperty);
+		const PropertyObject* identifierProperty = container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericIdentifierProperty) ? 
+			container->getProperty(PropertyStorage::GenericIdentifierProperty) : nullptr;
 		OVITO_ASSERT(!identifierProperty || selProperty->size() == identifierProperty->size());
 
 		if(identifierProperty && selProperty->size() == identifierProperty->size() && useIdentifiers()) {
@@ -170,7 +171,7 @@ void ElementSelectionSet::clearSelection(const PropertyContainer* container)
 	// Make a backup of the old selection state so it may be restored.
 	dataset()->undoStack().pushIfRecording<ReplaceSelectionOperation>(this);
 
-	if(useIdentifiers() && container->getProperty(PropertyStorage::GenericIdentifierProperty)) {
+	if(useIdentifiers() && container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericIdentifierProperty) && container->getProperty(PropertyStorage::GenericIdentifierProperty)) {
 		_selection.clear();
 		_selectedIdentifiers.clear();
 	}
@@ -190,7 +191,8 @@ void ElementSelectionSet::setSelection(const PropertyContainer* container, const
 	// Make a backup of the old snapshot so it may be restored.
 	dataset()->undoStack().pushIfRecording<ReplaceSelectionOperation>(this);
 
-	const PropertyObject* identifierProperty = container->getProperty(PropertyStorage::GenericIdentifierProperty);
+	const PropertyObject* identifierProperty = container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericIdentifierProperty) ? 
+		container->getProperty(PropertyStorage::GenericIdentifierProperty) : nullptr;
 	OVITO_ASSERT(!identifierProperty || selection.size() == identifierProperty->size());
 	
 	if(identifierProperty && useIdentifiers()) {
@@ -241,7 +243,8 @@ void ElementSelectionSet::toggleElement(const PropertyContainer* container, size
 	if(elementIndex >= container->elementCount())
 		return;
 
-	const PropertyObject* identifiers = container->getProperty(PropertyStorage::GenericIdentifierProperty);
+	const PropertyObject* identifiers = container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericIdentifierProperty) ?
+		container->getProperty(PropertyStorage::GenericIdentifierProperty) : nullptr;
 	if(useIdentifiers() && identifiers) {
 		_selection.clear();
 		toggleElementById(identifiers->getInt64(elementIndex));
@@ -290,7 +293,8 @@ void ElementSelectionSet::selectAll(const PropertyContainer* container)
 	// Make a backup of the old selection state so it may be restored.
 	dataset()->undoStack().pushIfRecording<ReplaceSelectionOperation>(this);
 
-	const PropertyObject* identifiers = container->getProperty(PropertyStorage::GenericIdentifierProperty);
+	const PropertyObject* identifiers = container->getOOMetaClass().isValidStandardPropertyId(PropertyStorage::GenericIdentifierProperty) ?
+		container->getProperty(PropertyStorage::GenericIdentifierProperty) : nullptr;
 	if(useIdentifiers() && identifiers != nullptr) {
 		_selection.clear();
 		_selectedIdentifiers.clear();
