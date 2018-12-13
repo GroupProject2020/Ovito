@@ -116,7 +116,7 @@ void DislocationAnalysisEngine::perform()
 #endif
 
 	task()->nextProgressSubStep();
-	FloatType ghostLayerSize = 3.0f * _structureAnalysis->maximumNeighborDistance();
+	FloatType ghostLayerSize = FloatType(3.0) * _structureAnalysis->maximumNeighborDistance();
 	if(!_tessellation->generateTessellation(_structureAnalysis->cell(), positions()->constDataPoint3(),
 			_structureAnalysis->atomCount(), ghostLayerSize, selection() ? selection()->constDataInt() : nullptr, *task()))
 		return;

@@ -23,6 +23,8 @@
 #include <core/utilities/concurrent/PromiseState.h>
 #include "DelaunayTessellation.h"
 
+#include <geogram/basic/numeric.h>
+
 #include <boost/random/mersenne_twister.hpp>
 #if BOOST_VERSION > 146000
 #include <boost/random/uniform_real_distribution.hpp>
@@ -161,6 +163,7 @@ bool DelaunayTessellation::generateTessellation(const SimulationCell& simCell, c
 	// The internal compute_BRIO_order() routine uses std::random_shuffle() to randomize the
 	// input points. This results in unstable ordering of the Delaunay cell list, unless we fix the seed number:
 	std::srand(1);
+	GEO::Numeric::random_reset();
 
 	// Construct Delaunay tessellation.
 	bool result = _dt->set_vertices(_pointData.size()/3, _pointData.data(), [&promise](int value, int maxProgress) {
@@ -168,7 +171,7 @@ bool DelaunayTessellation::generateTessellation(const SimulationCell& simCell, c
 		return promise.setProgressValueIntermittent(value);
 	});
 	if(!result) return false;
-	
+
 	// Classify tessellation cells as ghost or local cells.
 	_numPrimaryTetrahedra = 0;
 	_cellInfo.resize(_dt->nb_cells());

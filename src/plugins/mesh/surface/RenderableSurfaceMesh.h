@@ -55,6 +55,9 @@ private:
 
 	/// The material colors assigned to the surface mesh (optional).
 	DECLARE_RUNTIME_PROPERTY_FIELD(std::vector<ColorA>, materialColors, setMaterialColors);
+
+	/// The mapping of triangles of the renderable surface mesh to the original mesh (optional).
+	DECLARE_RUNTIME_PROPERTY_FIELD(std::vector<size_t>, originalFaceMap, setOriginalFaceMap);
 };
 
 }	// End of namespace

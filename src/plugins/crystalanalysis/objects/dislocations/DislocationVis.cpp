@@ -122,8 +122,8 @@ Future<PipelineFlowState> DislocationVis::transformDataImpl(TimePoint time, cons
 					edge = edge->nextFaceEdge();
 				}
 				while(edge != face->edges());
-				segmentIndex++;
 			}
+			segmentIndex++;
 		}
 	}
 
@@ -226,6 +226,7 @@ void DislocationVis::render(TimePoint time, const std::vector<const DataObject*>
 		std::shared_ptr<ArrowPrimitive> segments;
 		std::shared_ptr<ParticlePrimitive> corners;
 		std::shared_ptr<ArrowPrimitive> burgersArrows;
+		OORef<DislocationPickInfo> pickInfo;
 	};
 
 	ArrowPrimitive::Shape segmentShape = (showLineDirections() ? ArrowPrimitive::ArrowShape : ArrowPrimitive::CylinderShape);
@@ -281,7 +282,7 @@ void DislocationVis::render(TimePoint time, const std::vector<const DataObject*>
 	
 		primitives.segments = renderer->createArrowPrimitive(segmentShape, shadingMode(), ArrowPrimitive::HighQuality);
 		primitives.corners = renderer->createParticlePrimitive(cornerShadingMode, ParticlePrimitive::HighQuality);
-		primitives.burgersArrows = renderer->createArrowPrimitive(ArrowPrimitive::ArrowShape, shadingMode(), ArrowPrimitive::HighQuality);
+		primitives.burgersArrows.reset();
 
 		SimulationCell cellData = cellObject->data();
 		// First determine number of corner vertices/segments that are going to be rendered.
@@ -358,6 +359,7 @@ void DislocationVis::render(TimePoint time, const std::vector<const DataObject*>
 
 		if(dislocationsObj) {
 			if(showBurgersVectors()) {
+				primitives.burgersArrows = renderer->createArrowPrimitive(ArrowPrimitive::ArrowShape, shadingMode(), ArrowPrimitive::HighQuality);
 				primitives.burgersArrows->startSetElements(dislocationsObj->segments().size());
 				subobjToSegmentMap.reserve(subobjToSegmentMap.size() + dislocationsObj->segments().size());
 				int arrowIndex = 0;
@@ -376,16 +378,16 @@ void DislocationVis::render(TimePoint time, const std::vector<const DataObject*>
 					}
 					primitives.burgersArrows->setElement(arrowIndex++, center, dir, arrowColor, arrowRadius);
 				}
+				primitives.burgersArrows->endSetElements();
 			}
-			else {
-				primitives.burgersArrows->startSetElements(0);
-			}
-			primitives.burgersArrows->endSetElements();
-			_pickInfo = new DislocationPickInfo(this, dislocationsObj, patternCatalog, std::move(subobjToSegmentMap));
+			primitives.pickInfo = new DislocationPickInfo(this, dislocationsObj, patternCatalog, std::move(subobjToSegmentMap));
+		}
+		else if(microstructureObj) {
+			primitives.pickInfo = new DislocationPickInfo(this, microstructureObj, patternCatalog, std::move(subobjToSegmentMap));
 		}
 	}
 
-	renderer->beginPickObject(contextNode, _pickInfo);
+	renderer->beginPickObject(contextNode, primitives.pickInfo);
 
 	// Render dislocation segments.
 	primitives.segments->render(renderer);
@@ -619,9 +621,9 @@ QString DislocationVis::formatBurgersVector(const Vector3& b, StructurePattern* 
 		}
 		else if(structure->symmetryType() == StructurePattern::HexagonalSymmetry) {
 			// Determine vector components U, V, and W, with b = U*a1 + V*a2 + W*c.
-			FloatType U = sqrt(2.0f)*b.x() - sqrt(2.0f/3.0f)*b.y();
-			FloatType V = sqrt(2.0f)*b.x() + sqrt(2.0f/3.0f)*b.y();
-			FloatType W = sqrt(3.0f/4.0f)*b.z();
+			FloatType U = sqrt(2.0)*b.x() - sqrt(2.0/3.0)*b.y();
+			FloatType V = sqrt(2.0)*b.x() + sqrt(2.0/3.0)*b.y();
+			FloatType W = sqrt(3.0/4.0)*b.z();
 			Vector4 uvwt((2*U-V)/3, (2*V-U)/3, -(U+V)/3, W);
 			FloatType smallestCompnt = FLOATTYPE_MAX;
 			for(int i = 0; i < 4; i++) {
@@ -672,23 +674,46 @@ QString DislocationPickInfo::infoString(PipelineSceneNode* objectNode, quint32 s
 	QString str;
 
 	int segmentIndex = segmentIndexFromSubObjectID(subobjectId);
-	if(segmentIndex >= 0 && segmentIndex < dislocationObj()->segments().size()) {
-		DislocationSegment* segment = dislocationObj()->segments()[segmentIndex];
-		StructurePattern* structure = nullptr;
-		if(patternCatalog() != nullptr) {
-			structure = patternCatalog()->structureById(segment->burgersVector.cluster()->structure);
+	if(dislocationObj()) {
+		if(segmentIndex >= 0 && segmentIndex < dislocationObj()->segments().size()) {
+			DislocationSegment* segment = dislocationObj()->segments()[segmentIndex];
+			StructurePattern* structure = nullptr;
+			if(patternCatalog() != nullptr) {
+				structure = patternCatalog()->structureById(segment->burgersVector.cluster()->structure);
+			}
+			QString formattedBurgersVector = DislocationVis::formatBurgersVector(segment->burgersVector.localVec(), structure);
+			str = tr("True Burgers vector: %1").arg(formattedBurgersVector);
+			Vector3 transformedVector = segment->burgersVector.toSpatialVector();
+			str += tr(" | Spatial Burgers vector: [%1 %2 %3]")
+					.arg(QLocale::c().toString(transformedVector.x(), 'f', 4), 7)
+					.arg(QLocale::c().toString(transformedVector.y(), 'f', 4), 7)
+					.arg(QLocale::c().toString(transformedVector.z(), 'f', 4), 7);
+			str += tr(" | Cluster Id: %1").arg(segment->burgersVector.cluster()->id);
+			str += tr(" | Dislocation Id: %1").arg(segment->id);
+			if(structure) {
+				str += tr(" | Crystal structure: %1").arg(structure->name());
+			}
 		}
-		QString formattedBurgersVector = DislocationVis::formatBurgersVector(segment->burgersVector.localVec(), structure);
-		str = tr("True Burgers vector: %1").arg(formattedBurgersVector);
-		Vector3 transformedVector = segment->burgersVector.toSpatialVector();
-		str += tr(" | Spatial Burgers vector: [%1 %2 %3]")
-				.arg(QLocale::c().toString(transformedVector.x(), 'f', 4), 7)
-				.arg(QLocale::c().toString(transformedVector.y(), 'f', 4), 7)
-				.arg(QLocale::c().toString(transformedVector.z(), 'f', 4), 7);
-		str += tr(" | Cluster Id: %1").arg(segment->burgersVector.cluster()->id);
-		str += tr(" | Dislocation Id: %1").arg(segment->id);
-		if(structure) {
-			str += tr(" | Crystal structure: %1").arg(structure->name());
+	}
+	else if(microstructureObj()) {
+		if(segmentIndex >= 0 && segmentIndex < microstructureObj()->storage()->faces().size()) {
+			const Microstructure::Face* face = microstructureObj()->storage()->faces()[segmentIndex];
+			StructurePattern* structure = nullptr;
+			if(patternCatalog() != nullptr) {
+				structure = patternCatalog()->structureById(face->cluster()->structure);
+			}
+			QString formattedBurgersVector = DislocationVis::formatBurgersVector(face->burgersVector(), structure);
+			str = tr("True Burgers vector: %1").arg(formattedBurgersVector);
+			Vector3 transformedVector = face->cluster()->orientation * face->burgersVector();
+			str += tr(" | Spatial Burgers vector: [%1 %2 %3]")
+					.arg(QLocale::c().toString(transformedVector.x(), 'f', 4), 7)
+					.arg(QLocale::c().toString(transformedVector.y(), 'f', 4), 7)
+					.arg(QLocale::c().toString(transformedVector.z(), 'f', 4), 7);
+			str += tr(" | Cluster Id: %1").arg(face->cluster()->id);
+			str += tr(" | Dislocation Id: %1").arg(segmentIndex);
+			if(structure) {
+				str += tr(" | Crystal structure: %1").arg(structure->name());
+			}
 		}
 	}
 	return str;
