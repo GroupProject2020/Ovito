@@ -514,8 +514,8 @@ public:
 	}
 
 	/// Returns an numeric type ID that is not yet used by any of the existing element types.
-	int generateUniqueElementTypeId() const {
-		int maxId = 1;
+	int generateUniqueElementTypeId(int startAt = 1) const {
+		int maxId = startAt;
 		for(ElementType* type : elementTypes())
 			maxId = std::max(maxId, type->numericId() + 1);
 		return maxId;

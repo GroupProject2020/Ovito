@@ -120,6 +120,9 @@ public:
 		/// Returns the list of particle or bond types.
 		const std::vector<TypeDefinition>& types() const { return _types; }
 
+		/// Returns the list of particle or bond types.
+		std::vector<TypeDefinition>& types() { return _types; }
+
 		/// Sorts the types w.r.t. their name. Reassigns the per-element type IDs.
 		/// This method is used by file parsers that create particle/bond types on the go while the read the data.
 		/// In such a case, the assignment of IDs to types depends on the storage order of particles/bonds in the file, which is not desirable.
