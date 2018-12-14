@@ -77,12 +77,13 @@ void PolyhedralTemplateMatchingModifierEditor::createUI(const RolloutInsertionPa
 	sublayout->addWidget(outputInteratomicDistanceUI->checkBox(), 1, 0, 1, 2);
 	outputInteratomicDistanceUI->checkBox()->setText(tr("Interatomic distances"));
 
-	BooleanParameterUI* outputDeformationGradientUI = new BooleanParameterUI(this, PROPERTY_FIELD(PolyhedralTemplateMatchingModifier::outputDeformationGradient));
-	sublayout->addWidget(outputDeformationGradientUI->checkBox(), 2, 0, 1, 2);
-	outputDeformationGradientUI->checkBox()->setText(tr("Elastic deformation gradients"));
 	BooleanParameterUI* outputOrderingTypesUI = new BooleanParameterUI(this, PROPERTY_FIELD(PolyhedralTemplateMatchingModifier::outputOrderingTypes));
-	sublayout->addWidget(outputOrderingTypesUI->checkBox(), 3, 0, 1, 2);
-	outputOrderingTypesUI->checkBox()->setText(tr("Ordering types"));
+	sublayout->addWidget(outputOrderingTypesUI->checkBox(), 2, 0, 1, 2);
+	outputOrderingTypesUI->checkBox()->setText(tr("Chemical ordering types"));
+
+	BooleanParameterUI* outputDeformationGradientUI = new BooleanParameterUI(this, PROPERTY_FIELD(PolyhedralTemplateMatchingModifier::outputDeformationGradient));
+	sublayout->addWidget(outputDeformationGradientUI->checkBox(), 3, 0, 1, 2);
+	outputDeformationGradientUI->checkBox()->setText(tr("Elastic deformation gradients"));
 
 	// Lattice orientations
 	BooleanParameterUI* outputOrientationUI = new BooleanParameterUI(this, PROPERTY_FIELD(PolyhedralTemplateMatchingModifier::outputOrientation));
@@ -96,7 +97,12 @@ void PolyhedralTemplateMatchingModifierEditor::createUI(const RolloutInsertionPa
 	QRadioButton* templateModeBtn = referenceOrientationUI->addRadioButton(false, tr("Use PTM template orientations"));
 	sublayout->addWidget(standardModeBtn, 5, 1);
 	sublayout->addWidget(templateModeBtn, 6, 1);
-	connect(outputOrientationUI->checkBox(), &QCheckBox::toggled, referenceOrientationUI, &IntegerRadioButtonParameterUI::setEnabled);
+
+	auto updateReferenceOrientationUI = [=]() {
+		referenceOrientationUI->setEnabled(outputOrientationUI->checkBox()->isChecked() || outputDeformationGradientUI->checkBox()->isChecked());
+	};
+	connect(outputOrientationUI->checkBox(), &QCheckBox::toggled, this, updateReferenceOrientationUI);
+	connect(outputDeformationGradientUI->checkBox(), &QCheckBox::toggled, this, updateReferenceOrientationUI);
 
 	// Color by type
 	BooleanParameterUI* colorByTypeUI = new BooleanParameterUI(this, PROPERTY_FIELD(StructureIdentificationModifier::colorByType));
