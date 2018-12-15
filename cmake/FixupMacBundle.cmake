@@ -14,6 +14,7 @@ IF(APPLE)
 	INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/imageformats" DESTINATION ${plugin_dest_dir} COMPONENT "runtime" PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
 	INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/platforms" DESTINATION ${plugin_dest_dir} COMPONENT "runtime" PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
 	INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/iconengines" DESTINATION ${plugin_dest_dir} COMPONENT "runtime" PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
+	INSTALL(DIRECTORY "${QT_PLUGINS_DIR}/styles" DESTINATION ${plugin_dest_dir} COMPONENT "runtime" PATTERN "*_debug.dylib" EXCLUDE PATTERN "*.dSYM" EXCLUDE)
 
 	# Install a qt.conf file.
 	# This inserts some cmake code into the install script to write the file
@@ -46,7 +47,7 @@ IF(APPLE)
 		# for dependencies.  If they are not system dependencies, they are copied.
 		SET(APPS \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app\")
 
-		# Directories to look for dependencies
+		# Directories to look for dependencies:
 		SET(DIRS 
 			${QT_LIBRARY_DIRS} 
 			\"\${CMAKE_INSTALL_PREFIX}/${OVITO_RELATIVE_PLUGINS_DIRECTORY}\" 
@@ -58,9 +59,15 @@ IF(APPLE)
 		# Returns the path that others should refer to the item by when the item is embedded inside a bundle.
 		# This ensures that all plugin libraries go into the plugins/ directory of the bundle.
 		FUNCTION(gp_item_default_embedded_path_override item default_embedded_path_var)
-		    # Embed plugin libraries (.so) in the PlugIns/ subdirectory:
+			# Embed plugin libraries (.so) in the PlugIns/ subdirectory:
             IF(item MATCHES \"\\\\${OVITO_PLUGIN_LIBRARY_SUFFIX}$\" AND (item MATCHES \"^@rpath\" OR item MATCHES \"PlugIns/\"))
 	    	    SET(path \"@executable_path/../PlugIns\")
+		        SET(\${default_embedded_path_var} \"\${path}\" PARENT_SCOPE)
+    		    MESSAGE(\"     Embedding path override: \${item} -> \${path}\")
+			ENDIF()
+			# Leave core Ovito libraries in the MacOS/ directory:
+            IF(item MATCHES \"\\\\.dylib$\" AND item MATCHES \"^@rpath\")
+	    	    SET(path \"@executable_path\")
 		        SET(\${default_embedded_path_var} \"\${path}\" PARENT_SCOPE)
     		    MESSAGE(\"     Embedding path override: \${item} -> \${path}\")
             ENDIF()
@@ -79,7 +86,9 @@ IF(APPLE)
 			\"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks/Python.framework/*.so\")
 		FILE(GLOB OTHER_DYNLIBS
 			\"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/MacOS/*.dylib\")
-		SET(BUNDLE_LIBS \${QTPLUGINS} \${OVITO_PLUGINS} \${PYTHON_DYNLIBS} \${OTHER_DYNLIBS})
+		FILE(GLOB OTHER_FRAMEWORK_DYNLIBS
+			\"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks/*.dylib\")
+		SET(BUNDLE_LIBS \${QTPLUGINS} \${OVITO_PLUGINS} \${PYTHON_DYNLIBS} \${OTHER_DYNLIBS} \${OTHER_FRAMEWORK_DYNLIBS})
 		SET(BU_CHMOD_BUNDLE_ITEMS ON)	# Make copies of system libraries writable before install_name_tool tries to change them.
 		INCLUDE(BundleUtilities)
 		FIXUP_BUNDLE(\"\${APPS}\" \"\${BUNDLE_LIBS}\" \"\${DIRS}\" IGNORE_ITEM \"Python\")
@@ -122,6 +131,8 @@ IF(APPLE)
 			FILE(GLOB_RECURSE PythonDylibsToBeSigned \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks/Python.framework/Versions/*.dylib\")
 			LIST(APPEND FilesToBeSigned \${PythonDylibsToBeSigned})
 		ENDIF()
+		FILE(GLOB DylibsToBeSigned \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks/*.dylib\")
+		LIST(APPEND FilesToBeSigned \${DylibsToBeSigned})
 		FILE(GLOB FrameworksToBeSigned \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/Frameworks/*.framework\")
 		LIST(APPEND FilesToBeSigned \${FrameworksToBeSigned})
 		FILE(GLOB_RECURSE DylibsToBeSigned \"\${CMAKE_INSTALL_PREFIX}/${MACOSX_BUNDLE_NAME}.app/Contents/PlugIns/*.dylib\")

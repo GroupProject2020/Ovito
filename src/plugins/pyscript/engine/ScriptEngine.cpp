@@ -209,16 +209,16 @@ int ScriptEngine::execute(const std::function<void()>& func)
 
 	int returnValue = 0;
 	try {
-		// Get reference to the main ovito Python module.
-		py::module ovito_module = py::module::import("ovito");
-
-		// Add an attribute to the ovito module that provides access to the active dataset.
-		py::setattr(ovito_module, "scene", py::cast(dataset(), py::return_value_policy::reference));
-
-		// This is for backward compatibility with OVITO 2.9.0:
-		py::setattr(ovito_module, "dataset", py::cast(dataset(), py::return_value_policy::reference));
-		
 		try {
+			// Get reference to the main ovito Python module.
+			py::module ovito_module = py::module::import("ovito");
+
+			// Add an attribute to the ovito module that provides access to the active dataset.
+			py::setattr(ovito_module, "scene", py::cast(dataset(), py::return_value_policy::reference));
+
+			// This is for backward compatibility with OVITO 2.9.0:
+			py::setattr(ovito_module, "dataset", py::cast(dataset(), py::return_value_policy::reference));
+		
 			func();
 		}
 		catch(py::error_already_set& ex) {

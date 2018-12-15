@@ -34,6 +34,9 @@ ENDIF()
 IF(NOT CMAKE_VERSION VERSION_LESS "3.9")
 	CMAKE_POLICY(SET CMP0068 OLD)   # Use the 'RPATH' settings for 'install_name' on macOS.
 ENDIF()
+IF(NOT CMAKE_VERSION VERSION_LESS "3.12")
+	CMAKE_POLICY(SET CMP0074 NEW)   # find_package() uses <PackageName>_ROOT variables.
+ENDIF()
 
 # Check compiler requirement.
 IF(CMAKE_CXX_COMPILER_ID STREQUAL MSVC)
