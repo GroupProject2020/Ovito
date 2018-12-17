@@ -27,6 +27,7 @@
 #include <core/rendering/SceneRenderer.h>
 #include <plugins/stdobj/simcell/SimulationCellObject.h>
 #include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
+#include <plugins/crystalanalysis/objects/microstructure/MicrostructureObject.h>
 #include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
@@ -48,8 +49,15 @@ public:
 	DislocationPickInfo(DislocationVis* visElement, const DislocationNetworkObject* dislocationObj, const PatternCatalog* patternCatalog, std::vector<int>&& subobjToSegmentMap) :
 		_visElement(visElement), _dislocationObj(dislocationObj), _patternCatalog(patternCatalog), _subobjToSegmentMap(std::move(subobjToSegmentMap)) {}
 
+	/// Constructor.
+	DislocationPickInfo(DislocationVis* visElement, const MicrostructureObject* microstructureObj, const PatternCatalog* patternCatalog, std::vector<int>&& subobjToSegmentMap) :
+		_visElement(visElement), _microstructureObj(microstructureObj), _patternCatalog(patternCatalog), _subobjToSegmentMap(std::move(subobjToSegmentMap)) {}
+
 	/// The data object containing the dislocations.
 	const DislocationNetworkObject* dislocationObj() const { return _dislocationObj; }
+
+	/// The data object containing the dislocations.
+	const MicrostructureObject* microstructureObj() const { return _microstructureObj; }
 
 	/// Returns the vis element that rendered the dislocations.
 	DislocationVis* visElement() const { return _visElement; }
@@ -73,6 +81,9 @@ private:
 
 	/// The data object containing the dislocations.
 	OORef<DislocationNetworkObject> _dislocationObj;
+
+	/// The data object containing the dislocations.
+	OORef<MicrostructureObject> _microstructureObj;
 
 	/// The vis element that rendered the dislocations.
 	OORef<DislocationVis> _visElement;
@@ -157,9 +168,6 @@ protected:
 
 	/// Controls how the display color of dislocation lines is chosen.
 	DECLARE_MODIFIABLE_PROPERTY_FIELD(LineColoringMode, lineColoringMode, setLineColoringMode);
-
-	/// The data record used for picking dislocations in the viewports.
-	OORef<DislocationPickInfo> _pickInfo;
 };
 
 }	// End of namespace

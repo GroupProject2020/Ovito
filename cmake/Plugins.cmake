@@ -98,7 +98,7 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
     SET_TARGET_PROPERTIES(${target_name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${OVITO_PLUGINS_DIRECTORY}")
 	
 	# Install Python wrapper files.
-	IF(python_wrappers)
+	IF(python_wrappers AND OVITO_BUILD_PLUGIN_PYSCRIPT)
 		# Install the Python source files that belong to the plugin, which provide the scripting interface.
 		ADD_CUSTOM_COMMAND(TARGET ${target_name} POST_BUILD 
 			COMMAND ${CMAKE_COMMAND} "-E" copy_directory "${python_wrappers}" "${OVITO_PYTHON_DIRECTORY}/"

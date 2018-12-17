@@ -23,6 +23,7 @@
 #include <plugins/crystalanalysis/objects/clusters/ClusterGraphObject.h>
 #include <plugins/crystalanalysis/objects/patterns/PatternCatalog.h>
 #include <plugins/crystalanalysis/objects/microstructure/MicrostructureObject.h>
+#include <plugins/crystalanalysis/objects/dislocations/DislocationVis.h>
 #include <plugins/mesh/surface/RenderableSurfaceMesh.h>
 #include <core/rendering/SceneRenderer.h>
 #include <core/utilities/mesh/TriMesh.h>
@@ -40,6 +41,8 @@ DEFINE_REFERENCE_FIELD(SlipSurfaceVis, surfaceTransparencyController);
 SET_PROPERTY_FIELD_LABEL(SlipSurfaceVis, smoothShading, "Smooth shading");
 SET_PROPERTY_FIELD_LABEL(SlipSurfaceVis, surfaceTransparencyController, "Surface transparency");
 SET_PROPERTY_FIELD_UNITS_AND_RANGE(SlipSurfaceVis, surfaceTransparencyController, PercentParameterUnit, 0, 1);
+
+IMPLEMENT_OVITO_CLASS(SlipSurfacePickInfo);
 
 /******************************************************************************
 * Constructor.
@@ -101,7 +104,7 @@ Future<PipelineFlowState> SlipSurfaceVis::transformDataImpl(TimePoint time, cons
 
 	// Submit engine for execution and post-process results.
 	return dataset()->container()->taskManager().runTaskAsync(engine)
-		.then(executor(), [this, flowState = std::move(flowState), dataObject](TriMesh&& surfaceMesh, std::vector<ColorA>&& materialColors) mutable {
+		.then(executor(), [this, flowState = std::move(flowState), dataObject](TriMesh&& surfaceMesh, std::vector<ColorA>&& materialColors, std::vector<size_t>&& originalFaceMap) mutable {
 			UndoSuspender noUndo(this);
 
 			// Increase surface color brightness.
@@ -114,6 +117,7 @@ Future<PipelineFlowState> SlipSurfaceVis::transformDataImpl(TimePoint time, cons
 			// Output the computed mesh as a RenderableSurfaceMesh.
 			OORef<RenderableSurfaceMesh> renderableMesh = new RenderableSurfaceMesh(this, dataObject, std::move(surfaceMesh), {});
 			renderableMesh->setMaterialColors(std::move(materialColors));
+			renderableMesh->setOriginalFaceMap(std::move(originalFaceMap));
 			flowState.addObject(renderableMesh);
 			return std::move(flowState);
 		});
@@ -128,8 +132,9 @@ void SlipSurfaceVis::PrepareMeshEngine::perform()
 
 	TriMesh surfaceMesh;	
 	std::vector<ColorA> materialColors;
-	
-	if(!buildMesh(*_inputMesh, _simCell, _cuttingPlanes, _structureNames, surfaceMesh, materialColors, *this))
+	std::vector<size_t> originalFaceMap;
+
+	if(!buildMesh(*_inputMesh, _simCell, _cuttingPlanes, _structureNames, surfaceMesh, materialColors, originalFaceMap, *this))
 		throw Exception(tr("Failed to generate non-periodic version of slip surface for display. Simulation cell might be too small."));
 
 	if(isCanceled())
@@ -141,7 +146,7 @@ void SlipSurfaceVis::PrepareMeshEngine::perform()
 			face.setSmoothingGroups(1);	
 	}
 			
-	setResult(std::move(surfaceMesh), std::move(materialColors));
+	setResult(std::move(surfaceMesh), std::move(materialColors), std::move(originalFaceMap));
 }
 
 /******************************************************************************
@@ -186,33 +191,46 @@ void SlipSurfaceVis::render(TimePoint time, const std::vector<const DataObject*>
 		FloatType					// Alpha
 	>;
 
+	// The values stored in the vis cache.
+	struct CacheValue {
+		std::shared_ptr<MeshPrimitive> surfacePrimitive;
+		OORef<SlipSurfacePickInfo> pickInfo;
+	};
+
 	// Get the renderable mesh.
 	const RenderableSurfaceMesh* renderableMesh = dynamic_object_cast<RenderableSurfaceMesh>(objectStack.back());
 	if(!renderableMesh) return;
 
 	// Lookup the rendering primitive in the vis cache.
-	auto& surfacePrimitive = dataset()->visCache().get<std::shared_ptr<MeshPrimitive>>(SurfaceCacheKey(renderer, objectStack.back(), surface_alpha));
+	auto& visCache = dataset()->visCache().get<CacheValue>(SurfaceCacheKey(renderer, objectStack.back(), surface_alpha));
 
 	// Check if we already have a valid rendering primitive that is up to date.
-	if(!surfacePrimitive || !surfacePrimitive->isValid(renderer)) {
-		surfacePrimitive = renderer->createMeshPrimitive();
+	if(!visCache.surfacePrimitive || !visCache.surfacePrimitive->isValid(renderer)) {
+		visCache.surfacePrimitive = renderer->createMeshPrimitive();
 		auto materialColors = renderableMesh->materialColors();
 		for(ColorA& c : materialColors)
 			c.a() = surface_alpha;
-		surfacePrimitive->setMaterialColors(materialColors);
-		surfacePrimitive->setMesh(renderableMesh->surfaceMesh(), color_surface);
+		visCache.surfacePrimitive->setMaterialColors(materialColors);
+		visCache.surfacePrimitive->setMesh(renderableMesh->surfaceMesh(), color_surface);
+
+		// Get the original microstructure object and the pattern catalog.
+		const PatternCatalog* patternCatalog = flowState.getObject<PatternCatalog>();
+		const MicrostructureObject* microstructureObj = dynamic_object_cast<MicrostructureObject>(renderableMesh->sourceDataObject().get());	
+
+		// Create the pick record that keeps a reference to the original data.
+		visCache.pickInfo = new SlipSurfacePickInfo(this, microstructureObj, renderableMesh, patternCatalog);
 	}
 
 	// Handle picking of triangles.
-	renderer->beginPickObject(contextNode);
-	surfacePrimitive->render(renderer);
+	renderer->beginPickObject(contextNode, visCache.pickInfo);
+	visCache.surfacePrimitive->render(renderer);
 	renderer->endPickObject();
 }
 
 /******************************************************************************
 * Generates the final triangle mesh, which will be rendered.
 ******************************************************************************/
-bool SlipSurfaceVis::buildMesh(const Microstructure& input, const SimulationCell& cell, const QVector<Plane3>& cuttingPlanes, const QStringList& structureNames, TriMesh& output, std::vector<ColorA>& materialColors, PromiseState& promise)
+bool SlipSurfaceVis::buildMesh(const Microstructure& input, const SimulationCell& cell, const QVector<Plane3>& cuttingPlanes, const QStringList& structureNames, TriMesh& output, std::vector<ColorA>& materialColors, std::vector<size_t>& originalFaceMap, PromiseState& promise)
 {
 	// This predicate function selects the faces of the microstructure mesh 
 	// that are part of the slip surfaces to be rendered.
@@ -222,9 +240,11 @@ bool SlipSurfaceVis::buildMesh(const Microstructure& input, const SimulationCell
 
 	// Convert all slip faces of the half-edge mesh to a triangle mesh.
 	input.convertToTriMesh(output, facePredicate);
+	originalFaceMap.reserve(output.faces().size());
 	
 	// Color faces according to slip vector.
 	auto fout = output.faces().begin();
+	size_t inputIndex = 0;
 	for(Microstructure::Face* face : input.faces()) {
 		if(!facePredicate(face)) continue;
 
@@ -241,15 +261,17 @@ bool SlipSurfaceVis::buildMesh(const Microstructure& input, const SimulationCell
 					materialIndex = materialColors.size();
 					materialColors.push_back(c);
 				}
-				else materialIndex = iter - materialColors.begin();
+				else materialIndex = std::distance(materialColors.begin(), iter);
 			}
 		}
 		for(Microstructure::Edge* edge = face->edges()->nextFaceEdge()->nextFaceEdge(); edge != face->edges(); edge = edge->nextFaceEdge()) {
 			fout->setMaterialIndex(materialIndex);
 			++fout;
+			originalFaceMap.push_back(face->index());
 		}
 	}
 	OVITO_ASSERT(fout == output.faces().end());
+	OVITO_ASSERT(originalFaceMap.size() == output.faces().size());
 
 	// Check for early abortion.
 	if(promise.isCanceled())
@@ -281,7 +303,7 @@ bool SlipSurfaceVis::buildMesh(const Microstructure& input, const SimulationCell
 		std::vector<Point3> newVertices;
 		std::map<std::pair<int,int>,std::pair<int,int>> newVertexLookupMap;
 		for(int findex = 0; findex < oldFaceCount; findex++) {
-			if(!splitFace(output, findex, oldVertexCount, newVertices, newVertexLookupMap, cell, dim))
+			if(!splitFace(output, findex, oldVertexCount, newVertices, newVertexLookupMap, cell, dim, originalFaceMap))
 				return false;
 		}
 
@@ -309,6 +331,7 @@ bool SlipSurfaceVis::buildMesh(const Microstructure& input, const SimulationCell
 
 	output.invalidateVertices();
 	output.invalidateFaces();
+	OVITO_ASSERT(originalFaceMap.size() == output.faces().size());
 
 	return !promise.isCanceled();
 }
@@ -317,7 +340,7 @@ bool SlipSurfaceVis::buildMesh(const Microstructure& input, const SimulationCell
 * Splits a triangle face at a periodic boundary.
 ******************************************************************************/
 bool SlipSurfaceVis::splitFace(TriMesh& output, int faceIndex, int oldVertexCount, std::vector<Point3>& newVertices,
-		std::map<std::pair<int,int>,std::pair<int,int>>& newVertexLookupMap, const SimulationCell& cell, size_t dim)
+		std::map<std::pair<int,int>,std::pair<int,int>>& newVertexLookupMap, const SimulationCell& cell, size_t dim, std::vector<size_t>& originalFaceMap)
 {
 	TriMeshFace& face = output.face(faceIndex);
 
@@ -393,6 +416,7 @@ bool SlipSurfaceVis::splitFace(TriMesh& output, int faceIndex, int oldVertexCoun
 
 	int materialIndex = face.materialIndex();
 	output.setFaceCount(output.faceCount() + 2);
+	originalFaceMap.resize(originalFaceMap.size() + 2, originalFaceMap[faceIndex]);
 	TriMeshFace& newFace1 = output.face(output.faceCount() - 2);
 	TriMeshFace& newFace2 = output.face(output.faceCount() - 1);
 	newFace1.setVertices(originalVertices[(properEdge+1)%3], newVertexIndices[(properEdge+1)%3][0], newVertexIndices[(properEdge+2)%3][1]);
@@ -401,6 +425,30 @@ bool SlipSurfaceVis::splitFace(TriMesh& output, int faceIndex, int oldVertexCoun
 	newFace2.setMaterialIndex(materialIndex);
 
 	return true;
+}
+
+/******************************************************************************
+* Returns a human-readable string describing the picked object,
+* which will be displayed in the status bar by OVITO.
+******************************************************************************/
+QString SlipSurfacePickInfo::infoString(PipelineSceneNode* objectNode, quint32 subobjectId)
+{
+	QString str;
+	int facetIndex = slipFacetIndexFromSubObjectID(subobjectId);
+	if(facetIndex >= 0 && facetIndex < microstructureObj()->storage()->faces().size()) {
+		Microstructure::Face* face = microstructureObj()->storage()->faces()[facetIndex];
+		StructurePattern* structure = nullptr;
+		if(patternCatalog() != nullptr) {
+			structure = patternCatalog()->structureById(face->cluster()->structure);
+		}
+		QString formattedBurgersVector = DislocationVis::formatBurgersVector(face->burgersVector(), structure);
+		str = tr("Slip vector: %1").arg(formattedBurgersVector);
+		str += tr(" | Cluster Id: %1").arg(face->cluster()->id);
+		if(structure) {
+			str += tr(" | Crystal structure: %1").arg(structure->name());
+		}
+	}
+	return str;
 }
 
 }	// End of namespace

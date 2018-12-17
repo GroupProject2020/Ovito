@@ -320,19 +320,33 @@ void ParticleFrameData::insertTypes(PropertyObject* typeProperty, TypeList* type
 {
 	QSet<ElementType*> activeTypes;
 	if(typeList) {
-		for(const auto& item : typeList->types()) {
+		for(auto& item : typeList->types()) {
 			OORef<ElementType> ptype;
-			if(item.name.isEmpty()) 
+			if(item.name.isEmpty()) {
 				ptype = typeProperty->elementType(item.id);
+			}
 			else {
 				ptype = typeProperty->elementType(item.name);
 				if(ptype) {
-					ptype->setNumericId(item.id);
+					if(item.id != ptype->numericId()) {
+						int mappedId = ptype->numericId();
+						for(int& t : typeProperty->intRange()) {
+							if(t == item.id) t = mappedId;
+						}
+					}
 				}
 				else {
 					ptype = typeProperty->elementType(item.id);
-					if(ptype && !item.name.isEmpty())
-						ptype->setName(item.name);
+					if(ptype && ptype->name() != item.name) {
+						ptype = nullptr;
+						if(!isNewFile) {
+							int mappedId = typeProperty->generateUniqueElementTypeId(item.id + typeList->types().size());
+							for(int& t : typeProperty->intRange()) {
+								if(t == item.id) t = mappedId;
+							}
+							item.id = mappedId;
+						}
+					}
 				}
 			}
 			if(!ptype) {
@@ -375,7 +389,7 @@ void ParticleFrameData::insertTypes(PropertyObject* typeProperty, TypeList* type
 	}
 
 	if(isNewFile) {
-		// Remove unused types.
+		// Remove existing types that are no longer needed.
 		for(int index = typeProperty->elementTypes().size() - 1; index >= 0; index--) {
 			if(!activeTypes.contains(typeProperty->elementTypes()[index]))
 				typeProperty->removeElementType(index);
