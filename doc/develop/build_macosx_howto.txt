@@ -14,7 +14,7 @@ Install Qt libraries, version 5.12
 cd $HOME/Qt/5.12.0/clang_64/
 mkdir headers
 cd headers
-ln -s $PWD/../lib/QtConcurrent.framework/Versions/5/Headers/ QtCore
+ln -s $PWD/../lib/QtCore.framework/Versions/5/Headers/ QtCore
 ln -s $PWD/../lib/QtGui.framework/Versions/5/Headers/ QtGui
 ln -s $PWD/../lib/QtWidgets.framework/Versions/5/Headers/ QtWidgets
 ln -s $PWD/../lib/QtConcurrent.framework/Versions/5/Headers/ QtConcurrent

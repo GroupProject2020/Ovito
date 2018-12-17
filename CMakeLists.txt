@@ -166,7 +166,7 @@ ELSE()
 	SET(OVITO_DEFAULT_LIBRARY_TYPE SHARED)
 	# Define name suffix used for generating plugin libraries.
 	IF(APPLE)
-		# On Mac OS, we use the .so extension instead of the standard .dylib to be compatible
+		# On macOS, we use the .so extension instead of the standard .dylib to be compatible
 		# with the Python interpreter, which only finds modules having a .so suffix.
 		SET(OVITO_PLUGIN_LIBRARY_SUFFIX ".so")
 	ELSE()
@@ -234,7 +234,7 @@ SET(CMAKE_AUTOMOC ON)
 # As moc files are generated in the binary dir, tell CMake to always look for includes there.
 SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-# Determine the set of required Qt5 libraries.
+# Determine the set of required Qt5 modules.
 LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Core Concurrent Network Gui)
 IF(OVITO_BUILD_GUI) 
 	LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Widgets PrintSupport Svg)
@@ -247,7 +247,7 @@ IF(OVITO_BUILD_PLUGIN_GALAMOST)
 	LIST(APPEND OVITO_REQUIRED_QT_COMPONENTS Xml)
 ENDIF()
 
-# Search for the required Qt5 modules.
+# Find the required Qt5 modules.
 FOREACH(component IN LISTS OVITO_REQUIRED_QT_COMPONENTS)
 	FIND_PACKAGE(Qt5${component} REQUIRED)
 ENDFOREACH()

@@ -918,7 +918,7 @@ bool StructureAnalysis::buildClusters(PromiseState& promise)
 		_atomSymmetryPermutations->setInt(atomIndex, newSymmetryPermutation);
 	}
 
-	//qDebug() << "Number of clusters:" << (clusterGraph().clusters().size() - 1);
+	qInfo() << "Number of clusters:" << (clusterGraph()->clusters().size() - 1);
 
 	return !promise.isCanceled();
 }
@@ -1023,7 +1023,7 @@ bool StructureAnalysis::connectClusters(PromiseState& promise)
 		}
 	}
 
-	//qDebug() << "Number of cluster transitions:" << clusterGraph().clusterTransitions().size();
+	qInfo() << "Number of cluster transitions:" << clusterGraph()->clusterTransitions().size();
 
 	return !promise.isCanceled();
 }
