@@ -75,20 +75,20 @@ DislocationAnalysisEngine::DislocationAnalysisEngine(
 void DislocationAnalysisEngine::perform()
 {
 	task()->setProgressText(DislocationAnalysisModifier::tr("Dislocation analysis (DXA)"));
-	qInfo() << QDateTime::currentDateTime().toString() << "Beginning DXA";
+//	qInfo() << QDateTime::currentDateTime().toString() << "Beginning DXA";
 
 	task()->beginProgressSubStepsWithWeights({ 35, 6, 1, 220, 60, 1, 53, 190, 146, 20, 4, 4 });
-	qInfo() << QDateTime::currentDateTime().toString() << "Identifying structures";
+//	qInfo() << QDateTime::currentDateTime().toString() << "Identifying structures";
 	if(!_structureAnalysis->identifyStructures(*task()))
 		return;
 
 	task()->nextProgressSubStep();
-	qInfo() << QDateTime::currentDateTime().toString() << "Building clusters";
+//	qInfo() << QDateTime::currentDateTime().toString() << "Building clusters";
 	if(!_structureAnalysis->buildClusters(*task()))
 		return;
 
 	task()->nextProgressSubStep();
-	qInfo() << QDateTime::currentDateTime().toString() << "Connecting clusters";
+//	qInfo() << QDateTime::currentDateTime().toString() << "Connecting clusters";
 	if(!_structureAnalysis->connectClusters(*task()))
 		return;
 
@@ -121,26 +121,26 @@ void DislocationAnalysisEngine::perform()
 
 	task()->nextProgressSubStep();
 	FloatType ghostLayerSize = FloatType(3.0) * _structureAnalysis->maximumNeighborDistance();
-	qInfo() << QDateTime::currentDateTime().toString() << "Building Delaunay tessellation";
+//	qInfo() << QDateTime::currentDateTime().toString() << "Building Delaunay tessellation";
 	if(!_tessellation->generateTessellation(_structureAnalysis->cell(), positions()->constDataPoint3(),
 			_structureAnalysis->atomCount(), ghostLayerSize, selection() ? selection()->constDataInt() : nullptr, *task()))
 		return;
 
 	// Build list of edges in the tessellation.
 	task()->nextProgressSubStep();
-	qInfo() << QDateTime::currentDateTime().toString() << "Generating tessellation edges";
+//	qInfo() << QDateTime::currentDateTime().toString() << "Generating tessellation edges";
 	if(!_elasticMapping->generateTessellationEdges(*task()))
 		return;
 
 	// Assign each vertex to a cluster.
 	task()->nextProgressSubStep();
-	qInfo() << QDateTime::currentDateTime().toString() << "Assigning vertices to clusters";
+//	qInfo() << QDateTime::currentDateTime().toString() << "Assigning vertices to clusters";
 	if(!_elasticMapping->assignVerticesToClusters(*task()))
 		return;
 
 	// Determine the ideal vector corresponding to each edge of the tessellation.
 	task()->nextProgressSubStep();
-	qInfo() << QDateTime::currentDateTime().toString() << "Assigning ideal vectors to edges";
+//	qInfo() << QDateTime::currentDateTime().toString() << "Assigning ideal vectors to edges";
 	if(!_elasticMapping->assignIdealVectorsToEdges(4, *task()))
 		return;
 
@@ -149,16 +149,16 @@ void DislocationAnalysisEngine::perform()
 
 	// Create the mesh facets.
 	task()->nextProgressSubStep();
-	qInfo() << QDateTime::currentDateTime().toString() << "Creating interface mesh";
+//	qInfo() << QDateTime::currentDateTime().toString() << "Creating interface mesh";
 	if(!_interfaceMesh->createMesh(_structureAnalysis->maximumNeighborDistance(), crystalClusters().get(), *task()))
 		return;
 
 	// Trace dislocation lines.
 	task()->nextProgressSubStep();
-	qInfo() << QDateTime::currentDateTime().toString() << "Tracing dislocation lines";
+//	qInfo() << QDateTime::currentDateTime().toString() << "Tracing dislocation lines";
 	if(!_dislocationTracer->traceDislocationSegments(*task()))
 		return;
-	qInfo() << QDateTime::currentDateTime().toString() << "Finishing dislocation lines";
+//	qInfo() << QDateTime::currentDateTime().toString() << "Finishing dislocation lines";
 	_dislocationTracer->finishDislocationSegments(_inputCrystalStructure);
 
 #if 0
@@ -238,7 +238,7 @@ void DislocationAnalysisEngine::perform()
 
 	// Generate the defect mesh.
 	task()->nextProgressSubStep();
-	qInfo() << QDateTime::currentDateTime().toString() << "Generating defect mesh";
+//	qInfo() << QDateTime::currentDateTime().toString() << "Generating defect mesh";
 	if(!_interfaceMesh->generateDefectMesh(*_dislocationTracer, *defectMesh(), *task()))
 		return;
 
@@ -249,7 +249,7 @@ void DislocationAnalysisEngine::perform()
 	task()->nextProgressSubStep();
 
 	// Post-process surface mesh.
-	qInfo() << QDateTime::currentDateTime().toString() << "Smoothing surface mesh";
+//	qInfo() << QDateTime::currentDateTime().toString() << "Smoothing surface mesh";
 	if(_defectMeshSmoothingLevel > 0 && !SurfaceMesh::smoothMesh(*defectMesh(), cell(), _defectMeshSmoothingLevel, *task()))
 		return;
 
