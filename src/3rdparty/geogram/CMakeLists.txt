@@ -22,8 +22,13 @@
 # Compile the Geogram library (Delaunay "Pluggable Software Module")
 ADD_LIBRARY(geogram STATIC Delaunay_psm.cpp)
 
-# Floating-point math options.
-TARGET_COMPILE_OPTIONS(geogram PRIVATE "-Wno-ignored-optimization-argument" "-frounding-math" "-ffp-contract=off")
+# Set floating-point math compiler options.
+IF(UNIX OR APPLE)
+	TARGET_COMPILE_OPTIONS(geogram PRIVATE "-frounding-math" "-ffp-contract=off")
+	IF(APPLE)
+		TARGET_COMPILE_OPTIONS(geogram PRIVATE "-Wno-ignored-optimization-argument")
+	ENDIF()
+ENDIF()
 
 # Enable Geogram's support for 64-bit indices.
 TARGET_COMPILE_DEFINITIONS(geogram PUBLIC "GARGANTUA=1" )
