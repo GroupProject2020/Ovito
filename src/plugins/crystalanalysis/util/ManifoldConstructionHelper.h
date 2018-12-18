@@ -44,7 +44,7 @@ public:
 	// A no-op face-preparation functor.
 	struct DefaultPrepareMeshFaceFunc {
 		void operator()(typename HalfEdgeStructureType::Face* face,
-				const std::array<int,3>& vertexIndices,
+				const std::array<size_t,3>& vertexIndices,
 				const std::array<DelaunayTessellation::VertexHandle,3>& vertexHandles,
 				DelaunayTessellation::CellHandle cell) {}
 	};
@@ -104,7 +104,7 @@ private:
 
 		_numSolidCells = 0;
 		_spaceFillingRegion = -2;
-		int progressCounter = 0;
+		size_t progressCounter = 0;
 		for(DelaunayTessellation::CellIterator cellIter = _tessellation.begin_cells(); cellIter != _tessellation.end_cells(); ++cellIter) {
 			DelaunayTessellation::CellHandle cell = *cellIter;
 
@@ -188,11 +188,11 @@ private:
 				// Create the three vertices of the face or use existing output vertices.
 				std::array<typename HalfEdgeStructureType::Vertex*,3> facetVertices;
 				std::array<DelaunayTessellation::VertexHandle,3> vertexHandles;
-				std::array<int,3> vertexIndices;
+				std::array<size_t,3> vertexIndices;
 				for(int v = 0; v < 3; v++) {
 					vertexHandles[v] = _tessellation.cellVertex(cell, DelaunayTessellation::cellFacetVertexIndex(f, FlipOrientation ? (2-v) : v));
-					int vertexIndex = vertexIndices[v] = _tessellation.vertexIndex(vertexHandles[v]);
-					OVITO_ASSERT(vertexIndex >= 0 && vertexIndex < vertexMap.size());
+					size_t vertexIndex = vertexIndices[v] = _tessellation.vertexIndex(vertexHandles[v]);
+					OVITO_ASSERT(vertexIndex < vertexMap.size());
 					if(vertexMap[vertexIndex] == nullptr)
 						vertexMap[vertexIndex] = _mesh.createVertex(_positions.getPoint3(vertexIndex));
 					facetVertices[v] = vertexMap[vertexIndex];
@@ -209,11 +209,11 @@ private:
 
 					// Build face vertex list.
 					std::reverse(std::begin(vertexHandles), std::end(vertexHandles));
-					std::array<int,3> reverseVertexIndices;
+					std::array<size_t,3> reverseVertexIndices;
 					for(int v = 0; v < 3; v++) {
 						vertexHandles[v] = _tessellation.cellVertex(adjacentCell, DelaunayTessellation::cellFacetVertexIndex(mirrorFacet.second, FlipOrientation ? (2-v) : v));
-						int vertexIndex = reverseVertexIndices[v] = _tessellation.vertexIndex(vertexHandles[v]);
-						OVITO_ASSERT(vertexIndex >= 0 && vertexIndex < vertexMap.size());
+						size_t vertexIndex = reverseVertexIndices[v] = _tessellation.vertexIndex(vertexHandles[v]);
+						OVITO_ASSERT(vertexIndex < vertexMap.size());
 						OVITO_ASSERT(vertexMap[vertexIndex] != nullptr);
 						facetVertices[v] = vertexMap[vertexIndex];
 					}
@@ -369,7 +369,7 @@ private:
 			return _tetrahedraFaceList[_tessellation.getCellIndex(cell)][facet.second];
 		}
 		else {
-			std::array<int,3> faceVerts;
+			std::array<size_t,3> faceVerts;
 			for(size_t i = 0; i < 3; i++) {
 				int vertexIndex = DelaunayTessellation::cellFacetVertexIndex(facet.second, FlipOrientation ? (2-i) : i);
 				faceVerts[i] = _tessellation.vertexIndex(_tessellation.cellVertex(cell, vertexIndex));
@@ -383,7 +383,7 @@ private:
 		}
 	}
 
-	static void reorderFaceVertices(std::array<int,3>& vertexIndices) {
+	static void reorderFaceVertices(std::array<size_t,3>& vertexIndices) {
 #if !defined(Q_OS_MACOS)
 		// Shift the order of vertices so that the smallest index is at the front.
 		std::rotate(std::begin(vertexIndices), std::min_element(std::begin(vertexIndices), std::end(vertexIndices)), std::end(vertexIndices));
@@ -403,7 +403,7 @@ private:
 	FloatType _alpha;
 
 	/// Counts the number of tetrehedral cells that belong to the solid region.
-	int _numSolidCells = 0;
+	size_t _numSolidCells = 0;
 
 	/// Stores the region ID if all cells belong to the same region.
 	int _spaceFillingRegion = -1;
@@ -418,7 +418,7 @@ private:
 	std::vector<std::array<typename HalfEdgeStructureType::Face*, 4>> _tetrahedraFaceList;
 
 	/// This map allows to lookup faces based on their vertices.
-	std::unordered_map<std::array<int,3>, typename HalfEdgeStructureType::Face*, boost::hash<std::array<int,3>>> _faceLookupMap;
+	std::unordered_map<std::array<size_t,3>, typename HalfEdgeStructureType::Face*, boost::hash<std::array<size_t,3>>> _faceLookupMap;
 };
 
 }	// End of namespace

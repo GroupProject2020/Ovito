@@ -86,7 +86,7 @@ bool InterfaceMesh::createMesh(FloatType maximumNeighborDistance, const Property
 	};
 
 	// Transfer cluster vectors from tessellation edges to mesh edges.
-	auto prepareMeshFace = [this](Face* face, const std::array<int,3>& vertexIndices, const std::array<DelaunayTessellation::VertexHandle,3>& vertexHandles, DelaunayTessellation::CellHandle cell) {
+	auto prepareMeshFace = [this](Face* face, const std::array<size_t,3>& vertexIndices, const std::array<DelaunayTessellation::VertexHandle,3>& vertexHandles, DelaunayTessellation::CellHandle cell) {
 		// Obtain unwrapped vertex positions.
 		Point3 vertexPositions[3] = { tessellation().vertexPosition(vertexHandles[0]), tessellation().vertexPosition(vertexHandles[1]), tessellation().vertexPosition(vertexHandles[2]) };
 

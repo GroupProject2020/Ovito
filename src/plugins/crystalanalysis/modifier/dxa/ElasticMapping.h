@@ -42,13 +42,13 @@ private:
 	struct TessellationEdge {
 
 		/// Constructor.
-		TessellationEdge(int v1, int v2) : vertex1(v1), vertex2(v2), clusterTransition(nullptr) {}
+		TessellationEdge(size_t v1, size_t v2) : vertex1(v1), vertex2(v2), clusterTransition(nullptr) {}
 
 		/// The vertex this edge is originating from.
-		int vertex1;
+		size_t vertex1;
 
 		/// The vertex this edge is pointing to.
-		int vertex2;
+		size_t vertex2;
 
 		/// The vector corresponding to this edge in the stress-free reference configuration.
 		Vector3 clusterVector;
@@ -117,13 +117,13 @@ public:
 	bool isElasticMappingCompatible(DelaunayTessellation::CellHandle cell) const;
 
 	/// Returns the cluster to which a vertex of the tessellation has been assigned (may be NULL).
-	Cluster* clusterOfVertex(int vertexIndex) const {
-		OVITO_ASSERT(vertexIndex < (int)_vertexClusters.size());
+	Cluster* clusterOfVertex(size_t vertexIndex) const {
+		OVITO_ASSERT(vertexIndex < _vertexClusters.size());
 		return _vertexClusters[vertexIndex];
 	}
 
 	/// Returns the lattice vector assigned to a tessellation edge.
-	std::pair<Vector3, ClusterTransition*> getEdgeClusterVector(int vertexIndex1, int vertexIndex2) const {
+	std::pair<Vector3, ClusterTransition*> getEdgeClusterVector(size_t vertexIndex1, size_t vertexIndex2) const {
 		TessellationEdge* tessEdge = findEdge(vertexIndex1, vertexIndex2);
 		OVITO_ASSERT(tessEdge != nullptr);
 		OVITO_ASSERT(tessEdge->hasClusterVector());
@@ -136,13 +136,13 @@ public:
 private:
 
 	/// Returns the number of tessellation edges.
-	int edgeCount() const { return _edgeCount; }
+	size_t edgeCount() const { return _edgeCount; }
 
 	/// Looks up the tessellation edge connecting two tessellation vertices.
 	/// Returns NULL if the vertices are not connected by an edge.
-	TessellationEdge* findEdge(int vertexIndex1, int vertexIndex2) const {
-		OVITO_ASSERT(vertexIndex1 >= 0 && vertexIndex1 < (int)_vertexEdges.size());
-		OVITO_ASSERT(vertexIndex2 >= 0 && vertexIndex2 < (int)_vertexEdges.size());
+	TessellationEdge* findEdge(size_t vertexIndex1, size_t vertexIndex2) const {
+		OVITO_ASSERT(vertexIndex1 < _vertexEdges.size());
+		OVITO_ASSERT(vertexIndex2 < _vertexEdges.size());
 		for(TessellationEdge* e = _vertexEdges[vertexIndex1].first; e != nullptr; e = e->nextLeavingEdge)
 			if(e->vertex2 == vertexIndex2) return e;
 		for(TessellationEdge* e = _vertexEdges[vertexIndex1].second; e != nullptr; e = e->nextArrivingEdge)
@@ -168,7 +168,7 @@ private:
 	MemoryPool<TessellationEdge> _edgePool;
 
 	/// Number of tessellation edges on the local processor.
-	int _edgeCount;
+	size_t _edgeCount;
 
 	/// Stores the cluster assigned to each vertex atom of the tessellation.
 	std::vector<Cluster*> _vertexClusters;
@@ -177,5 +177,3 @@ private:
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-
-

@@ -26,7 +26,7 @@
 #include <plugins/stdobj/simcell/SimulationCell.h>
 #include <plugins/stdobj/properties/PropertyStorage.h>
 
-#include <geogram/delaunay/delaunay_3d.h>
+#include <geogram/Delaunay_psm.h>
 #include <boost/iterator/counting_iterator.hpp>
 #include <boost/iterator/permutation_iterator.hpp>
 
@@ -52,7 +52,7 @@ public:
 	struct CellInfo {
 		bool isGhost;	// Indicates whether this is a ghost tetrahedron.
 		int userField;	// An additional field that can be used by client code.
-		int index;		// An index assigned to the cell.
+		qint64 index;	// An index assigned to the cell.
 	};
 
 	typedef std::pair<CellHandle, int> Facet;
@@ -136,11 +136,11 @@ public:
 	CellIterator end_cells() const { return boost::make_permutation_iterator(boost::make_counting_iterator<size_type>(0), _stableCellOrder.cend()); }
 #endif	
 
-	void setCellIndex(CellHandle cell, int value) {
+	void setCellIndex(CellHandle cell, qint64 value) {
 		_cellInfo[cell].index = value;
 	}
 
-	int getCellIndex(CellHandle cell) const {
+	qint64 getCellIndex(CellHandle cell) const {
 		return _cellInfo[cell].index;
 	}
 
@@ -177,7 +177,7 @@ public:
 
 	bool alphaTest(CellHandle cell, FloatType alpha) const;
 
-	int vertexIndex(VertexHandle vertex) const {
+	size_t vertexIndex(VertexHandle vertex) const {
 		OVITO_ASSERT(vertex < _particleIndices.size());
 		return _particleIndices[vertex];
 	}
@@ -245,7 +245,7 @@ private:
 	bool classifyGhostCell(CellHandle cell) const;
 
 	/// The internal Delaunay generator object.
-	GEO::SmartPointer<GEO::Delaunay3d> _dt;
+	GEO::Delaunay_var _dt;
 
 	/// Stores the coordinates of the input points.
 	std::vector<double> _pointData;
@@ -254,7 +254,7 @@ private:
 	std::vector<CellInfo> _cellInfo;
 
 	/// Mapping of Delaunay points to input particles.
-	std::vector<int> _particleIndices;
+	std::vector<size_t> _particleIndices;
 
 	/// The number of primary (non-ghost) vertices.
 	size_type _primaryVertexCount;
@@ -264,14 +264,8 @@ private:
 
 	/// The simulation cell geometry.
 	SimulationCell _simCell;
-
-	/// Permutation of the cell array to guarantee a stable ordering.
-	std::vector<int> _stableCellOrder;
 };
 
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-
-
-

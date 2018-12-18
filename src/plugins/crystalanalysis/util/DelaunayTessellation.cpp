@@ -23,8 +23,6 @@
 #include <core/utilities/concurrent/PromiseState.h>
 #include "DelaunayTessellation.h"
 
-#include <geogram/basic/numeric.h>
-
 #include <boost/random/mersenne_twister.hpp>
 #if BOOST_VERSION > 146000
 #include <boost/random/uniform_real_distribution.hpp>
@@ -44,12 +42,8 @@ bool DelaunayTessellation::generateTessellation(const SimulationCell& simCell, c
 	promise.setProgressMaximum(0);
 
 	// Initialize the Geogram library.
-	static bool isGeogramInitialized = false;
-	if(!isGeogramInitialized) {
-		isGeogramInitialized = true;
-		GEO::initialize();
-		GEO::set_assert_mode(GEO::ASSERT_ABORT);
-	}
+	GEO::initialize();
+	GEO::set_assert_mode(GEO::ASSERT_ABORT);
 
 	const double epsilon = 2e-5;
 
@@ -92,7 +86,7 @@ bool DelaunayTessellation::generateTessellation(const SimulationCell& simCell, c
 		_pointData.push_back((double)wp.y());
 		_pointData.push_back((double)wp.z());
 #endif		
-		_particleIndices.push_back((int)i);
+		_particleIndices.push_back(i);
 
 		if(promise.isCanceled())
 			return false;
@@ -155,18 +149,17 @@ bool DelaunayTessellation::generateTessellation(const SimulationCell& simCell, c
 	}
 
 	// Create the internal Delaunay generator object.
-	_dt = new GEO::Delaunay3d();
+	_dt = GEO::Delaunay::create(3, "BDEL");
 	_dt->set_keeps_infinite(true);
 	_dt->set_reorder(true);
 
-	// This is to work around a bug in Geogram 1.5.0 and earlier versions.
-	// The internal compute_BRIO_order() routine uses std::random_shuffle() to randomize the
+	// The internal compute_BRIO_order() routine of Geogram uses std::random_shuffle() to randomize the
 	// input points. This results in unstable ordering of the Delaunay cell list, unless we fix the seed number:
 	std::srand(1);
 	GEO::Numeric::random_reset();
 
 	// Construct Delaunay tessellation.
-	bool result = _dt->set_vertices(_pointData.size()/3, _pointData.data(), [&promise](int value, int maxProgress) {
+	bool result = _dt->set_vertices(_pointData.size()/3, _pointData.data(), [&promise](size_t value, size_t maxProgress) {
 		if(maxProgress != promise.progressMaximum()) promise.setProgressMaximum(maxProgress);
 		return promise.setProgressValueIntermittent(value);
 	});
@@ -200,12 +193,10 @@ bool DelaunayTessellation::classifyGhostCell(CellHandle cell) const
 
 	// Find head vertex with the lowest index.
 	VertexHandle headVertex = cellVertex(cell, 0);
-	int headVertexIndex = vertexIndex(headVertex);
-	OVITO_ASSERT(headVertexIndex >= 0);
+	size_t headVertexIndex = vertexIndex(headVertex);
 	for(int v = 1; v < 4; v++) {
 		VertexHandle p = cellVertex(cell, v);
-		int vindex = vertexIndex(p);
-		OVITO_ASSERT(vindex >= 0);
+		size_t vindex = vertexIndex(p);
 		if(vindex < headVertexIndex) {
 			headVertex = p;
 			headVertexIndex = vindex;

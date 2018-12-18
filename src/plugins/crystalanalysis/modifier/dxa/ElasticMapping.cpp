@@ -52,15 +52,14 @@ bool ElasticMapping::generateTessellationEdges(PromiseState& promise)
 
 		// Create edge data structure for each of the six edges of the cell.
 		for(int edgeIndex = 0; edgeIndex < 6; edgeIndex++) {
-			int vertex1 = tessellation().vertexIndex(tessellation().cellVertex(cell, edgeVertices[edgeIndex][0]));
-			int vertex2 = tessellation().vertexIndex(tessellation().cellVertex(cell, edgeVertices[edgeIndex][1]));
+			size_t vertex1 = tessellation().vertexIndex(tessellation().cellVertex(cell, edgeVertices[edgeIndex][0]));
+			size_t vertex2 = tessellation().vertexIndex(tessellation().cellVertex(cell, edgeVertices[edgeIndex][1]));
 			if(vertex1 == vertex2)
 				continue;
 			Point3 p1 = tessellation().vertexPosition(tessellation().cellVertex(cell, edgeVertices[edgeIndex][0]));
 			Point3 p2 = tessellation().vertexPosition(tessellation().cellVertex(cell, edgeVertices[edgeIndex][1]));
 			if(structureAnalysis().cell().isWrappedVector(p1 - p2))
 				continue;
-			OVITO_ASSERT(vertex1 >= 0 && vertex2 >= 0);
 			TessellationEdge* edge = findEdge(vertex1, vertex2);
 			if(edge == nullptr) {
 				// Create a new edge.
@@ -103,7 +102,7 @@ bool ElasticMapping::assignVerticesToClusters(PromiseState& promise)
 			return false;
 
 		notDone = false;
-		for(int vertexIndex = 0; vertexIndex < _vertexClusters.size(); vertexIndex++) {
+		for(size_t vertexIndex = 0; vertexIndex < _vertexClusters.size(); vertexIndex++) {
 			if(clusterOfVertex(vertexIndex)->id != 0) continue;
 			for(TessellationEdge* e = _vertexEdges[vertexIndex].first; e != nullptr; e = e->nextLeavingEdge) {
 				OVITO_ASSERT(e->vertex1 == vertexIndex);
@@ -139,7 +138,7 @@ bool ElasticMapping::assignIdealVectorsToEdges(int crystalPathSteps, PromiseStat
 	// Try to assign a reference vector to the tessellation edges.
 	promise.setProgressValue(0);
 	promise.setProgressMaximum(_vertexEdges.size());
-	int progressCounter = 0;
+	size_t progressCounter = 0;
 	for(const auto& firstEdge : _vertexEdges) {
 
 		if(!promise.setProgressValueIntermittent(progressCounter++))
@@ -210,8 +209,8 @@ bool ElasticMapping::isElasticMappingCompatible(DelaunayTessellation::CellHandle
 	// Retrieve the cluster vectors assigned to the six edges of the tetrahedron.
 	std::pair<Vector3, ClusterTransition*> edgeVectors[6];
 	for(int edgeIndex = 0; edgeIndex < 6; edgeIndex++) {
-		int vertex1 = tessellation().vertexIndex(tessellation().cellVertex(cell, edgeVertices[edgeIndex][0]));
-		int vertex2 = tessellation().vertexIndex(tessellation().cellVertex(cell, edgeVertices[edgeIndex][1]));
+		size_t vertex1 = tessellation().vertexIndex(tessellation().cellVertex(cell, edgeVertices[edgeIndex][0]));
+		size_t vertex2 = tessellation().vertexIndex(tessellation().cellVertex(cell, edgeVertices[edgeIndex][1]));
 		TessellationEdge* tessEdge = findEdge(vertex1, vertex2);
 		if(!tessEdge || !tessEdge->hasClusterVector())
 			return false;

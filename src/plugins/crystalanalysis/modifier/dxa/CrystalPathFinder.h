@@ -58,7 +58,7 @@ public:
 	/// Finds an atom-to-atom path from atom 1 to atom 2 that lies entirely in the good crystal region.
 	/// If a path could be found, returns the corresponding ideal vector connecting the two
 	/// atoms in the ideal stress-free reference configuration.
-	boost::optional<ClusterVector> findPath(int atomIndex1, int atomIndex2);
+	boost::optional<ClusterVector> findPath(size_t atomIndex1, size_t atomIndex2);
 
 private:
 
@@ -68,11 +68,11 @@ private:
 	struct PathNode
 	{
 		/// Constructor
-		PathNode(int _atomIndex, const ClusterVector& _idealVector) :
-			atomIndex(_atomIndex), idealVector(_idealVector), nextToProcess(NULL) {}
+		PathNode(size_t _atomIndex, const ClusterVector& _idealVector) :
+			atomIndex(_atomIndex), idealVector(_idealVector) {}
 
 		/// The atom index.
-		int atomIndex;
+		size_t atomIndex;
 
 		/// The vector from the start atom of the path to this atom.
 		ClusterVector idealVector;
@@ -81,7 +81,7 @@ private:
 		int distance;
 
 		/// Linked list.
-		PathNode* nextToProcess;
+		PathNode* nextToProcess = nullptr;
 	};
 
 	/// The results of the pattern analysis.

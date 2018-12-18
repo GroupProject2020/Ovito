@@ -1,34 +1,35 @@
-# @brief Add sources from directories
-# @details
-# Add the sources from the specified \p directories to variable \p var
-# and place them in the specified \p folder if non empty.
-# @param[out] var name of the variable that receives the result list
-# @param[in] folder the name of the folder
-# @param[in] directories list of directories to scan
- 
-function(aux_source_directories var folder)
-    set(sources)
-    foreach(dir ${ARGN})
-        file(GLOB _sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${dir}/*.[ch]" "${dir}/*.[ch]pp")
-        list(APPEND sources ${_sources})
-    endforeach() 
-    
-    if( NOT folder STREQUAL "")
-        source_group(${folder} FILES ${sources})
-    endif()
+###############################################################################
+# 
+#  Copyright (2018) Alexander Stukowski
+#
+#  This file is part of OVITO (Open Visualization Tool).
+#
+#  OVITO is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  OVITO is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+###############################################################################
 
-    set(${var} ${${var}} ${sources} PARENT_SCOPE)
-endfunction()
+# Compile the Geogram library (Delaunay "Pluggable Software Module")
+ADD_LIBRARY(geogram STATIC Delaunay_psm.cpp)
 
-aux_source_directories(SOURCES "Source Files"            .)
-aux_source_directories(SOURCES "Source Files\\basic"     basic)
-aux_source_directories(SOURCES "Source Files\\numerics"  numerics)
-aux_source_directories(SOURCES "Source Files\\delaunay"  delaunay)
-aux_source_directories(SOURCES "Source Files\\mesh"      mesh)
-aux_source_directories(SOURCES "Source Files\\api"       api)
+# Floating-point math options.
+TARGET_COMPILE_OPTIONS(geogram PRIVATE "-Wno-ignored-optimization-argument" "-frounding-math" "-ffp-contract=off")
 
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/..)
-ADD_LIBRARY(geogram STATIC ${SOURCES})
+# Enable Geogram's support for 64-bit indices.
+TARGET_COMPILE_DEFINITIONS(geogram PUBLIC "GARGANTUA=1" )
+
+# Build static version of Geogram lib.
+TARGET_COMPILE_DEFINITIONS(geogram PUBLIC "GEO_STATIC_LIBS=1")
 
 # Set visibility of symbols in this shared library to hidden by default, except those exported in the source code.
 SET_TARGET_PROPERTIES(geogram PROPERTIES CXX_VISIBILITY_PRESET "hidden")

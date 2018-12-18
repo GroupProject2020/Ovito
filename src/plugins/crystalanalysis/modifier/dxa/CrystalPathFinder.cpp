@@ -28,7 +28,7 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 * Finds an atom-to-atom path from atom 1 to atom 2 that lies entirely in the
 * good crystal region.
 ******************************************************************************/
-boost::optional<ClusterVector> CrystalPathFinder::findPath(int atomIndex1, int atomIndex2)
+boost::optional<ClusterVector> CrystalPathFinder::findPath(size_t atomIndex1, size_t atomIndex2)
 {
 	OVITO_ASSERT(atomIndex1 != atomIndex2);
 
@@ -37,7 +37,7 @@ boost::optional<ClusterVector> CrystalPathFinder::findPath(int atomIndex1, int a
 
 	// Test if atom 2 is a direct neighbor of atom 1.
 	if(cluster1->id != 0) {
-		int neighborIndex = structureAnalysis().findNeighbor(atomIndex1, atomIndex2);
+		qint64 neighborIndex = structureAnalysis().findNeighbor(atomIndex1, atomIndex2);
 		if(neighborIndex != -1) {
 			const Vector3& refv = structureAnalysis().neighborLatticeVector(atomIndex1, neighborIndex);
 			return boost::optional<ClusterVector>(ClusterVector(refv, cluster1));
@@ -46,7 +46,7 @@ boost::optional<ClusterVector> CrystalPathFinder::findPath(int atomIndex1, int a
 
 	// Test if atom 1 is a direct neighbor of atom 2.
 	else if(cluster2->id != 0) {
-		int neighborIndex = structureAnalysis().findNeighbor(atomIndex2, atomIndex1);
+		qint64 neighborIndex = structureAnalysis().findNeighbor(atomIndex2, atomIndex1);
 		if(neighborIndex != -1) {
 			const Vector3& refv = structureAnalysis().neighborLatticeVector(atomIndex2, neighborIndex);
 			return boost::optional<ClusterVector>(ClusterVector(-refv, cluster2));
@@ -68,7 +68,7 @@ boost::optional<ClusterVector> CrystalPathFinder::findPath(int atomIndex1, int a
 	PathNode* end_of_queue = &start;
 	boost::optional<ClusterVector> result;
 	for(PathNode* current = &start; current != nullptr && !result; current = current->nextToProcess) {
-		int currentAtom = current->atomIndex;
+		size_t currentAtom = current->atomIndex;
 		OVITO_ASSERT(currentAtom != atomIndex2);
 		OVITO_ASSERT(_visitedAtoms.test(currentAtom) == true);
 
@@ -78,7 +78,7 @@ boost::optional<ClusterVector> CrystalPathFinder::findPath(int atomIndex1, int a
 		for(int neighborIndex = 0; neighborIndex < numNeighbors; neighborIndex++) {
 
 			// Resolve pattern node neighbor to actual neighbor atom.
-			int neighbor = structureAnalysis().getNeighbor(currentAtom, neighborIndex);
+			qint64 neighbor = structureAnalysis().getNeighbor(currentAtom, neighborIndex);
 
 			// Skip neighbor atom if it has been visited before.
 			if(_visitedAtoms.test(neighbor)) continue;
