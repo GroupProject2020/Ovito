@@ -319,6 +319,8 @@ OORef<DataCollection> ParticleFrameData::handOver(const DataCollection* existing
 void ParticleFrameData::insertTypes(PropertyObject* typeProperty, TypeList* typeList, bool isNewFile, bool isBondProperty)
 {
 	QSet<ElementType*> activeTypes;
+	std::vector<std::pair<int,int>> typeRemapping;
+
 	if(typeList) {
 		for(auto& item : typeList->types()) {
 			OORef<ElementType> ptype;
@@ -329,10 +331,7 @@ void ParticleFrameData::insertTypes(PropertyObject* typeProperty, TypeList* type
 				ptype = typeProperty->elementType(item.name);
 				if(ptype) {
 					if(item.id != ptype->numericId()) {
-						int mappedId = ptype->numericId();
-						for(int& t : typeProperty->intRange()) {
-							if(t == item.id) t = mappedId;
-						}
+						typeRemapping.push_back({item.id, ptype->numericId()});
 					}
 				}
 				else {
@@ -341,9 +340,7 @@ void ParticleFrameData::insertTypes(PropertyObject* typeProperty, TypeList* type
 						ptype = nullptr;
 						if(!isNewFile) {
 							int mappedId = typeProperty->generateUniqueElementTypeId(item.id + typeList->types().size());
-							for(int& t : typeProperty->intRange()) {
-								if(t == item.id) t = mappedId;
-							}
+							typeRemapping.push_back({item.id, mappedId});
 							item.id = mappedId;
 						}
 					}
@@ -393,6 +390,18 @@ void ParticleFrameData::insertTypes(PropertyObject* typeProperty, TypeList* type
 		for(int index = typeProperty->elementTypes().size() - 1; index >= 0; index--) {
 			if(!activeTypes.contains(typeProperty->elementTypes()[index]))
 				typeProperty->removeElementType(index);
+		}
+	}
+
+	// Remap particle types.
+	if(!typeRemapping.empty()) {
+		for(int& t : typeProperty->intRange()) {
+			for(const auto& mapping : typeRemapping) {
+				if(t == mapping.first) {
+					t = mapping.second;
+					break;
+				}
+			}
 		}
 	}
 }
