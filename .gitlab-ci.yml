@@ -41,3 +41,35 @@ build_linux_python2:
            ..
       - make -j3 install
       - ctest --output-on-failure
+
+build_macos_release:
+   stage: build
+   tags:
+      - macos
+   script:
+      - mkdir build
+      - cd build
+      - export MACOSX_DEPLOYMENT_TARGET=10.9
+      - echo $PWD
+      - cmake
+         -DOVITO_BUILD_DOCUMENTATION=ON
+         -DCMAKE_BUILD_TYPE=Release
+         -DOVITO_REDISTRIBUTABLE_PACKAGE=ON
+         -DCMAKE_PREFIX_PATH=$HOME/progs/Qt/5.9.5/clang_64/
+         -DPYTHON_EXECUTABLE=/Library/Frameworks/Python.framework/Versions/3.6/bin/python3
+         -DPYTHON_INCLUDE_DIR=/Library/Frameworks/Python.framework/Versions/3.6/include/python3.6m
+         -DPYTHON_LIBRARY=/Library/Frameworks/Python.framework/Versions/3.6/lib/libpython3.6.dylib
+         -DLIBAV_INCLUDE_DIR=$HOME/progs/libav/include
+         -DLIBAV_LIBRARY_DIR=$HOME/progs/libav/lib
+         -DQSCINTILLA_INCLUDE_DIR=$HOME/progs/QScintilla_gpl-2.10.4/Qt4Qt5
+         -DQSCINTILLA_LIBRARY=$HOME/progs/QScintilla_gpl-2.10.4/Qt4Qt5/libqscintilla2_qt5.dylib
+         -DnetCDF_DIR=$HOME/progs/netcdf/lib/cmake/netCDF
+         -DHDF5_DIR=$HOME/progs/hdf5/share/cmake/hdf5
+         -DOVITO_BUILD_PLUGIN_OSPRAY=ON
+         -Dospray_DIR=$HOME/progs/ospray_install/lib/cmake/ospray-1.6.0
+         -Dembree_DIR=$HOME/progs/embree_install/lib/cmake/embree-3.2.0
+         -DISPC_EXECUTABLE=$HOME/progs/ispc-v1.9.2-osx/ispc
+         -DTBB_ROOT=$HOME/progs/tbb2018_20180312oss
+         ..
+      - make -j2
+      - ctest --output-on-failure
