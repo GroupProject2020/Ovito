@@ -62,5 +62,3 @@ private:
 
 }	// End of namespace
 }	// End of namespace
-
-

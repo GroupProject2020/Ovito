@@ -25,6 +25,7 @@
 #include <core/dataset/scene/RootSceneNode.h>
 #include <core/dataset/scene/SelectionSet.h>
 #include <core/dataset/data/DataObject.h>
+#include <core/dataset/data/TransformedDataObject.h>
 #include <core/dataset/data/AttributeDataObject.h>
 #include <core/dataset/pipeline/Modifier.h>
 #include <core/dataset/pipeline/AsynchronousModifier.h>
@@ -147,6 +148,8 @@ void defineSceneSubmodule(py::module m)
 			}
 		})
 	;
+
+	ovito_abstract_class<TransformedDataObject, DataObject>{m};
 
 	ovito_abstract_class<CachingPipelineObject, PipelineObject>{m}
 	;

@@ -280,6 +280,9 @@ PYBIND11_MODULE(Mesh, m)
 				":Default: ``False``\n")
 	;
 	
+	ovito_class<RenderableSurfaceMesh, TransformedDataObject>{m}
+	;
+
 	ovito_class<VTKFileImporter, FileSourceImporter>{m}
 	;
 
