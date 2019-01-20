@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2016) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -28,17 +28,17 @@
 namespace Ovito { namespace Particles { OVITO_BEGIN_INLINE_NAMESPACE(Internal)
 
 /**
- * \brief A properties editor for the GenerateTrajectoryLinesModifier class.
+ * \brief A properties editor for the UnwrapTrajectoriesModifier class.
  */
-class GenerateTrajectoryLinesModifierEditor : public ModifierPropertiesEditor
+class UnwrapTrajectoriesModifierEditor : public ModifierPropertiesEditor
 {
 	Q_OBJECT
-	OVITO_CLASS(GenerateTrajectoryLinesModifierEditor)
+	OVITO_CLASS(UnwrapTrajectoriesModifierEditor)
 
 public:
 
 	/// Constructor.
-	Q_INVOKABLE GenerateTrajectoryLinesModifierEditor() {}
+	Q_INVOKABLE UnwrapTrajectoriesModifierEditor() {}
 
 protected:
 
@@ -47,8 +47,8 @@ protected:
 
 private Q_SLOTS:
 
-	/// Is called when the user clicks the 'Regenerate trajectory' button.
-	void onRegenerateTrajectory();
+	/// Is called when the user clicks the 'Unwrap trajectories' button.
+	void onUnwrapTrajectories();
 };
 
 OVITO_END_INLINE_NAMESPACE

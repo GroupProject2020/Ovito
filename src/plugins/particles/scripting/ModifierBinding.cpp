@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,6 +23,7 @@
 #include <plugins/particles/objects/ParticlesObject.h>
 #include <plugins/particles/modifier/coloring/AmbientOcclusionModifier.h>
 #include <plugins/particles/modifier/modify/WrapPeriodicImagesModifier.h>
+#include <plugins/particles/modifier/modify/UnwrapTrajectoriesModifier.h>
 #include <plugins/particles/modifier/modify/CreateBondsModifier.h>
 #include <plugins/particles/modifier/modify/LoadTrajectoryModifier.h>
 #include <plugins/particles/modifier/modify/CoordinationPolyhedraModifier.h>
@@ -1084,6 +1085,29 @@ void defineModifiersSubmodule(py::module m)
 			"The :py:class:`~ovito.vis.TrajectoryVis` element controlling the visual appearance of the trajectory lines created by this modifier.")
 	;
 	ovito_class<GenerateTrajectoryLinesModifierApplication, ModifierApplication>{m};
+
+	ovito_class<UnwrapTrajectoriesModifier, Modifier>(m,
+			":Base class: :py:class:`ovito.pipeline.Modifier`"
+			"\n\n"
+			"This modifier determines when particles cross through the periodic boundaries of the simulation cell "
+			"and unwraps the particle coordinates in order to make the trajectories continuous. As a result of this "
+			"operation, particle trajectories will no longer fold back into the simulation cell and instead lead outside the "
+			"cell. "
+			"\n\n"
+			"For unwrapping the particle coordinates, the modifier must load all frames of the input simulation trajectory "
+			"to detect crossings of the periodic cell boundaries. In the current version of OVITO, this initialization step must be "
+			"explicitly triggered by calling the :py:meth:`.update` method as shown in the following example. "
+			"\n\n"
+			".. literalinclude:: ../example_snippets/unwrap_trajectories.py")
+		.def("update", [](UnwrapTrajectoriesModifier& modifier) {
+				if(!modifier.detectPeriodicCrossings(ScriptEngine::getCurrentDataset()->container()->taskManager()))
+					modifier.throwException(ScriptEngine::tr("Unwrapping of particle trajectories has been canceled by the user."));
+			},
+			"This method detects crossings of the particles through of the periodic cell boundaries. The list of crossing events will subsequently be used by the modifier to unwrap "
+			"the particle coordinates and produce continuous particle trajectories. The method loads and steps through all animation frames of the input trajectory, which can take some time. "
+			"Make sure you call this method right *after* the modifier has been inserted into the pipeline and *before* the pipeline is evaluated for the first time. ")
+	;
+	ovito_class<UnwrapTrajectoriesModifierApplication, ModifierApplication>{m};
 
 	ovito_class<ParticlesComputePropertyModifierDelegate, ComputePropertyModifierDelegate>{m}
 		.def_property("neighbor_expressions", &ParticlesComputePropertyModifierDelegate::neighborExpressions, &ParticlesComputePropertyModifierDelegate::setNeighborExpressions)	

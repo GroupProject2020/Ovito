@@ -29,6 +29,7 @@ SET(SourceFiles
 	modifier/coloring/AmbientOcclusionModifierEditor.cpp
 	modifier/modify/CreateBondsModifierEditor.cpp
 	modifier/modify/LoadTrajectoryModifierEditor.cpp
+	modifier/modify/UnwrapTrajectoriesModifierEditor.cpp
 	modifier/analysis/StructureListParameterUI.cpp
 	modifier/analysis/ackland_jones/AcklandJonesModifierEditor.cpp
 	modifier/analysis/cna/CommonNeighborAnalysisModifierEditor.cpp

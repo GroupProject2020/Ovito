@@ -91,7 +91,7 @@ private:
 };
 
 /**
- * Used by the GenerateTrajectoryLinesModifier to store the generated trajeectory lines.
+ * Used by the GenerateTrajectoryLinesModifier to store the generated trajectory lines.
  */
 class OVITO_PARTICLES_EXPORT GenerateTrajectoryLinesModifierApplication : public ModifierApplication
 {

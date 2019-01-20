@@ -33,6 +33,7 @@ SET(SourceFiles
 	modifier/coloring/AmbientOcclusionModifier.cpp
 	modifier/coloring/AmbientOcclusionRenderer.cpp
 	modifier/modify/WrapPeriodicImagesModifier.cpp
+	modifier/modify/UnwrapTrajectoriesModifier.cpp
 	modifier/modify/CreateBondsModifier.cpp
 	modifier/modify/LoadTrajectoryModifier.cpp
 	modifier/modify/CoordinationPolyhedraModifier.cpp

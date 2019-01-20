@@ -75,7 +75,7 @@ SharedFuture<PipelineFlowState> CachingPipelineObject::evaluate(TimePoint time, 
 	if(_pipelineCache.insert(stateFuture, time, this)) {
 		// If the cache was updated, we also have a new preliminary state.
 		// Inform the pipeline about it.
-		if(performPreliminaryUpdateAfterEvaluation()) {
+		if(performPreliminaryUpdateAfterEvaluation() && time == dataset()->animationSettings()->time()) {
 			stateFuture = stateFuture.then(executor(), [this](PipelineFlowState&& state) {
 				notifyDependents(ReferenceEvent::PreliminaryStateAvailable);
 				return std::move(state);

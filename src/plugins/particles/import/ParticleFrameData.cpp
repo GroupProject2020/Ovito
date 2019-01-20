@@ -217,7 +217,7 @@ OORef<DataCollection> ParticleFrameData::handOver(const DataCollection* existing
 		// Hand over the bonds.
 		if(!_bondProperties.empty()) {
 
-			OORef<BondsObject> existingBonds = particles->bonds();
+			OORef<BondsObject> existingBonds = existingParticles ? existingParticles->bonds() : nullptr;
 			BondsObject* bonds = new BondsObject(fileSource->dataset());
 			particles->setBonds(bonds);
 			bonds->setDataSource(fileSource);

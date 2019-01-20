@@ -61,7 +61,7 @@ void WrapPeriodicImagesModifier::evaluatePreliminary(TimePoint time, ModifierApp
 	ParticlesObject* outputParticles = state.expectMutableObject<ParticlesObject>();
 
 	// Make a modifiable copy of the particle position property.
-	PropertyPtr posProperty = outputParticles->makeMutable(outputParticles->expectProperty(ParticlesObject::PositionProperty))->modifiableStorage();
+	PropertyPtr posProperty = outputParticles->expectMutableProperty(ParticlesObject::PositionProperty)->modifiableStorage();
 
 	// Wrap bonds by adjusting their PBC shift vectors.
 	if(outputParticles->bonds()) {

@@ -32,6 +32,7 @@ ovito.modifiers.PolyhedralTemplateMatchingModifier = ovito.plugins.Particles.Pol
 ovito.modifiers.CoordinationPolyhedraModifier = ovito.plugins.Particles.CoordinationPolyhedraModifier
 ovito.modifiers.InterpolateTrajectoryModifier = ovito.plugins.Particles.InterpolateTrajectoryModifier
 ovito.modifiers.GenerateTrajectoryLinesModifier = ovito.plugins.Particles.GenerateTrajectoryLinesModifier
+ovito.modifiers.UnwrapTrajectoriesModifier = ovito.plugins.Particles.UnwrapTrajectoriesModifier
 ovito.modifiers.__all__ += [
             'AmbientOcclusionModifier', 
             'WrapPeriodicImagesModifier',
@@ -52,7 +53,8 @@ ovito.modifiers.__all__ += [
             'PolyhedralTemplateMatchingModifier',
             'CoordinationPolyhedraModifier', 
             'InterpolateTrajectoryModifier', 
-            'GenerateTrajectoryLinesModifier']
+            'GenerateTrajectoryLinesModifier',
+            'UnwrapTrajectoriesModifier']
 
 # For backward compatibility with OVITO 2.9.0:
 ovito.modifiers.CoordinationNumberModifier = ovito.modifiers.CoordinationAnalysisModifier
