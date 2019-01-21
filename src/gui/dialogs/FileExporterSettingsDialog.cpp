@@ -221,16 +221,20 @@ void FileExporterSettingsDialog::updateDataObjectList()
 	// Update the data objects list.
 	_dataObjectBox->clear();
 
-	if(const DataObject::OOMetaClass* objClass = _exporter->exportableDataObjectClass()) {
+	std::vector<const DataObject::OOMetaClass*> objClasses = _exporter->exportableDataObjectClass();
+	if(!objClasses.empty()) {
 		if(PipelineSceneNode* pipeline = dynamic_object_cast<PipelineSceneNode>(_exporter->nodeToExport())) {
 			const PipelineFlowState& state = pipeline->evaluatePipelinePreliminary(true);
 			if(!state.isEmpty()) {
-				for(const ConstDataObjectPath& dataPath : state.data()->getObjectsRecursive(*objClass)) {
-					QString title = dataPath.back()->objectTitle();
-					DataObjectReference dataRef(objClass, dataPath.toString(), title);
-					_dataObjectBox->addItem(title, QVariant::fromValue(dataRef));
-					if(dataRef == _exporter->dataObjectToExport())
-						_dataObjectBox->setCurrentIndex(_dataObjectBox->count() - 1);
+				for(const DataObject::OOMetaClass* clazz : objClasses) {
+					OVITO_ASSERT(clazz != nullptr);
+					for(const ConstDataObjectPath& dataPath : state.data()->getObjectsRecursive(*clazz)) {
+						QString title = dataPath.back()->objectTitle();
+						DataObjectReference dataRef(clazz, dataPath.toString(), title);
+						_dataObjectBox->addItem(title, QVariant::fromValue(dataRef));
+						if(dataRef == _exporter->dataObjectToExport())
+							_dataObjectBox->setCurrentIndex(_dataObjectBox->count() - 1);
+					}
 				}
 			}
 		}

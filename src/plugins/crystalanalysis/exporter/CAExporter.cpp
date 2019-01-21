@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -37,15 +37,53 @@ namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 IMPLEMENT_OVITO_CLASS(CAExporter);
 
 /******************************************************************************
-* Writes the particles of one animation frame to the current output file.
-******************************************************************************/
-bool CAExporter::exportData(const PipelineFlowState& state, int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
+ * This is called once for every output file to be written and before
+ * exportFrame() is called.
+ *****************************************************************************/
+bool CAExporter::openOutputFile(const QString& filePath, int numberOfFrames, AsyncOperation& operation)
 {
+	OVITO_ASSERT(!_outputFile.isOpen());
+	OVITO_ASSERT(!_outputStream);
+
+	_outputFile.setFileName(filePath);
+	_outputStream.reset(new CompressedTextWriter(_outputFile, dataset()));
+
+	return true;
+}
+
+/******************************************************************************
+ * This is called once for every output file written after exportFrame()
+ * has been called.
+ *****************************************************************************/
+void CAExporter::closeOutputFile(bool exportCompleted)
+{
+	_outputStream.reset();
+	if(_outputFile.isOpen())
+		_outputFile.close();
+
+	if(!exportCompleted)
+		_outputFile.remove();
+}
+
+/******************************************************************************
+ * Exports a single animation frame to the current output file.
+ *****************************************************************************/
+bool CAExporter::exportFrame(int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation)
+{	
+	// Evaluate data pipeline.
+	const PipelineFlowState& state = getPipelineDataToBeExported(time, operation);
+
+	// Set progress display.
+	operation.setProgressText(tr("Writing file %1").arg(filePath));
+
 	// Get simulation cell info.
 	const SimulationCellObject* simulationCell = state.expectObject<SimulationCellObject>();
 
 	// Get dislocation lines.
 	const DislocationNetworkObject* dislocationObj = state.getObject<DislocationNetworkObject>();
+
+	// Get microstructure object.
+	const MicrostructureObject* microstructureObj = state.getObject<MicrostructureObject>();
 
 	// Get defect surface mesh.
 	const SurfaceMesh* defectMesh = meshExportEnabled() ? state.getObject<SurfaceMesh>() : nullptr;
@@ -53,7 +91,7 @@ bool CAExporter::exportData(const PipelineFlowState& state, int frameNumber, Tim
 	// Get partition mesh.
 	const PartitionMesh* partitionMesh = meshExportEnabled() ? state.getObject<PartitionMesh>() : nullptr;
 
-	if(!dislocationObj && !defectMesh && !partitionMesh)
+	if(!dislocationObj && !defectMesh && !partitionMesh && !microstructureObj)
 		throwException(tr("Dataset to be exported contains no dislocation lines nor a surface mesh. Cannot write CA file."));
 
 	// Get cluster graph.
@@ -64,7 +102,7 @@ bool CAExporter::exportData(const PipelineFlowState& state, int frameNumber, Tim
 	// Get pattern catalog.
 	const PatternCatalog* patternCatalog = state.getObject<PatternCatalog>();
 	if(dislocationObj && !patternCatalog)
-		throwException(tr("Dataset to be exported contains no structure pattern catalog. Cannot write CA file."));
+		throwException(tr("Dataset to be exported contains no structure catalog. Cannot write CA file."));
 
 	// Write file header.
 	textStream() << "CA_FILE_VERSION 6\n";
@@ -140,14 +178,24 @@ bool CAExporter::exportData(const PipelineFlowState& state, int frameNumber, Tim
 		}
 	}
 
+	// Select the dislocation network to be exported.
+	// Optionally, convert a Microstructure object to a DislocationNetwork object for export.
+	std::shared_ptr<DislocationNetwork> dislocations;
 	if(dislocationObj) {
+		dislocations = dislocationObj->storage();
+	}
+	else if(microstructureObj) {
+		dislocations = std::make_shared<DislocationNetwork>(*microstructureObj->storage(), microstructureObj->domain()->data());
+	}
+
+	if(dislocations) {
 		// Write list of dislocation segments.
-		textStream() << "DISLOCATIONS " << dislocationObj->segments().size() << "\n";
-		for(const DislocationSegment* segment : dislocationObj->segments()) {
+		textStream() << "DISLOCATIONS " << dislocations->segments().size() << "\n";
+		for(const DislocationSegment* segment : dislocations->segments()) {
 
 			// Make sure consecutive identifiers have been assigned to segments.
-			OVITO_ASSERT(segment->id >= 0 && segment->id < dislocationObj->segments().size());
-			OVITO_ASSERT(dislocationObj->segments()[segment->id] == segment);
+			OVITO_ASSERT(segment->id >= 0 && segment->id < dislocations->segments().size());
+			OVITO_ASSERT(dislocations->segments()[segment->id] == segment);
 
 			textStream() << segment->id << "\n";
 			textStream() << segment->burgersVector.localVec().x() << " " << segment->burgersVector.localVec().y() << " " << segment->burgersVector.localVec().z() << "\n";
@@ -172,9 +220,9 @@ bool CAExporter::exportData(const PipelineFlowState& state, int frameNumber, Tim
 		// Write dislocation connectivity information.
 		textStream() << "DISLOCATION_JUNCTIONS\n";
 		int index = 0;
-		for(const DislocationSegment* segment : dislocationObj->segments()) {
-			OVITO_ASSERT(segment->forwardNode().junctionRing->segment->id < dislocationObj->segments().size());
-			OVITO_ASSERT(segment->backwardNode().junctionRing->segment->id < dislocationObj->segments().size());
+		for(const DislocationSegment* segment : dislocations->segments()) {
+			OVITO_ASSERT(segment->forwardNode().junctionRing->segment->id < dislocations->segments().size());
+			OVITO_ASSERT(segment->backwardNode().junctionRing->segment->id < dislocations->segments().size());
 
 			for(int nodeIndex = 0; nodeIndex < 2; nodeIndex++) {
 				const DislocationNode* otherNode = segment->nodes[nodeIndex]->junctionRing;

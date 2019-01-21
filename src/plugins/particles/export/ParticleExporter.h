@@ -44,9 +44,9 @@ public:
 	///        exported contains particles and throws an exception if not.
 	PipelineFlowState getParticleData(TimePoint time, AsyncOperation& operation) const;
 
-	/// \brief Returns the type of data objects that this exporter service can export.
-	virtual const DataObject::OOMetaClass* exportableDataObjectClass() const override {
-		return &ParticlesObject::OOClass();
+	/// \brief Returns the type(s) of data objects that this exporter service can export.
+	virtual std::vector<const DataObject::OOMetaClass*> exportableDataObjectClass() const override {
+		return { &ParticlesObject::OOClass() };
 	}
 
 protected:

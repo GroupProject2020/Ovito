@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-//  Copyright (2017) Alexander Stukowski
+//  Copyright (2019) Alexander Stukowski
 //
 //  This file is part of OVITO (Open Visualization Tool).
 //
@@ -23,23 +23,25 @@
 
 
 #include <plugins/crystalanalysis/CrystalAnalysis.h>
-#include <plugins/particles/export/ParticleExporter.h>
 #include <plugins/crystalanalysis/objects/dislocations/DislocationNetworkObject.h>
+#include <plugins/crystalanalysis/objects/microstructure/MicrostructureObject.h>
+#include <core/dataset/io/FileExporter.h>
+#include <core/utilities/io/CompressedTextWriter.h>
 
 namespace Ovito { namespace Plugins { namespace CrystalAnalysis {
 
 /**
  * \brief Exporter that exports dislocation lines to a Crystal Analysis Tool (CA) file.
  */
-class OVITO_CRYSTALANALYSIS_EXPORT CAExporter : public ParticleExporter
+class OVITO_CRYSTALANALYSIS_EXPORT CAExporter : public FileExporter
 {
 	/// Defines a metaclass specialization for this exporter type.
-	class OOMetaClass : public ParticleExporter::OOMetaClass
+	class OOMetaClass : public FileExporter::OOMetaClass
 	{
 	public:
 
 		/// Inherit standard constructor from base meta class.
-		using ParticleExporter::OOMetaClass::OOMetaClass;
+		using FileExporter::OOMetaClass::OOMetaClass;
 
 		/// Returns the file filter that specifies the extension of files written by this service.
 		virtual QString fileFilter() const override { return QStringLiteral("*.ca"); }
@@ -54,7 +56,7 @@ class OVITO_CRYSTALANALYSIS_EXPORT CAExporter : public ParticleExporter
 public:
 
 	/// \brief Constructs a new instance of this class.
-	Q_INVOKABLE CAExporter(DataSet* dataset) : ParticleExporter(dataset) {}
+	Q_INVOKABLE CAExporter(DataSet* dataset) : FileExporter(dataset) {}
 
 	/// Returns whether the DXA defect mesh is exported (in addition to the dislocation lines).
 	bool meshExportEnabled() const { return _meshExportEnabled; }
@@ -62,24 +64,40 @@ public:
 	/// Sets whether the DXA defect mesh is exported (in addition to the dislocation lines).
 	void setMeshExportEnabled(bool enable) { _meshExportEnabled = enable; }
 
-	/// \brief Returns the type of data objects that this exporter service can export.
-	virtual const DataObject::OOMetaClass* exportableDataObjectClass() const override {
-		return &DislocationNetworkObject::OOClass();
+	/// \brief Returns the type(s) of data objects that this exporter service can export.
+	virtual std::vector<const DataObject::OOMetaClass*> exportableDataObjectClass() const override {
+		return { &DislocationNetworkObject::OOClass(), &MicrostructureObject::OOClass() };
 	}
 
 protected:
 
-	/// \brief Writes the particles of one animation frame to the current output file.
-	virtual bool exportData(const PipelineFlowState& state, int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation) override;
+	/// \brief This is called once for every output file to be written and before exportFrame() is called.
+	virtual bool openOutputFile(const QString& filePath, int numberOfFrames, AsyncOperation& operation) override;
+
+	/// \brief This is called once for every output file written after exportFrame() has been called.
+	virtual void closeOutputFile(bool exportCompleted) override;
+
+	/// \brief Exports a single animation frame to the current output file.
+	virtual bool exportFrame(int frameNumber, TimePoint time, const QString& filePath, AsyncOperation&& operation) override;
 	
+	/// Returns the current file this exporter is writing to.
+	QFile& outputFile() { return _outputFile; }
+
+	/// Returns the text stream used to write into the current output file.
+	CompressedTextWriter& textStream() { return *_outputStream; }
+
 private:
 
 	/// Controls whether the DXA defect mesh is exported (in addition to the dislocation lines).
 	bool _meshExportEnabled = true;
+
+	/// The output file stream.
+	QFile _outputFile;
+
+	/// The stream object used to write into the output file.
+	std::unique_ptr<CompressedTextWriter> _outputStream;
 };
 
 }	// End of namespace
 }	// End of namespace
 }	// End of namespace
-
-

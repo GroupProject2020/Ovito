@@ -70,7 +70,7 @@ DislocationNetwork::DislocationNetwork(const DislocationNetwork& other) :
 DislocationNetwork::DislocationNetwork(const Microstructure& other, const SimulationCell& cell) :
 	_clusterGraph(other.clusterGraph())
 {
-	// This is used to keep tracke which input edges have already been converted to a dislocation
+	// This is used to keep track which input edges have already been converted to a dislocation
 	// line. For each visited edge, we store the ID of the output dislocation line.
 	// The sign of the ID number indicates whether the input edge and the output line
 	// have the same or reverse orientation.

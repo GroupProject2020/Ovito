@@ -70,20 +70,20 @@ public:
 
 	/// \brief Determines whether the given scene node is suitable for exporting with this exporter service.
 	/// By default, all pipeline scene nodes are considered suitable that produce suitable data objects
-	/// of the type specified by the FileExporter::exportableDataObjectClass() method. 
+	/// of the type(s) specified by the FileExporter::exportableDataObjectClass() method. 
 	/// Subclasses can refine this behavior as needed.
 	virtual bool isSuitableNode(SceneNode* node) const;
 
 	/// \brief Determines whether the given pipeline output is suitable for exporting with this exporter service.
 	/// By default, all data collections are considered suitable that contain suitable data objects
-	/// of the type specified by the FileExporter::exportableDataObjectClass() method. 
+	/// of the type(s) specified by the FileExporter::exportableDataObjectClass() method. 
 	/// Subclasses can refine this behavior as needed.
 	virtual bool isSuitablePipelineOutput(const PipelineFlowState& state) const;
 
-	/// \brief Returns the specific type of data objects that this exporter service can export.
-	/// The default implementation returns a nullptr to indicate that the exporter is not restricted to
+	/// \brief Returns the specific type(s) of data objects that this exporter service can export.
+	/// The default implementation returns an empty list to indicate that the exporter is not restricted to
 	/// a specfic class of data objects. Subclasses should override this behavior.
-	virtual const DataObject::OOMetaClass* exportableDataObjectClass() const { return nullptr; }
+	virtual std::vector<const DataObject::OOMetaClass*> exportableDataObjectClass() const { return {}; }
 
 	/// \brief Sets the name of the output file that should be written by this exporter.
 	virtual void setOutputFilename(const QString& filename);

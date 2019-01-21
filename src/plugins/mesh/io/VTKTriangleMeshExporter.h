@@ -57,9 +57,9 @@ public:
 	/// \brief Constructs a new instance of this class.
 	Q_INVOKABLE VTKTriangleMeshExporter(DataSet* dataset) : FileExporter(dataset) {}
 
-	/// \brief Returns the type of data objects that this exporter service can export.
-	virtual const DataObject::OOMetaClass* exportableDataObjectClass() const override {
-		return &SurfaceMesh::OOClass();
+	/// \brief Returns the type(s) of data objects that this exporter service can export.
+	virtual std::vector<const DataObject::OOMetaClass*> exportableDataObjectClass() const override {
+		return { &SurfaceMesh::OOClass() };
 	}
 
 protected:

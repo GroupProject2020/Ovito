@@ -56,17 +56,17 @@ public:
 	/// \brief Constructs a new instance of this class.
 	Q_INVOKABLE VTKDislocationsExporter(DataSet* dataset) : FileExporter(dataset) {}
 
-	/// \brief Returns the type of data objects that this exporter service can export.
-	virtual const DataObject::OOMetaClass* exportableDataObjectClass() const override {
-		return &DislocationNetworkObject::OOClass();
+	/// \brief Returns the type(s) of data objects that this exporter service can export.
+	virtual std::vector<const DataObject::OOMetaClass*> exportableDataObjectClass() const override {
+		return { &DislocationNetworkObject::OOClass() };
 	}
 
 protected:
 
-	/// \brief This is called once for every output file to be written and before exportData() is called.
+	/// \brief This is called once for every output file to be written and before exportFrame() is called.
 	virtual bool openOutputFile(const QString& filePath, int numberOfFrames, AsyncOperation& operation) override;
 
-	/// \brief This is called once for every output file written after exportData() has been called.
+	/// \brief This is called once for every output file written after exportFrame() has been called.
 	virtual void closeOutputFile(bool exportCompleted) override;
 
 	/// \brief Exports a single animation frame to the current output file.

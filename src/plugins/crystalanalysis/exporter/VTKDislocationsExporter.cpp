@@ -32,7 +32,7 @@ IMPLEMENT_OVITO_CLASS(VTKDislocationsExporter);
 
 /******************************************************************************
  * This is called once for every output file to be written and before
- * exportData() is called.
+ * exportFrame() is called.
  *****************************************************************************/
 bool VTKDislocationsExporter::openOutputFile(const QString& filePath, int numberOfFrames, AsyncOperation& operation)
 {
@@ -46,7 +46,7 @@ bool VTKDislocationsExporter::openOutputFile(const QString& filePath, int number
 }
 
 /******************************************************************************
- * This is called once for every output file written after exportData()
+ * This is called once for every output file written after exportFrame()
  * has been called.
  *****************************************************************************/
 void VTKDislocationsExporter::closeOutputFile(bool exportCompleted)
