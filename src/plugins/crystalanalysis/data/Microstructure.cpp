@@ -185,7 +185,6 @@ void Microstructure::makeContinuousDislocationLines()
     removeMarkedFaces();
 }
 
-
 /*************************************************************************************
 * Aligns the orientation of slip faces and builds contiguous two-dimensional manifolds 
 * of maximum extent, i.e. slip surfaces with constant slip vector.

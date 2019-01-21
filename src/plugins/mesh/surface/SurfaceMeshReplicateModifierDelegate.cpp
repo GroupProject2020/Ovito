@@ -161,7 +161,7 @@ PipelineStatus SurfaceMeshReplicateModifierDelegate::apply(Modifier* modifier, P
 							if(pbcFlags[dim])
 								imageShift[dim] -= (int)std::floor(delta[dim] + FloatType(0.5));
 						}
-						if(!imageShift.isZero()) {
+						if(imageShift != Vector3I::Zero()) {
 							size_t imageIndex = edge->vertex2()->index() / oldVertexCount;
 							Point3I image(imageIndex / nPBC[1] / nPBC[2], (imageIndex / nPBC[2]) % nPBC[1], imageIndex % nPBC[2]);
 							Point3I newImage(SimulationCell::modulo(image[0] + imageShift[0], nPBC[0]),

@@ -56,7 +56,8 @@ IF(OVITO_BUILD_PLUGIN_STDMOD)
 	LIST(APPEND SourceFiles 
 		objects/dislocations/DislocationSliceModifierDelegate.cpp
 		objects/dislocations/DislocationReplicateModifierDelegate.cpp
-	)
+		objects/microstructure/MicrostructureReplicateModifierDelegate.cpp
+		)
 ENDIF()
 
 IF(OVITO_BUILD_PLUGIN_PYSCRIPT)

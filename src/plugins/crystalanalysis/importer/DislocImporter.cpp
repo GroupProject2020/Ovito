@@ -253,7 +253,7 @@ FileSourceImporter::FrameDataPtr DislocImporter::FrameLoader::loadFile(QFile& fi
 				NCERR(nc_get_var_longlong(root_ncid, slip_facet_vertices_var, slipFacetVertices.data()));				
 			}
 
-			// Create slip surfaces.
+			// Create slip surface facets.
 			auto slipVector = slipVectors.cbegin();
 			auto slipFacetEdgeCount = slipFacetEdgeCounts.cbegin();
 			auto slipFacetVertex = slipFacetVertices.cbegin();
@@ -452,7 +452,6 @@ void DislocImporter::FrameLoader::connectSlipFaces(Microstructure& microstructur
 			// Only process edges which haven't been linked to their neighbors yet.
 			if(edge1->oppositeEdge() != nullptr) continue;
 			if(!edge1->face()->isSlipSurfaceFace()) continue;
-			OVITO_ASSERT(edge1->face()->isSlipSurfaceFace());
 
 			Microstructure::Edge* oppositeEdge1 = edge1->face()->oppositeFace()->findEdge(edge1->vertex2(), edge1->vertex1());;
 			OVITO_ASSERT(oppositeEdge1 != nullptr);
@@ -545,6 +544,8 @@ void DislocImporter::FrameLoader::connectSlipFaces(Microstructure& microstructur
 			}
 
 			OVITO_ASSERT(edge1->nextManifoldEdge() != nullptr);
+			OVITO_ASSERT(edge1->nextManifoldEdge()->vertex2() == edge1->vertex2());
+			OVITO_ASSERT(edge1->nextManifoldEdge()->vertex1() == edge1->vertex1());
 			OVITO_ASSERT(oppositeEdge1->nextManifoldEdge() != nullptr);
 			OVITO_ASSERT(!edge2 || edge2->nextManifoldEdge() != nullptr);
 			OVITO_ASSERT(!oppositeEdge2 || oppositeEdge2->nextManifoldEdge() != nullptr);
