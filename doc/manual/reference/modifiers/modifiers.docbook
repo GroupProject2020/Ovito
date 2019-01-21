@@ -145,8 +145,12 @@
               <entry>Cuts the structure along an infinite plane.</entry>
             </row>
             <row>
+              <entry><link linkend="particles.modifiers.unwrap_trajectories">Unwrap&#xA0;trajectories</link></entry>
+              <entry>Computes unwrapped particle coordinates in order to generate continuous trajectories at periodic cell boundaries.</entry>
+            </row>
+            <row>
               <entry><link linkend="particles.modifiers.wrap_at_periodic_boundaries">Wrap&#xA0;at&#xA0;periodic&#xA0;boundaries</link></entry>
-              <entry>Maps particles outside of the simulation box back into the box.</entry>
+              <entry>Folds particles located outside of the periodic simulation box back into the box.</entry>
             </row>
 
 		<!-- SELECTION -->
@@ -314,6 +318,8 @@
   <xi:include href="particles/show_periodic_images.docbook"/>
 
   <xi:include href="particles/slice.docbook"/>
+
+  <xi:include href="particles/unwrap_trajectories.docbook"/>
 
   <xi:include href="particles/voronoi_analysis.docbook"/>
 

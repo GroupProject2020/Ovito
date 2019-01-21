@@ -42,9 +42,9 @@
   </para>
 
   <para>
-    The wrapping is only performed in those directions for which periodic
-    boundary conditions (PBC) are enabled. The PBC flags are usually read from the
-    input simulation file and can be changed in the <link linkend="scene_objects.simulation_cell">Simulation cell</link> panel.
+    The wrapping is only performed along those directions for which periodic
+    boundary conditions (PBC) are enabled for the simulation cell. The PBC flags are read from the
+    input simulation file if available and can be manually set in the <link linkend="scene_objects.simulation_cell">Simulation cell</link> panel.
   </para>
 
   <simplesect>

@@ -36,7 +36,7 @@ SET_OVITO_OBJECT_EDITOR(UnwrapTrajectoriesModifier, UnwrapTrajectoriesModifierEd
 void UnwrapTrajectoriesModifierEditor::createUI(const RolloutInsertionParameters& rolloutParams)
 {
 	// Create a rollout.
-	QWidget* rollout = createRollout(tr("Unwrap trajectories"), rolloutParams);
+	QWidget* rollout = createRollout(tr("Unwrap trajectories"), rolloutParams, "particles.modifiers.unwrap_trajectories.html");
 
     // Create the rollout contents.
 	QVBoxLayout* layout = new QVBoxLayout(rollout);

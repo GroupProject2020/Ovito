@@ -94,7 +94,7 @@ void UnwrapTrajectoriesModifier::unwrapParticleCoordinates(TimePoint time, Modif
 	}
 
 	const UnwrapTrajectoriesModifierApplication::UnwrapData& unwrapRecords = myModApp->unwrapRecords();
-	state.setStatus(PipelineStatus(PipelineStatus::Success, tr("Detected %1 periodic boundary crossing(s) in particle trajectories.").arg(unwrapRecords.size())));
+	state.setStatus(PipelineStatus(PipelineStatus::Success, tr("Detected %1 periodic cell boundary crossing(s) of particle trajectories.").arg(unwrapRecords.size())));
 	if(unwrapRecords.empty()) return;
 
 	// Get current simulation cell.
@@ -128,6 +128,34 @@ void UnwrapTrajectoriesModifier::unwrapParticleCoordinates(TimePoint time, Modif
 			p += cell.matrix() * pbcShift;
 		}
 		index++;
+	}
+
+	// Unwrap bonds by adjusting their PBC shift vectors.
+	if(outputParticles->bonds()) {
+		if(ConstPropertyPtr topologyProperty = outputParticles->bonds()->getPropertyStorage(BondsObject::TopologyProperty)) {
+			outputParticles->makeBondsMutable();
+			PropertyObject* periodicImageProperty = outputParticles->bonds()->createProperty(BondsObject::PeriodicImageProperty, true);
+			for(size_t bondIndex = 0; bondIndex < topologyProperty->size(); bondIndex++) {
+				size_t particleIndex1 = topologyProperty->getInt64Component(bondIndex, 0);
+				size_t particleIndex2 = topologyProperty->getInt64Component(bondIndex, 1);
+				if(particleIndex1 >= posProperty->size() || particleIndex2 >= posProperty->size())
+					continue;
+
+				Vector3I& pbcShift = periodicImageProperty->dataVector3I()[bondIndex];
+				auto range1 = unwrapRecords.equal_range(identifierProperty ? identifierProperty->getInt64(particleIndex1) : particleIndex1);
+				auto range2 = unwrapRecords.equal_range(identifierProperty ? identifierProperty->getInt64(particleIndex2) : particleIndex2);
+				for(auto iter = range1.first; iter != range1.second; ++iter) {
+					if(std::get<0>(iter->second) <= time) {
+						pbcShift[std::get<1>(iter->second)] += std::get<2>(iter->second);
+					}
+				}
+				for(auto iter = range2.first; iter != range2.second; ++iter) {
+					if(std::get<0>(iter->second) <= time) {
+						pbcShift[std::get<1>(iter->second)] -= std::get<2>(iter->second);
+					}
+				}
+			}
+		}
 	}
 }
 
