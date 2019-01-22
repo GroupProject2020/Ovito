@@ -143,38 +143,62 @@ void CoordinateTripodOverlay::renderImplementation(QPainter& painter, const View
 
 	painter.setRenderHint(QPainter::Antialiasing);
 	painter.setRenderHint(QPainter::TextAntialiasing);
+
+	// Render axis arrows.
 	for(int axis : orderedAxes) {
 		QBrush brush(axisColors[axis]);
 		QPen pen(axisColors[axis]);
 		pen.setWidthF(lineWidth);
 		pen.setJoinStyle(Qt::MiterJoin);
-		pen.setCapStyle(Qt::FlatCap);
+		pen.setCapStyle(Qt::RoundCap);
 		painter.setPen(pen);
 		painter.setBrush(brush);
-		Vector3 dir = tripodSize * axisDirs[axis];
-		Vector2 dir2(dir.x(), dir.y());
-		if(dir2.squaredLength() > FLOATTYPE_EPSILON) {
-			painter.drawLine(origin, origin + QPointF(dir2.x(), -dir2.y()));
-			Vector2 ndir = dir2;
-			if(ndir.length() > arrowSize * tripodSize)
-				ndir.resize(arrowSize * tripodSize);
+		Vector3 dir3d = tripodSize * axisDirs[axis];
+		Vector2 dir2d(dir3d.x(), dir3d.y());
+		FloatType labelMargin = lineWidth;
+
+		// Render axis arrow.
+		if(!dir2d.isZero()) {
+			painter.drawLine(origin, origin + QPointF(dir2d.x(), -dir2d.y()));
+			Vector2 dir2d_normalized = dir2d;
+			if(dir2d_normalized.length() > arrowSize * tripodSize)
+				dir2d_normalized.resize(arrowSize * tripodSize);
 			QPointF head[3];
-			head[1] = origin + QPointF(dir2.x(), -dir2.y());
-			head[0] = head[1] + QPointF(0.5 *  ndir.y() - ndir.x(), -(0.5 * -ndir.x() - ndir.y()));
-			head[2] = head[1] + QPointF(0.5 * -ndir.y() - ndir.x(), -(0.5 *  ndir.x() - ndir.y()));
+			head[1] = origin + QPointF(dir2d.x(), -dir2d.y());
+			head[0] = head[1] + QPointF(0.5 *  dir2d_normalized.y() - dir2d_normalized.x(), -(0.5 * -dir2d_normalized.x() - dir2d_normalized.y()));
+			head[2] = head[1] + QPointF(0.5 * -dir2d_normalized.y() - dir2d_normalized.x(), -(0.5 *  dir2d_normalized.x() - dir2d_normalized.y()));
 			painter.drawConvexPolygon(head, 3);
 		}
+		else {
+			// Draw a circle instead of an arrow when looking head onto the axis.
+			double arrowHeadSize = (lineWidth + tripodSize * arrowSize) * 0.5;
+			painter.setPen(Qt::NoPen);
+			painter.drawEllipse(origin, arrowHeadSize, arrowHeadSize);
+			painter.setPen(pen);
+			labelMargin += arrowHeadSize * 0.5;
+		}
 
-		if(fontSize != 0) {
+		// Render axis label.
+		if(fontSize != 0 && !labels[axis].isEmpty()) {
 			QRectF textRect = painter.boundingRect(QRectF(0,0,0,0), Qt::AlignHCenter | Qt::AlignVCenter | Qt::TextDontClip, labels[axis]);
-			textRect.translate(origin + QPointF(dir.x(), -dir.y()));
-			if(std::abs(dir.x()) > FLOATTYPE_EPSILON || std::abs(dir.y()) > FLOATTYPE_EPSILON) {
-				FloatType offset1 = dir.x() != 0 ? textRect.width() / std::abs(dir.x()) : FLOATTYPE_MAX;
-				FloatType offset2 = dir.y() != 0 ? textRect.height() / std::abs(dir.y()) : FLOATTYPE_MAX;
-				textRect.translate(0.5 * std::min(offset1, offset2) * QPointF(dir.x(), -dir.y()));
-				Vector3 ndir(dir.x(), dir.y(), 0);
-				ndir.resize(lineWidth);
-				textRect.translate(ndir.x(), -ndir.y());
+			textRect.translate(origin + QPointF(dir2d.x(), -dir2d.y()));
+			if(dir2d.isZero() && orderedAxes.size() >= 2) {
+				// When looking on the axis head-on, determine the displacement of the label such that it moves away
+				// from the other axes.
+				Vector3 averageAxisDir = Vector3::Zero();
+				for(int otherAxis : orderedAxes)
+					if(otherAxis != axis) averageAxisDir += axisDirs[otherAxis];
+				if(!averageAxisDir.isZero())
+					dir2d = Vector2(-averageAxisDir.x(), -averageAxisDir.y());
+			}
+			// Position the label at the end of the axis arrow and a bit beyond.
+			if(!dir2d.isZero()) {
+				FloatType offset1 = dir2d.x() != 0 ? textRect.width() / std::abs(dir2d.x()) : FLOATTYPE_MAX;
+				FloatType offset2 = dir2d.y() != 0 ? textRect.height() / std::abs(dir2d.y()) : FLOATTYPE_MAX;
+				textRect.translate(0.5 * std::min(offset1, offset2) * QPointF(dir2d.x(), -dir2d.y()));
+				Vector2 dir2d_normalized = dir2d;
+				dir2d_normalized.resize(labelMargin);
+				textRect.translate(dir2d_normalized.x(), -dir2d_normalized.y());
 			}
 			painter.drawText(textRect, Qt::AlignHCenter | Qt::AlignVCenter | Qt::TextDontClip, labels[axis]);
 		}

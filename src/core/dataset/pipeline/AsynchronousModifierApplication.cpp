@@ -40,11 +40,11 @@ AsynchronousModifierApplication::AsynchronousModifierApplication(DataSet* datase
 bool AsynchronousModifierApplication::referenceEvent(RefTarget* source, const ReferenceEvent& event)
 {
 	if(event.type() == ReferenceEvent::TargetEnabledOrDisabled && source == modifier()) {
-		// Throw away cached results when the modifier is disabled.
+		// Throw away cached results when the modifier is being disabled.
 		_lastComputeResults.reset();
 	}
 	else if(event.type() == ReferenceEvent::PreliminaryStateAvailable && source == input()) {
-		// Throw away cached results when the modifier's input changes.
+		// Throw away cached results when the modifier's input changes, unless the modifier requests otherwise.
 		if(_lastComputeResults) {
 			AsynchronousModifier* asyncModifier = dynamic_object_cast<AsynchronousModifier>(modifier());
 			if(!asyncModifier || asyncModifier->discardResultsOnInputChange())
@@ -62,7 +62,7 @@ bool AsynchronousModifierApplication::referenceEvent(RefTarget* source, const Re
 			_lastComputeResults->setValidityInterval(TimeInterval::empty());
 	}
 	else if(event.type() == ReferenceEvent::TargetChanged && source == modifier()) {
-		// Whenever the modifier object changes, mark the cached computation results as outdated,
+		// Whenever the modifier changes, mark the cached computation results as outdated,
 		// unless the modifier requests otherwise.
 		if(_lastComputeResults) {
 			AsynchronousModifier* asyncModifier = dynamic_object_cast<AsynchronousModifier>(modifier());
@@ -78,7 +78,7 @@ bool AsynchronousModifierApplication::referenceEvent(RefTarget* source, const Re
 ******************************************************************************/
 void AsynchronousModifierApplication::referenceReplaced(const PropertyFieldDescriptor& field, RefTarget* oldTarget, RefTarget* newTarget)
 {
-	// Throw away cached results when the Modifier is detached from the ModifierApplication.
+	// Throw away cached results when the modifier is being detached from this ModifierApplication.
 	if(field == PROPERTY_FIELD(modifier)) {
 		_lastComputeResults.reset();
 	}
