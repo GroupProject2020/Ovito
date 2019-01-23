@@ -123,10 +123,10 @@ SET(SourceFiles
 	utilities/concurrent/ProgressDialog.cpp
 )
 
-# Compile resources.
+# Compile Qt resources, which will be linked into the executable.
 QT5_ADD_RESOURCES(ResourceFiles resources/gui.qrc)
 
-# Build library
+# Define library target.
 ADD_LIBRARY(Gui ${OVITO_DEFAULT_LIBRARY_TYPE} GUI.cpp ${SourceFiles} ${ResourceFiles})
 
 # Pass name of gui plugin to the code.

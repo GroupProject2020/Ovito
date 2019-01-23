@@ -20,6 +20,10 @@
     with a higher visual quality than the <link linkend="rendering.opengl_renderer">OpenGL renderer</link> is able to provide.
   </para>
   <para>
+    <emphasis>Note: The OSPRay rendering engine is not yet available in the Windows version of OVITO. 
+    It is only included in the Linux and macOS versions of OVITO.</emphasis>
+  </para>
+  <para>
     The OSPRay renderer itself offers two different backends and you can switch between them using the 
     <guibutton>Switch OSPRay backend</guibutton> button. The default selection is the <emphasis>SciVis</emphasis> backend.
   </para>

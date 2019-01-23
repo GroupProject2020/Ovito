@@ -20,28 +20,28 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
     TARGET_INCLUDE_DIRECTORIES(${target_name} PUBLIC 
         "$<BUILD_INTERFACE:${OVITO_SOURCE_BASE_DIR}/src>")
 
-	# Pass name of current plugin to the code.
+	# Make the name of current plugin available to the source code.
 	TARGET_COMPILE_DEFINITIONS(${target_name} PRIVATE "OVITO_PLUGIN_NAME=\"${target_name}\"")
 
-	# Link to OVITO's core library.
+	# Link to OVITO's core module.
 	TARGET_LINK_LIBRARIES(${target_name} PUBLIC Core)
 
-	# Link to OVITO's GUI library when plugin provides a UI.
+	# Link to OVITO's GUI module when the plugin provides a UI.
 	IF(${ARG_GUI_PLUGIN})
 	    TARGET_LINK_LIBRARIES(${target_name} PUBLIC Gui)
     	TARGET_LINK_LIBRARIES(${target_name} PUBLIC Qt5::Widgets)
 	ENDIF()
 
-	# Link other required libraries.
+	# Link to other required libraries needed by this specific plugin.
 	TARGET_LINK_LIBRARIES(${target_name} PUBLIC ${lib_dependencies})
 
-	# Link other required libraries.
+	# Link to other required libraries needed by this specific plugin, which are not visible to dependent plugins.
 	TARGET_LINK_LIBRARIES(${target_name} PRIVATE ${private_lib_dependencies})
 
-	# Link Qt5.
+	# Link to Qt5.
 	TARGET_LINK_LIBRARIES(${target_name} PUBLIC Qt5::Core Qt5::Gui Qt5::Concurrent)
 
-	# Link plugin dependencies.
+	# Link to other plugin modules that are dependencies of this plugin.
 	FOREACH(plugin_name ${plugin_dependencies})
     	STRING(TOUPPER "${plugin_name}" uppercase_plugin_name)
     	IF(DEFINED OVITO_BUILD_PLUGIN_${uppercase_plugin_name})
@@ -52,7 +52,7 @@ MACRO(OVITO_STANDARD_PLUGIN target_name)
     	TARGET_LINK_LIBRARIES(${target_name} PUBLIC ${plugin_name})
 	ENDFOREACH()
 
-	# Link optional plugin dependencies.
+	# Link to other plugin modules that are optional dependencies of this plugin.
 	FOREACH(plugin_name ${optional_plugin_dependencies})
 		STRING(TOUPPER "${plugin_name}" uppercase_plugin_name)
 		IF(OVITO_BUILD_PLUGIN_${uppercase_plugin_name})

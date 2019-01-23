@@ -4,7 +4,7 @@
 OVITO Scripting Manual
 **********************************
 
-This manual describes OVITO's scripting interface. You can access this documentation from the *Help* menu of OVITO.
+This manual describes OVITO's scripting interface. You can access this document from the *Help* menu of OVITO.
 
 Introduction:
 -----------------

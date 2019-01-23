@@ -113,7 +113,6 @@ New analysis features:
 - Plotting the value of a certain property of a certain particle versus simulation time. To make this work, all simulation frames need to be kept in memory (requested by Taojun & Mathieu Marciante).
 - Glass ring analysis (see ISAACS, RINGS, Sudheer @ FAU) 
 - Crystal orientation map
-- Extend Create Bonds modifier to make it possible to create different bond types depending on atom pair types (Yan CHEN <1358179191@qq.com>).
 - Implement coarsening of surface meshes as a postprocessing step to reduce number of triangles.
 
 New I/O functions:

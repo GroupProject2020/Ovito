@@ -23,21 +23,23 @@
   </para>
 
   <simplesect xml:id="usage.global_attributes">
-    <title>Exporting scalar values</title>
+    <title>Global attribute values</title>
     <para>
-      Some of OVITO's analysis functions produce single output values (in contrast to per-particle property values), e.g. the total number of atoms of a 
-      particular type or the computed surface area of a solid. Such global quantities computed by the pipeline system may be time-dependent (i.e. the are 
-      recomputed on every frame) and thus represent time series.
+      Some of OVITO's analysis functions compute scalar output values, e.g. the total number of atoms of a 
+      particular type or the computed surface area of a solid. You can find a table of these <emphasis>global attributes</emphasis>
+      associated with the current dataset on the <link linkend="data_inspector.attributes">Attributes page</link> of the data inspector panel.
+      Attributes may have time-dependent values (i.e. their value is dynamically recomputed by the pipeline system for every animation frame).
     </para>
     <para>
-      For exporting a time series of one or more such values, OVITO provides the "<emphasis>Table of Values</emphasis>" format.
-      This output format generates a table with the selected quantities as functions of time and saves it as a plain text file. 
-      You can then plot the exported data with an external tool of your choice.
+      You can export the time series formed by one or more such global attributes to a text file using OVITO's file export function described above.
+      Make sure to select the "<emphasis>Table of Values</emphasis>" export format in the file selection dialog.
+      This output format produces a tabular text file with the values of the selected attributes as functions of time. 
+      You can plot the exported data with any external charting tool.
     </para>
   </simplesect>
   
   <simplesect xml:id="usage.export.formats">
-  <title>Supported output formats</title>
+  <title>Supported export formats</title>
   <para>
     <informaltable>
         <tgroup cols="3">

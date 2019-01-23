@@ -16,12 +16,18 @@
        <imagedata fileref="images/rendering/render_settings_panel.png" format="PNG" scale="45" />
     </imageobject></mediaobject></screenshot></informalfigure>
   
-    <link linkend="usage.rendering">Rendering</link> is the process of producing high-quality output images and movies
-    of the loaded dataset for publication and other purposes. 
+    <link linkend="usage.rendering">Rendering</link> is the process of producing a high-quality output image and movie
+    of the current dataset for publication and other purposes. 
     The <link linkend="core.render_settings">rendering page</link> of the command panel depicted in the screenshot 
-    lets you control various settings related to image and movie generation. 
-    Furthermore, OVITO provides several different rendering engines,
-    which are listed in the following table and differ in terms of visual quality and speed. 
+    on the right lets you control various settings related to rendering. For example, here you can determine OVITO should
+    render a single image, a series of images, or a video. Furthermore, you can adjust relevant parameters such as the 
+    output resolution and the background color of the rendered pictures.
+  </para>
+  <para>
+    OVITO provides several different rendering engines, which differ in terms of visual quality and rendering time.
+    They are listed in the following table. The OpenGL rendering engine is the default choice. It is very fast and produces
+    pictures that provide roughly the same basic visual quality as the realtime viewports of OVITO. The other available 
+    rendering engines provide can produce visually more appealing pictures but also require longer rendering times. 
   
     <informaltable>
         <tgroup cols="2">

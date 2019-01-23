@@ -41,11 +41,12 @@
     <para>
       This option lets the modifier automatically compute the affine transformation from the current shape of the input simulation cell and the specified 
       target shape. After application of the implicitly determined transformation, the cell will take on the 
-      given constant target shape. The contents of the simulation cell (e.g. particles, surface meshes, etc.) will be mapped to the new
-      cell shape accordingly.
+      given target size and shape. The contents of the simulation cell (e.g. particles, surface meshes, etc.) will be mapped to the new
+      cell shape accordingly, unless you turn their transformation off (see next section).
     </para>
     <para>
-      Note that you can use this as a way to permanently overwrite the original simulation box and fix its dimensions to constant values.
+      Note that you can use the target box option as a way to replace the simulation cell read from the input simulation file(s)
+      with a constant, non-varying simulation cell.
     </para>
   </simplesect>
 

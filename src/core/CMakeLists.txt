@@ -138,10 +138,10 @@ ELSE()
 	MESSAGE("Libav video encoding library not found. OVITO will be built without support for video output.")
 ENDIF()
 
-# Compile resources.
+# Compile Qt resources, which will be linked into the executable.
 QT5_ADD_RESOURCES(ResourceFiles resources/core.qrc)
 
-# Build library
+# Define library target.
 ADD_LIBRARY(Core ${OVITO_DEFAULT_LIBRARY_TYPE} Core.cpp ${SourceFiles} ${ResourceFiles})
 
 # Pass name of core plugin to the code.
